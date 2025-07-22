@@ -1,0 +1,141 @@
+.mic-container {
+    width: 3rem;
+    display: grid;
+    height: 3rem;
+    place-items: center;
+    background-color: #D36433;
+    border-radius: 0.5rem;
+    margin: 0;
+    font-size: 24px;
+}
+
+.audio-recorder {
+    display: flex;
+    flex-direction: column;
+    justify-content: center;
+    align-items: center;
+    width: 100%;
+    height: 100%;
+}
+
+.oscillogram {
+    width: 90%;
+    height: 50px;
+    margin: 0.5rem 0;
+    background-color: #e0e0e0;
+    padding: 8px;
+    /* Light gray background */
+    position: relative;
+    overflow: hidden;
+    border-radius: 10px;
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+}
+
+.play-overlay {
+    width: 100% !important;
+    height: 100% !important;
+    margin: 0;
+    position: absolute !important;
+    top: 0;
+    left: 0;
+    background-color: transparent !important;
+}
+
+
+.oscillogram div {
+    width: 4px;
+    background-color: #656363;
+    /* Updated color */
+    height: 100%;
+}
+
+/* Recording Mode - Dynamic Heights for Bars */
+.active-recording div:nth-child(1n) {
+    animation: oscillate-record 1.5s infinite ease-in-out;
+}
+
+.active-recording div:nth-child(2n) {
+    animation: oscillate-record 1.2s infinite ease-in-out;
+}
+
+.active-recording div:nth-child(3n) {
+    animation: oscillate-record 1.8s infinite ease-in-out;
+}
+
+.active-recording div:nth-child(4n) {
+    animation: oscillate-record 1.3s infinite ease-in-out;
+}
+
+.active-recording div:nth-child(5n) {
+    animation: oscillate-record 1.6s infinite ease-in-out;
+}
+
+@keyframes oscillate-record {
+
+    0%,
+    100% {
+        height: 30%;
+    }
+
+    50% {
+        height: 90%;
+    }
+}
+
+/* Static Oscillogram Bars */
+.static-bar {
+    transition: all 0.01s linear;
+}
+
+.static-bar.greyed {
+    background-color: #f0e9e9;
+}
+
+.static-bar.transparent {
+    background-color: transparent;
+}
+
+/* Playing Mode - Fixed Progress Bar */
+/* .active-playing div {
+  display: none;
+} */
+
+.progress-bar {
+    position: absolute;
+    top: 0;
+    left: 0;
+    width: 0%;
+    height: 100%;
+    background-color: #000;
+    animation: progress 10s linear forwards;
+    /* 10 seconds duration */
+}
+
+@keyframes progress {
+    0% {
+        width: 0%;
+    }
+
+    100% {
+        width: 100%;
+    }
+}
+
+.controls {
+    display: flex;
+    gap: 30px;
+}
+
+.material-symbols-outlined.icon {
+    font-size: 1.5rem;
+    cursor: pointer;
+    color: #fff;
+    /* Black icons for visibility on white background */
+    transition: color 0.3s ease;
+}
+
+.icon:hover {
+    color: #ff4081;
+}

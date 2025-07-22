@@ -1,0 +1,37 @@
+.custom-button {
+    padding: 8px 12px;
+    border-radius: 8px;
+    border: 1px solid black;
+    font-weight: 700;
+    text-align: center;
+    display: flex;
+    flex-direction: row;
+    align-items: center;
+    box-shadow: 0 4px 8px rgba(0, 0, 0, 0.1);
+    transition: transform 0.3s ease-in-out;
+    cursor: pointer;
+    background-color: transparent;
+    color: black;
+    font-size: 16px;
+}
+
+.custom-button.secondary {
+    background-color: black;
+    color: white;
+    width: max-content;
+    padding: 10px 24px;
+}
+
+.custom-button:disabled {
+    background-color: lightgray !important;
+}
+
+.custom-button.small {
+    padding: 6px !important;
+    font-size: 12px !important;
+}
+
+/* .custom-button:hover {
+    transform: translateY(-1.5px);
+    box-shadow: 0 6px 12px rgba(0, 0, 0, 0.2);
+} */

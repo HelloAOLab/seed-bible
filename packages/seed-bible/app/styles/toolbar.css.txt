@@ -1,0 +1,86 @@
+.toolbar-container-1 {
+  display: flex;
+  justify-content: center;
+  padding: 16px 0;
+  width: 100%;
+  position: fixed;
+  bottom: 18px;
+  left: 50%;
+  z-index: 10;
+}
+
+.toolbar-1 {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  /* background-color: var(--themeSideMenu); */
+  border-radius: 12px;
+  padding: 8px 20px;
+  box-shadow: 0 26px 10px rgba(0, 0, 0, 0.1);
+  gap: 10px;
+  /* min-width: 320px; */
+  max-width: 600px;
+  /* width: 80%; */
+  position: fixed;
+  left: 50%;
+  transform: translateX(-50%);
+  bottom: 18px;
+  z-index: 99;
+  border: 1px solid #00000024;
+}
+
+
+.toolbar-button {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  width: 40px;
+  height: 40px;
+  border-radius: 50%;
+  border: none;
+  background-color: transparent;
+  cursor: pointer;
+  transition: background-color 0.2s ease;
+}
+
+.toolbar-button:hover {
+  background-color: #f0f0f0;
+}
+
+.toolbar-button:focus {
+  /* outline: none; */
+  /* background-color: #e8e8e8; */
+}
+
+.material-icons {
+  color: #333;
+  font-size: 24px;
+}
+
+
+.toolbar-item-wrapper {
+  position: relative;
+  transition: transform 0.25s ease;
+}
+
+.toolbar-button {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  width: 40px;
+  height: 40px;
+  border-radius: 50%;
+  border: none;
+  background-color: transparent;
+  cursor: pointer;
+  transition: background-color 0.2s ease, transform 0.25s ease;
+}
+
+.toolbar-button:hover {
+  background-color: #f0f0f0;
+}
+
+/* 👇 Empty space where item was */
+.placeholder {
+  visibility: hidden;
+}

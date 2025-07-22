@@ -1,0 +1,36 @@
+.tooltip-container {
+    position: relative;
+    display: grid;
+    cursor: pointer;
+}
+
+.tooltip-bubble {
+    visibility: hidden;
+    width: 170px;
+    background-color: #555;
+    color: #fff;
+    text-align: center;
+    border-radius: 6px;
+    padding: 5px;
+    position: absolute;
+    z-index: 1;
+    top: 125%;
+    left: 0;
+    opacity: 0;
+    transition: opacity 0.3s;
+}
+
+.tooltip-container:hover .tooltip-bubble {
+    visibility: visible;
+    opacity: 1;
+}
+
+.tooltip-message {
+    background-color: #555;
+    color: #fff;
+    text-align: center;
+    border-radius: 6px;
+    padding: 5px 0;
+    position: relative;
+    z-index: 1;
+}

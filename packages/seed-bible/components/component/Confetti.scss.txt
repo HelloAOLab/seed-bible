@@ -1,0 +1,7 @@
+.wrapper-confetti {
+    width: 100vw;
+    height: 99dvh;
+    z-index: 1;
+    position: relative;
+    overflow: hidden;
+}

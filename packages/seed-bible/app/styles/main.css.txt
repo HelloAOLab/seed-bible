@@ -1,0 +1,193 @@
+:root {
+    --primary-color: #F0F1F1;
+    --secondary-color: #FFFFFF;
+    --gray-color: #606060;
+    --whitegray-color: #E6E6E6;
+    --gray2-color: #CCCCCD;
+}
+
+.disabled {
+    color: #929292 !important;
+    cursor: not-allowed;
+}
+
+#tiptapEditor {
+    background-color: var(--themeBackground);
+}
+
+.layout {
+    background-color: var(--themeSideMenu) !important;
+    height: 100vh;
+    width: 100vw;
+    display: flex;
+    flex-direction: row;
+    justify-content: space-between;
+    align-items: center;
+    overflow: hidden;
+    position: absolute;
+    left: 0;
+    top: 0;
+    padding: 1px;
+}
+
+.content {
+    display: flex;
+    justify-content: center;
+    align-items: center;
+    overflow: hidden;
+    border-radius: 10px;
+    /* box-shadow: 0px 0px 9px 0px rgba(0, 0, 0, 0.15); */
+    height: fit-content;
+    padding: 0 6px;
+}
+
+
+
+
+
+.formatting-toolbar {
+    display: flex;
+    align-items: center;
+    background-color: white;
+    padding: 4px 0px;
+    gap: 4px;
+    border-radius: 8px;
+    border: 1px solid #E1E3EA;
+    background: #E6E6E6;
+    margin: 10px 0px;
+}
+
+.toolbar-btn {
+    background: none;
+    border: none;
+    cursor: pointer;
+    padding: 4px;
+    border-radius: 4px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+}
+
+.toolbar-btn:hover {
+    background-color: #f0f0f0;
+}
+
+.toolbar-btn.active {
+    background-color: #e0e0e0;
+}
+
+.toolbar-btn .material-icons {
+    color: #333;
+    font-size: 20px;
+}
+
+.toolbar-divider {
+    width: 1px;
+    height: 24px;
+    background-color: #ccc;
+    margin: 0 8px;
+}
+
+
+
+.flexElementGap-0 {
+    display: flex;
+    align-items: center;
+    flex-direction: row;
+    gap: 0;
+}
+
+.flexElementGap-2 {
+    display: flex;
+    align-items: center;
+    flex-direction: row;
+    gap: 2px;
+}
+
+.flexElementGap-4 {
+    display: flex;
+    align-items: center;
+    flex-direction: row;
+    gap: 4px;
+}
+
+.flexElementGap-10 {
+    display: flex;
+    align-items: center;
+    flex-direction: row;
+    gap: 10px;
+}
+
+.flexColumn-10 {
+    display: flex;
+    flex-direction: column;
+    gap: 10px;
+    margin-bottom: 10px;
+}
+
+
+
+
+
+.softText {
+    color: var(--themeText1);
+    font-family: "Helvetica Neue";
+    font-size: 14px;
+    font-style: normal;
+    font-weight: 400;
+    line-height: normal;
+}
+
+.mediumText {
+    color: var(--themeText1);
+    font-family: "Open Sans";
+    font-size: 14px;
+    font-style: normal;
+    font-weight: 400;
+    line-height: normal;
+    margin-top: 0;
+    margin-bottom: 35px;
+}
+
+.blackText {
+    color: var(--themeText2);
+    font-family: "Helvetica Neue";
+    font-size: 16px;
+    font-style: normal;
+    font-weight: 400;
+    line-height: normal;
+}
+
+.selectInput {
+    border-radius: 8px;
+    border: 1px solid #E1E3EA;
+    background: #E6E6E6;
+    color: #5F5E5C;
+    font-family: Inter;
+    font-size: 15px;
+    font-style: normal;
+    font-weight: 400;
+    line-height: normal;
+    height: 44px;
+    padding: 0 15px;
+    outline: none;
+    border: none;
+    padding: 10px;
+}
+
+.routerOptions {
+    display: flex;
+    flex-direction: row;
+    gap: 10px;
+    /* justify-content: center; */
+    align-items: center;
+    margin: 21px 0px;
+}
+
+.routerTitle {
+    display: flex;
+    flex-direction: row;
+    gap: 10px;
+    align-items: center;
+    margin: 21px 0px;
+}

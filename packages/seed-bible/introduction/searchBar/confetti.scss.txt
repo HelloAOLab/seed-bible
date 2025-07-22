@@ -1,0 +1,38 @@
+.confetti-wrapper {
+  position: relative;
+  min-height: 100%;
+  overflow: hidden;
+}
+
+[class|="confetti"] {
+  position: absolute;
+}
+
+$colors: (#2971f9, #ef3d4d, #f9ca16, #7d3af2);
+
+@for $i from 0 through 150 {
+  $w: random(8);
+  $l: random(100);
+  .confetti-#{$i} {
+    width: #{$w}px;
+    height: #{$w*0.4}px;
+    background-color: nth($colors, random(4));
+    top: 150%;
+    left: unquote($l+"%");
+    opacity: random() + 0.5;
+    transform: rotate(#{random()*360}deg);
+	  animation: drop-#{$i} unquote(3+random()+"s") unquote(random()+"s") infinite;
+	  animation-timing-function: ease-in-out;
+  }
+  
+  @keyframes drop-#{$i} {
+	50% {
+	  top: unquote(random(10)+"%");
+	  left: unquote($l+random(15)+"%");
+	}
+    100% {
+      top: 110%;
+      left: unquote($l+random(15)+"%");
+    }
+  }
+}

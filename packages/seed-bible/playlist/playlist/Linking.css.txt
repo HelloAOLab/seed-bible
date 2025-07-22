@@ -1,0 +1,43 @@
+.linked-item-custom {
+    border: 1px solid black;
+    border-radius: 4px;
+    box-shadow: 2px 4px 8px rgba(0, 0, 0, 0.4);
+}
+
+.overlay-ref {
+    position: relative;
+}
+
+.overlay {
+    visibility: visible;
+    opacity: 1;
+    transition: all 0.2s linear;
+    width: 340px;
+    padding: 12px;
+    max-height: 270px;
+    overflow: auto;
+    position: absolute;
+    z-index: 10001;
+    border-radius: 0.625rem;
+    transform: translateX(-100%);
+    background-color: black;
+}
+
+.overlay.linked-item-custom p {
+    color: white !important;
+}
+
+.more-menu-items:nth-of-type(2n) {
+    border-bottom: 1px solid #3E3E3E;
+}
+
+.more-menu-items:hover {
+    background-color: #525151;
+}
+
+.link-tag {
+    width: 24px;
+    height: 24px;
+    border-radius: 50%;
+    font-size: 12px;
+}
