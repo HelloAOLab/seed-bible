@@ -32,4 +32,5 @@ jobs:
       - name: Upload AUXes
         uses: actions/upload-artifact@v4
         with:
-          path: 'dist/*.aux'
+          name: 'seed-bible.aux'
+          path: 'dist/seed-bible.aux'
