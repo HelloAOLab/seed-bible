@@ -4,7 +4,8 @@
   "description": "The source code behind the Seed Bible.",
   "main": "index.js",
   "scripts": {
-    "test": "echo \"Error: no test specified\" && exit 1"
+    "test": "echo \"Error: no test specified\" && exit 1",
+    "package:seed-bible": "casualos pack-aux ./packages/seed-bible ./dist/seed-bible.aux"
   },
   "repository": {
     "type": "git",
