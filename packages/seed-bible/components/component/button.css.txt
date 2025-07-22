@@ -1,7 +1,7 @@
 .custom-button {
     padding: 8px 12px;
     border-radius: 8px;
-    border: 1px solid black;
+    border: 5px solid black;
     font-weight: 700;
     text-align: center;
     display: flex;
