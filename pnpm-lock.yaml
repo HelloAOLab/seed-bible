@@ -8,6 +8,9 @@ importers:
 
   .:
     devDependencies:
+      '@casual-simulation/aux-runtime':
+        specifier: ^3.5.3
+        version: 3.5.3
       casualos:
         specifier: ^3.5.3
         version: 3.5.3
@@ -33,6 +36,9 @@ packages:
 
   '@casual-simulation/aux-records@3.5.3':
     resolution: {integrity: sha512-UrPiP2qLn5PsyKjCL9HlsnnG3gKbgCnwK2Lv3P8ysZ0AL2JGgnQMiN/ismuQ+cG2BSIRW9ficP2RiKgN0b/quA==}
+
+  '@casual-simulation/aux-runtime@3.5.3':
+    resolution: {integrity: sha512-ndGXE8/qS7NsrCJU3uyx06vhU//DxoTK4No+MDZ1oq1nYdEoXG8ufhpF5QCPJKL7qZrIb75p6cMo4Tw6Vd+bHw==}
 
   '@casual-simulation/chalk@3.1.11':
     resolution: {integrity: sha512-cJ2xHpo8N6HWMQ2yAJao+dFmLNMV3vd0uNYFcWa0YxsF26A4LYIpqYxGAM1U2iCTZhJiedP6//3UYvZbcsmHLw==}
@@ -282,6 +288,9 @@ packages:
   '@types/scrypt-async@1.3.5':
     resolution: {integrity: sha512-WprBpDhqq8DemGI0QepdcLdfTfOuAgD85A0hz8PljDFlalRbnZ1Puy1qC8x8CoAzr5Ugnyerbu+mNQ4jk9dg/w==}
 
+  '@types/seedrandom@3.0.8':
+    resolution: {integrity: sha512-TY1eezMU2zH2ozQoAFAQFOPpvP15g+ZgSfTZt31AUUH/Rxtnz3H+A/Sv1Snw2/amp//omibc+AEkTaA8KUeOLQ==}
+
   '@types/stack-utils@2.0.3':
     resolution: {integrity: sha512-9aEbYZ3TbYMznPdcdr3SmIrLXwC/AKZXQeCf9Pgao5CKb8CyHuEX5jzWPTkvregvhRJHcpRO6BFoGW9ycaOkYw==}
 
@@ -297,6 +306,21 @@ packages:
   abort-controller@3.0.0:
     resolution: {integrity: sha512-h8lQ8tacZYnR3vNQTgibj+tODHI5/+l06Au2Pcriv/Gmet0eaj4TwWH41sO9wnHDiQsEj19q0drzdWdeAHtweg==}
     engines: {node: '>=6.5'}
+
+  acorn-jsx@5.3.2:
+    resolution: {integrity: sha512-rq9s+JNhf0IChjtDXxllJ7g41oZk5SlXtp0LHwyA5cejwn7vKmKp4pPri6YEePv2PU65sAsegbXtIinmDFDXgQ==}
+    peerDependencies:
+      acorn: ^6.0.0 || ^7.0.0 || ^8.0.0
+
+  acorn-typescript@1.4.13:
+    resolution: {integrity: sha512-xsc9Xv0xlVfwp2o7sQ+GCQ1PgbkdcpWdTzrwXxO3xDMTAywVS3oXVOcOHuRjAPkS4P9b+yc/qNF15460v+jp4Q==}
+    peerDependencies:
+      acorn: '>=8.9.0'
+
+  acorn@8.11.3:
+    resolution: {integrity: sha512-Y9rRfJG5jcKOE0CLisYbojUjIrIEE7AGMzA/Sm4BslANhbS+cDMpgBdcPT91oJ7OuJ9hYJBx59RjbhxVnrF8Xg==}
+    engines: {node: '>=0.4.0'}
+    hasBin: true
 
   agentkeepalive@4.6.0:
     resolution: {integrity: sha512-kja8j7PjmncONqaTsB8fQ+wE2mSU2DJ9D4XKoJ5PFWIdRMa6SLSN1ff4mOr4jCbfRSsxR4keIiySJU0N9T5hIQ==}
@@ -773,6 +797,9 @@ packages:
   scrypt-js@3.0.1:
     resolution: {integrity: sha512-cdwTTnqPu0Hyvf5in5asVdZocVDTNRmR7XEcJuIzMjJeSHybHl7vpB66AzwTaIg6CLSbtjcxc8fqcySfnTkccA==}
 
+  seedrandom@3.0.5:
+    resolution: {integrity: sha512-8OwmbklUNzwezjGInmZ+2clQmExQPvomqjL7LFqOYqtmuxRgQYqOD3mHaU+MvZn5FLUeVxVfQjwLZW/n/JFuqg==}
+
   semver@7.7.2:
     resolution: {integrity: sha512-RF0Fw+rO5AMf9MAyaRXI4AV0Ulj5lMHqVxxdSgiVbixSCXoEmmX/jk0CuJw4+3SqroYO9VoUh+HcuJivvtJemA==}
     engines: {node: '>=10'}
@@ -961,6 +988,47 @@ snapshots:
       uuid: 10.0.0
       yjs: 13.6.8
       zod: 3.22.4
+    transitivePeerDependencies:
+      - debug
+      - encoding
+      - ws
+
+  '@casual-simulation/aux-runtime@3.5.3':
+    dependencies:
+      '@casual-simulation/aux-common': 3.5.3
+      '@casual-simulation/aux-records': 3.5.3
+      '@casual-simulation/crypto': 3.5.0
+      '@casual-simulation/engine262': 0.0.1-4de2170374e22761996e46eb1362f4496ee57f8f
+      '@casual-simulation/error-stack-parser': 2.0.7
+      '@casual-simulation/expect': 3.5.0
+      '@casual-simulation/fast-json-stable-stringify': 3.5.0
+      '@casual-simulation/js-interpreter': 3.5.0
+      '@casual-simulation/stacktrace': 3.1.11
+      '@casual-simulation/three': 0.140.3
+      '@tweenjs/tween.js': 18.6.0
+      '@types/estraverse': 5.1.7
+      '@types/seedrandom': 3.0.8
+      '@types/uuid': 10.0.0
+      acorn: 8.11.3
+      acorn-jsx: 5.3.2(acorn@8.11.3)
+      acorn-typescript: 1.4.13(acorn@8.11.3)
+      astring: 1.7.5
+      axios: 1.7.7
+      base64-js: 1.5.1
+      estraverse: 5.3.0
+      expect: 27.3.1
+      hash.js: 1.1.7
+      htm: 3.1.0
+      lib0: 0.2.49
+      lru-cache: 5.1.1
+      luxon: 3.4.4
+      mime: 2.4.6
+      preact: 10.19.6
+      rxjs: 8.0.0-alpha.14
+      seedrandom: 3.0.5
+      stackframe: 1.3.4
+      uuid: 10.0.0
+      yjs: 13.6.8
     transitivePeerDependencies:
       - debug
       - encoding
@@ -1284,6 +1352,8 @@ snapshots:
 
   '@types/scrypt-async@1.3.5': {}
 
+  '@types/seedrandom@3.0.8': {}
+
   '@types/stack-utils@2.0.3': {}
 
   '@types/uuid@10.0.0': {}
@@ -1297,6 +1367,16 @@ snapshots:
   abort-controller@3.0.0:
     dependencies:
       event-target-shim: 5.0.1
+
+  acorn-jsx@5.3.2(acorn@8.11.3):
+    dependencies:
+      acorn: 8.11.3
+
+  acorn-typescript@1.4.13(acorn@8.11.3):
+    dependencies:
+      acorn: 8.11.3
+
+  acorn@8.11.3: {}
 
   agentkeepalive@4.6.0:
     dependencies:
@@ -1762,6 +1842,8 @@ snapshots:
   rxjs@8.0.0-alpha.14: {}
 
   scrypt-js@3.0.1: {}
+
+  seedrandom@3.0.5: {}
 
   semver@7.7.2: {}
 
