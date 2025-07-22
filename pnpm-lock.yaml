@@ -12,8 +12,8 @@ importers:
         specifier: ^3.5.3
         version: 3.5.3
       casualos:
-        specifier: ^3.5.3
-        version: 3.5.3
+        specifier: ^3.5.4
+        version: 3.5.4
 
 packages:
 
@@ -395,8 +395,8 @@ packages:
     resolution: {integrity: sha512-8WB3Jcas3swSvjIeA2yvCJ+Miyz5l1ZmB6HFb9R1317dt9LCQoswg/BGrmAmkWVEszSrrg4RwmO46qIm2OEnSA==}
     engines: {node: '>=16'}
 
-  casualos@3.5.3:
-    resolution: {integrity: sha512-frxaYT0puSpf8sJ8+edBdePj1yc8QziXuK1iodrERRhJWreUuXq5++ZhZryZSCeWN10NKegyb1TJTfhybwEQqw==}
+  casualos@3.5.4:
+    resolution: {integrity: sha512-FbEewpScUUWtJS3YnwRh4sH+WvCvnFBPTPScVrCjOo/tm7WWunpZnKCEMDe9k+UgXD0GYlAmchshCuVKjgcVWQ==}
     hasBin: true
 
   chalk@4.1.2:
@@ -1339,7 +1339,7 @@ snapshots:
 
   '@types/node-fetch@2.6.12':
     dependencies:
-      '@types/node': 18.19.120
+      '@types/node': 24.1.0
       form-data: 4.0.4
 
   '@types/node@18.19.120':
@@ -1452,7 +1452,7 @@ snapshots:
 
   camelcase@8.0.0: {}
 
-  casualos@3.5.3:
+  casualos@3.5.4:
     dependencies:
       '@casual-simulation/aux-common': 3.5.3
       '@casual-simulation/aux-records': 3.5.3
