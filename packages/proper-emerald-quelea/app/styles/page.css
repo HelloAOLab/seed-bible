@@ -1,0 +1,184 @@
+.pageContainer {
+  height: 100%;
+  width: 100%;
+  background-color: white;
+  padding: 30px 0%;
+  overflow: scroll;
+  border-radius: 12px;
+
+}
+
+@keyframes backgroundFlash {
+  0% {
+    background-color: #f0f0f0;
+    /* light gray */
+  }
+
+  50% {
+    background-color: #d6d6d6;
+    /* medium gray */
+  }
+
+  100% {
+    background-color: #f0f0f0;
+  }
+
+}
+
+.tabHighlightBg {
+  animation: backgroundFlash 1s ease-out;
+}
+
+
+::-webkit-scrollbar {
+  display: none;
+}
+
+.bookTitle {
+  font-family: 'Helvetica Neue', sans-serif;
+  font-size: 32px;
+  margin-bottom: 60px;
+  font-weight: 500;
+  font-family: var(--text-bookchapter-font);
+  color: var(--text-bookchapter-color);
+  /* font-family: 'Montserrat', sans-serif; */
+  /* font-size: 22px; */
+  font-weight: var(--text-bookchapter-weight);
+  text-align: var(--text-bookchapter-alignment);
+  text-decoration: var(--text-bookchapter-text-decoration);
+  margin-top: var(--text-bookchapter-margin-top);
+  margin-bottom: var(--text-bookchapter-margin-bottom);
+  margin-left: var(--text-bookchapter-margin-left);
+  margin-right: var(--text-bookchapter-margin-right);
+}
+
+
+.sectionTitle {
+  font-family: var(--text-heading-font);
+  color: var(--text-heading-color);
+  /* font-family: 'Montserrat', sans-serif; */
+  font-size: 22px;
+  font-weight: var(--text-heading-weight);
+  text-align: var(--text-heading-alignment);
+  text-decoration: var(--text-heading-text-decoration);
+  margin-top: var(--text-heading-margin-top);
+  margin-bottom: var(--text-heading-margin-bottom);
+  margin-left: var(--text-heading-margin-left);
+  margin-right: var(--text-heading-margin-right);
+}
+
+
+.sectionText {
+  font-family: var(--text-verse-font);
+  color: var(--text-verse-color);
+  /* font-family: 'EB Garamond', sans-serif; */
+  font-size: 20px;
+  font-weight: var(--text-verse-weight);
+  font-style: var(--text-verse-font-style);
+  text-align: var(--text-verse-alignment);
+  text-decoration: var(--text-verse-text-decoration);
+  line-height: var(--text-verse-margin-top);
+
+  /* Additions ------> */
+  /* set up a transparent border to animate */
+  border: 2px solid transparent;
+  border-radius: 4px;
+  transition:
+    border-color 0.3s ease-in-out,
+    background-color 0.3s ease-in-out;
+
+}
+
+/* Additions ------> */
+
+.sectionText.highlighted {
+  border-color: #4F645B;
+  background-color: #639498;
+}
+
+.clickableCursor {
+  cursor: pointer;
+}
+
+.highlightened {
+  /* keep normal text color */
+  color: inherit;
+  transition: color 0.2s ease-in-out;
+
+  /* fade it out over 1.5s and then stay transparent */
+  animation: flashHighlight 2s ease-in-out;
+}
+
+.highlightened:hover {
+  color: #859E3B;
+}
+
+/* for the word spans when that word is active */
+.highlightened.highlighted-word {
+  color: #859E3B;
+}
+
+@keyframes flashHighlight {
+  0% {
+    color: black;
+  }
+
+  30%,
+  50%,
+  70% {
+    color: #859E3B;
+  }
+
+  100% {
+    color: black;
+  }
+}
+
+/* End of Additions */
+
+.sectionCover {
+  margin-left: var(--text-verse-margin-left);
+  margin-right: var(--text-verse-margin-right);
+}
+
+.sectionTextNumber {
+  color: #287F71;
+  font-family: 'EB Garamond', sans-serif;
+  font-size: 16px;
+  font-weight: 700;
+  line-height: 30px;
+  font-style: normal;
+  margin: 0 5px;
+}
+
+.tabDrop {
+  width: 100%;
+  height: 100%;
+  display: flex;
+  justify-content: center;
+  align-items: center;
+  background: white;
+  border-radius: 12px;
+}
+
+.tabEntered {
+  width: 100%;
+  height: 100%;
+  display: flex;
+  justify-content: center;
+  align-items: center;
+  background: rgb(190, 187, 187);
+  border-radius: 12px;
+}
+
+
+.editVerseTitle {
+  border-radius: 6px 6px 0px 0px;
+  background: #4459F3;
+  width: fit-content;
+  padding: 10px 30px;
+  color: white;
+  position: absolute;
+  top: -42px;
+  font-size: 17px;
+}
