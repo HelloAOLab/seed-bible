@@ -175,3 +175,28 @@
 }
 
 .swap-btn {}
+
+.highlightened {
+  /* keep normal text color */
+  color: inherit;
+  transition: color 0.2s ease-in-out;
+
+  /* fade it out over 1.5s and then stay transparent */
+  animation: flashHighlight 3s ease-in-out;
+}
+
+@keyframes flashHighlight {
+  0% {
+    color: black;
+  }
+
+  30%,
+  50%,
+  70% {
+    color: rgb(237, 222, 155);
+  }
+
+  100% {
+    color: black;
+  }
+}

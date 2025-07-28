@@ -1,7 +1,7 @@
 
 import { BibleDataManager } from 'app.hooks.bibleDataManager'
 import { getStyleOf } from 'app.styles.styler'
-const { useEffect, useState, useMemo, useCallback, createRef } = os.appHooks;
+const { useEffect, useState, useMemo, useCallback, createRef, useRef } = os.appHooks;
 import { useMouseMove } from 'app.hooks.mouseMove'
 import { useTabsContext } from 'app.hooks.tabs';
 import { useBibleContext } from 'app.hooks.bibleVariables'
@@ -9,6 +9,8 @@ import { TextFormattingToolbar } from 'app.components.textSettings'
 import { DivSpliter } from 'app.hooks.screenDevider'
 import { TextEditor } from 'app.components.editor'
 import { MiniTextEditor } from 'app.components.smallEditor'
+import { useSideBarContext } from 'app.hooks.sideBar'
+import { MenuIcon } from 'app.components.icons'
 
 function generateQuery(params) {
     let queryArray = [];
@@ -23,6 +25,20 @@ function generateQuery(params) {
 function attachQueryToURL(url, params) {
     const queryString = generateQuery(params);
     return url + (url.includes('?') ? '&' : '?') + queryString;
+}
+
+const getValidRect = (element) => {
+    let eleRect = element.getBoundingClientRect();
+    if (Math.floor(eleRect.height) > 0) {
+        return {
+            width: Math.floor(eleRect.width),
+            height: Math.floor(eleRect.height),
+            top: Math.floor(eleRect.top),
+            left: Math.floor(eleRect.left)
+        }
+    } else {
+        return getValidRect(element.parentElement)
+    }
 }
 
 function ThePage({ tab: T, setPanalApp, panelId, setEnableEditor, setData, data }) {
@@ -40,14 +56,8 @@ function ThePage({ tab: T, setPanalApp, panelId, setEnableEditor, setData, data 
             return;
         }
         globalThis.activeCanvasId = tabId;
-        const parent = canvasElement.parentElement;
-        parent.classList.remove('boundElements');
-        const rect = parent.getBoundingClientRect();
-        const width = Math.floor(rect.width);
-        const height = Math.floor(rect.height) > 0 ? Math.floor(rect.height) : window.innerHeight - 22;
-        const top = Math.floor(rect.top);
-        const left = Math.floor(rect.left);
-        setHW({
+        let { width, height, top, left } = getValidRect(canvasElement.parentElement);
+         setHW({
             height: `${height}px !important`,
             width: `${width}px !important`,
         })
@@ -266,6 +276,7 @@ function ThePage({ tab: T, setPanalApp, panelId, setEnableEditor, setData, data 
                 os.log('recoreded', panelId, { ...tab, data: { ...tab.data, ...data } })
                 globalThis.PanelTabsMap[panelId] = { ...tab, data: { ...tab.data, ...data } };
             }
+            shout("OnChapterChanged", {book: data.book, chapter: data.chapter});
         }
     }, [data])
     // const {
@@ -604,6 +615,14 @@ function ThePage({ tab: T, setPanalApp, panelId, setEnableEditor, setData, data 
         return <div id={tab.id}>
         </div>
     }
+    
+    const [tabernacleHighlightTimestamps, setTabernacleHighlightTimestamps] = useState(new Map());
+
+    const handleSectionHighlightened = useCallback(({key}) => {
+        setTabernacleHighlightTimestamps((prev) => {
+            return new Map(prev).set(key, os.localTime)
+        });
+    }, [])
 
     return <div
         className="pageContainer"
@@ -635,9 +654,11 @@ function ThePage({ tab: T, setPanalApp, panelId, setEnableEditor, setData, data 
         {data && tab && !tabEntered ? <>
             <div style={{ 'pointer-events': isDragging ? "none" : null }} className="bookTitle">{`${data?.book} - ${data?.chapter}`}</div>
             {
-                data && data.content.map(e => {
-                    return <div style={{ 'pointer-events': isDragging ? "none" : null }}>
+                data && data.content.map((e, sectionIndex) => {
+                    return <div key={`${data.book}-${data.chapter}-${e.verses[0].verseNumber}`} style={{ 'pointer-events': isDragging ? "none" : null }}>
                         <Section
+                            tabernacleHighlightTimestamps={tabernacleHighlightTimestamps}
+                            onSectionHighlightened={handleSectionHighlightened}
                             {...e}
                             book={data.book}
                             chapter={data.chapter}
@@ -646,7 +667,8 @@ function ThePage({ tab: T, setPanalApp, panelId, setEnableEditor, setData, data 
                             holded={holded}
                             selected={selected}
                             textEdit={false}
-                        />
+                            sectionIndex={sectionIndex}
+                         />
                     </div>
                 })
             }
@@ -712,25 +734,158 @@ function ThePage({ tab: T, setPanalApp, panelId, setEnableEditor, setData, data 
     </div>
 }
 
-function Section({ heading, setRef, verses, book, chapter, holded, blinker, selected, textEdit }) {
-    const editTextStyle = {
-        "border-radius": "6px",
-        "border": "2px solid #4459F3",
-        "background": "rgba(68, 89, 243, 0.10)",
-        "padding": '8px',
-        "position": 'relative',
+function Section({ heading, setRef, verses, book, chapter, holded, blinker, selected, textEdit, tabernacleHighlightTimestamps, onSectionHighlightened}) {
+
+    const {styles, editTextStyle} = useMemo(() => {
+        const styles = {
+            font: `'Montserrat', sans-serif`,
+            weight: '600',
+            color: 'black',
+            styles: {
+                bold: true,
+                italic: false,
+                underline: false,
+                alignment: 'left',
+            }
+        }
+        const editTextStyle = {
+            "border-radius": "6px",
+            "border": "2px solid #4459F3",
+            "background": "rgba(68, 89, 243, 0.10)",
+            "padding": '8px',
+            "position": 'relative',
+        }
+        return {styles, editTextStyle}
+    }, [])
+
+    const { tabs, addTab, activeSpace } = useTabsContext();
+    const { openPopupSettings, closePopupSettings } = useSideBarContext();
+    const { screens, setScreens } = useBibleContext();
+
+    const [locations, setLocations] = useState(getBot('system', 'introduction.searchBar').tags['places-new']);
+    
+    const tabernacleContent = useMemo(() => {
+        return globalThis?.TabernacleManager?.tags?.keys?.find((content) => {
+            return content.book === book && content.chapter == chapter && content.minVerse == verses[0].verseNumber;
+        })
+    }, [book, chapter, verses])
+
+    const openLocation = ({ location }) => {
+        if (globalThis?.activeCanvasId && configBot.tags.miniMapPortal) {
+            whisper(getBot('system', 'introduction.searchBar'), "handleGeoJsonSearch", { place: location });
+            return
+        }
+        openPopupSettings({
+            type: 'normal', items: [
+                {
+                    disabled: true, icon: <MenuIcon name="map" />, title: 'Open Location', onClick: () => {
+                        if (globalThis?.activeCanvasId) {
+                            whisper(getBot('system', 'introduction.searchBar'), "handleGeoJsonSearch", { place: location });
+                            whisper(thisBot, 'onGridClick')
+                        } else {
+                            let canvasTabs = tabs.filter(item => { return item.data.type === 'canvas' });
+                            let tabData;
+                            if (canvasTabs.length === 0) {
+                                let canvasNumber = globalThis?.initiatedCanvas ? globalThis.initiatedCanvas + 1 : 1;
+                                globalThis.initiatedCanvas = canvasNumber;
+                                tabData = {
+                                    id: uuid(),
+                                    taken: false,
+                                    data: {
+                                        use: 'thePage',
+                                        type: 'canvas',
+                                        book: 'Canvas',
+                                        bookId: 'GEN',
+                                        chapter: canvasNumber,
+                                        translation: 'BSB'
+                                    }
+                                };
+                                addTab(tabData);
+                            } else {
+                                tabData = canvasTabs[0];
+                            }
+                            if (screens < 4) {
+                                let scrValue = screens + 1;
+                                setScreens({ value: scrValue });
+                                setTimeout(async () => {
+                                    if (globalThis?.[`UpdatePanel-panel-${screens}-${activeSpace}`]) {
+                                        try{
+                                            globalThis?.[`UpdatePanel-panel-${screens}-${activeSpace}`](tabData);
+                                        }catch(e) {
+                                            console.log(e)
+                                        }
+                                        whisper(getBot('system', 'introduction.searchBar'), "handleGeoJsonSearch", { place: location });
+                                        whisper(thisBot, 'onGridClick')
+                                    }
+                                }, 100)
+                            }
+                        }
+                    }
+                },
+            ]
+        })
     }
-    const styles = {
-        font: `'Montserrat', sans-serif`,
-        weight: '600',
-        color: 'black',
-        styles: {
-            bold: true,
-            italic: false,
-            underline: false,
-            alignment: 'left',
-        },
-    }
+
+    const [isActive, setIsActive] = useState(false);
+    const timeoutRef = useRef(null)
+
+    const [isHighlightened, setIsHighlightened] = useState(false);
+
+    const wordHighlightInfo = useMemo(() => {
+        let currDelay = 0;
+        const threshold = 0.5;
+        return verses.map((verse) => {
+            return verse.text.split(" ").map(() => {
+                currDelay += 0.01
+                const random = Math.random()
+                const isRandomlySelected = random > threshold
+                return {isRandomlySelected, delay: currDelay};
+            });
+        })
+    }, [])
+
+    const highlightDuration = useMemo(() => {
+        const highlightBaseDuration = 3000;
+        const lastVerseHighlightInfo = wordHighlightInfo[wordHighlightInfo.length - 1]
+        
+        return highlightBaseDuration + (lastVerseHighlightInfo[lastVerseHighlightInfo.length - 1]?.delay * 1000)
+    }, [wordHighlightInfo]);
+
+    const handleSectionCoverClick = useCallback(() => {
+
+        if(timeoutRef.current || isHighlightened) return;
+
+        setIsActive(true);
+        timeoutRef.current = setTimeout(() => {
+            setIsActive(false);
+            timeoutRef.current = null;
+        }, highlightDuration);
+
+    }, [verses, timeoutRef.current, isHighlightened, highlightDuration])
+
+    useEffect(() => {
+        const key = `${book}-${chapter}-${verses[0].verseNumber}`
+        if(tabernacleContent)
+        {
+            globalThis[`TabernacleItemClicked-${key}`] = handleSectionCoverClick;
+            const highlightened = !tabernacleHighlightTimestamps.has(key) || ((os.localTime - tabernacleHighlightTimestamps.get(key)) > 60000)
+            if(highlightened)
+            {
+                setIsHighlightened(true);
+                onSectionHighlightened({key})
+                setTimeout(() => {
+                    setIsHighlightened(false);
+                }, highlightDuration);
+            }
+        }
+        return () => {
+            if(tabernacleContent)
+            {
+                globalThis[`TabernacleItemClicked-${key}`] = null;
+            }
+        }
+    }, [])
+    
     return <div>
         <div className="sectionTitle">
             {heading}
@@ -741,13 +896,83 @@ function Section({ heading, setRef, verses, book, chapter, holded, blinker, sele
                 <div style={{ right: '20px', top: '-65px', background: 'transparent' }} className="flexElementGap-4 editVerseTitle">
                     <TextFormattingToolbar sectionStyles={styles} />
                 </div>}
-            <div className="sectionCover">
-                {verses.map(verse => {
+            <div 
+                className="sectionCover"
+                onPointerEnter={() => {
+                    if(tabernacleContent)
+                    {
+                        shout("OnTabernacleSectionHover", {keys: tabernacleContent.keys});
+                    }
+                }}
+                onClick={() => {
+                    if(tabernacleContent)
+                    {
+                        handleSectionCoverClick()
+                        shout("OnTabernacleSectionClick", {keys: tabernacleContent.keys});
+                    }
+                }}
+            >
+                {verses.map((verse, verseIndex) => {
                     const [c, setC] = useState(false)
+                    const mapVerse = ({ verse }) => {
+                        let verseArray = verse.split(" ");
+                        let vr = [];
+                        verseArray.forEach((verseText, verseTextIndex) => {
+                            
+                            let location = locations[verseText.replace(/[^a-zA-Z]/g, "").toLowerCase()];
+                            const isRandomlySelected = wordHighlightInfo[verseIndex][verseTextIndex]?.isRandomlySelected;
+                            const className = `${(isHighlightened || isActive) && isRandomlySelected ? "highlightened" : ""}`;
+                            const animationDelay = `${wordHighlightInfo[verseIndex][verseTextIndex]?.delay ?? 0}s`
+                            
+                            if(location)
+                            {
+                                let result = verseText.split(/([^A-Za-z]+)/).filter(Boolean)
+                                for (const part of result) {
+                                    if (/^[A-Za-z]+$/.test(part)) {
+                                        vr.push(
+                                            <span 
+                                                style={{ animationDelay }}
+                                                className={className}
+                                                onMouseEnter={(e) => {
+                                                    e.target.style.color = "#0D47A1";
+                                                    e.target.style.fontWeight = "400";
+                                                }}
+                                                onMouseLeave={(e) => {
+                                                    setTimeout(() => {
+                                                        e.target.style.color = "";
+                                                        e.target.style.fontWeight = "";
+                                                        e.target.style.fontStyle = "";
+                                                    }, 2000)
+                                                }}
+                                                onClick={() => { 
+                                                    openLocation({ location }) 
+                                                }}
+                                            >
+                                                {`${part}`}
+                                            </span>
+                                        )
+                                    } else {
+                                        vr.push(<span 
+                                            style={{ animationDelay }}
+                                            className={className}
+                                        >{`${part}`}</span>)
+                                    }
+                                }
+                                vr.push(<span>{` `}</span>)
+                            } 
+                            else 
+                            {
+                                vr.push(<span 
+                                    style={{ animationDelay }}
+                                    className={className}
+                                >{`${verseText} `}</span>)
+                            }
+                        })
+                        return vr
+                    }
                     return <span
                         // onDoubleClick={(e) => { console.log(e); setC(!c) }}
                         onClick={() => {
-
                             os.log({
                                 verseNumber: verse.verseNumber,
                                 text: verse.text,
@@ -766,7 +991,7 @@ function Section({ heading, setRef, verses, book, chapter, holded, blinker, sele
                         }}
                         className="sectionText">
                         <span className="sectionTextNumber">{verse?.verseNumber}</span>
-                        {!c ? verse?.text : <MiniTextEditor
+                        {!c ? <span class="sectionVerse">{mapVerse({ verse: verse?.text }).map(item => item)} </span> : <MiniTextEditor
                             initialHtml={verse?.text}
                             onChange={(html) => console.log('Updated HTML:', html)}
                         />}
