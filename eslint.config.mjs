@@ -40,6 +40,9 @@ export default defineConfig([
     {
         // TODO: Go through and fix all errors
         rules: {
+            'prefer-const': ['error', {
+                destructuring: 'all'
+            }]
             // 'prefer-const': 'off',
             // '@typescript-eslint/no-explicit-any': 'off',
             // '@typescript-eslint/no-unused-vars': 'off',
