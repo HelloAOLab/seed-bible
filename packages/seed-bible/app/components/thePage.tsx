@@ -28,7 +28,7 @@ function attachQueryToURL(url, params) {
 }
 
 const getValidRect = (element) => {
-    let eleRect = element.getBoundingClientRect();
+    const eleRect = element.getBoundingClientRect();
     if (Math.floor(eleRect.height) > 0) {
         return {
             width: Math.floor(eleRect.width),
@@ -56,7 +56,7 @@ function ThePage({ tab: T, setPanalApp, panelId, setEnableEditor, setData, data 
             return;
         }
         globalThis.activeCanvasId = tabId;
-        let { width, height, top, left } = getValidRect(canvasElement.parentElement);
+        const { width, height, top, left } = getValidRect(canvasElement.parentElement);
          setHW({
             height: `${height}px !important`,
             width: `${width}px !important`,
@@ -783,10 +783,10 @@ function Section({ heading, setRef, verses, book, chapter, holded, blinker, sele
                             whisper(getBot('system', 'introduction.searchBar'), "handleGeoJsonSearch", { place: location });
                             whisper(thisBot, 'onGridClick')
                         } else {
-                            let canvasTabs = tabs.filter(item => { return item.data.type === 'canvas' });
+                            const canvasTabs = tabs.filter(item => { return item.data.type === 'canvas' });
                             let tabData;
                             if (canvasTabs.length === 0) {
-                                let canvasNumber = globalThis?.initiatedCanvas ? globalThis.initiatedCanvas + 1 : 1;
+                                const canvasNumber = globalThis?.initiatedCanvas ? globalThis.initiatedCanvas + 1 : 1;
                                 globalThis.initiatedCanvas = canvasNumber;
                                 tabData = {
                                     id: uuid(),
@@ -805,7 +805,7 @@ function Section({ heading, setRef, verses, book, chapter, holded, blinker, sele
                                 tabData = canvasTabs[0];
                             }
                             if (screens < 4) {
-                                let scrValue = screens + 1;
+                                const scrValue = screens + 1;
                                 setScreens({ value: scrValue });
                                 setTimeout(async () => {
                                     if (globalThis?.[`UpdatePanel-panel-${screens}-${activeSpace}`]) {
@@ -915,18 +915,18 @@ function Section({ heading, setRef, verses, book, chapter, holded, blinker, sele
                 {verses.map((verse, verseIndex) => {
                     const [c, setC] = useState(false)
                     const mapVerse = ({ verse }) => {
-                        let verseArray = verse.split(" ");
-                        let vr = [];
+                        const verseArray = verse.split(" ");
+                        const vr = [];
                         verseArray.forEach((verseText, verseTextIndex) => {
                             
-                            let location = locations[verseText.replace(/[^a-zA-Z]/g, "").toLowerCase()];
+                            const location = locations[verseText.replace(/[^a-zA-Z]/g, "").toLowerCase()];
                             const isRandomlySelected = wordHighlightInfo[verseIndex][verseTextIndex]?.isRandomlySelected;
                             const className = `${(isHighlightened || isActive) && isRandomlySelected ? "highlightened" : ""}`;
                             const animationDelay = `${wordHighlightInfo[verseIndex][verseTextIndex]?.delay ?? 0}s`
                             
                             if(location)
                             {
-                                let result = verseText.split(/([^A-Za-z]+)/).filter(Boolean)
+                                const result = verseText.split(/([^A-Za-z]+)/).filter(Boolean)
                                 for (const part of result) {
                                     if (/^[A-Za-z]+$/.test(part)) {
                                         vr.push(
