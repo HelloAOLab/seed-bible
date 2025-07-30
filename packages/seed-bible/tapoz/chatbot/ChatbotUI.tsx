@@ -1,10 +1,9 @@
+/* eslint-disable @typescript-eslint/no-unused-vars */
 const { useState } = os.appHooks;
 const { Input, Modal, Button, Checkbox, ButtonsCover, Tooltip, Select } = Components;
 
 const API_KEY = 'dVGoGdLEuE3qB175uWAyV2kbJFvNfizT7FoJAP9d';
 const secret_key = '2U838B2Q0G9KR4FXREBL';
-
-
 
 const TapozChat = ({ id }) => {
 

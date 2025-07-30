@@ -1,3 +1,4 @@
+/* eslint-disable @typescript-eslint/no-unused-vars */
 shout("closeShareButton");
 LocaleStorage.historySaver();
 os.unregisterApp("quitGame");
