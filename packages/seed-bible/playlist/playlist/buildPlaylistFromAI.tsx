@@ -39,7 +39,7 @@ function extractJsonFromString(inputString, tries = 1) {
 
 
 console.log("CALLING GPT4", text);
-let myChat = await ai.chat(prompt, { preferredModel: 'gpt-4o' });
+const myChat = await ai.chat(prompt, { preferredModel: 'gpt-4o' });
 console.log("myChat", myChat);
 const results = extractJsonFromString(myChat);
 
@@ -57,10 +57,10 @@ if (!Array.isArray(results)) {
 
 // Generate me Playlist of roman roads and add some links and required heading too from articles online or youtube.
 
-let suggestedName = null;
-let suggestedIcon = null;
-let suggestedColor = null;
-let suggestedDescription = null;
+const suggestedName = null;
+const suggestedIcon = null;
+const suggestedColor = null;
+const suggestedDescription = null;
 
 const { allItems, badData } = thisBot.ConvertDataType({ results });
 

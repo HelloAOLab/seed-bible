@@ -26,6 +26,9 @@ jobs:
         run: |
           corepack enable
           pnpm install
+      - name: Lint
+        run: |
+          pnpm lint
       - name: Package
         run: |
           pnpm package:seed-bible

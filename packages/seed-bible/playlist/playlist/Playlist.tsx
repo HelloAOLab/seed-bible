@@ -248,7 +248,7 @@ const Playlist = ({ id, playingPlaylist, creatingPlaylist, setCreatingPlaylist }
 
     const deleteDateData = () => {
         setPlaylist((prev) => {
-            let old = [...prev.filter(ele => ele.type !== 'date')];
+            const old = [...prev.filter(ele => ele.type !== 'date')];
             return old;
         });
     }
@@ -408,7 +408,7 @@ const Playlist = ({ id, playingPlaylist, creatingPlaylist, setCreatingPlaylist }
     const onBulkJsonDownload = () => {
         const listToDownload = [];
         playLists.forEach(({ list, id: playlistID }) => {
-            if (!!selectedPlaylist[playlistID]) {
+            if (selectedPlaylist[playlistID]) {
                 console.log("LIST", list);
                 list.forEach(ele => {
                     listToDownload.push({

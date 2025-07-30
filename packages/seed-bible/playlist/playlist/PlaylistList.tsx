@@ -29,15 +29,15 @@ const PlaylistList = ({ extraActions = () => { }, mergeMode, selectedPlaylists, 
 
         if (!draggedItemID) return;
 
-        let draggedItemIndex = playLists.findIndex(hist => hist.id === draggedItemID);
+        const draggedItemIndex = playLists.findIndex(hist => hist.id === draggedItemID);
 
-        let draggedOverItem = playLists[index];
+        const draggedOverItem = playLists[index];
 
-        let dragItem = [playLists[draggedItemIndex]];
+        const dragItem = [playLists[draggedItemIndex]];
 
         let newItems = [];
 
-        let filterAbleItems = {
+        const filterAbleItems = {
             [draggedItemID]: true,
         };
 

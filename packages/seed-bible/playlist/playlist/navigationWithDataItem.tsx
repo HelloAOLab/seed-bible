@@ -45,7 +45,7 @@ const openTestamentBySection = async (sectionName, isFindByRank = false) => {
 }
 
 const openSection = async (sectionName) => {
-    let sectionBot = getBot(byTag("isSection", true), byTag('sectionName', sectionName));
+    const sectionBot = getBot(byTag("isSection", true), byTag('sectionName', sectionName));
 
     if (sectionBot && !sectionBot.masks.selected) {
         // Double time is for interaction and select
@@ -57,7 +57,7 @@ const openSection = async (sectionName) => {
 }
 
 const openBook = async (commonName, chapter = 1, verse = []) => {
-    let bookBot = getBot(byTag("bookName", commonName), byTag("isBook", true));
+    const bookBot = getBot(byTag("bookName", commonName), byTag("isBook", true));
     if (bookBot) {
         await os.focusOn(bookBot, {
             duration: 1,
@@ -162,7 +162,7 @@ switch (dataToNavigate.type) {
         break;
     }
     case "verse": {
-        let bookName = dataToNavigate.additionalInfo.book;
+        const bookName = dataToNavigate.additionalInfo.book;
         const chapterNo = dataToNavigate.additionalInfo.chapter;
         const verseData = dataToNavigate.additionalInfo.data;
 
