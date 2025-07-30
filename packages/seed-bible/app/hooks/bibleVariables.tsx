@@ -20,8 +20,8 @@ export function BibleVariablesProvider({ children }) {
         {
             icon: 'playlist_play', label: 'Playlist', hasToggle: true, active: false,
             onHold: async () => {
-                let id = uuid();
-                let PlayList = await Playlist.tryInitPlaylistMaker();
+                const id = uuid();
+                const PlayList = await Playlist.tryInitPlaylistMaker();
                 console.log(PlayList)
                 // if (PlayList) {
                 //     if (!panelMode) {
@@ -49,10 +49,10 @@ export function BibleVariablesProvider({ children }) {
                     return;
                 }
 
-                let PlayList = await Playlist.tryInitPlaylistMaker();
+                const PlayList = await Playlist.tryInitPlaylistMaker();
                 if (PlayList) {
                     if (!panelMode) {
-                        let id = uuid();
+                        const id = uuid();
                         globalThis.PLAYLIST_PANEL_ID = id;
                         AddApplication({ id, App: <PlayList id={id} />, to: 'panel', minWidth: '23rem' })
                     }
@@ -68,7 +68,7 @@ export function BibleVariablesProvider({ children }) {
             isImg: true,
             onHold: async () => {
                 globalThis.chatbotPresent = true;
-                let id = uuid();
+                const id = uuid();
                 globalThis.CHATBOT_PANEL_ID = id;
                 SetIsDragging(true);
                 globalThis.SetElement({
@@ -87,7 +87,7 @@ export function BibleVariablesProvider({ children }) {
                 }
                 if (!panelMode) {
                     globalThis.chatbotPresent = true;
-                    let id = uuid();
+                    const id = uuid();
                     globalThis.CHATBOT_PANEL_ID = id;
                     AddApplication({ id, App: <iframe style={{ width: '100%', height: '100%' }} src={'https://ao.discipleship.bot/en'} id={id} />, to: 'panel', minWidth: '30rem' })
                 }
@@ -102,7 +102,7 @@ export function BibleVariablesProvider({ children }) {
             isImg: true,
             onHold: async () => {
                 globalThis.TapozChatboxPresent = true;
-                let id = uuid();
+                const id = uuid();
                 globalThis.TAPOZ_CHATBOX_UI_ID = id;
                 SetIsDragging(true);
                 globalThis.SetElement({
@@ -114,7 +114,7 @@ export function BibleVariablesProvider({ children }) {
             },
             onClick: async () => {
 
-                let TapozChat = await Tapoz.ChatbotUI();
+                const TapozChat = await Tapoz.ChatbotUI();
 
                 if (globalThis.TapozChatboxPresent) {
                     RemoveApplicationByID(globalThis.TAPOZ_CHATBOX_UI_ID);
@@ -124,7 +124,7 @@ export function BibleVariablesProvider({ children }) {
                 }
                 if (!panelMode) {
                     globalThis.TapozChatboxPresent = true;
-                    let id = uuid();
+                    const id = uuid();
                     globalThis.TAPOZ_CHATBOX_UI_ID = id;
                     // AddApplication({ id, App: <TapozChat id={id} />, to: 'panel', minWidth: '30rem' })
                     AddApplication({ id, App: <iframe style={{ width: '100%', height: '100%' }} src={'https://splinteredglass.retool.com/embedded/public/54c38714-4799-45c8-8663-961af09fafce#oid=67355031aea5f406546577d0'} id={id} />, to: 'panel', minWidth: '30rem' })

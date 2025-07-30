@@ -1,2 +1,2 @@
 ShowNotification({ message: `Voice Recording Started!`, severity: "success" });
-let begin = await os.beginAudioRecording();
+const begin = await os.beginAudioRecording();

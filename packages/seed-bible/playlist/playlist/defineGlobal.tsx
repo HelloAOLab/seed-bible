@@ -21,14 +21,14 @@ globalThis.CurrentViewerID = null;
 
 globalThis.Playlist = thisBot;
 
-let recored = getBot("system", 'main.Recorder')
+const recored = getBot("system", 'main.Recorder')
 
 function getBooksDataForMenu(booksLink = false) {
-  let formMenuBot = getBot('system', 'baseElements.formMenu');
+  const formMenuBot = getBot('system', 'baseElements.formMenu');
   if (booksLink) {
     formMenuBot.tags['booksLink'] = booksLink
   }
-  let bookPromise = formMenuBot.bookData();
+  const bookPromise = formMenuBot.bookData();
   Promise.resolve(bookPromise).then((data) => {
     recored.tags.menuData = [...data]
     globalThis.BOOKID_DATA = data;
@@ -188,7 +188,7 @@ globalThis.CONSTANTS = {
 
 globalThis.objectComparator = (firstData, secondData, keysComparator = []) => {
   if (!secondData) return false;
-  if (!!keysComparator) {
+  if (keysComparator) {
     return keysComparator.some(key => {
       return firstData[key] === secondData[key];
     })

@@ -11,8 +11,8 @@ import { TextEditor } from 'app.components.editor'
 import { MiniTextEditor } from 'app.components.smallEditor'
 
 function generateQuery(params) {
-    let queryArray = [];
-    for (let key in params) {
+    const queryArray = [];
+    for (const key in params) {
         if (params.hasOwnProperty(key)) {
             queryArray.push(encodeURIComponent(key) + '=' + encodeURIComponent(params[key]));
         }
@@ -34,7 +34,7 @@ function ThePage({ tab: T, setPanalApp, panelId, setEnableEditor, setData, data 
     const [currentCanvasMode, setCurrentCanvasMode] = useState(globalThis?.CurrentCanvasMode || "canvas");
 
     const setCanvasBoundaries = ({ intervalKey, tabId }) => {
-        let canvasElement = document.getElementById(tabId);
+        const canvasElement = document.getElementById(tabId);
         if (!canvasElement) {
             clearInterval(intervalKey);
             return;
@@ -60,7 +60,7 @@ function ThePage({ tab: T, setPanalApp, panelId, setEnableEditor, setData, data 
 
     const loadTranslationFromUrl = async () => {
         console.log(configBot.tags.translationId, "translation id")
-        let translationId = configBot.tags.translationId;
+        const translationId = configBot.tags.translationId;
         let baseUrl = "https://bible.helloao.org";
         let bookId = "GEN";
         let bookTranslationId = "BSB";
@@ -70,10 +70,10 @@ function ThePage({ tab: T, setPanalApp, panelId, setEnableEditor, setData, data 
 
             const searchBar = getBot('system', 'introduction.searchBar')
 
-            let available_translations_req = await web.get("https://bible.helloao.org/api/available_translations.json");
+            const available_translations_req = await web.get("https://bible.helloao.org/api/available_translations.json");
             let allTranslations = [];
-            let translations = {};
-            let defaultTranslations = [
+            const translations = {};
+            const defaultTranslations = [
                 "english",
                 "spanish",
                 "arabic",
@@ -89,7 +89,7 @@ function ThePage({ tab: T, setPanalApp, panelId, setEnableEditor, setData, data 
                 }
             });
 
-            let trValue = {
+            const trValue = {
                 pass: false,
                 value: null
             };
@@ -101,32 +101,32 @@ function ThePage({ tab: T, setPanalApp, panelId, setEnableEditor, setData, data 
                     }
                 })
 
-                let urlId = translationId.includes("https://");
+                const urlId = translationId.includes("https://");
 
                 if (trValue.pass && !urlId) {
-                    let bookData = await web.get(`https://bible.helloao.org/api/${trValue.value.id}/books.json`);
-                    let book0 = bookData.data.books[0];
+                    const bookData = await web.get(`https://bible.helloao.org/api/${trValue.value.id}/books.json`);
+                    const book0 = bookData.data.books[0];
                     setTagMask(searchBar, "selectedTranslation", trValue.value, "local");
                     setTagMask(searchBar, "booksData", bookData.data.books, "local");
                     bookId = book0.id;
                     bookTranslationId = trValue.value.id;
                     firstChapterApiLink = book0.firstChapterApiLink;
                 } else if (!urlId) {
-                    let url = `https://aolab-bible-api.netlify.app/api/translations/getTranslation`;
-                    let params = {
+                    const url = `https://aolab-bible-api.netlify.app/api/translations/getTranslation`;
+                    const params = {
                         uid: translationId
                     }
-                    let queryUrl = attachQueryToURL(url, params);
-                    let result = await web.get(queryUrl);
+                    const queryUrl = attachQueryToURL(url, params);
+                    const result = await web.get(queryUrl);
                     if (result.status === 200 && result.data.data) {
-                        let translation = JSON.parse(result.data.data.translation);
+                        const translation = JSON.parse(result.data.data.translation);
                         console.log("1 trans")
-                        let englishName = translation.languageEnglishName.toLowerCase();
-                        let shortName = translation.shortName.toLowerCase();
+                        const englishName = translation.languageEnglishName.toLowerCase();
+                        const shortName = translation.shortName.toLowerCase();
 
-                        let bookData = await web.get(translation.listOfBooksApiLink);
+                        const bookData = await web.get(translation.listOfBooksApiLink);
 
-                        let book0 = bookData.data.books[0];
+                        const book0 = bookData.data.books[0];
                         setTagMask(searchBar, "selectedTranslation", translation, "local");
                         setTagMask(searchBar, "booksData", bookData.data.books, "local");
                         if (!defaultTranslations.includes(englishName)) {
@@ -141,11 +141,11 @@ function ThePage({ tab: T, setPanalApp, panelId, setEnableEditor, setData, data 
                         firstChapterApiLink = book0.firstChapterApiLink;
                     }
                 } else {
-                    let result = await web.get(translationId);
+                    const result = await web.get(translationId);
                     if (result.status === 200) {
                         const url = new URL(translationId);
                         let newTranslations = result.data.translations;
-                        let defaultTranslation = newTranslations[0];
+                        const defaultTranslation = newTranslations[0];
                         newTranslations = newTranslations.map(trans => {
                             return {
                                 languageEnglishName: trans.languageEnglishName,
@@ -157,14 +157,14 @@ function ThePage({ tab: T, setPanalApp, panelId, setEnableEditor, setData, data 
                         })
                         console.log(newTranslations, "newTranslations")
                         allTranslations = [...allTranslations, ...newTranslations];
-                        for (let translation of newTranslations) {
+                        for (const translation of newTranslations) {
                             console.log("2 trans")
-                            let englishName = translation.languageEnglishName.toLowerCase();
+                            const englishName = translation.languageEnglishName.toLowerCase();
                             if (!defaultTranslations.includes(englishName)) {
                                 defaultTranslations.push(englishName);
                             }
                         }
-                        let translation = {
+                        const translation = {
                             languageEnglishName: defaultTranslation.languageEnglishName,
                             id: defaultTranslation.id,
                             listOfBooksApiLink: `${url.origin}${defaultTranslation.listOfBooksApiLink}`,
@@ -173,12 +173,12 @@ function ThePage({ tab: T, setPanalApp, panelId, setEnableEditor, setData, data 
                         }
                         console.log(translation, "translation")
                         console.log("3 trans")
-                        let englishName = translation.languageEnglishName.toLowerCase();
-                        let shortName = translation.shortName.toLowerCase();
+                        const englishName = translation.languageEnglishName.toLowerCase();
+                        const shortName = translation.shortName.toLowerCase();
 
-                        let bookData = await web.get(translation.listOfBooksApiLink);
+                        const bookData = await web.get(translation.listOfBooksApiLink);
 
-                        let book0 = bookData.data.books[0];
+                        const book0 = bookData.data.books[0];
                         setTagMask(searchBar, "selectedTranslation", translation, "local");
                         setTagMask(searchBar, "booksData", bookData.data.books, "local");
                         if (!defaultTranslations.includes(englishName)) {
@@ -198,8 +198,8 @@ function ThePage({ tab: T, setPanalApp, panelId, setEnableEditor, setData, data 
                     if (!translation?.languageEnglishName?.toLowerCase()) {
                         console.log(translation, "culprit")
                     }
-                    let englishName = translation?.languageEnglishName?.toLowerCase() || translation?.englishName?.toLowerCase();
-                    let shortName = translation.shortName.toLowerCase();
+                    const englishName = translation?.languageEnglishName?.toLowerCase() || translation?.englishName?.toLowerCase();
+                    const shortName = translation.shortName.toLowerCase();
                     if (translations[englishName]) {
                         if (!translations[englishName][shortName]) {
                             translations[englishName][shortName] = translation;
@@ -237,7 +237,7 @@ function ThePage({ tab: T, setPanalApp, panelId, setEnableEditor, setData, data 
             })
             return
         }
-        let { baseUrl, bookId, bookTranslationId } = await loadTranslationFromUrl();
+        const { baseUrl, bookId, bookTranslationId } = await loadTranslationFromUrl();
         const bible = new BibleDataManager({
             tabId: tab?.id,
             translation: bookTranslationId || tab.data.translation,
@@ -342,13 +342,13 @@ function ThePage({ tab: T, setPanalApp, panelId, setEnableEditor, setData, data 
         if (tab.data.type === "canvas") {
             setNavFunctions({
                 openNextChapter: () => {
-                    let tabData = { ...tab.data };
+                    const tabData = { ...tab.data };
                     tabData.chapter += 1;
                     tabData.book = 'Canvas';
                     updateTab(tab?.id, tabData);
                     setTab({ ...tab, data: tabData });
                 }, openPrevChapter: () => {
-                    let tabData = { ...tab.data };
+                    const tabData = { ...tab.data };
                     if (tabData.chapter > 1) {
                         tabData.chapter -= 1;
                         tabData.book = 'Canvas';
@@ -473,7 +473,7 @@ function ThePage({ tab: T, setPanalApp, panelId, setEnableEditor, setData, data 
         event.preventDefault();
         if (selectedText) {
             console.log("show dialog")
-            let dim = os.getCurrentDimension();
+            const dim = os.getCurrentDimension();
             if (dim) {
                 setShowDialog({
                     show: true,

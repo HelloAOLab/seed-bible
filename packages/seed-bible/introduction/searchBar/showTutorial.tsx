@@ -61,7 +61,7 @@ const App = () => {
 };
 
 const getTutorial = ({tutorialName, setModalOpacity, tutorialStep, setTutorialStep}) => {
-    let tutorials = [
+    const tutorials = [
         {
             tutorialName: "bible-location",
             tutorialSteps: [
@@ -104,7 +104,7 @@ const getTutorial = ({tutorialName, setModalOpacity, tutorialStep, setTutorialSt
                     action: async () => {
                         setModalOpacity(0);
                         await os.sleep(1000);
-                        let searchArr = ["j", "e", "r", "u"];
+                        const searchArr = ["j", "e", "r", "u"];
                         for(let i = 0; i < searchArr.length; i++){
                             setLocationSearch(locationSearch + searchArr[i]);
                             shout("playSound",{soundName: "DialogClick"});
@@ -134,7 +134,7 @@ const getTutorial = ({tutorialName, setModalOpacity, tutorialStep, setTutorialSt
                     },
                     action: async () => {
                         setModalOpacity(0);
-                        let JerusalemBot = getBot(byTag('label', 'Jerusalem'), byTag('form', 'nothing'), byTag('labelColor', 'black'));
+                        const JerusalemBot = getBot(byTag('label', 'Jerusalem'), byTag('form', 'nothing'), byTag('labelColor', 'black'));
                         await os.focusOn(JerusalemBot, {
                             duration: 2,
                             zoom: JerusalemBot.tags.zoom * 0.5
@@ -164,7 +164,7 @@ const getTutorial = ({tutorialName, setModalOpacity, tutorialStep, setTutorialSt
                     action: async () => {
                         setModalOpacity(0);
                         await os.sleep(2000);
-                        let JerusalemBot = getBot(byTag('label', 'Jerusalem'), byTag('form', 'nothing'), byTag('labelColor', 'black'));
+                        const JerusalemBot = getBot(byTag('label', 'Jerusalem'), byTag('form', 'nothing'), byTag('labelColor', 'black'));
                         await os.focusOn(JerusalemBot, {
                             duration: 2,
                             rotation: {
