@@ -1,5 +1,3 @@
-/* eslint-disable @typescript-eslint/no-unused-vars */
-
 globalThis.savePlaylistProgress = (id, progressID, parentID = "default") => {
     globalThis[`updatePercent${id}`](p => !p);
     setTag(thisBot, "defaultplaylistProgress", globalThis['defaultplaylistProgress']);

@@ -1,4 +1,3 @@
-/* eslint-disable @typescript-eslint/no-unused-vars */
 await os.unregisterApp("test1")
 await os.registerApp("test1")
 

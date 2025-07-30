@@ -1,4 +1,3 @@
-/* eslint-disable @typescript-eslint/no-unused-vars */
 const { useState } = os.appHooks;
 const { Input, Modal, Button, Checkbox, ButtonsCover, Tooltip, Select } = Components;
 
