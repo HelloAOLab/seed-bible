@@ -2724,6 +2724,8 @@ export interface Bot {
     maskChanges: {
         [space: string]: BotTags;
     };
+
+    [key: string]: any;
 }
 
 /**
@@ -16617,4 +16619,30 @@ interface Analytics {
      * @param metadata The metadata to include in the event. Optional.
      */
     recordEvent(name: string, metadata?: any): Promise<void>;
+}
+
+declare global {
+    // Tag-specific globals
+    let that: any;
+    let thisBot: Bot;
+    let creatorBot;
+    let tags: any;
+    let raw: any;
+    let tagName: string;
+
+    // Config bot
+    let configBot: Bot;
+
+    // Portal bot globals
+    let gridPortalBot: Bot;
+    let miniGridPortalBot: Bot;
+    let mapPortalBot: Bot;
+    let miniMapPortalBot: Bot;
+    let systemPortalBot: Bot;
+    let sheetPortalBot: Bot;
+    let tagPortalBot: Bot;
+    let meetPortalBot: Bot;
+    let menuPortalBot: Bot;
+    let leftWristPortalBot: Bot;
+    let rightWristPortalBot: Bot;
 }
