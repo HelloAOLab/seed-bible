@@ -5,7 +5,8 @@
   "main": "index.js",
   "scripts": {
     "test": "echo \"Error: no test specified\" && exit 1",
-    "package:seed-bible": "casualos pack-aux --overwrite ./packages/seed-bible ./dist/seed-bible.aux"
+    "package:seed-bible": "casualos pack-aux --overwrite ./packages/seed-bible ./dist/seed-bible.aux",
+    "lint": "eslint packages"
   },
   "repository": {
     "type": "git",
@@ -22,7 +23,12 @@
   "homepage": "https://github.com/HelloAOLab/seed-bible#readme",
   "packageManager": "pnpm@10.10.0+sha512.d615db246fe70f25dcfea6d8d73dee782ce23e2245e3c4f6f888249fb568149318637dca73c2c5c8ef2a4ca0d5657fb9567188bfab47f566d1ee6ce987815c39",
   "devDependencies": {
+    "@casual-simulation/aux-runtime": "^3.5.3",
+    "@eslint/css": "^0.10.0",
+    "@eslint/js": "^9.32.0",
     "casualos": "^3.5.4",
-    "@casual-simulation/aux-runtime": "^3.5.3"
+    "eslint": "^9.32.0",
+    "globals": "^16.3.0",
+    "typescript-eslint": "^8.38.0"
   }
 }
