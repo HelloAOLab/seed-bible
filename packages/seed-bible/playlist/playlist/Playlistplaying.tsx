@@ -214,7 +214,7 @@ const PlayingPlaylist = () => {
     const [playlists, setPlaylists] = useState({
         0: {
             name: playlistName,
-            list: [...playlist?.list],
+            list: [...(playlist?.list || [])],
             id: createUUID(),
             playlistID: playlist.id
         }

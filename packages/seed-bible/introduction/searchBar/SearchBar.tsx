@@ -389,7 +389,7 @@ const SearchBar = () => {
                 if (query.split(" ").length > 1) {
                     const queryArr = query.split(" ");
                     const chapterNo = parseInt(queryArr[queryArr.length - 1]);
-                    if (chapterNo !== NaN) {
+                    if (!Number.isNaN(chapterNo)) {
                         let bookName;
                         for (let i = 0; i < PsalmsData.length; i++) {
                             if (chapterNo <= PsalmsData[i].endingBook + 1) {
