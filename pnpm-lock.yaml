@@ -152,6 +152,9 @@ importers:
       tsx:
         specifier: ^4.20.5
         version: 4.20.5
+      typescript:
+        specifier: ^5.8.3
+        version: 5.8.3
       typescript-eslint:
         specifier: ^8.38.0
         version: 8.38.0(eslint@9.32.0)(typescript@5.8.3)

@@ -58,6 +58,7 @@
     "prettier": "^3.6.2",
     "pretty-quick": "^4.2.2",
     "tsc-silent": "1.2.2",
+    "typescript": "^5.8.3",
     "puppeteer": "^24.30.0",
     "tsx": "^4.20.5",
     "typescript-eslint": "^8.38.0",
