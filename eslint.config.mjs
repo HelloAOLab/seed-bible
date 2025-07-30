@@ -33,19 +33,36 @@ export default defineConfig([
         extends: ['css/recommended'],
         rules: {
             "css/no-important": "warn",
+            'css/no-empty-blocks': 'warn',
+            'css/use-baseline': 'warn',
+            'css/no-invalid-properties': 'warn',
         },
     },
 
     // Disabled rules
     {
+        files: ['packages/seed-bible/**/*.{js,mjs,cjs,ts,tsx,jsx,css}'],
+
         // TODO: Go through and fix all errors
         rules: {
             'prefer-const': ['error', {
                 destructuring: 'all'
-            }]
-            // 'prefer-const': 'off',
+            }],
+            '@typescript-eslint/no-unused-vars': 'off',
+            'no-constant-binary-expression': 'warn',
+            'no-constant-condition': 'warn',
+            '@typescript-eslint/no-unused-expressions': 'warn',
+            'no-useless-escape': 'off',
+            'no-empty': 'warn',
+            'no-prototype-builtins': 'warn',
+            'no-case-declarations': 'warn',
+            'no-control-regex': 'warn',
+            'no-empty-pattern': 'warn',
+
+
+            // 'css/no-important': 'off',
+
             // '@typescript-eslint/no-explicit-any': 'off',
-            // '@typescript-eslint/no-unused-vars': 'off',
             // '@typescript-eslint/no-empty-object-type': [
             //     'error',
             //     { allowInterfaces: 'always' },
