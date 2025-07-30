@@ -1,6 +1,6 @@
 const { dataItem } = that;
 
-let dataToNavigate = dataItem;
+const dataToNavigate = dataItem;
 let skipNeeded = false;
 
 const openTestamentBySection = (sectionName, isFindByRank = false) => {
@@ -42,7 +42,7 @@ switch (dataToNavigate.type) {
     case "section": {
         const isTestamentPresent = openTestamentBySection(dataToNavigate.additionalInfo.sectionName);
         if (!isTestamentPresent) {
-            let sectionBot = getBot(byTag("isSection", true), byTag('sectionName', dataToNavigate.additionalInfo.sectionName));
+            const sectionBot = getBot(byTag("isSection", true), byTag('sectionName', dataToNavigate.additionalInfo.sectionName));
             if (!sectionBot || sectionBot?.masks?.selected) {
                 skipNeeded = true;
             }

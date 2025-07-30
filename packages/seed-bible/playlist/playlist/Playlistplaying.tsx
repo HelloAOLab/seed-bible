@@ -359,7 +359,7 @@ const PlayingPlaylist = () => {
             }
         }
 
-        let newValues = {
+        const newValues = {
             index: newIndex,
             key: newKey,
             fromButton: order,
@@ -668,7 +668,7 @@ const PlayingPlaylist = () => {
 
         const isArray = Array.isArray(ids);
 
-        let newIds = isArray ? [...ids] : [ids];
+        const newIds = isArray ? [...ids] : [ids];
 
         let firstIDIndex = -1;
 
@@ -1104,7 +1104,7 @@ const PlayingPlaylist = () => {
                     }}
                     onClick={() => {
                         DataManager.cancelCurrentPlayingSound();
-                        if (!!nextItemName?.content) {
+                        if (nextItemName?.content) {
                             handleOnButtonPress(1);
                             return;
                         }
@@ -1118,7 +1118,7 @@ const PlayingPlaylist = () => {
                     }}
                 >
                     <span class="material-symbols-outlined unfollow">
-                        {!!nextItemName?.content ? "skip_next " : "last_page"}
+                        {nextItemName?.content ? "skip_next " : "last_page"}
                     </span>
                 </Button>
             </div>

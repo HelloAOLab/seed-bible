@@ -4,7 +4,7 @@ const instateToolBarOptions = ({toolBarOptions}) => {
         // setting page options
         toolBarOptions.page.forEach(tool => {
             SetTools(tools => {
-                let exist = tools.filter(item => item.icon === tool.icon);
+                const exist = tools.filter(item => item.icon === tool.icon);
                 if (exist.length > 0) {
                     return tools
                 } else {
@@ -15,7 +15,7 @@ const instateToolBarOptions = ({toolBarOptions}) => {
         // setting canvas options
         toolBarOptions.canvas.forEach(tool => {
             SetCanvasTools(tools => {
-                let exist = tools.filter(item => item.icon === tool.icon);
+                const exist = tools.filter(item => item.icon === tool.icon);
                 if (exist.length > 0) {
                     return tools
                 } else {
@@ -26,7 +26,7 @@ const instateToolBarOptions = ({toolBarOptions}) => {
         // setting map options
         toolBarOptions.map.forEach(tool => {
             SetMapTools(tools => {
-                let exist = tools.filter(item => item.icon === tool.icon);
+                const exist = tools.filter(item => item.icon === tool.icon);
                 if (exist.length > 0) {
                     return tools
                 } else {
