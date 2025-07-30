@@ -43,33 +43,23 @@ export default defineConfig([
     {
         files: ['packages/seed-bible/**/*.{js,mjs,cjs,ts,tsx,jsx,css}'],
 
-        // TODO: Go through and fix all errors
         rules: {
-            'prefer-const': ['error', {
-                destructuring: 'all'
-            }],
-            '@typescript-eslint/no-unused-vars': 'off',
+            // These rules should be fixed
             'no-constant-binary-expression': 'warn',
             'no-constant-condition': 'warn',
             '@typescript-eslint/no-unused-expressions': 'warn',
-            'no-useless-escape': 'off',
+            '@typescript-eslint/no-unused-vars': 'warn',
             'no-empty': 'warn',
             'no-prototype-builtins': 'warn',
             'no-case-declarations': 'warn',
-            'no-control-regex': 'warn',
             'no-empty-pattern': 'warn',
-
-
-            // 'css/no-important': 'off',
-
-            // '@typescript-eslint/no-explicit-any': 'off',
-            // '@typescript-eslint/no-empty-object-type': [
-            //     'error',
-            //     { allowInterfaces: 'always' },
-            // ],
-            // 'no-extra-boolean-cast': 'off',
-            // '@typescript-eslint/no-this-alias': 'off',
-            // 'vue/no-deprecated-v-bind-sync': 'off',
+            
+            // These rules can be ignored for now
+            'prefer-const': ['error', {
+                destructuring: 'all'
+            }],
+            'no-useless-escape': 'off',
+            'no-control-regex': 'off',
         },
     },
 ]);
