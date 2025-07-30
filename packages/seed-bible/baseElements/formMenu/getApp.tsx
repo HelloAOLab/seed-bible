@@ -22,7 +22,7 @@ const App = ({chapter}) => {
 
     const renderChapters = useMemo(() => {
         if(book){
-            let renderJSX = [];
+            const renderJSX = [];
             if(book.startingBook || book.startingBook === 0){
                 for(let i = book.startingBook; i < book.endingBook + 1; i++){
                     renderJSX.push(<div className={`chapter ${chapter === i + 1 ? "blinker" : ""}`} onClick={() => closeApp({book: book.commonName, chapter: i + 1})}><span>{i+1}</span></div>)
@@ -45,8 +45,8 @@ const App = ({chapter}) => {
     }, [])
 
     const init = () => {
-        let selectedBookBot = getBot(byTag("id", masks.selectedBot));
-        let bookPromise = thisBot.bookData();
+        const selectedBookBot = getBot(byTag("id", masks.selectedBot));
+        const bookPromise = thisBot.bookData();
         Promise.resolve(bookPromise).then((data) => {
             let bookfound = false;
             for(let i = 0; i < data.length; i++){

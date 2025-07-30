@@ -57,11 +57,11 @@ const App = () => {
     })
 
     const combinedStyle = useMemo(() => {
-        let gameContainerCss = jsonToCss(gameContainer);
-        let hwCss = jsonToCss(hw);
-        let tlCss = jsonToCss(tl);
-        let mapViewPointCss = jsonToCss(mapViewPoint);
-        let style = `
+        const gameContainerCss = jsonToCss(gameContainer);
+        const hwCss = jsonToCss(hw);
+        const tlCss = jsonToCss(tl);
+        const mapViewPointCss = jsonToCss(mapViewPoint);
+        const style = `
             .game-container {
                 ${gameContainerCss}
                 ${hwCss}

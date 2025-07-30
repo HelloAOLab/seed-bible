@@ -100,7 +100,7 @@ body {overflow: hidden; background: #212121}
     display: flex;
     justify-content: center;
     align-items: center;
-    transition: 0.3;
+    transition: 0.3s;
     background-color: #F2F6F7;
     border-radius: 10px;
     cursor: pointer;
@@ -182,7 +182,7 @@ body {overflow: hidden; background: #212121}
     display: flex;
     justify-content: center;
     align-items: center;
-    transition: 0.3;
+    transition: 0.3s;
     margin: 5px;
   }
 }

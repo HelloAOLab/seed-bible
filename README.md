@@ -15,9 +15,15 @@ Follow the given steps to get started developing the Seed Bible:
             -   `nvm use latest`
     -   The [`casualos` CLI](https://www.npmjs.com/package/casualos)
         -   `npm install -g casualos`
+    -   [PNPM](https://pnpm.io/)
+        -   v10.x is required
+        -   You can install PNPM by using corepack:
+            -   `corepack use pnpm@latest-10`
 2. Clone the repository:
     -   `git clone git@github.com:HelloAOLab/seed-bible.git`
-3. Open the repository with your favorite editor.
+3. Install dependencies
+    -   `pnpm install`
+4. Open the repository with your favorite editor.
 
 ### Scripts
 
