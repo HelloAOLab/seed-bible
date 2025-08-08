@@ -1,5 +1,5 @@
 const {useRef, useState, useEffect} = os.appHooks
- const self = this
+const self={tags:''};
  if (tags.unregister) {
     
 
@@ -96,7 +96,7 @@ const {useRef, useState, useEffect} = os.appHooks
         os.compileApp("chapterPreview", <ChapterPreview/>)
         
 } else {
-     this.tags.opened = false
+     
      await os.unregisterApp("chapterPreview")
 }
 
