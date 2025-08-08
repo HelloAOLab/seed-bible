@@ -1,6 +1,6 @@
 destroy(getBot("system","tools.Erase"))
-let dim =  os.getCurrentDimension()
-let Bot = create(getBot("system","ext_canvas.eraseTool",true),
+const dim =  os.getCurrentDimension()
+const Bot = create(getBot("system","ext_canvas.eraseTool",true),
 {
     [dim]: true,
     [dim + "X"]: that.position.x,

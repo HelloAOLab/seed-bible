@@ -1,4 +1,4 @@
-let dim = os.getCurrentDimension();
+const dim = os.getCurrentDimension();
 animateTag(thisBot, {
     fromValue: {
         [dim + "Z"]: thisBot.tags[dim + "Z"]

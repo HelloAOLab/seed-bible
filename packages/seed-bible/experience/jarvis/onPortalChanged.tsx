@@ -1,4 +1,4 @@
-let jarvisInstance = getBot("jarvis", true);
+const jarvisInstance = getBot("jarvis", true);
 
 if(jarvisInstance && that.portal === "gridPortal"){
     console.log(that.dimension)

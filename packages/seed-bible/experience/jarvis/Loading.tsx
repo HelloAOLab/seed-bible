@@ -2,7 +2,7 @@ let dimension = os.getCurrentDimension();
 const duration = 2;
 const expandDuration = 0.45;
 const durationFraction = duration / thisBot.vars.ringBots.length;
-let customPositionZ = -1;
+const customPositionZ = -1;
 clearAnimations(thisBot);
 if(configBot.tags.miniMapPortal === "map_portal"){
     dimension = configBot.tags.miniMapPortal;

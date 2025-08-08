@@ -24,21 +24,21 @@ const DragDrop = ({ list, setList }) => {
     const handleDragOver = (index) => {
         if (!draggedItemID) return;
 
-        let originalRespectiveIndex = index;
+        const originalRespectiveIndex = index;
 
-        let draggedItemIndex = list.findIndex(hist => hist.id === draggedItemID);
+        const draggedItemIndex = list.findIndex(hist => hist.id === draggedItemID);
 
-        let draggedOverItem = list[index];
+        const draggedOverItem = list[index];
 
-        let dragItem = [list[draggedItemIndex]];
-        let newIndex =
+        const dragItem = [list[draggedItemIndex]];
+        const newIndex =
             draggedItemIndex > originalRespectiveIndex
                 ? originalRespectiveIndex
                 : originalRespectiveIndex - 1;
 
         let newItems = [];
 
-        let filterAbleItems = {
+        const filterAbleItems = {
             [draggedItemID]: true,
         };
 

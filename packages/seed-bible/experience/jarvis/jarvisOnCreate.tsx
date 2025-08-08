@@ -1,6 +1,6 @@
 destroy(getBots(byTag("jarvis"), byTag("id", id => id !== thisBot.id)));
 
-let dim = os.getCurrentDimension();
+const dim = os.getCurrentDimension();
 await animateTag(thisBot, {
     fromValue: {
         scale: 0.1

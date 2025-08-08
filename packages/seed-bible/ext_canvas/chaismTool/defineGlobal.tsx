@@ -1,7 +1,7 @@
-let dim = os.getCurrentDimension();
+const dim = os.getCurrentDimension();
 
 const getVerses = () => {
-    let verseBots = getBots(byTag("wordBot", true));
+    const verseBots = getBots(byTag("wordBot", true));
     verseBots.sort(function(bot1, bot2){
         if( bot1.tags[dim + "Y"] == bot2.tags[dim + "Y"]) return bot1.tags[dim + "X"] - bot2.tags[dim + "X"];
         return bot2.tags[dim + "Y"] - bot1.tags[dim + "Y"];
@@ -15,6 +15,6 @@ const getVerses = () => {
     return verseBots;
 }
 
-let globalFunctions = {getVerses};
+const globalFunctions = {getVerses};
 
 globalThis.globalFunctions = globalFunctions;

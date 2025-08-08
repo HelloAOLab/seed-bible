@@ -1,10 +1,10 @@
-let dim = os.getCurrentDimension();
-let lineColors = ["#FF4081", "#E040FB", "#7C4DFF", "#536DFE", "#448AFF", "#40C4FF", "#18FFFF", "#64FFDA", "#69F0AE"];
-let controlBot = getBot(byTag("id", that.id));
+const dim = os.getCurrentDimension();
+const lineColors = ["#FF4081", "#E040FB", "#7C4DFF", "#536DFE", "#448AFF", "#40C4FF", "#18FFFF", "#64FFDA", "#69F0AE"];
+const controlBot = getBot(byTag("id", that.id));
 const typingTool = getBot(byTag("typingTool"));
-let dataSlits = getBots(byTag("slitType", that.state));
+const dataSlits = getBots(byTag("slitType", that.state));
 destroy(dataSlits);
-let dataSlitsConfig = {
+const dataSlitsConfig = {
     space: "tempLocal",
     [dim]: true,
     [dim + "Y"]: controlBot.tags[dim + "Y"] - 1.5,
@@ -19,7 +19,7 @@ let dataSlitsConfig = {
     dataSlit: true,
     draggable: false
 }
-let dataSlitLine = {
+const dataSlitLine = {
     space: "tempLocal",
     [dim]: true,
     [dim + "Y"]: controlBot.tags[dim + "Y"] - 2,
@@ -113,13 +113,13 @@ const ArrowDownConfig = {
     collapsed: false
 }
 
-let opacityCalc = (botPosition, parentPosition, initialOpacity) => {
-    let distance = Math.sqrt((parentPosition - botPosition) * (parentPosition - botPosition));
-    let opacity = initialOpacity * (1 - distance / 20);
+const opacityCalc = (botPosition, parentPosition, initialOpacity) => {
+    const distance = Math.sqrt((parentPosition - botPosition) * (parentPosition - botPosition));
+    const opacity = initialOpacity * (1 - distance / 20);
     return opacity;
 }
 
-let priorityIndexFinder = (dataList) => {
+const priorityIndexFinder = (dataList) => {
     let priorityIndex = 0;
     for(let i = 0; i < dataList.length; i++){
         if(dataList[i].priority){
@@ -130,7 +130,7 @@ let priorityIndexFinder = (dataList) => {
     return priorityIndex;
 }
 
-let timeData = [
+const timeData = [
     {
         year: "1 AD",
         priority: false
@@ -181,7 +181,7 @@ let timeData = [
     },
 ]
 
-let eventData = [
+const eventData = [
     {
         title: "event 1",
         description: "description 1",
@@ -244,10 +244,10 @@ if(that.state === "time"){
     if(typingTool.tags.dataSlitsManager.selectedIndex){
         priorityIndex = typingTool.tags.dataSlitsManager.selectedIndex;
     }
-    let startingIndex = controlBot.tags[dim + "X"] - (priorityIndex * 4)
-    let dataSlitIds = [];
+    const startingIndex = controlBot.tags[dim + "X"] - (priorityIndex * 4)
+    const dataSlitIds = [];
     for(let i = 0; i < timeData.length; i++){
-        let dataSlit = create({
+        const dataSlit = create({
             ...dataSlitsConfig,
             label: timeData[i].year,
             data: timeData[i],
@@ -255,7 +255,7 @@ if(that.state === "time"){
             scaleY: 0.8,
             labelFontSize: 1.2
         });
-        let dataSlitLineBot = create({
+        const dataSlitLineBot = create({
             ...dataSlitLine,
             slitType: "time",
             scaleY: 0.2,
@@ -310,12 +310,12 @@ if(that.state === "time"){
     typingTool.tags.dataSlitsManager.state = "time";
     whisper(typingTool, "createSlider", {id: controlBot.tags.id})
 }else if(that.state === "incident"){
-    let priorityIndex = priorityIndexFinder(eventData);
-    let startingIndex = controlBot.tags[dim + "Y"] - (priorityIndex * 3.5)
-    let dataSlitIds = [];
+    const priorityIndex = priorityIndexFinder(eventData);
+    const startingIndex = controlBot.tags[dim + "Y"] - (priorityIndex * 3.5)
+    const dataSlitIds = [];
     for(let i = 0; i < eventData.length; i++){
-        let label = getBot(byTag("id", typingTool.tags.dataSlitsManager.dataList[typingTool.tags.dataSlitsManager.selectedIndex])).tags.label + " " + eventData[i].title;
-        let dataSlit = create({
+        const label = getBot(byTag("id", typingTool.tags.dataSlitsManager.dataList[typingTool.tags.dataSlitsManager.selectedIndex])).tags.label + " " + eventData[i].title;
+        const dataSlit = create({
             ...dataSlitsConfig,
             label,
             data: eventData[i],

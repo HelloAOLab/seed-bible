@@ -1,4 +1,4 @@
-let jarvis = getBot('system', 'experience.jarvis')
+const jarvis = getBot('system', 'experience.jarvis')
 console.log(jarvis.masks)
 if(jarvis.masks?.playingAudioId){
     os.cancelSound(jarvis.masks.playingAudioId.id);
@@ -9,7 +9,7 @@ if(masks?.ss){
     clearTimeout(masks.ss);
     masks.ss = null;
 }
-let ss = setTimeout(() => {
+const ss = setTimeout(() => {
     masks.ss = null;
     thisBot.Recording();
 }, 500);

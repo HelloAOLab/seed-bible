@@ -1,4 +1,4 @@
-let textBot = getBot(byTag('id', that.id));
+const textBot = getBot(byTag('id', that.id));
 
 let label = "";
 

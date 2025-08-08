@@ -1,7 +1,7 @@
 const {eventBotData} = that;
 
 console.log(eventBotData)
-let dim = os.getCurrentDimension();
+const dim = os.getCurrentDimension();
 
 
 const initialPlace = [0, -100];
@@ -62,7 +62,7 @@ const eventBotConfig = {
     `,
 }
 
-let eventBot = create({
+const eventBot = create({
     ...eventBotConfig
 });
 

@@ -16,7 +16,7 @@ const dimension = os.getCurrentDimension();
 const duration = isInstantaneous ? 0 : 0.5;
 const easing = {type: "sinusoidal", mode: "inout"};
 const sectionPosition = getBotPosition(sectionData.element, dimension);
-let animations = [];
+const animations = [];
 
 const {newSectionAnimations} = HandleSectionDataInStack({isInstantaneous, sectionData, desiredPositionZ: sectionPosition.z, dimension, duration, easing})
 animations.push(...newSectionAnimations);

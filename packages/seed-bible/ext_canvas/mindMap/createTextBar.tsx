@@ -1,12 +1,12 @@
-let dim = os.getCurrentDimension();
+const dim = os.getCurrentDimension();
 const typingTool = getBot(byTag("typingTool"));
 
-let textBars = getBots(byTag("textBar"));
-for(let textBar of textBars){
+const textBars = getBots(byTag("textBar"));
+for(const textBar of textBars){
     destroy(textBar);
 }
 
-let textBar = create({
+const textBar = create({
     textBar: true,
     space: "tempLocal",
     [dim]: true,

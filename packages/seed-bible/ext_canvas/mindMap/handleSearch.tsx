@@ -4,10 +4,10 @@ query = query.toLowerCase();
 
 const searchInBook = ({ query }) => {
     console.log("searching books");
-    let formMenuBot = getBot('system', 'baseElements.formMenu');
-    let bookPromise = formMenuBot.bookData();
+    const formMenuBot = getBot('system', 'baseElements.formMenu');
+    const bookPromise = formMenuBot.bookData();
     Promise.resolve(bookPromise).then(async (books) => {
-        for (let book of books) {
+        for (const book of books) {
             if (book.commonName.toLowerCase().includes(query) || book.id.toLowerCase().includes(query)) {
                 console.log(query, book.commonName)
                 setCurrentExperience(0);
@@ -37,9 +37,9 @@ const openLocationTab = async ({ query }) => {
 
 const openLocationOnMap = async ({ query }) => {
     const typingTool = getBot(byTag("typingTool"));
-    let sideBar = getBot('system', 'ext_canvas.sideBar');
-    let controlBot = getBot(byID(that.controlBotId));
-    let dim = os.getCurrentDimension();
+    const sideBar = getBot('system', 'ext_canvas.sideBar');
+    const controlBot = getBot(byID(that.controlBotId));
+    const dim = os.getCurrentDimension();
     shout("handleGeoJsonSearch", { place: sideBar.tags['places-new'][query] });
     shout("createCloseButton", {
         close: async () => {
@@ -48,7 +48,7 @@ const openLocationOnMap = async ({ query }) => {
             SetSplitterPointerEvent("none")
         }
     });
-    let locationBot = await whisper(typingTool, "makeTextBox", {
+    const locationBot = await whisper(typingTool, "makeTextBox", {
         x: controlBot.tags[dim + "X"], y: controlBot.tags[dim + "Y"], label: `^ ${query}`, config: {
             onClick: `@
                 let sideBar = getBot('system', 'ext_canvas.sideBar');
@@ -74,11 +74,11 @@ const openLocationOnMap = async ({ query }) => {
 
 const searchInLocations = ({ query }) => {
     console.log("searching locations");
-    let sideBar = getBot('system', 'ext_canvas.sideBar');
+    const sideBar = getBot('system', 'ext_canvas.sideBar');
     if (sideBar.tags['places-new'][query]) {
         return true
     } else {
-        for (let place of Object.keys(sideBar.tags['places-new'])) {
+        for (const place of Object.keys(sideBar.tags['places-new'])) {
             if (place.toLowerCase().includes(query)) {
                 console.log(place)
                 return true
@@ -103,11 +103,11 @@ const openEventTab = async ({ query }) => {
 
 const addEventOnCanvas = async ({ query }) => {
     const typingTool = getBot(byTag("typingTool"));
-    let eventTool = getBot('system', 'ext_canvas.eventTool');
+    const eventTool = getBot('system', 'ext_canvas.eventTool');
     try {
         sendIcon({ type: 'loading', trayColor: "#ffffff", dragerColor: "#000000", action: null });
     } catch { () => { } }
-    let params = {
+    const params = {
         uid: eventTool.tags.places[query]
     };
     let queryUrl = globalThis.eventApis.places.getItemByUid;
@@ -121,8 +121,8 @@ const addEventOnCanvas = async ({ query }) => {
         globalThis.eventData = e.data.data;
         try {
             // sendIcon({ type: 'timeLine', trayColor: "#ffffff", dragerColor: "#000000", action: null });
-            let controlBot = getBot(byID(that.controlBotId));
-            let dim = os.getCurrentDimension();
+            const controlBot = getBot(byID(that.controlBotId));
+            const dim = os.getCurrentDimension();
             shout("createEventBot", {
                 eventBotData: e.data.data, position: {
                     x: controlBot.tags[dim + "X"],
@@ -141,11 +141,11 @@ const addEventOnCanvas = async ({ query }) => {
 
 const searchInEvents = ({ query }) => {
     console.log("searching events");
-    let eventTool = getBot('system', 'ext_canvas.eventTool');
+    const eventTool = getBot('system', 'ext_canvas.eventTool');
     if (eventTool.tags.places[query]) {
         return true
     } else {
-        for (let place of Object.keys(eventTool.tags.places)) {
+        for (const place of Object.keys(eventTool.tags.places)) {
             if (place.toLowerCase().includes(query)) {
                 return true
             }
@@ -157,7 +157,7 @@ const searchInEvents = ({ query }) => {
 if (that?.type) {
     switch (that.type) {
         case "location": {
-            let sideBar = getBot('system', 'ext_canvas.sideBar');
+            const sideBar = getBot('system', 'ext_canvas.sideBar');
             if (sideBar.tags['places-new'][query]) {
                 openLocationOnMap({ query });
             } else {
@@ -166,7 +166,7 @@ if (that?.type) {
             return
         }
         case "event": {
-            let eventTool = getBot('system', 'ext_canvas.eventTool');
+            const eventTool = getBot('system', 'ext_canvas.eventTool');
             if (eventTool.tags.places[query]) {
                 addEventOnCanvas({ query });
             } else {
@@ -179,14 +179,14 @@ if (that?.type) {
 }
 
 if (query && query !== "" && query !== " ") {
-    let controlBot = getBot(byID(that.controlBotId));
-    let dim = os.getCurrentDimension();
+    const controlBot = getBot(byID(that.controlBotId));
+    const dim = os.getCurrentDimension();
     const typingTool = getBot(byTag("typingTool"));
     if (searchInBook({ query })) {
         return
     } else if (searchInLocations({ query }) && searchInEvents({ query })) {
         console.log("blocked", searchInLocations({ query }), searchInEvents({ query }))
-        let locationBot = await whisper(typingTool, "makeTextBox", {
+        const locationBot = await whisper(typingTool, "makeTextBox", {
             x: controlBot.tags[dim + "X"], y: controlBot.tags[dim + "Y"], label: "location", config: {
                 onClick: `@
                 shout("handleSearch", {query: tags.query, type: "location", controlBotId: tags.controlBotId})
@@ -201,7 +201,7 @@ if (query && query !== "" && query !== " ") {
                 opacity: 0
             }
         })[0].bot;
-        let eventBot = whisper(typingTool, "makeTextBox", {
+        const eventBot = whisper(typingTool, "makeTextBox", {
             x: controlBot.tags[dim + "X"], y: controlBot.tags[dim + "Y"], label: "event", config: {
                 onClick: `@
                 shout("handleSearch", {query: tags.query, type: "event", controlBotId: tags.controlBotId})
@@ -247,7 +247,7 @@ if (query && query !== "" && query !== " ") {
         })
         return
     } else if (searchInLocations({ query })) {
-        let sideBar = getBot('system', 'ext_canvas.sideBar');
+        const sideBar = getBot('system', 'ext_canvas.sideBar');
         if (sideBar.tags['places-new'][query]) {
             openLocationOnMap({ query });
         } else {
@@ -255,7 +255,7 @@ if (query && query !== "" && query !== " ") {
         }
         return
     } else if (searchInEvents({ query })) {
-        let eventTool = getBot('system', 'ext_canvas.eventTool');
+        const eventTool = getBot('system', 'ext_canvas.eventTool');
         if (eventTool.tags.places[query]) {
             addEventOnCanvas({ query });
         } else {

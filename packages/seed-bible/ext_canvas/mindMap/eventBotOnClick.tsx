@@ -1,4 +1,4 @@
-let dim = os.getCurrentDimension();
+const dim = os.getCurrentDimension();
 const typingTool = getBot(byTag("typingTool"));
 
 os.unregisterApp('eventTab')

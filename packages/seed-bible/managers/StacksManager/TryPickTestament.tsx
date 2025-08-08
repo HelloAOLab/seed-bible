@@ -2,7 +2,7 @@ if(thisBot.masks.isBibleAnimating) return false;
 setTagMask(thisBot, 'isBibleAnimating', true);
 
 const {testamentName} = that;
-let testamentData = thisBot.vars.lastInteractedBibleData?.childrenData.find((currTestamentData) => {return currTestamentData.elementInfo.name === testamentName})
+const testamentData = thisBot.vars.lastInteractedBibleData?.childrenData.find((currTestamentData) => {return currTestamentData.elementInfo.name === testamentName})
 if( thisBot.vars.lastInteractedBibleData &&
     testamentData &&
     testamentData.isActive && !testamentData.isSplitIntoSections

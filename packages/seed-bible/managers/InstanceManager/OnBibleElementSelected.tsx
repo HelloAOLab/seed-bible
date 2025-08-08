@@ -3,7 +3,7 @@ import {ElementInfo} from "managers.InstanceManager.ElementInfo"
 import {RemoteUserSelection} from "managers.InstanceManager.RemoteUserSelection"
 const {element} = that;
 const myRemoteId = getID(configBot)
-let remoteUserSelection;
+const remoteUserSelection='';
 const lobbyUserBot = getBot('lobbyUserBot', true);
 const lobbyId = lobbyUserBot?.id;
 

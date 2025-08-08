@@ -30,13 +30,13 @@ bibleData.childrenData.forEach((testamentData) => {
 })
 if(callUpdateStacks) await thisBot.UpdateStacks({isInstantaneous, speedMultiplier: thisBot.tags.speedMultiplier});
 
-for(let testamentData of bibleData.childrenData.toReversed())
+for(const testamentData of bibleData.childrenData.toReversed())
 {
     if(testamentData.isActive && !testamentData.isSplitIntoSections)
     {
         await thisBot.SelectTestament({bibleData, testament: testamentData.element, speedMultiplier: thisBot.tags.speedMultiplier, isInstantaneous});
     }
-    for(let sectionData of testamentData.childrenData.toReversed())
+    for(const sectionData of testamentData.childrenData.toReversed())
     {
         if(!(sectionData instanceof SectionBookData))
         {

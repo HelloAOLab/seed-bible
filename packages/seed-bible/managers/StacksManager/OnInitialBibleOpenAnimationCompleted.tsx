@@ -12,7 +12,7 @@
 const {bibleData} = that;
 if(bibleData.bibleType !== BibleType.Default) return;
 await os.sleep(500);
-for(let testamentData of bibleData.childrenData)
+for(const testamentData of bibleData.childrenData)
 {
     thisBot.TryHighlightElement({element: testamentData.element, highlightRequestSource: StackElementInteractionType.Transition, unhighlightDelay: 4000});
     await os.sleep(100);

@@ -25,7 +25,7 @@ else
         {
             chapterData = StacksManager.GetChapterDataById({id: highlight.element.masks.chapterDataId})
         }
-        let currentHighlightInfo = chapterData.GetHighlightInfoByKey(highlight.element.masks.chunkPath ?? highlight.element.masks.versePath)
+        const currentHighlightInfo = chapterData.GetHighlightInfoByKey(highlight.element.masks.chunkPath ?? highlight.element.masks.versePath)
         if(!InstanceManager.masks.isInHistoryMode)
         {
             setTagMask(highlight.element, "color", highlight.color);

@@ -1,5 +1,5 @@
 if(thisBot.masks.initialized || !thisBot.masks?.activated) return;
-let result = await thisBot.InitOpenAiClient();
+const result = await thisBot.InitOpenAiClient();
 if(!result){
     os.toast("Unable to load your assistant!");
     return
@@ -19,7 +19,7 @@ else if(configBot.tags.mapPortal === "houseChurch")
 
 await os.sleep(500)
 
-let jarvis = {};
+const jarvis = {};
 jarvis[dimension] = true;
 jarvis.jarvis = true;
 jarvis.draggable = false;
@@ -61,7 +61,7 @@ jarvis.onFileUpload = tags.onFileUpload;
 jarvis.SpawnMesh = tags.SpawnMesh;
 jarvis.ScanBot = tags.ScanBot;
 
-let jarvisInstance = create(jarvis);
+const jarvisInstance = create(jarvis);
 
 await jarvisInstance.SetUpAnimationBots();
 await jarvisInstance.Spawn({positionInfo: that});

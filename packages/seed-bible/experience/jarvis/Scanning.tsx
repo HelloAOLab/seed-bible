@@ -12,7 +12,7 @@ const customPositionZ = -1;
 const duration = 2;
 const blinkTime = 35;
 const halfOfRingBots = Math.floor(thisBot.vars.ringBots.length/2)
-let resetAnimations = [];
+const resetAnimations = [];
 let scanCircle;
 if(worldPosition)
 {

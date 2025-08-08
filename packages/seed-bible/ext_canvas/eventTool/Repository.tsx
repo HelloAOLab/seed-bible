@@ -29,7 +29,7 @@ const Theographic = ({ dataType = "people" }) => {
             setLoading(true);
             setError(false);
             if (eventQuery !== "") {
-                let params = {
+                const params = {
                     query: eventQuery
                 }
                 let queryUrl = pageApis.searchItem;
@@ -49,7 +49,7 @@ const Theographic = ({ dataType = "people" }) => {
                     }
                 });
             } else {
-                let params = {
+                const params = {
                     page: currentPage,
                     count: 30
                 }
@@ -195,11 +195,11 @@ const Repository = ({ SelectedRepo = 0, repoType }) => {
                 globalThis.EVENT_PANEL_ID = null;
                 globalThis.eventToolApp = false;
             }
-            let App = await getBot('system', "ext_canvas.eventTool").initInterface()
+            const App = await getBot('system', "ext_canvas.eventTool").initInterface()
             console.log("people app init")
             if (App) {
                 // if (!panelMode) {
-                let id = uuid();
+                const id = uuid();
                 globalThis.eventToolApp = true;
                 globalThis.EVENT_PANEL_ID = id;
                 AddApplication({ id, App: <App initPage={1} id={id} />, minWidth: '23rem' })

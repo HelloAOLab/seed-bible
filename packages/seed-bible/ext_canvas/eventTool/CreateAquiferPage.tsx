@@ -1,4 +1,4 @@
-let dim = os.getCurrentDimension();
+const dim = os.getCurrentDimension();
 const css = thisBot.tags["App.css"];
 const css2 = getBot('system', "ext_canvas.sideBar").tags["App.css"]
 
@@ -50,10 +50,10 @@ const App = ({ aquiferData, prevData = [], selectedRepo }) => {
             return
         }
         setLoading(true);
-        let params = {
+        const params = {
             uid
         };
-        let pageApis = topicApi({ uid });
+        const pageApis = topicApi({ uid });
         console.log(pageApis)
         let queryUrl = pageApis.getItemByUid;
         queryUrl = eventUtils.attachQueryToURL(queryUrl, params);
@@ -68,9 +68,9 @@ const App = ({ aquiferData, prevData = [], selectedRepo }) => {
                 globalThis.EVENT_PANEL_ID = null;
                 globalThis.eventToolApp = false;
             }
-            let App = await thisBot.CreateAquiferPage()
+            const App = await thisBot.CreateAquiferPage()
             if (App) {
-                let id = uuid();
+                const id = uuid();
                 globalThis.eventToolApp = true;
                 globalThis.EVENT_PANEL_ID = id;
                 AddApplication({ id, App: <App aquiferData={e.data.data} prevData={[...prevData, aquiferData]} id={id} />, minWidth: "23rem" });
@@ -84,13 +84,13 @@ const App = ({ aquiferData, prevData = [], selectedRepo }) => {
     }
 
     const handleMapNav = ({ data }) => {
-        let sideBar = getBot('system', 'ext_canvas.sideBar');
-        let name = data.localizations.eng.preferred_label.toLowerCase();
+        const sideBar = getBot('system', 'ext_canvas.sideBar');
+        const name = data.localizations.eng.preferred_label.toLowerCase();
         if (sideBar.tags['places-new'][name]) {
             shout("handleGeoJsonSearch", { place: sideBar.tags['places-new'][name] });
             whisper(getBot('system', 'ext_geoImporter.importer'), 'createCloseButton')
         } else if (data?.geocoordinates?.obi) {
-            let geojson = {
+            const geojson = {
                 "geometry": {
                     "coordinates": [
                         data.geocoordinates.obi.lat,
@@ -116,17 +116,17 @@ const App = ({ aquiferData, prevData = [], selectedRepo }) => {
 
     const handleNav = async () => {
         if (prevData.length > 0) {
-            let tempPrevData = prevData;
-            let prevPerson = tempPrevData.pop();
+            const tempPrevData = prevData;
+            const prevPerson = tempPrevData.pop();
             if (prevPerson.dataType === "aquifer") {
                 if (globalThis.eventToolApp) {
                     RemoveApplicationByID(globalThis.EVENT_PANEL_ID);
                     globalThis.EVENT_PANEL_ID = null;
                     globalThis.eventToolApp = false;
                 }
-                let App = await thisBot.CreateAquiferPage();
+                const App = await thisBot.CreateAquiferPage();
                 if (App) {
-                    let id = uuid();
+                    const id = uuid();
                     globalThis.eventToolApp = true;
                     globalThis.EVENT_PANEL_ID = id;
                     AddApplication({ id, App: <App aquiferData={prevPerson} prevData={tempPrevData} id={id} />, minWidth: "23rem" });
@@ -141,9 +141,9 @@ const App = ({ aquiferData, prevData = [], selectedRepo }) => {
                 globalThis.EVENT_PANEL_ID = null;
                 globalThis.eventToolApp = false;
             }
-            let App = await thisBot.initInterface()
+            const App = await thisBot.initInterface()
             if (App) {
-                let id = uuid();
+                const id = uuid();
                 globalThis.eventToolApp = true;
                 globalThis.EVENT_PANEL_ID = id;
                 AddApplication({ id, App: <App initPage={5} selectedRepo={selectedRepo} id={id} />, minWidth: "23rem" });
@@ -162,12 +162,12 @@ const App = ({ aquiferData, prevData = [], selectedRepo }) => {
                 theoApi = { ...globalThis.eventApis.places }
             }
             if (theoApi) {
-                let params = {
+                const params = {
                     query: title
                 }
                 let queryUrl = theoApi.searchItem;
                 queryUrl = eventUtils.attachQueryToURL(queryUrl, params);
-                let personDataReq = await web.get(queryUrl);
+                const personDataReq = await web.get(queryUrl);
                 if (personDataReq.data.data.length === 1) {
                     setTheoGraphicData([...personDataReq.data.data])
                 }

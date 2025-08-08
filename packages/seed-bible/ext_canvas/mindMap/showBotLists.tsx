@@ -1,8 +1,8 @@
-let dim = os.getCurrentDimension();
-let controlBot = getBot(byTag("id", tags.controlBotId));
-let controlIndexBot = getBot(byTag("id", controlBot.tags.indexBot));
-let typingTool = getBot(byTag("typingTool"))
-let lineColors = ["#FF4081", "#E040FB", "#7C4DFF", "#536DFE", "#448AFF", "#40C4FF", "#18FFFF", "#64FFDA", "#69F0AE"];
+const dim = os.getCurrentDimension();
+const controlBot = getBot(byTag("id", tags.controlBotId));
+const controlIndexBot = getBot(byTag("id", controlBot.tags.indexBot));
+const typingTool = getBot(byTag("typingTool"))
+const lineColors = ["#FF4081", "#E040FB", "#7C4DFF", "#536DFE", "#448AFF", "#40C4FF", "#18FFFF", "#64FFDA", "#69F0AE"];
 const getAllChildIds = (id) => {
     const botById = getBot(byTag("id", id));
     let childrenIds = [];
@@ -35,11 +35,11 @@ if(tags.listShowing){
         let confirmedLinklist = []
         for(let i = 0; i < controlBot.tags.linkList.length; i++){
             if(isChild(controlBot.tags.id, controlBot.tags.linkList[i])){
-                let currentNumber = Math.floor(Math.random() * lineColors.length);
-                let currentColor = lineColors[currentNumber]
-                let childBot = getBot(byTag("id", controlBot.tags.linkList[i]));
-                let childIndexBox = getBot(byTag("id", childBot.tags.indexBot));
-                let listBot = create({
+                const currentNumber = Math.floor(Math.random() * lineColors.length);
+                const currentColor = lineColors[currentNumber]
+                const childBot = getBot(byTag("id", controlBot.tags.linkList[i]));
+                const childIndexBox = getBot(byTag("id", childBot.tags.indexBot));
+                const listBot = create({
                     [dim]: "true",
                     [dim + "X"]: tags[dim + "X"],
                     [dim + "Y"]: tags[dim + "Y"],
@@ -58,7 +58,7 @@ if(tags.listShowing){
                     childId: controlBot.tags.linkList[i],
                     strokeColor: currentColor
                 });
-                let playButton = create({
+                const playButton = create({
                     [dim]: "true",
                     [dim + "X"]: tags[dim + "X"] - 1.9,
                     [dim + "Y"]: tags[dim + "Y"],
@@ -102,7 +102,7 @@ if(tags.listShowing){
                 })
                 confirmedLinklist = [...confirmedLinklist, controlBot.tags.linkList[i]];
             }
-            let tray = create({
+            const tray = create({
                 [dim]: "true",
                 [dim + "X"]: tags[dim + "X"] - 0.5,
                 [dim + "Y"]: tags[dim + "Y"] - 0.5 - confirmedLinklist.length / 2,

@@ -11,6 +11,7 @@ export default defineConfig([
         '**/dist/**',
         '**/typings/**',
     ]),
+    
     { 
         files: ['**/*.{js,mjs,cjs,ts,tsx,jsx}'],
         ...pluginJs.configs.recommended,

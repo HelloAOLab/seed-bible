@@ -1,4 +1,4 @@
-let focusBot = getBot(byTag("id", tags.focusBotId));
+const focusBot = getBot(byTag("id", tags.focusBotId));
 if(focusBot){
     os.focusOn(focusBot, {
         duration: 4,

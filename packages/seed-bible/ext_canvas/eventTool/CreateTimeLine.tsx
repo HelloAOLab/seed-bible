@@ -1,4 +1,4 @@
-let dim = os.getCurrentDimension();
+const dim = os.getCurrentDimension();
 const css = thisBot.tags["App.css"];
 await os.unregisterApp('placeSlider')
 await os.registerApp('placeSlider', thisBot);
@@ -27,7 +27,7 @@ function App() {
             globalThis.eventToolApp = false;
         }
         if (App) {
-            let id = uuid();
+            const id = uuid();
             globalThis.eventToolApp = true;
             globalThis.EVENT_PANEL_ID = id;
             AddApplication({ id, App: <EventInfo prevData={that?.prevData ? [...that.prevData] : []} personData={that.personData} sliderValue={sliderValue} setCurrentModeP={setCurrentMode} setMax={setMax} id={id} />, minWidth: "23rem" });
@@ -65,26 +65,26 @@ const EventInfo = ({ personData, setCurrentModeP, setMax, sliderValue, prevData 
                     globalThis.EVENT_PANEL_ID = null;
                     globalThis.eventToolApp = false;
                 }
-                let App = await getBot('system', "ext_canvas.eventTool").initInterface()
+                const App = await getBot('system', "ext_canvas.eventTool").initInterface()
                 if (App) {
-                    let id = uuid();
+                    const id = uuid();
                     globalThis.eventToolApp = true;
                     globalThis.EVENT_PANEL_ID = id;
                     AddApplication({ id, App: <App initPage={1} selectedRepo={{ type: "theograph", repo: 0 }} id={id} />, minWidth: "23rem" });
                 }
 
             } else {
-                let tempPrevData = prevData;
-                let prevPerson = tempPrevData.pop();
+                const tempPrevData = prevData;
+                const prevPerson = tempPrevData.pop();
                 if (prevPerson.dataType === "aquifer") {
                     if (globalThis.eventToolApp) {
                         RemoveApplicationByID(globalThis.EVENT_PANEL_ID);
                         globalThis.EVENT_PANEL_ID = null;
                         globalThis.eventToolApp = false;
                     }
-                    let App = await thisBot.CreateAquiferPage();
+                    const App = await thisBot.CreateAquiferPage();
                     if (App) {
-                        let id = uuid();
+                        const id = uuid();
                         globalThis.eventToolApp = true;
                         globalThis.EVENT_PANEL_ID = id;
                         AddApplication({ id, App: <App aquiferData={prevPerson} prevData={tempPrevData} id={id} />, minWidth: "23rem" });
@@ -137,13 +137,13 @@ const EventInfo = ({ personData, setCurrentModeP, setMax, sliderValue, prevData 
     }
 
     const AquiferInfo = useCallback(async () => {
-        let peopleApis = { ...globalThis.aquiferApis.people };
-        let params = {
+        const peopleApis = { ...globalThis.aquiferApis.people };
+        const params = {
             query: personData.title
         }
         let queryUrl = peopleApis.searchItem;
         queryUrl = eventUtils.attachQueryToURL(queryUrl, params);
-        let result = await web.hook({
+        const result = await web.hook({
             method: "GET",
             url: queryUrl
         })
@@ -157,7 +157,7 @@ const EventInfo = ({ personData, setCurrentModeP, setMax, sliderValue, prevData 
             return
         }
         setLoading(true);
-        let params = {
+        const params = {
             uid
         };
         let queryUrl = aquiferApis.people.getItemByUid;
@@ -173,9 +173,9 @@ const EventInfo = ({ personData, setCurrentModeP, setMax, sliderValue, prevData 
                 globalThis.EVENT_PANEL_ID = null;
                 globalThis.eventToolApp = false;
             }
-            let App = await thisBot.CreateAquiferPage();
+            const App = await thisBot.CreateAquiferPage();
             if (App) {
-                let id = uuid();
+                const id = uuid();
                 globalThis.eventToolApp = true;
                 globalThis.EVENT_PANEL_ID = id;
                 AddApplication({ id, App: <App aquiferData={e.data.data} prevData={[...prevData, personData]} id={id} />, minWidth: "23rem" });
@@ -206,8 +206,8 @@ const EventInfo = ({ personData, setCurrentModeP, setMax, sliderValue, prevData 
                 configBot.tags.miniMapPortal = "map_portal";
             }
             if (eventData.locations.length > 0) {
-                let tempPlaces = []
-                let uniqueArr = eventData["places (from verses)"].filter((value, index, self) => self.indexOf(value) === index);
+                const tempPlaces = []
+                const uniqueArr = eventData["places (from verses)"].filter((value, index, self) => self.indexOf(value) === index);
                 for (let i = 0; i < uniqueArr.length; i++) {
                     for (let j = 0; j < eventData.locations.length; j++) {
                         if (uniqueArr[i] === eventData.locations[j].uid) {
@@ -223,12 +223,12 @@ const EventInfo = ({ personData, setCurrentModeP, setMax, sliderValue, prevData 
     useEffect(() => {
         if (places.length > 0 && eventData && !loading) {
             console.log(places, eventData["places (from verses)"])
-            let sideBar = getBot('system', 'ext_canvas.sideBar');
-            let name = places[0].kjvName.toLowerCase();
+            const sideBar = getBot('system', 'ext_canvas.sideBar');
+            const name = places[0].kjvName.toLowerCase();
             if (sideBar.tags['places-new'][name]) {
                 shout("handleGeoJsonSearch", { place: sideBar.tags['places-new'][name] });
             } else {
-                let geojson = {
+                const geojson = {
                     "geometry": {
                         "coordinates": [
                             places[0].latitude,
@@ -254,18 +254,18 @@ const EventInfo = ({ personData, setCurrentModeP, setMax, sliderValue, prevData 
 
     useEffect(async () => {
         AquiferInfo()
-        let params = {
+        const params = {
             uid: personData.uid
         }
         let queryUrl = eventApis.peoples.getItemByUid;
         queryUrl = eventUtils.attachQueryToURL(queryUrl, params);
-        let personDataReq = await web.get(queryUrl);
+        const personDataReq = await web.get(queryUrl);
         if (personDataReq.status === 200) {
-            let fetchPromises = [];
+            const fetchPromises = [];
 
             console.log("Raw tie", personDataReq.data.data)
             personDataReq.data.data.timeline.forEach(item => {
-                let params = {
+                const params = {
                     uid: item
                 }
                 let queryUrl = eventApis.events.getItemByUid;
@@ -291,12 +291,12 @@ const EventInfo = ({ personData, setCurrentModeP, setMax, sliderValue, prevData 
 
     useEffect(async () => {
         if (personData) {
-            let params = {
+            const params = {
                 query: personData.title
             }
             let queryUrl = aquiferApis.people.searchItem;
             queryUrl = eventUtils.attachQueryToURL(queryUrl, params);
-            let personDataReq = await web.get(queryUrl);
+            const personDataReq = await web.get(queryUrl);
             if (personDataReq.data.data.length > 1) {
                 console.log(personDataReq.data.data, "personDataReq")
                 setAquiferData([...personDataReq.data.data])
@@ -349,12 +349,12 @@ const EventInfo = ({ personData, setCurrentModeP, setMax, sliderValue, prevData 
                                     <div class="event-results">
                                         {places.map((item, index) => {
                                             return <button onClick={() => {
-                                                let sideBar = getBot('system', 'ext_canvas.sideBar');
-                                                let name = places[index].kjvName.toLowerCase();
+                                                const sideBar = getBot('system', 'ext_canvas.sideBar');
+                                                const name = places[index].kjvName.toLowerCase();
                                                 if (sideBar.tags['places-new'][name]) {
                                                     shout("handleGeoJsonSearch", { place: sideBar.tags['places-new'][name] });
                                                 } else {
-                                                    let geojson = {
+                                                    const geojson = {
                                                         "geometry": {
                                                             "coordinates": [
                                                                 item.latitude,

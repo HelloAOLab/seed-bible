@@ -1,4 +1,4 @@
-let lineColors = ["#FF4081", "#E040FB", "#7C4DFF", "#536DFE", "#448AFF", "#40C4FF", "#18FFFF", "#64FFDA", "#69F0AE"]
+const lineColors = ["#FF4081", "#E040FB", "#7C4DFF", "#536DFE", "#448AFF", "#40C4FF", "#18FFFF", "#64FFDA", "#69F0AE"]
 const getAllChildIds = (id) => {
     const botById = getBot(byTag("id", id));
     let childrenIds = [];
@@ -13,10 +13,10 @@ const getAllChildIds = (id) => {
     return childrenIds;
 }
 
-let childrenIds = [that.parentId, ...getAllChildIds(that.parentId)];
+const childrenIds = [that.parentId, ...getAllChildIds(that.parentId)];
 
 for(let i = 0; i < childrenIds.length; i++){
-    let subBot = getBot(byTag("id", childrenIds[i]));
+    const subBot = getBot(byTag("id", childrenIds[i]));
     for(let j = 0; j < 2; j++){
         setTimeout(() => {
             subBot.tags.lineColor = lineColors[Math.floor(Math.random() * lineColors.length)];

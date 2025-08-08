@@ -1,29 +1,29 @@
-let dim = os.getCurrentDimension();
+const dim = os.getCurrentDimension();
 whisper(thisBot, "removeMenuButtons");
 whisper(thisBot, "removeTLTools");
-let lineColors = ["#FF4081", "#E040FB", "#7C4DFF", "#536DFE", "#448AFF", "#40C4FF", "#18FFFF", "#64FFDA", "#69F0AE"];
-let botColors = ["#FCE4EC", "#F3E5F5", "#EDE7F6", "#E8EAF6", "#E3F2FD", "#E1F5FE", "#E0F7FA", "#E0F2F1", "#E8F5E9"];
+const lineColors = ["#FF4081", "#E040FB", "#7C4DFF", "#536DFE", "#448AFF", "#40C4FF", "#18FFFF", "#64FFDA", "#69F0AE"];
+const botColors = ["#FCE4EC", "#F3E5F5", "#EDE7F6", "#E8EAF6", "#E3F2FD", "#E1F5FE", "#E0F7FA", "#E0F2F1", "#E8F5E9"];
 const typingTool = getBot(byTag("typingTool"));
-let controlBot = getBot(byTag("id", that.id));
-let controlIndexBot = getBot(byTag("id", controlBot.tags.indexBot));
-let strokeBots = getBots(byTag("strokeColor"));
-let currentWritingBots = getBots(byTag("currentWriter", tags.id));
+const controlBot = getBot(byTag("id", that.id));
+const controlIndexBot = getBot(byTag("id", controlBot.tags.indexBot));
+const strokeBots = getBots(byTag("strokeColor"));
+const currentWritingBots = getBots(byTag("currentWriter", tags.id));
 for(let i = 0; i < strokeBots.length; i++){
         strokeBots[i].masks.strokeColor = null;
         strokeBots[i].masks.color = null;
         strokeBots[i].tags.strokeColor = null;
         strokeBots[i].tags.color = null;
-        let strokeIndexBot = getBot(byTag("id", strokeBots[i].tags.indexBot));
+        const strokeIndexBot = getBot(byTag("id", strokeBots[i].tags.indexBot));
         strokeIndexBot.masks.strokeColor = null;
         strokeIndexBot.masks.color = null;
 }
-for(let bot of currentWritingBots){
+for(const bot of currentWritingBots){
     bot.masks.currentWriter = null;
     bot.masks.name = null;
 }
-let currentNumber = Math.floor(Math.random() * lineColors.length);
-let currentColor = lineColors[currentNumber]
-let userBot = getBot(byTag("userInfoBot"), byTag("space", "tempShared"));
+const currentNumber = Math.floor(Math.random() * lineColors.length);
+const currentColor = lineColors[currentNumber]
+const userBot = getBot(byTag("userInfoBot"), byTag("space", "tempShared"));
 setTagMask(controlBot, "strokeColor", lineColors[currentNumber], "shared");
 setTagMask(controlBot, "color", botColors[currentNumber], "shared");
 setTagMask(controlIndexBot, "strokeColor", lineColors[currentNumber], "shared");
@@ -328,7 +328,7 @@ const shareButtonConfig = {
     refID: 5
 }
 
-let clickSound = "\n await os.playSound('https://auth-aux-aobot-prod-filesbucket-141297942820.s3.amazonaws.com/aoBot/f42ec34e8b5a29db9882a10d8a0c04f510c6cbbb7e9a56aa0ebb5f37343f1969.mpga')"
+const clickSound = "\n await os.playSound('https://auth-aux-aobot-prod-filesbucket-141297942820.s3.amazonaws.com/aoBot/f42ec34e8b5a29db9882a10d8a0c04f510c6cbbb7e9a56aa0ebb5f37343f1969.mpga')"
 
 let options = [
     removeButtonConfig,
@@ -338,13 +338,13 @@ let options = [
     deleteButtonConfig
 ]
 
-let settingsBot = getBot('system', 'app.components');
+const settingsBot = getBot('system', 'app.components');
 
 if(settingsBot.masks?.mindmapTools){
-    let tempOptions = [];
-    let menuSetting = [...settingsBot.masks?.mindmapTools];
-    for(let setting of menuSetting){
-        for(let option of options){
+    const tempOptions = [];
+    const menuSetting = [...settingsBot.masks?.mindmapTools||''];
+    for(const setting of menuSetting){
+        for(const option of options){
             if(setting.id === option.refID && setting.active){
                 tempOptions.push(option)
             }
@@ -354,7 +354,7 @@ if(settingsBot.masks?.mindmapTools){
 }
 
 for(let i = 0; i < options.length; i++){
-    let optionBot = create({
+    const optionBot = create({
         ...options[i],
         [dim + "X"]: getBot(byID(that.id)).tags[dim + "X"] + (1 * i) - ((options.length / 2))
     })

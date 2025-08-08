@@ -1,6 +1,6 @@
-let dim = os.getCurrentDimension();
+const dim = os.getCurrentDimension();
 const typingTool = getBot(byTag("typingTool"));
-let textBot = create({
+const textBot = create({
     [dim]: true,
     [dim + "X"]: that.x,
     [dim + "Y"]: that.y,
@@ -137,9 +137,9 @@ let textBot = create({
 setTagMask(textBot, "mode", 0, "shared");
 setTagMask(textBot, "label", that?.label ? that.label : " ", "shared");
 if (that?.id) {
-    let parentTextBar = getBot(byTag("id", that.id));
-    let textBars = getBots(byTag("textBar"));
-    for (let textBar of textBars) {
+    const parentTextBar = getBot(byTag("id", that.id));
+    const textBars = getBots(byTag("textBar"));
+    for (const textBar of textBars) {
         textBar.tags.active = false;
         textBar.tags.strokeColor = "white";
     }

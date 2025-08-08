@@ -1,7 +1,7 @@
 const callGPT = async (text: string) => {
     const currentAiBot = getBot(byTag('selectedAiBot', true));
 
-    let messageText = text ? text : currentAiBot.tags.label !== "Type your questions here!" ? currentAiBot.tags.label : currentAiBot.masks.label;
+    const messageText = text ? text : currentAiBot.tags.label !== "Type your questions here!" ? currentAiBot.tags.label : currentAiBot.masks.label;
     if (messageText && messageText !== "") {
         whisper(thisBot, "aiProgress");
         const resMsg = await ai.chat(`${masks?.positivePromt ? masks?.positivePromt : ""} ${messageText}`, {
@@ -18,7 +18,7 @@ const callGPT = async (text: string) => {
 const callGPTImageGen = async (text: string) => {
     const currentAiBot = getBot(byTag('selectedAiBot', true));
 
-    let messageText = text ? text : currentAiBot.tags.label !== "Type your questions here!" ? currentAiBot.tags.label : currentAiBot.masks.label;
+    const messageText = text ? text : currentAiBot.tags.label !== "Type your questions here!" ? currentAiBot.tags.label : currentAiBot.masks.label;
     if (messageText && messageText !== "") {
         try {
             whisper(thisBot, "aiProgress");

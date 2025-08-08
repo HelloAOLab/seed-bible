@@ -15,12 +15,12 @@ const animateBot = async (selectedBot, frame) => {
         const recording = JSON.parse(frame.frameData);
         try{
             if (recording) {
-                let startTime = Date.now();
+                const startTime = Date.now();
                 let hadState = false;
-                let states = recording.states;
+                const states = recording.states;
                 let interval = setInterval(() => {
-                    let currentTime = Date.now() - startTime;
-                    let state = states.find(s => s.time >= currentTime)
+                    const currentTime = Date.now() - startTime;
+                    const state = states.find(s => s.time >= currentTime)
                     if (state) {
                         hadState = true;
                         const b = getBot(byID(state.id));
@@ -100,6 +100,6 @@ const playAll = async (selectedBot, botFrames, repeat) => {
 
 const animationBots = getBots("animationName", that.animationName);
 
-for(let animationBot of animationBots){
+for(const animationBot of animationBots){
     playAll(animationBot, animationBot.tags.animationFrames, true)
 }

@@ -1,5 +1,5 @@
 if(!masks?.ss){
-    let data = await os.endAudioRecording();
+    const data = await os.endAudioRecording();
     if(data){
         thisBot.Loading();
         const arrayBuffer = await data.arrayBuffer();

@@ -17,10 +17,10 @@ const getAllChildIds = (id) => {
 if(parentBot.masks.expanded){
     tags.label = "+";
     setTagMask(parentBot, "expanded", false, "shared");
-    let botIds = getAllChildIds(tags.parentId);
+    const botIds = getAllChildIds(tags.parentId);
     for(let i = 0; i < botIds.length; i++){
-        let childBot = getBot(byTag("id", botIds[i]));
-        let childBotIndex = getBot(byTag("id", childBot.tags.indexBot));
+        const childBot = getBot(byTag("id", botIds[i]));
+        const childBotIndex = getBot(byTag("id", childBot.tags.indexBot));
         setTagMask(childBot, "hideLineTo", [...childBot.masks.lineTo], "shared");
         setTagMask(childBot, "lineTo", [], "shared");
         whisper(typingTool, "hideBot", {bot: childBot});
@@ -31,10 +31,10 @@ if(parentBot.masks.expanded){
 }else{
     tags.label = "-"
     setTagMask(parentBot, "expanded", true, "shared");
-    let botIds = getAllChildIds(tags.parentId);
+    const botIds = getAllChildIds(tags.parentId);
     for(let i = 0; i < botIds.length; i++){
-        let childBot = getBot(byTag("id", botIds[i]));
-        let childBotIndex = getBot(byTag("id", childBot.tags.indexBot))
+        const childBot = getBot(byTag("id", botIds[i]));
+        const childBotIndex = getBot(byTag("id", childBot.tags.indexBot))
         setTagMask(childBot, "lineTo", [...childBot.masks.hideLineTo], "shared");
         setTagMask(childBot, "hideLineTo", [], "shared");
         whisper(typingTool, "viewBot", {bot: childBot});

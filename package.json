@@ -8,6 +8,7 @@
     "package:seed-bible": "casualos pack-aux --overwrite ./packages/seed-bible ./dist/seed-bible.aux",
     "lint": "eslint packages",
     "lint:fix": "eslint packages --fix"
+    
   },
   "repository": {
     "type": "git",

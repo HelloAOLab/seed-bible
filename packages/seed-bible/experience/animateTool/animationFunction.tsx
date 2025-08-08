@@ -4,16 +4,16 @@ const animateBot = async (selectedBot, frame) => {
         const recording = JSON.parse(frame.frameData);
         try{
             if (recording) {
-                let startTime = Date.now();
+                const startTime = Date.now();
                 let hadState = false;
-                let states = recording.states;
+                const states = recording.states;
                 let interval = setInterval(() => {
-                    let currentTime = Date.now() - startTime;
-                    let state = states.find(s => s.time >= currentTime)
+                    const currentTime = Date.now() - startTime;
+                    const state = states.find(s => s.time >= currentTime)
                     if (state) {
                         hadState = true;
                         const b = getBot(byID(state.id));
-                        for(let tag in state.tags) {
+                        for(const tag in state.tags) {
                             b.masks[tag] = state.tags[tag];
                         }
                     } else if (hadState) {
@@ -91,13 +91,13 @@ const removeFrame = (frames, index) => {
     console.log(frames);
     const dim = os.getCurrentDimension();
     let tempFrames = [...frames];
-    let removedFrame = tempFrames.splice(index, 1);
+    const removedFrame = tempFrames.splice(index, 1);
     try{
         if(removedFrame[0].type === "recording"){
-            let frameData = JSON.parse(removedFrame[0].frameData);
-            let initPos = frameData.states[0].tags;
-            let finalPos = frameData.states[frameData.states.length - 1].tags;
-            let diff = {
+            const frameData = JSON.parse(removedFrame[0].frameData);
+            const initPos = frameData.states[0].tags;
+            const finalPos = frameData.states[frameData.states.length - 1].tags;
+            const diff = {
                 x: initPos[dim + "X"] - finalPos[dim + "X"],
                 y: initPos[dim + "Y"] - finalPos[dim + "Y"],
             }
@@ -108,7 +108,7 @@ const removeFrame = (frames, index) => {
             //     console.log(tempFrames[i], i,  tempFrames[i].initPos.x - diff.x, tempFrames[i].initPos.y - diff.y)
             // }
             tempFrames = tempFrames.map((item, fIndex) => {
-                let x = item;
+                const x = item;
                 if(fIndex >= index){
                     console.log(x.initPos);
                     x.initPos.x = x.initPos.x + diff.x;
@@ -135,15 +135,15 @@ const removeFrame = (frames, index) => {
 }
 
 const displacedDiff = (from, to) => {
-    let diff = {
+    const diff = {
         x: from.x - to.x,
         y: from.y - to.y,
     }
     const dim = os.getCurrentDimension();
-    let tempFrames = [...globalThis.frames];
+    const tempFrames = [...globalThis.frames];
     for(let i = 0; i < tempFrames.length; i++){
         if(tempFrames[i].type === "recording"){
-            let frameData = JSON.parse(tempFrames[i].frameData);
+            const frameData = JSON.parse(tempFrames[i].frameData);
             for(let j = 0; j < frameData.states.length; j++){
                 frameData.states[j].tags[dim + "X"] = frameData.states[j].tags[dim + "X"] - diff.x;
                 frameData.states[j].tags[dim + "Y"] = frameData.states[j].tags[dim + "Y"] - diff.y;

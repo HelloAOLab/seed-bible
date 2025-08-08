@@ -1,4 +1,4 @@
-let aiAssistant = getBot('system', 'experience.aiAssistant');
+const aiAssistant = getBot('system', 'experience.aiAssistant');
 
 let base64;
 
@@ -19,7 +19,7 @@ if(!that?.intro){
         console.log("from memory")
         base64 = tags[aiAssistant.masks?.aiVoice ? aiAssistant.masks.aiVoice + "intro" : "onyxintro"]
 
-        let blob = bytes.fromBase64Url(base64);
+        const blob = bytes.fromBase64Url(base64);
 
         buffer = await blob.arrayBuffer();
     }else{
@@ -37,16 +37,16 @@ if(!that?.intro){
     }
 }
 
-let jarvisInstance = getBot("jarvis", true);
+const jarvisInstance = getBot("jarvis", true);
 
 setTagMask(jarvisInstance, "thinking", false, "tempLocal");
 
 jarvisInstance.Speaking();
 
-let id = await os.playSound(base64);
+const id = await os.playSound(base64);
 
 console.log(buffer)
-let audioTimeout = setTimeout(() => {
+const audioTimeout = setTimeout(() => {
     console.log("clearing audioData mask")
     thisBot.masks.playingAudioId = null;
     jarvisInstance.Idle();

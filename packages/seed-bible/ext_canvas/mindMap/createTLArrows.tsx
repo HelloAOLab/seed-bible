@@ -1,6 +1,6 @@
-let dim = os.getCurrentDimension();
+const dim = os.getCurrentDimension();
 const typingTool = getBot(byTag("typingTool"));
-let writenBot = getBot(byTag("id", that.id));
+const writenBot = getBot(byTag("id", that.id));
 
 // const ArrowUpConfig = {
 //     [dim]: true,
@@ -165,12 +165,12 @@ const ArrowRightConfig = {
 // }, 80)
 
 setTimeout(() => {
-    let arrowLeft = create(ArrowLeftConfig);
+    const arrowLeft = create(ArrowLeftConfig);
     whisper(typingTool, "addPulseColor", {bot: arrowLeft, startingColor: [79, 195, 247], endingColor: [3, 155, 229], initialZ: 0.05})
 }, 110)
 
 setTimeout(() => {
-    let arrowRight = create(ArrowRightConfig);
+    const arrowRight = create(ArrowRightConfig);
     whisper(typingTool, "addPulseColor", {bot: arrowRight, startingColor: [79, 195, 247], endingColor: [3, 155, 229], initialZ: 0.05})
 }, 140)
 

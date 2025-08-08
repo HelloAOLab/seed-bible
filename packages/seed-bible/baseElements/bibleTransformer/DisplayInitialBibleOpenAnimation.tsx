@@ -22,7 +22,7 @@ const testamentsPositionZ = bibleData.childrenData.map((testamentData, index) =>
 const upperCoverPositionZ = testamentsPositionZ[testamentsPositionZ.length - 1] + testamentsScales[testamentsPositionZ.length - 1].z + StackSpacing.BetweenArrangements;
 const upperCoverScales = GetBotScales(bibleData.staticBibleElements.upperCover);
 const crossPositionZ = upperCoverPositionZ + upperCoverScales.z + StackSpacing.CoverToCross;
-let animations = [];
+const animations = [];
 
 bibleData.childrenData.forEach((testamentData, index) => {
     setTag(testamentData.element, "desiredPositionZ", testamentsPositionZ[index]);

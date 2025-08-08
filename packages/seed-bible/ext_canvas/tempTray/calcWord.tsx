@@ -1,4 +1,4 @@
-let word = that.label.toString();
+const word = that.label.toString();
 let base = 0;
 let small = false;
 for(const i in word) {

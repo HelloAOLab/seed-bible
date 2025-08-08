@@ -17,7 +17,7 @@ const App1 = () => {
             setEditor(EditorConfig.editor)
             setEditorID(EditorConfig.id)
         }
-        let it = setInterval(() => {
+        const it = setInterval(() => {
             if (EditorConfig && editorID !== EditorConfig.id) {
                 EditorConfig.editor.setEditable(true);
                 setEditor(EditorConfig.editor)

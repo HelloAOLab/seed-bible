@@ -1,6 +1,6 @@
 let dimension = os.getCurrentDimension();
 const expandDuration = 0.45;
-let resetAnimations = []
+const resetAnimations = []
 if(configBot.tags.miniMapPortal === "map_portal"){
     dimension = configBot.tags.miniMapPortal;
 }
@@ -62,7 +62,7 @@ function MakeWave() {
     const randomTime = (Math.random() * randomTimeRange);
     lastWaveRandomTime = randomTime;
     const randomDeltaScaleZ = (Math.random() * deltaScaleZRange);
-    let normalizedDeltaScaleZ = 1 - (deltaScaleZRange - randomDeltaScaleZ)
+    const normalizedDeltaScaleZ = 1 - (deltaScaleZRange - randomDeltaScaleZ)
     if(randomDeltaScaleZ > lastDeltaScaleZ || !lastWaveTime || (os.localTime > (lastWaveRandomTime + lastWaveTime)))
     {
         lastDeltaScaleZ = randomDeltaScaleZ;
@@ -70,7 +70,7 @@ function MakeWave() {
         const randomDuration = 0.15 + (Math.random() * 0.3)
         const waveBots = thisBot.vars.ringBots.slice(22, 30)
         waveBots.forEach((bot, i) => {
-            let x = (Math.PI * i) / (waveBots.length - 1);
+            const x = (Math.PI * i) / (waveBots.length - 1);
             const fixedDeltaScaleZ = randomDeltaScaleZ * Math.sin(x);
             bot.Speaking({deltaScaleZ: fixedDeltaScaleZ, duration: randomDuration, dimension, normalizedDeltaScaleZ});
         })

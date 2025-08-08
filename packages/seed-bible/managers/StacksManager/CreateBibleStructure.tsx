@@ -9,7 +9,7 @@
 
 const {arrangementIndex, bibleData} = that;
 const testamentsData = [];
-let staticBibleElements;
+const staticBibleElements={};
 const bibleTransformer = ObjectPooler.GetObjectFromPool({tag: ObjectPoolTags.BibleTransformer});
 const bibleTransformerMod = {bibleId: bibleData.id};
 const upperCover = ObjectPooler.GetObjectFromPool({tag: ObjectPoolTags.Cover});
@@ -43,7 +43,7 @@ staticBibleElements = {
     bibleShadow
 }
 
-for(let testamentIndex in InstanceManager.vars.fixedArrangementsInfo[arrangementIndex].testaments)
+for(const testamentIndex in InstanceManager.vars.fixedArrangementsInfo[arrangementIndex].testaments)
 {
     const testamentData = await thisBot.CreateTestament({arrangementIndex, testamentIndex, bibleData});
     testamentsData.push(testamentData);

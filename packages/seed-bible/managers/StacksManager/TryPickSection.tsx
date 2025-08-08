@@ -4,7 +4,7 @@ const {testamentName, sectionName} = that;
 const {found} = thisBot.GetSectionInfoPathByName({name: sectionName});
 if(found)
 {
-    let sectionData = thisBot.vars.lastInteractedTestamentData?.childrenData.find((currSectionData) => {return currSectionData.elementInfo.name === sectionName})
+    const sectionData = thisBot.vars.lastInteractedTestamentData?.childrenData.find((currSectionData) => {return currSectionData.elementInfo.name === sectionName})
     if( thisBot.vars.lastInteractedTestamentData &&
         thisBot.vars.lastInteractedTestamentData.isActive && 
         sectionData &&

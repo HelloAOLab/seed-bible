@@ -3,7 +3,7 @@ const {mapData, index} = that;
 const prevSelectedEntry = mapData.playlistLastSelectedEntryItem;
 mapData.playlistSelectedEntryIndex = index;
 
-for(let entryIndex in mapData.playlistEntries)
+for(const entryIndex in mapData.playlistEntries)
 {
     const entry = mapData.playlistEntries[entryIndex];
     if(!entry) continue;
@@ -51,13 +51,15 @@ for(let entryIndex in mapData.playlistEntries)
 
         let time = os.localTime;
 
-        (highlightTestament ? entryTestamentLine?.Highlight?.() : Promise.resolve()).then(() => {
+        (highlightBook && typeof entryBook?.Highlight === 'function'
+  ? entryBook.Highlight()
+  : Promise.resolve()).then(() => {
             console.log(`[Debug] first`, {time: os.localTime - time})
             time = os.localTime
-            return (highlightSection ? entrySectionLineSegment?.Highlight?.() : Promise.resolve()).then(() => {
+            return (highlightSection && typeof entrySectionLineSegment?.Highlight=== 'function' ? entrySectionLineSegment.Highlight() : Promise.resolve()).then(() => {
                 console.log(`[Debug] second`, {time: os.localTime - time})
                 time = os.localTime
-                return (highlightBook ? entryBook?.Highlight?.() : Promise.resolve()).then(() => {
+                return (highlightBook && entryBook?.Highlight==='function' ? entryBook.Highlight() : Promise.resolve()).then(() => {
                     console.log(`[Debug] third`, {time: os.localTime - time})
                     time = os.localTime
                     return entry.Highlight().then(() => {

@@ -1,4 +1,4 @@
-let { type } = that
+const { type } = that
 
 if (!type) {
     return
@@ -9,8 +9,8 @@ const { useEffect, useState } = os.appHooks
 
 setTagMask(thisBot, "pointer", true, "tempLocal")
 
-let MouseCursor = () => {
-    let [pointer, setPointer] = useState(gridPortalBot.tags.pointerPixel)
+const MouseCursor = () => {
+    const [pointer, setPointer] = useState(gridPortalBot.tags.pointerPixel)
 
     // useEffect(() => {
     //     let it = setInterval(() => {

@@ -76,8 +76,8 @@ function useBibleData({
                 // if (!response.ok) {
                 //     throw new Error(`Error fetching data: ${response.statusText}`);
                 // }
-                let url = customUrl ? `${baseUrl}${customUrl}` : `${baseUrl}/api/${ForcedTranslation || translation || initialTranslation}/${bookId || initialBookId}/${chapter || initialChapter}.json`;
-                let response
+                const url = customUrl ? `${baseUrl}${customUrl}` : `${baseUrl}/api/${ForcedTranslation || translation || initialTranslation}/${bookId || initialBookId}/${chapter || initialChapter}.json`;
+              
                 // os.log(url);
                 // if (localStorage.tags[thisBot.id + `${bookId} ${chapter} ${translation}`] && !customUrl) {
                 //     response = localStorage.tags[thisBot.id + `${bookId} ${chapter} ${translation}`]
@@ -85,7 +85,7 @@ function useBibleData({
                 //     response = localStorage.tags[thisBot.id + `${customUrl}`]
                 // } else {
 
-                response = await web.get(url);
+                const response = await web.get(url);
                 // }
                 // const response = await web.get(url);
                 const json = response;
@@ -161,7 +161,7 @@ function useBibleData({
             const targetChapter = chapter + offset;
             if (targetChapter < 1 || targetChapter > data?.numberOfChapters) return;
 
-            let url = `${baseUrl}/api/${translation}/${bookId}/${targetChapter}.json`;
+            const url = `${baseUrl}/api/${translation}/${bookId}/${targetChapter}.json`;
             if (!localStorage.tags[thisBot.id + `${bookId} ${targetChapter} ${translation}`]) {
                 try {
                     const response = await web.get(url);

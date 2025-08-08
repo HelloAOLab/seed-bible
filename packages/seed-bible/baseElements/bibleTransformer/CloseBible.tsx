@@ -16,7 +16,7 @@ import {SectionData} from 'managers.StacksManager.SectionData'
 import {SectionBookData} from 'managers.StacksManager.SectionBookData'
 
 shout("OnBibleClose");
-let {duration = 0.5, easing = {type: "sinusoidal", mode: "inout"}, bibleData} = that ?? {};
+const {duration = 0.5, easing = {type: "sinusoidal", mode: "inout"}, bibleData} = that ?? {};
 const dimension = os.getCurrentDimension();
 const testaments = bibleData.childrenData
     .filter((testamentData) => {return testamentData.isActive && !testamentData.isSplitIntoSections})

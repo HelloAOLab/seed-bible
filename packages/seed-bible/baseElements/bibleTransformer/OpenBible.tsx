@@ -11,22 +11,22 @@
 
 import {SectionBookData} from 'managers.StacksManager.SectionBookData'
 
-let {duration = 0.5, easing = {type: "sinusoidal", mode: "inout"}, bibleData} = that ?? {};
+const {duration = 0.5, easing = {type: "sinusoidal", mode: "inout"}, bibleData} = that ?? {};
 const dimension = os.getCurrentDimension();
 const lowerCoverPosition = getBotPosition(bibleData.staticBibleElements.lowerCover, dimension);
 const crossVerticalLineScales = GetBotScales(bibleData.staticBibleElements.crossVerticalLine)
 const sectionInitialScaleZ = 0;
 const initialPositionZ = lowerCoverPosition.z + StackElementMeasurements.CoverScales.z;
-let activeBibleElements;
-let crossOpenedPositionZ;
+
+
 let nextPositionZ = initialPositionZ + StackSpacing.BetweenArrangements;
-let resizeAnimations = [];
+const resizeAnimations = [];
 bibleData.currentStackVizState = BibleVisualizationState.Regular;
 
-for(let testamentData of bibleData.childrenData)
+for(const testamentData of bibleData.childrenData)
 {
     nextPositionZ += StackSpacing.BetweenSections;
-    for(let sectionData of testamentData.childrenData)
+    for(const sectionData of testamentData.childrenData)
     {
         const sectionIndex = testamentData.childrenData.indexOf(sectionData);
         const desiredScaleZ = sectionData.creationInfo.amountOfChaptersInSection * StackElementMeasurements.SectionDesiredScaleZRatio;
@@ -96,7 +96,7 @@ for(let testamentData of bibleData.childrenData)
     nextPositionZ += StackSpacing.BetweenArrangements
 }
 
-crossOpenedPositionZ = bibleData.childrenData[bibleData.childrenData.length - 1].childrenData[0].element.tags.desiredPositionZ - (StackSpacing.BetweenArrangements / 2) - StackSpacing.BetweenSections - (crossVerticalLineScales.z/2);
+const crossOpenedPositionZ = bibleData.childrenData[bibleData.childrenData.length - 1].childrenData[0].element.tags.desiredPositionZ - (StackSpacing.BetweenArrangements / 2) - StackSpacing.BetweenSections - (crossVerticalLineScales.z/2);
 resizeAnimations.push(
     animateTag(bibleData.staticBibleElements.upperCover, dimension + "Z", {
         toValue: nextPositionZ,
@@ -114,7 +114,7 @@ await Promise.allSettled(resizeAnimations);
 
 setTagMask(thisBot, "isBibleClosed", false);
 
-activeBibleElements = getBots(byTag("isBibleElement", true), byTag(dimension, true));
+const activeBibleElements = getBots(byTag("isBibleElement", true), byTag(dimension, true));
 StacksManager.TrySetElementsRenderOrder(activeBibleElements);
 
 return true;

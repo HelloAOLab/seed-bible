@@ -1,11 +1,11 @@
-let dim = os.getCurrentDimension();
+const dim = os.getCurrentDimension();
 setTagMask(thisBot, "clicking", true, "tempLocal");
 const increaseSize = () => {
-    let scaleZ = thisBot.masks.scaleZ + parseFloat(divident);
+    const scaleZ = thisBot.masks.scaleZ + parseFloat(divident);
     if(scaleZ > 10){
         return
     }
-    let prevColor = thisBot.masks.color;
+    const prevColor = thisBot.masks.color;
     shout("handleUndoStack", {
         action: "add",
         id: thisBot.tags.id,
@@ -13,18 +13,18 @@ const increaseSize = () => {
         prevValues: [thisBot.masks.scaleZ, prevColor]
     });
     shout("handleRedoStack", {action: "clean"});
-    let prevColorArrar = prevColor.slice(4,prevColor.length-1).split(",");
-    let newColor = `rgb(${parseInt(prevColorArrar[0] - redDivident)}, ${parseInt(prevColorArrar[1] - greenDivident)}, ${parseInt(prevColorArrar[2] - blueDivident)})`
+    const prevColorArrar = prevColor.slice(4,prevColor.length-1).split(",");
+    const newColor = `rgb(${parseInt(prevColorArrar[0] - redDivident)}, ${parseInt(prevColorArrar[1] - greenDivident)}, ${parseInt(prevColorArrar[2] - blueDivident)})`
     setTagMask(thisBot, "scaleZ", scaleZ, "tempLocal");
     setTagMask(thisBot, "color", newColor, "tempLocal");
 }
 
 const decreaseSize = () => {
-    let scaleZ = thisBot.masks.scaleZ - parseFloat(divident);
+    const scaleZ = thisBot.masks.scaleZ - parseFloat(divident);
     if(scaleZ < 0.1){
         return
     }
-    let prevColor = thisBot.masks.color;
+    const prevColor = thisBot.masks.color;
     shout("handleUndoStack", {
         action: "add",
         id: thisBot.tags.id,
@@ -32,8 +32,8 @@ const decreaseSize = () => {
         prevValues: [thisBot.masks.scaleZ, prevColor]
     });
     shout("handleRedoStack", {action: "clean"});
-    let prevColorArrar = prevColor.slice(4,prevColor.length-1).split(",");
-    let newColor = `rgb(${parseInt(parseFloat(prevColorArrar[0]) + parseFloat(redDivident))}, ${parseInt(parseFloat(prevColorArrar[1]) + parseFloat(greenDivident))}, ${parseInt(parseFloat(prevColorArrar[2]) + parseFloat(blueDivident))})`
+    const prevColorArrar = prevColor.slice(4,prevColor.length-1).split(",");
+    const newColor = `rgb(${parseInt(parseFloat(prevColorArrar[0]) + parseFloat(redDivident))}, ${parseInt(parseFloat(prevColorArrar[1]) + parseFloat(greenDivident))}, ${parseInt(parseFloat(prevColorArrar[2]) + parseFloat(blueDivident))})`
     setTagMask(thisBot, "scaleZ", scaleZ, "tempLocal");
     setTagMask(thisBot, "color", newColor, "tempLocal");
 }
@@ -52,7 +52,7 @@ if(currentMode === "build"){
     increaseSize();
     const to = setTimeout(() => {
         if(masks.clicking){
-            let it = setInterval(() => {
+            const it = setInterval(() => {
                 shout("handleIncreaseSize");
             }, 100);
             setTagMask(thisBot, "it", it, "tempLocal");
@@ -63,7 +63,7 @@ if(currentMode === "build"){
     decreaseSize();
     const to = setTimeout(() => {
         if(masks.clicking){
-            let it = setInterval(() => {
+            const it = setInterval(() => {
                 shout("handleDecreaseSize");
             }, 100);
             setTagMask(thisBot, "it", it, "tempLocal");
@@ -71,7 +71,7 @@ if(currentMode === "build"){
     }, 500);
     setTagMask(thisBot, "to", to, "tempLocal");
 }else if(currentMode === "level"){
-    let chaismTool = getBot("system", "ext_canvas.chaismTool");
+    const chaismTool = getBot("system", "ext_canvas.chaismTool");
     if(chaismTool.masks.prevHeight){
         shout("handleUndoStack", {
             action: "add",
@@ -92,7 +92,7 @@ if(currentMode === "build"){
             tempWordBot: true
         })
         let i = 0;
-        let it = setInterval(() => {
+        const it = setInterval(() => {
             if(thisBot.masks.strokeColor === "white"){
                 setTagMask(thisBot, "strokeColor", "transparent", "tempLocal")
                 i++

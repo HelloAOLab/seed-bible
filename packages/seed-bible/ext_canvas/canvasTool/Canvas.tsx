@@ -28,7 +28,7 @@ const initialTools = [
     {
         Element: <div className="tool-item canvas-assistant-icon tooltip" onClick={() => sendIcon({
             type: 'animation', trayColor: "#ffffff", dragerColor: "#000000", action: async () => {
-                let aiAssistant = getBot('system', 'experience.aiAssistant');
+                const aiAssistant = getBot('system', 'experience.aiAssistant');
                 if (aiAssistant.masks?.initiated) {
                     await os.unregisterApp('aiAssistant');
                 } else {
@@ -102,12 +102,12 @@ const initialTools = [
     {
         Element: <div className={`tool-item canvas-animation-icon tooltip`} onClick={() => sendIcon({
             type: 'animation', trayColor: "#ffffff", dragerColor: "#000000", action: async () => {
-                let animationTool = getBot('system', 'experience.animateTool');
+                const animationTool = getBot('system', 'experience.animateTool');
                 if (animationTool.masks?.initiated) {
                     await os.unregisterApp('animationDialog');
                     setTagMask(animationTool, "initiated", false, "tempLocal");
-                    let axisArrow = getBot("axisArrow");
-                    let circle = getBot("circle");
+                    const axisArrow = getBot("axisArrow");
+                    const circle = getBot("circle");
                     setTagMask(axisArrow, "formOpacity", 0);
                     setTagMask(circle, "formOpacity", 0);
                     setTagMask(circle, "strokeColor", "transparent");
@@ -156,9 +156,9 @@ const initialTools = [
     {
         Element: <div className="tool-item canvas-sideBar-icon tooltip" onClick={() => sendIcon({
             type: 'sideBar', trayColor: "#ffffff", dragerColor: "#000000", action: async () => {
-                let authBot = await os.requestAuthBotInBackground();
+                const authBot = await os.requestAuthBotInBackground();
                 if (authBot) {
-                    let lobbyBot = getBot('system', 'experience.lobby');
+                    const lobbyBot = getBot('system', 'experience.lobby');
                     if (lobbyBot.tags.lobbyInitiated) {
                         setSelectedDim(null);
                         await os.sleep(100);

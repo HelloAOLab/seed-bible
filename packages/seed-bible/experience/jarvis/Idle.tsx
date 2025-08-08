@@ -37,7 +37,7 @@ thisBot.vars.ringBots.forEach((bot, index) => {
     const normalizedTime = timoutTime / 1000 / duration;
     const sineValue = Math.sin(2*Math.PI*normalizedTime );
     const range = 0.1;
-    let customPositionZ = bot.tags.initialPositionZ + (range * sineValue);
+    const customPositionZ = bot.tags.initialPositionZ + (range * sineValue);
     setTagMask(bot, 'color', thisBot.tags.idleColorRingBots)
     bot.StopAnimations();
     bot.Reset({dimension, customPositionZ}).then(() => {

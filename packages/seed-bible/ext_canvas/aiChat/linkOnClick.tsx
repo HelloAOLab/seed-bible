@@ -7,9 +7,9 @@ if(!currentAiBot.masks.lineTo[0]){
 }
 
 let a = 0;
-let dim = os.getCurrentDimension()
+const dim = os.getCurrentDimension()
 tags[dim + "RotationZ"] = 0;
-let interval = setInterval(() => {
+const interval = setInterval(() => {
     tags[dim + "RotationZ"] = Math.PI * a;
     a += 0.005
     if(a >= 1){

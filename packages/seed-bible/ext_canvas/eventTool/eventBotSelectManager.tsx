@@ -9,7 +9,7 @@ const currentNumber = Math.floor(Math.random() * lineColors.length);
 const moveEventBots = async (fromIndex = 1000, displacement = 10) => {
     if(fromIndex !== -1){
         for(let i = 0; i < tags.eventBotIds.length; i++){
-            let eventBot = getBot(byID(tags.eventBotIds[i]))
+            const eventBot = getBot(byID(tags.eventBotIds[i]))
             if(eventBot){
                 animateTag(eventBot, `${dim + "Y"}`, {
                     toValue: i > fromIndex ? initialPlace[1] - (2 * i) - displacement : initialPlace[1] - (2 * i),

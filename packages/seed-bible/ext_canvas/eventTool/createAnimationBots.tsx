@@ -6,10 +6,10 @@ const initPos = {x: that.position.x, y: that.position.y};
 
 destroy(getBots("animationName", globalThis.animationBotsData.animationName))
 
-let animationConfigs = JSON.parse(globalThis.animationBotsData.animationBotConfigs);
+const animationConfigs = JSON.parse(globalThis.animationBotsData.animationBotConfigs);
 
 for(let i = 0; i < animationConfigs.length; i++){
-    let config = {
+    const config = {
         ...animationConfigs[i]
     }
     config[dim + "X"] = animationConfigs[i].dimX + initPos.x;
@@ -27,7 +27,7 @@ for(let i = 0; i < animationConfigs.length; i++){
     config.dim = null;
     config.animationFrames = animationConfigs[i].animationFrames;
 
-    let newAniBot = create({
+    const newAniBot = create({
         ...config,
         space: "tempLocal",
         [dim]: true,
@@ -47,7 +47,7 @@ for(let i = 0; i < animationConfigs.length; i++){
 
     for(let k = 0; k < config.animationFrames.length; k++){
         if(config.animationFrames[k].type === "recording"){
-            let frameData = JSON.parse(config.animationFrames[k].frameData);
+            const frameData = JSON.parse(config.animationFrames[k].frameData);
             for(let j = 0; j < frameData.states.length; j++){
                 frameData.states[j].tags[dim + "X"] = frameData.states[j].tags.dimX + initPos.x;
                 frameData.states[j].tags[dim + "Y"] = frameData.states[j].tags.dimY + initPos.y;

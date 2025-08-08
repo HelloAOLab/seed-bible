@@ -1,24 +1,17 @@
-let {useRef, useState, useEffect} = os.appHooks
- let self = this
- if (!this.tags.unregister) {
+const {useRef, useState, useEffect} = os.appHooks
+ const self = this
+ if (tags.unregister) {
     
 
              
-    let ChapterPreview = () => {
+    const ChapterPreview = () => {
 
         const coverRef = useRef(null)
         
  
         useEffect(()=>{
             
-                if (!this.tags.opened) {
-                    this.tags.opened = true 
-                    console.log("first time, openings")
-                    coverRef.current.style.height = "600px"
-                   
-                } else {
-                    console.log("already opened")
-                }
+               console.log('changed')
           
         }, [coverRef])
 

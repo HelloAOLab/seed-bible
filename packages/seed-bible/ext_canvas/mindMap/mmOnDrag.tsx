@@ -1,18 +1,18 @@
-let dim = os.getCurrentDimension();
+const dim = os.getCurrentDimension();
 tags.hold = false;
 destroy(getBots(byTag("expandTool", true)));
 whisper(getBot(byTag("typingTool")), "removeMenuButtons")
 whisper(getBot(byTag("typingTool")), "removeTLTools")
-let rightSliders = getBots('system', 'Tray.SliderRight');
-let lockedIcon = "https://auth-aux-aobot-prod-filesbucket-141297942820.s3.amazonaws.com/aoBot/09496640b86a5a1ce78c4d82984e508a61c0ce212fd086149a34ec5fb5dca985.png";
-let unlockedIcon = "https://auth-aux-aobot-prod-filesbucket-141297942820.s3.amazonaws.com/aoBot/7eb4be127a301949d753548b3388d8753d4d33d66d7bbc3cff5d36771654f275.png";
-let usbIcon = "https://auth-aux-aobot-prod-filesbucket-141297942820.s3.amazonaws.com/aoBot/de0b6e76774d33f16b4142f074ccf6909c848bc09322193a6496ad5294a67019.png";
+const rightSliders = getBots('system', 'Tray.SliderRight');
+const lockedIcon = "https://auth-aux-aobot-prod-filesbucket-141297942820.s3.amazonaws.com/aoBot/09496640b86a5a1ce78c4d82984e508a61c0ce212fd086149a34ec5fb5dca985.png";
+const unlockedIcon = "https://auth-aux-aobot-prod-filesbucket-141297942820.s3.amazonaws.com/aoBot/7eb4be127a301949d753548b3388d8753d4d33d66d7bbc3cff5d36771654f275.png";
+const usbIcon = "https://auth-aux-aobot-prod-filesbucket-141297942820.s3.amazonaws.com/aoBot/de0b6e76774d33f16b4142f074ccf6909c848bc09322193a6496ad5294a67019.png";
 if(!tags.parentBotId){
     for(let i = 0; i < rightSliders.length; i++){
         if(rightSliders[i].tags.slots && rightSliders[i].tags.slots.length > 4){
             continue
         }
-        let usbForm = create({
+        const usbForm = create({
             [dim]: true,
             [dim + "X"]: rightSliders[i].tags[dim + "X"] + 2,
             [dim + "Y"]: rightSliders[i].tags[dim + "Y"] + rightSliders[i].tags.scaleY / 2 - (rightSliders[i].tags.slots ? rightSliders[i].tags.slots.length + 1 : 1) * 2 + 1,
@@ -30,7 +30,7 @@ if(!tags.parentBotId){
             trayId: rightSliders[i].tags.trayId,
             system: 'Tray.usbForm'
         })
-        let lockForm = create({
+        const lockForm = create({
             [dim]: true,
             [dim + "X"]: rightSliders[i].tags[dim + "X"] + 1,
             [dim + "Y"]: rightSliders[i].tags[dim + "Y"] + rightSliders[i].tags.scaleY / 2 - (rightSliders[i].tags.slots ? rightSliders[i].tags.slots.length + 1 : 1) * 2 + 1,

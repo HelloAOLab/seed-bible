@@ -19,9 +19,9 @@ const setX = force ?? tags.includes(dimension + "X");
 const setY = force ?? tags.includes(dimension + "Y");
 const setZ = force ?? tags.includes(dimension + "Z");
 const setLabelOffset = force ?? (that.tags.includes("scaleX") || that.tags.includes("scaleY"));
-let currentLabelTransformer;
+ 
 
-currentLabelTransformer = getBot(byTag("ownerBotId", getID(thisBot)), byTag("isInfoLabelTransformer", true), byTag("isInUse", true));
+const currentLabelTransformer = getBot(byTag("ownerBotId", getID(thisBot)), byTag("isInfoLabelTransformer", true), byTag("isInUse", true));
 if(currentLabelTransformer && (setX || setY || setZ || setLabelOffset))
 {
     currentLabelTransformer.SetPosition({setX, setY, setZ, setLabelOffset})

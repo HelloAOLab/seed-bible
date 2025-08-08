@@ -77,7 +77,7 @@ function getHumanDuration(startTime, endTime, locale = 'en') {
   const [sh, sm] = startTime.split(':').map(Number);
   const [eh, em] = endTime.split(':').map(Number);
 
-  let start = sh * 60 + sm;
+  const start = sh * 60 + sm;
   let end = eh * 60 + em;
   if (end < start) end += 24 * 60; // handle overnight
 
@@ -219,7 +219,7 @@ const App = () => {
   const types = ["events", "reading", "content", "projects", "sources"];
 
 
-  let { name, apiCalendar, setApiCalendar } = useCalendar();
+  const { name, apiCalendar, setApiCalendar } = useCalendar();
 
 
 
@@ -463,7 +463,7 @@ const App = () => {
     let start = new Date();
 
     if (playLists[0]?.list[0]?.type !== 'date') {
-      start = start
+      console.log('chaged')
 
     }
 
@@ -1262,7 +1262,7 @@ const App = () => {
         slotLabelFormat: {
           hour: 'numeric',
           omitZeroMinute: true,
-          meridiem: 'short' // ensures "12:00 AM" with a space
+          meridiem: 'short' // ensures "12:00AM" with a space
         },
 
         slotLabelContent: function (arg) {
@@ -2364,7 +2364,7 @@ const App = () => {
     if (!container) return;
 
     const observer = new ResizeObserver(entries => {
-      for (let entry of entries) {
+      for (const entry of entries) {
         const w = entry.contentRect.width;
 
         // Toggle dot vs. full event mode

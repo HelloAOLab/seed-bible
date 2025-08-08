@@ -18,7 +18,7 @@ if(chapterData)
     thisBot.StopChapterTransition();
     let rgbTargetColor;
     
-    let infoLabelTransformer = GetCurrentInfoLabelTransformer(thisBot);
+    const infoLabelTransformer = GetCurrentInfoLabelTransformer(thisBot);
     if(infoLabelTransformer)
     {
         ObjectPooler.ReleaseObject({obj: infoLabelTransformer, tag: infoLabelTransformer.tags.poolTag})

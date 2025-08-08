@@ -26,7 +26,7 @@ switch(element.tags.typeOfElement)
     default: break;
 }
 
-let selections = thisBot.masks.usersLastSelection.slice().filter((selection) => {
+const selections = thisBot.masks.usersLastSelection.slice().filter((selection) => {
     return selection.selectionPath.some((elementInfo) => {
         return elementInfo.typeOfElement == typeOfElement && elementInfo.key == key
     })

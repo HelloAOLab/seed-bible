@@ -1,9 +1,9 @@
 setDisableMakeMountain(true);
-let dim = os.getCurrentDimension();
+const dim = os.getCurrentDimension();
 
-let finalColor = [255, 255, 255];
-let initialColor = [160,82,45];
-let colorDifference = [finalColor[0] - initialColor[0], finalColor[1] - initialColor[1], finalColor[2] - initialColor[2]];
+const finalColor = [255, 255, 255];
+const initialColor = [160,82,45];
+const colorDifference = [finalColor[0] - initialColor[0], finalColor[1] - initialColor[1], finalColor[2] - initialColor[2]];
 let startingZ = 0.5;
 let secondDivident, secondRed, secondGreen, secondBlue;
 
@@ -49,14 +49,14 @@ const correctRange = ({type, value}) => {
 
 const calculateScaleZ = ({versesCount, verseIndex, midPoint, divident}) => {
     if(verseIndex < midPoint){
-        let scaleZ = correctRange({type: "scaleZ", value: startingZ + parseFloat(divident)});
+        const scaleZ = correctRange({type: "scaleZ", value: startingZ + parseFloat(divident)});
         startingZ = startingZ + parseFloat(divident);
         return scaleZ;
     }else{
         if(!secondDivident){
             secondDivident = 10 / (versesCount - midPoint);
         }
-        let scaleZ = correctRange({type: "scaleZ", value: startingZ - parseFloat(secondDivident.toFixed(2))});
+        const scaleZ = correctRange({type: "scaleZ", value: startingZ - parseFloat(secondDivident.toFixed(2))});
         startingZ = startingZ - parseFloat(secondDivident.toFixed(2));
         return scaleZ;
     }
@@ -72,7 +72,7 @@ const calculateColor = ({versesCount, verseIndex, midPoint, redDivident, greenDi
     }
 }
 
-let verseBots = [...globalFunctions.getVerses()];
+const verseBots = [...globalFunctions.getVerses()];
 
 let midPoint, divident;
 
@@ -98,8 +98,8 @@ globalThis.greenDivident = greenDivident;
 globalThis.blueDivident = blueDivident;
 
 for(let i = 0; i < verseBots.length; i++){
-    let scaleZ = verseBots[i].tags.tempScaleZ ? verseBots[i].tags.tempScaleZ : calculateScaleZ({versesCount: verseBots.length, verseIndex: i, midPoint: midPoint, divident: divident});
-    let color = calculateColor({versesCount: verseBots.length, verseIndex: i, midPoint: midPoint, redDivident: redDivident, greenDivident: greenDivident, blueDivident: blueDivident})
+    const scaleZ = verseBots[i].tags.tempScaleZ ? verseBots[i].tags.tempScaleZ : calculateScaleZ({versesCount: verseBots.length, verseIndex: i, midPoint: midPoint, divident: divident});
+    const color = calculateColor({versesCount: verseBots.length, verseIndex: i, midPoint: midPoint, redDivident: redDivident, greenDivident: greenDivident, blueDivident: blueDivident})
     setTimeout(() => {
         animateTag(verseBots[i], {
             fromValue: {
@@ -124,8 +124,8 @@ for(let i = 0; i < verseBots.length; i++){
 
 setTimeout(() => setDisableMakeMountain(false), 150 * verseBots.length);
 
-let totalTime = (verseBots.length + 10) * 150;
-let tray = getBot("tray");
+const totalTime = (verseBots.length + 10) * 150;
+const tray = getBot("tray");
 await os.focusOn(tray, {
     zoom: gridPortalBot.tags.pixelWidth > 768 ? 10 : 5,
     duration: totalTime / 12000,
@@ -159,7 +159,7 @@ await os.focusOn(tray, {
 })
 
 if(!getBot("system", "introduction.searchBar").masks.initChaism){
-    let theBot = getBot(byTag("wordBot"), byTag("index", 39));
+    const theBot = getBot(byTag("wordBot"), byTag("index", 39));
     console.log(theBot, "theBot")
     if(theBot){
         await os.sleep(1000);

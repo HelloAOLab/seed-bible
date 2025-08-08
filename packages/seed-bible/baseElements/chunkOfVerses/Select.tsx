@@ -52,7 +52,7 @@ verses.forEach((verse) => {
     {
         const chapterData = thisBot.masks.chapterDataId ? StacksManager.GetChapterDataById({id: thisBot.masks.chapterDataId}) :
             MapsManager.GetChapterDataById({id: thisBot.masks.mapChapterDataId});
-        let currentHighlightInfo = chapterData.GetHighlightInfoByKey(verse.masks.versePath)
+        const currentHighlightInfo = chapterData.GetHighlightInfoByKey(verse.masks.versePath)
         if(currentHighlightInfo) setTagMask(verse, "color", currentHighlightInfo.color)
     }
     currentChapterNumber++

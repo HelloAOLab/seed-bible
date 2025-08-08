@@ -13,7 +13,7 @@ const mapBookData = new MapBookData({
     creationInfo
 });
 
-let chaptersData = await Promise.all(StacksManager.tags.booksStaticInfo[bookInfo.commonName].chaptersInfo.map((chapterInfo) => {return thisBot.CreateMapChapter({chapterInfo, mapData, mapBookData})}))
+const chaptersData = await Promise.all(StacksManager.tags.booksStaticInfo[bookInfo.commonName].chaptersInfo.map((chapterInfo) => {return thisBot.CreateMapChapter({chapterInfo, mapData, mapBookData})}))
 
 chaptersData.forEach((chapterData) => {mapBookData.AddChild(chapterData)});
 thisBot.vars.mapBooksData.push(mapBookData);

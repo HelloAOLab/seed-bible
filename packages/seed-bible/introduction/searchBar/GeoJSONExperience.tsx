@@ -60,9 +60,9 @@ const App = ({ from }) => {
                 globalThis.EVENT_PANEL_ID = null;
                 globalThis.eventToolApp = false;
             }
-            let App = await getBot('system', "ext_canvas.eventTool").initInterface()
+            const App = await getBot('system', "ext_canvas.eventTool").initInterface()
             if (App) {
-                let id = uuid();
+                const id = uuid();
                 globalThis.eventToolApp = true;
                 globalThis.EVENT_PANEL_ID = id;
                 AddApplication({ id, App: <App initPage={2} id={id} />, minWidth: "23rem" });

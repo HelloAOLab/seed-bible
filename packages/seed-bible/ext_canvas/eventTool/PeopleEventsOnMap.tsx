@@ -17,7 +17,7 @@ const App = ({ page = 0, setPage }) => {
             setLoading(true);
             setError(false);
             if (eventQuery !== "") {
-                let params = {
+                const params = {
                     query: eventQuery
                 }
                 let queryUrl = pageApis.searchItem;
@@ -37,7 +37,7 @@ const App = ({ page = 0, setPage }) => {
                     }
                 });
             } else {
-                let params = {
+                const params = {
                     page: currentPage,
                     count: 20
                 }

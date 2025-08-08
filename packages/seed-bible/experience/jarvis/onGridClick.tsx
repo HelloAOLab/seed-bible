@@ -6,7 +6,7 @@ if(!thisBot.tags.jarvis) return;
 
 console.log({...thisBot} ,that.dimension, configBot.tags.miniMapPortal)
 
-let aoLogoMod = {
+const aoLogoMod = {
     space: "tempLocal",
     [that.dimension]: true,
     dimension: that.dimension,
@@ -58,7 +58,7 @@ let aoLogoMod = {
 
 const aoLogo = create(aoLogoMod);
 
-let aoLogoCircleMod = {
+const aoLogoCircleMod = {
     space: "tempLocal",
     [that.dimension]: true,
     dimension: that.dimension,

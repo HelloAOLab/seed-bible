@@ -3,12 +3,12 @@ const {mapBookData, mapData, fromOpenAllButton = false, chaptersMod = {}} = that
 setTagMask(thisBot, "isAnimatingMap", true);
 
 mapBookData.isSelected = true;
-let dimension = os.getCurrentDimension()
+const dimension = os.getCurrentDimension()
 const mapBookPosition = getBotPosition(mapBookData.element, dimension);
 const mapBookScales = GetBotScales(mapBookData.element);
 const chaptersOriginPosition = new Vector2(mapBookPosition.x - (mapBookData.element.tags.scaleX/2), mapBookPosition.y + (mapBookData.element.tags.scaleY/2));
-var column = 0;
-var row = 0;
+let column = 0;
+let row = 0;
 const chapterShowDuration = 0.03
 
 InstanceManager.TryHideUsersColorOnElement({element: mapBookData.element})
@@ -47,7 +47,7 @@ const {relativeDateRange} = StacksManager.tags.booksStaticInfo[mapBookData.eleme
 const historicalDateRange  = `${Math.abs(relativeDateRange.min)}${(relativeDateRange.min != relativeDateRange.max) ? `-${Math.abs(relativeDateRange.max)}` : ``} ${relativeDateRange.min < 0 ? "B.C." : "A.D."}`
 const elapsedYearsRange = `${currentYear - relativeDateRange.min}${relativeDateRange.min != relativeDateRange.max ? `-${currentYear - relativeDateRange.max}` : ``} years ago`
 
-for(let mapChapterData of mapBookData.childrenData)
+for(const mapChapterData of mapBookData.childrenData)
 {
     const mapChapter = ObjectPooler.GetObjectFromPool({tag: ObjectPoolTags.MapChapter});
     const mapChapterMod = {

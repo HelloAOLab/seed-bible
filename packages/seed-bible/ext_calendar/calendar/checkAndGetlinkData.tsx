@@ -44,7 +44,7 @@ function parseBibleReference(filename) {
 
     parts.forEach((part) => {
         // Handle multiple possible separators: . (dot), _ (underscore), : (colon), space
-        let spaceParts = part.trim().split(/[\s\._:]+/); // Allows any of the separators to act
+        const spaceParts = part.trim().split(/[\s\._:]+/); // Allows any of the separators to act
 
         let bookPart = spaceParts[0].toLowerCase();
         let chapterPart = spaceParts[1] ? spaceParts[1].trim() : null;

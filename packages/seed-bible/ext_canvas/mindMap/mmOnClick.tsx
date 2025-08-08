@@ -1,10 +1,10 @@
 if (globalThis?.focusOnVisibleButton) {
     globalThis.focusOnVisibleButton()
 }
-let typingManager = getBot(byTag("mmTypingManager"));
+const typingManager = getBot(byTag("mmTypingManager"));
 whisper(typingManager, "handleEnlargement", { bot: thisBot });
 setTimeout(async () => {
-    let selectBot = getBot(byTag("button2", true));
+    const selectBot = getBot(byTag("button2", true));
     if (selectBot) {
         if (selectBot.tags.selecting) {
             whisper(typingManager, "prePresentation", { selecting: true, bot: thisBot })

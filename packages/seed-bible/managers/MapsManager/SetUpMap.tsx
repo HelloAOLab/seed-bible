@@ -1,6 +1,6 @@
 const { mapData, position } = that;
 
-let dimension = os.getCurrentDimension()
+const dimension = os.getCurrentDimension()
 const toggleBackgroundPadding = 0.5
 const colorPickerBackgroundPadding = 0.8
 const buttonMargin = new Vector2(1, 0.4);
@@ -104,7 +104,7 @@ for(let row = 0; row < mapData.amountOfRows; row++)
     rowSegments.push(rowSegment);
 }
 
-for(let testamentLineInfo of mapData.testamentLinesInfo)
+for(const testamentLineInfo of mapData.testamentLinesInfo)
 {
     const scaleX = sectionLineScaleY;
     const scaleY = Math.abs(rowSegments[testamentLineInfo.endRow].end - rowSegments[testamentLineInfo.startRow].start);
@@ -126,7 +126,7 @@ for(let testamentLineInfo of mapData.testamentLinesInfo)
         color: testamentLineInfo.color,
         initialColor: testamentLineInfo.color
     }
-    let labelMod = {
+    const labelMod = {
         mapId: mapData.id,
         space: "tempLocal",
         scaleX: scaleY,
@@ -147,10 +147,10 @@ for(let testamentLineInfo of mapData.testamentLinesInfo)
     mapData.staticMapElements.testamentLabels.push(label);
 }
 
-for(let sectionLineInfo of mapData.sectionLinesInfo)
+for(const sectionLineInfo of mapData.sectionLinesInfo)
 {
     const segmentLabelIndex = (sectionLineInfo.segments.length / 2) + (sectionLineInfo.segments.length % 2 === 0 ? -1 : -0.5)
-    for(let segmentIndex in sectionLineInfo.segments)
+    for(const segmentIndex in sectionLineInfo.segments)
     {
         const segment = sectionLineInfo.segments[segmentIndex];
         const scaleX = Math.abs(columnsSegments[segment.end.column].end - columnsSegments[segment.start.column].start);
@@ -238,7 +238,7 @@ const coverMod = {
     pointable: false
 }
 
-let buttonPosition = new Vector3(
+const buttonPosition = new Vector3(
     position.x - (coverScales.x/2) - (links.baseToggle.tags.scaleX/2) - buttonMargin.x,
     0,
     0
@@ -280,13 +280,13 @@ mapData.staticMapElements.settingsButtons.forEach((settingsButton, index) => {
         }
         break;
         case MapButtonType.ColorPickerButton: {
-            let colorPickerBackgroundMod = {
+            const colorPickerBackgroundMod = {
                 [dimension]: false,
                 [dimension + "X"]: buttonMod[dimension + "X"] + (links.baseToggle.tags.scaleX / 2) - (links.baseColorPickerBackground.tags.scaleX / 2) - colorPickerBackgroundPadding,
                 [dimension + "Y"]: buttonMod[dimension + "Y"],
                 [dimension + "Z"]: buttonMod[dimension + "Z"] + toggleHandleMarginZ
             }
-            let colorPickerContentMod = {
+            const colorPickerContentMod = {
                 [dimension]: false,
                 [dimension + "X"]: colorPickerBackgroundMod[dimension + "X"],
                 [dimension + "Y"]: colorPickerBackgroundMod[dimension + "Y"],
@@ -306,14 +306,14 @@ mapData.staticMapElements.settingsButtons.forEach((settingsButton, index) => {
             
             const buttonContentScaleX = labelScaleX + links.baseButtonIcon.tags.scaleX + buttonGap;
 
-            let labelMod = {
+            const labelMod = {
                 [dimension]: false,
                 [dimension + "X"]: buttonMod[dimension + "X"] + (buttonContentScaleX / 2) - (labelScaleX / 2),
                 [dimension + "Y"]: buttonMod[dimension + "Y"],
                 [dimension + "Z"]: buttonMod[dimension + "Z"] + toggleHandleMarginZ,
                 scaleX: labelScaleX
             }
-            let iconMod = {
+            const iconMod = {
                 [dimension]: false,
                 [dimension + "X"]: buttonMod[dimension + "X"] - (buttonContentScaleX / 2) + (links.baseButtonIcon.tags.scaleX / 2),
                 [dimension + "Y"]: buttonMod[dimension + "Y"],

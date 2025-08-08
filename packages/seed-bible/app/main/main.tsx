@@ -68,7 +68,7 @@ const Main = () => {
     }, [collapsed])
 
     useEffect(async () => {
-        let authBot = await os.requestAuthBotInBackground();
+        const authBot = await os.requestAuthBotInBackground();
         if (authBot) {
             window.clUserId = authBot.id;
         }

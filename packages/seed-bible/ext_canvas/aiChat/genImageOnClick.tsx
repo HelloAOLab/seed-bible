@@ -5,9 +5,9 @@ if(globalThis?.aiStarted){
 globalThis.aiStarted = true;
 
 let a = 0;
-let dim = os.getCurrentDimension()
+const dim = os.getCurrentDimension()
 tags[dim + "RotationZ"] = 0;
-let interval = setInterval(() => {
+const interval = setInterval(() => {
     tags[dim + "RotationZ"] = Math.PI * a;
     a += 0.005
     if(a >= 2){
@@ -33,8 +33,8 @@ try{
             image: aiMessage
         })
     }else if(aiMessage!== null && that?.self){
-        let controlBot = getBot(byID(tags.controlBotId));
-        let aiChat = getBot('system', 'ext_canvas.aiChat');
+        const controlBot = getBot(byID(tags.controlBotId));
+        const aiChat = getBot('system', 'ext_canvas.aiChat');
         setTagMask(controlBot, "formAddress", aiMessage, "shared");
         setTagMask(controlBot, "scaleX", aiChat.masks.width ? aiChat.masks.width * 0.01 : 500 * 0.01, "shared");
         setTagMask(controlBot, "scaleY", aiChat.masks.height ? aiChat.masks.height * 0.01 : 500 * 0.01, "shared");
@@ -84,14 +84,14 @@ try{
             easing: "elastic",
             tagMaskSpace: "local"
         })
-        let typingManager = getBot(byTag("mmTypingManager"));
+        const typingManager = getBot(byTag("mmTypingManager"));
         whisper(typingManager, "onGridClick");
     }
 }catch(e){
     console.log(e)
 }
 
-let intBots = getBots("rotateInterval");
+const intBots = getBots("rotateInterval");
 intBots.forEach(intBot => {
     clearInterval(intBot.masks.rotateInterval)
     intBot.tags[dim + "RotationZ"] = 0;

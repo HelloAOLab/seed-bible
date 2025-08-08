@@ -5,8 +5,8 @@ const dim = os.getCurrentDimension();
 const { useState, useEffect, useMemo, useCallback, useRef } = os.appHooks;
 
 function generateQuery(params) {
-    let queryArray = [];
-    for (let key in params) {
+    const queryArray = [];
+    for (const key in params) {
         if (params.hasOwnProperty(key)) {
             queryArray.push(encodeURIComponent(key) + '=' + encodeURIComponent(params[key]));
         }
@@ -71,11 +71,11 @@ const App = () => {
         setDisable(true);
         setUploading(true);
         os.toast("Uploading Annotation")
-        let body = JSON.stringify({
+        const body = JSON.stringify({
             annotations: JSON.stringify(annotations),
             title,
             bots: botIds.map(item => {
-                let thatBot = getBot(byID(item));
+                const thatBot = getBot(byID(item));
                 return {
                     label: thatBot.masks.label,
                     formAddress: thatBot.masks.formAddress,
@@ -85,7 +85,7 @@ const App = () => {
             })
         });
 
-        let blob = new Blob([body], { type: 'text/plain' });
+        const blob = new Blob([body], { type: 'text/plain' });
 
         const record = await os.recordFile("vRK2.YW5ub3RhdGlvblJlY29yZA==.WmptMWdDa1RLMFYvQlhQR2hKa3hhUT09.subjectfull", blob);
         if(record.success){
@@ -183,7 +183,7 @@ const App = () => {
     useEffect(() => {
         botIds.forEach(item => {
             const it = setInterval(() => {
-                let thatBot = getBot(byID(item));
+                const thatBot = getBot(byID(item));
                 setTagMask(thatBot, "strokeColor", "red", "tempLocal");
                 if(thatBot.tags?.indexBot){
                     setTagMask(getBot(byID(thatBot.tags?.indexBot)), "strokeColor", "red", "tempLocal");
@@ -193,7 +193,7 @@ const App = () => {
         })
         return () => {
             botIds.forEach(item => {
-                let annotBot = getBot(byID(item));
+                const annotBot = getBot(byID(item));
                 clearInterval(annotBot.masks.it);
                 annotBot.masks.it = null;
                 annotBot.masks.strokeColor = null;
@@ -240,12 +240,12 @@ const App = () => {
                                         return <div class="annot-item">
                                             <span class="annot-item-title">{item.title}</span>
                                             <textarea disabled={disable} onChange={e => {
-                                                let tempAnnot = [...annotations];
+                                                const tempAnnot = [...annotations];
                                                 tempAnnot[index].value = e.target.value;
                                                 setAnnotations([...tempAnnot]);
                                             }} value={item.value} type="text" class="annot-item-textarea">{item.value}</textarea>
                                             <span onClick={() => {
-                                                let tempAnnot = [...annotations];
+                                                const tempAnnot = [...annotations];
                                                 tempAnnot.splice(index, 1);
                                                 setAnnotations([...tempAnnot]);
                                             }} class="del-btn">X</span>
@@ -255,12 +255,12 @@ const App = () => {
                                         return <div class="annot-item">
                                             <span class="annot-item-title">{item.title}</span>
                                             <input disabled={disable} onChange={e => {
-                                                let tempAnnot = [...annotations];
+                                                const tempAnnot = [...annotations];
                                                 tempAnnot[index].value = e.target.value;
                                                 setAnnotations([...tempAnnot]);
                                             }} value={item.value} type="url" class="annot-item-input">{item.value}</input>
                                             <span onClick={() => {
-                                                let tempAnnot = [...annotations];
+                                                const tempAnnot = [...annotations];
                                                 tempAnnot.splice(index, 1);
                                                 setAnnotations([...tempAnnot]);
                                             }} class="del-btn">X</span>
@@ -272,7 +272,7 @@ const App = () => {
                                             <div class="recording-section"></div>
                                             {
                                                 annotations[index].value === null && <button onClick={async () => {
-                                                    let tempAnnot = [...annotations];
+                                                    const tempAnnot = [...annotations];
                                                     if (!item.recording) {
                                                         os.beginAudioRecording();
                                                         tempAnnot[index].recording = true;
@@ -298,7 +298,7 @@ const App = () => {
                                                 }}>Play Audio Note</button>
                                             }
                                             <span onClick={() => {
-                                                let tempAnnot = [...annotations];
+                                                const tempAnnot = [...annotations];
                                                 if (tempAnnot[index].value) {
                                                     tempAnnot[index].value = null
                                                 } else {
@@ -345,7 +345,7 @@ const App = () => {
                             {
                                 !loading && annots.length > 0 && <>
                                     {annots.map((item, index) => {
-                                        let time = new Date(item.createdAt);
+                                        const time = new Date(item.createdAt);
                                         return <div class="annot--item" id={`${index}-annnot`}>
                                                 <div class="annot-content">
                                                     <span class="annot-content-title">{item.title}</span>
@@ -362,7 +362,7 @@ const App = () => {
                                                                 if(authId !== null){
                                                                     authKey = authId;
                                                                 }else{
-                                                                    let authBot = await os.requestAuthBot();
+                                                                    const authBot = await os.requestAuthBot();
                                                                     if(authBot){
                                                                         authKey = authBot.tags.id;
                                                                         setAuthId(authBot.tags.id);
@@ -372,7 +372,7 @@ const App = () => {
                                                                         return
                                                                     }
                                                                 }
-                                                                let tempAnnots = [...annots];
+                                                                const tempAnnots = [...annots];
                                                                 if(tempAnnots[index].upvoters.includes(authKey)){
                                                                     tempAnnots[index].upvoters = tempAnnots[index].upvoters.filter(upvoter => upvoter !== authKey)
                                                                 }else{
@@ -380,7 +380,7 @@ const App = () => {
                                                                     tempAnnots[index].downvoters = tempAnnots[index].downvoters.filter(downvoter => downvoter !== authKey)
                                                                 }
                                                                 setAnnots(tempAnnots);
-                                                                let body = {
+                                                                const body = {
                                                                     uid: item.uid,
                                                                     authId: authKey
                                                                 }
@@ -401,7 +401,7 @@ const App = () => {
                                                                 if(authId !== null){
                                                                     authKey = authId;
                                                                 }else{
-                                                                    let authBot = await os.requestAuthBot();
+                                                                    const authBot = await os.requestAuthBot();
                                                                     if(authBot){
                                                                         authKey = authBot.tags.id;
                                                                         setAuthId(authBot.tags.id);
@@ -411,7 +411,7 @@ const App = () => {
                                                                         return
                                                                     }
                                                                 }
-                                                                let tempAnnots = [...annots];
+                                                                const tempAnnots = [...annots];
                                                                 if(tempAnnots[index].downvoters.includes(authKey)){
                                                                     tempAnnots[index].downvoters = tempAnnots[index].downvoters.filter(downvoter => downvoter !== authKey)
                                                                 }else{
@@ -419,7 +419,7 @@ const App = () => {
                                                                     tempAnnots[index].upvoters = tempAnnots[index].upvoters.filter(upvoter => upvoter !== authKey)
                                                                 }
                                                                 setAnnots(tempAnnots);
-                                                                let body = {
+                                                                const body = {
                                                                     uid: item.uid,
                                                                     authId: authKey
                                                                 }

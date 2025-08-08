@@ -38,12 +38,12 @@ try {
 
     const sectionRanks = globalThis.getSectionRanking();
 
-    let { status, data, statusText } = await web.get(linkToHit).catch(this.catchError)
+    const { status, data, statusText } = await web.get(linkToHit).catch(this.catchError)
     if (status !== 200)
         return info('Status is different than 200, got', status, 'with status text of', statusText);
 
-    let lines = data.split('\r\n');
-    let options = lines.shift();
+    const lines = data.split('\r\n');
+    const options = lines.shift();
 
     const heading = options.split(",").map(head => head.toLocaleLowerCase());
 
@@ -80,7 +80,7 @@ try {
 
         const booksMap = thisBot.tags.abbrevations;
 
-        let bookName = !!booksMap[bookOrgKey.toLocaleLowerCase()] ? booksMap[bookOrgKey.toLocaleLowerCase()] : bookOrgKey;
+        let bookName = booksMap[bookOrgKey.toLocaleLowerCase()] ? booksMap[bookOrgKey.toLocaleLowerCase()] : bookOrgKey;
 
         bookName = capitalizeFirstLetter(bookName);
 
@@ -112,7 +112,7 @@ try {
 
         if (chapter < startChapter || startChapter > endChapter) return;
 
-        if (!!data[verseKey]) {
+        if (data[verseKey]) {
             dataType = types[0];
 
             chapter = isValidNumber(chapter);
@@ -382,7 +382,7 @@ try {
             return;
         }
 
-        if (!!data[testamentKey]) {
+        if (data[testamentKey]) {
             const isNewTestament = data[testamentKey].toLocaleLowerCase().includes("new");
             const isOldTestament = data[testamentKey].toLocaleLowerCase().includes("old");
 

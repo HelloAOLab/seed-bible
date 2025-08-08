@@ -1,8 +1,8 @@
-let {action} = that;
+const {action} = that;
 
 switch (action) {
     case "add": {
-        let {id, tags, prevValues} = that;
+        const {id, tags, prevValues} = that;
         if(masks.redoStack){
             let redoStack = [...masks.redoStack];
             if(redoStack.length > 20){
@@ -32,7 +32,7 @@ switch (action) {
             os.toast("nothing to redo");
             return
         }
-        let lastValue = masks.redoStack[masks.redoStack.length - 1];
+        const lastValue = masks.redoStack[masks.redoStack.length - 1];
         for(let i = 0; i < lastValue.tags.length; i++){
             setTagMask(getBot(byID(lastValue.id)), lastValue.tags[i], lastValue.prevValues[i], "tempLocal");
         }

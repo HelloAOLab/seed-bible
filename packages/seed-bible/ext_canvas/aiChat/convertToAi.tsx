@@ -1,9 +1,9 @@
 const {node} = that;
 
-let childrenIds = [node.tags.id, ...eventUtils.getAllChildIds(node.tags.id)];
+const childrenIds = [node.tags.id, ...eventUtils.getAllChildIds(node.tags.id)];
 
-for(let childId of childrenIds){
-    let childBot = getBot(byID(childId));
+for(const childId of childrenIds){
+    const childBot = getBot(byID(childId));
     childBot.tags.eventBot = null;
 
     if(childBot.tags.nodeType === "expanse"){

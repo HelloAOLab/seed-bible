@@ -1,4 +1,4 @@
-let dim = os.getCurrentDimension();
+const dim = os.getCurrentDimension();
 const getAllChildIds = (id) => {
     const botById = getBot(byTag("id", id));
     let childrenIds = [];
@@ -14,7 +14,7 @@ const getAllChildIds = (id) => {
 }
 
 const childToParentBots = (childId) => {
-    let childBot = getBot(byTag("id", childId));
+    const childBot = getBot(byTag("id", childId));
     let list = [childId];
     if(childBot.tags.parentBotId){
         list = [...list, ...childToParentBots(childBot.tags.parentBotId)]
@@ -25,7 +25,7 @@ const childToParentBots = (childId) => {
 const getRootParent = (childBot) => {
     let rootParent = null;
     if(childBot.tags.parentBotId){
-        let parentBot = getBot(byTag("id", childBot.tags.parentBotId))
+        const parentBot = getBot(byTag("id", childBot.tags.parentBotId))
         if(parentBot.tags.parentBotId){
             rootParent = getRootParent(parentBot);
         }else {
@@ -37,14 +37,14 @@ const getRootParent = (childBot) => {
     return rootParent;
 }
 
-let textBot = getBot(byTag("id", tags.textBot));
-let rootParent = getRootParent(textBot);
+const textBot = getBot(byTag("id", tags.textBot));
+const rootParent = getRootParent(textBot);
 const allChildrens = [rootParent.tags.id, ...getAllChildIds(rootParent.tags.id)];
 await os.playSound("https://auth-aux-aobot-prod-filesbucket-141297942820.s3.amazonaws.com/aoBot/2e2827636cc7a30197222a7ccd65a71d3ce95a34abe2a7d218c822ebbc052798.mpga")
 
 for(let i = 0; i < allChildrens.length; i++){
-    let subBot = getBot(byTag("id", allChildrens[i]));
-    let subIndexBot = getBot(byTag("id", subBot.tags.indexBot));
+    const subBot = getBot(byTag("id", allChildrens[i]));
+    const subIndexBot = getBot(byTag("id", subBot.tags.indexBot));
     if(subBot.masks.interval){
         clearInterval(subBot.masks.interval);
         subBot.masks.interval = null;

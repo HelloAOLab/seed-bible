@@ -1,10 +1,10 @@
 const typingTool = getBot(byTag("mmTypingManager"));
-let arrowUps = getBots(byTag("arrowUp"));
-let arrowDowns = getBots(byTag("arrowDown"));
-let arrowRights = getBots(byTag("arrowRight"));
-let arrowLefts = getBots(byTag("arrowLeft"));
-let dataslits = getBots(byTag("dataSlit"));
-let eventBots = getBots("eventBot");
+const arrowUps = getBots(byTag("arrowUp"));
+const arrowDowns = getBots(byTag("arrowDown"));
+const arrowRights = getBots(byTag("arrowRight"));
+const arrowLefts = getBots(byTag("arrowLeft"));
+const dataslits = getBots(byTag("dataSlit"));
+const eventBots = getBots("eventBot");
 destroy(arrowUps)
 destroy(arrowDowns)
 destroy(arrowRights)

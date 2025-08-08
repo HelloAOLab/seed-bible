@@ -143,9 +143,9 @@ const SearchBar = () => {
 
     const handleNameMatch = useCallback(({ query, bookData }) => {
         let lowercaseQuery = query.toLowerCase();
-        let commonName = bookData.commonName.toLowerCase();
-        let bookId = bookData.id.toLowerCase();
-        let lowercaseQueryArr = lowercaseQuery.split(" ");
+        const commonName = bookData.commonName.toLowerCase();
+        const bookId = bookData.id.toLowerCase();
+        const lowercaseQueryArr = lowercaseQuery.split(" ");
         if (lowercaseQueryArr.length > 1) {
             if (lowercaseQueryArr[lowercaseQueryArr.length - 1] === "" || parseInt(lowercaseQueryArr[lowercaseQueryArr.length - 1])) {
                 lowercaseQuery = lowercaseQueryArr.slice(0, lowercaseQueryArr.length - 1).join(" ");
@@ -172,7 +172,7 @@ const SearchBar = () => {
             if (booksData === null || query === "") {
                 return []
             } else if (query.length > 0) {
-                let sortedBook = [];
+                const sortedBook = [];
                 for (let i = 0; i < booksData.length; i++) {
                     if (
                         handleNameMatch({ query: query, bookData: booksData[i] })
@@ -201,13 +201,13 @@ const SearchBar = () => {
 
     const filteredApiTranslations = useMemo(() => {
         if (query !== "") {
-            let translations = {};
-            let lowercaseQuery = query.toLowerCase();
+            const translations = {};
+            const lowercaseQuery = query.toLowerCase();
             Object.entries(apiTranslations).slice(0, allowedTranslationLimit).forEach(([key, value]) => {
                 if (key.includes(lowercaseQuery)) {
                     translations[key] = translations[key] ? { ...translations[key], ...value } : { ...value }
                 } else if (Object.keys(apiTranslations[key]).filter(translationKey => translationKey.includes(lowercaseQuery)).length > 0) {
-                    let values = {};
+                    const values = {};
                     Object.entries(apiTranslations[key]).forEach(([subKey, subValue]) => {
                         if (subKey.includes(lowercaseQuery)) {
                             values[subKey] = apiTranslations[key][subKey];
@@ -233,7 +233,7 @@ const SearchBar = () => {
     const handleTranslationAddition = ({ type, value, setInputValue }) => {
         if (type === "id") {
             web.get("https://bible.helloao.org/api/available_translations.json").then(request => {
-                let trValue = {
+                const trValue = {
                     pass: false,
                     value: null
                 };
@@ -245,13 +245,13 @@ const SearchBar = () => {
                         }
                     })
                     if (trValue.pass) {
-                        let translationValue = {
+                        const translationValue = {
                             ...trValue.value
                         }
                         if (apiTranslations[translationValue.languageEnglishName.toLowerCase()] && apiTranslations[translationValue.languageEnglishName.toLowerCase()][value]) {
                             os.toast(`Translation Already Exists!`)
                         } else {
-                            let translations = { ...apiTranslations };
+                            const translations = { ...apiTranslations };
                             translations[translationValue.languageEnglishName.toLowerCase()] = translations[translationValue.languageEnglishName.toLowerCase()] ? { ...translations[translationValue.languageEnglishName.toLowerCase()], [value.toLowerCase()]: translationValue } : { [value.toLowerCase()]: translationValue };
                             setSelectedTranslation({
                                 language: translationValue.languageEnglishName.toLowerCase(),
@@ -268,7 +268,7 @@ const SearchBar = () => {
             })
         } else {
             web.get("https://bible.helloao.org/api/available_translations.json").then(request => {
-                let trValue = {
+                const trValue = {
                     pass: false,
                     value: null
                 };
@@ -280,13 +280,13 @@ const SearchBar = () => {
                         }
                     })
                     if (trValue.pass) {
-                        let translationValue = {
+                        const translationValue = {
                             ...trValue.value
                         }
                         if (apiTranslations[translationValue.languageEnglishName.toLowerCase()] && apiTranslations[translationValue.languageEnglishName.toLowerCase()][trValue.value.shortName.toLowerCase()]) {
                             os.toast(`Translation Already Exists!`)
                         } else {
-                            let translations = { ...apiTranslations };
+                            const translations = { ...apiTranslations };
                             translations[translationValue.languageEnglishName.toLowerCase()] = translations[translationValue.languageEnglishName.toLowerCase()] ? { ...translations[translationValue.languageEnglishName.toLowerCase()], [value.toLowerCase()]: translationValue } : { [value.toLowerCase()]: translationValue };
                             setSelectedTranslation({
                                 language: translationValue.languageEnglishName.toLowerCase(),
@@ -373,9 +373,9 @@ const SearchBar = () => {
         } else {
             if (query.toLowerCase().includes("psalm")) {
                 if (query.split(" ").length > 1) {
-                    let queryArr = query.split(" ");
-                    let chapterNo = parseInt(queryArr[queryArr.length - 1]);
-                    if (chapterNo !== NaN) {
+                    const queryArr = query.split(" ");
+                    const chapterNo = parseInt(queryArr[queryArr.length - 1]);
+                    if (chapterNo !== null) {
                         let bookName;
                         for (let i = 0; i < PsalmsData.length; i++) {
                             if (chapterNo <= PsalmsData[i].endingBook + 1) {
@@ -414,11 +414,11 @@ const SearchBar = () => {
         }
     }, [])
     function getBooksDataForMenu(booksLink = false) {
-        let formMenuBot = getBot('system', 'baseElements.formMenu');
+        const formMenuBot = getBot('system', 'baseElements.formMenu');
         if (booksLink) {
             formMenuBot.masks['booksLink'] = booksLink
         }
-        let bookPromise = formMenuBot.bookData();
+        const bookPromise = formMenuBot.bookData();
         Promise.resolve(bookPromise).then((data) => {
             setBooksData([...data])
         }).catch((e) => {
@@ -456,7 +456,7 @@ const SearchBar = () => {
     useEffect(() => {
         web.get("https://bible.helloao.org/api/available_translations.json").then(request => {
             if (request.status === 200) {
-                let translations = {};
+                const translations = {};
                 request.data.translations.map(translation => {
                     if (showAllLanguages) {
                         translations[translation.languageEnglishName.toLowerCase()] = translations[translation.languageEnglishName.toLowerCase()] ? { ...translations[translation.languageEnglishName.toLowerCase()], [translation.shortName.toLowerCase()]: translation } : { [translation.shortName.toLowerCase()]: translation };
@@ -642,7 +642,7 @@ const NewTransOptions = ({ translationName, translations, selectedTranslation, s
                                         language: value.languageEnglishName,
                                         version: value.shortName
                                     })
-                                    let bot = getBot('system', 'main.UI2')
+                                    const bot = getBot('system', 'main.UI2')
                                     bot.masks.transilation = value.id
                                     SetTransilation(value.id)
                                     bot.masks.transilationShort = value.shortName
@@ -687,7 +687,7 @@ const TransOption = ({ translationOption, index, idx = 0, setSelectedTranslation
                                         setBooksData(e)
                                     })
                                     setSelectedTranslation(e.short)
-                                    let bot = getBot('system', 'main.UI2')
+                                    const bot = getBot('system', 'main.UI2')
                                     bot.masks.transilation = e.id
                                     SetTransilation(e.id)
                                     bot.masks.transilationShort = e.short
@@ -888,7 +888,7 @@ const SideBarChapters = ({ bookData, focusOnBook, setLastBookClicked, setBookDat
     const [currentPsalms, setCurrentPsalms] = useState("1 Psalms");
 
     useEffect(() => {
-        let renderJSX = [];
+        const renderJSX = [];
         if (bookData.startingBook || bookData.startingBook === 0) {
             for (let i = bookData.startingBook; i < bookData.endingBook + 1; i++) {
                 renderJSX.push(<div onCLick={() => handleChapterClick({

@@ -1,4 +1,4 @@
-let dim = os.getCurrentDimension();
+const dim = os.getCurrentDimension();
 
 const typingTool = getBot(byTag("typingTool"));
 
@@ -19,7 +19,7 @@ const getAllChildIds = (id) => {
 const getRootParent = (childBot) => {
     let rootParent = null;
     if(childBot.tags.parentBotId){
-        let parentBot = getBot(byTag("id", childBot.tags.parentBotId))
+        const parentBot = getBot(byTag("id", childBot.tags.parentBotId))
         if(parentBot.tags.parentBotId){
             rootParent = getRootParent(parentBot);
         }else {

@@ -1,4 +1,4 @@
-let dim = os.getCurrentDimension();
+const dim = os.getCurrentDimension();
 that.bot.masks.formOpacity = null;
 that.bot.masks.strokeColor = null;
 setTagMask(that.bot, `labelOpacity`, 0, "shared");

@@ -1,3 +1,3 @@
-let BookData = await web.get(tags.BookUrl)
+const BookData = await web.get(tags.BookUrl)
 
 return BookData.data.books

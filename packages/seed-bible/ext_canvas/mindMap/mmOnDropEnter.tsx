@@ -1,5 +1,5 @@
 const typingTool = getBot(byTag("typingTool"));
-let dim = os.getCurrentDimension();
+const dim = os.getCurrentDimension();
 const getAllChildIds = (id) => {
     const botById = getBot(byTag("id", id));
     let childrenIds = [];
@@ -17,7 +17,7 @@ const getAllChildIds = (id) => {
 const getRootParent = (childBot) => {
     let rootParent = null;
     if(childBot.tags.parentBotId){
-        let parentBot = getBot(byTag("id", childBot.tags.parentBotId))
+        const parentBot = getBot(byTag("id", childBot.tags.parentBotId))
         if(parentBot.tags.parentBotId){
             rootParent = getRootParent(parentBot);
         }else {
@@ -30,9 +30,9 @@ const getRootParent = (childBot) => {
 }
 
 const addBotToParent = async (botId) => {
-    let newChildBot = getBot(byTag("id", botId));
+    const newChildBot = getBot(byTag("id", botId));
     whisper(getBot('mmTypingManager'), "linePulser", {parentId: botId})
-    let newChildBotIndex = getBot(byTag("id", newChildBot.tags.indexBot));
+    const newChildBotIndex = getBot(byTag("id", newChildBot.tags.indexBot));
     newChildBot.tags.hold = true;
     newChildBot.tags.parentBotId = tags.id;
     setTagMask(thisBot, "lineTo", [...masks.lineTo, newChildBot.tags.id], "shared");
@@ -57,19 +57,19 @@ const addBotToParent = async (botId) => {
         duration: 0.1,
         tagMaskSpace: "shared"
     });
-    let rootParent = getRootParent(thisBot);
+    const rootParent = getRootParent(thisBot);
     const allChildIds = [rootParent.tags.id, ...getAllChildIds(rootParent.tags.id)];
     for(let i = 0; i < allChildIds.length; i++){
-        let subBot = getBot(byTag("id", allChildIds[i]));
+        const subBot = getBot(byTag("id", allChildIds[i]));
         if(subBot.tags.indexBot){
-            let subIndexBot = getBot(byTag("id", subBot.tags.indexBot));
+            const subIndexBot = getBot(byTag("id", subBot.tags.indexBot));
             subIndexBot.masks.label = null;
             setTagMask(subIndexBot, "label", `${i + 1}`, "shared");
         }
     }
     for(let i = 0; i < masks.childIds.length; i++){
-        let subBot = getBot(byTag("id", masks.childIds[i]));
-        let yPosition = (masks.childIds.length - (2 * i + 1)) * 1.5
+        const subBot = getBot(byTag("id", masks.childIds[i]));
+        const yPosition = (masks.childIds.length - (2 * i + 1)) * 1.5
         animateTag(subBot, {
             fromValue: {
                 [dim + "Y"]: subBot.tags[dim + "Y"],
@@ -81,7 +81,7 @@ const addBotToParent = async (botId) => {
             tagMaskSpace: "shared"
         });
         if(subBot.tags.indexBot){
-            let subIndexBot = getBot(byTag("id", subBot.tags.indexBot));
+            const subIndexBot = getBot(byTag("id", subBot.tags.indexBot));
             animateTag(subIndexBot, {
                 fromValue: {
                     [dim + "Y"]: subIndexBot.tags[dim + "Y"],
@@ -119,7 +119,7 @@ if(that.bot.id !== tags.id){
         "ab.factory.track"
     ]
     if(that.bot.tags.textBot){
-        let textBot = getBot(byTag("id", that.bot.tags.textBot));
+        const textBot = getBot(byTag("id", that.bot.tags.textBot));
         if(!textBot.tags.parentBotId){
             addBotToParent(that.bot.tags.textBot);
         }
@@ -141,9 +141,9 @@ if(that.bot.id !== tags.id){
     if(that.to.bot && that.to.bot.tags.indexBot){
         return
     }
-    let xDisposition = that.from.x - that.to.x;
-    let yDisposition = that.from.y - that.to.y;
-    let childrenIds = getAllChildIds(tags.id);
+    const xDisposition = that.from.x - that.to.x;
+    const yDisposition = that.from.y - that.to.y;
+    const childrenIds = getAllChildIds(tags.id);
     whisper(getBot('mmTypingManager'), "moveBots", {childrenIds, xDisposition, yDisposition, space: "tempShared"});
     // if(tags.space === "tempShared"){
     //     whisper(getBot('mmTypingManager'), "moveBots", {childrenIds, xDisposition, yDisposition, space: `tempShared`});
@@ -153,8 +153,8 @@ if(that.bot.id !== tags.id){
 
 tags.initPos = {x: that.to.x, y: that.to.y};
 
-let usbBots = getBots('usbForm');
-let indexBot = getBot(byTag('id', tags.indexBot))
+const usbBots = getBots('usbForm');
+const indexBot = getBot(byTag('id', tags.indexBot))
 for(let i = 0; i < usbBots.length; i++){
     if(usbBots[i].tags[dim + "X"] > indexBot.tags[dim + "X"] - 0.5
         &&
@@ -189,9 +189,9 @@ for(let i = 0; i < usbBots.length; i++){
             duration: 0.1
         })
         usbBots[i].tags.allotedMindmap = tags.id;
-        let lockBot = getBot(byTag('id', usbBots[i].tags.lockId));
+        const lockBot = getBot(byTag('id', usbBots[i].tags.lockId));
         lockBot.tags.formAddress = lockBot.tags.formAddresses[0];
-        let slider = getBot(byTag('id', usbBots[i].tags.sliderId));
+        const slider = getBot(byTag('id', usbBots[i].tags.sliderId));
         slider.tags.slots = slider.tags.slots ? slider.tags.slots.indexOf(usbBots[i].tags.id) === -1 ? [...slider.tags.slots, usbBots[i].tags.id] : [...slider.tags.slots] : [usbBots[i].tags.id];
     }else if(!usbBots[i].tags.allotedMindmap){
         if(usbBots[i].tags.allotedMindmap !== " "){
