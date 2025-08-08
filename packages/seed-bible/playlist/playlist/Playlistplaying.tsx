@@ -13,9 +13,10 @@ if (!globalThis.IsQueuePresent) {
             ...prev,
             [keyNumber]: {
                 name: playlistName,
-                list: playlist.list,
+                list: playlist.isLayers ? thisBot.PlayingLayersConversion(playlist.list) : playlist.list,
                 id: createUUID(),
-                playlistID: playlist.id
+                playlistID: playlist.id,
+                isLayers: playlist.isLayers
             }
         }
     });
@@ -45,8 +46,10 @@ const ButtonStyle = {
 
 let subIndex = startSubIndex;
 
+
 const playlist = globalThis[`${parentId}playlists`].find(ele => ele.id === playingPlaylist);
-const thh = thisBot.groupVerse(playlist.list);
+const isLayers = playlist.isLayers;
+const thh = isLayers ? playlist.list : thisBot.groupVerse(playlist.list);
 
 const checklistEnabled = playlist.checklistEnabled;
 
@@ -55,29 +58,34 @@ const readingPlanEnabled = playlist.readingPlanEnabled;
 const currentFormat = playlist.dateFormat;
 
 
-const getCurrentItem = (key, index, playlists, subIndex) => {
-    const list = thisBot.groupVerse(playlists[key]?.list);
+const getCurrentItem = (key, index, playlists, subIndex, layers) => {
+
+    const list = layers ? playlists[key]?.list : thisBot.groupVerse(playlists[key]?.list);
 
     let targetItem = null;
+    let isNested = false;
 
     // if (queue?.length) {
     //     targetItem = queue[0]
     // } else {
     // }
 
+    if (!list) return;
+
     targetItem = list[index];
 
-    const isCurrentItemTargetItem = targetItem?.type === "chapter-range";
+    const isCurrentItemTargetItem = targetItem?.type === "chapter-range" || (!!targetItem?.additionalInfo?.layers?.length);
 
     if (isCurrentItemTargetItem) {
-        targetItem = targetItem.additionalInfo[subIndex]
+        targetItem = layers ? targetItem.additionalInfo.layers[subIndex] : targetItem.additionalInfo[subIndex];
+        isNested = true;
     }
 
     let prefix = '';
 
     if (targetItem?.type === "heading") prefix = " - 'Heading'"
 
-    return { ...targetItem, prefix };
+    return { ...targetItem, prefix, isNested };
     // let targetItem = null;
     // if (subIndex > -1) {
     //     const th = thisBot.groupVerse(list[index].list);
@@ -175,7 +183,7 @@ if (readingPlanEnabled) {
 
 if (!checklistEnabled) {
     const findIndex = readingPlanEnabled ? firstActiveIndex : firstIndex;
-    const tgITM = getCurrentItem(0, findIndex, { 0: { list: playlist.list } }, 0);
+    const tgITM = getCurrentItem(0, findIndex, { 0: { list: playlist.list } }, 0, isLayers);
 
 
     if (tgITM.type === "attachment-link") {
@@ -214,9 +222,10 @@ const PlayingPlaylist = () => {
     const [playlists, setPlaylists] = useState({
         0: {
             name: playlistName,
-            list: [...(playlist?.list || [])],
+            list: [...(playlist.isLayers ? thisBot.PlayingLayersConversion(playlist.list) : playlist.list)],
             id: createUUID(),
-            playlistID: playlist.id
+            playlistID: playlist.id,
+            isLayers: playlist.isLayers
         }
     });
     // const [dragList, setDragList] = useState([]);
@@ -303,16 +312,20 @@ const PlayingPlaylist = () => {
         let newSubIndex = directSet ? 0 : indexes.subIndex;
         let newKey = directSetKey ? directSetKey : indexes.key;
 
-        const tranformedList = thisBot.groupVerse(playlists[indexes.key]?.list);
+        const isLayer = playlists[indexes.key]?.isLayers;
+
+        const tranformedList = isLayer ? playlists[indexes.key]?.list : thisBot.groupVerse(playlists[indexes.key]?.list);
         const currentItem = tranformedList[indexes.index];
+
+        const toBeMapArray = !!currentItem?.additionalInfo?.layers?.length ? currentItem?.additionalInfo.layers : currentItem?.additionalInfo;
         // const isCurrentItemGroup = tranformedList[]
 
-        const isCurrentItemChapterRange = currentItem?.type === "chapter-range";
+        const isCurrentItemChapterRange = currentItem?.type === "chapter-range" || !!currentItem.additionalInfo?.layers?.length;
 
         if (!isCurrentItemChapterRange) newSubIndex = 0;
 
         if (isCurrentItemChapterRange && !directSet) {
-            const lengthOfChapterRange = currentItem?.additionalInfo?.length;
+            const lengthOfChapterRange = toBeMapArray?.length;
             newIndex -= order;
             if (order > 0) {
                 if (lengthOfChapterRange <= (newSubIndex + order)) {
@@ -326,7 +339,10 @@ const PlayingPlaylist = () => {
             } else {
                 if ((newSubIndex + order) < 0) {
                     const prevItem = tranformedList[indexes.index - 1];
-                    const prevItemList = prevItem?.type === "chapter-range" ? prevItem?.additionalInfo : [];
+
+                    const wasPrevItemArray = prevItem?.type === "chapter-range";
+
+                    const prevItemList = wasPrevItemArray ? prevItem?.additionalInfo : !!prevItem?.additionalInfo?.layers?.length ? prevItem?.additionalInfo?.layers : [];
                     // This Might Break When Order is > 1
                     newSubIndex = (prevItemList.length + newSubIndex) + order;
                     if (prevItem) newIndex -= 1;
@@ -340,7 +356,7 @@ const PlayingPlaylist = () => {
             if (order > 0) {
                 const currentListLength = tranformedList.length;
 
-                if ((currentListLength <= (indexes.index + order)) && (!isCurrentItemChapterRange || (indexes.subIndex + order) >= currentItem?.additionalInfo?.length)) {
+                if ((currentListLength <= (indexes.index + order)) && (!isCurrentItemChapterRange || (indexes.subIndex + order) >= toBeMapArray?.length)) {
                     const allKeys = Object.keys(playlists);
                     const currentKeyIndex = allKeys.findIndex(ele => ele == indexes.key);
                     newKey = allKeys[currentKeyIndex + 1];
@@ -353,13 +369,13 @@ const PlayingPlaylist = () => {
                     const allKeys = Object.keys(playlists);
                     const currentKeyIndex = allKeys.findIndex(ele => ele == indexes.key);
                     newKey = allKeys[currentKeyIndex - 1];
-                    newIndex = thisBot.groupVerse(playlists[newKey]?.list)?.length - 1;
+                    newIndex = (playlists[newKey]?.isLayers ? playlists[newKey]?.list : thisBot.groupVerse(playlists[newKey]?.list))?.length - 1;
                     newSubIndex = 0;
                 }
             }
         }
 
-        const newValues = {
+        let newValues = {
             index: newIndex,
             key: newKey,
             fromButton: order,
@@ -367,8 +383,11 @@ const PlayingPlaylist = () => {
             subIndex: newSubIndex
         };
 
-        const targetItem = getCurrentItem(newValues.key, newValues.index, playlists, newValues.subIndex);
-        if (["heading", 'date'].findIndex(ele => ele === targetItem?.type) > -1) {
+        const targetItem = getCurrentItem(newValues.key, newValues.index, playlists, newValues.subIndex, playlists[newValues.key]?.isLayers);
+
+        const isLayersAndScripture = playlists[newValues.key]?.isLayers && targetItem.isNested && targetItem.type !== 'attachment-link' && newValues.subIndex !== 0;
+
+        if (["heading", 'date'].findIndex(ele => ele === targetItem?.type) > -1 || isLayersAndScripture) {
 
             if (targetItem.type === "date" && !getIndexOnly) {
                 setItemVisitedMap(prev => ({ ...prev, [targetItem.id]: true }));
@@ -433,12 +452,12 @@ const PlayingPlaylist = () => {
                 return prevPlaylists;
             }
 
-            const { list: currentList, SQ } = currentPlaylist;
+            const { list: currentList, SQ, isLayers } = currentPlaylist;
             let splitIndex = currIndex.index;
 
             let extraPoints = 0;
 
-            const thh = this.groupVerse(currentList);
+            const thh = isLayers ? currentList : this.groupVerse(currentList);
 
             thh.forEach((ele, index) => {
                 if (index <= splitIndex) {
@@ -554,17 +573,18 @@ const PlayingPlaylist = () => {
     }, [handleOnButtonPress, transformedHistory]);
 
     const [currentPlaylistName, currentItemID, typeContent, nextItemName, prevItemName, currentItemName] = useMemo(() => {
-        const targetItem = getCurrentItem(currIndex.key, currIndex.index, playlists, currIndex.subIndex);
+        const { name: currentPlaylistName } = playlists[currIndex.key];
+
+        const targetItem = getCurrentItem(currIndex.key, currIndex.index, playlists, currIndex.subIndex, playlists[currIndex.key]?.isLayers);
         const currentItemName = targetItem;
         const currentItemType = targetItem?.type;
 
-        const { name: currentPlaylistName } = playlists[currIndex.key];
 
         const nextIndexes = handleOnButtonPress(1, true);
         const prevIndex = handleOnButtonPress(-1, true);
 
-        const nextItem = getCurrentItem(nextIndexes.key, nextIndexes.index, playlists, nextIndexes.subIndex);
-        const prevItem = (prevIndex.isPreviousQueue) ? oldData[oldData.length - 1] : getCurrentItem(prevIndex.key, prevIndex.index, playlists, prevIndex.subIndex);
+        const nextItem = getCurrentItem(nextIndexes.key, nextIndexes.index, playlists, nextIndexes.subIndex, playlists[nextIndexes.key]?.isLayers);
+        const prevItem = (prevIndex.isPreviousQueue) ? oldData[oldData.length - 1] : getCurrentItem(prevIndex.key, prevIndex.index, playlists, prevIndex.subIndex, playlists[prevIndex.key]?.isLayers);
 
         // setOldData(prev => [...prev, targetItem]);
         setItemVisitedMap(prev => ({ ...prev, [targetItem.id]: true }));
@@ -572,7 +592,10 @@ const PlayingPlaylist = () => {
         if (targetItem?.type === "attachment-link") {
             thisBot.RenderLinkContent({ ...targetItem, isLastItem: !nextItem, isFirstItem: !prevItem });
         } else if (currIndex.fromButton !== 0) {
-            const isBulk = Array.isArray(targetItem.additionalInfo);
+            const isBulk = !!targetItem?.additionalInfo?.layers?.length || Array.isArray(targetItem.additionalInfo);
+
+            const toBeMapArray = targetItem?.additionalInfo?.layers?.length ? targetItem?.additionalInfo?.layers : Array.isArray(targetItem.additionalInfo);
+
             if (targetItem?.type === "heading") {
                 setHeading(targetItem.content);
 
@@ -581,7 +604,7 @@ const PlayingPlaylist = () => {
                 const isFirstKey = currIndex.key == 0;
                 const isLastKey = currIndex.key == allKeys[allKeys.length - 1];
 
-                const th = this.groupVerse(playlists[currIndex.key].list);
+                const th = playlists[currIndex.key].isLayers ? playlists[currIndex.key].list : this.groupVerse(playlists[currIndex.key].list);
 
                 const isFirstItemAndBackButton = currIndex.fromButton < 0 && currIndex.index == 0 && isFirstKey;
                 const isLastItemAndLastButton = currIndex.fromButton > 0 && isLastKey && currIndex.index == (th.length - 1);
@@ -593,7 +616,7 @@ const PlayingPlaylist = () => {
                     os.toast(`${targetItem.content} is Already Opened.Skipping it!`)
                     handleOnButtonPress(currIndex.fromButton);
                 } else {
-                    thisBot.navigationWithDataItem({ dataItem: isBulk ? targetItem.additionalInfo : targetItem, bulkAdd: isBulk });
+                    thisBot.navigationWithDataItem({ dataItem: isBulk ? toBeMapArray : targetItem, bulkAdd: isBulk });
                 }
                 // SetBlinker({});
             }
@@ -603,15 +626,20 @@ const PlayingPlaylist = () => {
         return [currentPlaylistName, targetItem.id, currentItemType, nextItem, prevItem, currentItemName];
     }, [currIndex, playlists, queue, refs]);
 
-    const onClick = ({ key, dataItem, bulkAdd = false }) => {
+    const onClick = ({ key, dataItem, bulkAdd = false, }) => {
         const data = bulkAdd ? { ...dataItem[0] } : { ...dataItem };
-        const th = thisBot.groupVerse(playlists[key].list);
+
+        const isLayers = playlists[key].isLayers;
+
+        const th = isLayers ? playlists[key].list : thisBot.groupVerse(playlists[key].list);
         let index = th.findIndex(ele => ele.id === data.id);
+
         if (bulkAdd || index === -1) {
             th.findIndex((item, i) => {
-                if (Array.isArray(item.additionalInfo)) {
+                const toBeMapped = isLayers ? item.additionalInfo.layers : item.additionalInfo;
+                if (Array.isArray(toBeMapped)) {
                     const idMap = {};
-                    item.additionalInfo.forEach(({ id }) => {
+                    toBeMapped.forEach(({ id }) => {
                         idMap[id] = true;
                     });
                     if (idMap[data.id]) {
@@ -661,14 +689,13 @@ const PlayingPlaylist = () => {
 
     const editDataFromPlaylist = (ids, key, play) => {
 
-        const isShiftHold = globalThis?.KEY_HOLD?.['Shift'];
-
+        const isShiftHold = globalThis?.KEY_HOLD?.['shift'];
 
         const prevIds = { ...checkedItems };
 
         const isArray = Array.isArray(ids);
 
-        const newIds = isArray ? [...ids] : [ids];
+        let newIds = isArray ? [...ids] : [ids];
 
         let firstIDIndex = -1;
 
@@ -723,7 +750,7 @@ const PlayingPlaylist = () => {
 
         globalThis.LAST_INDEX_CHECKLIST_CHECKED = firstIDIndex;
 
-        const thCurrent = thisBot.groupVerse(playlist.list);
+        const thCurrent = playlist.isLayers ? playlist.list : thisBot.groupVerse(playlist.list);
 
         if (targetItem.length > 1) {
             thCurrent.forEach(ele => {
@@ -759,7 +786,7 @@ const PlayingPlaylist = () => {
         const i = currIndex.index;
         const list = playlist.list;
 
-        const gp = this.groupVerse(list);
+        const gp = playlist.isLayers ? list : this.groupVerse(list);
 
         let lastActiveDateID = -1;
 
@@ -854,7 +881,7 @@ const PlayingPlaylist = () => {
                         null
                 }
                 {Object.keys(playlists).map(key => {
-                    const { name, list, broken, playlistID, id } = playlists[key];
+                    const { name, list, broken, playlistID, id, isLayers } = playlists[key];
                     if (playlistID) {
                         if (!globalThis['defaultplaylistProgress']) globalThis['defaultplaylistProgress'] = {};
                         if (!globalThis['defaultplaylistChecked']) globalThis['defaultplaylistChecked'] = {};
@@ -874,6 +901,7 @@ const PlayingPlaylist = () => {
                             isPlayer={checklistEnabled}
                             currentFormat={currentFormat}
                             list={list}
+                            layers={isLayers}
                             currentDateActive={activeDate}
                             editDataFromPlaylist={(data, play = true) => editDataFromPlaylist(data, key, play)}
                             oldItemsMap={{ ...itemVisitedMap, ...checkedItems }}
@@ -896,13 +924,17 @@ const PlayingPlaylist = () => {
                             // activeItemList={false ? activeIndexs : {}}
                             deleteFromList={() => { }}
                             creatingPlaylist={false}
-                            onClick={({ dataItem, bulkAdd }) => {
+                            onClick={({ dataItem, bulkAdd, justPlay }) => {
                                 DataManager.cancelCurrentPlayingSound();
+                                if (justPlay) {
+                                    thisBot.navigationWithDataItem({ dataItem });
+                                    return;
+                                }
                                 onClick({
                                     dataItem,
                                     bulkAdd,
                                     key
-                                })
+                                });
                             }}
                             onClickItem={() => { }}
                         />
@@ -976,154 +1008,154 @@ const PlayingPlaylist = () => {
                             // thisBot.showInfo(`History Mode`);
                         }} >
                         <span class="material-symbols-outlined unfollow" style={ButtonStyle}>
-                        stop
-                    </span>
-                </Button>
-            </div>
-        }
-        <div style={{ display: 'flex', flexDirection: 'column', height: '100%' }}>
-            <div
-                style={{
-                    display: 'flex',
-                    flexDirection: 'row',
-                    justifyContent: 'space-between',
-                    gap: '0.5rem',
-                    width: "calc(100%)"
-                }}
-            >
-                <div style={{ width: '50%', flexDirection: 'column', display: 'flex' }}>
-                    <p style={{
-                        fontSize: '12px',
-                        fontWeight: '600',
-                        display: "flex",
-                        alignItems: 'center'
-                    }}>
-                        Currently Playing
-                    </p>
-                    <div style={{ gap: '0.5rem', }} className="align-center">
-                        <div style={{ height: '2.5rem', width: '2.5rem', display: 'grid', placeItems: 'center', backgroundColor: '#D3643329', borderRadius: '0.25rem' }} >
-                            <span style={{ margin: '0', fontSize: '18px' }} class="material-symbols-outlined unfollow">
-                                {currentItemName.type === 'attachment-link' ? 'media_link' : 'description'}
-                            </span>
-                        </div>
-                        <div>
+                            stop
+                        </span>
+                    </Button>
+                </div>
+                }
+                <div style={{ display: 'flex', flexDirection: 'column', height: '100%' }}>
+                    <div
+                        style={{
+                            display: 'flex',
+                            flexDirection: 'row',
+                            justifyContent: 'space-between',
+                            gap: '0.5rem',
+                            width: "calc(100%)"
+                        }}
+                    >
+                        <div style={{ width: '50%', flexDirection: 'column', display: 'flex' }}>
                             <p style={{
                                 fontSize: '12px',
                                 fontWeight: '600',
                                 display: "flex",
                                 alignItems: 'center'
                             }}>
-                                {currentItemName?.content ? `${currentItemName?.content}${currentItemName?.prefix}`.substring(0, 16) : ""}{`${currentItemName?.content}${currentItemName?.prefix}`.length > 16 ? '...' : ""}
+                                Currently Playing
+                            </p>
+                            <div style={{ gap: '0.5rem', }} className="align-center">
+                                <div style={{ height: '2.5rem', width: '2.5rem', display: 'grid', placeItems: 'center', backgroundColor: '#D3643329', borderRadius: '0.25rem' }} >
+                                    <span style={{ margin: '0', fontSize: '18px' }} class="material-symbols-outlined unfollow">
+                                        {currentItemName.type === 'attachment-link' ? 'media_link' : 'description'}
+                                    </span>
+                                </div>
+                                <div>
+                                    <p style={{
+                                        fontSize: '12px',
+                                        fontWeight: '600',
+                                        display: "flex",
+                                        alignItems: 'center'
+                                    }}>
+                                        {currentItemName?.content ? `${currentItemName?.content}${currentItemName?.prefix}`.substring(0, 16) : ""}{`${currentItemName?.content}${currentItemName?.prefix}`.length > 16 ? '...' : ""}
+                                    </p>
+                                    <p
+                                        style={{
+                                            color: "green",
+                                            fontSize: "12px",
+                                            fontWeight: "900"
+                                        }}
+                                    >{nextItemName?.content ? "" : " (Playlist Ended)"}</p>
+                                    <p style={{ fontSize: '12px', textTransform: "capitalize" }}>{currentItemName.type}</p>
+                                </div>
+
+                            </div>
+                        </div>
+                        <div className="flex align-center" style={{ gap: '0.5rem' }}>
+                            <p style={{ margin: '0', width: 'max-content' }} className="playlist-action small" onClick={toggleHide}>
+                                <span class="material-symbols-outlined unfollow" style={{ margin: '0' }}>
+                                    flex_no_wrap
+                                </span>
+                                {false && <span>
+                                    {checklistEnabled ? "Player" : "Queue"}
+                                </span>}
                             </p>
                             <p
-                                style={{
-                                    color: "green",
-                                    fontSize: "12px",
-                                    fontWeight: "900"
+                                onClick={() => {
+                                    setOpenAttachLink(true);
                                 }}
-                            >{nextItemName?.content ? "" : " (Playlist Ended)"}</p>
-                            <p style={{ fontSize: '12px', textTransform: "capitalize" }}>{currentItemName.type}</p>
+                                style={{ margin: '0', width: 'max-content' }}
+                                className="playlist-action small"
+                            >
+                                <span style={{ margin: '0' }} class="material-symbols-outlined unfollow">
+                                    add
+                                </span>
+                            </p>
                         </div>
+                    </div>
 
+                    <div style={{ display: 'flex', width: '100%', justifyContent: "space-between", alignItems: 'center', marginTop: 'auto' }}>
+
+                        <Button
+                            style={{
+                                fontSize: '12px',
+                                margin: '0',
+                                minWidth: 'auto',
+                                backgroundColor: '#F8E6DE',
+                                border: '1px solid #D36433',
+                                color: '#4459F3',
+                                padding: '8px',
+                                fontSize: '12px'
+                            }}
+                            onClick={() => {
+                                if (!prevItemName?.content) return;
+                                DataManager.cancelCurrentPlayingSound();
+                                handleOnButtonPress(-1);
+                            }}
+                        >
+                            <span class="material-symbols-outlined unfollow">
+                                skip_previous
+                            </span>
+                        </Button>
+                        <p
+                            onClick={() => {
+                                DataManager.cancelCurrentPlayingSound();
+                                // globalThis.SetPlayingPlaylist && globalThis.SetPlayingPlaylist(false);
+                                globalThis[`${parentId}ToggleGreyCheckPLayingPlaylist`] && globalThis[`${parentId}ToggleGreyCheckPLayingPlaylist`](null);
+                                globalThis.IsQueuePresent = false;
+                                // os.unregisterApp("playing-playlist");
+                                globalThis.IS_PLAYLIST_ACTIVE = false;
+                                globalThis.SetSplitAppPanel2(null);
+                                // thisBot.showInfo(`History Mode`);
+                            }}
+                            style={{ margin: '0', width: '2.55rem', height: '2.55rem', borderRadius: '50%', border: 'none' }}
+                            className="playlist-action small"
+                        >
+                            <span style={{ margin: '0', fontSize: '14px', backgroundColor: '#D36433' }} class="material-symbols-outlined unfollow">
+                                stop
+                            </span>
+                        </p>
+                        <Button
+                            style={{
+                                fontSize: '12px',
+                                margin: '0',
+                                minWidth: 'auto',
+                                backgroundColor: '#F8E6DE',
+                                border: '1px solid #D36433',
+                                color: '#4459F3',
+                                padding: '8px',
+                                fontSize: '12px'
+                            }}
+                            onClick={() => {
+                                DataManager.cancelCurrentPlayingSound();
+                                if (!!nextItemName?.content) {
+                                    handleOnButtonPress(1);
+                                    return;
+                                }
+                                // globalThis.SetPlayingPlaylist && globalThis.SetPlayingPlaylist(false);
+                                globalThis[`${parentId}ToggleGreyCheckPLayingPlaylist`] && globalThis[`${parentId}ToggleGreyCheckPLayingPlaylist`](null);
+                                globalThis.IsQueuePresent = false;
+                                globalThis.IS_PLAYLIST_ACTIVE = false;
+                                globalThis.SetSplitAppPanel2(null);
+                                // os.unregisterApp("playing-playlist");
+                                // thisBot.showInfo(`History Mode`);
+                            }}
+                        >
+                            <span class="material-symbols-outlined unfollow">
+                                {!!nextItemName?.content ? "skip_next " : "last_page"}
+                            </span>
+                        </Button>
                     </div>
                 </div>
-                <div className="flex align-center" style={{ gap: '0.5rem' }}>
-                    <p style={{ margin: '0', width: 'max-content' }} className="playlist-action small" onClick={toggleHide}>
-                        <span class="material-symbols-outlined unfollow" style={{ margin: '0' }}>
-                            flex_no_wrap
-                        </span>
-                        {false && <span>
-                            {checklistEnabled ? "Player" : "Queue"}
-                        </span>}
-                    </p>
-                    <p
-                        onClick={() => {
-                            setOpenAttachLink(true);
-                        }}
-                        style={{ margin: '0', width: 'max-content' }}
-                        className="playlist-action small"
-                    >
-                        <span style={{ margin: '0' }} class="material-symbols-outlined unfollow">
-                            add
-                        </span>
-                    </p>
-                </div>
-            </div>
-
-            <div style={{ display: 'flex', width: '100%', justifyContent: "space-between", alignItems: 'center', marginTop: 'auto' }}>
-
-                <Button
-                    style={{
-                        fontSize: '12px',
-                        margin: '0',
-                        minWidth: 'auto',
-                        backgroundColor: '#F8E6DE',
-                        border: '1px solid #D36433',
-                        color: '#4459F3',
-                        padding: '8px',
-                        fontSize: '12px'
-                    }}
-                    onClick={() => {
-                        if (!prevItemName?.content) return;
-                        DataManager.cancelCurrentPlayingSound();
-                        handleOnButtonPress(-1);
-                    }}
-                >
-                    <span class="material-symbols-outlined unfollow">
-                        skip_previous
-                    </span>
-                </Button>
-                <p
-                    onClick={() => {
-                        DataManager.cancelCurrentPlayingSound();
-                        // globalThis.SetPlayingPlaylist && globalThis.SetPlayingPlaylist(false);
-                        globalThis[`${parentId}ToggleGreyCheckPLayingPlaylist`] && globalThis[`${parentId}ToggleGreyCheckPLayingPlaylist`](null);
-                        globalThis.IsQueuePresent = false;
-                        // os.unregisterApp("playing-playlist");
-                        globalThis.IS_PLAYLIST_ACTIVE = false;
-                        globalThis.SetSplitAppPanel2(null);
-                        // thisBot.showInfo(`History Mode`);
-                    }}
-                    style={{ margin: '0', width: '2.55rem', height: '2.55rem', borderRadius: '50%', border: 'none' }}
-                    className="playlist-action small"
-                >
-                    <span style={{ margin: '0', fontSize: '14px', backgroundColor: '#D36433' }} class="material-symbols-outlined unfollow">
-                        stop
-                    </span>
-                </p>
-                <Button
-                    style={{
-                        fontSize: '12px',
-                        margin: '0',
-                        minWidth: 'auto',
-                        backgroundColor: '#F8E6DE',
-                        border: '1px solid #D36433',
-                        color: '#4459F3',
-                        padding: '8px',
-                        fontSize: '12px'
-                    }}
-                    onClick={() => {
-                        DataManager.cancelCurrentPlayingSound();
-                        if (nextItemName?.content) {
-                            handleOnButtonPress(1);
-                            return;
-                        }
-                        // globalThis.SetPlayingPlaylist && globalThis.SetPlayingPlaylist(false);
-                        globalThis[`${parentId}ToggleGreyCheckPLayingPlaylist`] && globalThis[`${parentId}ToggleGreyCheckPLayingPlaylist`](null);
-                        globalThis.IsQueuePresent = false;
-                        globalThis.IS_PLAYLIST_ACTIVE = false;
-                        globalThis.SetSplitAppPanel2(null);
-                        // os.unregisterApp("playing-playlist");
-                        // thisBot.showInfo(`History Mode`);
-                    }}
-                >
-                    <span class="material-symbols-outlined unfollow">
-                        {nextItemName?.content ? "skip_next " : "last_page"}
-                    </span>
-                </Button>
-            </div>
-        </div>
-    </div >
+            </div >
         }
     </>
 

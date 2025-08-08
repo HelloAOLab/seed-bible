@@ -1,0 +1,8 @@
+export class ElementInfo
+{
+    constructor({typeOfElement, key})
+    {
+        this.typeOfElement = typeOfElement;
+        this.key = key;
+    }
+}

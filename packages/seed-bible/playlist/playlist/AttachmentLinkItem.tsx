@@ -34,7 +34,13 @@ const AttachLinkItem = ({
     originalList,
     datesRepeat,
     datesInWrongOrder,
-    currentFormat
+    currentFormat,
+    isSomethingEmbededChecked,
+    draggable = true,
+    layers,
+    onDisembed,
+    playingPlaylist = false,
+    justPlay = false,
 }) => {
 
     const [editDateModal, setEditDateModal] = useState(false);
@@ -83,15 +89,16 @@ const AttachLinkItem = ({
             </Modal >
         )}
         <div
-            draggable={!viewOnly}
+            draggable={draggable && !viewOnly}
             // ref={ref => setRef.current[data.id] = ref}
+            // ${(oldItemsMap[data.id] || isSomethingEmbededChecked) ? 'greyed-out' : ''}
             tabIndex={0}
             className={`history-item 
                 ${currentDateActive === data.id && "current-date-active"} 
                 ${datesRepeat[data.id] && "current-date-repeat"} 
                 ${datesInWrongOrder[data.id] && "current-date-disorder"} 
                 ${(data.id === activeItemID || activeItemList[data.id]) && "current-playing-item"} 
-                ${oldItemsMap[data.id] ? 'greyed-out' : ''}
+                ${(oldItemsMap[data.id]) ? 'greyed-out' : ''}
             `}
             onPointerDown={() => {
                 if (data.type === "date") return;
@@ -131,6 +138,7 @@ const AttachLinkItem = ({
                 {data.type !== "heading" && data.type !== "date" && checklistEnabled && !viewOnly ?
                     <Checkbox
                         small
+                        // disabled={isSomethingEmbededChecked}
                         checked={checkListData[data.id] || data.readAlready}
                         onClick={() => {
                             editDataFromPlaylist(data.id, false);
@@ -181,6 +189,16 @@ const AttachLinkItem = ({
             </p>
             <div className="actions">
                 {false && <a style={{ marginLeft: "10px" }} target="_blank" rel="noreferrer" href={data.additionalInfo?.link}>🔗</a>}
+
+                {!playingPlaylist && !!onDisembed && layers && creatingPlaylist && !viewOnly && <p className={`end-icon without-right-margin ${`${isMobile && "visible"} end-icon without-right-margin`}`} onClick={() => {
+                    if (onDisembed) {
+                        onDisembed();
+                    }
+                }} >
+                    <span class="material-symbols-outlined unfollow delete-icon">
+                        link_off
+                    </span>
+                </p>}
                 {creatingPlaylist && !viewOnly && <p className={`${isMobile && "visible"} end-icon without-right-margin`} onClick={() => deleteFromList(originalIndex)} >
                     <span class="material-symbols-outlined unfollow delete-icon">
                         delete
@@ -190,7 +208,7 @@ const AttachLinkItem = ({
 
                 {false && <Linking linkingMode={linkingMode} playlistName={playlistName} data={data} playListId={playlistId} />}
             </div>
-        </div>
+        </div >
     </>
 }
 

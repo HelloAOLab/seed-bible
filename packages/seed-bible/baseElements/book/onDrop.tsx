@@ -1,0 +1,1 @@
+shout("OnBookInteracted", {book: thisBot, typeOfInteraction: StackElementInteractionType.Drop, dropInfo: that});

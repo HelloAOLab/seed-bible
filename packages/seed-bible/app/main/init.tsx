@@ -4,7 +4,7 @@ return
 thisBot.main()
 //
 // destroy()
-const localStorage = getBot('system', 'app.localStorage')
+let localStorage = getBot('system', 'app.localStorage')
 if (!localStorage)
     create({
         system: 'app.localStorage',

@@ -1,7 +1,5 @@
 const { useState, useRef } = os.appHooks;
-import { Space, LoadSpace, ToolbarIcon, UserAvatar } from 'app.components.icons'
-import { useTabsContext } from 'app.hooks.tabs';
-const { useEffect } = os.appHooks;
+
 export function ImportSpaceModal() {
     const [spaceId, setSpaceId] = useState('');
     const [isDragging, setIsDragging] = useState(false);
@@ -375,14 +373,13 @@ export function RenameSpaceModal({ updateSpace, activeSpace }) {
 
     const handleSave = () => {
         // Handle save logic here
-        // closePopupSettings()
-        // console.log('Space renamed to:', spaceName, 'with icon:', selectedIcon);
-        // updateSpace(activeSpace, { name: spaceName, icon: selectedIcon.emoji })
+        console.log('Space renamed to:', spaceName, 'with icon:', selectedIcon);
+        updateSpace(activeSpace, { name: spaceName, icon: selectedIcon.emoji })
+        closePopupSettings()
     };
 
     const handleCancel = () => {
         // Handle cancel logic here
-        closePopupSettings()
         console.log('Rename canceled');
     };
 
@@ -512,8 +509,7 @@ export function CreateNewSpaceModal({ addSpace }) {
             borderRadius: '8px',
             width: '380px',
             padding: '20px',
-            boxShadow: '0 4px 6px rgba(0, 0, 0, 0.1)',
-            padding: " 30px !important",
+            boxShadow: '0 4px 6px rgba(0, 0, 0, 0.1)'
         },
         headerText: {
             fontSize: '18px',
@@ -792,275 +788,3 @@ export function CreateNewSpaceModal({ addSpace }) {
         </div>
     );
 }
-
-export function SpaceSettingsForm() {
-
-
-    const { updateSpace, activeSpace, spaces } = useTabsContext();
-    const CurrentSpace = spaces.find(e => e.id === activeSpace)
-    const [spaceName, setSpaceName] = useState(CurrentSpace.name);
-    const [selectedIcon, setSelectedIcon] = useState(CurrentSpace?.iconIndex || 0);
-
-    const icons = [
-        <Space />,
-        'dashboard',
-        'auto_stories',
-        'menu_book',
-        'bookmarks',
-        'library_books',
-        'history',
-        'event_note',
-        'schedule',
-        'insights',
-        'favorite',
-        'lightbulb',
-        'check_circle',
-        'track_changes',
-        'timeline',
-        'person_pin',
-        'note_alt',
-        'chat_bubble',
-        'explore'
-    ];
-
-    const handleSave = () => {
-        // updateSpace(activeSpace, { name: spaceName, icon: icons[selectedIcon],iconIndex:selectedIcon })
-        // alert(`Settings saved!\nSpace Name: ${spaceName}\nSelected Icon: ${selectedIcon}`);
-    };
-
-    useEffect(() => {
-        updateSpace(activeSpace, { name: spaceName })
-    }, [spaceName])
-    useEffect(() => {
-        updateSpace(activeSpace, { icon: icons[selectedIcon], iconIndex: selectedIcon })
-    }, [selectedIcon])
-
-
-
-    return (
-        <>
-            <link href="https://fonts.googleapis.com/icon?family=Material+Icons" rel="stylesheet" />
-            <div style={styles.container}>
-                <div style={styles.settingsBox}>
-
-
-                    <div style={styles.content}>
-                        <div style={styles.inputGroup}>
-                            <label style={styles.label}>
-                                <span className="material-icons" style={styles.labelIcon}>edit</span>
-                                Space Name
-                            </label>
-                            <input
-                                type="text"
-                                value={spaceName}
-                                onChange={(e) => setSpaceName(e.target.value)}
-                                placeholder="Enter space name"
-                                style={styles.input}
-                                onFocus={(e) => {
-                                    e.target.style.borderColor = '#4285f4';
-                                    e.target.style.boxShadow = '0 0 0 2px rgba(66, 133, 244, 0.1)';
-                                }}
-                                onBlur={(e) => {
-                                    e.target.style.borderColor = '#ddd';
-                                    e.target.style.boxShadow = 'none';
-                                }}
-                            />
-                        </div>
-
-                        <div style={styles.inputGroup}>
-                            <label style={styles.label}>
-                                <span className="material-icons" style={styles.labelIcon}>palette</span>
-                                Space Icon
-                            </label>
-
-                        </div>
-                    </div>
-                </div>
-            </div>
-        </>
-    );
-}
-
-export const SpaceSelector = () => {
-    const { updateSpace, activeSpace, spaces } = useTabsContext();
-    const CurrentSpace = spaces.find(e => e.id === activeSpace)
-    const [selectedIcon, setSelectedIcon] = useState(CurrentSpace?.iconIndex || 0);
-    const icons = [
-        <Space />,
-       'dashboard',
-        'auto_stories',
-        'menu_book',
-        'bookmarks',
-        'library_books',
-        'history',
-        'event_note',
-        'schedule',
-        'insights',
-        'favorite',
-        'lightbulb',
-        'check_circle',
-        'track_changes',
-        'timeline',
-        'person_pin',
-        'note_alt',
-        'chat_bubble',
-        'explore'
-    ];
-    // useEffect(() => {
-    //     updateSpace(activeSpace, { icon: icons[selectedIcon], iconIndex: selectedIcon })
-    //     console.log(activeSpace, { icon: icons[selectedIcon], iconIndex: selectedIcon })
-    // }, [selectedIcon])
-    return <div style={styles.inputGroup}>
-        <div style={styles.iconGrid}>
-            {icons.map((icon, index) => (
-                <div
-                    key={icon}
-                    onClick={() => {
-                        // setSelectedIcon(index);
-                        updateSpace(activeSpace, { icon: icons[index], iconIndex: index })
-                    }}
-                    style={{
-                        ...styles.iconOption,
-                        ...(selectedIcon === index ? styles.iconOptionSelected : {})
-                    }}
-                    onMouseOver={(e) => {
-                        if (selectedIcon !== index) {
-                            e.target.style.borderColor = '#4285f4';
-                        }
-                    }}
-                    onMouseOut={(e) => {
-                        if (selectedIcon !== index) {
-                            e.target.style.borderColor = '#ddd';
-                        }
-                    }}
-                >
-                    <span
-                        className="material-symbols-outlined"
-                        style={selectedIcon === icon ? styles.iconSelected : styles.icon}
-                    >
-                        {icon}
-                    </span>
-                </div>
-            ))}
-        </div>
-    </div>
-}
-const styles = {
-    container: {
-        //   minHeight: '100vh',
-        backgroundColor: '#f5f5f5',
-        //   padding: '20px',
-        display: 'flex',
-        alignItems: 'flex-start',
-        justifyContent: 'center',
-        fontFamily: '-apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif'
-    },
-    settingsBox: {
-        //   background: 'white',
-        borderRadius: '8px',
-        //   boxShadow: '0 2px 8px rgba(0,0,0,0.1)',
-        width: '100%'
-    },
-    header: {
-        padding: '16px 20px',
-        borderBottom: '1px solid #e5e5e5',
-        display: 'flex',
-        alignItems: 'center',
-        justifyContent: 'space-between'
-    },
-    title: {
-        fontSize: '16px',
-        fontWeight: '600',
-        color: '#333',
-        margin: 0
-    },
-    closeBtn: {
-        background: 'none',
-        border: 'none',
-        cursor: 'pointer',
-        color: '#666',
-        fontSize: '18px'
-    },
-    content: {
-        padding: '20px'
-    },
-    inputGroup: {
-        marginBottom: '20px'
-    },
-    label: {
-        display: 'flex',
-        alignItems: 'center',
-        marginBottom: '8px',
-        color: '#555',
-        fontSize: '14px',
-        fontWeight: '500'
-    },
-    labelIcon: {
-        marginRight: '8px',
-        fontSize: '18px',
-        color: '#666'
-    },
-    input: {
-        width: '100%',
-        padding: '10px 12px',
-        border: '1px solid #ddd',
-        borderRadius: '6px',
-        fontSize: '14px',
-        background: 'white',
-        outline: 'none',
-        transition: 'border-color 0.2s, box-shadow 0.2s',
-        boxSizing: 'border-box'
-    },
-    inputFocus: {
-        borderColor: '#4285f4',
-        boxShadow: '0 0 0 2px rgba(66, 133, 244, 0.1)'
-    },
-    iconGrid: {
-        display: 'grid',
-        gridTemplateColumns: 'repeat(4, 1fr)',
-        gap: '8px',
-        marginTop: '8px',
-        padding: '12px',
-        background: 'white'
-    },
-    iconOption: {
-        width: '36px',
-        height: '36px',
-        border: '2px solid #ddd',
-        borderRadius: '6px',
-        display: 'flex',
-        alignItems: 'center',
-        justifyContent: 'center',
-        cursor: 'pointer',
-        transition: 'all 0.2s',
-        background: 'white'
-    },
-    iconOptionSelected: {
-        borderColor: '#4285f4',
-        background: '#e8f0fe'
-    },
-    iconOptionHover: {
-        borderColor: '#4285f4'
-    },
-    icon: {
-        fontSize: '18px',
-        color: '#666'
-    },
-    iconSelected: {
-        fontSize: '18px',
-        color: '#4285f4'
-    },
-    saveBtn: {
-        width: '100%',
-        padding: '12px',
-        background: '#ff9800',
-        color: 'white',
-        border: 'none',
-        borderRadius: '6px',
-        fontSize: '14px',
-        fontWeight: '600',
-        cursor: 'pointer',
-        marginTop: '20px',
-        transition: 'background-color 0.2s'
-    }
-};

@@ -35,8 +35,8 @@ const ControlButtons = () => {
 // os.compileApp("controlButtons", <ControlButtons/>);
 
 return {
-  onSave: (attachment, checklist, readingPlan, currentFormat, color, icon, isCustomColor, description, isCustomIcon, selectedTags) => {
-    thisBot.tryAddPlaylistToPlaylists({ attachment, checklist, id, readingPlan, currentFormat, color, icon, isCustomColor, description, isCustomIcon, selectedTags });
+  onSave: (attachment, checklist, readingPlan, currentFormat, color, icon, isCustomColor, description, isCustomIcon, selectedTags, isLayers) => {
+    thisBot.tryAddPlaylistToPlaylists({ attachment, checklist, id, readingPlan, currentFormat, color, icon, isCustomColor, description, isCustomIcon, selectedTags, isLayers });
     resetState();
   },
   onClose: () => {

@@ -3,17 +3,13 @@
   justify-content: center;
   padding: 16px 0;
   width: 100%;
-  position: fixed;
-  bottom: 18px;
-  left: 50%;
-  z-index: 10;
 }
 
 .toolbar-1 {
   display: flex;
   align-items: center;
   justify-content: space-between;
-  /* background-color: var(--themeSideMenu); */
+  background-color: white;
   border-radius: 12px;
   padding: 8px 20px;
   box-shadow: 0 26px 10px rgba(0, 0, 0, 0.1);
@@ -25,8 +21,9 @@
   left: 50%;
   transform: translateX(-50%);
   bottom: 18px;
-  z-index: 99;
+  z-index: 999999999999;
   border: 1px solid #00000024;
+  pointer-events: all;
 }
 
 

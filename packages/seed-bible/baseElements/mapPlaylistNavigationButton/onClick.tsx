@@ -1,0 +1,1 @@
+shout("OnMapPlaylistNavigationButtonClicked", {button: thisBot})

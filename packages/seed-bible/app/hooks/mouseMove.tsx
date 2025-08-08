@@ -1,4 +1,4 @@
-const { createContext, useContext, useState, useEffect } = os.appHooks;
+const { createContext, useContext, useState } = os.appHooks;
 
 const MyContext = createContext();
 export function MouseMoveProvider({ children }) {
@@ -6,13 +6,6 @@ export function MouseMoveProvider({ children }) {
     const [isDragging, setIsDragging] = useState(false)
     const [Element, setElement] = useState(null)
     const [isAbleToRightClick, setIsAbleToRightClick] = useState(false)
-    globalThis.SetElement = setElement
-    globalThis.SetIsDragging = setIsDragging
-    // useEffect(() => {
-    //     return () => {
-    //         globalThis.SetElement = null
-    //     }
-    // }, [])
     // to be able to access it outside react elements
     globalThis.isAbleToRightClick = isAbleToRightClick
     return (

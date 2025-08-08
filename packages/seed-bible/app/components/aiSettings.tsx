@@ -53,7 +53,7 @@ const AiSettings = () => {
                 </div>
                 <div className="softText">Page settings</div>
                 <div className="softText"><MenuIcon name="chevron_right" /></div>
-                <div className="softText">Toolbar</div>
+                <div className="softText">toolbar</div>
             </div>
 
             <div className="routerTitle blackText">
@@ -125,41 +125,6 @@ const AiSettings = () => {
                 {imageResult && <div className="imageResult">
                     <img src={imageResult} alt="Generated AI" style={{ width: '100%', marginTop: '10px' }} />
                 </div>}
-            </>}
-
-            <div className="ai-chat">
-                <div onClick={() => setSwitcher(prev => prev === 3 ? null : 3)} className="ai-chat">
-                    <AiChatIcon />
-                    <div className="blackText">Editor AI</div>
-                </div>
-                <div>
-                    <MenuIcon name={`keyboard_arrow_${switcher === 3 ? 'up' : "down"}`} />
-                </div>
-            </div>
-            <div style={{ height: '20px' }}></div>
-            {switcher === 3 && <>
-                <div className="blackText">Select model</div>
-                <div style={{ height: '20px' }}></div>
-                <select style={{ width: '100%' }} className="selectInput">
-                    <option>gpt-4o</option>
-                </select>
-                <div style={{ marginTop: '10px' }} className="mediumText">Different AI models can produce different or better results so feel free to experiment.</div>
-                <div className="blackText">Positive prompt</div>
-                <div style={{ height: '10px' }}></div>
-                <textarea
-                    style={{ height: '150px', width: '100%' }}
-                    className="selectInput"
-                    value={masks?.editorAIPostive || ""}
-                    onChange={(e) => setTagMask(thisBot, "editorAIPostive", e.target.value, "local")}
-                ></textarea>
-                <div className="blackText">Negative prompt</div>
-                <div style={{ height: '10px' }}></div>
-                <textarea
-                    style={{ height: '150px', width: '100%' }}
-                    className="selectInput"
-                    value={masks?.editorAINegative || ""}
-                    onChange={(e) => setTagMask(thisBot, "editorAINegative", e.target.value, "local")}
-                ></textarea>
             </>}
 
             <style>{getStyleOf('aiSettings.css')}</style>

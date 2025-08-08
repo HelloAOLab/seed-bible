@@ -48,7 +48,7 @@
     background: rgb(197, 194, 194)
 }
 
-html *{
+html * {
     scroll-behavior: smooth;
 }
 
@@ -257,7 +257,7 @@ history-item:active {
     display: block !important;
 }
 
-.actions>*:hover {
+.actions:hover>* {
     display: block !important;
 }
 
@@ -399,6 +399,13 @@ div.history-item.greyed-out .playlist-item-type,
 div.attachment-link.greyed-out .playlist-item-type {
     background-color: #E3E3E2;
     border: 1px solid #AFAFAF;
+}
+
+div.history-item.embedding-on .playlist-item-type,
+div.attachment-link.embedding-on .playlist-item-type {
+    background-color: #2979FF;
+    color: black;
+    border: 1px solid #448AFF;
 }
 
 div.history-item.current-playing-item,

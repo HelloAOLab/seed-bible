@@ -78,7 +78,7 @@ function extractJsonFromString(inputString, tries = 1) {
 
 
 console.log("CALLING GPT4", command);
-const myChat = await ai.chat(prompt, { preferredModel: 'gpt-4o' });
+let myChat = await ai.chat(prompt, { preferredModel: 'gpt-4o' });
 console.log("myChat", myChat);
 const results = extractJsonFromString(myChat);
 console.log("CALLING GPT4 SUCCESS", results);

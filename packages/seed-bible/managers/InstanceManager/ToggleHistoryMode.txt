@@ -1,0 +1,11 @@
+thisBot.masks.isInHistoryMode = !thisBot.masks.isInHistoryMode;
+if(thisBot.masks.isInHistoryMode)
+{
+    os.toast(`History mode On`)
+    shout("OnEnterHistoryMode");
+}
+else
+{
+    os.toast(`History mode Off`)
+    shout("OnExitHistoryMode");
+}

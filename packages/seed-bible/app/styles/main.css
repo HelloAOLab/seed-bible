@@ -6,17 +6,12 @@
     --gray2-color: #CCCCCD;
 }
 
-.disabled {
-    color: #929292 !important;
-    cursor: not-allowed;
-}
-
-#tiptapEditor {
-    background-color: var(--themeBackground);
+.md-theme-default {
+    background: transparent;
 }
 
 .layout {
-    background-color: var(--themeSideMenu) !important;
+    background-color: var(--primary-color);
     height: 100vh;
     width: 100vw;
     display: flex;
@@ -24,7 +19,7 @@
     justify-content: space-between;
     align-items: center;
     overflow: hidden;
-    position: absolute;
+        position: absolute;
     left: 0;
     top: 0;
     padding: 1px;
@@ -36,9 +31,8 @@
     align-items: center;
     overflow: hidden;
     border-radius: 10px;
-    /* box-shadow: 0px 0px 9px 0px rgba(0, 0, 0, 0.15); */
+    box-shadow: 0px 0px 9px 0px rgba(0, 0, 0, 0.15);
     height: fit-content;
-    padding: 0 6px;
 }
 
 
@@ -90,35 +84,31 @@
 
 
 
-.flexElementGap-0 {
+.flexElementGap-0{
     display: flex;
     align-items: center;
     flex-direction: row;
     gap: 0;
 }
-
-.flexElementGap-2 {
+.flexElementGap-2{
     display: flex;
     align-items: center;
     flex-direction: row;
     gap: 2px;
 }
-
-.flexElementGap-4 {
+.flexElementGap-4{
     display: flex;
     align-items: center;
     flex-direction: row;
     gap: 4px;
 }
-
-.flexElementGap-10 {
+.flexElementGap-10{
     display: flex;
     align-items: center;
     flex-direction: row;
     gap: 10px;
 }
-
-.flexColumn-10 {
+.flexColumn-10{
     display: flex;
     flex-direction: column;
     gap: 10px;
@@ -130,7 +120,7 @@
 
 
 .softText {
-    color: var(--themeText1);
+    color: #929292;
     font-family: "Helvetica Neue";
     font-size: 14px;
     font-style: normal;
@@ -139,7 +129,7 @@
 }
 
 .mediumText {
-    color: var(--themeText1);
+    color: #5F5E5C;
     font-family: "Open Sans";
     font-size: 14px;
     font-style: normal;
@@ -150,7 +140,7 @@
 }
 
 .blackText {
-    color: var(--themeText2);
+    color: #000;
     font-family: "Helvetica Neue";
     font-size: 16px;
     font-style: normal;

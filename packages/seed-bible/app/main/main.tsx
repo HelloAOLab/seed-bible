@@ -15,19 +15,16 @@ import { useSideBarContext } from 'app.hooks.sideBar'
 globalThis.Open = () => { }
 globalThis.OpenNextChapter = () => { }
 globalThis.OpenPrevChapter = () => { }
-globalThis.SpaceLayouts = {}; // To store layout per space
-globalThis.SpaceScreens = {}; // Already used for screen count
-
 
 const Main = () => {
-    const { screens, fullScreen, setFullScreen } = useBibleContext()
-    const { collapsed, sidebarWidth, setSidebarWidth, themeColors } = useSideBarContext()
-    const { tabs, activeSpace, getAllTabsInSpace } = useTabsContext();
-    const [started, setStarted] = useState(false)
+    const { screens } = useBibleContext()
+    const { collapsed } = useSideBarContext()
+    const { tabs } = useTabsContext();
 
-    const { containerProps, updateContainerSize, removeApplicationByID, replaceApplication, addApplication, resetApps, removeApplication, setApps } = useDivSpliter({
+
+    const { containerProps, updateContainerSize, removeApplicationByID, addApplication, resetApps, removeApplication } = useDivSpliter({
         components: [
-            { id: `panel-${0}-${activeSpace}`, App: <ThePageWithEditor panelId={`panel-${0}-${activeSpace}`} tab={tabs[0]} />, to: 'window' },
+            { App: <ThePageWithEditor tab={tabs[0]} />, to: 'window' },
         ],
         split: true,
         containerWidth: 1150,
@@ -39,67 +36,28 @@ const Main = () => {
     globalThis.RemoveApplication = removeApplication
     globalThis.AddApplication = addApplication;
     globalThis.RemoveApplicationByID = removeApplicationByID;
-    globalThis.ReplaceApplication = replaceApplication
-    useEffect(() => {
-        setStarted(true)
-    }, [])
-    useEffect(() => {
-        if (!started)
-            return
-        const newApps = [];
 
-        for (let i = 0; i < screens.value; i++) {
-            const id = `panel-${i}-${activeSpace}`;
-            newApps.push({
-                id,
-                App: <ThePageWithEditor key={id} panelId={id} tab={globalThis.PanelTabsMap[id]} />,
-                to: 'window',
-                tabData: globalThis.PanelTabsMap[id],
-            });
+    useEffect(() => {
+        if (screens === 1) {
+            resetApps()
+        } else {
+            resetApps()
+            for (let i = 1; i < screens; i++) {
+                const id = uuid()
+                addApplication(
+                    { id, App: <ThePageWithEditor id={id} />, to: 'window' }
+                )
+
+            }
         }
-        // console.log(newApps)
-        setApps(newApps); // ✅ Update all at once
-
-        globalThis.SpaceScreens[activeSpace] = screens.value;
     }, [screens]);
 
 
-    useEffect(() => {
-        if (!started) return;
 
-        const savedScreens = globalThis.SpaceScreens[activeSpace] || 1;
-        const newApps = [];
-
-        for (let i = 0; i < savedScreens; i++) {
-            const id = `panel-${i}-${activeSpace}`;
-            newApps.push({
-                id,
-                App: <ThePageWithEditor key={id} panelId={id} tab={globalThis.PanelTabsMap[id]} />,
-                to: 'window',
-                tabData: globalThis.PanelTabsMap[id],
-            });
-        }
-        console.log(newApps)
-        setApps(newApps); // ✅ Update all at once
-        setTimeout(() => {
-            if (tabs.length === 1 && savedScreens === 1) {
-                console.log('testing update now working', tabs[0])
-                globalThis.UpdateTab(tabs[0])
-            }
-        }, 10)
-        globalThis.SpaceScreens[activeSpace] = savedScreens;
-
-    }, [activeSpace]);
-
-    const [isMobile, setIsMobile] = useState(window.innerWidth < 768);
     // const resize = () => {
     // }
     function handleResize() {
-        setIsMobile(window.innerWidth < 768);
-        const mob = window.innerWidth < 768
-        setTimeout(() => {
-            updateContainerSize(globalThis.window?.innerWidth - (!fullScreen && !mob && sidebarWidth), globalThis.window?.innerHeight * 0.98)
-        }, 0)
+        updateContainerSize(globalThis.window?.innerWidth - (collapsed ? 100 : 300), globalThis.window?.innerHeight * 0.98)
     }
     useEffect(() => {
         handleResize()
@@ -107,29 +65,21 @@ const Main = () => {
         return () => {
             globalThis.window?.removeEventListener('resize', handleResize);
         };
-    }, [collapsed, fullScreen, sidebarWidth])
+    }, [collapsed])
+
+    useEffect(async () => {
+        let authBot = await os.requestAuthBotInBackground();
+        if (authBot) {
+            window.clUserId = authBot.id;
+        }
+    }, [])
     // useEffect(() => {
     //     const interval = setInterval(() => {
     //         resize()
     //     }, 100);
     //     return () => clearInterval(interval);
     // }, [collapsed]);
-    useEffect(() => {
-        os.log(themeColors, 'theme colors')
-    }, [themeColors])
-    const lenght = Object.keys(themeColors || {}).length
     return <MouseMoveProvider>
-        <link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Material+Symbols+Outlined:opsz,wght,FILL,GRAD@24,400,0,0" />
-        <style>{`
-        :root{
-          --themeBackground:${lenght !==0 && themeColors[`${activeSpace}`]?.background || `white`};
-          --themePanel:${lenght !==0 && themeColors[`${activeSpace}`]?.panel || null};
-          --themeSideMenu:${lenght !==0 && themeColors[`${activeSpace}`]?.sideMenu || `#f0f1f1`};
-          --themeToolbar:${lenght !==0 && themeColors[`${activeSpace}`]?.toolbar || `white`};
-          --themeText1:${lenght !==0 && themeColors[`${activeSpace}`]?.text1 || `#606060`};
-          --themeText2:${lenght !==0 && themeColors[`${activeSpace}`]?.text2 || `#000`};
-        }
-      `}</style>
         <Layout>
             <SplitApp {...containerProps} panalMode={false} />
         </Layout>
@@ -138,9 +88,15 @@ const Main = () => {
 
 const Root = () => {
     return <>
-        <script src="https://cdn.jsdelivr.net/npm/fullcalendar@6.1.17/index.global.min.js"></script>
-        <script src="https://cdn.jsdelivr.net/npm/fullcalendar/timegrid@6.1.17/index.global.min.js"></script>
-        <script src="https://cdn.jsdelivr.net/npm/fullcalendar/interaction@6.1.17/index.global.min.js"></script>
+     <script src="'https://unpkg.com/@popperjs/core@2'"></script>
+        <script src="https://unpkg.com/tippy.js@6/dist/tippy-bundle.umd.min.js"></script>
+        <link rel='stylesheet' href='https://unpkg.com/tippy.js@6/dist/tippy.css'/>
+       <script src="https://cdn.jsdelivr.net/npm/fullcalendar-scheduler@6.1.18/index.global.min.js"></script>
+       <script src="https://cdn.jsdelivr.net/npm/fullcalendar/interaction@6.1.18/index.global.min.js"></script>
+        <script src="https://cdn.jsdelivr.net/npm/@fullcalendar/resource-common@6.1.18/index.global.min.js"></script>
+        <script src="https://cdn.jsdelivr.net/npm/@fullcalendar/resource-timegrid@6.1.18/index.global.min.js"></script>
+       
+
         <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/@fullcalendar/core@6.1.17/main.min.css" />
         <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/@fullcalendar/daygrid@6.1.17/main.min.css" />
         <BibleVariablesProvider>
@@ -151,9 +107,7 @@ const Root = () => {
             </TabsProvider>
         </BibleVariablesProvider>
     </>
-
 }
-if (configBot.tags.systemPortal) return
-configBot.tags.gridPortal = null;
+configBot.tags.gridPortal = "home"
 render(<Root />, document.body)
 // os.compileApp('main', <Root />)

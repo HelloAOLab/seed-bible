@@ -11,7 +11,7 @@ const CollectionsContainer = await thisBot.Collections();
 // <PlaylistInfoItem />
 
 
-const Playlist = ({id}) => {
+const Playlist = () => {
 
     const [SplitAppPanel2, setSplitAppPanel2] = useState(null);
 
@@ -306,7 +306,7 @@ const Playlist = ({id}) => {
                             // os.unregisterApp("playing-playlist");
                             globalThis.IS_PLAYLIST_ACTIVE = false;
                             setSplitAppPanel2(null);
-                            RemoveApplicationByID(id);
+                            RemoveApplicationByID(globalThis.PLAYLIST_PANEL_ID);
                             globalThis.PLAYLIST_PANEL_ID = null;
                             globalThis.makingPlaylist = false;
                             return;
@@ -320,7 +320,7 @@ const Playlist = ({id}) => {
                 :
                 viewHistroy === 2 ? <CollectionsContainer collectionName={collectionName} currentCollection={currentCollection} setCurrentCollection={setCurrentCollection} collection={collection} collections={collections} />
                     :
-                    <div style={{ display: "flex", height: '100%' }}>
+                    <div style={{ display: "flex", height: 'calc(100% - 90px)' }}>
                         {(activePlaylists).map(ele => <PlaylistCont setOpenModal={setOpenModal} active={playlists[ele].active} playingPlaylist={playingPlaylist} id={ele} key={ele} />)}
                     </div>
             }

@@ -29,28 +29,12 @@ const PsalmsData = [
     },
 ];
 
-function generateQuery(params) {
-    const queryArray = [];
-    for (const key in params) {
-        if (params.hasOwnProperty(key)) {
-            queryArray.push(encodeURIComponent(key) + '=' + encodeURIComponent(params[key]));
-        }
-    }
-    return queryArray.join('&');
-}
-
-// Function to attach query string to URL
-function attachQueryToURL(url, params) {
-    const queryString = generateQuery(params);
-    return url + (url.includes('?') ? '&' : '?') + queryString;
-}
-
 const SearchBar = () => {
 
     const [query, setQuery] = useState("");
     const inputRef = useRef(null);
 
-    const [booksData, setBooksData] = useState(masks?.booksData || tags.booksData);
+    const [booksData, setBooksData] = useState(null);
     const [selectedTestament, setSelectedTestament] = useState(2);
     const [openSearchBar, setOpenSearchBar] = useState(false);
     const [searchBarFocused, setSearchBarFocused] = useState(false);
@@ -96,9 +80,9 @@ const SearchBar = () => {
 
     const handleNameMatch = useCallback(({ query, bookData }) => {
         let lowercaseQuery = query.toLowerCase();
-        const commonName = bookData.commonName.toLowerCase();
-        const bookId = bookData.id.toLowerCase();
-        const lowercaseQueryArr = lowercaseQuery.split(" ");
+        let commonName = bookData.commonName.toLowerCase();
+        let bookId = bookData.id.toLowerCase();
+        let lowercaseQueryArr = lowercaseQuery.split(" ");
         if (lowercaseQueryArr.length > 1) {
             if (lowercaseQueryArr[lowercaseQueryArr.length - 1] === "" || parseInt(lowercaseQueryArr[lowercaseQueryArr.length - 1])) {
                 lowercaseQuery = lowercaseQueryArr.slice(0, lowercaseQueryArr.length - 1).join(" ");
@@ -125,7 +109,7 @@ const SearchBar = () => {
             if (booksData === null || query === "") {
                 return []
             } else if (query.length > 0) {
-                const sortedBook = [];
+                let sortedBook = [];
                 for (let i = 0; i < booksData.length; i++) {
                     if (
                         handleNameMatch({ query: query, bookData: booksData[i] })
@@ -164,13 +148,13 @@ const SearchBar = () => {
 
     const filteredApiTranslations = useMemo(() => {
         if (query !== "") {
-            const translations = {};
-            const lowercaseQuery = query.toLowerCase();
+            let translations = {};
+            let lowercaseQuery = query.toLowerCase();
             Object.entries(apiTranslations).slice(0, allowedTranslationLimit).forEach(([key, value]) => {
                 if (key.includes(lowercaseQuery)) {
                     translations[key] = translations[key] ? { ...translations[key], ...value } : { ...value }
                 } else if (Object.keys(apiTranslations[key]).filter(translationKey => translationKey.includes(lowercaseQuery)).length > 0) {
-                    const values = {};
+                    let values = {};
                     Object.entries(apiTranslations[key]).forEach(([subKey, subValue]) => {
                         if (subKey.includes(lowercaseQuery)) {
                             values[subKey] = apiTranslations[key][subKey];
@@ -206,151 +190,149 @@ const SearchBar = () => {
             return null;
         }
     }, [])
-    const handleTranslationAddition = async ({ type, value, setInputValue = () => { } }) => {
-        const available_translations_req = await web.get("https://bible.helloao.org/api/available_translations.json");
+    const handleTranslationAddition = ({ type, value, setInputValue }) => {
         if (type === "id") {
-            const trValue = {
-                pass: false,
-                value: null
-            };
-            if (available_translations_req.status === 200) {
-                available_translations_req.data.translations.map(translation => {
-                    if (translation.id.toLowerCase() === value.toLowerCase()) {
-                        trValue.pass = true;
-                        trValue.value = translation;
-                    }
-                })
-                if (trValue.pass) {
-                    const translationValue = {
-                        ...trValue.value
-                    }
-                    if (apiTranslations[translationValue.languageEnglishName.toLowerCase()] && apiTranslations[translationValue.languageEnglishName.toLowerCase()][value]) {
-                        os.toast(`Translation Already Exists!`)
-                    } else {
-                        const translations = { ...apiTranslations };
-                        translations[translationValue.languageEnglishName.toLowerCase()] = translations[translationValue.languageEnglishName.toLowerCase()] ? { ...translations[translationValue.languageEnglishName.toLowerCase()], [value.toLowerCase()]: translationValue } : { [value.toLowerCase()]: translationValue };
-                        setSelectedTranslation({
-                            languageEnglishName: translationValue.languageEnglishName.toLowerCase(),
-                            id: translationValue.shortName,
-                            shortName: translationValue.shortName
-                        });
-                        setApiTranslations(translations)
-                        setShowCustomTranslation(false)
-                        if (!defaultTranslations.includes(translationValue.languageEnglishName.toLowerCase())) {
-                            setDefaultTranslations([...defaultTranslations, translationValue.languageEnglishName.toLowerCase()])
+            web.get("https://bible.helloao.org/api/available_translations.json").then(request => {
+                let trValue = {
+                    pass: false,
+                    value: null
+                };
+                if (request.status === 200) {
+                    request.data.translations.map(translation => {
+                        if (translation.id.toLowerCase() === value.toLowerCase()) {
+                            trValue.pass = true;
+                            trValue.value = translation;
                         }
-                        os.toast(`Translation ${value} added!`)
-                    }
-                } else {
-                    os.toast("no translation found")
-                }
-            }
-        } else {
-            const trValue = {
-                pass: false,
-                value: null
-            };
-            if (available_translations_req.status === 200) {
-                available_translations_req.data.translations.map(translation => {
-                    if (translation.website.toLowerCase() === value.toLowerCase()) {
-                        trValue.pass = true;
-                        trValue.value = translation;
-                    }
-                })
-                if (trValue.pass) {
-                    const translationValue = {
-                        ...trValue.value
-                    }
-                    if (apiTranslations[translationValue.languageEnglishName.toLowerCase()] && apiTranslations[translationValue.languageEnglishName.toLowerCase()][trValue.value.shortName.toLowerCase()]) {
-                        os.toast(`Translation Already Exists!`)
-                    } else {
-                        const translations = { ...apiTranslations };
-                        translations[translationValue.languageEnglishName.toLowerCase()] = translations[translationValue.languageEnglishName.toLowerCase()] ? { ...translations[translationValue.languageEnglishName.toLowerCase()], [value.toLowerCase()]: translationValue } : { [value.toLowerCase()]: translationValue };
-                        setSelectedTranslation({
-                            languageEnglishName: translationValue.languageEnglishName.toLowerCase(),
-                            id: translationValue.shortName,
-                            shortName: translationValue.shortName
-                        });
-                        setApiTranslations(translations)
-                        setShowCustomTranslation(false)
-                        if (!defaultTranslations.includes(translationValue.languageEnglishName.toLowerCase())) {
-                            setDefaultTranslations([...defaultTranslations, translationValue.languageEnglishName.toLowerCase()])
+                    })
+                    if (trValue.pass) {
+                        let translationValue = {
+                            ...trValue.value
                         }
-                        os.toast(`Translation ${value} added!`)
-                    }
-                } else {
-                    console.log(value)
-                    web.hook({
-                        method: 'GET',
-                        url: value
-                    }).then(e => {
-                        const url = new URL(value);
-                        const origin = getUrlUpToKeyword(value, "/api");
-                        const data = e.data;
-                        if (value.includes("/available_translations.json")) {
-                            const translations = data.translations;
-                            const tempApiTranslations = { ...apiTranslations };
-                            let defaultTranslation;
-                            for (let i = 0; i < translations.length; i++) {
-                                const translation = translations[i];
-                                console.log(translation, "translation")
-                                const languageEnglishName = translation.languageEnglishName.toLowerCase()
-                                const controlledTranslation = {
-                                    languageEnglishName: languageEnglishName,
-                                    id: translation.id,
-                                    listOfBooksApiLink: `${url.origin}${translation.listOfBooksApiLink}`,
-                                    origin: url.origin,
-                                    shortName: translation.shortName
-                                }
-                                if (i === 0) {
-                                    defaultTranslation = controlledTranslation;
-                                }
-                                tempApiTranslations[languageEnglishName] = tempApiTranslations[languageEnglishName] ? { ...tempApiTranslations[languageEnglishName], [translation.shortName.toLowerCase()]: controlledTranslation } : { [translation.shortName.toLowerCase()]: controlledTranslation };
-                                if (!defaultTranslations.includes(languageEnglishName)) {
-                                    setDefaultTranslations([...defaultTranslations, languageEnglishName])
-                                }
-                            }
-                            setSelectedTranslation(defaultTranslation);
-                            setApiTranslations(tempApiTranslations);
-                            setShowCustomTranslation(false);
-                            os.log("All Translations Added")
+                        if (apiTranslations[translationValue.languageEnglishName.toLowerCase()] && apiTranslations[translationValue.languageEnglishName.toLowerCase()][value]) {
+                            os.toast(`Translation Already Exists!`)
                         } else {
-                            if (data?.translation && data?.books) {
-                                const translation = data.translation;
-                                const controlledTranslation = {
-                                    languageEnglishName: translation.languageEnglishName.toLowerCase(),
-                                    id: translation.id,
-                                    listOfBooksApiLink: `${url.origin}${translation.listOfBooksApiLink}`,
-                                    origin,
-                                    shortName: translation.shortName
-                                }
-                                if (apiTranslations[translation.languageEnglishName.toLowerCase()] && apiTranslations[translation.languageEnglishName.toLowerCase()][trValue.value.shortName.toLowerCase()]) {
-                                    os.toast(`Translation Already Exists!`)
-                                } else {
-                                    const translations = { ...apiTranslations };
-
-                                    translations[translation.languageEnglishName.toLowerCase()] = translations[translation.languageEnglishName.toLowerCase()] ? { ...translations[translation.languageEnglishName.toLowerCase()], [translation.shortName.toLowerCase()]: controlledTranslation } : { [translation.shortName.toLowerCase()]: controlledTranslation };
-                                    setSelectedTranslation({
-                                        ...controlledTranslation
-                                    });
-                                    setApiTranslations(translations)
-                                    setShowCustomTranslation(false)
+                            let translations = { ...apiTranslations };
+                            translations[translationValue.languageEnglishName.toLowerCase()] = translations[translationValue.languageEnglishName.toLowerCase()] ? { ...translations[translationValue.languageEnglishName.toLowerCase()], [value.toLowerCase()]: translationValue } : { [value.toLowerCase()]: translationValue };
+                            setSelectedTranslation({
+                                languageEnglishName: translationValue.languageEnglishName.toLowerCase(),
+                                id: translationValue.shortName,
+                                shortName: translationValue.shortName
+                            });
+                            setApiTranslations(translations)
+                            setShowCustomTranslation(false)
+                            if (!defaultTranslations.includes(translationValue.languageEnglishName.toLowerCase())) {
+                                setDefaultTranslations([...defaultTranslations, translationValue.languageEnglishName.toLowerCase()])
+                            }
+                            os.toast(`Translation ${value} added!`)
+                        }
+                    } else {
+                        os.toast("no translation found")
+                    }
+                }
+            })
+        } else {
+            web.get("https://bible.helloao.org/api/available_translations.json").then(request => {
+                let trValue = {
+                    pass: false,
+                    value: null
+                };
+                if (request.status === 200) {
+                    request.data.translations.map(translation => {
+                        if (translation.website.toLowerCase() === value.toLowerCase()) {
+                            trValue.pass = true;
+                            trValue.value = translation;
+                        }
+                    })
+                    if (trValue.pass) {
+                        let translationValue = {
+                            ...trValue.value
+                        }
+                        if (apiTranslations[translationValue.languageEnglishName.toLowerCase()] && apiTranslations[translationValue.languageEnglishName.toLowerCase()][trValue.value.shortName.toLowerCase()]) {
+                            os.toast(`Translation Already Exists!`)
+                        } else {
+                            let translations = { ...apiTranslations };
+                            translations[translationValue.languageEnglishName.toLowerCase()] = translations[translationValue.languageEnglishName.toLowerCase()] ? { ...translations[translationValue.languageEnglishName.toLowerCase()], [value.toLowerCase()]: translationValue } : { [value.toLowerCase()]: translationValue };
+                            setSelectedTranslation({
+                                languageEnglishName: translationValue.languageEnglishName.toLowerCase(),
+                                id: translationValue.shortName,
+                                shortName: translationValue.shortName
+                            });
+                            setApiTranslations(translations)
+                            setShowCustomTranslation(false)
+                            if (!defaultTranslations.includes(translationValue.languageEnglishName.toLowerCase())) {
+                                setDefaultTranslations([...defaultTranslations, translationValue.languageEnglishName.toLowerCase()])
+                            }
+                            os.toast(`Translation ${value} added!`)
+                        }
+                    } else {
+                        web.hook({
+                            method: 'GET',
+                            url: value
+                        }).then(e => {
+                            const url = new URL(value);
+                            let origin = getUrlUpToKeyword(value, "/api");
+                            let data = e.data;
+                            if (value.includes("/available_translations.json")) {
+                                let translations = data.translations;
+                                let tempApiTranslations = { ...apiTranslations };
+                                let defaultTranslation;
+                                for (let i = 0; i < translations.length; i++) {
+                                    let translation = translations[i];
+                                    let controlledTranslation = {
+                                        languageEnglishName: translation.languageEnglishName.toLowerCase(),
+                                        id: translation.id,
+                                        listOfBooksApiLink: `${url.origin}${translation.listOfBooksApiLink}`,
+                                        origin,
+                                        shortName: translation.shortName
+                                    }
+                                    if (i === 0) {
+                                        defaultTranslation = controlledTranslation;
+                                    }
+                                    tempApiTranslations[translation.languageEnglishName.toLowerCase()] = tempApiTranslations[translation.languageEnglishName.toLowerCase()] ? { ...tempApiTranslations[translation.languageEnglishName.toLowerCase()], [translation.shortName.toLowerCase()]: controlledTranslation } : { [translation.shortName.toLowerCase()]: controlledTranslation };
                                     if (!defaultTranslations.includes(translation.languageEnglishName.toLowerCase())) {
                                         setDefaultTranslations([...defaultTranslations, translation.languageEnglishName.toLowerCase()])
                                     }
-                                    os.toast(`Translation ${value} added!`)
                                 }
+                                setSelectedTranslation(defaultTranslation);
+                                setApiTranslations(tempApiTranslations);
+                                setShowCustomTranslation(false);
+                                os.log("All Translations Added")
                             } else {
-                                os.toast("not a valid link")
-                            }
-                        }
-                    }).catch((e) => {
-                        os.log(e)
-                        os.toast("not a valid link")
-                    })
-                }
-            }
+                                if (data?.translation && data?.books) {
+                                    let translation = data.translation;
+                                    let controlledTranslation = {
+                                        languageEnglishName: translation.languageEnglishName.toLowerCase(),
+                                        id: translation.id,
+                                        listOfBooksApiLink: `${url.origin}${translation.listOfBooksApiLink}`,
+                                        origin,
+                                        shortName: translation.shortName
+                                    }
+                                    if (apiTranslations[translation.languageEnglishName.toLowerCase()] && apiTranslations[translation.languageEnglishName.toLowerCase()][trValue.value.shortName.toLowerCase()]) {
+                                        os.toast(`Translation Already Exists!`)
+                                    } else {
+                                        let translations = { ...apiTranslations };
 
+                                        translations[translation.languageEnglishName.toLowerCase()] = translations[translation.languageEnglishName.toLowerCase()] ? { ...translations[translation.languageEnglishName.toLowerCase()], [translation.shortName.toLowerCase()]: controlledTranslation } : { [translation.shortName.toLowerCase()]: controlledTranslation };
+                                        setSelectedTranslation({
+                                            ...controlledTranslation
+                                        });
+                                        setApiTranslations(translations)
+                                        setShowCustomTranslation(false)
+                                        if (!defaultTranslations.includes(translation.languageEnglishName.toLowerCase())) {
+                                            setDefaultTranslations([...defaultTranslations, translation.languageEnglishName.toLowerCase()])
+                                        }
+                                        os.toast(`Translation ${value} added!`)
+                                    }
+                                } else {
+                                    os.toast("not a valid link")
+                                }
+                            }
+                        }).catch(() => {
+                            os.toast("not a valid link")
+                        })
+                    }
+                }
+            })
         }
         setInputValue("")
     }
@@ -387,9 +369,9 @@ const SearchBar = () => {
         } else {
             if (query.toLowerCase().includes("psalm")) {
                 if (query.split(" ").length > 1) {
-                    const queryArr = query.split(" ");
-                    const chapterNo = parseInt(queryArr[queryArr.length - 1]);
-                    if (!Number.isNaN(chapterNo)) {
+                    let queryArr = query.split(" ");
+                    let chapterNo = parseInt(queryArr[queryArr.length - 1]);
+                    if (chapterNo !== NaN) {
                         let bookName;
                         for (let i = 0; i < PsalmsData.length; i++) {
                             if (chapterNo <= PsalmsData[i].endingBook + 1) {
@@ -415,19 +397,20 @@ const SearchBar = () => {
     }, [selectedTestamentData, query, focusOnBook])
 
     const fetchBookdata = useCallback(() => {
-        console.log(selectedTranslation, "selectedTranslation")
         if (selectedTranslation?.listOfBooksApiLink?.includes("https")) {
             web.get(`${selectedTranslation.listOfBooksApiLink}`).then(e => {
-                const book0 = e.data.books[0];
-                ChangeTranslation(selectedTranslation.id, book0, selectedTranslation.origin);
+                SetBaseUrl(selectedTranslation.origin);
+                let book0 = e.data.books[0];
+                ChangeTranslation(selectedTranslation.id, book0);
                 setBooksData([...e.data.books])
             }).catch(e => {
                 console.log(e)
             })
         } else {
             web.get(`https://bible.helloao.org/api/${selectedTranslation.id}/books.json`).then(e => {
-                const book0 = e.data.books[0];
-                ChangeTranslation(selectedTranslation.id, book0, "https://bible.helloao.org");
+                SetBaseUrl("https://bible.helloao.org");
+                let book0 = e.data.books[0];
+                ChangeTranslation(selectedTranslation.id, book0);
                 setBooksData([...e.data.books])
             }).catch(e => {
                 console.log(e)
@@ -437,20 +420,31 @@ const SearchBar = () => {
     }, [selectedTranslation])
 
     useEffect(() => {
-        if (!apiTranslations[selectedTranslation.languageEnglishName.toLowerCase()]) {
-            const translations = { ...apiTranslations };
-            translations[selectedTranslation.languageEnglishName.toLowerCase()] = {
-                [selectedTranslation.shortName.toLowerCase()]: selectedTranslation
-            }
-            console.log(translations, "1 trans")
-            setTagMask(thisBot, "apiTranslations", translations, "local")
-            setTagMask(thisBot, "defaultTranslations", [...defaultTranslations, selectedTranslation.languageEnglishName.toLowerCase()], "local")
-            setApiTranslations(translations)
-            setDefaultTranslations([...defaultTranslations, selectedTranslation.languageEnglishName.toLowerCase()])
-        }
         setTagMask(thisBot, "selectedTranslation", selectedTranslation, "local");
+        console.log(masks.selectedTranslation, selectedTranslation, "selectedTranslation")
         fetchBookdata();
-    }, [selectedTranslation, apiTranslations, defaultTranslations])
+    }, [selectedTranslation])
+
+    useEffect(() => {
+        if (selectedTestament, setQuery, query, openSearchBar, setOpenSearchBar, searchBarFocused, handleEnter !== undefined || selectedTestament, setQuery, query, openSearchBar, setOpenSearchBar, searchBarFocused, handleEnter !== null) {
+            globalThis.selectedTestament = selectedTestament;
+            globalThis.setQuery = setQuery;
+            globalThis.query = query;
+            globalThis.openSearchBar = openSearchBar;
+            globalThis.setOpenSearchBar = setOpenSearchBar;
+            globalThis.searchBarFocused = searchBarFocused;
+            globalThis.handleEnter = handleEnter;
+        }
+        return () => {
+            globalThis.selectedTestament = null;
+            globalThis.setQuery = null;
+            globalThis.query = null;
+            globalThis.openSearchBar = null;
+            globalThis.setOpenSearchBar = null;
+            globalThis.searchBarFocused = null;
+            globalThis.handleEnter = null;
+        }
+    }, [selectedTestament, setQuery, query, openSearchBar, setOpenSearchBar, searchBarFocused, handleEnter])
 
     useEffect(() => {
         let allTranslations = null;
@@ -458,19 +452,13 @@ const SearchBar = () => {
             web.get("https://bible.helloao.org/api/available_translations.json").then(request => {
                 if (request.status === 200) {
                     allTranslations = request.data.translations;
-                    allTranslations = allTranslations.map(item => {
-                        return {
-                            ...item,
-                            languageEnglishName: item?.languageEnglishName || item.englishName
-                        }
-                    })
                     setTagMask(thisBot, "allTranslations", request.data.translations, "local");
-                    const translations = { ...apiTranslations };
+                    let translations = { ...apiTranslations };
 
                     allTranslations.map(translation => {
-                        const englishName = translation.languageEnglishName.toLowerCase();
+                        let englishName = translation.languageEnglishName.toLowerCase();
                         if (showAllLanguages) {
-                            const shortName = translation.shortName.toLowerCase();
+                            let shortName = translation.shortName.toLowerCase();
                             if (translations[englishName]) {
                                 if (!translations[englishName][shortName]) {
                                     translations[englishName][shortName] = translation;
@@ -486,7 +474,7 @@ const SearchBar = () => {
                                     delete translations[englishName]
                                 }
                             } else {
-                                const shortName = translation.shortName.toLowerCase();
+                                let shortName = translation.shortName.toLowerCase();
                                 if (!translations[englishName]) {
                                     translations[englishName] = {
                                         [shortName]: translation
@@ -502,7 +490,6 @@ const SearchBar = () => {
                             }
                         }
                     })
-                    console.log(translations, "2 trans")
                     setTagMask(thisBot, "apiTranslations", translations, "local")
                     setTagMask(thisBot, "defaultTranslations", defaultTranslations, "local")
                     setApiTranslations(translations);
@@ -512,12 +499,12 @@ const SearchBar = () => {
         } else {
             allTranslations = masks.allTranslations;
         }
-        const translations = { ...apiTranslations };
+        let translations = { ...apiTranslations };
 
         allTranslations.map(translation => {
-            const englishName = translation.languageEnglishName.toLowerCase();
+            let englishName = translation.languageEnglishName.toLowerCase();
             if (showAllLanguages) {
-                const shortName = translation.shortName.toLowerCase();
+                let shortName = translation.shortName.toLowerCase();
                 if (translations[englishName]) {
                     if (!translations[englishName][shortName]) {
                         translations[englishName][shortName] = translation;
@@ -533,7 +520,7 @@ const SearchBar = () => {
                         delete translations[englishName]
                     }
                 } else {
-                    const shortName = translation.shortName.toLowerCase();
+                    let shortName = translation.shortName.toLowerCase();
                     if (!translations[englishName]) {
                         translations[englishName] = {
                             [shortName]: translation
@@ -549,34 +536,10 @@ const SearchBar = () => {
                 }
             }
         })
-            console.log(translations, "3 trans")
         setTagMask(thisBot, "apiTranslations", translations, "local")
         setTagMask(thisBot, "defaultTranslations", defaultTranslations, "local")
         setApiTranslations(translations);
     }, [showAllLanguages, defaultTranslations])
-
-    useEffect(() => {
-        if (selectedTestament, setQuery, query, openSearchBar, setOpenSearchBar, searchBarFocused, handleEnter !== undefined || selectedTestament, setQuery, query, openSearchBar, setOpenSearchBar, searchBarFocused, handleEnter !== null) {
-            globalThis.selectedTestament = selectedTestament;
-            // globalThis.setQuery = setQuery;
-            globalThis.query = query;
-            globalThis.openSearchBar = openSearchBar;
-            globalThis.setOpenSearchBar = setOpenSearchBar;
-            globalThis.searchBarFocused = searchBarFocused;
-            globalThis.handleEnter = handleEnter;
-        }
-        return () => {
-            globalThis.selectedTestament = null;
-            // globalThis.setQuery = null;
-            globalThis.query = null;
-            globalThis.openSearchBar = null;
-            globalThis.setOpenSearchBar = null;
-            globalThis.searchBarFocused = null;
-            globalThis.handleEnter = null;
-        }
-    }, [selectedTestament, setQuery, query, openSearchBar, setOpenSearchBar, searchBarFocused, handleEnter])
-
-    console.log("searchBar initated", booksData)
 
     return <>
         <div class="testament-selection starterAnimation" style={{ opacity: 0 }}>
@@ -720,23 +683,6 @@ const CustomTranslation = ({ handleTranslationAddition }) => {
 
 const NewTransOptions = ({ translationName, translations, selectedTranslation, setSelectedTranslation }) => {
     const [show, setShow] = useState(false)
-
-    const shareTranslatation = async ({ translation }) => {
-        console.log(translation)
-        if (translation?.origin) {
-            const url = `https://aolab-bible-api.netlify.app/api/translations/addTranslation`;
-            const params = {
-                uid: translation.id,
-                translation: JSON.stringify(translation)
-            }
-            const queryUrl = attachQueryToURL(url, params);
-            const result = await web.get(queryUrl);
-        }
-        const translationUrl = `https://ao.bot/?pattern=${configBot.tags.pattern}&bios=local%20inst&translationId=${translation.id}`;
-        // let translationUrl = `${configBot.tags.url}&translationId=${translation.id}`;
-        os.setClipboard(translationUrl)
-        os.toast("Copied translation share code");
-    }
     useEffect(() => {
         Object.entries(translations).map(([key, value]) => {
             if (value.id === selectedTranslation.id && value.languageEnglishName === selectedTranslation.languageEnglishName) {
@@ -766,10 +712,6 @@ const NewTransOptions = ({ translationName, translations, selectedTranslation, s
                                 style={{ background: selectedTranslation.id === value.id ? "rgba(59, 130, 246, 0.5)" : "rgba(1, 87, 155, 0.3)" }} class="translation-option" >
                                 <span class="translation-title">{value.shortName}</span>
                                 <span class="translation-description">{value.name}</span>
-                                <button onClick={(e) => {
-                                    e.stopPropagation();
-                                    shareTranslatation({ translation: value })
-                                }} class="material-symbols-outlined share-btn">share</button>
                             </div>
                         })
                     }
@@ -799,7 +741,7 @@ const TransOption = ({ translationOption, index, idx = 0, setSelectedTranslation
                             return <div
                                 onClick={async () => {
                                     setSelectedTranslation(e.short)
-                                    const bot = getBot('system', 'main.UI2')
+                                    let bot = getBot('system', 'main.UI2')
                                     bot.masks.transilation = e.id
                                     SetTransilation(e.id)
                                     bot.masks.transilationShort = e.short
@@ -971,9 +913,8 @@ const SideBarBooks = ({ booksData, focusOnBook, selectedTestament, selectedTrans
 const SideBarChapters = ({ bookData, focusOnBook, setLastBookClicked, setBookData, refsObject, selectedTranslation }) => {
     const [renderingJSX, setRenderingJSX] = useState([]);
 
-    const handleChapterClick = ({ bookName, chapterNo, bookData, ...data }) => {
+    const handleChapterClick = ({ bookName, chapterNo, ...data }) => {
         // if(introductionManager.masks.isASectionMakingTourGuide) return os.toast("Please wait while section is opening!");
-        console.log(bookData, "bookData")
         shout('playSound', { soundName: 'UI_Numpad_Click' })
         // ContainerRef?.current?.focus()
         // focusOnBook({bookName: bookName, chapterNo: chapterNo});
@@ -983,8 +924,7 @@ const SideBarChapters = ({ bookData, focusOnBook, setLastBookClicked, setBookDat
         if (globalThis.CloseNewList) CloseNewList();
         setTimeout(() => {
             // Manage.open({ ...data, bookName, chapterNo })
-            const chapterUrl = bookData.firstChapterApiLink.replace("1.json", `${chapterNo}.json`)
-            globalThis.Open(data.id, chapterNo, selectedTranslation.id, chapterUrl);
+            globalThis.Open(data.id, chapterNo, selectedTranslation.id);
             // MainApp2({ action: 'addStudyNotes', props: { book: bookName, bookId: data.id, chapter: chapterNo, forced: true } })
         }, 500)
         // setSelectedVerses([])
@@ -1009,7 +949,7 @@ const SideBarChapters = ({ bookData, focusOnBook, setLastBookClicked, setBookDat
     const [currentPsalms, setCurrentPsalms] = useState("1 Psalms");
 
     useEffect(() => {
-        const renderJSX = [];
+        let renderJSX = [];
         if (bookData.startingBook || bookData.startingBook === 0) {
             for (let i = bookData.startingBook; i < bookData.endingBook + 1; i++) {
                 renderJSX.push(<div onCLick={() => handleChapterClick({
@@ -1017,8 +957,7 @@ const SideBarChapters = ({ bookData, focusOnBook, setLastBookClicked, setBookDat
                     translationId: bookData.translationId,
                     numberOfChapters: bookData.numberOfChapters,
                     bookName: bookData.commonName,
-                    chapterNo: i + 1,
-                    bookData
+                    chapterNo: i + 1
                 })} ><span className={`sidebar-chapter-itm`}>{i + 1}</span></div>)
             }
         } else {
@@ -1061,8 +1000,7 @@ const SideBarChapters = ({ bookData, focusOnBook, setLastBookClicked, setBookDat
                         translationId: bookData.translationId,
                         numberOfChapters: bookData.numberOfChapters,
                         bookName: bookData.commonName,
-                        chapterNo: i + 1,
-                        bookData
+                        chapterNo: i + 1
                     })} ><span className={`sidebar-chapter-itm`}>{i + 1}</span></button>)
                 }
             }

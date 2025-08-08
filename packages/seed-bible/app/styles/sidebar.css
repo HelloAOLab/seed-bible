@@ -1,101 +1,11 @@
 .sidebar-1 {
     padding: 15px;
     width: 280px;
-    height: 100dvh;
+    height: 100vh;
     position: relative;
-    /* transition: width 0.3s ease; */
-    background-color: var(--themeSideMenu);
-    padding-top: 50px;
-    /* padding-top: 50px; */
-}
-.customCheckboxWrapper {
-  display: flex;
-  align-items: center;
-  justify-content: center;
-  padding-left: 4px;
-  padding-right: 2px;
-}
-
-.customCheckbox {
-  appearance: none;
-  width: 16px;
-  height: 16px;
-  border: 2px solid #4459F3; /* orange border */
-  border-radius: 4px;
-  background-color: white;
-  cursor: pointer;
-  transition: background-color 0.2s, border 0.2s;
-  position: relative;
-  margin-bottom: 6px;
-}
-
-.customCheckbox:checked {
-  background-color: #4459F3; /* orange fill */
-  border-color: #4459F3;
-}
-
-.customCheckbox:checked::after {
-  content: '';
-  position: absolute;
-  top: 2px;
-  left: 4px;
-  width: 4px;
-  height: 8px;
-  border: solid white;
-  border-width: 0 2px 2px 0;
-  transform: rotate(45deg);
-}
-
-.tab.selected {
-    border: 2px solid var(--primary-color);
-    /* background-color: rgba(255, 165, 0, 0.1); */
-}
-
-.multiSelectActions {
-     display: flex;
-    justify-content: start;
-    align-items: center;
-    gap: 10px;
-    margin-bottom: 13px;
-}
-
-.floatSidebar {
-    position: fixed;
-    top: 0;
-    left: -100%;
-    /* hide it initially off screen */
-    z-index: 1000;
-    height: 100dvh;
-    transition: left 0.3s ease;
-}
-
-.floatProfileSection {
-    left: -300px !important;
-}
-
-@media (max-width: 768px) {
-    .sidebar-1 {
-        position: fixed;
-        top: 0;
-        left: -100%;
-        /* hide it initially off screen */
-        z-index: 1000;
-        height: 100dvh;
-        /* transition: left 0.3s ease; */
-    }
-
-
-    .profileSection {
-        left: -300px !important;
-    }
-
-    profileSection .open,
-    .open {
-        left: 0 !important;
-        /* slide into view */
-    }
-
-
+    transition: width 0.3s ease;
+    background-color: var(--primary-color);
+    pointer-events: all;
 }
 
 .sidebar-collapsed {
@@ -103,8 +13,7 @@
     width: 60px;
     height: 100vh;
     position: relative;
-    background: var(--themeSideMenu);
-    /* transition: width 0.3s ease; */
+    transition: width 0.3s ease;
 }
 
 .optionsButton {
@@ -117,7 +26,7 @@
     align-items: center;
     gap: 15px;
     justify-content: space-between;
-    color: var(--themeText1);
+    color: var(--gray-color);
     font-weight: 700;
 }
 
@@ -161,7 +70,7 @@
     padding: 5px;
     border-radius: 10px;
     margin-top: 25px;
-    color: var(--themeText1);
+    color: var(--gray-color);
 }
 
 .searchSection input {
@@ -175,7 +84,7 @@
     gap: 16px;
     margin-top: 25px;
     justify-content: space-between;
-    color: var(--themeText1);
+    color: var(--gray-color);
     font-weight: 700;
     margin-bottom: 27px;
     align-items: center;
@@ -184,17 +93,6 @@
 .tabs {
     margin-left: 10px;
     height: 100%;
-}
-
-.addIconCollapsed {
-    width: 50px;
-    background: var(--whitegray-color);
-    border-radius: 5px;
-    cursor: pointer;
-    height: 45px;
-    align-items: center;
-    justify-content: center;
-    display: flex
 }
 
 .tabs-collapsed {
@@ -206,7 +104,7 @@
 }
 
 .tab {
-    color: var(--themeText1);
+    color: var(--gray-color);
     display: flex;
     flex-direction: row;
     justify-content: space-between;
@@ -219,6 +117,22 @@
 .activeTab {
     background: white;
     color: black;
+    display: flex
+;
+    flex-direction: row;
+    justify-content: space-between;
+    align-items: center;
+    cursor: pointer;
+    border-radius: 8px;
+    user-select: none;
+    /* -webkit-user-drag: element; */
+    padding-left: 5px;
+    padding-bottom: 3px;
+}
+
+.activeTabCollapsed {
+    background: white;
+    color: black;
     display: flex;
     flex-direction: row;
     justify-content: space-between;
@@ -227,42 +141,14 @@
     border-radius: 8px;
     user-select: none;
     /* -webkit-user-drag: element; */
-    /* padding-left: 5px; */
-    padding-bottom: 3px;
-}
-
-.activeTabCollapsed {
-    flex-direction: row;
-    cursor: pointer;
-    border-radius: 5px;
-    user-select: none;
-    width: 50px;
+    width: 40px;
     display: flex;
     justify-content: center;
     align-items: center;
-    height: 45px;
+    border: 1px solid black;
+    height: 40px;
     padding: 0;
     padding-top: 3px;
-    background: #C1C8F4;
-    border: #4459F3 1px solid;
-    color: #4459F3;
-}
-
-.collabsedTab {
-    flex-direction: row;
-    cursor: pointer;
-    border-radius: 5px;
-    user-select: none;
-    width: 50px;
-    display: flex;
-    justify-content: center;
-    align-items: center;
-    height: 45px;
-    padding: 0;
-    padding-top: 3px;
-    background: transparent;
-    border: black 1px solid;
-    color: black;
 }
 
 .tabInfo {
@@ -288,28 +174,23 @@
 .profileSection {
     position: absolute;
     left: 0;
-    bottom: 0px;
+    bottom: 26px;
     display: flex;
     flex-direction: row;
     gap: 10px;
+    width: 100%;
     justify-content: space-around;
-    width: 280px;
-    background: var(--themeSideMenu);
-    align-items: center;
-    height: 70px;
-
 }
 
 .profileSection-collapsed {
     position: absolute;
-    left: 6px;
+    left: 0;
     bottom: 26px;
     display: flex;
     flex-direction: column;
     gap: 15px;
     width: 100%;
     align-items: center;
-    background: var(--themeSideMenu);
 }
 
 .dot {
@@ -367,7 +248,7 @@
 
 .icon-button {
     cursor: pointer;
-    color: var(--themeText1);
+    color: var(--gray-color);
 }
 
 

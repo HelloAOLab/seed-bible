@@ -1,0 +1,37 @@
+return
+os.unregisterApp(thisBot.tags.welcomeMessageName);
+os.registerApp(thisBot.tags.welcomeMessageName,thisBot);
+const { ModalStepper } = Components;
+const mainWord = getBot("isMainWord", true);
+
+const stepData = [
+    {
+        nextBtn: "Next",
+        nextBtnAction: ()=>{
+            setTimeout(() => {mainWord.tryToShowInteractDialog();}, 10000)
+            os.unregisterApp(thisBot.tags.welcomeMessageName);
+        },
+        textElement: <div>
+            <p>We're releasing this demo early because we need <b>your feedback</b> to make it great!</p>
+            <p><b>Reload</b> your browser tab if the demo breaks for any reason.</p>
+            <p>The demo improves <b>every day</b> so try again later if you have any issues.</p>
+            <p><b>Join our <a rel="noopener" href="https://discord.com/invite/NbEZMCJmqC" target="_blank" >Discord</a></b> community to get involved, or follow us online for future updates.</p>
+        </div>,
+        prevBtn: "Don't Show Again",
+        prevBtnAction: ()=>{
+            setTimeout(() => {mainWord.tryToShowInteractDialog();}, 10000);
+            const localStorage = getBot("system","storage.localStorage");
+            setTag(localStorage,"notShowWelcomeMessage",true);
+            os.unregisterApp(thisBot.tags.welcomeMessageName);
+        }
+    },
+   
+]
+
+const WelcomeInformation = () => {
+    return <>
+        <ModalStepper sxBackdrop={{backdropFilter: "blur(4px)"}} stepData={stepData} css={thisBot.tags["lore-card-tut.css"]} />
+    </>
+}
+
+os.compileApp(thisBot.tags.welcomeMessageName,<WelcomeInformation/>);

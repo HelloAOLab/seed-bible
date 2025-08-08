@@ -1,0 +1,7 @@
+// thisBot.tags.currentAnimationIndex++;
+// if(thisBot.tags.currentAnimationIndex >= thisBot.tags.animationsPool.length)
+// {
+//     thisBot.tags.currentAnimationIndex = 0;
+// }
+clearAnimations(thisBot);
+whisper(thisBot, that.animationName);

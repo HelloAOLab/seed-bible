@@ -1,0 +1,1 @@
+shout("OnCoverClicked", {bibleId: thisBot.tags.bibleId});

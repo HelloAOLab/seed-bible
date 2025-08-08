@@ -10,27 +10,20 @@ const SearchBar = getBot('system', "introduction.searchBar").SearchBar();
 import { useSideBarContext } from 'app.hooks.sideBar'
 import { useTabsContext } from 'app.hooks.tabs';
 import { ToolbarSettings } from 'app.components.toolbarSettings'
-import { SpaceUI } from 'app.components.sideBar'
-import { ThemeSettings } from 'app.components.themeSettings'
 import { AiSettings } from 'app.components.aiSettings'
-import { CanvasAiSettings } from 'app.components.canvasAiSettings'
-import { PromtBarSettings } from 'app.components.PromtBarSettings'
-import { CreateAccountSettings } from 'app.components.createAccountSettings'
 import { useBibleContext } from 'app.hooks.bibleVariables'
 shout('initialize')
-globalThis.PanelTabsMap = {}; // { panelId: tabObject }
-
 const Layout = ({ children }) => {
   // using this to recored the mouse position always
   // u can use the position anywhere if needed (i will need it for tabs dragging)
   const { spaces, activeSpace } = useTabsContext()
   const { setPosition } = useMouseMove()
-  const { sidebarMode, setSideBarMode, closePopupSettings, themeColors } = useSideBarContext()
+  const { sidebarMode, setSideBarMode, closePopupSettings } = useSideBarContext()
   const { canvasMode, setCanvasMode } = useBibleContext()
   useEffect(() => {
     const handleContextMenu = (e) => {
       // e.preventDefault();
-      // console.log('Global right-click blocked');
+      console.log('Global right-click blocked');
     };
     document.addEventListener("contextmenu", handleContextMenu);
     return () => {
@@ -38,33 +31,27 @@ const Layout = ({ children }) => {
     };
   }, []);
   return (
-    <div onMouseMove={(e) => {
-      setPosition({ x: e.clientX, y: e.clientY })
+    <div onMouseMove={() => {
+      setPosition({ x: gridPortalBot.tags.pointerPixelX, y: gridPortalBot.tags.pointerPixelY })
     }}
       onContextMenu={(e) => {
         // e.preventDefault()
-        // os.log('works')
+        os.log('works')
       }}
       onClick={() => {
         closePopupSettings()
       }}
-      className="layout" style={{ background: 'white' }}>
-     
+      className="layout" style={canvasMode ? { background: 'transparent', pointerEvents: "none"} : {pointerEvents: "all"}}>
       <style>{`${spaces.find(e => e.id === activeSpace)?.settings?.text?.root || exportTextConfigToCSS(defaultTextConfig)}`}</style>
+      <link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Material+Symbols+Outlined:opsz,wght,FILL,GRAD@24,400,0,0" />
       {
         sidebarMode === 'default' ? <SideBar /> :
           sidebarMode === 'settings' ? <SettingsSidebar /> :
             sidebarMode === 'textSettings' ? <TextSettings /> :
-              sidebarMode.includes('toolbarSettings') ? <ToolbarSettings /> :
-                sidebarMode === 'promtSettings' ? <PromtBarSettings /> :
-                  sidebarMode === 'canvasAiSettings' ? <CanvasAiSettings /> :
-                    sidebarMode === 'themeSettings' ? <ThemeSettings /> :
-                      sidebarMode === 'aiSettings' ? <AiSettings /> :
-                        sidebarMode === 'createAccountSettings' ? <CreateAccountSettings />
-                          : null
+              sidebarMode === 'toolbarSettings' ? <ToolbarSettings /> :
+                sidebarMode === 'aiSettings' ? <AiSettings />
+                  : null
       }
-      {(sidebarMode === 'default' || sidebarMode === 'settings' || sidebarMode === 'themeSettings') && <SpaceUI />}
-
       <main className="content">
         {children}
       </main>

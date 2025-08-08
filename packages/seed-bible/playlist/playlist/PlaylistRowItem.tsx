@@ -12,7 +12,7 @@ const ButtonStyle = {
     color: 'inherit'
 }
 
-const startEditingPlaylist = (name, id, list, subId, attachment, checklistEnabled, parentId, readingPlanEnabled, currentFormat, color, icon, isCustomColor, description, isCustomIcon, selectedTags) => {
+const startEditingPlaylist = (name, id, list, subId, attachment, checklistEnabled, parentId, readingPlanEnabled, currentFormat, color, icon, isCustomColor, description, isCustomIcon, selectedTags, isLayers) => {
     globalThis[`${parentId}SetPlaylistName`](name);
     globalThis[`${parentId}creatingPlaylistName`] = name;
     globalThis[`${parentId}HISTORYExploreMode`] = false;
@@ -42,6 +42,7 @@ const startEditingPlaylist = (name, id, list, subId, attachment, checklistEnable
     globalThis[`${parentId}setDescription`](description);
     globalThis[`${parentId}SetCreatingPlaylist`](true, list);
     globalThis[`${parentId}SetSelectedTags`](selectedTags || []);
+    globalThis[`${parentId}SetLayers`](isLayers);
 }
 
 function sanitizeString(str) {
@@ -76,7 +77,7 @@ const getPosition = () => {
     const edgeThreshold = 200; // Distance from edges to adjust position
     const safeMargin = "2rem"; // Fixed margin when near edges
 
-    const position = {};
+    let position = {};
 
     // Horizontal positioning
     if (width - pointerX < edgeThreshold) {
@@ -99,7 +100,7 @@ const getPosition = () => {
     return position;
 };
 
-const PlaylistRowItem = ({ currentDateActive, oldItemsMap = {}, checkListData, selectedPlaylists, selectPlaylist = false, setSelectPlaylist, playlistParentName = '', clickPass = false, linkingMode, onLink, viewOnly, parentId, playingPlaylist, checklistEnabled, readingPlanEnabled, totalItem, index, toggle, list, name, id, setPlaylists, attachment = null, playListIndex, playListSubId = null, playListSubIndex = null, creatingPlaylist, handleDragOver, handleDragEnd, currentFormat, handleDragStart, dragOverSet, setOpenedList, opendedList, color = "#D9D9D9", icon = "subscriptions", isCustomColor = false, description = '', isCustomIcon = false, selectedTags }) => {
+const PlaylistRowItem = ({ currentDateActive, oldItemsMap = {}, checkListData, selectedPlaylists, selectPlaylist = false, setSelectPlaylist, playlistParentName = '', clickPass = false, linkingMode, onLink, viewOnly, parentId, playingPlaylist, checklistEnabled, readingPlanEnabled, totalItem, index, toggle, list, name, id, setPlaylists, attachment = null, playListIndex, playListSubId = null, playListSubIndex = null, creatingPlaylist, handleDragOver, handleDragEnd, currentFormat, handleDragStart, dragOverSet, setOpenedList, opendedList, color = "#D9D9D9", icon = "subscriptions", isCustomColor = false, description = '', isCustomIcon = false, selectedTags, isLayers }) => {
     const isCustomIcons = icon.startsWith("https") || isCustomIcon;
 
     const [showMoreOptions, setShowMoreOptions] = useState(false);
@@ -518,7 +519,7 @@ const PlaylistRowItem = ({ currentDateActive, oldItemsMap = {}, checkListData, s
                     {
                         opendedList
                         &&
-                        <DragDrop description={description} icon={icon} isCustomIcon={isCustomIcon} isCustomColor={isCustomColor} color={color} currentFormat={currentFormat} currentDateActive={currentDateActive} checkListData={checkListData} oldItemsMap={oldItemsMap} clickPass={clickPass} onLinking={onLink} playlistName={`${playlistParentName}${playlistParentName ? " - " : ''}${name}`} linkingMode={linkingMode} viewOnly={viewOnly} parentId={parentId} checklistEnabled={checklistEnabled} toggle={toggle} creatingPlaylist={creatingPlaylist} playingPlaylist={playingPlaylist} list={list} editDataFromPlaylist={editDataFromPlaylist} playListSubIndex={playListIndex} playListSubId={id} setPlaylistFromRow={setPlaylists} onClick={onClick} setList={setPlaylist} deleteFromList={deleteDataFromPlaylist} onClickItem={hanldeAdd} />
+                        <DragDrop description={description} icon={icon} isCustomIcon={isCustomIcon} isCustomColor={isCustomColor} color={color} currentFormat={currentFormat} currentDateActive={currentDateActive} checkListData={checkListData} oldItemsMap={oldItemsMap} clickPass={clickPass} onLinking={onLink} playlistName={`${playlistParentName}${!!playlistParentName ? " - " : ''}${name}`} linkingMode={linkingMode} viewOnly={viewOnly} parentId={parentId} checklistEnabled={checklistEnabled} toggle={toggle} creatingPlaylist={creatingPlaylist} playingPlaylist={playingPlaylist} list={list} editDataFromPlaylist={editDataFromPlaylist} playListSubIndex={playListIndex} playListSubId={id} setPlaylistFromRow={setPlaylists} onClick={onClick} setList={setPlaylist} deleteFromList={deleteDataFromPlaylist} onClickItem={hanldeAdd} />
                     }
                 </div>
 
@@ -563,7 +564,7 @@ const PlaylistRowItem = ({ currentDateActive, oldItemsMap = {}, checkListData, s
                                 <div className="more-menu-items"
                                     onClick={() => {
                                         setShowMoreOptions(false);
-                                        startEditingPlaylist(name, id, list, playListSubId, attachment, checklistEnabled, parentId, readingPlanEnabled, currentFormat, color, icon, isCustomColor, description, isCustomIcon, selectedTags);
+                                        startEditingPlaylist(name, id, list, playListSubId, attachment, checklistEnabled, parentId, readingPlanEnabled, currentFormat, color, icon, isCustomColor, description, isCustomIcon, selectedTags, isLayers);
                                         setShowMoreOptions(false);
                                     }}
                                 >
@@ -604,7 +605,7 @@ const PlaylistRowItem = ({ currentDateActive, oldItemsMap = {}, checkListData, s
                             >
                                 <p>Delete </p>
                             </div>}
-                        {!creatingPlaylist && !viewOnly && !playingPlaylist && (playListSubId ? <div
+                        {!creatingPlaylist && !viewOnly && !playingPlaylist && (!!playListSubId ? <div
                             className="more-menu-items"
                             onClick={() => {
                                 exportNestedList();

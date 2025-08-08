@@ -1,0 +1,10 @@
+setTag(thisBot, "scaleX", 0.25);
+setTag(thisBot, "scaleY", 0.25);
+setTag(thisBot, "scaleZ", 0.125);
+setTag(thisBot, "label", "");
+setTag(thisBot, 'userColorIndex', null);
+setTag(thisBot, 'isExtraUsersContent', null);
+setTag(thisBot, 'isExtraUsersBackground', null);
+setTag(thisBot, 'ownerDataId', null);
+setTag(thisBot, 'form', "sphere");
+setTag(thisBot, 'userColorPosition', null);

@@ -79,7 +79,7 @@ if (sharedPlaylist) {
 
                 if (globalThis.SetScreens) {
                     await Playlist.tryInitPlaylistMaker();
-                    globalThis.SetScreens({value:2});
+                    globalThis.SetScreens(2);
                 }
                 // setTagMask(toutour, "showingStep", false);
                 // setTagMask(toutour, "access", false);

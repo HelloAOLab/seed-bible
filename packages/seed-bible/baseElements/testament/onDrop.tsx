@@ -1,0 +1,1 @@
+shout("OnTestamentInteracted", {testament: thisBot, typeOfInteraction: StackElementInteractionType.Drop, dropInfo: that});

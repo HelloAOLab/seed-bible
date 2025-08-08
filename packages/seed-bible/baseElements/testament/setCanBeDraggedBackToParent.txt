@@ -1,0 +1,15 @@
+if(!thisBot.masks.canBeDraggedBackToParent)
+{
+    const dimension = os.getCurrentDimension();
+    const distanceThreshold = 7;
+    const currentPositionXY = new Vector2(
+        thisBot.masks[dimension + "X"] ?? thisBot.tags[dimension + "X"],
+        thisBot.masks[dimension + "Y"] ?? thisBot.tags[dimension + "Y"]
+    )
+    const distanceBetween = Vector2.distanceBetween(currentPositionXY, thisBot.masks.positionXYOnDrag);
+
+    if(distanceBetween > distanceThreshold)
+    {
+        setTagMask(thisBot, "canBeDraggedBackToParent", true);
+    }
+}

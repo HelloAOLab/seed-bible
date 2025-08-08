@@ -1,0 +1,12 @@
+const {element, stackData} = that;
+
+const dimension = os.getCurrentDimension();
+const radius = 4;
+let elementPosition = getBotPosition(element, dimension);
+elementPosition = new Vector2(elementPosition.x, elementPosition.y);
+let bibleTransformerPosition = getBotPosition(stackData.staticBibleElements.bibleTransformer, dimension);
+bibleTransformerPosition = new Vector2(bibleTransformerPosition.x, bibleTransformerPosition.y);
+if(element.tags.transformer) elementPosition = elementPosition.add(bibleTransformerPosition)
+const distanceBetween = Vector2.distanceBetween(elementPosition, bibleTransformerPosition);
+
+return distanceBetween <= radius

@@ -1,0 +1,67 @@
+const { useState, useCallback, useEffect } = os.appHooks;
+
+const CustomArrangementEditor = thisBot.CustomArrangementEditor();
+
+const ArrangementCreator = ({selectedOption, setSelectedOption, checkedOption, setCheckedOption}) => {
+
+    const [singleOptions, setSingleOptions] = useState([
+        {
+            name: "Custom Arrangement",
+            optionTitle: "Start from scratch",
+            id: uuid(),
+            testaments: [
+                {
+                    name: "Custom Section",
+                    id: uuid(),
+                    color: "#FFFFFF",
+                    sections: [
+                        {
+                            name: "Custom Sub-section",
+                            id: uuid(),
+                            color: "#FFFFFF",
+                            books: []
+                        }
+                    ]
+                }
+            ]
+        }
+    ])
+    const [groupOptions, setGroupOptions] = useState([
+        {
+            title: "Start from a template",
+            options: [...InstanceManager.vars.fixedArrangementsInfo.map((arrangementInfo) => {return GetTemplateFromArrangement(arrangementInfo)})]
+        }
+    ])
+
+    // const handleExitEditor = useCallback(() => {
+    //     setSelectedOption(null);
+    //     setShowEditionToggle(true)
+    // }, [])
+
+    
+    return (
+        <>
+            {selectedOption ? <CustomArrangementEditor 
+                template={selectedOption} 
+                setTemplate={setSelectedOption}
+                isEditor={false}
+            /> : <TemplateSelector
+                checkedOption={checkedOption}
+                handleOptionClick={handleOptionClick}
+                singleOptions={singleOptions}
+                groupOptions={groupOptions}
+                key="creation"
+            />}
+            
+            
+            <CustomArrangementNavigationButtons
+                handleBackButtonClick={handleBackButtonClick}
+                handleForwardButtonClick={handleForwardButtonClick} 
+                backContent="Close"
+                forwardContent="Continue"
+            />
+        </>
+    )
+}
+
+return ArrangementCreator;

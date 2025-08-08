@@ -1,0 +1,1 @@
+if(thisBot.GetCurrentGameState() === GameState.Playing) thisBot.SetGameState({state: GameState.Pause})

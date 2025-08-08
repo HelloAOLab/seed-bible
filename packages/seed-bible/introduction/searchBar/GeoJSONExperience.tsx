@@ -60,9 +60,9 @@ const App = ({ from }) => {
                 globalThis.EVENT_PANEL_ID = null;
                 globalThis.eventToolApp = false;
             }
-            const App = await getBot('system', "ext_canvas.eventTool").initInterface()
+            let App = await getBot('system', "ext_canvas.eventTool").initInterface()
             if (App) {
-                const id = uuid();
+                let id = uuid();
                 globalThis.eventToolApp = true;
                 globalThis.EVENT_PANEL_ID = id;
                 AddApplication({ id, App: <App initPage={2} id={id} />, minWidth: "23rem" });
@@ -141,7 +141,6 @@ const App = ({ from }) => {
 
 const Buttons = ({ place }) => {
     const handleClick = useCallback(() => {
-        console.log("hello")
         whisper(thisBot, "handleGeoJsonSearch", { place: place });
         setOpenSidebar(false);
         // setCurrentExperience(0);

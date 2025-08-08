@@ -52,7 +52,7 @@
 
 .place{
     display: flex;
-    width: calc(50% - 25px);
+    width: 150px;
     background-color: #CFD8DC;
     border-radius: 10px;
     justify-content: flex-start;
@@ -101,7 +101,7 @@
         height: calc(45dvh - 92px);
     }
     .place{
-        width: calc(50% - 25px);
+        width: 180px;
     }
     .search {
         width: 95px;

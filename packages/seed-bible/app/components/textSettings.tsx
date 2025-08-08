@@ -10,7 +10,7 @@ export const defaultTextConfig = {
         weight: '500',
         color: 'black',
         marginVertical: '60',
-        marginHorizontal: '10',
+        marginHorizontal: '150',
         styles: {
             bold: true,
             italic: false,
@@ -23,7 +23,7 @@ export const defaultTextConfig = {
         weight: '600',
         color: 'black',
         marginVertical: '24',
-        marginHorizontal: '10',
+        marginHorizontal: '150',
         styles: {
             bold: true,
             italic: false,
@@ -36,7 +36,7 @@ export const defaultTextConfig = {
         weight: '600',
         color: 'black',
         marginVertical: '8',
-        marginHorizontal: '10',
+        marginHorizontal: '150',
         styles: {
             bold: true,
             italic: false,
@@ -49,7 +49,7 @@ export const defaultTextConfig = {
         weight: '400',
         color: 'black',
         marginVertical: '30',
-        marginHorizontal: '10',
+        marginHorizontal: '150',
         styles: {
             bold: false,
             italic: false,
@@ -60,7 +60,7 @@ export const defaultTextConfig = {
 };
 export function exportTextConfigToCSS(textConfig) {
     const toCSSVarName = (section, key) => `--text-${section}-${key}`;
-    const cssVars = [];
+    let cssVars = [];
 
     for (const [section, config] of Object.entries(textConfig)) {
         const styles = config.styles || {};
@@ -74,8 +74,8 @@ export function exportTextConfigToCSS(textConfig) {
         cssVars.push(`${toCSSVarName(section, 'color')}: ${config.color || 'black'};`);
         cssVars.push(`${toCSSVarName(section, 'margin-top')}: ${config.marginVertical || '16'}px;`);
         cssVars.push(`${toCSSVarName(section, 'margin-bottom')}: ${config.marginVertical || '16'}px;`);
-        cssVars.push(`${toCSSVarName(section, 'margin-left')}: ${config.marginHorizontal || '0'}%;`);
-        cssVars.push(`${toCSSVarName(section, 'margin-right')}: ${config.marginHorizontal || '0'}%;`);
+        cssVars.push(`${toCSSVarName(section, 'margin-left')}: ${config.marginHorizontal || '0'}px;`);
+        cssVars.push(`${toCSSVarName(section, 'margin-right')}: ${config.marginHorizontal || '0'}px;`);
 
     }
 
@@ -120,7 +120,7 @@ function TextSettings() {
     return (
         <div className="textSettings-sidebar">
             <div className="routerOptions">
-                <div style={{ cursor: 'pointer' }}  onClick={() => setSideBarMode('settings')} className="blackText"><MenuIcon name="arrow_back" /></div>
+                <div onClick={() => setSideBarMode('settings')} className="blackText"><MenuIcon name="arrow_back" /></div>
                 <div className="softText">Page settings</div>
                 <div className="softText"><MenuIcon name="chevron_right" /></div>
                 <div className="softText">Text</div>

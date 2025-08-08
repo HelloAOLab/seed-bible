@@ -1,0 +1,27 @@
+.custom-button {
+   padding: 8px 12px;
+    border-radius: 8px;
+    border: 1px solid black;
+    font-weight: 700;
+    text-align: center;
+    box-shadow: 0 4px 8px rgba(0, 0, 0, 0.1);
+    transition: transform 0.3s ease-in-out;
+    cursor: pointer;
+    background-color: transparent !important;
+    color: black !important;
+    font-size: 16px;
+}
+
+.custom-button.secondary {
+    background-color: black !important;
+    color: white !important;
+}
+
+.custom-button:disabled {
+    background-color: lightgray !important;
+}
+
+/* .custom-button:hover {
+    transform: translateY(-1.5px);
+    box-shadow: 0 6px 12px rgba(0, 0, 0, 0.2);
+} */

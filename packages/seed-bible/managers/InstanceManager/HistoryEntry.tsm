@@ -1,0 +1,9 @@
+import {ElementInfo} from "managers.InstanceManager.ElementInfo"
+export class HistoryEntry extends ElementInfo
+{
+    constructor({typeOfElement, key, date})
+    {
+        super({typeOfElement, key})
+        this.date = date
+    }
+}

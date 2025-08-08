@@ -1,0 +1,139 @@
+.refresh{
+    position: fixed;
+    bottom: 10px;
+    left: 10px;
+}
+
+.chaism-tools-container {
+    position: fixed;
+    display: flex;
+    flex-direction: column;
+    height: fit-content;
+    width: 250px;
+    background: white;
+    justify-content: space-around;
+    align-items: center;
+    border-radius: 10px;
+    cursor: default;
+    gap: 10px;
+    padding: 15px;
+}
+
+.dragTool {
+    position: absolute;
+    top: 8px;
+    height: 10px;
+    display: flex;
+    justify-content: center;
+    align-items: center;
+    cursor: move;
+}
+
+.promt-container {
+    display: flex;
+    justify-content: center;
+    align-items: center;
+    height: 100%;
+    width: 100%;
+    flex-direction: column;
+}
+
+.default-btn {
+  appearance: none;
+  background-color: #FAFBFC;
+  border: 1px solid rgba(27, 31, 35, 0.15);
+  border-radius: 6px;
+  box-shadow: rgba(27, 31, 35, 0.04) 0 1px 0, rgba(255, 255, 255, 0.25) 0 1px 0 inset;
+  box-sizing: border-box;
+  color: #24292E;
+  cursor: pointer;
+  display: inline-block;
+  font-family: -apple-system, system-ui, "Segoe UI", Helvetica, Arial, sans-serif, "Apple Color Emoji", "Segoe UI Emoji";
+  font-size: 14px;
+  font-weight: 500;
+  line-height: 20px;
+  list-style: none;
+  padding: 6px 16px;
+  position: relative;
+  transition: background-color 0.2s cubic-bezier(0.3, 0, 0.5, 1);
+  user-select: none;
+  -webkit-user-select: none;
+  touch-action: manipulation;
+  vertical-align: middle;
+  white-space: nowrap;
+  word-wrap: break-word;
+  width: 100%;
+}
+
+.default-btn:hover {
+  background-color: #F3F4F6;
+  text-decoration: none;
+  transition-duration: 0.1s;
+}
+
+.default-btn:disabled {
+  background-color: #FAFBFC;
+  border-color: rgba(27, 31, 35, 0.15);
+  color: #959DA5;
+  cursor: default;
+}
+
+.default-btn:active {
+  background-color: #EDEFF2;
+  box-shadow: rgba(225, 228, 232, 0.2) 0 1px 0 inset;
+  transition: none 0s;
+}
+
+.default-btn:focus {
+  outline: 1px transparent;
+}
+
+.default-btn:before {
+  display: none;
+}
+
+.default-btn:-webkit-details-marker {
+  display: none;
+}
+
+.promt-item {
+    width: 100%;
+    display: flex;
+    flex-direction: column;
+    margin: 10px;
+    gap: 10px;
+    align-items: flex-start;
+}
+
+.promt-item-hor{
+    width: 100%;
+    display: flex;
+    flex-direction: row;
+    gap: 10px;
+    align-items: flex-start;
+}
+
+.promt-item-title {
+    font-size: 16px;
+    font-weight: bold;
+    width: 100%;
+}
+
+.promt-item-textarea {
+    border-radius: 5px;
+    padding: 5px;
+    width: 100%;
+    max-width: 100%;
+    min-width: 100%;
+}
+
+.nav-btn {
+    padding: 3px;
+    border-radius: 5px;
+    display: flex;
+    justify-content: center;
+    align-items: center;
+    cursor: pointer;
+    background: none;
+    border: none;
+}

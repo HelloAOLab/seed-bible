@@ -29,15 +29,15 @@ const PlaylistList = ({ extraActions = () => { }, mergeMode, selectedPlaylists, 
 
         if (!draggedItemID) return;
 
-        const draggedItemIndex = playLists.findIndex(hist => hist.id === draggedItemID);
+        let draggedItemIndex = playLists.findIndex(hist => hist.id === draggedItemID);
 
-        const draggedOverItem = playLists[index];
+        let draggedOverItem = playLists[index];
 
-        const dragItem = [playLists[draggedItemIndex]];
+        let dragItem = [playLists[draggedItemIndex]];
 
         let newItems = [];
 
-        const filterAbleItems = {
+        let filterAbleItems = {
             [draggedItemID]: true,
         };
 
@@ -114,7 +114,7 @@ const PlaylistList = ({ extraActions = () => { }, mergeMode, selectedPlaylists, 
     return <>
         <div onClick={() => extraActions()} style={{ display: 'flex', flexDirection: 'column', gap: '1rem' }}>
             {playLists.length === 0 && <h4 style={{ margin: "8px 0" }} >No Playlists to show.</h4>}
-            {playLists.filter(pl => !playingPlaylist ? true : pl.id === playingPlaylist).map(({ name: playlistName, list, id, nesting, toggleRender, description, readingPlanEnabled, dateFormat, attachment, checklistEnabled, color, icon, isCustomColor, isCustomIcon, selectedTags }, index) =>
+            {playLists.filter(pl => !playingPlaylist ? true : pl.id === playingPlaylist).map(({ name: playlistName, list, id, nesting, toggleRender, description, readingPlanEnabled, dateFormat, attachment, checklistEnabled, color, icon, isCustomColor, isCustomIcon, selectedTags, isLayers }, index) =>
                 <PlaylistRowItem
                     selectPlaylist={selectPlaylist}
                     selectedPlaylists={selectedPlaylists}
@@ -128,6 +128,7 @@ const PlaylistList = ({ extraActions = () => { }, mergeMode, selectedPlaylists, 
                     setOpenedList={setOpenedList}
                     opendedList={opendedList}
                     selectedTags={selectedTags}
+                    isLayers={isLayers}
                     attachment={attachment}
                     currentFormat={dateFormat}
                     checklistEnabled={checklistEnabled}

@@ -4,7 +4,7 @@
 os.log(that, 'app')
 
 if (that.buttonId === 'left') {
-    isAbleToRightClick.leftClickAction()
+    // isAbleToRightClick.leftClickAction()
     return
 }
 import { DualScreenIcon, ThreeScreenIcon, QuadScreenIcon, SingleScreenIcon, MenuIcon } from 'app.components.icons'

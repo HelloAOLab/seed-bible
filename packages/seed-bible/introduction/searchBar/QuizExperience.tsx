@@ -30,7 +30,7 @@ const App = () => {
         if(!gameRunning){
             return
         }
-        const tempQuiz = [...quizData];
+        let tempQuiz = [...quizData];
         if(event){
             tempQuiz[index].options[0]["selected"] = event.target.value;
             tempQuiz[index].attempted = true;
@@ -170,7 +170,7 @@ const App = () => {
 
 const OptionComponent = ({options, handleCheck, index, points, quiz}) => {
     const [optionType, setOptionType] = useState(null);
-    const optionsNum = {
+    let optionsNum = {
         "1": "a",
         "2": "b",
         "3": "c",
@@ -267,9 +267,9 @@ const OptionComponent = ({options, handleCheck, index, points, quiz}) => {
 }
 
 const Confetti = () => {
-    const numberArr = []
+    let numberArr = []
 
-    for (let i = 0; i < 149; i++) {
+    for (var i = 0; i < 149; i++) {
         numberArr.push(i)
     }
     

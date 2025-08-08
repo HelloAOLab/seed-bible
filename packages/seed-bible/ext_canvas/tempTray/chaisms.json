@@ -1,0 +1,239 @@
+[
+    [
+        [
+            {
+                "labelColor": "black",
+                "labelScaleZ": [
+                    0.1,
+                    0.1
+                ],
+                "text": "Matthew 8:1-4",
+                "title": true
+            }
+        ],
+        [
+            {
+                "labelColor": "black",
+                "labelScaleZ": [
+                    0.75,
+                    1,
+                    1.25,
+                    1.5,
+                    1.75,
+                    2,
+                    2.25
+                ],
+                "text": "When Jesus came down from the mountain,"
+            },
+            {
+                "labelColor": "black",
+                "labelScaleZ": [
+                    2.5,
+                    2.75
+                ],
+                "labelSize": 1,
+                "text": "large crowds"
+            },
+            {
+                "labelColor": "black",
+                "labelScaleZ": [
+                    3,
+                    3.25
+                ],
+                "text": "followed Him."
+            }
+        ],
+        [
+            {
+                "labelColor": "black",
+                "labelScaleZ": [
+                    3.5,
+                    3.75
+                ],
+                "text": "Suddenly a"
+            },
+            {
+                "labelColor": "blue",
+                "labelScaleZ": [
+                    4
+                ],
+                "labelSize": 1,
+                "text": "leper"
+            },
+            {
+                "labelColor": "black",
+                "labelScaleZ": [
+                    4.25,
+                    4.5,
+                    4.75,
+                    5,
+                    5.25
+                ],
+                "text": "came and knelt before Him,"
+            }
+        ],
+        [
+            {
+                "labelColor": "black",
+                "labelScaleZ": [
+                    5.5,
+                    5.75
+                ],
+                "text": "saying, “Lord,"
+            },
+            {
+                "labelColor": "green",
+                "labelScaleZ": [
+                    6,
+                    6.25,
+                    6.5,
+                    6.75
+                ],
+                "labelSize": 1,
+                "text": "if You are willing,"
+            },
+            {
+                "labelColor": "black",
+                "labelScaleZ": [
+                    7,
+                    7.25,
+                    7.5,
+                    7.75
+                ],
+                "text": "You can make me"
+            },
+            {
+                "labelColor": "#E65100",
+                "labelScaleZ": [
+                    8
+                ],
+                "labelSize": 1,
+                "text": "clean.”"
+            }
+        ],
+        [
+            {
+                "labelColor": "black",
+                "labelScaleZ": [
+                    8.25,
+                    8.5,
+                    8.75,
+                    9,
+                    9.25,
+                    9.5,
+                    10,
+                    10,
+                    10
+                ],
+                "labelSize": 1,
+                "text": "Jesus reached out His hand and touched the man."
+            }
+        ],
+        [
+            {
+                "labelColor": "green",
+                "labelScaleZ": [
+                    8.75,
+                    8.75,
+                    8.5
+                ],
+                "labelSize": 1,
+                "text": "“I am willing,”"
+            },
+            {
+                "labelColor": "black",
+                "labelScaleZ": [
+                    8.25,
+                    8
+                ],
+                "text": "He said."
+            },
+            {
+                "labelColor": "#E65100",
+                "labelScaleZ": [
+                    7.75,
+                    7.5
+                ],
+                "labelSize": 1,
+                "text": "“Be clean!”"
+            }
+        ],
+        [
+            {
+                "labelColor": "black",
+                "labelScaleZ": [
+                    7.8199999999999985,
+                    7.829999999999998,
+                    7.589999999999998
+                ],
+                "text": "And immediately his"
+            },
+            {
+                "labelColor": "blue",
+                "labelScaleZ": [
+                    7.349999999999998
+                ],
+                "labelSize": 1,
+                "text": "leprosy"
+            },
+            {
+                "labelColor": "black",
+                "labelScaleZ": [
+                    7.359999999999998,
+                    7.119999999999997
+                ],
+                "text": "was cleansed."
+            }
+        ],
+        [
+            {
+                "labelColor": "black",
+                "labelScaleZ": [
+                    7.379999999999997,
+                    7.139999999999997,
+                    6.899999999999997,
+                    6.659999999999997,
+                    6.419999999999996,
+                    6.179999999999996,
+                    5.939999999999996,
+                    5.699999999999996,
+                    5.4599999999999955
+                ],
+                "text": "Then Jesus instructed him, “See that you don’t tell"
+            },
+            {
+                "labelColor": "black",
+                "labelScaleZ": [
+                    5.219999999999995
+                ],
+                "labelSize": 1,
+                "text": "anyone."
+            },
+            {
+                "labelColor": "black",
+                "labelScaleZ": [
+                    4.979999999999995,
+                    4.739999999999995,
+                    4.499999999999995,
+                    4.2599999999999945,
+                    4.019999999999994,
+                    3.779999999999994,
+                    3.539999999999994,
+                    3.2999999999999936,
+                    3.0599999999999934,
+                    2.819999999999993,
+                    2.579999999999993,
+                    2.3399999999999928,
+                    2.0999999999999925,
+                    1.8599999999999925,
+                    1.6199999999999926,
+                    1.3799999999999926,
+                    1.1399999999999926,
+                    0.8999999999999926,
+                    0.6599999999999926
+                ],
+                "text": "But go, show yourself to the priest and offer the gift prescribed by Moses, as a testimony to them.”"
+            }
+        ]
+    ]
+]

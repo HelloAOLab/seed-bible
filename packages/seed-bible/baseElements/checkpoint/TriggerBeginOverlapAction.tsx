@@ -1,0 +1,1 @@
+if(!thisBot.masks.activated) thisBot.Activate();

@@ -9,6 +9,7 @@ const isCustomColor = that?.isCustomColor;
 const isCustomIcon = that?.isCustomIcon;
 const description = that?.description;
 const selectedTags = that?.selectedTags;
+const isLayers = that?.isLayers;
 
 const editId = globalThis[`${id}isEditMode`];
 const isEditModeSubID = globalThis[`${id}isEditModeSubID`];
@@ -29,7 +30,8 @@ if (globalThis.makingPlaylist) {
         isCustomColor,
         isCustomIcon,
         description,
-        selectedTags
+        selectedTags,
+        isLayers
     };
 
     if (isEditModeSubID) {

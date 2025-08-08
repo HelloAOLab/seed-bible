@@ -1,0 +1,27 @@
+import {StackData} from "managers.StacksManager.StackData"
+
+export class StackElementData extends StackData
+{
+    constructor({
+        childrenData = [],
+        id,
+        element,
+        elementInfo,
+        parentDataIds = null,
+        isInsideBible = true,
+        isActive = false,
+        isHidden = false,
+        creationInfo = false
+    })
+    {
+        super({childrenData, id});
+        this.element        = element;
+        this.elementInfo    = elementInfo;
+        this.parentDataIds  = parentDataIds;
+        this.isInsideBible  = isInsideBible;
+        this.isHidden       = isHidden;
+        this.isActive       = isActive;
+        this.creationInfo   = creationInfo;
+        this.highlightColor = null
+    }
+}

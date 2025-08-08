@@ -1,9 +1,13 @@
 const { useState, useRef, useEffect } = os.appHooks;
 import { useBibleContext } from 'app.hooks.bibleVariables'
-import { useTabsContext } from 'app.hooks.tabs'
 
 /**
  * useDivSpliter - Hook to manage split layout logic
+ *
+ * Returns:
+ * - `containerProps`: Container state & event handlers
+ * - `updateContainerSize`: Function to resize container
+ * - `addApplication`: Function to add new panels
  */
 export const useDivSpliter = ({
     components = [],
@@ -14,52 +18,44 @@ export const useDivSpliter = ({
 }) => {
     const [apps, setApps] = useState(components);
     const count = apps.length;
-    globalThis.SetApps = setApps;
-
-    const { activeSpace } = useTabsContext();
-    const { panelMode } = useBibleContext();
-
-    const [isMobile, setIsMobile] = useState(window.innerWidth < 768);
-
+    globalThis.SetApps = setApps
+    const { panelMode, setPanelMode, screens } = useBibleContext()
+    // useEffect(() => {
+    //     if (apps.length > 0) {
+    //         const findPanel = apps.find(e => e?.to === 'panel')
+    //         os.log(findPanel, 'findPanel')
+    //         if (findPanel) {
+    //             setPanelMode(true)
+    //         } else {
+    //             setPanelMode(false)
+    //         }
+    //     }
+    // }, [apps])
+    // State for container dimensions
     const [currentContainerWidth, setCurrentContainerWidth] = useState(containerWidth);
     const [currentContainerHeight, setCurrentContainerHeight] = useState(containerHeight);
 
-    const defaultLeftWidth = containerWidth * 0.7;
-    const defaultTopHeight = containerHeight * 0.5;
-
+    // State for split sizes
+    const defaultLeftWidth = currentContainerWidth * 0.7;
     const [leftWidth, setLeftWidth] = useState(defaultLeftWidth);
+    const defaultTopHeight = currentContainerHeight * 0.5;
     const [topHeight, setTopHeight] = useState(defaultTopHeight);
 
+    // Store previous container dimensions
     const prevContainerSize = useRef({ width: containerWidth, height: containerHeight });
 
+    // Drag refs for resizing
     const verticalDragRef = useRef({ isDragging: false, startX: 0, startLeftWidth: 0 });
     const horizontalDragRef = useRef({ isDragging: false, startY: 0, startTopHeight: 0 });
 
-    useEffect(() => {
-        const layout = globalThis.SpaceLayouts?.[activeSpace];
-        if (layout) {
-            if (layout.leftWidth) setLeftWidth(layout.leftWidth);
-            if (layout.topHeight) setTopHeight(layout.topHeight);
-        }
-    }, [activeSpace]);
-
-    useEffect(() => {
-        globalThis.SpaceLayouts[activeSpace] = { leftWidth, topHeight };
-    }, [leftWidth, topHeight]);
-
-    useEffect(() => {
-        const handleResize = () => {
-            setIsMobile(window.innerWidth < 768);
-        };
-        window.addEventListener('resize', handleResize);
-        return () => window.removeEventListener('resize', handleResize);
-    }, []);
-
+    // Mouse event handlers
     const handleVerticalMouseDown = (e) => {
+        os.log('mouse down vertical', e.clientX)
         verticalDragRef.current = { isDragging: true, startX: e.clientX, startLeftWidth: leftWidth };
     };
 
     const handleHorizontalMouseDown = (e) => {
+        os.log('mouse down horo', e)
         horizontalDragRef.current = { isDragging: true, startY: e.clientY, startTopHeight: topHeight };
     };
 
@@ -74,6 +70,7 @@ export const useDivSpliter = ({
             const deltaY = e.clientY - horizontalDragRef.current.startY;
             let newTopHeight = horizontalDragRef.current.startTopHeight + deltaY;
             newTopHeight = Math.max(minSize, Math.min(newTopHeight, currentContainerHeight - minSize));
+            os.log(e, newTopHeight, 'horo')
             setTopHeight(newTopHeight);
         }
     };
@@ -83,17 +80,22 @@ export const useDivSpliter = ({
         horizontalDragRef.current.isDragging = false;
     };
 
+    // Update container size while preserving ratios
     const updateContainerSize = (newWidth, newHeight) => {
         if (
             newWidth === prevContainerSize.current.width &&
             newHeight === prevContainerSize.current.height
-        ) return;
+        ) {
+            return;
+        }
 
+        // Preserve ratios
         const leftRatio = leftWidth / currentContainerWidth;
         const topRatio = topHeight / currentContainerHeight;
 
         setCurrentContainerWidth(newWidth);
         setCurrentContainerHeight(newHeight);
+
         setLeftWidth(newWidth * leftRatio);
         setTopHeight(newHeight * topRatio);
 
@@ -109,25 +111,29 @@ export const useDivSpliter = ({
         }
     };
 
+    // Add new panel dynamically
     const addApplication = (newApp) => {
         if (newApp.to === 'panel') {
             if (apps.length > 2) {
-                setApps([apps[0], apps[1], newApp]);
+                setApps([apps[0], apps[1], newApp])
             } else {
-                setApps(prev => [...prev, newApp]);
+                setApps(prev => [...prev, newApp])
             }
+            // setApps((prevApps) => {
+            //     if (prevApps.length > 2)
+            //         [...prevApps, newApp]
+
+            // });
         } else {
             setApps((prevApps) => [...prevApps, newApp]);
         }
-    };
-
+    }
     const resetApps = () => {
-        setApps([]);
-    };
-
+        setApps((prevApps) => [prevApps[0]]);
+    }
     const removeApplication = (id) => {
         setApps((prevApps) => prevApps.filter(e => e.id !== id));
-    };
+    }
 
     const removeApplicationByID = (oldAppID) => {
         setApps((prevApps) => {
@@ -136,37 +142,7 @@ export const useDivSpliter = ({
             if (index > -1) old.splice(index, 1);
             return old;
         });
-    };
-    const handleTouchMove = (e) => {
-        const touch = e.touches[0];
-        if (verticalDragRef.current.isDragging) {
-            const deltaX = touch.clientX - verticalDragRef.current.startX;
-            let newLeftWidth = verticalDragRef.current.startLeftWidth + deltaX;
-            newLeftWidth = Math.max(minSize, Math.min(newLeftWidth, currentContainerWidth - minSize));
-            setLeftWidth(newLeftWidth);
-        }
-        if (horizontalDragRef.current.isDragging) {
-            const deltaY = touch.clientY - horizontalDragRef.current.startY;
-            let newTopHeight = horizontalDragRef.current.startTopHeight + deltaY;
-            newTopHeight = Math.max(minSize, Math.min(newTopHeight, currentContainerHeight - minSize));
-            setTopHeight(newTopHeight);
-        }
-    };
-
-    const handleTouchEnd = () => {
-        verticalDragRef.current.isDragging = false;
-        horizontalDragRef.current.isDragging = false;
-    };
-    const replaceApplication = (oldAppID, newApp) => {
-    setApps((prevApps) => {
-        const updated = [...prevApps];
-        const index = updated.findIndex(app => app.id === oldAppID);
-        if (index !== -1) {
-            updated[index] = newApp;
-        }
-        return updated;
-    });
-};
+    }
 
     return {
         containerProps: {
@@ -180,23 +156,18 @@ export const useDivSpliter = ({
             handleMouseUp,
             handleVerticalMouseDown,
             handleHorizontalMouseDown,
-            isMobile,
-            handleTouchMove,
-            handleTouchEnd,
         },
         updateContainerSize,
         addApplication,
         removeApplication,
-        setApps,
         resetApps,
-        removeApplicationByID,
-        replaceApplication
+        removeApplicationByID
     };
 };
 
 
 
-export const SplitApp = ({
+const SplitApp = ({
     apps,
     count,
     currentContainerWidth,
@@ -205,27 +176,23 @@ export const SplitApp = ({
     topHeight,
     handleMouseMove,
     handleMouseUp,
+    // panelMode = true,
     handleVerticalMouseDown,
     handleHorizontalMouseDown,
-    isMobile,
-    handleTouchMove,
-    handleTouchEnd
-
 }) => {
-    const { panelMode, screens } = useBibleContext();
-    const { activeSpace } = useTabsContext();
+
+    const { panelMode, setPanelMode } = useBibleContext()
     const [panelWidths, setPanelWidths] = useState(Array(count).fill(currentContainerWidth / count));
     const dragRefs = useRef(Array(count - 1).fill(null).map(() => ({ isDragging: false, startX: 0, startWidth: 0 })));
-
     const handleRowMouseDown = (index, e) => {
-        dragRefs.current[index] = { isDragging: true, startX: e.clientX, startWidth: panelWidths[index] };
+        dragRefs.current[index] = { isDragging: true, startX: gridPortalBot.tags.pointerPixelX, startWidth: panelWidths[index] };
     };
 
     const handleRowMouseMove = (e) => {
         const updatedWidths = [...panelWidths];
         dragRefs.current.forEach((ref, index) => {
             if (ref.isDragging) {
-                const deltaX = e.clientX - ref.startX;
+                const deltaX = gridPortalBot.tags.pointerPixelX - ref.startX;
                 const newWidth = ref.startWidth + deltaX;
 
                 if (newWidth > 10 && (currentContainerWidth - newWidth) > 10) {
@@ -233,90 +200,29 @@ export const SplitApp = ({
                     updatedWidths[index + 1] = currentContainerWidth - updatedWidths.slice(0, index + 1).reduce((a, b) => a + b, 0);
                 }
             }
+            setPanelWidths(updatedWidths);
         });
-        setPanelWidths(updatedWidths);
-    };
 
+    };
+    useEffect(() => {
+        // Adjust panel widths proportionally if the container width changes
+        const totalWidth = panelWidths.reduce((a, b) => a + b, 0);
+        const updatedWidths = panelWidths.map(width => (width / totalWidth) * currentContainerWidth);
+
+        setPanelWidths(updatedWidths);
+    }, [currentContainerWidth]);
     const handleRowMouseUp = () => {
         dragRefs.current.forEach(ref => ref.isDragging = false);
     };
-
-    useEffect(() => {
-        const defaultWidth = currentContainerWidth / count;
-        setPanelWidths(Array(count).fill(defaultWidth));
-    }, [activeSpace, currentContainerWidth, count]);
-
-    if (isMobile && apps.length > 1) {
-        return (
-            <div
-                style={{
-                    display: 'flex',
-                    flexDirection: 'column',
-                    width: currentContainerWidth,
-                    height: currentContainerHeight,
-                    overflow: 'auto',
-                    userSelect: 'none',
-                    position: 'relative',
-                }}
-                onMouseMove={handleMouseMove}
-                onMouseUp={handleMouseUp}
-                onTouchMove={handleTouchMove}
-                onTouchEnd={handleTouchEnd}
-            >
-                <div
-                    key={apps[0]?.id}
-                    style={{
-                        height: topHeight,
-                        overflow: 'auto',
-                        padding: '0px',
-                        borderRadius: '12px',overflow:'auto',
-                    }}
-                >
-                    {apps[0]?.App}
-                </div>
-
-                <div
-                    style={{
-                        height: 4,
-                        width: '100%',
-                        cursor: 'row-resize',
-                        // background: '',
-                        touchAction: 'none',
-                    }}
-                    onMouseDown={handleHorizontalMouseDown}
-                    onTouchStart={(e) => {
-                        const touch = e.touches[0];
-                        horizontalDragRef.current = {
-                            isDragging: true,
-                            startY: touch.clientY,
-                            startTopHeight: topHeight,
-                        };
-                    }}
-                />
-
-                <div
-                    key={apps[1]?.id}
-                    style={{
-                        flex: 1,
-                        overflow: 'auto',
-                        padding: '0px',
-                        borderRadius: '12px',overflow:'auto',
-                    }}
-                >
-                    {apps[1]?.App}
-                </div>
-            </div>
-
-        );
-    }
-    if (panelMode || screens.row) {
+    if (panelMode) {
+        // Fallback for any other number of panels
         return (
             <div
                 style={{
                     display: 'flex',
                     width: currentContainerWidth,
                     height: currentContainerHeight,
-                    overflow: 'auto',
+                    overflow: 'auto', scrollbarWidth: "none",
                     userSelect: 'none',
                     position: 'relative'
                 }}
@@ -325,7 +231,7 @@ export const SplitApp = ({
             >
                 {apps.map(({ App, minWidth }, index) => (
                     <>
-                        <div style={{ width: panelWidths[index], padding: '0px', minWidth: minWidth || '100px', overflow: 'auto', borderRadius: '12px',overflow:'auto' }}>
+                        <div style={{ width: panelWidths[index], padding: '1px', minWidth: minWidth || '100px', overflow: 'auto', scrollbarWidth: "none", 'border-radius': '12px' }}>
                             {App}
                         </div>
                         {index < apps.length - 1 && (
@@ -333,7 +239,7 @@ export const SplitApp = ({
                                 style={{
                                     width: 4,
                                     cursor: 'col-resize',
-                                    // background: '',
+                                    background: 'var(--primary-color)',
                                     zIndex: 1
                                 }}
                                 onMouseDown={(e) => handleRowMouseDown(index, e)}
@@ -342,8 +248,9 @@ export const SplitApp = ({
                     </>
                 ))}
             </div>
-        );
-    } else if (count === 2) {
+        )
+    }
+    else if (count === 2) {
         return (
             <div
                 style={{
@@ -356,14 +263,14 @@ export const SplitApp = ({
                 onMouseMove={handleMouseMove}
                 onMouseUp={handleMouseUp}
             >
-                <div key={apps[2]?.id} style={{ width: leftWidth, height: '100%', overflow: 'auto', padding: '0px', borderRadius: '12px',overflow:'auto' }}>
+                <div style={{ width: leftWidth, height: '100%', overflow: 'auto', scrollbarWidth: "none", padding: '1px', 'border-radius': '12px', }}>
                     {apps[0]?.App}
                 </div>
                 <div
-                    style={{ width: 4, cursor: 'col-resize', background: '' }}
+                    style={{ width: 4, cursor: 'col-resize', background: 'var(--primary-color)' }}
                     onMouseDown={handleVerticalMouseDown}
                 />
-                <div key={apps[1]?.id} style={{ flex: 1, height: '100%', overflow: 'auto', padding: '0px', minWidth: '370px', borderRadius: '12px',overflow:'auto' }}>
+                <div style={{ flex: 1, height: '100%', overflow: 'auto', scrollbarWidth: "none", padding: '1px', minWidth: '370px', 'border-radius': '12px', }}>
                     {apps[1]?.App}
                 </div>
             </div>
@@ -381,22 +288,22 @@ export const SplitApp = ({
                 onMouseMove={handleMouseMove}
                 onMouseUp={handleMouseUp}
             >
-                <div key={apps[0]?.id} style={{ width: leftWidth, height: '100%', overflow: 'auto', padding: '0px', borderRadius: '12px',overflow:'auto' }}>
+                <div style={{ width: leftWidth, height: '100%', overflow: 'auto', scrollbarWidth: "none", padding: '1px', 'border-radius': '12px', }}>
                     {apps[0]?.App}
                 </div>
                 <div
-                    style={{ width: 4, cursor: 'col-resize', background: '' }}
+                    style={{ width: 4, cursor: 'col-resize', background: 'var(--primary-color)' }}
                     onMouseDown={handleVerticalMouseDown}
                 />
-                <div style={{ flex: 1, display: 'flex', flexDirection: 'column', height: '100%', minWidth: '370px', borderRadius: '12px',overflow:'auto' }}>
-                    <div key={apps[1]?.id} style={{ height: topHeight, overflow: 'auto', padding: '1px' }}>
+                <div style={{ flex: 1, display: 'flex', flexDirection: 'column', height: '100%', minWidth: '370px', 'border-radius': '12px', }}>
+                    <div style={{ height: topHeight, overflow: 'auto', scrollbarWidth: "none", padding: '1px' }}>
                         {apps[1]?.App}
                     </div>
                     <div
-                        style={{ height: 4, cursor: 'row-resize', background: '' }}
+                        style={{ height: 4, cursor: 'row-resize', background: 'var(--primary-color)' }}
                         onMouseDown={handleHorizontalMouseDown}
                     />
-                    <div key={apps[2]?.id} style={{ flex: 1, overflow: 'auto', padding: '0px', borderRadius: '12px',overflow:'auto' }}>
+                    <div style={{ flex: 1, overflow: 'auto', scrollbarWidth: "none", padding: '1px', 'border-radius': '12px', }}>
                         {apps[2]?.App}
                     </div>
                 </div>
@@ -414,36 +321,104 @@ export const SplitApp = ({
                 onMouseMove={handleMouseMove}
                 onMouseUp={handleMouseUp}
             >
-                <div key={apps[0]?.id} style={{ position: 'absolute', left: 0, top: 0, width: leftWidth, height: topHeight, overflow: 'auto', padding: '0px', borderRadius: '12px',overflow:'auto' }}>
+                <div
+                    style={{
+                        position: 'absolute',
+                        left: 0,
+                        top: 0,
+                        width: leftWidth,
+                        height: topHeight,
+                        overflow: 'auto', scrollbarWidth: "none",
+                        padding: '1px',
+                        'border-radius': '12px',
+
+                    }}
+                >
                     {apps[0]?.App}
                 </div>
 
-                <div key={apps[1]?.id} style={{ position: 'absolute', left: leftWidth + 4, top: 0, width: currentContainerWidth - leftWidth - 4, height: topHeight, overflow: 'auto', padding: '0px', minWidth: '370px', borderRadius: '12px',overflow:'auto' }}>
+                <div
+                    style={{
+                        position: 'absolute',
+                        left: leftWidth + 4,
+                        top: 0,
+                        width: currentContainerWidth - leftWidth - 4,
+                        height: topHeight,
+                        overflow: 'auto', scrollbarWidth: "none",
+                        padding: '1px',
+                        minWidth: '370px',
+                        'border-radius': '12px',
+                    }}
+                >
                     {apps[1]?.App}
                 </div>
 
-                <div key={apps[2]?.id} style={{ position: 'absolute', left: 0, top: topHeight + 4, width: leftWidth, height: currentContainerHeight - topHeight - 4, overflow: 'auto', padding: '0px', borderRadius: '12px',overflow:'auto' }}>
+                <div
+                    style={{
+                        position: 'absolute',
+                        left: 0,
+                        top: topHeight + 4,
+                        width: leftWidth,
+                        height: currentContainerHeight - topHeight - 4,
+                        overflow: 'auto', scrollbarWidth: "none",
+                        padding: '1px', 'border-radius': '12px',
+                    }}
+                >
                     {apps[2]?.App}
                 </div>
 
-                <div key={apps[3]?.id} style={{ position: 'absolute', left: leftWidth + 4, top: topHeight + 4, width: currentContainerWidth - leftWidth - 4, height: currentContainerHeight - topHeight - 4, overflow: 'auto', padding: '0px', borderRadius: '12px',overflow:'auto' }}>
+                <div
+                    style={{
+                        position: 'absolute',
+                        left: leftWidth + 4,
+                        top: topHeight + 4,
+                        width: currentContainerWidth - leftWidth - 4,
+                        height: currentContainerHeight - topHeight - 4,
+                        overflow: 'auto', scrollbarWidth: "none",
+                        padding: '1px',
+                        'border-radius': '12px',
+                    }}
+                >
                     {apps[3]?.App}
                 </div>
 
-                <div style={{ position: 'absolute', left: leftWidth, top: 0, width: 4, height: currentContainerHeight, cursor: 'col-resize', background: '' }} onMouseDown={handleVerticalMouseDown} />
+                <div
+                    style={{
+                        position: 'absolute',
+                        left: leftWidth,
+                        top: 0,
+                        width: 4,
+                        height: currentContainerHeight,
+                        cursor: 'col-resize',
+                        background: 'var(--primary-color)',
+                    }}
+                    onMouseDown={handleVerticalMouseDown}
+                />
 
-                <div style={{ position: 'absolute', top: topHeight, left: 0, height: 4, width: currentContainerWidth, cursor: 'row-resize', background: '' }} onMouseDown={handleHorizontalMouseDown} />
-            </div>
+                <div
+                    style={{
+                        position: 'absolute',
+                        top: topHeight,
+                        left: 0,
+                        height: 4,
+                        width: currentContainerWidth,
+                        cursor: 'row-resize',
+                        background: 'var(--primary-color)',
+                    }}
+                    onMouseDown={handleHorizontalMouseDown}
+                />
+            </div >
         );
     } else {
+        // Fallback for any other number of panels
         return (
-            <div style={{ width: currentContainerWidth, height: currentContainerHeight, overflow: 'auto', padding: '0px' }}>
-                {apps.map(({ App, id }, index) => (
-                    <div style={{ height: '100%', width: '100%' }} key={id}>{App}</div>
+            <div style={{ width: currentContainerWidth, height: currentContainerHeight, overflow: 'auto', scrollbarWidth: "none", padding: '1px' }}>
+                {apps.map(({ App }, index) => (
+                    <div style={{ height: '100%', width: '100%' }} key={index}>{App}</div>
                 ))}
             </div>
         );
     }
 };
 
-export { SplitApp, useDivSpliter };
+export { SplitApp, useDivSpliter }

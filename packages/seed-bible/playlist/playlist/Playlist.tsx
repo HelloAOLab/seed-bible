@@ -4,7 +4,7 @@
 // number -> Index of chpater / verse / book
 
 const { useState, useEffect, useRef, useMemo } = os.appHooks;
-const { Input, Modal, Button, ButtonsCover, Tooltip, Select } = Components;
+const { Input, Modal, Button, ButtonsCover, Checkbox, Tooltip, Select } = Components;
 
 const ChecklistGIf = "https://auth-aux-aobot-prod-filesbucket-141297942820.s3.amazonaws.com/aoBot/90e85308635064b3d0fdaa9c220b8547a9467a10affe3cf22f06ad6b26fbf0a1.gif"
 
@@ -73,6 +73,20 @@ const Playlist = ({ id, playingPlaylist, creatingPlaylist, setCreatingPlaylist }
     const [selectedTags, setTags] = useState([]);
     const [selectPlaylist, setSelectPlaylist] = useState(false);
 
+    const [checkListData, setChecklistData] = useState({});
+    const [checkListEmbeded, setChecklistEmbeded] = useState({});
+    const [checklistEnabled, setChecklistEnabled] = useState(false);
+    const [embedding, setEmbedding] = useState(null);
+
+    useEffect(() => {
+        globalThis[`SetChecklistEnabled`] = setChecklistEnabled;
+        return () => {
+            globalThis[`SetChecklistEnabled`] = null;
+        }
+    }, [checklistEnabled])
+
+    const [layers, setLayers] = useState(false);
+
     const [searchText, setSearchText] = useState('');
 
     const creatingPlaylistRef = useRef(null);
@@ -115,7 +129,7 @@ const Playlist = ({ id, playingPlaylist, creatingPlaylist, setCreatingPlaylist }
     const [description, setDescription] = useState('');
     const [customIcon, setCustomIcon] = useState(DEFAULT_UPLOAD_ICON);
 
-    const setEditModal = ({ id, color, isCustomColor, icon, name, description: des, isCustomIcon, selectedTags }) => {
+    const setEditModal = ({ id, color, isCustomColor, icon, name, description: des, isCustomIcon, selectedTags, isLayers }) => {
         setName(name);
         if (isCustomColor) setCustomColor(color);
         if (isCustomIcon) setCustomIcon(icon);
@@ -123,6 +137,7 @@ const Playlist = ({ id, playingPlaylist, creatingPlaylist, setCreatingPlaylist }
         setSelectedIcon(icon);
         setDescription(des);
         setTags(selectedTags || []);
+        setLayers(isLayers);
         isEdit.current = id;
         // Make Async so happen at last
         setTimeout(() => {
@@ -179,8 +194,11 @@ const Playlist = ({ id, playingPlaylist, creatingPlaylist, setCreatingPlaylist }
     };
 
     const onSearchHit = async () => {
+        console.log(thisBot.getSuggestedListItems);
+        console.log(typeof(searchText),'ssas')
 
         const allItems = thisBot.getSuggestedListItems({ searchText });
+        console.log(allItems);
 
         setSearchText("");
         setPlaylist((prev) => {
@@ -248,7 +266,7 @@ const Playlist = ({ id, playingPlaylist, creatingPlaylist, setCreatingPlaylist }
 
     const deleteDateData = () => {
         setPlaylist((prev) => {
-            const old = [...prev.filter(ele => ele.type !== 'date')];
+            let old = [...prev.filter(ele => ele.type !== 'date')];
             return old;
         });
     }
@@ -307,6 +325,7 @@ const Playlist = ({ id, playingPlaylist, creatingPlaylist, setCreatingPlaylist }
         globalThis[`SetEditModal`] = setEditModal;
         globalThis[`SetSelectPlaylist`] = setSelectPlaylist;
         globalThis[`${id}SetSelectedTags`] = setTags;
+        globalThis[`${id}SetLayers`] = setLayers;
         return () => {
             globalThis[`${id}SetPlaylistName`] = null;
             globalThis[`${id}AddDataToPlaylist`] = null;
@@ -324,8 +343,6 @@ const Playlist = ({ id, playingPlaylist, creatingPlaylist, setCreatingPlaylist }
             globalThis[`SetSelectPlaylist`] = null;
         };
     }, [playList, name, playLists, attachment]);
-
-    console.log("TAGS", selectedTags);
 
     const checkNameDuplicate = (newName) => {
         const nameValue = (newName || name).trim();
@@ -408,8 +425,7 @@ const Playlist = ({ id, playingPlaylist, creatingPlaylist, setCreatingPlaylist }
     const onBulkJsonDownload = () => {
         const listToDownload = [];
         playLists.forEach(({ list, id: playlistID }) => {
-            if (selectedPlaylist[playlistID]) {
-                console.log("LIST", list);
+            if (!!selectedPlaylist[playlistID]) {
                 list.forEach(ele => {
                     listToDownload.push({
                         ...ele,
@@ -418,7 +434,7 @@ const Playlist = ({ id, playingPlaylist, creatingPlaylist, setCreatingPlaylist }
                 });
             };
         });
-        console.log("listToDownload", listToDownload);
+
         const jsonStr = JSON.stringify(listToDownload, null, 2);
         os.download(jsonStr, `BulkPlaylist.json`);
         setSelectedPlaylist({});
@@ -443,7 +459,6 @@ const Playlist = ({ id, playingPlaylist, creatingPlaylist, setCreatingPlaylist }
 
         try {
             const { allItems } = await thisBot.RegenratePlaylistWithNewCommand({ oldData, command: regenrationCommand });
-            console.log("allItems", allItems);
             setLoading(false);
             if (!allItems?.length) {
                 ShowNotification({
@@ -456,7 +471,6 @@ const Playlist = ({ id, playingPlaylist, creatingPlaylist, setCreatingPlaylist }
             setPlaylist(allItems);
             setHasGenrated(true);
         } catch (err) {
-            console.log("REGENRATION FAILED", err);
             setLoading(false);
             return ShowNotification({
                 message: "Regenration in Failed!",
@@ -467,6 +481,139 @@ const Playlist = ({ id, playingPlaylist, creatingPlaylist, setCreatingPlaylist }
 
     const onRevert = () => {
         setPlaylist(oldListRef.current);
+    }
+
+    const editDataFromPlaylist = (receivedIds) => {
+        let ids = [receivedIds];
+        if (Array.isArray(receivedIds)) {
+            ids = [...receivedIds];
+        }
+
+        setChecklistData(prev => {
+            const old = { ...prev };
+            ids.forEach(idEle => {
+                if (old[idEle]) {
+                    delete old[idEle];
+                } else {
+                    old[idEle] = true;
+                }
+            })
+
+            return old;
+        });
+    }
+
+    const onBulkDeleteItems = () => {
+        setPlaylist(prev => {
+            const old = prev.filter(ele => !checkListData[ele.id]);
+            return old;
+        });
+        setChecklistData({});
+        setEmbedding(null);
+        setChecklistEmbeded({});
+    }
+
+    const onEmbedItems = () => {
+        if (!embedding) return;
+        setPlaylist(prev => {
+            const oldItems = [];
+            const newLayers = [];
+            const old = [...prev];
+            old.forEach(ele => {
+                if (checkListData[ele.id]) {
+                    newLayers.push({
+                        ...ele
+                    })
+                }
+                if (!checkListData[ele.id]) {
+                    oldItems.push({
+                        ...ele
+                    })
+                }
+            });
+            const embeddingItemsIndex = oldItems.findIndex(ele => ele.id === embedding);
+            oldItems[embeddingItemsIndex] = {
+                ...oldItems[embeddingItemsIndex],
+                additionalInfo: {
+                    ...oldItems[embeddingItemsIndex].additionalInfo,
+                    layers: [...(oldItems[embeddingItemsIndex].additionalInfo.layers || []), ...newLayers]
+                }
+            };
+            return oldItems;
+        });
+        setEmbedding(null);
+        setChecklistData({});
+    }
+
+    const onDisembed = (ids, isDelete) => {
+        let idtoDisembed = [ids];
+        if (Array.isArray(ids)) {
+            idtoDisembed = [...ids];
+        }
+
+        const idsMap = {};
+        const pidsMap = {};
+
+        idtoDisembed.forEach((ele, index) => {
+            idsMap[ele.id] = true;
+            pidsMap[ele.pId] = true;
+        });
+
+
+        setPlaylist(prev => {
+            const toBeAddedAtIndex = {};
+
+            const old = prev.map((ele, idx) => {
+                const prevEle = {
+                    ...ele,
+                    additionalInfo: {
+                        ...ele.additionalInfo,
+                        layers: [...(ele.additionalInfo.layers || [])]
+                    }
+                }
+                const layersFilter = [];
+                const remaningLayers = [];
+                if (pidsMap[prevEle.id]) {
+                    prevEle.additionalInfo.layers.forEach(layer => {
+                        if (idsMap[layer.id]) {
+                            layersFilter.push({
+                                ...layer
+                            });
+                        } else {
+                            remaningLayers.push({
+                                ...layer
+                            });
+                        }
+                    });
+                    prevEle.additionalInfo.layers = [...remaningLayers];
+                }
+                if (!isDelete) {
+                    toBeAddedAtIndex[idx] = [...layersFilter];
+                }
+                return prevEle;
+            });
+            Object.keys(toBeAddedAtIndex).forEach(ele => {
+                const items = [...toBeAddedAtIndex[ele]];
+                old.splice(ele, 0, ...items);
+            });
+            return old;
+        });
+    }
+
+    const isSomethingChecked = Object.keys(checkListData).length > 0;
+
+    const isSomethingEmbededChecked = Object.keys(checkListEmbeded).length > 0;
+
+    const onCheckEmbeded = (id, pId) => {
+        setChecklistEmbeded(prev => {
+            const old = { ...prev };
+            if (old[id]) {
+                delete old[id];
+            } else {
+                old[id] = { id, pId };
+            }
+            return old;
+        });
     }
 
     return (
@@ -615,6 +762,36 @@ const Playlist = ({ id, playingPlaylist, creatingPlaylist, setCreatingPlaylist }
                                         <span style={{ fontSize: "24px" }} class="material-symbols-outlined unfollow ">info</span>
                                     </p>
                                 </Tooltip>
+                                <div
+                                    className="align-center"
+                                    style={{
+                                        cursor: "pointer",
+                                        marginLeft: '1rem'
+                                    }}
+                                >
+                                    <Checkbox
+                                        small
+                                        checked={layers}
+                                        onClick={() => {
+                                            setLayers(p => !p);
+                                        }}
+                                    />
+                                    <label
+                                        style={{
+                                            fontSize: "12px",
+                                            fontWeight: "600",
+                                            marginLeft: "4px",
+                                        }}
+                                        for="playlistInclude"
+                                    >
+                                        Layers
+                                    </label>
+                                </div>
+                                <Tooltip forRight={true} text="Layers let you create and attach various data and verse into a verse unlike a playlist which is similar to a reading plan." gifUrl={ChecklistGIf} >
+                                    <p className="what-this center" style={{ margin: '0 0 0 0.5rem' }}>
+                                        <span style={{ fontSize: "24px" }} class="material-symbols-outlined unfollow ">info</span>
+                                    </p>
+                                </Tooltip>
                                 <div style={{ marginLeft: 'auto' }}>
                                     {readingPlan
                                         &&
@@ -631,8 +808,103 @@ const Playlist = ({ id, playingPlaylist, creatingPlaylist, setCreatingPlaylist }
                                 </div>
                             </div>
                         </div>
+                        {isSomethingChecked &&
+                            <div style={{ justifyContent: 'space-between', margin: '0.5rem 0' }} className="align-center">
+                                <Button
+                                    onClick={() => {
+                                        onBulkDeleteItems();
+                                        if (isSomethingEmbededChecked) {
+                                            const values = Object.keys(checkListEmbeded).map(ele => checkListEmbeded[ele]);
+                                            onDisembed(values, true);
+                                        }
+                                    }}
+                                    secondaryAlt
+                                    color="#C20104"
+                                >
+                                    <span style={{ marginRight: '0.5rem' }} class="material-symbols-outlined unfollow color-inherit">
+                                        delete_forever
+                                    </span>
+                                    <span className="color-inherit">Delete</span>
+                                </Button>
+                                {!!embedding && <Button
+                                    onClick={onEmbedItems}
+                                    secondaryAlt
+                                    color="#3B82F6"
+                                >
+                                    <span style={{ marginRight: '0.5rem' }} class="material-symbols-outlined unfollow color-inherit">
+                                        frame_source
+                                    </span>
+                                    <span className="color-inherit">Embed</span>
+                                </Button>}
+                                <Button
+                                    onClick={() => {
+                                        setEmbedding(false);
+                                        setChecklistData({});
+                                        setChecklistEmbededta({});
+                                    }}
+                                    secondaryAlt
+                                >
+                                    <span style={{ marginRight: '0.5rem' }} class="material-symbols-outlined unfollow color-inherit">
+                                        close
+                                    </span>
+                                    <span className="color-inherit">Cancel</span>
+                                </Button>
+                            </div>
+                        }
+                        {isSomethingEmbededChecked && !isSomethingChecked &&
+                            <div style={{ justifyContent: 'space-between', margin: '0.5rem 0' }} className="align-center">
+                                <Button
+                                    onClick={() => {
+                                        const values = Object.keys(checkListEmbeded).map(ele => checkListEmbeded[ele]);
+                                        onDisembed(values, true);
+                                    }}
+                                    secondaryAlt
+                                    color="#C20104"
+                                >
+                                    <span style={{ marginRight: '0.5rem' }} class="material-symbols-outlined unfollow color-inherit">
+                                        delete_forever
+                                    </span>
+                                    <span className="color-inherit">Delete</span>
+                                </Button>
+                                <Button
+                                    onClick={() => {
+                                        const values = Object.keys(checkListEmbeded).map(ele => checkListEmbeded[ele]);
+                                        onDisembed(values);
+                                    }}
+                                    secondaryAlt
+                                    color="#3B82F6"
+                                >
+                                    <span style={{ marginRight: '0.5rem' }} class="material-symbols-outlined unfollow color-inherit">
+                                        link_off
+                                    </span>
+                                    <span className="color-inherit">Remove</span>
+                                </Button>
+                                <Button
+                                    onClick={() => {
+                                        setChecklistEmbeded({});
+                                    }}
+                                    secondaryAlt
+                                >
+                                    <span style={{ marginRight: '0.5rem' }} class="material-symbols-outlined unfollow color-inherit">
+                                        close
+                                    </span>
+                                    <span className="color-inherit">Cancel</span>
+                                </Button>
+                            </div>
+                        }
                         <DragDrop
+                            isPlayer={checklistEnabled || isSomethingChecked || isSomethingEmbededChecked}
+                            isSomethingEmbededChecked={isSomethingEmbededChecked}
+                            allowHeadingCheck
+                            checkListData={checkListData}
+                            layers={layers}
                             list={playList}
+                            checkListEmbeded={checkListEmbeded}
+                            setChecklistEmbeded={onCheckEmbeded}
+                            onDisembed={onDisembed}
+                            embedding={embedding}
+                            setEmbedding={setEmbedding}
+                            editDataFromPlaylist={editDataFromPlaylist}
                             currentFormat={currentFormat}
                             setList={setPlaylist}
                             deleteFromList={deleteDataFromPlaylist}
@@ -726,7 +998,7 @@ const Playlist = ({ id, playingPlaylist, creatingPlaylist, setCreatingPlaylist }
                             <Button
                                 onClick={() => {
                                     setOpenAttachLink(false);
-                                    onSave(attachment, checklist, readingPlan, currentFormat, selectedColor, selectedIcon, selectedColor === customColor, description, selectedIcon === customIcon, selectedTags);
+                                    onSave(attachment, checklist, readingPlan, currentFormat, selectedColor, selectedIcon, selectedColor === customColor, description, selectedIcon === customIcon, selectedTags, layers);
                                 }}
                                 secondary
                             >

@@ -4,115 +4,59 @@ await os.registerApp("iframeVisible");
 
 const { useEffect, useState, useRef } = os.appHooks;
 
-const detectAreaBound = (x, y, elements) => {
-    for (const el of elements) {
-        if (
-            x >= el[0] &&
-            x <= el[1] &&
-            y >= el[2] &&
-            y <= el[3]
-        ) {
-            return true;
-        }
-    }
-    return false;
-}
-
 const App = () => {
 
-    // const [pointerEvent, setpointerEvent] = useState("all");
-    // const clickButtonRef = useRef(null);
+    const [pointerEvent, setpointerEvent] = useState("all");
+    const clickButtonRef = useRef(null);
 
-    // useEffect(() => {
-    //     let bodyEle = document.body;
-    //     bodyEle.style.margin = "0px";
-    //     bodyEle.style.overflow = "hidden";
-    // }, [])
+    useEffect(() => {
+        let bodyEle = document.body;
+        bodyEle.style.margin = "0px";
+        bodyEle.style.overflow = "hidden";
+    }, [])
 
-    // const checkCanvasBound = () => {
-    //     try {
-    //         if (gridPortalBot.tags.pointerPixel && detectAreaBound(gridPortalBot.tags.pointerPixel.x, gridPortalBot.tags.pointerPixel.y, window.permaElements)) {
-    //             setpointerEvent("all");
-    //             console.log("outside canvas")
-    //             return
-    //         }
-    //         setTimeout(() => {
-    //             checkCanvasBound();
-    //         }, 100)
-    //     } catch {
-    //         (e) => {
-    //             console.errot(e, "checkCanvasBound")
-    //             setTimeout(() => {
-    //                 checkCanvasBound();
-    //             }, 100)
-    //         }
-    //     }
-    // }
+    const checkCanvasBound = () => {
+        let eventBound = gridPortalBot.tags.pixelWidth - 450;
+        if (gridPortalBot.tags.pointerPixel && (gridPortalBot.tags.pointerPixel.x < 310 || gridPortalBot.tags.pointerPixel.y > 940)) {
+            setpointerEvent("all");
+            return
+        }
+        if (gridPortalBot.tags.pointerPixel && (globalThis?.EVENT_PANEL_ID || globalThis?.MAP_PANEL_ID || globalThis?.calendarToolApp)&& gridPortalBot.tags.pointerPixel.x > eventBound) {
+            setpointerEvent("all");
+            return
+        }
+        setTimeout(() => {
+            checkCanvasBound();
+        }, 200)
+    }
 
-    // const checkWindowBound = (e) => {
-    //     try {
-    //         if (!detectAreaBound(e.clientX, e.clientY, window.permaElements) && window.permaElements.length > 0) {
-    //             setpointerEvent("none");
-    //             console.log("outside window")
-    //             setTimeout(() => {
-    //                 checkCanvasBound()
-    //             }, 100)
-    //         }
-    //     } catch {
-    //         e => {
-    //             console.error(e, "checkWindowBound")
-    //         }
-    //     }
-    // }
+    const checkWindowBound = (e) => {
+        if (pointerEvent === "all" && globalThis?.CanvasMode && e.clientX > 310 && e.clientY < 940) {
+            setpointerEvent("none");
+            setTimeout(() => {
+                checkCanvasBound()
+            }, 100)
+            console.log("index set to 1")
+        }
+    }
 
-    // const focusOnVisibleButton = () => {
-    //     clickButtonRef.current.focus()
-    // }
+    useEffect(() => {
+        window.addEventListener("mousemove", (e) => {
+            checkWindowBound(e);
+        })
+    }, [])
 
-    // const handleMouseCheck = () => {
-    //     if ((window?.CanvasMode || globalThis?.CanvasMode)) {
-    //         const elementsToCheck = document.getElementsByClassName('boundElements');
-    //         let bounds = [];
-    //         for (const el of elementsToCheck) {
-    //             const rect = el.getBoundingClientRect();
-    //             bounds.push([rect.left, rect.right, rect.top, rect.bottom])
-    //         }
-    //         window.permaElements = [...bounds];
-    //         if (bounds.length > 0 && !window?.windowMounted) {
-    //             console.log("mounting window");
-    //             window.addEventListener("mousemove", checkWindowBound);
-    //             window.windowMounted = true;
-    //         }
-    //     } else if (window?.windowMounted) {
-    //         console.log("unmounting window");
-    //         window.removeEventListener("mousemove", checkWindowBound);
-    //         window.windowMounted = false;
-    //     }
-    // }
-
-    // useEffect(() => {
-    //     setTimeout(() => {
-    //         globalThis.focusOnVisibleButton = focusOnVisibleButton;
-    //     }, 1000)
-    //     return () => {
-    //         globalThis.focusOnVisibleButton = null;
-    //     }
-    // }, [])
-
-    // useEffect(() => {
-    //     let it = setInterval(() => {
-    //         handleMouseCheck();
-    //     }, 250);
-    //     return () => {
-    //         clearInterval(it)
-    //     }
-    // }, [])
+    useEffect(() => {
+        setTimeout(() => {
+            globalThis.ClickButtonRef = clickButtonRef;
+        }, 1000)
+        return () => {
+            globalThis.ClickButtonRef = null;
+        }
+    }, [pointerEvent])
 
     return <>
         <style>{`
-            .vm-iframe-container iframe:first-child {
-                pointer-events: auto !important;
-            }
             .vm-iframe-container {
                 display: block;
                 width: 100dvw;
@@ -125,7 +69,7 @@ const App = () => {
                 margin: 0;
                 padding: 0;
                 background: transparent;
-                pointer-events: all;
+                pointer-events: ${pointerEvent}
             }
             html, body {
                 margin: 0;
@@ -134,10 +78,14 @@ const App = () => {
                 width: 100dvw;
                 overflow: hidden; /* Optional: prevents scrollbars */
             }
+            .vm-iframe-container.game-view-visible iframe:first-child {
+                pointer-events: all;
+            }
             *, *::before, *::after {
                 box-sizing: border-box;
             }
         `}</style>
+        <button style={{height: "0px", width: "0px"}} ref={clickButtonRef}></button>
     </>
 }
 

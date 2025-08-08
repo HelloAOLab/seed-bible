@@ -1,4 +1,4 @@
-const { useState, useRef, useMemo } = os.appHooks;
+const { useState, useRef, useMemo, useEffect } = os.appHooks;
 
 const PlaylistRowItem = thisBot.PlaylistRowItem();
 const AttachmentLinkItem = thisBot.AttachmentLinkItem();
@@ -10,10 +10,11 @@ const isMobile = gridPortalBot.tags.pixelWidth < MOBILE_VIEWPORT_THRESHOLD;
 // Replaced now with props toggleRemoved cause no need to show like this now use is to show active element
 const toggle = 'null';
 
-const DragDrop = ({ setRef = {}, selectedTags, playlistName, currentDateActive, clickPass, currentFormat, readingPlanEnabled, linkingMode, viewOnly, checkListData = {}, oldItemsMap = {}, parentId, list, isPlayer, playingPlaylist, activeItemList = {}, activeItemID, toggleRemoved, setList, editDataFromPlaylist, playListSubId, setPlaylistFromRow = () => { }, playListSubIndex = null, deleteFromList = () => { }, onClickItem = () => { }, onClick = () => { }, creatingPlaylist = false, color, icon, isCustomColor, description, isCustomIcon }) => {
+
+const DragDrop = ({ isSomethingEmbededChecked, checkListEmbeded, setChecklistEmbeded, onDisembed = () => { }, layers = false, embedding, setEmbedding, setRef = {}, allowHeadingCheck, selectedTags, playlistName, currentDateActive, clickPass, currentFormat, readingPlanEnabled, linkingMode, viewOnly, checkListData = {}, oldItemsMap = {}, parentId, list, isPlayer, playingPlaylist, activeItemList = {}, activeItemID, toggleRemoved, setList, editDataFromPlaylist, playListSubId, setPlaylistFromRow = () => { }, playListSubIndex = null, deleteFromList = () => { }, onClickItem = () => { }, onClick = () => { }, creatingPlaylist = false, color, icon, isCustomColor, description, isCustomIcon }) => {
     const [opendedList, setOpenedList] = useState("");
 
-    const checklistEnabled = isPlayer;
+    const checklistEnabled = isPlayer || embedding;
 
     const toBeSetItems = useRef([]);
     const [dragOverSet, setDragoverSetMutate] = useState({
@@ -30,7 +31,7 @@ const DragDrop = ({ setRef = {}, selectedTags, playlistName, currentDateActive, 
     const selectedCount = list.filter(ele => !!ele.readAlready);
     const unSelectedCount = list.length - selectedCount;
 
-    const transformedHistory = useMemo(() => thisBot.groupVerse(list), [list, selectedCount, unSelectedCount]);
+    const transformedHistory = useMemo(() => layers ? list : thisBot.groupVerse(list), [list, selectedCount, unSelectedCount]);
 
     const finalHistoryObject = useMemo(() => playingPlaylist ? thisBot.checkGreyOut(transformedHistory) : transformedHistory, [transformedHistory, toggle, playingPlaylist]);
 
@@ -83,7 +84,7 @@ const DragDrop = ({ setRef = {}, selectedTags, playlistName, currentDateActive, 
 
         let newItems = [];
 
-        const filterAbleItems = {
+        let filterAbleItems = {
             [draggedItemID]: true,
         };
 
@@ -183,7 +184,6 @@ const DragDrop = ({ setRef = {}, selectedTags, playlistName, currentDateActive, 
         return { datesRepeat, datesInWrongOrder };
     }, [finalHistoryObject]);
 
-
     return <>
         {creatingPlaylist && Object.keys(datesRepeat).length > 0 && (
             <div className="mini-alert mini-alert-error">
@@ -200,12 +200,27 @@ const DragDrop = ({ setRef = {}, selectedTags, playlistName, currentDateActive, 
 
         {list.length === 0 && <h4 style={{ margin: "8px 0" }}>No Items Now.</h4>}
         {
-            finalHistoryObject.map((data, index) => data.type?.includes("range")
+            finalHistoryObject.map((data, index) => data.type?.includes("range") || (data.additionalInfo?.layers?.length > 0 && layers)
                 ?
                 <PlaylistContentRenderer
                     linkingMode={linkingMode}
+                    embedding={embedding}
                     setRef={setRef}
+                    datesRepeat={datesRepeat}
+                    datesInWrongOrder={datesInWrongOrder}
+                    currentFormat={currentFormat}
+                    currentDateActive={currentDateActive}
+                    setList={setList}
+                    finalHistoryObject={finalHistoryObject}
+                    playListSubIndex={playListSubIndex}
+                    setEmbedding={setEmbedding}
+                    data={data}
+                    checkListEmbeded={checkListEmbeded}
+                    setChecklistEmbeded={setChecklistEmbeded}
                     playListSubId={playListSubId}
+                    isSomethingEmbededChecked={isSomethingEmbededChecked}
+                    onDisembed={onDisembed}
+                    layers={layers}
                     clickPass={clickPass}
                     playlistName={playlistName}
                     activeItemList={activeItemList}
@@ -229,7 +244,8 @@ const DragDrop = ({ setRef = {}, selectedTags, playlistName, currentDateActive, 
                     oldItemsMap={oldItemsMap}
                     handleDragOver={handleDragOver}
                     onClickItem={onClickItem}
-                    handleDragEnd={handleDragEnd} {...data}
+                    handleDragEnd={handleDragEnd}
+                    {...data}
                 />
                 :
                 data.type === "playlist"
@@ -239,6 +255,7 @@ const DragDrop = ({ setRef = {}, selectedTags, playlistName, currentDateActive, 
                         toggle={toggle || activeItemID}
                         playingPlaylist={playingPlaylist}
                         activeItemList={activeItemList}
+                        layers={layers}
                         currentDateActive={currentDateActive}
                         activeItemID={activeItemID}
                         setRef={setRef}
@@ -246,6 +263,7 @@ const DragDrop = ({ setRef = {}, selectedTags, playlistName, currentDateActive, 
                         oldItemsMap={oldItemsMap}
                         checklistEnabled={checklistEnabled}
                         color={color}
+                        isSomethingEmbededChecked={isSomethingEmbededChecked}
                         icon={icon}
                         description={description}
                         isCustomColor={isCustomColor}
@@ -282,11 +300,13 @@ const DragDrop = ({ setRef = {}, selectedTags, playlistName, currentDateActive, 
                         <AttachmentLinkItem
                             linkingMode={linkingMode}
                             viewOnly={viewOnly}
+                            isSomethingEmbededChecked={isSomethingEmbededChecked}
                             datesRepeat={datesRepeat}
                             datesInWrongOrder={datesInWrongOrder}
                             playlistName={playlistName}
                             currentFormat={currentFormat}
                             readingPlanEnabled={readingPlanEnabled}
+                            layers={layers}
                             oldItemsMap={oldItemsMap}
                             currentDateActive={currentDateActive}
                             originalIndex={data.originalIndex}
@@ -324,7 +344,7 @@ const DragDrop = ({ setRef = {}, selectedTags, playlistName, currentDateActive, 
                             tabIndex={0}
                             // ref={(ref) => setRef.current[data.id] = ref}
                             style={{ display: "flex" }}
-                            className={`history-item ${(data.greyOut || oldItemsMap[data.id]) && "greyed-out"} ${(toggle === data.id || activeItemList[data.id] || data.id === activeItemID) && "current-playing-item"} ${dragOverSet.itemId === data.id && `dropabble-${dragOverSet.position}`}`}
+                            className={`history-item ${embedding === data.id ? 'embedding-on' : ''} ${(data.greyOut || oldItemsMap[data.id]) && "greyed-out"} ${(toggle === data.id || activeItemList[data.id] || data.id === activeItemID) && "current-playing-item"} ${dragOverSet.itemId === data.id && `dropabble-${dragOverSet.position}`}`}
                             onPointerDown={() => {
                                 if (!viewOnly) {
                                     globalThis.ADDING_TOPLAYLIST_TIMEOUT = setTimeout(() => {
@@ -358,11 +378,19 @@ const DragDrop = ({ setRef = {}, selectedTags, playlistName, currentDateActive, 
 
                             <div className="start-actions">
 
-                                {data.type !== "heading" && checklistEnabled && !viewOnly ?
+                                {(data.type !== "heading" || allowHeadingCheck) && checklistEnabled && !viewOnly ?
                                     <Checkbox
                                         small
+                                        // disabled={embedding === data.id || isSomethingEmbededChecked}
+                                        disabled={embedding === data.id}
                                         checked={checkListData[data.id] || data.readAlready}
                                         onClick={() => {
+                                            if (!embedding) {
+                                                if (globalThis.KEY_HOLD['control'] || globalThis.KEY_HOLD['meta']) {
+                                                    setEmbedding(data.id);
+                                                    return;
+                                                }
+                                            }
                                             editDataFromPlaylist(data.id, false);
                                         }}
                                     />
@@ -378,21 +406,21 @@ const DragDrop = ({ setRef = {}, selectedTags, playlistName, currentDateActive, 
                                 onPointerUp={() => {
                                     if (globalThis.ADDING_TOPLAYLIST_TIMEOUT) {
                                         clearInterval(globalThis.ADDING_TOPLAYLIST_TIMEOUT)
-                                        if (!viewOnly && data.type !== "heading") {
+                                        if (!viewOnly && (data.type !== "heading" || allowHeadingCheck)) {
                                             onClick({ dataItem: data, index });
                                             if (checklistEnabled) {
                                                 editDataFromPlaylist(data.id);
                                             }
                                         }
                                     }
-                                    if (clickPass && data.type !== "heading") {
+                                    if (clickPass && (data.type !== "heading" || allowHeadingCheck)) {
                                         onClick({ dataItem: data, index });
                                         if (checklistEnabled) {
                                             editDataFromPlaylist(data.id);
                                         }
                                     }
                                 }}
-                                className={`playlist-item-type ${data.type !== "heading" && checklistEnabled && !viewOnly ? "" : 'no-left-padding'} playlist-item-${data.type}`}
+                                className={`playlist-item-type ${(data.type !== "heading" || allowHeadingCheck) && checklistEnabled && !viewOnly ? "" : 'no-left-padding'} playlist-item-${data.type}`}
                             >
                                 {data.type === "headings" && <span class="material-symbols-outlined side-icon">
                                     format_h1 //Not NEEEDED FOR NOW
@@ -400,6 +428,18 @@ const DragDrop = ({ setRef = {}, selectedTags, playlistName, currentDateActive, 
                                 {data.content}
                             </p>
                             <div className="actions">
+                                {!playingPlaylist && !embedding && layers && creatingPlaylist && !viewOnly && <p className={`end-icon without-right-margin ${`${isMobile && "visible"} end-icon without-right-margin`}`}
+                                    onClick={() => {
+                                        setEmbedding(data.id);
+                                        if (checkListData[data.id]) {
+                                            editDataFromPlaylist(data.id, false);
+                                        }
+                                    }} >
+                                    <span class="material-symbols-outlined">
+                                        pip
+                                    </span>
+                                </p>
+                                }
                                 {!playingPlaylist && creatingPlaylist && !viewOnly && <p className={`end-icon without-right-margin ${`${isMobile && "visible"} end-icon without-right-margin`}`} onClick={() => deleteFromList(data.originalIndex)} >
                                     <span class="material-symbols-outlined unfollow delete-icon">
                                         delete
@@ -413,16 +453,87 @@ const DragDrop = ({ setRef = {}, selectedTags, playlistName, currentDateActive, 
     </>
 }
 
-const PlaylistContentRenderer = ({ setRef, originalIndex, clickPass, activeItemID, activeItemList, oldItemsMap, playListSubId, viewOnly, linkingMode, creatingPlaylist, checkListData, checklistEnabled, playlistName, editDataFromPlaylist, type, toggle, playingPlaylist, greyOut, content, id, additionalInfo, handleDragStart, handleDragOver, handleDragEnd, index, onClickItem, onClick, deleteFromList, dragOverSet }) => {
+
+const PlaylistContentRenderer = ({
+
+    datesRepeat,
+    datesInWrongOrder,
+    currentFormat,
+    readingPlanEnabled,
+    currentDateActive,
+    setList,
+    finalHistoryObject,
+    playListSubIndex,
+    isSomethingEmbededChecked,
+    checkListEmbeded,
+    setChecklistEmbeded,
+    onDisembed,
+    setRef,
+    layers,
+    embedding,
+    setEmbedding,
+    originalIndex,
+    clickPass,
+    activeItemID,
+    activeItemList,
+    oldItemsMap,
+    playListSubId,
+    data,
+    viewOnly,
+    linkingMode,
+    creatingPlaylist,
+    checkListData,
+    checklistEnabled,
+    playlistName,
+    editDataFromPlaylist,
+    type,
+    toggle,
+    playingPlaylist,
+    greyOut,
+    content,
+    id,
+    additionalInfo,
+    handleDragStart,
+    handleDragOver,
+    handleDragEnd,
+    index,
+    onClickItem,
+    onClick,
+    deleteFromList,
+    dragOverSet
+}) => {
+
     const [open, setOpen] = useState(false);
+    const prevAutoOpen = useRef(false);
+
     const dragged = useRef(false);
 
-    const isChecked = additionalInfo.every(ele => ele.readAlready || checkListData[ele.id]);
-    const isGreyout = additionalInfo.every(ele => oldItemsMap[ele.id]);
-    const isActive = additionalInfo.some(ele => ele.id === activeItemID || activeItemList[ele.id]);
-    const allIds = additionalInfo.map(ele => ele.id);
+    const dataLength = layers ? 0 : (additionalInfo || []).length;
 
-    const extraClasses = `${(toggle === id || activeItemID === id || activeItemList[id] || isActive) && "current-playing-item"} ${(greyOut || oldItemsMap[id] || isGreyout) && "greyed-out"} ${dragOverSet.itemId === id && `dropabble-${dragOverSet.position}`}`;
+    const itemToBeShared = layers ? [data] : additionalInfo;
+
+    const toBeMapArray = layers ? (additionalInfo.layers || []) : (additionalInfo || []);
+
+    const isChecked = itemToBeShared.every(ele => ele.readAlready || checkListData[ele.id]);
+    const isGreyout = itemToBeShared.every(ele => oldItemsMap[ele.id]);
+    const isActive = itemToBeShared.some(ele => ele.id === activeItemID || activeItemList[ele.id]);
+    const allIds = itemToBeShared.map(ele => ele.id);
+
+    const extraClasses = `${(toggle === id || activeItemID === id || activeItemList[id] || isActive) && "current-playing-item"} ${(greyOut || oldItemsMap[id] || isGreyout) && "greyed-out"} ${embedding === data.id ? 'embedding-on' : ''} ${dragOverSet.itemId === id && `dropabble-${dragOverSet.position}`}`;
+
+
+    useEffect(() => {
+        if (!prevAutoOpen.current) {
+            if (activeItemID === id || activeItemList[id] || isActive) {
+                setOpen(true);
+                prevAutoOpen.current = true;
+            }
+        } else {
+            if (activeItemID !== id || activeItemList[id] || isActive) {
+                prevAutoOpen.current = false;
+            }
+        }
+    }, [data, activeItemID])
 
     return <div>
         <div
@@ -433,7 +544,7 @@ const PlaylistContentRenderer = ({ setRef, originalIndex, clickPass, activeItemI
                 if (!viewOnly) {
                     globalThis.ADDING_TOPLAYLIST_TIMEOUT = setTimeout(() => {
                         globalThis.ADDING_TOPLAYLIST_TIMEOUT = null;
-                        onClickItem({ dataItem: additionalInfo, bulkAdd: true })
+                        onClickItem({ dataItem: itemToBeShared, bulkAdd: true })
                     }, 1000);
                 }
             }}
@@ -456,7 +567,7 @@ const PlaylistContentRenderer = ({ setRef, originalIndex, clickPass, activeItemI
                 dragged.current = true;
                 handleDragStart(index, id);
             }}
-            onDragOver={() => handleDragOver(index, additionalInfo.length, id)}
+            onDragOver={() => handleDragOver(index, dataLength, id)}
             onDragEnd={handleDragEnd}
         >
             <input
@@ -472,8 +583,16 @@ const PlaylistContentRenderer = ({ setRef, originalIndex, clickPass, activeItemI
                 {checklistEnabled && !viewOnly ?
                     <Checkbox
                         checked={isChecked}
+                        // disabled={embedding === data.id || isSomethingEmbededChecked}
+                        disabled={embedding === data.id}
                         small
                         onClick={() => {
+                            if (!embedding) {
+                                if (globalThis.KEY_HOLD['control'] || globalThis.KEY_HOLD['meta']) {
+                                    setEmbedding(data.id);
+                                    return;
+                                }
+                            }
                             editDataFromPlaylist(allIds, false);
                         }}
                     />
@@ -484,7 +603,7 @@ const PlaylistContentRenderer = ({ setRef, originalIndex, clickPass, activeItemI
                 </span>}
             </div>
 
-            {additionalInfo.map((data) => <input
+            {toBeMapArray.map((data) => <input
                 style={{ opacity: '0', 'pointer-events': 'none', position: 'absolute', 'left': 0, 'top': 0, zIndex: -1 }}
                 placeholder={'test'}
                 ref={(ref) => {
@@ -503,14 +622,14 @@ const PlaylistContentRenderer = ({ setRef, originalIndex, clickPass, activeItemI
                     if (globalThis.ADDING_TOPLAYLIST_TIMEOUT && !viewOnly) {
                         clearInterval(globalThis.ADDING_TOPLAYLIST_TIMEOUT)
                         globalThis.ADDING_TOPLAYLIST_TIMEOUT = null;
-                        onClick({ dataItem: additionalInfo, bulkAdd: true, index });
+                        onClick({ dataItem: itemToBeShared, bulkAdd: true, index });
                         if (checklistEnabled) {
                             editDataFromPlaylist(allIds);
                         }
                     }
                     if (clickPass) {
                         globalThis.ADDING_TOPLAYLIST_TIMEOUT = null;
-                        onClick({ dataItem: additionalInfo, bulkAdd: true, index });
+                        onClick({ dataItem: itemToBeShared, bulkAdd: true, index });
                         if (checklistEnabled) {
                             editDataFromPlaylist(allIds);
                         }
@@ -521,16 +640,22 @@ const PlaylistContentRenderer = ({ setRef, originalIndex, clickPass, activeItemI
                 {content}
             </p>
             <div className="actions">
+                {!playingPlaylist && layers && !embedding && creatingPlaylist && !viewOnly && <p className={`end-icon without-right-margin ${`${isMobile && "visible"} end-icon without-right-margin`}`} onClick={() => setEmbedding(data.id)} >
+                    <span class="material-symbols-outlined">
+                        pip
+                    </span>
+                </p>
+                }
                 {!playingPlaylist && creatingPlaylist && !viewOnly &&
                     <p className="without-right-margin end-icon">
                         <span onClick={() => {
-                            deleteFromList(additionalInfo.map(data => data.id));
+                            deleteFromList(itemToBeShared.map(data => data.id));
                         }} class="material-symbols-outlined unfollow delete-icon">
                             delete
                         </span>
                     </p>
                 }
-                <p className="without-right-margin end-icon visible">
+                {toBeMapArray.length > 0 && <p className="without-right-margin end-icon visible">
                     <span onClick={() => {
                         if (!dragged.current) {
                             setOpen(p => !p);
@@ -538,90 +663,146 @@ const PlaylistContentRenderer = ({ setRef, originalIndex, clickPass, activeItemI
                     }} class="material-symbols-outlined unfollow " style={{ fontSize: '1.2rem' }}>
                         {open ? "collapse_content" : "expand_content"}
                     </span>
-                </p>
+                </p>}
             </div>
         </div>
         <div style={{ height: open ? "auto" : '0', transition: "all 0.2s linear", overflow: 'hidden', padding: "0 8px" }}>
-            {additionalInfo.map((data) => {
-                return <div
-                    key={`${data.id}-${data.readAlready}`}
-                    draggable={!playingPlaylist}
-                    onDragStart={() => { if (open) handleDragStart(data.originalIndex) }}
-                    tabIndex={0}
-                    // ref={ref => setRef.current[data.id] = ref}
-                    onDragOver={() => {
-                        if (open) {
-                            handleDragOver(data.originalIndex);
-                        }
-                    }}
-                    onDragEnd={() => { if (open) handleDragEnd(); }}
-                    className={`history-item ${(oldItemsMap[data.id]) && "greyed-out"} ${(toggle === data.id || activeItemList[data.id] || activeItemID === data.id) && "current-playing-item"} ${dragOverSet.itemId === data.id && `dropabble-${dragOverSet.position}`}`}
-                    onPointerDown={() => {
-                        if (!viewOnly) {
-                            globalThis.ADDING_TOPLAYLIST_TIMEOUT = setTimeout(() => {
-                                globalThis.ADDING_TOPLAYLIST_TIMEOUT = null;
-                                if (data.type !== "heading") onClickItem({ dataItem: data })
-                            }, 1000);
-                        }
-                    }}
-                    onPointerUp={() => {
-                        if (globalThis.ADDING_TOPLAYLIST_TIMEOUT) {
-                            clearInterval(globalThis.ADDING_TOPLAYLIST_TIMEOUT)
-                        };
-                    }}
-                    onMouseLeave={() => {
-                        if (globalThis.ADDING_TOPLAYLIST_TIMEOUT) clearInterval(globalThis.ADDING_TOPLAYLIST_TIMEOUT);
-                    }}
-                    onTouchEnd={() => {
-                        if (globalThis.ADDING_TOPLAYLIST_TIMEOUT) clearInterval(globalThis.ADDING_TOPLAYLIST_TIMEOUT);
-                    }}
-                >
-                    <div className="start-actions">
-                        {data.type !== "heading" && checklistEnabled && open && !viewOnly ?
-                            <Checkbox
-                                small
-                                checked={checkListData[data.id] || data.readAlready}
-                                onClick={() => {
-                                    editDataFromPlaylist(data.id, false);
-                                }}
-                            />
-                            :
-                            null
-                        }
-                        {false && <span class="material-symbols-outlined unfollow drag-item-icon">
-                            featured_play_list
-                        </span>}
-                    </div>
-                    <p
+            {toBeMapArray.map((data) => {
+                return (data.type === "attachment-link" || data.type === "date")
+                    ?
+                    <AttachmentLinkItem
+                        linkingMode={linkingMode}
+                        viewOnly={viewOnly}
+                        isSomethingEmbededChecked={isSomethingEmbededChecked}
+                        datesRepeat={datesRepeat}
+                        datesInWrongOrder={datesInWrongOrder}
+                        playlistName={playlistName}
+                        currentFormat={currentFormat}
+                        readingPlanEnabled={readingPlanEnabled}
+                        layers={layers}
+                        draggable={!layers && !playingPlaylist}
+                        oldItemsMap={oldItemsMap}
+                        currentDateActive={currentDateActive}
+                        originalIndex={data.originalIndex}
+                        activeItemID={activeItemID}
+                        clickPass={clickPass}
+                        setRef={setRef}
+                        activeItemList={activeItemList}
+                        onClick={onClick}
+                        playlistId={playListSubId}
+                        onClickItem={onClickItem}
+                        checklistEnabled={checklistEnabled}
+                        checkListData={checkListData}
+                        creatingPlaylist={creatingPlaylist}
+                        index={index}
+                        editDataFromPlaylist={editDataFromPlaylist}
+                        handleDragStart={handleDragStart}
+                        handleDragOver={handleDragOver}
+                        toggle={toggle}
+                        setList={setList}
+                        layers={layers}
+                        handleDragEnd={handleDragEnd}
+                        originalList={finalHistoryObject}
+                        playListSubIndex={playListSubIndex}
+                        deleteFromList={deleteFromList}
+                        key={`${data.id}-${data.readAlready}`}
+                        playingPlaylist={playingPlaylist}
+                        data={data}
+                        onDisembed={() => {
+                            onDisembed({ id: data.id, pId: id });
+                        }}
+                        justPlay={true}
+                    /> : <div
+                        key={`${data.id}-${data.readAlready}`}
+                        style={{ display: data.id === id ? 'none' : '' }}
+                        draggable={!layers && !playingPlaylist}
+                        onDragStart={() => { if (open) handleDragStart(data.originalIndex) }}
+                        tabIndex={0}
+                        // ref={ref => setRef.current[data.id] = ref}
+                        onDragOver={() => {
+                            if (open) {
+                                handleDragOver(data.originalIndex);
+                            }
+                        }}
+                        onDragEnd={() => { if (open) handleDragEnd(); }}
+                        className={`history-item ${(oldItemsMap[data.id] || !!embedding) && "greyed-out"} ${(toggle === data.id || activeItemList[data.id] || activeItemID === data.id) && "current-playing-item"} ${dragOverSet.itemId === data.id && `dropabble-${dragOverSet.position}`}`}
+                        onPointerDown={() => {
+                            if (!viewOnly) {
+                                globalThis.ADDING_TOPLAYLIST_TIMEOUT = setTimeout(() => {
+                                    globalThis.ADDING_TOPLAYLIST_TIMEOUT = null;
+                                    if (data.type !== "heading") onClickItem({ dataItem: data })
+                                }, 1000);
+                            }
+                        }}
                         onPointerUp={() => {
-                            if (globalThis.ADDING_TOPLAYLIST_TIMEOUT && !viewOnly) {
+                            if (globalThis.ADDING_TOPLAYLIST_TIMEOUT) {
                                 clearInterval(globalThis.ADDING_TOPLAYLIST_TIMEOUT)
-                                if (data.type !== "heading") {
-                                    if (checklistEnabled) {
-                                        editDataFromPlaylist(data.id);
-                                    }
-                                    onClick({ dataItem: data, index });
-                                }
                             };
                         }}
-                        className={`playlist-item-type ${(data.type !== "heading" && checklistEnabled && open && !viewOnly) ? "" : 'no-left-padding'} playlist-item-${data.type}`}
+                        onMouseLeave={() => {
+                            if (globalThis.ADDING_TOPLAYLIST_TIMEOUT) clearInterval(globalThis.ADDING_TOPLAYLIST_TIMEOUT);
+                        }}
+                        onTouchEnd={() => {
+                            if (globalThis.ADDING_TOPLAYLIST_TIMEOUT) clearInterval(globalThis.ADDING_TOPLAYLIST_TIMEOUT);
+                        }}
                     >
-                        {data.type === "headings" && <span class="material-symbols-outlined side-icon">
-                            format_h1 //Not NEEEDED FOR NOW
-                        </span>}
-                        {data.content}
-                    </p>
-                    <div className="actions">
-                        {!playingPlaylist && creatingPlaylist && open && !viewOnly && <p className={`end-icon without-right-margin ${`${isMobile && "visible"} end-icon without-right-margin`}`} onClick={() => deleteFromList(data.originalIndex)} >
-                            <span class="material-symbols-outlined unfollow delete-icon">
-                                delete
-                            </span>
-                        </p>}
+                        <div className="start-actions">
+                            {data.type !== "heading" && !embedding && checklistEnabled && open && !viewOnly ?
+                                <Checkbox
+                                    small
+                                    disabled={!!embedding}
+                                    checked={layers ? !!checkListEmbeded[data.id] : checkListData[data.id] || data.readAlready}
+                                    onClick={() => {
+                                        if (layers) {
+                                            setChecklistEmbeded(data.id, id);
+                                        } else {
+                                            editDataFromPlaylist(data.id, false);
+                                        }
+                                    }}
+                                />
+                                :
+                                null
+                            }
+                            {false && <span class="material-symbols-outlined unfollow drag-item-icon">
+                                featured_play_list
+                            </span>}
+                        </div>
+                        <p
+                            onPointerUp={() => {
+                                if (globalThis.ADDING_TOPLAYLIST_TIMEOUT && !viewOnly) {
+                                    clearInterval(globalThis.ADDING_TOPLAYLIST_TIMEOUT)
+                                    if (data.type !== "heading") {
+                                        if (checklistEnabled) {
+                                            editDataFromPlaylist(data.id);
+                                        }
+                                        onClick({ dataItem: data, index, justPlay: !!layers });
+                                    }
+                                };
+                            }}
+                            className={`playlist-item-type ${(data.type !== "heading" && (embedding || checklistEnabled) && open && !viewOnly) ? "" : 'no-left-padding'} playlist-item-${data.type}`}
+                        >
+                            {data.type === "headings" && <span class="material-symbols-outlined side-icon">
+                                format_h1 //Not NEEEDED FOR NOW
+                            </span>}
+                            {data.content}
+                        </p>
+                        <div className="actions">
+
+                            {!playingPlaylist && layers && creatingPlaylist && open && !viewOnly && <p className={`end-icon without-right-margin ${`${isMobile && "visible"} end-icon without-right-margin`}`} onClick={() => onDisembed({ id: data.id, pId: id })} >
+                                <span class="material-symbols-outlined unfollow delete-icon">
+                                    link_off
+                                </span>
+                            </p>}
+                            {!playingPlaylist && creatingPlaylist && open && !viewOnly && <p className={`end-icon without-right-margin ${`${isMobile && "visible"} end-icon without-right-margin`}`} onClick={() => deleteFromList(data.originalIndex)} >
+                                <span class="material-symbols-outlined unfollow delete-icon">
+                                    delete
+                                </span>
+                            </p>}
 
 
-                        {open && <Linking linkingMode={linkingMode} playListId={playListSubId} playlistName={playlistName} data={data} />}
+                            {open && <Linking linkingMode={linkingMode} playListId={playListSubId} playlistName={playlistName} data={data} />}
+                        </div>
                     </div>
-                </div>
             })}
         </div>
     </div >;

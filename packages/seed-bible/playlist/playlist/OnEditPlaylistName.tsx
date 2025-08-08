@@ -1,4 +1,4 @@
-const { parentId, id, name, color, description, icon, isCustomColor, selectedTags } = that;
+const { parentId, id, name, color, description, icon, isCustomColor, selectedTags, isLayers } = that;
 
 const playlists = globalThis[`${parentId}playlists`];
 
@@ -13,6 +13,7 @@ if (globalThis[`${parentId}SetPlaylists`] && idx > -1) {
     playlistData.icon = icon;
     playlistData.isCustomColor = isCustomColor;
     playlistData.selectedTags = selectedTags;
+    playlistData.isLayers = isLayers;
 
     playlists[idx] = { ...playlistData };
 

@@ -1,0 +1,1 @@
+shout(`OnMapSettingsButtonClicked`, {settingsButton: thisBot});

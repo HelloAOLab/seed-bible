@@ -1,0 +1,9 @@
+export class RemoteUserSelection
+{
+    constructor({selectionPath, userId, lobbyId})
+    {
+        this.selectionPath = selectionPath;
+        this.userId = userId;
+        this.lobbyId = lobbyId;
+    }
+}

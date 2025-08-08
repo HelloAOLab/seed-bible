@@ -1,0 +1,214 @@
+/**
+    * Handles the stop of the expand animation of this book.
+    * Determines if the book should instantly convert itself into a tray, go back to it's regular form, or go forward and finish the animation.
+    *
+    * @param {string} callingFrom? - This parameter is optional and is the tag from which this tag is called from.
+    * @throws {Error} - If any of the animations is canceled.
+    *
+    * @example
+    * thisBot.handleExpandStop({callingFrom: "onPointerUp"});
+*/
+
+if(!thisBot.masks.isExpanding || thisBot.masks.isManagingExpandStop) return;
+
+thisBot.stopExpandTransition();
+setTagMask(thisBot, "isManagingExpandStop", true);
+const callingFrom = that ? (that.callingFrom ?? "") : "";
+const animationDuration = 0.15;
+const mainWord = getBot("isMainWord", true);
+const bookExpandShadow = getBot(byTag("isBookExpandShadow", true), byTag("parentBookId", getID(thisBot)))
+const sectionParent = getBot(byTag("isSection", true), byTag("sectionName", thisBot.tags.sectionName));
+destroy(bookExpandShadow);
+
+
+// if(thisBot.masks.isExpanded)
+// {
+    if(thisBot.masks.expandTransitionPercentage > 0.7)
+    {
+        SoundsManager.playRandomStopExpandSound();
+        // thisBot.lerpColor({startingColor: HexToRgb(thisBot.masks.color ?? thisBot.tags.color), endingColor: [255, 255, 255], durationInSeconds: animationDuration})
+        LerpColorManager.LerpTagColor({startingColor: HexToRgb(thisBot.masks.color ?? thisBot.tags.color), endingColor: [255, 255, 255], durationInSeconds: animationDuration, bot: thisBot, tag: InterpolatableColorTags.Color});
+
+        await Promise.all([
+            animateTag(thisBot, "scaleX", {
+                toValue: thisBot.tags.trayDesiredScaleX,
+                duration: animationDuration,
+                easing: {type: "elastic", mode: "out"}
+            }),
+            animateTag(thisBot, "scaleY", {
+                toValue: thisBot.tags.trayDesiredScaleY,
+                duration: animationDuration,
+                easing: {type: "elastic", mode: "out"}
+            }),
+            animateTag(thisBot, "scaleZ", {
+                toValue: thisBot.tags.trayDesiredScaleZ,
+                duration: animationDuration,
+                easing: {type: "elastic", mode: "out"}
+            }),
+            animateTag(thisBot, "labelOpacity", {
+                toValue: 0,
+                duration: animationDuration
+            }),
+            animateTag(thisBot, "expandTransitionPercentage", {
+                toValue: 1,
+                duration: animationDuration,
+                easing: {type: "linear"}
+            })
+        ]).then(() => {
+            setTagMask(thisBot, "isExpanded", true);
+            thisBot.setThisBookAsTheTray();
+            mainWord.resizeBible();
+        })
+    }
+    else
+    {
+        if((thisBot.masks.expandTransitionPercentage > (thisBot.tags.expandAnimationClickThreshold / thisBot.tags.expandAnimationDuration) && callingFrom === "onPointerUp") || callingFrom === "onDrag")
+        {
+            if(thisBot.masks.expandTransitionPercentage > (thisBot.tags.expandAnimationClickThreshold / thisBot.tags.expandAnimationDuration))
+            {
+                SoundsManager.playRandomStopExpandSound();
+            }
+            // thisBot.lerpColor({startingColor: HexToRgb(thisBot.masks.color ?? thisBot.tags.color), endingColor: HexToRgb(thisBot.tags.initialColor), durationInSeconds: animationDuration})
+            LerpColorManager.LerpTagColor({startingColor: HexToRgb(thisBot.masks.color ?? thisBot.tags.color), endingColor: HexToRgb(thisBot.tags.initialColor), durationInSeconds: animationDuration, bot: thisBot, tag: InterpolatableColorTags.Color});
+            await Promise.all([
+                animateTag(thisBot, "formOpacity", {
+                    toValue: thisBot.tags.unhoveredOpacity,
+                    duration: animationDuration,
+                    easing: {type: "sinusoidal", mode: "out"}
+                }),
+                animateTag(thisBot, "labelOpacity", {
+                    toValue: 0,
+                    duration: animationDuration,
+                    easing: {type: "sinusoidal", mode: "out"}
+                }),
+                animateTag(thisBot, "scaleX", {
+                    toValue: sectionParent.masks.isInExplodedView && thisBot.tags.explodedViewCustomScale ? (thisBot.tags.explodedViewCustomScale.x * sectionParent.tags.initialScaleX) : (thisBot.tags.initialScaleX  * (thisBot.tags.isBookAsSection && thisBot.masks.hasBeenScaledAsBook ? 0.9 : 1)),
+                    duration: animationDuration,
+                    easing: {type: "elastic", mode: "out"}
+                }),
+                animateTag(thisBot, "scaleY", {
+                    toValue: sectionParent.masks.isInExplodedView && thisBot.tags.explodedViewCustomScale ? (thisBot.tags.explodedViewCustomScale.y * sectionParent.tags.initialScaleY) : (thisBot.tags.initialScaleY * (thisBot.tags.isBookAsSection && thisBot.masks.hasBeenScaledAsBook ? 0.9 : 1)),
+                    duration: animationDuration,
+                    easing: {type: "elastic", mode: "out"}
+                }),
+                animateTag(thisBot, "scaleZ", {
+                    toValue: thisBot.tags.desiredScaleZ,
+                    duration: animationDuration,
+                    easing: {type: "elastic", mode: "out"}
+                }),
+                animateTag(thisBot, "expandTransitionPercentage", {
+                    toValue: 0,
+                    duration: animationDuration,
+                    easing: {type: "linear"}
+                })
+            ]);
+        }
+        else
+        {
+            thisBot.setThisBookAsTheTray();
+        }
+        // await Promise.all([
+        //     animateTag(thisBot, "scaleX", {
+        //         toValue: thisBot.tags.bookExpandedDesiredScaleX,
+        //         duration: animationDuration,
+        //         easing: {type: "elastic", mode: "out"}
+        //     }),
+        //     animateTag(thisBot, "scaleY", {
+        //         toValue: 1 + (thisBot.tags.numberOfChapters * 0.15),
+        //         duration: animationDuration,
+        //         easing: {type: "elastic", mode: "out"}
+        //     }),
+        //     animateTag(thisBot, "scaleZ", {
+        //         toValue: thisBot.tags.bookExpandedDesiredScaleZ,
+        //         duration: animationDuration,
+        //         easing: {type: "elastic", mode: "out"}
+        //     }),
+        //     animateTag(thisBot, "labelOpacity", {
+        //         toValue: 1,
+        //         duration: animationDuration
+        //     }),
+        //     animateTag(thisBot, "expandTransitionPercentage", {
+        //         toValue: 0,
+        //         duration: animationDuration,
+        //         easing: {type: "linear"}
+        //     })
+        // ])
+    }
+// }
+// else
+// {
+//     if(thisBot.masks.expandTransitionPercentage > 0.7)
+//     {        
+//         await Promise.all([
+//             animateTag(thisBot, "formOpacity", {
+//                 toValue: 1,
+//                 duration: animationDuration,
+//                 easing: {type: "elastic", mode: "out"}
+//             }),
+//             animateTag(thisBot, "labelOpacity", {
+//                 toValue: 1,
+//                 duration: animationDuration,
+//                 easing: {type: "elastic", mode: "out"}
+//             }),
+//             animateTag(thisBot, "scaleX", {
+//                 toValue: thisBot.tags.bookExpandedDesiredScaleX,
+//                 duration: animationDuration,
+//                 easing: {type: "elastic", mode: "out"}
+//             }),
+//             animateTag(thisBot, "scaleY", {
+//                 toValue: 1 + (thisBot.tags.numberOfChapters * 0.15),
+//                 duration: animationDuration,
+//                 easing: {type: "elastic", mode: "out"}
+//             }),
+//             animateTag(thisBot, "scaleZ", {
+//                 toValue: thisBot.tags.bookExpandedDesiredScaleZ,
+//                 duration: animationDuration,
+//                 easing: {type: "elastic", mode: "out"}
+//             }),
+//             animateTag(thisBot, "expandTransitionPercentage", {
+//                 toValue: 1,
+//                 duration: animationDuration,
+//                 easing: {type: "linear"}
+//             })
+//         ]).then(() => {
+//             setTagMask(thisBot, "isExpanded", true);
+//         })
+//     }
+//     else
+//     {
+//         await Promise.all([
+//             animateTag(thisBot, "formOpacity", {
+//                 toValue: thisBot.tags.unhoveredOpacity,
+//                 duration: animationDuration,
+//                 easing: {type: "sinusoidal", mode: "out"}
+//             }),
+//             animateTag(thisBot, "labelOpacity", {
+//                 toValue: 0,
+//                 duration: animationDuration,
+//                 easing: {type: "sinusoidal", mode: "out"}
+//             }),
+//             animateTag(thisBot, "scaleX", {
+//                 toValue: sectionParent.masks.isInExplodedView && thisBot.tags.explodedViewCustomScale ? (thisBot.tags.explodedViewCustomScale.x * sectionParent.tags.initialScaleX) : (thisBot.tags.initialScaleX  * (thisBot.tags.isBookAsSection && thisBot.masks.hasBeenScaledAsBook ? 0.9 : 1)),
+//                 duration: animationDuration,
+//                 easing: {type: "elastic", mode: "out"}
+//             }),
+//             animateTag(thisBot, "scaleY", {
+//                 toValue: sectionParent.masks.isInExplodedView && thisBot.tags.explodedViewCustomScale ? (thisBot.tags.explodedViewCustomScale.y * sectionParent.tags.initialScaleY) : (thisBot.tags.initialScaleY * (thisBot.tags.isBookAsSection && thisBot.masks.hasBeenScaledAsBook ? 0.9 : 1)),
+//                 duration: animationDuration,
+//                 easing: {type: "elastic", mode: "out"}
+//             }),
+//             animateTag(thisBot, "scaleZ", {
+//                 toValue: thisBot.tags.desiredScaleZ,
+//                 duration: animationDuration,
+//                 easing: {type: "elastic", mode: "out"}
+//             }),
+//             animateTag(thisBot, "expandTransitionPercentage", {
+//                 toValue: 0,
+//                 duration: animationDuration,
+//                 easing: {type: "linear"}
+//             })
+//         ]);
+//     }
+// }
+
+setTagMask(thisBot, "isManagingExpandStop", false);

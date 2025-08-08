@@ -11,9 +11,7 @@ export function SideBarProvider({ children }) {
     const [position, setPosition] = useState({ x: 0, y: 0 })
     const [wait, setWait] = useState(false)
     const [mousePosition, setMousePosition] = useState({ x: 0, y: 0 });
-    const [popupComponent, setPopupComponent] = useState(null)
-    const [sidebarWidth, setSidebarWidth] = useState(280);
-    const [themeColors, setThemeColors] = useState()
+
     useEffect(() => {
         const handleMouseMove = (event) => {
             setMousePosition({ x: event.clientX, y: event.clientY });
@@ -25,7 +23,7 @@ export function SideBarProvider({ children }) {
         };
     }, []);
 
-    function openPopupSettings(props, wait, popupComponent) {
+    function openPopupSettings(props, wait) {
         setWait(wait)
         if (popupSettings) {
             closePopupSettings()
@@ -39,11 +37,7 @@ export function SideBarProvider({ children }) {
         setPosition(adjustedPosition);
 
         setTimeout(() => {
-            if (popupComponent) {
-                setPopupComponent(props)
-            } else {
-                setPopupSettings(props)
-            }
+            setPopupSettings(props)
         }, 100)
     }
 
@@ -77,8 +71,6 @@ export function SideBarProvider({ children }) {
             return
         }
         setPopupSettings(false)
-        setPopupComponent(false)
-        os.unregisterApp("PopupSettings");
     }
     globalThis.closePopupSettings = closePopupSettings
     useEffect(() => {
@@ -88,72 +80,61 @@ export function SideBarProvider({ children }) {
         }
     }, [popupSettings]);
 
-    useEffect(() => {
-        if (popupSettings || popupComponent) {
-            runPopUpSettings({ ...popupSettings, sidebarContext: { closePopupSettings, position, popupComponent } })
-        } else {
-            os.unregisterApp("PopupSettings");
-        }
-    }, [popupSettings, popupComponent])
-
     return (
-        <MyContext.Provider value={{ themeColors, setThemeColors, vars, setVars, wait, setWait, sidebarMode, setSideBarMode, collapsed, setCollapsed, openPopupSettings, sidebarWidth, setSidebarWidth, closePopupSettings }}>
+        <MyContext.Provider value={{ vars, setVars, wait, setWait, sidebarMode, setSideBarMode, collapsed, setCollapsed, openPopupSettings, closePopupSettings }}>
             {children}
+            {
+                popupSettings &&
+                <div
+                    style={{
+                        position: 'fixed',
+                        left: `${position.x}px`,
+                        top: `${position.y}px`,
+                        zIndex: '10000',
+                        pointerEvents: 'auto'
+                    }}
+                >
+                    <PopupSettings {...popupSettings} />
+                </div>
+            }
         </MyContext.Provider>
     );
 }
 
-export function PopupSettings({ items, type, disabled, sidebarContext }) {
+export function PopupSettings({ items, type }) {
     const [external, setextrnal] = useState(false)
     return (
-        <div
-            onClick={sidebarContext.closePopupSettings}
-            style={{
-                position: 'fixed',
-                left: `${sidebarContext.position.x}px`,
-                top: `${sidebarContext.position.y}px`,
-                zIndex: '10000',
-                pointerEvents: 'auto'
-            }}
-        >
-            {sidebarContext.popupComponent || <div className={`popupSettings ${disabled ? 'disabled' : null}`}>
-                {external && <div className=" externalPopupSettings">{external}</div>}
-                {null /*<div className="triangle-up"></div>*/}
-                {
-                    items.map(item => {
-                        if (item?.type === 'line')
-                            return <div style={{
-                                width: "100%",
-                                height: "1px",
-                                backgroundColor: "#cdcccc3b",
-                            }}></div>
-                        else
-                            return (
-                                <div
-                                    onClick={() => {
-                                        item.onClick()
-                                        if (item.external)
-                                            setextrnal(item.external)
-                                    }}
-                                    className={`itemSettings ${item?.disabled && 'disabled'}`}
-                                    style={{ cursor: 'pointer' }}
-                                >
-                                    <div>{item.icon}</div>
-                                    <div>{item.title}</div>
-                                </div>
-                            )
-                    })
-                }
-                <style>{getStyleOf('sidebar.css')}</style>
-            </div>}
+        <div className="popupSettings">
+            {external && <div className=" externalPopupSettings">{external}</div>}
+            {null /*<div className="triangle-up"></div>*/}
+            {
+                items.map(item => {
+                    if (item?.type === 'line')
+                        return <div style={{
+                            width: "100%",
+                            height: "1px",
+                            backgroundColor: "#cdcccc3b",
+                        }}></div>
+                    else
+                        return (
+                            <div
+                                onClick={() => {
+                                    item.onClick()
+                                    if (item.external)
+                                        setextrnal(item.external)
+                                }}
+                                className="itemSettings"
+                                style={{ cursor: 'pointer' }}
+                            >
+                                <div>{item.icon}</div>
+                                <div>{item.title}</div>
+                            </div>
+                        )
+                })
+            }
+            <style>{getStyleOf('sidebar.css')}</style>
         </div>
     );
-}
-
-async function runPopUpSettings({ ...props }) {
-    await os.unregisterApp("PopupSettings");
-    await os.registerApp("PopupSettings");
-    os.compileApp('PopupSettings', <PopupSettings {...props} />);
 }
 
 export function useSideBarContext() {

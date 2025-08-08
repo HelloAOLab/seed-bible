@@ -1,0 +1,1 @@
+this.tags.hidden = true

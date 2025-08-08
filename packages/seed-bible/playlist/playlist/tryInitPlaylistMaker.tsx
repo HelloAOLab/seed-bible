@@ -13,9 +13,7 @@ if (globalThis.makingPlaylist) {
     setCurrentExperience(0);
     setOpenSidebar(false);
     globalThis.IS_PLAYLIST_ACTIVE = false;
-    if (globalThis.SET_SHOW_CHECK) {
-        globalThis.SET_SHOW_CHECK(false);
-    }
+    globalThis.SET_SHOW_CHECK && globalThis.SET_SHOW_CHECK(false);
     // shout('shareButton');
     if (globalThis.updateCustomHeight) updateCustomHeight(0);
     ids.forEach(id => {
@@ -32,7 +30,7 @@ if (globalThis.makingPlaylist) {
     return;
 }
 
-// globalThis.makingPlaylist = true;
+globalThis.makingPlaylist = true;
 setOpenSidebar(false);
 const Playlist = await thisBot.PlaylistUI();
 return Playlist;
