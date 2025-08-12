@@ -532,13 +532,14 @@ input:checked+.slider:not(#slider):before {
     outline: none;
 }
 
+
 .searchbar-container:hover {
     left: calc(50vw - 100px);
 }
 
-.searchbar-container:not(:hover) {
+/* .searchbar-container:not(:hover) {
     transition-delay: 2s;
-}
+} */
 
 @keyframes fadeInAnimation2 {
     0% {
@@ -612,6 +613,10 @@ input:checked+.slider:not(#slider):before {
 }
 
 .sidebar-chapter-itm:hover {
+    background-color: rgba(1, 87, 155, 0.9);
+}
+
+.sidebar-chapter-itm.highlight {
     background-color: rgba(1, 87, 155, 0.9);
 }
 
@@ -981,15 +986,15 @@ input:checked+.slider:not(#slider):before {
 }
 
 .sidebar-input-container:not(:hover) .input {
-    transition-delay: 2s;
+    /* transition-delay: 2s; */
 }
 
 .sidebar-input-container:not(:hover) i {
-    transition-delay: 2s;
+    /* transition-delay: 2s; */
 }
 
 .sidebar-input-container:not(:hover) .result-container {
-    transition-delay: 2s;
+    /* transition-delay: 2s; */
     opacity: 0;
 }
 
