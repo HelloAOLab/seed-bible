@@ -1,7 +1,8 @@
 import {MapData} from "interactiveBible.managers.MapsManager.MapData"
 import {MapBookData} from "interactiveBible.managers.MapsManager.MapBookData"
 import {MapChapterData} from "interactiveBible.managers.MapsManager.MapChapterData"
-let {elementData, element} = that;
+let {elementData} = that;
+const {element} = that;
 if(!elementData)
 {
     if(element.tags.isMapCover)

@@ -371,7 +371,7 @@ export const MapToolProvider = ({
         }
         else
         {
-            const allSelected = Array.from(projectFilters).every(([_, value]) => { return value });
+            const allSelected = Array.from(projectFilters).every(([, value]) => { return value });
             if(allSelected)
             {
                 Array.from(projectFilters).forEach(([stateKey]) => {

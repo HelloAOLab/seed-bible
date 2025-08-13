@@ -12,7 +12,7 @@ export const UserPresenceSettings = () => {
         <div className="userPresenceSettings">
             <UsersSelector />
             <ModesSelector />
-            {false && modes.get("Reading") && <TimeFrameSetter /> }
+            {/*modes.get("Reading") && <TimeFrameSetter />*/}
             {modes.get("Content") && <ContentVisualizationSetter />}
         </div>
     )

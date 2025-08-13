@@ -87,9 +87,11 @@ export const MapControls = () => {
 
 
 
-            {false && <><button onClick={handleLabelsToggle}><span class="material-symbols-outlined">sell</span></button>
-            {false && <button onClick={handleShowAllChaptersToggle}><span class="material-symbols-outlined">{showingAllChapters ? "visibility_off" : "visibility"}</span></button>}
-            <button onClick={handleContentHeatmapToggle}><span class="material-symbols-outlined">description</span></button></>}
+            {/*<>
+                <button onClick={handleLabelsToggle}><span class="material-symbols-outlined">sell</span></button>
+                {false && <button onClick={handleShowAllChaptersToggle}><span class="material-symbols-outlined">{showingAllChapters ? "visibility_off" : "visibility"}</span></button>}
+                <button onClick={handleContentHeatmapToggle}><span class="material-symbols-outlined">description</span></button>
+            </>*/}
         </div>
     )    
 }

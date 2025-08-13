@@ -1,6 +1,6 @@
 const {useCallback, useState, useRef} = os.appHooks
 
-const useReorderableList = (list, onUpdate) => {
+export const useReorderableList = (list, onUpdate) => {
     const [draggingId, setDraggingId] = useState(null);
     const [draggingIndex, setDraggingIndex] = useState(null);
     const [dragOverInfo, setDragOverInfo] = useState(null);

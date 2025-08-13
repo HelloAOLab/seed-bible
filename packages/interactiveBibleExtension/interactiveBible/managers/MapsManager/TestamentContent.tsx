@@ -3,7 +3,7 @@ import { useMapToolContext } from "interactiveBible.managers.MapsManager.MapTool
 import { Book } from "interactiveBible.managers.MapsManager.Book"
 import {useResizeObserver} from "interactiveBible.managers.MapsManager.CustomHooks"
 import {SectionToggle} from "interactiveBible.managers.MapsManager.SectionToggle"
-const { useMemo, useCallback, useState, useEffect, useRef } = os.appHooks;
+const { useMemo, useCallback, useState, useRef } = os.appHooks;
 
 export const TestamentContent = ({hidden}) => {
 

@@ -25,7 +25,7 @@ const crossVerticalLinePosition = new Vector3(0, 0, upperCoverPosition.z + Stack
 const crossVerticalLineScales = new Vector3(StackElementMeasurements.CoverScales.x * 0.07, StackElementMeasurements.CoverScales.y / 2, 0.055);
 const crossHorizontalLinePosition = new Vector3(0, crossVerticalLinePosition.y + (crossVerticalLineScales.y/4), upperCoverPosition.z + StackElementMeasurements.CoverScales.z);
 const crossHorizontalLineScales = new Vector3(crossVerticalLineScales.y/2, crossVerticalLineScales.x, 0.055);
-const animationDuration = 0;
+// const animationDuration = 0;
 const collisionType = bibleType === BibleType.PlatformerGame ? CollisionType.Collision : null
 const bibleTransformerMod = {
     [dimension]: true,

@@ -17,8 +17,6 @@ const lowerCoverPosition = getBotPosition(bibleData.staticBibleElements.lowerCov
 const crossVerticalLineScales = GetBotScales(bibleData.staticBibleElements.crossVerticalLine)
 const sectionInitialScaleZ = 0;
 const initialPositionZ = lowerCoverPosition.z + StackElementMeasurements.CoverScales.z;
-let activeBibleElements;
-let crossOpenedPositionZ;
 let nextPositionZ = initialPositionZ + StackSpacing.BetweenArrangements;
 const resizeAnimations = [];
 bibleData.currentStackVizState = BibleVisualizationState.Regular;
@@ -97,7 +95,7 @@ for(const testamentData of bibleData.childrenData)
     nextPositionZ += StackSpacing.BetweenArrangements
 }
 
-crossOpenedPositionZ = bibleData.childrenData[bibleData.childrenData.length - 1].childrenData[0].element.tags.desiredPositionZ - (StackSpacing.BetweenArrangements / 2) - StackSpacing.BetweenSections - (crossVerticalLineScales.z/2);
+const crossOpenedPositionZ = bibleData.childrenData[bibleData.childrenData.length - 1].childrenData[0].element.tags.desiredPositionZ - (StackSpacing.BetweenArrangements / 2) - StackSpacing.BetweenSections - (crossVerticalLineScales.z/2);
 resizeAnimations.push(
     animateTag(bibleData.staticBibleElements.upperCover, dimension + "Z", {
         toValue: nextPositionZ,
@@ -115,7 +113,7 @@ await Promise.allSettled(resizeAnimations);
 
 setTagMask(thisBot, "isBibleClosed", false);
 
-activeBibleElements = getBots(byTag("isBibleElement", true), byTag(dimension, true));
+const activeBibleElements = getBots(byTag("isBibleElement", true), byTag(dimension, true));
 StacksManager.TrySetElementsRenderOrder(activeBibleElements);
 
 return true;

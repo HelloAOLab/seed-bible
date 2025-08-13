@@ -2,11 +2,11 @@ const {element, elements} = that;
 const dimension = os.getCurrentDimension();
 const fixedElements = (Array.isArray(elements) ? elements : [element]).filter((currElement) => {return currElement.tags[dimension] == true});
 const allUsersColor = [];
-const myLobbyId = getBot('lobbyUserBot', true)?.id;
+// const myLobbyId = getBot('lobbyUserBot', true)?.id;
 const maxAmountOfColors = 4;
 fixedElements.forEach((fixedElement) => {
     const currUsersColor = thisBot.GetCurrentUsersColorForElement({element: fixedElement});
-    let elementSelections;
+    // let elementSelections;
     let selectionsElement;
     let userColorScales;
     let extraUsersContentScales;
@@ -34,7 +34,7 @@ fixedElements.forEach((fixedElement) => {
             userColorForm = UsersColorValues.GroundedElementColorForm;
         break;
     }
-    elementSelections = thisBot.GetUsersSelectionForElement({element: selectionsElement})
+    const elementSelections = thisBot.GetUsersSelectionForElement({element: selectionsElement})
     const fixedSelections = elementSelections.filter((selection) => {return selection.userId != getID(configBot)})
     if(fixedSelections.length > 0)
     {

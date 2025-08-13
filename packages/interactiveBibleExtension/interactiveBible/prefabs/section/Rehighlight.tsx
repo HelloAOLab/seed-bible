@@ -11,9 +11,9 @@
 const {speedMultiplier = 1, isInstantaneous = false} = that ?? {}
 const dimension = os.getCurrentDimension();
 const animationDuration = isInstantaneous ? 0 : StackAnimationsDuration.Rehighlight/speedMultiplier;
-const deltaScaleZ = thisBot.tags.hoveredScaleZ - thisBot.tags.desiredScaleZ;
+// const deltaScaleZ = thisBot.tags.hoveredScaleZ - thisBot.tags.desiredScaleZ;
 const infoLabelTransformer = getBot(byTag("isInfoLabelTransformer", true), byTag("ownerBotId", getID(thisBot)));
-const thisBotPosition = getBotPosition(thisBot, dimension);
+// const thisBotPosition = getBotPosition(thisBot, dimension);
 const thisBotScales = GetBotScales(thisBot);
 const animationEasing = {type: "sinusoidal", mode: "inout"};
 

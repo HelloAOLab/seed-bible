@@ -13,7 +13,8 @@
 
 import {UnhighlightDelayInfo} from "interactiveBible.managers.StacksManager.UnhighlightDelayInfo"
 
-let {element, tryUpdateUsersNotification = true, delay, requestSource, customDuration, speedMultiplier = 1, isInstantaneous = false} = that;
+let {delay} = that;
+const {element, tryUpdateUsersNotification = true, requestSource, customDuration, speedMultiplier = 1, isInstantaneous = false} = that;
 const data = thisBot.GetBibleElementData({element});
 const {bibleData} = thisBot.GetDataChainFromParentDataIds({parentDataIds: data.parentDataIds});
 const {unhighlightDelayInfo: currentUnhighlightDelayInfo, unhighlightDelayInfoIndex: currentUnhighlightDelayInfoIndex} = thisBot.GetUnhighlightDelayInfo({element});

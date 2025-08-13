@@ -13,7 +13,8 @@
 
 import {BibleData} from 'interactiveBible.managers.StacksManager.BibleData'
 
-let {position, setBibleAnimating = true, bibleType = BibleType.Default, customArrangementIndex} = that;
+let {position} = that;
+const {setBibleAnimating = true, bibleType = BibleType.Default, customArrangementIndex} = that;
 const dimension = os.getCurrentDimension();
 const jarvis = getBot("jarvis", true);
 const jarvisPosition = jarvis ? getBotPosition(jarvis, dimension) : null;

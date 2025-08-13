@@ -1,29 +1,29 @@
-async function RecordFile()
-{
-    const files = await os.showUploadFiles();
+// async function RecordFile()
+// {
+//     const files = await os.showUploadFiles();
 
-    if (files.length <= 0) {
-        return;
-    }
+//     if (files.length <= 0) {
+//         return;
+//     }
 
-    const recordKey = await os.getPublicRecordKey('Canvas');
+//     const recordKey = await os.getPublicRecordKey('Canvas');
 
-    if (!recordKey.success) 
-    {
-        os.toast('Failed ' + recordKey.errorMessage);
-        return
-    }
+//     if (!recordKey.success) 
+//     {
+//         os.toast('Failed ' + recordKey.errorMessage);
+//         return
+//     }
 
-    files.forEach(async (file) => {
-        const result = await os.recordFile(recordKey.recordKey, file);
+//     files.forEach(async (file) => {
+//         const result = await os.recordFile(recordKey.recordKey, file);
 
-        if (result.success) { 
-            console.log("Success! Uploaded to " + result.url);
-        } else {
-            console.log("Failed " + result.errorMessage);
-        }
-    })
-}
+//         if (result.success) { 
+//             console.log("Success! Uploaded to " + result.url);
+//         } else {
+//             console.log("Failed " + result.errorMessage);
+//         }
+//     })
+// }
 
 if(that.keys[0] === "1")
 {

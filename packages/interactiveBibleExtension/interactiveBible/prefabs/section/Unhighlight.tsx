@@ -13,7 +13,7 @@
 */
 
 const {customDuration, speedMultiplier = 1, isInstantaneous = false} = that ?? {};
-const dimension = os.getCurrentDimension();
+// const dimension = os.getCurrentDimension();
 const animationDuration = isInstantaneous ? 0 : ((customDuration ?? StackAnimationsDuration.Unhighlight)/speedMultiplier);
 const infoLabelTransformer = GetCurrentInfoLabelTransformer(thisBot);
 const thisBotScales = GetBotScales(thisBot);

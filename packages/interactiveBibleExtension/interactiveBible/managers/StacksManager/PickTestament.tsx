@@ -6,7 +6,7 @@ const movementYEasing = {type: "linear"}
 const movementZEasing = {type: "cubic", mode: "in"}
 const testamentData = bibleData.childrenData.find((currTestamentData) => {return currTestamentData.elementInfo.name == testamentName});
 const testamentPosition = getBotPosition(testamentData.element, dimension);
-const testamentScales = GetBotScales(testamentData.element)
+// const testamentScales = GetBotScales(testamentData.element)
 const newPositionY = testamentPosition.y + positionYOffset;
 await Promise.all([
     animateTag(testamentData.element, {

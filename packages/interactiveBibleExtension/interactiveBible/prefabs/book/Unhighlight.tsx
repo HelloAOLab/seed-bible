@@ -10,7 +10,7 @@
 */
 
 const {customDuration, speedMultiplier = 1, isInstantaneous} = that ?? {};
-const bookData = StacksManager.GetBibleElementData({element: thisBot});
+// const bookData = StacksManager.GetBibleElementData({element: thisBot});
 const dimension = os.getCurrentDimension();
 const animationDuration = isInstantaneous ? 0 : ((customDuration ?? StackAnimationsDuration.Unhighlight)/speedMultiplier);
 const infoLabelTransformer = GetCurrentInfoLabelTransformer(thisBot);

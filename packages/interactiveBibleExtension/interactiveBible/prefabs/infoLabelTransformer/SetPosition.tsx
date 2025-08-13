@@ -23,7 +23,7 @@ const infoLabelTransformerScales = GetBotScales(thisBot);
 const ownerBotPosition = getBotPosition(ownerBot, dimension);
 const ownerBotScales = GetBotScales(ownerBot);
 const transformerOffset = 1;
-const infoLabelTransformerScaleZ = 1;
+// const infoLabelTransformerScaleZ = 1;
 const transformerPosition = transformer ? getBotPosition(transformer, dimension).add(new Vector3(0, 0, transformerOffset)) : new Vector3(0, 0, 0);
 const infoLabelTransformerDesiredPosition = new Vector3(
     ownerBotPosition.x, 
@@ -67,5 +67,5 @@ if(setLabelOffset && thisBot.tags.labelPositioning !== LabelPositioning.Top)
     }
     setTagMask(infoLabel, dimension + 'X', infoLabelOffsetX);
     setTagMask(infoLabelTail, dimension + 'X', infoLabelTailOffsetX);
-    infoLabelDate ? setTagMask(infoLabelDate, dimension + "X", infoLabelDateOffsetX) : null;
+    infoLabelDate && setTagMask(infoLabelDate, dimension + "X", infoLabelDateOffsetX);
 }

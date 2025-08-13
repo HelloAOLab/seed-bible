@@ -49,15 +49,16 @@ for(const entryIndex in mapData.playlistEntries)
             prevEntryTestamentLine?.TryStopHighlight();
         }
 
-        let time = os.localTime;
+        // let time = os.localTime;
 
-        (highlightTestament ? entryTestamentLine?.Highlight?.() : Promise.resolve()).then(() => {
-            time = os.localTime
-            return (highlightSection ? entrySectionLineSegment?.Highlight?.() : Promise.resolve()).then(() => {
-                time = os.localTime
-                return (highlightBook ? entryBook?.Highlight?.() : Promise.resolve()).then(() => {
-                    time = os.localTime
+        (highlightTestament ? (entryTestamentLine?.Highlight ? entryTestamentLine.Highlight() : Promise.resolve()) : Promise.resolve()).then(() => {
+            // time = os.localTime
+            return (highlightSection ? (entrySectionLineSegment?.Highlight ? entrySectionLineSegment.Highlight() : Promise.resolve()) : Promise.resolve()).then(() => {
+                // time = os.localTime
+                return (highlightBook ? (entryBook?.Highlight ? entryBook.Highlight() : Promise.resolve()) : Promise.resolve()).then(() => {
+                    // time = os.localTime
                     return entry.Highlight().then(() => {
+                        
                     });
                 })
             }) 

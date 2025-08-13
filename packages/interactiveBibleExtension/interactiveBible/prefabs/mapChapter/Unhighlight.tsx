@@ -2,7 +2,7 @@ const {mapChapterData} = that;
 const duration = 0.1;
 let rgbTargetColor;
 const animations = [];
-const dimension = os.getCurrentDimension();
+// const dimension = os.getCurrentDimension();
 const easing = {type: "sinusoidal", mode: "inout"};
 thisBot.StopChapterTransition()
 
@@ -37,7 +37,7 @@ try
         setTagMask(thisBot, "isHighlighted", false);
     })
 }
-catch(error){}
+catch()
 finally
 {
     setTagMask(thisBot, "isUnhighlighting", false);

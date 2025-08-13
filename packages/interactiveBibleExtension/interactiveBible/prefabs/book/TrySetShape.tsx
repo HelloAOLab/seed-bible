@@ -10,7 +10,8 @@
 import {SectionBookData} from "interactiveBible.managers.StacksManager.SectionBookData"
 
 const dimension = os.getCurrentDimension();
-let {shape, duration = 0.5, speedMultiplier = 1, isInstantaneous = false} = that;
+const {shape, speedMultiplier = 1, isInstantaneous = false} = that;
+let {duration = 0.5} = that;
 duration = duration/speedMultiplier;
 const bookData = StacksManager.GetBibleElementData({element: thisBot});
 const {sectionData} = StacksManager.GetDataChainFromParentDataIds({parentDataIds: bookData.parentDataIds});

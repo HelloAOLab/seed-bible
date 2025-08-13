@@ -11,7 +11,7 @@
 */
 
 const {testamentData, speedMultiplier = 1, isInstantaneous = false} = that;
-const updateStacksTime =  await thisBot.UpdateStacks({speedMultiplier, isInstantaneous});
+// const updateStacksTime =  await thisBot.UpdateStacks({speedMultiplier, isInstantaneous});
 const animations = [];
 if(!isInstantaneous)
 {

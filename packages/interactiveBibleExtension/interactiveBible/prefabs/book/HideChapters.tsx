@@ -10,7 +10,7 @@ if(thisBot.tags.isBaseBook) return;
 const {bibleId} = that ?? {};
 const bookData = StacksManager.GetBibleElementData({element: thisBot});
 if(!thisBot.masks.isShowingChapters || (bibleId && (!bookData.parentDataIds.bibleId || bibleId !== bookData.parentDataIds.bibleId))) return;
-const dimension = os.getCurrentDimension();
+// const dimension = os.getCurrentDimension();
 setTagMask(thisBot, "isShowingChapters", false);
 thisBot.vars.previousHighlightedChapterData = null;
 for(const chapterData of bookData.childrenData)

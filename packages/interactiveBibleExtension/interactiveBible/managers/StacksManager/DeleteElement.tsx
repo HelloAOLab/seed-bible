@@ -19,7 +19,8 @@ import { SectionData } from "interactiveBible.managers.StacksManager.SectionData
 import { SectionBookData } from "interactiveBible.managers.StacksManager.SectionBookData"
 import { BookData } from "interactiveBible.managers.StacksManager.BookData"
 import { ChapterData } from "interactiveBible.managers.StacksManager.ChapterData"
-let { elementData, element } = that;
+let { elementData } = that;
+const { element } = that;
 if (!elementData) {
     if (element.tags.isBibleElement) {
         elementData = thisBot.GetBibleElementData({ element });

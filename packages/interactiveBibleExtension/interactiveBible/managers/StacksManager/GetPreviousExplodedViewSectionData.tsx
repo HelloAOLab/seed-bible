@@ -6,7 +6,8 @@
     * const previousExplodedViewSectionData = thisBot.GetPreviousExplodedViewSectionData({stackData: someStackData});
 */
 
-let {bibleData, testamentData} = that;
+let {testamentData} = that;
+const {bibleData} = that;
 if(bibleData)
 {
     testamentData = bibleData.childrenData.find((currentTestamentData) => {

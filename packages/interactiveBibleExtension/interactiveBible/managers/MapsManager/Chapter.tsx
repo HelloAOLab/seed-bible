@@ -1,4 +1,4 @@
-const { useState, useCallback, useEffect, useMemo, useRef } = os.appHooks;
+const { useState, useCallback, useEffect, useMemo } = os.appHooks;
 import { useMapToolContext } from "interactiveBible.managers.MapsManager.MapToolContext"
 import { Tooltip } from "interactiveBible.managers.MapsManager.Tooltip"
 import { PresentUserPresenceTooltipIcon } from "interactiveBible.managers.MapsManager.PresentUserPresenceIcon"
@@ -158,13 +158,13 @@ export const Chapter = ({ index, bookName, sectionName}) => {
         isUserPresenceEnabled,
         content,
         usersStatus,
-        maxChapterHeatCount,
+        // maxChapterHeatCount,
         modes,
         userPresence,
         usersInfo,
         contentVisualization,
         ContentVisualizationType,
-        readingHistory,
+        // readingHistory,
         mode,
         selection,
         MapToolModes,
@@ -276,10 +276,10 @@ export const Chapter = ({ index, bookName, sectionName}) => {
             }
             break;
 
-            case MapToolModes.Viewer: {
+            // case MapToolModes.Viewer: {
 
-            }
-            break;
+            // }
+            // break;
 
             case MapToolModes.Checkbox: {
                 if(checked) borderColor = "#2AB80D"
@@ -334,21 +334,21 @@ export const Chapter = ({ index, bookName, sectionName}) => {
         >
             {index + 1}
 
-            {false && mode === MapToolModes.Viewer && isUserPresenceEnabled && displayContainer && <div className="contentContainer" style={{
+            {/*mode === MapToolModes.Viewer && isUserPresenceEnabled && displayContainer && <div className="contentContainer" style={{
                 gridTemplateColumns: gridColumns,
                 gridTemplateRows: gridRows
             }}>
                 {filteredUsers.map(([user]) => {
                     return <div style={{ backgroundColor: usersInfo[user].color }}></div>
                 })}
-            </div>}
+            </div>*/}
 
             
-            {false && mode === MapToolModes.Viewer && isUserPresenceEnabled && modes.get("Reading") && <>
+            {/*mode === MapToolModes.Viewer && isUserPresenceEnabled && modes.get("Reading") && <>
                 <PresentUserPresenceDotContainer bookName={bookName} chapterIndex={index} usersInChapter={usersInChapter} />
                 <ReadingHistoryChapterNotificationContainer bookName={bookName} chapterIndex={index} />
                 <UpcomingEventsChapterNotificationContainer bookName={bookName} chapterIndex={index} />
-            </>}
+            </>*/}
         </div>
     )
 }

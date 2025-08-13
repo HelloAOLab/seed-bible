@@ -7,7 +7,8 @@
     * infoLabelTransformer.Hide({duration: 0.2, speedMultiplier: 1.5});
     */
 
-let {duration = 0.15, speedMultiplier = 1, isInstantaneous = false} = that ?? {};
+let {duration = 0.15} = that ?? {};
+const {speedMultiplier = 1, isInstantaneous = false} = that ?? {};
 duration = isInstantaneous ? 0 : (duration / speedMultiplier);
 thisBot.StopOpacityTransition();
 const {infoLabel, infoLabelTail, infoLabelDate, infoLabelUsersColor} = thisBot.GetLabelElements();

@@ -25,12 +25,12 @@ export const Book = ({
         usersInfo,
         contentVisualization,
         ContentVisualizationType,
-        mode,
-        MapToolModes,
+        // mode,
+        // MapToolModes,
         selection,
-        handleCheckboxChange,
-        isInSelectionMode,
-        setIsInSelectionMode,
+        // handleCheckboxChange,
+        // isInSelectionMode,
+        // setIsInSelectionMode,
 
         onBookNameClickAndHold,
         onBookNameClickAndHoldDependencies

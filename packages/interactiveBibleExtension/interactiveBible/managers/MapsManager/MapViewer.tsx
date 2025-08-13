@@ -1,6 +1,6 @@
 import { MapToolModes, ProjectChapterState } from "interactiveBible.managers.MapsManager.MapTool"
 const { useMemo, useState, useCallback, useRef } = os.appHooks;
-import { MapViewerContext, useMapViewerContext } from "interactiveBible.managers.MapsManager.MapViewerContext"
+import { MapViewerContext } from "interactiveBible.managers.MapsManager.MapViewerContext"
 import {MapViewerContainer} from "interactiveBible.managers.MapsManager.MapViewerContainer"
 
 const MapViewer = () => {
@@ -15,7 +15,7 @@ const MapViewer = () => {
             arrangement.testaments.map(({name: testamentName, sections}) => {
                 return [testamentName, Object.fromEntries(sections.map(({name: sectionName, books}) => {
                     return [sectionName, Object.fromEntries(books.map(({commonName}) => {
-                        return [commonName, StacksManager.tags.booksStaticInfo[commonName].chaptersInfo.map((_) => {
+                        return [commonName, StacksManager.tags.booksStaticInfo[commonName].chaptersInfo.map(() => {
                             return false
                         })]
                     }))]

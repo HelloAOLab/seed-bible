@@ -5,7 +5,6 @@
     * shout("OnCameraRotationChanged");
 */
 
-const dimension = os.getCurrentDimension();
 const bibleElements = getBots(byTag('isBibleElement', true), byTag('isInUse', true));
 if(bibleElements.length > 0)
 {

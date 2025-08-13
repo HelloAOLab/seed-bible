@@ -7,7 +7,7 @@
 */
 
 const {chapterData, duration = 0.1} = that;
-const dimension = os.getCurrentDimension();
+// const dimension = os.getCurrentDimension();
 const rgbTargetColor = HexToRgb(InstanceManager.masks.isInHistoryMode ? GetHistoryColor({element: thisBot}) : (chapterData.highlightColor ?? thisBot.tags.initialColor));
 const animations = [];
 thisBot.StopChapterTransition();
@@ -37,7 +37,7 @@ try
         setTagMask(thisBot, "isHighlighted", false);
     })
 }
-catch(error){}
+catch()
 finally
 {
     setTagMask(thisBot, "isUnhighlighting", false);

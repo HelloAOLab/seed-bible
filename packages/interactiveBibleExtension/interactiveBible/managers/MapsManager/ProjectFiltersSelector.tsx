@@ -7,7 +7,7 @@ export const ProjectFiltersSelector = () => {
     const { projectFilters, handleProjectFilterOptionClick, ProjectChapterState, ProjectStateStyle } = useMapToolContext();
 
     const allSelected = useMemo(() => {
-        return Array.from(projectFilters).every(([_, value]) => { return value });
+        return Array.from(projectFilters).every(([, value]) => { return value });
     }, [projectFilters])
 
     const getOptionContent = useCallback((key) => {

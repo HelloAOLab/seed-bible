@@ -1,10 +1,10 @@
 const {bot, cameraFocus} = that;
 
-const baseGlow = getBot("system", "ext_tabernacle.glow");
+// const baseGlow = getBot("system", "ext_tabernacle.glow");
 const baseCone = getBot("system", "ext_tabernacle.cone");
 const dimension = os.getCurrentDimension();
 const blinkDuration = 1;
-const glowTargetFormOpacity = 0.4;
+// const glowTargetFormOpacity = 0.4;
 const coneTargetFormOpacity = 0.75;
 const botPosition = getBotPosition(bot, dimension);
 

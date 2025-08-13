@@ -68,7 +68,7 @@ else
             })
         })
     }
-    catch(error)
+    catch()
     {
         return Promise.all(shout('OnTourGuideComplete'));
     }

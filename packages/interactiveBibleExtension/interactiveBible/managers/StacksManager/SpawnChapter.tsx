@@ -22,7 +22,8 @@ setTagMask(thisBot, 'isBibleAnimating', true);
 const dimension = os.getCurrentDimension();
 const jarvis = getBot("jarvis", true);
 const jarvisPosition = getBotPosition(jarvis, dimension);
-let {bookName, chapterNumber, spawnPosition} = that;
+let {spawnPosition} = that;
+const {bookName, chapterNumber} = that;
 let displayJarvisSpawnElementAnimation = false;
 if(jarvis && !spawnPosition)
 {
@@ -31,7 +32,7 @@ if(jarvis && !spawnPosition)
 }
 const {arrangementIndex, testamentIndex, sectionIndex, found} = thisBot.GetBookInfoPathByName({name: bookName});
 let chapterSpawned = false;
-let book;
+// let book;
 if(found)
 {
     const {chaptersInfo} = StacksManager.tags.booksStaticInfo[bookInfo.commonName];

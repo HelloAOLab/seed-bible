@@ -12,13 +12,21 @@
 */
 
 import { ColorLerpData } from "interactiveBible.managers.LerpColorManager.ColorLerpData";
-let {startingColor, endingColor, durationInSeconds, bot, tag} = that;
+let {
+    startingColor, 
+} = that;
+const {
+    endingColor, 
+    durationInSeconds, 
+    bot, 
+    tag
+} = that;
 startingColor = startingColor ?? HexToRgb(bot.masks[tag] ?? bot.tags[tag]);
 thisBot.StopColorLerp({bot, tag});
 if(startingColor === endingColor) return true;
 
 return new Promise((resolve, reject) => {
-    let intervalId, botLerpData;
+    let botLerpData;
     const divisionFactor = 20;
     const difference = [endingColor[0] - startingColor[0], endingColor[1] - startingColor[1], endingColor[2] - startingColor[2]];
     const differenceFraction = [difference[0] / divisionFactor, difference[1] / divisionFactor, difference[2] / divisionFactor];
@@ -31,7 +39,7 @@ return new Promise((resolve, reject) => {
         const rgbColor = ClampRGBColor([(currentColor[0] + (differenceFraction[0] * j)), (currentColor[1] + (differenceFraction[1] * j)), (currentColor[2] + (differenceFraction[2] * j))])
         rgbColors.push(rgbColor);
     }
-    intervalId = setInterval(() => {
+    const intervalId = setInterval(() => {
         const hexColor = RgbToHex(rgbColors[i]);
         setTagMask(bot, tag, hexColor);
         i++;

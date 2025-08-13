@@ -1,7 +1,7 @@
 const {arrangementIndex, arrangement} = that;
 let column = 0;
 let row = 0;
-const bookIndex = 0;
+// const bookIndex = 0;
 const testamentLinesInfo = [];
 const sectionLinesInfo = [];
 const mapBooksInfo = [];

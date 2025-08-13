@@ -9,7 +9,8 @@
 
 import {QueuedChapterData} from "interactiveBible.managers.StacksManager.QueuedChapterData"
 
-let {bookData, chapterNumber, chapterData} = that;
+let {chapterData} = that;
+const {bookData, chapterNumber} = that;
 if(!chapterData)
 {
     chapterData = bookData.childrenData.find((currentChapterData) => {

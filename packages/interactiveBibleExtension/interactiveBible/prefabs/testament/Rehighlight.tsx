@@ -11,11 +11,11 @@
 */
 
 const {speedMultiplier = 1, isInstantaneous = false} = that ?? {}
-const dimension = os.getCurrentDimension();
+// const dimension = os.getCurrentDimension();
 const animationDuration = isInstantaneous ? 0 : (StackAnimationsDuration.Rehighlight/speedMultiplier);
 const infoLabelTransformer = getBot(byTag("isInfoLabelTransformer", true), byTag("ownerBotId", getID(thisBot)));
 const animationEasing = {type: "sinusoidal", mode: "inout"};
-const desiredLabelFormOpacity = 1;
+// const desiredLabelFormOpacity = 1;
 
 setTagMask(thisBot, "isHighlighting", true);
 setTagMask(thisBot, "isHighlighted", true);

@@ -1,5 +1,5 @@
-const {useRef, useState, useEffect} = os.appHooks
- const self = this
+const {useRef, useEffect} = os.appHooks
+ const self = thisBot
  if (!this.tags.unregister) {
     
 

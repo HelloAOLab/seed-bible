@@ -10,9 +10,9 @@
  * StacksManager.SetUpInitialBibleOpen({ bibleData: someBibleData });
  */
 
-const {bibleData, bibleType = BibleType.Default} = that;
+const {bibleData} = that;
 const dimension = os.getCurrentDimension();
-const bibleTransformerPosition = getBotPosition(bibleData.staticBibleElements.bibleTransformer, dimension);
+// const bibleTransformerPosition = getBotPosition(bibleData.staticBibleElements.bibleTransformer, dimension);
 bibleData.currentState = BibleState.Open;
 bibleData.childrenData.forEach((testamentData) => {testamentData.isInsideBible = true});
 return bibleData.staticBibleElements.bibleTransformer.DisplayInitialBibleOpenAnimation({bibleData});

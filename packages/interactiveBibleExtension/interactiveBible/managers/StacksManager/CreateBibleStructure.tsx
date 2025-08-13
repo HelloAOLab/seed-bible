@@ -9,7 +9,6 @@
 
 const {arrangementIndex, bibleData} = that;
 const testamentsData = [];
-let staticBibleElements;
 const bibleTransformer = ObjectPooler.GetObjectFromPool({tag: ObjectPoolTags.BibleTransformer});
 const bibleTransformerMod = {bibleId: bibleData.id};
 const upperCover = ObjectPooler.GetObjectFromPool({tag: ObjectPoolTags.Cover});
@@ -33,7 +32,7 @@ crossVerticalLine.OnSpawned({mod: crossVerticalLineMod});
 crossHorizontalLine.OnSpawned({mod: crossHorizontalLineMod});
 bibleShadow.OnSpawned({mod: bibleShadowMod});
 
-staticBibleElements = {
+const staticBibleElements = {
     bibleTransformer,
     upperCover,
     leftCover,

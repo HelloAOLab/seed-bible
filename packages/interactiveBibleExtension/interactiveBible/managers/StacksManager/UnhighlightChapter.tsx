@@ -12,7 +12,7 @@
  * StacksManager.UnhighlightChapter({ parentData: someData, chapterData: someChapterData });
  */
 
-const {parentData, chapterData} = that;
+const {parentData} = that;
 
 const previousHighlightedChapterData = parentData.element.vars.previousHighlightedChapterData;
 

@@ -1,18 +1,18 @@
-const { useState, useEffect, useCallback, useMemo } = os.appHooks;
+const { useState, useEffect, useMemo } = os.appHooks;
 const css = thisBot.tags["App.css"];
 
 const App = ({chapter}) => {
-    const [open, setOpen] = useState(false);
+    // const [open, setOpen] = useState(false);
     const [bookName, setBookName] = useState("");
     const [book, setBook] = useState(null);
     
-    const changeForm = (form) => {
-        const selectedBot = getBot(byID(tags.selectedBot))
-        selectedBot.tags.form = form
-        setTimeout(() => {
-            shout('closeFormMenu')
-        }, 900)
-    }
+    // const changeForm = (form) => {
+    //     const selectedBot = getBot(byID(tags.selectedBot))
+    //     selectedBot.tags.form = form
+    //     setTimeout(() => {
+    //         shout('closeFormMenu')
+    //     }, 900)
+    // }
 
     const closeApp = ({book, chapter}) => {
         bible.openAt(`${book} ${chapter}:1`);

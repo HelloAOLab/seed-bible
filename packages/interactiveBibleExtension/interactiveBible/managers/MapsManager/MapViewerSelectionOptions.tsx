@@ -1,5 +1,5 @@
-import { useMapToolContext } from "interactiveBible.managers.MapsManager.MapToolContext"
-import { useMapViewerContext } from "interactiveBible.managers.MapsManager.MapViewerContext"
+// import { useMapToolContext } from "interactiveBible.managers.MapsManager.MapToolContext"
+// import { useMapViewerContext } from "interactiveBible.managers.MapsManager.MapViewerContext"
 
 export const MapViewerSelectionOptions = ({handleDoneClick, handleClearSelectionClick}) => {
 

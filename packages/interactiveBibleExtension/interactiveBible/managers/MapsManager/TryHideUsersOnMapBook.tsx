@@ -1,4 +1,5 @@
-let {mapBook, mapBookData} = that;
+let {mapBookData} = that;
+const {mapBook} that;
 if(!mapBookData) mapBookData = thisBot.GetMapElementData({element: mapBook});
 const currUsersColor = thisBot.GetUsersColorOnMapBook({mapBookData})
 currUsersColor.forEach((userColor) => {ObjectPooler.ReleaseObject({obj: userColor, tag: userColor.tags.poolTag})})

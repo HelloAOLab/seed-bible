@@ -10,7 +10,7 @@
 
 const {name} = that;
 let numberOfChapters;
-const {arrangementIndex, testamentIndex, sectionIndex, found} = thisBot.GetBookInfoPathByName({name});
+const {arrangementIndex, testamentIndex, sectionIndex} = thisBot.GetBookInfoPathByName({name});
 const bookInfo = InstanceManager.vars.fixedArrangementsInfo[arrangementIndex].testaments[testamentIndex].sections[sectionIndex].books.find((currentBookInfo) => {return currentBookInfo.commonName == name});
 if(bookInfo) numberOfChapters = bookInfo.numberOfChapters
 return numberOfChapters;

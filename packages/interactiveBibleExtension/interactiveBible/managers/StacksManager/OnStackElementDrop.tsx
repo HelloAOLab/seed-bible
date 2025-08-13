@@ -63,5 +63,6 @@ switch(true)
     break;
     case data instanceof BookData:
         thisBot.vars.lastInteractedBookData = data;
+    break;
     default: break;
 }

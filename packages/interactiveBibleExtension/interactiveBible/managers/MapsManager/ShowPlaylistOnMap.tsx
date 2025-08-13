@@ -2,7 +2,7 @@ const {mapData, playlistInfo} = that;
 
 if(!playlistInfo) return;
 
-const { playlistId, startIndex, startSubIndex, parentId, name } = playlistInfo;
+const { playlistId } = playlistInfo;
 
 setTagMask(thisBot, "isAnimatingMap", true);
 

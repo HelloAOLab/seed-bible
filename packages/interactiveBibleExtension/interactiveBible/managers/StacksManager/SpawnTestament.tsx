@@ -17,7 +17,8 @@
 const dimension = os.getCurrentDimension();
 const jarvis = getBot("jarvis", true);
 const jarvisPosition = getBotPosition(jarvis, dimension);
-let {name, spawnPosition} = that;
+let {spawnPosition} = that;
+const {name} = that;
 let displayJarvisSpawnElementAnimation = false;
 if(jarvis && !spawnPosition)
 {

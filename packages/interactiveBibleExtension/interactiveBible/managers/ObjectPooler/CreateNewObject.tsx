@@ -16,10 +16,9 @@
 */
 
 const {poolData} = that;
-let obj;
 const dimension = os.getCurrentDimension();
 
-obj = create(poolData.bot, {
+const obj = create(poolData.bot, {
     space: "tempLocal",
     [dimension]: false
 });

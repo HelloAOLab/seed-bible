@@ -4,12 +4,12 @@ const dimension = os.getCurrentDimension()
 const toggleBackgroundPadding = 0.5
 const colorPickerBackgroundPadding = 0.8
 const buttonMargin = new Vector2(1, 0.4);
-const spaceBetweenButtons = 2.5;
+// const spaceBetweenButtons = 2.5;
 const settingsButtonMargin = 0.75;
 const buttonGap = 0.25;
 const coverPadding = new Vector2(10, 8);
 
-const fixedLabelWidth = 4.5;
+// const fixedLabelWidth = 4.5;
 const bookShowDelay = 500;
 
 mapData.childrenStructures.forEach(async (mapBookStructure) => {

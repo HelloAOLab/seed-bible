@@ -22,7 +22,6 @@ const isBibleEmpty = IsBibleEmpty();
 const isCrossInMiddle = bibleData.childrenData.every((testamentData) => {return testamentData.isSplitIntoSections}) && !isBibleEmpty;
 const animations = [];
 let crossNewPositionZ = null;
-let targetCrossPosition;
 const stackStructure = GetBibleStackStructure();
 const initialPositionZ = lowerCoverPosition.z + lowerCoverScales.z
 let nextPositionZ = initialPositionZ;
@@ -48,7 +47,7 @@ if (!isCrossInMiddle)
     crossNewPositionZ = isBibleEmpty ? (initialPositionZ + upperCoverScales.z) : (nextPositionZ + StackSpacing.CoverToCross);
 }
 
-targetCrossPosition = isCrossInMiddle ? CrossPosition.Middle : CrossPosition.Top;
+const targetCrossPosition = isCrossInMiddle ? CrossPosition.Middle : CrossPosition.Top;
 
 if(bibleData.currentCrossPosition !== targetCrossPosition)
 {

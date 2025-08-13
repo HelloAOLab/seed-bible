@@ -42,7 +42,6 @@ let infoLabelTransformerDesiredPosition;
 let infoLabelOffset;
 let infoLabelTailDesiredRotationZ;
 let infoLabelTailOffset;
-let infoLabelTransformerMod, infoLabelTailMod, infoLabelMod, infoLabelDateMod
 
 switch(labelPositioning)
 {
@@ -112,7 +111,7 @@ const infoLabelDateOffset = infoLabelDate ? new Vector3(
     infoLabelOffset.z + 1
 ) : null;
 
-infoLabelTransformerMod = {
+const infoLabelTransformerMod = {
     [dimension]: true,
     [dimension + "X"]: infoLabelTransformerDesiredPosition.x,
     [dimension + "Y"]: infoLabelTransformerDesiredPosition.y,
@@ -126,7 +125,7 @@ infoLabelTransformerMod = {
     labelPositioning,
     targetOpacity
 }
-infoLabelMod = {
+const infoLabelMod = {
     [dimension]: true,
     [dimension + "X"]: infoLabelOffset.x,
     [dimension + "Y"]: infoLabelOffset.y,
@@ -146,7 +145,7 @@ infoLabelMod = {
     labelPositioning,
     ownerBotId: getID(element)
 };
-infoLabelTailMod = {
+const infoLabelTailMod = {
     [dimension]: true,
     [dimension + "X"]: infoLabelTailOffset.x,
     [dimension + "Y"]: infoLabelTailOffset.y,
@@ -162,7 +161,7 @@ infoLabelTailMod = {
     labelPositioning,
     ownerBotId: getID(element)
 };
-infoLabelDateMod = infoLabelDate ? {
+const infoLabelDateMod = infoLabelDate ? {
     [dimension]: true,
     [dimension + "X"]: infoLabelDateOffset.x,
     [dimension + "Y"]: infoLabelDateOffset.y,

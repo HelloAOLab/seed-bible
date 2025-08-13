@@ -14,7 +14,6 @@ const sectionData = thisBot.GetBibleElementData({element: section});
 const {bibleData, testamentData} = thisBot.GetDataChainFromParentDataIds({parentDataIds: sectionData.parentDataIds});
 const dimension = os.getCurrentDimension();
 const easeInOutSine = {type: "sinusoidal", mode: "inout"};
-let sectionPosition;
 const currentColorRGB = HexToRgb(sectionData.highlightColor ?? sectionData.element.tags.orginalColor);
 const colorRangeSize = sectionData.elementInfo.customColorRange ?? 70;
 const levelsColorRange = {
@@ -37,8 +36,6 @@ let bookDesiredPositionZOnRegularView;
 let bookDesiredPositionZ;
 let bookInitialPositionZ;
 const bookScalesOnMod = {x: 0.1, y: 0.1, z: 0.1}
-let bibleElements;
-let fixedBooksData;
 let elementsAboveSection = GetElementsAboveSection();
 const previousExplodedViewSectionData = (bibleData || testamentData) ? thisBot.GetPreviousExplodedViewSectionData({bibleData, testamentData}) : null;
 const collisionType = bibleData?.bibleType === BibleType.PlatformerGame ? CollisionType.Collision : null;
@@ -67,9 +64,9 @@ if(thisBot.vars.highlightedElements.length > 0)
 if(previousExplodedViewSectionData && (!bibleData || bibleData.currentStackVizState === BibleVisualizationState.Regular))
 {
     previousExplodedViewSectionData.isInExplodedView = false;
-    const updateStacksTime = await thisBot.UpdateStacks({speedMultiplier, isInstantaneous});
+    await thisBot.UpdateStacks({speedMultiplier, isInstantaneous});
 }
-sectionPosition = getBotPosition(sectionData.element, dimension);
+const sectionPosition = getBotPosition(sectionData.element, dimension);
 sectionData.isSplitIntoBooks = true;
 sectionData.isInExplodedView = true;
 thisBot.vars.lastInteractedSectionData = sectionData;
@@ -338,9 +335,9 @@ for(const bookDataArr of sectionData.childrenData)
     }
 }
 
-bibleElements = getBots(byTag("isBibleElement", true), byTag("isInUse", true));
+const bibleElements = getBots(byTag("isBibleElement", true), byTag("isInUse", true));
 StacksManager.TrySetElementsRenderOrder(bibleElements);
-fixedBooksData = sectionData.childrenData.flat().toReversed();
+const fixedBooksData = sectionData.childrenData.flat().toReversed();
 for(const bookData of fixedBooksData)
 {
 

@@ -25,6 +25,4 @@ try {
             rotation: {x: 1.01229, y:0.5},
         }
     );
-}catch {
-    
-}
+}catch

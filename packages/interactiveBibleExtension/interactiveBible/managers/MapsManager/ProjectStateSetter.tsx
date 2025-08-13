@@ -2,7 +2,7 @@ import { MapViewerSelectionOptions } from "interactiveBible.managers.MapsManager
 import { ProjectStateSetterOption } from "interactiveBible.managers.MapsManager.ProjectStateSetterOption"
 import { useMapToolContext } from "interactiveBible.managers.MapsManager.MapToolContext"
 
-const {useState, useCallback} = os.appHooks;
+const {useCallback} = os.appHooks;
 
 export const ProjectStateSetter = () => {
     

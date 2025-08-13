@@ -5,7 +5,7 @@
     * testament.StopHighlightTransition();
 */
 
-const dimension = os.getCurrentDimension();
+// const dimension = os.getCurrentDimension();
 
 const infoLabelTransformer = GetCurrentInfoLabelTransformer(thisBot);
 const {infoLabel, infoLabelTail} = infoLabelTransformer.GetLabelElements();

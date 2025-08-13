@@ -16,7 +16,7 @@ let delay = 0;
 
 data.forEach((info) => {
 
-    const {key, value, index = 0} = info;
+    const {key, value} = info;
     const bot = getBot(byTag("key", key));
     const startTime = delay + os.localTime;
     const fixedDuration = !isNaN(bot.tags.customDuration) && bot.tags.customDuration != null ? bot.tags.customDuration : duration

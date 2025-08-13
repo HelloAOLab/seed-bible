@@ -6,7 +6,7 @@
     * const {bibleData, testamentData, sectionData, sectionBookData, bookData} = StacksManager.GetDataChainFromParentDataIds({parentDataIds});
 */
 
-const {parentDataIds, source} = that;
+const {parentDataIds} = that;
 let bibleData, testamentData, sectionData, sectionBookData, bookData;
 
 if(parentDataIds.bibleId) bibleData = thisBot.vars.biblesData.find((data) => {return data.id === parentDataIds.bibleId})

@@ -10,7 +10,7 @@
     * shout('OnStackElementDragging', {element: someStackElement, data: someStackElementData, dragInfo: someDragInfo})
 */
 
-const {element, dragInfo, data} = that;
+const {element, dragInfo} = that;
 if(!element.masks.isBeingDragged) return;
 const dimension = os.getCurrentDimension();
 setTagMask(element, dimension + "X", dragInfo.to.x);

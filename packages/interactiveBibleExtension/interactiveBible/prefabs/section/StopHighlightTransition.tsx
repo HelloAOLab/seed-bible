@@ -5,7 +5,7 @@
     * section.StopHighlightTransition();
 */
 
-const dimension = os.getCurrentDimension();
+// const dimension = os.getCurrentDimension();
 const infoLabelTransformer = getBot(byTag("isInfoLabelTransformer", true), byTag("ownerBotId", getID(thisBot)));
 const infoLabel = getBot(byTag("isInfoLabel", true), byTag("transformer", getID(infoLabelTransformer)));
 const infoLabelTail = getBot(byTag("isInfoLabelTail", true), byTag("transformer", getID(infoLabelTransformer)));

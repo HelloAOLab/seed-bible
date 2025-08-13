@@ -9,7 +9,7 @@
 
 const {speedMultiplier = 1, isInstantaneous = false} = that ?? {}
 const bookData = StacksManager.GetBibleElementData({element: thisBot});
-const dimension = os.getCurrentDimension();
+// const dimension = os.getCurrentDimension();
 const animationDuration = isInstantaneous ? 0 : StackAnimationsDuration.Rehighlight/speedMultiplier;
 const infoLabelTransformer = getBot(byTag("isInfoLabelTransformer", true), byTag("ownerBotId", getID(thisBot)));
 const thisBotScales = GetBotScales(thisBot);
