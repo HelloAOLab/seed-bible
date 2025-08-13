@@ -1,62 +1,62 @@
 const { useState, useCallback, useEffect, useMemo } = os.appHooks;
 import { useMapToolContext } from "interactiveBible.managers.MapsManager.MapToolContext"
 import { Tooltip } from "interactiveBible.managers.MapsManager.Tooltip"
-import { PresentUserPresenceTooltipIcon } from "interactiveBible.managers.MapsManager.PresentUserPresenceIcon"
+// import { PresentUserPresenceTooltipIcon } from "interactiveBible.managers.MapsManager.PresentUserPresenceIcon"
 import { useTestamentContext } from "interactiveBible.managers.MapsManager.TestamentContext"
 
 import {useClickAndHold} from "interactiveBible.managers.MapsManager.CustomHooks"
 
-const ChapterNotificationContainer = ({
-    bookName,
-    chapterIndex,
-    contextKey,
-    filterFn,
-    renderTooltipItem,
-    renderContent,
-    tooltipDirection = "up",
-    className,
-}) => {
-    const context = useMapToolContext();
-    const [containerRect, setContainerRect] = useState(null);
+// const ChapterNotificationContainer = ({
+//     bookName,
+//     chapterIndex,
+//     contextKey,
+//     filterFn,
+//     renderTooltipItem,
+//     renderContent,
+//     tooltipDirection = "up",
+//     className,
+// }) => {
+//     const context = useMapToolContext();
+//     const [containerRect, setContainerRect] = useState(null);
 
-    const { tooltipContent, tooltipAnchor, items } = useMemo(() => {
-        const dataSource = context[contextKey];
-        const items = Object.keys(dataSource).map((user) => {
-            const item = filterFn(dataSource[user], user, bookName, chapterIndex);
-            return item && { ...item, user };
-        }).filter(Boolean);
+//     const { tooltipContent, tooltipAnchor, items } = useMemo(() => {
+//         const dataSource = context[contextKey];
+//         const items = Object.keys(dataSource).map((user) => {
+//             const item = filterFn(dataSource[user], user, bookName, chapterIndex);
+//             return item && { ...item, user };
+//         }).filter(Boolean);
 
-        let tooltipAnchor, tooltipContent;
+//         let tooltipAnchor, tooltipContent;
 
-        if (containerRect) {
-            tooltipAnchor = {
-                x: containerRect.left + containerRect.width / 2,
-                y: containerRect.top + (tooltipDirection === "down" ? containerRect.height : 0),
-            };
-        }
+//         if (containerRect) {
+//             tooltipAnchor = {
+//                 x: containerRect.left + containerRect.width / 2,
+//                 y: containerRect.top + (tooltipDirection === "down" ? containerRect.height : 0),
+//             };
+//         }
 
-        if (items.length > 0) {
-            tooltipContent = items.map(renderTooltipItem);
-        }
+//         if (items.length > 0) {
+//             tooltipContent = items.map(renderTooltipItem);
+//         }
 
-        return { tooltipContent, tooltipAnchor, items };
-    }, [containerRect, context[contextKey], bookName, chapterIndex]);
+//         return { tooltipContent, tooltipAnchor, items };
+//     }, [containerRect, context[contextKey], bookName, chapterIndex]);
 
-    if (items.length === 0) return null;
+//     if (items.length === 0) return null;
 
-    return (
-        <div
-            onPointerEnter={(e) => setContainerRect(e.currentTarget.getBoundingClientRect())}
-            onPointerLeave={() => setContainerRect(null)}
-            className={className}
-        >
-            {containerRect && tooltipContent && (
-                <Tooltip direction={tooltipDirection} anchor={tooltipAnchor} content={tooltipContent} />
-            )}
-            {renderContent?.(items)}
-        </div>
-    );
-};
+//     return (
+//         <div
+//             onPointerEnter={(e) => setContainerRect(e.currentTarget.getBoundingClientRect())}
+//             onPointerLeave={() => setContainerRect(null)}
+//             className={className}
+//         >
+//             {containerRect && tooltipContent && (
+//                 <Tooltip direction={tooltipDirection} anchor={tooltipAnchor} content={tooltipContent} />
+//             )}
+//             {renderContent?.(items)}
+//         </div>
+//     );
+// };
 // const ReadingHistoryChapterNotificationContainer = ({ bookName, chapterIndex }) => (
 //     <ChapterNotificationContainer
 //         bookName={bookName}
@@ -133,22 +133,22 @@ const ChapterNotificationContainer = ({
 //         />
 //     );
 // };
-const PresentUserPresenceDot = ({ user, index, length }) => {
+// const PresentUserPresenceDot = ({ user, index, length }) => {
 
-    const { usersInfo } = useMapToolContext();
+//     const { usersInfo } = useMapToolContext();
 
-    return (
-        <div
-            className="presentUserPresenceDot"
-            style={{
-                backgroundColor: usersInfo[user].color,
-                marginRight: index > 0 ? "calc(var(--FIXED_SIZE_2) / 2 * (-1))" : null,
-                zIndex: length - index
-            }}
-        >
-        </div>
-    )
-};
+//     return (
+//         <div
+//             className="presentUserPresenceDot"
+//             style={{
+//                 backgroundColor: usersInfo[user].color,
+//                 marginRight: index > 0 ? "calc(var(--FIXED_SIZE_2) / 2 * (-1))" : null,
+//                 zIndex: length - index
+//             }}
+//         >
+//         </div>
+//     )
+// };
 
 export const Chapter = ({ index, bookName, sectionName}) => {
 
@@ -160,7 +160,7 @@ export const Chapter = ({ index, bookName, sectionName}) => {
         usersStatus,
         // maxChapterHeatCount,
         modes,
-        userPresence,
+        // userPresence,
         usersInfo,
         contentVisualization,
         ContentVisualizationType,
