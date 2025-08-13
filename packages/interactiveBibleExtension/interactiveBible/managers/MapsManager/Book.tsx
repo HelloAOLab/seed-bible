@@ -66,7 +66,7 @@ export const Book = ({
 
     const { fixedBackground, gridRows, displayContainer, gridColumns, filteredUsers } = useMemo(() => {
 
-        let baseColor = [211, 211, 211];
+        const baseColor = [211, 211, 211];
 
         let userPresenceBackground = `rgb(${baseColor[0]}, ${baseColor[1]}, ${baseColor[2]})`;
 

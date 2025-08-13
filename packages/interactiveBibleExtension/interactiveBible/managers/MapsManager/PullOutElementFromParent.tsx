@@ -1,7 +1,7 @@
 import {MapBookData} from "interactiveBible.managers.MapsManager.MapBookData"
 import {MapChapterData} from "interactiveBible.managers.MapsManager.MapChapterData"
 const {elementData, mapData, mapBookData} = that;
-let elementDataCopy = await CreateDataCopy(elementData);
+const elementDataCopy = await CreateDataCopy(elementData);
 let elementDataIndex;
 
 const nullifiableIds = {

@@ -10,7 +10,7 @@
 let {duration = 0.15, speedMultiplier = 1, isInstantaneous = false} = that ?? {};
 duration = isInstantaneous ? 0 : (duration / speedMultiplier);
 thisBot.StopOpacityTransition();
-let {infoLabel, infoLabelTail, infoLabelDate, infoLabelUsersColor} = thisBot.GetLabelElements();
+const {infoLabel, infoLabelTail, infoLabelDate, infoLabelUsersColor} = thisBot.GetLabelElements();
 setTagMask(thisBot, 'isHiding', true);
 const easing = {type: "sinusoidal", mode: "inout"};
 try

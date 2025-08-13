@@ -1,4 +1,4 @@
-for(let bot of thisBot.vars.focusedBots)
+for(const bot of thisBot.vars.focusedBots)
 {
     const cone = getBot(byTag("isCone", true), byTag("parentId", bot.id));
     await animateTag([cone], "formOpacity", null);

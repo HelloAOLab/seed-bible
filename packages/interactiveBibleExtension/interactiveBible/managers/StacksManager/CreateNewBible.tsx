@@ -53,7 +53,7 @@ thisBot.vars.lastInteractedBibleData = bibleData;
 thisBot.SetUpBible({bibleData, position, bibleType});
 
 
-let fixedPosition = new Vector3(position.x, position.y, 2)
+const fixedPosition = new Vector3(position.x, position.y, 2)
 const desiredFocusOnPosition = GetFocusOnPositionFromRotation(
     focusOnRotation.y, 
     focusOnRotation.x, 

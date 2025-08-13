@@ -22,7 +22,7 @@ export const TestamentContent = ({hidden}) => {
     const reversedSections = useMemo(() => {
         return testament.sections.toReversed()
     }, []);
-    let sectionLevelsColorsMap = useMemo(() => {
+    const sectionLevelsColorsMap = useMemo(() => {
         const map = new Map();
         
         reversedSections.forEach((section, sectionIndex) => {
@@ -65,7 +65,7 @@ export const TestamentContent = ({hidden}) => {
 
     const renderSections = useCallback(() => {
 
-        let elements = [];
+        const elements = [];
         let sectionIndex = 0;
         let bookIndex = 0;
         let currentBookColumn = 1;

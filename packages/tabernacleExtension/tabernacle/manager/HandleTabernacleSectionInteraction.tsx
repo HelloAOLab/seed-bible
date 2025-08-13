@@ -1,6 +1,6 @@
 const {keys, type} = that;
 
-let bots = keys.map((key) => {
+const bots = keys.map((key) => {
     return getBot("system", `ext_tabernacle.${key}`)
 }).filter((bot) => {
     return bot // && (bot.masks.state === MeshState.Shown || bot.masks.state === MeshState.Translucent)

@@ -71,7 +71,7 @@ const bookData = new BookData({
     parentDataIds, 
     creationInfo
 });
-let chaptersData = await Promise.all(StacksManager.tags.booksStaticInfo[bookInfo.commonName].chaptersInfo.map((chapterInfo) => {
+const chaptersData = await Promise.all(StacksManager.tags.booksStaticInfo[bookInfo.commonName].chaptersInfo.map((chapterInfo) => {
     return thisBot.CreateChapter({
         chapterInfo, 
         isInsideBible: true, 

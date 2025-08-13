@@ -10,7 +10,7 @@ if(!dimension) return;
 //     return bot.masks.state !== value;
 // })})
 
-let animations = [];
+const animations = [];
 let delay = 0;
 
 
@@ -19,7 +19,7 @@ data.forEach((info) => {
     const {key, value, index = 0} = info;
     const bot = getBot(byTag("key", key));
     const startTime = delay + os.localTime;
-    let fixedDuration = !isNaN(bot.tags.customDuration) && bot.tags.customDuration != null ? bot.tags.customDuration : duration
+    const fixedDuration = !isNaN(bot.tags.customDuration) && bot.tags.customDuration != null ? bot.tags.customDuration : duration
 
     switch(value)
     {

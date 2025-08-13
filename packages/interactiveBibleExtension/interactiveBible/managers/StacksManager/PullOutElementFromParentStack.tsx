@@ -32,7 +32,7 @@ import {SectionBookData} from "interactiveBible.managers.StacksManager.SectionBo
 import {BookData} from "interactiveBible.managers.StacksManager.BookData"
 import {ChapterData} from "interactiveBible.managers.StacksManager.ChapterData"
 const {elementData, bibleData, testamentData, sectionData, sectionBookData, bookData} = that;
-let elementDataCopy = await CreateDataCopy(elementData);
+const elementDataCopy = await CreateDataCopy(elementData);
 let elementDataIndex;
 
 const nullifiableIds = {

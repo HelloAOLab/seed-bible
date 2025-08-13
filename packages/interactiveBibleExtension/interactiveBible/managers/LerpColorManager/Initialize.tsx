@@ -12,6 +12,6 @@ if(thisBot.masks.initialized) return;
 
 setTagMask(thisBot, "initialized", true);
 
-let currentLerps = new ColorLerpsArray({});
+const currentLerps = new ColorLerpsArray({});
 globalThis.LerpColorManager = thisBot;
 globalThis.currentLerps = currentLerps;

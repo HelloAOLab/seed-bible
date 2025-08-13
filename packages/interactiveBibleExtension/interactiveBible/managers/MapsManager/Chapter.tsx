@@ -216,7 +216,7 @@ export const Chapter = ({ index, bookName, sectionName}) => {
 
     const { background, borderStyle, borderColor, displayContainer, gridColumns, gridRows, filteredUsers } = useMemo(() => {
 
-        let baseColor = [227, 227, 227];
+        const baseColor = [227, 227, 227];
         const hasProjectContent = project && mode === MapToolModes.Project && (isInSelectionMode || projectFilters.get(project.structure[testament.name][sectionName][bookName][index]));
 
         const filteredUsers = Array.from(usersStatus).filter(([user, enabled]) => {

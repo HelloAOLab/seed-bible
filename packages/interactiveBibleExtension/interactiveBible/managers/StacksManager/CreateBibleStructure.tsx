@@ -43,7 +43,7 @@ staticBibleElements = {
     bibleShadow
 }
 
-for(let testamentIndex in InstanceManager.vars.fixedArrangementsInfo[arrangementIndex].testaments)
+for(const testamentIndex in InstanceManager.vars.fixedArrangementsInfo[arrangementIndex].testaments)
 {
     const testamentData = await thisBot.CreateTestament({arrangementIndex, testamentIndex, bibleData});
     testamentsData.push(testamentData);

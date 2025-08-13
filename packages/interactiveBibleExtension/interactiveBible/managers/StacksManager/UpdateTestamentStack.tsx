@@ -16,7 +16,7 @@ const dimension = os.getCurrentDimension();
 const duration = isInstantaneous ? 0 : 0.5;
 const easing = {type: "sinusoidal", mode: "inout"};
 const testamentPosition = getBotPosition(testamentData.element, dimension);
-let animations = [];
+const animations = [];
 
 const {newTestamentAnimations} = HandleTestamentDataInStack({isInstantaneous, testamentData, desiredPositionZ: testamentPosition.z, dimension, duration, easing});
 animations.push(...newTestamentAnimations)

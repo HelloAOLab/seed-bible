@@ -23,7 +23,7 @@ obj = create(poolData.bot, {
     space: "tempLocal",
     [dimension]: false
 });
-for(let tag of poolData.customTags)
+for(const tag of poolData.customTags)
 {
     obj.tags[tag.name] = tag.value;
 }

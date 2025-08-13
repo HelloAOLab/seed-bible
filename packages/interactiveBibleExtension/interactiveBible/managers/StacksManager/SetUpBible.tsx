@@ -126,7 +126,7 @@ const crossHorizontalLineMod = {
     transformerLink: `🔗${bibleData.staticBibleElements.bibleTransformer.id}`,
     collisionType
 };
-for(let testamentData of bibleData.childrenData)
+for(const testamentData of bibleData.childrenData)
 {
     const testament = ObjectPooler.GetObjectFromPool({tag: ObjectPoolTags.Testament});
     const testamentMod = {

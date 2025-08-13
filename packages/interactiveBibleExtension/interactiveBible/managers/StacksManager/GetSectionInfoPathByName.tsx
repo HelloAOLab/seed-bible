@@ -18,7 +18,7 @@ const initialArrangementIndex = arrangementIndex;
 let testamentIndex, sectionIndex;
 let found = false;
 
-for(let currentTestamentIndex in InstanceManager.vars.fixedArrangementsInfo[arrangementIndex].testaments)
+for(const currentTestamentIndex in InstanceManager.vars.fixedArrangementsInfo[arrangementIndex].testaments)
 {
     const testamentInfo = InstanceManager.vars.fixedArrangementsInfo[arrangementIndex].testaments[currentTestamentIndex];
     if(testamentInfo.sections.some((sectionInfo) => {return sectionInfo.name === name}))
@@ -31,10 +31,10 @@ for(let currentTestamentIndex in InstanceManager.vars.fixedArrangementsInfo[arra
 }
 if(!found)
 {
-    for(let currentArrangementIndex in InstanceManager.vars.fixedArrangementsInfo)
+    for(const currentArrangementIndex in InstanceManager.vars.fixedArrangementsInfo)
     {
         if(currentArrangementIndex == initialArrangementIndex) continue;
-        for(let currentTestamentIndex in InstanceManager.vars.fixedArrangementsInfo[currentArrangementIndex].testaments)
+        for(const currentTestamentIndex in InstanceManager.vars.fixedArrangementsInfo[currentArrangementIndex].testaments)
         {
             const testamentInfo = InstanceManager.vars.fixedArrangementsInfo[currentArrangementIndex].testaments[currentTestamentIndex];
             if(testamentInfo.sections.some((sectionInfo) => {return sectionInfo.name === name}))

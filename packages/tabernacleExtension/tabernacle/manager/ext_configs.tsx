@@ -1,4 +1,4 @@
-let toolBarOptions = {
+const toolBarOptions = {
     page: [],
     canvas: [],
     map: []

@@ -17,9 +17,9 @@ const focusOnPositionOffsetZ = 12
 const desiredFocusOnPosition = GetFocusOnPositionFromRotation(focusOnRotation.y, focusOnRotation.x, new Vector3(bibleTransformerPosition.x, bibleTransformerPosition.y, (bibleTransformerPosition.z) + focusOnPositionOffsetZ));
 const continerScaleZFactor = 0.02;
 const containerInitialPositionZ = 0;
-let animations = [];
+const animations = [];
 let nextPositionZ = lowerCoverPosition.z + lowerCoverScales.z + StackSpacing.BetweenArrangements;
-let containers = [];
+const containers = [];
 let upperCoverOpenedPositionZ;
 let crossOpenedPositionZ;
 let i = 0;
@@ -32,10 +32,10 @@ os.focusOn({x: desiredFocusOnPosition.x, y: desiredFocusOnPosition.y}, {
 })
 
 
-for(let testamentData of StackManager.vars.bibleStructure)
+for(const testamentData of StackManager.vars.bibleStructure)
 {
     nextPositionZ += StackSpacing.BetweenSections;
-    for(let sectionData of testamentData.sectionsData)
+    for(const sectionData of testamentData.sectionsData)
     {
         const desiredScaleZ = sectionData.section.tags.amountOfChaptersInSection * continerScaleZFactor;
         const container = ObjectPooler.GetObjectFromPool({tag: ObjectPoolTags.DonationContainer});

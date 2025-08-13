@@ -36,7 +36,7 @@ if(found)
     {
         if(InstanceManager.vars.fixedArrangementsInfo[arrangementIndex].testaments[testamentIndex].sections[sectionIndex].books.length > 1)
         {
-            let sectionData = thisBot.vars.lastInteractedTestamentData?.childrenData.find((currSectionData) => {
+            const sectionData = thisBot.vars.lastInteractedTestamentData?.childrenData.find((currSectionData) => {
                 return currSectionData.childrenData.flat().some((currBookData) => {
                     return currBookData.elementInfo.commonName === bookName;
                 })
@@ -65,7 +65,7 @@ if(found)
         }
         else
         {
-            let sectionBookData = thisBot.vars.lastInteractedTestamentData?.childrenData.find((currSectionData) => {
+            const sectionBookData = thisBot.vars.lastInteractedTestamentData?.childrenData.find((currSectionData) => {
                 return (currSectionData instanceof SectionBookData) && currSectionData.elementBookInfo.commonName === bookName
             })
             if( thisBot.vars.lastInteractedTestamentData &&

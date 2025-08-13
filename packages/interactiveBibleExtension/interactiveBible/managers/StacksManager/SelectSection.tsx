@@ -21,14 +21,14 @@ const levelsColorRange = {
     min: [Math.max(currentColorRGB[0] - colorRangeSize, 0), Math.max(currentColorRGB[1] - colorRangeSize, 0), Math.max(currentColorRGB[2] - colorRangeSize, 0)],
     max: [Math.min(currentColorRGB[0] + colorRangeSize, 255), Math.min(currentColorRGB[1] + colorRangeSize, 255), Math.min(currentColorRGB[2] + colorRangeSize, 255)]
 }
-let sectionAvailableSpace = sectionData.element.tags.desiredScaleZ - (StackSpacing.BetweenBooks * (sectionData.childrenData.length + 1));
-let firstSequenceAnimationsObjects = [];
-let secondSequenceAnimationsObjects = [];
-let thirdSequenceAnimations = [];
+const sectionAvailableSpace = sectionData.element.tags.desiredScaleZ - (StackSpacing.BetweenBooks * (sectionData.childrenData.length + 1));
+const firstSequenceAnimationsObjects = [];
+const secondSequenceAnimationsObjects = [];
+const thirdSequenceAnimations = [];
 const cameraFocusDuration = 1;
 const firstSequenceAnimationDuration =  isInstantaneous ? 0 : (0.4/speedMultiplier);
 const secondSequenceAnimationDuration =  isInstantaneous ? 0 : (0.4/speedMultiplier);
-let levelsColors = [];
+const levelsColors = [];
 const deltaRed = Math.floor((levelsColorRange.max[0] - levelsColorRange.min[0]) / sectionData.childrenData.length);
 const deltaGreen = Math.floor((levelsColorRange.max[1] - levelsColorRange.min[1]) / sectionData.childrenData.length);
 const deltaBlue = Math.floor((levelsColorRange.max[2] - levelsColorRange.min[2]) / sectionData.childrenData.length);
@@ -248,7 +248,7 @@ for(let i = 0; i < sectionData.childrenData.length; i++)
     const levelColorHex = RgbToHex(levelColorRGB);
     levelsColors.push(levelColorHex);
 }
-for(let bookDataArr of sectionData.childrenData)
+for(const bookDataArr of sectionData.childrenData)
 {
     const bookDataIndex = sectionData.childrenData.indexOf(bookDataArr);
     let percentageOfLevelInSection;
@@ -258,7 +258,7 @@ for(let bookDataArr of sectionData.childrenData)
         return total + numberOfChapters
     }, 0);
     const layout = StacksManager.GetLayoutForBooksGroup({amountOfBooks: bookDataArr.length});
-    for(let bookData of bookDataArr)
+    for(const bookData of bookDataArr)
     {
         const {numberOfChapters} = StacksManager.tags.booksStaticInfo[bookData.elementInfo.commonName];
         let groupBookScaleX, groupBookScaleY, groupBookPositionX, groupBookPositionY, groupBookLayoutPositionX, groupBookLayoutPositionY;
@@ -341,7 +341,7 @@ for(let bookDataArr of sectionData.childrenData)
 bibleElements = getBots(byTag("isBibleElement", true), byTag("isInUse", true));
 StacksManager.TrySetElementsRenderOrder(bibleElements);
 fixedBooksData = sectionData.childrenData.flat().toReversed();
-for(let bookData of fixedBooksData)
+for(const bookData of fixedBooksData)
 {
 
     const bookDataIndex = fixedBooksData.indexOf(bookData);
@@ -369,7 +369,7 @@ return Promise.all(shout("OnSectionSelectionAnimationComplete", {sectionData, sp
 
 function GetElementsAboveSection()
 {
-    let elements = [];
+    const elements = [];
     const sectionDataIndex = testamentData ? testamentData.childrenData.indexOf(sectionData) : null;
     if(bibleData)
     {        
@@ -378,13 +378,13 @@ function GetElementsAboveSection()
             const currentTestamentData = bibleData.childrenData[i];
             if(currentTestamentData.isSplitIntoSections)
             {
-                for(let currentSectionData of currentTestamentData.childrenData)
+                for(const currentSectionData of currentTestamentData.childrenData)
                 {
                     const currentSectionDataIndex = currentTestamentData.childrenData.indexOf(currentSectionData);
                     if(i < testamentData.creationInfo.testamentIndex || (i === testamentData.creationInfo.testamentIndex && currentSectionDataIndex <= sectionDataIndex)) continue;
                     if(currentSectionData.isSplitIntoBooks)
                     {
-                        for(let bookData of currentSectionData.childrenData.flat())
+                        for(const bookData of currentSectionData.childrenData.flat())
                         {
                             if(bookData.isActive)
                             {
@@ -407,13 +407,13 @@ function GetElementsAboveSection()
     }
     else if(testamentData)
     {        
-        for(let currentSectionData of testamentData.childrenData)
+        for(const currentSectionData of testamentData.childrenData)
         {
             const currentSectionDataIndex = testamentData.childrenData.indexOf(currentSectionData);
             if(currentSectionDataIndex <= sectionDataIndex) continue;
             if(currentSectionData.isSplitIntoBooks)
             {
-                for(let bookData of currentSectionData.childrenData.flat())
+                for(const bookData of currentSectionData.childrenData.flat())
                 {
                     if(bookData.isActive)
                     {

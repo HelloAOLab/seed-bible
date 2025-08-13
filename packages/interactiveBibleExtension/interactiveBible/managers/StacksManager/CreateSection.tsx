@@ -48,13 +48,13 @@ if(sectionInfo.books.length > 1)
         isInsideTestament, 
         creationInfo
     });
-    let levels = GetSectionLevels(sectionInfo.books);
+    const levels = GetSectionLevels(sectionInfo.books);
     const levelsLenght = levels.length;
-    for(let level of levels)
+    for(const level of levels)
     {
-        let booksData = [];
+        const booksData = [];
         const levelIndex = levels.indexOf(level);
-        for(let bookInfo of level)
+        for(const bookInfo of level)
         {
             const bookIndex = sectionInfo.books.indexOf(bookInfo);
             const bookLevelIndex = level.indexOf(bookInfo);
@@ -92,7 +92,7 @@ else
         isInsideTestament,
         creationInfo
     });
-    let chaptersData = await Promise.all(StacksManager.tags.booksStaticInfo[sectionInfo.books[0].commonName].chaptersInfo.map((chapterInfo) => {
+    const chaptersData = await Promise.all(StacksManager.tags.booksStaticInfo[sectionInfo.books[0].commonName].chaptersInfo.map((chapterInfo) => {
         return thisBot.CreateChapter({
             chapterInfo, 
             isInsideBible: true, 

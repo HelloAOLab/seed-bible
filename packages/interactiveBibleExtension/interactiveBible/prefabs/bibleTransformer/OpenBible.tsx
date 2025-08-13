@@ -11,7 +11,7 @@
 
 import {SectionBookData} from 'interactiveBible.managers.StacksManager.SectionBookData'
 
-let {duration = 0.5, easing = {type: "sinusoidal", mode: "inout"}, bibleData} = that ?? {};
+const {duration = 0.5, easing = {type: "sinusoidal", mode: "inout"}, bibleData} = that ?? {};
 const dimension = os.getCurrentDimension();
 const lowerCoverPosition = getBotPosition(bibleData.staticBibleElements.lowerCover, dimension);
 const crossVerticalLineScales = GetBotScales(bibleData.staticBibleElements.crossVerticalLine)
@@ -20,13 +20,13 @@ const initialPositionZ = lowerCoverPosition.z + StackElementMeasurements.CoverSc
 let activeBibleElements;
 let crossOpenedPositionZ;
 let nextPositionZ = initialPositionZ + StackSpacing.BetweenArrangements;
-let resizeAnimations = [];
+const resizeAnimations = [];
 bibleData.currentStackVizState = BibleVisualizationState.Regular;
 
-for(let testamentData of bibleData.childrenData)
+for(const testamentData of bibleData.childrenData)
 {
     nextPositionZ += StackSpacing.BetweenSections;
-    for(let sectionData of testamentData.childrenData)
+    for(const sectionData of testamentData.childrenData)
     {
         const sectionIndex = testamentData.childrenData.indexOf(sectionData);
         const desiredScaleZ = sectionData.creationInfo.amountOfChaptersInSection * StackElementMeasurements.SectionDesiredScaleZRatio;

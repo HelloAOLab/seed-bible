@@ -33,7 +33,7 @@ const MapViewer = () => {
     const project = useMemo(() => {return projects?.[projectIndex]}, [projects, projectIndex]);
 
     const selectedChaptersKeys = useMemo(() => {
-        let keys = [];
+        const keys = [];
         Object.keys(selection).forEach((testamentName) => {
             const testament = selection[testamentName];
             return Object.keys(testament).forEach((sectionName) => {
@@ -73,7 +73,7 @@ const MapViewer = () => {
     const setChapterState = useCallback((info) => {
 
         const fixedInfo = Array.isArray(info) ? info : [info]
-        let copy = JSON.parse(JSON.stringify(projects[projectIndex]));
+        const copy = JSON.parse(JSON.stringify(projects[projectIndex]));
         fixedInfo.forEach((currInfo) => {
             const {key, state} = currInfo; 
             const {testamentName, sectionName, bookName, chapterIndex} = key;
@@ -250,7 +250,7 @@ return {MapViewer}
 
 function GetProjectFromSelection(selection)
 {
-    let project = JSON.parse(JSON.stringify(selection));
+    const project = JSON.parse(JSON.stringify(selection));
     for (const testamentName of Object.keys(project)) 
     {
         const testament = project[testamentName];

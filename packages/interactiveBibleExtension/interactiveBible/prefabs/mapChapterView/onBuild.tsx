@@ -1,10 +1,10 @@
-let {useRef, useState, useEffect} = os.appHooks
- let self = this
+const {useRef, useState, useEffect} = os.appHooks
+ const self = this
  if (!this.tags.unregister) {
     
 
              
-    let ChapterPreview = () => {
+    const ChapterPreview = () => {
 
         const coverRef = useRef(null)
         

@@ -26,7 +26,7 @@ const testamentInfo = InstanceManager.vars.fixedArrangementsInfo[arrangementInde
 const creationInfo = {arrangementIndex, testamentIndex};
 const parentDataIds = new ParentDataIds({bibleId: bibleData?.id});
 const testamentData = new TestamentData({elementInfo: testamentInfo, id: uuid(), parentDataIds, isInsideBible: true, creationInfo});
-for(let sectionIndex in testamentInfo.sections)
+for(const sectionIndex in testamentInfo.sections)
 {
     const sectionData = await thisBot.CreateSection({arrangementIndex, testamentIndex, sectionIndex, isInsideBible: true, isInsideTestament: true, bibleData, testamentData, isHidden});
     testamentData.AddChild(sectionData);

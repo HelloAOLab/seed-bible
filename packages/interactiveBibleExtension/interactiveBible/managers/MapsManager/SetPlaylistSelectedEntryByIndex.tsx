@@ -3,7 +3,7 @@ const {mapData, index} = that;
 const prevSelectedEntry = mapData.playlistLastSelectedEntryItem;
 mapData.playlistSelectedEntryIndex = index;
 
-for(let entryIndex in mapData.playlistEntries)
+for(const entryIndex in mapData.playlistEntries)
 {
     const entry = mapData.playlistEntries[entryIndex];
     if(!entry) continue;

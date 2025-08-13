@@ -8,7 +8,7 @@ const duration = 0.1;
 const easing = {type: 'sinusoidal', mode: 'inout'}
 const chapterData = thisBot.masks.chapterDataId ? StacksManager.GetChapterDataById({id: thisBot.masks.chapterDataId}) :
                     MapsManager.GetChapterDataById({id: thisBot.masks.mapChapterDataId});
-let chunkHighlightInfo = chapterData.HighlightsInfo.find((currHighlightInfo) => {return currHighlightInfo.key == thisBot.masks.chunkPath})
+const chunkHighlightInfo = chapterData.HighlightsInfo.find((currHighlightInfo) => {return currHighlightInfo.key == thisBot.masks.chunkPath})
 const rgbTargetColor = HexToRgb(InstanceManager.masks.isInHistoryMode ? GetHistoryColor({element: thisBot}) : (chunkHighlightInfo?.color ?? thisBot.tags.initialColor));
 thisBot.StopHighlightTransition();
 

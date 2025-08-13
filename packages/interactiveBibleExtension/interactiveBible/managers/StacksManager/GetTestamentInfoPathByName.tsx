@@ -15,7 +15,7 @@ const {name} = that;
 const arrangementIndex = thisBot.GetCurrentArrangementIndex();
 let testamentIndex
 let found = false;
-for(let currentTestamentIndex in InstanceManager.vars.fixedArrangementsInfo[arrangementIndex].testaments)
+for(const currentTestamentIndex in InstanceManager.vars.fixedArrangementsInfo[arrangementIndex].testaments)
 {
     const testamentInfo = InstanceManager.vars.fixedArrangementsInfo[arrangementIndex].testaments[currentTestamentIndex];
     if(testamentInfo.name === name)

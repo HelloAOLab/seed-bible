@@ -1,11 +1,11 @@
 const {element, elements} = that;
 const dimension = os.getCurrentDimension();
 const fixedElements = (Array.isArray(elements) ? elements : [element]).filter((currElement) => {return currElement.tags[dimension] == true});
-let allUsersColor = [];
+const allUsersColor = [];
 const myLobbyId = getBot('lobbyUserBot', true)?.id;
 const maxAmountOfColors = 4;
 fixedElements.forEach((fixedElement) => {
-    let currUsersColor = thisBot.GetCurrentUsersColorForElement({element: fixedElement});
+    const currUsersColor = thisBot.GetCurrentUsersColorForElement({element: fixedElement});
     let elementSelections;
     let selectionsElement;
     let userColorScales;
@@ -53,7 +53,7 @@ fixedElements.forEach((fixedElement) => {
             if(currExtraUsersContent) ObjectPooler.ReleaseObject({obj: currExtraUsersContent, tag: currExtraUsersContent.tags.poolTag});
             if(currExtraUsersBackground) ObjectPooler.ReleaseObject({obj: currExtraUsersBackground, tag: currExtraUsersBackground.tags.poolTag});            
         }
-        for(let selectionIndex in fixedSelections)
+        for(const selectionIndex in fixedSelections)
         {
             const userSelection = fixedSelections[selectionIndex];
             if(selectionIndex >= maxAmountOfColors)
