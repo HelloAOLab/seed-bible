@@ -1,6 +1,6 @@
 import { UsersSelector } from "interactiveBible.managers.MapsManager.UsersSelector"
 import { ModesSelector } from "interactiveBible.managers.MapsManager.ModesSelector"
-import { TimeFrameSetter } from "interactiveBible.managers.MapsManager.TimeFrameSetter"
+// import { TimeFrameSetter } from "interactiveBible.managers.MapsManager.TimeFrameSetter"
 import { ContentVisualizationSetter } from "interactiveBible.managers.MapsManager.ContentVisualizationSetter"
 import { useMapToolContext } from "interactiveBible.managers.MapsManager.MapToolContext"
 

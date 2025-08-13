@@ -1,7 +1,6 @@
 const { mapData } = that;
 
 const mapBookStructures = [];
-let staticMapElements;
 const arrangementIndex = StacksManager.GetCurrentArrangementIndex();
 const arrangement = InstanceManager.vars.fixedArrangementsInfo[arrangementIndex];
 let column = 0;
@@ -223,7 +222,7 @@ const openAllBooksButtonMod = {
 const openAllBooksLabelMod = { label: "Open all books", ...settingsButtonsBaseTags};
 const openAllBooksIconMod = settingsButtonsBaseTags;
 
-const playlistButtonMod = settingsButtonsBaseTags;
+// const playlistButtonMod = settingsButtonsBaseTags;
 
 const playlistSelectorButtonMod = {
     buttonLabel: `🔗${playlistSelectorLabel.id}`, 
@@ -278,7 +277,7 @@ playlistPathToggle.OnSpawned({mod: playlistPathToggleMod})
 playlistPathToggleBackground.OnSpawned({mod: playlistPathToggleBackgroundMod})
 playlistPathToggleHandle.OnSpawned({mod: playlistPathToggleHandleMod})
 
-staticMapElements = {
+const staticMapElements = {
     cover,
     settingsButtons: [
         cameraAnimationToggle,

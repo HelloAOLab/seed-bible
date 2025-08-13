@@ -57,82 +57,82 @@ const ChapterNotificationContainer = ({
         </div>
     );
 };
-const ReadingHistoryChapterNotificationContainer = ({ bookName, chapterIndex }) => (
-    <ChapterNotificationContainer
-        bookName={bookName}
-        chapterIndex={chapterIndex}
-        contextKey="readingHistory"
-        className="readingHistoryChapterNotificationContainer"
-        tooltipDirection="down"
-        filterFn={ (entries, _, book, chapterIndex) => {return entries.find((reading) => reading.book === book && reading.chapter === chapterIndex + 1)} }
-        renderTooltipItem={(reading) => (
-            <span key={reading.user}>
-                <PresentUserPresenceTooltipIcon user={reading.user} />
-                {`read ${reading.daysAgo} day${reading.daysAgo > 1 ? "s" : ""} ago`}
-            </span>
-        )}
-        renderContent={(items) => (
-            <>
-                <span className="notificationCount">{items.length}</span>
-                <span className="material-symbols-outlined">history</span>
-            </>
-        )}
-    />
-);
-const UpcomingEventsChapterNotificationContainer = ({ bookName, chapterIndex }) => (
-    <ChapterNotificationContainer
-        bookName={bookName}
-        chapterIndex={chapterIndex}
-        contextKey="upcomingEvents"
-        className="upcomingEventsChapterNotificationContainer"
-        tooltipDirection="down"
-        filterFn={ (entries, _, book, chapterIndex) => {return entries.find((e) => e.book === book && e.chapter === chapterIndex + 1)} }
-        renderTooltipItem={(event) => (
-            <span key={event.user}>
-                <PresentUserPresenceTooltipIcon user={event.user} />
-                {`will read in ${event.remainingDays} day${event.remainingDays > 1 ? "s" : ""}`}
-            </span>
-        )}
-        renderContent={(items) => (
-            <>
-                <span className="notificationCount">{items.length}</span>
-                <span className="material-symbols-outlined">event</span>
-            </>
-        )}
-    />
-);
-const PresentUserPresenceDotContainer = ({ bookName, chapterIndex, usersInChapter }) => {
-    const { userPresence } = useMapToolContext();
+// const ReadingHistoryChapterNotificationContainer = ({ bookName, chapterIndex }) => (
+//     <ChapterNotificationContainer
+//         bookName={bookName}
+//         chapterIndex={chapterIndex}
+//         contextKey="readingHistory"
+//         className="readingHistoryChapterNotificationContainer"
+//         tooltipDirection="down"
+//         filterFn={ (entries, _, book, chapterIndex) => {return entries.find((reading) => reading.book === book && reading.chapter === chapterIndex + 1)} }
+//         renderTooltipItem={(reading) => (
+//             <span key={reading.user}>
+//                 <PresentUserPresenceTooltipIcon user={reading.user} />
+//                 {`read ${reading.daysAgo} day${reading.daysAgo > 1 ? "s" : ""} ago`}
+//             </span>
+//         )}
+//         renderContent={(items) => (
+//             <>
+//                 <span className="notificationCount">{items.length}</span>
+//                 <span className="material-symbols-outlined">history</span>
+//             </>
+//         )}
+//     />
+// );
+// const UpcomingEventsChapterNotificationContainer = ({ bookName, chapterIndex }) => (
+//     <ChapterNotificationContainer
+//         bookName={bookName}
+//         chapterIndex={chapterIndex}
+//         contextKey="upcomingEvents"
+//         className="upcomingEventsChapterNotificationContainer"
+//         tooltipDirection="down"
+//         filterFn={ (entries, _, book, chapterIndex) => {return entries.find((e) => e.book === book && e.chapter === chapterIndex + 1)} }
+//         renderTooltipItem={(event) => (
+//             <span key={event.user}>
+//                 <PresentUserPresenceTooltipIcon user={event.user} />
+//                 {`will read in ${event.remainingDays} day${event.remainingDays > 1 ? "s" : ""}`}
+//             </span>
+//         )}
+//         renderContent={(items) => (
+//             <>
+//                 <span className="notificationCount">{items.length}</span>
+//                 <span className="material-symbols-outlined">event</span>
+//             </>
+//         )}
+//     />
+// );
+// const PresentUserPresenceDotContainer = ({ bookName, chapterIndex, usersInChapter }) => {
+//     const { userPresence } = useMapToolContext();
 
-    return (
-        <ChapterNotificationContainer
-            bookName={bookName}
-            chapterIndex={chapterIndex}
-            contextKey="userPresence"
-            className="presentUserPresenceDotContainer"
-            filterFn={(_, user, book, chapterIndex) => {
-                const presence = userPresence[user];
-                return presence.book === book && presence.chapter === chapterIndex + 1 ? { user } : null;
-            }}
-            renderTooltipItem={({ user }) => (
-                <span key={user}>
-                    <PresentUserPresenceTooltipIcon user={user} />
-                    {user}
-                </span>
-            )}
-            renderContent={() =>
-                usersInChapter.map((user, index) => (
-                    <PresentUserPresenceDot
-                        key={user}
-                        user={user}
-                        index={index}
-                        length={usersInChapter.length}
-                    />
-                ))
-            }
-        />
-    );
-};
+//     return (
+//         <ChapterNotificationContainer
+//             bookName={bookName}
+//             chapterIndex={chapterIndex}
+//             contextKey="userPresence"
+//             className="presentUserPresenceDotContainer"
+//             filterFn={(_, user, book, chapterIndex) => {
+//                 const presence = userPresence[user];
+//                 return presence.book === book && presence.chapter === chapterIndex + 1 ? { user } : null;
+//             }}
+//             renderTooltipItem={({ user }) => (
+//                 <span key={user}>
+//                     <PresentUserPresenceTooltipIcon user={user} />
+//                     {user}
+//                 </span>
+//             )}
+//             renderContent={() =>
+//                 usersInChapter.map((user, index) => (
+//                     <PresentUserPresenceDot
+//                         key={user}
+//                         user={user}
+//                         index={index}
+//                         length={usersInChapter.length}
+//                     />
+//                 ))
+//             }
+//         />
+//     );
+// };
 const PresentUserPresenceDot = ({ user, index, length }) => {
 
     const { usersInfo } = useMapToolContext();
@@ -214,7 +214,7 @@ export const Chapter = ({ index, bookName, sectionName}) => {
         return () => { unsubscribeFromHistoryUpdate(updateHistoryColor) }
     }, [])
 
-    const { background, borderStyle, borderColor, displayContainer, gridColumns, gridRows, filteredUsers } = useMemo(() => {
+    const { background, borderStyle, borderColor, /*displayContainer, gridColumns, gridRows, filteredUsers*/ } = useMemo(() => {
 
         const baseColor = [227, 227, 227];
         const hasProjectContent = project && mode === MapToolModes.Project && (isInSelectionMode || projectFilters.get(project.structure[testament.name][sectionName][bookName][index]));
@@ -313,12 +313,12 @@ export const Chapter = ({ index, bookName, sectionName}) => {
         isInSelectionMode
     ])
 
-    const { usersInChapter } = useMemo(() => {
-        const usersInChapter = Object.keys(userPresence).filter((user) => {
-            return userPresence[user].book === bookName && userPresence[user].chapter === (index + 1)
-        })
-        return { usersInChapter }
-    }, [userPresence, isUserPresenceEnabled, modes])
+    // const { usersInChapter } = useMemo(() => {
+    //     const usersInChapter = Object.keys(userPresence).filter((user) => {
+    //         return userPresence[user].book === bookName && userPresence[user].chapter === (index + 1)
+    //     })
+    //     return { usersInChapter }
+    // }, [userPresence, isUserPresenceEnabled, modes])
 
     return (
         <div

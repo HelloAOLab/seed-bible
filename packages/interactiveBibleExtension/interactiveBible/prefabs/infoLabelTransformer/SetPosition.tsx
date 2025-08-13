@@ -67,5 +67,5 @@ if(setLabelOffset && thisBot.tags.labelPositioning !== LabelPositioning.Top)
     }
     setTagMask(infoLabel, dimension + 'X', infoLabelOffsetX);
     setTagMask(infoLabelTail, dimension + 'X', infoLabelTailOffsetX);
-    infoLabelDate && setTagMask(infoLabelDate, dimension + "X", infoLabelDateOffsetX);
+    if(infoLabelDate) setTagMask(infoLabelDate, dimension + "X", infoLabelDateOffsetX);
 }

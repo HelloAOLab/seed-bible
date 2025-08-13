@@ -8,7 +8,7 @@ const {infoLabel, infoLabelTail, infoLabelDate, infoLabelUsersColor} = thisBot.G
 thisBot.StopShakeAnimation();
 setTag(thisBot, "ownerBotId", null);
 setTag(thisBot, "isDonationLabelTransformer", null);
-infoLabel && ObjectPooler.ReleaseObject({obj: infoLabel, tag: infoLabel.tags.poolTag});
-infoLabelTail && ObjectPooler.ReleaseObject({obj: infoLabelTail, tag: infoLabelTail.tags.poolTag});
-infoLabelDate && ObjectPooler.ReleaseObject({obj: infoLabelDate, tag: infoLabelDate.tags.poolTag});
-infoLabelUsersColor?.length > 0 && ObjectPooler.ReleaseObject({obj: infoLabelUsersColor, tag: infoLabelUsersColor[0].tags.poolTag});
+if(infoLabel) ObjectPooler.ReleaseObject({obj: infoLabel, tag: infoLabel.tags.poolTag});
+if(infoLabelTail) ObjectPooler.ReleaseObject({obj: infoLabelTail, tag: infoLabelTail.tags.poolTag});
+if(infoLabelDate) ObjectPooler.ReleaseObject({obj: infoLabelDate, tag: infoLabelDate.tags.poolTag});
+if(infoLabelUsersColor?.length > 0) ObjectPooler.ReleaseObject({obj: infoLabelUsersColor, tag: infoLabelUsersColor[0].tags.poolTag});

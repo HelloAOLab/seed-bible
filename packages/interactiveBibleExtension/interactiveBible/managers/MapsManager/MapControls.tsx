@@ -71,7 +71,7 @@ export const MapControls = () => {
 
     const [showOptions, setShowOptions] = useState(false);
 
-    const { handleZoomIn, handleZoomOut, handleLabelsToggle, handleShowAllChaptersToggle, showingAllChapters, handleContentHeatmapToggle } = useMapToolContext();
+    const { handleZoomIn, handleZoomOut, /*handleLabelsToggle, handleShowAllChaptersToggle, showingAllChapters, handleContentHeatmapToggle*/ } = useMapToolContext();
     
     return (
         <div className="mapControls">

@@ -11,7 +11,7 @@
  */
 
 const {bibleData} = that;
-const dimension = os.getCurrentDimension();
+// const dimension = os.getCurrentDimension();
 // const bibleTransformerPosition = getBotPosition(bibleData.staticBibleElements.bibleTransformer, dimension);
 bibleData.currentState = BibleState.Open;
 bibleData.childrenData.forEach((testamentData) => {testamentData.isInsideBible = true});

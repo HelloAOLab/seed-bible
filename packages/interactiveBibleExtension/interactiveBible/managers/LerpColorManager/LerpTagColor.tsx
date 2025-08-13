@@ -26,7 +26,6 @@ thisBot.StopColorLerp({bot, tag});
 if(startingColor === endingColor) return true;
 
 return new Promise((resolve, reject) => {
-    let botLerpData;
     const divisionFactor = 20;
     const difference = [endingColor[0] - startingColor[0], endingColor[1] - startingColor[1], endingColor[2] - startingColor[2]];
     const differenceFraction = [difference[0] / divisionFactor, difference[1] / divisionFactor, difference[2] / divisionFactor];
@@ -52,7 +51,7 @@ return new Promise((resolve, reject) => {
         }
     }, (durationInSeconds * 1000 / divisionFactor));
 
-    botLerpData = new ColorLerpData({botId: getID(bot), tag, lerpIntervalId: intervalId, reject})
+    const botLerpData = new ColorLerpData({botId: getID(bot), tag, lerpIntervalId: intervalId, reject})
     currentLerps.AddColorLerpData(botLerpData);
 });
 
