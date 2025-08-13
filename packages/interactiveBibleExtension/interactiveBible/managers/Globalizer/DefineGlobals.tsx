@@ -852,7 +852,7 @@ function HandleSectionDataInStack(params)
                 if(!infoLabelTransformer && sectionData.isInExplodedView && !(bibleData && bibleData.bibleType === BibleType.PlatformerGame))
                 {
                     const label = CapitalizeFirstLetter(sectionData.element.tags.sectionName.split("-").join(" "));
-                    let {infoLabelTransformer} = StacksManager.GetLabelForElement({
+                    const {infoLabelTransformer} = StacksManager.GetLabelForElement({
                         element: sectionData.shadow, 
                         label, 
                         color: sectionData.highlightColor ?? sectionData.element.tags.labelTextColor,
@@ -888,7 +888,7 @@ function HandleSectionDataInStack(params)
                         if(!infoLabelTransformer && sectionData.isInExplodedView && !(bibleData && bibleData.bibleType === BibleType.PlatformerGame))
                         {
                             const label = CapitalizeFirstLetter(sectionData.element.tags.sectionName.split("-").join(" "));
-                            let {infoLabelTransformer} = StacksManager.GetLabelForElement({
+                            const {infoLabelTransformer} = StacksManager.GetLabelForElement({
                                 element: sectionData.shadow, 
                                 label, 
                                 color: sectionData.highlightColor ?? sectionData.element.tags.labelTextColor,

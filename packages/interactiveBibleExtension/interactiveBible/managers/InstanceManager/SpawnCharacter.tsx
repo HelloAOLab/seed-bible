@@ -13,7 +13,8 @@ const character = create({
     scaleZ: scales.z,
     color: "pink"
 })
-const hatCrown = create({
+// const hatCrown = 
+create({
     space: "tempLocal",
     [dimension]: true,
     [dimension + "X"]: 0,
@@ -26,7 +27,8 @@ const hatCrown = create({
     color: "#ADD8E6",
     transformer: character.id
 })
-const hatVisor = create({
+// const hatVisor = 
+create({
     space: "tempLocal",
     [dimension]: true,
     [dimension + "X"]: 0,

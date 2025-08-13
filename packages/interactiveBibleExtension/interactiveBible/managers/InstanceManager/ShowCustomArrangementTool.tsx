@@ -1,5 +1,3 @@
-const { useState, useEffect } = os.appHooks;
-
 setTagMask(thisBot, "isShowingCustomArrangementTool", true);
 const appName = "customArrangementTool"
 await os.unregisterApp(appName);

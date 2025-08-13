@@ -1,5 +1,5 @@
 import { useCustomArrangementContext } from "interactiveBible.managers.InstanceManager.CustomArrangementContext"
-const { useState, useRef, useCallback, useEffect } = os.appHooks;
+const { useState, useRef, useCallback } = os.appHooks;
 
 const TemplateSelectorOption = await thisBot.TemplateSelectorOption();
 
@@ -34,9 +34,9 @@ const TemplateSelector = ({initialList, setReorderedList, setHasListBeenModified
             }
             else
             {
-                let dragOverIndex = singleOptions.findIndex((item) => {return item.id === id});
+                const dragOverIndex = singleOptions.findIndex((item) => {return item.id === id});
 
-                let newList = singleOptions.filter(item => item.id !== draggingId);
+                const newList = singleOptions.filter(item => item.id !== draggingId);
 
                 newList.splice(dragOverIndex, 0, singleOptions[draggingIndex]);
 

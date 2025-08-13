@@ -1,4 +1,4 @@
-const { useCallback, useRef, useState, useEffect, createRef } = os.appHooks;
+const { useCallback, useState, useEffect, createRef } = os.appHooks;
 import { useSideBarContext } from 'app.hooks.sideBar'
 import { MenuIcon } from 'app.components.icons'
 
@@ -10,7 +10,7 @@ const TemplateItem = ({
     handleDragEnter,
     handleDragEnd,
     handleItemDelete,
-    handleItemColorChange,
+    // handleItemColorChange,
     handleNameChange,
     handleInspect,
     dragOverInfo,
@@ -21,11 +21,11 @@ const TemplateItem = ({
     const { openPopupSettings } = useSideBarContext();
     const [nameInputRefState, setNameInputRefState] = useState(null)
 
-    const focusOnNameInput = () => {
-        console.log(nameInputRefState)
-        nameInputRefState?.current?.focus();
-        closePopupSettings();
-    }
+    // const focusOnNameInput = () => {
+    //     console.log(nameInputRefState)
+    //     nameInputRefState?.current?.focus();
+    //     closePopupSettings();
+    // }
 
     const handleMoreClick = useCallback(() => {
         const items = [

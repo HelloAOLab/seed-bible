@@ -1,5 +1,5 @@
 import { useCustomArrangementContext } from "interactiveBible.managers.InstanceManager.CustomArrangementContext"
-const { useEffect, useState, useCallback } = os.appHooks;
+const { useState, useCallback } = os.appHooks;
 
 const DragOverBar = await thisBot.DragOverBar();
 

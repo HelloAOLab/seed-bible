@@ -1,4 +1,4 @@
-const { useState, useEffect, useRef, useCallback } = os.appHooks;
+const { useState, useEffect } = os.appHooks;
 
 setTagMask(thisBot, "isShowingHighlightTool", true);
 thisBot.HideHistorySettings();
