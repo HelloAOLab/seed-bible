@@ -1,4 +1,4 @@
-const { createContext, useState, useContext, useRef, useCallback, useEffect } = os.appHooks;
+const { createContext, useState, useContext, useRef, useCallback } = os.appHooks;
 
 const CustomArrangementContext = createContext();
 

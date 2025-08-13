@@ -1,5 +1,3 @@
-const {useEffect} = os.appHooks;
-
 const NavigationButton = ({ buttonInfo }) => {
     const { content, iconName, action, backgroundColor, enabled } = buttonInfo;
     

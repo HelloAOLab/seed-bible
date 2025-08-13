@@ -1,5 +1,5 @@
 import { useCustomArrangementContext } from "interactiveBible.managers.InstanceManager.CustomArrangementContext"
-const { useState, useCallback, useEffect } = os.appHooks;
+const { useCallback } = os.appHooks;
 
 const EditionToggle = () => {
 

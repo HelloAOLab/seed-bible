@@ -3,7 +3,6 @@ import {ElementInfo} from "interactiveBible.managers.InstanceManager.ElementInfo
 import {RemoteUserSelection} from "interactiveBible.managers.InstanceManager.RemoteUserSelection"
 const {element} = that;
 const myRemoteId = getID(configBot)
-let remoteUserSelection;
 const lobbyUserBot = getBot('lobbyUserBot', true);
 const lobbyId = lobbyUserBot?.id;
 
@@ -92,7 +91,7 @@ switch(element.tags.typeOfElement)
 
 const remoteSelectionPath = entries.map((entry) => {return new ElementInfo({key: entry.key, typeOfElement: entry.typeOfElement})})
 
-remoteUserSelection = new RemoteUserSelection({selectionPath: remoteSelectionPath, userId: myRemoteId, lobbyId})
+const remoteUserSelection = new RemoteUserSelection({selectionPath: remoteSelectionPath, userId: myRemoteId, lobbyId})
 thisBot.vars.history.push(...entries)
 shout(`OnHistoryUpdated`);
 thisBot.OnUserSelectedBibleElement({remoteUserSelection})

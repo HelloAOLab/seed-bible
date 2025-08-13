@@ -1,3 +1,3 @@
-const {id} = that;
+// const {id} = that;
 
-const timePeriodInfo = thisBot.masks.historyTimePeriodsInfo.find((info) => {return info.id == id});
+// const timePeriodInfo = thisBot.masks.historyTimePeriodsInfo.find((info) => {return info.id == id});
