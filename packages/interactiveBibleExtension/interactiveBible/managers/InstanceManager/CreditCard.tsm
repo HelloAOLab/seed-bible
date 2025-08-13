@@ -1,0 +1,16 @@
+export class CreditCard
+{
+    constructor({
+        nickname = undefined,
+        firstName = undefined,
+        lastName = undefined,
+        photoUrl,
+    })
+    {
+        this.nickname = nickname;
+        this.firstName = firstName;
+        this.name = name;
+        this.lastName = lastName;
+        this.photoUrl = photoUrl;
+    }
+}

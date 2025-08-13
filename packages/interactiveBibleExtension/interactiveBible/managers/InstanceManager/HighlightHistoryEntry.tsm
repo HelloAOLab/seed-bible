@@ -1,0 +1,10 @@
+export class HighlightHistoryEntry
+{
+    constructor({data = null, element = null, color, prevColor = null})
+    {
+        this.data = data;
+        this.element = element;
+        this.color = color;
+        this.prevColor = prevColor;
+    }
+}

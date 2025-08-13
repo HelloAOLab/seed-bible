@@ -1,0 +1,17 @@
+{
+    "author": "Gabriel Souki",
+    "toolbarConfig":
+    {
+        "label": "Interactive Bible",
+        "hasToggle": "false",
+        "icon": "book_5"
+    },
+    "tabConfig":
+    {
+        "title": "Interactive Bible"
+    },
+    "contextMenuConfig": 
+    {
+        "optionsIsOn": ""
+    }
+}

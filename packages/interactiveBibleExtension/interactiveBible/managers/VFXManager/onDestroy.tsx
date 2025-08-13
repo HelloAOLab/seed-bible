@@ -1,0 +1,1 @@
+globalThis.VFXManager = null;

@@ -1,0 +1,15 @@
+let bufferBot = create({
+    form: "sprite",
+    formAddress: undefined,
+    space: "tempLocal"
+});
+
+await os.sleep(50);
+
+for(let formAddressInfo of thisBot.tags.dialogBoxFormAddresses)
+{
+    setTag(bufferBot, "formAddress", formAddressInfo.formAddress);
+    await os.sleep(50);
+}
+
+destroy(bufferBot);

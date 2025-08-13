@@ -1,0 +1,68 @@
+const DragOverBar = thisBot.DragOverBar();
+
+const TemplateItem = ({
+    item,
+    handleDragStart,
+    handleDragEnter,
+    handleDragEnd,
+    handleItemDelete,
+    handleItemColorChange,
+    handleNameChange,
+    handleClick,
+    dragOverInfo,
+    draggingId,
+    index,
+    showArrowRight = false
+}) => {
+    return (
+        <>
+            {dragOverInfo?.id === item.id && dragOverInfo.position === "top" && <DragOverBar />}
+
+            <li
+                key={item.id}
+                draggable="true"
+                onDragStart={() => handleDragStart(item.id)}
+                onDragEnter={() => handleDragEnter(item.id)}
+                onDragEnd={handleDragEnd}
+                className={`listItem ${draggingId === item.id ? "dragging" : ""}`}
+                style={{
+                    backgroundColor: item.color,
+                    color: GetTextColorBasedOnBackground(item.color),
+                }}
+            >
+                {handleNameChange ? (
+                    <input
+                        type="text"
+                        value={item.name}
+                        onBlur={(e) => handleNameChange(e, item)}
+                    />
+                ) : (
+                    item.name
+                )}
+
+                <div className="actionButtonsContainer">
+                    <span className="material-symbols-outlined" onClick={() => handleItemDelete(index)}>
+                        close
+                    </span>
+                    <div>
+                        <span className="material-symbols-outlined">palette</span>
+                        <input
+                            type="color"
+                            value={item.color}
+                            onChange={(e) => handleItemColorChange(e, item.id)}
+                        />
+                    </div>
+                    {showArrowRight && (
+                        <span className="material-symbols-outlined" onClick={() => handleClick(item)}>
+                            chevron_right
+                        </span>
+                    )}
+                </div>
+            </li>
+
+            {dragOverInfo?.id === item.id && dragOverInfo.position === "bottom" && <DragOverBar />}
+        </>
+    );
+};
+
+return TemplateItem;

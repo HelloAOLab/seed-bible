@@ -1,0 +1,1 @@
+shout("OnSectionInteracted", {section: thisBot, typeOfInteraction: StackElementInteractionType.Drop, dropInfo: that});

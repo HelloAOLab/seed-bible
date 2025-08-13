@@ -1,0 +1,52 @@
+const {useEffect, useState} = os.appHooks;
+
+const DragOverBar = thisBot.DragOverBar();
+
+const CustomArrangementSection = ({
+    testament,
+    section, 
+    handleSectionNameChange, 
+    handleSectionClick,
+    handleDragStart,
+    handleDragEnter,
+    handleDragEnd,
+    index,
+    handleItemDelete,
+    handleItemColorChange,
+    dragOverInfo,
+    draggingId
+}) => {
+    
+    return (
+        <>
+            { (dragOverInfo?.id === section.id && dragOverInfo.position === "top") && <DragOverBar />}
+
+            <li 
+                key={section.id} 
+                draggable="true" 
+                onDragStart={() => {handleDragStart(section.id)}} 
+                onDragEnter={() => {handleDragEnter(section.id)}} 
+                onDragEnd={handleDragEnd} 
+                className={`listItem ${draggingId === section.id ? "dragging" : ""}`}
+                style={{
+                    backgroundColor: section.color,
+                    color: GetTextColorBasedOnBackground(section.color)
+                }}
+            >
+                <input type="text" value={section.name} onBlur={(e) => {handleSectionNameChange({e, testamentId: testament.id, sectionId: section.id})}} />
+                <div className="actionButtonsContainer">
+                    <span class={`material-symbols-outlined`} onClick={() => {handleItemDelete(index)}}>close</span>
+                    <div>
+                        <span class="material-symbols-outlined">palette</span>
+                        <input type="color" value={section.color} onChange={(e) => {handleItemColorChange(e, section.id)}}/>
+                    </div>
+                    <span class={`material-symbols-outlined caret`} onClick={() => {handleSectionClick(section)}}>chevron_right</span>
+                </div>
+            </li>
+
+            {(dragOverInfo?.id === section.id && dragOverInfo.position === "bottom") && <DragOverBar />}
+        </>
+    )
+}
+
+return CustomArrangementSection;

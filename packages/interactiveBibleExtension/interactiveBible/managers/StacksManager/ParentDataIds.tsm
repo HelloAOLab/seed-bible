@@ -1,0 +1,13 @@
+export class ParentDataIds
+{
+    constructor({bibleId, testamentId, sectionId, bookId, sectionBookId, mapId, mapBookId})
+    {
+        this.bibleId = bibleId;
+        this.testamentId = testamentId; 
+        this.sectionId = sectionId; 
+        this.sectionBookId = sectionBookId
+        this.bookId = bookId;
+        this.mapId = mapId;
+        this.mapBookId = mapBookId;
+    }
+}

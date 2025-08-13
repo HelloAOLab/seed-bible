@@ -1,0 +1,27 @@
+if(thisBot.tags.isBaseBook) return;
+
+const dimension = os.getCurrentDimension();
+if(dimension === that.dimension)
+{
+    if(thisBot.masks.isOnTheGround)
+    {
+        const currentPositionXY = new Vector2(
+            thisBot.masks[dimension + "X"] ?? thisBot.tags[dimension + "X"],
+            thisBot.masks[dimension + "Y"] ?? thisBot.tags[dimension + "Y"]
+        )
+        const clickPosition = new Vector2(that.position.x, that.position.y)
+        const distanceBetweenPositionAndClick = Vector2.distanceBetween(currentPositionXY, clickPosition);
+        
+        if(distanceBetweenPositionAndClick < 7)
+        {
+            thisBot.tryToHighlightSelf({highlightingFrom: "gridClick", unhighlightDelayInSeconds: 2});
+        }
+    }
+    else
+    {
+        if(thisBot.masks.highlighted)
+        {
+            thisBot.forceUnhighlight();
+        }
+    }
+}

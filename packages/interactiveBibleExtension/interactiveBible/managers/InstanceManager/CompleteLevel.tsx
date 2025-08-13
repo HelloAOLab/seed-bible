@@ -1,0 +1,1 @@
+thisBot.SetGameState({state: GameState.GameOver})

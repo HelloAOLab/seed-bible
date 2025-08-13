@@ -1,0 +1,1 @@
+thisBot.SetGameTime({value: 0})

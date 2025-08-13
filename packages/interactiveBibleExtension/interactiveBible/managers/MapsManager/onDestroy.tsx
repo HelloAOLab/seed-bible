@@ -1,0 +1,1 @@
+globalThis.MapsManager = null;

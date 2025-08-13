@@ -1,0 +1,47 @@
+[
+    {
+        "amountOfBooks": 2,
+        "layout": [
+            {"x": {"from": 0.5, "to": 1}, "y": {"from": 0, "to": 1}},
+            {"x": {"from": 0, "to": 0.5}, "y": {"from": 0, "to": 1}}
+        ]
+    },
+    {
+        "amountOfBooks": 3,
+        "layout": [
+            {"x": {"from": 0, "to": 1}, "y": {"from": 0.75, "to": 1}},
+            {"x": {"from": 0.5, "to": 1}, "y": {"from": 0, "to": 0.75}},
+            {"x": {"from": 0, "to": 0.5}, "y": {"from": 0, "to": 0.75}}
+        ]
+    },
+    {
+        "amountOfBooks": 4,
+        "layout": [
+            {"x": {"from": 0.5, "to": 1}, "y": {"from": 0.5, "to": 1}},
+            {"x": {"from": 0, "to": 0.5}, "y": {"from": 0.5, "to": 1}},
+            {"x": {"from": 0.5, "to": 1}, "y": {"from": 0, "to": 0.5}},
+            {"x": {"from": 0, "to": 0.5}, "y": {"from": 0, "to": 0.5}}
+        ]
+    },
+    {
+        "amountOfBooks": 5,
+        "layout": [
+            {"x": {"from": 0, "to": 0.5}, "y": {"from": 0, "to": 0.4}},
+            {"x": {"from": 0.5, "to": 1}, "y": {"from": 0, "to": 0.4}},
+            {"x": {"from": 0.66, "to": 1}, "y": {"from": 0.4, "to": 1}},
+            {"x": {"from": 0.33, "to": 0.66}, "y": {"from": 0.4, "to": 1}},
+            {"x": {"from": 0, "to": 0.33}, "y": {"from": 0.4, "to": 1}}
+        ]
+    },
+    {
+        "amountOfBooks": 6,
+        "layout": [
+            {"x": {"from": 0.5, "to": 1}, "y": {"from": 0.66, "to": 1}},
+            {"x": {"from": 0.5, "to": 1}, "y": {"from": 0.33, "to": 0.66}},
+            {"x": {"from": 0.5, "to": 1}, "y": {"from": 0, "to": 0.33}},
+            {"x": {"from": 0, "to": 0.5}, "y": {"from": 0.66, "to": 1}},
+            {"x": {"from": 0, "to": 0.5}, "y": {"from": 0.33, "to": 0.66}},
+            {"x": {"from": 0, "to": 0.5}, "y": {"from": 0, "to": 0.33}}
+        ]
+    }
+]

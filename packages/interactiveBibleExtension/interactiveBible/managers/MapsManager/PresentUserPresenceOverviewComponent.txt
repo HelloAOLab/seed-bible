@@ -1,0 +1,20 @@
+import { useMapToolContext } from "interactiveBible.managers.MapsManager.MapToolContext"
+import { PresentUserPresenceIcon } from "interactiveBible.managers.MapsManager.PresentUserPresenceIconConponent"
+const { useMemo } = os.appHooks;
+
+export const PresentUserPresenceOverview = ({book, borderColor}) => {
+    const { userPresence } = useMapToolContext();
+    const users = useMemo(() => {
+        return Object.keys(userPresence).filter((user) => {return userPresence[user].book === book})
+    }, [book, userPresence])
+    
+    return (
+        <>
+            {users.length > 0 && <div className="presentUserPresenceOverview">
+                {users.map((user, index) => {
+                    return <PresentUserPresenceIcon borderColor={borderColor} index={index} user={user} length={users.length} />
+                })}
+            </div>}
+        </>
+    )
+}

@@ -1,0 +1,1 @@
+LerpColorManager.StopColorLerp({bot: thisBot, tag: InterpolatableColorTags.Color});

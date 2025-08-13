@@ -1,0 +1,2 @@
+const {modality} = that;
+shout("OnTestamentInteracted", {testament: thisBot, typeOfInteraction: (modality === ClickModality.touch ? StackElementInteractionType.Tap : StackElementInteractionType.Click)});

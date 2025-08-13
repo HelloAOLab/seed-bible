@@ -1,0 +1,9 @@
+if(testament.masks.highlightable)
+{
+    if(testament.masks.isInsideBible)
+    {
+        const otherBotsToUnhighlight = getBots("forceUnhighlight").filter((bot) => {return bot !== thisBot && !bot.masks.isOnTheGround && !bot.masks.isForcingUnhighlight})
+        whisper(otherBotsToUnhighlight, "forceUnhighlight");
+    }
+    thisBot.tryToHighlightSelf({highlightingFrom: "click", unhighlightDelayInSeconds: 2});
+}

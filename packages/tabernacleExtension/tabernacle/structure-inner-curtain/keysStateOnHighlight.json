@@ -1,0 +1,38 @@
+[
+    {
+        "key": "cloth-brown",
+        "state": "Hidden"
+    },
+    {
+        "key": "cloth-grey",
+        "state": "Hidden"
+    },
+    {
+        "key": "cloth-purple",
+        "state": "Hidden"
+    },
+    {
+        "key": "cloth-red",
+        "state": "Hidden"
+    },
+    {
+        "key": "structure-front-pillars",
+        "state": "Translucent"
+    },
+    {
+        "key": "structure-inner-pillars",
+        "state": "Translucent"
+    },
+    {
+        "key": "structure-walls",
+        "state": "Translucent"
+    },
+    {
+        "key": "structure-rings",
+        "state": "Translucent"
+    },
+    {
+        "key": "structure-bars",
+        "state": "Translucent"
+    }
+]

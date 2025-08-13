@@ -1,0 +1,1 @@
+thisBot.SetCountdownTimer({value: thisBot.tags.maxCountdownTimer})

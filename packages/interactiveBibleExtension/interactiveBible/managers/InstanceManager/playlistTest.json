@@ -1,0 +1,297 @@
+{
+    "name": "Test",
+    "list": [
+        {
+            "type": "verse",
+            "content": "Genesis 1:4",
+            "additionalInfo": {
+                "verse": 4,
+                "chapter": 1,
+                "book": "Genesis",
+                "data": {
+                    "verseNumber": 4,
+                    "text": "And God saw that the light was good, and He separated the light from the darkness.",
+                    "chapter": 1,
+                    "book": "Genesis"
+                },
+                "chapterData": {}
+            },
+            "id": "dd2e72da-535a-4d99-8f7e-38555c2c57db"
+        },
+        {
+            "type": "verse",
+            "content": "Genesis 1:9",
+            "additionalInfo": {
+                "verse": 9,
+                "chapter": 1,
+                "book": "Genesis",
+                "data": {
+                    "verseNumber": 9,
+                    "text": "And God said, “Let the waters under the sky be gathered into one place, so that the dry land may appear.” And it was so.",
+                    "chapter": 1,
+                    "book": "Genesis"
+                },
+                "chapterData": {}
+            },
+            "id": "259f03c2-51ae-40e1-96a6-1bc4d5af91b3"
+        },
+        {
+            "type": "verse",
+            "content": "Genesis 1:21",
+            "additionalInfo": {
+                "verse": 21,
+                "chapter": 1,
+                "book": "Genesis",
+                "data": {
+                    "verseNumber": 21,
+                    "text": "So God created the great sea creatures and every living thing that moves, with which the waters teemed according to their kinds, and every bird of flight after its kind. And God saw that it was good.",
+                    "chapter": 1,
+                    "book": "Genesis"
+                },
+                "chapterData": {}
+            },
+            "id": "50057749-c68e-4533-8f9b-7680078cecbd"
+        },
+        {
+            "content": "Mar - 27 - 2025",
+            "additionalInfo": {
+                "date": "2025-03-27"
+            },
+            "type": "date",
+            "id": "2dd13503-ab14-4ff5-b14e-8971b5db0b60"
+        },
+        {
+            "type": "verse",
+            "content": "Genesis 3:15",
+            "additionalInfo": {
+                "verse": 15,
+                "chapter": 3,
+                "book": "Genesis",
+                "data": {
+                    "verseNumber": 15,
+                    "text": "And I will put enmity between you and the woman, and between your seed and her seed. He will crush your head, and you will strike his heel.  ”",
+                    "chapter": 3,
+                    "book": "Genesis"
+                },
+                "chapterData": {}
+            },
+            "id": "b14acfb8-ca5d-4351-a8a3-1be43c745315"
+        },
+        {
+            "type": "verse",
+            "content": "Genesis 4:17",
+            "additionalInfo": {
+                "verse": 17,
+                "chapter": 4,
+                "book": "Genesis",
+                "data": {
+                    "verseNumber": 17,
+                    "text": "And Cain had relations with his wife, and she conceived and gave birth to Enoch. Then Cain built a city and named it after his son Enoch.",
+                    "chapter": 4,
+                    "book": "Genesis"
+                },
+                "chapterData": {}
+            },
+            "id": "792dfa9c-0b2c-4f5c-b5a8-a9a9a6e4ea97"
+        },
+        {
+            "content": "Mar - 28 - 2025",
+            "additionalInfo": {
+                "date": "2025-03-28"
+            },
+            "type": "date",
+            "id": "58cf5877-1a0d-44ac-b266-ffee27bfc825"
+        },
+        {
+            "additionalInfo": {
+                "bookName": "Deuteronomy",
+                "bookRank": 65,
+                "chapter": 1,
+                "chapters": 34,
+                "data": {
+                    "id": "DEU",
+                    "translationId": "BSB",
+                    "numberOfChapters": 34,
+                    "chapter": 1,
+                    "viewerId": null
+                }
+            },
+            "content": "Deuteronomy 1",
+            "id": "250a7b79-276d-4c5f-b09d-f9145e1b30df",
+            "prefix": "",
+            "type": "chapter"
+        },
+        {
+            "additionalInfo": {
+                "bookName": "John",
+                "bookRank": 23,
+                "chapter": 2,
+                "chapters": 21,
+                "data": {
+                    "id": "JHN",
+                    "translationId": "BSB",
+                    "numberOfChapters": 21,
+                    "chapter": 2,
+                    "viewerId": null
+                }
+            },
+            "content": "John 2",
+            "id": "7063fe0f-75db-45ce-be51-182afd332cc3",
+            "prefix": "",
+            "type": "chapter"
+        },
+        {
+            "additionalInfo": {
+                "bookName": "Numbers",
+                "bookRank": 66,
+                "chapter": 1,
+                "chapters": 36,
+                "data": {
+                    "id": "NUM",
+                    "translationId": "BSB",
+                    "numberOfChapters": 36,
+                    "chapter": 1,
+                    "viewerId": null
+                }
+            },
+            "content": "Numbers 1",
+            "id": "8007411f-2038-45be-ac91-eae3b799cae9",
+            "prefix": "",
+            "type": "chapter"
+        },
+        {
+            "additionalInfo": {
+                "book": "Genesis",
+                "chapter": 1,
+                "bookRank": 69,
+                "chapterData": {
+                    "bookName": "Genesis",
+                    "chapterNo": 1,
+                    "id": "GEN",
+                    "numberOfChapters": 50,
+                    "translationId": "BSB"
+                },
+                "data": {
+                    "book": "Genesis",
+                    "bookId": "GEN",
+                    "chapter": 1,
+                    "viewerId": null,
+                    "verse": 21,
+                    "verseNumber": 21
+                },
+                "verse": 21
+            },
+            "content": "Genesis 1:21",
+            "id": "154b9077-1361-4ee0-8bd8-29501c8a9e9c",
+            "prefix": "",
+            "type": "verse"
+        },
+        {
+            "additionalInfo": {
+                "bookName": "Mark",
+                "bookRank": 25,
+                "chapter": 1,
+                "chapters": 16,
+                "data": {
+                    "id": "MRK",
+                    "translationId": "BSB",
+                    "numberOfChapters": 16,
+                    "chapter": 1,
+                    "viewerId": null
+                }
+            },
+            "content": "Mark 1",
+            "id": "66fbfc96-0b83-46f7-b0ec-9ceafb0ec1fc",
+            "prefix": "",
+            "type": "chapter"
+        },
+        {
+            "additionalInfo": {
+                "bookName": "Mark",
+                "bookRank": 25,
+                "chapter": 2,
+                "chapters": 16,
+                "data": {
+                    "id": "MRK",
+                    "translationId": "BSB",
+                    "numberOfChapters": 16,
+                    "chapter": 2,
+                    "viewerId": null
+                }
+            },
+            "content": "Mark 2",
+            "id": "82860fe6-f09e-4894-afae-8139cfd526a7",
+            "prefix": "",
+            "type": "chapter"
+        },
+        {
+            "additionalInfo": {
+                "bookName": "Luke",
+                "bookRank": 24,
+                "chapter": 2,
+                "chapters": 24,
+                "data": {
+                    "id": "LUK",
+                    "translationId": "BSB",
+                    "numberOfChapters": 24,
+                    "chapter": 2,
+                    "viewerId": null
+                }
+            },
+            "content": "Luke 2",
+            "id": "8ba886e2-32d8-42a0-837a-3202b8f22304",
+            "prefix": "",
+            "type": "chapter"
+        },
+        {
+            "additionalInfo": {
+                "bookName": "Luke",
+                "bookRank": 24,
+                "chapter": 3,
+                "chapters": 24,
+                "data": {
+                    "id": "LUK",
+                    "translationId": "BSB",
+                    "numberOfChapters": 24,
+                    "chapter": 3,
+                    "viewerId": null
+                }
+            },
+            "content": "Luke 3",
+            "id": "cdde68e7-a49d-4276-b502-a6af4bfd19e9",
+            "prefix": "",
+            "type": "chapter"
+        },
+        {
+            "additionalInfo": {
+                "bookName": "Luke",
+                "bookRank": 24,
+                "chapter": 4,
+                "chapters": 24,
+                "data": {
+                    "id": "LUK",
+                    "translationId": "BSB",
+                    "numberOfChapters": 24,
+                    "chapter": 4,
+                    "viewerId": null
+                }
+            },
+            "content": "Luke 4",
+            "id": "85c75873-2f4b-4df9-a9af-992aa7961f7e",
+            "prefix": "",
+            "type": "chapter"
+        }
+    ],
+    "id": "cbce9ba4-556a-47dd-ba33-51512d723db3",
+    "nesting": 1,
+    "toggleRender": false,
+    "attachment": null,
+    "checklistEnabled": false,
+    "readingPlanEnabled": true,
+    "dateFormat": "MM-DD-YYYY",
+    "color": "#D364338A",
+    "icon": "subscriptions",
+    "isCustomColor": false,
+    "isCustomIcon": false,
+    "description": "my description"
+}

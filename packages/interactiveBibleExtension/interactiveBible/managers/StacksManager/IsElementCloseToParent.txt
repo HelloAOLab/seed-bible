@@ -1,0 +1,51 @@
+import {StackData} from 'interactiveBible.managers.StacksManager.StackData'
+import {TestamentData} from "interactiveBible.managers.StacksManager.TestamentData"
+import {SectionData} from "interactiveBible.managers.StacksManager.SectionData"
+
+// console.log(that);
+const {element, parentsData} = that;
+const dimension = os.getCurrentDimension();
+const radius = 4;
+let elementPosition = getBotPosition(element, dimension);
+elementPosition = new Vector2(elementPosition.x, elementPosition.y);
+let closeParentsData = [];
+for(let parentData of parentsData)
+{
+    let parent;
+    let tempElementPosition = elementPosition;
+    switch(true)
+    {
+        case parentData instanceof StackData:
+            parent = parentData.staticBibleElements.bibleTransformer
+        break;
+        case parentData instanceof TestamentData:
+            parent = parentData.testament
+        break;
+        case parentData instanceof SectionData:
+            parent = parentData.section
+        break;
+    }
+    let parentPosition = getBotPosition(parent, dimension);
+    parentPosition = new Vector2(parentPosition.x, parentPosition.y);
+    if(element.tags.transformer)
+    {
+        const elementTransformer = getBot(byID(element.tags.transformer));
+        let elementTransformerPosition = getBotPosition(elementTransformer, dimension);
+        elementTransformerPosition = new Vector2(elementTransformerPosition.x, elementTransformerPosition.y);
+        tempElementPosition = tempElementPosition.add(elementTransformerPosition);
+    }
+    const distanceBetween = Vector2.distanceBetween(tempElementPosition, parentPosition);
+    if(distanceBetween <= radius)
+    {
+        closeParentsData.push({parentData, distanceBetween});
+    }
+}
+
+if(closeParentsData.length > 0)
+{
+    const closeParentsDataSorted = closeParentsData.sort((parentDataA, parentDataB) => {return parentDataA.distanceBetween - parentDataB.distanceBetween});
+    const closestParentData = closeParentsDataSorted[0].parentData;
+    return {isClose: true, closestParentData}
+}
+
+return {isClose: false}

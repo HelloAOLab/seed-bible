@@ -1,0 +1,67 @@
+const { useRef, useState, useCallback } = os.appHooks;
+
+const DragOverBar = thisBot.DragOverBar();
+
+const CustomArrangementTestament = ({
+    testament, 
+    handleTestamentNameChange, 
+    handleTestamentClick,
+    handleDragStart,
+    handleDragEnter,
+    handleDragEnd,
+    index,
+    handleItemDelete,
+    handleItemColorChange,
+    dragOverInfo,
+    draggingId
+}) => {
+    
+    return (
+        <>
+            { (dragOverInfo?.id === testament.id && dragOverInfo.position === "top") && <DragOverBar />}
+            <li 
+                key={testament.id}
+                draggable="true"
+                onDragStart={() => {handleDragStart(testament.id)}} 
+                onDragEnter={() => {handleDragEnter(testament.id)}} 
+                onDragEnd={handleDragEnd}
+                className={`listItem ${draggingId === testament.id ? "dragging" : ""}`}
+                style={{
+                    backgroundColor: testament.color,
+                    color: GetTextColorBasedOnBackground(testament.color)
+                }}
+            >
+                <input
+                    key={testament.id}
+                    type="text"
+                    value={testament.name}
+                    onBlur={(e) => {handleTestamentNameChange({e, testamentId: testament.id})}}
+                />
+                <div className="actionButtonsContainer">
+                    <span 
+                        class={`material-symbols-outlined`} 
+                        onClick={() => {handleItemDelete(index)}}
+                    >
+                        close
+                    </span>
+                    <div>
+                    <span class="material-symbols-outlined" 
+                        >
+                            palette
+                        </span>
+                        <input type="color" value={testament.color} onChange={(e) => {handleItemColorChange(e, testament.id)}}/>
+                    </div>
+                    <span 
+                        class={`material-symbols-outlined`} 
+                        onClick={() => {handleTestamentClick(testament)}}
+                    >
+                        chevron_right
+                    </span>
+                </div>
+            </li>
+            {(dragOverInfo?.id === testament.id && dragOverInfo.position === "bottom") && <DragOverBar />}
+        </>
+    )
+}
+
+return CustomArrangementTestament;

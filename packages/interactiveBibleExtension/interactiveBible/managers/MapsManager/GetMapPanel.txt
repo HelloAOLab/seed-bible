@@ -1,0 +1,20 @@
+import { MapToolProvider } from "interactiveBible.managers.MapsManager.MapToolContext"
+import { MapWrapper } from "interactiveBible.managers.MapsManager.MapWrapperComponent"
+
+export const MapModes = Object.freeze({
+    Viewer: "Viewer",
+    Checkbox: "Checkbox"
+});
+
+export const MapPanel = ({mode}) => {
+    return (
+        <>
+            <style>{thisBot.tags["MapPanel.css"]}</style>
+            <MapToolProvider>
+                <MapWrapper />
+            </ MapToolProvider>
+        </>
+    );
+};
+
+return {MapPanel, MapModes}

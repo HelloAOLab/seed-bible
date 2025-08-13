@@ -1,0 +1,62 @@
+if(thisBot.masks.isInTransition || thisBot.masks.isTryingToEjectFromTheBible || thisBot.masks.isStoppingEjectFromTheBible) return;
+
+const dimension = os.getCurrentDimension();
+const animationDuration = 1
+const mainWord = getBot("isMainWord", true);
+setTagMask(thisBot, "isInTransition", true);
+setTagMask(thisBot, "isTryingToEjectFromTheBible", true);
+setTagMask(thisBot, "ejectTransitionPercentage", 0);
+
+// Code that automatically starts the color lerp without the delay
+
+try
+{
+    // thisBot.lerpColor({startingColor: HexToRgb(thisBot.tags.initialColor), endingColor: [255, 255, 255], durationInSeconds: (animationDuration / 4 * 3)})
+    LerpColorManager.LerpTagColor({startingColor: HexToRgb(thisBot.tags.initialColor), endingColor: [255, 255, 255], durationInSeconds: (animationDuration / 4 * 3), bot: thisBot, tag: InterpolatableColorTags.Color});
+
+    await Promise.all([
+        animateTag(thisBot, "ejectTransitionPercentage", {
+            toValue: 1,
+            duration: animationDuration / 4 * 3,
+            easing: {type: "linear"}
+        })
+    ]).then(() => {
+        // thisBot.lerpColor({startingColor: [255, 255, 255], endingColor: HexToRgb(thisBot.tags.initialColor), durationInSeconds: (animationDuration / 5)})
+        LerpColorManager.LerpTagColor({startingColor: [255, 255, 255], endingColor: HexToRgb(thisBot.tags.initialColor), durationInSeconds: (animationDuration / 5), bot: thisBot, tag: InterpolatableColorTags.Color});
+
+        setTagMask(thisBot, "isInTransition", false);
+        setTagMask(thisBot, "isTryingToEjectFromTheBible", false);
+        thisBot.ejectFromTheBible();
+    })
+}
+catch(error) {console.error(error)}
+
+// Code to wait a delay time to detect if the user release the pointer and set the book as the tray
+
+// try
+// {
+//     await animateTag(thisBot, "ejectTransitionPercentage", {
+//         toValue: 0.25,
+//         duration: animationDuration / 4,
+//         easing: {type: "linear"}
+//     }).then(async () => {
+//         thisBot.lerpColor({startingColor: HexToRgb(thisBot.tags.initialColor), endingColor: [255, 255, 255], durationInSeconds: (animationDuration / 4 * 3)})
+//         LerpColorManager.LerpTagColor({startingColor: HexToRgb(thisBot.tags.initialColor), endingColor: [255, 255, 255], durationInSeconds: (animationDuration / 4 * 3), bot: thisBot, tag: InterpolatableColorTags.Color});
+
+//         await Promise.all([
+//             animateTag(thisBot, "ejectTransitionPercentage", {
+//                 toValue: 1,
+//                 duration: animationDuration / 4 * 3,
+//                 easing: {type: "linear"}
+//             })
+//         ]).then(() => {
+//             thisBot.lerpColor({startingColor: [255, 255, 255], endingColor: HexToRgb(thisBot.tags.initialColor), durationInSeconds: (animationDuration / 5)})
+//             LerpColorManager.LerpTagColor({startingColor: [255, 255, 255], endingColor: HexToRgb(thisBot.tags.initialColor), durationInSeconds: (animationDuration / 5), bot: thisBot, tag: InterpolatableColorTags.Color});
+
+//             setTagMask(thisBot, "isInTransition", false);
+//             setTagMask(thisBot, "isTryingToEjectFromTheBible", false);
+//             thisBot.ejectFromTheBible();
+//         })
+//     })
+// }
+// catch(error) {console.error(error)}

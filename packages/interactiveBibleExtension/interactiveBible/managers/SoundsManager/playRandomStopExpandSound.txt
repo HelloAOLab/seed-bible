@@ -1,0 +1,2 @@
+const urlsArray = thisBot.tags.soundsURLArray.find((soundInfo) => {return soundInfo.name === "HandleStopExpand"}).URLs
+os.playSound(GetRandomElementFromArray(urlsArray));

@@ -1,0 +1,1 @@
+return InstanceManager.vars.fixedArrangementsInfo[thisBot.GetCurrentArrangementIndex()];
