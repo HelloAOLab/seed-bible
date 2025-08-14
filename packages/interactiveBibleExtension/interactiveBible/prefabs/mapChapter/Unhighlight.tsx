@@ -37,7 +37,10 @@ try
         setTagMask(thisBot, "isHighlighted", false);
     })
 }
-catch()
+catch(error)
+{
+    void error
+}
 finally
 {
     setTagMask(thisBot, "isUnhighlighting", false);

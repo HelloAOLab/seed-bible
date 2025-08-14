@@ -18,7 +18,11 @@ try
         duration: animationDuration * 1.25,
         easing: {type: "sinusoidal", mode: "in"}
     })
-}catch()
+}
+catch(error)
+{
+    void error
+}
 
 while(thisBot.masks.isInAwaitAnimation)
 {

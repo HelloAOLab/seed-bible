@@ -1,6 +1,6 @@
 const { useState, useCallback, useEffect, useMemo } = os.appHooks;
 import { useMapToolContext } from "interactiveBible.managers.MapsManager.MapToolContext"
-import { Tooltip } from "interactiveBible.managers.MapsManager.Tooltip"
+// import { Tooltip } from "interactiveBible.managers.MapsManager.Tooltip"
 // import { PresentUserPresenceTooltipIcon } from "interactiveBible.managers.MapsManager.PresentUserPresenceIcon"
 import { useTestamentContext } from "interactiveBible.managers.MapsManager.TestamentContext"
 
