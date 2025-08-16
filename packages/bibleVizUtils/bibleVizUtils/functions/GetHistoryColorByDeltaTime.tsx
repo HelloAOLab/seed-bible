@@ -1,6 +1,6 @@
 const {deltaTime} = that;
 
-const sortedTimePeriods = thisBot.masks.historyTimePeriodsInfo.toSorted((periodInfoA, periodInfoB) => {
+const sortedTimePeriods = BibleVizUtils.Data.masks.historyTimePeriodsInfo.toSorted((periodInfoA, periodInfoB) => {
     return periodInfoA.GetTimePeriodInMs() - periodInfoB.GetTimePeriodInMs()
 })
 const greaterTimePeriodTime = sortedTimePeriods[sortedTimePeriods.length - 1].GetTimePeriodInMs();

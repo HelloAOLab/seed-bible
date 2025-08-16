@@ -176,7 +176,7 @@ export const Chapter = ({ index, bookName, sectionName}) => {
         onChapterClickAndHold,
         isInSelectionMode
     } = useBibleLayout2DContext();
-
+    
     const { testament } = useTestamentContext();
     
     const checked = useMemo(() => { return selection[testament.name][sectionName][bookName][index] }, [selection])
@@ -200,7 +200,7 @@ export const Chapter = ({ index, bookName, sectionName}) => {
     })
 
     const getChapterHistoryColor = useCallback(() => {
-        return GetHistoryColor({ data: { typeOfElement: BibleElementType.Chapter, key: `${bookName} ${index + 1}` } })
+        return BibleVizUtils.Functions.GetHistoryColor({ data: { typeOfElement: BibleVizUtils.Data.tags.BibleElementType.Chapter, key: `${bookName} ${index + 1}` } })
     }, [])
 
     const [historyColor, setHistoryColor] = useState(getChapterHistoryColor())

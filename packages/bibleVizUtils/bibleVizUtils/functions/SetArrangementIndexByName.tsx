@@ -13,9 +13,9 @@
  */
 
 const {name} = that;
-const arrangement = thisBot.vars.fixedArrangementsInfo.find((currentArrangement) => {return currentArrangement.name == name});
+const arrangement = BibleVizUtils.Data.vars.fixedArrangementsInfo.find((currentArrangement) => {return currentArrangement.name == name});
 if(arrangement)
 {
-    const index = thisBot.vars.fixedArrangementsInfo.indexOf(arrangement);
-    thisBot.vars.arrangementIndex = index;
+    const index = BibleVizUtils.Data.vars.fixedArrangementsInfo.indexOf(arrangement);
+    BibleVizUtils.Data.vars.arrangementIndex = index;
 }

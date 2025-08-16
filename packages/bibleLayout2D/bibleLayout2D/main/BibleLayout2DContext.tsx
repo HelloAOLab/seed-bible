@@ -262,7 +262,7 @@ export const BibleLayout2DProvider = ({
     const [scaleFactor, setScaleFactor] = useState(24)
     const [showLabels, setShowLabels] = useState(true);
     // const [showingAllChapters, setShowingAllChapters] = useState(true);
-    const arrangement = useMemo(() => {return InteractiveBibleData.vars.fixedArrangementsInfo[arrangementIndex]}, [arrangementIndex]);
+    const arrangement = useMemo(() => {return BibleVizUtils.Data.vars.fixedArrangementsInfo[arrangementIndex]}, [arrangementIndex]);
     const [isUserPresenceEnabled, setIsUserPresenceEnabled] = useState(false);
     const [usersStatus, setUsersStatus] = useState(new Map(Array.from(content).map(([key]) => {return [key, true]})))
     const [modes, setModes] = useState(new Map([
@@ -300,10 +300,10 @@ export const BibleLayout2DProvider = ({
             "20": getFixedSizeByRatio(SIZE_RATIO[20]),
             "48": getFixedSizeByRatio(SIZE_RATIO[48])
         }
-        const bookWidth = getFixedSizeByRatio(InteractiveBibleData.tags.BibleLayoutMeasurements.Book2DScaleX);
-        const chapterGap = getFixedSizeByRatio(InteractiveBibleData.tags.BibleLayoutMeasurements.Chapter2DGap);
-        const chapterWidth = getFixedSizeByRatio(InteractiveBibleData.tags.BibleLayoutMeasurements.Chapter2DWidth);
-        const chapterHeight = getFixedSizeByRatio(InteractiveBibleData.tags.BibleLayoutMeasurements.Chapter2DHeight);
+        const bookWidth = getFixedSizeByRatio(BibleVizUtils.Data.tags.BibleLayoutMeasurements.Book2DScaleX);
+        const chapterGap = getFixedSizeByRatio(BibleVizUtils.Data.tags.BibleLayoutMeasurements.Chapter2DGap);
+        const chapterWidth = getFixedSizeByRatio(BibleVizUtils.Data.tags.BibleLayoutMeasurements.Chapter2DWidth);
+        const chapterHeight = getFixedSizeByRatio(BibleVizUtils.Data.tags.BibleLayoutMeasurements.Chapter2DHeight);
 
         return {fixedSize, bookWidth, chapterGap, chapterWidth, chapterHeight}
     }, [scaleFactor, getFixedSizeByRatio])

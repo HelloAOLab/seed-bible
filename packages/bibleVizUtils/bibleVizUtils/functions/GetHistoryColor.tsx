@@ -13,5 +13,5 @@ if(entries.length > 0)
     const entriesDeltaTime = entries.map((entry) => {return os.localTime - entry.date.getTime()});
     color = thisBot.GetHistoryColorByDeltaTime({deltaTime: entriesDeltaTime[entriesDeltaTime.length - 1]});
 }
-else color = InstanceManager.tags.historyNullColor
+else color = BibleVizUtils.Data.tags.historyNullColor
 return color;

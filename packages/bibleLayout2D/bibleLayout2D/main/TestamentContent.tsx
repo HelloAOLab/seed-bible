@@ -27,8 +27,8 @@ export const TestamentContent = ({hidden}) => {
         
         reversedSections.forEach((section, sectionIndex) => {
             const levelColorsKey = `${testamentIndex} ${sectionIndex}`
-            const sectionLevelsColors = GetChildrenLevelColors({
-                sectionColorRGB: HexToRgb(section.color), 
+            const sectionLevelsColors = BibleVizUtils.Functions.GetChildrenLevelColors({
+                sectionColorRGB: BibleVizUtils.Functions.HexToRgb(section.color), 
                 colorRange: section.customColorRange ?? 70, 
                 levelsLength: section.books.length
             })
@@ -54,12 +54,11 @@ export const TestamentContent = ({hidden}) => {
     }, [])
     
     const { fittingBooksCount, rowPairCount } = useMemo(() => {
-        const bookWidth = getRawSizeByRatio(InteractiveBibleData.tags.BibleLayoutMeasurements.Book2DScaleX);
+        const bookWidth = getRawSizeByRatio(BibleVizUtils.Data.tags.BibleLayoutMeasurements.Book2DScaleX);
         const gridGap = getRawSizeByRatio(SIZE_RATIO[4]);
         const fittingBooksCount = getFittingItemCount(contentWidth, bookWidth, gridGap);
         const totalBooks = reversedSections.flatMap((section) => {return section.books}).length;
         const rowPairCount = Math.ceil(totalBooks / fittingBooksCount);
-
         return { fittingBooksCount, rowPairCount }
     }, [scaleFactor, contentWidth, testament]);
 
@@ -71,7 +70,6 @@ export const TestamentContent = ({hidden}) => {
         let currentBookColumn = 1;
 
         if(fittingBooksCount === 0) return elements
-
 
         for( let i = 1 ; i <= rowPairCount ; i++ )
         {
@@ -124,6 +122,7 @@ export const TestamentContent = ({hidden}) => {
             }
             currentBookColumn = 1;
         }
+        
         return elements
     }, [fittingBooksCount, rowPairCount, reversedSections, sectionLevelsColorsMap, sectionsShown, showLabels])
 

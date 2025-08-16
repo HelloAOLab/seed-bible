@@ -35,7 +35,7 @@ export const Wrapper = () => {
                 "--chapterGap": chapterGap,
                 "--chapterWidth": chapterWidth,
                 "--chapterHeight": chapterHeight,
-                "--bookMaxAmountOfColumns": InteractiveBibleData.tags.BibleLayoutMeasurements.Book2DMaxAmountOfColumns
+                "--bookMaxAmountOfColumns": BibleVizUtils.Data.tags.BibleLayoutMeasurements.Book2DMaxAmountOfColumns
             }}
         >
             <Settings />

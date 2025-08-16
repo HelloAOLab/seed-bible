@@ -1,20 +1,21 @@
-import {HistoryTimePeriodInfo} from "bibleVizUtils.classes.HistoryTimePeriodInfo"
-
-if(configBot.tags.systemPortal || thisBot.masks.initialized || typeof InteractiveBibleData !== "undefined") return;
-
-setTagMask(thisBot, "initialized", true);
 const bibleVizClasses = getBot(byTag("system", "bibleVizUtils.classes"));
 const bibleVizData = getBot(byTag("system", "bibleVizUtils.data"));
 const bibleVizFunctions = getBot(byTag("system", "bibleVizUtils.functions"))
 
-const nowTimePeriod = new HistoryTimePeriodInfo({color: "#ea42ea", isNowTimePeriod: true})
-const defaultTimePeriod = new HistoryTimePeriodInfo({color: "#42ea6b", timeAmount: 30, timeUnit: TimeUnit.Days})
+if(configBot.tags.systemPortal || thisBot.masks.initialized || typeof BibleVizUtils !== "undefined" || !bibleVizClasses || !bibleVizData || !bibleVizFunctions) return;
+
+setTagMask(thisBot, "initialized", true);
 
 globalThis.BibleVizUtils = {
-    Classes: bibleVizClasses
-    Data: bibleVizData
+    Classes: bibleVizClasses,
+    Data: bibleVizData,
     Functions: bibleVizFunctions
 }
+const {HistoryTimePeriodInfo} = await import("bibleVizUtils.classes.HistoryTimePeriodInfo");
+
+const nowTimePeriod = new HistoryTimePeriodInfo({color: "#ea42ea", isNowTimePeriod: true})
+const defaultTimePeriod = new HistoryTimePeriodInfo({color: "#42ea6b", timeAmount: 30, timeUnit: bibleVizData.tags.TimeUnit.Days})
+
 
 const UsersColorValues = {
     InfoLabelColorScales: {x: 0.5, y: 0.5, z: 0},
@@ -59,9 +60,8 @@ const BibleLayoutMeasurements = {
     Chapter2DPadding: 0.1,
     Book2DMaxAmountOfColumns: 5
 }
-const BookScaleX = (BibleLayoutMeasurements.BookMaxAmountOfColumns * BibleLayoutMeasurements.ChapterWidth) + (BibleLayoutMeasurements.ChapterPadding * 2) + (BibleLayoutMeasurements.ChapterGap * (BibleLayoutMeasurements.BookMaxAmountOfColumns - 1))
-BibleLayoutMeasurements.Book3DScaleX = BookScaleX;
-BibleLayoutMeasurements.Book2DScaleX = BookScaleX;
+BibleLayoutMeasurements.Book3DScaleX = (BibleLayoutMeasurements.Book3DMaxAmountOfColumns * BibleLayoutMeasurements.Chapter3DWidth) + (BibleLayoutMeasurements.Chapter3DPadding * 2) + (BibleLayoutMeasurements.Chapter3DGap * (BibleLayoutMeasurements.Book3DMaxAmountOfColumns - 1))
+BibleLayoutMeasurements.Book2DScaleX = (BibleLayoutMeasurements.Book2DMaxAmountOfColumns * BibleLayoutMeasurements.Chapter2DWidth) + (BibleLayoutMeasurements.Chapter2DPadding * 2) + (BibleLayoutMeasurements.Chapter2DGap * (BibleLayoutMeasurements.Book2DMaxAmountOfColumns - 1))
 const StackElementMeasurements = {
     ChapterWidth: 0.5,
     ChapterHeight: 0.5,
@@ -78,11 +78,11 @@ const StackElementMeasurements = {
     AditionalBookScaleOnHover: 0.1
 }
 
-setTag(bibleVizData, "BibleLayoutMeasurements", BibleLayoutMeasurements);
 setTag(bibleVizData, "UsersColorValues", UsersColorValues);
+setTag(bibleVizData, "BibleLayoutMeasurements", BibleLayoutMeasurements);
 setTag(bibleVizData, "StackElementMeasurements", StackElementMeasurements);
-setTagMask(bibleVizData, 'highlightHistoryIndex', -1);
 setTagMask(bibleVizData, "isInHistoryMode", false);
+setTagMask(bibleVizData, 'highlightHistoryIndex', -1);
 setTagMask(bibleVizData, "historyTimePeriodsInfo", [nowTimePeriod, defaultTimePeriod])
 bibleVizData.vars.history = [];
 bibleVizData.vars.highlightHistory = [];

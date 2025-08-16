@@ -40,8 +40,8 @@ export const Book = ({
     const [showChapters, setShowChapters] = useState(showingAllChapters);
     const {chaptersCount, shortName} = useMemo(() => { 
         return {
-            chaptersCount: InteractiveBibleData.tags.booksStaticInfo[bookInfo.commonName].numberOfChapters,
-            shortName: InteractiveBibleData.tags.booksStaticInfo[bookInfo.commonName].abbreviation
+            chaptersCount: BibleVizUtils.Data.tags.booksStaticInfo[bookInfo.commonName].numberOfChapters,
+            shortName: BibleVizUtils.Data.tags.booksStaticInfo[bookInfo.commonName].abbreviation
         } 
     }, [])
     const bookCoverHeight = useMemo(() => { return `${Math.round(thisBot.GetBookHeightByName({bookName: bookInfo.commonName})  * scaleFactor)}px` }, [scaleFactor]);

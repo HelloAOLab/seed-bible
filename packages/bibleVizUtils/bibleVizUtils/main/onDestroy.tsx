@@ -1,1 +1,1 @@
-globalThis.InteractiveBibleData = null;
+globalThis.BibleVizUtils = null;
