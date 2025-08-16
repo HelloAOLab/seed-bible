@@ -28,8 +28,8 @@ export const TestamentContent = ({hidden}) => {
         reversedSections.forEach((section, sectionIndex) => {
             const levelColorsKey = `${testamentIndex} ${sectionIndex}`
             const sectionLevelsColors = BibleVizUtils.Functions.GetChildrenLevelColors({
-                sectionColorRGB: BibleVizUtils.Functions.HexToRgb(section.color), 
-                colorRange: section.customColorRange ?? 70, 
+                sectionColorRGB: BibleVizUtils.Functions.HexToRgb({hexColor: section.color}), 
+                colorRange: section.customColorRange ?? 70,
                 levelsLength: section.books.length
             })
             map.set(levelColorsKey, sectionLevelsColors);
