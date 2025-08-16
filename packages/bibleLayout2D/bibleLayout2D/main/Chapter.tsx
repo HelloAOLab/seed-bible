@@ -320,6 +320,21 @@ export const Chapter = ({ index, bookName, sectionName}) => {
     //     return { usersInChapter }
     // }, [userPresence, isUserPresenceEnabled, modes])
 
+    /*{mode === BibleLayout2DModes.Viewer && isUserPresenceEnabled && displayContainer && <div className="contentContainer" style={{
+        gridTemplateColumns: gridColumns,
+        gridTemplateRows: gridRows
+    }}>
+        {filteredUsers.map(([user]) => {
+            return <div style={{ backgroundColor: usersInfo[user].color }}></div>
+        })}
+    </div>}
+
+    
+    {mode === BibleLayout2DModes.Viewer && isUserPresenceEnabled && modes.get("Reading") && <>
+        <PresentUserPresenceDotContainer bookName={bookName} chapterIndex={index} usersInChapter={usersInChapter} />
+        <ReadingHistoryChapterNotificationContainer bookName={bookName} chapterIndex={index} />
+        <UpcomingEventsChapterNotificationContainer bookName={bookName} chapterIndex={index} />
+    </>}*/
     return (
         <div
             className="chapter"
@@ -333,22 +348,6 @@ export const Chapter = ({ index, bookName, sectionName}) => {
             }}
         >
             {index + 1}
-
-            {/*mode === BibleLayout2DModes.Viewer && isUserPresenceEnabled && displayContainer && <div className="contentContainer" style={{
-                gridTemplateColumns: gridColumns,
-                gridTemplateRows: gridRows
-            }}>
-                {filteredUsers.map(([user]) => {
-                    return <div style={{ backgroundColor: usersInfo[user].color }}></div>
-                })}
-            </div>*/}
-
-            
-            {/*mode === BibleLayout2DModes.Viewer && isUserPresenceEnabled && modes.get("Reading") && <>
-                <PresentUserPresenceDotContainer bookName={bookName} chapterIndex={index} usersInChapter={usersInChapter} />
-                <ReadingHistoryChapterNotificationContainer bookName={bookName} chapterIndex={index} />
-                <UpcomingEventsChapterNotificationContainer bookName={bookName} chapterIndex={index} />
-            </>*/}
         </div>
     )
 }

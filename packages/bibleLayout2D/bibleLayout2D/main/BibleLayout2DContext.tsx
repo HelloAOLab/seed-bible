@@ -1,4 +1,4 @@
-const { createContext, useRef, useState, useContext, useCallback, useEffect, useMemo } = os.appHooks;
+const { createContext, useRef, useState, useContext, useCallback, useMemo } = os.appHooks;
 
 const BibleLayout2DContext = createContext();
 

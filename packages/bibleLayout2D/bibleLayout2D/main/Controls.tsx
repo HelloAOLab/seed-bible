@@ -73,6 +73,12 @@ export const Controls = () => {
 
     const { handleZoomIn, handleZoomOut, /*handleLabelsToggle, handleShowAllChaptersToggle, showingAllChapters, handleContentHeatmapToggle*/ } = useBibleLayout2DContext();
     
+    /*{<>
+        <button onClick={handleLabelsToggle}><span class="material-symbols-outlined">sell</span></button>
+        {false && <button onClick={handleShowAllChaptersToggle}><span class="material-symbols-outlined">{showingAllChapters ? "visibility_off" : "visibility"}</span></button>}
+        <button onClick={handleContentHeatmapToggle}><span class="material-symbols-outlined">description</span></button>
+    </>}*/
+    
     return (
         <div className="mapControls">
             <div className="zoomContainer">
@@ -83,15 +89,6 @@ export const Controls = () => {
                 </ZoomButton>
                 <ZoomButton onClick={handleZoomIn}><span className="material-symbols-outlined">add</span></ZoomButton>
             </div>
-
-
-
-
-            {/*<>
-                <button onClick={handleLabelsToggle}><span class="material-symbols-outlined">sell</span></button>
-                {false && <button onClick={handleShowAllChaptersToggle}><span class="material-symbols-outlined">{showingAllChapters ? "visibility_off" : "visibility"}</span></button>}
-                <button onClick={handleContentHeatmapToggle}><span class="material-symbols-outlined">description</span></button>
-            </>*/}
         </div>
     )    
 }

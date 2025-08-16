@@ -1,0 +1,91 @@
+import {HistoryTimePeriodInfo} from "bibleVizUtils.classes.HistoryTimePeriodInfo"
+
+if(configBot.tags.systemPortal || thisBot.masks.initialized || typeof InteractiveBibleData !== "undefined") return;
+
+setTagMask(thisBot, "initialized", true);
+const bibleVizClasses = getBot(byTag("system", "bibleVizUtils.classes"));
+const bibleVizData = getBot(byTag("system", "bibleVizUtils.data"));
+const bibleVizFunctions = getBot(byTag("system", "bibleVizUtils.functions"))
+
+const nowTimePeriod = new HistoryTimePeriodInfo({color: "#ea42ea", isNowTimePeriod: true})
+const defaultTimePeriod = new HistoryTimePeriodInfo({color: "#42ea6b", timeAmount: 30, timeUnit: TimeUnit.Days})
+
+globalThis.BibleVizUtils = {
+    Classes: bibleVizClasses
+    Data: bibleVizData
+    Functions: bibleVizFunctions
+}
+
+const UsersColorValues = {
+    InfoLabelColorScales: {x: 0.5, y: 0.5, z: 0},
+    InfoLabelExtraUsersContentScales: {x: 0.4, y: 0.4, z: 0},
+    InfoLabelExtraUsersBackgroundScales: {x: 0.5, y: 0.5, z: 0},
+    InfoLabelColorForm: "circle",
+    InfoLabelColorOffset: new Vector3(0.25, 0, 0.1),
+    InfoLabelColorStep: new Vector3(0.3, 0, 0.02),
+    ChapterColorOffset: new Vector3(0.075, 0.075, 0),
+    ChapterColorStep: new Vector3(0.275, 0, 0),
+    GroundedElementColorScales: {x: 0.25, y: 0.25, z: 0.125},
+    GroundedElementExtraUsersContentScales: {x: 0.2, y: 0.2, z: 0.125},
+    GroundedElementExtraUsersBackgroundScales: {x: 0.25, y: 0.25, z: 0.03},
+    GroundedElementColorForm: "sphere",
+    MapBookColorOffset: {x: 0.1, y: 0.1, z: 0},
+    MapBookColorStep: new Vector3(0.3, 0, 0),
+}
+const BibleLayoutMeasurements = {
+    MaxAmountOfColumns: 7,
+    Book3DMaxAmountOfColumns: 5,
+    Chapter3DWidth: 0.5,
+    Chapter3DHeight: 0.5,
+    Chapter3DPadding: 0.1,
+    Chapter3DGap: 0.1,
+    BookHorizontalGap: 1,
+    BookVerticalGap: 1,
+    LayersVerticalGap: [3.5, 13.5, 21.625, 30.5, 43.5, 53.5, 57.5, 61.5, 68.5, 74],
+    GapBetweenBookAndLine: 1.5,
+    BookHorizontalOffset: 5,
+    BookLabelHeight: 1,
+    BookPositionZ: 1,
+    ChapterInitialScaleZ: 0.15,
+    ChapterSelectedScaleZ: 0.3,
+    ChapterPlaylistItemDeltaHeight: 0.075,
+    PlaylistNavigationButtonVerticalGap: 1,
+    PlaylistStackedEntryItemGap: 0.0375,
+    PlaylistEntryItemPadding: 0.01,
+
+    Chapter2DGap: 0.1,
+    Chapter2DHeight: 0.5,
+    Chapter2DWidth: 0.5,
+    Chapter2DPadding: 0.1,
+    Book2DMaxAmountOfColumns: 5
+}
+const BookScaleX = (BibleLayoutMeasurements.BookMaxAmountOfColumns * BibleLayoutMeasurements.ChapterWidth) + (BibleLayoutMeasurements.ChapterPadding * 2) + (BibleLayoutMeasurements.ChapterGap * (BibleLayoutMeasurements.BookMaxAmountOfColumns - 1))
+BibleLayoutMeasurements.Book3DScaleX = BookScaleX;
+BibleLayoutMeasurements.Book2DScaleX = BookScaleX;
+const StackElementMeasurements = {
+    ChapterWidth: 0.5,
+    ChapterHeight: 0.5,
+    MinChapterBackDepth: 0.5,
+    ChapterFrontDepth: 0.01,
+    ChapterFrontSelectedDepth: 0.25,
+    EmptySectionShadowScaleZ: 1,
+    CoverScales: new Vector3(2.53, 3.85, 0.10),
+    TestamentScales: new Vector3(2.27, 3.47, 0.825),
+    SectionScales: new Vector2(2.04, 3.12),
+    BookScales: new Vector2(1.83, 2.8),
+    SectionAditionalScaleOnHover: 0.1,
+    SectionDesiredScaleZRatio: 0.02,
+    AditionalBookScaleOnHover: 0.1
+}
+
+setTag(bibleVizData, "BibleLayoutMeasurements", BibleLayoutMeasurements);
+setTag(bibleVizData, "UsersColorValues", UsersColorValues);
+setTag(bibleVizData, "StackElementMeasurements", StackElementMeasurements);
+setTagMask(bibleVizData, 'highlightHistoryIndex', -1);
+setTagMask(bibleVizData, "isInHistoryMode", false);
+setTagMask(bibleVizData, "historyTimePeriodsInfo", [nowTimePeriod, defaultTimePeriod])
+bibleVizData.vars.history = [];
+bibleVizData.vars.highlightHistory = [];
+bibleVizData.vars.customArrangements = [];
+bibleVizData.vars.fixedArrangementsInfo = [];
+bibleVizFunctions.UpdateFixedArrangementsInfo();
