@@ -21,8 +21,8 @@ export const ProjectStateSetter = () => {
         
         switch(key)
         {
-            case ProjectChapterState.Unset: title = "Default"; break;
-            case ProjectChapterState.NotStarted: title = "Not Started"; break;
+            case ProjectChapterState.None: title = "None"; break;
+            case ProjectChapterState.Assigned: title = "Assigned"; break;
             case ProjectChapterState.InProgress: title = "In Progress"; break;
             case ProjectChapterState.NeedsReview: title = "Needs Review"; break;
             case ProjectChapterState.Completed: title = "Completed"; break;
@@ -57,7 +57,7 @@ export const ProjectStateSetter = () => {
             </div>
 
             {isInSelectionMode && <div>
-                <span>Mark as:</span>
+                <span>Status:</span>
                 {Object.keys(ProjectChapterState).map((state) => { return <ProjectStateSetterOption 
                     content={getOptionContent(state)}
                     onClick={() => {onStateSetterOptionClick(state)}}

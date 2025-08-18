@@ -8,8 +8,8 @@ export const BibleLayout2DModes = Object.freeze({
 });
 
 export const ProjectChapterState = Object.freeze({
-    Unset: "Unset",
-    NotStarted: "NotStarted",
+    None: "None",
+    Assigned: "Assigned",
     InProgress: "InProgress",
     NeedsReview: "NeedsReview",
     Completed: "Completed",

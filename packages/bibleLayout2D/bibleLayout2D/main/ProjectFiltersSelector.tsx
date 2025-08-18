@@ -15,7 +15,7 @@ export const ProjectFiltersSelector = () => {
         
         switch(key)
         {
-            case ProjectChapterState.NotStarted: title = "Not Started"; break;
+            case ProjectChapterState.Assigned: title = "Assigned"; break;
             case ProjectChapterState.InProgress: title = "In Progress"; break;
             case ProjectChapterState.NeedsReview: title = "Needs Review"; break;
             case ProjectChapterState.Completed: title = "Completed"; break;

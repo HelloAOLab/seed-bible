@@ -3,7 +3,7 @@ import { Chapter } from "bibleLayout2D.main.Chapter"
 import { PresentUserPresenceBookIcon } from "bibleLayout2D.main.PresentUserPresenceIcon"
 import { useTestamentContext } from "bibleLayout2D.main.TestamentContext"
 import {useClickAndHold} from "bibleLayout2D.main.CustomHooks"
-const { useMemo, useState, useEffect } = os.appHooks;
+const { useMemo, useState, useEffect, useCallback } = os.appHooks;
 
 export const Book = ({
     bookInfo,
@@ -33,7 +33,13 @@ export const Book = ({
         // setIsInSelectionMode,
 
         onBookNameClickAndHold,
-        onBookNameClickAndHoldDependencies
+        onBookNameClickAndHoldDependencies,
+
+        bookWidth,
+        chapterGap,
+        chapterPadding,
+        chapterWidth,
+        chapterHeight,
     } = useBibleLayout2DContext();
     const { testament } = useTestamentContext() 
     
@@ -44,7 +50,17 @@ export const Book = ({
             shortName: BibleVizUtils.Data.tags.booksStaticInfo[bookInfo.commonName].abbreviation
         } 
     }, [])
-    const bookCoverHeight = useMemo(() => { return `${Math.round(thisBot.GetBookHeightByName({bookName: bookInfo.commonName})  * scaleFactor)}px` }, [scaleFactor]);
+
+    const getBookHeight = useCallback(() => {
+        
+        const {chaptersInfo} = BibleVizUtils.Data.tags.booksStaticInfo[bookInfo.commonName];
+        const amountOfRows = Math.ceil(chaptersInfo.length / BibleVizUtils.Data.tags.BibleLayoutMeasurements.Book2DMaxAmountOfColumns);
+        const height = (amountOfRows * chapterHeight) + (chapterPadding * 2) + (chapterGap * (amountOfRows - 1))
+        return height;
+
+    }, [scaleFactor, chapterGap, chapterPadding, chapterHeight])
+    
+    const bookCoverHeight = useMemo(() => { return `${ getBookHeight() }px` }, [scaleFactor, getBookHeight, chapterGap, chapterPadding, chapterHeight]);
 
     const checked = useMemo(() => {
         return selection?.[testament.name]?.[sectionName]?.[bookInfo.commonName]?.every((chapter) => {return chapter});

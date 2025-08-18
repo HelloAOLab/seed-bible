@@ -9,10 +9,9 @@ export const TestamentContent = ({hidden}) => {
 
     const {
         arrangementIndex,
-        SIZE_RATIO,
-        getRawSizeByRatio,
         scaleFactor,
-        showLabels
+        showLabels,
+        bookWidth
     } = useBibleLayout2DContext();
 
     const contentRef = useRef(null);
@@ -54,13 +53,12 @@ export const TestamentContent = ({hidden}) => {
     }, [])
     
     const { fittingBooksCount, rowPairCount } = useMemo(() => {
-        const bookWidth = getRawSizeByRatio(BibleVizUtils.Data.tags.BibleLayoutMeasurements.Book2DScaleX);
-        const gridGap = getRawSizeByRatio(SIZE_RATIO[4]);
+        const gridGap = 16 * scaleFactor;
         const fittingBooksCount = getFittingItemCount(contentWidth, bookWidth, gridGap);
         const totalBooks = reversedSections.flatMap((section) => {return section.books}).length;
         const rowPairCount = Math.ceil(totalBooks / fittingBooksCount);
         return { fittingBooksCount, rowPairCount }
-    }, [scaleFactor, contentWidth, testament]);
+    }, [scaleFactor, contentWidth, testament, bookWidth]);
 
     const renderSections = useCallback(() => {
 

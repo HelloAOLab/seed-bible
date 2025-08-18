@@ -53,15 +53,10 @@ const BibleLayoutMeasurements = {
     PlaylistNavigationButtonVerticalGap: 1,
     PlaylistStackedEntryItemGap: 0.0375,
     PlaylistEntryItemPadding: 0.01,
-
-    Chapter2DGap: 0.1,
-    Chapter2DHeight: 0.5,
-    Chapter2DWidth: 0.5,
-    Chapter2DPadding: 0.1,
+    
     Book2DMaxAmountOfColumns: 5
 }
 BibleLayoutMeasurements.Book3DScaleX = (BibleLayoutMeasurements.Book3DMaxAmountOfColumns * BibleLayoutMeasurements.Chapter3DWidth) + (BibleLayoutMeasurements.Chapter3DPadding * 2) + (BibleLayoutMeasurements.Chapter3DGap * (BibleLayoutMeasurements.Book3DMaxAmountOfColumns - 1))
-BibleLayoutMeasurements.Book2DScaleX = (BibleLayoutMeasurements.Book2DMaxAmountOfColumns * BibleLayoutMeasurements.Chapter2DWidth) + (BibleLayoutMeasurements.Chapter2DPadding * 2) + (BibleLayoutMeasurements.Chapter2DGap * (BibleLayoutMeasurements.Book2DMaxAmountOfColumns - 1))
 const StackElementMeasurements = {
     ChapterWidth: 0.5,
     ChapterHeight: 0.5,

@@ -223,22 +223,8 @@ const ContentVisualizationType = {
     Container: "Container"
 }
 
-const SIZE_RATIO = {
-    "0.25": 0.02085,
-    "0.5": 0.0417,
-    "0.75": 0.06255,
-    "1": 0.0834,
-    "2": 0.1667,
-    "3": 0.2502,
-    "4": 0.334,
-    "8": 0.667,
-    "10": 0.834,
-    "12": 1,
-    "20": 1.667,
-    "48": 4
-}
-const MIN_SCALE_FACTOR = 12;
-const MAX_SCALE_FACTOR = 72;
+const MIN_SCALE_FACTOR = 0.25;
+const MAX_SCALE_FACTOR = 1.5;
 
 export const BibleLayout2DProvider = ({
         children,
@@ -249,8 +235,8 @@ export const BibleLayout2DProvider = ({
 
     const projectStateStyle = useMemo(() => {
         return {
-            [ProjectChapterState.Unset]: {backgroundColor: "rgb(227, 227, 227)", borderColor: "rgb(227, 227, 227)", borderStyle: "solid"},
-            [ProjectChapterState.NotStarted]: {backgroundColor: "rgb(227, 227, 227)", borderColor: "grey", borderStyle: "dashed"},
+            [ProjectChapterState.None]: {backgroundColor: "rgb(227, 227, 227)", borderColor: "rgb(227, 227, 227)", borderStyle: "solid"},
+            [ProjectChapterState.Assigned]: {backgroundColor: "rgb(227, 227, 227)", borderColor: "grey", borderStyle: "dashed"},
             [ProjectChapterState.InProgress]: {backgroundColor: "#ffeaa7", borderColor: "#D8A90F", borderStyle: "dashed"},
             [ProjectChapterState.NeedsReview]: {backgroundColor: "#ffb3a3", borderColor: "#B82A0D", borderStyle: "dashed"},
             [ProjectChapterState.Completed]: {backgroundColor: "#87eb72", borderColor: "#87eb72", borderStyle: "solid"},
@@ -259,7 +245,7 @@ export const BibleLayout2DProvider = ({
 
     const { arrangementIndex } = parentContext;
 
-    const [scaleFactor, setScaleFactor] = useState(24)
+    const [scaleFactor, setScaleFactor] = useState(1)
     const [showLabels, setShowLabels] = useState(true);
     // const [showingAllChapters, setShowingAllChapters] = useState(true);
     const arrangement = useMemo(() => {return BibleVizUtils.Data.vars.fixedArrangementsInfo[arrangementIndex]}, [arrangementIndex]);
@@ -272,41 +258,21 @@ export const BibleLayout2DProvider = ({
     const [contentVisualization, setContentVisualization] = useState(ContentVisualizationType.Container);
     
     const [projectFilters, setProjectFilters] = useState(new Map([
-        [ProjectChapterState.NotStarted, true],
+        [ProjectChapterState.Assigned, true],
         [ProjectChapterState.InProgress, true],
         [ProjectChapterState.NeedsReview, true],
         [ProjectChapterState.Completed, true]
     ]))
 
-    const getRawSizeByRatio = useCallback((ratio) => {
-        return Math.round(ratio * scaleFactor)
-    }, [scaleFactor])
-    const getFixedSizeByRatio = useCallback((ratio) => {
-        return `${getRawSizeByRatio(ratio)}px`
-    }, [scaleFactor])
+    const { bookWidth, chapterGap, chapterWidth, chapterHeight, chapterPadding } = useMemo(() => {
+        const bookWidth = scaleFactor * 150;
+        const chapterGap = scaleFactor * 5;
+        const chapterPadding = scaleFactor * 5;
+        const chapterWidth = scaleFactor * 24;
+        const chapterHeight = scaleFactor * 24;
 
-    const { fixedSize, bookWidth, chapterGap, chapterWidth, chapterHeight } = useMemo(() => {
-        const fixedSize = {
-            "0.25": getFixedSizeByRatio(SIZE_RATIO["0.25"]),
-            "0.5": getFixedSizeByRatio(SIZE_RATIO["0.5"]),
-            "0.75": getFixedSizeByRatio(SIZE_RATIO["0.75"]),
-            "1": getFixedSizeByRatio(SIZE_RATIO[1]),
-            "2": getFixedSizeByRatio(SIZE_RATIO[2]),
-            "3": getFixedSizeByRatio(SIZE_RATIO[3]),
-            "4": getFixedSizeByRatio(SIZE_RATIO[4]),
-            "8": getFixedSizeByRatio(SIZE_RATIO[8]),
-            "10": getFixedSizeByRatio(SIZE_RATIO[10]),
-            "12": getFixedSizeByRatio(SIZE_RATIO[12]),
-            "20": getFixedSizeByRatio(SIZE_RATIO[20]),
-            "48": getFixedSizeByRatio(SIZE_RATIO[48])
-        }
-        const bookWidth = getFixedSizeByRatio(BibleVizUtils.Data.tags.BibleLayoutMeasurements.Book2DScaleX);
-        const chapterGap = getFixedSizeByRatio(BibleVizUtils.Data.tags.BibleLayoutMeasurements.Chapter2DGap);
-        const chapterWidth = getFixedSizeByRatio(BibleVizUtils.Data.tags.BibleLayoutMeasurements.Chapter2DWidth);
-        const chapterHeight = getFixedSizeByRatio(BibleVizUtils.Data.tags.BibleLayoutMeasurements.Chapter2DHeight);
-
-        return {fixedSize, bookWidth, chapterGap, chapterWidth, chapterHeight}
-    }, [scaleFactor, getFixedSizeByRatio])
+        return {bookWidth, chapterGap, chapterWidth, chapterHeight, chapterPadding}
+    }, [scaleFactor])
 
 
     const handleContentHeatmapToggle = useCallback(() => {
@@ -327,7 +293,7 @@ export const BibleLayout2DProvider = ({
     const handleZoomIn = useCallback(() => {
         if(scaleFactor < MAX_SCALE_FACTOR)
         {
-            const newValue = Math.min(MAX_SCALE_FACTOR, scaleFactor + 4)
+            const newValue = Math.min(MAX_SCALE_FACTOR, scaleFactor + MIN_SCALE_FACTOR)
             setScaleFactor(newValue)
         }
     }, [scaleFactor])
@@ -335,7 +301,7 @@ export const BibleLayout2DProvider = ({
     const handleZoomOut = useCallback(() => {
         if(scaleFactor > MIN_SCALE_FACTOR)
         {
-            const newValue = Math.max(MIN_SCALE_FACTOR, scaleFactor - 4);
+            const newValue = Math.max(MIN_SCALE_FACTOR, scaleFactor - MIN_SCALE_FACTOR);
             setScaleFactor(newValue)
         }
     }, [scaleFactor])
@@ -421,10 +387,9 @@ export const BibleLayout2DProvider = ({
             UserPresenceTimeType,
             usersInfo,
             userPresence,
-            fixedSize,
-            SIZE_RATIO,
             bookWidth,
             chapterGap,
+            chapterPadding,
             chapterWidth,
             chapterHeight,
             ContentVisualizationType,
@@ -433,7 +398,6 @@ export const BibleLayout2DProvider = ({
             handleProjectFilterOptionClick,
             readingHistory,
             upcomingEvents,
-            getRawSizeByRatio,
             projectFilters,
             BibleLayout2DModes,
             ProjectChapterState,

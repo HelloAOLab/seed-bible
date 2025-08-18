@@ -4,10 +4,10 @@ const { useState, useCallback, useMemo } = os.appHooks;
 
 const ZoomLevelOption = ({value, handleZoomLevelClick}) => {
 
-    const { scaleFactor, MIN_SCALE_FACTOR } = useBibleLayout2DContext();
+    const { scaleFactor } = useBibleLayout2DContext();
 
     const zoom = useMemo(() => {
-        return (value * 25) / MIN_SCALE_FACTOR
+        return value * 100
     }, [scaleFactor])
 
     const selected = useMemo(() => {return value === scaleFactor}, [scaleFactor])
@@ -35,12 +35,12 @@ const ZoomLevelSelector = ({setShowOptions}) => {
             className="zoomLevelSelector"
         >
             <span>Zoom level</span>
-            <ZoomLevelOption value={72} handleZoomLevelClick={handleZoomLevelClick} />
-            <ZoomLevelOption value={60} handleZoomLevelClick={handleZoomLevelClick} />
-            <ZoomLevelOption value={48} handleZoomLevelClick={handleZoomLevelClick} />
-            <ZoomLevelOption value={36} handleZoomLevelClick={handleZoomLevelClick} />
-            <ZoomLevelOption value={24} handleZoomLevelClick={handleZoomLevelClick} />
-            <ZoomLevelOption value={12} handleZoomLevelClick={handleZoomLevelClick} />
+            <ZoomLevelOption value={1.5}    handleZoomLevelClick={handleZoomLevelClick} />
+            <ZoomLevelOption value={1.25}   handleZoomLevelClick={handleZoomLevelClick} />
+            <ZoomLevelOption value={1}      handleZoomLevelClick={handleZoomLevelClick} />
+            <ZoomLevelOption value={0.75}   handleZoomLevelClick={handleZoomLevelClick} />
+            <ZoomLevelOption value={0.5}    handleZoomLevelClick={handleZoomLevelClick} />
+            <ZoomLevelOption value={0.25}   handleZoomLevelClick={handleZoomLevelClick} />
         </div>
     )
 }
@@ -63,10 +63,10 @@ const ZoomButton = ({onClick, children}) => {
 
 export const Controls = () => {
 
-    const { scaleFactor, MIN_SCALE_FACTOR } = useBibleLayout2DContext();
+    const { scaleFactor } = useBibleLayout2DContext();
 
     const currZoom = useMemo(() => {
-        return Math.round((scaleFactor * 25) / MIN_SCALE_FACTOR)
+        return Math.round(scaleFactor * 100)
     }, [scaleFactor])
 
     const [showOptions, setShowOptions] = useState(false);
