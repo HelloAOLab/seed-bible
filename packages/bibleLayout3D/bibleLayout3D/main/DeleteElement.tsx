@@ -1,6 +1,6 @@
-import {LayoutData} from "bibleLayout3D.main.LayoutData"
-import {LayoutBookData} from "bibleLayout3D.main.LayoutBookData"
-import {LayoutChapterData} from "bibleLayout3D.main.LayoutChapterData"
+import {LayoutData} from "bibleVizUtils.classes.LayoutData"
+import {LayoutBookData} from "bibleVizUtils.classes.LayoutBookData"
+import {LayoutChapterData} from "bibleVizUtils.classes.LayoutChapterData"
 let {elementData} = that;
 const {element} = that;
 if(!elementData)

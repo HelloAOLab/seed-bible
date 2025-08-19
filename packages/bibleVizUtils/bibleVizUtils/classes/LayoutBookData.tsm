@@ -1,4 +1,4 @@
-import {LayoutChapterData} from "bibleLayout3D.main.LayoutChapterData"
+import {LayoutChapterData} from "bibleVizUtils.classes.LayoutChapterData"
 
 export class LayoutBookData
 {

@@ -5,6 +5,6 @@ if (!chapterData.element.masks.isSelecting &&
     !chapterData.element.masks.isBeingDragged)
 {
     chapterData.element.Unhighlight({chapterData}).then(() => {
-        if(!chapterData.element.masks.isExpanded) InstanceManager.UpdateUsersNotificationOnElements({elementsData: [chapterData]})
+        if(!chapterData.element.masks.isExpanded) BibleVizUtils.Functions.UpdateUsersNotificationOnElements({elementsData: [chapterData]})
     });
 }

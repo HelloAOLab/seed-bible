@@ -1,4 +1,4 @@
-import {LayoutBookData} from "bibleLayout3D.main.LayoutBookData"
+import {LayoutBookData} from "bibleVizUtils.classes.LayoutBookData"
 import {ParentDataIds} from "bibleVizUtils.classes.ParentDataIds"
 
 const {bookInfo, layoutData, arrangementIndex, testamentIndex, sectionIndex} = that;

@@ -9,9 +9,9 @@ setTagMask(thisBot, "isAnimatingMap", true);
 const dimension = os.getCurrentDimension();
 layoutData.currentPlaylistShownId = playlistId;
 const playlistItemsList = playlistInfo.list.slice()
-thisBot.HideCurrentMapBookDateLabelShown();
+thisBot.HideCurrentBookDateLabelShown();
 
-await thisBot.RespawnAllBooksOnMap({layoutData});
+await thisBot.RespawnAllBooks({layoutData});
 
 layoutData.childrenStructures.forEach((layoutBookStructure) => {
     if(layoutBookStructure.layoutBookData.element)
@@ -29,16 +29,16 @@ for(const playlistEntryInfoIndex in playlistItemsList)
 
     switch(playlistEntryInfo.type)
     {
-        case PlaylistItemType.Chapter: 
-        case PlaylistItemType.Verse: {
+        case BibleVizUtils.Data.tags.PlaylistItemType.Chapter: 
+        case BibleVizUtils.Data.tags.PlaylistItemType.Verse: {
             const layoutBookStructure = layoutData.childrenStructures.find((structure) => {
-                return structure.layoutBookData.elementInfo.commonName === playlistEntryInfo.additionalInfo[playlistEntryInfo.type === PlaylistItemType.Verse ? "book" : "bookName"]
+                return structure.layoutBookData.elementInfo.commonName === playlistEntryInfo.additionalInfo[playlistEntryInfo.type === BibleVizUtils.Data.tags.PlaylistItemType.Verse ? "book" : "bookName"]
             })
             
             if(!layoutBookStructure.layoutBookData.isSelected)
             {
                 const chaptersMod = { draggable: false }
-                await thisBot.SelectMapBook({layoutBookData: layoutBookStructure.layoutBookData, layoutData, chaptersMod})
+                await thisBot.SelectBook({layoutBookData: layoutBookStructure.layoutBookData, layoutData, chaptersMod})
             }
             const chapterData = layoutBookStructure.layoutBookData.childrenData.find((data) => {
                 return data.elementInfo.number === playlistEntryInfo.additionalInfo.chapter
@@ -84,10 +84,10 @@ for(const playlistEntryInfoIndex in playlistItemsList)
     }
 }
 
-thisBot.TryShowPlaylistPathOnMap({layoutData})
+thisBot.TryShowPlaylistPath({layoutData})
 
 const coverPosition = getBotPosition(layoutData.staticLayoutElements.cover, dimension);
-const coverScales = GetBotScales(layoutData.staticLayoutElements.cover)
+const coverScales = BibleVizUtils.Functions.GetBotScales({bot: layoutData.staticLayoutElements.cover})
 
 const prevButton = layoutData.staticLayoutElements.playlistPreviousButton ?? ObjectPooler.GetObjectFromPool({tag: BibleVizUtils.Data.tags.ObjectPoolTags.MapPlaylistNavigationButton});
 const nextButton = layoutData.staticLayoutElements.playlistNextButton ?? ObjectPooler.GetObjectFromPool({tag: BibleVizUtils.Data.tags.ObjectPoolTags.MapPlaylistNavigationButton});
@@ -125,4 +125,4 @@ nextButton.OnSpawned({mod: nextButtonMod});
 layoutData.staticLayoutElements.playlistPreviousButton = prevButton;
 layoutData.staticLayoutElements.playlistNextButton = nextButton;
 
-shout("OnShowPlaylistOnMapComplete")
+shout("OnShowPlaylistOnLayoutComplete")

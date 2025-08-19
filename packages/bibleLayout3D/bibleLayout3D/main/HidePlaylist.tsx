@@ -6,7 +6,7 @@ layoutData.playlistSelectedEntryIndex = 0;
 layoutData.currentPlaylistShownId = null;
 layoutData.playlistEntries = [];
 
-await thisBot.RespawnAllBooksOnMap({layoutData});
+await thisBot.RespawnAllBooks({layoutData});
 
 layoutData.childrenStructures.forEach((layoutBookStructure) => {
     if(layoutBookStructure.layoutBookData.element)
@@ -27,4 +27,4 @@ if(layoutData.staticLayoutElements.playlistNextButton)
     layoutData.staticLayoutElements.playlistNextButton = null;
 }
 
-shout("OnHidePlaylistOnMapComplete")
+shout("OnHidePlaylistComplete")

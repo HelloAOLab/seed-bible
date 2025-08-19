@@ -8,7 +8,7 @@ if(data)
 {
     if(data.highlightColor != InstanceManager.tags.highlightColor)
     {
-        if(!InstanceManager.masks.isInHistoryMode) setTagMask(data.element, "color", InstanceManager.tags.highlightColor);
+        if(!BibleVizUtils.Data.masks.isInHistoryMode) setTagMask(data.element, "color", InstanceManager.tags.highlightColor);
         prevColor = data.highlightColor;
         data.highlightColor = InstanceManager.tags.highlightColor;
         highlightSuccessful = true;
@@ -23,7 +23,7 @@ else
     {
         if(currentHighlightInfo.color != InstanceManager.tags.highlightColor)
         {
-            if(!InstanceManager.masks.isInHistoryMode) setTagMask(element, "color", InstanceManager.tags.highlightColor);
+            if(!BibleVizUtils.Data.masks.isInHistoryMode) setTagMask(element, "color", InstanceManager.tags.highlightColor);
             prevColor = currentHighlightInfo.color;
             currentHighlightInfo.color = InstanceManager.tags.highlightColor
             highlightSuccessful = true;
@@ -31,7 +31,7 @@ else
     }
     else
     {
-        if(!InstanceManager.masks.isInHistoryMode) setTagMask(element, "color", InstanceManager.tags.highlightColor);
+        if(!BibleVizUtils.Data.masks.isInHistoryMode) setTagMask(element, "color", InstanceManager.tags.highlightColor);
         const newHighlightInfo = new HighlightInfo({
             color: InstanceManager.tags.highlightColor, 
             typeOfElement: element.tags.typeOfElement, 

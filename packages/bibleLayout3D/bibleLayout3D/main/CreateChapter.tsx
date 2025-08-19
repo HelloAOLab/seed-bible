@@ -1,5 +1,5 @@
 import {ParentDataIds} from "bibleVizUtils.classes.ParentDataIds"
-import {LayoutChapterData} from "bibleLayout3D.main.LayoutChapterData"
+import {LayoutChapterData} from "bibleVizUtils.classes.LayoutChapterData"
 
 const {chapterInfo, layoutData, layoutBookData} = that;
 const parentDataIds = new ParentDataIds({

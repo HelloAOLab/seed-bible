@@ -7,6 +7,6 @@ if(chapterData.element.masks.isSelecting        ||
 
 if(chapterData.element.masks.isOnTheGround && !chapterData.isSelected) 
 {
-    InstanceManager.TryHideUsersNotificationOnElement({element: chapterData.element})
+    BibleVizUtis.Functions.TryHideUsersNotificationOnElement({element: chapterData.element})
 }
 chapterData.element.Highlight({chapterData});

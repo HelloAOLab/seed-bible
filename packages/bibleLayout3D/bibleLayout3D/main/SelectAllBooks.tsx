@@ -13,7 +13,7 @@ await unselectedBooksData.sort((bookDataA, bookDataB) => bookDataA.element.tags.
 
 for(const bookData of unselectedBooksData)
 {
-    await thisBot.SelectMapBook({layoutBookData: bookData, layoutData, fromOpenAllButton: true})
+    await thisBot.SelectBook({layoutBookData: bookData, layoutData, fromOpenAllButton: true})
 }
 
-shout("OnSelectAllBooksOnMapComplete")
+shout("OnSelectAllBooksOnLayoutComplete")

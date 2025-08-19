@@ -1,9 +1,9 @@
-const {mapBookLabel} = that;
+const {bookLabel} = that;
 const dimension = os.getCurrentDimension();
 
 if(thisBot.masks.isAnimatingMap) return;
 
-const layoutBookStructure = thisBot.GetBookStructureByChild({mapBookLabel});
+const layoutBookStructure = thisBot.GetBookStructureByChild({bookLabel});
 const layoutData = thisBot.GetLayoutDataById({layoutId: layoutBookStructure.layoutId});
 if(!layoutBookStructure.layoutBookData.element || layoutBookStructure.layoutBookData.isSelected && !layoutData.currentPlaylistShownId)
 {
@@ -17,13 +17,13 @@ if(!layoutBookStructure.layoutBookData.element || layoutBookStructure.layoutBook
     }
     const nameLabelPosition = getBotPosition(layoutBookStructure.nameLabel, dimension);
 
-    const book = thisBot.SpawnMapBook({layoutData, layoutBookStructure});
+    const book = thisBot.SpawnBook({layoutData, layoutBookStructure});
     
-    const mapBookPositionMod = {
+    const bookPositionMod = {
         [dimension + "X"]: nameLabelPosition.x,
         [dimension + "Y"]: nameLabelPosition.y - (BibleVizUtils.Data.BibleLayoutMeasurements.BookLabelHeight/2) - (book.tags.scaleY/2),
     }
-    applyMod(book, mapBookPositionMod);
+    applyMod(book, bookPositionMod);
 
     animateTag(layoutBookStructure.layoutBookData.element, {
         fromValue: {

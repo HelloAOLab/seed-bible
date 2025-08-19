@@ -1,5 +1,5 @@
-import {LayoutBookData} from "bibleLayout3D.main.LayoutBookData"
-import {LayoutChapterData} from "bibleLayout3D.main.LayoutChapterData"
+import {LayoutBookData} from "bibleVizUtils.classes.LayoutBookData"
+import {LayoutChapterData} from "bibleVizUtils.classes.LayoutChapterData"
 
 const elementsData = [
     ...thisBot.vars.layoutBooksData, 

@@ -4,9 +4,9 @@ setTagMask(thisBot, "isAnimatingMap", true);
 
 layoutBookData.isSelected = true;
 const dimension = os.getCurrentDimension()
-const mapBookPosition = getBotPosition(layoutBookData.element, dimension);
-const mapBookScales = GetBotScales(layoutBookData.element);
-const chaptersOriginPosition = new Vector2(mapBookPosition.x - (layoutBookData.element.tags.scaleX/2), mapBookPosition.y + (layoutBookData.element.tags.scaleY/2));
+const bookPosition = getBotPosition(layoutBookData.element, dimension);
+const bookScales = BibleVizUtils.Functions.GetBotScales({bot: layoutBookData.element});
+const chaptersOriginPosition = new Vector2(bookPosition.x - (layoutBookData.element.tags.scaleX/2), bookPosition.y + (layoutBookData.element.tags.scaleY/2));
 let column = 0;
 let row = 0;
 const chapterShowDuration = 0.03
@@ -18,7 +18,7 @@ if(!fromOpenAllButton)
 {
     if(layoutData?.isCameraAnimationEnabled)
     {
-        os.focusOn({x: mapBookPosition.x, y: mapBookPosition.y, z:0}, {
+        os.focusOn({x: bookPosition.x, y: bookPosition.y, z:0}, {
             rotation: {x:0,y:0,z:0},
             zoom: 18
         })
@@ -26,18 +26,18 @@ if(!fromOpenAllButton)
     await animateTag(layoutBookData.element, {
         fromValue: {
             formOpacity: 1,
-            scaleX: mapBookScales.x,
-            scaleY: mapBookScales.y
+            scaleX: bookScales.x,
+            scaleY: bookScales.y
         },
         toValue: {
             formOpacity: 0,
-            scaleX: mapBookScales.x + 1,
-            scaleY: mapBookScales.y + 1
+            scaleX: bookScales.x + 1,
+            scaleY: bookScales.y + 1
         },
         duration: fromOpenAllButton ? 0.005 : 0.3
     }).finally(() => {
-        setTagMask(layoutBookData.element, "scaleX", mapBookScales.x);
-        setTagMask(layoutBookData.element, "scaleY", mapBookScales.y);
+        setTagMask(layoutBookData.element, "scaleX", bookScales.x);
+        setTagMask(layoutBookData.element, "scaleY", bookScales.y);
     })
 }
 layoutBookData.element.tags[dimension] = false
@@ -49,8 +49,8 @@ const elapsedYearsRange = `${currentYear - relativeDateRange.min}${relativeDateR
 
 for(const chapterData of layoutBookData.childrenData)
 {
-    const mapChapter = ObjectPooler.GetObjectFromPool({tag: BibleVizUtils.Data.tags.ObjectPoolTags.LayoutChapter});
-    const mapChapterMod = {
+    const chapter = ObjectPooler.GetObjectFromPool({tag: BibleVizUtils.Data.tags.ObjectPoolTags.LayoutChapter});
+    const chapterMod = {
         [dimension]: true,
         [dimension + "X"]: chaptersOriginPosition.x + (BibleVizUtils.Data.BibleLayoutMeasurements.ChapterWidth/2) + BibleVizUtils.Data.BibleLayoutMeasurements.ChapterPadding + (column * (BibleVizUtils.Data.BibleLayoutMeasurements.ChapterWidth + BibleVizUtils.Data.BibleLayoutMeasurements.ChapterGap)),
         [dimension + "Y"]: chaptersOriginPosition.y - (BibleVizUtils.Data.BibleLayoutMeasurements.ChapterHeight/2) - BibleVizUtils.Data.BibleLayoutMeasurements.ChapterPadding - (row * (BibleVizUtils.Data.BibleLayoutMeasurements.ChapterHeight + BibleVizUtils.Data.BibleLayoutMeasurements.ChapterGap)),
@@ -78,10 +78,10 @@ for(const chapterData of layoutBookData.childrenData)
         chapterNumber: chapterData.elementInfo.number,
         ...chaptersMod
     }
-    mapChapter.OnSpawned({mod: mapChapterMod});
-    chapterData.element = mapChapter;
+    chapter.OnSpawned({mod: chapterMod});
+    chapterData.element = chapter;
     chapterData.isActive = true;
-    if(InstanceManager.masks.isInHistoryMode) setTagMask(mapChapter, "color", GetHistoryColor({element: mapChapter}))
+    if(BibleVizUtils.Data.masks.isInHistoryMode) setTagMask(chapter, "color", BibleVizUtils.Functions.GetHistoryColor({element: chapter}))
     else if(chapterData.highlightColor) setTagMask(chapter, "color", chapterData.highlightColor);
     column += 1
 
@@ -107,5 +107,5 @@ else
             duration: chapterShowDuration,
             startTime: os.localTime + (index * chapterShowDuration * 1000)
         }).then(() => {setTag(chapterData.element, "label", chapterData.element.tags.desiredLabel)})
-    })).then(() => {shout("OnSelectMapBookComplete", {fromOpenAllButton})})
+    })).then(() => {shout("OnSelectLayoutBookComplete", {fromOpenAllButton})})
 }

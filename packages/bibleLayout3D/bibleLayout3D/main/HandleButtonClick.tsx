@@ -6,31 +6,31 @@ const layoutData = thisBot.GetLayoutDataById({layoutId: button.tags.layoutId})
 switch(button.tags.buttonType)
 {
     case BibleVizUtils.Data.LayoutButtonType.ColorPickerButton: 
-        thisBot.TrySetChapterSelectColorOnMap({layoutData})
+        thisBot.TrySetChapterSelectColor({layoutData})
     break;
         
     case BibleVizUtils.Data.LayoutButtonType.OpenAllBooksButton: {
         if(layoutData.hasSelectAllBooksBeenCalled)
         {
-            thisBot.RespawnAllBooksOnMap({layoutData});
+            thisBot.RespawnAllBooks({layoutData});
         }
         else
         {
-            thisBot.SelectAllBooksOnMap({layoutData});
+            thisBot.SelectAllBooks({layoutData});
         }
     }
     break;
 
-    case BibleVizUtils.Data.LayoutButtonType.DateFormatSelectorButton: {
+    case BibleVizUtils.Data.LayoutButtonType.BibleVizUtils.Data.tags.DateFormatselectorButton: {
         
-        const currentDateFormatIndex = Object.keys(DateFormats).findIndex((key) => {return DateFormats[key] === layoutData.currentDateFormat})
+        const currentDateFormatIndex = Object.keys(BibleVizUtils.Data.tags.DateFormats).findIndex((key) => {return BibleVizUtils.Data.tags.DateFormats[key] === layoutData.currentDateFormat})
         
         const selectedDateformat = await os.showInput(currentDateFormatIndex, {
             title: 'Select a new Date format',
             type: 'list',
-            items: Object.keys(DateFormats).map((dateFormatKey) => {
+            items: Object.keys(BibleVizUtils.Data.tags.DateFormats).map((dateFormatKey) => {
                 return {
-                    label: DateFormats[dateFormatKey],
+                    label: BibleVizUtils.Data.tags.DateFormats[dateFormatKey],
                     value: dateFormatKey
                 }
             })
@@ -38,41 +38,41 @@ switch(button.tags.buttonType)
         
         if(selectedDateformat && selectedDateformat.label !== layoutData.currentDateFormat)
         {
-            thisBot.SetMapDateFormat({ layoutData, newDateFormat: selectedDateformat.label })
+            thisBot.SetDateFormat({ layoutData, newDateFormat: selectedDateformat.label })
         }
     }
     break;
 
-    case BibleVizUtils.Data.LayoutButtonType.PlaylistSelectorButton: {
+    // case BibleVizUtils.Data.LayoutButtonType.PlaylistSelectorButton: {
         
-        const selectedPlaylist = await os.showInput(0, {
-            title: 'Select a playlist to show',
-            type: 'list',
-            items: [
-                {
-                    label: "None",
-                    value: "None"
-                },
-                {
-                    label: InstanceManager.tags.playlistTest.name,
-                    value: InstanceManager.tags.playlistTest
-                }
-            ]
-        });
+    //     const selectedPlaylist = await os.showInput(0, {
+    //         title: 'Select a playlist to show',
+    //         type: 'list',
+    //         items: [
+    //             {
+    //                 label: "None",
+    //                 value: "None"
+    //             },
+    //             {
+    //                 label: InstanceManager.tags.playlistTest.name,
+    //                 value: InstanceManager.tags.playlistTest
+    //             }
+    //         ]
+    //     });
         
-        if(selectedPlaylist)
-        {
-            if(selectedPlaylist.value === "None")
-            {
-                if(layoutData.currentPlaylistShownId) thisBot.HidePlaylistOnMap({layoutData})
-            }
-            else if(selectedPlaylist.value.id !== layoutData.currentPlaylistShownId)
-            {
-                thisBot.ShowPlaylistOnMap({layoutData, playlistInfo: selectedPlaylist.value})
-            }
-        }
-    }
-    break;
+    //     if(selectedPlaylist)
+    //     {
+    //         if(selectedPlaylist.value === "None")
+    //         {
+    //             if(layoutData.currentPlaylistShownId) thisBot.HidePlaylist({layoutData})
+    //         }
+    //         else if(selectedPlaylist.value.id !== layoutData.currentPlaylistShownId)
+    //         {
+    //             thisBot.ShowPlaylist({layoutData, playlistInfo: selectedPlaylist.value})
+    //         }
+    //     }
+    // }
+    // break;
 
     case BibleVizUtils.Data.LayoutButtonType.CameraAnimationToggle: {
         layoutData.isCameraAnimationEnabled = !layoutData.isCameraAnimationEnabled;
@@ -84,18 +84,18 @@ switch(button.tags.buttonType)
         layoutData.areDatesEnabled = !layoutData.areDatesEnabled
         HandleToggle(
             layoutData.areDatesEnabled,
-            () => {thisBot.ShowDatesOnMap({layoutData})},
-            () => {thisBot.HideDatesOnMap({layoutData})}
+            () => {thisBot.ShowDates({layoutData})},
+            () => {thisBot.HideDates({layoutData})}
         );
     }
     break;
 
     case BibleVizUtils.Data.LayoutButtonType.ShowLabelsToggle: {
-        layoutData.isLabelsEnabled = !layoutData.isLabelsEnabled;
+        layoutData.areLabelsEnabled = !layoutData.areLabelsEnabled;
         HandleToggle(
-            layoutData.isLabelsEnabled,
-            () => thisBot.ShowLabelsOnMap({ layoutData }),
-            () => thisBot.HideLabelsOnMap({ layoutData })
+            layoutData.areLabelsEnabled,
+            () => thisBot.ShowLabels({ layoutData }),
+            () => thisBot.HideLabels({ layoutData })
         );
     }
     break;
@@ -116,8 +116,8 @@ switch(button.tags.buttonType)
         layoutData.isPlaylistPathEnabled = !layoutData.isPlaylistPathEnabled;
         HandleToggle(
             layoutData.isPlaylistPathEnabled,
-            () => thisBot.TryShowPlaylistPathOnMap({ layoutData }),
-            () => thisBot.TryHidePlaylistPathOnMap({ layoutData })
+            () => thisBot.TryShowPlaylistPath({ layoutData }),
+            () => thisBot.TryHidePlaylistPath({ layoutData })
         );
     }
     break;

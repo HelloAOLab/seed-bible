@@ -112,9 +112,9 @@ const settingsButton = ObjectPooler.GetObjectFromPool({ tag: BibleVizUtils.Data.
 const playlistSelectorButton = ObjectPooler.GetObjectFromPool({ tag: BibleVizUtils.Data.tags.ObjectPoolTags.LayoutButton });
 const playlistSelectorIcon = ObjectPooler.GetObjectFromPool({ tag: BibleVizUtils.Data.tags.ObjectPoolTags.LayoutButtonIcon });
 const playlistSelectorLabel = ObjectPooler.GetObjectFromPool({ tag: BibleVizUtils.Data.tags.ObjectPoolTags.LayoutButtonLabel });
-const dateFormatSelectorButton = ObjectPooler.GetObjectFromPool({ tag: BibleVizUtils.Data.tags.ObjectPoolTags.LayoutButton });
-const dateFormatSelectorIcon = ObjectPooler.GetObjectFromPool({ tag: BibleVizUtils.Data.tags.ObjectPoolTags.LayoutButtonIcon });
-const dateFormatSelectorLabel = ObjectPooler.GetObjectFromPool({ tag: BibleVizUtils.Data.tags.ObjectPoolTags.LayoutButtonLabel });
+const BibleVizUtils.Data.tags.DateFormatselectorButton = ObjectPooler.GetObjectFromPool({ tag: BibleVizUtils.Data.tags.ObjectPoolTags.LayoutButton });
+const BibleVizUtils.Data.tags.DateFormatselectorIcon = ObjectPooler.GetObjectFromPool({ tag: BibleVizUtils.Data.tags.ObjectPoolTags.LayoutButtonIcon });
+const BibleVizUtils.Data.tags.DateFormatselectorLabel = ObjectPooler.GetObjectFromPool({ tag: BibleVizUtils.Data.tags.ObjectPoolTags.LayoutButtonLabel });
 
 const playlistPathToggle = ObjectPooler.GetObjectFromPool({ tag: BibleVizUtils.Data.tags.ObjectPoolTags.LayoutToggleButton });
 const playlistPathToggleBackground = ObjectPooler.GetObjectFromPool({ tag: BibleVizUtils.Data.tags.ObjectPoolTags.LayoutToggleBackground });
@@ -197,15 +197,15 @@ const showDatesToggleMod =  {
 const showDatesToggleBackgroundMod = settingsButtonsBaseTags;
 const showDatesToggleHandleMod = settingsButtonsBaseTags;
 
-const dateFormatSelectorButtonMod = {
-    buttonIcon: `🔗${dateFormatSelectorIcon.id}`,
-    buttonLabel: `🔗${dateFormatSelectorLabel.id}`,
+const BibleVizUtils.Data.tags.DateFormatselectorButtonMod = {
+    buttonIcon: `🔗${BibleVizUtils.Data.tags.DateFormatselectorIcon.id}`,
+    buttonLabel: `🔗${BibleVizUtils.Data.tags.DateFormatselectorLabel.id}`,
     draggable: false,
-    buttonType: BibleVizUtils.Data.LayoutButtonType.DateFormatSelectorButton,
+    buttonType: BibleVizUtils.Data.LayoutButtonType.BibleVizUtils.Data.tags.DateFormatselectorButton,
     ...settingsButtonsBaseTags
 };
-const dateFormatSelectorLabelMod = { label: "Change date format", ...settingsButtonsBaseTags };
-const dateFormatSelectorIconMod = {
+const BibleVizUtils.Data.tags.DateFormatselectorLabelMod = { label: "Change date format", ...settingsButtonsBaseTags };
+const BibleVizUtils.Data.tags.DateFormatselectorIconMod = {
     formAddress: "https://auth-aux-aobot-prod-filesbucket-141297942820.s3.amazonaws.com/Canvas/4d3c62e30cd5b0e38bba9463df006b89af865e0cba30072062ff6da7f95f7eab.png",
     ...settingsButtonsBaseTags
 };
@@ -252,9 +252,9 @@ playlistSelectorButton.OnSpawned({mod: playlistSelectorButtonMod});
 playlistSelectorLabel.OnSpawned({mod: playlistSelectorLabelMod});
 playlistSelectorIcon.OnSpawned({mod: playlistSelectorIconMod});
 
-dateFormatSelectorButton.OnSpawned({ mod: dateFormatSelectorButtonMod });
-dateFormatSelectorLabel.OnSpawned({ mod: dateFormatSelectorLabelMod });
-dateFormatSelectorIcon.OnSpawned({ mod: dateFormatSelectorIconMod });
+BibleVizUtils.Data.tags.DateFormatselectorButton.OnSpawned({ mod: BibleVizUtils.Data.tags.DateFormatselectorButtonMod });
+BibleVizUtils.Data.tags.DateFormatselectorLabel.OnSpawned({ mod: BibleVizUtils.Data.tags.DateFormatselectorLabelMod });
+BibleVizUtils.Data.tags.DateFormatselectorIcon.OnSpawned({ mod: BibleVizUtils.Data.tags.DateFormatselectorIconMod });
 
 labelsToggle.OnSpawned({ mod: labelsToggleMod })
 labelsToggleBackground.OnSpawned({ mod: labelsToggleBackgroundMod })
@@ -288,7 +288,7 @@ const staticLayoutElements = {
         playlistPathToggle,
         colorPickerButton,
         openAllBooksButton,
-        dateFormatSelectorButton,
+        BibleVizUtils.Data.tags.DateFormatselectorButton,
         playlistSelectorButton
     ],
     settingsButton,

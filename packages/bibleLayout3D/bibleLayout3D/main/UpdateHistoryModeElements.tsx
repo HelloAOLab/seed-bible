@@ -1,5 +1,5 @@
-import {LayoutBookData} from "bibleLayout3D.main.LayoutBookData"
-import {LayoutChapterData} from "bibleLayout3D.main.LayoutChapterData"
+import {LayoutBookData} from "bibleVizUtils.classes.LayoutBookData"
+import {LayoutChapterData} from "bibleVizUtils.classes.LayoutChapterData"
 
 
 const elementsData = [
@@ -10,7 +10,7 @@ elementsData.forEach((elementData) => {
     const isElementAvailable = elementData.element && elementData.element.tags.isInUse && ((elementData instanceof LayoutBookData) ? !elementData.isSelected : true)
     if(isElementAvailable)
     {
-        const color = GetHistoryColor({element: elementData.element})
+        const color = BibleVizUtils.Functions.GetHistoryColor({element: elementData.element})
         setTagMask(elementData.element, 'color', color);
         if(elementData instanceof LayoutChapterData)
         {
@@ -22,13 +22,13 @@ elementsData.forEach((elementData) => {
                         if(Array.isArray(chunk.vars.verses) && chunk.vars.verses.length > 0)
                         {
                             chunk.vars.verses.forEach((verse) => {
-                                setTagMask(verse, 'color', GetHistoryColor({element: verse}));
+                                setTagMask(verse, 'color', BibleVizUtils.Functions.GetHistoryColor({element: verse}));
                             })
                         }
                     }
                     else
                     {
-                        setTagMask(chunk, 'color', GetHistoryColor({element: chunk}));
+                        setTagMask(chunk, 'color', BibleVizUtils.Functions.GetHistoryColor({element: chunk}));
                     }
                 })
             }

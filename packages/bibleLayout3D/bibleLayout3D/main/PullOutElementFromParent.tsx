@@ -1,5 +1,5 @@
-import {LayoutBookData} from "bibleLayout3D.main.LayoutBookData"
-import {LayoutChapterData} from "bibleLayout3D.main.LayoutChapterData"
+import {LayoutBookData} from "bibleVizUtils.classes.LayoutBookData"
+import {LayoutChapterData} from "bibleVizUtils.classes.LayoutChapterData"
 const {elementData, layoutData, layoutBookData} = that;
 const elementDataCopy = await CreateDataCopy(elementData);
 let elementDataIndex;
@@ -14,13 +14,13 @@ elementData.element.tags.toErase = true;
 switch(true)
 {
     case elementData instanceof LayoutBookData: {
-        NullifyMapBookParentIds(elementData, [nullifiableIds.layoutId]);
+        NullifyBookParentIds(elementData, [nullifiableIds.layoutId]);
         const layoutBookStructure = thisBot.GetBookStructureByChild({layoutBookData: elementData})
         layoutBookStructure.layoutBookData = elementDataCopy
     }
     break;
     case elementData instanceof LayoutChapterData: {
-        NullifyMapChapterParentIds(elementData, [nullifiableIds.layoutId, nullifiableIds.layoutBookId])
+        NullifyChapterParentIds(elementData, [nullifiableIds.layoutId, nullifiableIds.layoutBookId])
         elementDataIndex = layoutBookData.childrenData.indexOf(elementData);
         layoutBookData.childrenData.splice(elementDataIndex, 1, elementDataCopy);
     }
@@ -28,15 +28,16 @@ switch(true)
     default: break;
 }
 
+// Stack? Shouldn't be Layout?
 return Promise.all(shout('OnStackElementPulledOut'));
 
-function NullifyMapBookParentIds(layoutBookData, idsToNullify)
+function NullifyBookParentIds(layoutBookData, idsToNullify)
 {
     NullifyParentIdsOnData(layoutBookData, idsToNullify);
-    layoutBookData.childrenData.forEach((chapterData) => {NullifyMapChapterParentIds(chapterData, idsToNullify);})
+    layoutBookData.childrenData.forEach((chapterData) => {NullifyChapterParentIds(chapterData, idsToNullify);})
 }
 
-function NullifyMapChapterParentIds(chapterData, idsToNullify)
+function NullifyChapterParentIds(chapterData, idsToNullify)
 {
     NullifyParentIdsOnData(chapterData, idsToNullify);
 }

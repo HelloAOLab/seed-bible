@@ -21,5 +21,5 @@ if(layoutData?.isCameraAnimationEnabled)
         z: 1.5
     },{rotation: {x: 0.3, y: 0.3, z: 0}})
 }
-InstanceManager.TryHideUsersNotificationOnElement({element: chapterData.element})
+BibleVizUtis.Functions.TryHideUsersNotificationOnElement({element: chapterData.element})
 return chapterData.element.Select({layoutData})

@@ -1,9 +1,7 @@
 const {layoutData} = that;
 
-layoutData
-if(mapData.isLabelsEnabled) return;
-layoutData
-mapData.isLabelsEnabled =layoutData
-thisBot.ShowLabelsOnMap({mapData})
-layoutData
-mapData.staticLayoutElements.settingsButtons.find((button) => {return button.tags.buttonType === BibleVizUtils.Data.LayoutButtonType.ShowLabelsToggle})?.Activate?.();
+if(layoutData.areLabelsEnabled) return;
+
+layoutData.areLabelsEnabled = true;
+thisBot.ShowLabels({layoutData});
+layoutData.staticLayoutElements.settingsButtons.find((button) => {return button.tags.buttonType === BibleVizUtils.Data.LayoutButtonType.ShowLabelsToggle})?.Activate?.();

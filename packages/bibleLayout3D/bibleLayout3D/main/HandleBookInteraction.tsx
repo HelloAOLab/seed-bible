@@ -10,15 +10,15 @@ switch(typeOfInteraction)
     {
         if(!thisBot.masks.isAnimatingMap)
         {
-            if(InstanceManager.masks.isHighlightToolEnabled)
+            if(BibleVizUtils.Data.masks.isHighlightToolEnabled)
             {
-                InstanceManager.HighlightBibleElement({data: layoutBookData});
+                BibleVizUtils.Functions.HighlightBibleElement({data: layoutBookData});
             }
             else
             {
                 if(!layoutBookData.isSelected)
                 {
-                    thisBot.SelectMapBook({layoutBookData, layoutData})
+                    thisBot.SelectBook({layoutBookData, layoutData})
                 }
             }
         }
@@ -26,12 +26,12 @@ switch(typeOfInteraction)
     break;
     case BibleVizUtils.Data.tags.InteractionType.Drag:
     {
-        if(book.tags.draggable) shout("OnMapElementDrag", {data: layoutBookData});
+        if(book.tags.draggable) shout("OnLayoutElementDrag", {data: layoutBookData});
     }
     break;
     case BibleVizUtils.Data.tags.InteractionType.Drop:
     {
-        shout('OnMapElementDrop', {element: book, dropInfo});
+        shout('OnLayoutElementDrop', {element: book, dropInfo});
     }
     break;
     default: break;

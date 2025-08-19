@@ -1,4 +1,4 @@
-import {LayoutBookStructure} from "bibleLayout3D.main.LayoutBookStructure"
+import {LayoutBookStructure} from "bibleVizUtils.classes.LayoutBookStructure"
 
 const { bookInfo, layoutData, column, row, structureIndex, arrangementIndex, testamentIndex, sectionIndex } = that;
 

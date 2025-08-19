@@ -1,4 +1,4 @@
-if(thisBot.masks.initialized) return;
+if(thisBot.masks.initialized || configBot.tags.systemPortal) return;
 
 setTagMask(thisBot, "initialized", true);
 if(typeof BibleLayout2DManager === "undefined")

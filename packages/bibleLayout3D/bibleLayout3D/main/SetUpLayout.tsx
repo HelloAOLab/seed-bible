@@ -13,7 +13,7 @@ const coverPadding = new Vector2(10, 8);
 const bookShowDelay = 500;
 
 layoutData.childrenStructures.forEach(async (layoutBookStructure) => {
-    thisBot.SpawnMapBook({ layoutBookStructure, layoutData })
+    thisBot.SpawnBook({ layoutBookStructure, layoutData })
 })
 const rowSegments = [];
 const BooksOriginOffset = new Vector2(0, 0);
@@ -63,11 +63,11 @@ for(let row = 0; row < layoutData.amountOfRows; row++)
         let bookDateLabelLabel;
         switch(layoutData.currentDateFormat)
         {
-            case BibleVizUtils.Data.tags.DateFormats.ElapsedYears: {
+            case BibleVizUtils.Data.tags.BibleVizUtils.Data.tags.DateFormats.ElapsedYears: {
                 bookDateLabelLabel = layoutBookStructure.elapsedYearsRange
             }
             break;
-            case BibleVizUtils.Data.tags.DateFormats.HistoricalDate: {
+            case BibleVizUtils.Data.tags.BibleVizUtils.Data.tags.DateFormats.HistoricalDate: {
                 bookDateLabelLabel = layoutBookStructure.historicalDateRange
             }
             break;
@@ -79,7 +79,7 @@ for(let row = 0; row < layoutData.amountOfRows; row++)
         .sections
         .toReversed()[layoutBookStructure.layoutBookData.creationInfo.sectionIndex]
         .color
-        const labelColor = BibleVizUtils.Functions.GetTextColorBasedOnBackground(sectionColor)
+        const labelColor = BibleVizUtils.Functions.GetTextColorBasedOnBackground({backgroundColor: sectionColor})
 
         const bookDateLabelMod = {
             [dimension]: false,
@@ -297,7 +297,7 @@ layoutData.staticLayoutElements.settingsButtons.forEach((settingsButton, index) 
             applyMod(settingsButton.links.colorBackground, colorPickerBackgroundMod);
         }
         break;
-        case BibleVizUtils.Data.tags.LayoutButtonType.DateFormatSelectorButton:
+        case BibleVizUtils.Data.tags.LayoutButtonType.BibleVizUtils.Data.tags.DateFormatselectorButton:
         case BibleVizUtils.Data.tags.LayoutButtonType.OpenAllBooksButton:
         case BibleVizUtils.Data.tags.LayoutButtonType.PlaylistSelectorButton: {
             
@@ -340,7 +340,7 @@ const settingsButtonMod = {
 applyMod(layoutData.staticLayoutElements.settingsButton, settingsButtonMod)
 applyMod(layoutData.staticLayoutElements.cover, coverMod);
 
-// thisBot.TryShowDatesOnMap({ layoutData })
+// thisBot.TryShowDates({ layoutData })
 thisBot.TryShowLabels({ layoutData });
 layoutData.childrenStructures.forEach((layoutBookStructure, index) => {
     animateTag(layoutBookStructure.layoutBookData.element, {

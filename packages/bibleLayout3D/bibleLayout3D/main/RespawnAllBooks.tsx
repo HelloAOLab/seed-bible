@@ -22,14 +22,14 @@ for(const respawnableBookStructure of respawnableBooksStructure)
         ObjectPooler.ReleaseObject({obj: activeChapters, tag: activeChapters[0].tags.poolTag})
         activeChaptersData.forEach((chapterData) => {chapterData.ResetData();})
     }
-    const book = await thisBot.SpawnMapBook({layoutData, layoutBookStructure: respawnableBookStructure});
+    const book = await thisBot.SpawnBook({layoutData, layoutBookStructure: respawnableBookStructure});
     const nameLabelPosition = getBotPosition(respawnableBookStructure.nameLabel, dimension);
 
-    const mapBookPositionMod = {
+    const bookPositionMod = {
         [dimension + "X"]: nameLabelPosition.x,
         [dimension + "Y"]: nameLabelPosition.y - (BibleVizUtils.Data.BibleLayoutMeasurements.BookLabelHeight/2) - (book.tags.scaleY/2),
     }
-    applyMod(book, mapBookPositionMod);
+    applyMod(book, bookPositionMod);
 }
 await respawnableBooksStructure.sort((structureA, structureB) => structureA.layoutBookData.element.tags.index - structureB.layoutBookData.element.tags.index)
 
@@ -46,7 +46,7 @@ await Promise.all(respawnableBooksStructure.map((layoutBookStructure, index) => 
     })
 }))
 
-shout("OnRespwnAllBooksOnMapComplete")
+shout("OnRespawnAllBooksOnLayoutComplete")
 
 return;
 

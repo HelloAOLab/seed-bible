@@ -1,4 +1,4 @@
-const availableMapChaptersData = thisBot.vars.layoutChaptersData.filter((chapterData) => {
+const availablechaptersData = thisBot.vars.layoutChaptersData.filter((chapterData) => {
     return chapterData.element 
         && chapterData.element.tags.isInUse
             && chapterData.element.masks.isExpanded 
@@ -10,8 +10,8 @@ const availableMapBooksData = thisBot.vars.layoutBooksData.filter((layoutBookDat
         && !layoutBookData.isSelected
 });
 const availableElementsData = [
-    ...availableMapChaptersData,
+    ...availablechaptersData,
     ...availableMapBooksData
 ]
 const availableElements = availableElementsData.map((elementData) => {return elementData.element})
-InstanceManager.UpdateUsersColorOnElement({elements: availableElements});
+BibleVizUtils.Functions.UpdateUsersColorOnElement({elements: availableElements});

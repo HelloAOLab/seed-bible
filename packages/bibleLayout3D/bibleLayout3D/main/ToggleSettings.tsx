@@ -13,7 +13,7 @@ const settingsElements = layoutData.staticLayoutElements.settingsButtons.flatMap
 
         case BibleVizUtils.Data.LayoutButtonType.ColorPickerButton: return [button, button.links.colorContent, button.links.colorBackground]
 
-        case BibleVizUtils.Data.LayoutButtonType.DateFormatSelectorButton:
+        case BibleVizUtils.Data.LayoutButtonType.BibleVizUtils.Data.tags.DateFormatselectorButton:
         case BibleVizUtils.Data.LayoutButtonType.OpenAllBooksButton:
         case BibleVizUtils.Data.LayoutButtonType.PlaylistSelectorButton: return [button, button.links.buttonLabel, button.links.buttonIcon]
     }

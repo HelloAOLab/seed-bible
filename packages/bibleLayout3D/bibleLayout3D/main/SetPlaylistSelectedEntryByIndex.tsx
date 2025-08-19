@@ -23,7 +23,7 @@ for(const entryIndex in layoutData.playlistEntries)
         if(prevSelectedEntry.tags.book !== entry.tags.book || prevSelectedEntry.tags.sectionIndex !== entry.tags.sectionIndex || prevSelectedEntry.tags.testamentIndex !== entry.tags.testamentIndex) 
         {
             highlightBook = true;
-            entryBook = GetMapBookForEntry(entry);
+            entryBook = GetBookForEntry(entry);
 
             if(prevSelectedEntry.tags.sectionIndex !== entry.tags.sectionIndex || prevSelectedEntry.tags.testamentIndex !== entry.tags.testamentIndex)
             {
@@ -40,7 +40,7 @@ for(const entryIndex in layoutData.playlistEntries)
         
         if(prevSelectedEntry)
         {
-            const prevEntryBook = GetMapBookForEntry(prevSelectedEntry);
+            const prevEntryBook = GetBookForEntry(prevSelectedEntry);
             const prevEntrySectionLine = GetSectionLineSegmentForEntry(prevSelectedEntry);
             const prevEntryTestamentLine = GetTestamentLineForEntry(prevSelectedEntry);
 
@@ -89,7 +89,7 @@ for(const entryIndex in layoutData.playlistEntries)
     
 }
 
-thisBot.TryShowPlaylistPathOnMap({layoutData})
+thisBot.TryShowPlaylistPath({layoutData})
 
 function GetTestamentLineForEntry(entryItem)
 {
@@ -112,7 +112,7 @@ function GetSectionLineSegmentForEntry(entryItem)
     return sectionLine
 }
 
-function GetMapBookForEntry(entryItem)
+function GetBookForEntry(entryItem)
 {
     const layoutBookStructure = layoutData.childrenStructures.find((structure) => {
         return structure.layoutBookData.creationInfo.arrangementIndex === entryItem.tags.arrangementIndex &&

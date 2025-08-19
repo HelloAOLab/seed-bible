@@ -6,11 +6,11 @@ layoutData.childrenStructures.forEach((layoutBookStructure) => {
     let newLabel;
     switch(newDateFormat)
     {
-        case DateFormats.ElapsedYears: {
+        case BibleVizUtils.Data.tags.DateFormats.ElapsedYears: {
             newLabel = layoutBookStructure.elapsedYearsRange
         }
         break;
-        case DateFormats.HistoricalDate: {
+        case BibleVizUtils.Data.tags.DateFormats.HistoricalDate: {
             newLabel = layoutBookStructure.historicalDateRange
         }
         break;

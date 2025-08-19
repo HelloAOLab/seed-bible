@@ -25,7 +25,7 @@ const bookIndexWithinSection = BibleVizUtils.Data.vars.fixedArrangementsInfo[arr
 
 const sectionInfo = BibleVizUtils.Data.vars.fixedArrangementsInfo.slice()[arrangementIndex].testaments[testamentIndex].sections[sectionIndex]
 const sectionLevelsColors = GetChildrenLevelColors({
-    sectionColorRGB: HexToRgb(sectionInfo.color), 
+    sectionColorRGB: BibleVizUtils.Functions.HexToRgb({hexColor: sectionInfo.color}), 
     colorRange: sectionInfo.customColorRange ?? 70, 
     levelsLength: sectionInfo.books.length
 })
@@ -61,6 +61,6 @@ book.OnSpawned({mod: mapBookMod});
 layoutBookStructure.layoutBookData.element = book;
 layoutBookStructure.layoutBookData.isActive = true;
 layoutBookStructure.layoutBookData.isSelected = false;
-if(InstanceManager.masks.isInHistoryMode) setTagMask(book, "color", GetHistoryColor({element: book}))
+if(BibleVizUtils.Data.masks.isInHistoryMode) setTagMask(book, "color", BibleVizUtils.Functions.GetHistoryColor({element: book}))
 
 return book;
