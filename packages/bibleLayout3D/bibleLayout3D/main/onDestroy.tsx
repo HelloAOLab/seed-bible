@@ -1,0 +1,1 @@
+globalThis.BibleLayout3DManager = null;

@@ -11,11 +11,11 @@ switch(element.tags.typeOfElement)
     break;
     case BibleVizUtils.Data.tags.BibleElementType.SectionBook:
     case BibleVizUtils.Data.tags.BibleElementType.Book:
-    case BibleVizUtils.Data.tags.BibleElementType.MapBook:
+    case BibleVizUtils.Data.tags.BibleElementType.LayoutBook:
         key = element.tags.bookName; 
     break;
     case BibleVizUtils.Data.tags.BibleElementType.Chapter:
-    case BibleVizUtils.Data.tags.BibleElementType.MapChapter:
+    case BibleVizUtils.Data.tags.BibleElementType.LayoutChapter:
         key = `${element.tags.parentBookName} ${element.tags.chapterNumber}`;
     break;
     case BibleVizUtils.Data.tags.BibleElementType.ChunkOfVerses:
@@ -27,6 +27,6 @@ switch(element.tags.typeOfElement)
     default: break;
 }
 
-const actualTypeOfElement = (element.tags.typeOfElement === BibleVizUtils.Data.tags.BibleElementType.MapBook ||element.tags.typeOfElement ===  BibleVizUtils.Data.tags.BibleElementType.SectionBook) ? BibleVizUtils.Data.tags.BibleElementType.Book : 
-    (element.tags.typeOfElement === BibleVizUtils.Data.tags.BibleElementType.MapChapter) ? BibleVizUtils.Data.tags.BibleElementType.Chapter : element.tags.typeOfElement
+const actualTypeOfElement = (element.tags.typeOfElement === BibleVizUtils.Data.tags.BibleElementType.LayoutBook ||element.tags.typeOfElement ===  BibleVizUtils.Data.tags.BibleElementType.SectionBook) ? BibleVizUtils.Data.tags.BibleElementType.Book : 
+    (element.tags.typeOfElement === BibleVizUtils.Data.tags.BibleElementType.LayoutChapter) ? BibleVizUtils.Data.tags.BibleElementType.Chapter : element.tags.typeOfElement
 return thisBot.GetHistoryEntries({typeOfElement: actualTypeOfElement, key});

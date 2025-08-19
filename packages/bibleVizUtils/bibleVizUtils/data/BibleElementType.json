@@ -6,6 +6,6 @@
     "Chapter": "Chapter",
     "ChunkOfVerses": "ChunkOfVerses",
     "Verse": "Verse",
-    "MapBook": "MapBook",
-    "MapChapter": "MapChapter"
+    "LayoutBook": "LayoutBook",
+    "LayoutChapter": "LayoutChapter"
 }
