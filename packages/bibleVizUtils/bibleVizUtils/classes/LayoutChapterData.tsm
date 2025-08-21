@@ -2,9 +2,9 @@ export class LayoutChapterData
 {
     constructor({
         id,
-        element,
+        piece,
         playlistEntriesItems = [],
-        elementInfo,
+        pieceInfo,
         parentDataIds,
         isActive = false,
         highlightColor = null,
@@ -13,8 +13,8 @@ export class LayoutChapterData
     {
         this.highlightColor = highlightColor;
         this.id = id;
-        this.element = element;
-        this.elementInfo = elementInfo;
+        this.piece = piece;
+        this.pieceInfo = pieceInfo;
         this.parentDataIds = parentDataIds;
         this.isActive = isActive;
         this.originalLayoutId = originalLayoutId;
@@ -26,7 +26,7 @@ export class LayoutChapterData
     
     ResetData()
     {
-        this.element = null;
+        this.piece = null;
         this.isActive = false;
         this.isSelected = false;
         this.HighlightsInfo = [];

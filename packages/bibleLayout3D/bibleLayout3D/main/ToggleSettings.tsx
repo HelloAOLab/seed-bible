@@ -1,6 +1,6 @@
 const {layoutData} = that;
 
-const settingsElements = layoutData.staticLayoutElements.settingsButtons.flatMap((button) => {
+const settingsPieces = layoutData.staticLayoutPieces.settingsButtons.flatMap((button) => {
     
     switch(button.tags.buttonType)
     {
@@ -20,24 +20,24 @@ const settingsElements = layoutData.staticLayoutElements.settingsButtons.flatMap
 })
 const dimension = os.getCurrentDimension();
 const duration = 0.25;
-animateTag(layoutData.staticLayoutElements.settingsButton, dimension + "RotationZ", null);
+animateTag(layoutData.staticLayoutPieces.settingsButton, dimension + "RotationZ", null);
 if(layoutData.isShowingSettings)
 {
     layoutData.isShowingSettings = false
-    animateTag(layoutData.staticLayoutElements.settingsButton, dimension + "RotationZ", {
+    animateTag(layoutData.staticLayoutPieces.settingsButton, dimension + "RotationZ", {
         toValue: Math.PI,
         duration,
         easing: {type: "sinusoidal", mode: "inout"}
     });
-    setTag(settingsElements, dimension, false);
+    setTag(settingsPieces, dimension, false);
 }
 else
 {
     layoutData.isShowingSettings = true
-    animateTag(layoutData.staticLayoutElements.settingsButton, dimension + "RotationZ", {
+    animateTag(layoutData.staticLayoutPieces.settingsButton, dimension + "RotationZ", {
         toValue: Math.PI*2,
         duration,
         easing: {type: "sinusoidal", mode: "inout"}
     });
-    setTag(settingsElements, dimension, true);
+    setTag(settingsPieces, dimension, true);
 }

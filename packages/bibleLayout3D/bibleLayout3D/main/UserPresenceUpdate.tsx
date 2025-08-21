@@ -1,2 +1,2 @@
-thisBot.UpdateElementsUsersColor();
-thisBot.UpdateElementsUsersNotification();
+thisBot.UpdatePiecesUsersColor();
+thisBot.UpdatePiecesUsersNotification();

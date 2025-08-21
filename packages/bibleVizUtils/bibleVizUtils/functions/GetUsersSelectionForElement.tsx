@@ -1,34 +1,34 @@
-const {element} = that;
+const {piece} = that;
 
 let key;
 let typeOfElement;
-switch(element.tags.typeOfElement)
+switch(piece.tags.typeOfElement)
 {
     case BibleVizUtils.Data.tags.BibleElementType.Testament: 
-        key = element.tags.testamentName; 
+        key = piece.tags.testamentName; 
         typeOfElement = BibleVizUtils.Data.tags.BibleElementType.Testament;
     break;
     case BibleVizUtils.Data.tags.BibleElementType.Section: 
-        key = element.tags.sectionName; 
+        key = piece.tags.sectionName; 
         typeOfElement = BibleVizUtils.Data.tags.BibleElementType.Section;
     break;
     case BibleVizUtils.Data.tags.BibleElementType.SectionBook:
     case BibleVizUtils.Data.tags.BibleElementType.Book:
     case BibleVizUtils.Data.tags.BibleElementType.LayoutBook:
-        key = element.tags.bookName; 
+        key = piece.tags.bookName; 
         typeOfElement = BibleVizUtils.Data.tags.BibleElementType.Book;
     break;
     case BibleVizUtils.Data.tags.BibleElementType.Chapter:
     case BibleVizUtils.Data.tags.BibleElementType.LayoutChapter:
-        key = `${element.tags.parentBookName} ${element.tags.chapterNumber}`;
+        key = `${piece.tags.parentBookName} ${piece.tags.chapterNumber}`;
         typeOfElement = BibleVizUtils.Data.tags.BibleElementType.Chapter;
     break;
     default: break;
 }
 
 const selections = BibleVizUtils.masks.usersLastSelection.slice().filter((selection) => {
-    return selection.selectionPath.some((elementInfo) => {
-        return elementInfo.typeOfElement == typeOfElement && elementInfo.key == key
+    return selection.selectionPath.some((pieceInfo) => {
+        return pieceInfo.typeOfElement == typeOfElement && pieceInfo.key == key
     })
 })
 

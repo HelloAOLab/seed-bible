@@ -5,13 +5,13 @@ if(thisBot.masks.isAnimatingMap) return;
 
 const layoutBookStructure = thisBot.GetBookStructureByChild({bookLabel});
 const layoutData = thisBot.GetLayoutDataById({layoutId: layoutBookStructure.layoutId});
-if(!layoutBookStructure.layoutBookData.element || layoutBookStructure.layoutBookData.isSelected && !layoutData.currentPlaylistShownId)
+if(!layoutBookStructure.layoutBookData.piece || layoutBookStructure.layoutBookData.isSelected && !layoutData.currentPlaylistShownId)
 {
     const activeChaptersData = layoutBookStructure.layoutBookData.childrenData
-        .filter((chapterData) => {return chapterData.element})
+        .filter((chapterData) => {return chapterData.piece})
     if(activeChaptersData.length > 0)
     {
-        const activeChapters = activeChaptersData.map((chapterData) => {return chapterData.element})
+        const activeChapters = activeChaptersData.map((chapterData) => {return chapterData.piece})
         ObjectPooler.ReleaseObject({obj: activeChapters, tag: activeChapters[0].tags.poolTag})
         activeChaptersData.forEach((chapterData) => {chapterData.ResetData();})
     }
@@ -25,7 +25,7 @@ if(!layoutBookStructure.layoutBookData.element || layoutBookStructure.layoutBook
     }
     applyMod(book, bookPositionMod);
 
-    animateTag(layoutBookStructure.layoutBookData.element, {
+    animateTag(layoutBookStructure.layoutBookData.piece, {
         fromValue: {
             formOpacity: 0
         },

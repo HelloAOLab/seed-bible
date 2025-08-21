@@ -11,12 +11,12 @@ layoutData.playlistEntries.filter((entryItem) => {
     const prevEntryItem = array[index - 1];
     if(index > 0 && (prevEntryItem.tags.book !== entryItem.tags.book || prevEntryItem.tags.chapter !== entryItem.tags.chapter))
     {
-        const layoutBookStructure = layoutData.childrenStructures.find((structure) => { return structure.layoutBookData.elementInfo.commonName === entryItem.tags.book })
-        const chapterData = layoutBookStructure.layoutBookData.childrenData.find((data) => { return data.elementInfo.number === entryItem.tags.chapter })
+        const layoutBookStructure = layoutData.childrenStructures.find((structure) => { return structure.layoutBookData.pieceInfo.commonName === entryItem.tags.book })
+        const chapterData = layoutBookStructure.layoutBookData.childrenData.find((data) => { return data.pieceInfo.number === entryItem.tags.chapter })
         const chapterDataLastEntryItem = chapterData.playlistEntriesItems[chapterData.playlistEntriesItems.length - 1];
 
-        const prevMapBookStructure = layoutData.childrenStructures.find((structure) => { return structure.layoutBookData.elementInfo.commonName === prevEntryItem.tags.book })
-        const prevChapterData = prevMapBookStructure.layoutBookData.childrenData.find((data) => { return data.elementInfo.number === prevEntryItem.tags.chapter })
+        const prevMapBookStructure = layoutData.childrenStructures.find((structure) => { return structure.layoutBookData.pieceInfo.commonName === prevEntryItem.tags.book })
+        const prevChapterData = prevMapBookStructure.layoutBookData.childrenData.find((data) => { return data.pieceInfo.number === prevEntryItem.tags.chapter })
         const prevChapterDataLastEntryItem = prevChapterData.playlistEntriesItems[prevChapterData.playlistEntriesItems.length - 1];
 
         let node = prevChapterDataLastEntryItem.vars.nodes?.find?.((node) => {

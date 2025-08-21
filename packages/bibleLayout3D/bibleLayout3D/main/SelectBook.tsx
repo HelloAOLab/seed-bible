@@ -4,15 +4,15 @@ setTagMask(thisBot, "isAnimatingMap", true);
 
 layoutBookData.isSelected = true;
 const dimension = os.getCurrentDimension()
-const bookPosition = getBotPosition(layoutBookData.element, dimension);
-const bookScales = BibleVizUtils.Functions.GetBotScales({bot: layoutBookData.element});
-const chaptersOriginPosition = new Vector2(bookPosition.x - (layoutBookData.element.tags.scaleX/2), bookPosition.y + (layoutBookData.element.tags.scaleY/2));
+const bookPosition = getBotPosition(layoutBookData.piece, dimension);
+const bookScales = BibleVizUtils.Functions.GetBotScales({bot: layoutBookData.piece});
+const chaptersOriginPosition = new Vector2(bookPosition.x - (layoutBookData.piece.tags.scaleX/2), bookPosition.y + (layoutBookData.piece.tags.scaleY/2));
 let column = 0;
 let row = 0;
 const chapterShowDuration = 0.03
 
-BibleVizUtils.Functions.TryHideUsersColorOnElement({element: layoutBookData.element})
-shout("OnBibleElementSelected", {element: layoutBookData.element});
+BibleVizUtils.Functions.TryHideUsersColorOnPiece({piece: layoutBookData.piece})
+shout("OnBiblePieceSelected", {piece: layoutBookData.piece});
 
 if(!fromOpenAllButton)
 {
@@ -23,7 +23,7 @@ if(!fromOpenAllButton)
             zoom: 18
         })
     }
-    await animateTag(layoutBookData.element, {
+    await animateTag(layoutBookData.piece, {
         fromValue: {
             formOpacity: 1,
             scaleX: bookScales.x,
@@ -36,14 +36,14 @@ if(!fromOpenAllButton)
         },
         duration: fromOpenAllButton ? 0.005 : 0.3
     }).finally(() => {
-        setTagMask(layoutBookData.element, "scaleX", bookScales.x);
-        setTagMask(layoutBookData.element, "scaleY", bookScales.y);
+        setTagMask(layoutBookData.piece, "scaleX", bookScales.x);
+        setTagMask(layoutBookData.piece, "scaleY", bookScales.y);
     })
 }
-layoutBookData.element.tags[dimension] = false
+layoutBookData.piece.tags[dimension] = false
 const currentDate = new Date();
 const currentYear = currentDate.getFullYear();
-const {relativeDateRange} = BibleVizUtils.Data.tags.booksStaticInfo[layoutBookData.elementInfo.commonName]
+const {relativeDateRange} = BibleVizUtils.Data.tags.booksStaticInfo[layoutBookData.pieceInfo.commonName]
 const historicalDateRange  = `${Math.abs(relativeDateRange.min)}${(relativeDateRange.min != relativeDateRange.max) ? `-${Math.abs(relativeDateRange.max)}` : ``} ${relativeDateRange.min < 0 ? "B.C." : "A.D."}`
 const elapsedYearsRange = `${currentYear - relativeDateRange.min}${relativeDateRange.min != relativeDateRange.max ? `-${currentYear - relativeDateRange.max}` : ``} years ago`
 
@@ -63,25 +63,25 @@ for(const chapterData of layoutBookData.childrenData)
         initialScaleY: BibleVizUtils.Data.BibleLayoutMeasurements.ChapterHeight,
         initialScaleZ: BibleVizUtils.Data.BibleLayoutMeasurements.ChapterInitialScaleZ,
         selectedScaleZ: BibleVizUtils.Data.BibleLayoutMeasurements.ChapterSelectedScaleZ,
-        desiredLabel: (layoutBookData.element.tags.startChapter) + chapterData.elementInfo.number ,
-        toErase: layoutBookData.element.tags.toErase,
+        desiredLabel: (layoutBookData.piece.tags.startChapter) + chapterData.pieceInfo.number ,
+        toErase: layoutBookData.piece.tags.toErase,
         initialColor: "#FFFFFF",
         historicalDateRange,
         elapsedYearsRange,
         labelFontSize: 0.5,
-        parentBookName: layoutBookData.elementInfo.commonName,
+        parentBookName: layoutBookData.pieceInfo.commonName,
         arrangementIndex: layoutBookData.creationInfo.arrangementIndex,
         isYear: layoutData?.isDatesEnabled == 2 ? false:true,
         isShowYear: layoutData?.isDatesEnabled == 1 ? false :true,
         // layerIndex: chapterData.layerIndex,
         structureIndex: chapterData.structureIndex,
-        chapterNumber: chapterData.elementInfo.number,
+        chapterNumber: chapterData.pieceInfo.number,
         ...chaptersMod
     }
     chapter.OnSpawned({mod: chapterMod});
-    chapterData.element = chapter;
+    chapterData.piece = chapter;
     chapterData.isActive = true;
-    if(BibleVizUtils.Data.masks.isInHistoryMode) setTagMask(chapter, "color", BibleVizUtils.Functions.GetHistoryColor({element: chapter}))
+    if(BibleVizUtils.Data.masks.isInHistoryMode) setTagMask(chapter, "color", BibleVizUtils.Functions.GetHistoryColor({piece: chapter}))
     else if(chapterData.highlightColor) setTagMask(chapter, "color", chapterData.highlightColor);
     column += 1
 
@@ -94,18 +94,18 @@ for(const chapterData of layoutBookData.childrenData)
 if(fromOpenAllButton)
 {
     layoutBookData.childrenData.forEach((chapterData) => {
-        setTag(chapterData.element, "scale", 1);
-        setTag(chapterData.element, "label", chapterData.element.tags.desiredLabel);
+        setTag(chapterData.piece, "scale", 1);
+        setTag(chapterData.piece, "label", chapterData.piece.tags.desiredLabel);
     })
     return true;
 }
 else
 {
     return Promise.all(layoutBookData.childrenData.map((chapterData, index) => {
-        return animateTag(chapterData.element, "scale", {
+        return animateTag(chapterData.piece, "scale", {
             toValue: 1,
             duration: chapterShowDuration,
             startTime: os.localTime + (index * chapterShowDuration * 1000)
-        }).then(() => {setTag(chapterData.element, "label", chapterData.element.tags.desiredLabel)})
+        }).then(() => {setTag(chapterData.piece, "label", chapterData.piece.tags.desiredLabel)})
     })).then(() => {shout("OnSelectLayoutBookComplete", {fromOpenAllButton})})
 }

@@ -1,32 +1,32 @@
-const {element} = that;
+const {piece} = that;
 
 let key;
-switch(element.tags.typeOfElement)
+switch(piece.tags.typeOfElement)
 {
     case BibleVizUtils.Data.tags.BibleElementType.Testament: 
-        key = element.tags.testamentName; 
+        key = piece.tags.testamentName; 
     break;
     case BibleVizUtils.Data.tags.BibleElementType.Section: 
-        key = element.tags.sectionName; 
+        key = piece.tags.sectionName; 
     break;
     case BibleVizUtils.Data.tags.BibleElementType.SectionBook:
     case BibleVizUtils.Data.tags.BibleElementType.Book:
     case BibleVizUtils.Data.tags.BibleElementType.LayoutBook:
-        key = element.tags.bookName; 
+        key = piece.tags.bookName; 
     break;
     case BibleVizUtils.Data.tags.BibleElementType.Chapter:
     case BibleVizUtils.Data.tags.BibleElementType.LayoutChapter:
-        key = `${element.tags.parentBookName} ${element.tags.chapterNumber}`;
+        key = `${piece.tags.parentBookName} ${piece.tags.chapterNumber}`;
     break;
     case BibleVizUtils.Data.tags.BibleElementType.ChunkOfVerses:
-        key = element.masks.chunkPath
+        key = piece.masks.chunkPath
     break;
     case BibleVizUtils.Data.tags.BibleElementType.Verse:
-        key = element.masks.versePath;
+        key = piece.masks.versePath;
     break;
     default: break;
 }
 
-const actualTypeOfElement = (element.tags.typeOfElement === BibleVizUtils.Data.tags.BibleElementType.LayoutBook ||element.tags.typeOfElement ===  BibleVizUtils.Data.tags.BibleElementType.SectionBook) ? BibleVizUtils.Data.tags.BibleElementType.Book : 
-    (element.tags.typeOfElement === BibleVizUtils.Data.tags.BibleElementType.LayoutChapter) ? BibleVizUtils.Data.tags.BibleElementType.Chapter : element.tags.typeOfElement
+const actualTypeOfElement = (piece.tags.typeOfElement === BibleVizUtils.Data.tags.BibleElementType.LayoutBook ||piece.tags.typeOfElement ===  BibleVizUtils.Data.tags.BibleElementType.SectionBook) ? BibleVizUtils.Data.tags.BibleElementType.Book : 
+    (piece.tags.typeOfElement === BibleVizUtils.Data.tags.BibleElementType.LayoutChapter) ? BibleVizUtils.Data.tags.BibleElementType.Chapter : piece.tags.typeOfElement
 return thisBot.GetHistoryEntries({typeOfElement: actualTypeOfElement, key});

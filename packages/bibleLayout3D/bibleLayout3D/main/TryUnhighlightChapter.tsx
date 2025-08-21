@@ -1,10 +1,10 @@
 const {chapterData} = that;
 
-if (!chapterData.element.masks.isSelecting && 
-    !chapterData.element.masks.isDeselecting && 
-    !chapterData.element.masks.isBeingDragged)
+if (!chapterData.piece.masks.isSelecting && 
+    !chapterData.piece.masks.isDeselecting && 
+    !chapterData.piece.masks.isBeingDragged)
 {
-    chapterData.element.Unhighlight({chapterData}).then(() => {
-        if(!chapterData.element.masks.isExpanded) BibleVizUtils.Functions.UpdateUsersNotificationOnElements({elementsData: [chapterData]})
+    chapterData.piece.Unhighlight({chapterData}).then(() => {
+        if(!chapterData.piece.masks.isExpanded) BibleVizUtils.Functions.UpdateUsersNotificationOnPieces({piecesData: [chapterData]})
     });
 }

@@ -1,26 +1,26 @@
 const {layoutBookStructure, position} = that;
 const dimension = os.getCurrentDimension();
-const {chaptersInfo} = BibleVizUtils.Data.tags.booksStaticInfo[layoutBookStructure.layoutBookData.elementInfo.commonName];
+const {chaptersInfo} = BibleVizUtils.Data.tags.booksStaticInfo[layoutBookStructure.layoutBookData.pieceInfo.commonName];
 const amountOfRows = Math.ceil(chaptersInfo.length / BibleVizUtils.Data.BibleLayoutMeasurements.BookMaxAmountOfColumns)
 // Delete? -> const amountOfColumns = Math.min(BibleVizUtils.Data.BibleLayoutMeasurements.BookMaxAmountOfColumns, chaptersInfo.length)
-// Integrage -> const bookScaleY = thisBot.GetBookHeightByName({bookName: layoutBookStructure.layoutBookData.elementInfo.commonName})
+// Integrage -> const bookScaleY = thisBot.GetBookHeightByName({bookName: layoutBookStructure.layoutBookData.pieceInfo.commonName})
 const bookScales = new Vector3(
     BibleVizUtils.Data.BibleLayoutMeasurements.BookScaleX,
     (amountOfRows * BibleVizUtils.Data.BibleLayoutMeasurements.ChapterHeight) + (BibleVizUtils.Data.BibleLayoutMeasurements.ChapterPadding * 2) + (BibleVizUtils.Data.BibleLayoutMeasurements.ChapterGap * (amountOfRows - 1)), 
     0.175
 );
 
-const book = layoutBookStructure.layoutBookData.element ?? ObjectPooler.GetObjectFromPool({tag: BibleVizUtils.Data.tags.ObjectPoolTags.LayoutBook});
+const book = layoutBookStructure.layoutBookData.piece ?? ObjectPooler.GetObjectFromPool({tag: BibleVizUtils.Data.tags.ObjectPoolTags.LayoutBook});
 
 const {arrangementIndex, testamentIndex, sectionIndex} = StacksManager.GetBookInfoPathByName({
-    name: layoutBookStructure.layoutBookData.elementInfo.commonName, 
+    name: layoutBookStructure.layoutBookData.pieceInfo.commonName, 
     arrangementIndex: BibleVizUtils.Functions.GetCurrentArrangementIndex()
 });
 
 const sectionName = BibleVizUtils.Data.vars.fixedArrangementsInfo[arrangementIndex].testaments[testamentIndex].sections[sectionIndex].name;
 
 const bookIndexWithinSection = BibleVizUtils.Data.vars.fixedArrangementsInfo[arrangementIndex].testaments[testamentIndex].sections[sectionIndex].books.findIndex((bookInfo) => {
-    return bookInfo.commonName === layoutBookStructure.layoutBookData.elementInfo.commonName;
+    return bookInfo.commonName === layoutBookStructure.layoutBookData.pieceInfo.commonName;
 })
 
 const sectionInfo = BibleVizUtils.Data.vars.fixedArrangementsInfo.slice()[arrangementIndex].testaments[testamentIndex].sections[sectionIndex]
@@ -31,7 +31,7 @@ const sectionLevelsColors = GetChildrenLevelColors({
 })
 
 const color = layoutBookStructure.layoutBookData.highlightColor ??
-    layoutBookStructure.layoutBookData.elementInfo.customColor ??
+    layoutBookStructure.layoutBookData.pieceInfo.customColor ??
         sectionLevelsColors[bookIndexWithinSection];
 
 const mapBookMod = {
@@ -45,11 +45,11 @@ const mapBookMod = {
     color: color,
     initialColor: color,
     draggable: true,
-    apiName: layoutBookStructure.layoutBookData.elementInfo.commonName,
-    bookName: layoutBookStructure.layoutBookData.elementInfo.commonName,
+    apiName: layoutBookStructure.layoutBookData.pieceInfo.commonName,
+    bookName: layoutBookStructure.layoutBookData.pieceInfo.commonName,
     sectionName,
-    startChapter: layoutBookStructure.layoutBookData.elementInfo.startingIndex ?? 0,
-    chapterCount: layoutBookStructure.layoutBookData.elementInfo.numberOfChapters,
+    startChapter: layoutBookStructure.layoutBookData.pieceInfo.startingIndex ?? 0,
+    chapterCount: layoutBookStructure.layoutBookData.pieceInfo.numberOfChapters,
     index: layoutBookStructure.structureIndex,
     system: null,
     formOpacity: 0,
@@ -58,9 +58,9 @@ const mapBookMod = {
     sectionIndex
 };
 book.OnSpawned({mod: mapBookMod});
-layoutBookStructure.layoutBookData.element = book;
+layoutBookStructure.layoutBookData.piece = book;
 layoutBookStructure.layoutBookData.isActive = true;
 layoutBookStructure.layoutBookData.isSelected = false;
-if(BibleVizUtils.Data.masks.isInHistoryMode) setTagMask(book, "color", BibleVizUtils.Functions.GetHistoryColor({element: book}))
+if(BibleVizUtils.Data.masks.isInHistoryMode) setTagMask(book, "color", BibleVizUtils.Functions.GetHistoryColor({piece: book}))
 
 return book;

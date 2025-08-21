@@ -1,5 +1,5 @@
 const {chapter, typeOfInteraction} = that;
-const chapterData = thisBot.GetElementData({element: chapter});
+const chapterData = thisBot.GetPieceData({piece: chapter});
 const originalLayoutData = thisBot.GetLayoutDataById({layoutId: chapterData.originalLayoutId})
 
 if(originalLayoutData?.currentPlaylistShownId) return;
@@ -13,7 +13,7 @@ switch(typeOfInteraction)
         {
             if(BibleVizUtils.Data.masks.isHighlightToolEnabled)
             {
-                BibleVizUtils.Functions.HighlightBibleElement({data: chapterData});
+                BibleVizUtils.Functions.HighlightBiblePiece({data: chapterData});
             }
             else
             {
@@ -44,7 +44,7 @@ switch(typeOfInteraction)
     break;
     case BibleVizUtils.Data.tags.InteractionType.Drag:
     {
-        shout(`OnLayoutElementDrag`, {data: chapterData})
+        shout(`OnLayoutPieceDrag`, {data: chapterData})
     }
     break;
     case BibleVizUtils.Data.tags.InteractionType.Drop:
@@ -52,7 +52,7 @@ switch(typeOfInteraction)
         setTagMask(chapter, 'isBeingDragged', false);
         if(chapterData.isSelected)
         {
-            if(chapterData.element.masks.isExpanded || originalLayoutData.isChapterExpandEnabled)
+            if(chapterData.piece.masks.isExpanded || originalLayoutData.isChapterExpandEnabled)
             {
                 thisBot.DeselectChapter({chapterData, layoutData: originalLayoutData}).then(() => {thisBot.TrySelectChapter({chapterData, layoutData: originalLayoutData});})
             }

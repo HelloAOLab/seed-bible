@@ -93,14 +93,14 @@ thisBot.TryShowPlaylistPath({layoutData})
 
 function GetTestamentLineForEntry(entryItem)
 {
-    return layoutData.staticLayoutElements.testamentLines.find((testamentLine) => {
+    return layoutData.staticLayoutPieces.testamentLines.find((testamentLine) => {
         return testamentLine.tags.lineInfo.arrangementIndex == entryItem.tags.arrangementIndex && testamentLine.tags.lineInfo.testamentIndex == entryItem.tags.testamentIndex
     })
 }
 
 function GetSectionLineSegmentForEntry(entryItem)
 {
-    const sectionLine = layoutData.staticLayoutElements.sectionLines.find((currSectionLine) => {
+    const sectionLine = layoutData.staticLayoutPieces.sectionLines.find((currSectionLine) => {
         const segmentInfo = currSectionLine.tags.lineInfo.segments[currSectionLine.tags.segmentIndex];
         return currSectionLine.tags.lineInfo.arrangementIndex == entryItem.tags.arrangementIndex &&
             currSectionLine.tags.lineInfo.testamentIndex == entryItem.tags.testamentIndex &&
@@ -118,7 +118,7 @@ function GetBookForEntry(entryItem)
         return structure.layoutBookData.creationInfo.arrangementIndex === entryItem.tags.arrangementIndex &&
             structure.layoutBookData.creationInfo.testamentIndex == entryItem.tags.testamentIndex &&
                 structure.layoutBookData.creationInfo.sectionIndex == entryItem.tags.sectionIndex &&
-                    structure.layoutBookData.elementInfo.commonName === entryItem.tags.book
+                    structure.layoutBookData.pieceInfo.commonName === entryItem.tags.book
     })
-    return layoutBookStructure?.layoutBookData?.element;
+    return layoutBookStructure?.layoutBookData?.piece;
 }

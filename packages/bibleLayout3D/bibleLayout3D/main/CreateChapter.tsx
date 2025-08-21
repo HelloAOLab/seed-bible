@@ -8,7 +8,7 @@ const parentDataIds = new ParentDataIds({
 });
 const chapterData = new LayoutChapterData({
     id: uuid(), 
-    elementInfo: chapterInfo, 
+    pieceInfo: chapterInfo, 
     parentDataIds, 
     originalLayoutId: layoutData?.id
 })

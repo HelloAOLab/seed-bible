@@ -6,7 +6,7 @@ const contentMarginBottom = 2;
 const backgroundPadding = 1;
 
 const layoutBookStructure = thisBot.vars.layoutBooksStructure.find((structure) => {return structure.dateLabel.id === label.id})
-const {author, relativeDateRange, numberOfChapters} = BibleVizUtils.Data.tags.booksStaticInfo[layoutBookStructure.layoutBookData.elementInfo.commonName];
+const {author, relativeDateRange, numberOfChapters} = BibleVizUtils.Data.tags.booksStaticInfo[layoutBookStructure.layoutBookData.pieceInfo.commonName];
 const date = `${Math.abs(relativeDateRange.min)}${(relativeDateRange.min != relativeDateRange.max) ? `-${Math.abs(relativeDateRange.max)}` : ``} ${relativeDateRange.min < 0 ? "B.C." : "A.D."}`
 const contentLabel = `Author: ${author}
 Date: ${date}

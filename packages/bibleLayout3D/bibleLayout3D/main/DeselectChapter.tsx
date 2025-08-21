@@ -1,17 +1,17 @@
 const {chapterData, layoutData} = that;
 
 chapterData.isSelected = false;
-BibleVizUtils.Functions.TryHideUsersColorOnElement({element: chapterData.element});
-const previousLinkedChapter = getBot("lineTo", chapterData.element.id);
+BibleVizUtils.Functions.TryHideUsersColorOnPiece({piece: chapterData.piece});
+const previousLinkedChapter = getBot("lineTo", chapterData.piece.id);
 if(layoutData.currentSelectedChapterData?.id == chapterData.id)
 {
     if(previousLinkedChapter) 
     {
-        const previousChapterData = thisBot.GetElementData({element: previousLinkedChapter})
+        const previousChapterData = thisBot.GetPieceData({piece: previousLinkedChapter})
         layoutData.currentSelectedChapterData = previousChapterData;
     }
     else layoutData.currentSelectedChapterData = null;
 }
 if(previousLinkedChapter) previousLinkedChapter.tags.lineTo = null;
-chapterData.element.tags.lineTo = null;
-return chapterData.element.Deselect();
+chapterData.piece.tags.lineTo = null;
+return chapterData.piece.Deselect();

@@ -1,7 +1,7 @@
-const {element, data} = that;
+const {piece, data} = that;
 
 let entries;
-if(element) entries = thisBot.GetHistoryEntriesForElement({element});
+if(piece) entries = thisBot.GetHistoryEntriesForElement({piece});
 else if(data)
 {
     const {typeOfElement, key} = data;

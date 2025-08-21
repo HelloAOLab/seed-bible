@@ -57,7 +57,7 @@ const BibleLayoutMeasurements = {
     Book2DMaxAmountOfColumns: 5
 }
 BibleLayoutMeasurements.Book3DScaleX = (BibleLayoutMeasurements.Book3DMaxAmountOfColumns * BibleLayoutMeasurements.Chapter3DWidth) + (BibleLayoutMeasurements.Chapter3DPadding * 2) + (BibleLayoutMeasurements.Chapter3DGap * (BibleLayoutMeasurements.Book3DMaxAmountOfColumns - 1))
-const StackElementMeasurements = {
+const StackPieceMeasurements = {
     ChapterWidth: 0.5,
     ChapterHeight: 0.5,
     MinChapterBackDepth: 0.5,
@@ -75,7 +75,7 @@ const StackElementMeasurements = {
 
 setTag(bibleVizData, "UsersColorValues", UsersColorValues);
 setTag(bibleVizData, "BibleLayoutMeasurements", BibleLayoutMeasurements);
-setTag(bibleVizData, "StackElementMeasurements", StackElementMeasurements);
+setTag(bibleVizData, "StackPieceMeasurements", StackPieceMeasurements);
 setTagMask(bibleVizData, "isInHistoryMode", false);
 setTagMask(bibleVizData, 'highlightHistoryIndex', -1);
 setTagMask(bibleVizData, "historyTimePeriodsInfo", [nowTimePeriod, defaultTimePeriod])

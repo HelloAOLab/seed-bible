@@ -1,37 +1,37 @@
 import {LayoutBookData} from "bibleVizUtils.classes.LayoutBookData"
 import {LayoutChapterData} from "bibleVizUtils.classes.LayoutChapterData"
 
-const elementsData = [
+const piecesData = [
     ...thisBot.vars.layoutBooksData, 
     ...thisBot.vars.layoutChaptersData, 
 ]
 
-elementsData.forEach((elementData) => {
-    const isElementAvailable = elementData.element && elementData.element.tags.isInUse && ((elementData instanceof LayoutBookData) ? !elementData.isSelected : true)
+piecesData.forEach((pieceData) => {
+    const isPieceAvailable = pieceData.piece && pieceData.piece.tags.isInUse && ((pieceData instanceof LayoutBookData) ? !pieceData.isSelected : true)
 
-    if(isElementAvailable)
+    if(isPieceAvailable)
     {
-        if(elementData instanceof LayoutChapterData && elementData.isSelected)
+        if(pieceData instanceof LayoutChapterData && pieceData.isSelected)
         {
-            const layoutData = thisBot.GetLayoutDataById({layoutId: elementData.parentDataIds.layoutId});
-            setTagMask(elementData.element, 'color', (elementData.isSelected && !elementData.element.masks.isExpanded) ? layoutData.chapterSelectColor : (elementData.highlightColor ?? elementData.element.tags.initialColor));
+            const layoutData = thisBot.GetLayoutDataById({layoutId: pieceData.parentDataIds.layoutId});
+            setTagMask(pieceData.piece, 'color', (pieceData.isSelected && !pieceData.piece.masks.isExpanded) ? layoutData.chapterSelectColor : (pieceData.highlightColor ?? pieceData.piece.tags.initialColor));
 
-            if(Array.isArray(elementData.element.vars.chunksOfVerses) && elementData.element.vars.chunksOfVerses.length > 0)
+            if(Array.isArray(pieceData.piece.vars.chunksOfVerses) && pieceData.piece.vars.chunksOfVerses.length > 0)
             {
-                elementData.element.vars.chunksOfVerses.forEach((chunk) => {
+                pieceData.piece.vars.chunksOfVerses.forEach((chunk) => {
                     if(chunk.masks.isSelected)
                     {
                         if(Array.isArray(chunk.vars.verses) && chunk.vars.verses.length > 0)
                         {
                             chunk.vars.verses.forEach((verse) => {
-                                const verseHighlightInfo = elementData.GetHighlightInfoByKey(verse.masks.versePath)
+                                const verseHighlightInfo = pieceData.GetHighlightInfoByKey(verse.masks.versePath)
                                 setTagMask(verse, 'color', (verseHighlightInfo ? verseHighlightInfo.color : verse.tags.initialColor))
                             })
                         }
                     }
                     else
                     {
-                        const chunkHighlightInfo = elementData.GetHighlightInfoByKey(chunk.masks.chunkPath)
+                        const chunkHighlightInfo = pieceData.GetHighlightInfoByKey(chunk.masks.chunkPath)
                         setTagMask(chunk, "color", (chunkHighlightInfo ? chunkHighlightInfo.color : chunk.tags.initialColor));
                     }
                 })
@@ -39,7 +39,7 @@ elementsData.forEach((elementData) => {
         }
         else
         {
-            setTagMask(elementData.element, "color", (elementData.highlightColor ?? elementData.element.tags.initialColor));
+            setTagMask(pieceData.piece, "color", (pieceData.highlightColor ?? pieceData.piece.tags.initialColor));
         }
     }
 })

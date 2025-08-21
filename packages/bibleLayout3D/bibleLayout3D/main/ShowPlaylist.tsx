@@ -14,10 +14,10 @@ thisBot.HideCurrentBookDateLabelShown();
 await thisBot.RespawnAllBooks({layoutData});
 
 layoutData.childrenStructures.forEach((layoutBookStructure) => {
-    if(layoutBookStructure.layoutBookData.element)
+    if(layoutBookStructure.layoutBookData.piece)
     {
         const bookMod = { draggable: false }
-        applyMod(layoutBookStructure.layoutBookData.element, bookMod);
+        applyMod(layoutBookStructure.layoutBookData.piece, bookMod);
     }
 })
 
@@ -32,7 +32,7 @@ for(const playlistEntryInfoIndex in playlistItemsList)
         case BibleVizUtils.Data.tags.PlaylistItemType.Chapter: 
         case BibleVizUtils.Data.tags.PlaylistItemType.Verse: {
             const layoutBookStructure = layoutData.childrenStructures.find((structure) => {
-                return structure.layoutBookData.elementInfo.commonName === playlistEntryInfo.additionalInfo[playlistEntryInfo.type === BibleVizUtils.Data.tags.PlaylistItemType.Verse ? "book" : "bookName"]
+                return structure.layoutBookData.pieceInfo.commonName === playlistEntryInfo.additionalInfo[playlistEntryInfo.type === BibleVizUtils.Data.tags.PlaylistItemType.Verse ? "book" : "bookName"]
             })
             
             if(!layoutBookStructure.layoutBookData.isSelected)
@@ -41,10 +41,10 @@ for(const playlistEntryInfoIndex in playlistItemsList)
                 await thisBot.SelectBook({layoutBookData: layoutBookStructure.layoutBookData, layoutData, chaptersMod})
             }
             const chapterData = layoutBookStructure.layoutBookData.childrenData.find((data) => {
-                return data.elementInfo.number === playlistEntryInfo.additionalInfo.chapter
+                return data.pieceInfo.number === playlistEntryInfo.additionalInfo.chapter
             })
 
-            const chapterPosition = getBotPosition(chapterData.element, dimension);
+            const chapterPosition = getBotPosition(chapterData.piece, dimension);
 
             const itemPositionZ = BibleVizUtils.Data.BibleLayoutMeasurements.BookPositionZ + (chapterData.playlistEntriesItems.length * (playlistEntryItemHeight + BibleVizUtils.Data.BibleLayoutMeasurements.PlaylistStackedEntryItemGap))
 
@@ -59,14 +59,14 @@ for(const playlistEntryInfoIndex in playlistItemsList)
                 scaleX: BibleVizUtils.Data.BibleLayoutMeasurements.ChapterWidth + BibleVizUtils.Data.BibleLayoutMeasurements.PlaylistEntryItemPadding,
                 scaleY: BibleVizUtils.Data.BibleLayoutMeasurements.ChapterHeight + BibleVizUtils.Data.BibleLayoutMeasurements.PlaylistEntryItemPadding,
                 scaleZ: playlistEntryItemHeight,
-                label: chapterData.element.tags.label,
+                label: chapterData.piece.tags.label,
                 color: index < layoutData.playlistSelectedEntryIndex ? "#D3D3D3" : (index > layoutData.playlistSelectedEntryIndex ? "#FFFFFF" : "#DCF0EC"),
                 strokeColor: index < layoutData.playlistSelectedEntryIndex ? "#D3D3D3" : (index > layoutData.playlistSelectedEntryIndex ? "#FFFFFF" : "#139981"),
                 arrangementIndex: layoutBookStructure.layoutBookData.creationInfo.arrangementIndex,
                 testamentIndex: layoutBookStructure.layoutBookData.creationInfo.testamentIndex,
                 sectionIndex: layoutBookStructure.layoutBookData.creationInfo.sectionIndex,
-                book: layoutBookStructure.layoutBookData.elementInfo.commonName,
-                chapter: chapterData.elementInfo.number,
+                book: layoutBookStructure.layoutBookData.pieceInfo.commonName,
+                chapter: chapterData.pieceInfo.number,
                 index: playlistEntryInfoIndex,
                 bookColumn: layoutBookStructure.column,
                 bookRow: layoutBookStructure.row,
@@ -86,11 +86,11 @@ for(const playlistEntryInfoIndex in playlistItemsList)
 
 thisBot.TryShowPlaylistPath({layoutData})
 
-const coverPosition = getBotPosition(layoutData.staticLayoutElements.cover, dimension);
-const coverScales = BibleVizUtils.Functions.GetBotScales({bot: layoutData.staticLayoutElements.cover})
+const coverPosition = getBotPosition(layoutData.staticLayoutPieces.cover, dimension);
+const coverScales = BibleVizUtils.Functions.GetBotScales({bot: layoutData.staticLayoutPieces.cover})
 
-const prevButton = layoutData.staticLayoutElements.playlistPreviousButton ?? ObjectPooler.GetObjectFromPool({tag: BibleVizUtils.Data.tags.ObjectPoolTags.MapPlaylistNavigationButton});
-const nextButton = layoutData.staticLayoutElements.playlistNextButton ?? ObjectPooler.GetObjectFromPool({tag: BibleVizUtils.Data.tags.ObjectPoolTags.MapPlaylistNavigationButton});
+const prevButton = layoutData.staticLayoutPieces.playlistPreviousButton ?? ObjectPooler.GetObjectFromPool({tag: BibleVizUtils.Data.tags.ObjectPoolTags.MapPlaylistNavigationButton});
+const nextButton = layoutData.staticLayoutPieces.playlistNextButton ?? ObjectPooler.GetObjectFromPool({tag: BibleVizUtils.Data.tags.ObjectPoolTags.MapPlaylistNavigationButton});
 
 const prevButtonMod = {
     label: "<",
@@ -122,7 +122,7 @@ const nextButtonMod = {
 prevButton.OnSpawned({mod: prevButtonMod});
 nextButton.OnSpawned({mod: nextButtonMod});
 
-layoutData.staticLayoutElements.playlistPreviousButton = prevButton;
-layoutData.staticLayoutElements.playlistNextButton = nextButton;
+layoutData.staticLayoutPieces.playlistPreviousButton = prevButton;
+layoutData.staticLayoutPieces.playlistNextButton = nextButton;
 
 shout("OnShowPlaylistOnLayoutComplete")

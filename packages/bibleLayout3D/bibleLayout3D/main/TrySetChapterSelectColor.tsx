@@ -5,5 +5,5 @@ const color = await os.showInput(thisBot.tags.currentColor, {
 if(color)
 {
     layoutData.chapterSelectColor = color;
-    layoutData.staticLayoutElements.colorPickerContent.tags.color = color;
+    layoutData.staticLayoutPieces.colorPickerContent.tags.color = color;
 }

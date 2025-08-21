@@ -1,0 +1,8 @@
+/**
+    * Deactivates the Bible creation process by setting the appropriate tag mask.
+    *
+    * @example
+    * shout("OnNewBibleStackCreated");
+*/
+
+setTagMask(thisBot, 'isBibleCreationActive', false);

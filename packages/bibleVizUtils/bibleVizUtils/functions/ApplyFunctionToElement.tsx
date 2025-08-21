@@ -1,10 +1,10 @@
-const {element, func, args = {}} = that;
+const {piece, func, args = {}} = that;
 
-if(Array.isArray(element))
+if(Array.isArray(piece))
 {
-    return element.map((i, index) => {return func({element: i, args, isArray: true, index})}).filter((i) => {return i !== null && i !== undefined});
+    return piece.map((i, index) => {return func({piece: i, args, isArray: true, index})}).filter((i) => {return i !== null && i !== undefined});
 }
 else
 {
-    return func({element, args, isArray: false});
+    return func({piece, args, isArray: false});
 }

@@ -1,18 +1,18 @@
-const {element} = that;
+const {piece} = that;
 let currUsersColor;
 
-switch(element.tags.poolTag)
+switch(piece.tags.poolTag)
 {
     case BibleVizUtils.Data.tags.ObjectPoolTags.InfoLabelTransformer:
-        currUsersColor = element.GetLabelElements().infoLabelUsersColor;
+        currUsersColor = piece.GetLabelElements().infoLabelUsersColor;
     break;
     case BibleVizUtils.Data.tags.ObjectPoolTags.Chapter:
     case BibleVizUtils.Data.tags.ObjectPoolTags.LayoutBook:
     case BibleVizUtils.Data.tags.ObjectPoolTags.LayoutChapter: 
     {
-        const elementData = element.tags.poolTag == BibleVizUtils.Data.tags.ObjectPoolTags.Chapter ? BibleStackManager.GetBibleElementData({element}) :
-            BibleLayout3DManager.GetElementData({element})
-        currUsersColor = getBots(byTag("isUserColor", true), byTag("ownerDataId", elementData.id), byTag("isInUse", true));
+        const pieceData = piece.tags.poolTag == BibleVizUtils.Data.tags.ObjectPoolTags.Chapter ? BibleStackManager.GetBibleElementData({piece}) :
+            BibleLayout3DManager.GetPieceData({piece})
+        currUsersColor = getBots(byTag("isUserColor", true), byTag("ownerDataId", pieceData.id), byTag("isInUse", true));
     }
     break;
 }

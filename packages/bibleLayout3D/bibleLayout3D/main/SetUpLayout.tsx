@@ -40,14 +40,14 @@ for(let row = 0; row < layoutData.amountOfRows; row++)
 
     bookStructuresWithinRow.forEach((layoutBookStructure) => {
 
-        if(layoutBookStructure.layoutBookData.element.tags.scaleY > greaterBookScaleY) greaterBookScaleY = layoutBookStructure.layoutBookData.element.tags.scaleY;
+        if(layoutBookStructure.layoutBookData.piece.tags.scaleY > greaterBookScaleY) greaterBookScaleY = layoutBookStructure.layoutBookData.piece.tags.scaleY;
 
         const bookPosition = new Vector2(
-            booksOriginPosition.x + (layoutBookStructure.layoutBookData.element.tags.scaleX/2) + ((layoutBookStructure.layoutBookData.element.tags.scaleX + BibleVizUtils.Data.tags.BibleLayoutMeasurements.BookHorizontalGap) * layoutBookStructure.column),
-            currRowPosition - sectionLineLabelScaleY - sectionLineScaleY - BibleVizUtils.Data.tags.BibleLayoutMeasurements.BookVerticalGap - BibleVizUtils.Data.tags.BibleLayoutMeasurements.BookLabelHeight - (layoutBookStructure.layoutBookData.element.tags.scaleY/2),
+            booksOriginPosition.x + (layoutBookStructure.layoutBookData.piece.tags.scaleX/2) + ((layoutBookStructure.layoutBookData.piece.tags.scaleX + BibleVizUtils.Data.tags.BibleLayoutMeasurements.BookHorizontalGap) * layoutBookStructure.column),
+            currRowPosition - sectionLineLabelScaleY - sectionLineScaleY - BibleVizUtils.Data.tags.BibleLayoutMeasurements.BookVerticalGap - BibleVizUtils.Data.tags.BibleLayoutMeasurements.BookLabelHeight - (layoutBookStructure.layoutBookData.piece.tags.scaleY/2),
         )
-        setTag(layoutBookStructure.layoutBookData.element, dimension + "X", bookPosition.x);
-        setTag(layoutBookStructure.layoutBookData.element, dimension + "Y", bookPosition.y);
+        setTag(layoutBookStructure.layoutBookData.piece, dimension + "X", bookPosition.x);
+        setTag(layoutBookStructure.layoutBookData.piece, dimension + "Y", bookPosition.y);
 
         const bookNameLabelMod = {
             [dimension]: true,
@@ -55,7 +55,7 @@ for(let row = 0; row < layoutData.amountOfRows; row++)
             [dimension + "Y"]: currRowPosition - sectionLineLabelScaleY - sectionLineScaleY - BibleVizUtils.Data.tags.BibleLayoutMeasurements.BookVerticalGap - (BibleVizUtils.Data.tags.BibleLayoutMeasurements.BookLabelHeight/2),
             [dimension + "Z"]: 0.5,
             isClick: false,
-            label: layoutBookStructure.layoutBookData.elementInfo.commonName,
+            label: layoutBookStructure.layoutBookData.pieceInfo.commonName,
             scaleX: BibleVizUtils.Data.tags.BibleLayoutMeasurements.BookScaleX,
             scaleY: BibleVizUtils.Data.tags.BibleLayoutMeasurements.BookLabelHeight
         }
@@ -143,8 +143,8 @@ for(const testamentLineInfo of layoutData.testamentLinesInfo)
     }
     line.OnSpawned({ mod: lineMod });
     label.OnSpawned({ mod: labelMod });
-    layoutData.staticLayoutElements.testamentLines.push(line);
-    layoutData.staticLayoutElements.testamentLabels.push(label);
+    layoutData.staticLayoutPieces.testamentLines.push(line);
+    layoutData.staticLayoutPieces.testamentLabels.push(label);
 }
 
 for(const sectionLineInfo of layoutData.sectionLinesInfo)
@@ -174,7 +174,7 @@ for(const sectionLineInfo of layoutData.sectionLinesInfo)
         }
         line.OnSpawned({ mod: lineMod });
 
-        layoutData.staticLayoutElements.sectionLines.push(line)
+        layoutData.staticLayoutPieces.sectionLines.push(line)
         
         if(segmentIndex == segmentLabelIndex)
         {
@@ -195,7 +195,7 @@ for(const sectionLineInfo of layoutData.sectionLinesInfo)
             }
             label.OnSpawned({ mod: labelMod });
 
-            layoutData.staticLayoutElements.sectionLabels.push(label)
+            layoutData.staticLayoutPieces.sectionLabels.push(label)
         }
     }
 }
@@ -205,25 +205,25 @@ const booksGridScales = {
     y: Math.abs(currRowPosition - booksOriginPosition.y)
 }
 const coverScales = new Vector2(booksGridScales.x + coverPadding.x, booksGridScales.y + coverPadding.y)
-const gridElementsOffset = new Vector3(-booksGridScales.x/2, booksGridScales.y/2, 0);
-const bookGridElements = [
+const gridPieceOffset = new Vector3(-booksGridScales.x/2, booksGridScales.y/2, 0);
+const bookGridPieces = [
     ...layoutData.childrenStructures.flatMap((layoutBookStructure) => {
-        return [layoutBookStructure.layoutBookData.element, layoutBookStructure.nameLabel, layoutBookStructure.dateLabel]
+        return [layoutBookStructure.layoutBookData.piece, layoutBookStructure.nameLabel, layoutBookStructure.dateLabel]
     }),
-    ...layoutData.staticLayoutElements.testamentLines,
-    ...layoutData.staticLayoutElements.testamentLabels,
-    ...layoutData.staticLayoutElements.sectionLines,
-    ...layoutData.staticLayoutElements.sectionLabels
+    ...layoutData.staticLayoutPieces.testamentLines,
+    ...layoutData.staticLayoutPieces.testamentLabels,
+    ...layoutData.staticLayoutPieces.sectionLines,
+    ...layoutData.staticLayoutPieces.sectionLabels
 ]
 
-bookGridElements.forEach((element) => {
-    const currPosition = getBotPosition(element, dimension);
-    const newPosition = currPosition.add(gridElementsOffset);
+bookGridPieces.forEach((piece) => {
+    const currPosition = getBotPosition(piece, dimension);
+    const newPosition = currPosition.add(gridPieceOffset);
     const mod = {
         [dimension + "X"]: newPosition.x,
         [dimension + "Y"]: newPosition.y
     }
-    applyMod(element, mod);
+    applyMod(piece, mod);
 })
 
 const coverMod = {
@@ -245,7 +245,7 @@ const buttonPosition = new Vector3(
 )
 const toggleHandleMarginZ = 0.01;
 
-layoutData.staticLayoutElements.settingsButtons.forEach((settingsButton, index) => {
+layoutData.staticLayoutPieces.settingsButtons.forEach((settingsButton, index) => {
     buttonPosition.y = position.y + (coverScales.y/2) - (links.baseToggle.tags.scaleY/2) - buttonMargin.y - ((links.baseToggle.tags.scaleY + buttonMargin.y) * index)
     
     const buttonMod = {
@@ -332,18 +332,18 @@ const settingsButtonMod = {
     [dimension]: true,
     [dimension + "X"]: position.x - (coverScales.x / 2) + (links.baseSettingsButton.tags.scaleX / 2) + settingsButtonMargin,
     [dimension + "Y"]: position.y + (coverScales.y / 2) - (links.baseSettingsButton.tags.scaleY / 2) - settingsButtonMargin,
-    [dimension + "Z"]: layoutData.staticLayoutElements.cover.tags.scaleZ + 0.01,
+    [dimension + "Z"]: layoutData.staticLayoutPieces.cover.tags.scaleZ + 0.01,
     [dimension + "RotationZ"]: Math.PI,
     isShowingSettings: false
 }
 
-applyMod(layoutData.staticLayoutElements.settingsButton, settingsButtonMod)
-applyMod(layoutData.staticLayoutElements.cover, coverMod);
+applyMod(layoutData.staticLayoutPieces.settingsButton, settingsButtonMod)
+applyMod(layoutData.staticLayoutPieces.cover, coverMod);
 
 // thisBot.TryShowDates({ layoutData })
 thisBot.TryShowLabels({ layoutData });
 layoutData.childrenStructures.forEach((layoutBookStructure, index) => {
-    animateTag(layoutBookStructure.layoutBookData.element, {
+    animateTag(layoutBookStructure.layoutBookData.piece, {
         fromValue: {
             formOpacity: 0
         },

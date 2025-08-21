@@ -122,7 +122,7 @@ const playlistPathToggleHandle = ObjectPooler.GetObjectFromPool({ tag: BibleVizU
 
 const settingsButtonsBaseTags = {
     layoutId: layoutData.id, 
-    isSettingsElement: true
+    isSettingsPiece: true
 }
 
 const playlistPathToggleMod = { 
@@ -277,7 +277,7 @@ playlistPathToggle.OnSpawned({mod: playlistPathToggleMod})
 playlistPathToggleBackground.OnSpawned({mod: playlistPathToggleBackgroundMod})
 playlistPathToggleHandle.OnSpawned({mod: playlistPathToggleHandleMod})
 
-const staticLayoutElements = {
+const staticLayoutPieces = {
     cover,
     settingsButtons: [
         cameraAnimationToggle,
@@ -299,4 +299,4 @@ const staticLayoutElements = {
 
 }
 
-return { bookStructures, staticLayoutElements, amountOfRows: row, sectionLinesInfo, testamentLinesInfo };
+return { bookStructures, staticLayoutPieces, amountOfRows: row, sectionLinesInfo, testamentLinesInfo };

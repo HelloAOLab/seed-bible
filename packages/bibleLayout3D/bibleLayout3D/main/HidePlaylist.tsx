@@ -9,22 +9,22 @@ layoutData.playlistEntries = [];
 await thisBot.RespawnAllBooks({layoutData});
 
 layoutData.childrenStructures.forEach((layoutBookStructure) => {
-    if(layoutBookStructure.layoutBookData.element)
+    if(layoutBookStructure.layoutBookData.piece)
     {
         const bookMod = { draggable: true }
-        applyMod(layoutBookStructure.layoutBookData.element, bookMod);
+        applyMod(layoutBookStructure.layoutBookData.piece, bookMod);
     }
 })
 
-if(layoutData.staticLayoutElements.playlistPreviousButton)
+if(layoutData.staticLayoutPieces.playlistPreviousButton)
 {
-    ObjectPooler.ReleaseObject({obj: layoutData.staticLayoutElements.playlistPreviousButton, tag: BibleVizUtils.Data.tags.ObjectPoolTags.MapPlaylistNavigationButton});
-    layoutData.staticLayoutElements.playlistPreviousButton = null;
+    ObjectPooler.ReleaseObject({obj: layoutData.staticLayoutPieces.playlistPreviousButton, tag: BibleVizUtils.Data.tags.ObjectPoolTags.MapPlaylistNavigationButton});
+    layoutData.staticLayoutPieces.playlistPreviousButton = null;
 }
-if(layoutData.staticLayoutElements.playlistNextButton)
+if(layoutData.staticLayoutPieces.playlistNextButton)
 {
-    ObjectPooler.ReleaseObject({obj: layoutData.staticLayoutElements.playlistNextButton, tag: BibleVizUtils.Data.tags.ObjectPoolTags.MapPlaylistNavigationButton});
-    layoutData.staticLayoutElements.playlistNextButton = null;
+    ObjectPooler.ReleaseObject({obj: layoutData.staticLayoutPieces.playlistNextButton, tag: BibleVizUtils.Data.tags.ObjectPoolTags.MapPlaylistNavigationButton});
+    layoutData.staticLayoutPieces.playlistNextButton = null;
 }
 
 shout("OnHidePlaylistComplete")

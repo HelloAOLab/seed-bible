@@ -1,13 +1,13 @@
 const {layoutData} = that
 
 const dimension = os.getCurrentDimension();
-const elements = [
-    ...layoutData.staticLayoutElements.testamentLines,
-    ...layoutData.staticLayoutElements.testamentLabels,
-    ...layoutData.staticLayoutElements.sectionLines,
-    ...layoutData.staticLayoutElements.sectionLabels
+const pieces = [
+    ...layoutData.staticLayoutPieces.testamentLines,
+    ...layoutData.staticLayoutPieces.testamentLabels,
+    ...layoutData.staticLayoutPieces.sectionLines,
+    ...layoutData.staticLayoutPieces.sectionLabels
 ]
-setTag(elements, dimension, false);
+setTag(pieces, dimension, false);
 
 layoutData.childrenStructures.forEach((layoutBookStructure) => {
     setTag(layoutBookStructure.dateLabel, "labelColor", "black")

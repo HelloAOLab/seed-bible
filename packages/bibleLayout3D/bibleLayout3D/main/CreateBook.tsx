@@ -6,8 +6,8 @@ const parentDataIds = new ParentDataIds({layoutId: layoutData?.id});
 const creationInfo = {arrangementIndex, testamentIndex, sectionIndex}
 const layoutBookData = new LayoutBookData({
     id: uuid(), 
-    element: null,
-    elementInfo: bookInfo,
+    piece: null,
+    pieceInfo: bookInfo,
     isSelected: false,
     parentDataIds,
     creationInfo

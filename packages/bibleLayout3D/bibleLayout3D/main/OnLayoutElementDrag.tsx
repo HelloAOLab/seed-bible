@@ -4,8 +4,8 @@ const {data} = that;
 const {layoutData, layoutBookData} = thisBot.GetDataChainFromParentDataIds({parentDataIds: data.parentDataIds});
 let pulledOutFromParent = false
 
-setTagMask(data.element, "isOnTheGround", false);
-setTagMask(data.element, 'isBeingDragged', true);
+setTagMask(data.piece, "isOnTheGround", false);
+setTagMask(data.piece, 'isBeingDragged', true);
 
 switch(true)
 {
@@ -17,4 +17,4 @@ switch(true)
     break;
     default: break;
 }
-if(pulledOutFromParent) thisBot.PullOutElementFromParent({elementData: data, layoutData, layoutBookData});
+if(pulledOutFromParent) thisBot.PullOutPieceFromParent({pieceData: data, layoutData, layoutBookData});

@@ -3,11 +3,11 @@ setTagMask(thisBot, "isAnimatingMap", true);
 const {layoutData} = that;
 const dimension = os.getCurrentDimension();
 const respawnableBooksStructure = thisBot.vars.layoutBooksStructure.filter((layoutBookStructure) => {
-    return !layoutBookStructure.layoutBookData.element || layoutBookStructure.layoutBookData.isSelected
+    return !layoutBookStructure.layoutBookData.piece || layoutBookStructure.layoutBookData.isSelected
 })
 const bookShowDelay = 500;
 
-const openAllBooksButton = layoutData.staticLayoutElements.settingsButtons.find((button) => {return button.tags.buttonType === BibleVizUtils.Data.LayoutButtonType.OpenAllBooksButton});
+const openAllBooksButton = layoutData.staticLayoutPieces.settingsButtons.find((button) => {return button.tags.buttonType === BibleVizUtils.Data.LayoutButtonType.OpenAllBooksButton});
 
 openAllBooksButton.links.buttonIcon.tags.formAddress = openAllBooksButton.tags.openIcon;
 openAllBooksButton.links.buttonLabel.tags.label = "Open all books"
@@ -15,10 +15,10 @@ layoutData.hasSelectAllBooksBeenCalled = false
 for(const respawnableBookStructure of respawnableBooksStructure)
 {
     const activeChaptersData = respawnableBookStructure.layoutBookData.childrenData
-    .filter((chapterData) => {return chapterData.element})
+    .filter((chapterData) => {return chapterData.piece})
     if(activeChaptersData.length > 0)
     {
-        const activeChapters = activeChaptersData.map((chapterData) => {return chapterData.element})
+        const activeChapters = activeChaptersData.map((chapterData) => {return chapterData.piece})
         ObjectPooler.ReleaseObject({obj: activeChapters, tag: activeChapters[0].tags.poolTag})
         activeChaptersData.forEach((chapterData) => {chapterData.ResetData();})
     }
@@ -31,10 +31,10 @@ for(const respawnableBookStructure of respawnableBooksStructure)
     }
     applyMod(book, bookPositionMod);
 }
-await respawnableBooksStructure.sort((structureA, structureB) => structureA.layoutBookData.element.tags.index - structureB.layoutBookData.element.tags.index)
+await respawnableBooksStructure.sort((structureA, structureB) => structureA.layoutBookData.piece.tags.index - structureB.layoutBookData.piece.tags.index)
 
 await Promise.all(respawnableBooksStructure.map((layoutBookStructure, index) => {
-    return animateTag(layoutBookStructure.layoutBookData.element, {
+    return animateTag(layoutBookStructure.layoutBookData.piece, {
         fromValue: {
             formOpacity: 0
         },

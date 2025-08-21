@@ -1,5 +1,5 @@
 const {book, typeOfInteraction} = that;
-const layoutBookData = thisBot.GetElementData({element: book});
+const layoutBookData = thisBot.GetPieceData({piece: book});
 const layoutData = layoutBookData.parentDataIds && layoutBookData.parentDataIds.layoutId ? thisBot.GetLayoutDataById({layoutId: layoutBookData.parentDataIds.layoutId}) : null;
 
 if(layoutData?.currentPlaylistShownId) return;
@@ -12,7 +12,7 @@ switch(typeOfInteraction)
         {
             if(BibleVizUtils.Data.masks.isHighlightToolEnabled)
             {
-                BibleVizUtils.Functions.HighlightBibleElement({data: layoutBookData});
+                BibleVizUtils.Functions.HighlightBiblePiece({data: layoutBookData});
             }
             else
             {
@@ -26,12 +26,12 @@ switch(typeOfInteraction)
     break;
     case BibleVizUtils.Data.tags.InteractionType.Drag:
     {
-        if(book.tags.draggable) shout("OnLayoutElementDrag", {data: layoutBookData});
+        if(book.tags.draggable) shout("OnLayoutPieceDrag", {data: layoutBookData});
     }
     break;
     case BibleVizUtils.Data.tags.InteractionType.Drop:
     {
-        shout('OnLayoutElementDrop', {element: book, dropInfo});
+        shout('OnLayoutPieceDrop', {piece: book, dropInfo});
     }
     break;
     default: break;
