@@ -1,6 +1,6 @@
 const {layoutBookData, layoutData, fromOpenAllButton = false, chaptersMod = {}} = that;
 
-setTagMask(thisBot, "isAnimatingMap", true);
+setTagMask(thisBot, "isAnimatingBible", true);
 
 layoutBookData.isSelected = true;
 const dimension = os.getCurrentDimension()

@@ -10,7 +10,7 @@ const testamentLinesInfo = [];
 const sectionLinesInfo = [];
 const labelInitialSpace = "   ";
 
-// const { testamentLinesInfo, sectionLinesInfo, mapBooksInfo, layers } = GetLayoutStructure({arrangementIndex, arrangement})
+// const { testamentLinesInfo, sectionLinesInfo, layoutBooksInfo, layers } = GetLayoutStructure({arrangementIndex, arrangement})
 
 const testaments = arrangement.testaments.toReversed()
 for(const testamentIndex in testaments)

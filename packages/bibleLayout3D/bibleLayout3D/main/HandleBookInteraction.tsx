@@ -8,7 +8,7 @@ switch(typeOfInteraction)
 {
     case BibleVizUtils.Data.tags.InteractionType.Click:
     {
-        if(!thisBot.masks.isAnimatingMap)
+        if(!thisBot.masks.isAnimatingBible)
         {
             if(BibleVizUtils.Data.masks.isHighlightToolEnabled)
             {

@@ -18,7 +18,7 @@ setTagMask(thisBot, "isStoppingStackVizToggle", true);
 const animationDuration = 0.25;
 const crossLines = [bibleData.staticBiblePieces.crossVerticalLine, bibleData.staticBiblePieces.crossHorizontalLine];
 await Promise.all(crossLines.map((crossLine) => {
-    return LerpColorManager.LerpTagColor({
+    return ColorLerper.LerpTag({
         startingColor: BibleVizUtils.Functions.HexToRgb({hexColor: crossLine.masks.color ?? crossLine.tags.color}), 
         endingColor: BibleVizUtils.Functions.HexToRgb({hexColor: crossLine.tags.initialColor}), 
         durationInSeconds: animationDuration, 

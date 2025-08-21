@@ -170,7 +170,7 @@ export const Book = ({
 
     return (
         <div 
-            className={`mapBookContainer${showChapters ? "" : " pointable"}`} 
+            className={`layoutBookContainer${showChapters ? "" : " pointable"}`} 
             style={style}
             key={key}
             onClick={() => {

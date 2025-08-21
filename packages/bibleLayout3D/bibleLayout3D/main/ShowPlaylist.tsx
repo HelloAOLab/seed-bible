@@ -4,7 +4,7 @@ if(!playlistInfo) return;
 
 const { playlistId } = playlistInfo;
 
-setTagMask(thisBot, "isAnimatingMap", true);
+setTagMask(thisBot, "isAnimatingBible", true);
 
 const dimension = os.getCurrentDimension();
 layoutData.currentPlaylistShownId = playlistId;

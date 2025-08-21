@@ -34,7 +34,7 @@ const color = layoutBookStructure.layoutBookData.highlightColor ??
     layoutBookStructure.layoutBookData.pieceInfo.customColor ??
         sectionLevelsColors[bookIndexWithinSection];
 
-const mapBookMod = {
+const layoutBookMod = {
     [dimension]: true,
     [dimension + "X"]: position ? position.x : null,
     [dimension + "Y"]: position ? position.y : null,
@@ -57,7 +57,7 @@ const mapBookMod = {
     testamentIndex, 
     sectionIndex
 };
-book.OnSpawned({mod: mapBookMod});
+book.OnSpawned({mod: layoutBookMod});
 layoutBookStructure.layoutBookData.piece = book;
 layoutBookStructure.layoutBookData.isActive = true;
 layoutBookStructure.layoutBookData.isSelected = false;

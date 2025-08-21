@@ -1,4 +1,4 @@
-if(thisBot.masks.isAnimatingMap) return;
+if(thisBot.masks.isAnimatingBible) return;
 
 const {button} = that;
 const layoutData = thisBot.GetLayoutDataById({layoutId: button.tags.layoutId})

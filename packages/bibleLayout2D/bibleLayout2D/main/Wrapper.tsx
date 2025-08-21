@@ -18,7 +18,7 @@ export const Wrapper = () => {
     
     return (
         <div 
-            className={`mapWrapper${showLabels ? " showingLabels" : ""}`}
+            className={`layoutWrapper${showLabels ? " showingLabels" : ""}`}
             style={{
                 "--scaleFactor": scaleFactor,
                 "--bookWidth": `${bookWidth}px`,

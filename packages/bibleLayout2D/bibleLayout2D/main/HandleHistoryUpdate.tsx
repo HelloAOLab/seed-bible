@@ -1,1 +1,1 @@
-// globalThis.mapPanelHistoryUpdate?.();
+// globalThis.bibleLayout2DHistoryUpdate?.();

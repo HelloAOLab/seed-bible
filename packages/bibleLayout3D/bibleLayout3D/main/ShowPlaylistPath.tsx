@@ -15,8 +15,8 @@ layoutData.playlistEntries.filter((entryItem) => {
         const chapterData = layoutBookStructure.layoutBookData.childrenData.find((data) => { return data.pieceInfo.number === entryItem.tags.chapter })
         const chapterDataLastEntryItem = chapterData.playlistEntriesItems[chapterData.playlistEntriesItems.length - 1];
 
-        const prevMapBookStructure = layoutData.childrenStructures.find((structure) => { return structure.layoutBookData.pieceInfo.commonName === prevEntryItem.tags.book })
-        const prevChapterData = prevMapBookStructure.layoutBookData.childrenData.find((data) => { return data.pieceInfo.number === prevEntryItem.tags.chapter })
+        const prevlayoutBookStructure = layoutData.childrenStructures.find((structure) => { return structure.layoutBookData.pieceInfo.commonName === prevEntryItem.tags.book })
+        const prevChapterData = prevlayoutBookStructure.layoutBookData.childrenData.find((data) => { return data.pieceInfo.number === prevEntryItem.tags.chapter })
         const prevChapterDataLastEntryItem = prevChapterData.playlistEntriesItems[prevChapterData.playlistEntriesItems.length - 1];
 
         let node = prevChapterDataLastEntryItem.vars.nodes?.find?.((node) => {

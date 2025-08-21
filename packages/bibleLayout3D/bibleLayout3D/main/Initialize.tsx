@@ -11,7 +11,7 @@ thisBot.vars.layoutsData = [];
 thisBot.vars.layoutBooksStructure = [];
 thisBot.vars.layoutBooksData = [];
 thisBot.vars.layoutChaptersData = [];
-setTagMask(thisBot, "isAnimatingMap", false);
+setTagMask(thisBot, "isAnimatingBible", false);
 setTimeout(() => {
     thisBot.UpdateLinks();
 }, 100)

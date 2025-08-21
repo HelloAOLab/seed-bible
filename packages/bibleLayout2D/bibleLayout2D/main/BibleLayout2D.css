@@ -1,4 +1,4 @@
-/* .mapWrapper
+/* .layoutWrapper
 {
     width: 100%;
     display: grid;
@@ -9,7 +9,7 @@
     overflow: scroll;
 } */
 
-.mapWrapper
+.layoutWrapper
 {
     width: 100%;
     display: flex;
@@ -22,12 +22,12 @@
     gap: 8px;
 }
 
-/* .mapWrapper.showingContent
+/* .layoutWrapper.showingContent
 {
     grid-template-rows: 60px 1fr auto;
 } */
 
-.mapSettings
+.layoutSettings
 {
     position: sticky;
     z-index: 10;
@@ -156,8 +156,8 @@
     background-color: #d2d2d2;
 }
 
-.mapWrapper .mapControls,
-.mapWrapper .userPresenceSettings
+.layoutWrapper .layoutControls,
+.layoutWrapper .userPresenceSettings
 {
     width: 100%;
 }
@@ -309,13 +309,13 @@
     font-size: 14px;
 }
 
-.mapWrapper, .mapWrapper *
+.layoutWrapper, .layoutWrapper *
 {
     box-sizing: border-box;
     scrollbar-width: none;
 }
 
-.mapWrapper .mapControls
+.layoutWrapper .layoutControls
 {
     height: 60px;
     display: flex;
@@ -331,7 +331,7 @@
     padding: 12px 0;
 }
 
-.mapWrapper .mapControls .zoomContainer
+.layoutWrapper .layoutControls .zoomContainer
 {
     background-color: #F0F1F1;
     box-shadow: 0 0 6px 0 #0000002e;
@@ -340,7 +340,7 @@
     padding: 4px;
 }
 
-.mapWrapper .mapControls .zoomContainer > button
+.layoutWrapper .layoutControls .zoomContainer > button
 {
     appearance: none;
     display: flex;
@@ -352,35 +352,35 @@
     padding: 0 8px;
 }
 
-.mapWrapper .mapControls .zoomContainer > button.hovered
+.layoutWrapper .layoutControls .zoomContainer > button.hovered
 {
     background-color: #D36433;
     color: white !important;
 }
 
-.mapWrapper .mapControls .zoomContainer > button:nth-of-type(1),
-.mapWrapper .mapControls .zoomContainer > button:nth-of-type(3)
+.layoutWrapper .layoutControls .zoomContainer > button:nth-of-type(1),
+.layoutWrapper .layoutControls .zoomContainer > button:nth-of-type(3)
 {
     width: 32px;
 }
 
-.mapWrapper .mapControls .zoomContainer > button > span 
+.layoutWrapper .layoutControls .zoomContainer > button > span 
 {
     color: inherit;
 }
 
-.mapWrapper .mapControls .zoomContainer > button:nth-of-type(1) > span, 
-.mapWrapper .mapControls .zoomContainer > button:nth-of-type(3) > span 
+.layoutWrapper .layoutControls .zoomContainer > button:nth-of-type(1) > span, 
+.layoutWrapper .layoutControls .zoomContainer > button:nth-of-type(3) > span 
 {
     font-size: 16px;
 }
 
-.mapWrapper .mapControls .zoomContainer > button:nth-of-type(2) > span
+.layoutWrapper .layoutControls .zoomContainer > button:nth-of-type(2) > span
 {
     text-box: auto;
 }
 
-/* .mapWrapper .mapControls .zoomContainer > button:hover 
+/* .layoutWrapper .layoutControls .zoomContainer > button:hover 
 {
     background-color: #D36433;
     color: white;
@@ -447,7 +447,7 @@
     border: solid 5px #D36433;
 }
 
-.mapWrapper .mapContainer
+.layoutWrapper .layoutContainer
 {
     display: flex;
     flex-direction: column;
@@ -460,7 +460,7 @@
     padding-left: 16px;
 }
 
-.mapWrapper .mapContainer .testamentContainer
+.layoutWrapper .layoutContainer .testamentContainer
 {
     display: flex;
     flex-direction: column;
@@ -471,7 +471,7 @@
 }
 
 
-.mapWrapper .mapContainer .testamentContainer .testamentContent
+.layoutWrapper .layoutContainer .testamentContainer .testamentContent
 {
     width: 100%;
     display: grid;
@@ -481,7 +481,7 @@
     align-items: start;
 }
 
-.mapWrapper .mapContainer .testamentContainer .mapBookContainer
+.layoutWrapper .layoutContainer .testamentContainer .layoutBookContainer
 {
     display: flex;
     flex-direction: column;
@@ -491,8 +491,8 @@
     width: 100%;
 }
 
-.mapWrapper .mapContainer .testamentContainer .mapBookContainer .mapBook .bookName,
-.mapWrapper .mapContainer .testamentContainer .mapBookContainer .sectionNameContainer
+.layoutWrapper .layoutContainer .testamentContainer .layoutBookContainer .layoutBook .bookName,
+.layoutWrapper .layoutContainer .testamentContainer .layoutBookContainer .sectionNameContainer
 {
     width: 100%;
     height: calc(80px * var(--scaleFactor));
@@ -503,7 +503,7 @@
     /* background-color: transparent; */
 }
 
-.mapWrapper .mapContainer .testamentContainer .mapBookContainer .sectionNameContainer
+.layoutWrapper .layoutContainer .testamentContainer .layoutBookContainer .sectionNameContainer
 {
     border-radius: calc(16px * var(--scaleFactor)) calc(16px * var(--scaleFactor)) 0 0;
     margin-left: 0;
@@ -513,7 +513,7 @@
     border-left: solid calc(8px * var(--scaleFactor)) transparent;
 }
 
-.mapWrapper .mapContainer .testamentContainer .mapBookContainer .sectionNameContainer span
+.layoutWrapper .layoutContainer .testamentContainer .layoutBookContainer .sectionNameContainer span
 {
     overflow: hidden;
     text-overflow: ellipsis;
@@ -524,18 +524,18 @@
     white-space: nowrap;
 }
 
-.mapWrapper .mapContainer .testamentContainer .mapBookContainer.collapsed .sectionNameContainer
+.layoutWrapper .layoutContainer .testamentContainer .layoutBookContainer.collapsed .sectionNameContainer
 {
     border-bottom: solid calc(8px * var(--scaleFactor)) transparent;
     border-radius: calc(16px * var(--scaleFactor));
 }
 
-.mapWrapper .mapContainer .testamentContainer .mapBookContainer.collapsed
+.layoutWrapper .layoutContainer .testamentContainer .layoutBookContainer.collapsed
 {
     margin-right: calc(16px * var(--scaleFactor));
 }
 
-.mapWrapper .mapContainer .testamentContainer .mapBookContainer .bookCover
+.layoutWrapper .layoutContainer .testamentContainer .layoutBookContainer .bookCover
 {
     background: red;
     width: 100%;
@@ -549,14 +549,14 @@
     justify-content: center;
 }
 
-.mapWrapper .mapContainer .testamentContainer .mapBookContainer .bookCover.displayingContainer
+.layoutWrapper .layoutContainer .testamentContainer .layoutBookContainer .bookCover.displayingContainer
 {
     gap: calc(2px * var(--scaleFactor));
     display: grid;
     /* overflow: hidden; */
 }
 
-.mapWrapper .mapContainer .testamentContainer .mapBookContainer .bookCover.displayingContainer > div:not(.presentUserPresenceIcon)
+.layoutWrapper .layoutContainer .testamentContainer .layoutBookContainer .bookCover.displayingContainer > div:not(.presentUserPresenceIcon)
 {
     width: 100%;
     height: 100%;
@@ -564,7 +564,7 @@
 }
 
 
-.mapWrapper .mapContainer .testamentContainer .mapBookContainer .bookName
+.layoutWrapper .layoutContainer .testamentContainer .layoutBookContainer .bookName
 {
     cursor: pointer;
     font-size: calc(32px * var(--scaleFactor));
@@ -577,7 +577,7 @@
     align-items: center;
 }
 
-.mapWrapper .mapContainer .testamentContainer .mapBookContainer .bookName span
+.layoutWrapper .layoutContainer .testamentContainer .layoutBookContainer .bookName span
 {
     width: calc(40px * var(--scaleFactor));
     height: calc(40px * var(--scaleFactor));
@@ -590,12 +590,12 @@
     align-items: center;
 }
 
-.mapWrapper .mapContainer .testamentContainer .mapBookContainer .bookName span.checked
+.layoutWrapper .layoutContainer .testamentContainer .layoutBookContainer .bookName span.checked
 {
     background-color: #2AB80D;
 }
 
-.mapWrapper .mapContainer .testamentContainer .mapBookContainer .bookCover .chapter
+.layoutWrapper .layoutContainer .testamentContainer .layoutBookContainer .bookCover .chapter
 {
     background: rgb(227, 227, 227);
     visibility: visible;
@@ -613,8 +613,8 @@
     text-align: center;
 }
 
-/* .mapWrapper .mapContainer .testamentContainer .mapBookContainer .bookCover .chapter .contentContainer,
-.mapWrapper .mapContainer .testamentContainer .mapBookContainer .bookCover .chapter > span:nth-of-type(1)
+/* .layoutWrapper .layoutContainer .testamentContainer .layoutBookContainer .bookCover .chapter .contentContainer,
+.layoutWrapper .layoutContainer .testamentContainer .layoutBookContainer .bookCover .chapter > span:nth-of-type(1)
 {
     width: 100%;
     height: 100%;
@@ -624,13 +624,13 @@
     pointer-events: none;
 } */
 
-.mapWrapper .mapContainer .testamentContainer .mapBookContainer .bookCover .chapter .contentContainer
+.layoutWrapper .layoutContainer .testamentContainer .layoutBookContainer .bookCover .chapter .contentContainer
 {
     gap: 1px;
     display: grid;
 }
 
-/* .mapWrapper .mapContainer .testamentContainer .mapBookContainer .bookCover .chapter > span:nth-of-type(1)
+/* .layoutWrapper .layoutContainer .testamentContainer .layoutBookContainer .bookCover .chapter > span:nth-of-type(1)
 {
     background-color: #ffffff4d;
     font-family: system-ui;
@@ -640,7 +640,7 @@
     align-items: center;
 } */
 
-.mapWrapper .mapContainer .testamentContainer .mapBookContainer .bookCover .chapter .contentContainer div
+.layoutWrapper .layoutContainer .testamentContainer .layoutBookContainer .bookCover .chapter .contentContainer div
 {
     width: 100%;
     height: 100%;

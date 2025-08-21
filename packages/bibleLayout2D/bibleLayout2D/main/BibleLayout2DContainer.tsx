@@ -6,7 +6,7 @@ export const BibleLayout2DContainer = () => {
     const { scaleFactor, arrangement } = useBibleLayout2DContext();
     
     return (
-        <div className="mapContainer" >
+        <div className="layoutContainer" >
             { arrangement.testaments.toReversed().map((testament, testamentIndex) => {
                 return <TestamentContainer testament={testament} testamentIndex={testamentIndex} />
             })}

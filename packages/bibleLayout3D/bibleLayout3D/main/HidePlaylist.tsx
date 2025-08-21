@@ -1,4 +1,4 @@
-setTagMask(thisBot, "isAnimatingMap", true);
+setTagMask(thisBot, "isAnimatingBible", true);
 
 const {layoutData} = that;
 

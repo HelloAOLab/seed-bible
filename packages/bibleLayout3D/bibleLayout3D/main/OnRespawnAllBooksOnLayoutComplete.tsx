@@ -1,1 +1,1 @@
-setTagMask(thisBot, "isAnimatingMap", false);
+setTagMask(thisBot, "isAnimatingBible", false);

@@ -5,13 +5,13 @@ const availablechaptersData = thisBot.vars.layoutChaptersData.filter((chapterDat
                 && !chapterData.piece.masks.isDeselecting 
                     && !chapterData.piece.masks.isSelecting
 })
-const availableMapBooksData = thisBot.vars.layoutBooksData.filter((layoutBookData) => {
+const availablelayoutBooksData = thisBot.vars.layoutBooksData.filter((layoutBookData) => {
     return layoutBookData.piece 
         && !layoutBookData.isSelected
 });
 const availablePiecesData = [
     ...availablechaptersData,
-    ...availableMapBooksData
+    ...availablelayoutBooksData
 ]
 const availablePieces = availablePiecesData.map((pieceData) => {return pieceData.piece})
 BibleVizUtils.Functions.UpdateUsersColorOnPiece({pieces: availablePieces});

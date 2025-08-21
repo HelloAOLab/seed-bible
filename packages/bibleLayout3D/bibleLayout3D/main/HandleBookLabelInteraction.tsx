@@ -1,7 +1,7 @@
 const {bookLabel} = that;
 const dimension = os.getCurrentDimension();
 
-if(thisBot.masks.isAnimatingMap) return;
+if(thisBot.masks.isAnimatingBible) return;
 
 const layoutBookStructure = thisBot.GetBookStructureByChild({bookLabel});
 const layoutData = thisBot.GetLayoutDataById({layoutId: layoutBookStructure.layoutId});

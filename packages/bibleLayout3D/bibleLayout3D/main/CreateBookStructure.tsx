@@ -6,10 +6,10 @@ const layoutBookData = await thisBot.CreateBook({bookInfo, layoutData, arrangeme
 const nameLabel = ObjectPooler.GetObjectFromPool({tag: BibleVizUtils.Data.tags.ObjectPoolTags.LayoutBookNameLabel});
 const dateLabel = ObjectPooler.GetObjectFromPool({tag: BibleVizUtils.Data.tags.ObjectPoolTags.LayoutBookDateLabel});
 
-const mapBookNameLabelMod = {layoutId: layoutData.id};
-nameLabel.OnSpawned({mod: mapBookNameLabelMod});
-const mapBookDateWroteMod = {layoutId: layoutData.id};
-dateLabel.OnSpawned({mod: mapBookDateWroteMod});
+const layoutBookNameLabelMod = {layoutId: layoutData.id};
+nameLabel.OnSpawned({mod: layoutBookNameLabelMod});
+const layoutBookDateWroteMod = {layoutId: layoutData.id};
+dateLabel.OnSpawned({mod: layoutBookDateWroteMod});
 
 
 const currentDate = new Date();

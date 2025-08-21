@@ -9,7 +9,7 @@ export const Settings = () => {
     if(mode !== BibleLayout2DModes.Project || !project) return null;
 
     return (
-        <div className="mapSettings">
+        <div className="layoutSettings">
             {mode === BibleLayout2DModes.Project && project && <>
                 <ProjectStateSetter />
                 {!isInSelectionMode && <ProjectFiltersSelector />}

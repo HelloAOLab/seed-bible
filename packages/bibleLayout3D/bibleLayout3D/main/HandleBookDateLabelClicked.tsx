@@ -1,4 +1,4 @@
-if(thisBot.masks.isAnimatingMap) return;
+if(thisBot.masks.isAnimatingBible) return;
 
 const {label} = that;
 const dimension = os.getCurrentDimension();

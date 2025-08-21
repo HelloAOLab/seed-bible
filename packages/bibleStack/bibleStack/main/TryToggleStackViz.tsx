@@ -23,7 +23,7 @@ const secondAnimationDuration = 0.25;
 const endingColor = [255,255,255];
 const crossLines = [bibleData.staticBiblePieces.crossVerticalLine, bibleData.staticBiblePieces.crossHorizontalLine];
 await Promise.all(crossLines.map((crossLine) => {
-    return LerpColorManager.LerpTagColor({
+    return ColorLerper.LerpTag({
         startingColor: BibleVizUtils.Functions.HexToRgb({hexColor: crossLine.tags.initialColor}), 
         endingColor, 
         durationInSeconds: firstAnimationDuration, 
@@ -34,7 +34,7 @@ await Promise.all(crossLines.map((crossLine) => {
     setTagMask(thisBot, "isTryingToToggleStackViz", false);
     thisBot.ToggleStackViz({bibleData});
     crossLines.forEach((crossLine) => {
-        LerpColorManager.LerpTagColor({
+        ColorLerper.LerpTag({
             startingColor: endingColor, 
             endingColor: BibleVizUtils.Functions.HexToRgb({hexColor: crossLine.tags.initialColor}), 
             durationInSeconds: secondAnimationDuration, 
