@@ -6,10 +6,11 @@
     * const obj = ObjectPooler.GetObjectFromPool({tag: ObjectPoolTags.ConfettiParticle});
 */
 
-import {PoolData} from "interactiveBible.managers.ObjectPooler.PoolData"
 import {Pool} from "interactiveBible.managers.ObjectPooler.Pool"
-import {CustomTag} from "interactiveBible.managers.ObjectPooler.CustomTag"
 
+const {poolsData} = that;
+
+{
 const infoLabelPool = new PoolData({
     tag: ObjectPoolTags.InfoLabel,
     bot: getBot(byTag("isBaseInfoLabel", true)),
@@ -422,6 +423,7 @@ const mapChapterPlaylistEntryNodePool = new PoolData({
     ],
     size: 1
 })
+}
 
 const poolDataArray = [
     infoLabelPool,
@@ -467,24 +469,17 @@ const poolDataArray = [
     mapPlaylistNavigationButton
 ]
 
-const poolDictionary = {};
-
-for(const poolData of poolDataArray)
+for(const poolData of poolsData)
 {
-    const objectPool = [];
+    if(thisBot.vars.poolDictionary[poolData.tag]) continue;
 
-    for(let i = 0; i < poolData.size; i++)
-    {
-        const obj = thisBot.CreateNewObject({poolData: poolData});
-        objectPool.push(obj);
-    }
-    poolDictionary[poolData.tag] = new Pool(
+    const objectPool = Array.from({length: poolData.size}).map(() => { return thisBot.CreateNewObject({poolData}) });
+
+    thisBot.vars.poolDictionary[poolData.tag] = new Pool(
         {
-            poolData: poolData,
-            objectPool: objectPool,
+            poolData,
+            objectPool,
             inUseObjects: []
         }
     )
 }
-
-thisBot.vars.poolDictionary = poolDictionary;

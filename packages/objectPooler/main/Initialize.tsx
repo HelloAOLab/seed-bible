@@ -5,13 +5,8 @@
     * thisBot.initialize();
 */
 
-if(thisBot.masks.initialized) return;
+if(thisBot.masks.initialized || ObjectPooler || configBot.tags.systemPortal) return;
 
-if(typeof ObjectPooler === "undefined")
-{
-    globalThis.ObjectPooler = thisBot;
-}
-
+globalThis.ObjectPooler = thisBot
 setTagMask(thisBot, "initialized", true);
-await os.sleep(1);
-thisBot.CreateObjectPools();
+thisBot.vars.poolDictionary = {};

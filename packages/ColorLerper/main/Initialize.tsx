@@ -8,7 +8,7 @@
 
 import { ColorLerpsArray } from "ColorLerper.main.ColorLerpsArray";
 
-if(thisBot.masks.initialized || configBot.tags.systemPortal) return;
+if(thisBot.masks.initialized || configBot.tags.systemPortal || ColorLerper) return;
 
 setTagMask(thisBot, "initialized", true);
 
