@@ -3,7 +3,7 @@
     *
     * @returns {string} - The name of the current arrangement.
     * @example
-    * const arrangementName = StacksManager.GetCurrentArrangementName();
+    * const arrangementName = BibleStackManager.GetCurrentArrangementName();
 */
 
 return thisBot.vars.fixedArrangementsInfo?.[thisBot.GetCurrentArrangementIndex()]?.name;

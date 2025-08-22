@@ -1,0 +1,1 @@
+setTagMask(thisBot, "isBeingDragged", false);

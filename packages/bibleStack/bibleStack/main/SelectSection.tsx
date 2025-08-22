@@ -276,7 +276,7 @@ for(const bookDataArr of sectionData.childrenData)
             [dimension + "X"]            : groupBookPositionX ?? sectionPosition.x,
             [dimension + "Y"]            : groupBookPositionY ?? sectionPosition.y,
             [dimension + "Z"]            : bookInitialPositionZ,
-            typeOfPiece                  : BibleVizUtils.Data.tags.BiblePieceType.Book,
+            typeOfPiece                  : BibleVizUtils.Data.tags.BiblePieceType.StackBook,
             bookIndex                    : bookData.creationInfo.levelIndex,
             isStackPiece                 : true,
             arrangementIndex             : bookData.creationInfo.arrangementIndex,

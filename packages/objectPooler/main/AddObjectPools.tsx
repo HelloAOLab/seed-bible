@@ -425,50 +425,6 @@ const mapChapterPlaylistEntryNodePool = new PoolData({
 })
 }
 
-const poolDataArray = [
-    infoLabelPool,
-    infoLabelTailPool,
-    infoLabelTransformerPool,
-    sectionShadowPool,
-    chapterPool,
-    chunkOfVersesPool,
-    versesPool,
-    booksPool,
-    sectionsPool,
-    testamentsPool,
-    bibleTransformersPool,
-    coversPool,
-    crossLinesPool,
-    bibleShadowsPool,
-    mapCoversPool,
-    mapBooksPool,
-    mapBookNameLabelsPool,
-    mapBookDateLabelsPool,
-    mapLinesPool,
-    mapLabelsPool,
-    mapChaptersPool,
-    mapToggleButtonsPool,
-    mapToggleBackgroundsPool,
-    mapToggleHandlesPool,
-    mapButtonsPool,
-    mapButtonIconsPool,
-    mapButtonLabelsPool,
-    mapColorPickerBackgroundsPool,
-    mapColorPickerContentsPool,
-    mapSettingsButtonsPool,
-    userColorPool,
-    usersNotificationPool,
-    elementUsersColorPool,
-    // vfxParticle,
-    mapBookInfoCardBackground,
-    mapBookInfoCardTransformer,
-    mapBookInfoCardContent,
-    infoLabelDatePool,
-    mapChapterPlaylistEntryItemPool,
-    mapChapterPlaylistEntryNodePool,
-    mapPlaylistNavigationButton
-]
-
 for(const poolData of poolsData)
 {
     if(thisBot.vars.poolDictionary[poolData.tag]) continue;

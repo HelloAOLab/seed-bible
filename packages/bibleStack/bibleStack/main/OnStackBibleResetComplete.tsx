@@ -20,7 +20,7 @@ sectionsToHighlight.reverse();
 await os.sleep(500);
 for(let i = 0; i < sectionsToHighlight.length; i++)
 {
-    thisBot.TryHighlightPiece({piece: sectionsToHighlight[i], highlightRequestSource: BibleVizUtils.Data.tags.InteractionType.Transition, unhighlightDelay: 2000, typeOfPiece: BibleVizUtils.Data.tags.BiblePieceType.Section});
+    thisBot.TryHighlightPiece({piece: sectionsToHighlight[i], highlightRequestSource: BibleVizUtils.Data.tags.InteractionType.Transition, unhighlightDelay: 2000, typeOfPiece: BibleVizUtils.Data.tags.BiblePieceType.StackSection});
     await os.sleep(100);
 }
 setTagMask(thisBot, "isBibleAnimating", false);

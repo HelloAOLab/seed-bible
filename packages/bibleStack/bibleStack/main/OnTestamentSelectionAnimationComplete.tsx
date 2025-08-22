@@ -23,7 +23,7 @@ if(!isInstantaneous)
             piece: sectionData.piece, 
             highlightRequestSource: BibleVizUtils.Data.tags.InteractionType.Transition, 
             unhighlightDelay: 2000, 
-            typeOfPiece: BibleVizUtils.Data.tags.BiblePieceType.Section
+            typeOfPiece: BibleVizUtils.Data.tags.BiblePieceType.StackSection
         }));
         await os.sleep(isInstantaneous ? 0 : StackAnimationsDuration.Highlight/3*2/speedMultiplier*1000);
     }

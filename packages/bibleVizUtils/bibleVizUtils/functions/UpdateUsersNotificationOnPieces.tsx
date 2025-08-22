@@ -8,7 +8,7 @@ import {LayoutChapterData} from "bibleVizUtils.classes.LayoutChapterData"
 const {piecesData} = that;
 const dimension = os.getCurrentDimension();
 const fixedElementsData = piecesData.filter((currElementData) => {
-    // const {bibleData} = StacksManager.GetDataChainFromParentDataIds({parentDataIds: currElementData.parentDataIds});
+    // const {bibleData} = BibleStackManager.GetDataChainFromParentDataIds({parentDataIds: currElementData.parentDataIds});
     return currElementData.piece && currElementData.piece.tags[dimension] == true // && (bibleData && bibleData.bibleType === BibleType.PlatformerGame)
 })
 

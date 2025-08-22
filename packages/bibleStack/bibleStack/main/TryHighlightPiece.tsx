@@ -7,7 +7,7 @@
     * @param {String} that.typeOfPiece - The type of piece. Available values can be found at globalThis.BibleVizUtils.Data.tags.BiblePieceType
     * @param {Number} that.customUnhighlightDuration? - Is optional and is a custom duration for the unhighlight animation
     * @example
-    * shout("TryHighlightPiece", {piece: section, highlightRequestSource: BibleVizUtils.Data.tags.InteractionType.Click, unhighlightDelay: 4000, typeOfPiece: BibleVizUtils.Data.tags.BiblePieceType.Testament, customUnhighlightDuration: 1});
+    * shout("TryHighlightPiece", {piece: section, highlightRequestSource: BibleVizUtils.Data.tags.InteractionType.Click, unhighlightDelay: 4000, typeOfPiece: BibleVizUtils.Data.tags.BiblePieceType.StackTestament, customUnhighlightDuration: 1});
 */
 
 const {piece, highlightRequestSource, unhighlightDelay, typeOfPiece, customUnhighlightDuration, speedMultiplier = 1, isInstantaneous = false} = that;
@@ -24,16 +24,16 @@ if((thisBot.IsBiblePieceHighlighted({piece}) && !unhighlightDelayInfo && !piece.
 
 switch(typeOfPiece)
 {
-    case BibleVizUtils.Data.tags.BiblePieceType.Book: thisBot.vars.lastInteractedStackBookData = data;
+    case BibleVizUtils.Data.tags.BiblePieceType.StackBook: thisBot.vars.lastInteractedStackBookData = data;
     break;
-    case BibleVizUtils.Data.tags.BiblePieceType.Section: thisBot.vars.lastInteractedStackSectionData = data;
+    case BibleVizUtils.Data.tags.BiblePieceType.StackSection: thisBot.vars.lastInteractedStackSectionData = data;
     break;
-    case BibleVizUtils.Data.tags.BiblePieceType.Testament: thisBot.vars.lastInteractedStackTestamentData = data;
+    case BibleVizUtils.Data.tags.BiblePieceType.StackTestament: thisBot.vars.lastInteractedStackTestamentData = data;
 }
 
 if(unhighlightDelayInfo)
 {
-    if(typeOfPiece === BibleVizUtils.Data.tags.BiblePieceType.Book)
+    if(typeOfPiece === BibleVizUtils.Data.tags.BiblePieceType.StackBook)
     {
         thisBot.TryIncreasePieceHighlight({piece, speedMultiplier, isInstantaneous});
     }
@@ -56,14 +56,14 @@ else
 
     switch(typeOfPiece)
     {
-        case BibleVizUtils.Data.tags.BiblePieceType.Testament: {
+        case BibleVizUtils.Data.tags.BiblePieceType.StackTestament: {
             if(data.parentDataIds.stackBibleId && highlightRequestSource !== BibleVizUtils.Data.tags.InteractionType.Transition)
             {
                 const otherBotsToUnhighlight = thisBot.vars.highlightedPieces.filter((currentPiece) => {
                     return currentPiece !== piece 
                         && !currentPiece.masks.isOnTheGround 
                         && !currentPiece.masks.isUnhighlighting
-                        && currentPiece.tags.typeOfPiece === BibleVizUtils.Data.tags.BiblePieceType.Testament
+                        && currentPiece.tags.typeOfPiece === BibleVizUtils.Data.tags.BiblePieceType.StackTestament
                         && thisBot.ArePiecesOnSameStack({pieces: [currentPiece, piece]})
                     }
                 );

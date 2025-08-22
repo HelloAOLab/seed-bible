@@ -46,7 +46,7 @@ else
                 const normalizedBooksData = sectionData.childrenData.flat().toReversed();
                 let index = 0;
                 const intervalId = setInterval(() => {
-                    thisBot.TryHighlightPiece({piece: normalizedBooksData[index].piece, highlightRequestSource: BibleVizUtils.Data.tags.InteractionType.Transition, unhighlightDelay, typeOfPiece: BibleVizUtils.Data.tags.BiblePieceType.Book, customUnhighlightDuration});
+                    thisBot.TryHighlightPiece({piece: normalizedBooksData[index].piece, highlightRequestSource: BibleVizUtils.Data.tags.InteractionType.Transition, unhighlightDelay, typeOfPiece: BibleVizUtils.Data.tags.BiblePieceType.StackBook, customUnhighlightDuration});
                     shout('OnTourGuideBookHighlighted', {totalBooks: normalizedBooksData.length, currentBookIndex: index});
                     index++;
 

@@ -25,7 +25,7 @@ if (!pieceData) {
     if (piece.tags.isStackPiece) {
         pieceData = thisBot.GetPieceData({ piece });
     }
-    else if (piece.tags.isBibleTransformer) {
+    else if (piece.tags.isStackBibleTransformer) {
         pieceData = thisBot.vars.stackBiblesData.find((bibleData) => { return bibleData.id == piece.tags.stackBibleId });
     }
     else if (piece.tags.isSectionShadow) {

@@ -22,11 +22,11 @@ fixedElements.forEach((fixedElement) => {
             extraUsersBackgroundScales = BibleVizUtils.Data.tags.UsersColorValues.InfoLabelExtraUsersBackgroundScales;
             userColorForm = BibleVizUtils.Data.tags.UsersColorValues.InfoLabelColorForm
         break;
-        case BibleVizUtils.Data.tags.ObjectPoolTags.Chapter:
+        case BibleVizUtils.Data.tags.ObjectPoolTags.StackChapter:
         case BibleVizUtils.Data.tags.ObjectPoolTags.LayoutBook:
         case BibleVizUtils.Data.tags.ObjectPoolTags.LayoutChapter:
-            pieceData = fixedElement.tags.poolTag == BibleVizUtils.Data.tags.ObjectPoolTags.Chapter ? StacksManager.GetBibleElementData({piece: fixedElement}) :
-                BibleLayout3D.GetPieceData({piece: fixedElement})
+            pieceData = fixedElement.tags.poolTag == BibleVizUtils.Data.tags.ObjectPoolTags.StackChapter ? BibleStackManager.GetPieceData({piece: fixedElement}) :
+                BibleLayout3DManager.GetPieceData({piece: fixedElement})
             selectionsElement = fixedElement;
             userColorScales = BibleVizUtils.Data.tags.UsersColorValues.GroundedElementColorScales;
             extraUsersContentScales = BibleVizUtils.Data.tags.UsersColorValues.GroundedElementExtraUsersContentScales;

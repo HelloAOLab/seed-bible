@@ -1,0 +1,1 @@
+if(thisBot.masks.isExpanded && !thisBot.masks.isDeselecting && !thisBot.masks.isSelecting) InstanceManager.UpdateUsersColorOnElement({element: thisBot})

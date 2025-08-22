@@ -1,5 +1,5 @@
 /**
- * Sets the current arrangement index of the StacksManager by the name of the arrangement.
+ * Sets the current arrangement index of the BibleStackManager by the name of the arrangement.
  * 
  * This function searches for an arrangement by its name in this bot's `arrangementsInfo` and updates the 
  * bot's `arrangementIndex` to match the index of the found arrangement. If no arrangement with the given 
@@ -9,7 +9,7 @@
  * @param {string} that.name - The name of the arrangement to search for.
  * 
  * @example
- * StacksManager.SetArrangementIndexByName({ name: "Protestant" });
+ * BibleStackManager.SetArrangementIndexByName({ name: "Protestant" });
  */
 
 const {name} = that;

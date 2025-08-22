@@ -1,11 +1,13 @@
 {
-    "Testament": "Testament",
-    "Section": "Section",
-    "SectionBook": "SectionBook",
-    "Book": "Book",
-    "Chapter": "Chapter",
-    "ChunkOfVerses": "ChunkOfVerses",
-    "Verse": "Verse",
+    "StackTestament": "StackTestament",
+    "StackSection": "StackSection",
+    "StackSectionBook": "StackSectionBook",
+    "StackBook": "StackBook",
+    "StackChapter": "StackChapter",
+    "StackChunkOfVerses": "StackChunkOfVerses",
+    "StackVerse": "StackVerse",
     "LayoutBook": "LayoutBook",
-    "LayoutChapter": "LayoutChapter"
+    "LayoutChapter": "LayoutChapter",
+    "LayoutChunkOfVerses": "LayoutChunkOfVerses",
+    "LayoutVerse": "LayoutVerse"
 }

@@ -34,7 +34,7 @@ if(!bibleData || bibleData.currentState === BibleVizUtils.Data.tags.BibleState.O
                     }
                     else
                     {
-                        thisBot.TryHighlightPiece({piece: testament, highlightRequestSource: BibleVizUtils.Data.tags.InteractionType.Click, typeOfPiece: BibleVizUtils.Data.tags.BiblePieceType.Testament});
+                        thisBot.TryHighlightPiece({piece: testament, highlightRequestSource: BibleVizUtils.Data.tags.InteractionType.Click, typeOfPiece: BibleVizUtils.Data.tags.BiblePieceType.StackTestament});
                     }
                 }
             }
@@ -53,7 +53,7 @@ if(!bibleData || bibleData.currentState === BibleVizUtils.Data.tags.BibleState.O
             break;
             case BibleVizUtils.Data.tags.InteractionType.HoverBegin:
             {
-                thisBot.TryHighlightPiece({piece: testament, highlightRequestSource: BibleVizUtils.Data.tags.InteractionType.HoverBegin, typeOfPiece: BibleVizUtils.Data.tags.BiblePieceType.Testament});
+                thisBot.TryHighlightPiece({piece: testament, highlightRequestSource: BibleVizUtils.Data.tags.InteractionType.HoverBegin, typeOfPiece: BibleVizUtils.Data.tags.BiblePieceType.StackTestament});
             }
             break;
             case BibleVizUtils.Data.tags.InteractionType.Drag:

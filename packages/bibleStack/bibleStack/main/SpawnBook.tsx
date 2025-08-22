@@ -85,7 +85,7 @@ if(found)
         [dimension + "X"]            : spawnPosition.x,
         [dimension + "Y"]            : spawnPosition.y,
         [dimension + "Z"]            : spawnPosition.z,
-        typeOfPiece                : BibleVizUtils.Data.tags.BiblePieceType.Book,
+        typeOfPiece                : BibleVizUtils.Data.tags.BiblePieceType.StackBook,
         bookIndex                    : bookData.creationInfo.levelIndex,
         isStackPiece               : true,
         bookName                     : bookData.pieceInfo.commonName,

@@ -42,7 +42,7 @@ if(found)
     )})
     const section = ObjectPooler.GetObjectFromPool({tag: sectionData instanceof StackSectionBookData ? BibleVizUtils.Data.tags.ObjectPoolTags.Book : BibleVizUtils.Data.tags.ObjectPoolTags.Section});
     const sectionMod = {
-        typeOfPiece               : sectionData instanceof StackSectionBookData ? BibleVizUtils.Data.tags.BiblePieceType.SectionBook : BibleVizUtils.Data.tags.BiblePieceType.Section,
+        typeOfPiece               : sectionData instanceof StackSectionBookData ? BibleVizUtils.Data.tags.BiblePieceType.StackSectionBook : BibleVizUtils.Data.tags.BiblePieceType.StackSection,
         arrangementIndex,
         testamentIndex,
         sectionIndex,

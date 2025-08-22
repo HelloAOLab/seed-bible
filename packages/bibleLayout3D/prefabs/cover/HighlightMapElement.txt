@@ -1,0 +1,40 @@
+import {HighlightInfo} from "interactiveBible.managers.StacksManager.HighlightInfo"
+const {element} = that;
+
+let key, prevColor;
+let highlightSuccessful = false;
+switch(element.tags.typeOfElement)
+{
+    case BibleElementType.MapBook:
+        key = element.tags.bookName;
+    break;
+    case BibleElementType.MapChapter:
+        key = `${element.tags.bookName} ${element.tags.chapterNumber}`;
+    break;
+    case BibleElementType.ChunkOfVerses:
+        key = element.masks.chunkPath
+    break;
+    case BibleElementType.Verse: 
+        key = element.masks.versePath
+    break;
+    default: break;
+}
+const currentHighlightInfo = thisBot.tags.highlightsInfo.find((highlightInfo) => {return highlightInfo.key == key})
+if(currentHighlightInfo)
+{
+    if(currentHighlightInfo.color != InstanceManager.tags.highlightColor)
+    {
+        if(!InstanceManager.masks.isInHistoryMode) setTagMask(element, "color", InstanceManager.tags.highlightColor);
+        prevColor = currentHighlightInfo.color;
+        currentHighlightInfo.color = InstanceManager.tags.highlightColor;
+        highlightSuccessful = true;
+    }
+}
+else
+{
+    if(!InstanceManager.masks.isInHistoryMode) setTagMask(element, "color", InstanceManager.tags.highlightColor);
+    thisBot.tags.highlightsInfo.push(new HighlightInfo({key, typeOfElement: element.tags.typeOfElement, color: InstanceManager.tags.highlightColor}))
+    highlightSuccessful = true;
+}
+
+if(highlightSuccessful) shout(`OnElementHighlighted`, {color: InstanceManager.tags.highlightColor, prevColor, element})

@@ -22,7 +22,7 @@ currUsersColor.forEach((userColor) => {
             )
         }
         break;
-        case BibleVizUtils.Data.tags.ObjectPoolTags.Chapter:
+        case BibleVizUtils.Data.tags.ObjectPoolTags.StackChapter:
         case BibleVizUtils.Data.tags.ObjectPoolTags.LayoutChapter:
             offset = BibleVizUtils.Data.tags.UsersColorValues.ChapterColorOffset;
             step = BibleVizUtils.Data.tags.UsersColorValues.ChapterColorStep;

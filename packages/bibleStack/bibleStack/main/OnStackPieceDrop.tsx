@@ -49,7 +49,7 @@ else
     setTag(piece, "desiredPositionZ", newPosition ? newPosition.z : piecePosition.z);
     if(piece.masks.isBeingHovered)
     {
-        thisBot.TryHighlightPiece({piece, highlightRequestSource: BibleVizUtils.Data.tags.InteractionType.Drop, typeOfPiece: BibleVizUtils.Data.tags.BiblePieceType.Testament});
+        thisBot.TryHighlightPiece({piece, highlightRequestSource: BibleVizUtils.Data.tags.InteractionType.Drop, typeOfPiece: BibleVizUtils.Data.tags.BiblePieceType.StackTestament});
     }
 }
 

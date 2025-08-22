@@ -86,7 +86,7 @@ for(const data of testamentData.childrenData)
     const desiredScaleZ = data.creationInfo.amountOfChaptersInSection * BibleVizUtils.Data.tags.StackPieceMeasurements.SectionDesiredScaleZRatio;
     const section = ObjectPooler.GetObjectFromPool({tag: data instanceof StackSectionBookData ? BibleVizUtils.Data.tags.ObjectPoolTags.Book : BibleVizUtils.Data.tags.ObjectPoolTags.Section});
     const sectionMod = {
-        typeOfPiece               : data instanceof StackSectionBookData ? BibleVizUtils.Data.tags.BiblePieceType.SectionBook : BibleVizUtils.Data.tags.BiblePieceType.Section,
+        typeOfPiece               : data instanceof StackSectionBookData ? BibleVizUtils.Data.tags.BiblePieceType.StackSectionBook : BibleVizUtils.Data.tags.BiblePieceType.StackSection,
         arrangementIndex            : data.creationInfo.arrangementIndex,
         testamentIndex              : data.creationInfo.testamentIndex,
         sectionIndex                : data.creationInfo.sectionIndex,

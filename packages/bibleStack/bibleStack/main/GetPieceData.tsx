@@ -11,19 +11,19 @@ let data;
 
 switch(piece.tags.typeOfPiece)
 {
-    case BibleVizUtils.Data.tags.BiblePieceType.Testament:
+    case BibleVizUtils.Data.tags.BiblePieceType.StackTestament:
         data = thisBot.vars.stackTestamentsData.find((data) => {return data.isActive && data.piece.id === piece.id})
     break;
-    case BibleVizUtils.Data.tags.BiblePieceType.Section:
+    case BibleVizUtils.Data.tags.BiblePieceType.StackSection:
         data = thisBot.vars.stackSectionsData.find((data) => {return data.isActive && data.piece.id === piece.id})
     break;
-    case BibleVizUtils.Data.tags.BiblePieceType.SectionBook:
+    case BibleVizUtils.Data.tags.BiblePieceType.StackSectionBook:
         data = thisBot.vars.stackSectionBooksData.find((data) => {return data.isActive && data.piece.id === piece.id})
     break;
-    case BibleVizUtils.Data.tags.BiblePieceType.Book:
+    case BibleVizUtils.Data.tags.BiblePieceType.StackBook:
         data = thisBot.vars.stackBooksData.find((data) => {return data.isActive && data.piece.id === piece.id})
     break;
-    case BibleVizUtils.Data.tags.BiblePieceType.Chapter:
+    case BibleVizUtils.Data.tags.BiblePieceType.StackChapter:
         data = thisBot.vars.stackChaptersData.find((data) => {return data.isActive && data.piece.id === piece.id})
     break;
     default: break;
