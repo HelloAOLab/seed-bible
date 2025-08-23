@@ -8,7 +8,7 @@ os.registerApp("bookSelected");
 
 const createGameButton = getBot(byTag("isCreateGameButton",true),byTag("isInitialized",true));
 
-shout("playSound",{soundName: "SelectTestament"});
+shout("PlaySound",{soundName: "SelectTestament"});
 
 thisBot.CreateShowBookModal({z: -6});
 

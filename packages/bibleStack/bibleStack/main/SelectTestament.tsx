@@ -30,7 +30,7 @@ let piecesAboveTestament;
 // const collisionType = bibleData?.bibleType === BibleVizUtils.Data.tags.BibleType.PlatformerGame ? CollisionType.Collision : null
 
 BibleVizUtils.Functions.TryHideUsersNotificationOnPiece({piece: testament})
-shout("OnTestamentSelected", {isFromPlatformerGame: (bibleData && bibleData.bibleType === BibleVizUtils.Data.tags.BibleType.PlatformerGame)});
+shout("OnStackTestamentSelected", {isFromPlatformerGame: (bibleData && bibleData.bibleType === BibleVizUtils.Data.tags.BibleType.PlatformerGame)});
 setTagMask(thisBot, "isBibleAnimating", true);
 if(thisBot.vars.highlightedPieces.length > 0 && bibleData)
 {

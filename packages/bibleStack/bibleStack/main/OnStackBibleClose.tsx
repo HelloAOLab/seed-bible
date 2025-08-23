@@ -10,3 +10,5 @@ if(thisBot.vars.currentSelectedBookData)
     thisBot.vars.currentSelectedBookData.isSelected = false;
     thisBot.vars.currentSelectedBookData = null;
 }
+
+thisBot.PlaySound({soundName: "BibleClose"});

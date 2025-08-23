@@ -19,6 +19,7 @@ const dimension = os.getCurrentDimension();
 const piecePosition = getBotPosition(piece, dimension);
 let newPosition;
 let justGrounded;
+thisBot.PlaySound({soundName: "StackPieceDrop"});
 setTagMask(piece, 'isBeingDragged', false);
 if(!dropInfo?.to.bot && !piece.masks.isOnTheGround)
 {
