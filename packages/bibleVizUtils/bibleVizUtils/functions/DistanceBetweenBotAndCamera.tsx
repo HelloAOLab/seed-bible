@@ -1,4 +1,4 @@
-cont {bot} = that;
+const {bot} = that;
 
 const cameraPosition = os.getCameraPosition('grid');
 const dimension = os.getCurrentDimension();

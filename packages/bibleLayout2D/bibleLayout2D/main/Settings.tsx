@@ -4,7 +4,7 @@ import {ProjectFiltersSelector} from "bibleLayout2D.main.ProjectFiltersSelector"
 import { ProjectStateSetter } from "bibleLayout2D.main.ProjectStateSetter"
 
 export const Settings = () => {
-    const { isUserPresenceEnabled, mode, BibleLayout2DModes, project, isInSelectionMode } = useBibleLayout2DContext();
+    const { mode, BibleLayout2DModes, project, isInSelectionMode } = useBibleLayout2DContext();
 
     if(mode !== BibleLayout2DModes.Project || !project) return null;
 

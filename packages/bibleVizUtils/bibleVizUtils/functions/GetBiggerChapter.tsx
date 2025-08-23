@@ -6,7 +6,7 @@
     * const biggerChapter = thisBot.GetBiggerChapter();
 */
 
-let biggerChapter = thisBot.masks.biggerChapterInBible;
+const biggerChapter = thisBot.masks.biggerChapterInBible;
 if(!biggerChapter)
 {
     const arrangementsInfo = BibleVizUtils.Data.vars.fixedArrangementsInfo.slice();

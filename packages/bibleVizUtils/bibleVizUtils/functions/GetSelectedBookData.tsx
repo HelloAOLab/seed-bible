@@ -1,6 +1,6 @@
 import {StackSectionBookData} from "bibleVizUtils.classes.StackSectionBookData"
 
-const {data} that;
+const {data} = that;
 
 if(data.isSelected)
 {

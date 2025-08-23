@@ -3,7 +3,7 @@ import { TestamentContainer } from "bibleLayout2D.main.TestamentContainer"
 
 export const BibleLayout2DContainer = () => {
     
-    const { scaleFactor, arrangement } = useBibleLayout2DContext();
+    const { arrangement } = useBibleLayout2DContext();
     
     return (
         <div className="layoutContainer" >

@@ -35,11 +35,8 @@ export const Book = ({
         onBookNameClickAndHold,
         onBookNameClickAndHoldDependencies,
 
-        bookWidth,
         chapterGap,
         chapterPadding,
-        chapterWidth,
-        chapterHeight,
     } = useBibleLayout2DContext();
     const { testament } = useTestamentContext() 
     
