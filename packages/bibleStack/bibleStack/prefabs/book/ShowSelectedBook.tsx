@@ -24,7 +24,7 @@ const onClickContinue = (verse,refer) => {
 
     thisBot.tryToUnhighlightSelf();
 
-    if(createGameButton.tags.GAME_MODE === globalThis.GAME_MODES.HOTSEAT) {
+    if(createGameButton.tags.GAME_MODE === globalThis?.GAME_MODES?.HOTSEAT) {
         createGameButton.startHotSeat(
             {
                 verse,

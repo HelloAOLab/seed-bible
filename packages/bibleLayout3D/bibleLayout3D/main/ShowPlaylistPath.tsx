@@ -25,7 +25,7 @@ layoutData.playlistEntries.filter((entryItem) => {
         if(!node)
         {
             const prevChapterDataLastEntryItemPosition = getBotPosition(prevChapterDataLastEntryItem, dimension);
-            const prevChapterDataLastEntryItemScales = BibleVizUtils.Functions.GetBotScales({bot: prevChapterDataLastEntryItem});
+            const prevChapterDataLastEntryItemScales = BibleVizUtils.Functions.GetBotScales(prevChapterDataLastEntryItem);
             node = ObjectPooler.GetObjectFromPool({tag: BibleVizUtils.Data.tags.ObjectPoolTags.LayoutChapterPlaylistEntryNode})
             const mod = {
                 [dimension]: true,

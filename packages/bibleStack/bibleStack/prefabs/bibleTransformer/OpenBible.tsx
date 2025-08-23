@@ -14,7 +14,7 @@ import {StackSectionBookData} from 'bibleVizUtils.classes.StackSectionBookData'
 const {duration = 0.5, easing = {type: "sinusoidal", mode: "inout"}, bibleData} = that ?? {};
 const dimension = os.getCurrentDimension();
 const lowerCoverPosition = getBotPosition(bibleData.staticBibleElements.lowerCover, dimension);
-const crossVerticalLineScales = BibleVizUtils.Functions.GetBotScales({bot: bibleData.staticBibleElements.crossVerticalLine})
+const crossVerticalLineScales = BibleVizUtils.Functions.GetBotScales(bibleData.staticBibleElements.crossVerticalLine)
 const sectionInitialScaleZ = 0;
 const initialPositionZ = lowerCoverPosition.z + BibleVizUtils.Data.tags.StackPieceMeasurements.CoverScales.z;
 let nextPositionZ = initialPositionZ + BibleVizUtils.Data.tags.StackSpacing.BetweenArrangements;

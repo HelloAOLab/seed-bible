@@ -243,7 +243,7 @@ else
         }
         else
         {
-            const sectionCurrentScales = BibleVizUtils.Functions.GetBotScales({bot: sectionData.piece});
+            const sectionCurrentScales = BibleVizUtils.Functions.GetBotScales(sectionData.piece);
             const sectionDesiredScales = new Vector3(BibleVizUtils.Data.tags.StackPieceMeasurements.SectionScales.x, BibleVizUtils.Data.tags.StackPieceMeasurements.SectionScales.y, sectionData.piece.tags.desiredScaleZ)
             const setScaleX = sectionCurrentScales.x != sectionDesiredScales.x;
             const setScaleY = sectionCurrentScales.y != sectionDesiredScales.y;

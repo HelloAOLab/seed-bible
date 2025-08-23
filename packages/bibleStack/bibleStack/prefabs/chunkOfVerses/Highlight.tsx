@@ -14,7 +14,7 @@ const rgbTargetColor = BibleVizUtils.Functions.HexToRgb(BibleVizUtils.Data.masks
 thisBot.StopHighlightTransition();
 
 await Promise.all([
-    ColorLerper.LerpTag({startingColor: BibleVizUtils.Functions.HexToRgb(thisBot.masks.color ?? thisBot.tags.color), endingColor: rgbTargetColor, durationInSeconds: duration, bot: thisBot,  tag: BibleVizUtils.Data.tags.InterpolatableColorTags.Color}),
+    ColorLerper.LerpTag({startingColor: BibleVizUtils.Functions.HexToRgb({hexColor: thisBot.masks.color ?? thisBot.tags.color}), endingColor: rgbTargetColor, durationInSeconds: duration, bot: thisBot,  tag: BibleVizUtils.Data.tags.InterpolatableColorTags.Color}),
     animateTag(thisBot, 'scaleZ', {
         toValue: desiredScaleZ,
         duration,

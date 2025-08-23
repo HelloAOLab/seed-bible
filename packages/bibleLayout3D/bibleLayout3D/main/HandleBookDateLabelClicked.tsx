@@ -32,7 +32,7 @@ if(layoutBookStructure && (!layoutData || !layoutData.currentPlaylistShownId))
             const backgroundScales = new Vector3(contentScales.x + (backgroundPadding*2), contentScales.y + (backgroundPadding*2), 0.1)
             const contentPosition = new Vector3(0, contentMarginBottom + (contentScales.y/2), 0);
             const dateLabelPosition = getBotPosition(layoutBookStructure.dateLabel, dimension);
-            const dateLabelScales = BibleVizUtils.Functions.GetBotScales({bot: layoutBookStructure.dateLabel});
+            const dateLabelScales = BibleVizUtils.Functions.GetBotScales(layoutBookStructure.dateLabel);
             const transformerMod = {
                 [dimension]: true,
                 [dimension + "X"]: dateLabelPosition.x,
@@ -81,7 +81,7 @@ if(layoutBookStructure && (!layoutData || !layoutData.currentPlaylistShownId))
         const infoCardContent = ObjectPooler.GetObjectFromPool({tag: BibleVizUtils.Data.tags.ObjectPoolTags.LayoutBookInfoCardContent});
         const infoCardBackground = ObjectPooler.GetObjectFromPool({tag: BibleVizUtils.Data.tags.ObjectPoolTags.LayoutBookInfoCardBackground});
         const dateLabelPosition = getBotPosition(layoutBookStructure.dateLabel, dimension);
-        const dateLabelScales = BibleVizUtils.Functions.GetBotScales({bot: layoutBookStructure.dateLabel});
+        const dateLabelScales = BibleVizUtils.Functions.GetBotScales(layoutBookStructure.dateLabel);
         const transformerMod = {
             [dimension]: true,
             [dimension + "X"]: dateLabelPosition.x,

@@ -66,7 +66,7 @@ if(elementsToShrink.length > 0)
     {
         await Promise.all(elementsToShrink.map((piece) => {
             const elementPosition = getBotPosition(piece, dimension);
-            const elementScales = BibleVizUtils.Functions.GetBotScales({bot: piece});
+            const elementScales = BibleVizUtils.Functions.GetBotScales(piece);
             return animateTag(piece, {
                 fromValue: {
                     [dimension + 'Z']: elementPosition.z,

@@ -10,7 +10,7 @@
 
 if(!thisBot.tags.color) return;
 
-const grayScaleColor = that.grayScaleColor;
+const {grayScaleColor} = that;
 
 const blinkSelf = that.blinkSelf;
 

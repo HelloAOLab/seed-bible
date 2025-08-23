@@ -9,7 +9,7 @@
     * chunkOfVerses.Show({index: 0, dimension: 'home', delayBetweenAnimations: 100, duration: 0.3});
 */
 
-const {index, dimension ,delayBetweenAnimations, duration} = that;
+const {index, dimension, delayBetweenAnimations, duration} = that;
 const easing = {type: "elastic", mode: "out"};
 const delay = index * delayBetweenAnimations;
 await os.sleep(delay);

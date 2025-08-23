@@ -11,8 +11,8 @@ const {bibleData} = that;
 const dimension = os.getCurrentDimension();
 const animationDuration = bibleData.bibleType === BibleVizUtils.Data.tags.BibleType.PlatformerGame ? 0 : 2;
 const lowerCoverPosition = getBotPosition(bibleData.staticBibleElements.lowerCover, dimension);
-const lowerCoverScales = BibleVizUtils.Functions.GetBotScales({bot: bibleData.staticBibleElements.lowerCover});
-const testamentsScales = bibleData.childrenData.map((testamentData) => {return BibleVizUtils.Functions.GetBotScales({bot: testamentData.piece})});
+const lowerCoverScales = BibleVizUtils.Functions.GetBotScales(bibleData.staticBibleElements.lowerCover);
+const testamentsScales = bibleData.childrenData.map((testamentData) => {return BibleVizUtils.Functions.GetBotScales(testamentData.piece)});
 // const testamentsPositionZ = [
 //     lowerCoverPosition.z + lowerCoverScales.z + BibleVizUtils.Data.tags.StackSpacing.BetweenArrangements,
 //     lowerCoverPosition.z + lowerCoverScales.z + (BibleVizUtils.Data.tags.StackSpacing.BetweenArrangements*2) + testamentsScales[0].z
@@ -21,7 +21,7 @@ const testamentsPositionZ = bibleData.childrenData.map((testamentData, index) =>
     return  lowerCoverPosition.z + lowerCoverScales.z + (BibleVizUtils.Data.tags.StackSpacing.BetweenArrangements * (index + 1)) + (testamentsScales[0].z * index)
 })
 const upperCoverPositionZ = testamentsPositionZ[testamentsPositionZ.length - 1] + testamentsScales[testamentsPositionZ.length - 1].z + BibleVizUtils.Data.tags.StackSpacing.BetweenArrangements;
-const upperCoverScales = BibleVizUtils.Functions.GetBotScales({bot: bibleData.staticBibleElements.upperCover});
+const upperCoverScales = BibleVizUtils.Functions.GetBotScales(bibleData.staticBibleElements.upperCover);
 const crossPositionZ = upperCoverPositionZ + upperCoverScales.z + BibleVizUtils.Data.tags.StackSpacing.CoverToCross;
 const animations = [];
 

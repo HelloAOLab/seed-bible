@@ -5,7 +5,7 @@ setTagMask(thisBot, "isAnimatingBible", true);
 layoutBookData.isSelected = true;
 const dimension = os.getCurrentDimension()
 const bookPosition = getBotPosition(layoutBookData.piece, dimension);
-const bookScales = BibleVizUtils.Functions.GetBotScales({bot: layoutBookData.piece});
+const bookScales = BibleVizUtils.Functions.GetBotScales(layoutBookData.piece);
 const chaptersOriginPosition = new Vector2(bookPosition.x - (layoutBookData.piece.tags.scaleX/2), bookPosition.y + (layoutBookData.piece.tags.scaleY/2));
 let column = 0;
 let row = 0;

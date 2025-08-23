@@ -87,7 +87,7 @@ for(const playlistEntryInfoIndex in playlistItemsList)
 thisBot.TryShowPlaylistPath({layoutData})
 
 const coverPosition = getBotPosition(layoutData.staticLayoutPieces.cover, dimension);
-const coverScales = BibleVizUtils.Functions.GetBotScales({bot: layoutData.staticLayoutPieces.cover})
+const coverScales = BibleVizUtils.Functions.GetBotScales(layoutData.staticLayoutPieces.cover)
 
 const prevButton = layoutData.staticLayoutPieces.playlistPreviousButton ?? ObjectPooler.GetObjectFromPool({tag: BibleVizUtils.Data.tags.ObjectPoolTags.MapPlaylistNavigationButton});
 const nextButton = layoutData.staticLayoutPieces.playlistNextButton ?? ObjectPooler.GetObjectFromPool({tag: BibleVizUtils.Data.tags.ObjectPoolTags.MapPlaylistNavigationButton});
