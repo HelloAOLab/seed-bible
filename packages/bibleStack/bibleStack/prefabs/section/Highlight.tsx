@@ -11,13 +11,13 @@
 
 const {speedMultiplier = 1, isInstantaneous = false} = that ?? {}
 const dimension = os.getCurrentDimension();
-const animationDuration = isInstantaneous ? 0 : StackAnimationsDuration.Highlight/speedMultiplier;
-const thisBotScales = GetBotScales(thisBot);
+const animationDuration = isInstantaneous ? 0 : BibleVizUtils.Data.tags.StackAnimationsDuration.Highlight/speedMultiplier;
+const thisBotScales = BibleVizUtils.Functions.GetBotScales(thisBot);
 const animationEasing = {type: "sinusoidal", mode: "inout"};
 const label = CapitalizeFirstLetter(thisBot.tags.sectionName.split("-").join(" "));
-const sectionData = StacksManager.GetBibleElementData({element: thisBot})
-const {infoLabelTransformer} = await StacksManager.GetLabelForElement({
-    element: thisBot, 
+const sectionData = BibleStackManager.GetPieceData({piece: thisBot})
+const {infoLabelTransformer} = await BibleVizUtils.Functions.GetLabelForPiece({
+    piece: thisBot, 
     label,
     color: "white", 
     labelColor: sectionData.highlightColor ?? thisBot.tags.labelTextColor, 

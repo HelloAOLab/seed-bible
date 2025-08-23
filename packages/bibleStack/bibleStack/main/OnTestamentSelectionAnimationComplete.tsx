@@ -25,7 +25,7 @@ if(!isInstantaneous)
             unhighlightDelay: 2000, 
             typeOfPiece: BibleVizUtils.Data.tags.BiblePieceType.StackSection
         }));
-        await os.sleep(isInstantaneous ? 0 : StackAnimationsDuration.Highlight/3*2/speedMultiplier*1000);
+        await os.sleep(isInstantaneous ? 0 : BibleVizUtils.Data.tags.StackAnimationsDuration.Highlight/3*2/speedMultiplier*1000);
     }
     await Promise.all(animations);
 }

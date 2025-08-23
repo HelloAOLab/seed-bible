@@ -9,4 +9,4 @@ thisBot.tags.formOpacity = null
 thisBot.tags.arrangementIndex = null
 thisBot.tags.testamentIndex = null
 thisBot.tags.sectionIndex = null
-InstanceManager.TryHideUsersColorOnElement({element: thisBot})
+BibleVizUtils.Functions.TryHideUsersColorOnPiece({piece: thisBot})

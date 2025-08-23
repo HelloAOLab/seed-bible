@@ -7,7 +7,7 @@
 
 // const dimension = os.getCurrentDimension();
 
-const infoLabelTransformer = GetCurrentInfoLabelTransformer(thisBot);
+const infoLabelTransformer = BibleVizUtils.Functions.GetCurrentInfoLabelTransformer(thisBot);
 const {infoLabel, infoLabelTail} = infoLabelTransformer.GetLabelElements();
 animateTag(thisBot, "scaleX", null);
 animateTag(thisBot, "scaleY", null);

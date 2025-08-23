@@ -1,6 +1,6 @@
 const dimension = os.getCurrentDimension();
 const myLobbyId = getBot('lobbyUserBot', true)?.id;
-const elementSelections = InstanceManager.GetUsersSelectionForElement({element: thisBot}).filter((userSelection) => {
+const elementSelections = InstanceManager.GetUsersSelectionForElement({piece: thisBot}).filter((userSelection) => {
     return userSelection.lobbyId != myLobbyId
 })
 
@@ -12,7 +12,7 @@ if(elementSelections.length > 0)
     }
     else
     {
-        const usersNotification = ObjectPooler.GetObjectFromPool({tag: ObjectPoolTags.UsersNotification});
+        const usersNotification = ObjectPooler.GetObjectFromPool({tag: BibleVizUtils.Data.tags.ObjectPoolTags.UsersNotification});
         const usersNotificationMod = {
             [dimension]: true,
             label: elementSelections.length,

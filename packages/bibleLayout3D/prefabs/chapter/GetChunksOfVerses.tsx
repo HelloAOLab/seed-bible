@@ -5,20 +5,20 @@
     * const verseChunks = chapter.GetChunksOfVerses();
 */
 
-const {mapChapterData} = that;
+const {chapterData} = that;
 const chunks = [];
 const versesPerChunk = 12;
-let chunksCount = Math.floor(mapChapterData.elementInfo.amountOfVerses / versesPerChunk);
-let remainingVerses = mapChapterData.elementInfo.amountOfVerses;
+let chunksCount = Math.floor(chapterData.elementInfo.amountOfVerses / versesPerChunk);
+let remainingVerses = chapterData.elementInfo.amountOfVerses;
 let currentVerseNumber = 1;
-if((mapChapterData.elementInfo.amountOfVerses - (versesPerChunk * chunksCount)) > 0) chunksCount++
+if((chapterData.elementInfo.amountOfVerses - (versesPerChunk * chunksCount)) > 0) chunksCount++
 for(let i = 0; i < chunksCount; i++)
 {
-    const chunk = ObjectPooler.GetObjectFromPool({tag: ObjectPoolTags.LayoutChunkOfVerses});
+    const chunk = ObjectPooler.GetObjectFromPool({tag: BibleVizUtils.Data.tags.ObjectPoolTags.LayoutChunkOfVerses});
     const amountOfVerses = Math.min(remainingVerses, versesPerChunk);
     setTagMask(chunk, 'initialVerseNumber', currentVerseNumber);
     setTagMask(chunk, 'finalVerseNumber', currentVerseNumber + amountOfVerses - 1);
-    setTagMask(chunk, 'mapChapterDataId', mapChapterData.id);
+    setTagMask(chunk, 'chapterDataId', chapterData.id);
     setTagMask(chunk, "chapterOrigin", "map");
     const label = chunk.masks.initialVerseNumber !== chunk.masks.finalVerseNumber ? `${chunk.masks.initialVerseNumber} - ${chunk.masks.finalVerseNumber}` : `${chunk.masks.initialVerseNumber}`
     setTagMask(chunk, 'chunkPath', `${thisBot.tags.parentBookName} ${thisBot.tags.chapterNumber} ${label}`);
@@ -26,10 +26,10 @@ for(let i = 0; i < chunksCount; i++)
     setTagMask(chunk, 'parentBookName', thisBot.tags.parentBookName)
     setTagMask(chunk, 'chapterNumber', thisBot.tags.chapterNumber)
     setTagMask(chunk, 'label', label)
-    if(InstanceManager.masks.isInHistoryMode) setTagMask(chunk, "color", GetHistoryColor({element: chunk}))
+    if(BibleVizUtils.Data.masks.isInHistoryMode) setTagMask(chunk, "color", BibleVizUtils.Functions.GetHistoryColor({piece: chunk}))
     else
     {
-        const currentHighlightInfo = mapChapterData.GetHighlightInfoByKey(chunk.masks.chunkPath)
+        const currentHighlightInfo = chapterData.GetHighlightInfoByKey(chunk.masks.chunkPath)
         if(currentHighlightInfo) setTagMask(chunk, "color", currentHighlightInfo.color)
     }
     currentVerseNumber += amountOfVerses;

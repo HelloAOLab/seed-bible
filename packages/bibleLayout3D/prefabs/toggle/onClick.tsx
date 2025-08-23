@@ -1,1 +1,1 @@
-shout("OnMapButtonClicked", {button: thisBot})
+shout("OnLayoutButtonClicked", {button: thisBot})

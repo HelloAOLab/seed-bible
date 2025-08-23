@@ -1,2 +1,2 @@
-thisBot.tags.mapId = null;
-thisBot.tags.isSettingsElement = null;
+thisBot.tags.layoutId = null;
+thisBot.tags.isSettingsPiece = null;

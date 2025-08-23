@@ -1,1 +1,1 @@
-shout(`OnMapChapterInteracted`, {mapChapter: thisBot, typeOfInteraction: StackElementInteractionType.Drop});
+shout(`OnLayoutChapterInteracted`, {chapter: thisBot, typeOfInteraction: BibleVizUtils.Data.tags.InteractionType.Drop});

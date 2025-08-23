@@ -11,7 +11,7 @@ const dimension = os.getCurrentDimension();
 if(thisBot.tags.isBaseStackBook || !thisBot.tags.isInUse) return;
 
 const {force, tags} = that;
-const data = StacksManager.GetBibleElementData({element: thisBot});
+const data = BibleStackManager.GetPieceData({piece: thisBot});
 const setX = force ?? (tags.includes(dimension + "X") || tags.includes("scaleX"));
 const setY = force ?? (tags.includes(dimension + "Y") || tags.includes("scaleY"));
 const setZ = force ?? (tags.includes(dimension + "Z") || tags.includes("scaleZ"));
@@ -25,7 +25,7 @@ if(currentLabelTransformers.length > 0 && (setX || setY || setZ))
 }
 if(isBookSelected)
 {
-    if(data.currentShape === BookShapeType.Selected && (setX || setY || setZ) && thisBot.masks.isShowingChapters)
+    if(data.currentShape === BibleVizUtils.Data.tags.BookShapeType.Selected && (setX || setY || setZ) && thisBot.masks.isShowingChapters)
     {
         thisBot.TrySetChaptersPosition({setX, setY, setZ})
     }

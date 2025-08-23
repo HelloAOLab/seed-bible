@@ -8,7 +8,7 @@
 // const crossHorizontalLine = getBot("isCrossHorizontalLine", true);
 // const bibleTransformerPosition = getBotPosition(thisBot, dimension);
 // const lowerCoverPosition = getBotPosition(lowerCover, dimension);
-// const lowerCoverScales = GetBotScales(lowerCover);
+// const lowerCoverScales = BibleVizUtils.Functions.GetBotScales(lowerCover);
 // const containerScaleXYFactor = 0.81;
 // const containerInitialScaleZ = 0;
 // const containerScales = {x: lowerCoverScales.x * containerScaleXYFactor, y: lowerCoverScales.y * containerScaleXYFactor};
@@ -18,7 +18,7 @@
 // const continerScaleZFactor = 0.02;
 // const containerInitialPositionZ = 0;
 // const animations = [];
-// let nextPositionZ = lowerCoverPosition.z + lowerCoverScales.z + StackSpacing.BetweenArrangements;
+// let nextPositionZ = lowerCoverPosition.z + lowerCoverScales.z + BibleVizUtils.Data.tags.StackSpacing.BetweenArrangements;
 // const containers = [];
 // let upperCoverOpenedPositionZ;
 // let crossOpenedPositionZ;
@@ -34,11 +34,11 @@
 
 // for(const testamentData of StackManager.vars.bibleStructure)
 // {
-//     nextPositionZ += StackSpacing.BetweenSections;
+//     nextPositionZ += BibleVizUtils.Data.tags.StackSpacing.BetweenSections;
 //     for(const sectionData of testamentData.sectionsData)
 //     {
 //         const desiredScaleZ = sectionData.section.tags.amountOfChaptersInSection * continerScaleZFactor;
-//         const container = ObjectPooler.GetObjectFromPool({tag: ObjectPoolTags.DonationContainer});
+//         const container = ObjectPooler.GetObjectFromPool({tag: BibleVizUtils.Data.tags.ObjectPoolTags.DonationContainer});
         
 //         if(container)
 //         {
@@ -75,10 +75,10 @@
 //                     easing
 //                 })
 //             )
-//             nextPositionZ += (desiredScaleZ + StackSpacing.BetweenSections);
+//             nextPositionZ += (desiredScaleZ + BibleVizUtils.Data.tags.StackSpacing.BetweenSections);
 //         }
 //     }
-//     nextPositionZ += StackSpacing.BetweenArrangements
+//     nextPositionZ += BibleVizUtils.Data.tags.StackSpacing.BetweenArrangements
 // }
 
 // animations.push(
@@ -89,7 +89,7 @@
 //     })
 // );
 
-// nextPositionZ += (lowerCoverScales.z + StackSpacing.CoverToCross);
+// nextPositionZ += (lowerCoverScales.z + BibleVizUtils.Data.tags.StackSpacing.CoverToCross);
 
 // animations.push(
 //     animateTag([crossVerticalLine, crossHorizontalLine], dimension + "Z", {
@@ -103,6 +103,6 @@
 
 // setTagMask(thisBot, "isBibleClosed", false);
 
-// StackManager.TrySetElementsRenderOrder(containers);
+// StackManager.TrySetPiecesRenderOrder(containers);
 
 // return true;

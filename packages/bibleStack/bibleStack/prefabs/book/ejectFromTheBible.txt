@@ -47,11 +47,11 @@ for(let testament of currentBibleStructure)
         }
         else
         {
-            for(let element of section.books)
+            for(let piece of section.books)
             {
-                if(Array.isArray(element))
+                if(Array.isArray(piece))
                 {
-                    for(let book of element)
+                    for(let book of piece)
                     {
                         if(book.botID === getID(thisBot))
                         {
@@ -65,11 +65,11 @@ for(let testament of currentBibleStructure)
                 }
                 else
                 {
-                    if(element.botID === getID(thisBot))
+                    if(piece.botID === getID(thisBot))
                     {
-                        element.isInsideBible = false;
-                        element.isInsideArrangement = false;
-                        element.isInsideSection = false;
+                        piece.isInsideBible = false;
+                        piece.isInsideArrangement = false;
+                        piece.isInsideSection = false;
                         setTagMask(mainWord, "bibleStructure", currentBibleStructure);
                         mainWord.resizeBible();
                     }

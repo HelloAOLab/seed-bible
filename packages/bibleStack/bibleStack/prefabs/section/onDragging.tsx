@@ -1,1 +1,1 @@
-shout("OnSectionInteracted", {section: thisBot, typeOfInteraction: StackElementInteractionType.Dragging, dragInfo: that});
+shout("OnStackSectionInteracted", {section: thisBot, typeOfInteraction: BibleVizUtils.Data.tags.InteractionType.Dragging, dragInfo: that});

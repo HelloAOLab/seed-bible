@@ -5,7 +5,7 @@
     * book.DecreaseHighlight();
 */
 
-const infoLabelTransformer = GetCurrentInfoLabelTransformer(thisBot);
+const infoLabelTransformer = BibleVizUtils.Functions.GetCurrentInfoLabelTransformer(thisBot);
 const duration = 0.15;
 const newOpacity = 0.75;
 const easing = {type: "sinusoidal", mode: "inout"};

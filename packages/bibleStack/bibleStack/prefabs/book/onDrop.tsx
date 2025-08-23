@@ -1,1 +1,1 @@
-shout("OnBookInteracted", {book: thisBot, typeOfInteraction: StackElementInteractionType.Drop, dropInfo: that});
+shout("OnStackBookInteracted", {book: thisBot, typeOfInteraction: BibleVizUtils.Data.tags.InteractionType.Drop, dropInfo: that});

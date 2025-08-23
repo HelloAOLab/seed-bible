@@ -15,8 +15,8 @@ if(previousTray)
     }
     setTagMask(previousTray, "isConvertedIntoATray", false);
     previousTray.tryToIncludeInTheBible({callingFrom: "setThisBookAsTheTray"});
-    // previousTray.lerpColor({startingColor: HexToRgb(previousTray.masks.color ?? previousTray.tags.color), endingColor: HexToRgb(previousTray.tags.initialColor), durationInSeconds: 0.75})
-    LerpColorManager.LerpTagColor({startingColor: HexToRgb(previousTray.masks.color ?? previousTray.tags.color), endingColor: HexToRgb(previousTray.tags.initialColor), durationInSeconds: 0.75, bot: previousTray, tag: InterpolatableColorTags.Color});
+    // previousTray.lerpColor({startingColor: BibleVizUtils.Functions.HexToRgb(previousTray.masks.color ?? previousTray.tags.color), endingColor: BibleVizUtils.Functions.HexToRgb(previousTray.tags.initialColor), durationInSeconds: 0.75})
+    ColorLerper.LerpTag({startingColor: BibleVizUtils.Functions.HexToRgb(previousTray.masks.color ?? previousTray.tags.color), endingColor: BibleVizUtils.Functions.HexToRgb(previousTray.tags.initialColor), durationInSeconds: 0.75, bot: previousTray, tag: BibleVizUtils.Data.tags.InterpolatableColorTags.Color});
 }
 
 SoundsManager.playSetBookAsTraySound();

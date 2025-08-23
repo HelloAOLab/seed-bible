@@ -3,7 +3,7 @@
     *
     * @param {Object} that - The context object containing interaction details.
     * @example
-    * shout("OnChunkOfVersesInteracted", {chunk: someBot, typeOfInteraction: BibleVizUtils.Data.tags.InteractionType.Click});
+    * shout("OnStackChunkOfVersesInteracted", {chunk: someBot, typeOfInteraction: BibleVizUtils.Data.tags.InteractionType.Click});
 */
 
 thisBot.HandleChunkOfVersesInteraction(that);

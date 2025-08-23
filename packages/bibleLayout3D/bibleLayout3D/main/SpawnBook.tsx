@@ -12,7 +12,7 @@ const bookScales = new Vector3(
 
 const book = layoutBookStructure.layoutBookData.piece ?? ObjectPooler.GetObjectFromPool({tag: BibleVizUtils.Data.tags.ObjectPoolTags.LayoutBook});
 
-const {arrangementIndex, testamentIndex, sectionIndex} = StacksManager.GetBookInfoPathByName({
+const {arrangementIndex, testamentIndex, sectionIndex} = BibleStackManager.GetBookInfoPathByName({
     name: layoutBookStructure.layoutBookData.pieceInfo.commonName, 
     arrangementIndex: BibleVizUtils.Functions.GetCurrentArrangementIndex()
 });

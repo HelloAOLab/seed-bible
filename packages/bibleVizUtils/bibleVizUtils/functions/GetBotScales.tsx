@@ -1,4 +1,4 @@
-const {bot} = that;
+const bot = that;
 
 const scales = {
     x: bot.masks.scaleX ?? bot.tags.scaleX ?? 1, 

@@ -7,7 +7,7 @@
 setTagMask(thisBot, 'isSelected', true);
 const dimension = os.getCurrentDimension();
 const amountOfVerses = thisBot.masks.finalVerseNumber - thisBot.masks.initialVerseNumber + 1;
-let verses = ObjectPooler.GetObjectFromPool({tag: ObjectPoolTags.LayoutVerse, amount: amountOfVerses});
+let verses = ObjectPooler.GetObjectFromPool({tag: BibleVizUtils.Data.tags.ObjectPoolTags.LayoutVerse, amount: amountOfVerses});
 verses = Array.isArray(verses) ? verses : [verses];
 const maxHorizontalAmountOfVersesPerChunk = 6;
 const maxVerticalAmountOfVersesPerChunk = 2;
@@ -18,7 +18,7 @@ const fixedVerseScales = new Vector3(
     thisBot.tags.desiredScaleZ - gapBetweenVerses
 );
 const chunkPosition = getBotPosition(thisBot, dimension);
-const chunkScales = GetBotScales(thisBot);
+const chunkScales = BibleVizUtils.Functions.GetBotScales(thisBot);
 const duration = 0.3;
 const firstSequenceEasing = {type: 'sinusoidal', mode: 'out'};
 const secondSequenceEasing = {type: 'cubic', mode: 'out'};
@@ -40,18 +40,18 @@ verses.forEach((verse) => {
     setTagMask(verse, 'scaleZ', fixedVerseScales.z);
     setTagMask(verse, 'label', currentChapterNumber);
     setTagMask(verse, "chapterDataId", thisBot.masks.chapterDataId);
-    setTagMask(verse, 'mapChapterDataId', thisBot.masks.mapChapterDataId);
+    setTagMask(verse, 'chapterDataId', thisBot.masks.chapterDataId);
     setTagMask(verse, "chapterOrigin", thisBot.masks.chapterOrigin);
     setTagMask(verse, 'versePath', `${thisBot.masks.parentBookName} ${thisBot.masks.chapterNumber} ${currentChapterNumber}`);
     setTagMask(verse, 'parentChunkPath', thisBot.masks.chunkPath);
     setTagMask(verse, 'arrangementIndex', thisBot.masks.arrangementIndex);
     setTagMask(verse, 'bookName', thisBot.masks.parentBookName);
     setTagMask(verse, 'chapterNumber', thisBot.masks.chapterNumber);
-    if(InstanceManager.masks.isInHistoryMode) setTagMask(verse, "color", GetHistoryColor({element: verse})) 
+    if(BibleVizUtils.Data.masks.isInHistoryMode) setTagMask(verse, "color", BibleVizUtils.Functions.GetHistoryColor({piece: verse})) 
     else
     {
-        const chapterData = thisBot.masks.chapterDataId ? StacksManager.GetChapterDataById({id: thisBot.masks.chapterDataId}) :
-            MapsManager.GetChapterDataById({id: thisBot.masks.mapChapterDataId});
+        const chapterData = thisBot.masks.chapterDataId ? BibleStackManager.GetChapterDataById({id: thisBot.masks.chapterDataId}) :
+            BibleLayout3DManager.GetChapterDataById({id: thisBot.masks.chapterDataId});
         const currentHighlightInfo = chapterData.GetHighlightInfoByKey(verse.masks.versePath)
         if(currentHighlightInfo) setTagMask(verse, "color", currentHighlightInfo.color)
     }

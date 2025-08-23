@@ -6,4 +6,4 @@ const setX = changedTags.includes(dimension + "X") || changedTags.includes("scal
 const setY = changedTags.includes(dimension + "Y") || changedTags.includes("scaleY");
 const setZ = changedTags.includes(dimension + "Z") || changedTags.includes("scaleZ");
 
-if(setX || setY || setZ) InstanceManager.SetUsersColorPositionOnElement({element: thisBot});
+if(setX || setY || setZ) BibleVizUtils.Functions.SetUsersColorPositionOnElement({piece: thisBot});

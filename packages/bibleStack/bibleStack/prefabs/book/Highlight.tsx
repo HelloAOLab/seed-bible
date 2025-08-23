@@ -6,28 +6,29 @@
     * book.Highlight();
 */
 
-import {BookData} from "interactiveBible.managers.StacksManager.BookData"
+import {BookData} from "bibleVizUtils.classes.BookData"
+
 const {speedMultiplier = 1, isInstantaneous = false} = that ?? {}
-const bookData = StacksManager.GetBibleElementData({element: thisBot});
-const dimension                             = os.getCurrentDimension();
-const duration                              = isInstantaneous ? 0 : StackAnimationsDuration.Highlight/speedMultiplier;
-const easing                                = {type: "sinusoidal", mode: "inout"};
-const bookScales                            = GetBotScales(thisBot);
-const scales                                = await thisBot.GetHighlightScales();
-const highlightAditionalScale               = 0.1;
-const currentDate                           = new Date();
-const currentYear                           = currentDate.getFullYear();
-const actualInfo                            = (bookData instanceof BookData) ? bookData.elementInfo : bookData.elementBookInfo
-const {relativeDateRange}                   = StacksManager.tags.booksStaticInfo[actualInfo.commonName];
-const date                                  = InstanceManager.GetCurrentLabelDateFormat() === LabelDateFormats.Relative ? (
+const bookData = BibleStackManager.GetPieceData({piece: thisBot});
+const dimension = os.getCurrentDimension();
+const duration = isInstantaneous ? 0 : BibleVizUtils.Data.tags.StackAnimationsDuration.Highlight/speedMultiplier;
+const easing = {type: "sinusoidal", mode: "inout"};
+const bookScales = BibleVizUtils.Functions.GetBotScales(thisBot);
+const scales = await thisBot.GetHighlightScales();
+const highlightAditionalScale = 0.1;
+const currentDate = new Date();
+const currentYear = currentDate.getFullYear();
+const actualInfo = (bookData instanceof BookData) ? bookData.elementInfo : bookData.elementBookInfo
+const {relativeDateRange} = BibleVizUtils.Data.tags.booksStaticInfo[actualInfo.commonName];
+const date = InstanceManager.GetCurrentLabelDateFormat() === BibleVizUtils.Data.tags.LabelDateFormats.Relative ? (
     `${Math.abs(relativeDateRange.min)}${(relativeDateRange.min != relativeDateRange.max) ? `-${Math.abs(relativeDateRange.max)}` : ``} ${relativeDateRange.min < 0 ? "B.C." : "A.D."}`
 ) : (
     `${currentYear - relativeDateRange.min}${relativeDateRange.min != relativeDateRange.max ? `-${currentYear - relativeDateRange.max}` : ``} years ago`
 );
-const {infoLabelTransformer} = await StacksManager.GetLabelForElement({
-    element: thisBot, 
+const {infoLabelTransformer} = await BibleVizUtils.Functions.GetLabelForPiece({
+    piece: thisBot, 
     label: thisBot.tags.bookName,
-    date: StacksManager.masks.showBooksLabelDate ? date : null,
+    date: BibleStackManager.masks.showBooksLabelDate ? date : null,
     color: 'white', 
     labelColor: thisBot.tags.labelTextColor, 
     dimension,
@@ -39,7 +40,7 @@ setTagMask(thisBot, "isHighlighted", true);
 if(bookData.parentDataIds.bibleId)
 {
     const activeElementsInStack = getBots(byTag("isStackPiece", true), byTag(dimension, true))
-        .map((element) => {return StacksManager.GetBibleElementData({element})})
+        .map((piece) => {return BibleStackManager.GetPieceData({piece})})
         .filter((elementData) => {return elementData.parentDataIds.bibleId && elementData.parentDataIds.bibleId === bookData.parentDataIds.bibleId});
     setTagMask(thisBot, "formRenderOrder", (-activeElementsInStack.length - 20));
 }

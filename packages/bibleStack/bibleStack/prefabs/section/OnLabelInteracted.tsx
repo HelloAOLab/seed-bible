@@ -1,7 +1,7 @@
 /**
-    * Triggers an OnSectionInteracted event when the section's label has been interacted.
+    * Triggers an OnStackSectionInteracted event when the section's label has been interacted.
     * @example
     * section.OnLabelInteracted()
 */
 
-shout("OnSectionInteracted", {section: thisBot, typeOfInteraction: StackElementInteractionType.Tap});
+shout("OnStackSectionInteracted", {section: thisBot, typeOfInteraction: BibleVizUtils.Data.tags.InteractionType.Tap});

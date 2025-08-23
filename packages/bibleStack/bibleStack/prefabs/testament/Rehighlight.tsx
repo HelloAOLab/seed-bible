@@ -12,7 +12,7 @@
 
 const {speedMultiplier = 1, isInstantaneous = false} = that ?? {}
 // const dimension = os.getCurrentDimension();
-const animationDuration = isInstantaneous ? 0 : (StackAnimationsDuration.Rehighlight/speedMultiplier);
+const animationDuration = isInstantaneous ? 0 : (BibleVizUtils.Data.tags.StackAnimationsDuration.Rehighlight/speedMultiplier);
 const infoLabelTransformer = getBot(byTag("isInfoLabelTransformer", true), byTag("ownerBotId", getID(thisBot)));
 const animationEasing = {type: "sinusoidal", mode: "inout"};
 // const desiredLabelFormOpacity = 1;

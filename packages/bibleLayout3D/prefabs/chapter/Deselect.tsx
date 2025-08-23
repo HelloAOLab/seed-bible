@@ -4,16 +4,16 @@
     * chapter.Deselect();
 */
 
-const mapChapterData = MapsManager.GetMapElementData({element: thisBot});
+const chapterData = BibleLayout3DManager.GetPieceData({piece: thisBot});
 const dimension = os.getCurrentDimension();
 const duration = 0.15;
 const easing = {type: "sinusoidal", mode: "out"};
-const rgbTargetColor = HexToRgb(InstanceManager.masks.isInHistoryMode ? GetHistoryColor({element: thisBot}) : (mapChapterData.highlightColor ?? thisBot.tags.initialColor));
+const rgbTargetColor = BibleVizUtils.Functions.HexToRgb(BibleVizUtils.Data.masks.isInHistoryMode ? BibleVizUtils.Functions.GetHistoryColor({piece: thisBot}) : (chapterData.highlightColor ?? thisBot.tags.initialColor));
 // const chapterPosition = getBotPosition(thisBot, dimension);
 const delayBetweenChunkAnimations = 35;
 const chunkAnimationDuration = 0.15;
-const chapterScales = GetBotScales(thisBot);
-const infoLabelTransformer = GetCurrentInfoLabelTransformer(thisBot);
+const chapterScales = BibleVizUtils.Functions.GetBotScales(thisBot);
+const infoLabelTransformer = BibleVizUtils.Functions.GetCurrentInfoLabelTransformer(thisBot);
 
 setTagMask(thisBot, "isDeselecting", true);
 if(infoLabelTransformer)
@@ -31,7 +31,7 @@ if(Array.isArray(thisBot.vars.chunksOfVerses) && thisBot.vars.chunksOfVerses.len
 }
 
 await Promise.all([
-    LerpColorManager.LerpTagColor({endingColor: rgbTargetColor, durationInSeconds: duration, bot: thisBot,  tag: InterpolatableColorTags.Color}),
+    ColorLerper.LerpTag({endingColor: rgbTargetColor, durationInSeconds: duration, bot: thisBot,  tag: BibleVizUtils.Data.tags.InterpolatableColorTags.Color}),
     animateTag(thisBot, 'labelOpacity', {
         toValue: 0,
         duration: duration / 2,

@@ -3,7 +3,7 @@ setTagMask(thisBot, "isAnimatingBible", true);
 const {layoutData} = that;
 layoutData.hasSelectAllBooksBeenCalled = true
 
-const openAllBooksButton = layoutData.staticLayoutPieces.settingsButtons.find((button) => {return button.tags.buttonType === BibleVizUtils.Data.LayoutButtonType.OpenAllBooksButton});
+const openAllBooksButton = layoutData.staticLayoutPieces.settingsButtons.find((button) => {return button.tags.buttonType === BibleVizUtils.Data.tags.LayoutButtonType.OpenAllBooksButton});
 
 openAllBooksButton.links.buttonLabel.tags.label = "Close all books"
 openAllBooksButton.links.buttonIcon.tags.formAddress = openAllBooksButton.tags.closeIcon;

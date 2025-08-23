@@ -1,2 +1,2 @@
-shout("OnBookInteracted", {book: thisBot, typeOfInteraction: StackElementInteractionType.Drag, dragInfo: that});
+shout("OnStackBookInteracted", {book: thisBot, typeOfInteraction: BibleVizUtils.Data.tags.InteractionType.Drag, dragInfo: that});
 os.enableCustomDragging();

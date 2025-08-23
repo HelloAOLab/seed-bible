@@ -1,2 +1,2 @@
 // const {modality} = that;
-shout("OnMapBookInteracted", {mapBook: thisBot, typeOfInteraction: StackElementInteractionType.Click});
+shout("OnLayoutBookInteracted", {book: thisBot, typeOfInteraction: BibleVizUtils.Data.tags.InteractionType.Click});

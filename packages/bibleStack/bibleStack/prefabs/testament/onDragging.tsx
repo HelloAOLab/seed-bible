@@ -1,1 +1,1 @@
-shout("OnTestamentInteracted", {testament: thisBot, typeOfInteraction: StackElementInteractionType.Dragging, dragInfo: that});
+shout("OnStackTestamentInteracted", {testament: thisBot, typeOfInteraction: BibleVizUtils.Data.tags.InteractionType.Dragging, dragInfo: that});

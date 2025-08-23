@@ -7,7 +7,7 @@ const respawnableBooksStructure = thisBot.vars.layoutBooksStructure.filter((layo
 })
 const bookShowDelay = 500;
 
-const openAllBooksButton = layoutData.staticLayoutPieces.settingsButtons.find((button) => {return button.tags.buttonType === BibleVizUtils.Data.LayoutButtonType.OpenAllBooksButton});
+const openAllBooksButton = layoutData.staticLayoutPieces.settingsButtons.find((button) => {return button.tags.buttonType === BibleVizUtils.Data.tags.LayoutButtonType.OpenAllBooksButton});
 
 openAllBooksButton.links.buttonIcon.tags.formAddress = openAllBooksButton.tags.openIcon;
 openAllBooksButton.links.buttonLabel.tags.label = "Open all books"

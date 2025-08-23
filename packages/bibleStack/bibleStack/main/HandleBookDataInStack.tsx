@@ -28,7 +28,7 @@ let marginToAdd = 0;
 const newBookAnimations = [];
 const initialDesiredPositionX = desiredPositionX;
 const initialDesiredPositionY = desiredPositionY;
-const isSectionBookDataInstance = bookData instanceof SectionBookData || bookData.constructor.name === "SectionBookData";
+const isSectionBookDataInstance = bookData instanceof StackSectionBookData || bookData.constructor.name === "StackSectionBookData";
 
 if(bookData.isSelected)
 {

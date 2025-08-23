@@ -1,2 +1,2 @@
-const bibleData = StacksManager.GetBibleDataById({bibleId: thisBot.tags.bibleId})
+const bibleData = BibleStackManager.GetBibleDataById({bibleId: thisBot.tags.bibleId})
 shout('TryStopStackVizToggle', {bibleData});

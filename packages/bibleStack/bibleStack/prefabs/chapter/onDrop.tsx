@@ -1,2 +1,2 @@
-const chapterData = StacksManager.GetBibleElementData({element: thisBot});
-shout("OnChapterInteracted", {chapterData, typeOfInteraction: StackElementInteractionType.Drop, dropInfo: that});
+const chapterData = BibleStackManager.GetPieceData({piece: thisBot});
+shout("OnChapterInteracted", {chapterData, typeOfInteraction: BibleVizUtils.Data.tags.InteractionType.Drop, dropInfo: that});

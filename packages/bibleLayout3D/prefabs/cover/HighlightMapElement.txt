@@ -1,21 +1,21 @@
-import {HighlightInfo} from "interactiveBible.managers.StacksManager.HighlightInfo"
-const {element} = that;
+import {HighlightInfo} from "bibleVizUtils.classes.HighlightInfo"
+const {piece} = that;
 
 let key, prevColor;
 let highlightSuccessful = false;
-switch(element.tags.typeOfElement)
+switch(piece.tags.typeOfElement)
 {
     case BibleElementType.MapBook:
-        key = element.tags.bookName;
+        key = piece.tags.bookName;
     break;
     case BibleElementType.MapChapter:
-        key = `${element.tags.bookName} ${element.tags.chapterNumber}`;
+        key = `${piece.tags.bookName} ${piece.tags.chapterNumber}`;
     break;
     case BibleElementType.ChunkOfVerses:
-        key = element.masks.chunkPath
+        key = piece.masks.chunkPath
     break;
     case BibleElementType.Verse: 
-        key = element.masks.versePath
+        key = piece.masks.versePath
     break;
     default: break;
 }
@@ -24,7 +24,7 @@ if(currentHighlightInfo)
 {
     if(currentHighlightInfo.color != InstanceManager.tags.highlightColor)
     {
-        if(!InstanceManager.masks.isInHistoryMode) setTagMask(element, "color", InstanceManager.tags.highlightColor);
+        if(!BibleVizUtils.Data.masks.isInHistoryMode) setTagMask(piece, "color", InstanceManager.tags.highlightColor);
         prevColor = currentHighlightInfo.color;
         currentHighlightInfo.color = InstanceManager.tags.highlightColor;
         highlightSuccessful = true;
@@ -32,9 +32,9 @@ if(currentHighlightInfo)
 }
 else
 {
-    if(!InstanceManager.masks.isInHistoryMode) setTagMask(element, "color", InstanceManager.tags.highlightColor);
-    thisBot.tags.highlightsInfo.push(new HighlightInfo({key, typeOfElement: element.tags.typeOfElement, color: InstanceManager.tags.highlightColor}))
+    if(!BibleVizUtils.Data.masks.isInHistoryMode) setTagMask(piece, "color", InstanceManager.tags.highlightColor);
+    thisBot.tags.highlightsInfo.push(new HighlightInfo({key, typeOfElement: piece.tags.typeOfElement, color: InstanceManager.tags.highlightColor}))
     highlightSuccessful = true;
 }
 
-if(highlightSuccessful) shout(`OnElementHighlighted`, {color: InstanceManager.tags.highlightColor, prevColor, element})
+if(highlightSuccessful) shout(`OnElementHighlighted`, {color: InstanceManager.tags.highlightColor, prevColor, piece})

@@ -7,7 +7,7 @@
 animateTag(thisBot, 'scaleX', null)
 animateTag(thisBot, 'scaleY', null)
 animateTag(thisBot, 'scaleZ', null)
-const infoLabelTransformer = GetCurrentInfoLabelTransformer(thisBot);
+const infoLabelTransformer = BibleVizUtils.Functions.GetCurrentInfoLabelTransformer(thisBot);
 if(infoLabelTransformer)
 {
     const {infoLabel, infoLabelTail, infoLabelUsersColor} = infoLabelTransformer.GetLabelElements();
@@ -17,4 +17,4 @@ if(infoLabelTransformer)
     animateTag(infoLabelUsersColor, 'labelOpacity', null);
     animateTag(infoLabelUsersColor, 'formOpacity', null);
 }
-LerpColorManager.StopColorLerp({bot: thisBot,  tag: InterpolatableColorTags.Color});
+ColorLerper.StopColorLerp({bot: thisBot,  tag: BibleVizUtils.Data.tags.InterpolatableColorTags.Color});

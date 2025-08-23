@@ -3,4 +3,4 @@
 // }
 // InstanceManager.TryClearVideoTimeout();
 setTagMask(thisBot, "isBeingHovered", false);
-shout("OnTestamentInteracted", {testament: thisBot, typeOfInteraction: StackElementInteractionType.HoverEnd});
+shout("OnStackTestamentInteracted", {testament: thisBot, typeOfInteraction: BibleVizUtils.Data.tags.InteractionType.HoverEnd});

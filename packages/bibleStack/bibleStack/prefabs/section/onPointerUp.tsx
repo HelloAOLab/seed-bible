@@ -1,1 +1,1 @@
-shout("OnSectionInteracted", {section: thisBot, typeOfInteraction: StackElementInteractionType.PointerUp});
+shout("OnStackSectionInteracted", {section: thisBot, typeOfInteraction: BibleVizUtils.Data.tags.InteractionType.PointerUp});

@@ -1,4 +1,4 @@
-const mapChapterData = MapsManager.GetMapElementData({element: thisBot});
+const chapterData = BibleLayout3DManager.GetPieceData({piece: thisBot});
 const duration = 0.1;
 
 let rgbTargetColor;
@@ -17,14 +17,14 @@ if(thisBot.masks.isExpanded)
         duration,
         easing
     }))
-    rgbTargetColor = HexToRgb(InstanceManager.masks.isInHistoryMode ? GetHistoryColor({element: thisBot}) : (mapChapterData.highlightColor ?? thisBot.tags.highlightedColor));
+    rgbTargetColor = BibleVizUtils.Functions.HexToRgb({hexColor: BibleVizUtils.Data.masks.isInHistoryMode ? BibleVizUtils.Functions.GetHistoryColor({piece: thisBot}) : (chapterData.highlightColor ?? thisBot.tags.highlightedColor)});
 }
 else
 {
     const label = `${thisBot.tags.parentBookName} ${thisBot.tags.chapterNumber}`
     
-    const infoLabelTransformer = GetCurrentInfoLabelTransformer(thisBot) ?? StacksManager.GetLabelForElement({
-        element: thisBot, 
+    const infoLabelTransformer = BibleVizUtils.Functions.GetCurrentInfoLabelTransformer(thisBot) ?? BibleVizUtils.Functions.GetLabelForPiece({
+        piece: thisBot, 
         label,
         color: 'white', 
         labelColor: 'black', 
@@ -34,14 +34,14 @@ else
     }).infoLabelTransformer;
 
     animations.push(infoLabelTransformer.Show({duration}))
-    if(!mapChapterData.isSelected)
+    if(!chapterData.isSelected)
     {
-        rgbTargetColor = HexToRgb(InstanceManager.masks.isInHistoryMode ? GetHistoryColor({element: thisBot}) : (mapChapterData.highlightColor ?? thisBot.tags.highlightedColor));
+        rgbTargetColor = BibleVizUtils.Functions.HexToRgb({hexColor: BibleVizUtils.Data.masks.isInHistoryMode ? BibleVizUtils.Functions.GetHistoryColor({piece: thisBot}) : (chapterData.highlightColor ?? thisBot.tags.highlightedColor)});
     }
 }
 
 setTagMask(thisBot, "isHighlighting", true);
-if(rgbTargetColor) animations.push(LerpColorManager.LerpTagColor({startingColor: HexToRgb(thisBot.masks.color ?? thisBot.tags.color), endingColor: rgbTargetColor, durationInSeconds: duration, bot: thisBot,  tag: InterpolatableColorTags.Color}))
+if(rgbTargetColor) animations.push(ColorLerper.LerpTag({startingColor: BibleVizUtils.Functions.HexToRgb({hexColor: thisBot.masks.color ?? thisBot.tags.color}), endingColor: rgbTargetColor, durationInSeconds: duration, bot: thisBot,  tag: BibleVizUtils.Data.tags.InterpolatableColorTags.Color}))
 
 try
 {

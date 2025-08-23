@@ -1,2 +1,2 @@
 setTagMask(thisBot, "isBeingHovered", true);
-shout("OnTestamentInteracted", {testament: thisBot, typeOfInteraction: StackElementInteractionType.HoverBegin});
+shout("OnStackTestamentInteracted", {testament: thisBot, typeOfInteraction: BibleVizUtils.Data.tags.InteractionType.HoverBegin});

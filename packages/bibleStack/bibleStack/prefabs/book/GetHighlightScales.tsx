@@ -5,30 +5,30 @@
     * const highlightScales = book.GetHighlightScales();
 */
 
-import {SectionBookData} from "interactiveBible.managers.StacksManager.SectionBookData"
+import {StackSectionBookData} from "bibleVizUtils.classes.StackSectionBookData"
 
-const bookData = StacksManager.GetBibleElementData({element: thisBot});
-const {sectionData} = StacksManager.GetDataChainFromParentDataIds({parentDataIds: bookData.parentDataIds});
+const bookData = BibleStackManager.GetPieceData({piece: thisBot});
+const {sectionData} = BibleStackManager.GetDataChainFromParentDataIds({parentDataIds: bookData.parentDataIds});
 let scaleX, scaleY;
 if(sectionData?.isInExplodedView && (bookData.isInsideBible || (!bookData.isInsideTestament && !bookData.isInsideSection)))
 {
     if(bookData.isSelected)
     {
-        scaleX = sectionData.element.tags.initialScaleX;
-        scaleY = sectionData.element.tags.initialScaleY;
+        scaleX = sectionData.piece.tags.initialScaleX;
+        scaleY = sectionData.piece.tags.initialScaleY;
     }
     else
     {
         if(thisBot.tags.explodedViewCustomScale)
         {
-            scaleX = thisBot.tags.explodedViewCustomScale.x * sectionData.element.tags.initialScaleX;
-            scaleY = thisBot.tags.explodedViewCustomScale.y * sectionData.element.tags.initialScaleY;
+            scaleX = thisBot.tags.explodedViewCustomScale.x * sectionData.piece.tags.initialScaleX;
+            scaleY = thisBot.tags.explodedViewCustomScale.y * sectionData.piece.tags.initialScaleY;
         }
         else
         {
             scaleX = thisBot.tags.initialScaleX;
             scaleY = thisBot.tags.initialScaleY;
-            if(bookData instanceof SectionBookData && thisBot.masks.hasBeenScaledAsBook)
+            if(bookData instanceof StackSectionBookData && thisBot.masks.hasBeenScaledAsBook)
             {
                 scaleX *= 0.9;
                 scaleY *= 0.9;
@@ -40,7 +40,7 @@ else
 {
     scaleX = thisBot.tags.initialScaleX;
     scaleY = thisBot.tags.initialScaleY;
-    if(bookData instanceof SectionBookData && thisBot.masks.hasBeenScaledAsBook)
+    if(bookData instanceof StackSectionBookData && thisBot.masks.hasBeenScaledAsBook)
     {
         scaleX *= 0.9;
         scaleY *= 0.9;

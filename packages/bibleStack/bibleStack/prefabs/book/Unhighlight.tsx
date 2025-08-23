@@ -10,13 +10,13 @@
 */
 
 const {customDuration, speedMultiplier = 1, isInstantaneous} = that ?? {};
-// const bookData = StacksManager.GetBibleElementData({element: thisBot});
+// const bookData = BibleStackManager.GetPieceData({piece: thisBot});
 const dimension = os.getCurrentDimension();
-const animationDuration = isInstantaneous ? 0 : ((customDuration ?? StackAnimationsDuration.Unhighlight)/speedMultiplier);
-const infoLabelTransformer = GetCurrentInfoLabelTransformer(thisBot);
+const animationDuration = isInstantaneous ? 0 : ((customDuration ?? BibleVizUtils.Data.tags.StackAnimationsDuration.Unhighlight)/speedMultiplier);
+const infoLabelTransformer = BibleVizUtils.Functions.GetCurrentInfoLabelTransformer(thisBot);
 const scales = await thisBot.GetHighlightScales();
 const animationEasing = {type: "sinusoidal", mode: "inout"};
-const thisBotScales = GetBotScales(thisBot);
+const thisBotScales = BibleVizUtils.Functions.GetBotScales(thisBot);
 
 setTagMask(thisBot, "isUnhighlighting", true);
 setTagMask(thisBot, "isHighlighted", false);
@@ -46,7 +46,7 @@ try
         const activeElements = getBots(byTag("isStackPiece", true), byTag(dimension, true));
         if(activeElements.length > 0)
         {
-            StacksManager.TrySetElementsRenderOrder(activeElements)
+            BibleStackManager.TrySetPiecesRenderOrder(activeElements)
         }
     })
 }

@@ -1,2 +1,2 @@
 const {modality} = that;
-shout("OnBookInteracted", {book: thisBot, typeOfInteraction: (modality === ClickModality.touch ? StackElementInteractionType.Tap : StackElementInteractionType.Click)});
+shout("OnStackBookInteracted", {book: thisBot, typeOfInteraction: (modality === BibleVizUtils.Data.tags.ClickModality.touch ? BibleVizUtils.Data.tags.InteractionType.Tap : BibleVizUtils.Data.tags.InteractionType.Click)});

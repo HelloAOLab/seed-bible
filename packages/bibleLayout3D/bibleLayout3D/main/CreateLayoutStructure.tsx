@@ -129,7 +129,7 @@ const playlistPathToggleMod = {
     background: `🔗${playlistPathToggleBackground.id}`, 
     handle: `🔗${playlistPathToggleHandle.id}`,
     label: labelInitialSpace + "Playlist path",
-    buttonType: BibleVizUtils.Data.LayoutButtonType.PlaylistPathToggle,
+    buttonType: BibleVizUtils.Data.tags.LayoutButtonType.PlaylistPathToggle,
     ...settingsButtonsBaseTags
 }
 const playlistPathToggleBackgroundMod = settingsButtonsBaseTags;
@@ -141,7 +141,7 @@ const cameraAnimationToggleMod = {
     background: `🔗${cameraAnimationToggleBackground.id}`, 
     handle: `🔗${cameraAnimationToggleHandle.id}`,
     label: labelInitialSpace + "Camera Animation",
-    buttonType: BibleVizUtils.Data.LayoutButtonType.CameraAnimationToggle,
+    buttonType: BibleVizUtils.Data.tags.LayoutButtonType.CameraAnimationToggle,
     ...settingsButtonsBaseTags
 }
 const cameraAnimationToggleBackgroundMod = settingsButtonsBaseTags;
@@ -151,7 +151,7 @@ const labelsToggleMod = {
     background: `🔗${labelsToggleBackground.id}`, 
     handle: `🔗${labelsToggleHandle.id}`,
     label: labelInitialSpace + "Labels",
-    buttonType: BibleVizUtils.Data.LayoutButtonType.ShowLabelsToggle,
+    buttonType: BibleVizUtils.Data.tags.LayoutButtonType.ShowLabelsToggle,
     ...settingsButtonsBaseTags
 };
 const labelsToggleBackgroundMod = settingsButtonsBaseTags;
@@ -161,7 +161,7 @@ const pathToggleMod = {
     background: `🔗${pathToggleBackground.id}`, 
     handle: `🔗${pathToggleHandle.id}`,
     label: labelInitialSpace + "Path",
-    buttonType: BibleVizUtils.Data.LayoutButtonType.PathToggle,
+    buttonType: BibleVizUtils.Data.tags.LayoutButtonType.PathToggle,
     ...settingsButtonsBaseTags
 }
 const pathToggleBackgroundMod = settingsButtonsBaseTags
@@ -171,7 +171,7 @@ const chapterSelectToggleMod = {
     background: `🔗${chapterSelectToggleBackground.id}`, 
     handle: `🔗${chapterSelectToggleHandle.id}`,
     label: labelInitialSpace + "Chapter Expand",
-    buttonType: BibleVizUtils.Data.LayoutButtonType.ChapterExpandToggle,
+    buttonType: BibleVizUtils.Data.tags.LayoutButtonType.ChapterExpandToggle,
     ...settingsButtonsBaseTags
 }
 const chapterSelectToggleBackgroundMod = settingsButtonsBaseTags
@@ -181,7 +181,7 @@ const colorPickerButtonMod = {
     colorContent: `🔗${colorPickerContent.id}`,
     colorBackground: `🔗${colorPickerBackground.id}`,
     label: labelInitialSpace + "Color",
-    buttonType: BibleVizUtils.Data.LayoutButtonType.ColorPickerButton,
+    buttonType: BibleVizUtils.Data.tags.LayoutButtonType.ColorPickerButton,
     ...settingsButtonsBaseTags
 }
 const colorPickerBackgroundMod = settingsButtonsBaseTags
@@ -191,7 +191,7 @@ const showDatesToggleMod =  {
     background: `🔗${showDatesToggleBackground.id}`, 
     handle: `🔗${showDatesToggleHandle.id}`,
     label: labelInitialSpace + "Show dates",
-    buttonType: BibleVizUtils.Data.LayoutButtonType.ShowDatesToggle,
+    buttonType: BibleVizUtils.Data.tags.LayoutButtonType.ShowDatesToggle,
     ...settingsButtonsBaseTags
 }
 const showDatesToggleBackgroundMod = settingsButtonsBaseTags;
@@ -201,7 +201,7 @@ const BibleVizUtils.Data.tags.DateFormatselectorButtonMod = {
     buttonIcon: `🔗${BibleVizUtils.Data.tags.DateFormatselectorIcon.id}`,
     buttonLabel: `🔗${BibleVizUtils.Data.tags.DateFormatselectorLabel.id}`,
     draggable: false,
-    buttonType: BibleVizUtils.Data.LayoutButtonType.BibleVizUtils.Data.tags.DateFormatselectorButton,
+    buttonType: BibleVizUtils.Data.tags.LayoutButtonType.BibleVizUtils.Data.tags.DateFormatselectorButton,
     ...settingsButtonsBaseTags
 };
 const BibleVizUtils.Data.tags.DateFormatselectorLabelMod = { label: "Change date format", ...settingsButtonsBaseTags };
@@ -214,7 +214,7 @@ const openAllBooksButtonMod = {
     buttonLabel: `🔗${openAllBooksLabel.id}`, 
     buttonIcon: `🔗${openAllBooksIcon.id}`,
     draggable: false,
-    buttonType: BibleVizUtils.Data.LayoutButtonType.OpenAllBooksButton,
+    buttonType: BibleVizUtils.Data.tags.LayoutButtonType.OpenAllBooksButton,
     closeIcon: "https://auth-aux-aobot-prod-filesbucket-141297942820.s3.amazonaws.com/Sandbox/a71bb7fc57da5acf0ebcb801c7f3a0e3639e0234dababcc6f2ad169a3bb3987c.webp",
     openIcon: "https://auth-aux-aobot-prod-filesbucket-141297942820.s3.amazonaws.com/Sandbox/988824600f85ac5099c901f6a3388bec73fb10c64c8a1c9f23454a32d96aa33b.webp",
     ...settingsButtonsBaseTags
@@ -228,7 +228,7 @@ const playlistSelectorButtonMod = {
     buttonLabel: `🔗${playlistSelectorLabel.id}`, 
     buttonIcon: `🔗${playlistSelectorIcon.id}`,
     draggable: false,
-    buttonType: BibleVizUtils.Data.LayoutButtonType.PlaylistSelectorButton,
+    buttonType: BibleVizUtils.Data.tags.LayoutButtonType.PlaylistSelectorButton,
     ...settingsButtonsBaseTags
 }
 const playlistSelectorLabelMod = { label: "Show playlist", ...settingsButtonsBaseTags };

@@ -9,15 +9,15 @@
     * someBook.TrySetChaptersPosition({setX: true, setY: true, setZ: true});
 */
 const dimension = os.getCurrentDimension();
-const bookData = StacksManager.GetBibleElementData({element: thisBot});
-const {bibleData} = StacksManager.GetDataChainFromParentDataIds({parentDataIds: bookData.parentDataIds});
+const bookData = BibleStackManager.GetPieceData({piece: thisBot});
+const {bibleData} = BibleStackManager.GetDataChainFromParentDataIds({parentDataIds: bookData.parentDataIds});
 const activeChaptersData = bookData.childrenData.filter((chapterData) => {return chapterData.isInsideBook})
 if(activeChaptersData.length > 0)
 {
     const {setX, setY, setZ} = that;
     const bibleTransformerPosition = bibleData ? getBotPosition(bibleData.staticBibleElements.bibleTransformer, dimension) : null;
     const bookPosition = getBotPosition(thisBot, dimension);
-    const bookScales = GetBotScales(thisBot);
+    const bookScales = BibleVizUtils.Functions.GetBotScales(thisBot);
     let row = 0;
     let column = 0;
     let xPosition, yPosition, zPosition;
@@ -26,27 +26,27 @@ if(activeChaptersData.length > 0)
     {
         if(chapterData.isActive && !chapterData.isHidden)
         {
-            const horizontalChaptersSpace = chapterData.element.tags.chapterWidth * thisBot.tags.chapterColumns;
-            const verticalChaptersSpace = chapterData.element.tags.chapterHeight * (thisBot.tags.chapterRows - 1);
+            const horizontalChaptersSpace = chapterData.piece.tags.chapterWidth * thisBot.tags.chapterColumns;
+            const verticalChaptersSpace = chapterData.piece.tags.chapterHeight * (thisBot.tags.chapterRows - 1);
             const horizontalEmptySpace = thisBot.masks.scaleX - horizontalChaptersSpace;
             const verticalEmptySpace = thisBot.masks.scaleZ - verticalChaptersSpace;
             const chapterHorizontalGap = horizontalEmptySpace / thisBot.tags.chapterColumns;
             const chapterVerticalGap = verticalEmptySpace / (thisBot.tags.chapterRows - 1);
-            const chapterScales = GetBotScales(chapterData.element);
+            const chapterScales = BibleVizUtils.Functions.GetBotScales(chapterData.piece);
             if(setX)
             {
-                xPosition = (bookData.parentDataIds.bibleId ? bibleTransformerPosition.x : 0) + bookPosition.x - (bookScales.x/2) + (chapterData.element.tags.chapterWidth/2) + (chapterHorizontalGap/2) + ((chapterData.element.tags.chapterWidth + chapterHorizontalGap) * column);
-                setTagMask(chapterData.element, dimension + "X", xPosition);
+                xPosition = (bookData.parentDataIds.bibleId ? bibleTransformerPosition.x : 0) + bookPosition.x - (bookScales.x/2) + (chapterData.piece.tags.chapterWidth/2) + (chapterHorizontalGap/2) + ((chapterData.piece.tags.chapterWidth + chapterHorizontalGap) * column);
+                setTagMask(chapterData.piece, dimension + "X", xPosition);
             }
             if(setY)
             {
-                yPosition = (bookData.parentDataIds.bibleId ? bibleTransformerPosition.y : 0) + bookPosition.y - (bookScales.y/2) + chapterData.element.tags.gapY + (chapterScales.y/2) - (chapterData.isSelected ? StackElementMeasurements.ChapterFrontSelectedDepth : 0);
-                setTagMask(chapterData.element, dimension + "Y", yPosition);
+                yPosition = (bookData.parentDataIds.bibleId ? bibleTransformerPosition.y : 0) + bookPosition.y - (bookScales.y/2) + chapterData.piece.tags.gapY + (chapterScales.y/2) - (chapterData.isSelected ? BibleVizUtils.Data.tags.StackPieceMeasurements.ChapterFrontSelectedDepth : 0);
+                setTagMask(chapterData.piece, dimension + "Y", yPosition);
             }
             if(setZ)
             {
-                zPosition = (bookData.parentDataIds.bibleId ? (bibleTransformerPosition.z + 1) : 0) + bookPosition.z + bookScales.z - (chapterData.element.tags.chapterHeight) - (chapterVerticalGap/2) - ((chapterData.element.tags.chapterHeight + chapterVerticalGap) * row);
-                setTagMask(chapterData.element, dimension + "Z", zPosition);
+                zPosition = (bookData.parentDataIds.bibleId ? (bibleTransformerPosition.z + 1) : 0) + bookPosition.z + bookScales.z - (chapterData.piece.tags.chapterHeight) - (chapterVerticalGap/2) - ((chapterData.piece.tags.chapterHeight + chapterVerticalGap) * row);
+                setTagMask(chapterData.piece, dimension + "Z", zPosition);
             }
         }
         column++;

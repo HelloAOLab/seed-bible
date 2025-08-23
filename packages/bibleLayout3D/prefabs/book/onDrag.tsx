@@ -1,1 +1,1 @@
-shout(`OnMapBookInteracted`, {mapBook: thisBot, typeOfInteraction: StackElementInteractionType.Drag});
+shout(`OnLayoutBookInteracted`, {book: thisBot, typeOfInteraction: BibleVizUtils.Data.tags.InteractionType.Drag});

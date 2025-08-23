@@ -1,24 +1,24 @@
 if(!thisBot.masks.color) setTagMask(thisBot, "color", thisBot.tags.color)
 const startingColorHex = thisBot.tags.initialColor;
-const startingColorRgb = HexToRgb(startingColorHex);
-const targetColorRgb = HexToRgb("#139981");
+const startingColorRgb = BibleVizUtils.Functions.HexToRgb({hexColor: startingColorHex});
+const targetColorRgb = BibleVizUtils.Functions.HexToRgb({hexColor: "#139981"});
 const blinkDuration = 0.25
 
 try
 {
-    await LerpColorManager.LerpTagColor({
+    await ColorLerper.LerpTag({
         startingColor: startingColorRgb, 
         endingColor: targetColorRgb, 
         durationInSeconds: blinkDuration, 
         bot: thisBot,  
-        tag: InterpolatableColorTags.Color
+        tag: BibleVizUtils.Data.tags.InterpolatableColorTags.Color
     }).then(() => {
-        return LerpColorManager.LerpTagColor({
+        return ColorLerper.LerpTag({
             startingColor: targetColorRgb, 
             endingColor: startingColorRgb, 
             durationInSeconds: blinkDuration, 
             bot: thisBot,  
-            tag: InterpolatableColorTags.Color
+            tag: BibleVizUtils.Data.tags.InterpolatableColorTags.Color
         })
     })
 }

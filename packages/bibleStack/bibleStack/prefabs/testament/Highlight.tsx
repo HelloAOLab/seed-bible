@@ -12,14 +12,14 @@
 
 const {speedMultiplier = 1, isInstantaneous = false} = that ?? {}
 const dimension = os.getCurrentDimension();
-const thisBotScales = GetBotScales(thisBot);
-const duration = isInstantaneous ? 0 : (StackAnimationsDuration.Highlight/speedMultiplier);
+const thisBotScales = BibleVizUtils.Functions.GetBotScales(thisBot);
+const duration = isInstantaneous ? 0 : (BibleVizUtils.Data.tags.StackAnimationsDuration.Highlight/speedMultiplier);
 const easing = {type: "sinusoidal", mode: "inout"};
 const label = thisBot.tags.infoLabel;
-const testamentData = StacksManager.GetBibleElementData({element: thisBot})
+const testamentData = BibleStackManager.GetPieceData({piece: thisBot})
 
-const {infoLabelTransformer} = await StacksManager.GetLabelForElement({
-    element: thisBot, 
+const {infoLabelTransformer} = await BibleVizUtils.Functions.GetLabelForPiece({
+    piece: thisBot, 
     label,
     color: "white", 
     labelColor: testamentData.highlightColor ?? thisBot.tags.labelTextColor,

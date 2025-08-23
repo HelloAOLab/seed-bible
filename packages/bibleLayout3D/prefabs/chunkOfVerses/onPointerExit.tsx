@@ -1,1 +1,1 @@
-shout("OnChunkOfVersesInteracted", {chunk: thisBot, typeOfInteraction: StackElementInteractionType.HoverEnd});
+shout("OnLayoutChunkOfVersesInteracted", {chunk: thisBot, typeOfInteraction: BibleVizUtils.Data.tags.InteractionType.HoverEnd});

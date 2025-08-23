@@ -1,5 +1,5 @@
 setTagMask(thisBot, "isBeingHovered", true);
-shout("OnBookInteracted", {book: thisBot, typeOfInteraction: StackElementInteractionType.HoverEnd});
+shout("OnStackBookInteracted", {book: thisBot, typeOfInteraction: BibleVizUtils.Data.tags.InteractionType.HoverEnd});
 
 InstanceManager.TryClearVideoTimeout();
 if(globalThis.CLEARABLE_LERPING){

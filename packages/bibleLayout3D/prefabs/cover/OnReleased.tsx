@@ -1,2 +1,2 @@
 thisBot.tags.toErase = null;
-thisBot.tags.mapId = null;
+thisBot.tags.layoutId = null;

@@ -5,11 +5,11 @@ const layoutData = thisBot.GetLayoutDataById({layoutId: button.tags.layoutId})
 
 switch(button.tags.buttonType)
 {
-    case BibleVizUtils.Data.LayoutButtonType.ColorPickerButton: 
+    case BibleVizUtils.Data.tags.LayoutButtonType.ColorPickerButton: 
         thisBot.TrySetChapterSelectColor({layoutData})
     break;
         
-    case BibleVizUtils.Data.LayoutButtonType.OpenAllBooksButton: {
+    case BibleVizUtils.Data.tags.LayoutButtonType.OpenAllBooksButton: {
         if(layoutData.hasSelectAllBooksBeenCalled)
         {
             thisBot.RespawnAllBooks({layoutData});
@@ -21,7 +21,7 @@ switch(button.tags.buttonType)
     }
     break;
 
-    case BibleVizUtils.Data.LayoutButtonType.BibleVizUtils.Data.tags.DateFormatselectorButton: {
+    case BibleVizUtils.Data.tags.LayoutButtonType.BibleVizUtils.Data.tags.DateFormatselectorButton: {
         
         const currentDateFormatIndex = Object.keys(BibleVizUtils.Data.tags.DateFormats).findIndex((key) => {return BibleVizUtils.Data.tags.DateFormats[key] === layoutData.currentDateFormat})
         
@@ -43,7 +43,7 @@ switch(button.tags.buttonType)
     }
     break;
 
-    // case BibleVizUtils.Data.LayoutButtonType.PlaylistSelectorButton: {
+    // case BibleVizUtils.Data.tags.LayoutButtonType.PlaylistSelectorButton: {
         
     //     const selectedPlaylist = await os.showInput(0, {
     //         title: 'Select a playlist to show',
@@ -74,13 +74,13 @@ switch(button.tags.buttonType)
     // }
     // break;
 
-    case BibleVizUtils.Data.LayoutButtonType.CameraAnimationToggle: {
+    case BibleVizUtils.Data.tags.LayoutButtonType.CameraAnimationToggle: {
         layoutData.isCameraAnimationEnabled = !layoutData.isCameraAnimationEnabled;
         HandleToggle(layoutData.isCameraAnimationEnabled);
     }
     break;
 
-    case BibleVizUtils.Data.LayoutButtonType.ShowDatesToggle: {
+    case BibleVizUtils.Data.tags.LayoutButtonType.ShowDatesToggle: {
         layoutData.areDatesEnabled = !layoutData.areDatesEnabled
         HandleToggle(
             layoutData.areDatesEnabled,
@@ -90,7 +90,7 @@ switch(button.tags.buttonType)
     }
     break;
 
-    case BibleVizUtils.Data.LayoutButtonType.ShowLabelsToggle: {
+    case BibleVizUtils.Data.tags.LayoutButtonType.ShowLabelsToggle: {
         layoutData.areLabelsEnabled = !layoutData.areLabelsEnabled;
         HandleToggle(
             layoutData.areLabelsEnabled,
@@ -100,19 +100,19 @@ switch(button.tags.buttonType)
     }
     break;
 
-    case BibleVizUtils.Data.LayoutButtonType.PathToggle: {
+    case BibleVizUtils.Data.tags.LayoutButtonType.PathToggle: {
         layoutData.isPathEnabled = !layoutData.isPathEnabled;
         HandleToggle(layoutData.isPathEnabled);
     }
     break;
 
-    case BibleVizUtils.Data.LayoutButtonType.ChapterExpandToggle: {
+    case BibleVizUtils.Data.tags.LayoutButtonType.ChapterExpandToggle: {
         layoutData.isChapterExpandEnabled = !layoutData.isChapterExpandEnabled;
         HandleToggle(layoutData.isChapterExpandEnabled);
     }
     break;
 
-    case BibleVizUtils.Data.LayoutButtonType.PlaylistPathToggle: {
+    case BibleVizUtils.Data.tags.LayoutButtonType.PlaylistPathToggle: {
         layoutData.isPlaylistPathEnabled = !layoutData.isPlaylistPathEnabled;
         HandleToggle(
             layoutData.isPlaylistPathEnabled,

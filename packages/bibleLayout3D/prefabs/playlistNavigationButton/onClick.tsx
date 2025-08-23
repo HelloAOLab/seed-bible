@@ -1,1 +1,1 @@
-shout("OnMapPlaylistNavigationButtonClicked", {button: thisBot})
+shout("OnLayoutPlaylistNavigationButtonClicked", {button: thisBot})

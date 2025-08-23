@@ -6,6 +6,6 @@
 
 if(!thisBot.tags.isBaseStackCover && thisBot.tags.isInUse && thisBot.tags.isUpperCover)
 {
-    const bibleData = StacksManager.GetBibleDataById({bibleId: thisBot.tags.bibleId});
+    const bibleData = BibleStackManager.GetBibleDataById({bibleId: thisBot.tags.bibleId});
     if(bibleData.currentState === BibleState.Open) thisBot.SetOpacity();
 }

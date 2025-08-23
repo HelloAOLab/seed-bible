@@ -5,7 +5,7 @@
     * const verseChunks = chapter.GetChunksOfVerses();
 */
 
-const chapterData = StacksManager.GetBibleElementData({element: thisBot});
+const chapterData = BibleStackManager.GetPieceData({piece: thisBot});
 const chunks = [];
 const versesPerChunk = 12;
 let chunksCount = Math.floor(chapterData.elementInfo.amountOfVerses / versesPerChunk);
@@ -14,19 +14,19 @@ let currentVerseNumber = 1;
 if((chapterData.elementInfo.amountOfVerses - (versesPerChunk * chunksCount)) > 0) chunksCount++
 for(let i = 0; i < chunksCount; i++)
 {
-    const chunk = ObjectPooler.GetObjectFromPool({tag: ObjectPoolTags.StackChunkOfVerses});
+    const chunk = ObjectPooler.GetObjectFromPool({tag: BibleVizUtils.Data.tags.ObjectPoolTags.StackChunkOfVerses});
     const amountOfVerses = Math.min(remainingVerses, versesPerChunk);
     setTagMask(chunk, 'initialVerseNumber', currentVerseNumber);
     setTagMask(chunk, 'finalVerseNumber', currentVerseNumber + amountOfVerses - 1);
     setTagMask(chunk, 'chapterDataId', chapterData.id);
     setTagMask(chunk, "chapterOrigin", "stack");
     const label = chunk.masks.initialVerseNumber !== chunk.masks.finalVerseNumber ? `${chunk.masks.initialVerseNumber} - ${chunk.masks.finalVerseNumber}` : `${chunk.masks.initialVerseNumber}`
-    setTagMask(chunk, 'chunkPath', `${chapterData.element.tags.parentBookName} ${chapterData.element.tags.chapterNumber} ${label}`);
-    setTagMask(chunk, 'arrangementIndex', chapterData.element.tags.arrangementIndex);
-    setTagMask(chunk, 'parentBookName', chapterData.element.tags.parentBookName)
-    setTagMask(chunk, 'chapterNumber', chapterData.element.tags.chapterNumber)
+    setTagMask(chunk, 'chunkPath', `${chapterData.piece.tags.parentBookName} ${chapterData.piece.tags.chapterNumber} ${label}`);
+    setTagMask(chunk, 'arrangementIndex', chapterData.piece.tags.arrangementIndex);
+    setTagMask(chunk, 'parentBookName', chapterData.piece.tags.parentBookName)
+    setTagMask(chunk, 'chapterNumber', chapterData.piece.tags.chapterNumber)
     setTagMask(chunk, 'label', label)
-    if(InstanceManager.masks.isInHistoryMode) setTagMask(chunk, "color", GetHistoryColor({element: chunk}))
+    if(BibleVizUtils.Data.masks.isInHistoryMode) setTagMask(chunk, "color", BibleVizUtils.Functions.GetHistoryColor({piece: chunk}))
     else
     {
         const chunkHighlightInfo = chapterData.HighlightsInfo.find((currHighlightInfo) => {return currHighlightInfo.key == chunk.masks.chunkPath})

@@ -1,2 +1,2 @@
-LerpColorManager.StopColorLerp({bot: thisBot, tag: InterpolatableColorTags.Color});
-LerpColorManager.StopColorLerp({bot: thisBot, tag: InterpolatableColorTags.StrokeColor});
+ColorLerper.StopColorLerp({bot: thisBot, tag: BibleVizUtils.Data.tags.InterpolatableColorTags.Color});
+ColorLerper.StopColorLerp({bot: thisBot, tag: BibleVizUtils.Data.tags.InterpolatableColorTags.StrokeColor});

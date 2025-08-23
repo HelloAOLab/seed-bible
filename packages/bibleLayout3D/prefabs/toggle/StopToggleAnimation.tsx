@@ -1,3 +1,3 @@
 const dimension = os.getCurrentDimension();
-LerpColorManager.StopColorLerp({bot: links.background, tag: InterpolatableColorTags.color});
+ColorLerper.StopColorLerp({bot: links.background, tag: BibleVizUtils.Data.tags.InterpolatableColorTags.color});
 animateTag(links.handle, dimension + "X", null);

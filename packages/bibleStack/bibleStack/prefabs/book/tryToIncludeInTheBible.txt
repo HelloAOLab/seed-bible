@@ -36,13 +36,13 @@ if(!thisBot.masks.isInsideBible && (thisBot.masks.canBeDraggedBackToParent || ca
             }
             else
             {
-                for(let element of section.books)
+                for(let piece of section.books)
                 {
-                    if(Array.isArray(element))
+                    if(Array.isArray(piece))
                     {
                         if(thisBot.tags.isArrangementGroupBook)
                         {
-                            for(let book of element)
+                            for(let book of piece)
                             {
                                 if(book.botID === getID(thisBot))
                                 {
@@ -58,14 +58,14 @@ if(!thisBot.masks.isInsideBible && (thisBot.masks.canBeDraggedBackToParent || ca
                     }
                     else
                     {
-                        if(element.botID === getID(thisBot))
+                        if(piece.botID === getID(thisBot))
                         {
                             setTagMask(thisBot, "isInsideTestament", testament.isInsideBible);
                             setTagMask(thisBot, "isInsideSection", section.isInsideBible);
-                            element.isInsideSection = section.isInsideBible;
-                            element.isInsideArrangement = testament.isInsideBible;
-                            element.isInsideBible = true;
-                            element.isConvertedIntoATray = false;
+                            piece.isInsideSection = section.isInsideBible;
+                            piece.isInsideArrangement = testament.isInsideBible;
+                            piece.isInsideBible = true;
+                            piece.isConvertedIntoATray = false;
                         }
                     }
                 }
@@ -81,8 +81,8 @@ if(!thisBot.masks.isInsideBible && (thisBot.masks.canBeDraggedBackToParent || ca
             ObjectPooler.ReleaseObject({obj: trayBookOutline, tag: trayBookOutline.tags.poolTag});
         }
         setTagMask(thisBot, "isConvertedIntoATray", false);
-        // thisBot.lerpColor({startingColor: HexToRgb(thisBot.masks.color ?? thisBot.tags.color), endingColor: HexToRgb(thisBot.tags.initialColor), durationInSeconds: 0.75})
-        LerpColorManager.LerpTagColor({startingColor: HexToRgb(thisBot.masks.color ?? thisBot.tags.color), endingColor: HexToRgb(thisBot.tags.initialColor), durationInSeconds: 0.75, bot: thisBot, tag: InterpolatableColorTags.Color});
+        // thisBot.lerpColor({startingColor: BibleVizUtils.Functions.HexToRgb(thisBot.masks.color ?? thisBot.tags.color), endingColor: BibleVizUtils.Functions.HexToRgb(thisBot.tags.initialColor), durationInSeconds: 0.75})
+        ColorLerper.LerpTag({startingColor: BibleVizUtils.Functions.HexToRgb(thisBot.masks.color ?? thisBot.tags.color), endingColor: BibleVizUtils.Functions.HexToRgb(thisBot.tags.initialColor), durationInSeconds: 0.75, bot: thisBot, tag: BibleVizUtils.Data.tags.InterpolatableColorTags.Color});
     }
     
     setTagMask(mainWord, "bibleStructure", currentBibleStructure);

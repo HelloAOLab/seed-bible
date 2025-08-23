@@ -1,6 +1,6 @@
 /**
-    * Triggers an OnBookInteracted event when the book's label has been interacted.
+    * Triggers an OnStackBookInteracted event when the book's label has been interacted.
     * @example
     * book.OnLabelInteracted()
 */
-shout("OnBookInteracted", {book: thisBot, typeOfInteraction: StackElementInteractionType.Tap});
+shout("OnStackBookInteracted", {book: thisBot, typeOfInteraction: BibleVizUtils.Data.tags.InteractionType.Tap});

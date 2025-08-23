@@ -1,4 +1,4 @@
-import {HighlightInfo} from "interactiveBible.managers.StacksManager.HighlightInfo"
+import {HighlightInfo} from "bibleVizUtils.classes.HighlightInfo"
 
 const {piece, data} = that;
 

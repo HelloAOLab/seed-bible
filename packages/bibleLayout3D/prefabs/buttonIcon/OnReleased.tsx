@@ -1,1 +1,1 @@
-thisBot.tags.isSettingsElement = null;
+thisBot.tags.isSettingsPiece = null;

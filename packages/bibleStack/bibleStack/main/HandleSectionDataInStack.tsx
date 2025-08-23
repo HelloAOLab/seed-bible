@@ -95,7 +95,7 @@ if(sectionData.isSplitIntoBooks)
             if(!infoLabelTransformer && sectionData.isInExplodedView && !(bibleData && bibleData.bibleType === BibleVizUtils.Data.tags.BibleType.PlatformerGame))
             {
                 const label = BibleVizUtils.Functions.CapitalizeFirstLetter(sectionData.piece.tags.sectionName.split("-").join(" "));
-                const {infoLabelTransformer} = thisBot.GetLabelForElement({
+                const {infoLabelTransformer} = thisBot.BibleVizUtils.Functions.GetLabelForPiece({
                     piece: sectionData.shadow, 
                     label, 
                     color: sectionData.highlightColor ?? sectionData.piece.tags.labelTextColor,
@@ -128,10 +128,10 @@ if(sectionData.isSplitIntoBooks)
                     duration,
                     easing
                 }).then(() => {
-                    if(!infoLabelTransformer && sectionData.isInExplodedView && !(bibleData && bibleData.bibleType === BibleType.PlatformerGame))
+                    if(!infoLabelTransformer && sectionData.isInExplodedView && !(bibleData && bibleData.bibleType === BibleVizUtils.Data.tags.BibleType.PlatformerGame))
                     {
                         const label = BibleVizUtils.Functions.CapitalizeFirstLetter(sectionData.piece.tags.sectionName.split("-").join(" "));
-                        const {infoLabelTransformer} = thisBot.GetLabelForElement({
+                        const {infoLabelTransformer} = thisBot.BibleVizUtils.Functions.GetLabelForPiece({
                             piece: sectionData.shadow, 
                             label, 
                             color: sectionData.highlightColor ?? sectionData.piece.tags.labelTextColor,
@@ -152,7 +152,7 @@ if(sectionData.isSplitIntoBooks)
     {
         // Create section shadow
         
-        const sectionShadow = ObjectPooler.GetObjectFromPool({tag: ObjectPoolTags.SectionShadow});
+        const sectionShadow = ObjectPooler.GetObjectFromPool({tag: BibleVizUtils.Data.tags.ObjectPoolTags.SectionShadow});
         if(sectionShadow)
         {
             const sectionShadowMod = {
@@ -176,10 +176,10 @@ if(sectionData.isSplitIntoBooks)
         if(isInstantaneous)
         {
             setTagMask(sectionShadow, "formOpacity", desiredSectionShadowFormOpacity);
-            if(!(bibleData && bibleData.bibleType === BibleType.PlatformerGame))
+            if(!(bibleData && bibleData.bibleType === BibleVizUtils.Data.tags.BibleType.PlatformerGame))
             {
                 const label = BibleVizUtils.Functions.CapitalizeFirstLetter(sectionData.piece.tags.sectionName.split("-").join(" "));
-                const {infoLabelTransformer} = thisBot.GetLabelForElement({
+                const {infoLabelTransformer} = thisBot.BibleVizUtils.Functions.GetLabelForPiece({
                     piece: sectionShadow, 
                     label, 
                     color: sectionData.highlightColor ?? sectionData.piece.tags.labelTextColor,
@@ -205,7 +205,7 @@ if(sectionData.isSplitIntoBooks)
                     if(!(bibleData && bibleData.bibleType === BibleVizUtils.Data.tags.BibleType.PlatformerGame))
                     {
                         const label = BibleVizUtils.Functions.CapitalizeFirstLetter(sectionData.piece.tags.sectionName.split("-").join(" "));
-                        const {infoLabelTransformer} = StacksManager.GetLabelForElement({
+                        const {infoLabelTransformer} = BibleVizUtils.Functions.GetLabelForPiece({
                             piece: sectionShadow, 
                             label, 
                             color: sectionData.highlightColor ?? sectionData.piece.tags.labelTextColor,

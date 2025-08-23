@@ -1,1 +1,1 @@
-shout(`OnMapSettingsButtonClicked`, {settingsButton: thisBot});
+shout(`OnLayoutSettingsButtonClicked`, {settingsButton: thisBot});

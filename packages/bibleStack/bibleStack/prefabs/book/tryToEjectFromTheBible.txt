@@ -11,8 +11,8 @@ setTagMask(thisBot, "ejectTransitionPercentage", 0);
 
 try
 {
-    // thisBot.lerpColor({startingColor: HexToRgb(thisBot.tags.initialColor), endingColor: [255, 255, 255], durationInSeconds: (animationDuration / 4 * 3)})
-    LerpColorManager.LerpTagColor({startingColor: HexToRgb(thisBot.tags.initialColor), endingColor: [255, 255, 255], durationInSeconds: (animationDuration / 4 * 3), bot: thisBot, tag: InterpolatableColorTags.Color});
+    // thisBot.lerpColor({startingColor: BibleVizUtils.Functions.HexToRgb(thisBot.tags.initialColor), endingColor: [255, 255, 255], durationInSeconds: (animationDuration / 4 * 3)})
+    ColorLerper.LerpTag({startingColor: BibleVizUtils.Functions.HexToRgb(thisBot.tags.initialColor), endingColor: [255, 255, 255], durationInSeconds: (animationDuration / 4 * 3), bot: thisBot, tag: BibleVizUtils.Data.tags.InterpolatableColorTags.Color});
 
     await Promise.all([
         animateTag(thisBot, "ejectTransitionPercentage", {
@@ -21,8 +21,8 @@ try
             easing: {type: "linear"}
         })
     ]).then(() => {
-        // thisBot.lerpColor({startingColor: [255, 255, 255], endingColor: HexToRgb(thisBot.tags.initialColor), durationInSeconds: (animationDuration / 5)})
-        LerpColorManager.LerpTagColor({startingColor: [255, 255, 255], endingColor: HexToRgb(thisBot.tags.initialColor), durationInSeconds: (animationDuration / 5), bot: thisBot, tag: InterpolatableColorTags.Color});
+        // thisBot.lerpColor({startingColor: [255, 255, 255], endingColor: BibleVizUtils.Functions.HexToRgb(thisBot.tags.initialColor), durationInSeconds: (animationDuration / 5)})
+        ColorLerper.LerpTag({startingColor: [255, 255, 255], endingColor: BibleVizUtils.Functions.HexToRgb(thisBot.tags.initialColor), durationInSeconds: (animationDuration / 5), bot: thisBot, tag: BibleVizUtils.Data.tags.InterpolatableColorTags.Color});
 
         setTagMask(thisBot, "isInTransition", false);
         setTagMask(thisBot, "isTryingToEjectFromTheBible", false);
@@ -40,8 +40,8 @@ catch(error) {console.error(error)}
 //         duration: animationDuration / 4,
 //         easing: {type: "linear"}
 //     }).then(async () => {
-//         thisBot.lerpColor({startingColor: HexToRgb(thisBot.tags.initialColor), endingColor: [255, 255, 255], durationInSeconds: (animationDuration / 4 * 3)})
-//         LerpColorManager.LerpTagColor({startingColor: HexToRgb(thisBot.tags.initialColor), endingColor: [255, 255, 255], durationInSeconds: (animationDuration / 4 * 3), bot: thisBot, tag: InterpolatableColorTags.Color});
+//         thisBot.lerpColor({startingColor: BibleVizUtils.Functions.HexToRgb(thisBot.tags.initialColor), endingColor: [255, 255, 255], durationInSeconds: (animationDuration / 4 * 3)})
+//         ColorLerper.LerpTag({startingColor: BibleVizUtils.Functions.HexToRgb(thisBot.tags.initialColor), endingColor: [255, 255, 255], durationInSeconds: (animationDuration / 4 * 3), bot: thisBot, tag: BibleVizUtils.Data.tags.InterpolatableColorTags.Color});
 
 //         await Promise.all([
 //             animateTag(thisBot, "ejectTransitionPercentage", {
@@ -50,8 +50,8 @@ catch(error) {console.error(error)}
 //                 easing: {type: "linear"}
 //             })
 //         ]).then(() => {
-//             thisBot.lerpColor({startingColor: [255, 255, 255], endingColor: HexToRgb(thisBot.tags.initialColor), durationInSeconds: (animationDuration / 5)})
-//             LerpColorManager.LerpTagColor({startingColor: [255, 255, 255], endingColor: HexToRgb(thisBot.tags.initialColor), durationInSeconds: (animationDuration / 5), bot: thisBot, tag: InterpolatableColorTags.Color});
+//             thisBot.lerpColor({startingColor: [255, 255, 255], endingColor: BibleVizUtils.Functions.HexToRgb(thisBot.tags.initialColor), durationInSeconds: (animationDuration / 5)})
+//             ColorLerper.LerpTag({startingColor: [255, 255, 255], endingColor: BibleVizUtils.Functions.HexToRgb(thisBot.tags.initialColor), durationInSeconds: (animationDuration / 5), bot: thisBot, tag: BibleVizUtils.Data.tags.InterpolatableColorTags.Color});
 
 //             setTagMask(thisBot, "isInTransition", false);
 //             setTagMask(thisBot, "isTryingToEjectFromTheBible", false);

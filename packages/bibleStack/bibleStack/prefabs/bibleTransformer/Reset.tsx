@@ -13,7 +13,7 @@ const duration = 0.42;
 const easing = {type: "sinusoidal", mode: "inout"}
 thisBot.CloseBible({duration, easing, bibleData})
 .then(() => {
-    shout('OnBibleCloseComplete', {bibleData})
+    shout('OnStackBibleCloseComplete', {bibleData})
     thisBot.OpenBible({duration, easing, bibleData})
-    .then(() => {shout("OnBibleResetComplete", {bibleData})});
+    .then(() => {shout("OnStackBibleResetComplete", {bibleData})});
 })

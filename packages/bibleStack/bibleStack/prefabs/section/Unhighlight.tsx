@@ -14,9 +14,9 @@
 
 const {customDuration, speedMultiplier = 1, isInstantaneous = false} = that ?? {};
 // const dimension = os.getCurrentDimension();
-const animationDuration = isInstantaneous ? 0 : ((customDuration ?? StackAnimationsDuration.Unhighlight)/speedMultiplier);
-const infoLabelTransformer = GetCurrentInfoLabelTransformer(thisBot);
-const thisBotScales = GetBotScales(thisBot);
+const animationDuration = isInstantaneous ? 0 : ((customDuration ?? BibleVizUtils.Data.tags.StackAnimationsDuration.Unhighlight)/speedMultiplier);
+const infoLabelTransformer = BibleVizUtils.Functions.GetCurrentInfoLabelTransformer(thisBot);
+const thisBotScales = BibleVizUtils.Functions.GetBotScales(thisBot);
 const animationEasing = {type: "sinusoidal", mode: "inout"};
 
 setTagMask(thisBot, "isUnhighlighting", true);

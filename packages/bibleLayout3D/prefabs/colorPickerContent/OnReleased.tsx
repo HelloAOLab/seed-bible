@@ -1,3 +1,3 @@
 thisBot.tags.color = null;
 thisBot.tags.creator = null;
-thisBot.tags.isSettingsElement = null;
+thisBot.tags.isSettingsPiece = null;

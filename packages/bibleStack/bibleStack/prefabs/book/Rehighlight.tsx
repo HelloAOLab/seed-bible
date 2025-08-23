@@ -8,11 +8,11 @@
 */
 
 const {speedMultiplier = 1, isInstantaneous = false} = that ?? {}
-const bookData = StacksManager.GetBibleElementData({element: thisBot});
+const bookData = BibleStackManager.GetPieceData({piece: thisBot});
 // const dimension = os.getCurrentDimension();
-const animationDuration = isInstantaneous ? 0 : StackAnimationsDuration.Rehighlight/speedMultiplier;
+const animationDuration = isInstantaneous ? 0 : BibleVizUtils.Data.tags.StackAnimationsDuration.Rehighlight/speedMultiplier;
 const infoLabelTransformer = getBot(byTag("isInfoLabelTransformer", true), byTag("ownerBotId", getID(thisBot)));
-const thisBotScales = GetBotScales(thisBot);
+const thisBotScales = BibleVizUtils.Functions.GetBotScales(thisBot);
 const scales = await thisBot.GetHighlightScales();
 const highlightAditionalScale = 0.1;
 const animationEasing = {type: "sinusoidal", mode: "inout"};

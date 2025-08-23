@@ -17,12 +17,12 @@ const dialog                            = "Click or tap!"
 const {scaleY} = GetDialogBotScaleY(5, dialog, 0.4, 0.4)
 const infoLabelDesiredScales            = {x: 5, y: scaleY, z: 1};
 const infoLabelDesiredAspectRatio       = infoLabelDesiredScales.x / infoLabelDesiredScales.y;
-const closestFormAddressAspectRatio     = ClosestNumber(InstanceManager.tags.dialogBoxFormAddresses.map((formAddressesInfo) => {return formAddressesInfo.aspectRatio}), infoLabelDesiredAspectRatio)
-const infoLabelDesiredFormAddress       = InstanceManager.tags.dialogBoxFormAddresses.find((formAddressesInfo) => {return formAddressesInfo.aspectRatio === closestFormAddressAspectRatio}).formAddress;
-const infoLabelTransformer              = ObjectPooler.GetObjectFromPool({tag: ObjectPoolTags.InfoLabelTransformer});
-const infoLabel                         = ObjectPooler.GetObjectFromPool({tag: ObjectPoolTags.InfoLabel});
+const closestFormAddressAspectRatio     = BibleVizUtils.Functions.BiblePieceType({arr: BibleVizUtils.Datga.tags.dialogBoxFormAddresses.map((formAddressesInfo) => {return formAddressesInfo.aspectRatio}), input: infoLabelDesiredAspectRatio})
+const infoLabelDesiredFormAddress       = BibleVizUtils.Datga.tags.dialogBoxFormAddresses.find((formAddressesInfo) => {return formAddressesInfo.aspectRatio === closestFormAddressAspectRatio}).formAddress;
+const infoLabelTransformer              = ObjectPooler.GetObjectFromPool({tag: BibleVizUtils.Data.tags.ObjectPoolTags.InfoLabelTransformer});
+const infoLabel                         = ObjectPooler.GetObjectFromPool({tag: BibleVizUtils.Data.tags.ObjectPoolTags.InfoLabel});
 const infoLabelDesiredOffset            = new Vector3(0, 3, 5);
-const infoLabelTail                     = ObjectPooler.GetObjectFromPool({tag: ObjectPoolTags.InfoLabelTail});
+const infoLabelTail                     = ObjectPooler.GetObjectFromPool({tag: BibleVizUtils.Data.tags.ObjectPoolTags.InfoLabelTail});
 const infoLabelTailDesiredOffset        = new Vector3(0, infoLabelDesiredOffset.y, infoLabelDesiredOffset.z);
 const bibleTransformerPosition          = getBotPosition(thisBot, dimension);
 const infoLabelTransformerDesiredScales = {x: 1, y: 1, z: 1};
