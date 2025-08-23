@@ -1,1 +1,0 @@
-return thisBot.vars.highlightHistory[thisBot.masks.highlightHistoryIndex];

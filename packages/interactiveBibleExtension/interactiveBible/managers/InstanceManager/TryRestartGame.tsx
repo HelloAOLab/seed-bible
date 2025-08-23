@@ -1,2 +1,0 @@
-const currentGameState = thisBot.GetCurrentGameState()
-if(currentGameState === GameState.Playing || currentGameState === GameState.Pause || currentGameState === GameState.GameOver) thisBot.RestartGame();

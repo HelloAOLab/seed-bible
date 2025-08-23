@@ -41,7 +41,8 @@ const previousExplodedViewSectionData = (bibleData || testamentData) ? thisBot.G
 // const collisionType = bibleData?.bibleType === BibleVizUtils.Data.tags.BibleType.PlatformerGame ? CollisionType.Collision : null;
 BibleVizUtils.Functions.TryHideUsersNotificationOnPiece({piece: section})
 setTagMask(thisBot, "isBibleAnimating", true);
-shout("OnSectionSelected")
+shout("OnStackSectionSelected")
+thisBot.PlaySound({soundName: "SectionOpen"});
 if(thisBot.vars.highlightedPieces.length > 0)
 {
     const piecesToUnhighlight = (bibleData || testamentData) ? thisBot.vars.highlightedPieces.map((piece) => {return thisBot.GetPieceData({piece})})

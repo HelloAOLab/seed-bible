@@ -1,9 +1,0 @@
-import {ElementInfo} from "interactiveBible.managers.InstanceManager.ElementInfo"
-export class HistoryEntry extends ElementInfo
-{
-    constructor({typeOfElement, key, date})
-    {
-        super({typeOfElement, key})
-        this.date = date
-    }
-}

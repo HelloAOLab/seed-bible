@@ -1,1 +1,0 @@
-shout(`OnMapBookInteracted`, {mapBook: thisBot, typeOfInteraction: StackElementInteractionType.Drag});

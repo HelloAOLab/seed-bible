@@ -1,1 +1,0 @@
-shout("OnBookInteracted", {book: thisBot, typeOfInteraction: StackElementInteractionType.PointerUp});

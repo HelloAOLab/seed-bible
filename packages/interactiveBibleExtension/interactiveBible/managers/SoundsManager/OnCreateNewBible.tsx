@@ -1,1 +1,0 @@
-if(!StacksManager.masks.hasStackEverBeenSpawned) thisBot.playSound({soundName: "BibleOpenSound"});

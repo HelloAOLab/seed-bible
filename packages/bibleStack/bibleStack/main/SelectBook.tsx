@@ -51,4 +51,5 @@ await thisBot.UpdateStacks();
 // OpenBibleAt(`${book.tags.bookName} ${1}:0`)
 if (setBibleAnimating) setTagMask(thisBot, "isBibleAnimating", false);
 thisBot.UpdateStackPiecesUsersNotification();
-shout("OnBookSelectionComplete", { book });
+shout("OnStackBookSelectionComplete", { book });
+thisBot.PlaySound({soundName: "BookSelect"});

@@ -1,1 +1,0 @@
-shout("OnTestamentInteracted", {testament: thisBot, typeOfInteraction: StackElementInteractionType.Dragging, dragInfo: that});

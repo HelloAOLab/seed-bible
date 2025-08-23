@@ -1,1 +1,0 @@
-thisBot.playSound({soundName: "PlantWatering"});

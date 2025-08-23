@@ -1,1 +1,0 @@
-shout("OnVerseInteracted", {verse: thisBot, typeOfInteraction: StackElementInteractionType.Click});

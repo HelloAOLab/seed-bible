@@ -1,1 +1,0 @@
-shout("OnMapBookDateLabelClicked", {label: thisBot});

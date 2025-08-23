@@ -14,7 +14,7 @@ if(typeof BibleStackManager === "undefined")
 }
 
 setTagMask(thisBot, "areBiblePiecesDraggable", thisBot.tags.areBiblePiecesDraggable);
-
+thisBot.BufferSounds();
 thisBot.vars.sectionNamesEverSelected = [];
 thisBot.vars.stackBiblesData = [];
 thisBot.vars.stackTestamentsData = [];

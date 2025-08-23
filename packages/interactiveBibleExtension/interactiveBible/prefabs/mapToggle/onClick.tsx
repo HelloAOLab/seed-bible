@@ -1,1 +1,0 @@
-shout("OnMapButtonClicked", {button: thisBot})

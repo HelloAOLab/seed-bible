@@ -1,5 +1,0 @@
-if(links.usersNotification)
-{
-    ObjectPooler.ReleaseObject({obj: links.usersNotification, tag: links.usersNotification.tags.poolTag});
-    thisBot.tags.usersNotification = null;
-}

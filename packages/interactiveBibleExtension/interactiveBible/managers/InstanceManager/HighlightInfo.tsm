@@ -1,9 +1,0 @@
-export class HighlightInfo
-{
-    constructor({color, typeOfElement, key})
-    {
-        this.color = color
-        this.typeOfElement = typeOfElement
-        this.key = key
-    }
-}

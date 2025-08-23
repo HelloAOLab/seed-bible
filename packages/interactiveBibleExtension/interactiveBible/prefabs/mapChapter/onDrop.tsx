@@ -1,1 +1,0 @@
-shout(`OnMapChapterInteracted`, {mapChapter: thisBot, typeOfInteraction: StackElementInteractionType.Drop});

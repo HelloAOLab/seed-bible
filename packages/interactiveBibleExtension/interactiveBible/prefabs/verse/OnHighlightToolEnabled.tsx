@@ -1,1 +1,0 @@
-setTagMask(thisBot, 'cursor', BRUSH_CURSOR_URL)

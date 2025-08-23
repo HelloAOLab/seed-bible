@@ -1,2 +1,0 @@
-// const {bibleData} = 
-await StacksManager.CreateNewBible({bibleType: BibleType.PlatformerGame});
