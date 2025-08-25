@@ -92,8 +92,8 @@ export function createAnnotation(bookId: string, chapterNumber: number, data: un
  * @param chapterNumber 
  * @returns 
  */
-export function getAnnotationMarker(bookId: string, chapterNumber: number): string {
-    return `publicRead:annotations/${bookId}/${chapterNumber}`;
+export function getAnnotationMarker(bookId: string, chapterNumber: number, group: string = 'annotations'): string {
+    return `publicRead:${group}/${bookId}/${chapterNumber}`;
 }
 
 /**
@@ -117,6 +117,7 @@ export async function getUserRecord(forceLogin?: boolean): Promise<string | null
  * Saves an annotation to a record.
  * @param recordName The name of the record that the annotation should be saved in.
  * @param annotation The annotation to save.
+ * @param group An optional group to use for the annotations. Group can be used store different collections of annotations inside a single record.
  * 
  * @example Save a new annotation for Genesis chapter 1
  * const annotation = createAnnotation('GEN', 1, {
@@ -134,8 +135,8 @@ export async function getUserRecord(forceLogin?: boolean): Promise<string | null
  * 
  * await saveAnnotation('my-annotations-record', annotation);
  */
-export async function saveAnnotation(recordName: string, annotation: Annotation): Promise<void> {
-    const marker = getAnnotationMarker(annotation.bookId, annotation.chapterNumber);
+export async function saveAnnotation(recordName: string, annotation: Annotation, group?: string): Promise<void> {
+    const marker = getAnnotationMarker(annotation.bookId, annotation.chapterNumber, group);
 
     const result = await os.recordData(recordName, annotation.id, annotation, {
         marker,
@@ -152,12 +153,13 @@ export async function saveAnnotation(recordName: string, annotation: Annotation)
  * @param recordName The name of the record that the annotations are stored in.
  * @param bookId The ID of the book that the annotations are for.
  * @param chapterNumber The chapter number that the annotations are for.
+ * @param group An optional group to use for the annotations. Group can be used store different collections of annotations inside a single record.
  * 
  * @example Load annotations for Genesis chapter 1
  * const annotations = await loadAnnotations('my-annotations-record', 'GEN', 1);
  */
-export async function loadAnnotations(recordName: string, bookId: string, chapterNumber: number): Promise<Annotation[]> {
-    const marker = getAnnotationMarker(bookId, chapterNumber);
+export async function loadAnnotations(recordName: string, bookId: string, chapterNumber: number, group?: string): Promise<Annotation[]> {
+    const marker = getAnnotationMarker(bookId, chapterNumber, group);
 
     const annotations: Annotation[] = [];
     let lastAddress: string | null = null;
@@ -209,6 +211,7 @@ export async function loadAnnotations(recordName: string, bookId: string, chapte
  * @param recordName The name of the record that the translation document is stored in.
  * @param bookId The ID of the book.
  * @param chapterNumber The number of the chapter.
+ * @param group An optional group to use for the translation documents. Groups can be used store different collections of translation documents inside a single record.
  * @returns A shared document.
  * 
  * @example Load a translation document Genesis chapter 1
@@ -217,9 +220,9 @@ export async function loadAnnotations(recordName: string, bookId: string, chapte
  * @example Unload a translation document
  * doc.unsubscribe();
  */
-export async function loadTranslationDocument(recordName: string, bookId: string, chapterNumber: number): Promise<SharedDocument> {
-    const marker = `publicRead:translation_documents/${bookId}/${chapterNumber}`;
-    const doc = await os.getSharedDocument(recordName, 'translation-documents', `${bookId}/${chapterNumber}`, {
+export async function loadTranslationDocument(recordName: string, bookId: string, chapterNumber: number, group: string = 'translation_documents'): Promise<SharedDocument> {
+    const marker = `publicRead:${group}/${bookId}/${chapterNumber}`;
+    const doc = await os.getSharedDocument(recordName, group, `${bookId}/${chapterNumber}`, {
         markers: [marker]
     });
     return doc;
