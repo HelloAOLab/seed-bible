@@ -177,7 +177,23 @@ export async function loadAnnotations(recordName: string, bookId: string, chapte
         lastAddress = items[items.length - 1].address;
     }
 
-    return annotations;
+    return annotations.sort((a, b) => {
+        if (typeof a.order === 'number') {
+            if (typeof b.order === 'number') {
+                return a.order - b.order;
+            } else {
+                // All annotations with an order come before
+                // ones that don't have an order
+                return -1;
+            }
+        } else if (typeof b.order === 'number') {
+            // All annotations with an order come before
+            // ones that don't have an order
+            return 1;
+        } else {
+            return a.id < b.id ? -1 : 1;
+        }
+    });
 }
 
 // load translation document
