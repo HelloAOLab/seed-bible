@@ -1,6 +1,3 @@
-
-// export function 
-
 /**
  * Defines an annotation. That is, a piece of information associated with a specific chapter of the Bible.
  */
@@ -106,7 +103,7 @@ export function getAnnotationMarker(bookId: string, chapterNumber: number): stri
  * 
  * @param forceLogin If true, the user will be prompted to log in if they are not already logged in.
  */
-export function getUserRecord(forceLogin?: boolean): Promise<string | null> {
+export async function getUserRecord(forceLogin?: boolean): Promise<string | null> {
     const authBot = forceLogin ? await os.requestAuthBot() : await os.requestAuthBotInBackground();
 
     if (!authBot) {
