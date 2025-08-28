@@ -13,8 +13,8 @@ import {StackSectionBookData} from 'bibleVizUtils.classes.StackSectionBookData'
 
 const {duration = 0.5, easing = {type: "sinusoidal", mode: "inout"}, bibleData} = that ?? {};
 const dimension = os.getCurrentDimension();
-const lowerCoverPosition = getBotPosition(bibleData.staticBibleElements.lowerCover, dimension);
-const crossVerticalLineScales = BibleVizUtils.Functions.GetBotScales(bibleData.staticBibleElements.crossVerticalLine)
+const lowerCoverPosition = getBotPosition(bibleData.staticBiblePieces.lowerCover, dimension);
+const crossVerticalLineScales = BibleVizUtils.Functions.GetBotScales(bibleData.staticBiblePieces.crossVerticalLine)
 const sectionInitialScaleZ = 0;
 const initialPositionZ = lowerCoverPosition.z + BibleVizUtils.Data.tags.StackPieceMeasurements.CoverScales.z;
 let nextPositionZ = initialPositionZ + BibleVizUtils.Data.tags.StackSpacing.BetweenArrangements;
@@ -29,9 +29,9 @@ for(const testamentData of bibleData.childrenData)
         const sectionIndex = testamentData.childrenData.indexOf(sectionData);
         const desiredScaleZ = sectionData.creationInfo.amountOfChaptersInSection * BibleVizUtils.Data.tags.StackPieceMeasurements.SectionDesiredScaleZRatio;
         
-        const section = ObjectPooler.GetObjectFromPool({tag: sectionData instanceof StackSectionBookData ? BibleVizUtils.Data.tags.ObjectPoolTags.Book : BibleVizUtils.Data.tags.ObjectPoolTags.Section});
+        const section = ObjectPooler.GetObjectFromPool({tag: sectionData instanceof StackSectionBookData ? BibleVizUtils.Data.tags.ObjectPoolTags.StackBook : BibleVizUtils.Data.tags.ObjectPoolTags.StackSection});
         const sectionMod = {
-            typeOfElement               : sectionData instanceof StackSectionBookData ? BibleVizUtils.Data.tags.BiblePieceType.StackSectionBook : BibleVizUtils.Data.tags.BiblePieceType.StackSection,
+            typeOfPiece               : sectionData instanceof StackSectionBookData ? BibleVizUtils.Data.tags.BiblePieceType.StackSectionBook : BibleVizUtils.Data.tags.BiblePieceType.StackSection,
             arrangementIndex            : sectionData.creationInfo.arrangementIndex,
             testamentIndex              : sectionData.creationInfo.testamentIndex,
             sectionIndex                : sectionData.creationInfo.sectionIndex,
@@ -97,12 +97,12 @@ for(const testamentData of bibleData.childrenData)
 
 const crossOpenedPositionZ = bibleData.childrenData[bibleData.childrenData.length - 1].childrenData[0].piece.tags.desiredPositionZ - (BibleVizUtils.Data.tags.StackSpacing.BetweenArrangements / 2) - BibleVizUtils.Data.tags.StackSpacing.BetweenSections - (crossVerticalLineScales.z/2);
 resizeAnimations.push(
-    animateTag(bibleData.staticBibleElements.upperCover, dimension + "Z", {
+    animateTag(bibleData.staticBiblePieces.upperCover, dimension + "Z", {
         toValue: nextPositionZ,
         duration,
         easing: easing
     }),
-    animateTag([bibleData.staticBibleElements.crossVerticalLine, bibleData.staticBibleElements.crossHorizontalLine], dimension + "Z", {
+    animateTag([bibleData.staticBiblePieces.crossVerticalLine, bibleData.staticBiblePieces.crossHorizontalLine], dimension + "Z", {
         toValue: crossOpenedPositionZ,
         duration,
         easing: easing

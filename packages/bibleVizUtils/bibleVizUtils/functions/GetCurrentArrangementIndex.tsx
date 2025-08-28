@@ -6,4 +6,4 @@
     * const arrangementIndex = BibleVizUtils.Functions.GetCurrentArrangementIndex();
 */
 
-return thisBot.vars.arrangementIndex;
+return BibleVizUtils.Data.vars.arrangementIndex;

@@ -20,19 +20,19 @@ let shakeDirection;
 switch(thisBot.tags.labelPositioning)
 {
     default:
-    case LabelPositioning.LeftSided: {
+    case BibleVizUtils.Data.tags.LabelPositioning.LeftSided: {
         shakeDirection = new Vector2(0.1, 0)
     }
     break;
-    case LabelPositioning.RightSided: {
+    case BibleVizUtils.Data.tags.LabelPositioning.RightSided: {
         shakeDirection = new Vector2(-0.1, 0)
     }
     break;
-    case LabelPositioning.Top: {
+    case BibleVizUtils.Data.tags.LabelPositioning.Top: {
         shakeDirection = new Vector2(0, -0.1)
     }
     break;
-    case LabelPositioning.RightSidedCorner: {
+    case BibleVizUtils.Data.tags.LabelPositioning.RightSidedCorner: {
         shakeDirection = new Vector2(-0.1, -0.1)
     }
     break;

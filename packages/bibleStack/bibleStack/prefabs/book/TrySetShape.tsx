@@ -150,7 +150,7 @@ switch(shape)
             color: (bookData.highlightColor ?? thisBot.tags.labelTextColor),
             labelColor: "white", 
             dimension,
-            labelPositioning: thisBot.masks.isOnTheGround ? LabelPositioning.Top : LabelPositioning.RightSided,
+            labelPositioning: thisBot.masks.isOnTheGround ? BibleVizUtils.Data.tags.LabelPositioning.Top : BibleVizUtils.Data.tags.LabelPositioning.RightSided,
             isAnimatable: false
         });
         setTagMask(thisBot, "strokeColor", "#FFFFFF");

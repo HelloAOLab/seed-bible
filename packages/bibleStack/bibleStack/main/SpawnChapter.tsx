@@ -43,7 +43,7 @@ if(found)
     {
         const chapterInfo = chaptersInfo[chapterIndex];
         const chapterData = await thisBot.CreateChapter({chapterInfo})
-        const chapter = ObjectPooler.GetObjectFromPool({tag: BibleVizUtils.Data.tags.ObjectPoolTags.Chapter});
+        const chapter = ObjectPooler.GetObjectFromPool({tag: BibleVizUtils.Data.tags.ObjectPoolTags.StackChapter});
         const chapterDeltaDepth = (BibleVizUtils.Data.tags.StackPieceMeasurements.BookScales.y - (chapter.tags.gapY*2) - BibleVizUtils.Data.tags.StackPieceMeasurements.MinChapterBackDepth) * (chapterInfo.amountOfVerses / BibleVizUtils.Functions.GetBiggerChapter());
         if(displayJarvisSpawnPieceAnimation) await jarvis.SpawnPieceStart({scales: new Vector3(
             BibleVizUtils.Data.tags.StackPieceMeasurements.ChapterWidth,

@@ -11,7 +11,7 @@
     * LerpColorManager.LerpTag({startingColor: [50, 60, 70], endingColor: [255, 255, 200], durationInSeconds: 2, bot: thisBot,  tag: InterpolatableColorTags.strokeColor});
 */
 
-import { ColorLerpData } from "ColorLerper.main..ColorLerpData";
+import { ColorLerpData } from "colorLerper.main.ColorLerpData";
 let {
     startingColor, 
 } = that;

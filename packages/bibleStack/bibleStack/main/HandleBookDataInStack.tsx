@@ -1,4 +1,4 @@
-import {StackSectionBookData} from "BibleVizUtils.Classes.StackSectionBookData"
+import {StackSectionBookData} from "bibleVizUtils.classes.StackSectionBookData"
 
 const {
     bookData, 

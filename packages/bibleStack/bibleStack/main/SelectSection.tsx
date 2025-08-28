@@ -271,7 +271,7 @@ for(const bookDataArr of sectionData.childrenData)
             const bookLayout = layout[groupBookIndex];
             ({groupBookScaleX, groupBookScaleY, groupBookPositionX, groupBookPositionY, groupBookLayoutPositionX, groupBookLayoutPositionY} = GetGroupBookData(bookLayout, sectionPosition));
         }
-        const book = ObjectPooler.GetObjectFromPool({tag: BibleVizUtils.Data.tags.ObjectPoolTags.Book});
+        const book = ObjectPooler.GetObjectFromPool({tag: BibleVizUtils.Data.tags.ObjectPoolTags.StackBook});
         const bookMod = {
             [dimension]                  : true,
             [dimension + "X"]            : groupBookPositionX ?? sectionPosition.x,

@@ -11,8 +11,8 @@
  * shout("UpdateStacks");
  */
 
-import {StackSectionData} from "BibleVizUtils.Classes.StackSectionData"
-import {StackSectionBookData} from "BibleVizUtils.Classes.StackSectionBookData"
+import {StackSectionData} from "bibleVizUtils.classes.StackSectionData"
+import {StackSectionBookData} from "bibleVizUtils.classes.StackSectionBookData"
 
 if(thisBot.masks.isUpdatingStack) 
 {

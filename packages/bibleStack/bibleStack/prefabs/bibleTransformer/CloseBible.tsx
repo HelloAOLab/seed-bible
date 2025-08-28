@@ -35,8 +35,8 @@ const booksData = bibleData.childrenData
     .filter((bookData) => {return bookData.isActive})
 const books = booksData.map((bookData) => {return bookData.piece});
 const sectionShadows = bibleData.childrenData.flatMap((testamentData) => {return testamentData.childrenData}).filter((sectionData) => {return sectionData.isActive && sectionData.shadow}).map((sectionData) => {return sectionData.shadow});
-const lowerCoverPosition = getBotPosition(bibleData.staticBibleElements.lowerCover, dimension);
-const lowerCoverScales = BibleVizUtils.Functions.GetBotScales(bibleData.staticBibleElements.lowerCover);
+const lowerCoverPosition = getBotPosition(bibleData.staticBiblePieces.lowerCover, dimension);
+const lowerCoverScales = BibleVizUtils.Functions.GetBotScales(bibleData.staticBiblePieces.lowerCover);
 const upperCoverClosedPositionZ = lowerCoverPosition.z + lowerCoverScales.z;
 const crossClosedPositionZ = upperCoverClosedPositionZ;
 const bibleElements = testaments.concat(sections, books);
@@ -80,12 +80,12 @@ if(elementsToShrink.length > 0)
                 easing
             })
         }).concat(
-            animateTag(bibleData.staticBibleElements.upperCover, dimension + "Z",  {
+            animateTag(bibleData.staticBiblePieces.upperCover, dimension + "Z",  {
                 toValue: upperCoverClosedPositionZ,
                 duration,
                 easing
             }),
-            animateTag([bibleData.staticBibleElements.crossVerticalLine, bibleData.staticBibleElements.crossHorizontalLine], dimension + "Z", {
+            animateTag([bibleData.staticBiblePieces.crossVerticalLine, bibleData.staticBiblePieces.crossHorizontalLine], dimension + "Z", {
                 toValue: crossClosedPositionZ,
                 duration,
                 easing

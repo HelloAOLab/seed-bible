@@ -9,7 +9,7 @@
     * thisBot.HandleBookInteraction({book: someBook, typeOfInteraction: BibleVizUtils.Data.tags.InteractionType.Drag, dragInfo: someDragInfo});
 */
 
-import {StackSectionBookData} from "BibleVizUtils.Classes.StackSectionBookData"
+import {StackSectionBookData} from "bibleVizUtils.classes.StackSectionBookData"
 const {book, typeOfInteraction, dragInfo, dropInfo} = that;
 if(thisBot.masks.isBibleAnimating && typeOfInteraction !== BibleVizUtils.Data.tags.InteractionType.Click && typeOfInteraction !== BibleVizUtils.Data.tags.InteractionType.Tap && typeOfInteraction !== BibleVizUtils.Data.tags.InteractionType.PointerUp) return;
 const bookData = thisBot.GetPieceData({piece: book});

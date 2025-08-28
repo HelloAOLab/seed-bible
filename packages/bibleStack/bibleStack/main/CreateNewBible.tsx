@@ -11,7 +11,7 @@
     * thisBot.CreateNewBible({position: {x: 0, y: 0}});
 */
 
-import {StackBibleData} from "BibleVizUtils.Classes.StackBibleData"
+import {StackBibleData} from "bibleVizUtils.classes.StackBibleData"
 
 let {position} = that;
 const {setBibleAnimating = true, bibleType = BibleVizUtils.Data.tags.BibleType.Default, customArrangementIndex} = that;
@@ -42,7 +42,7 @@ setTagMask(thisBot, "hasStackEverBeenSpawned", true);
 //     })
 // }
 const arrangementIndex = !isNaN(customArrangementIndex) ? customArrangementIndex : BibleVizUtils.Functions.GetCurrentArrangementIndex();
-const bibleData = new StackBibleData({bibleType, arrangementIndex, currentCrossPosition: CrossPosition.Top, currentStackVizState: BibleVizUtils.Data.tags.BibleVisualizationState.Regular, id: uuid()});
+const bibleData = new StackBibleData({bibleType, arrangementIndex, currentCrossPosition: BibleVizUtils.Data.tags.CrossPosition.Top, currentStackVizState: BibleVizUtils.Data.tags.BibleVisualizationState.Regular, id: uuid()});
 const {testamentsData, staticBiblePieces} = await thisBot.CreateBibleStructure({arrangementIndex, bibleData});
 const focusOnRotation = {x: 1.01229, y:0.5};
 const focusOnDuration = 1;

@@ -29,7 +29,7 @@ const bookPool = new PoolData({
     bot: getBot("system", "bibleLayout3D.prefabs.book"),
     customTags: [
         new CustomTag({name: "poolTag", value: BibleVizUtils.Data.tags.ObjectPoolTags.LayoutBook}),
-        new CustomTag({name: "typeOfElement", value: BibleVizUtils.Data.tags.BiblePieceType.LayoutBook}),
+        new CustomTag({name: "typeOfPiece", value: BibleVizUtils.Data.tags.BiblePieceType.LayoutBook}),
         new CustomTag({name: "isBaseLayoutBook", value: false}),
         new CustomTag({name: "system", value: null}),
     ],
@@ -76,7 +76,7 @@ const chaptersPool = new PoolData({
     bot: getBot("system", "bibleLayout3D.prefabs.layoutChapter"),
     customTags: [
         new CustomTag({name: "poolTag", value: BibleVizUtils.Data.tags.ObjectPoolTags.LayoutChapter}),
-        new CustomTag({name: "typeOfElement", value: BibleVizUtils.Data.tags.BiblePieceType.LayoutChapter}),
+        new CustomTag({name: "typeOfPiece", value: BibleVizUtils.Data.tags.BiblePieceType.LayoutChapter}),
         new CustomTag({name: "isBaseLayoutChapter", value: false}),
         new CustomTag({name: "system", value: null})
     ],
@@ -222,7 +222,7 @@ const chunkOfVersesPool = new PoolData({
     bot: getBot(byTag("isBaseLayoutChunkOfVerses", true)),
     customTags: [
         new CustomTag({name: "isBaseLayoutChunkOfVerses", value: false}),
-        new CustomTag({name: "typeOfElement", value: BibleVizUtils.Data.tags.BibleElementType.LayoutChunkOfVerses}),
+        new CustomTag({name: "typeOfPiece", value: BibleVizUtils.Data.tags.BiblePieceType.LayoutChunkOfVerses}),
         new CustomTag({name: "poolTag", value: BibleVizUtils.Data.tags.ObjectPoolTags.LayoutChunkOfVerses}),
         new CustomTag({name: "system", value: null}),
     ],
@@ -233,7 +233,7 @@ const versesPool = new PoolData({
     bot: getBot(byTag("isBaseLayoutVerse", true)),
     customTags: [
         new CustomTag({name: "isBaseLayoutVerse", value: false}),
-        new CustomTag({name: "typeOfElement", value: BibleVizUtils.Data.tags.BibleElementType.LayoutVerse}),
+        new CustomTag({name: "typeOfPiece", value: BibleVizUtils.Data.tags.BiblePieceType.LayoutVerse}),
         new CustomTag({name: "poolTag", value: BibleVizUtils.Data.tags.ObjectPoolTags.LayoutVerse}),
         new CustomTag({name: "system", value: null}),
     ],

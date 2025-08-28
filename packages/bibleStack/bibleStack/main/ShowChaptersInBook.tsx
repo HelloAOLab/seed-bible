@@ -7,7 +7,7 @@ for(const chapterData of data.childrenData)
     if(!chapterData.isActive)
     {
         const isSectionBookDataInstance = data instanceof StackSectionBookData || data.constructor.name === "StackSectionBookData";
-        const chapter = ObjectPooler.GetObjectFromPool({tag: BibleVizUtils.Data.tags.ObjectPoolTags.Chapter});
+        const chapter = ObjectPooler.GetObjectFromPool({tag: BibleVizUtils.Data.tags.ObjectPoolTags.StackChapter});
         const chapterDeltaDepth = (data.piece.masks.scaleY - (chapter.tags.gapY*2) - BibleVizUtils.Data.tags.StackPieceMeasurements.MinChapterBackDepth) * (chapterData.elementInfo.amountOfVerses / BibleStackManager.GetBiggerChapter());
         const chapterMod = {
             [dimension]: true,

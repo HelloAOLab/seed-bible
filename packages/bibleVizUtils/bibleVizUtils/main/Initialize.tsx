@@ -1,3 +1,6 @@
+import { PoolData } from "objectPooler.main.PoolData"
+import { CustomTag } from "objectPooler.main.CustomTag"
+
 const bibleVizClasses = getBot(byTag("system", "bibleVizUtils.classes"));
 const bibleVizData = getBot(byTag("system", "bibleVizUtils.data"));
 const bibleVizFunctions = getBot(byTag("system", "bibleVizUtils.functions"))

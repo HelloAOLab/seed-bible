@@ -79,7 +79,7 @@ if(found)
             levelScaleZ
         )
     })
-    book = ObjectPooler.GetObjectFromPool({tag: BibleVizUtils.Data.tags.ObjectPoolTags.Book});
+    book = ObjectPooler.GetObjectFromPool({tag: BibleVizUtils.Data.tags.ObjectPoolTags.StackBook});
     const bookMod = {
         [dimension]                  : true,
         [dimension + "X"]            : spawnPosition.x,

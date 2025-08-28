@@ -4,7 +4,7 @@
     * section.OnReleased();
 */
 
-thisBot.tags.typeOfElement = null;
+thisBot.tags.typeOfPiece = null;
 thisBot.tags.arrangementIndex = null;
 thisBot.tags.testamentIndex = null;
 thisBot.tags.sectionIndex = null;

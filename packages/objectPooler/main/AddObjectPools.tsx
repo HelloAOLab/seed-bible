@@ -6,7 +6,7 @@
     * const obj = ObjectPooler.GetObjectFromPool({tag: ObjectPoolTags.ConfettiParticle});
 */
 
-import {Pool} from "interactiveBible.managers.ObjectPooler.Pool"
+import { Pool } from "objectPooler.main.Pool"
 
 const {poolsData} = that;
 

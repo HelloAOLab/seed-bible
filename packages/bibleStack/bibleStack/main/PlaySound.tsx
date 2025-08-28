@@ -5,7 +5,7 @@ const throtleTimeLimit = 5000;
 if(!globalThis.soundThrottleLimit) {
     globalThis.soundThrottleLimit = {}
 }
-const sound = thisBot.tags.soundsURLArray.find((soundInfo) =>soundInfo.name === soundName);
+const sound = thisBot.tags.sounds.find((soundInfo) =>soundInfo.name === soundName);
 
 if(isThrottle) {
     if(globalThis.soundThrottleLimit[soundName]) {
@@ -26,7 +26,7 @@ if(!sound){
 }
 
 if(PlaySound && sound.URL) {
-    return os.PlaySound(sound.URL);
+    return os.playSound(sound.URL);
 }
 
 if(sound.URLs && PlaySound) {
@@ -34,5 +34,5 @@ if(sound.URLs && PlaySound) {
     const len = sound.URLs.length;
     const index = Math.floor(Math.random() * len);
     const url = sound.URLs[index];
-    return os.PlaySound(url);
+    return os.playSound(url);
 }

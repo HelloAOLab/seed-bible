@@ -5,7 +5,7 @@
     * thisBot.initialize();
 */
 
-if(thisBot.masks.initialized || ObjectPooler || configBot.tags.systemPortal) return;
+if(thisBot.masks.initialized || globalThis.ObjectPooler || configBot.tags.systemPortal) return;
 
 globalThis.ObjectPooler = thisBot
 setTagMask(thisBot, "initialized", true);

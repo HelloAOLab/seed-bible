@@ -3,7 +3,7 @@ const {piece} = that;
 
 let key, prevColor;
 let highlightSuccessful = false;
-switch(piece.tags.typeOfElement)
+switch(piece.tags.typeOfPiece)
 {
     case BibleElementType.MapBook:
         key = piece.tags.bookName;
@@ -33,7 +33,7 @@ if(currentHighlightInfo)
 else
 {
     if(!BibleVizUtils.Data.masks.isInHistoryMode) setTagMask(piece, "color", InstanceManager.tags.highlightColor);
-    thisBot.tags.highlightsInfo.push(new HighlightInfo({key, typeOfElement: piece.tags.typeOfElement, color: InstanceManager.tags.highlightColor}))
+    thisBot.tags.highlightsInfo.push(new HighlightInfo({key, typeOfPiece: piece.tags.typeOfPiece, color: InstanceManager.tags.highlightColor}))
     highlightSuccessful = true;
 }
 

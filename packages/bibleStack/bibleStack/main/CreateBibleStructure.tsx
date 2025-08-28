@@ -9,7 +9,7 @@
 
 const {arrangementIndex, bibleData} = that;
 const testamentsData = [];
-const bibleTransformer = ObjectPooler.GetObjectFromPool({tag: BibleVizUtils.Data.tags.ObjectPoolTags.BibleTransformer});
+const bibleTransformer = ObjectPooler.GetObjectFromPool({tag: BibleVizUtils.Data.tags.ObjectPoolTags.StackBibleTransformer});
 const bibleTransformerMod = {stackBibleId: bibleData.id};
 const upperCover = ObjectPooler.GetObjectFromPool({tag: BibleVizUtils.Data.tags.ObjectPoolTags.StackCover});
 const upperCoverMod = {stackBibleId: bibleData.id};
@@ -41,7 +41,6 @@ const staticBiblePieces = {
     crossHorizontalLine,
     bibleShadow
 }
-
 for(const testamentIndex in BibleVizUtils.Data.vars.fixedArrangementsInfo[arrangementIndex].testaments)
 {
     const testamentData = await thisBot.CreateTestament({arrangementIndex, testamentIndex, bibleData});

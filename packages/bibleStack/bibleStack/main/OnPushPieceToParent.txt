@@ -1,7 +1,7 @@
 import {StackData} from 'interactiveBible.managers.thisBot.StackData'
-import {StackTestamentData} from "BibleVizUtils.Classes.StackTestamentData"
-import {StackSectionData} from "BibleVizUtils.Classes.StackSectionData"
-import {StackBookData} from "BibleVizUtils.Classes.StackBookData"
+import {StackTestamentData} from "bibleVizUtils.classes.StackTestamentData"
+import {StackSectionData} from "bibleVizUtils.classes.StackSectionData"
+import {StackBookData} from "bibleVizUtils.classes.StackBookData"
 
 const {piece, data, parentData} = that;
 const {testamentData, sectionData, bookData} = thisBot.GetPieceData({biblePiece: piece});

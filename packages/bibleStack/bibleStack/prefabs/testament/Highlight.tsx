@@ -24,7 +24,7 @@ const {infoLabelTransformer} = await BibleVizUtils.Functions.GetLabelForPiece({
     color: "white", 
     labelColor: testamentData.highlightColor ?? thisBot.tags.labelTextColor,
     dimension,
-    labelPositioning: thisBot.masks.isOnTheGround ? LabelPositioning.Top : LabelPositioning.LeftSided,
+    labelPositioning: thisBot.masks.isOnTheGround ? BibleVizUtils.Data.tags.LabelPositioning.Top : BibleVizUtils.Data.tags.LabelPositioning.LeftSided,
     isAnimatable: true
 });
 

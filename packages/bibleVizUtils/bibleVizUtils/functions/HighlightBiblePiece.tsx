@@ -43,7 +43,7 @@ else
         if(!BibleVizUtils.Data.masks.isInHistoryMode) setTagMask(piece, "color", BibleVizUtils.Data.tags.highlightColor);
         const newHighlightInfo = new HighlightInfo({
             color: BibleVizUtils.Data.tags.highlightColor, 
-            typeOfElement: piece.tags.typeOfElement, 
+            typeOfPiece: piece.tags.typeOfPiece, 
             key: piece.masks.chunkPath ?? piece.masks.versePath
         })
         chapterData.AddHighlightInfo(newHighlightInfo)

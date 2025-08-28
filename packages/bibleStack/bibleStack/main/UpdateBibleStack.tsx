@@ -47,7 +47,7 @@ if (!isCrossInMiddle)
     crossNewPositionZ = isBibleEmpty ? (initialPositionZ + upperCoverScales.z) : (nextPositionZ + BibleVizUtils.Data.tags.StackSpacing.CoverToCross);
 }
 
-const targetCrossPosition = isCrossInMiddle ? CrossPosition.Middle : CrossPosition.Top;
+const targetCrossPosition = isCrossInMiddle ? BibleVizUtils.Data.tags.CrossPosition.Middle : BibleVizUtils.Data.tags.CrossPosition.Top;
 
 if(bibleData.currentCrossPosition !== targetCrossPosition)
 {

@@ -32,7 +32,7 @@ if(thisBot.masks.isOnTheGround)
             color: 'white', 
             labelColor: 'black', 
             dimension,
-            labelPositioning: LabelPositioning.Top,
+            labelPositioning: BibleVizUtils.Data.tags.LabelPositioning.Top,
             isAnimatable: false
         }).infoLabelTransformer;
 

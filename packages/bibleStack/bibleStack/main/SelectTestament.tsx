@@ -7,7 +7,7 @@
     * thisBot.SelectTestament({testament});
 */
 
-import {StackSectionBookData} from "BibleVizUtils.Classes.StackSectionBookData"
+import {StackSectionBookData} from "bibleVizUtils.classes.StackSectionBookData"
 
 const {testament, speedMultiplier = 1, isInstantaneous = false} = that;
 const testamentData = thisBot.GetPieceData({piece: testament});
@@ -84,7 +84,7 @@ for(const data of testamentData.childrenData)
 {
     const sectionIndex = testamentData.childrenData.indexOf(data);
     const desiredScaleZ = data.creationInfo.amountOfChaptersInSection * BibleVizUtils.Data.tags.StackPieceMeasurements.SectionDesiredScaleZRatio;
-    const section = ObjectPooler.GetObjectFromPool({tag: data instanceof StackSectionBookData ? BibleVizUtils.Data.tags.ObjectPoolTags.Book : BibleVizUtils.Data.tags.ObjectPoolTags.Section});
+    const section = ObjectPooler.GetObjectFromPool({tag: data instanceof StackSectionBookData ? BibleVizUtils.Data.tags.ObjectPoolTags.StackBook : BibleVizUtils.Data.tags.ObjectPoolTags.StackSection});
     const sectionMod = {
         typeOfPiece               : data instanceof StackSectionBookData ? BibleVizUtils.Data.tags.BiblePieceType.StackSectionBook : BibleVizUtils.Data.tags.BiblePieceType.StackSection,
         arrangementIndex            : data.creationInfo.arrangementIndex,

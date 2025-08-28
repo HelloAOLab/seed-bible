@@ -15,7 +15,7 @@
  * thisBot.SelectAllSections({bibleData: someBibleData});
  */
 
-import {StackSectionBookData} from "BibleVizUtils.Classes.StackSectionBookData"
+import {StackSectionBookData} from "bibleVizUtils.classes.StackSectionBookData"
 
 const {bibleData, isInstantaneous = false} = that;
 let callUpdateStacks = false;

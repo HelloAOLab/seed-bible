@@ -8,7 +8,7 @@ export class StackBibleData extends StackData
         id,
         currentCrossPosition,
         currentStackVizState,
-        staticBibleElements = null,
+        staticBiblePieces = null,
         arrangementIndex,
         bibleType,
     })
@@ -16,7 +16,7 @@ export class StackBibleData extends StackData
         super({childrenData, id});
         this.currentCrossPosition = currentCrossPosition;
         this.currentStackVizState = currentStackVizState;
-        this.staticBibleElements = staticBibleElements;
+        this.staticBiblePieces = staticBiblePieces;
         this.hasBeenSetUp = false;
         this.currentState = null;
         this.arrangementIndex = arrangementIndex;

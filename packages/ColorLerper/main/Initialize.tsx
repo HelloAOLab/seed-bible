@@ -6,9 +6,9 @@
  * LerpColorManager.Initialize();
  */
 
-import { ColorLerpsArray } from "ColorLerper.main.ColorLerpsArray";
+import { ColorLerpsArray } from "colorLerper.main.ColorLerpsArray";
 
-if(thisBot.masks.initialized || configBot.tags.systemPortal || ColorLerper) return;
+if(thisBot.masks.initialized || configBot.tags.systemPortal || globalThis.ColorLerper) return;
 
 setTagMask(thisBot, "initialized", true);
 

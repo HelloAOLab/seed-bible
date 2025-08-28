@@ -8,7 +8,7 @@ const filterdArray = [];
 
 if (Array.isArray(items)) {
     items.forEach(ele => {
-        const typeOfElement = ele.type;
+        const typeOfPiece = ele.type;
         const isAttachmentLink = ele.type === "attachment-link";
         const subType = isAttachmentLink ? ele.additionalInfo.type : null;
 
@@ -18,7 +18,7 @@ if (Array.isArray(items)) {
             return;
         }
 
-        if (validTypes.findIndex(ele => ele === typeOfElement) < 0) {
+        if (validTypes.findIndex(ele => ele === typeOfPiece) < 0) {
             return;
         }
 

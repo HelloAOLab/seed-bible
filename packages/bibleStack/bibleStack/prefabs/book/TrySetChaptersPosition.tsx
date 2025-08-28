@@ -15,7 +15,7 @@ const activeChaptersData = bookData.childrenData.filter((chapterData) => {return
 if(activeChaptersData.length > 0)
 {
     const {setX, setY, setZ} = that;
-    const bibleTransformerPosition = bibleData ? getBotPosition(bibleData.staticBibleElements.bibleTransformer, dimension) : null;
+    const bibleTransformerPosition = bibleData ? getBotPosition(bibleData.staticBiblePieces.bibleTransformer, dimension) : null;
     const bookPosition = getBotPosition(thisBot, dimension);
     const bookScales = BibleVizUtils.Functions.GetBotScales(thisBot);
     let row = 0;

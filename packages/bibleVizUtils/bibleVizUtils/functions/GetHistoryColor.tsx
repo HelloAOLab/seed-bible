@@ -4,8 +4,8 @@ let entries;
 if(piece) entries = thisBot.GetHistoryEntriesForElement({piece});
 else if(data)
 {
-    const {typeOfElement, key} = data;
-    entries = thisBot.GetHistoryEntries({typeOfElement, key});
+    const {typeOfPiece, key} = data;
+    entries = thisBot.GetHistoryEntries({typeOfPiece, key});
 }
 let color;
 if(entries.length > 0)

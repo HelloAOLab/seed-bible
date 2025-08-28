@@ -1,34 +1,34 @@
 const {piece} = that;
 
 let key;
-let typeOfElement;
-switch(piece.tags.typeOfElement)
+let typeOfPiece;
+switch(piece.tags.typeOfPiece)
 {
-    case BibleVizUtils.Data.tags.BibleElementType.Testament: 
+    case BibleVizUtils.Data.tags.BiblePieceType.Testament: 
         key = piece.tags.testamentName; 
-        typeOfElement = BibleVizUtils.Data.tags.BibleElementType.Testament;
+        typeOfPiece = BibleVizUtils.Data.tags.BiblePieceType.Testament;
     break;
-    case BibleVizUtils.Data.tags.BibleElementType.Section: 
+    case BibleVizUtils.Data.tags.BiblePieceType.Section: 
         key = piece.tags.sectionName; 
-        typeOfElement = BibleVizUtils.Data.tags.BibleElementType.Section;
+        typeOfPiece = BibleVizUtils.Data.tags.BiblePieceType.Section;
     break;
-    case BibleVizUtils.Data.tags.BibleElementType.SectionBook:
-    case BibleVizUtils.Data.tags.BibleElementType.Book:
-    case BibleVizUtils.Data.tags.BibleElementType.LayoutBook:
+    case BibleVizUtils.Data.tags.BiblePieceType.SectionBook:
+    case BibleVizUtils.Data.tags.BiblePieceType.Book:
+    case BibleVizUtils.Data.tags.BiblePieceType.LayoutBook:
         key = piece.tags.bookName; 
-        typeOfElement = BibleVizUtils.Data.tags.BibleElementType.Book;
+        typeOfPiece = BibleVizUtils.Data.tags.BiblePieceType.Book;
     break;
-    case BibleVizUtils.Data.tags.BibleElementType.Chapter:
-    case BibleVizUtils.Data.tags.BibleElementType.LayoutChapter:
+    case BibleVizUtils.Data.tags.BiblePieceType.Chapter:
+    case BibleVizUtils.Data.tags.BiblePieceType.LayoutChapter:
         key = `${piece.tags.parentBookName} ${piece.tags.chapterNumber}`;
-        typeOfElement = BibleVizUtils.Data.tags.BibleElementType.Chapter;
+        typeOfPiece = BibleVizUtils.Data.tags.BiblePieceType.Chapter;
     break;
     default: break;
 }
 
 const selections = BibleVizUtils.masks.usersLastSelection.slice().filter((selection) => {
     return selection.selectionPath.some((pieceInfo) => {
-        return pieceInfo.typeOfElement == typeOfElement && pieceInfo.key == key
+        return pieceInfo.typeOfPiece == typeOfPiece && pieceInfo.key == key
     })
 })
 

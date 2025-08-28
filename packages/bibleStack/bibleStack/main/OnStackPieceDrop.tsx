@@ -9,10 +9,10 @@
     * shout('OnStackPieceDrop', {data: someStackPieceData, piece: someStackPiece, dropInfo: someDropInfo});
 */
 
-import {StackChapterData} from "BibleVizUtils.Classes.StackChapterData"
-import {StackSectionData} from "BibleVizUtils.Classes.StackSectionData"
-import {StackBookData} from "BibleVizUtils.Classes.StackBookData"
-import {StackTestamentData} from "BibleVizUtils.Classes.StackTestamentData"
+import {StackChapterData} from "bibleVizUtils.classes.StackChapterData"
+import {StackSectionData} from "bibleVizUtils.classes.StackSectionData"
+import {StackBookData} from "bibleVizUtils.classes.StackBookData"
+import {StackTestamentData} from "bibleVizUtils.classes.StackTestamentData"
 
 const {piece, data, dropInfo} = that;
 const dimension = os.getCurrentDimension();

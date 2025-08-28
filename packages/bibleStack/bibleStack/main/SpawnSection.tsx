@@ -14,7 +14,7 @@
  * });
  */
 
-import {StackSectionBookData} from "BibleVizUtils.Classes.StackSectionBookData"
+import {StackSectionBookData} from "bibleVizUtils.classes.StackSectionBookData"
 
 let sectionData;
 const dimension = os.getCurrentDimension();
@@ -40,7 +40,7 @@ if(found)
         BibleVizUtils.Data.tags.StackPieceMeasurements.SectionScales.y,
         desiredScaleZ
     )})
-    const section = ObjectPooler.GetObjectFromPool({tag: sectionData instanceof StackSectionBookData ? BibleVizUtils.Data.tags.ObjectPoolTags.Book : BibleVizUtils.Data.tags.ObjectPoolTags.Section});
+    const section = ObjectPooler.GetObjectFromPool({tag: sectionData instanceof StackSectionBookData ? BibleVizUtils.Data.tags.ObjectPoolTags.StackBook : BibleVizUtils.Data.tags.ObjectPoolTags.StackSection});
     const sectionMod = {
         typeOfPiece               : sectionData instanceof StackSectionBookData ? BibleVizUtils.Data.tags.BiblePieceType.StackSectionBook : BibleVizUtils.Data.tags.BiblePieceType.StackSection,
         arrangementIndex,

@@ -31,7 +31,7 @@ if(found)
 {
     if(displayJarvisSpawnPieceAnimation) await jarvis.SpawnPieceStart({scales: BibleVizUtils.Data.tags.StackPieceMeasurements.TestamentScales})
     testamentData = await thisBot.CreateTestament({arrangementIndex, testamentIndex})
-    const testament = ObjectPooler.GetObjectFromPool({tag: BibleVizUtils.Data.tags.ObjectPoolTags.Testament});
+    const testament = ObjectPooler.GetObjectFromPool({tag: BibleVizUtils.Data.tags.ObjectPoolTags.StackTestament});
     const testamentMod = {
         infoLabel       : testamentData.pieceInfo.name,
         formOpacity     : 1,
