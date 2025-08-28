@@ -152,11 +152,11 @@ try
             const transformerPosition = getBotPosition(testamentData.piece.links.transformerLink, dimension);
             fixedPosition = fixedPosition.add(transformerPosition);
         }
-        const desiredFocusOnPosition = BibleVizUtils.Functions.GetFocusOnPositionFromRotation(
-            focusOnRotation.y, 
-            focusOnRotation.x, 
-            fixedPosition
-        );
+        const desiredFocusOnPosition = BibleVizUtils.Functions.GetFocusOnPositionFromRotation({
+            theta: focusOnRotation.y, 
+            phi: focusOnRotation.x, 
+            botPosition: fixedPosition
+        });
 
         firstAnimationSequence.push(
             animateTag(testamentData.piece, "scaleZ", {

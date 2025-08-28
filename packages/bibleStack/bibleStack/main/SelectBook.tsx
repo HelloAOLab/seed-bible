@@ -20,7 +20,6 @@ setTagMask(book, "highlightable", false);
 const focusOnRotation = {x: 1.01229, y:0.5};
 const cameraFocusDuration = 1;
 
-
 const bookPosition = getBotPosition(book, dimension);
 const { selectedBookHeight } = ComputeSelectedBookLayout(bookData);
 let fixedPosition = new Vector3(bookPosition.x, bookPosition.y, bookPosition.z + (selectedBookHeight/2))
@@ -29,11 +28,11 @@ if(bookData.parentDataIds.stackBibleId)
     const transformerPosition = getBotPosition(bookData.piece.links.transformerLink, dimension);
     fixedPosition = fixedPosition.add(transformerPosition);
 }
-const desiredFocusOnPosition = BibleVizUtils.Functions.GetFocusOnPositionFromRotation(
-    focusOnRotation.y, 
-    focusOnRotation.x, 
-    fixedPosition
-);
+const desiredFocusOnPosition = BibleVizUtils.Functions.GetFocusOnPositionFromRotation({
+    theta: focusOnRotation.y, 
+    phi: focusOnRotation.x, 
+    botPosition: fixedPosition
+});
 
 os.focusOn({x: desiredFocusOnPosition.x, y: desiredFocusOnPosition.y}, {
     duration: cameraFocusDuration,

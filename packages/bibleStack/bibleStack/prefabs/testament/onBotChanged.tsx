@@ -12,12 +12,11 @@
 
 if(thisBot.tags.isBaseStackTestament || !thisBot.tags.isInUse) return;
 
-const {force, tags} = that;
+const {force, tags: changedTags} = that;
 const dimension = os.getCurrentDimension();
-
-const setX = force ?? (tags.includes(dimension + "X") || tags.includes("scaleX"));
-const setY = force ?? (tags.includes(dimension + "Y") || tags.includes("scaleY"));
-const setZ = force ?? (tags.includes(dimension + "Z") || tags.includes("scaleZ"));
+const setX = force ?? (changedTags.includes(dimension + "X") || changedTags.includes("scaleX"));
+const setY = force ?? (changedTags.includes(dimension + "Y") || changedTags.includes("scaleY"));
+const setZ = force ?? (changedTags.includes(dimension + "Z") || changedTags.includes("scaleZ"));
 const currentLabelTransformers = getBots(byTag("ownerBotId", getID(thisBot)), byTag("isInfoLabelTransformer", true), byTag(dimension, true));
 const currentUsersNotification = getBot(byTag("ownerBotId", getID(thisBot)), byTag("isUsersNotification", true), byTag("isInUse", true))
 

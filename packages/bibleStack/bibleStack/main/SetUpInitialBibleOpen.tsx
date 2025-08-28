@@ -15,4 +15,5 @@ const {bibleData} = that;
 // const bibleTransformerPosition = getBotPosition(bibleData.staticBiblePieces.bibleTransformer, dimension);
 bibleData.currentState = BibleVizUtils.Data.tags.BibleState.Open;
 bibleData.childrenData.forEach((testamentData) => {testamentData.isInsideBible = true});
+
 return bibleData.staticBiblePieces.bibleTransformer.DisplayInitialBibleOpenAnimation({bibleData});

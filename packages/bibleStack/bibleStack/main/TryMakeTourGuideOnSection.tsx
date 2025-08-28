@@ -22,8 +22,16 @@ else
     const unhighlightDelay = 50;
     const sectionPosition = getBotPosition(sectionData.piece, dimension);
     const bibleTransformerPosition = bibleData && sectionData.parentDataIds.stackBibleId ? getBotPosition(sectionData.piece.links.transformerLink, dimension) : new Vector3(0,0,0);
-    const desiredFocusOnInitialPosition = BibleVizUtils.Functions.GetFocusOnPositionFromRotation(focusOnRotation.y, focusOnRotation.x, new Vector3(sectionPosition.x + bibleTransformerPosition.x, sectionPosition.y + bibleTransformerPosition.y, sectionPosition.z + bibleTransformerPosition.z + (sectionData.piece.tags.desiredScaleZ)));
-    const desiredFocusOnFinalPosition = BibleVizUtils.Functions.GetFocusOnPositionFromRotation(focusOnRotation.y, focusOnRotation.x, new Vector3(sectionPosition.x + bibleTransformerPosition.x, sectionPosition.y + bibleTransformerPosition.y, sectionPosition.z + bibleTransformerPosition.z));
+    const desiredFocusOnInitialPosition = BibleVizUtils.Functions.GetFocusOnPositionFromRotation({
+        theta: focusOnRotation.y, 
+        phi: focusOnRotation.x, 
+        botPosition: new Vector3(sectionPosition.x + bibleTransformerPosition.x, sectionPosition.y + bibleTransformerPosition.y, sectionPosition.z + bibleTransformerPosition.z + (sectionData.piece.tags.desiredScaleZ))
+    });
+    const desiredFocusOnFinalPosition = BibleVizUtils.Functions.GetFocusOnPositionFromRotation({
+        theta: focusOnRotation.y, 
+        phi: focusOnRotation.x, 
+        botPosition: new Vector3(sectionPosition.x + bibleTransformerPosition.x, sectionPosition.y + bibleTransformerPosition.y, sectionPosition.z + bibleTransformerPosition.z)
+    });
     const easing = {type: "sinusoidal", mode: "inout"};
     const focusOnZoom = 6;
     const customUnhighlightDuration = 0.15;

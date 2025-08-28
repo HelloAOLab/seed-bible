@@ -14,7 +14,11 @@
 // const containerScales = {x: lowerCoverScales.x * containerScaleXYFactor, y: lowerCoverScales.y * containerScaleXYFactor};
 // const focusOnRotation = {x: 1.01229, y:0.5};
 // const focusOnPositionOffsetZ = 12
-// const desiredFocusOnPosition = GetFocusOnPositionFromRotation(focusOnRotation.y, focusOnRotation.x, new Vector3(bibleTransformerPosition.x, bibleTransformerPosition.y, (bibleTransformerPosition.z) + focusOnPositionOffsetZ));
+// const desiredFocusOnPosition = GetFocusOnPositionFromRotation({
+//     theta: focusOnRotation.y, 
+//     phi: focusOnRotation.x, 
+//     botPosition: new Vector3(bibleTransformerPosition.x, bibleTransformerPosition.y, (bibleTransformerPosition.z) + focusOnPositionOffsetZ)
+// });
 // const continerScaleZFactor = 0.02;
 // const containerInitialPositionZ = 0;
 // const animations = [];

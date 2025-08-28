@@ -214,11 +214,11 @@ try
             const transformerPosition = getBotPosition(sectionData.piece.links.transformerLink, dimension);
             fixedPosition = fixedPosition.add(transformerPosition);
         }
-        const desiredFocusOnPosition = BibleVizUtils.Functions.GetFocusOnPositionFromRotation(
-            focusOnRotation.y, 
-            focusOnRotation.x, 
-            fixedPosition
-        );
+        const desiredFocusOnPosition = BibleVizUtils.Functions.GetFocusOnPositionFromRotation({
+            theta: focusOnRotation.y, 
+            phi: focusOnRotation.x, 
+            botPosition: fixedPosition
+        });
         
 
         await Promise.allSettled([

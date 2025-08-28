@@ -35,7 +35,7 @@ bibleData.childrenData.forEach((testamentData, index) => {
         }),
     )
 });
-animations.push([
+animations.push(
     animateTag(bibleData.staticBiblePieces.leftCover, "scaleZ", {
         toValue: 0,
         duration: animationDuration,
@@ -51,17 +51,17 @@ animations.push([
         duration: animationDuration,
         easing: {type: "sinusoidal", mode: "inout"}
     })
-])
+)
 
 await Promise.all(animations)
-    .then(() => {
-        setTagMask(bibleData.childrenData.map((testamentData) => {return testamentData.piece}), "highlightable", bibleData.bibleType === BibleVizUtils.Data.tags.BibleType.Default);
-        setTagMask(bibleData.childrenData.map((testamentData) => {return testamentData.piece}), "draggable", bibleData.bibleType === BibleVizUtils.Data.tags.BibleType.Default ? BibleStackManager.masks.areBiblePiecesDraggable : false);
-        setTagMask([bibleData.staticBiblePieces.crossVerticalLine, bibleData.staticBiblePieces.crossHorizontalLine], "pointable", bibleData.bibleType === BibleVizUtils.Data.tags.BibleType.Default);
-        setTag(bibleData.staticBiblePieces.leftCover, dimension, false);
-        return Promise.all(shout("OnInitialBibleOpenAnimationCompleted", {bibleData}));
-    })
-    .catch((error) => {
-        console.log(error)
-        shout('OnInitialBibleOpenAnimationFailed')
-    });
+.then(() => {
+    setTagMask(bibleData.childrenData.map((testamentData) => {return testamentData.piece}), "highlightable", bibleData.bibleType === BibleVizUtils.Data.tags.BibleType.Default);
+    setTagMask(bibleData.childrenData.map((testamentData) => {return testamentData.piece}), "draggable", bibleData.bibleType === BibleVizUtils.Data.tags.BibleType.Default ? BibleStackManager.masks.areBiblePiecesDraggable : false);
+    setTagMask([bibleData.staticBiblePieces.crossVerticalLine, bibleData.staticBiblePieces.crossHorizontalLine], "pointable", bibleData.bibleType === BibleVizUtils.Data.tags.BibleType.Default);
+    setTag(bibleData.staticBiblePieces.leftCover, dimension, false);
+    return Promise.all(shout("OnInitialBibleOpenAnimationCompleted", {bibleData}));
+})
+.catch((error) => {
+    console.log(error)
+    shout('OnInitialBibleOpenAnimationFailed')
+});

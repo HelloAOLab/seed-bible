@@ -55,11 +55,11 @@ thisBot.SetUpBible({bibleData, position, bibleType});
 
 
 const fixedPosition = new Vector3(position.x, position.y, 2)
-const desiredFocusOnPosition = BibleVizUtils.Functions.GetFocusOnPositionFromRotation(
-    focusOnRotation.y, 
-    focusOnRotation.x, 
-    fixedPosition
-);
+const desiredFocusOnPosition = BibleVizUtils.Functions.GetFocusOnPositionFromRotation({
+    theta: focusOnRotation.y, 
+    phi: focusOnRotation.x, 
+    botPosition: fixedPosition
+});
 os.focusOn({x: desiredFocusOnPosition.x, y: desiredFocusOnPosition.y}, {
     duration: focusOnDuration,
     easing,
