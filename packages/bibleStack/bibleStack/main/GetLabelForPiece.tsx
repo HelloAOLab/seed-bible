@@ -33,7 +33,7 @@ const radialVector                          = new Vector2(pieceScales.x/2, piece
 const infoLabelOffsetMargin                 = 0.25;
 let infoLabelTailDesiredScales              = {x: 0.3 / infoLabelTransformerDesiredScales.x, y: 0.3 / infoLabelTransformerDesiredScales.y, z: 0.3 / infoLabelTransformerDesiredScales.z}
 const infoLabelDateDesiredScales              = infoLabelDate && {
-    x: thisBot.GetCurrentLabelDateFormat() === BibleVizUtils.Data.tags.LabelDateFormats.Relative ? infoLabelDate.tags.relativeDateScales.x : infoLabelDate.tags.absoluteDateScales.x, 
+    x: BibleVizUtils.Functions.GetCurrentLabelDateFormat() === BibleVizUtils.Data.tags.LabelDateFormats.Relative ? infoLabelDate.tags.relativeDateScales.x : infoLabelDate.tags.absoluteDateScales.x, 
     y: 0.375 / infoLabelTransformerDesiredScales.y, 
     z: infoLabelScales.z / infoLabelTransformerDesiredScales.z}
 const dateGap                                 = {x: 0.2, y: 0.05};
@@ -106,7 +106,7 @@ switch(labelPositioning)
     break;
 }
 const infoLabelDateOffset = infoLabelDate ? new Vector3(
-    infoLabelOffset.x + (infoLabelScales.x / 2 / infoLabelTransformerDesiredScales.x) - ((thisBot.GetCurrentLabelDateFormat() === BibleVizUtils.Data.tags.LabelDateFormats.Relative ? infoLabelDate.tags.relativeDateScales.x : infoLabelDate.tags.absoluteDateScales.x)/2) - dateGap.x, 
+    infoLabelOffset.x + (infoLabelScales.x / 2 / infoLabelTransformerDesiredScales.x) - ((BibleVizUtils.Functions.GetCurrentLabelDateFormat() === BibleVizUtils.Data.tags.LabelDateFormats.Relative ? infoLabelDate.tags.relativeDateScales.x : infoLabelDate.tags.absoluteDateScales.x)/2) - dateGap.x, 
     infoLabelOffset.y + (infoLabelScales.y/2) + (infoLabelDateScales.y/2) + dateGap.y,
     infoLabelOffset.z + 1
 ) : null;
@@ -170,7 +170,7 @@ const infoLabelDateMod = infoLabelDate ? {
     transformer: getID(infoLabelTransformer),
     label: date,
     color,
-    formAddress: thisBot.GetCurrentLabelDateFormat() === BibleVizUtils.Data.tags.LabelDateFormats.Relative ? infoLabelDate.tags.relativeDateFormAddress : infoLabelDate.tags.absoluteDateFormAddress,
+    formAddress: BibleVizUtils.Functions.GetCurrentLabelDateFormat() === BibleVizUtils.Data.tags.LabelDateFormats.Relative ? infoLabelDate.tags.relativeDateFormAddress : infoLabelDate.tags.absoluteDateFormAddress,
     scaleX: infoLabelDateDesiredScales.x,
     scaleY: infoLabelDateDesiredScales.y,
     scaleZ: infoLabelDateDesiredScales.z,

@@ -58,5 +58,5 @@ fixedElementsData.forEach((pieceData) => {
             pieceData.piece.tags.usersNotification = `🔗${usersNotification.id}`
         }
     }
-    else thisBot.TryHideUsersNotificationOnElement({piece: pieceData.piece});
+    else thisBot.TryHideUsersNotificationOnPiece({piece: pieceData.piece});
 })

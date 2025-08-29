@@ -7,6 +7,7 @@ const sectionPosition = getBotPosition(sectionData.piece, dimension);
 let nextPositionZ = desiredPositionZ;
 const newSectionAnimations = []
 const desiredSectionShadowFormOpacity = 0.2;
+
 if(sectionData.isSplitIntoBooks)
 {
     const activeBooksInsideSection = sectionData.childrenData.flat().filter((bookData) => {return bookData.isActive});
@@ -22,7 +23,7 @@ if(sectionData.isSplitIntoBooks)
             const bookDataIndex = bookDataArr.indexOf(bookData);
             if(bookData.isActive)
             {
-                const {absBookDesiredPosition, halfInitialBookScales, selectedBookHeight, marginToAdd, newBookAnimations} = thisBot.HandleBookDataInStack({
+                const {absBookDesiredPosition, halfInitialBookScales, selectedBookHeight, marginToAdd, newBookAnimations} = await thisBot.HandleBookDataInStack({
                     dimension, 
                     duration,
                     easing,
@@ -166,7 +167,7 @@ if(sectionData.isSplitIntoBooks)
                 scaleY: sectionData.isInExplodedView && activeBooksInsideSection.length > 0 ? sectionShadowDesiredScales.y : sectionData.piece.tags.initialScaleY,
                 scaleZ: sectionShadowDesiredScales.z,
                 desiredScaleZ: sectionShadowDesiredScales,
-                color: sectionData.highlightColor ?? sectionData.elementInfo.color,
+                color: sectionData.highlightColor ?? sectionData.pieceInfo.color,
                 sectionName: sectionData.piece.tags.sectionName,
                 sectionDataId: sectionData.id
             }
@@ -232,7 +233,6 @@ else
         const isSectionBookDataInstance = sectionData instanceof StackSectionBookData || sectionData.constructor.name === "StackSectionBookData"; // instanceof not working the first time for some reason so checking by name;
         if(isSectionBookDataInstance)
         {
-            console.log(`[Debug] DefineGlobals.HandleSectionDataInStack !sectionData.isSplitIntoBooks && sectionData.isActive && sectionData instanceof StackSectionBookData`);
             const {newBookAnimations} = thisBot.HandleBookDataInStack({
                 dimension,
                 duration,
@@ -287,4 +287,5 @@ else
     }
 }
 const sectionDeltaPositionZ = nextPositionZ - desiredPositionZ;
+
 return {sectionDeltaPositionZ, newSectionAnimations};

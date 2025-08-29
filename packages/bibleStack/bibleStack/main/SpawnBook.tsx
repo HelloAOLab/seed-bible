@@ -57,7 +57,7 @@ if(found)
         const groupBookIndex = level.indexOf(bookInfo);
         const layout = thisBot.GetLayoutForBooksGroup({amountOfBooks: level.length});
         const bookLayout = layout[groupBookIndex];
-        ({groupBookScaleX, groupBookScaleY} = GetGroupBookData(bookLayout));
+        ({groupBookScaleX, groupBookScaleY} = BibleVizUtils.Functions.GetGroupBookData({bookLayout}));
     }
     const sectionColorRGB = BibleVizUtils.Functions.HexToRgb({hexColor: sectionInfo.color});
     const colorRangeSize = sectionInfo.customColorRange ?? 70;

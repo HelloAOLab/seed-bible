@@ -19,9 +19,9 @@ const ownerBot = getBot(byID(thisBot.tags.ownerBotId));
 const transformer = ownerBot.tags.transformer ? getBot(byID(ownerBot.tags.transformer)) : null
 // const ownerBotData = StacksManager.GetBibleElementData({element: ownerBot});
 // const {bibleData} = StacksManager.GetDataChainFromParentDataIds({parentDataIds: ownerBotData.parentDataIds});
-const infoLabelTransformerScales = GetBotScales(thisBot);
+const infoLabelTransformerScales = BibleVizUtils.Functions.GetBotScales(thisBot);
 const ownerBotPosition = getBotPosition(ownerBot, dimension);
-const ownerBotScales = GetBotScales(ownerBot);
+const ownerBotScales = BibleVizUtils.Functions.GetBotScales(ownerBot);
 const transformerOffset = 1;
 // const infoLabelTransformerScaleZ = 1;
 const transformerPosition = transformer ? getBotPosition(transformer, dimension).add(new Vector3(0, 0, transformerOffset)) : new Vector3(0, 0, 0);
@@ -39,9 +39,9 @@ if(setLabelOffset && thisBot.tags.labelPositioning !== BibleVizUtils.Data.tags.L
 {
     const {infoLabel, infoLabelTail, infoLabelDate} = thisBot.GetLabelElements();
 
-    const infoLabelScales = GetBotScales(infoLabel);
-    const infoLabelTailScales = GetBotScales(infoLabelTail);
-    const infoLabelDateScales = infoLabelDate ? GetBotScales(infoLabelDate) : null;
+    const infoLabelScales = BibleVizUtils.Functions.GetBotScales(infoLabel);
+    const infoLabelTailScales = BibleVizUtils.Functions.GetBotScales(infoLabelTail);
+    const infoLabelDateScales = infoLabelDate ? BibleVizUtils.Functions.GetBotScales(infoLabelDate) : null;
     const radialVector = new Vector2(ownerBotScales.x/2, ownerBotScales.y/2)
     const infoLabelOffsetMargin = 1;
     let infoLabelOffsetX, infoLabelTailOffsetX;

@@ -12,6 +12,7 @@ const dimension = os.getCurrentDimension();
 const bookData = BibleStackManager.GetPieceData({piece: thisBot});
 const {bibleData} = BibleStackManager.GetDataChainFromParentDataIds({parentDataIds: bookData.parentDataIds});
 const activeChaptersData = bookData.childrenData.filter((chapterData) => {return chapterData.isInsideBook})
+
 if(activeChaptersData.length > 0)
 {
     const {setX, setY, setZ} = that;

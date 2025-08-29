@@ -14,7 +14,7 @@ const dimension = os.getCurrentDimension();
 const animationDuration = isInstantaneous ? 0 : BibleVizUtils.Data.tags.StackAnimationsDuration.Highlight/speedMultiplier;
 const thisBotScales = BibleVizUtils.Functions.GetBotScales(thisBot);
 const animationEasing = {type: "sinusoidal", mode: "inout"};
-const label = CapitalizeFirstLetter(thisBot.tags.sectionName.split("-").join(" "));
+const label = BibleVizUtils.Functions.CapitalizeFirstLetter(thisBot.tags.sectionName.split("-").join(" "));
 const sectionData = BibleStackManager.GetPieceData({piece: thisBot})
 const {infoLabelTransformer} = await BibleVizUtils.Functions.GetLabelForPiece({
     piece: thisBot, 

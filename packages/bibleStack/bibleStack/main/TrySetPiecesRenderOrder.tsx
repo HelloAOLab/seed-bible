@@ -19,19 +19,19 @@ if(lastRenderOrderSetTime)
         {
             setTagMask(thisBot, "waitingToSetRenderOrder", true);
             setTimeout(() => {
-                SetRenderOrder(that);
+                BibleVizUtils.Functions.SetRenderOrder({bots: that});
                 setTagMask(thisBot, "waitingToSetRenderOrder", false);
             }, os.localTime - lastRenderOrderSetTime)
         }
     }
     else
     {
-        SetRenderOrder(that);
+        BibleVizUtils.Functions.SetRenderOrder({bots: that});
         setTagMask(thisBot, "lastRenderOrderSetTime", os.localTime);
     }
 }
 else
 {
-    SetRenderOrder(that);
+    BibleVizUtils.Functions.SetRenderOrder({bots: that});
     setTagMask(thisBot, "lastRenderOrderSetTime", os.localTime);
 }

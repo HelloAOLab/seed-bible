@@ -3,7 +3,7 @@ import {StackSectionBookData} from "bibleVizUtils.classes.StackSectionBookData"
 const dimension = os.getCurrentDimension();
 let animations = [];
 
-function ComputeSelectedBookLayout(data)
+function ComputeSelectedBookLayout({data})
 {
     if(data.isSelected)
     {

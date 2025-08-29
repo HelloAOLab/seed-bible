@@ -14,7 +14,7 @@ let {duration = 0.15} = that ?? {};
 const {speedMultiplier = 1, isInstantaneous = false} = that ?? {};
 duration = isInstantaneous ? 0 : (duration/speedMultiplier);
 thisBot.StopOpacityTransition();
-const infoLabelUsersColor = await InstanceManager.UpdateUsersColorOnElement({element: thisBot});
+const infoLabelUsersColor = await BibleVizUtils.Functions.TryHideUsersColorOnPiece({element: thisBot});
 const { infoLabel, infoLabelTail, infoLabelDate} = thisBot.GetLabelElements();
 const easing = {type: "sinusoidal", mode: "inout"};
 try

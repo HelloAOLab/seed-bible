@@ -8,10 +8,10 @@
 const chapterData = BibleStackManager.GetPieceData({piece: thisBot});
 const chunks = [];
 const versesPerChunk = 12;
-let chunksCount = Math.floor(chapterData.elementInfo.amountOfVerses / versesPerChunk);
-let remainingVerses = chapterData.elementInfo.amountOfVerses;
+let chunksCount = Math.floor(chapterData.pieceInfo.amountOfVerses / versesPerChunk);
+let remainingVerses = chapterData.pieceInfo.amountOfVerses;
 let currentVerseNumber = 1;
-if((chapterData.elementInfo.amountOfVerses - (versesPerChunk * chunksCount)) > 0) chunksCount++
+if((chapterData.pieceInfo.amountOfVerses - (versesPerChunk * chunksCount)) > 0) chunksCount++
 for(let i = 0; i < chunksCount; i++)
 {
     const chunk = ObjectPooler.GetObjectFromPool({tag: BibleVizUtils.Data.tags.ObjectPoolTags.StackChunkOfVerses});

@@ -21,7 +21,7 @@ const focusOnRotation = {x: 1.01229, y:0.5};
 const cameraFocusDuration = 1;
 
 const bookPosition = getBotPosition(book, dimension);
-const { selectedBookHeight } = ComputeSelectedBookLayout(bookData);
+const { selectedBookHeight } = await thisBot.ComputeSelectedBookLayout({data: bookData});
 let fixedPosition = new Vector3(bookPosition.x, bookPosition.y, bookPosition.z + (selectedBookHeight/2))
 if(bookData.parentDataIds.stackBibleId)
 {

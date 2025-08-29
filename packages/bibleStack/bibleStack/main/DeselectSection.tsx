@@ -18,7 +18,7 @@ const sectionDesiredScale = 1;
 const sectionDesiredFormOpacity = 1;
 const duration = 0.5;
 const easing = {type: 'sinusoidal', mode: 'inout'}
-const infoLabelTransformer = BibleVizUtils.Functions.GetCurrentInfoLabelTransformer({ownerBot: sectionData.shadow});
+const infoLabelTransformer = BibleVizUtils.Functions.GetCurrentInfoLabelTransformer(sectionData.shadow);
 const selectedBooksData = sectionData.childrenData.flat().filter((bookData) => {return bookData.isActive && bookData.isSelected})
 
 thisBot.vars.lastInteractedStackSectionData = sectionData;

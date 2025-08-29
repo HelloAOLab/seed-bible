@@ -8,7 +8,7 @@ const fixedArrangement = {
             color: testament.color,
             sections: testament.sections.map((section) => {
                 const amountOfChaptersInSection = thisBot.GetAmountOfChaptersInSection({section: section.books.map((book) => {return {commonName: book.name}})})
-                const sectionDesiredScaleZ = amountOfChaptersInSection * BibleVizUtils.Data.tags.StackElementMeasurements.SectionDesiredScaleZRatio;
+                const sectionDesiredScaleZ = amountOfChaptersInSection * BibleVizUtils.Data.tags.StackPieceMeasurements.SectionDesiredScaleZRatio;
                 const sectionAvailableSpace = sectionDesiredScaleZ - (BibleVizUtils.Data.tags.StackSpacing.BetweenBooks * (section.books.length + 1));
                 const sectionExplodedViewScaleZ = sectionDesiredScaleZ * 2;
 

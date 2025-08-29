@@ -1,3 +1,1 @@
-const {string} = that;
-
-return string.charAt(0).toUpperCase() + string.slice(1);
+return that.charAt(0).toUpperCase() + that.slice(1);

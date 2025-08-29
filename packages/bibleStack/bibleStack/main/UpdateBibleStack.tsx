@@ -31,7 +31,7 @@ if(!isBibleEmpty)
     nextPositionZ += BibleVizUtils.Data.tags.StackSpacing.BetweenArrangements;
     for(const testamentData of stackStructure)
     {
-        const {testamentDeltaPositionZ, newTestamentAnimations} = thisBot.HandleTestamentDataInStack({isInstantaneous, testamentData, desiredPositionZ: nextPositionZ, dimension, duration, easing, speedMultiplier});
+        const {testamentDeltaPositionZ, newTestamentAnimations} = await thisBot.HandleTestamentDataInStack({isInstantaneous, testamentData, desiredPositionZ: nextPositionZ, dimension, duration, easing, speedMultiplier});
         animations.push(...newTestamentAnimations)
         nextPositionZ += testamentDeltaPositionZ;
         if(isCrossInMiddle && stackStructure.indexOf(testamentData) === 0)
@@ -105,7 +105,8 @@ else
     )
 }
 
-await Promise.allSettled(animations);
+// await Promise.allSettled(animations);
+await Promise.all(animations);
 
 return true;
 

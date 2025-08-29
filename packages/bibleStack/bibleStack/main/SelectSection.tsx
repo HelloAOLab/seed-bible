@@ -222,7 +222,7 @@ try
         
 
         await Promise.allSettled([
-            ...firstSequenceAnimationsObjects.map((animateTagObject) => {return BibleVizUtils.Functions.GetAnimateTagFromObject(animateTagObject)}),
+            ...firstSequenceAnimationsObjects.map((animateTagObject) => {return BibleVizUtils.Functions.GetAnimateTagFromObject({obj: animateTagObject})}),
             os.focusOn({x: desiredFocusOnPosition.x, y: desiredFocusOnPosition.y}, {
                 duration: cameraFocusDuration,
                 easing: {type: "sinusoidal", mode: "inout"},
@@ -233,7 +233,7 @@ try
     }
     
     if(isInstantaneous) secondSequenceAnimationsObjects.forEach((setTagObject) => {BibleVizUtils.Functions.GetSetTagFromObject(setTagObject)})
-    else await Promise.all(secondSequenceAnimationsObjects.map((animateTagObject) => {return BibleVizUtils.Functions.GetAnimateTagFromObject(animateTagObject)}))
+    else await Promise.all(secondSequenceAnimationsObjects.map((animateTagObject) => {return BibleVizUtils.Functions.GetAnimateTagFromObject({obj: animateTagObject})}))
     
     setTagMask(section, 'color', 'clear');
     setTagMask(section, 'pointable', false);
@@ -269,7 +269,7 @@ for(const bookDataArr of sectionData.childrenData)
         {
             const groupBookIndex = bookDataArr.indexOf(bookData);
             const bookLayout = layout[groupBookIndex];
-            ({groupBookScaleX, groupBookScaleY, groupBookPositionX, groupBookPositionY, groupBookLayoutPositionX, groupBookLayoutPositionY} = GetGroupBookData(bookLayout, sectionPosition));
+            ({groupBookScaleX, groupBookScaleY, groupBookPositionX, groupBookPositionY, groupBookLayoutPositionX, groupBookLayoutPositionY} = BibleVizUtils.Functions.GetGroupBookData({bookLayout, sectionPosition}));
         }
         const book = ObjectPooler.GetObjectFromPool({tag: BibleVizUtils.Data.tags.ObjectPoolTags.StackBook});
         const bookMod = {

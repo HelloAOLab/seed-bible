@@ -6,7 +6,7 @@
     * book.Highlight();
 */
 
-import {BookData} from "bibleVizUtils.classes.BookData"
+import {StackBookData} from "bibleVizUtils.classes.StackBookData"
 
 const {speedMultiplier = 1, isInstantaneous = false} = that ?? {}
 const bookData = BibleStackManager.GetPieceData({piece: thisBot});
@@ -18,9 +18,9 @@ const scales = await thisBot.GetHighlightScales();
 const highlightAditionalScale = 0.1;
 const currentDate = new Date();
 const currentYear = currentDate.getFullYear();
-const actualInfo = (bookData instanceof BookData) ? bookData.elementInfo : bookData.elementBookInfo
+const actualInfo = (bookData instanceof StackBookData) ? bookData.pieceInfo : bookData.pieceBookInfo
 const {relativeDateRange} = BibleVizUtils.Data.tags.booksStaticInfo[actualInfo.commonName];
-const date = InstanceManager.GetCurrentLabelDateFormat() === BibleVizUtils.Data.tags.LabelDateFormats.Relative ? (
+const date = BibleVizUtils.Functions.GetCurrentLabelDateFormat() === BibleVizUtils.Data.tags.LabelDateFormats.Relative ? (
     `${Math.abs(relativeDateRange.min)}${(relativeDateRange.min != relativeDateRange.max) ? `-${Math.abs(relativeDateRange.max)}` : ``} ${relativeDateRange.min < 0 ? "B.C." : "A.D."}`
 ) : (
     `${currentYear - relativeDateRange.min}${relativeDateRange.min != relativeDateRange.max ? `-${currentYear - relativeDateRange.max}` : ``} years ago`
@@ -44,7 +44,7 @@ if(bookData.parentDataIds.bibleId)
         .filter((elementData) => {return elementData.parentDataIds.bibleId && elementData.parentDataIds.bibleId === bookData.parentDataIds.bibleId});
     setTagMask(thisBot, "formRenderOrder", (-activeElementsInStack.length - 20));
 }
-if(bookData instanceof BookData && !bookData.isSelected)
+if(bookData instanceof StackBookData && !bookData.isSelected)
 {
     setTagMask(thisBot, "strokeColor", "#FFFFFF");
 }

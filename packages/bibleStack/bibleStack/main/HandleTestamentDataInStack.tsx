@@ -10,7 +10,7 @@ if(testamentData.isSplitIntoSections)
     {
         if(sectionData.isActive)
         {
-            const {sectionDeltaPositionZ, newSectionAnimations} = thisBot.HandleSectionDataInStack({sectionData, desiredPositionZ: nextPositionZ, dimension, duration, easing, speedMultiplier, isInstantaneous})
+            const {sectionDeltaPositionZ, newSectionAnimations} = await thisBot.HandleSectionDataInStack({sectionData, desiredPositionZ: nextPositionZ, dimension, duration, easing, speedMultiplier, isInstantaneous})
             newTestamentAnimations.push(...newSectionAnimations);
             nextPositionZ += (sectionDeltaPositionZ + BibleVizUtils.Data.tags.StackSpacing.BetweenSections);
         }

@@ -18,9 +18,9 @@ let {
     desiredPositionX,
     desiredPositionY,
     desiredPositionZ
-} = params;
+} = that;
 
-const {chapterColumns, chapterRows, selectedBookHeight} = thisBot.ComputeSelectedBookLayout({data: bookData});
+const {chapterColumns, chapterRows, selectedBookHeight} = await thisBot.ComputeSelectedBookLayout({data: bookData});
 const bookPosition = getBotPosition(bookData.piece, dimension);
 let absBookDesiredPosition;
 let halfInitialBookScales;
