@@ -22,7 +22,7 @@ const {
     tag
 } = that;
 startingColor = startingColor ?? BibleVizUtils.Functions.HexToRgb({hexColor: bot.masks[tag] ?? bot.tags[tag]});
-thisBot.StopColorLerp({bot, tag});
+thisBot.StopLerp({bot, tag});
 if(startingColor === endingColor) return true;
 
 return new Promise((resolve, reject) => {

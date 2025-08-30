@@ -4,5 +4,5 @@
     * chunkOfVerses.StopHighlightTransition();
 */
 
-ColorLerper.StopColorLerp({bot: thisBot,  tag: BibleVizUtils.Data.tags.InterpolatableColorTags.Color});
+ColorLerper.StopLerp({bot: thisBot,  tag: BibleVizUtils.Data.tags.InterpolatableColorTags.Color});
 animateTag(thisBot, 'scaleZ', null);

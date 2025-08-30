@@ -4,4 +4,4 @@
     * bibleTransformer.OnLabelInteracted()
 */
 
-shout("OnStackCoverClicked", {bibleId: thisBot.tags.bibleId});
+shout("OnStackCoverClicked", {stackBibleId: thisBot.tags.stackBibleId});

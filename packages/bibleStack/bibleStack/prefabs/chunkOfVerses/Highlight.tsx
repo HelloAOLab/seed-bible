@@ -10,7 +10,7 @@ const easing = {type: 'sinusoidal', mode: 'inout'}
 const chapterData = thisBot.masks.chapterDataId ? BibleStackManager.GetChapterDataById({id: thisBot.masks.chapterDataId}) :
                     BibleLayout3DManager.GetChapterDataById({id: thisBot.masks.chapterDataId});
 const chunkHighlightInfo = chapterData.HighlightsInfo.find((currHighlightInfo) => {return currHighlightInfo.key == thisBot.masks.chunkPath})
-const rgbTargetColor = BibleVizUtils.Functions.HexToRgb(BibleVizUtils.Data.masks.isInHistoryMode ? BibleVizUtils.Functions.GetHistoryColor({piece: thisBot}) : (chunkHighlightInfo?.color ?? thisBot.tags.highlightedColor));
+const rgbTargetColor = BibleVizUtils.Functions.HexToRgb({hexColor: BibleVizUtils.Data.masks.isInHistoryMode ? BibleVizUtils.Functions.GetHistoryColor({piece: thisBot}) : (chunkHighlightInfo?.color ?? thisBot.tags.highlightedColor)});
 thisBot.StopHighlightTransition();
 
 await Promise.all([

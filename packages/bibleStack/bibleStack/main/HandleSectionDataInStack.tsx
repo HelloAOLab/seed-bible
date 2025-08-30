@@ -96,7 +96,7 @@ if(sectionData.isSplitIntoBooks)
             if(!infoLabelTransformer && sectionData.isInExplodedView && !(bibleData && bibleData.bibleType === BibleVizUtils.Data.tags.BibleType.PlatformerGame))
             {
                 const label = BibleVizUtils.Functions.CapitalizeFirstLetter(sectionData.piece.tags.sectionName.split("-").join(" "));
-                const {infoLabelTransformer} = thisBot.BibleVizUtils.Functions.GetLabelForPiece({
+                const {infoLabelTransformer} = BibleVizUtils.Functions.GetLabelForPiece({
                     piece: sectionData.shadow, 
                     label, 
                     color: sectionData.highlightColor ?? sectionData.piece.tags.labelTextColor,
@@ -132,7 +132,7 @@ if(sectionData.isSplitIntoBooks)
                     if(!infoLabelTransformer && sectionData.isInExplodedView && !(bibleData && bibleData.bibleType === BibleVizUtils.Data.tags.BibleType.PlatformerGame))
                     {
                         const label = BibleVizUtils.Functions.CapitalizeFirstLetter(sectionData.piece.tags.sectionName.split("-").join(" "));
-                        const {infoLabelTransformer} = thisBot.BibleVizUtils.Functions.GetLabelForPiece({
+                        const {infoLabelTransformer} = BibleVizUtils.Functions.GetLabelForPiece({
                             piece: sectionData.shadow, 
                             label, 
                             color: sectionData.highlightColor ?? sectionData.piece.tags.labelTextColor,
@@ -180,7 +180,7 @@ if(sectionData.isSplitIntoBooks)
             if(!(bibleData && bibleData.bibleType === BibleVizUtils.Data.tags.BibleType.PlatformerGame))
             {
                 const label = BibleVizUtils.Functions.CapitalizeFirstLetter(sectionData.piece.tags.sectionName.split("-").join(" "));
-                const {infoLabelTransformer} = thisBot.BibleVizUtils.Functions.GetLabelForPiece({
+                const {infoLabelTransformer} = BibleVizUtils.Functions.GetLabelForPiece({
                     piece: sectionShadow, 
                     label, 
                     color: sectionData.highlightColor ?? sectionData.piece.tags.labelTextColor,
@@ -233,7 +233,7 @@ else
         const isSectionBookDataInstance = sectionData instanceof StackSectionBookData || sectionData.constructor.name === "StackSectionBookData"; // instanceof not working the first time for some reason so checking by name;
         if(isSectionBookDataInstance)
         {
-            const {newBookAnimations} = thisBot.HandleBookDataInStack({
+            const {newBookAnimations} = await thisBot.HandleBookDataInStack({
                 dimension,
                 duration,
                 bookData: sectionData,

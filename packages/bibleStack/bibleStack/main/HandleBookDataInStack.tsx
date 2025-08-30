@@ -66,7 +66,7 @@ if(sectionData)
             marginToAdd += (BibleVizUtils.Data.tags.StackSpacing.SelectedBookMargin*2);
             if(bookDataIndex > 0)
             {
-                const previousValidGroupBookData = thisBot.FindPreviousValidGroupBookData({arr: bookDataArr, currIndex: bookDataIndex});
+                const previousValidGroupBookData = BibleVizUtils.Functions.FindPreviousValidGroupBookData({arr: bookDataArr, currentIndex: bookDataIndex});
                 if(previousValidGroupBookData)
                 {
                     const tempBookDesiredPositionZ = previousValidGroupBookData.piece.tags.desiredPositionZ + previousValidGroupBookData.piece.tags.desiredScaleZ + BibleVizUtils.Data.tags.StackSpacing.SelectedBookMargin

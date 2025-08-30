@@ -4,5 +4,5 @@
     * shadow.OnReleased();
 */
 
-thisBot.tags.bibleId = null;
+thisBot.tags.stackBibleId = null;
 thisBot.tags.transformer = null;

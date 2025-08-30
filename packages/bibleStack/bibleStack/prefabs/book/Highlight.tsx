@@ -37,11 +37,11 @@ const {infoLabelTransformer} = await BibleVizUtils.Functions.GetLabelForPiece({
 });
 setTagMask(thisBot, "isHighlighting", true);
 setTagMask(thisBot, "isHighlighted", true);
-if(bookData.parentDataIds.bibleId)
+if(bookData.parentDataIds.stackBibleId)
 {
     const activeElementsInStack = getBots(byTag("isStackPiece", true), byTag(dimension, true))
         .map((piece) => {return BibleStackManager.GetPieceData({piece})})
-        .filter((elementData) => {return elementData.parentDataIds.bibleId && elementData.parentDataIds.bibleId === bookData.parentDataIds.bibleId});
+        .filter((elementData) => {return elementData.parentDataIds.stackBibleId && elementData.parentDataIds.stackBibleId === bookData.parentDataIds.stackBibleId});
     setTagMask(thisBot, "formRenderOrder", (-activeElementsInStack.length - 20));
 }
 if(bookData instanceof StackBookData && !bookData.isSelected)

@@ -9,7 +9,7 @@
     * @param {Bool} that.isAside - Determines if the label will be positioned on top or on the side of the piece
     * @param {Bool} that.isAnimatable - Determines if the label will be able to make the shake animation while active
     * @example
-    * thisBot.BibleVizUtils.Functions.GetLabelForPiece({piece: thisBot, label: someText, color: '#FFFFFF', labelColor: '#000000', dimension: 'home', isAside: true, isAnimatable: false});
+    * BibleVizUtils.Functions.GetLabelForPiece({piece: thisBot, label: someText, color: '#FFFFFF', labelColor: '#000000', dimension: 'home', isAside: true, isAnimatable: false});
 */
 
 const {piece, label, date, color, labelColor, dimension, labelPositioning, isAnimatable, targetOpacity = 1} = that;

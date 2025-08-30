@@ -30,7 +30,7 @@ if(chapterData)
         const labelText = `${thisBot.tags.parentBookName} ${thisBot.tags.chapterNumber}`
         const chapterMargin = 0.5;
         duration = 0.15;
-        rgbTargetColor = BibleVizUtils.Functions.HexToRgb({hecColor: BibleVizUtils.Data.masks.isInHistoryMode ? BibleVizUtils.Functions.GetHistoryColor({piece: thisBot}) : (chapterData.highlightColor ?? thisBot.tags.initialColor)});
+        rgbTargetColor = BibleVizUtils.Functions.HexToRgb({hexColor: BibleVizUtils.Data.masks.isInHistoryMode ? BibleVizUtils.Functions.GetHistoryColor({piece: thisBot}) : (chapterData.highlightColor ?? thisBot.tags.initialColor)});
 
         await Promise.all([
             ColorLerper.LerpTag({endingColor: rgbTargetColor, durationInSeconds: duration, bot: chapterData.piece,  tag: BibleVizUtils.Data.tags.InterpolatableColorTags.Color}),

@@ -128,7 +128,7 @@ switch(shape)
     case BibleVizUtils.Data.tags.BookShapeType.Selected:
     {
         await Promise.allSettled([
-            prevShape !== BibleVizUtils.Data.tags.BookShapeType.RegularSelected ? ColorLerper.LerpTag({startingColor: BibleVizUtils.Functions.HexToRgb(thisBot.masks.color ?? thisBot.tags.color), endingColor: [255, 255, 255], durationInSeconds: duration, bot: thisBot, tag: BibleVizUtils.Data.tags.InterpolatableColorTags.Color}) : null,
+            prevShape !== BibleVizUtils.Data.tags.BookShapeType.RegularSelected ? ColorLerper.LerpTag({startingColor: BibleVizUtils.Functions.HexToRgb({hexColor: thisBot.masks.color ?? thisBot.tags.color}), endingColor: [255, 255, 255], durationInSeconds: duration, bot: thisBot, tag: BibleVizUtils.Data.tags.InterpolatableColorTags.Color}) : null,
             animateTag(thisBot, {
                 fromValue: {
                     scaleX: bookScales.x,

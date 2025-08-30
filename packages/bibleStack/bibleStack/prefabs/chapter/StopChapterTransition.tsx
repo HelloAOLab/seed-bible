@@ -17,4 +17,4 @@ if(infoLabelTransformer)
     animateTag(infoLabelUsersColor, 'labelOpacity', null);
     animateTag(infoLabelUsersColor, 'formOpacity', null);
 }
-ColorLerper.StopColorLerp({bot: thisBot,  tag: BibleVizUtils.Data.tags.InterpolatableColorTags.Color});
+ColorLerper.StopLerp({bot: thisBot,  tag: BibleVizUtils.Data.tags.InterpolatableColorTags.Color});

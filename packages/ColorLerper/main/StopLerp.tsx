@@ -7,7 +7,7 @@
  * @param {string} that.tag - The tag associated with the color lerp.
  *
  * @example
- * LerpColorManager.StopColorLerp({bot: someBot, tag: InterpolatableColorTags.color});
+ * LerpColorManager.StopLerp({bot: someBot, tag: InterpolatableColorTags.color});
  */
 
 const {bot, tag} = that;

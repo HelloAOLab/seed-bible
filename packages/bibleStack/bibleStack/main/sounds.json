@@ -41,5 +41,65 @@
         "https://auth-aux-aobot-prod-filesbucket-141297942820.s3.amazonaws.com/aoBot/ec8b4e57f99fa394943d75b5a1b0868a08b3b19e777df542a941d444e92ccf97.mpga",
         "https://auth-aux-aobot-prod-filesbucket-141297942820.s3.amazonaws.com/aoBot/b9d883188be8cc81416ae6536502f0f1c4fd701b05772de0e60fcd01083c8ddb.mpga",
         "https://auth-aux-aobot-prod-filesbucket-141297942820.s3.amazonaws.com/aoBot/0ae29bd00b160b07e956d39f164d34b69a742553106b057fe9346b7b8c954b2a.mpga"
-    ]}
+    ]},
+    {
+        "name": "String_06c",
+        "URL": "https://auth-aux-aobot-prod-filesbucket-141297942820.s3.amazonaws.com/mySounds/f59af28843c845ac1e896fced3e2ca327c47c929ff3cd2cb02f1da88308b34ef.wav"
+    },
+    {
+        "name": "String_08f",
+        "URL": "https://auth-aux-aobot-prod-filesbucket-141297942820.s3.amazonaws.com/myRecord/08c6a5f59ece11eaee8f170c63f0b0fcf8ac07118c88d92677dac0102345dbbb.oga"
+    },
+    {
+        "name": "String_09g",
+        "URL": "https://auth-aux-aobot-prod-filesbucket-141297942820.s3.amazonaws.com/mySounds/392b8e1ef3873c0c29bff06b6ddfc2214430a4dcf2ad7e80ca24f21aa6408aaf.wav"
+    },
+    {
+        "name": "String_11c",
+        "URL": "https://auth-aux-aobot-prod-filesbucket-141297942820.s3.amazonaws.com/mySounds/c3e2dbe171cd2c42e62ffd0e23705d18146d4fda125e5c3be89bc610350f32ae.wav"
+    },
+    {
+        "name": "String_10a",
+        "URL": "https://auth-aux-aobot-prod-filesbucket-141297942820.s3.amazonaws.com/mySounds/7b4aa96817b078dca915b652a3b9e6320ef72254c134155b2f5baa6e8da7e972.wav"
+    },
+    {
+        "name": "String_01c",
+        "URL": "https://auth-aux-aobot-prod-filesbucket-141297942820.s3.amazonaws.com/mySounds/e6204dbbb645961cfbf2cc0ecdf1ebc6090235fac765fc8004788ba0f1f7a2a8.wav"
+    },
+    {
+        "name": "String_03f",
+        "URL": "https://auth-aux-aobot-prod-filesbucket-141297942820.s3.amazonaws.com/mySounds/0e2e56937ca10654da2bf1e0266954cc9936d4bd622bda736cfd6c04cced8b1a.wav"
+    },
+    {
+        "name": "String_04g",
+        "URL": "https://auth-aux-aobot-prod-filesbucket-141297942820.s3.amazonaws.com/mySounds/c004e0551fbbb7641dabdff175f84f57ba53633639a4ce2b1206d5fb2f1058f1.wav"
+    },
+    {
+        "name": "String_05a",
+        "URL": "https://auth-aux-aobot-prod-filesbucket-141297942820.s3.amazonaws.com/myRecord/d8993e4a1c6c7c3956285ee169786f362d1cd7d2114e8afbf8159fd63e45f4ec.oga"
+    },
+    {
+        "name": "String_13f",
+        "URL": "https://auth-aux-aobot-prod-filesbucket-141297942820.s3.amazonaws.com/mySounds/5a38ae73a484505930301b2acedb8725b249cc6cbbbed9db3f2cfec6a771f533.wav"
+    },
+    {
+        "name": "String_14g",
+        "URL": "https://auth-aux-aobot-prod-filesbucket-141297942820.s3.amazonaws.com/mySounds/013a287e8fe8c0802503297b783dcdaf98bc1521ba4448c555df45c9f72961a7.wav"
+    },
+    {
+        "name": "String_07e",
+        "URL": "https://auth-aux-aobot-prod-filesbucket-141297942820.s3.amazonaws.com/myRecord/244619f89a32aa196c936bb84b314a1a8ddac483404b7cd022d177a1dd69726d.oga"
+    },
+    {
+        "name": "String_02e",
+        "URL": "https://auth-aux-aobot-prod-filesbucket-141297942820.s3.amazonaws.com/mySounds/a3812fe6f95c8ec6cb60aa99ac73cf9c082c6ea6a50b58a89b689e721e5713be.wav"
+    },
+    {
+        "name": "String_12e",
+        "URL": "https://auth-aux-aobot-prod-filesbucket-141297942820.s3.amazonaws.com/mySounds/9623651e135dc91ac13cfbe63bee2f3acbbe4788174076aa6f6a8c84fda261d5.wav"
+    },
+    {
+        "name": "String_16c",
+        "URL": "https://auth-aux-aobot-prod-filesbucket-141297942820.s3.amazonaws.com/mySounds/03a10aa1283ced90d56595891542927fcbb0296e5419272828ed42a9962c982a.wav"
+    }
 ]

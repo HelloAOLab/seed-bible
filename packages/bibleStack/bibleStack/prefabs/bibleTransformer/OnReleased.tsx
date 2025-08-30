@@ -4,4 +4,4 @@
     * bibleTransformer.OnReleased()
 */
 
-thisBot.tags.bibleId = null;
+thisBot.tags.stackBibleId = null;

@@ -36,17 +36,17 @@ if(activeChaptersData.length > 0)
             const chapterScales = BibleVizUtils.Functions.GetBotScales(chapterData.piece);
             if(setX)
             {
-                xPosition = (bookData.parentDataIds.bibleId ? bibleTransformerPosition.x : 0) + bookPosition.x - (bookScales.x/2) + (chapterData.piece.tags.chapterWidth/2) + (chapterHorizontalGap/2) + ((chapterData.piece.tags.chapterWidth + chapterHorizontalGap) * column);
+                xPosition = (bookData.parentDataIds.stackBibleId ? bibleTransformerPosition.x : 0) + bookPosition.x - (bookScales.x/2) + (chapterData.piece.tags.chapterWidth/2) + (chapterHorizontalGap/2) + ((chapterData.piece.tags.chapterWidth + chapterHorizontalGap) * column);
                 setTagMask(chapterData.piece, dimension + "X", xPosition);
             }
             if(setY)
             {
-                yPosition = (bookData.parentDataIds.bibleId ? bibleTransformerPosition.y : 0) + bookPosition.y - (bookScales.y/2) + chapterData.piece.tags.gapY + (chapterScales.y/2) - (chapterData.isSelected ? BibleVizUtils.Data.tags.StackPieceMeasurements.ChapterFrontSelectedDepth : 0);
+                yPosition = (bookData.parentDataIds.stackBibleId ? bibleTransformerPosition.y : 0) + bookPosition.y - (bookScales.y/2) + chapterData.piece.tags.gapY + (chapterScales.y/2) - (chapterData.isSelected ? BibleVizUtils.Data.tags.StackPieceMeasurements.ChapterFrontSelectedDepth : 0);
                 setTagMask(chapterData.piece, dimension + "Y", yPosition);
             }
             if(setZ)
             {
-                zPosition = (bookData.parentDataIds.bibleId ? (bibleTransformerPosition.z + 1) : 0) + bookPosition.z + bookScales.z - (chapterData.piece.tags.chapterHeight) - (chapterVerticalGap/2) - ((chapterData.piece.tags.chapterHeight + chapterVerticalGap) * row);
+                zPosition = (bookData.parentDataIds.stackBibleId ? (bibleTransformerPosition.z + 1) : 0) + bookPosition.z + bookScales.z - (chapterData.piece.tags.chapterHeight) - (chapterVerticalGap/2) - ((chapterData.piece.tags.chapterHeight + chapterVerticalGap) * row);
                 setTagMask(chapterData.piece, dimension + "Z", zPosition);
             }
         }

@@ -18,7 +18,7 @@ const easing = {type: "sinusoidal", mode: "inout"};
 const sectionPosition = getBotPosition(sectionData.piece, dimension);
 const animations = [];
 
-const {newSectionAnimations} = thisBot.HandleSectionDataInStack({isInstantaneous, sectionData, desiredPositionZ: sectionPosition.z, dimension, duration, easing})
+const {newSectionAnimations} = await thisBot.HandleSectionDataInStack({isInstantaneous, sectionData, desiredPositionZ: sectionPosition.z, dimension, duration, easing})
 animations.push(...newSectionAnimations);
 
 await Promise.allSettled(animations);

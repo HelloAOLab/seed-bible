@@ -18,7 +18,7 @@ const easing = {type: "sinusoidal", mode: "inout"};
 const testamentPosition = getBotPosition(testamentData.piece, dimension);
 const animations = [];
 
-const {newTestamentAnimations} = thisBot.HandleTestamentDataInStack({isInstantaneous, testamentData, desiredPositionZ: testamentPosition.z, dimension, duration, easing});
+const {newTestamentAnimations} = await thisBot.HandleTestamentDataInStack({isInstantaneous, testamentData, desiredPositionZ: testamentPosition.z, dimension, duration, easing});
 animations.push(...newTestamentAnimations)
 
 await Promise.allSettled(animations);

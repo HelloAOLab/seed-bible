@@ -4,7 +4,7 @@
     * cover.OnReleased();
 */
 
-thisBot.tags.bibleId = null;
+thisBot.tags.stackBibleId = null;
 thisBot.tags.transformer = null;
 thisBot.tags.onDrag = null;
 thisBot.tags.onDragging = null;

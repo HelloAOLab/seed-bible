@@ -1,7 +1,7 @@
 if(thisBot.masks.isBibleAnimating) return false;
 setTagMask(thisBot, 'isBibleAnimating', true);
 const {testamentName, sectionName} = that;
-const {found} = thisBot.BibleVizUtils.Functions.GetSectionInfoPathByName({name: sectionName});
+const {found} = BibleVizUtils.Functions.GetSectionInfoPathByName({name: sectionName});
 if(found)
 {
     const sectionData = thisBot.vars.lastInteractedStackTestamentData?.childrenData.find((currSectionData) => {return currSectionData.pieceInfo.name === sectionName})

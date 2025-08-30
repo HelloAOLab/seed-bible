@@ -30,7 +30,7 @@ if(jarvis && !spawnPosition)
     spawnPosition = jarvisPosition;
     displayJarvisSpawnPieceAnimation = true
 }
-const {arrangementIndex, testamentIndex, sectionIndex, found} = thisBot.BibleVizUtils.Functions.GetSectionInfoPathByName({name});
+const {arrangementIndex, testamentIndex, sectionIndex, found} = BibleVizUtils.Functions.GetSectionInfoPathByName({name});
 if(found)
 {
     sectionData = await thisBot.CreateSection({arrangementIndex, testamentIndex, sectionIndex});

@@ -2,7 +2,7 @@ for(const bot of thisBot.vars.focusedBots)
 {
     const cone = getBot(byTag("isCone", true), byTag("parentId", bot.id));
     await animateTag([cone], "formOpacity", null);
-    LerpColorManager.StopColorLerp({bot, tag: InterpolatableColorTags.Color});
+    LerpColorManager.StopLerp({bot, tag: InterpolatableColorTags.Color});
     setTagMask(bot, "color", "#ffffff");
     destroy([cone]);
 

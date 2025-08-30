@@ -61,7 +61,7 @@ for(const testamentData of bibleData.childrenData)
             desiredExplodedViewScaleZ   : sectionData instanceof StackSectionBookData ? null : desiredScaleZ * (sectionData.pieceInfo.customExplodedViewScaleFactor ?? 2),
             labelOpacity                : 0,
             formOpacity                 : 0.7,
-            labelTextColor              : GetDarkerColor(sectionData.pieceInfo.color),
+            labelTextColor              : BibleVizUtils.Functions.GetDarkerColor({color: sectionData.pieceInfo.color}),
             transformer                 : thisBot.id,
             transformerLink             : `🔗${thisBot.id}`,
             customColorRange            : sectionData instanceof StackSectionBookData ? null : sectionData.pieceInfo.customColorRange,

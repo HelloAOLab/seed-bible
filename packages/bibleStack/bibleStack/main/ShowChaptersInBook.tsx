@@ -2,6 +2,7 @@ import {StackSectionBookData} from "bibleVizUtils.classes.StackSectionBookData"
 
 const {data, dimension} = that;
 
+const biggerChapter = BibleVizUtils.Functions.GetBiggerChapter();
 setTagMask(data.piece, "isShowingChapters", true);
 for(const chapterData of data.childrenData)
 {
@@ -10,7 +11,7 @@ for(const chapterData of data.childrenData)
     {
         const isSectionBookDataInstance = data instanceof StackSectionBookData || data.constructor.name === "StackSectionBookData";
         const chapter = ObjectPooler.GetObjectFromPool({tag: BibleVizUtils.Data.tags.ObjectPoolTags.StackChapter});
-        const chapterDeltaDepth = (data.piece.masks.scaleY - (chapter.tags.gapY*2) - BibleVizUtils.Data.tags.StackPieceMeasurements.MinChapterBackDepth) * (chapterData.pieceInfo.amountOfVerses / BibleVizUtils.Functions.GetBiggerChapter());
+        const chapterDeltaDepth = (data.piece.masks.scaleY - (chapter.tags.gapY*2) - BibleVizUtils.Data.tags.StackPieceMeasurements.MinChapterBackDepth) * (chapterData.pieceInfo.amountOfVerses / biggerChapter);
         const chapterMod = {
             [dimension]: true,
             [dimension + "X"]: 0,
@@ -33,6 +34,7 @@ for(const chapterData of data.childrenData)
             selectedScaleY: BibleVizUtils.Data.tags.StackPieceMeasurements.MinChapterBackDepth + chapterDeltaDepth + BibleVizUtils.Data.tags.StackPieceMeasurements.ChapterFrontSelectedDepth,
             label: (idx + 1) + ((isSectionBookDataInstance ? data.pieceBookInfo.startingIndex : data.pieceInfo.startingIndex) ?? 0),
         }
+
         chapter.OnSpawned({mod: chapterMod});
         chapterData.piece = chapter;
         chapterData.isInsideBible = data.isInsideBible;

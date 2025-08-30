@@ -106,7 +106,7 @@ if(elementsToShrink.length > 0)
             if(sectionShadows.length > 0)
             {
                 sectionShadows.forEach((piece) => {
-                    ReleaseLabelTransformerFromElement(piece);
+                    BibleVizUtils.Functions.ReleaseLabelTransformerFromPiece({piece});
                     ObjectPooler.ReleaseObject({obj: piece, tag: piece.tags.poolTag});
                 })
             }

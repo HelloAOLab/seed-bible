@@ -12,7 +12,7 @@
  */
 
 const {sectionName, bookName} = that;
-const {arrangementIndex, testamentIndex, sectionIndex, found} = thisBot.BibleVizUtils.Functions.GetSectionInfoPathByName({name: sectionName});
+const {arrangementIndex, testamentIndex, sectionIndex, found} = BibleVizUtils.Functions.GetSectionInfoPathByName({name: sectionName});
 if(found && BibleVizUtils.Data.vars.fixedArrangementsInfo[arrangementIndex].testaments[testamentIndex].sections[sectionIndex].books.length > 1)
 {
     const {sectionData} = await thisBot.SpawnSection({name: sectionName});

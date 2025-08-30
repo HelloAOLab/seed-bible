@@ -9,7 +9,7 @@
 if(thisBot.tags.isBaseStackBook) return;
 const {bibleId} = that ?? {};
 const bookData = BibleStackManager.GetPieceData({piece: thisBot});
-if(!thisBot.masks.isShowingChapters || (bibleId && (!bookData.parentDataIds.bibleId || bibleId !== bookData.parentDataIds.bibleId))) return;
+if(!thisBot.masks.isShowingChapters || (bibleId && (!bookData.parentDataIds.stackBibleId || bibleId !== bookData.parentDataIds.stackBibleId))) return;
 // const dimension = os.getCurrentDimension();
 setTagMask(thisBot, "isShowingChapters", false);
 thisBot.vars.previousHighlightedChapterData = null;

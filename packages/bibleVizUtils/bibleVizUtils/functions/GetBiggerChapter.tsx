@@ -6,14 +6,14 @@
     * const biggerChapter = thisBot.GetBiggerChapter();
 */
 
-const biggerChapter = thisBot.masks.biggerChapterInBible;
+let biggerChapter = thisBot.masks.biggerChapterInBible;
 if(!biggerChapter)
 {
     const arrangementsInfo = BibleVizUtils.Data.vars.fixedArrangementsInfo.slice();
     const arrangementIndex = BibleVizUtils.Functions.GetCurrentArrangementIndex();
     const arrangement = arrangementsInfo[arrangementIndex];
     
-    let biggerChapter = 0;
+    biggerChapter = 0;
     let chapterInfo;
     
     for(const testament of arrangement.testaments)
