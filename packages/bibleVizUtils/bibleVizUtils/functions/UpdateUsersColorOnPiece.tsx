@@ -34,7 +34,7 @@ fixedElements.forEach((fixedElement) => {
             userColorForm = BibleVizUtils.Data.tags.UsersColorValues.GroundedElementColorForm;
         break;
     }
-    const pieceSelections = thisBot.GetUsersSelectionForElement({piece: selectionsElement})
+    const pieceSelections = thisBot.GetUsersSelectionForPiece({piece: selectionsElement})
     const fixedSelections = pieceSelections.filter((selection) => {return selection.userId != getID(configBot)})
     if(fixedSelections.length > 0)
     {

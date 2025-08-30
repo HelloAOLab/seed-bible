@@ -1,6 +1,6 @@
 const dimension = os.getCurrentDimension();
 const myLobbyId = getBot('lobbyUserBot', true)?.id;
-const elementSelections = InstanceManager.GetUsersSelectionForElement({piece: thisBot}).filter((userSelection) => {
+const elementSelections = InstanceManager.GetUsersSelectionForPiece({piece: thisBot}).filter((userSelection) => {
     return userSelection.lobbyId != myLobbyId
 })
 

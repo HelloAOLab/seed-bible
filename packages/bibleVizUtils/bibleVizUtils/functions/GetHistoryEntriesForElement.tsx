@@ -3,18 +3,18 @@ const {piece} = that;
 let key;
 switch(piece.tags.typeOfPiece)
 {
-    case BibleVizUtils.Data.tags.BiblePieceType.Testament: 
+    case BibleVizUtils.Data.tags.BiblePieceType.StackTestament: 
         key = piece.tags.testamentName; 
     break;
-    case BibleVizUtils.Data.tags.BiblePieceType.Section: 
+    case BibleVizUtils.Data.tags.BiblePieceType.StackSection: 
         key = piece.tags.sectionName; 
     break;
     case BibleVizUtils.Data.tags.BiblePieceType.SectionBook:
-    case BibleVizUtils.Data.tags.BiblePieceType.Book:
+    case BibleVizUtils.Data.tags.BiblePieceType.StackBook:
     case BibleVizUtils.Data.tags.BiblePieceType.LayoutBook:
         key = piece.tags.bookName; 
     break;
-    case BibleVizUtils.Data.tags.BiblePieceType.Chapter:
+    case BibleVizUtils.Data.tags.BiblePieceType.StackChapter:
     case BibleVizUtils.Data.tags.BiblePieceType.LayoutChapter:
         key = `${piece.tags.parentBookName} ${piece.tags.chapterNumber}`;
     break;
@@ -27,6 +27,6 @@ switch(piece.tags.typeOfPiece)
     default: break;
 }
 
-const actualTypeOfElement = (piece.tags.typeOfPiece === BibleVizUtils.Data.tags.BiblePieceType.LayoutBook ||piece.tags.typeOfPiece ===  BibleVizUtils.Data.tags.BiblePieceType.SectionBook) ? BibleVizUtils.Data.tags.BiblePieceType.Book : 
-    (piece.tags.typeOfPiece === BibleVizUtils.Data.tags.BiblePieceType.LayoutChapter) ? BibleVizUtils.Data.tags.BiblePieceType.Chapter : piece.tags.typeOfPiece
+const actualTypeOfElement = (piece.tags.typeOfPiece === BibleVizUtils.Data.tags.BiblePieceType.LayoutBook ||piece.tags.typeOfPiece ===  BibleVizUtils.Data.tags.BiblePieceType.SectionBook) ? BibleVizUtils.Data.tags.BiblePieceType.StackBook : 
+    (piece.tags.typeOfPiece === BibleVizUtils.Data.tags.BiblePieceType.LayoutChapter) ? BibleVizUtils.Data.tags.BiblePieceType.StackChapter : piece.tags.typeOfPiece
 return thisBot.GetHistoryEntries({typeOfPiece: actualTypeOfElement, key});

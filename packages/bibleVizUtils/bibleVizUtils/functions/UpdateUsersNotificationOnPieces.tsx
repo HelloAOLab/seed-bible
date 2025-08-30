@@ -13,7 +13,7 @@ const fixedElementsData = piecesData.filter((currElementData) => {
 })
 
 fixedElementsData.forEach((pieceData) => {
-    const pieceSelections = thisBot.GetUsersSelectionForElement({piece: pieceData.piece}).filter((userSelection) => {
+    const pieceSelections = thisBot.GetUsersSelectionForPiece({piece: pieceData.piece}).filter((userSelection) => {
         return userSelection.userId != getID(configBot)
     })
     let isElementSelected = false;
