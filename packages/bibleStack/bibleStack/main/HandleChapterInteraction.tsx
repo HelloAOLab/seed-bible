@@ -59,7 +59,7 @@ switch(typeOfInteraction)
             !chapterData.piece.masks.isDeselecting) 
         {
             chapterData.piece.Unhighlight({chapterData}).then(() => {
-                if(!chapterData.isSelected) BibleVizUtils.Functions.UpdateUsersNotificationOnPieces({piecesData: [chapterData]})
+                if(!chapterData.isSelected) BibleVizUtils.Functions.UpdateUsersNotificationOnPieces({piecesData: [chapterData], manager: thisBot})
             });
         }
     }

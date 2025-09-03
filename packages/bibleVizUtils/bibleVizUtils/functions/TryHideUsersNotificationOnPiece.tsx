@@ -1,6 +1,6 @@
 const {piece} = that;
-if(piece.links.usersNotification)
+if(piece.links.activityNotification)
 {
-    ObjectPooler.ReleaseObject({obj: piece.links.usersNotification, tag: piece.links.usersNotification.tags.poolTag});
-    piece.tags.usersNotification = null;
+    ObjectPooler.ReleaseObject({obj: piece.links.activityNotification, tag: piece.links.activityNotification.tags.poolTag});
+    piece.tags.activityNotification = null;
 }

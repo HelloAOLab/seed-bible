@@ -1,1 +1,1 @@
-if(thisBot.masks.isExpanded && !thisBot.masks.isDeselecting && !thisBot.masks.isSelecting) BibleVizUtils.Functions.UpdateUsersColorOnPiece({piece: thisBot})
+if(thisBot.masks.isExpanded && !thisBot.masks.isDeselecting && !thisBot.masks.isSelecting) BibleVizUtils.Functions.UpdateUsersColorOnPiece({piece: thisBot, manager: BibleStackManager})

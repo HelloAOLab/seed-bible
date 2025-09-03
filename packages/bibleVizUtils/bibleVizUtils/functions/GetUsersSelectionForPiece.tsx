@@ -12,7 +12,7 @@
 //         key = piece.tags.sectionName; 
 //         typeOfPiece = BibleVizUtils.Data.tags.BiblePieceType.StackSection;
 //     break;
-//     case BibleVizUtils.Data.tags.BiblePieceType.SectionBook:
+//     case BibleVizUtils.Data.tags.BiblePieceType.StackSectionBook:
 //     case BibleVizUtils.Data.tags.BiblePieceType.StackBook:
 //     case BibleVizUtils.Data.tags.BiblePieceType.LayoutBook:
 //         key = piece.tags.bookName; 

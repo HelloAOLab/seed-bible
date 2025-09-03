@@ -39,7 +39,7 @@ if(delay)
             piece.StopHighlightTransition();
             piece.Unhighlight({customDuration, isInstantaneous, speedMultiplier}).then(() => {
                 thisBot.RemovePieceFromHighlightedList({piece})
-                if(tryUpdateUsersNotification) BibleVizUtils.Functions.UpdateUsersNotificationOnPieces({piecesData: [data]})
+                if(tryUpdateUsersNotification) BibleVizUtils.Functions.UpdateUsersNotificationOnPieces({piecesData: [data], manager: thisBot})
             });
         }
     }, delay);
@@ -50,6 +50,6 @@ else
     piece.StopHighlightTransition();
     await piece.Unhighlight({customDuration, speedMultiplier, isInstantaneous}).then(() => {
         thisBot.RemovePieceFromHighlightedList({piece})
-        if(tryUpdateUsersNotification) BibleVizUtils.Functions.UpdateUsersNotificationOnPieces({piecesData: [data]})
+        if(tryUpdateUsersNotification) BibleVizUtils.Functions.UpdateUsersNotificationOnPieces({piecesData: [data], manager: thisBot})
     });
 }

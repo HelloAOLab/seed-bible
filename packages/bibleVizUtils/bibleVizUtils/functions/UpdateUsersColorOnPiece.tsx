@@ -1,22 +1,21 @@
-const {piece, pieces} = that;
+const {piece, pieces, manager} = that;
 const dimension = os.getCurrentDimension();
-const fixedElements = (Array.isArray(pieces) ? pieces : [piece]).filter((currElement) => {return currElement.tags[dimension] == true});
+const fixedPieces = (Array.isArray(pieces) ? pieces : [piece]).filter((currElement) => {return currElement.tags[dimension] == true});
 const allUsersColor = [];
 // const myLobbyId = getBot('lobbyUserBot', true)?.id;
 const maxAmountOfColors = 4;
-fixedElements.forEach((fixedElement) => {
-    const currUsersColor = thisBot.GetCurrentUsersColorForElement({piece: fixedElement});
-    // let pieceSelections;
-    let selectionsElement;
+fixedPieces.forEach((fixedPiece) => {
+    const currUsersColor = thisBot.GetCurrentUsersColorForPiece({piece: fixedPiece});
+    let selectionsPiece;
     let userColorScales;
     let extraUsersContentScales;
     let extraUsersBackgroundScales;
     let userColorForm;
     let pieceData;
-    switch(fixedElement.tags.poolTag)
+    switch(fixedPiece.tags.poolTag)
     {
         case BibleVizUtils.Data.tags.ObjectPoolTags.InfoLabelTransformer:
-            selectionsElement = fixedElement.links.ownerBot
+            selectionsPiece = fixedPiece.links.ownerBot
             userColorScales = BibleVizUtils.Data.tags.UsersColorValues.InfoLabelColorScales;
             extraUsersContentScales = BibleVizUtils.Data.tags.UsersColorValues.InfoLabelExtraUsersContentScales;
             extraUsersBackgroundScales = BibleVizUtils.Data.tags.UsersColorValues.InfoLabelExtraUsersBackgroundScales;
@@ -25,51 +24,50 @@ fixedElements.forEach((fixedElement) => {
         case BibleVizUtils.Data.tags.ObjectPoolTags.StackChapter:
         case BibleVizUtils.Data.tags.ObjectPoolTags.LayoutBook:
         case BibleVizUtils.Data.tags.ObjectPoolTags.LayoutChapter:
-            pieceData = fixedElement.tags.poolTag == BibleVizUtils.Data.tags.ObjectPoolTags.StackChapter ? BibleStackManager.GetPieceData({piece: fixedElement}) :
-                BibleLayout3DManager.GetPieceData({piece: fixedElement})
-            selectionsElement = fixedElement;
+            pieceData = fixedPiece.tags.poolTag == BibleVizUtils.Data.tags.ObjectPoolTags.StackChapter ? BibleStackManager.GetPieceData({piece: fixedPiece}) :
+                BibleLayout3DManager.GetPieceData({piece: fixedPiece})
+            selectionsPiece = fixedPiece;
             userColorScales = BibleVizUtils.Data.tags.UsersColorValues.GroundedElementColorScales;
             extraUsersContentScales = BibleVizUtils.Data.tags.UsersColorValues.GroundedElementExtraUsersContentScales;
             extraUsersBackgroundScales = BibleVizUtils.Data.tags.UsersColorValues.GroundedElementExtraUsersBackgroundScales;
             userColorForm = BibleVizUtils.Data.tags.UsersColorValues.GroundedElementColorForm;
         break;
     }
-    const pieceSelections = thisBot.GetUsersSelectionForPiece({piece: selectionsElement})
-    const fixedSelections = pieceSelections.filter((selection) => {return selection.userId != getID(configBot)})
-    if(fixedSelections.length > 0)
+    const pieceActivity = thisBot.GetActivityForPiece({piece: selectionsPiece, tabsContext: manager.vars.tabsContext})
+    if(pieceActivity.length > 0)
     {
         for(let i = 0; i < maxAmountOfColors; i++)
         {
-            const userColorAtIndex = currUsersColor.find((currUserColor) => {return currUserColor.tags.selectionIndex == i})
-            if(userColorAtIndex && (i >= fixedSelections.length))
+            const userColorAtIndex = currUsersColor.find((currUserColor) => {return currUserColor.tags.activityIndex == i})
+            if(userColorAtIndex && (i >= pieceActivity.length))
             {
                 ObjectPooler.ReleaseObject({obj: userColorAtIndex, tag: userColorAtIndex.tags.poolTag});
             }
         }
-        if(fixedSelections.length <= maxAmountOfColors)
+        if(pieceActivity.length <= maxAmountOfColors)
         {
             const currExtraUsersContent = currUsersColor.find((currUserColor) => {return currUserColor.tags.isExtraUsersContent});
             const currExtraUsersBackground = currUsersColor.find((currUserColor) => {return currUserColor.tags.isExtraUsersBackground});
             if(currExtraUsersContent) ObjectPooler.ReleaseObject({obj: currExtraUsersContent, tag: currExtraUsersContent.tags.poolTag});
             if(currExtraUsersBackground) ObjectPooler.ReleaseObject({obj: currExtraUsersBackground, tag: currExtraUsersBackground.tags.poolTag});            
         }
-        for(const selectionIndex in fixedSelections)
+        for(const activityIndex in pieceActivity)
         {
-            const userSelection = fixedSelections[selectionIndex];
-            if(selectionIndex >= maxAmountOfColors)
+            const userSelection = pieceActivity[activityIndex];
+            if(activityIndex >= maxAmountOfColors)
             {
-                const extraUsers = fixedSelections.length - maxAmountOfColors;
+                const extraUsers = pieceActivity.length - maxAmountOfColors;
                 const label = `+${extraUsers}`;
                 let extraUsersContent = getBot(
                     byTag('isExtraUsersContent', true), 
                     byTag("isUserColor", true), 
-                    fixedElement.tags.isInfoLabelTransformer ? byTag("transformer", getID(fixedElement)) : byTag("ownerDataId", Number(pieceData.id)), 
+                    fixedPiece.tags.isInfoLabelTransformer ? byTag("transformer", getID(fixedPiece)) : byTag("ownerDataId", Number(pieceData.id)), 
                     byTag('isInUse', true)
                 )
                 let extraUsersBackground = getBot(
                     byTag('isExtraUsersBackground', true), 
                     byTag("isUserColor", true), 
-                    fixedElement.tags.isInfoLabelTransformer ? byTag("transformer", getID(fixedElement)) : byTag("ownerDataId", Number(pieceData.id)), 
+                    fixedPiece.tags.isInfoLabelTransformer ? byTag("transformer", getID(fixedPiece)) : byTag("ownerDataId", Number(pieceData.id)), 
                     byTag('isInUse', true)
                 )
 
@@ -86,10 +84,10 @@ fixedElements.forEach((fixedElement) => {
                         color: "black",
                         [dimension]: true,
                         isExtraUsersBackground: true,
-                        transformer: fixedElement.tags.poolTag == BibleVizUtils.Data.tags.ObjectPoolTags.InfoLabelTransformer ? getID(fixedElement) : null,
-                        ownerBotId: fixedElement.tags.poolTag == BibleVizUtils.Data.tags.ObjectPoolTags.InfoLabelTransformer ? getID(fixedElement.links.ownerBot) : null,
-                        ownerDataId: fixedElement.tags.poolTag != BibleVizUtils.Data.tags.ObjectPoolTags.InfoLabelTransformer ? pieceData.id : null,
-                        selectionIndex,
+                        transformer: fixedPiece.tags.poolTag == BibleVizUtils.Data.tags.ObjectPoolTags.InfoLabelTransformer ? getID(fixedPiece) : null,
+                        ownerBotId: fixedPiece.tags.poolTag == BibleVizUtils.Data.tags.ObjectPoolTags.InfoLabelTransformer ? getID(fixedPiece.links.ownerBot) : null,
+                        ownerDataId: fixedPiece.tags.poolTag != BibleVizUtils.Data.tags.ObjectPoolTags.InfoLabelTransformer ? pieceData.id : null,
+                        activityIndex,
                         scaleX: extraUsersBackgroundScales.x,
                         scaleY: extraUsersBackgroundScales.y,
                         scaleZ: extraUsersBackgroundScales.z,
@@ -99,10 +97,10 @@ fixedElements.forEach((fixedElement) => {
                         color: "white",
                         [dimension]: true,
                         isExtraUsersContent: true,
-                        transformer: fixedElement.tags.poolTag == BibleVizUtils.Data.tags.ObjectPoolTags.InfoLabelTransformer ? getID(fixedElement) : null,
-                        ownerBotId: fixedElement.tags.poolTag == BibleVizUtils.Data.tags.ObjectPoolTags.InfoLabelTransformer ? getID(fixedElement.links.ownerBot) : null,
-                        ownerDataId: fixedElement.tags.poolTag != BibleVizUtils.Data.tags.ObjectPoolTags.InfoLabelTransformer ? pieceData.id : null,
-                        selectionIndex,
+                        transformer: fixedPiece.tags.poolTag == BibleVizUtils.Data.tags.ObjectPoolTags.InfoLabelTransformer ? getID(fixedPiece) : null,
+                        ownerBotId: fixedPiece.tags.poolTag == BibleVizUtils.Data.tags.ObjectPoolTags.InfoLabelTransformer ? getID(fixedPiece.links.ownerBot) : null,
+                        ownerDataId: fixedPiece.tags.poolTag != BibleVizUtils.Data.tags.ObjectPoolTags.InfoLabelTransformer ? pieceData.id : null,
+                        activityIndex,
                         label,
                         scaleX: extraUsersContentScales.x,
                         scaleY: extraUsersContentScales.y,
@@ -117,16 +115,16 @@ fixedElements.forEach((fixedElement) => {
             }
             else
             {
-                const color = links.lobby?.masks?.users?.slice()
-                    .find((userInfo) => {
-                        return userInfo.instanceId == userSelection.userId && userInfo.instanceId != getID(configBot)
-                    })?.color ?? "#808080";
+                const color = "#FE9A37" // links.lobby?.masks?.users?.slice()
+                    // .find((userInfo) => {
+                    //     return userInfo.instanceId == userSelection.userId && userInfo.instanceId != getID(configBot)
+                    // })?.color ?? "#808080";
                 
                 let userColor = getBot(
                     byTag("isUserColor", true), 
-                    fixedElement.tags.isInfoLabelTransformer ? byTag("transformer", getID(fixedElement)) : byTag("ownerDataId", pieceData.id), 
+                    fixedPiece.tags.isInfoLabelTransformer ? byTag("transformer", getID(fixedPiece)) : byTag("ownerDataId", pieceData.id), 
                     byTag('isInUse', true), 
-                    byTag('selectionIndex', Number(selectionIndex))
+                    byTag('activityIndex', Number(activityIndex))
                 );
                 if(userColor)
                 {
@@ -137,11 +135,11 @@ fixedElements.forEach((fixedElement) => {
                     userColor = ObjectPooler.GetObjectFromPool({tag: BibleVizUtils.Data.tags.ObjectPoolTags.UserColor})
                     const userColorMod = {
                         color,
-                        selectionIndex,
+                        activityIndex,
                         [dimension]: true,
-                        transformer: fixedElement.tags.poolTag == BibleVizUtils.Data.tags.ObjectPoolTags.InfoLabelTransformer ? getID(fixedElement) : null,
-                        ownerBotId: fixedElement.tags.poolTag == BibleVizUtils.Data.tags.ObjectPoolTags.InfoLabelTransformer ? getID(fixedElement.links.ownerBot) : null,
-                        ownerDataId: fixedElement.tags.poolTag != BibleVizUtils.Data.tags.ObjectPoolTags.InfoLabelTransformer ? pieceData.id : null,
+                        transformer: fixedPiece.tags.poolTag == BibleVizUtils.Data.tags.ObjectPoolTags.InfoLabelTransformer ? getID(fixedPiece) : null,
+                        ownerBotId: fixedPiece.tags.poolTag == BibleVizUtils.Data.tags.ObjectPoolTags.InfoLabelTransformer ? getID(fixedPiece.links.ownerBot) : null,
+                        ownerDataId: fixedPiece.tags.poolTag != BibleVizUtils.Data.tags.ObjectPoolTags.InfoLabelTransformer ? pieceData.id : null,
                         scaleX: userColorScales.x,
                         scaleY: userColorScales.y,
                         scaleZ: userColorScales.z,
@@ -155,7 +153,7 @@ fixedElements.forEach((fixedElement) => {
     }
     else currUsersColor.forEach((userColor) => {ObjectPooler.ReleaseObject({obj: userColor, tag: userColor.tags.poolTag});})
 
-    thisBot.SetUsersColorPositionOnElement({piece: fixedElement})
+    thisBot.SetUsersColorPositionOnElement({piece: fixedPiece})
 })
 
 return allUsersColor;

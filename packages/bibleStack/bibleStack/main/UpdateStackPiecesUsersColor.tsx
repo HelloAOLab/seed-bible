@@ -9,4 +9,4 @@ const availablePiecesData = [
     ...availableChaptersData
 ]
 const availablePieces = availablePiecesData.map((pieceData) => {return pieceData.piece})
-BibleVizUtils.Functions.UpdateUsersColorOnPiece({pieces: availablePieces});
+BibleVizUtils.Functions.UpdateUsersColorOnPiece({pieces: availablePieces, manager: thisBot});

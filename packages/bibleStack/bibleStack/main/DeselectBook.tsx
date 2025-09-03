@@ -17,5 +17,5 @@ await thisBot.UpdateStacks();
 setTagMask(bookData.piece, "pointable", true);
 setTagMask(bookData.piece, "highlightable", true);
 setTagMask(thisBot, "isBibleAnimating", false);
-BibleVizUtils.Functions.UpdateUsersNotificationOnPieces({piecesData: [bookData]})
+BibleVizUtils.Functions.UpdateUsersNotificationOnPieces({piecesData: [bookData], manager: thisBot})
 shout("OnStackBookDeselectionComplete", {book: bookData.piece});

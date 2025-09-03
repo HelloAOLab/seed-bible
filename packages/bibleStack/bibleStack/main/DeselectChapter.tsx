@@ -21,4 +21,4 @@ setTagMask(thisBot, "aChapterIsBeingDeselected", true);
 await chapterData.piece.Deselect({chapterData});
 setTagMask(thisBot, "aChapterIsBeingDeselected", false);
 if(setBibleAnimating) setTagMask(thisBot, "isBibleAnimating", false);
-BibleVizUtils.Functions.UpdateUsersNotificationOnPieces({piecesData: [chapterData]})
+BibleVizUtils.Functions.UpdateUsersNotificationOnPieces({piecesData: [chapterData], manager: thisBot})

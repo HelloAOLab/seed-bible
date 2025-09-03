@@ -16,7 +16,7 @@ const thisBotScales = BibleVizUtils.Functions.GetBotScales(thisBot);
 const animationEasing = {type: "sinusoidal", mode: "inout"};
 const label = BibleVizUtils.Functions.CapitalizeFirstLetter(thisBot.tags.sectionName.split("-").join(" "));
 const sectionData = BibleStackManager.GetPieceData({piece: thisBot})
-const {infoLabelTransformer} = await BibleVizUtils.Functions.GetLabelForPiece({
+const {infoLabelTransformer} = BibleVizUtils.Functions.GetLabelForPiece({
     piece: thisBot, 
     label,
     color: "white", 

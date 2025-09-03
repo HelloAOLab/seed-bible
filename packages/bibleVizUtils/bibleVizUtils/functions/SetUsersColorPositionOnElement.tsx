@@ -16,9 +16,9 @@ currUsersColor.forEach((userColor) => {
             piecePosition = infoLabel.tags.initialPosition
             pieceScales = thisBot.GetBotScales(infoLabel)
             colorPosition = new Vector3(
-                piecePosition.x - (pieceScales.x/2) + (BibleVizUtils.Data.tags.UsersColorValues.InfoLabelColorScales.x/2) + offset.x + (userColor.tags.selectionIndex * step.x),
+                piecePosition.x - (pieceScales.x/2) + (BibleVizUtils.Data.tags.UsersColorValues.InfoLabelColorScales.x/2) + offset.x + (userColor.tags.activityIndex * step.x),
                 piecePosition.y + (pieceScales.y/2),
-                piecePosition.z + pieceScales.z + offset.z + (userColor.tags.selectionIndex * step.z) + (userColor.tags.isExtraUsersContent ? step.z : 0)
+                piecePosition.z + pieceScales.z + offset.z + (userColor.tags.activityIndex * step.z) + (userColor.tags.isExtraUsersContent ? step.z : 0)
             )
         }
         break;
@@ -29,7 +29,7 @@ currUsersColor.forEach((userColor) => {
             piecePosition = getBotPosition(piece, dimension);
             pieceScales = thisBot.GetBotScales(piece)
             colorPosition = new Vector3(
-                piecePosition.x - (pieceScales.x/2) + (BibleVizUtils.Data.tags.UsersColorValues.GroundedElementColorScales.x/2) + offset.x + (userColor.tags.selectionIndex * step.x),
+                piecePosition.x - (pieceScales.x/2) + (BibleVizUtils.Data.tags.UsersColorValues.GroundedElementColorScales.x/2) + offset.x + (userColor.tags.activityIndex * step.x),
                 piecePosition.y + (pieceScales.y/2) - (BibleVizUtils.Data.tags.UsersColorValues.GroundedElementColorScales.y/2) - offset.y,
                 piecePosition.z + pieceScales.z - (userColor.tags.scaleZ/2) 
             )
@@ -40,7 +40,7 @@ currUsersColor.forEach((userColor) => {
             piecePosition = getBotPosition(piece, dimension);
             pieceScales = thisBot.GetBotScales(piece)
             colorPosition = new Vector3(
-                piecePosition.x - (pieceScales.x/2) + (BibleVizUtils.Data.tags.UsersColorValues.GroundedElementColorScales.x/2) + offset.x + (userColor.tags.selectionIndex * step.x),
+                piecePosition.x - (pieceScales.x/2) + (BibleVizUtils.Data.tags.UsersColorValues.GroundedElementColorScales.x/2) + offset.x + (userColor.tags.activityIndex * step.x),
                 piecePosition.y + (pieceScales.y/2) - (BibleVizUtils.Data.tags.UsersColorValues.GroundedElementColorScales.y/2) - offset.y,
                 piecePosition.z + pieceScales.z - (userColor.tags.scaleZ/2) 
             )

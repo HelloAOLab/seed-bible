@@ -1,4 +1,4 @@
-const App = thisBot.App();
+const App = await thisBot.App();
 
 
 globalThis.AddApplication({

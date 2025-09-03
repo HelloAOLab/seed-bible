@@ -25,7 +25,7 @@ const date = BibleVizUtils.Functions.GetCurrentLabelDateFormat() === BibleVizUti
 ) : (
     `${currentYear - relativeDateRange.min}${relativeDateRange.min != relativeDateRange.max ? `-${currentYear - relativeDateRange.max}` : ``} years ago`
 );
-const {infoLabelTransformer} = await BibleVizUtils.Functions.GetLabelForPiece({
+const {infoLabelTransformer} = BibleVizUtils.Functions.GetLabelForPiece({
     piece: thisBot, 
     label: thisBot.tags.bookName,
     date: BibleStackManager.masks.showBooksLabelDate ? date : null,

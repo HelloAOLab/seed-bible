@@ -144,7 +144,7 @@ switch(shape)
                 easing
             })
         ])
-        const {infoLabelTransformer} = await BibleVizUtils.Functions.GetLabelForPiece({
+        const {infoLabelTransformer} = BibleVizUtils.Functions.GetLabelForPiece({
             piece: thisBot, 
             label: thisBot.tags.bookName, 
             color: (bookData.highlightColor ?? thisBot.tags.labelTextColor),

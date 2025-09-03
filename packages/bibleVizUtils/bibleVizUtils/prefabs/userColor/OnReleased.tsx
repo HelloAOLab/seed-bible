@@ -5,6 +5,6 @@ setTag(thisBot, "initialPosition", null);
 setTag(thisBot, "label", "");
 setTag(thisBot, "labelOpacity", 1);
 setTag(thisBot, "formOpacity", 1);
-setTag(thisBot, 'selectionIndex', null);
+setTag(thisBot, 'activityIndex', null);
 setTag(thisBot, 'isExtraUsersContent', null);
 setTag(thisBot, 'isExtraUsersBackground', null);

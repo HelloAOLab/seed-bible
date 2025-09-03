@@ -101,4 +101,4 @@ sectionData.childrenData.flat().forEach((bookData) => {
 await thisBot.UpdateStacks();
 setTagMask(thisBot, 'isBibleAnimating', false);
 
-BibleVizUtils.Functions.UpdateUsersNotificationOnPieces({piecesData: [sectionData]})
+BibleVizUtils.Functions.UpdateUsersNotificationOnPieces({piecesData: [sectionData], manager: thisBot})

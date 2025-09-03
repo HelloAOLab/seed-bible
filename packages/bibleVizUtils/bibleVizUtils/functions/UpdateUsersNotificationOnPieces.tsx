@@ -5,58 +5,60 @@ import {StackBookData} from "bibleVizUtils.classes.StackBookData"
 import {StackChapterData} from "bibleVizUtils.classes.StackChapterData"
 import {LayoutChapterData} from "bibleVizUtils.classes.LayoutChapterData"
 
-const {piecesData} = that;
+const {piecesData, manager} = that;
+
+if(!manager.vars.tabsContext) return;
+
 const dimension = os.getCurrentDimension();
 const fixedElementsData = piecesData.filter((currElementData) => {
     // const {bibleData} = BibleStackManager.GetDataChainFromParentDataIds({parentDataIds: currElementData.parentDataIds});
     return currElementData.piece && currElementData.piece.tags[dimension] == true // && (bibleData && bibleData.bibleType === BibleType.PlatformerGame)
 })
 
-fixedElementsData.forEach((pieceData) => {
-    const pieceSelections = thisBot.GetUsersSelectionForPiece({piece: pieceData.piece}).filter((userSelection) => {
-        return userSelection.userId != getID(configBot)
-    })
-    let isElementSelected = false;
+for(const pieceData of fixedElementsData)
+{
+    const pieceActivity = thisBot.GetActivityForPiece({piece: pieceData.piece, tabsContext: manager.vars.tabsContext});
+    let isPieceSelected = false;
     switch(true)
     {
         case pieceData instanceof StackTestamentData:
-            isElementSelected = pieceData.isSplitIntoSections
+            isPieceSelected = pieceData.isSplitIntoSections
         break;
         case pieceData instanceof StackSectionData:
-            isElementSelected = pieceData.isSplitIntoBooks
+            isPieceSelected = pieceData.isSplitIntoBooks
         break;
         case pieceData instanceof StackSectionBookData:
         case pieceData instanceof StackBookData:
-            isElementSelected = pieceData.currentShape == BibleVizUtils.Data.tags.BookShapeType.Selected
+            isPieceSelected = pieceData.currentShape == BibleVizUtils.Data.tags.BookShapeType.Selected
         break;
         case pieceData instanceof StackChapterData:
         case pieceData instanceof LayoutChapterData:
-            isElementSelected = pieceData.piece.masks.isExpanded
+            isPieceSelected = pieceData.piece.masks.isExpanded
         break;
     }
 
-    if(pieceSelections.length > 0 && 
-        !isElementSelected &&
+    if(pieceActivity.length > 0 && 
+        !isPieceSelected &&
         pieceData.piece.tags.isInUse && 
         !pieceData.piece.masks.isHighlighting && 
         !pieceData.piece.masks.isHighlighted)
     {
-        if(pieceData.piece.links.usersNotification)
+        if(pieceData.piece.links.activityNotification)
         {
-            setTag(pieceData.piece.links.usersNotification, "label", pieceSelections.length)
+            setTag(pieceData.piece.links.activityNotification, "label", pieceActivity.length)
         }
         else if(!pieceData.piece.masks.isHighlighting && !pieceData.piece.masks.isHighlighted)
         {
-            const usersNotification = ObjectPooler.GetObjectFromPool({tag: BibleVizUtils.Data.tags.ObjectPoolTags.UsersNotification});
-            const usersNotificationMod = {
+            const activityNotification = ObjectPooler.GetObjectFromPool({tag: BibleVizUtils.Data.tags.ObjectPoolTags.UsersNotification});
+            const activityNotificationMod = {
                 [dimension]: true,
-                label: pieceSelections.length,
+                label: pieceActivity.length,
                 ownerBotId: pieceData.piece.id
             }
-            usersNotification.OnSpawned({mod: usersNotificationMod});
-            usersNotification.SetPosition({setX: true, setY: true, setZ: true});
-            pieceData.piece.tags.usersNotification = `🔗${usersNotification.id}`
+            activityNotification.OnSpawned({mod: activityNotificationMod});
+            activityNotification.SetPosition({setX: true, setY: true, setZ: true});
+            pieceData.piece.tags.activityNotification = `🔗${activityNotification.id}`
         }
     }
     else thisBot.TryHideUsersNotificationOnPiece({piece: pieceData.piece});
-})
+}

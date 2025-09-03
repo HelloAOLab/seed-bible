@@ -18,7 +18,7 @@ const easing = {type: "sinusoidal", mode: "inout"};
 const label = thisBot.tags.infoLabel;
 const testamentData = BibleStackManager.GetPieceData({piece: thisBot})
 
-const {infoLabelTransformer} = await BibleVizUtils.Functions.GetLabelForPiece({
+const {infoLabelTransformer} = BibleVizUtils.Functions.GetLabelForPiece({
     piece: thisBot, 
     label,
     color: "white", 
