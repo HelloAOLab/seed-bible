@@ -27,9 +27,6 @@
     * })
 */
 
-import {ParentDataIds} from "bibleVizUtils.classes.ParentDataIds"
-import {StackChapterData} from "bibleVizUtils.classes.StackChapterData"
-
 const {chapterInfo, isInsideBible, isInsideBook, bibleData, testamentData, sectionData, sectionBookData, bookData, isHidden = false} = that;
 const parentDataIds = new ParentDataIds({
     stackBibleId: bibleData?.id, 

@@ -11,8 +11,8 @@ const bookData = thisBot.GetPieceData({ piece: book });
 thisBot.vars.lastInteractedStackBookData = bookData;
 const dimension = os.getCurrentDimension();
 if (setBibleAnimating) setTagMask(thisBot, "isBibleAnimating", true);
-BibleVizUtils.Functions.TryHideUsersNotificationOnPiece({piece: book});
-await thisBot.TryUnhighlightPiece({ piece: book, tryUpdateUsersNotification: false, requestSource: BibleVizUtils.Data.tags.InteractionType.Transition });
+BibleVizUtils.Functions.TryHideActivityNotificationOnPiece({piece: book});
+await thisBot.TryUnhighlightPiece({ piece: book, tryUpdateActivityNotification: false, requestSource: BibleVizUtils.Data.tags.InteractionType.Transition });
 bookData.isSelected = true;
 shout("OnBiblePieceSelected", {piece: book});
 setTagMask(book, "pointable", false);
@@ -49,6 +49,6 @@ await thisBot.UpdateStacks();
 // }
 // OpenBibleAt(`${book.tags.bookName} ${1}:0`)
 if (setBibleAnimating) setTagMask(thisBot, "isBibleAnimating", false);
-thisBot.UpdateStackPiecesUsersNotification();
+thisBot.UpdateStackPiecesActivityNotification();
 shout("OnStackBookSelectionComplete", { book });
 thisBot.PlaySound({soundName: "BookSelect"});

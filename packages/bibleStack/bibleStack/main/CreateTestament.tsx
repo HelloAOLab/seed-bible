@@ -18,9 +18,6 @@
     * });
 */
 
-import {StackTestamentData} from "bibleVizUtils.classes.StackTestamentData"
-import {ParentDataIds} from "bibleVizUtils.classes.ParentDataIds"
-
 const {arrangementIndex, testamentIndex, bibleData, isHidden = false} = that;
 const testamentInfo = BibleVizUtils.Data.vars.fixedArrangementsInfo[arrangementIndex].testaments[testamentIndex];
 const creationInfo = {arrangementIndex, testamentIndex};

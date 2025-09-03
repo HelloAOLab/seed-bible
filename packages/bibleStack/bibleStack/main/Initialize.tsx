@@ -29,7 +29,7 @@ thisBot.vars.lastInteractedStackSectionData = null;
 thisBot.vars.lastInteractedStackTestamentData = null;
 thisBot.vars.lastInteractedStackBibleData = null;
 thisBot.masks.isBibleCreationActive = false;
-thisBot.masks.hasStackEverBeenSpawned = false;
+thisBot.vars.hasStackEverBeenSpawned = false;
 thisBot.masks.showBooksLabelDate = false;
 
 

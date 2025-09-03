@@ -9,11 +9,7 @@
     * shout("OnStackPieceDrag", {piece: someStackPiece, data: someStackPieceData});
 */
 
-import {StackTestamentData} from "bibleVizUtils.classes.StackTestamentData"
-import {StackSectionData} from "bibleVizUtils.classes.StackSectionData"
-import {StackSectionBookData} from "bibleVizUtils.classes.StackSectionBookData"
-import {StackBookData} from "bibleVizUtils.classes.StackBookData"
-import {StackChapterData} from "bibleVizUtils.classes.StackChapterData"
+
 const {piece, data} = that;
 const {bibleData, testamentData, sectionData, sectionBookData, bookData} = thisBot.GetDataChainFromParentDataIds({parentDataIds: data.parentDataIds});
 

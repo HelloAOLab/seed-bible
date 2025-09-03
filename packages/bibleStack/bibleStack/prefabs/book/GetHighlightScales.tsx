@@ -5,8 +5,6 @@
     * const highlightScales = book.GetHighlightScales();
 */
 
-import {StackSectionBookData} from "bibleVizUtils.classes.StackSectionBookData"
-
 const bookData = BibleStackManager.GetPieceData({piece: thisBot});
 const {sectionData} = BibleStackManager.GetDataChainFromParentDataIds({parentDataIds: bookData.parentDataIds});
 let scaleX, scaleY;

@@ -30,5 +30,5 @@ if(!isInstantaneous)
     await Promise.all(animations);
 }
 setTagMask(thisBot, "isBibleAnimating", false);
-thisBot.UpdateStackPiecesUsersNotification();
+thisBot.UpdateStackPiecesActivityNotification();
 return true;

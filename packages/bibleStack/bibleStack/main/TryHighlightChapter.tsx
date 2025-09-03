@@ -16,26 +16,27 @@ const {parentData, chapterData} = that;
 const previousHighlightedChapterData = parentData?.piece.vars.previousHighlightedChapterData;
 
 if((previousHighlightedChapterData && previousHighlightedChapterData == chapterData)    || 
+    chapterData.piece.masks.isBeingDragged                                 ||
     chapterData.piece.masks.isSelecting                                    || 
     chapterData.piece.masks.isDeselecting                                  ||
     chapterData.piece.masks.isHighlighting                                 || 
     (chapterData.piece.masks.isHighlighted && !chapterData.piece.masks.isUnhighlighting)) return false;
 
-if( previousHighlightedChapterData                                                    &&
-    previousHighlightedChapterData.isActive                                           &&
-    !previousHighlightedChapterData.isHidden                                          &&
-    !previousHighlightedChapterData.piece.masks.isUnhighlighting         &&
-    previousHighlightedChapterData.piece.tags.isInUse                    &&
-    (previousHighlightedChapterData.piece.masks.isHighlighted || previousHighlightedChapterData.piece.masks.isHighlighting) &&
-    !previousHighlightedChapterData.piece.masks.isSelecting              &&
-    !previousHighlightedChapterData.isSelected)
+// if( previousHighlightedChapterData                                                    &&
+//     previousHighlightedChapterData.isActive                                           &&
+//     !previousHighlightedChapterData.isHidden                                          &&
+//     !previousHighlightedChapterData.piece.masks.isUnhighlighting         &&
+//     previousHighlightedChapterData.piece.tags.isInUse                    &&
+//     (previousHighlightedChapterData.piece.masks.isHighlighted || previousHighlightedChapterData.piece.masks.isHighlighting) &&
+//     !previousHighlightedChapterData.piece.masks.isSelecting              &&
+//     !previousHighlightedChapterData.isSelected)
+// {
+//     previousHighlightedChapterData.piece.Unhighlight({chapterData: previousHighlightedChapterData});
+//     parentData.piece.vars.previousHighlightedChapterData = null;
+// }
+if(!chapterData.isSelected || !chapterData.piece.masks.isOnTheGround) 
 {
-    previousHighlightedChapterData.piece.Unhighlight({chapterData: previousHighlightedChapterData});
-    parentData.piece.vars.previousHighlightedChapterData = null;
-}
-if(chapterData.piece.masks.isOnTheGround && !chapterData.isSelected) 
-{
-    BibleVizUtils.Functions.TryHideUsersNotificationOnPiece({piece: chapterData.piece})
+    BibleVizUtils.Functions.TryHideActivityNotificationOnPiece({piece: chapterData.piece})
 }
 chapterData.piece.Highlight({chapterData});
-if(parentData) parentData.piece.vars.previousHighlightedChapterData = chapterData;
+// if(parentData) parentData.piece.vars.previousHighlightedChapterData = chapterData;

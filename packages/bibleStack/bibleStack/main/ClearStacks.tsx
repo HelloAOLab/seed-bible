@@ -38,6 +38,9 @@ thisBot.vars.lastInteractedStackBookData = null;
 thisBot.vars.lastInteractedStackSectionData = null;
 thisBot.vars.lastInteractedStackTestamentData = null;
 thisBot.vars.lastInteractedStackBibleData = null;
+thisBot.vars.highlightedPieces = [];
+thisBot.vars.unhighlightDelaysInfo = [];
 
 clearTagMasks(thisBot);
-thisBot.Initialize();
+
+setTagMask(thisBot, "areBiblePiecesDraggable", thisBot.tags.areBiblePiecesDraggable);

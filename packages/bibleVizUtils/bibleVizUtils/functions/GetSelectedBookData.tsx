@@ -1,5 +1,3 @@
-import {StackSectionBookData} from "bibleVizUtils.classes.StackSectionBookData"
-
 const {data} = that;
 
 if(data.isSelected)

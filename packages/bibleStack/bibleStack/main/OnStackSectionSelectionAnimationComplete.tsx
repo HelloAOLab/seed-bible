@@ -11,7 +11,7 @@ if(thisBot.HasSectionEverBeenSelected({sectionData}))
 {
     await thisBot.UpdateStacks({speedMultiplier, isInstantaneous});
     setTagMask(thisBot, "isBibleAnimating", false);
-    thisBot.UpdateStackPiecesUsersNotification();
+    thisBot.UpdateStackPiecesActivityNotification();
     return true;
 }
 else

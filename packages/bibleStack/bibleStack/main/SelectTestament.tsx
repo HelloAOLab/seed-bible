@@ -7,8 +7,6 @@
     * thisBot.SelectTestament({testament});
 */
 
-import {StackSectionBookData} from "bibleVizUtils.classes.StackSectionBookData"
-
 const {testament, speedMultiplier = 1, isInstantaneous = false} = that;
 const testamentData = thisBot.GetPieceData({piece: testament});
 const {bibleData} = thisBot.GetDataChainFromParentDataIds({parentDataIds: testamentData.parentDataIds});
@@ -29,7 +27,7 @@ let sectionShadows;
 let piecesAboveTestament;
 // const collisionType = bibleData?.bibleType === BibleVizUtils.Data.tags.BibleType.PlatformerGame ? CollisionType.Collision : null
 
-BibleVizUtils.Functions.TryHideUsersNotificationOnPiece({piece: testament})
+BibleVizUtils.Functions.TryHideActivityNotificationOnPiece({piece: testament})
 shout("OnStackTestamentSelected", {isFromPlatformerGame: (bibleData && bibleData.bibleType === BibleVizUtils.Data.tags.BibleType.PlatformerGame)});
 setTagMask(thisBot, "isBibleAnimating", true);
 if(thisBot.vars.highlightedPieces.length > 0 && bibleData)
@@ -45,7 +43,7 @@ if(thisBot.vars.highlightedPieces.length > 0 && bibleData)
     if(piecesToUnhighlight.length > 0)
     {
         await Promise.all(piecesToUnhighlight.map((piece) => {
-            return thisBot.TryUnhighlightPiece({piece, tryUpdateUsersNotification: (piece.id == testament.id ? false : true), requestSource: BibleVizUtils.Data.tags.InteractionType.Transition})
+            return thisBot.TryUnhighlightPiece({piece, tryUpdateActivityNotification: (piece.id == testament.id ? false : true), requestSource: BibleVizUtils.Data.tags.InteractionType.Transition})
         }));
         thisBot.vars.highlightedPieces = BibleVizUtils.Functions.SubtractArrays({array1: thisBot.vars.highlightedPieces, array2: piecesToUnhighlight})
     }

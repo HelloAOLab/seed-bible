@@ -11,9 +11,6 @@
  * shout("UpdateStacks");
  */
 
-import {StackSectionData} from "bibleVizUtils.classes.StackSectionData"
-import {StackSectionBookData} from "bibleVizUtils.classes.StackSectionBookData"
-
 if(thisBot.masks.isUpdatingStack) 
 {
     setTagMask(thisBot, "isUpdateStackQueued", true);

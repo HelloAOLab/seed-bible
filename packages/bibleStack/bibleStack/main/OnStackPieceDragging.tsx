@@ -11,6 +11,7 @@
 */
 
 const {piece, dragInfo} = that;
+
 if(!piece.masks.isBeingDragged) return;
 const dimension = os.getCurrentDimension();
 setTagMask(piece, dimension + "X", dragInfo.to.x);

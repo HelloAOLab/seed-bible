@@ -1,5 +1,5 @@
 const {piece}  = that;
-const currUsersColor = thisBot.GetCurrentUsersColorForElement({piece});
+const currUsersColor = thisBot.GetCurrentUsersColorForPiece({piece});
 const dimension = os.getCurrentDimension();
 currUsersColor.forEach((userColor) => {
     let offset;
@@ -18,7 +18,7 @@ currUsersColor.forEach((userColor) => {
             colorPosition = new Vector3(
                 piecePosition.x - (pieceScales.x/2) + (BibleVizUtils.Data.tags.UsersColorValues.InfoLabelColorScales.x/2) + offset.x + (userColor.tags.activityIndex * step.x),
                 piecePosition.y + (pieceScales.y/2),
-                piecePosition.z + pieceScales.z + offset.z + (userColor.tags.activityIndex * step.z) + (userColor.tags.isExtraUsersContent ? step.z : 0)
+                piecePosition.z + pieceScales.z + offset.z + (userColor.tags.activityIndex * (step.z * (userColor.tags.isExtraUsersContent ? 2 : 1))) + (userColor.tags.isExtraUsersContent ? step.z : 0)
             )
         }
         break;
@@ -46,8 +46,11 @@ currUsersColor.forEach((userColor) => {
             )
         break
     }
+
     setTag(userColor, dimension + "X", colorPosition.x)
     setTag(userColor, dimension + "Y", colorPosition.y)
     setTag(userColor, dimension + "Z", colorPosition.z)
     setTag(userColor, "initialPosition", colorPosition)
+
+
 })

@@ -1,4 +1,4 @@
-/**
+/**ication$0
     * Handles a book deselection. It modify the data of the selected book on the bibleStructure
     * @param {Object} that - Object that contains important data for the function
     * @param {StackBookData} that.bookData - The book data of the book to select
@@ -17,5 +17,5 @@ await thisBot.UpdateStacks();
 setTagMask(bookData.piece, "pointable", true);
 setTagMask(bookData.piece, "highlightable", true);
 setTagMask(thisBot, "isBibleAnimating", false);
-BibleVizUtils.Functions.UpdateUsersNotificationOnPieces({piecesData: [bookData], manager: thisBot})
+BibleVizUtils.Functions.UpdateActivityNotificationOnPieces({piecesData: [bookData], manager: thisBot})
 shout("OnStackBookDeselectionComplete", {book: bookData.piece});

@@ -5,7 +5,7 @@
     * @param {Number} that.amount? - (Optional) The amount of objects to get from the pool
     * @example
     * ObjectPooler.GetObjectFromPool({tag: ObjectPoolTags.ConfettiParticle});
-    * ObjectPooler.GetObjectFromPool({tag: ObjectPoolTags.StackChapter, amount: 20});
+    * ObjectPooler.GetObjectFromPool({tag: ObjectPoolTags.Chapter, amount: 20});
 */
 
 const {tag, amount} = that;

@@ -4,7 +4,9 @@ const fixedPieces = (Array.isArray(pieces) ? pieces : [piece]).filter((currEleme
 const allUsersColor = [];
 // const myLobbyId = getBot('lobbyUserBot', true)?.id;
 const maxAmountOfColors = 4;
-fixedPieces.forEach((fixedPiece) => {
+
+for(const fixedPiece of fixedPieces)
+{
     const currUsersColor = thisBot.GetCurrentUsersColorForPiece({piece: fixedPiece});
     let selectionsPiece;
     let userColorScales;
@@ -19,7 +21,7 @@ fixedPieces.forEach((fixedPiece) => {
             userColorScales = BibleVizUtils.Data.tags.UsersColorValues.InfoLabelColorScales;
             extraUsersContentScales = BibleVizUtils.Data.tags.UsersColorValues.InfoLabelExtraUsersContentScales;
             extraUsersBackgroundScales = BibleVizUtils.Data.tags.UsersColorValues.InfoLabelExtraUsersBackgroundScales;
-            userColorForm = BibleVizUtils.Data.tags.UsersColorValues.InfoLabelColorForm
+            userColorForm = BibleVizUtils.Data.tags.UsersColorValues.InfoLabelColorForm;
         break;
         case BibleVizUtils.Data.tags.ObjectPoolTags.StackChapter:
         case BibleVizUtils.Data.tags.ObjectPoolTags.LayoutBook:
@@ -34,6 +36,7 @@ fixedPieces.forEach((fixedPiece) => {
         break;
     }
     const pieceActivity = thisBot.GetActivityForPiece({piece: selectionsPiece, tabsContext: manager.vars.tabsContext})
+    
     if(pieceActivity.length > 0)
     {
         for(let i = 0; i < maxAmountOfColors; i++)
@@ -53,7 +56,7 @@ fixedPieces.forEach((fixedPiece) => {
         }
         for(const activityIndex in pieceActivity)
         {
-            const userSelection = pieceActivity[activityIndex];
+            const activity = pieceActivity[activityIndex];
             if(activityIndex >= maxAmountOfColors)
             {
                 const extraUsers = pieceActivity.length - maxAmountOfColors;
@@ -91,7 +94,9 @@ fixedPieces.forEach((fixedPiece) => {
                         scaleX: extraUsersBackgroundScales.x,
                         scaleY: extraUsersBackgroundScales.y,
                         scaleZ: extraUsersBackgroundScales.z,
-                        form: userColorForm
+                        targetOpacity: 1,
+                        formOpacity: 1,
+                        form: userColorForm,
                     }
                     const contentMod = {
                         color: "white",
@@ -105,7 +110,9 @@ fixedPieces.forEach((fixedPiece) => {
                         scaleX: extraUsersContentScales.x,
                         scaleY: extraUsersContentScales.y,
                         scaleZ: extraUsersContentScales.z,
-                        form: userColorForm
+                        targetOpacity: 1,
+                        formOpacity: 1,
+                        form: userColorForm,
                     }
                     extraUsersBackground.OnSpawned({mod: backgroundMod});
                     extraUsersContent.OnSpawned({mod: contentMod});
@@ -115,10 +122,12 @@ fixedPieces.forEach((fixedPiece) => {
             }
             else
             {
-                const color = "#FE9A37" // links.lobby?.masks?.users?.slice()
+                const color = "#ff4500" // links.lobby?.masks?.users?.slice()
                     // .find((userInfo) => {
-                    //     return userInfo.instanceId == userSelection.userId && userInfo.instanceId != getID(configBot)
+                    //     return userInfo.instanceId == activity.userId && userInfo.instanceId != getID(configBot)
                     // })?.color ?? "#808080";
+
+                const opacity = activity.id === manager.vars.tabsContext.activeTab ? 1 : 0.5;
                 
                 let userColor = getBot(
                     byTag("isUserColor", true), 
@@ -129,6 +138,8 @@ fixedPieces.forEach((fixedPiece) => {
                 if(userColor)
                 {
                     setTag(userColor, 'color', color);
+                    setTagMask(userColor, "formOpacity", opacity);
+                    setTag(userColor, "targetOpacity", opacity);
                 }
                 else
                 {
@@ -143,7 +154,10 @@ fixedPieces.forEach((fixedPiece) => {
                         scaleX: userColorScales.x,
                         scaleY: userColorScales.y,
                         scaleZ: userColorScales.z,
-                        form: userColorForm
+                        form: userColorForm,
+                        formOpacity: opacity,
+                        targetOpacity: opacity,
+                        formRenderOrder: 10 - Number(activityIndex)
                     }
                     userColor.OnSpawned({mod: userColorMod})
                 }
@@ -153,7 +167,7 @@ fixedPieces.forEach((fixedPiece) => {
     }
     else currUsersColor.forEach((userColor) => {ObjectPooler.ReleaseObject({obj: userColor, tag: userColor.tags.poolTag});})
 
-    thisBot.SetUsersColorPositionOnElement({piece: fixedPiece})
-})
+    thisBot.SetUsersColorPositionOnPiece({piece: fixedPiece})
+}
 
 return allUsersColor;

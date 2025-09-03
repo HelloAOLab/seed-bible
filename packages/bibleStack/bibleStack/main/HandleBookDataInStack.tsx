@@ -1,5 +1,3 @@
-import {StackSectionBookData} from "bibleVizUtils.classes.StackSectionBookData"
-
 const {
     bookData, 
     bookDataArr, 

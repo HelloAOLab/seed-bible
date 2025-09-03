@@ -7,8 +7,6 @@
     * shout("TrySelectChapter", {book: someBook, chapterNumber: 1});
 */
 
-import {QueuedChapterData} from "bibleVizUtils.classes.QueuedChapterData"
-
 let {chapterData} = that;
 const {bookData, chapterNumber} = that;
 if(!chapterData)
@@ -35,7 +33,9 @@ if(chapterData && !chapterData.isSelected)
     }
 
     chapterData.isSelected = true;
-    BibleVizUtils.Functions.TryHideUsersNotificationOnPiece({piece: chapterData.piece})
+
+    if(chapterData.piece.masks.isOnTheGround) BibleVizUtils.Functions.TryHideActivityNotificationOnPiece({piece: chapterData.piece})
+    
     shout("OnBiblePieceSelected", {piece: chapterData.piece});
 
     setTagMask(thisBot, "aChapterIsBeingSelected", true);
@@ -46,6 +46,7 @@ if(chapterData && !chapterData.isSelected)
         chapterData.piece.Select({chapterData})
     ])
 
+    if(chapterData.isSelected && chapterData.piece.masks.isOnTheGround) BibleVizUtils.Functions.UpdateUsersColorOnPiece({piece: chapterData.piece, manager: thisBot})
     setTagMask(thisBot, "aChapterIsBeingSelected", false)
     setTagMask(thisBot, "isBibleAnimating", false);
 

@@ -17,7 +17,7 @@ const setY = force ?? (tags.includes(dimension + "Y") || tags.includes("scaleY")
 const setZ = force ?? (tags.includes(dimension + "Z") || tags.includes("scaleZ"));
 const isBookSelected = data.isSelected;
 const currentLabelTransformers = getBots(byTag("ownerBotId", getID(thisBot)), byTag("isInfoLabelTransformer", true), byTag("isInUse", true));
-const currentUsersNotification = getBot(byTag("ownerBotId", getID(thisBot)), byTag("isUsersNotification", true), byTag("isInUse", true))
+const currentActivityNotification = getBot(byTag("ownerBotId", getID(thisBot)), byTag("isActivityNotification", true), byTag("isInUse", true))
 
 if(currentLabelTransformers.length > 0 && (setX || setY || setZ))
 {
@@ -30,7 +30,7 @@ if(isBookSelected)
         thisBot.TrySetChaptersPosition({setX, setY, setZ})
     }
 }
-if(currentUsersNotification && (setX || setY || setZ))
+if(currentActivityNotification && (setX || setY || setZ))
 {
-    currentUsersNotification.SetPosition({setX, setY, setZ})
+    currentActivityNotification.SetPosition({setX, setY, setZ})
 }

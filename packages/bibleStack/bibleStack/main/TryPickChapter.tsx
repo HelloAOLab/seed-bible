@@ -11,8 +11,6 @@
  * const success = thisBot.TryPickChapter({bookName: "Genesis", chapterNumber: 5});
  */
 
-import {StackSectionBookData} from 'bibleVizUtils.classes.StackSectionBookData'
-
 if(thisBot.masks.isBibleAnimating) return false;
 setTagMask(thisBot, 'isBibleAnimating', true);
 const {bookName, chapterNumber} = that;

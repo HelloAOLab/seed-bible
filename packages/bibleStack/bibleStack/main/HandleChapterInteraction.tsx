@@ -48,18 +48,18 @@ switch(typeOfInteraction)
     break;
     case BibleVizUtils.Data.tags.InteractionType.HoverBegin:
     {
-        if(!chapterData.piece.masks.isBeingDragged) thisBot.TryHighlightChapter({parentData: actualData, chapterData});
+        thisBot.TryHighlightChapter({parentData: actualData, chapterData});
     }
     break;
     case BibleVizUtils.Data.tags.InteractionType.HoverEnd:
     {
         if(!chapterData.piece.masks.isBeingDragged    && 
-            chapterData.piece.masks.isOnTheGround     && 
+            // chapterData.piece.masks.isOnTheGround     && 
             !chapterData.piece.masks.isSelecting      &&
             !chapterData.piece.masks.isDeselecting) 
         {
             chapterData.piece.Unhighlight({chapterData}).then(() => {
-                if(!chapterData.isSelected) BibleVizUtils.Functions.UpdateUsersNotificationOnPieces({piecesData: [chapterData], manager: thisBot})
+                if(!chapterData.isSelected || !chapterData.piece.masks.isOnTheGround) BibleVizUtils.Functions.UpdateActivityNotificationOnPieces({piecesData: [chapterData], manager: thisBot})
             });
         }
     }

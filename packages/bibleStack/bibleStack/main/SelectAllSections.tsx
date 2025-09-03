@@ -15,8 +15,6 @@
  * thisBot.SelectAllSections({bibleData: someBibleData});
  */
 
-import {StackSectionBookData} from "bibleVizUtils.classes.StackSectionBookData"
-
 const {bibleData, isInstantaneous = false} = that;
 let callUpdateStacks = false;
 bibleData.childrenData.forEach((testamentData) => {

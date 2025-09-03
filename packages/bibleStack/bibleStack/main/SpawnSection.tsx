@@ -14,8 +14,6 @@
  * });
  */
 
-import {StackSectionBookData} from "bibleVizUtils.classes.StackSectionBookData"
-
 let sectionData;
 const dimension = os.getCurrentDimension();
 const jarvis = getBot("jarvis", true);

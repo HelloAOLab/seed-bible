@@ -26,11 +26,6 @@
  * });
  */
 
-import {StackTestamentData} from "bibleVizUtils.classes.StackTestamentData"
-import {StackSectionData} from "bibleVizUtils.classes.StackSectionData"
-import {StackSectionBookData} from "bibleVizUtils.classes.StackSectionBookData"
-import {StackBookData} from "bibleVizUtils.classes.StackBookData"
-import {StackChapterData} from "bibleVizUtils.classes.StackChapterData"
 const {pieceData, bibleData, testamentData, sectionData, sectionBookData, bookData} = that;
 const pieceDataCopy = await CreateDataCopy(pieceData);
 let pieceDataIndex;

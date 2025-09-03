@@ -11,8 +11,6 @@
     * thisBot.CreateNewBible({position: {x: 0, y: 0}});
 */
 
-import {StackBibleData} from "bibleVizUtils.classes.StackBibleData"
-
 let {position} = that;
 const {setBibleAnimating = true, bibleType = BibleVizUtils.Data.tags.BibleType.Default, customArrangementIndex} = that;
 const dimension = os.getCurrentDimension();
@@ -26,7 +24,7 @@ if(jarvis && !position  && bibleType === BibleVizUtils.Data.tags.BibleType.Defau
 }
 if(displayJarvisSpawnPieceAnimation) await jarvis.SpawnPieceStart({scales: new Vector3(3, 3, 3)})
 shout('OnNewBibleStackCreated');
-setTagMask(thisBot, "hasStackEverBeenSpawned", true);
+thisBot.vars.hasStackEverBeenSpawned = true;
 // if(globalThis?.SetCanvasTools){
 //     SetCanvasTools(tools => {
 //         return tools.map(tool => {

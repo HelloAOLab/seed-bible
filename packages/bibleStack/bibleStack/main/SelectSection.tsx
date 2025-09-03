@@ -7,8 +7,6 @@
     * thisBot.SelectSection({section});
 */
 
-import {AnimateTagObject} from "bibleVizUtils.classes.AnimateTagObject"
-
 const {section, speedMultiplier = 1, isInstantaneous = false} = that;
 const sectionData = thisBot.GetPieceData({piece: section});
 const {bibleData, testamentData} = thisBot.GetDataChainFromParentDataIds({parentDataIds: sectionData.parentDataIds});
@@ -39,7 +37,7 @@ const bookScalesOnMod = {x: 0.1, y: 0.1, z: 0.1}
 let piecesAboveSection = GetPiecesAboveSection();
 const previousExplodedViewSectionData = (bibleData || testamentData) ? thisBot.GetPreviousExplodedViewSectionData({bibleData, testamentData}) : null;
 // const collisionType = bibleData?.bibleType === BibleVizUtils.Data.tags.BibleType.PlatformerGame ? CollisionType.Collision : null;
-BibleVizUtils.Functions.TryHideUsersNotificationOnPiece({piece: section})
+BibleVizUtils.Functions.TryHideActivityNotificationOnPiece({piece: section})
 setTagMask(thisBot, "isBibleAnimating", true);
 shout("OnStackSectionSelected")
 thisBot.PlaySound({soundName: "SectionOpen"});
@@ -56,7 +54,7 @@ if(thisBot.vars.highlightedPieces.length > 0)
     if(piecesToUnhighlight.length > 0)
     {
         await Promise.all(piecesToUnhighlight.map((piece) => {
-            return thisBot.TryUnhighlightPiece({isInstantaneous, piece, tryUpdateUsersNotification: (piece.id == section.id ? false : true), requestSource: BibleVizUtils.Data.tags.InteractionType.Transition});
+            return thisBot.TryUnhighlightPiece({isInstantaneous, piece, tryUpdateActivityNotification: (piece.id == section.id ? false : true), requestSource: BibleVizUtils.Data.tags.InteractionType.Transition});
         }));
         thisBot.vars.highlightedPieces = BibleVizUtils.Functions.SubtractArrays({array1: thisBot.vars.highlightedPieces, array2: piecesToUnhighlight})
     }

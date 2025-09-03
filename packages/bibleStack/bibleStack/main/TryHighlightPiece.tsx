@@ -50,7 +50,7 @@ else
     else
     {
         thisBot.vars.highlightedPieces.push(piece);
-        BibleVizUtils.Functions.TryHideUsersNotificationOnPiece({piece})
+        BibleVizUtils.Functions.TryHideActivityNotificationOnPiece({piece})
         highlightAction = piece.Highlight({speedMultiplier, isInstantaneous});
     }
 

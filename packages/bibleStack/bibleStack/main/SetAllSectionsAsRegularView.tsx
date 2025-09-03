@@ -12,7 +12,6 @@
  * thisBot.SetAllSectionsAsRegularView({bibleData: someBibleData});
  */
 
-import {StackSectionBookData} from "bibleVizUtils.classes.StackSectionBookData"
 const {bibleData} = that;
 for(const testamentData of bibleData.childrenData)
 {

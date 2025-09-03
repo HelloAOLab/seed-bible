@@ -6,4 +6,4 @@ const piecesData = [
     ...thisBot.vars.stackChaptersData,
 ]
 
-BibleVizUtils.Functions.UpdateUsersNotificationOnPieces({piecesData, manager: thisBot});
+BibleVizUtils.Functions.UpdateActivityNotificationOnPieces({piecesData, manager: thisBot});

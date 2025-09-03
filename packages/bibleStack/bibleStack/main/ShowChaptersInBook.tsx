@@ -1,5 +1,3 @@
-import {StackSectionBookData} from "bibleVizUtils.classes.StackSectionBookData"
-
 const {data, dimension} = that;
 
 const biggerChapter = BibleVizUtils.Functions.GetBiggerChapter();

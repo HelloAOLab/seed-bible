@@ -6,7 +6,6 @@
     * StackManager.TryMakeTourGuidOnSection({sectionData});
 */
 
-import {TourGuideData} from 'bibleVizUtils.classes.TourGuideData'
 const {sectionData} = that;
 if(thisBot.HasSectionEverBeenSelected({sectionData}))
 {

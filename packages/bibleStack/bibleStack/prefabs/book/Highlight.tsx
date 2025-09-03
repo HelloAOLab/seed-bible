@@ -6,8 +6,6 @@
     * book.Highlight();
 */
 
-import {StackBookData} from "bibleVizUtils.classes.StackBookData"
-
 const {speedMultiplier = 1, isInstantaneous = false} = that ?? {}
 const bookData = BibleStackManager.GetPieceData({piece: thisBot});
 const dimension = os.getCurrentDimension();

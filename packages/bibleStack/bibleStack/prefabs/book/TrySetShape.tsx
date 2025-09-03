@@ -7,8 +7,6 @@
     * thisBot.TrySetShape({shape: BibleVizUtils.Data.tags.BookShapeType.Regular})
 */
 
-import {StackSectionBookData} from "bibleVizUtils.classes.StackSectionBookData"
-
 const dimension = os.getCurrentDimension();
 const {shape, speedMultiplier = 1, isInstantaneous = false} = that;
 let {duration = 0.5} = that;

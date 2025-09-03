@@ -26,10 +26,6 @@
     *     isHidden: false
     * });*/
 
-import {StackSectionData} from "bibleVizUtils.classes.StackSectionData"
-import {StackSectionBookData} from "bibleVizUtils.classes.StackSectionBookData"
-import {ParentDataIds} from "bibleVizUtils.classes.ParentDataIds"
-
 const {arrangementIndex, testamentIndex, sectionIndex, isInsideBible, isInsideTestament, bibleData, testamentData, isHidden = false} = that;
 const sectionInfo = BibleVizUtils.Data.vars.fixedArrangementsInfo[arrangementIndex].testaments[testamentIndex].sections[sectionIndex];
 const amountOfChaptersInSection = BibleVizUtils.Functions.GetAmountOfChaptersInSection({section: sectionInfo.books});

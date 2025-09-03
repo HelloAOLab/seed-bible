@@ -1,5 +1,3 @@
-import {StackSectionBookData} from "bibleVizUtils.classes.StackSectionBookData"
-
 const {sectionData, desiredPositionZ, dimension, duration, easing, speedMultiplier = 1, isInstantaneous} = that;
 
 const {bibleData} = thisBot.GetDataChainFromParentDataIds({parentDataIds: sectionData.parentDataIds});

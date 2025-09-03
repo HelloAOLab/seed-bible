@@ -10,7 +10,9 @@
 */
 
 const {testament, typeOfInteraction, dragInfo, dropInfo} = that;
+
 if(thisBot.masks.isBibleAnimating && typeOfInteraction !== BibleVizUtils.Data.tags.InteractionType.PointerUp) return;
+
 const testamentData = thisBot.GetPieceData({piece: testament});
 const {bibleData} = thisBot.GetDataChainFromParentDataIds({parentDataIds: testamentData.parentDataIds});
 

@@ -6,21 +6,21 @@ const elementSelections = InstanceManager.GetUsersSelectionForPiece({piece: this
 
 if(elementSelections.length > 0)
 {
-    if(links.usersNotification)
+    if(links.activityNotification)
     {
-        setTag(links.usersNotification, "label", elementSelections.length)
+        setTag(links.activityNotification, "label", elementSelections.length)
     }
     else
     {
-        const usersNotification = ObjectPooler.GetObjectFromPool({tag: BibleVizUtils.Data.tags.ObjectPoolTags.UsersNotification});
+        const activityNotification = ObjectPooler.GetObjectFromPool({tag: BibleVizUtils.Data.tags.ObjectPoolTags.UsersNotification});
         const usersNotificationMod = {
             [dimension]: true,
             label: elementSelections.length,
             ownerBotId: thisBot.id
         }
-        usersNotification.OnSpawned({mod: usersNotificationMod});
-        usersNotification.SetPosition({setX: true, setY: true, setZ: true});
-        thisBot.tags.usersNotification = `🔗${usersNotification.id}`
+        activityNotification.OnSpawned({mod: usersNotificationMod});
+        activityNotification.SetPosition({setX: true, setY: true, setZ: true});
+        thisBot.tags.activityNotification = `🔗${activityNotification.id}`
     }
 }
 else thisBot.TryHideUsersNotification();

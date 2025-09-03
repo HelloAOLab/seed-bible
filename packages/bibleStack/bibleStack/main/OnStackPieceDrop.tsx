@@ -9,11 +9,6 @@
     * shout('OnStackPieceDrop', {data: someStackPieceData, piece: someStackPiece, dropInfo: someDropInfo});
 */
 
-import {StackChapterData} from "bibleVizUtils.classes.StackChapterData"
-import {StackSectionData} from "bibleVizUtils.classes.StackSectionData"
-import {StackBookData} from "bibleVizUtils.classes.StackBookData"
-import {StackTestamentData} from "bibleVizUtils.classes.StackTestamentData"
-
 const {piece, data, dropInfo} = that;
 const dimension = os.getCurrentDimension();
 const piecePosition = getBotPosition(piece, dimension);

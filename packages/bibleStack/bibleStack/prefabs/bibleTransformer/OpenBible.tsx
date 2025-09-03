@@ -9,8 +9,6 @@
     * bibleTransformer.OpenBible({duration: 1, easing: {type: "linear", mode: "inout"}, bibleData: someBibleData})
 */
 
-import {StackSectionBookData} from 'bibleVizUtils.classes.StackSectionBookData'
-
 const {duration = 0.5, easing = {type: "sinusoidal", mode: "inout"}, bibleData} = that ?? {};
 const dimension = os.getCurrentDimension();
 const lowerCoverPosition = getBotPosition(bibleData.staticBiblePieces.lowerCover, dimension);

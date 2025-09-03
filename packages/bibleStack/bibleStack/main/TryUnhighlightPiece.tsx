@@ -14,7 +14,7 @@
 import {UnhighlightDelayInfo} from "bibleStack.main.UnhighlightDelayInfo"
 
 let {delay} = that;
-const {piece, tryUpdateUsersNotification = true, requestSource, customDuration, speedMultiplier = 1, isInstantaneous = false} = that;
+const {piece, tryUpdateActivityNotification = true, requestSource, customDuration, speedMultiplier = 1, isInstantaneous = false} = that;
 const data = thisBot.GetPieceData({piece});
 const {bibleData} = thisBot.GetDataChainFromParentDataIds({parentDataIds: data.parentDataIds});
 const {unhighlightDelayInfo: currentUnhighlightDelayInfo, unhighlightDelayInfoIndex: currentUnhighlightDelayInfoIndex} = thisBot.GetUnhighlightDelayInfo({piece});
@@ -39,7 +39,7 @@ if(delay)
             piece.StopHighlightTransition();
             piece.Unhighlight({customDuration, isInstantaneous, speedMultiplier}).then(() => {
                 thisBot.RemovePieceFromHighlightedList({piece})
-                if(tryUpdateUsersNotification) BibleVizUtils.Functions.UpdateUsersNotificationOnPieces({piecesData: [data], manager: thisBot})
+                if(tryUpdateActivityNotification) BibleVizUtils.Functions.UpdateActivityNotificationOnPieces({piecesData: [data], manager: thisBot})
             });
         }
     }, delay);
@@ -50,6 +50,6 @@ else
     piece.StopHighlightTransition();
     await piece.Unhighlight({customDuration, speedMultiplier, isInstantaneous}).then(() => {
         thisBot.RemovePieceFromHighlightedList({piece})
-        if(tryUpdateUsersNotification) BibleVizUtils.Functions.UpdateUsersNotificationOnPieces({piecesData: [data], manager: thisBot})
+        if(tryUpdateActivityNotification) BibleVizUtils.Functions.UpdateActivityNotificationOnPieces({piecesData: [data], manager: thisBot})
     });
 }

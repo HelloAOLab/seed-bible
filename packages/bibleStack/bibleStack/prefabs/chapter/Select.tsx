@@ -18,14 +18,14 @@ if(chapterData)
     thisBot.StopChapterTransition();
     let rgbTargetColor;
     
-    const infoLabelTransformer = BibleVizUtils.Functions.GetCurrentInfoLabelTransformer(thisBot);
-    if(infoLabelTransformer)
-    {
-        ObjectPooler.ReleaseObject({obj: infoLabelTransformer, tag: infoLabelTransformer.tags.poolTag})
-    }
     setTagMask(thisBot, "isSelecting", true);
     if(thisBot.masks.isOnTheGround)
     {
+        const infoLabelTransformer = BibleVizUtils.Functions.GetCurrentInfoLabelTransformer(thisBot);
+        if(infoLabelTransformer)
+        {
+            ObjectPooler.ReleaseObject({obj: infoLabelTransformer, tag: infoLabelTransformer.tags.poolTag})
+        }
         const chapterScales = BibleVizUtils.Functions.GetBotScales(thisBot);
         const labelText = `${thisBot.tags.parentBookName} ${thisBot.tags.chapterNumber}`
         const chapterMargin = 0.5;

@@ -1,5 +1,5 @@
 if(!thisBot.masks.isBibleAnimating)
 {
-    thisBot.UpdateStackPiecesUsersNotification();
+    thisBot.UpdateStackPiecesActivityNotification();
     thisBot.UpdateStackPiecesUsersColor();
 }

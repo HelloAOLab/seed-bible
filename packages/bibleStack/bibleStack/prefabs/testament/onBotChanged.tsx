@@ -10,21 +10,21 @@
     * testament.onBotChanged({tags: ["homeX", "homeY"]})
 */
 
+const {force, tags: changedTags} = that;
 if(thisBot.tags.isBaseStackTestament || !thisBot.tags.isInUse) return;
 
-const {force, tags: changedTags} = that;
 const dimension = os.getCurrentDimension();
 const setX = force ?? (changedTags.includes(dimension + "X") || changedTags.includes("scaleX"));
 const setY = force ?? (changedTags.includes(dimension + "Y") || changedTags.includes("scaleY"));
 const setZ = force ?? (changedTags.includes(dimension + "Z") || changedTags.includes("scaleZ"));
 const currentLabelTransformers = getBots(byTag("ownerBotId", getID(thisBot)), byTag("isInfoLabelTransformer", true), byTag(dimension, true));
-const currentUsersNotification = getBot(byTag("ownerBotId", getID(thisBot)), byTag("isUsersNotification", true), byTag("isInUse", true))
+const currentActivityNotification = getBot(byTag("ownerBotId", getID(thisBot)), byTag("isActivityNotification", true), byTag("isInUse", true))
 
 if(currentLabelTransformers.length > 0 && (setX || setY || setZ))
 {
     whisper(currentLabelTransformers, "SetPosition", {setX, setY, setZ})
 }
-if(currentUsersNotification && (setX || setY || setZ))
+if(currentActivityNotification && (setX || setY || setZ))
 {
-    currentUsersNotification.SetPosition({setX, setY, setZ})
+    currentActivityNotification.SetPosition({setX, setY, setZ})
 }

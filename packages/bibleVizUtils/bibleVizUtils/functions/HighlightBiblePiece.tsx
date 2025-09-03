@@ -1,5 +1,3 @@
-import {HighlightInfo} from "bibleVizUtils.classes.HighlightInfo"
-
 const {piece, data} = that;
 
 let prevColor;

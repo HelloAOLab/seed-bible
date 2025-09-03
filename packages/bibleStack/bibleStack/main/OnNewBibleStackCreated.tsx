@@ -6,4 +6,4 @@
 */
 
 setTagMask(thisBot, 'isBibleCreationActive', false);
-if(!thisBot.masks.hasStackEverBeenSpawned) thisBot.PlaySound({soundName: "BibleOpenSound"});
+if(!thisBot.vars.hasStackEverBeenSpawned) thisBot.PlaySound({soundName: "BibleOpenSound"});

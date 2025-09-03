@@ -13,12 +13,6 @@
  * thisBot.DeletePiece({pieceData: somePieceData, piece: somePiece});
  */
 
-import { StackBibleData } from "bibleVizUtils.classes.StackBibleData"
-import { StackTestamentData } from "bibleVizUtils.classes.StackTestamentData"
-import { StackSectionData } from "bibleVizUtils.classes.StackSectionData"
-import { StackSectionBookData } from "bibleVizUtils.classes.StackSectionBookData"
-import { StackBookData } from "bibleVizUtils.classes.StackBookData"
-import { StackChapterData } from "bibleVizUtils.classes.StackChapterData"
 let { pieceData } = that;
 const { piece } = that;
 if (!pieceData) {

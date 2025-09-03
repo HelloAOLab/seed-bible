@@ -1,6 +1,42 @@
 import { PoolData } from "objectPooler.main.PoolData"
 import { CustomTag } from "objectPooler.main.CustomTag"
 
+import {PieceInfo} from "bibleVizUtils.classes.PieceInfo"
+import {StackBibleData} from "bibleVizUtils.classes.StackBibleData"
+import {StackTestamentData} from "bibleVizUtils.classes.StackTestamentData"
+import {StackSectionData} from "bibleVizUtils.classes.StackSectionData"
+import {StackSectionBookData} from "bibleVizUtils.classes.StackSectionBookData"
+import {StackBookData} from "bibleVizUtils.classes.StackBookData"
+import {StackChapterData} from "bibleVizUtils.classes.StackChapterData"
+import {LayoutChapterData} from "bibleVizUtils.classes.LayoutChapterData"
+import {AnimateTagObject} from "bibleVizUtils.classes.AnimateTagObject"
+import {LayoutBibleData} from "bibleVizUtils.classes.LayoutBibleData"
+import {LayoutBookData} from "bibleVizUtils.classes.LayoutBookData"
+import {LayoutBookStructure} from "bibleVizUtils.classes.LayoutBookStructure"
+import {ParentDataIds} from "bibleVizUtils.classes.ParentDataIds"
+import {QueuedChapterData} from "bibleVizUtils.classes.QueuedChapterData"
+import {StackData} from "bibleVizUtils.classes.StackData"
+import {TourGuideData} from "bibleVizUtils.classes.TourGuideData"
+import {UnhighlightDelayInfo} from "bibleVizUtils.classes.UnhighlightDelayInfo"
+
+globalThis.PieceInfo = PieceInfo;
+globalThis.StackBibleData = StackBibleData;
+globalThis.StackTestamentData = StackTestamentData;
+globalThis.StackSectionData = StackSectionData;
+globalThis.StackSectionBookData = StackSectionBookData;
+globalThis.StackBookData = StackBookData;
+globalThis.StackChapterData = StackChapterData;
+globalThis.LayoutChapterData = LayoutChapterData;
+globalThis.AnimateTagObject = AnimateTagObject;
+globalThis.LayoutBibleData = LayoutBibleData;
+globalThis.LayoutBookData = LayoutBookData;
+globalThis.LayoutBookStructure = LayoutBookStructure;
+globalThis.ParentDataIds = ParentDataIds;
+globalThis.QueuedChapterData = QueuedChapterData;
+globalThis.StackData = StackData;
+globalThis.TourGuideData = TourGuideData;
+globalThis.UnhighlightDelayInfo = UnhighlightDelayInfo;
+
 const bibleVizClasses = getBot(byTag("system", "bibleVizUtils.classes"));
 const bibleVizData = getBot(byTag("system", "bibleVizUtils.data"));
 const bibleVizFunctions = getBot(byTag("system", "bibleVizUtils.functions"))
@@ -141,11 +177,11 @@ const userColorPool = new PoolData({
     ],
     size: 8
 })
-const usersNotificationPool = new PoolData({
-    tag: bibleVizData.tags.ObjectPoolTags.UsersNotification,
-    bot: getBot("system", "bibleVizUtils.prefabs.usersNotification"),
+const activityNotificationPool = new PoolData({
+    tag: bibleVizData.tags.ObjectPoolTags.ActivityNotification,
+    bot: getBot("system", "bibleVizUtils.prefabs.activityNotification"),
     customTags: [
-        new CustomTag({name: "poolTag", value: bibleVizData.tags.ObjectPoolTags.UsersNotification}),
+        new CustomTag({name: "poolTag", value: bibleVizData.tags.ObjectPoolTags.ActivityNotification}),
         new CustomTag({name: "system", value: null})
     ],
     size: 5
@@ -158,6 +194,6 @@ ObjectPooler.AddObjectPools({
         infoLabelDatePool,
         infoLabelTransformerPool,
         userColorPool,
-        usersNotificationPool
+        activityNotificationPool
     ]
 })

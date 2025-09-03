@@ -10,8 +10,6 @@
  * const success = thisBot.TryPickBook({sectionName: "Law", bookName: "Genesis"});
  */
 
-import {StackSectionBookData} from 'bibleVizUtils.classes.StackSectionBookData'
-
 if(thisBot.masks.isBibleAnimating) return false;
 setTagMask(thisBot, 'isBibleAnimating', true);
 const {sectionName, bookName} = that;

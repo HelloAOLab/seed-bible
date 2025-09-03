@@ -23,4 +23,4 @@ thisBot.vars.lastInteractedStackSectionData = sectionData;
 await thisBot.UpdateStacks({speedMultiplier, isInstantaneous});
 
 if(setBibleAnimating) setTagMask(thisBot, "isBibleAnimating", false);
-thisBot.UpdateStackPiecesUsersNotification();
+thisBot.UpdateStackPiecesActivityNotification();

@@ -14,17 +14,25 @@ let {duration = 0.15} = that ?? {};
 const {speedMultiplier = 1, isInstantaneous = false} = that ?? {};
 duration = isInstantaneous ? 0 : (duration/speedMultiplier);
 thisBot.StopOpacityTransition();
+
 const infoLabelUsersColor = BibleVizUtils.Functions.UpdateUsersColorOnPiece({piece: thisBot, manager: BibleStackManager});
 const { infoLabel, infoLabelTail, infoLabelDate} = thisBot.GetLabelElements();
 const easing = {type: "sinusoidal", mode: "inout"};
 try
 {
     await Promise.all([
-        animateTag([...infoLabelUsersColor, infoLabelTail, infoLabel, infoLabelDate], "formOpacity", {
+        animateTag([infoLabelTail, infoLabel, infoLabelDate], "formOpacity", {
             toValue: thisBot.tags.targetOpacity,
             duration,
             easing
         }),
+        ...infoLabelUsersColor?.map((userColor) => {
+            return animateTag(userColor, "formOpacity", {
+                toValue: userColor.tags.targetOpacity,
+                duration,
+                easing
+            })
+        }) ?? [],
         animateTag(infoLabelUsersColor, {
             fromValue: {labelOpacity: 0},
             toValue: {labelOpacity: thisBot.tags.targetOpacity},

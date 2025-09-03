@@ -12,9 +12,6 @@
     * thisBot.CloseBible({duration: 1, easing: {type: "sinusoidal", mode: "inout"}})
 */
 
-import {StackSectionData} from 'bibleVizUtils.classes.StackSectionData'
-import {StackSectionBookData} from 'bibleVizUtils.classes.StackSectionBookData'
-
 shout("OnStackBibleClose");
 const {duration = 0.5, easing = {type: "sinusoidal", mode: "inout"}, bibleData} = that ?? {};
 const dimension = os.getCurrentDimension();

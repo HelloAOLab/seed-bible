@@ -11,25 +11,22 @@ const {chapterData, duration = 0.1} = that;
 const rgbTargetColor = BibleVizUtils.Functions.HexToRgb({hexColor: BibleVizUtils.Data.masks.isInHistoryMode ? BibleVizUtils.Functions.GetHistoryColor({piece: thisBot}) : (chapterData.highlightColor ?? thisBot.tags.initialColor)});
 const animations = [];
 thisBot.StopChapterTransition();
-if(thisBot.masks.isOnTheGround)
+if(thisBot.masks.isOnTheGround && chapterData.isSelected)
 {
     const easing = {type: "sinusoidal", mode: "inout"};
-    if(chapterData.isSelected)
-    {
-        animations.push(animateTag(thisBot, 'scaleZ', {
-            toValue: thisBot.tags.expandedScales.z,
-            duration,
-            easing
-        }))
-    }
-    else
-    {
-        const infoLabelTransformer = BibleVizUtils.Functions.GetCurrentInfoLabelTransformer(thisBot);
-        if(infoLabelTransformer) animations.push(infoLabelTransformer.Hide({duration}).then(() => {ObjectPooler.ReleaseObject({obj: infoLabelTransformer, tag: infoLabelTransformer.tags.poolTag})}))
-    }
+    animations.push(animateTag(thisBot, 'scaleZ', {
+        toValue: thisBot.tags.expandedScales.z,
+        duration,
+        easing
+    }))
+}
+else
+{
+    const infoLabelTransformer = BibleVizUtils.Functions.GetCurrentInfoLabelTransformer(thisBot);
+    if(infoLabelTransformer) animations.push(infoLabelTransformer.Hide({duration}).then(() => {ObjectPooler.ReleaseObject({obj: infoLabelTransformer, tag: infoLabelTransformer.tags.poolTag})}))
 }
 setTagMask(thisBot, "isUnhighlighting", true);
-animations.push(ColorLerper.LerpTag({startingColor: BibleVizUtils.Functions.HexToRgb({hexColor: thisBot.masks.color ?? thisBot.tags.color}), endingColor: rgbTargetColor, durationInSeconds: duration, bot: thisBot,  tag: BibleVizUtils.Data.tags.InterpolatableColorTags.Color}))
+if(!chapterData.isSelected || thisBot.masks.isOnTheGround) animations.push(ColorLerper.LerpTag({startingColor: BibleVizUtils.Functions.HexToRgb({hexColor: thisBot.masks.color ?? thisBot.tags.color}), endingColor: rgbTargetColor, durationInSeconds: duration, bot: thisBot,  tag: BibleVizUtils.Data.tags.InterpolatableColorTags.Color}))
 
 try
 {

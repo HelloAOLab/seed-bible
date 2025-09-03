@@ -1,10 +1,3 @@
-import {StackTestamentData} from "bibleVizUtils.classes.StackTestamentData"
-import {StackSectionData} from "bibleVizUtils.classes.StackSectionData"
-import {StackSectionBookData} from "bibleVizUtils.classes.StackSectionBookData"
-import {StackBookData} from "bibleVizUtils.classes.StackBookData"
-import {StackChapterData} from "bibleVizUtils.classes.StackChapterData"
-import {LayoutChapterData} from "bibleVizUtils.classes.LayoutChapterData"
-
 const {piecesData, manager} = that;
 
 if(!manager.vars.tabsContext) return;
@@ -43,22 +36,25 @@ for(const pieceData of fixedElementsData)
         !pieceData.piece.masks.isHighlighting && 
         !pieceData.piece.masks.isHighlighted)
     {
+        const formOpacity = pieceActivity.some((activity) => {return manager.vars.tabsContext.activeTab === activity.id;}) ? 1 : 0.5;
         if(pieceData.piece.links.activityNotification)
         {
             setTag(pieceData.piece.links.activityNotification, "label", pieceActivity.length)
+            setTag(pieceData.piece.links.activityNotification, "formOpacity", formOpacity);
         }
         else if(!pieceData.piece.masks.isHighlighting && !pieceData.piece.masks.isHighlighted)
         {
-            const activityNotification = ObjectPooler.GetObjectFromPool({tag: BibleVizUtils.Data.tags.ObjectPoolTags.UsersNotification});
+            const activityNotification = ObjectPooler.GetObjectFromPool({tag: BibleVizUtils.Data.tags.ObjectPoolTags.ActivityNotification});
             const activityNotificationMod = {
                 [dimension]: true,
                 label: pieceActivity.length,
-                ownerBotId: pieceData.piece.id
+                ownerBotId: pieceData.piece.id,
+                formOpacity
             }
             activityNotification.OnSpawned({mod: activityNotificationMod});
             activityNotification.SetPosition({setX: true, setY: true, setZ: true});
             pieceData.piece.tags.activityNotification = `🔗${activityNotification.id}`
         }
     }
-    else thisBot.TryHideUsersNotificationOnPiece({piece: pieceData.piece});
+    else thisBot.TryHideActivityNotificationOnPiece({piece: pieceData.piece});
 }

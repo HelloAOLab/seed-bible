@@ -39,9 +39,6 @@
     * });
 */
 
-import {StackBookData} from "bibleVizUtils.classes.StackBookData"
-import {ParentDataIds} from "bibleVizUtils.classes.ParentDataIds"
-
 const {
     arrangementIndex, 
     testamentIndex, 

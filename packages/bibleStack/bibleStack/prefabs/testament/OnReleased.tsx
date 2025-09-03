@@ -22,8 +22,8 @@ thisBot.tags.initialScaleZ = null;
 thisBot.tags.desiredScaleZ = null;
 thisBot.tags.transformer = null;
 thisBot.tags.toErase = false;
-if(thisBot.tags.usersNotification)
+if(thisBot.tags.activityNotification)
 {
-    ObjectPooler.ReleaseObject({obj: links.usersNotification, tag: links.usersNotification.tags.poolTag})
-    thisBot.tags.usersNotification = null;
+    ObjectPooler.ReleaseObject({obj: links.activityNotification, tag: links.activityNotification.tags.poolTag})
+    thisBot.tags.activityNotification = null;
 }

@@ -10,38 +10,35 @@ const duration = 0.1;
 const rgbTargetColor = BibleVizUtils.Functions.HexToRgb({hexColor: BibleVizUtils.Data.masks.isInHistoryMode ? BibleVizUtils.Functions.GetHistoryColor({piece: thisBot}) : (chapterData.highlightColor ?? thisBot.tags.highlightedColor)});
 const animations = [];
 thisBot.StopChapterTransition()
-if(thisBot.masks.isOnTheGround)
+const dimension = os.getCurrentDimension();
+const easing = {type: "sinusoidal", mode: "inout"};
+if(chapterData.isSelected && thisBot.masks.isOnTheGround)
 {
-    const dimension = os.getCurrentDimension();
-    const easing = {type: "sinusoidal", mode: "inout"};
-    if(chapterData.isSelected)
-    {
-        const desiredScaleZ = thisBot.tags.expandedScales.z + 0.1;
-        animations.push(animateTag(thisBot, 'scaleZ', {
-            toValue: desiredScaleZ,
-            duration,
-            easing
-        }))
-    }
-    else
-    {
-        const label = `${thisBot.tags.parentBookName} ${thisBot.tags.chapterNumber}`
-        const infoLabelTransformer = BibleVizUtils.Functions.GetCurrentInfoLabelTransformer(thisBot) ?? BibleVizUtils.Functions.GetLabelForPiece({
-            piece: thisBot, 
-            label,
-            color: 'white', 
-            labelColor: 'black', 
-            dimension,
-            labelPositioning: BibleVizUtils.Data.tags.LabelPositioning.Top,
-            isAnimatable: false
-        }).infoLabelTransformer;
+    const desiredScaleZ = thisBot.tags.expandedScales.z + 0.1;
+    animations.push(animateTag(thisBot, 'scaleZ', {
+        toValue: desiredScaleZ,
+        duration,
+        easing
+    }))
+}
+else
+{
+    const label = `${thisBot.tags.parentBookName} ${thisBot.tags.chapterNumber}`
+    const infoLabelTransformer = BibleVizUtils.Functions.GetCurrentInfoLabelTransformer(thisBot) ?? BibleVizUtils.Functions.GetLabelForPiece({
+        piece: thisBot, 
+        label,
+        color: 'white', 
+        labelColor: 'black', 
+        dimension,
+        labelPositioning: thisBot.masks.isOnTheGround ? BibleVizUtils.Data.tags.LabelPositioning.Top : BibleVizUtils.Data.tags.LabelPositioning.LeftSided,
+        isAnimatable: false
+    }).infoLabelTransformer;
 
-        animations.push(infoLabelTransformer.Show({duration}))
-    }
+    animations.push(infoLabelTransformer.Show({duration}))
 }
 
 setTagMask(thisBot, "isHighlighting", true);
-animations.push(ColorLerper.LerpTag({startingColor: BibleVizUtils.Functions.HexToRgb({hexColor: thisBot.masks.color ?? thisBot.tags.color}), endingColor: rgbTargetColor, durationInSeconds: duration, bot: thisBot,  tag: BibleVizUtils.Data.tags.InterpolatableColorTags.Color}))
+if(!chapterData.isSelected || thisBot.masks.isOnTheGround) animations.push(ColorLerper.LerpTag({startingColor: BibleVizUtils.Functions.HexToRgb({hexColor: thisBot.masks.color ?? thisBot.tags.color}), endingColor: rgbTargetColor, durationInSeconds: duration, bot: thisBot,  tag: BibleVizUtils.Data.tags.InterpolatableColorTags.Color}))
 
 try
 {

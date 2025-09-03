@@ -1,5 +1,3 @@
-import {PieceInfo} from "bibleVizUtils.classes.PieceInfo"
-
 const {piece, tabsContext} = that;
 
 const tabsPathMap = new Map(tabsContext.tabs.map((tab) => {
