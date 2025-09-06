@@ -220,7 +220,7 @@ function segmentHtmlBySectionEnd(htmlString) {
   let currentSegmentNodes = [];
   const bodyChildren = Array.from(doc.body.childNodes);
 
-  for (let node of bodyChildren) {
+  for (const node of bodyChildren) {
     currentSegmentNodes.push(node);
 
     if (
@@ -628,16 +628,16 @@ const TextEditor = ({ content, tab, data, setEnableEditor, enableEditor }) => {
         }
       },
       aiHighlight: async (prompt) => {
-        let html = editor.getHTML();
+        const html = editor.getHTML();
 
-        let editorElement = document.getElementById("tiptapEditor")
+        const editorElement = document.getElementById("tiptapEditor")
         editorElement.classList.add('overlay-animated-text');
         editor.setEditable(false);
 
-        let defaultPromt = prompt || tags.editorAIPromt;
-        let positivePromt = masks?.editorAIPostive || "";
-        let negativePromt = masks?.editorAINegative || "";
-        let chat = [
+        const defaultPromt = prompt || tags.editorAIPromt;
+        const positivePromt = masks?.editorAIPostive || "";
+        const negativePromt = masks?.editorAINegative || "";
+        const chat = [
           {
             role: "system",
             content: `${defaultPromt}`
@@ -655,7 +655,7 @@ const TextEditor = ({ content, tab, data, setEnableEditor, enableEditor }) => {
             content: `${html}`
           }
         ]
-        let combinedHtml = await ai.chat([...chat])
+        const combinedHtml = await ai.chat([...chat])
 
         editor.commands.setContent(combinedHtml.content)
 
@@ -1911,7 +1911,7 @@ function Counter({ value, onChange, min = 8, max = 72 }) {
   const [fontSize, setFontSize] = useState(16)
   const increment = () => {
     if (value < max) {
-      let size = fontSize + 1
+      const size = fontSize + 1
       setFontSize(size);
       globalThis.EditorFns?.setFontSize(size.toString());
     };
@@ -1919,7 +1919,7 @@ function Counter({ value, onChange, min = 8, max = 72 }) {
 
   const decrement = () => {
     if (value > min) {
-      let size = fontSize - 1
+      const size = fontSize - 1
       setFontSize(size);
       globalThis.EditorFns?.setFontSize(size.toString());
     };

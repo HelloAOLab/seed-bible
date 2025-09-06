@@ -83,7 +83,7 @@ const DragDrop = ({ setRef = {}, selectedTags, playlistName, currentDateActive, 
 
         let newItems = [];
 
-        let filterAbleItems = {
+        const filterAbleItems = {
             [draggedItemID]: true,
         };
 

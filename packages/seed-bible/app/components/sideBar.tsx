@@ -443,7 +443,7 @@ function SideBar() {
             },
             {
                 icon: <MenuIcon name="view_in_ar" />, title: 'Canvas tab', onClick: () => {
-                    let canvasNumber = globalThis?.initiatedCanvas ? globalThis.initiatedCanvas + 1 : 1;
+                    const canvasNumber = globalThis?.initiatedCanvas ? globalThis.initiatedCanvas + 1 : 1;
                     globalThis.initiatedCanvas = canvasNumber;
                     addTab({
                         id: uuid(),
@@ -533,7 +533,7 @@ function SideBar() {
                         <>
                             <div className="menuOptions">
                                 <span onClick={() => {
-                                    let mob = window.innerWidth < 768
+                                    const mob = window.innerWidth < 768
                                     if (!mob) {
 
                                         setSidebarWidth(60);

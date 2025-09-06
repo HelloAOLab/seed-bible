@@ -33,7 +33,7 @@ if (idsMap) {
         const pId = idsMap[id];
         const originalPlaylist = globalThis[`${pId}playlists`] || [];
 
-        let plylist = { ...originalPlaylist.find((pl) => pl.id === id) };
+        const plylist = { ...originalPlaylist.find((pl) => pl.id === id) };
 
         plylist.parentId = pId;
         tempArray.push(plylist);

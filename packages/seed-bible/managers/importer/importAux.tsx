@@ -1,6 +1,6 @@
-let abData = [];
-for (let auxName of tags.auxNames) {
-    let auxData = shout("onLookupABEggs", {
+const abData = [];
+for (const auxName of tags.auxNames) {
+    const auxData = shout("onLookupABEggs", {
         aoID: auxName,
         returnType: "data"
     })
@@ -9,12 +9,12 @@ for (let auxName of tags.auxNames) {
     })
 }
 
-let managerConfigs = []
-let installedBots = []
+const managerConfigs = []
+const installedBots = []
 
-for(let ab of abData){
-    for(let state of Object.values(ab.state)){
-        let prevBots = getBots("system", state.tags.system);
+for(const ab of abData){
+    for(const state of Object.values(ab.state)){
+        const prevBots = getBots("system", state.tags.system);
         if(prevBots.length > 0){
             const manager = prevBots.find((bot) => { return bot.tags.ext_manager })
             if(manager) 
@@ -24,7 +24,7 @@ for(let ab of abData){
             }
             continue
         }
-        let newBot = create({
+        const newBot = create({
             ...state.tags,
             space: "local"
         });

@@ -44,7 +44,7 @@ const App = () => {
     globalThis.setCurrentExperience = setCurrentExperience;
 
     function Swap(direaction) {
-        let bots = SortBots()
+        const bots = SortBots()
         if (direaction === 'up' && masks.index !== bots.length - 1)
             masks.index++
         else if (direaction === 'down' && masks.index !== 0)
@@ -54,7 +54,7 @@ const App = () => {
         else if (masks.index === bots.length - 1)
             masks.index = 0
         // os.log(bots[masks.index])
-        let current = getBot('id', bots[masks.index][1])
+        const current = getBot('id', bots[masks.index][1])
         current.onPointerEnter()
         os.focusOn(current, { zoom: 20, space: 'local' })
     }
@@ -125,8 +125,8 @@ const App = () => {
 }
 
 function generateQuery(params) {
-    let queryArray = [];
-    for (let key in params) {
+    const queryArray = [];
+    for (const key in params) {
         if (params.hasOwnProperty(key)) {
             queryArray.push(encodeURIComponent(key) + '=' + encodeURIComponent(params[key]));
         }
@@ -141,7 +141,7 @@ function attachQueryToURL(url, params) {
 }
 
 const setTranslation = async () => {
-    let translationId = configBot.tags.translationId
+    const translationId = configBot.tags.translationId
     if (translationId) {
         // console.log(translationId, "translation id")
         // os.toast(`Loading ${translationId} translation`)
@@ -186,17 +186,17 @@ const setTranslation = async () => {
         if (!masks?.selectedTranslation) {
             return
         }
-        let selectedTranslation = masks?.selectedTranslation;
+        const selectedTranslation = masks?.selectedTranslation;
         if (selectedTranslation?.listOfBooksApiLink?.includes("https")) {
             web.get(`${selectedTranslation.listOfBooksApiLink}`).then(e => {
-                let book0 = e.data.books[0];
+                const book0 = e.data.books[0];
                 ChangeTranslation(selectedTranslation.id, book0, selectedTranslation.origin);
             }).catch(e => {
                 console.log(e)
             })
         } else {
             web.get(`https://bible.helloao.org/api/${selectedTranslation.id}/books.json`).then(e => {
-                let book0 = e.data.books[0];
+                const book0 = e.data.books[0];
                 ChangeTranslation(selectedTranslation.id, book0, "https://bible.helloao.org");
             }).catch(e => {
                 console.log(e)

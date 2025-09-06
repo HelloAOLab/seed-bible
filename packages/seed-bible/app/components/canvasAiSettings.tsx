@@ -106,7 +106,7 @@ const CanvasAiSettings = () => {
 
     useEffect(() => {
         if (initiated) {
-            let aiChat = getBot('system', 'ext_canvas.aiChat');
+            const aiChat = getBot('system', 'ext_canvas.aiChat');
             setTagMask(aiChat, "dallEVersion", selectedImageAI, "local")
             setTagMask(aiChat, "gptVersion", selectedChatAI, "local")
             setTagMask(aiChat, "positivePromt", chatPrompt, "local")
@@ -115,7 +115,7 @@ const CanvasAiSettings = () => {
     }, [selectedChatAI, selectedImageAI, chatPrompt, imagePrompt, initiated])
 
     useEffect(() => {
-        let aiChat = getBot('system', 'ext_canvas.aiChat');
+        const aiChat = getBot('system', 'ext_canvas.aiChat');
         if (aiChat) {
             setSelectedImageAI(aiChat.masks?.dallEVersion)
             setSelectedChatAI(aiChat.masks?.gptVersion)

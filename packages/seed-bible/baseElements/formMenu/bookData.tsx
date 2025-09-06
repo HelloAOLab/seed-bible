@@ -1,7 +1,7 @@
-let BookData = await web.get(masks?.booksLink || tags.BookUrl)
+const BookData = await web.get(masks?.booksLink || tags.BookUrl)
 
-let Books = [];
-let PsalmsData = [
+const Books = [];
+const PsalmsData = [
     {
         commonName: "1 Psalms",
         startingBook: 0,
