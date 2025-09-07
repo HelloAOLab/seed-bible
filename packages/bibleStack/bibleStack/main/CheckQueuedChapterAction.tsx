@@ -6,16 +6,18 @@
     * thisBot.CheckQueuedChapterAction({data: someData});
 */
 
-const {data} = that;
-if(data.queuedChapterData)
+
+
+[...thisBot.vars.groundedChapterSelectionQueue, ...thisBot.vars.stackedChapterSelectionQueue].map((entry) => {
+
+})
+
+switch(data.queuedChapterData.action)
 {
-    switch(data.queuedChapterData.action)
-    {
-        case BibleVizUtils.Data.tags.EnqueueChapterActions.Select: {
-            thisBot.TrySelectChapter({book: data.queuedChapterData.book, chapterNumber: data.queuedChapterData.chapterNumber});
-        }
-        break;
-        default: break;
+    case BibleVizUtils.Data.tags.EnqueueChapterActions.Select: {
+        const queuedChapterData = data.queuedChapterData;
+        data.queuedChapterData = null
+        return thisBot.TrySelectChapter({bookData: queuedChapterData.bookData, chapterNumber: queuedChapterData.chapterNumber});
     }
-    data.queuedChapterData = null
+    default: break;
 }

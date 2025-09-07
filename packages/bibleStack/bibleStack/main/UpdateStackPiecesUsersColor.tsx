@@ -16,7 +16,6 @@ const availableInfoLabelTransformers = getBots(
                     labelTransformer.links.ownerBot.tags.typeOfPiece === BibleVizUtils.Data.tags.BiblePieceType.StackBook ||
                         labelTransformer.links.ownerBot.tags.typeOfPiece === BibleVizUtils.Data.tags.BiblePieceType.StackChapter)
 })
-
 const availablePiecesData = [
     ...availableChaptersData
 ]

@@ -12,13 +12,20 @@
  * thisBot.DeselectChapter({chapterData: someChapterData, setBibleAnimating: true});
  */
 
-const {chapterData, setBibleAnimating = false} = that;
+const {info, setBibleAnimating = false} = that;
 
-if(setBibleAnimating) setTagMask(thisBot, "isBibleAnimating", true);
-chapterData.isSelected = false;
-BibleVizUtils.Functions.TryHideUsersColorOnPiece({piece: chapterData.piece});
-setTagMask(thisBot, "aChapterIsBeingDeselected", true);
-await chapterData.piece.Deselect({chapterData});
-setTagMask(thisBot, "aChapterIsBeingDeselected", false);
-if(setBibleAnimating) setTagMask(thisBot, "isBibleAnimating", false);
-BibleVizUtils.Functions.UpdateActivityNotificationOnPieces({piecesData: [chapterData], manager: thisBot})
+const fixedInfo = Array.isArray(info) ? info : [info];
+
+await Promise.all(
+    fixedInfo.map(({chapterData}) => {
+        // if(setBibleAnimating) setTagMask(thisBot, "isBibleAnimating", true);
+        chapterData.isSelected = false;
+        BibleVizUtils.Functions.TryHideUsersColorOnPiece({piece: chapterData.piece});
+        // setTagMask(thisBot, "aChapterIsBeingDeselected", true);
+        return chapterData.piece.Deselect({chapterData}).then(() => {
+            BibleVizUtils.Functions.UpdateActivityNotificationOnPieces({piecesData: [chapterData], manager: thisBot})
+        });
+        // setTagMask(thisBot, "aChapterIsBeingDeselected", false);
+        // if(setBibleAnimating) setTagMask(thisBot, "isBibleAnimating", false);
+    })
+)

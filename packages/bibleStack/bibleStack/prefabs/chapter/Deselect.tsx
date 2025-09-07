@@ -63,7 +63,7 @@ if(chapterData)
             })
         ]).then(() => {
             setTagMask(thisBot, "isExpanded", false);
-            setTagMask(thisBot, "isHighlighted", false);
+            // setTagMask(thisBot, "isHighlighted", false);
         }).finally(() => {
             setTagMask(thisBot, "isDeselecting", false);
         })

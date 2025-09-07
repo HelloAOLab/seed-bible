@@ -36,8 +36,8 @@ if(data instanceof StackChapterData && data.isSelected && justGrounded)
 {
     const {sectionBookData, bookData} = thisBot.GetDataChainFromParentDataIds({parentDataIds: data.parentDataIds});
     const actualData = bookData ?? sectionBookData;
-    thisBot.DeselectChapter({chapterData: data, setBibleAnimating: true}).then(() => {
-        thisBot.TrySelectChapter({chapterData: data, bookData: actualData});
+    thisBot.DeselectChapter({info: {chapterData: data}, setBibleAnimating: true}).then(() => {
+        thisBot.TrySelectChapter({info: {chapterData: data}, bookData: actualData});
     });
 }
 else

@@ -2,7 +2,6 @@ const {piece, pieces, manager} = that;
 const dimension = os.getCurrentDimension();
 const fixedPieces = (Array.isArray(pieces) ? pieces : [piece]).filter((currElement) => {return currElement.tags[dimension] == true});
 const allUsersColor = [];
-// const myLobbyId = getBot('lobbyUserBot', true)?.id;
 const maxAmountOfColors = 4;
 
 for(const fixedPiece of fixedPieces)
@@ -122,12 +121,14 @@ for(const fixedPiece of fixedPieces)
             }
             else
             {
+                const isActiveTab = activity.id === manager.vars.tabsContext.activeTab;
                 const color = "#ff4500" // links.lobby?.masks?.users?.slice()
                     // .find((userInfo) => {
                     //     return userInfo.instanceId == activity.userId && userInfo.instanceId != getID(configBot)
                     // })?.color ?? "#808080";
 
-                const opacity = activity.id === manager.vars.tabsContext.activeTab ? 1 : 0.5;
+                const opacity = isActiveTab ? 1 : 0.5;
+                const formRenderOrder = isActiveTab ? -1 : 10 - Number(activityIndex)
                 
                 let userColor = getBot(
                     byTag("isUserColor", true), 
@@ -140,6 +141,7 @@ for(const fixedPiece of fixedPieces)
                     setTag(userColor, 'color', color);
                     setTagMask(userColor, "formOpacity", opacity);
                     setTag(userColor, "targetOpacity", opacity);
+                    setTag(userColor, "formRenderOrder", formRenderOrder);
                 }
                 else
                 {
@@ -157,7 +159,7 @@ for(const fixedPiece of fixedPieces)
                         form: userColorForm,
                         formOpacity: opacity,
                         targetOpacity: opacity,
-                        formRenderOrder: 10 - Number(activityIndex)
+                        formRenderOrder
                     }
                     userColor.OnSpawned({mod: userColorMod})
                 }

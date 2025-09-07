@@ -24,23 +24,46 @@ switch(typeOfInteraction)
         }
         else
         {
-            if(!chapterData.piece.masks.isSelecting && !chapterData.piece.masks.isDeselecting)
+            if(chapterData.isSelected)
             {
-                if(chapterData.isSelected)
+                if(!actualData && !chapterData.piece.masks.isDeselecting)
                 {
-                    if(!actualData)
-                    {
-                        thisBot.DeselectChapter({chapterData, setBibleAnimating: true});
-                    }
+                    thisBot.DeselectChapter({info: {chapterData}, setBibleAnimating: true});
                 }
-                else
+            }
+            else
+            {
+                if(!chapterData.piece.masks.isSelecting)
                 {
-                    thisBot.TrySelectChapter({chapterData, bookData: actualData});
-                    // if(globalThis?.OpenBibleAt === undefined){
-                    //     shout("runThePage")
-                    //     await os.sleep(1000);
-                    // }
-                    // OpenBibleAt(`${chapterData.piece.tags.parentBookName} ${chapterData.piece.tags.chapterNumber}:0`)
+                    if(chapterData.piece.masks.isOnTheGround)
+                    {
+                        thisBot.TrySelectChapter({info: {chapterData}, bookData: actualData}).then(() => {thisBot.UserPresenceUpdate()});
+                    }
+                    else
+                    {
+                        let tab = thisBot.vars.tabsContext.tabs.find((currTab) => {
+                            return currTab.data.book === chapterData.piece.tags.parentBookName && currTab.data.chapter == chapterData.pieceInfo.number
+                        })
+
+                        if(!tab)
+                        {
+                            tab = {
+                                id: uuid(),
+                                taken: false,
+                                data: {
+                                    use: 'thePage',
+                                    type: 'book',
+                                    book: chapterData.piece.tags.parentBookName,
+                                    bookId: BibleVizUtils.Data.tags.booksStaticInfo[chapterData.piece.tags.parentBookName].abbreviation,
+                                    chapter: chapterData.pieceInfo.number,
+                                    translation: 'BSB'
+                                }
+                            }
+                            globalThis.AddTab(tab)
+                        }
+                        thisBot.vars.tabsContext.setActiveTab(tab.id);
+                        globalThis.UpdateTab(tab);
+                    }
                 }
             }
         }
@@ -53,10 +76,11 @@ switch(typeOfInteraction)
     break;
     case BibleVizUtils.Data.tags.InteractionType.HoverEnd:
     {
-        if(!chapterData.piece.masks.isBeingDragged    && 
+        if(!chapterData.piece.masks.isBeingDragged    //&& 
             // chapterData.piece.masks.isOnTheGround     && 
-            !chapterData.piece.masks.isSelecting      &&
-            !chapterData.piece.masks.isDeselecting) 
+            // !chapterData.piece.masks.isSelecting      &&
+            // !chapterData.piece.masks.isDeselecting
+        ) 
         {
             chapterData.piece.Unhighlight({chapterData}).then(() => {
                 if(!chapterData.isSelected || !chapterData.piece.masks.isOnTheGround) BibleVizUtils.Functions.UpdateActivityNotificationOnPieces({piecesData: [chapterData], manager: thisBot})

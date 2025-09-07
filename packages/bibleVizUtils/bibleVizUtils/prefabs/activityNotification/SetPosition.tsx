@@ -10,8 +10,8 @@ const transformerOffset = 1;
 const notificationOffset = 0.15
 const transformerPosition = transformer ? getBotPosition(transformer, dimension).add(new Vector3(0, 0, transformerOffset)) : new Vector3(0, 0, 0);
 const activityNotificationDesiredPosition = new Vector3(
-    ownerBotPosition.x + (ownerBotScales.x/2) + notificationOffset, 
-    ownerBotPosition.y - (ownerBotScales.y/2) - notificationOffset, 
+    ownerBotPosition.x + (thisBot.tags.direction.x * ((ownerBotScales.x / 2) + notificationOffset)), 
+    ownerBotPosition.y + (thisBot.tags.direction.y * ((ownerBotScales.y / 2) + notificationOffset)), 
     ownerBotPosition.z + ownerBotScales.z + notificationOffset
 ).add(transformerPosition);
 

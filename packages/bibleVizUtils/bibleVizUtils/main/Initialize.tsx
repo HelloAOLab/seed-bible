@@ -45,6 +45,27 @@ if(configBot.tags.systemPortal || thisBot.masks.initialized || typeof BibleVizUt
 
 setTagMask(thisBot, "initialized", true);
 
+
+// const shoutName = 'OnCameraRotationChanged';
+// const gridBotOnBotChanged = gridPortalBot.tags.onBotChanged;
+// if(!gridBotOnBotChanged?.includes?.(shoutName))
+// {
+//     const onBotChanged = `@const changedTags = that.tags;
+// const cameraRotationChanged = changedTags.some((changedTag) => {
+//     return changedTag === 'cameraRotationX' ||
+//         changedTag === 'cameraRotationY' ||
+//         changedTag === 'cameraRotationZ';
+// })
+// if (cameraRotationChanged) {
+//     shout('${shoutName}', { changedTags })
+// }
+// `
+//     const finalBotChanged = (gridBotOnBotChanged ?? "") + onBotChanged;
+//     setTag(gridPortalBot, "onBotChanged", null);
+//     setTag(gridPortalBot, "onBotChanged", finalBotChanged);
+// }
+
+
 globalThis.BibleVizUtils = {
     Classes: bibleVizClasses,
     Data: bibleVizData,

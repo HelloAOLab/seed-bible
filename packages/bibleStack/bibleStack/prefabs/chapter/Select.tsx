@@ -73,7 +73,7 @@ if(chapterData)
                 return chunk.Show({index, dimension, delayBetweenAnimations: delayBetweenChunkAnimations, duration: chunkAnimationDuration});
             })).then(() => {
                 setTagMask(thisBot, "isExpanded", true);
-                setTagMask(thisBot, "isHighlighted", true);
+                // setTagMask(thisBot, "isHighlighted", true);
             })
         }).finally(() => {
             setTagMask(thisBot, "isSelecting", false);
@@ -99,7 +99,7 @@ if(chapterData)
                 easing
             })
         ]).then(() => {
-            setTagMask(thisBot, "isHighlighted", true);
+            // setTagMask(thisBot, "isHighlighted", true);
         }).finally(() => {
             setTagMask(thisBot, "isSelecting", false);
         })

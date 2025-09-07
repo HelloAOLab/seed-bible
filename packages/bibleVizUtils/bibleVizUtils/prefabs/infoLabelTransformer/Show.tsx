@@ -45,7 +45,7 @@ try
             easing
         })
     ]).then(() => {
-        setTagMask([infoLabel, infoLabelTail], "pointable", true);
+        setTagMask([infoLabel, infoLabelTail], "pointable", thisBot.tags.pointableDefault);
     })
 }
 catch(error){console.error(error)}

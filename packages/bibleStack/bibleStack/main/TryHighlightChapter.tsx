@@ -17,8 +17,8 @@ const previousHighlightedChapterData = parentData?.piece.vars.previousHighlighte
 
 if((previousHighlightedChapterData && previousHighlightedChapterData == chapterData)    || 
     chapterData.piece.masks.isBeingDragged                                 ||
-    chapterData.piece.masks.isSelecting                                    || 
-    chapterData.piece.masks.isDeselecting                                  ||
+    // chapterData.piece.masks.isSelecting                                    || 
+    // chapterData.piece.masks.isDeselecting                                  ||
     chapterData.piece.masks.isHighlighting                                 || 
     (chapterData.piece.masks.isHighlighted && !chapterData.piece.masks.isUnhighlighting)) return false;
 

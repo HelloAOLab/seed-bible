@@ -7,54 +7,33 @@
     * shout("TrySelectChapter", {book: someBook, chapterNumber: 1});
 */
 
-let {chapterData} = that;
-const {bookData, chapterNumber} = that;
-if(!chapterData)
-{
-    chapterData = bookData.childrenData.find((currentChapterData) => {
-        return currentChapterData.piece.tags.chapterNumber == chapterNumber   && 
-                currentChapterData.isActive                                     &&
-                !currentChapterData.isHidden
-        }
-    )
-}
-if(chapterData && !chapterData.isSelected)
-{
-    if((thisBot.masks.aChapterIsBeingSelected || thisBot.masks.aChapterIsBeingDeselected) && bookData)
+const {info, source} = that;
+const fixedInfo = (Array.isArray(info) ? info : [info]).map(({chapterData, bookData, chapterNumber}) => {
+    if(!chapterData)
     {
-        const queuedChapterData = new QueuedChapterData({
-            bookData,
-            chapterNumber,
-            chapterData,
-            action: BibleVizUtils.Data.tags.EnqueueChapterActions.Select
-        })
-        thisBot.EnqueueChapter({queuedChapterData, data: bookData});
-        return;
+        chapterData = bookData.childrenData.find((currentChapterData) => {
+            return currentChapterData.piece.tags.chapterNumber == chapterNumber   && 
+                    currentChapterData.isActive                                   &&
+                    !currentChapterData.isHidden
+            }
+        )
     }
+    return {chapterData, bookData, chapterNumber}
+})
+.filter(({chapterData}) => {
+    return chapterData && !chapterData.isSelected
+});
 
-    chapterData.isSelected = true;
+if(fixedInfo.length > 0)
+{    
+    await Promise.all(fixedInfo.map(({chapterData}) => {
 
-    if(chapterData.piece.masks.isOnTheGround) BibleVizUtils.Functions.TryHideActivityNotificationOnPiece({piece: chapterData.piece})
-    
-    shout("OnBiblePieceSelected", {piece: chapterData.piece});
+        chapterData.isSelected = true;
 
-    setTagMask(thisBot, "aChapterIsBeingSelected", true);
-    setTagMask(thisBot, "isBibleAnimating", true);
+        if(chapterData.piece.masks.isOnTheGround) BibleVizUtils.Functions.TryHideActivityNotificationOnPiece({piece: chapterData.piece})
+        
+        shout("OnBiblePieceSelected", {piece: chapterData.piece});
 
-    await Promise.all([
-        bookData?.currentSelectedChapterData && bookData.currentSelectedChapterData != chapterData ? thisBot.DeselectChapter({chapterData: bookData.currentSelectedChapterData}) : null,
-        chapterData.piece.Select({chapterData})
-    ])
-
-    if(chapterData.isSelected && chapterData.piece.masks.isOnTheGround) BibleVizUtils.Functions.UpdateUsersColorOnPiece({piece: chapterData.piece, manager: thisBot})
-    setTagMask(thisBot, "aChapterIsBeingSelected", false)
-    setTagMask(thisBot, "isBibleAnimating", false);
-
-    if(bookData) 
-    {
-        bookData.currentSelectedChapterData = chapterData;
-        thisBot.CheckQueuedChapterAction({data: bookData});
-    }
-
-    return true;
+        return chapterData.piece.Select({chapterData});
+    }));
 }

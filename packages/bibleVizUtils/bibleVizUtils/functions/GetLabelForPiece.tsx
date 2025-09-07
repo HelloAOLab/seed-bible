@@ -12,7 +12,7 @@
     * thisBot.GetLabelForPiece({piece: thisBot, label: someText, color: '#FFFFFF', labelColor: '#000000', dimension: 'home', isAside: true, isAnimatable: false});
 */
 
-const {piece, label, date, color, labelColor, dimension, labelPositioning, isAnimatable, targetOpacity = 1} = that;
+const {piece, label, date, color, labelColor, dimension, labelPositioning, isAnimatable, targetOpacity = 1, pointableDefault = true} = that;
 
 const {scaleY} = BibleVizUtils.Functions.GetDialogBotScaleY({scaleXLimit: 5, line: label, paddingX: 0.4, paddingY: 0.4})
 const infoLabelScales                       = {x: 5, y: scaleY, z: 1};
@@ -124,7 +124,8 @@ const infoLabelTransformerMod = {
     ownerBot: `🔗${getID(piece)}`,
     isAnimatable,
     labelPositioning,
-    targetOpacity
+    targetOpacity,
+    pointableDefault
 }
 const infoLabelMod = {
     [dimension]: true,

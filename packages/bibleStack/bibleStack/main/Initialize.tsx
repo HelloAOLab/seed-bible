@@ -31,6 +31,8 @@ thisBot.vars.lastInteractedStackBibleData = null;
 thisBot.masks.isBibleCreationActive = false;
 thisBot.vars.hasStackEverBeenSpawned = false;
 thisBot.masks.showBooksLabelDate = false;
+thisBot.vars.groundedChapterSelectionQueue = []
+thisBot.vars.stackedChapterSelectionQueue = []
 
 
 const sectionShadowPool = new PoolData({

@@ -4,10 +4,10 @@ import { useTabsContext } from 'app.hooks.tabs';
 
 const App = () => {
 
-    const { spaces, activeSpace, tabs, activeTab } = useTabsContext();
+    const { spaces, activeSpace, tabs, activeTab, setActiveTab } = useTabsContext();
 
     useEffect(() => {
-        shout("OnTabsContextChanged", {spaces, activeSpace, tabs, activeTab})
+        shout("OnTabsContextChanged", {spaces, activeSpace, tabs, activeTab, setActiveTab})
     }, [spaces, activeSpace, tabs, activeTab])
 
     return <div style={{width: "100%", height: "100%"}}>
@@ -19,7 +19,9 @@ const App = () => {
                 border: "1px solid black",
                 overflow: "auto"
             }}
-        ></div>
+        >
+            <button>Click me!</button>
+        </div>
     </div>
 }
 

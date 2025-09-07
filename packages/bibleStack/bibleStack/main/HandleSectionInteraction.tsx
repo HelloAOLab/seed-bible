@@ -64,7 +64,7 @@ if(!bibleData || bibleData.currentState === BibleVizUtils.Data.tags.BibleState.O
             break;
             case BibleVizUtils.Data.tags.InteractionType.HoverEnd:
             {
-                thisBot.TryUnhighlightPiece({piece: section, delay: 2000, requestSource: BibleVizUtils.Data.tags.InteractionType.HoverEnd});
+                thisBot.TryUnhighlightPiece({piece: section, delay: 4000, requestSource: BibleVizUtils.Data.tags.InteractionType.HoverEnd});
             }
             break;
             // case BibleVizUtils.Data.tags.InteractionType.SearchBarSelection:

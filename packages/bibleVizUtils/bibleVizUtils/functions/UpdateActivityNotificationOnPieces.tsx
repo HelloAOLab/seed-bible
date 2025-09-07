@@ -3,38 +3,49 @@ const {piecesData, manager} = that;
 if(!manager.vars.tabsContext) return;
 
 const dimension = os.getCurrentDimension();
-const fixedElementsData = piecesData.filter((currElementData) => {
-    // const {bibleData} = BibleStackManager.GetDataChainFromParentDataIds({parentDataIds: currElementData.parentDataIds});
-    return currElementData.piece && currElementData.piece.tags[dimension] == true // && (bibleData && bibleData.bibleType === BibleType.PlatformerGame)
+const fixedElementsData = piecesData.filter((currPieceData) => {
+    // const {bibleData} = BibleStackManager.GetDataChainFromParentDataIds({parentDataIds: currPieceData.parentDataIds});
+    return currPieceData.piece && currPieceData.piece.tags[dimension] == true // && (bibleData && bibleData.bibleType === BibleType.PlatformerGame)
 })
 
 for(const pieceData of fixedElementsData)
 {
     const pieceActivity = thisBot.GetActivityForPiece({piece: pieceData.piece, tabsContext: manager.vars.tabsContext});
     let isPieceSelected = false;
+    const relativeDirection = BibleVizUtils.Functions.GetDirectionForNotification();
+    let direction;
+    
     switch(true)
     {
         case pieceData instanceof StackTestamentData:
-            isPieceSelected = pieceData.isSplitIntoSections
+            direction = relativeDirection;
+            isPieceSelected = pieceData.isSplitIntoSections;
         break;
         case pieceData instanceof StackSectionData:
-            isPieceSelected = pieceData.isSplitIntoBooks
+            direction = relativeDirection;
+            isPieceSelected = pieceData.isSplitIntoBooks;
         break;
         case pieceData instanceof StackSectionBookData:
         case pieceData instanceof StackBookData:
-            isPieceSelected = pieceData.currentShape == BibleVizUtils.Data.tags.BookShapeType.Selected
+            direction = relativeDirection;
+            isPieceSelected = pieceData.currentShape == BibleVizUtils.Data.tags.BookShapeType.Selected;
         break;
         case pieceData instanceof StackChapterData:
         case pieceData instanceof LayoutChapterData:
-            isPieceSelected = pieceData.piece.masks.isExpanded
+            direction = new Vector2(1, -1);
+            isPieceSelected = pieceData.piece.masks.isExpanded;
         break;
-    }
+        }
 
-    if(pieceActivity.length > 0 && 
+
+
+    if(
+        pieceActivity.length > 0 && 
         !isPieceSelected &&
         pieceData.piece.tags.isInUse && 
         !pieceData.piece.masks.isHighlighting && 
-        !pieceData.piece.masks.isHighlighted)
+        (!(pieceData instanceof StackChapterData) || !pieceData.piece.masks.isHighlighted || pieceData.isSelected)
+    )
     {
         const formOpacity = pieceActivity.some((activity) => {return manager.vars.tabsContext.activeTab === activity.id;}) ? 1 : 0.5;
         if(pieceData.piece.links.activityNotification)
@@ -49,7 +60,8 @@ for(const pieceData of fixedElementsData)
                 [dimension]: true,
                 label: pieceActivity.length,
                 ownerBotId: pieceData.piece.id,
-                formOpacity
+                formOpacity,
+                direction
             }
             activityNotification.OnSpawned({mod: activityNotificationMod});
             activityNotification.SetPosition({setX: true, setY: true, setZ: true});

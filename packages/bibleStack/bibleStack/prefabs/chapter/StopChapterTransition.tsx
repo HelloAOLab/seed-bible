@@ -4,9 +4,14 @@
     * chapter.StopChapterTransition();
 */
 
-animateTag(thisBot, 'scaleX', null)
-animateTag(thisBot, 'scaleY', null)
-animateTag(thisBot, 'scaleZ', null)
+if(!thisBot.masks.isSelecting && !thisBot.masks.isDeselecting)
+{
+    animateTag(thisBot, 'scaleX', null);
+    animateTag(thisBot, 'scaleY', null);
+    animateTag(thisBot, 'scaleZ', null);
+    ColorLerper.StopLerp({bot: thisBot,  tag: BibleVizUtils.Data.tags.InterpolatableColorTags.Color});
+}
+
 const infoLabelTransformer = BibleVizUtils.Functions.GetCurrentInfoLabelTransformer(thisBot);
 if(infoLabelTransformer)
 {
@@ -17,4 +22,3 @@ if(infoLabelTransformer)
     animateTag(infoLabelUsersColor, 'labelOpacity', null);
     animateTag(infoLabelUsersColor, 'formOpacity', null);
 }
-ColorLerper.StopLerp({bot: thisBot,  tag: BibleVizUtils.Data.tags.InterpolatableColorTags.Color});
