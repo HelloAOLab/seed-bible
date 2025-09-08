@@ -1,0 +1,30 @@
+.floating-banner {
+    padding: 8px 12px;
+    border-radius: 8px;
+    font-size: 15px;
+    background-color: white;
+    position: absolute;
+    top: 20px;
+    left: 50%;
+    transform: translateX(-50%);
+    animation: floatingBanner 2s infinite linear;
+}
+
+.floating-banner.not-float {
+    animation: none;
+}
+
+@keyframes floatingBanner {
+    0% {
+        transform: translateX(-50%) translateY(0px);
+    }
+    50% {
+        transform: translateX(-50%) translateY(5px);
+    }
+    75% {
+        transform: translateX(-50%) translateY(-5px);
+    }
+    100% {
+        transform: translateX(-50%) translateY(0px);
+    }
+}

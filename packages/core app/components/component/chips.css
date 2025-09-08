@@ -1,0 +1,31 @@
+.chip {
+    display: inline-flex;
+    align-items: center;
+    background-color: #f0d6c8;
+    /* soft peachy background */
+    color: #2c2c2c;
+    /* dark text for contrast */
+    font-size: 16px;
+    font-family: 'Arial', sans-serif;
+    padding: 6px 12px;
+    border-radius: 999px;
+    margin-right: 8px;
+}
+
+.chip-label {
+    margin-right: 8px;
+}
+
+.chip-close {
+    background: none;
+    border: none;
+    font-size: 18px;
+    color: #2c2c2c;
+    cursor: pointer;
+    line-height: 1;
+    padding: 0;
+}
+
+.chip-close:hover {
+    color: #000;
+}

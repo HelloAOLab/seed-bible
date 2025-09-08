@@ -1,0 +1,1 @@
+globalThis.Components = thisBot.components();

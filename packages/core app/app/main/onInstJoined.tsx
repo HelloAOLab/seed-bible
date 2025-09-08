@@ -1,0 +1,2 @@
+thisBot.init()
+

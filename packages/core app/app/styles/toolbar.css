@@ -1,0 +1,125 @@
+.toolbar-container-1 {
+  display: var(--toolbarVisibility);
+  justify-content: center;
+  padding: 16px 0;
+  width: max-content;
+  position: fixed;
+  bottom: 18px;
+  left: 50%;
+  z-index: 10;
+
+}
+
+.toolbar-1 {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  /* background-color: var(--themeSideMenu); */
+  border-radius: 12px;
+  padding: 8px 20px;
+  box-shadow: 0 26px 10px rgba(0, 0, 0, 0.1);
+  gap: 10px;
+  /* min-width: 320px; */
+  max-width: 600px;
+  /* width: 80%; */
+  position: fixed;
+  left: 50%;
+  transform: translateX(-50%);
+  bottom: 18px;
+  z-index: 99;
+  border: 1px solid #00000024;
+}
+
+
+
+@media (max-width: 480px) {
+  .toolbar-1 {
+    width: 100vw !important;
+    border: none;
+    border-radius: 0px;
+    bottom: 0px;
+    background-color: #F0F1F1 !important;
+    justify-content: flex-start !important;
+    padding: 0px 2px;
+    height: 45px;
+  }
+
+  .firstToolbarbutton {
+    height: 100% !important;
+    background-color: #DFDEDE !important;
+    border-radius: 0px !important;
+    width: 50px !important;
+  }
+
+  .leftClick {
+    position: absolute !important;
+    left: 13px;
+    bottom: 60px;
+    background: #F0F1F1;
+    border-radius: 100%;
+  }
+
+  .rightClick {
+    position: absolute !important;
+    right: 13px;
+    bottom: 60px;
+    background: #F0F1F1;
+    border-radius: 100%;
+  }
+}
+
+
+.toolbar-button {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  width: 40px;
+  height: 40px;
+  border-radius: 50%;
+  border: none;
+  background-color: transparent;
+  cursor: pointer;
+  transition: background-color 0.2s ease;
+}
+
+.toolbar-button:hover {
+  background-color: #f0f0f0;
+}
+
+.toolbar-button:focus {
+  /* outline: none; */
+  /* background-color: #e8e8e8; */
+}
+
+.material-icons {
+  color: #333;
+  font-size: 24px;
+}
+
+
+.toolbar-item-wrapper {
+  position: relative;
+  transition: transform 0.25s ease;
+}
+
+.toolbar-button {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  width: 40px;
+  height: 40px;
+  border-radius: 50%;
+  border: none;
+  background-color: transparent;
+  cursor: pointer;
+  transition: background-color 0.2s ease, transform 0.25s ease;
+}
+
+.toolbar-button:hover {
+  background-color: #f0f0f0;
+}
+
+/* 👇 Empty space where item was */
+.placeholder {
+  visibility: hidden;
+}

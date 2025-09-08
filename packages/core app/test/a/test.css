@@ -1,0 +1,10 @@
+.game-canvas {
+
+}
+
+.game-canvas div {
+    background: red;
+    right: 0;
+    width: 100px;
+    height: 1000px;
+}

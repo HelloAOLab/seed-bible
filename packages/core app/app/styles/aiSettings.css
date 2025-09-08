@@ -1,0 +1,31 @@
+.aiSettings-container {
+    font-family: sans-serif;
+    padding: 16px;
+    width: 280px;
+    height: 100%;
+    overflow: scroll;
+}
+
+
+.ai-chat {
+    display: flex;
+    flex-direction: row;
+    justify-content: start;
+    align-items: center;
+    gap: 10px;
+    /* margin-bottom: 30px; */
+}
+.ai-photo-positions{
+    display: flex;
+    flex-direction: column;
+    justify-content: start;
+    align-items: center;
+    gap: 20px;
+}
+
+.position-item{
+    display: flex;
+    flex-direction: column;
+    justify-content: center;
+    align-items: center;
+}
