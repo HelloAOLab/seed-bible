@@ -44,7 +44,7 @@ const App = () => {
     globalThis.setCurrentExperience = setCurrentExperience;
 
     function Swap(direaction) {
-        const bots = SortBots()
+        let bots = SortBots()
         if (direaction === 'up' && masks.index !== bots.length - 1)
             masks.index++
         else if (direaction === 'down' && masks.index !== 0)
@@ -54,7 +54,7 @@ const App = () => {
         else if (masks.index === bots.length - 1)
             masks.index = 0
         // os.log(bots[masks.index])
-        const current = getBot('id', bots[masks.index][1])
+        let current = getBot('id', bots[masks.index][1])
         current.onPointerEnter()
         os.focusOn(current, { zoom: 20, space: 'local' })
     }
@@ -79,7 +79,7 @@ const App = () => {
         <style>{css}</style>
         <link href="https://fonts.googleapis.com/icon?family=Material+Icons" rel="stylesheet" />
         <link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Material+Symbols+Outlined:opsz,wght,FILL,GRAD@24,400,0,0" />
-        {<div class={`sidebar-container experience_id-${currentExperience} ${openSidebar ? "open-toggle" : openSidebar === null ? "" : "close-toggle"}`}>
+        {false && <div class={`sidebar-container experience_id-${currentExperience} ${openSidebar ? "open-toggle" : openSidebar === null ? "" : "close-toggle"}`}>
             {null/*<span
                 onClick={() => {
                     CloseAllInNav()
@@ -125,8 +125,8 @@ const App = () => {
 }
 
 function generateQuery(params) {
-    const queryArray = [];
-    for (const key in params) {
+    let queryArray = [];
+    for (let key in params) {
         if (params.hasOwnProperty(key)) {
             queryArray.push(encodeURIComponent(key) + '=' + encodeURIComponent(params[key]));
         }
@@ -141,7 +141,7 @@ function attachQueryToURL(url, params) {
 }
 
 const setTranslation = async () => {
-    const translationId = configBot.tags.translationId
+    let translationId = configBot.tags.translationId
     if (translationId) {
         // console.log(translationId, "translation id")
         // os.toast(`Loading ${translationId} translation`)
@@ -186,17 +186,17 @@ const setTranslation = async () => {
         if (!masks?.selectedTranslation) {
             return
         }
-        const selectedTranslation = masks?.selectedTranslation;
+        let selectedTranslation = masks?.selectedTranslation;
         if (selectedTranslation?.listOfBooksApiLink?.includes("https")) {
             web.get(`${selectedTranslation.listOfBooksApiLink}`).then(e => {
-                const book0 = e.data.books[0];
+                let book0 = e.data.books[0];
                 ChangeTranslation(selectedTranslation.id, book0, selectedTranslation.origin);
             }).catch(e => {
                 console.log(e)
             })
         } else {
             web.get(`https://bible.helloao.org/api/${selectedTranslation.id}/books.json`).then(e => {
-                const book0 = e.data.books[0];
+                let book0 = e.data.books[0];
                 ChangeTranslation(selectedTranslation.id, book0, "https://bible.helloao.org");
             }).catch(e => {
                 console.log(e)

@@ -1,8 +1,8 @@
 
 return
-const bookName = that.bookname;
+let bookName = that.bookname;
 setVersesState([])
-const bookArrangementObj = getBot("system", "introduction.manager").tags.bibleArrangementsArray[0];
+let bookArrangementObj = getBot("system", "introduction.manager").tags.bibleArrangementsArray[0];
 // os.log(bookArrangementObj,'bookArrangementObj')
 let name = null;
 let sectionName = null;
@@ -13,16 +13,16 @@ try{
 }catch{
     os.log('not globaled yet')
 }
-   const MainBot =  getBot('phrase','firstPhrase')
+   let MainBot =  getBot('phrase','firstPhrase')
 
 
 for(let i = 0; i < bookArrangementObj.length; i++){
     name = bookArrangementObj[i].name;
     // os.log(bookArrangementObj[i].sections,i)
-    const sections = Object.keys(bookArrangementObj[i].sections);
+    let sections = Object.keys(bookArrangementObj[i].sections);
     for(let j = 0; j < sections.length; j++){
         sectionName = sections[j];
-        const sectionArray = bookArrangementObj[i].sections[sections[j]];
+        let sectionArray = bookArrangementObj[i].sections[sections[j]];
         for(let k = 0; k < sectionArray.length; k++){
             if(sectionArray[k].commonName === that.bookname){
                 commonName = sectionArray[k].commonName;
@@ -77,8 +77,8 @@ async function openBook(bookBot,commonName){
     }
 }
 
-const interactWithBook = () => {
-    const bookBot = getBot(byTag("bookName", commonName), byTag("isBook", true));
+let interactWithBook = () => {
+    let bookBot = getBot(byTag("bookName", commonName), byTag("isBook", true));
     // console.log(bookBot);
    if(bookBot){
         os.focusOn(bookBot, {
@@ -92,8 +92,8 @@ const interactWithBook = () => {
     }
 }
 
-const interactWithSection = async () => {
-    const sectionBot = getBot(byTag("isSection", true), byTag('sectionName',sectionName.toLowerCase()));
+let interactWithSection = async () => {
+    let sectionBot = getBot(byTag("isSection", true), byTag('sectionName',sectionName.toLowerCase()));
     os.log(sectionBot,sectionName,'sectionBotdd');
 
     // Double time is for interaction and select
@@ -127,11 +127,11 @@ if(bookTestament) {
     await os.sleep(4000);    
 }
 
-const bibleLowerCover = getBot(byTag("isMainWordLowerCover", true));
-const infoLabelBot = getBot("infoLabel");
-const sectionBot = getBot(byTag("sectionName", sectionName));
-const bookBot = getBot(byTag("bookName", commonName));
-const formMenu = getBot("system", "baseElements.formMenu");
+let bibleLowerCover = getBot(byTag("isMainWordLowerCover", true));
+let infoLabelBot = getBot("infoLabel");
+let sectionBot = getBot(byTag("sectionName", sectionName));
+let bookBot = getBot(byTag("bookName", commonName));
+let formMenu = getBot("system", "baseElements.formMenu");
 
 whisper(formMenu, "closeFormMenu");
 
