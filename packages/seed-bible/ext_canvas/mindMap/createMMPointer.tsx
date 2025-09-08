@@ -1,5 +1,5 @@
-const dim = os.getCurrentDimension();
-const pointer = create({
+let dim = os.getCurrentDimension();
+let pointer = create({
     [dim]: true,
     [dim + "X"]: configBot.tags.mousePointerPosition.x,
     [dim + "Y"]: configBot.tags.mousePointerPosition.y,

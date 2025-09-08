@@ -2,7 +2,7 @@ await os.unregisterApp('aiPromt');
 await os.registerApp('aiPromt', thisBot);
 const css = thisBot.tags["App.css"];
 const {useState, useEffect, useMemo, useCallback, useRef} = os.appHooks;
-const aiChat = getBot('system', 'ext_canvas.aiChat');
+let aiChat = getBot('system', 'ext_canvas.aiChat');
 
 const App = () => {
     const [position, setPosition] = useState({x: "calc(100vw - 270px)", y: "20px"});
@@ -29,14 +29,14 @@ const App = () => {
     }, [gptVersion]);
 
     useEffect(() => {
-        const it = setInterval(() => {
-            const aiSetting = getBot(byTag("aiSetting"));
+        let it = setInterval(() => {
+            let aiSetting = getBot(byTag("aiSetting"));
             setTagMask(aiSetting, "formAddress", "https://auth-aux-aobot-prod-filesbucket-141297942820.s3.amazonaws.com/aoBot/a4a176e8fe212617e1802bdc1e90b32813d172a3dd10d87fa98de1bcf2dc7e93.png", "tempLocal");
             setTagMask(aiSetting, "onClick", `@ os.unregisterApp('aiPromt')`, "tempLocal");
         }, 50)
         return () => {
             clearInterval(it);
-            const aiSetting = getBot(byTag("aiSetting"));
+            let aiSetting = getBot(byTag("aiSetting"));
             aiSetting.masks.formAddress = null;
             aiSetting.masks.onClick = null;
         }

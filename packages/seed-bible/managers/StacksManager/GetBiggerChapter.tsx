@@ -8,18 +8,18 @@
 
 if(thisBot.masks.biggerChapterInBible) return thisBot.masks.biggerChapterInBible;
 
-const arrangementsInfo = InstanceManager.vars.fixedArrangementsInfo.slice();
+let arrangementsInfo = InstanceManager.vars.fixedArrangementsInfo.slice();
 const arrangementIndex = thisBot.GetCurrentArrangementIndex();
 const arrangement = arrangementsInfo[arrangementIndex];
 
 let biggerChapter = 0;
 let chapterInfo;
 
-for(const testament of arrangement.testaments)
+for(let testament of arrangement.testaments)
 {
-    for(const sectionInfo of testament.sections)
+    for(let sectionInfo of testament.sections)
     {
-        for(const book of sectionInfo.books)
+        for(let book of sectionInfo.books)
         {
             const {chaptersInfo} = StacksManager.tags.booksStaticInfo[book.commonName];
             if(chaptersInfo)

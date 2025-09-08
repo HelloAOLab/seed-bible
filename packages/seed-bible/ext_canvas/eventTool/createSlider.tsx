@@ -1,13 +1,13 @@
-const dim = os.getCurrentDimension();
-const controlBot = getBot(byTag("id", that.id));
+let dim = os.getCurrentDimension();
+let controlBot = getBot(byTag("id", that.id));
 await os.unregisterApp('slider')
 await os.registerApp('slider', thisBot);
 
 const { useEffect,useState, useRef } = os.appHooks;
 
-const opacityCalc = (botPosition, parentPosition, initialOpacity) => {
-    const distance = Math.sqrt((parentPosition - botPosition) * (parentPosition - botPosition));
-    const opacity = initialOpacity * (1 - distance / 20);
+let opacityCalc = (botPosition, parentPosition, initialOpacity) => {
+    let distance = Math.sqrt((parentPosition - botPosition) * (parentPosition - botPosition));
+    let opacity = initialOpacity * (1 - distance / 20);
     return opacity;
 }
 
@@ -19,19 +19,19 @@ function App() {
     const changePosition = (e) => {
         const eventTool = getBot('system', 'ext_canvas.eventTool');
         // moveEventBots(tags.eventBotIds.indexOf(that.id), 3);
-        const priorityIndex = parseInt(e.target.value);
-        const upArrow = getBots("arrowUp");
-        const downArrow = getBots("arrowDown");
-        const dataSlits = getBots(byTag("slitType", "incident"));
-        const eventBots = getBots("eventBot");
+        let priorityIndex = parseInt(e.target.value);
+        let upArrow = getBots("arrowUp");
+        let downArrow = getBots("arrowDown");
+        let dataSlits = getBots(byTag("slitType", "incident"));
+        let eventBots = getBots("eventBot");
         destroy(eventBots);
         destroy(upArrow);
         destroy(downArrow);
         destroy(dataSlits);
-        const startingIndex = controlBot.tags[dim + "X"] - (priorityIndex * 4);
+        let startingIndex = controlBot.tags[dim + "X"] - (priorityIndex * 4);
         for(let i = 0; i < tags.dataSlitsManager.dataList.length; i++){
-            const dataSlit = getBot(byTag("id", tags.dataSlitsManager.dataList[i]));
-            const dataSlitLine = getBot(byTag("id", dataSlit.tags.lineId));
+            let dataSlit = getBot(byTag("id", tags.dataSlitsManager.dataList[i]));
+            let dataSlitLine = getBot(byTag("id", dataSlit.tags.lineId));
             animateTag(dataSlit, {
                 fromValue: {
                     [dim + "X"]: dataSlit.tags[dim + "X"],
@@ -98,17 +98,17 @@ function SimSlider() {
     const [sliderValue, setSliderValue] = useState(0);
     globalThis.setSliderValue = setSliderValue;
     const changePosition = (e) => {
-        const priorityIndex = parseInt(e.target.value);
-        const upArrow = getBots("arrowUp");
-        const downArrow = getBots("arrowDown");
-        const dataSlits = getBots(byTag("slitType", "incident"));
-        const eventBots = getBots("eventBot");
+        let priorityIndex = parseInt(e.target.value);
+        let upArrow = getBots("arrowUp");
+        let downArrow = getBots("arrowDown");
+        let dataSlits = getBots(byTag("slitType", "incident"));
+        let eventBots = getBots("eventBot");
         destroy(eventBots);
         destroy(upArrow);
         destroy(downArrow);
         destroy(dataSlits);
         const masksKeys = Object.keys(controlBot.masks);
-        for(const maskKey of masksKeys){
+        for(let maskKey of masksKeys){
             if(maskKey !== "selectedEventBot" || maskKey !== "color" || maskKey !== ""){
                 controlBot.masks[maskKey] = null;
             }
@@ -117,8 +117,8 @@ function SimSlider() {
         controlBot.tags.scaleY = null;
         controlBot.tags.scaleZ = null;
         controlBot.tags.label = null;
-        const simKeys = Object.keys(controlBot.tags.eventBotData.sims[priorityIndex]);
-        for(const key of simKeys){
+        let simKeys = Object.keys(controlBot.tags.eventBotData.sims[priorityIndex]);
+        for(let key of simKeys){
             setTagMask(controlBot, key, controlBot.tags.eventBotData.sims[priorityIndex][key], "tempLocal");
             if(key === "playSound"){
                 controlBot.masks.onClick = `@
@@ -140,7 +140,7 @@ function SimSlider() {
     useEffect(() => {
         return () => {
             const masksKeys = Object.keys(controlBot.masks);
-            for(const maskKey of masksKeys){
+            for(let maskKey of masksKeys){
                 if(maskKey !== "selectedEventBot" || maskKey !== "color" || maskKey !== ""){
                     controlBot.masks[maskKey] = null;
                 }
@@ -149,8 +149,8 @@ function SimSlider() {
             controlBot.tags.scaleY = null;
             controlBot.tags.scaleZ = null;
             controlBot.tags.label = null;
-            const simKeys = Object.keys(controlBot.tags.eventBotData.sims[0]);
-            for(const key of simKeys){
+            let simKeys = Object.keys(controlBot.tags.eventBotData.sims[0]);
+            for(let key of simKeys){
                 setTagMask(controlBot, key, controlBot.tags.eventBotData.sims[0][key], "tempLocal");
                 if(key === "playSound"){
                     controlBot.masks.onClick = `@

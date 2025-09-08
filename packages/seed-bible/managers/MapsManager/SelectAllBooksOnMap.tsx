@@ -11,7 +11,7 @@ openAllBooksButton.links.buttonIcon.tags.formAddress = openAllBooksButton.tags.c
 const unselectedBooksData = thisBot.vars.mapBooksData.filter((bookData) => {return bookData.element && !bookData.isSelected})
 await unselectedBooksData.sort((bookDataA, bookDataB) => bookDataA.element.tags.index - bookDataB.element.tags.index)
 
-for(const bookData of unselectedBooksData)
+for(let bookData of unselectedBooksData)
 {
     await thisBot.SelectMapBook({mapBookData: bookData, mapData, fromOpenAllButton: true})
 }

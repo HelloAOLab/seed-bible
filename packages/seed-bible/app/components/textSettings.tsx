@@ -60,7 +60,7 @@ export const defaultTextConfig = {
 };
 export function exportTextConfigToCSS(textConfig) {
     const toCSSVarName = (section, key) => `--text-${section}-${key}`;
-    const cssVars = [];
+    let cssVars = [];
 
     for (const [section, config] of Object.entries(textConfig)) {
         const styles = config.styles || {};

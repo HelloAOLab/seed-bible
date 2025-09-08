@@ -173,11 +173,11 @@ const Repository = ({ selectedRepo }) => {
                         globalThis.EVENT_PANEL_ID = null;
                         globalThis.eventToolApp = false;
                     }
-                    const App = await thisBot.Repository();
+                    let App = await thisBot.Repository();
                     console.log("people app init")
                     if (App) {
                         // if (!panelMode) {
-                        const id = uuid();
+                        let id = uuid();
                         globalThis.eventToolApp = true;
                         globalThis.EVENT_PANEL_ID = id;
                         AddApplication({ id, App: <App SelectedRepo={0} repoType={repoType} id={id} />, minWidth: '23rem' })
@@ -194,10 +194,10 @@ const Repository = ({ selectedRepo }) => {
                         globalThis.EVENT_PANEL_ID = null;
                         globalThis.eventToolApp = false;
                     }
-                    const App = await thisBot.Repository();
+                    let App = await thisBot.Repository();
                     if (App) {
                         // if (!panelMode) {
-                        const id = uuid();
+                        let id = uuid();
                         globalThis.eventToolApp = true;
                         globalThis.EVENT_PANEL_ID = id;
                         AddApplication({ id, App: <App SelectedRepo={1} repoType={repoType} id={id} />, minWidth: '23rem' })
@@ -214,10 +214,10 @@ const Repository = ({ selectedRepo }) => {
                         globalThis.EVENT_PANEL_ID = null;
                         globalThis.eventToolApp = false;
                     }
-                    const App = await thisBot.Repository();
+                    let App = await thisBot.Repository();
                     if (App) {
                         // if (!panelMode) {
-                        const id = uuid();
+                        let id = uuid();
                         globalThis.eventToolApp = true;
                         globalThis.EVENT_PANEL_ID = id;
                         AddApplication({ id, App: <App SelectedRepo={2} repoType={repoType} id={id} />, minWidth: '23rem' })
@@ -234,10 +234,10 @@ const Repository = ({ selectedRepo }) => {
                         globalThis.EVENT_PANEL_ID = null;
                         globalThis.eventToolApp = false;
                     }
-                    const App = await thisBot.Repository();
+                    let App = await thisBot.Repository();
                     if (App) {
                         // if (!panelMode) {
-                        const id = uuid();
+                        let id = uuid();
                         globalThis.eventToolApp = true;
                         globalThis.EVENT_PANEL_ID = id;
                         AddApplication({ id, App: <App SelectedRepo={3} repoType={repoType} id={id} />, minWidth: '23rem' })
@@ -254,10 +254,10 @@ const Repository = ({ selectedRepo }) => {
                         globalThis.EVENT_PANEL_ID = null;
                         globalThis.eventToolApp = false;
                     }
-                    const App = await thisBot.Repository();
+                    let App = await thisBot.Repository();
                     if (App) {
                         // if (!panelMode) {
-                        const id = uuid();
+                        let id = uuid();
                         globalThis.eventToolApp = true;
                         globalThis.EVENT_PANEL_ID = id;
                         AddApplication({ id, App: <App SelectedRepo={4} repoType={repoType} id={id} />, minWidth: '23rem' })
@@ -274,10 +274,10 @@ const Repository = ({ selectedRepo }) => {
                         globalThis.EVENT_PANEL_ID = null;
                         globalThis.eventToolApp = false;
                     }
-                    const App = await thisBot.Repository();
+                    let App = await thisBot.Repository();
                     if (App) {
                         // if (!panelMode) {
-                        const id = uuid();
+                        let id = uuid();
                         globalThis.eventToolApp = true;
                         globalThis.EVENT_PANEL_ID = id;
                         AddApplication({ id, App: <App SelectedRepo={5} repoType={repoType} id={id} />, minWidth: '23rem' })
@@ -294,10 +294,10 @@ const Repository = ({ selectedRepo }) => {
                         globalThis.EVENT_PANEL_ID = null;
                         globalThis.eventToolApp = false;
                     }
-                    const App = await thisBot.Repository();
+                    let App = await thisBot.Repository();
                     if (App) {
                         // if (!panelMode) {
-                        const id = uuid();
+                        let id = uuid();
                         globalThis.eventToolApp = true;
                         globalThis.EVENT_PANEL_ID = id;
                         AddApplication({ id, App: <App SelectedRepo={6} repoType={repoType} id={id} />, minWidth: '23rem' })
@@ -439,7 +439,7 @@ const SelectedEventPage = ({ page, setPage }) => {
 
     const createEvent = ({ uid, textBotId = null, page = 0 }) => {
         setLoading(true);
-        const params = {
+        let params = {
             uid
         };
         let queryUrl = pageApis.getItemByUid;
@@ -521,7 +521,7 @@ const SelectedEventPage = ({ page, setPage }) => {
             setLoading(true);
             setError(false);
             if (eventQuery !== "") {
-                const params = {
+                let params = {
                     query: eventQuery
                 }
                 let queryUrl = pageApis.searchItem;
@@ -546,7 +546,7 @@ const SelectedEventPage = ({ page, setPage }) => {
                     }
                 });
             } else {
-                const params = {
+                let params = {
                     page: currentPage,
                     count: 32
                 }
@@ -676,7 +676,7 @@ const Annotations = ({ page, setPage }) => {
         setLoading(true);
         setError(false);
         if (eventQuery !== "") {
-            const params = {
+            let params = {
                 query: eventQuery,
                 page: 1,
                 count: 10
@@ -698,7 +698,7 @@ const Annotations = ({ page, setPage }) => {
                 }
             });
         } else {
-            const params = {
+            let params = {
                 page: currentPage,
                 count: 10
             }

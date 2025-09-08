@@ -50,7 +50,7 @@ if(chapterNumber > 0 && chapterNumber <= numberOfChapters)
         {
             if(InstanceManager.vars.fixedArrangementsInfo[arrangementIndex].testaments[testamentIndex].sections[sectionIndex].books.length > 1)
             {
-                const sectionData = thisBot.vars.lastInteractedTestamentData?.childrenData.find((currSectionData) => {
+                let sectionData = thisBot.vars.lastInteractedTestamentData?.childrenData.find((currSectionData) => {
                     return currSectionData.childrenData.flat().some((currBookData) => {
                         return currBookData.elementInfo.commonName === bookName;
                     })
@@ -82,7 +82,7 @@ if(chapterNumber > 0 && chapterNumber <= numberOfChapters)
             }
             else
             {
-                const sectionBookData = thisBot.vars.lastInteractedTestamentData?.childrenData.find((currSectionData) => {
+                let sectionBookData = thisBot.vars.lastInteractedTestamentData?.childrenData.find((currSectionData) => {
                     return (currSectionData instanceof SectionBookData) && currSectionData.elementBookInfo.commonName === bookName
                 })
                 if( thisBot.vars.lastInteractedTestamentData &&

@@ -1,7 +1,7 @@
 const text = that.text;
 const dim = os.getCurrentDimension();
 
-const textBoxConfig = {
+let textBoxConfig = {
     space: "tempLocal",
     [dim]: true,
     scaleZ: 0.1,

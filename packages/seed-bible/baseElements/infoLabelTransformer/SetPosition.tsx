@@ -30,14 +30,14 @@ const infoLabelTransformerDesiredPosition = new Vector3(
     ownerBotPosition.y, 
     ownerBotPosition.z + (ownerBotScales.z / ((thisBot.tags.labelPositioning ===  LabelPositioning.Top ||  thisBot.tags.labelPositioning === LabelPositioning.RightSidedCorner) ? 1 : 2)) - (infoLabelTransformerScales.z / 2) + (thisBot.tags.labelPositioning === LabelPositioning.RightSidedCorner ? 1.5 : 0)
 ).add(transformerPosition);
-const dateGapX = 0.2;
+let dateGapX = 0.2;
 
 if(setX) setTagMask(thisBot, dimension + "X", infoLabelTransformerDesiredPosition.x);
 if(setY) setTagMask(thisBot, dimension + "Y", infoLabelTransformerDesiredPosition.y);
 if(setZ) setTagMask(thisBot, dimension + "Z", infoLabelTransformerDesiredPosition.z);
 if(setLabelOffset && thisBot.tags.labelPositioning !== LabelPositioning.Top)
 {
-    const {infoLabel, infoLabelTail, infoLabelDate} = thisBot.GetLabelElements();
+    let {infoLabel, infoLabelTail, infoLabelDate} = thisBot.GetLabelElements();
 
     const infoLabelScales = GetBotScales(infoLabel);
     const infoLabelTailScales = GetBotScales(infoLabelTail);
@@ -45,7 +45,7 @@ if(setLabelOffset && thisBot.tags.labelPositioning !== LabelPositioning.Top)
     const radialVector = new Vector2(ownerBotScales.x/2, ownerBotScales.y/2)
     const infoLabelOffsetMargin = 1;
     let infoLabelOffsetX, infoLabelTailOffsetX;
-    const infoLabelDateOffsetX = infoLabelDate ? (infoLabelOffsetX + (infoLabelScales.x / 2 / infoLabelTransformerScales.x) - (infoLabelDateScales.x/2) - dateGapX) : null;
+    let infoLabelDateOffsetX = infoLabelDate ? (infoLabelOffsetX + (infoLabelScales.x / 2 / infoLabelTransformerScales.x) - (infoLabelDateScales.x/2) - dateGapX) : null;
     switch(thisBot.tags.labelPositioning)
     {
         default:

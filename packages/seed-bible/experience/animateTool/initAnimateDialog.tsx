@@ -3,14 +3,14 @@ await os.registerApp('animationDialog', thisBot);
 const css = thisBot.tags["App.css"];
 const active = thisBot.tags["active.css"];
 const {useState, useEffect, useMemo, useCallback, useRef} = os.appHooks;
-const axisArrow = getBot("axisArrow");
-const circle = getBot("circle");
+let axisArrow = getBot("axisArrow");
+let circle = getBot("circle");
 
 setTagMask(thisBot, "initiated", true, "tempLocal");
 
 function generateQuery(params) {
-    const queryArray = [];
-    for (const key in params) {
+    let queryArray = [];
+    for (let key in params) {
         if (params.hasOwnProperty(key)) {
             queryArray.push(encodeURIComponent(key) + '=' + encodeURIComponent(params[key]));
         }
@@ -212,7 +212,7 @@ const App = () => {
                     }
                 ]);
             }
-            const anis = await os.listFormAnimations(selectedBot);
+            let anis = await os.listFormAnimations(selectedBot);
             if(anis.length > 0){
                 setFormAnimations([...anis]);
             }
@@ -248,7 +248,7 @@ const App = () => {
     }
 
     const handleAnimationUpdate = (e, key) => {
-        const tempFrames = frames;
+        let tempFrames = frames;
         const value = parseFloat(e.target.value);
         if(value || value === 0){
             tempFrames[currentFrame][key] = value;
@@ -285,13 +285,13 @@ const App = () => {
             os.toast("Please enter a valid name");
             return
         }
-        const aniBotTags = [];
+        let aniBotTags = [];
         const animationBots = getBots("animationFrames");
-        for(const animationBot of animationBots){
+        for(let animationBot of animationBots){
             aniBotTags.push({...animationBot.tags})
         }
 
-        for(const aniConfig of aniBotTags){
+        for(let aniConfig of aniBotTags){
             aniConfig.dimX = aniConfig[dim + "X"];
             aniConfig.dimY = aniConfig[dim + "Y"];
             aniConfig.dimZ = aniConfig[dim + "Z"];
@@ -305,10 +305,10 @@ const App = () => {
             destroy(aniConfig[dim + "RotationX"]);
             destroy(aniConfig[dim + "RotationY"]);
             destroy(aniConfig[dim + "RotationZ"]);
-            const animationFrames = [...aniConfig.animationFrames];
+            let animationFrames = [...aniConfig.animationFrames];
             for(let j = 0; j < animationFrames.length; j++){
                 if(animationFrames[j].type === "recording"){
-                    const recording = JSON.parse(animationFrames[j].frameData);
+                    let recording = JSON.parse(animationFrames[j].frameData);
                     for(let i = 0; i < recording.states.length; i++){
                         recording.states[i].tags.dimX = recording.states[i].tags[dim + "X"];
                         recording.states[i].tags.dimY = recording.states[i].tags[dim + "Y"];
@@ -322,12 +322,12 @@ const App = () => {
         }
         os.toast("Publishing animation")
 
-        const body = JSON.stringify({
+        let body = JSON.stringify({
             animationBotConfigs: JSON.stringify(aniBotTags),
             animationName: title
         });
 
-        const blob = new Blob([body], { type: 'text/plain' });
+        let blob = new Blob([body], { type: 'text/plain' });
 
         const record = await os.recordFile("vRK2.YW5ub3RhdGlvblJlY29yZA==.WmptMWdDa1RLMFYvQlhQR2hKa3hhUT09.subjectfull", blob);
 
@@ -337,7 +337,7 @@ const App = () => {
             animationName: title
         }
 
-        const url = attachQueryToURL("https://theographic-bible-api.netlify.app/api/animation/addAnimation", recordData)
+        let url = attachQueryToURL("https://theographic-bible-api.netlify.app/api/animation/addAnimation", recordData)
         
         const result = await web.get(url);
 
@@ -348,7 +348,7 @@ const App = () => {
             }else{
                 os.toast(result.data.data)
             }
-        }else if(result.status !== 200){
+        }else if(result.status === 200){
             os.toast(result.data.data)
         }
         setBtnDisable(false);
@@ -381,11 +381,11 @@ const App = () => {
     useEffect(() => {
         const animationBots = getBots("animationFrames");
         if(playing){
-            for(const animationBot of animationBots){
+            for(let animationBot of animationBots){
                 playAll(animationBot, animationBot.masks.animationFrames, true)
             }
         }else{
-            for(const animationBot of animationBots){
+            for(let animationBot of animationBots){
                 clearAnimations(animationBot);
             }
         }
@@ -456,7 +456,7 @@ const App = () => {
                 startTime: selectedBot.vars.startTime
             });
 
-            const tempFrames = [...frames];
+            let tempFrames = [...frames];
             tempFrames[currentFrame] = {
                 ...tempFrames[currentFrame],
                 frameData: frame,

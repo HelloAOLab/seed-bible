@@ -22,7 +22,7 @@ if(activeChaptersData.length > 0)
     let column = 0;
     let xPosition, yPosition, zPosition;
     
-    for(const chapterData of activeChaptersData)
+    for(let chapterData of activeChaptersData)
     {
         if(chapterData.isActive && !chapterData.isHidden)
         {

@@ -9,8 +9,8 @@
 */
 
 const {bibleData} = that;
-const sectionsToHighlight = [];
-for(const testamentData of bibleData.childrenData)
+let sectionsToHighlight = [];
+for(let testamentData of bibleData.childrenData)
 {
     testamentData.childrenData.forEach((sectionData) => {
         sectionsToHighlight.push(sectionData.element);

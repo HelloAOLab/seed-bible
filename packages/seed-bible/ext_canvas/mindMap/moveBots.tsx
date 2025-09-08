@@ -1,10 +1,10 @@
-const dim = os.getCurrentDimension();
+let dim = os.getCurrentDimension();
 for(let i = 0; i < that.childrenIds.length; i++){
-    const children = getBot(byTag("id", that.childrenIds[i]));
-    const childernIndex = getBot(byTag("id", children.tags.indexBot));
+    let children = getBot(byTag("id", that.childrenIds[i]));
+    let childernIndex = getBot(byTag("id", children.tags.indexBot));
     children.tags.initPos = {x: children.tags[dim + "X"] - that.xDisposition, y: children.tags[dim + "Y"] - that.yDisposition}
-    const childNewPos = {x: children.tags[dim + "X"] - that.xDisposition, y: children.tags[dim + "Y"] - that.yDisposition}
-    const childIndexNewPos = {x: childernIndex.tags[dim + "X"] - that.xDisposition, y: childernIndex.tags[dim + "Y"] - that.yDisposition}
+    let childNewPos = {x: children.tags[dim + "X"] - that.xDisposition, y: children.tags[dim + "Y"] - that.yDisposition}
+    let childIndexNewPos = {x: childernIndex.tags[dim + "X"] - that.xDisposition, y: childernIndex.tags[dim + "Y"] - that.yDisposition}
     setTagMask(children, `${dim + "X"}`, childNewPos.x, "shared")
     setTagMask(children, `${dim + "Y"}`, childNewPos.y, "shared")
     setTagMask(childernIndex, `${dim + "X"}`, childIndexNewPos.x, "shared")

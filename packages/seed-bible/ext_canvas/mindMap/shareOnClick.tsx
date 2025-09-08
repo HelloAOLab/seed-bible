@@ -1,6 +1,6 @@
-const dim = os.getCurrentDimension();
-const shareBot = getBot(byTag('shareButton'));
-const controlBot = getBot(byTag("id", shareBot.tags.controlBotId));
+let dim = os.getCurrentDimension();
+let shareBot = getBot(byTag('shareButton'));
+let controlBot = getBot(byTag("id", shareBot.tags.controlBotId));
 const typingTool = getBot(byTag("typingTool"));
 const getAllChildIds = (id) => {
     const botById = getBot(byTag("id", id));
@@ -19,7 +19,7 @@ const getAllChildIds = (id) => {
 const getRootParent = (childBot) => {
     let rootParent = null;
     if(childBot.tags.parentBotId){
-        const parentBot = getBot(byTag("id", childBot.tags.parentBotId))
+        let parentBot = getBot(byTag("id", childBot.tags.parentBotId))
         if(parentBot.tags.parentBotId){
             rootParent = getRootParent(parentBot);
         }else {
@@ -33,9 +33,9 @@ const getRootParent = (childBot) => {
 
 if(controlBot.masks.mode === 0){
     shareBot.tags.formAddress = shareBot.tags.formAddresses[1]
-    const childrenIds = [controlBot.tags.id, ...getAllChildIds(controlBot.tags.id)];
+    let childrenIds = [controlBot.tags.id, ...getAllChildIds(controlBot.tags.id)];
     for(let i = 0; i < childrenIds.length; i++){
-        const subBot = getBot(byTag("id", childrenIds[i]));
+        let subBot = getBot(byTag("id", childrenIds[i]));
         setTagMask(subBot, "mode", 1, "shared");
         if(subBot.tags.id === controlBot.tags.id){
             continue
@@ -45,9 +45,9 @@ if(controlBot.masks.mode === 0){
 }
 else{
     shareBot.tags.formAddress = shareBot.tags.formAddresses[0]
-    const childrenIds = [controlBot.tags.id, ...getAllChildIds(controlBot.tags.id)];
+    let childrenIds = [controlBot.tags.id, ...getAllChildIds(controlBot.tags.id)];
     for(let i = 0; i < childrenIds.length; i++){
-        const subBot = getBot(byTag("id", childrenIds[i]));
+        let subBot = getBot(byTag("id", childrenIds[i]));
         setTagMask(subBot, "mode", 0, "shared");
         if(subBot.masks.tempLabel){
             setTagMask(subBot, "label", subBot.masks.tempLabel, "shared");

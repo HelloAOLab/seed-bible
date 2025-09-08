@@ -420,7 +420,7 @@ function GetTextColorBasedOnBackground(backgroundColor) {
 
 function GetChildrenLevelColors({sectionColorRGB, colorRange, levelsLength})
 {
-    const levelsColors = [];
+    let levelsColors = [];
     const levelsColorRange = {
         min: [Math.max(sectionColorRGB[0] - colorRange, 0), Math.max(sectionColorRGB[1] - colorRange, 0), Math.max(sectionColorRGB[2] - colorRange, 0)],
         max: [Math.min(sectionColorRGB[0] + colorRange, 255), Math.min(sectionColorRGB[1] + colorRange, 255), Math.min(sectionColorRGB[2] + colorRange, 255)]
@@ -524,7 +524,7 @@ function GetHistoryEntriesForElement({element})
 
 function GetHistoryEntries({typeOfElement, key})
 {
-    const entries = InstanceManager.vars.history.filter((entry) => {return entry.typeOfElement == typeOfElement && entry.key == key});
+    let entries = InstanceManager.vars.history.filter((entry) => {return entry.typeOfElement == typeOfElement && entry.key == key});
     return entries
 }
 
@@ -575,7 +575,7 @@ function GetSelectedBookData(data)
 function ShowChaptersInBook(data, dimension)
 {
     setTagMask(data.element, "isShowingChapters", true);
-    for(const chapterData of data.childrenData)
+    for(let chapterData of data.childrenData)
     {
         const idx = data.childrenData.indexOf(chapterData);
         if(!chapterData.isActive)
@@ -648,7 +648,7 @@ function HandleBookDataInStack(params)
     let absBookDesiredPosition;
     let halfInitialBookScales;
     let marginToAdd = 0;
-    const newBookAnimations = [];
+    let newBookAnimations = [];
     const initialDesiredPositionX = desiredPositionX;
     const initialDesiredPositionY = desiredPositionY;
 
@@ -754,20 +754,20 @@ function HandleSectionDataInStack(params)
     const {bibleData} = StacksManager.GetDataChainFromParentDataIds({parentDataIds: sectionData.parentDataIds});
     const sectionPosition = getBotPosition(sectionData.element, dimension);
     let nextPositionZ = desiredPositionZ;
-    const newSectionAnimations = []
-    const desiredSectionShadowFormOpacity = 0.2;
-    const sectionDeltaPositionZ='';
+    let newSectionAnimations = []
+    let desiredSectionShadowFormOpacity = 0.2;
+    let sectionDeltaPositionZ;
     if(sectionData.isSplitIntoBooks)
     {
         const activeBooksInsideSection = sectionData.childrenData.flat().filter((bookData) => {return bookData.isActive});
         let selectedBooksTotalHeight = 0;
         let selectedBooksTotalMargin = 0;
-        const sectionShadowDesiredScales = {x: 0, y: 0, z: 0};
-        const sectionShadowDesiredPositionZ = nextPositionZ + (!sectionData.element.masks.isOnTheGround && sectionData.isInExplodedView && activeBooksInsideSection.length > 0 ? StackSpacing.ExplodedViewSectionShadowPadding : 0);
+        let sectionShadowDesiredScales = {x: 0, y: 0, z: 0};
+        let sectionShadowDesiredPositionZ = nextPositionZ + (!sectionData.element.masks.isOnTheGround && sectionData.isInExplodedView && activeBooksInsideSection.length > 0 ? StackSpacing.ExplodedViewSectionShadowPadding : 0);
         nextPositionZ += sectionData.element.masks.isOnTheGround ? 0 : (sectionData.isInExplodedView ? StackSpacing.ExplodedViewSectionPadding : StackSpacing.BetweenBooks);
-        for(const bookDataArr of sectionData.childrenData)
+        for(let bookDataArr of sectionData.childrenData)
         {
-            for(const bookData of bookDataArr)
+            for(let bookData of bookDataArr)
             {
                 const bookDataIndex = bookDataArr.indexOf(bookData);
                 if(bookData.isActive)
@@ -828,7 +828,7 @@ function HandleSectionDataInStack(params)
         if(sectionData.shadow)
         {
             // Modify section shadow scale and position
-            const infoLabelTransformer = GetCurrentInfoLabelTransformer(sectionData.shadow);
+            let infoLabelTransformer = GetCurrentInfoLabelTransformer(sectionData.shadow);
             const sectionShadowScales = GetBotScales(sectionData.shadow);
             setTag(sectionData.shadow, "desiredPositionZ", sectionShadowDesiredPositionZ);
             setTag(sectionData.shadow, "desiredScaleZ", sectionShadowDesiredScales.z);
@@ -845,7 +845,7 @@ function HandleSectionDataInStack(params)
                 if(!infoLabelTransformer && sectionData.isInExplodedView && !(bibleData && bibleData.bibleType === BibleType.PlatformerGame))
                 {
                     const label = CapitalizeFirstLetter(sectionData.element.tags.sectionName.split("-").join(" "));
-                    const {infoLabelTransformer} = StacksManager.GetLabelForElement({
+                    let {infoLabelTransformer} = StacksManager.GetLabelForElement({
                         element: sectionData.shadow, 
                         label, 
                         color: sectionData.highlightColor ?? sectionData.element.tags.labelTextColor,
@@ -881,7 +881,7 @@ function HandleSectionDataInStack(params)
                         if(!infoLabelTransformer && sectionData.isInExplodedView && !(bibleData && bibleData.bibleType === BibleType.PlatformerGame))
                         {
                             const label = CapitalizeFirstLetter(sectionData.element.tags.sectionName.split("-").join(" "));
-                            const {infoLabelTransformer} = StacksManager.GetLabelForElement({
+                            let {infoLabelTransformer} = StacksManager.GetLabelForElement({
                                 element: sectionData.shadow, 
                                 label, 
                                 color: sectionData.highlightColor ?? sectionData.element.tags.labelTextColor,
@@ -1042,13 +1042,13 @@ function HandleTestamentDataInStack(params)
 {
     const {testamentData, desiredPositionZ, dimension, duration, easing, speedMultiplier = 1, isInstantaneous} = params;
     let nextPositionZ = desiredPositionZ;
-    const newTestamentAnimations = [];
-    const testamentDeltaPositionZ='';
+    let newTestamentAnimations = [];
+    let testamentDeltaPositionZ;
 
     if(testamentData.isSplitIntoSections)
     {
         nextPositionZ += StackSpacing.BetweenSections;
-        for(const sectionData of testamentData.childrenData)
+        for(let sectionData of testamentData.childrenData)
         {
             if(sectionData.isActive)
             {
@@ -1095,9 +1095,9 @@ function GetDialogBotScaleY(scaleXLimit, line, paddingX = 0, paddingY = 0, fontS
     let amountOfLines = 1;
     let scaleX = 0;
     let finalScaleX = 0;
-    const scaleY='';
-    const labelHeight = robotoFont.tags.data.common.lineHeight;
-    const newScaleXLimit = scaleXLimit - paddingX;
+    let scaleY;
+    let labelHeight = robotoFont.tags.data.common.lineHeight;
+    let newScaleXLimit = scaleXLimit - paddingX;
     let currentWordScaleX = 0;
 
     for (let i = 0; i < line.length; i++) {
@@ -1168,7 +1168,7 @@ function GetDialogBotScaleY(scaleXLimit, line, paddingX = 0, paddingY = 0, fontS
 
 function GetRandomColor()
 {
-    const hexadecimalCharacters = ["0","1","2","3","4","5","6","7","8","9","A","B","C","D","E","F"];
+    const hexadecimalCharacters = new Array("0","1","2","3","4","5","6","7","8","9","A","B","C","D","E","F");
     let randomColor = "#";
     for(let i = 0; i < 6; i++)
     {
@@ -1203,7 +1203,7 @@ function ClosestNumber(arr, input) {
   let closestDifference = Math.abs(input - closest);
 
   for (let i = 1; i < arr.length; i++) {
-    const difference = Math.abs(input - arr[i]);
+    let difference = Math.abs(input - arr[i]);
 
     if (difference < closestDifference) {
       closest = arr[i];
@@ -1240,9 +1240,9 @@ function HexToRgb(hex = "")
     {
         color = color.slice(1);
     }
-    const r = parseInt(color.substring(0,2), 16);
-    const g = parseInt(color.substring(2,4), 16);
-    const b = parseInt(color.substring(4,6), 16);
+    var r = parseInt(color.substring(0,2), 16);
+    var g = parseInt(color.substring(2,4), 16);
+    var b = parseInt(color.substring(4,6), 16);
     return [r, g, b];
 }
 
@@ -1349,7 +1349,7 @@ function SetRenderOrder(bots)
     })
     let i = -1;
 
-    for(const bot of newOrder)
+    for(let bot of newOrder)
     {
         setTagMask(bot, "formRenderOrder", i);
         i--;
@@ -1358,15 +1358,15 @@ function SetRenderOrder(bots)
 
 function GetSectionLevels(books)
 {
-    const levels = [];
-    const groupsIncluded = [];
-    for(const book of books)
+    let levels = [];
+    let groupsIncluded = [];
+    for(let book of books)
     {
         if(book.group)
         {
             if(groupsIncluded.includes(book.group)) continue;
 
-            const group = books.filter((sectionBook) => {
+            let group = books.filter((sectionBook) => {
                 return sectionBook.group === book.group;
             });
             levels.push(group);
@@ -1429,7 +1429,7 @@ function GetFixedScales(params)
 {
     const {bot} = params;
     const botScale = bot.masks.scale ?? bot.tags.scale ?? 1;
-    const botScales = GetBotScales(bot);
+    let botScales = GetBotScales(bot);
     botScales.x *= botScale;
     botScales.y *= botScale;
     botScales.z *= botScale;
@@ -1438,7 +1438,7 @@ function GetFixedScales(params)
     {
         if(!bot.links.transformerLink) setTagMask(bot, "transformerLink", `🔗${bot.masks.transformer ?? bot.tags.transformer}`)
         const transformerScale = bot.links.transformerLink.masks.scale ?? bot.links.transformerLink.tags.scale ?? 1;
-        const transformerScales = GetBotScales(bot.links.transformerLink);
+        let transformerScales = GetBotScales(bot.links.transformerLink);
         botScales.x *= (transformerScales.x * transformerScale);
         botScales.y *= (transformerScales.y * transformerScale);
         botScales.z *= (transformerScales.z * transformerScale);
@@ -1449,12 +1449,12 @@ function GetFixedScales(params)
 function GetFixedPosition(params)
 {
     const {bot, dimension} = params;
-    const position = getBotPosition(bot, dimension)
+    let position = getBotPosition(bot, dimension)
     if(bot.masks.transformer || bot.tags.transformer)
     {
         if(!bot.links.transformerLink) setTagMask(bot, "transformerLink", `🔗${bot.masks.transformer ?? bot.tags.transformer}`)
         const transformerScale = bot.links.transformerLink.masks.scale ?? bot.links.transformerLink.tags.scale ?? 1;
-        const transformerScales = GetBotScales(bot.links.transformerLink);
+        let transformerScales = GetBotScales(bot.links.transformerLink);
         position.z += (transformerScales.z * transformerScale)
     }
     return position;
@@ -1486,7 +1486,7 @@ function GetFixedArrangementFromTemplate(template)
                 sections: testament.sections.map((section) => {
                     const amountOfChaptersInSection = GetAmountOfChaptersInSection(section.books.map((book) => {return {commonName: book.name}}))
                     const sectionDesiredScaleZ = amountOfChaptersInSection * StackElementMeasurements.SectionDesiredScaleZRatio;
-                    const sectionAvailableSpace = sectionDesiredScaleZ - (StackSpacing.BetweenBooks * (section.books.length + 1));
+                    let sectionAvailableSpace = sectionDesiredScaleZ - (StackSpacing.BetweenBooks * (section.books.length + 1));
                     const sectionExplodedViewScaleZ = sectionDesiredScaleZ * 2;
 
                     const booksScalesZ = section.books.map((book) => {

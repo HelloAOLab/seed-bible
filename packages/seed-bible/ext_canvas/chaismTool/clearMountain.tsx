@@ -1,5 +1,5 @@
 setDisableMakeMountain(true);
-const verseBots = [...globalFunctions.getVerses()].reverse();
+let verseBots = [...globalFunctions.getVerses()].reverse();
 for(let i = 0; i < verseBots.length; i++){
     setTimeout(() => {
         animateTag(verseBots[i], {
@@ -26,9 +26,9 @@ setTimeout(() => setDisableMakeMountain(false), 120 * verseBots.length);
 clearTagMasks(thisBot);
 console.log("verses cleared");
 
-const totalTime = (verseBots.length + 10) * 120;
+let totalTime = (verseBots.length + 10) * 120;
 
-const tray = getBot("tray");
+let tray = getBot("tray");
 
 await os.focusOn(tray, {
     zoom: gridPortalBot.tags.pixelWidth > 768 ? 7 : 3.5,

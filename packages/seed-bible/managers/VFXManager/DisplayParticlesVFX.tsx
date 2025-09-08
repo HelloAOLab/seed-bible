@@ -1,5 +1,5 @@
 const {duration, period, particleReleaseDelay, distance, dimension, position, transformer, color = "white", scaleFactor = 1} = that;
-const interval = setInterval(ThrowNewParticle, period);
+let interval = setInterval(ThrowNewParticle, period);
 // let particleReleaseDelay = 0.6
 // const distance = 7.5;
 const transformerPosition = transformer ? getBotPosition(transformer, dimension) : null;

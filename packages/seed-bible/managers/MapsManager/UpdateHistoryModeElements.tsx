@@ -10,7 +10,7 @@ elementsData.forEach((elementData) => {
     const isElementAvailable = elementData.element && elementData.element.tags.isInUse && ((elementData instanceof MapBookData) ? !elementData.isSelected : true)
     if(isElementAvailable)
     {
-        const color = GetHistoryColor({element: elementData.element})
+        let color = GetHistoryColor({element: elementData.element})
         setTagMask(elementData.element, 'color', color);
         if(elementData instanceof MapChapterData)
         {

@@ -8,7 +8,7 @@ if (masks?.clicked) {
         }
         case "mind_map": {
             console.log("mind_map");
-            const mindMapBot = getBot('mmTypingManager');
+            let mindMapBot = getBot('mmTypingManager');
             whisper(mindMapBot, "UMCreateInitNode", that);
             break
         }
@@ -22,7 +22,7 @@ if (masks?.clicked) {
             break
         }
         case "annotation": {
-            const annotationBot = getBot('system', 'experience.annotation');
+            let annotationBot = getBot('system', 'experience.annotation');
             annotationBot.masks.onAnyBotClicked = null;
             break
         }

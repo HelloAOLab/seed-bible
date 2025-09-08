@@ -14,9 +14,9 @@
 
 import {SectionBookData} from "managers.StacksManager.SectionBookData"
 const {bibleData} = that;
-for(const testamentData of bibleData.childrenData)
+for(let testamentData of bibleData.childrenData)
 {
-    for(const sectionData of testamentData.childrenData)
+    for(let sectionData of testamentData.childrenData)
     {
         if(!(sectionData instanceof SectionBookData)) sectionData.isInExplodedView = false;
     }

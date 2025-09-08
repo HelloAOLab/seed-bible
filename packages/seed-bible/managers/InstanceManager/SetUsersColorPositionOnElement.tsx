@@ -1,5 +1,5 @@
 const {element}  = that;
-const currUsersColor = thisBot.GetCurrentUsersColorForElement({element});
+let currUsersColor = thisBot.GetCurrentUsersColorForElement({element});
 const dimension = os.getCurrentDimension();
 currUsersColor.forEach((userColor) => {
     let offset;

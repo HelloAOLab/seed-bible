@@ -64,7 +64,7 @@ const CustomArrangementOptionEditor = ({templateRef, navigationButtonsInfo, setN
     }, [template, isEditor, initialTemplateName]);
 
     const updateNavigationButtonsInfo = useCallback(() => {
-        const buttonsInfo = [
+        let buttonsInfo = [
             {
                 content: "Back",
                 iconName: "arrow_back_ios_new",
@@ -125,7 +125,7 @@ return CustomArrangementOptionEditor;
 
 function IsValidArrangement({template, isEditor, initialTemplateName})
 {
-    const errors = [];
+    let errors = [];
 
     const isValidByName = !thisBot.vars.fixedArrangementsInfo.some((arrangementInfo) => {
         return arrangementInfo.name === template.name

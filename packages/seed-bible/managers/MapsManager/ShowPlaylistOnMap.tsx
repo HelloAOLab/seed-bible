@@ -23,7 +23,7 @@ mapData.childrenStructures.forEach((mapBookStructure) => {
 
 const playlistEntryItemHeight = 0.25;
 
-for(const playlistEntryInfoIndex in playlistItemsList)
+for(let playlistEntryInfoIndex in playlistItemsList)
 {
     const playlistEntryInfo = playlistItemsList[playlistEntryInfoIndex];
 
@@ -46,7 +46,7 @@ for(const playlistEntryInfoIndex in playlistItemsList)
 
             const chapterPosition = getBotPosition(mapChapterData.element, dimension);
 
-            const itemPositionZ = MapElementMeasurements.BookPositionZ + (mapChapterData.playlistEntriesItems.length * (playlistEntryItemHeight + MapElementMeasurements.PlaylistStackedEntryItemGap))
+            let itemPositionZ = MapElementMeasurements.BookPositionZ + (mapChapterData.playlistEntriesItems.length * (playlistEntryItemHeight + MapElementMeasurements.PlaylistStackedEntryItemGap))
 
             const entryItem = ObjectPooler.GetObjectFromPool({tag: ObjectPoolTags.MapChapterPlaylistEntryItem});
             mapChapterData.AddEntryItem(entryItem);
@@ -89,8 +89,8 @@ thisBot.TryShowPlaylistPathOnMap({mapData})
 const coverPosition = getBotPosition(mapData.staticMapElements.cover, dimension);
 const coverScales = GetBotScales(mapData.staticMapElements.cover)
 
-const prevButton = mapData.staticMapElements.playlistPreviousButton ?? ObjectPooler.GetObjectFromPool({tag: ObjectPoolTags.MapPlaylistNavigationButton});
-const nextButton = mapData.staticMapElements.playlistNextButton ?? ObjectPooler.GetObjectFromPool({tag: ObjectPoolTags.MapPlaylistNavigationButton});
+let prevButton = mapData.staticMapElements.playlistPreviousButton ?? ObjectPooler.GetObjectFromPool({tag: ObjectPoolTags.MapPlaylistNavigationButton});
+let nextButton = mapData.staticMapElements.playlistNextButton ?? ObjectPooler.GetObjectFromPool({tag: ObjectPoolTags.MapPlaylistNavigationButton});
 
 const prevButtonMod = {
     label: "<",

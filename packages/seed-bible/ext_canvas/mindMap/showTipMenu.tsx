@@ -1,7 +1,7 @@
-const dim = os.getCurrentDimension();
+let dim = os.getCurrentDimension();
 switch (that.direction) {
     case "top": {
-        const dialogBox = create({
+        let dialogBox = create({
             [dim]: true,
             [dim + "X"]: that.bot.masks[dim + "X"],
             [dim + "Y"]: that.bot.masks[dim + "Y"] + 1,
@@ -22,7 +22,7 @@ switch (that.direction) {
         break;
     }
     case "bottom": {
-        const dialogBox = create({
+        let dialogBox = create({
             [dim]: true,
             [dim + "X"]: that.bot.masks[dim + "X"],
             [dim + "Y"]: that.bot.masks[dim + "Y"] - 1,
@@ -43,7 +43,7 @@ switch (that.direction) {
         break;
     }
     case "left": {
-        const dialogBox = create({
+        let dialogBox = create({
             [dim]: true,
             [dim + "X"]: that.bot.masks[dim + "X"] - that.bot.tags.scaleX / 2 - getBot('system', 'main.bookManager').calcWord({label: that.message}) * 0.7 / 2,
             [dim + "Y"]: that.bot.masks[dim + "Y"],
@@ -64,7 +64,7 @@ switch (that.direction) {
         break;
     }
     case "right": {
-        const dialogBox = create({
+        let dialogBox = create({
             [dim]: true,
             [dim + "X"]: that.bot.masks[dim + "X"] + that.bot.tags.scaleX / 2 + getBot('system', 'main.bookManager').calcWord({label: that.message}) * 0.7 / 2,
             [dim + "Y"]: that.bot.masks[dim + "Y"],

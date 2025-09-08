@@ -1,4 +1,4 @@
-const {mapBookStructure, mapData, position} = that;
+let {mapBookStructure, mapData, position} = that;
 const dimension = os.getCurrentDimension();
 const {chaptersInfo} = StacksManager.tags.booksStaticInfo[mapBookStructure.mapBookData.elementInfo.commonName];
 const amountOfRows = Math.ceil(chaptersInfo.length / MapElementMeasurements.BookMaxAmountOfColumns)

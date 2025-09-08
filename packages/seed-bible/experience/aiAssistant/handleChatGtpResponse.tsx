@@ -1,6 +1,6 @@
 function generateQuery(params) {
-    const queryArray = [];
-    for (const key in params) {
+    let queryArray = [];
+    for (let key in params) {
         if (params.hasOwnProperty(key)) {
             queryArray.push(encodeURIComponent(key) + '=' + encodeURIComponent(params[key]));
         }
@@ -17,16 +17,16 @@ try{
 
     console.log(response)
 
-    const functions = [...response?.functions||''];
+    let functions = [...response?.functions];
 
     try{
         if(response?.biblical){
             console.log("biblical")
-            const data = {
+            let data = {
                 query: that.userMessage
             }
-            const url = attachQueryToURL("https://developer.ai.gloo.us/api/documents/all", data);
-            const response = await web.get(url, {
+            let url = attachQueryToURL("https://developer.ai.gloo.us/api/documents/all", data);
+            let response = await web.get(url, {
                 headers: {
                     "X-Api-Key": "e78f1add78f0d3311156b3d539114a6d4d7308d3d9f3b93d6fadab8515721f73c6fb7f580857b1acb2b88e36cb7c5dd482a162e423a51613fe7cfc6d2f27a414",
                     "Accept": "*/*",
@@ -35,7 +35,7 @@ try{
             })
             console.log(response)
         };
-        const msg = response.message
+        let msg = response.message
 
         if(msg){
             const mp3 = await openAIClient.audio.speech.create({

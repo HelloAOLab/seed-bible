@@ -1,6 +1,6 @@
 if(!thisBot.masks.color) setTagMask(thisBot, "color", thisBot.tags.color)
 if(!thisBot.masks.strokeColor) setTagMask(thisBot, "strokeColor", thisBot.tags.strokeColor)
-const startingColorHex = thisBot.masks.color;
+let startingColorHex = thisBot.masks.color;
 const startingColorRgb = HexToRgb(startingColorHex);
 const targetColorRgb = HexToRgb("#DCF0EC");
 const targetStrokeColorRgb = HexToRgb("#139981");

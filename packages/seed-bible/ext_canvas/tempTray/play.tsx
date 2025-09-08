@@ -1,8 +1,8 @@
-const dim = os.getCurrentDimension();
+let dim = os.getCurrentDimension();
 
-const currentTrays = getBots(byTag("tray"));
+let currentTrays = getBots(byTag("tray"));
 destroy(currentTrays);
-const prevWordBots = getBots(byTag("wordBot"));
+let prevWordBots = getBots(byTag("wordBot"));
 destroy(prevWordBots);
 
 let startingX = 50;
@@ -17,7 +17,7 @@ for(let i = 0; i < tags.chaisms[0].length; i++){
     let wordLengthTotal = 0;
     for(let j = 0; j < tags.chaisms[0][i].length; j++){
         let placeTempScaleZ = false;
-        const words = tags.chaisms[0][i][j].text.split(" ");
+        let words = tags.chaisms[0][i][j].text.split(" ");
         if(words.length === tags.chaisms[0][i][j].labelScaleZ.length){
             placeTempScaleZ = true;
         }
@@ -34,7 +34,7 @@ for(let i = 0; i < tags.chaisms[0].length; i++){
                 startingY -= 1;
                 maxY += 1;
             }
-            const wordXPosition = startingX + (wordLength / 2);
+            let wordXPosition = startingX + (wordLength / 2);
             startingX = startingX + wordLength;
             wordLengthTotal += wordLength;
             create({
@@ -64,7 +64,7 @@ for(let i = 0; i < tags.chaisms[0].length; i++){
     }
 }
 
-const currentTray = create({
+let currentTray = create({
     tray: "true",
     [dim + "X"]: 60,
     [dim + "Y"]: -(maxY / 2) - 1,

@@ -1,4 +1,4 @@
-const toolBarOptions = {
+let toolBarOptions = {
     page: [
     ],
     canvas: [
@@ -11,9 +11,9 @@ const toolBarOptions = {
                     globalThis.eventToolApp = false;
                     return;
                 }
-                const App = await getBot('system', "ext_canvas.eventTool").initInterface()
+                let App = await getBot('system', "ext_canvas.eventTool").initInterface()
                 if (App) {
-                    const id = uuid();
+                    let id = uuid();
                     globalThis.eventToolApp = true;
                     globalThis.EVENT_PANEL_ID = id;
                     AddApplication({ id, App: <App id={id} />, minWidth: '23rem' })

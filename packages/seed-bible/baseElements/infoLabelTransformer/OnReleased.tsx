@@ -4,7 +4,7 @@
     * infoLabelTransformer.OnReleased();
     */
 
-const {infoLabel, infoLabelTail, infoLabelDate, infoLabelUsersColor} = thisBot.GetLabelElements();
+let {infoLabel, infoLabelTail, infoLabelDate, infoLabelUsersColor} = thisBot.GetLabelElements();
 thisBot.StopShakeAnimation();
 setTag(thisBot, "ownerBotId", null);
 setTag(thisBot, "isDonationLabelTransformer", null);

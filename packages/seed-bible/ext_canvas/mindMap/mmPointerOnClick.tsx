@@ -1,6 +1,6 @@
-const dim = os.getCurrentDimension();
-const interval = setInterval(() => {
-    const mousePosition = os.getPointerPosition("mouse");
+let dim = os.getCurrentDimension();
+let interval = setInterval(() => {
+    let mousePosition = os.getPointerPosition("mouse");
     animateTag(thisBot, {
         fromValue: {
             [dim + "X"]: thisBot.tags[dim + "X"],
@@ -13,7 +13,7 @@ const interval = setInterval(() => {
         duration: 0.1
     })
 }, 100);
-const interval2 = setInterval(() => {
+let interval2 = setInterval(() => {
     tags.color = '#'+ (Math.random() * 0xfffff * 1000000).toString(16).slice(0, 6)
 }, 300);
 masks.interval = interval;

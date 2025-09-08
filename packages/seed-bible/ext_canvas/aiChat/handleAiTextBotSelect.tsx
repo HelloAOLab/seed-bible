@@ -24,7 +24,7 @@ if(botId === null){
     destroy(getBots("aiTray"));
     return
 }else{
-    const currentBot = getBot(byID(botId));
+    let currentBot = getBot(byID(botId));
     if(currentBot){
         setTagMask(currentBot, "color", "#448AFF", "tempLocal");
         setTagMask(currentBot, "strokeColor", "#448AFF", "tempLocal");

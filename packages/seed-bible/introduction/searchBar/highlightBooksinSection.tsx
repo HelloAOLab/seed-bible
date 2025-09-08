@@ -6,7 +6,7 @@ bookBots = bookBots.sort((a,b)=>b.tags.bookRank - a.tags.bookRank);
 
 await os.sleep(300);
 
-const strings = {
+let strings = {
     '5': {
         0: "String_06c",
         1: "String_08f",
@@ -96,7 +96,7 @@ for(let i = 0;i<bookBots.length; i++) {
     if (globalThis.skipAnimation || !globalThis.hideSeekPlaying){
         continue;
     }
-    const obj = strings[bookBots.length];
+    let obj = strings[bookBots.length];
     const book = bookBots[i];
     try {
         book.shiftFocus({onlyZ: true, duration: 0.4});

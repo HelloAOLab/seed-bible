@@ -6,14 +6,14 @@
 */
 
 const {duration = 0.15, mapData} = that;
-const dimension = os.getCurrentDimension()
+let dimension = os.getCurrentDimension()
 const mapChapterData = MapsManager.GetMapElementData({element: thisBot})
 const easing = {type: "sinusoidal", mode: "out"};
 const chapterPosition = getBotPosition(thisBot, dimension);
 const delayBetweenChunkAnimations = 35;
 const chunkAnimationDuration = 0.15;
 let rgbTargetColor;
-const infoLabelTransformer = GetCurrentInfoLabelTransformer(thisBot);
+let infoLabelTransformer = GetCurrentInfoLabelTransformer(thisBot);
 
 setTagMask(thisBot, "isSelecting", true);
 if(infoLabelTransformer)

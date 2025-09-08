@@ -1,6 +1,6 @@
 let dimension = os.getCurrentDimension();
 setTagMask(thisBot, 'color', thisBot.tags.recordingColorAO)
-const resetAnimations = []
+let resetAnimations = []
 
 if(configBot.tags.miniMapPortal === "map_portal"){
     dimension = configBot.tags.miniMapPortal;
@@ -62,7 +62,7 @@ function MakeWave() {
     }
     for (let i = 0; i < randomRingBots.length; i++)
     {
-        const x = (Math.PI * i) / (randomRingBots.length - 1);
+        let x = (Math.PI * i) / (randomRingBots.length - 1);
         const fixedDeltaScaleZ = randomDeltaScaleZ * Math.sin(x);
         randomRingBots[i].Recording({dimension, deltaScaleZ: fixedDeltaScaleZ, duration: randomDuration});
     }

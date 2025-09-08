@@ -1,5 +1,5 @@
-const dim = os.getCurrentDimension();
-const controlBot = getBot(byTag("id", tags.controlBotId));
+let dim = os.getCurrentDimension();
+let controlBot = getBot(byTag("id", tags.controlBotId));
 const typingTool = getBot(byTag("typingTool"));
 const getAllChildIds = (id) => {
     const botById = getBot(byTag("id", id));
@@ -18,7 +18,7 @@ const getAllChildIds = (id) => {
 const getRootParent = (childBot) => {
     let rootParent = null;
     if(childBot.tags.parentBotId){
-        const parentBot = getBot(byTag("id", childBot.tags.parentBotId))
+        let parentBot = getBot(byTag("id", childBot.tags.parentBotId))
         if(parentBot.tags.parentBotId){
             rootParent = getRootParent(parentBot);
         }else {
@@ -31,9 +31,9 @@ const getRootParent = (childBot) => {
 }
 
 if(controlBot.tags.parentBotId){
-    const parentBot = getBot(byTag("id", controlBot.tags.parentBotId));
+    let parentBot = getBot(byTag("id", controlBot.tags.parentBotId));
     controlBot.tags.parentBotId = null;
-    const childIds = [...parentBot.masks.childIds];
+    let childIds = [...parentBot.masks.childIds];
     childIds.splice(childIds.indexOf(controlBot.tags.id), 1);
     setTagMask(parentBot, "lineTo", [...childIds], "shared");
     setTagMask(parentBot, "childIds", [...childIds], "shared");
@@ -42,27 +42,27 @@ if(controlBot.tags.parentBotId){
     for(let i = 0; i < childrensId.length; i++){
         const subBot = getBot(byTag("id", childrensId[i]));
         if(subBot.tags.indexBot){
-            const subIndexBot = getBot(byTag("id", subBot.tags.indexBot));
+            let subIndexBot = getBot(byTag("id", subBot.tags.indexBot));
             setTagMask(subIndexBot, "label", `${i + 1}`, "tempShared");
         }
     }
-    const rootParent = getRootParent(parentBot);
-    const rootParentChildIds = getAllChildIds(rootParent.tags.id);
+    let rootParent = getRootParent(parentBot);
+    let rootParentChildIds = getAllChildIds(rootParent.tags.id);
     for(let i = 0; i < rootParentChildIds.length; i++){
         const subBot = getBot(byTag("id", rootParentChildIds[i]));
         if(subBot.tags.indexBot){
-            const subIndexBot = getBot(byTag("id", subBot.tags.indexBot));
+            let subIndexBot = getBot(byTag("id", subBot.tags.indexBot));
             setTagMask(subIndexBot, "label", `${i + 2}`, "tempShared");
         }
     }
 }else if(!controlBot.tags.parentBotId && controlBot.masks.lineTo.length > 0){
     const childIds = [...getAllChildIds(controlBot.tags.id)];
     childIds.forEach(childId => {
-        const childBot = getBot(byID(childId));
+        let childBot = getBot(byID(childId));
         if(childBot.tags.parentBotId === controlBot.tags.id){
-            const parentBot = getBot(byTag("id", childBot.tags.parentBotId));
+            let parentBot = getBot(byTag("id", childBot.tags.parentBotId));
             childBot.tags.parentBotId = null;
-            const childIds = [...parentBot.masks.childIds];
+            let childIds = [...parentBot.masks.childIds];
             childIds.splice(childIds.indexOf(childBot.tags.id), 1);
             setTagMask(parentBot, "lineTo", [...childIds], "shared");
             setTagMask(parentBot, "childIds", [...childIds], "shared");
@@ -71,16 +71,16 @@ if(controlBot.tags.parentBotId){
             for(let i = 0; i < childrensId.length; i++){
                 const subBot = getBot(byTag("id", childrensId[i]));
                 if(subBot.tags.indexBot){
-                    const subIndexBot = getBot(byTag("id", subBot.tags.indexBot));
+                    let subIndexBot = getBot(byTag("id", subBot.tags.indexBot));
                     setTagMask(subIndexBot, "label", `${i + 1}`, "tempShared");
                 }
             }
-            const rootParent = getRootParent(parentBot);
-            const rootParentChildIds = getAllChildIds(rootParent.tags.id);
+            let rootParent = getRootParent(parentBot);
+            let rootParentChildIds = getAllChildIds(rootParent.tags.id);
             for(let i = 0; i < rootParentChildIds.length; i++){
                 const subBot = getBot(byTag("id", rootParentChildIds[i]));
                 if(subBot.tags.indexBot){
-                    const subIndexBot = getBot(byTag("id", subBot.tags.indexBot));
+                    let subIndexBot = getBot(byTag("id", subBot.tags.indexBot));
                     setTagMask(subIndexBot, "label", `${i + 2}`, "tempShared");
                 }
             }

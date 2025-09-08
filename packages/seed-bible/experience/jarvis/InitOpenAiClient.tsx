@@ -1,9 +1,16 @@
 if(!globalThis?.openAIClient){
-    const  key = await os.showInput(null, {placeholder: "Enter OpenAI api key"});
+    let key = await os.showInput(null, {placeholder: "Enter OpenAI api key"});
     if(key && key !== ""){
-        console.log('changed')
-        
+        try{
+            const client='';
+
+
+            globalThis.openAIClient = client;
+        }catch{() => {
+            return false
+        }}
+        return true
     }else{
-        console.log( false)
+        return false
     }
 }

@@ -1,12 +1,12 @@
-const dim = os.getCurrentDimension();
+let dim = os.getCurrentDimension();
 const typingTool = getBot('mmTypingManager');
-const controlBot = getBot(byTag("id", tags.controlBotId))
+let controlBot = getBot(byTag("id", tags.controlBotId))
 setTagMask(thisBot, "assignedBot", controlBot.masks.lineTo[0], "shared")
 if(masks.currentState){ // need to hide the bots
     setTagMask(thisBot, "color", "#1DE9B6", "shared");
     for(let i = 0; i < controlBot.masks.lineTo.length; i++){
-        const subBot = getBot(byTag("id", controlBot.masks.lineTo[i]));
-        const subIndexBot = getBot(byTag("id", subBot.tags.indexBot));
+        let subBot = getBot(byTag("id", controlBot.masks.lineTo[i]));
+        let subIndexBot = getBot(byTag("id", subBot.tags.indexBot));
         if(controlBot.masks.lineTo[i] !== masks.assignedBot){
             whisper(typingTool, "hideBot", {bot: subBot});
             whisper(typingTool, "hideBot", {bot: subIndexBot});
@@ -19,8 +19,8 @@ if(masks.currentState){ // need to hide the bots
     let x = 0;
     for(let i = 0; i < controlBot.masks.childIds.length; i++){
         if(getBot('mmTypingManager').tags.focusManager.childIds.indexOf(controlBot.masks.childIds[i]) === -1){
-            const subBot = getBot(byTag("id", controlBot.masks.childIds[i]));
-            const subIndexBot = getBot(byTag("id", subBot.tags.indexBot));
+            let subBot = getBot(byTag("id", controlBot.masks.childIds[i]));
+            let subIndexBot = getBot(byTag("id", subBot.tags.indexBot));
             if(controlBot.masks.lineTo.indexOf(controlBot.masks.childIds[i]) === -1){
                 setTagMask(controlBot, "lineTo", [...controlBot.masks.lineTo, controlBot.masks.childIds[i]], "shared")
             }else{

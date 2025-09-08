@@ -282,6 +282,16 @@ calendar {
   outline: none;
   resize: none;
 }
+.gm-input.title-res{
+  outline: none;
+  background-color: #f4f7f8;
+ 
+  font-size: 14px;
+  border-bottom:1px solid gray;
+  font-weight: bold;
+  
+
+}
 
 .gm-input.title {
   outline: none;
@@ -326,7 +336,7 @@ calendar {
   display: flex;
   flex-direction: column;
   gap:20px;
-  margin-top: 20px;
+  margin-top: 10px;
 }
 .gm-input-date{
   display: flex;
@@ -460,9 +470,19 @@ calendar {
   padding: 3px 6px;
   border-radius: 10px;
 }
+.gm-modal-select-3{
+  padding: 3px 6px;
+  border-radius: 10px;
+}
+
 
 
 .gm-modal-select-1:hover{
+  background-color: lightgray;
+
+
+}
+.gm-modal-select-3:hover{
   background-color: lightgray;
 
 
@@ -590,8 +610,14 @@ svg:hover{
   width: 100%;
 }
 .readingPlan{
-  color: lightgreen;
+  color: white;
+  background-color: white;
   
+}
+.schedule{
+  color:#f1c40f;
+  background-color: #f1c40f;
+  border: 1px solid #f1c40f;
 }
 
 /* Make event container use flex layout */

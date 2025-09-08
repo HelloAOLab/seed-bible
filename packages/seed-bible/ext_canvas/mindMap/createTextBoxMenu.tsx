@@ -1,4 +1,4 @@
-const dim = os.getCurrentDimension();
+let dim = os.getCurrentDimension();
 const typingTool = getBot(byTag("typingTool"))
 const clearBot = {
     [dim]: true,
@@ -222,7 +222,7 @@ const aiSetting = {
     `
 }
 
-const clickSound = "\n await os.playSound('https://auth-aux-aobot-prod-filesbucket-141297942820.s3.amazonaws.com/aoBot/f42ec34e8b5a29db9882a10d8a0c04f510c6cbbb7e9a56aa0ebb5f37343f1969.mpga')";
+let clickSound = "\n await os.playSound('https://auth-aux-aobot-prod-filesbucket-141297942820.s3.amazonaws.com/aoBot/f42ec34e8b5a29db9882a10d8a0c04f510c6cbbb7e9a56aa0ebb5f37343f1969.mpga')";
 
 let options = [
     clearBot,
@@ -245,13 +245,13 @@ let options = [
 //     options = [...tempOptions]
 // }
 
-const settingsBot = getBot('system', 'app.components');
+let settingsBot = getBot('system', 'app.components');
 
 if(settingsBot.masks?.promtTools){
-    const tempOptions = [];
-    const menuSetting = [...settingsBot.masks?.promtTools||''];
-    for(const setting of menuSetting){
-        for(const option of options){
+    let tempOptions = [];
+    let menuSetting = [...settingsBot.masks?.promtTools];
+    for(let setting of menuSetting){
+        for(let option of options){
             if(setting.id === option.refID && setting.active){
                 tempOptions.push(option)
             }
@@ -261,7 +261,7 @@ if(settingsBot.masks?.promtTools){
 }
 
 for(let i = 0; i < options.length; i++){
-    const optionBot = create({
+    let optionBot = create({
         ...options[i],
         [dim + "X"]: getBot(byID(that.id)).tags[dim + "X"] + (1 * i) - ((options.length / 2) - 0.6)
     })

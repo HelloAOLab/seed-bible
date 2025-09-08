@@ -22,7 +22,7 @@ if(messages.length > 10){
 
 setTagMask(thisBot, "messages", [...messages], "tempLocal");
 
-const jarvisInstance = getBot("jarvis", true);
+let jarvisInstance = getBot("jarvis", true);
 
 setTagMask(jarvisInstance, "thinking", true, "tempLocal");
 
@@ -38,12 +38,12 @@ const response = await openAIClient.chat.completions.create({
 
 console.log(response)
 
-const choice = response.choices[0].message;
+let choice = response.choices[0].message;
 
 if (choice?.tool_calls) {
-    const toolCall = choice?.tool_calls[0];
+    let toolCall = choice?.tool_calls[0];
     console.log(toolCall.function.name)
-    const result = await assistantActions[toolCall.function.name]({ parameters: {...JSON.parse(toolCall.function.arguments), tool_call_id: choice.tool_calls[0].id} });
+    let result = await assistantActions[toolCall.function.name]({ parameters: {...JSON.parse(toolCall.function.arguments), tool_call_id: choice.tool_calls[0].id} });
     setTagMask(thisBot, "messages", [
         ...messages,
         { ...choice }

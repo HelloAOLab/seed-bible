@@ -10,13 +10,13 @@ const App = () => {
     const clickButtonRef = useRef(null);
 
     useEffect(() => {
-        const bodyEle = document.body;
+        let bodyEle = document.body;
         bodyEle.style.margin = "0px";
         bodyEle.style.overflow = "hidden";
     }, [])
 
     const checkCanvasBound = () => {
-        const eventBound = gridPortalBot.tags.pixelWidth - 450;
+        let eventBound = gridPortalBot.tags.pixelWidth - 450;
         if (gridPortalBot.tags.pointerPixel && (gridPortalBot.tags.pointerPixel.x < 310 || gridPortalBot.tags.pointerPixel.y > 940)) {
             setpointerEvent("all");
             return

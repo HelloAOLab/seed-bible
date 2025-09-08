@@ -44,7 +44,7 @@ const App = () => {
     globalThis.setCurrentExperience = setCurrentExperience;
 
     function Swap(direaction) {
-        const bots = SortBots()
+        let bots = SortBots()
         if (direaction === 'up' && masks.index !== bots.length - 1)
             masks.index++
         else if (direaction === 'down' && masks.index !== 0)
@@ -54,7 +54,7 @@ const App = () => {
         else if (masks.index === bots.length - 1)
             masks.index = 0
         // os.log(bots[masks.index])
-        const current = getBot('id', bots[masks.index][1])
+        let current = getBot('id', bots[masks.index][1])
         current.onPointerEnter()
         os.focusOn(current, { zoom: 20, space: 'local' })
     }
@@ -129,11 +129,11 @@ const setTranslation = () => {
     if(!masks?.selectedTranslation){
         return
     }
-    const selectedTranslation = masks?.selectedTranslation;
+    let selectedTranslation = masks?.selectedTranslation;
     if (selectedTranslation?.listOfBooksApiLink?.includes("https")) {
         web.get(`${selectedTranslation.listOfBooksApiLink}`).then(e => {
             SetBaseUrl(selectedTranslation.origin);
-            const book0 = e.data.books[0];
+            let book0 = e.data.books[0];
             ChangeTranslation(selectedTranslation.id, book0);
         }).catch(e => {
             console.log(e)
@@ -141,7 +141,7 @@ const setTranslation = () => {
     } else {
         web.get(`https://bible.helloao.org/api/${selectedTranslation.id}/books.json`).then(e => {
             SetBaseUrl("https://bible.helloao.org");
-            const book0 = e.data.books[0];
+            let book0 = e.data.books[0];
             ChangeTranslation(selectedTranslation.id, book0);
         }).catch(e => {
             console.log(e)

@@ -39,7 +39,7 @@ if(positionInfo)
     setTagMask(thisBot, positionInfo.dimension + "X", positionInfo.position.x)
     setTagMask(thisBot, positionInfo.dimension + "Y", positionInfo.position.y)
 }
-const firstSequenceAnimations = [
+let firstSequenceAnimations = [
     animateTag(thisBot, {
         fromValue: {scaleX: 0, scaleY: 0, scaleZ: 0, [dimension + "Z"]: 0},
         toValue: {scaleX: 1, scaleY: 1, scaleZ: 1, [dimension + "Z"]: 0.5},
@@ -70,7 +70,7 @@ thisBot.vars.ringBots.forEach((bot, index) => {
 
 return Promise.all(firstSequenceAnimations)
 .then(() => {
-    const secondSequenceAnimations = [
+    let secondSequenceAnimations = [
         animateTag(thisBot, {
             fromValue: {[dimension + "Z"]: 0.5, [dimension + 'RotationZ']: 0},
             toValue: {[dimension + "Z"]: 0, [dimension + 'RotationZ']: Math.PI*2},

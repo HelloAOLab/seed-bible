@@ -5,7 +5,7 @@
 */
 
 const infoLabelTransformer = GetCurrentInfoLabelTransformer(thisBot);
-const {infoLabel, infoLabelTail, infoLabelDate, speedMultiplier = 1} = infoLabelTransformer.GetLabelElements();
+let {infoLabel, infoLabelTail, infoLabelDate, speedMultiplier = 1} = infoLabelTransformer.GetLabelElements();
 const duration = StackAnimationsDuration.IncreaseHighlight/speedMultiplier;
 const newOpacity = 1;
 const easing = {type: "sinusoidal", mode: "inout"};

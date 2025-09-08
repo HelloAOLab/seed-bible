@@ -26,7 +26,7 @@ else
         chapterData = StacksManager.GetChapterDataById({id: element.masks.chapterDataId})
     }
     console.log({chapterData: {...chapterData}, element: {...element}})
-    const currentHighlightInfo = chapterData.GetHighlightInfoByKey(element.masks.chunkPath ?? element.masks.versePath)
+    let currentHighlightInfo = chapterData.GetHighlightInfoByKey(element.masks.chunkPath ?? element.masks.versePath)
 
     if(currentHighlightInfo)
     {

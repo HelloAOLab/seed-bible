@@ -7,15 +7,15 @@
     * ObjectPooler.ReleaseObject({obj: thisBot, tag: thisBot.tags.poolTag});
 */
 
-const {obj, tag} = that;
+let {obj, tag} = that;
 const dimension = os.getCurrentDimension();
 
 if(Array.isArray(obj))
 {
-    const releasedObjects = [];
-    for(const bot of obj)
+    let releasedObjects = [];
+    for(let bot of obj)
     {
-        const inUseObject = thisBot.vars.poolDictionary[tag].inUseObjects.find((activeObject) => {return activeObject.id === bot.id});
+        let inUseObject = thisBot.vars.poolDictionary[tag].inUseObjects.find((activeObject) => {return activeObject.id === bot.id});
 
         if(inUseObject)
         {
@@ -24,7 +24,7 @@ if(Array.isArray(obj))
             clearAnimations(bot);
             setTag(bot, dimension, false);
             setTag(bot, "isInUse", false);
-            const idx = thisBot.vars.poolDictionary[tag].inUseObjects.indexOf(inUseObject);
+            let idx = thisBot.vars.poolDictionary[tag].inUseObjects.indexOf(inUseObject);
             thisBot.vars.poolDictionary[tag].inUseObjects.splice(idx, 1);
             thisBot.vars.poolDictionary[tag].objectPool.push(inUseObject);
             releasedObjects.push(inUseObject);
@@ -37,7 +37,7 @@ if(Array.isArray(obj))
 }
 else
 {
-    const inUseObject = thisBot.vars.poolDictionary[tag].inUseObjects.find((activeObject) => {return activeObject.id === obj.id});
+    let inUseObject = thisBot.vars.poolDictionary[tag].inUseObjects.find((activeObject) => {return activeObject.id === obj.id});
 
     if(inUseObject)
     {
@@ -46,7 +46,7 @@ else
         obj.OnReleased?.();
         setTag(obj, dimension, false);
         setTag(obj, "isInUse", false);
-        const idx = thisBot.vars.poolDictionary[tag].inUseObjects.indexOf(inUseObject);
+        let idx = thisBot.vars.poolDictionary[tag].inUseObjects.indexOf(inUseObject);
         thisBot.vars.poolDictionary[tag].inUseObjects.splice(idx, 1);
         thisBot.vars.poolDictionary[tag].objectPool.push(inUseObject);
         return true;

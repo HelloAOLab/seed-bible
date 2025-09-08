@@ -24,14 +24,14 @@ elementsData.forEach((elementData) => {
                         if(Array.isArray(chunk.vars.verses) && chunk.vars.verses.length > 0)
                         {
                             chunk.vars.verses.forEach((verse) => {
-                                const verseHighlightInfo = elementData.GetHighlightInfoByKey(verse.masks.versePath)
+                                let verseHighlightInfo = elementData.GetHighlightInfoByKey(verse.masks.versePath)
                                 setTagMask(verse, 'color', (verseHighlightInfo ? verseHighlightInfo.color : verse.tags.initialColor))
                             })
                         }
                     }
                     else
                     {
-                        const chunkHighlightInfo = elementData.GetHighlightInfoByKey(chunk.masks.chunkPath)
+                        let chunkHighlightInfo = elementData.GetHighlightInfoByKey(chunk.masks.chunkPath)
                         setTagMask(chunk, "color", (chunkHighlightInfo ? chunkHighlightInfo.color : chunk.tags.initialColor));
                     }
                 })

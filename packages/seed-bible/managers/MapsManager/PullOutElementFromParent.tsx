@@ -1,7 +1,7 @@
 import {MapBookData} from "managers.MapsManager.MapBookData"
 import {MapChapterData} from "managers.MapsManager.MapChapterData"
 const {elementData, mapData, mapBookData} = that;
-const elementDataCopy = await CreateDataCopy(elementData);
+let elementDataCopy = await CreateDataCopy(elementData);
 let elementDataIndex;
 
 const nullifiableIds = {

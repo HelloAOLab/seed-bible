@@ -17,7 +17,7 @@ elementsData.forEach((elementData) => {
             ((elementData instanceof SectionBookData) || (elementData instanceof BookData)) ? !elementData.isSelected : true)
     if(isElementAvailable)
     {
-        const color = GetHistoryColor({element: elementData.element})
+        let color = GetHistoryColor({element: elementData.element})
         setTagMask(elementData.element, 'color', color);
         if(color != InstanceManager.tags.historyNullColor)
         {

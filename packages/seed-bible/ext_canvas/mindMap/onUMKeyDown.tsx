@@ -2,13 +2,13 @@ if (configBot.tags.systemPortal) return;
 if(globalThis?.annotInitialized || globalThis?.promtInitiated){
     return
 }
-const writenBot = getBot(byTag("id", tags.currentWritingBotId));
-const dim = os.getCurrentDimension();
+let writenBot = getBot(byTag("id", tags.currentWritingBotId));
+let dim = os.getCurrentDimension();
 
 const getRootParent = (childBot) => {
     let rootParent = null;
     if (childBot.tags.parentBotId) {
-        const parentBot = getBot(byTag("id", childBot.tags.parentBotId))
+        let parentBot = getBot(byTag("id", childBot.tags.parentBotId))
         if (parentBot.tags.parentBotId) {
             rootParent = getRootParent(parentBot);
         } else {
@@ -62,12 +62,12 @@ if (writenBot && tags.writing) {
             }else{
                 if(writenBot.masks.label[0] !== "-"){
                     setTagMask(writenBot, "tempLabel", writenBot.masks.label + that.keys[0], "shared");
-                    const dashLine = returnDash(writenBot.masks.tempLabel);
+                    let dashLine = returnDash(writenBot.masks.tempLabel);
                     setTagMask(writenBot, "label", dashLine, "shared");
                     setTagMask(writenBot, "label", writenBot.masks.tempLabel, "tempLocal");
                 }else{
                     setTagMask(writenBot, "tempLabel", writenBot.masks.tempLabel + that.keys[0], "shared");
-                    const dashLine = returnDash(writenBot.masks.tempLabel);
+                    let dashLine = returnDash(writenBot.masks.tempLabel);
                     setTagMask(writenBot, "label", dashLine, "shared");
                     setTagMask(writenBot, "label", writenBot.masks.tempLabel, "tempLocal");
                 }
@@ -79,39 +79,39 @@ if (writenBot && tags.writing) {
             }else{
                 if(writenBot.masks.label[0] !== "-"){
                     setTagMask(writenBot, "tempLabel", writenBot.masks.label + " ", "shared");
-                    const dashLine = returnDash(writenBot.masks.tempLabel);
+                    let dashLine = returnDash(writenBot.masks.tempLabel);
                     setTagMask(writenBot, "label", dashLine, "shared");
                     setTagMask(writenBot, "label", writenBot.masks.tempLabel, "tempLocal");
                 }else{
                     setTagMask(writenBot, "tempLabel", writenBot.masks.tempLabel + " ", "shared");
-                    const dashLine = returnDash(writenBot.masks.tempLabel);
+                    let dashLine = returnDash(writenBot.masks.tempLabel);
                     setTagMask(writenBot, "label", dashLine, "shared");
                     setTagMask(writenBot, "label", writenBot.masks.tempLabel, "tempLocal");
                 }
             }
             tags.writing = true;
         } else if (that.keys[0] === "Backspace") {
-            const label = writenBot.masks.label;
+            let label = writenBot.masks.label;
             if(label.slice(0, -1)){
                 if(writenBot.masks.mode === 0){
                     setTagMask(writenBot, "label", writenBot.masks.label.slice(0, -1), "shared");
                 }else{
                     if(writenBot.masks.label[0] !== "-"){
                         setTagMask(writenBot, "tempLabel", writenBot.masks.label.slice(0, -1), "shared");
-                        const dashLine = returnDash(writenBot.masks.tempLabel);
+                        let dashLine = returnDash(writenBot.masks.tempLabel);
                         setTagMask(writenBot, "label", dashLine, "shared");
                         setTagMask(writenBot, "label", writenBot.masks.tempLabel, "tempLocal");
                     }else{
                         setTagMask(writenBot, "tempLabel", writenBot.masks.tempLabel.slice(0, -1), "shared");
-                        const dashLine = returnDash(writenBot.masks.tempLabel);
+                        let dashLine = returnDash(writenBot.masks.tempLabel);
                         setTagMask(writenBot, "label", dashLine, "shared");
                         setTagMask(writenBot, "label", writenBot.masks.tempLabel, "tempLocal");
                     }
                 }
-                const colorPulse = setTimeout(() => {
+                let colorPulse = setTimeout(() => {
                     whisper(thisBot, "startPhaseColor", {bot: writenBot, startingColor: [255,255,255], endingColor: [220, 0, 0], interval: 500});
                 }, 100)
-                const clearTextTO = setTimeout(() => {
+                let clearTextTO = setTimeout(() => {
                     setTagMask(writenBot, "label", " ", "shared");
                 }, 600)
                 setTagMask(writenBot, "clearTextTO", clearTextTO, "tempShared");
@@ -134,18 +134,18 @@ if (writenBot && tags.writing) {
             if(writenBot.masks.mode === 0){
                 setTagMask(writenBot, "label", writenBot.masks.label + that.keys[0], "shared");
             }else{
-                const parentBot = getBot(byTag("id", writenBot.tags.parentBotId));
+                let parentBot = getBot(byTag("id", writenBot.tags.parentBotId));
                 if(!writenBot.tags.parentBotId || parentBot.masks.mode === 0){
                     setTagMask(writenBot, "label", writenBot.masks.label + that.keys[0], "shared");
                 }else{
                     if(writenBot.masks.label[0] !== "-"){
                         setTagMask(writenBot, "tempLabel", writenBot.masks.label + that.keys[0], "shared");
-                        const dashLine = returnDash(writenBot.masks.tempLabel);
+                        let dashLine = returnDash(writenBot.masks.tempLabel);
                         setTagMask(writenBot, "label", dashLine, "shared");
                         setTagMask(writenBot, "label", writenBot.masks.tempLabel, "tempLocal");
                     }else{
                         setTagMask(writenBot, "tempLabel", writenBot.masks.tempLabel + that.keys[0], "shared");
-                        const dashLine = returnDash(writenBot.masks.tempLabel);
+                        let dashLine = returnDash(writenBot.masks.tempLabel);
                         setTagMask(writenBot, "label", dashLine, "shared");
                         setTagMask(writenBot, "label", writenBot.masks.tempLabel, "tempLocal");
                     }
@@ -156,18 +156,18 @@ if (writenBot && tags.writing) {
             if(writenBot.masks.mode === 0){
                 setTagMask(writenBot, "label", writenBot.masks.label + " ", "shared");
             }else{
-                const parentBot = getBot(byTag("id", writenBot.tags.parentBotId));
+                let parentBot = getBot(byTag("id", writenBot.tags.parentBotId));
                 if(!writenBot.tags.parentBotId || parentBot.masks.mode === 0){
                     setTagMask(writenBot, "label", writenBot.masks.label + " ", "shared");
                 }else{
                     if(writenBot.masks.label[0] !== "-"){
                         setTagMask(writenBot, "tempLabel", writenBot.masks.label + " ", "shared");
-                        const dashLine = returnDash(writenBot.masks.tempLabel);
+                        let dashLine = returnDash(writenBot.masks.tempLabel);
                         setTagMask(writenBot, "label", dashLine, "shared");
                         setTagMask(writenBot, "label", writenBot.masks.tempLabel, "tempLocal");
                     }else{
                         setTagMask(writenBot, "tempLabel", writenBot.masks.tempLabel + " ", "shared");
-                        const dashLine = returnDash(writenBot.masks.tempLabel);
+                        let dashLine = returnDash(writenBot.masks.tempLabel);
                         setTagMask(writenBot, "label", dashLine, "shared");
                         setTagMask(writenBot, "label", writenBot.masks.tempLabel, "tempLocal");
                     }
@@ -175,32 +175,32 @@ if (writenBot && tags.writing) {
             }
             tags.writing = true;
         } else if (that.keys[0] === "Backspace") {
-            const label = writenBot.masks.label;
+            let label = writenBot.masks.label;
             if(label.slice(0, -1)){
                 if(writenBot.masks.mode === 0){
                     setTagMask(writenBot, "label", writenBot.masks.label.slice(0, -1), "shared");
                 }else{
-                    const parentBot = getBot(byTag("id", writenBot.tags.parentBotId));
+                    let parentBot = getBot(byTag("id", writenBot.tags.parentBotId));
                     if(!writenBot.tags.parentBotId || parentBot.masks.mode === 0){
                         setTagMask(writenBot, "label", writenBot.masks.label.slice(0, -1), "shared");
                     }else{
                         if(writenBot.masks.label[0] !== "-"){
                             setTagMask(writenBot, "tempLabel", writenBot.masks.label.slice(0, -1), "shared");
-                            const dashLine = returnDash(writenBot.masks.tempLabel);
+                            let dashLine = returnDash(writenBot.masks.tempLabel);
                             setTagMask(writenBot, "label", dashLine, "shared");
                             setTagMask(writenBot, "label", writenBot.masks.tempLabel, "tempLocal");
                         }else{
                             setTagMask(writenBot, "tempLabel", writenBot.masks.tempLabel.slice(0, -1), "shared");
-                            const dashLine = returnDash(writenBot.masks.tempLabel);
+                            let dashLine = returnDash(writenBot.masks.tempLabel);
                             setTagMask(writenBot, "label", dashLine, "shared");
                             setTagMask(writenBot, "label", writenBot.masks.tempLabel, "tempLocal");
                         }
                     }
                 }
-                const colorPulse = setTimeout(() => {
+                let colorPulse = setTimeout(() => {
                     whisper(thisBot, "startPhaseColor", {bot: writenBot, startingColor: [255,255,255], endingColor: [220, 0, 0], interval: 500});
                 }, 100)
-                const clearTextTO = setTimeout(() => {
+                let clearTextTO = setTimeout(() => {
                     setTagMask(writenBot, "label", " ", "shared");
                 }, 600)
                 setTagMask(writenBot, "clearTextTO", clearTextTO, "tempShared");
@@ -218,7 +218,7 @@ if (writenBot && tags.writing) {
     }
     if(that.keys.includes("ArrowUp")){
         if(writenBot.tags.parentBotId){
-            const parentBot = getBot(byTag("id", writenBot.tags.parentBotId));
+            let parentBot = getBot(byTag("id", writenBot.tags.parentBotId));
             if(parentBot.masks.lineTo.indexOf(writenBot.tags.id) > 0){
                 tags.currentWritingBotId = parentBot.masks.lineTo[parentBot.masks.lineTo.indexOf(writenBot.tags.id) - 1];
                 tags.writing = true;
@@ -227,14 +227,14 @@ if (writenBot && tags.writing) {
                 tags.writing = true;
             }
         }else if(writenBot.tags.textBox){
-            const arrowBot = getBot("arrowDown");
+            let arrowBot = getBot("arrowDown");
             if(arrowBot.tags.collapsed){
                 whisper(arrowBot, "onClick");
             }
         }
     }else if(that.keys.includes("ArrowDown")){
         if(writenBot.tags.parentBotId){
-            const parentBot = getBot(byTag("id", writenBot.tags.parentBotId));
+            let parentBot = getBot(byTag("id", writenBot.tags.parentBotId));
             if(parentBot.masks.lineTo.indexOf(writenBot.tags.id) < parentBot.masks.lineTo.length - 1){
                 tags.currentWritingBotId = parentBot.masks.lineTo[parentBot.masks.lineTo.indexOf(writenBot.tags.id) + 1];
                 tags.writing = true;
@@ -243,14 +243,14 @@ if (writenBot && tags.writing) {
                 tags.writing = true;
             }
         }else if(writenBot.tags.textBox){
-            const arrowBot = getBot("arrowDown");
+            let arrowBot = getBot("arrowDown");
             if(!arrowBot.tags.collapsed){
                 whisper(arrowBot, "onClick");
             }
         }
     }else if(that.keys.includes("ArrowLeft")){
         if(writenBot.tags.parentBotId){
-            const parentBot = getBot(byTag("id", writenBot.tags.parentBotId));
+            let parentBot = getBot(byTag("id", writenBot.tags.parentBotId));
             tags.currentWritingBotId = parentBot.tags.id;
             tags.writing = true;
         }else if(writenBot.tags.textBox){
@@ -262,11 +262,11 @@ if (writenBot && tags.writing) {
             return
         }
         if(writenBot.masks.lineTo.length > 0){
-            const childBot = getBot(byTag('id', writenBot.masks.lineTo[0]))
+            let childBot = getBot(byTag('id', writenBot.masks.lineTo[0]))
             tags.currentWritingBotId = childBot.tags.id;
             tags.writing = true;
         }else if(writenBot.masks.lineTo.length === 0){
-            const rootParent = getRootParent(writenBot);
+            let rootParent = getRootParent(writenBot);
             tags.currentWritingBotId = rootParent.tags.id;
             tags.writing = true;
         }

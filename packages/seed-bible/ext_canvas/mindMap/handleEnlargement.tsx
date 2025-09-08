@@ -3,7 +3,7 @@ if((that.bot.masks.formAddress === null || that.bot.masks.formAddress === undefi
 }
 
 
-const dim = os.getCurrentDimension();
+let dim = os.getCurrentDimension();
 if(that.bot.masks.enlarged === null && that.bot.masks.singleClicked === null){
     setTagMask(that.bot, "enlarged", false, "tempLocal");
     setTagMask(that.bot, "singleClicked", false, "tempLocal");
@@ -44,7 +44,7 @@ if(that.bot.masks.enlarged){
             that.bot.masks.scTImeout = null;
         }
         setTagMask(that.bot, "singleClicked", true, "tempLocal");
-        const scTimeout = setTimeout(() => {
+        let scTimeout = setTimeout(() => {
             setTagMask(that.bot, "singleClicked", false, "tempLocal");
             that.bot.masks.scTImeout = null;
         }, 200);

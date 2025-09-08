@@ -1,8 +1,8 @@
-const dim = os.getCurrentDimension();
+let dim = os.getCurrentDimension();
 const typingTool = getBot('mmTypingManager');
 
 const parentCheck = (childId, parentId) => {
-    const childBot = getBot(byTag("id", childId));
+    let childBot = getBot(byTag("id", childId));
     let isParent = false;
     if(!childBot.tags.parentBotId){
         return false;
@@ -15,7 +15,7 @@ const parentCheck = (childId, parentId) => {
 }
 
 const childToParentBots = (childId, parentId) => {
-    const childBot = getBot(byTag("id", childId));
+    let childBot = getBot(byTag("id", childId));
     let list = [childId];
     if(childBot.tags.parentBotId !== parentId){
         list = [...list, ...childToParentBots(childBot.tags.parentBotId, parentId)]
@@ -41,19 +41,19 @@ const getAllChildIds = (id) => {
 
 if(that.selecting){
     // await os.playSound("https://auth-aux-aobot-prod-filesbucket-141297942820.s3.amazonaws.com/aoBot/e00550871b08fbbe54349b0c637ced1f5487768097d06de4d7775b14c98e5756.mpga")
-    const selectBot = getBot(byTag("button2", true));
+    let selectBot = getBot(byTag("button2", true));
     if(selectBot){
         if(selectBot.tags.selecting && selectBot.tags.selectedBot[0] !== that.bot.tags.id){
             if(parentCheck(that.bot.tags.id, selectBot.tags.selectedBot[0])){
-                const childToParentList = [...childToParentBots(that.bot.tags.id, selectBot.tags.selectedBot[0])].reverse();
-                const allChildrens = [selectBot.tags.selectedBot[0], ...getAllChildIds(selectBot.tags.selectedBot[0])]
-                const parentBot = getBot(byTag("id", selectBot.tags.selectedBot[0]));
+                let childToParentList = [...childToParentBots(that.bot.tags.id, selectBot.tags.selectedBot[0])].reverse();
+                let allChildrens = [selectBot.tags.selectedBot[0], ...getAllChildIds(selectBot.tags.selectedBot[0])]
+                let parentBot = getBot(byTag("id", selectBot.tags.selectedBot[0]));
                 parentBot.tags.linkList.push(that.bot.tags.id)
                 //224, 64, 251
                 //24, 255, 255
                 for(let i = 0; i < childToParentList.length; i++){
-                    const subBot = getBot(byTag("id", childToParentList[i]));
-                    const subIndexBot = getBot(byTag("id", subBot.tags.indexBot))
+                    let subBot = getBot(byTag("id", childToParentList[i]));
+                    let subIndexBot = getBot(byTag("id", subBot.tags.indexBot))
                     setTimeout(async () => {
                         whisper(typingTool, "addPulseColor", {bot: subBot, startingColor: [224, 64, 251], endingColor: [24, 255, 255], initialZ: 0.05})
                         whisper(typingTool, "addPulseColor", {bot: subIndexBot, startingColor: [224, 64, 251], endingColor: [24, 255, 255], initialZ: 0.05})
@@ -86,12 +86,12 @@ if(that.selecting){
         }
     }
 }else{
-    const parentBot = getBot(byTag("id", that.parentId))
-    const childToParentList = [...childToParentBots(that.childId, that.parentId)].reverse();
-    const allChildrens = [that.parentId, ...getAllChildIds(that.parentId)]
+    let parentBot = getBot(byTag("id", that.parentId))
+    let childToParentList = [...childToParentBots(that.childId, that.parentId)].reverse();
+    let allChildrens = [that.parentId, ...getAllChildIds(that.parentId)]
     for(let i = 0; i < allChildrens.length; i++){
-        const subBot = getBot(byTag("id", allChildrens[i]));
-        const subIndexBot = getBot(byTag("id", subBot.tags.indexBot))
+        let subBot = getBot(byTag("id", allChildrens[i]));
+        let subIndexBot = getBot(byTag("id", subBot.tags.indexBot))
         subBot.tags.draggable = false;
         subIndexBot.tags.draggable = false;
         setTimeout(async () => {
@@ -125,8 +125,8 @@ if(that.selecting){
                     setTagMask(subIndexBot, `color`, "clear", "shared");
                     setTagMask(subIndexBot, `strokeColor`, "clear", "shared");
                     setTagMask(subIndexBot, `pointable`, false, "shared");
-                    const subParentBot = getBot(byTag('id', subBot.tags.parentBotId));
-                    const lineTo = [...subParentBot.masks.lineTo];
+                    let subParentBot = getBot(byTag('id', subBot.tags.parentBotId));
+                    let lineTo = [...subParentBot.masks.lineTo];
                     lineTo.splice(lineTo.indexOf(subBot.tags.id), 1);
                     setTagMask(subParentBot, "lineTo", [...lineTo], "shared");
                 }, 150 * 1)

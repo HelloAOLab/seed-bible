@@ -68,7 +68,7 @@ const Main = () => {
     }, [collapsed])
 
     useEffect(async () => {
-        const authBot = await os.requestAuthBotInBackground();
+        let authBot = await os.requestAuthBotInBackground();
         if (authBot) {
             window.clUserId = authBot.id;
         }
@@ -88,7 +88,7 @@ const Main = () => {
 
 const Root = () => {
     return <>
-     <script src="'https://unpkg.com/@popperjs/core@2'"></script>
+     /*<script src="'https://unpkg.com/@popperjs/core@2'"></script>
         <script src="https://unpkg.com/tippy.js@6/dist/tippy-bundle.umd.min.js"></script>
         <link rel='stylesheet' href='https://unpkg.com/tippy.js@6/dist/tippy.css'/>
        <script src="https://cdn.jsdelivr.net/npm/fullcalendar-scheduler@6.1.18/index.global.min.js"></script>
@@ -99,6 +99,8 @@ const Root = () => {
 
         <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/@fullcalendar/core@6.1.17/main.min.css" />
         <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/@fullcalendar/daygrid@6.1.17/main.min.css" />
+        <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/@fullcalendar/timegrid@6.1.17/main.min.css"/>
+        <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/@fullcalendar/resource-timegrid@6.1.17/main.min.css"/>*/
         <BibleVariablesProvider>
             <TabsProvider>
                 <SideBarProvider>

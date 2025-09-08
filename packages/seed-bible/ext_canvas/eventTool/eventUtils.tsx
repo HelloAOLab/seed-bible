@@ -1,6 +1,6 @@
 function generateQuery(params) {
-    const queryArray = [];
-    for (const key in params) {
+    let queryArray = [];
+    for (let key in params) {
         if (params.hasOwnProperty(key)) {
             queryArray.push(encodeURIComponent(key) + '=' + encodeURIComponent(params[key]));
         }
@@ -38,7 +38,7 @@ const getAllChildIds = (id: string, customMask: string = null) => {
 }
 
 const parentCheck = (childId, parentId) => {
-    const childBot = getBot(byTag("id", childId));
+    let childBot = getBot(byTag("id", childId));
     let isParent = false;
     if(!childBot.tags.parentBotId){
         return false;

@@ -20,9 +20,9 @@ const lowerCoverScales = GetBotScales(bibleData.staticBibleElements.lowerCover);
 const upperCoverScales = GetBotScales(bibleData.staticBibleElements.upperCover);
 const isBibleEmpty = IsBibleEmpty();
 const isCrossInMiddle = bibleData.childrenData.every((testamentData) => {return testamentData.isSplitIntoSections}) && !isBibleEmpty;
-const animations = [];
+let animations = [];
 let crossNewPositionZ = null;
-const targetCrossPosition='';
+let targetCrossPosition;
 const stackStructure = GetBibleStackStructure();
 const initialPositionZ = lowerCoverPosition.z + lowerCoverScales.z
 let nextPositionZ = initialPositionZ;
@@ -30,7 +30,7 @@ let nextPositionZ = initialPositionZ;
 if(!isBibleEmpty)
 {
     nextPositionZ += StackSpacing.BetweenArrangements;
-    for(const testamentData of stackStructure)
+    for(let testamentData of stackStructure)
     {
         const {testamentDeltaPositionZ, newTestamentAnimations} = HandleTestamentDataInStack({isInstantaneous, testamentData, desiredPositionZ: nextPositionZ, dimension, duration, easing, speedMultiplier});
         animations.push(...newTestamentAnimations)

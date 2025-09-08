@@ -1,7 +1,7 @@
-const dim = os.getCurrentDimension();
+let dim = os.getCurrentDimension();
 if(that.tags.indexOf("currentWritingBotId") !== -1){ // writing bot is either selected or changed
         setTimeout(() => {
-            const currentWritingBot = getBot(byTag("id", tags.currentWritingBotId));
+            let currentWritingBot = getBot(byTag("id", tags.currentWritingBotId));
             if(currentWritingBot && tags.writing){
                 whisper(bot, "menuOnCreate", {
                     [dim + "X"]: currentWritingBot.tags[dim + "X"],

@@ -119,9 +119,9 @@ const TemplateEditor = ({
                 else if(selectedTestament) currentList = selectedTestament.sections;
                 else currentList = template.testaments;
 
-                const dragOverIndex = currentList.findIndex((item) => {return item.id === id});
+                let dragOverIndex = currentList.findIndex((item) => {return item.id === id});
 
-                const newList = currentList.filter(item => item.id !== draggingId);
+                let newList = currentList.filter(item => item.id !== draggingId);
 
                 newList.splice(dragOverIndex, 0, currentList[draggingIndex]);
 

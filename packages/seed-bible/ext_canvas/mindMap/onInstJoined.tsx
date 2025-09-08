@@ -1,4 +1,4 @@
-const userDataBot = create(thisBot, {
+let userDataBot = create(thisBot, {
     onBotChanged: tags.onUMBotChanged,
     onGridClick: tags.onUMGridClick,
     onKeyDown: tags.onUMKeyDown,

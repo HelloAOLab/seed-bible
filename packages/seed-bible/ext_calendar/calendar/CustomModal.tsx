@@ -1,52 +1,90 @@
 const { useState, useEffect, useRef } = os.appHooks;
 
 const CustomRepeatModal = await thisBot.RepeatModal();
-import {useCalendar} from 'ext_calendar.calendar.CalendarContext';
+import { useCalendar } from 'ext_calendar.calendar.CalendarContext';
 
 
 
 
 
 
-const CustomModal = ({ onClose, playlists, eventTitle, eventDescription, eventLink, eventStartDate, eventEndDate, setEventTitle, setEventDescription, setEventEndDate, setEventStartDate, setEventLink, setEventCreated, setSelectedDays, selectedDays, selectedOption, setSelectedOption,eventStartTime,setEventStartTime,eventEndTime,setEventEndTime ,addReadingPlans,calendarApi}) => {
+const CustomModal = ({setModalOpen, addReadingPlans, calendarApi }) => {
   const [mode, setMode] = useState('event'); // 'event' or 'readingPlans'
 
-  console.log(calendarApi.current,'kjkjkj');
+  const [eventTitle, setEventTitle] = useState('');
+  const [eventStartDate, setEventStartDate] = useState('');
+  const [eventEndDate, setEventEndDate] = useState('');
+  const [eventDescription, setEventDescription] = useState('');
+  const [eventCreated, setEventCreated] = useState(false);
+  const [eventLink, setEventLink] = useState('');
+  const [eventStartTime, setEventStartTime] = useState('');
+  const [eventEndTime, setEventEndTime] = useState('');
+  const [selectedDays, setSelectedDays] = useState([]);
+  const [selectedOption, setSelectedOption] = useState('No Repeat');
   const [repeat, setRepeat] = useState('No Repeat');
 
   const [checked, setChecked] = useState({});
 
   const [showCustomRepeat, setShowCustomRepeat] = useState(false);
-  const {apiCalendar}=useCalendar();
-  console.log(apiCalendar.getEvents(),'events');
-  
- 
-  
-  
-   
-  
+
+
+  useEffect(() => {
+
+    if (eventCreated && calendarApi.current) {
+      const eventData = {
+        title: eventTitle,
+        start: `${eventStartDate}T${eventStartTime}:00`, // use ISO string or JS Date
+        allDay: `${eventEndDate}T${eventEndTime}:00`,
+        allDay: false,
+        extendedProps: {
+          description: eventDescription,
+          link: eventLink,
+        }
+      };
+
+      if (selectedOption === 'custom') {
+        eventData.daysOfWeek = selectedDays; // e.g., [1,3,5]
+      }
+
+      calendarApi.current.addEvent(eventData);
+      setEventCreated(false);
+    }
+  }, [eventCreated, selectedOption]);
+  useEffect(() => {
+    setEventCreated(false)
+  });
+  const onCloseModal = () => {
+    setModalOpen(prev => !prev);
+
+  }
+
+
+
+
+
+
 
   const modalRef = useRef(null);
   const customRepeatRef = useRef(null); // NEW
   let plays = globalThis['defaultplaylists'];
-   if (plays.length === 0) {
-      plays = [{
-        checklistEnabled: false, color: "#D9D9D9", dateFormat: "MM-DD-YYYY", description: "", icon: "subscriptions", id: "aa9be68e-33f8-4f55-8452-a56447b5c347"
-        , isCustomColor: false, isCustomIcon: false, isLayers: false, list:
-          [{ type: 'verse', content: 'Genesis 1:1', additionalInfo: {}, id: 'ab7ba93b-15a0-4144-a51c-4c9840a5c2e1' }, { type: 'verse', content: 'Genesis 1:4', additionalInfo: {}, id: 'ca6b309e-9a44-45b0-9dac-19ed9113c7ad' }, { type: 'verse', content: 'Genesis 1:6', additionalInfo: {}, id: '305aafbc-cf29-446f-91a5-12cb8cacc752' }]
-        ,
-        name: "Craigs",
-        nesting
-          :
-          1,
-        readingPlanEnabled
-          :
-          true,
-        selectedTags
-          :
-          []
-      }]
-    }
+  if (plays.length === 0) {
+    plays = [{
+      checklistEnabled: false, color: "#D9D9D9", dateFormat: "MM-DD-YYYY", description: "", icon: "subscriptions", id: "aa9be68e-33f8-4f55-8452-a56447b5c347"
+      , isCustomColor: false, isCustomIcon: false, isLayers: false, list:
+        [{ type: 'verse', content: 'Genesis 1:1', additionalInfo: {}, id: 'ab7ba93b-15a0-4144-a51c-4c9840a5c2e1' }, { type: 'verse', content: 'Genesis 1:4', additionalInfo: {}, id: 'ca6b309e-9a44-45b0-9dac-19ed9113c7ad' }, { type: 'verse', content: 'Genesis 1:6', additionalInfo: {}, id: '305aafbc-cf29-446f-91a5-12cb8cacc752' }]
+      ,
+      name: "Craigs",
+      nesting
+        :
+        1,
+      readingPlanEnabled
+        :
+        true,
+      selectedTags
+        :
+        []
+    }]
+  }
   const playListsFiltered = plays.filter(item => item.readingPlanEnabled);
 
   const handleOverlayClick = (e) => {
@@ -71,7 +109,7 @@ const CustomModal = ({ onClose, playlists, eventTitle, eventDescription, eventLi
 
   const renderEventFields = () => (
     <div className="gm-event">
-     
+
       <div className="gm-input-date">
         <svg
           style={{ color: 'gray' }}
@@ -95,7 +133,7 @@ const CustomModal = ({ onClose, playlists, eventTitle, eventDescription, eventLi
           <input type="date" value={eventEndDate} onChange={e => setEventEndDate(e.target.value)} />
         </div>
       </div>
-       <div style={{ display: 'flex', alignItems: 'center', gap: '16px' }}>
+      <div style={{ display: 'flex', alignItems: 'center', gap: '16px' }}>
         <svg
           style={{ color: 'gray' }}
           width="24"
@@ -113,12 +151,12 @@ const CustomModal = ({ onClose, playlists, eventTitle, eventDescription, eventLi
         <div style={{ display: 'flex', gap: '6px' }}>
           <label style={{ display: 'flex', fontSize: '10px', alignItems: 'center' }}>
 
-            <input type="time" name="startTime" value={eventStartTime} onChange={(e)=>setEventStartTime(e.target.value)} />
+            <input type="time" name="startTime" value={eventStartTime} onChange={(e) => setEventStartTime(e.target.value)} />
           </label>
           <span>to</span>
           <label style={{ display: 'flex', fontSize: '10px', alignItems: 'center' }}  >
 
-            <input value={eventEndTime}  type="time" name="endTime" onChange={(e)=>setEventEndTime(e.target.value)} />
+            <input value={eventEndTime} type="time" name="endTime" onChange={(e) => setEventEndTime(e.target.value)} />
           </label>
         </div>
       </div>
@@ -226,13 +264,14 @@ const CustomModal = ({ onClose, playlists, eventTitle, eventDescription, eventLi
 
 
   const handleSave = () => {
-    
-     const selected = playListsFiltered.filter((p) => checked[p.id]);
-     if(selected){
-     addReadingPlans(selected);}
-    
+
+    const selected = playListsFiltered.filter((p) => checked[p.id]);
+    if (selected) {
+      addReadingPlans(selected);
+    }
+
     setEventCreated(prev => !prev);
-    onClose?.();
+    onCloseModal?.();
   };
 
   return (
@@ -279,7 +318,7 @@ const CustomModal = ({ onClose, playlists, eventTitle, eventDescription, eventLi
 
         <div className="gm-actions">
           <button className="gm-button" onClick={handleSave}>Save</button>
-          <button className="gm-button cancel" onClick={onClose}>Cancel</button>
+          <button className="gm-button cancel" onClick={onCloseModal}>Cancel</button>
         </div>
       </div>
       {showCustomRepeat && (
@@ -295,7 +334,7 @@ const CustomModal = ({ onClose, playlists, eventTitle, eventDescription, eventLi
           />
         </div>
       )}
-     
+
 
 
     </div>

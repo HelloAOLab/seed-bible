@@ -1,8 +1,8 @@
 const image = that.image;
 
 const dim = os.getCurrentDimension();
-const typingManager = getBot(byTag("mmTypingManager"));
-const aiChatBot = getBot(byID(typingManager.tags.currentWritingBotId));
+let typingManager = getBot(byTag("mmTypingManager"));
+let aiChatBot = getBot(byID(typingManager.tags.currentWritingBotId));
 
 // let aiText = create({
 //     tray: "true",
@@ -40,9 +40,9 @@ const aiChatBot = getBot(byID(typingManager.tags.currentWritingBotId));
 //     toErase: true
 // });
 
-const aiText = whisper(typingManager, "createMMBot", {from: {x: aiChatBot.tags.initPos.x, y: aiChatBot.tags.initPos.y}, parentBot: aiChatBot, label: aiChatBot.masks.label ? aiChatBot.masks.label : " "})[0].bot;
+let aiText = whisper(typingManager, "createMMBot", {from: {x: aiChatBot.tags.initPos.x, y: aiChatBot.tags.initPos.y}, parentBot: aiChatBot, label: aiChatBot.masks.label ? aiChatBot.masks.label : " "})[0].bot;
 await os.sleep(100)
-const currentTray = whisper(typingManager, "createMMBot", {from: {x: aiText.tags.initPos.x, y: aiText.tags.initPos.y}, parentBot: aiText, config: {
+let currentTray = whisper(typingManager, "createMMBot", {from: {x: aiText.tags.initPos.x, y: aiText.tags.initPos.y}, parentBot: aiText, config: {
     formAddress: image,
 }}).bot;
 

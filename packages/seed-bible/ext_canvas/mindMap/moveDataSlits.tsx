@@ -1,10 +1,10 @@
-const dim = os.getCurrentDimension();
+let dim = os.getCurrentDimension();
 const typingTool = getBot(byTag("typingTool"));
-const controlBot = getBot(byTag("id", typingTool.tags.currentWritingBotId));
+let controlBot = getBot(byTag("id", typingTool.tags.currentWritingBotId));
 
-const opacityCalc = (botPosition, parentPosition, initialOpacity) => {
-    const distance = Math.sqrt((parentPosition - botPosition) * (parentPosition - botPosition));
-    const opacity = initialOpacity * (1 - distance / 20);
+let opacityCalc = (botPosition, parentPosition, initialOpacity) => {
+    let distance = Math.sqrt((parentPosition - botPosition) * (parentPosition - botPosition));
+    let opacity = initialOpacity * (1 - distance / 20);
     return opacity;
 }
 
@@ -87,22 +87,22 @@ const ArrowDownConfig = {
 }
 
 if(that.action === "left"){
-    const priorityIndex = typingTool.tags.dataSlitsManager.selectedIndex - 1;
+    let priorityIndex = typingTool.tags.dataSlitsManager.selectedIndex - 1;
     if(priorityIndex < 0){
         return;
     }
-    const upArrow = getBots("arrowUp");
-    const downArrow = getBots("arrowDown");
-    const dataSlits = getBots(byTag("slitType", "incident"));
-    const eventBots = getBots("eventBot");
+    let upArrow = getBots("arrowUp");
+    let downArrow = getBots("arrowDown");
+    let dataSlits = getBots(byTag("slitType", "incident"));
+    let eventBots = getBots("eventBot");
     destroy(eventBots);
     destroy(upArrow);
     destroy(downArrow);
     destroy(dataSlits);
-    const startingIndex = controlBot.tags[dim + "X"] - (priorityIndex * 4);
+    let startingIndex = controlBot.tags[dim + "X"] - (priorityIndex * 4);
     for(let i = 0; i < typingTool.tags.dataSlitsManager.dataList.length; i++){
-        const dataSlit = getBot(byTag("id", typingTool.tags.dataSlitsManager.dataList[i]));
-        const dataSlitLine = getBot(byTag("id", dataSlit.tags.lineId));
+        let dataSlit = getBot(byTag("id", typingTool.tags.dataSlitsManager.dataList[i]));
+        let dataSlitLine = getBot(byTag("id", dataSlit.tags.lineId));
         animateTag(dataSlit, {
             fromValue: {
                 [dim + "X"]: dataSlit.tags[dim + "X"],
@@ -148,22 +148,22 @@ if(that.action === "left"){
     typingTool.tags.dataSlitsManager.selectedIndex -= 1;
     setSliderValue(priorityIndex);
 }else if(that.action === "right"){
-    const priorityIndex = typingTool.tags.dataSlitsManager.selectedIndex + 1;
+    let priorityIndex = typingTool.tags.dataSlitsManager.selectedIndex + 1;
     if(priorityIndex + 1 > typingTool.tags.dataSlitsManager.dataList.length){
         return;
     }
-    const upArrow = getBots("arrowUp");
-    const downArrow = getBots("arrowDown");
-    const dataSlits = getBots(byTag("slitType", "incident"));
-    const eventBots = getBots("eventBot");
+    let upArrow = getBots("arrowUp");
+    let downArrow = getBots("arrowDown");
+    let dataSlits = getBots(byTag("slitType", "incident"));
+    let eventBots = getBots("eventBot");
     destroy(eventBots);
     destroy(upArrow);
     destroy(downArrow);
     destroy(dataSlits);
-    const startingIndex = controlBot.tags[dim + "X"] - (priorityIndex * 4);
+    let startingIndex = controlBot.tags[dim + "X"] - (priorityIndex * 4);
     for(let i = 0; i < typingTool.tags.dataSlitsManager.dataList.length; i++){
-        const dataSlit = getBot(byTag("id", typingTool.tags.dataSlitsManager.dataList[i]));
-        const dataSlitLine = getBot(byTag("id", dataSlit.tags.lineId));
+        let dataSlit = getBot(byTag("id", typingTool.tags.dataSlitsManager.dataList[i]));
+        let dataSlitLine = getBot(byTag("id", dataSlit.tags.lineId));
         animateTag(dataSlit, {
             fromValue: {
                 [dim + "X"]: dataSlit.tags[dim + "X"],

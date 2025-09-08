@@ -1,5 +1,5 @@
 if(!thisBot.masks.color) setTagMask(thisBot, "color", thisBot.tags.color)
-const startingColorHex = thisBot.tags.initialColor;
+let startingColorHex = thisBot.tags.initialColor;
 const startingColorRgb = HexToRgb(startingColorHex);
 const targetColorRgb = HexToRgb("#139981");
 const blinkDuration = 0.25

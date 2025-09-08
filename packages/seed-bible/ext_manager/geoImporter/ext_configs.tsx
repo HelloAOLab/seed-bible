@@ -1,4 +1,4 @@
-const toolBarOptions = {
+let toolBarOptions = {
     page: [],
     canvas: [],
     map: [
@@ -11,9 +11,9 @@ const toolBarOptions = {
                     globalThis.mapToolApp = false;
                     return;
                 }
-                const App = await getBot('system', "introduction.searchBar").GeoJSONExperience()
+                let App = await getBot('system', "introduction.searchBar").GeoJSONExperience()
                 if (App) {
-                    const id = uuid();
+                    let id = uuid();
                     globalThis.mapToolApp = true;
                     globalThis.MAP_PANEL_ID = id;
                     AddApplication({ id, App: <App id={id} />, minWidth: '23rem' })

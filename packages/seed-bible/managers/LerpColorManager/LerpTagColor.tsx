@@ -18,14 +18,14 @@ thisBot.StopColorLerp({bot, tag});
 if(startingColor === endingColor) return true;
 
 return new Promise((resolve, reject) => {
-    const intervalId, botLerpData;
+    let intervalId, botLerpData;
     const divisionFactor = 20;
     const difference = [endingColor[0] - startingColor[0], endingColor[1] - startingColor[1], endingColor[2] - startingColor[2]];
     const differenceFraction = [difference[0] / divisionFactor, difference[1] / divisionFactor, difference[2] / divisionFactor];
 
-    const currentColor = startingColor;
+    let currentColor = startingColor;
     let i = 0;
-    const rgbColors = [];
+    let rgbColors = [];
     for(let j = 1; j < divisionFactor; j++)
     {
         const rgbColor = ClampRGBColor([(currentColor[0] + (differenceFraction[0] * j)), (currentColor[1] + (differenceFraction[1] * j)), (currentColor[2] + (differenceFraction[2] * j))])
@@ -50,7 +50,7 @@ return new Promise((resolve, reject) => {
 
 function ClampRGBColor(colorToClamp)
 {
-    const colorClamped = [
+    let colorClamped = [
         Math.max(Math.min(Math.round(colorToClamp[0]), 255), 0),
         Math.max(Math.min(Math.round(colorToClamp[1]), 255), 0),
         Math.max(Math.min(Math.round(colorToClamp[2]), 255), 0)

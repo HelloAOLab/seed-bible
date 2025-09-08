@@ -1,10 +1,10 @@
-const dim = os.getCurrentDimension();
+let dim = os.getCurrentDimension();
 const typingTool = getBot(byTag("typingTool"));
-const timeBot = getBot(byTag("id", that.id));
-const eventBots = getBots("eventBot");
+let timeBot = getBot(byTag("id", that.id));
+let eventBots = getBots("eventBot");
 destroy(eventBots);
 
-const eventData = [
+let eventData = [
     {
         title: "event 1",
         description: "description 1",
@@ -62,7 +62,7 @@ const eventData = [
     },
 ]
 
-const eventBotConfig = {
+let eventBotConfig = {
     space: "tempLocal",
     [dim]: true,
     color: "#84FFFF",

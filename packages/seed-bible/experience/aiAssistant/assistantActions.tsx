@@ -1,8 +1,8 @@
-const jarvis = getBot('system', 'experience.jarvis');
+let jarvis = getBot('system', 'experience.jarvis');
 
 const changeLightMode = async ({ parameters }) => {
     if (parameters.mode === "light") {
-        const jarvisInstance = getBot('jarvis');
+        let jarvisInstance = getBot('jarvis');
         setTagMask(jarvisInstance, "color", "white", "tempLocal")
         toggleDisplay(false);
         await animateTag(jarvisInstance, {
@@ -27,7 +27,7 @@ const changeLightMode = async ({ parameters }) => {
         })
         jarvisInstance.masks.color = null;
     } else if (parameters.mode === "dark") {
-        const jarvisInstance = getBot('jarvis');
+        let jarvisInstance = getBot('jarvis');
         setTagMask(jarvisInstance, "color", "black", "tempLocal")
         toggleDisplay(true);
         await animateTag(jarvisInstance, {
@@ -59,15 +59,15 @@ const changeLightMode = async ({ parameters }) => {
 }
 
 const createImage = async ({ parameters }) => {
-    const dim = os.getCurrentDimension();
+    let dim = os.getCurrentDimension();
     const typingTool = getBot(byTag("typingTool"));
     const aiMessage = await globalThis.aiUtils.callGPTImageGen(parameters.userRequirements);
-    const controlBot = whisper(typingTool, "makeTextBox", {
+    let controlBot = whisper(typingTool, "makeTextBox", {
         x: 0, y: 0, label: "", config: {
             formAddress: aiMessage
         }
     })[0].bot;
-    const aiChat = getBot('system', 'ext_canvas.aiChat');
+    let aiChat = getBot('system', 'ext_canvas.aiChat');
     setTagMask(controlBot, "formAddress", aiMessage, "shared");
     setTagMask(controlBot, "scaleX", aiChat.masks.width ? aiChat.masks.width * 0.01 : 500 * 0.01, "shared");
     setTagMask(controlBot, "scaleY", aiChat.masks.height ? aiChat.masks.height * 0.01 : 500 * 0.01, "shared");
@@ -108,7 +108,7 @@ const createImage = async ({ parameters }) => {
         easing: "elastic",
         tagMaskSpace: "local"
     })
-    const typingManager = getBot(byTag("mmTypingManager"));
+    let typingManager = getBot(byTag("mmTypingManager"));
     whisper(typingManager, "onGridClick");
     return {
         success: true,
@@ -131,7 +131,7 @@ const createBibleStack = async ({ parameters }) => {
 }
 
 const spawnTestament = async ({ parameters }) => {
-    const testament = parameters.testament;
+    let testament = parameters.testament;
 
     StacksManager.SpawnTestament({ name: testament });
     return {
@@ -141,7 +141,7 @@ const spawnTestament = async ({ parameters }) => {
 }
 
 const spawnSection = async ({ parameters }) => {
-    const section = parameters.section;
+    let section = parameters.section;
 
     StacksManager.SpawnSection({ name: section });
     return {
@@ -152,7 +152,7 @@ const spawnSection = async ({ parameters }) => {
 
 const spawnBook = async ({ parameters }) => {
 
-    const bookName = parameters.bookName;
+    let bookName = parameters.bookName;
 
     StacksManager.SpawnBook({ name: bookName });
     return {
@@ -163,9 +163,9 @@ const spawnBook = async ({ parameters }) => {
 
 const spawnChapter = async ({ parameters }) => {
 
-    const bookName = parameters.bookName;
-    const chapterNumber = parameters.chapterNumber;
-    const success = await StacksManager.SpawnChapter({ bookName: bookName, chapterNumber: chapterNumber });
+    let bookName = parameters.bookName;
+    let chapterNumber = parameters.chapterNumber;
+    let success = await StacksManager.SpawnChapter({ bookName: bookName, chapterNumber: chapterNumber });
     if (!success) {
         return {
             message: "Chapter not found",
@@ -192,9 +192,9 @@ const spawnChapter = async ({ parameters }) => {
 
 const pickChapter = async ({ parameters }) => {
 
-    const bookName = parameters.bookName;
-    const chapterNumber = parameters.chapterNumber;
-    const success = await StacksManager.TryEjectChapter({ bookName: bookName, chapterNumber: chapterNumber });
+    let bookName = parameters.bookName;
+    let chapterNumber = parameters.chapterNumber;
+    let success = await StacksManager.TryEjectChapter({ bookName: bookName, chapterNumber: chapterNumber });
     if (!success) {
         return {
             message: "Chapter not found",
@@ -209,11 +209,11 @@ const pickChapter = async ({ parameters }) => {
 }
 
 const pickChapterWithoutBookName = async ({ parameters }) => {
-    const chapterNumber = parameters.chapterNumber;
+    let chapterNumber = parameters.chapterNumber;
     if (StacksManager.vars.lastInteractedBookData) {
         const numberOfChapters = StacksManager.GetNumberOfChaptersByName({ name: StacksManager.vars.lastInteractedBookData.elementInfo.commonName });
         if (chapterNumber <= numberOfChapters) {
-            const success = await StacksManager.TryEjectChapter({ bookName: StacksManager.vars.lastInteractedBookData.elementInfo.commonName, chapterNumber });
+            let success = await StacksManager.TryEjectChapter({ bookName: StacksManager.vars.lastInteractedBookData.elementInfo.commonName, chapterNumber });
             if (!success) {
                 return {
                     message: "Chapter not found",
@@ -245,7 +245,7 @@ const createAnimation = async ({ parameters }) => {
 
     destroy(getBots("animationName", "aiAnimation"))
     const dim = os.getCurrentDimension();
-    const config = {
+    let config = {
     }
     config[dim] = true;
     config[dim + "X"] = 0;
@@ -259,7 +259,7 @@ const createAnimation = async ({ parameters }) => {
     config.scaleZ = parameters.z;
     config.animationFrames = parameters.animationFrame;
 
-    const newAniBot = create({
+    let newAniBot = create({
         ...config,
         space: "tempLocal",
         toErase: true,
@@ -278,7 +278,7 @@ const createAnimation = async ({ parameters }) => {
 
     for (let k = 0; k < config.animationFrames.length; k++) {
         if (config.animationFrames[k].type === "recording") {
-            const frameData = JSON.parse(config.animationFrames[k].frameData);
+            let frameData = JSON.parse(config.animationFrames[k].frameData);
             for (let j = 0; j < frameData.states.length; j++) {
                 frameData.states[j].tags[dim + "X"] = frameData.states[j].tags.dimX;
                 frameData.states[j].tags[dim + "Y"] = frameData.states[j].tags.dimY;
@@ -288,8 +288,8 @@ const createAnimation = async ({ parameters }) => {
             }
             config.animationFrames[k].frameData = JSON.stringify(frameData);
         }
-        config.animationFrames[k].initPos.x =''
-        config.animationFrames[k].initPos.y = ''
+        config.animationFrames[k].initPos.x = config.animationFrames[k].initPos.x;
+        config.animationFrames[k].initPos.y = config.animationFrames[k].initPos.y;
     }
 
     newAniBot.tags.animationFrames = [...config.animationFrames]
@@ -303,8 +303,8 @@ const createAnimation = async ({ parameters }) => {
 
 const clearCanvas = async ({ parameters }) => {
     const dim = os.getCurrentDimension();
-    const clearBots = getBots(byMod({ toErase: true, [dim]: true }));
-    for (const clearBot of clearBots) {
+    let clearBots = getBots(byMod({ toErase: true, [dim]: true }));
+    for (let clearBot of clearBots) {
         destroy(clearBot);
         await os.sleep(20);
     }
@@ -321,7 +321,7 @@ const navigateToLobby = async ({ parameters }) => {
         setSliderDimension("lobby");
         setSliderDimensionNum(1);
     } else {
-        const uiBot = getBot('system', 'main.UI');
+        let uiBot = getBot('system', 'main.UI');
         setTagMask(uiBot, "currentDimension", 'lobby', "local")
         setTagMask(uiBot, "currentDimensionNum", 1, "local")
     }
@@ -334,9 +334,9 @@ const navigateToLobby = async ({ parameters }) => {
 }
 
 const locatePlace = async ({ parameters }) => {
-    const locationName = parameters.locationName;
-    const allPlaces = [...Object.values(getBot('system', 'ext_canvas.sideBar').tags["places-new"])];
-    const foundLocations = allPlaces.filter(place => {
+    let locationName = parameters.locationName;
+    let allPlaces = [...Object.values(getBot('system', 'ext_canvas.sideBar').tags["places-new"])];
+    let foundLocations = allPlaces.filter(place => {
         return place.place.toLowerCase().includes(locationName.toLowerCase());
     });
     if (foundLocations.length > 0) {
@@ -449,7 +449,7 @@ const launchHouseChurch = async () => {
 }
 
 const showSermonNetwork = async () => {
-    const houseChurchManager = getBot('system', 'houseChurch.manager')
+    let houseChurchManager = getBot('system', 'houseChurch.manager')
     const receiverHouses = getBots("system").filter((bot) => { return bot.tags.system.includes("houseChurch.house") && bot.id !== houseChurchManager.links.houseOne.id && bot.masks.activated })
     houseChurchManager.DisplayShareDataAnimation({ senderHouse: houseChurchManager.links.houseOne, receiverHouses });
     return {
@@ -489,7 +489,7 @@ const hideHouseChurchStats = async () => {
 }
 
 const StartCutscene = async () => {
-    const houseChurchManager = getBot('system', 'houseChurch.manager')
+    let houseChurchManager = getBot('system', 'houseChurch.manager')
     if (houseChurchManager.masks.assetsPreloaded) {
         houseChurchManager.StartCutscene()
         return {
@@ -505,7 +505,7 @@ const StartCutscene = async () => {
 }
 
 const closeHouseChurch = async () => {
-    const houseChurchManager = getBot('system', 'houseChurch.manager')
+    let houseChurchManager = getBot('system', 'houseChurch.manager')
     if (houseChurchManager.masks.initialized) {
         shout("CloseHouseChurchExperience");
         return {

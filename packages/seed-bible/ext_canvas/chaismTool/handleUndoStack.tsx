@@ -1,8 +1,8 @@
-const {action} = that;
+let {action} = that;
 
 switch (action) {
     case "add": {
-        const {id, tags, prevValues} = that;
+        let {id, tags, prevValues} = that;
         if(masks.undoStack){
             let undoStack = [...masks.undoStack];
             if(undoStack.length > 20){
@@ -32,9 +32,9 @@ switch (action) {
             os.toast("nothing to redo");
             return
         }
-        const lastValue = masks.undoStack[masks.undoStack.length - 1];
-        const prevBot = getBot(byID(lastValue.id));
-        const prevBotValue = {id: lastValue.id, tags: [], prevValues: []};
+        let lastValue = masks.undoStack[masks.undoStack.length - 1];
+        let prevBot = getBot(byID(lastValue.id));
+        let prevBotValue = {id: lastValue.id, tags: [], prevValues: []};
         for(let i = 0; i < lastValue.tags.length; i++){
             prevBotValue.tags.push(lastValue.tags[i]);
             prevBotValue.prevValues.push(prevBot.masks[lastValue.tags[i]])

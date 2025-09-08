@@ -1,4 +1,4 @@
-const toolBarOptions = {
+let toolBarOptions = {
     page: [
         {
             icon: 'calendar_month', label: 'Calendar', hasToggle: true, active: true,
@@ -9,9 +9,9 @@ const toolBarOptions = {
                     globalThis.calendarToolApp = false;
                     return;
                 }
-                const App = await getBot('system', "ext_calendar.calendar").CalendarApp();
+                let App = await getBot('system', "ext_calendar.calendar").CalendarApp();
                 if (App) {
-                    const id = uuid();
+                    let id = uuid();
                     globalThis.calendarToolApp = true;
                     globalThis.CALENDAR_PANEL_ID = id;
                     AddApplication({ id, App: <App id={id} />, minWidth: '23rem' })

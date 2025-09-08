@@ -86,7 +86,7 @@ const SettingsBackground = () => {
     }
 
     const RemoveTimePeriodById = (timePeriodInfo) => {
-        const index = timePeriodsInfo.indexOf(timePeriodInfo);
+        let index = timePeriodsInfo.indexOf(timePeriodInfo);
         const newTimePeriods = timePeriodsInfo.toSpliced(index, 1);
         setTimePeriodsInfo(newTimePeriods);
     }

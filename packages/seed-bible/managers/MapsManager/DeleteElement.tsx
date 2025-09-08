@@ -60,7 +60,7 @@ function DeleteMapChapter(mapChapterData)
 
 function DeleteMapBook(mapBookData)
 {
-    const mapBookDataIndex = thisBot.vars.mapBooksData.indexOf(mapBookData);
+    let mapBookDataIndex = thisBot.vars.mapBooksData.indexOf(mapBookData);
     mapBookData.childrenData.forEach((mapChapterData) => {DeleteMapChapter(mapChapterData)});
     mapBookData.childrenData.splice(0, mapBookData.childrenData.length);
     if(mapBookData.element)
@@ -80,7 +80,7 @@ function DeleteMapBook(mapBookData)
 function DeleteMap(mapData)
 {
  
-    const mapDataIndex = thisBot.vars.mapsData.indexOf(mapData);
+    let mapDataIndex = thisBot.vars.mapsData.indexOf(mapData);
     const staticMapElementsKeys = Object.keys(mapData.staticMapElements)
     mapData.childrenStructures
         .forEach((mapBookStructure) => {

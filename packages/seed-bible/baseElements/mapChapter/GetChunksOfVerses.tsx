@@ -6,7 +6,7 @@
 */
 
 const {mapChapterData} = that;
-const chunks = [];
+let chunks = [];
 const versesPerChunk = 12;
 let chunksCount = Math.floor(mapChapterData.elementInfo.amountOfVerses / versesPerChunk);
 let remainingVerses = mapChapterData.elementInfo.amountOfVerses;
@@ -29,7 +29,7 @@ for(let i = 0; i < chunksCount; i++)
     if(InstanceManager.masks.isInHistoryMode) setTagMask(chunk, "color", GetHistoryColor({element: chunk}))
     else
     {
-        const currentHighlightInfo = mapChapterData.GetHighlightInfoByKey(chunk.masks.chunkPath)
+        let currentHighlightInfo = mapChapterData.GetHighlightInfoByKey(chunk.masks.chunkPath)
         if(currentHighlightInfo) setTagMask(chunk, "color", currentHighlightInfo.color)
     }
     currentVerseNumber += amountOfVerses;

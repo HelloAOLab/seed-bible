@@ -14,7 +14,7 @@ if(thisBot.masks.shakeIntervalId)
     thisBot.StopShakeAnimation();
 }
 
-
+let intervalId;
 const shakeAnimationDelayTimeInMs = 5000;
 let shakeDirection;
 
@@ -39,7 +39,7 @@ switch(thisBot.tags.labelPositioning)
     break;
 }
 
-const intervalId = setInterval(() => {
+intervalId = setInterval(() => {
     const {infoLabel, infoLabelTail, infoLabelDate, infoLabelUsersColor} = thisBot.GetLabelElements();
     
     if(infoLabel)

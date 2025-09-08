@@ -1,6 +1,6 @@
 const { createContext, useContext, useRef, useState, useEffect } = os.appHooks;
 
-const Menu = ({ onClose, setOpenEditModal, onDelete ,position,groupValue}) => {
+const Menu = ({ onClose, setOpenEditModal, onDelete, position, groupValue, isResourceGroupHiding, groupMenu, setGroupMenu, setIsResourceGroupHiding, setResourcesByDate, calendarApi }) => {
   const menuRef = useRef();
   const [hovered, setHovered] = useState(null);
 
@@ -15,17 +15,22 @@ const Menu = ({ onClose, setOpenEditModal, onDelete ,position,groupValue}) => {
     return () => document.removeEventListener('mousedown', handleClickOutside);
   }, [onClose]);
 
+  const resourceGroupShaded = document.querySelector('.fc-cell-shaded');
+
+
+
+
   return (
     <div
       ref={menuRef}
       style={{
         fontFamily: 'Satoshi',
         position: 'absolute',
-        right:position?``:'12px',
-        left:position?"90px":'',
+        right: position ? `` : '12px',
+        left: position ? "90px" : '',
 
-        top: position?`${position.top-20}px` :'10px',
-        borderRadius:'4px',
+        top: position ? `${position.top - 20}px` : '10px',
+        borderRadius: '4px',
         padding: '4px 2px 4px 2px',
         backgroundColor: '#f4f7f8',
         zIndex: 1000,
@@ -51,10 +56,10 @@ const Menu = ({ onClose, setOpenEditModal, onDelete ,position,groupValue}) => {
             fontSize: '15px',
             cursor: 'pointer',
             borderRadius: '4px',
-              
-            
-            width:'100%',
-            borderRadius:'4px',
+
+
+            width: '100%',
+            borderRadius: '4px',
             backgroundColor: hovered === 'edit' ? '#d3d3d3' : 'transparent',
           }}
         >
@@ -79,16 +84,19 @@ const Menu = ({ onClose, setOpenEditModal, onDelete ,position,groupValue}) => {
         </div>
 
         <div
-         onClick={() => onDelete(groupValue || '')}
+          onClick={() => {
+            onDelete(groupValue || '')
+            onClose()
+          }}
           onMouseEnter={() => setHovered('delete')}
           onMouseLeave={() => setHovered(null)}
           style={{
             fontSize: '15px',
             cursor: 'pointer',
             borderRadius: '4px',
-          
-            width:'100%',
-            borderRadius:'4px',
+
+            width: '100%',
+            borderRadius: '4px',
             backgroundColor: hovered === 'delete' ? '#d3d3d3' : 'transparent',
           }}
         >
@@ -109,6 +117,118 @@ const Menu = ({ onClose, setOpenEditModal, onDelete ,position,groupValue}) => {
               />
             </svg>
             Delete
+          </span>
+        </div>
+        <div
+          onClick={() => {
+            setIsResourceGroupHiding(prev => !prev);
+
+            const groups = document.querySelectorAll('.fc-resource-group');
+
+            groups.forEach(group => {
+              const label = group.innerText.trim();
+
+              if (label === groupValue && !isResourceGroupHiding) {
+                // shrink the group row completely
+                group.style.overflow = "";
+                group.style.height = '0';
+                group.style.display = "none"; // fully collapse
+
+                // check if replacement svg button already exists
+                if (!document.querySelector(`#collapsed-btn-${label}`)) {
+                  const btn = document.createElement("button");
+                  btn.id = `collapsed-btn-${label}`;
+                  btn.style.position = "absolute";
+
+                  // position button near the hidden row
+
+
+                  btn.style.background = "transparent";
+                  btn.style.border = "none";
+                  btn.style.cursor = "pointer";
+                  btn.style.padding = "2px";
+                  btn.style.top = `${position.top - 10}px`;
+
+                  btn.innerHTML = `
+          <svg width="16" height="16" viewBox="0 0 24 24" fill="gray">
+            <circle cx="12" cy="5" r="2" />
+            <circle cx="12" cy="12" r="2" />
+            <circle cx="12" cy="19" r="2" />
+          </svg>
+        `;
+
+                  // when clicked → open menu again
+                  btn.onclick = (e) => {
+
+                    e.stopPropagation();
+                    const rect = btn.getBoundingClientRect();
+                    setGroupMenu({
+                      groupValue,
+                      position: {
+                        top: rect.top + window.scrollY + 20,
+                        left: rect.left + window.scrollX - 30
+                      }
+                    });
+                  };
+
+
+                  // append into calendar container
+                  document.querySelector(".fc").appendChild(btn);
+                }
+                calendarApi.current.setOption('resourceAreaWidth', `${Math.floor(Math.random() * 200 + 120)}px`)
+              }
+              else {
+
+                group.style.display = "block";
+                group.style.height = '100%';
+                
+
+                calendarApi.current.setOption('resourceAreaWidth', `${Math.floor(Math.random() * 200 + 120)}px`)
+
+
+              }
+            });
+
+            onClose();
+          }}
+
+
+
+
+
+
+
+
+
+
+
+          onMouseEnter={() => setHovered('hide')}
+          onMouseLeave={() => setHovered(null)}
+          style={{
+            fontSize: '15px',
+            cursor: 'pointer',
+            borderRadius: '4px',
+
+            width: '100%',
+            borderRadius: '4px',
+            backgroundColor: hovered === 'hide' ? '#d3d3d3' : 'transparent',
+          }}
+        >
+          <span style={{ display: 'flex', alignItems: 'center', gap: '4px' }}>
+            <svg
+              stroke="currentColor"
+              fill="currentColor"
+              strokeWidth="0"
+              viewBox="0 0 24 24"
+              height="15"
+              width="15"
+              xmlns="http://www.w3.org/2000/svg"
+            >
+              <path d="M12 5c-7.633 0-11 7-11 7s1.753 3.41 5.247 5.438l-2.707 2.707 1.414 1.414 16.97-16.97-1.414-1.414-2.717 2.717C16.65 6.383 14.415 5 12 5zm0 2c1.635 0 3.118.802 4.373 1.908l-1.461 1.461A3.99 3.99 0 0 0 12 9c-1.654 0-3 1.346-3 3 0 .739.268 1.414.708 1.938l-1.462 1.462A5.985 5.985 0 0 1 6 12c0-3.309 2.691-6 6-6zm0 10c-1.64 0-3.122-.8-4.374-1.906l1.463-1.463A3.99 3.99 0 0 0 12 15c1.654 0 3-1.346 3-3 0-.737-.266-1.41-.705-1.934l1.461-1.461A5.978 5.978 0 0 1 18 12c0 3.309-2.691 6-6 6z" />
+            </svg>
+            {!isResourceGroupHiding ? 'hide' : 'show'}
+
+
           </span>
         </div>
       </div>

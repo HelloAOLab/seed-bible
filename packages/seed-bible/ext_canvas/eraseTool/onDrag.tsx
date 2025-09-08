@@ -1,5 +1,5 @@
 masks['run'] = true
-const dim = os.getCurrentDimension()
+let dim = os.getCurrentDimension()
 shout('pauseTrays')
 let distance
 if(masks?.tm){
@@ -8,8 +8,8 @@ if(masks?.tm){
 }
 while(masks['run']){
     await os.sleep(50)
-    const toEraseBots = getBots(byMod({toErase:true,[dim]:true}))
-    for(const key in toEraseBots){
+    let toEraseBots = getBots(byMod({toErase:true,[dim]:true}))
+    for(let key in toEraseBots){
         distance = Vector3.distanceBetween(
             new Vector3( toEraseBots[key].tags[dim+"X"], toEraseBots[key].tags[dim+"Y"], toEraseBots[key].tags[dim+"Z"]),
             new Vector3(thisBot.tags[dim+"X"],thisBot.tags[dim+"Y"],thisBot.tags[dim+"Z"])

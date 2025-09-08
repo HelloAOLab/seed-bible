@@ -1,21 +1,21 @@
 let text: string = that.text;
 const position = that.position;
 const dim = os.getCurrentDimension();
-const typingManager = getBot(byTag("mmTypingManager"));
-const aiChatBot = getBot(byID(typingManager.tags.currentWritingBotId));
+let typingManager = getBot(byTag("mmTypingManager"));
+let aiChatBot = getBot(byID(typingManager.tags.currentWritingBotId));
 
 text = text.replace(/(\r\n|\n|\r)/gm, " ")
-const words = text.split(" ");
+let words = text.split(" ");
 let startingX = 0;
 let startingY = 0;
-const maxX = 1;
+let maxX = 1;
 let maxY = 1;
-const index = 0;
+let index = 0;
 
 let wordLengthTotal = 0;
 
 for(let k = 0; k < words.length; k++){
-    const wordLength = thisBot.calcWord({label: words[k]});
+    let wordLength = thisBot.calcWord({label: words[k]});
     if(startingX + wordLength > 20){
         startingX = 0;
         startingY -= 1;
@@ -64,9 +64,9 @@ for(let k = 0; k < words.length; k++){
 //     toErase: true
 // });
 
-const aiText = whisper(typingManager, "createMMBot", {from: {x: aiChatBot.tags.initPos.x, y: aiChatBot.tags.initPos.y}, parentBot: aiChatBot, label: aiChatBot.masks.label ? aiChatBot.masks.label : " "})[0].bot;
+let aiText = whisper(typingManager, "createMMBot", {from: {x: aiChatBot.tags.initPos.x, y: aiChatBot.tags.initPos.y}, parentBot: aiChatBot, label: aiChatBot.masks.label ? aiChatBot.masks.label : " "})[0].bot;
 await os.sleep(100)
-const currentTray = whisper(typingManager, "createMMBot", {from: {x: aiText.tags.initPos.x, y: aiText.tags.initPos.y}, parentBot: aiText, label: text}).bot;
+let currentTray = whisper(typingManager, "createMMBot", {from: {x: aiText.tags.initPos.x, y: aiText.tags.initPos.y}, parentBot: aiText, label: text}).bot;
 
 // setTagMask(aiText, "lineTo", [currentTray.tags.id], "tempLocal");
 // setTagMask(aiChatBot, "lineTo", aiChatBot.masks.lineTo ? [...aiChatBot.masks.lineTo, aiText.tags.id] : [aiText.tags.id], "tempLocal");

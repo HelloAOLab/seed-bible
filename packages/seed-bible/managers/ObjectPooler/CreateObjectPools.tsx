@@ -467,11 +467,11 @@ const poolDataArray = [
     mapPlaylistNavigationButton
 ]
 
-const poolDictionary = {};
+let poolDictionary = {};
 
-for(const poolData of poolDataArray)
+for(let poolData of poolDataArray)
 {
-    const objectPool = [];
+    let objectPool = [];
 
     for(let i = 0; i < poolData.size; i++)
     {

@@ -1,16 +1,16 @@
-const newAnnot = selectedAnnot;
+let newAnnot = selectedAnnot;
 if(newAnnot){
     console.log("Deploying new annot");
     sendIcon({ type: 'loading', trayColor: "#ffffff", dragerColor: "#000000", action: null });
     const fileData = await os.getFile(newAnnot.recordAddress);
     sendIcon(null);
     if(fileData){
-        const dim = os.getCurrentDimension();
+        let dim = os.getCurrentDimension();
         const typingTool = getBot(byTag("typingTool"));
-        const newBotsId = [];
-        const mmBots = [];
-        const createdMMBot = [];
-        const normalBots = [];
+        let newBotsId = [];
+        let mmBots = [];
+        let createdMMBot = [];
+        let normalBots = [];
         fileData.bots.forEach(item => {
             // let textBot = create({
             //     ...item,
@@ -28,7 +28,7 @@ if(newAnnot){
         });
         normalBots.forEach(item => {
             destroy(getBots(byTag("uid", item.uid)));
-            const textBot = create({
+            let textBot = create({
                 ...item,
                 [dim]: true,
                 [dim + "X"]: item.x + that.position.x,
@@ -39,7 +39,7 @@ if(newAnnot){
         })
         mmBots.map(item => {
             destroy(getBots(byTag("uid", item.uid)));
-            const textBot = create({
+            let textBot = create({
                 ...item,
                 [dim]: true,
                 [dim + "X"]: item.x + that.position.x,
@@ -51,21 +51,21 @@ if(newAnnot){
         })
         console.log(createdMMBot)
         createdMMBot.forEach(item => {
-            const newBot = getBot(byID(item));
+            let newBot = getBot(byID(item));
             console.log(newBot, "newBot")
             if(newBot.tags.mmBot){
-                const mmIndexBot = getBot(byTag("uid", newBot.tags.indexBot));
+                let mmIndexBot = getBot(byTag("uid", newBot.tags.indexBot));
                 newBot.tags.indexBot = mmIndexBot.tags.id;
-                const lineTo = [];
+                let lineTo = [];
                 newBot.tags.lineTo.map(subItem => {
-                    const childBot = getBot(byTag("uid", subItem));
+                    let childBot = getBot(byTag("uid", subItem));
                     childBot.tags.parentBotId = item;
                     lineTo.push(childBot.tags.id);
                 })
                 setTagMask(newBot, "lineTo", [...lineTo], "tempLocal");
                 setTagMask(newBot, "childIds", [...lineTo], "tempLocal");
             }else if(newBot.tags.mmIndexBot){
-                const mmBot = getBot(byTag("uid", newBot.tags.textBot));
+                let mmBot = getBot(byTag("uid", newBot.tags.textBot));
                 newBot.tags.textBot = mmBot.tags.id;
             }
         })

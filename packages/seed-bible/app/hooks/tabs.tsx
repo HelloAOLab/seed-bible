@@ -69,10 +69,10 @@ export function TabsProvider({ children }) {
         setScreens(masks[activeSpace] || 1)
         // const prev = screens
         // setScreens(1)
-        const id = masks[`lastactive_tab_${activeSpace}`] || tabs[0]?.id
+        let id = masks[`lastactive_tab_${activeSpace}`] || tabs[0]?.id
         setActiveTab(id)
         // os.log(id, tabs, 'masks[`lastactive_tab_${activeSpace}`]')
-        const tab = getAllTabsInSpace(spaces.find(space => space.id === activeSpace)).find(e => e.id === id)
+        let tab = getAllTabsInSpace(spaces.find(space => space.id === activeSpace)).find(e => e.id === id)
         // os.log(globalThis.UpdateTab, tab, id, 'globalThis.UpdateTab')
         if (tab) {
             if(globalThis.UpdateTab)

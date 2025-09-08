@@ -8,7 +8,7 @@
 const chapterData = StacksManager.GetBibleElementData({element: thisBot});
 const duration = 0.1;
 const rgbTargetColor = HexToRgb(InstanceManager.masks.isInHistoryMode ? GetHistoryColor({element: thisBot}) : (chapterData.highlightColor ?? thisBot.tags.highlightedColor));
-const animations = [];
+let animations = [];
 thisBot.StopChapterTransition()
 if(thisBot.masks.isOnTheGround)
 {
@@ -26,7 +26,7 @@ if(thisBot.masks.isOnTheGround)
     else
     {
         const label = `${thisBot.tags.parentBookName} ${thisBot.tags.chapterNumber}`
-        const infoLabelTransformer = GetCurrentInfoLabelTransformer(thisBot) ?? StacksManager.GetLabelForElement({
+        let infoLabelTransformer = GetCurrentInfoLabelTransformer(thisBot) ?? StacksManager.GetLabelForElement({
             element: thisBot, 
             label,
             color: 'white', 

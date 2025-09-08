@@ -13,10 +13,10 @@ const getAllChildIds = (id) => {
     return childrenIds;
 }
 parentBot.tags.expanded = false;
-const botIds = getAllChildIds(that.parentId);
+let botIds = getAllChildIds(that.parentId);
 for(let i = 0; i < botIds.length; i++){
-    const childBot = getBot(byTag("id", botIds[i]));
-    const childBotIndex = getBot(byTag("id", childBot.tags.indexBot))
+    let childBot = getBot(byTag("id", botIds[i]));
+    let childBotIndex = getBot(byTag("id", childBot.tags.indexBot))
     childBot.tags.formOpacity = 0;
     childBot.tags.pointable = false;
     childBot.tags.hideLineTo = [...childBot.tags.lineTo];

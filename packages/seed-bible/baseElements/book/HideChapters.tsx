@@ -13,7 +13,7 @@ if(!thisBot.masks.isShowingChapters || (bibleId && (!bookData.parentDataIds.bibl
 const dimension = os.getCurrentDimension();
 setTagMask(thisBot, "isShowingChapters", false);
 thisBot.vars.previousHighlightedChapterData = null;
-for(const chapterData of bookData.childrenData)
+for(let chapterData of bookData.childrenData)
 {
     if(chapterData.isActive && chapterData.isInsideBook)
     {

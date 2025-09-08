@@ -1,18 +1,21 @@
 const { useRef, useState, useEffect } = os.appHooks;
 
-const ResourceEventModal = ({ calendarApi, currentResourceId, setCurrentResourceId, allEvents, setAllEvents, isEventModalOpen, setIsEventModalOpen }) => {
+const ResourceEventModal = ({ calendarApi, currentResourceId, setCurrentResourceId, allEvents, setAllEvents, isEventModalOpen, setIsEventModalOpen, resourceDatee, resourceTime, resourceETime, modalPosition ,showSchedules}) => {
     const [resourceTitle, setResourceTitle] = useState('');
 
-    const [resourceDate, setResourceDate] = useState(new Date().toLocaleDateString('en-CA'));
-    const [resourceEndDate, setResourceEndDate] = useState(new Date().toLocaleDateString('en-CA'));
-    const [resourceStartTime, setResourceStartTime] = useState('07:00');
+    const [resourceDate, setResourceDate] = useState(resourceDatee);
+    const [resourceEndDate, setResourceEndDate] = useState(resourceDatee);
+    const [resourceStartTime, setResourceStartTime] = useState(resourceTime);
 
     const [resourceUrl, setResourceEventUrl] = useState('');
 
-    const [resourceEndTime, setResourceEndTime] = useState('08:00');
+    const [resourceEndTime, setResourceEndTime] = useState(resourceETime);
     const [resourceDescription, setResourceDescription] = useState('');
     const [isResourceEventModalOpen, setResourceEventModalOpen] = useState(false);
     const [selectedEvents, setSelectedEvents] = useState([]);
+    const [hover, setHover] = useState(false);
+
+    const [isCopyEvents, setIsCopyEvents] = useState(false);
 
     const eventModalRef = useRef(null);
     const dateInputRef = useRef(null);
@@ -60,13 +63,17 @@ const ResourceEventModal = ({ calendarApi, currentResourceId, setCurrentResource
             id: uuid(),
             start: `${resourceDate}T${resourceStartTime}`,
             end: `${resourceEndDate}T${resourceEndTime}`,
+            classNames: ['schedule'],
             extendedProps: { description: resourceDescription, link: resourceUrl, type: "events", isResource: true },
             resourceId: currentResourceId
         };
         calendarApi.current.addEvent(newEvent);
-        setAllEvents(prev => [...prev, newEvent])
+        setAllEvents(prev=>[...prev,newEvent]);
+      
+       
 
-        // Reset and close modal
+
+      
         setResourceTitle('');
         setResourceDate(new Date().toLocaleDateString('en-CA'));
         setResourceEndDate(new Date().toLocaleDateString('en-CA'))
@@ -95,6 +102,8 @@ const ResourceEventModal = ({ calendarApi, currentResourceId, setCurrentResource
         setResourceEventModalOpen(true);
     };
     const handleCopy = (event) => {
+        setIsCopyEvents(false)
+        setResourceEventModalOpen(false)
         const startISO = event.startStr || event.start;
         const endISO = event.endStr || event.end;
 
@@ -128,95 +137,153 @@ const ResourceEventModal = ({ calendarApi, currentResourceId, setCurrentResource
     };
 
 
+
     return (
-        <div className="google-modal" ref={eventModalRef} style={{ zIndex: 1000, position: 'absolute', top: '20%' }}>
-            <div className="gm-input-svg" style={{ display: 'flex', alignItems: 'center', gap: '10px' }}>
-                <svg
-                    style={{ color: 'gray' }}
+        <div className="google-modal" ref={eventModalRef} style={{
+            zIndex: 1000, position: 'absolute', top: modalPosition.y - 100 + "px",
+            left: modalPosition.x - 220 + "px"
+        }}>
 
-                    xmlns="http://www.w3.org/2000/svg"
-                    width="20"
-                    height="20"
-                    fill="none"
-                    stroke="currentColor"
-                    strokeWidth="2"
-                    strokeLinecap="round"
-                    strokeLinejoin="round"
-                    viewBox="0 0 24 24"
-                >
-                    <rect x="3" y="4" width="18" height="18" rx="2" ry="2" />
-                    <line x1="16" y1="2" x2="16" y2="6" />
-                    <line x1="8" y1="2" x2="8" y2="6" />
-                    <line x1="3" y1="10" x2="21" y2="10" />
-                </svg>
 
+
+
+            <div className="gm-input-svg">
+                <div style={{ position: 'relative' }}>
+                    {isResourceEventModalOpen && (
+                        <div
+                            ref={resourceModalRef}
+                            id="event-modal"
+                            style={{
+                                fontFamily: 'Satoshi',
+                                backgroundColor: '#f4f7f8',
+                                position: 'absolute',
+                                color: 'black',
+                               
+                                zIndex: '999',
+                                boxShadow: '2px 2px 5px gray',
+                                borderRadius: '20px',
+                                padding: '8px',
+                                width: '220px',
+                            }}
+                        >
+                            <h3>Events for Selected Date</h3>
+                            <ul style={{ marginTop: '10px' }}>
+                                {selectedEvents.length === 0 ? (
+                                    <li >No events found for this date.</li>
+                                ) : (
+                                    selectedEvents.map((event, index) => (
+                                        <li key={index} className="event-item" >
+                                            <span className="event-title">{event.title}</span>
+                                            <button
+                                                className="copy-btn"
+
+
+                                                onClick={() => handleCopy(event)}
+                                            >
+                                                Copy
+                                            </button>
+                                        </li>
+                                    ))
+                                )}
+                            </ul>
+
+                            <button
+                                onClick={() => setResourceEventModalOpen(false)}
+                                style={{ marginTop: '10px', padding: '5px 10px' }}
+                            >
+                                Close
+                            </button>
+                        </div>
+                    )}
+                    {hover && (
+                        <div
+                            style={{
+                                position: "absolute",
+                                top: "20px", // above the button
+                                left: '5px',
+                                transform: "translateX(-50%)",
+                                backgroundColor: "black",
+                                color: "white",
+                                fontSize: "8px",
+                                padding: "1px 2px",
+                                borderRadius: "4px",
+                                whiteSpace: "nowrap",
+                                zIndex: 10,
+                            }}
+                        >
+                            copy events
+                        </div>
+                    )}
+                    <svg
+                        onclick={() => setIsCopyEvents(prev => !prev)}
+                        onmouseenter={() => setHover(true)}
+                        onmouseleave={() => setHover(false)}
+                        style={{ color: hover ? 'black' : 'gray' }}
+
+                        xmlns="http://www.w3.org/2000/svg"
+                        width="24"
+                        height="24"
+                        fill="none"
+                        stroke="currentColor"
+                        stroke-width="2"
+                        stroke-linecap="round"
+                        stroke-linejoin="round"
+                        viewBox="0 0 24 24"
+
+                    >
+                        <rect x="9" y="9" width="12" height="12" rx="2" ry="2" />
+                        <rect x="3" y="3" width="12" height="12" rx="2" ry="2" />
+                    </svg>
+                </div>
                 <input
-                    ref={dateInputRef}
-                    type="date"
-                    placeholder="Events for date"
-                    className="gm-input-date gm-input gm-input-date-input"
-                    style={{ width: '37%' }}
+                    type="text"
+                    id="popup-title"
+                    placeholder="Add title"
+                    className="gm-input title-res"
+                    value={resourceTitle}
+                    onChange={(e) => setResourceTitle(e.target.value)}
                 />
-
-                <button onClick={handleEventFetch} className="events-btn">Events</button>
             </div>
 
-
-            {isResourceEventModalOpen && (
-                <div
-                    ref={resourceModalRef}
-                    id="event-modal"
-                    style={{
-                        fontFamily: 'Satoshi',
-                        backgroundColor: '#f4f7f8',
-                        position: 'absolute',
-                        color: 'black',
-                        left: '180px',
-                        top: '350px',
-                        zIndex: '999',
-                        boxShadow: '2px 2px 5px gray',
-                        borderRadius: '20px',
-                        padding: '8px',
-                        width: '220px',
-                    }}
-                >
-                    <h3>Events for Selected Date</h3>
-                    <ul style={{ marginTop: '10px' }}>
-                        {selectedEvents.length === 0 ? (
-                            <li >No events found for this date.</li>
-                        ) : (
-                            selectedEvents.map((event, index) => (
-                                <li key={index} className="event-item" >
-                                    <span className="event-title">{event.title}</span>
-                                    <button
-                                        className="copy-btn"
+            {isCopyEvents &&
+                <div style={{ display: 'flex', alignItems: 'center', gap: '10px' }}>
 
 
-                                        onClick={() => handleCopy(event)}
-                                    >
-                                        Copy
-                                    </button>
-                                </li>
-                            ))
-                        )}
-                    </ul>
+                    <svg
 
-                    <button
-                        onClick={() => setResourceEventModalOpen(false)}
-                        style={{ marginTop: '10px', padding: '5px 10px' }}
+
+                        xmlns="http://www.w3.org/2000/svg"
+                        width="24"
+                        height="24"
+                        fill="none"
+                        stroke="gray"
+                        stroke-width="2"
+                        stroke-linecap="round"
+                        stroke-linejoin="round"
+                        viewBox="0 0 24 24"
                     >
-                        Close
-                    </button>
+                        <circle cx="6" cy="7" r="2" />
+                        <circle cx="6" cy="12" r="2" />
+                        <circle cx="6" cy="17" r="2" />
+                        <line x1="10" y1="7" x2="20" y2="7" />
+                        <line x1="10" y1="12" x2="20" y2="12" />
+                        <line x1="10" y1="17" x2="20" y2="17" />
+                    </svg>
+
+
+                    <input
+                        ref={dateInputRef}
+                        type="date"
+                        placeholder="Events for date"
+                        className="gm-input-date gm-input gm-input-date-input"
+                        style={{ width: '37%' }}
+                    />
+
+                    <button onClick={handleEventFetch} className="events-btn">Events</button>
                 </div>
-            )}
-            <input
-                type="text"
-                id="popup-title"
-                placeholder="Add title"
-                className="gm-input title"
-                value={resourceTitle}
-                onChange={(e) => setResourceTitle(e.target.value)}
-            />
+            }
+
+
 
             <div className="gm-modal-event">
                 <div className="gm-event">

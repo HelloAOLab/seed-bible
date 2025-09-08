@@ -1,6 +1,6 @@
 masks['run'] = false
 shout('returnTrays')
-const tm = setTimeout(() => {
+let tm = setTimeout(() => {
     destroy(thisBot);
 }, 10000);
 

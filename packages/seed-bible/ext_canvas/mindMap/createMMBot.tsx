@@ -1,10 +1,10 @@
-const dim = os.getCurrentDimension();
+let dim = os.getCurrentDimension();
 const typingTool = getBot(byTag("mmTypingManager"));
 
 const getRootParent = (childBot) => {
     let rootParent = null;
     if (childBot.tags.parentBotId) {
-        const parentBot = getBot(byTag("id", childBot.tags.parentBotId))
+        let parentBot = getBot(byTag("id", childBot.tags.parentBotId))
         if (parentBot.tags.parentBotId) {
             rootParent = getRootParent(parentBot);
         } else {
@@ -31,7 +31,7 @@ const getAllChildIds = (id) => {
 }
 
 // creating new text block
-const childBot = create({
+let childBot = create({
     [dim]: true,
     [dim + "X"]: that.from.x,
     [dim + "Y"]: that.from.y,
@@ -70,7 +70,7 @@ const childBot = create({
 });
 
 // creating new index block for text block
-const childIndexBot = create({
+let childIndexBot = create({
     [dim]: true,
     [dim + "X"]: that.from.x - 3,
     [dim + "Y"]: that.from.y,
@@ -146,12 +146,12 @@ childBot.tags.originalId = childBot.tags.id;
 childIndexBot.tags.originalId = childIndexBot.tags.id;
 
 // renaming previous index blocks
-const rootParent = getRootParent(childBot);
+let rootParent = getRootParent(childBot);
 const allChildIds = [rootParent.tags.id, ...getAllChildIds(rootParent.tags.id)];
 for (let i = 0; i < allChildIds.length; i++) {
-    const subBot = getBot(byTag("id", allChildIds[i]));
+    let subBot = getBot(byTag("id", allChildIds[i]));
     if (subBot.tags.indexBot) {
-        const subIndexBot = getBot(byTag("id", subBot.tags.indexBot));
+        let subIndexBot = getBot(byTag("id", subBot.tags.indexBot));
         setTagMask(subIndexBot, "label", `${i + 1}`, "shared");
     }
 }
@@ -159,11 +159,11 @@ for (let i = 0; i < allChildIds.length; i++) {
 // setting positions for text and index blocks
 
 if(that.parentBot){
-    const parentBotChildrens = that.parentBot.masks.childIds;
+    let parentBotChildrens = that.parentBot.masks.childIds;
     for(let i = 0; i < parentBotChildrens.length; i++){
-        const subBot = getBot(byTag("id",  parentBotChildrens[i]));
-        const subIndexBot = getBot(byTag("id", subBot.tags.indexBot));
-        const yPosition = (that.parentBot.masks.childIds.length - (2 * i + 1)) * 1.5;
+        let subBot = getBot(byTag("id",  parentBotChildrens[i]));
+        let subIndexBot = getBot(byTag("id", subBot.tags.indexBot));
+        let yPosition = (that.parentBot.masks.childIds.length - (2 * i + 1)) * 1.5;
         animateTag(subBot, {
             fromValue: {
                 [dim + "X"]: subBot.masks[dim + "X"],

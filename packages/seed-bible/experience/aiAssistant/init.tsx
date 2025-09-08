@@ -33,7 +33,7 @@ const App = () => {
                 masks.ss = null;
             }
             setShouldSend(false);
-            const ss = setTimeout(() => {
+            let ss = setTimeout(() => {
                 setShouldSend(true);
                 masks.ss = null;
             }, 1000);
@@ -48,11 +48,11 @@ const App = () => {
     const onUp = async () => {
         if(shouldSend){
             setHumeStarted(false);
-            const data = await os.endAudioRecording();
+            let data = await os.endAudioRecording();
             if(data){
                 const arrayBuffer = await data.arrayBuffer();
                 console.log(arrayBuffer, data)
-                const f = filterData(arrayBuffer);
+                let f = filterData(arrayBuffer);
                 console.log(f, "fff")
                 const blob = new Blob([arrayBuffer], { type: 'audio/wav' });
                 const file = new File([blob], "rec.wav");
@@ -125,7 +125,7 @@ const App = () => {
     useEffect(() => {
         const it = setInterval(() => {
             if (masks?.messages) {
-                const tempMessages = [...masks.messages];
+                let tempMessages = [...masks.messages];
                 setAiMessages([...tempMessages.reverse()]);
             }
         }, 200);
@@ -171,7 +171,7 @@ const App = () => {
                             }else if(item.role === "assistant"){
                                 let msg;
                                 try{
-                                    const content = item.content;
+                                    let content = item.content;
                                     msg = JSON.parse(content).message
                                 }catch{() => {
                                     msg = "Unable to complete your request"

@@ -1,6 +1,6 @@
-const managerConfigs = []
+let managerConfigs = []
 
-const managers = getBots("ext_manager", true);
+let managers = getBots("ext_manager", true);
 
 managers.forEach(manager => {
     managerConfigs.push(manager.ext_configs())
@@ -14,7 +14,7 @@ const instateToolBarOptions = ({ toolBarOptions }) => {
             // setting page options
             toolBarOptions.page.forEach(tool => {
                 SetTools(tools => {
-                    const exist = tools.filter(item => item.icon === tool.icon);
+                    let exist = tools.filter(item => item.icon === tool.icon);
                     if (exist.length > 0) {
                         return tools
                     } else {
@@ -25,7 +25,7 @@ const instateToolBarOptions = ({ toolBarOptions }) => {
             // setting canvas options
             toolBarOptions.canvas.forEach(tool => {
                 SetCanvasTools(tools => {
-                    const exist = tools.filter(item => item.icon === tool.icon);
+                    let exist = tools.filter(item => item.icon === tool.icon);
                     if (exist.length > 0) {
                         return tools
                     } else {
@@ -36,7 +36,7 @@ const instateToolBarOptions = ({ toolBarOptions }) => {
             // setting map options
             toolBarOptions.map.forEach(tool => {
                 SetMapTools(tools => {
-                    const exist = tools.filter(item => item.icon === tool.icon);
+                    let exist = tools.filter(item => item.icon === tool.icon);
                     if (exist.length > 0) {
                         return tools
                     } else {

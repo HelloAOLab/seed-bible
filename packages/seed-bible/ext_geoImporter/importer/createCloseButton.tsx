@@ -3,7 +3,7 @@ await os.unregisterApp('userPresent');
 await os.unregisterApp("userOptions");
 // os.appHooks.render(<></>, document.body);
 
-const dim = os.getCurrentDimension();
+let dim = os.getCurrentDimension();
 os.unregisterApp('closeButton')
 await os.registerApp('closeButton', thisBot);
 
@@ -18,7 +18,7 @@ function App() {
     }, [])
 
     const reset = useCallback(() => {
-      const currElements = getBots(byTag(tags.targetDim, true))
+      var currElements = getBots(byTag(tags.targetDim, true))
       if (currElements.length > 0) {
           destroy(currElements);
       }

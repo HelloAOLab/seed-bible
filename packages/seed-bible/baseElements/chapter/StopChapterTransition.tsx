@@ -7,10 +7,10 @@
 animateTag(thisBot, 'scaleX', null)
 animateTag(thisBot, 'scaleY', null)
 animateTag(thisBot, 'scaleZ', null)
-const infoLabelTransformer = GetCurrentInfoLabelTransformer(thisBot);
+let infoLabelTransformer = GetCurrentInfoLabelTransformer(thisBot);
 if(infoLabelTransformer)
 {
-    const {infoLabel, infoLabelTail, infoLabelUsersColor} = infoLabelTransformer.GetLabelElements();
+    let {infoLabel, infoLabelTail, infoLabelUsersColor} = infoLabelTransformer.GetLabelElements();
     animateTag(infoLabel, 'formOpacity', null);
     animateTag(infoLabel, 'labelOpacity', null);
     animateTag(infoLabelTail, 'formOpacity', null);

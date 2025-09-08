@@ -1,7 +1,7 @@
 const {mapChapterData} = that;
 const duration = 0.1;
 let rgbTargetColor;
-const animations = [];
+let animations = [];
 const dimension = os.getCurrentDimension();
 const easing = {type: "sinusoidal", mode: "inout"};
 thisBot.StopChapterTransition()
@@ -17,7 +17,7 @@ if(thisBot.masks.isExpanded)
 }
 else
 {
-    const infoLabelTransformer = GetCurrentInfoLabelTransformer(thisBot)
+    let infoLabelTransformer = GetCurrentInfoLabelTransformer(thisBot)
     if(infoLabelTransformer) animations.push(
         infoLabelTransformer.Hide({duration})
             .then(() => {ObjectPooler.ReleaseObject({obj: infoLabelTransformer, tag: infoLabelTransformer.tags.poolTag})})

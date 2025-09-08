@@ -32,17 +32,14 @@ const infoLabelTransformerDesiredScales     = {x: 1, y: 1, z: 1};
 const radialVector                          = new Vector2(elementScales.x/2, elementScales.y/2)
 const infoLabelOffsetMargin                 = 0.25;
 let infoLabelTailDesiredScales              = {x: 0.3 / infoLabelTransformerDesiredScales.x, y: 0.3 / infoLabelTransformerDesiredScales.y, z: 0.3 / infoLabelTransformerDesiredScales.z}
-const infoLabelDateDesiredScales              = {x: 0.3 / infoLabelTransformerDesiredScales.x, y: 0.3 / infoLabelTransformerDesiredScales.y, z: 0.3 / infoLabelTransformerDesiredScales.z}
-const dateGap                                 = {x: 0.2, y: 0.05};
+let infoLabelDateDesiredScales              = {x: 0.3 / infoLabelTransformerDesiredScales.x, y: 0.3 / infoLabelTransformerDesiredScales.y, z: 0.3 / infoLabelTransformerDesiredScales.z}
+let dateGap                                 = {x: 0.2, y: 0.05};
 const infoLabelDateScales                   = infoLabelDate ? GetBotScales(infoLabelDate) : null;
 let infoLabelTransformerDesiredPosition;
 let infoLabelOffset;
 let infoLabelTailDesiredRotationZ;
 let infoLabelTailOffset;
-const infoLabelTransformerMod='';
-const infoLabelTailMod=''
-const infoLabelMod=''
-const infoLabelDateMod=''
+let infoLabelTransformerMod, infoLabelTailMod, infoLabelMod, infoLabelDateMod
 
 switch(labelPositioning)
 {
@@ -106,7 +103,7 @@ switch(labelPositioning)
     }
     break;
 }
-const infoLabelDateOffset = infoLabelDate ? new Vector3(
+let infoLabelDateOffset = infoLabelDate ? new Vector3(
     infoLabelOffset.x + (infoLabelScales.x / 2 / infoLabelTransformerDesiredScales.x) - ((InstanceManager.GetCurrentLabelDateFormat() === LabelDateFormats.Relative ? infoLabelDate.tags.relativeDateScales.x : infoLabelDate.tags.absoluteDateScales.x)/2) - dateGap.x, 
     infoLabelOffset.y + (infoLabelScales.y/2) + (infoLabelDateScales.y/2) + dateGap.y,
     infoLabelOffset.z

@@ -4,9 +4,9 @@ if(globalThis?.aiStarted){
 }
 globalThis.aiStarted = true;
 let a = 0;
-const dim = os.getCurrentDimension()
+let dim = os.getCurrentDimension()
 tags[dim + "RotationZ"] = 0;
-const interval = setInterval(() => {
+let interval = setInterval(() => {
     tags[dim + "RotationZ"] = Math.PI * a;
     a += 0.005
     if(a >= 2){
@@ -32,7 +32,7 @@ if(aiMessage !== null && !that?.self){
         label: that?.text ? that.text.replace("tell me about ", "") : null
     });
 }else if(aiMessage!== null && that?.self){
-    const controlBot = getBot(byID(tags.controlBotId));
+    let controlBot = getBot(byID(tags.controlBotId));
     setTagMask(controlBot, "label", aiMessage, "shared");
     setTagMask(controlBot, "onPointerEnter", " ", "shared");
     setTagMask(controlBot, "onPointerExit", " ", "shared");
@@ -51,10 +51,10 @@ if(aiMessage !== null && !that?.self){
             }
         }
     `, "shared");
-    const typingManager = getBot(byTag("mmTypingManager"));
+    let typingManager = getBot(byTag("mmTypingManager"));
     whisper(typingManager, "onGridClick");
 }
-const intBots = getBots("rotateInterval");
+let intBots = getBots("rotateInterval");
 intBots.forEach(intBot => {
     clearInterval(intBot.masks.rotateInterval)
     intBot.tags[dim + "RotationZ"] = 0;

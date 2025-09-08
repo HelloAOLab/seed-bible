@@ -7,13 +7,13 @@ const Layers = ({ layers, setLayers, selectingLayerWord, setSelectingLayerWord }
     const [openLayers, setOpenLayers] = useState(false);
 
     const activateLayer = ({ layer }) => {
-        const tempSelectedLayers = layersContext.state.layers;
+        let tempSelectedLayers = layersContext.state.layers;
         tempSelectedLayers[layer.layerName].selected = true;
         layersContext.dispatch({ type: "updateLayers", payload: { ...tempSelectedLayers } })
     }
 
     const deActivateLayer = ({ layer }) => {
-        const tempSelectedLayers = layersContext.state.layers;
+        let tempSelectedLayers = layersContext.state.layers;
         tempSelectedLayers[layer.layerName].selected = false;
         if (layersContext.state.selectingLayerWord === layer.layerName) {
             layersContext.dispatch({ type: "updateSelectingLayerWord", payload: null })
@@ -22,11 +22,11 @@ const Layers = ({ layers, setLayers, selectingLayerWord, setSelectingLayerWord }
     }
 
     const addLayer = async () => {
-        const layerName = await os.showInput(null, {
+        let layerName = await os.showInput(null, {
             placeholder: "Enter New Layer Name"
         });
         if (layerName !== null && layerName !== "" && !layersContext.state.layers[layerName]) {
-            const tempSelectedLayers = layersContext.state.layers;
+            let tempSelectedLayers = layersContext.state.layers;
             tempSelectedLayers[layerName] = {
                 layerName: layerName,
                 layerType: "customLayer",
@@ -47,7 +47,7 @@ const Layers = ({ layers, setLayers, selectingLayerWord, setSelectingLayerWord }
     }
 
     const changeLayerColor = ({ layer, color }) => {
-        const tempSelectedLayers = layersContext.state.layers;
+        let tempSelectedLayers = layersContext.state.layers;
         tempSelectedLayers[layer.layerName].color = color;
         layersContext.dispatch({ type: "updateLayers", payload: { ...tempSelectedLayers } })
     }

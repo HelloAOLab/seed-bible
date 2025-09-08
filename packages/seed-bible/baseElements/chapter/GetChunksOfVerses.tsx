@@ -6,7 +6,7 @@
 */
 
 const chapterData = StacksManager.GetBibleElementData({element: thisBot});
-const chunks = [];
+let chunks = [];
 const versesPerChunk = 12;
 let chunksCount = Math.floor(chapterData.elementInfo.amountOfVerses / versesPerChunk);
 let remainingVerses = chapterData.elementInfo.amountOfVerses;

@@ -22,7 +22,7 @@ const AquiferObjects = ({ currentTopic }) => {
             setLoading(true);
             setError(false);
             if (eventQuery !== "") {
-                const params = {
+                let params = {
                     query: eventQuery
                 }
                 let queryUrl = pageApis.searchItem;
@@ -42,7 +42,7 @@ const AquiferObjects = ({ currentTopic }) => {
                     }
                 });
             } else {
-                const params = {
+                let params = {
                     page: currentPage,
                     count: 32
                 }
@@ -111,7 +111,7 @@ const AquiferObjects = ({ currentTopic }) => {
 
     const createEvent = ({ uid }) => {
         setLoading(true);
-        const params = {
+        let params = {
             uid
         };
         let queryUrl = pageApis.getItemByUid;
@@ -120,16 +120,16 @@ const AquiferObjects = ({ currentTopic }) => {
             method: "GET",
             url: queryUrl
         }).then(async (e) => {
-            const aquiferData = e.data.data;
+            let aquiferData = e.data.data;
             aquiferData.dataType = "aquifer";
             if (globalThis.eventToolApp) {
                 RemoveApplicationByID(globalThis.EVENT_PANEL_ID);
                 globalThis.EVENT_PANEL_ID = null;
                 globalThis.eventToolApp = false;
             }
-            const App = await thisBot.CreateAquiferPage()
+            let App = await thisBot.CreateAquiferPage()
             if (App) {
-                const id = uuid();
+                let id = uuid();
                 globalThis.eventToolApp = true;
                 globalThis.EVENT_PANEL_ID = id;
                 AddApplication({ id, App: <App aquiferData={aquiferData} selectedRepo={selectedRepo} id={id} />, minWidth: '23rem' })

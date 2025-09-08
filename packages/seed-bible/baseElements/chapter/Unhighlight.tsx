@@ -9,7 +9,7 @@
 const {chapterData, duration = 0.1} = that;
 const dimension = os.getCurrentDimension();
 const rgbTargetColor = HexToRgb(InstanceManager.masks.isInHistoryMode ? GetHistoryColor({element: thisBot}) : (chapterData.highlightColor ?? thisBot.tags.initialColor));
-const animations = [];
+let animations = [];
 thisBot.StopChapterTransition();
 if(thisBot.masks.isOnTheGround)
 {
@@ -24,7 +24,7 @@ if(thisBot.masks.isOnTheGround)
     }
     else
     {
-        const infoLabelTransformer = GetCurrentInfoLabelTransformer(thisBot);
+        let infoLabelTransformer = GetCurrentInfoLabelTransformer(thisBot);
         if(infoLabelTransformer) animations.push(infoLabelTransformer.Hide({duration}).then(() => {ObjectPooler.ReleaseObject({obj: infoLabelTransformer, tag: infoLabelTransformer.tags.poolTag})}))
     }
 }

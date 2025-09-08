@@ -12,10 +12,10 @@
 
 const {testamentData, speedMultiplier = 1, isInstantaneous = false} = that;
 const updateStacksTime =  await thisBot.UpdateStacks({speedMultiplier, isInstantaneous});
-const animations = [];
+let animations = [];
 if(!isInstantaneous)
 {
-    for(const sectionData of testamentData.childrenData.toReversed())
+    for(let sectionData of testamentData.childrenData.toReversed())
     {
         animations.push(thisBot.TryHighlightElement({
             speedMultiplier,

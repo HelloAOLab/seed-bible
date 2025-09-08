@@ -1,6 +1,6 @@
 function generateQuery(params) {
-    const queryArray = [];
-    for (const key in params) {
+    let queryArray = [];
+    for (let key in params) {
         if (params.hasOwnProperty(key)) {
             queryArray.push(encodeURIComponent(key) + '=' + encodeURIComponent(params[key]));
         }
@@ -17,7 +17,7 @@ try{
 
     console.log(response)
 
-    const functions = [...response?.functions||''];
+    let functions = [...response?.functions];
 
     try{
         // if(response?.biblical){
@@ -35,7 +35,7 @@ try{
         //     })
         //     console.log(response)
         // };
-        const msg = response.message
+        let msg = response.message
 
         if(msg){
             whisper(thisBot, "handleVoice", {msg})

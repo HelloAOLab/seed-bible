@@ -317,7 +317,7 @@ const PlayingPlaylist = () => {
         const tranformedList = isLayer ? playlists[indexes.key]?.list : thisBot.groupVerse(playlists[indexes.key]?.list);
         const currentItem = tranformedList[indexes.index];
 
-        const toBeMapArray = currentItem?.additionalInfo?.layers?.length ? currentItem?.additionalInfo.layers : currentItem?.additionalInfo;
+        const toBeMapArray = !!currentItem?.additionalInfo?.layers?.length ? currentItem?.additionalInfo.layers : currentItem?.additionalInfo;
         // const isCurrentItemGroup = tranformedList[]
 
         const isCurrentItemChapterRange = currentItem?.type === "chapter-range" || !!currentItem.additionalInfo?.layers?.length;
@@ -342,7 +342,7 @@ const PlayingPlaylist = () => {
 
                     const wasPrevItemArray = prevItem?.type === "chapter-range";
 
-                    const prevItemList = wasPrevItemArray ? prevItem?.additionalInfo : prevItem?.additionalInfo?.layers?.length ? prevItem?.additionalInfo?.layers : [];
+                    const prevItemList = wasPrevItemArray ? prevItem?.additionalInfo : !!prevItem?.additionalInfo?.layers?.length ? prevItem?.additionalInfo?.layers : [];
                     // This Might Break When Order is > 1
                     newSubIndex = (prevItemList.length + newSubIndex) + order;
                     if (prevItem) newIndex -= 1;
@@ -375,7 +375,7 @@ const PlayingPlaylist = () => {
             }
         }
 
-        const newValues = {
+        let newValues = {
             index: newIndex,
             key: newKey,
             fromButton: order,
@@ -695,7 +695,7 @@ const PlayingPlaylist = () => {
 
         const isArray = Array.isArray(ids);
 
-        const newIds = isArray ? [...ids] : [ids];
+        let newIds = isArray ? [...ids] : [ids];
 
         let firstIDIndex = -1;
 
@@ -1136,7 +1136,7 @@ const PlayingPlaylist = () => {
                             }}
                             onClick={() => {
                                 DataManager.cancelCurrentPlayingSound();
-                                if (nextItemName?.content) {
+                                if (!!nextItemName?.content) {
                                     handleOnButtonPress(1);
                                     return;
                                 }
@@ -1150,7 +1150,7 @@ const PlayingPlaylist = () => {
                             }}
                         >
                             <span class="material-symbols-outlined unfollow">
-                                {nextItemName?.content ? "skip_next " : "last_page"}
+                                {!!nextItemName?.content ? "skip_next " : "last_page"}
                             </span>
                         </Button>
                     </div>

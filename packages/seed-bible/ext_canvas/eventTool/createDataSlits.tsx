@@ -8,7 +8,7 @@ destroy(dataSlits);
 
 await os.sleep(250);
 
-const dataSlitsConfig = {
+let dataSlitsConfig = {
     space: "tempLocal",
     [dim]: true,
     [dim + "Y"]: controlBot.tags[dim + "Y"] - 1.5,
@@ -23,7 +23,7 @@ const dataSlitsConfig = {
     dataSlit: true,
     draggable: false
 }
-const dataSlitLine = {
+let dataSlitLine = {
     space: "tempLocal",
     [dim]: true,
     [dim + "Y"]: controlBot.tags[dim + "Y"] - 2,
@@ -140,7 +140,7 @@ const timeLineAndEventRetriver = (eventData) => {
     }
     let timeLine = [];
     const timeLineEventKeys = Object.keys(timeLineEvents);
-    for(const key of timeLineEventKeys){
+    for(let key of timeLineEventKeys){
         timeLine.push({
             year: key,
             events: timeLineEvents[key].map(item => {
@@ -160,14 +160,14 @@ const timeLineAndEventRetriver = (eventData) => {
 
 const timeLineEvents = [...timeLineAndEventRetriver(controlBot.tags.eventBotData.eventsHere)];
 
-const priorityIndex = 0;
+let priorityIndex = 0;
 // if(tags.dataSlitsManager.selectedIndex){
 //     priorityIndex = tags.dataSlitsManager.selectedIndex;
 // }
-const startingIndex = controlBot.tags[dim + "X"] - (priorityIndex * 4)
-const dataSlitIds = [];
+let startingIndex = controlBot.tags[dim + "X"] - (priorityIndex * 4)
+let dataSlitIds = [];
 for(let i = 0; i < timeLineEvents.length; i++){
-    const dataSlit = create({
+    let dataSlit = create({
         ...dataSlitsConfig,
         label: timeLineEvents[i].year,
         data: timeLineEvents[i],
@@ -176,7 +176,7 @@ for(let i = 0; i < timeLineEvents.length; i++){
         labelFontSize: 1.2,
         eventData: timeLineEvents[i].events
     });
-    const dataSlitLineBot = create({
+    let dataSlitLineBot = create({
         ...dataSlitLine,
         slitType: "time",
         scaleY: 0.2,

@@ -12,7 +12,7 @@
 
 const {bookData, isInstantaneous} = that;
 const dimension = os.getCurrentDimension();
-const animations = [];
+let animations = [];
 
 const {newBookAnimations} = HandleBookDataInStack({dimension, bookData, isInstantaneous});
 animations.push(...newBookAnimations);

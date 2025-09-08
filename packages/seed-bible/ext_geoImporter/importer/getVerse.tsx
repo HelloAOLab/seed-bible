@@ -1,7 +1,7 @@
 if (that?.refer) return that;
 
 try{
-    const {verse} = that
+    let {verse} = that
     const BookData = await thisBot.fetchBookData()
 
     function parseBibleReference(reference) {
@@ -38,11 +38,11 @@ try{
                 // os.log(content)
                 for(const c of content){
                     if(c?.number >= data.startVerse && c?.number <= data.endVerse){
-                        const verse = c['content']
+                        let verse = c['content']
                             // os.log(verse,c,'ver')
-                            const verseArray = Object.keys(verse)
+                            let verseArray = Object.keys(verse)
                             if(typeof verse === 'object'){
-                                for(const v in verseArray){
+                                for(let v in verseArray){
                                     // os.log((verse[v]),'tok')
                                     if(typeof verse[v] === 'object')
                                     array.push(verse[v]?.text)

@@ -1,6 +1,6 @@
-const dim = os.getCurrentDimension();
-const lineColors = ["#FF4081", "#E040FB", "#7C4DFF", "#536DFE", "#448AFF", "#40C4FF", "#18FFFF", "#64FFDA", "#69F0AE"];
-const botColors = ["#FCE4EC", "#F3E5F5", "#EDE7F6", "#E8EAF6", "#E3F2FD", "#E1F5FE", "#E0F7FA", "#E0F2F1", "#E8F5E9"];
+let dim = os.getCurrentDimension();
+let lineColors = ["#FF4081", "#E040FB", "#7C4DFF", "#536DFE", "#448AFF", "#40C4FF", "#18FFFF", "#64FFDA", "#69F0AE"];
+let botColors = ["#FCE4EC", "#F3E5F5", "#EDE7F6", "#E8EAF6", "#E3F2FD", "#E1F5FE", "#E0F7FA", "#E0F2F1", "#E8F5E9"];
 const getAllChildIds = (id) => {
     const botById = getBot(byTag("id", id));
     let childrenIds = [];
@@ -27,11 +27,11 @@ function App() {
     destroy(getBots('showBot'))
     // let allChildrens = [...getAllChildIds(tags.focusManager.childIds[0])];
     for(let i = 0; i < initialChildrens.length; i++){
-      const subBot = getBot(byTag("id", initialChildrens[i]));
+      let subBot = getBot(byTag("id", initialChildrens[i]));
       if(!subBot){
         continue
       }
-      const subIndexBot = getBot(byTag("id", subBot.tags.indexBot));
+      let subIndexBot = getBot(byTag("id", subBot.tags.indexBot));
       subBot.masks.lineTo = null;
       setTagMask(subBot, "lineTo", [...subBot.masks.childIds], "shared");
       if(subBot.masks.interval){
@@ -93,7 +93,7 @@ function App() {
         }, 1100)
       }
     }
-    const writingBot = getBot(byTag('id', tags.currentWritingBotId));
+    let writingBot = getBot(byTag('id', tags.currentWritingBotId));
     if(writingBot){
       writingBot.masks.currentWriter = null;
       writingBot.masks.name = null;
@@ -106,10 +106,10 @@ function App() {
   }
 
   const next = async () => {
-    const indexOfCurrBotId = tags.focusManager.childIds.indexOf(tags.focusManager.currentChild);
+    let indexOfCurrBotId = tags.focusManager.childIds.indexOf(tags.focusManager.currentChild);
     if(indexOfCurrBotId < tags.focusManager.childIds.length - 1){
-      const currentSubBot = getBot(byTag("id", tags.focusManager.currentChild));
-      const currentSubIndexBot = getBot(byTag("id", currentSubBot.tags.indexBot));
+      let currentSubBot = getBot(byTag("id", tags.focusManager.currentChild));
+      let currentSubIndexBot = getBot(byTag("id", currentSubBot.tags.indexBot));
       currentSubBot.masks.strokeColor = null;
       currentSubIndexBot.masks.strokeColor = null;
       setTagMask(currentSubBot, "color", "white", "shared");
@@ -117,10 +117,10 @@ function App() {
       tags.focusManager.currentChild = tags.focusManager.childIds[indexOfCurrBotId + 1];
       tags.currentWritingBotId = tags.focusManager.childIds[indexOfCurrBotId + 1];
       getBot('system', 'ext_canvas.mindMap').tags.focusBotId = tags.focusManager.currentChild;
-      const subBot = getBot(byTag("id", tags.focusManager.currentChild));
-      const subIndexBot = getBot(byTag("id", subBot.tags.indexBot));
-      const currentNumber = Math.floor(Math.random() * lineColors.length);
-      const currentColor = lineColors[currentNumber];
+      let subBot = getBot(byTag("id", tags.focusManager.currentChild));
+      let subIndexBot = getBot(byTag("id", subBot.tags.indexBot));
+      let currentNumber = Math.floor(Math.random() * lineColors.length);
+      let currentColor = lineColors[currentNumber];
       setTagMask(subBot, "strokeColor", currentColor, "shared");
       setTagMask(subIndexBot, "strokeColor", currentColor, "shared");
       setTagMask(subBot, "color", botColors[currentNumber], "shared");
@@ -130,10 +130,10 @@ function App() {
     }
   }
   const previous = async () => {
-    const indexOfCurrBotId = tags.focusManager.childIds.indexOf(tags.focusManager.currentChild);
+    let indexOfCurrBotId = tags.focusManager.childIds.indexOf(tags.focusManager.currentChild);
     if(indexOfCurrBotId > 0){
-      const currentSubBot = getBot(byTag("id", tags.focusManager.currentChild));
-      const currentSubIndexBot = getBot(byTag("id", currentSubBot.tags.indexBot));
+      let currentSubBot = getBot(byTag("id", tags.focusManager.currentChild));
+      let currentSubIndexBot = getBot(byTag("id", currentSubBot.tags.indexBot));
       currentSubBot.masks.strokeColor = null;
       currentSubIndexBot.masks.strokeColor = null;
       setTagMask(currentSubBot, "color", "white", "shared");
@@ -141,10 +141,10 @@ function App() {
       tags.focusManager.currentChild = tags.focusManager.childIds[indexOfCurrBotId - 1];
       tags.currentWritingBotId = tags.focusManager.childIds[indexOfCurrBotId - 1];
       getBot('system', 'ext_canvas.mindMap').tags.focusBotId = tags.focusManager.currentChild;
-      const subBot = getBot(byTag("id", tags.focusManager.currentChild));
-      const subIndexBot = getBot(byTag("id", subBot.tags.indexBot));
-      const currentNumber = Math.floor(Math.random() * lineColors.length);
-      const currentColor = lineColors[currentNumber];
+      let subBot = getBot(byTag("id", tags.focusManager.currentChild));
+      let subIndexBot = getBot(byTag("id", subBot.tags.indexBot));
+      let currentNumber = Math.floor(Math.random() * lineColors.length);
+      let currentColor = lineColors[currentNumber];
       setTagMask(subBot, "strokeColor", currentColor, "shared");
       setTagMask(subIndexBot, "strokeColor", currentColor, "shared");
       setTagMask(subBot, "color", botColors[currentNumber], "shared");

@@ -6,7 +6,7 @@ const { useMemo, useCallback, useState, useEffect, useRef } = os.appHooks;
 
 export const TestamentContent = ({hidden}) => {
 
-    const sectionLevelsColorsMapRef = useRef(new Map())
+    let sectionLevelsColorsMapRef = useRef(new Map())
     const { testament, testamentIndex } = useTestamentContext()
     const { arrangementRef, arrangementIndexRef } = useMapPanelContext();
     const { mapBooksInfo } = useMemo(() => {

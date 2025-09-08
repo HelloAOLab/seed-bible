@@ -83,7 +83,7 @@ const createExpanseBot = async (botRef) => {
 
     if(data.type === "verse"){
         setOpenSidebar(false);
-        const osisRef = data.osisRef.split(".");
+        let osisRef = data.osisRef.split(".");
         bible.openAt(`${data.book[0].bookName} ${osisRef[1]}:${osisRef[2]}`)
         shout("playSound",{soundName: "OpenPage"});
         await os.sleep(100)
@@ -109,7 +109,7 @@ const createExpanseBot = async (botRef) => {
         return
     }
 
-    const allData = [];
+    let allData = [];
 
     for(let i = 0; i < dataStructure[data.type].access.length; i++){
         const uidUrl = dataStructure[data.type].access[i].map(item => {
@@ -124,7 +124,7 @@ const createExpanseBot = async (botRef) => {
     const ids = [];
 
     for(let i = 0; i < allData.length; i++){
-        const dataBot = create({
+        let dataBot = create({
             ...nodeBotConfig,
             nodeType: "expanse",
             [dim + "X"]: botRef.tags[dim + "X"] + 12,
@@ -190,7 +190,7 @@ const createSoureBot = async () => {
             onClick: ``
         }
     }
-    const ids = [];
+    let ids = [];
 
     if(!getBot(byID(controlBot.tags.id)) || !getBot(byID(controlBot.tags.id)).masks.selectedNodeBot){
         return
@@ -203,12 +203,12 @@ const createSoureBot = async () => {
     for(let i = 0; i < uidData.length; i++){
         let label = uidData[i][sourceBotDataStructure[controlBot.tags.type].name]
         if(uidData[0].type === "verse"){
-            const osisRef = uidData[i].osisRef.split(".");
+            let osisRef = uidData[i].osisRef.split(".");
             // console.log(`https://bible.helloao.org/api/BSB/${uidData[0].book[0].bookName}/${osisRef[1]}.json`)
             const bsbtranslation = await web.get(`https://bible.helloao.org/api/BSB/${uidData[0].book[0].bookName}/${osisRef[1]}.json`).then(data => {
                 return data.data
             })
-            const verseJSON = bsbtranslation.chapter.content.filter(item => {return item.number == osisRef[2]})[0];
+            let verseJSON = bsbtranslation.chapter.content.filter(item => {return item.number == osisRef[2]})[0];
             if(verseJSON){
                 label = verseJSON.content[0].text
             }
@@ -218,7 +218,7 @@ const createSoureBot = async () => {
             // updateCustomHeight(0.89);
             // return
         }
-        const locationBot = create({
+        let locationBot = create({
             ...nodeBotConfig,
             nodeType: "source",
             [dim + "X"]: controlBot.tags[dim + "X"] + 12,
@@ -290,7 +290,7 @@ const lerpColor = () => {
     }, 20)
 }
 
-const lerp = lerpColor();
+let lerp = lerpColor();
 
 await convertDataToNodes(controlBot);
 

@@ -32,7 +32,7 @@ import {SectionBookData} from "managers.StacksManager.SectionBookData"
 import {BookData} from "managers.StacksManager.BookData"
 import {ChapterData} from "managers.StacksManager.ChapterData"
 const {elementData, bibleData, testamentData, sectionData, sectionBookData, bookData} = that;
-const elementDataCopy = await CreateDataCopy(elementData);
+let elementDataCopy = await CreateDataCopy(elementData);
 let elementDataIndex;
 
 const nullifiableIds = {

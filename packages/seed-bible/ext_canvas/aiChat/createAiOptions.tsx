@@ -171,7 +171,7 @@ if(currentAiBot){
         }
     ];
     for(let i = 0; i < optionConfigs.length; i++){
-        const optionBot = create({
+        let optionBot = create({
             ...optionConfigs[i],
             [dim + "X"]: currentAiBot.tags[dim + "X"] + (1 * i) - ((optionConfigs.length / 2) - 0.6),
             [dim + "Y"]: currentAiBot.tags[dim + "Y"] - 1,

@@ -30,7 +30,7 @@ if(found)
 {
     const sectionInfo = InstanceManager.vars.fixedArrangementsInfo[arrangementIndex].testaments[testamentIndex].sections[sectionIndex];
     const amountOfChaptersInSection = GetAmountOfChaptersInSection(sectionInfo.books);
-    const levels = GetSectionLevels(sectionInfo.books);
+    let levels = GetSectionLevels(sectionInfo.books);
     const levelsLenght = levels.length;
     const level = levels.find((level) => {return level.some((bookInfo) => {return bookInfo.commonName == name})})
     const levelIndex = levels.indexOf(level);
@@ -47,9 +47,9 @@ if(found)
         levelsLenght
     });
     const amountOfChaptersInLevel = level.reduce((total, bookInfo) => {return total +  bookInfo.numberOfChapters}, 0);
-    const percentageOfLevelInSection = amountOfChaptersInLevel / amountOfChaptersInSection;
-    const sectionAvailableSpace = (amountOfChaptersInSection * StackElementMeasurements.SectionDesiredScaleZRatio) - (StackSpacing.BetweenBooks * (levelsLenght + 1));
-    const levelScaleZ = percentageOfLevelInSection * sectionAvailableSpace;
+    let percentageOfLevelInSection = amountOfChaptersInLevel / amountOfChaptersInSection;
+    let sectionAvailableSpace = (amountOfChaptersInSection * StackElementMeasurements.SectionDesiredScaleZRatio) - (StackSpacing.BetweenBooks * (levelsLenght + 1));
+    let levelScaleZ = percentageOfLevelInSection * sectionAvailableSpace;
     let groupBookScaleX, groupBookScaleY;
     if(bookData.elementInfo.group)
     {

@@ -18,10 +18,10 @@ let testamentIndex, sectionIndex;
 let found = false;
 let bookIndex;
 
-for(const currentTestamentIndex in InstanceManager.vars.fixedArrangementsInfo[arrangementIndex].testaments)
+for(let currentTestamentIndex in InstanceManager.vars.fixedArrangementsInfo[arrangementIndex].testaments)
 {
     const testamentInfo = InstanceManager.vars.fixedArrangementsInfo[arrangementIndex].testaments[currentTestamentIndex];
-    for(const currentSectionIndex in testamentInfo.sections)
+    for(let currentSectionIndex in testamentInfo.sections)
     {
         const sectionInfo = testamentInfo.sections[currentSectionIndex];
         const bookInfo = sectionInfo.books.find((bookInfo) => {return bookInfo.commonName == name})
@@ -37,13 +37,13 @@ for(const currentTestamentIndex in InstanceManager.vars.fixedArrangementsInfo[ar
 }
 if(!found)
 {
-    for(const currentArrangementIndex in InstanceManager.vars.fixedArrangementsInfo)
+    for(let currentArrangementIndex in InstanceManager.vars.fixedArrangementsInfo)
     {
         if(currentArrangementIndex == initialArrangementIndex) continue;
-        for(const currentTestamentIndex in InstanceManager.vars.fixedArrangementsInfo[currentArrangementIndex].testaments)
+        for(let currentTestamentIndex in InstanceManager.vars.fixedArrangementsInfo[currentArrangementIndex].testaments)
         {
             const testamentInfo = InstanceManager.vars.fixedArrangementsInfo[currentArrangementIndex].testaments[currentTestamentIndex];
-            for(const currentSectionIndex in testamentInfo.sections)
+            for(let currentSectionIndex in testamentInfo.sections)
             {
                 const sectionInfo = testamentInfo.sections[currentSectionIndex];
                 const bookInfo = sectionInfo.books.find((bookInfo) => {return bookInfo.commonName == name})

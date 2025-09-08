@@ -1,6 +1,6 @@
-const dim = os.getCurrentDimension();
+let dim = os.getCurrentDimension();
 const typingTool = getBot(byTag("typingTool"));
-const lineColors = ["#FF4081", "#E040FB", "#7C4DFF", "#536DFE", "#448AFF", "#40C4FF", "#18FFFF", "#64FFDA", "#69F0AE"]
+let lineColors = ["#FF4081", "#E040FB", "#7C4DFF", "#536DFE", "#448AFF", "#40C4FF", "#18FFFF", "#64FFDA", "#69F0AE"]
 const getAllChildIds = (id) => {
     const botById = getBot(byTag("id", id));
     let childrenIds = [];
@@ -15,17 +15,17 @@ const getAllChildIds = (id) => {
     return childrenIds;
 }
 
-const controlBotParent = getBot(byTag("id", tags.parentBotId));
+let controlBotParent = getBot(byTag("id", tags.parentBotId));
 destroy(getBot(byTag("id", tags.indexBot)));
 for(let i = 0; i < masks.childIds.length; i++){
-    const subBot = getBot(byTag("id", masks.childIds[i]));
+    let subBot = getBot(byTag("id", masks.childIds[i]));
     if(subBot){
         subBot.tags.parentBotId = null;
-        const subBotChildrens = [subBot.tags.id, ...getAllChildIds(subBot.tags.id)];
+        let subBotChildrens = [subBot.tags.id, ...getAllChildIds(subBot.tags.id)];
         whisper(typingTool, "linePulser", {parentId: subBotChildrens[i]})
         if(subBotChildrens.length === 1){
             const subBotChild = getBot(byTag("id", subBotChildrens[0]));
-            const subIndexBot = getBot(byTag("id", subBotChild.tags.indexBot));
+            let subIndexBot = getBot(byTag("id", subBotChild.tags.indexBot));
             animateTag(subBotChild, {
                 fromValue: {
                     formOpacity: 1
@@ -50,7 +50,7 @@ for(let i = 0; i < masks.childIds.length; i++){
             for(let i = 0; i < subBotChildrens.length; i++){
                 const subBotChild = getBot(byTag("id", subBotChildrens[i]));
                 if(subBotChild.tags.indexBot){
-                    const subIndexBot = getBot(byTag("id", subBotChild.tags.indexBot));
+                    let subIndexBot = getBot(byTag("id", subBotChild.tags.indexBot));
                     setTagMask(subIndexBot, "label", `${i + 1}`, "tempShared");
                 }
             }
@@ -58,7 +58,7 @@ for(let i = 0; i < masks.childIds.length; i++){
     }
 }
 
-const childIds = controlBotParent.masks.childIds ? [...controlBotParent.masks.childIds] : [];
+let childIds = controlBotParent.masks.childIds ? [...controlBotParent.masks.childIds] : [];
 childIds.splice(childIds.indexOf(tags.id), 1);
 setTagMask(controlBotParent, "lineTo", [...childIds], "shared");
 setTagMask(controlBotParent, "childIds", [...childIds], "shared");

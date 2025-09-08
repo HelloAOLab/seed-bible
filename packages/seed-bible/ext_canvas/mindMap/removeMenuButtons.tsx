@@ -1,10 +1,10 @@
-const removeButton = getBots(byTag("removeButton"));
-const deleteButton = getBots(byTag("deleteButton"));
-const button2 = getBots(byTag("button2"));
-const button3 = getBots(byTag("button3"));
-const button4 = getBots(byTag("button4"));
-const shareButton = getBots(byTag("shareButton"));
-const aiSetting = getBots(byTag("aiSetting"));
+let removeButton = getBots(byTag("removeButton"));
+let deleteButton = getBots(byTag("deleteButton"));
+let button2 = getBots(byTag("button2"));
+let button3 = getBots(byTag("button3"));
+let button4 = getBots(byTag("button4"));
+let shareButton = getBots(byTag("shareButton"));
+let aiSetting = getBots(byTag("aiSetting"));
 
 for(let i = 0; i < removeButton.length; i++){
     clearAnimations(removeButton[i]);

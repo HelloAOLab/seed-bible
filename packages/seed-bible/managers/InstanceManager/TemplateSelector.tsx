@@ -31,9 +31,9 @@ const TemplateSelector = ({initialList, setReorderedList, setHasListBeenModified
             }
             else
             {
-                const dragOverIndex = singleOptions.findIndex((item) => {return item.id === id});
+                let dragOverIndex = singleOptions.findIndex((item) => {return item.id === id});
 
-                const newList = singleOptions.filter(item => item.id !== draggingId);
+                let newList = singleOptions.filter(item => item.id !== draggingId);
 
                 newList.splice(dragOverIndex, 0, singleOptions[draggingIndex]);
 
