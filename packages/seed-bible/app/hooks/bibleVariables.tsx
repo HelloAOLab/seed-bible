@@ -207,53 +207,9 @@ export function BibleVariablesProvider({ children }) {
         }
     }
     const [canvasTools, setCanvasTools] = useState([
-        // {
-        //     icon: 'map',
-        //     label: 'Map Swap',
-        //     hasToggle: true,
-        //     active: true,
-        //     isImg: false,
-        //     onClick: async () => {
-        //         console.log(globalThis?.SetCurrentCanvasMode)
-        //         if (globalThis?.SetCurrentCanvasMode) {
-        //             SetCurrentCanvasMode('map')
-        //         }
-        //     }
-        // },
-        {
-            icon: 'https://auth-aux-aobot-prod-filesbucket-141297942820.s3.amazonaws.com/aoBot/3c6a9b2acc629e207b0891f7a8d95d8cb0b2110b6cb99fc3e1b44944e19d09c0.gif',
-            label: 'Loading',
-            hasToggle: true,
-            active: true,
-            isImg: true,
-            onClick: async () => {
-            }
-        }
     ]);
 
     const [mapTools, setMapTools] = useState([
-        // {
-        //     icon: 'deployed_code',
-        //     label: 'Canvas Swap',
-        //     hasToggle: true,
-        //     active: true,
-        //     isImg: false,
-        //     onClick: async () => {
-        //         console.log(globalThis?.SetCurrentCanvasMode)
-        //         if (globalThis?.SetCurrentCanvasMode) {
-        //             SetCurrentCanvasMode('canvas')
-        //         }
-        //     }
-        // },
-        {
-            icon: 'https://auth-aux-aobot-prod-filesbucket-141297942820.s3.amazonaws.com/aoBot/3c6a9b2acc629e207b0891f7a8d95d8cb0b2110b6cb99fc3e1b44944e19d09c0.gif',
-            label: 'Loading',
-            hasToggle: true,
-            active: true,
-            isImg: true,
-            onClick: async () => {
-            }
-        },
     ]);
 
     useEffect(() => {
