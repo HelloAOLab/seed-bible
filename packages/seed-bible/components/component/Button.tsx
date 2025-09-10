@@ -1,9 +1,12 @@
-const Button = ({ children, onClick, isDisabled, secondaryAlt, small, secondary = false, color = "", backgroundColor = "", style = {}, varient = "" }) => {
+const LoaderSecondary = thisBot.LoaderSecondary();
+
+const Button = ({ children, loading, onClick, isDisabled, secondaryAlt, small, secondary = false, color = "", backgroundColor = "", style = {}, varient = "" }) => {
     return <>
         <style>{thisBot.tags["button.css"]}</style>
         <button
             disabled={isDisabled}
             onClick={(e) => {
+                if (!loading && isDisabled) return;
                 shout("playSound", { soundName: "DialogClick" });
                 onClick(e);
             }}
@@ -15,6 +18,7 @@ const Button = ({ children, onClick, isDisabled, secondaryAlt, small, secondary 
             }}
         >
             {children}
+            {loading ? <LoaderSecondary secondary={secondary} /> : null}
         </button>
     </>
 }

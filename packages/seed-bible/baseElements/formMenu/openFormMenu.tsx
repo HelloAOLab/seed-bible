@@ -3,8 +3,8 @@ await os.registerApp('formMenu', thisBot)
 
 const App = thisBot.getApp()
 
-let pointerX = gridPortalBot.tags.pointerPixelX
-let pointerY = gridPortalBot.tags.pointerPixelY
+var pointerX = gridPortalBot.tags.pointerPixelX
+var pointerY = gridPortalBot.tags.pointerPixelY
 
 if(that.center){
     pointerX = "50vw";

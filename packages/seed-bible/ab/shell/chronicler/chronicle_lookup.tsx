@@ -18,7 +18,7 @@ if (periodCount == 3)
 const recordName = targetAddress.replaceAll(".", "_");
 
 let lastAddress;
-const items = [];
+let items = [];
 
 //list all data in the record with appropriate tags
 if (!targetTag && !that.privateChronicle) 

@@ -9,7 +9,10 @@
   border-left: 1px solid #e0e0e0;
   background-color: var(--themeSideMenu) !important;
 }
-
+.disabled{
+    color: #929292 !important;
+    cursor: not-allowed;
+}
 .spin {
   animation: spin 1s linear infinite;
 }
@@ -63,8 +66,8 @@
 }
 
 .tab-button.active {
-  color: #4365de;
-  border-bottom-color: #4365de;
+  color: var(--spaceSelection);
+  border-bottom-color: var(--spaceSelection);
 }
 
 .settings-divider {
@@ -128,12 +131,12 @@
 
 .space-description {
   font-size: 13px;
-  color: var(--themeText1);
+  color: var(--text2);
   line-height: 1.4;
 }
 
 .settings-list {
-  padding: 8px 0;
+  padding: 0px 0;
 }
 
 .settings-item {
@@ -142,7 +145,7 @@
   padding: 10px 16px;
   cursor: pointer;
   transition: background-color 0.2s;
-  color: var(--themeText1);
+  color: var(--text1);
 }
 
 .settings-item:hover {
@@ -193,17 +196,17 @@
 }
 
 .sub-item {
-  color: var(--themeText2) !important;
+  color: var(--text2) !important;
 }
 
 .space-description {
-  color: var(--themeText1);
+  color: var(--text2);
   font-family: "Open Sans";
   font-size: 12px;
   font-style: normal;
   font-weight: 400;
   line-height: normal;
-  padding: 0 20px;
+  padding: 0 10px;
   margin-bottom: 15px;
 }
 

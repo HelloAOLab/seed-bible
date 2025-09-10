@@ -1,0 +1,70 @@
+/* page wrapper */
+.judeTextPage {
+  margin: 0 auto;
+  padding: 20px;
+  background-color: #fff;
+}
+
+/* each book block */
+.studyTextContainer {
+  font-family: 'EB Garamond', serif;
+  margin-bottom: 40px;
+  /* space between books */
+}
+
+/* big chapter header */
+.mainHeader {
+  font-size: 30px;
+  font-weight: 600;
+  margin: 40px 0 40px;
+  /* plenty of top & bottom space */
+}
+
+/* verse container */
+/* .verse {
+  margin-top: 20px;
+  margin-bottom: 15px;
+} */
+
+/* verse number */
+.verseNumber {
+  font-size: 20px;
+  margin-bottom: 5px;
+  cursor: pointer;
+}
+
+/* verse text */
+.verseText {
+  font-size: 20px;
+  line-height: 1.6;
+  margin-left: 10px;
+  /* if you get very long lines, you can uncomment the following: */
+  /* word-wrap: break-word; */
+}
+
+/* .highlighted {
+  border: 2px solid rgba(200, 160, 0, 0.9);
+  background-color: rgba(255, 235, 59, 0.3);
+  border-radius: 15px;
+  transition: background-color 0.7s ease-out,
+    border-color 0.7s ease-out;
+} */
+
+.verse {
+  border: 2px solid transparent;
+  background-color: transparent;
+  border-radius: 15px;
+  padding: 8px;
+  transition:
+    background-color 0.5s ease-out,
+    border-color 0.5s ease-out;
+}
+
+.verse .verseNumber {
+  margin: 0 0 0.5em;
+}
+
+.verse.highlighted {
+  border-color: #4F645B;
+  background-color: #639498;
+}

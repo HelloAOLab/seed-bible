@@ -1,47 +1,74 @@
 .pageContainer {
   height: 100%;
   width: 100%;
-  background-color: var(--themeBackground);
+  background-color: white;
   padding: 30px 0%;
   overflow: scroll;
   border-radius: 12px;
-  user-select: text;
-  overflow: hidden;
+
 }
 
-.overlay-animated-text {
-  position: relative;
-  display: inline-block;
-  color: #111; /* or any text color you want */
-  z-index: 0;
-  overflow: hidden;
-}
-
-.overlay-animated-text::after {
-  content: "";
+.thePageToolbar {
+  /* left: 20%;
   position: absolute;
-  top: 0;
-  left: -100%;
-  width: 100%;
-  height: 100%;
-  background: linear-gradient(
-    120deg,
-    rgba(255, 255, 255, 0) 0%,
-    rgba(255, 255, 255, 0.6) 50%,
-    rgba(255, 255, 255, 0) 100%
-  );
-  animation: textOverlayShine 1s infinite;
-  z-index: 1;
-  pointer-events: none;
+  min-width: 170px;
+  height: 35px;
+  background: white;
+  border: 1px #0000001A solid;
+  border-radius: 18px;
+  box-shadow: 0 7px 10px rgba(0, 0, 0, 0.1);
+  display: flex;
+  flex-direction: row;
+  align-items: center;
+  justify-content: center;
+  gap: 10px;
+  width: fit-content;
+  padding: 0 5px; */
+      position: absolute;
+    background-color: white;
+    padding: 0px 15px;
+    min-width: 169px;
+    border: 1px solid #0000001a;
+    border-radius: 12px;
+    box-shadow: 0 10px 16px rgba(0, 0, 0, 0.1);
+    height: 35px;
+    display: flex
+;
+    justify-content: center;
+    align-items: center;
+    flex-direction: row;
+
+}
+.scroller > div:first-child {
+  /* min-height: 100px; */
+  /* height: 100px !important;  */
+  /* overrides inline height: '100%' */
+}
+/* Default: hide scrollbar completely */
+.scroller::-webkit-scrollbar {
+  /* display: none; */
+  display: block;
+  width: 3px;
 }
 
-@keyframes textOverlayShine {
-  0% {
-    left: -100%;
-  }
-  100% {
-    left: 100%;
-  }
+/* Show scrollbar only while actively scrolling */
+.scroller.scroll::-webkit-scrollbar {
+  display: block;
+  width: 3px;
+}
+
+.scroller.scroll::-webkit-scrollbar-track {
+  background: rgba(0, 0, 0, 0.104);
+  border-radius: 5px;
+}
+
+.scroller.scroll::-webkit-scrollbar-thumb {
+  background: black;
+  border-radius: 5px;
+}
+
+.scroller.scroll::-webkit-scrollbar-thumb:hover {
+  background: #555;
 }
 
 
@@ -73,7 +100,7 @@
 }
 
 .bookTitle {
-  /* font-family: 'Helvetica Neue', sans-serif; */
+  font-family: 'Helvetica Neue', sans-serif;
   font-size: 32px;
   margin-bottom: 60px;
   font-weight: 500;
@@ -86,11 +113,8 @@
   text-decoration: var(--text-bookchapter-text-decoration);
   margin-top: var(--text-bookchapter-margin-top);
   margin-bottom: var(--text-bookchapter-margin-bottom);
-  /* margin-left: var(--text-bookchapter-margin-left); */
-  /* margin-right: var(--text-bookchapter-margin-right}
- */
-  margin-left: calc(var(--text-bookchapter-margin-left) + 1vw);
-  margin-right: calc(var(--text-bookchapter-margin-right) + 1vw);
+  margin-left: var(--text-bookchapter-margin-left);
+  margin-right: var(--text-bookchapter-margin-right);
 }
 
 
@@ -104,11 +128,8 @@
   text-decoration: var(--text-heading-text-decoration);
   margin-top: var(--text-heading-margin-top);
   margin-bottom: var(--text-heading-margin-bottom);
-  /* margin-left: var(--text-heading-margin-left); */
-  /* margin-right: var(--text-heading-margin-right); */
-  margin-left: calc(var(--text-heading-margin-left) + 1vw);
-  margin-right: calc(var(--text-heading-margin-right) + 1vw);
-
+  margin-left: var(--text-heading-margin-left);
+  margin-right: var(--text-heading-margin-right);
 }
 
 
@@ -123,13 +144,66 @@
   text-decoration: var(--text-verse-text-decoration);
   line-height: var(--text-verse-margin-top);
 
+  /* Additions ------> */
+  /* set up a transparent border to animate */
+  border: 2px solid transparent;
+  border-radius: 4px;
+  transition:
+    border-color 0.3s ease-in-out,
+    background-color 0.3s ease-in-out;
+
 }
 
+/* Additions ------> */
+
+.sectionText.highlighted {
+  border-color: #4F645B;
+  background-color: #639498;
+}
+
+.clickableCursor {
+  cursor: pointer;
+}
+
+.highlightened {
+  /* keep normal text color */
+  color: inherit;
+  transition: color 0.2s ease-in-out;
+
+  /* fade it out over 1.5s and then stay transparent */
+  animation: flashHighlight 2s ease-in-out;
+}
+
+.highlightened:hover {
+  color: #859E3B;
+}
+
+/* for the word spans when that word is active */
+.highlightened.highlighted-word {
+  color: #859E3B;
+}
+
+@keyframes flashHighlight {
+  0% {
+    color: black;
+  }
+
+  30%,
+  50%,
+  70% {
+    color: #859E3B;
+  }
+
+  100% {
+    color: black;
+  }
+}
+
+/* End of Additions */
+
 .sectionCover {
-  /* margin-left: var(--text-verse-margin-left); */
-  /* margin-right: var(--text-verse-margin-right); */
-  margin-left: calc(var(--text-verse-margin-left) + 1vw);
-  margin-right: calc(var(--text-verse-margin-right) + 1vw);
+  margin-left: var(--text-verse-margin-left);
+  margin-right: var(--text-verse-margin-right);
 }
 
 .sectionTextNumber {
@@ -148,8 +222,10 @@
   display: flex;
   justify-content: center;
   align-items: center;
-  background: transparent;
+  background: white !important;
   border-radius: 12px;
+  /* height: 100vh !important; */
+
 }
 
 .tabEntered {
@@ -173,5 +249,3 @@
   top: -42px;
   font-size: 17px;
 }
-
-.swap-btn {}

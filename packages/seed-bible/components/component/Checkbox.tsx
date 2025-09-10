@@ -1,8 +1,9 @@
-const Checkbox = ({ checked, small, onClick, style }) => {
+const Checkbox = ({ checked, small, onClick, style, disabled }) => {
     return (
         <>
             <style>{thisBot.tags["Checkbox.css"]}</style>
             <div style={style} className={`checkbox ${small && 'small'}`} onClick={(e) => {
+                if (disabled) return;
                 e.stopPropagation();
                 onClick(!checked);
             }}>

@@ -9,10 +9,15 @@ import { useTabsContext } from 'app.hooks.tabs';
 
 function Toolbar() {
     const { navFunctions, setScreens, tools, canvasMode, canvasTools, mapTools, mapMode, setTools, setCanvasTools, setMapTools } = useBibleContext();
-    const { sidebarMode } = useSideBarContext();
+    const { sidebarMode, openOnMobile } = useSideBarContext();
     const { setIsDragging, isDragging, setElement, Element } = useMouseMove();
-    const { activeSpace, updateToolsForSpace, getToolsForActiveSpace, updateTab } = useTabsContext();
-
+    const { activeSpace, updateToolsForSpace, getToolsForActiveSpace, updateTab, activeTab, tabs } = useTabsContext();
+    const [showToolbar, setShowToolbar] = useState(true)
+    useEffect(() => {
+        setShowToolbar(!openOnMobile)
+         
+    }, [openOnMobile])
+    // globalThis.ShowToolbar = setShowToolbar
     const TabTools = getToolsForActiveSpace();
     const setActiveTools = (newTools) => updateToolsForSpace(activeSpace, newTools);
 
@@ -57,14 +62,16 @@ function Toolbar() {
     }
 
     useEffect(() => {
-        if (canvasMode && !mapMode) {
+        console.log(!activeTab || !tabs, "tools 1234", tools)
+        if(!activeTab || !tabs) return;
+        let activeTabObj = tabs.filter(item => item.id === activeTab)[0];
+        console.log(activeTab, activeTabObj, "activetab")
+        if(activeTabObj.data.type === 'canvas'){
             setActiveTools([...canvasTools])
-        } else if (mapMode) {
-            setActiveTools([...mapTools])
-        } else {
+        }else{
             setActiveTools([...tools])
         }
-    }, [canvasMode, mapMode, canvasTools, mapTools, tools])
+    }, [activeTab, tabs, canvasTools, tools])
 
     useEffect(() => {
         globalThis.SetTools = setTools;
@@ -93,7 +100,8 @@ function Toolbar() {
                 setOldList,
                 setDraggedIndex,
                 setElement,
-                isDragging
+                isDragging,
+                showToolbar
             })
         } else {
             thisBot.renderToolbar({
@@ -110,7 +118,8 @@ function Toolbar() {
                 setOldList,
                 setDraggedIndex,
                 setElement,
-                isDragging
+                isDragging,
+                showToolbar
             });
         }
     }, [
