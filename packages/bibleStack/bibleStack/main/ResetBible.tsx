@@ -9,9 +9,9 @@
  * thisBot.ResetBible({ bibleData: someBibleData });
  */
 
-const {bibleData} = that;
+const {bibleData, speedMultiplier = 1} = that;
 setTagMask(thisBot, "isBibleAnimating", true);
 thisBot.vars.lastInteractedStackBibleData = bibleData;
 shout("OnStackBibleResetStart", {bibleData});
 thisBot.PlaySound({soundName: "ResetBible"});
-bibleData.staticBiblePieces.bibleTransformer?.Reset?.({bibleData});
+return bibleData.staticBiblePieces.bibleTransformer?.Reset?.({bibleData, speedMultiplier});

@@ -11,10 +11,11 @@ export class StackChapterData extends StackPieceData
         isInsideBible       = true,
         isInsideBook        = true,
         isActive            = false,
-        isHidden            = false
+        isHidden            = false,
+        creationInfo        = false
     })
     {
-        super({id, piece, pieceInfo, parentDataIds, isInsideBible, isHidden});
+        super({id, piece, pieceInfo, parentDataIds, isInsideBible, isHidden, creationInfo});
         this.isInsideBook       = isInsideBook;
         this.isActive           = isActive;
         this.HighlightsInfo     = [];

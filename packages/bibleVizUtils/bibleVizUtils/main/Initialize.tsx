@@ -1,5 +1,4 @@
-import { PoolData } from "objectPooler.main.PoolData"
-import { CustomTag } from "objectPooler.main.CustomTag"
+let PoolData, CustomTag;
 
 import {PieceInfo} from "bibleVizUtils.classes.PieceInfo"
 import {StackBibleData} from "bibleVizUtils.classes.StackBibleData"
@@ -145,76 +144,88 @@ bibleVizData.vars.customArrangements = [];
 bibleVizData.vars.fixedArrangementsInfo = [];
 bibleVizFunctions.UpdateFixedArrangementsInfo();
 
-const infoLabelPool = new PoolData({
-    tag: bibleVizData.tags.ObjectPoolTags.InfoLabel,
-    bot: getBot(byTag("isBaseInfoLabel", true)),
-    customTags: [
-        new CustomTag({name: "isBaseInfoLabel", value: false}),
-        new CustomTag({name: "isInfoLabel", value: true}),
-        new CustomTag({name: "poolTag", value: bibleVizData.tags.ObjectPoolTags.InfoLabel}),
-        new CustomTag({name: "system", value: null})
-    ],
-    size: 8
-})
-const infoLabelTailPool = new PoolData({
-    tag: bibleVizData.tags.ObjectPoolTags.InfoLabelTail,
-    bot: getBot(byTag("isBaseInfoLabelTail", true)),
-    customTags: [
-        new CustomTag({name: "isBaseInfoLabelTail", value: false}),
-        new CustomTag({name: "isInfoLabelTail", value: true}),
-        new CustomTag({name: "poolTag", value: bibleVizData.tags.ObjectPoolTags.InfoLabelTail}),
-        new CustomTag({name: "system", value: null})
-    ],
-    size: 8
-})
-const infoLabelDatePool = new PoolData({
-    tag: bibleVizData.tags.ObjectPoolTags.InfoLabelDate,
-    bot: getBot("system", "bibleVizUtils.prefabs.infoLabelDate"),
-    customTags: [
-        new CustomTag({name: "poolTag", value: bibleVizData.tags.ObjectPoolTags.InfoLabelDate}),
-        new CustomTag({name: "isInfoLabelDate", value: true}),
-        new CustomTag({name: "system", value: null})
-    ],
-    size: 8
-})
-const infoLabelTransformerPool = new PoolData({
-    tag: bibleVizData.tags.ObjectPoolTags.InfoLabelTransformer,
-    bot: getBot(byTag("isBaseInfoLabelTransformer", true)),
-    customTags: [
-        new CustomTag({name: "isBaseInfoLabelTransformer", value: false}),
-        new CustomTag({name: "isInfoLabelTransformer", value: true}),
-        new CustomTag({name: "poolTag", value: bibleVizData.tags.ObjectPoolTags.InfoLabelTransformer}),
-        new CustomTag({name: "system", value: null})
-    ],
-    size: 8
-})
-const userColorPool = new PoolData({
-    tag: bibleVizData.tags.ObjectPoolTags.UserColor,
-    bot:  getBot("system", "bibleVizUtils.prefabs.userColor"),
-    customTags: [
-        new CustomTag({name: "poolTag", value: bibleVizData.tags.ObjectPoolTags.UserColor}),
-        new CustomTag({name: "isUserColor", value: true}),
-        new CustomTag({name: "system", value: null})
-    ],
-    size: 8
-})
-const activityNotificationPool = new PoolData({
-    tag: bibleVizData.tags.ObjectPoolTags.ActivityNotification,
-    bot: getBot("system", "bibleVizUtils.prefabs.activityNotification"),
-    customTags: [
-        new CustomTag({name: "poolTag", value: bibleVizData.tags.ObjectPoolTags.ActivityNotification}),
-        new CustomTag({name: "system", value: null})
-    ],
-    size: 5
-})
+try {
+    console.log(`[Debug] bibleVizUtils.main.Initialize`, {ob})
+  ({ PoolData } = await import("objectPooler.main.PoolData"));
+  ({ CustomTag } = await import("objectPooler.main.CustomTag"));
+} 
+catch (err) {
+  console.warn("Module not found:", err);
+}
 
-ObjectPooler.AddObjectPools({
-    poolsData: [
-        infoLabelPool,
-        infoLabelTailPool,
-        infoLabelDatePool,
-        infoLabelTransformerPool,
-        userColorPool,
-        activityNotificationPool
-    ]
-})
+if(PoolData && CustomTag)
+{
+    const infoLabelPool = new PoolData({
+        tag: bibleVizData.tags.ObjectPoolTags.InfoLabel,
+        bot: getBot(byTag("isBaseInfoLabel", true)),
+        customTags: [
+            new CustomTag({name: "isBaseInfoLabel", value: false}),
+            new CustomTag({name: "isInfoLabel", value: true}),
+            new CustomTag({name: "poolTag", value: bibleVizData.tags.ObjectPoolTags.InfoLabel}),
+            new CustomTag({name: "system", value: null})
+        ],
+        size: 8
+    })
+    const infoLabelTailPool = new PoolData({
+        tag: bibleVizData.tags.ObjectPoolTags.InfoLabelTail,
+        bot: getBot(byTag("isBaseInfoLabelTail", true)),
+        customTags: [
+            new CustomTag({name: "isBaseInfoLabelTail", value: false}),
+            new CustomTag({name: "isInfoLabelTail", value: true}),
+            new CustomTag({name: "poolTag", value: bibleVizData.tags.ObjectPoolTags.InfoLabelTail}),
+            new CustomTag({name: "system", value: null})
+        ],
+        size: 8
+    })
+    const infoLabelDatePool = new PoolData({
+        tag: bibleVizData.tags.ObjectPoolTags.InfoLabelDate,
+        bot: getBot("system", "bibleVizUtils.prefabs.infoLabelDate"),
+        customTags: [
+            new CustomTag({name: "poolTag", value: bibleVizData.tags.ObjectPoolTags.InfoLabelDate}),
+            new CustomTag({name: "isInfoLabelDate", value: true}),
+            new CustomTag({name: "system", value: null})
+        ],
+        size: 8
+    })
+    const infoLabelTransformerPool = new PoolData({
+        tag: bibleVizData.tags.ObjectPoolTags.InfoLabelTransformer,
+        bot: getBot(byTag("isBaseInfoLabelTransformer", true)),
+        customTags: [
+            new CustomTag({name: "isBaseInfoLabelTransformer", value: false}),
+            new CustomTag({name: "isInfoLabelTransformer", value: true}),
+            new CustomTag({name: "poolTag", value: bibleVizData.tags.ObjectPoolTags.InfoLabelTransformer}),
+            new CustomTag({name: "system", value: null})
+        ],
+        size: 8
+    })
+    const userColorPool = new PoolData({
+        tag: bibleVizData.tags.ObjectPoolTags.UserColor,
+        bot:  getBot("system", "bibleVizUtils.prefabs.userColor"),
+        customTags: [
+            new CustomTag({name: "poolTag", value: bibleVizData.tags.ObjectPoolTags.UserColor}),
+            new CustomTag({name: "isUserColor", value: true}),
+            new CustomTag({name: "system", value: null})
+        ],
+        size: 8
+    })
+    const activityNotificationPool = new PoolData({
+        tag: bibleVizData.tags.ObjectPoolTags.ActivityNotification,
+        bot: getBot("system", "bibleVizUtils.prefabs.activityNotification"),
+        customTags: [
+            new CustomTag({name: "poolTag", value: bibleVizData.tags.ObjectPoolTags.ActivityNotification}),
+            new CustomTag({name: "system", value: null})
+        ],
+        size: 5
+    })
+
+    ObjectPooler.AddObjectPools({
+        poolsData: [
+            infoLabelPool,
+            infoLabelTailPool,
+            infoLabelDatePool,
+            infoLabelTransformerPool,
+            userColorPool,
+            activityNotificationPool
+        ]
+    })
+}

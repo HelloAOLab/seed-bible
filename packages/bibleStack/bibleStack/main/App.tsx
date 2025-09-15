@@ -8,7 +8,7 @@ const App = () => {
 
     useEffect(() => {
         shout("OnTabsContextChanged", {spaces, activeSpace, tabs, activeTab, setActiveTab})
-    }, [spaces, activeSpace, tabs, activeTab])
+    }, [spaces, activeSpace, tabs, activeTab, setActiveTab])
 
     return <div style={{width: "100%", height: "100%"}}>
         <div

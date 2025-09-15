@@ -7,13 +7,13 @@
     * bibleTransformer.OnBibleReset({bibleData: someBibleData})
 */
 
-const {bibleData} = that
+const {bibleData, speedMultiplier = 1} = that
 if(thisBot.tags.isBaseStackBibleTransformer || !thisBot.tags.isInUse) return;
-const duration = 0.42;
+const duration = 0.42 / speedMultiplier;
 const easing = {type: "sinusoidal", mode: "inout"}
-thisBot.CloseBible({duration, easing, bibleData})
+return thisBot.CloseBible({duration, easing, bibleData})
 .then(() => {
     shout('OnStackBibleCloseComplete', {bibleData})
-    thisBot.OpenBible({duration, easing, bibleData})
+    return thisBot.OpenBible({duration, easing, bibleData})
     .then(() => {shout("OnStackBibleResetComplete", {bibleData})});
 })

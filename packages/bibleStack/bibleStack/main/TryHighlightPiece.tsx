@@ -10,6 +10,7 @@
     * shout("TryHighlightPiece", {piece: section, highlightRequestSource: BibleVizUtils.Data.tags.InteractionType.Click, unhighlightDelay: 4000, typeOfPiece: BibleVizUtils.Data.tags.BiblePieceType.StackTestament, customUnhighlightDuration: 1});
 */
 
+
 const {piece, highlightRequestSource, unhighlightDelay, typeOfPiece, customUnhighlightDuration, speedMultiplier = 1, isInstantaneous = false} = that;
 
 const {unhighlightDelayInfo, unhighlightDelayInfoIndex} = thisBot.GetUnhighlightDelayInfo({piece});

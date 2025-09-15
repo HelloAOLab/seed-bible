@@ -5,6 +5,7 @@
 */
 
 thisBot.tags.toErase = false;
+thisBot.tags.draggable = true;
 if(thisBot.tags.activityNotification)
 {
     ObjectPooler.ReleaseObject({obj: links.activityNotification, tag: links.activityNotification.tags.poolTag})

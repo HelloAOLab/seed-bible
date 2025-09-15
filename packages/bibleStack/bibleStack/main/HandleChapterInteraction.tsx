@@ -95,12 +95,12 @@ switch(typeOfInteraction)
     break;
     case BibleVizUtils.Data.tags.InteractionType.Dragging:
     {
-        shout('OnStackPieceDragging', {piece: chapterData.piece, dragInfo, data: chapterData})
+        if(chapterData.piece.tags.draggable) shout('OnStackPieceDragging', {piece: chapterData.piece, dragInfo, data: chapterData})
     }
     break;
     case BibleVizUtils.Data.tags.InteractionType.Drop:
     {
-        shout('OnStackPieceDrop', {data: chapterData, piece: chapterData.piece, dropInfo});
+        if(chapterData.piece.tags.draggable) shout('OnStackPieceDrop', {data: chapterData, piece: chapterData.piece, dropInfo});
     }
     break;
     default: break;
