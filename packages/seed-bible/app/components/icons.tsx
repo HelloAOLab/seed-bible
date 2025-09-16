@@ -36,6 +36,27 @@ const SplitScreenIcon = ({ size = 24 }) => {
     </div>
   );
 };
+export const SpaceDefaultIcon = () => {
+  return <div class="activeBg">
+    <span></span>
+  </div>
+}
+export function SeedBibleIcon() {
+  return (
+    <img
+      src="https://res.cloudinary.com/dfbtwwa8p/image/upload/v1755365776/717a8527988cca7e0bdc9449ec68581a8400b977_vqc7mx.png"
+      style={{
+        width: "40px",
+        height: "42px",
+        objectFit: "cover",      // crop to fit box
+        objectPosition: "center" // adjust focal point
+      }}
+    />
+  );
+}
+export const ApologistIcon = () => {
+  return <img style={{ filter: "invert(1)" }} src="https://res.cloudinary.com/dfbtwwa8p/image/upload/v1755794631/svgviewer-png-output_1_tgtfvm.png" />
+}
 const AiIcon = (props) => (
   <svg
     width={24}

@@ -1,7 +1,6 @@
-
 import { BibleDataManager } from 'app.hooks.bibleDataManager'
 import { getStyleOf } from 'app.styles.styler'
-const { useEffect, useState, useMemo, useCallback, createRef } = os.appHooks;
+const { useEffect, useState, useMemo, useCallback, useLayoutEffect, useRef, createRef } = os.appHooks;
 import { useMouseMove } from 'app.hooks.mouseMove'
 import { useTabsContext } from 'app.hooks.tabs';
 import { useBibleContext } from 'app.hooks.bibleVariables'
@@ -10,9 +9,14 @@ import { DivSpliter } from 'app.hooks.screenDevider'
 import { TextEditor } from 'app.components.editor'
 import { MiniTextEditor } from 'app.components.smallEditor'
 
+// Additions ------>
+// import { StudyNotes, StudyNotesWithPanel } from 'app.sn_components.studyNotes';
+
+import { ConfigurableFunctionCommands } from 'app.components.commands'
+
 function generateQuery(params) {
-    const queryArray = [];
-    for (const key in params) {
+    let queryArray = [];
+    for (let key in params) {
         if (params.hasOwnProperty(key)) {
             queryArray.push(encodeURIComponent(key) + '=' + encodeURIComponent(params[key]));
         }
@@ -27,40 +31,34 @@ function attachQueryToURL(url, params) {
 
 function ThePage({ tab: T, setPanalApp, panelId, setEnableEditor, setData, data }) {
     const [tab, setTab] = useState(T);
-    const [tabEntered, setTabEntered] = useState(false)
-    const { updateTab, tabs, setActiveTab } = useTabsContext();
-    const { isDragging, setIsDragging, Element } = useMouseMove()
-    const { navFunctions, setNavFunctions, setCanvasMode, setMapMode, screens } = useBibleContext()
-    const [currentCanvasMode, setCurrentCanvasMode] = useState(globalThis?.CurrentCanvasMode || "canvas");
+    const [commandHighlight, setCommandHighlight] = useState([]);
 
-    const setCanvasBoundaries = ({ intervalKey, tabId }) => {
-        const canvasElement = document.getElementById(tabId);
-        if (!canvasElement) {
-            clearInterval(intervalKey);
-            return;
-        }
-        globalThis.activeCanvasId = tabId;
-        const parent = canvasElement.parentElement;
-        parent.classList.remove('boundElements');
-        const rect = parent.getBoundingClientRect();
-        const width = Math.floor(rect.width);
-        const height = Math.floor(rect.height) > 0 ? Math.floor(rect.height) : window.innerHeight - 22;
-        const top = Math.floor(rect.top);
-        const left = Math.floor(rect.left);
-        setHW({
-            height: `${height}px !important`,
-            width: `${width}px !important`,
-        })
-        setTL({
-            top: `${top}px !important`,
-            left: `${left}px !important`,
-            borderRadius: "10px"
-        })
-    };
+    const commandsRef = useRef(null);
+
+    
+    const [tabEntered, setTabEntered] = useState(false)
+    const { updateTab, tabs, setActiveTab, activeTab } = useTabsContext();
+    const { isDragging, setIsDragging, Element } = useMouseMove()
+    const { navFunctions, setNavFunctions } = useBibleContext()
+    const [inHold, setInHold] = useState()
+    const [contextData, setContextData] = useState({
+        verse: "And God said, 'Let there be light,' and there was light. And God saw that the light was good, and He separated the light from the darkness. God called the light 'day,' and the darkness He called 'night.' And there was evening, and there was morning—the first day.",
+        reference: "Genesis 1:3-5",
+        book: "Genesis",
+        chapter: 1,
+        verses: [3, 4, 5]
+    })
+    // Add state for text selection and commands
+    const [selectedText, setSelectedText] = useState('');
+    const [showCommands, setShowCommands] = useState(false);
+    const [lastSelectedVerse, setLastSelectedVerse] = useState(null);
+
+    // Add state for word highlights
+    const [wordHighlights, setWordHighlights] = useState({});
 
     const loadTranslationFromUrl = async () => {
         console.log(configBot.tags.translationId, "translation id")
-        const translationId = configBot.tags.translationId;
+        let translationId = configBot.tags.translationId;
         let baseUrl = "https://bible.helloao.org";
         let bookId = "GEN";
         let bookTranslationId = "BSB";
@@ -68,12 +66,10 @@ function ThePage({ tab: T, setPanalApp, panelId, setEnableEditor, setData, data 
         if (translationId) {
             os.toast(`Loading ${translationId} translation`)
 
-            const searchBar = getBot('system', 'introduction.searchBar')
-
-            const available_translations_req = await web.get("https://bible.helloao.org/api/available_translations.json");
+            let available_translations_req = await web.get("https://bible.helloao.org/api/available_translations.json");
             let allTranslations = [];
-            const translations = {};
-            const defaultTranslations = [
+            let translations = {};
+            let defaultTranslations = [
                 "english",
                 "spanish",
                 "arabic",
@@ -82,14 +78,9 @@ function ThePage({ tab: T, setPanalApp, panelId, setEnableEditor, setData, data 
                 "ancient greek",
                 "custom"
             ]
-            allTranslations = available_translations_req.data.translations.map(item => {
-                return {
-                    ...item,
-                    languageEnglishName: item?.languageEnglishName || item.englishName
-                }
-            });
+            allTranslations = available_translations_req.data.translations;
 
-            const trValue = {
+            let trValue = {
                 pass: false,
                 value: null
             };
@@ -101,34 +92,33 @@ function ThePage({ tab: T, setPanalApp, panelId, setEnableEditor, setData, data 
                     }
                 })
 
-                const urlId = translationId.includes("https://");
+                let urlId = translationId.includes("https://");
 
                 if (trValue.pass && !urlId) {
-                    const bookData = await web.get(`https://bible.helloao.org/api/${trValue.value.id}/books.json`);
-                    const book0 = bookData.data.books[0];
-                    setTagMask(searchBar, "selectedTranslation", trValue.value, "local");
-                    setTagMask(searchBar, "booksData", bookData.data.books, "local");
+                    let bookData = await web.get(`https://bible.helloao.org/api/${trValue.value.id}/books.json`);
+                    let book0 = bookData.data.books[0];
+                    setTagMask(thisBot, "selectedTranslation", trValue.value, "local");
+                    setTagMask(thisBot, "booksData", bookData.data.books, "local");
                     bookId = book0.id;
                     bookTranslationId = trValue.value.id;
                     firstChapterApiLink = book0.firstChapterApiLink;
                 } else if (!urlId) {
-                    const url = `https://aolab-bible-api.netlify.app/api/translations/getTranslation`;
-                    const params = {
+                    let url = `https://aolab-bible-api.netlify.app/api/translations/getTranslation`;
+                    let params = {
                         uid: translationId
                     }
-                    const queryUrl = attachQueryToURL(url, params);
-                    const result = await web.get(queryUrl);
+                    let queryUrl = attachQueryToURL(url, params);
+                    let result = await web.get(queryUrl);
                     if (result.status === 200 && result.data.data) {
-                        const translation = JSON.parse(result.data.data.translation);
-                        console.log("1 trans")
-                        const englishName = translation.languageEnglishName.toLowerCase();
-                        const shortName = translation.shortName.toLowerCase();
+                        let translation = JSON.parse(result.data.data.translation);
+                        let englishName = translation.languageEnglishName.toLowerCase();
+                        let shortName = translation.shortName.toLowerCase();
 
-                        const bookData = await web.get(translation.listOfBooksApiLink);
+                        let bookData = await web.get(translation.listOfBooksApiLink);
 
-                        const book0 = bookData.data.books[0];
-                        setTagMask(searchBar, "selectedTranslation", translation, "local");
-                        setTagMask(searchBar, "booksData", bookData.data.books, "local");
+                        let book0 = bookData.data.books[0];
+                        setTagMask(thisBot, "selectedTranslation", translation, "local");
+                        setTagMask(thisBot, "booksData", bookData.data.books, "local");
                         if (!defaultTranslations.includes(englishName)) {
                             defaultTranslations.push(englishName)
                             translations[englishName] = {
@@ -141,11 +131,11 @@ function ThePage({ tab: T, setPanalApp, panelId, setEnableEditor, setData, data 
                         firstChapterApiLink = book0.firstChapterApiLink;
                     }
                 } else {
-                    const result = await web.get(translationId);
+                    let result = await web.get(translationId);
                     if (result.status === 200) {
                         const url = new URL(translationId);
                         let newTranslations = result.data.translations;
-                        const defaultTranslation = newTranslations[0];
+                        let defaultTranslation = newTranslations[0];
                         newTranslations = newTranslations.map(trans => {
                             return {
                                 languageEnglishName: trans.languageEnglishName,
@@ -157,14 +147,13 @@ function ThePage({ tab: T, setPanalApp, panelId, setEnableEditor, setData, data 
                         })
                         console.log(newTranslations, "newTranslations")
                         allTranslations = [...allTranslations, ...newTranslations];
-                        for (const translation of newTranslations) {
-                            console.log("2 trans")
-                            const englishName = translation.languageEnglishName.toLowerCase();
+                        for (let translation of newTranslations) {
+                            let englishName = translation.languageEnglishName.toLowerCase();
                             if (!defaultTranslations.includes(englishName)) {
                                 defaultTranslations.push(englishName);
                             }
                         }
-                        const translation = {
+                        let translation = {
                             languageEnglishName: defaultTranslation.languageEnglishName,
                             id: defaultTranslation.id,
                             listOfBooksApiLink: `${url.origin}${defaultTranslation.listOfBooksApiLink}`,
@@ -172,15 +161,14 @@ function ThePage({ tab: T, setPanalApp, panelId, setEnableEditor, setData, data 
                             shortName: defaultTranslation.shortName
                         }
                         console.log(translation, "translation")
-                        console.log("3 trans")
-                        const englishName = translation.languageEnglishName.toLowerCase();
-                        const shortName = translation.shortName.toLowerCase();
+                        let englishName = translation.languageEnglishName.toLowerCase();
+                        let shortName = translation.shortName.toLowerCase();
 
-                        const bookData = await web.get(translation.listOfBooksApiLink);
+                        let bookData = await web.get(translation.listOfBooksApiLink);
 
-                        const book0 = bookData.data.books[0];
-                        setTagMask(searchBar, "selectedTranslation", translation, "local");
-                        setTagMask(searchBar, "booksData", bookData.data.books, "local");
+                        let book0 = bookData.data.books[0];
+                        setTagMask(thisBot, "selectedTranslation", translation, "local");
+                        setTagMask(thisBot, "booksData", bookData.data.books, "local");
                         if (!defaultTranslations.includes(englishName)) {
                             defaultTranslations.push(englishName)
                             translations[englishName] = {
@@ -194,12 +182,8 @@ function ThePage({ tab: T, setPanalApp, panelId, setEnableEditor, setData, data 
                     }
                 }
                 allTranslations.forEach(translation => {
-                    console.log("4 trans", translation)
-                    if (!translation?.languageEnglishName?.toLowerCase()) {
-                        console.log(translation, "culprit")
-                    }
-                    const englishName = translation?.languageEnglishName?.toLowerCase() || translation?.englishName?.toLowerCase();
-                    const shortName = translation.shortName.toLowerCase();
+                    let englishName = translation?.languageEnglishName?.toLowerCase() || translation?.englishName?.toLowerCase();
+                    let shortName = translation.shortName.toLowerCase();
                     if (translations[englishName]) {
                         if (!translations[englishName][shortName]) {
                             translations[englishName][shortName] = translation;
@@ -210,10 +194,10 @@ function ThePage({ tab: T, setPanalApp, panelId, setEnableEditor, setData, data 
                         }
                     }
                 })
-                setTagMask(searchBar, "allTranslations", allTranslations, "local");
-                setTagMask(searchBar, "apiTranslations", { ...translations }, "local")
-                setTagMask(searchBar, "defaultTranslations", defaultTranslations, "local")
-                console.log(defaultTranslations, translations, "trans")
+                setTagMask(thisBot, "allTranslations", allTranslations, "local");
+                setTagMask(thisBot, "apiTranslations", translations, "local")
+                setTagMask(thisBot, "defaultTranslations", defaultTranslations, "local")
+                console.log(defaultTranslations, translations)
                 configBot.tags.translationId = null;
             }
         }
@@ -229,38 +213,44 @@ function ThePage({ tab: T, setPanalApp, panelId, setEnableEditor, setData, data 
     if (tab)
         globalThis[`SetEnableEditorOf${tab?.id}`] = setEnableEditor;
     async function loadData() {
-        if (!tab) return;
-        if (tab.data.type === 'canvas') {
-            setData({
-                ...tab.data,
-                content: []
-            })
+        if (!tab)
             return
-        }
-        const { baseUrl, bookId, bookTranslationId } = await loadTranslationFromUrl();
+        let { baseUrl, bookId, bookTranslationId, firstChapterApiLink } = await loadTranslationFromUrl();
         const bible = new BibleDataManager({
             tabId: tab?.id,
             translation: bookTranslationId || tab.data.translation,
             bookId: bookId || tab.data.bookId,
             chapter: tab.data.chapter,
-            basuUrl: baseUrl
+            baseUrl: baseUrl
         });
         setBible(bible)
-        await bible.fetch();
+
+        console.log("bible data: ", bible);
+
+        await bible.fetch(firstChapterApiLink);
+
+        // Additional Data ----------->
+        globalThis.BookId = bible.bookId;
+
         const { data, loading, error } = bible.getState();
         console.log(data, tab, 'the data loaded')
+
         setData(data)
         // setContent(data)
         // await bible.openNext();
-
+        globalThis.refreshScrollers && globalThis.refreshScrollers();
         // await bible.changeTranslation('KJV');
     }
     useEffect(() => {
         loadData()
+        // after you change something that affects height:
+
+
     }, [tab])
     useEffect(() => {
         if (data) {
             hanldNavFunctions()
+            SetShowCommands(false);
             updateTab(tab?.id, data)
             if (panelId && tab) {
                 os.log('recoreded', panelId, { ...tab, data: { ...tab.data, ...data } })
@@ -268,6 +258,91 @@ function ThePage({ tab: T, setPanalApp, panelId, setEnableEditor, setData, data 
             }
         }
     }, [data])
+
+    // Add text selection handler
+    useEffect(() => {
+        // (intentionally left commented per original logic)
+    }, []);
+
+    useEffect(() => {
+        const handleMouseUp = () => {
+            const selection = window.getSelection();
+            if (!selection || selection.isCollapsed) return;
+
+            const selectedRange = selection.getRangeAt(0);
+            const container = selectedRange.commonAncestorContainer.nodeType === Node.TEXT_NODE
+                ? selectedRange.commonAncestorContainer.parentElement
+                : selectedRange.commonAncestorContainer;
+
+            if (commandsRef.current && commandsRef.current.contains(container)) {
+                setShowCommands(true);
+                return;
+            }
+            // Use TreeWalker to collect all .sectionText spans inside selection
+            const treeWalker = document.createTreeWalker(
+                selectedRange.commonAncestorContainer,
+                NodeFilter.SHOW_ELEMENT,
+                {
+                    acceptNode: (node) => {
+                        if (
+                            node.classList?.contains('sectionText') &&
+                            selectedRange.intersectsNode(node)
+                        ) {
+                            return NodeFilter.FILTER_ACCEPT;
+                        }
+                        return NodeFilter.FILTER_SKIP;
+                    },
+                }
+            );
+
+            const selectedVerses = new Set();
+
+            let currentNode = treeWalker.nextNode();
+            while (currentNode) {
+                const verseNumberElem = currentNode.querySelector('.sectionTextNumber');
+                if (verseNumberElem) {
+                    const verseNum = parseInt(verseNumberElem.textContent);
+                    if (!isNaN(verseNum)) {
+                        selectedVerses.add(verseNum);
+                    }
+                }
+                currentNode = treeWalker.nextNode();
+            }
+
+            if (selectedVerses.size > 0) {
+                const selectedArray = Array.from(selectedVerses).sort((a, b) => a - b);
+                console.log('Selected verse numbers:', selectedArray);
+                // setShowCommands(false);
+                setSelectedText(selection.toString());
+                setLastSelectedVerse(selectedArray[selectedArray.length - 1]);
+                setContextData({
+                    verse: window.getSelection().toString(),
+                    reference: `${data?.book} ${data?.chapter}:${selectedArray[0]}-${selectedArray[selectedArray.length - 1]}`,
+                    book: data?.book,
+                    chapter: data?.chapter,
+                    verses: selectedArray,
+                })
+                shout('onVeresRightClick', {
+                    verseNumber: selectedArray,
+                    text: window.getSelection().toString(),
+                    book: data?.book,
+                    chapter: data?.chapter,
+                    highlighted: false
+                })
+
+            } else {
+                setShowCommands(false);
+                setSelectedText('');
+                setLastSelectedVerse(null);
+            }
+        };
+        document.addEventListener('mouseup', handleMouseUp);
+        return () => {
+            document.removeEventListener('mouseup', handleMouseUp)
+        };
+    }, [data]);
+
+
     // const {
     //     data,
     //     footnotes,
@@ -297,33 +372,55 @@ function ThePage({ tab: T, setPanalApp, panelId, setEnableEditor, setData, data 
     function handleMouseUp() {
         if (!isDragging)
             return
-
-        console.log(Element, 'the element')
-        if (Element.data.to === 'panel') {
-            if (!panelId.includes(`panel-${0}`)) {
-                os.log(panelId)
-                ReplaceApplication(panelId, Element.data)
-                setIsDragging(false)
-                return
-            } else {
-                os.toast('The main panel can not change')
-                setIsDragging(false)
-                // return
+        console.log(Element.data, 'El.data')
+        if (Element?.data?.data?.pkgApp) {
+            const handoff = Element?.data?.data
+            const App = handoff.app
+            let tabData = {
+                ...Element.data,
+                data: {
+                    ...Element.data.data,
+                    app: null
+                }
             }
+            ReplaceApplication(panelId,
+                { id: panelId, App: <App tab={tabData} panelId={panelId} activeTab={Element.data.id} />, to: 'panel', minWidth: '30rem' })
+            console.log('replaced')
+        } else {
+            Update(Element.data)
+            if (globalThis.GetBooksDataForMenu)
+                globalThis.GetBooksDataForMenu(`https://bible.helloao.org/api/${Element.data.data.translation}/books.json`, Element.data.data.translation)
         }
-        Update(Element.data)
-        if (globalThis.GetBooksDataForMenu)
-            globalThis.GetBooksDataForMenu(`https://bible.helloao.org/api/${Element.data.data.translation}/books.json`, Element.data.data.translation)
         setIsDragging(false)
         setTabEntered(false)
     }
     async function openNextChapter() {
         await bible.openNext()
         setData(bible.data)
+
+        // Additions ------>
+        globalThis.GlobalChapter = bible.data.chapter - 1;
+
+        if (globalThis.studyNotesPresent) {
+            UpdateApplication(globalThis.STUDYNOTES_PANEL_ID, {
+                App: <StudyNotes id={globalThis.STUDYNOTES_PANEL_ID} chapter={globalThis.GlobalChapter} />,
+                to: 'panel',
+            })
+        }
     }
     async function openPrevChapter() {
         await bible.openPrevious()
         setData(bible.data)
+
+        // Additions ------>
+        globalThis.GlobalChapter = bible.data.chapter - 1;
+
+        if (globalThis.studyNotesPresent) {
+            UpdateApplication(globalThis.STUDYNOTES_PANEL_ID, {
+                App: <StudyNotes id={globalThis.STUDYNOTES_PANEL_ID} chapter={globalThis.GlobalChapter} />,
+                to: 'panel',
+            })
+        }
     }
     async function open(bookId, chapter, translation = null) {
         await bible.open(bookId, chapter, translation = null)
@@ -333,47 +430,165 @@ function ThePage({ tab: T, setPanalApp, panelId, setEnableEditor, setData, data 
         await bible.changeTranslation(id, bookData, forcedBaseUrl)
         setData(bible.data)
     }
+
+    // Add word highlighting functions
+    const highlightWords = useCallback((config) => {
+        /*
+        UPDATED CONFIG BEHAVIOR
+        -----------------------
+        - If any of book / chapter / verse is null, it will default to the CURRENT data in view and expand as follows:
+            book: null   -> use current data.book
+            chapter: null-> use current data.chapter
+            verse: null  -> apply to ALL verses in the current data (current chapter's verses)
+        - verse may be a single number or an array of numbers. If omitted or null, all verses are targeted.
+
+        Example:
+        HighlightWords({
+            book: null,
+            chapter: null,
+            verse: null,
+            words: ["light", "God", "LORD"],
+            color: "#000",
+            backgroundColor: "#ffeb3b",
+            onClick: (word, verseNumber) => console.log(word, verseNumber)
+        })
+        */
+        if (!tab?.id) return;
+
+        // Derive targets from current data when null
+        const targetBook = (config.book == null ? data?.book : config.book);
+        const targetChapter = (config.chapter == null ? data?.chapter : config.chapter);
+
+        // Build list of verse numbers to apply to
+        let targetVerses = [];
+        if (config.verse == null) {
+            // Apply to all verses visible in current data
+            const content = data?.content || [];
+            content.forEach(({ verses }) => {
+                verses.forEach(v => {
+                    if (typeof v?.verseNumber === 'number') targetVerses.push(v.verseNumber);
+                })
+            });
+        } else if (Array.isArray(config.verse)) {
+            targetVerses = config.verse;
+        } else {
+            targetVerses = [config.verse];
+        }
+
+        // Guard: if we still have no verses, do nothing
+        if (!targetVerses.length) return;
+
+        const wordsToAdd = (config.words || []).filter(Boolean);
+        if (!wordsToAdd.length) return;
+
+        setWordHighlights(prev => {
+            const newHighlights = { ...prev };
+
+            // Ensure container for this tab in global store
+            if (!globalThis.wordHighlights) globalThis.wordHighlights = {};
+            if (!globalThis.wordHighlights[tab.id]) globalThis.wordHighlights[tab.id] = {};
+
+            // Apply highlights to each targeted verse
+            targetVerses.forEach(vn => {
+                const key = `${targetBook}-${targetChapter}-${vn}`;
+                if (!newHighlights[key]) newHighlights[key] = {};
+
+                wordsToAdd.forEach(word => {
+                    const wordKey = String(word).toLowerCase();
+                    newHighlights[key][wordKey] = {
+                        color: config.color || "#000",
+                        backgroundColor: config.backgroundColor || "#ffeb3b",
+                        onClick: config.onClick || null,
+                        timestamp: Date.now(),
+                        createAttributes: config.createAttributes ? config?.createAttributes : () => {return {}}
+                    };
+                });
+            });
+
+            // Persist per-tab
+            globalThis.wordHighlights[tab.id] = newHighlights;
+            return newHighlights;
+        });
+    }, [data, tab?.id]);
+
+    const removeWordHighlight = useCallback((config) => {
+        /*
+        Original behavior preserved.
+        */
+        if (!tab?.id) return;
+
+        setWordHighlights(prev => {
+            const newHighlights = { ...prev };
+            const key = `${config.book}-${config.chapter}-${config.verse}`;
+
+            if (!newHighlights[key]) return prev;
+
+            if (config.words) {
+                config.words.forEach(word => {
+                    const wordKey = word.toLowerCase();
+                    delete newHighlights[key][wordKey];
+                });
+
+                // Remove verse key if no words left
+                if (Object.keys(newHighlights[key]).length === 0) {
+                    delete newHighlights[key];
+                }
+            } else {
+                // Remove all words for this verse
+                delete newHighlights[key];
+            }
+
+            // Update global storage
+            if (globalThis.wordHighlights) {
+                globalThis.wordHighlights[tab.id] = newHighlights;
+            }
+
+            return newHighlights;
+        });
+    }, [data]);
+
+    const clearAllWordHighlights = useCallback(() => {
+        setWordHighlights({});
+        if (globalThis.wordHighlights && tab?.id) {
+            delete globalThis.wordHighlights[tab.id];
+        }
+    }, [data]);
+
     function hanldNavFunctions() {
         //  bible.openNext()
         // console.log(bible, 'nextChapterData')
-        console.log(tab, "tabData")
         if (tab && tab?.id)
             setActiveTab(tab?.id)
-        if (tab.data.type === "canvas") {
-            setNavFunctions({
-                openNextChapter: () => {
-                    const tabData = { ...tab.data };
-                    tabData.chapter += 1;
-                    tabData.book = 'Canvas';
-                    updateTab(tab?.id, tabData);
-                    setTab({ ...tab, data: tabData });
-                }, openPrevChapter: () => {
-                    const tabData = { ...tab.data };
-                    if (tabData.chapter > 1) {
-                        tabData.chapter -= 1;
-                        tabData.book = 'Canvas';
-                        updateTab(tab?.id, tabData);
-                        setTab({ ...tab, data: tabData });
-                    }
-                }
-            })
-        } else {
-            setNavFunctions({ openNextChapter, openPrevChapter, open, changeTranslation: bible?.changeTranslation || undefined, setPanalApp: () => { } })
-        }
+        setNavFunctions({ openNextChapter, openPrevChapter, open, changeTranslation: bible?.changeTranslation || undefined, setPanalApp: () => { } })
         globalThis.Open = open
         globalThis.ChangeTranslation = changeTranslation
         globalThis.SetPanalApp = () => { }
-        setShowDialog({
-            show: false,
-            top: 0,
-            left: 0,
-            text: null
-        });
+        globalThis.ToggleVerseHighlight = toggleVerseHighlight;
+        globalThis.SetInHold = setInHold
+        globalThis.SetShowCommands = setShowCommands
+
+        // Add global word highlighting functions for developers
+        globalThis.HighlightWords = highlightWords;
+        globalThis.RemoveWordHighlight = removeWordHighlight;
+        globalThis.ClearAllWordHighlights = clearAllWordHighlights;
+
+
         //     os.log(tab)
         //     if (globalThis.GetBooksDataForMenu) {
         //         os.log(`https://bible.helloao.org/api/${data?.translation}/books.json`)
         //         globalThis.GetBooksDataForMenu(`https://bible.helloao.org/api/${data?.translation}/books.json`, data?.translation)
         //     }
+
+        // Additions ------>
+        globalThis.GlobalChapter = (data?.chapter || 1) - 1;
+
+        if (globalThis.studyNotesPresent) {
+            UpdateApplication(globalThis.STUDYNOTES_PANEL_ID, {
+                App: <StudyNotes id={globalThis.STUDYNOTES_PANEL_ID} chapter={globalThis.GlobalChapter} />,
+                to: 'panel',
+            })
+        }
+
     }
     function Update(tab) {
         // return
@@ -383,29 +598,21 @@ function ThePage({ tab: T, setPanalApp, panelId, setEnableEditor, setData, data 
         // globalThis.PanelTabsMap[id]
         // open(tab.data.bookId, tab.data.chapter, tab.data.translation)
     }
-    useEffect(() => {
-        globalThis.UpdateTab = Update
-        globalThis[`UpdateTabWidthId${tab?.id}`] = Update
-    })
-    // useEffect(() => {
-    //     if (data && tab) {
-    //         os.log('updatedData', data)
-    //         updateTab(tab?.id, data)
-    //         if (panelId && tab) {
-    //             os.log('recoreded', panelId, { ...tab, data: { ...tab.data, ...data } })
-    //             globalThis.PanelTabsMap[panelId] = { ...tab, data: { ...tab.data, ...data } };
-    //         }
-    //         // setTab(tabs.find(e => e?.id === tab?.id))
-    //     }
-    //     if (data) {
-    //         hanldNavFunctions()
-    //     }
-    // }, [data]);
-
+    globalThis.UpdateTab = Update
 
     const [blinker, setBlinker] = useState({});
     const [selected, setSelected] = useState({});
     const [holded, setHolded] = useState({});
+
+    useEffect(() => {
+        if (globalThis.SetCurrentBook) {
+            globalThis.SetCurrentBook(data);
+            globalThis.CHAPTER_DATA = {
+                ...data,
+            };
+        }
+        globalThis.CurrentBookData = { ...data };
+    }, [data]);
 
     useEffect(() => {
         globalThis.SetBlinker = setBlinker;
@@ -449,207 +656,162 @@ function ThePage({ tab: T, setPanalApp, panelId, setEnableEditor, setData, data 
             globalThis.ScrollToVerse = null;
         }
     }, [onScrollToRef]);
-    // return <TextEditor /> 
-    // if (data)
+
+    // Load existing word highlights for this tab
+    useEffect(() => {
+        if (!globalThis.wordHighlights) {
+            globalThis.wordHighlights = {};
+        }
+        if (tab?.id && globalThis.wordHighlights[tab.id]) {
+            setWordHighlights(globalThis.wordHighlights[tab.id]);
+        }
+    }, [tab?.id]);
+
     const [highlightOnce, setHighlightOnce] = useState(false);
 
+    const [highlighted, setHighlighted] = useState({});
+
+    // Add this useEffect after the existing globalThis assignments:
     useEffect(() => {
-        // setHighlightOnce(true);
-        // const timer = setTimeout(() => setHighlightOnce(false), 800); // matches animation duration
-        // return () => clearTimeout(timer);
-    }, []);
+        // Initialize tab highlights if not exists
+        if (!globalThis.tabHighlights) {
+            globalThis.tabHighlights = {};
+        }
+        if (tab?.id && !globalThis.tabHighlights[tab.id]) {
+            globalThis.tabHighlights[tab.id] = {};
+        }
 
-    // codes for page dialog
+        // Load existing highlights for this tab
+        if (tab?.id && globalThis.tabHighlights[tab.id]) {
+            setHighlighted(globalThis.tabHighlights[tab.id]);
+        }
 
-    const [selectedText, setSelectedText] = useState(null);
-    const [showDialog, setShowDialog] = useState({
-        show: false,
-        top: 0,
-        left: 0,
-        text: null
-    });
+        globalThis.SetHighlighted = setHighlighted;
 
-    const handleRightClick = (event) => {
-        event.preventDefault();
-        if (selectedText) {
-            console.log("show dialog")
-            const dim = os.getCurrentDimension();
-            if (dim) {
-                setShowDialog({
-                    show: true,
-                    top: `${event.y}px`,
-                    left: `${event.x}px`,
-                    text: selectedText
+        return () => {
+            globalThis.SetHighlighted = null;
+        }
+    }, [tab?.id, highlighted]);
+
+    // Add these helper functions in ThePage component:
+    const toggleVerseHighlight = useCallback((verseNumbers) => {
+        if (!tab?.id) return;
+
+        const numbers = Array.isArray(verseNumbers) ? verseNumbers : [verseNumbers];
+
+        setHighlighted(prev => {
+            const newHighlighted = { ...prev };
+
+            // Check if all verses in this group are already highlighted together
+            const allHighlighted = numbers.every(vn => newHighlighted[vn]);
+            const groupId = Date.now(); // Unique group ID for new highlights
+
+            if (allHighlighted) {
+                // All are highlighted → unhighlight them as a group
+                numbers.forEach(vn => {
+                    delete newHighlighted[vn];
+                });
+            } else {
+                // Highlight them together with same groupId
+                numbers.forEach(vn => {
+                    newHighlighted[vn] = {
+                        timestamp: groupId,
+                        book: data?.book,
+                        chapter: data?.chapter,
+                        group: groupId
+                    };
                 });
             }
-        } else {
-            console.log("hide dialog 1")
-            setShowDialog({
-                show: false,
-                top: 0,
-                left: 0,
-                text: null
-            });
-        }
-    }
 
-    const handleTextAdd = () => {
-        const typingTool = getBot(byTag("typingTool"));
-        if (typingTool) {
-            whisper(typingTool, "makeTextBox", { x: 0, y: 0, label: showDialog.text });
-        }
-        setShowDialog({
-            show: false,
-            top: 0,
-            left: 0,
-            text: null
+            // Update global storage
+            if (!globalThis.tabHighlights) {
+                globalThis.tabHighlights = {};
+            }
+            globalThis.tabHighlights[tab.id] = newHighlighted;
+
+            return newHighlighted;
         });
+    }, [tab?.id, data?.book, data?.chapter]);
+    useEffect(() => {
+        if (showCommands) {
+            setCommandHighlight(contextData.verses)
+        } else {
+            setCommandHighlight([])
+        }
+    }, [showCommands])
+    function clearUserSelection() {
+        if (window.getSelection) {
+            const selection = window.getSelection();
+            if (selection.empty) {          // Chrome
+                selection.empty();
+            } else if (selection.removeAllRanges) {  // Firefox / Edge
+                selection.removeAllRanges();
+            }
+        } else if (document.selection) {   // IE
+            document.selection.empty();
+        }
     }
+    globalThis.ClearUserSelection = clearUserSelection
 
     useEffect(() => {
-        const handleSelectionChange = () => {
-            const text = window.getSelection().toString();
-            if (text) {
-                setSelectedText(text);
-            } else if (!text) {
-                setSelectedText(null);
+        if (tab && tab.id === activeTab && panelId) {
+            globalThis.CurrentActivePanel = panelId;
+            return () => {
+                globalThis.CurrentActivePanel = null;
             }
-        };
-
-        document.addEventListener('selectionchange', handleSelectionChange);
-
-        return () => {
-            document.removeEventListener('selectionchange', handleSelectionChange);
-        };
-    }, [])
-
-    useEffect(() => {
-        if (!tab) return;
-        let it;
-        if (tab && tab.data.type === "canvas") {
-            if (currentCanvasMode === "canvas") {
-                setMapMode(false);
-                setCanvasMode(true)
-                globalThis.CanvasMode = true;
-                window.CanvasMode = true;
-                configBot.tags.gridPortal = `${tab?.data?.book}-${tab?.data?.chapter}`
-                configBot.tags.miniMapPortal = null;
-                it = setInterval(() => {
-                    setCanvasBoundaries({ intervalKey: it, tabId: tab.id });
-                }, 50)
-            } else {
-                setMapMode(true);
-                setCanvasMode(true)
-                globalThis.CanvasMode = true;
-                window.CanvasMode = true;
-                if (!configBot.tags.miniMapPortal) {
-                    animateTag(miniMapPortalBot, {
-                        fromValue: {
-                            miniPortalWidth: 0.1,
-                            miniPortalHeight: 0.2
-                        },
-                        toValue: {
-                            miniPortalWidth: 1,
-                            miniPortalHeight: 1
-                        },
-                        duration: 0.1
-                    });
-                }
-                configBot.tags.miniMapPortal = `map-${tab?.data?.chapter}`;
-                const geoImporter = getBot("system", "ext_geoImporter.importer");
-                if (geoImporter) {
-                    setTag(geoImporter, "targetDim", `map-${tab?.data?.chapter}`, "local")
-                }
-                it = setInterval(() => {
-                    setCanvasBoundaries({ intervalKey: it, tabId: tab.id });
-                }, 50)
-            }
-            setTagMask(thisBot, "canvasTab", tab, "tempLocal");
-            setTagMask(thisBot, "onGridClick", `@
-                console.log(masks.canvasTab)
-                if (globalThis[\`UpdateTabWidthId\${masks.canvasTab.id}\`]){
-                    console.log("updating tab via grid");
-                    SetCanvasMode(true);
-                    globalThis[\`UpdateTabWidthId\${masks.canvasTab.id}\`](masks.canvasTab)
-                }
-            `, "tempLocal")
-            console.log("tab canvas", tab)
         }
-        globalThis.SetCurrentCanvasMode = setCurrentCanvasMode;
-        globalThis.SetCanvasMode = setCanvasMode;
-        globalThis.CurrentCanvasMode = currentCanvasMode;
-        setIsDragging(false)
-        setTabEntered(false)
-        console.log("loading canvas");
-        return () => {
-            clearInterval(it)
-            setHW({
-                height: `0px !important`,
-                width: `0px !important`,
-            })
-            setTL({
-                top: `0px !important`,
-                left: `0px !important`,
-                borderRadius: "10px"
-            })
-            globalThis.SetCurrentCanvasMode = null;
-            masks.canvasTab = null;
-            masks.onGridClick = null;
-            globalThis.activeCanvasId = null;
-            console.log("unloading canvas");
-        }
-    }, [tab, currentCanvasMode])
-
-    if (tab?.data?.type === "canvas" && (globalThis?.activeCanvasId ? tab.id === globalThis.activeCanvasId : true)) {
-        return <div id={tab.id}>
-        </div>
-    }
+    }, [activeTab, panelId, tab])
 
     return <div
         className="pageContainer"
         onMouseLeave={handleMouseLeave}
         onMouseEnter={handleMouseEnter}
         onMouseUp={handleMouseUp}
-        onClick={() => {
-            hanldNavFunctions();
-            setCanvasMode(false)
-        }}
-        onContextMenu={handleRightClick}
+        onClick={hanldNavFunctions}
     >
         <link href="https://fonts.cdnfonts.com/css/helvetica-neue-55" rel="stylesheet" />
         <link href="https://fonts.cdnfonts.com/css/montserrat" rel="stylesheet" />
         <link href="https://fonts.googleapis.com/css2?family=EB+Garamond:ital,wght@0,400..800;1,400..800&display=swap" rel="stylesheet" />
-        {showDialog.show && <div style={{
-            position: "fixed",
-            top: showDialog.top,
-            left: showDialog.left,
-            zIndex: 10000,
-            pointerEvents: "auto"
-        }}>
-            <div class="popupSettings">
-                <div class="itemSettings" onClick={handleTextAdd}>
-                    <span>Create Text Bot</span>
-                </div>
-            </div>
-        </div>}
         {data && tab && !tabEntered ? <>
-            <div style={{ 'pointer-events': isDragging ? "none" : null }} className="bookTitle">{`${data?.book} - ${data?.chapter}`}</div>
+            <div style={{ 'pointer-events': isDragging ? "none" : null }} className="bookTitle">{`${data?.book} ${data?.chapter}`}</div>
             {
                 data && data.content.map(e => {
-                    return <div style={{ 'pointer-events': isDragging ? "none" : null }}>
-                        <Section
-                            {...e}
-                            book={data.book}
-                            chapter={data.chapter}
-                            blinker={blinker}
-                            setRef={refs}
-                            holded={holded}
-                            selected={selected}
-                            textEdit={false}
-                        />
-                    </div>
+                    return <>
+                        <div style={{ 'pointer-events': isDragging ? "none" : null }}>
+                            <Section
+                                {...e}
+                                inHold={inHold}
+                                setInHold={setInHold}
+                                book={data.book}
+                                chapter={data.chapter}
+                                blinker={blinker}
+                                setRef={refs}
+                                holded={holded}
+                                selected={selected}
+                                highlighted={highlighted}
+                                wordHighlights={wordHighlights}
+                                textEdit={false}
+                                showCommands={showCommands}
+                                setShowCommands={setShowCommands}
+                                selectedText={selectedText}
+                                lastSelectedVerse={lastSelectedVerse}
+                                contextData={contextData}
+                                setContextData={setContextData}
+                                commandsRef={commandsRef}
+                                setLastSelectedVerse={setLastSelectedVerse}
+                                setCommandHighlight={setCommandHighlight}
+                                commandHighlight={commandHighlight}
+                            />
+                        </div>
+                    </>
                 })
             }
+            <div style={{ height: '40px' }}></div>
+            <div style={{ margin: 'auto', width: '80%', height: '1px', background: 'gray' }}></div>
+            <div style={{ width: '50%', display: 'flex', 'align-items': 'center', 'justify-content': 'center', position: 'relative' }}>
+                <PageToolbar />
+            </div>
+            <div style={{ height: '160px' }}></div>
         </> :
             <>
                 <div
@@ -659,7 +821,7 @@ function ThePage({ tab: T, setPanalApp, panelId, setEnableEditor, setData, data 
                         display: 'flex',
                         alignItems: 'center',
                         justifyContent: 'center',
-                        height: screens === 1 && '100vh'
+                        backgroundColor: '#f8f9fa',
                     }}
                     className={`pageContainer ${tabEntered ? 'tabEntered' : 'tabDrop'} ${highlightOnce ? 'tabHighlightBg' : ''}`}
                 >
@@ -668,42 +830,48 @@ function ThePage({ tab: T, setPanalApp, panelId, setEnableEditor, setData, data 
                             pointerEvents: isDragging ? 'none' : undefined,
                             display: 'flex',
                             flexDirection: 'column',
+                            alignItems: 'center',
                             textAlign: 'center',
-
+                            padding: '40px',
+                            // backgroundColor: 'white',
+                            borderRadius: '12px',
+                            // boxShadow: '0 4px 12px rgba(0, 0, 0, 0.1)',
+                            maxWidth: '400px',
+                            width: '90%',
                         }}
                     >
-                        {!tabEntered ? `Please drop tab here` : 'Drop to open !'}
                         <div
-                            style={{
-                                textAlign: 'center',
-                                color: '#666',
-                                margin: '20px 0',
-                                fontSize: '14px',
+                            onClick={() => {
+                                setOpenSidebar(prev => !prev);
+                                setCurrentExperience(0);
                             }}
-                        >
-                            ──────── OR ────────
+                            style={{
+                                fontSize: '24px',
+                                marginBottom: '20px',
+                                color: '#333'
+                            }}>
+                            <img style={{ width: '50px' }} src="https://res.cloudinary.com/dfbtwwa8p/image/upload/v1755365776/717a8527988cca7e0bdc9449ec68581a8400b977_vqc7mx.png" />
                         </div>
 
-                        <button
-                            onClick={() => {
-                                globalThis.UpdateTab = Update
-                                hanldNavFunctions()
-                                setOpenSidebar(true);
-                                setCurrentExperience(0);
-                                globalThis.MakingNewTab = Update;
-                            }}
-                            style={{
-                                padding: '8px 16px',
-                                backgroundColor: 'gray',
-                                color: 'white',
-                                border: 'none',
-                                borderRadius: '4px',
-                                cursor: 'pointer',
-                                fontSize: '14px',
-                            }}
-                        >
-                            Select Book/Chapter
-                        </button>
+
+
+                        <div style={{
+                            width: '80%',
+                            height: '1px',
+                            background: '#e0e0e0',
+                            marginTop: '40px',
+                            margin: 'auto'
+                        }}></div>
+                        <div style={{
+                            width: '100%',
+                            marginTop: '30px',
+                            display: 'flex',
+                            alignItems: 'center',
+                            justifyContent: 'center',
+                            position: 'relative'
+                        }}>
+                            <PageToolbar path="showInStarterToolbar" />
+                        </div>
                     </div>
                 </div>
             </>
@@ -711,8 +879,219 @@ function ThePage({ tab: T, setPanalApp, panelId, setEnableEditor, setData, data 
 
     </div>
 }
+function PageToolbar({ path = 'showInPageToolbar' }) {
+    const { tools } = useBibleContext();
 
-function Section({ heading, setRef, verses, book, chapter, holded, blinker, selected, textEdit }) {
+    const visibleTools = tools.filter(tool => tool[path]);
+    if (visibleTools.length === 0) return null;
+
+    return (
+        <div className="thePageToolbar">
+            {
+                visibleTools.map(tool => (
+                    <div onClick={tool.onClick} className="tool-preview" key={tool.label}>
+                        {tool.isImg ? (
+                            <img
+                                src={tool.icon}
+                                style={{ width: '24px', height: '24px', objectFit: 'contain' }}
+                                alt={tool.label}
+                            />
+                        ) : (
+                            <span className="material-symbols-outlined">{tool.icon}</span>
+                        )}
+                    </div>
+                ))
+            }
+        </div>
+    );
+}
+
+// Additions ------>
+/**
+ * Split text into chunks of words vs. exact section-keys,
+ * matching any multi-word subphrase (≥2 words) *and* any single-word keys.
+ */
+function splitBySectionKeys(text, verseSectionMap) {
+    const stripRe = /[.,'"""'']/g;
+
+    // 1) Build a map of all subphrases (length ≥2) and single-word keys → parent key
+    const subphraseMap = {};
+    let maxLen = 1;
+
+    Object.keys(verseSectionMap).forEach(fullKey => {
+        // normalize the key
+        const normalized = fullKey.replace(stripRe, '').trim();
+        const wordsKey = normalized.split(/\s+/);
+        const n = wordsKey.length;
+        maxLen = Math.max(maxLen, n);
+
+        if (n === 1) {
+            // single-word key
+            subphraseMap[normalized] = fullKey;
+        } else {
+            // all contiguous subphrases of length ≥2
+            for (let L = n; L >= 2; L--) {
+                for (let start = 0; start + L <= n; start++) {
+                    const phrase = wordsKey.slice(start, start + L).join(' ');
+                    subphraseMap[phrase] = fullKey;
+                }
+            }
+        }
+    });
+
+    // 2) Tokenize & normalize your text
+    const words = text.split(/\s+/);
+    const norm = words.map(w => w.replace(stripRe, ''));
+
+    // 3) Scan through words greedily
+    const chunks = [];
+    let i = 0;
+    while (i < words.length) {
+        let matchLen = 0, matchKey = null;
+
+        // try lengths from maxLen down to 1
+        const limit = Math.min(maxLen, words.length - i);
+        for (let L = limit; L >= 1; L--) {
+            const slice = norm.slice(i, i + L).join(' ');
+            if (subphraseMap[slice]) {
+                matchKey = subphraseMap[slice];
+                matchLen = L;
+                break;
+            }
+        }
+
+        if (matchLen > 0) {
+            // emit matched chunk
+            chunks.push({
+                text: words.slice(i, i + matchLen).join(' '),
+                isSection: true,
+                key: matchKey
+            });
+            i += matchLen;
+        } else {
+            // no match → emit/merge single plain word
+            const w = words[i++];
+            if (chunks.length && !chunks[chunks.length - 1].isSection) {
+                chunks[chunks.length - 1].text += ' ' + w;
+            } else {
+                chunks.push({ text: w, isSection: false });
+            }
+        }
+    }
+
+    return chunks;
+}
+
+// Helper function to split text by word highlights
+function splitByWordHighlights(text, wordHighlights, book, chapter, verseNumber) {
+    if (!wordHighlights || Object.keys(wordHighlights).length === 0) {
+        return [{ text, isHighlighted: false }];
+    }
+
+    const verseKey = `${book}-${chapter}-${verseNumber}`;
+    const highlights = wordHighlights[verseKey];
+
+    if (!highlights || Object.keys(highlights).length === 0) {
+        return [{ text, isHighlighted: false }];
+    }
+
+    // Create regex pattern for all highlighted words
+    const highlightWords = Object.keys(highlights);
+    if (highlightWords.length === 0) {
+        return [{ text, isHighlighted: false }];
+    }
+
+    // Sort by length (longest first) to handle overlapping words correctly
+    highlightWords.sort((a, b) => b.length - a.length);
+
+    const pattern = new RegExp(`\\b(${highlightWords.map(word =>
+        word.replace(/[.*+?^${}()|[\\]\\\\]/g, '\\$&')
+    ).join('|')})\\b`, 'gi');
+
+    const parts = [];
+    let lastIndex = 0;
+    let match;
+
+    while ((match = pattern.exec(text)) !== null) {
+        // Add text before the match
+        if (match.index > lastIndex) {
+            parts.push({
+                text: text.slice(lastIndex, match.index),
+                isHighlighted: false
+            });
+        }
+
+        // Add the highlighted word
+        const matchedWord = match[1].toLowerCase();
+        parts.push({
+            text: match[1],
+            isHighlighted: true,
+            highlightConfig: highlights[matchedWord]
+        });
+
+        lastIndex = match.index + match[1].length;
+    }
+
+    // Add remaining text
+    if (lastIndex < text.length) {
+        parts.push({
+            text: text.slice(lastIndex),
+            isHighlighted: false
+        });
+    }
+
+    return parts;
+}
+
+// Replace the Section component with this updated one:
+
+function Section({ heading, commandHighlight, setCommandHighlight, setLastSelectedVerse, setRef, commandsRef, setContextData, contextData, verses, book, chapter, holded, blinker, selected, highlighted, wordHighlights, textEdit, setInHold, inHold, showCommands, setShowCommands, selectedText, lastSelectedVerse }) {
+
+    const stripRe = /[.,'"""'']/g;
+    const normalize = (k) => k.replace(stripRe, '').toLowerCase().trim();
+
+    // read the active key
+    const [activeKey, setActiveKey] = useState(globalThis.HighlightedSectionKey || '');
+    const [activeVerse, setActiveVerse] = useState(globalThis.HighlightedVerseNumber || '');
+
+    // 1) build refs once per verse
+    const verseRefs = useMemo(() => {
+        const m = {};
+        verses.forEach(v => {
+            m[v.verseNumber] = createRef();
+        })
+        return m;
+    }, [verses]);
+
+    useEffect(() => {
+        const handler = () => {
+            setActiveKey(globalThis.HighlightedSectionKey || '');
+        };
+        window.addEventListener('highlightedSectionKeyChanged', handler);
+        return () => window.removeEventListener('highlightedSectionKeyChanged', handler);
+    }, []);
+
+    useEffect(() => {
+        const handler = () => {
+            setActiveVerse(globalThis.HighlightedVerseNumber || '');
+            console.log("verse number clicked: ", globalThis.HighlightedVerseNumber || '');
+        };
+        window.addEventListener('highlightedVerseChanged', handler);
+        return () =>
+            window.removeEventListener('highlightedVerseChanged', handler);
+    }, []);
+
+    useLayoutEffect(() => {
+        if (!activeVerse) return
+        const ref = verseRefs[activeVerse]
+        if (ref?.current) {
+            ref.current.scrollIntoView({
+                behavior: 'smooth',
+                block: 'end'
+            })
+        }
+    }, [activeVerse, verseRefs])
+
     const editTextStyle = {
         "border-radius": "6px",
         "border": "2px solid #4459F3",
@@ -731,6 +1110,151 @@ function Section({ heading, setRef, verses, book, chapter, holded, blinker, sele
             alignment: 'left',
         },
     }
+
+    // inside your Section component, before the return:
+    const chunksMap = useMemo(() => {
+        const result = {};
+        if (globalThis.studyNotesPresent) {
+            verses.forEach(v => {
+                result[v.verseNumber] = splitBySectionKeys(
+                    v.text,
+                    globalThis.VerseSectionMap
+                );
+            });
+        }
+        return result;
+    }, [verses, globalThis.studyNotesPresent, globalThis.VerseSectionMap]);
+
+    // Create word highlight chunks map
+    const wordChunksMap = useMemo(() => {
+        const result = {};
+        verses.forEach(v => {
+            result[v.verseNumber] = splitByWordHighlights(
+                v.text,
+                wordHighlights,
+                book,
+                chapter,
+                v.verseNumber
+            );
+        });
+        return result;
+    }, [verses, wordHighlights, book, chapter]);
+
+    // Get context data for the selected verse
+    const getContextData = (verseNumber) => {
+        const verse = verses.find(v => v.verseNumber === verseNumber);
+        if (!verse) return null;
+
+        return {
+            verse: selectedText || verse.text,
+            reference: `${book} ${chapter}:${verseNumber}`,
+            book: book,
+            chapter: chapter,
+            verses: [verseNumber],
+            selectedText: selectedText
+        };
+    };
+
+    // Function to render verse text with word highlights
+    const renderVerseText = (verse) => {
+        const verseKey = `${book}-${chapter}-${verse.verseNumber}`;
+        const hasWordHighlights = wordHighlights[verseKey] && Object.keys(wordHighlights[verseKey]).length > 0;
+
+        if (globalThis.studyNotesPresent) {
+            // Use section-based rendering
+            return (chunksMap[verse.verseNumber] || []).map((part, i) => {
+                if (!part.isSection) {
+                    // For non-section text, apply word highlights if any
+                    if (hasWordHighlights) {
+                        const wordParts = splitByWordHighlights(part.text, wordHighlights, book, chapter, verse.verseNumber);
+                        return wordParts.map((wordPart, wordIndex) => {
+                            if (wordPart.isHighlighted) {
+                                return (
+                                    <span
+                                        key={`${i}-word-${wordIndex}`}
+                                        style={{
+                                            color: wordPart.highlightConfig.color,
+                                            backgroundColor: wordPart.highlightConfig.backgroundColor,
+                                            cursor: wordPart.highlightConfig.onClick ? 'pointer' : 'default',
+                                            padding: '1px 2px',
+                                            borderRadius: '2px'
+                                        }}
+                                        onClick={(e) => {
+                                            e.stopPropagation();
+                                            if (wordPart.highlightConfig.onClick) {
+                                                wordPart.highlightConfig.onClick(wordPart.text, verse.verseNumber);
+                                            }
+                                        }}
+                                    >
+                                        {wordPart.text}
+                                    </span>
+                                );
+                            }
+                            return <span key={`${i}-word-${wordIndex}`}>{wordPart.text}</span>;
+                        });
+                    }
+                    return <span key={i}>{part.text}</span>;
+                }
+
+                const partNorm = normalize(part.key);
+                const activeNorm = (activeKey || '').toLowerCase();
+                const isActive = activeNorm.includes(partNorm);
+
+                return (
+                    <span
+                        key={i}
+                        className={`clickableCursor highlightened ${isActive ? 'highlighted-word' : ''}`}
+                        style={{ animationDelay: `${i * 0.1}s` }}
+                        onClick={() => {
+                            console.log(part.key);
+                            const raw = globalThis.VerseSectionMap[part.key].original;
+                            console.log(raw);
+                            const m = /:(\d+)$/.exec(raw);
+                            console.log(m);
+                            const sec = m ? m[1] : part.key;
+                            console.log(sec);
+                            globalThis.HighlightStudyNoteSection(raw);
+                        }}
+                    >
+                        {part.text}
+                    </span>
+                );
+            });
+        } else {
+            // Use word highlighting only
+            if (hasWordHighlights) {
+                const wordParts = wordChunksMap[verse.verseNumber] || [{ text: verse.text, isHighlighted: false }];
+                return wordParts.map((part, i) => {
+                    if (part.isHighlighted) {
+                        let attributes = part.highlightConfig.createAttributes(book, chapter, part)
+                        return (
+                            <span
+                                key={i}
+                                style={{
+                                    color: part.highlightConfig.color,
+                                    cursor: part.highlightConfig.onClick ? 'pointer' : 'default',
+                                    padding: '1px 2px',
+                                    borderRadius: '2px'
+                                }}
+                                onClick={(e) => {
+                                    e.stopPropagation();
+                                    if (part.highlightConfig.onClick) {
+                                        part.highlightConfig.onClick(part.text, verse.verseNumber);
+                                    }
+                                }}
+                                {...attributes}
+                            >
+                                {part.text}
+                            </span>
+                        );
+                    }
+                    return <span key={i}>{part.text}</span>;
+                });
+            }
+            return verse.text;
+        }
+    };
+
     return <div>
         <div className="sectionTitle">
             {heading}
@@ -744,48 +1268,111 @@ function Section({ heading, setRef, verses, book, chapter, holded, blinker, sele
             <div className="sectionCover">
                 {verses.map(verse => {
                     const [c, setC] = useState(false)
-                    return <span
-                        // onDoubleClick={(e) => { console.log(e); setC(!c) }}
-                        onClick={() => {
+                    const isActive = verse.verseNumber.toString() === activeVerse
+                    const shouldShowCommands = showCommands && lastSelectedVerse === verse.verseNumber;
+                    const isTextDecorUnderline = (holded?.[verse.verseNumber] || selected[verse.verseNumber] || blinker[verse.verseNumber]);
 
-                            os.log({
-                                verseNumber: verse.verseNumber,
-                                text: verse.text,
-                                chapter,
-                                book
-                            })
-                            thisBot.onVerseClick({
-                                verseNumber: verse.verseNumber,
-                                text: verse.text,
-                                chapter,
-                                book
-                            })
-                        }}
-                        style={{
-                            'text-decoration': (holded?.[verse.verseNumber] || selected[verse.verseNumber] || blinker[verse.verseNumber]) ? `underline` : ``,
-                        }}
-                        className="sectionText">
-                        <span className="sectionTextNumber">{verse?.verseNumber}</span>
-                        {!c ? verse?.text : <MiniTextEditor
-                            initialHtml={verse?.text}
-                            onChange={(html) => console.log('Updated HTML:', html)}
-                        />}
-                        <input
-                            style={{ opacity: '0', 'pointer-events': 'none', position: 'absolute', 'left': 0, 'top': 0, zIndex: -1 }}
-                            placeholder={'test'}
-                            ref={(ref) => {
-                                if (setRef && setRef[verse.verseNumber]) {
-                                    setRef[verse.verseNumber].current = ref
-                                }
+                    return <span key={verse.verseNumber}>
+                        <span
+                            ref={verseRefs[verse.verseNumber]}
+                            onContextMenu={(e) => {
+                                e.preventDefault();
+                                setInHold(verse.verseNumber);
+                                setLastSelectedVerse(verse.verseNumber);
+
+                                setContextData({
+                                    verse: verse.text,
+                                    reference: `${book} ${chapter}:${verse.verseNumber}`,
+                                    book,
+                                    chapter,
+                                    verses: [verse.verseNumber],
+                                });
+                                shout('onVeresRightClick', {
+                                    verseNumber: verse.verseNumber,
+                                    text: verse.text,
+                                    chapter,
+                                    book,
+                                    highlighted: highlighted?.[verse.verseNumber]
+                                });
                             }}
-                        />
+
+                            onClick={() => {
+                                SetShowCommands(false);
+                                os.log({
+                                    verseNumber: verse.verseNumber,
+                                    text: verse.text,
+                                    chapter,
+                                    book,
+                                    highlighted: highlighted?.[verse.verseNumber]
+                                })
+                                shout('onVerseClick', {
+                                    verseNumber: verse.verseNumber,
+                                    text: verse.text,
+                                    chapter,
+                                    book,
+                                    highlighted: highlighted?.[verse.verseNumber]
+                                })
+                            }}
+                            style={{
+                                'background-color':
+                                    highlighted?.[verse.verseNumber] ||
+                                        commandHighlight.includes(verse.verseNumber)
+                                        ? '#ffeb3b'
+                                        : 'transparent',
+                                'transition': 'background-color 0.2s ease',
+                                'border-radius': highlighted?.[verse.verseNumber] ? '3px' : '0',
+                                'padding': highlighted?.[verse.verseNumber] ? '2px 4px' : '0',
+                                'margin': highlighted?.[verse.verseNumber] ? '0 1px' : '0',
+                                'text-decoration': (inHold === verse.verseNumber || isTextDecorUnderline) ? 'underline' : '',
+                                'text-decoration-style': (inHold === verse.verseNumber || isTextDecorUnderline) ? "dotted" : '',
+                            }}
+                            className={`sectionText ${verse?.verseNumber.toString() === activeVerse.toString() ? 'highlighted' : ''} ${highlighted?.[verse.verseNumber] ? 'verse-highlighted' : ''}`}
+                        >
+                            <span
+                                className={`sectionTextNumber ${globalThis.studyNotesPresent ? "clickableCursor" : ""}`}
+                                onClick={() => {
+                                    if (globalThis.studyNotesPresent) {
+                                        HighlightStudyNoteSection(verse?.verseNumber)
+                                    }
+                                }}
+                            >{verse?.verseNumber}</span>
+                            {!c ? renderVerseText(verse) : (
+                                <MiniTextEditor
+                                    initialHtml={verse.text}
+                                    onChange={(html) => console.log("Updated HTML:", html)}
+                                />
+                            )}
+                            <input
+                                style={{ opacity: '0', 'pointer-events': 'none', position: 'absolute', 'left': 0, 'top': 0, zIndex: -1 }}
+                                placeholder={'test'}
+                                ref={(ref) => {
+                                    if (setRef && setRef[verse.verseNumber]) {
+                                        setRef[verse.verseNumber].current = ref
+                                    }
+                                }}
+                            />
+                        </span>
+
+                        {shouldShowCommands && (
+                            <div
+                                ref={commandsRef}
+                                style={{
+                                    marginTop: '10px',
+                                    marginBottom: '20px',
+                                    borderTop: '1px solid #eee',
+                                    paddingTop: '10px'
+                                }}>
+                                <ConfigurableFunctionCommands
+                                    contextData={contextData}
+                                />
+                            </div>
+                        )}
                     </span>
                 })}
             </div>
         </div>
-    </div >
+    </div>
 }
-
 
 export const ThePageWithPanel = ({ tab }) => {
 
@@ -807,12 +1394,12 @@ export const ThePageWithPanel = ({ tab }) => {
         </DivSpliter>
     </>
 }
-export const ThePageWithEditor = ({ tab, setPanalApp, panelId }) => {
+export const ThePageWithEditor = ({ tab, setPanalApp, panelId, preferTab = false }) => {
     useEffect(() => {
         os.log('tab in the page', panelId, tab)
     }, [])
 
-    const activeTab = panelId ? globalThis.PanelTabsMap[panelId] || tab : tab;
+    const activeTab = panelId && !preferTab ? globalThis.PanelTabsMap[panelId] || tab : tab;
     const [enableEditor, setEnableEditor] = useState(false);
     const [data, setData] = useState()
     if (tab)

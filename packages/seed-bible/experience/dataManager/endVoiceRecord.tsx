@@ -1,4 +1,4 @@
-const { setData } = that || {};
+let { setData } = that || {};
 const data = await os.endAudioRecording();
 if (setData) {
     data.arrayBuffer().then(buffer => {

@@ -1,6 +1,7 @@
 .tooltip-container {
     position: relative;
     display: grid;
+    margin-left: auto;
     cursor: pointer;
 }
 
@@ -26,11 +27,12 @@
 }
 
 .tooltip-message {
-    background-color: #555;
-    color: #fff;
-    text-align: center;
+    background-color: #555 !important;
+    color: #fff !important;
+    text-align: left;
     border-radius: 6px;
     padding: 5px 0;
     position: relative;
     z-index: 1;
 }
+
