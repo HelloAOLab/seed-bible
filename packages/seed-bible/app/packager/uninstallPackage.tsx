@@ -1,18 +1,32 @@
+
+// return
 const { address } = that
-console.log(masks[`${address}-data`], 'packge for uninstall')
+console.log(masks[`${address}-data`], 'package for uninstall')
 if (masks[`${address}-data`]) {
     const { mainBotTag, otherBots, configEditor, dependencies } = masks[`${address}-data`]
+    destroy(getBots('forPackage', address))
 
     if (mainBotTag)
         destroy(getBot('system', mainBotTag))
-    dependencies.forEach(({ name, type }) => {
+
+    // replace dependencies.forEach
+    for (let i = 0; i < dependencies.length; i++) {
+        const { name, type } = dependencies[i]
         if (type === 'package') {
-            thisBot.uninstallPackage({ address: name })
+            await thisBot.uninstallPackage({ address: name })
         } else if (type === "dependency") {
             destroy(getBots('forPackage', address))
         }
-    })
-    otherBots.forEach(bot => getBot('system', bot?.tags?.system || bot.tag) && destroy(getBot('system', bot?.tags?.system || bot.tag)))
+    }
+
+    // replace otherBots.forEach
+    for (let i = 0; i < otherBots.length; i++) {
+        const bot = otherBots[i]
+        const sysTag = bot?.tags?.system || bot.tag
+        if (getBot('system', sysTag)) {
+            destroy(getBot('system', sysTag))
+        }
+    }
 
     if (!globalThis.ContextMenuOptions)
         globalThis.ContextMenuOptions = []
@@ -37,6 +51,8 @@ if (masks[`${address}-data`]) {
 }
 
 setTagMask(thisBot, `${address}-data`, null)
+
+
 // console.log()
 
 // const allbots = masks[`${address}-bots`]

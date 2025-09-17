@@ -1,10 +1,19 @@
 
 
 await thisBot.getPackages()
-tags.mainPackages.forEach(async e => {
-    os.log('installing main package', e)
-    await thisBot.installPackage({ name: e })
-})
+
+for(let i =0;i<masks.installedPackages.length;i++){
+
+    const address = masks.installedPackages[i]
+    
+    const pkgConfig = masks[`${address}-data`]
+    const bot = getBot('system', pkgConfig.mainBotTag)
+    await thisBot.reInitPackage({ configEditor: pkgConfig.configEditor, bot, pkgName: address })
+}
+// tags.mainPackages.forEach(async e => {
+//     os.log('installing main package', e)
+//     await thisBot.installPackage({ name: e })
+// })
 thisBot.detectPackagesFromLink()
 
 // await os.sleep(1000)

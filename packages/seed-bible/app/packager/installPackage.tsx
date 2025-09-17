@@ -178,8 +178,11 @@ await(async function mainInstaller(that) {
 
                     // If pushBots is async, await each push
                     for (const botDef of read.data) {
-                        const b = create({ ...botDef, forPackage: NameHolder, space: 'tempLocal' });
-                        await thisBot.pushBots({ name: NameHolder, bot: b });
+                        const b = create({ ...botDef, space: 'local' }, {
+                            forPackage: NameHolder
+                        });
+                        console.log(b, b.tags.mazem, b.tags.system)
+                        // await thisBot.pushBots({ name: NameHolder, bot: b });
                     }
                 }
             }
@@ -230,12 +233,12 @@ await(async function mainInstaller(that) {
 
         // Push secondary bots first (await if async)
         for (let i = 1; i < read.data.length; i++) {
-            const b = create(read.data[i], { space: 'tempLocal' });
-            await thisBot.pushBots({ name, bot: b });
+            const b = create(read.data[i], { space: 'local', forPackage: NameHolder });
+            // await thisBot.pushBots({ name, bot: b });
         }
 
         // Push the primary (first) bot
-        const bot = create(read.data[0], { space: 'tempLocal' });
+        const bot = create(read.data[0], { space: 'local', forPackage: NameHolder });
         await thisBot.pushBots({ name, bot, first: true });
 
         // Give lifecycle hooks a chance to run (await sleeps!)

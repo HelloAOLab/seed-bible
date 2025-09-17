@@ -23,6 +23,8 @@ import { Extensions } from 'app.components.extensions'
 import { useBibleContext } from 'app.hooks.bibleVariables'
 import { PanelSettingsDialog } from 'app.components.screenSettingsOptions'
 import { EditorToolbarSettings } from 'app.components.editorSettings'
+import { NowBar } from 'app.components.nowBar'
+
 shout('initialize')
 globalThis.PanelTabsMap = {}; // { panelId: tabObject }
 
@@ -91,6 +93,7 @@ const Layout = ({ children }) => {
       <div>
         <Toolbar />
         <ToolbarReal />
+        <NowBar/>
       </div>
 
       <style>{getStyleOf('main.css')}</style>
