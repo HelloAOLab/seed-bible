@@ -1,4 +1,4 @@
-const LoaderSecondary = () => {
+const LoaderSecondary = ({ secondary }) => {
     return <>
         <style>{
             `
@@ -7,7 +7,6 @@ const LoaderSecondary = () => {
                     padding: 4px;
                     aspect-ratio: 1;
                     border-radius: 50%;
-                    background: #D36433;
                     --_m: 
                         conic-gradient(#0000 10%,#000),
                         linear-gradient(#000 0 0) content-box;
@@ -21,6 +20,9 @@ const LoaderSecondary = () => {
             `
         }</style>
         <div
+            style={{
+                backgroundColor: secondary ? 'grey' : '#D36433'
+            }}
             className="loader"
         />
     </>

@@ -1,6 +1,7 @@
 const { useState, useRef } = os.appHooks;
-import { Space, LoadSpace, ToolbarIcon, UserAvatar } from 'app.components.icons'
+import { Space, LoadSpace, ToolbarIcon, UserAvatar, SpaceDefaultIcon } from 'app.components.icons'
 import { useTabsContext } from 'app.hooks.tabs';
+import { IconOptions } from 'app.components.types'
 const { useEffect } = os.appHooks;
 export function ImportSpaceModal() {
     const [spaceId, setSpaceId] = useState('');
@@ -881,13 +882,14 @@ export function SpaceSettingsForm() {
     );
 }
 
-export const SpaceSelector = () => {
-    const { updateSpace, activeSpace, spaces } = useTabsContext();
+export const SpaceSelector = ({ updateSpace, activeSpace, spaces }) => {
+    // const {   } = useTabsContext();
     const CurrentSpace = spaces.find(e => e.id === activeSpace)
     const [selectedIcon, setSelectedIcon] = useState(CurrentSpace?.iconIndex || 0);
-    const icons = [
+    const iconsDefault = [
+        'block',
         <Space />,
-       'dashboard',
+        'dashboard',
         'auto_stories',
         'menu_book',
         'bookmarks',
@@ -906,6 +908,21 @@ export const SpaceSelector = () => {
         'chat_bubble',
         'explore'
     ];
+    const [icons, setIcons] = useState(IconOptions)
+    async function handeUpload() {
+        const image = await thisBot.uploadHandler()
+        const ICON = ({ src, url }) => {
+            return <img onClick={() => {
+                os.openURL(url);
+            }} style={{ width: '25px' }} src={src} />
+        }
+        // const url = await os.showInput(null, {
+        //     placeholder: 'Enter Url'
+        // });
+        IconOptions.push({ id: `${Date.now()}`, active: true, name: <ICON src={image} url={''} /> })
+        updateSpace(activeSpace, { icon: <ICON src={image} url={''} />, iconIndex: IconOptions.lenght })
+        // setIcons(prev => ([...prev, { id: `${Date.now()}`, active: true, name: <ICON src={image} /> }]))
+    }
     // useEffect(() => {
     //     updateSpace(activeSpace, { icon: icons[selectedIcon], iconIndex: selectedIcon })
     //     console.log(activeSpace, { icon: icons[selectedIcon], iconIndex: selectedIcon })
@@ -914,10 +931,10 @@ export const SpaceSelector = () => {
         <div style={styles.iconGrid}>
             {icons.map((icon, index) => (
                 <div
-                    key={icon}
+                    key={icon.name}
                     onClick={() => {
                         // setSelectedIcon(index);
-                        updateSpace(activeSpace, { icon: icons[index], iconIndex: index })
+                        updateSpace(activeSpace, { icon: index === 0 ? null : icons[index].name, iconIndex: index })
                     }}
                     style={{
                         ...styles.iconOption,
@@ -936,13 +953,55 @@ export const SpaceSelector = () => {
                 >
                     <span
                         className="material-symbols-outlined"
-                        style={selectedIcon === icon ? styles.iconSelected : styles.icon}
+                        style={{
+                            ...selectedIcon === icon.name ? styles.iconSelected : styles.icon,
+                            'pointer-events': 'none'
+                        }}
                     >
-                        {icon}
+                        {icon.name}
                     </span>
                 </div>
             ))}
+            <div onclick={handeUpload} style={styles.iconOption}>
+                <span
+
+                    className="material-symbols-outlined"
+                    style={styles.iconSelected}
+                >
+                    {`add_2`}
+                </span>
+            </div>
         </div>
+        <style>{`
+        .activeBg {
+    background: #4459F34D;
+    border-radius: 3px;
+    width: 20px;
+    height: 20px;
+    border: 1px solid #4459F3;
+    display: flex;
+    justify-content: center;
+    align-items: center;
+    cursor: pointer;
+}
+
+.activeBg span {
+    width: 8px;
+    height: 8px;
+    background-color: #4459F3;
+    border-radius: 2px;
+    display: block;
+}
+
+.bg span {
+    cursor: pointer;
+    width: 8px;
+    height: 8px;
+    background-color: var(--gray2-color);
+    border-radius: 2px;
+    display: block;
+}
+        `}</style>
     </div>
 }
 const styles = {

@@ -1,12 +1,13 @@
 .toolbar-container-1 {
-  display: flex;
+  display: var(--toolbarVisibility);
   justify-content: center;
   padding: 16px 0;
-  width: 100%;
+  width: max-content;
   position: fixed;
   bottom: 18px;
   left: 50%;
   z-index: 10;
+
 }
 
 .toolbar-1 {
@@ -27,6 +28,44 @@
   bottom: 18px;
   z-index: 99;
   border: 1px solid #00000024;
+}
+
+
+
+@media (max-width: 480px) {
+  .toolbar-1 {
+    width: 100vw !important;
+    border: none;
+    border-radius: 0px;
+    bottom: 0px;
+    background-color: #F0F1F1 !important;
+    justify-content: flex-start !important;
+    padding: 0px 2px;
+    height: 45px;
+  }
+
+  .firstToolbarbutton {
+    height: 100% !important;
+    background-color: #DFDEDE !important;
+    border-radius: 0px !important;
+    width: 50px !important;
+  }
+
+  .leftClick {
+    position: absolute !important;
+    left: 13px;
+    bottom: 60px;
+    background: #F0F1F1;
+    border-radius: 100%;
+  }
+
+  .rightClick {
+    position: absolute !important;
+    right: 13px;
+    bottom: 60px;
+    background: #F0F1F1;
+    border-radius: 100%;
+  }
 }
 
 

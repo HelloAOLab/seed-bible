@@ -60,33 +60,25 @@ export function TabsProvider({ children }) {
     const { setScreens, screens } = useBibleContext()
     const [multiSelectMode, setMultiSelectMode] = useState(false);
     const [selectedTabs, setSelectedTabs] = useState([]);
-
+    const [tabsIcons, setTabsIcons] = useState(true)
     // Get current space
     const activeSpaceData = spaces.find(space => space.id === activeSpace) || spaces[0];
     const { folders = [], tabs = [] } = activeSpaceData || {};
+
     useEffect(() => {
-        masks[`lastactive_tab_${activeSpace}`] = activeTab
-    }, [activeTab])
-    // useEffect(() => {
-    //     os.log(masks[activeSpace], activeSpace, 'spaces[activeSpace]?.screens')
-    //     setScreens(masks[activeSpace] || 1)
-    //     // const prev = screens
-    //     // setScreens(1)
-    //     let id = masks[`lastactive_tab_${activeSpace}`] || tabs[0]?.id
-    //     setActiveTab(id)
-    //     // os.log(id, tabs, 'masks[`lastactive_tab_${activeSpace}`]')
-    //     let tab = getAllTabsInSpace(spaces.find(space => space.id === activeSpace)).find(e => e.id === id)
-    //     // os.log(globalThis.UpdateTab, tab, id, 'globalThis.UpdateTab')
-    //     if (tab) {
-    //         if(globalThis.UpdateTab)
-    //         globalThis.UpdateTab(tab)
-    //         // os.log('globalThis.Open',globalThis.Open)
-    //         // globalThis.Open(tab.data.id, tab.data.chapter, tab.data.translation)
-    //         // updateActiveTab(tab.data)
-    //     }
-    //     // setTimeout(() => {
-    //     // }, 0)
-    // }, [activeSpace])
+        masks[`lastactive_tab_${activeSpace}`] = activeTab;
+
+        const activeTabData = tabs.find((ele) => ele.id === activeTab)?.data;
+
+        if (globalThis.SetCurrentBook && !!activeTabData) {
+            globalThis.SetCurrentBook(activeTabData);
+            globalThis.CHAPTER_DATA = {
+                ...activeTabData,
+            };
+        }
+        globalThis.CurrentBookData = { ...activeTabData };
+    }, [activeTab]);
+
     const updateToolsForSpace = (spaceId, tools) => {
         setSpaces(prev =>
             prev.map(space =>
@@ -496,6 +488,15 @@ export function TabsProvider({ children }) {
         os.log(spaces, 'spaces updated')
     }, [spaces])
 
+    useEffect(() => {
+        globalThis.ActiveTab = activeTab;
+        globalThis.SetActiveTab = setActiveTab;
+        return () => {
+            globalThis.ActiveTab = null;
+            globalThis.SetActiveTab = null;
+        }
+    }, [activeTab])
+
     return (
         <MyContext.Provider value={{
             spaces, activeSpace, setActiveSpace,
@@ -510,6 +511,7 @@ export function TabsProvider({ children }) {
             multiSelectMode, setMultiSelectMode,
             selectedTabs, setSelectedTabs,
             getToolsForActiveSpace,
+            tabsIcons, setTabsIcons,
             currentSpace: spaces.find(e => e.id === activeSpace)
         }}>
             {children}

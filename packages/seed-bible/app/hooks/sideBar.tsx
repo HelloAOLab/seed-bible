@@ -14,6 +14,17 @@ export function SideBarProvider({ children }) {
     const [popupComponent, setPopupComponent] = useState(null)
     const [sidebarWidth, setSidebarWidth] = useState(280);
     const [themeColors, setThemeColors] = useState()
+    const [userURL, setUserURL] = useState()
+    const [customIcon, setCustomIcon] = useState(null)
+    const [packageAddingOptions, setPackageAddingOptions] = useState([])
+    const [openOnMobile, setOpenOnMobile] = useState(false)
+    globalThis.SetPackageAddingOptions = setPackageAddingOptions
+    useEffect(() => {
+        console.log(packageAddingOptions, 'addingOptions')
+    }, [packageAddingOptions])
+    useEffect(() => {
+        // ShowToolbar(!openOnMobile)
+    }, [openOnMobile])
     useEffect(() => {
         const handleMouseMove = (event) => {
             setMousePosition({ x: event.clientX, y: event.clientY });
@@ -48,26 +59,43 @@ export function SideBarProvider({ children }) {
     }
 
     function adjustPositionWithinScreen(x, y) {
-        const popupWidth = 250; // Adjust to your popup's actual width
-        const popupHeight = 230; // Adjust to your popup's actual height
-        const margin = 10; // Minimum margin from the screen edges
+        const popupWidth = 250;
+        const popupHeight = 230;
+        const margin = 10;
+        const cursorOffset = 10; // Small offset from cursor
 
-        let adjustedX = x;
-        let adjustedY = y;
+        let adjustedX = x + cursorOffset;
+        let adjustedY = y + cursorOffset;
 
-        if (x + popupWidth > window.innerWidth - margin) {
-            adjustedX = window.innerWidth - popupWidth - margin;
+        // Check horizontal bounds
+        if (adjustedX + popupWidth > window.innerWidth - margin) {
+            // Position to the left of cursor instead
+            adjustedX = x - popupWidth - cursorOffset;
+
+            // If still off screen, clamp to right edge
+            if (adjustedX < margin) {
+                adjustedX = window.innerWidth - popupWidth - margin;
+            }
         }
 
-        if (y + popupHeight > window.innerHeight - margin) {
-            adjustedY = window.innerHeight - popupHeight - margin - 45;
+        // Check vertical bounds
+        if (adjustedY + popupHeight > window.innerHeight - margin) {
+            // Position above cursor instead
+            adjustedY = y - popupHeight - cursorOffset;
+
+            // If still off screen, clamp to bottom edge
+            if (adjustedY < margin) {
+                adjustedY = window.innerHeight - popupHeight - margin;
+            }
         }
 
-        if (adjustedX < margin) adjustedX = margin;
-        if (adjustedY < margin) adjustedY = margin;
+        // Final safety checks
+        adjustedX = Math.max(margin, Math.min(adjustedX, window.innerWidth - popupWidth - margin));
+        adjustedY = Math.max(margin, Math.min(adjustedY, window.innerHeight - popupHeight - margin));
 
         return { x: adjustedX, y: adjustedY };
     }
+
 
     globalThis.openPopupSettings = openPopupSettings
 
@@ -97,7 +125,15 @@ export function SideBarProvider({ children }) {
     }, [popupSettings, popupComponent])
 
     return (
-        <MyContext.Provider value={{ themeColors, setThemeColors, vars, setVars, wait, setWait, sidebarMode, setSideBarMode, collapsed, setCollapsed, openPopupSettings, sidebarWidth, setSidebarWidth, closePopupSettings }}>
+        <MyContext.Provider value={{
+            userURL, packageAddingOptions,
+            setPackageAddingOptions, customIcon, setCustomIcon, setUserURL,
+            themeColors, setThemeColors, vars, setVars, wait, setWait,
+            sidebarMode, setSideBarMode, collapsed, setCollapsed,
+            openPopupSettings, sidebarWidth, setSidebarWidth,
+            openOnMobile, setOpenOnMobile,
+            closePopupSettings
+        }}>
             {children}
         </MyContext.Provider>
     );
@@ -121,6 +157,8 @@ export function PopupSettings({ items, type, disabled, sidebarContext }) {
                 {null /*<div className="triangle-up"></div>*/}
                 {
                     items.map(item => {
+                        if (item.active === false)
+                            return
                         if (item?.type === 'line')
                             return <div style={{
                                 width: "100%",
@@ -135,14 +173,15 @@ export function PopupSettings({ items, type, disabled, sidebarContext }) {
                                         if (item.external)
                                             setextrnal(item.external)
                                     }}
-                                    className={`itemSettings ${item?.disabled && 'disabled'}`}
-                                    style={{ cursor: 'pointer' }}
+                                    className={`itemSettings`}
+                                    style={{ cursor: item?.disabled ? "not-allowed" : 'pointer', color: item?.disabled ? "#929292" : "" }}
                                 >
                                     <div>{item.icon}</div>
-                                    <div>{item.title}</div>
+                                    <div>{typeof item.title === "function" ? item.title() : item.title}</div>
                                 </div>
                             )
-                    })
+                    }
+                    )
                 }
                 <style>{getStyleOf('sidebar.css')}</style>
             </div>}
