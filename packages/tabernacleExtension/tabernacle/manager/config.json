@@ -1,0 +1,14 @@
+{
+    "app": "",
+    "author": "Gabriel Souki",
+    "toolbarConfig":
+    {
+        "label": "Tabernacle",
+        "hasToggle": "true",
+        "icon": "home"
+    },
+    "tabConfig":
+    {
+        "title": "Tabernacle"
+    }
+}

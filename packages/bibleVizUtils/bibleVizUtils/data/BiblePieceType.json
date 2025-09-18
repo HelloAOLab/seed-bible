@@ -1,0 +1,13 @@
+{
+    "StackTestament": "StackTestament",
+    "StackSection": "StackSection",
+    "StackSectionBook": "StackSectionBook",
+    "StackBook": "StackBook",
+    "StackChapter": "StackChapter",
+    "StackChunkOfVerses": "StackChunkOfVerses",
+    "StackVerse": "StackVerse",
+    "LayoutBook": "LayoutBook",
+    "LayoutChapter": "LayoutChapter",
+    "LayoutChunkOfVerses": "LayoutChunkOfVerses",
+    "LayoutVerse": "LayoutVerse"
+}

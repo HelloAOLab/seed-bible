@@ -1,0 +1,1 @@
+BibleVizUtils.Functions.TryUpdateNotificationDirection({bot: thisBot});

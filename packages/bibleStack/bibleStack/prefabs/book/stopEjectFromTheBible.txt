@@ -1,0 +1,25 @@
+return
+
+// that: {callingFrom: String [onPointerUp, onDrag]}
+
+if(!thisBot.masks.isTryingToEjectFromTheBible) return;
+
+const currentEjectTransitionPercentage = thisBot.masks.ejectTransitionPercentage;
+const animationDuration = 0.25;
+setTagMask(thisBot, "isInTransition", false);
+setTagMask(thisBot, "isTryingToEjectFromTheBible", false);
+animateTag(thisBot, "ejectTransitionPercentage", null);
+setTagMask(thisBot, "ejectTransitionPercentage", 0);
+
+// if(currentEjectTransitionPercentage < 0.25 && currentEjectTransitionPercentage > 0)
+// {
+//     if(that.callingFrom === "onPointerUp")
+//     {
+//         thisBot.setThisBookAsTheTray();
+//     }
+// }
+// else
+// {
+    // thisBot.lerpColor({startingColor: BibleVizUtils.Functions.HexToRgb(thisBot.masks.color ?? thisBot.tags.color), endingColor: BibleVizUtils.Functions.HexToRgb(thisBot.tags.initialColor), durationInSeconds: animationDuration});
+    ColorLerper.LerpTag({startingColor: BibleVizUtils.Functions.HexToRgb(thisBot.masks.color ?? thisBot.tags.color), endingColor: BibleVizUtils.Functions.HexToRgb(thisBot.tags.initialColor), durationInSeconds: animationDuration, bot: thisBot, tag: BibleVizUtils.Data.tags.InterpolatableColorTags.Color});
+// }

@@ -1,0 +1,258 @@
+[
+    {
+        "book": "Exodus",
+        "chapter": 25,
+        "minVerse": 10,
+        "maxVerse": 16,
+        "keys": [
+            "ark-of-covenant"
+        ]
+    },
+    {
+        "book": "Exodus",
+        "chapter": 25,
+        "minVerse": 17,
+        "maxVerse": 22,
+        "keys": [
+            "ark-of-covenant"
+        ]
+    },
+    {
+        "book": "Exodus",
+        "chapter": 25,
+        "minVerse": 23,
+        "maxVerse": 30,
+        "keys": [
+            "table-showbread"
+        ]
+    },
+    {
+        "book": "Exodus",
+        "chapter": 25,
+        "minVerse": 31,
+        "maxVerse": 40,
+        "keys": [
+            "menorah"
+        ]
+    },
+    {
+        "book": "Exodus",
+        "chapter": 26,
+        "minVerse": 1,
+        "maxVerse": 6,
+        "keys": [
+            "cloth-brown",
+            "cloth-red",
+            "cloth-grey",
+            "cloth-purple"
+        ]
+    },
+    {
+        "book": "Exodus",
+        "chapter": 26,
+        "minVerse": 7,
+        "maxVerse": 14,
+        "keys": [
+            "cloth-brown",
+            "cloth-red",
+            "cloth-grey",
+            "cloth-purple"
+        ]
+    },
+    {
+        "book": "Exodus",
+        "chapter": 26,
+        "minVerse": 15,
+        "maxVerse": 30,
+        "keys": [
+            "structure-front-pillars",
+            "structure-inner-pillars",
+            "structure-rings",
+            "structure-bars",
+            "structure-walls"
+        ]
+    },
+    {
+        "book": "Exodus",
+        "chapter": 26,
+        "minVerse": 31,
+        "maxVerse": 35,
+        "keys": [
+            "structure-inner-curtain"
+        ]
+    },
+    {
+        "book": "Exodus",
+        "chapter": 26,
+        "minVerse": 36,
+        "maxVerse": 37,
+        "keys": [
+            "structure-front-curtain"
+        ]
+    },
+    {
+        "book": "Exodus",
+        "chapter": 27,
+        "minVerse": 1,
+        "maxVerse": 8,
+        "keys": [
+            "altar-of-sacrifice"
+        ]
+    },
+    {
+        "book": "Exodus",
+        "chapter": 27,
+        "minVerse": 9,
+        "maxVerse": 19,
+        "keys": [
+            "ground",
+            "fence"
+        ]
+    },
+    {
+        "book": "Exodus",
+        "chapter": 30,
+        "minVerse": 1,
+        "maxVerse": 10,
+        "keys": [
+            "incense-altar"
+        ]
+    },
+    {
+        "book": "Exodus",
+        "chapter": 30,
+        "minVerse": 17,
+        "maxVerse": 21,
+        "keys": [
+            "bronze-laver"
+        ]
+    },
+    {
+        "book": "Exodus",
+        "chapter": 36,
+        "minVerse": 8,
+        "maxVerse": 13,
+        "keys": [
+            "cloth-brown",
+            "cloth-red",
+            "cloth-grey",
+            "cloth-purple"
+        ]
+    },
+    {
+        "book": "Exodus",
+        "chapter": 36,
+        "minVerse": 14,
+        "maxVerse": 19,
+        "keys": [
+            "cloth-brown",
+            "cloth-red",
+            "cloth-grey",
+            "cloth-purple"
+        ]
+    },
+    {
+        "book": "Exodus",
+        "chapter": 36,
+        "minVerse": 20,
+        "maxVerse": 34,
+        "keys": [
+            "structure-front-pillars",
+            "structure-inner-pillars",
+            "structure-rings",
+            "structure-bars",
+            "structure-walls"
+        ]
+    },
+    {
+        "book": "Exodus",
+        "chapter": 36,
+        "minVerse": 35,
+        "maxVerse": 36,
+        "keys": [
+            "structure-inner-curtain"
+        ]
+    },
+    {
+        "book": "Exodus",
+        "chapter": 36,
+        "minVerse": 37,
+        "maxVerse": 38,
+        "keys": [
+            "structure-front-curtain"
+        ]
+    },
+    {
+        "book": "Exodus",
+        "chapter": 37,
+        "minVerse": 1,
+        "maxVerse": 5,
+        "keys": [
+            "ark-of-covenant"
+        ]
+    },
+    {
+        "book": "Exodus",
+        "chapter": 37,
+        "minVerse": 6,
+        "maxVerse": 9,
+        "keys": [
+            "ark-of-covenant"
+        ]
+    },
+    {
+        "book": "Exodus",
+        "chapter": 37,
+        "minVerse": 10,
+        "maxVerse": 16,
+        "keys": [
+            "table-showbread"
+        ]
+    },
+    {
+        "book": "Exodus",
+        "chapter": 37,
+        "minVerse": 17,
+        "maxVerse": 24,
+        "keys": [
+            "menorah"
+        ]
+    },
+    {
+        "book": "Exodus",
+        "chapter": 37,
+        "minVerse": 25,
+        "maxVerse": 28,
+        "keys": [
+            "incense-altar"
+        ]
+    },
+    {
+        "book": "Exodus",
+        "chapter": 38,
+        "minVerse": 1,
+        "maxVerse": 7,
+        "keys": [
+            "altar-of-sacrifice"
+        ]
+    },
+    {
+        "book": "Exodus",
+        "chapter": 38,
+        "minVerse": 8,
+        "maxVerse": 8,
+        "keys": [
+            "bronze-laver"
+        ]
+    },
+    {
+        "book": "Exodus",
+        "chapter": 38,
+        "minVerse": 9,
+        "maxVerse": 20,
+        "keys": [
+            "ground",
+            "fence"
+        ]
+    }
+]

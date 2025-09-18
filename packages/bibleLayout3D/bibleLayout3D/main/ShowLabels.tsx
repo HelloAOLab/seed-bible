@@ -1,0 +1,15 @@
+const {layoutData} = that
+
+const dimension = os.getCurrentDimension();
+const pieces = [
+    ...layoutData.staticLayoutPieces.testamentLines,
+    ...layoutData.staticLayoutPieces.testamentLabels,
+    ...layoutData.staticLayoutPieces.sectionLines,
+    ...layoutData.staticLayoutPieces.sectionLabels
+]
+
+setTag(pieces, dimension, true);
+
+layoutData.childrenStructures.forEach((layoutBookStructure) => {
+    setTag(layoutBookStructure.dateLabel, "labelColor", layoutBookStructure.dateLabel.tags.initialLabelcolor)
+});

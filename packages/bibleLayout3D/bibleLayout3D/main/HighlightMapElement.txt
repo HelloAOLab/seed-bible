@@ -1,0 +1,45 @@
+import {HighlightInfo} from "bibleVizUtils.classes.HighlightInfo"
+
+const {piece, data} = that;
+
+let prevColor;
+let highlightSuccessful = false;
+if(data)
+{
+    if(data.highlightColor != BibleVizUtils.Data.tags.highlightColor)
+    {
+        if(!BibleVizUtils.Data.masks.isInHistoryMode) setTagMask(data.piece, "color", BibleVizUtils.Data.tags.highlightColor);
+        prevColor = data.highlightColor;
+        data.highlightColor = BibleVizUtils.Data.tags.highlightColor;
+        highlightSuccessful = true;
+    }
+}
+else
+{
+    const chapterData = thisBot.GetChapterDataById({id: piece.masks.chapterDataId})
+    let currentHighlightInfo = chapterData.GetHighlightInfoByKey(piece.masks.chunkPath ?? piece.masks.versePath)
+
+    if(currentHighlightInfo)
+    {
+        if(currentHighlightInfo.color != BibleVizUtils.Data.tags.highlightColor)
+        {
+            if(!BibleVizUtils.Data.masks.isInHistoryMode) setTagMask(piece, "color", BibleVizUtils.Data.tags.highlightColor);
+            prevColor = currentHighlightInfo.color;
+            currentHighlightInfo.color = BibleVizUtils.Data.tags.highlightColor
+            highlightSuccessful = true;
+        }
+    }
+    else
+    {
+        if(!BibleVizUtils.Data.masks.isInHistoryMode) setTagMask(piece, "color", BibleVizUtils.Data.tags.highlightColor);
+        const newHighlightInfo = new HighlightInfo({
+            color: BibleVizUtils.Data.tags.highlightColor, 
+            typeOfPiece: piece.tags.typeOfPiece, 
+            key: piece.masks.chunkPath ?? piece.masks.versePath
+        })
+        chapterData.AddHighlightInfo(newHighlightInfo)
+        highlightSuccessful = true;
+    }
+}
+
+if(highlightSuccessful) shout(`OnpieceHighlighted`, {color: BibleVizUtils.Data.tags.highlightColor, prevColor, piece, data})

@@ -1,0 +1,17 @@
+{
+    "author": "Gabriel Souki",
+    "toolbarConfig":
+    {
+        "label": "Bible Layout 3D",
+        "hasToggle": "false",
+        "icon": "stacks"
+    },
+    "tabConfig":
+    {
+        "title": "Bible Layout 3D"
+    },
+    "contextMenuConfig": 
+    {
+        "optionsIsOn": ""
+    }
+}

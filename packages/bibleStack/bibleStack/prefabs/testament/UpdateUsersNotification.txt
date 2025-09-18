@@ -1,0 +1,26 @@
+const dimension = os.getCurrentDimension();
+const myLobbyId = getBot('lobbyUserBot', true)?.id;
+const elementSelections = InstanceManager.GetUsersSelectionForPiece({piece: thisBot}).filter((userSelection) => {
+    return userSelection.lobbyId != myLobbyId
+})
+
+if(elementSelections.length > 0)
+{
+    if(links.activityNotification)
+    {
+        setTag(links.activityNotification, "label", elementSelections.length)
+    }
+    else
+    {
+        const activityNotification = ObjectPooler.GetObjectFromPool({tag: BibleVizUtils.Data.tags.ObjectPoolTags.UsersNotification});
+        const usersNotificationMod = {
+            [dimension]: true,
+            label: elementSelections.length,
+            ownerBotId: thisBot.id
+        }
+        activityNotification.OnSpawned({mod: usersNotificationMod});
+        activityNotification.SetPosition({setX: true, setY: true, setZ: true});
+        thisBot.tags.activityNotification = `🔗${activityNotification.id}`
+    }
+}
+else thisBot.TryHideUsersNotification();

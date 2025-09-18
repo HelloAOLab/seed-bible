@@ -1,0 +1,12 @@
+setTag(thisBot, "transformer", null);
+setTag(thisBot, "ownerBotId", null);
+setTag(thisBot, "ownerDataId", null);
+setTag(thisBot, "initialPosition", null);
+setTag(thisBot, "label", "");
+setTag(thisBot, "labelOpacity", 1);
+setTag(thisBot, "formOpacity", 1);
+setTag(thisBot, "formRenderOrder", null);
+setTag(thisBot, 'activityIndex', null);
+setTag(thisBot, 'isExtraUsersContent', null);
+setTag(thisBot, 'isExtraUsersBackground', null);
+setTag(thisBot, "targetOpacity", 1);

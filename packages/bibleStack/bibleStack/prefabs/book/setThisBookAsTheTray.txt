@@ -1,0 +1,127 @@
+const dimension = os.getCurrentDimension();
+const mainWord = getBot("isMainWord", true);
+let currentBibleStructure = mainWord.masks.bibleStructure.slice();
+const previousTray = getBot("isConvertedIntoATray", true);
+const previousTrayBookOutline = getBot(byTag("isTrayBookOutline", true), byTag(dimension, true));
+const otherSections = getBots("isSection", true).filter((section) => {return section.tags.sectionName !== thisBot.tags.sectionName});
+const trayOffsetY = -15;
+const cameraFocusDuration = 1;
+
+if(previousTray)
+{
+    if(previousTrayBookOutline)
+    {
+        ObjectPooler.ReleaseObject({obj: previousTrayBookOutline, tag: previousTrayBookOutline.tags.poolTag});
+    }
+    setTagMask(previousTray, "isConvertedIntoATray", false);
+    previousTray.tryToIncludeInTheBible({callingFrom: "setThisBookAsTheTray"});
+    // previousTray.lerpColor({startingColor: BibleVizUtils.Functions.HexToRgb(previousTray.masks.color ?? previousTray.tags.color), endingColor: BibleVizUtils.Functions.HexToRgb(previousTray.tags.initialColor), durationInSeconds: 0.75})
+    ColorLerper.LerpTag({startingColor: BibleVizUtils.Functions.HexToRgb(previousTray.masks.color ?? previousTray.tags.color), endingColor: BibleVizUtils.Functions.HexToRgb(previousTray.tags.initialColor), durationInSeconds: 0.75, bot: previousTray, tag: BibleVizUtils.Data.tags.InterpolatableColorTags.Color});
+}
+
+SoundsManager.playSetBookAsTraySound();
+setTagMask(thisBot, "isConvertedIntoATray", true);
+setTagMask(thisBot, dimension + "X", mainWord.masks[dimension + "X"] ?? mainWord.tags[dimension + "X"]);
+setTagMask(thisBot, dimension + "Y", (mainWord.masks[dimension + "Y"] ?? mainWord.tags[dimension + "Y"]) + trayOffsetY);
+setTagMask(thisBot, dimension + "Z", mainWord.masks[dimension + "Z"] ?? mainWord.tags[dimension + "Z"]);
+setTagMask(thisBot, "color", "#FFFFFF");
+
+// if(thisBot.masks.isInsideBible)
+// {
+    setTagMask(thisBot, "isOnTheGround", true);
+    setTagMask(thisBot, "isInsideBible", false);
+    setTagMask(thisBot, "isInsideTestament", false);
+    setTagMask(thisBot, "canBeDraggedBackToParent", true);
+    setTag(thisBot, "transformer", null);
+    setTag(thisBot, "desiredPositionZ", mainWord.masks[dimension + "Z"] ?? mainWord.tags[dimension + "Z"]);
+    setTagMask(mainWord, "lastBookExpandingId", getID(thisBot));
+    
+    if(!thisBot.tags.isBookAsSection)
+    {
+        setTagMask(thisBot, "isInsideSection", false);
+    }
+    thisBot.forceUnhighlight({isInstantaneous: true}).then(() => {
+        setTagMask(thisBot, "isExpanded", true);
+        setTagMask(thisBot, "scaleX", thisBot.tags.trayDesiredScaleX);
+        setTagMask(thisBot, "scaleY", thisBot.tags.trayDesiredScaleY);
+        setTagMask(thisBot, "scaleZ", thisBot.tags.trayDesiredScaleZ);
+        setTagMask(thisBot, "formOpacity", 1);
+    });
+// }
+
+otherSections.forEach((section) => {section.reformSection()});
+
+for(let testament of currentBibleStructure)
+{
+    for(let section of testament.sections)
+    {
+        if(previousTray)
+        {
+            if(getID(previousTray) === section.botID)
+            {
+                section.isConvertedIntoATray = false;
+            }
+        }
+        if(getID(thisBot) === section.botID)
+        {
+            section.isConvertedIntoATray = true;
+            if(section.isInsideBible)
+            {
+                section.isInsideArrangement = false;
+                section.isInsideBible = false;
+                setTagMask(mainWord, "bibleStructure", currentBibleStructure);
+            }
+        }
+        
+        for(let bookElement of section.books)
+        {
+            if(Array.isArray(bookElement))
+            {
+                for(let book of bookElement)
+                {
+                    if(previousTray)
+                    {
+                        if(getID(previousTray) === book.botID)
+                        {
+                            book.isConvertedIntoATray = false;
+                        }
+                    }
+                    if(getID(thisBot) === book.botID)
+                    {
+                        book.isConvertedIntoATray = true;
+                        if(book.isInsideBible)
+                        {
+                            book.isInsideBible = false;
+                            book.isInsideArrangement = false;
+                            book.isInsideSection = false;
+                            setTagMask(mainWord, "bibleStructure", currentBibleStructure);
+                        }
+                    }
+                }
+            }
+            else
+            {
+                if(previousTray)
+                {
+                    if(getID(previousTray) === bookElement.botID)
+                    {
+                        bookElement.isConvertedIntoATray = false;
+                    }
+                }
+                if(getID(thisBot) === bookElement.botID)
+                {
+                    bookElement.isConvertedIntoATray = true;
+                    if(bookElement.isInsideBible)
+                    {
+                        bookElement.isInsideBible = false;
+                        bookElement.isInsideArrangement = false;
+                        bookElement.isInsideSection = false;
+                        setTagMask(mainWord, "bibleStructure", currentBibleStructure);
+                    }
+                }
+            }
+        }
+    }
+}
+
+mainWord.resizeBible();

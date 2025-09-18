@@ -1,0 +1,1 @@
+shout("OnLayoutBookDateLabelClicked", {label: thisBot});
