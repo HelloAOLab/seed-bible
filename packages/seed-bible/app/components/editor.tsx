@@ -209,7 +209,7 @@ function segmentHtmlBySectionEnd(htmlString) {
   const segments = [];
   let currentSegmentNodes = [];
   const bodyChildren = Array.from(doc.body.childNodes);
-  for (let node of bodyChildren) {
+  for (const node of bodyChildren) {
     currentSegmentNodes.push(node);
     if (node.nodeType === 1 && node.tagName.toLowerCase() === 'div' && node.classList.contains('sectionCover')) {
       const tempDoc = document.implementation.createHTMLDocument();
@@ -470,20 +470,20 @@ const TextEditor = ({ content, tab, data, setEnableEditor, enableEditor, studyNo
         }
       },
       aiHighlight: async (prompt) => {
-        let html = editor.getHTML();
-        let editorElement = document.getElementById("tiptapEditor")
+        const html = editor.getHTML();
+        const editorElement = document.getElementById("tiptapEditor")
         editorElement.classList.add('overlay-animated-text');
         editor.setEditable(false);
-        let defaultPromt = prompt || tags.editorAIPromt;
-        let positivePromt = masks?.editorAIPostive || "";
-        let negativePromt = masks?.editorAINegative || "";
-        let chat = [
+        const defaultPromt = prompt || tags.editorAIPromt;
+        const positivePromt = masks?.editorAIPostive || "";
+        const negativePromt = masks?.editorAINegative || "";
+        const chat = [
           { role: "system", content: `${defaultPromt}` },
           { role: "system", content: `Avoid: ${negativePromt}` },
           { role: "system", content: `Remember: ${positivePromt}` },
           { role: "user", content: `${html}` }
         ]
-        let combinedHtml = await ai.chat([...chat])
+        const combinedHtml = await ai.chat([...chat])
         editor.commands.setContent(combinedHtml.content)
         editorElement.classList.remove('overlay-animated-text');
         editor.setEditable(true);
@@ -1165,14 +1165,14 @@ function Counter({ value, onChange, min = 8, max = 72 }) {
   const [fontSize, setFontSize] = useState(16)
   const increment = () => {
     if (fontSize < max) {
-      let size = fontSize + 1
+      const size = fontSize + 1
       setFontSize(size);
       globalThis.EditorFns?.setFontSize(size.toString());
     }
   };
   const decrement = () => {
     if (fontSize > min) {
-      let size = fontSize - 1
+      const size = fontSize - 1
       setFontSize(size);
       globalThis.EditorFns?.setFontSize(size.toString());
     }

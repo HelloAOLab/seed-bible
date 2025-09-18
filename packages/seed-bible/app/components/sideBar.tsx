@@ -92,7 +92,7 @@ function Tab({ el, activeTab, setActiveTab, setIsDragging, setElement, collapsed
             setActiveTab(el.id);
             const handoff = el?.data
             const App = handoff.app
-            let tabData = {
+            const tabData = {
                 ...el,
                 data: {
                     ...el.data,
@@ -622,7 +622,7 @@ function SideBar() {
                         <>
                             <div className="menuOptions">
                                 <span onClick={() => {
-                                    let mob = window.innerWidth < 768
+                                    const mob = window.innerWidth < 768
                                     if (!mob) {
                                         setSidebarWidth(60);
                                         setCollapsed(true);

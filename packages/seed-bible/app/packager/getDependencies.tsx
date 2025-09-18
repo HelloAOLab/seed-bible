@@ -7,7 +7,7 @@
 //     .map(data=>data.data)
 // }
 let lastAddress;
-let items = [];
+const items = [];
 while (true) {
     const result = await os.listDataByMarker(tags.publicKey, 'publicRead', lastAddress);
     if (result.success) {

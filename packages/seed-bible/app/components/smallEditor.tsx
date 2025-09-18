@@ -369,7 +369,7 @@ export function MiniTextEditor({
         let used = 0;
         const vis = [];
         const over = [];
-        for (let id of ids) {
+        for (const id of ids) {
             const el = itemsRef.current[id];
             if (!el) continue;
             const w = el.offsetWidth + 12;

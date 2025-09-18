@@ -1,7 +1,7 @@
 const Confetti = () => {
-    let numberArr = []
+    const numberArr = []
 
-    for (var i = 0; i < 149; i++) {
+    for (let i = 0; i < 149; i++) {
         numberArr.push(i)
     }
     

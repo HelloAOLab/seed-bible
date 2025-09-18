@@ -81,8 +81,8 @@ export function MouseMoveProvider({ children }) {
                         const dx = e.clientX - app.resizeStartPos.x;
                         const dy = e.clientY - app.resizeStartPos.y;
 
-                        let size = { ...app.size };
-                        let pos = { ...app.position };
+                        const size = { ...app.size };
+                        const pos = { ...app.position };
 
                         switch (app.resizeHandle) {
                             case "se":
