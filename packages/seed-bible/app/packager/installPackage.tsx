@@ -1,0 +1,288 @@
+// === Pre-check helper ===
+async function waitForGlobals(required = [], delay = 250) {
+    while (true) {
+        const missing = required.filter(n => typeof globalThis[n] !== 'function');
+        if (missing.length === 0) break; // all exist → proceed
+        console.warn(`Missing globals: ${missing.join(', ')} — retrying...`);
+        await new Promise(res => setTimeout(res, delay));
+    }
+}
+
+// === Begin of your code ===
+await(async function mainInstaller(that) {
+    // --- pre-check at start ---
+    await waitForGlobals([
+        'AddTool',
+        'SetElement',
+        'ReplaceApplication',
+        'AddApplication',
+        'RemoveApplicationByID',
+        'SetIsDragging',
+        'SetPackageAddingOptions'
+    ]);
+
+    // ===== your original code (with fixes) =====
+    const { name } = that;
+    const NameHolder = name;
+    globalThis[`${name}_package`] = {};
+
+    const result = await os.getData(tags.publicKey, name);
+    let errorInstall = false;
+
+    async function SetUpConextMenu(contextOptions, bot, label) {
+        try {
+            const items = await bot[`${contextOptions}`]();
+            if (!Array.isArray(items)) return [];
+            if (!globalThis.ContextMenuOptions) globalThis.ContextMenuOptions = [];
+            globalThis.ContextMenuOptions.push({ address: name, label, items });
+        } catch { /* swallow */ }
+    }
+
+    async function SetUpApplication(applicationFunction, bot, toolbarConfig) {
+        function generateAppItem({ icon, iconUrl, label, AppComponent }) {
+            const panelKey = `${label?.toUpperCase()?.replace(/\s/g, '_')}_PANEL_ID`;
+
+            const onClick = async () => {
+                if (globalThis.makingApp === label) {
+                    RemoveApplicationByID(globalThis[panelKey]);
+                    globalThis[panelKey] = null;
+                    globalThis.makingApp = null;
+                    return;
+                }
+                const InitializedApp = AppComponent;
+                if (!InitializedApp) return;
+                const id = uuid();
+                globalThis[panelKey] = id;
+                globalThis.makingApp = label;
+
+                if (globalThis.CurrentPanelAvailable) {
+                    ReplaceApplication(globalThis.CurrentPanelAvailable, {
+                        id,
+                        App: <InitializedApp id={id} />,
+                        to: 'panel',
+                        minWidth: '23rem',
+                    });
+                    return;
+                }
+                AddApplication({
+                    id,
+                    App: <InitializedApp id={id} />,
+                    to: 'panel',
+                    minWidth: '23rem',
+                });
+            };
+
+            const onHold = async () => {
+                const id = uuid();
+                const InitializedApp = AppComponent;
+                if (!InitializedApp) return;
+                globalThis[`${label.toUpperCase().replace(/\s/g, '_')}_PANEL_ID`] = id;
+                SetIsDragging(true);
+                globalThis.SetElement({
+                    App: !iconUrl ? (
+                        <span className="material-symbols-outlined">{icon}</span>
+                    ) : (
+                        <img
+                            src={iconUrl}
+                            style={{
+                                width: '40px',
+                                height: '42px',
+                                objectFit: 'cover',
+                                objectPosition: 'center',
+                            }}
+                        />
+                    ),
+                    data: {
+                        id,
+                        App: <InitializedApp id={id} />,
+                        to: 'panel',
+                        minWidth: '23rem',
+                    },
+                });
+            };
+
+            globalThis[`${name}_package`].onClick = onClick;
+
+            return {
+                icon,
+                label,
+                hasToggle: true,
+                active: true,
+                onHold,
+                onClick,
+            };
+        }
+
+        // Get the component (support both sync and async factories)
+        const App = await bot[applicationFunction]();
+
+        // Validate: must be a function/component
+        if (typeof App !== 'function') {
+            os.log('Error in installed app (expected a component function)', {
+                applicationFunction,
+                AppType: typeof App,
+            });
+            errorInstall = true;
+            return; // bail early
+        }
+
+        // Optional: sanity render without shadowing the variable
+        try {
+            const _testEl = <App />; // if this throws, it’s not a valid JSX component
+        } catch (err) {
+            os.log('Component render test failed', err);
+            errorInstall = true;
+            return;
+        }
+
+        const toolbarOption = generateAppItem({
+            icon: toolbarConfig.icon,
+            label: toolbarConfig.label,
+            AppComponent: App,
+            iconUrl: toolbarConfig?.iconUrl,
+        });
+
+        if (globalThis.AddTool) globalThis.AddTool(toolbarOption);
+
+        return toolbarOption;
+    }
+
+    async function SetUpApplicationWithoutApp(toolbarConfig, bot) {
+        const runFn = () => bot[toolbarConfig.run]();
+
+        const toolbarOption = {
+            icon: !toolbarConfig?.iconUrl ? toolbarConfig.icon : toolbarConfig.iconUrl,
+            label: toolbarConfig.label,
+            hasToggle: true,
+            active: true,
+            onHold: runFn,
+            onClick: runFn,
+            isImg: !!toolbarConfig?.iconUrl,
+        };
+
+        if (globalThis.AddTool) {
+            globalThis.AddTool(toolbarOption, { to: toolbarConfig.to ? toolbarConfig.to : 'page' });
+        }
+    }
+
+    // FIX: make this actually wait for each dependency (no forEach + await)
+    async function InstallDependencies(dependencies) {
+        for (const { name: depName, type } of dependencies) {
+            if (type === 'package') {
+                await thisBot.installPackage({ name: depName });
+            } else if (type === 'dependency') {
+                const result = await os.getData(tags.publicKey, depName);
+                if (result?.success) {
+                    const data = result.data;
+                    const read = await web.get(data.source);
+
+                    // If pushBots is async, await each push
+                    for (const botDef of read.data) {
+                        const b = create({ ...botDef, space: 'local' }, {
+                            forPackage: NameHolder
+                        });
+                        console.log(b, b.tags.mazem, b.tags.system)
+                        // await thisBot.pushBots({ name: NameHolder, bot: b });
+                    }
+                }
+            }
+        }
+        await os.sleep(100)
+    }
+
+    async function SetUpTabApplication(tabConfig, bot) {
+        // Support async or sync app getter
+        const maybeApp = bot[tabConfig.app]();
+        const App = (typeof maybeApp?.then === 'function') ? await maybeApp : maybeApp;
+
+        if (App) {
+            SetPackageAddingOptions(prev => {
+                const d = [
+                    ...prev,
+                    {
+                        pkg: NameHolder,
+                        data: {
+                            ...tabConfig,
+                            app: App,
+                        },
+                    },
+                ];
+                return d;
+            });
+        }
+    }
+
+    if (result.success) {
+        const data = result.data;
+
+        // Uninstall previous version first
+        thisBot.uninstallPackage({ ...data, address: name });
+
+        // Install dependencies and WAIT for them
+        if (data.dependencies?.length) {
+            await InstallDependencies(data.dependencies);
+            // No need to sleep if the functions above are correctly awaited
+            // await os.sleep(5000);
+        }
+
+        os.log(data);
+        setTagMask(thisBot, `${name}-data`, data, 'local');
+
+        // Load record/source
+        const read = await web.get(data.recordFile?.url || data.source);
+
+        // Push secondary bots first (await if async)
+        for (let i = 1; i < read.data.length; i++) {
+            const b = create(read.data[i], { space: 'local', forPackage: NameHolder });
+            // await thisBot.pushBots({ name, bot: b });
+        }
+
+        // Push the primary (first) bot
+        const bot = create(read.data[0], { space: 'local', forPackage: NameHolder });
+        await thisBot.pushBots({ name, bot, first: true });
+
+        // Give lifecycle hooks a chance to run (await sleeps!)
+        // Only keep sleeps if actually needed by environment
+        // await os.sleep(2000);
+
+        if (bot?.tags?.onInstJoined) {
+            try { await bot.onInstJoined(); } catch { /* swallow */ }
+        }
+        if (bot?.tags?.onEggHatch) {
+            try { await bot.onEggHatch(); } catch { /* swallow */ }
+        }
+
+        // Context menu
+        if (data?.configEditor?.contextMenuConfig) {
+            const contextOptions = data.configEditor.contextMenuConfig.optionsIsOn.replace('@', '');
+            await SetUpConextMenu(contextOptions, bot, data.configEditor.toolbarConfig?.label);
+        }
+
+        // Toolbar / App
+        if (data?.configEditor?.toolbarConfig?.run) {
+            await SetUpApplicationWithoutApp(data.configEditor.toolbarConfig, bot);
+        } else if (data?.configEditor?.app && data?.configEditor?.toolbarConfig) {
+            const applicationFunction = data.configEditor.app.replace('@', '');
+            await SetUpApplication(applicationFunction, bot, data.configEditor.toolbarConfig);
+        }
+
+        // Tab app
+        if (data?.configEditor?.tabConfig?.app) {
+            await SetUpTabApplication(data.configEditor.tabConfig, bot);
+        }
+
+        // Ensure installedPackages tag is updated (FIX: use masks not tags)
+        if (!masks.installedPackages) {
+            setTagMask(thisBot, 'installedPackages', [name], 'local');
+        } else if (!masks.installedPackages.includes(name)) {
+            setTagMask(thisBot, 'installedPackages', [...masks.installedPackages, name], 'local');
+        }
+
+        if (errorInstall) {
+            // optional uninstall / rollback here if you want
+        }
+
+        const { feedback } = that;
+        if (feedback) feedback();
+    }
+})(that); // self-invoking to run immediately

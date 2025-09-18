@@ -9,7 +9,7 @@ const Modal = ({ onClose, title, children, className = "", sxContainer = {}, sty
                     close
                 </span>
             </div>}
-            <div className={`modal-inner-cont ${className}`} style={styles} >
+            <div className={`modal-inner-cont ${className}`} style={{ ...styles, overflow: 'scroll' }} >
                 {showIcon && <ImageWrapper><div class="img"><img style={{ width: '35px', height: '35px' }} src="https://helloaolab.my.canva.site/images/508bf8e3a36b2a0124d06a721f99f284.png" /></div></ImageWrapper>}
                 {children}
             </div>

@@ -14,3 +14,7 @@
 .checkbox.small span {
     font-size: 18px !important;
 }
+
+.checkbox.small {
+ height: 1.125rem;
+}

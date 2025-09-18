@@ -95,7 +95,7 @@ const ToolbarSettings = () => {
               onClick={() => toggleToolActive(index, !tool.active)}
             >
               <span className="icon">
-                {typeof tool.icon === 'string' && !tool.isImg ? <MenuIcon name={tool.icon} /> : tool.isImg ? <img src={tool.icon} style={{ width: '20px' }} /> : tool.icon}
+                {typeof tool.icon === 'string' && !tool.isImg ? <MenuIcon name={tool.icon} /> : tool.isImg ? <img src={tool.icon} style={{ width: '40px' }} /> : tool.icon}
               </span>
               <span className="label">{tool.label}</span>
               {tool.hasToggle && (
