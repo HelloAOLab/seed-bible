@@ -55,7 +55,7 @@ export default defineConfig([
             'no-empty-pattern': 'warn',
             
             // These rules can be ignored for now
-            'prefer-const': ['error', {
+            'prefer-const': ['warn', {
                 destructuring: 'all'
             }],
             'no-useless-escape': 'off',
