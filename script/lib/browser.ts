@@ -1,4 +1,4 @@
-import { Page, ElementHandle } from "puppeteer";
+import { Page, ElementHandle, JSHandle } from "puppeteer";
 
 /**
  * Runs required initialization code on the page.
@@ -14,6 +14,14 @@ export async function initPage(page: Page) {
  */
 export async function getApp(page: Page) {
     return page.evaluateHandle(() => window.aux.getApp());
+}
+
+export async function getPrimarySim(page: Page) {
+    return await page.evaluateHandle(() => {
+        const app = window.aux.getApp();
+        const sim = app.simulationManager.primary;
+        return sim;
+    }) as JSHandle<any>;
 }
 
 /**

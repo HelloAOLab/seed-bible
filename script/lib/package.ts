@@ -17,7 +17,7 @@ export async function packageSingle(pkg: string, stdio: 'inherit' | 'ignore' = '
 }
 
 export async function packageAll() {
-    const packages = await readdir('packages');
+    const packages = await listPackages();
     for (const pkg of packages) {
         await packageSingle(pkg);
     }
@@ -28,4 +28,8 @@ export async function readPackage(packageName: string) {
     const packageData = await readFile(packageAux, 'utf-8')
     const aux = JSON.parse(packageData);
     return aux;
+}
+
+export async function listPackages() {
+    return await readdir('packages');
 }
