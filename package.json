@@ -5,6 +5,7 @@
   "type": "module",
   "scripts": {
     "test": "echo \"Error: no test specified\" && exit 1",
+    "dev": "tsx script/dev.ts",
     "package": "tsx script/package.ts",
     "package:seed-bible": "casualos pack-aux --overwrite ./packages/seed-bible ./dist/seed-bible.aux",
     "package:playlist": "casualos pack-aux --overwrite ./packages/playlist ./dist/playlist.aux",
@@ -26,7 +27,8 @@
   "homepage": "https://github.com/HelloAOLab/seed-bible#readme",
   "packageManager": "pnpm@10.10.0+sha512.d615db246fe70f25dcfea6d8d73dee782ce23e2245e3c4f6f888249fb568149318637dca73c2c5c8ef2a4ca0d5657fb9567188bfab47f566d1ee6ce987815c39",
   "devDependencies": {
-    "@casual-simulation/aux-runtime": "^3.5.3",
+    "@casual-simulation/aux-common": "3.7.0",
+    "@casual-simulation/aux-runtime": "3.7.0",
     "@eslint/css": "^0.10.0",
     "@eslint/js": "^9.32.0",
     "@types/node": "^24.5.2",
@@ -35,6 +37,7 @@
     "globals": "^16.3.0",
     "puppeteer": "^24.22.0",
     "tsx": "^4.20.5",
-    "typescript-eslint": "^8.38.0"
+    "typescript-eslint": "^8.38.0",
+    "uuid": "^13.0.0"
   }
 }
