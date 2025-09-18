@@ -522,7 +522,7 @@ const AttachLink = ({ sSelectedType, sName, sData, sLink, sMediaType, editMode, 
             setLink('');
             setLoading(true);
 
-            let finalData = data;
+            const finalData = data;
 
             const fileSave = await os.recordFile(globalThis.RECORD_STOREKEY, finalData, {
                 name: name,
@@ -587,7 +587,7 @@ const AttachLink = ({ sSelectedType, sName, sData, sLink, sMediaType, editMode, 
                     allItems.push(...file.data);
                 });
             }
-            if (!!name.trim()) {
+            if (name.trim()) {
                 allItems.push(...thisBot.getSuggestedListItems({ searchText: name }));
             }
             setName('');

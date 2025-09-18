@@ -22,10 +22,10 @@ const ShowPlayingContentAnnotation = () => {
             width: 'calc(100% - 10px)'
         }}
     >
-        {!!videoSrc ?
+        {videoSrc ?
             <VideoPlayer videoSrc={videoSrc} playlistItem={{ ...currentItem }} />
             :
-            !!mediaURL ?
+            mediaURL ?
                 <AudioPlayer close secondaryClose mediaURL={mediaURL} />
                 :
                 null

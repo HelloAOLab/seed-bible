@@ -468,13 +468,13 @@ const AddAnotationUI = ({
 
         list.forEach(ele => {
             if (checkListData[ele.id] && ele.id !== embedding) {
-                if (!!ele.additionalInfo?.layers?.length) {
+                if (ele.additionalInfo?.layers?.length) {
                     embededItem = ele.content;
                 }
             }
         });
 
-        if (!!embededItem) {
+        if (embededItem) {
             ShowNotification({
                 message: `Cannot Embed the Embedded item! Content: ${embededItem}. Please remove it before embeding!`,
                 severity: "error",
@@ -970,7 +970,7 @@ const AddAnotationUI = ({
                 dragItem = finalHistoryObject[parentIdx].additionalInfo.layers[draggedItemIndex];
             }
 
-            if (!!dragItem.additionalInfo.layers?.length) {
+            if (dragItem.additionalInfo.layers?.length) {
                 ShowNotification({
                     message: `Cannot Embed the Embedded item!. Please remove it before embeding!`,
                     severity: "error",

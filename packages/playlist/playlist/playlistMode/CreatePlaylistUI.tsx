@@ -401,7 +401,7 @@ const CreatePlaylistUI = ({
 
   const deleteDateData = () => {
     setPlaylist((prev) => {
-      let old = [...prev.filter((ele) => ele.type !== "date")];
+      const old = [...prev.filter((ele) => ele.type !== "date")];
       return old;
     });
     setItemSelected(null);
@@ -513,7 +513,7 @@ const CreatePlaylistUI = ({
       },
       type: linkState.type === "text" ? "heading" : "attachment-link",
     };
-    if (!!itemSelected) {
+    if (itemSelected) {
       setPlaylist((old) => {
         const prev = [...old];
         const index = prev.findIndex((ele) => ele.id === itemSelected);
@@ -545,7 +545,7 @@ const CreatePlaylistUI = ({
   };
 
   const massAdd = (items) => {
-    if (!!itemSelected) {
+    if (itemSelected) {
       setPlaylist((old) => {
         const prev = [...old];
         const index = prev.findIndex((ele) => ele.id === itemSelected);
@@ -612,7 +612,7 @@ const CreatePlaylistUI = ({
   const onBulkJsonDownload = () => {
     const listToDownload = [];
     playLists.forEach(({ list, id: playlistID }) => {
-      if (!!selectedPlaylist[playlistID]) {
+      if (selectedPlaylist[playlistID]) {
         list.forEach((ele) => {
           listToDownload.push({
             ...ele,
@@ -715,13 +715,13 @@ const CreatePlaylistUI = ({
 
     playList.forEach((ele) => {
       if (checkListData[ele.id] && ele.id !== embedding) {
-        if (!!ele.additionalInfo?.layers?.length) {
+        if (ele.additionalInfo?.layers?.length) {
           embededItem = ele.content;
         }
       }
     });
 
-    if (!!embededItem) {
+    if (embededItem) {
       ShowNotification({
         message: `Cannot Embed the Embedded item! Content: ${embededItem}. Please remove it before embeding!`,
         severity: "error",
@@ -745,7 +745,7 @@ const CreatePlaylistUI = ({
         }
       });
 
-      let embeddingItemsIndex = oldItems.findIndex(
+      const embeddingItemsIndex = oldItems.findIndex(
         (ele) => ele.id === embedding
       );
       oldItems[embeddingItemsIndex] = {

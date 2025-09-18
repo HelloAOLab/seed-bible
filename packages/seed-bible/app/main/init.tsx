@@ -13,7 +13,7 @@ setTimeout(() => {
 // thisBot.global_functions()
 //
 // destroy()
-let localStorage = getBot('system', 'app.localStorage')
+const localStorage = getBot('system', 'app.localStorage')
 if (!localStorage)
     create({
         system: 'app.localStorage',

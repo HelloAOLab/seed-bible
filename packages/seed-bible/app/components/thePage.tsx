@@ -15,8 +15,8 @@ import { MiniTextEditor } from 'app.components.smallEditor'
 import { ConfigurableFunctionCommands } from 'app.components.commands'
 
 function generateQuery(params) {
-    let queryArray = [];
-    for (let key in params) {
+    const queryArray = [];
+    for (const key in params) {
         if (params.hasOwnProperty(key)) {
             queryArray.push(encodeURIComponent(key) + '=' + encodeURIComponent(params[key]));
         }
@@ -58,7 +58,7 @@ function ThePage({ tab: T, setPanalApp, panelId, setEnableEditor, setData, data 
 
     const loadTranslationFromUrl = async () => {
         console.log(configBot.tags.translationId, "translation id")
-        let translationId = configBot.tags.translationId;
+        const translationId = configBot.tags.translationId;
         let baseUrl = "https://bible.helloao.org";
         let bookId = "GEN";
         let bookTranslationId = "BSB";
@@ -66,10 +66,10 @@ function ThePage({ tab: T, setPanalApp, panelId, setEnableEditor, setData, data 
         if (translationId) {
             os.toast(`Loading ${translationId} translation`)
 
-            let available_translations_req = await web.get("https://bible.helloao.org/api/available_translations.json");
+            const available_translations_req = await web.get("https://bible.helloao.org/api/available_translations.json");
             let allTranslations = [];
-            let translations = {};
-            let defaultTranslations = [
+            const translations = {};
+            const defaultTranslations = [
                 "english",
                 "spanish",
                 "arabic",
@@ -80,7 +80,7 @@ function ThePage({ tab: T, setPanalApp, panelId, setEnableEditor, setData, data 
             ]
             allTranslations = available_translations_req.data.translations;
 
-            let trValue = {
+            const trValue = {
                 pass: false,
                 value: null
             };
@@ -92,31 +92,31 @@ function ThePage({ tab: T, setPanalApp, panelId, setEnableEditor, setData, data 
                     }
                 })
 
-                let urlId = translationId.includes("https://");
+                const urlId = translationId.includes("https://");
 
                 if (trValue.pass && !urlId) {
-                    let bookData = await web.get(`https://bible.helloao.org/api/${trValue.value.id}/books.json`);
-                    let book0 = bookData.data.books[0];
+                    const bookData = await web.get(`https://bible.helloao.org/api/${trValue.value.id}/books.json`);
+                    const book0 = bookData.data.books[0];
                     setTagMask(thisBot, "selectedTranslation", trValue.value, "local");
                     setTagMask(thisBot, "booksData", bookData.data.books, "local");
                     bookId = book0.id;
                     bookTranslationId = trValue.value.id;
                     firstChapterApiLink = book0.firstChapterApiLink;
                 } else if (!urlId) {
-                    let url = `https://aolab-bible-api.netlify.app/api/translations/getTranslation`;
-                    let params = {
+                    const url = `https://aolab-bible-api.netlify.app/api/translations/getTranslation`;
+                    const params = {
                         uid: translationId
                     }
-                    let queryUrl = attachQueryToURL(url, params);
-                    let result = await web.get(queryUrl);
+                    const queryUrl = attachQueryToURL(url, params);
+                    const result = await web.get(queryUrl);
                     if (result.status === 200 && result.data.data) {
-                        let translation = JSON.parse(result.data.data.translation);
-                        let englishName = translation.languageEnglishName.toLowerCase();
-                        let shortName = translation.shortName.toLowerCase();
+                        const translation = JSON.parse(result.data.data.translation);
+                        const englishName = translation.languageEnglishName.toLowerCase();
+                        const shortName = translation.shortName.toLowerCase();
 
-                        let bookData = await web.get(translation.listOfBooksApiLink);
+                        const bookData = await web.get(translation.listOfBooksApiLink);
 
-                        let book0 = bookData.data.books[0];
+                        const book0 = bookData.data.books[0];
                         setTagMask(thisBot, "selectedTranslation", translation, "local");
                         setTagMask(thisBot, "booksData", bookData.data.books, "local");
                         if (!defaultTranslations.includes(englishName)) {
@@ -131,11 +131,11 @@ function ThePage({ tab: T, setPanalApp, panelId, setEnableEditor, setData, data 
                         firstChapterApiLink = book0.firstChapterApiLink;
                     }
                 } else {
-                    let result = await web.get(translationId);
+                    const result = await web.get(translationId);
                     if (result.status === 200) {
                         const url = new URL(translationId);
                         let newTranslations = result.data.translations;
-                        let defaultTranslation = newTranslations[0];
+                        const defaultTranslation = newTranslations[0];
                         newTranslations = newTranslations.map(trans => {
                             return {
                                 languageEnglishName: trans.languageEnglishName,
@@ -147,13 +147,13 @@ function ThePage({ tab: T, setPanalApp, panelId, setEnableEditor, setData, data 
                         })
                         console.log(newTranslations, "newTranslations")
                         allTranslations = [...allTranslations, ...newTranslations];
-                        for (let translation of newTranslations) {
-                            let englishName = translation.languageEnglishName.toLowerCase();
+                        for (const translation of newTranslations) {
+                            const englishName = translation.languageEnglishName.toLowerCase();
                             if (!defaultTranslations.includes(englishName)) {
                                 defaultTranslations.push(englishName);
                             }
                         }
-                        let translation = {
+                        const translation = {
                             languageEnglishName: defaultTranslation.languageEnglishName,
                             id: defaultTranslation.id,
                             listOfBooksApiLink: `${url.origin}${defaultTranslation.listOfBooksApiLink}`,
@@ -161,12 +161,12 @@ function ThePage({ tab: T, setPanalApp, panelId, setEnableEditor, setData, data 
                             shortName: defaultTranslation.shortName
                         }
                         console.log(translation, "translation")
-                        let englishName = translation.languageEnglishName.toLowerCase();
-                        let shortName = translation.shortName.toLowerCase();
+                        const englishName = translation.languageEnglishName.toLowerCase();
+                        const shortName = translation.shortName.toLowerCase();
 
-                        let bookData = await web.get(translation.listOfBooksApiLink);
+                        const bookData = await web.get(translation.listOfBooksApiLink);
 
-                        let book0 = bookData.data.books[0];
+                        const book0 = bookData.data.books[0];
                         setTagMask(thisBot, "selectedTranslation", translation, "local");
                         setTagMask(thisBot, "booksData", bookData.data.books, "local");
                         if (!defaultTranslations.includes(englishName)) {
@@ -182,8 +182,8 @@ function ThePage({ tab: T, setPanalApp, panelId, setEnableEditor, setData, data 
                     }
                 }
                 allTranslations.forEach(translation => {
-                    let englishName = translation?.languageEnglishName?.toLowerCase() || translation?.englishName?.toLowerCase();
-                    let shortName = translation.shortName.toLowerCase();
+                    const englishName = translation?.languageEnglishName?.toLowerCase() || translation?.englishName?.toLowerCase();
+                    const shortName = translation.shortName.toLowerCase();
                     if (translations[englishName]) {
                         if (!translations[englishName][shortName]) {
                             translations[englishName][shortName] = translation;
@@ -215,7 +215,7 @@ function ThePage({ tab: T, setPanalApp, panelId, setEnableEditor, setData, data 
     async function loadData() {
         if (!tab)
             return
-        let { baseUrl, bookId, bookTranslationId, firstChapterApiLink } = await loadTranslationFromUrl();
+        const { baseUrl, bookId, bookTranslationId, firstChapterApiLink } = await loadTranslationFromUrl();
         const bible = new BibleDataManager({
             tabId: tab?.id,
             translation: bookTranslationId || tab.data.translation,
@@ -376,7 +376,7 @@ function ThePage({ tab: T, setPanalApp, panelId, setEnableEditor, setData, data 
         if (Element?.data?.data?.pkgApp) {
             const handoff = Element?.data?.data
             const App = handoff.app
-            let tabData = {
+            const tabData = {
                 ...Element.data,
                 data: {
                     ...Element.data.data,
@@ -1226,7 +1226,7 @@ function Section({ heading, commandHighlight, setCommandHighlight, setLastSelect
                 const wordParts = wordChunksMap[verse.verseNumber] || [{ text: verse.text, isHighlighted: false }];
                 return wordParts.map((part, i) => {
                     if (part.isHighlighted) {
-                        let attributes = part.highlightConfig.createAttributes(book, chapter, part)
+                        const attributes = part.highlightConfig.createAttributes(book, chapter, part)
                         return (
                             <span
                                 key={i}

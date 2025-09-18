@@ -66,14 +66,14 @@ const getBookmarks = async () => {
 
 const bookmarks = await getBookmarks();
 
-let recored = getBot("system", 'main.Recorder')
+const recored = getBot("system", 'main.Recorder')
 
 function getBooksDataForMenu(booksLink = false) {
-  let formMenuBot = getBot('system', 'baseElements.formMenu');
+  const formMenuBot = getBot('system', 'baseElements.formMenu');
   if (booksLink) {
     formMenuBot.tags['booksLink'] = booksLink
   }
-  let bookPromise = formMenuBot.bookData();
+  const bookPromise = formMenuBot.bookData();
   Promise.resolve(bookPromise).then((data) => {
     if (recored?.tags) {
       recored.tags.menuData = [...data]
@@ -235,7 +235,7 @@ globalThis.CONSTANTS = {
 
 globalThis.objectComparator = (firstData, secondData, keysComparator = []) => {
   if (!secondData) return false;
-  if (!!keysComparator) {
+  if (keysComparator) {
     return keysComparator.some(key => {
       return firstData[key] === secondData[key];
     })
@@ -602,7 +602,7 @@ const getPosition = () => {
   const edgeThreshold = 200; // Distance from edges to adjust position
   const safeMargin = "2rem"; // Fixed margin when near edges
 
-  let position = {};
+  const position = {};
 
   // Horizontal positioning
   if (width - pointerX < edgeThreshold) {

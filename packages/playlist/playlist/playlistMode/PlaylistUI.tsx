@@ -292,7 +292,7 @@ const Playlist = () => {
                             bookid: currentOpenedBook?.bookId,
                             chapter: currentOpenedBook?.chapter,
                         };
-                        if (!!ele.data.additionalInfo) {
+                        if (ele.data.additionalInfo) {
                             const tags = [...(ele.data.additionalInfo.tags || [])];
                             const layers = [...ele.data.additionalInfo.layers];
 
@@ -319,7 +319,7 @@ const Playlist = () => {
                             };
                         }
 
-                        if (!!data.address) {
+                        if (data.address) {
                             allAnnotations.push(data);
                         }
                     });
@@ -491,7 +491,7 @@ const Playlist = () => {
                             list={playlistShared.list}
                         />
                         <div className="welcome-details">
-                            <h4 style={{ fontSize: !!playlistShared.description ? "1rem" : "1.125rem" }}>{playlistShared.name}</h4>
+                            <h4 style={{ fontSize: playlistShared.description ? "1rem" : "1.125rem" }}>{playlistShared.name}</h4>
                             {!!playlistShared.description && <p>{playlistShared.description}</p>}
                         </div>
                     </div>
@@ -681,7 +681,7 @@ const Playlist = () => {
                                 </div>
                             </div>
                             {isLayers ?
-                                <div style={{ display: "flex", flexDirection: 'column', overflow: 'auto', paddingBottom: !!SplitAppPanel2 ? "10rem" : "0", height: `calc(100% - ${playingPlaylist || !!editData.id ? '130px' : '40px'})` }}>
+                                <div style={{ display: "flex", flexDirection: 'column', overflow: 'auto', paddingBottom: SplitAppPanel2 ? "10rem" : "0", height: `calc(100% - ${playingPlaylist || !!editData.id ? '130px' : '40px'})` }}>
                                     <Discover setAnnotationData={setAnnotationData} editingPlaylist={editData.id} currentOpenedBook={currentOpenedBook} fetchingAnnotation={fetchingAnnotation} chapter={currentOpenedBook?.chapter} annotationData={annoationData} style={{ height: `100%` }} setOpenModal={setOpenModal} playingPlaylist={playingPlaylist} />
                                 </div>
                                 :

@@ -2,7 +2,7 @@ const { name, version, description, mainBotTag, otherBots, dependencies, author,
 os.log(that)
 const mainBot = getBot('system', mainBotTag)
 const otherBotsHolder = otherBots.map(bot => getBot('system', bot.tag))
-let bots = await os.recordFile(tags.publicKey, [mainBot, ...otherBotsHolder])
+const bots = await os.recordFile(tags.publicKey, [mainBot, ...otherBotsHolder])
 if (!bots.success && bots.errorCode !== 'file_already_exists')
     return
 if (bots.errorCode === 'file_already_exists')

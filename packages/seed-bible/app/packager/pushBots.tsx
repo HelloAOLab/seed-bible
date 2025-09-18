@@ -7,12 +7,12 @@ if (!masks[`${name}-bots`])
     setTagMask(thisBot, `${name}-bots`, [], "local");
 
 if (!first) {
-    let arr = masks[`${name}-bots`]
+    const arr = masks[`${name}-bots`]
     arr.push(bot.id)
     setTagMask(thisBot, `${name}-bots`, [...bot], "local");
 }
 else {
-    let arr = masks[`${name}-bots`]
+    const arr = masks[`${name}-bots`]
     arr.unshift(bot.id)
     setTagMask(thisBot, `${name}-bots`, [...bot], "local");
 }

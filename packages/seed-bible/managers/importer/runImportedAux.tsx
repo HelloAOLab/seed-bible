@@ -1,9 +1,9 @@
-let managerConfigs = [];
-let installedBots = getBots('ext_configs');
+const managerConfigs = [];
+const installedBots = getBots('ext_configs');
 
 console.log(installedBots, "masks.installedBots")
 
-for (let installedBot of installedBots) {
+for (const installedBot of installedBots) {
     if (installedBot.tags.ext_manager) {
         managerConfigs.push(installedBot.ext_configs());
     }

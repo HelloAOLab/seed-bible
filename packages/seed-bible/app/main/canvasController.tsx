@@ -33,7 +33,7 @@ const CanvasController = () => {
         height: 600
     });
     const combinedStyle = useMemo(() => {
-        let posCss = jsonToCss(position);
+        const posCss = jsonToCss(position);
         return `
             #app-game-container, .main-content {
                 position: fixed !important;

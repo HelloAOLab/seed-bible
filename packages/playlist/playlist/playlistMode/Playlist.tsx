@@ -344,7 +344,7 @@ const Playlist = ({ id, query, selectedChip, isCreate, isLayers, playingPlaylist
 
     const deleteDateData = () => {
         setPlaylist((prev) => {
-            let old = [...prev.filter(ele => ele.type !== 'date')];
+            const old = [...prev.filter(ele => ele.type !== 'date')];
             return old;
         });
     }
@@ -455,7 +455,7 @@ const Playlist = ({ id, query, selectedChip, isCreate, isLayers, playingPlaylist
             },
             type: linkState.type === "text" ? "heading" : "attachment-link",
         };
-        if (!!itemSelected) {
+        if (itemSelected) {
             setPlaylist(old => {
                 const prev = [...old];
                 const index = prev.findIndex(ele => ele.id === itemSelected);
@@ -487,7 +487,7 @@ const Playlist = ({ id, query, selectedChip, isCreate, isLayers, playingPlaylist
     };
 
     const massAdd = (items) => {
-        if (!!itemSelected) {
+        if (itemSelected) {
             setPlaylist(old => {
                 const prev = [...old];
                 const index = prev.findIndex(ele => ele.id === itemSelected);
@@ -552,7 +552,7 @@ const Playlist = ({ id, query, selectedChip, isCreate, isLayers, playingPlaylist
     const onBulkJsonDownload = () => {
         const listToDownload = [];
         playLists.forEach(({ list, id: playlistID }) => {
-            if (!!selectedPlaylist[playlistID]) {
+            if (selectedPlaylist[playlistID]) {
                 list.forEach(ele => {
                     listToDownload.push({
                         ...ele,
@@ -648,13 +648,13 @@ const Playlist = ({ id, query, selectedChip, isCreate, isLayers, playingPlaylist
 
         playList.forEach(ele => {
             if (checkListData[ele.id] && ele.id !== embedding) {
-                if (!!ele.additionalInfo?.layers?.length) {
+                if (ele.additionalInfo?.layers?.length) {
                     embededItem = ele.content;
                 }
             }
         });
 
-        if (!!embededItem) {
+        if (embededItem) {
             ShowNotification({
                 message: `Cannot Embed the Embedded item! Content: ${embededItem}. Please remove it before embeding!`,
                 severity: "error",
@@ -678,7 +678,7 @@ const Playlist = ({ id, query, selectedChip, isCreate, isLayers, playingPlaylist
                 };
             });
 
-            let embeddingItemsIndex = oldItems.findIndex(ele => ele.id === embedding);
+            const embeddingItemsIndex = oldItems.findIndex(ele => ele.id === embedding);
             oldItems[embeddingItemsIndex] = {
                 ...oldItems[embeddingItemsIndex],
                 additionalInfo: {

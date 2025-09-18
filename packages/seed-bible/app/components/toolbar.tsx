@@ -64,7 +64,7 @@ function Toolbar() {
     useEffect(() => {
         console.log(!activeTab || !tabs, "tools 1234", tools)
         if(!activeTab || !tabs) return;
-        let activeTabObj = tabs.filter(item => item.id === activeTab)[0];
+        const activeTabObj = tabs.filter(item => item.id === activeTab)[0];
         console.log(activeTab, activeTabObj, "activetab")
         if(activeTabObj.data.type === 'canvas'){
             setActiveTools([...canvasTools])

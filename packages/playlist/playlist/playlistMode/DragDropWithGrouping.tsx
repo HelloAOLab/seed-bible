@@ -74,11 +74,11 @@ const DragDrop = ({ massAdd, attachLink, onGenClick = () => { }, setItemSelected
 
         if (!draggedItemID) return;
 
-        let originalRespectiveIndex = index;
+        const originalRespectiveIndex = index;
 
 
         let draggedItemIndex = transformedHistory.findIndex(hist => hist.id === draggedItemID);
-        let parentIdx = transformedHistory.findIndex(ele => ele.id === draggedParent);
+        const parentIdx = transformedHistory.findIndex(ele => ele.id === draggedParent);
 
         let dragItem = [transformedHistory[draggedItemIndex]];
 
@@ -95,13 +95,13 @@ const DragDrop = ({ massAdd, attachLink, onGenClick = () => { }, setItemSelected
             draggedOverItem = transformedHistory[parentIndexDragOver].additionalInfo.layers[index];
         }
 
-        let newIndex = originalRespectiveIndex;
+        const newIndex = originalRespectiveIndex;
 
         // console.log("Drag Over:", { newIndex, draggedItemIndex,originalRespectiveIndex, pseudoIndex, index });
 
         let newItems = [];
 
-        let filterAbleItems = {
+        const filterAbleItems = {
             [draggedItemID]: true,
         };
 
@@ -164,7 +164,7 @@ const DragDrop = ({ massAdd, attachLink, onGenClick = () => { }, setItemSelected
 
             let dragItem = transformedHistory[draggedItemIndex];
 
-            let parentIdx = transformedHistory.findIndex(ele => ele.id === draggedParent);
+            const parentIdx = transformedHistory.findIndex(ele => ele.id === draggedParent);
 
             if (draggedItemIndex === -1 && parentIdx > -1) {
                 draggedItemIndex = transformedHistory[parentIdx].additionalInfo.layers?.findIndex(hist => hist.id === draggedItemID);
@@ -179,7 +179,7 @@ const DragDrop = ({ massAdd, attachLink, onGenClick = () => { }, setItemSelected
                 return;
             }
 
-            if (!!dragItem.additionalInfo.layers?.length) {
+            if (dragItem.additionalInfo.layers?.length) {
                 ShowNotification({
                     message: `Cannot Embed the Embedded item!. Please remove it before embeding!`,
                     severity: "error",
@@ -470,8 +470,8 @@ const DragDrop = ({ massAdd, attachLink, onGenClick = () => { }, setItemSelected
                                             onClick={() => {
                                                 const isShiftHold = globalThis?.KEY_HOLD?.['shift'];
                                                 if (isShiftHold) {
-                                                    let upperLimit = Math.max(index, globalThis.LAST_CLICK_ID);
-                                                    let lowerLimit = Math.min(index, globalThis.LAST_CLICK_ID);
+                                                    const upperLimit = Math.max(index, globalThis.LAST_CLICK_ID);
+                                                    const lowerLimit = Math.min(index, globalThis.LAST_CLICK_ID);
                                                     const idsFilter = transformedHistory.filter(({ id }, indexInner) => indexInner <= upperLimit && indexInner >= lowerLimit && indexInner !== globalThis.LAST_CLICK_ID && id !== embedding).map(ele => ele.id);
                                                     editDataFromPlaylist(idsFilter, false);
                                                     globalThis.LAST_CLICK_ID = index;
@@ -728,8 +728,8 @@ const PlaylistContentRenderer = ({
                         onClick={() => {
                             const isShiftHold = globalThis?.KEY_HOLD?.['shift'];
                             if (isShiftHold) {
-                                let upperLimit = Math.max(index, globalThis.LAST_CLICK_ID);
-                                let lowerLimit = Math.min(index, globalThis.LAST_CLICK_ID);
+                                const upperLimit = Math.max(index, globalThis.LAST_CLICK_ID);
+                                const lowerLimit = Math.min(index, globalThis.LAST_CLICK_ID);
                                 const idsFilter = transformedHistory.filter(({ id }, indexInner) => indexInner <= upperLimit && indexInner >= lowerLimit && indexInner !== globalThis.LAST_CLICK_ID && id !== embedding).map(ele => ele.id);
                                 editDataFromPlaylist(idsFilter, false);
                                 globalThis.LAST_CLICK_ID = index;
@@ -876,8 +876,8 @@ const PlaylistContentRenderer = ({
                         onClickCheckbox={() => {
                             const isShiftHold = globalThis?.KEY_HOLD?.['shift'];
                             if (isShiftHold && id === globalThis.LAST_CLICK_EMBED_PARENT) {
-                                let upperLimit = Math.max(index, globalThis.LAST_CLICK_EMBED_ID);
-                                let lowerLimit = Math.min(index, globalThis.LAST_CLICK_EMBED_ID);
+                                const upperLimit = Math.max(index, globalThis.LAST_CLICK_EMBED_ID);
+                                const lowerLimit = Math.min(index, globalThis.LAST_CLICK_EMBED_ID);
                                 const idsFilter = toBeMapArray.filter(({ id }, indexInner) => indexInner <= upperLimit && indexInner >= lowerLimit && indexInner !== globalThis.LAST_CLICK_EMBED_ID && id !== embedding).map(ele => ele.id);
                                 setChecklistEmbeded(idsFilter, false);
                                 globalThis.LAST_CLICK_EMBED_PARENT = id;
@@ -941,8 +941,8 @@ const PlaylistContentRenderer = ({
                                     onClick={() => {
                                         const isShiftHold = globalThis?.KEY_HOLD?.['shift'];
                                         if (isShiftHold && id === globalThis.LAST_CLICK_EMBED_PARENT) {
-                                            let upperLimit = Math.max(index, globalThis.LAST_CLICK_EMBED_ID);
-                                            let lowerLimit = Math.min(index, globalThis.LAST_CLICK_EMBED_ID);
+                                            const upperLimit = Math.max(index, globalThis.LAST_CLICK_EMBED_ID);
+                                            const lowerLimit = Math.min(index, globalThis.LAST_CLICK_EMBED_ID);
                                             const idsFilter = toBeMapArray.filter(({ id }, indexInner) => indexInner <= upperLimit && indexInner >= lowerLimit && indexInner !== globalThis.LAST_CLICK_EMBED_ID && id !== embedding).map(ele => ele.id);
                                             setChecklistEmbeded(idsFilter, false);
                                             globalThis.LAST_CLICK_EMBED_PARENT = id;

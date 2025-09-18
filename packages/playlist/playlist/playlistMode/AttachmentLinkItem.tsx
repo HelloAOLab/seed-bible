@@ -197,8 +197,8 @@ const AttachLinkItem = ({
                             const isShiftHold = globalThis?.KEY_HOLD?.['shift'];
 
                             if (isShiftHold && !onDisembed) {
-                                let upperLimit = Math.max(index, globalThis.LAST_CLICK_ID);
-                                let lowerLimit = Math.min(index, globalThis.LAST_CLICK_ID);
+                                const upperLimit = Math.max(index, globalThis.LAST_CLICK_ID);
+                                const lowerLimit = Math.min(index, globalThis.LAST_CLICK_ID);
                                 const idsFilter = originalList.filter(({ id }, indexInner) => indexInner <= upperLimit && indexInner >= lowerLimit && indexInner !== globalThis.LAST_CLICK_ID && id !== embedding).map(ele => ele.id);
                                 editDataFromPlaylist(idsFilter, false);
                                 globalThis.LAST_CLICK_ID = index;

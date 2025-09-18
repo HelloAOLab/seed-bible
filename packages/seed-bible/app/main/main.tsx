@@ -189,7 +189,7 @@ const Main = () => {
     // }
     function handleResize() {
         setIsMobile(window.innerWidth < 768);
-        let mob = window.innerWidth < 768
+        const mob = window.innerWidth < 768
         setTimeout(() => {
             updateContainerSize(globalThis.window?.innerWidth - (!fullScreen && !mob && sidebarWidth), globalThis.window?.innerHeight * 0.98)
         }, 0)

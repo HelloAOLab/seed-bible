@@ -52,7 +52,7 @@ globalThis.NagiationTimeout = setTimeout(async () => {
     }
 
     const openSection = async (sectionName) => {
-        let sectionBot = getBot(byTag("isSection", true), byTag('sectionName', sectionName));
+        const sectionBot = getBot(byTag("isSection", true), byTag('sectionName', sectionName));
 
         if (sectionBot && !sectionBot.masks.selected) {
             // Double time is for interaction and select
@@ -64,7 +64,7 @@ globalThis.NagiationTimeout = setTimeout(async () => {
     }
 
     const openBook = async (commonName, chapter = 1, verse = []) => {
-        let bookBot = getBot(byTag("bookName", commonName), byTag("isBook", true));
+        const bookBot = getBot(byTag("bookName", commonName), byTag("isBook", true));
         if (bookBot) {
             await os.focusOn(bookBot, {
                 duration: 1,
@@ -185,7 +185,7 @@ globalThis.NagiationTimeout = setTimeout(async () => {
         }
         case 'verse-grouped':
         case "verse": {
-            let bookName = dataToNavigate.additionalInfo.book;
+            const bookName = dataToNavigate.additionalInfo.book;
             const chapterNo = dataToNavigate.additionalInfo.chapter;
             const verseData = dataToNavigate.additionalInfo.data;
 

@@ -111,7 +111,7 @@ async function SetUpApplication(applicationFunction, bot, toolbarConfig) {
     }
 
     // Get the component (support both sync and async factories)
-    let App = await bot[applicationFunction]();
+    const App = await bot[applicationFunction]();
 
     // Validate: must be a function/component
     if (typeof App !== 'function') {

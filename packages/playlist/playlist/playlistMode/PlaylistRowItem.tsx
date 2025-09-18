@@ -537,7 +537,7 @@ const PlaylistRowItem = ({ currentDateActive, shareProfileName, oldItemsMap = {}
                     {
                         opendedList
                         &&
-                        <DragDrop access={access} description={description} icon={icon} isCustomIcon={isCustomIcon} isCustomColor={isCustomColor} color={color} currentFormat={currentFormat} currentDateActive={currentDateActive} checkListData={checkListData} oldItemsMap={oldItemsMap} clickPass={clickPass} onLinking={onLink} playlistName={`${playlistParentName}${!!playlistParentName ? " - " : ''}${name}`} linkingMode={linkingMode} viewOnly={viewOnly} parentId={parentId} checklistEnabled={checklistEnabled} toggle={toggle} creatingPlaylist={creatingPlaylist} playingPlaylist={playingPlaylist} list={list} editDataFromPlaylist={editDataFromPlaylist} playListSubIndex={playListIndex} playListSubId={id} setPlaylistFromRow={setPlaylists} onClick={onClick} setList={setPlaylist} deleteFromList={deleteDataFromPlaylist} onClickItem={hanldeAdd} />
+                        <DragDrop access={access} description={description} icon={icon} isCustomIcon={isCustomIcon} isCustomColor={isCustomColor} color={color} currentFormat={currentFormat} currentDateActive={currentDateActive} checkListData={checkListData} oldItemsMap={oldItemsMap} clickPass={clickPass} onLinking={onLink} playlistName={`${playlistParentName}${playlistParentName ? " - " : ''}${name}`} linkingMode={linkingMode} viewOnly={viewOnly} parentId={parentId} checklistEnabled={checklistEnabled} toggle={toggle} creatingPlaylist={creatingPlaylist} playingPlaylist={playingPlaylist} list={list} editDataFromPlaylist={editDataFromPlaylist} playListSubIndex={playListIndex} playListSubId={id} setPlaylistFromRow={setPlaylists} onClick={onClick} setList={setPlaylist} deleteFromList={deleteDataFromPlaylist} onClickItem={hanldeAdd} />
                     }
                 </div>
 
@@ -635,7 +635,7 @@ const PlaylistRowItem = ({ currentDateActive, shareProfileName, oldItemsMap = {}
                             >
                                 <p>Delete </p>
                             </div>}
-                        {!creatingPlaylist && !viewOnly && !playingPlaylist && (!!playListSubId ? <div
+                        {!creatingPlaylist && !viewOnly && !playingPlaylist && (playListSubId ? <div
                             className="more-menu-items"
                             onClick={() => {
                                 exportNestedList();
