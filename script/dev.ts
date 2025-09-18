@@ -1,6 +1,6 @@
 import puppeteer from 'puppeteer';
 import { listPackages, packageSingle, readPackage } from './lib/package.js';
-import { initPage, loadAOBot as loadInst, addAux, shout, getPrimarySim } from './lib/browser.js';
+import { initPage, loadAOBot as loadInst, addAux, shout, getPrimarySim, execScript } from './lib/browser.js';
 import { writeFile } from 'node:fs/promises';
 import repl from 'node:repl';
 
@@ -127,6 +127,8 @@ server.defineCommand('download', {
         await shout(page, 'onChat', null, {
             message: '.download'
         });
+
+        server.displayPrompt();
     }
 });
 
@@ -138,8 +140,22 @@ server.defineCommand('chat', {
         await shout(page, 'onChat', null, {
             message
         });
+
+        server.displayPrompt();
     },
 })
+
+Object.defineProperty(server.context, 'run', {
+    configurable: false,
+    writable: false,
+    enumerable: false,
+    value: (script: string) => {
+        server.clearBufferedCommand();
+        const result = execScript(page, script);
+        server.displayPrompt();
+        return result;
+    }
+});
 
 server.on('exit', async () => {
     process.exit(0);

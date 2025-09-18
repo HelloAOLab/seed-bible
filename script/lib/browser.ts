@@ -1,4 +1,5 @@
 import { Page, ElementHandle, JSHandle } from "puppeteer";
+import { v4 as uuid } from 'uuid';
 
 /**
  * Runs required initialization code on the page.
@@ -21,7 +22,7 @@ export async function getPrimarySim(page: Page) {
         const app = window.aux.getApp();
         const sim = app.simulationManager.primary;
         return sim;
-    }) as JSHandle<any>;
+    }) as JSHandle<unknown>;
 }
 
 /**
@@ -55,6 +56,35 @@ export async function shout(page: Page, name: string, botIds: string[] | null = 
         const sim = app.simulationManager.primary;
         return sim.helper.shout(name, botIds, that);
     }, name, botIds, that);
+}
+
+/**
+ * Runs the given script in the context of the inst that is currently loaded in the page.
+ * @param page The page.
+ * @param script The script to run.
+ */
+export async function execScript(page: Page, script: string) {
+    const taskId = uuid();
+    return await page.evaluate((script, taskId) => {
+        const app = window.aux.getApp();
+        const sim = app.simulationManager.primary;
+
+        sim.helper.transaction({
+            type: 'run_script',
+            script,
+            taskId,
+        })
+
+        return new Promise((resolve, reject) => {
+            sim.localEvents.subscribe(e => {
+                if (e.type === 'async_result' && e.taskId === taskId) {
+                   resolve(e.result);
+                } else if (e.type === 'async_error' && e.taskId === taskId) {
+                   reject(e.error);
+                }
+            })
+        });
+    }, script, taskId);
 }
 
 /**
