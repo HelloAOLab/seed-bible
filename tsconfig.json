@@ -27,5 +27,6 @@
   "include": [
     "packages",
     "typings",
+    "script"
   ]
 }
