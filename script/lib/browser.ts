@@ -65,24 +65,13 @@ export async function shout(page: Page, name: string, botIds: string[] | null = 
  */
 export async function execScript(page: Page, script: string) {
     const taskId = uuid();
-    return await page.evaluate((script, taskId) => {
+    page.evaluate((script, taskId) => {
         const app = window.aux.getApp();
         const sim = app.simulationManager.primary;
-
         sim.helper.transaction({
             type: 'run_script',
             script,
             taskId,
-        })
-
-        return new Promise((resolve, reject) => {
-            sim.localEvents.subscribe(e => {
-                if (e.type === 'async_result' && e.taskId === taskId) {
-                   resolve(e.result);
-                } else if (e.type === 'async_error' && e.taskId === taskId) {
-                   reject(e.error);
-                }
-            })
         });
     }, script, taskId);
 }

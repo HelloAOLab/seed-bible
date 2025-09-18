@@ -40,6 +40,11 @@ for (const pkg of packages) {
 
 console.log('Loaded!');
 
+// await execScript(page, `
+//     const packager = getBot('system', 'app.packager');
+//     packager.masks.mainPackages = [];
+// `);
+
 await shout(page, 'onEggHatch');
 
 process.on('exit', async () => {
@@ -119,6 +124,27 @@ server.defineCommand('save', {
     }
 });
 
+// server.defineCommand('load', {
+//     help: 'Load a package',
+//     action: async (name: string) => {
+//         server.clearBufferedCommand();
+
+//         console.log(`Adding ${name}...`);
+//         const aux = await readPackage(name);
+//         await addAux(page, aux);
+
+//         await execScript(page, `
+//             const packager = getBot('system', 'app.packager');
+//             setTagMask(packager, 'installedPackages', [
+//                 ...(packager.masks.installedPackages ?? []),
+//                 ${JSON.stringify(name)}
+//             ], 'local');
+//         `);
+
+//         server.displayPrompt();
+//     }
+// });
+
 server.defineCommand('download', {
     help: 'Run the .download chat command',
     action: async () => {
@@ -152,6 +178,18 @@ Object.defineProperty(server.context, 'run', {
     value: (script: string) => {
         server.clearBufferedCommand();
         const result = execScript(page, script);
+        server.displayPrompt();
+        return result;
+    }
+});
+
+Object.defineProperty(server.context, 'shout', {
+    configurable: false,
+    writable: false,
+    enumerable: false,
+    value: (name: string, arg: unknown) => {
+        server.clearBufferedCommand();
+        const result = shout(page, name, arg);
         server.displayPrompt();
         return result;
     }
