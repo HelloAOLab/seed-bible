@@ -1,5 +1,5 @@
 import { execSync } from 'child_process';
-import { readdir } from 'fs/promises';
+import { readdir, readFile } from 'fs/promises';
 import * as path from 'path';
 
 export async function packageSingle(pkg: string, stdio: 'inherit' | 'ignore' = 'inherit') {
@@ -21,4 +21,11 @@ export async function packageAll() {
     for (const pkg of packages) {
         await packageSingle(pkg);
     }
+}
+
+export async function readPackage(packageName: string) {
+    const packageAux = path.resolve('dist', `${packageName}.aux`);
+    const packageData = await readFile(packageAux, 'utf-8')
+    const aux = JSON.parse(packageData);
+    return aux;
 }
