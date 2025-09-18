@@ -43,7 +43,13 @@ console.log('Loaded!');
 await shout(page, 'onEggHatch');
 
 process.on('exit', async () => {
-    await browser.close();
+    if (browser.connected) {
+        await browser.close();
+    }
+});
+
+browser.on('disconnected', () => {
+    process.exit(0);
 });
 
 const server = repl.start('> ');
@@ -62,52 +68,78 @@ server.defineCommand('system', {
         server.clearBufferedCommand();
 
         const sim = await getPrimarySim(page);
+        try {
+            await sim.evaluate(async (s, name) => {
+                await s.helper.updateBot(s.helper.userBot, {
+                    tags: {
+                        systemPortal: name || true
+                    }
+                });
+            }, name);
 
-        console.log('got sim');
-
-        await sim.evaluate(async (s, name) => {
-            await s.helper.updateBot(s.helper.userBot, {
-                tags: {
-                    systemPortal: name || true
-                }
-            });
-        }, name);
-
-        server.displayPrompt();
+            server.displayPrompt();
+        } finally{
+            sim.dispose();
+        }
     }
 });
 
 server.defineCommand('save', {
-    help: 'Save the current inst',
+    help: 'Save the current inst to a local .aux file',
     action: async () => {
         server.clearBufferedCommand();
 
         const sim = await getPrimarySim(page);
-
-        const state = await sim.evaluate(s => {
-            const state = {};
-            for (const id in s.helper.botsState) {
-                const bot = state[id] = {...s.helper.botsState[id]};
-                if (bot.precalculated) {
-                    delete bot.precalculated;
-                    delete bot.values;
+        try {
+            const state = await sim.evaluate(s => {
+                const state = {};
+                for (const id in s.helper.botsState) {
+                    const bot = state[id] = {...s.helper.botsState[id]};
+                    if (bot.precalculated) {
+                        delete bot.precalculated;
+                        delete bot.values;
+                    }
                 }
-            }
 
-            return state;
-        });
+                return state;
+            });
 
-        const aux = {
-            version: 1,
-            state
-        };
+            const aux = {
+                version: 1,
+                state
+            };
 
-        const filename = `saved-${Date.now()}.aux`;
-        await writeFile(filename, JSON.stringify(aux, null, 2), 'utf-8');
-        console.log(`Wrote: ${filename}`);
-        server.displayPrompt();
+            const filename = `saved-${Date.now()}.aux`;
+            await writeFile(filename, JSON.stringify(aux, null, 2), 'utf-8');
+            console.log(`Wrote: ${filename}`);
+            server.displayPrompt();
+        } finally {
+            sim.dispose();
+        }
     }
 });
+
+server.defineCommand('download', {
+    help: 'Run the .download chat command',
+    action: async () => {
+        server.clearBufferedCommand();
+
+        await shout(page, 'onChat', null, {
+            message: '.download'
+        });
+    }
+});
+
+server.defineCommand('chat', {
+    help: 'Send a chat message',
+    action: async (message: string) => {
+        server.clearBufferedCommand();
+
+        await shout(page, 'onChat', null, {
+            message
+        });
+    },
+})
 
 server.on('exit', async () => {
     process.exit(0);
