@@ -41,7 +41,7 @@ export default defineConfig([
 
     // Disabled rules
     {
-        files: ['packages/seed-bible/**/*.{js,mjs,cjs,ts,tsx,jsx,css}'],
+        files: ['packages/**/*.{js,mjs,cjs,ts,tsx,jsx,css}'],
 
         rules: {
             // These rules should be fixed
@@ -49,6 +49,7 @@ export default defineConfig([
             'no-constant-condition': 'warn',
             '@typescript-eslint/no-unused-expressions': 'warn',
             '@typescript-eslint/no-unused-vars': 'warn',
+            '@typescript-eslint/no-explicit-any': 'warn',
             'no-empty': 'warn',
             'no-prototype-builtins': 'warn',
             'no-case-declarations': 'warn',

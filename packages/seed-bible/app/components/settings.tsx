@@ -210,7 +210,6 @@ const SettingsSidebar = () => {
 
         setSettingsVisibility(initialVisibility);
         setSettingsLabels(initialLabels);
-        // eslint-disable-next-line react-hooks/exhaustive-deps
     }, []); // run once
 
     // Generate SPACE settings config with custom labels and visibility

@@ -86,7 +86,7 @@ server.defineCommand('system', {
             }, name);
 
             server.displayPrompt();
-        } finally{
+        } finally {
             sim.dispose();
         }
     }
