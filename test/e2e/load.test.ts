@@ -13,7 +13,9 @@ console.log = jest.fn();
 beforeAll(async () => {
     await packageSingle('seed-bible', 'ignore');
 
-    browser = await puppeteer.launch({});
+    browser = await puppeteer.launch({
+        args: ['--no-sandbox']
+    });
 });
 
 afterAll(async () => {
