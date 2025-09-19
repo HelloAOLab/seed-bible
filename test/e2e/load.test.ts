@@ -39,3 +39,13 @@ test('load seed bible into Genesis 1', async () => {
     const bookTitle = await seedBibleFrame.locator('div.bookTitle').waitHandle();
     expect(await bookTitle?.evaluate(el => el.textContent)).toBe('Genesis 1');
 });
+
+// Should work but doesn't because of the login screens
+test.skip('change chapter', async () => {
+    await seedBibleFrame.locator('div.toolbar-item-wraper[title="Books"] > button').click();
+    await seedBibleFrame.locator('div.sidebar-itm:-p-text("Isaiah")').click();
+    await seedBibleFrame.locator('button.chapter-btn:-p-text("53")').click();
+
+    const bookTitle = await seedBibleFrame.locator('div.bookTitle').waitHandle();
+    expect(await bookTitle?.evaluate(el => el.textContent)).toBe('Isaiah 53');
+});
