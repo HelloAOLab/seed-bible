@@ -1,6 +1,7 @@
 import { execSync } from 'child_process';
 import { readdir, readFile } from 'fs/promises';
 import * as path from 'path';
+import type { BotsState } from '../../typings/AuxLibraryDefinitions';
 
 export async function packageSingle(pkg: string, stdio: 'inherit' | 'ignore' = 'inherit') {
     try {
@@ -32,4 +33,36 @@ export async function readPackage(packageName: string) {
 
 export async function listPackages() {
     return await readdir('packages');
+}
+
+/**
+ * Creates a new stored aux that only includes bots in the "shared" space and
+ * removes certain tags from the bots.
+ * @param aux The original aux to clean up.
+ */
+export function cleanupAux(aux: BotsState) {
+    const result = {};
+
+    const ignoredTags = [
+        'creator',
+        'abIDOrigin',
+    ];
+
+    for (const id in aux) {
+        const bot = aux[id];
+        if (bot.space !== 'shared' || bot.tags.aoIgnore) {
+            continue;
+        }
+        result[id] = {
+            id: bot.id,
+            space: bot.space,
+            tags: { ...bot.tags },
+        };
+
+        for (const tag of ignoredTags) {
+            delete result[id].tags[tag];
+        }
+    }
+
+    return result;
 }

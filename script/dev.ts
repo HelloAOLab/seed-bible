@@ -1,8 +1,11 @@
 import puppeteer from 'puppeteer';
-import { listPackages, packageSingle, readPackage } from './lib/package.js';
+import { cleanupAux, listPackages, packageSingle, readPackage } from './lib/package.js';
 import { initPage, loadAOBot as loadInst, addAux, shout, getPrimarySim, execScript } from './lib/browser.js';
-import { writeFile } from 'node:fs/promises';
+import { rmdir, writeFile } from 'node:fs/promises';
+import path from 'node:path';
+import { execSync } from 'node:child_process';
 import repl from 'node:repl';
+import type { StoredAux } from '../typings/AuxLibraryDefinitions.js';
 
 await packageSingle('seed-bible', 'ignore');
 
@@ -90,33 +93,94 @@ server.defineCommand('system', {
 });
 
 server.defineCommand('save', {
-    help: 'Save the current inst to a local .aux file',
-    action: async () => {
+    help: 'Save the current state back to the repository',
+    action: async (packageName: string) => {
         server.clearBufferedCommand();
 
         const sim = await getPrimarySim(page);
         try {
-            const state = await sim.evaluate(s => {
+            const state = cleanupAux(await sim.evaluate(s => {
                 const state = {};
                 for (const id in s.helper.botsState) {
-                    const bot = state[id] = {...s.helper.botsState[id]};
-                    if (bot.precalculated) {
-                        delete bot.precalculated;
-                        delete bot.values;
-                    }
+                    const bot = s.helper.botsState[id];
+                    state[id] = {
+                        id: bot.id,
+                        space: bot.space,
+                        tags: { ...bot.tags },
+                    };
                 }
 
                 return state;
-            });
+            }));
 
-            const aux = {
+            const packages = (await listPackages()).filter(p => p !== 'seed-bible');
+
+            const unpack = async (pkg: string, aux: StoredAux) => {
+                console.log('Saving package:', pkg);
+                const filePath = path.resolve('dist', `${pkg}.aux`);
+                await writeFile(filePath, JSON.stringify(aux, null, 2), 'utf-8');
+
+                const packagePath = path.resolve('packages', pkg);
+                await rmdir(packagePath, { recursive: true, force: true });
+                execSync(`casualos unpack-aux --overwrite ${filePath} ./packages`, { stdio: 'ignore' });
+            };
+            
+            const seedBible = {
                 version: 1,
-                state
+                state: {}
             };
 
-            const filename = `saved-${Date.now()}.aux`;
-            await writeFile(filename, JSON.stringify(aux, null, 2), 'utf-8');
-            console.log(`Wrote: ${filename}`);
+            const packageAuxes = [];
+
+            for (const id in state) {
+                const bot = state[id];
+                const system = bot.tags.system ? bot.tags.system.toLowerCase() : null;
+                const forPackage = bot.tags.forPackage ? bot.tags.forPackage.toLowerCase() : null;
+                let hasPackage = false;
+                for (const pkg of packages) {
+                    const pkgLower = pkg.toLowerCase();
+                    let found = false;
+                    if (forPackage && forPackage === pkgLower) {
+                        found = true;
+                    } else if (system && system.startsWith(pkgLower)) {
+                        found = true;
+                    }
+
+                    if (found) {
+                        let aux = packageAuxes.find(p => p.name === pkg);
+                        if (!aux) {
+                            aux = {
+                                name: pkg,
+                                aux: {
+                                    version: 1,
+                                    state: {}
+                                }
+                            };
+                            packageAuxes.push(aux);
+                        }
+
+                        aux.aux.state[id] = bot;
+                        hasPackage = true;
+                        break;
+                    }
+                }
+
+                if (!hasPackage && (!forPackage || forPackage === 'seed-bible')) {
+                    seedBible.state[id] = bot;
+                }
+            }
+
+            if (!packageName || packageName === 'seed-bible' || packageName === 'all') {
+                await unpack('seed-bible', seedBible);
+            }
+
+            for (const pkg of packageAuxes) {
+                if (packageName === pkg.name || packageName === 'all') {
+                    await unpack(pkg.name, pkg.aux);
+                }
+            }
+
+            console.log(`Saved!`);
             server.displayPrompt();
         } finally {
             sim.dispose();
