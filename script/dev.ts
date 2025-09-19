@@ -10,12 +10,12 @@ import type { StoredAux } from '../typings/AuxLibraryDefinitions.js';
 await packageSingle('seed-bible', 'ignore');
 
 const browser = await puppeteer.launch({
-    headless: false
+    headless: false,
+    defaultViewport: null,
 });
 const page = await browser.newPage();
 
 await initPage(page);
-await page.setViewport({ width: 1280, height: 800 });
 
 const inst = 'myDevInst';
 
