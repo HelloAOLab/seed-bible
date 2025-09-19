@@ -1,7 +1,10 @@
-import posthog from 'https://esm.sh/posthog-js@1.266.2';
-
-posthog.captureException(that.error, {
-    bot: that.bot.id,
-    tag: that.bot.tag,
-    system: that.bot.tags.system,
-});
+console.warn('[app.error] Got Error!', that);
+try {
+    posthog.captureException(that.error.error, {
+        bot: that.error.bot?.id,
+        tag: that.error.tag,
+        system: that.error.bot?.tags.system,
+    });
+} catch(err) {
+    console.error('Error reporting the error to PostHog:', err);
+}
