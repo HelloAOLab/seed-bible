@@ -1,6 +1,6 @@
 import puppeteer from 'puppeteer';
 import { cleanupAux, listPackages, packageSingle, readPackage } from './lib/package.js';
-import { initPage, loadAOBot as loadInst, addAux, shout, getPrimarySim, execScript } from './lib/browser.js';
+import { initPage, loadInst, addAux, shout, getPrimarySim, execScript } from './lib/browser.js';
 import { rmdir, writeFile } from 'node:fs/promises';
 import path from 'node:path';
 import { execSync } from 'node:child_process';

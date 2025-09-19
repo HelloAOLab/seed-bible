@@ -137,7 +137,7 @@ export async function uploadFile(page: Page, filePath: string) {
     fileInput.dispose();
 }
 
-export async function loadAOBot(page: Page, inst: string, collaborative: boolean = false) {
+export async function loadInst(page: Page, inst: string, collaborative: boolean = false) {
     await page.goto(`https://ao.bot?gridPortal=home&${collaborative ? 'inst' : 'staticInst'}=${inst}`);
     console.log('Waiting for ao.bot to load...');
     await waitForInstLoad(page);
