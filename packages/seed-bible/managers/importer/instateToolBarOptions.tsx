@@ -39,10 +39,10 @@ const instateToolBarOptions = ({toolBarOptions}) => {
         SetCanvasTools(tools => tools.filter(tool => tool.label !== "Loading"))
         SetMapTools(tools => tools.filter(tool => tool.label !== "Loading"))
     } else {
-        setTimeout(() => {
-            console.log("trying to add again")
-            instateToolBarOptions({toolBarOptions});
-        }, 1000)
+        // setTimeout(() => {
+        //     console.log("trying to add again")
+        //     instateToolBarOptions({toolBarOptions});
+        // }, 1000)
     }
 }
 

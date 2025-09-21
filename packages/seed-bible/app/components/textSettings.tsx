@@ -9,8 +9,8 @@ export const defaultTextConfig = {
         font: `'Helvetica Neue', sans-serif`,
         weight: '500',
         color: 'black',
-        marginVertical: '60',
-        marginHorizontal: '10',
+        marginVertical: '0',
+        marginHorizontal: '27',
         styles: {
             bold: true,
             italic: false,
@@ -23,7 +23,7 @@ export const defaultTextConfig = {
         weight: '600',
         color: 'black',
         marginVertical: '24',
-        marginHorizontal: '10',
+        marginHorizontal: '27',
         styles: {
             bold: true,
             italic: false,
@@ -36,7 +36,7 @@ export const defaultTextConfig = {
         weight: '600',
         color: 'black',
         marginVertical: '8',
-        marginHorizontal: '10',
+        marginHorizontal: '27',
         styles: {
             bold: true,
             italic: false,
@@ -49,7 +49,7 @@ export const defaultTextConfig = {
         weight: '400',
         color: 'black',
         marginVertical: '30',
-        marginHorizontal: '10',
+        marginHorizontal: '27',
         styles: {
             bold: false,
             italic: false,
