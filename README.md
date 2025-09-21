@@ -23,7 +23,11 @@ Follow the given steps to get started developing the Seed Bible:
     -   `git clone git@github.com:HelloAOLab/seed-bible.git`
 3. Install dependencies
     -   `pnpm install`
-4. Open the repository with your favorite editor.
+    -   `pnpm puppeteer browsers install chrome` - (Optional) Install Chrome for developing directly from the repo.
+4. Open the repository with your favorite editor
+5. Run the Seed bible package in Chrome
+    -   `pnpm dev`
+    -   Each run gives you a clean inst static to work in with the local seed bible.
 
 ### Scripts
 

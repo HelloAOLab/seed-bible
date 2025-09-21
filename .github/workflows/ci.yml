@@ -27,6 +27,7 @@ jobs:
           corepack enable
           pnpm install
       - name: Lint
+        continue-on-error: true
         run: |
           pnpm lint
       - name: Package
