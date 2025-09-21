@@ -41,7 +41,7 @@ switch(typeOfInteraction)
                     }
                     else
                     {
-                        let createNewTab = false;
+                        const createNewTab = false;
                         if(createNewTab)
                         {
                             let tab = thisBot.vars.tabsContext.tabs.find((currTab) => {
