@@ -41,6 +41,7 @@ const sectionShadowPool = new PoolData({
     customTags: [
         new CustomTag({name: "isBaseSectionShadow", value: false}),
         new CustomTag({name: "isSectionShadow", value: true}),
+        new CustomTag({name: "typeOfPiece", value: BibleVizUtils.Data.tags.BiblePieceType.StackSectionShadow}),
         new CustomTag({name: "poolTag", value: BibleVizUtils.Data.tags.ObjectPoolTags.SectionShadow}),
         new CustomTag({name: "system", value: null})
     ],

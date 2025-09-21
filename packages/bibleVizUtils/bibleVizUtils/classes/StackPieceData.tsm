@@ -11,7 +11,7 @@ export class StackPieceData extends StackData
         isInsideBible = true,
         isActive = false,
         isHidden = false,
-        creationInfo = false
+        creationInfo = false,
     })
     {
         super({childrenData, id});
@@ -23,5 +23,6 @@ export class StackPieceData extends StackData
         this.isActive       = isActive;
         this.creationInfo   = creationInfo;
         this.highlightColor = null
+        this.lastInteractionSource = null;
     }
 }

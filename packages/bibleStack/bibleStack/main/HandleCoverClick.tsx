@@ -7,18 +7,20 @@
     * thisBot.HandleCoverClick({stackBibleId: someBibleId});
 */
 
-const {stackBibleId} = that;
-const bibleData = thisBot.GetBibleDataById({stackBibleId});
-if(thisBot.masks.isBibleAnimating || !bibleData.hasBeenSetUp) return;
-switch(bibleData.currentState)
-{
-    case BibleVizUtils.Data.tags.BibleState.Open:
-    {
-        if(!thisBot.masks.isASectionMakingTourGuide)
-        {
-            thisBot.ResetBible({bibleData});
-        }
-    }
-    break;
-    default: break;
-}
+// const {stackBibleId} = that;
+// const bibleData = thisBot.GetBibleDataById({stackBibleId});
+// if(thisBot.masks.isBibleAnimating || !bibleData.hasBeenSetUp) return;
+// switch(bibleData.currentState)
+// {
+//     case BibleVizUtils.Data.tags.BibleState.Open:
+//     {
+//         if(!thisBot.masks.isASectionMakingTourGuide)
+//         {
+//             thisBot.ResetBible({bibleData});
+//         }
+//     }
+//     break;
+//     default: break;
+// }
+
+thisBot.DisplayApp();

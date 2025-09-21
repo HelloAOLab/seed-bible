@@ -8,6 +8,7 @@
 */
 
 const {info} = that;
+
 const fixedInfo = (Array.isArray(info) ? info : [info]).map(({chapterData, bookData, chapterNumber}) => {
     if(!chapterData)
     {

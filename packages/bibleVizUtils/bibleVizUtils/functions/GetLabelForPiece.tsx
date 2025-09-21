@@ -186,7 +186,7 @@ infoLabel.OnSpawned({mod: infoLabelMod});
 infoLabelTail.OnSpawned({mod: infoLabelTailMod});
 infoLabelDate?.OnSpawned({mod: infoLabelDateMod});
 
-const infoLabelUsersColor = BibleVizUtils.Functions.UpdateUsersColorOnPiece({piece: infoLabelTransformer, manager: BibleStackManager});
+const infoLabelUsersColor = BibleVizUtils.Functions.UpdateUsersColorOnPiece({source: "GetLabelForPiece", piece: infoLabelTransformer, manager: BibleStackManager});
 
 setTagMask([...infoLabelUsersColor, infoLabel], "formOpacity", 0);
 setTagMask([infoLabel, infoLabelTail, infoLabelDate], "labelOpacity", 0);

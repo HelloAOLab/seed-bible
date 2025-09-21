@@ -7,7 +7,7 @@
     * thisBot.SelectSection({section});
 */
 
-const {section, speedMultiplier = 1, isInstantaneous = false} = that;
+const {section, speedMultiplier = 1, isInstantaneous = false, skipTourGuide = false} = that;
 const sectionData = thisBot.GetPieceData({piece: section});
 const {bibleData, testamentData} = thisBot.GetDataChainFromParentDataIds({parentDataIds: sectionData.parentDataIds});
 const dimension = os.getCurrentDimension();
@@ -361,7 +361,7 @@ if(!isInstantaneous) await Promise.all(thirdSequenceAnimations);
 
 thisBot.TrySetPiecesRenderOrder(biblePieces);
 
-return Promise.all(shout("OnStackSectionSelectionAnimationComplete", {sectionData, speedMultiplier, isInstantaneous}));
+return Promise.all(shout("OnStackSectionSelectionAnimationComplete", {sectionData, speedMultiplier, isInstantaneous, skipTourGuide}));
 
 function GetPiecesAboveSection()
 {

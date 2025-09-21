@@ -4,21 +4,17 @@ if(thisBot.vars.stackBiblesData.lenght === 0 || !thisBot.vars.tabsContext.active
 
 if(thisBot.masks.isBibleAnimating || thisBot.masks.isMakingTabsVizUpdate)
 {
-
-    thisBot.masks.isTabVizUpdateQueued = true;
-    // setTagMask(thisBot, "isTabVizUpdateQueued", true);
+    setTagMask(thisBot, "isTabVizUpdateQueued", true);
     return;
 }
 
-thisBot.masks.isTabVizUpdateQueued = false;
-// setTagMask(thisBot, "isTabVizUpdateQueued", false);
+setTagMask(thisBot, "isTabVizUpdateQueued", false);
 setTagMask(thisBot, "isMakingTabsVizUpdate", true);
 
 const activeTab = thisBot.vars.tabsContext.tabs.find((tab) => {return tab.id === thisBot.vars.tabsContext.activeTab});
 
 if(activeTab)
 {
-
     const dimension = os.getCurrentDimension();
     const chapterSelectionAnimations = [];
     const chaptersToDeselect = [];
@@ -26,8 +22,13 @@ if(activeTab)
 
     thisBot.vars.stackChaptersData.forEach((chapterData) => {
 
-        const book = chapterData.creationInfo.bookName;
-        const chapter = chapterData.pieceInfo.number;
+        let book = chapterData.creationInfo.bookName;
+        let chapter = chapterData.pieceInfo.number;
+        if(book.includes("Psalms"))
+        {
+            ({chapter} = BibleVizUtils.Functions.ConvertDividedPsalmsToComplete({book, chapter}))
+            book = "Psalms";
+        }
         const isAnimatable = chapterData.piece && chapterData.piece.tags.isInUse && chapterData.piece.tags[dimension] == true;
         const isActiveChapter = activeTab.data.book == book && activeTab.data.chapter == chapter;
 
@@ -56,33 +57,45 @@ if(activeTab)
 
     if(chapterToFocus)
     {
-        const bookData = thisBot.vars.stackBooksData.find((bookData) => { return bookData.id === chapterToFocus.parentDataIds.stackBookId });
+        const bookData = thisBot.vars.stackBooksData.find((currBookData) => { return currBookData.id === chapterToFocus.parentDataIds.stackBookId });
+        const sectionBookData = thisBot.vars.stackSectionBooksData.find((sectionBookData) => { return sectionBookData.id === chapterToFocus.parentDataIds.stackSectionBookId })
         const sectionData = thisBot.vars.stackSectionsData.find((data) => { return data.id === chapterToFocus.parentDataIds.stackSectionId });
         const testamentData = thisBot.vars.stackTestamentsData.find((data) => { return data.id === chapterToFocus.parentDataIds.stackTestamentId });
         const bibleData = thisBot.GetBibleDataById({stackBibleId: chapterToFocus.parentDataIds.stackBibleId});
         const shouldResetStack = (!testamentData.isActive || testamentData.isSplitIntoSections) && 
-            (!sectionData.isActive || sectionData.isSplitIntoBooks) && 
-            (!bookData.isActive || bookData.isSelected) && 
+            (sectionBookData ? (
+                !sectionBookData.isActive || sectionBookData.isSelected
+            ) : (
+                (!sectionData.isActive || sectionData.isSplitIntoBooks) && (!bookData.isActive || bookData.isSelected)
+            )) &&
             !chapterToFocus.isActive &&
             !chapterToFocus.parentDataIds.stackBibleId;
 
         const speedMultiplierConditions = [
-            !testamentData.isSplitIntoSections,
-            !sectionData.isSplitIntoBooks,
-            !sectionData.isInExplodedView,
-            !bookData.isSelected
+            !testamentData.isSplitIntoSections
         ];
-
-        console.log(`[Debug] UpdateStackTabsVisualization`, {
-            testamentData: JSON.parse(JSON.stringify({...testamentData, piece: null})),
-            sectionData: JSON.parse(JSON.stringify({...sectionData, piece: null})), 
-            bookData: JSON.parse(JSON.stringify({...bookData, piece: null})), 
-            chapterToFocus: JSON.parse(JSON.stringify({...chapterToFocus, piece: null}))
-        })
+        if(sectionBookData)
+        {
+            speedMultiplierConditions.push(!sectionBookData.isSelected)
+        }
+        else
+        {
+            speedMultiplierConditions.push(
+                !sectionData.isSplitIntoBooks,
+                !sectionData.isInExplodedView,
+                !bookData.isSelected
+            )
+        }
 
         const speedMultiplier = shouldResetStack || (speedMultiplierConditions.filter(Boolean).length > 1) ? 2 : 1;
+        const getBookToDeselect = (currBookData) => {
+            return currBookData.id !== bookData.id && 
+                currBookData.isSelected && 
+                    currBookData.lastInteractionSource === BibleVizUtils.Data.tags.PieceDataSelectionSource.StackTabsVisualizationUpdate
+        }
+        let bookToDeselectData = thisBot.vars.stackBooksData.find(getBookToDeselect) ?? thisBot.vars.stackSectionBooksData.find(getBookToDeselect)
 
-        const animation = (shouldResetStack ? thisBot.ResetBible({bibleData, speedMultiplier}) : os.sleep(1))
+        const animation = (shouldResetStack ? thisBot.ResetBible({bibleData, speedMultiplier}) : (bookToDeselectData ? thisBot.DeselectBook({bookData: bookToDeselectData}) : os.sleep(1)))
         .then(() => {
 
             if(thisBot.masks.isTabVizUpdateQueued)
@@ -98,7 +111,7 @@ if(activeTab)
                     return true;
                 }
 
-                return (sectionData.isSplitIntoBooks ? os.sleep(1) : thisBot.SelectSection({section: sectionData.piece, speedMultiplier}))
+                return (sectionBookData ? (sectionBookData.isSelected ? os.sleep(1) : thisBot.SelectBook({book: sectionBookData.piece, speedMultiplier, source: BibleVizUtils.Data.tags.PieceDataSelectionSource.StackTabsVisualizationUpdate})) : (sectionData.isSplitIntoBooks ? os.sleep(1) : thisBot.SelectSection({section: sectionData.piece, speedMultiplier, skipTourGuide: true})))
                 .then(() => {
 
                     if(thisBot.masks.isTabVizUpdateQueued)
@@ -106,7 +119,7 @@ if(activeTab)
                         return true;
                     }
 
-                    return (sectionData.isInExplodedView ? os.sleep(1) : thisBot.TrySetSectionAsExplodedView({section: sectionData.piece, speedMultiplier}))
+                    return (sectionBookData || sectionData.isInExplodedView ? os.sleep(1) : thisBot.TrySetSectionAsExplodedView({section: sectionData.piece, speedMultiplier}))
                     .then(() => {
 
                         if(thisBot.masks.isTabVizUpdateQueued)
@@ -114,7 +127,7 @@ if(activeTab)
                             return true;
                         }
 
-                        return (bookData.isSelected ? os.sleep(1) : thisBot.SelectBook({book: bookData.piece, speedMultiplier}))
+                        return (sectionBookData || bookData.isSelected ? os.sleep(1) : thisBot.SelectBook({book: bookData.piece, speedMultiplier, source: BibleVizUtils.Data.tags.PieceDataSelectionSource.StackTabsVisualizationUpdate}))
                         .then(() => {
 
                             if(thisBot.masks.isTabVizUpdateQueued)
@@ -137,7 +150,8 @@ if(activeTab)
         chaptersToDeselect.length > 0 ? thisBot.DeselectChapter({info: chaptersToDeselect.map((chapterData) => { return {chapterData }})}) : null
     ].filter(Boolean)
     
-    return (allAnimations.length > 0 ? Promise.all(allAnimations) : os.sleep(1)).then(() => {
+    return (allAnimations.length > 0 ? Promise.allSettled(allAnimations) : os.sleep(1)).then(() => {
+
         setTagMask(thisBot, "isMakingTabsVizUpdate", false);
         if(thisBot.masks.isTabVizUpdateQueued)
         {

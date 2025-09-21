@@ -145,9 +145,8 @@ bibleVizData.vars.fixedArrangementsInfo = [];
 bibleVizFunctions.UpdateFixedArrangementsInfo();
 
 try {
-    console.log(`[Debug] bibleVizUtils.main.Initialize`, {ob})
-  ({ PoolData } = await import("objectPooler.main.PoolData"));
-  ({ CustomTag } = await import("objectPooler.main.CustomTag"));
+    ({ PoolData } = await import("objectPooler.main.PoolData"));
+    ({ CustomTag } = await import("objectPooler.main.CustomTag"));
 } 
 catch (err) {
   console.warn("Module not found:", err);

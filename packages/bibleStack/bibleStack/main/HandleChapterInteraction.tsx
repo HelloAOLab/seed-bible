@@ -41,28 +41,45 @@ switch(typeOfInteraction)
                     }
                     else
                     {
-                        let tab = thisBot.vars.tabsContext.tabs.find((currTab) => {
-                            return currTab.data.book === chapterData.piece.tags.parentBookName && currTab.data.chapter == chapterData.pieceInfo.number
-                        })
-
-                        if(!tab)
+                        let createNewTab = false;
+                        if(createNewTab)
                         {
-                            tab = {
-                                id: uuid(),
-                                taken: false,
-                                data: {
-                                    use: 'thePage',
-                                    type: 'book',
-                                    book: chapterData.piece.tags.parentBookName,
-                                    bookId: BibleVizUtils.Data.tags.booksStaticInfo[chapterData.piece.tags.parentBookName].abbreviation,
-                                    chapter: chapterData.pieceInfo.number,
-                                    translation: 'BSB'
+                            let tab = thisBot.vars.tabsContext.tabs.find((currTab) => {
+                                return currTab.data.book === chapterData.piece.tags.parentBookName && currTab.data.chapter == chapterData.pieceInfo.number
+                            })
+
+                            if(!tab)
+                            {
+                                tab = {
+                                    id: uuid(),
+                                    taken: false,
+                                    data: {
+                                        use: 'thePage',
+                                        type: 'book',
+                                        book: chapterData.piece.tags.parentBookName,
+                                        bookId: BibleVizUtils.Data.tags.booksStaticInfo[chapterData.piece.tags.parentBookName].abbreviation,
+                                        chapter: chapterData.pieceInfo.number,
+                                        translation: 'BSB'
+                                    }
                                 }
+                                globalThis.AddTab(tab)
                             }
-                            globalThis.AddTab(tab)
+                            thisBot.vars.tabsContext.setActiveTab(tab.id);
+                            globalThis.UpdateTab(tab);
                         }
-                        thisBot.vars.tabsContext.setActiveTab(tab.id);
-                        globalThis.UpdateTab(tab);
+                        else
+                        {
+                            let bookId = BibleVizUtils.Data.tags.booksStaticInfo[chapterData.piece.tags.parentBookName].abbreviation;
+                            let chapter = chapterData.pieceInfo.number;
+
+                            if(chapterData.piece.tags.parentBookName.includes("Psalms"))
+                            {
+                                ({chapter} = BibleVizUtils.Functions.ConvertDividedPsalmsToComplete({book: chapterData.piece.tags.parentBookName, chapter}))
+                                bookId = "PSA";
+                            }
+
+                            thisBot.vars.tabsContext.navFunctions?.open?.(bookId, chapter)
+                        }
                     }
                 }
             }

@@ -39,7 +39,7 @@ if(!bibleData || bibleData.currentState === BibleVizUtils.Data.tags.BibleState.O
                     {
                         if(book.masks.isHighlighted)
                         {
-                            thisBot.SelectBook({book})
+                            thisBot.SelectBook({book, source: BibleVizUtils.Data.tags.PieceDataSelectionSource.Click})
                         }
                         else
                         {
@@ -66,7 +66,7 @@ if(!bibleData || bibleData.currentState === BibleVizUtils.Data.tags.BibleState.O
                     }
                     else
                     {
-                        thisBot.SelectBook({book})
+                        thisBot.SelectBook({book, source: BibleVizUtils.Data.tags.PieceDataSelectionSource.Click})
                     }
                 }
                 else if(bookData.parentDataIds.stackBibleId && bibleData.currentStackVizState === BibleVizUtils.Data.tags.BibleVisualizationState.Regular)

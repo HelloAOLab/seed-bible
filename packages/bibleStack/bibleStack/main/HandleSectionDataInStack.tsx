@@ -205,8 +205,8 @@ if(sectionData.isSplitIntoBooks)
                     {
                         const label = BibleVizUtils.Functions.CapitalizeFirstLetter(sectionData.piece.tags.sectionName.split("-").join(" "));
                         const {infoLabelTransformer} = BibleVizUtils.Functions.GetLabelForPiece({
-                            piece: sectionShadow, 
-                            label, 
+                            piece: sectionShadow,
+                            label,
                             color: sectionData.highlightColor ?? sectionData.piece.tags.labelTextColor,
                             labelColor: "white", 
                             dimension,

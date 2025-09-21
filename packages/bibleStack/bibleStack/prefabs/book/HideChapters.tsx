@@ -17,6 +17,12 @@ for(const chapterData of bookData.childrenData)
 {
     if(chapterData.isActive && chapterData.isInsideBook)
     {
+        if(chapterData.piece)
+        {
+            const infoLabelTransformer = BibleVizUtils.Functions.GetCurrentInfoLabelTransformer(chapterData.piece);
+            if(infoLabelTransformer) ObjectPooler.ReleaseObject({obj: infoLabelTransformer, tag: infoLabelTransformer.tags.poolTag});
+        }
+
         ObjectPooler.ReleaseObject({obj: chapterData.piece, tag: chapterData.piece.tags.poolTag});
         chapterData.ResetData();
     }

@@ -29,6 +29,7 @@ export class StackChapterData extends StackPieceData
         this.isInsideBible          = null;
         this.isInsideBook           = null;
         this.isActive               = false;
+        this.isSelected = false;
     }
 
     AddHighlightInfo(newHighlightInfo)

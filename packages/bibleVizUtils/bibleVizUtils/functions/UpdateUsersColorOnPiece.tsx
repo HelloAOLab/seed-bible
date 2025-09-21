@@ -1,4 +1,4 @@
-const {piece, pieces, manager} = that;
+const {piece, pieces, manager, source = "Unknown"} = that;
 const dimension = os.getCurrentDimension();
 const fixedPieces = (Array.isArray(pieces) ? pieces : [piece]).filter((currElement) => {return currElement.tags[dimension] == true});
 const allUsersColor = [];
@@ -34,7 +34,10 @@ for(const fixedPiece of fixedPieces)
             userColorForm = BibleVizUtils.Data.tags.UsersColorValues.GroundedElementColorForm;
         break;
     }
+
     const pieceActivity = thisBot.GetActivityForPiece({piece: selectionsPiece, tabsContext: manager.vars.tabsContext})
+
+    if(selectionsPiece.tags.typeOfPiece === BibleVizUtils.Data.tags.BiblePieceType.StackSectionShadow) console.log(`[Debug] UpdateUsersColorOnPiece`, {source, pieceActivity, piece: {...selectionsPiece}});
     
     if(pieceActivity.length > 0)
     {
@@ -122,10 +125,7 @@ for(const fixedPiece of fixedPieces)
             else
             {
                 const isActiveTab = activity.id === manager.vars.tabsContext.activeTab;
-                const color = "#ff4500" // links.lobby?.masks?.users?.slice()
-                    // .find((userInfo) => {
-                    //     return userInfo.instanceId == activity.userId && userInfo.instanceId != getID(configBot)
-                    // })?.color ?? "#808080";
+                const color = BibleVizUtils.Data.tags.dumbUserPresenceData.find((dumbData) => { return dumbData.tab === activity})?.user?.color ?? BibleVizUtils.Data.tags.myUserColor;
 
                 const opacity = isActiveTab ? 1 : 0.5;
                 const formRenderOrder = isActiveTab ? -1 : 10 - Number(activityIndex)

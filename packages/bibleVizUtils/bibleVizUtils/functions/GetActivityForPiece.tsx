@@ -1,7 +1,12 @@
 const {piece, tabsContext} = that;
 
-const tabsPathMap = new Map(tabsContext.tabs.map((tab) => {
-    const {book, chapter} = tab.data;
+const dumbTabs = BibleVizUtils.Data.tags.dumbUserPresenceData.map((data) => {return data.tab})
+const allTabs = [...tabsContext.tabs, ...dumbTabs];
+
+const tabsPathMap = new Map(allTabs.map((tab) => {
+    let {book, chapter} = tab.data;
+
+    if(book === "Psalms") ({book, chapter} = thisBot.ConvertCompletePsalmsToDivided({chapter}))
     
     const {arrangementIndex, testamentIndex, sectionIndex} = thisBot.GetBookInfoPathByName({name: book, arrangementIndex: 0});
     const testamentName = BibleVizUtils.Data.vars.fixedArrangementsInfo[arrangementIndex].testaments[testamentIndex].name;
@@ -25,6 +30,7 @@ switch(piece.tags.typeOfPiece)
         typeOfPiece = BibleVizUtils.Data.tags.BiblePieceType.StackTestament;
     break;
     case BibleVizUtils.Data.tags.BiblePieceType.StackSection: 
+    case BibleVizUtils.Data.tags.BiblePieceType.StackSectionShadow:
         key = piece.tags.sectionName; 
         typeOfPiece = BibleVizUtils.Data.tags.BiblePieceType.StackSection;
     break;
@@ -42,7 +48,7 @@ switch(piece.tags.typeOfPiece)
     default: break;
 }
 
-const activity = tabsContext.tabs.filter((tab) => {
+const activity = allTabs.filter((tab) => {
     const tabPath = tabsPathMap.get(tab);
 
     return tabPath.some((pieceInfo) => {
