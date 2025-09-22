@@ -66,7 +66,7 @@ function Toolbar() {
         if(!activeTab || !tabs) return;
         const activeTabObj = tabs.filter(item => item.id === activeTab)[0];
         console.log(activeTab, activeTabObj, "activetab")
-        if(activeTabObj.data.type === 'canvas'){
+        if(activeTabObj?.data.type === 'canvas'){
             setActiveTools([...canvasTools])
         }else{
             setActiveTools([...tools])

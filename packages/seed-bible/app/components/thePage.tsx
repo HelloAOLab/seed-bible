@@ -14,30 +14,20 @@ import { MiniTextEditor } from 'app.components.smallEditor'
 
 import { ConfigurableFunctionCommands } from 'app.components.commands'
 
-function generateQuery(params) {
-    const queryArray = [];
-    for (const key in params) {
-        if (params.hasOwnProperty(key)) {
-            queryArray.push(encodeURIComponent(key) + '=' + encodeURIComponent(params[key]));
-        }
-    }
-    return queryArray.join('&');
-}
-
-function attachQueryToURL(url, params) {
-    const queryString = generateQuery(params);
-    return url + (url.includes('?') ? '&' : '?') + queryString;
-}
-
 function ThePage({ tab: T, setPanalApp, panelId, setEnableEditor, setData, data }) {
     const [tab, setTab] = useState(T);
     const [commandHighlight, setCommandHighlight] = useState([]);
 
     const commandsRef = useRef(null);
 
-    
+    useEffect(() => {
+        if (!T)
+            globalThis.CurrentPanelAvailable = panelId
+        else
+            globalThis.CurrentPanelAvailable = null
+    }, [T])
     const [tabEntered, setTabEntered] = useState(false)
-    const { updateTab, tabs, setActiveTab, activeTab } = useTabsContext();
+    const { updateTab, tabs, setActiveTab } = useTabsContext();
     const { isDragging, setIsDragging, Element } = useMouseMove()
     const { navFunctions, setNavFunctions } = useBibleContext()
     const [inHold, setInHold] = useState()
@@ -56,178 +46,23 @@ function ThePage({ tab: T, setPanalApp, panelId, setEnableEditor, setData, data 
     // Add state for word highlights
     const [wordHighlights, setWordHighlights] = useState({});
 
-    const loadTranslationFromUrl = async () => {
-        console.log(configBot.tags.translationId, "translation id")
-        const translationId = configBot.tags.translationId;
-        let baseUrl = "https://bible.helloao.org";
-        let bookId = "GEN";
-        let bookTranslationId = "BSB";
-        let firstChapterApiLink;
-        if (translationId) {
-            os.toast(`Loading ${translationId} translation`)
-
-            const available_translations_req = await web.get("https://bible.helloao.org/api/available_translations.json");
-            let allTranslations = [];
-            const translations = {};
-            const defaultTranslations = [
-                "english",
-                "spanish",
-                "arabic",
-                "hindi",
-                "hebrew",
-                "ancient greek",
-                "custom"
-            ]
-            allTranslations = available_translations_req.data.translations;
-
-            const trValue = {
-                pass: false,
-                value: null
-            };
-            if (available_translations_req.status === 200) {
-                allTranslations.forEach(translationData => {
-                    if (translationData.id.toLowerCase() === translationId.toLowerCase()) {
-                        trValue.pass = true;
-                        trValue.value = translationData;
-                    }
-                })
-
-                const urlId = translationId.includes("https://");
-
-                if (trValue.pass && !urlId) {
-                    const bookData = await web.get(`https://bible.helloao.org/api/${trValue.value.id}/books.json`);
-                    const book0 = bookData.data.books[0];
-                    setTagMask(thisBot, "selectedTranslation", trValue.value, "local");
-                    setTagMask(thisBot, "booksData", bookData.data.books, "local");
-                    bookId = book0.id;
-                    bookTranslationId = trValue.value.id;
-                    firstChapterApiLink = book0.firstChapterApiLink;
-                } else if (!urlId) {
-                    const url = `https://aolab-bible-api.netlify.app/api/translations/getTranslation`;
-                    const params = {
-                        uid: translationId
-                    }
-                    const queryUrl = attachQueryToURL(url, params);
-                    const result = await web.get(queryUrl);
-                    if (result.status === 200 && result.data.data) {
-                        const translation = JSON.parse(result.data.data.translation);
-                        const englishName = translation.languageEnglishName.toLowerCase();
-                        const shortName = translation.shortName.toLowerCase();
-
-                        const bookData = await web.get(translation.listOfBooksApiLink);
-
-                        const book0 = bookData.data.books[0];
-                        setTagMask(thisBot, "selectedTranslation", translation, "local");
-                        setTagMask(thisBot, "booksData", bookData.data.books, "local");
-                        if (!defaultTranslations.includes(englishName)) {
-                            defaultTranslations.push(englishName)
-                            translations[englishName] = {
-                                [shortName]: translation
-                            }
-                        }
-                        baseUrl = translation.origin;
-                        bookId = book0.id;
-                        bookTranslationId = translation.id;
-                        firstChapterApiLink = book0.firstChapterApiLink;
-                    }
-                } else {
-                    const result = await web.get(translationId);
-                    if (result.status === 200) {
-                        const url = new URL(translationId);
-                        let newTranslations = result.data.translations;
-                        const defaultTranslation = newTranslations[0];
-                        newTranslations = newTranslations.map(trans => {
-                            return {
-                                languageEnglishName: trans.languageEnglishName,
-                                id: trans.id,
-                                listOfBooksApiLink: `${url.origin}${trans.listOfBooksApiLink}`,
-                                origin: url.origin,
-                                shortName: trans.shortName
-                            }
-                        })
-                        console.log(newTranslations, "newTranslations")
-                        allTranslations = [...allTranslations, ...newTranslations];
-                        for (const translation of newTranslations) {
-                            const englishName = translation.languageEnglishName.toLowerCase();
-                            if (!defaultTranslations.includes(englishName)) {
-                                defaultTranslations.push(englishName);
-                            }
-                        }
-                        const translation = {
-                            languageEnglishName: defaultTranslation.languageEnglishName,
-                            id: defaultTranslation.id,
-                            listOfBooksApiLink: `${url.origin}${defaultTranslation.listOfBooksApiLink}`,
-                            origin: url.origin,
-                            shortName: defaultTranslation.shortName
-                        }
-                        console.log(translation, "translation")
-                        const englishName = translation.languageEnglishName.toLowerCase();
-                        const shortName = translation.shortName.toLowerCase();
-
-                        const bookData = await web.get(translation.listOfBooksApiLink);
-
-                        const book0 = bookData.data.books[0];
-                        setTagMask(thisBot, "selectedTranslation", translation, "local");
-                        setTagMask(thisBot, "booksData", bookData.data.books, "local");
-                        if (!defaultTranslations.includes(englishName)) {
-                            defaultTranslations.push(englishName)
-                            translations[englishName] = {
-                                [shortName]: translation
-                            }
-                        }
-                        baseUrl = translation.origin;
-                        bookId = book0.id;
-                        bookTranslationId = translation.id;
-                        firstChapterApiLink = book0.firstChapterApiLink;
-                    }
-                }
-                allTranslations.forEach(translation => {
-                    const englishName = translation?.languageEnglishName?.toLowerCase() || translation?.englishName?.toLowerCase();
-                    const shortName = translation.shortName.toLowerCase();
-                    if (translations[englishName]) {
-                        if (!translations[englishName][shortName]) {
-                            translations[englishName][shortName] = translation;
-                        }
-                    } else {
-                        translations[englishName] = {
-                            [shortName]: translation
-                        }
-                    }
-                })
-                setTagMask(thisBot, "allTranslations", allTranslations, "local");
-                setTagMask(thisBot, "apiTranslations", translations, "local")
-                setTagMask(thisBot, "defaultTranslations", defaultTranslations, "local")
-                console.log(defaultTranslations, translations)
-                configBot.tags.translationId = null;
-            }
-        }
-        return {
-            baseUrl,
-            bookId,
-            bookTranslationId,
-            firstChapterApiLink
-        }
-    }
-
     const [bible, setBible] = useState()
     if (tab)
         globalThis[`SetEnableEditorOf${tab?.id}`] = setEnableEditor;
     async function loadData() {
         if (!tab)
             return
-        const { baseUrl, bookId, bookTranslationId, firstChapterApiLink } = await loadTranslationFromUrl();
         const bible = new BibleDataManager({
             tabId: tab?.id,
-            translation: bookTranslationId || tab.data.translation,
-            bookId: bookId || tab.data.bookId,
+            translation: tab.data.translation,
+            bookId: tab.data.bookId,
             chapter: tab.data.chapter,
-            baseUrl: baseUrl
         });
         setBible(bible)
 
         console.log("bible data: ", bible);
 
-        await bible.fetch(firstChapterApiLink);
+        await bible.fetch();
 
         // Additional Data ----------->
         globalThis.BookId = bible.bookId;
@@ -259,10 +94,14 @@ function ThePage({ tab: T, setPanalApp, panelId, setEnableEditor, setData, data 
         }
     }, [data])
 
-    // Add text selection handler
     useEffect(() => {
-        // (intentionally left commented per original logic)
-    }, []);
+        globalThis.NavFunctions = navFunctions;
+        globalThis.BibleData = data;
+        return () => {
+            globalThis.BibleData = null;
+            globalThis.NavFunctions = navFunctions;
+        }
+    }, [navFunctions, data])
 
     useEffect(() => {
         const handleMouseUp = () => {
@@ -376,15 +215,9 @@ function ThePage({ tab: T, setPanalApp, panelId, setEnableEditor, setData, data 
         if (Element?.data?.data?.pkgApp) {
             const handoff = Element?.data?.data
             const App = handoff.app
-            const tabData = {
-                ...Element.data,
-                data: {
-                    ...Element.data.data,
-                    app: null
-                }
-            }
+            const id = uuid()
             ReplaceApplication(panelId,
-                { id: panelId, App: <App tab={tabData} panelId={panelId} activeTab={Element.data.id} />, to: 'panel', minWidth: '30rem' })
+                { id, App, to: 'panel', minWidth: '30rem' })
             console.log('replaced')
         } else {
             Update(Element.data)
@@ -426,8 +259,8 @@ function ThePage({ tab: T, setPanalApp, panelId, setEnableEditor, setData, data 
         await bible.open(bookId, chapter, translation = null)
         setData(bible.data)
     }
-    async function changeTranslation(id, bookData, forcedBaseUrl) {
-        await bible.changeTranslation(id, bookData, forcedBaseUrl)
+    async function changeTranslation(id) {
+        await bible.changeTranslation(id)
         setData(bible.data)
     }
 
@@ -499,8 +332,7 @@ function ThePage({ tab: T, setPanalApp, panelId, setEnableEditor, setData, data 
                         color: config.color || "#000",
                         backgroundColor: config.backgroundColor || "#ffeb3b",
                         onClick: config.onClick || null,
-                        timestamp: Date.now(),
-                        createAttributes: config.createAttributes ? config?.createAttributes : () => {return {}}
+                        timestamp: Date.now()
                     };
                 });
             });
@@ -752,16 +584,6 @@ function ThePage({ tab: T, setPanalApp, panelId, setEnableEditor, setData, data 
         }
     }
     globalThis.ClearUserSelection = clearUserSelection
-
-    useEffect(() => {
-        if (tab && tab.id === activeTab && panelId) {
-            globalThis.CurrentActivePanel = panelId;
-            return () => {
-                globalThis.CurrentActivePanel = null;
-            }
-        }
-    }, [activeTab, panelId, tab])
-
     return <div
         className="pageContainer"
         onMouseLeave={handleMouseLeave}
@@ -1226,12 +1048,12 @@ function Section({ heading, commandHighlight, setCommandHighlight, setLastSelect
                 const wordParts = wordChunksMap[verse.verseNumber] || [{ text: verse.text, isHighlighted: false }];
                 return wordParts.map((part, i) => {
                     if (part.isHighlighted) {
-                        const attributes = part.highlightConfig.createAttributes(book, chapter, part)
                         return (
                             <span
                                 key={i}
                                 style={{
                                     color: part.highlightConfig.color,
+                                    backgroundColor: part.highlightConfig.backgroundColor,
                                     cursor: part.highlightConfig.onClick ? 'pointer' : 'default',
                                     padding: '1px 2px',
                                     borderRadius: '2px'
@@ -1242,7 +1064,6 @@ function Section({ heading, commandHighlight, setCommandHighlight, setLastSelect
                                         part.highlightConfig.onClick(part.text, verse.verseNumber);
                                     }
                                 }}
-                                {...attributes}
                             >
                                 {part.text}
                             </span>
@@ -1256,7 +1077,11 @@ function Section({ heading, commandHighlight, setCommandHighlight, setLastSelect
     };
 
     return <div>
-        <div className="sectionTitle">
+        <div onClick={() => {
+            shout('onHeadingClick', {
+                heading,
+            })
+        }} className="sectionTitle">
             {heading}
         </div>
         <div style={textEdit ? editTextStyle : null}>
@@ -1394,12 +1219,12 @@ export const ThePageWithPanel = ({ tab }) => {
         </DivSpliter>
     </>
 }
-export const ThePageWithEditor = ({ tab, setPanalApp, panelId, preferTab = false }) => {
+export const ThePageWithEditor = ({ tab, setPanalApp, panelId }) => {
     useEffect(() => {
         os.log('tab in the page', panelId, tab)
     }, [])
 
-    const activeTab = panelId && !preferTab ? globalThis.PanelTabsMap[panelId] || tab : tab;
+    const activeTab = panelId ? globalThis.PanelTabsMap[panelId] || tab : tab;
     const [enableEditor, setEnableEditor] = useState(false);
     const [data, setData] = useState()
     if (tab)

@@ -1,6 +1,8 @@
 
 // return
 const { address } = that
+shout('onUnInstallPackage', { name: address })
+
 console.log(masks[`${address}-data`], 'package for uninstall')
 if (masks[`${address}-data`]) {
     const { mainBotTag, otherBots, configEditor, dependencies } = masks[`${address}-data`]

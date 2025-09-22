@@ -162,12 +162,14 @@ const Extensions = () => {
             </div>
 
             <div className="mediumText">Settings for your Extensions in the page</div>
+            <div style={{height:'500px',overflow:'scroll'}} className="extensions-tools">
             {
                 packages && [...packages].map(({ address, data }) => {
                     // getBot('')
                     return <SettingsPanel data={data} address={address} setUpdate={setUpdate} installed={getBot('system', data?.mainBotTag)} icon={data?.configEditor?.toolbarConfig?.icon} name={data?.configEditor?.toolbarConfig?.label || address} />
                 })
             }
+            </div>
 
             <style>{getStyleOf('extensions.css')}</style>
         </div>

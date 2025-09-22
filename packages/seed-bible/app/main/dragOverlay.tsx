@@ -2,6 +2,7 @@
 const { useEffect, useState, render } = os.appHooks;
 
 const DragDropOverlay = () => {
+    return // paused
     const [dragState, setDragState] = useState({
         isDragOver: false,
         draggedFiles: []
