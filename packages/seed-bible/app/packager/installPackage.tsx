@@ -154,11 +154,10 @@ await(async function mainInstaller(that) {
             icon: !toolbarConfig?.iconUrl ? toolbarConfig.icon : toolbarConfig.iconUrl,
             label: toolbarConfig.label,
             hasToggle: true,
-            active: true,
+            active: toolbarConfig?.active ? toolbarConfig.active : true,
             onHold: runFn,
             onClick: runFn,
             isImg: !!toolbarConfig?.iconUrl,
-            ...toolbarConfig,
         };
 
         if (globalThis.AddTool) {
