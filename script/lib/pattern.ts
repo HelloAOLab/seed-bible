@@ -1,9 +1,14 @@
 import { createRecordsClient } from '@casual-simulation/aux-records/RecordsClient';
 import { writeFile } from 'node:fs/promises';
 import path from 'node:path';
+import hash from 'hash.js';
+import axios from 'axios';
+import stringify from '@casual-simulation/fast-json-stable-stringify';
 
 const recordName = 'aoBot';
-
+const headers = {
+    'Origin': 'https://auth.ao.bot',
+};
 
 /**
  * Downloads the AUX for the given pattern from the records server.
@@ -16,6 +21,8 @@ export async function downloadPattern(name: string, version?: number): Promise<S
     const result = await client.getData({
         recordName,
         address: name,
+    }, {
+        headers,
     });
 
     if (result.success === false) {
@@ -70,4 +77,133 @@ export async function downloadAndSave(name: string, version?: number, fileName?:
     const filePath = path.resolve('dist', fileName || `${name}.aux`);
     await writeFile(filePath, JSON.stringify(pattern, null, 2), 'utf-8');
     return filePath;
+}
+
+const UNSAFE_HEADERS = new Set([
+    'accept-encoding',
+    'referer',
+    'sec-fetch-dest',
+    'sec-fetch-mode',
+    'sec-fetch-site',
+    'origin',
+    'sec-ch-ua-platform',
+    'user-agent',
+    'sec-ch-ua-mobile',
+    'sec-ch-ua',
+    'content-length',
+    'connection',
+    'host',
+]);
+
+/**
+ * Uploads the given pattern to the records server.
+ * @param name The name of the pattern to upload.
+ * @param aux The pattern data to upload.
+ * @param sessionKey The session key to use for authentication.
+ * @param recordKey The record key to use. If not specified, the default record name will be used.
+ */
+export async function uploadPattern(name: string, aux: StoredAux, sessionKey: string, recordKey?: string) {
+    const client = createRecordsClient('https://api.ao.bot');
+
+    client.sessionKey = sessionKey;
+
+    const json = stringify(aux);
+    const data = new TextEncoder().encode(json);
+    const byteLength = data.byteLength;
+    const mimeType = 'application/json';
+    const hash = getHash(data);
+    const rName = recordKey ?? recordName;
+
+    console.log(`Uploading AUX file... (${data.byteLength} bytes, sha256=${hash})`);
+    const recordFileResult = await client.recordFile({
+        recordKey: rName,
+        fileSha256Hex: hash,
+        fileMimeType: mimeType,
+        fileByteLength: byteLength,
+        markers: ['publicRead'],
+    }, {
+        headers,
+    });
+
+    let fileUrl: string;
+    if (recordFileResult.success === false) {
+        if (recordFileResult.errorCode !== 'file_already_exists') {
+            throw new Error('Failed to record file: ' + recordFileResult.errorCode + ' ' + recordFileResult.errorMessage);
+        } else {
+            fileUrl = recordFileResult.existingFileUrl;
+        }
+    } else {
+        const method = recordFileResult.uploadMethod;
+        const url = fileUrl = recordFileResult.uploadUrl;
+        const headers = { ...recordFileResult.uploadHeaders };
+
+        for(const header of UNSAFE_HEADERS) {
+            delete headers[header];
+        }
+
+        const uploadResult = await axios.request({
+            method: method.toLowerCase(),
+            url: url,
+            headers: headers,
+            data: data,
+        });
+
+        if (uploadResult.status < 200 || uploadResult.status >= 300) {
+            throw new Error('Failed to upload file.');
+        } else {
+            console.log('Successfully uploaded AUX file.');
+        }
+    }
+
+    const eggDataResult = await client.getData({
+        recordName: rName,
+        address: name
+    }, {
+        headers,
+    });
+    let eggData;
+
+    if (eggDataResult.success === false) {
+        if (eggDataResult.errorCode === 'data_not_found') {
+            // Create new egg data
+            eggData = {
+                aoID: name,
+                eggVersionHistory: [],
+                label: `v0`,
+                maxVersion: 0,
+                targetVersion: 0,
+                xp: 0,
+            };
+        } else {
+            throw new Error('Failed to get egg data: ' + eggDataResult.errorCode + ' ' + eggDataResult.errorMessage);
+        }
+    } else {
+        eggData = eggDataResult.data;
+    }
+
+    eggData.eggVersionHistory.push(fileUrl);
+    eggData.targetVersion = eggData.maxVersion = eggData.eggVersionHistory.length;
+    eggData.label = `v${eggData.maxVersion}`;
+
+    console.log(`Recording pattern (v${eggData.maxVersion})...`);
+    const recordDataResult = await client.recordData({
+        recordKey: rName,
+        address: name,
+        data: eggData,
+    }, {
+        headers,
+    });
+
+    if (recordDataResult.success === false) {
+        throw new Error('Failed to record data: ' + recordDataResult.errorCode + ' ' + recordDataResult.errorMessage);
+    }
+
+    console.log('Successfully uploaded pattern:', name);
+    const url = new URL(`https://ao.bot/`);
+    url.searchParams.set('pattern', name);
+    console.log(`View it at: ${url.href}`);
+}
+
+function getHash(buffer: Uint8Array): string {
+    return hash.sha256().update(buffer).digest('hex');
 }
