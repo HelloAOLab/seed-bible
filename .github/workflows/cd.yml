@@ -39,7 +39,7 @@ jobs:
       - name: Publish SeedBible Pattern
         run: |
           PATTERN_NAME=${BRANCH_NAME:8}
-          pnpm pattern -- upload seed-bible -p "$PATTERN_NAME" --session-key "$SESSION_KEY" --record-key "$RECORD_KEY"
+          pnpm pattern upload seed-bible -p "$PATTERN_NAME" --session-key "$SESSION_KEY" --record-key "$RECORD_KEY"
         env:
           BRANCH_NAME: ${{ github.head_ref || github.ref_name }}
           SESSION_KEY: ${{ secrets.SESSION_KEY }}
