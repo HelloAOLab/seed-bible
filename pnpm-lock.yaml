@@ -20,6 +20,9 @@ importers:
       '@casual-simulation/aux-common':
         specifier: 3.7.0
         version: 3.7.0
+      '@casual-simulation/aux-records':
+        specifier: 3.7.0
+        version: 3.7.0(@babel/runtime@7.28.4)(ws@8.18.3)
       '@casual-simulation/aux-runtime':
         specifier: 3.7.0
         version: 3.7.0(@babel/runtime@7.28.4)(ws@8.18.3)
@@ -38,6 +41,9 @@ importers:
       casualos:
         specifier: ^3.7.0
         version: 3.7.0(@babel/runtime@7.28.4)(ws@8.18.3)
+      commander:
+        specifier: ^14.0.1
+        version: 14.0.1
       eslint:
         specifier: ^9.32.0
         version: 9.32.0
@@ -1256,6 +1262,7 @@ packages:
 
   '@simplewebauthn/types@9.0.1':
     resolution: {integrity: sha512-tGSRP1QvsAvsJmnOlRQyw/mvK9gnPtjEc5fg2+m8n+QUa+D7rvrKkOYyfpy42GTs90X3RDOnqJgfHt+qO67/+w==}
+    deprecated: Package no longer supported. Contact Support at https://www.npmjs.com/support for more info.
 
   '@sinclair/typebox@0.34.41':
     resolution: {integrity: sha512-6gS8pZzSXdyRHTIqoqSVknxolr1kzfy4/CeDnrzsVz8TTIWUbOBr6gnzOmTYJ3eXQNh4IYHIGi5aIL7sOZ2G/g==}
@@ -1810,6 +1817,10 @@ packages:
   commander@12.0.0:
     resolution: {integrity: sha512-MwVNWlYjDTtOjX5PiD7o5pK0UrFU/OYgcJfjjK4RaHZETNtjJqrZa9Y9ds88+A+f+d5lv+561eZ+yCKoS3gbAA==}
     engines: {node: '>=18'}
+
+  commander@14.0.1:
+    resolution: {integrity: sha512-2JkV3gUZUVrbNA+1sjBOYLsMZ5cEEl8GTFP2a4AVz5hvasAMCQ1D2l2le/cX+pV4N6ZU17zjUahLpIXRrnWL8A==}
+    engines: {node: '>=20'}
 
   concat-map@0.0.1:
     resolution: {integrity: sha512-/Srv4dswyQNBfohGpz9o6Yb3Gz3SrUDqBH5rTuhGR7ahtlbYKnVxw2bCFMRljaA7EXHaXZ8wsHdodFvbkhKmqg==}
@@ -5553,6 +5564,8 @@ snapshots:
       delayed-stream: 1.0.0
 
   commander@12.0.0: {}
+
+  commander@14.0.1: {}
 
   concat-map@0.0.1: {}
 
