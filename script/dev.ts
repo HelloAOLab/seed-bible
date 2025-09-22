@@ -5,50 +5,53 @@ import { rmdir, writeFile } from 'node:fs/promises';
 import path from 'node:path';
 import { execSync } from 'node:child_process';
 import repl from 'node:repl';
+import { v4 as uuid } from 'uuid';
 import type { StoredAux } from '../typings/AuxLibraryDefinitions.js';
-
-await packageSingle('seed-bible', 'ignore');
 
 const browser = await puppeteer.launch({
     headless: false,
     defaultViewport: null,
 });
-const page = await browser.newPage();
 
-await initPage(page);
+let page: puppeteer.Page;
 
-const inst = 'myDevInst';
+async function startPage() {
+    await packageSingle('seed-bible', 'ignore');
+    
+    page = await browser.newPage();
 
-await loadInst(page, inst);
+    await initPage(page);
 
-console.log('Uploading Seed Bible...');
+    const inst = uuid();
 
-await addAux(page, await readPackage('seed-bible'));
+    await loadInst(page, inst);
 
-let packages: string[];
-if (process.argv.some(pkg => pkg === 'all')) {
-    packages = await listPackages();
-} else {
-    packages = process.argv.slice(2);
-}
+    console.log('Uploading Seed Bible...');
 
-for (const pkg of packages) {
-    if (pkg === 'seed-bible') {
-        continue;
+    await addAux(page, await readPackage('seed-bible'));
+
+    let packages: string[];
+    if (process.argv.some(pkg => pkg === 'all')) {
+        packages = await listPackages();
+    } else {
+        packages = process.argv.slice(2);
     }
-    console.log(`Adding ${pkg}...`);
-    const aux = await readPackage(pkg);
-    await addAux(page, aux);
+
+    for (const pkg of packages) {
+        if (pkg === 'seed-bible') {
+            continue;
+        }
+        console.log(`Adding ${pkg}...`);
+        const aux = await readPackage(pkg);
+        await addAux(page, aux);
+    }
+
+    console.log('Loaded!');
+
+    await shout(page, 'onEggHatch');
 }
 
-console.log('Loaded!');
-
-// await execScript(page, `
-//     const packager = getBot('system', 'app.packager');
-//     packager.masks.mainPackages = [];
-// `);
-
-await shout(page, 'onEggHatch');
+await startPage();
 
 process.on('exit', async () => {
     if (browser.connected) {
@@ -187,6 +190,16 @@ server.defineCommand('save', {
         }
     }
 });
+
+server.defineCommand('reload', {
+    help: 'Reload the page with changes from disk',
+    action: async () => {
+        if (page) {
+            await page.close();
+        }
+        await startPage();
+    },
+})
 
 // server.defineCommand('load', {
 //     help: 'Load a package',
