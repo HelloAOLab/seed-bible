@@ -5,7 +5,8 @@ name: Continous Deployment
 
 on:
   push:
-    'releases/**'
+    branches:
+      'releases/**'
 
 jobs:
   build:
