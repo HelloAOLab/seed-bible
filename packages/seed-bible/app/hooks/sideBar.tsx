@@ -177,7 +177,7 @@ export function PopupSettings({ items, type, disabled, sidebarContext }) {
                                     style={{ cursor: item?.disabled ? "not-allowed" : 'pointer', color: item?.disabled ? "#929292" : "" }}
                                 >
                                     <div>{item.icon}</div>
-                                    <div>{typeof item.title === "function" ? item.title() : item.title}</div>
+                                    <div>{typeof item.title === "function" ? item.title(item) : item.title}</div>
                                 </div>
                             )
                     }

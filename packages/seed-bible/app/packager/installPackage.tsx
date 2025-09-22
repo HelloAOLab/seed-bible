@@ -158,6 +158,7 @@ await(async function mainInstaller(that) {
             onHold: runFn,
             onClick: runFn,
             isImg: !!toolbarConfig?.iconUrl,
+            ...toolbarConfig,
         };
 
         if (globalThis.AddTool) {
