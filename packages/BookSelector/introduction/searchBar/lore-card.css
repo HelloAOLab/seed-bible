@@ -1,0 +1,546 @@
+html {
+  font-size: 62.5%;
+  box-sizing: border-box;
+  font-family: 'Pacifico'; 
+}
+
+*, *::after, *::before {
+    margin: 0;
+    padding: 0;
+    box-sizing: border-box;
+}
+
+.material-symbols-outlined {
+  font-variation-settings:
+  'FILL' 0,
+  'wght' 400,
+  'GRAD' 0,
+  'opsz' 24
+}
+
+/* Width */
+::-webkit-scrollbar {
+  width: 2px;
+  height: 2px;
+}
+
+/* Track */
+::-webkit-scrollbar-track {
+  box-shadow: inset 0 0 2px rgb(219, 210, 210);
+  border-radius: 2px;
+}
+
+/* Handle */
+::-webkit-scrollbar-thumb {
+  border-radius: 5px;
+  background: darkgray;
+}
+
+/* Handle on hover */
+::-webkit-scrollbar-thumb:hover {
+  background: rgb(197, 194, 194)
+}
+
+
+.lore-card-container {
+    width: 100vw;
+    height: 100dvh;
+    background: transparent;
+    overflow: hidden;
+    top: 0;
+    left: 0;
+}
+
+.lore-card-container a {
+    text-decoration: underline;
+}
+
+.lore-cards-user-actions {
+    position: fixed;
+    z-index: inherit;
+    right: 15px;
+    bottom: 15px;
+}
+
+.lore-cards-left-actions {
+    position: fixed;
+    z-index: 10;
+    left: 15px;
+    bottom: 15px;
+}
+
+.description__programming {
+    text-align: center;
+    position: absolute;
+    top: 50%;
+    left: 50%;
+    width: 60rem;
+    height: 72rem;
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    justify-content: space-between;
+    transform: translate(-50%,-50%);
+}
+
+.description__programming__card {
+    position: absolute;
+    top: 50%;
+    left: 50%;
+    backface-visibility: hidden;
+    text-align: center;
+    width: 53.33%;
+    height: 66.66%;
+    transform-origin: bottom left;
+    box-shadow: 2px 2px 4px rgba(0, 0, 0, 0.3);
+    transform: translateX(0);
+    border-radius: 12px;
+    background-color: orangered;
+    transition: all 1s; 
+}
+
+
+.description_card_front {
+    position: absolute;
+    top: 0;
+    left: 0;
+    border-radius: inherit;
+    height: 100%;
+    width: 100%;
+    background-color: inherit;
+    transform: rotateY(0);
+    z-index: 2;
+}
+
+.description_card_front > .content {
+    height: calc(100% - 100px);
+    overflow: auto;
+    text-align: justify;
+    padding: 8px 2rem;
+}
+
+.description_card_front_footer {
+    position: absolute;
+    bottom: 0;
+    left: 0;
+    display: flex;
+    width: 100%;
+    align-items: center;
+    justify-content: space-between;
+    padding: 0.8rem 1.6rem;
+    flex-direction: row-reverse;
+}
+
+.description_card_back {
+    position: absolute;
+    top: 0;
+    z-index: 1;
+    left: 0;
+    border-radius: inherit;
+    height: 100%;
+    width: 100%;
+    display: grid;
+    place-items: center;
+    padding: inherit;
+    background-image: linear-gradient(to bottom right, #fff, rgba(0, 0, 0, 1));
+    transform: rotateY(180deg);
+}
+
+.description_card_back img {
+    width: 13rem;
+    animation: rotateCircle 1s linear infinite;
+}
+
+
+.description__programming__card--0 {
+    background-color:  white;
+    transform: rotateZ(-8deg) translateX(-50%) translateY(-50%);
+    color: black;
+    z-index: 10;
+}
+
+.description__programming__card--1 {
+    background-color:  black;
+    transform: rotateZ(-4deg) translateX(-50%) translateY(-50%);
+    color: white;
+    z-index: 20;
+}
+
+.description__programming__card--2 {
+    background-color:  white;
+    transform: rotateZ(0deg) translateX(-50%) translateY(-50%);
+    color: black;
+    z-index: 30;
+}
+
+.description__programming__card--3 {
+    background-color:  black;
+    transform: rotateZ(4deg) translateX(-50%) translateY(-50%);
+    z-index: 40;
+    color: white;
+}
+
+.description__programming__card--4 {
+    background-color:  white;
+    transform: rotateZ(8deg) translateX(-50%) translateY(-50%);
+    z-index: 50;
+    color: black;
+}
+
+
+.description__programming__card--0.focus-out {
+    opacity: 0.85;
+    transform: scale(0.95) rotateZ(-8deg) translateX(-50%) translateY(-50%);
+}
+
+
+.description__programming__card--1.focus-out {
+    opacity: 0.85;
+    transform: scale(0.95) rotateZ(-4deg) translateX(-50%) translateY(-50%);
+}
+
+
+.description__programming__card--2.focus-out {
+    opacity: 0.85;
+    transform: scale(0.95) rotateZ(0deg) translateX(-50%) translateY(-50%);
+}
+
+
+.description__programming__card--3.focus-out {
+    opacity: 0.85;
+    transform: scale(0.95) rotateZ(4deg) translateX(-50%) translateY(-50%);
+}
+
+
+.description__programming__card--4.focus-out {
+    opacity: 0.85;
+    transform: scale(0.95) rotateZ(8deg) translateX(-50%) translateY(-50%);
+}
+
+.heading__teritary.title {
+    text-align: center;
+    flex: 1;
+}
+
+.heading__teritary {
+    padding: 1rem;
+}
+
+.description__programming__card--0 p {
+      border-bottom: 2px solid #000;
+}
+
+.description__programming__card--1 p {
+      border-bottom: 2px solid white;
+}
+
+.description__programming__card--2 p {
+      border-bottom: 2px solid #000;
+}
+
+.description__programming__card--3 p {
+      border-bottom: 2px solid #fff;
+}
+
+.description__programming__card--4 p {
+      border-bottom: 2px solid #000;
+}
+
+div.description_card_front > .content > * {
+    font-size: 1.4rem;
+    line-height: 1.3;
+    padding: 8px 0;
+}
+
+div.description_card_front > .content > ul, div.description_card_front > .content > ol {
+    padding: 8px 15px;
+}
+
+
+div.description__programming__card--0 * {
+    text-shadow: -1px 1px 1px white;
+    color: black !important;
+}
+
+div.description__programming__card--1 * {
+    text-shadow: -1px 1px 1px black;
+    color: white !important;
+}
+
+div.description__programming__card--2 * {
+    text-shadow: -1px 1px 1px white;
+    color: black !important;
+}
+
+div.description__programming__card--3 * {
+    text-shadow: -1px 1px 1px black;
+    color: white !important;
+}
+
+div.description__programming__card--4 * {
+    text-shadow: -1px 1px 1px white;
+    color: black !important;
+}
+
+.description__programming__card__icon--small {
+    height: 2rem;
+    width: 2rem;
+    font-size: 2rem;
+    position: absolute;
+    top: 2rem;
+    left: 2rem;
+}
+
+.description__programming__card__icon--0 {
+    font-size: 1.6rem;
+    text-decoration: none;
+    font-family: sans-serif;
+    color: transparent;
+}
+
+.description__programming__card__icon--1 {
+    height: 4rem;
+    width: 4rem;
+    padding-bottom: 2rem;
+}
+
+.description__programming__card p {
+    font-size: 1.2rem;
+}
+
+
+.description__programming__card.target {
+    transform: rotateZ(0deg) translateX(-50%) translateY(calc(-50% + 4rem)) scale(1.05) !important;
+    z-index: 60;
+    opacity: 1 !important;
+}
+
+.description__programming__card.target::after {
+    position: fixed;
+    top: 54px;
+    left: -20%;
+    content: "";
+    width: 140%;
+    height: calc(100% - 110px);
+    z-index: -1;
+    opacity: 0.7;
+    backdrop-filter: blur(2px);
+    -webkit-backdrop-filter: blur(2px);
+}
+
+.description__programming__card.target .description_card_back img{
+    animation: none;
+}
+
+.description__programming__card.collected .description_card_back {
+    animation: comeUp 0s linear forwards 1.5s, goDown 0s linear forwards 4.5s;
+}
+
+.description__programming__card.collected.description__programming__card--0 {
+    transform-origin: bottom left;
+    transform: rotateZ(0deg) translateX(-50%) translateY(calc(-50% + 4rem)) scale(1);
+    animation: flipBack 1s linear forwards 1s, flipUp 2s linear forwards 4s , rotate0 0.5s linear forwards 6s;
+}
+
+.description__programming__card.collected.description__programming__card--1 {
+    transform-origin: bottom left;
+    transform: rotateZ(0deg) translateX(-50%) translateY(calc(-50% + 4rem)) scale(1);
+    animation: flipBack 1s linear forwards 1s, flipUp 2s linear forwards 4s , rotate1 0.5s linear forwards 6s;
+}
+
+.description__programming__card.collected.description__programming__card--2 {
+    transform-origin: bottom left;
+    transform: rotateZ(0deg) translateX(-50%) translateY(calc(-50% + 4rem)) scale(1);
+    animation: flipBack 1s linear forwards 1s, flipUp 2s linear forwards 4s , rotate2 0.5s linear forwards 6s;
+}
+
+.description__programming__card.collected.description__programming__card--3 {
+    transform-origin: bottom left;
+    transform: rotateZ(0deg) translateX(-50%) translateY(calc(-50% + 4rem)) scale(1);
+    animation: flipBack 1s linear forwards 1s, flipUp 2s linear forwards 4s , rotate3 0.5s linear forwards 6s;
+}
+
+.description__programming__card.collected.description__programming__card--4 {
+    transform-origin: bottom left;
+    transform: rotateZ(0deg) translateX(-50%) translateY(calc(-50% + 4rem)) scale(1);
+    animation: flipBack 1s linear forwards 1s, flipUp 2s linear forwards 4s , rotate4 0.5s linear forwards 6s;
+}
+
+.description__programming__card.startpoint {
+    transform-origin: bottom;
+    transform: rotateZ(0deg) translateX(-50%) translateY(calc(-50% + 4rem)) scale(1) rotateY(180deg);
+}
+
+.description__programming__card.startpoint .description_card_back {
+    z-index: 3;
+    animation: goDown 0s linear forwards 1.5s;
+}
+
+.description__programming__card.startpoint.description__programming__card--0 {
+    animation: flipUp 2s linear forwards 1s, rotate0 0.5s linear forwards 3s;
+}
+
+.description__programming__card.startpoint.description__programming__card--1 {
+    animation: flipUp 2s linear forwards 1s, rotate1 0.5s linear forwards 3s;
+}
+
+.description__programming__card.startpoint.description__programming__card--2 {
+    animation: flipUp 2s linear forwards 1s, rotate2 0.5s linear forwards 3s;
+}
+
+.description__programming__card.startpoint.description__programming__card--3 {
+    animation: flipUp 2s linear forwards 1s, rotate3 0.5s linear forwards 3s;
+}
+
+.description__programming__card.startpoint.description__programming__card--4 {
+    animation: flipUp 2s linear forwards 1s, rotate4 0.5s linear forwards 3s;
+}
+
+
+@keyframes rotate0 { 
+    0% {
+        transform: rotateZ(8deg) translateX(-50%) translateY(-50%);
+        transform-origin: bottom left;
+    }
+
+    100% {
+        transform: rotateZ(-8deg) translateX(-50%) translateY(-50%);
+        transform-origin: bottom left;
+    }
+}
+
+@keyframes rotate1 { 
+    0% {
+        transform: rotateZ(8deg) translateX(-50%) translateY(-50%);
+        transform-origin: bottom left;
+    }
+
+    100% {
+        transform: rotateZ(-4deg) translateX(-50%) translateY(-50%);
+        transform-origin: bottom left;
+    }
+}
+
+@keyframes rotate2 { 
+    0% {
+        transform: rotateZ(8deg) translateX(-50%) translateY(-50%);
+        transform-origin: bottom left;
+    }
+
+    100% {
+        transform: rotateZ(0deg) translateX(-50%) translateY(-50%);
+        transform-origin: bottom left;
+    }
+}
+
+@keyframes rotate3 { 
+    0% {
+        transform: rotateZ(8deg) translateX(-50%) translateY(-50%);
+        transform-origin: bottom left;
+    }
+
+    100% {
+        transform: rotateZ(4deg) translateX(-50%) translateY(-50%);
+        transform-origin: bottom left;
+    }
+}
+
+@keyframes rotate4 { 
+    0% {
+        transform: rotateZ(8deg) translateX(-50%) translateY(-50%);
+        transform-origin: bottom left;
+    }
+
+    100% {
+        transform: rotateZ(8deg) translateX(-50%) translateY(-50%);
+        transform-origin: bottom left;
+    }
+}
+
+
+@keyframes comeUp { 
+    0% {
+        z-index: 1;
+    }
+
+    100% {
+        z-index: 3;
+    }
+}
+
+@keyframes goDown { 
+    0% {
+        z-index: 3;
+    }
+
+    100% {
+        z-index: 1;
+    }
+}
+
+@keyframes flipBack { 
+    0% {
+        transform: rotateZ(0deg) translateX(-50%) translateY(calc(-50% + 4rem)) scale(1) rotateY(0deg);
+        transform-origin: bottom;
+    }
+    100% {
+        transform: rotateZ(0deg) translateX(-50%) translateY(calc(-50% + 4rem)) scale(1) rotateY(180deg);
+        transform-origin: bottom;
+    }
+}
+
+@keyframes flipUp { 
+    0% {
+        transform: rotateZ(0deg) translateX(-50%) translateY(calc(-50% + 4rem)) scale(1) rotateY(180deg);
+        transform-origin: bottom;
+    }
+
+    49.99% {
+        transform: rotateZ(0deg) translateX(-50%) translateY(calc(-50% + 4rem)) scale(1) rotateY(0deg);
+        transform-origin: bottom;
+    }
+
+    50% {
+        transform: rotateZ(0deg) translateX(-50%) translateY(calc(-50% + 4rem)) scale(1) rotateY(0deg);
+        transform-origin: bottom left;
+    }
+
+    60% {
+        transform: rotateZ(0deg) translateX(-50%) translateY(calc(-50% + 4rem)) scale(1) rotateY(0deg);
+        transform-origin: bottom left;
+    }
+
+    100% {
+        transform: rotateZ(8deg) translateX(-50%) translateY(-50%) scale(1) rotateY(0deg);
+        transform-origin: bottom left;
+    }
+}
+
+@keyframes rotateCircle { 
+    0% {
+        transform: rotateZ(0deg);
+    }
+
+    100% {
+        transform: rotateZ(360deg);
+    }
+}
+
+
+@media (max-width: 700px) {
+  .description__programming {
+    width: 92vw;
+    height: 100%;
+  }
+
+  .description__programming__card {
+    width: 90%;
+    height: calc(100% - 22rem);
+  }
+}
+
+@media (max-width: 540px) {
+    lore-card-container {
+        height: 100dvh;
+    }
+}
