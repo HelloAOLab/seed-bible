@@ -11,14 +11,12 @@ export const Wrapper = () => {
         chapterGap,
         chapterWidth,
         chapterHeight,
-        
-
         scaleFactor
     } = useBibleLayout2DContext();
     
     return (
         <div 
-            className={`layoutWrapper${showLabels ? " showingLabels" : ""}`}
+            className={`mapWrapper${showLabels ? " showingLabels" : ""}`}
             style={{
                 "--scaleFactor": scaleFactor,
                 "--bookWidth": `${bookWidth}px`,

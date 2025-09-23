@@ -200,7 +200,7 @@ export const Chapter = ({ index, bookName, sectionName}) => {
     })
 
     const getChapterHistoryColor = useCallback(() => {
-        return BibleVizUtils.Functions.GetHistoryColor({ data: { typeOfPiece: BibleVizUtils.Data.tags.BiblePieceType.StackChapter, key: `${bookName} ${index + 1}` } })
+        return BibleVizUtils.Functions.GetHistoryColor({ data: { typeOfElement: BibleVizUtils.Data.tags.BiblePieceType.Chapter, key: `${bookName} ${index + 1}` } })
     }, [])
 
     const [historyColor, setHistoryColor] = useState(getChapterHistoryColor())

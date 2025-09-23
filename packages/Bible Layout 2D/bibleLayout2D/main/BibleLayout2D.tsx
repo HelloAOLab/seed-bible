@@ -17,7 +17,7 @@ export const ProjectChapterState = Object.freeze({
 
 export const BibleLayout2D = ({parentContext}) => {
 
-    const {mode, project, layoutProviderRef} = parentContext;
+    const {mode, project, mapToolProviderRef} = parentContext;
 
     if(mode === BibleLayout2DModes.Project && !project) return null
     
@@ -25,7 +25,7 @@ export const BibleLayout2D = ({parentContext}) => {
         <>
             <style>{thisBot.tags["BibleLayout2D.css"]}</style>
             <BibleLayout2DProvider 
-                ref={layoutProviderRef}
+                ref={mapToolProviderRef}
                 parentContext={parentContext}
                 BibleLayout2DModes={BibleLayout2DModes}
                 ProjectChapterState={ProjectChapterState}

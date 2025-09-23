@@ -35,8 +35,11 @@ export const Book = ({
         onBookNameClickAndHold,
         onBookNameClickAndHoldDependencies,
 
+        bookWidth,
         chapterGap,
         chapterPadding,
+        chapterWidth,
+        chapterHeight,
     } = useBibleLayout2DContext();
     const { testament } = useTestamentContext() 
     
@@ -167,7 +170,7 @@ export const Book = ({
 
     return (
         <div 
-            className={`layoutBookContainer${showChapters ? "" : " pointable"}`} 
+            className={`mapBookContainer${showChapters ? "" : " pointable"}`} 
             style={style}
             key={key}
             onClick={() => {

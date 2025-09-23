@@ -80,7 +80,7 @@ export const Controls = () => {
     </>}*/
     
     return (
-        <div className="layoutControls">
+        <div className="mapControls">
             <div className="zoomContainer">
                 <ZoomButton onClick={handleZoomOut}><span className="material-symbols-outlined">remove</span></ZoomButton>
                 <ZoomButton onClick={() => {setShowOptions(prev => !prev)}}>

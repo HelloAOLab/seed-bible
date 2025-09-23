@@ -3,7 +3,6 @@ import { TestamentContent } from "bibleLayout2D.main.TestamentContent"
 import { TestamentContext } from "bibleLayout2D.main.TestamentContext"
 import { useBibleLayout2DContext } from "bibleLayout2D.main.BibleLayout2DContext"
 
-
 const { useState,useCallback } = os.appHooks; 
 
 export const TestamentContainer = ({ testament, testamentIndex }) => {
