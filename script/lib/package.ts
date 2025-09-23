@@ -50,7 +50,7 @@ export function cleanupAux(aux: BotsState) {
 
     for (const id in aux) {
         const bot = aux[id];
-        if (bot.space !== 'shared' || bot.tags.aoIgnore) {
+        if (!['shared', 'local'].includes(bot.space) || bot.tags.aoIgnore) {
             continue;
         }
         result[id] = {

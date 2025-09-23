@@ -1,6 +1,6 @@
 import puppeteer from 'puppeteer';
 import { cleanupAux, listPackages, packageSingle, readPackage } from './lib/package.js';
-import { initPage, loadInst, addAux, shout, getPrimarySim, execScript, registerPackage } from './lib/browser.js';
+import { initPage, loadInst, addAux, shout, getPrimarySim, execScript, getPackageData } from './lib/browser.js';
 import { rmdir, writeFile } from 'node:fs/promises';
 import path from 'node:path';
 import { execSync } from 'node:child_process';
@@ -128,6 +128,14 @@ server.defineCommand('save', {
                 const packagePath = path.resolve('packages', pkg);
                 await rmdir(packagePath, { recursive: true, force: true });
                 execSync(`casualos unpack-aux --overwrite ${filePath} ./packages`, { stdio: 'ignore' });
+
+                const data = await getPackageData(page, pkg);
+                if (!data) {
+                    console.warn('No package data found for', pkg);
+                } else {
+                    const extensionPath = path.resolve('packages', pkg, 'extension.json');
+                    await writeFile(extensionPath, JSON.stringify(data, null, 2), 'utf-8');
+                }
             };
             
             const seedBible = {
@@ -175,17 +183,25 @@ server.defineCommand('save', {
                 }
             }
 
-            if (!packageName || packageName === 'seed-bible' || packageName === 'all') {
-                await unpack('seed-bible', seedBible);
-            }
+            console.log('found Packages', packageAuxes.map(p => p.name));
 
-            for (const pkg of packageAuxes) {
-                if (packageName === pkg.name || packageName === 'all') {
+            if (!packageName || packageName === 'seed-bible') {
+                await unpack('seed-bible', seedBible);
+            } else if (packageName === 'all') {
+                console.log('Saving All');
+                await unpack('seed-bible', seedBible);
+                for (const pkg of packageAuxes) {
                     await unpack(pkg.name, pkg.aux);
                 }
+            } else {
+                const pkg = packageAuxes.find(p => p.name === packageName);
+                if (pkg) {
+                    await unpack(pkg.name, pkg.aux);
+                } else {
+                    console.log(`Package ${packageName} not found.`);
+                }
             }
-
-            console.log(`Saved!`);
+            
             server.displayPrompt();
         } finally {
             sim.dispose();

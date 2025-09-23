@@ -135,6 +135,25 @@ export async function registerPackage(page: Page, name: string) {
 }
 
 /**
+ * Gets the saved data for the package.
+ * @param page The page.
+ * @param name The name of the package.
+ */
+export async function getPackageData(page: Page, name: string) {
+    return await page.evaluate((name) => {
+        const app = window.aux.getApp();
+        const sim = app.simulationManager.primary;
+
+        const bots = Object.values(sim.helper.botsState);
+        const packager = bots.find(b => b.tags.system === 'app.packager');
+        if (!packager) {
+            throw new Error('Packager app not found in bots state.');
+        }
+        return packager.values[`${name}-data`];
+    }, name);
+}
+
+/**
  * Uploads a file to the page.
  * @param page The page.
  * @param filePath The path to the file.
