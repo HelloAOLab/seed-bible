@@ -50,7 +50,10 @@ globalThis.Playlist = thisBot;
 const getBookmarks = async () => {
   let apiResults = {};
   try {
-    await os.requestAuthBot();
+    const authBot = await os.requestAuthBotInBackground();
+    if (!authBot) {
+      return apiResults;
+    }
     apiResults = await os.getData(authBot.id, "bookmarks");
     if (apiResults.data) {
       setTag(thisBot, "bookmarks", { ...apiResults.data });

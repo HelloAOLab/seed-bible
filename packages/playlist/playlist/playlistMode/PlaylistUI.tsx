@@ -404,8 +404,8 @@ const Playlist = () => {
             if (globalThis.hasASharedPlaylist) {
                 const nameOfSharer = globalThis.shareProfileName;
                 let currentProfileName = "Guest";
-                await os.requestAuthBot();
-                if (authBot.id) {
+                const authBot = await os.requestAuthBotInBackground();
+                if (authBot?.id) {
                     const data = await os.getData(tags.key, authBot.id);
                     if (data.success) {
                         const payload = data.data

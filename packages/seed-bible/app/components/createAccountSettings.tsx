@@ -24,8 +24,8 @@ const CreateAccountSettings = () => {
     }
     async function init() {
         getLocation()
-        await os.requestAuthBot()
-        if (!authBot.id)
+        const authBot = await os.requestAuthBotInBackground();
+        if (!authBot?.id)
             return
         const data = await os.getData(tags.key, authBot.id);
         if (data.success) {
