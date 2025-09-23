@@ -1,0 +1,27 @@
+{
+  "author": "Sujan",
+  "configEditor": {
+    "app": "",
+    "author": "Sujan Barman"
+  },
+  "createdAt": "2025-09-18T04:41:34.705Z",
+  "dependencies": [],
+  "description": "let's you paint",
+  "id": 1758170494705,
+  "license": "MIT",
+  "linkedDependencies": [],
+  "mainBotTag": "aiApps.painter",
+  "name": "Painter",
+  "otherBots": [],
+  "recordFile": {
+    "sha256Hash": "75fb1f0723995ed8dbd2ccb06326eaee8e923542098b51cc01393016f84c3e64",
+    "success": true,
+    "url": "https://auth-aux-aobot-prod-filesbucket-141297942820.s3.amazonaws.com/testingPublickKey/75fb1f0723995ed8dbd2ccb06326eaee8e923542098b51cc01393016f84c3e64.json"
+  },
+  "source": "https://auth-aux-aobot-prod-filesbucket-141297942820.s3.amazonaws.com/testingPublickKey/75fb1f0723995ed8dbd2ccb06326eaee8e923542098b51cc01393016f84c3e64.json",
+  "status": "active",
+  "type": "package",
+  "updatedAt": "2025-09-23T16:42:53.003Z",
+  "userAuth": "ba0d275f-d720-40a8-bbd0-c3c9632fd6e9",
+  "version": "1.0.5"
+}

@@ -1,0 +1,321 @@
+.app {
+    position: fixed;
+    width: 100dvw;
+    height: 100dvh;
+    background: transparent;
+    color: #333;
+    min-height: 100vh;
+    overflow: hidden;
+    z-index: 10;
+    top: 0;
+    left: 0;
+}
+
+.draggable {
+  user-select: none;
+  z-index: 1000;
+  transition: box-shadow 0.2s ease;
+}
+
+.draggable:active {
+  z-index: 1001;
+}
+
+.drawing-canvas {
+    position: absolute;
+    top: 0;
+    left: 0;
+    width: 100%;
+    height: 100%;
+    background: transparent;
+    cursor: crosshair;
+    touch-action: none;
+    z-index: 1;
+}
+
+.canvas-disabled {
+    cursor: default !important;
+}
+
+.toolbar {
+    bottom: 20px;
+    left: 20px;
+    padding: 12px;
+    border-radius: 15px;
+    box-shadow: 0 5px 20px rgba(0, 0, 0, 0.15);
+    z-index: 100;
+    display: flex;
+    flex-direction: column;
+    gap: 12px;
+    backdrop-filter: blur(5px);
+    transition: all 0.3s ease;
+    pointer-events: all;
+}
+
+/* .toolbar:hover {
+    background: rgba(255, 255, 255, 0.95);
+} */
+
+.tool-section {
+    display: flex;
+    flex-direction: row;
+    gap: 10px;
+}
+
+.color-options {
+    display: flex;
+    gap: 8px;
+    flex-wrap: wrap;
+    justify-content: center;
+    flex-direction: row;
+}
+
+.color-option {
+    width: 28px;
+    height: 28px;
+    border-radius: 50%;
+    cursor: pointer;
+    transition: transform 0.2s;
+    border: 2px solid transparent;
+}
+
+.color-option:hover {
+    transform: scale(1.15);
+}
+
+.color-option.active {
+    border-color: white;
+    box-shadow: 0 0 0 2px #4a6fc7;
+}
+
+.size-options {
+    display: flex;
+    gap: 10px;
+    justify-content: center;
+    align-items: center;
+}
+
+.size-option {
+    width: 30px;
+    height: 30px;
+    border-radius: 50%;
+    cursor: pointer;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    background: #f1f5ff;
+    border: 2px solid #ddd;
+    transition: all 0.2s;
+}
+
+.size-option:hover {
+    background: #e1eaff;
+    border-color: #4a6fc7;
+}
+
+.size-option.active {
+    background: #4a6fc7;
+    border-color: #4a6fc7;
+    color: white;
+}
+
+.action-buttons {
+    display: flex;
+    gap: 8px;
+    justify-content: space-evenly;
+    align-items: center;
+}
+
+.action-btn {
+    padding: 8px 10px;
+    border: none;
+    border-radius: 8px;
+    cursor: pointer;
+    font-weight: bold;
+    transition: all 0.2s;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    gap: 5px;
+    font-size: 13px;
+    width: 60px;
+    height: 30px;
+    /* font-size: 4px !important; */
+}
+
+.clear-btn {
+    background: #ff4757;
+    color: white;
+}
+
+.clear-btn:hover {
+    background: #ff2e43;
+    transform: scale(1.05);
+}
+
+.toggle-btn {
+    background: #4a6fc7;
+    color: white;
+}
+
+.toggle-btn:hover {
+    background: #3a5bb0;
+    transform: scale(1.05);
+}
+
+.toggle-btn.disabled {
+    background: #2ed573;
+}
+
+.toggle-btn.disabled:hover {
+    background: #25b562;
+}
+
+.instructions {
+    position: fixed;
+    top: 20px;
+    right: 20px;
+    background: rgba(255, 255, 255, 0.85);
+    padding: 15px;
+    border-radius: 10px;
+    max-width: 250px;
+    box-shadow: 0 4px 15px rgba(0, 0, 0, 0.1);
+    z-index: 90;
+    backdrop-filter: blur(5px);
+}
+
+.instructions h3 {
+    color: #4a6fc7;
+    margin-bottom: 10px;
+    font-size: 16px;
+}
+
+.instructions ul {
+    padding-left: 20px;
+}
+
+.instructions li {
+    margin-bottom: 8px;
+    font-size: 14px;
+}
+
+.status {
+    position: fixed;
+    top: 20px;
+    left: 20px;
+    background: rgba(255, 255, 255, 0.85);
+    padding: 8px 12px;
+    border-radius: 8px;
+    box-shadow: 0 4px 15px rgba(0, 0, 0, 0.1);
+    z-index: 90;
+    backdrop-filter: blur(5px);
+    font-size: 14px;
+    display: flex;
+    align-items: center;
+    gap: 8px;
+}
+
+.status2 {
+    position: fixed;
+    top: 20px;
+    right: 20px;
+    background: rgba(255, 255, 255, 0.85);
+    padding: 8px 12px;
+    border-radius: 8px;
+    box-shadow: 0 4px 15px rgba(0, 0, 0, 0.1);
+    z-index: 90;
+    backdrop-filter: blur(5px);
+    font-size: 14px;
+    display: flex;
+    align-items: center;
+    gap: 8px;
+}
+
+.status-dot {
+    width: 10px;
+    height: 10px;
+    border-radius: 50%;
+    background: #2ed573;
+}
+
+.status-dot.disabled {
+    background: #ff4757;
+}
+
+.container {
+    display: flex;
+    justify-content: center;
+    align-items: center;
+    background: transparent;
+    font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, Oxygen, sans-serif;
+}
+
+.sliderTrack {
+    width: 310px;
+    height: 40px;
+    position: relative;
+    display: flex;
+    align-items: center;
+    cursor: pointer;
+    overflow: hidden;
+}
+
+.trackBackground {
+    position: absolute;
+    width: 100%;
+    height: 100%;
+    clip-path: polygon(0 50%, 100% 0, 100% 100%);
+    border-radius: 5px;
+}
+
+.sliderThumb {
+    position: absolute;
+    background: white;
+    border-radius: 50%;
+    top: 50%;
+    transform: translate(-50%, -50%);
+    cursor: pointer;
+    box-shadow: 0 4px 10px rgba(0, 0, 0, 0.2);
+    transition: all 0.15s ease;
+    z-index: 2;
+}
+
+.sliderInput {
+    position: absolute;
+    width: 100%;
+    height: 100%;
+    top: 0;
+    left: 0;
+    opacity: 0;
+    cursor: pointer;
+    z-index: 3;
+}
+
+@media (max-width: 768px) {
+    .toolbar {
+        bottom: 10px;
+        left: 10px;
+        padding: 10px;
+    }
+
+    .instructions {
+        top: 10px;
+        right: 10px;
+        max-width: 200px;
+    }
+
+    .status {
+        top: 10px;
+        left: 10px;
+    }
+
+    .color-option {
+        width: 24px;
+        height: 24px;
+    }
+
+    .action-btn {
+        padding: 6px 8px;
+        font-size: 12px;
+    }
+}
