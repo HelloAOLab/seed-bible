@@ -1,4 +1,5 @@
 import { readFile } from "node:fs/promises";
+import { readPackage } from './package';
 import { Page, ElementHandle, JSHandle } from "puppeteer";
 import { v4 as uuid } from 'uuid';
 import path from 'node:path';
@@ -239,4 +240,40 @@ export async function loadInst(page: Page, inst: string, collaborative: boolean 
     await page.goto(`https://ao.bot?gridPortal=home&${collaborative ? 'inst' : 'staticInst'}=${inst}`);
     console.log('Waiting for ao.bot to load...');
     await waitForInstLoad(page);
+}
+
+export async function loadSeedBible(page: Page) {
+    await initPage(page);
+    
+    const inst = uuid();
+
+    await loadInst(page, inst);
+
+    console.log('Uploading Seed Bible...');
+
+    await addAux(page, await readPackage('seed-bible'));
+    await addAux(page, await readPackage('BookSelector'));
+    await addAux(page, await readPackage('Bible Layout 2D'));
+    await addAux(page, await readPackage('Painter'));
+    await addAux(page, await readPackage('Playlist'));
+    await registerPackage(page, 'BookSelector');
+    await registerPackage(page, 'Bible Layout 2D');
+    await registerPackage(page, 'Painter');
+    await registerPackage(page, 'Playlist');
+
+    await waitForPackage(page, 'Playlist');
+
+    await execScript(page, `
+        const packager = getBot('system', 'app.packager');
+        setTagMask(packager, 'installedPackages', [
+            'BookSelector',
+            'Bible Layout 2D',
+            'Painter',
+            'Playlist',
+        ], 'local');
+    `);
+
+    console.log('Loaded!');
+
+    shout(page, 'onInstJoined');
 }

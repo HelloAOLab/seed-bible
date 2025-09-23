@@ -1,20 +1,19 @@
 import puppeteer, { Browser, Page, Frame } from 'puppeteer';
-import { packageSingle, readPackage } from '../../script/lib/package';
-import { initPage, loadInst, addAux, shout } from '../../script/lib/browser';
+import { packageAll } from '../../script/lib/package';
+import { initPage, loadInst, addAux, shout, loadSeedBible } from '../../script/lib/browser';
 import { afterEach } from 'node:test';
 
 let browser: Browser;
 let page: Page;
 let seedBibleFrame: Frame;
-const inst = 'myTestInst';
 
 console.log = jest.fn();
 
 beforeAll(async () => {
-    await packageSingle('seed-bible', 'ignore');
+    await packageAll('ignore');
 
     browser = await puppeteer.launch({
-        args: ['--no-sandbox']
+        args: ['--no-sandbox'],
     });
 });
 
@@ -24,10 +23,7 @@ afterAll(async () => {
 
 beforeEach(async () => {
     page = await browser.newPage();
-    await initPage(page);
-    await loadInst(page, inst);
-    await addAux(page, await readPackage('seed-bible'));
-    shout(page, 'onEggHatch').catch(() => {});
+    await loadSeedBible(page);
     seedBibleFrame = page.frames().find(f => f.url().includes('secure-ao-content.org'));
 });
 
