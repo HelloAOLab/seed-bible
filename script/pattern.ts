@@ -32,8 +32,8 @@ program.command('unpack')
         console.log(`Unpacked pattern ${name} to packages folder.`);
     });
 
-program.command('upload')
-    .description('Uploads the given pattern to the records server.')
+program.command('publish')
+    .description('Publishes the given pattern to the records server.')
     .argument('<package>', 'The name of the package to upload.')
     .option('-p, --pattern <pattern>', 'The name of the pattern to upload.')
     .option('--session-key <sessionKey>', 'The session key to use for authentication.')
