@@ -17,10 +17,10 @@ export async function packageSingle(pkg: string, stdio: 'inherit' | 'ignore' = '
     }
 }
 
-export async function packageAll() {
+export async function packageAll(stdio: 'inherit' | 'ignore' = 'inherit') {
     const packages = await listPackages();
     for (const pkg of packages) {
-        await packageSingle(pkg);
+        await packageSingle(pkg, stdio);
     }
 }
 

@@ -1,5 +1,5 @@
 import puppeteer from 'puppeteer';
-import { cleanupAux, listPackages, packageSingle, readPackage } from './lib/package.js';
+import { cleanupAux, listPackages, packageAll, readPackage } from './lib/package.js';
 import { initPage, loadInst, addAux, shout, getPrimarySim, execScript, getPackageData, registerPackage, waitForPackage } from './lib/browser.js';
 import { rmdir, writeFile } from 'node:fs/promises';
 import path from 'node:path';
@@ -16,7 +16,7 @@ const browser = await puppeteer.launch({
 let page: puppeteer.Page;
 
 async function startPage() {
-    await packageSingle('seed-bible', 'ignore');
+    await packageAll('ignore');
     
     page = await browser.newPage();
 
