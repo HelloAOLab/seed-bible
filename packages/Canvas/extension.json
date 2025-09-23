@@ -1,0 +1,38 @@
+{
+  "author": "Sujan",
+  "configEditor": {
+    "app": "",
+    "author": "Sujan",
+    "tabConfig": {
+      "app": "CanvasApp",
+      "book": "Canvas",
+      "bookId": "GEN",
+      "chapter": 1,
+      "icon": "view_in_ar",
+      "title": "Canvas tab",
+      "translation": "BSB",
+      "type": "canvas",
+      "use": "thePage"
+    }
+  },
+  "createdAt": "2025-08-14T21:47:25.661Z",
+  "dependencies": [],
+  "description": "adds canvas functinality to the seedbible",
+  "id": 1755208045661,
+  "license": "MIT",
+  "linkedDependencies": [],
+  "mainBotTag": "canvas.canvasApp",
+  "name": "Canvas",
+  "otherBots": [],
+  "recordFile": {
+    "sha256Hash": "e47840f346b4bf8e8e4116299d45fddb5b2082848ce92140a3bbe39d24a5b129",
+    "success": true,
+    "url": "https://auth-aux-aobot-prod-filesbucket-141297942820.s3.amazonaws.com/testingPublickKey/e47840f346b4bf8e8e4116299d45fddb5b2082848ce92140a3bbe39d24a5b129.json"
+  },
+  "source": "https://auth-aux-aobot-prod-filesbucket-141297942820.s3.amazonaws.com/testingPublickKey/e47840f346b4bf8e8e4116299d45fddb5b2082848ce92140a3bbe39d24a5b129.json",
+  "status": "active",
+  "type": "package",
+  "updatedAt": "2025-09-22T12:39:11.562Z",
+  "userAuth": "ba0d275f-d720-40a8-bbd0-c3c9632fd6e9",
+  "version": "1.0.22"
+}
