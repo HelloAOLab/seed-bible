@@ -68,6 +68,10 @@ html * {
     background-color: rgba(0, 0, 0, 0.6);
 }
 
+.backdrop.transparent {
+    background-color: rgba(0, 0, 0, 0.0);
+}
+
 .align-center {
     display: flex;
     align-items: center;
@@ -221,7 +225,6 @@ history-item:active {
 .playlist-item {
     display: flex;
     align-items: center;
-    text-transform: capitalize;
     padding: 8px 0;
     cursor: pointer;
     position: relative;
@@ -504,6 +507,32 @@ div.history-item.current-date-disorder .playlist-item-type {
     transition: all 0.2s linear;
 }
 
+.playlist-item-type.bookmark {
+    border: none;
+    background-color: #F4F5F5;
+    border-radius: 4px;
+}
+
+.playlist-item-type.bookmark .number-style {
+    font-family: Satoshi;
+    font-weight: 600;
+    font-size: 15px;
+}
+
+.playlist-item-type.bookmark .verse-style {
+    font-family: Satoshi;
+    font-weight: 500;
+    font-size: 12px;
+}
+
+.playlist-item-type.bookmark .time-style {
+    font-family: Satoshi;
+    font-weight: 400;
+    font-style: Italic;
+    font-size: 12px;
+    margin-left: auto;
+}
+
 .playlist-item-type.checklistEnabled {
     padding-left: 4.5rem;
 }
@@ -516,7 +545,7 @@ div.history-item.current-date-disorder .playlist-item-type {
     padding-left: 0.5rem;
 }
 
-.playlist-item-type:hover {
+.playlist-item-type:not(.bookmark):hover {
     background-color: #CECECE;
     border: 1px solid #AFAFAF;
 }

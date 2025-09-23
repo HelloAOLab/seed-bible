@@ -1,0 +1,10 @@
+await os.requestAuthBot();
+
+if (authBot.id) {
+    const res = await os.recordData(authBot.id, 'playlists', { playlists: [...that.playlists] }, {
+        marker: 'bookmarks'
+    });
+    return res;
+} else {
+    throw new Error("User not logged in!");
+}

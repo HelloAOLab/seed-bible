@@ -36,7 +36,7 @@ if (globalThis.makingPlaylist) {
                     if (!isSame) {
                         globalThis[`${id}currentPlaylist`].push(dataItem);
                     } else {
-                        os.toast("Last item repeated!");
+                        // os.toast("Last item repeated!");
                     }
                 } else {
                     if (bulkAdd) {

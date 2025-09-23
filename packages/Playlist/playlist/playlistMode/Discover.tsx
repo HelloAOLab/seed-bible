@@ -1,4 +1,4 @@
-const { useState, useRef, useEffect } = os.appHooks;
+const { useState, useRef, useLayoutEffect } = os.appHooks;
 
 const { Input } = Components;
 
@@ -15,7 +15,7 @@ const Discover = ({ currentOpenedBook, setAnnotationData, chapter, fetchingAnnot
 
     const [renamingPlaylist, setRenamingPlaylist] = useState(false);
 
-    useEffect(() => {
+    useLayoutEffect(() => {
         globalThis.SetRenamingPlaylist = setRenamingPlaylist;
         return () => {
             globalThis.SetRenamingPlaylist = null;
@@ -73,7 +73,7 @@ const Discover = ({ currentOpenedBook, setAnnotationData, chapter, fetchingAnnot
 
     const isAll = "All" === selectedChip;
 
-    useEffect(() => {
+    useLayoutEffect(() => {
         const interval = setInterval(() => {
             checkPosition();
         }, 100);

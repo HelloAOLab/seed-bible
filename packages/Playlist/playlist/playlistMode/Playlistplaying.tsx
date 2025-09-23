@@ -34,12 +34,20 @@ if (!globalThis.IsQueuePresent) {
     return;
 }
 
-const { useState, useEffect, useRef, useMemo, createRef } = os.appHooks;
+
+
+const { useState, useLayoutEffect, useRef, useMemo, createRef } = os.appHooks;
 const { Input, Modal, Button, ButtonsCover } = Components;
 
 const AttachLink = await thisBot.AttachLink();
 const VideoPlayer = await thisBot.VideoSmallScreen();
 const AudioPlayer = await thisBot.AudioPlayer();
+const PlaylistPlayerControls = await thisBot.PlaylistPlayerControls();
+
+if (globalThis.AddNowBarApp) {
+    const id = 'player-playlist-bar';
+    globalThis.AddNowBarApp(<PlaylistPlayerControls parentId={parentId} />, id);
+}
 
 const paraStyle = {
     fontWeight: "400",
@@ -270,6 +278,8 @@ const PlayingPlaylist = () => {
 
     const [openAttachLink, setOpenAttachLink] = useState(false);
 
+    globalThis.PlayingsetOpenAttachLink = setOpenAttachLink;
+
     // May Use Later
     const [activeIndexs, setActiveIndexs] = useState({ ...closestNearDateEvent });
 
@@ -410,7 +420,7 @@ const PlayingPlaylist = () => {
 
                     const wasPrevItemArray = prevItem?.type === "chapter-range";
 
-                    const prevItemList = wasPrevItemArray ? prevItem?.additionalInfo : prevItem?.additionalInfo?.layers?.length ? prevItem?.additionalInfo?.layers : [];
+                    const prevItemList = wasPrevItemArray ? prevItem?.additionalInfo : !!prevItem?.additionalInfo?.layers?.length ? prevItem?.additionalInfo?.layers : [];
                     // This Might Break When Order is > 1
                     newSubIndex = (prevItemList.length + newSubIndex) + order;
                     if (prevItem) newIndex -= 1;
@@ -443,7 +453,7 @@ const PlayingPlaylist = () => {
             }
         }
 
-        const newValues = {
+        let newValues = {
             index: newIndex,
             key: newKey,
             fromButton: order,
@@ -618,7 +628,7 @@ const PlayingPlaylist = () => {
     };
 
 
-    useEffect(() => {
+    useLayoutEffect(() => {
         globalThis.SetCurreIndexPlaylist = handlesetIndex;
         globalThis.HandleOnButtonPress = handleOnButtonPress;
         globalThis.ModifyTransformedHistory = setTransformedHistory;
@@ -679,6 +689,7 @@ const PlayingPlaylist = () => {
                 const isFirstItemAndBackButton = currIndex.fromButton < 0 && currIndex.index == 0 && isFirstKey;
                 const isLastItemAndLastButton = currIndex.fromButton > 0 && isLastKey && currIndex.index == (th.length - 1);
                 if (targetItem?.nextTargetItem) {
+                    thisBot.navigationWithDataItem({ dataItem: isBulk ? toBeMapArray : targetItem, bulkAdd: isBulk });
                     handleOnButtonPress(currIndex.fromButton);
                     globalThis[`${targetItem.id}OpenToggle`] && globalThis[`${targetItem.id}OpenToggle`](true);
                 }
@@ -694,6 +705,11 @@ const PlayingPlaylist = () => {
                 // SetBlinker({});
             }
         }
+
+        thisBot.SetItemsPlayerPlaylist({
+            prevItemName: prevItem,
+            nextItemName: nextItem
+        })
         // nextItemName, nextItemType, prevItemName, prevItemType
         //  nextItemName, nextItemType, prevItemName, prevItemType
         return [currentPlaylistName, targetItem.id, currentItemType, nextItem, prevItem, currentItemName];
@@ -733,7 +749,7 @@ const PlayingPlaylist = () => {
         }
     }
 
-    useEffect(() => {
+    useLayoutEffect(() => {
         globalThis.SET_SHOW_CHECK && globalThis.SET_SHOW_CHECK(1);
         return () => {
             globalThis.SET_SHOW_CHECK && globalThis.SET_SHOW_CHECK(false);
@@ -768,7 +784,7 @@ const PlayingPlaylist = () => {
 
         const isArray = Array.isArray(ids);
 
-        const newIds = isArray ? [...ids] : [ids];
+        let newIds = isArray ? [...ids] : [ids];
 
         let firstIDIndex = -1;
 
@@ -853,7 +869,7 @@ const PlayingPlaylist = () => {
 
     const [activeDate, setActiveDate] = useState(null);
 
-    useEffect(() => {
+    useLayoutEffect(() => {
         const i = currIndex.index;
         const list = playlist.list;
 
@@ -873,6 +889,11 @@ const PlayingPlaylist = () => {
 
     const tranformedList = playlists[currIndex.key]?.list;
     const currentItem = tranformedList[currIndex.index];
+
+
+    globalThis.HandleOnButtonPress = handleOnButtonPress;
+
+    globalThis.PlaylistPlaytoggleHide = toggleHide;
 
     return <>
         <style>{thisBot.tags['RecordingVoiceUI.css']}</style>
@@ -904,9 +925,10 @@ const PlayingPlaylist = () => {
                                     // globalThis.SetPlayingPlaylist && globalThis.SetPlayingPlaylist(false);
                                     globalThis[`${parentId}ToggleGreyCheckPLayingPlaylist`] && globalThis[`${parentId}ToggleGreyCheckPLayingPlaylist`](null);
                                     globalThis.IsQueuePresent = false;
+                                    thisBot.CloseFloatingApp();
                                     // os.unregisterApp("playing-playlist");
                                     globalThis.IS_PLAYLIST_ACTIVE = false;
-                                    globalThis.SetSplitAppPanel2(null);
+                                    globalThis.SetSplitAppPanel2 && globalThis.SetSplitAppPanel2(null);
                                     // thisBot.showInfo(`History Mode`);
                                 }}
                                 style={{ margin: '0', width: '2.55rem', height: '2.55rem', borderRadius: '50%' }}
@@ -944,13 +966,14 @@ const PlayingPlaylist = () => {
                                     list={queue}
                                     setList={setQueue}
                                     embedding={null}
+                                    PlayingPlaylist={true}
                                     currentDateActive={activeDate}
                                     deleteFromList={() => { }}
                                     creatingPlaylist={false}
                                     onClick={() => { }}
                                     currentFormat={currentFormat}
                                     activeItemID={currentItemID}
-                                    oldItemsMap={itemVisitedMap}
+                                    // oldItemsMap={itemVisitedMap}
                                     onClickItem={() => { }}
                                 />
                             </>
@@ -982,7 +1005,7 @@ const PlayingPlaylist = () => {
                                 layers={true}
                                 currentDateActive={activeDate}
                                 editDataFromPlaylist={(data, play = true) => editDataFromPlaylist(data, key, play)}
-                                oldItemsMap={{ ...itemVisitedMap, ...checkedItems }}
+                                // oldItemsMap={{ ...itemVisitedMap, ...checkedItems }}
                                 checkListData={checkedItems}
                                 setList={(newList) => {
                                     const listLatest = [...newList];
@@ -1079,8 +1102,9 @@ const PlayingPlaylist = () => {
                                 globalThis[`${parentId}ToggleGreyCheckPLayingPlaylist`] && globalThis[`${parentId}ToggleGreyCheckPLayingPlaylist`](null);
                                 globalThis.IsQueuePresent = false;
                                 // os.unregisterApp("playing-playlist");
+                                thisBot.CloseFloatingApp();
                                 globalThis.IS_PLAYLIST_ACTIVE = false;
-                                globalThis.SetSplitAppPanel2(null);
+                                globalThis.SetSplitAppPanel2 && globalThis.SetSplitAppPanel2(null);
                                 // thisBot.showInfo(`History Mode`);
                             }} >
                             <span class="material-symbols-outlined unfollow" style={ButtonStyle}>
@@ -1089,7 +1113,7 @@ const PlayingPlaylist = () => {
                         </Button>
                     </div>
                     }
-                    <div style={{
+                    {(!!videoSrc || !!mediaURL) && < div style={{
                         background: "white",
                         display: 'flex',
                         flexDirection: 'column',
@@ -1102,159 +1126,7 @@ const PlayingPlaylist = () => {
                             <VideoPlayer videoSrc={videoSrc} playlistItem={currentItem} />
                         }
                         {!!mediaURL && <AudioPlayer mediaURL={mediaURL} />}
-                        <div
-                            style={{
-                                display: 'flex',
-                                flexDirection: 'row',
-                                justifyContent: 'space-between',
-                                gap: '0.5rem',
-                                width: "calc(100%)",
-                            }}
-                        >
-                            <div style={{ width: '50%', flexDirection: 'column', display: 'flex' }}>
-                                {nextItemName?.content ? <p style={{
-                                    fontSize: '12px',
-                                    fontWeight: '500',
-                                    display: "flex",
-                                    alignItems: 'center',
-                                    marginBottom: '0.5rem',
-                                    fontFamily: 'DM Mono'
-                                }}>
-                                    Playing Next
-                                </p> : null}
-                                <div style={{ gap: '0.5rem', }} className="align-center">
-                                    <div style={{ height: '2.5rem', width: '2.5rem', display: 'grid', placeItems: 'center', backgroundColor: '#D3643329', borderRadius: '0.25rem' }} >
-                                        <span style={{ margin: '0', fontSize: '18px' }} class="material-symbols-outlined unfollow">
-                                            {nextItemName?.type === 'attachment-link' ? 'media_link' : 'description'}
-                                        </span>
-                                    </div>
-                                    <div>
-                                        {nextItemName?.content ? < p style={{
-                                            fontSize: '1rem',
-                                            fontWeight: '600',
-                                            display: "flex",
-                                            alignItems: 'center',
-                                            fontFamily: 'DM Sans'
-                                        }}>
-                                            {nextItemName?.content ? `${nextItemName?.content}${nextItemName?.prefix}`.substring(0, 16) : ""}{`${nextItemName?.content}${nextItemName?.prefix}`.length > 16 ? '...' : ""}
-                                        </p> : null}
-                                        <p
-                                            style={{
-                                                color: "green",
-                                                fontSize: "12px",
-                                                fontWeight: "900",
-                                                fontFamily: 'DM Sans'
-                                            }}
-                                        >{nextItemName?.content ? "" : " (Playlist Ended)"}</p>
-                                        {!globalThis.ValidTypes[nextItemName?.type] && <p style={{ fontSize: '12px', fontWeight: '400', color: '#0000001', textTransform: "capitalize" }}>{nextItemName?.type}</p>}
-                                    </div>
-                                </div>
-                            </div>
-                            <div className="flex align-center" style={{ gap: '0.5rem' }}>
-                                <p style={{ margin: '0', width: '36px', backgroundColor: '#D364334D', border: '1px solid #D36433' }} className="playlist-action small" onClick={toggleHide}>
-                                    <img
-                                        src="https://auth-aux-aobot-prod-filesbucket-141297942820.s3.amazonaws.com/aoBot/fe3ea1784fbed6a33fb06bc8885bca18211293462adcb06311db83f1450589b8.svg"
-                                        class="material-symbols-outlined unfollow" style={{
-                                            margin: '0',
-                                            width: '12px'
-                                        }}
-                                    />
-
-                                    {false && <span>
-                                        {checklistEnabled ? "Player" : "Queue"}
-                                    </span>}
-                                </p>
-                                <p
-                                    onClick={() => {
-                                        setOpenAttachLink(true);
-                                    }}
-                                    style={{ margin: '0', width: 'max-content' }}
-                                    className="playlist-action small"
-                                >
-                                    <span style={{ margin: '0' }} class="material-symbols-outlined unfollow">
-                                        add
-                                    </span>
-                                </p>
-                            </div>
-                        </div>
-
-                        <p style={{ height: '1px', backgroundColor: '#000000', opacity: '0.1', width: '100%', margin: '0.5rem 0' }} />
-
-                        <div style={{ display: 'flex', width: '100%', justifyContent: "space-between", alignItems: 'center' }}>
-
-                            <Button
-                                style={{
-                                    fontSize: '12px',
-                                    margin: '0',
-                                    minWidth: 'auto',
-                                    backgroundColor: '#F8E6DE',
-                                    border: '1px solid #D36433',
-                                    color: '#4459F3',
-                                    padding: '8px',
-                                    fontSize: '12px'
-                                }}
-                                onClick={() => {
-                                    if (!prevItemName?.content) return;
-                                    DataManager.cancelCurrentPlayingSound();
-                                    handleOnButtonPress(-1);
-                                }}
-                            >
-                                <span class="material-symbols-outlined unfollow">
-                                    skip_previous
-                                </span>
-                            </Button>
-                            <p
-                                onClick={() => {
-                                    DataManager.cancelCurrentPlayingSound();
-                                    globalThis.SetSelected && SetSelected({});
-                                    globalThis.SetHolded && SetHolded({});
-                                    // globalThis.SetPlayingPlaylist && globalThis.SetPlayingPlaylist(false);
-                                    globalThis[`${parentId}ToggleGreyCheckPLayingPlaylist`] && globalThis[`${parentId}ToggleGreyCheckPLayingPlaylist`](null);
-                                    globalThis.IsQueuePresent = false;
-                                    // os.unregisterApp("playing-playlist");
-                                    globalThis.IS_PLAYLIST_ACTIVE = false;
-                                    globalThis.SetSplitAppPanel2(null);
-                                    // thisBot.showInfo(`History Mode`);
-                                }}
-                                style={{ margin: '0', width: '2.55rem', height: '2.55rem', borderRadius: '50%', border: 'none' }}
-                                className="playlist-action small"
-                            >
-                                <span style={{ margin: '0', fontSize: '14px', backgroundColor: '#D36433' }} class="material-symbols-outlined unfollow">
-                                    stop
-                                </span>
-                            </p>
-                            <Button
-                                style={{
-                                    fontSize: '12px',
-                                    margin: '0',
-                                    minWidth: 'auto',
-                                    backgroundColor: '#F8E6DE',
-                                    border: '1px solid #D36433',
-                                    color: '#4459F3',
-                                    padding: '8px',
-                                    fontSize: '12px'
-                                }}
-                                onClick={() => {
-                                    DataManager.cancelCurrentPlayingSound();
-                                    if (nextItemName?.content) {
-                                        handleOnButtonPress(1);
-                                        return;
-                                    }
-                                    // globalThis.SetPlayingPlaylist && globalThis.SetPlayingPlaylist(false);
-                                    globalThis[`${parentId}ToggleGreyCheckPLayingPlaylist`] && globalThis[`${parentId}ToggleGreyCheckPLayingPlaylist`](null);
-                                    globalThis.IsQueuePresent = false;
-                                    globalThis.IS_PLAYLIST_ACTIVE = false;
-                                    globalThis.SetSplitAppPanel2(null);
-                                    // os.unregisterApp("playing-playlist");
-                                    // thisBot.showInfo(`History Mode`);
-                                }}
-                            >
-                                <span class="material-symbols-outlined unfollow">
-                                    {nextItemName?.content ? "skip_next " : "last_page"}
-                                </span>
-                            </Button>
-                        </div>
-                    </div>
+                    </div>}
                 </div>
             }
         </div >
@@ -1264,7 +1136,7 @@ const PlayingPlaylist = () => {
 
 if (playlist && !globalThis.IsQueuePresent) {
     globalThis.IsQueuePresent = true;
-    globalThis.SetSplitAppPanel2(<PlayingPlaylist />);
+    globalThis.SetSplitAppPanel2 && globalThis.SetSplitAppPanel2(<PlayingPlaylist />);
     // os.compileApp("playing-playlist", <PlayingPlaylist />)
 }
 

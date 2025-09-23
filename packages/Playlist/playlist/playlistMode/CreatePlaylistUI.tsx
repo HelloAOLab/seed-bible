@@ -3,7 +3,7 @@
 // additionalInfo = rank, sectionRank, testamentRank
 // number -> Index of chpater / verse / book
 
-const { useState, useEffect, useRef, useMemo } = os.appHooks;
+const { useState, useLayoutEffect, useRef, useMemo } = os.appHooks;
 const { Input, Modal, Button, ButtonsCover, Checkbox, Tooltip, Select } =
   Components;
 
@@ -143,15 +143,15 @@ const CreatePlaylistUI = ({
   const [checklistEnabled, setChecklistEnabled] = useState(false);
   const [embedding, setEmbedding] = useState(null);
 
-  useEffect(() => {
+  useLayoutEffect(() => {
     globalThis.SelectedItemIDForAttachments = null;
   }, []);
 
-  useEffect(() => {
+  useLayoutEffect(() => {
     globalThis.SelectedItemIDForAttachments = itemSelected;
   }, [itemSelected]);
 
-  useEffect(() => {
+  useLayoutEffect(() => {
     globalThis[`SetChecklistEnabled`] = setChecklistEnabled;
     return () => {
       globalThis[`SetChecklistEnabled`] = null;
@@ -252,6 +252,7 @@ const CreatePlaylistUI = ({
   const [playLists, setPlayLists] = useState(
     globalThis[`${id}playlists`] || []
   );
+
   const [selectedPlaylist, setSelectedPlaylist] = useState({});
 
   const toggleSelectedPlaylist = (id, parentID) => {
@@ -285,8 +286,8 @@ const CreatePlaylistUI = ({
           if (idx > -1) {
             if (fullData) {
               old[parentIdx].additionalInfo.layers[idx] = { ...newValueContent };
-                   old[parentIdx]  .additionalInfo.layers[idx] = { ...old[parentIdx].additionalInfo.layers[idx], content: newValueContent };
-      }else {
+              old[parentIdx].additionalInfo.layers[idx] = { ...old[parentIdx].additionalInfo.layers[idx], content: newValueContent };
+            } else {
             }
           }
         }
@@ -321,7 +322,7 @@ const CreatePlaylistUI = ({
       if (!isSame) {
         old.push(data);
       } else {
-        os.toast("Last item repeated!");
+        // os.toast("Last item repeated!");
       }
       return old;
     });
@@ -346,7 +347,8 @@ const CreatePlaylistUI = ({
 
   const addPlaylist = (data, id = false, subId = null) => {
     setPlayLists((p) => {
-      const old = [...p];
+      const old = [...(p || [])];
+      globalThis.AlreadySet = true;
       if (id) {
         if (subId) {
           const subIndex = globalThis[`${id}playlists`].findIndex(
@@ -369,9 +371,11 @@ const CreatePlaylistUI = ({
           }
         }
       } else {
+        globalThis[`${'default'}playlists`] = old;
         if (data.list.length === 0) return old;
         old.push(data);
       }
+      globalThis[`${'default'}playlists`] = old;
       return old;
     });
   };
@@ -401,7 +405,7 @@ const CreatePlaylistUI = ({
 
   const deleteDateData = () => {
     setPlaylist((prev) => {
-      const old = [...prev.filter((ele) => ele.type !== "date")];
+      let old = [...prev.filter((ele) => ele.type !== "date")];
       return old;
     });
     setItemSelected(null);
@@ -418,7 +422,7 @@ const CreatePlaylistUI = ({
     setPlaylist(list);
   };
 
-  useEffect(() => {
+  useLayoutEffect(() => {
     globalThis[`${id}creatingPlaylist`] = !creatingPlaylist;
     globalThis.IS_PLAYLIST_ACTIVE = !creatingPlaylist;
     globalThis.SET_SHOW_CHECK && globalThis.SET_SHOW_CHECK(!creatingPlaylist);
@@ -439,16 +443,18 @@ const CreatePlaylistUI = ({
   //     })
   // }
 
-  useEffect(() => {
+  useLayoutEffect(() => {
     globalThis[`${id}AddDataToPlaylist`] = addDataToPlaylist;
     globalThis[`${id}EditPlaylistData`] = editPlaylistData;
     globalThis[`${id}ResetPlaylist`] = resetPlayist;
     globalThis[`${id}SetCreatingPlaylist`] = SetCreatingPlaylist;
     globalThis[`${id}SetPlaylistName`] = setName;
+    console.log("TRAIL NAMe", name);
     globalThis[`${id}AddPlaylist`] = addPlaylist;
     globalThis[`${id}creatingPlaylistName`] = name;
     globalThis[`${id}currentPlaylist`] = playList;
-    globalThis[`${id}playlists`] = playLists;
+    if (!globalThis.AlreadySet) globalThis[`${id}playlists`] = playLists;
+    globalThis.AlreadySet = false;
     globalThis[`${id}Attachments`] = attachment;
     globalThis[`${id}SetAttachments`] = setAttachment;
     globalThis[`${id}SetPlaylists`] = setPlayLists;
@@ -513,7 +519,7 @@ const CreatePlaylistUI = ({
       },
       type: linkState.type === "text" ? "heading" : "attachment-link",
     };
-    if (itemSelected) {
+    if (!!itemSelected) {
       setPlaylist((old) => {
         const prev = [...old];
         const index = prev.findIndex((ele) => ele.id === itemSelected);
@@ -545,7 +551,7 @@ const CreatePlaylistUI = ({
   };
 
   const massAdd = (items) => {
-    if (itemSelected) {
+    if (!!itemSelected) {
       setPlaylist((old) => {
         const prev = [...old];
         const index = prev.findIndex((ele) => ele.id === itemSelected);
@@ -588,7 +594,7 @@ const CreatePlaylistUI = ({
     });
   };
 
-  useEffect(() => {
+  useLayoutEffect(() => {
     if (!openModalName) {
       isEdit.current = false;
     }
@@ -612,7 +618,7 @@ const CreatePlaylistUI = ({
   const onBulkJsonDownload = () => {
     const listToDownload = [];
     playLists.forEach(({ list, id: playlistID }) => {
-      if (selectedPlaylist[playlistID]) {
+      if (!!selectedPlaylist[playlistID]) {
         list.forEach((ele) => {
           listToDownload.push({
             ...ele,
@@ -715,13 +721,13 @@ const CreatePlaylistUI = ({
 
     playList.forEach((ele) => {
       if (checkListData[ele.id] && ele.id !== embedding) {
-        if (ele.additionalInfo?.layers?.length) {
+        if (!!ele.additionalInfo?.layers?.length) {
           embededItem = ele.content;
         }
       }
     });
 
-    if (embededItem) {
+    if (!!embededItem) {
       ShowNotification({
         message: `Cannot Embed the Embedded item! Content: ${embededItem}. Please remove it before embeding!`,
         severity: "error",
@@ -745,7 +751,7 @@ const CreatePlaylistUI = ({
         }
       });
 
-      const embeddingItemsIndex = oldItems.findIndex(
+      let embeddingItemsIndex = oldItems.findIndex(
         (ele) => ele.id === embedding
       );
       oldItems[embeddingItemsIndex] = {

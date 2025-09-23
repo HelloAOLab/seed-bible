@@ -1,4 +1,4 @@
-const { useState, useEffect, useMemo } = os.appHooks;
+const { useState, useLayoutEffect, useMemo } = os.appHooks;
 const { Checkbox, LoaderSecondary, Modal, ButtonsCover, Button } = Components;
 
 const CircleProgress = await thisBot.DynamicCircle();
@@ -321,7 +321,7 @@ const PlaylistRowItem = ({ currentDateActive, shareProfileName, oldItemsMap = {}
         }
     })();
 
-    useEffect(() => {
+    useLayoutEffect(() => {
         globalThis[`updatePercent${id}`] = () => { };
     }, [id]);
 
@@ -350,6 +350,8 @@ const PlaylistRowItem = ({ currentDateActive, shareProfileName, oldItemsMap = {}
                 onDragStart={() => {
                     handleDragStart(playListIndex);
                 }}
+                onClick={(e) => e.stopPropagation()}     // block clicks bubbling
+                onMouseDown={(e) => e.stopPropagation()} // block parent drag
                 onDragOver={() => {
                     handleDragOver(playListIndex)
                 }}
@@ -537,7 +539,7 @@ const PlaylistRowItem = ({ currentDateActive, shareProfileName, oldItemsMap = {}
                     {
                         opendedList
                         &&
-                        <DragDrop access={access} description={description} icon={icon} isCustomIcon={isCustomIcon} isCustomColor={isCustomColor} color={color} currentFormat={currentFormat} currentDateActive={currentDateActive} checkListData={checkListData} oldItemsMap={oldItemsMap} clickPass={clickPass} onLinking={onLink} playlistName={`${playlistParentName}${playlistParentName ? " - " : ''}${name}`} linkingMode={linkingMode} viewOnly={viewOnly} parentId={parentId} checklistEnabled={checklistEnabled} toggle={toggle} creatingPlaylist={creatingPlaylist} playingPlaylist={playingPlaylist} list={list} editDataFromPlaylist={editDataFromPlaylist} playListSubIndex={playListIndex} playListSubId={id} setPlaylistFromRow={setPlaylists} onClick={onClick} setList={setPlaylist} deleteFromList={deleteDataFromPlaylist} onClickItem={hanldeAdd} />
+                        <DragDrop access={access} description={description} icon={icon} isCustomIcon={isCustomIcon} isCustomColor={isCustomColor} color={color} currentFormat={currentFormat} currentDateActive={currentDateActive} checkListData={checkListData} oldItemsMap={oldItemsMap} clickPass={clickPass} onLinking={onLink} playlistName={`${playlistParentName}${!!playlistParentName ? " - " : ''}${name}`} linkingMode={linkingMode} viewOnly={viewOnly} parentId={parentId} checklistEnabled={checklistEnabled} toggle={toggle} creatingPlaylist={creatingPlaylist} playingPlaylist={playingPlaylist} list={list} editDataFromPlaylist={editDataFromPlaylist} playListSubIndex={playListIndex} playListSubId={id} setPlaylistFromRow={setPlaylists} onClick={onClick} setList={setPlaylist} deleteFromList={deleteDataFromPlaylist} onClickItem={hanldeAdd} />
                     }
                 </div>
 
@@ -545,7 +547,7 @@ const PlaylistRowItem = ({ currentDateActive, shareProfileName, oldItemsMap = {}
             {
                 showMoreOptions &&
                 <>
-                    <div className="backdrop" onClick={() => setShowMoreOptions(false)} />
+                    <div className="backdrop transparent" onClick={() => setShowMoreOptions(false)} />
 
                     <div
                         onClick={() => {
@@ -635,7 +637,7 @@ const PlaylistRowItem = ({ currentDateActive, shareProfileName, oldItemsMap = {}
                             >
                                 <p>Delete </p>
                             </div>}
-                        {!creatingPlaylist && !viewOnly && !playingPlaylist && (playListSubId ? <div
+                        {!creatingPlaylist && !viewOnly && !playingPlaylist && (!!playListSubId ? <div
                             className="more-menu-items"
                             onClick={() => {
                                 exportNestedList();

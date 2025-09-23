@@ -11,6 +11,7 @@ globalThis.RenderLinkTimer = setTimeout(async () => {
     if (globalThis.SetMediaURL && !that.skipEmbed) {
         globalThis.SetMediaURL(null);
     }
+    thisBot.CloseFloatingApp();
 
     if (globalThis.SetVideoSrc && !that.skipEmbed) {
         globalThis.SetVideoSrc(null);
@@ -35,21 +36,49 @@ globalThis.RenderLinkTimer = setTimeout(async () => {
     if (that.additionalInfo.type === 'file') {
         const link = document.createElement('a');
         link.href = that.additionalInfo.link;
-        link.download = that.content;
 
-        // For cross-origin URLs, set target _blank to trigger download in new tab
-        link.target = '_blank';
+        // If same-origin → force download
+        if (location.origin === new URL(that.additionalInfo.link).origin) {
+            link.download = that.content; // suggest filename
+        } else {
+            // Cross-origin → `download` is ignored, so open in new tab
+            link.target = '_blank';
+            link.rel = 'noopener';
+        }
 
-        // Append to DOM and trigger click
         document.body.appendChild(link);
         link.click();
-        document.body.removeChild(link);
+        link.remove();
         return;
     }
 
     const data = that;
 
-    if (data.additionalInfo.type === 'iframe') {
+    // Let iFrame pass and render
+    // if (data.additionalInfo.type === 'iframe') {
+    //     if (globalThis.OpenRefTimeout) {
+    //         clearTimeout(globalThis.OpenRefTimeout);
+    //         globalThis.OpenRefTimeout = null;
+    //     }
+    //     globalThis.OpenRefTimeout = setTimeout(() => {
+    //         const link = that.additionalInfo.link;
+    //         const isVideo = globalThis.IsVideoAttachment(that);
+    //         if (isVideo) {
+    //             thisBot.VideoPlayer({
+    //                 src: link
+    //             })
+    //             return;
+    //         }
+    //         globalThis.window?.open(
+    //             link,
+    //             "_blank",
+    //             "noopener,noreferrer"
+    //         );
+    //     }, 200);
+    //     return;
+    // }
+
+    if (data.additionalInfo.type === 'externalLink') {
         if (globalThis.OpenRefTimeout) {
             clearTimeout(globalThis.OpenRefTimeout);
             globalThis.OpenRefTimeout = null;

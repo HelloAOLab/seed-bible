@@ -3,7 +3,7 @@
 // additionalInfo = rank, sectionRank, testamentRank  
 // number -> Index of chpater / verse / book
 
-const { useState, useEffect } = os.appHooks;
+const { useState, useLayoutEffect } = os.appHooks;
 
 const Playlist = await thisBot.Playlist();
 const History = await thisBot.History();

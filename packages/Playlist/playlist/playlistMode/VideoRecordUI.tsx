@@ -1,4 +1,4 @@
-const { useState, useEffect, useRef, useMemo, useCallback } = os.appHooks;
+const { useState, useLayoutEffect, useRef, useMemo, useCallback } = os.appHooks;
 
 const videoGIF = 'https://auth-aux-aobot-prod-filesbucket-141297942820.s3.amazonaws.com/aoBot/a06426963e6f35751bdc3e76b49527f24cf646ff1ca48aaec66db6ee483f3f1c.gif';
 const screenGIF = 'https://auth-aux-aobot-prod-filesbucket-141297942820.s3.amazonaws.com/aoBot/4762072e89002b10128fc5fd2378aab528e60776159734a56ab048f3f337ed1d.gif';
@@ -111,7 +111,7 @@ const VideoRecordUI = ({ data, setData }) => {
         }
     };
 
-    useEffect(() => {
+    useLayoutEffect(() => {
         if (globalThis.StopVideoRecording) {
             handleStop();
             globalThis.StopVideoRecording = false;
@@ -201,7 +201,7 @@ const VideoRecordUI = ({ data, setData }) => {
 
 
 
-    useEffect(() => {
+    useLayoutEffect(() => {
         if (data) {
             // Create a local URL for the recorded Blob
             const blob = new Blob([data], { type: 'video/webm' });
@@ -235,7 +235,7 @@ const VideoRecordUI = ({ data, setData }) => {
         }
     }, [data]);
 
-    useEffect(() => {
+    useLayoutEffect(() => {
         globalThis.HandleStop = handleStop;
         return () => {
             globalThis.HandleStop = false;

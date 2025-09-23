@@ -1,4 +1,4 @@
-const { useState, useEffect, useRef } = os.appHooks;
+const { useState, useLayoutEffect, useRef } = os.appHooks;
 
 const limitOfLines = 45;
 
@@ -19,12 +19,12 @@ const AudioPlayer = ({ mediaURL, secondaryClose, close = false }) => {
         try {
             const data = await web.get(mediaURL);
             const val = await thisBot.getAudioSeconds({ blob: data.data });
-            await DataManager.playSound({ data: data.data });
             setBlobMp3Data(data.data);
             incrementCount.current = limitOfLines / Math.ceil(val);
             setIsRecorded(true);
             setLoading(false);
             setIsPlaying(true);
+            await DataManager.playSound({ data: data.data });
         } catch (e) {
             ShowNotification({ message: `Failed to fetch notification!`, severity: "error" });
             setIsRecorded(true);
@@ -34,11 +34,11 @@ const AudioPlayer = ({ mediaURL, secondaryClose, close = false }) => {
     };
 
 
-    useEffect(() => {
+    useLayoutEffect(() => {
         setIncrementalCount();
     }, []);
 
-    useEffect(() => {
+    useLayoutEffect(() => {
         let timer = null;
         if (isPlaying) {
             if (playCount === 0) setPlayCount(p => p + incrementCount.current);

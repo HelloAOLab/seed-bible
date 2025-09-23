@@ -3,7 +3,7 @@ os.registerApp("playlist-cont-ui");
 import { ProjectProvider } from "playlist.playlistMode.useProjectContext";
 const RenderIcon = await thisBot.RenderIcon();
 
-const { useState, useEffect, useMemo, useRef, useCallback } = os.appHooks;
+const { useState, useLayoutEffect, useMemo, useRef, useCallback } = os.appHooks;
 const { Input, Modal, Button, ButtonsCover, Tooltip } = Components;
 
 const ShowPersonVideoOverlay = await thisBot.ShowPersonVideoOverlay();
@@ -57,7 +57,7 @@ const Playlist = () => {
     const [fetchingAnnotation, setFetchingAnnotation] = useState(false);
     const [currentOpenedBook, setCurrentOpenedBook] = useState({ ...(globalThis.CurrentBookData || {}) });
 
-    useEffect(() => {
+    useLayoutEffect(() => {
         globalThis.SetCurrentBook = setCurrentOpenedBook
         return () => {
             globalThis.SetCurrentBook = null;
@@ -84,7 +84,7 @@ const Playlist = () => {
 
     const [queueOpen, setQueueOpen] = useState(false);
 
-    useEffect(() => {
+    useLayoutEffect(() => {
         globalThis.SetIsQueuePlaying = setQueueOpen;
     }, [queueOpen]);
 
@@ -93,7 +93,7 @@ const Playlist = () => {
 
     const [sidebarOpen, setSidebarOpen] = useState(true);
 
-    useEffect(() => {
+    useLayoutEffect(() => {
         globalThis.SetSidebarOpen = setSidebarOpen;
     }, [sidebarOpen]);
 
@@ -110,11 +110,11 @@ const Playlist = () => {
         },
     });
 
-    useEffect(() => {
+    useLayoutEffect(() => {
         globalThis.isUIOpen = open;
     }, [open]);
 
-    useEffect(() => {
+    useLayoutEffect(() => {
         globalThis.SetHidePlaylist = setHide;
         globalThis.IsHidden = hide;
         return () => {
@@ -138,7 +138,7 @@ const Playlist = () => {
         setOpenModal(false);
     }
 
-    useEffect(() => {
+    useLayoutEffect(() => {
         globalThis.PlayingPlaylist = playingPlaylist;
         globalThis.PlaylistsGroups = playlists;
         globalThis.SetPlayingPlaylist = (val) => {
@@ -154,7 +154,7 @@ const Playlist = () => {
         }
     }, [playingPlaylist, playlists]);
 
-    useEffect(() => {
+    useLayoutEffect(() => {
         globalThis.SetSplitAppPanel2 = setSplitAppPanel2;
         return () => {
             globalThis.SetSplitAppPanel2 = null;
@@ -189,7 +189,7 @@ const Playlist = () => {
         setCollectionsLocale(newCollections);
     }
 
-    useEffect(() => {
+    useLayoutEffect(() => {
         globalThis.COLLECTIONS = collections;
         globalThis.COLLECTION_SETTER = setCollectionsMiddleware;
     }, [collections, setCollections]);
@@ -248,7 +248,7 @@ const Playlist = () => {
     const [playlistSharerName, setPLaylistSharerName] = useState('');
     const currentProfileNameRef = useRef('');
 
-    useEffect(() => {
+    useLayoutEffect(() => {
         globalThis.currentActiveItem = tab;
         globalThis.setTabPlaylist = setTab;
 
@@ -292,7 +292,7 @@ const Playlist = () => {
                             bookid: currentOpenedBook?.bookId,
                             chapter: currentOpenedBook?.chapter,
                         };
-                        if (ele.data.additionalInfo) {
+                        if (!!ele.data.additionalInfo) {
                             const tags = [...(ele.data.additionalInfo.tags || [])];
                             const layers = [...ele.data.additionalInfo.layers];
 
@@ -319,7 +319,7 @@ const Playlist = () => {
                             };
                         }
 
-                        if (data.address) {
+                        if (!!data.address) {
                             allAnnotations.push(data);
                         }
                     });
@@ -393,7 +393,9 @@ const Playlist = () => {
         })
     }, []);
 
-    useEffect(() => {
+    useLayoutEffect(() => {
+        globalThis.makingPlaylist = true;
+        globalThis.setOpenSidebar && globalThis.setOpenSidebar(false);
         globalThis.OpenVideoOverlay = () => setShowVideoOverlay(true);
         globalThis.CloseVideoOverlay = () => setShowVideoOverlay(false);
         globalThis.SetEditAnnoData = setEditAnnoData;
@@ -422,6 +424,7 @@ const Playlist = () => {
         document.addEventListener('keydown', onKeyDown);
 
         return () => {
+            globalThis.makingPlaylist = false;
             document.removeEventListener('keyup', onKeyUp);
             document.removeEventListener('keydown', onKeyDown);
             globalThis.SetEditRichText = null;
@@ -445,9 +448,13 @@ const Playlist = () => {
             globalThis[`defaultToggleGreyCheckPLayingPlaylist`] &&
                 globalThis[`defaultToggleGreyCheckPLayingPlaylist`](null);
             globalThis.IsQueuePresent = false;
+            thisBot.CloseFloatingApp();
             globalThis.IS_PLAYLIST_ACTIVE = false;
             globalThis.SetSplitAppPanel2 && globalThis.SetSplitAppPanel2(null);
             globalThis.makingPlaylist = false;
+            globalThis.SetMediaURL && globalThis.SetMediaURL(null);
+            globalThis.SetVideoSrc && globalThis.SetVideoSrc(null);
+
         }
     }, []);
 
@@ -491,7 +498,7 @@ const Playlist = () => {
                             list={playlistShared.list}
                         />
                         <div className="welcome-details">
-                            <h4 style={{ fontSize: playlistShared.description ? "1rem" : "1.125rem" }}>{playlistShared.name}</h4>
+                            <h4 style={{ fontSize: !!playlistShared.description ? "1rem" : "1.125rem" }}>{playlistShared.name}</h4>
                             {!!playlistShared.description && <p>{playlistShared.description}</p>}
                         </div>
                     </div>
@@ -519,7 +526,7 @@ const Playlist = () => {
 
             {stopPlaylistModal &&
                 <Modal showIcon={false} onClose={closeConfirmStopPlaylist}>
-                    <h2 style={{ fontSize: "1rem" }}>Stop playlist</h2>
+                    <h2 style={{ fontSize: "1rem" }}>This will stop playing playlist.</h2>
                     <p>A playlist is currently playing. Do you want to stop it to continue?</p>
                     <ButtonsCover>
                         <Button
@@ -533,7 +540,7 @@ const Playlist = () => {
                             }}
                             variant="black"
                         >
-                            Stop, Proceed
+                            Confirm
                         </Button>
                         <Button
                             secondaryAlt
@@ -662,6 +669,7 @@ const Playlist = () => {
                                         onClick={() => {
                                             // setHide(p => !p);
                                             // globalThis.SetScreens(1);
+                                            thisBot.CloseFloatingApp();
                                             DataManager.cancelCurrentPlayingSound();
                                             // globalThis.SetPlayingPlaylist && globalThis.SetPlayingPlaylist(false);
                                             globalThis[`defaultToggleGreyCheckPLayingPlaylist`] && globalThis[`defaultToggleGreyCheckPLayingPlaylist`](null);
@@ -681,7 +689,7 @@ const Playlist = () => {
                                 </div>
                             </div>
                             {isLayers ?
-                                <div style={{ display: "flex", flexDirection: 'column', overflow: 'auto', paddingBottom: SplitAppPanel2 ? "10rem" : "0", height: `calc(100% - ${playingPlaylist || !!editData.id ? '130px' : '40px'})` }}>
+                                <div style={{ display: "flex", flexDirection: 'column', overflow: 'auto', paddingBottom: !!SplitAppPanel2 ? "10rem" : "0", height: `calc(100% - ${playingPlaylist || !!editData.id ? '130px' : '40px'})` }}>
                                     <Discover setAnnotationData={setAnnotationData} editingPlaylist={editData.id} currentOpenedBook={currentOpenedBook} fetchingAnnotation={fetchingAnnotation} chapter={currentOpenedBook?.chapter} annotationData={annoationData} style={{ height: `100%` }} setOpenModal={setOpenModal} playingPlaylist={playingPlaylist} />
                                 </div>
                                 :

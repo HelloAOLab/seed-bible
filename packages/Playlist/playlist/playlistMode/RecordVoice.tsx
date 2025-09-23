@@ -1,4 +1,4 @@
-const { useState, useEffect, useRef, useMemo } = os.appHooks;
+const { useState, useLayoutEffect, useRef, useMemo } = os.appHooks;
 
 const limitOfLines = 45;
 
@@ -13,14 +13,14 @@ const RecordingVoiceUI = ({ data, setData }) => {
 
     globalThis.isRecording = isRecording;
 
-    useEffect(() => {
+    useLayoutEffect(() => {
         (async () => {
             const val = await thisBot.getAudioSeconds({ blob: data });
             incrementCount.current = limitOfLines / Math.ceil(val);
         })();
     }, [data]);
 
-    useEffect(() => {
+    useLayoutEffect(() => {
         let timer = null;
         if (isPlaying) {
             if (playCount === 0) setPlayCount(p => p + incrementCount.current);

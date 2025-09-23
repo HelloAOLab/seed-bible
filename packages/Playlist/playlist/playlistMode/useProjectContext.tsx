@@ -1,4 +1,4 @@
-const { createContext, useContext, useState, useCallback, useEffect } = os.appHooks;
+const { createContext, useContext, useState, useCallback, useLayoutEffect } = os.appHooks;
 
 const ProjectContext = createContext();
 
@@ -17,7 +17,7 @@ export function ProjectProvider({ children }) {
         }))
     }, []);
 
-    useEffect(() => {
+    useLayoutEffect(() => {
         globalThis.ProjectMenuState = { ...menuState };
         // Optional: global access if you really need it
         globalThis.SetProjectMenuState = setMenuState;

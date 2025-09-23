@@ -1,4 +1,4 @@
-const { useState, useEffect } = os.appHooks;
+const { useState, useLayoutEffect } = os.appHooks;
 // check_circle
 const { Input, Modal, Button, ButtonsCover, Checkbox } = Components;
 const Linking = thisBot.LinkingItems();
@@ -93,6 +93,8 @@ const AttachLinkItem = ({
         if (autoPlayToggle) autoPlayToggle(originalIndex, pId, data.id)
     }
 
+    const comparator = playingPlaylist ? 1 : 0;
+
 
     return <>
         {editDateModal && (
@@ -132,7 +134,8 @@ const AttachLinkItem = ({
                 ${(data.id === activeItemID || activeItemList[data.id]) && "current-playing-item"} 
                 ${(oldItemsMap[data.id] || (!!onDisembed && !!embedding)) ? 'greyed-out' : ''}
             `}
-            onClick={() => {
+            onClick={(e) => {
+                // e.stopPropagation();
                 if (data.type === "date") return;
                 if (data.additionalInfo.type === "playlist") {
                     if (!isPlaylistNestedPlayAble) {
@@ -160,6 +163,7 @@ const AttachLinkItem = ({
                     globalThis.ADDING_TOPLAYLIST_TIMEOUT = null;
                 }
             }}
+            // onMouseDown={(e) => e.stopPropagation()} // block parent drag
             onMouseLeave={() => {
                 if (globalThis.ADDING_TOPLAYLIST_TIMEOUT) clearInterval(globalThis.ADDING_TOPLAYLIST_TIMEOUT);
             }}
@@ -197,8 +201,8 @@ const AttachLinkItem = ({
                             const isShiftHold = globalThis?.KEY_HOLD?.['shift'];
 
                             if (isShiftHold && !onDisembed) {
-                                const upperLimit = Math.max(index, globalThis.LAST_CLICK_ID);
-                                const lowerLimit = Math.min(index, globalThis.LAST_CLICK_ID);
+                                let upperLimit = Math.max(index, globalThis.LAST_CLICK_ID);
+                                let lowerLimit = Math.min(index, globalThis.LAST_CLICK_ID);
                                 const idsFilter = originalList.filter(({ id }, indexInner) => indexInner <= upperLimit && indexInner >= lowerLimit && indexInner !== globalThis.LAST_CLICK_ID && id !== embedding).map(ele => ele.id);
                                 editDataFromPlaylist(idsFilter, false);
                                 globalThis.LAST_CLICK_ID = index;
@@ -248,6 +252,28 @@ const AttachLinkItem = ({
             <p
                 onClick={() => {
                     if (data.type === "date") return;
+                    if (!!onClick
+                        // globalThis.ADDING_TOPLAYLIST_TIMEOUT
+                    ) {
+                        clearInterval(globalThis.ADDING_TOPLAYLIST_TIMEOUT)
+                        globalThis.ADDING_TOPLAYLIST_TIMEOUT = null;
+                        // thisBot.RenderLinkContent(data);
+                        onClick({ dataItem: data, index: originalIndex });
+                        if (checklistEnabled) {
+                            editDataFromPlaylist(data.id);
+                        }
+                        // globalThis.SetCurreIndexPlaylist && globalThis.SetCurreIndexPlaylist(index, playListSubIndex);
+                        return;
+                    }
+                    if (clickPass) {
+                        // thisBot.RenderLinkContent(data);
+                        onClick({ dataItem: data, index: originalIndex });
+                        if (checklistEnabled) {
+                            editDataFromPlaylist(data.id);
+                        }
+                        // globalThis.SetCurreIndexPlaylist && globalThis.SetCurreIndexPlaylist(index, playListSubIndex);
+                        return;
+                    }
                     if (globalThis.SetCurrentItem) {
                         globalThis.SetCurrentItem({ ...data });
                     };
@@ -255,15 +281,20 @@ const AttachLinkItem = ({
                     if (globalThis.SetVideoSrc) {
                         globalThis.SetVideoSrc(null);
                         if (data.additionalInfo.type === 'video-recording' || data.additionalInfo.type === 'Video' || data.additionalInfo.type === 'video' || data.additionalInfo.type === 'youtube') {
+                            thisBot.CloseFloatingApp();
                             thisBot.VideoPlayer({
-                                src: data.additionalInfo.link
+                                src: data.additionalInfo.link,
+                                isYoutube: !!data.additionalInfo.videoId,
+                                videoID: data.additionalInfo.videoId,
+                                content: data.content
                             });
                             // globalThis.SetVideoSrc(data.additionalInfo.link);
                             return;
                         }
                     };
-                    
-                    if (data.additionalInfo.type === 'iframe') {
+
+                    if (data.additionalInfo.type === 'externalLink') {
+                        // thisBot.RenderLinkContent({ ...data });
                         if (globalThis.OpenRefTimeout) {
                             clearTimeout(globalThis.OpenRefTimeout);
                             globalThis.OpenRefTimeout = null;
@@ -272,6 +303,7 @@ const AttachLinkItem = ({
                             const link = data.additionalInfo.link;
                             const isVideo = globalThis.IsVideoAttachment(data);
                             if (isVideo) {
+                                thisBot.CloseFloatingApp();
                                 thisBot.VideoPlayer({
                                     src: link
                                 })
@@ -296,26 +328,10 @@ const AttachLinkItem = ({
 
                     if (creatingPlaylist) {
                         thisBot.RenderLinkContent({ ...data });
+                        return;
                     };
 
-                    if (globalThis.ADDING_TOPLAYLIST_TIMEOUT) {
-                        clearInterval(globalThis.ADDING_TOPLAYLIST_TIMEOUT)
-                        globalThis.ADDING_TOPLAYLIST_TIMEOUT = null;
-                        // thisBot.RenderLinkContent(data);
-                        onClick({ dataItem: data, index: originalIndex });
-                        if (checklistEnabled) {
-                            editDataFromPlaylist(data.id);
-                        }
-                        // globalThis.SetCurreIndexPlaylist && globalThis.SetCurreIndexPlaylist(index, playListSubIndex);
-                    }
-                    if (clickPass) {
-                        // thisBot.RenderLinkContent(data);
-                        onClick({ dataItem: data, index: originalIndex });
-                        if (checklistEnabled) {
-                            editDataFromPlaylist(data.id);
-                        }
-                        // globalThis.SetCurreIndexPlaylist && globalThis.SetCurreIndexPlaylist(index, playListSubIndex);
-                    }
+
                 }}
                 className={`attachment-link ${data.type === "heading" ? 'no-left-padding' : data.type !== "date" && checklistEnabled && !viewOnly ? "checklistEnabled" : ''} playlist-item-type playlist-item-verse ${toggle === data.id && "current-playing-item"}`}
             >
@@ -328,17 +344,22 @@ const AttachLinkItem = ({
                     <p className={`end-icon without-right-margin ${`${isMobile && "visible"} end-icon without-right-margin`}`}
                         onClick={(e) => {
                             e.stopPropagation();
+
                             const link = document.createElement('a');
                             link.href = data.additionalInfo.link;
-                            link.download = data.content;
 
-                            // For cross-origin URLs, set target _blank to trigger download in new tab
-                            link.target = '_blank';
+                            // If same-origin → force download
+                            if (location.origin === new URL(data.additionalInfo.link).origin) {
+                                link.download = data.content; // suggest filename
+                            } else {
+                                // Cross-origin → `download` is ignored, so open in new tab
+                                link.target = '_blank';
+                                link.rel = 'noopener';
+                            }
 
-                            // Append to DOM and trigger click
                             document.body.appendChild(link);
                             link.click();
-                            document.body.removeChild(link);
+                            link.remove();
                         }}
                     >
                         <span class="material-symbols-outlined" >
@@ -347,15 +368,16 @@ const AttachLinkItem = ({
                     </p>
                 }
 
-                {!playingPlaylist && index === 0 && !!autoPlayToggle && !!onDisembed && isVideoItem && layers &&
-                    <p onClick={(e) => {
+                {(index === comparator && !!autoPlayToggle && (!!onDisembed) && isVideoItem && layers && !playingPlaylist) || (playingPlaylist && data.autoPlay) &&
+                    < p onClick={(e) => {
+                        if (playingPlaylist) return;
                         e.stopPropagation();
                         toggleAutoPlay();
                     }}
-                        className={`end-icon with-padding-activation ${data.autoPlay ? 'active' : ''} without-right-margin ${`${isMobile && "visible"}`}`}
+                        className={`end-icon with-padding-activation ${(data.autoPlay && !playingPlaylist) ? 'active' : ''} without-right-margin ${`${(isMobile || playingPlaylist) && "visible"}`}`}
                     >
                         <img
-                            src={data.autoPlay ? AutoplayIcons.TRUE : AutoplayIcons.FALSE}
+                            src={(data.autoPlay && !playingPlaylist) ? AutoplayIcons.TRUE : AutoplayIcons.FALSE}
                             alt="autplay"
                         />
                     </p>
@@ -392,7 +414,7 @@ const AttachLinkItem = ({
                 </p>}
                 {creatingPlaylist && !viewOnly && <p className={`${isMobile && "visible"} end-icon without-right-margin`} onClick={(e) => {
                     e.stopPropagation();
-                    deleteFromList(originalIndex, pId, data.id);
+                    deleteFromList(index, pId, data.id);
                 }} >
                     <span class="material-symbols-outlined unfollow delete-icon">
                         delete

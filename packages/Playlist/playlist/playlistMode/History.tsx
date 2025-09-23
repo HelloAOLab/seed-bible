@@ -3,7 +3,7 @@
 // additionalInfo = rank, sectionRank, testamentRank  
 // number -> Index of chpater / verse / book
 
-const { useState, useEffect, useRef, useMemo } = os.appHooks;
+const { useState, useLayoutEffect, useRef, useMemo } = os.appHooks;
 const { Button } = Components;
 
 const History = ({ id }) => {
@@ -19,7 +19,7 @@ const History = ({ id }) => {
                 return old;
             });
         } else {
-            os.toast("Last item repeated!");
+            // os.toast("Last item repeated!");
         }
     }
 
@@ -40,7 +40,7 @@ const History = ({ id }) => {
         })
     }
 
-    useEffect(() => {
+    useLayoutEffect(() => {
         globalThis[`${id}AddDataToHistory`] = addDataToHistory;
         globalThis[`${id}currentHistory`] = history;
         setHistoryLocale(history, id);

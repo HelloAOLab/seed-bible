@@ -69,14 +69,14 @@ const getBookmarks = async () => {
 
 const bookmarks = await getBookmarks();
 
-const recored = getBot("system", 'main.Recorder')
+let recored = getBot("system", 'main.Recorder')
 
 function getBooksDataForMenu(booksLink = false) {
-  const formMenuBot = getBot('system', 'baseElements.formMenu');
+  let formMenuBot = getBot('system', 'baseElements.formMenu');
   if (booksLink) {
     formMenuBot.tags['booksLink'] = booksLink
   }
-  const bookPromise = formMenuBot.bookData();
+  let bookPromise = formMenuBot.bookData();
   Promise.resolve(bookPromise).then((data) => {
     if (recored?.tags) {
       recored.tags.menuData = [...data]
@@ -238,7 +238,7 @@ globalThis.CONSTANTS = {
 
 globalThis.objectComparator = (firstData, secondData, keysComparator = []) => {
   if (!secondData) return false;
-  if (keysComparator) {
+  if (!!keysComparator) {
     return keysComparator.some(key => {
       return firstData[key] === secondData[key];
     })
@@ -605,7 +605,7 @@ const getPosition = () => {
   const edgeThreshold = 200; // Distance from edges to adjust position
   const safeMargin = "2rem"; // Fixed margin when near edges
 
-  const position = {};
+  let position = {};
 
   // Horizontal positioning
   if (width - pointerX < edgeThreshold) {
@@ -699,6 +699,8 @@ function isVideoUrl(url) {
 const videoTypes = {
   "video-recording": true,
   "youtube": true,
+  "Video": true,
+  "video": true,
 }
 
 function isVideoAttachment(dataitem) {
@@ -719,3 +721,62 @@ function isVideoAttachment(dataitem) {
 globalThis.IsVideoAttachment = isVideoAttachment;
 
 globalThis.IsVideoUrl = isVideoUrl;
+
+function formatRelativeTime(date) {
+  if (!date) return "";
+  const now = new Date();
+  const diffMs = now - date;
+  const diffSec = Math.floor(diffMs / 1000);
+  const diffMin = Math.floor(diffSec / 60);
+  const diffHrs = Math.floor(diffMin / 60);
+  const diffDays = Math.floor(diffHrs / 24);
+
+  // Just now (less than 60 sec)
+  if (diffSec < 60) {
+    return diffSec <= 5 ? "just now" : `${diffSec} sec ago`;
+  }
+
+  // Few minutes ago (< 5 min)
+  if (diffMin < 5) {
+    return "few mins ago";
+  }
+
+  // Within the hour
+  if (diffMin < 60) {
+    return `${diffMin} mins ago`;
+  }
+
+  // Same day (show "X hrs ago" if today)
+  if (
+    date.getDate() === now.getDate() &&
+    date.getMonth() === now.getMonth() &&
+    date.getFullYear() === now.getFullYear()
+  ) {
+    return `${diffHrs} hrs ago`;
+  }
+
+  // Yesterday
+  const yesterday = new Date();
+  yesterday.setDate(now.getDate() - 1);
+  if (
+    date.getDate() === yesterday.getDate() &&
+    date.getMonth() === yesterday.getMonth() &&
+    date.getFullYear() === yesterday.getFullYear()
+  ) {
+    return `yesterday ${date.toLocaleTimeString([], {
+      hour: "numeric",
+      minute: "2-digit",
+    })}`;
+  }
+
+  // Older → show like "Sep/9 6:55 AM"
+  return date.toLocaleString("en-US", {
+    month: "short",
+    day: "numeric",
+    hour: "numeric",
+    minute: "2-digit",
+  });
+}
+
+
+globalThis.FormatRelativeTime = formatRelativeTime;

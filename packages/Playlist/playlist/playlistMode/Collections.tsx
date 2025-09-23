@@ -1,4 +1,4 @@
-const { useState, useEffect } = os.appHooks;
+const { useState, useLayoutEffect } = os.appHooks;
 
 const tabItems = ["Collections"];
 

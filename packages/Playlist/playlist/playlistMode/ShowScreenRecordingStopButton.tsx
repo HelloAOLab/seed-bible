@@ -1,5 +1,5 @@
 const { Button } = Components;
-const { useState, useEffect, useRef, } = os.appHooks;
+const { useState, useLayoutEffect, useRef, } = os.appHooks;
 
 const name = 'ShowScreenRecordingStopButton';
 const videoGIF = 'https://auth-aux-aobot-prod-filesbucket-141297942820.s3.amazonaws.com/aoBot/a06426963e6f35751bdc3e76b49527f24cf646ff1ca48aaec66db6ee483f3f1c.gif';
@@ -7,8 +7,11 @@ os.unregisterApp(name);
 os.registerApp(name);
 globalThis.StopVideoRecording = false;
 
+const painterApp = getBot("system", 'aiApps.painter');
+
 const ShowScreenRecordingStopButton = () => {
     const [hidden, setHidden] = useState(false);
+    const [isPainting, setIsPainting] = useState(false);
     const [video, setVideo] = useState(!!that.video);
 
     const toggleVideo = () => {
@@ -20,7 +23,7 @@ const ShowScreenRecordingStopButton = () => {
         setVideo(p => !p);
     }
 
-    useEffect(() => {
+    useLayoutEffect(() => {
         globalThis.ToggleVideoLayout = toggleVideo;
         if (globalThis.OpenVideoOverlay && !!that.video) globalThis.OpenVideoOverlay();
         return () => {
@@ -75,6 +78,9 @@ const ShowScreenRecordingStopButton = () => {
             <span style={{ cursor: 'grab' }} class="material-symbols-outlined">
                 drag_indicator
             </span>
+            {painterApp && false && <span style={{ cursor: 'pointer' }} onClick={() => { painterApp.togglePainter() }} class="material-symbols-outlined">
+                brush
+            </span>}
             <p>You're sharing your screen.</p>
             <div
                 src='https://auth-aux-aobot-prod-filesbucket-141297942820.s3.amazonaws.com/aoBot/8c36b2ef970a1ddd51de47ff2157fc2d7746fcfbb2f02f8941018052d29dbb31.svg'

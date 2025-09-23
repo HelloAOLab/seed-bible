@@ -20,7 +20,7 @@ const id = that.id;
 const idsMap = that.idsMap;
 
 const { Input, Modal, Button, ButtonsCover, Tooltip, Select } = Components;
-const { useState, useEffect } = os.appHooks;
+const { useState, useLayoutEffect } = os.appHooks;
 
 const PlaylistRowItem = await thisBot.PlaylistRowItem();
 let playlistToLink = [];
@@ -33,7 +33,7 @@ if (idsMap) {
         const pId = idsMap[id];
         const originalPlaylist = globalThis[`${pId}playlists`] || [];
 
-        const plylist = { ...originalPlaylist.find((pl) => pl.id === id) };
+        let plylist = { ...originalPlaylist.find((pl) => pl.id === id) };
 
         plylist.parentId = pId;
         tempArray.push(plylist);
@@ -120,7 +120,7 @@ const PlaylistLinkModal = () => {
         thisBot.cursorReset();
     };
 
-    useEffect(() => {
+    useLayoutEffect(() => {
         globalThis.onCurrentCollectionEdit = onCurrentCollectionEdit;
 
         return () => {

@@ -280,7 +280,6 @@ that.results?.forEach((item) => {
                         } else {
                             books[bookData.commonName].additionalInfo.chapter.push(chpt);
                         }
-
                     } else {
                         books[bookData.commonName] = {
                             "additionalInfo": {

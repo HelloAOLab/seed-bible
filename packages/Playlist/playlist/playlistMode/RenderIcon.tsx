@@ -1,19 +1,19 @@
-const { useMemo, useState, useEffect } = os.appHooks;
+const { useMemo, useState, useLayoutEffect } = os.appHooks;
 
 const RenderIcon = ({ isCustomIcons, big = false, isAllowSet = false, icon, list = [], onDelete }) => {
-
     const [mylist, setMylist] = useState(list);
 
     const firstItemID = useMemo(() => {
         let name = "🎶";
         const firstItem = mylist.find(ele => globalThis.ValidTypes[ele?.type]);
         if (firstItem) {
-            name = firstItem.additionalInfo.data.bookId || firstItem.additionalInfo.data.id || firstItem.additionalInfo.data.bookId || firstItem.additionalInfo.chapterData.id || firstItem.additionalInfo.chapterData.bookId;
+            const lowerCase = firstItem?.additionalInfo?.book?.toLocaleLowerCase();
+            name = firstItem.additionalInfo.data.bookId || firstItem.additionalInfo.data.id || firstItem.additionalInfo.data.bookId || firstItem.additionalInfo.chapterData.id || firstItem.additionalInfo.chapterData.bookId || thisBot.tags.LowerCaseBookMapping[lowerCase];
         }
         return name;
     }, [mylist]);
 
-    useEffect(() => {
+    useLayoutEffect(() => {
         if (isAllowSet) {
             globalThis.SetRenderMylist = setMylist;
         }

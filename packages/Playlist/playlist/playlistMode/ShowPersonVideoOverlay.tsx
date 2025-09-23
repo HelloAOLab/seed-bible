@@ -1,4 +1,4 @@
-const { useState, useRef, useEffect } = os.appHooks;
+const { useState, useRef, useLayoutEffect } = os.appHooks;
 
 const sizes = [{
     size: '8px',
@@ -44,7 +44,7 @@ const VideoOverlay = () => {
         }
     }
 
-    useEffect(() => {
+    useLayoutEffect(() => {
         StartVideo();
         return async () => {
             if (videoRef.current) {

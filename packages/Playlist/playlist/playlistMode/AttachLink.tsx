@@ -1,4 +1,4 @@
-const { useState, useEffect, useMemo, useRef } = os.appHooks;
+const { useState, useLayoutEffect, useMemo, useRef } = os.appHooks;
 import { MiniTextEditor } from 'app.components.smallEditor';
 const { Input, Modal, Button, ButtonsCover, Select, LoaderSecondary } = Components;
 
@@ -16,6 +16,7 @@ const OPTIONS = [
     { value: "iframe", label: "Iframe" },
     { value: "youtube", label: "Youtube" },
     { value: "Video", label: "Video" },
+    { value: "externalLink", label: "External Link" },
     // { value: RECORDING_VALUE, label: "Recording" },
     // { value: "aux", label: "AUX", disabled: true }
 ];
@@ -373,7 +374,7 @@ const AttachLink = ({ sSelectedType, sName, sData, sLink, sMediaType, editMode, 
         setData(prev => [...(Array.isArray(prev) ? prev : []), ...tempData]);
     }
 
-    useEffect(() => {
+    useLayoutEffect(() => {
 
         const handleDragEnter = (e) => {
             e.preventDefault();
@@ -444,7 +445,7 @@ const AttachLink = ({ sSelectedType, sName, sData, sLink, sMediaType, editMode, 
         };
     }, [selectedType]);
 
-    useEffect(() => {
+    useLayoutEffect(() => {
         const results = validateUrl(link);
         if (!results.isValid) {
             return;
@@ -453,7 +454,7 @@ const AttachLink = ({ sSelectedType, sName, sData, sLink, sMediaType, editMode, 
         setLinkState(results);
     }, [link]);
 
-    useEffect(() => {
+    useLayoutEffect(() => {
         if (!name && (!!link || !!data)) {
             let tempName = `${getCurrentTime()}`;
             switch (mediaType?.toLocaleLowerCase()) {
@@ -461,6 +462,7 @@ const AttachLink = ({ sSelectedType, sName, sData, sLink, sMediaType, editMode, 
                     tempName += '-heading';
                     break;
                 case 'iframe':
+                case 'externalLink':
                 case 'youtube':
                 case 'Video':
                     tempName = link;
@@ -486,12 +488,11 @@ const AttachLink = ({ sSelectedType, sName, sData, sLink, sMediaType, editMode, 
                         break;
                 }
             }
-            console.log("tempName", mediaType?.toLocaleLowerCase(), tempName);
-            if (selectedType !== "SCRIPTURE") {
+            if (selectedType !== "SCRIPTURE" && !name && !!tempName) {
                 setName(tempName);
             }
         }
-    }, [mediaType, data]);
+    }, [mediaType, link, data]);
 
     const deleteFromList = (id) => {
         if (Array.isArray(data)) {
@@ -501,7 +502,7 @@ const AttachLink = ({ sSelectedType, sName, sData, sLink, sMediaType, editMode, 
 
     const onClickSend = async () => {
         if (!name.trim()) {
-            if (!(selectedType === "SCRIPTURE" && Array.isArray(data) && data.length > 0)) {
+            if (!(selectedType === "SCRIPTURE" && Array.isArray(data) && data?.length > 0)) {
                 return ShowNotification({ message: "Attachment Name missing!", severity: "error" });
             }
         }
@@ -522,7 +523,7 @@ const AttachLink = ({ sSelectedType, sName, sData, sLink, sMediaType, editMode, 
             setLink('');
             setLoading(true);
 
-            const finalData = data;
+            let finalData = data;
 
             const fileSave = await os.recordFile(globalThis.RECORD_STOREKEY, finalData, {
                 name: name,
@@ -587,7 +588,7 @@ const AttachLink = ({ sSelectedType, sName, sData, sLink, sMediaType, editMode, 
                     allItems.push(...file.data);
                 });
             }
-            if (name.trim()) {
+            if (!!name.trim()) {
                 allItems.push(...thisBot.getSuggestedListItems({ searchText: name }));
             }
             setName('');
@@ -607,7 +608,7 @@ const AttachLink = ({ sSelectedType, sName, sData, sLink, sMediaType, editMode, 
         }
     }
 
-    useEffect(() => {
+    useLayoutEffect(() => {
         if (selectedType === 'TEXT') {
             globalThis.RawName = name;
         } else {
@@ -615,10 +616,18 @@ const AttachLink = ({ sSelectedType, sName, sData, sLink, sMediaType, editMode, 
         }
     }, [name, selectedType]);
 
-    globalThis.FireEditContent = onClickSend;
+    useLayoutEffect(() => {
+        if (editMode) {
+            globalThis.FireEditContent = onClickSend;
+        }
+    }, [onClickSend])
 
     return <div className='add-new-playlist' ref={dragRef}>
-        <div className='container-render'>
+        <div className='container-render'
+            onKeyDown={(e) => {
+                e.stopPropagation();
+            }}
+        >
             {loading
                 &&
                 <div className="loader-container">

@@ -14,7 +14,7 @@ catch (error)
     ProjectChapterState = {};
 }
 
-const { useState, useEffect, useRef, useMemo, useCallback } = os.appHooks;
+const { useState, useLayoutEffect, useRef, useMemo, useCallback } = os.appHooks;
 import { useProjectMenu } from "playlist.playlistMode.useProjectContext";
 
 const isMobile = gridPortalBot.tags.pixelWidth < MOBILE_VIEWPORT_THRESHOLD;
@@ -98,7 +98,7 @@ const ProjectMode = ({
     const [selection, setSelection] = useState(getEmptySelection())
     const [isInSelectionMode, setIsInSelectionMode] = useState(false);
     const selectedChaptersKeys = useMemo(() => {
-        const keys = [];
+        let keys = [];
         Object.keys(selection).forEach((testamentName) => {
             const testament = selection[testamentName];
             return Object.keys(testament).forEach((sectionName) => {
@@ -136,7 +136,7 @@ const ProjectMode = ({
     const setChapterState = useCallback((info) => {
 
         const fixedInfo = Array.isArray(info) ? info : [info]
-        const copy = JSON.parse(JSON.stringify(project));
+        let copy = JSON.parse(JSON.stringify(project));
         fixedInfo.forEach((currInfo) => {
             const { key, state } = currInfo;
             const { testamentName, sectionName, bookName, chapterIndex } = key;
@@ -494,7 +494,7 @@ const ProjectMode = ({
 return ProjectMode;
 
 function GetProjectFromSelection(selection) {
-    const project = JSON.parse(JSON.stringify(selection));
+    let project = JSON.parse(JSON.stringify(selection));
     for (const testamentName of Object.keys(project)) {
         const testament = project[testamentName];
         for (const sectionName of Object.keys(testament)) {

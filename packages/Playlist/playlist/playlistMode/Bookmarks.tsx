@@ -1,10 +1,12 @@
-const { useEffect, useState, useMemo } = os.appHooks;
+const { useLayoutEffect, useState, useMemo } = os.appHooks;
 const isMobile = gridPortalBot.tags.pixelWidth < MOBILE_VIEWPORT_THRESHOLD;
+
+
+const UNBOOKMARK_ICON = 'https://auth-aux-aobot-prod-filesbucket-141297942820.s3.amazonaws.com/aoBot/71edcb41d7fbda4b963eb8b177f190341e7b11f0e150be7aad1a8f102f72e1c4.svg';
 
 const Bookmarks = () => {
     const [bookmarks, setBookmarks] = useState({ ...thisBot.tags.bookmarks });
-
-    useEffect(() => {
+    useLayoutEffect(() => {
         globalThis.SetBookmarks = setBookmarks;
         return () => {
             globalThis.SetBookmarks = null;
@@ -43,28 +45,34 @@ const Bookmarks = () => {
             flexDirection: "column"
         }}
     >
-        <h3 style={{ margin: '1rem 0 0 0 ' }}>Bookmarks</h3>
+        <h3 style={{ margin: '1rem 0' }}>Bookmarks</h3>
         {finalBookmarks.length === 0 && <p>Nothing Bookmarked.</p>}
         {finalBookmarks.map(data => <div
             key={`${data.id}-${data.readAlready}`}
             style={{ display: "flex", }}
-            className={`history-item`}
+            className={`history-item bookmark`}
             onClick={() => { thisBot.navigationWithDataItem({ dataItem: data }); }}
             draggable={true}
         >
-            <p
-                className={`playlist-item-type no-left-padding playlist-item-${data.type}`}
+            <div
+                className={`playlist-item-type bookmark no-left-padding playlist-item-${data.type}`}
+                style={{ display: 'flex', alignItems: 'center' }}
             >
-                {data.content}
-            </p>
+                <p className="number-style" style={{ width: '90px' }}>{data.content}</p>
+                <p className="verse-style" style={{ flexGrow: 1 }}>
+                    - {data.additionalInfo.data?.text?.substr(0, 27)}{data.additionalInfo.data?.text?.length > 27 ? "..." : ""}
+                </p>
+                <p className="time-style" style={{ width: '70px', textAlign: 'right', marginRight: '1.25rem' }}>
+                    {FormatRelativeTime(data.time)}
+                </p>
+            </div>
+
             <div className="actions">
                 <p className={`end-icon without-right-margin ${`${isMobile && "visible"} end-icon without-right-margin`}`} onClick={(e) => {
                     e.stopPropagation();
                     deleteBookmark(data)
                 }} >
-                    <span class="material-symbols-outlined unfollow delete-icon">
-                        delete
-                    </span>
+                    <img src={UNBOOKMARK_ICON} class="material-symbols-outlined unfollow delete-icon" />
                 </p>
             </div>
         </div>)}

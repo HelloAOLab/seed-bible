@@ -1,4 +1,4 @@
-const { useState, useEffect, useRef, useMemo } = os.appHooks;
+const { useState, useLayoutEffect, useRef, useMemo } = os.appHooks;
 
 const isMobile = gridPortalBot.tags.pixelWidth < MOBILE_VIEWPORT_THRESHOLD;
 const { Chips, Checkbox, Button, Tooltip, LoaderSecondary } = Components;
@@ -43,13 +43,13 @@ const AnnotationInnerDiv = ({
 }) => {
     const [expand, setExpand] = useState(false);
 
-    useEffect(() => {
+    useLayoutEffect(() => {
         if (selectedAnnotation === data.id) {
             setExpand(true)
         };
     }, [selectedAnnotation]);
 
-    useEffect(() => {
+    useLayoutEffect(() => {
         globalThis[`${data.id}OpenToggle`] = setExpand;
         return () => {
             globalThis[`${data.id}OpenToggle`] = null;
@@ -66,7 +66,7 @@ const AnnotationInnerDiv = ({
             // ref={(ref) => setRef.current[data.id] = ref}
             style={{ display: "flex", }}
             className={`history-item ${dragOverSet.itemId === data.id && `dropabble-${dragOverSet.position}`} ${embedding === data.id ? 'embedding-on' : ''}`}
-            onClick={() => { if (onClick) onClick(data.id) }}
+            onClick={(e) => { e.stopPropagation(); if (onClick) onClick(data.id) }}
             draggable={true}
             onPointerDown={() => {
                 globalThis.ADDING_TOPLAYLIST_TIMEOUT = setTimeout(() => {
@@ -79,6 +79,7 @@ const AnnotationInnerDiv = ({
                     clearInterval(globalThis.ADDING_TOPLAYLIST_TIMEOUT)
                 }
             }}
+            onMouseDown={(e) => e.stopPropagation()} // block parent drag
             onMouseLeave={() => {
                 if (globalThis.ADDING_TOPLAYLIST_TIMEOUT) clearInterval(globalThis.ADDING_TOPLAYLIST_TIMEOUT);
             }}
@@ -197,7 +198,7 @@ const AnnotationInnerDiv = ({
                     </span>
                 </p> : null
                 }
-                <p className={`end-icon without-right-margin ${`${isMobile && "visible"} end-icon without-right-margin`}`} onClick={() => {
+                <p className={`end-icon without-right-margin ${`${isMobile && "visible"} end-icon without-right-margin`}`} onClick={(e) => {
                     e.stopPropagation();
                     deleteFromList(data.id)
                 }} >
@@ -374,7 +375,7 @@ const AddAnotationUI = ({
 
     const [checklistEnabled, setChecklistEnabled] = useState(false);
 
-    useEffect(() => {
+    useLayoutEffect(() => {
         globalThis.SetSelectedAnnotations = setSelectedAnnotation;
         if (editData?.address) {
             (async () => {
@@ -417,11 +418,11 @@ const AddAnotationUI = ({
         }
     }, []);
 
-    useEffect(() => {
+    useLayoutEffect(() => {
         globalThis.SelectedItemIDForAttachments = selectedAnnotation;
     }, [selectedAnnotation]);
 
-    useEffect(() => {
+    useLayoutEffect(() => {
         globalThis[`SetChecklistEnabled`] = setChecklistEnabled;
         return () => {
             globalThis[`SetChecklistEnabled`] = null;
@@ -468,13 +469,13 @@ const AddAnotationUI = ({
 
         list.forEach(ele => {
             if (checkListData[ele.id] && ele.id !== embedding) {
-                if (ele.additionalInfo?.layers?.length) {
+                if (!!ele.additionalInfo?.layers?.length) {
                     embededItem = ele.content;
                 }
             }
         });
 
-        if (embededItem) {
+        if (!!embededItem) {
             ShowNotification({
                 message: `Cannot Embed the Embedded item! Content: ${embededItem}. Please remove it before embeding!`,
                 severity: "error",
@@ -970,7 +971,7 @@ const AddAnotationUI = ({
                 dragItem = finalHistoryObject[parentIdx].additionalInfo.layers[draggedItemIndex];
             }
 
-            if (dragItem.additionalInfo.layers?.length) {
+            if (!!dragItem.additionalInfo.layers?.length) {
                 ShowNotification({
                     message: `Cannot Embed the Embedded item!. Please remove it before embeding!`,
                     severity: "error",

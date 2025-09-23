@@ -1,4 +1,4 @@
-const { useState, useEffect } = os.appHooks;
+const { useState, useLayoutEffect } = os.appHooks;
 const { Button } = Components;
 const { id } = that;
 
@@ -38,8 +38,8 @@ return {
   onSave: (attachment, checklist, readingPlan, currentFormat, color, icon, isCustomColor, description, isCustomIcon, selectedTags, isLayers, access, onClose) => {
     thisBot.tryAddPlaylistToPlaylists({ attachment, checklist, id, readingPlan, currentFormat, color, icon, isCustomColor, description, isCustomIcon, selectedTags, isLayers, access });
     globalThis.SelectedItemIDForAttachments = null;
-    resetState();
     setTimeout(() => {
+      resetState();
       if (onClose) onClose();
     }, 100);
   },

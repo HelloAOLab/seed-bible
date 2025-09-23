@@ -1,4 +1,4 @@
-const { useState, useEffect, useRef, useMemo } = os.appHooks;
+const { useState, useLayoutEffect, useRef, useMemo } = os.appHooks;
 
 const { Input, Modal, Button, Chips, Checkbox, ButtonsCover, Tooltip, Select } = Components;
 
@@ -181,7 +181,7 @@ const AddNewPlaylist = ({
         return !link.trim() && !name?.trim();
     }
 
-    useEffect(() => {
+    useLayoutEffect(() => {
         globalThis.PREDEFINED_ICONS = predefinedIcons;
         globalThis.setPredefinedIcons = setPredefinedIcons;
         savePlaylistProgress();

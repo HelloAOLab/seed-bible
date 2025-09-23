@@ -44,18 +44,18 @@ const items = [
     {
         icon: <MenuIcon name="book" />,
         title: (item = {}) => {
-            const title = `${item.book} ${item.chapter}:${item.verseNumber}`;
-
+            const title = `${item?.book} ${item?.chapter}:${item?.verseNumber}`;
+            console.log("thisBot.tags.bookmarks", title, thisBot.tags.bookmarks);
             if (thisBot.tags.bookmarks[title]) {
                 return "Remove Bookmark";
             }
             return "Add Bookmark"
         },
-        onClick: (item) => {
+        onClick: async (item) => {
             const id = createUUID();
             const booksDetails = globalThis.findNameRank(item.book);
             const title = `${item.book} ${item.chapter}:${item.verseNumber}`;
-            const oldBookmarks = { ...playlistBok.tags.bookmarks };
+            const oldBookmarks = { ...thisBot.tags.bookmarks };
 
             let msg = "";
             let errorMsg = "";
@@ -63,8 +63,6 @@ const items = [
             if (oldBookmarks[title]) {
                 delete oldBookmarks[title];
 
-
-                setBookmarks(oldBookmarks);
                 msg = 'Bookmark removed successfully.';
                 errorMsg = "Failed to remove bookmark. Please try again.";
             }
@@ -81,7 +79,8 @@ const items = [
                         chapterData: { ...globalThis.CHAPTER_DATA },
                         groupID: globalThis.ADD_VERSE_ITEM_PLAYLIST_GROUP_ID
                     },
-                    id
+                    id,
+                    time: new Date().toLocaleString()
                 };
 
                 oldBookmarks[title] = {

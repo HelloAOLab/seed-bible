@@ -1,4 +1,4 @@
-const { useState, useEffect, useRef } = os.appHooks;
+const { useState, useLayoutEffect, useRef } = os.appHooks;
 const { Input } = Components;
 
 const PlaylistRowItem = await thisBot.PlaylistRowItem();
@@ -29,15 +29,15 @@ const PlaylistList = ({ selectedChip, extraActions = () => { }, mergeMode, selec
 
         if (!draggedItemID) return;
 
-        const draggedItemIndex = playLists.findIndex(hist => hist.id === draggedItemID);
+        let draggedItemIndex = playLists.findIndex(hist => hist.id === draggedItemID);
 
-        const draggedOverItem = playLists[index];
+        let draggedOverItem = playLists[index];
 
-        const dragItem = [playLists[draggedItemIndex]];
+        let dragItem = [playLists[draggedItemIndex]];
 
         let newItems = [];
 
-        const filterAbleItems = {
+        let filterAbleItems = {
             [draggedItemID]: true,
         };
 
@@ -97,7 +97,7 @@ const PlaylistList = ({ selectedChip, extraActions = () => { }, mergeMode, selec
 
     const [toggle, setToggle] = useState(false);
 
-    useEffect(() => {
+    useLayoutEffect(() => {
         if (playingPlaylist) {
             globalThis[`${parentId}ToggleGreyCheckPLayingPlaylist`] = setToggle;
             globalThis[`${parentId}SetOpenedList`] = setOpenedList;

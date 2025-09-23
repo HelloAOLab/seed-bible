@@ -9,7 +9,7 @@ const PlaylistMedia = ({ type, content, link, videoId }) => {
         case "iframe":
             return <>
                 <iframe
-                    className="item-need-full-height" src={link} width="100%" height="100%" title={content}></iframe>
+                    className="item-need-full-height" style={{ height: '100%' }} src={link} width="100%" height="100%" title={content}></iframe>
                 <a href={link} target="_blank" > {content} </a>
             </>
         case "video":

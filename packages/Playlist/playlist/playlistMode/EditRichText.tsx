@@ -26,7 +26,7 @@ const EditRichText = ({
         <div className="input-conainter-type" >
             <MiniTextEditor
                 id='edit'
-                minHeight={60}
+                minHeight={120}
                 initialHtml={name}
                 placeholderHTML={name}
                 onChange={(html) => {

@@ -1,14 +1,16 @@
 const { src, isYoutube, videoID, content } = that;
-const { useRef, useState, useEffect } = os.appHooks
+const { useRef, useState, useLayoutEffect } = os.appHooks
+
+thisBot.CloseFloatingApp();
 
 function VideoPlayerApp() {
     const videoRef = useRef(null);
     const seekRef = useRef(null);
-    const [playing, setPlaying] = useState(false);
+    const [playing, setPlaying] = useState(true);
     const [progress, setProgress] = useState(0);
     const [volume, setVolume] = useState(1);
 
-    useEffect(() => {
+    useLayoutEffect(() => {
         const video = videoRef.current;
 
         const updateTime = () => {
@@ -54,23 +56,33 @@ function VideoPlayerApp() {
         <div
             className=""
             style={{
-                width: "100%",
-                height: "100%",
+                width: "auto",
                 borderRadius: "16px",
                 background: "#111",
-                padding: "8px",
                 boxSizing: "border-box",
                 color: "#fff",
+                display: 'flex',
+                flexDirection: 'column',
+                height: '100%',
+                width: '100%'
             }}
         >
             {isYoutube ? <iframe
                 className="item-need-full-height"
                 src={`${globalThis.CONSTANTS.YT_PREFIX}/${videoID}`}
-                style={{ borderRadius: "16px", width: '100%', height: '100%' }}
+                style={{
+                    width: 'auto',
+                    flexGrow: '1',
+                    objectFit: 'cover',
+                    marginBottom: '6px'
+                }}
                 title={content}
-                allow="accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope;"
-                allowFullScreen
-            /> : <video autoPlay ref={videoRef} width="100%" height="auto" style={{ maxHeight: 'calc(100% - 32px)' }}>
+                allow="accelerometer;encrypted-media;gyroscope;"
+            /> : <video autoPlay ref={videoRef} width="auto" height="auto" style={{
+                flexGrow: '1',
+                objectFit: 'cover',
+                marginBottom: '6px'
+            }}>
                 <source
                     src={src || "https://www.w3schools.com/html/mov_bbb.mp4"}
                     type="video/mp4"
@@ -79,10 +91,12 @@ function VideoPlayerApp() {
             </video>}
 
             {!isYoutube && <div
+                onMouseDown={(e) => e.stopPropagation()} // block parent drag
+                onClick={(e) => e.stopPropagation()}     // block clicks bubbling
                 style={{
                     display: "flex",
                     gap: "8px",
-                    marginTop: "6px",
+                    marginTop: "auto",
                     alignItems: "center",
                 }}
             >
@@ -110,7 +124,7 @@ function VideoPlayerApp() {
     );
 }
 
-globalThis.AddFloatingApp({
+globalThis.Previous_ID_Floading_App_PL = globalThis.AddFloatingApp({
     App: <VideoPlayerApp />,
     title: `Video Playlist`,
     position: { x: 200, y: 150 },

@@ -1,12 +1,12 @@
 const { Button } = Components;
-const { useState, useEffect, useRef } = os.appHooks;
+const { useState, useLayoutEffect, useRef } = os.appHooks;
 
 const RenderHTMLContent = ({ htmlContent }) => {
     const [shouldRender, setShouldRender] = useState(false);
     const [open, setOpen] = useState(false);
     const containerRef = useRef(null);
 
-    useEffect(() => {
+    useLayoutEffect(() => {
         const height = containerRef.current?.offsetHeight || 0;
         if (height > 60) {
             setShouldRender(true);
@@ -17,7 +17,7 @@ const RenderHTMLContent = ({ htmlContent }) => {
         <div>
             <div
                 ref={containerRef}
-                style={{ height: shouldRender ? open ? 'auto' : '60px' : 'auto', overflow: 'hidden', textTransform: "none", transition: 'all 0.2s linear' }}
+                style={{ height: shouldRender ? open ? 'auto' : '60px' : 'auto', overflow: 'hidden', textTransform: "none", transition: 'all 0.2s linear', overflowX: 'auto', paddingRight: '1.25rem' }}
                 dangerouslySetInnerHTML={{ __html: htmlContent }}
             />
 

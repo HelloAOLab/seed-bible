@@ -1,12 +1,12 @@
-const icon = that?.icon || "rebase";
+let icon = that?.icon || "rebase";
 os.unregisterApp('mouseCursor')
 await os.registerApp('mouseCursor', thisBot)
-const { useEffect, useState } = os.appHooks
+const { useLayoutEffect, useState } = os.appHooks
 
-const MouseCursor = () => {
-    const [pointer, setPointer] = useState(gridPortalBot.tags.pointerPixel);
+let MouseCursor = () => {
+    let [pointer, setPointer] = useState(gridPortalBot.tags.pointerPixel);
 
-    useEffect(() => {
+    useLayoutEffect(() => {
         const interval = setInterval(() => {
             setPointer(gridPortalBot.tags.pointerPixel);
         }, 20);
