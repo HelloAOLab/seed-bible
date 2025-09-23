@@ -51,7 +51,10 @@ globalThis.setCollectionsLocale = setCollections;
 const getPlaylists = async () => {
     let apiResults = {};
     try {
-        await os.requestAuthBot();
+        const authBot = await os.requestAuthBotInBackground();
+        if (!authBot) {
+            return [];
+        }
         apiResults = await os.getData(authBot.id, "playlists");
         if (apiResults.data) {
             const playlists = [...(apiResults.data.playlists || [])];
