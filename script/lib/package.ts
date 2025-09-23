@@ -8,7 +8,7 @@ export async function packageSingle(pkg: string, stdio: 'inherit' | 'ignore' = '
         console.log(`Packaging: ${pkg}`);
         const packagePath = path.resolve('packages', pkg);
         const distPath = path.resolve('dist', `${pkg}.aux`);
-        execSync(`casualos pack-aux --overwrite ${packagePath} ${distPath}`, { stdio });
+        execSync(`casualos pack-aux --overwrite "${packagePath}" "${distPath}"`, { stdio });
         console.log(`Wrote: ${distPath}`);
         return true;
     } catch (e) {

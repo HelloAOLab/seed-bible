@@ -28,7 +28,7 @@ program.command('unpack')
         const filePath = await downloadAndSave(name, options.version, packageNameMap.get(name) || `${name}.aux`);
         const packagePath = path.resolve('packages', packageNameMap.get(name) || name);
         await rmdir(packagePath, { recursive: true });
-        execSync(`casualos unpack-aux --overwrite ${filePath} ./packages`, { stdio: 'ignore' });
+        execSync(`casualos unpack-aux --overwrite "${filePath}" ./packages`, { stdio: 'ignore' });
         console.log(`Unpacked pattern ${name} to packages folder.`);
     });
 
@@ -45,7 +45,7 @@ program.command('upload')
         const packagePath = path.resolve('packages', name);
         console.log('Packaging:', packagePath);
         const filePath = path.resolve('dist', `${name}.aux`);
-        execSync(`casualos pack-aux --overwrite ${packagePath} ${filePath}`, { stdio: 'inherit' });
+        execSync(`casualos pack-aux --overwrite "${packagePath}" "${filePath}"`, { stdio: 'inherit' });
         const aux = await readFile(filePath, 'utf-8');
         const auxJson = JSON.parse(aux);
         await uploadPattern(options.pattern || name, auxJson, options.sessionKey, options.recordKey);

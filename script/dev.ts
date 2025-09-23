@@ -127,7 +127,7 @@ server.defineCommand('save', {
 
                 const packagePath = path.resolve('packages', pkg);
                 await rmdir(packagePath, { recursive: true, force: true });
-                execSync(`casualos unpack-aux --overwrite ${filePath} ./packages`, { stdio: 'ignore' });
+                execSync(`casualos unpack-aux --overwrite "${filePath}" ./packages`, { stdio: 'ignore' });
 
                 const data = await getPackageData(page, pkg);
                 if (!data) {
