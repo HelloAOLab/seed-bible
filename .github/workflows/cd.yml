@@ -6,7 +6,8 @@ name: Continous Deployment
 on:
   push:
     branches:
-      'releases/**'
+      - 'releases/**'
+      - 'develop'
 
 jobs:
   build:
@@ -38,7 +39,11 @@ jobs:
           if-no-files-found: error
       - name: Publish SeedBible Pattern
         run: |
-          PATTERN_NAME=${BRANCH_NAME:9}
+          if [[ "$BRANCH_NAME" == "develop" ]]; then
+            PATTERN_NAME="SeedBibleDev"
+          else
+            PATTERN_NAME=${BRANCH_NAME:9}
+          fi
           pnpm pattern publish seed-bible -p "$PATTERN_NAME" --session-key "$SESSION_KEY" --record-key "$RECORD_KEY"
         env:
           BRANCH_NAME: ${{ github.head_ref || github.ref_name }}
