@@ -1,6 +1,6 @@
 import puppeteer from 'puppeteer';
 import { cleanupAux, listPackages, packageSingle, readPackage } from './lib/package.js';
-import { initPage, loadInst, addAux, shout, getPrimarySim, execScript } from './lib/browser.js';
+import { initPage, loadInst, addAux, shout, getPrimarySim, execScript, registerPackage } from './lib/browser.js';
 import { rmdir, writeFile } from 'node:fs/promises';
 import path from 'node:path';
 import { execSync } from 'node:child_process';
@@ -29,6 +29,8 @@ async function startPage() {
     console.log('Uploading Seed Bible...');
 
     await addAux(page, await readPackage('seed-bible'));
+    // await addAux(page, await readPackage('playlist'));
+    // registerPackage(page, 'playlist');
 
     let packages: string[];
     if (process.argv.some(pkg => pkg === 'all')) {
@@ -38,7 +40,7 @@ async function startPage() {
     }
 
     for (const pkg of packages) {
-        if (pkg === 'seed-bible') {
+        if (pkg === 'seed-bible' || pkg === 'playlist') {
             continue;
         }
         console.log(`Adding ${pkg}...`);

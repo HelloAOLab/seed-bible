@@ -1,3 +1,4 @@
+import { readFile } from "node:fs/promises";
 import { Page, ElementHandle, JSHandle } from "puppeteer";
 import { v4 as uuid } from 'uuid';
 
@@ -103,6 +104,34 @@ export async function addAux(page: Page, data: StoredAux) {
         const sim = app.simulationManager.primary;
         return sim.helper.transaction(event);
     }, event);
+}
+
+/**
+ * Registers the given package as installed into the packager.
+ * @param page The page.
+ * @param name The name of the package.
+ */
+export async function registerPackage(page: Page, name: string) {
+    const extensionFilePath = path.resolve('packages', name, 'extension.json');
+    const extensionData = JSON.parse(await readFile(extensionFilePath, 'utf-8'));
+
+    await page.evaluate((data) => {
+        const app = window.aux.getApp();
+        const sim = app.simulationManager.primary;
+
+        const bots = Object.values(sim.helper.botsState);
+        const packager = bots.find(b => b.tags.system === 'app.packager');
+        if (!packager) {
+            throw new Error('Packager app not found in bots state.');
+        }
+        return sim.helper.updateBot(packager.id, {
+            masks: {
+                tempLocal: {
+                    [`${data.name}-data`]: data
+                }
+            }
+        });
+    }, extensionData);
 }
 
 /**
