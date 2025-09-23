@@ -332,7 +332,8 @@ function ThePage({ tab: T, setPanalApp, panelId, setEnableEditor, setData, data 
                         color: config.color || "#000",
                         backgroundColor: config.backgroundColor || "#ffeb3b",
                         onClick: config.onClick || null,
-                        timestamp: Date.now()
+                        timestamp: Date.now(),
+                        createAttributes: config?.createAttributes ? config.createAttributes : () => {return {}}
                     };
                 });
             });
@@ -1048,22 +1049,18 @@ function Section({ heading, commandHighlight, setCommandHighlight, setLastSelect
                 const wordParts = wordChunksMap[verse.verseNumber] || [{ text: verse.text, isHighlighted: false }];
                 return wordParts.map((part, i) => {
                     if (part.isHighlighted) {
+                        let attributes = part.highlightConfig.createAttributes(book, chapter, part)
                         return (
                             <span
                                 key={i}
                                 style={{
-                                    color: part.highlightConfig.color,
-                                    backgroundColor: part.highlightConfig.backgroundColor,
                                     cursor: part.highlightConfig.onClick ? 'pointer' : 'default',
                                     padding: '1px 2px',
                                     borderRadius: '2px'
                                 }}
-                                onClick={(e) => {
-                                    e.stopPropagation();
-                                    if (part.highlightConfig.onClick) {
-                                        part.highlightConfig.onClick(part.text, verse.verseNumber);
-                                    }
-                                }}
+                                {
+                                ...attributes
+                                }
                             >
                                 {part.text}
                             </span>
