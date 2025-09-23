@@ -1,6 +1,7 @@
 import { readFile } from "node:fs/promises";
 import { Page, ElementHandle, JSHandle } from "puppeteer";
 import { v4 as uuid } from 'uuid';
+import path from 'node:path';
 
 /**
  * Runs required initialization code on the page.
@@ -55,7 +56,7 @@ export async function shout(page: Page, name: string, botIds: string[] | null = 
     await page.evaluate((name, botIds, that) => {
         const app = window.aux.getApp();
         const sim = app.simulationManager.primary;
-        return sim.helper.shout(name, botIds, that);
+        sim.helper.shout(name, botIds, that);
     }, name, botIds, that);
 }
 
@@ -107,6 +108,30 @@ export async function addAux(page: Page, data: StoredAux) {
 }
 
 /**
+ * Waits for the given package to have been loaded into the bots state.
+ * @param page The page.
+ * @param name The name of the package.
+ */
+export async function waitForPackage(page: Page, name: string) {
+    await page.evaluate((name) => {
+        const app = window.aux.getApp();
+        const sim = app.simulationManager.primary;
+        return new Promise((resolve, reject) => {
+            const intervalId = setInterval(() => {
+                const bots = Object.values(sim.helper.botsState);
+                for (const b of bots) {
+                    if (b.values.forPackage === name) {
+                        clearInterval(intervalId);
+                        resolve(true);
+                        return;
+                    }
+                }
+            }, 100);
+        });
+    }, name);
+}
+
+/**
  * Registers the given package as installed into the packager.
  * @param page The page.
  * @param name The name of the package.
@@ -115,23 +140,48 @@ export async function registerPackage(page: Page, name: string) {
     const extensionFilePath = path.resolve('packages', name, 'extension.json');
     const extensionData = JSON.parse(await readFile(extensionFilePath, 'utf-8'));
 
-    await page.evaluate((data) => {
-        const app = window.aux.getApp();
-        const sim = app.simulationManager.primary;
+    await execScript(page, `
+        const packager = getBot('system', 'app.packager');
+        setTagMask(packager, '${name}-data', ${JSON.stringify(extensionData)}, 'local');
+    `);
 
-        const bots = Object.values(sim.helper.botsState);
-        const packager = bots.find(b => b.tags.system === 'app.packager');
-        if (!packager) {
-            throw new Error('Packager app not found in bots state.');
-        }
-        return sim.helper.updateBot(packager.id, {
-            masks: {
-                tempLocal: {
-                    [`${data.name}-data`]: data
-                }
-            }
-        });
-    }, extensionData);
+    // await page.evaluate(async (data) => {
+    //     const app = window.aux.getApp();
+    //     const sim = app.simulationManager.primary;
+    //     console.log(sim.helper.botsState);
+
+    //     console.log(Object.values(sim.helper.botsState).find(b => b.tags.system === 'app.packager'));
+
+    //     const packager = await new Promise((resolve, reject) => {
+    //         let count = 0;
+    //         const interval = setInterval(() => {
+    //             count++;
+    //             if (count > 1000) {
+    //                 clearInterval(interval);
+    //                 reject(new Error('Packager app not found in bots state.'));
+    //                 return;
+    //             }
+    //             bots = Object.values(sim.helper.botsState);
+    //             const packager = bots.find(b => b.tags.system === 'app.packager');
+    //             if (packager) {
+    //                 clearInterval(interval);
+    //                 resolve(packager);
+    //                 return;
+    //             }
+    //         }, 100);
+    //     });
+    //     if (!packager) {
+    //         throw new Error('Packager app not found in bots state.');
+    //     }
+    //     console.error('UPDATE BOT', data.name, packager.id, data);
+    //     return sim.helper.updateBot(packager.id, {
+    //         masks: {
+    //             tempLocal: {
+    //                 [`${data.name}-data`]: 'abc'
+    //             }
+    //         }
+    //     });
+    // }, extensionData);
 }
 
 /**

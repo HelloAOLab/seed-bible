@@ -1,6 +1,6 @@
 import puppeteer from 'puppeteer';
 import { cleanupAux, listPackages, packageSingle, readPackage } from './lib/package.js';
-import { initPage, loadInst, addAux, shout, getPrimarySim, execScript, getPackageData } from './lib/browser.js';
+import { initPage, loadInst, addAux, shout, getPrimarySim, execScript, getPackageData, registerPackage, waitForPackage } from './lib/browser.js';
 import { rmdir, writeFile } from 'node:fs/promises';
 import path from 'node:path';
 import { execSync } from 'node:child_process';
@@ -29,28 +29,56 @@ async function startPage() {
     console.log('Uploading Seed Bible...');
 
     await addAux(page, await readPackage('seed-bible'));
-    // await addAux(page, await readPackage('playlist'));
-    // registerPackage(page, 'playlist');
+    await addAux(page, await readPackage('BookSelector'));
+    await addAux(page, await readPackage('Bible Layout 2D'));
+    await addAux(page, await readPackage('Painter'));
+    await addAux(page, await readPackage('Playlist'));
+    await registerPackage(page, 'BookSelector');
+    await registerPackage(page, 'Bible Layout 2D');
+    await registerPackage(page, 'Painter');
+    await registerPackage(page, 'Playlist');
 
-    let packages: string[];
-    if (process.argv.some(pkg => pkg === 'all')) {
-        packages = await listPackages();
-    } else {
-        packages = process.argv.slice(2);
-    }
+    await waitForPackage(page, 'Playlist');
 
-    for (const pkg of packages) {
-        if (pkg === 'seed-bible' || pkg === 'playlist') {
-            continue;
-        }
-        console.log(`Adding ${pkg}...`);
-        const aux = await readPackage(pkg);
-        await addAux(page, aux);
-    }
+    await execScript(page, `
+        const packager = getBot('system', 'app.packager');
+        setTagMask(packager, 'installedPackages', [
+            'BookSelector',
+            'Bible Layout 2D',
+            'Painter',
+            'Playlist',
+        ], 'local');
+    `);
+
+    // await registerPackage(page, 'Bible Layout 2D');
+    // await registerPackage(page, 'Painter');
+    // await registerPackage(page, 'Playlist');
+
+    // let packages: string[];
+    // if (process.argv.some(pkg => pkg === 'all')) {
+    //     packages = await listPackages();
+    // } else {
+    //     packages = process.argv.slice(2);
+    // }
+
+    // for (const pkg of packages) {
+    //     if (pkg === 'seed-bible' || pkg === 'playlist') {
+    //         continue;
+    //     }
+    //     console.log(`Adding ${pkg}...`);
+    //     const aux = await readPackage(pkg);
+    //     await addAux(page, aux);
+    // }
 
     console.log('Loaded!');
+    // await new Promise((resolve) => {
+    //     setTimeout(() => {
+    //         resolve();
+    //     }, 10000);
+    // });
+    // page.reload();
 
-    await shout(page, 'onEggHatch');
+    shout(page, 'onInstJoined');
 }
 
 await startPage();
@@ -216,6 +244,7 @@ server.defineCommand('reload', {
             await page.close();
         }
         await startPage();
+        server.displayPrompt();
     },
 })
 
