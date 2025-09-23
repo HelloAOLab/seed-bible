@@ -1,5 +1,3 @@
-const { book, chapter } = that;
-
 const keysFirstAppearance = [
     { 
         key: "blueprint-ground", 
@@ -339,15 +337,15 @@ const keysFirstAppearance = [
     }
 ]
 
-const isValidChapter = chapter != null && !isNaN(Number(chapter));
+const isValidChapter = thisBot.vars.currentChapter != null && !isNaN(Number(thisBot.vars.currentChapter));
 
-if (book && isValidChapter) {
-    const shouldShow = book === "Exodus" && chapter >= 25;
+if (thisBot.vars.currentBook && isValidChapter) {
+    const shouldShow = thisBot.vars.currentBook === "Exodus" && thisBot.vars.currentChapter >= 25;
     thisBot.SetBotsVisibility({
         data: keysFirstAppearance.map((info ,index) => {
             return { 
                 key: info.key, 
-                value: shouldShow ? (info.chaptersInfo[String(chapter)] ?? MeshState.Hidden) : MeshState.Hidden,
+                value: shouldShow ? (info.chaptersInfo[String(thisBot.vars.currentChapter)] ?? MeshState.Hidden) : MeshState.Hidden,
                 index
             }
         })

@@ -10,8 +10,6 @@ globalThis.MeshState = {
     Translucent: "Translucent"
 }
 
-gridPortalBot.tags.portalCameraType = "perspective";
-
 const keys = [
     "altar-of-sacrifice",
     "ark-of-covenant",
@@ -37,3 +35,5 @@ const keys = [
 // Development purposes
 thisBot.SetBotsVisibility({data: keys.map((key) => { return {key, value: MeshState.Hidden} })});
 // gridPortalBot.tags.portalBackgroundAddress = "https://publicos-link-filesbucket-404655125928.s3.amazonaws.com/ab-1/00471bdfd73c319edf496024c5349e51a6cf48589d29db12f17c5c71c7c9acbf"
+
+thisBot.UpdateHighlightedWords();

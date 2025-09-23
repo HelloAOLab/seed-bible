@@ -1,0 +1,147 @@
+{
+  "author": "Gabriel Souki",
+  "configEditor": {
+    "author": "Gabriel Souki"
+  },
+  "createdAt": "2025-09-23T04:17:23.840Z",
+  "dependencies": [],
+  "description": "Meshes and logic for the tabernacle experience",
+  "id": 1758601043840,
+  "license": "MIT",
+  "linkedDependencies": [],
+  "mainBotTag": "tabernacle.manager",
+  "name": "Tabernacle",
+  "otherBots": [
+    {
+      "description": "tabernacle.altar-of-sacrifice",
+      "tag": "tabernacle.altar-of-sacrifice"
+    },
+    {
+      "description": "tabernacle.ark-of-covenant",
+      "tag": "tabernacle.ark-of-covenant"
+    },
+    {
+      "description": "tabernacle.blueprint-altar-of-sacrifice",
+      "tag": "tabernacle.blueprint-altar-of-sacrifice"
+    },
+    {
+      "description": "tabernacle.blueprint-ark-of-covenant",
+      "tag": "tabernacle.blueprint-ark-of-covenant"
+    },
+    {
+      "description": "tabernacle.blueprint-bronze-laver",
+      "tag": "tabernacle.blueprint-bronze-laver"
+    },
+    {
+      "description": "tabernacle.blueprint-ground",
+      "tag": "tabernacle.blueprint-ground"
+    },
+    {
+      "description": "tabernacle.blueprint-incense-altar",
+      "tag": "tabernacle.blueprint-incense-altar"
+    },
+    {
+      "description": "tabernacle.blueprint-menorah",
+      "tag": "tabernacle.blueprint-menorah"
+    },
+    {
+      "description": "tabernacle.blueprint-pillars",
+      "tag": "tabernacle.blueprint-pillars"
+    },
+    {
+      "description": "tabernacle.blueprint-table-showbread",
+      "tag": "tabernacle.blueprint-table-showbread"
+    },
+    {
+      "description": "tabernacle.blueprint-walls",
+      "tag": "tabernacle.blueprint-walls"
+    },
+    {
+      "description": "tabernacle.bronze-laver",
+      "tag": "tabernacle.bronze-laver"
+    },
+    {
+      "description": "tabernacle.cloth-brown",
+      "tag": "tabernacle.cloth-brown"
+    },
+    {
+      "description": "tabernacle.cloth-grey",
+      "tag": "tabernacle.cloth-grey"
+    },
+    {
+      "description": "tabernacle.cloth-purple",
+      "tag": "tabernacle.cloth-purple"
+    },
+    {
+      "description": "tabernacle.cloth-red",
+      "tag": "tabernacle.cloth-red"
+    },
+    {
+      "description": "tabernacle.cone",
+      "tag": "tabernacle.cone"
+    },
+    {
+      "description": "tabernacle.fence",
+      "tag": "tabernacle.fence"
+    },
+    {
+      "description": "tabernacle.glow",
+      "tag": "tabernacle.glow"
+    },
+    {
+      "description": "tabernacle.ground",
+      "tag": "tabernacle.ground"
+    },
+    {
+      "description": "tabernacle.incense-altar",
+      "tag": "tabernacle.incense-altar"
+    },
+    {
+      "description": "tabernacle.menorah",
+      "tag": "tabernacle.menorah"
+    },
+    {
+      "description": "tabernacle.structure-bars",
+      "tag": "tabernacle.structure-bars"
+    },
+    {
+      "description": "tabernacle.structure-front-curtain",
+      "tag": "tabernacle.structure-front-curtain"
+    },
+    {
+      "description": "tabernacle.structure-front-pillars",
+      "tag": "tabernacle.structure-front-pillars"
+    },
+    {
+      "description": "tabernacle.structure-inner-curtain",
+      "tag": "tabernacle.structure-inner-curtain"
+    },
+    {
+      "description": "tabernacle.structure-inner-pillars",
+      "tag": "tabernacle.structure-inner-pillars"
+    },
+    {
+      "description": "tabernacle.structure-rings",
+      "tag": "tabernacle.structure-rings"
+    },
+    {
+      "description": "tabernacle.structure-walls",
+      "tag": "tabernacle.structure-walls"
+    },
+    {
+      "description": "tabernacle.table-showbread",
+      "tag": "tabernacle.table-showbread"
+    }
+  ],
+  "recordFile": {
+    "sha256Hash": "f77aea4f60ae4e8db0b6f268c7386493db0f0a726e229255bf7f615c66cc5198",
+    "success": true,
+    "url": "https://auth-aux-aobot-prod-filesbucket-141297942820.s3.amazonaws.com/testingPublickKey/f77aea4f60ae4e8db0b6f268c7386493db0f0a726e229255bf7f615c66cc5198.json"
+  },
+  "source": "https://auth-aux-aobot-prod-filesbucket-141297942820.s3.amazonaws.com/testingPublickKey/f77aea4f60ae4e8db0b6f268c7386493db0f0a726e229255bf7f615c66cc5198.json",
+  "status": "active",
+  "type": "package",
+  "updatedAt": "2025-09-23T06:55:42.557Z",
+  "userAuth": "2225616f-cc40-4129-89a6-b8448743687b",
+  "version": "1.0.5"
+}
