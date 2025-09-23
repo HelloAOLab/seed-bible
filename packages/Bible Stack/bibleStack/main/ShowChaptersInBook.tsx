@@ -16,6 +16,7 @@ for(const chapterData of data.childrenData)
             [dimension + "Y"]: 0,
             [dimension + "Z"]: 0,
             creator: null,
+            draggable: thisBot.masks.areBiblePiecesDraggable,
             index: idx,
             chapterNumber: idx+1,
             chapterWidth: BibleVizUtils.Data.tags.StackPieceMeasurements.ChapterWidth,

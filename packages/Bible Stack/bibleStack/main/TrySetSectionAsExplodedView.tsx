@@ -24,3 +24,17 @@ await thisBot.UpdateStacks({speedMultiplier, isInstantaneous});
 
 if(setBibleAnimating) setTagMask(thisBot, "isBibleAnimating", false);
 thisBot.UpdateStackPiecesActivityNotification();
+
+if(thisBot.vars.tabsContext)
+{
+    const activeTab = thisBot.vars.tabsContext.tabs.find((tab) => {return tab.id === thisBot.vars.tabsContext.activeTab});
+
+    if(activeTab)
+    {
+        const activeBook = sectionData.childrenData.flat().find((bookData) => {
+            return bookData.pieceInfo.commonName === activeTab.data.book && bookData.isActive && bookData.isSelected
+        })
+
+        if(activeBook) thisBot.UpdateStackTabsVisualization({source: "OnStackBookSelectionComplete"});
+    }
+}

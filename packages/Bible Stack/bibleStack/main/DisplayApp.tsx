@@ -1,40 +1,30 @@
-const App = await thisBot.App();
-await thisBot.ClearStacks()
-
-
-const id = uuid();
-const appConfig = {
-    id,
-    App: <App />,
-    // to: 'panel',
-    minWidth: '40rem',
-}
 if(thisBot.vars.appId)
 {
-    globalThis.ReplaceApplication(thisBot.vars.appId, appConfig)
+    await thisBot.ClearStacks()
+    globalThis.RemoveApplication(thisBot.vars.appId)
+    thisBot.vars.appId = null
 }
 else
 {
-    globalThis.AddApplication(appConfig);
+    gridPortalBot.tags.portalCameraType = "orthographic";
+    const App = await thisBot.App();
+    const id = globalThis.AddFloatingApp({
+        App: <App />,
+        title: "Stack",
+        position: {x: 200, y: 150},
+        size: {width: 300, height: 150}
+    })
+    thisBot.vars.appId = id;
+
+    await os.sleep(500);
+
+    if(thisBot.vars.appId && thisBot.vars.appId === id)
+    {
+        setTagMask(thisBot, "isBibleAnimating", true);
+        thisBot.CreateNewBible({position: {x: 0, y: 0}}).then(() => {
+            thisBot.UpdateStackTabsVisualization({source: "DisplayApp"});
+        });
+    }
 }
 
-thisBot.vars.appId = id;
 
-await os.sleep(500);
-
-const RecenterButton = () => {
-    return (
-        <button style={{position: "absolute", top: "8px", right: "8px"}} onClick={() => {console.log(`[Debug] Button clicked`)}}>Click me!</button>
-    )
-}
-
-const appName = "stackUI"
-await os.unregisterApp(appName);
-await os.registerApp(appName, thisBot);
-os.compileApp(appName, <RecenterButton />);
-
-if(thisBot.vars.appId === id)
-{
-    setTagMask(thisBot, "isBibleAnimating", true);
-    thisBot.CreateNewBible({position: {x: 0, y: 0}});
-}

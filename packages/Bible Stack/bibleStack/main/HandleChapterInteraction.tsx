@@ -41,28 +41,48 @@ switch(typeOfInteraction)
                     }
                     else
                     {
-                        let tab = thisBot.vars.tabsContext.tabs.find((currTab) => {
-                            return currTab.data.book === chapterData.piece.tags.parentBookName && currTab.data.chapter == chapterData.pieceInfo.number
-                        })
-
-                        if(!tab)
+                        let createNewTab = false;
+                        if(createNewTab)
                         {
-                            tab = {
-                                id: uuid(),
-                                taken: false,
-                                data: {
-                                    use: 'thePage',
-                                    type: 'book',
-                                    book: chapterData.piece.tags.parentBookName,
-                                    bookId: BibleVizUtils.Data.tags.booksStaticInfo[chapterData.piece.tags.parentBookName].abbreviation,
-                                    chapter: chapterData.pieceInfo.number,
-                                    translation: 'BSB'
+                            if(thisBot.vars.tabsContext)
+                            {
+                                let tab = thisBot.vars.tabsContext.tabs.find((currTab) => {
+                                    return currTab.data.book === chapterData.piece.tags.parentBookName && currTab.data.chapter == chapterData.pieceInfo.number
+                                })
+
+                                if(!tab)
+                                {
+                                    tab = {
+                                        id: uuid(),
+                                        taken: false,
+                                        data: {
+                                            use: 'thePage',
+                                            type: 'book',
+                                            book: chapterData.piece.tags.parentBookName,
+                                            bookId: BibleVizUtils.Data.tags.booksStaticInfo[chapterData.piece.tags.parentBookName].abbreviation,
+                                            chapter: chapterData.pieceInfo.number,
+                                            translation: 'BSB'
+                                        }
+                                    }
+                                    globalThis.AddTab(tab)
                                 }
+                                thisBot.vars.tabsContext.setActiveTab(tab.id);
+                                globalThis.UpdateTab(tab);
                             }
-                            globalThis.AddTab(tab)
                         }
-                        thisBot.vars.tabsContext.setActiveTab(tab.id);
-                        globalThis.UpdateTab(tab);
+                        else
+                        {
+                            let bookId = BibleVizUtils.Data.tags.booksStaticInfo[chapterData.piece.tags.parentBookName].abbreviation;
+                            let chapter = chapterData.pieceInfo.number;
+
+                            if(chapterData.piece.tags.parentBookName.includes("Psalms"))
+                            {
+                                ({chapter} = BibleVizUtils.Functions.ConvertDividedPsalmsToComplete({book: chapterData.piece.tags.parentBookName, chapter}))
+                                bookId = "PSA";
+                            }
+
+                            thisBot.vars.tabsContext.navFunctions?.open?.(bookId, chapter)
+                        }
                     }
                 }
             }
@@ -95,12 +115,12 @@ switch(typeOfInteraction)
     break;
     case BibleVizUtils.Data.tags.InteractionType.Dragging:
     {
-        shout('OnStackPieceDragging', {piece: chapterData.piece, dragInfo, data: chapterData})
+        if(chapterData.piece.tags.draggable) shout('OnStackPieceDragging', {piece: chapterData.piece, dragInfo, data: chapterData})
     }
     break;
     case BibleVizUtils.Data.tags.InteractionType.Drop:
     {
-        shout('OnStackPieceDrop', {data: chapterData, piece: chapterData.piece, dropInfo});
+        if(chapterData.piece.tags.draggable) shout('OnStackPieceDrop', {data: chapterData, piece: chapterData.piece, dropInfo});
     }
     break;
     default: break;

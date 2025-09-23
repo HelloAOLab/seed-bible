@@ -6,7 +6,7 @@
     * thisBot.SelectBook({book})
 */
 
-const { book, setBibleAnimating = true } = that;
+const { book, setBibleAnimating = true, speedMultiplier = 1, source = "Unknown" } = that;
 const bookData = thisBot.GetPieceData({ piece: book });
 thisBot.vars.lastInteractedStackBookData = bookData;
 const dimension = os.getCurrentDimension();
@@ -14,11 +14,12 @@ if (setBibleAnimating) setTagMask(thisBot, "isBibleAnimating", true);
 BibleVizUtils.Functions.TryHideActivityNotificationOnPiece({piece: book});
 await thisBot.TryUnhighlightPiece({ piece: book, tryUpdateActivityNotification: false, requestSource: BibleVizUtils.Data.tags.InteractionType.Transition });
 bookData.isSelected = true;
+bookData.lastInteractionSource = source;
 shout("OnBiblePieceSelected", {piece: book});
 setTagMask(book, "pointable", false);
 setTagMask(book, "highlightable", false);
 const focusOnRotation = {x: 1.01229, y:0.5};
-const cameraFocusDuration = 1;
+const cameraFocusDuration = 1 / speedMultiplier;
 
 const bookPosition = getBotPosition(book, dimension);
 const { selectedBookHeight } = await thisBot.ComputeSelectedBookLayout({data: bookData});
@@ -41,7 +42,7 @@ os.focusOn({x: desiredFocusOnPosition.x, y: desiredFocusOnPosition.y}, {
     zoom: 8
 })
 
-await thisBot.UpdateStacks();
+await thisBot.UpdateStacks({speedMultiplier});
 
 // if(globalThis?.OpenBibleAt === undefined){
 //     shout("runThePage")

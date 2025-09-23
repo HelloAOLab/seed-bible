@@ -1,0 +1,14 @@
+{
+    "Click": "Click",
+    "Tap": "Tap",
+    "HoverBegin": "HoverBegin",
+    "HoverEnd": "HoverEnd",
+    "GridClick": "GridClick",
+    "Transition": "Transition",
+    "SearchBarSelection": "SearchBarSelection",
+    "Drag": "Drag",
+    "Dragging": "Dragging",
+    "Drop": "Drop",
+    "PointerUp": "PointerUp",
+    "PointerDown": "PointerDown"
+}

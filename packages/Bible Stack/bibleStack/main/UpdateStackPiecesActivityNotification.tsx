@@ -1,8 +1,8 @@
 const piecesData = [
-    ...thisBot.vars.stackTestamentsData,
-    ...thisBot.vars.stackSectionsData,
-    ...thisBot.vars.stackSectionBooksData,
-    ...thisBot.vars.stackBooksData,
+    // ...thisBot.vars.stackTestamentsData,
+    // ...thisBot.vars.stackSectionsData,
+    // ...thisBot.vars.stackSectionBooksData,
+    // ...thisBot.vars.stackBooksData,
     ...thisBot.vars.stackChaptersData,
 ]
 

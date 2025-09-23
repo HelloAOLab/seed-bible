@@ -1,4 +1,6 @@
+const {activeTab, tabs} = that;
+
 thisBot.vars.tabsContext = that;
 
 thisBot.UserPresenceUpdate();
-thisBot.UpdateStackTabsVisualization();
+thisBot.UpdateStackTabsVisualization({source: "OnTabsContextChanged"});

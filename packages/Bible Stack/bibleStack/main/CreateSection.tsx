@@ -31,10 +31,10 @@ const sectionInfo = BibleVizUtils.Data.vars.fixedArrangementsInfo[arrangementInd
 const amountOfChaptersInSection = BibleVizUtils.Functions.GetAmountOfChaptersInSection({section: sectionInfo.books});
 let data;
 const creationInfo = {arrangementIndex, testamentIndex, sectionIndex, amountOfChaptersInSection};
+const parentDataIds = new ParentDataIds({stackBibleId: bibleData?.id, stackTestamentId: testamentData?.id});
 
 if(sectionInfo.books.length > 1)
 {
-    const parentDataIds = new ParentDataIds({stackBibleId: bibleData?.id, stackTestamentId: testamentData?.id});
     data = new StackSectionData({
         pieceInfo: sectionInfo, 
         id: uuid(), 
@@ -78,7 +78,6 @@ if(sectionInfo.books.length > 1)
 }
 else
 {
-    const parentDataIds = new ParentDataIds({stackBibleId: bibleData?.id, stackTestamentId: testamentData?.id});
     data = new StackSectionBookData({
         pieceInfo: sectionInfo, 
         pieceBookInfo: sectionInfo.books[0], 

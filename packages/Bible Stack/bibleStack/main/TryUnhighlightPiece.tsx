@@ -11,10 +11,12 @@
     * shout("TryUnhighlightPiece", {piece: someBot, delay: 4000, requestSource: BibleVizUtils.Data.tags.InteractionType.Transition, customDuration: 1});
 */
 
+
 import {UnhighlightDelayInfo} from "bibleStack.main.UnhighlightDelayInfo"
 
 let {delay} = that;
 const {piece, tryUpdateActivityNotification = true, requestSource, customDuration, speedMultiplier = 1, isInstantaneous = false} = that;
+
 const data = thisBot.GetPieceData({piece});
 const {bibleData} = thisBot.GetDataChainFromParentDataIds({parentDataIds: data.parentDataIds});
 const {unhighlightDelayInfo: currentUnhighlightDelayInfo, unhighlightDelayInfoIndex: currentUnhighlightDelayInfoIndex} = thisBot.GetUnhighlightDelayInfo({piece});

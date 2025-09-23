@@ -78,17 +78,17 @@ if(!bibleData || bibleData.currentState === BibleVizUtils.Data.tags.BibleState.O
             break;
             case BibleVizUtils.Data.tags.InteractionType.Dragging:
             {
-                shout('OnStackPieceDragging', {piece: section, dragInfo})
+                if(section.tags.draggable) shout('OnStackPieceDragging', {piece: section, dragInfo})
             }
             break;
             case BibleVizUtils.Data.tags.InteractionType.Drop:
             {
-                shout('OnStackPieceDrop', {piece: section, dropInfo});
+                if(section.tags.draggable) shout('OnStackPieceDrop', {piece: section, dropInfo});
             }
             break;
             case BibleVizUtils.Data.tags.InteractionType.PointerUp:
             {
-                shout('OnStackPiecePointerUp', {piece: section});
+                if(section.tags.draggable) shout('OnStackPiecePointerUp', {piece: section});
             }
             break;
             default: break;

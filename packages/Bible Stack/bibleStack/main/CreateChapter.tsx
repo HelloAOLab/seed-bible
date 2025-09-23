@@ -35,6 +35,16 @@ const parentDataIds = new ParentDataIds({
     stackSectionId: sectionData?.id, 
     stackBookId: bookData?.id
 });
-const chapterData = new StackChapterData({id: uuid(), pieceInfo: chapterInfo, parentDataIds, isInsideBible, isInsideBook, isHidden})
+
+const creationInfo = {bookName: bookData?.pieceInfo.commonName ?? sectionBookData.pieceBookInfo.commonName}
+const chapterData = new StackChapterData({
+    id: uuid(), 
+    pieceInfo: chapterInfo, 
+    parentDataIds, 
+    isInsideBible, 
+    isInsideBook, 
+    isHidden,
+    creationInfo
+})
 thisBot.vars.stackChaptersData.push(chapterData);
 return chapterData;

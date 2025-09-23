@@ -6,7 +6,7 @@
     * shout("OnStackSectionSelectionAnimationComplete", {sectionData})
 */
 
-const {sectionData, speedMultiplier = 1, isInstantaneous = false} = that;
+const {sectionData, speedMultiplier = 1, isInstantaneous = false, skipTourGuide = false} = that;
 if(thisBot.HasSectionEverBeenSelected({sectionData}))
 {
     await thisBot.UpdateStacks({speedMultiplier, isInstantaneous});
@@ -16,5 +16,5 @@ if(thisBot.HasSectionEverBeenSelected({sectionData}))
 }
 else
 {
-    return thisBot.TryMakeTourGuideOnSection({sectionData});
+    return thisBot.TryMakeTourGuideOnSection({sectionData, skip: skipTourGuide});
 }

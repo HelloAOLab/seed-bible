@@ -49,7 +49,7 @@ try
         infoLabelTransformer.Show({speedMultiplier, isInstantaneous})
     ])
 }
-catch(error){console.error(error)}
+catch(error){throw new Error(error)}
 finally
 {
     setTagMask(thisBot, "isHighlighting", false);

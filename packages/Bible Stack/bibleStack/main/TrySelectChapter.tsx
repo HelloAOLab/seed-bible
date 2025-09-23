@@ -7,7 +7,8 @@
     * shout("TrySelectChapter", {book: someBook, chapterNumber: 1});
 */
 
-const {info, source} = that;
+const {info} = that;
+
 const fixedInfo = (Array.isArray(info) ? info : [info]).map(({chapterData, bookData, chapterNumber}) => {
     if(!chapterData)
     {

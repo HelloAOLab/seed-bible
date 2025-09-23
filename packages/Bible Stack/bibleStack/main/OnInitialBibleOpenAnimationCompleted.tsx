@@ -17,3 +17,4 @@ for(const testamentData of bibleData.childrenData)
     thisBot.TryHighlightPiece({piece: testamentData.piece, highlightRequestSource: BibleVizUtils.Data.tags.InteractionType.Transition, unhighlightDelay: 4000});
     await os.sleep(100);
 }
+// await os.sleep(60);

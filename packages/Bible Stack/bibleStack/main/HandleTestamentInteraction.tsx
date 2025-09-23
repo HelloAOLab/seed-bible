@@ -60,25 +60,22 @@ if(!bibleData || bibleData.currentState === BibleVizUtils.Data.tags.BibleState.O
             break;
             case BibleVizUtils.Data.tags.InteractionType.Drag:
             {
-                if(testament.tags.draggable)
-                {
-                    shout("OnStackPieceDrag", {piece: testament, data: testamentData});
-                }
+                if(testament.tags.draggable) shout("OnStackPieceDrag", {piece: testament, data: testamentData});
             }
             break;
             case BibleVizUtils.Data.tags.InteractionType.Dragging:
             {
-                shout('OnStackPieceDragging', {piece: testament, dragInfo});
+                if(testament.tags.draggable) shout('OnStackPieceDragging', {piece: testament, dragInfo});
             }
             break;
             case BibleVizUtils.Data.tags.InteractionType.Drop:
             {
-                shout('OnStackPieceDrop', {piece: testament, dropInfo});
+                if(testament.tags.draggable) shout('OnStackPieceDrop', {piece: testament, dropInfo});
             }
             break;
             case BibleVizUtils.Data.tags.InteractionType.PointerUp:
             {
-                shout('OnStackPiecePointerUp', {piece: testament});
+                if(testament.tags.draggable) shout('OnStackPiecePointerUp', {piece: testament});
             }
             break;
             // case BibleVizUtils.Data.tags.InteractionType.SearchBarSelection:

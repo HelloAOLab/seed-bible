@@ -1,14 +1,16 @@
 const {useEffect} = os.appHooks;
 
 import { useTabsContext } from 'app.hooks.tabs';
+import { useBibleContext } from 'app.hooks.bibleVariables'
 
 const App = () => {
 
+    const { navFunctions } = useBibleContext()
     const { spaces, activeSpace, tabs, activeTab, setActiveTab } = useTabsContext();
 
     useEffect(() => {
-        shout("OnTabsContextChanged", {spaces, activeSpace, tabs, activeTab, setActiveTab})
-    }, [spaces, activeSpace, tabs, activeTab])
+        shout("OnTabsContextChanged", {spaces, activeSpace, tabs, activeTab, setActiveTab, navFunctions})
+    }, [spaces, activeSpace, tabs, activeTab, setActiveTab, navFunctions])
 
     return <div style={{width: "100%", height: "100%"}}>
         <div
