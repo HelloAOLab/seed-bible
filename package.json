@@ -7,6 +7,7 @@
     "test": "jest",
     "dev": "tsx script/dev.ts",
     "package": "tsx script/package.ts",
+    "extension": "tsx script/extension.ts",
     "package:seed-bible": "casualos pack-aux --overwrite ./packages/seed-bible ./dist/seed-bible.aux",
     "package:playlist": "casualos pack-aux --overwrite ./packages/playlist ./dist/playlist.aux",
     "lint": "eslint packages",

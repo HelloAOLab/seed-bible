@@ -1,0 +1,69 @@
+import { program } from 'commander';
+import { readFile, rmdir, writeFile } from 'node:fs/promises';
+import { downloadAndSave, listExtensions, uploadPattern } from './lib/extension';
+import path from 'node:path';
+import { execSync } from 'node:child_process';
+
+const extensionNameMap = new Map([
+]);
+
+program.name('extension')
+    .description('Commands for working with SeedBible extensions.')
+    .version('0.1.0');
+
+program.command('list')
+    .description('Lists all the extensions.')
+    .option('-v, --verbose', 'Whether to log verbose output.', false)
+    .action(async (options) => {
+        const list = await listExtensions();
+
+        for (const ext of list) {
+            if (options.verbose) {
+                console.log(JSON.stringify(ext, null, 2));
+            } else {
+                console.log(ext.name);
+            }
+        }
+    });
+
+program.command('download')
+    .description('Downloads the AUX for the given extension to the dist folder.')
+    .argument('<name>', 'The name of the extension to download.')
+    .action(async (name, options) => {
+        await downloadAndSave(name, options.version);
+    });
+
+program.command('unpack')
+    .description('Downloads and unpacks the AUX for the given extension into the packages folder.')
+    .argument('<name>', 'The name of the extension to download.')
+    .action(async (name, options) => {
+        const { filePath, ...ext } = await downloadAndSave(name, options.version, extensionNameMap.get(name) || `${name}.aux`);
+        const extensionPath = path.resolve('packages', extensionNameMap.get(name) || name);
+        await rmdir(extensionPath, { recursive: true });
+        execSync(`casualos unpack-aux --overwrite "${filePath}" ./packages`, { stdio: 'ignore' });
+
+        const extensionJsonPath = path.resolve(extensionPath, 'extension.json');
+        await writeFile(extensionJsonPath, JSON.stringify(ext.meta, null, 2), 'utf-8');
+        console.log(`Unpacked extension ${name} to packages folder.`);
+    });
+
+// program.command('upload')
+//     .description('Uploads the given pattern to the records server.')
+//     .argument('<package>', 'The name of the package to upload.')
+//     .option('-p, --pattern <pattern>', 'The name of the pattern to upload.')
+//     .option('--session-key <sessionKey>', 'The session key to use for authentication.')
+//     .option('--record-key <recordKey>', 'The record key to use. If not specified, the default record name will be used.')
+//     .action(async (name, options) => {
+//         if (!options.sessionKey) {
+//             throw new Error('You must specify a session key using the --session-key option.');
+//         }
+//         const packagePath = path.resolve('packages', name);
+//         console.log('Packaging:', packagePath);
+//         const filePath = path.resolve('dist', `${name}.aux`);
+//         execSync(`casualos pack-aux --overwrite "${packagePath}" "${filePath}"`, { stdio: 'inherit' });
+//         const aux = await readFile(filePath, 'utf-8');
+//         const auxJson = JSON.parse(aux);
+//         await uploadPattern(options.pattern || name, auxJson, options.sessionKey, options.recordKey);
+//     });
+
+program.parse();
