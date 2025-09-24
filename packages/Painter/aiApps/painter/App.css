@@ -12,13 +12,14 @@
 }
 
 .draggable {
-  user-select: none;
-  z-index: 1000;
-  transition: box-shadow 0.2s ease;
+    user-select: none;
+    z-index: 1000;
+    transition: box-shadow 0.2s ease;
+    
 }
 
 .draggable:active {
-  z-index: 1001;
+    z-index: 1001;
 }
 
 .drawing-canvas {
@@ -45,11 +46,14 @@
     box-shadow: 0 5px 20px rgba(0, 0, 0, 0.15);
     z-index: 100;
     display: flex;
-    flex-direction: column;
+    flex-direction: row;
     gap: 12px;
     backdrop-filter: blur(5px);
     transition: all 0.3s ease;
     pointer-events: all;
+    transform: rotate(-90deg);
+    transform-origin: center;
+    background: rgba(0,0,0,0.7);
 }
 
 /* .toolbar:hover {
@@ -265,7 +269,7 @@
     width: 100%;
     height: 100%;
     clip-path: polygon(0 50%, 100% 0, 100% 100%);
-    border-radius: 5px;
+    border-radius: 25px;
 }
 
 .sliderThumb {
@@ -289,6 +293,21 @@
     opacity: 0;
     cursor: pointer;
     z-index: 3;
+}
+
+.doneBtn {
+    display: flex;
+    flex-direction: column;
+    gap: 10px;
+    justify-content: center;
+    align-items: center;
+    writing-mode: vertical-rl;
+    background: transparent;
+    border: transparent;
+    font-size: 18px;
+    font-family: monospace;
+    color: white;
+    cursor: pointer;
 }
 
 @media (max-width: 768px) {

@@ -3,8 +3,8 @@ const { useState, useRef, useEffect } = os.appHooks;
 const DraggableContainer = ({ children }) => {
     const [isDragging, setIsDragging] = useState(false);
     const [position, setPosition] = useState({ 
-        x: 20, 
-        y: window.innerHeight - 130
+        x: 180, 
+        y: window.innerHeight / 2
     });
     const [offset, setOffset] = useState({ x: 0, y: 0 });
     const dragRef = useRef(null);
