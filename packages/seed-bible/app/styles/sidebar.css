@@ -5,6 +5,9 @@
     position: relative;
     /* transition: width 0.3s ease; */
     background-color: var(--themeSideMenu);
+
+    font-family: 'Segoe UI', Arial, sans-serif;
+    
 }
 
 .customCheckboxWrapper {
