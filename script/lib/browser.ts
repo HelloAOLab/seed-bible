@@ -117,7 +117,7 @@ export async function waitForPackage(page: Page, name: string) {
     await page.evaluate((name) => {
         const app = window.aux.getApp();
         const sim = app.simulationManager.primary;
-        return new Promise((resolve, reject) => {
+        return new Promise((resolve) => {
             const intervalId = setInterval(() => {
                 const bots = Object.values(sim.helper.botsState);
                 for (const b of bots) {

@@ -80,7 +80,10 @@ export async function uploadFile(recordNameOrKey: string, data: object | string 
         }
     }
 
-    return fileUrl;
+    return {
+        fileUrl,
+        sha256Hash: hash,
+    };
 }
 
 function getHash(buffer: Uint8Array): string {
