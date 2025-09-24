@@ -3,6 +3,7 @@ import { readFile, rmdir } from 'node:fs/promises';
 import { downloadAndSave, uploadPattern } from './lib/pattern';
 import path from 'node:path';
 import { execSync } from 'node:child_process';
+import { uploadAll } from './lib/extension';
 
 const packageNameMap = new Map([
     ['SeedBible', 'seed-bible'],
@@ -49,6 +50,47 @@ program.command('publish')
         const aux = await readFile(filePath, 'utf-8');
         const auxJson = JSON.parse(aux);
         await uploadPattern(options.pattern || name, auxJson, options.sessionKey, options.recordKey);
+    });
+
+program.command('publish-seed-bible')
+    .description('Publishes the Seed Bible pattern with all the extensions.')
+    .option('-p, --pattern <pattern>', 'The name of the pattern to upload.')
+    .option('--session-key <sessionKey>', 'The session key to use for authentication.')
+    .option('--record-key <recordKey>', 'The record key to use. If not specified, the default record name will be used.')
+    .option('--ext-record-key <extRecordKey>', 'The record key to use for extensions. If not specified, the default record name will be used.')
+    .option('--no-save-meta', 'Whether to skip saving the extension metadata to the records server. Defaults to true.', true)
+    .action(async (options) => {
+        if (!options.pattern) {
+            throw new Error('You must specify a pattern using the --pattern option.');
+        }
+        if (!options.sessionKey) {
+            throw new Error('You must specify a session key using the --session-key option.');
+        }
+
+        const extensions = await uploadAll({
+            ...options,
+            recordKey: options.extRecordKey ?? options.recordKey,
+        });
+        const availablePackages = extensions.map(e => e.meta);
+
+        const name = 'seed-bible';
+        const packagePath = path.resolve('packages', name);
+        console.log('Packaging:', packagePath);
+        const filePath = path.resolve('dist', `${name}.aux`);
+        execSync(`casualos pack-aux --overwrite "${packagePath}" "${filePath}"`, { stdio: 'inherit' });
+        const aux = await readFile(filePath, 'utf-8');
+        const auxJson = JSON.parse(aux);
+
+        const bots = Object.values(auxJson.state);
+        const packager = bots.find(b => b.tags.system === 'app.packager');
+        if (!packager) {
+            throw new Error('No app.packager bot found in the Seed Bible AUX.');
+        }
+        
+        packager.tags.availablePackages = availablePackages;
+        packager.tags.alwaysUseAvailablePackages = true;
+
+        await uploadPattern(options.pattern, auxJson, options.sessionKey, options.recordKey);
     });
 
 program.parse();

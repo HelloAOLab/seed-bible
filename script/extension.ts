@@ -78,6 +78,7 @@ program.command('upload')
     .argument('<name>', 'The name of the extension to upload.')
     .option('--session-key <sessionKey>', 'The session key to use for authentication.')
     .option('--record-key <recordKey>', 'The record key to use. If not specified, the default record name will be used.')
+    .option('--no-save-meta', 'Whether to skip saving the extension metadata to the records server. Defaults to true.', true)
     .action(async (name, options) => {
         await upload(name, options);
     });
@@ -86,6 +87,7 @@ program.command('upload-all')
     .description('Uploads all extensions to the records server.')
     .option('--session-key <sessionKey>', 'The session key to use for authentication.')
     .option('--record-key <recordKey>', 'The record key to use. If not specified, the default record name will be used.')
+    .option('--no-save-meta', 'Whether to skip saving the extension metadata to the records server. Defaults to true.', true)
     .action(async (options) => {
         await uploadAll(options);
     });

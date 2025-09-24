@@ -1,6 +1,6 @@
 
 // const { force } = that
-if (masks.availablePackages) return masks.availablePackages
+if (tags.availablePackages) return tags.availablePackages
 
 // const result = await os.listDataByMarker(tags.publicKey, 'publicRead');
 // os.log(result, 'for test')

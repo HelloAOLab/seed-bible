@@ -184,7 +184,7 @@ export async function downloadAndSave(name: string, fileName?: string) {
  * @param sessionKey The session key to use for authentication.
  * @param recordKey The record key to use. If not specified, the default record name will be used.
  */
-export async function uploadExtensionAux(meta: ExtensionMeta, aux: StoredAux, sessionKey: string, recordKey?: string) {
+export async function uploadExtensionAux(meta: ExtensionMeta, aux: StoredAux, sessionKey: string, recordKey: string, saveMeta: boolean) {
     const { fileUrl, sha256Hash } = await uploadFile(recordKey ?? uploadRecordName, aux, sessionKey, ['publicRead']);
     console.log('Extension File URL:', fileUrl);
 
@@ -199,17 +199,21 @@ export async function uploadExtensionAux(meta: ExtensionMeta, aux: StoredAux, se
     meta.source = fileUrl;
     meta.updatedAt = new Date().toISOString();
 
-    const recordResult = await client.recordData({
-        recordKey: recordKey ?? uploadRecordName,
-        address: meta.name,
-        data: meta,
-        markers: ['publicRead'],
-    }, {
-        headers
-    });
+    if (saveMeta) {
+        const recordResult = await client.recordData({
+            recordKey: recordKey ?? uploadRecordName,
+            address: meta.name,
+            data: meta,
+            markers: ['publicRead'],
+        }, {
+            headers
+        });
 
-    if (recordResult.success === false) {
-        throw new Error('Failed to record extension: ' + recordResult.errorCode + ' ' + recordResult.errorMessage);
+        if (recordResult.success === false) {
+            throw new Error('Failed to record extension: ' + recordResult.errorCode + ' ' + recordResult.errorMessage);
+        }
+    } else {
+        console.log('Skipping meta.');
     }
 
     console.log('Successfully recorded extension:', meta.name);
@@ -226,7 +230,7 @@ export async function uploadExtensionAux(meta: ExtensionMeta, aux: StoredAux, se
  * @param name The name of the extension to upload.
  * @param options The options for uploading the extension.
  */
-export async function upload(name: string, options: { sessionKey?: string; recordKey?: string }) {
+export async function upload(name: string, options: { sessionKey?: string; recordKey?: string, saveMeta?: boolean }) {
     if (!options.sessionKey) {
         throw new Error('You must specify a session key using the --session-key option.');
     }
@@ -244,14 +248,14 @@ export async function upload(name: string, options: { sessionKey?: string; recor
     const aux = await readFile(filePath, 'utf-8');
     const auxJson = JSON.parse(aux);
 
-    return await uploadExtensionAux(extensionData, auxJson, options.sessionKey, options.recordKey);
+    return await uploadExtensionAux(extensionData, auxJson, options.sessionKey, options.recordKey, options.saveMeta ?? true);
 }
 
 /**
  * Uploads all extensions in the packages folder to the records server.
  * @param options The options for uploading the extensions.
  */
-export async function uploadAll(options: { sessionKey?: string; recordKey?: string }) {
+export async function uploadAll(options: { sessionKey?: string; recordKey?: string, saveMeta?: boolean }) {
     const list = await readdir('packages');
     const extensions: string[] = [];
     for (const name of list) {
@@ -260,7 +264,11 @@ export async function uploadAll(options: { sessionKey?: string; recordKey?: stri
         }
     }
 
-    const extensionData = [];
+    const extensionData: {
+        fileUrl: string;
+        meta: ExtensionMeta;
+        name: string;
+    }[] = [];
     for (const name of extensions) {
         extensionData.push(await upload(name, options));
     }
