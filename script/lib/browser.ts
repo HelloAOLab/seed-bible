@@ -275,5 +275,5 @@ export async function loadSeedBible(page: Page) {
 
     console.log('Loaded!');
 
-    shout(page, 'onInstJoined');
+    shout(page, 'onInstJoined', null, { inst });
 }
