@@ -104,23 +104,23 @@ function Toolbar() {
                 showToolbar
             })
         } else {
-            thisBot.renderToolbar({
-                handleMouseLeaveContainer,
-                handleMouseUp,
-                sidebarMode,
-                navFunctions,
-                TabTools,
-                handleMouseEnter,
-                draggedIndex,
-                hasHeldRef,
-                holdTimeoutRef,
-                setIsDragging,
-                setOldList,
-                setDraggedIndex,
-                setElement,
-                isDragging,
-                showToolbar
-            });
+            // thisBot.renderToolbar({
+            //     handleMouseLeaveContainer,
+            //     handleMouseUp,
+            //     sidebarMode,
+            //     navFunctions,
+            //     TabTools,
+            //     handleMouseEnter,
+            //     draggedIndex,
+            //     hasHeldRef,
+            //     holdTimeoutRef,
+            //     setIsDragging,
+            //     setOldList,
+            //     setDraggedIndex,
+            //     setElement,
+            //     isDragging,
+            //     showToolbar
+            // });
         }
     }, [
         handleMouseLeaveContainer,
