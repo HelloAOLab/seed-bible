@@ -1,0 +1,23 @@
+{
+  "bots": [
+    {
+      "botTag": "colorLerper.main",
+      "notes": "colorLerper.main"
+    }
+  ],
+  "createdAt": "2025-08-27T14:37:35.321Z",
+  "description": "Provides functions to perform color lerps on bots.",
+  "id": 1756305455321,
+  "name": "Color Lerper",
+  "recordFile": {
+    "sha256Hash": "4308a12a797e79a789fdd01f0621852215c69bdcc37e9f530d95279721f7a17e",
+    "success": true,
+    "url": "https://auth-aux-aobot-prod-filesbucket-141297942820.s3.amazonaws.com/testingPublickKey/4308a12a797e79a789fdd01f0621852215c69bdcc37e9f530d95279721f7a17e.json"
+  },
+  "source": "https://auth-aux-aobot-prod-filesbucket-141297942820.s3.amazonaws.com/testingPublickKey/4308a12a797e79a789fdd01f0621852215c69bdcc37e9f530d95279721f7a17e.json",
+  "status": "active",
+  "type": "dependency",
+  "updatedAt": "2025-09-14T19:23:07.869Z",
+  "userAuth": "2225616f-cc40-4129-89a6-b8448743687b",
+  "version": "1.0.13"
+}
