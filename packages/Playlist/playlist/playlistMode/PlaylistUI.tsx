@@ -407,7 +407,7 @@ const Playlist = () => {
                 const nameOfSharer = globalThis.shareProfileName;
                 let currentProfileName = "Guest";
                 const authBot = await os.requestAuthBotInBackground();
-                if (authBot?.id) {
+                if (authBot.id) {
                     const data = await os.getData(tags.key, authBot.id);
                     if (data.success) {
                         const payload = data.data
@@ -454,7 +454,9 @@ const Playlist = () => {
             globalThis.makingPlaylist = false;
             globalThis.SetMediaURL && globalThis.SetMediaURL(null);
             globalThis.SetVideoSrc && globalThis.SetVideoSrc(null);
-
+            if (globalThis.RemoveNowBarApp) {
+                globalThis.RemoveNowBarApp('player-playlist-bar');
+            }
         }
     }, []);
 

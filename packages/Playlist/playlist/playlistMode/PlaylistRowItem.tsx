@@ -220,7 +220,7 @@ const PlaylistRowItem = ({ currentDateActive, shareProfileName, oldItemsMap = {}
         setLoading(true);
         let shareProfileName = "Guest";
         let shareProfilePic = defaultProfile;
-        await os.requestAuthBot();
+        const authBot = await os.requestAuthBotInBackground();
         if (authBot.id) {
             const data = await os.getData(tags.key, authBot.id);
             if (data.success) {
