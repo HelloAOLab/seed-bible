@@ -237,6 +237,7 @@ const Toolbar = () => {
                                             }}
                                             onMouseUp={(e) => {
                                                 os.log(e, 'elements')
+                                                e.stopPropagation();
                                                 clearTimeout(toolbarProps.holdTimeoutRef.current);
 
                                                 if (!toolbarProps.hasHeldRef.current && tool.onClick) {
