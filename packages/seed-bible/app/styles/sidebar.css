@@ -365,6 +365,7 @@
     height: 30px;
     width: 31px;
     color: white;
+    cursor: pointer;
 }
 
 .icon-button {
