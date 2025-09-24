@@ -244,15 +244,37 @@ await(async function mainInstaller(that) {
 
     // Load record/source
     const read = await web.get(data.recordFile?.url || data.source);
+    let bots;
+    if (typeof read.data === 'object' && 'version' in read.data) {
+        const aux = read.data;
+        // Handle aux files
+        if (aux.version === 1) {
+            bots = Object.values(aux.state);
+            for (let i = 1; i < bots.length; i++) {
+                const b = bots[i];
+                if (b.tags.system === data.mainBotTag) {
+                    const t = bots[0];
+                    bots[0] = b;
+                    bots[i] = t;
+                    break;
+                }
+            }
+        } else {
+            console.error('Unsupported AUX version:', aux.version);
+            return;
+        }
+    } else {
+        bots = read.data;
+    }
 
     // Push secondary bots first (await if async)
-    for (let i = 1; i < read.data.length; i++) {
-        const b = create(read.data[i], { space: 'local', forPackage: NameHolder });
+    for (let i = 1; i < bots.length; i++) {
+        const b = create(bots[i], { space: 'local', forPackage: NameHolder });
         // await thisBot.pushBots({ name, bot: b });
     }
 
     // Push the primary (first) bot
-    const bot = create(read.data[0], { space: 'local', forPackage: NameHolder });
+    const bot = create(bots[0], { space: 'local', forPackage: NameHolder });
     await thisBot.pushBots({ name, bot, first: true });
 
     // Give lifecycle hooks a chance to run (await sleeps!)
