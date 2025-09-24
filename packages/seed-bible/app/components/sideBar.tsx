@@ -172,16 +172,14 @@ function Tab({ el, activeTab, setActiveTab, setIsDragging, setElement, collapsed
                             // style={{ marginRight: '8px' }}
                             />
                         )}
-                        {tabsIcons && <span className="tabIcon">
-                            <span className="material-symbols-outlined">
-                                {el?.data?.type === 'book'
-                                    ? 'description'
-                                    : el?.data?.type === 'canvas'
-                                        ? 'deployed_code'
-                                        : el?.data?.type === 'map'
-                                            ? 'map'
-                                            : null}
-                            </span>
+                        {tabsIcons && <span className="tabIcon material-symbols-outlined">
+                            {el?.data?.type === 'book'
+                                ? 'description'
+                                : el?.data?.type === 'canvas'
+                                    ? 'deployed_code'
+                                    : el?.data?.type === 'map'
+                                        ? 'map'
+                                        : null}
                         </span>}
                         <span className="tabName">
                             {
@@ -812,7 +810,8 @@ function SideBar() {
                 {collapsed && <div style={{
                     display: 'flex', 'align-items': 'center', 'justify-content': 'center', width: '100%', "flex-direction": "column",
                     gap: "12px",
-                    "padding-top": "10px"
+                    "padding-top": "10px",
+                    cursor: 'pointer'
                 }}>
                     <span onclick={() => { setSidebarWidth(280); setCollapsed(false) }} class="material-symbols-outlined">
                         menu
