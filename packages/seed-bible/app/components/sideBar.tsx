@@ -812,7 +812,8 @@ function SideBar() {
                 {collapsed && <div style={{
                     display: 'flex', 'align-items': 'center', 'justify-content': 'center', width: '100%', "flex-direction": "column",
                     gap: "12px",
-                    "padding-top": "10px"
+                    "padding-top": "10px",
+                    cursor: 'pointer'
                 }}>
                     <span onclick={() => { setSidebarWidth(280); setCollapsed(false) }} class="material-symbols-outlined">
                         menu
