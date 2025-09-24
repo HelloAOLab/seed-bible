@@ -1,6 +1,6 @@
 import { program } from 'commander';
 import { readFile, rmdir, writeFile } from 'node:fs/promises';
-import { downloadAndSave, listExtensions, uploadPattern } from './lib/extension';
+import { downloadAndSave, listExtensions, uploadExtension } from './lib/extension';
 import path from 'node:path';
 import { execSync } from 'node:child_process';
 import { existsSync } from 'node:fs';
@@ -73,23 +73,30 @@ program.command('unpack-all')
         }
     });
 
-// program.command('upload')
-//     .description('Uploads the given pattern to the records server.')
-//     .argument('<package>', 'The name of the package to upload.')
-//     .option('-p, --pattern <pattern>', 'The name of the pattern to upload.')
-//     .option('--session-key <sessionKey>', 'The session key to use for authentication.')
-//     .option('--record-key <recordKey>', 'The record key to use. If not specified, the default record name will be used.')
-//     .action(async (name, options) => {
-//         if (!options.sessionKey) {
-//             throw new Error('You must specify a session key using the --session-key option.');
-//         }
-//         const packagePath = path.resolve('packages', name);
-//         console.log('Packaging:', packagePath);
-//         const filePath = path.resolve('dist', `${name}.aux`);
-//         execSync(`casualos pack-aux --overwrite "${packagePath}" "${filePath}"`, { stdio: 'inherit' });
-//         const aux = await readFile(filePath, 'utf-8');
-//         const auxJson = JSON.parse(aux);
-//         await uploadPattern(options.pattern || name, auxJson, options.sessionKey, options.recordKey);
-//     });
+program.command('upload')
+    .description('Uploads the given extension to the records server.')
+    .argument('<name>', 'The name of the extension to upload.')
+    .option('--session-key <sessionKey>', 'The session key to use for authentication.')
+    .option('--record-key <recordKey>', 'The record key to use. If not specified, the default record name will be used.')
+    .action(async (name, options) => {
+        if (!options.sessionKey) {
+            throw new Error('You must specify a session key using the --session-key option.');
+        }
+        const packagePath = path.resolve('packages', name);
+        const packageExtensionPath = path.resolve(packagePath, 'extension.json');
+        if (!existsSync(packageExtensionPath)) {
+            throw new Error('No extension.json file found in package: ' + packageExtensionPath);
+        }
+        const extensionData = JSON.parse(await readFile(packageExtensionPath, 'utf-8'));
+        const filePath = path.resolve('dist', `${extensionData.name}.aux`);
+
+        console.log('Packaging:', packagePath);
+        execSync(`casualos pack-aux --overwrite "${packagePath}" "${filePath}"`, { stdio: 'inherit' });
+
+        const aux = await readFile(filePath, 'utf-8');
+        const auxJson = JSON.parse(aux);
+
+        await uploadExtension(extensionData, auxJson, options.sessionKey, options.recordKey);
+    });
 
 program.parse();

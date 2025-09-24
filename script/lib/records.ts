@@ -1,0 +1,88 @@
+import { createRecordsClient } from '@casual-simulation/aux-records/RecordsClient';
+import hash from 'hash.js';
+import axios from 'axios';
+import stringify from '@casual-simulation/fast-json-stable-stringify';
+
+const headers = {
+    'Origin': 'https://auth.ao.bot',
+};
+
+const UNSAFE_HEADERS = new Set([
+    'accept-encoding',
+    'referer',
+    'sec-fetch-dest',
+    'sec-fetch-mode',
+    'sec-fetch-site',
+    'origin',
+    'sec-ch-ua-platform',
+    'user-agent',
+    'sec-ch-ua-mobile',
+    'sec-ch-ua',
+    'content-length',
+    'connection',
+    'host',
+]);
+
+/**
+ * Uploads a file to the records server. Returns the URL of the file that was uploaded.
+ * @param recordNameOrKey The name or key of the record to upload to.
+ * @param data The data to upload
+ * @param sessionKey The session key to use for authentication.
+ */
+export async function uploadFile(recordNameOrKey: string, data: object | string | number | boolean, sessionKey: string, markers: string[] = ['publicRead']) {
+    const client = createRecordsClient('https://api.ao.bot');
+
+    client.sessionKey = sessionKey;
+
+    const json = stringify(data);
+    const encodedData = new TextEncoder().encode(json);
+    const byteLength = encodedData.byteLength;
+    const mimeType = 'application/json';
+    const hash = getHash(encodedData);
+
+    const recordFileResult = await client.recordFile({
+        recordKey: recordNameOrKey,
+        fileSha256Hex: hash,
+        fileMimeType: mimeType,
+        fileByteLength: byteLength,
+        markers,
+    }, {
+        headers,
+    });
+
+    let fileUrl: string;
+    if (recordFileResult.success === false) {
+        if (recordFileResult.errorCode !== 'file_already_exists') {
+            throw new Error('Failed to record file: ' + recordFileResult.errorCode + ' ' + recordFileResult.errorMessage);
+        } else {
+            fileUrl = recordFileResult.existingFileUrl;
+        }
+    } else {
+        const method = recordFileResult.uploadMethod;
+        const url = fileUrl = recordFileResult.uploadUrl;
+        const headers = { ...recordFileResult.uploadHeaders };
+
+        for(const header of UNSAFE_HEADERS) {
+            delete headers[header];
+        }
+
+        const uploadResult = await axios.request({
+            method: method.toLowerCase(),
+            url: url,
+            headers: headers,
+            data: data,
+        });
+
+        if (uploadResult.status < 200 || uploadResult.status >= 300) {
+            throw new Error('Failed to upload file.');
+        } else {
+            console.log('Successfully uploaded AUX file.');
+        }
+    }
+
+    return fileUrl;
+}
+
+function getHash(buffer: Uint8Array): string {
+    return hash.sha256().update(buffer).digest('hex');
+}
