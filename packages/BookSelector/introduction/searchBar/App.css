@@ -819,10 +819,11 @@ input:checked+.slider:not(#slider):before {
 
 .close-sideBar {
     right: 0;
-    opacity: 0;
     height: 0;
     bottom: -80px !important;
     user-select: none;
+    visibility: hidden;
+    pointer-events: none;
 }
 
 
@@ -1151,6 +1152,8 @@ input:checked+.slider:not(#slider):before {
     .close-sideBar {
         right: -200px;
         opacity: 0;
+        visibility: hidden;
+        pointer-events: none;
     }
 
     .result-container {
