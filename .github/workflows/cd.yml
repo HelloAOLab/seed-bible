@@ -50,4 +50,4 @@ jobs:
           BRANCH_NAME: ${{ github.head_ref || github.ref_name }}
           SESSION_KEY: ${{ secrets.SESSION_KEY }}
           PATTERN_RECORD_KEY: ${{ secrets.RECORD_KEY }}
-          EXTENSION_RECORD_KEY
+          EXTENSION_RECORD_KEY: ${{ secrets.EXTENSION_RECORD_KEY }}
