@@ -1,0 +1,36 @@
+{
+  "author": "Sujan",
+  "configEditor": {
+    "app": "",
+    "author": "Sujan Barman",
+    "toolbarConfig": {
+      "hasToggle": "true",
+      "icon": "robot_2",
+      "label": "Assistant",
+      "run": "toggleVoiceAssistant"
+    }
+  },
+  "createdAt": "2025-09-17T11:11:09.060Z",
+  "dependencies": [],
+  "description": "AI Voice Assistant",
+  "id": 1758107469060,
+  "license": "MIT",
+  "linkedDependencies": [],
+  "mainBotTag": "aiApps.voiceAssistant",
+  "name": "Assistant",
+  "otherBots": [],
+  "recordFile": {
+    "errorCode": "file_already_exists",
+    "errorMessage": "The file has already been uploaded to https://auth-aux-aobot-prod-filesbucket-141297942820.s3.amazonaws.com/testingPublickKey/a1514653b038f72c99d457d518c1f93802eef053afde5bbe4cf577fc481f220b.json",
+    "existingFileName": "a1514653b038f72c99d457d518c1f93802eef053afde5bbe4cf577fc481f220b.json",
+    "existingFileUrl": "https://auth-aux-aobot-prod-filesbucket-141297942820.s3.amazonaws.com/testingPublickKey/a1514653b038f72c99d457d518c1f93802eef053afde5bbe4cf577fc481f220b.json",
+    "success": false,
+    "url": "https://auth-aux-aobot-prod-filesbucket-141297942820.s3.amazonaws.com/testingPublickKey/a1514653b038f72c99d457d518c1f93802eef053afde5bbe4cf577fc481f220b.json"
+  },
+  "source": "https://auth-aux-aobot-prod-filesbucket-141297942820.s3.amazonaws.com/testingPublickKey/a1514653b038f72c99d457d518c1f93802eef053afde5bbe4cf577fc481f220b.json",
+  "status": "active",
+  "type": "package",
+  "updatedAt": "2025-09-24T18:16:03.951Z",
+  "userAuth": "ba0d275f-d720-40a8-bbd0-c3c9632fd6e9",
+  "version": "1.0.5"
+}
