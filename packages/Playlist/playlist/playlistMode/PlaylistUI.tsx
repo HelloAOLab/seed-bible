@@ -534,6 +534,7 @@ const Playlist = () => {
                         <Button
                             secondary
                             onClick={() => {
+                                globalThis.IsPlaylistPlaying = false;
                                 thisBot.StopPlayingPlaylist();
                                 if (globalThis.PendingAction) {
                                     globalThis.PendingAction();
