@@ -1,0 +1,58 @@
+{
+  "author": "Sujan",
+  "configEditor": {
+    "app": "@getEventsInterface",
+    "author": "Sujan",
+    "toolbarConfig": {
+      "hasToggle": "true",
+      "icon": "database",
+      "label": "Events",
+      "to": "canvas"
+    }
+  },
+  "createdAt": "2025-09-02T11:14:35.192Z",
+  "dependencies": [
+    {
+      "depId": 1755208045661,
+      "name": "Canvas",
+      "type": "package"
+    },
+    {
+      "depId": 1756727334297,
+      "name": "CursorFollow",
+      "type": "package"
+    },
+    {
+      "depId": 1756727401073,
+      "name": "Eraser",
+      "type": "package"
+    },
+    {
+      "depId": 1756744150791,
+      "name": "GeoImporter",
+      "type": "package"
+    },
+    {
+      "depId": 1756742733511,
+      "name": "MindMap",
+      "type": "package"
+    }
+  ],
+  "description": "Shows recorded events",
+  "id": 1756811675192,
+  "license": "MIT",
+  "linkedDependencies": [],
+  "mainBotTag": "ext_canvas.eventTool",
+  "name": "Events",
+  "otherBots": [],
+  "recordFile": {
+    "sha256Hash": "11aead823e5b1b799742fa14ab8a634d75c4db8b67a3daf66ec047e156b590d3",
+    "success": true,
+    "url": "https://auth-aux-aobot-prod-filesbucket-141297942820.s3.amazonaws.com/testingPublickKey/11aead823e5b1b799742fa14ab8a634d75c4db8b67a3daf66ec047e156b590d3.json"
+  },
+  "source": "https://auth-aux-aobot-prod-filesbucket-141297942820.s3.amazonaws.com/testingPublickKey/11aead823e5b1b799742fa14ab8a634d75c4db8b67a3daf66ec047e156b590d3.json",
+  "status": "active",
+  "type": "package",
+  "userAuth": "ba0d275f-d720-40a8-bbd0-c3c9632fd6e9",
+  "version": "1.0.0"
+}
