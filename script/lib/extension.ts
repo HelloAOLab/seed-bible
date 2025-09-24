@@ -175,5 +175,5 @@ export async function uploadExtension(meta: unknown, aux: StoredAux, sessionKey:
         throw new Error('Failed to record extension: ' + recordResult.errorCode + ' ' + recordResult.errorMessage);
     }
 
-    console.log('Successfully recorded extension.');
+    console.log('Successfully recorded extension:', meta.name);
 }

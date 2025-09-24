@@ -3,7 +3,7 @@ import { readFile, rmdir, writeFile } from 'node:fs/promises';
 import { downloadAndSave, listExtensions, uploadExtension } from './lib/extension';
 import path from 'node:path';
 import { execSync } from 'node:child_process';
-import { existsSync } from 'node:fs';
+import { existsSync, readdir } from 'node:fs';
 
 const extensionNameMap = new Map([
 ]);
@@ -73,30 +73,53 @@ program.command('unpack-all')
         }
     });
 
+async function upload(name: string, options: { sessionKey?: string; recordKey?: string }) {
+    if (!options.sessionKey) {
+        throw new Error('You must specify a session key using the --session-key option.');
+    }
+    const packagePath = path.resolve('packages', name);
+    const packageExtensionPath = path.resolve(packagePath, 'extension.json');
+    if (!existsSync(packageExtensionPath)) {
+        throw new Error('No extension.json file found in package: ' + packageExtensionPath);
+    }
+    const extensionData = JSON.parse(await readFile(packageExtensionPath, 'utf-8'));
+    const filePath = path.resolve('dist', `${extensionData.name}.aux`);
+
+    console.log('Packaging:', packagePath);
+    execSync(`casualos pack-aux --overwrite "${packagePath}" "${filePath}"`, { stdio: 'ignore' });
+
+    const aux = await readFile(filePath, 'utf-8');
+    const auxJson = JSON.parse(aux);
+
+    await uploadExtension(extensionData, auxJson, options.sessionKey, options.recordKey);
+}
+
 program.command('upload')
     .description('Uploads the given extension to the records server.')
     .argument('<name>', 'The name of the extension to upload.')
     .option('--session-key <sessionKey>', 'The session key to use for authentication.')
     .option('--record-key <recordKey>', 'The record key to use. If not specified, the default record name will be used.')
     .action(async (name, options) => {
-        if (!options.sessionKey) {
-            throw new Error('You must specify a session key using the --session-key option.');
+        await upload(name, options);
+    });
+
+program.command('upload-all')
+    .description('Uploads all extensions to the records server.')
+    .option('--session-key <sessionKey>', 'The session key to use for authentication.')
+    .option('--record-key <recordKey>', 'The record key to use. If not specified, the default record name will be used.')
+    .action(async (name, options) => {
+
+        const list = await readdir('packages');
+        const extensions: string[] = [];
+        for (const name of list) {
+            if (existsSync(path.resolve('packages', name, 'extension.json'))) {
+                extensions.push(name);
+            }
         }
-        const packagePath = path.resolve('packages', name);
-        const packageExtensionPath = path.resolve(packagePath, 'extension.json');
-        if (!existsSync(packageExtensionPath)) {
-            throw new Error('No extension.json file found in package: ' + packageExtensionPath);
+
+        for (const name of extensions) {
+            await upload(name, options);
         }
-        const extensionData = JSON.parse(await readFile(packageExtensionPath, 'utf-8'));
-        const filePath = path.resolve('dist', `${extensionData.name}.aux`);
-
-        console.log('Packaging:', packagePath);
-        execSync(`casualos pack-aux --overwrite "${packagePath}" "${filePath}"`, { stdio: 'inherit' });
-
-        const aux = await readFile(filePath, 'utf-8');
-        const auxJson = JSON.parse(aux);
-
-        await uploadExtension(extensionData, auxJson, options.sessionKey, options.recordKey);
     });
 
 program.parse();
