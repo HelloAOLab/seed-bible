@@ -285,5 +285,6 @@ const Root = () => {
 if (configBot.tags.systemPortal) return
 configBot.tags.gridPortal = null;
 render(<Root />, document.body)
+document.body.style.overscrollBehaviorX = 'none';
 
 // os.compileApp('main', <Root />)
