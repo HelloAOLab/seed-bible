@@ -1,11 +1,12 @@
 if(thisBot.vars.appId)
 {
-    globalThis.RemoveApplication(thisBot.vars.appId)
+    globalThis.RemoveFloatingApp(thisBot.vars.appId)
     thisBot.vars.appId = null;
-    thisBot.ClearExperience()
+    // thisBot.ClearExperience()
 }
 else
 {
+    gridPortalBot.tags.portalCameraType = "perspective";
     const App = await thisBot.App();
     const id = globalThis.AddFloatingApp({
         App: <App />,
@@ -20,7 +21,11 @@ else
     if(thisBot.vars.appId && thisBot.vars.appId === id)
     {
         const isValidChapter = thisBot.vars.currentChapter != null && !isNaN(Number(thisBot.vars.currentChapter));
-        if(thisBot.vars.currentBook && isValidChapter) thisBot.UpdateTabernacleVisuals()
+        if(thisBot.vars.currentBook && isValidChapter) 
+        {
+            thisBot.FixBotsPosition();
+            thisBot.UpdateTabernacleVisuals()
+        }
         else console.warn("Book or Chapter not available at tabernacle.manager.DisplayApp");
     }
 }
