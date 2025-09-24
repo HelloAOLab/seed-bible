@@ -172,16 +172,14 @@ function Tab({ el, activeTab, setActiveTab, setIsDragging, setElement, collapsed
                             // style={{ marginRight: '8px' }}
                             />
                         )}
-                        {tabsIcons && <span className="tabIcon">
-                            <span className="material-symbols-outlined">
-                                {el?.data?.type === 'book'
-                                    ? 'description'
-                                    : el?.data?.type === 'canvas'
-                                        ? 'deployed_code'
-                                        : el?.data?.type === 'map'
-                                            ? 'map'
-                                            : null}
-                            </span>
+                        {tabsIcons && <span className="tabIcon material-symbols-outlined">
+                            {el?.data?.type === 'book'
+                                ? 'description'
+                                : el?.data?.type === 'canvas'
+                                    ? 'deployed_code'
+                                    : el?.data?.type === 'map'
+                                        ? 'map'
+                                        : null}
                         </span>}
                         <span className="tabName">
                             {
