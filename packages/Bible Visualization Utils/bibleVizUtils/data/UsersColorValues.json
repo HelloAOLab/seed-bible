@@ -1,0 +1,64 @@
+{
+  "ChapterColorOffset": {
+    "x": 0.075,
+    "y": 0.075,
+    "z": 0
+  },
+  "ChapterColorStep": {
+    "x": 0.275,
+    "y": 0,
+    "z": 0
+  },
+  "GroundedElementColorForm": "sphere",
+  "GroundedElementColorScales": {
+    "x": 0.25,
+    "y": 0.25,
+    "z": 0.125
+  },
+  "GroundedElementExtraUsersBackgroundScales": {
+    "x": 0.25,
+    "y": 0.25,
+    "z": 0.03
+  },
+  "GroundedElementExtraUsersContentScales": {
+    "x": 0.2,
+    "y": 0.2,
+    "z": 0.125
+  },
+  "InfoLabelColorForm": "circle",
+  "InfoLabelColorOffset": {
+    "x": 0.25,
+    "y": 0,
+    "z": 0.1
+  },
+  "InfoLabelColorScales": {
+    "x": 0.5,
+    "y": 0.5,
+    "z": 0
+  },
+  "InfoLabelColorStep": {
+    "x": 0.3,
+    "y": 0,
+    "z": 0.02
+  },
+  "InfoLabelExtraUsersBackgroundScales": {
+    "x": 0.5,
+    "y": 0.5,
+    "z": 0
+  },
+  "InfoLabelExtraUsersContentScales": {
+    "x": 0.4,
+    "y": 0.4,
+    "z": 0
+  },
+  "MapBookColorOffset": {
+    "x": 0.1,
+    "y": 0.1,
+    "z": 0
+  },
+  "MapBookColorStep": {
+    "x": 0.3,
+    "y": 0,
+    "z": 0
+  }
+}
