@@ -95,7 +95,7 @@ const Layout = ({ children }) => {
       </main>
       <div>
         <Toolbar />
-        <ToolbarReal />
+        
         <NowBar/>
       </div>
 
