@@ -1,6 +1,6 @@
 const authBot = await os.requestAuthBotInBackground();
 
-if (authBot.id) {
+if (authBot?.id) {
     const res = await os.recordData(authBot.id, 'bookmarks', { ...that.bookmarks }, {
         marker: 'bookmarks'
     });

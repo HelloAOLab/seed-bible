@@ -26,7 +26,7 @@ const AnnotationList = ({ currentOpenedBook, chapter, fetchingAnnotation, setAnn
     const onDelete = async (address) => {
         try {
             setLoading(true);
-            const deleteAddress = `${authBot.id}.${currentOpenedBook?.bookId}.${currentOpenedBook?.chapter}.${address}`;
+            const deleteAddress = `${authBot?.id}.${currentOpenedBook?.bookId}.${currentOpenedBook?.chapter}.${address}`;
 
             const res = await shout("chronicle_destroy", { address: deleteAddress })[0];
             const data = JSON.parse(JSON.stringify(res));
