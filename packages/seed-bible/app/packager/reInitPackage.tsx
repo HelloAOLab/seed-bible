@@ -1,5 +1,11 @@
-const { configEditor, bot, pkgName } = that
-const name = pkgName
+// const { configEditor, bot, pkgName } = that
+// const name = pkgName
+const { name } = that
+const pkgName = name
+const pkgData = masks[`${name}-data`]
+const configEditor = pkgData.configEditor
+const bot = getBot('system', pkgData.mainBotTag)
+
 // if(name !=="BookSelector")
 // return
 
@@ -38,7 +44,7 @@ async function SetUpConextMenu(contextOptions, bot, label) {
 async function SetUpApplication(applicationFunction, bot, toolbarConfig) {
     function generateAppItem({ icon, iconUrl, label, AppComponent }) {
         const panelKey = `${label?.toUpperCase()?.replace(/\s/g, '_')}_PANEL_ID`;
-        console.log('working',pkgName)
+        console.log('working', pkgName)
         const onClick = async () => {
             if (globalThis.makingApp === label) {
                 RemoveApplicationByID(globalThis[panelKey]);

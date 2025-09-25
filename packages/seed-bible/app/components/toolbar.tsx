@@ -317,6 +317,18 @@ export function Toolbar() {
                     margin-bottom: 16px;
                     font-size: 24px;
                 }
+                .tool-preview-page {
+                  display: flex;
+            align-items: center;
+            justify-content: center;
+            width: 48px;
+            height: 48px;
+            /* background: #f5f5f5; */
+            /* border: 2px solid #ddd; */
+            border-radius: 8px;
+            /* margin-bottom: 16px; */
+            font-size: 24px;
+    }
                 
                 .tool-controls {
                     display: flex;
