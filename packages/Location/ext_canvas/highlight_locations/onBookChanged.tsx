@@ -61,7 +61,7 @@ HighlightWords({
                                                 </div>,
                                                 title: `Canvas`,
                                                 position: { x: 200, y: 150 },
-                                                size: { width: 300, height: 150 }
+                                                size: { width: 525, height: 300 }
                                             });
                                         }
                                         let geoJson;
