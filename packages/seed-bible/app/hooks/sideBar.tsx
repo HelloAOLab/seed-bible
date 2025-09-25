@@ -1,4 +1,4 @@
-const { createContext, useContext, useState, useEffect } = os.appHooks;
+const { createContext, useContext, useState, useEffect, useLayoutEffect } = os.appHooks;
 import { getStyleOf } from 'app.styles.styler';
 import { DualScreenIcon, ThreeScreenIcon, QuadScreenIcon } from 'app.components.icons'
 const MyContext = createContext();
@@ -116,7 +116,7 @@ export function SideBarProvider({ children }) {
         }
     }, [popupSettings]);
 
-    useEffect(() => {
+    useLayoutEffect(() => {
         if (popupSettings || popupComponent) {
             runPopUpSettings({ ...popupSettings, sidebarContext: { closePopupSettings, position, popupComponent } })
         } else {
