@@ -12,7 +12,7 @@
  * thisBot.DeselectChapter({chapterData: someChapterData, setBibleAnimating: true});
  */
 
-const {info, setBibleAnimating = false} = that;
+const {info /*, setBibleAnimating = false*/} = that;
 
 const fixedInfo = Array.isArray(info) ? info : [info];
 

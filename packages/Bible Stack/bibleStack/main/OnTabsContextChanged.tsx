@@ -1,4 +1,4 @@
-const {activeTab, tabs} = that;
+// const {activeTab, tabs} = that;
 
 thisBot.vars.tabsContext = that;
 

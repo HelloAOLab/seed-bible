@@ -1,6 +1,4 @@
-const {source = "Unknown"} = that ?? {};
-
-if(thisBot.vars.stackBiblesData.lenght === 0 || !thisBot.vars.tabsContext || !thisBot.vars.tabsContext.activeTab) return;
+if(thisBot.vars.stackBiblesData.lenght === 0 || !thisBot.vars.tabsContext.activeTab) return;
 
 if(thisBot.masks.isBibleAnimating || thisBot.masks.isMakingTabsVizUpdate)
 {
@@ -93,7 +91,7 @@ if(activeTab)
                 currBookData.isSelected && 
                     currBookData.lastInteractionSource === BibleVizUtils.Data.tags.PieceDataSelectionSource.StackTabsVisualizationUpdate
         }
-        let bookToDeselectData = thisBot.vars.stackBooksData.find(getBookToDeselect) ?? thisBot.vars.stackSectionBooksData.find(getBookToDeselect)
+        const bookToDeselectData = thisBot.vars.stackBooksData.find(getBookToDeselect) ?? thisBot.vars.stackSectionBooksData.find(getBookToDeselect)
 
         const animation = (shouldResetStack ? thisBot.ResetBible({bibleData, speedMultiplier}) : (bookToDeselectData ? thisBot.DeselectBook({bookData: bookToDeselectData}) : os.sleep(1)))
         .then(() => {

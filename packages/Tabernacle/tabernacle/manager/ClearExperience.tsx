@@ -20,4 +20,5 @@ const keys = [
     "structure-front-curtain",
 ]
 
+// Development purposes
 thisBot.SetBotsVisibility({data: keys.map((key) => { return {key, value: MeshState.Hidden} })});
