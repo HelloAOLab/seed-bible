@@ -1056,7 +1056,8 @@ function Section({ heading, commandHighlight, setCommandHighlight, setLastSelect
                                 style={{
                                     cursor: part.highlightConfig.onClick ? 'pointer' : 'default',
                                     padding: '1px 2px',
-                                    borderRadius: '2px'
+                                    borderRadius: '2px',
+                                    marginRight: '-0.25em'
                                 }}
                                 {
                                 ...attributes
