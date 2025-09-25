@@ -149,6 +149,27 @@ export async function saveAnnotation(recordName: string, annotation: Annotation,
 }
 
 /**
+ * Deletes the given annotation from a record.
+ * @param recordName The name of the record that the annotation is stored in.
+ * @param annotation The annotation to delete.
+ */
+export async function deleteAnnotation(recordName: string, annotation: Annotation): Promise<void> {
+    if (typeof annotation.data === 'object' && 'url' in annotation.data) {
+        const result = await os.eraseFile(recordName, annotation.data.url);
+        if (result.success === false) {
+            console.error("Error deleting annotation file: ", result);
+            throw new Error("Error deleting annotation file");
+        }
+    }
+
+    const result = await os.eraseData(recordName, annotation.id);
+    if (result.success === false) {
+        console.error("Error deleting annotation: ", result);
+        throw new Error("Error deleting annotation");
+    }
+}
+
+/**
  * Loads the annotations that are recorded for a specific book and chapter.
  * @param recordName The name of the record that the annotations are stored in.
  * @param bookId The ID of the book that the annotations are for.
