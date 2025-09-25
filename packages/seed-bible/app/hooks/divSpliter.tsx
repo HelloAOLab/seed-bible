@@ -284,69 +284,6 @@ export const SplitApp = ({
         setPanelWidths(Array(count).fill(defaultWidth));
     }, [activeSpace, currentContainerWidth, count]);
 
-    if (isMobile && apps.length > 1) {
-        return (
-            <div
-                style={{
-                    display: 'flex',
-                    flexDirection: 'column',
-                    width: currentContainerWidth,
-                    height: currentContainerHeight,
-                    overflow: 'auto',
-                    userSelect: 'none',
-                    position: 'relative',
-                }}
-                onMouseMove={handleMouseMove}
-                onMouseUp={handleMouseUp}
-                onTouchMove={handleTouchMove}
-                onTouchEnd={handleTouchEnd}
-            >
-                <div
-                    key={apps[0]?.id}
-                    style={{
-                        height: topHeight,
-                        overflow: 'auto',
-                        padding: '0px',
-                        borderRadius: '12px', overflow: 'auto',
-                    }}
-                >
-                    {apps[0]?.App}
-                </div>
-
-                <div
-                    style={{
-                        height: 4,
-                        width: '100%',
-                        cursor: 'row-resize',
-                        // background: '',
-                        touchAction: 'none',
-                    }}
-                    onMouseDown={handleHorizontalMouseDown}
-                    onTouchStart={(e) => {
-                        const touch = e.touches[0];
-                        horizontalDragRef.current = {
-                            isDragging: true,
-                            startY: touch.clientY,
-                            startTopHeight: topHeight,
-                        };
-                    }}
-                />
-
-                <div
-                    key={apps[1]?.id}
-                    style={{
-                        flex: 1,
-                        overflow: 'auto',
-                        padding: '0px',
-                        borderRadius: '12px', overflow: 'auto',
-                    }}
-                >
-                    {apps[1]?.App}
-                </div>
-            </div>
-
-        );
-    }
     if (panelMode || screens.row) {
         return (
             <div
@@ -386,6 +323,7 @@ export const SplitApp = ({
             <div
                 style={{
                     display: 'flex',
+                    flexDirection: isMobile ? 'column' : 'row',
                     width: currentContainerWidth,
                     height: currentContainerHeight,
                     position: 'relative',
@@ -393,18 +331,60 @@ export const SplitApp = ({
                 }}
                 onMouseMove={handleMouseMove}
                 onMouseUp={handleMouseUp}
+                onTouchMove={handleTouchMove}
+                onTouchEnd={handleTouchEnd}
             >
-                <div className="scroller" key={apps[0]?.id} style={{ width: leftWidth, height: '100%', overflow: 'auto', padding: '0px', borderRadius: '12px', overflow: 'auto' }}>
-                    <div style={{ height: '100%', width: '100%', }}>
+                <div 
+                    className="scroller" 
+                    key={apps[0]?.id} 
+                    style={{ 
+                        width: isMobile ? '100%' : leftWidth, 
+                        height: isMobile ? topHeight : '100%', 
+                        overflow: 'auto', 
+                        padding: '0px', 
+                        borderRadius: '12px' 
+                    }}
+                >
+                    <div style={{ height: '100%', width: '100%' }}>
                         {apps[0]?.App}
                     </div>
                 </div>
+                
                 <div
-                    style={{ width: 4, cursor: 'col-resize', background: '' }}
-                    onMouseDown={handleVerticalMouseDown}
+                    style={{ 
+                        width: isMobile ? '100%' : 4, 
+                        height: isMobile ? 4 : '100%',
+                        cursor: isMobile ? 'row-resize' : 'col-resize', 
+                        background: '',
+                        touchAction: 'none'
+                    }}
+                    onMouseDown={isMobile ? handleHorizontalMouseDown : handleVerticalMouseDown}
+                    onTouchStart={(e) => {
+                        if (isMobile) {
+                            const touch = e.touches[0];
+                            // You'll need to define horizontalDragRef in your parent component
+                            // horizontalDragRef.current = {
+                            //     isDragging: true,
+                            //     startY: touch.clientY,
+                            //     startTopHeight: topHeight,
+                            // };
+                        }
+                    }}
                 />
-                <div className="scroller" key={apps[1]?.id} style={{ flex: 1, height: '100%', overflow: 'auto', padding: '0px', minWidth: '370px', borderRadius: '12px', overflow: 'auto' }}>
-                    <div style={{ height: '100%', width: '100%', }}>
+                
+                <div 
+                    className="scroller" 
+                    key={apps[1]?.id} 
+                    style={{ 
+                        flex: 1, 
+                        height: isMobile ? 'auto' : '100%', 
+                        overflow: 'auto', 
+                        padding: '0px', 
+                        minWidth: isMobile ? 'auto' : '370px', 
+                        borderRadius: '12px' 
+                    }}
+                >
+                    <div style={{ height: '100%', width: '100%' }}>
                         {apps[1]?.App}
                     </div>
                 </div>
@@ -482,7 +462,7 @@ export const SplitApp = ({
 
                 <div className="scroller" key={apps[3]?.id} style={{ position: 'absolute', left: leftWidth + 4, top: topHeight + 4, width: currentContainerWidth - leftWidth - 4, height: currentContainerHeight - topHeight - 4, overflow: 'auto', padding: '0px', borderRadius: '12px', overflow: 'auto' }}>
                     <div style={{ height: '100%', width: '100%', }}>
-                        {apps[4]?.App}
+                        {apps[3]?.App}
                     </div>
                 </div>
 

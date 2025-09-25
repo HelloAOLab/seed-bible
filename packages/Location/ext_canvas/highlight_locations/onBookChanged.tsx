@@ -1,0 +1,89 @@
+// os.log(HighlightWords,'HighlightWords')
+await os.sleep(200)
+// globalThis.ClearAllWordHighlights()
+
+
+let locations = tags.locations;
+
+let locationsArr = [];
+
+for (let i = 0; i < that.content.length; i++) {
+    let verses = that.content[i].verses;
+    for (let j = 0; j < verses.length; j++) {
+        let verse = verses[j].text.split(" ")
+        for (let word of verse) {
+            if (locations[word.replace(/[^a-zA-Z]/g, '').toLowerCase()]) {
+                locationsArr.push(word.replace(/[^a-zA-Z]/g, '').toLowerCase())
+            }
+        }
+    }
+}
+
+HighlightWords({
+    words: [...locationsArr],
+    color: "#000", // text color
+    backgroundColor: "#ffeb3b", // highlight color
+    createAttributes: (book, chapter, verse) => {
+        return {
+            onMouseEnter: async (e) => {
+                e.target.style.color = "#0D47A1";
+                e.target.style.fontWeight = "400";
+            },
+            onMouseLeave: async (e) => {
+                setTimeout(() => {
+                    e.target.style.color = "";
+                    e.target.style.fontWeight = "";
+                    e.target.style.fontStyle = "";
+                }, 2000)
+            },
+            onContextMenu: async (e) => {
+                e.stopPropagation();
+                e.preventDefault();
+                console.log(book, chapter, verse)
+                shout('onVeresRightClick', {
+                    verseNumber: verse.verseNumber,
+                    text: verse.text,
+                    chapter,
+                    book,
+                    highlighted: true,
+                    extraContext: [
+                        {
+                            address: "Locations",
+                            label: "Locations",
+                            items: [
+                                {
+                                    icon: <span class="material-symbols-outlined">location_on</span>,
+                                    title: () => 'Open Location',
+                                    onClick: async () => {
+                                        if (!globalThis.activeCanvasId) {
+                                            globalThis.AddFloatingApp({
+                                                App: <div className="mainCanvas" style={{ width: '100%', height: '100%', 'border-radius': '16px' }}>
+                                                </div>,
+                                                title: `Canvas`,
+                                                position: { x: 200, y: 150 },
+                                                size: { width: 300, height: 150 }
+                                            });
+                                        }
+                                        let geoJson;
+                                        let locationBot = getBot("system", "ext_canvas.highlight_locations")
+                                        let placeData = locationBot.tags.locations[verse.text.toLowerCase()];
+                                        if (placeData.place === placeData.geojson) {
+                                            geoJson = await web.get(`https://raw.githubusercontent.com/Bored-Wizard/isreal_geojson/main/${placeData.geojson}.geojson`);
+                                        } else {
+                                            geoJson = await web.get(`https://raw.githubusercontent.com/openbibleinfo/Bible-Geocoding-Data/main/geometry/${placeData.geojson}.geojson`);
+                                        }
+                                        if (geoJson.status === 200) {
+                                            whisper(getBot('system', 'ext_geoImporter.importer'), "loadMap", { file: geoJson.data, loadGame: that?.loadGame ? true : false, openOverlay: true })
+                                        } else {
+                                            os.toast("Something went wrong while retrieving the data");
+                                        }
+                                    }
+                                }
+                            ]
+                        }
+                    ]
+                });
+            }
+        }
+    }
+});

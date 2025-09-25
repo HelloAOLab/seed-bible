@@ -5,6 +5,7 @@
   padding: 30px 0%;
   overflow: scroll;
   border-radius: 12px;
+  user-select: text;
 
 }
 
@@ -24,26 +25,27 @@
   gap: 10px;
   width: fit-content;
   padding: 0 5px; */
-      position: absolute;
-    background-color: white;
-    padding: 0px 15px;
-    min-width: 169px;
-    border: 1px solid #0000001a;
-    border-radius: 12px;
-    box-shadow: 0 10px 16px rgba(0, 0, 0, 0.1);
-    height: 35px;
-    display: flex
-;
-    justify-content: center;
-    align-items: center;
-    flex-direction: row;
+  position: absolute;
+  background-color: white;
+  padding: 0px 15px;
+  min-width: 169px;
+  border: 1px solid #0000001a;
+  border-radius: 12px;
+  box-shadow: 0 10px 16px rgba(0, 0, 0, 0.1);
+  height: 35px;
+  display: flex;
+  justify-content: center;
+  align-items: center;
+  flex-direction: row;
 
 }
-.scroller > div:first-child {
+
+.scroller>div:first-child {
   /* min-height: 100px; */
   /* height: 100px !important;  */
   /* overrides inline height: '100%' */
 }
+
 /* Default: hide scrollbar completely */
 .scroller::-webkit-scrollbar {
   /* display: none; */

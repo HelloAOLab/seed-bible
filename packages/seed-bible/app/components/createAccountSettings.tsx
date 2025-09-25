@@ -19,13 +19,13 @@ const CreateAccountSettings = () => {
             os.log(address, 'address');
             setLocation(address)
         } else {
-            os.tost("Could not get geolocation");
+            os.log("Could not get geolocation");
         }
     }
     async function init() {
         getLocation()
-        await os.requestAuthBot()
-        if (!authBot.id)
+        const authBot = await os.requestAuthBotInBackground();
+        if (!authBot?.id)
             return
         const data = await os.getData(tags.key, authBot.id);
         if (data.success) {

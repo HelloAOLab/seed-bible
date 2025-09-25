@@ -1,0 +1,1 @@
+return that.charAt(0).toUpperCase() + that.slice(1);

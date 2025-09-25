@@ -10,8 +10,6 @@ globalThis.MeshState = {
     Translucent: "Translucent"
 }
 
-gridPortalBot.tags.portalCameraType = "perspective";
-
 const keys = [
     "altar-of-sacrifice",
     "ark-of-covenant",

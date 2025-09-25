@@ -26,7 +26,24 @@ await(async function mainInstaller(that) {
     const NameHolder = name;
     globalThis[`${name}_package`] = {};
 
-    const result = await os.getData(tags.publicKey, name);
+    let data;
+    if (tags.alwaysUseAvailablePackages && tags.availablePackages) {
+        data = tags.availablePackages.find(p => p.name === name);
+    }
+
+    if (!data) {
+        const result = await os.getData(tags.publicKey, name);
+        if (result.success === false) {
+            throw new Error(`Failed to get package data for ${name}: ${result.errorCode} ${result.errorMessage}`);
+        }
+        data = result.data;
+    }
+
+    if (!data) {
+        throw new Error('No package data found for ' + name);
+    }
+
+    
     let errorInstall = false;
 
     async function SetUpConextMenu(contextOptions, bot, label) {
@@ -154,7 +171,7 @@ await(async function mainInstaller(that) {
             icon: !toolbarConfig?.iconUrl ? toolbarConfig.icon : toolbarConfig.iconUrl,
             label: toolbarConfig.label,
             hasToggle: true,
-            active: true,
+            active: typeof toolbarConfig?.active === 'boolean' ? toolbarConfig.active : true,
             onHold: runFn,
             onClick: runFn,
             isImg: !!toolbarConfig?.iconUrl,
@@ -212,77 +229,95 @@ await(async function mainInstaller(that) {
         }
     }
 
-    if (result.success) {
-        const data = result.data;
+    // Uninstall previous version first
+    thisBot.uninstallPackage({ ...data, address: name });
 
-        // Uninstall previous version first
-        thisBot.uninstallPackage({ ...data, address: name });
-
-        // Install dependencies and WAIT for them
-        if (data.dependencies?.length) {
-            await InstallDependencies(data.dependencies);
-            // No need to sleep if the functions above are correctly awaited
-            // await os.sleep(5000);
-        }
-
-        os.log(data);
-        setTagMask(thisBot, `${name}-data`, data, 'local');
-
-        // Load record/source
-        const read = await web.get(data.recordFile?.url || data.source);
-
-        // Push secondary bots first (await if async)
-        for (let i = 1; i < read.data.length; i++) {
-            const b = create(read.data[i], { space: 'local', forPackage: NameHolder });
-            // await thisBot.pushBots({ name, bot: b });
-        }
-
-        // Push the primary (first) bot
-        const bot = create(read.data[0], { space: 'local', forPackage: NameHolder });
-        await thisBot.pushBots({ name, bot, first: true });
-
-        // Give lifecycle hooks a chance to run (await sleeps!)
-        // Only keep sleeps if actually needed by environment
-        // await os.sleep(2000);
-
-        if (bot?.tags?.onInstJoined) {
-            try { await bot.onInstJoined(); } catch { /* swallow */ }
-        }
-        if (bot?.tags?.onEggHatch) {
-            try { await bot.onEggHatch(); } catch { /* swallow */ }
-        }
-
-        // Context menu
-        if (data?.configEditor?.contextMenuConfig) {
-            const contextOptions = data.configEditor.contextMenuConfig.optionsIsOn.replace('@', '');
-            await SetUpConextMenu(contextOptions, bot, data.configEditor.toolbarConfig?.label);
-        }
-
-        // Toolbar / App
-        if (data?.configEditor?.toolbarConfig?.run) {
-            await SetUpApplicationWithoutApp(data.configEditor.toolbarConfig, bot);
-        } else if (data?.configEditor?.app && data?.configEditor?.toolbarConfig) {
-            const applicationFunction = data.configEditor.app.replace('@', '');
-            await SetUpApplication(applicationFunction, bot, data.configEditor.toolbarConfig);
-        }
-
-        // Tab app
-        if (data?.configEditor?.tabConfig?.app) {
-            await SetUpTabApplication(data.configEditor.tabConfig, bot);
-        }
-
-        // Ensure installedPackages tag is updated (FIX: use masks not tags)
-        if (!masks.installedPackages) {
-            setTagMask(thisBot, 'installedPackages', [name], 'local');
-        } else if (!masks.installedPackages.includes(name)) {
-            setTagMask(thisBot, 'installedPackages', [...masks.installedPackages, name], 'local');
-        }
-
-        if (errorInstall) {
-            // optional uninstall / rollback here if you want
-        }
-
-        const { feedback } = that;
-        if (feedback) feedback();
+    // Install dependencies and WAIT for them
+    if (data.dependencies?.length) {
+        await InstallDependencies(data.dependencies);
+        // No need to sleep if the functions above are correctly awaited
+        // await os.sleep(5000);
     }
+
+    os.log(data);
+    setTagMask(thisBot, `${name}-data`, data, 'local');
+
+    // Load record/source
+    const read = await web.get(data.recordFile?.url || data.source);
+    let bots;
+    if (typeof read.data === 'object' && 'version' in read.data) {
+        const aux = read.data;
+        // Handle aux files
+        if (aux.version === 1) {
+            bots = Object.values(aux.state);
+            for (let i = 1; i < bots.length; i++) {
+                const b = bots[i];
+                if (b.tags.system === data.mainBotTag) {
+                    const t = bots[0];
+                    bots[0] = b;
+                    bots[i] = t;
+                    break;
+                }
+            }
+        } else {
+            console.error('Unsupported AUX version:', aux.version);
+            return;
+        }
+    } else {
+        bots = read.data;
+    }
+
+    // Push secondary bots first (await if async)
+    for (let i = 1; i < bots.length; i++) {
+        const b = create(bots[i], { space: 'local', forPackage: NameHolder });
+        // await thisBot.pushBots({ name, bot: b });
+    }
+
+    // Push the primary (first) bot
+    const bot = create(bots[0], { space: 'local', forPackage: NameHolder });
+    await thisBot.pushBots({ name, bot, first: true });
+
+    // Give lifecycle hooks a chance to run (await sleeps!)
+    // Only keep sleeps if actually needed by environment
+    // await os.sleep(2000);
+
+    if (bot?.tags?.onInstJoined) {
+        try { await bot.onInstJoined(); } catch { /* swallow */ }
+    }
+    if (bot?.tags?.onEggHatch) {
+        try { await bot.onEggHatch(); } catch { /* swallow */ }
+    }
+
+    // Context menu
+    if (data?.configEditor?.contextMenuConfig) {
+        const contextOptions = data.configEditor.contextMenuConfig.optionsIsOn.replace('@', '');
+        await SetUpConextMenu(contextOptions, bot, data.configEditor.toolbarConfig?.label);
+    }
+
+    // Toolbar / App
+    if (data?.configEditor?.toolbarConfig?.run) {
+        await SetUpApplicationWithoutApp(data.configEditor.toolbarConfig, bot);
+    } else if (data?.configEditor?.app && data?.configEditor?.toolbarConfig) {
+        const applicationFunction = data.configEditor.app.replace('@', '');
+        await SetUpApplication(applicationFunction, bot, data.configEditor.toolbarConfig);
+    }
+
+    // Tab app
+    if (data?.configEditor?.tabConfig?.app) {
+        await SetUpTabApplication(data.configEditor.tabConfig, bot);
+    }
+
+    // Ensure installedPackages tag is updated (FIX: use masks not tags)
+    if (!masks.installedPackages) {
+        setTagMask(thisBot, 'installedPackages', [name], 'local');
+    } else if (!masks.installedPackages.includes(name)) {
+        setTagMask(thisBot, 'installedPackages', [...masks.installedPackages, name], 'local');
+    }
+
+    if (errorInstall) {
+        // optional uninstall / rollback here if you want
+    }
+
+    const { feedback } = that;
+    if (feedback) feedback();
 })(that); // self-invoking to run immediately

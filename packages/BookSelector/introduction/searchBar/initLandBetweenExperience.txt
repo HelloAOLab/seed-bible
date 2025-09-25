@@ -1,0 +1,8 @@
+const landBetweenManager = getBot("isLandBetweenManager", true);
+
+setTag(configBot, "gridPortal", null);
+setTag(configBot, "mapPortal", "theLandBetween");
+shout("clearUi")
+landBetweenManager.initializeLandBetween();
+setTagMask(introductionManager, "isASectionMakingTourGuide", true);
+setTagMask(thisBot, "isInBibleAnimation", true);

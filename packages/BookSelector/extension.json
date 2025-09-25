@@ -1,0 +1,34 @@
+{
+  "author": "Sujan",
+  "configEditor": {
+    "app": "",
+    "author": "Sujan Barman",
+    "toolbarConfig": {
+      "hasToggle": "true",
+      "icon": "book",
+      "iconUrl": "https://res.cloudinary.com/dfbtwwa8p/image/upload/v1755365776/717a8527988cca7e0bdc9449ec68581a8400b977_vqc7mx.png",
+      "label": "Books",
+      "run": "togglePanel"
+    }
+  },
+  "createdAt": "2025-08-28T03:00:19.215Z",
+  "dependencies": [],
+  "description": "",
+  "id": 1756350019215,
+  "license": "MIT",
+  "linkedDependencies": [],
+  "mainBotTag": "introduction.searchBar",
+  "name": "BookSelector",
+  "otherBots": [],
+  "recordFile": {
+    "sha256Hash": "9090e838c4b88b2aa3d2ca1f072af112111152be386f64d60e2b411d583658be",
+    "success": true,
+    "url": "https://auth-aux-aobot-prod-filesbucket-141297942820.s3.amazonaws.com/testingPublickKey/9090e838c4b88b2aa3d2ca1f072af112111152be386f64d60e2b411d583658be.json"
+  },
+  "source": "https://auth-aux-aobot-prod-filesbucket-141297942820.s3.amazonaws.com/testingPublickKey/9090e838c4b88b2aa3d2ca1f072af112111152be386f64d60e2b411d583658be.json",
+  "status": "active",
+  "type": "package",
+  "updatedAt": "2025-09-23T12:29:19.179Z",
+  "userAuth": "ba0d275f-d720-40a8-bbd0-c3c9632fd6e9",
+  "version": "1.0.20"
+}

@@ -8,7 +8,7 @@ export async function packageSingle(pkg: string, stdio: 'inherit' | 'ignore' = '
         console.log(`Packaging: ${pkg}`);
         const packagePath = path.resolve('packages', pkg);
         const distPath = path.resolve('dist', `${pkg}.aux`);
-        execSync(`casualos pack-aux --overwrite ${packagePath} ${distPath}`, { stdio });
+        execSync(`casualos pack-aux --overwrite "${packagePath}" "${distPath}"`, { stdio });
         console.log(`Wrote: ${distPath}`);
         return true;
     } catch (e) {
@@ -17,10 +17,10 @@ export async function packageSingle(pkg: string, stdio: 'inherit' | 'ignore' = '
     }
 }
 
-export async function packageAll() {
+export async function packageAll(stdio: 'inherit' | 'ignore' = 'inherit') {
     const packages = await listPackages();
     for (const pkg of packages) {
-        await packageSingle(pkg);
+        await packageSingle(pkg, stdio);
     }
 }
 
@@ -50,7 +50,7 @@ export function cleanupAux(aux: BotsState) {
 
     for (const id in aux) {
         const bot = aux[id];
-        if (bot.space !== 'shared' || bot.tags.aoIgnore) {
+        if (!['shared', 'local'].includes(bot.space) || bot.tags.aoIgnore) {
             continue;
         }
         result[id] = {

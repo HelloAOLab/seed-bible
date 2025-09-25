@@ -1,0 +1,1 @@
+sendIcon({ type: 'text_tool', trayColor: "#ffffff", dragerColor: "#000000", action: null });

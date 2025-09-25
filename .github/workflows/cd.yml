@@ -1,0 +1,53 @@
+# This workflow will do a clean installation of node dependencies, cache/restore them, build the source code and run tests across different versions of node
+# For more information see: https://docs.github.com/en/actions/automating-builds-and-tests/building-and-testing-nodejs
+
+name: Continous Deployment
+
+on:
+  push:
+    branches:
+      - 'releases/**'
+      - 'develop'
+
+jobs:
+  build:
+    runs-on: ubuntu-latest
+
+    strategy:
+      matrix:
+        node-version: [20.x]
+        # See supported Node.js release schedule at https://nodejs.org/en/about/releases/
+
+    steps:
+      - uses: actions/checkout@v4
+      - name: Use Node.js ${{ matrix.node-version }}
+        uses: actions/setup-node@v4
+        with:
+          node-version: ${{ matrix.node-version }}
+      - name: Install
+        run: |
+          corepack enable
+          pnpm install
+      - name: Package
+        run: |
+          pnpm package:seed-bible
+          pnpm package:playlist
+      - name: Upload AUXes
+        uses: actions/upload-artifact@v4
+        with:
+          path: 'dist/*.aux'
+          if-no-files-found: error
+      - name: Publish SeedBible Pattern
+        run: |
+          if [[ "$BRANCH_NAME" == "develop" ]]; then
+            PATTERN_NAME="SeedBibleDev"
+            pnpm pattern publish-seed-bible -p "$PATTERN_NAME" --session-key "$SESSION_KEY" --record-key "$PATTERN_RECORD_KEY" --ext-record-key "$EXTENSION_RECORD_KEY" --no-save-meta
+          else
+            PATTERN_NAME=${BRANCH_NAME:9}
+            pnpm pattern publish-seed-bible -p "$PATTERN_NAME" --session-key "$SESSION_KEY" --record-key "$PATTERN_RECORD_KEY" --ext-record-key "$EXTENSION_RECORD_KEY"
+          fi
+        env:
+          BRANCH_NAME: ${{ github.head_ref || github.ref_name }}
+          SESSION_KEY: ${{ secrets.SESSION_KEY }}
+          PATTERN_RECORD_KEY: ${{ secrets.RECORD_KEY }}
+          EXTENSION_RECORD_KEY: ${{ secrets.EXTENSION_RECORD_KEY }}

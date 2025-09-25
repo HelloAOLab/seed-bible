@@ -1,0 +1,41 @@
+{
+  "author": "Sujan",
+  "configEditor": {
+    "app": "@",
+    "author": "Sujan",
+    "contextMenuConfig": {
+      "optionsIsOn": "@options"
+    },
+    "toolbarConfig": {
+      "hasToggle": "true",
+      "icon": "location_on",
+      "label": "Locations"
+    }
+  },
+  "createdAt": "2025-09-10T14:53:53.604Z",
+  "dependencies": [
+    {
+      "depId": 1756744150791,
+      "name": "GeoImporter",
+      "type": "package"
+    }
+  ],
+  "description": "Add the contexts to words in bible to show locations",
+  "id": 1757516033604,
+  "license": "MIT",
+  "linkedDependencies": [],
+  "mainBotTag": "ext_canvas.highlight_locations",
+  "name": "Location",
+  "otherBots": [],
+  "recordFile": {
+    "sha256Hash": "b0eace1b72087a335d443ed5fede3ba90f64c841db28daa2442a0de6a797dc2c",
+    "success": true,
+    "url": "https://auth-aux-aobot-prod-filesbucket-141297942820.s3.amazonaws.com/testingPublickKey/b0eace1b72087a335d443ed5fede3ba90f64c841db28daa2442a0de6a797dc2c.json"
+  },
+  "source": "https://auth-aux-aobot-prod-filesbucket-141297942820.s3.amazonaws.com/testingPublickKey/b0eace1b72087a335d443ed5fede3ba90f64c841db28daa2442a0de6a797dc2c.json",
+  "status": "active",
+  "type": "package",
+  "updatedAt": "2025-09-23T21:59:25.185Z",
+  "userAuth": "ba0d275f-d720-40a8-bbd0-c3c9632fd6e9",
+  "version": "1.0.4"
+}

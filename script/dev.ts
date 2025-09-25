@@ -1,54 +1,29 @@
 import puppeteer from 'puppeteer';
-import { cleanupAux, listPackages, packageSingle, readPackage } from './lib/package.js';
-import { initPage, loadAOBot as loadInst, addAux, shout, getPrimarySim, execScript } from './lib/browser.js';
+import { cleanupAux, listPackages, packageAll, readPackage } from './lib/package.js';
+import { initPage, loadInst, addAux, shout, getPrimarySim, execScript, getPackageData, registerPackage, waitForPackage, loadSeedBible } from './lib/browser.js';
 import { rmdir, writeFile } from 'node:fs/promises';
 import path from 'node:path';
 import { execSync } from 'node:child_process';
 import repl from 'node:repl';
+import { v4 as uuid } from 'uuid';
 import type { StoredAux } from '../typings/AuxLibraryDefinitions.js';
-
-await packageSingle('seed-bible', 'ignore');
 
 const browser = await puppeteer.launch({
     headless: false,
     defaultViewport: null,
 });
-const page = await browser.newPage();
 
-await initPage(page);
+let page: puppeteer.Page;
 
-const inst = 'myDevInst';
+async function startPage() {
+    await packageAll('ignore');
+    
+    page = await browser.newPage();
 
-await loadInst(page, inst);
-
-console.log('Uploading Seed Bible...');
-
-await addAux(page, await readPackage('seed-bible'));
-
-let packages: string[];
-if (process.argv.some(pkg => pkg === 'all')) {
-    packages = await listPackages();
-} else {
-    packages = process.argv.slice(2);
+    await loadSeedBible(page);
 }
 
-for (const pkg of packages) {
-    if (pkg === 'seed-bible') {
-        continue;
-    }
-    console.log(`Adding ${pkg}...`);
-    const aux = await readPackage(pkg);
-    await addAux(page, aux);
-}
-
-console.log('Loaded!');
-
-// await execScript(page, `
-//     const packager = getBot('system', 'app.packager');
-//     packager.masks.mainPackages = [];
-// `);
-
-await shout(page, 'onEggHatch');
+await startPage();
 
 process.on('exit', async () => {
     if (browser.connected) {
@@ -122,7 +97,15 @@ server.defineCommand('save', {
 
                 const packagePath = path.resolve('packages', pkg);
                 await rmdir(packagePath, { recursive: true, force: true });
-                execSync(`casualos unpack-aux --overwrite ${filePath} ./packages`, { stdio: 'ignore' });
+                execSync(`casualos unpack-aux --overwrite "${filePath}" ./packages`, { stdio: 'ignore' });
+
+                const data = await getPackageData(page, pkg);
+                if (!data) {
+                    console.warn('No package data found for', pkg);
+                } else {
+                    const extensionPath = path.resolve('packages', pkg, 'extension.json');
+                    await writeFile(extensionPath, JSON.stringify(data, null, 2), 'utf-8');
+                }
             };
             
             const seedBible = {
@@ -170,23 +153,42 @@ server.defineCommand('save', {
                 }
             }
 
-            if (!packageName || packageName === 'seed-bible' || packageName === 'all') {
-                await unpack('seed-bible', seedBible);
-            }
+            console.log('found Packages', packageAuxes.map(p => p.name));
 
-            for (const pkg of packageAuxes) {
-                if (packageName === pkg.name || packageName === 'all') {
+            if (!packageName || packageName === 'seed-bible') {
+                await unpack('seed-bible', seedBible);
+            } else if (packageName === 'all') {
+                console.log('Saving All');
+                await unpack('seed-bible', seedBible);
+                for (const pkg of packageAuxes) {
                     await unpack(pkg.name, pkg.aux);
                 }
+            } else {
+                const pkg = packageAuxes.find(p => p.name === packageName);
+                if (pkg) {
+                    await unpack(pkg.name, pkg.aux);
+                } else {
+                    console.log(`Package ${packageName} not found.`);
+                }
             }
-
-            console.log(`Saved!`);
+            
             server.displayPrompt();
         } finally {
             sim.dispose();
         }
     }
 });
+
+server.defineCommand('reload', {
+    help: 'Reload the page with changes from disk',
+    action: async () => {
+        if (page) {
+            await page.close();
+        }
+        await startPage();
+        server.displayPrompt();
+    },
+})
 
 // server.defineCommand('load', {
 //     help: 'Load a package',

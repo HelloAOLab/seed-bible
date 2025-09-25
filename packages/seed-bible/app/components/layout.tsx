@@ -59,6 +59,9 @@ const Layout = ({ children }) => {
       onClick={() => {
         closePopupSettings()
       }}
+      onMouseUp={() => {
+        globalThis?.setOpenSidebar(false)
+      }}
       className="layout" style={{ background: 'white' }}>
 
       <style>{`${spaces.find(e => e.id === activeSpace)?.settings?.text?.root || exportTextConfigToCSS(defaultTextConfig)}`}</style>
@@ -92,7 +95,7 @@ const Layout = ({ children }) => {
       </main>
       <div>
         <Toolbar />
-        <ToolbarReal />
+        
         <NowBar/>
       </div>
 

@@ -1,0 +1,29 @@
+{
+  "AditionalBookScaleOnHover": 0.1,
+  "BookScales": {
+    "x": 1.83,
+    "y": 2.8
+  },
+  "ChapterFrontDepth": 0.01,
+  "ChapterFrontSelectedDepth": 0.25,
+  "ChapterHeight": 0.5,
+  "ChapterWidth": 0.5,
+  "CoverScales": {
+    "x": 2.53,
+    "y": 3.85,
+    "z": 0.1
+  },
+  "EmptySectionShadowScaleZ": 1,
+  "MinChapterBackDepth": 0.5,
+  "SectionAditionalScaleOnHover": 0.1,
+  "SectionDesiredScaleZRatio": 0.02,
+  "SectionScales": {
+    "x": 2.04,
+    "y": 3.12
+  },
+  "TestamentScales": {
+    "x": 2.27,
+    "y": 3.47,
+    "z": 0.825
+  }
+}

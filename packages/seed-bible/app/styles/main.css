@@ -1,7 +1,7 @@
 html , body {
     position: fixed !important;;
-    left: -2px !important;;
-    top: -2px !important;
+    left: -10px !important;;
+    top: -10px !important;
 }
 
 :root {
@@ -75,7 +75,7 @@ html , body {
     display: flex;
     flex-direction: row;
     justify-content: space-between;
-    align-items: center;
+    /* align-items: center; */
     overflow: hidden;
     position: absolute;
     left: 0;

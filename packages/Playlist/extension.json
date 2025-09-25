@@ -1,0 +1,54 @@
+{
+  "author": "Kushagra Karki",
+  "configEditor": {
+    "app": "@tryInitPlaylistMaker",
+    "author": "Kushagra Karki",
+    "contextMenuConfig": {
+      "optionsIsOn": "@options"
+    },
+    "tabConfig": {
+      "title": "Playlist Kushagra"
+    },
+    "toolbarConfig": {
+      "hasToggle": "true",
+      "icon": "playlist_play",
+      "label": "Playlist"
+    }
+  },
+  "createdAt": "2025-09-22T14:09:46.695Z",
+  "dependencies": [
+    {
+      "depId": 1757954638673,
+      "name": "Bible Layout 2D",
+      "type": "package"
+    },
+    {
+      "depId": 1758170494705,
+      "name": "Painter",
+      "type": "package"
+    }
+  ],
+  "description": "Playlist in Seed Bible.",
+  "id": 1758550186695,
+  "license": "MIT",
+  "linkedDependencies": [],
+  "mainBotTag": "playlist.playlistMode",
+  "name": "Playlist",
+  "otherBots": [
+    {
+      "description": "Temp Storage Bot.",
+      "tag": "storage.tempStorageBot"
+    }
+  ],
+  "recordFile": {
+    "sha256Hash": "5180d2852c2d244d720a40fe2b2bce2949d65290868acb6516f905667a1c1098",
+    "success": true,
+    "url": "https://auth-aux-aobot-prod-filesbucket-141297942820.s3.amazonaws.com/testingPublickKey/5180d2852c2d244d720a40fe2b2bce2949d65290868acb6516f905667a1c1098.json"
+  },
+  "source": "https://auth-aux-aobot-prod-filesbucket-141297942820.s3.amazonaws.com/testingPublickKey/5180d2852c2d244d720a40fe2b2bce2949d65290868acb6516f905667a1c1098.json",
+  "status": "active",
+  "type": "package",
+  "updatedAt": "2025-09-24T16:01:00.789Z",
+  "userAuth": "1a434287-4a50-4122-a7e9-f3c02382f7a6",
+  "version": "1.0.10"
+}

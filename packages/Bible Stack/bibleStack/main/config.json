@@ -5,6 +5,9 @@
         "icon": "stacks",
         "label": "Bible Stack",
         "hasToggle": "true",
-        "run": "DisplayApp"
+        "run": "DisplayApp",
+        "active": false,
+        "showInPageToolbar": true,
+        "showInStarterToolbar": true
     }
 }

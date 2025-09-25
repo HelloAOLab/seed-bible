@@ -1,0 +1,10 @@
+{
+    "author": "Sujan Barman",
+    "app": "",
+    "toolbarConfig": {
+        "icon": "robot_2",
+        "label": "Assistant",
+        "hasToggle": "true",
+        "run": "toggleVoiceAssistant"
+    }
+}

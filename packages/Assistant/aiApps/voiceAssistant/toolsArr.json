@@ -1,0 +1,129 @@
+[
+    {
+        "type": "function",
+        "name": "getTime",
+        "description": "Get the current time",
+        "parameters": {
+            "type": "object",
+            "properties": {}
+        }
+    },
+    {
+        "type": "function",
+        "name": "analyzeScreen",
+        "description": "Capture the user's screen and analyze what is visible in it. or if user asks about explanation about something on screen",
+        "parameters": {
+            "type": "object",
+            "properties": {
+                "userSpecification": {
+                    "type": "string",
+                    "description": "Extra instructions from the user about what to focus on in the analysis of the pageContainer"
+                }
+            },
+            "required": [
+                "userSpecification"
+            ]
+        }
+    },
+    {
+        "type": "function",
+        "name": "openChapter",
+        "description": "Opens a chapter in bible or if the user asks to go back to where he was then also fire this function remembering which chapter and book he was on",
+        "parameters": {
+            "type": "object",
+            "properties": {
+                "bookId": {
+                    "type": "string",
+                    "description": "book id"
+                },
+                "chapter": {
+                    "type": "string",
+                    "description": "chapter number"
+                }
+            },
+            "required": [
+                "bookId",
+                "chapter"
+            ]
+        }
+    },
+    {
+        "type": "function",
+        "name": "openPreviousChapter",
+        "description": "Opens previous chapter in bible",
+        "parameters": {
+            "type": "object",
+            "properties": {}
+        }
+    },
+    {
+        "type": "function",
+        "name": "openNextChapter",
+        "description": "Opens next chapter in bible",
+        "parameters": {
+            "type": "object",
+            "properties": {}
+        }
+    },
+    {
+        "type": "function",
+        "name": "highlight",
+        "description": "If the user asks to highlight any words or verses on screen then highlight those after scanning the screen.",
+        "parameters": {
+            "type": "object",
+            "properties": {
+                "highlightWord": {
+                    "type": "string",
+                    "description": "the words user says to highlight a word"
+                },
+                "highlightVerse": {
+                    "type": "number",
+                    "description": "the verse user says to highlight a verse"
+                },
+                "color": {
+                    "type": "string",
+                    "description": "the color user suggests"
+                }
+            },
+            "required": []
+        }
+    },
+    {
+        "type": "function",
+        "name": "clearHighlight",
+        "description": "Clears all the highlighted words from the page",
+        "parameters": {
+            "type": "object",
+            "properties": {}
+        }
+    },
+    {
+        "type": "function",
+        "name": "highlightLocation",
+        "description": "whenever the user asks to highlight location",
+        "parameters": {
+            "type": "object",
+            "properties": {
+                "color": {
+                    "type": "string",
+                    "description": "the color user suggests"
+                }
+            }
+        }
+    },
+    {
+        "type": "function",
+        "name": "getChapterContext",
+        "description": "whenever user ask what he is reading. what he reads can change so execute this function everytime he ask what he is reading",
+        "parameters": {
+            "type": "object",
+            "properties": {
+                "verse": {
+                    "type": "number",
+                    "description": "the verse the user asks to highlight"
+                }
+            },
+            "required": []
+        }
+    }
+]

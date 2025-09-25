@@ -1,4 +1,4 @@
-if(thisBot.tags.typeOfPiece === BibleVizUtils.Data.tags.BiblePieceType.StackSectionShadow) 
+if (thisBot.tags.typeOfPiece === BibleVizUtils.Data.tags.BiblePieceType.StackSectionShadow) 
 {
     console.log(`[Debug] UserPresenceUpdate`, {
         "!thisBot.tags.isBaseInfoLabelTransformer": !thisBot.tags.isBaseInfoLabelTransformer,

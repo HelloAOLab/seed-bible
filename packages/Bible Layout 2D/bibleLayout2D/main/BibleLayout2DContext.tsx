@@ -286,7 +286,7 @@ export const BibleLayout2DProvider = ({
     const subscribeToHistoryUpdate = useCallback((callback) => {
         historyUpdateListeners.current.add(callback);
     }, [])
-    globalThis.bibleLayout2DHistoryUpdate = useCallback(() => {
+    globalThis.mapPanelHistoryUpdate = useCallback(() => {
         historyUpdateListeners.current.forEach((currFunction) => {currFunction?.()});
     }, [])
 
@@ -317,7 +317,7 @@ export const BibleLayout2DProvider = ({
     const maxChapterHeatCount = useMemo(() => {return 5}, []);
 
     // useEffect(() => {
-    //     return () => {globalThis.bibleLayout2DHistoryUpdate = null}
+    //     return () => {globalThis.mapPanelHistoryUpdate = null}
     // }, [])
 
     const handleUserButtonClick = useCallback(({user}) => {

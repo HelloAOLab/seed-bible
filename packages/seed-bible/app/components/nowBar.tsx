@@ -1,6 +1,5 @@
 const { useState, useRef, useEffect } = os.appHooks
 
-
 function NowBar() {
     const [apps, setApps] = useState([]);
     const [currentIndex, setCurrentIndex] = useState(0);
@@ -8,7 +7,18 @@ function NowBar() {
     const [dragOffset, setDragOffset] = useState(0);
     const [startY, setStartY] = useState(0);
     const [startDragIndex, setStartDragIndex] = useState(0);
+    const [windowWidth, setWindowWidth] = useState(typeof window !== 'undefined' ? window.innerWidth : 400);
     const cardRef = useRef(null);
+
+    // Track window resize for responsive behavior
+    useEffect(() => {
+        const handleResize = () => {
+            setWindowWidth(window.innerWidth);
+        };
+
+        window.addEventListener('resize', handleResize);
+        return () => window.removeEventListener('resize', handleResize);
+    }, []);
 
     // Global function to add apps to NowBar
     useEffect(() => {
@@ -58,6 +68,37 @@ function NowBar() {
         };
     }, [apps]);
 
+    // Responsive dimensions based on screen size
+    const getDimensions = () => {
+        const isMobile = windowWidth <= 768;
+        const isTablet = windowWidth > 768 && windowWidth <= 1024;
+
+        if (isMobile) {
+            return {
+                width: Math.min(windowWidth - 32, 350), // 16px margin on each side
+                height: 150, // Proportional height with max
+                bottom: windowWidth <= 480 ? '70px' : '75px', // Adjust for very small screens
+                borderRadius: '16px'
+            };
+        } else if (isTablet) {
+            return {
+                width: 380,
+                height: 140,
+                bottom: '80px',
+                borderRadius: '18px'
+            };
+        } else {
+            return {
+                width: 400,
+                height: 150,
+                bottom: '85px',
+                borderRadius: '20px'
+            };
+        }
+    };
+
+    const dimensions = getDimensions();
+
     const handleStart = (clientY) => {
         setIsDragging(true);
         setStartY(clientY);
@@ -75,8 +116,11 @@ function NowBar() {
         const clampedOffset = Math.max(-cardHeight, Math.min(cardHeight, deltaY));
         setDragOffset(clampedOffset);
 
-        // Auto-swipe when reaching 100px threshold during drag
-        if (Math.abs(clampedOffset) >= 100) {
+        // Adjust auto-swipe threshold based on screen size
+        const autoSwipeThreshold = windowWidth <= 768 ? 60 : 100;
+
+        // Auto-swipe when reaching threshold during drag
+        if (Math.abs(clampedOffset) >= autoSwipeThreshold) {
             if (clampedOffset > 0 && currentIndex < apps.length - 1) {
                 // Swipe up - move current app to end of stack
                 const currentApp = apps[currentIndex];
@@ -98,7 +142,8 @@ function NowBar() {
 
         setIsDragging(false);
 
-        const threshold = 30; // Reduced threshold for easier swiping
+        // Responsive threshold - smaller on mobile for easier swiping
+        const threshold = windowWidth <= 768 ? 20 : 30;
 
         console.log('Drag ended:', { dragOffset, threshold, currentIndex }); // Debug log
 
@@ -165,11 +210,14 @@ function NowBar() {
     return (
         <div style={{
             position: 'fixed',
-            bottom: '85px',
+            bottom: dimensions.bottom,
             left: '50%',
             transform: 'translateX(-50%)',
-            width: '400px',
-            height: '150px'
+            width: `${dimensions.width}px`,
+            height: `${dimensions.height}px`,
+            zIndex: '999999',
+            // Ensure it doesn't overflow on very small screens
+            maxWidth: '95vw'
         }}>
             {apps.map((app, index) => {
                 const isVisible = index >= currentIndex;
@@ -178,15 +226,26 @@ function NowBar() {
                 if (!isVisible) return null;
 
                 const isTopApp = index === currentIndex;
+
+                // Responsive scaling - less dramatic on mobile
+                const baseScale = windowWidth <= 768 ? 0.03 : 0.05;
+                const dragScale = windowWidth <= 768 ? 0.0003 : 0.0005;
+                const opacityScale = windowWidth <= 768 ? 0.002 : 0.003;
+
                 const transform = isTopApp
-                    ? `translateY(${-dragOffset}px) scale(${1 - Math.abs(dragOffset) * 0.0005})`
-                    : `scale(${1 - stackIndex * 0.05})`;
+                    ? `translateY(${-dragOffset}px) scale(${1 - Math.abs(dragOffset) * dragScale})`
+                    : `scale(${1 - stackIndex * baseScale})`;
 
                 const opacity = isTopApp
-                    ? Math.max(0.3, 1 - Math.abs(dragOffset) * 0.003)
+                    ? Math.max(0.3, 1 - Math.abs(dragOffset) * opacityScale)
                     : Math.max(0.3, 1 - stackIndex * 0.2);
 
                 const zIndex = apps.length - stackIndex;
+
+                // Responsive shadow - smaller on mobile
+                const shadowBlur = windowWidth <= 768 ?
+                    `0 ${3 + stackIndex}px ${8 + stackIndex * 3}px rgba(0,0,0,0.2)` :
+                    `0 ${5 + stackIndex * 2}px ${15 + stackIndex * 5}px rgba(0,0,0,0.2)`;
 
                 return (
                     <div
@@ -202,8 +261,8 @@ function NowBar() {
                             left: '0',
                             width: '100%',
                             height: '100%',
-                            borderRadius: '20px',
-                            boxShadow: `0 ${5 + stackIndex * 2}px ${15 + stackIndex * 5}px rgba(0,0,0,0.2)`,
+                            borderRadius: dimensions.borderRadius,
+                            boxShadow: shadowBlur,
                             cursor: isTopApp ? (isDragging ? 'grabbing' : 'grab') : 'default',
                             transform,
                             opacity,
@@ -211,7 +270,10 @@ function NowBar() {
                             transition: isDragging ? 'none' : 'transform 0.3s ease, opacity 0.3s ease',
                             overflow: 'hidden',
                             userSelect: 'none',
-                            touchAction: 'none'
+                            touchAction: 'none',
+                            // Prevent text selection on mobile
+                            WebkitUserSelect: 'none',
+                            WebkitTouchCallout: 'none'
                         }}
                     >
                         {app.component}
