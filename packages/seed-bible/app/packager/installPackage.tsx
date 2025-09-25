@@ -46,6 +46,30 @@ await(async function mainInstaller(that) {
     
     let errorInstall = false;
 
+    function getBotsFromData(aux) {
+        if (typeof aux === 'object' && 'version' in aux) {
+            // Handle aux files
+            if (aux.version === 1) {
+                const bots = Object.values(aux.state);
+                for (let i = 1; i < bots.length; i++) {
+                    const b = bots[i];
+                    if (b.tags.system === data.mainBotTag) {
+                        const t = bots[0];
+                        bots[0] = b;
+                        bots[i] = t;
+                        break;
+                    }
+                }
+
+                return bots;
+            } else {
+                throw new Error('Unsupported AUX version: ' + aux.version);
+            }
+        } else {
+            return bots;
+        }
+    }
+
     async function SetUpConextMenu(contextOptions, bot, label) {
         try {
             const items = await bot[`${contextOptions}`]();
@@ -130,6 +154,10 @@ await(async function mainInstaller(that) {
             };
         }
 
+        if (!bot[applicationFunction]) {
+            os.log('Error in extension (function not found)', name, { bot, applicationFunction });
+            throw new Error('Unable to install extension:' + name + ' (function not found: ' + applicationFunction + ')');
+        }
         // Get the component (support both sync and async factories)
         const App = await bot[applicationFunction]();
 
@@ -194,7 +222,7 @@ await(async function mainInstaller(that) {
                     const read = await web.get(data.source);
 
                     // If pushBots is async, await each push
-                    for (const botDef of read.data) {
+                    for (const botDef of getBotsFromData(read.data)) {
                         const b = create({ ...botDef, space: 'local' }, {
                             forPackage: NameHolder
                         });
@@ -244,28 +272,7 @@ await(async function mainInstaller(that) {
 
     // Load record/source
     const read = await web.get(data.recordFile?.url || data.source);
-    let bots;
-    if (typeof read.data === 'object' && 'version' in read.data) {
-        const aux = read.data;
-        // Handle aux files
-        if (aux.version === 1) {
-            bots = Object.values(aux.state);
-            for (let i = 1; i < bots.length; i++) {
-                const b = bots[i];
-                if (b.tags.system === data.mainBotTag) {
-                    const t = bots[0];
-                    bots[0] = b;
-                    bots[i] = t;
-                    break;
-                }
-            }
-        } else {
-            console.error('Unsupported AUX version:', aux.version);
-            return;
-        }
-    } else {
-        bots = read.data;
-    }
+    const bots = getBotsFromData(read.data);
 
     // Push secondary bots first (await if async)
     for (let i = 1; i < bots.length; i++) {
