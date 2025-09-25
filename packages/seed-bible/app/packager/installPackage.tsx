@@ -32,7 +32,7 @@ await(async function mainInstaller(that) {
     }
 
     if (!data) {
-        const result = await os.getData(tags.publicKey, name);
+        const result = await os.getData(tags.recordName, name);
         if (result.success === false) {
             throw new Error(`Failed to get package data for ${name}: ${result.errorCode} ${result.errorMessage}`);
         }
@@ -188,7 +188,7 @@ await(async function mainInstaller(that) {
             if (type === 'package') {
                 await thisBot.installPackage({ name: depName });
             } else if (type === 'dependency') {
-                const result = await os.getData(tags.publicKey, depName);
+                const result = await os.getData(tags.recordName, depName);
                 if (result?.success) {
                     const data = result.data;
                     const read = await web.get(data.source);

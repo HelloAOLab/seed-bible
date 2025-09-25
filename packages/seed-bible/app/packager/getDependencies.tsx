@@ -1,5 +1,5 @@
 
-// const result = await os.listDataByMarker(tags.publicKey, ['publicRead']);
+// const result = await os.listDataByMarker(tags.recordName, ['publicRead']);
 // os.log(result, 'for test')
 // if (result.success) {
 //     return result.items
@@ -9,7 +9,7 @@
 let lastAddress;
 const items = [];
 while (true) {
-    const result = await os.listDataByMarker(tags.publicKey, 'publicRead', lastAddress);
+    const result = await os.listDataByMarker(tags.recordName, 'publicRead', lastAddress);
     if (result.success) {
         items.push(...result.items);
         if (result.items.length > 0) {

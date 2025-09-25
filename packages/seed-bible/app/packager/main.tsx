@@ -238,7 +238,7 @@ const PackageManager = () => {
     async function getMyPackages() {
         return
         try {
-            const result = await os.listDataByMarker(tags.publicKey, 'publicRead');
+            const result = await os.listDataByMarker(tags.recordName, 'publicRead');
             if (result.success) {
                 const filtered = result.items
                     .map(data => ({
@@ -256,7 +256,7 @@ const PackageManager = () => {
     async function loadAvailablePackages() {
         return
         try {
-            const result = await os.listDataByMarker(tags.publicKey, 'publicRead');
+            const result = await os.listDataByMarker(tags.recordName, 'publicRead');
             if (result.success) {
                 setAvailablePackages(result.items);
             }
@@ -411,7 +411,7 @@ const PackageManager = () => {
     const deletePackage = async (address) => {
         try {
             setLoading(true);
-            const result = await os.eraseData(tags.publicKey, address);
+            const result = await os.eraseData(tags.recordName, address);
             if (result.success) {
                 showNotification('Package deleted successfully!');
                 await getMyPackages();

@@ -2,7 +2,7 @@
 // const { force } = that
 if (tags.availablePackages) return tags.availablePackages
 
-// const result = await os.listDataByMarker(tags.publicKey, 'publicRead');
+// const result = await os.listDataByMarker(tags.recordName, 'publicRead');
 // os.log(result, 'for test')
 // if (result.success) {
 //     const output = result.items.filter(data => data.data.type === 'package').map(data => ({ data: (data.data), address: data.address }))
@@ -20,7 +20,7 @@ return output
 // let lastAddress;
 // let items = [];
 // while (true) {
-//     const result = await os.listDataByMarker(tags.publicKey, 'publicRead', lastAddress);
+//     const result = await os.listDataByMarker(tags.recordName, 'publicRead', lastAddress);
 //     if (result.success) {
 //         items.push(...result.items);
 //         if (result.items.length > 0) {
