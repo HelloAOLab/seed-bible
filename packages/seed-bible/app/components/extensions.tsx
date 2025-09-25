@@ -162,7 +162,7 @@ const Extensions = () => {
             </div>
 
             <div className="mediumText">Settings for your Extensions in the page</div>
-            <div style={{height:'500px',overflow:'scroll'}} className="extensions-tools">
+            <div style={{overflow:'scroll'}} className="extensions-tools">
             {
                 packages && [...packages].map((item) => {
                     let data;
@@ -188,6 +188,7 @@ const Extensions = () => {
 
 
 const containerStyle = {
+    marginBottom: '8px',
     backgroundColor: '#f8f9fa',
     border: '1px solid #e1e4e8',
     borderRadius: '8px',
