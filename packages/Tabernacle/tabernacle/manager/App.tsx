@@ -8,7 +8,7 @@ const App = () => {
     const { floatingApps } = useMouseMove()
 
     useEffect(() => {
-        shout("OnMouseMoveContextChanged", { floatingApps })
+        thisBot.OnMouseMoveContextChanged({ floatingApps })
     }, [ floatingApps ])
 
     return <div style={{width: "100%", height: "100%"}}>
