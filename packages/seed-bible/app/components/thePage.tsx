@@ -333,7 +333,7 @@ function ThePage({ tab: T, setPanalApp, panelId, setEnableEditor, setData, data 
                         backgroundColor: config.backgroundColor || "#ffeb3b",
                         onClick: config.onClick || null,
                         timestamp: Date.now(),
-                        createAttributes: config?.createAttributes ? config.createAttributes : () => {return {}}
+                        createAttributes: config?.createAttributes ? config.createAttributes : () => { return {} }
                     };
                 });
             });
@@ -712,7 +712,7 @@ function PageToolbar({ path = 'showInPageToolbar' }) {
         <div className="thePageToolbar">
             {
                 visibleTools.map(tool => (
-                    <div onClick={tool.onClick} className="tool-preview" key={tool.label}>
+                    <div onClick={tool.onClick} className="tool-preview-page" key={tool.label}>
                         {tool.isImg ? (
                             <img
                                 src={tool.icon}

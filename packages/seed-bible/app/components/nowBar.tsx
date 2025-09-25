@@ -100,6 +100,8 @@ function NowBar() {
     const dimensions = getDimensions();
 
     const handleStart = (clientY) => {
+        if(apps.length === 1)
+        return
         setIsDragging(true);
         setStartY(clientY);
         setDragOffset(0);
