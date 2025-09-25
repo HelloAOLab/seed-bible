@@ -1,7 +1,7 @@
-// os.log(HighlightWords,'HighlightWords')
-await os.sleep(200)
-// globalThis.ClearAllWordHighlights()
 
+await os.sleep(200)
+if (!that.content)
+    return
 
 let locations = tags.locations;
 

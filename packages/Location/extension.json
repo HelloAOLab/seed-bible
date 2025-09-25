@@ -28,14 +28,14 @@
   "name": "Location",
   "otherBots": [],
   "recordFile": {
-    "sha256Hash": "aae4ddd094ec65135698b9843fd2b11c9f0d4ce8c023f75b9ce17bbcc541b6f0",
+    "sha256Hash": "ec311bf67ef2e5de8dd61834fe52f24d7fb5188faba9cda5928ab255533a65a7",
     "success": true,
-    "url": "https://auth-aux-aobot-prod-filesbucket-141297942820.s3.amazonaws.com/testingPublickKey/aae4ddd094ec65135698b9843fd2b11c9f0d4ce8c023f75b9ce17bbcc541b6f0.json"
+    "url": "https://auth-aux-aobot-prod-filesbucket-141297942820.s3.amazonaws.com/testingPublickKey/ec311bf67ef2e5de8dd61834fe52f24d7fb5188faba9cda5928ab255533a65a7.json"
   },
-  "source": "https://auth-aux-aobot-prod-filesbucket-141297942820.s3.amazonaws.com/testingPublickKey/aae4ddd094ec65135698b9843fd2b11c9f0d4ce8c023f75b9ce17bbcc541b6f0.json",
+  "source": "https://auth-aux-aobot-prod-filesbucket-141297942820.s3.amazonaws.com/testingPublickKey/ec311bf67ef2e5de8dd61834fe52f24d7fb5188faba9cda5928ab255533a65a7.json",
   "status": "active",
   "type": "package",
-  "updatedAt": "2025-09-25T16:30:13.804Z",
+  "updatedAt": "2025-09-25T18:17:32.364Z",
   "userAuth": "1946d76e-bdde-47ec-81ec-497255d8a972",
-  "version": "1.0.5"
+  "version": "1.0.7"
 }
