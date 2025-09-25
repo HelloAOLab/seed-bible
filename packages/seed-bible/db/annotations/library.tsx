@@ -170,6 +170,26 @@ export async function deleteAnnotation(recordName: string, annotation: Annotatio
 }
 
 /**
+ * Gets a single annotation by its ID.
+ * @param recordName The name of the record.
+ * @param annotationId The ID of the annotation to retrieve.
+ */
+export async function getAnnotation(recordName: string, annotationId: string): Promise<Annotation | null> {
+    const result = await os.getData(recordName, annotationId);
+
+    if (result.success === false) {
+        if (result.errorCode === 'data_not_found') {
+            return null;
+        } else {
+            console.error("Error getting annotation: ", result);
+            return null;
+        }
+    }
+
+    return result.data as Annotation;
+}
+
+/**
  * Loads the annotations that are recorded for a specific book and chapter.
  * @param recordName The name of the record that the annotations are stored in.
  * @param bookId The ID of the book that the annotations are for.
