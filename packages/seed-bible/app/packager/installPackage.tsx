@@ -155,6 +155,10 @@ await(async function mainInstaller(that) {
             };
         }
 
+        if (!bot[applicationFunction]) {
+            os.log('Error in extension (function not found)', name, { bot, applicationFunction });
+            throw new Error('Unable to install extension:' + name + ' (function not found: ' + applicationFunction + ')');
+        }
         // Get the component (support both sync and async factories)
         const App = await bot[applicationFunction]();
 
