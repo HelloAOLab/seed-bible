@@ -179,7 +179,7 @@ function SubComponent({ editMode, onAddFiles, dragState, recordingType, setRecor
             return <div className="input-conainter-type" >
                 <MiniTextEditor
                     id={EditorId}
-                    minHeight={60}
+                    minHeight={120}
                     placeholderHTML={name}
                     initialHtml={name}
                     onChange={(html) => {

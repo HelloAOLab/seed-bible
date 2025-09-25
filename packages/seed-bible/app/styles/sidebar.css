@@ -1,12 +1,13 @@
 .sidebar-1 {
     padding: 15px;
     width: 280px;
-    height: 100dvh;
+    /* height: 100dvh; */
     position: relative;
     /* transition: width 0.3s ease; */
     background-color: var(--themeSideMenu);
-    padding-top: 50px;
-    /* padding-top: 50px; */
+
+    font-family: 'Segoe UI', Arial, sans-serif;
+    
 }
 
 .customCheckboxWrapper {
@@ -170,7 +171,7 @@
     /* height: 100%; */
 }
 
-.addIconCollapsed {
+.material-symbols-outlined.addIconCollapsed {
     width: 50px;
     background: var(--whitegray-color);
     border-radius: 5px;
@@ -178,7 +179,7 @@
     height: 45px;
     align-items: center;
     justify-content: center;
-    display: flex
+    display: flex;
 }
 
 .tabs-collapsed {
@@ -365,6 +366,7 @@
     height: 30px;
     width: 31px;
     color: white;
+    cursor: pointer;
 }
 
 .icon-button {

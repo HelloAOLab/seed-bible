@@ -201,7 +201,7 @@ export async function uploadPattern(name: string, aux: StoredAux, sessionKey: st
     console.log('Successfully uploaded pattern:', name);
     const url = new URL(`https://ao.bot/`);
     url.searchParams.set('pattern', name);
-    console.log(`View it at: ${url.href}`);
+    console.log(`View it at: ${url.href}&noGridPortal`);
 }
 
 function getHash(buffer: Uint8Array): string {

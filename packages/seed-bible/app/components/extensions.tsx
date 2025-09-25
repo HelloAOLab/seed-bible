@@ -162,9 +162,19 @@ const Extensions = () => {
             </div>
 
             <div className="mediumText">Settings for your Extensions in the page</div>
-            <div style={{height:'500px',overflow:'scroll'}} className="extensions-tools">
+            <div style={{overflow:'scroll'}} className="extensions-tools">
             {
-                packages && [...packages].map(({ address, data }) => {
+                packages && [...packages].map((item) => {
+                    let data;
+                    let address;
+                    if('data' in item && 'address' in item) {
+                        data = item.data;
+                        address = item.address;
+                    } else {
+                        data = item;
+                        address = item.name;
+                    }
+
                     // getBot('')
                     return <SettingsPanel data={data} address={address} setUpdate={setUpdate} installed={getBot('system', data?.mainBotTag)} icon={data?.configEditor?.toolbarConfig?.icon} name={data?.configEditor?.toolbarConfig?.label || address} />
                 })
@@ -178,6 +188,7 @@ const Extensions = () => {
 
 
 const containerStyle = {
+    marginBottom: '8px',
     backgroundColor: '#f8f9fa',
     border: '1px solid #e1e4e8',
     borderRadius: '8px',

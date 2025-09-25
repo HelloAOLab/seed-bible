@@ -1,4 +1,4 @@
-const { createContext, useContext, useState, useEffect } = os.appHooks;
+const { createContext, useContext, useState, useEffect, useLayoutEffect } = os.appHooks;
 import { getStyleOf } from 'app.styles.styler';
 import { DualScreenIcon, ThreeScreenIcon, QuadScreenIcon } from 'app.components.icons'
 const MyContext = createContext();
@@ -18,6 +18,15 @@ export function SideBarProvider({ children }) {
     const [customIcon, setCustomIcon] = useState(null)
     const [packageAddingOptions, setPackageAddingOptions] = useState([])
     const [openOnMobile, setOpenOnMobile] = useState(false)
+    const [isMobile,setIsMobile] = useState(false)
+    useEffect(() => {
+        const handleResize = () => {
+            const check = window.innerWidth < 768
+            setIsMobile(check);
+        };
+        window.addEventListener('resize', handleResize);
+        return () => window.removeEventListener('resize', handleResize);
+    }, []);
     globalThis.SetPackageAddingOptions = setPackageAddingOptions
     useEffect(() => {
         console.log(packageAddingOptions, 'addingOptions')
@@ -116,7 +125,7 @@ export function SideBarProvider({ children }) {
         }
     }, [popupSettings]);
 
-    useEffect(() => {
+    useLayoutEffect(() => {
         if (popupSettings || popupComponent) {
             runPopUpSettings({ ...popupSettings, sidebarContext: { closePopupSettings, position, popupComponent } })
         } else {
@@ -132,7 +141,7 @@ export function SideBarProvider({ children }) {
             sidebarMode, setSideBarMode, collapsed, setCollapsed,
             openPopupSettings, sidebarWidth, setSidebarWidth,
             openOnMobile, setOpenOnMobile,
-            closePopupSettings
+            closePopupSettings,isMobile
         }}>
             {children}
         </MyContext.Provider>

@@ -147,7 +147,8 @@ const EditorToolbarSettings = () => {
             margin: '0 auto',
             // padding: '20px',
             // backgroundColor: 't',
-            height: '90%',
+            height: '100%',
+            maxHeight: '100%',
             overflow: 'scroll',
             padding: '10px'
 

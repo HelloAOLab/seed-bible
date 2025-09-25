@@ -529,45 +529,47 @@ const SearchBar = () => {
         }
         let translations = { ...apiTranslations };
 
-        allTranslations.map(translation => {
-            let englishName = translation.languageEnglishName?.toLowerCase() || "";
-            if (showAllLanguages) {
-                let shortName = translation.shortName?.toLowerCase() || "";
-                if (translations[englishName]) {
-                    if (!translations[englishName][shortName]) {
-                        translations[englishName][shortName] = translation;
-                    }
-                } else {
-                    translations[englishName] = {
-                        [shortName]: translation
-                    }
-                }
-            } else {
-                if (!defaultTranslations.includes(englishName)) {
-                    if (translations[englishName]) {
-                        delete translations[englishName]
-                    }
-                } else {
+        if (allTranslations) {
+            allTranslations.map(translation => {
+                let englishName = translation.languageEnglishName?.toLowerCase() || "";
+                if (showAllLanguages) {
                     let shortName = translation.shortName?.toLowerCase() || "";
-                    if (!translations[englishName]) {
+                    if (translations[englishName]) {
+                        if (!translations[englishName][shortName]) {
+                            translations[englishName][shortName] = translation;
+                        }
+                    } else {
                         translations[englishName] = {
                             [shortName]: translation
                         }
+                    }
+                } else {
+                    if (!defaultTranslations.includes(englishName)) {
+                        if (translations[englishName]) {
+                            delete translations[englishName]
+                        }
                     } else {
-                        if (!translations[englishName][shortName]) {
+                        let shortName = translation.shortName?.toLowerCase() || "";
+                        if (!translations[englishName]) {
                             translations[englishName] = {
-                                ...translations[englishName],
                                 [shortName]: translation
+                            }
+                        } else {
+                            if (!translations[englishName][shortName]) {
+                                translations[englishName] = {
+                                    ...translations[englishName],
+                                    [shortName]: translation
+                                }
                             }
                         }
                     }
                 }
-            }
-        })
-        console.log(translations, "3 trans")
-        setTagMask(thePage, "apiTranslations", translations, "local")
-        setTagMask(thePage, "defaultTranslations", defaultTranslations, "local")
-        setApiTranslations(translations);
+            })
+            console.log(translations, "3 trans")
+            setTagMask(thePage, "apiTranslations", translations, "local")
+            setTagMask(thePage, "defaultTranslations", defaultTranslations, "local")
+            setApiTranslations(translations);
+        }
     }, [showAllLanguages, defaultTranslations])
 
     useEffect(() => {

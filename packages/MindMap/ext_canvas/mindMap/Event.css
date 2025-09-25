@@ -1,0 +1,49 @@
+.App{
+    display: flex;
+    justify-content: center;
+    align-items: center;
+    height: 100vh;
+    width: 100vw;
+    position: absolute;
+}
+
+.header{
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    width: 100%;
+}
+
+.dialog{
+    height: 500px;
+    width: 300px;
+    padding: 10px;
+    border-radius: 10px;
+    box-shadow: 0 3px 10px rgb(0 0 0 / 0.2);
+    display: flex;
+    justify-content: flex-start;
+    align-items: flex-start;
+    background-color: #FBE9E7;
+    flex-direction: column;
+}
+
+.title{
+    font-weight: 700;
+    font-size: 24px;
+    color: #FF3D00;
+}
+
+.description{
+    height: 460px;
+    overflow-y: auto;
+}
+
+.close{
+    height: 24px;
+    width: 24px;
+    border: 1px solid black;
+    display: flex;
+    justify-content: center;
+    align-items: center;
+    border-radius: 15px;
+}

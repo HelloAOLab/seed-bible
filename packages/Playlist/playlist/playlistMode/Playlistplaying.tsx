@@ -640,7 +640,7 @@ const PlayingPlaylist = () => {
             globalThis.READING_PLAN_WORK = true;
             // globalThis.IS_PLAYLIST_ACTIVE = 0;
         }
-        return () => {
+        return ()=>{          
             globalThis.SetCurreIndexPlaylist = null;
             globalThis.HandleOnButtonPress = null;
             globalThis.IsPlaylistPlaying = false;

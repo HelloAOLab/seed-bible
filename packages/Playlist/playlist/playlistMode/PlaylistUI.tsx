@@ -454,7 +454,9 @@ const Playlist = () => {
             globalThis.makingPlaylist = false;
             globalThis.SetMediaURL && globalThis.SetMediaURL(null);
             globalThis.SetVideoSrc && globalThis.SetVideoSrc(null);
-
+            if (globalThis.RemoveNowBarApp) {
+                globalThis.RemoveNowBarApp('player-playlist-bar');
+            }
         }
     }, []);
 
@@ -532,6 +534,7 @@ const Playlist = () => {
                         <Button
                             secondary
                             onClick={() => {
+                                globalThis.IsPlaylistPlaying = false;
                                 thisBot.StopPlayingPlaylist();
                                 if (globalThis.PendingAction) {
                                     globalThis.PendingAction();

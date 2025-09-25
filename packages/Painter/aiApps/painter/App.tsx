@@ -292,10 +292,11 @@ const App = () => {
 
         const track = sliderRef.current;
         const rect = track.getBoundingClientRect();
-        const clickX = e.clientX - rect.left;
-        const percentage = Math.max(0, Math.min(100, (clickX / rect.width) * 100));
+        const clickY = rect.bottom - e.clientY; // Calculate from bottom
+        const percentage = (clickY / rect.height) * 100;
+        const newValue = Math.max(1, Math.min(100, Math.round(percentage)));
 
-        setValue(Math.round(percentage));
+        setValue(newValue);
     };
 
     const thumbSize = 10 + (value / 100) * 30;
@@ -335,54 +336,56 @@ const App = () => {
                 />
                 <DraggableContainer>
                     <div className="toolbar">
-                        <div className="tool-section">
-                            <div className="color-options">
-                                {
-                                    availableColor.map(color => {
-                                        return <div
-                                            onMouseDown={e => e.stopPropagation()}
-                                            className={`color-option ${currentColor === color ? 'active' : ''}`}
-                                            style={{ backgroundColor: color }}
-                                            onClick={() => handleColorChange(color)}
-                                        ></div>
-                                    })
-                                }
+                        <button className="doneBtn" onClick={() => whisper(thisBot, "closePainter")}>Done</button>
+                        <div style={{ display: "flex", flexDirection: "column", gap: "10px" }}>
+                            <div className="tool-section">
+                                <div className="color-options">
+                                    {
+                                        availableColor.map(color => {
+                                            return <div
+                                                onMouseDown={e => e.stopPropagation()}
+                                                className={`color-option ${currentColor === color ? 'active' : ''}`}
+                                                style={{ backgroundColor: color }}
+                                                onClick={() => handleColorChange(color)}
+                                            ></div>
+                                        })
+                                    }
+                                </div>
                             </div>
-                        </div>
-
-                        <div className="tool-section">
-                            <div className="container" onMouseDown={e => e.stopPropagation()}>
-                                <div
-                                    ref={sliderRef}
-                                    className="sliderTrack"
-                                    onClick={handleTrackClick}
-                                >
-                                    <div className="trackBackground" style={{
-                                        background: `linear-gradient(to right, rgba(255, 255, 255, 0.1) 0%, ${currentColor || 'rgba(0,0,0,0.5)'} 50%)`
-                                    }}></div>
+                            <div className="tool-section">
+                                <div className="container" onMouseDown={e => e.stopPropagation()}>
                                     <div
-                                        className="sliderThumb"
-                                        style={{
-                                            left: `${value}%`,
-                                            width: `${thumbSize}px`,
-                                            height: `${thumbSize}px`,
-                                            border: `1px solid ${currentColor}`
-                                        }}
-                                    ></div>
-                                    <input
-                                        type="range"
-                                        min="1"
-                                        max="100"
-                                        value={value}
-                                        onChange={handleInput}
-                                        class="sliderInput"
-                                    />
+                                        ref={sliderRef}
+                                        className="sliderTrack"
+                                        onClick={handleTrackClick}
+                                    >
+                                        <div className="trackBackground" style={{
+                                            background: `linear-gradient(to right, rgba(255, 255, 255, 0.1) 0%, ${currentColor || 'rgba(0,0,0,0.5)'} 50%)`
+                                        }}></div>
+                                        <div
+                                            className="sliderThumb"
+                                            style={{
+                                                left: `${value < 93 ? value < 3 ? 3 : value : 93}%`,
+                                                width: `${thumbSize}px`,
+                                                height: `${thumbSize}px`,
+                                                border: `1px solid ${currentColor}`
+                                            }}
+                                        ></div>
+                                        <input
+                                            type="range"
+                                            min="1"
+                                            max="100"
+                                            value={value}
+                                            onChange={handleInput}
+                                            class="sliderInput"
+                                        />
+                                    </div>
                                 </div>
                             </div>
                         </div>
                     </div>
-                </DraggableContainer>
-            </div>
+                </DraggableContainer >
+            </div >
 
         </>
     );

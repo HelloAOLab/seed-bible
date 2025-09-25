@@ -4,12 +4,21 @@ html , body {
     top: -10px !important;
 }
 
+* {
+    box-sizing: border-box;
+}
+
 :root {
     --primary-color: #F0F1F1;
     --secondary-color: #FFFFFF;
     --gray-color: #606060;
     --whitegray-color: #E6E6E6;
     --gray2-color: #CCCCCD;
+}
+
+.floatsidebar {
+    height: 100%;
+    max-height: 100%;
 }
 
 @media (max-width: 768px) {
@@ -75,7 +84,7 @@ html , body {
     display: flex;
     flex-direction: row;
     justify-content: space-between;
-    align-items: center;
+    align-items: flex-start;
     overflow: hidden;
     position: absolute;
     left: 0;

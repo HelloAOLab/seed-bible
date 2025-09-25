@@ -1,12 +1,14 @@
 import puppeteer from 'puppeteer';
-import { cleanupAux, listPackages, packageAll, readPackage } from './lib/package.js';
-import { initPage, loadInst, addAux, shout, getPrimarySim, execScript, getPackageData, registerPackage, waitForPackage, loadSeedBible } from './lib/browser.js';
+import { cleanupAux, listPackages, packageAll, packageSingle, readPackage } from './lib/package.js';
+import { initPage, loadInst, addAux, shout, getPrimarySim, execScript, getPackageData, registerPackage, waitForPackage, loadSeedBible, DEFAULT_EXTENSIONS } from './lib/browser.js';
 import { rmdir, writeFile } from 'node:fs/promises';
 import path from 'node:path';
 import { execSync } from 'node:child_process';
 import repl from 'node:repl';
 import { v4 as uuid } from 'uuid';
 import type { StoredAux } from '../typings/AuxLibraryDefinitions.js';
+
+const extraExtensions = process.argv.slice(2);
 
 const browser = await puppeteer.launch({
     headless: false,
@@ -16,11 +18,16 @@ const browser = await puppeteer.launch({
 let page: puppeteer.Page;
 
 async function startPage() {
-    await packageAll('ignore');
+    const allPackages = [...new Set([
+        ...DEFAULT_EXTENSIONS,
+        ...extraExtensions
+    ])];
+
+    await Promise.all(allPackages.map(pkg => packageSingle(pkg, 'ignore')));
     
     page = await browser.newPage();
 
-    await loadSeedBible(page);
+    await loadSeedBible(page, extraExtensions);
 }
 
 await startPage();

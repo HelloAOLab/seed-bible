@@ -1,18 +1,65 @@
 import { createRecordsClient } from '@casual-simulation/aux-records/RecordsClient';
-import { writeFile } from 'node:fs/promises';
+import { writeFile, readdir, readFile } from 'node:fs/promises';
 import path from 'node:path';
-import hash from 'hash.js';
-import axios from 'axios';
-import stringify from '@casual-simulation/fast-json-stable-stringify';
+import { uploadFile } from './records';
+import { existsSync } from 'node:fs';
+import { execSync } from 'node:child_process';
 
-const recordName = 'testingPublickKey';
+
+const downloadRecordName = 'testingPublickKey';
+const uploadRecordName = 'seedBibleExtensions';
 const headers = {
     'Origin': 'https://auth.ao.bot',
 };
 
 export interface ExtensionData {
-    meta: unknown;
+    meta: ExtensionMeta;
     aux: StoredAux;
+}
+
+export interface ExtensionMeta {
+    author: string;
+    configEditor: {
+        app: string;
+        author: string;
+        contextMenuConfig: {
+            optionsIsOn: string;
+        },
+        tabConfig: {
+            title: string;
+        },
+        toolbarConfig: {
+            label: string;
+            icon: string;
+            hasToggle: string;
+        }
+    },
+    createdAt: string;
+    dependencies: {
+        depId: number,
+        name: string,
+        type: 'package'
+    }[];
+    description: string;
+    id: number,
+    license: string;
+    linkedDependencies: unknown[];
+    name: string;
+    otherBots: {
+        description: string,
+        tag: string;
+    }[];
+    recordFile?: {
+        sha256Hash: string;
+        success: boolean;
+        url: string;
+    };
+    source?: string;
+    status: 'active';
+    type: 'package';
+    updatedAt: string;
+    userAuth: string;
+    version: string;
 }
 
 /**
@@ -24,9 +71,9 @@ export async function listExtensions(): Promise<unknown[]> {
 
     const list: unknown[] = [];
     let lastAddress: string | undefined = undefined;
-    while(true) {
+    while (true) {
         const result = await client.listData({
-            recordName,
+            recordName: downloadRecordName,
             address: lastAddress,
             marker: 'publicRead',
         }, {
@@ -57,7 +104,7 @@ export async function downloadExtension(name: string): Promise<ExtensionData | n
     const client = createRecordsClient('https://api.ao.bot');
 
     const result = await client.getData({
-        recordName,
+        recordName: downloadRecordName,
         address: name,
     }, {
         headers,
@@ -69,7 +116,7 @@ export async function downloadExtension(name: string): Promise<ExtensionData | n
     }
 
     const data = result.data;
-    if(!data) {
+    if (!data) {
         console.error('No data found for extension:', name);
         return null;
     }
@@ -130,131 +177,101 @@ export async function downloadAndSave(name: string, fileName?: string) {
     };
 }
 
-const UNSAFE_HEADERS = new Set([
-    'accept-encoding',
-    'referer',
-    'sec-fetch-dest',
-    'sec-fetch-mode',
-    'sec-fetch-site',
-    'origin',
-    'sec-ch-ua-platform',
-    'user-agent',
-    'sec-ch-ua-mobile',
-    'sec-ch-ua',
-    'content-length',
-    'connection',
-    'host',
-]);
-
 /**
- * Uploads the given pattern to the records server.
- * @param name The name of the pattern to upload.
- * @param aux The pattern data to upload.
+ * Uploads the given extension to the records server.
+ * @param meta The metadata of the extension to upload.
+ * @param aux The extension data to upload.
  * @param sessionKey The session key to use for authentication.
  * @param recordKey The record key to use. If not specified, the default record name will be used.
  */
-export async function uploadPattern(name: string, aux: StoredAux, sessionKey: string, recordKey?: string) {
-    const client = createRecordsClient('https://api.ao.bot');
+export async function uploadExtensionAux(meta: ExtensionMeta, aux: StoredAux, sessionKey: string, recordKey: string, saveMeta: boolean) {
+    const { fileUrl, sha256Hash } = await uploadFile(recordKey ?? uploadRecordName, aux, sessionKey, ['publicRead']);
+    console.log('Extension File URL:', fileUrl);
 
+    const client = createRecordsClient('https://api.ao.bot');
     client.sessionKey = sessionKey;
 
-    const json = stringify(aux);
-    const data = new TextEncoder().encode(json);
-    const byteLength = data.byteLength;
-    const mimeType = 'application/json';
-    const hash = getHash(data);
-    const rName = recordKey ?? recordName;
+    meta.recordFile = {
+        sha256Hash,
+        success: true,
+        url: fileUrl
+    };
+    meta.source = fileUrl;
+    meta.updatedAt = new Date().toISOString();
 
-    console.log(`Uploading AUX file... (${data.byteLength} bytes, sha256=${hash})`);
-    const recordFileResult = await client.recordFile({
-        recordKey: rName,
-        fileSha256Hex: hash,
-        fileMimeType: mimeType,
-        fileByteLength: byteLength,
-        markers: ['publicRead'],
-    }, {
-        headers,
-    });
-
-    let fileUrl: string;
-    if (recordFileResult.success === false) {
-        if (recordFileResult.errorCode !== 'file_already_exists') {
-            throw new Error('Failed to record file: ' + recordFileResult.errorCode + ' ' + recordFileResult.errorMessage);
-        } else {
-            fileUrl = recordFileResult.existingFileUrl;
-        }
-    } else {
-        const method = recordFileResult.uploadMethod;
-        const url = fileUrl = recordFileResult.uploadUrl;
-        const headers = { ...recordFileResult.uploadHeaders };
-
-        for(const header of UNSAFE_HEADERS) {
-            delete headers[header];
-        }
-
-        const uploadResult = await axios.request({
-            method: method.toLowerCase(),
-            url: url,
-            headers: headers,
-            data: data,
+    if (saveMeta) {
+        const recordResult = await client.recordData({
+            recordKey: recordKey ?? uploadRecordName,
+            address: meta.name,
+            data: meta,
+            markers: ['publicRead'],
+        }, {
+            headers
         });
 
-        if (uploadResult.status < 200 || uploadResult.status >= 300) {
-            throw new Error('Failed to upload file.');
-        } else {
-            console.log('Successfully uploaded AUX file.');
-        }
-    }
-
-    const eggDataResult = await client.getData({
-        recordName: rName,
-        address: name
-    }, {
-        headers,
-    });
-    let eggData;
-
-    if (eggDataResult.success === false) {
-        if (eggDataResult.errorCode === 'data_not_found') {
-            // Create new egg data
-            eggData = {
-                aoID: name,
-                eggVersionHistory: [],
-                label: `v0`,
-                maxVersion: 0,
-                targetVersion: 0,
-                xp: 0,
-            };
-        } else {
-            throw new Error('Failed to get egg data: ' + eggDataResult.errorCode + ' ' + eggDataResult.errorMessage);
+        if (recordResult.success === false) {
+            throw new Error('Failed to record extension: ' + recordResult.errorCode + ' ' + recordResult.errorMessage);
         }
     } else {
-        eggData = eggDataResult.data;
+        console.log('Skipping meta.');
     }
 
-    eggData.eggVersionHistory.push(fileUrl);
-    eggData.targetVersion = eggData.maxVersion = eggData.eggVersionHistory.length;
-    eggData.label = `v${eggData.maxVersion}`;
+    console.log('Successfully recorded extension:', meta.name);
 
-    console.log(`Recording pattern (v${eggData.maxVersion})...`);
-    const recordDataResult = await client.recordData({
-        recordKey: rName,
-        address: name,
-        data: eggData,
-    }, {
-        headers,
-    });
-
-    if (recordDataResult.success === false) {
-        throw new Error('Failed to record data: ' + recordDataResult.errorCode + ' ' + recordDataResult.errorMessage);
-    }
-
-    console.log('Successfully uploaded pattern:', name);
-    const url = new URL(`https://ao.bot/`);
-    url.searchParams.set('pattern', name);
-    console.log(`View it at: ${url.href}`);
+    return {
+        fileUrl: fileUrl,
+        meta,
+        name: meta.name,
+    };
 }
 
-function getHash(buffer: Uint8Array): string {
-    return hash.sha256().update(buffer).digest('hex');
+/**
+ * Uploads the given extension to the records server.
+ * @param name The name of the extension to upload.
+ * @param options The options for uploading the extension.
+ */
+export async function upload(name: string, options: { sessionKey?: string; recordKey?: string, saveMeta?: boolean }) {
+    if (!options.sessionKey) {
+        throw new Error('You must specify a session key using the --session-key option.');
+    }
+    const packagePath = path.resolve('packages', name);
+    const packageExtensionPath = path.resolve(packagePath, 'extension.json');
+    if (!existsSync(packageExtensionPath)) {
+        throw new Error('No extension.json file found in package: ' + packageExtensionPath);
+    }
+    const extensionData = JSON.parse(await readFile(packageExtensionPath, 'utf-8'));
+    const filePath = path.resolve('dist', `${extensionData.name}.aux`);
+
+    console.log('Packaging:', packagePath);
+    execSync(`casualos pack-aux --overwrite "${packagePath}" "${filePath}"`, { stdio: 'ignore' });
+
+    const aux = await readFile(filePath, 'utf-8');
+    const auxJson = JSON.parse(aux);
+
+    return await uploadExtensionAux(extensionData, auxJson, options.sessionKey, options.recordKey, options.saveMeta ?? true);
+}
+
+/**
+ * Uploads all extensions in the packages folder to the records server.
+ * @param options The options for uploading the extensions.
+ */
+export async function uploadAll(options: { sessionKey?: string; recordKey?: string, saveMeta?: boolean }) {
+    const list = await readdir('packages');
+    const extensions: string[] = [];
+    for (const name of list) {
+        if (existsSync(path.resolve('packages', name, 'extension.json'))) {
+            extensions.push(name);
+        }
+    }
+
+    const extensionData: {
+        fileUrl: string;
+        meta: ExtensionMeta;
+        name: string;
+    }[] = [];
+    for (const name of extensions) {
+        extensionData.push(await upload(name, options));
+    }
+
+    return extensionData;
 }

@@ -332,7 +332,8 @@ function ThePage({ tab: T, setPanalApp, panelId, setEnableEditor, setData, data 
                         color: config.color || "#000",
                         backgroundColor: config.backgroundColor || "#ffeb3b",
                         onClick: config.onClick || null,
-                        timestamp: Date.now()
+                        timestamp: Date.now(),
+                        createAttributes: config?.createAttributes ? config.createAttributes : () => { return {} }
                     };
                 });
             });
@@ -385,7 +386,13 @@ function ThePage({ tab: T, setPanalApp, panelId, setEnableEditor, setData, data 
             delete globalThis.wordHighlights[tab.id];
         }
     }, [data]);
-
+    useEffect(() => {
+        // Add global word highlighting functions for developers
+        globalThis.HighlightWords = highlightWords;
+        globalThis.RemoveWordHighlight = removeWordHighlight;
+        globalThis.ClearAllWordHighlights = clearAllWordHighlights;
+        shout('onBookChanged', { ...data, tabId: tab.id })
+    }, [data])
     function hanldNavFunctions() {
         //  bible.openNext()
         // console.log(bible, 'nextChapterData')
@@ -711,7 +718,7 @@ function PageToolbar({ path = 'showInPageToolbar' }) {
         <div className="thePageToolbar">
             {
                 visibleTools.map(tool => (
-                    <div onClick={tool.onClick} className="tool-preview" key={tool.label}>
+                    <div onClick={tool.onClick} className="tool-preview-page" key={tool.label}>
                         {tool.isImg ? (
                             <img
                                 src={tool.icon}
@@ -1048,22 +1055,19 @@ function Section({ heading, commandHighlight, setCommandHighlight, setLastSelect
                 const wordParts = wordChunksMap[verse.verseNumber] || [{ text: verse.text, isHighlighted: false }];
                 return wordParts.map((part, i) => {
                     if (part.isHighlighted) {
+                        let attributes = part.highlightConfig.createAttributes(book, chapter, part)
                         return (
                             <span
                                 key={i}
                                 style={{
-                                    color: part.highlightConfig.color,
-                                    backgroundColor: part.highlightConfig.backgroundColor,
                                     cursor: part.highlightConfig.onClick ? 'pointer' : 'default',
                                     padding: '1px 2px',
-                                    borderRadius: '2px'
+                                    borderRadius: '2px',
+                                    marginRight: '-0.25em'
                                 }}
-                                onClick={(e) => {
-                                    e.stopPropagation();
-                                    if (part.highlightConfig.onClick) {
-                                        part.highlightConfig.onClick(part.text, verse.verseNumber);
-                                    }
-                                }}
+                                {
+                                ...attributes
+                                }
                             >
                                 {part.text}
                             </span>

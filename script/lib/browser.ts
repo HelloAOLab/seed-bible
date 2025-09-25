@@ -117,7 +117,7 @@ export async function waitForPackage(page: Page, name: string) {
     await page.evaluate((name) => {
         const app = window.aux.getApp();
         const sim = app.simulationManager.primary;
-        return new Promise((resolve, reject) => {
+        return new Promise((resolve) => {
             const intervalId = setInterval(() => {
                 const bots = Object.values(sim.helper.botsState);
                 for (const b of bots) {
@@ -242,7 +242,15 @@ export async function loadInst(page: Page, inst: string, collaborative: boolean 
     await waitForInstLoad(page);
 }
 
-export async function loadSeedBible(page: Page) {
+export const DEFAULT_EXTENSIONS = [
+    'seed-bible',
+    'BookSelector',
+    'Bible Layout 2D',
+    'Painter',
+    'Playlist',
+];
+
+export async function loadSeedBible(page: Page, extraExtensions: string[] = []) {
     await initPage(page);
     
     const inst = uuid();
@@ -251,29 +259,27 @@ export async function loadSeedBible(page: Page) {
 
     console.log('Uploading Seed Bible...');
 
-    await addAux(page, await readPackage('seed-bible'));
-    await addAux(page, await readPackage('BookSelector'));
-    await addAux(page, await readPackage('Bible Layout 2D'));
-    await addAux(page, await readPackage('Painter'));
-    await addAux(page, await readPackage('Playlist'));
-    await registerPackage(page, 'BookSelector');
-    await registerPackage(page, 'Bible Layout 2D');
-    await registerPackage(page, 'Painter');
-    await registerPackage(page, 'Playlist');
+    const allPackages = new Set([
+        ...DEFAULT_EXTENSIONS,
+        ...extraExtensions
+    ]);
+    const installedPackages = [...allPackages].filter(p => p !== 'seed-bible');
+
+    for (const pkg of allPackages) {
+        await addAux(page, await readPackage(pkg));
+    }
+    for (const pkg of installedPackages) {
+        await registerPackage(page, pkg);
+    }
 
     await waitForPackage(page, 'Playlist');
 
     await execScript(page, `
         const packager = getBot('system', 'app.packager');
-        setTagMask(packager, 'installedPackages', [
-            'BookSelector',
-            'Bible Layout 2D',
-            'Painter',
-            'Playlist',
-        ], 'local');
+        setTagMask(packager, 'installedPackages', ${JSON.stringify(installedPackages)}, 'local');
     `);
 
     console.log('Loaded!');
 
-    shout(page, 'onInstJoined');
+    shout(page, 'onInstJoined', null, { inst });
 }

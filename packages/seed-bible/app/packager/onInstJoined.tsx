@@ -1,28 +1,18 @@
-
-
-await thisBot.getPackages()
-
-for(let i =0;i<masks.installedPackages.length;i++){
-
-    const address = masks.installedPackages[i]
-    
-    const pkgConfig = masks[`${address}-data`]
-    const bot = getBot('system', pkgConfig.mainBotTag)
-    await thisBot.reInitPackage({ configEditor: pkgConfig.configEditor, bot, pkgName: address })
-}
 // tags.mainPackages.forEach(async e => {
 //     os.log('installing main package', e)
 //     await thisBot.installPackage({ name: e })
 // })
-thisBot.detectPackagesFromLink()
+// thisBot.detectPackagesFromLink()
 
 // await os.sleep(1000)
 // os.log(masks.installedPackages)
 // if (!masks.installedPackages)
 //     setTagMask(thisBot, 'installedPackages', [], 'local')
 
-// masks.installedPackages.forEach(pkg => {
-//     console.log('reinstalling ', pkg)
-//     //  thisBot.uninstallinstallPackage({ name: pkg })
-//     thisBot.installPackage({ name: pkg })
-// })
+// We have to check the tags instead of the masks
+// because injected packages can only be injected via regular tags
+tags.installedPackages.forEach(pkg => {
+    console.log('reinstalling ', pkg)
+    //  thisBot.uninstallinstallPackage({ name: pkg })
+    thisBot.reInitPackage({ name: pkg })
+})
