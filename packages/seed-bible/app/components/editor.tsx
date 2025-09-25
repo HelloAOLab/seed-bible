@@ -175,9 +175,9 @@ function renderStudyNotesToHTML(studyNote) {
   return html;
 }
 function generateHtmlFromContent(data) {
-  if (!data || !data.content) return '';
-  const bookTitle = `${data.book} - ${data.chapter}`;
-  const sectionsHtml = data.content.map(section => {
+  if (!data || !data?.content) return '';
+  const bookTitle = `${data?.book} - ${data?.chapter}`;
+  const sectionsHtml = data?.content.map(section => {
     const versesHtml = section.verses.map(verse => {
       return `
         <span class="sectionText">
@@ -240,7 +240,7 @@ const TextEditor = ({ content, tab, data, setEnableEditor, enableEditor, studyNo
 
   useEffect(() => {
     const saveData = (editor) => {
-      const key = `${data.translation}_${data.book}_${data.chapter}`;
+      const key = `${data?.translation}_${data?.book}_${data?.chapter}`;
       const json = editor.getJSON();
       localStorage.masks[key] = { key, data: JSON.stringify(json) }
       os.log('data saved', key, localStorage.masks[key])
@@ -497,7 +497,7 @@ const TextEditor = ({ content, tab, data, setEnableEditor, enableEditor, studyNo
     if (!data) return
     const editor = editorRef.current;
     if (!editor) return;
-    const key = `${data.translation}_${data.book}_${data.chapter}`;
+    const key = `${data?.translation}_${data?.book}_${data?.chapter}`;
     if (localStorage.masks[key]) os.log('localStorage.masks[key]', localStorage.masks[key])
     editor.commands.setContent(htmlString);
   }, [data])
