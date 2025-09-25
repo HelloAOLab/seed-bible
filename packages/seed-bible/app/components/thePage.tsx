@@ -386,7 +386,13 @@ function ThePage({ tab: T, setPanalApp, panelId, setEnableEditor, setData, data 
             delete globalThis.wordHighlights[tab.id];
         }
     }, [data]);
-
+    useEffect(() => {
+        // Add global word highlighting functions for developers
+        globalThis.HighlightWords = highlightWords;
+        globalThis.RemoveWordHighlight = removeWordHighlight;
+        globalThis.ClearAllWordHighlights = clearAllWordHighlights;
+        shout('onBookChanged', { ...data, tabId: tab.id })
+    }, [data])
     function hanldNavFunctions() {
         //  bible.openNext()
         // console.log(bible, 'nextChapterData')

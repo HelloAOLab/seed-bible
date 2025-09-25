@@ -21,7 +21,7 @@ export function Toolbar() {
         setMapTools
     } = useBibleContext();
 
-    const { sidebarMode, openOnMobile } = useSideBarContext();
+    const { sidebarMode, openOnMobile,isMobile,setSidebarWidth,setOpenOnMobile } = useSideBarContext();
     const { setIsDragging, isDragging, setElement } = useMouseMove();
     const { activeSpace, updateToolsForSpace, getToolsForActiveSpace, activeTab, tabs } = useTabsContext();
 
@@ -123,7 +123,16 @@ export function Toolbar() {
                                 <span className="material-symbols-outlined">chevron_left</span>
                             </button>
                         </div>
-
+                        {isMobile && <div
+                            onClick={() => { setSidebarWidth(300); setOpenOnMobile(true); globalThis?.setOpenSidebar && setOpenSidebar(false) }}
+                            className="toolbar-item-wrapper"
+                        >
+                            <button
+                                className={`toolbar-button firstToolbarbutton`}
+                            >
+                                <span className="material-symbols-outlined">menu</span>
+                            </button>
+                        </div>}
                         {tools?.map((tool, index) =>
                             tool?.active === false ? null : (
                                 <div

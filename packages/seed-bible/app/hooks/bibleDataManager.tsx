@@ -129,7 +129,7 @@ export class BibleDataManager {
                 if (this.tabId) {
                     setCachedTabData(this.tabId, this.data);
                 }
-                shout('onBookChanged', { ...this.data, tabId: this.tabId })
+               
                 // schedule the "open ≥ 1 min" record
                 this._scheduleMaskRecord();
             }
