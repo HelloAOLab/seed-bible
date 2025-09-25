@@ -46,9 +46,8 @@ await(async function mainInstaller(that) {
     
     let errorInstall = false;
 
-    function getBotsFromData(data) {
-        if (typeof data === 'object' && 'version' in data) {
-            const aux = data;
+    function getBotsFromData(aux) {
+        if (typeof aux === 'object' && 'version' in aux) {
             // Handle aux files
             if (aux.version === 1) {
                 const bots = Object.values(aux.state);
