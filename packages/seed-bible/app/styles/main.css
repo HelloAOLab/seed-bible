@@ -4,6 +4,10 @@ html , body {
     top: -10px !important;
 }
 
+* {
+    box-sizing: border-box;
+}
+
 :root {
     --primary-color: #F0F1F1;
     --secondary-color: #FFFFFF;
