@@ -175,5 +175,3 @@ ObjectPooler.AddObjectPools({
         versesPool
     ]
 })
-
-thisBot.UpdateHighlightedWords();
