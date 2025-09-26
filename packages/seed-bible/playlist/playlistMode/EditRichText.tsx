@@ -1,0 +1,48 @@
+// const appName = 'eidt-rich-text-modal';
+
+// os.unregisterApp(appName);
+// os.registerApp(appName);
+
+const { useState } = os.appHooks
+const { Modal, Button, ButtonsCover } = Components;
+import { MiniTextEditor } from 'app.components.smallEditor';
+
+const id = "default";
+
+const EditRichText = ({
+    onClose,
+    contentId,
+    parentID,
+    text
+}) => {
+    const [name, setName] = useState(text || "");
+
+    const onSave = () => {
+        globalThis[`${id}EditPlaylistData`](contentId, name, parentID);
+        onClose();
+    }
+
+    return <Modal title="Edit Text" showIcon={false} onClose={onClose}>
+        <div className="input-conainter-type" >
+            <MiniTextEditor
+                id='edit'
+                minHeight={120}
+                initialHtml={name}
+                placeholderHTML={name}
+                onChange={(html) => {
+                    setName(html);
+                }}
+            />
+        </div>
+        <ButtonsCover>
+            <Button secondary onClick={() => { onSave(); }}>
+                Save
+            </Button>
+            <Button secondaryAlt onClick={onClose}>
+                Close
+            </Button>
+        </ButtonsCover>
+    </Modal>
+};
+
+return EditRichText;
