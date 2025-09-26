@@ -1,11 +1,10 @@
 if(thisBot.vars.appId)
 {
-    await thisBot.ClearStacks()
     globalThis.RemoveApplication(thisBot.vars.appId)
-    thisBot.vars.appId = null
 }
 else
 {
+    gridPortalBot.tags.portalCameraType = "orthographic";
     const App = await thisBot.App();
     const id = globalThis.AddFloatingApp({
         App: <App />,
