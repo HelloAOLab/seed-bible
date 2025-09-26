@@ -2,7 +2,6 @@ const {useEffect} = os.appHooks;
 
 import { useMouseMove } from 'app.hooks.mouseMove'
 
-
 const App = () => {
     
     const { floatingApps } = useMouseMove()
