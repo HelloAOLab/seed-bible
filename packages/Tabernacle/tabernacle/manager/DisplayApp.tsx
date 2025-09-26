@@ -1,8 +1,6 @@
 if(thisBot.vars.appId)
 {
     globalThis.RemoveFloatingApp(thisBot.vars.appId)
-    thisBot.vars.appId = null;
-    thisBot.ClearExperience();
 }
 else
 {
