@@ -79,7 +79,7 @@ export async function saveFileAnnotationData(recordName: string, data: unknown):
  */
 export function createAnnotation(bookId: string, chapterNumber: number, data: unknown): Annotation {
     return {
-        id: uuid(),
+        id: data.id || uuid(),
         bookId,
         chapterNumber,
         data,
