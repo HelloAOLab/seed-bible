@@ -52,6 +52,7 @@ export function MouseMoveProvider({ children }) {
     // remove
     globalThis.RemoveFloatingApp = (appId) => {
         setFloatingApps((prev) => prev.filter((app) => app.id !== appId));
+        shout("onFloatingAppRemoved", {appId});
     };
 
     // update
