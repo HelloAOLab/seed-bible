@@ -179,7 +179,7 @@ function SubComponent({ editMode, onAddFiles, dragState, recordingType, setRecor
             return <div className="input-conainter-type" >
                 <MiniTextEditor
                     id={EditorId}
-                    minHeight={120}
+                    minHeight={60}
                     placeholderHTML={name}
                     initialHtml={name}
                     onChange={(html) => {
@@ -500,12 +500,23 @@ const AttachLink = ({ sSelectedType, sName, sData, sLink, sMediaType, editMode, 
         }
     }
 
+
+    const isDisabled = useMemo(() => {
+        if (!name.trim()) {
+            if (!(selectedType === "SCRIPTURE" && Array.isArray(data) && data?.length > 0) && selectedType !== "LINK") {
+                return true;
+            }
+        }
+        return false;
+    }, [name, selectedType, data])
+
     const onClickSend = async () => {
         if (!name.trim()) {
-            if (!(selectedType === "SCRIPTURE" && Array.isArray(data) && data?.length > 0)) {
+            if (!(selectedType === "SCRIPTURE" && Array.isArray(data) && data?.length > 0) && selectedType !== "LINK") {
                 return ShowNotification({ message: "Attachment Name missing!", severity: "error" });
             }
         }
+
 
         if (selectedType === 'TAG') {
             if (onAddTags) {
@@ -577,7 +588,7 @@ const AttachLink = ({ sSelectedType, sName, sData, sLink, sMediaType, editMode, 
                 setName('');
                 setSelectedType("TEXT");
                 setLink('')
-                attachLink(name, link, linkState.type ? linkState : { isValid: true, type: mediaType });
+                attachLink(name || link, link, linkState.type ? linkState : { isValid: true, type: mediaType });
             }
         }
 
@@ -622,7 +633,13 @@ const AttachLink = ({ sSelectedType, sName, sData, sLink, sMediaType, editMode, 
         }
     }, [onClickSend])
 
-    return <div className='add-new-playlist' ref={dragRef}>
+    return <form
+        className='add-new-playlist' ref={dragRef}
+        onSubmit={(e) => {
+            e.preventDefault(); // prevent full page reload
+            onClickSend();
+        }}
+    >
         <div className='container-render'
             onKeyDown={(e) => {
                 e.stopPropagation();
@@ -691,15 +708,16 @@ const AttachLink = ({ sSelectedType, sName, sData, sLink, sMediaType, editMode, 
             {canClose && <div onClick={onClose} style={{ marginLeft: 'auto' }} className={`active  select_item_type`}>
                 <img src={CLOSE} />
             </div>}
-            <div
-                style={{ marginLeft: 'auto' }}
-                className={`active  select_item_type`}
-                onClick={onClickSend}
+            <button
+                type="submit"
+                style={{ marginLeft: "auto", cursor: isDisabled ? "not-allowed" : "" }}
+                className={`${!isDisabled ? "active" : "disabled"} select_item_type`}
+                disabled={isDisabled}
             >
-                <img src={SEND} style={{ width: '20px' }} />
-            </div>
+                <img src={SEND} style={{ width: "20px" }} />
+            </button>
         </div>}
-    </div >
+    </form>
 }
 
 return AttachLink;

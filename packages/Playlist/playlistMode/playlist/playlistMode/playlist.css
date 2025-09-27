@@ -65,7 +65,7 @@ html * {
     left: 0;
     z-index: 1000;
     position: fixed;
-    background-color: rgba(0, 0, 0, 0.6);
+    background-color: rgba(0, 0, 0, 0.0);
 }
 
 .backdrop.transparent {
@@ -733,7 +733,7 @@ div.attachment-link.dropabble-Embed .playlist-item-type {
 } */
 
 .add-playlist-actions {
-    margin-top: auto;
+    /* margin-top: auto; */
     padding: 0.5rem;
     gap: 1rem;
     display: flex;
@@ -817,8 +817,14 @@ div.attachment-link.dropabble-Embed .playlist-item-type {
     height: 35px;
     display: grid;
     place-items: center;
+    border: none;
+    outline: none;
     background-color: #F4F5F5F5;
     cursor: pointer;
+}
+
+.select_item_type.disabled {
+    background-color: #afafaff5;
 }
 
 .select_item_container {

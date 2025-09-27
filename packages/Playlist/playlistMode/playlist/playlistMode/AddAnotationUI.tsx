@@ -713,10 +713,9 @@ const AddAnotationUI = ({
                         layers: [...list]
                     }
                 },
-                id: isEditAddress
             };
 
-            const annotation = createAnnotation(chroAddData.book, chroAddData.chapter, chroAddData);
+            const annotation = createAnnotation(chroAddData.book, chroAddData.chapter, { ...chroAddData, id: isEditAddress });
 
             const userRecord = await getUserRecord();
             promisesArray.push(saveAnnotation(userRecord, annotation));
@@ -1470,7 +1469,7 @@ const AddAnotationUI = ({
             }
             {!!mediaURL && <AudioPlayer close mediaURL={mediaURL} />}
 
-            <div style={{ marginTop: 'auto', padding: '1rem 0 ' }}>
+            <div style={{ padding: '1rem 0 ' }}>
                 <div className="add-playlist-actions">
                     <Button
                         onClick={onClickSave}
