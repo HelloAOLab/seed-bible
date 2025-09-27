@@ -36,7 +36,6 @@ const MenuOptions = {
         SetInHold(null);
       },
     },
-    // { icon: <MenuIcon name="screen_share" />, title: 'open next sceeen', onClick: () => { globalThis.SetShowScreenPanelOption(2); SetInHold(null) } },
   ],
 };
 if (!globalThis.ContextMenuOptions) globalThis.ContextMenuOptions = [];
