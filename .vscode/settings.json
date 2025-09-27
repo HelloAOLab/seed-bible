@@ -8,7 +8,7 @@
         "workbench.action.files.save", // normal save
         {
           "command": "workbench.action.terminal.sendSequence",
-          "args": { "text": "\u0003npx pnpm dev\u000D" }
+          "args": { "text": "\u0003.reload\u000D" }
         } // Ctrl+C + done + Enter
       ]
     }

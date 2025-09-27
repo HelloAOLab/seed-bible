@@ -150,6 +150,7 @@ export function TabsProvider({ children }) {
           : space
       )
     );
+    return tab;
   };
 
   // Remove standalone tab
