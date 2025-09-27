@@ -806,7 +806,8 @@ function SideBar() {
           <span className="material-symbols-outlined">menu</span>
         </div>
       )}
-      {isMobile && !openOnMobile && (
+      {
+        null /* {isMobile && !openOnMobile && (
         <div
           onClick={() => {
             setSidebarWidth(300);
@@ -822,7 +823,8 @@ function SideBar() {
         >
           <span className="material-symbols-outlined">menu</span>
         </div>
-      )}
+      )} */
+      }
       {sidebarWidth === 0 && (
         <div
           onMouseDown={() => {
