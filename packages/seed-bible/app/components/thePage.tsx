@@ -1442,13 +1442,10 @@ export const ThePageWithEditor = ({ tab, setPanalApp, panelId }) => {
   }, []);
 
   const activeTab = panelId ? globalThis.PanelTabsMap[panelId] || tab : tab;
-  const [enableEditor, setEnableEditor] = useState(
-    globalThis[`ElableEditorFor${tab.id}`] &&
-      globalThis[`ElableEditorFor${tab.id}`]
-  );
+  const [enableEditor, setEnableEditor] = useState(false);
   useEffect(() => {
     // console.log("enableEditor", enableEditor, "updates");
-    globalThis[`ElableEditorFor${tab.id}`] = enableEditor;
+    // globalThis[`ElableEditorFor${tab.id}`] = enableEditor;
   }, [enableEditor]);
   const [data, setData] = useState();
   if (tab) globalThis[`SetEnableEditorOf${tab?.id}`] = setEnableEditor;
