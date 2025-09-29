@@ -993,6 +993,16 @@ const SideBarBooks = ({ booksData, focusOnBook, selectedTestament, selectedTrans
         return (Math.floor(index / separator) * separator + separator) - 1;
     }
 
+    const ghostArray = (booksArray, allowedRows) => {
+        let booksLength = booksArray.length;
+        let additionalElements = allowedRows - (booksLength % allowedRows === 0 ? allowedRows : booksLength % allowedRows);
+        let tempBooksArray = [...booksArray];
+        for(let i = 0; i < additionalElements; i++){
+            tempBooksArray.push({ghost: true});
+        }
+        return  [...tempBooksArray];
+    }
+
     const RenderBooksByTestament = useMemo(() => {
         let isMobile = windowSize < 768;
 
@@ -1011,8 +1021,8 @@ const SideBarBooks = ({ booksData, focusOnBook, selectedTestament, selectedTrans
             let OTChapterPos = calcChapterPos(lastBookClicked, OTChapterSeparator);
             let NTChapterSeparator = allowedRows === 2 ? 1 : allowedRows === 3 ? 1 : 2;
             let NTChapterPos = calcChapterPos(lastBookClicked, NTChapterSeparator);
-            let OTBooks = booksData.slice(0, 39);
-            let NTBooks = booksData.slice(39);
+            let OTBooks = ghostArray(booksData.slice(0, 39), OTChapterSeparator);
+            let NTBooks = ghostArray(booksData.slice(39), NTChapterSeparator);
             return <div class="books-container" style={showCheck ? {paddingTop: "40px"} : {}}>
                 <div class="testament-container" style={{ width: `${allowedRows === 5 ? 60 : allowedRows === 3 ? 66.66 : 50}%` }}>
                     <span class="testament-title">Old Testament</span>
@@ -1020,7 +1030,7 @@ const SideBarBooks = ({ booksData, focusOnBook, selectedTestament, selectedTrans
                         {
                             OTBooks.map((book, index) => {
                                 return <>
-                                    <div class={`sidebar-itm ${index === lastBookClicked && bookData?.id === book.id ? "sidebar-selected-itm" : ""}`} ref={(ref) => updateRefsArray(index, ref)} tabIndex={index + 1} onClick={() => {
+                                    {!book?.ghost && <div class={`sidebar-itm ${index === lastBookClicked && bookData?.id === book.id ? "sidebar-selected-itm" : ""}`} ref={(ref) => updateRefsArray(index, ref)} tabIndex={index + 1} onClick={() => {
                                         handleClick({ index, book, cht: 0 })
                                     }}>
                                         <span >
@@ -1029,9 +1039,12 @@ const SideBarBooks = ({ booksData, focusOnBook, selectedTestament, selectedTrans
                                         <span style={{ transition: "transform 0.3s", opacity: 0.3 }} class={`material-symbols-outlined ${index === lastBookClicked && bookData?.id === book.id ? "upside-down" : ""}`}>
                                             expand_more
                                         </span>
-                                    </div>
+                                    </div>}
                                     {
-                                        (OTChapterPos === index || (OTChapterPos > index && index === OTBooks.length - 1)) && bookData && chT === 0 && <div class={`sidebar-chapters show-sidebar-chapter`} style={{justifyContent: bookData.numberOfChapters < 3 * OTChapterSeparator ? "flex-start" : "space-between"}}>
+                                        book?.ghost && <div class={`sidebar-ghost-itm`} ref={(ref) => updateRefsArray(index, ref)} tabIndex={index + 1} />
+                                    }
+                                    {
+                                        (OTChapterPos === index) && bookData && chT === 0 && <div class={`sidebar-chapters show-sidebar-chapter`} style={{justifyContent: bookData.numberOfChapters < 3 * OTChapterSeparator ? "flex-start" : "space-between"}}>
                                             <SideBarChapters
                                                 refsObject={refsObject}
                                                 bookData={bookData}
@@ -1055,7 +1068,7 @@ const SideBarBooks = ({ booksData, focusOnBook, selectedTestament, selectedTrans
                         {
                             NTBooks.map((book, index) => {
                                 return <>
-                                    <div class={`sidebar-itm ${index === lastBookClicked && bookData?.id === book.id ? "sidebar-selected-itm" : ""}`} ref={(ref) => updateRefsArray(index, ref)} tabIndex={index + 1} onClick={() => {
+                                    {!book?.ghost && <div class={`sidebar-itm ${index === lastBookClicked && bookData?.id === book.id ? "sidebar-selected-itm" : ""}`} ref={(ref) => updateRefsArray(index, ref)} tabIndex={index + 1} onClick={() => {
                                         handleClick({ index, book, cht: 1 })
                                     }}>
                                         <span >
@@ -1064,9 +1077,12 @@ const SideBarBooks = ({ booksData, focusOnBook, selectedTestament, selectedTrans
                                         <span style={{ transition: "transform 0.3s", opacity: 0.3 }} class={`material-symbols-outlined ${index === lastBookClicked && bookData?.id === book.id ? "upside-down" : ""}`}>
                                             expand_more
                                         </span>
-                                    </div>
+                                    </div>}
                                     {
-                                        (NTChapterPos === index || (NTChapterPos > index && index === NTBooks.length - 1)) && bookData && chT === 1 && <div class={`sidebar-chapters show-sidebar-chapter`} style={{justifyContent: bookData.numberOfChapters < 3 * NTChapterSeparator ? "flex-start" : "space-between"}}>
+                                        book?.ghost && <div class={`sidebar-ghost-itm`} ref={(ref) => updateRefsArray(index, ref)} tabIndex={index + 1} />
+                                    }
+                                    {
+                                        (NTChapterPos === index) && bookData && chT === 1 && <div class={`sidebar-chapters show-sidebar-chapter`} style={{justifyContent: bookData.numberOfChapters < 3 * NTChapterSeparator ? "flex-start" : "space-between"}}>
                                             <style>{allowedRows === 3 && `
                                                 .show-sidebar-chapter{width: calc(100% - 5px);}
                                             `}</style>
@@ -1090,14 +1106,15 @@ const SideBarBooks = ({ booksData, focusOnBook, selectedTestament, selectedTrans
         } else if (selectedTestament === 1) {
             console.log("New Testament")
             let chapterPos = calcChapterPos(lastBookClicked, allowedRows);
+            let booksWithGhost = ghostArray(booksData, allowedRows);
             return <div class="books-container" style={showCheck ? {paddingTop: "40px"} : {}}>
                 <div class="testament-container">
                     <span class="testament-title">New Testament</span>
                     <div class="books-item">
                         {
-                            booksData.map((book, index) => {
+                            booksWithGhost.map((book, index) => {
                                 return <>
-                                    <div class={`sidebar-itm ${index === lastBookClicked && bookData?.id === book.id ? "sidebar-selected-itm" : ""}`} ref={(ref) => updateRefsArray(index, ref)} tabIndex={index + 1} onClick={() => {
+                                    {!book.ghost && <div class={`sidebar-itm ${index === lastBookClicked && bookData?.id === book.id ? "sidebar-selected-itm" : ""}`} ref={(ref) => updateRefsArray(index, ref)} tabIndex={index + 1} onClick={() => {
                                         handleClick({ index, book })
                                     }}>
                                         <span >
@@ -1106,9 +1123,12 @@ const SideBarBooks = ({ booksData, focusOnBook, selectedTestament, selectedTrans
                                         <span style={{ transition: "transform 0.3s", opacity: 0.3 }} class={`material-symbols-outlined ${index === lastBookClicked && bookData?.id === book.id ? "upside-down" : ""}`}>
                                             expand_more
                                         </span>
-                                    </div>
+                                    </div>}
                                     {
-                                        (chapterPos === index || (index === booksData.length - 1 && chapterPos > index)) && bookData && <div class={`sidebar-chapters show-sidebar-chapter`} style={{justifyContent: bookData.numberOfChapters < 3 * allowedRows ? "flex-start" : "space-between"}}>
+                                        book?.ghost && <div class={`sidebar-ghost-itm`} ref={(ref) => updateRefsArray(index, ref)} tabIndex={index + 1} />
+                                    }
+                                    {
+                                        (chapterPos === index) && bookData && <div class={`sidebar-chapters show-sidebar-chapter`} style={{justifyContent: bookData.numberOfChapters < 3 * allowedRows ? "flex-start" : "space-between"}}>
                                             <SideBarChapters
                                                 refsObject={refsObject}
                                                 bookData={bookData}
@@ -1129,14 +1149,15 @@ const SideBarBooks = ({ booksData, focusOnBook, selectedTestament, selectedTrans
         } else if (selectedTestament === 0) {
             console.log("Old testament")
             let chapterPos = calcChapterPos(lastBookClicked, allowedRows);
+            let booksWithGhost = ghostArray(booksData.slice(0, 39), allowedRows);
             return <div class="books-container" style={showCheck ? {paddingTop: "40px"} : {}}>
                 <div class="testament-container">
                     <span class="testament-title">Old Testament</span>
                     <div class="books-item">
                         {
-                            booksData.slice(0, 39).map((book, index) => {
+                            booksWithGhost.map((book, index) => {
                                 return <>
-                                    <div class={`sidebar-itm ${index === lastBookClicked && bookData?.id === book.id ? "sidebar-selected-itm" : ""}`} ref={(ref) => updateRefsArray(index, ref)} tabIndex={index + 1} onClick={() => {
+                                    {!book.ghost && <div class={`sidebar-itm ${index === lastBookClicked && bookData?.id === book.id ? "sidebar-selected-itm" : ""}`} ref={(ref) => updateRefsArray(index, ref)} tabIndex={index + 1} onClick={() => {
                                         handleClick({ index, book })
                                     }}>
                                         <span >
@@ -1145,9 +1166,12 @@ const SideBarBooks = ({ booksData, focusOnBook, selectedTestament, selectedTrans
                                         <span style={{ transition: "transform 0.3s", opacity: 0.3 }} class={`material-symbols-outlined ${index === lastBookClicked && bookData?.id === book.id ? "upside-down" : ""}`}>
                                             expand_more
                                         </span>
-                                    </div>
+                                    </div>}
                                     {
-                                        (chapterPos === index || (index === booksData.length - 1 && chapterPos > index)) && bookData && <div class={`sidebar-chapters show-sidebar-chapter`} style={{justifyContent: bookData.numberOfChapters < 3 * allowedRows ? "flex-start" : "space-between"}}>
+                                        book?.ghost && <div class={`sidebar-ghost-itm`} ref={(ref) => updateRefsArray(index, ref)} tabIndex={index + 1} />
+                                    }
+                                    {
+                                        (chapterPos === index) && bookData && <div class={`sidebar-chapters show-sidebar-chapter`} style={{justifyContent: bookData.numberOfChapters < 3 * allowedRows ? "flex-start" : "space-between"}}>
                                             <SideBarChapters
                                                 refsObject={refsObject}
                                                 bookData={bookData}
