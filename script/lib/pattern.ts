@@ -31,7 +31,7 @@ export async function downloadPattern(name: string, version?: number): Promise<S
     }
 
     const data = result.data;
-    if(!data) {
+    if (!data) {
         console.error('No data found for pattern:', name);
         return null;
     }
@@ -101,8 +101,10 @@ const UNSAFE_HEADERS = new Set([
  * @param aux The pattern data to upload.
  * @param sessionKey The session key to use for authentication.
  * @param recordKey The record key to use. If not specified, the default record name will be used.
+ * @param telegramBotToken The Telegram bot token to use for sending upload notifications to Telegram. If not specified, notifications won't be sent to Telegram.
+ * @param telegramChatId The Telegram chat ID to use for sending upload notifications to Telegram. If not specified, notifications won't be sent to Telegram.
  */
-export async function uploadPattern(name: string, aux: StoredAux, sessionKey: string, recordKey?: string) {
+export async function uploadPattern(name: string, aux: StoredAux, sessionKey: string, recordKey?: string, telegramBotToken?: string, telegramChatId?: string) {
     const client = createRecordsClient('https://api.ao.bot');
 
     client.sessionKey = sessionKey;
@@ -137,7 +139,7 @@ export async function uploadPattern(name: string, aux: StoredAux, sessionKey: st
         const url = fileUrl = recordFileResult.uploadUrl;
         const headers = { ...recordFileResult.uploadHeaders };
 
-        for(const header of UNSAFE_HEADERS) {
+        for (const header of UNSAFE_HEADERS) {
             delete headers[header];
         }
 
@@ -198,10 +200,41 @@ export async function uploadPattern(name: string, aux: StoredAux, sessionKey: st
         throw new Error('Failed to record data: ' + recordDataResult.errorCode + ' ' + recordDataResult.errorMessage);
     }
 
-    console.log('Successfully uploaded pattern:', name);
     const url = new URL(`https://ao.bot/`);
     url.searchParams.set('pattern', name);
-    console.log(`View it at: ${url.href}&noGridPortal`);
+    url.searchParams.set('patternVersion', eggData.maxVersion.toString());
+    const patternUrl = `${url.href}&noGridPortal`;
+
+    if (telegramBotToken && telegramChatId) {
+        const now = new Date();
+        const date = now.toISOString().split('T')[0]; // YYYY-MM-DD format
+        const time = now.toISOString().split('T')[1].split('.')[0] + ' UTC';
+        const telegramUrl = `https://api.telegram.org/bot${telegramBotToken}/sendMessage`;
+        const telegramMessage = `**action:**  publishRecord.success\n**date:**     ${date}\n**time:     **${time}\n**pattern:** [${aoID}](${patternUrl})\n**key:**${key}\n**version:** **${eggData.maxVersion}`;
+        const telegramParams = {
+            chat_id: telegramChatId,
+            text: telegramMessage,
+            parse_mode: 'Markdown'
+        };
+        try {
+            const telegramResponse = await fetch(telegramUrl, {
+                method: 'POST',
+                headers: {
+                    'Content-Type': 'application/json'
+                },
+                body: JSON.stringify(telegramParams)
+            });
+
+            if (!telegramResponse.ok) {
+                console.error(`Failed to send Telegram message (${telegramResponse.status}): ${await telegramResponse.text()}`);
+            }
+        } catch (error) {
+            console.error('TelegramError:', error);
+        }
+    }
+
+    console.log('Successfully uploaded pattern:', name);
+    console.log(`View it at: ${patternUrl}`);
 }
 
 function getHash(buffer: Uint8Array): string {
