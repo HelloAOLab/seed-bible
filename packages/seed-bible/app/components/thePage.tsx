@@ -1,6 +1,6 @@
 import { BibleDataManager } from 'app.hooks.bibleDataManager'
 import { getStyleOf } from 'app.styles.styler'
-const { useEffect, useState, useMemo, useCallback, useLayoutEffect, useRef, createRef } = os.appHooks;
+const { useEffect, useState, useMemo, useCallback, useLayoutEffect, createRef } = os.appHooks;
 import { useMouseMove } from 'app.hooks.mouseMove'
 import { useTabsContext } from 'app.hooks.tabs';
 import { useBibleContext } from 'app.hooks.bibleVariables'
@@ -10,16 +10,14 @@ import { TextEditor } from 'app.components.editor'
 import { MiniTextEditor } from 'app.components.smallEditor'
 
 // Additions ------>
-// import { StudyNotes, StudyNotesWithPanel } from 'app.sn_components.studyNotes';
+import { StudyNotes, StudyNotesWithPanel } from 'app.sn_components.studyNotes';
+
+const SN_Components_Bot = getBot(byTag('system', 'app.sn_components'));
 
 import { ConfigurableFunctionCommands } from 'app.components.commands'
 
 function ThePage({ tab: T, setPanalApp, panelId, setEnableEditor, setData, data }) {
     const [tab, setTab] = useState(T);
-    const [commandHighlight, setCommandHighlight] = useState([]);
-
-    const commandsRef = useRef(null);
-
     useEffect(() => {
         if (!T)
             globalThis.CurrentPanelAvailable = panelId
@@ -43,15 +41,15 @@ function ThePage({ tab: T, setPanalApp, panelId, setEnableEditor, setData, data 
     const [showCommands, setShowCommands] = useState(false);
     const [lastSelectedVerse, setLastSelectedVerse] = useState(null);
 
-    // Add state for word highlights
-    const [wordHighlights, setWordHighlights] = useState({});
-
     const [bible, setBible] = useState()
     if (tab)
         globalThis[`SetEnableEditorOf${tab?.id}`] = setEnableEditor;
     async function loadData() {
         if (!tab)
             return
+
+        console.log("tab data in ThePage: ", tab);
+
         const bible = new BibleDataManager({
             tabId: tab?.id,
             translation: tab.data.translation,
@@ -64,28 +62,66 @@ function ThePage({ tab: T, setPanalApp, panelId, setEnableEditor, setData, data 
 
         await bible.fetch();
 
+        let tempBibleObject = bible;
+        
+        globalThis.CurrentBibleObject = tempBibleObject;
+
+        const { data, loading, error } = bible.getState();
+        console.log(data, tab, 'the data loaded')
+        setData(data)
+
+        globalThis.BookId = bible.bookId;
+        globalThis.GlobalChapter = bible.data.chapter - 1;
+
+        // if(!globalThis.studyNotesPresent) {
+        //     SN_Components_Bot.initializer();
+        // }
+        // setContent(data)
+        // await bible.openNext();
+
+        // await bible.changeTranslation('KJV');
+    }
+    useEffect(() => {
+        loadData()
+    }, [tab])
+
+    async function globalLoadingDataFromSN(bookId, chapter) {
+        if (!tab)
+            return
+        const bible = new BibleDataManager({
+            tabId: tab?.id,
+            translation: tab.data.translation,
+            bookId: bookId,
+            chapter: chapter,
+        });
+        setBible(bible)
+
+        console.log("bible data: ", bible);
+
+        await bible.fetch();
+
         // Additional Data ----------->
         globalThis.BookId = bible.bookId;
 
         const { data, loading, error } = bible.getState();
         console.log(data, tab, 'the data loaded')
+        setData(data);
 
-        setData(data)
-        // setContent(data)
-        // await bible.openNext();
-        globalThis.refreshScrollers && globalThis.refreshScrollers();
-        // await bible.changeTranslation('KJV');
+        globalThis.GlobalChapter = bible.data.chapter - 1;
+
+        if (globalThis.studyNotesPresent) {
+            UpdateApplication(globalThis.STUDYNOTES_PANEL_ID, {
+                App: <StudyNotes id={globalThis.STUDYNOTES_PANEL_ID} chapter={globalThis.GlobalChapter} />,
+                to: 'panel',
+            })
+        }
     }
-    useEffect(() => {
-        loadData()
-        // after you change something that affects height:
 
+    globalThis.GlobalLoadingDataFromSN = globalLoadingDataFromSN;
 
-    }, [tab])
     useEffect(() => {
         if (data) {
             hanldNavFunctions()
-            SetShowCommands(false);
             updateTab(tab?.id, data)
             if (panelId && tab) {
                 os.log('recoreded', panelId, { ...tab, data: { ...tab.data, ...data } })
@@ -94,29 +130,47 @@ function ThePage({ tab: T, setPanalApp, panelId, setEnableEditor, setData, data 
         }
     }, [data])
 
+    // Add text selection handler
     useEffect(() => {
-        globalThis.NavFunctions = navFunctions;
-        globalThis.BibleData = data;
-        return () => {
-            globalThis.BibleData = null;
-            globalThis.NavFunctions = navFunctions;
-        }
-    }, [navFunctions, data])
+        // const handleSelection = () => {
+        //     const selection = window.getSelection();
+        //     const selectedText = selection.toString().trim();
 
+        //     if (selectedText && selectedText.length > 0) {
+        //         setSelectedText(selectedText);
+        //         setShowCommands(true);
+
+        //         // Find the verse element that contains the selection
+        //         console.log(selection,'section range')
+        //         const range = selection.getRangeAt(0);
+        //         const container = range.commonAncestorContainer;
+        //         const verseElement = container.nodeType === Node.TEXT_NODE
+        //             ? container.parentElement.closest('.sectionText')
+        //             : container.closest('.sectionText');
+
+        //         if (verseElement) {
+        //             const verseNumber = verseElement.querySelector('.sectionTextNumber')?.textContent;
+        //             if (verseNumber) {
+        //                 setLastSelectedVerse(parseInt(verseNumber));
+        //             }
+        //         }
+        //     } else {
+        //         // setShowCommands(false);
+        //         // setSelectedText('');
+        //     }
+        // };
+
+        // document.addEventListener('selectionchange', handleSelection);
+        // return () => document.removeEventListener('selectionchange', handleSelection);
+
+    }, []);
     useEffect(() => {
         const handleMouseUp = () => {
             const selection = window.getSelection();
             if (!selection || selection.isCollapsed) return;
 
             const selectedRange = selection.getRangeAt(0);
-            const container = selectedRange.commonAncestorContainer.nodeType === Node.TEXT_NODE
-                ? selectedRange.commonAncestorContainer.parentElement
-                : selectedRange.commonAncestorContainer;
 
-            if (commandsRef.current && commandsRef.current.contains(container)) {
-                setShowCommands(true);
-                return;
-            }
             // Use TreeWalker to collect all .sectionText spans inside selection
             const treeWalker = document.createTreeWalker(
                 selectedRange.commonAncestorContainer,
@@ -211,19 +265,9 @@ function ThePage({ tab: T, setPanalApp, panelId, setEnableEditor, setData, data 
     function handleMouseUp() {
         if (!isDragging)
             return
-        console.log(Element.data, 'El.data')
-        if (Element?.data?.data?.pkgApp) {
-            const handoff = Element?.data?.data
-            const App = handoff.app
-            const id = uuid()
-            ReplaceApplication(panelId,
-                { id, App, to: 'panel', minWidth: '30rem' })
-            console.log('replaced')
-        } else {
-            Update(Element.data)
-            if (globalThis.GetBooksDataForMenu)
-                globalThis.GetBooksDataForMenu(`https://bible.helloao.org/api/${Element.data.data.translation}/books.json`, Element.data.data.translation)
-        }
+        Update(Element.data)
+        if (globalThis.GetBooksDataForMenu)
+            globalThis.GetBooksDataForMenu(`https://bible.helloao.org/api/${Element.data.data.translation}/books.json`, Element.data.data.translation)
         setIsDragging(false)
         setTabEntered(false)
     }
@@ -231,8 +275,11 @@ function ThePage({ tab: T, setPanalApp, panelId, setEnableEditor, setData, data 
         await bible.openNext()
         setData(bible.data)
 
+        console.log("New Bible Object: ", bible);
+
         // Additions ------>
         globalThis.GlobalChapter = bible.data.chapter - 1;
+        globalThis.BookId = bible.data.bookId;
 
         if (globalThis.studyNotesPresent) {
             UpdateApplication(globalThis.STUDYNOTES_PANEL_ID, {
@@ -245,8 +292,11 @@ function ThePage({ tab: T, setPanalApp, panelId, setEnableEditor, setData, data 
         await bible.openPrevious()
         setData(bible.data)
 
+        console.log("New Bible Object: ", bible);
+
         // Additions ------>
         globalThis.GlobalChapter = bible.data.chapter - 1;
+        globalThis.BookId = bible.data.bookId;
 
         if (globalThis.studyNotesPresent) {
             UpdateApplication(globalThis.STUDYNOTES_PANEL_ID, {
@@ -258,141 +308,22 @@ function ThePage({ tab: T, setPanalApp, panelId, setEnableEditor, setData, data 
     async function open(bookId, chapter, translation = null) {
         await bible.open(bookId, chapter, translation = null)
         setData(bible.data)
-    }
-    async function changeTranslation(id) {
-        await bible.changeTranslation(id)
-        setData(bible.data)
-    }
+        
+        // Additions ------>
+        globalThis.GlobalChapter = bible.data.chapter - 1;
+        globalThis.BookId = bible.data.bookId;
 
-    // Add word highlighting functions
-    const highlightWords = useCallback((config) => {
-        /*
-        UPDATED CONFIG BEHAVIOR
-        -----------------------
-        - If any of book / chapter / verse is null, it will default to the CURRENT data in view and expand as follows:
-            book: null   -> use current data.book
-            chapter: null-> use current data.chapter
-            verse: null  -> apply to ALL verses in the current data (current chapter's verses)
-        - verse may be a single number or an array of numbers. If omitted or null, all verses are targeted.
-
-        Example:
-        HighlightWords({
-            book: null,
-            chapter: null,
-            verse: null,
-            words: ["light", "God", "LORD"],
-            color: "#000",
-            backgroundColor: "#ffeb3b",
-            onClick: (word, verseNumber) => console.log(word, verseNumber)
-        })
-        */
-        if (!tab?.id) return;
-
-        // Derive targets from current data when null
-        const targetBook = (config.book == null ? data?.book : config.book);
-        const targetChapter = (config.chapter == null ? data?.chapter : config.chapter);
-
-        // Build list of verse numbers to apply to
-        let targetVerses = [];
-        if (config.verse == null) {
-            // Apply to all verses visible in current data
-            const content = data?.content || [];
-            content.forEach(({ verses }) => {
-                verses.forEach(v => {
-                    if (typeof v?.verseNumber === 'number') targetVerses.push(v.verseNumber);
-                })
-            });
-        } else if (Array.isArray(config.verse)) {
-            targetVerses = config.verse;
-        } else {
-            targetVerses = [config.verse];
+        if (globalThis.studyNotesPresent) {
+            UpdateApplication(globalThis.STUDYNOTES_PANEL_ID, {
+                App: <StudyNotes id={globalThis.STUDYNOTES_PANEL_ID} chapter={globalThis.GlobalChapter} />,
+                to: 'panel',
+            })
         }
-
-        // Guard: if we still have no verses, do nothing
-        if (!targetVerses.length) return;
-
-        const wordsToAdd = (config.words || []).filter(Boolean);
-        if (!wordsToAdd.length) return;
-
-        setWordHighlights(prev => {
-            const newHighlights = { ...prev };
-
-            // Ensure container for this tab in global store
-            if (!globalThis.wordHighlights) globalThis.wordHighlights = {};
-            if (!globalThis.wordHighlights[tab.id]) globalThis.wordHighlights[tab.id] = {};
-
-            // Apply highlights to each targeted verse
-            targetVerses.forEach(vn => {
-                const key = `${targetBook}-${targetChapter}-${vn}`;
-                if (!newHighlights[key]) newHighlights[key] = {};
-
-                wordsToAdd.forEach(word => {
-                    const wordKey = String(word).toLowerCase();
-                    newHighlights[key][wordKey] = {
-                        color: config.color || "#000",
-                        backgroundColor: config.backgroundColor || "#ffeb3b",
-                        onClick: config.onClick || null,
-                        timestamp: Date.now(),
-                        createAttributes: config?.createAttributes ? config.createAttributes : () => { return {} }
-                    };
-                });
-            });
-
-            // Persist per-tab
-            globalThis.wordHighlights[tab.id] = newHighlights;
-            return newHighlights;
-        });
-    }, [data, tab?.id]);
-
-    const removeWordHighlight = useCallback((config) => {
-        /*
-        Original behavior preserved.
-        */
-        if (!tab?.id) return;
-
-        setWordHighlights(prev => {
-            const newHighlights = { ...prev };
-            const key = `${config.book}-${config.chapter}-${config.verse}`;
-
-            if (!newHighlights[key]) return prev;
-
-            if (config.words) {
-                config.words.forEach(word => {
-                    const wordKey = word.toLowerCase();
-                    delete newHighlights[key][wordKey];
-                });
-
-                // Remove verse key if no words left
-                if (Object.keys(newHighlights[key]).length === 0) {
-                    delete newHighlights[key];
-                }
-            } else {
-                // Remove all words for this verse
-                delete newHighlights[key];
-            }
-
-            // Update global storage
-            if (globalThis.wordHighlights) {
-                globalThis.wordHighlights[tab.id] = newHighlights;
-            }
-
-            return newHighlights;
-        });
-    }, [data]);
-
-    const clearAllWordHighlights = useCallback(() => {
-        setWordHighlights({});
-        if (globalThis.wordHighlights && tab?.id) {
-            delete globalThis.wordHighlights[tab.id];
-        }
-    }, [data]);
-    useEffect(() => {
-        // Add global word highlighting functions for developers
-        globalThis.HighlightWords = highlightWords;
-        globalThis.RemoveWordHighlight = removeWordHighlight;
-        globalThis.ClearAllWordHighlights = clearAllWordHighlights;
-        shout('onBookChanged', { ...data, tabId: tab.id })
-    }, [data])
+    }
+    async function changeTranslation(id, book, url) {
+        await bible.changeTranslation(id);
+        setData(bible.data);
+    }
     function hanldNavFunctions() {
         //  bible.openNext()
         // console.log(bible, 'nextChapterData')
@@ -405,13 +336,6 @@ function ThePage({ tab: T, setPanalApp, panelId, setEnableEditor, setData, data 
         globalThis.ToggleVerseHighlight = toggleVerseHighlight;
         globalThis.SetInHold = setInHold
         globalThis.SetShowCommands = setShowCommands
-
-        // Add global word highlighting functions for developers
-        globalThis.HighlightWords = highlightWords;
-        globalThis.RemoveWordHighlight = removeWordHighlight;
-        globalThis.ClearAllWordHighlights = clearAllWordHighlights;
-
-
         //     os.log(tab)
         //     if (globalThis.GetBooksDataForMenu) {
         //         os.log(`https://bible.helloao.org/api/${data?.translation}/books.json`)
@@ -419,7 +343,7 @@ function ThePage({ tab: T, setPanalApp, panelId, setEnableEditor, setData, data 
         //     }
 
         // Additions ------>
-        globalThis.GlobalChapter = (data?.chapter || 1) - 1;
+        globalThis.GlobalChapter = data.chapter - 1;
 
         if (globalThis.studyNotesPresent) {
             UpdateApplication(globalThis.STUDYNOTES_PANEL_ID, {
@@ -438,6 +362,21 @@ function ThePage({ tab: T, setPanalApp, panelId, setEnableEditor, setData, data 
         // open(tab.data.bookId, tab.data.chapter, tab.data.translation)
     }
     globalThis.UpdateTab = Update
+    // useEffect(() => {
+    //     if (data && tab) {
+    //         os.log('updatedData', data)
+    //         updateTab(tab?.id, data)
+    //         if (panelId && tab) {
+    //             os.log('recoreded', panelId, { ...tab, data: { ...tab.data, ...data } })
+    //             globalThis.PanelTabsMap[panelId] = { ...tab, data: { ...tab.data, ...data } };
+    //         }
+    //         // setTab(tabs.find(e => e?.id === tab?.id))
+    //     }
+    //     if (data) {
+    //         hanldNavFunctions()
+    //     }
+    // }, [data]);
+
 
     const [blinker, setBlinker] = useState({});
     const [selected, setSelected] = useState({});
@@ -495,18 +434,15 @@ function ThePage({ tab: T, setPanalApp, panelId, setEnableEditor, setData, data 
             globalThis.ScrollToVerse = null;
         }
     }, [onScrollToRef]);
-
-    // Load existing word highlights for this tab
-    useEffect(() => {
-        if (!globalThis.wordHighlights) {
-            globalThis.wordHighlights = {};
-        }
-        if (tab?.id && globalThis.wordHighlights[tab.id]) {
-            setWordHighlights(globalThis.wordHighlights[tab.id]);
-        }
-    }, [tab?.id]);
-
+    // return <TextEditor /> 
+    // if (data)
     const [highlightOnce, setHighlightOnce] = useState(false);
+
+    useEffect(() => {
+        setHighlightOnce(true);
+        const timer = setTimeout(() => setHighlightOnce(false), 800); // matches animation duration
+        return () => clearTimeout(timer);
+    }, []);
 
     const [highlighted, setHighlighted] = useState({});
 
@@ -571,26 +507,7 @@ function ThePage({ tab: T, setPanalApp, panelId, setEnableEditor, setData, data 
             return newHighlighted;
         });
     }, [tab?.id, data?.book, data?.chapter]);
-    useEffect(() => {
-        if (showCommands) {
-            setCommandHighlight(contextData.verses)
-        } else {
-            setCommandHighlight([])
-        }
-    }, [showCommands])
-    function clearUserSelection() {
-        if (window.getSelection) {
-            const selection = window.getSelection();
-            if (selection.empty) {          // Chrome
-                selection.empty();
-            } else if (selection.removeAllRanges) {  // Firefox / Edge
-                selection.removeAllRanges();
-            }
-        } else if (document.selection) {   // IE
-            document.selection.empty();
-        }
-    }
-    globalThis.ClearUserSelection = clearUserSelection
+
     return <div
         className="pageContainer"
         onMouseLeave={handleMouseLeave}
@@ -602,7 +519,7 @@ function ThePage({ tab: T, setPanalApp, panelId, setEnableEditor, setData, data 
         <link href="https://fonts.cdnfonts.com/css/montserrat" rel="stylesheet" />
         <link href="https://fonts.googleapis.com/css2?family=EB+Garamond:ital,wght@0,400..800;1,400..800&display=swap" rel="stylesheet" />
         {data && tab && !tabEntered ? <>
-            <div style={{ 'pointer-events': isDragging ? "none" : null }} className="bookTitle">{`${data?.book} ${data?.chapter}`}</div>
+            <div style={{ 'pointer-events': isDragging ? "none" : null }} className="bookTitle">{`${data?.book} - ${data?.chapter}`}</div>
             {
                 data && data.content.map(e => {
                     return <>
@@ -618,7 +535,6 @@ function ThePage({ tab: T, setPanalApp, panelId, setEnableEditor, setData, data 
                                 holded={holded}
                                 selected={selected}
                                 highlighted={highlighted}
-                                wordHighlights={wordHighlights}
                                 textEdit={false}
                                 showCommands={showCommands}
                                 setShowCommands={setShowCommands}
@@ -626,18 +542,14 @@ function ThePage({ tab: T, setPanalApp, panelId, setEnableEditor, setData, data 
                                 lastSelectedVerse={lastSelectedVerse}
                                 contextData={contextData}
                                 setContextData={setContextData}
-                                commandsRef={commandsRef}
-                                setLastSelectedVerse={setLastSelectedVerse}
-                                setCommandHighlight={setCommandHighlight}
-                                commandHighlight={commandHighlight}
                             />
                         </div>
                     </>
                 })
             }
             <div style={{ height: '40px' }}></div>
-            <div style={{ margin: 'auto', width: '80%', height: '1px', background: 'gray' }}></div>
-            <div style={{ width: '50%', display: 'flex', 'align-items': 'center', 'justify-content': 'center', position: 'relative' }}>
+            <div style={{ width: '100%', display: 'flex', 'align-items': 'center', 'justify-content': 'center', position: 'relative' }}>
+                <div style={{ width: '80%', height: '1px', background: 'gray' }}></div>
                 <PageToolbar />
             </div>
             <div style={{ height: '160px' }}></div>
@@ -650,7 +562,6 @@ function ThePage({ tab: T, setPanalApp, panelId, setEnableEditor, setData, data 
                         display: 'flex',
                         alignItems: 'center',
                         justifyContent: 'center',
-                        backgroundColor: '#f8f9fa',
                     }}
                     className={`pageContainer ${tabEntered ? 'tabEntered' : 'tabDrop'} ${highlightOnce ? 'tabHighlightBg' : ''}`}
                 >
@@ -659,47 +570,45 @@ function ThePage({ tab: T, setPanalApp, panelId, setEnableEditor, setData, data 
                             pointerEvents: isDragging ? 'none' : undefined,
                             display: 'flex',
                             flexDirection: 'column',
-                            alignItems: 'center',
                             textAlign: 'center',
-                            padding: '40px',
-                            // backgroundColor: 'white',
-                            borderRadius: '12px',
-                            // boxShadow: '0 4px 12px rgba(0, 0, 0, 0.1)',
-                            maxWidth: '400px',
-                            width: '90%',
                         }}
                     >
+                        {!tabEntered ? `Please drop tab here` : 'Drop to open !'}
                         <div
-                            onClick={() => {
-                                setOpenSidebar(prev => !prev);
-                                setCurrentExperience(0);
-                            }}
                             style={{
-                                fontSize: '24px',
-                                marginBottom: '20px',
-                                color: '#333'
-                            }}>
-                            <img style={{ width: '50px' }} src="https://res.cloudinary.com/dfbtwwa8p/image/upload/v1755365776/717a8527988cca7e0bdc9449ec68581a8400b977_vqc7mx.png" />
+                                textAlign: 'center',
+                                color: '#666',
+                                margin: '20px 0',
+                                fontSize: '14px',
+                            }}
+                        >
+                            ──────── OR ────────
                         </div>
 
-
-
-                        <div style={{
-                            width: '80%',
-                            height: '1px',
-                            background: '#e0e0e0',
-                            marginTop: '40px',
-                            margin: 'auto'
-                        }}></div>
-                        <div style={{
-                            width: '100%',
-                            marginTop: '30px',
-                            display: 'flex',
-                            alignItems: 'center',
-                            justifyContent: 'center',
-                            position: 'relative'
-                        }}>
-                            <PageToolbar path="showInStarterToolbar" />
+                        <button
+                            onClick={() => {
+                                globalThis.UpdateTab = Update
+                                hanldNavFunctions()
+                                setOpenSidebar(true);
+                                setCurrentExperience(0);
+                                globalThis.MakingNewTab = Update;
+                            }}
+                            style={{
+                                padding: '8px 16px',
+                                backgroundColor: 'gray',
+                                color: 'white',
+                                border: 'none',
+                                borderRadius: '4px',
+                                cursor: 'pointer',
+                                fontSize: '14px',
+                            }}
+                        >
+                            Select Book/Chapter
+                        </button>
+                        <div style={{ height: '40px' }}></div>
+                        <div style={{ width: '100%', display: 'flex', 'align-items': 'center', 'justify-content': 'center', position: 'relative' }}>
+                            <div style={{ width: '80%', height: '1px', background: 'gray' }}></div>
+                            <PageToolbar />
                         </div>
                     </div>
                 </div>
@@ -708,17 +617,17 @@ function ThePage({ tab: T, setPanalApp, panelId, setEnableEditor, setData, data 
 
     </div>
 }
-function PageToolbar({ path = 'showInPageToolbar' }) {
+function PageToolbar() {
     const { tools } = useBibleContext();
 
-    const visibleTools = tools.filter(tool => tool[path]);
+    const visibleTools = tools.filter(tool => tool.showInPageToolbar);
     if (visibleTools.length === 0) return null;
 
     return (
         <div className="thePageToolbar">
             {
                 visibleTools.map(tool => (
-                    <div onClick={tool.onClick} className="tool-preview-page" key={tool.label}>
+                    <div onClick={tool.onClick} className="tool-preview" key={tool.label}>
                         {tool.isImg ? (
                             <img
                                 src={tool.icon}
@@ -741,7 +650,7 @@ function PageToolbar({ path = 'showInPageToolbar' }) {
  * matching any multi-word subphrase (≥2 words) *and* any single-word keys.
  */
 function splitBySectionKeys(text, verseSectionMap) {
-    const stripRe = /[.,'"""'']/g;
+    const stripRe = /[.,'"“”‘’]/g;
 
     // 1) Build a map of all subphrases (length ≥2) and single-word keys → parent key
     const subphraseMap = {};
@@ -811,77 +720,71 @@ function splitBySectionKeys(text, verseSectionMap) {
     return chunks;
 }
 
-// Helper function to split text by word highlights
-function splitByWordHighlights(text, wordHighlights, book, chapter, verseNumber) {
-    if (!wordHighlights || Object.keys(wordHighlights).length === 0) {
-        return [{ text, isHighlighted: false }];
+function normalizeToSet(payload) {
+    // Accept shapes: "5", "5-8", [5,7,9], {start:5,end:8}, [{start:1,end:3},{start:10,end:11}]
+    const out = new Set();
+
+    if (payload == null) return out;
+
+    const addRange = (a, b) => {
+        const start = Math.min(+a, +b);
+        const end = Math.max(+a, +b);
+        for (let v = start; v <= end; v++) out.add(v);
+    };
+
+    if (typeof payload === 'string') {
+        const t = payload.trim();
+        const m = t.match(/^(\d+)\s*[-–]\s*(\d+)$/);
+        if (m) addRange(m[1], m[2]);
+        else if (/^\d+$/.test(t)) out.add(+t);
+        return out;
     }
 
-    const verseKey = `${book}-${chapter}-${verseNumber}`;
-    const highlights = wordHighlights[verseKey];
-
-    if (!highlights || Object.keys(highlights).length === 0) {
-        return [{ text, isHighlighted: false }];
-    }
-
-    // Create regex pattern for all highlighted words
-    const highlightWords = Object.keys(highlights);
-    if (highlightWords.length === 0) {
-        return [{ text, isHighlighted: false }];
-    }
-
-    // Sort by length (longest first) to handle overlapping words correctly
-    highlightWords.sort((a, b) => b.length - a.length);
-
-    const pattern = new RegExp(`\\b(${highlightWords.map(word =>
-        word.replace(/[.*+?^${}()|[\\]\\\\]/g, '\\$&')
-    ).join('|')})\\b`, 'gi');
-
-    const parts = [];
-    let lastIndex = 0;
-    let match;
-
-    while ((match = pattern.exec(text)) !== null) {
-        // Add text before the match
-        if (match.index > lastIndex) {
-            parts.push({
-                text: text.slice(lastIndex, match.index),
-                isHighlighted: false
+    if (Array.isArray(payload)) {
+        // array of numbers OR array of ranges
+        if (payload.length && typeof payload[0] === 'object') {
+            payload.forEach(r => {
+                if (r && r.start != null && r.end != null) addRange(r.start, r.end);
             });
+        } else {
+            payload.forEach(n => /^\d+$/.test(String(n)) && out.add(+n));
         }
-
-        // Add the highlighted word
-        const matchedWord = match[1].toLowerCase();
-        parts.push({
-            text: match[1],
-            isHighlighted: true,
-            highlightConfig: highlights[matchedWord]
-        });
-
-        lastIndex = match.index + match[1].length;
+        return out;
     }
 
-    // Add remaining text
-    if (lastIndex < text.length) {
-        parts.push({
-            text: text.slice(lastIndex),
-            isHighlighted: false
-        });
+    if (typeof payload === 'object') {
+        const { start, end } = payload;
+        if (start != null && end != null) addRange(start, end);
+        return out;
     }
 
-    return parts;
+    return out;
 }
 
-// Replace the Section component with this updated one:
+// Replace the Section component with this one below: 
 
-function Section({ heading, commandHighlight, setCommandHighlight, setLastSelectedVerse, setRef, commandsRef, setContextData, contextData, verses, book, chapter, holded, blinker, selected, highlighted, wordHighlights, textEdit, setInHold, inHold, showCommands, setShowCommands, selectedText, lastSelectedVerse }) {
+function Section({ heading, setRef, setContextData, contextData, verses, book, chapter, holded, blinker, selected, highlighted, textEdit, setInHold, inHold, showCommands, setShowCommands, selectedText, lastSelectedVerse }) {
 
     const stripRe = /[.,'"""'']/g;
     const normalize = (k) => k.replace(stripRe, '').toLowerCase().trim();
 
     // read the active key
     const [activeKey, setActiveKey] = useState(globalThis.HighlightedSectionKey || '');
+
     const [activeVerse, setActiveVerse] = useState(globalThis.HighlightedVerseNumber || '');
+
+    const [activeVerses, setActiveVerses] = useState(() => new Set());
+
+    const [animating, setAnimating] = useState(false);
+    const [sectionMap, setSectionMap] = useState(null);
+    const [chunksMap, setChunksMap] = useState(null);
+
+    function readGlobalShouldHighlight() {
+        const v = SN_Components_Bot?.tags?.shouldHighlight;
+        return v === true || String(v) === 'true';
+    }
+
+    const shouldHighlight = readGlobalShouldHighlight();
 
     // 1) build refs once per verse
     const verseRefs = useMemo(() => {
@@ -910,6 +813,35 @@ function Section({ heading, commandHighlight, setCommandHighlight, setLastSelect
             window.removeEventListener('highlightedVerseChanged', handler);
     }, []);
 
+    useEffect(() => {
+        const handler = () => {
+            const payload =
+                globalThis.HighlightedVerses
+                ?? globalThis.HighlightedVerseRange
+                ?? null;
+
+            setActiveVerses(normalizeToSet(payload));
+        };
+        window.addEventListener('highlightedVersesChanged', handler);
+        return () => window.removeEventListener('highlightedVersesChanged', handler);
+    }, []);
+
+    useLayoutEffect(() => {
+        // prefer multi-verse; fall back to single-verse for backward compat
+        let target = null;
+        if (activeVerses && activeVerses.size) {
+            target = Math.min(...Array.from(activeVerses));
+        } else if (activeVerse) {
+            target = activeVerse;
+        }
+        if (!target) return;
+
+        const ref = verseRefs[target];
+        if (ref?.current) {
+            ref.current.scrollIntoView({ behavior: 'smooth', block: 'center' });
+        }
+    }, [activeVerses, activeVerse, verseRefs]);
+
     useLayoutEffect(() => {
         if (!activeVerse) return
         const ref = verseRefs[activeVerse]
@@ -920,6 +852,7 @@ function Section({ heading, commandHighlight, setCommandHighlight, setLastSelect
             })
         }
     }, [activeVerse, verseRefs])
+
 
     const editTextStyle = {
         "border-radius": "6px",
@@ -940,34 +873,29 @@ function Section({ heading, commandHighlight, setCommandHighlight, setLastSelect
         },
     }
 
-    // inside your Section component, before the return:
-    const chunksMap = useMemo(() => {
-        const result = {};
-        if (globalThis.studyNotesPresent) {
-            verses.forEach(v => {
-                result[v.verseNumber] = splitBySectionKeys(
-                    v.text,
-                    globalThis.VerseSectionMap
-                );
-            });
+    // 1) listen for the map
+    useEffect(() => {
+        function onMapReady(e) {
+            const map = e.detail || null;
+            setSectionMap(map);
+            setAnimating(!!map);
         }
-        return result;
-    }, [verses, globalThis.studyNotesPresent, globalThis.VerseSectionMap]);
+        window.addEventListener('sectionMapReady', onMapReady);
+        return () => window.removeEventListener('sectionMapReady', onMapReady);
+    }, []);
 
-    // Create word highlight chunks map
-    const wordChunksMap = useMemo(() => {
+    useEffect(() => {
+        if (!globalThis.VerseSectionMap) {
+            setChunksMap(null);
+            return;
+        }
         const result = {};
         verses.forEach(v => {
-            result[v.verseNumber] = splitByWordHighlights(
-                v.text,
-                wordHighlights,
-                book,
-                chapter,
-                v.verseNumber
-            );
+            result[v.verseNumber] = splitBySectionKeys(v.text, globalThis.VerseSectionMap);
         });
-        return result;
-    }, [verses, wordHighlights, book, chapter]);
+        setChunksMap(result);
+
+    }, [globalThis.VerseSectionMap, verses]);
 
     // Get context data for the selected verse
     const getContextData = (verseNumber) => {
@@ -984,108 +912,8 @@ function Section({ heading, commandHighlight, setCommandHighlight, setLastSelect
         };
     };
 
-    // Function to render verse text with word highlights
-    const renderVerseText = (verse) => {
-        const verseKey = `${book}-${chapter}-${verse.verseNumber}`;
-        const hasWordHighlights = wordHighlights[verseKey] && Object.keys(wordHighlights[verseKey]).length > 0;
-
-        if (globalThis.studyNotesPresent) {
-            // Use section-based rendering
-            return (chunksMap[verse.verseNumber] || []).map((part, i) => {
-                if (!part.isSection) {
-                    // For non-section text, apply word highlights if any
-                    if (hasWordHighlights) {
-                        const wordParts = splitByWordHighlights(part.text, wordHighlights, book, chapter, verse.verseNumber);
-                        return wordParts.map((wordPart, wordIndex) => {
-                            if (wordPart.isHighlighted) {
-                                return (
-                                    <span
-                                        key={`${i}-word-${wordIndex}`}
-                                        style={{
-                                            color: wordPart.highlightConfig.color,
-                                            backgroundColor: wordPart.highlightConfig.backgroundColor,
-                                            cursor: wordPart.highlightConfig.onClick ? 'pointer' : 'default',
-                                            padding: '1px 2px',
-                                            borderRadius: '2px'
-                                        }}
-                                        onClick={(e) => {
-                                            e.stopPropagation();
-                                            if (wordPart.highlightConfig.onClick) {
-                                                wordPart.highlightConfig.onClick(wordPart.text, verse.verseNumber);
-                                            }
-                                        }}
-                                    >
-                                        {wordPart.text}
-                                    </span>
-                                );
-                            }
-                            return <span key={`${i}-word-${wordIndex}`}>{wordPart.text}</span>;
-                        });
-                    }
-                    return <span key={i}>{part.text}</span>;
-                }
-
-                const partNorm = normalize(part.key);
-                const activeNorm = (activeKey || '').toLowerCase();
-                const isActive = activeNorm.includes(partNorm);
-
-                return (
-                    <span
-                        key={i}
-                        className={`clickableCursor highlightened ${isActive ? 'highlighted-word' : ''}`}
-                        style={{ animationDelay: `${i * 0.1}s` }}
-                        onClick={() => {
-                            console.log(part.key);
-                            const raw = globalThis.VerseSectionMap[part.key].original;
-                            console.log(raw);
-                            const m = /:(\d+)$/.exec(raw);
-                            console.log(m);
-                            const sec = m ? m[1] : part.key;
-                            console.log(sec);
-                            globalThis.HighlightStudyNoteSection(raw);
-                        }}
-                    >
-                        {part.text}
-                    </span>
-                );
-            });
-        } else {
-            // Use word highlighting only
-            if (hasWordHighlights) {
-                const wordParts = wordChunksMap[verse.verseNumber] || [{ text: verse.text, isHighlighted: false }];
-                return wordParts.map((part, i) => {
-                    if (part.isHighlighted) {
-                        let attributes = part.highlightConfig.createAttributes(book, chapter, part)
-                        return (
-                            <span
-                                key={i}
-                                style={{
-                                    cursor: part.highlightConfig.onClick ? 'pointer' : 'default',
-                                    padding: '1px 2px',
-                                    borderRadius: '2px',
-                                    marginRight: '-0.25em'
-                                }}
-                                {
-                                ...attributes
-                                }
-                            >
-                                {part.text}
-                            </span>
-                        );
-                    }
-                    return <span key={i}>{part.text}</span>;
-                });
-            }
-            return verse.text;
-        }
-    };
-
     return <div>
-        <div onClick={() => {
-            shout('onHeadingClick', {
-                heading,
-            })
-        }} className="sectionTitle">
+        <div className="sectionTitle">
             {heading}
         </div>
         <div style={textEdit ? editTextStyle : null}>
@@ -1097,35 +925,38 @@ function Section({ heading, commandHighlight, setCommandHighlight, setLastSelect
             <div className="sectionCover">
                 {verses.map(verse => {
                     const [c, setC] = useState(false)
-                    const isActive = verse.verseNumber.toString() === activeVerse
+                    const isVerseActive =
+                        activeVerses.has(verse.verseNumber) ||
+                        verse?.verseNumber.toString() === String(activeVerse);
                     const shouldShowCommands = showCommands && lastSelectedVerse === verse.verseNumber;
                     const isTextDecorUnderline = (holded?.[verse.verseNumber] || selected[verse.verseNumber] || blinker[verse.verseNumber]);
 
                     return <span key={verse.verseNumber}>
                         <span
                             ref={verseRefs[verse.verseNumber]}
-                            onContextMenu={(e) => {
-                                e.preventDefault();
-                                setInHold(verse.verseNumber);
-                                setLastSelectedVerse(verse.verseNumber);
-
+                            // onDoubleClick={(e) => { console.log(e); setC(!c) }}
+                            onContextMenu={() => {
+                                setInHold(verse.verseNumber)
+                                let selectedArray = [verse.verseNumber]
                                 setContextData({
                                     verse: verse.text,
                                     reference: `${book} ${chapter}:${verse.verseNumber}`,
                                     book,
                                     chapter,
-                                    verses: [verse.verseNumber],
-                                });
+                                    verses: selectedArray,
+                                })
+                                globalThis.GlobalSearch = verse.text;
                                 shout('onVeresRightClick', {
                                     verseNumber: verse.verseNumber,
                                     text: verse.text,
                                     chapter,
                                     book,
                                     highlighted: highlighted?.[verse.verseNumber]
-                                });
+                                })
                             }}
-
                             onClick={() => {
+                                // setInHold(verse.verseNumber)
+                                os.log('in hold')
                                 SetShowCommands(false);
                                 os.log({
                                     verseNumber: verse.verseNumber,
@@ -1141,13 +972,10 @@ function Section({ heading, commandHighlight, setCommandHighlight, setLastSelect
                                     book,
                                     highlighted: highlighted?.[verse.verseNumber]
                                 })
+
                             }}
                             style={{
-                                'background-color':
-                                    highlighted?.[verse.verseNumber] ||
-                                        commandHighlight.includes(verse.verseNumber)
-                                        ? '#ffeb3b'
-                                        : 'transparent',
+                                'background-color': highlighted?.[verse.verseNumber] ? '#ffeb3b' : 'transparent',
                                 'transition': 'background-color 0.2s ease',
                                 'border-radius': highlighted?.[verse.verseNumber] ? '3px' : '0',
                                 'padding': highlighted?.[verse.verseNumber] ? '2px 4px' : '0',
@@ -1155,7 +983,7 @@ function Section({ heading, commandHighlight, setCommandHighlight, setLastSelect
                                 'text-decoration': (inHold === verse.verseNumber || isTextDecorUnderline) ? 'underline' : '',
                                 'text-decoration-style': (inHold === verse.verseNumber || isTextDecorUnderline) ? "dotted" : '',
                             }}
-                            className={`sectionText ${verse?.verseNumber.toString() === activeVerse.toString() ? 'highlighted' : ''} ${highlighted?.[verse.verseNumber] ? 'verse-highlighted' : ''}`}
+                            className={`sectionText ${isVerseActive ? 'highlighted' : ''} ${highlighted?.[verse.verseNumber] ? 'verse-highlighted' : ''}`}
                         >
                             <span
                                 className={`sectionTextNumber ${globalThis.studyNotesPresent ? "clickableCursor" : ""}`}
@@ -1165,12 +993,50 @@ function Section({ heading, commandHighlight, setCommandHighlight, setLastSelect
                                     }
                                 }}
                             >{verse?.verseNumber}</span>
-                            {!c ? renderVerseText(verse) : (
-                                <MiniTextEditor
-                                    initialHtml={verse.text}
-                                    onChange={(html) => console.log("Updated HTML:", html)}
-                                />
-                            )}
+                            {!c
+                                ? globalThis.studyNotesPresent
+                                    ? (chunksMap?.[verse.verseNumber]
+                                        ? (chunksMap[verse.verseNumber] || []).map((part, i) => {
+                                            if (!part.isSection) {
+                                                return <span key={i}>{part.text}</span>;
+                                            }
+
+                                            const partNorm = normalize(part.key);
+                                            const activeNorm = (activeKey || '').toLowerCase();
+                                            const isActive = activeNorm.includes(partNorm);
+
+                                            return (
+                                                <span
+                                                    key={i}
+                                                    className={
+                                                        `clickableCursor linkedWord ${shouldHighlight ? "highlightened" : ""} ${(isActive) ? 'highlighted-word' : ''}`
+                                                    }
+                                                    style={{ animationDelay: `${i * 0.1}s` }}
+                                                    onClick={() => {
+                                                        console.log(part.key);
+                                                        const raw = globalThis.VerseSectionMap[part.key].original;
+                                                        console.log(raw);
+                                                        const m = /:(\d+)$/.exec(raw);
+                                                        console.log(m);
+                                                        const sec = m ? m[1] : part.key;
+                                                        console.log(sec);
+                                                        globalThis.HighlightStudyNoteSection(raw);
+                                                    }}
+                                                >
+                                                    {part.text}
+                                                </span>
+                                            )
+
+                                        })
+                                        : verse.text)
+                                    : verse.text
+                                : (
+                                    <MiniTextEditor
+                                        initialHtml={verse.text}
+                                        onChange={(html) => console.log("Updated HTML:", html)}
+                                    />
+                                )
+                            }
                             <input
                                 style={{ opacity: '0', 'pointer-events': 'none', position: 'absolute', 'left': 0, 'top': 0, zIndex: -1 }}
                                 placeholder={'test'}
@@ -1183,16 +1049,15 @@ function Section({ heading, commandHighlight, setCommandHighlight, setLastSelect
                         </span>
 
                         {shouldShowCommands && (
-                            <div
-                                ref={commandsRef}
-                                style={{
-                                    marginTop: '10px',
-                                    marginBottom: '20px',
-                                    borderTop: '1px solid #eee',
-                                    paddingTop: '10px'
-                                }}>
+                            <div style={{
+                                marginTop: '10px',
+                                marginBottom: '20px',
+                                borderTop: '1px solid #eee',
+                                paddingTop: '10px'
+                            }}>
                                 <ConfigurableFunctionCommands
                                     contextData={contextData}
+                                // onClose={() => setShowCommands(false)}
                                 />
                             </div>
                         )}
@@ -1200,8 +1065,9 @@ function Section({ heading, commandHighlight, setCommandHighlight, setLastSelect
                 })}
             </div>
         </div>
-    </div>
+    </div >
 }
+
 
 export const ThePageWithPanel = ({ tab }) => {
 
@@ -1223,6 +1089,7 @@ export const ThePageWithPanel = ({ tab }) => {
         </DivSpliter>
     </>
 }
+
 export const ThePageWithEditor = ({ tab, setPanalApp, panelId }) => {
     useEffect(() => {
         os.log('tab in the page', panelId, tab)

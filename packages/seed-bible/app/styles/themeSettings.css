@@ -27,11 +27,12 @@
   height: 48px;
   flex-shrink: 0;
   border-radius: 4px;
+  margin-bottom: 10px;
   /* background: #4459F3; */
   background-color: var(--secondaryButton) !important;
   color: var(--secondaryButtonColor) !important;
-  border: var(---buttonBorder) 1px solid !important;
-  border-color: var(---buttonBorder) !important;
+  border: var(--buttonBorder) 1px solid !important;
+  border-color: var(--buttonBorder) !important;
   outline: none;
   /* margin-top: 40px; */
   cursor: pointer;

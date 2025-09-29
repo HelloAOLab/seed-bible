@@ -1,6 +1,8 @@
 const { createContext, useContext, useState, useEffect } = os.appHooks;
 const MyContext = createContext();
-// import { StudyNotes, StudyNotesWithPanel } from 'app.sn_components.studyNotes';
+import { StudyNotes } from 'app.sn_components.studyNotes';
+import { SgSearch } from 'app.sn_components.tapos';
+import { ApologistSearch } from 'app.sn_components.apologist';
 import { MenuIcon, SeedBibleIcon, AiIcon, T, MenuDown, FormatLine, ColorSelect, ToolbarIcon, Panal, Playlist, AiChatIcon } from 'app.components.icons';
 
 // import { useMouseMove, } from 'app.hooks.mouseMove';
@@ -18,17 +20,17 @@ export function BibleVariablesProvider({ children }) {
     }, [ReSeed])
     // const { isDragging, setIsDragging, Element, setElement } = useMouseMove()
     const [tools, setTools] = useState([
-        // {
-        //     icon: <SeedBibleIcon />,
-        //     // isImg: true,
-        //     label: 'Books',
-        //     hasToggle: true,
-        //     active: true,
-        //     onClick: () => {
-        //         setOpenSidebar(prev => !prev);
-        //         setCurrentExperience(0);
-        //     }
-        // },
+        {
+            icon: <SeedBibleIcon />,
+            // isImg: true,
+            label: 'Books',
+            hasToggle: true,
+            active: true,
+            onClick: () => {
+                setOpenSidebar(prev => !prev);
+                setCurrentExperience(0);
+            }
+        },
         // {
         //     icon: 'playlist_play', label: 'Playlist', hasToggle: true, active: true,
         //     onHold: async () => {
@@ -92,7 +94,7 @@ export function BibleVariablesProvider({ children }) {
             isImg: true,
             onHold: async () => {
                 globalThis.chatbotPresent = true;
-                const id = uuid();
+                let id = uuid();
                 globalThis.CHATBOT_PANEL_ID = id;
                 SetIsDragging(true);
                 globalThis.SetElement({
@@ -111,7 +113,7 @@ export function BibleVariablesProvider({ children }) {
                 }
                 if (!panelMode) {
                     globalThis.chatbotPresent = true;
-                    const id = uuid();
+                    let id = uuid();
                     globalThis.CHATBOT_PANEL_ID = id;
                     AddApplication({ id, App: <iframe style={{ width: '100%', height: '100%' }} src={'https://ao.discipleship.bot/en'} id={id} />, to: 'panel', minWidth: '30rem' })
                 }
@@ -126,7 +128,7 @@ export function BibleVariablesProvider({ children }) {
             isImg: true,
             onHold: async () => {
                 globalThis.TapozChatboxPresent = true;
-                const id = uuid();
+                let id = uuid();
                 globalThis.TAPOZ_CHATBOX_UI_ID = id;
                 SetIsDragging(true);
                 globalThis.SetElement({
@@ -138,7 +140,7 @@ export function BibleVariablesProvider({ children }) {
             },
             onClick: async () => {
 
-                const TapozChat = await Tapoz.ChatbotUI();
+                let TapozChat = await Tapoz.ChatbotUI();
 
                 if (globalThis.TapozChatboxPresent) {
                     RemoveApplicationByID(globalThis.TAPOZ_CHATBOX_UI_ID);
@@ -148,7 +150,7 @@ export function BibleVariablesProvider({ children }) {
                 }
                 if (!panelMode) {
                     globalThis.TapozChatboxPresent = true;
-                    const id = uuid();
+                    let id = uuid();
                     globalThis.TAPOZ_CHATBOX_UI_ID = id;
                     // AddApplication({ id, App: <TapozChat id={id} />, to: 'panel', minWidth: '30rem' })
                     AddApplication({ id, App: <iframe style={{ width: '100%', height: '100%' }} src={'https://splinteredglass.retool.com/embedded/public/54c38714-4799-45c8-8663-961af09fafce#oid=67355031aea5f406546577d0'} id={id} />, to: 'panel', minWidth: '30rem' })
@@ -165,25 +167,65 @@ export function BibleVariablesProvider({ children }) {
 
         //     }
         // },
+        {
+            icon: 'splitscreen_right',
+            label: 'Study Notes',
+            hasToggle: true,
+            active: true,
+            onRightClick: () => {
+                const MenuOptions = {
+                    type: 'normal', items: [
+                        { icon: <MenuIcon name="open_in_new" />, title: 'open', onClick: () => { openStudyNotes() } },
+                        { type: 'line' },
+                        { icon: <MenuIcon name="edit" />, title: 'Edit mode', onClick: () => { globalThis?.SetEnableEditStudyNotes(prev => !prev) } },
+
+                    ]
+                };
+
+                openPopupSettings(MenuOptions)
+            },
+            onClick: async () => {
+                openStudyNotes()
+            }
+        },
         // {
-        //     icon: 'splitscreen_right',
-        //     label: 'Study Notes',
+        //     icon: 'network_intel_node',
+        //     label: 'Tapos Search',
         //     hasToggle: true,
-        //     active: false,
+        //     active: true,
         //     onRightClick: () => {
         //         const MenuOptions = {
         //             type: 'normal', items: [
-        //                 { icon: <MenuIcon name="open_in_new" />, title: 'open', onClick: () => { openStudyNotes() } },
+        //                 { icon: <MenuIcon name="open_in_new" />, title: 'open', onClick: () => { openTaposSearch() } },
         //                 { type: 'line' },
-        //                 { icon: <MenuIcon name="edit" />, title: 'Edit mode', onClick: () => { globalThis?.SetEnableEditStudyNotes(prev => !prev) } },
+        //                 { icon: <MenuIcon name="edit" />, title: 'Edit mode', onClick: () => { globalThis?.SetEnableEditTaposSearch(prev => !prev) } },
 
         //             ]
         //         };
-
         //         openPopupSettings(MenuOptions)
         //     },
         //     onClick: async () => {
-        //         openStudyNotes()
+        //         openTaposSearch()
+        //     }
+        // },
+        // {
+        //     icon: 'network_intelligence',
+        //     label: 'Apologist Search',
+        //     hasToggle: true,
+        //     active: true,
+        //     onRightClick: () => {
+        //         const MenuOptions = {
+        //             type: 'normal', items: [
+        //                 { icon: <MenuIcon name="open_in_new" />, title: 'open', onClick: () => { openApologistSearch() } },
+        //                 { type: 'line' },
+        //                 { icon: <MenuIcon name="edit" />, title: 'Edit mode', onClick: () => { globalThis?.SetEnableEditTaposSearch(prev => !prev) } },
+
+        //             ]
+        //         };
+        //         openPopupSettings(MenuOptions)
+        //     },
+        //     onClick: async () => {
+        //         openApologistSearch()
         //     }
         // },
     ]);
@@ -196,7 +238,7 @@ export function BibleVariablesProvider({ children }) {
         }
         if (!panelMode) {
             globalThis.studyNotesPresent = true;
-            const id = uuid();
+            let id = uuid();
             globalThis.STUDYNOTES_PANEL_ID = id;
             AddApplication({
                 id,
@@ -206,10 +248,92 @@ export function BibleVariablesProvider({ children }) {
             });
         }
     }
+    function openTaposSearch() {
+        if (globalThis.TaposSearchPresent) {
+            RemoveApplicationByID(globalThis.TaposSearch_PANEL_ID);
+            globalThis.TaposSearch_PANEL_ID = null;
+            globalThis.TaposSearchPresent = false;
+            return;
+        }
+        if (!panelMode) {
+            globalThis.TaposSearchPresent = true;
+            let id = uuid();
+            globalThis.TaposSearch_PANEL_ID = id;
+            AddApplication({
+                id,
+                App: <SgSearch id={id} search={globalThis.GlobalSearch ?? "galations 5"} />,
+                to: 'panel',
+                minWidth: '30rem'
+            });
+        }
+    }
+    function openApologistSearch() {
+        if (globalThis.ApologistSearchPresent) {
+            RemoveApplicationByID(globalThis.ApologistSearch_PANEL_ID);
+            globalThis.ApologistSearch_PANEL_ID = null;
+            globalThis.ApologistSearchPresent = false;
+            return;
+        }
+        if (!panelMode) {
+            globalThis.ApologistSearchPresent = true;
+            let id = uuid();
+            globalThis.ApologistSearch_PANEL_ID = id;
+            AddApplication({
+                id,
+                App: <ApologistSearch id={id} search={globalThis.GlobalSearch ?? "galations 5"} />,
+                to: 'panel',
+                minWidth: '30rem'
+            });
+        }
+    }
     const [canvasTools, setCanvasTools] = useState([
+        // {
+        //     icon: 'map',
+        //     label: 'Map Swap',
+        //     hasToggle: true,
+        //     active: true,
+        //     isImg: false,
+        //     onClick: async () => {
+        //         console.log(globalThis?.SetCurrentCanvasMode)
+        //         if (globalThis?.SetCurrentCanvasMode) {
+        //             SetCurrentCanvasMode('map')
+        //         }
+        //     }
+        // },
+        {
+            icon: 'https://auth-aux-aobot-prod-filesbucket-141297942820.s3.amazonaws.com/aoBot/3c6a9b2acc629e207b0891f7a8d95d8cb0b2110b6cb99fc3e1b44944e19d09c0.gif',
+            label: 'Loading',
+            hasToggle: true,
+            active: true,
+            isImg: true,
+            onClick: async () => {
+            }
+        }
     ]);
 
     const [mapTools, setMapTools] = useState([
+        // {
+        //     icon: 'deployed_code',
+        //     label: 'Canvas Swap',
+        //     hasToggle: true,
+        //     active: true,
+        //     isImg: false,
+        //     onClick: async () => {
+        //         console.log(globalThis?.SetCurrentCanvasMode)
+        //         if (globalThis?.SetCurrentCanvasMode) {
+        //             SetCurrentCanvasMode('canvas')
+        //         }
+        //     }
+        // },
+        {
+            icon: 'https://auth-aux-aobot-prod-filesbucket-141297942820.s3.amazonaws.com/aoBot/3c6a9b2acc629e207b0891f7a8d95d8cb0b2110b6cb99fc3e1b44944e19d09c0.gif',
+            label: 'Loading',
+            hasToggle: true,
+            active: true,
+            isImg: true,
+            onClick: async () => {
+            }
+        },
     ]);
 
     useEffect(() => {

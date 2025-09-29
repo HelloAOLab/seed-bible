@@ -1,32 +1,20 @@
-import { getStyleOf } from 'app.styles.styler';
-const { useEffect, useState, useRef } = os.appHooks;
-
-import { useSideBarContext } from 'app.hooks.sideBar';
-import { useMouseMove } from 'app.hooks.mouseMove';
 import SurroundingDivs from 'app.components.surroundingDivs';
-import { useBibleContext } from 'app.hooks.bibleVariables';
-import { useTabsContext } from 'app.hooks.tabs';
+import { getStyleOf } from 'app.styles.styler';
+const { render } = os.appHooks
+await os.unregisterApp("main=toolbar")
+await os.registerApp("main=toolbar")
 
-// Simple, single-toolbar component (no edit layer). Main logic unchanged.
-export function Toolbar() {
-    const {
-        navFunctions,
-        setScreens,
-        tools,
-        canvasTools,
-        mapTools,
-        mapMode,
-        setTools,
-        setCanvasTools,
-        setMapTools
-    } = useBibleContext();
+const { useState, useEffect } = os.appHooks;
 
-    const { sidebarMode, openOnMobile } = useSideBarContext();
-    const { setIsDragging, isDragging, setElement } = useMouseMove();
-    const { activeSpace, updateToolsForSpace, getToolsForActiveSpace, activeTab, tabs } = useTabsContext();
+const Toolbar = () => {
+    const [toolbarProps, setToolBarProps] = useState(that || null);
     const [toolbarBackground, setToolbarBackground] = useState('white');
-
+    const [editMode, setEditMode] = useState(false);
+    const [showEdit, setShowEdit] = useState()
+    const [editableTools, setEditableTools] = useState([]);
+    globalThis.ToolbarReSeedMode = setShowEdit
     useEffect(() => {
+        globalThis.SetToolBarProps = setToolBarProps;
         globalThis.SetToolbarBackground = setToolbarBackground;
 
         // ✅ Only initialize if undefined
@@ -35,68 +23,136 @@ export function Toolbar() {
         }
 
         return () => {
+            globalThis.SetToolBarProps = null;
             globalThis.SetToolbarBackground = null;
         }
     }, []);
-    // === keep original default-toolbar logic ===
-    const [showToolbar, setShowToolbar] = useState(true);
+
+
+    // Load saved changes and initialize editable tools
     useEffect(() => {
-        setShowToolbar(!openOnMobile);
-    }, [openOnMobile]);
+        if (toolbarProps?.TabTools) {
+            const toolsWithChanges = toolbarProps.TabTools.map((tool, index) => {
+                const savedChanges = globalThis.toolbarChanges[index];
+                return {
+                    ...tool,
+                    originalIndex: index,
+                    visible: savedChanges?.visible !== undefined ? savedChanges.visible : (tool.active !== false),
+                    icon: savedChanges?.icon || tool.icon,
+                    label: savedChanges?.label || tool.label || `Tool ${index + 1}`,
+                    isImg: savedChanges?.isImg !== undefined ? savedChanges.isImg : tool.isImg
+                };
+            });
 
-    const TabTools = getToolsForActiveSpace();
-    const setActiveTools = (newTools) => updateToolsForSpace(activeSpace, newTools);
-
-    const [oldList, setOldList] = useState(null);
-    const [draggedIndex, setDraggedIndex] = useState(null);
-    const holdTimeoutRef = useRef(null);
-    const hasHeldRef = useRef(false);
-
-    useEffect(() => {
-        globalThis.SetScreens = setScreens;
-    }, [setScreens]);
-
-    useEffect(() => () => clearTimeout(holdTimeoutRef.current), []);
-
-    function handleMouseEnter(targetIndex) {
-        if (!isDragging || draggedIndex === null) return;
-        if (targetIndex === draggedIndex) return;
-
-        const reordered = [...TabTools];
-        const [movedItem] = reordered.splice(draggedIndex, 1);
-        reordered.splice(targetIndex, 0, movedItem);
-
-        setActiveTools(reordered);
-        setDraggedIndex(targetIndex);
-    }
-
-    function handleMouseLeaveContainer() {
-        if (isDragging) {
-            setIsDragging(false);
-            setActiveTools(oldList);
-            setDraggedIndex(null);
+            // Append any new tools saved globally
+            const newTools = globalThis.newTool || [];
+            setEditableTools([...toolsWithChanges, ...newTools]);
         }
-    }
+    }, [toolbarProps]);
 
-    function handleMouseUp() {
-        if (!isDragging) return;
-        setIsDragging(false);
-        setElement(null);
-        setDraggedIndex(null);
-    }
 
-    // Sync tools with active tab type (keeps main logic)
-    useEffect(() => {
-        if (!activeTab || !tabs) return;
-        const activeTabObj = tabs.find((t) => t.id === activeTab);
-        if (activeTabObj?.data?.type === 'canvas') {
-            setActiveTools([...canvasTools]);
-        } else {
-            setActiveTools([...tools]);
+    const toggleEditMode = () => {
+        setEditMode(!editMode);
+    };
+
+    const toggleToolVisibility = (index) => {
+        setEditableTools(prev => prev.map((tool, i) =>
+            i === index ? { ...tool, visible: !tool.visible } : tool
+        ));
+    };
+
+    const updateToolIcon = (index, newIcon) => {
+        setEditableTools(prev => prev.map((tool, i) =>
+            i === index ? {
+                ...tool,
+                icon: newIcon,
+                isImg: isValidUrl(newIcon) // Auto-detect if it's an image URL
+            } : tool
+        ));
+    };
+
+    const updateToolLabel = (index, newLabel) => {
+        setEditableTools(prev => prev.map((tool, i) =>
+            i === index ? { ...tool, label: newLabel } : tool
+        ));
+    };
+
+    const toggleToolType = (index) => {
+        setEditableTools(prev => prev.map((tool, i) =>
+            i === index ? { ...tool, isImg: !tool.isImg } : tool
+        ));
+    };
+
+    const isValidUrl = (string) => {
+        try {
+            new URL(string);
+            return true;
+        } catch (_) {
+            return false;
         }
-    }, [activeTab, tabs, canvasTools, tools]);
+    };
 
-    // expose setters globally (kept behavior)
+    const applyChanges = () => {
+        // Save changes globally
+        editableTools.forEach((tool, index) => {
+            globalThis.toolbarChanges[index] = {
+                visible: tool.visible,
+                icon: tool.icon,
+                label: tool.label,
+                isImg: tool.isImg,
+                auxFile: tool.auxFile || null,
+                extension: tool.extension || ''
+            };
+        });
+
+        if (toolbarProps) {
+            const updatedTabTools = editableTools.map(tool => ({
+                ...tool,
+                active: tool.visible,
+                auxFile: tool.auxFile,
+                extension: tool.extension
+            }));
+
+            const updatedProps = {
+                ...toolbarProps,
+                TabTools: updatedTabTools
+            };
+
+            setToolBarProps(updatedProps);
+        }
+
+        setEditMode(false);
+    };
+
+    const resetChanges = () => {
+        if (toolbarProps?.TabTools) {
+            setEditableTools(toolbarProps.TabTools.map((tool, index) => ({
+                ...tool,
+                originalIndex: index,
+                visible: tool.active !== false,
+                label: tool.label || `Tool ${index + 1}`
+            })));
+        }
+    };
+
+    const resetToDefaults = () => {
+        // Clear all saved changes
+        globalThis.toolbarChanges = {};
+
+        if (toolbarProps?.TabTools) {
+            setEditableTools(toolbarProps.TabTools.map((tool, index) => ({
+                ...tool,
+                originalIndex: index,
+                visible: tool.active !== false,
+                label: tool.label || `Tool ${index + 1}`
+            })));
+        }
+    };
+
+    if (!toolbarProps) {
+        return <></>
+    }
+
     useEffect(() => {
         globalThis.SetTools = setTools;
         globalThis.SetCanvasTools = setCanvasTools;
@@ -110,86 +166,301 @@ export function Toolbar() {
 
     // Disable context menu like before
     useEffect(() => {
-        const handleContextMenu = (e) => e.preventDefault();
-        window.addEventListener('contextmenu', handleContextMenu);
-        return () => window.removeEventListener('contextmenu', handleContextMenu);
-    }, []);
+        const handleContextMenu = (e) => e.preventDefault()
 
-    if (!showToolbar) return <></>;
+        window.addEventListener('contextmenu', handleContextMenu);
+
+        return () => {
+            window.removeEventListener('contextmenu', handleContextMenu);
+        };
+    }, []);
+    const addNewTool = () => {
+        const newTool = {
+            originalIndex: editableTools.length,
+            icon: 'build',
+            label: `New Tool ${editableTools.length + 1}`,
+            visible: true,
+            isImg: false,
+            auxFile: null,
+            extension: ''
+        };
+
+        // Save to globalThis.newTool
+        if (!globalThis.newTool) {
+            globalThis.newTool = [];
+        }
+        globalThis.newTool.push(newTool);
+
+        setEditableTools(prev => [...prev, newTool]);
+    };
+
 
     return (
         <>
-            <link
-                rel="stylesheet"
-                href="https://fonts.googleapis.com/css2?family=Material+Symbols+Outlined:opsz,wght,FILL,GRAD@20..48,100..700,0..1,-50..200"
-            />
+            <link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Material+Symbols+Outlined:opsz,wght,FILL,GRAD@20..48,100..700,0..1,-50..200" />
 
             <div className="toolbar-container-1 boundElements">
-                <SurroundingDivs action={handleMouseLeaveContainer}>
+                <SurroundingDivs action={toolbarProps.handleMouseLeaveContainer}>
                     <div
-                        onMouseUp={handleMouseUp}
+                        onMouseUp={toolbarProps.handleMouseUp}
                         className="toolbar-1 boundElements"
-                        style={{ border: sidebarMode?.includes('toolbarSettings') ? '2px solid #4459F3' : null }}
+                        style={{
+                            border: toolbarProps.sidebarMode.includes('toolbarSettings') ? '2px solid #4459F3' : null,
+                            background: toolbarBackground,
+                        }}
                     >
-                        <div className="toolbar-item-wrapper leftClick">
-                            <button onClick={() => navFunctions?.openPrevChapter()} className="toolbar-button">
-                                <span className="material-symbols-outlined">chevron_left</span>
+                        <div className="toolbar-item-wrapper">
+                            <button
+                                onClick={() => {
+                                    toolbarProps.navFunctions?.openPrevChapter();
+                                    HandleClosePopup();
+                                    if (globalThis.ChangeGlobalHighlighting) globalThis.ChangeGlobalHighlighting(true);
+                                    if (globalThis.RemoveStudyNoteBackButton) globalThis.RemoveStudyNoteBackButton();
+                                }}
+                                className="toolbar-button"
+                            >
+                                <span>
+                                    <svg width="12" height="17" viewBox="0 0 12 17" fill="none" xmlns="http://www.w3.org/2000/svg">
+                                        <path d="M10.2227 2.09334L1.19933 8.61195C0.933555 8.80385 0.933555 9.19542 1.19933 9.38732L10.2227 15.9059C10.5453 16.1391 11 15.9119 11 15.5187V2.48146C11 2.08734 10.5453 1.86101 10.2227 2.09422V2.09334Z" stroke="#231F20" stroke-width="2" stroke-miterlimit="10" />
+                                    </svg>
+                                </span>
                             </button>
                         </div>
 
-                        {tools?.map((tool, index) =>
-                            tool?.active === false ? null : (
-                                <div
-                                    key={`${tool.icon || 'tool'}-${index}`}
-                                    className="toolbar-item-wrapper"
-                                    onMouseEnter={() => handleMouseEnter(index)}
-                                    title={tool.label}
-                                >
-                                    {index === draggedIndex ? (
-                                        <div className={`toolbar-button placeholder`}></div>
-                                    ) : (
-                                        <button
-                                            className={`toolbar-button ${index === 0 ? 'firstToolbarbutton' : ''}`}
-                                            onMouseDown={() => {
-                                                hasHeldRef.current = false;
-                                                holdTimeoutRef.current = setTimeout(() => {
-                                                    if (tool?.onRightClick) tool.onRightClick();
-                                                    else if (tool?.onHold) tool.onHold();
-                                                    hasHeldRef.current = true;
-                                                }, 600);
-                                            }}
-                                            onMouseUp={(e) => {
-                                                e.stopPropagation();
-                                                clearTimeout(holdTimeoutRef.current);
-                                                if (!hasHeldRef.current && tool?.onClick) tool.onClick();
-                                                if (isDragging) {
-                                                    setIsDragging(false);
-                                                    setElement(null);
-                                                    setDraggedIndex(null);
-                                                }
-                                            }}
-                                            onMouseLeave={() => clearTimeout(holdTimeoutRef.current)}
-                                        >
-                                            {tool.isImg ? (
-                                                <img src={tool.icon} style={{ width: '40px' }} alt={tool.label} />
-                                            ) : (
-                                                <span className="material-symbols-outlined">{tool.icon}</span>
-                                            )}
-                                        </button>
-                                    )}
-                                </div>
-                            )
-                        )}
+                        {editableTools.map((tool, index) => tool?.visible && (
+                            <div
+                                key={`${tool.icon}-${index}`}
+                                className="toolbar-item-wrapper"
+                                onMouseEnter={() => toolbarProps.handleMouseEnter(index)}
+                                title={tool.label}
+                            >
+                                {index === toolbarProps.draggedIndex ? (
+                                    <div className="toolbar-button placeholder"></div>
+                                ) : (
+                                    <button
+                                        className="toolbar-button"
+                                        onMouseDown={() => {
+                                            toolbarProps.hasHeldRef.current = false;
 
-                        <div className="toolbar-item-wrapper rightClick">
-                            <button onClick={() => navFunctions?.openNextChapter()} className="toolbar-button">
-                                <span className="material-symbols-outlined">chevron_right</span>
+                                            toolbarProps.holdTimeoutRef.current = setTimeout(() => {
+                                                os.log('the other', tool?.onRightClick || tool?.onHold)
+                                                if (tool?.onRightClick) tool.onRightClick();
+                                                else if (tool?.onHold) tool.onHold();
+                                                toolbarProps.hasHeldRef.current = true;
+                                            }, 600);
+                                        }}
+                                        onMouseUp={(e) => {
+                                            os.log(e, 'elements')
+                                            clearTimeout(toolbarProps.holdTimeoutRef.current);
+                                            if (globalThis.ChangeGlobalHighlighting) globalThis.ChangeGlobalHighlighting(true);
+                                            if (globalThis.RemoveStudyNoteBackButton) globalThis.RemoveStudyNoteBackButton();
+
+                                            if (!toolbarProps.hasHeldRef.current && tool.onClick) {
+                                                tool.onClick();
+                                            }
+
+                                            if (toolbarProps.isDragging) {
+                                                toolbarProps.setIsDragging(false);
+                                                toolbarProps.setElement(null);
+                                                toolbarProps.setDraggedIndex(null);
+                                            }
+                                        }}
+                                        onMouseLeave={() => {
+                                            clearTimeout(toolbarProps.holdTimeoutRef.current);
+                                        }}
+
+                                    >
+                                        {tool.isImg
+                                            ? <ImageWrapper>
+                                                <img src={tool.icon} style={{ width: '20px' }} alt={tool.label} />
+                                            </ImageWrapper>
+                                            : <span className="material-symbols-outlined">{tool.icon}</span>}
+                                    </button>
+                                )}
+                            </div>
+                        ))}
+
+                        <div className="toolbar-item-wrapper">
+                            <button
+                                onClick={() => {
+                                    toolbarProps.navFunctions?.openNextChapter();
+                                    HandleClosePopup();
+                                    if (globalThis.ChangeGlobalHighlighting) globalThis.ChangeGlobalHighlighting(true);
+                                    if (globalThis.RemoveStudyNoteBackButton) globalThis.RemoveStudyNoteBackButton();
+                                }}
+                                className="toolbar-button"
+                            >
+                                <span className="material-symbols-outlined">
+                                    <svg width="13" height="17" viewBox="0 0 13 17" fill="none" xmlns="http://www.w3.org/2000/svg">
+                                        <path d="M2.25873 2.09334L11.2821 8.61195C11.5479 8.80385 11.5479 9.19542 11.2821 9.38732L2.25873 15.9059C1.93612 16.1391 1.48145 15.9119 1.48145 15.5187V2.48146C1.48145 2.08734 1.93612 1.86101 2.25873 2.09422V2.09334Z" stroke="#231F20" stroke-width="2" stroke-miterlimit="10" />
+                                    </svg>
+                                </span>
                             </button>
                         </div>
+
+                        {showEdit && <div className="toolbar-item-wrapper toolbar-edit-toggle">
+                            <button
+                                style={{ position: 'absolute', 'bottom': '6px', background: 'white', color: 'blue' }}
+                                onClick={toggleEditMode}
+                                className={`toolbar-button ${editMode ? 'edit-active' : ''}`}
+                                title="Edit Toolbar"
+                            >
+                                <span className="material-symbols-outlined">
+                                    {editMode ? 'close' : 'tune'}
+                                </span>
+                            </button>
+                        </div>}
                     </div>
                 </SurroundingDivs>
                 <style>{getStyleOf('toolbar.css')}</style>
             </div>
+
+            {editMode && (
+                <div className="edit-mode-overlay">
+                    <div className="edit-mode-panel">
+                        <div className="edit-panel-header">
+                            <h3>Edit Toolbar</h3>
+                            <div className="header-actions">
+                                <button onClick={resetToDefaults} className="reset-defaults-btn" title="Reset to original defaults">
+                                    <span className="material-symbols-outlined">restore</span>
+                                </button>
+                                <button onClick={toggleEditMode} className="close-panel-btn">
+                                    <span className="material-symbols-outlined">close</span>
+                                </button>
+                            </div>
+                        </div>
+
+                        <div className="edit-panel-content">
+                            <div className="tools-grid">
+                                {editableTools.map((tool, index) => (
+                                    <div key={index} className={`tool-edit-item ${!tool.visible ? 'tool-hidden' : ''}`}>
+                                        <div className="tool-preview">
+                                            {tool.isImg ? (
+                                                <img src={tool.icon} style={{ width: '24px', height: '24px', objectFit: 'contain' }} alt={tool.label} />
+                                            ) : (
+                                                <span className="material-symbols-outlined">{tool.icon}</span>
+                                            )}
+                                        </div>
+
+                                        <div className="tool-controls">
+                                            <div className="control-group">
+                                                <label className="control-label">Name:</label>
+                                                <input
+                                                    type="text"
+                                                    value={tool.label}
+                                                    onChange={(e) => updateToolLabel(index, e.target.value)}
+                                                    className="text-input"
+                                                    placeholder="Tool name"
+                                                />
+                                            </div>
+
+                                            <div className="control-group">
+                                                <label className="control-label">Icon:</label>
+                                                <input
+                                                    type="text"
+                                                    value={tool.icon}
+                                                    onChange={(e) => updateToolIcon(index, e.target.value)}
+                                                    className="text-input"
+                                                    placeholder="Icon name or URL"
+                                                />
+                                            </div>
+
+
+                                            <div className="control-row">
+                                                <label className="toggle-control">
+                                                    <input
+                                                        type="checkbox"
+                                                        checked={tool.visible}
+                                                        onChange={() => toggleToolVisibility(index)}
+                                                    />
+                                                    <span className="toggle-label">
+                                                        <span className="material-symbols-outlined">
+                                                            {tool.visible ? 'visibility' : 'visibility_off'}
+                                                        </span>
+                                                        Show
+                                                    </span>
+                                                </label>
+
+                                                <label className="toggle-control">
+                                                    <input
+                                                        type="checkbox"
+                                                        checked={tool.isImg}
+                                                        onChange={() => toggleToolType(index)}
+                                                    />
+                                                    <span className="toggle-label">
+                                                        <span className="material-symbols-outlined">image</span>
+                                                        Image
+                                                    </span>
+                                                </label>
+                                            </div>
+                                        </div>
+                                        <div className="control-group">
+                                            <label className="control-label">Upload Aux File:</label>
+                                            <input
+                                                type="file"
+                                                accept="*"
+                                                onChange={(e) => {
+                                                    const file = e.target.files?.[0];
+                                                    if (file) {
+                                                        const reader = new FileReader();
+                                                        reader.onload = () => {
+                                                            const fileContent = reader.result;
+                                                            setEditableTools(prev => prev.map((tool, i) =>
+                                                                i === index ? { ...tool, auxFile: fileContent } : tool
+                                                            ));
+                                                        };
+                                                        reader.readAsText(file);
+                                                    }
+                                                }}
+                                            />
+                                        </div>
+
+                                        <div className="control-group">
+                                            <label className="control-label">Extension:</label>
+                                            <input
+                                                type="text"
+                                                value={tool.extension || ''}
+                                                onChange={(e) => {
+                                                    const value = e.target.value;
+                                                    setEditableTools(prev => prev.map((tool, i) =>
+                                                        i === index ? { ...tool, extension: value } : tool
+                                                    ));
+                                                }}
+                                                className="text-input"
+                                                placeholder=".json, .js, etc"
+                                            />
+                                        </div>
+
+                                        <div className="tool-info">
+                                            <small>Position: #{index + 1}</small>
+                                            {globalThis.toolbarChanges[index] && (
+                                                <small className="modified-indicator">• Modified</small>
+                                            )}
+                                        </div>
+                                    </div>
+                                ))}
+                            </div>
+                        </div>
+
+                        <div className="edit-panel-actions">
+                            <button onClick={resetChanges} className="reset-btn">
+                                <span className="material-symbols-outlined">undo</span>
+                                Reset
+                            </button>
+                            <button onClick={applyChanges} className="apply-btn">
+                                <span className="material-symbols-outlined">check</span>
+                                Apply Changes
+                            </button>
+                            <button onClick={addNewTool} className="new-tool-btn">
+                                <span className="material-symbols-outlined">add</span>
+                                New Tool
+                            </button>
+
+                        </div>
+                    </div>
+                </div>
+            )}
+
             <style>{`
                 .toolbar-edit-toggle {
                     margin-left: auto;
@@ -467,3 +738,4 @@ export function Toolbar() {
     );
 }
 
+os.compileApp('main=toolbar', <Toolbar />);

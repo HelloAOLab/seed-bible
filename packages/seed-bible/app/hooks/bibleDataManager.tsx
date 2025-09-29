@@ -129,7 +129,7 @@ export class BibleDataManager {
                 if (this.tabId) {
                     setCachedTabData(this.tabId, this.data);
                 }
-               
+
                 // schedule the "open ≥ 1 min" record
                 this._scheduleMaskRecord();
             }
@@ -149,7 +149,6 @@ export class BibleDataManager {
             chapterUrl ? chapterUrl : `/api/${translation || this.translation}/${bookId}/${chapter}.json`,
             translation
         );
-
     }
 
     async openNext() {
@@ -166,17 +165,40 @@ export class BibleDataManager {
 
     async changeTranslation(newTranslation, bookData, forcedBaseUrl) {
         console.log("changeTranslation tra");
+        console.log("newTranslation: ", newTranslation, " bookData: ", bookData, " forcedBaseUrl: ", forcedBaseUrl);
         this.translation = newTranslation;
-        this.bookId = bookData?.id || 'GEN';
+
+        // Update baseUrl only if provided
         if (forcedBaseUrl) {
-            this.chapter = 1;
+            this.baseUrl = forcedBaseUrl;
         }
-        this.baseUrl = forcedBaseUrl || this.baseUrl;
-        await this.fetch(
-            bookData ? bookData.firstChapterApiLink : `/api/${newTranslation}/${bookData?.id || 'GEN'}/1.json`,
-            newTranslation,
-            forcedBaseUrl
-        );
+
+        // If we DON'T have a concrete book, do NOT default to GEN or chapter 1.
+        // Just update translation/baseUrl and exit quietly.
+        if (!bookData || !bookData.id) {
+            return;
+        }
+
+        // We have a real book — set bookId and chapter safely
+        this.bookId = bookData.id;
+
+        // Try to infer chapter from the provided link; otherwise default to 1 for THIS book only
+        let chapter = 1;
+        if (bookData.firstChapterApiLink) {
+            const m = /\/(\d+)\.json$/.exec(bookData.firstChapterApiLink);
+            if (m) {
+                const parsed = parseInt(m[1], 10);
+                if (!Number.isNaN(parsed)) chapter = parsed;
+            }
+        }
+        this.chapter = chapter;
+
+        // Build a safe URL
+        const href =
+            bookData.firstChapterApiLink ||
+            `/api/${newTranslation}/${bookData.id}/${chapter}.json`;
+
+        await this.fetch(href, newTranslation, this.baseUrl);
     }
 
     getState() {
