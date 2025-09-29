@@ -210,7 +210,7 @@ export async function uploadPattern(name: string, aux: StoredAux, sessionKey: st
         const date = now.toISOString().split('T')[0]; // YYYY-MM-DD format
         const time = now.toISOString().split('T')[1].split('.')[0] + ' UTC';
         const telegramUrl = `https://api.telegram.org/bot${telegramBotToken}/sendMessage`;
-        const telegramMessage = `**action:**  publishRecord.success\n**date:**     ${date}\n**time:     **${time}\n**pattern:** [${aoID}](${patternUrl})\n**key:**${key}\n**version:** **${eggData.maxVersion}`;
+        const telegramMessage = `**action:**  publishRecord.success\n**date:**     ${date}\n**time:     **${time}\n**pattern:** [${name}](${patternUrl})\n**key:**${key}\n**version:** **${eggData.maxVersion}`;
         const telegramParams = {
             chat_id: telegramChatId,
             text: telegramMessage,
