@@ -2,9 +2,7 @@
 
 /* wrapper keeps things aligned with your list pages */
 .tt-frameWrap{
-  width:95%;
-  margin:24px 10px;
-  margin-top:90px;
+  width:100%;
 }
 
 /* bordered, rounded iframe shell in your green theme */

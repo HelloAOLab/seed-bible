@@ -1812,6 +1812,8 @@ function StudyNotes() {
     }, [active]);
 
 
+
+
     return (
         <div className="sn-tabs-wrap">
             <div className="sn-tabs">
@@ -1846,8 +1848,6 @@ function StudyNotes() {
             </div>
 
             <style>{getStyleOf('studyNotes.css')}</style>
-            <style>{getStyleOf('apologist.css')}</style>
-            <style>{getStyleOf('tapos.css')}</style>
         </div>
     );
 };

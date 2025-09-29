@@ -34,7 +34,7 @@
 .sg-card {
   background: #fff;
   overflow: hidden;
-  transition: border-color .2s ease, box-shadow .2s ease, transform .08s ease;
+  transition: border-color 0.2s ease, box-shadow 0.2s ease, transform 0.08s ease;
   width: 100%;
   max-width: 100%;
   box-sizing: border-box;
@@ -44,7 +44,7 @@
 
 .sg-card:hover {
   border-color: #8ca443;
-  box-shadow: 0 10px 22px rgba(16, 24, 40, .10);
+  box-shadow: 0 10px 22px rgba(16, 24, 40, 0.1);
 }
 
 .sg-card:active {
@@ -134,7 +134,7 @@
   display: inline-flex;
   align-items: center;
   justify-content: center;
-  transition: background .15s ease;
+  transition: background 0.15s ease;
   margin-top: 2px;
 }
 
@@ -143,7 +143,7 @@
 }
 
 .sg-caret {
-  transition: transform .25s ease;
+  transition: transform 0.25s ease;
 }
 
 .is-collapsed .sg-caret {
@@ -208,12 +208,13 @@
   display: inline-flex;
   align-items: center;
   gap: 8px;
-  transition: background .15s ease, box-shadow .15s ease, transform .05s ease, border-color .15s ease;
+  transition: background 0.15s ease, box-shadow 0.15s ease, transform 0.05s ease,
+    border-color 0.15s ease;
 }
 
 .sg-btn:hover {
   background: #e6f0cd;
-  box-shadow: 0 2px 6px rgba(140, 164, 67, .22);
+  box-shadow: 0 2px 6px rgba(140, 164, 67, 0.22);
 }
 
 .sg-btn:active {
@@ -274,7 +275,7 @@
   border-radius: 999px;
   padding: 4px 10px;
   font-size: 12px;
-  transition: background .15s, border-color .15s;
+  transition: background 0.15s, border-color 0.15s;
 }
 
 .sg-chip:hover {
@@ -288,8 +289,8 @@
   max-width: 100%;
   overflow: hidden;
   box-sizing: border-box;
-  opacity: .0;
-  transition: max-height .32s ease, opacity .22s ease;
+  opacity: 0;
+  transition: max-height 0.32s ease, opacity 0.22s ease;
 }
 
 .is-open .sg-previewAnim {
@@ -318,7 +319,7 @@
   overflow: hidden;
   text-overflow: ellipsis;
   white-space: nowrap;
-  min-width: 0; 
+  min-width: 0;
   flex: 1 1 auto;
 }
 
@@ -339,7 +340,7 @@
   justify-content: space-between;
   font-size: 13px;
   text-decoration: none;
-  transition: background .15s ease-in-out;
+  transition: background 0.15s ease-in-out;
 }
 
 .sg-miniBtn:hover {
@@ -428,7 +429,7 @@
   border-radius: 50%;
   border: 3px solid #e2e8f0;
   border-top-color: var(--sg-green);
-  animation: sg-spin .8s linear infinite;
+  animation: sg-spin 0.8s linear infinite;
 }
 
 @keyframes sg-spin {
@@ -525,12 +526,13 @@
   text-decoration: none;
   font-weight: 100;
   line-height: 1;
-  transition: background .15s, box-shadow .15s, border-color .15s, transform .05s;
+  transition: background 0.15s, box-shadow 0.15s, border-color 0.15s,
+    transform 0.05s;
 }
 
 .sg2-open:hover {
   background: #eef4e2;
-  box-shadow: 0 2px 6px rgba(140, 164, 67, .25);
+  box-shadow: 0 2px 6px rgba(140, 164, 67, 0.25);
 }
 
 .sg2-title {
@@ -563,7 +565,7 @@
   border-top: 1px solid #e7eed3;
 }
 
-.sg2-tagsWrapper{
+.sg2-tagsWrapper {
   display: flex;
   flex-direction: row;
   flex-wrap: wrap;
@@ -598,7 +600,7 @@
   cursor: pointer;
   padding: 6px 8px;
   border-radius: 8px;
-  transition: background .15s ease;
+  transition: background 0.15s ease;
 }
 
 .sg2-previewLink:hover {
@@ -606,7 +608,7 @@
 }
 
 /* Responsive (list keeps stacking) */
-@media (max-width:480px) {
+@media (max-width: 480px) {
   .sg-card {
     border-radius: 12px;
   }

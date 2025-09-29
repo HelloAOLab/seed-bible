@@ -63,7 +63,7 @@ function ThePage({ tab: T, setPanalApp, panelId, setEnableEditor, setData, data 
         await bible.fetch();
 
         let tempBibleObject = bible;
-        
+
         globalThis.CurrentBibleObject = tempBibleObject;
 
         const { data, loading, error } = bible.getState();
@@ -73,6 +73,13 @@ function ThePage({ tab: T, setPanalApp, panelId, setEnableEditor, setData, data 
         globalThis.BookId = bible.bookId;
         globalThis.GlobalChapter = bible.data.chapter - 1;
 
+        const combinedText = data.content
+            .flatMap(({ verses }) => verses.map(verse => verse.text))
+            .join(" ");
+
+        globalThis.GlobalSearch = combinedText;
+
+        // prepareAISearch();
         // if(!globalThis.studyNotesPresent) {
         //     SN_Components_Bot.initializer();
         // }
@@ -84,6 +91,32 @@ function ThePage({ tab: T, setPanalApp, panelId, setEnableEditor, setData, data 
     useEffect(() => {
         loadData()
     }, [tab])
+
+    // const prepareAISearch = () => {
+    //     if (globalThis.ApologistSearchPresent) {
+    //         RemoveApplicationByID(globalThis.ApologistSearch_PANEL_ID);
+    //         let id = uuid();
+    //         globalThis.ApologistSearch_PANEL_ID = id;
+    //         AddApplication({
+    //             id,
+    //             App: <ApologistSearch id={id} search={globalThis.GlobalSearch ?? "galations 5"} />,
+    //             to: 'panel',
+    //             minWidth: '30rem'
+    //         });
+    //     }
+    //     // else if (globalThis.TaposSearchPresent) {
+    //     //     RemoveApplicationByID(globalThis.TaposSearch_PANEL_ID);
+    //     //     globalThis.TaposSearchPresent = true;
+    //     //     let id = uuid();
+    //     //     globalThis.TaposSearch_PANEL_ID = id;
+    //     //     AddApplication({
+    //     //         id,
+    //     //         App: <SgSearch id={id} search={globalThis.GlobalSearch ?? "galations 5"} />,
+    //     //         to: 'panel',
+    //     //         minWidth: '30rem'
+    //     //     });
+    //     // }
+    // }
 
     async function globalLoadingDataFromSN(bookId, chapter) {
         if (!tab)
@@ -108,6 +141,12 @@ function ThePage({ tab: T, setPanalApp, panelId, setEnableEditor, setData, data 
         setData(data);
 
         globalThis.GlobalChapter = bible.data.chapter - 1;
+
+        const combinedText = data.content
+            .flatMap(({ verses }) => verses.map(verse => verse.text))
+            .join(" ");
+
+        globalThis.GlobalSearch = combinedText;
 
         if (globalThis.studyNotesPresent) {
             UpdateApplication(globalThis.STUDYNOTES_PANEL_ID, {
@@ -281,6 +320,12 @@ function ThePage({ tab: T, setPanalApp, panelId, setEnableEditor, setData, data 
         globalThis.GlobalChapter = bible.data.chapter - 1;
         globalThis.BookId = bible.data.bookId;
 
+        const combinedText = bible.data.content
+            .flatMap(({ verses }) => verses.map(verse => verse.text))
+            .join(" ");
+
+        globalThis.GlobalSearch = combinedText;
+
         if (globalThis.studyNotesPresent) {
             UpdateApplication(globalThis.STUDYNOTES_PANEL_ID, {
                 App: <StudyNotes id={globalThis.STUDYNOTES_PANEL_ID} chapter={globalThis.GlobalChapter} />,
@@ -297,6 +342,12 @@ function ThePage({ tab: T, setPanalApp, panelId, setEnableEditor, setData, data 
         // Additions ------>
         globalThis.GlobalChapter = bible.data.chapter - 1;
         globalThis.BookId = bible.data.bookId;
+        
+        const combinedText = bible.data.content
+            .flatMap(({ verses }) => verses.map(verse => verse.text))
+            .join(" ");
+
+        globalThis.GlobalSearch = combinedText;
 
         if (globalThis.studyNotesPresent) {
             UpdateApplication(globalThis.STUDYNOTES_PANEL_ID, {
@@ -308,10 +359,16 @@ function ThePage({ tab: T, setPanalApp, panelId, setEnableEditor, setData, data 
     async function open(bookId, chapter, translation = null) {
         await bible.open(bookId, chapter, translation = null)
         setData(bible.data)
-        
+
         // Additions ------>
         globalThis.GlobalChapter = bible.data.chapter - 1;
         globalThis.BookId = bible.data.bookId;
+        
+        const combinedText = bible.data.content
+            .flatMap(({ verses }) => verses.map(verse => verse.text))
+            .join(" ");
+
+        globalThis.GlobalSearch = combinedText;
 
         if (globalThis.studyNotesPresent) {
             UpdateApplication(globalThis.STUDYNOTES_PANEL_ID, {

@@ -427,7 +427,6 @@
   height: 100%;
   display: flex;
   flex-direction: column;
-  margin-top: 85px;
 }
 
 /* top pills */
@@ -443,20 +442,19 @@
 }
 
 .sn-tab {
-  border: 1px solid #ffffff;
-  background: #f8faf1;
+  border-bottom: 1px solid transparent;
+  background: transparent;
   color: #24310c;
   font-size: 18px;
   border-radius: 999px;
   padding: 7px 12px;
   cursor: pointer;
-  transition: background .15s, border-color .15s, transform .05s;
+  transition: color .15s, border-color .15s, transform .05s;
 }
-.sn-tab:hover { background: #eef4e2; }
-.sn-tab.is-active {
-  background: #8ca443;
-  color: #fff;
-  border-color: #8ca443;
+.sn-tab:hover { color: #8ca443; }
+.sn-tab.is-active {   
+  color: #8ca443;
+  border-color: 1px solid #8ca443;
 }
 
 /* panels */
