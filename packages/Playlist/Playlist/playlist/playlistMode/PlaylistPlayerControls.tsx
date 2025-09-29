@@ -651,6 +651,7 @@ const PlayerControls = ({ parentId = 'default' }) => {
                             border: '0px solid #D36433',
                             boxShadow: 'none',
                             padding: '8px',
+                            cursor: !prevItemName?.content ? "not-allowed" : "",
                             fontSize: '12px'
                         }}
                         onClick={() => {
@@ -697,9 +698,11 @@ const PlayerControls = ({ parentId = 'default' }) => {
                             boxShadow: 'none',
                             color: '#000',
                             padding: '8px',
-                            fontSize: '12px'
+                            fontSize: '12px',
+                            cursor: !nextItemName?.content ? "not-allowed" : ""
                         }}
                         onClick={() => {
+                            if (!nextItemName?.content) return;
                             DataManager.cancelCurrentPlayingSound();
                             if (!!nextItemName?.content && !!globalThis.HandleOnButtonPress) {
                                 globalThis.HandleOnButtonPress(1);
@@ -713,6 +716,7 @@ const PlayerControls = ({ parentId = 'default' }) => {
                             globalThis.SetSplitAppPanel2(null);
                             // os.unregisterApp("playing-playlist");
                             // thisBot.showInfo(`History Mode`);
+                            os.unregisterApp("playing-playlist-flaot");
                             if (globalThis.RemoveNowBarApp) {
                                 globalThis.RemoveNowBarApp('player-playlist-bar');
                             }
