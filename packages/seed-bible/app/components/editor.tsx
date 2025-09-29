@@ -1,35 +1,57 @@
 const { useEffect, useState, useRef } = os.appHooks;
-import { Editor } from 'https://esm.sh/@tiptap/core';
-import StarterKit from 'https://esm.sh/@tiptap/starter-kit';
-import render from 'https://esm.run/preact-render-to-string';
-import { TextStyle } from 'https://esm.sh/@tiptap/extension-text-style';
-import { Color } from 'https://esm.sh/@tiptap/extension-color';
-import { Node } from 'https://esm.sh/@tiptap/core';
-import TextAlign from 'https://esm.sh/@tiptap/extension-text-align';
-import Underline from 'https://esm.sh/@tiptap/extension-underline';
-import Superscript from 'https://esm.sh/@tiptap/extension-superscript';
-import Subscript from 'https://esm.sh/@tiptap/extension-subscript';
-import Highlight from 'https://esm.sh/@tiptap/extension-highlight';
-import { Mark } from 'https://esm.sh/@tiptap/core';
-import { MarginYIcon, MarginXIcon } from 'app.components.icons'
-import Image from 'https://esm.sh/@tiptap/extension-image';
-import Link from 'https://esm.sh/@tiptap/extension-link';
-import BulletList from 'https://esm.sh/@tiptap/extension-bullet-list';
-import OrderedList from 'https://esm.sh/@tiptap/extension-ordered-list';
-import ListItem from 'https://esm.sh/@tiptap/extension-list-item';
-const localStorage = getBot('system', 'app.localStorage')
+import { Editor } from "https://esm.sh/@tiptap/core";
+import StarterKit from "https://esm.sh/@tiptap/starter-kit";
+import render from "https://esm.run/preact-render-to-string";
+import { TextStyle } from "https://esm.sh/@tiptap/extension-text-style";
+import { Color } from "https://esm.sh/@tiptap/extension-color";
+import { Node } from "https://esm.sh/@tiptap/core";
+import TextAlign from "https://esm.sh/@tiptap/extension-text-align";
+import Underline from "https://esm.sh/@tiptap/extension-underline";
+import Superscript from "https://esm.sh/@tiptap/extension-superscript";
+import Subscript from "https://esm.sh/@tiptap/extension-subscript";
+import Highlight from "https://esm.sh/@tiptap/extension-highlight";
+import { Mark } from "https://esm.sh/@tiptap/core";
+import { MarginYIcon, MarginXIcon } from "app.components.icons";
+import Image from "https://esm.sh/@tiptap/extension-image";
+import Link from "https://esm.sh/@tiptap/extension-link";
+import BulletList from "https://esm.sh/@tiptap/extension-bullet-list";
+import OrderedList from "https://esm.sh/@tiptap/extension-ordered-list";
+import ListItem from "https://esm.sh/@tiptap/extension-list-item";
+const localStorage = getBot("system", "app.localStorage");
 
 // >>> priorities: dev default order (first = highest priority)
 if (!globalThis.DEFAULT_TOOLBAR_PRIORITY)
   globalThis.DEFAULT_TOOLBAR_PRIORITY = [
-    'text-select', 'bold', 'italic', 'underline', 'strikethrough',
-    'superscript', 'subscript', 'align', 'list', 'line-spacing',
-    'attach', 'image', 'text-color', 'bg-color', 'paragraph', 'font-family',
-    'font-style', 'font-size', 'undo', 'redo', 'clear', 'print',
-    'margin1', 'margin2', 'ai-prompt', 'download', 'upload'
+    "text-select",
+    "bold",
+    "italic",
+    "underline",
+    "strikethrough",
+    "superscript",
+    "subscript",
+    "align",
+    "list",
+    "line-spacing",
+    "attach",
+    "image",
+    "text-color",
+    "bg-color",
+    "paragraph",
+    "font-family",
+    "font-style",
+    "font-size",
+    "undo",
+    "redo",
+    "clear",
+    "print",
+    "margin1",
+    "margin2",
+    "ai-prompt",
+    "download",
+    "upload",
   ];
 // key in your existing storage bucket
-const PRIORITY_KEY = 'tiptap_toolbar_priorities';
+const PRIORITY_KEY = "tiptap_toolbar_priorities";
 
 // ------- uploads -------
 async function uploadAttachmentAndInsert() {
@@ -37,13 +59,13 @@ async function uploadAttachmentAndInsert() {
   if (files.length === 0) return;
   const file = files[0];
   const fileUrl = await uploadToServerOrBase64(file);
-  const fileName = file.name || 'download';
+  const fileName = file.name || "download";
   if (globalThis.EditorFns?.insertAttachment && fileUrl) {
     globalThis.EditorFns.insertAttachment(fileName, fileUrl);
   }
 }
 async function uploadImageAndInsert() {
-  const files = await os.showUploadFiles({ accept: 'image/*' });
+  const files = await os.showUploadFiles({ accept: "image/*" });
   if (files.length === 0) return;
   const file = files[0];
   const imageUrl = await uploadToServerOrBase64(file);
@@ -63,13 +85,13 @@ async function uploadFile() {
 
 // ------- marks/nodes -------
 const LineHeight = Mark.create({
-  name: 'lineHeight',
+  name: "lineHeight",
   addAttributes() {
     return {
       lineHeight: {
         default: null,
-        parseHTML: element => element.style.lineHeight || null,
-        renderHTML: attributes => {
+        parseHTML: (element) => element.style.lineHeight || null,
+        renderHTML: (attributes) => {
           if (!attributes.lineHeight) return {};
           return { style: `line-height: ${attributes.lineHeight}` };
         },
@@ -77,67 +99,88 @@ const LineHeight = Mark.create({
     };
   },
   parseHTML() {
-    return [{ style: 'line-height' }];
+    return [{ style: "line-height" }];
   },
   renderHTML({ HTMLAttributes }) {
-    return ['span', HTMLAttributes, 0];
+    return ["span", HTMLAttributes, 0];
   },
 });
 
 const CustomStyle = Mark.create({
-  name: 'customStyle',
+  name: "customStyle",
   addAttributes() {
     return {
       style: {
         default: null,
-        parseHTML: element => element.getAttribute('style'),
-        renderHTML: attributes => (attributes.style ? { style: attributes.style } : {}),
+        parseHTML: (element) => element.getAttribute("style"),
+        renderHTML: (attributes) =>
+          attributes.style ? { style: attributes.style } : {},
       },
     };
   },
   parseHTML() {
-    return [{ tag: 'span[style]' }];
+    return [{ tag: "span[style]" }];
   },
   renderHTML({ HTMLAttributes }) {
-    return ['span', HTMLAttributes, 0];
+    return ["span", HTMLAttributes, 0];
   },
 });
 
 export const BookTitle = Node.create({
-  name: 'bookTitle',
-  group: 'block',
-  content: 'inline*',
-  parseHTML() { return [{ tag: 'div.bookTitle' }]; },
-  renderHTML() { return ['div', { class: 'bookTitle' }, 0]; },
+  name: "bookTitle",
+  group: "block",
+  content: "inline*",
+  parseHTML() {
+    return [{ tag: "div.bookTitle" }];
+  },
+  renderHTML() {
+    return ["div", { class: "bookTitle" }, 0];
+  },
 });
 export const SectionTitle = Node.create({
-  name: 'sectionTitle',
-  group: 'block',
-  content: 'inline*',
-  parseHTML() { return [{ tag: 'div.sectionTitle' }]; },
-  renderHTML() { return ['div', { class: 'sectionTitle' }, 0]; },
+  name: "sectionTitle",
+  group: "block",
+  content: "inline*",
+  parseHTML() {
+    return [{ tag: "div.sectionTitle" }];
+  },
+  renderHTML() {
+    return ["div", { class: "sectionTitle" }, 0];
+  },
 });
 export const SectionCover = Node.create({
-  name: 'sectionCover',
-  group: 'block',
-  content: 'inline*',
-  parseHTML() { return [{ tag: 'div.sectionCover' }]; },
-  renderHTML() { return ['div', { class: 'sectionCover' }, 0]; },
+  name: "sectionCover",
+  group: "block",
+  content: "inline*",
+  parseHTML() {
+    return [{ tag: "div.sectionCover" }];
+  },
+  renderHTML() {
+    return ["div", { class: "sectionCover" }, 0];
+  },
 });
 export const SectionText = Node.create({
-  name: 'sectionText',
-  group: 'block',
-  content: 'inline*',
-  parseHTML() { return [{ tag: 'div.sectionText' }]; },
-  renderHTML() { return ['div', { class: 'sectionText' }, 0]; },
+  name: "sectionText",
+  group: "block",
+  content: "inline*",
+  parseHTML() {
+    return [{ tag: "div.sectionText" }];
+  },
+  renderHTML() {
+    return ["div", { class: "sectionText" }, 0];
+  },
 });
 export const SectionTextNumber = Node.create({
-  name: 'sectionTextNumber',
-  group: 'inline',
+  name: "sectionTextNumber",
+  group: "inline",
   inline: true,
-  content: 'text*',
-  parseHTML() { return [{ tag: 'span.sectionTextNumber' }]; },
-  renderHTML() { return ['span', { class: 'sectionTextNumber' }, 0]; },
+  content: "text*",
+  parseHTML() {
+    return [{ tag: "span.sectionTextNumber" }];
+  },
+  renderHTML() {
+    return ["span", { class: "sectionTextNumber" }, 0];
+  },
 });
 
 // ------- render helpers -------
@@ -159,8 +202,10 @@ function renderStudyNotesToHTML(studyNote) {
       if (m) {
         const bookNum = m[1];
         const verseNum = m[2];
-        const tail = m[3] || '';
-        html += `<h3 class="verseNumber">${bookNum}:${verseNum}${tail ? ` <span>${tail}</span>` : ''}</h3>`;
+        const tail = m[3] || "";
+        html += `<h3 class="verseNumber">${bookNum}:${verseNum}${
+          tail ? ` <span>${tail}</span>` : ""
+        }</h3>`;
       } else {
         html += `<h3 class="verseNumber">${sec}</h3>`;
       }
@@ -175,24 +220,28 @@ function renderStudyNotesToHTML(studyNote) {
   return html;
 }
 function generateHtmlFromContent(data) {
-  if (!data || !data?.content) return '';
+  if (!data || !data?.content) return "";
   const bookTitle = `${data?.book} - ${data?.chapter}`;
-  const sectionsHtml = data?.content.map(section => {
-    const versesHtml = section.verses.map(verse => {
-      return `
+  const sectionsHtml = data?.content
+    .map((section) => {
+      const versesHtml = section.verses
+        .map((verse) => {
+          return `
         <span class="sectionText">
           <span class="sectionTextNumber">${verse.verseNumber}</span>
           ${verse.text}
         </span>`;
-    }).join('\n');
-    return `
+        })
+        .join("\n");
+      return `
       <div class="section">
         <div class="sectionTitle">${section.heading}</div>
         <div class="sectionCover">
           ${versesHtml}
         </div>
       </div>`;
-  }).join('\n');
+    })
+    .join("\n");
   return `
     <!DOCTYPE html>
     <html lang="en">
@@ -205,60 +254,82 @@ function generateHtmlFromContent(data) {
 }
 function segmentHtmlBySectionEnd(htmlString) {
   const parser = new DOMParser();
-  const doc = parser.parseFromString(htmlString, 'text/html');
+  const doc = parser.parseFromString(htmlString, "text/html");
   const segments = [];
   let currentSegmentNodes = [];
   const bodyChildren = Array.from(doc.body.childNodes);
   for (const node of bodyChildren) {
     currentSegmentNodes.push(node);
-    if (node.nodeType === 1 && node.tagName.toLowerCase() === 'div' && node.classList.contains('sectionCover')) {
+    if (
+      node.nodeType === 1 &&
+      node.tagName.toLowerCase() === "div" &&
+      node.classList.contains("sectionCover")
+    ) {
       const tempDoc = document.implementation.createHTMLDocument();
-      currentSegmentNodes.forEach(n => tempDoc.body.appendChild(n.cloneNode(true)));
+      currentSegmentNodes.forEach((n) =>
+        tempDoc.body.appendChild(n.cloneNode(true))
+      );
       segments.push(tempDoc.body.innerHTML);
       currentSegmentNodes = [];
     }
   }
   if (currentSegmentNodes.length > 0) {
     const tempDoc = document.implementation.createHTMLDocument();
-    currentSegmentNodes.forEach(n => tempDoc.body.appendChild(n.cloneNode(true)));
+    currentSegmentNodes.forEach((n) =>
+      tempDoc.body.appendChild(n.cloneNode(true))
+    );
     segments.push(tempDoc.body.innerHTML);
   }
   return segments;
 }
 
 // ------- editor -------
-const TextEditor = ({ content, tab, data, setEnableEditor, enableEditor, studyNotes }) => {
+const TextEditor = ({
+  content,
+  tab,
+  data,
+  setEnableEditor,
+  enableEditor,
+  studyNotes,
+}) => {
   if (!tab && !studyNotes) return content;
 
   const editorRef = useRef(null);
-  const [textColor, setTextColor] = useState('#000000');
-  const [bgColor, setBgColor] = useState('#ffffff');
-  const [paddingY, setPaddingY] = useState(0)
-  const [paddingX, setPaddingX] = useState(0)
+  const [textColor, setTextColor] = useState("#000000");
+  const [bgColor, setBgColor] = useState("#ffffff");
+  const [paddingY, setPaddingY] = useState(0);
+  const [paddingX, setPaddingX] = useState(0);
 
-  const htmlString = !studyNotes ? generateHtmlFromContent(data) : renderStudyNotesToHTML(data);
+  const htmlString = !studyNotes
+    ? generateHtmlFromContent(data)
+    : renderStudyNotesToHTML(data);
 
   useEffect(() => {
     const saveData = (editor) => {
       const key = `${data?.translation}_${data?.book}_${data?.chapter}`;
       const json = editor.getJSON();
-      localStorage.masks[key] = { key, data: JSON.stringify(json) }
-      os.log('data saved', key, localStorage.masks[key])
-    }
+      localStorage.masks[key] = { key, data: JSON.stringify(json) };
+      os.log("data saved", key, localStorage.masks[key]);
+    };
 
     const editor = new Editor({
-      element: document.getElementById('tiptapEditor'),
-      onUpdate({ editor }) { saveData(editor) },
+      element: document.getElementById("tiptapEditor"),
+      onUpdate({ editor }) {
+        saveData(editor);
+      },
       extensions: [
         StarterKit.configure({
           heading: true,
           blockquote: true,
           paragraph: true,
-          paragraph: { HTMLAttributes: { style: 'text-align: left;' } },
+          paragraph: { HTMLAttributes: { style: "text-align: left;" } },
         }),
         TextStyle,
-        Color.configure({ types: ['textStyle'] }),
-        TextAlign.configure({ types: ['heading', 'paragraph'], defaultAlignment: 'left' }),
+        Color.configure({ types: ["textStyle"] }),
+        TextAlign.configure({
+          types: ["heading", "paragraph"],
+          defaultAlignment: "left",
+        }),
         Underline,
         Superscript,
         CustomStyle,
@@ -282,9 +353,9 @@ const TextEditor = ({ content, tab, data, setEnableEditor, enableEditor, studyNo
     editorRef.current = editor;
 
     function resolveTargetNodeName() {
-      const mode = globalThis.EditorTextMode || 'all';
-      if (mode === 'verses') return 'sectionCover';
-      if (mode === 'headings') return 'sectionTitle';
+      const mode = globalThis.EditorTextMode || "all";
+      if (mode === "verses") return "sectionCover";
+      if (mode === "headings") return "sectionTitle";
       return null; // for "all"
     }
     function applyMarkToNamedNodes(editor, nodeName, markName, attrs = {}) {
@@ -310,51 +381,81 @@ const TextEditor = ({ content, tab, data, setEnableEditor, enableEditor, studyNo
     globalThis.EditorFns = {
       bold: () => {
         const node = resolveTargetNodeName();
-        if (node) { applyMarkToNamedNodes(editor, node, 'bold'); }
-        else { editor.chain().focus().toggleBold().run(); }
+        if (node) {
+          applyMarkToNamedNodes(editor, node, "bold");
+        } else {
+          editor.chain().focus().toggleBold().run();
+        }
       },
       italic: () => {
         const node = resolveTargetNodeName();
-        if (node) { applyMarkToNamedNodes(editor, node, 'italic'); }
-        else { editor.chain().focus().toggleItalic().run(); }
+        if (node) {
+          applyMarkToNamedNodes(editor, node, "italic");
+        } else {
+          editor.chain().focus().toggleItalic().run();
+        }
       },
       underline: () => {
         const node = resolveTargetNodeName();
-        if (node) { applyMarkToNamedNodes(editor, node, 'underline'); }
-        else { editor.chain().focus().toggleUnderline().run(); }
+        if (node) {
+          applyMarkToNamedNodes(editor, node, "underline");
+        } else {
+          editor.chain().focus().toggleUnderline().run();
+        }
       },
       strikethrough: () => {
         const node = resolveTargetNodeName();
-        if (node) { applyMarkToNamedNodes(editor, node, 'strike'); }
-        else { editor.chain().focus().toggleStrike().run(); }
+        if (node) {
+          applyMarkToNamedNodes(editor, node, "strike");
+        } else {
+          editor.chain().focus().toggleStrike().run();
+        }
       },
       superscript: () => editor.chain().focus().toggleSuperscript().run(),
       subscript: () => editor.chain().focus().toggleSubscript().run(),
-      alignLeft: () => editor.chain().focus().setTextAlign('left').run(),
-      alignCenter: () => editor.chain().focus().setTextAlign('center').run(),
-      alignRight: () => editor.chain().focus().setTextAlign('right').run(),
-      alignJustify: () => editor.chain().focus().setTextAlign('justify').run(),
+      alignLeft: () => editor.chain().focus().setTextAlign("left").run(),
+      alignCenter: () => editor.chain().focus().setTextAlign("center").run(),
+      alignRight: () => editor.chain().focus().setTextAlign("right").run(),
+      alignJustify: () => editor.chain().focus().setTextAlign("justify").run(),
       undo: () => editor.chain().focus().undo().run(),
       redo: () => editor.chain().focus().redo().run(),
       toggleBulletList: () => editor.chain().focus().toggleBulletList().run(),
       toggleOrderedList: () => editor.chain().focus().toggleOrderedList().run(),
       onFontStyleChange: (style) => {
-        if (style === 'bold') editor.chain().focus().toggleBold().run();
-        else if (style === 'italic') editor.chain().focus().toggleItalic().run();
-        else if (style === 'light') editor.chain().focus().setMark('customStyle', { style: 'font-weight: 300;' }).run();
+        if (style === "bold") editor.chain().focus().toggleBold().run();
+        else if (style === "italic")
+          editor.chain().focus().toggleItalic().run();
+        else if (style === "light")
+          editor
+            .chain()
+            .focus()
+            .setMark("customStyle", { style: "font-weight: 300;" })
+            .run();
         else editor.chain().focus().unsetAllMarks().run();
       },
       onParagraphChange: (value) => {
-        if (value === 'p') editor.chain().focus().setParagraph().run();
-        else if (value.startsWith('h')) {
-          const level = parseInt(value.replace('h', ''), 10);
+        if (value === "p") editor.chain().focus().setParagraph().run();
+        else if (value.startsWith("h")) {
+          const level = parseInt(value.replace("h", ""), 10);
           editor.chain().focus().toggleHeading({ level }).run();
         }
       },
       insertAttachment: (name, url) => {
-        editor.chain().focus().insertContent(`<a href="${url}" target="_blank" rel="noopener noreferrer">${name}</a>`).run();
+        editor
+          .chain()
+          .focus()
+          .insertContent(
+            `<a href="${url}" target="_blank" rel="noopener noreferrer">${name}</a>`
+          )
+          .run();
       },
-      insertLink: (url) => editor.chain().focus().extendMarkRange('link').setLink({ href: url }).run(),
+      insertLink: (url) =>
+        editor
+          .chain()
+          .focus()
+          .extendMarkRange("link")
+          .setLink({ href: url })
+          .run(),
       removeLink: () => editor.chain().focus().unsetLink().run(),
       insertImage: (url) => editor.chain().focus().setImage({ src: url }).run(),
       setLineHeight: (height) => {
@@ -373,9 +474,9 @@ const TextEditor = ({ content, tab, data, setEnableEditor, enableEditor, studyNo
       },
       clear: () => {
         const node = (function () {
-          const mode = globalThis.EditorTextMode || 'all';
-          if (mode === 'verses') return 'sectionCover';
-          if (mode === 'headings') return 'sectionTitle';
+          const mode = globalThis.EditorTextMode || "all";
+          if (mode === "verses") return "sectionCover";
+          if (mode === "headings") return "sectionTitle";
           return null;
         })();
         if (node) {
@@ -401,13 +502,13 @@ const TextEditor = ({ content, tab, data, setEnableEditor, enableEditor, studyNo
       setTextColor: (color) => {
         setTextColor(color);
         const node = (function () {
-          const mode = globalThis.EditorTextMode || 'all';
-          if (mode === 'verses') return 'sectionCover';
-          if (mode === 'headings') return 'sectionTitle';
+          const mode = globalThis.EditorTextMode || "all";
+          if (mode === "verses") return "sectionCover";
+          if (mode === "headings") return "sectionTitle";
           return null;
         })();
         if (node) {
-          applyMarkToNamedNodes(editor, node, 'textStyle', { color });
+          applyMarkToNamedNodes(editor, node, "textStyle", { color });
         } else {
           editor.chain().focus().setColor(color).run();
         }
@@ -415,64 +516,66 @@ const TextEditor = ({ content, tab, data, setEnableEditor, enableEditor, studyNo
       setHighlightColor: (color) => {
         setBgColor(color);
         const node = (function () {
-          const mode = globalThis.EditorTextMode || 'all';
-          if (mode === 'verses') return 'sectionCover';
-          if (mode === 'headings') return 'sectionTitle';
+          const mode = globalThis.EditorTextMode || "all";
+          if (mode === "verses") return "sectionCover";
+          if (mode === "headings") return "sectionTitle";
           return null;
         })();
         if (node) {
-          applyMarkToNamedNodes(editor, node, 'highlight', { color });
+          applyMarkToNamedNodes(editor, node, "highlight", { color });
         } else {
-          editor.chain().focus().setMark('highlight', { color }).run();
+          editor.chain().focus().setMark("highlight", { color }).run();
         }
       },
       setFontFamily: (font) => {
         const node = (function () {
-          const mode = globalThis.EditorTextMode || 'all';
-          if (mode === 'verses') return 'sectionCover';
-          if (mode === 'headings') return 'sectionTitle';
+          const mode = globalThis.EditorTextMode || "all";
+          if (mode === "verses") return "sectionCover";
+          if (mode === "headings") return "sectionTitle";
           return null;
         })();
         const style = `font-family: ${font};`;
-        if (node) applyMarkToNamedNodes(editor, node, 'customStyle', { style });
-        else editor.chain().focus().setMark('customStyle', { style }).run();
+        if (node) applyMarkToNamedNodes(editor, node, "customStyle", { style });
+        else editor.chain().focus().setMark("customStyle", { style }).run();
       },
       setFontSize: (size) => {
         const node = (function () {
-          const mode = globalThis.EditorTextMode || 'all';
-          if (mode === 'verses') return 'sectionCover';
-          if (mode === 'headings') return 'sectionTitle';
+          const mode = globalThis.EditorTextMode || "all";
+          if (mode === "verses") return "sectionCover";
+          if (mode === "headings") return "sectionTitle";
           return null;
         })();
         const style = `font-size: ${size}px;`;
-        if (node) applyMarkToNamedNodes(editor, node, 'customStyle', { style });
-        else editor.chain().focus().setMark('customStyle', { style }).run();
+        if (node) applyMarkToNamedNodes(editor, node, "customStyle", { style });
+        else editor.chain().focus().setMark("customStyle", { style }).run();
       },
-      getHtml: () => editor.getHTML() || '',
+      getHtml: () => editor.getHTML() || "",
       setHtml: (html) => editor.commands.setContent(html),
       exportJson: () => {
         const json = editor.getJSON();
-        const dataStr = 'data:text/json;charset=utf-8,' + encodeURIComponent(JSON.stringify(json, null, 2));
-        const dlAnchor = document.createElement('a');
-        dlAnchor.setAttribute('href', dataStr);
-        dlAnchor.setAttribute('download', 'editor-content.json');
+        const dataStr =
+          "data:text/json;charset=utf-8," +
+          encodeURIComponent(JSON.stringify(json, null, 2));
+        const dlAnchor = document.createElement("a");
+        dlAnchor.setAttribute("href", dataStr);
+        dlAnchor.setAttribute("download", "editor-content.json");
         document.body.appendChild(dlAnchor);
         dlAnchor.click();
         dlAnchor.remove();
       },
       importJson: (json) => {
         try {
-          if (typeof json === 'string') json = JSON.parse(json);
+          if (typeof json === "string") json = JSON.parse(json);
           editor.commands.setContent(json);
         } catch (error) {
-          console.error('Failed to import JSON:', error);
-          alert('Invalid JSON format');
+          console.error("Failed to import JSON:", error);
+          alert("Invalid JSON format");
         }
       },
       aiHighlight: async (prompt) => {
         const html = editor.getHTML();
-        const editorElement = document.getElementById("tiptapEditor")
-        editorElement.classList.add('overlay-animated-text');
+        const editorElement = document.getElementById("tiptapEditor");
+        editorElement.classList.add("overlay-animated-text");
         editor.setEditable(false);
         const defaultPromt = prompt || tags.editorAIPromt;
         const positivePromt = masks?.editorAIPostive || "";
@@ -481,70 +584,78 @@ const TextEditor = ({ content, tab, data, setEnableEditor, enableEditor, studyNo
           { role: "system", content: `${defaultPromt}` },
           { role: "system", content: `Avoid: ${negativePromt}` },
           { role: "system", content: `Remember: ${positivePromt}` },
-          { role: "user", content: `${html}` }
-        ]
-        const combinedHtml = await ai.chat([...chat])
-        editor.commands.setContent(combinedHtml.content)
-        editorElement.classList.remove('overlay-animated-text');
+          { role: "user", content: `${html}` },
+        ];
+        const combinedHtml = await ai.chat([...chat]);
+        editor.commands.setContent(combinedHtml.content);
+        editorElement.classList.remove("overlay-animated-text");
         editor.setEditable(true);
       },
     };
 
-    return () => { editor.destroy(); };
+    return () => {
+      editor.destroy();
+    };
   }, [enableEditor]);
 
   useEffect(() => {
-    if (!data) return
+    if (!data) return;
     const editor = editorRef.current;
     if (!editor) return;
     const key = `${data?.translation}_${data?.book}_${data?.chapter}`;
-    if (localStorage.masks[key]) os.log('localStorage.masks[key]', localStorage.masks[key])
+    if (localStorage.masks[key])
+      os.log("localStorage.masks[key]", localStorage.masks[key]);
     editor.commands.setContent(htmlString);
-  }, [data])
+  }, [data]);
 
   return (
     <>
-      <div style={{ display: !enableEditor ? "" : "none" }}>{content}</div>
+      <div style={{ height: "100%", display: !enableEditor ? "" : "none" }}>
+        {content}
+      </div>
       {enableEditor && content && (
         <>
           <ResponsiveToolbar editor={editorRef.current} />
           <style>{styles}</style>
-          <div
-            id="tiptapEditor"
-            style={editorStyle}
-          />
+          <div id="tiptapEditor" style={editorStyle} />
         </>
       )}
     </>
-  )
+  );
 };
 
 // ------- toolbar -------
 const editorStyle = {
-  minHeight: '300px',
-  padding: '15px',
-  outline: 'none',
-  lineHeight: '1.6',
-  fontSize: '16px',
+  minHeight: "300px",
+  padding: "15px",
+  outline: "none",
+  lineHeight: "1.6",
+  fontSize: "16px",
 };
 
 const iconButtonStyle = {
-  background: 'transparent',
-  border: 'none',
-  cursor: 'pointer'
+  background: "transparent",
+  border: "none",
+  cursor: "pointer",
 };
 
 export function ResponsiveToolbar({ editor }) {
-  const [selectedText, setSelectedText] = useState('all');
+  const [selectedText, setSelectedText] = useState("all");
   const [fontSize, setFontSize] = useState(16);
-  const [textColor, setTextColor] = useState('#000000');
-  const [bgColor, setBgColor] = useState('#ffffff');
+  const [textColor, setTextColor] = useState("#000000");
+  const [bgColor, setBgColor] = useState("#ffffff");
 
   // >>> priorities state
   const [priority, setPriority] = useState(() => {
     try {
-      return (localStorage?.masks?.[PRIORITY_KEY]?.data && JSON.parse(localStorage.masks[PRIORITY_KEY].data)) || DEFAULT_TOOLBAR_PRIORITY;
-    } catch { return DEFAULT_TOOLBAR_PRIORITY; }
+      return (
+        (localStorage?.masks?.[PRIORITY_KEY]?.data &&
+          JSON.parse(localStorage.masks[PRIORITY_KEY].data)) ||
+        DEFAULT_TOOLBAR_PRIORITY
+      );
+    } catch {
+      return DEFAULT_TOOLBAR_PRIORITY;
+    }
   });
 
   // >>> overflow state
@@ -559,7 +670,9 @@ export function ResponsiveToolbar({ editor }) {
   const [showTuning, setShowTuning] = useState(false);
   const [draftOrder, setDraftOrder] = useState(priority);
 
-  useEffect(() => { globalThis.EditorTextMode = selectedText; }, [selectedText]);
+  useEffect(() => {
+    globalThis.EditorTextMode = selectedText;
+  }, [selectedText]);
 
   globalThis.EditorToolbar = {
     setPriorities(ids) {
@@ -567,27 +680,32 @@ export function ResponsiveToolbar({ editor }) {
       setPriority(ids);
       persistPriority(ids);
     },
-    getPriorities() { return priority.slice(); },
+    getPriorities() {
+      return priority.slice();
+    },
     resetPriorities() {
       setPriority(DEFAULT_TOOLBAR_PRIORITY);
       persistPriority(DEFAULT_TOOLBAR_PRIORITY);
-    }
+    },
   };
 
   const persistPriority = (ids) => {
-    localStorage.masks[PRIORITY_KEY] = { key: PRIORITY_KEY, data: JSON.stringify(ids) };
+    localStorage.masks[PRIORITY_KEY] = {
+      key: PRIORITY_KEY,
+      data: JSON.stringify(ids),
+    };
   };
 
   // dropdown choices
   const alignmentOptions = [
-    { label: 'Left', icon: 'format_align_left', value: 'left' },
-    { label: 'Center', icon: 'format_align_center', value: 'center' },
-    { label: 'Right', icon: 'format_align_right', value: 'right' },
-    { label: 'Justify', icon: 'format_align_justify', value: 'justify' }
+    { label: "Left", icon: "format_align_left", value: "left" },
+    { label: "Center", icon: "format_align_center", value: "center" },
+    { label: "Right", icon: "format_align_right", value: "right" },
+    { label: "Justify", icon: "format_align_justify", value: "justify" },
   ];
   const listOptions = [
-    { label: 'Bulleted', icon: 'format_list_bulleted', value: 'bulletList' },
-    { label: 'Numbered', icon: 'format_list_numbered', value: 'orderedList' }
+    { label: "Bulleted", icon: "format_list_bulleted", value: "bulletList" },
+    { label: "Numbered", icon: "format_list_numbered", value: "orderedList" },
   ];
 
   const handleTextColorChange = (color) => {
@@ -607,15 +725,17 @@ export function ResponsiveToolbar({ editor }) {
   };
   const handleAlignmentSelect = (option) => {
     if (!option) return;
-    if (option.value === 'left') globalThis.EditorFns?.alignLeft();
-    else if (option.value === 'center') globalThis.EditorFns?.alignCenter();
-    else if (option.value === 'right') globalThis.EditorFns?.alignRight();
-    else if (option.value === 'justify') globalThis.EditorFns?.alignJustify();
+    if (option.value === "left") globalThis.EditorFns?.alignLeft();
+    else if (option.value === "center") globalThis.EditorFns?.alignCenter();
+    else if (option.value === "right") globalThis.EditorFns?.alignRight();
+    else if (option.value === "justify") globalThis.EditorFns?.alignJustify();
   };
   const handleListSelect = (option) => {
     if (!option) return;
-    if (option.value === 'bulletList') globalThis.EditorFns?.toggleBulletList?.();
-    else if (option.value === 'orderedList') globalThis.EditorFns?.toggleOrderedList?.();
+    if (option.value === "bulletList")
+      globalThis.EditorFns?.toggleBulletList?.();
+    else if (option.value === "orderedList")
+      globalThis.EditorFns?.toggleOrderedList?.();
   };
   const [spacing, setSpacing] = useState();
   const handleSpaceSelect = (val) => {
@@ -628,75 +748,107 @@ export function ResponsiveToolbar({ editor }) {
 
   // build toolbar items
   const colorInputStyle = {
-    width: '28px',
-    height: '28px',
-    borderRadius: '50%',
-    border: 'none',
-    outline: 'none',
-    cursor: 'pointer',
-    padding: '0',
+    width: "28px",
+    height: "28px",
+    borderRadius: "50%",
+    border: "none",
+    outline: "none",
+    cursor: "pointer",
+    padding: "0",
   };
   const allItemsById = {
-    'text-select': {
-      id: 'text-select',
+    "text-select": {
+      id: "text-select",
       node: (
         <TextSelect
           key="text-select"
           selectedText={selectedText}
           onTextSelect={setSelectedText}
         />
-      )
+      ),
     },
-    'bold': {
-      id: 'bold',
+    bold: {
+      id: "bold",
       node: (
-        <button key="bold" onClick={() => globalThis.EditorFns?.bold()} style={iconButtonStyle} title="Bold">
+        <button
+          key="bold"
+          onClick={() => globalThis.EditorFns?.bold()}
+          style={iconButtonStyle}
+          title="Bold"
+        >
           <span className="material-symbols-outlined">format_bold</span>
         </button>
-      )
+      ),
     },
-    'italic': {
-      id: 'italic',
+    italic: {
+      id: "italic",
       node: (
-        <button key="italic" onClick={() => globalThis.EditorFns?.italic()} style={iconButtonStyle} title="Italic">
+        <button
+          key="italic"
+          onClick={() => globalThis.EditorFns?.italic()}
+          style={iconButtonStyle}
+          title="Italic"
+        >
           <span className="material-symbols-outlined">format_italic</span>
         </button>
-      )
+      ),
     },
-    'underline': {
-      id: 'underline',
+    underline: {
+      id: "underline",
       node: (
-        <button key="underline" onClick={() => globalThis.EditorFns?.underline()} style={iconButtonStyle} title="Underline">
+        <button
+          key="underline"
+          onClick={() => globalThis.EditorFns?.underline()}
+          style={iconButtonStyle}
+          title="Underline"
+        >
           <span className="material-symbols-outlined">format_underlined</span>
         </button>
-      )
+      ),
     },
-    'strikethrough': {
-      id: 'strikethrough',
+    strikethrough: {
+      id: "strikethrough",
       node: (
-        <button key="strikethrough" onClick={() => globalThis.EditorFns?.strikethrough()} style={iconButtonStyle} title="Strikethrough">
-          <span className="material-symbols-outlined">format_strikethrough</span>
+        <button
+          key="strikethrough"
+          onClick={() => globalThis.EditorFns?.strikethrough()}
+          style={iconButtonStyle}
+          title="Strikethrough"
+        >
+          <span className="material-symbols-outlined">
+            format_strikethrough
+          </span>
         </button>
-      )
+      ),
     },
-    'superscript': {
-      id: 'superscript',
+    superscript: {
+      id: "superscript",
       node: (
-        <button key="superscript" onClick={() => globalThis.EditorFns?.superscript()} style={iconButtonStyle} title="Superscript">
+        <button
+          key="superscript"
+          onClick={() => globalThis.EditorFns?.superscript()}
+          style={iconButtonStyle}
+          title="Superscript"
+        >
           <span className="material-symbols-outlined">superscript</span>
         </button>
-      )
+      ),
     },
-    'subscript': {
-      id: 'subscript',
+    subscript: {
+      id: "subscript",
       node: (
-        <button key="subscript" onClick={() => globalThis.EditorFns?.subscript()} style={iconButtonStyle} title="Subscript">
+        <button
+          key="subscript"
+          onClick={() => globalThis.EditorFns?.subscript()}
+          style={iconButtonStyle}
+          title="Subscript"
+        >
           <span className="material-symbols-outlined">subscript</span>
         </button>
-      )
+      ),
     },
-    'align': {
-      id: 'align',
+    align: {
+      id: "align",
       node: (
         <CustomDropdown
           key="align"
@@ -704,10 +856,10 @@ export function ResponsiveToolbar({ editor }) {
           onSelect={handleAlignmentSelect}
           defaultValue={alignmentOptions[0]}
         />
-      )
+      ),
     },
-    'list': {
-      id: 'list',
+    list: {
+      id: "list",
       node: (
         <CustomDropdown
           key="list"
@@ -715,104 +867,175 @@ export function ResponsiveToolbar({ editor }) {
           onSelect={handleListSelect}
           defaultValue={listOptions[0]}
         />
-      )
+      ),
     },
-    'line-spacing': {
-      id: 'line-spacing',
+    "line-spacing": {
+      id: "line-spacing",
       node: (
         <InputWithIcon
           key="line-spacing"
-          icon={<span class="material-symbols-outlined">format_line_spacing</span>}
+          icon={
+            <span class="material-symbols-outlined">format_line_spacing</span>
+          }
           value={spacing}
           onChange={handleSpaceSelect}
           placeholder="1.6"
         />
-      )
+      ),
     },
-    'attach': {
-      id: 'attach',
+    attach: {
+      id: "attach",
       node: (
-        <button key="attach" onClick={() => uploadAttachmentAndInsert()} style={iconButtonStyle} title="Attach File">
+        <button
+          key="attach"
+          onClick={() => uploadAttachmentAndInsert()}
+          style={iconButtonStyle}
+          title="Attach File"
+        >
           <span className="material-symbols-outlined">attach_file</span>
         </button>
-      )
+      ),
     },
-    'image': {
-      id: 'image',
+    image: {
+      id: "image",
       node: (
-        <button key="image" onClick={() => uploadImageAndInsert()} style={iconButtonStyle} title="Insert Image">
+        <button
+          key="image"
+          onClick={() => uploadImageAndInsert()}
+          style={iconButtonStyle}
+          title="Insert Image"
+        >
           <span className="material-symbols-outlined">image</span>
         </button>
-      )
+      ),
     },
-    'text-color': {
-      id: 'text-color',
+    "text-color": {
+      id: "text-color",
       node: (
-        <div key="text-color" style={{ display: 'flex', alignItems: 'center', gap: '4px' }}>
+        <div
+          key="text-color"
+          style={{ display: "flex", alignItems: "center", gap: "4px" }}
+        >
           <span className="material-symbols-outlined">title</span>
-          <input type="color" value={textColor} onChange={(e) => handleTextColorChange(e.target.value)} style={colorInputStyle} title="Text Color" />
+          <input
+            type="color"
+            value={textColor}
+            onChange={(e) => handleTextColorChange(e.target.value)}
+            style={colorInputStyle}
+            title="Text Color"
+          />
         </div>
-      )
+      ),
     },
-    'bg-color': {
-      id: 'bg-color',
+    "bg-color": {
+      id: "bg-color",
       node: (
-        <div key="bg-color" style={{ display: 'flex', alignItems: 'center', gap: '4px' }}>
+        <div
+          key="bg-color"
+          style={{ display: "flex", alignItems: "center", gap: "4px" }}
+        >
           <span className="material-symbols-outlined">border_color</span>
-          <input type="color" value={bgColor} onChange={(e) => handleBgColorChange(e.target.value)} style={colorInputStyle} title="Highlight Color" />
+          <input
+            type="color"
+            value={bgColor}
+            onChange={(e) => handleBgColorChange(e.target.value)}
+            style={colorInputStyle}
+            title="Highlight Color"
+          />
         </div>
-      )
+      ),
     },
-    'paragraph': {
-      id: 'paragraph',
-      node: (<ParagraphSelect key="paragraph" onParagraphChange={globalThis.EditorFns?.onParagraphChange} />)
-    },
-    'font-family': {
-      id: 'font-family',
-      node: (<FontFamilySelect key="font-family" onFontFamilyChange={handleFontFamilyChange} />)
-    },
-    'font-style': {
-      id: 'font-style',
-      node: (<FontStyleSelect key="font-style" onFontStyleChange={globalThis.EditorFns?.onFontStyleChange} />)
-    },
-    'font-size': {
-      id: 'font-size',
-      node: (<Counter key="font-size" value={fontSize} onChange={handleFontSizeChange} />)
-    },
-    'undo': {
-      id: 'undo',
+    paragraph: {
+      id: "paragraph",
       node: (
-        <button key="undo" onClick={() => globalThis.EditorFns?.undo()} style={iconButtonStyle} title="Undo">
+        <ParagraphSelect
+          key="paragraph"
+          onParagraphChange={globalThis.EditorFns?.onParagraphChange}
+        />
+      ),
+    },
+    "font-family": {
+      id: "font-family",
+      node: (
+        <FontFamilySelect
+          key="font-family"
+          onFontFamilyChange={handleFontFamilyChange}
+        />
+      ),
+    },
+    "font-style": {
+      id: "font-style",
+      node: (
+        <FontStyleSelect
+          key="font-style"
+          onFontStyleChange={globalThis.EditorFns?.onFontStyleChange}
+        />
+      ),
+    },
+    "font-size": {
+      id: "font-size",
+      node: (
+        <Counter
+          key="font-size"
+          value={fontSize}
+          onChange={handleFontSizeChange}
+        />
+      ),
+    },
+    undo: {
+      id: "undo",
+      node: (
+        <button
+          key="undo"
+          onClick={() => globalThis.EditorFns?.undo()}
+          style={iconButtonStyle}
+          title="Undo"
+        >
           <span className="material-symbols-outlined">undo</span>
         </button>
-      )
+      ),
     },
-    'redo': {
-      id: 'redo',
+    redo: {
+      id: "redo",
       node: (
-        <button key="redo" onClick={() => globalThis.EditorFns?.redo()} style={iconButtonStyle} title="Redo">
+        <button
+          key="redo"
+          onClick={() => globalThis.EditorFns?.redo()}
+          style={iconButtonStyle}
+          title="Redo"
+        >
           <span className="material-symbols-outlined">redo</span>
         </button>
-      )
+      ),
     },
-    'clear': {
-      id: 'clear',
+    clear: {
+      id: "clear",
       node: (
-        <button key="clear" onClick={() => globalThis.EditorFns?.clear()} style={iconButtonStyle} title="Clear Formatting">
+        <button
+          key="clear"
+          onClick={() => globalThis.EditorFns?.clear()}
+          style={iconButtonStyle}
+          title="Clear Formatting"
+        >
           <span className="material-symbols-outlined">format_clear</span>
         </button>
-      )
+      ),
     },
-    'print': {
-      id: 'print',
+    print: {
+      id: "print",
       node: (
-        <button key="print" onClick={() => window.print()} style={iconButtonStyle} title="Print">
+        <button
+          key="print"
+          onClick={() => window.print()}
+          style={iconButtonStyle}
+          title="Print"
+        >
           <span className="material-symbols-outlined">print</span>
         </button>
-      )
+      ),
     },
-    'margin1': {
-      id: 'margin1',
+    margin1: {
+      id: "margin1",
       node: (
         <InputWithIcon
           key="margin1"
@@ -826,10 +1049,10 @@ export function ResponsiveToolbar({ editor }) {
           }}
           placeholder="Vertical"
         />
-      )
+      ),
     },
-    'margin2': {
-      id: 'margin2',
+    margin2: {
+      id: "margin2",
       node: (
         <InputWithIcon
           key="margin2"
@@ -843,45 +1066,63 @@ export function ResponsiveToolbar({ editor }) {
           }}
           placeholder="Horizontal"
         />
-      )
+      ),
     },
-    'ai-prompt': {
-      id: 'ai-prompt',
-      node: (<AIPromptInput key="ai-prompt" onAIPrompt={handleAIPrompt} />)
+    "ai-prompt": {
+      id: "ai-prompt",
+      node: <AIPromptInput key="ai-prompt" onAIPrompt={handleAIPrompt} />,
     },
-    'download': {
-      id: 'download',
+    download: {
+      id: "download",
       node: (
-        <button key="download" onClick={() => globalThis.EditorFns?.exportJson()} style={iconButtonStyle} title="Download">
+        <button
+          key="download"
+          onClick={() => globalThis.EditorFns?.exportJson()}
+          style={iconButtonStyle}
+          title="Download"
+        >
           <span className="material-symbols-outlined">file_download</span>
         </button>
-      )
+      ),
     },
-    'upload': {
-      id: 'upload',
+    upload: {
+      id: "upload",
       node: (
-        <button key="upload" onClick={() => uploadFile()} style={iconButtonStyle} title="Upload">
+        <button
+          key="upload"
+          onClick={() => uploadFile()}
+          style={iconButtonStyle}
+          title="Upload"
+        >
           <span className="material-symbols-outlined">upload_file</span>
         </button>
-      )
+      ),
     },
     // >>> a tiny “tune” button for end users to reorder
-    '__tune__': {
-      id: '__tune__',
+    __tune__: {
+      id: "__tune__",
       node: (
-        <button key="tune" onClick={() => { setDraftOrder(priority); setShowTuning(true); }} title="Customize toolbar" style={iconButtonStyle}>
+        <button
+          key="tune"
+          onClick={() => {
+            setDraftOrder(priority);
+            setShowTuning(true);
+          }}
+          title="Customize toolbar"
+          style={iconButtonStyle}
+        >
           <span className="material-symbols-outlined">tune</span>
         </button>
-      )
-    }
+      ),
+    },
   };
 
   // ordered item ids = priority + any missing ids appended
-  const allIds = Object.keys(allItemsById).filter(x => x !== '__tune__');
+  const allIds = Object.keys(allItemsById).filter((x) => x !== "__tune__");
   const orderedIds = (() => {
-    const known = priority.filter(id => allIds.includes(id));
-    const missing = allIds.filter(id => !known.includes(id));
-    return [...known, ...missing, '__tune__']; // tune button last
+    const known = priority.filter((id) => allIds.includes(id));
+    const missing = allIds.filter((id) => !known.includes(id));
+    return [...known, ...missing, "__tune__"]; // tune button last
   })();
 
   // measure & compute visible/overflow
@@ -920,15 +1161,15 @@ export function ResponsiveToolbar({ editor }) {
     const ro = new ResizeObserver(() => computeLayout());
     if (toolbarRef.current) ro.observe(toolbarRef.current);
     const onWin = () => computeLayout();
-    window.addEventListener('resize', onWin);
+    window.addEventListener("resize", onWin);
     // initial pass after mount
     const t = setTimeout(computeLayout, 120);
     return () => {
       ro.disconnect();
-      window.removeEventListener('resize', onWin);
+      window.removeEventListener("resize", onWin);
       clearTimeout(t);
     };
-  }, [orderedIds.join('|')]);
+  }, [orderedIds.join("|")]);
 
   // UI for priority tuning
   const moveInDraft = (index, dir) => {
@@ -950,13 +1191,16 @@ export function ResponsiveToolbar({ editor }) {
 
   return (
     <>
-      <link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Material+Symbols+Outlined:opsz,wght,FILL,GRAD@20..48,100..700,0..1,-50..200" />
+      <link
+        rel="stylesheet"
+        href="https://fonts.googleapis.com/css2?family=Material+Symbols+Outlined:opsz,wght,FILL,GRAD@20..48,100..700,0..1,-50..200"
+      />
       <div className="tiptapToolbar" ref={toolbarRef}>
         <div className="toolbar-measurer" ref={measurerRef}>
-          {orderedIds.map(id => (
+          {orderedIds.map((id) => (
             <div
               key={`measure-${id}`}
-              ref={el => (itemsRef.current[id] = el)}
+              ref={(el) => (itemsRef.current[id] = el)}
               className="toolbar-item-measurer"
             >
               {allItemsById[id]?.node}
@@ -964,12 +1208,18 @@ export function ResponsiveToolbar({ editor }) {
           ))}
         </div>
 
-        {visibleIds.map(id => (
-          <div key={`vis-${id}`} className="toolbar-item">{allItemsById[id]?.node}</div>
+        {visibleIds.map((id) => (
+          <div key={`vis-${id}`} className="toolbar-item">
+            {allItemsById[id]?.node}
+          </div>
         ))}
 
         <div className="toolbar-item">
-          <button className="overflow-button" onClick={() => setShowOverflow(v => !v)} title="More">
+          <button
+            className="overflow-button"
+            onClick={() => setShowOverflow((v) => !v)}
+            title="More"
+          >
             <span className="material-symbols-outlined">more_vert</span>
           </button>
         </div>
@@ -977,8 +1227,10 @@ export function ResponsiveToolbar({ editor }) {
 
       {showOverflow && (
         <div className="overflow-tray">
-          {overflowIds.length === 0 && <div className="overflow-empty">No more items</div>}
-          {overflowIds.map(id => (
+          {overflowIds.length === 0 && (
+            <div className="overflow-empty">No more items</div>
+          )}
+          {overflowIds.map((id) => (
             <div key={`of-${id}`} className="overflow-item">
               {allItemsById[id]?.node}
             </div>
@@ -991,7 +1243,10 @@ export function ResponsiveToolbar({ editor }) {
           <div className="tuning-modal" onClick={(e) => e.stopPropagation()}>
             <div className="tuning-header">
               <div>Customize toolbar order</div>
-              <button className="tuning-close" onClick={() => setShowTuning(false)}>
+              <button
+                className="tuning-close"
+                onClick={() => setShowTuning(false)}
+              >
                 <span className="material-symbols-outlined">close</span>
               </button>
             </div>
@@ -1000,16 +1255,33 @@ export function ResponsiveToolbar({ editor }) {
                 <div key={`draft-${id}`} className="tuning-row">
                   <div className="tuning-id">{id}</div>
                   <div className="tuning-arrows">
-                    <button onClick={() => moveInDraft(idx, -1)} title="Up"><span className="material-symbols-outlined">keyboard_arrow_up</span></button>
-                    <button onClick={() => moveInDraft(idx, 1)} title="Down"><span className="material-symbols-outlined">keyboard_arrow_down</span></button>
+                    <button onClick={() => moveInDraft(idx, -1)} title="Up">
+                      <span className="material-symbols-outlined">
+                        keyboard_arrow_up
+                      </span>
+                    </button>
+                    <button onClick={() => moveInDraft(idx, 1)} title="Down">
+                      <span className="material-symbols-outlined">
+                        keyboard_arrow_down
+                      </span>
+                    </button>
                   </div>
                 </div>
               ))}
             </div>
             <div className="tuning-footer">
-              <button className="btn-secondary" onClick={() => { setDraftOrder(DEFAULT_TOOLBAR_PRIORITY); }}>Reset</button>
+              <button
+                className="btn-secondary"
+                onClick={() => {
+                  setDraftOrder(DEFAULT_TOOLBAR_PRIORITY);
+                }}
+              >
+                Reset
+              </button>
               <div style={{ flex: 1 }} />
-              <button className="btn-primary" onClick={saveDraft}>Save</button>
+              <button className="btn-primary" onClick={saveDraft}>
+                Save
+              </button>
             </div>
           </div>
         </div>
@@ -1023,14 +1295,14 @@ function TextSelect({ selectedText, onTextSelect }) {
   return (
     <select
       className="textToEdit"
-      value={selectedText || 'all'}
+      value={selectedText || "all"}
       onChange={(e) => onTextSelect(e.target.value)}
       style={{
-        padding: '6px 8px',
-        borderRadius: '6px',
-        border: '1px solid #ccc',
-        fontSize: '14px',
-        minWidth: '80px'
+        padding: "6px 8px",
+        borderRadius: "6px",
+        border: "1px solid #ccc",
+        fontSize: "14px",
+        minWidth: "80px",
       }}
     >
       <option value="all">All text</option>
@@ -1044,13 +1316,13 @@ function ParagraphSelect({ onParagraphChange }) {
     <select
       onChange={(e) => onParagraphChange(e.target.value)}
       style={{
-        width: '50px',
-        height: '30px',
-        color: '#5F5E5C',
-        border: '1px solid #ccc',
-        outline: 'none',
-        borderRadius: '6px',
-        fontSize: '12px'
+        width: "50px",
+        height: "30px",
+        color: "#5F5E5C",
+        border: "1px solid #ccc",
+        outline: "none",
+        borderRadius: "6px",
+        fontSize: "12px",
       }}
     >
       <option value="p">P</option>
@@ -1061,21 +1333,32 @@ function ParagraphSelect({ onParagraphChange }) {
   );
 }
 function FontFamilySelect({ onFontFamilyChange }) {
-  const fonts = ['DM Sans', 'Arial', 'Times New Roman', 'Courier New', 'Georgia', 'Verdana'];
+  const fonts = [
+    "DM Sans",
+    "Arial",
+    "Times New Roman",
+    "Courier New",
+    "Georgia",
+    "Verdana",
+  ];
   return (
     <select
       onChange={(e) => onFontFamilyChange(e.target.value)}
       style={{
-        width: '90px',
-        height: '30px',
-        color: '#5F5E5C',
-        border: '1px solid #ccc',
-        outline: 'none',
-        borderRadius: '6px',
-        fontSize: '12px'
+        width: "90px",
+        height: "30px",
+        color: "#5F5E5C",
+        border: "1px solid #ccc",
+        outline: "none",
+        borderRadius: "6px",
+        fontSize: "12px",
       }}
     >
-      {fonts.map(font => (<option key={font} value={font}>{font}</option>))}
+      {fonts.map((font) => (
+        <option key={font} value={font}>
+          {font}
+        </option>
+      ))}
     </select>
   );
 }
@@ -1084,13 +1367,13 @@ function FontStyleSelect({ onFontStyleChange }) {
     <select
       onChange={(e) => onFontStyleChange(e.target.value)}
       style={{
-        width: '70px',
-        height: '30px',
-        color: '#5F5E5C',
-        border: '1px solid #ccc',
-        outline: 'none',
-        borderRadius: '6px',
-        fontSize: '12px'
+        width: "70px",
+        height: "30px",
+        color: "#5F5E5C",
+        border: "1px solid #ccc",
+        outline: "none",
+        borderRadius: "6px",
+        fontSize: "12px",
       }}
     >
       <option value="normal">Normal</option>
@@ -1101,24 +1384,32 @@ function FontStyleSelect({ onFontStyleChange }) {
   );
 }
 function AIPromptInput({ onAIPrompt }) {
-  const [inputValue, setInputValue] = useState('');
-  const handleSubmit = () => { onAIPrompt(inputValue); setInputValue(''); };
-  const handleKeyPress = (e) => { if (e.key === 'Enter') handleSubmit(); };
+  const [inputValue, setInputValue] = useState("");
+  const handleSubmit = () => {
+    onAIPrompt(inputValue);
+    setInputValue("");
+  };
+  const handleKeyPress = (e) => {
+    if (e.key === "Enter") handleSubmit();
+  };
   return (
-    <div style={{
-      display: 'inline-flex',
-      alignItems: 'center',
-      justifyContent: 'space-between',
-      backgroundColor: '#f3f4f6',
-      borderRadius: '24px',
-      padding: '2px',
-      minWidth: '200px',
-      gap: '12px',
-      fontFamily: '-apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif',
-      transition: 'all 0.2s ease',
-      border: 'none',
-      boxShadow: '0 1px 3px rgba(0, 0, 0, 0.1)'
-    }}>
+    <div
+      style={{
+        display: "inline-flex",
+        alignItems: "center",
+        justifyContent: "space-between",
+        backgroundColor: "#f3f4f6",
+        borderRadius: "24px",
+        padding: "2px",
+        minWidth: "200px",
+        gap: "12px",
+        fontFamily:
+          '-apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif',
+        transition: "all 0.2s ease",
+        border: "none",
+        boxShadow: "0 1px 3px rgba(0, 0, 0, 0.1)",
+      }}
+    >
       <input
         type="text"
         value={inputValue}
@@ -1126,99 +1417,171 @@ function AIPromptInput({ onAIPrompt }) {
         onKeyPress={handleKeyPress}
         placeholder="AI Prompt..."
         style={{
-          backgroundColor: 'transparent',
-          border: 'none',
-          outline: 'none',
-          color: '#374151',
-          fontSize: '14px',
-          fontWeight: '400',
-          letterSpacing: '-0.01em',
-          lineHeight: '1.2',
+          backgroundColor: "transparent",
+          border: "none",
+          outline: "none",
+          color: "#374151",
+          fontSize: "14px",
+          fontWeight: "400",
+          letterSpacing: "-0.01em",
+          lineHeight: "1.2",
           flex: 1,
-          fontFamily: 'inherit',
-          padding: '8px 12px'
+          fontFamily: "inherit",
+          padding: "8px 12px",
         }}
       />
       <div
         onClick={handleSubmit}
         style={{
-          display: 'flex',
-          alignItems: 'center',
-          justifyContent: 'center',
-          width: '32px',
-          height: '32px',
-          backgroundColor: '#f9d5cc',
-          borderRadius: '50%',
+          display: "flex",
+          alignItems: "center",
+          justifyContent: "center",
+          width: "32px",
+          height: "32px",
+          backgroundColor: "#f9d5cc",
+          borderRadius: "50%",
           flexShrink: 0,
-          cursor: 'pointer'
+          cursor: "pointer",
         }}
       >
-        <svg width="16" height="16" viewBox="0 0 16 16" fill="none" style={{ color: '#8b4513' }}>
-          <path d="M8 1L9.5 6.5L15 8L9.5 9.5L8 15L6.5 9.5L1 8L6.5 6.5L8 1Z" fill="currentColor" />
-          <path d="M12 1L12.75 3.25L15 4L12.75 4.75L12 7L11.25 4.75L9 4L11.25 3.25L12 1Z" fill="currentColor" />
+        <svg
+          width="16"
+          height="16"
+          viewBox="0 0 16 16"
+          fill="none"
+          style={{ color: "#8b4513" }}
+        >
+          <path
+            d="M8 1L9.5 6.5L15 8L9.5 9.5L8 15L6.5 9.5L1 8L6.5 6.5L8 1Z"
+            fill="currentColor"
+          />
+          <path
+            d="M12 1L12.75 3.25L15 4L12.75 4.75L12 7L11.25 4.75L9 4L11.25 3.25L12 1Z"
+            fill="currentColor"
+          />
         </svg>
       </div>
     </div>
   );
 }
 function Counter({ value, onChange, min = 8, max = 72 }) {
-  const [fontSize, setFontSize] = useState(16)
+  const [fontSize, setFontSize] = useState(16);
   const increment = () => {
     if (fontSize < max) {
-      const size = fontSize + 1
+      const size = fontSize + 1;
       setFontSize(size);
       globalThis.EditorFns?.setFontSize(size.toString());
     }
   };
   const decrement = () => {
     if (fontSize > min) {
-      const size = fontSize - 1
+      const size = fontSize - 1;
       setFontSize(size);
       globalThis.EditorFns?.setFontSize(size.toString());
     }
   };
   return (
-    <div style={{
-      display: 'flex',
-      alignItems: 'center',
-      backgroundColor: 'transparent',
-      borderRadius: '50px',
-      boxShadow: '0 2px 8px rgba(0, 0, 0, 0.1)',
-      border: '1px solid #DADADA',
-      padding: '2px'
-    }}>
-      <button onClick={decrement} style={{
-        width: '24px', height: '24px', display: 'flex', alignItems: 'center', justifyContent: 'center',
-        color: '#6b7280', backgroundColor: 'transparent', border: 'none', borderRadius: '50%', cursor: 'pointer', fontSize: '14px', fontWeight: '300'
-      }}>−</button>
-      <div style={{ fontSize: '14px', fontWeight: '500', color: '#5F5E5C', minWidth: '40px', textAlign: 'center', userSelect: 'none' }}>
+    <div
+      style={{
+        display: "flex",
+        alignItems: "center",
+        backgroundColor: "transparent",
+        borderRadius: "50px",
+        boxShadow: "0 2px 8px rgba(0, 0, 0, 0.1)",
+        border: "1px solid #DADADA",
+        padding: "2px",
+      }}
+    >
+      <button
+        onClick={decrement}
+        style={{
+          width: "24px",
+          height: "24px",
+          display: "flex",
+          alignItems: "center",
+          justifyContent: "center",
+          color: "#6b7280",
+          backgroundColor: "transparent",
+          border: "none",
+          borderRadius: "50%",
+          cursor: "pointer",
+          fontSize: "14px",
+          fontWeight: "300",
+        }}
+      >
+        −
+      </button>
+      <div
+        style={{
+          fontSize: "14px",
+          fontWeight: "500",
+          color: "#5F5E5C",
+          minWidth: "40px",
+          textAlign: "center",
+          userSelect: "none",
+        }}
+      >
         {fontSize}
       </div>
-      <button onClick={increment} style={{
-        width: '24px', height: '24px', display: 'flex', alignItems: 'center', justifyContent: 'center',
-        color: '#6b7280', backgroundColor: 'transparent', border: 'none', borderRadius: '50%', cursor: 'pointer', fontSize: '14px', fontWeight: '300'
-      }}>+</button>
+      <button
+        onClick={increment}
+        style={{
+          width: "24px",
+          height: "24px",
+          display: "flex",
+          alignItems: "center",
+          justifyContent: "center",
+          color: "#6b7280",
+          backgroundColor: "transparent",
+          border: "none",
+          borderRadius: "50%",
+          cursor: "pointer",
+          fontSize: "14px",
+          fontWeight: "300",
+        }}
+      >
+        +
+      </button>
     </div>
   );
 }
 function InputWithIcon({ icon, value, onChange, placeholder = "" }) {
   return (
-    <div style={{
-      display: 'flex', alignItems: 'center', gap: '4px', padding: '4px 8px',
-      border: '1px solid #ccc', borderRadius: '6px', backgroundColor: 'white', minWidth: '60px'
-    }}>
-      <div style={{ fontSize: '16px', color: '#666' }}>{icon}</div>
+    <div
+      style={{
+        display: "flex",
+        alignItems: "center",
+        gap: "4px",
+        padding: "4px 8px",
+        border: "1px solid #ccc",
+        borderRadius: "6px",
+        backgroundColor: "white",
+        minWidth: "60px",
+      }}
+    >
+      <div style={{ fontSize: "16px", color: "#666" }}>{icon}</div>
       <input
         type="number"
         value={value}
         onChange={(e) => onChange(parseFloat(e.target.value) || 0)}
         placeholder={placeholder}
-        style={{ border: 'none', outline: 'none', width: '40px', fontSize: '14px', textAlign: 'center' }}
+        style={{
+          border: "none",
+          outline: "none",
+          width: "40px",
+          fontSize: "14px",
+          textAlign: "center",
+        }}
       />
     </div>
   );
 }
-function CustomDropdown({ options = [], onSelect, label = 'Select', defaultValue }) {
+function CustomDropdown({
+  options = [],
+  onSelect,
+  label = "Select",
+  defaultValue,
+}) {
   const [selected, setSelected] = useState(defaultValue || options[0]);
   const [open, setOpen] = useState(false);
   const handleSelect = (option) => {
@@ -1227,25 +1590,74 @@ function CustomDropdown({ options = [], onSelect, label = 'Select', defaultValue
     if (onSelect) onSelect(option);
   };
   return (
-    <div style={{ position: 'relative' }}>
-      <div onClick={() => setOpen(!open)} style={{
-        display: 'flex', alignItems: 'center', gap: '4px', padding: '6px 8px',
-        borderRadius: '6px', cursor: 'pointer', minWidth: '40px'
-      }}>
-        {selected?.icon && <span className="material-symbols-outlined" style={{ fontSize: '18px' }}>{selected.icon}</span>}
-        <span className="material-symbols-outlined" style={{ fontSize: '16px', marginLeft: 'auto' }}>{open ? 'expand_less' : 'expand_more'}</span>
+    <div style={{ position: "relative" }}>
+      <div
+        onClick={() => setOpen(!open)}
+        style={{
+          display: "flex",
+          alignItems: "center",
+          gap: "4px",
+          padding: "6px 8px",
+          borderRadius: "6px",
+          cursor: "pointer",
+          minWidth: "40px",
+        }}
+      >
+        {selected?.icon && (
+          <span
+            className="material-symbols-outlined"
+            style={{ fontSize: "18px" }}
+          >
+            {selected.icon}
+          </span>
+        )}
+        <span
+          className="material-symbols-outlined"
+          style={{ fontSize: "16px", marginLeft: "auto" }}
+        >
+          {open ? "expand_less" : "expand_more"}
+        </span>
       </div>
       {open && (
-        <div style={{
-          position: 'absolute', top: '100%', left: 0, right: 0, backgroundColor: 'white',
-          border: '1px solid #ccc', borderRadius: '6px', boxShadow: '0 2px 10px rgba(0,0,0,0.1)',
-          zIndex: 1000, marginTop: '2px'
-        }}>
+        <div
+          style={{
+            position: "absolute",
+            top: "100%",
+            left: 0,
+            right: 0,
+            backgroundColor: "white",
+            border: "1px solid #ccc",
+            borderRadius: "6px",
+            boxShadow: "0 2px 10px rgba(0,0,0,0.1)",
+            zIndex: 1000,
+            marginTop: "2px",
+          }}
+        >
           {options.map((option) => (
-            <div key={option.value} onClick={(e) => { e.stopPropagation(); handleSelect(option); }} style={{
-              display: 'flex', alignItems: 'center', gap: '8px', padding: '8px 12px', cursor: 'pointer', fontSize: '14px', borderBottom: '1px solid #eee'
-            }}>
-              {option.icon && <span className="material-symbols-outlined" style={{ fontSize: '18px' }}>{option.icon}</span>}
+            <div
+              key={option.value}
+              onClick={(e) => {
+                e.stopPropagation();
+                handleSelect(option);
+              }}
+              style={{
+                display: "flex",
+                alignItems: "center",
+                gap: "8px",
+                padding: "8px 12px",
+                cursor: "pointer",
+                fontSize: "14px",
+                borderBottom: "1px solid #eee",
+              }}
+            >
+              {option.icon && (
+                <span
+                  className="material-symbols-outlined"
+                  style={{ fontSize: "18px" }}
+                >
+                  {option.icon}
+                </span>
+              )}
             </div>
           ))}
         </div>
