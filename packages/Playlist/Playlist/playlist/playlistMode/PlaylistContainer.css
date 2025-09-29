@@ -121,7 +121,7 @@
     display: block;
     visibility: visible;
     z-index: 1000;
-    padding-bottom: 7rem !important;
+    /* padding-bottom: 7rem !important; */
 }
 
 .playing-queue.checklistEnabled {

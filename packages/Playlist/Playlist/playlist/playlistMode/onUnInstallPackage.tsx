@@ -13,6 +13,8 @@ globalThis.StopPlayingPlaylistModal(false);
 if (globalThis.RemoveNowBarApp) {
     globalThis.RemoveNowBarApp('player-playlist-bar');
 }
+os.unregisterApp("playing-playlist-flaot");
+thisBot.CloseFloatingApp();
 document.removeEventListener('keyup', () => { });
 document.removeEventListener('keydown', () => { });
 globalThis.SetEditRichText = null;
@@ -35,7 +37,6 @@ globalThis.PLAYLIST_PANEL_ID = null;
 globalThis.PlayingPlaylist = null;
 globalThis[`defaultToggleGreyCheckPLayingPlaylist`] &&
     globalThis[`defaultToggleGreyCheckPLayingPlaylist`](null);
-globalThis.IsQueuePresent = false;
 thisBot.CloseFloatingApp();
 globalThis.IS_PLAYLIST_ACTIVE = false;
 globalThis.SetSplitAppPanel2 && globalThis.SetSplitAppPanel2(null);
