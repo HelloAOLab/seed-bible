@@ -3,7 +3,7 @@ import { getStyleOf } from 'app.styles.styler';
 import { SpaceIcon } from 'app.components.images';
 import { ProfileCard } from 'app.components.profileCard';
 import { useSideBarContext } from 'app.hooks.sideBar';
-import { Space, LoadSpace, ToolbarIcon, UserAvatar, MenuIcon } from 'app.components.icons'
+import { Space, LoadSpace, ToolbarIcon, UserAvatar } from 'app.components.icons'
 import { useTabsContext } from 'app.hooks.tabs';
 import { useBibleContext } from 'app.hooks.bibleVariables';
 import {
@@ -16,7 +16,7 @@ const SettingsSidebar = () => {
     const [activeTab, setActiveTab] = useState('space');
     globalThis.SetActiveSettingsTab = setActiveTab
     const { sidebarMode, setSideBarMode } = useSideBarContext();
-    const { openPopupSettings, closePopupSettings, setUserURL, customIcon, setCustomIcon } = useSideBarContext();
+    const { openPopupSettings, closePopupSettings, setUserURL } = useSideBarContext();
     const { updateSpace, activeSpace, spaces, downloadSpaceAsJSON, replaceActiveSpaceWithJSON } = useTabsContext()
     const CurrentSpace = spaces.find(e => e.id === activeSpace)
     const [expandedSections, setExpandedSections] = useState({
@@ -87,14 +87,14 @@ const SettingsSidebar = () => {
                 { key: 'ai', label: 'AI', icon: 'smart_toy', onClick: () => setSideBarMode('canvasAiSettings') },
             ]
         },
-        // { key: 'divider2b', type: 'divider' },
-        // {
-        //     key: 'mapSettings', label: 'Map Settings', icon: 'map', expandable: true, subItems: [
-        //         { key: 'toolbar', label: 'Toolbar', icon: `construction`, onClick: () => setSideBarMode('toolbarSettings-Canvas') },
-        //         { key: 'tab', label: 'Tab', icon: 'description', onClick: () => setSideBarMode('tabSettings') },
-        //         { key: 'ai', label: 'AI', icon: 'smart_toy', onClick: () => setSideBarMode('canvasAiSettings') },
-        //     ]
-        // },
+        { key: 'divider2b', type: 'divider' },
+        {
+            key: 'mapSettings', label: 'Map Settings', icon: 'map', expandable: true, subItems: [
+                { key: 'toolbar', label: 'Toolbar', icon: `construction`, onClick: () => setSideBarMode('toolbarSettings-Canvas') },
+                { key: 'tab', label: 'Tab', icon: 'description', onClick: () => setSideBarMode('tabSettings') },
+                { key: 'ai', label: 'AI', icon: 'smart_toy', onClick: () => setSideBarMode('canvasAiSettings') },
+            ]
+        },
         { key: 'divider3', type: 'divider' },
         {
             key: 'LoadSpace', label: 'Load new space', icon: <LoadSpace />, expandable: false, onClick: async () => {
@@ -116,16 +116,16 @@ const SettingsSidebar = () => {
     // GENERAL tab config (adds hide/show + label editing via the same machinery)
     const generalSettingsConfig = [
         // Move account section to the top as the first item
-        { key: 'generalHeader', type: 'header', label: 'General Settings' },
-        { key: 'generalDesc', type: 'desc', label: 'Manage your account, profile, and preferences.' },
         {
             key: 'yourAccount',
             type: 'account',
             label: 'Your account'
         },
 
+        { key: 'generalHeader', type: 'header', label: 'General Settings' },
+        { key: 'generalDesc', type: 'desc', label: 'Manage your account, profile, and preferences..' },
 
-        // { key: 'dividerG1', type: 'divider' },
+        { key: 'dividerG1', type: 'divider' },
 
         // Account row
         {
@@ -140,7 +140,7 @@ const SettingsSidebar = () => {
         { key: 'permissions', label: 'Permissions', icon: 'action_key', style: 'disabled' },
         { key: 'notifications', label: 'Notifications', icon: 'notification_settings', style: 'disabled' },
 
-        // { key: 'dividerG2', type: 'divider' },
+        { key: 'dividerG2', type: 'divider' },
 
         // Subscriptions "section"
         {
@@ -149,7 +149,7 @@ const SettingsSidebar = () => {
             label: 'Subscriptions', // header text; content rendered below
         },
 
-        // { key: 'dividerG3', type: 'divider' },
+        { key: 'dividerG3', type: 'divider' },
 
         // Language (disabled)
         { key: 'language', label: 'Language', icon: 'language', style: 'disabled' },
@@ -210,6 +210,7 @@ const SettingsSidebar = () => {
 
         setSettingsVisibility(initialVisibility);
         setSettingsLabels(initialLabels);
+        // eslint-disable-next-line react-hooks/exhaustive-deps
     }, []); // run once
 
     // Generate SPACE settings config with custom labels and visibility
@@ -390,36 +391,6 @@ const SettingsSidebar = () => {
         sections.push(current);
         return sections;
     };
-    const SpaceIconOptions = {
-        type: 'normal',
-        items: [
-            {
-                icon: <MenuIcon name="upload" />, title: 'Upload icon', onClick: async () => {
-                    const img = await thisBot.uploadHandler()
-                    setCustomIcon({ icon: <img style={{ width: '25px' }} src={img} /> })
-                }
-            },
-            {
-                disabled: !customIcon, icon: <MenuIcon name="add_link" />, title: 'Add link', onClick: async () => {
-                    const link = await os.showInput(null, {
-                        title: 'Add link'
-                    })
-                    os.log(link, 'link')
-                    if (link)
-                        setCustomIcon(prev => ({
-                            ...prev,
-                            link
-                        }))
-                }
-            },
-            {
-                disabled: !customIcon, icon: <MenuIcon name="hide_image" />, title: 'Remove icon', onClick: async () => {
-                    setCustomIcon(null)
-                }
-            },
-
-        ]
-    };
     const settingsSections = chunkByDividers(settingsConfig);
     const generalSections = chunkByDividers(generalConfig);
 
@@ -482,43 +453,7 @@ const SettingsSidebar = () => {
                                     {CurrentSpace?.icon || <div class="activeBg"><span></span></div>}
                                 </div>
                             </div>
-                            {spaceContentVisibility.spaceName !== false && (
-                                <div onContextMenu={(e) => {
-                                    openPopupSettings(SpaceIconOptions)
-                                }} className="space-name-container">
-                                    {editMode && (
-                                        <button
-                                            className="hide-button space-name-hide"
-                                            onClick={() => toggleSpaceContentVisibility('spaceName')}
-                                            title="Hide space name">
-                                            <span className="material-symbols-outlined">
-                                                {spaceContentVisibility.spaceName === false ? 'visibility' : 'visibility_off'}
-                                            </span>
-                                        </button>
-                                    )}
-                                    {customIcon ? (
-                                        <div className="space-name">
-                                            {customIcon.icon}
-                                        </div>
-                                    ) : (
-                                        !editSpaceName ? (
-                                            <div onClick={() => setEditSpaceName(true)} className="space-name">
-                                                {CurrentSpace.name}
-                                            </div>
-                                        ) : (
-                                            <input
-                                                onBlur={() => setEditSpaceName(false)}
-                                                style={{ height: '10px', width: '100px' }}
-                                                id="input"
-                                                value={spaceName}
-                                                onChange={(e) => { e.target.value !== "" && setSpaceName(e.target.value) }}
-                                                className="input-field number selectInput"
-                                            />
-                                        )
-                                    )}
-
-                                </div>
-                            )}
+                            
                         </div>
                     </div>
                 )}

@@ -1,8 +1,6 @@
 await os.unregisterApp('main')
 os.registerApp('main', thisBot)
-const { useEffect, useState, useRef, render } = os.appHooks;
-
-
+const { useEffect, useState, render } = os.appHooks;
 import { BibleVariablesProvider } from 'app.hooks.bibleVariables'
 import { TabsProvider } from 'app.hooks.tabs'
 import { SideBarProvider } from 'app.hooks.sideBar'
@@ -15,7 +13,6 @@ import { useTabsContext } from 'app.hooks.tabs';
 import { useSideBarContext } from 'app.hooks.sideBar'
 import { Person } from "https://cdn.skypack.dev/lucide-react";
 import { PackageManager } from 'app.packager.main'
-import { DragDropOverlay } from 'app.main.dragOverlay'
 //this for defining nav functions globaly
 globalThis.Open = () => { }
 globalThis.OpenNextChapter = () => { }
@@ -24,55 +21,8 @@ globalThis.SpaceLayouts = {}; // To store layout per space
 globalThis.SpaceScreens = {}; // Already used for screen count
 globalThis.CheckToolbarOverflow = () => { }
 
+const themeManagerBot = getBot(byTag("system", "app.themeManager"));
 
-const TestingApp = ({ myProp }) => {
-    const divRef = useRef(null);
-    const [css, setCss] = useState()
-    // console.log(myProp, 'myProp')
-    function runTest() {
-        //     globalThis?.SetCanvasPosition?.(`
-        //                  #app-game-container, .main-content {
-        //     position:absolute !important;
-        //     left:0 !important;
-        //     top:0 !important;
-        //     width:600px !important;
-        //     height:600px !important;
-        //     z-index:999999;
-        //  }  
-        //             `)
-        if (divRef.current) {
-            // const rect = divRef.current.getBoundingClientRect();
-            // console.log("Left:", rect.left);
-            // console.log("Top:", rect.top);
-            // console.log("Width:", rect.width);
-            // console.log("Height:", rect.height);
-            // console.log(rect, 'rect')
-            // configBot.tags.gridPortal = 'test'
-            // globalThis.SetCanvasPositions({ left: rect.left, top: rect.top, width: rect.width, height: rect.height, })
-            // globalThis.setHW({ width: `${rect.width}px !important`, height: `${rect.height}px !important` })
-            // globalThis.setTL({ left: `${rect.left}px !important`, top: `${rect.top}px !important` })
-        }
-    }
-
-    return (
-        <div style={{ width: "100%", height: "100%" }}>
-            <style>
-            </style>
-            <div
-                ref={divRef}
-                id="#mainCanvas"
-                class="mainCanvas"
-                onClick={runTest}
-                style={{
-                    width: "100%",
-                    height: "100%",
-                    border: "1px solid black",
-                    overflow: "auto",
-                }}
-            ></div>
-        </div>
-    );
-};
 const Main = () => {
     if (configBot.tags.extensions)
         return <PackageManager />
@@ -84,7 +34,6 @@ const Main = () => {
     const { containerProps, updateContainerSize, updateApplication, removeApplicationByID, replaceApplication, addApplication, resetApps, removeApplication, setApps } = useDivSpliter({
         components: [
             { id: `panel-${0}-${activeSpace}`, App: <ThePageWithEditor panelId={`panel-${0}-${activeSpace}`} tab={tabs[0]} />, to: 'panel' },
-            // { id: `panel-${1}-${activeSpace}`, App: <TestingApp panelId={`panel-${1}-${activeSpace}`} />, to: 'panel' },
         ],
         split: true,
         containerWidth: 1150,
@@ -157,6 +106,8 @@ const Main = () => {
 
     }, [screens, containerProps.apps, containerProps.leftWidth, containerProps.topHeight]);
 
+
+
     useEffect(() => {
         if (!started) return;
 
@@ -172,11 +123,11 @@ const Main = () => {
                 tabData: globalThis.PanelTabsMap[id],
             });
         }
-        // console.log(newApps)
+        console.log(newApps)
         setApps(newApps); // ✅ Update all at once
         setTimeout(() => {
             if (tabs.length === 1 && savedScreens === 1) {
-                // console.log('testing update now working', tabs[0])
+                console.log('testing update now working', tabs[0])
                 globalThis.UpdateTab(tabs[0])
             }
         }, 10)
@@ -189,7 +140,7 @@ const Main = () => {
     // }
     function handleResize() {
         setIsMobile(window.innerWidth < 768);
-        const mob = window.innerWidth < 768
+        let mob = window.innerWidth < 768
         setTimeout(() => {
             updateContainerSize(globalThis.window?.innerWidth - (!fullScreen && !mob && sidebarWidth), globalThis.window?.innerHeight * 0.98)
         }, 0)
@@ -208,10 +159,9 @@ const Main = () => {
     //     return () => clearInterval(interval);
     // }, [collapsed]);
     useEffect(() => {
-        // os.log(themeColors, 'theme colors')
+        os.log(themeColors, 'theme colors')
     }, [themeColors])
     useEffect(() => {
-
         const handleContextMenu = (e) => {
             e.preventDefault(); // Disable right-click
         };
@@ -225,7 +175,7 @@ const Main = () => {
     const lenght = Object.keys(themeColors || {}).length
     useEffect(() => {
         CheckToolbarOverflow()
-        // os.log('resize', CheckToolbarOverflow)
+        os.log('resize', CheckToolbarOverflow)
     }, [containerProps.leftWidth, containerProps.topHeight])
     const buildThemeCSS = (themeColors, activeSpace, defaultTheme) => {
         const colors = {
@@ -239,26 +189,29 @@ const Main = () => {
 
         return `:root {\n  ${vars.join("\n  ")}\n}`;
     };
-    const defaultTheme = {
-        menuBackground: '#F0F1F1',
-        primaryButton: '#E6E6E6',
-        primaryButtonColor: '#606060',
-        secondaryButton: '#4459F34D',
-        secondaryButtonColor: '#4459F3',
-        buttonBorder: '#2b00ff',
-        tabSelection: '#a5ade2',
-        spaceSelection: '#4459F3',
-        toolbarBackground: '#ffffff',
-        text1: '#606060',
-        text2: '#000000',
 
-    };
+    // const defaultTheme = {
+    //     menuBackground: '#F0F1F1',
+    //     primaryButton: '#E6E6E6',
+    //     primaryButtonColor: '#606060',
+    //     secondaryButton: '#4459F34D',
+    //     secondaryButtonColor: '#4459F3',
+    //     buttonBorder: '#2b00ff',
+    //     tabSelection: '#a5ade2',
+    //     spaceSelection: '#4459F3',
+    //     toolbarBackground: '#ffffff',
+    //     text1: '#606060',
+    //     text2: '#000000',
+        
+    // };
+
+    const defaultTheme = themeManagerBot.tags.newTheme;
+
     return <MouseMoveProvider>
         <link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Material+Symbols+Outlined:opsz,wght,FILL,GRAD@24,400,0,0" />
         <style>
             {buildThemeCSS(themeColors, activeSpace, defaultTheme)}
         </style>
-        <DragDropOverlay />
         <Layout>
             <SplitApp {...containerProps} panalMode={false} />
         </Layout>
@@ -282,9 +235,12 @@ const Root = () => {
     </>
 
 }
+
 if (configBot.tags.systemPortal) return
 configBot.tags.gridPortal = null;
 render(<Root />, document.body)
-document.body.style.overscrollBehaviorX = 'none';
+function ReRender() {
+    render(<Root />, document.body)
 
+}
 // os.compileApp('main', <Root />)

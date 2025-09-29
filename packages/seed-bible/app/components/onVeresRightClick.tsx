@@ -1,4 +1,7 @@
-import { MenuIcon, ApologistIcon } from 'app.components.icons'
+import { MenuIcon } from 'app.components.icons'
+import { SgSearch } from 'app.sn_components.tapos';
+import { ApologistSearch } from 'app.sn_components.apologist';
+
 const MenuOptions = {
     type: 'normal', items: [
         {
@@ -11,18 +14,49 @@ const MenuOptions = {
             }
         },
         { icon: <MenuIcon name="copy_all" />, title: 'Copy text', onClick: () => { os.setClipboard(that.text); SetInHold(null) } },
-        {
-            icon: <ApologistIcon />, title: 'Apologist AI', onClick: () => {
-                ClearUserSelection()
-                SetShowCommands(true);
-                SetInHold(null)
-            }
-        },
+        { icon: <MenuIcon name="terminal" />, title: 'commands', onClick: () => { SetShowCommands(true); SetInHold(null) } },
         { icon: <MenuIcon name="share" />, title: 'Share verse', onClick: () => { SetInHold(null) } },
-        { icon: <MenuIcon name="screen_share" />, title: 'open next sceeen', onClick: () => { globalThis.SetShowScreenPanelOption(2); SetInHold(null) } },
-
+        { icon: <MenuIcon name="search" />, title: 'AI Search', onClick: () => { aiSearch(); SetInHold(null); } },
     ]
 };
+
+const aiSearch = () => {
+    if (globalThis.ApologistSearchPresent) {
+        RemoveApplicationByID(globalThis.ApologistSearch_PANEL_ID);
+        let id = uuid();
+        globalThis.ApologistSearch_PANEL_ID = id;
+        AddApplication({
+            id,
+            App: <ApologistSearch id={id} search={globalThis.GlobalSearch ?? "galations 5"} />,
+            to: 'panel',
+            minWidth: '30rem'
+        });
+    }
+    else if (globalThis.TaposSearchPresent) {
+        RemoveApplicationByID(globalThis.TaposSearch_PANEL_ID);
+        globalThis.TaposSearchPresent = true;
+        let id = uuid();
+        globalThis.TaposSearch_PANEL_ID = id;
+        AddApplication({
+            id,
+            App: <SgSearch id={id} search={globalThis.GlobalSearch ?? "galations 5"} />,
+            to: 'panel',
+            minWidth: '30rem'
+        });
+    }
+    else if (!globalThis.panelMode) {
+        globalThis.ApologistSearchPresent = true;
+        let id = uuid();
+        globalThis.ApologistSearch_PANEL_ID = id;
+        AddApplication({
+            id,
+            App: <ApologistSearch id={id} search={globalThis.GlobalSearch ?? "galations 5"} />,
+            to: 'panel',
+            minWidth: '30rem'
+        });
+    }
+}
+
 if (!globalThis.ContextMenuOptions)
     globalThis.ContextMenuOptions = []
 
@@ -44,21 +78,6 @@ globalThis.ContextMenuOptions.forEach(({ address, label, items }) => {
         MenuOptions.items.push({ type: 'line' })
         MenuOptions.items.push(...itemsHolder,)
     }
-})
-
-that?.extraContext?.forEach(({ address, label, items }) => {
-    const itemsHolder = items.map(el => {
-        return {
-            ...el,
-            onClick: () => {
-                if (el.onClick)
-                    el.onClick(that)
-                SetInHold(null)
-            }
-        }
-    })
-    MenuOptions.items.push({ type: 'line' })
-    MenuOptions.items.push(...itemsHolder,)
 })
 // globalThis.ContextMenuOptions.forEach(({ address, items: options }) => {
 //     if (!Array.isArray(options))

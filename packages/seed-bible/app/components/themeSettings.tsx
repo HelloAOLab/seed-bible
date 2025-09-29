@@ -13,7 +13,7 @@ const COLOR_FIELDS = [
     { label: 'Primary button background', field: 'primaryButton' },
     { label: 'Primary button text', field: 'primaryButtonColor' },
     { label: 'Secondary button background', field: 'secondaryButton' },
-    { label: 'Secondary button text', field: 'secondaryButton' },
+    { label: 'Secondary button text', field: 'secondaryButtonColor' },
     { label: 'Button border', field: 'buttonBorder' },
     { label: 'Tab Selection', field: 'tabSelection' },
     { label: 'Space selection', field: 'spaceSelection' },
@@ -35,7 +35,7 @@ const defaultTheme = {
     toolbarBackground: '#ffffff',
     text1: '#606060',
     text2: '#000000',
-    showTabIcons: true, // Default to showing tab icons
+    showTabIcons: true,
 };
 
 // ————————————————————————————————————————————————————————————
@@ -167,8 +167,10 @@ const READY_THEMES = [
     }
 ];
 
+const themeBot = getBot(byTag("system", "app.themeManager"));
+
 const ThemeSettings = () => {
-    const { updateSpace, activeSpace, currentSpace, tabsIcons, setTabsIcons } = useTabsContext();
+    const { updateSpace, activeSpace, currentSpace } = useTabsContext();
     const { setSideBarMode, closePopupSettings, setThemeColors, themeColors } = useSideBarContext();
 
     const [changesSaved, setChagesSaved] = useState(false);
@@ -216,13 +218,6 @@ const ThemeSettings = () => {
 
         // persist to the space
         updateSpace(activeSpace, { themeColors: updatedColors });
-    };
-
-    // ————————————————————————————————————————————————————————————
-    // Handle Tab Icons Toggle
-    // ————————————————————————————————————————————————————————————
-    const handleTabIconsToggle = () => {
-        setTabsIcons(!tabsIcons)
     };
 
     // ————————————————————————————————————————————————————————————
@@ -302,50 +297,6 @@ const ThemeSettings = () => {
             <div style={{ height: 15 }} />
             <div className="sidebarLine" />
             <div style={{ height: 15 }} />
-
-            <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: 34 }}>
-                <div
-                    style={{
-                        color: labelColor,
-                        fontFamily: 'Open Sans',
-                        fontSize: 16,
-                        fontStyle: 'normal',
-                        fontWeight: 600,
-                        lineHeight: 'normal',
-                    }}
-                >
-                    Show Tab Icons
-                </div>
-                <div
-                    onClick={handleTabIconsToggle}
-                    style={{
-                        width: 48,
-                        height: 24,
-                        backgroundColor: tabsIcons ? colors.tabSelection : '#CCCCCC',
-                        borderRadius: 12,
-                        cursor: 'pointer',
-                        position: 'relative',
-                        transition: 'background-color 0.3s ease',
-                    }}
-                >
-                    <div
-                        style={{
-                            width: 20,
-                            height: 20,
-                            backgroundColor: '#FFFFFF',
-                            borderRadius: '50%',
-                            position: 'absolute',
-                            top: 2,
-                            left: tabsIcons ? 26 : 2,
-                            transition: 'left 0.3s ease',
-                            boxShadow: '0 1px 3px rgba(0, 0, 0, 0.3)',
-                        }}
-                    />
-                </div>
-            </div>
-
-            <div className="sidebarLine" />
-            <div style={{ height: 15 }} />
             <div className="readyThemes-section">
                 <div
                     className="themeText"
@@ -398,6 +349,7 @@ const ThemeSettings = () => {
                     setChagesSaved(true);
                     // capture the latest committed theme as "CurrentColors"
                     globalThis.CurrentColors = themeColors?.[activeSpace] || colors;
+                    themeBot.tags.newTheme = globalThis.CurrentColors;
                 }}
                 className="themeButton"
             >

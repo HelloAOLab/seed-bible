@@ -1,11 +1,10 @@
 // console.log("globalThis.CHAPTER_DATA", globalThis.CHAPTER_DATA);
-
 if (!that.verseNumber) return;
 
 const isShiftHold = globalThis?.KEY_HOLD?.['shift'];
 
 if (!isShiftHold) {
-    globalThis.ADD_VERSE_ITEM_PLAYLIST_GROUP_ID = createUUID&&createUUID();
+    globalThis.ADD_VERSE_ITEM_PLAYLIST_GROUP_ID = createUUID();
 }
 
 const dataItem = {
@@ -34,7 +33,7 @@ if (globalThis.ON_VERSE_CLICK && isShiftHold) {
         const booksDetails = globalThis.findNameRank(lastBook.book);
         let fIndex = lastBook.verseNumber;
         let sIndex = currentBook.verseNumber;
-        const i = fIndex > sIndex ? -1 : 1;
+        let i = fIndex > sIndex ? -1 : 1;
         if (fIndex === sIndex) return;
         sIndex = sIndex + i;
         do {

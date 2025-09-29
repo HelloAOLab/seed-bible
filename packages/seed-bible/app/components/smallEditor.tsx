@@ -80,7 +80,8 @@ export function MiniTextEditor({
     priorityKey = 'simple_rich_editor_toolbar_priority',
     defaultPriority = DEFAULT_TOOLBAR_PRIORITY,
     onChange,
-    onAIHighlight
+    onAIHighlight,
+    id = "1",
 }) {
     // ----- ids & storage
     const _instanceId = useRef(instanceId || `sre_${Math.random().toString(36).slice(2)}`).current;
@@ -188,6 +189,9 @@ export function MiniTextEditor({
 
         // apply initial paddings
         applyPadding(padY, padX);
+
+        globalThis[`${id}ClearEditorContent`] = () =>
+            editor.commands.setContent("");
 
         return () => { editor.destroy(); editorObjRef.current = null; };
     }, []);
@@ -369,7 +373,7 @@ export function MiniTextEditor({
         let used = 0;
         const vis = [];
         const over = [];
-        for (const id of ids) {
+        for (let id of ids) {
             const el = itemsRef.current[id];
             if (!el) continue;
             const w = el.offsetWidth + 12;

@@ -1,0 +1,13 @@
+{
+  "buttonBorder": "#859e3b",
+  "menuBackground": "#f8f8f7",
+  "primaryButton": "#859e3b",
+  "primaryButtonColor": "#ffffff",
+  "secondaryButton": "#859e3b",
+  "secondaryButtonColor": "#ffffff",
+  "spaceSelection": "#859e3b",
+  "tabSelection": "#edf0e5",
+  "text1": "#606060",
+  "text2": "#000000",
+  "toolbarBackground": "#ffffff"
+}
