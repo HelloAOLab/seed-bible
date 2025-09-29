@@ -872,6 +872,13 @@ input:checked+.slider:not(#slider):before {
     /* color: black; */
 }
 
+.sidebar-ghost-itm {
+    height: 40px;
+    width: 148px;
+    user-select: none;
+    opacity: 0;
+}
+
 .sidebar-itm:hover {
     background-color: #F1F1F1;
 }
