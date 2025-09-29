@@ -39,6 +39,8 @@ program.command('publish')
     .option('-p, --pattern <pattern>', 'The name of the pattern to upload.')
     .option('--session-key <sessionKey>', 'The session key to use for authentication.')
     .option('--record-key <recordKey>', 'The record key to use. If not specified, the default record name will be used.')
+    .option('--telegram-bot-token <telegramBotToken>', 'The Telegram bot token to use for sending upload notifications to Telegram. If not specified, then notifications won\'t be sent to Telegram.')
+    .option('--telegram-chat-id <telegramChatId>', 'The Telegram chat ID to use for sending upload notifications to Telegram. If not specified, then notifications won\'t be sent to Telegram.')
     .action(async (name, options) => {
         if (!options.sessionKey) {
             throw new Error('You must specify a session key using the --session-key option.');
@@ -49,7 +51,7 @@ program.command('publish')
         execSync(`casualos pack-aux --overwrite "${packagePath}" "${filePath}"`, { stdio: 'inherit' });
         const aux = await readFile(filePath, 'utf-8');
         const auxJson = JSON.parse(aux);
-        await uploadPattern(options.pattern || name, auxJson, options.sessionKey, options.recordKey);
+        await uploadPattern(options.pattern || name, auxJson, options.sessionKey, options.recordKey, options.telegramBotToken, options.telegramChatId);
     });
 
 program.command('publish-seed-bible')
@@ -59,6 +61,8 @@ program.command('publish-seed-bible')
     .option('--record-key <recordKey>', 'The record key to use. If not specified, the default record name will be used.')
     .option('--ext-record-key <extRecordKey>', 'The record key to use for extensions. If not specified, the default record name will be used.')
     .option('--no-save-meta', 'Whether to skip saving the extension metadata to the records server. Defaults to true.', true)
+    .option('--telegram-bot-token <telegramBotToken>', 'The Telegram bot token to use for sending upload notifications to Telegram. If not specified, then notifications won\'t be sent to Telegram.')
+    .option('--telegram-chat-id <telegramChatId>', 'The Telegram chat ID to use for sending upload notifications to Telegram. If not specified, then notifications won\'t be sent to Telegram.')
     .action(async (options) => {
         if (!options.pattern) {
             throw new Error('You must specify a pattern using the --pattern option.');
@@ -90,7 +94,7 @@ program.command('publish-seed-bible')
         packager.tags.availablePackages = availablePackages;
         packager.tags.alwaysUseAvailablePackages = true;
 
-        await uploadPattern(options.pattern, auxJson, options.sessionKey, options.recordKey);
+        await uploadPattern(options.pattern, auxJson, options.sessionKey, options.recordKey, options.telegramBotToken, options.telegramChatId);
     });
 
 program.parse();
