@@ -221,18 +221,16 @@ await(async function mainInstaller(that) {
             if (type === 'package') {
                 await thisBot.installPackage({ name: depName });
             } else if (type === 'dependency') {
+                os.log('installing dependency', depName);
                 const data = await FindExtensionData(depName);
                 const read = await web.get(data.recordFile?.url || data.source);
 
-                // If pushBots is async, await each push
-                for (const botDef of GetBotsFromData(read.data)) {
-                    const b = create({ ...botDef, space: 'local' }, {
-                        forPackage: NameHolder,
-                        packageName: depName,
-                    });
-                    console.log(b, b.tags.mazem, b.tags.system)
-                    // await thisBot.pushBots({ name: NameHolder, bot: b });
-                }
+                const bots = GetBotsFromData(read.data);
+                create(bots, {
+                    space: 'local',
+                    forPackage: NameHolder,
+                    packageName: depName
+                });
             }
         }
         await os.sleep(100)
@@ -270,7 +268,7 @@ await(async function mainInstaller(that) {
         // await os.sleep(5000);
     }
 
-    os.log(data);
+    os.log('installing package', name, data);
     setTagMask(thisBot, `${name}-data`, data, 'local');
 
     // Load record/source
