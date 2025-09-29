@@ -449,7 +449,6 @@ const CreatePlaylistUI = ({
     globalThis[`${id}ResetPlaylist`] = resetPlayist;
     globalThis[`${id}SetCreatingPlaylist`] = SetCreatingPlaylist;
     globalThis[`${id}SetPlaylistName`] = setName;
-    console.log("TRAIL NAMe", name);
     globalThis[`${id}AddPlaylist`] = addPlaylist;
     globalThis[`${id}creatingPlaylistName`] = name;
     globalThis[`${id}currentPlaylist`] = playList;

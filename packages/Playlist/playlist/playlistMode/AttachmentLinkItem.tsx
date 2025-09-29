@@ -252,9 +252,8 @@ const AttachLinkItem = ({
             <p
                 onClick={() => {
                     if (data.type === "date") return;
-                    if (!!onClick
-                        // globalThis.ADDING_TOPLAYLIST_TIMEOUT
-                    ) {
+
+                    if (!!onClick) {
                         clearInterval(globalThis.ADDING_TOPLAYLIST_TIMEOUT)
                         globalThis.ADDING_TOPLAYLIST_TIMEOUT = null;
                         // thisBot.RenderLinkContent(data);

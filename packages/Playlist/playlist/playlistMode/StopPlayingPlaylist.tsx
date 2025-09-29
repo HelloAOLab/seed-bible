@@ -1,5 +1,4 @@
 const parentId = that?.parentId || 'default';
-thisBot.CloseFloatingApp();
 DataManager.cancelCurrentPlayingSound();
 globalThis.SetSelected && SetSelected({});
 globalThis.SetHolded && SetHolded({});
@@ -13,3 +12,5 @@ globalThis.StopPlayingPlaylistModal(false);
 if (globalThis.RemoveNowBarApp) {
     globalThis.RemoveNowBarApp('player-playlist-bar');
 }
+os.unregisterApp("playing-playlist-flaot");
+thisBot.CloseFloatingApp();

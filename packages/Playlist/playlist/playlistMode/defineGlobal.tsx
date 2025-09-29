@@ -51,8 +51,8 @@ const getBookmarks = async () => {
   let apiResults = {};
   try {
     const authBot = await os.requestAuthBotInBackground();
-    if (authBot?.id) {
-      apiResults = await os.getData(authBot?.id, "bookmarks");
+    if (authBot.id) {
+      apiResults = await os.getData(authBot.id, "bookmarks");
       if (apiResults.data) {
         setTag(thisBot, "bookmarks", { ...apiResults.data });
         if (globalThis.SetBookmarks) {

@@ -24,9 +24,6 @@
     overflow: visible;
 }
 
-.overlay.linked-item-custom p {
-    color: white !important;
-}
 
 .more-menu-items:not(:last-of-type, .noBorderBottom) {
     border-bottom: 1px solid #3E3E3E;

@@ -20,20 +20,21 @@ const Overlay = ({ position, onClose, items, styles, children }) => {
                         onClick={() => {
                             ele.click();
                         }}
-                        // style={{
-                        //     borderTop: '1px solid #3E3E3E'
-                        // }}
+                        style={{
+                            borderRadius: ele.disabled ? "4px" : '',
+                            cursor: ele.disabled ? "not-allowed" : '',
+                        }}
                     >
-                        {!!ele.icon && <span style={{ color: 'white' }} class="material-symbols-outlined">
+                        {!!ele.icon && <span style={{ color: ele.disabled ? "rgb(142 140 140) !important" : 'white' }} class="material-symbols-outlined">
                             {ele.icon}
                         </span>}
-                        <p>
+                        <p style={{ color: ele.disabled ? "rgb(142 140 140) !important" : 'white' }} >
                             {ele.label}
                         </p>
                     </div>
                 )
             })}
-        </div>
+        </div >
     </>
 }
 

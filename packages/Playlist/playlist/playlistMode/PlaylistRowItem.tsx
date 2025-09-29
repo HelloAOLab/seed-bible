@@ -1,4 +1,4 @@
-const { useState, useLayoutEffect, useMemo } = os.appHooks;
+const { useState, useLayoutEffect, useRef, useMemo } = os.appHooks;
 const { Checkbox, LoaderSecondary, Modal, ButtonsCover, Button } = Components;
 
 const CircleProgress = await thisBot.DynamicCircle();
@@ -162,13 +162,19 @@ const PlaylistRowItem = ({ currentDateActive, shareProfileName, oldItemsMap = {}
         })
     }
 
-    const deletePlayList = (index) => {
+    const deletePlayList = (id) => {
         setPlaylists(prev => {
             const old = [...prev];
+            let index = old.findIndex(ele => ele.id === id);
             if (playListSubIndex || playListSubIndex === 0) {
-                old[playListSubIndex].list.splice(index, 1);
-            } else {
-                old.splice(index, 1);
+                index = old[playListSubIndex].list.findIndex(ele => ele.id === id);
+            }
+            if (index > -1) {
+                if (playListSubIndex || playListSubIndex === 0) {
+                    old[playListSubIndex].list.splice(index, 1);
+                } else {
+                    old.splice(index, 1);
+                }
             }
             return old;
         })
@@ -222,7 +228,7 @@ const PlaylistRowItem = ({ currentDateActive, shareProfileName, oldItemsMap = {}
         let shareProfilePic = defaultProfile;
         const authBot = await os.requestAuthBotInBackground();
         if (authBot?.id) {
-            const data = await os.getData(tags.key, authBot?.id);
+            const data = await os.getData(tags.key, authBot.id);
             if (data.success) {
                 const payload = data.data
                 shareProfileName = payload.profileName || "Guest";
@@ -329,6 +335,29 @@ const PlaylistRowItem = ({ currentDateActive, shareProfileName, oldItemsMap = {}
         setWarningMsg(null);
     }
 
+    const timer = useRef(null);
+
+    const handleTouchStart = (e) => {
+
+        const rect = e.currentTarget.getBoundingClientRect();
+
+        const x = rect.left;            // X position where the element starts (from left of screen)
+        const y = rect.bottom;          // Y position where the element ends (bottom of element from top of screen)
+
+        globalThis.LastClickX = Math.max(x, 10);
+        globalThis.LastClickY = y;
+        timer.current = setTimeout(() => {
+            setShowMoreOptions(p => !p);
+        }, 1000); // 600ms = long press threshold
+    };
+
+    const handleTouchEnd = () => {
+        if (timer.current) {
+            clearTimeout(timer.current);
+        }
+    };
+
+
     return (
         <>
             {!!warningMessage && <Modal title="Edit playist" showIcon={false} onClose={onCloseWarningPopup}>
@@ -360,17 +389,21 @@ const PlaylistRowItem = ({ currentDateActive, shareProfileName, oldItemsMap = {}
                 draggable={!playingPlaylist && !viewOnly}
                 className={`playlist ${(playingPlaylist || isPlay) && "playingPlaylist"} ${id === opendedList ? "opened" : ""}  ${dragOverSet.itemId === id && `dropabble-${dragOverSet.position}`}`}
             >
-                <div onClick={(e) => {
-                    const rect = e.currentTarget.getBoundingClientRect();
+                <div
+                    onContextMenu={(e) => {
+                        e.preventDefault();
 
-                    const x = rect.left;            // X position where the element starts (from left of screen)
-                    const y = rect.bottom;          // Y position where the element ends (bottom of element from top of screen)
+                        const rect = e.currentTarget.getBoundingClientRect();
 
-                    globalThis.LastClickX = x;
-                    globalThis.LastClickY = y;
+                        const x = rect.left;            // X position where the element starts (from left of screen)
+                        const y = rect.bottom;          // Y position where the element ends (bottom of element from top of screen)
 
-                    setShowMoreOptions(p => !p);
-                }}
+                        globalThis.LastClickX = x;
+                        globalThis.LastClickY = y;
+                        setShowMoreOptions(p => !p);
+                    }}
+                    onTouchStart={handleTouchStart}
+                    onTouchEnd={handleTouchEnd}
                     style={{ display: "flex", alignItems: "center", width: '100%', position: 'relative', zIndex: '2' }}>
                     {selectPlaylist && <Checkbox
                         onClick={() => setSelectPlaylist(id, parentId)}
@@ -630,7 +663,7 @@ const PlaylistRowItem = ({ currentDateActive, shareProfileName, oldItemsMap = {}
                         {
                             !creatingPlaylist && !viewOnly && !playingPlaylist && <div className="more-menu-items"
                                 onClick={() => {
-                                    deletePlayList(playListIndex);
+                                    deletePlayList(id);
                                     setShowMoreOptions(false);
                                     setShowMoreOptions(false);
                                 }}
