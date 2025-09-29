@@ -1,4 +1,4 @@
-import * as opentypeJs from 'https://esm.helloao.org/painter-vendor-IGDNTFOW.js';
+import { opentypeJs } from 'https://esm.helloao.org/painter-vendor-IGDNTFOW.js';
 globalThis.GlobalBaseMap = "satellite"
 globalThis.OpentypeJs = opentypeJs;
 if (configBot.tags.systemPortal) return;
