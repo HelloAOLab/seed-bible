@@ -1,6 +1,8 @@
-import html2canvas from 'https://esm.run/html2canvas';
-import ImageTracer from 'https://esm.run/imagetracerjs';
-import debounce from 'https://esm.run/debounce';
+import {
+    html2canvas,
+    ImageTracer,
+    debounce
+} from 'https://esm.helloao.org/painter-vendor-IGDNTFOW.js';
 
 globalThis.ImageTracer = ImageTracer;
 globalThis.html2canvas = html2canvas;

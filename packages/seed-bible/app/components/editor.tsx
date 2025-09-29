@@ -1,22 +1,26 @@
 const { useEffect, useState, useRef } = os.appHooks;
-import { Editor } from "https://esm.sh/@tiptap/core";
-import StarterKit from "https://esm.sh/@tiptap/starter-kit";
-import render from "https://esm.run/preact-render-to-string";
-import { TextStyle } from "https://esm.sh/@tiptap/extension-text-style";
-import { Color } from "https://esm.sh/@tiptap/extension-color";
-import { Node } from "https://esm.sh/@tiptap/core";
-import TextAlign from "https://esm.sh/@tiptap/extension-text-align";
-import Underline from "https://esm.sh/@tiptap/extension-underline";
-import Superscript from "https://esm.sh/@tiptap/extension-superscript";
-import Subscript from "https://esm.sh/@tiptap/extension-subscript";
-import Highlight from "https://esm.sh/@tiptap/extension-highlight";
-import { Mark } from "https://esm.sh/@tiptap/core";
+
+import {
+  Editor,
+  StarterKit,
+  preactRenderToString as render,
+  TextStyle,
+  Color,
+  Node,
+  TextAlign,
+  Underline,
+  Superscript,
+  Subscript,
+  Highlight,
+  Mark,
+  Image,
+  Link,
+  BulletList,
+  OrderedList,
+  ListItem,
+} from 'https://esm.helloao.org/vendor-RPNXNWQB.js';
+
 import { MarginYIcon, MarginXIcon } from "app.components.icons";
-import Image from "https://esm.sh/@tiptap/extension-image";
-import Link from "https://esm.sh/@tiptap/extension-link";
-import BulletList from "https://esm.sh/@tiptap/extension-bullet-list";
-import OrderedList from "https://esm.sh/@tiptap/extension-ordered-list";
-import ListItem from "https://esm.sh/@tiptap/extension-list-item";
 const localStorage = getBot("system", "app.localStorage");
 
 // >>> priorities: dev default order (first = highest priority)

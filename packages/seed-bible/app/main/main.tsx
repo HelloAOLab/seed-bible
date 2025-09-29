@@ -13,7 +13,6 @@ import { ThePage, ThePageWithPanel, ThePageWithEditor } from 'app.components.the
 import { useBibleContext } from 'app.hooks.bibleVariables'
 import { useTabsContext } from 'app.hooks.tabs';
 import { useSideBarContext } from 'app.hooks.sideBar'
-import { Person } from "https://cdn.skypack.dev/lucide-react";
 import { PackageManager } from 'app.packager.main'
 import { DragDropOverlay } from 'app.main.dragOverlay'
 //this for defining nav functions globaly
