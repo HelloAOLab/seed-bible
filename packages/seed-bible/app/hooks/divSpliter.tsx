@@ -111,6 +111,7 @@ export const useDivSpliter = ({
     };
 
     const addApplication = (newApp) => {
+        // TODO: Replace with a better alternative
         const clone = cloneElement(newApp.App, { prop: 'test' })
         os.log(clone, 'cloned')
         if (newApp.to === 'panel') {
