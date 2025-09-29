@@ -602,7 +602,7 @@ const SearchBar = () => {
     const dontOpen = dontopn && showCheck;
 
     return <>
-        <div class="testament-selection starterAnimation" style={{ opacity: 0 }}>
+        <div class="testament-selection starterAnimation">
             <span class="sidebar-select">
                 <div class="sidebar-book-selector">
                     <div class="sidebar-translation-selector" onClick={() => { setSelectingTranslation(!selectingTranslation); setQuery(""); }}>
@@ -611,35 +611,58 @@ const SearchBar = () => {
                             expand_more
                         </span>
                     </div>
-                    {
-                        selectedTestament === 0 && query.length === 0 && !selectingTranslation && <span onClick={() => { handleSelectTestament() }} class="ot baseT">
-                            OT
-                        </span>
-                    }
-                    {
-                        selectedTestament === 1 && query.length === 0 && !selectingTranslation && <span onClick={() => { handleSelectTestament() }} class="nt baseT">
-                            NT
-                        </span>
-                    }
-                    {
-                        (selectedTestament === 2 || query.length > 0) && !selectingTranslation && <span onClick={() => { handleSelectTestament() }} class="all baseT">
-                            ALL
-                        </span>
-                    }
-                    {
-                        selectingTranslation && !showAllLanguages && <span onClick={() => { setShowAllLanguages(true) }} class="ot baseT">
-                            Default Translations
-                        </span>
-                    }
-                    {
-                        selectingTranslation && showAllLanguages && <span onClick={() => { setShowAllLanguages(false) }} class="all baseT">
-                            All Translations
-                        </span>
-                    }
+                    <div className="searchbar">
+                        <span className="search-icon material-symbols-outlined">Search</span>
+                        <input
+                            type="text"
+                            placeholder={selectingTranslation ? "Search Translation..." : "Seach Book..."}
+                            value={query}
+                            ref={inputRef}
+                            onInput={e => {
+                                setQuery(e.target.value)
+                            }}
+                            onKeyDown={e => {
+                                if (e.key === "Enter" || e.keyCode === 13) {
+                                    handleEnter();
+                                }
+                            }}
+                        />
+                    </div>
+                    {!selectingTranslation && <div className="dropdown">
+                        <select
+                            value={selectedTestament}
+                            onChange={(e) => setSelectedTestament(Number(e.target.value))}
+                            className="dropdown-select"
+                        >
+                            <option value={2} className="dropdown-option">
+                                All Books
+                            </option>
+                            <option value={0} className="dropdown-option">
+                                Old Testament
+                            </option>
+                            <option value={1} className="dropdown-option">
+                                New Testament
+                            </option>
+                        </select>
+                    </div>}
+                    {selectingTranslation && <div className="dropdown">
+                        <select
+                            value={showAllLanguages}
+                            onChange={(e) => e.target.value === "true" ? setShowAllLanguages(true) : setShowAllLanguages(false)}
+                            className="dropdown-select"
+                        >
+                            <option value={"false"} className="dropdown-option">
+                                Default Translations
+                            </option>
+                            <option value={"true"} className="dropdown-option">
+                                All Translations
+                            </option>
+                        </select>
+                    </div>}
                 </div>
             </span>
         </div>
-        <div class="sidebar-results starterAnimation" style={{ opacity: 0 }}>
+        <div class="sidebar-results starterAnimation">
             {!selectingTranslation && showCheck
                 &&
                 <div
@@ -684,29 +707,7 @@ const SearchBar = () => {
                 booksData && selectedTestamentData && !selectingTranslation && selectedTranslation && <SideBarBooks dontOpen={dontOpen} selectedTranslation={selectedTranslation} selectedTestament={selectedTestament} booksData={selectedTestamentData} focusOnBook={focusOnBook} />
             }
             {
-                selectingTranslation && <div class="sidebar-translation-options">
-                    <div class="box" style={{ width: "100%", position: "absolute", top: "45px", left: "0", padding: "0px 10px", zIndex: "1" }}>
-                        <input
-                            type="text"
-                            class="input"
-                            value={query}
-                            ref={inputRef}
-                            onInput={e => {
-                                setQuery(e.target.value)
-                            }}
-                            onKeyDown={e => {
-                                if (e.key === "Enter" || e.keyCode === 13) {
-                                    handleEnter();
-                                }
-                            }}
-                            placeholder={selectingTranslation ? "Search Translations" : "Book name"}
-                            onBlur={() => { setOpenSearchBar(false); setSearchBarFocused(false) }}
-                            style={{ opacity: 1, borderRadius: "5px", paddingLeft: "30px", width: "100%", background: "#F7F7F7", border: "1px solid #E2E2E2" }}
-                        />
-                        <i class="material-symbols-outlined" style={{ width: "30px", left: "27px" }}>
-                            search
-                        </i>
-                    </div>
+                selectingTranslation && <div class="sidebar-translation-options" style={{paddingBottom: showCustomTranslation ? "200px" : "36px"}}>
                     {
                         filteredApiTranslations && filteredApiTranslations?.length > 0 && filteredApiTranslations.map(([key, value]) => {
                             return <NewTransOptions translationName={key} translations={value} selectedTranslation={selectedTranslation} setSelectedTranslation={setSelectedTranslation} />
@@ -718,14 +719,14 @@ const SearchBar = () => {
                 </div>
             }
         </div>
-        {selectingTranslation && <div class="sidebar-input-container custom-translation-container-main" style={{ bottom: showCustomTranslation ? "5px" : "-150px" }}>
+        {selectingTranslation && <div class="sidebar-input-container custom-translation-container-main" style={{ bottom: showCustomTranslation ? "5px" : "5px" }}>
             <div class="custom-translation-header" onClick={() => { setShowCustomTranslation(!showCustomTranslation) }}>
                 <span>Custom Translations</span>
                 <span style={{ transition: "0.5s linear all", transform: showCustomTranslation ? "rotateZ(45deg)" : "rotateZ(0deg)", cursor: "pointer" }} class="material-symbols-outlined">add</span>
             </div>
-            <CustomTranslation handleTranslationAddition={handleTranslationAddition} />
+            {showCustomTranslation && <CustomTranslation handleTranslationAddition={handleTranslationAddition} />}
         </div>}
-        {!selectingTranslation && <div
+        {false && <div
             onClick={() => { setOpenSearchBar(false); setSearchBarFocused(true); inputRef.current.focus() }}
             style={{ opacity: 0 }}
             class={`${openSearchBar ? "open-searchbar starterAnimation" : query.length > 0 ? "open-sidebar-input-container starterAnimation" : "sidebar-input-container starterAnimation"}`}
@@ -808,7 +809,7 @@ const NewTransOptions = ({ translationName, translations, selectedTranslation, s
         })
     }, [selectedTranslation])
     return <div style={{ width: "100%" }}>
-        <div class="translation-language" onClick={() => {
+        <div class="translation-language" style={{backgroundColor: show ? "rgb(225, 245, 254)" : "rgb(250, 250, 250)", marginBottom: show ? "0px" : "10px"}} onClick={() => {
             setShow(!show)
         }}>
             <span style={{ textTransform: "capitalize" }}>{translationName}</span>
@@ -818,7 +819,7 @@ const NewTransOptions = ({ translationName, translations, selectedTranslation, s
         </div>
         {
             show && <>
-                <div style={{ margin: '16px 5px' }}>
+                <div style={{ margin: '5px 5px' }}>
                     {
                         Object.entries(translations).map(([key, value]) => {
                             return <div
@@ -841,7 +842,7 @@ const NewTransOptions = ({ translationName, translations, selectedTranslation, s
                                         })
                                     }
                                 }}
-                                style={{ background: selectedTranslation.id === value.id ? "rgba(59, 130, 246, 0.5)" : "rgba(1, 87, 155, 0.3)" }} class="translation-option" >
+                                style={{ background: selectedTranslation.id === value.id ? "rgb(225, 245, 254)" : "rgb(250, 250, 250)" }} class="translation-option" >
                                 <span class="translation-title">{value.shortName}</span>
                                 <span class="translation-description">{value.name}</span>
                                 <button onClick={(e) => {
@@ -898,6 +899,8 @@ const SideBarBooks = ({ booksData, focusOnBook, selectedTestament, selectedTrans
     const [lastBookClicked, setLastBookClicked] = useState(-1);
     const [bookData, setBookData] = useState(null);
     const [isMobile, setIsMobile] = useState(false);
+    const [windowSize, setWindowSize] = useState(window.innerWidth);
+    const [chT, setChT] = useState(0);
 
     const refsArray = useRef([]);
 
@@ -906,19 +909,6 @@ const SideBarBooks = ({ booksData, focusOnBook, selectedTestament, selectedTrans
         refsArray.current[index] = ref;
         globalThis.BooksRefSearchBar = refsArray;
     }, []);
-
-
-    // const handleClick = ({ index, book }) => {
-    //     shout('playSound', { soundName: "UI_Open_NumPad" });
-    //     // refsArray.current[0]?.focus();
-    //     if (index === lastBookClicked) {
-    //         setLastBookClicked(-1);
-    //         setBookData(null);
-    //     } else {
-    //         setBookData(book);
-    //         setLastBookClicked(index);
-    //     }
-    // }
 
     useEffect(() => {
         setLastBookClicked(-1);
@@ -972,11 +962,10 @@ const SideBarBooks = ({ booksData, focusOnBook, selectedTestament, selectedTrans
 
     useEffect(() => {
         const handleResize = () => {
-            if (window.innerWidth > 768) {
-                setIsMobile(false);
-            } else {
-                setIsMobile(true);
-            }
+            // if (window.innerWidth > 768) {
+            //     setWindowSize(false);
+            // } else {
+            setWindowSize(window.innerWidth);
         };
 
         handleResize();
@@ -987,71 +976,200 @@ const SideBarBooks = ({ booksData, focusOnBook, selectedTestament, selectedTrans
         };
     }, []);
 
-    const handleClick = useCallback(({ index, book }) => {
-        setLastBookClicked(prev => {
-            if (prev === index) {
-                setBookData(null);
-                return -1;
-            } else {
-                setBookData(book);
-                return index;
-            }
-        });
-    }, []);
-
-    const RenderBooks = useMemo(() => {
-        if (booksData) {
-            return booksData.map((book, index) => {
-                return <>
-                    <div class={`sidebar-itm ${index === lastBookClicked ? "sidebar-selected-itm" : ""}`} ref={(ref) => updateRefsArray(index, ref)} tabIndex={index + 1} onClick={() => {
-                        handleClick({ index, book })
-                    }}>
-                        <span >
-                            {book.commonName}
-                        </span>
-                        <span style={{ transition: "transform 0.3s", opacity: 0.3 }} class={`material-symbols-outlined ${index === lastBookClicked ? "upside-down" : ""}`}>
-                            expand_more
-                        </span>
-                    </div>
-                    {
-                        !isMobile && (((index + 1) % 4 === 0 && index <= lastBookClicked + 3 && index >= lastBookClicked) || (index === booksData.length - 1 && (index === lastBookClicked || booksData.length === 1 || index - 1 === lastBookClicked))) && bookData && <div class={`sidebar-chapters show-sidebar-chapter`}>
-                            <SideBarChapters
-                                refsObject={refsObject}
-                                bookData={bookData}
-                                focusOnBook={focusOnBook}
-                                setLastBookClicked={setLastBookClicked}
-                                dontOpen={dontOpen}
-                                setBookData={setBookData}
-                                selectedTranslation={selectedTranslation}
-                            />
-                        </div >
-                    }
-                    {
-                        isMobile && index === lastBookClicked && bookData && <div class={`sidebar-chapters show-sidebar-chapter`}>
-                            <SideBarChapters
-                                refsObject={refsObject}
-                                bookData={bookData}
-                                focusOnBook={focusOnBook}
-                                setLastBookClicked={setLastBookClicked}
-                                dontOpen={dontOpen}
-                                setBookData={setBookData}
-                                selectedTranslation={selectedTranslation}
-                            />
-                        </div>
-                    }
-                </>
-            })
+    const handleClick = useCallback(({ index, book, cht = 0 }) => {
+        if (bookData?.id === book.id) {
+            setBookData(null);
+            setChT(0);
+            setLastBookClicked(-1);
         } else {
-            return []
+            setBookData(book);
+            setChT(cht)
+            setLastBookClicked(index);
         }
-    }, [booksData, lastBookClicked, isMobile, bookData])
+    }, [chT, bookData, lastBookClicked]);
+
+    const calcChapterPos = (index, separator) => {
+        return (Math.floor(index / separator) * separator + separator) - 1;
+    }
+
+    const RenderBooksByTestament = useMemo(() => {
+        let isMobile = windowSize < 768;
+
+        let allowedRows = 5;
+
+        if (isMobile) {
+            allowedRows = 2;
+        } else if (windowSize < 1200) {
+            allowedRows = 3;
+        } else {
+            allowedRows = 5;
+        }
+
+        if (selectedTestament === 2) {
+            let OTChapterSeparator = allowedRows === 2 ? 1 : allowedRows === 3 ? 2 : 3;
+            let OTChapterPos = calcChapterPos(lastBookClicked, OTChapterSeparator);
+            let NTChapterSeparator = allowedRows === 2 ? 1 : allowedRows === 3 ? 1 : 2;
+            let NTChapterPos = calcChapterPos(lastBookClicked, NTChapterSeparator);
+            let OTBooks = booksData.slice(0, 39);
+            let NTBooks = booksData.slice(39);
+            return <div class="books-container">
+                <div class="testament-container" style={{ width: `${allowedRows === 5 ? 60 : allowedRows === 3 ? 66.66 : 50}%` }}>
+                    <span class="testament-title">Old Testament</span>
+                    <div class="books-item">
+                        {
+                            OTBooks.map((book, index) => {
+                                return <>
+                                    <div class={`sidebar-itm ${index === lastBookClicked && bookData?.id === book.id ? "sidebar-selected-itm" : ""}`} ref={(ref) => updateRefsArray(index, ref)} tabIndex={index + 1} onClick={() => {
+                                        handleClick({ index, book, cht: 0 })
+                                    }}>
+                                        <span >
+                                            {book.commonName}
+                                        </span>
+                                        <span style={{ transition: "transform 0.3s", opacity: 0.3 }} class={`material-symbols-outlined ${index === lastBookClicked && bookData?.id === book.id ? "upside-down" : ""}`}>
+                                            expand_more
+                                        </span>
+                                    </div>
+                                    {
+                                        (OTChapterPos === index || (OTChapterPos > index && index === OTBooks.length - 1)) && bookData && chT === 0 && <div class={`sidebar-chapters show-sidebar-chapter`} style={{justifyContent: bookData.numberOfChapters < 3 * OTChapterSeparator ? "flex-start" : "space-between"}}>
+                                            <SideBarChapters
+                                                refsObject={refsObject}
+                                                bookData={bookData}
+                                                focusOnBook={focusOnBook}
+                                                setLastBookClicked={setLastBookClicked}
+                                                dontOpen={dontOpen}
+                                                setBookData={setBookData}
+                                                selectedTranslation={selectedTranslation}
+                                            />
+                                        </div>
+                                    }
+                                </>
+                            })
+                        }
+                    </div>
+                </div>
+                <div className="separator" />
+                <div class="testament-container" style={{ width: `${allowedRows === 5 ? 40 : allowedRows === 3 ? 33.33 : 50}%` }}>
+                    <span class="testament-title">New Testament</span>
+                    <div class="books-item">
+                        {
+                            NTBooks.map((book, index) => {
+                                return <>
+                                    <div class={`sidebar-itm ${index === lastBookClicked && bookData?.id === book.id ? "sidebar-selected-itm" : ""}`} ref={(ref) => updateRefsArray(index, ref)} tabIndex={index + 1} onClick={() => {
+                                        handleClick({ index, book, cht: 1 })
+                                    }}>
+                                        <span >
+                                            {book.commonName}
+                                        </span>
+                                        <span style={{ transition: "transform 0.3s", opacity: 0.3 }} class={`material-symbols-outlined ${index === lastBookClicked && bookData?.id === book.id ? "upside-down" : ""}`}>
+                                            expand_more
+                                        </span>
+                                    </div>
+                                    {
+                                        (NTChapterPos === index || (NTChapterPos > index && index === NTBooks.length - 1)) && bookData && chT === 1 && <div class={`sidebar-chapters show-sidebar-chapter`} style={{justifyContent: bookData.numberOfChapters < 3 * NTChapterSeparator ? "flex-start" : "space-between"}}>
+                                            <style>{allowedRows === 3 && `
+                                                .show-sidebar-chapter{width: calc(100% - 5px);}
+                                            `}</style>
+                                            <SideBarChapters
+                                                refsObject={refsObject}
+                                                bookData={bookData}
+                                                focusOnBook={focusOnBook}
+                                                setLastBookClicked={setLastBookClicked}
+                                                dontOpen={dontOpen}
+                                                setBookData={setBookData}
+                                                selectedTranslation={selectedTranslation}
+                                            />
+                                        </div>
+                                    }
+                                </>
+                            })
+                        }
+                    </div>
+                </div>
+            </div>
+        } else if (selectedTestament === 1) {
+            console.log("New Testament")
+            let chapterPos = calcChapterPos(lastBookClicked, allowedRows);
+            return <div class="books-container">
+                <div class="testament-container">
+                    <span class="testament-title">New Testament</span>
+                    <div class="books-item">
+                        {
+                            booksData.map((book, index) => {
+                                return <>
+                                    <div class={`sidebar-itm ${index === lastBookClicked && bookData?.id === book.id ? "sidebar-selected-itm" : ""}`} ref={(ref) => updateRefsArray(index, ref)} tabIndex={index + 1} onClick={() => {
+                                        handleClick({ index, book })
+                                    }}>
+                                        <span >
+                                            {book.commonName}
+                                        </span>
+                                        <span style={{ transition: "transform 0.3s", opacity: 0.3 }} class={`material-symbols-outlined ${index === lastBookClicked && bookData?.id === book.id ? "upside-down" : ""}`}>
+                                            expand_more
+                                        </span>
+                                    </div>
+                                    {
+                                        (chapterPos === index || (index === booksData.length - 1 && chapterPos > index)) && bookData && <div class={`sidebar-chapters show-sidebar-chapter`} style={{justifyContent: bookData.numberOfChapters < 3 * allowedRows ? "flex-start" : "space-between"}}>
+                                            <SideBarChapters
+                                                refsObject={refsObject}
+                                                bookData={bookData}
+                                                focusOnBook={focusOnBook}
+                                                setLastBookClicked={setLastBookClicked}
+                                                dontOpen={dontOpen}
+                                                setBookData={setBookData}
+                                                selectedTranslation={selectedTranslation}
+                                            />
+                                        </div>
+                                    }
+                                </>
+                            })
+                        }
+                    </div>
+                </div>
+            </div>
+        } else if (selectedTestament === 0) {
+            console.log("Old testament")
+            let chapterPos = calcChapterPos(lastBookClicked, allowedRows);
+            return <div class="books-container">
+                <div class="testament-container">
+                    <span class="testament-title">Old Testament</span>
+                    <div class="books-item">
+                        {
+                            booksData.slice(0, 39).map((book, index) => {
+                                return <>
+                                    <div class={`sidebar-itm ${index === lastBookClicked && bookData?.id === book.id ? "sidebar-selected-itm" : ""}`} ref={(ref) => updateRefsArray(index, ref)} tabIndex={index + 1} onClick={() => {
+                                        handleClick({ index, book })
+                                    }}>
+                                        <span >
+                                            {book.commonName}
+                                        </span>
+                                        <span style={{ transition: "transform 0.3s", opacity: 0.3 }} class={`material-symbols-outlined ${index === lastBookClicked && bookData?.id === book.id ? "upside-down" : ""}`}>
+                                            expand_more
+                                        </span>
+                                    </div>
+                                    {
+                                        (chapterPos === index || (index === booksData.length - 1 && chapterPos > index)) && bookData && <div class={`sidebar-chapters show-sidebar-chapter`} style={{justifyContent: bookData.numberOfChapters < 3 * allowedRows ? "flex-start" : "space-between"}}>
+                                            <SideBarChapters
+                                                refsObject={refsObject}
+                                                bookData={bookData}
+                                                focusOnBook={focusOnBook}
+                                                setLastBookClicked={setLastBookClicked}
+                                                dontOpen={dontOpen}
+                                                setBookData={setBookData}
+                                                selectedTranslation={selectedTranslation}
+                                            />
+                                        </div>
+                                    }
+                                </>
+                            })
+                        }
+                    </div>
+                </div>
+            </div>
+        }
+    }, [booksData, lastBookClicked, bookData, selectedTestament, windowSize, chT])
 
     return <>
-        <span style={{ display: "none" }}>{lastBookClicked}</span>
         {
-            RenderBooks.map(jsx => {
-                return jsx
-            })
+            RenderBooksByTestament
         }
     </>
 }
@@ -1200,68 +1318,6 @@ const SideBarChapters = ({ bookData, dontOpen, focusOnBook, setLastBookClicked, 
     }
     const [currentPsalms, setCurrentPsalms] = useState("1 Psalms");
 
-    // useEffect(() => {
-    //     let renderJSX = [];
-    //     if (bookData.startingBook || bookData.startingBook === 0) {
-    //         for (let i = bookData.startingBook; i < bookData.endingBook + 1; i++) {
-    //             renderJSX.push(<div onCLick={() => handleChapterClick({
-    //                 id: bookData.id,
-    //                 translationId: bookData.translationId,
-    //                 numberOfChapters: bookData.numberOfChapters,
-    //                 bookName: bookData.commonName,
-    //                 chapterNo: i + 1,
-    //                 bookData
-    //             })} ><span className={`sidebar-chapter-itm ${highLightedButtonsID[i + 1] ? "highlight" : 'un-highlight'}`}>{i + 1}</span></div>)
-    //         }
-    //     } else {
-    //         if (bookData.commonName === "Psalms") {
-    //             for (let i = 0; i < bookData.numberOfChapters; i++) {
-    //                 if (i === 0) {
-    //                     renderJSX.push(<button onCLick={() => { setCurrentPsalms(currentPsalms === "1 Psalms" ? "" : "1 Psalms"); }} class={`chapter-btn ${currentPsalms === "1 Psalms" ? "sidebar-selected-itm" : ""}`}>
-    //                         <span class="psalms-btn">1 Psalms</span>
-    //                     </button>)
-    //                 } else if (i === 41) {
-    //                     renderJSX.push(<button onCLick={() => { setCurrentPsalms(currentPsalms === "2 Psalms" ? "" : "2 Psalms"); }} class={`chapter-btn ${currentPsalms === "2 Psalms" ? "sidebar-selected-itm" : ""}`}>
-    //                         <span class="psalms-btn">2 Psalms</span>
-    //                     </button>)
-    //                 } else if (i === 72) {
-    //                     renderJSX.push(<button onCLick={() => { setCurrentPsalms(currentPsalms === "3 Psalms" ? "" : "3 Psalms"); }} class={`chapter-btn ${currentPsalms === "3 Psalms" ? "sidebar-selected-itm" : ""}`}>
-    //                         <span class="psalms-btn">3 Psalms</span>
-    //                     </button>)
-    //                 } else if (i === 89) {
-    //                     renderJSX.push(<button onCLick={() => { setCurrentPsalms(currentPsalms === "4 Psalms" ? "" : "4 Psalms"); }} class={`chapter-btn ${currentPsalms === "4 Psalms" ? "sidebar-selected-itm" : ""}`}>
-    //                         <span class="psalms-btn">4 Psalms</span>
-    //                     </button>)
-    //                 } else if (i === 106) {
-    //                     renderJSX.push(<button onCLick={() => { setCurrentPsalms(currentPsalms === "5 Psalms" ? "" : "5 Psalms"); }} class={`chapter-btn ${currentPsalms === "5 Psalms" ? "sidebar-selected-itm" : ""}`}>
-    //                         <span class="psalms-btn">5 Psalms</span>
-    //                     </button>)
-    //                 }
-    //                 renderJSX.push(<button style={{ display: currentPsalms === psalmsPartName({ index: i }) ? "flex" : "none" }} class={`chapter-btn`} onCLick={() => handleChapterClick({
-    //                     id: bookData.id,
-    //                     translationId: bookData.translationId,
-    //                     numberOfChapters: bookData.numberOfChapters,
-    //                     bookName: psalmsPartName({ index: i }),
-    //                     chapterNo: i + 1
-    //                 })} ><span className={`sidebar-chapter-itm ${highLightedButtonsID[i + 1] ? "highlight" : 'un-highlight'}`}>{i + 1}</span></button>)
-    //             }
-    //         } else {
-
-    //             for (let i = 0; i < bookData.numberOfChapters; i++) {
-    //                 renderJSX.push(<button ref={refsObject[i]} class={`chapter-btn ${i === bookData.numberOfChapters - 1 ? "lastOne" : ""}`} onCLick={() => handleChapterClick({
-    //                     id: bookData.id,
-    //                     translationId: bookData.translationId,
-    //                     numberOfChapters: bookData.numberOfChapters,
-    //                     bookName: bookData.commonName,
-    //                     chapterNo: i + 1,
-    //                     bookData
-    //                 })} ><span className={`sidebar-chapter-itm ${highLightedButtonsID[i + 1] ? "highlight" : 'un-highlight'}`}>{i + 1}</span></button>)
-    //             }
-    //         }
-    //     }
-    //     setRenderingJSX([...renderJSX]);
-    // }, [bookData, highLightedButtonsID, dontOpen, currentPsalms]);
-
     const renderChapters = useMemo(() => {
         let renderJSX = [];
         if (bookData.startingBook || bookData.startingBook === 0) {
@@ -1279,24 +1335,24 @@ const SideBarChapters = ({ bookData, dontOpen, focusOnBook, setLastBookClicked, 
             if (bookData.commonName === "Psalms") {
                 for (let i = 0; i < bookData.numberOfChapters; i++) {
                     if (i === 0) {
-                        renderJSX.push(<button style={{ width: "100%" }} onCLick={() => { setCurrentPsalms(currentPsalms === "1 Psalms" ? "" : "1 Psalms"); }} class={`chapter-btn ${currentPsalms === "1 Psalms" ? "sidebar-selected-itm" : ""}`}>
-                            <span style={{ width: "100%" }} class="psalms-btn">1 Psalms</span>
+                        renderJSX.push(<button style={{ width: "100%" }} onCLick={() => { setCurrentPsalms(currentPsalms === "1 Psalms" ? "" : "1 Psalms"); }} class={`psalms-btn ${currentPsalms === "1 Psalms" ? "sidebar-selected-itm" : ""}`}>
+                            <span style={{ width: "100%" }} class="">1 Psalms</span>
                         </button>)
                     } else if (i === 41) {
-                        renderJSX.push(<button style={{ width: "100%" }} onCLick={() => { setCurrentPsalms(currentPsalms === "2 Psalms" ? "" : "2 Psalms"); }} class={`chapter-btn ${currentPsalms === "2 Psalms" ? "sidebar-selected-itm" : ""}`}>
-                            <span style={{ width: "100%" }} class="psalms-btn">2 Psalms</span>
+                        renderJSX.push(<button style={{ width: "100%" }} onCLick={() => { setCurrentPsalms(currentPsalms === "2 Psalms" ? "" : "2 Psalms"); }} class={`psalms-btn ${currentPsalms === "2 Psalms" ? "sidebar-selected-itm" : ""}`}>
+                            <span style={{ width: "100%" }} class="">2 Psalms</span>
                         </button>)
                     } else if (i === 72) {
-                        renderJSX.push(<button style={{ width: "100%" }} onCLick={() => { setCurrentPsalms(currentPsalms === "3 Psalms" ? "" : "3 Psalms"); }} class={`chapter-btn ${currentPsalms === "3 Psalms" ? "sidebar-selected-itm" : ""}`}>
-                            <span style={{ width: "100%" }} class="psalms-btn">3 Psalms</span>
+                        renderJSX.push(<button style={{ width: "100%" }} onCLick={() => { setCurrentPsalms(currentPsalms === "3 Psalms" ? "" : "3 Psalms"); }} class={`psalms-btn ${currentPsalms === "3 Psalms" ? "sidebar-selected-itm" : ""}`}>
+                            <span style={{ width: "100%" }} class="">3 Psalms</span>
                         </button>)
                     } else if (i === 89) {
-                        renderJSX.push(<button style={{ width: "100%" }} onCLick={() => { setCurrentPsalms(currentPsalms === "4 Psalms" ? "" : "4 Psalms"); }} class={`chapter-btn ${currentPsalms === "4 Psalms" ? "sidebar-selected-itm" : ""}`}>
-                            <span style={{ width: "100%" }} class="psalms-btn">4 Psalms</span>
+                        renderJSX.push(<button style={{ width: "100%" }} onCLick={() => { setCurrentPsalms(currentPsalms === "4 Psalms" ? "" : "4 Psalms"); }} class={`psalms-btn ${currentPsalms === "4 Psalms" ? "sidebar-selected-itm" : ""}`}>
+                            <span style={{ width: "100%" }} class="">4 Psalms</span>
                         </button>)
                     } else if (i === 106) {
-                        renderJSX.push(<button style={{ width: "100%" }} onCLick={() => { setCurrentPsalms(currentPsalms === "5 Psalms" ? "" : "5 Psalms"); }} class={`chapter-btn ${currentPsalms === "5 Psalms" ? "sidebar-selected-itm" : ""}`}>
-                            <span style={{ width: "100%" }} class="psalms-btn">5 Psalms</span>
+                        renderJSX.push(<button style={{ width: "100%" }} onCLick={() => { setCurrentPsalms(currentPsalms === "5 Psalms" ? "" : "5 Psalms"); }} class={`psalms-btn ${currentPsalms === "5 Psalms" ? "sidebar-selected-itm" : ""}`}>
+                            <span style={{ width: "100%" }} class="">5 Psalms</span>
                         </button>)
                     }
                     renderJSX.push(<button style={{ display: currentPsalms === psalmsPartName({ index: i }) ? "flex" : "none" }} class={`chapter-btn`} onCLick={() => handleChapterClick({
