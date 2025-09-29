@@ -26,27 +26,32 @@ await(async function mainInstaller(that) {
     const NameHolder = name;
     globalThis[`${name}_package`] = {};
 
-    let data;
-    if (tags.alwaysUseAvailablePackages && tags.availablePackages) {
-        data = tags.availablePackages.find(p => p.name === name);
-    }
-
-    if (!data) {
-        const result = await os.getData(tags.recordName, name);
-        if (result.success === false) {
-            throw new Error(`Failed to get package data for ${name}: ${result.errorCode} ${result.errorMessage}`);
+    async function FindExtensionData(name) {
+        let data;
+        if (tags.alwaysUseAvailablePackages && tags.availablePackages) {
+            data = tags.availablePackages.find(p => p.name === name);
         }
-        data = result.data;
+
+        if (!data) {
+            const result = await os.getData(tags.recordName, name);
+            if (result.success === false) {
+                throw new Error(`Failed to get package data for ${name}: ${result.errorCode} ${result.errorMessage}`);
+            }
+            data = result.data;
+        }
+
+        if (!data) {
+            throw new Error('No package data found for ' + name);
+        }
+
+        return data;
     }
 
-    if (!data) {
-        throw new Error('No package data found for ' + name);
-    }
-
+    const data = await FindExtensionData(name);
     
     let errorInstall = false;
 
-    function getBotsFromData(aux) {
+    function GetBotsFromData(aux) {
         if (typeof aux === 'object' && 'version' in aux) {
             // Handle aux files
             if (aux.version === 1) {
@@ -216,19 +221,17 @@ await(async function mainInstaller(that) {
             if (type === 'package') {
                 await thisBot.installPackage({ name: depName });
             } else if (type === 'dependency') {
-                const result = await os.getData(tags.recordName, depName);
-                if (result?.success) {
-                    const data = result.data;
-                    const read = await web.get(data.source);
+                const data = await FindExtensionData(depName);
+                const read = await web.get(data.recordFile?.url || data.source);
 
-                    // If pushBots is async, await each push
-                    for (const botDef of getBotsFromData(read.data)) {
-                        const b = create({ ...botDef, space: 'local' }, {
-                            forPackage: NameHolder
-                        });
-                        console.log(b, b.tags.mazem, b.tags.system)
-                        // await thisBot.pushBots({ name: NameHolder, bot: b });
-                    }
+                // If pushBots is async, await each push
+                for (const botDef of GetBotsFromData(read.data)) {
+                    const b = create({ ...botDef, space: 'local' }, {
+                        forPackage: NameHolder,
+                        packageName: depName,
+                    });
+                    console.log(b, b.tags.mazem, b.tags.system)
+                    // await thisBot.pushBots({ name: NameHolder, bot: b });
                 }
             }
         }
@@ -272,16 +275,16 @@ await(async function mainInstaller(that) {
 
     // Load record/source
     const read = await web.get(data.recordFile?.url || data.source);
-    const bots = getBotsFromData(read.data);
+    const bots = GetBotsFromData(read.data);
 
     // Push secondary bots first (await if async)
     for (let i = 1; i < bots.length; i++) {
-        const b = create(bots[i], { space: 'local', forPackage: NameHolder });
+        const b = create(bots[i], { space: 'local', forPackage: NameHolder, packageName: name });
         // await thisBot.pushBots({ name, bot: b });
     }
 
     // Push the primary (first) bot
-    const bot = create(bots[0], { space: 'local', forPackage: NameHolder });
+    const bot = create(bots[0], { space: 'local', forPackage: NameHolder, packageName: name });
     await thisBot.pushBots({ name, bot, first: true });
 
     // Give lifecycle hooks a chance to run (await sleeps!)
