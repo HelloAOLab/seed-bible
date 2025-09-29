@@ -670,7 +670,8 @@ const SearchBar = () => {
                         marginBottom: "8px",
                         width: "100%",
                         background: "lightgray",
-                        padding: "4px 8px"
+                        padding: "4px 8px",
+                        zIndex: 1
                     }}
                 >
                     <div
@@ -704,7 +705,7 @@ const SearchBar = () => {
                 </div>
             }
             {
-                booksData && selectedTestamentData && !selectingTranslation && selectedTranslation && <SideBarBooks dontOpen={dontOpen} selectedTranslation={selectedTranslation} selectedTestament={selectedTestament} booksData={selectedTestamentData} focusOnBook={focusOnBook} />
+                booksData && selectedTestamentData && !selectingTranslation && selectedTranslation && <SideBarBooks showCheck={!selectingTranslation && showCheck} dontOpen={dontOpen} selectedTranslation={selectedTranslation} selectedTestament={selectedTestament} booksData={selectedTestamentData} focusOnBook={focusOnBook} />
             }
             {
                 selectingTranslation && <div class="sidebar-translation-options" style={{paddingBottom: showCustomTranslation ? "200px" : "36px"}}>
@@ -895,7 +896,7 @@ const TransOption = ({ translationOption, index, idx = 0, setSelectedTranslation
         }
     </div>
 }
-const SideBarBooks = ({ booksData, focusOnBook, selectedTestament, selectedTranslation, dontOpen }) => {
+const SideBarBooks = ({ booksData, focusOnBook, selectedTestament, selectedTranslation, dontOpen, showCheck }) => {
     const [lastBookClicked, setLastBookClicked] = useState(-1);
     const [bookData, setBookData] = useState(null);
     const [isMobile, setIsMobile] = useState(false);
@@ -1012,7 +1013,7 @@ const SideBarBooks = ({ booksData, focusOnBook, selectedTestament, selectedTrans
             let NTChapterPos = calcChapterPos(lastBookClicked, NTChapterSeparator);
             let OTBooks = booksData.slice(0, 39);
             let NTBooks = booksData.slice(39);
-            return <div class="books-container">
+            return <div class="books-container" style={showCheck ? {paddingTop: "40px"} : {}}>
                 <div class="testament-container" style={{ width: `${allowedRows === 5 ? 60 : allowedRows === 3 ? 66.66 : 50}%` }}>
                     <span class="testament-title">Old Testament</span>
                     <div class="books-item">
@@ -1089,7 +1090,7 @@ const SideBarBooks = ({ booksData, focusOnBook, selectedTestament, selectedTrans
         } else if (selectedTestament === 1) {
             console.log("New Testament")
             let chapterPos = calcChapterPos(lastBookClicked, allowedRows);
-            return <div class="books-container">
+            return <div class="books-container" style={showCheck ? {paddingTop: "40px"} : {}}>
                 <div class="testament-container">
                     <span class="testament-title">New Testament</span>
                     <div class="books-item">
@@ -1128,7 +1129,7 @@ const SideBarBooks = ({ booksData, focusOnBook, selectedTestament, selectedTrans
         } else if (selectedTestament === 0) {
             console.log("Old testament")
             let chapterPos = calcChapterPos(lastBookClicked, allowedRows);
-            return <div class="books-container">
+            return <div class="books-container" style={showCheck ? {paddingTop: "40px"} : {}}>
                 <div class="testament-container">
                     <span class="testament-title">Old Testament</span>
                     <div class="books-item">
