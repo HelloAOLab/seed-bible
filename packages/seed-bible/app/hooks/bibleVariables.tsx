@@ -20,17 +20,17 @@ export function BibleVariablesProvider({ children }) {
     }, [ReSeed])
     // const { isDragging, setIsDragging, Element, setElement } = useMouseMove()
     const [tools, setTools] = useState([
-        {
-            icon: <SeedBibleIcon />,
-            // isImg: true,
-            label: 'Books',
-            hasToggle: true,
-            active: true,
-            onClick: () => {
-                setOpenSidebar(prev => !prev);
-                setCurrentExperience(0);
-            }
-        },
+        // {
+        //     icon: <SeedBibleIcon />,
+        //     // isImg: true,
+        //     label: 'Books',
+        //     hasToggle: true,
+        //     active: true,
+        //     onClick: () => {
+        //         setOpenSidebar(prev => !prev);
+        //         setCurrentExperience(0);
+        //     }
+        // },
         // {
         //     icon: 'playlist_play', label: 'Playlist', hasToggle: true, active: true,
         //     onHold: async () => {
