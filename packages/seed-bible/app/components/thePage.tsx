@@ -1243,9 +1243,7 @@ function Section({
                   marginRight: "-0.25em",
                 }}
                 {...attributes}
-              >
-                {part.text}
-              </span>
+              >{part.text}</span>
             );
           }
           return <span key={i}>{part.text}</span>;
