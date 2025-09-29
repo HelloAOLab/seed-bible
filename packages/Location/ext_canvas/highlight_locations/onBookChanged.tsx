@@ -1,6 +1,6 @@
 
 await os.sleep(200)
-if (!that.content)
+if (!that?.content)
     return
 
 let locations = tags.locations;
