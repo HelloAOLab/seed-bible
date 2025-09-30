@@ -23,6 +23,11 @@ const SN_Components_Bot = getBot(byTag("system", "app.sn_components"));
 
 import { ConfigurableFunctionCommands } from "app.components.commands";
 
+function prepareAISearchParamOnChapter(chapterData) {
+  const combinedText = chapterData.book + " Chapter " + chapterData.chapter;
+  globalThis.GlobalSearch = combinedText.trim();
+}
+
 function ThePage({
   tab: T,
   setPanalApp,
@@ -86,6 +91,8 @@ function ThePage({
     globalThis.BookId = bible.bookId;
     globalThis.GlobalChapter = bible.data.chapter - 1;
 
+    prepareAISearchParamOnChapter(bible.data);
+
     // if(!globalThis.studyNotesPresent) {
     //     SN_Components_Bot.initializer();
     // }
@@ -120,6 +127,8 @@ function ThePage({
     setData(data);
 
     globalThis.GlobalChapter = bible.data.chapter - 1;
+
+    prepareAISearchParamOnChapter(bible.data);
 
     if (globalThis.studyNotesPresent) {
       UpdateApplication(globalThis.STUDYNOTES_PANEL_ID, {
@@ -228,9 +237,8 @@ function ThePage({
         setLastSelectedVerse(selectedArray[selectedArray.length - 1]);
         setContextData({
           verse: window.getSelection().toString(),
-          reference: `${data?.book} ${data?.chapter}:${selectedArray[0]}-${
-            selectedArray[selectedArray.length - 1]
-          }`,
+          reference: `${data?.book} ${data?.chapter}:${selectedArray[0]}-${selectedArray[selectedArray.length - 1]
+            }`,
           book: data?.book,
           chapter: data?.chapter,
           verses: selectedArray,
@@ -300,6 +308,8 @@ function ThePage({
     globalThis.GlobalChapter = bible.data.chapter - 1;
     globalThis.BookId = bible.data.bookId;
 
+    prepareAISearchParamOnChapter(bible.data);
+
     if (globalThis.studyNotesPresent) {
       UpdateApplication(globalThis.STUDYNOTES_PANEL_ID, {
         App: (
@@ -322,6 +332,8 @@ function ThePage({
     globalThis.GlobalChapter = bible.data.chapter - 1;
     globalThis.BookId = bible.data.bookId;
 
+    prepareAISearchParamOnChapter(bible.data);
+
     if (globalThis.studyNotesPresent) {
       UpdateApplication(globalThis.STUDYNOTES_PANEL_ID, {
         App: (
@@ -341,6 +353,8 @@ function ThePage({
     // Additions ------>
     globalThis.GlobalChapter = bible.data.chapter - 1;
     globalThis.BookId = bible.data.bookId;
+
+    prepareAISearchParamOnChapter(bible.data);
 
     if (globalThis.studyNotesPresent) {
       UpdateApplication(globalThis.STUDYNOTES_PANEL_ID, {
@@ -367,11 +381,11 @@ function ThePage({
       openPrevChapter,
       open,
       changeTranslation: bible?.changeTranslation || undefined,
-      setPanalApp: () => {},
+      setPanalApp: () => { },
     });
     globalThis.Open = open;
     globalThis.ChangeTranslation = changeTranslation;
-    globalThis.SetPanalApp = () => {};
+    globalThis.SetPanalApp = () => { };
     globalThis.ToggleVerseHighlight = toggleVerseHighlight;
     globalThis.SetInHold = setInHold;
     globalThis.SetShowCommands = setShowCommands;
@@ -642,9 +656,8 @@ function ThePage({
               alignItems: "center",
               justifyContent: "center",
             }}
-            className={`pageContainer ${
-              tabEntered ? "tabEntered" : "tabDrop"
-            } ${highlightOnce ? "tabHighlightBg" : ""}`}
+            className={`pageContainer ${tabEntered ? "tabEntered" : "tabDrop"
+              } ${highlightOnce ? "tabHighlightBg" : ""}`}
           >
             <div
               style={{
@@ -1122,16 +1135,13 @@ function Section({
                         ? "dotted"
                         : "",
                   }}
-                  className={`sectionText ${
-                    isVerseActive ? "highlighted" : ""
-                  } ${
-                    highlighted?.[verse.verseNumber] ? "verse-highlighted" : ""
-                  }`}
+                  className={`sectionText ${isVerseActive ? "highlighted" : ""
+                    } ${highlighted?.[verse.verseNumber] ? "verse-highlighted" : ""
+                    }`}
                 >
                   <span
-                    className={`sectionTextNumber ${
-                      globalThis.studyNotesPresent ? "clickableCursor" : ""
-                    }`}
+                    className={`sectionTextNumber ${globalThis.studyNotesPresent ? "clickableCursor" : ""
+                      }`}
                     onClick={() => {
                       if (globalThis.studyNotesPresent) {
                         HighlightStudyNoteSection(verse?.verseNumber);
@@ -1155,9 +1165,8 @@ function Section({
                           return (
                             <span
                               key={i}
-                              className={`clickableCursor linkedWord ${
-                                shouldHighlight ? "highlightened" : ""
-                              } ${isActive ? "highlighted-word" : ""}`}
+                              className={`clickableCursor linkedWord ${shouldHighlight ? "highlightened" : ""
+                                } ${isActive ? "highlighted-word" : ""}`}
                               style={{ animationDelay: `${i * 0.1}s` }}
                               onClick={() => {
                                 console.log(part.key);
@@ -1228,7 +1237,7 @@ function Section({
                   >
                     <ConfigurableFunctionCommands
                       contextData={contextData}
-                      // onClose={() => setShowCommands(false)}
+                    // onClose={() => setShowCommands(false)}
                     />
                   </div>
                 )}
@@ -1251,7 +1260,7 @@ export const ThePageWithPanel = ({ tab }) => {
         initialWidth={gridPortalBot.tags.pixelWidth}
         containerWidth={gridPortalBot.tags.pixelWidth}
         containerHeight={1000}
-        onResize={() => {}}
+        onResize={() => { }}
         otherTab={panalApp}
       >
         <ThePage setPanalApp={setPanalApp} tab={tab} />

@@ -1,0 +1,17 @@
+{
+    "author": "Gabriel Souki",
+    "toolbarConfig":
+    {
+        "label": "Bible Layout 2D",
+        "hasToggle": "false",
+        "icon": "dashboard_2"
+    },
+    "tabConfig":
+    {
+        "title": "Bible Layout 2D"
+    },
+    "contextMenuConfig": 
+    {
+        "optionsIsOn": ""
+    }
+}
