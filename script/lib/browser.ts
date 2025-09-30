@@ -245,9 +245,16 @@ export async function loadInst(page: Page, inst: string, collaborative: boolean 
 export const DEFAULT_EXTENSIONS = [
     'seed-bible',
     'BookSelector',
+    'Object Pooler',
+    'GeoImporter',
+    'Color Lerper',
+    'Location',
+    'Bible Visualization Utils',
     'Bible Layout 2D',
     'Painter',
     'Playlist',
+    'Bible Layout 3D',
+    'Bible Stack',
 ];
 
 export async function loadSeedBible(page: Page, extraExtensions: string[] = []) {
