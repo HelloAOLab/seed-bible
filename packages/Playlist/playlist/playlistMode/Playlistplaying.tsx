@@ -38,6 +38,9 @@ if (skipAll) {
                 }
             }
         });
+        if (!skipAll) {
+            thisBot.CloseSelf();
+        }
         return;
     }
 }
@@ -60,7 +63,6 @@ if (globalThis.AddNowBarApp && !globalThis.IsQueuePresent) {
         </div>
     }
     os.compileApp("playing-playlist-flaot", <FloatApp />)
-
 }
 
 const paraStyle = {
@@ -554,6 +556,7 @@ const PlayingPlaylist = () => {
                                     thisBot.CloseFloatingApp();
                                     // os.unregisterApp("playing-playlist");
                                     globalThis.IS_PLAYLIST_ACTIVE = false;
+                                    thisBot.OpenSelf();
                                     globalThis.SetSplitAppPanel2 && globalThis.SetSplitAppPanel2(null);
                                     // thisBot.showInfo(`History Mode`);
                                 }}
@@ -760,6 +763,9 @@ const PlayingPlaylist = () => {
 if ((playlist && !globalThis.IsQueuePresent) || skipAll) {
     globalThis.IsQueuePresent = true;
     globalThis.SetSplitAppPanel2 && globalThis.SetSplitAppPanel2(<PlayingPlaylist />);
+    if (!skipAll) {
+        thisBot.CloseSelf();
+    }
     // os.compileApp("playing-playlist", <PlayingPlaylist />)
 }
 
