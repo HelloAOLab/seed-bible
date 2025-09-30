@@ -1,0 +1,1 @@
+// globalThis.bibleLayout2DHistoryUpdate?.();

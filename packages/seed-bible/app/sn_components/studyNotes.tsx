@@ -1811,6 +1811,23 @@ function StudyNotes() {
         tags.studyNotesActiveTab = active;
     }, [active]);
 
+    // Force re-render when global search changes
+    useEffect(() => {
+        let lastSearch = globalThis.GlobalSearch;
+
+        const checkGlobalSearch = () => {
+            if (globalThis.GlobalSearch !== lastSearch) {
+                lastSearch = globalThis.GlobalSearch;
+                forceUpdate({});
+            }
+        };
+
+        // Check for global search changes periodically
+        const interval = setInterval(checkGlobalSearch, 100);
+
+        return () => clearInterval(interval);
+    }, []);
+
 
     return (
         <div className="sn-tabs-wrap">
@@ -1846,8 +1863,6 @@ function StudyNotes() {
             </div>
 
             <style>{getStyleOf('studyNotes.css')}</style>
-            <style>{getStyleOf('apologist.css')}</style>
-            <style>{getStyleOf('tapos.css')}</style>
         </div>
     );
 };

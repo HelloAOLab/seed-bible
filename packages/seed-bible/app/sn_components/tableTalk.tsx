@@ -14,7 +14,7 @@ function TableTalkEmbed({ height = "70vh", className = "" }) {
 
   return (
     <div className={`tt-frameWrap ${className}`}>
-      <div className={`tt-iframeBox ${loaded ? "is-loaded" : ""}`} style={{ height }}>
+      <div className={`tt-iframeBox ${loaded ? "is-loaded" : ""}`}>
         <div className="tt-loader" aria-hidden={loaded}>
           <div className="tt-spinner" />
         </div>

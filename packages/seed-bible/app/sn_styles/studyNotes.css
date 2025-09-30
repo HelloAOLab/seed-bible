@@ -25,7 +25,7 @@
 .studyTextContainer {
   font-family: 'EB Garamond', serif;
   margin-bottom: 40px;
-  margin-top: 175px;
+  margin-top: 5px;
   /* space between books */
 }
 
@@ -427,48 +427,54 @@
   height: 100%;
   display: flex;
   flex-direction: column;
-  margin-top: 85px;
+  margin-top: 20px;
+  overflow: hidden;
+  scrollbar-width: none; 
+  -ms-overflow-style: none; 
 }
 
 /* top pills */
 .sn-tabs {
-  position: sticky; /* stays visible while notes scroll */
+  position: sticky; 
   top: 0;
   z-index: 20;
   display: flex;
+  flex: 0;
   gap: 10px;
   align-items: center;
-  padding: 10px 14px;
+  padding: 0px 14px;
   background: #fff;
+  border-bottom: 1px solid #E7E4DF;
 }
 
 .sn-tab {
-  border: 1px solid #ffffff;
-  background: #f8faf1;
+  border: none;
+  border-bottom: 3px solid transparent;
+  background: transparent;
   color: #24310c;
   font-size: 18px;
-  border-radius: 999px;
-  padding: 7px 12px;
+  border-radius: 0;
+  padding: 7px 12px 15px 12px;
   cursor: pointer;
-  transition: background .15s, border-color .15s, transform .05s;
+  transition: color .15s, border-bottom-color .15s, transform .05s;
 }
-.sn-tab:hover { background: #eef4e2; }
+.sn-tab:hover { color: #8ca443; }
 .sn-tab.is-active {
-  background: #8ca443;
-  color: #fff;
-  border-color: #8ca443;
+  color: #8ca443;
+  border-bottom-color: #8ca443;
 }
 
 /* panels */
 .sn-panels {
   position: relative;
-  margin-top: -150px;
   flex: 1;
-  min-height: 0;           /* allow children to scroll */
+  min-height: 0;           
   display: grid;
+  overflow: auto;
 }
+
 .sn-panel { min-height: 0; }
-.sn-panel.hide { display: none; }  /* keep mounted, just hide */
+.sn-panel.hide { display: none; }  
 .sn-panel.show { display: block; }
 
 

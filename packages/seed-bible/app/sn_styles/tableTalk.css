@@ -1,25 +1,29 @@
 :root { --sg-green:#8ca443; }
 
-/* wrapper keeps things aligned with your list pages */
 .tt-frameWrap{
-  width:95%;
-  margin:24px 10px;
-  margin-top:90px;
+  width:105%;
+  margin-left: -10px;
+  margin-top: 20px;
+  height: 89vh;
+  overflow: hidden;
+  scrollbar-width: none;
+  -ms-overflow-style: none;
 }
 
-/* bordered, rounded iframe shell in your green theme */
+.tt-frameWrap::-webkit-scrollbar {
+  display: none;
+}
+
 .tt-iframeBox{
   position:relative;
   width:100%;
   max-width:100%;
-  border:1.5px solid var(--sg-green);
-  border-radius:12px;
+  height: 100%;
   overflow:hidden;
   background:#fff;
   box-shadow:0 8px 24px rgba(16,24,40,.06);
 }
 
-/* loader overlay (hidden once iframe fires onLoad) */
 .tt-loader{
   position:absolute;
   inset:0;
@@ -38,7 +42,6 @@
 }
 @keyframes tt-spin { to { transform: rotate(360deg); } }
 
-/* the iframe itself */
 .tt-iframeBox iframe{
   position:absolute;
   inset:0;
@@ -47,10 +50,16 @@
   border:0;
   display:block;
   background:#fff;
+  overflow:hidden;
+  scrollbar-width: none !important;
+  -ms-overflow-style: none !important;
 }
 
-/* small-screen tweak */
+.tt-iframeBox iframe::-webkit-scrollbar {
+  display: none !important;
+}
+
 @media (max-width:480px){
-  .tt-frameWrap{ width:98%; margin:16px 8px; margin-top:80px; }
+  .tt-frameWrap{ width:100%; margin:16px 8px; margin-top:80px; }
   .tt-iframeBox{ border-radius:10px; }
 }
