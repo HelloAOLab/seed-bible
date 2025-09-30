@@ -1,4 +1,4 @@
-const isMobile = gridPortalBot.tags.pixelWidth < MOBILE_VIEWPORT_THRESHOLD;
+const isMobile = true || gridPortalBot.tags.pixelWidth < MOBILE_VIEWPORT_THRESHOLD;
 
 if (isMobile && globalThis.makingPlaylist) {
     if (globalThis["Playlist_package"]) {
