@@ -502,7 +502,7 @@ const PlayerControls = ({ parentId = 'default' }) => {
                 prevItemName: prevItem,
                 currentItemName: currentItemName
             });
-            globalThis.RenderPlaylist();
+            globalThis.RenderPlaylist && globalThis.RenderPlaylist();
             globalThis.RenderPlaylistTimer = null;
         }, 100);
         // nextItemName, nextItemType, prevItemName, prevItemType
@@ -673,7 +673,8 @@ const PlayerControls = ({ parentId = 'default' }) => {
                             globalThis.IsQueuePresent = false;
                             // os.unregisterApp("playing-playlist");
                             globalThis.IS_PLAYLIST_ACTIVE = false;
-                            globalThis.SetSplitAppPanel2(null);
+                            globalThis.SetSplitAppPanel2 && globalThis.SetSplitAppPanel2(null);
+                            thisBot.OpenSelf();
                             // thisBot.showInfo(`History Mode`);
                             if (globalThis.RemoveNowBarApp) {
                                 globalThis.RemoveNowBarApp('player-playlist-bar');
