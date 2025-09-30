@@ -101,10 +101,18 @@
   display: none;
 }
 
+.chapter-header {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  margin-bottom: 20px;
+  width: 100%;
+}
+
 .bookTitle {
   font-family: 'Helvetica Neue', sans-serif;
   font-size: 32px;
-  margin-bottom: 60px;
+  margin-bottom: 0;
   font-weight: 500;
   font-family: var(--text-bookchapter-font);
   color: var(--text-bookchapter-color);
@@ -117,6 +125,22 @@
   margin-bottom: var(--text-bookchapter-margin-bottom);
   margin-left: var(--text-bookchapter-margin-left);
   margin-right: var(--text-bookchapter-margin-right);
+}
+
+.more-resources {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  cursor: pointer;
+  color: #859E3B;
+  font-size: 14px;
+  font-weight: 500;
+  transition: opacity 0.2s ease;
+  margin-right: 20px;
+}
+
+.more-resources:hover {
+  opacity: 0.8;
 }
 
 
