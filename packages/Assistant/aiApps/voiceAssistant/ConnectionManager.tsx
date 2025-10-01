@@ -1,5 +1,6 @@
 const { useEffect } = os.appHooks;
-import HandleEvents from 'aiApps.voiceAssistant.HandleEvents'
+import HandleEvents from 'aiApps.voiceAssistant.HandleEvents';
+import { HandleEventMessage, CreateMessageLog, ClearMessageLog } from 'aiApps.voiceAssistant.HandleMessageLog';
 function generateQuery(params) {
     let queryArray = [];
     for (let key in params) {
@@ -10,12 +11,14 @@ function generateQuery(params) {
     return queryArray.join('&');
 }
 
+// response.content_part.done // ai res
+
 // Function to attach query string to URL
 function attachQueryToURL(url, params) {
     const queryString = generateQuery(params);
     return url + (url.includes('?') ? '&' : '?') + queryString;
 }
-const ConnectionManager = ({ start, setConnected, audioRef, pcRef, micRef }) => {
+const ConnectionManager = ({ start, setConnected, audioRef, pcRef, micRef, micActive, speakerActive, dcRef }) => {
 
     const init = async () => {
 
@@ -27,6 +30,8 @@ const ConnectionManager = ({ start, setConnected, audioRef, pcRef, micRef }) => 
         let response = await web.get(queryUrl);
 
         const EPHEMERAL_KEY = response.data.data.value;
+
+        CreateMessageLog();
 
         const pc = new RTCPeerConnection();
         pcRef.current = pc;
@@ -43,16 +48,23 @@ const ConnectionManager = ({ start, setConnected, audioRef, pcRef, micRef }) => 
         micRef.current = mic;
 
         const dc = pc.createDataChannel("oai-events");
-
+        dcRef.current = dc;
         dc.onmessage = (e) => {
             const data = JSON.parse(e.data);
 
+            HandleEventMessage(data);
             if (data.type === "response.function_call_arguments.done") {
                 HandleEvents({ dc, data })
             }
         };
 
-        globalThis.AIDataChannel = dc;
+        dc.onopen = () => console.log("oai-events open");
+
+        dc.onclose = () => {
+            console.log("data channel closing")
+        }
+
+        // globalThis.AIDataChannel = dc;
 
         const offer = await pc.createOffer();
         await pc.setLocalDescription(offer);
@@ -93,8 +105,29 @@ const ConnectionManager = ({ start, setConnected, audioRef, pcRef, micRef }) => 
             micRef.current.getTracks().forEach(track => track.stop());
             setConnected(false);
             globalThis.AIDataChannel = null;
+            dcRef.current = null;
+            ClearMessageLog();
         };
     }, [start, setConnected, audioRef, pcRef, micRef]);
+
+    const handleMicAndSpeaker = async () => {
+        if (micActive) {
+            micRef.current.getTracks().forEach(track => {track.enabled = true});
+        } else {
+            micRef.current.getTracks().forEach(track => {track.enabled = false});
+        }
+
+        if (speakerActive) {
+            audioRef.current.muted = false;
+        } else {
+            audioRef.current.muted = true;
+        }
+    }
+
+    useEffect(() => {
+        if (!start || !pcRef.current) return;
+        handleMicAndSpeaker()
+    }, [micActive, speakerActive, start, pcRef.current])
 
     return null;
 };
