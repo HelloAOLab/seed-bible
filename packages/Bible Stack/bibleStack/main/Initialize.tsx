@@ -7,7 +7,7 @@
 
 console.log(`[Debug] bibleStack.main.Initialize`);
 
-if(thisBot.masks.initialized || configBot.tags.systemPortal || globalThis.BibleStackManager || !ObjectPooler || !BibleVizUtils || !ColorLerper) return;
+if(thisBot.masks.initialized || configBot.tags.systemPortal || globalThis.BibleStackManager || !globalThis.ObjectPooler || !globalThis.BibleVizUtils || !globalThis.ColorLerper) return;
 
 let PoolData, CustomTag;
 
