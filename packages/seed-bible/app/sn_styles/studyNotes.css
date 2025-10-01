@@ -427,10 +427,10 @@
   height: 100%;
   display: flex;
   flex-direction: column;
-  margin-top: 20px;
   overflow: hidden;
   scrollbar-width: none; 
   -ms-overflow-style: none; 
+  background-color: white;
 }
 
 /* top pills */
@@ -441,8 +441,8 @@
   display: flex;
   flex: 0;
   gap: 10px;
+  margin-top: 10px;
   align-items: center;
-  padding: 0px 14px;
   background: #fff;
   border-bottom: 1px solid #E7E4DF;
 }

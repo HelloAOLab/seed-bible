@@ -20,8 +20,24 @@ function Chips({ items }) {
 function pill(text) { return text ? <span className="sg-pill">{text}</span> : null; }
 
 function getDomain(u) {
-    try { return new URL(u).hostname.replace(/^www\./, ""); } catch { return ""; }
+    if (!u) return "";
+
+    try {
+        if (!/^https?:\/\//i.test(u)) {
+            u = "http://" + u;
+        }
+
+        let hostname = new URL(u).hostname;
+
+        // Remove leading "www."
+        hostname = hostname.replace(/^www\./, "");
+
+        return hostname;
+    } catch {
+        return "";
+    }
 }
+
 function getFavicon(u) {
     const d = getDomain(u);
     if (!d) return null;
@@ -30,7 +46,7 @@ function getFavicon(u) {
 }
 
 function toEmbeddableUrl(item) {
-    const url = item?.url || "";
+    const url = item?.listing_url || "";
     if (!url) return "";
     if ((item.type === "youtube" || /youtube\.com\/watch\?v=|youtu\.be\//i.test(url))) {
         const idMatch = url.match(/[?&]v=([^&]+)/) || url.match(/youtu\.be\/([^?&]+)/);
@@ -51,8 +67,8 @@ function SgCard({ item, isOpen, onToggle }) {
         formatDateISO(item.created_at) ||
         null;
 
-    const domain = useMemo(() => getDomain(item.url), [item.url]);
-    const icon = useMemo(() => getFavicon(item.url), [item.url]);
+    const domain = useMemo(() => getDomain(item.referral_url), [item.referral_url]);
+    const icon = useMemo(() => item.image_url, [item.image_url]);
 
     const openInNewTab = (e) => {
         e.preventDefault();
@@ -79,7 +95,7 @@ function SgCard({ item, isOpen, onToggle }) {
     }, []);
 
     return (
-        <article className={`sg-card sg2 ${isOpen ? "is-open" : ""}`}>
+        <article className={`sg-card ${isOpen ? "is-open" : ""}`}>
 
             <header className="sg2-head">
                 <div className="sg2-headLeft">
@@ -87,6 +103,11 @@ function SgCard({ item, isOpen, onToggle }) {
                     <span className="sg2-domain" title={domain}>{domain || "external"}</span>
                     {date && <>
                         <span className="sg2-dot" />
+                        <span className="sg2-calendar" >
+                            <svg width="10" height="10" viewBox="0 0 10 10" fill="none" xmlns="http://www.w3.org/2000/svg">
+                                <path d="M1.25 10C1.05 10 0.875 9.925 0.725 9.775C0.575 9.625 0.5 9.45 0.5 9.25V1.5C0.5 1.3 0.575 1.125 0.725 0.975C0.875 0.825 1.05 0.75 1.25 0.75H2.0625V0H2.875V0.75H7.125V0H7.9375V0.75H8.75C8.95 0.75 9.125 0.825 9.275 0.975C9.425 1.125 9.5 1.3 9.5 1.5V9.25C9.5 9.45 9.425 9.625 9.275 9.775C9.125 9.925 8.95 10 8.75 10H1.25ZM1.25 9.25H8.75V3.875H1.25V9.25ZM1.25 3.125H8.75V1.5H1.25V3.125ZM5 6C4.85833 6 4.73958 5.95208 4.64375 5.85625C4.54792 5.76042 4.5 5.64167 4.5 5.5C4.5 5.35833 4.54792 5.23958 4.64375 5.14375C4.73958 5.04792 4.85833 5 5 5C5.14167 5 5.26042 5.04792 5.35625 5.14375C5.45208 5.23958 5.5 5.35833 5.5 5.5C5.5 5.64167 5.45208 5.76042 5.35625 5.85625C5.26042 5.95208 5.14167 6 5 6ZM3 6C2.85833 6 2.73957 5.95208 2.64375 5.85625C2.54792 5.76042 2.5 5.64167 2.5 5.5C2.5 5.35833 2.54792 5.23958 2.64375 5.14375C2.73957 5.04792 2.85833 5 3 5C3.14167 5 3.26042 5.04792 3.35625 5.14375C3.45207 5.23958 3.5 5.35833 3.5 5.5C3.5 5.64167 3.45207 5.76042 3.35625 5.85625C3.26042 5.95208 3.14167 6 3 6ZM7 6C6.85833 6 6.73958 5.95208 6.64375 5.85625C6.54792 5.76042 6.5 5.64167 6.5 5.5C6.5 5.35833 6.54792 5.23958 6.64375 5.14375C6.73958 5.04792 6.85833 5 7 5C7.14167 5 7.26042 5.04792 7.35625 5.14375C7.45208 5.23958 7.5 5.35833 7.5 5.5C7.5 5.64167 7.45208 5.76042 7.35625 5.85625C7.26042 5.95208 7.14167 6 7 6ZM5 8C4.85833 8 4.73958 7.95208 4.64375 7.85625C4.54792 7.76042 4.5 7.64167 4.5 7.5C4.5 7.35833 4.54792 7.23958 4.64375 7.14375C4.73958 7.04792 4.85833 7 5 7C5.14167 7 5.26042 7.04792 5.35625 7.14375C5.45208 7.23958 5.5 7.35833 5.5 7.5C5.5 7.64167 5.45208 7.76042 5.35625 7.85625C5.26042 7.95208 5.14167 8 5 8ZM3 8C2.85833 8 2.73957 7.95208 2.64375 7.85625C2.54792 7.76042 2.5 7.64167 2.5 7.5C2.5 7.35833 2.54792 7.23958 2.64375 7.14375C2.73957 7.04792 2.85833 7 3 7C3.14167 7 3.26042 7.04792 3.35625 7.14375C3.45207 7.23958 3.5 7.35833 3.5 7.5C3.5 7.64167 3.45207 7.76042 3.35625 7.85625C3.26042 7.95208 3.14167 8 3 8ZM7 8C6.85833 8 6.73958 7.95208 6.64375 7.85625C6.54792 7.76042 6.5 7.64167 6.5 7.5C6.5 7.35833 6.54792 7.23958 6.64375 7.14375C6.73958 7.04792 6.85833 7 7 7C7.14167 7 7.26042 7.04792 7.35625 7.14375C7.45208 7.23958 7.5 7.35833 7.5 7.5C7.5 7.64167 7.45208 7.76042 7.35625 7.85625C7.26042 7.95208 7.14167 8 7 8Z" fill="#949494" />
+                            </svg>
+                        </span>
                         <span className="sg2-date">{date}</span>
                     </>}
                 </div>
@@ -222,7 +243,15 @@ function ApologistSearch({
                     ...(cacheTtl ? { "x-cache-ttl": String(cacheTtl) } : { "x-cache-ttl": "300" }),
                 };
 
-                const res = await web.post(url, { query: searchParam.trim() }, { headers });
+                const payload = {
+                    "query": searchParam.trim(),
+                    "limit": 100,
+                    "filters": {
+                        "team_id": 111
+                    }
+                }
+
+                const res = await web.post(url, payload, { headers });
 
                 if (cancelled) return;
                 if (res.status !== 200) { setErr(res?.error || `HTTP ${res.status}`); setData([]); return; }
@@ -270,14 +299,17 @@ function ApologistSearch({
 
             <div className={`sg-results ${className}`}>
                 {data && data.length > 0 ? (
-                    data.map((item, i) => (
-                        <SgCard
-                            key={item?.id ? String(item.id) : `row-${i}`}
-                            item={item}
-                            isOpen={openId === item.id}
-                            onToggle={(id) => setOpenId(id)}
-                        />
-                    ))
+                    <>
+                        <h2 className="sg2-noResults">{data.length} Results</h2>
+                        {data.map((item, i) => (
+                            <SgCard
+                                key={item?.id ? String(item.id) : `row-${i}`}
+                                item={item}
+                                isOpen={openId === item.id}
+                                onToggle={(id) => setOpenId(id)}
+                            />
+                        ))}
+                    </>
                 ) : (
                     <div className="sg-empty">
                         <div className="sg-emptyIcon">🔎</div>

@@ -18,7 +18,6 @@
   font-size: 22px;
   font-weight: 100;
   color: #0f172a;
-  margin-bottom: 20px;
 }
 
 /* Results (LIST) */
@@ -36,8 +35,8 @@
   transition: border-color 0.2s ease, box-shadow 0.2s ease, transform 0.08s ease;
   width: 100%;
   max-width: 100%;
-  box-sizing: border-box;
   padding: 12px 14px;
+  box-sizing: border-box;
   /* list padding */
 }
 
@@ -81,7 +80,7 @@
 }
 
 .sg-domain {
-  color: #22310c;
+  color: #949494;
   font-weight: 100;
   font-size: 13px;
   max-width: 55vw;
@@ -91,7 +90,7 @@
 }
 
 .sg-metaDate {
-  color: #64748b;
+  color: #949494;
   font-size: 12px;
   display: flex;
   align-items: center;
@@ -287,7 +286,6 @@
   width: 100%;
   max-width: 100%;
   overflow: hidden;
-  box-sizing: border-box;
   opacity: 0;
   transition: max-height 0.32s ease, opacity 0.22s ease;
 }
@@ -300,6 +298,9 @@
 .sg-preview {
   border-top: 1px solid #e8edd6;
   background: #fcfef8;
+  display: flex;
+  position: relative;
+  width: 100%;
 }
 
 .sg-previewBar {
@@ -351,7 +352,6 @@
   border-top: 1px dashed #d9e4b7;
   width: 100%;
   max-width: 100%;
-  box-sizing: border-box;
   padding: 10px 0 16px;
 }
 
@@ -359,23 +359,23 @@
   position: relative;
   width: 100%;
   max-width: 100%;
-  aspect-ratio: 16/9;
-  max-height: 480px;
+  max-height: 600px;
+  height: 600px;
   min-height: 240px;
   overflow: hidden;
   border-radius: 10px;
   border: 1px solid #e2e8f0;
-  box-sizing: border-box;
   background: #fff;
+  contain: content;
 }
 
 .sg-iframeBox iframe {
   position: absolute;
+  display: block;
   inset: 0;
   width: 100%;
   height: 100%;
   border: 0;
-  display: block;
 }
 
 /* States / misc */
@@ -487,7 +487,7 @@
 }
 
 .sg2-domain {
-  color: #22310c;
+  color: #949494;
   font-weight: 100;
   font-size: 13px;
   max-width: 55vw;
@@ -497,15 +497,19 @@
 }
 
 .sg2-dot {
-  width: 4px;
-  height: 4px;
+  width: 1px;
+  height: 10px;
   background: #a3a3a3;
-  border-radius: 999px;
+  border-radius: 5px;
+  display: inline-block;
+}
+
+.sg2-calendar{
   display: inline-block;
 }
 
 .sg2-date {
-  color: #64748b;
+  color: #949494;
   font-size: 12px;
 }
 
@@ -532,6 +536,14 @@
 .sg2-open:hover {
   background: #eef4e2;
   box-shadow: 0 2px 6px rgba(140, 164, 67, 0.25);
+}
+
+.sg2-noResults{
+  display: inline-block;
+  font-size: 18px;
+  font-weight: 50;
+  margin-top: -5px;
+  color: #949494;
 }
 
 .sg2-title {
@@ -573,13 +585,13 @@
 
 .sg2-tagsLabel {
   font-weight: 100;
-  color: #475569;
+  color: #0f172a;
   font-size: 13px;
 }
 
 .sg2-tagsText {
   margin-left: 5px;
-  color: #475569;
+  color: #949494;
   font-size: 13px;
 }
 
