@@ -21,9 +21,7 @@ const App = () => {
                 border: "1px solid black",
                 overflow: "auto"
             }}
-        >
-            <button>Click me!</button>
-        </div>
+        ></div>
     </div>
 }
 
