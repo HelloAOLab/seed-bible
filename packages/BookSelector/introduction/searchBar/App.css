@@ -705,12 +705,12 @@ input:checked+.slider:not(#slider):before {
 
 .show-sidebar-chapter {
     display: grid;
-    grid-template-columns: repeat(auto-fit, 40px);
+    grid-template-columns: repeat(auto-fit, 38px);
     justify-content: space-between;
     /* display: flex; */
     width: 100%;
     height: fit-content;
-    gap: clamp(5px, 1vw, 20px);
+    gap: clamp(5px, 0.5vw, 20px);
     flex-wrap: wrap;
     background-color: #E1F5FE;
     padding: 8px;
