@@ -279,7 +279,10 @@ export async function loadSeedBible(page: Page, extraExtensions: string[] = []) 
         await registerPackage(page, pkg);
     }
 
-    await waitForPackage(page, 'Playlist');
+    const lastPackage = installedPackages[installedPackages.length - 1];
+    if (lastPackage) {
+        await waitForPackage(page, lastPackage);
+    }
 
     await execScript(page, `
         const packager = getBot('system', 'app.packager');
