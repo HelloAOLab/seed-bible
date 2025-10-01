@@ -477,6 +477,39 @@
 .sn-panel.hide { display: none; }  
 .sn-panel.show { display: block; }
 
+/* Search type toggle buttons */
+.search-type-toggle {
+  display: flex;
+  gap: 8px;
+  margin-bottom: 20px;
+  margin-top: 10px;
+  padding: 0 4px;
+}
+
+.search-toggle-btn {
+  background: transparent;
+  border: 1px solid #E7E4DF;
+  color: #24310c;
+  font-size: 14px;
+  font-weight: 500;
+  border-radius: 6px;
+  padding: 8px 16px;
+  cursor: pointer;
+  transition: all 0.15s ease;
+  font-family: 'Helvetica Neue', sans-serif;
+}
+
+.search-toggle-btn:hover {
+  background: #f8faf1;
+  border-color: #8ca443;
+}
+
+.search-toggle-btn.active {
+  background: #8ca443;
+  color: #fff;
+  border-color: #8ca443;
+}
+
 
 
 /* Bible Book Section Styles */

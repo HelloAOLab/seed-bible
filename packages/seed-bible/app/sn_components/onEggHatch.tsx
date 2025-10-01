@@ -11,5 +11,7 @@ globalThis.ScheduleHighlight = (payload, highlightSection) => {
     }, 500);
 }
 
+tags.studyNotesActiveTab = "notes";
+
 tags.previousTab = {};
 tags.shouldHighlight = true;

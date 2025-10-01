@@ -15,6 +15,7 @@ import {
   Panal,
   Playlist,
   AiChatIcon,
+  LigonierSeedBibleIcon,
 } from "app.components.icons";
 
 // import { useMouseMove, } from 'app.hooks.mouseMove';
@@ -33,7 +34,7 @@ export function BibleVariablesProvider({ children }) {
   // const { isDragging, setIsDragging, Element, setElement } = useMouseMove()
   const [tools, setTools] = useState([
     {
-        icon: <SeedBibleIcon />,
+        icon: <LigonierSeedBibleIcon />,
         // isImg: true,
         label: 'Books',
         hasToggle: true,
