@@ -110,7 +110,7 @@ async function SetUpApplication(applicationFunction, bot, toolbarConfig) {
             icon,
             label,
             hasToggle: true,
-            active: true,
+            active: false,
             onHold,
             onClick,
         };
