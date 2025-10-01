@@ -601,7 +601,19 @@ const PlayerControls = ({ parentId = 'default' }) => {
                         </div>
                     </div>
                     <div className="flex align-center" style={{ gap: '0.5rem' }}>
-                        <p style={{ margin: '0', width: '24px', backgroundColor: '#D364334D', height: '24px', border: '1px solid #D36433' }} className="playlist-action small" onClick={globalThis.PlaylistPlaytoggleHide}>
+                        <p style={{ margin: '0', width: '24px', backgroundColor: '#D364334D', height: '24px', border: '1px solid #D36433' }} className="playlist-action small"
+                            onClick={
+                                () => {
+
+                                    if (globalThis.PlaylistPlaytoggleHide) {
+                                        globalThis.PlaylistPlaytoggleHide();
+                                    } else {
+                                        thisBot.OpenSelf();
+
+                                    }
+                                }
+                            }
+                        >
                             <img
                                 src="https://auth-aux-aobot-prod-filesbucket-141297942820.s3.amazonaws.com/aoBot/fe3ea1784fbed6a33fb06bc8885bca18211293462adcb06311db83f1450589b8.svg"
                                 class="material-symbols-outlined unfollow" style={{
@@ -738,7 +750,7 @@ const PlayerControls = ({ parentId = 'default' }) => {
                         }}
                     />}
                 </div>
-            </div>
+            </div >
         </>)
 }
 
