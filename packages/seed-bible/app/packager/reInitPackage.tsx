@@ -157,7 +157,7 @@ async function SetUpApplicationWithoutApp(toolbarConfig, bot) {
         icon: !toolbarConfig?.iconUrl ? toolbarConfig.icon : toolbarConfig.iconUrl,
         label: toolbarConfig.label,
         hasToggle: true,
-        active: true,
+        active: false,
         onHold: runFn,
         onClick: runFn,
         isImg: !!toolbarConfig?.iconUrl,

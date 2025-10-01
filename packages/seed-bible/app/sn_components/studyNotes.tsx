@@ -1806,6 +1806,7 @@ function StudyNotes() {
 
     const initialTab = tags?.studyNotesActiveTab || 'notes';
     const [active, setActive] = useState(initialTab);
+    const [searchType, setSearchType] = useState('apologist'); // 'apologist' or 'tapos'
 
     useEffect(() => {
         tags.studyNotesActiveTab = active;
@@ -1857,7 +1858,25 @@ function StudyNotes() {
 
                 <div className={`sn-panel ${active === 'discover' ? 'show' : 'hide'}`}>
                     <div className="sg-searchWrap">
-                        <ApologistSearch search={globalThis.GlobalSearch ?? "galations 5"} />
+                        <div className="search-type-toggle">
+                            <button 
+                                className={`search-toggle-btn ${searchType === 'apologist' ? 'active' : ''}`}
+                                onClick={() => setSearchType('apologist')}
+                            >
+                                Apologist
+                            </button>
+                            <button 
+                                className={`search-toggle-btn ${searchType === 'tapos' ? 'active' : ''}`}
+                                onClick={() => setSearchType('tapos')}
+                            >
+                                Tapos
+                            </button>
+                        </div>
+                        {searchType === 'apologist' ? (
+                            <ApologistSearch search={globalThis.GlobalSearch ?? "galations 5"} />
+                        ) : (
+                            <SgSearch search={globalThis.GlobalSearch ?? "galations 5"} />
+                        )}
                     </div>
                 </div>
             </div>

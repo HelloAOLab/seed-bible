@@ -648,7 +648,7 @@ function ThePage({
             }}
             className="chapter-header"
           >
-            <div className="bookTitle">{`${data?.book} ${data?.chapter}:1`}</div>
+            <div className="bookTitle">{`${data?.book} ${data?.chapter}`}</div>
             <MoreResources />
           </div>
           {data &&

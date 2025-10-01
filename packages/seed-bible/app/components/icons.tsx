@@ -54,6 +54,21 @@ export function SeedBibleIcon() {
     />
   );
 }
+export function LigonierSeedBibleIcon() {
+  return (
+    <svg width="23" height="22" viewBox="0 0 23 17" fill="none" xmlns="http://www.w3.org/2000/svg">
+      <path d="M1 1H7.98155C9.7805 1 11.2412 2.46074 11.2412 4.25969V14.3019H1V1Z" stroke="#231F20" stroke-width="2" stroke-miterlimit="10" />
+      <path d="M14.5002 1H21.4817V14.3019H11.2405V4.25969C11.2405 2.46074 12.7012 1 14.5002 1Z" stroke="#231F20" stroke-width="2" stroke-miterlimit="10" />
+      <path d="M4.26733 4.62622H7.97388" stroke="#231F20" stroke-width="2" stroke-miterlimit="10" />
+      <path d="M4.26733 7.65088H7.97388" stroke="#231F20" stroke-width="2" stroke-miterlimit="10" />
+      <path d="M4.26733 10.6758H7.97388" stroke="#231F20" stroke-width="2" stroke-miterlimit="10" />
+      <path d="M14.5078 4.62622H18.2151" stroke="#231F20" stroke-width="2" stroke-miterlimit="10" />
+      <path d="M14.5078 7.65088H18.2151" stroke="#231F20" stroke-width="2" stroke-miterlimit="10" />
+      <path d="M14.5078 10.6758H18.2151" stroke="#231F20" stroke-width="2" stroke-miterlimit="10" />
+      <path d="M11.2412 11.2097V16.9999" stroke="#231F20" stroke-width="2" stroke-miterlimit="10" />
+    </svg>
+  );
+}
 export const ApologistIcon = () => {
   return <img style={{ filter: "invert(1)" }} src="https://res.cloudinary.com/dfbtwwa8p/image/upload/v1755794631/svgviewer-png-output_1_tgtfvm.png" />
 }
