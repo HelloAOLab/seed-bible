@@ -1,6 +1,6 @@
 if(thisBot.vars.appId)
 {
-    globalThis.RemoveApplication(thisBot.vars.appId)
+    globalThis.RemoveFloatingApp(thisBot.vars.appId)
 }
 else
 {
@@ -10,7 +10,7 @@ else
         App: <App />,
         title: "Stack",
         position: {x: 200, y: 150},
-        size: {width: 300, height: 150}
+        size: {width: 350, height: 200}
     })
     thisBot.vars.appId = id;
 
