@@ -3,7 +3,7 @@ const { useState, useRef, useEffect } = os.appHooks;
 const DraggableContainer = ({ children }) => {
     const [isDragging, setIsDragging] = useState(false);
     const [position, setPosition] = useState({ 
-        x: window.innerWidth - 170, 
+        x: window.innerWidth - 300, 
         y: 20 
     });
     const [offset, setOffset] = useState({ x: 0, y: 0 });
@@ -53,6 +53,7 @@ const DraggableContainer = ({ children }) => {
                 left: position.x
             }}
             onMouseDown={handleMouseDown}
+            onContextMenu={e => e.stopPropagation()}
         >
             {children}
         </div>
