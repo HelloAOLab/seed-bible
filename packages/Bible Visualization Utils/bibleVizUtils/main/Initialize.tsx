@@ -64,6 +64,7 @@ setTagMask(thisBot, "initialized", true);
 //     setTag(gridPortalBot, "onBotChanged", finalBotChanged);
 // }
 
+console.log(`[Debug] bibleVizUtils.main.Initialize`);
 
 globalThis.BibleVizUtils = {
     Classes: bibleVizClasses,
