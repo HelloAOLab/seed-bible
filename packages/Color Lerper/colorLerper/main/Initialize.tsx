@@ -15,3 +15,5 @@ setTagMask(thisBot, "initialized", true);
 const currentLerps = new ColorLerpsArray({});
 globalThis.ColorLerper = thisBot;
 globalThis.currentLerps = currentLerps;
+
+shout("OnColorLerperInitialized");
