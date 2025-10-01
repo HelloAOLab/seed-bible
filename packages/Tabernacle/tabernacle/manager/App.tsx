@@ -7,7 +7,6 @@ const App = () => {
     const { floatingApps } = useMouseMove()
 
     useEffect(() => {
-        console.log(`[Debug] Tabernacle.manager.App`, {floatingApps});
         thisBot.vars.floatingApps = floatingApps;
     }, [ floatingApps ])
 
