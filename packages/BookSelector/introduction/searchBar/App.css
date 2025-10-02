@@ -1,6 +1,110 @@
-.starterAnimation {
-    animation: fade-in-animation 0.3s linear forwards;
-    animation-delay: 0.1s;
+.books-container {
+    display: flex;
+    width: 100%;
+    height: calc(70dvh - 75px);
+    position: absolute;
+    left: 0;
+    padding: 0px 10px;
+    /* overflow: auto; */
+    gap: 10px;
+}
+
+.testament-container {
+    display: flex;
+    flex-direction: column;
+    gap: 5px;
+}
+
+.testament-title {
+    font-family: Satoshi;
+    font-weight: 700;
+    font-style: Bold;
+    font-size: 18px;
+    line-height: 100%;
+    letter-spacing: 0%;
+    padding-left: 10px;
+}
+
+.books-item {
+    display: flex;
+    flex-direction: row;
+    flex-wrap: wrap;
+    gap: 10px;
+    width: 100%;
+    height: fit-content;
+    scrollbar-width: none;
+    overflow: auto;
+    justify-content: space-around;
+}
+
+.separator {
+    width: 2px;
+    height: 100%;
+    background-color: #F1F1F1;
+    margin-right: 10px;
+}
+
+.dropdown-select {
+    appearance: none;
+    /* remove default arrow */
+    -webkit-appearance: none;
+    -moz-appearance: none;
+
+    padding: 8px 36px 8px 12px;
+    /* space for arrow on right */
+    font-size: 14px;
+    font-family: inherit;
+
+    border: 1px solid #ccc;
+    border-radius: 6px;
+    background: white url("data:image/svg+xml;utf8,<svg fill='gray' height='20' viewBox='0 0 24 24' width='20' xmlns='http://www.w3.org/2000/svg'><path d='M7 10l5 5 5-5z'/></svg>") no-repeat right 10px center;
+    background-size: 16px;
+
+    cursor: pointer;
+    outline: none;
+    transition: border-color 0.2s, box-shadow 0.2s;
+    margin-right: 5px;
+}
+
+.dropdown-select:hover {
+    border-color: #999;
+}
+
+.dropdown-option {
+    background: white;
+    color: #333;
+    padding: 8px 12px;
+    font-weight: bold;
+}
+
+.dropdown-option:hover {
+    background: #f1f1f1;
+    /* some browsers ignore this */
+}
+
+.searchbar {
+    display: flex;
+    align-items: center;
+    border: 1px solid #ccc;
+    border-radius: 6px;
+    background: white;
+    padding: 6px 10px;
+    width: 100%;
+    height: 34px;
+    overflow: hidden;
+}
+
+.search-icon {
+    margin-right: 8px;
+    color: #555;
+    font-size: 18px;
+}
+
+.searchbar input {
+    border: none;
+    outline: none;
+    flex: 1;
+    font-size: 14px;
 }
 
 .share-btn {
@@ -8,7 +112,7 @@
     font-size: 18px !important;
     height: 24px;
     width: 24px;
-    background: #80DEF8;
+    background: transparent;
     display: flex !important;
     justify-content: center;
     align-items: center;
@@ -16,12 +120,8 @@
     padding: 3px;
 }
 
-.share-btn:hover {
-    background-color: #26C6DA;
-}
-
 .share-btn:active {
-    background-color: #26C6DA;
+    background-color: rgba(1, 87, 155, 0.3);
 }
 
 @keyframes fade-in-animation {
@@ -248,10 +348,19 @@ input:checked+.slider:not(#slider):before {
     justify-content: space-between;
     align-items: center;
     height: 24px;
+    gap: 10px;
 }
 
 .sidebar-translation-selector {
     display: flex;
+    background: white;
+    padding: 0px 5px;
+    height: 32px;
+    justify-content: space-between;
+    align-items: center;
+    width: 100px;
+    border-radius: 5px;
+    border: 1px solid #ccc;
 }
 
 .sidebar-translation-options {
@@ -260,7 +369,6 @@ input:checked+.slider:not(#slider):before {
     justify-content: flex-start;
     align-items: flex-start;
     width: 100%;
-    padding-top: 40px;
 }
 
 .translation-option {
@@ -284,13 +392,13 @@ input:checked+.slider:not(#slider):before {
     font-weight: bold;
     font-size: 20px;
     display: flex;
-    justify-content: start;
     align-items: center;
     flex-direction: row;
     margin-bottom: 10px;
-    width: calc(100% - 25px);
+    width: calc(100%);
     justify-content: space-between;
-    margin: 10px;
+    padding: 6px;
+    border-radius: 5px;
 }
 
 .translation-title {
@@ -517,13 +625,16 @@ input:checked+.slider:not(#slider):before {
 }
 
 .psalms-btn {
-    width: 290px;
     display: flex;
-    background-color: rgba(1, 87, 155, 0.3);
-    color: #044d87;
+    background-color: rgba(1, 87, 155, 0.3) !important;
+    color: #044d87 !important;
     padding: 10px;
     border-radius: 5px;
     font-size: 16px;
+    grid-column: 1 / -1;
+    border: none;
+    justify-content: start;
+    align-items: start;
 }
 
 .chapter-btn {
@@ -531,6 +642,19 @@ input:checked+.slider:not(#slider):before {
     border: none;
     outline: none;
     cursor: pointer;
+    width: 40px;
+    aspect-ratio: 1 / 1;
+    display: flex;
+    background-color: rgba(1, 87, 155, 0.3);
+    justify-content: center;
+    align-items: center;
+    border-radius: 5px;
+    color: white;
+    transition: all 0.3s;
+}
+
+.chapter-btn:hover {
+    background-color: rgba(1, 87, 155, 0.9);
 }
 
 
@@ -580,10 +704,13 @@ input:checked+.slider:not(#slider):before {
 }
 
 .show-sidebar-chapter {
-    display: flex;
+    display: grid;
+    grid-template-columns: repeat(auto-fit, 38px);
+    justify-content: space-between;
+    /* display: flex; */
     width: 100%;
     height: fit-content;
-    gap: 11.4px;
+    gap: clamp(5px, 0.5vw, 20px);
     flex-wrap: wrap;
     background-color: #E1F5FE;
     padding: 8px;
@@ -601,17 +728,7 @@ input:checked+.slider:not(#slider):before {
     border-radius: 5px;
 }
 
-.sidebar-chapter-itm {
-    height: 41.5px;
-    width: 41.5px;
-    display: flex;
-    background-color: rgba(1, 87, 155, 0.3);
-    justify-content: center;
-    align-items: center;
-    border-radius: 5px;
-    color: white;
-    transition: all 0.3s;
-}
+.sidebar-chapter-itm {}
 
 .sidebar-chapter-itm:hover {
     background-color: rgba(1, 87, 155, 0.9);
@@ -673,20 +790,18 @@ input:checked+.slider:not(#slider):before {
 }
 
 .sidebar {
-    width: 660px;
+    width: 830px;
     background-color: var(--bgColor) !important;
     color: var(--textColor) !important;
     display: flex;
     padding: 10px;
     transition: all 0.5s;
-    overflow-y: hidden;
     scrollbar-width: none;
     border-top-left-radius: 10px;
     border-bottom-left-radius: 10px;
     border-top-right-radius: 10px;
     border-bottom-right-radius: 10px;
     flex-direction: column;
-    padding-bottom: 45px;
     position: fixed;
     left: 50%;
     transform: translateX(-50%);
@@ -696,8 +811,10 @@ input:checked+.slider:not(#slider):before {
 }
 
 .testament-selection {
-    opacity: 0;
     margin-bottom: 10px;
+    background: #F1F1F1 !important;
+    padding: 10px 0px;
+    border-radius: 5px;
 }
 
 .sidebar-select {
@@ -716,7 +833,7 @@ input:checked+.slider:not(#slider):before {
     animation-iteration-count: 1;
     animation-fill-mode: forwards;
     /* border: 1px solid black; */
-    background-color: white;
+    background-color: #F1F1F1;
     padding-left: 5px;
     cursor: pointer;
     flex-direction: column;
@@ -737,13 +854,14 @@ input:checked+.slider:not(#slider):before {
     transition: all 0.3s;
     justify-content: flex-start;
     align-items: flex-start;
+    height: calc(70dvh - 50px);
 }
 
 .sidebar-itm {
     height: 40px;
-    width: 150px;
+    width: 148px;
     display: flex;
-    /* background-color: #F9F9F9; */
+    background-color: #FAFAFA;
     justify-content: space-between;
     align-items: center;
     border-radius: 5px;
@@ -754,12 +872,25 @@ input:checked+.slider:not(#slider):before {
     /* color: black; */
 }
 
+.sidebar-ghost-itm {
+    height: 40px;
+    width: 148px;
+    user-select: none;
+    opacity: 0;
+}
+
 .sidebar-itm:hover {
-    background-color: var(--bg-color);
+    background-color: #F1F1F1;
 }
 
 .sidebar-selected-itm {
     background-color: #E1F5FE;
+    color: #044d87;
+    font-weight: bold;
+}
+
+.sidebar-itm.sidebar-selected-itm:hover {
+    background-color: #ceeaf7;
     color: #044d87;
     font-weight: bold;
 }
@@ -811,7 +942,7 @@ input:checked+.slider:not(#slider):before {
 
 .open-sideBar {
     opacity: 1;
-    height: 60dvh;
+    height: 70dvh;
     bottom: 78px;
     background-color: white !important;
     box-shadow: rgba(0, 0, 0, 0.24) 0px 3px 8px;
@@ -886,9 +1017,9 @@ input:checked+.slider:not(#slider):before {
     justify-content: space-between;
 }
 
-.searchbar {
+/* .searchbar {
     width: 100%;
-}
+} */
 
 .box {
     position: relative;
@@ -1010,7 +1141,44 @@ input:checked+.slider:not(#slider):before {
     transition: transform 0.3s;
 }
 
+@media only screen and (max-width: 1200px) {
+    .sidebar {
+        width: 490px;
+    }
+
+    .show-sidebar-chapter {
+        grid-template-columns: repeat(auto-fit, 36px);
+    }
+
+    .separator {
+        width: 2px;
+        height: 100%;
+        background-color: #F1F1F1;
+        /* margin-right: 10px; */
+        position: absolute;
+        left: calc(66.66% - 5px);
+    }
+
+    .searchbar {
+        width: 45%;
+    }
+}
+
 @media only screen and (max-width: 768px) {
+
+    .dropdown {
+        display: none;
+    }
+
+    .searchbar {
+        width: 80%;
+        margin-right: 5px;
+    }
+
+    .testament-selection {
+        padding: 10px 0px;
+    }
+
     .mainSettings {
         padding: 0 !important;
     }
@@ -1088,8 +1256,17 @@ input:checked+.slider:not(#slider):before {
 
     .sidebar {
         transition: all 0.5s;
-        height: 45dvh;
+        height: 80dvh;
         padding-bottom: 40px;
+        width: 300px;
+    }
+
+    .sidebar-results {
+        height: calc(80dvh - 50px);
+    }
+
+    .books-container {
+        height: calc(80dvh - 75px);
     }
 
     .defocus-input {
@@ -1099,11 +1276,6 @@ input:checked+.slider:not(#slider):before {
 
     .show-chapters {
         right: -45px;
-    }
-
-    .sidebar {
-        width: var(--mobileWidth);
-        right: -200px;
     }
 
     .sidebar.experience_id-3 {
@@ -1148,6 +1320,7 @@ input:checked+.slider:not(#slider):before {
     .open-sideBar {
         right: 0;
         opacity: 1;
+        bottom: 55px;
     }
 
     .close-sideBar {
@@ -1185,13 +1358,16 @@ input:checked+.slider:not(#slider):before {
 
     .sidebar-itm {
         color: black;
-        width: 180px;
+        width: 135px;
         font-weight: lighter;
     }
 
-    .sidebar-chapter-itm {
-        height: 34.5px;
-        width: 34.5px;
+    .chapter-btn {
+        width: 34px;
+    }
+
+    .show-sidebar-chapter {
+        grid-template-columns: repeat(auto-fit, 34px);
     }
 
     .psalms-btn {
@@ -1218,6 +1394,15 @@ input:checked+.slider:not(#slider):before {
 
     .experiences .experience_btn {
         width: 180px;
+    }
+
+    .separator {
+        width: 2px;
+        height: 100%;
+        background-color: #F1F1F1;
+        /* margin-right: 10px; */
+        position: absolute;
+        left: calc(50% - 1.5px);
     }
 }
 

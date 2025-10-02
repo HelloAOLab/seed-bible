@@ -1,3 +1,5 @@
+return;
+
 if(thisBot.masks.initialized || configBot.tags.systemPortal) return;
 
 setTagMask(thisBot, "initialized", true);

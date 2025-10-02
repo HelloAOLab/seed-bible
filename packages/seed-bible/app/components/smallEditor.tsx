@@ -1,21 +1,22 @@
-// import { useEffect, useRef, useState } from 'https://esm.sh/preact/hooks';
 const { useEffect, useState, useRef } = os.appHooks;
 
-import { Editor } from 'https://esm.sh/@tiptap/core';
-import StarterKit from 'https://esm.sh/@tiptap/starter-kit';
-import { TextStyle } from 'https://esm.sh/@tiptap/extension-text-style';
-import { Color } from 'https://esm.sh/@tiptap/extension-color';
-import TextAlign from 'https://esm.sh/@tiptap/extension-text-align';
-import Underline from 'https://esm.sh/@tiptap/extension-underline';
-import Superscript from 'https://esm.sh/@tiptap/extension-superscript';
-import Subscript from 'https://esm.sh/@tiptap/extension-subscript';
-import Highlight from 'https://esm.sh/@tiptap/extension-highlight';
-import Image from 'https://esm.sh/@tiptap/extension-image';
-import Link from 'https://esm.sh/@tiptap/extension-link';
-import BulletList from 'https://esm.sh/@tiptap/extension-bullet-list';
-import OrderedList from 'https://esm.sh/@tiptap/extension-ordered-list';
-import ListItem from 'https://esm.sh/@tiptap/extension-list-item';
-import { Mark } from 'https://esm.sh/@tiptap/core';
+import {
+    Editor,
+    StarterKit,
+    TextStyle,
+    Color,
+    TextAlign,
+    Underline,
+    Superscript,
+    Subscript,
+    Highlight,
+    Image,
+    Link,
+    BulletList,
+    OrderedList,
+    ListItem,
+    Mark,
+} from 'https://esm.helloao.org/vendor-RPNXNWQB.js';
 
 /**
  * -----------------------------------------------------------

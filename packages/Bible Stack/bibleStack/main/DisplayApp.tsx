@@ -1,17 +1,16 @@
 if(thisBot.vars.appId)
 {
-    await thisBot.ClearStacks()
-    globalThis.RemoveApplication(thisBot.vars.appId)
-    thisBot.vars.appId = null
+    globalThis.RemoveFloatingApp(thisBot.vars.appId)
 }
 else
 {
+    gridPortalBot.tags.portalCameraType = "orthographic";
     const App = await thisBot.App();
     const id = globalThis.AddFloatingApp({
         App: <App />,
         title: "Stack",
         position: {x: 200, y: 150},
-        size: {width: 300, height: 150}
+        size: {width: 350, height: 200}
     })
     thisBot.vars.appId = id;
 

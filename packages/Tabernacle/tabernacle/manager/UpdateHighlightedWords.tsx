@@ -1,3 +1,5 @@
+if(!globalThis.HighlightWords) return;
+
 await os.sleep(200)
 
 HighlightWords({

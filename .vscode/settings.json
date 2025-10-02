@@ -1,4 +1,16 @@
 {
-    "typescript.validate.enable": false,
-    "javascript.validate.enable": false
+  "typescript.validate.enable": false,
+  "javascript.validate.enable": false,
+  "multiCommand.commands": [
+    {
+      "command": "multiCommand.saveAndTerminal",
+      "sequence": [
+        "workbench.action.files.save", // normal save
+        {
+          "command": "workbench.action.terminal.sendSequence",
+          "args": { "text": "\u0003.reload\u000D" }
+        } // Ctrl+C + done + Enter
+      ]
+    }
+  ]
 }

@@ -22,7 +22,7 @@ const bibleVizClasses = getBot(byTag("system", "bibleVizUtils.classes"));
 const bibleVizData = getBot(byTag("system", "bibleVizUtils.data"));
 const bibleVizFunctions = getBot(byTag("system", "bibleVizUtils.functions"))
 
-if(configBot.tags.systemPortal || thisBot.masks.initialized || typeof BibleVizUtils !== "undefined" || !bibleVizClasses || !bibleVizData || !bibleVizFunctions) return;
+if(configBot.tags.systemPortal || thisBot.masks.initialized || typeof BibleVizUtils !== "undefined" || !bibleVizClasses || !bibleVizData || !bibleVizFunctions || !globalThis.ObjectPooler) return;
 
 globalThis.PieceInfo = PieceInfo;
 globalThis.StackBibleData = StackBibleData;
@@ -63,7 +63,6 @@ setTagMask(thisBot, "initialized", true);
 //     setTag(gridPortalBot, "onBotChanged", null);
 //     setTag(gridPortalBot, "onBotChanged", finalBotChanged);
 // }
-
 
 globalThis.BibleVizUtils = {
     Classes: bibleVizClasses,
@@ -228,3 +227,5 @@ if(PoolData && CustomTag)
         ]
     })
 }
+
+shout("OnBibleVizUtilsInitialized")

@@ -1,7 +1,7 @@
 {
   "author": "Sujan",
   "configEditor": {
-    "app": "@",
+    "app": null,
     "author": "Sujan",
     "contextMenuConfig": {
       "optionsIsOn": "@options"

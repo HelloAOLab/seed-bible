@@ -1,4 +1,14 @@
+const {useEffect} = os.appHooks;
+
+import { useMouseMove } from 'app.hooks.mouseMove'
+
 const App = () => {
+    
+    const { floatingApps } = useMouseMove()
+
+    useEffect(() => {
+        thisBot.vars.floatingApps = floatingApps;
+    }, [ floatingApps ])
 
     return <div style={{width: "100%", height: "100%"}}>
         <div

@@ -5,10 +5,17 @@
     * thisBot.Initialize();
 */
 
-import { PoolData } from "objectPooler.main.PoolData"
-import { CustomTag } from "objectPooler.main.CustomTag"
+if(thisBot.masks.initialized || configBot.tags.systemPortal || globalThis.BibleStackManager || !globalThis.ObjectPooler || !globalThis.BibleVizUtils || !globalThis.ColorLerper) return;
 
-if(thisBot.masks.initialized || configBot.tags.systemPortal || globalThis.BibleStackManager) return;
+let PoolData, CustomTag;
+
+try {
+  ({ PoolData } = await import("objectPooler.main.PoolData"));
+  ({ CustomTag } = await import("objectPooler.main.CustomTag"));
+} 
+catch (err) {
+  throw new Error("[Debug] bibleStack.main.Initialize Could not load module", err);
+}
 
 setTagMask(thisBot, "initialized", true);
 globalThis.BibleStackManager = thisBot;

@@ -17,7 +17,7 @@ if (masks[`${address}-data`]) {
         if (type === 'package') {
             await thisBot.uninstallPackage({ address: name })
         } else if (type === "dependency") {
-            destroy(getBots('forPackage', address))
+            destroy(getBots('forPackage', address));
         }
     }
 
