@@ -51,7 +51,7 @@ const ConnectionManager = ({ start, setConnected, audioRef, pcRef, micRef, micAc
         dcRef.current = dc;
         dc.onmessage = (e) => {
             const data = JSON.parse(e.data);
-
+            console.log(data)
             HandleEventMessage(data);
             if (data.type === "response.function_call_arguments.done") {
                 HandleEvents({ dc, data })

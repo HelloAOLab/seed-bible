@@ -1,14 +1,17 @@
-const ModeManager = ({ aiMode, setAIMode }) => {
-    return <div className="mode-container">
-        <button className={`mode-btn ${aiMode === "Voice" && "selected-mode"}`} onClick={() => setAIMode("Voice")}>
-            <svg style={{width: "24px", height: "24px"}} width="16" height="16" viewBox="0 0 16 16" fill="none" xmlns="http://www.w3.org/2000/svg">
-                <path d="M4.75 11.9987V3.9987H5.75V11.9987H4.75ZM7.5 14.6654V1.33203H8.5V14.6654H7.5ZM2 9.33203V6.66536H3V9.33203H2ZM10.25 11.9987V3.9987H11.25V11.9987H10.25ZM13 9.33203V6.66536H14V9.33203H13Z" fill="black" />
-            </svg>
-        </button>
-        <button className={`mode-btn ${aiMode === "Text" && "selected-mode"}`} onClick={() => setAIMode("Text")}>
-            <svg style={{width: "24px", height: "24px"}} width="14" height="15" viewBox="0 0 14 15" fill="none" xmlns="http://www.w3.org/2000/svg">
-                <path d="M4.66671 15.0013V11.318H4.50004C3.32227 11.318 2.33337 10.893 1.53337 10.043C0.733374 9.19297 0.333374 8.17907 0.333374 7.0013C0.333374 5.7902 0.752817 4.7652 1.59171 3.9263C2.43061 3.08741 3.45561 2.66797 4.66671 2.66797H5.55004L4.26671 1.36797L4.96671 0.667969L7.46671 3.16797L4.96671 5.66797L4.26671 4.96797L5.55004 3.66797H4.66671C3.74447 3.66797 2.95837 3.99297 2.30837 4.64297C1.65837 5.29297 1.33337 6.07907 1.33337 7.0013C1.33337 7.9124 1.63615 8.69573 2.24171 9.3513C2.84727 10.0069 3.60004 10.3346 4.50004 10.3346H5.66671V12.5846L7.93337 10.3346H9.35004C10.2723 10.3346 11.0556 10.0096 11.7 9.35964C12.3445 8.70963 12.6667 7.91797 12.6667 6.98464C12.6667 6.0624 12.3417 5.27907 11.6917 4.63463C11.0417 3.9902 10.2556 3.66797 9.33337 3.66797H8.45004V2.66797H9.33337C10.5334 2.66797 11.5556 3.08741 12.4 3.9263C13.2445 4.7652 13.6667 5.78464 13.6667 6.98464C13.6667 8.19574 13.2473 9.22354 12.4084 10.068C11.5695 10.9124 10.55 11.3346 9.35004 11.3346H8.35004L4.66671 15.0013Z" fill="black" />
-            </svg>
+import { Voice, Text, Settings } from 'aiApps.voiceAssistant.icons';
+
+const ModeManager = ({ aiMode, setAIMode, setOpenSettings }) => {
+    return <div class="header-container">
+        <div className="mode-container">
+            <button className={`mode-btn ${aiMode === "Voice" && "selected-mode"}`} onClick={() => setAIMode("Voice")}>
+                <Voice style={{ width: "24px", height: "24px" }} />
+            </button>
+            <button className={`mode-btn ${aiMode === "Text" && "selected-mode"}`} onClick={() => setAIMode("Text")}>
+                <Text style={{ width: "24px", height: "24px" }} />
+            </button>
+        </div>
+        <button className={`mode-btn`} onClick={() => setOpenSettings(true)}>
+            <Settings style={{ width: "24px", height: "24px" }} />
         </button>
     </div>
 }
