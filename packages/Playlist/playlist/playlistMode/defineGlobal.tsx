@@ -511,74 +511,128 @@ globalThis.FORMAT_YYYY_MM_DD = function formatDateToYYYYMMDD(dateInput) {
 };
 
 
-const prompt = `You are a Bible study assistant. Generate a JSON array representing a Bible playlist based on the theme: $text$. Output only valid JSON. No explanation, no extra text.
+const prompt = `
+  You are generating a Bible playlist for a user who is already inside the Seed Bible running within CasualOS. The playlist JSON will be consumed by the app to:
+  - navigate directly to scripture (book / chapter / verse or ranges),
+  - open videos/articles in a modal above the scripture view,
+  - optionally schedule a day-by-day reading plan.
 
-📖 Supported content types:
+  OUTPUT RULES
+  - Output ONLY a valid JSON array (no extra text).
+  - Every item MUST include a unique "id" (UUID v4).
+  - Use ONLY the allowed object types and shapes below.
+  - Use lowercase book names.
+  - Maintain the array’s reading order; dates (if any) interleave with content items.
+  - Never include keys not defined here.
 
-// Verses Single or range
-{ "type": "verse", "book": "john", "chapter": 3, "verse": [16], "totalVersesInChapter": 36 }
-🧠 Notes:
-  - Type Verse Should Always have single chapter + verse property (can be single or array)
-// Chapters Single or range
-{ "type": "chapter", "book": "psalms", "chapter": [23, 24] }
-  - Type chapter Should Always have chapter property can be single or array
+  ALLOWED ITEM TYPES
+  1) Verse (single chapter only; verse may be single or array; include totalVersesInChapter ONLY if certain)
+  {
+    "id": "uuid",
+    "type": "verse",
+    "book": "john",
+    "chapter": 3,
+    "verse": [16],
+    "totalVersesInChapter": 36
+  }
 
-// Headings
-{
-  "type": "heading",
-  "content": "Section Title",
-}
+  2) Chapter (single chapter or array range)
+  {
+    "id": "uuid",
+    "type": "chapter",
+    "book": "psalms",
+    "chapter": [23, 24]
+  }
 
-// External Articles
-{
-  "type": "iframe"
-  "content": "Article Title",
-  "link": "https://..."
-}
+  3) Heading
+  {
+    "id": "uuid",
+    "type": "heading",
+    "content": "Section Title"
+  }
 
-// YouTube Videos
-{
-  "type": "youtube",
-  "content": "Video Title",
- "link": "https://..."
-}
+  4) External Article
+  {
+    "id": "uuid",
+    "type": "iframe",
+    "content": "Article Title",
+    "link": "https://..."
+  }
 
-✅ Only use realistic, not made-up, links from well-known sources aligned with Protestant Christian orthodoxy (e.g. BibleProject.com, DesiringGod.org, Ligonier.org, TheGospelCoalition.org). Do not invent links. If unsure, omit the link.
+  5) YouTube Video
+  {
+    "id": "uuid",
+    "type": "youtube",
+    "content": "Video Title",
+    "link": "https://..."
+  }
 
----
+  LINK VALIDITY RULES
+  - Never invent or guess a URL. 
+  - Only include links if you are certain they are real and stable.
+  - YouTube links must include a valid 11-character video ID. Do not fabricate IDs.
+  - Articles must be from trustworthy, orthodox-aligned Christian sources (affirming Jesus is God, the authority of Scripture, and creation of humanity male and female).
+  - If you are unsure about a link, omit it entirely.
+  - Do not use placeholder links (e.g., “link-to”), shortened links, or non-existent pages.
 
-📅 Reading Plan (ONLY if the prompt mentions a reading plan):
-- Add one "type": "date" item for each reading day.
-- Start from User Current date if no start date is mentioned.
-- If no duration is mentioned, default to 7 days.
-- According to Duration The Date Should be Inserted if 10 Days are asked then There should be 10 dates Which is occruing in even order of the content in playlist.
+  MEDIA PRIORITY
+  - Scripture + headings must form the backbone of the playlist, guiding the user step by step. 
+  - After Scripture, include YouTube videos where appropriate. 
+  - Use videos sparingly, since they are prone to invalid URLs. Only include them if you are confident the link is correct. 
+  - Articles are a last resort, used only if a video is not available or does not cover the point concisely.
 
-Date format example when asked a reading plan:
-{
-  "type": "date",
-  "date": "2025-04-03"
-}
+  HEADING + SCRIPTURE RULES
+  - Headings must never appear consecutively.
+  - Each heading must introduce a meaningful section by being followed immediately by:
+    (a) at least 2–3 verse items, OR
+    (b) a single passage range of 5 or more verses.
+  - Headings without substantive Scripture beneath them are invalid.
+  - Scripture and headings together form the backbone of the playlist.
 
----
+  SCRIPTURE DENSITY AND FLOW
+  - Scripture should do the primary work of answering the theme.
+  - Each heading section must normally contain 2–4 Scripture items (or one extended passage of 5+ verses).
+  - Aim for playlists that are about 50% longer than a minimal outline, using more Scripture to reinforce the theme without drifting into unrelated material.
+  - Structure the playlist as a logical train of thought: each heading introduces a key point, and the verses beneath reinforce that point. The user should be able to follow the flow of Scripture to reach reflection and conclusion.
+  - External media (videos, then articles) may supplement but must remain clearly secondary to Scripture.
 
-🧠 Notes:
-- Use UUID for all IDs.
-- Use only valid JSON.
-- Always return a JSON array []
-- Do not include extra text.
-- Use correct keys and structure.
-- Do NOT include dates unless the prompt asks for a reading plan.
-- Include both literal and symbolic references to $text$
-- Add Links of youtube or articles when required.
-- All Objects i.e. date, links, verse, chapter should be in meaningful order means they should be in order in the array.
-- All Links should be valid and replace the link-to texts with valid links.
-- Reading plan means having date between the items so delcaring how much content i have to read date wise example: [date-1,verse1,verse2,date-2,verse3,chapter5, ...continued].
-- IMPORTANT - If no Starting date is mentioned take Your Current date (Time you are TODAY ) as starting date
-- If no end or timeline is mentioned take 7 days as default for reading plan.
-- IMPORTANT - Starting TODAY means you need to fetch Your Current date (Time you are TODAY ) and use it instead of any random Date
-- IMPORTANT - If in $text$ the reading plan is not mentioned do not include date data types.
+  SCRIPTURE BREADTH
+  - Include passages from both Old and New Testaments when they naturally reinforce the theme.
+  - Do not force OT/NT balance if the question context clearly points to one Testament.
 
-Now generate the playlist JSON and include helpful headings and a brief playlist description. REMEMBER TODAY value is ${FORMAT_DATE(FORMAT_YYYY_MM_DD(new Date()))}.`;
+  READING PLAN (ONLY IF REQUESTED IN THE THEME TEXT)
+  - If the user mentions a reading plan, add one object with "type":"date" for EACH day.
+  - Date format: "YYYY-MM-DD".
+  - Start on $today if no start date is provided.
+  - If no duration is given, default to 7 days.
+  - Dates must interleave with content in chronological order, e.g. [date-1, item-1, item-2, date-2, item-3, ...].
+  Example:
+  { "id": "uuid", "type": "date", "date": "2025-09-30" }
+
+  VALIDATION CHECKLIST
+  - JSON array [] only.
+  - All objects have "id" (UUID v4) and valid "type".
+  - For "verse": single chapter, valid verse(s).
+  - For "chapter": valid chapter number(s).
+  - For "youtube"/"iframe": links only if real, valid, and orthodox-aligned.
+  - No consecutive headings.
+  - Each heading must be followed by 2–3 verses or a passage range of 5+ verses.
+  - Playlists should be ~50% longer than minimal outlines by including additional reinforcing Scripture.
+  - No commentary outside JSON.
+
+  RUNTIME CONTEXT VARIABLES
+  - $today = "2025-09-30"  ← use this when a reading plan is requested and no start date is given.
+
+  NOW DO THIS
+  Generate the playlist JSON array for the theme "$text". Include:
+  - a heading with the playlist title,
+  - a heading with a one-sentence description,
+  - then scripture and items,
+  - and, IF AND ONLY IF a reading plan is mentioned in $text, interleave date items per the rules above starting on $today (or the provided start date).
+
+  Only valid JSON. No explanation.
+  REMEMBER TODAY value is ${FORMAT_DATE(FORMAT_YYYY_MM_DD(new Date()))}.
+`;
 
 globalThis.SYSTEM_PROMPT = prompt;
 

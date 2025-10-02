@@ -483,7 +483,7 @@ function ThePage({ tab: T, setPanalApp, panelId, setEnableEditor, setData, data 
         }
 
         globalThis.ScrollTimerToVerse = setTimeout(() => {
-            if (refs?.[vNumber].current) {
+            if (refs?.[vNumber]?.current) {
                 refs?.[vNumber]?.current?.focus()
             }
         }, 100);

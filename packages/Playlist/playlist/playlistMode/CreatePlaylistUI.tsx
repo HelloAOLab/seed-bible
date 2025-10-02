@@ -78,6 +78,7 @@ const PROMPT_OPTIONS = [
 ];
 
 const AI_OPTIONS = [
+  { "value": "openai/gpt/5", "label": "OpenAI GPT-5" },
   { "value": "openai/gpt/o1-mini", "label": "OpenAI GPT-o1 Mini" },
   { "value": "openai/gpt/o3-mini", "label": "OpenAI GPT-o3 Mini" },
   { "value": "openai/gpt/4o-mini", "label": "OpenAI GPT-4o Mini" },
@@ -116,7 +117,7 @@ const CreatePlaylistUI = ({
   const [mediaURL, setMediaURL] = useState("");
   const [videoSrc, setVideoSrc] = useState(false);
   const [currentItem, setCurrentItem] = useState({});
-  const [selectedAI, setSelectedAI] = useState('openai/gpt/4o-mini');
+  const [selectedAI, setSelectedAI] = useState(AI_OPTIONS[0].value);
 
   globalThis.SetVideoSrc = setVideoSrc;
   globalThis.SetMediaURL = setMediaURL;
@@ -652,7 +653,8 @@ const CreatePlaylistUI = ({
     try {
       const { allItems } = await thisBot.RegenratePlaylistWithNewCommand({
         oldData,
-        command: regenrationCommand,
+        command: genDetails,
+        systemPrompt: systemPrompt,
         aiModal: selectedAI
       });
       setLoading(false);
@@ -1650,7 +1652,7 @@ const CreatePlaylistUI = ({
                     // isDisabled={loading}
                     onClick={onRegenration}
                     secondary>
-                    Generate
+                    {loading ? "Generating" : "Generate"}
                   </Button>
                 </div>
               </div>

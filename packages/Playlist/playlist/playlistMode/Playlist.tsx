@@ -75,6 +75,7 @@ const PROMPT_OPTIONS = [
 ];
 
 const AI_OPTIONS = [
+    { "value": "openai/gpt/5", "label": "OpenAI GPT-5" },
     { "value": "openai/gpt/o1-mini", "label": "OpenAI GPT-o1 Mini" },
     { "value": "openai/gpt/o3-mini", "label": "OpenAI GPT-o3 Mini" },
     { "value": "openai/gpt/4o-mini", "label": "OpenAI GPT-4o Mini" },
@@ -106,7 +107,7 @@ const Playlist = ({ id, query, selectedChip, isCreate, isLayers, playingPlaylist
     const [mediaURL, setMediaURL] = useState('');
     const [videoSrc, setVideoSrc] = useState(false);
     const [currentItem, setCurrentItem] = useState({});
-    const [selectedAI, setSelectedAI] = useState('openai/gpt/4o-mini');
+    const [selectedAI, setSelectedAI] = useState(AI_OPTIONS[0].value);
 
     globalThis.SetVideoSrc = setVideoSrc;
     globalThis.SetMediaURL = setMediaURL;
@@ -589,7 +590,7 @@ const Playlist = ({ id, query, selectedChip, isCreate, isLayers, playingPlaylist
         setLoading(true);
 
         try {
-            const { allItems } = await thisBot.RegenratePlaylistWithNewCommand({ aiModal: selectedAI, oldData, command: regenrationCommand });
+            const { allItems } = await thisBot.RegenratePlaylistWithNewCommand({ aiModal: selectedAI, oldData, systemPrompt: systemPrompt, command: genDetails });
             setLoading(false);
             if (!allItems?.length) {
                 ShowNotification({
@@ -1624,7 +1625,7 @@ const Playlist = ({ id, query, selectedChip, isCreate, isLayers, playingPlaylist
                                             animated_images
                                         </span>
                                         <span>
-                                            Generate {isLayers ? 'layers' : 'playlist'}
+                                            {loading ? "Generating" : "Generate"} {isLayers ? 'layers' : 'playlist'}
                                         </span>
                                     </>
                                     :
