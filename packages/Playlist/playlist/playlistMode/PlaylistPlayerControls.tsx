@@ -14,8 +14,6 @@ const NextIcon = ({ fill = "#939393" }) => <svg width="18" height="16" viewBox="
     <path d="M14.9999 16V0H17.6666V16H14.9999ZM0.333252 16V0L12.3333 8L0.333252 16Z" fill={fill} />
 </svg>
 
-
-
 const getCurrentItem = (key, index, playlists, subIndex, isHint = false) => {
 
     const list = playlists[key]?.list;
@@ -87,10 +85,10 @@ const PlayerControls = ({ parentId = 'default' }) => {
     const [playlists, setPlaylists] = useState({
         0: {
             name: globalThis.PPplaylistName,
-            list: [...(thisBot.PlayingLayersConversion(globalThis.PPplaylist.list))],
+            list: [...(thisBot.PlayingLayersConversion(globalThis.PPplaylist?.list || []))],
             id: createUUID(),
-            playlistID: globalThis.PPplaylist.id,
-            isLayers: globalThis.PPplaylist.isLayers
+            playlistID: globalThis.PPplaylist?.id,
+            isLayers: globalThis.PPplaylist?.isLayers
         }
     });
 
@@ -215,7 +213,7 @@ const PlayerControls = ({ parentId = 'default' }) => {
         if (["heading", 'date'].findIndex(ele => ele === targetItem?.type) > -1 || isLayersAndScripture) {
 
             if (targetItem.type === "date" && !getIndexOnly) {
-                globalThis.PlaylingItemVisitiedMap(prev => ({ ...prev, [targetItem.id]: true }));
+               globalThis.PlaylingItemVisitiedMap?.(prev => ({ ...prev, [targetItem.id]: true }));
             }
 
             const newVals = handleOnButtonPress(order, getIndexOnly, directSet, directSetKey, newValues);
@@ -306,11 +304,11 @@ const PlayerControls = ({ parentId = 'default' }) => {
                     currentKey = Number(currIndex.key) + 1;
                 }
                 if (combineLast) {
-                    updatedPlaylists[currentKey].list.pop();
+                    updatedPlaylists[currentKey]?.list.pop();
                 }
                 // Case: Adding to an existing special queue
                 updatedPlaylists[currentKey].list = [
-                    ...updatedPlaylists[currentKey].list,
+                    ...updatedPlaylists[currentKey]?.list,
                     ...toAddItems
                 ];
             } else {
@@ -374,8 +372,6 @@ const PlayerControls = ({ parentId = 'default' }) => {
         });
     };
 
-    console.log("RENDER 2");
-
     useLayoutEffect(() => {
         globalThis.SetCurreIndexPlaylist = handlesetIndex;
         globalThis.SetCurreIndexDirect = setCurreIndex;
@@ -435,7 +431,6 @@ const PlayerControls = ({ parentId = 'default' }) => {
     }, [])
 
     const [currentPlaylistName, currentItemID, typeContent, nextItemName, prevItemName, currentItemName] = useMemo(() => {
-        console.log("playlists", playlists, currIndex);
         const { name: currentPlaylistName } = playlists[currIndex.key];
 
         const targetItem = getCurrentItem(currIndex.key, currIndex.index, playlists, currIndex.subIndex, playlists[currIndex.key]?.isLayers);
@@ -450,7 +445,7 @@ const PlayerControls = ({ parentId = 'default' }) => {
         const prevItem = (prevIndex.isPreviousQueue) ? oldData[oldData.length - 1] : getCurrentItem(prevIndex.key, prevIndex.index, playlists, prevIndex.subIndex, playlists[prevIndex.key]?.isLayers, true);
 
         // setOldData(prev => [...prev, targetItem]);
-        globalThis.PlaylingItemVisitiedMap(prev => ({ ...prev, [targetItem.id]: true }));
+        globalThis.PlaylingItemVisitiedMap?.(prev => ({ ...prev, [targetItem.id]: true }));
 
         if (targetItem?.type === "attachment-link") {
             thisBot.RenderLinkContent({ ...targetItem, isLastItem: !nextItem, isFirstItem: !prevItem });
@@ -466,7 +461,7 @@ const PlayerControls = ({ parentId = 'default' }) => {
                 const isFirstKey = currIndex.key == 0;
                 const isLastKey = currIndex.key == allKeys[allKeys.length - 1];
 
-                const th = playlists[currIndex.key].list;
+                const th = playlists[currIndex.key]?.list;
 
                 const isFirstItemAndBackButton = currIndex.fromButton < 0 && currIndex.index == 0 && isFirstKey;
                 const isLastItemAndLastButton = currIndex.fromButton > 0 && isLastKey && currIndex.index == (th.length - 1);
@@ -515,7 +510,7 @@ const PlayerControls = ({ parentId = 'default' }) => {
 
     useLayoutEffect(() => {
         const i = currIndex.index;
-        const list = globalThis.PPplaylist.list;
+        const list = globalThis.PPplaylist?.list;
 
         const gp = list;
 

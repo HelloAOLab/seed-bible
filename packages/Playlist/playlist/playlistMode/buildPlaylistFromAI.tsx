@@ -37,7 +37,7 @@ function extractJsonFromString(inputString, tries = 1) {
     }
 };
 
-
+console.log(prompt, "prompt")
 // console.log("CALLING GPT4", text);
 let myChat = await ai.chat(prompt, { preferredModel: that.aiModal || 'gpt-4o' });
 // console.log("myChat", myChat);

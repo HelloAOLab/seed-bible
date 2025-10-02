@@ -51,20 +51,6 @@ const { Input, Modal, Button, ButtonsCover } = Components;
 const AttachLink = await thisBot.AttachLink();
 const PlaylistPlayerControls = await thisBot.PlaylistPlayerControls();
 
-if (globalThis.AddNowBarApp && !globalThis.IsQueuePresent) {
-    const id = 'player-playlist-bar';
-    globalThis.AddNowBarApp(<PlaylistPlayerControls parentId={parentId} />, id);
-} else if (!globalThis.IsQueuePresent) {
-    os.unregisterApp("playing-playlist-flaot");
-    os.registerApp("playing-playlist-flaot");
-    const FloatApp = () => {
-        return <div style={{ top: '1rem', left: '1rem', zIndex: '10000', position: 'fixed' }}>
-            <PlaylistPlayerControls parentId={parentId} />
-        </div>
-    }
-    os.compileApp("playing-playlist-flaot", <FloatApp />)
-}
-
 const paraStyle = {
     fontWeight: "400",
     padding: "8px",
@@ -290,6 +276,22 @@ if (!skipAll) {
     globalThis.PPplaylistName = playlistName;
     globalThis.PPclosestNearDateEvent = closestNearDateEvent;
 }
+
+
+if (globalThis.AddNowBarApp && !globalThis.IsQueuePresent) {
+    const id = 'player-playlist-bar';
+    globalThis.AddNowBarApp(<PlaylistPlayerControls parentId={parentId} />, id);
+} else if (!globalThis.IsQueuePresent) {
+    os.unregisterApp("playing-playlist-flaot");
+    os.registerApp("playing-playlist-flaot");
+    const FloatApp = () => {
+        return <div style={{ top: '1rem', left: '1rem', zIndex: '10000', position: 'fixed' }}>
+            <PlaylistPlayerControls parentId={parentId} />
+        </div>
+    }
+    os.compileApp("playing-playlist-flaot", <FloatApp />)
+}
+
 const PlayingPlaylist = () => {
 
     const [render, setRender] = useState(0);

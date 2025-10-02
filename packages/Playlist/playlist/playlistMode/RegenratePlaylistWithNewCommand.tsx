@@ -1,5 +1,6 @@
 const command = that.command;
 const oldData = that.oldData;
+const systemPrompt = that.systemPrompt;
 
 const prompt = `
     Use The Old Data Reference Below
@@ -53,6 +54,22 @@ const prompt = `
         - Always Include heading, External Articles, YouTube Videos Whenever Required.
 `
 
+
+const promptAlter = `
+    Use The Old Data Reference Below
+        '''
+        OLD DATA BELOW
+        ${oldData}
+        OLD DATA ENDED
+        '''
+
+    ${systemPrompt}
+
+    Use the command below to Regenrate The Playlist again according to USERINPUT
+
+    USERINPUT = ${command}
+`
+
 function extractJsonFromString(inputString, tries = 1) {
     // Use regex to find JSON array in the input string
     const jsonTakenOut = inputString.match(/\[\s*\{[\s\S]*\}\s*\]/);
@@ -76,9 +93,8 @@ function extractJsonFromString(inputString, tries = 1) {
     }
 };
 
-
 // console.log("CALLING GPT4", command);
-let myChat = await ai.chat(prompt, { preferredModel: that.aiModal || 'gpt-4o' });
+let myChat = await ai.chat(promptAlter, { preferredModel: that.aiModal || 'gpt-4o' });
 // console.log("myChat", myChat);
 const results = extractJsonFromString(myChat);
 // console.log("CALLING GPT4 SUCCESS", results);
