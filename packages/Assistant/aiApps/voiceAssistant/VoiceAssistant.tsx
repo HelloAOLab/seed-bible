@@ -8,6 +8,7 @@ import DraggableContainer from 'aiApps.voiceAssistant.DraggableContainer';
 import VoiceAi from 'aiApps.voiceAssistant.VoiceAI';
 import ModeManager from 'aiApps.voiceAssistant.ModeManager';
 import TextAi from 'aiApps.voiceAssistant.TextAI';
+import UserSettings from 'aiApps.voiceAssistant.UserSettings';
 
 function VoiceAssistant() {
     const [connected, setConnected] = useState(false);
@@ -16,6 +17,7 @@ function VoiceAssistant() {
     const [aiMode, setAIMode] = useState("Voice");
     const [micActive, setMicActive] = useState(false);
     const [speakerActive, setSpeakerActive] = useState(false);
+    const [openSettings,setOpenSettings] = useState(false);
 
     const audioRef = useRef(null);
     const pcRef = useRef(null);
@@ -50,11 +52,12 @@ function VoiceAssistant() {
                     setIsAssistantSpeaking={setIsAssistantSpeaking}
                 />
 
-                <ModeManager
+                {!openSettings && <ModeManager
                     aiMode={aiMode}
                     setAIMode={setAIMode}
-                />
-                {aiMode === "Voice" && <VoiceAi
+                    setOpenSettings={setOpenSettings}
+                />}
+                {aiMode === "Voice" && !openSettings && <VoiceAi
                     start={start}
                     connected={connected}
                     isAssistantSpeaking={isAssistantSpeaking}
@@ -63,12 +66,19 @@ function VoiceAssistant() {
                     setSpeakerActive={setSpeakerActive}
                 />}
                 {
-                    aiMode === "Text" && <TextAi
+                    aiMode === "Text" && !openSettings && <TextAi
                         micActive={micActive}
                         setMicActive={setMicActive}
                         speakerActive={speakerActive}
                         setSpeakerActive={setSpeakerActive}
                         dcRef={dcRef}
+                    />
+                }
+                {
+                    openSettings && <UserSettings
+                        setMicActive={setMicActive}
+                        setSpeakerActive={setSpeakerActive}
+                        setOpenSettings={setOpenSettings}
                     />
                 }
             </DraggableContainer>

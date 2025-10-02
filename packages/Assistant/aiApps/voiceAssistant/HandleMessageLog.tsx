@@ -27,6 +27,8 @@ export const HandleEventMessage = (event) => {
                     role: "user"
                 }
             }, "tempLocal");
+            globalThis?.SetUserWriting && globalThis.SetUserWriting(false);
+            globalThis?.SetAiTextMessages && globalThis.SetAiTextMessages([...OutputMessageLog()]);
             break
         }
         case "response.content_part.done": {
@@ -37,6 +39,8 @@ export const HandleEventMessage = (event) => {
                     role: "assistant"
                 }
             }, "tempLocal");
+            globalThis?.SetAiTextMessages && globalThis.SetAiTextMessages([...OutputMessageLog()]);
+            globalThis?.SetAssistantWriting && globalThis.SetAssistantWriting(false);
             break
         }
         case "response.content_part.added": {
@@ -45,6 +49,7 @@ export const HandleEventMessage = (event) => {
         }
         case "input_audio_buffer.speech_started": {
             setTagMask(thisBot, 'itemArray', [...masks.itemArray, event.item_id], "tempLocal");
+            globalThis?.SetUserWriting && globalThis.SetUserWriting(true);
             break
         }
     }
