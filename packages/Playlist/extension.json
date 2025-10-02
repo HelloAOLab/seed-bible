@@ -26,11 +26,6 @@
         "depId": 1757954638673,
         "name": "Bible Layout 2D",
         "type": "package"
-      },
-      {
-        "depId": 1756665263918,
-        "name": "Bible Visualization Utils",
-        "type": "package"
       }
     ],
     "description": "Playlist for seed bible.",
