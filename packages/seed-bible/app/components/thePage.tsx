@@ -49,26 +49,52 @@ function MoreResources() {
       });
     }
   }
-  
+
   return (
-    <div 
+    <div
       className="more-resources"
       onClick={openStudyNotes}
       style={{
-        display: 'flex',
-        alignItems: 'center',
-        gap: '6px',
-        cursor: 'pointer',
-        color: '#859E3B',
-        fontSize: '14px',
-        fontWeight: '500'
+        display: "flex",
+        alignItems: "center",
+        gap: "6px",
+        cursor: "pointer",
+        color: "#859E3B",
+        fontSize: "14px",
+        fontWeight: "500",
       }}
     >
-      <svg width="18" height="18" viewBox="0 0 18 18" fill="none" xmlns="http://www.w3.org/2000/svg">
-        <path d="M15.3235 1H2.67645C1.75056 1 1 1.7506 1 2.6765V15.3235C1 16.2494 1.75056 17 2.67645 17H15.3235C16.2494 17 17 16.2494 17 15.3235V2.6765C17 1.7506 16.2494 1 15.3235 1Z" stroke="#859E3B" strokeWidth="2" strokeMiterlimit="10"/>
-        <path d="M9.96308 12.6438H5.19916" stroke="#859E3B" strokeWidth="2" strokeMiterlimit="10"/>
-        <path d="M12.8018 9H5.19916" stroke="#859E3B" strokeWidth="2" strokeMiterlimit="10"/>
-        <path d="M11.3095 5.35718H5.19916" stroke="#859E3B" strokeWidth="2" strokeMiterlimit="10"/>
+      <svg
+        width="18"
+        height="18"
+        viewBox="0 0 18 18"
+        fill="none"
+        xmlns="http://www.w3.org/2000/svg"
+      >
+        <path
+          d="M15.3235 1H2.67645C1.75056 1 1 1.7506 1 2.6765V15.3235C1 16.2494 1.75056 17 2.67645 17H15.3235C16.2494 17 17 16.2494 17 15.3235V2.6765C17 1.7506 16.2494 1 15.3235 1Z"
+          stroke="#859E3B"
+          strokeWidth="2"
+          strokeMiterlimit="10"
+        />
+        <path
+          d="M9.96308 12.6438H5.19916"
+          stroke="#859E3B"
+          strokeWidth="2"
+          strokeMiterlimit="10"
+        />
+        <path
+          d="M12.8018 9H5.19916"
+          stroke="#859E3B"
+          strokeWidth="2"
+          strokeMiterlimit="10"
+        />
+        <path
+          d="M11.3095 5.35718H5.19916"
+          stroke="#859E3B"
+          strokeWidth="2"
+          strokeMiterlimit="10"
+        />
       </svg>
       <span>More Resources</span>
     </div>
@@ -284,8 +310,9 @@ function ThePage({
         setLastSelectedVerse(selectedArray[selectedArray.length - 1]);
         setContextData({
           verse: window.getSelection().toString(),
-          reference: `${data?.book} ${data?.chapter}:${selectedArray[0]}-${selectedArray[selectedArray.length - 1]
-            }`,
+          reference: `${data?.book} ${data?.chapter}:${selectedArray[0]}-${
+            selectedArray[selectedArray.length - 1]
+          }`,
           book: data?.book,
           chapter: data?.chapter,
           verses: selectedArray,
@@ -428,11 +455,11 @@ function ThePage({
       openPrevChapter,
       open,
       changeTranslation: bible?.changeTranslation || undefined,
-      setPanalApp: () => { },
+      setPanalApp: () => {},
     });
     globalThis.Open = open;
     globalThis.ChangeTranslation = changeTranslation;
-    globalThis.SetPanalApp = () => { };
+    globalThis.SetPanalApp = () => {};
     globalThis.ToggleVerseHighlight = toggleVerseHighlight;
     globalThis.SetInHold = setInHold;
     globalThis.SetShowCommands = setShowCommands;
@@ -639,17 +666,23 @@ function ThePage({
       {data && tab && !tabEntered ? (
         <>
           <div
-            style={{ 
+            style={{
               "pointer-events": isDragging ? "none" : null,
-              display: 'flex',
-              justifyContent: 'space-between',
-              alignItems: 'center',
-              marginBottom: '20px'
+              display: "flex",
+              justifyContent: "space-between",
+              alignItems: "center",
+              marginBottom: "20px",
             }}
             className="chapter-header"
           >
-            <div className="bookTitle">{`${data?.book} ${data?.chapter}`}</div>
-            <MoreResources />
+            <div className="bookTitleContainer">
+              <div className="bookTitle">
+                {`${data?.book} ${data?.chapter}`}
+              </div>
+              <div className="bookTitleMoreResources">
+                <MoreResources />
+              </div>
+            </div>
           </div>
           {data &&
             data.content.map((e) => {
@@ -712,8 +745,9 @@ function ThePage({
               alignItems: "center",
               justifyContent: "center",
             }}
-            className={`pageContainer ${tabEntered ? "tabEntered" : "tabDrop"
-              } ${highlightOnce ? "tabHighlightBg" : ""}`}
+            className={`pageContainer ${
+              tabEntered ? "tabEntered" : "tabDrop"
+            } ${highlightOnce ? "tabHighlightBg" : ""}`}
           >
             <div
               style={{
@@ -1191,13 +1225,16 @@ function Section({
                         ? "dotted"
                         : "",
                   }}
-                  className={`sectionText ${isVerseActive ? "highlighted" : ""
-                    } ${highlighted?.[verse.verseNumber] ? "verse-highlighted" : ""
-                    }`}
+                  className={`sectionText ${
+                    isVerseActive ? "highlighted" : ""
+                  } ${
+                    highlighted?.[verse.verseNumber] ? "verse-highlighted" : ""
+                  }`}
                 >
                   <span
-                    className={`sectionTextNumber ${globalThis.studyNotesPresent ? "clickableCursor" : ""
-                      }`}
+                    className={`sectionTextNumber ${
+                      globalThis.studyNotesPresent ? "clickableCursor" : ""
+                    }`}
                     onClick={() => {
                       if (globalThis.studyNotesPresent) {
                         HighlightStudyNoteSection(verse?.verseNumber);
@@ -1221,8 +1258,9 @@ function Section({
                           return (
                             <span
                               key={i}
-                              className={`clickableCursor linkedWord ${shouldHighlight ? "highlightened" : ""
-                                } ${isActive ? "highlighted-word" : ""}`}
+                              className={`clickableCursor linkedWord ${
+                                shouldHighlight ? "highlightened" : ""
+                              } ${isActive ? "highlighted-word" : ""}`}
                               style={{ animationDelay: `${i * 0.1}s` }}
                               onClick={() => {
                                 console.log(part.key);
@@ -1293,7 +1331,7 @@ function Section({
                   >
                     <ConfigurableFunctionCommands
                       contextData={contextData}
-                    // onClose={() => setShowCommands(false)}
+                      // onClose={() => setShowCommands(false)}
                     />
                   </div>
                 )}
@@ -1316,7 +1354,7 @@ export const ThePageWithPanel = ({ tab }) => {
         initialWidth={gridPortalBot.tags.pixelWidth}
         containerWidth={gridPortalBot.tags.pixelWidth}
         containerHeight={1000}
-        onResize={() => { }}
+        onResize={() => {}}
         otherTab={panalApp}
       >
         <ThePage setPanalApp={setPanalApp} tab={tab} />

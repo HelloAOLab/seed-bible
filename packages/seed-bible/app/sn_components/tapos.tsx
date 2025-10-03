@@ -289,7 +289,7 @@ function SgSearch({
 
     return (
         <div className={`sg-searchWrap ${className}`}>
-            <h2 className="sg-heading">AI Search Results</h2>
+            <h2 className="sg-heading">Related Content</h2>
 
             <div className="sg-results" key={`results-${Boolean(data?.length)}-${search}`}>
                 {message ? <div className="sg-muted sg-small">{message}</div> : null}

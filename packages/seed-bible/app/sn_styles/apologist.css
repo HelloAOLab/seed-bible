@@ -547,6 +547,14 @@
   color: #949494;
 }
 
+.sg2-bodyTitle {
+  display: flex;
+  flex-direction: row;
+  justify-content: space-between;
+  align-items: center;
+  width: 100%;
+}
+
 .sg2-title {
   margin: 0 0 6px 0;
   color: #0f172a;
