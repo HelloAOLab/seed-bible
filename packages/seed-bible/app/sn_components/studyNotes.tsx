@@ -970,7 +970,7 @@ function StudyNotesWithoutWrap({ chapter }) {
 
         const timer = setTimeout(() => {
             setHighlightedPos(null)
-        }, 3000);
+        }, 5000);
 
         return () => clearTimeout(timer);
     }, [highlightedPos]);
@@ -1044,7 +1044,7 @@ function StudyNotesWithoutWrap({ chapter }) {
         timeout = setTimeout(() => {
             globalThis.HighlightedSectionKey = '';
             window.dispatchEvent(new CustomEvent('highlightedSectionKeyChanged'));
-        }, 3000);
+        }, 5000);
     }
 
     let verseTimeout;
@@ -1081,7 +1081,7 @@ function StudyNotesWithoutWrap({ chapter }) {
         verseTimeout = setTimeout(() => {
             globalThis.HighlightedVerseNumber = '';
             window.dispatchEvent(new CustomEvent('highlightedVerseChanged'));
-        }, 3000)
+        }, 5000)
     }
 
     // highlight a single verse, a range string, an array, or range object(s)
@@ -1095,7 +1095,7 @@ function StudyNotesWithoutWrap({ chapter }) {
         versesTimeout = setTimeout(() => {
             globalThis.HighlightedVerses = '';
             window.dispatchEvent(new CustomEvent('highlightedVersesChanged'));
-        }, 3000);
+        }, 5000);
     }
 
     function scheduleStudyNoteHighlight(payload) {
@@ -1829,6 +1829,19 @@ function StudyNotes() {
         return () => clearInterval(interval);
     }, []);
 
+    // Alt + S key switching between search types
+    useEffect(() => {
+        const handleKeyPress = (event) => {
+            if (event.altKey && event.key === 's') {
+                event.preventDefault();
+                setSearchType(prev => prev === 'apologist' ? 'tapos' : 'apologist');
+            }
+        };
+
+        window.addEventListener('keydown', handleKeyPress);
+        return () => window.removeEventListener('keydown', handleKeyPress);
+    }, []);
+
 
     return (
         <div className="sn-tabs-wrap">
@@ -1858,20 +1871,6 @@ function StudyNotes() {
 
                 <div className={`sn-panel ${active === 'discover' ? 'show' : 'hide'}`}>
                     <div className="sg-searchWrap">
-                        <div className="search-type-toggle">
-                            <button 
-                                className={`search-toggle-btn ${searchType === 'apologist' ? 'active' : ''}`}
-                                onClick={() => setSearchType('apologist')}
-                            >
-                                Apologist
-                            </button>
-                            <button 
-                                className={`search-toggle-btn ${searchType === 'tapos' ? 'active' : ''}`}
-                                onClick={() => setSearchType('tapos')}
-                            >
-                                Tapos
-                            </button>
-                        </div>
                         {searchType === 'apologist' ? (
                             <ApologistSearch search={globalThis.GlobalSearch ?? "galations 5"} />
                         ) : (

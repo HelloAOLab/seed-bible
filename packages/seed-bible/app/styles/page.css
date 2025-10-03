@@ -109,22 +109,26 @@
   width: 100%;
 }
 
+.bookTitleContainer {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  width: 100%;
+  margin-right: var(--text-bookchapter-margin-right);
+  margin-left: var(--text-bookchapter-margin-left);
+  margin-top: var(--text-bookchapter-margin-top);
+  margin-bottom: var(--text-bookchapter-margin-bottom);
+}
+
 .bookTitle {
   font-family: 'Helvetica Neue', sans-serif;
   font-size: 32px;
-  margin-bottom: 0;
-  font-weight: 500;
   font-family: var(--text-bookchapter-font);
   color: var(--text-bookchapter-color);
   /* font-family: 'Montserrat', sans-serif; */
   /* font-size: 22px; */
   font-weight: var(--text-bookchapter-weight);
   text-align: var(--text-bookchapter-alignment);
-  text-decoration: var(--text-bookchapter-text-decoration);
-  margin-top: var(--text-bookchapter-margin-top);
-  margin-bottom: var(--text-bookchapter-margin-bottom);
-  margin-left: var(--text-bookchapter-margin-left);
-  margin-right: var(--text-bookchapter-margin-right);
 }
 
 .more-resources {
@@ -172,19 +176,19 @@
 
   /* Additions ------> */
   /* set up a transparent border to animate */
-  border: 2px solid transparent;
+  border-bottom: 2px solid transparent;
   border-radius: 4px;
   transition:
-    border-color 0.3s ease-in-out,
-    background-color 0.3s ease-in-out;
+    border-bottom-color 1s ease-in-out,
 
 }
 
 /* Additions ------> */
 
+
+
 .sectionText.highlighted {
-  border-color: #4F645B;
-  background-color: #639498;
+  border-bottom-color: #4F645B;
 }
 
 .clickableCursor {
