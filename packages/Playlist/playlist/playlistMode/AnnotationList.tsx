@@ -1,4 +1,5 @@
 const { LoaderSecondary } = Components;
+import { deleteAnnotation, getUserRecord } from "db.annotations.library";
 
 const { useState, useRef } = os.appHooks;
 
@@ -26,12 +27,9 @@ const AnnotationList = ({ currentOpenedBook, chapter, fetchingAnnotation, setAnn
     const onDelete = async (address) => {
         try {
             setLoading(true);
-            const deleteAddress = `${authBot?.id}.${currentOpenedBook?.bookId}.${currentOpenedBook?.chapter}.${address}`;
-
-            const res = await shout("chronicle_destroy", { address: deleteAddress })[0];
-            const data = JSON.parse(JSON.stringify(res));
-
-            if (data.success) {
+            const userRecord = await getUserRecord();
+            const res = await deleteAnnotation(userRecord, { id: address });
+            if (res.success) {
                 setAnnotationData(prev => {
                     return prev.filter(ele => ele.address !== address);
                 })
@@ -120,16 +118,19 @@ const AnnotationList = ({ currentOpenedBook, chapter, fetchingAnnotation, setAnn
                                         {
                                             click: () => { },
                                             icon: 'history',
-                                            label: 'Show Version History',
+                                            disabled: true,
+                                            label: 'Show version History',
                                         },
                                         {
-                                            click: () => { },
+                                                              disabled: true,
+                          click: () => { },
                                             icon: 'download',
                                             label: 'Download',
                                             noBorderBottom: true
                                         },
                                         {
-                                            click: () => { },
+                                                              disabled: true,
+                          click: () => { },
                                             icon: 'share',
                                             label: 'Share',
                                         },
@@ -143,13 +144,13 @@ const AnnotationList = ({ currentOpenedBook, chapter, fetchingAnnotation, setAnn
                                                 globalThis.SetTab('create');
                                             },
                                             icon: 'edit',
-                                            label: 'Edit Annotations',
+                                            label: 'Edit annotations',
                                             noBorderBottom: true
                                         },
                                         {
                                             click: () => { setDeleteModal(ele.address); closeOverlay(); },
                                             icon: 'delete',
-                                            label: 'Delete Annotations',
+                                            label: 'Delete annotations',
                                         }
                                     ]}
                                 />
@@ -188,10 +189,8 @@ const AnnodataMapper = ({ data }) => {
                     activeItemID={false}
                     clickPass={false}
                     activeItemList={{}}
-                    onClick={() => { }}
                     playlistId={false}
-                    onClickItem={() => {
-                    }}
+                    onClickItem={() => { }}
                     checkListData={{}}
                     creatingPlaylist={true}
                     isPlaylistNestedSupported
@@ -214,10 +213,8 @@ const AnnodataMapper = ({ data }) => {
                     key={`${contentData.id}-${contentData.readAlready}`}
                     playingPlaylist={false}
                     data={contentData}
-                    onDisembed={() => {
-                    }}
-                    onClickCheckbox={() => {
-                    }}
+                    onDisembed={() => { }}
+                    onClickCheckbox={() => { }}
                 /> : <div
                     onClick={() => {
                         thisBot.navigationWithDataItem({ dataItem: contentData });

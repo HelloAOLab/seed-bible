@@ -41,34 +41,31 @@ switch(typeOfInteraction)
                     }
                     else
                     {
-                        let createNewTab = false;
+                        const createNewTab = false;
                         if(createNewTab)
                         {
-                            if(thisBot.vars.tabsContext)
-                            {
-                                let tab = thisBot.vars.tabsContext.tabs.find((currTab) => {
-                                    return currTab.data.book === chapterData.piece.tags.parentBookName && currTab.data.chapter == chapterData.pieceInfo.number
-                                })
+                            let tab = thisBot.vars.tabsContext.tabs.find((currTab) => {
+                                return currTab.data.book === chapterData.piece.tags.parentBookName && currTab.data.chapter == chapterData.pieceInfo.number
+                            })
 
-                                if(!tab)
-                                {
-                                    tab = {
-                                        id: uuid(),
-                                        taken: false,
-                                        data: {
-                                            use: 'thePage',
-                                            type: 'book',
-                                            book: chapterData.piece.tags.parentBookName,
-                                            bookId: BibleVizUtils.Data.tags.booksStaticInfo[chapterData.piece.tags.parentBookName].abbreviation,
-                                            chapter: chapterData.pieceInfo.number,
-                                            translation: 'BSB'
-                                        }
+                            if(!tab)
+                            {
+                                tab = {
+                                    id: uuid(),
+                                    taken: false,
+                                    data: {
+                                        use: 'thePage',
+                                        type: 'book',
+                                        book: chapterData.piece.tags.parentBookName,
+                                        bookId: BibleVizUtils.Data.tags.booksStaticInfo[chapterData.piece.tags.parentBookName].abbreviation,
+                                        chapter: chapterData.pieceInfo.number,
+                                        translation: 'BSB'
                                     }
-                                    globalThis.AddTab(tab)
                                 }
-                                thisBot.vars.tabsContext.setActiveTab(tab.id);
-                                globalThis.UpdateTab(tab);
+                                globalThis.AddTab(tab)
                             }
+                            thisBot.vars.tabsContext.setActiveTab(tab.id);
+                            globalThis.UpdateTab(tab);
                         }
                         else
                         {

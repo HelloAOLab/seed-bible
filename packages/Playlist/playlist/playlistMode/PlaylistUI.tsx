@@ -1,5 +1,6 @@
 os.unregisterApp("playlist-cont-ui");
 os.registerApp("playlist-cont-ui");
+import { getUserRecord, loadAnnotations } from "db.annotations.library";
 import { ProjectProvider } from "playlist.playlistMode.useProjectContext";
 const RenderIcon = await thisBot.RenderIcon();
 
@@ -16,6 +17,12 @@ const CreatePlaylistUI = await thisBot.CreatePlaylistUI();
 const ShowPlayingContentAnnotation = await thisBot.ShowPlayingContentAnnotation();
 const EditRichText = await thisBot.EditRichText();
 const EditAttachment = await thisBot.EditAttachment();
+
+const bibleVizUtils = getBot("system","bibleVizUtils.main");
+console.log("PHEW PHEW PHEWW",bibleVizUtils);
+if(bibleVizUtils) {
+    bibleVizUtils.Initialize();
+}
 // <PlaylistInfoItem />
 
 const sortFunc = (a, b) => {
@@ -270,56 +277,51 @@ const Playlist = () => {
             setAnnotationData([]);
             apiCallforAnnotationRef.current = null;
             if (!currentOpenedBook?.bookId) return;
+
             (async () => {
                 try {
                     setFetchingAnnotation(true);
 
-                    const res = await shout("chronicle_lookup", { address: address, chronicle_tag: "" })[0];
-                    const promises = [];
+                    const userRecord = await getUserRecord();
 
-                    res.forEach(ele => {
-                        const urls = ele.data.urlArray;
-                        promises.push(web.get(urls[urls.length - 1]));
-                        // promises.push(web.get(urls[1]));
-                    });
-
-                    const finalRes = await Promise.all(promises);
-
+                    const annotations = await loadAnnotations(userRecord, currentOpenedBook?.bookId, currentOpenedBook?.chapter);
                     let allAnnotations = [];
 
-                    finalRes.forEach((ele, index) => {
+                    annotations.forEach((ele) => {
                         const data = {
                             bookid: currentOpenedBook?.bookId,
                             chapter: currentOpenedBook?.chapter,
                         };
-                        if (!!ele.data.additionalInfo) {
-                            const tags = [...(ele.data.additionalInfo.tags || [])];
-                            const layers = [...ele.data.additionalInfo.layers];
+                        const innerele = ele?.data?.data;
 
-                            if (ele.data?.type === "chapter") {
+                        if (!!innerele.additionalInfo) {
+                            const tags = [...(ele.data.chronicle_tags || [])];
+                            const layers = [...innerele.additionalInfo.layers];
+
+                            if (innerele?.type === "chapter") {
                                 data.heading = 'Chapter';
                                 data.data = [...layers];
                                 data.tags = [...tags];
-                                data.address = res[index].address;
+                                data.address = ele.id;
                             }
-                            if (ele.data?.type === "verse-grouped") {
-                                const verses = [...ele.data.additionalInfo.verse];
+                            if (innerele?.type === "verse-grouped") {
+                                const verses = [...innerele.additionalInfo.verse];
                                 const length = verses.length;
                                 data.heading = `Verse ${verses[0]}-${verses[length - 1]}`;
-                                data.address = res[index].address;
                                 data.data = [...layers];
                                 data.tags = [...tags];
+                                data.address = ele.id;
                             };
 
-                            if (ele.data?.type === 'verse') {
-                                data.heading = `Verse ${ele.data.additionalInfo.verse}`;
-                                data.address = res[index].address;
+                            if (innerele?.type === 'verse') {
+                                data.heading = `Verse ${innerele.additionalInfo.verse}`;
                                 data.data = [...layers];
                                 data.tags = [...tags];
+                                data.address = ele.id;
                             };
                         }
 
-                        if (!!data.address) {
+                        if (!!data.address || true) {
                             allAnnotations.push(data);
                         }
                     });
@@ -394,6 +396,11 @@ const Playlist = () => {
     }, []);
 
     useLayoutEffect(() => {
+        if (globalThis.IsPlaylistPlaying) {
+            thisBot.Playlistplaying({
+                skipAll: true,
+            })
+        }
         globalThis.makingPlaylist = true;
         globalThis.setOpenSidebar && globalThis.setOpenSidebar(false);
         globalThis.OpenVideoOverlay = () => setShowVideoOverlay(true);
@@ -444,19 +451,14 @@ const Playlist = () => {
             globalThis.StopVideoRecording = false;
             globalThis.RemoveApplicationByID && globalThis.RemoveApplicationByID(globalThis.PLAYLIST_PANEL_ID);
             globalThis.PLAYLIST_PANEL_ID = null;
-            globalThis.PlayingPlaylist = null;
+            globalThis.IS_PLAYLIST_ACTIVE = false;
             globalThis[`defaultToggleGreyCheckPLayingPlaylist`] &&
                 globalThis[`defaultToggleGreyCheckPLayingPlaylist`](null);
-            globalThis.IsQueuePresent = false;
             thisBot.CloseFloatingApp();
-            globalThis.IS_PLAYLIST_ACTIVE = false;
             globalThis.SetSplitAppPanel2 && globalThis.SetSplitAppPanel2(null);
             globalThis.makingPlaylist = false;
             globalThis.SetMediaURL && globalThis.SetMediaURL(null);
             globalThis.SetVideoSrc && globalThis.SetVideoSrc(null);
-            if (globalThis.RemoveNowBarApp) {
-                globalThis.RemoveNowBarApp('player-playlist-bar');
-            }
         }
     }, []);
 
@@ -535,7 +537,10 @@ const Playlist = () => {
                             secondary
                             onClick={() => {
                                 globalThis.IsPlaylistPlaying = false;
+                                globalThis.IsQueuePresent = false;
                                 thisBot.StopPlayingPlaylist();
+                                os.unregisterApp("playing-playlist-flaot");
+                                thisBot.CloseFloatingApp();
                                 if (globalThis.PendingAction) {
                                     globalThis.PendingAction();
                                     globalThis.PendingAction = null;
@@ -679,7 +684,8 @@ const Playlist = () => {
                                             globalThis.IsQueuePresent = false;
                                             // os.unregisterApp("playing-playlist");
 
-                                            globalThis.IS_PLAYLIST_ACTIVE = false; globalThis.SET_SHOW_CHECK && globalThis.SET_SHOW_CHECK(false);
+                                            globalThis.IS_PLAYLIST_ACTIVE = false;
+                                            globalThis.SET_SHOW_CHECK && globalThis.SET_SHOW_CHECK(false);
                                             setSplitAppPanel2(null);
                                             globalThis.RemoveApplicationByID && globalThis.RemoveApplicationByID(globalThis.PLAYLIST_PANEL_ID);
                                             globalThis.PLAYLIST_PANEL_ID = null;
@@ -692,7 +698,7 @@ const Playlist = () => {
                                 </div>
                             </div>
                             {isLayers ?
-                                <div style={{ display: "flex", flexDirection: 'column', overflow: 'auto', paddingBottom: !!SplitAppPanel2 ? "10rem" : "0", height: `calc(100% - ${playingPlaylist || !!editData.id ? '130px' : '40px'})` }}>
+                                <div style={{ display: "flex", flexDirection: 'column', overflow: 'auto', paddingBottom: !!SplitAppPanel2 ? "0rem" : "0", height: `calc(100% - ${playingPlaylist || !!editData.id ? '130px' : '40px'})` }}>
                                     <Discover setAnnotationData={setAnnotationData} editingPlaylist={editData.id} currentOpenedBook={currentOpenedBook} fetchingAnnotation={fetchingAnnotation} chapter={currentOpenedBook?.chapter} annotationData={annoationData} style={{ height: `100%` }} setOpenModal={setOpenModal} playingPlaylist={playingPlaylist} />
                                 </div>
                                 :

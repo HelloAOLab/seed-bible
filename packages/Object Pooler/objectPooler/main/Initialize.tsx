@@ -10,3 +10,5 @@ if(thisBot.masks.initialized || globalThis.ObjectPooler || configBot.tags.system
 globalThis.ObjectPooler = thisBot
 setTagMask(thisBot, "initialized", true);
 thisBot.vars.poolDictionary = {};
+
+shout("OnObjectPoolerInitialized");

@@ -8,9 +8,9 @@
 
 
 
-[...thisBot.vars.groundedChapterSelectionQueue, ...thisBot.vars.stackedChapterSelectionQueue].map((entry) => {
+// [...thisBot.vars.groundedChapterSelectionQueue, ...thisBot.vars.stackedChapterSelectionQueue].map((entry) => {
 
-})
+// })
 
 switch(data.queuedChapterData.action)
 {

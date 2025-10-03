@@ -1,7 +1,5 @@
 const {book} = that;
 
-if(!thisBot.vars.tabsContext) return;
-
 const activeTab = thisBot.vars.tabsContext.tabs.find((tab) => {return tab.id === thisBot.vars.tabsContext.activeTab});
 
 if(activeTab)

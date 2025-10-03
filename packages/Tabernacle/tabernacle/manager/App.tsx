@@ -1,15 +1,14 @@
 const {useEffect} = os.appHooks;
 
-import { useTabsContext } from 'app.hooks.tabs';
-import { useBibleContext } from 'app.hooks.bibleVariables'
+import { useMouseMove } from 'app.hooks.mouseMove'
 
 const App = () => {
-
-    const { tabs, activeTab } = useTabsContext();
+    
+    const { floatingApps } = useMouseMove()
 
     useEffect(() => {
-        shout("OnTabsContextChanged", { tabs, activeTab })
-    }, [ tabs, activeTab ])
+        thisBot.vars.floatingApps = floatingApps;
+    }, [ floatingApps ])
 
     return <div style={{width: "100%", height: "100%"}}>
         <div

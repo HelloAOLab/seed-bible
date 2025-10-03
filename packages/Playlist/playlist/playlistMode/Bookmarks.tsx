@@ -62,7 +62,7 @@ const Bookmarks = () => {
                 <p className="verse-style" style={{ flexGrow: 1 }}>
                     - {data.additionalInfo.data?.text?.substr(0, 27)}{data.additionalInfo.data?.text?.length > 27 ? "..." : ""}
                 </p>
-                <p className="time-style" style={{ width: '70px', textAlign: 'right', marginRight: '1.25rem' }}>
+                <p className="time-style" style={{ width: '92px', textAlign: 'right', marginRight: '1.25rem' }}>
                     {FormatRelativeTime(data.time ? new Date(data.time) : null)}
                 </p>
             </div>

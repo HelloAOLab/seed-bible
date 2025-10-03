@@ -1,1 +1,0 @@
-return BibleVizUtils.Data.masks.labelDateFormat;

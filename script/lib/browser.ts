@@ -245,8 +245,15 @@ export async function loadInst(page: Page, inst: string, collaborative: boolean 
 export const DEFAULT_EXTENSIONS = [
     'seed-bible',
     'BookSelector',
+    'Object Pooler',
+    'GeoImporter',
+    'Color Lerper',
+    'Location',
+    'Bible Visualization Utils',
     'Bible Layout 2D',
     'Painter',
+    'Bible Layout 3D',
+    'Bible Stack',
     'Playlist',
 ];
 
@@ -272,7 +279,10 @@ export async function loadSeedBible(page: Page, extraExtensions: string[] = []) 
         await registerPackage(page, pkg);
     }
 
-    await waitForPackage(page, 'Playlist');
+    const lastPackage = installedPackages[installedPackages.length - 1];
+    if (lastPackage) {
+        await waitForPackage(page, lastPackage);
+    }
 
     await execScript(page, `
         const packager = getBot('system', 'app.packager');

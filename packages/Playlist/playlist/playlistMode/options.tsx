@@ -4,7 +4,7 @@ import { MenuIcon } from 'app.components.icons'
 const items = [
     {
         icon: <MenuIcon name="file_export" />,
-        title: () => !globalThis.IsPlaylistPlaying ? 'Add To Annotation' : 'Add to Queue',
+        title: () => !globalThis.IsPlaylistPlaying ? 'Add annotation' : 'Add to queue',
         onClick: (item) => {
 
             const id = createUUID();
@@ -37,7 +37,7 @@ const items = [
                 }, 100);
                 return;
             }
-            SetQueue(dataItemTemp);
+            globalThis.SetQueue?.(dataItemTemp);
         }
     },
 
@@ -49,7 +49,7 @@ const items = [
             if (thisBot.tags.bookmarks[title]) {
                 return "Remove Bookmark";
             }
-            return "Add Bookmark"
+            return "Add bookmark"
         },
         onClick: async (item) => {
             const id = createUUID();

@@ -148,14 +148,14 @@ server.defineCommand("save", {
       for (const id in state) {
         const bot = state[id];
         const system = bot.tags.system ? bot.tags.system.toLowerCase() : null;
-        const forPackage = bot.tags.forPackage
-          ? bot.tags.forPackage.toLowerCase()
+        const packageName = bot.tags.packageName
+          ? bot.tags.packageName.toLowerCase()
           : null;
         let hasPackage = false;
         for (const pkg of packages) {
           const pkgLower = pkg.toLowerCase();
           let found = false;
-          if (forPackage && forPackage === pkgLower) {
+          if (packageName && packageName === pkgLower) {
             found = true;
           } else if (system && system.startsWith(pkgLower)) {
             found = true;
@@ -180,7 +180,7 @@ server.defineCommand("save", {
           }
         }
 
-        if (!hasPackage && (!forPackage || forPackage === "seed-bible")) {
+        if (!hasPackage && (!packageName || packageName === "seed-bible")) {
           seedBible.state[id] = bot;
         }
       }

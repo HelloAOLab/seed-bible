@@ -97,6 +97,7 @@ export function MouseMoveProvider({ children }) {
   globalThis.RemoveFloatingApp = (appId) => {
     setFloatingApps((prev) => prev.filter((app) => app.id !== appId));
     setHiddenApps((prev) => prev.filter((app) => app.id !== appId));
+    shout("onFloatingAppRemoved", { appId });
   };
 
   // update
@@ -239,11 +240,16 @@ export function MouseMoveProvider({ children }) {
       );
     };
 
-    document.addEventListener("mousemove", handleMouseMove);
-    document.addEventListener("mouseup", handleMouseUp);
+    if (document) {
+      document.addEventListener("mousemove", handleMouseMove);
+      document.addEventListener("mouseup", handleMouseUp);
+    }
+
     return () => {
-      document.removeEventListener("mousemove", handleMouseMove);
-      document.removeEventListener("mouseup", handleMouseUp);
+      if (document) {
+        document.removeEventListener("mousemove", handleMouseMove);
+        document.removeEventListener("mouseup", handleMouseUp);
+      }
     };
   }, []);
 
@@ -265,11 +271,15 @@ export function MouseMoveProvider({ children }) {
         })
       );
     };
-    window.addEventListener("resize", onResize);
-    window.addEventListener("orientationchange", onResize);
+    if (window) {
+      window.addEventListener("resize", onResize);
+      window.addEventListener("orientationchange", onResize);
+    }
     return () => {
-      window.removeEventListener("resize", onResize);
-      window.removeEventListener("orientationchange", onResize);
+      if (window) {
+        window.removeEventListener("resize", onResize);
+        window.removeEventListener("orientationchange", onResize);
+      }
     };
   }, []);
 
@@ -299,8 +309,14 @@ export function MouseMoveProvider({ children }) {
     const onKey = (e) => {
       if (e.key === "Escape") exitAnyFullscreen();
     };
-    window.addEventListener("keydown", onKey);
-    return () => window.removeEventListener("keydown", onKey);
+    if (window) {
+      window.addEventListener("keydown", onKey);
+    }
+    return () => {
+      if (window) {
+        window.removeEventListener("keydown", onKey);
+      }
+    };
   }, [anyFullscreen]);
 
   async function fullScreenButton(anyFullscreen) {
@@ -334,8 +350,7 @@ export function MouseMoveProvider({ children }) {
             cursor: "pointer",
             backdropFilter: "blur(6px)",
             boxShadow: "0 2px 10px rgba(0,0,0,0.35)",
-          }}
-        >
+          }}>
           <span className="material-symbols-outlined" style={{ fontSize: 20 }}>
             close_fullscreen
           </span>
@@ -372,8 +387,7 @@ export function MouseMoveProvider({ children }) {
         hiddenApps,
         slideOutApp,
         slideInApp,
-      }}
-    >
+      }}>
       {isDragging && (
         <div
           style={{
@@ -382,8 +396,7 @@ export function MouseMoveProvider({ children }) {
             top: position.y,
             zIndex: 10000,
             pointerEvents: "none",
-          }}
-        >
+          }}>
           {Element?.App}
         </div>
       )}
@@ -410,8 +423,7 @@ export function MouseMoveProvider({ children }) {
             display: "flex",
             flexDirection: "column",
             gap: 8,
-          }}
-        >
+          }}>
           {hiddenApps.map((app) => (
             <button
               key={app.id}
@@ -439,12 +451,10 @@ export function MouseMoveProvider({ children }) {
               onMouseLeave={(e) => {
                 e.currentTarget.style.transform = "translateX(0)";
                 e.currentTarget.style.background = "rgba(0,0,0,0.8)";
-              }}
-            >
+              }}>
               <span
                 className="material-symbols-outlined"
-                style={{ fontSize: 24 }}
-              >
+                style={{ fontSize: 24 }}>
                 chevron_left
               </span>
             </button>
@@ -457,8 +467,7 @@ export function MouseMoveProvider({ children }) {
           width: "100%",
           height: "100%",
           pointerEvents: isAbleToRightClick ? "none" : "",
-        }}
-      >
+        }}>
         {children}
       </div>
     </MyContext.Provider>
@@ -523,27 +532,34 @@ const FloatingAppContainer = ({
     const onTouch = () => kickVisibility();
     const onEnter = () => kickVisibility();
 
-    wrapEl.addEventListener("mousemove", onMove);
-    wrapEl.addEventListener("mousedown", onDown);
-    wrapEl.addEventListener("wheel", onWheel, { passive: true });
-    wrapEl.addEventListener("touchstart", onTouch, { passive: true });
-    wrapEl.addEventListener("touchmove", onTouch, { passive: true });
-    wrapEl.addEventListener("mouseenter", onEnter);
+    if (wrapEl) {
+      wrapEl.addEventListener("mousemove", onMove);
+      wrapEl.addEventListener("mousedown", onDown);
+      wrapEl.addEventListener("wheel", onWheel, { passive: true });
+      wrapEl.addEventListener("touchstart", onTouch, { passive: true });
+      wrapEl.addEventListener("touchmove", onTouch, { passive: true });
+      wrapEl.addEventListener("mouseenter", onEnter);
+    }
 
     const onKey = () => kickVisibility();
-    window.addEventListener("keydown", onKey);
-
+    if (window) {
+      window.addEventListener("keydown", onKey);
+    }
     // start initial countdown
     kickVisibility();
 
     return () => {
-      wrapEl.removeEventListener("mousemove", onMove);
-      wrapEl.removeEventListener("mousedown", onDown);
-      wrapEl.removeEventListener("wheel", onWheel);
-      wrapEl.removeEventListener("touchstart", onTouch);
-      wrapEl.removeEventListener("touchmove", onTouch);
-      wrapEl.removeEventListener("mouseenter", onEnter);
-      window.removeEventListener("keydown", onKey);
+      if (wrapEl) {
+        wrapEl.removeEventListener("mousemove", onMove);
+        wrapEl.removeEventListener("mousedown", onDown);
+        wrapEl.removeEventListener("wheel", onWheel);
+        wrapEl.removeEventListener("touchstart", onTouch);
+        wrapEl.removeEventListener("touchmove", onTouch);
+        wrapEl.removeEventListener("mouseenter", onEnter);
+      }
+      if (window) {
+        window.removeEventListener("keydown", onKey);
+      }
       if (hideTimerRef.current) clearTimeout(hideTimerRef.current);
     };
   }, [wrapRef, app.id, mobile]);
@@ -635,8 +651,7 @@ const FloatingAppContainer = ({
               AddFloatingApp(app);
             }}
             title={app.title}
-            onClose={() => RemoveApplicationByID(id)}
-          >
+            onClose={() => RemoveApplicationByID(id)}>
             {app.App}
           </PanelAppWrapper>
         ),
@@ -800,8 +815,7 @@ const FloatingAppContainer = ({
       className="floating-wrap"
       style={wrapperStyle}
       onMouseDown={handleMouseDown}
-      ref={wrapRef}
-    >
+      ref={wrapRef}>
       <div className="floating-app" style={windowStyle}>
         <div style={contentStyle}>{app.App}</div>
         {!app.isDocked && !app.isMinimized && (
@@ -856,12 +870,10 @@ const FloatingAppContainer = ({
             onClick={screen2}
             style={pillBtn}
             title="Square"
-            className="control-button"
-          >
+            className="control-button">
             <span
               className="material-symbols-outlined"
-              style={{ fontSize: 20 }}
-            >
+              style={{ fontSize: 20 }}>
               rectangle
             </span>
           </button>
@@ -870,12 +882,10 @@ const FloatingAppContainer = ({
             onClick={screen1}
             style={pillBtn}
             title="Bring to front / Pop out"
-            className="control-button"
-          >
+            className="control-button">
             <span
               className="material-symbols-outlined"
-              style={{ fontSize: 25 }}
-            >
+              style={{ fontSize: 25 }}>
               rectangle
             </span>
           </button>
@@ -883,12 +893,10 @@ const FloatingAppContainer = ({
           <button
             onClick={() => handleFullscreen()}
             style={pillBtn}
-            className="control-button"
-          >
+            className="control-button">
             <span
               className="material-symbols-outlined"
-              style={{ fontSize: 25 }}
-            >
+              style={{ fontSize: 25 }}>
               fullscreen
             </span>
           </button>
@@ -897,12 +905,10 @@ const FloatingAppContainer = ({
             className="control-button"
             onClick={handleSlideOut}
             title="Hide to side panel"
-            style={pillBtn}
-          >
+            style={pillBtn}>
             <span
               className="material-symbols-outlined"
-              style={{ fontSize: 25 }}
-            >
+              style={{ fontSize: 25 }}>
               chevron_right
             </span>
           </button>
@@ -911,12 +917,10 @@ const FloatingAppContainer = ({
             className="control-button"
             onClick={moveToPanel}
             title="Move to panel (or restore)"
-            style={pillBtn}
-          >
+            style={pillBtn}>
             <span
               className="material-symbols-outlined"
-              style={{ fontSize: 25 }}
-            >
+              style={{ fontSize: 25 }}>
               dock_to_left
             </span>
           </button>
@@ -941,12 +945,10 @@ const FloatingAppContainer = ({
             className="control-button"
             onClick={handleClose}
             title="Close"
-            style={{ ...pillBtn, outlineColor: "rgba(255,80,80,.9)" }}
-          >
+            style={{ ...pillBtn, outlineColor: "rgba(255,80,80,.9)" }}>
             <span
               className="material-symbols-outlined"
-              style={{ fontSize: 25 }}
-            >
+              style={{ fontSize: 25 }}>
               close
             </span>
           </button>
@@ -992,8 +994,7 @@ export function PanelAppWrapper({
         height: "100%",
         display: "flex",
         flexDirection: "column",
-      }}
-    >
+      }}>
       <div style={headerStyle}>
         <h4 style={{ fontSize: 14, fontWeight: 600, color: "#333", margin: 0 }}>
           {title}
@@ -1004,8 +1005,7 @@ export function PanelAppWrapper({
               className="control-button"
               style={btn}
               title="Return to floating window"
-              onClick={onReturnToFloat}
-            >
+              onClick={onReturnToFloat}>
               <span className="material-symbols-outlined">open_in_new</span>
               <span style={{ fontSize: 12 }}>Return to Float</span>
             </button>
@@ -1015,8 +1015,7 @@ export function PanelAppWrapper({
               className="control-button"
               style={{ ...btn, borderColor: "#ef4444", color: "#ef4444" }}
               title="Close"
-              onClick={onClose}
-            >
+              onClick={onClose}>
               <span className="material-symbols-outlined">close</span>
               <span style={{ fontSize: 12 }}>Close</span>
             </button>

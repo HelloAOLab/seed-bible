@@ -81,6 +81,7 @@
     display: flex;
     align-items: center;
     gap: 1rem;
+    color: white;
     font-size: 14px;
     font-weight: 600;
     border-bottom: 1px solid black;
@@ -88,8 +89,20 @@
     cursor: pointer;
 }
 
+.more-menu-items * {
+    color: white !important;
+}
+
+.more-menu-items.inactive * {
+    color: #5F5E5C !important;
+}
+
 .more-menu-items.active {
     background-color: white;
+}
+
+.more-menu-items.inactive {
+    color: #5F5E5C;
 }
 
 .more-menu-items.active *:not(.tooltip-message) {
@@ -121,7 +134,7 @@
     display: block;
     visibility: visible;
     z-index: 1000;
-    padding-bottom: 7rem !important;
+    /* padding-bottom: 7rem !important; */
 }
 
 .playing-queue.checklistEnabled {

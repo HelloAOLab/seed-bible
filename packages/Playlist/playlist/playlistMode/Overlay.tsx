@@ -16,24 +16,25 @@ const Overlay = ({ position, onClose, items, styles, children }) => {
             {items.map(ele => {
                 return (
                     <div
-                        className={`more-menu-items ${ele.noBorderBottom ? 'noBorderBottom' : ''}`}
+                        className={`more-menu-items ${ele.disabled ? 'inactive':''} ${ele.noBorderBottom ? 'noBorderBottom' : ''}`}
                         onClick={() => {
                             ele.click();
                         }}
-                        // style={{
-                        //     borderTop: '1px solid #3E3E3E'
-                        // }}
+                        style={{
+                            borderRadius: ele.disabled ? "4px" : '',
+                            cursor: ele.disabled ? "not-allowed" : '',
+                        }}
                     >
-                        {!!ele.icon && <span style={{ color: 'white' }} class="material-symbols-outlined">
+                        {!!ele.icon && <span style={{ color: ele.disabled ? "rgb(142 140 140) !important" : 'white' }} class="material-symbols-outlined">
                             {ele.icon}
                         </span>}
-                        <p>
+                        <p style={{ color: ele.disabled ? "rgb(142 140 140) !important" : 'white' }} >
                             {ele.label}
                         </p>
                     </div>
                 )
             })}
-        </div>
+        </div >
     </>
 }
 

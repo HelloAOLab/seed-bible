@@ -1,4 +1,5 @@
 const { useState, useLayoutEffect, useRef, useMemo } = os.appHooks;
+import { getUserRecord, createAnnotation, saveAnnotation } from "db.annotations.library";
 
 const isMobile = gridPortalBot.tags.pixelWidth < MOBILE_VIEWPORT_THRESHOLD;
 const { Chips, Checkbox, Button, Tooltip, LoaderSecondary } = Components;
@@ -383,10 +384,9 @@ const AddAnotationUI = ({
                 setList([]);
                 try {
                     // const latestData = await shout("chronicle_loadData", { record: latestRecord[0], targetVersion: 0 })[0];
-                    const res = await shout("chronicle_lookup", { address: `${editData.prefixAddress}.${editData.address}`, chronicle_tag: "" })[0];
-                    const urls = res[0].data.urlArray;
-
-                    const data = await web.get(urls[urls.length - 1]);
+                    const userRecord = await getUserRecord();
+                    const res = await os.getData(userRecord, editData?.address)
+                    const data = res.data.data;
                     if (data.data) {
                         setEditDataDetails({ ...data.data });
                         setList([...data.data.additionalInfo.layers]);
@@ -713,9 +713,12 @@ const AddAnotationUI = ({
                         layers: [...list]
                     }
                 },
-                address: isEditAddress
             };
-            promisesArray.push(shout("chronicle_add", chroAddData)[0]);
+
+            const annotation = createAnnotation(chroAddData.book, chroAddData.chapter, { ...chroAddData, id: isEditAddress });
+
+            const userRecord = await getUserRecord();
+            promisesArray.push(saveAnnotation(userRecord, annotation));
             await Promise.all(promisesArray);
             globalThis.SelectedItemIDForAttachments = null;
             ShowNotification({ message: `Annotations saved successfully!`, severity: "success" });
@@ -773,6 +776,7 @@ const AddAnotationUI = ({
 
         try {
             const promisesArray = [];
+            const userRecord = await getUserRecord();
             currentList.forEach(ele => {
                 if (ele.type !== 'chapter-range' && ele.type !== 'chapter-grouped') {
                     const chroAddData = {
@@ -782,7 +786,8 @@ const AddAnotationUI = ({
                         chronicle_tags: [...(ele.additionalInfo.tags || [])],
                         data: { ...ele }
                     }
-                    promisesArray.push(shout("chronicle_add", chroAddData)[0]);
+                    const annotation = createAnnotation(chroAddData.book, chroAddData.chapter, chroAddData);
+                    promisesArray.push(saveAnnotation(userRecord, annotation));
                 }
             });
 
@@ -1464,7 +1469,7 @@ const AddAnotationUI = ({
             }
             {!!mediaURL && <AudioPlayer close mediaURL={mediaURL} />}
 
-            <div style={{ marginTop: 'auto', padding: '1rem 0 ' }}>
+            <div style={{ padding: '1rem 0 ' }}>
                 <div className="add-playlist-actions">
                     <Button
                         onClick={onClickSave}

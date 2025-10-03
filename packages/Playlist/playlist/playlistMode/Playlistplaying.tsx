@@ -1,53 +1,55 @@
-const { playingPlaylist, startIndex, startSubIndex, parentId, name: playlistName, list = undefined } = that;
-
-if (!globalThis.IsQueuePresent) {
+const { playingPlaylist, skipAll, startIndex, startSubIndex, parentId, name: playlistName, list = undefined } = that;
+if (skipAll) {
     os.unregisterApp("playing-playlist");
     os.registerApp("playing-playlist");
     globalThis.IS_PLAYLIST_ACTIVE = 1;
 } else {
-    if (globalThis.READING_PLAN_WORK) return;
-    let playlist = globalThis[`${parentId}playlists`].find(ele => ele.id === playingPlaylist);
-    if (list) {
-        playlist = {
-            list: list,
-            isLayers: false,
-            id: createUUID(),
-            playlistID: playingPlaylist,
-            checklistEnabled: false,
-            readingPlanEnabled: false
-        }
-    }
-    globalThis.SetPlayingList(prev => {
-        const keys = Object.keys(prev);
-        const keyNumber = keys.length;
-        return {
-            ...prev,
-            [keyNumber]: {
-                name: playlistName,
-                list: playlist.isLayers ? thisBot.PlayingLayersConversion(playlist.list) : playlist.list,
+    if (!globalThis.IsQueuePresent) {
+        os.unregisterApp("playing-playlist");
+        os.registerApp("playing-playlist");
+        globalThis.IS_PLAYLIST_ACTIVE = 1;
+        globalThis.PlayingPlaylists = {};
+        globalThis.PlayingPlaylistCheckedItems = {};
+        globalThis.CurrentIndexItem = {};
+    } else {
+        if (globalThis.READING_PLAN_WORK) return;
+        let playlist = globalThis[`${parentId}playlists`].find(ele => ele.id === playingPlaylist);
+        if (list) {
+            playlist = {
+                list: list,
+                isLayers: false,
                 id: createUUID(),
-                playlistID: playlist.id,
-                isLayers: playlist.isLayers
+                playlistID: playingPlaylist,
+                checklistEnabled: false,
+                readingPlanEnabled: false
             }
         }
-    });
-    return;
+        globalThis.SetPlayingList(prev => {
+            const keys = Object.keys(prev);
+            const keyNumber = keys.length;
+            return {
+                ...prev,
+                [keyNumber]: {
+                    name: playlistName,
+                    list: playlist.isLayers ? thisBot.PlayingLayersConversion(playlist.list) : playlist.list,
+                    id: createUUID(),
+                    playlistID: playlist.id,
+                    isLayers: playlist.isLayers
+                }
+            }
+        });
+        if (!skipAll) {
+            thisBot.CloseSelf();
+        }
+        return;
+    }
 }
-
-
 
 const { useState, useLayoutEffect, useRef, useMemo, createRef } = os.appHooks;
 const { Input, Modal, Button, ButtonsCover } = Components;
 
 const AttachLink = await thisBot.AttachLink();
-const VideoPlayer = await thisBot.VideoSmallScreen();
-const AudioPlayer = await thisBot.AudioPlayer();
 const PlaylistPlayerControls = await thisBot.PlaylistPlayerControls();
-
-if (globalThis.AddNowBarApp) {
-    const id = 'player-playlist-bar';
-    globalThis.AddNowBarApp(<PlaylistPlayerControls parentId={parentId} />, id);
-}
 
 const paraStyle = {
     fontWeight: "400",
@@ -68,7 +70,7 @@ const ButtonStyle = {
 let subIndex = startSubIndex;
 
 
-let playlist = globalThis[`${parentId}playlists`].find(ele => ele.id === playingPlaylist);
+let playlist = !playingPlaylist ? {} : globalThis[`${parentId}playlists`].find(ele => ele.id === playingPlaylist);
 
 if (list) {
     playlist = {
@@ -144,30 +146,13 @@ const getCurrentItem = (key, index, playlists, subIndex, isHint = false) => {
     // return targetItem;
 }
 
-const isfirstItemPlaylist = !!thh[0].list;
+const isfirstItemPlaylist = !!thh?.[0].list;
 
 if (startIndex === 0 && isfirstItemPlaylist) {
     subIndex = 0;
 }
 
 let firstIndex = 0;
-
-
-for (let i = 0; i < thh.length; i++) {
-    const ele = thh[i];
-    if (ele.type !== 'heading') {
-        firstIndex = i;
-        const firstInnerItem = ele?.additionalInfo?.layers?.[0];
-        if (globalThis.IsVideoAttachment(firstInnerItem) && firstInnerItem.autoPlay) {
-            setTimeout(() => {
-                globalThis[`${ele.id}OpenToggle`] && globalThis[`${ele.id}OpenToggle`](true);
-            }, 200);
-            subIndex = 1;
-        }
-        break;
-    }
-
-}
 
 const pastDateEvents = {};
 const closestNearDateEvent = {};
@@ -184,185 +169,170 @@ function getUtcTimestamp(dateString) {
     return new Date(Date.UTC(year, month - 1, day)).getTime();
 }
 
-if (readingPlanEnabled) {
-    playlist.list.forEach((ele, index) => {
-        if (ele.type === "date") {
-            lastActiveDate = getUtcTimestamp(ele.additionalInfo.date);
-            if (lastActiveDate >= currentDate) {
-                if (closestDateFound) {
-                    futureDateBreak = true;
+
+
+if (!skipAll) {
+
+    for (let i = 0; i < thh.length; i++) {
+        const ele = thh[i];
+        if (ele.type !== 'heading') {
+            firstIndex = i;
+            const firstInnerItem = ele?.additionalInfo?.layers?.[0];
+            if (globalThis.IsVideoAttachment(firstInnerItem) && firstInnerItem.autoPlay) {
+                setTimeout(() => {
+                    globalThis[`${ele.id}OpenToggle`] && globalThis[`${ele.id}OpenToggle`](true);
+                }, 200);
+                subIndex = 1;
+            }
+            break;
+        }
+
+    }
+
+    if (readingPlanEnabled) {
+        playlist.list.forEach((ele, index) => {
+            if (ele.type === "date") {
+                lastActiveDate = getUtcTimestamp(ele.additionalInfo.date);
+                if (lastActiveDate >= currentDate) {
+                    if (closestDateFound) {
+                        futureDateBreak = true;
+                    }
+                    closestDateFound = true;
                 }
-                closestDateFound = true;
-            }
-            if (!futureDateBreak && !closestDateFound) {
-                pastDateEvents[ele.id] = true;
-                pastDateEvents[`${pseudoIndentifier}${ele.id}`] = true;
-            }
-        } else {
-            if (lastActiveDate < currentDate) {
-                pastDateEvents[ele.id] = true;
-                pastDateEvents[`${pseudoIndentifier}${ele.id}`] = true;
+                if (!futureDateBreak && !closestDateFound) {
+                    pastDateEvents[ele.id] = true;
+                    pastDateEvents[`${pseudoIndentifier}${ele.id}`] = true;
+                }
             } else {
-                if (!futureDateBreak) {
-                    closestNearDateEvent[ele.id] = true;
-                    findLastActiveIndex = index;
+                if (lastActiveDate < currentDate) {
+                    pastDateEvents[ele.id] = true;
+                    pastDateEvents[`${pseudoIndentifier}${ele.id}`] = true;
+                } else {
+                    if (!futureDateBreak) {
+                        closestNearDateEvent[ele.id] = true;
+                        findLastActiveIndex = index;
+                    }
+                    if (firstActiveIndex === -1 && ele.type !== 'heading') {
+                        firstActiveIndex = index;
+                        firstActiveItem = ele;
+                    }
                 }
-                if (firstActiveIndex === -1 && ele.type !== 'heading') {
-                    firstActiveIndex = index;
-                    firstActiveItem = ele;
+            }
+        });
+
+        if (firstActiveIndex > -1) {
+
+            firstActiveIndex = -1;
+
+            thh.forEach((ele, i) => {
+                if (ele.id === firstActiveItem.id) {
+                    firstActiveIndex = i;
                 }
+                if (firstActiveIndex === -1 && Array.isArray(ele.additionalInfo)) {
+                    ele.additionalInfo.forEach(item => {
+                        if (item.id === firstActiveItem.id) {
+                            firstActiveIndex = i;
+                        }
+                    });
+                }
+            })
+        }
+    }
+
+
+    if (!checklistEnabled) {
+        const findIndex = readingPlanEnabled ? firstActiveIndex : firstIndex;
+        const tgITM = getCurrentItem(0, findIndex, { 0: { list: thisBot.PlayingLayersConversion(playlist.list) } }, 0);
+
+
+        if (tgITM.type === "attachment-link") {
+            thisBot.RenderLinkContent({ ...tgITM, isLastItem: thh.length === 1 && (!isfirstItemPlaylist || thh[0].list.length === 1), isFirstItem: startIndex === 0 && subIndex < 1 });
+        } else if (tgITM) {
+            const isBulk = Array.isArray(tgITM.additionalInfo);
+            const skip = await thisBot.checkIfNeedToSkip({ dataItem: tgITM });
+            if (!skip) {
+                thisBot.navigationWithDataItem({ dataItem: isBulk ? tgITM.additionalInfo : tgITM, });
+                // if (tgITM?.nextTargetItem) {
+                //     if (tgITM.nextTargetItem.additionalInfo.type === "attachment-link") {
+                //         thisBot.RenderLinkContent({ ...tgITM.nextTargetItem });
+                //     } else {
+                //         thisBot.navigationWithDataItem({ dataItem: tgITM.nextTargetItem, });
+
+                //     }
+                // }
             }
         }
-    });
-
-    if (firstActiveIndex > -1) {
-
-        firstActiveIndex = -1;
-
-        thh.forEach((ele, i) => {
-            if (ele.id === firstActiveItem.id) {
-                firstActiveIndex = i;
-            }
-            if (firstActiveIndex === -1 && Array.isArray(ele.additionalInfo)) {
-                ele.additionalInfo.forEach(item => {
-                    if (item.id === firstActiveItem.id) {
-                        firstActiveIndex = i;
-                    }
-                });
-            }
-        })
+        globalThis[`${parentId}ToggleGreyCheckPLayingPlaylist`] && globalThis[`${parentId}ToggleGreyCheckPLayingPlaylist`](tgITM.id);
     }
+
+    globalThis.PPthh = thh;
+    globalThis.PPpastDateEvents = pastDateEvents;
+    globalThis.PPchecklistEnabled = checklistEnabled;
+    globalThis.PPreadingPlanEnabled = readingPlanEnabled;
+    globalThis.PPfirstActiveIndex = firstActiveIndex;
+    globalThis.PPfirstIndex = firstIndex;
+    globalThis.PPplaylist = playlist;
+    globalThis.PPsubIndex = subIndex;
+    globalThis.PPplaylistName = playlistName;
+    globalThis.PPclosestNearDateEvent = closestNearDateEvent;
 }
 
 
-if (!checklistEnabled) {
-    const findIndex = readingPlanEnabled ? firstActiveIndex : firstIndex;
-    const tgITM = getCurrentItem(0, findIndex, { 0: { list: thisBot.PlayingLayersConversion(playlist.list) } }, 0);
-
-
-    if (tgITM.type === "attachment-link") {
-        thisBot.RenderLinkContent({ ...tgITM, isLastItem: thh.length === 1 && (!isfirstItemPlaylist || thh[0].list.length === 1), isFirstItem: startIndex === 0 && subIndex < 1 });
-    } else if (tgITM) {
-        const isBulk = Array.isArray(tgITM.additionalInfo);
-        const skip = await thisBot.checkIfNeedToSkip({ dataItem: tgITM });
-        if (!skip) {
-            thisBot.navigationWithDataItem({ dataItem: isBulk ? tgITM.additionalInfo : tgITM, });
-            // if (tgITM?.nextTargetItem) {
-            //     if (tgITM.nextTargetItem.additionalInfo.type === "attachment-link") {
-            //         thisBot.RenderLinkContent({ ...tgITM.nextTargetItem });
-            //     } else {
-            //         thisBot.navigationWithDataItem({ dataItem: tgITM.nextTargetItem, });
-
-            //     }
-            // }
-        }
+if (globalThis.AddNowBarApp && !globalThis.IsQueuePresent) {
+    const id = 'player-playlist-bar';
+    globalThis.AddNowBarApp(<PlaylistPlayerControls parentId={parentId} />, id);
+} else if (!globalThis.IsQueuePresent) {
+    os.unregisterApp("playing-playlist-flaot");
+    os.registerApp("playing-playlist-flaot");
+    const FloatApp = () => {
+        return <div style={{ top: '1rem', left: '1rem', zIndex: '10000', position: 'fixed' }}>
+            <PlaylistPlayerControls parentId={parentId} />
+        </div>
     }
-    globalThis[`${parentId}ToggleGreyCheckPLayingPlaylist`] && globalThis[`${parentId}ToggleGreyCheckPLayingPlaylist`](tgITM.id);
+    os.compileApp("playing-playlist-flaot", <FloatApp />)
 }
 
 const PlayingPlaylist = () => {
 
-    // Audio
-    const [mediaURL, setMediaURL] = useState('');
-    const [videoSrc, setVideoSrc] = useState(false);
-
-    const setIncrementalCount = async (data) => {
-        if (!data) return;
-        setMediaURL(data);
-    };
-
-    globalThis.SetIncrementalCountPlayingPlaylist = setIncrementalCount;
-    globalThis.SetVideoSrc = setVideoSrc;
-    globalThis.SetMediaURL = setMediaURL;
-
+    const [render, setRender] = useState(0);
 
     const [openAttachLink, setOpenAttachLink] = useState(false);
 
-    globalThis.PlayingsetOpenAttachLink = setOpenAttachLink;
-
-    // May Use Later
-    const [activeIndexs, setActiveIndexs] = useState({ ...closestNearDateEvent });
+    const [{
+        currentPlaylistName,
+        currentItemID,
+    }, setItemsPlayer] = useState({
+        currentPlaylistName: globalThis.PPcurrentPlaylistName,
+        currentItemID: globalThis.PPcurrentItemID,
+        typeContent: globalThis.PPtypeContent,
+        nextItemName: globalThis.PPnextItemName,
+        prevItemName: globalThis.PPprevItemName,
+        currentItemName: globalThis.PPcurrentItemName,
+    });
 
     const [hide, setHide] = useState(false);
-
-
-    // useEffect(() => {
-    //     globalThis.SetSubtractWidth(300);
-    //     return () => {
-    //         globalThis.SetSubtractWidth(0);
-    //     }
-    // }, []);
 
     const toggleHide = () => setHide(p => !p);
 
     const [queue, setQueue] = useState([]);
 
-    const [playlists, setPlaylists] = useState({
-        0: {
-            name: playlistName,
-            list: [...(thisBot.PlayingLayersConversion(playlist.list))],
-            id: createUUID(),
-            playlistID: playlist.id,
-            isLayers: playlist.isLayers
-        }
-    });
-    // const [dragList, setDragList] = useState([]);
-    // const [oldList, setOldList] = useState([]);
-
-    const [transformedHistory, setTransformedHistory] = useState(thh);
+    const [itemVisitedMap, setItemVisitedMap] = useState({ ...globalThis.PPpastDateEvents });
     const [heading, setHeading] = useState("");
 
-    const [itemVisitedMap, setItemVisitedMap] = useState({ ...pastDateEvents });
-    const [oldData, setOldData] = useState([]);
-
-    const [checkedItems, setCheckedItems] = useState(readingPlanEnabled ? { ...pastDateEvents } : {});
-
-    const [currIndex, setCurreIndex] = useState({
-        key: 0,
-        index: (checklistEnabled) ? -1 : readingPlanEnabled ? firstActiveIndex : firstIndex,
-        fromButton: 0,
-        isPreviousQueue: false,
-        subIndex: subIndex,
-        // index: startIndex,
-        // Sub Index is not needed cause we have paused the Merging for now
-        // subIndex,
-        // fromButton: 0
-    });
-
-    const handlesetIndex = (index = 0, key) => {
-        const nextItem = transformedHistory[index];
-        const isPlaylist = !!nextItem?.list;
-        if (isPlaylist) {
-            setCurreIndex({
-                index,
-                key,
-                fromButton: currIndex.fromButton,
-                isPreviousQueue: false,
-                subIndex: 0,
-            });
-        } else {
-            setCurreIndex({
-                index,
-                key,
-                fromButton: currIndex.fromButton,
-                isPreviousQueue: false,
-                subIndex: 0,
-            });
-        }
-    }
-
+    globalThis.PlaylingItemVisitiedMap = setItemVisitedMap;
+    globalThis.PlayingPlaylistSetHeading = setHeading;
 
     const refs = useMemo(() => {
         const refs = {};
 
-        const playlistsProgress = globalThis[`${parentId}playlistProgress`];
-        const playlistsChecked = globalThis[`${parentId}playlistChecked`];
+        const playlistsProgress = globalThis[`${parentId}playlistProgress`] || {};
+        const playlistsChecked = globalThis[`${parentId}playlistChecked`] || {};
 
         let progressItemsTemp = {};
         let checkedItemsTemp = {};
 
-        Object.keys(playlists).forEach(key => {
-            const { list, playlistID } = playlists[key];
+        Object.keys(globalThis.PlayingPlaylists).forEach(key => {
+            const { list, playlistID } = globalThis.PlayingPlaylists[key];
             list.forEach(ele => {
                 refs[ele.id] = createRef();
             });
@@ -375,352 +345,21 @@ const PlayingPlaylist = () => {
             }
         });
 
-        setCheckedItems(checkedItemsTemp);
+        globalThis.SetCheckedItemsPlayingPlaylist?.(checkedItemsTemp);
 
-        setItemVisitedMap({ ...pastDateEvents, ...progressItemsTemp });
+        globalThis.PlaylingItemVisitiedMap?.({ ...globalThis.PPpastDateEvents, ...progressItemsTemp });
 
         return refs;
-    }, [playlists]);
+    }, [render]);
 
-    const handleOnButtonPress = (order = 0, getIndexOnly = false, directSet = false, directSetKey = false, newIndexs) => {
-        const indexes = newIndexs ? newIndexs : { ...currIndex }
 
-
-        let newIndex = directSet ? directSet : indexes.index + order;
-        let newSubIndex = directSet ? 0 : indexes.subIndex;
-        let newKey = directSetKey ? directSetKey : indexes.key;
-
-        // const isLayer = playlists[indexes.key]?.isLayers;
-
-        const tranformedList = playlists[indexes.key]?.list;
-        const currentItem = tranformedList[indexes.index];
-
-        const toBeMapArray = currentItem?.additionalInfo?.layers || [];
-        // const isCurrentItemGroup = tranformedList[]
-
-        const isCurrentItemChapterRange = currentItem?.type === "chapter-range" || !!currentItem.additionalInfo?.layers?.length;
-
-        if (!isCurrentItemChapterRange) newSubIndex = 0;
-
-        if (isCurrentItemChapterRange && !directSet) {
-            const lengthOfChapterRange = toBeMapArray?.length;
-            newIndex -= order;
-            if (order > 0) {
-                if (lengthOfChapterRange <= (newSubIndex + order)) {
-                    const nextItem = tranformedList[indexes.index + 1];
-                    // This Might Break When Order is > 1
-                    newSubIndex = (newSubIndex + order) % lengthOfChapterRange;
-                    if (nextItem) newIndex += 1;
-                } else {
-                    newSubIndex += order;
-                }
-            } else {
-                if ((newSubIndex + order) < 0) {
-                    const prevItem = tranformedList[indexes.index - 1];
-
-                    const wasPrevItemArray = prevItem?.type === "chapter-range";
-
-                    const prevItemList = wasPrevItemArray ? prevItem?.additionalInfo : !!prevItem?.additionalInfo?.layers?.length ? prevItem?.additionalInfo?.layers : [];
-                    // This Might Break When Order is > 1
-                    newSubIndex = (prevItemList.length + newSubIndex) + order;
-                    if (prevItem) newIndex -= 1;
-                } else {
-                    newSubIndex += order;
-                }
-            }
-        }
-
-        if (!directSet) {
-            if (order > 0) {
-                const currentListLength = tranformedList.length;
-
-                if ((currentListLength <= (indexes.index + order)) && (!isCurrentItemChapterRange || (indexes.subIndex + order) >= toBeMapArray?.length)) {
-                    const allKeys = Object.keys(playlists);
-                    const currentKeyIndex = allKeys.findIndex(ele => ele == indexes.key);
-                    newKey = allKeys[currentKeyIndex + 1];
-                    // newKey = parseInt(indexes.key) + 1;
-                    newIndex = (indexes.index + order) % currentListLength;
-                    newSubIndex = 0;
-                }
-            } else {
-                if (indexes.index + order < 0 && (indexes.subIndex + order) < 0) {
-                    const allKeys = Object.keys(playlists);
-                    const currentKeyIndex = allKeys.findIndex(ele => ele == indexes.key);
-                    newKey = allKeys[currentKeyIndex - 1];
-                    newIndex = (playlists[newKey]?.list)?.length - 1;
-                    newSubIndex = 0;
-                }
-            }
-        }
-
-        let newValues = {
-            index: newIndex,
-            key: newKey,
-            fromButton: order,
-            isPreviousQueue: false,
-            subIndex: newSubIndex
-        };
-
-        const targetItem = getCurrentItem(newValues.key, newValues.index, playlists, newValues.subIndex, playlists[newValues.key]?.isLayers);
-
-        const isLayersAndScripture = playlists[newValues.key]?.isLayers && targetItem.type !== 'attachment-link' && newValues.subIndex !== 0;
-
-        if (["heading", 'date'].findIndex(ele => ele === targetItem?.type) > -1 || isLayersAndScripture) {
-
-            if (targetItem.type === "date" && !getIndexOnly) {
-                setItemVisitedMap(prev => ({ ...prev, [targetItem.id]: true }));
-            }
-
-            const newVals = handleOnButtonPress(order, getIndexOnly, directSet, directSetKey, newValues);
-            return newVals;
-        }
-
-        if (getIndexOnly) return newValues;
-        const id = targetItem.id;
-
-        // console.log("CHECK", id, refs);
-        // console.log("CHECK 2", refs[id]?.current);
-        // console.log("CHECK 2", refs[id]?.current?.focus);
-        if (refs[id]?.current.focus) {
-            globalThis.ScrollTimerPlaylist && clearTimeout(globalThis.ScrollTimerPlaylist);
-            globalThis.ScrollTimerPlaylist = setTimeout(() => {
-                refs[id].current.focus();
-            }, 1000)
-        }
-
-        if (targetItem.type === 'verse') {
-            if (globalThis.FocusOnVerse) {
-                FocusOnVerse(targetItem.additionalInfo.verse)
-            }
-        }
-
-        justAddedQueue.current = false;
-        globalThis.LAST_QUEUE_IIEM = {};
-        setCurreIndex(newValues)
-    }
-
-
-    const justAddedQueue = useRef(false);
-
-    const addToQueue = (item, combineLast) => {
-
-        const isArr = Array.isArray(item);
-
-        let toAddItems = [];
-
-        if (isArr) {
-            toAddItems = [...item.map(ele => ({ id: createUUID(), ...ele }))];
-            globalThis.LAST_QUEUE_IIEM = item[item.length];
-
-        } else {
-            const isSame = objectComparator(item, (globalThis.LAST_QUEUE_IIEM || {}), ["content"]);
-
-            if (isSame) return os.toast("Last Item Repeated!");
-            toAddItems = [{ ...item, id: createUUID() }];
-            globalThis.LAST_QUEUE_IIEM = item;
-        }
-
-        setPlaylists((prevPlaylists) => {
-            let currentKey = currIndex.key;
-            const currentPlaylist = prevPlaylists[currentKey];
-            const playlistID = currentPlaylist.playlistID;
-
-            if (!currentPlaylist) {
-                console.error("Current playlist key does not exist!");
-                return prevPlaylists;
-            }
-
-            const { list: currentList, SQ, isLayers } = currentPlaylist;
-            let splitIndex = currIndex.index;
-
-            let extraPoints = 0;
-
-            const thh = currentList;
-
-            thh.forEach((ele, index) => {
-                if (index <= splitIndex) {
-                    if (Array.isArray(ele.additionalInfo)) {
-                        extraPoints += (ele.additionalInfo.length - 1);
-                    }
-                };
-            });
-
-            splitIndex += extraPoints;
-
-            let totalQueue = 0;
-            Object.keys(prevPlaylists).forEach(currentKeyItr => {
-                if (prevPlaylists[currentKeyItr].SQ) totalQueue++;
-            })
-
-            const updatedPlaylists = { ...prevPlaylists };
-
-            if ((SQ || justAddedQueue.current)) {
-                if (justAddedQueue.current) {
-                    currentKey = Number(currIndex.key) + 1;
-                }
-                if (combineLast) {
-                    updatedPlaylists[currentKey].list.pop();
-                }
-                // Case: Adding to an existing special queue
-                updatedPlaylists[currentKey].list = [
-                    ...updatedPlaylists[currentKey].list,
-                    ...toAddItems
-                ];
-            } else {
-                // Case: Splitting a playlist
-                const beforeCurrentIndex = currentList.slice(0, splitIndex + 1);
-                const afterCurrentIndex = currentList.slice(splitIndex + 1);
-
-                const newQueueKey = `${currIndex.key}.1` // Next numeric key
-                const newQueue = {
-                    name: `Queue ${totalQueue + 1}`,
-                    list: [...toAddItems],
-                    id: createUUID(),
-                    SQ: true,// Mark this as a special queue,
-                    playlistID: null
-                };
-
-                if (!checklistEnabled) {
-                    // Update the current playlist with items before the split
-                    updatedPlaylists[currentKey] = {
-                        ...currentPlaylist,
-                        list: beforeCurrentIndex
-                    };
-                }
-
-
-                // if (!readingPlanEnabled) {
-                // Add the new queue
-                updatedPlaylists[newQueueKey] = newQueue;
-                // } else if (findLastActiveIndex > -1) {
-                //     findLastActiveIndex++;
-                //     currentList.splice(findLastActiveIndex, 0, item);
-                //     updatedPlaylists[currentKey].list = currentList;
-                //     setActiveIndexs(prev => ({ ...prev, [item.id]: true }));
-                // }
-
-
-                if (!checklistEnabled) {
-                    updatedPlaylists[currentKey].broken = true;
-                    if (afterCurrentIndex.length > 0) {
-                        updatedPlaylists[`${currIndex.key}.2`] = {
-                            name: `${currentPlaylist.name}`,
-                            list: [...afterCurrentIndex],
-                            id: createUUID(),
-                            SQ: false, // Mark this as a special queue
-                            playlistID
-                        };
-                    }
-                }
-            }
-            justAddedQueue.current = true;
-
-            // Renumber keys to ensure sequential ordering
-            const reorderedPlaylists = {};
-            Object.keys(updatedPlaylists)
-                .sort((a, b) => Number(a) - Number(b)) // Sort numerically
-                .forEach((key, index) => {
-                    reorderedPlaylists[index] = { ...updatedPlaylists[key] };
-                });
-
-            return reorderedPlaylists;
-        });
-    };
-
-
-    useLayoutEffect(() => {
-        globalThis.SetCurreIndexPlaylist = handlesetIndex;
-        globalThis.HandleOnButtonPress = handleOnButtonPress;
-        globalThis.ModifyTransformedHistory = setTransformedHistory;
-        globalThis.IsPlaylistPlaying = true;
-        globalThis.SetQueue = addToQueue;
-        globalThis.SetPlayingList = setPlaylists;
-
-        if (readingPlanEnabled) {
-            globalThis.READING_PLAN_WORK = true;
-            // globalThis.IS_PLAYLIST_ACTIVE = 0;
-        }
-        return ()=>{          
-            globalThis.SetCurreIndexPlaylist = null;
-            globalThis.HandleOnButtonPress = null;
-            globalThis.IsPlaylistPlaying = false;
-            globalThis.ModifyTransformedHistory = null;
-            globalThis.SetQueue = false;
-            globalThis.SetPlayingList = () => { };
-            globalThis.SetSelected && SetSelected({});
-            globalThis.READING_PLAN_WORK = false;
-            // globalThis.IS_PLAYLIST_ACTIVE = true;
-        }
-    }, [handleOnButtonPress, transformedHistory]);
-
-    const [currentPlaylistName, currentItemID, typeContent, nextItemName, prevItemName, currentItemName] = useMemo(() => {
-        const { name: currentPlaylistName } = playlists[currIndex.key];
-
-        const targetItem = getCurrentItem(currIndex.key, currIndex.index, playlists, currIndex.subIndex, playlists[currIndex.key]?.isLayers);
-        const currentItemName = targetItem;
-        const currentItemType = targetItem?.type;
-
-
-        const nextIndexes = handleOnButtonPress(1, true);
-        const prevIndex = handleOnButtonPress(-1, true);
-
-        const nextItem = getCurrentItem(nextIndexes.key, nextIndexes.index, playlists, nextIndexes.subIndex, playlists[nextIndexes.key]?.isLayers, true);
-        const prevItem = (prevIndex.isPreviousQueue) ? oldData[oldData.length - 1] : getCurrentItem(prevIndex.key, prevIndex.index, playlists, prevIndex.subIndex, playlists[prevIndex.key]?.isLayers, true);
-
-        // setOldData(prev => [...prev, targetItem]);
-        setItemVisitedMap(prev => ({ ...prev, [targetItem.id]: true }));
-
-        if (targetItem?.type === "attachment-link") {
-            thisBot.RenderLinkContent({ ...targetItem, isLastItem: !nextItem, isFirstItem: !prevItem });
-        } else if (currIndex.fromButton !== 0) {
-            const isBulk = !!targetItem?.additionalInfo?.layers?.length || Array.isArray(targetItem.additionalInfo);
-
-            const toBeMapArray = targetItem?.additionalInfo?.layers?.length ? targetItem?.additionalInfo?.layers : Array.isArray(targetItem.additionalInfo);
-
-            if (targetItem?.type === "heading" || (!!targetItem?.nextTargetItem?.id && currIndex.fromButton === 1)) {
-                if (targetItem?.type === "heading") setHeading(targetItem.content);
-                const allKeys = Object.keys(playlists);
-
-                const isFirstKey = currIndex.key == 0;
-                const isLastKey = currIndex.key == allKeys[allKeys.length - 1];
-
-                const th = playlists[currIndex.key].list;
-
-                const isFirstItemAndBackButton = currIndex.fromButton < 0 && currIndex.index == 0 && isFirstKey;
-                const isLastItemAndLastButton = currIndex.fromButton > 0 && isLastKey && currIndex.index == (th.length - 1);
-                if (targetItem?.nextTargetItem) {
-                    thisBot.navigationWithDataItem({ dataItem: isBulk ? toBeMapArray : targetItem, bulkAdd: isBulk });
-                    handleOnButtonPress(currIndex.fromButton);
-                    globalThis[`${targetItem.id}OpenToggle`] && globalThis[`${targetItem.id}OpenToggle`](true);
-                }
-                if (!isFirstItemAndBackButton && !isLastItemAndLastButton) handleOnButtonPress(currIndex.fromButton);
-            } else {
-                const skip = thisBot.checkIfNeedToSkip({ dataItem: targetItem });
-                if (skip) {
-                    os.toast(`${targetItem.content} is Already Opened.Skipping it!`)
-                    handleOnButtonPress(currIndex.fromButton);
-                } else {
-                    thisBot.navigationWithDataItem({ dataItem: isBulk ? toBeMapArray : targetItem, bulkAdd: isBulk });
-                }
-                // SetBlinker({});
-            }
-        }
-
-        thisBot.SetItemsPlayerPlaylist({
-            prevItemName: prevItem,
-            nextItemName: nextItem
-        })
-        // nextItemName, nextItemType, prevItemName, prevItemType
-        //  nextItemName, nextItemType, prevItemName, prevItemType
-        return [currentPlaylistName, targetItem.id, currentItemType, nextItem, prevItem, currentItemName];
-    }, [currIndex, playlists, queue, refs]);
 
     const onClick = ({ key, dataItem, bulkAdd = false, }) => {
         const data = bulkAdd ? { ...dataItem[0] } : { ...dataItem };
 
-        const isLayers = playlists[key].isLayers;
+        const isLayers = globalThis.PlayingPlaylists[key].isLayers;
 
-        const th = playlists[key].list;
+        const th = globalThis.PlayingPlaylists[key].list;
         let index = th.findIndex(ele => ele.id === data.id);
 
         if (bulkAdd || index === -1) {
@@ -738,11 +377,11 @@ const PlayingPlaylist = () => {
             });
         }
         if (index > -1) {
-            justAddedQueue.current = false;
-            setCurreIndex({
+            globalThis.UpdateJustAddedToQueue(false);
+            globalThis.SetCurreIndexDirect({
                 key: key,
                 index: index,
-                fromButton: currIndex.fromButton || 1,
+                fromButton: globalThis.CurrentIndexItem.fromButton || 1,
                 isPreviousQueue: false,
                 subIndex: 0
             });
@@ -757,9 +396,8 @@ const PlayingPlaylist = () => {
         };
     }, []);
 
-
     const attachLink = (title, link, linkState) => {
-        addToQueue(
+        globalThis.SetQueue(
             {
                 content: title,
                 additionalInfo: {
@@ -773,14 +411,14 @@ const PlayingPlaylist = () => {
     };
 
     const massAdd = (items) => {
-        addToQueue(items);
+        globalThis.SetQueue(items);
     }
 
     const editDataFromPlaylist = (ids, key, play) => {
 
         const isShiftHold = globalThis?.KEY_HOLD?.['shift'];
 
-        const prevIds = { ...checkedItems };
+        const prevIds = { ...globalThis.PlayingPlaylistCheckedItems };
 
         const isArray = Array.isArray(ids);
 
@@ -800,14 +438,14 @@ const PlayingPlaylist = () => {
             prevIds[id] = !prevIds[id];
         });
 
-        const playlist = playlists[key];
+        const playlist = globalThis.PlayingPlaylists[key];
 
         let startI = Number.MAX_SAFE_INTEGER;
         let endI = Number.MIN_SAFE_INTEGER;
 
 
 
-        playlist.list.forEach((ele, index) => {
+        globalThis.PPplaylist.list.forEach((ele, index) => {
             if (newIdsmap[ele.id]) {
                 if (firstIDIndex === -1) {
                     firstIDIndex = index;
@@ -821,7 +459,7 @@ const PlayingPlaylist = () => {
             endI = Math.max(lastIdIndex, firstIDIndex);
         }
 
-        playlist.list.forEach((ele, index) => {
+        globalThis.PPplaylist.list.forEach((ele, index) => {
             if (newIdsmap[ele.id]) {
                 if (firstIDIndex === -1) {
                     firstIDIndex = index;
@@ -837,7 +475,7 @@ const PlayingPlaylist = () => {
 
         globalThis.LAST_INDEX_CHECKLIST_CHECKED = firstIDIndex;
 
-        const thCurrent = playlist.list;
+        const thCurrent = globalThis.PPplaylist.list;
 
         if (targetItem.length > 1) {
             thCurrent.forEach(ele => {
@@ -863,46 +501,38 @@ const PlayingPlaylist = () => {
             }
         }
 
-        setCheckedItems(prevIds);
+        globalThis.SetCheckedItemsPlayingPlaylist(prevIds);
     };
 
 
     const [activeDate, setActiveDate] = useState(null);
 
     useLayoutEffect(() => {
-        const i = currIndex.index;
-        const list = playlist.list;
+        globalThis.SetActiveDate = setActiveDate;
+        globalThis.PlaylistPlaytoggleHide = toggleHide;
+        globalThis.PlayingsetOpenAttachLink = setOpenAttachLink;
+        globalThis.RenderPlaylist = () => setRender(p => p + 1);
+        globalThis.SetItemsPlayer = setItemsPlayer;
+        return () => {
+            globalThis.SetActiveDate = null;
+            globalThis.PlaylistPlaytoggleHide = null;
+            globalThis.PlayingsetOpenAttachLink = null;
+            globalThis.RenderPlaylist = null;
+            globalThis.SetItemsPlayer = null;
+        }
+    }, [])
 
-        const gp = list;
-
-        let lastActiveDateID = -1;
-
-        for (let j = i; j > -1; j--) {
-            const item = gp[j];
-            if (item.type === "date" && lastActiveDateID === -1) {
-                lastActiveDateID = item.id;
-            }
-        };
-
-        setActiveDate(lastActiveDateID);
-    }, [currIndex]);
-
-    const tranformedList = playlists[currIndex.key]?.list;
-    const currentItem = tranformedList[currIndex.index];
-
-
-    globalThis.HandleOnButtonPress = handleOnButtonPress;
-
-    globalThis.PlaylistPlaytoggleHide = toggleHide;
+    // const tranformedList = globalThis.PlayingPlaylists?.[globalThis.CurrentIndexItem?.key]?.list;
+    // const currentItem = tranformedList?.[globalThis.CurrentIndexItem?.index];
 
     return <>
         <style>{thisBot.tags['RecordingVoiceUI.css']}</style>
 
         <div className="playing-queue-container" style={{ height: hide ? '' : '100%' }}>
-            <div className={`playing-queue reset-css ${(checklistEnabled) && "checklistEnabled"} ${hide && 'hide'}`}>
+            <div className={`playing-queue reset-css ${(globalThis.PPchecklistEnabled) && "checklistEnabled"} ${hide && 'hide'}`}>
                 <div className="header">
                     <h3>{currentPlaylistName}</h3>
-                    {(!checklistEnabled) ? <span style={{ cursor: 'pointer' }} onClick={toggleHide} class="material-symbols-outlined unfollow">
+                    {(!globalThis.PPchecklistEnabled) ? <span style={{ cursor: 'pointer' }} onClick={toggleHide} class="material-symbols-outlined unfollow">
                         close
                     </span> :
                         <div className="align-center" style={{ gap: '0.5rem' }}>
@@ -928,6 +558,7 @@ const PlayingPlaylist = () => {
                                     thisBot.CloseFloatingApp();
                                     // os.unregisterApp("playing-playlist");
                                     globalThis.IS_PLAYLIST_ACTIVE = false;
+                                    thisBot.OpenSelf();
                                     globalThis.SetSplitAppPanel2 && globalThis.SetSplitAppPanel2(null);
                                     // thisBot.showInfo(`History Mode`);
                                 }}
@@ -944,7 +575,7 @@ const PlayingPlaylist = () => {
                 </div>
                 <div className="playing-queue-content">
 
-                    {false && (checklistEnabled) && <p className="align-center" style={{ justifyContent: "center" }}>
+                    {false && (globalThis.PPchecklistEnabled) && <p className="align-center" style={{ justifyContent: "center" }}>
                         <span class="material-symbols-outlined unfollow" style={{ color: "lightgreen", marginRight: "8px" }}>
                             check_circle
                         </span>
@@ -960,9 +591,9 @@ const PlayingPlaylist = () => {
                             <>
                                 <h4>Next in Queue</h4>
                                 <DragDrop
-                                    checkListData={checkedItems}
+                                    checkListData={globalThis.PlayingPlaylistCheckedItems}
                                     editDataFromPlaylist={editDataFromPlaylist}
-                                    isPlayer={checklistEnabled}
+                                    isPlayer={globalThis.PPchecklistEnabled}
                                     list={queue}
                                     setList={setQueue}
                                     embedding={null}
@@ -980,8 +611,8 @@ const PlayingPlaylist = () => {
                             :
                             null
                     }
-                    {Object.keys(playlists).map((key, index) => {
-                        const { name, list, broken, playlistID, id, isLayers } = playlists[key];
+                    {Object.keys(globalThis.PlayingPlaylists).map((key, index) => {
+                        const { name, list, broken, playlistID, id, isLayers } = globalThis.PlayingPlaylists[key];
                         if (playlistID) {
                             if (!globalThis['defaultplaylistProgress']) globalThis['defaultplaylistProgress'] = {};
                             if (!globalThis['defaultplaylistChecked']) globalThis['defaultplaylistChecked'] = {};
@@ -989,7 +620,7 @@ const PlayingPlaylist = () => {
                                 ...itemVisitedMap
                             };
                             globalThis['defaultplaylistChecked'][playlistID] = {
-                                ...checkedItems
+                                ...globalThis.PlayingPlaylistCheckedItems
                             };
                             globalThis?.savePlaylistProgress && savePlaylistProgress(playlistID);
                         }
@@ -998,7 +629,7 @@ const PlayingPlaylist = () => {
                             <DragDrop
                                 key={id}
                                 setRef={refs}
-                                isPlayer={checklistEnabled}
+                                isPlayer={globalThis.PPchecklistEnabled}
                                 currentFormat={currentFormat}
                                 list={list}
                                 playingPlaylist={true}
@@ -1006,13 +637,13 @@ const PlayingPlaylist = () => {
                                 currentDateActive={activeDate}
                                 editDataFromPlaylist={(data, play = true) => editDataFromPlaylist(data, key, play)}
                                 // oldItemsMap={{ ...itemVisitedMap, ...checkedItems }}
-                                checkListData={checkedItems}
+                                checkListData={globalThis.PlayingPlaylistCheckedItems}
                                 setList={(newList) => {
                                     const listLatest = [...newList];
                                     if (typeof newList === 'function') {
                                         listLatest = newList(list);
                                     }
-                                    setPlaylists(prev => ({
+                                    globalThis.SetPlayingPlaylists?.(prev => ({
                                         ...prev,
                                         [key]: { name, list: listLatest }
                                     }));
@@ -1021,7 +652,7 @@ const PlayingPlaylist = () => {
                                     //     return [...oldList, item, ...listLatest]
                                     // });
                                 }}
-                                activeItemID={key == currIndex.key ? currentItemID : 0}
+                                activeItemID={key == globalThis.CurrentIndexItem.key ? currentItemID : 0}
                                 // activeItemList={false ? activeIndexs : {}}
                                 deleteFromList={() => { }}
                                 creatingPlaylist={false}
@@ -1074,7 +705,7 @@ const PlayingPlaylist = () => {
 
 
             {
-                (!checklistEnabled) && <div
+                (!globalThis.PPchecklistEnabled) && <div
                     style={{
                         zIndex: "1001",
                         textTransform: " capitalize",
@@ -1113,7 +744,7 @@ const PlayingPlaylist = () => {
                         </Button>
                     </div>
                     }
-                    {(!!videoSrc || !!mediaURL) && < div style={{
+                    {false && < div style={{
                         background: "white",
                         display: 'flex',
                         flexDirection: 'column',
@@ -1122,10 +753,7 @@ const PlayingPlaylist = () => {
                         padding: '10px',
                         borderRadius: '8px'
                     }}>
-                        {!!videoSrc &&
-                            <VideoPlayer videoSrc={videoSrc} playlistItem={currentItem} />
-                        }
-                        {!!mediaURL && <AudioPlayer mediaURL={mediaURL} />}
+                        <PlaylistPlayerControls />
                     </div>}
                 </div>
             }
@@ -1134,9 +762,12 @@ const PlayingPlaylist = () => {
 }
 
 
-if (playlist && !globalThis.IsQueuePresent) {
+if ((playlist && !globalThis.IsQueuePresent) || skipAll) {
     globalThis.IsQueuePresent = true;
     globalThis.SetSplitAppPanel2 && globalThis.SetSplitAppPanel2(<PlayingPlaylist />);
+    if (!skipAll) {
+        thisBot.CloseSelf();
+    }
     // os.compileApp("playing-playlist", <PlayingPlaylist />)
 }
 
@@ -1188,7 +819,7 @@ if (playlist && !globalThis.IsQueuePresent) {
 //                 {name}
 //             </span>
 //         </p>
-//         <div style={{
+//         <div style={{[0]
 //             display: "flex",
 //             alignItems: "center",
 //             fontSize: "12px",

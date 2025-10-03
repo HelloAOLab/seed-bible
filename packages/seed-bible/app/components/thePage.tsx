@@ -109,10 +109,24 @@ function ThePage({
       }
     }
   }, [data]);
-
+  async function checkDefault() {
+    if (configBot.tags.book && configBot.tags.chapter) {
+      await os.sleep(1000);
+      await bible.open(
+        configBot.tags.book.toUpperCase(),
+        configBot.tags.chapter,
+        configBot.tags.translation || "BSB"
+      );
+      setData(bible.data);
+      configBot.tags.book = null;
+      configBot.tags.chapter = null;
+      configBot.tags.translation = null;
+    }
+  }
   useEffect(() => {
     globalThis.NavFunctions = navFunctions;
     globalThis.BibleData = data;
+    checkDefault();
     return () => {
       globalThis.BibleData = null;
       globalThis.NavFunctions = navFunctions;
