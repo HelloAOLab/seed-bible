@@ -538,7 +538,8 @@ const PlayerControls = ({ parentId = 'default' }) => {
                 height: '100%',
                 boxShadow: '0px 0px 9px 0px #00000026',
                 padding: '0.5rem',
-                borderRadius: '8px'
+                borderRadius: '8px',
+                justifyContent: 'center'
             }}>
                 {!!videoSrc &&
                     <VideoPlayer videoSrc={videoSrc} playlistItem={currentItem} />
@@ -554,17 +555,18 @@ const PlayerControls = ({ parentId = 'default' }) => {
                     }}
                 >
                     <div style={{ width: '50%', flexDirection: 'column', display: 'flex' }}>
-                        {nextItemName?.content ? <p style={{
+                        <p style={{
                             fontSize: '12px',
                             fontWeight: '500',
                             display: "flex",
                             alignItems: 'center',
                             margin: '0',
                             marginBottom: '0.5rem',
-                            fontFamily: 'DM Mono'
+                            fontFamily: 'DM Mono',
+                            height: '12px'
                         }}>
-                            Playing Next
-                        </p> : null}
+                            {nextItemName?.content ? "Playing Next" : null}
+                        </p> 
                         <div style={{ gap: '0.5rem', }} className="align-center">
                             <div style={{ height: '2.5rem', width: '2.5rem', display: 'grid', placeItems: 'center', backgroundColor: '#D3643329', borderRadius: '0.25rem' }} >
                                 <span style={{ margin: '0', fontSize: '18px' }} class="material-symbols-outlined unfollow">

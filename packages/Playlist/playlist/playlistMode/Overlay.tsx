@@ -16,7 +16,7 @@ const Overlay = ({ position, onClose, items, styles, children }) => {
             {items.map(ele => {
                 return (
                     <div
-                        className={`more-menu-items ${ele.noBorderBottom ? 'noBorderBottom' : ''}`}
+                        className={`more-menu-items ${ele.disabled ? 'inactive':''} ${ele.noBorderBottom ? 'noBorderBottom' : ''}`}
                         onClick={() => {
                             ele.click();
                         }}
