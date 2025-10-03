@@ -93,6 +93,10 @@
     color: white !important;
 }
 
+.more-menu-items.inactive * {
+    color: 5F5E5C !important;
+}
+
 .more-menu-items.active {
     background-color: white;
 }
