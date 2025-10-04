@@ -397,6 +397,7 @@ const Playlist = () => {
 
     useLayoutEffect(() => {
         if (globalThis.IsPlaylistPlaying) {
+            globalThis.SetPlaylistForcedHeight && globalThis.SetPlaylistForcedHeight(true);
             thisBot.Playlistplaying({
                 skipAll: true,
             })
@@ -459,6 +460,7 @@ const Playlist = () => {
             globalThis.makingPlaylist = false;
             globalThis.SetMediaURL && globalThis.SetMediaURL(null);
             globalThis.SetVideoSrc && globalThis.SetVideoSrc(null);
+            globalThis.SetPlaylistForcedHeight && globalThis.SetPlaylistForcedHeight(false);
         }
     }, []);
 

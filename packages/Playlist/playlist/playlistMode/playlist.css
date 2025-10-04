@@ -1229,3 +1229,29 @@ div.attachment-link.dropabble-Embed .playlist-item-type {
 .input-container {
     display: flex;
 }
+
+.fade-in-animation.show {
+    animation: fadeInUp 1s ease forwards;
+}
+.fade-in-animation {
+    opacity: 0;
+    transform: translateY(10px);
+}
+
+.overlay-top-left {
+    position: absolute;
+    top: 0;
+    left: 0;
+}
+  
+@keyframes fadeInUp {
+    from {
+      opacity: 0;
+      transform: translateY(10px);
+    }
+    to {
+      opacity: 1;
+      transform: translateY(0);
+    }
+}
+  

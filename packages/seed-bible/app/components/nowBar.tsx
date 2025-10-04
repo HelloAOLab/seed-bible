@@ -166,11 +166,13 @@ function NowBar() {
 
     // Mouse events
     const handleMouseDown = (e) => {
-        e.preventDefault();
+        // We need to click input box inside here
+        // e.preventDefault();
         handleStart(e.clientY);
     };
 
     const handleMouseMove = (e) => {
+        e.preventDefault();
         handleMove(e.clientY);
     };
 
@@ -216,10 +218,12 @@ function NowBar() {
             left: '50%',
             transform: 'translateX(-50%)',
             width: `${dimensions.width}px`,
-            height: `${dimensions.height}px`,
+            // Shall be min height not exact height
+            minHeight: `${dimensions.height}px`,
             zIndex: '999999',
             // Ensure it doesn't overflow on very small screens
-            maxWidth: '95vw'
+            maxWidth: '95vw',
+            backgroundColor: 'white'
         }}>
             {apps.map((app, index) => {
                 const isVisible = index >= currentIndex;
@@ -258,9 +262,10 @@ function NowBar() {
                         onTouchMove={isTopApp ? handleTouchMove : undefined}
                         onTouchEnd={isTopApp ? handleTouchEnd : undefined}
                         style={{
-                            position: 'absolute',
-                            bottom: '0',
-                            left: '0',
+                            // We dont need absolute in this since we have upper parent fixed.
+                            // position: 'absolute',
+                            // bottom: '0',
+                            // left: '0',
                             width: '100%',
                             height: '100%',
                             borderRadius: dimensions.borderRadius,

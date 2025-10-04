@@ -706,7 +706,7 @@ const AttachLink = ({ sSelectedType, sName, sData, sLink, sMediaType, editMode, 
                 </div>)
             }
             {canClose && <div onClick={onClose} style={{ marginLeft: 'auto' }} className={`active  select_item_type`}>
-                <img src={CLOSE} />
+                <img src={CLOSE} style={{width: '20px'}} />
             </div>}
             <button
                 type="submit"

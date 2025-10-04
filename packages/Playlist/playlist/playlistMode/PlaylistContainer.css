@@ -122,6 +122,21 @@
     height: max-content;
 }
 
+div.flaoting-attach-link  {
+    height: 100% !important;
+}
+
+div.flaoting-attach-link  .add-new-playlist{
+    height: 100% !important;
+    border: none;
+}
+
+@media (max-width: 550px) {
+    .playing-queue-container,.sidebar-bar {
+        padding-bottom: 5rem;
+    }
+}  
+
 .playing-queue {
     /* position: absolute; */
     top: 0;

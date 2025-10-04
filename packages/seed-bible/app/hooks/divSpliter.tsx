@@ -227,6 +227,7 @@ export const SplitApp = ({
 
 }) => {
     const { panelMode, screens } = useBibleContext();
+    const [forcedHeightPlaylist,setForcedHeightPlaylist] = useState(false);
     useEffect(() => {
         (function installScrollerScrollIndicator() {
             const timers = new WeakMap();
@@ -251,6 +252,11 @@ export const SplitApp = ({
             document.addEventListener('scroll', onScrollCapture, { capture: true, passive: true });
         })();
 
+        globalThis.SetPlaylistForcedHeight = setForcedHeightPlaylist;
+
+        return () => {
+            globalThis.SetPlaylistForcedHeight = false;
+        }
     }, [])
     const { activeSpace } = useTabsContext();
     const [panelWidths, setPanelWidths] = useState(Array(count).fill(currentContainerWidth / count));
@@ -340,7 +346,7 @@ export const SplitApp = ({
                     key={apps[0]?.id} 
                     style={{ 
                         width: isMobile ? '100%' : leftWidth, 
-                        height: isMobile ? topHeight : '100%', 
+                        height: forcedHeightPlaylist ? "0px" : isMobile ? topHeight : '100%', 
                         overflow: 'auto', 
                         padding: '0px', 
                         borderRadius: '12px' 
