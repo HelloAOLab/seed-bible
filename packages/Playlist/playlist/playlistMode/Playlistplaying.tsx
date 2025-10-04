@@ -48,7 +48,6 @@ if (skipAll) {
 const { useState, useLayoutEffect, useRef, useMemo, createRef } = os.appHooks;
 const { Input, Modal, Button, ButtonsCover } = Components;
 
-const AttachLink = await thisBot.AttachLink();
 const PlaylistPlayerControls = await thisBot.PlaylistPlayerControls();
 
 const paraStyle = {
@@ -296,8 +295,6 @@ const PlayingPlaylist = () => {
 
     const [render, setRender] = useState(0);
 
-    const [openAttachLink, setOpenAttachLink] = useState(false);
-
     const [{
         currentPlaylistName,
         currentItemID,
@@ -396,24 +393,6 @@ const PlayingPlaylist = () => {
         };
     }, []);
 
-    const attachLink = (title, link, linkState) => {
-        globalThis.SetQueue(
-            {
-                content: title,
-                additionalInfo: {
-                    link,
-                    ...linkState,
-                },
-                type: linkState.type === "text" ? "heading" : "attachment-link",
-            }
-        );
-        setOpenAttachLink(false);
-    };
-
-    const massAdd = (items) => {
-        globalThis.SetQueue(items);
-    }
-
     const editDataFromPlaylist = (ids, key, play) => {
 
         const isShiftHold = globalThis?.KEY_HOLD?.['shift'];
@@ -510,13 +489,11 @@ const PlayingPlaylist = () => {
     useLayoutEffect(() => {
         globalThis.SetActiveDate = setActiveDate;
         globalThis.PlaylistPlaytoggleHide = toggleHide;
-        globalThis.PlayingsetOpenAttachLink = setOpenAttachLink;
         globalThis.RenderPlaylist = () => setRender(p => p + 1);
         globalThis.SetItemsPlayer = setItemsPlayer;
         return () => {
             globalThis.SetActiveDate = null;
             globalThis.PlaylistPlaytoggleHide = null;
-            globalThis.PlayingsetOpenAttachLink = null;
             globalThis.RenderPlaylist = null;
             globalThis.SetItemsPlayer = null;
         }
@@ -536,9 +513,9 @@ const PlayingPlaylist = () => {
                         close
                     </span> :
                         <div className="align-center" style={{ gap: '0.5rem' }}>
-                            <p
+                           {false && <p
                                 onClick={() => {
-                                    setOpenAttachLink(true);
+                                    // setOpenAttachLink(true);
                                 }}
                                 style={{ margin: '0', padding: '-0.5rem' }}
                                 className="playlist-action small secondary self-start"
@@ -546,7 +523,7 @@ const PlayingPlaylist = () => {
                                 <span>
                                     Add Link to Queue
                                 </span>
-                            </p>
+                            </p>}
                             <p
                                 onClick={() => {
                                     DataManager.cancelCurrentPlayingSound();
@@ -673,32 +650,6 @@ const PlayingPlaylist = () => {
                         </>
                     })}
 
-                    {openAttachLink && (
-                        <div
-                            style={{
-                                position: "relative",
-                                // bottom: (checklistEnabled) ? 'calc(62px)' : "calc(62px + 153px)",
-                                // left: "0px",
-                                // zIndex: "1001",
-                                textTransform: "capitalize",
-                                // padding: "12px",
-                                background: "white",
-                                borderRadius: "4px",
-                                fontWeight: "600",
-                                width: "calc(100%)",
-                                // borderTop: "1px solid #DADADA",
-                                backgroundColor: "#F7F7F5",
-                                height: 'auto'
-                            }}
-                        >
-                            <AttachLink
-                                massAdd={massAdd}
-                                attachLink={attachLink}
-                                onClose={() => setOpenAttachLink(false)}
-                            />
-                        </div>
-                    )
-                    }
                 </div>
             </div >
 
