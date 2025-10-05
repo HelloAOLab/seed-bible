@@ -414,7 +414,7 @@ const AddAnotationUI = ({
 
             }
             setIsEditAddress(false);
-            globalThis.SetEditAnnoData(null);
+            globalThis.SetEditAnnoData?.(null);
         }
     }, []);
 
@@ -737,6 +737,12 @@ const AddAnotationUI = ({
 
     const onClickSave = async () => {
         if (loading) return;
+        if(finalHistoryObject.length<1) {
+            return ShowNotification({
+                message: 'Cannot save empty annotations.',
+                severity: "error"
+            });
+        }
         if (isEditAddress) {
             await onEditSave();
             return;
@@ -1203,7 +1209,7 @@ const AddAnotationUI = ({
                         <div className='back-button' onClick={() => {
                             if (isEditAddress) setList([]);
                             setIsEditAddress(false);
-                            globalThis.SetEditAnnoData(null);
+                            globalThis.SetEditAnnoData?.(null);
                             if (setTab) setTab('discover');
                         }}>
                             <span class="material-symbols-outlined">
@@ -1347,7 +1353,7 @@ const AddAnotationUI = ({
                 <LoaderSecondary />
                 <p>Fetching Annotation Data</p>
             </div>}
-            {finalHistoryObject.length === 0 && !dataFetching && <p style={{ margin: '1rem 0' }}>Add Items to start Annotating.</p>}
+            {finalHistoryObject.length === 0 && !dataFetching && <p style={{ margin: '1rem 0' }}>Add items to start annotating.</p>}
             {
                 finalHistoryObject.map((ele, index) => (ele.type === "attachment-link" || ele.type === "date")
                     ?

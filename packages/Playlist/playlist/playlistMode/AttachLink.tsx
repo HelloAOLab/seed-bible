@@ -109,7 +109,7 @@ function SubComponent({ editMode, onAddFiles, dragState, recordingType, setRecor
                             globalThis.SetDontOpenPlaylist && globalThis.SetDontOpenPlaylist(true);
                         }, 200);
                     }} style={{ backgroundColor: '#E9E9E9', cursor: 'pointer', padding: '13px 8px', borderRadius: '4px' }}>
-                        <img alt="bible" src={BIBLE_ICON} />
+                        <img style={{width: '24px',height: '14px'}} alt="bible" src={BIBLE_ICON} />
                     </div>
                     <div style={{ flexGrow: '1' }}>
                         <Input style={{ marginBottom: '0' }} value={name} onChangeListener={setName} placeholder="Type to add scripture (e.g. Gen 1, Rev 2:4)" />
