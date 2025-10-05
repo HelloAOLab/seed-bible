@@ -6,77 +6,77 @@ import { TableTalkEmbed } from 'app.sn_components.tableTalk';
 const { useEffect, useState, useRef, useLayoutEffect } = os.appHooks;
 
 const bibleBooks = [
-    { "id": "GEN", "name": "GENESIS" },
-    { "id": "EXO", "name": "EXODUS" },
-    { "id": "LEV", "name": "LEVITICUS" },
-    { "id": "NUM", "name": "NUMBERS" },
-    { "id": "DEU", "name": "DEUTERONOMY" },
-    { "id": "JOS", "name": "JOSHUA" },
-    { "id": "JDG", "name": "JUDGES" },
-    { "id": "RUT", "name": "RUTH" },
-    { "id": "1SA", "name": "1 SAMUEL" },
-    { "id": "2SA", "name": "2 SAMUEL" },
-    { "id": "1KI", "name": "1 KINGS" },
-    { "id": "2KI", "name": "2 KINGS" },
-    { "id": "1CH", "name": "1 CHRONICLES" },
-    { "id": "2CH", "name": "2 CHRONICLES" },
-    { "id": "EZR", "name": "EZRA" },
-    { "id": "NEH", "name": "NEHEMIAH" },
-    { "id": "EST", "name": "ESTHER" },
-    { "id": "JOB", "name": "JOB" },
-    { "id": "PSA", "name": "PSALMS" },
-    { "id": "PRO", "name": "PROVERBS" },
-    { "id": "ECC", "name": "ECCLESIASTES" },
-    { "id": "SNG", "name": "SONG" },
-    { "id": "ISA", "name": "ISAIAH" },
-    { "id": "JER", "name": "JEREMIAH" },
-    { "id": "LAM", "name": "LAMENTATIONS" },
-    { "id": "EZK", "name": "EZEKIEL" },
-    { "id": "DAN", "name": "DANIEL" },
-    { "id": "HOS", "name": "HOSEA" },
-    { "id": "JOL", "name": "JOEL" },
-    { "id": "AMO", "name": "AMOS" },
-    { "id": "OBA", "name": "OBADIAH" },
-    { "id": "JON", "name": "JONAH" },
-    { "id": "MIC", "name": "MICAH" },
-    { "id": "NAM", "name": "NAHUM" },
-    { "id": "HAB", "name": "HABAKKUK" },
-    { "id": "ZEP", "name": "ZEPHANIAH" },
-    { "id": "HAG", "name": "HAGGAI" },
-    { "id": "ZEC", "name": "ZECHARIAH" },
-    { "id": "MAL", "name": "MALACHI" },
-    { "id": "MAT", "name": "MATTHEW" },
-    { "id": "MRK", "name": "MARK" },
-    { "id": "LUK", "name": "LUKE" },
-    { "id": "JHN", "name": "JOHN" },
-    { "id": "ACT", "name": "ACTS" },
-    { "id": "ROM", "name": "ROMANS" },
-    { "id": "1CO", "name": "1 CORINTHIANS" },
-    { "id": "2CO", "name": "2 CORINTHIANS" },
-    { "id": "GAL", "name": "GALATIANS" },
-    { "id": "EPH", "name": "EPHESIANS" },
-    { "id": "PHP", "name": "PHILIPPIANS" },
-    { "id": "COL", "name": "COLOSSIANS" },
-    { "id": "1TH", "name": "1 THESSALONIANS" },
-    { "id": "2TH", "name": "2 THESSALONIANS" },
-    { "id": "1TI", "name": "1 TIMOTHY" },
-    { "id": "2TI", "name": "2 TIMOTHY" },
-    { "id": "TIT", "name": "TITUS" },
-    { "id": "PHM", "name": "PHILEMON" },
-    { "id": "HEB", "name": "HEBREWS" },
-    { "id": "JAS", "name": "JAMES" },
-    { "id": "1PE", "name": "1 PETER" },
-    { "id": "2PE", "name": "2 PETER" },
-    { "id": "1JN", "name": "1 JOHN" },
-    { "id": "2JN", "name": "2 JOHN" },
-    { "id": "3JN", "name": "3 JOHN" },
-    { "id": "JUD", "name": "JUDE" },
-    { "id": "REV", "name": "REVELATION" }
+    { id: "GEN", name: "GENESIS", realName: "Genesis" },
+    { id: "EXO", name: "EXODUS", realName: "Exodus" },
+    { id: "LEV", name: "LEVITICUS", realName: "Leviticus" },
+    { id: "NUM", name: "NUMBERS", realName: "Numbers" },
+    { id: "DEU", name: "DEUTERONOMY", realName: "Deuteronomy" },
+    { id: "JOS", name: "JOSHUA", realName: "Joshua" },
+    { id: "JDG", name: "JUDGES", realName: "Judges" },
+    { id: "RUT", name: "RUTH", realName: "Ruth" },
+    { id: "1SA", name: "1 SAMUEL", realName: "1 Samuel" },
+    { id: "2SA", name: "2 SAMUEL", realName: "2 Samuel" },
+    { id: "1KI", name: "1 KINGS", realName: "1 Kings" },
+    { id: "2KI", name: "2 KINGS", realName: "2 Kings" },
+    { id: "1CH", name: "1 CHRONICLES", realName: "1 Chronicles" },
+    { id: "2CH", name: "2 CHRONICLES", realName: "2 Chronicles" },
+    { id: "EZR", name: "EZRA", realName: "Ezra" },
+    { id: "NEH", name: "NEHEMIAH", realName: "Nehemiah" },
+    { id: "EST", name: "ESTHER", realName: "Esther" },
+    { id: "JOB", name: "JOB", realName: "Job" },
+    { id: "PSA", name: "PSALMS", realName: "Psalms" },
+    { id: "PRO", name: "PROVERBS", realName: "Proverbs" },
+    { id: "ECC", name: "ECCLESIASTES", realName: "Ecclesiastes" },
+    { id: "SNG", name: "SONG", realName: "Song" },
+    { id: "ISA", name: "ISAIAH", realName: "Isaiah" },
+    { id: "JER", name: "JEREMIAH", realName: "Jeremiah" },
+    { id: "LAM", name: "LAMENTATIONS", realName: "Lamentations" },
+    { id: "EZK", name: "EZEKIEL", realName: "Ezekiel" },
+    { id: "DAN", name: "DANIEL", realName: "Daniel" },
+    { id: "HOS", name: "HOSEA", realName: "Hosea" },
+    { id: "JOL", name: "JOEL", realName: "Joel" },
+    { id: "AMO", name: "AMOS", realName: "Amos" },
+    { id: "OBA", name: "OBADIAH", realName: "Obadiah" },
+    { id: "JON", name: "JONAH", realName: "Jonah" },
+    { id: "MIC", name: "MICAH", realName: "Micah" },
+    { id: "NAM", name: "NAHUM", realName: "Nahum" },
+    { id: "HAB", name: "HABAKKUK", realName: "Habakkuk" },
+    { id: "ZEP", name: "ZEPHANIAH", realName: "Zephaniah" },
+    { id: "HAG", name: "HAGGAI", realName: "Haggai" },
+    { id: "ZEC", name: "ZECHARIAH", realName: "Zechariah" },
+    { id: "MAL", name: "MALACHI", realName: "Malachi" },
+    { id: "MAT", name: "MATTHEW", realName: "Matthew" },
+    { id: "MRK", name: "MARK", realName: "Mark" },
+    { id: "LUK", name: "LUKE", realName: "Luke" },
+    { id: "JHN", name: "JOHN", realName: "John" },
+    { id: "ACT", name: "ACTS", realName: "Acts" },
+    { id: "ROM", name: "ROMANS", realName: "Romans" },
+    { id: "1CO", name: "1 CORINTHIANS", realName: "1 Corinthians" },
+    { id: "2CO", name: "2 CORINTHIANS", realName: "2 Corinthians" },
+    { id: "GAL", name: "GALATIANS", realName: "Galatians" },
+    { id: "EPH", name: "EPHESIANS", realName: "Ephesians" },
+    { id: "PHP", name: "PHILIPPIANS", realName: "Philippians" },
+    { id: "COL", name: "COLOSSIANS", realName: "Colossians" },
+    { id: "1TH", name: "1 THESSALONIANS", realName: "1 Thessalonians" },
+    { id: "2TH", name: "2 THESSALONIANS", realName: "2 Thessalonians" },
+    { id: "1TI", name: "1 TIMOTHY", realName: "1 Timothy" },
+    { id: "2TI", name: "2 TIMOTHY", realName: "2 Timothy" },
+    { id: "TIT", name: "TITUS", realName: "Titus" },
+    { id: "PHM", name: "PHILEMON", realName: "Philemon" },
+    { id: "HEB", name: "HEBREWS", realName: "Hebrews" },
+    { id: "JAS", name: "JAMES", realName: "James" },
+    { id: "1PE", name: "1 PETER", realName: "1 Peter" },
+    { id: "2PE", name: "2 PETER", realName: "2 Peter" },
+    { id: "1JN", name: "1 JOHN", realName: "1 John" },
+    { id: "2JN", name: "2 JOHN", realName: "2 John" },
+    { id: "3JN", name: "3 JOHN", realName: "3 John" },
+    { id: "JUD", name: "JUDE", realName: "Jude" },
+    { id: "REV", name: "REVELATION", realName: "Revelation" }
 ]
 
 function getBookNameById(id) {
     const book = bibleBooks.find(b => b.id === id);
-    return book ? book.name : null;
+    return book ? book.realName : null;
 }
 
 /**
@@ -842,22 +842,27 @@ function StudyNotesWithoutWrap({ chapter }) {
         return bookId.replace(/^(\d+)([A-Za-z])/, '$1 $2');
     }
 
+    function denormalizeBookId(bookId) {
+        // Remove spaces from book IDs for internal use (1 SA -> 1SA)
+        return bookId.replace(/\s+/g, '');
+    }
+
     async function fetchCitationDataForRefs(refs) {
         const reqId = ++currentReqIdRef.current;
         setIsLoading(true);
         try {
             const passages = await Promise.all(
                 refs.map(async ({ bookId, chapter, verseStart, verseEnd, source }) => {
-                    const normalizedBookId = normalizeBookId(bookId);
+                    const displayBookId = normalizeBookId(bookId); // For display in popup
 
                     if (source === 'study-note') {
-                        return await extractFromStudyNote({ bookId: normalizedBookId, chapter, verseStart, verseEnd });
+                        return await extractFromStudyNote({ bookId: displayBookId, chapter, verseStart, verseEnd });
                     }
 
                     const mgr = new BibleDataManager({
                         tabId: null,
                         translation: 'BSB',
-                        bookId,
+                        bookId, // Use original bookId for BibleDataManager (1SA, 2SA, etc.)
                         chapter
                     });
                     await mgr.fetch();
@@ -872,7 +877,7 @@ function StudyNotesWithoutWrap({ chapter }) {
                         .filter(v => v.verseNumber >= verseStart && v.verseNumber <= verseEnd)
                         .map(v => ({ number: v.verseNumber, text: v.text }));
 
-                    return { bookId: normalizedBookId, chapter, verseStart, verseEnd, sectionTitle, verses, source: source || 'bible' };
+                    return { bookId: displayBookId, chapter, verseStart, verseEnd, sectionTitle, verses, source: source || 'bible' };
                 })
             );
 
@@ -1109,9 +1114,10 @@ function StudyNotesWithoutWrap({ chapter }) {
         evt?.stopPropagation?.();
 
         const { source = 'bible', verseStart, verseEnd, chapter, bookId } = passage;
+        const internalBookId = denormalizeBookId(bookId); // Convert "1 SA" to "1SA" for internal use
         console.log("passage: ", passage);
 
-        if (globalThis.BookId === bookId && currentChapter === chapter) {
+        if (globalThis.BookId === internalBookId && currentChapter === chapter) {
             tags.shouldHighlight = true;
             // Empty for now :D
         } else {
@@ -1143,7 +1149,7 @@ function StudyNotesWithoutWrap({ chapter }) {
                 return hit ? { tabId: hit.id, data: hit.data } : null;
             }
 
-            const existingTab = findFirstTabByBookIdInActiveSpace(bookId);
+            const existingTab = findFirstTabByBookIdInActiveSpace(internalBookId);
 
             let newTabData;
             let newTabId;
@@ -1156,8 +1162,8 @@ function StudyNotesWithoutWrap({ chapter }) {
                 newTabData = {
                     use: 'thePage',
                     type: 'book',
-                    book: getBookNameById(bookId),
-                    bookId: bookId,
+                    book: getBookNameById(internalBookId),
+                    bookId: internalBookId,
                     chapter: chapter,
                     translation: 'BSB'
                 };
@@ -1171,7 +1177,7 @@ function StudyNotesWithoutWrap({ chapter }) {
 
             SetActiveTab(newTabId);
 
-            await loadTabsData(bookId, chapter, newTabId, newTabData);
+            await loadTabsData(internalBookId, chapter, newTabId, newTabData);
 
 
             // const allTabsInSpace = GetTabsInSpace();
@@ -1199,9 +1205,10 @@ function StudyNotesWithoutWrap({ chapter }) {
         evt?.stopPropagation?.();
 
         const { source = 'bible', verseStart, verseEnd, chapter, bookId } = passage;
+        const internalBookId = denormalizeBookId(bookId); // Convert "1 SA" to "1SA" for internal use
         console.log("passage: ", passage);
 
-        if (globalThis.BookId === bookId && currentChapter === chapter) {
+        if (globalThis.BookId === internalBookId && currentChapter === chapter) {
             tags.shouldHighlight = true;
             os.toast("you are already opening this book.", 2);
             if (source === 'study-note') {
@@ -1254,7 +1261,7 @@ function StudyNotesWithoutWrap({ chapter }) {
                 return hit ? { tabId: hit.id, data: hit.data } : null;
             }
 
-            const existingTab = findFirstTabByBookIdInActiveSpace(bookId);
+            const existingTab = findFirstTabByBookIdInActiveSpace(internalBookId);
 
             let newTabData;
             let newTabId;
@@ -1268,8 +1275,8 @@ function StudyNotesWithoutWrap({ chapter }) {
                 newTabData = {
                     use: 'thePage',
                     type: 'book',
-                    book: getBookNameById(bookId),
-                    bookId: bookId,
+                    book: getBookNameById(internalBookId),
+                    bookId: internalBookId,
                     chapter: chapter,
                     translation: 'BSB'
                 };
@@ -1283,7 +1290,7 @@ function StudyNotesWithoutWrap({ chapter }) {
 
             SetActiveTab(newTabId);
 
-            await loadTabsData(bookId, chapter, newTabId, tabData);
+            await loadTabsData(internalBookId, chapter, newTabId, newTabData);
 
             if (source === 'study-note') {
                 console.log("is study note");
