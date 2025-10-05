@@ -320,6 +320,24 @@ const HandleEvents = ({ dc, data }) => {
             }));
             dc.send(JSON.stringify({ type: "response.create" }));
         }
+        case "highlightVerses": {
+            let { verses } = JSON.parse(data.arguments || "{}");
+            if (verses && Array.isArray(verses)) {
+                ToggleVerseHighlight(verses)
+                globalThis.ClearAllWordHighlights()
+                dc.send(JSON.stringify({
+                    type: "conversation.item.create",
+                    item: {
+                        type: "function_call_output",
+                        call_id: data.call_id,
+                        output: "cleared highlighted words"
+                    }
+                }));
+                dc.send(JSON.stringify({ type: "response.create" }));
+            }
+            console.log(verses, "verses");
+            break
+        }
         case "highlightLocation": {
             let { color } = JSON.parse(data.arguments || "{}");
             let searchBar = getBot('system', 'introduction.searchBar');

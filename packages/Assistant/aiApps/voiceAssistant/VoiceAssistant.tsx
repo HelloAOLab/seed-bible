@@ -14,10 +14,12 @@ function VoiceAssistant() {
     const [connected, setConnected] = useState(false);
     const [start, setStart] = useState(true);
     const [isAssistantSpeaking, setIsAssistantSpeaking] = useState(false);
+    const [isAssistantListening, setIsAssistantListening] = useState(false);
     const [aiMode, setAIMode] = useState("Voice");
     const [micActive, setMicActive] = useState(false);
     const [speakerActive, setSpeakerActive] = useState(false);
-    const [openSettings,setOpenSettings] = useState(false);
+    const [openSettings, setOpenSettings] = useState(false);
+    const [aiState, setAiState] = useState("disconnected");
 
     const audioRef = useRef(null);
     const pcRef = useRef(null);
@@ -30,6 +32,24 @@ function VoiceAssistant() {
             globalThis.AISetStart = null;
         }
     }, [])
+
+    useEffect(() => {
+        if (start) {
+            if (connected) {
+                if (isAssistantListening) {
+                    setAiState("listening");
+                } else if (isAssistantSpeaking) {
+                    setAiState("speaking");
+                } else {
+                    setAiState("connected");
+                }
+            } else {
+                setAiState("connecting");
+            }
+        } else {
+            setAiState("disconnected")
+        }
+    }, [start, connected, isAssistantListening, isAssistantSpeaking])
 
     return (
         <>
@@ -45,6 +65,7 @@ function VoiceAssistant() {
                     micActive={micActive}
                     speakerActive={speakerActive}
                     dcRef={dcRef}
+                    setIsAssistantListening={setIsAssistantListening}
                 />
                 <AudioMonitor
                     audioRef={audioRef}
@@ -64,6 +85,7 @@ function VoiceAssistant() {
                     setStart={setStart}
                     setMicActive={setMicActive}
                     setSpeakerActive={setSpeakerActive}
+                    aiState={aiState}
                 />}
                 {
                     aiMode === "Text" && !openSettings && <TextAi
@@ -72,6 +94,7 @@ function VoiceAssistant() {
                         speakerActive={speakerActive}
                         setSpeakerActive={setSpeakerActive}
                         dcRef={dcRef}
+                        aiState={aiState}
                     />
                 }
                 {
