@@ -19,7 +19,7 @@ const EditRichText = await thisBot.EditRichText();
 const EditAttachment = await thisBot.EditAttachment();
 
 const bibleVizUtils = getBot("system","bibleVizUtils.main");
-console.log("PHEW PHEW PHEWW",bibleVizUtils);
+
 if(bibleVizUtils) {
     bibleVizUtils.Initialize();
 }

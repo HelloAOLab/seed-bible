@@ -333,8 +333,9 @@ const SettingsSidebar = () => {
     const [editSpaceName, setEditSpaceName] = useState(false)
     const [spaceName, setSpaceName] = useState(false)
     useEffect(() => {
-        if (CurrentSpace)
+        if (CurrentSpace){
             setSpaceName(CurrentSpace.name)
+        }
     }, [activeSpace])
     useEffect(() => {
         updateSpace(activeSpace, { name: spaceName })

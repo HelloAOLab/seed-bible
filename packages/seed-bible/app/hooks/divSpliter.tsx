@@ -42,6 +42,7 @@ export const useDivSpliter = ({
             if (layout.leftWidth) setLeftWidth(layout.leftWidth);
             if (layout.topHeight) setTopHeight(layout.topHeight);
         }
+        globalThis.CurrentPanelAvailable = null;
     }, [activeSpace]);
 
     useEffect(() => {
@@ -113,7 +114,7 @@ export const useDivSpliter = ({
     const addApplication = (newApp) => {
         // TODO: Replace with a better alternative
         const clone = cloneElement(newApp.App, { prop: 'test' })
-        os.log(clone, 'cloned')
+        os.log(newApp.to, apps, 'cloned')
         if (newApp.to === 'panel') {
             if (apps.length > 2) {
                 setApps([apps[0], apps[1], newApp]);

@@ -87,7 +87,7 @@ await(async function mainInstaller(that) {
     async function SetUpApplication(applicationFunction, bot, toolbarConfig) {
         function generateAppItem({ icon, iconUrl, label, AppComponent }) {
             const panelKey = `${label?.toUpperCase()?.replace(/\s/g, '_')}_PANEL_ID`;
-
+            
             const onClick = async () => {
                 if (globalThis.makingApp === label) {
                     RemoveApplicationByID(globalThis[panelKey]);
@@ -100,6 +100,7 @@ await(async function mainInstaller(that) {
                 const id = uuid();
                 globalThis[panelKey] = id;
                 globalThis.makingApp = label;
+
 
                 if (globalThis.CurrentPanelAvailable) {
                     ReplaceApplication(globalThis.CurrentPanelAvailable, {
@@ -191,6 +192,7 @@ await(async function mainInstaller(that) {
             AppComponent: App,
             iconUrl: toolbarConfig?.iconUrl,
         });
+
 
         if (globalThis.AddTool) globalThis.AddTool(toolbarOption);
 
