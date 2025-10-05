@@ -17,7 +17,7 @@ else
     let chapterData
     if(piece.masks.chapterOrigin == "layout")
     {
-        chapterData = BibleLayout3DManagerManager.GetChapterDataById({id: piece.masks.layoutChapterDataId})
+        chapterData = scriptureMap3DManagerManager.GetChapterDataById({id: piece.masks.layoutChapterDataId})
     }
     else if(piece.masks.chapterOrigin == "stack")
     {

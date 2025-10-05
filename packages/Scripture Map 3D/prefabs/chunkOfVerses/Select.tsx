@@ -7,7 +7,7 @@
 setTagMask(thisBot, 'isSelected', true);
 const dimension = os.getCurrentDimension();
 const amountOfVerses = thisBot.masks.finalVerseNumber - thisBot.masks.initialVerseNumber + 1;
-let verses = ObjectPooler.GetObjectFromPool({tag: BibleVizUtils.Data.tags.ObjectPoolTags.StackVerse, amount: amountOfVerses});
+let verses = ObjectPooler.GetObjectFromPool({tag: BibleVizUtils.Data.tags.ObjectPoolTags.LayoutVerse, amount: amountOfVerses});
 verses = Array.isArray(verses) ? verses : [verses];
 const maxHorizontalAmountOfVersesPerChunk = 6;
 const maxVerticalAmountOfVersesPerChunk = 2;
