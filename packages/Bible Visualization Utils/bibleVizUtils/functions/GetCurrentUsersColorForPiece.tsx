@@ -11,7 +11,7 @@ switch(piece.tags.poolTag)
     case BibleVizUtils.Data.tags.ObjectPoolTags.LayoutChapter: 
     {
         const pieceData = piece.tags.poolTag == BibleVizUtils.Data.tags.ObjectPoolTags.StackChapter ? BibleStackManager.GetPieceData({piece}) :
-            BibleLayout3DManager.GetPieceData({piece})
+            scriptureMap3DManager.GetPieceData({piece})
         currUsersColor = getBots(byTag("isUserColor", true), byTag("ownerDataId", pieceData.id), byTag("isInUse", true));
     }
     break;
