@@ -44,7 +44,7 @@ async function SetUpConextMenu(contextOptions, bot, label) {
 async function SetUpApplication(applicationFunction, bot, toolbarConfig) {
     function generateAppItem({ icon, iconUrl, label, AppComponent }) {
         const panelKey = `${label?.toUpperCase()?.replace(/\s/g, '_')}_PANEL_ID`;
-       
+        console.log('working', pkgName, panelKey)
         const onClick = async () => {
             if (globalThis.makingApp === label) {
                 globalThis.CurrentPanelAvailable = null;
@@ -58,7 +58,6 @@ async function SetUpApplication(applicationFunction, bot, toolbarConfig) {
             const id = uuid();
             globalThis[panelKey] = id;
             globalThis.makingApp = label;
-            console.log(globalThis.CurrentPanelAvailable,"KYU?")
             if (globalThis.CurrentPanelAvailable) {
                 ReplaceApplication(globalThis.CurrentPanelAvailable, {
                     id,
