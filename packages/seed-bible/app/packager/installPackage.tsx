@@ -85,7 +85,7 @@ await(async function mainInstaller(that) {
     }
 
     async function SetUpApplication(applicationFunction, bot, toolbarConfig) {
-        function generateAppItem({ icon, iconUrl, label, AppComponent }) {
+        function generateAppItem({ icon, iconUrl, label, AppComponent, hasToggle, showInPageToolbar, showInStarterToolbar }) {
             const panelKey = `${label?.toUpperCase()?.replace(/\s/g, '_')}_PANEL_ID`;
             
             const onClick = async () => {
@@ -157,6 +157,9 @@ await(async function mainInstaller(that) {
                 active: true,
                 onHold,
                 onClick,
+                hasToggle,
+                showInPageToolbar, 
+                showInStarterToolbar
             };
         }
 
@@ -191,6 +194,9 @@ await(async function mainInstaller(that) {
             label: toolbarConfig.label,
             AppComponent: App,
             iconUrl: toolbarConfig?.iconUrl,
+            hasToggle: toolbarConfig.hasToggle,
+            showInPageToolbar: toolbarConfig.showInPageToolbar,
+            showInStarterToolbar: toolbarConfig.showInStarterToolbar
         });
 
 
@@ -205,12 +211,16 @@ await(async function mainInstaller(that) {
         const toolbarOption = {
             icon: !toolbarConfig?.iconUrl ? toolbarConfig.icon : toolbarConfig.iconUrl,
             label: toolbarConfig.label,
-            hasToggle: true,
+            hasToggle: toolbarConfig.hasToggle,
             active: typeof toolbarConfig?.active === 'boolean' ? toolbarConfig.active : true,
+            showInPageToolbar: toolbarConfig.showInPageToolbar,
+            showInStarterToolbar: toolbarConfig.showInStarterToolbar,
             onHold: runFn,
             onClick: runFn,
             isImg: !!toolbarConfig?.iconUrl,
         };
+
+        console.log(`[Debug] installPackage`, {toolbarOption, toolbarConfig})
 
         if (globalThis.AddTool) {
             globalThis.AddTool(toolbarOption, { to: toolbarConfig.to ? toolbarConfig.to : 'page' });

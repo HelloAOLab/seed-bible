@@ -42,7 +42,7 @@ async function SetUpConextMenu(contextOptions, bot, label) {
 }
 
 async function SetUpApplication(applicationFunction, bot, toolbarConfig) {
-    function generateAppItem({ icon, iconUrl, label, AppComponent }) {
+    function generateAppItem({ icon, iconUrl, label, AppComponent, hasToggle, showInPageToolbar, showInStarterToolbar }) {
         const panelKey = `${label?.toUpperCase()?.replace(/\s/g, '_')}_PANEL_ID`;
         console.log('working', pkgName, panelKey)
         const onClick = async () => {
@@ -113,6 +113,9 @@ async function SetUpApplication(applicationFunction, bot, toolbarConfig) {
             active: true,
             onHold,
             onClick,
+            hasToggle,
+            showInPageToolbar, 
+            showInStarterToolbar
         };
     }
 
@@ -138,11 +141,16 @@ async function SetUpApplication(applicationFunction, bot, toolbarConfig) {
         return;
     }
 
+    const {showInPageToolbar, showInStarterToolbar, active, hasToggle} = toolbarConfig;
+
     const toolbarOption = generateAppItem({
         icon: toolbarConfig.icon,
         label: toolbarConfig.label,
         AppComponent: App,
         iconUrl: toolbarConfig?.iconUrl,
+        hasToggle: toolbarConfig.hasToggle,
+        showInPageToolbar: toolbarConfig.showInPageToolbar,
+        showInStarterToolbar: toolbarConfig.showInStarterToolbar
     });
 
     if (globalThis.AddTool) globalThis.AddTool(toolbarOption);
@@ -156,8 +164,10 @@ async function SetUpApplicationWithoutApp(toolbarConfig, bot) {
     const toolbarOption = {
         icon: !toolbarConfig?.iconUrl ? toolbarConfig.icon : toolbarConfig.iconUrl,
         label: toolbarConfig.label,
-        hasToggle: true,
-        active: true,
+        hasToggle: toolbarConfig.hasToggle,
+        active: toolbarConfig.active,
+        showInPageToolbar: toolbarConfig.showInPageToolbar,
+        showInStarterToolbar: toolbarConfig.showInStarterToolbar,
         onHold: runFn,
         onClick: runFn,
         isImg: !!toolbarConfig?.iconUrl,
