@@ -48,6 +48,7 @@ globalThis.CheckMultiFuntionHold = () => globalThis?.KEY_HOLD?.['shift'] || glob
 globalThis.Playlist = thisBot;
 
 const getBookmarks = async () => {
+  setTag(thisBot, "bookmarks", { });
   let apiResults = {};
   try {
     const authBot = await os.requestAuthBotInBackground();
