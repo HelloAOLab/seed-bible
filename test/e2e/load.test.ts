@@ -50,6 +50,19 @@ test('change chapter', async () => {
     expect(await bookTitle?.evaluate(el => el.textContent)).toBe('Isaiah 53');
 });
 
+test('search book', async () => {
+    await seedBibleFrame.waitForSelector('div.toolbar-item-wrapper[title="Books"] > button', { visible: true });
+    await delay(1000);
+    await seedBibleFrame.locator('div.toolbar-item-wrapper[title="Books"] > button')
+        .click({});
+    await page.locator('.searchbar > input').fill('Hos');
+    await page.locator('button.chapter-btn:nth-child(3)').click();
+
+    const bookTitle = await seedBibleFrame.locator('div.bookTitle').waitHandle();
+    await delay(1000);
+    expect(await bookTitle?.evaluate(el => el.textContent)).toBe('Hosea 3');
+});
+
 function delay(time) {
    return new Promise(function(resolve) { 
        setTimeout(resolve, time)
