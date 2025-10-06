@@ -49,6 +49,10 @@ globalThis.ContextMenuOptions.forEach(({ address, label, items }) => {
         if (el.onClick) el.onClick(that);
         SetInHold(null);
       },
+      // For dynamic title
+      title: () => {
+        return typeof el.title === "function" ? el.title(that) : item.title
+      }
     };
   });
   const panelKey = `${label.toUpperCase().replace(/\s/g, "_")}_PANEL_ID`;

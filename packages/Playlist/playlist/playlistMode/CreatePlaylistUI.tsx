@@ -78,30 +78,33 @@ const PROMPT_OPTIONS = [
 ];
 
 const AI_OPTIONS = [
-  { "value": "openai/gpt/5", "label": "OpenAI GPT-5" },
-  { "value": "openai/gpt/4o-mini", "label": "OpenAI GPT-4o Mini" },
-  { "value": "openai/gpt/o1-mini", "label": "OpenAI GPT-o1 Mini" },
-  { "value": "openai/gpt/o3-mini", "label": "OpenAI GPT-o3 Mini" },
-  { "value": "meta/llama3.1/405b", "label": "Meta LLaMA 3.1 405B" },
-  { "value": "01ai/yi/large", "label": "01.AI Yi Large" },
-  { "value": "xai/grok/2", "label": "xAI Grok 2" },
-  { "value": "openai/gpt/4o", "label": "OpenAI GPT-4o" },
-  { "value": "anthropic/claude3.5/sonnet", "label": "Anthropic Claude 3.5 Sonnet" },
-  { "value": "anthropic/claude3.5/haiku", "label": "Anthropic Claude 3.5 Haiku" },
-  { "value": "anthropic/claude3.7/sonnet", "label": "Anthropic Claude 3.7 Sonnet" },
-  { "value": "apologist/aquinas/v4", "label": "Apologist Aquinas v4" },
-  { "value": "mistral/mixtral/8x22b", "label": "Mistral Mixtral 8x22B" },
-  { "value": "mistral/mixtral/8x7b", "label": "Mistral Mixtral 8x7B" },
-  { "value": "mistral/small/24b", "label": "Mistral Small 24B" },
-  { "value": "alibaba/qwen2.5/72b", "label": "Alibaba Qwen 2.5 72B" },
-  { "value": "alibaba/qwen2.5/32b", "label": "Alibaba Qwen 2.5 32B" },
-  { "value": "microsoft/wizardlm/8x22b", "label": "Microsoft WizardLM 8x22B" },
-  { "value": "deepseek/deepseek/v3", "label": "DeepSeek v3" },
-  { "value": "deepseek/deepseek/r1", "label": "DeepSeek R1" },
-  { "value": "google/gemma/9b", "label": "Google Gemma 9B" },
-  { "value": "meta/llama3.3/70b-specdec", "label": "Meta LLaMA 3.3 70B SpecDec" },
-  { "value": "meta/llama3.3/70b-versatile", "label": "Meta LLaMA 3.3 70B Versatile" },
-]
+  { value: "openai/gpt/5", label: "OpenAI GPT-5" },
+  { value: "openai/gpt/4o-mini", label: "OpenAI GPT-4o Mini" },
+  { value: "openai/gpt/o1-mini", label: "OpenAI GPT-o1 Mini" },
+  { value: "openai/gpt/o3-mini", label: "OpenAI GPT-o3 Mini" },
+  { value: "meta/llama3.1/405b", label: "Meta LLaMA 3.1 405B" },
+  { value: "01ai/yi/large", label: "01.AI Yi Large" },
+  { value: "xai/grok/2", label: "xAI Grok 2" },
+  { value: "openai/gpt/4o", label: "OpenAI GPT-4o" },
+  { value: "anthropic/claude3.5/sonnet", label: "Anthropic Claude 3.5 Sonnet" },
+  { value: "anthropic/claude3.5/haiku", label: "Anthropic Claude 3.5 Haiku" },
+  { value: "anthropic/claude3.7/sonnet", label: "Anthropic Claude 3.7 Sonnet" },
+  { value: "apologist/aquinas/v4", label: "Apologist Aquinas v4" },
+  { value: "mistral/mixtral/8x22b", label: "Mistral Mixtral 8x22B" },
+  { value: "mistral/mixtral/8x7b", label: "Mistral Mixtral 8x7B" },
+  { value: "mistral/small/24b", label: "Mistral Small 24B" },
+  { value: "alibaba/qwen2.5/72b", label: "Alibaba Qwen 2.5 72B" },
+  { value: "alibaba/qwen2.5/32b", label: "Alibaba Qwen 2.5 32B" },
+  { value: "microsoft/wizardlm/8x22b", label: "Microsoft WizardLM 8x22B" },
+  { value: "deepseek/deepseek/v3", label: "DeepSeek v3" },
+  { value: "deepseek/deepseek/r1", label: "DeepSeek R1" },
+  { value: "google/gemma/9b", label: "Google Gemma 9B" },
+  { value: "meta/llama3.3/70b-specdec", label: "Meta LLaMA 3.3 70B SpecDec" },
+  {
+    value: "meta/llama3.3/70b-versatile",
+    label: "Meta LLaMA 3.3 70B Versatile",
+  },
+];
 
 // There are ! in creating playlist because flow is reversed
 
@@ -111,8 +114,10 @@ const CreatePlaylistUI = ({
   setTab,
   isLayers,
   playingPlaylist,
-  editData
+  editData,
 }) => {
+  const isloggedIN = authBot?.id;
+
   // Audio
   const [mediaURL, setMediaURL] = useState("");
   const [videoSrc, setVideoSrc] = useState(false);
@@ -205,7 +210,9 @@ const CreatePlaylistUI = ({
   const [link, setLink] = useState("");
 
   const [mode, setMode] = useState(
-    editData?.address ? PlaylistModeTypes.annotations : globalThis[`${id}mode`] || PlaylistModeTypes.playlist
+    editData?.address
+      ? PlaylistModeTypes.annotations
+      : globalThis[`${id}mode`] || PlaylistModeTypes.playlist
   );
 
   globalThis[`${id}mode`] = mode;
@@ -277,17 +284,29 @@ const CreatePlaylistUI = ({
     });
   }, [query, playLists]);
 
-  const editPlaylistData = (idRec, newValueContent, parentId = null, fullData = false) => {
+  const editPlaylistData = (
+    idRec,
+    newValueContent,
+    parentId = null,
+    fullData = false
+  ) => {
     setPlaylist((prev) => {
       const old = [...prev];
       if (parentId) {
         const parentIdx = old.findIndex((e) => e.id === parentId);
         if (parentIdx > -1) {
-          const idx = old[parentIdx].additionalInfo.layers.findIndex((e) => e.id === idRec);
+          const idx = old[parentIdx].additionalInfo.layers.findIndex(
+            (e) => e.id === idRec
+          );
           if (idx > -1) {
             if (fullData) {
-              old[parentIdx].additionalInfo.layers[idx] = { ...newValueContent };
-              old[parentIdx].additionalInfo.layers[idx] = { ...old[parentIdx].additionalInfo.layers[idx], content: newValueContent };
+              old[parentIdx].additionalInfo.layers[idx] = {
+                ...newValueContent,
+              };
+              old[parentIdx].additionalInfo.layers[idx] = {
+                ...old[parentIdx].additionalInfo.layers[idx],
+                content: newValueContent,
+              };
             } else {
             }
           }
@@ -372,11 +391,11 @@ const CreatePlaylistUI = ({
           }
         }
       } else {
-        globalThis[`${'default'}playlists`] = old;
+        globalThis[`${"default"}playlists`] = old;
         if (data.list.length === 0) return old;
         old.push(data);
       }
-      globalThis[`${'default'}playlists`] = old;
+      globalThis[`${"default"}playlists`] = old;
       return old;
     });
   };
@@ -429,7 +448,7 @@ const CreatePlaylistUI = ({
     globalThis.SET_SHOW_CHECK && globalThis.SET_SHOW_CHECK(!creatingPlaylist);
     return () => {
       globalThis.SET_SHOW_CHECK && globalThis.SET_SHOW_CHECK(creatingPlaylist);
-    }
+    };
   }, [creatingPlaylist]);
 
   // const toggleMarkAsRead = (playlistIndex, subPlaylistIndex = false) => {
@@ -655,7 +674,7 @@ const CreatePlaylistUI = ({
         oldData,
         command: genDetails,
         systemPrompt: systemPrompt,
-        aiModal: selectedAI
+        aiModal: selectedAI,
       });
       setLoading(false);
       if (!allItems?.length) {
@@ -849,25 +868,28 @@ const CreatePlaylistUI = ({
   };
 
   if (PlaylistModeTypes.project === mode) {
-    return <div style={{
-      display: "flex",
-      flexDirection: "column",
-      // minWidth: `min(396p    flex-gro            flexGrow: '1',
-      width: '100%',
-      padding: "12px"
-    }}>
-      <ProjectMode
-        setTab={setTab}
-        name={name}
-        showPlaylistSettings={showPlaylistSettings}
-        setShowPlaylistSettings={setShowPlaylistSettings}
-        onReset={() => {
-          setMode(PlaylistModeTypes.playlist);
-          globalThis[`${id}creatingPlaylist`] = true;
-        }}
-        setMode={setMode}
-      />
-    </div>
+    return (
+      <div
+        style={{
+          display: "flex",
+          flexDirection: "column",
+          // minWidth: `min(396p    flex-gro            flexGrow: '1',
+          width: "100%",
+          padding: "12px",
+        }}>
+        <ProjectMode
+          setTab={setTab}
+          name={name}
+          showPlaylistSettings={showPlaylistSettings}
+          setShowPlaylistSettings={setShowPlaylistSettings}
+          onReset={() => {
+            setMode(PlaylistModeTypes.playlist);
+            globalThis[`${id}creatingPlaylist`] = true;
+          }}
+          setMode={setMode}
+        />
+      </div>
+    );
   }
 
   if (PlaylistModeTypes.annotations === mode) {
@@ -1001,44 +1023,46 @@ const CreatePlaylistUI = ({
               padding: "1rem",
             }}
             className="overlay linked-item-custom">
-            <div
-              className="more-menu-items"
-              onClick={() => {
-                setMode(PlaylistModeTypes.annotations);
-                setShowPlaylistSettings(false);
-              }}>
-              <div className="align-center">
-                <span
-                  style={{ fontSize: "20px", color: "white" }}
-                  class="material-symbols-outlined">
-                  draft
-                </span>
-                <label
-                  style={{
-                    fontSize: "12px",
-                    fontWeight: "600",
-                    marginLeft: "4px",
-                    color: "white",
-                  }}
-                  for="playlistInclude">
-                  Annotation Mode
-                </label>
-              </div>
-              <Tooltip
-                forRight={true}
-                text="Annotation mode is the way to annotate the bible so you can see content while exploring other who have subscribed to you."
-                gifUrl={ChecklistGIf}>
-                <p
-                  className="what-this center"
-                  style={{ margin: "0 0 0 0.5rem" }}>
+            {isloggedIN ? (
+              <div
+                className="more-menu-items"
+                onClick={() => {
+                  setMode(PlaylistModeTypes.annotations);
+                  setShowPlaylistSettings(false);
+                }}>
+                <div className="align-center">
                   <span
-                    style={{ fontSize: "24px" }}
-                    class="material-symbols-outlined unfollow">
-                    info
+                    style={{ fontSize: "20px", color: "white" }}
+                    class="material-symbols-outlined">
+                    draft
                   </span>
-                </p>
-              </Tooltip>
-            </div>
+                  <label
+                    style={{
+                      fontSize: "12px",
+                      fontWeight: "600",
+                      marginLeft: "4px",
+                      color: "white",
+                    }}
+                    for="playlistInclude">
+                    Annotation Mode
+                  </label>
+                </div>
+                <Tooltip
+                  forRight={true}
+                  text="Annotation mode is the way to annotate the bible so you can see content while exploring other who have subscribed to you."
+                  gifUrl={ChecklistGIf}>
+                  <p
+                    className="what-this center"
+                    style={{ margin: "0 0 0 0.5rem" }}>
+                    <span
+                      style={{ fontSize: "24px" }}
+                      class="material-symbols-outlined unfollow">
+                      info
+                    </span>
+                  </p>
+                </Tooltip>
+              </div>
+            ) : null}
             <div
               className="more-menu-items active"
               onClick={() => {
@@ -1077,44 +1101,46 @@ const CreatePlaylistUI = ({
                 </p>
               </Tooltip>
             </div>
-            <div
-              className="more-menu-items"
-              onClick={() => {
-                setMode(PlaylistModeTypes.project);
-                setShowPlaylistSettings(false);
-              }}>
-              <div className="align-center">
-                <span
-                  style={{ fontSize: "20px", color: "white" }}
-                  class="material-symbols-outlined">
-                  team_dashboard
-                </span>
-                <label
-                  style={{
-                    fontSize: "12px",
-                    fontWeight: "600",
-                    marginLeft: "4px",
-                    color: "white",
-                  }}
-                  for="playlistInclude">
-                  Project Mode
-                </label>
-              </div>
-              <Tooltip
-                forRight={true}
-                text="Project mode is awesome."
-                gifUrl={ChecklistGIf}>
-                <p
-                  className="what-this center"
-                  style={{ margin: "0 0 0 0.5rem" }}>
+            {isloggedIN ? (
+              <div
+                className="more-menu-items"
+                onClick={() => {
+                  setMode(PlaylistModeTypes.project);
+                  setShowPlaylistSettings(false);
+                }}>
+                <div className="align-center">
                   <span
-                    style={{ fontSize: "24px" }}
-                    class="material-symbols-outlined unfollow">
-                    info
+                    style={{ fontSize: "20px", color: "white" }}
+                    class="material-symbols-outlined">
+                    team_dashboard
                   </span>
-                </p>
-              </Tooltip>
-            </div>
+                  <label
+                    style={{
+                      fontSize: "12px",
+                      fontWeight: "600",
+                      marginLeft: "4px",
+                      color: "white",
+                    }}
+                    for="playlistInclude">
+                    Project Mode
+                  </label>
+                </div>
+                <Tooltip
+                  forRight={true}
+                  text="Project mode is awesome."
+                  gifUrl={ChecklistGIf}>
+                  <p
+                    className="what-this center"
+                    style={{ margin: "0 0 0 0.5rem" }}>
+                    <span
+                      style={{ fontSize: "24px" }}
+                      class="material-symbols-outlined unfollow">
+                      info
+                    </span>
+                  </p>
+                </Tooltip>
+              </div>
+            ) : null}
           </div>
         </>
       )}
@@ -1300,6 +1326,7 @@ const CreatePlaylistUI = ({
               <div
                 className="publish-setting"
                 onClick={(e) => {
+                  if (!isloggedIN) return;
                   const rect = e.currentTarget.getBoundingClientRect();
 
                   const x = rect.left; // X position where the element starts (from left of screen)
@@ -1546,7 +1573,7 @@ const CreatePlaylistUI = ({
                   <span className="color-inherit">Add Media</span>
                 </Button>
                 <p
-                  onClick={() => { }}
+                  onClick={() => {}}
                   style={{ width: "fit-content" }}
                   className="playlist-action small">
                   <span class="material-symbols-outlined unfollow">
@@ -1582,12 +1609,13 @@ const CreatePlaylistUI = ({
               <div
                 className="add-new-playlist alter"
                 style={{ border: "none" }}>
-
-                <div class="align-center" style={{ justifyContent: 'space-between' }}>
-                  <p style={{ fontSize: "12px", margin: '0.5rem 0' }}>
+                <div
+                  class="align-center"
+                  style={{ justifyContent: "space-between" }}>
+                  <p style={{ fontSize: "12px", margin: "0.5rem 0" }}>
                     <b>Generation Prompt:</b>
                   </p>
-                  <div class="align-center" style={{ gap: '0.5rem' }}>
+                  <div class="align-center" style={{ gap: "0.5rem" }}>
                     <Select
                       hidden={true}
                       secondary
@@ -1599,50 +1627,55 @@ const CreatePlaylistUI = ({
                       options={PROMPT_OPTIONS}
                       sxSelect={{ padding: "0.25rem" }}
                     />
-                    {currentPromptText === "system-prompt"
-                      &&
+                    {currentPromptText === "system-prompt" && (
                       <Button
                         small
                         onClick={() => {
                           setSystemPrompt(globalThis.SYSTEM_PROMPT);
-                        }}
-                      >
-                        <span style={{ fontSize: '14px' }} class="material-symbols-outlined unfollow">
+                        }}>
+                        <span
+                          style={{ fontSize: "14px" }}
+                          class="material-symbols-outlined unfollow">
                           reset_settings
                         </span>
                       </Button>
-                    }
+                    )}
                   </div>
                 </div>
 
-                {currentPromptText === 'prompt'
-                  ?
+                {currentPromptText === "prompt" ? (
                   <Input
-                    style={{ marginBottom: '0' }}
+                    style={{ marginBottom: "0" }}
                     type="textarea"
                     value={genDetails}
                     onChangeListener={setGenDetails}
                     placeholder="Describe the playlist you would like to make."
                   />
-                  :
+                ) : (
                   <Input
-                    style={{ marginBottom: '0', }}
-                    sxInput={{ resize: 'vertical', height: '25rem' }}
+                    style={{ marginBottom: "0" }}
+                    sxInput={{ resize: "vertical", height: "25rem" }}
                     type="textarea"
                     value={systemPrompt}
                     onChangeListener={setSystemPrompt}
                     placeholder="Describe your system Prompt."
                   />
-                }
-                {currentPromptText === "system-prompt" && <p className='info'>Use $text$ to use your initial prompt as variable.</p>}
+                )}
+                {currentPromptText === "system-prompt" && (
+                  <p className="info">
+                    Use $text$ to use your initial prompt as variable.
+                  </p>
+                )}
                 <Select
                   hidden={true}
                   secondary
                   value={selectedAI}
-                  onChangeListener={(val) => { setSelectedAI(val); }}
+                  onChangeListener={(val) => {
+                    setSelectedAI(val);
+                  }}
                   name="AI:"
                   options={AI_OPTIONS}
-                  sxSelect={{ padding: '0.25rem', }}
+                  sxSelect={{ padding: "0.25rem" }}
                 />
                 <div className="attach-link-actions">
                   <Button onClick={() => setRegenrateUI(false)} secondaryAlt>
