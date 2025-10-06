@@ -37,11 +37,21 @@ test('load seed bible into Genesis 1', async () => {
 });
 
 // Should work but doesn't because of the login screens
-test.skip('change chapter', async () => {
-    await seedBibleFrame.locator('div.toolbar-item-wraper[title="Books"] > button').click();
-    await seedBibleFrame.locator('div.sidebar-itm:-p-text("Isaiah")').click();
-    await seedBibleFrame.locator('button.chapter-btn:-p-text("53")').click();
+test('change chapter', async () => {
+    await seedBibleFrame.waitForSelector('div.toolbar-item-wrapper[title="Books"] > button', { visible: true });
+    await delay(1000);
+    await seedBibleFrame.locator('div.toolbar-item-wrapper[title="Books"] > button')
+        .click({});
+    await page.locator('div.sidebar-itm:nth-child(23)').click();
+    await page.locator('button.chapter-btn:nth-child(53)').click();
 
     const bookTitle = await seedBibleFrame.locator('div.bookTitle').waitHandle();
+    await delay(1000);
     expect(await bookTitle?.evaluate(el => el.textContent)).toBe('Isaiah 53');
 });
+
+function delay(time) {
+   return new Promise(function(resolve) { 
+       setTimeout(resolve, time)
+   });
+}
