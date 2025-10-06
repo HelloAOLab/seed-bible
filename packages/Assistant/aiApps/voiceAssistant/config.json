@@ -3,7 +3,7 @@
     "app": "",
     "toolbarConfig": {
         "icon": "robot_2",
-        "label": "Assistant",
+        "label": "AO",
         "hasToggle": "true",
         "run": "toggleVoiceAssistant"
     }

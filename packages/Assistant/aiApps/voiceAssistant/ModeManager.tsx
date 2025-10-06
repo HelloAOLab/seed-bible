@@ -1,11 +1,19 @@
 import { Voice, Text, Settings } from 'aiApps.voiceAssistant.icons';
 
-const ModeManager = ({ aiMode, setAIMode, setOpenSettings }) => {
+const {useEffect} = os.appHooks;
+
+const ModeManager = ({ aiMode, setAIMode, setOpenSettings, currentAIConfig }) => {
+
+    useEffect(() => {
+        if(currentAIConfig.type === "stream"){
+            setAIMode("Text")
+        }
+    }, [currentAIConfig])
     return <div class="header-container">
         <div className="mode-container">
-            <button className={`mode-btn ${aiMode === "Voice" && "selected-mode"}`} onClick={() => setAIMode("Voice")}>
+            {currentAIConfig.type === "webrtc" && <button className={`mode-btn ${aiMode === "Voice" && "selected-mode"}`} onClick={() => setAIMode("Voice")}>
                 <Voice style={{ width: "24px", height: "24px" }} />
-            </button>
+            </button>}
             <button className={`mode-btn ${aiMode === "Text" && "selected-mode"}`} onClick={() => setAIMode("Text")}>
                 <Text style={{ width: "24px", height: "24px" }} />
             </button>

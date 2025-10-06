@@ -118,9 +118,23 @@
         "parameters": {
             "type": "object",
             "properties": {
-                "verse": {
-                    "type": "number",
-                    "description": "the verse the user asks to highlight"
+            },
+            "required": []
+        }
+    },
+    {
+        "type": "function",
+        "name": "highlightVerses",
+        "description": "whenever user ask to highlight or unhighlight the verses",
+        "parameters": {
+            "type": "object",
+            "properties": {
+                "verses": {
+                    "type": "array",
+                    "description": "the verses the user specifies",
+                    "items": {
+                        "type": "number"
+                    }
                 }
             },
             "required": []
