@@ -1,9 +1,10 @@
 import { program } from 'commander';
-import { readFile, rmdir } from 'node:fs/promises';
+import { readFile, rmdir, cp } from 'node:fs/promises';
 import { downloadAndSave, uploadPattern } from './lib/pattern';
 import path from 'node:path';
 import { execSync } from 'node:child_process';
 import { uploadAll } from './lib/extension';
+import os from 'node:os';
 
 const packageNameMap = new Map([
     ['SeedBible', 'seed-bible'],
@@ -19,6 +20,19 @@ program.command('download')
     .option('-v, --version <version>', 'The version of the pattern to download. If not specified, the latest version will be downloaded.', parseInt)
     .action(async (name, options) => {
         await downloadAndSave(name, options.version);
+    });
+
+program.command('unpack-seed-bible-aux')
+    .description('Unpacks the given AUX file as the Seed Bible pattern into the packages folder.')
+    .argument('<file>', 'The path to the AUX file to unpack.')
+    .action(async (file) => {
+        const filePath = path.resolve(file);
+        const copyPath = path.resolve(os.tmpdir(), 'seed-bible.aux');
+        await cp(filePath, copyPath, { force: true });
+        const packagePath = path.resolve('packages', 'seed-bible');
+        await rmdir(packagePath, { recursive: true });
+        execSync(`casualos unpack-aux --overwrite "${copyPath}" ./packages`, { stdio: 'ignore' });
+        console.log(`Unpacked Seed Bible AUX from ${filePath} to packages folder.`);
     });
 
 program.command('unpack')
