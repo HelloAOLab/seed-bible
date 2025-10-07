@@ -23,8 +23,8 @@ function VoiceAssistant() {
     const [openSettings, setOpenSettings] = useState(false);
     const [aiState, setAiState] = useState("disconnected");
     const [currentAIConfig, setCurrentAIConfig] = useState({
-        Name: "GPT-5",
-        Description: "The latest chatgpt 5 model",
+        Name: "GPT-Realtime",
+        Description: "The realtime AI using the latest gpt-5",
         Modes: [Voice, Text],
         type: "webrtc"
     })
@@ -44,7 +44,9 @@ function VoiceAssistant() {
     useEffect(() => {
         if (start) {
             if (connected) {
-                if (isAssistantListening) {
+                if(!micActive){
+                    setAiState("muted")
+                }else if (isAssistantListening) {
                     setAiState("listening");
                 } else if (isAssistantSpeaking) {
                     setAiState("speaking");
@@ -57,12 +59,12 @@ function VoiceAssistant() {
         } else {
             setAiState("disconnected")
         }
-    }, [start, connected, isAssistantListening, isAssistantSpeaking])
+    }, [start, connected, isAssistantListening, isAssistantSpeaking, micActive])
 
     useEffect(() => {
-        if(currentAIConfig.type === "webrtc"){
+        if (currentAIConfig.type === "webrtc") {
             setStart(true)
-        }else{
+        } else {
             setStart(false)
         }
     }, [currentAIConfig])
@@ -103,6 +105,7 @@ function VoiceAssistant() {
                     setMicActive={setMicActive}
                     setSpeakerActive={setSpeakerActive}
                     aiState={aiState}
+                    micActive={micActive}
                 />}
                 {
                     aiMode === "Text" && !openSettings && currentAIConfig.type === "webrtc" && <TextAi
