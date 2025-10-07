@@ -68,6 +68,18 @@
   transition: all 1s ease-in-out;
 }
 
+.ai-circle.muted{
+  background: radial-gradient(circle at 15% 15%, #e0e0e0, #b0b0b0, #6c7a89, #F1F1F1);
+  animation: flow 12s ease-in-out infinite;
+  position: absolute;
+  border-radius: 50%;
+  box-shadow: 0 4px 20px rgba(0, 0, 0, 0.25);
+  background-size: 200% 200%;
+  width: 50px;
+  height: 50px;
+  transition: all 1s ease-in-out;
+}
+
 .ai-circle:hover{
   animation: flow 4s ease-in-out infinite;
   position: absolute;

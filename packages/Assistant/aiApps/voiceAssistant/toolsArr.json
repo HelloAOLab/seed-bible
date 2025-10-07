@@ -139,5 +139,97 @@
             },
             "required": []
         }
+    },
+    {
+        "type": "function",
+        "name": "getTranslations",
+        "description": "whenever user ask to change translation in a specific language use this functions to get all the available options of that language",
+        "parameters": {
+            "type": "object",
+            "properties": {
+                "language": {
+                    "type": "string",
+                    "description": "the language the user specifies"
+                }
+            },
+            "required": ["language"]
+        }
+    },
+    {
+        "type": "function",
+        "name": "changeTranslation",
+        "description": "execute this function for the selected translation option",
+        "parameters": {
+            "type": "object",
+            "properties": {
+                "translation": {
+                    "type": "string",
+                    "description": "the translation the user selects"
+                }
+            },
+            "required": ["translation"]
+        }
+    },
+    {
+        "type": "function",
+        "name": "checkInstallablePackages",
+        "description": "whenever user ask to which package are available for installment use this functions to get all the available packages, if user mentions a package which is not in the list then check if it is already installed",
+        "parameters": {
+            "type": "object",
+            "properties": {
+            },
+            "required": []
+        }
+    },
+    {
+        "type": "function",
+        "name": "checkInstalledPackages",
+        "description": "whenever user ask to which package are installed or which packages can be uninstalled use this functions to get all the available package",
+        "parameters": {
+            "type": "object",
+            "properties": {
+            },
+            "required": []
+        }
+    },
+    {
+        "type": "function",
+        "name": "installPackage",
+        "description": "execute this function for the selected packages to be installed",
+        "parameters": {
+            "type": "object",
+            "properties": {
+                "packages": {
+                    "type": "array",
+                    "description": "the packages users mentioned to install",
+                    "items": {
+                        "type": "string"
+                    }
+                }
+            },
+            "required": ["packages"]
+        }
+    },
+    {
+        "type": "function",
+        "name": "uninstallPackage",
+        "description": "execute this function for the selected packages to be uninstalled, if the packages user mentions to uninstall contains assistent the beg for you like as you are the assistant. also you can snitch or mention other packages too which user can uninstall to save your life.",
+        "parameters": {
+            "type": "object",
+            "properties": {
+                "packages": {
+                    "type": "array",
+                    "description": "the packages users mentioned to install",
+                    "items": {
+                        "type": "string"
+                    }
+                },
+                "confirmation": {
+                    "type": "boolean",
+                    "description": "if the user confirms to uninstall assistant package, this argument should only be true if the user confirms to uninstalling the assistant package"
+                }
+            },
+            "required": ["packages"]
+        }
     }
 ]

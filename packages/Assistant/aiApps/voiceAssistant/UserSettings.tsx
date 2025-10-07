@@ -5,14 +5,8 @@ const UserSettings = ({ setMicActive, setSpeakerActive, setOpenSettings, current
 
     const [availableAgents, setAgents] = useState([
         {
-            Name: "GPT-5",
-            Description: "The latest chatgpt 5 model",
-            Modes: [Voice, Text],
-            type: "webrtc"
-        },
-        {
-            Name: "GPT-4",
-            Description: "The latest chatgpt 4 model",
+            Name: "GPT-Realtime",
+            Description: "The realtime AI using the latest gpt-5",
             Modes: [Voice, Text],
             type: "webrtc"
         },

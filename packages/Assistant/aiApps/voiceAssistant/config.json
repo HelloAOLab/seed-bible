@@ -5,6 +5,7 @@
         "icon": "robot_2",
         "label": "AO",
         "hasToggle": "true",
-        "run": "toggleVoiceAssistant"
+        "run": "toggleVoiceAssistant",
+        "iconUrl": "https://res.cloudinary.com/dacw0qnpr/image/upload/v1759843780/AO_logo_no_text_black_jcr3za.png"
     }
 }
