@@ -4,7 +4,7 @@ if (globalThis.NagiationTimeout) {
 }
 
 function scrollToVerse(verseNumber) {
-  const element = document.getElementById(`ref-verse-number-${verseNumber}`);
+  const element = document.getElementById(`v-${verseNumber}`);
   if (element) {
     element.scrollIntoView({
       behavior: "smooth", // smooth scrolling animation
