@@ -1,4 +1,4 @@
-export class LayoutData
+export class LayoutBibleData
 {
     constructor({
         childrenStructures = [],
