@@ -4,8 +4,10 @@ const { FloatingBanner } = Components;
 os.unregisterApp("message");
 os.registerApp("message");
 
-const InfoMessage = ()=> <FloatingBanner>
-        <b>{message}</b>
-    </FloatingBanner>;
+const InfoMessage = () => (
+  <FloatingBanner>
+    <b>{message}</b>
+  </FloatingBanner>
+);
 
-os.compileApp("message",<InfoMessage/>);
+os.compileApp("message", <InfoMessage />);

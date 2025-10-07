@@ -1,2 +1,2 @@
 tags.testLaunch = false;
-whisper(thisBot, 'initialize')
+whisper(thisBot, "initialize");

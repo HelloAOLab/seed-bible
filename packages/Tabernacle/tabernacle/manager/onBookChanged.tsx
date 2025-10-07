@@ -5,4 +5,4 @@ thisBot.vars.currentChapter = chapter;
 
 thisBot.UpdateHighlightedWords(that);
 
-if(thisBot.vars.appId) thisBot.UpdateTabernacleVisuals()
+if (thisBot.vars.appId) thisBot.UpdateTabernacleVisuals();

@@ -2,7 +2,7 @@
 
 // const recordUpdate = await os.getData(authBot.id, "chronicler_lastUpdate");
 
-// if (recordUpdate.data > masks?.lastCheck || !masks.lastCheck || !recordUpdate.success) 
+// if (recordUpdate.data > masks?.lastCheck || !masks.lastCheck || !recordUpdate.success)
 // {
 //     os.toast("NEED TO UPDATE");
 
@@ -10,7 +10,7 @@
 
 //     return;
 // }
-// else 
+// else
 // {
 //     os.toast("UP TO DATE");
 // }

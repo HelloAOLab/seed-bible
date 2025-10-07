@@ -1,2 +1,6 @@
-const chapterData = BibleStackManager.GetPieceData({piece: thisBot});
-shout("OnStackChapterInteracted", {chapterData, typeOfInteraction: BibleVizUtils.Data.tags.InteractionType.Dragging, dragInfo: that});
+const chapterData = BibleStackManager.GetPieceData({ piece: thisBot });
+shout("OnStackChapterInteracted", {
+  chapterData,
+  typeOfInteraction: BibleVizUtils.Data.tags.InteractionType.Dragging,
+  dragInfo: that,
+});

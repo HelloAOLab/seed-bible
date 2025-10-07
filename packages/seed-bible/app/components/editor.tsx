@@ -18,7 +18,7 @@ import {
   BulletList,
   OrderedList,
   ListItem,
-} from 'https://esm.helloao.org/vendor-RPNXNWQB.js';
+} from "https://esm.helloao.org/vendor-RPNXNWQB.js";
 
 import { MarginYIcon, MarginXIcon } from "app.components.icons";
 const localStorage = getBot("system", "app.localStorage");

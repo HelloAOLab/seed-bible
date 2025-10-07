@@ -1,8 +1,8 @@
 /**
-    * Resets the properties of the section's tags when it is released.
-    * @example
-    * section.OnReleased();
-*/
+ * Resets the properties of the section's tags when it is released.
+ * @example
+ * section.OnReleased();
+ */
 
 thisBot.tags.typeOfPiece = null;
 thisBot.tags.arrangementIndex = null;
@@ -34,8 +34,10 @@ thisBot.tags.desiredPositionZ = null;
 thisBot.tags.desiredScaleZ = null;
 thisBot.tags.sectionIndex = null;
 thisBot.tags.toErase = false;
-if(thisBot.tags.activityNotification)
-{
-    ObjectPooler.ReleaseObject({obj: links.activityNotification, tag: links.activityNotification.tags.poolTag})
-    thisBot.tags.activityNotification = null;
+if (thisBot.tags.activityNotification) {
+  ObjectPooler.ReleaseObject({
+    obj: links.activityNotification,
+    tag: links.activityNotification.tags.poolTag,
+  });
+  thisBot.tags.activityNotification = null;
 }

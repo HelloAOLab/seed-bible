@@ -58,7 +58,6 @@ function ThePage({
   const [lastSelectedVerse, setLastSelectedVerse] = useState(null);
   const [highlighted, setHighlighted] = useState({});
 
-
   // Add state for word highlights
   const [wordHighlights, setWordHighlights] = useState({});
 
@@ -92,14 +91,14 @@ function ThePage({
     // await bible.changeTranslation('KJV');
   }
   useEffect(() => {
-    os.addBotListener(thisBot, 'remoteBookChange', (data) => {
-      setData(data)
-    })
-    os.addBotListener(thisBot, 'remoteHighlightChange', (data) => {
-      console.log('remoteHighlightChange', data)
-      toggleVerseHighlight(data)
-    })
-  }, [])
+    os.addBotListener(thisBot, "remoteBookChange", (data) => {
+      setData(data);
+    });
+    os.addBotListener(thisBot, "remoteHighlightChange", (data) => {
+      console.log("remoteHighlightChange", data);
+      toggleVerseHighlight(data);
+    });
+  }, []);
 
   useEffect(() => {
     loadData();
@@ -120,10 +119,14 @@ function ThePage({
           data: { ...tab.data, ...data },
         };
       }
-      EmitData('book', { ...data })
+      EmitData("book", { ...data });
       // if (tab) {
-      const emitter = getBot('system', 'app.emitter')
-      sendRemoteData(emitter.masks.otherRemotes, 'updateSharingData', { id: tab?.id, book: data?.book, chapter: data?.chapter })
+      const emitter = getBot("system", "app.emitter");
+      sendRemoteData(emitter.masks.otherRemotes, "updateSharingData", {
+        id: tab?.id,
+        book: data?.book,
+        chapter: data?.chapter,
+      });
       // }
     }
   }, [data]);
@@ -205,8 +208,9 @@ function ThePage({
         setLastSelectedVerse(selectedArray[selectedArray.length - 1]);
         setContextData({
           verse: window.getSelection().toString(),
-          reference: `${data?.book} ${data?.chapter}:${selectedArray[0]}-${selectedArray[selectedArray.length - 1]
-            }`,
+          reference: `${data?.book} ${data?.chapter}:${selectedArray[0]}-${
+            selectedArray[selectedArray.length - 1]
+          }`,
           book: data?.book,
           chapter: data?.chapter,
           verses: selectedArray,
@@ -415,8 +419,8 @@ function ThePage({
               createAttributes: config?.createAttributes
                 ? config.createAttributes
                 : () => {
-                  return {};
-                },
+                    return {};
+                  },
             };
           });
         });
@@ -480,7 +484,7 @@ function ThePage({
     globalThis.RemoveWordHighlight = removeWordHighlight;
     globalThis.ClearAllWordHighlights = clearAllWordHighlights;
     shout("onBookChanged", { ...data, tabId: tab?.id });
-    setHighlighted({})
+    setHighlighted({});
   }, [data]);
   function hanldNavFunctions() {
     //  bible.openNext()
@@ -491,11 +495,11 @@ function ThePage({
       openPrevChapter,
       open,
       changeTranslation: bible?.changeTranslation || undefined,
-      setPanalApp: () => { },
+      setPanalApp: () => {},
     });
     globalThis.Open = open;
     globalThis.ChangeTranslation = changeTranslation;
-    globalThis.SetPanalApp = () => { };
+    globalThis.SetPanalApp = () => {};
     globalThis.ToggleVerseHighlight = toggleVerseHighlight;
     globalThis.SetInHold = setInHold;
     globalThis.SetShowCommands = setShowCommands;
@@ -607,7 +611,6 @@ function ThePage({
 
   const [highlightOnce, setHighlightOnce] = useState(false);
 
-
   // Add this useEffect after the existing globalThis assignments:
   useEffect(() => {
     // Initialize tab highlights if not exists
@@ -634,14 +637,14 @@ function ThePage({
   const toggleVerseHighlight = useCallback(
     (verseNumbers) => {
       if (!tab?.id) return;
-      EmitData('highlight', verseNumbers)
+      EmitData("highlight", verseNumbers);
       // console.log(data, 'remoteData')
-      const verseId = `v-${typeof verseNumbers === 'object' ? verseNumbers[verseNumbers.length - 1] : verseNumbers}`
+      const verseId = `v-${typeof verseNumbers === "object" ? verseNumbers[verseNumbers.length - 1] : verseNumbers}`;
       // console.log(verseId, 'verseId', document.getElementById(verseId))
       document.getElementById(verseId).scrollIntoView({
-        behavior: 'smooth',      // enables smooth animation
-        block: 'center',         // positions the element in the center of the screen
-        inline: 'nearest'
+        behavior: "smooth", // enables smooth animation
+        block: "center", // positions the element in the center of the screen
+        inline: "nearest",
       });
       const numbers = Array.isArray(verseNumbers)
         ? verseNumbers
@@ -756,7 +759,6 @@ function ThePage({
                       setLastSelectedVerse={setLastSelectedVerse}
                       setCommandHighlight={setCommandHighlight}
                       commandHighlight={commandHighlight}
-
                     />
                   </div>
                 </>
@@ -795,8 +797,9 @@ function ThePage({
               justifyContent: "center",
               backgroundColor: "#f8f9fa",
             }}
-            className={`pageContainer ${tabEntered ? "tabEntered" : "tabDrop"
-              } ${highlightOnce ? "tabHighlightBg" : ""}`}
+            className={`pageContainer ${
+              tabEntered ? "tabEntered" : "tabDrop"
+            } ${highlightOnce ? "tabHighlightBg" : ""}`}
           >
             <div
               style={{
@@ -1239,8 +1242,9 @@ function Section({
         return (
           <span
             key={i}
-            className={`clickableCursor highlightened ${isActive ? "highlighted-word" : ""
-              }`}
+            className={`clickableCursor highlightened ${
+              isActive ? "highlighted-word" : ""
+            }`}
             style={{ animationDelay: `${i * 0.1}s` }}
             onClick={() => {
               console.log(part.key);
@@ -1279,7 +1283,9 @@ function Section({
                   borderRadius: "2px",
                 }}
                 {...attributes}
-              >{part.text}</span>
+              >
+                {part.text}
+              </span>
             );
           }
           return <span key={i}>{part.text}</span>;
@@ -1367,7 +1373,7 @@ function Section({
                   style={{
                     "background-color":
                       highlighted?.[verse.verseNumber] ||
-                        commandHighlight.includes(verse.verseNumber)
+                      commandHighlight.includes(verse.verseNumber)
                         ? "#ffeb3b"
                         : "transparent",
                     transition: "background-color 0.2s ease",
@@ -1385,15 +1391,18 @@ function Section({
                         ? "dotted"
                         : "",
                   }}
-                  className={`sectionText ${verse?.verseNumber.toString() === activeVerse.toString()
-                    ? "highlighted"
-                    : ""
-                    } ${highlighted?.[verse.verseNumber] ? "verse-highlighted" : ""
-                    }`}
+                  className={`sectionText ${
+                    verse?.verseNumber.toString() === activeVerse.toString()
+                      ? "highlighted"
+                      : ""
+                  } ${
+                    highlighted?.[verse.verseNumber] ? "verse-highlighted" : ""
+                  }`}
                 >
                   <span
-                    className={`sectionTextNumber ${globalThis.studyNotesPresent ? "clickableCursor" : ""
-                      }`}
+                    className={`sectionTextNumber ${
+                      globalThis.studyNotesPresent ? "clickableCursor" : ""
+                    }`}
                     onClick={() => {
                       if (globalThis.studyNotesPresent) {
                         HighlightStudyNoteSection(verse?.verseNumber);
@@ -1460,7 +1469,7 @@ export const ThePageWithPanel = ({ tab }) => {
         initialWidth={gridPortalBot.tags.pixelWidth}
         containerWidth={gridPortalBot.tags.pixelWidth}
         containerHeight={1000}
-        onResize={() => { }}
+        onResize={() => {}}
         otherTab={panalApp}
       >
         <ThePage setPanalApp={setPanalApp} tab={tab} />

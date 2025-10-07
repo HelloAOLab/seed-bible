@@ -1,7 +1,7 @@
 /* ------ ANIMATIONS ------ */
 @keyframes slide-app-in {
   from {
-    animation-timing-function: cubic-bezier(.6,0,.79,1.03);
+    animation-timing-function: cubic-bezier(0.6, 0, 0.79, 1.03);
     height: 0dvh;
     min-height: 0dvh;
   }
@@ -14,7 +14,7 @@
 
 @keyframes slide-app-out {
   from {
-    animation-timing-function: cubic-bezier(.6,0,.79,1.03);
+    animation-timing-function: cubic-bezier(0.6, 0, 0.79, 1.03);
     height: 70dvh;
     min-height: 70dvh;
   }
@@ -26,18 +26,18 @@
 }
 
 .img-loader {
-    width: 80px;
-    animation: rotateCircle 1s linear infinite;
+  width: 80px;
+  animation: rotateCircle 1s linear infinite;
 }
 
-@keyframes rotateCircle { 
-    0% {
-        transform: rotateZ(0deg);
-    }
+@keyframes rotateCircle {
+  0% {
+    transform: rotateZ(0deg);
+  }
 
-    100% {
-        transform: rotateZ(360deg);
-    }
+  100% {
+    transform: rotateZ(360deg);
+  }
 }
 
 .animated.slide-app-in {
@@ -49,28 +49,28 @@
   animation-duration: 0.5s;
 }
 
-.app-container{
-    height: 100%;
-    overflow: hidden;
-    scrollbar-width: none;
-    display: flex;
-    margin-top: 10px;
+.app-container {
+  height: 100%;
+  overflow: hidden;
+  scrollbar-width: none;
+  display: flex;
+  margin-top: 10px;
 }
 
 .remove-btn-styling {
-	background: none;
-	color: inherit;
-	border: none;
-	padding: 0;
-	font: inherit;
-	cursor: pointer;
-	outline: inherit;
+  background: none;
+  color: inherit;
+  border: none;
+  padding: 0;
+  font: inherit;
+  cursor: pointer;
+  outline: inherit;
 }
 
 /* ------ INPUTS ------ */
 .result-btn {
   display: flex;
-  background-color: #B3E5FC;
+  background-color: #b3e5fc;
   align-items: center;
   overflow: hidden;
   line-height: 40px;
@@ -95,12 +95,12 @@
   --btn-border-color: 233, 236, 239;
 }
 
-.result-btn:hover{
-  background-color: #81D4FA;
+.result-btn:hover {
+  background-color: #81d4fa;
 }
 
 .html-container textarea,
-.html-container textarea[type=text] {
+.html-container textarea[type="text"] {
   width: 100%;
   border: 1px solid #dee2e6;
   border-radius: 3px;
@@ -116,7 +116,10 @@
   resize: vertical;
 }
 
-.html-container input:not([type=checkbox]):not([type=radio]):not([type=submit]):not([type=button]):not([type=reset]),
+.html-container
+  input:not([type="checkbox"]):not([type="radio"]):not([type="submit"]):not(
+    [type="button"]
+  ):not([type="reset"]),
 .html-container select {
   width: 90%;
   border: 1px solid #dee2e6;
@@ -128,13 +131,13 @@
 }
 
 input.error {
-    border-color: red !important;
-    border-width: 2px !important;
+  border-color: red !important;
+  border-width: 2px !important;
 }
 
 textarea.error {
-    border-color: red !important;
-    border-width: 2px !important;
+  border-color: red !important;
+  border-width: 2px !important;
 }
 
 .text-error {
@@ -142,18 +145,18 @@ textarea.error {
 }
 
 .floating-btn {
-    color: #000;
-    background-color: transparent;
-    display: flex;
-    align-items: center;
-    position: fixed;
-    right: 32px;
-    bottom: 70px;
-    width: 56px;
-    height: 56px;
-    border-radius: 50%;
-    z-index: 1;
-    backdrop-filter: blur(10px);
+  color: #000;
+  background-color: transparent;
+  display: flex;
+  align-items: center;
+  position: fixed;
+  right: 32px;
+  bottom: 70px;
+  width: 56px;
+  height: 56px;
+  border-radius: 50%;
+  z-index: 1;
+  backdrop-filter: blur(10px);
 }
 
 .floating-btn:after {
@@ -171,74 +174,74 @@ textarea.error {
 }
 
 .floating-btn:hover {
-    backdrop-filter: brightness(300%) blur(10px);
+  backdrop-filter: brightness(300%) blur(10px);
 }
 
 .floating-btn span {
-    width: 100%;
-    text-align: center;
-    position: relative;
-    z-index: 1;
+  width: 100%;
+  text-align: center;
+  position: relative;
+  z-index: 1;
 }
 
 .quiz-container {
-    width: 100%;
-    height: calc(60dvh - 100px);
-    overflow-y: auto;
-    padding: 5px;
-    scrollbar-width: none;
+  width: 100%;
+  height: calc(60dvh - 100px);
+  overflow-y: auto;
+  padding: 5px;
+  scrollbar-width: none;
 }
 
 .app-container .result-container {
-    width: 100%;
-    display: flex;
-    justify-content: center;
-    height: 40px;
-    align-items: center;
-    padding-bottom: 0px;
+  width: 100%;
+  display: flex;
+  justify-content: center;
+  height: 40px;
+  align-items: center;
+  padding-bottom: 0px;
 }
 
 .option {
-    display: flex;
-    width: 100%;
-    justify-content: space-between;
-    align-items: center;
-    height: auto;
-    padding: 5px;
-    border-radius: 5px;
-    cursor: pointer;
+  display: flex;
+  width: 100%;
+  justify-content: space-between;
+  align-items: center;
+  height: auto;
+  padding: 5px;
+  border-radius: 5px;
+  cursor: pointer;
 }
-.smoothTrans{
+.smoothTrans {
   transition: all 0.5s linear;
 }
 
 .points {
-    font-size: large;
-    display: flex;
-    justify-content: space-between;
-    align-items: center;
-    width: 100%;
-    padding: 10px;
-    overflow: hidden;
+  font-size: large;
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  width: 100%;
+  padding: 10px;
+  overflow: hidden;
 }
 
 @media only screen and (max-width: 768px) {
   .quiz-container {
-      width: 100%;
-      height: calc(45dvh - 108px);
-      overflow-y: auto;
-      padding: 5px;
+    width: 100%;
+    height: calc(45dvh - 108px);
+    overflow-y: auto;
+    padding: 5px;
   }
 }
 
 .right-input {
-    display: flex;
-    width: 100%;
-    height: 40px;
-    background: #64FFDA;
-    padding: 10px;
-    margin-top: 5px;
-    font-size: 16px;
-    border-radius: 5px;
-    cursor: pointer;
+  display: flex;
+  width: 100%;
+  height: 40px;
+  background: #64ffda;
+  padding: 10px;
+  margin-top: 5px;
+  font-size: 16px;
+  border-radius: 5px;
+  cursor: pointer;
 }

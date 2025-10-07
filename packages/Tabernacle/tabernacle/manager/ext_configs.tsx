@@ -1,9 +1,9 @@
 const toolBarOptions = {
-    page: [],
-    canvas: [],
-    map: []
-}
+  page: [],
+  canvas: [],
+  map: [],
+};
 
 return {
-    toolBarOptions
-}
+  toolBarOptions,
+};

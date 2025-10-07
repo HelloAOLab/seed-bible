@@ -1,5 +1,11 @@
-ObjectPooler.ReleaseObject({obj: thisBot.links.background, tag: BibleVizUtils.Data.tags.ObjectPoolTags.MapToggleBackground});
-ObjectPooler.ReleaseObject({obj: thisBot.links.handle, tag: BibleVizUtils.Data.tags.ObjectPoolTags.MapToggleHandle});
+ObjectPooler.ReleaseObject({
+  obj: thisBot.links.background,
+  tag: BibleVizUtils.Data.tags.ObjectPoolTags.MapToggleBackground,
+});
+ObjectPooler.ReleaseObject({
+  obj: thisBot.links.handle,
+  tag: BibleVizUtils.Data.tags.ObjectPoolTags.MapToggleHandle,
+});
 
 thisBot.tags.background = null;
 thisBot.tags.handle = null;

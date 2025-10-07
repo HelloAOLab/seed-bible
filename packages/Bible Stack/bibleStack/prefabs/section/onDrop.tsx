@@ -1,1 +1,5 @@
-shout("OnStackSectionInteracted", {section: thisBot, typeOfInteraction: BibleVizUtils.Data.tags.InteractionType.Drop, dropInfo: that});
+shout("OnStackSectionInteracted", {
+  section: thisBot,
+  typeOfInteraction: BibleVizUtils.Data.tags.InteractionType.Drop,
+  dropInfo: that,
+});

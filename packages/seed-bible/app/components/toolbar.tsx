@@ -169,8 +169,9 @@ export function Toolbar() {
                     <div className={`toolbar-button placeholder`}></div>
                   ) : (
                     <button
-                      className={`toolbar-button ${index === 0 ? "firstToolbarbutton" : ""
-                        }`}
+                      className={`toolbar-button ${
+                        index === 0 ? "firstToolbarbutton" : ""
+                      }`}
                       onMouseDown={() => {
                         hasHeldRef.current = false;
                         holdTimeoutRef.current = setTimeout(() => {
@@ -185,7 +186,7 @@ export function Toolbar() {
                         if (!hasHeldRef.current && tool?.onClick) {
                           tool.onClick();
                         }
-                         
+
                         if (isDragging) {
                           setIsDragging(false);
                           setElement(null);

@@ -319,7 +319,8 @@ if (globalThis.AddNowBarApp && !globalThis.IsQueuePresent) {
           left: "1rem",
           zIndex: "10000",
           position: "fixed",
-        }}>
+        }}
+      >
         <PlaylistPlayerControls parentId={parentId} />
       </div>
     );
@@ -546,18 +547,21 @@ const PlayingPlaylist = () => {
 
       <div
         className="playing-queue-container"
-        style={{ height: hide ? "" : "100%" }}>
+        style={{ height: hide ? "" : "100%" }}
+      >
         <div
           className={`playing-queue reset-css ${
             globalThis.PPchecklistEnabled && "checklistEnabled"
-          } ${hide && "hide"}`}>
+          } ${hide && "hide"}`}
+        >
           <div className="header">
             <h3>{currentPlaylistName}</h3>
             {!globalThis.PPchecklistEnabled ? (
               <span
                 style={{ cursor: "pointer" }}
                 onClick={toggleHide}
-                class="material-symbols-outlined unfollow">
+                class="material-symbols-outlined unfollow"
+              >
                 close
               </span>
             ) : (
@@ -568,7 +572,8 @@ const PlayingPlaylist = () => {
                       // setOpenAttachLink(true);
                     }}
                     style={{ margin: "0", padding: "-0.5rem" }}
-                    className="playlist-action small secondary self-start">
+                    className="playlist-action small secondary self-start"
+                  >
                     <span>Add Link to Queue</span>
                   </p>
                 )}
@@ -597,14 +602,16 @@ const PlayingPlaylist = () => {
                     height: "2.55rem",
                     borderRadius: "50%",
                   }}
-                  className="playlist-action small">
+                  className="playlist-action small"
+                >
                   <span
                     style={{
                       margin: "0",
                       fontSize: "14px",
                       backgroundColor: "#D36433",
                     }}
-                    class="material-symbols-outlined unfollow">
+                    class="material-symbols-outlined unfollow"
+                  >
                     stop
                   </span>
                 </p>
@@ -616,7 +623,8 @@ const PlayingPlaylist = () => {
               <p className="align-center" style={{ justifyContent: "center" }}>
                 <span
                   class="material-symbols-outlined unfollow"
-                  style={{ color: "lightgreen", marginRight: "8px" }}>
+                  style={{ color: "lightgreen", marginRight: "8px" }}
+                >
                   check_circle
                 </span>
                 <span>Mark as Visited</span>
@@ -740,7 +748,8 @@ const PlayingPlaylist = () => {
               width: "calc(100%)",
               borderTop: "1px solid #DADADA",
             }}
-            className="reset-css">
+            className="reset-css"
+          >
             {false && (
               <span className="item-ribbon">
                 <span>
@@ -771,10 +780,12 @@ const PlayingPlaylist = () => {
                     globalThis.SetSplitAppPanel2 &&
                       globalThis.SetSplitAppPanel2(null);
                     // thisBot.showInfo(`History Mode`);
-                  }}>
+                  }}
+                >
                   <span
                     class="material-symbols-outlined unfollow"
-                    style={ButtonStyle}>
+                    style={ButtonStyle}
+                  >
                     stop
                   </span>
                 </Button>
@@ -790,7 +801,8 @@ const PlayingPlaylist = () => {
                   boxShadow: "0px 0px 9px 0px #00000026",
                   padding: "10px",
                   borderRadius: "8px",
-                }}>
+                }}
+              >
                 <PlaylistPlayerControls />
               </div>
             )}

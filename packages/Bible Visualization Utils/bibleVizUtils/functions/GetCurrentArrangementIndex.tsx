@@ -1,9 +1,9 @@
 /**
-    * Retrieves the current arrangement index.
-    *
-    * @returns {number} - The current arrangement index.
-    * @example
-    * const arrangementIndex = BibleVizUtils.Functions.GetCurrentArrangementIndex();
-*/
+ * Retrieves the current arrangement index.
+ *
+ * @returns {number} - The current arrangement index.
+ * @example
+ * const arrangementIndex = BibleVizUtils.Functions.GetCurrentArrangementIndex();
+ */
 
 return BibleVizUtils.Data.vars.arrangementIndex;

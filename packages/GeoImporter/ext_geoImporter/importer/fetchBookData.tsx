@@ -1,3 +1,3 @@
-let BookData = await web.get(tags.BookUrl)
+let BookData = await web.get(tags.BookUrl);
 
-return BookData.data.books
+return BookData.data.books;

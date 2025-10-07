@@ -103,7 +103,8 @@ const DragDropOverlay = () => {
             alignItems: "center",
             justifyContent: "center",
             backdropFilter: "blur(2px)",
-          }}>
+          }}
+        >
           <div
             style={{
               backgroundColor: "white",
@@ -113,13 +114,15 @@ const DragDropOverlay = () => {
               textAlign: "center",
               maxWidth: "400px",
               boxShadow: "0 10px 30px rgba(0,0,0,0.3)",
-            }}>
+            }}
+          >
             <div
               style={{
                 fontSize: "48px",
                 marginBottom: "16px",
                 color: "#4459F3",
-              }}>
+              }}
+            >
               📁
             </div>
             <h3
@@ -127,7 +130,8 @@ const DragDropOverlay = () => {
                 margin: "0 0 8px 0",
                 color: "#333",
                 fontSize: "20px",
-              }}>
+              }}
+            >
               Drop files here
             </h3>
             <p
@@ -135,7 +139,8 @@ const DragDropOverlay = () => {
                 margin: "0",
                 color: "#666",
                 fontSize: "14px",
-              }}>
+              }}
+            >
               Release to upload files
             </p>
           </div>
@@ -157,7 +162,8 @@ const DragDropOverlay = () => {
             maxHeight: "400px",
             overflowY: "auto",
             border: "1px solid #e0e0e0",
-          }}>
+          }}
+        >
           <div
             style={{
               display: "flex",
@@ -166,13 +172,15 @@ const DragDropOverlay = () => {
               marginBottom: "16px",
               borderBottom: "1px solid #f0f0f0",
               paddingBottom: "12px",
-            }}>
+            }}
+          >
             <h4
               style={{
                 margin: "0",
                 color: "#333",
                 fontSize: "16px",
-              }}>
+              }}
+            >
               Files Dropped ({dragState.draggedFiles.length})
             </h4>
             <button
@@ -191,7 +199,8 @@ const DragDropOverlay = () => {
                 display: "flex",
                 alignItems: "center",
                 justifyContent: "center",
-              }}>
+              }}
+            >
               ×
             </button>
           </div>
@@ -205,14 +214,16 @@ const DragDropOverlay = () => {
                 backgroundColor: "#f8f9fa",
                 borderRadius: "6px",
                 fontSize: "12px",
-              }}>
+              }}
+            >
               <div
                 style={{
                   fontWeight: "bold",
                   marginBottom: "4px",
                   color: "#333",
                   wordBreak: "break-word",
-                }}>
+                }}
+              >
                 {file.name}
               </div>
               <div style={{ color: "#666", marginBottom: "2px" }}>

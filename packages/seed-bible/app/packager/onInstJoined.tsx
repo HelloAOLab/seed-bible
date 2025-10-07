@@ -11,8 +11,8 @@
 
 // We have to check the tags instead of the masks
 // because injected packages can only be injected via regular tags
-tags.installedPackages.forEach(pkg => {
-    console.log('reinstalling ', pkg)
-    //  thisBot.uninstallinstallPackage({ name: pkg })
-    thisBot.reInitPackage({ name: pkg })
-})
+tags.installedPackages.forEach((pkg) => {
+  console.log("reinstalling ", pkg);
+  //  thisBot.uninstallinstallPackage({ name: pkg })
+  thisBot.reInitPackage({ name: pkg });
+});

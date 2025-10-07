@@ -1,70 +1,77 @@
-const {chapter, typeOfInteraction} = that;
-const chapterData = thisBot.GetPieceData({piece: chapter});
-const originalLayoutData = thisBot.GetLayoutDataById({layoutId: chapterData.originalLayoutId})
+const { chapter, typeOfInteraction } = that;
+const chapterData = thisBot.GetPieceData({ piece: chapter });
+const originalLayoutData = thisBot.GetLayoutDataById({
+  layoutId: chapterData.originalLayoutId,
+});
 
-if(originalLayoutData?.currentPlaylistShownId) return;
+if (originalLayoutData?.currentPlaylistShownId) return;
 
-switch(typeOfInteraction)
-{
-    case BibleVizUtils.Data.tags.InteractionType.Click:
+switch (typeOfInteraction) {
+  case BibleVizUtils.Data.tags.InteractionType.Click:
     {
-        
-        if(!thisBot.masks.isAnimatingBible)
-        {
-            if(BibleVizUtils.Data.masks.isHighlightToolEnabled)
-            {
-                BibleVizUtils.Functions.HighlightBiblePiece({data: chapterData});
+      if (!thisBot.masks.isAnimatingBible) {
+        if (BibleVizUtils.Data.masks.isHighlightToolEnabled) {
+          BibleVizUtils.Functions.HighlightBiblePiece({ data: chapterData });
+        } else {
+          if (!chapter.masks.isSelecting && !chapter.masks.isDeselecting) {
+            if (chapterData.isSelected) {
+              thisBot.DeselectChapter({
+                chapterData,
+                layoutData: originalLayoutData,
+              });
+            } else {
+              thisBot.TrySelectChapter({
+                chapterData,
+                layoutData: originalLayoutData,
+              });
             }
-            else
-            {
-                if(!chapter.masks.isSelecting && !chapter.masks.isDeselecting)
-                {
-                    if(chapterData.isSelected)
-                    {
-                        thisBot.DeselectChapter({chapterData, layoutData: originalLayoutData})
-                    }
-                    else
-                    {
-                        thisBot.TrySelectChapter({chapterData, layoutData: originalLayoutData});
-                    }
-                }
-            }
+          }
         }
+      }
     }
     break;
-    case BibleVizUtils.Data.tags.InteractionType.HoverBegin:
+  case BibleVizUtils.Data.tags.InteractionType.HoverBegin:
     {
-        thisBot.TryHighlightChapter({chapterData});
+      thisBot.TryHighlightChapter({ chapterData });
     }
     break;
-    case BibleVizUtils.Data.tags.InteractionType.HoverEnd:
+  case BibleVizUtils.Data.tags.InteractionType.HoverEnd:
     {
-        thisBot.TryUnhighlightChapter({chapterData});
+      thisBot.TryUnhighlightChapter({ chapterData });
     }
     break;
-    case BibleVizUtils.Data.tags.InteractionType.Drag:
+  case BibleVizUtils.Data.tags.InteractionType.Drag:
     {
-        shout(`OnLayoutPieceDrag`, {data: chapterData})
+      shout(`OnLayoutPieceDrag`, { data: chapterData });
     }
     break;
-    case BibleVizUtils.Data.tags.InteractionType.Drop:
+  case BibleVizUtils.Data.tags.InteractionType.Drop:
     {
-        setTagMask(chapter, 'isBeingDragged', false);
-        if(chapterData.isSelected)
-        {
-            if(chapterData.piece.masks.isExpanded || originalLayoutData.isChapterExpandEnabled)
-            {
-                thisBot.DeselectChapter({chapterData, layoutData: originalLayoutData}).then(() => {thisBot.TrySelectChapter({chapterData, layoutData: originalLayoutData});})
-            }
+      setTagMask(chapter, "isBeingDragged", false);
+      if (chapterData.isSelected) {
+        if (
+          chapterData.piece.masks.isExpanded ||
+          originalLayoutData.isChapterExpandEnabled
+        ) {
+          thisBot
+            .DeselectChapter({ chapterData, layoutData: originalLayoutData })
+            .then(() => {
+              thisBot.TrySelectChapter({
+                chapterData,
+                layoutData: originalLayoutData,
+              });
+            });
         }
-        else
-        {
-            if(originalLayoutData.isChapterExpandEnabled)
-            {
-                thisBot.TrySelectChapter({chapterData, layoutData: originalLayoutData});
-            }
+      } else {
+        if (originalLayoutData.isChapterExpandEnabled) {
+          thisBot.TrySelectChapter({
+            chapterData,
+            layoutData: originalLayoutData,
+          });
         }
+      }
     }
     break;
-    default: break;
+  default:
+    break;
 }

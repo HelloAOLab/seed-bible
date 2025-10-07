@@ -1,67 +1,67 @@
 .person-video-overlay {
-    position: fixed;
-    cursor: grab;
-    transition: all 0.001s linear;
-    z-index: 9999999999999;
+  position: fixed;
+  cursor: grab;
+  transition: all 0.001s linear;
+  z-index: 9999999999999;
 }
 
 .person-video-overlay video {
-    border-radius: 50%;
-    object-fit: cover;
-    overflow: hidden;
+  border-radius: 50%;
+  object-fit: cover;
+  overflow: hidden;
 }
 
 .person-video-overlay video.size-s {
-    width: 12rem;
-    height: 12rem;
+  width: 12rem;
+  height: 12rem;
 }
 
 .person-video-overlay video.size-m {
-    width: 16rem;
-    height: 16rem;
+  width: 16rem;
+  height: 16rem;
 }
 
 .person-video-overlay video.size-l {
-    width: 22rem;
-    height: 22rem;
+  width: 22rem;
+  height: 22rem;
 }
 
 .person-video-overlay video.size-full {
-    width: 90dvw;
-    height: 80dvh;
-    border-radius: 0;
+  width: 90dvw;
+  height: 80dvh;
+  border-radius: 0;
 }
 
 .person-video-overlay.full {
-    border-radius: 0;
+  border-radius: 0;
 }
 
 .control-overlay {
-    position: absolute;
-    transform: translate(-50%, 0%);
-    transition: 0.2s all linear;
-    opacity: 0;
-    visibility: hidden;
-    border-radius: 7px;
-    bottom: 0;
-    background-color: #635f5f91;
-    left: 50%;
-    display: flex;
-    width: max-content;
-    align-items: center;
-    gap: 0.5rem;
+  position: absolute;
+  transform: translate(-50%, 0%);
+  transition: 0.2s all linear;
+  opacity: 0;
+  visibility: hidden;
+  border-radius: 7px;
+  bottom: 0;
+  background-color: #635f5f91;
+  left: 50%;
+  display: flex;
+  width: max-content;
+  align-items: center;
+  gap: 0.5rem;
 }
 
 .control-overlay div {
-    cursor: pointer;
-    border-radius: 50%;
+  cursor: pointer;
+  border-radius: 50%;
 }
 
 .person-video-overlay:hover .control-overlay {
-    opacity: 1;
-    visibility: visible;
+  opacity: 1;
+  visibility: visible;
 }
 
 .control-overlay span {
-    cursor: pointer;
+  cursor: pointer;
 }

@@ -1,7 +1,7 @@
 // import { useBibleLayout2DContext } from "bibleLayout2D.main.BibleLayout2DContext"
 
 // const UserButton = ({name, color, borderColor}) => {
-    
+
 //     const { handleUserButtonClick } = useBibleLayout2DContext();
 
 //     return (
@@ -13,9 +13,9 @@
 // }
 
 // export const UsersSelector = () => {
-    
+
 //     const { usersStatus, content, usersInfo } = useBibleLayout2DContext();
-    
+
 //     return (
 //         <div className="usersSelector">
 //             {Array.from(content).map(([user]) => {

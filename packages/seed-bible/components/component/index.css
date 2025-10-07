@@ -44,9 +44,8 @@
 }
 
 .text-red {
-  color: #C02F1D;
+  color: #c02f1d;
 }
-
 
 /* Font Weights */
 .text-heavy {
@@ -59,20 +58,15 @@
   margin: 6rem 0;
 }
 
-
-
 /* Shake Text */
 
 .shake-text {
   animation: shake 1s 1 linear forwards;
 }
 
-
-
 /* Animations */
 
 @keyframes shake {
-
   0%,
   100% {
     transform: translateX(0);
@@ -93,7 +87,7 @@
   padding: 12px 20px;
   display: flex;
   align-items: center;
-  border: 1px solid #E1E3EA;
+  border: 1px solid #e1e3ea;
   justify-content: space-between;
   position: relative;
 }

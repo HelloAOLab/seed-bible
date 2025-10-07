@@ -1,7 +1,7 @@
-masks['run'] = false
-shout('returnTrays')
+masks["run"] = false;
+shout("returnTrays");
 let tm = setTimeout(() => {
-    destroy(thisBot);
+  destroy(thisBot);
 }, 10000);
 
 setTagMask(thisBot, "tm", tm, "tempLocal");

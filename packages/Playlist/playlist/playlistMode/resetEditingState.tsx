@@ -7,15 +7,17 @@ globalThis[`${id}creatingPlaylistName`] = "";
 globalThis[`${id}creatingPlaylist`] = false;
 globalThis[`${id}isEditMode`] = null;
 globalThis[`${id}isEditModeSubID`] = null;
-globalThis[`${id}SetCreatingPlaylist`] && globalThis[`${id}SetCreatingPlaylist`](false);
+globalThis[`${id}SetCreatingPlaylist`] &&
+  globalThis[`${id}SetCreatingPlaylist`](false);
 // thisBot.showInfo(`History Mode`);
-globalThis[`${id}SetDontOpenPlaylist`] && globalThis[`${id}SetDontOpenPlaylist`](false);
+globalThis[`${id}SetDontOpenPlaylist`] &&
+  globalThis[`${id}SetDontOpenPlaylist`](false);
 os.unregisterApp("controlButtons");
 
 globalThis.SetEditData({
-    color: null,
-    id: null,
-    name: null,
-    description: null,
-    icon: null
+  color: null,
+  id: null,
+  name: null,
+  description: null,
+  icon: null,
 });

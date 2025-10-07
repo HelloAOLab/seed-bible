@@ -3,149 +3,162 @@ if (thisBot.tags.historySaverIntialized) return;
 setTagMask(thisBot, "historySaverIntialized", true);
 
 const setHistory = (newHistory = [], id) => {
-    setTag(thisBot, `${id}playlistHistory`, newHistory);
-}
+  setTag(thisBot, `${id}playlistHistory`, newHistory);
+};
 
 globalThis.setHistoryLocale = setHistory;
 
-const historyPresent = (getTag(thisBot, "defaultplaylistHistory") || []).filter(ele => ele.content !== "undefined").map(ele => ele);
+const historyPresent = (getTag(thisBot, "defaultplaylistHistory") || [])
+  .filter((ele) => ele.content !== "undefined")
+  .map((ele) => ele);
 
 const parallelPlaylistPresent = getTag(thisBot, "playlistLists") || {
-    default: {
-        active: true,
-        deleteable: false,
-        link: ''
-    },
+  default: {
+    active: true,
+    deleteable: false,
+    link: "",
+  },
 };
 
-const collectionsPresent = (getTag(thisBot, "defaultCollections") || []) || {};
+const collectionsPresent = getTag(thisBot, "defaultCollections") || [] || {};
 
 globalThis.defaultcurrentHistory = historyPresent;
 
 // Playlist
 
 const setPlaylist = (newHistory = [], id, skipApi = false) => {
-    if (!skipApi) {
-        thisBot.savePlaylists({
-            playlists: newHistory
-        });
-    }
-    setTag(thisBot, `${id}playlistList`, newHistory);
-}
+  if (!skipApi) {
+    thisBot.savePlaylists({
+      playlists: newHistory,
+    });
+  }
+  setTag(thisBot, `${id}playlistList`, newHistory);
+};
 
 const setPlaylists = (newHistory = null) => {
-    if (newHistory) {
-        setTag(thisBot, "playlistLists", newHistory);
-    }
-}
+  if (newHistory) {
+    setTag(thisBot, "playlistLists", newHistory);
+  }
+};
 
 const setCollections = (newCollections = {}, id = "default") => {
-    setTag(thisBot, `${id}Collections`, newCollections);
-}
-
+  setTag(thisBot, `${id}Collections`, newCollections);
+};
 
 globalThis.setPlaylistLocale = setPlaylist;
 globalThis.setPlaylistsLocale = setPlaylists;
 globalThis.setCollectionsLocale = setCollections;
 
 const getPlaylists = async () => {
-    let apiResults = {};
-    try {
-        const authBot = await os.requestAuthBotInBackground();
-        if (!authBot) {
-            return [];
-        }
-        apiResults = await os.getData(authBot.id, "playlists");
-        if (apiResults.data) {
-            const playlists = [...(apiResults.data.playlists || [])];
-            setTag(thisBot, "defaultplaylistList", playlists);
-            setPlaylist(playlists, true);
-            return playlists;
-        }
-        return [];
-    } catch (err) {
-        console.log('err', err);
+  let apiResults = {};
+  try {
+    const authBot = await os.requestAuthBotInBackground();
+    if (!authBot) {
+      return [];
     }
-    return apiResults;
-}
+    apiResults = await os.getData(authBot.id, "playlists");
+    if (apiResults.data) {
+      const playlists = [...(apiResults.data.playlists || [])];
+      setTag(thisBot, "defaultplaylistList", playlists);
+      setPlaylist(playlists, true);
+      return playlists;
+    }
+    return [];
+  } catch (err) {
+    console.log("err", err);
+  }
+  return apiResults;
+};
 
 const playlistRes = await getPlaylists();
 
-const playlistsPresent = globalThis.playlists ? globalThis.playlists : (getTag(thisBot, "defaultplaylistList") || []).map(ele => ele);
+const playlistsPresent = globalThis.playlists
+  ? globalThis.playlists
+  : (getTag(thisBot, "defaultplaylistList") || []).map((ele) => ele);
 
 const sharedPlaylist = configBot.tags.Playlist;
 // console.log("GOT SHAERD PLATLIST", sharedPlaylist);
 
-
 if (sharedPlaylist) {
-    try {
+  try {
+    web
+      .hook({
+        url: `https://theographic-bible-api.netlify.app/api/playlist/getPlaylist?uid=${sharedPlaylist}`,
+        method: "GET",
+      })
+      .then(async (dbRes) => {
+        // console.log(dbRes, "dbRes");
+        const playlistDataRes = dbRes?.data?.data?.query;
+        // console.log("playlistDataRes", API, !playlistDataRes, playlistDataRes);
+        if (!playlistDataRes) return;
+        // API.decrypt()
+        const playlistDecoded = playlistDataRes;
+        // console.log("playlistDecoded", playlistDecoded);
+        const playlistData = JSON.parse(`${playlistDecoded}`);
 
-        web.hook({
-            url: `https://theographic-bible-api.netlify.app/api/playlist/getPlaylist?uid=${sharedPlaylist}`,
-            method: 'GET',
-        }).then(async (dbRes) => {
-            // console.log(dbRes, "dbRes");
-            const playlistDataRes = dbRes?.data?.data?.query;
-            // console.log("playlistDataRes", API, !playlistDataRes, playlistDataRes);
-            if (!playlistDataRes) return;
-            // API.decrypt()
-            const playlistDecoded = playlistDataRes;
-            // console.log("playlistDecoded", playlistDecoded);
-            const playlistData = JSON.parse(`${playlistDecoded}`);
+        setTag(configBot, "Playlist", null);
 
-            setTag(configBot, "Playlist", null);
+        const index = playlistsPresent.findIndex(
+          (ele) => ele.id === playlistData?.id
+        );
 
-            const index = playlistsPresent.findIndex(ele => ele.id === playlistData?.id);
+        const isPlaylistDuplicate = index > -1;
 
-            const isPlaylistDuplicate = index > -1;
+        if (typeof playlistData === "object") {
+          // const toutour = getBot('system', 'main.totourTool')
+          globalThis.hasASharedPlaylist = playlistData.id;
+          globalThis.shareProfileName = playlistData.shareProfileName;
+          globalThis.shareProfilePic = playlistData.shareProfilePic;
 
-            if (typeof playlistData === "object") {
-                // const toutour = getBot('system', 'main.totourTool')
-                globalThis.hasASharedPlaylist = playlistData.id;
-                globalThis.shareProfileName = playlistData.shareProfileName;
-                globalThis.shareProfilePic = playlistData.shareProfilePic;
+          if (globalThis["Playlist_package"]) {
+            globalThis["Playlist_package"].onClick();
+          }
+          // setTagMask(toutour, "showingStep", false);
+          // setTagMask(toutour, "access", false);
+          // setTagMask(toutour, "isBookClicked", true);
 
-                if (globalThis["Playlist_package"]) {
-                    globalThis["Playlist_package"].onClick();
-                }
-                // setTagMask(toutour, "showingStep", false);
-                // setTagMask(toutour, "access", false);
-                // setTagMask(toutour, "isBookClicked", true);
+          globalThis.clickWait = false;
+          globalThis.isModalRegistered = false;
+          globalThis.isBlackFadeRegistered = false;
+          globalThis.demoInteractionWait = false;
 
-                globalThis.clickWait = false;
-                globalThis.isModalRegistered = false;
-                globalThis.isBlackFadeRegistered = false;
-                globalThis.demoInteractionWait = false;
+          if (playlistData.icons)
+            globalThis.PREDEFINED_ICONS = playlistData.icons;
 
-                if (playlistData.icons) globalThis.PREDEFINED_ICONS = playlistData.icons;
-
-                if (isPlaylistDuplicate) {
-                    playlistsPresent[index] = playlistData;
-                } else {
-                    playlistsPresent.push(playlistData);
-                }
-            }
-            // console.log(playlistsPresent);
-        }).catch((err) => {
-            console.log(err);
-            ShowNotification({ message: "Unable to copy playlist. Please try again!", severity: "error" });
-        })
-    } catch (err) {
-        console.log("ERROR PARSING THE SHARED PLAYLIST", err);
-    }
+          if (isPlaylistDuplicate) {
+            playlistsPresent[index] = playlistData;
+          } else {
+            playlistsPresent.push(playlistData);
+          }
+        }
+        // console.log(playlistsPresent);
+      })
+      .catch((err) => {
+        console.log(err);
+        ShowNotification({
+          message: "Unable to copy playlist. Please try again!",
+          severity: "error",
+        });
+      });
+  } catch (err) {
+    console.log("ERROR PARSING THE SHARED PLAYLIST", err);
+  }
 }
 
+Object.keys(parallelPlaylistPresent).forEach((id) => {
+  if (!globalThis[`${id}currentPlaylist`])
+    globalThis[`${id}currentPlaylist`] = [];
+  if (!globalThis[`${id}currentHistory`])
+    globalThis[`${id}currentHistory`] = [];
+  globalThis[`${id}playlists`] = globalThis[`${id}playlists`]
+    ? globalThis[`${id}playlists`]
+    : (getTag(thisBot, `${id}playlistList`) || []).map((ele) => ele);
+  // console.log("ID", id, globalThis[`${id}playlists`]);
+  if (!globalThis[`${id}playlists`]) {
+    globalThis[`${id}playlists`] = [];
+  }
+});
 
-Object.keys(parallelPlaylistPresent).forEach(id => {
-    if (!globalThis[`${id}currentPlaylist`]) globalThis[`${id}currentPlaylist`] = [];
-    if (!globalThis[`${id}currentHistory`]) globalThis[`${id}currentHistory`] = [];
-    globalThis[`${id}playlists`] = globalThis[`${id}playlists`] ? globalThis[`${id}playlists`] : (getTag(thisBot, `${id}playlistList`) || []).map(ele => ele);;
-    // console.log("ID", id, globalThis[`${id}playlists`]);
-    if (!globalThis[`${id}playlists`]) {
-        globalThis[`${id}playlists`] = [];
-    }
-})
-
-globalThis['defaultplaylists'] = playlistsPresent;
+globalThis["defaultplaylists"] = playlistsPresent;
 globalThis.PlaylistsGroups = parallelPlaylistPresent;
 globalThis.COLLECTIONS = collectionsPresent;

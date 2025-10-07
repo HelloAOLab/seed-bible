@@ -1,14 +1,13 @@
 /**
-    * Handles the event when the Bible is closed by deselecting the currently selected book.
-    *
-    * @example
-    * shout("OnStackBibleClose");
-*/
+ * Handles the event when the Bible is closed by deselecting the currently selected book.
+ *
+ * @example
+ * shout("OnStackBibleClose");
+ */
 
-if(thisBot.vars.currentSelectedBookData)
-{
-    thisBot.vars.currentSelectedBookData.isSelected = false;
-    thisBot.vars.currentSelectedBookData = null;
+if (thisBot.vars.currentSelectedBookData) {
+  thisBot.vars.currentSelectedBookData.isSelected = false;
+  thisBot.vars.currentSelectedBookData = null;
 }
 
-thisBot.PlaySound({soundName: "BibleClose"});
+thisBot.PlaySound({ soundName: "BibleClose" });

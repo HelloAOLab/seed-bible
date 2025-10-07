@@ -1,8 +1,8 @@
 /**
-    * Resets the properties of the book's tags when it is released.
-    * @example
-    * book.OnReleased();
-*/
+ * Resets the properties of the book's tags when it is released.
+ * @example
+ * book.OnReleased();
+ */
 
 thisBot.tags.bookIndex = null;
 thisBot.tags.bookName = null;
@@ -39,8 +39,10 @@ thisBot.tags.layoutBookDirectionNormalized = null;
 thisBot.tags.bookInfo = null;
 thisBot.tags.singleBooksScales = null;
 thisBot.tags.toErase = false;
-if(thisBot.tags.activityNotification)
-{
-    ObjectPooler.ReleaseObject({obj: links.activityNotification, tag: links.activityNotification.tags.poolTag})
-    thisBot.tags.activityNotification = null;
+if (thisBot.tags.activityNotification) {
+  ObjectPooler.ReleaseObject({
+    obj: links.activityNotification,
+    tag: links.activityNotification.tags.poolTag,
+  });
+  thisBot.tags.activityNotification = null;
 }

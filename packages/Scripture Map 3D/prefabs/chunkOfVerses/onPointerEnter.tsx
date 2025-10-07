@@ -1,1 +1,4 @@
-shout("OnLayoutChunkOfVersesInteracted", {chunk: thisBot, typeOfInteraction: BibleVizUtils.Data.tags.InteractionType.HoverBegin});
+shout("OnLayoutChunkOfVersesInteracted", {
+  chunk: thisBot,
+  typeOfInteraction: BibleVizUtils.Data.tags.InteractionType.HoverBegin,
+});

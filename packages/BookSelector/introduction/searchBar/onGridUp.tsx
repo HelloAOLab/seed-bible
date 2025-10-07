@@ -15,10 +15,10 @@
 
 //     await os.focusOn(
 //         {
-//             x: middleBot.tags[dimension + "X"] + 4, 
+//             x: middleBot.tags[dimension + "X"] + 4,
 //             y: middleBot.tags[dimension + "Y"] ,
 //             z: middleBot.tags[dimension + "Z"] ,
-//         }, 
+//         },
 //         {
 //             duration: 0.5,
 //             rotation: focusOnRotation,

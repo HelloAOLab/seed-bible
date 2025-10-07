@@ -1,55 +1,47 @@
-
-globalThis.ContextMenuOptions = []
-
+globalThis.ContextMenuOptions = [];
 
 // switch to tab object
-globalThis.UpdateTab = () => { }
+globalThis.UpdateTab = () => {};
 
-// 
-globalThis.CanvasMode = null
-
+//
+globalThis.CanvasMode = null;
 
 // for adding new tab
-globalThis.AddTab = () => { }
+globalThis.AddTab = () => {};
 
 //takes new color to change it for the toolbar background
-globalThis.SetToolbarBackground = () => { }
+globalThis.SetToolbarBackground = () => {};
 
 // set number of screens
-globalThis.SetScreens = () => { }
+globalThis.SetScreens = () => {};
 
 //switch toolbar edit mode!
-globalThis.ToolbarReSeedMode = () => { }
-
+globalThis.ToolbarReSeedMode = () => {};
 
 //setting element on mouse cursor to show it like dragging
-globalThis.SetElement = () => { }
+globalThis.SetElement = () => {};
 //to show the added elements from SetElement
-globalThis.SetIsDragging = () => { }
+globalThis.SetIsDragging = () => {};
 
 // removing application with specific id
-globalThis.AddApplication = () => { }
-globalThis.RemoveApplication = () => { }
-globalThis.AddApplication = () => { };
-globalThis.RemoveApplicationByID = () => { };
-globalThis.ReplaceApplication = () => { }
-globalThis.UpdateApplication = () => { };
-
+globalThis.AddApplication = () => {};
+globalThis.RemoveApplication = () => {};
+globalThis.AddApplication = () => {};
+globalThis.RemoveApplicationByID = () => {};
+globalThis.ReplaceApplication = () => {};
+globalThis.UpdateApplication = () => {};
 
 // opens / close popup
-globalThis.openPopupSettings = () => { }
-globalThis.closePopupSettings = () => { }
-
-
+globalThis.openPopupSettings = () => {};
+globalThis.closePopupSettings = () => {};
 
 // open specific book chapter translation globalThis.Open(tab.data.id, tab.data.chapter, tab.data.translation)
-globalThis.Open = () => { }
-globalThis.OpenNextChapter = () => { }
-globalThis.OpenPrevChapter = () => { }
-
+globalThis.Open = () => {};
+globalThis.OpenNextChapter = () => {};
+globalThis.OpenPrevChapter = () => {};
 
 //toolbar controllers
-globalThis.AddTool = () => { }
-globalThis.RemoveTool = () => { }
-globalThis.UpdateTool = () => { }
-globalThis.ToggleToolActive = () => { }
+globalThis.AddTool = () => {};
+globalThis.RemoveTool = () => {};
+globalThis.UpdateTool = () => {};
+globalThis.ToggleToolActive = () => {};

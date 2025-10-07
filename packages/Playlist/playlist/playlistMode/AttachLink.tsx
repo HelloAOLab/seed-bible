@@ -129,7 +129,8 @@ function SubComponent({
                 alignItems: "center",
                 justifyContent: "center",
                 backdropFilter: "blur(2px)",
-              }}>
+              }}
+            >
               <div
                 style={{
                   backgroundColor: "white",
@@ -139,12 +140,14 @@ function SubComponent({
                   textAlign: "center",
                   minWidth: "280px",
                   boxShadow: "0 10px 30px rgba(0,0,0,0.3)",
-                }}>
+                }}
+              >
                 <div
                   style={{
                     fontSize: "1rem",
                     color: "#4459F3",
-                  }}>
+                  }}
+                >
                   📁
                 </div>
                 <h3
@@ -152,7 +155,8 @@ function SubComponent({
                     margin: "0 0 8px 0",
                     color: "#333",
                     fontSize: "14px",
-                  }}>
+                  }}
+                >
                   Drop files here
                 </h3>
                 <p
@@ -160,7 +164,8 @@ function SubComponent({
                     margin: "0",
                     color: "#666",
                     fontSize: "12px",
-                  }}>
+                  }}
+                >
                   Release to upload files
                 </p>
               </div>
@@ -182,7 +187,8 @@ function SubComponent({
                 cursor: "pointer",
                 padding: "13px 8px",
                 borderRadius: "4px",
-              }}>
+              }}
+            >
               <img
                 style={{ width: "24px", height: "14px" }}
                 alt="bible"
@@ -209,7 +215,8 @@ function SubComponent({
                 onClick={async () => {
                   const files = await os.showUploadFiles();
                   await onAddFiles(files);
-                }}>
+                }}
+              >
                 Import JSON
               </Button>
             </>
@@ -230,7 +237,8 @@ function SubComponent({
                 }
                 setRecordingType("audio");
               }}
-              className={`${recordingType === "audio" ? "active" : ""}`}>
+              className={`${recordingType === "audio" ? "active" : ""}`}
+            >
               <span class="material-symbols-outlined">mic</span>
               <p>Audio</p>
             </div>
@@ -244,7 +252,8 @@ function SubComponent({
                 }
                 setRecordingType("video");
               }}
-              className={`${recordingType === "video" ? "active" : ""}`}>
+              className={`${recordingType === "video" ? "active" : ""}`}
+            >
               <span class="material-symbols-outlined">videocam</span>
               <p>Video</p>
             </div>
@@ -291,7 +300,8 @@ function SubComponent({
             display: "flex",
             flexDirection: "column",
             alignItems: "center",
-          }}>
+          }}
+        >
           <Input
             style={{ width: "100%" }}
             value={name}
@@ -418,7 +428,8 @@ function SubComponent({
               // console.log(fileSave, "fileSave");
               // console.log(url, "url");
               // setCustomIcon(url);
-            }}>
+            }}
+          >
             <img
               src="https://auth-aux-aobot-prod-filesbucket-141297942820.s3.amazonaws.com/aoBot/6c8e5fa8be9c6bd0786104e4819b401b4b345a7734a7ebffb5d5e606ee182b45.png"
               style={{ height: "46px" }}
@@ -499,8 +510,8 @@ const AttachLink = ({
     sSelectedType
       ? sSelectedType
       : globalThis.isScreenRecording
-      ? "RECORDING"
-      : "SCRIPTURE"
+        ? "RECORDING"
+        : "SCRIPTURE"
   );
   const [mediaType, setType] = useState(sMediaType ? sMediaType : "youtube");
   const [data, setData] = useState(sData ? sData : null);
@@ -874,12 +885,14 @@ const AttachLink = ({
       onSubmit={(e) => {
         e.preventDefault(); // prevent full page reload
         onClickSend();
-      }}>
+      }}
+    >
       <div
         className="container-render"
         onKeyDown={(e) => {
           e.stopPropagation();
-        }}>
+        }}
+      >
         {loading && (
           <div className="loader-container">
             <LoaderSecondary />
@@ -916,7 +929,8 @@ const AttachLink = ({
               display: "flex",
               alignItems: "center",
               justifyItems: "space-between",
-            }}>
+            }}
+          >
             <div className="align-center" style={{ gap: "1rem" }}>
               <img
                 src={getFileIconByMimeType(ele?.additionalInfo?.mimeType)}
@@ -931,7 +945,8 @@ const AttachLink = ({
             </div>
             <p
               style={{ marginLeft: "auto", cursor: "pointer" }}
-              onClick={() => deleteFromList(ele.id)}>
+              onClick={() => deleteFromList(ele.id)}
+            >
               <span class="material-symbols-outlined unfollow delete-icon">
                 delete
               </span>
@@ -947,10 +962,10 @@ const AttachLink = ({
                 (ele === "PLAYLIST"
                   ? isPlaylist
                   : ele === "TAG"
-                  ? isTags
-                  : ele === "DATE"
-                  ? isDate
-                  : true)
+                    ? isTags
+                    : ele === "DATE"
+                      ? isDate
+                      : true)
             )
             .map((ele) => (
               <div
@@ -970,7 +985,8 @@ const AttachLink = ({
                 }}
                 className={`${
                   ele === selectedType ? "active" : ""
-                } select_item_type`}>
+                } select_item_type`}
+              >
                 <img
                   style={{ height: "16px", width: "16px" }}
                   src={
@@ -981,12 +997,14 @@ const AttachLink = ({
             ))}
           <div
             className="align-center"
-            style={{ gap: "0.25rem", marginLeft: "auto" }}>
+            style={{ gap: "0.25rem", marginLeft: "auto" }}
+          >
             {canClose && (
               <div
                 onClick={onClose}
                 style={{ marginLeft: "auto" }}
-                className={`active  select_item_type`}>
+                className={`active  select_item_type`}
+              >
                 <img src={CLOSE} style={{ width: "20px" }} />
               </div>
             )}
@@ -999,7 +1017,8 @@ const AttachLink = ({
               className={`${
                 !isDisabled ? "active" : "disabled"
               } select_item_type`}
-              disabled={isDisabled}>
+              disabled={isDisabled}
+            >
               <img src={SEND} style={{ width: "20px" }} />
             </button>
           </div>

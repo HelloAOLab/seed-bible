@@ -1,10 +1,10 @@
 const { useState, useCallback, useEffect, useMemo } = os.appHooks;
-import { useBibleLayout2DContext } from "bibleLayout2D.main.BibleLayout2DContext"
+import { useBibleLayout2DContext } from "bibleLayout2D.main.BibleLayout2DContext";
 // import { Tooltip } from "bibleLayout2D.main.Tooltip"
 // import { PresentUserPresenceTooltipIcon } from "bibleLayout2D.main.PresentUserPresenceIcon"
-import { useTestamentContext } from "bibleLayout2D.main.TestamentContext"
+import { useTestamentContext } from "bibleLayout2D.main.TestamentContext";
 
-import {useClickAndHold} from "bibleLayout2D.main.CustomHooks"
+import { useClickAndHold } from "bibleLayout2D.main.CustomHooks";
 
 // const ChapterNotificationContainer = ({
 //     bookName,
@@ -150,177 +150,226 @@ import {useClickAndHold} from "bibleLayout2D.main.CustomHooks"
 //     )
 // };
 
-export const Chapter = ({ index, bookName, sectionName}) => {
+export const Chapter = ({ index, bookName, sectionName }) => {
+  const {
+    unsubscribeFromHistoryUpdate,
+    subscribeToHistoryUpdate,
+    isUserPresenceEnabled,
+    content,
+    usersStatus,
+    // maxChapterHeatCount,
+    modes,
+    // userPresence,
+    usersInfo,
+    contentVisualization,
+    ContentVisualizationType,
+    // readingHistory,
+    mode,
+    selection,
+    BibleLayout2DModes,
+    project,
+    projectFilters,
+    projectStateStyle,
+    onChapterClick,
+    onChapterClickDependencies,
+    onChapterClickAndHold,
+    isInSelectionMode,
+  } = useBibleLayout2DContext();
 
-    const {
-        unsubscribeFromHistoryUpdate,
-        subscribeToHistoryUpdate,
-        isUserPresenceEnabled,
-        content,
-        usersStatus,
-        // maxChapterHeatCount,
-        modes,
-        // userPresence,
-        usersInfo,
-        contentVisualization,
-        ContentVisualizationType,
-        // readingHistory,
-        mode,
-        selection,
-        BibleLayout2DModes,
-        project,
-        projectFilters,
-        projectStateStyle,
-        onChapterClick,
-        onChapterClickDependencies,
-        onChapterClickAndHold,
-        isInSelectionMode
-    } = useBibleLayout2DContext();
-    
-    const { testament } = useTestamentContext();
-    
-    const checked = useMemo(() => { return selection[testament.name][sectionName][bookName][index] }, [selection])
+  const { testament } = useTestamentContext();
 
-    // const handleChapterClick = useCallback((e) => {
-    //     const key = {testamentName: testament.name, sectionName, bookName, chapterIndex: index}
-    //     onChapterClick(e, key, checked) 
-    // }, onChapterClickDependencies);
-    
-    const {onHoldStart, onHoldEnd} = useClickAndHold({
-        holdTime: 400, 
-        holdCompleteCallback: (e) => { 
-            const key = {testamentName: testament.name, sectionName, bookName, chapterIndex: index}
-            onChapterClickAndHold(e, key) 
-        },
-        holdCancelCallback: (e) => {
-            const key = {testamentName: testament.name, sectionName, bookName, chapterIndex: index}
-            onChapterClick(e, key, checked) 
-        },
-        dependencies: onChapterClickDependencies
-    })
+  const checked = useMemo(() => {
+    return selection[testament.name][sectionName][bookName][index];
+  }, [selection]);
 
-    const getChapterHistoryColor = useCallback(() => {
-        return BibleVizUtils.Functions.GetHistoryColor({ data: { typeOfElement: BibleVizUtils.Data.tags.BiblePieceType.Chapter, key: `${bookName} ${index + 1}` } })
-    }, [])
+  // const handleChapterClick = useCallback((e) => {
+  //     const key = {testamentName: testament.name, sectionName, bookName, chapterIndex: index}
+  //     onChapterClick(e, key, checked)
+  // }, onChapterClickDependencies);
 
-    const [historyColor, setHistoryColor] = useState(getChapterHistoryColor())
+  const { onHoldStart, onHoldEnd } = useClickAndHold({
+    holdTime: 400,
+    holdCompleteCallback: (e) => {
+      const key = {
+        testamentName: testament.name,
+        sectionName,
+        bookName,
+        chapterIndex: index,
+      };
+      onChapterClickAndHold(e, key);
+    },
+    holdCancelCallback: (e) => {
+      const key = {
+        testamentName: testament.name,
+        sectionName,
+        bookName,
+        chapterIndex: index,
+      };
+      onChapterClick(e, key, checked);
+    },
+    dependencies: onChapterClickDependencies,
+  });
 
-    const updateHistoryColor = useCallback(() => {
-        setHistoryColor(getChapterHistoryColor())
-    }, [])
+  const getChapterHistoryColor = useCallback(() => {
+    return BibleVizUtils.Functions.GetHistoryColor({
+      data: {
+        typeOfElement: BibleVizUtils.Data.tags.BiblePieceType.Chapter,
+        key: `${bookName} ${index + 1}`,
+      },
+    });
+  }, []);
 
-    useEffect(() => {
-        subscribeToHistoryUpdate(updateHistoryColor)
-        return () => { unsubscribeFromHistoryUpdate(updateHistoryColor) }
-    }, [])
+  const [historyColor, setHistoryColor] = useState(getChapterHistoryColor());
 
-    const { background, borderStyle, borderColor, /*displayContainer, gridColumns, gridRows, filteredUsers*/ } = useMemo(() => {
+  const updateHistoryColor = useCallback(() => {
+    setHistoryColor(getChapterHistoryColor());
+  }, []);
 
-        const baseColor = [227, 227, 227];
-        const hasProjectContent = project && mode === BibleLayout2DModes.Project && (isInSelectionMode || projectFilters.get(project.structure[testament.name][sectionName][bookName][index]));
+  useEffect(() => {
+    subscribeToHistoryUpdate(updateHistoryColor);
+    return () => {
+      unsubscribeFromHistoryUpdate(updateHistoryColor);
+    };
+  }, []);
 
-        const filteredUsers = Array.from(usersStatus).filter(([user, enabled]) => {
-            return enabled && content.get(user).books?.[bookName]?.[index + 1]?.length > 0
-        });
-        // let userPresenceBackground = `rgb(${baseColor[0]}, ${baseColor[1]}, ${baseColor[2]})`;
-        // if (modes.get("Content")) {
-        //     if (filteredUsers.length === 0) {
-        //         userPresenceBackground = `rgb(${baseColor[0]}, ${baseColor[1]}, ${baseColor[2]})`
-        //     }
-        //     else {
-        //         const colors = filteredUsers.map(([user]) => {
-        //             const userContent = content.get(user);
-        //             const bookContent = userContent.books[bookName];
-        //             const entriesCount = Math.min(bookContent[index + 1].length, maxChapterHeatCount);
+  const {
+    background,
+    borderStyle,
+    borderColor /*displayContainer, gridColumns, gridRows, filteredUsers*/,
+  } = useMemo(() => {
+    const baseColor = [227, 227, 227];
+    const hasProjectContent =
+      project &&
+      mode === BibleLayout2DModes.Project &&
+      (isInSelectionMode ||
+        projectFilters.get(
+          project.structure[testament.name][sectionName][bookName][index]
+        ));
 
-        //             const heatMaxColor = HexToRgb(usersInfo[user].color);
-        //             const progress = entriesCount / maxChapterHeatCount;
-        //             const deltaColor = [heatMaxColor[0] - baseColor[0], heatMaxColor[1] - baseColor[1], heatMaxColor[2] - baseColor[2]].map((value) => { return Math.floor(value * progress) });
-        //             const heatColor = baseColor.map((value, index) => { return value + deltaColor[index] });
+    const filteredUsers = Array.from(usersStatus).filter(([user, enabled]) => {
+      return (
+        enabled && content.get(user).books?.[bookName]?.[index + 1]?.length > 0
+      );
+    });
+    // let userPresenceBackground = `rgb(${baseColor[0]}, ${baseColor[1]}, ${baseColor[2]})`;
+    // if (modes.get("Content")) {
+    //     if (filteredUsers.length === 0) {
+    //         userPresenceBackground = `rgb(${baseColor[0]}, ${baseColor[1]}, ${baseColor[2]})`
+    //     }
+    //     else {
+    //         const colors = filteredUsers.map(([user]) => {
+    //             const userContent = content.get(user);
+    //             const bookContent = userContent.books[bookName];
+    //             const entriesCount = Math.min(bookContent[index + 1].length, maxChapterHeatCount);
 
-        //             return heatColor
-        //         })
-        //         if (filteredUsers.length === 1) {
-        //             userPresenceBackground = `rgb(${colors[0][0]}, ${colors[0][1]}, ${colors[0][2]})`
-        //         }
-        //         else if (filteredUsers.length === 2) {
-        //             userPresenceBackground = `linear-gradient(to right, rgb(${colors[0][0]}, ${colors[0][1]}, ${colors[0][2]}), rgb(${colors[1][0]}, ${colors[1][1]}, ${colors[1][2]}))`
-        //         }
-        //         else if (filteredUsers.length === 3) {
-        //             userPresenceBackground = `linear-gradient(to bottom right, rgb(${colors[0][0]}, ${colors[0][1]}, ${colors[0][2]}), rgb(255 255 255 / 0%) 70%), linear-gradient(to bottom left, rgb(${colors[1][0]}, ${colors[1][1]}, ${colors[1][2]}), rgb(255 255 255 / 0%) 70%), linear-gradient(to top, rgb(${colors[2][0]}, ${colors[2][1]}, ${colors[2][2]}), rgb(255 255 255 / 0%) 70%)`
-        //         }
-        //         else if (filteredUsers.length > 3) {
-        //             userPresenceBackground = `linear-gradient(to bottom right, rgb(${colors[0][0]}, ${colors[0][1]}, ${colors[0][2]}), rgb(255 255 255 / 0%) 70%), linear-gradient(to bottom left, rgb(${colors[1][0]}, ${colors[1][1]}, ${colors[1][2]}), rgb(255 255 255 / 0%) 70%), linear-gradient(to top right, rgb(${colors[2][0]}, ${colors[2][1]}, ${colors[2][2]}), rgb(255 255 255 / 0%) 70%), linear-gradient(to top left, rgb(${colors[3][0]}, ${colors[3][1]}, ${colors[3][2]}), rgb(255 255 255 / 0%) 70%)`
-        //         }
-        //     }
-        // }
+    //             const heatMaxColor = HexToRgb(usersInfo[user].color);
+    //             const progress = entriesCount / maxChapterHeatCount;
+    //             const deltaColor = [heatMaxColor[0] - baseColor[0], heatMaxColor[1] - baseColor[1], heatMaxColor[2] - baseColor[2]].map((value) => { return Math.floor(value * progress) });
+    //             const heatColor = baseColor.map((value, index) => { return value + deltaColor[index] });
 
-        const displayContainer = contentVisualization === ContentVisualizationType.Container && filteredUsers.length > 0 && modes.get("Content")
+    //             return heatColor
+    //         })
+    //         if (filteredUsers.length === 1) {
+    //             userPresenceBackground = `rgb(${colors[0][0]}, ${colors[0][1]}, ${colors[0][2]})`
+    //         }
+    //         else if (filteredUsers.length === 2) {
+    //             userPresenceBackground = `linear-gradient(to right, rgb(${colors[0][0]}, ${colors[0][1]}, ${colors[0][2]}), rgb(${colors[1][0]}, ${colors[1][1]}, ${colors[1][2]}))`
+    //         }
+    //         else if (filteredUsers.length === 3) {
+    //             userPresenceBackground = `linear-gradient(to bottom right, rgb(${colors[0][0]}, ${colors[0][1]}, ${colors[0][2]}), rgb(255 255 255 / 0%) 70%), linear-gradient(to bottom left, rgb(${colors[1][0]}, ${colors[1][1]}, ${colors[1][2]}), rgb(255 255 255 / 0%) 70%), linear-gradient(to top, rgb(${colors[2][0]}, ${colors[2][1]}, ${colors[2][2]}), rgb(255 255 255 / 0%) 70%)`
+    //         }
+    //         else if (filteredUsers.length > 3) {
+    //             userPresenceBackground = `linear-gradient(to bottom right, rgb(${colors[0][0]}, ${colors[0][1]}, ${colors[0][2]}), rgb(255 255 255 / 0%) 70%), linear-gradient(to bottom left, rgb(${colors[1][0]}, ${colors[1][1]}, ${colors[1][2]}), rgb(255 255 255 / 0%) 70%), linear-gradient(to top right, rgb(${colors[2][0]}, ${colors[2][1]}, ${colors[2][2]}), rgb(255 255 255 / 0%) 70%), linear-gradient(to top left, rgb(${colors[3][0]}, ${colors[3][1]}, ${colors[3][2]}), rgb(255 255 255 / 0%) 70%)`
+    //         }
+    //     }
+    // }
 
-        // const fixedBackground = isUserPresenceEnabled ? (displayContainer ? "transparent" : userPresenceBackground) : historyColor;
+    const displayContainer =
+      contentVisualization === ContentVisualizationType.Container &&
+      filteredUsers.length > 0 &&
+      modes.get("Content");
 
-        let background = `rgb(${baseColor[0]}, ${baseColor[1]}, ${baseColor[2]})`
-        let borderStyle = "solid";
-        let borderColor = `rgb(${baseColor[0]}, ${baseColor[1]}, ${baseColor[2]})`;
+    // const fixedBackground = isUserPresenceEnabled ? (displayContainer ? "transparent" : userPresenceBackground) : historyColor;
 
-        switch(mode)
+    let background = `rgb(${baseColor[0]}, ${baseColor[1]}, ${baseColor[2]})`;
+    let borderStyle = "solid";
+    let borderColor = `rgb(${baseColor[0]}, ${baseColor[1]}, ${baseColor[2]})`;
+
+    switch (mode) {
+      case BibleLayout2DModes.Project:
         {
-            case BibleLayout2DModes.Project: {
-                if(hasProjectContent || checked)
-                {
-                    const style = projectStateStyle[project.structure[testament.name][sectionName][bookName][index]];
-                    background = style?.backgroundColor;
-                    borderStyle = checked ? "solid" : style?.borderStyle;
-                    borderColor = checked ? "#2AB80D" : style?.borderColor;
-                }
-            }
-            break;
-
-            // case BibleLayout2DModes.Viewer: {
-
-            // }
-            // break;
-
-            case BibleLayout2DModes.Checkbox: {
-                if(checked) borderColor = "#2AB80D"
-            }
-            break;
+          if (hasProjectContent || checked) {
+            const style =
+              projectStateStyle[
+                project.structure[testament.name][sectionName][bookName][index]
+              ];
+            background = style?.backgroundColor;
+            borderStyle = checked ? "solid" : style?.borderStyle;
+            borderColor = checked ? "#2AB80D" : style?.borderColor;
+          }
         }
+        break;
 
-        const chapterEntriesCounts = filteredUsers.map(([user]) => {
-            const userContent = content.get(user);
-            const bookContent = userContent.books[bookName];
-            const entriesCount = bookContent[index + 1].length;
-            return entriesCount;
-        })
-        const gridColumns = displayContainer ? "1fr" : null;
-        const gridRows = displayContainer ? chapterEntriesCounts.map((count) => { return `${count}fr` }).join(' ') : null;
+      // case BibleLayout2DModes.Viewer: {
 
-        return { background, borderStyle, borderColor, displayContainer, gridColumns, gridRows, filteredUsers }
-    }, [
-        historyColor,
-        isUserPresenceEnabled,
-        content,
-        usersStatus,
-        modes,
-        usersInfo,
-        contentVisualization,
-        ContentVisualizationType,
-        project,
-        mode,
-        projectFilters,
-        checked,
-        isInSelectionMode
-    ])
+      // }
+      // break;
 
-    // const { usersInChapter } = useMemo(() => {
-    //     const usersInChapter = Object.keys(userPresence).filter((user) => {
-    //         return userPresence[user].book === bookName && userPresence[user].chapter === (index + 1)
-    //     })
-    //     return { usersInChapter }
-    // }, [userPresence, isUserPresenceEnabled, modes])
+      case BibleLayout2DModes.Checkbox:
+        {
+          if (checked) borderColor = "#2AB80D";
+        }
+        break;
+    }
 
-    /*{mode === BibleLayout2DModes.Viewer && isUserPresenceEnabled && displayContainer && <div className="contentContainer" style={{
+    const chapterEntriesCounts = filteredUsers.map(([user]) => {
+      const userContent = content.get(user);
+      const bookContent = userContent.books[bookName];
+      const entriesCount = bookContent[index + 1].length;
+      return entriesCount;
+    });
+    const gridColumns = displayContainer ? "1fr" : null;
+    const gridRows = displayContainer
+      ? chapterEntriesCounts
+          .map((count) => {
+            return `${count}fr`;
+          })
+          .join(" ")
+      : null;
+
+    return {
+      background,
+      borderStyle,
+      borderColor,
+      displayContainer,
+      gridColumns,
+      gridRows,
+      filteredUsers,
+    };
+  }, [
+    historyColor,
+    isUserPresenceEnabled,
+    content,
+    usersStatus,
+    modes,
+    usersInfo,
+    contentVisualization,
+    ContentVisualizationType,
+    project,
+    mode,
+    projectFilters,
+    checked,
+    isInSelectionMode,
+  ]);
+
+  // const { usersInChapter } = useMemo(() => {
+  //     const usersInChapter = Object.keys(userPresence).filter((user) => {
+  //         return userPresence[user].book === bookName && userPresence[user].chapter === (index + 1)
+  //     })
+  //     return { usersInChapter }
+  // }, [userPresence, isUserPresenceEnabled, modes])
+
+  /*{mode === BibleLayout2DModes.Viewer && isUserPresenceEnabled && displayContainer && <div className="contentContainer" style={{
         gridTemplateColumns: gridColumns,
         gridTemplateRows: gridRows
     }}>
@@ -335,19 +384,19 @@ export const Chapter = ({ index, bookName, sectionName}) => {
         <ReadingHistoryChapterNotificationContainer bookName={bookName} chapterIndex={index} />
         <UpcomingEventsChapterNotificationContainer bookName={bookName} chapterIndex={index} />
     </>}*/
-    return (
-        <div
-            className="chapter"
-            onClick={() => {} /*handleChapterClick*/}
-            onPointerDown={onHoldStart}
-            onPointerUp={onHoldEnd}
-            style={{
-                background,
-                borderStyle,
-                borderColor
-            }}
-        >
-            {index + 1}
-        </div>
-    )
-}
+  return (
+    <div
+      className="chapter"
+      onClick={() => {} /*handleChapterClick*/}
+      onPointerDown={onHoldStart}
+      onPointerUp={onHoldEnd}
+      style={{
+        background,
+        borderStyle,
+        borderColor,
+      }}
+    >
+      {index + 1}
+    </div>
+  );
+};

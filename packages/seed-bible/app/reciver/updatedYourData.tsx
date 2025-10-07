@@ -6,4 +6,4 @@
 // console.log(masks['usersData'], "masks['usersData']")
 // await os.sleep(10)
 // console.log(that,'that final')
-SetOnlineUsers(prev => ({ ...prev, [`${that.user}`]: that.tab }))
+SetOnlineUsers((prev) => ({ ...prev, [`${that.user}`]: that.tab }));

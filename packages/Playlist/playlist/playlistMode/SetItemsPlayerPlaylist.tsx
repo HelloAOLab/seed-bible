@@ -1,21 +1,21 @@
 const {
+  currentPlaylistName,
+  currentItemID,
+  typeContent,
+  nextItemName,
+  prevItemName,
+  currentItemName,
+} = that;
+
+if (globalThis.SetItemsPlayer) {
+  globalThis.SetItemsPlayer({
     currentPlaylistName,
     currentItemID,
     typeContent,
     nextItemName,
     prevItemName,
-    currentItemName
-} = that;
-
-if (globalThis.SetItemsPlayer) {
-    globalThis.SetItemsPlayer({
-        currentPlaylistName,
-        currentItemID,
-        typeContent,
-        nextItemName,
-        prevItemName,
-        currentItemName
-    });
+    currentItemName,
+  });
 }
 
 globalThis.PPcurrentPlaylistName = currentPlaylistName;

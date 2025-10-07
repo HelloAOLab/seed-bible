@@ -1,8 +1,8 @@
 const CircleProgress = ({ id = "default", progress = "50" }) => {
-    return (
-        <>
-            <style>
-                {`
+  return (
+    <>
+      <style>
+        {`
                     :root {
                         --progress-${id}: ${progress};
                     }
@@ -26,10 +26,10 @@ const CircleProgress = ({ id = "default", progress = "50" }) => {
                         border-radius: 50%;
                     }
                 `}
-            </style>
-            <div class={`progress-circle-${id}`} />
-        </>
-    );
+      </style>
+      <div class={`progress-circle-${id}`} />
+    </>
+  );
 };
 
 return CircleProgress;

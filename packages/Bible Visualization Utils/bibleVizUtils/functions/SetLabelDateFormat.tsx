@@ -1,2 +1,2 @@
-const {format} = that;
-setTagMask(BibleVizUtils.Datas, 'labelDateFormat', format);
+const { format } = that;
+setTagMask(BibleVizUtils.Datas, "labelDateFormat", format);

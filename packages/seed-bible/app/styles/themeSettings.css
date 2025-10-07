@@ -55,11 +55,11 @@
   border-radius: 6px;
   cursor: pointer;
   transition: background-color 0.2s ease;
-  border: 1px solid var(--gray2-color, #E2E8F0);
+  border: 1px solid var(--gray2-color, #e2e8f0);
 }
 
 .readyTheme-item:hover {
-  background-color: var(--gray1-color, #F7FAFC);
+  background-color: var(--gray1-color, #f7fafc);
 }
 
 .readyTheme-preview {

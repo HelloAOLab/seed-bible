@@ -1,6 +1,5 @@
-const {layoutData} = that;
+const { layoutData } = that;
 
-if(layoutData.currentPlaylistShownId && layoutData.isPlaylistPathEnabled)
-{
-    thisBot.ShowPlaylistPath({layoutData})
+if (layoutData.currentPlaylistShownId && layoutData.isPlaylistPathEnabled) {
+  thisBot.ShowPlaylistPath({ layoutData });
 }

@@ -1,1 +1,5 @@
-shout("OnStackBookInteracted", {book: thisBot, typeOfInteraction: BibleVizUtils.Data.tags.InteractionType.Dragging, dragInfo: that});
+shout("OnStackBookInteracted", {
+  book: thisBot,
+  typeOfInteraction: BibleVizUtils.Data.tags.InteractionType.Dragging,
+  dragInfo: that,
+});

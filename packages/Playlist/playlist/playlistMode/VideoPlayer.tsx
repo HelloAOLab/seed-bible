@@ -69,7 +69,8 @@ function VideoPlayerApp() {
         flexDirection: "column",
         height: "100%",
         width: "100%",
-      }}>
+      }}
+    >
       {isYoutube ? (
         <iframe
           className="item-need-full-height"
@@ -93,7 +94,8 @@ function VideoPlayerApp() {
             flexGrow: "1",
             objectFit: "cover",
             marginBottom: "6px",
-          }}>
+          }}
+        >
           <source
             src={src || "https://www.w3schools.com/html/mov_bbb.mp4"}
             type="video/mp4"
@@ -111,7 +113,8 @@ function VideoPlayerApp() {
             gap: "8px",
             marginTop: "auto",
             alignItems: "center",
-          }}>
+          }}
+        >
           <button onClick={togglePlay}>{playing ? "⏸️" : "▶️"}</button>
           <input
             ref={seekRef}

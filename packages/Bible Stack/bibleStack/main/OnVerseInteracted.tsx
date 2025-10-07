@@ -1,1 +1,1 @@
-thisBot.HandleVerseInteraction(that)
+thisBot.HandleVerseInteraction(that);

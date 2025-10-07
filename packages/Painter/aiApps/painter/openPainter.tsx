@@ -1,16 +1,16 @@
 const { render } = os.appHooks;
-import App from 'aiApps.painter.App'
+import App from "aiApps.painter.App";
 
 let prevPainter = document.getElementById("painter-container");
 
 if (!prevPainter) {
-    let painterDiv = document.createElement('div');
+  let painterDiv = document.createElement("div");
 
-    painterDiv.id = "painter-container";
+  painterDiv.id = "painter-container";
 
-    painterDiv.className = 'painter';
+  painterDiv.className = "painter";
 
-    document.body.appendChild(painterDiv);
+  document.body.appendChild(painterDiv);
 
-    render(<App />, document.getElementById("painter-container"))
+  render(<App />, document.getElementById("painter-container"));
 }

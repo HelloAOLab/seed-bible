@@ -1,3 +1,3 @@
-if(thisBot.tags.isBaseStackSection) return;
+if (thisBot.tags.isBaseStackSection) return;
 
 setTagMask(thisBot, "highlightable", true);

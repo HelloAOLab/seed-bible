@@ -51,7 +51,7 @@ const AiSettings = () => {
       setLoading(false);
     } catch (error) {
       setLoading(false);
-      
+
       console.error("Error generating image:", error);
     }
   };

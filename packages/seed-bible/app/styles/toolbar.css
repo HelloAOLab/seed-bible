@@ -7,7 +7,6 @@
   bottom: 18px;
   left: 50%;
   z-index: 10;
-
 }
 
 .toolbar-1 {
@@ -30,15 +29,13 @@
   border: 1px solid #00000024;
 }
 
-
-
 @media (max-width: 480px) {
   .toolbar-1 {
     width: 100vw !important;
     border: none;
     border-radius: 0px;
     bottom: 0px;
-    background-color: #F0F1F1 !important;
+    background-color: #f0f1f1 !important;
     justify-content: flex-start !important;
     padding: 0px 2px;
     height: 45px;
@@ -46,7 +43,7 @@
 
   .firstToolbarbutton {
     height: 100% !important;
-    background-color: #DFDEDE !important;
+    background-color: #dfdede !important;
     border-radius: 0px !important;
     width: 50px !important;
   }
@@ -55,7 +52,7 @@
     position: absolute !important;
     left: 13px;
     bottom: 60px;
-    background: #F0F1F1;
+    background: #f0f1f1;
     border-radius: 100%;
   }
 
@@ -63,11 +60,10 @@
     position: absolute !important;
     right: 13px;
     bottom: 60px;
-    background: #F0F1F1;
+    background: #f0f1f1;
     border-radius: 100%;
   }
 }
-
 
 .toolbar-button {
   display: flex;
@@ -96,7 +92,6 @@
   font-size: 24px;
 }
 
-
 .toolbar-item-wrapper {
   position: relative;
   transition: transform 0.25s ease;
@@ -112,7 +107,9 @@
   border: none;
   background-color: transparent;
   cursor: pointer;
-  transition: background-color 0.2s ease, transform 0.25s ease;
+  transition:
+    background-color 0.2s ease,
+    transform 0.25s ease;
 }
 
 .toolbar-button:hover {

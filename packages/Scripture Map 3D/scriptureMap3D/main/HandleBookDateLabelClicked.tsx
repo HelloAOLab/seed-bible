@@ -1,121 +1,194 @@
-if(thisBot.masks.isAnimatingBible) return;
+if (thisBot.masks.isAnimatingBible) return;
 
-const {label} = that;
+const { label } = that;
 const dimension = os.getCurrentDimension();
 const contentMarginBottom = 2;
 const backgroundPadding = 1;
 
-const layoutBookStructure = thisBot.vars.layoutBooksStructure.find((structure) => {return structure.dateLabel.id === label.id})
-const {author, relativeDateRange, numberOfChapters} = BibleVizUtils.Data.tags.booksStaticInfo[layoutBookStructure.layoutBookData.pieceInfo.commonName];
-const date = `${Math.abs(relativeDateRange.min)}${(relativeDateRange.min != relativeDateRange.max) ? `-${Math.abs(relativeDateRange.max)}` : ``} ${relativeDateRange.min < 0 ? "B.C." : "A.D."}`
+const layoutBookStructure = thisBot.vars.layoutBooksStructure.find(
+  (structure) => {
+    return structure.dateLabel.id === label.id;
+  }
+);
+const { author, relativeDateRange, numberOfChapters } =
+  BibleVizUtils.Data.tags.booksStaticInfo[
+    layoutBookStructure.layoutBookData.pieceInfo.commonName
+  ];
+const date = `${Math.abs(relativeDateRange.min)}${relativeDateRange.min != relativeDateRange.max ? `-${Math.abs(relativeDateRange.max)}` : ``} ${relativeDateRange.min < 0 ? "B.C." : "A.D."}`;
 const contentLabel = `Author: ${author}
 Date: ${date}
-Chapters: ${numberOfChapters}`
+Chapters: ${numberOfChapters}`;
 
-const layoutData = layoutBookStructure.layoutBookData.parentDataIds && layoutBookStructure.layoutBookData.parentDataIds.layoutId ? thisBot.GetLayoutDataById({layoutId: layoutBookStructure.layoutBookData.parentDataIds.layoutId}) : null;
+const layoutData =
+  layoutBookStructure.layoutBookData.parentDataIds &&
+  layoutBookStructure.layoutBookData.parentDataIds.layoutId
+    ? thisBot.GetLayoutDataById({
+        layoutId: layoutBookStructure.layoutBookData.parentDataIds.layoutId,
+      })
+    : null;
 
-if(layoutBookStructure && (!layoutData || !layoutData.currentPlaylistShownId))
-{
-    const structureCurrentlyShowingInfoCard = thisBot.vars.layoutBooksStructure.find((structure) => {return structure.infoCardTransformer});
-    if(structureCurrentlyShowingInfoCard)
-    {
-        if(structureCurrentlyShowingInfoCard.id === layoutBookStructure.id)
-        {
-            ObjectPooler.ReleaseObject({obj: structureCurrentlyShowingInfoCard.infoCardTransformer, tag: BibleVizUtils.Data.tags.ObjectPoolTags.LayoutBookInfoCardTransformer});
-            ObjectPooler.ReleaseObject({obj: structureCurrentlyShowingInfoCard.infoCardContent, tag: BibleVizUtils.Data.tags.ObjectPoolTags.LayoutBookInfoCardContent});
-            ObjectPooler.ReleaseObject({obj: structureCurrentlyShowingInfoCard.infoCardBackground, tag: BibleVizUtils.Data.tags.ObjectPoolTags.LayoutBookInfoCardBackground});
-        }
-        else
-        {
-            const {scaleY} = BibleVizUtils.Functions.GetDialogBotScaleY({scaleXLimit: 5, line: contentLabel, paddingX: 0, paddingY: 0})
-            const contentScales = new Vector3(6, scaleY, 0.2);
-            const backgroundScales = new Vector3(contentScales.x + (backgroundPadding*2), contentScales.y + (backgroundPadding*2), 0.1)
-            const contentPosition = new Vector3(0, contentMarginBottom + (contentScales.y/2), 0);
-            const dateLabelPosition = getBotPosition(layoutBookStructure.dateLabel, dimension);
-            const dateLabelScales = BibleVizUtils.Functions.GetBotScales(layoutBookStructure.dateLabel);
-            const transformerMod = {
-                [dimension]: true,
-                [dimension + "X"]: dateLabelPosition.x,
-                [dimension + "Y"]: dateLabelPosition.y,
-                [dimension + "Z"]: dateLabelPosition.z + dateLabelScales.z,
-            }
-            const contentMod = {
-                transformer: structureCurrentlyShowingInfoCard.infoCardTransformer.id,
-                [dimension]: true,
-                [dimension + "X"]: contentPosition.x,
-                [dimension + "Y"]: contentPosition.y,
-                [dimension + "Z"]: contentPosition.z,
-                scaleX: contentScales.x,
-                scaleY: contentScales.y,
-                scaleZ: contentScales.z,
-                label: contentLabel
-            }
-            const backgroundMod = {
-                transformer: structureCurrentlyShowingInfoCard.infoCardTransformer.id,
-                [dimension]: true,
-                [dimension + "X"]: contentPosition.x,
-                [dimension + "Y"]: contentPosition.y,
-                [dimension + "Z"]: contentPosition.z,
-                scaleX: backgroundScales.x,
-                scaleY: backgroundScales.y,
-                scaleZ: backgroundScales.z,
-            }
-            applyMod(structureCurrentlyShowingInfoCard.infoCardTransformer, transformerMod);
-            applyMod(structureCurrentlyShowingInfoCard.infoCardContent, contentMod);
-            applyMod(structureCurrentlyShowingInfoCard.infoCardBackground, backgroundMod);
-            layoutBookStructure.infoCardTransformer = structureCurrentlyShowingInfoCard.infoCardTransformer;
-            layoutBookStructure.infoCardContent = structureCurrentlyShowingInfoCard.infoCardContent;
-            layoutBookStructure.infoCardBackground = structureCurrentlyShowingInfoCard.infoCardBackground;
-        }
-        structureCurrentlyShowingInfoCard.infoCardTransformer = null;
-        structureCurrentlyShowingInfoCard.infoCardContent = null;
-        structureCurrentlyShowingInfoCard.infoCardBackground = null;
+if (
+  layoutBookStructure &&
+  (!layoutData || !layoutData.currentPlaylistShownId)
+) {
+  const structureCurrentlyShowingInfoCard =
+    thisBot.vars.layoutBooksStructure.find((structure) => {
+      return structure.infoCardTransformer;
+    });
+  if (structureCurrentlyShowingInfoCard) {
+    if (structureCurrentlyShowingInfoCard.id === layoutBookStructure.id) {
+      ObjectPooler.ReleaseObject({
+        obj: structureCurrentlyShowingInfoCard.infoCardTransformer,
+        tag: BibleVizUtils.Data.tags.ObjectPoolTags
+          .LayoutBookInfoCardTransformer,
+      });
+      ObjectPooler.ReleaseObject({
+        obj: structureCurrentlyShowingInfoCard.infoCardContent,
+        tag: BibleVizUtils.Data.tags.ObjectPoolTags.LayoutBookInfoCardContent,
+      });
+      ObjectPooler.ReleaseObject({
+        obj: structureCurrentlyShowingInfoCard.infoCardBackground,
+        tag: BibleVizUtils.Data.tags.ObjectPoolTags
+          .LayoutBookInfoCardBackground,
+      });
+    } else {
+      const { scaleY } = BibleVizUtils.Functions.GetDialogBotScaleY({
+        scaleXLimit: 5,
+        line: contentLabel,
+        paddingX: 0,
+        paddingY: 0,
+      });
+      const contentScales = new Vector3(6, scaleY, 0.2);
+      const backgroundScales = new Vector3(
+        contentScales.x + backgroundPadding * 2,
+        contentScales.y + backgroundPadding * 2,
+        0.1
+      );
+      const contentPosition = new Vector3(
+        0,
+        contentMarginBottom + contentScales.y / 2,
+        0
+      );
+      const dateLabelPosition = getBotPosition(
+        layoutBookStructure.dateLabel,
+        dimension
+      );
+      const dateLabelScales = BibleVizUtils.Functions.GetBotScales(
+        layoutBookStructure.dateLabel
+      );
+      const transformerMod = {
+        [dimension]: true,
+        [dimension + "X"]: dateLabelPosition.x,
+        [dimension + "Y"]: dateLabelPosition.y,
+        [dimension + "Z"]: dateLabelPosition.z + dateLabelScales.z,
+      };
+      const contentMod = {
+        transformer: structureCurrentlyShowingInfoCard.infoCardTransformer.id,
+        [dimension]: true,
+        [dimension + "X"]: contentPosition.x,
+        [dimension + "Y"]: contentPosition.y,
+        [dimension + "Z"]: contentPosition.z,
+        scaleX: contentScales.x,
+        scaleY: contentScales.y,
+        scaleZ: contentScales.z,
+        label: contentLabel,
+      };
+      const backgroundMod = {
+        transformer: structureCurrentlyShowingInfoCard.infoCardTransformer.id,
+        [dimension]: true,
+        [dimension + "X"]: contentPosition.x,
+        [dimension + "Y"]: contentPosition.y,
+        [dimension + "Z"]: contentPosition.z,
+        scaleX: backgroundScales.x,
+        scaleY: backgroundScales.y,
+        scaleZ: backgroundScales.z,
+      };
+      applyMod(
+        structureCurrentlyShowingInfoCard.infoCardTransformer,
+        transformerMod
+      );
+      applyMod(structureCurrentlyShowingInfoCard.infoCardContent, contentMod);
+      applyMod(
+        structureCurrentlyShowingInfoCard.infoCardBackground,
+        backgroundMod
+      );
+      layoutBookStructure.infoCardTransformer =
+        structureCurrentlyShowingInfoCard.infoCardTransformer;
+      layoutBookStructure.infoCardContent =
+        structureCurrentlyShowingInfoCard.infoCardContent;
+      layoutBookStructure.infoCardBackground =
+        structureCurrentlyShowingInfoCard.infoCardBackground;
     }
-    else
-    {
-        const {scaleY} = BibleVizUtils.Functions.GetDialogBotScaleY({scaleXLimit: 5, line: contentLabel, paddingX: 0, paddingY: 0})
-        const contentScales = new Vector3(6, scaleY, 0.2);
-        const backgroundScales = new Vector3(contentScales.x + (backgroundPadding*2), contentScales.y + (backgroundPadding*2), 0.1)
-        const contentPosition = new Vector3(0, contentMarginBottom + (contentScales.y/2), 0);
-        const infoCardTransformer = ObjectPooler.GetObjectFromPool({tag: BibleVizUtils.Data.tags.ObjectPoolTags.LayoutBookInfoCardTransformer});
-        const infoCardContent = ObjectPooler.GetObjectFromPool({tag: BibleVizUtils.Data.tags.ObjectPoolTags.LayoutBookInfoCardContent});
-        const infoCardBackground = ObjectPooler.GetObjectFromPool({tag: BibleVizUtils.Data.tags.ObjectPoolTags.LayoutBookInfoCardBackground});
-        const dateLabelPosition = getBotPosition(layoutBookStructure.dateLabel, dimension);
-        const dateLabelScales = BibleVizUtils.Functions.GetBotScales(layoutBookStructure.dateLabel);
-        const transformerMod = {
-            [dimension]: true,
-            [dimension + "X"]: dateLabelPosition.x,
-            [dimension + "Y"]: dateLabelPosition.y,
-            [dimension + "Z"]: dateLabelPosition.z + dateLabelScales.z,
-        }
-        const contentMod = {
-            transformer: infoCardTransformer.id,
-            [dimension]: true,
-            [dimension + "X"]: contentPosition.x,
-            [dimension + "Y"]: contentPosition.y,
-            [dimension + "Z"]: contentPosition.z,
-            scaleX: contentScales.x,
-            scaleY: contentScales.y,
-            scaleZ: contentScales.z,
-            label: contentLabel
-        }
-        const backgroundMod = {
-            transformer: infoCardTransformer.id,
-            [dimension]: true,
-            [dimension + "X"]: contentPosition.x,
-            [dimension + "Y"]: contentPosition.y,
-            [dimension + "Z"]: contentPosition.z,
-            scaleX: backgroundScales.x,
-            scaleY: backgroundScales.y,
-            scaleZ: backgroundScales.z,
-        }
-        infoCardTransformer.OnSpawned({mod: transformerMod});
-        infoCardContent.OnSpawned({mod: contentMod});
-        infoCardBackground.OnSpawned({mod: backgroundMod});
+    structureCurrentlyShowingInfoCard.infoCardTransformer = null;
+    structureCurrentlyShowingInfoCard.infoCardContent = null;
+    structureCurrentlyShowingInfoCard.infoCardBackground = null;
+  } else {
+    const { scaleY } = BibleVizUtils.Functions.GetDialogBotScaleY({
+      scaleXLimit: 5,
+      line: contentLabel,
+      paddingX: 0,
+      paddingY: 0,
+    });
+    const contentScales = new Vector3(6, scaleY, 0.2);
+    const backgroundScales = new Vector3(
+      contentScales.x + backgroundPadding * 2,
+      contentScales.y + backgroundPadding * 2,
+      0.1
+    );
+    const contentPosition = new Vector3(
+      0,
+      contentMarginBottom + contentScales.y / 2,
+      0
+    );
+    const infoCardTransformer = ObjectPooler.GetObjectFromPool({
+      tag: BibleVizUtils.Data.tags.ObjectPoolTags.LayoutBookInfoCardTransformer,
+    });
+    const infoCardContent = ObjectPooler.GetObjectFromPool({
+      tag: BibleVizUtils.Data.tags.ObjectPoolTags.LayoutBookInfoCardContent,
+    });
+    const infoCardBackground = ObjectPooler.GetObjectFromPool({
+      tag: BibleVizUtils.Data.tags.ObjectPoolTags.LayoutBookInfoCardBackground,
+    });
+    const dateLabelPosition = getBotPosition(
+      layoutBookStructure.dateLabel,
+      dimension
+    );
+    const dateLabelScales = BibleVizUtils.Functions.GetBotScales(
+      layoutBookStructure.dateLabel
+    );
+    const transformerMod = {
+      [dimension]: true,
+      [dimension + "X"]: dateLabelPosition.x,
+      [dimension + "Y"]: dateLabelPosition.y,
+      [dimension + "Z"]: dateLabelPosition.z + dateLabelScales.z,
+    };
+    const contentMod = {
+      transformer: infoCardTransformer.id,
+      [dimension]: true,
+      [dimension + "X"]: contentPosition.x,
+      [dimension + "Y"]: contentPosition.y,
+      [dimension + "Z"]: contentPosition.z,
+      scaleX: contentScales.x,
+      scaleY: contentScales.y,
+      scaleZ: contentScales.z,
+      label: contentLabel,
+    };
+    const backgroundMod = {
+      transformer: infoCardTransformer.id,
+      [dimension]: true,
+      [dimension + "X"]: contentPosition.x,
+      [dimension + "Y"]: contentPosition.y,
+      [dimension + "Z"]: contentPosition.z,
+      scaleX: backgroundScales.x,
+      scaleY: backgroundScales.y,
+      scaleZ: backgroundScales.z,
+    };
+    infoCardTransformer.OnSpawned({ mod: transformerMod });
+    infoCardContent.OnSpawned({ mod: contentMod });
+    infoCardBackground.OnSpawned({ mod: backgroundMod });
 
-
-        layoutBookStructure.infoCardTransformer = infoCardTransformer;
-        layoutBookStructure.infoCardContent = infoCardContent;
-        layoutBookStructure.infoCardBackground = infoCardBackground;
-    }
+    layoutBookStructure.infoCardTransformer = infoCardTransformer;
+    layoutBookStructure.infoCardContent = infoCardContent;
+    layoutBookStructure.infoCardBackground = infoCardBackground;
+  }
 }

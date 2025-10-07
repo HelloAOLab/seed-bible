@@ -1,4 +1,4 @@
-const {bot, cameraFocus} = that;
+const { bot, cameraFocus } = that;
 
 // const baseGlow = getBot("system", "ext_tabernacle.glow");
 const baseCone = getBot("system", "ext_tabernacle.cone");
@@ -9,54 +9,86 @@ const coneTargetFormOpacity = 0.75;
 const botPosition = getBotPosition(bot, dimension);
 
 const duration = 1;
-const easing = {type: "sinusoidal", mode: "inout"};
-const rotation = {x: 1.01229, y:0.5};
-const startTime = os.localTime + (bot.tags.keysStateOnHighlight?.some((info) => {return info.state === "Hidden" }) ? 1000 : 0);
+const easing = { type: "sinusoidal", mode: "inout" };
+const rotation = { x: 1.01229, y: 0.5 };
+const startTime =
+  os.localTime +
+  (bot.tags.keysStateOnHighlight?.some((info) => {
+    return info.state === "Hidden";
+  })
+    ? 1000
+    : 0);
 
-const cone = bot.tags.showHighlightCone && create(baseCone, {
+const cone =
+  bot.tags.showHighlightCone &&
+  create(baseCone, {
     space: "tempLocal",
     parentId: bot.id,
     pointable: false,
     [dimension]: true,
-    [dimension + "X"]: botPosition.x + (bot.tags.coneOffset ? bot.tags.coneOffset.x : 0),
-    [dimension + "Y"]: botPosition.y + (bot.tags.coneOffset ? bot.tags.coneOffset.y : 0),
-    [dimension + "Z"]: botPosition.z + (bot.tags.coneOffset ? bot.tags.coneOffset.z : 0) + ((bot.tags.scaleZ ?? 1) * (bot.tags.scale ?? 1)) + (baseCone.tags.scaleZ * baseCone.tags.targetScale),
+    [dimension + "X"]:
+      botPosition.x + (bot.tags.coneOffset ? bot.tags.coneOffset.x : 0),
+    [dimension + "Y"]:
+      botPosition.y + (bot.tags.coneOffset ? bot.tags.coneOffset.y : 0),
+    [dimension + "Z"]:
+      botPosition.z +
+      (bot.tags.coneOffset ? bot.tags.coneOffset.z : 0) +
+      (bot.tags.scaleZ ?? 1) * (bot.tags.scale ?? 1) +
+      baseCone.tags.scaleZ * baseCone.tags.targetScale,
     [dimension + "RotationX"]: 3.141593,
     isCone: true,
     system: null,
-    scale: baseCone.tags.targetScale
-})
+    scale: baseCone.tags.targetScale,
+  });
 
-const showBot = bot.masks.state === MeshState.Hidden || bot.masks.state === MeshState.Translucent
+const showBot =
+  bot.masks.state === MeshState.Hidden ||
+  bot.masks.state === MeshState.Translucent;
 
 return Promise.all([
-    showBot && thisBot.SetBotsVisibility({data: [{key: bot.tags.key, value: MeshState.Shown}]}),
-    cameraFocus && os.focusOn(bot, {
-        duration,
-        easing,
-        rotation,
-        zoom: 40
+  showBot &&
+    thisBot.SetBotsVisibility({
+      data: [{ key: bot.tags.key, value: MeshState.Shown }],
     }),
-    LerpColorManager.LerpTagColor({startingColor: HexToRgb("#ffffff"), endingColor: HexToRgb("#8df5f3"), durationInSeconds: blinkDuration/2, bot, tag: InterpolatableColorTags.Color}).then(() => {
-        return LerpColorManager.LerpTagColor({endingColor: HexToRgb("#ffffff"), durationInSeconds: blinkDuration/2, bot, tag: InterpolatableColorTags.Color})
+  cameraFocus &&
+    os.focusOn(bot, {
+      duration,
+      easing,
+      rotation,
+      zoom: 40,
     }),
-    bot.tags.showHighlightCone && animateTag(cone, "formOpacity", {
+  LerpColorManager.LerpTagColor({
+    startingColor: HexToRgb("#ffffff"),
+    endingColor: HexToRgb("#8df5f3"),
+    durationInSeconds: blinkDuration / 2,
+    bot,
+    tag: InterpolatableColorTags.Color,
+  }).then(() => {
+    return LerpColorManager.LerpTagColor({
+      endingColor: HexToRgb("#ffffff"),
+      durationInSeconds: blinkDuration / 2,
+      bot,
+      tag: InterpolatableColorTags.Color,
+    });
+  }),
+  bot.tags.showHighlightCone &&
+    animateTag(cone, "formOpacity", {
+      duration: blinkDuration / 2,
+      easing,
+      toValue: coneTargetFormOpacity,
+      startTime,
+    }).then(() => {
+      return animateTag(cone, "formOpacity", {
         duration: blinkDuration / 2,
         easing,
-        toValue: coneTargetFormOpacity,
-        startTime
-    }).then(() => {
-        return animateTag(cone, "formOpacity", {
-            duration: blinkDuration / 2,
-            easing,
-            toValue: 0,
-            startTime: os.localTime + (blinkDuration * 2000)
-        })
+        toValue: 0,
+        startTime: os.localTime + blinkDuration * 2000,
+      });
     }),
-    ...bot.tags.keysStateOnHighlight?.map((info) => {
-        const {key, state} = info;
-        return thisBot.SetBotsVisibility({data: [{key, value: state}]})
-    }) ?? []
+  ...(bot.tags.keysStateOnHighlight?.map((info) => {
+    const { key, state } = info;
+    return thisBot.SetBotsVisibility({ data: [{ key, value: state }] });
+  }) ?? []),
 ]).finally(() => {
-    destroy([cone]);
-})
+  destroy([cone]);
+});

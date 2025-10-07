@@ -2,11 +2,11 @@
   z-index: 10 !important;
 }
 
-.header-container{
-      display: flex;
-    width: 100%;
-    justify-content: space-between;
-    align-items: center;
+.header-container {
+  display: flex;
+  width: 100%;
+  justify-content: space-between;
+  align-items: center;
 }
 
 .thinking {
@@ -23,7 +23,8 @@
 }
 
 @keyframes dots {
-  0%, 100%{
+  0%,
+  100% {
     content: "";
   }
 
@@ -62,7 +63,7 @@
 
 .user-message {
   margin-left: auto;
-  background: #F1F1F1;
+  background: #f1f1f1;
   padding: 5px;
   border-radius: 5px;
   font-size: 16px;
@@ -72,7 +73,7 @@
 
 .assistant-message {
   margin-right: auto;
-  background: #F1F1F1;
+  background: #f1f1f1;
   padding: 5px;
   border-radius: 5px;
   font-size: 16px;
@@ -81,17 +82,17 @@
 }
 
 .ai-container {
-    display: flex;
-    justify-content: flex-start;
-    align-items: center;
-    flex-direction: column;
-    min-height: 400px;
-    width: 250px;
-    background: white;
-    border-radius: 10px;
-    padding: 10px;
-    box-shadow: rgba(0, 0, 0, 0.35) 0px 5px 15px;
-    height: fit-content;
+  display: flex;
+  justify-content: flex-start;
+  align-items: center;
+  flex-direction: column;
+  min-height: 400px;
+  width: 250px;
+  background: white;
+  border-radius: 10px;
+  padding: 10px;
+  box-shadow: rgba(0, 0, 0, 0.35) 0px 5px 15px;
+  height: fit-content;
 }
 
 .draggable {
@@ -107,16 +108,16 @@
 }
 
 .ai-btn {
-    aspect-ratio: 1/1;
-    border-radius: 50%;
-    background: transparent;
-    display: flex;
-    align-items: center;
-    justify-content: center;
-    cursor: pointer;
-    transition: all 0.3s ease;
-    position: relative;
-    border: none;
+  aspect-ratio: 1/1;
+  border-radius: 50%;
+  background: transparent;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  cursor: pointer;
+  transition: all 0.3s ease;
+  position: relative;
+  border: none;
 }
 
 .AO {
@@ -136,7 +137,7 @@
   width: fit-content;
   display: flex;
   gap: 10px;
-  background: #F1F1F1;
+  background: #f1f1f1;
   border-radius: 5px;
 }
 
@@ -156,14 +157,14 @@
 }
 
 .voice-container {
-    display: flex;
-    flex-direction: column;
-    width: 100%;
-    height: 100%;
-    justify-content: center;
-    align-items: center;
-    margin-top: auto;
-    margin-bottom: auto;
+  display: flex;
+  flex-direction: column;
+  width: 100%;
+  height: 100%;
+  justify-content: center;
+  align-items: center;
+  margin-top: auto;
+  margin-bottom: auto;
 }
 
 .input-mic-wrapper {
@@ -247,9 +248,9 @@ body {
 }
 
 .card {
-    padding: 10px;
-    width: 100%;
-    text-align: center;
+  padding: 10px;
+  width: 100%;
+  text-align: center;
 }
 
 .card-image img {
@@ -265,12 +266,12 @@ body {
 }
 
 .agents {
-    display: flex;
-    flex-direction: column;
-    gap: 8px;
-    margin-bottom: 20px;
-    background: #F1F1F1;
-    border-radius: 10px;
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+  margin-bottom: 20px;
+  background: #f1f1f1;
+  border-radius: 10px;
 }
 
 .agents .agent:last-child {
@@ -278,14 +279,14 @@ body {
 }
 
 .agent {
-    display: flex;
-    align-items: center;
-    border-bottom: 1px solid #ddd;
-    /* border-radius: 6px; */
-    padding: 10px;
-    cursor: pointer;
-    transition: border-color 0.2s;
-    justify-content: space-between;
+  display: flex;
+  align-items: center;
+  border-bottom: 1px solid #ddd;
+  /* border-radius: 6px; */
+  padding: 10px;
+  cursor: pointer;
+  transition: border-color 0.2s;
+  justify-content: space-between;
 }
 
 .agent:hover {

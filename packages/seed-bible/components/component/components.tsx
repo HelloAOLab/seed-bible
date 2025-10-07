@@ -20,19 +20,19 @@ globalThis.ComponentsBot = thisBot;
 globalThis.ImageWrapper = ImageWrapper;
 
 return {
-    Modal,
-    Button,
-    FloatingBanner,
-    Confetti,
-    ButtonsCover,
-    Input,
-    GlassButton,
-    Loader,
-    Highlighter,
-    ModalStepper,
-    Select,
-    Tooltip,
-    Checkbox,
-    LoaderSecondary,
-    Chips
-}
+  Modal,
+  Button,
+  FloatingBanner,
+  Confetti,
+  ButtonsCover,
+  Input,
+  GlassButton,
+  Loader,
+  Highlighter,
+  ModalStepper,
+  Select,
+  Tooltip,
+  Checkbox,
+  LoaderSecondary,
+  Chips,
+};

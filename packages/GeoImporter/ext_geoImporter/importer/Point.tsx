@@ -12,7 +12,7 @@ elem[tags.targetDim + "X"] = coordinates[0];
 elem[tags.targetDim + "Y"] = coordinates[1];
 let elemBot = create(elem);
 
-if(elemBot && masks.initGame){
-    setTagMask(elemBot, "labelOpacity", 0, "tempLocal");
-    setTagMask(elemBot, "lineTo", [], "tempLocal");
+if (elemBot && masks.initGame) {
+  setTagMask(elemBot, "labelOpacity", 0, "tempLocal");
+  setTagMask(elemBot, "lineTo", [], "tempLocal");
 }

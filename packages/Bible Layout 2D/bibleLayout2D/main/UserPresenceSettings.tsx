@@ -5,7 +5,7 @@
 // import { useBibleLayout2DContext } from "bibleLayout2D.main.BibleLayout2DContext"
 
 // export const UserPresenceSettings = () => {
-    
+
 //     const { modes } = useBibleLayout2DContext();
 
 //     return (
