@@ -125,7 +125,25 @@
     {
         "type": "function",
         "name": "highlightVerses",
-        "description": "whenever user ask to highlight or unhighlight the verses",
+        "description": "whenever user ask to highlight the verses",
+        "parameters": {
+            "type": "object",
+            "properties": {
+                "verses": {
+                    "type": "array",
+                    "description": "the verses the user specifies",
+                    "items": {
+                        "type": "number"
+                    }
+                }
+            },
+            "required": []
+        }
+    },
+    {
+        "type": "function",
+        "name": "unHighlightVerses",
+        "description": "whenever user ask to unhighlight the verses",
         "parameters": {
             "type": "object",
             "properties": {
@@ -241,6 +259,36 @@
             "properties": {
             },
             "required": []
+        }
+    },
+    {
+        "type": "function",
+        "name": "changeHighlightColor",
+        "description": "whenever the user asks to change the highlight words or verses color",
+        "parameters": {
+            "type": "object",
+            "properties": {
+                "color": {
+                    "type": "string",
+                    "description": "the color user mentions, it should be in hex code"
+                }
+            },
+            "required": ["color"]
+        }
+    },
+    {
+        "type": "function",
+        "name": "changeHighlightTextColor",
+        "description": "whenever the user asks to change the highlight words or verses text color",
+        "parameters": {
+            "type": "object",
+            "properties": {
+                "color": {
+                    "type": "string",
+                    "description": "the color user mentions, it should be in hex code"
+                }
+            },
+            "required": ["color"]
         }
     }
 ]
