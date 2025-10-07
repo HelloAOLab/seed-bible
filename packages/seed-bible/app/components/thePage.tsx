@@ -61,6 +61,8 @@ function ThePage({
 
   // Add state for word highlights
   const [wordHighlights, setWordHighlights] = useState({});
+  const [wordHighlightsTC, setWordHighlightsTC] = useState("black");
+  const [wordHighlightsBC, setWordHighlightsBC] = useState("#ffeb3b");
 
   const [bible, setBible] = useState();
   if (tab) globalThis[`SetEnableEditorOf${tab?.id}`] = setEnableEditor;
@@ -497,6 +499,10 @@ function ThePage({
     globalThis.ChangeTranslation = changeTranslation;
     globalThis.SetPanalApp = () => { };
     globalThis.ToggleVerseHighlight = toggleVerseHighlight;
+    globalThis.UnHighlightVerse = unHighlightVerse;
+    globalThis.HighlightVerse = highlightVerse;
+    globalThis.SetWordHighlightsTC = setWordHighlightsTC;
+    globalThis.SetWordHighlightsBC = setWordHighlightsBC;
     globalThis.SetInHold = setInHold;
     globalThis.SetShowCommands = setShowCommands;
 
@@ -682,6 +688,90 @@ function ThePage({
     },
     [tab?.id, data, data?.book, data?.chapter]
   );
+
+  const highlightVerse = useCallback(
+    (verseNumbers) => {
+      if (!tab?.id) return;
+      EmitData('highlight', verseNumbers)
+      // console.log(data, 'remoteData')
+      const verseId = `v-${typeof verseNumbers === 'object' ? verseNumbers[verseNumbers.length - 1] : verseNumbers}`
+      // console.log(verseId, 'verseId', document.getElementById(verseId))
+      document.getElementById(verseId).scrollIntoView({
+        behavior: 'smooth',      // enables smooth animation
+        block: 'center',         // positions the element in the center of the screen
+        inline: 'nearest'
+      });
+      const numbers = Array.isArray(verseNumbers)
+        ? verseNumbers
+        : [verseNumbers];
+
+      setHighlighted((prev) => {
+        const newHighlighted = { ...prev };
+
+        // Check if all verses in this group are already highlighted together
+        const allHighlighted = numbers.every((vn) => newHighlighted[vn]);
+        const groupId = Date.now(); // Unique group ID for new highlights
+
+        numbers.forEach((vn) => {
+          newHighlighted[vn] = {
+            timestamp: groupId,
+            book: data?.book,
+            chapter: data?.chapter,
+            group: groupId,
+          };
+        });
+
+        // Update global storage
+        if (!globalThis.tabHighlights) {
+          globalThis.tabHighlights = {};
+        }
+        globalThis.tabHighlights[tab?.id] = newHighlighted;
+
+        return newHighlighted;
+      });
+    },
+    [tab?.id, data, data?.book, data?.chapter]
+  );
+  const unHighlightVerse = useCallback(
+    (verseNumbers) => {
+      if (!tab?.id) return;
+      EmitData('highlight', verseNumbers)
+      // console.log(data, 'remoteData')
+      const verseId = `v-${typeof verseNumbers === 'object' ? verseNumbers[verseNumbers.length - 1] : verseNumbers}`
+      // console.log(verseId, 'verseId', document.getElementById(verseId))
+      document.getElementById(verseId).scrollIntoView({
+        behavior: 'smooth',      // enables smooth animation
+        block: 'center',         // positions the element in the center of the screen
+        inline: 'nearest'
+      });
+      const numbers = Array.isArray(verseNumbers)
+        ? verseNumbers
+        : [verseNumbers];
+
+      setHighlighted((prev) => {
+        const newHighlighted = { ...prev };
+
+        // Check if all verses in this group are already highlighted together
+        const allHighlighted = numbers.every((vn) => newHighlighted[vn]);
+
+        if (allHighlighted) {
+          // All are highlighted → unhighlight them as a group
+          numbers.forEach((vn) => {
+            delete newHighlighted[vn];
+          });
+        }
+
+        // Update global storage
+        if (!globalThis.tabHighlights) {
+          globalThis.tabHighlights = {};
+        }
+        globalThis.tabHighlights[tab?.id] = newHighlighted;
+
+        return newHighlighted;
+      });
+    },
+    [tab?.id, data, data?.book, data?.chapter]
+  );
   useEffect(() => {
     if (showCommands) {
       setCommandHighlight(contextData.verses);
@@ -756,7 +846,8 @@ function ThePage({
                       setLastSelectedVerse={setLastSelectedVerse}
                       setCommandHighlight={setCommandHighlight}
                       commandHighlight={commandHighlight}
-
+                      wordHighlightsTC={wordHighlightsTC}
+                      wordHighlightsBC={wordHighlightsBC}
                     />
                   </div>
                 </>
@@ -970,7 +1061,9 @@ function splitByWordHighlights(
   wordHighlights,
   book,
   chapter,
-  verseNumber
+  verseNumber,
+  wordHighlightsTC,
+  wordHighlightsBC
 ) {
   if (!wordHighlights || Object.keys(wordHighlights).length === 0) {
     return [{ text, isHighlighted: false }];
@@ -1060,6 +1153,8 @@ function Section({
   setShowCommands,
   selectedText,
   lastSelectedVerse,
+  wordHighlightsTC,
+  wordHighlightsBC
 }) {
   const stripRe = /[.,'"""'']/g;
   const normalize = (k) => k.replace(stripRe, "").toLowerCase().trim();
@@ -1155,7 +1250,9 @@ function Section({
         wordHighlights,
         book,
         chapter,
-        v.verseNumber
+        v.verseNumber,
+        wordHighlightsTC,
+        wordHighlightsBC
       );
     });
     return result;
@@ -1202,8 +1299,8 @@ function Section({
                   <span
                     key={`${i}-word-${wordIndex}`}
                     style={{
-                      color: wordPart.highlightConfig.color,
-                      backgroundColor: wordPart.highlightConfig.backgroundColor,
+                      color: wordHighlightsTC,
+                      backgroundColor: wordHighlightsBC,
                       cursor: wordPart.highlightConfig.onClick
                         ? "pointer"
                         : "default",
@@ -1277,6 +1374,8 @@ function Section({
                   cursor: part.highlightConfig.onClick ? "pointer" : "default",
                   padding: "1px 2px",
                   borderRadius: "2px",
+                  color: wordHighlightsTC,
+                  backgroundColor: wordHighlightsBC,
                 }}
                 {...attributes}
               >{part.text}</span>
@@ -1366,10 +1465,14 @@ function Section({
                   }}
                   style={{
                     "background-color":
-                      highlighted?.[verse.verseNumber] ||
+                      (highlighted?.[verse.verseNumber] && highlighted?.[verse.verseNumber].book === book && highlighted?.[verse.verseNumber].chapter === chapter) ||
                         commandHighlight.includes(verse.verseNumber)
-                        ? "#ffeb3b"
+                        ? wordHighlightsBC
                         : "transparent",
+                    color: (highlighted?.[verse.verseNumber] && highlighted?.[verse.verseNumber].book === book && highlighted?.[verse.verseNumber].chapter === chapter) ||
+                        commandHighlight.includes(verse.verseNumber)
+                        ? wordHighlightsTC
+                        : "black",
                     transition: "background-color 0.2s ease",
                     "border-radius": highlighted?.[verse.verseNumber]
                       ? "3px"
