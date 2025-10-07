@@ -19,7 +19,7 @@ const EditRichText = await thisBot.EditRichText();
 const EditAttachment = await thisBot.EditAttachment();
 
 const bibleVizUtils = getBot("system","bibleVizUtils.main");
-console.log("PHEW PHEW PHEWW",bibleVizUtils);
+
 if(bibleVizUtils) {
     bibleVizUtils.Initialize();
 }
@@ -48,6 +48,8 @@ const sortFunc = (a, b) => {
 
 
 const Playlist = () => {
+
+    const IsPlaylistPlaying = globalThis.IsPlaylistPlaying;
 
     const [editAnnoData, setEditAnnoData] = useState({
         address: '',
@@ -396,7 +398,11 @@ const Playlist = () => {
     }, []);
 
     useLayoutEffect(() => {
-        if (globalThis.IsPlaylistPlaying) {
+        const isMobile = (window?.innerWidth || gridPortalBot.tags.pixelWidth) < MOBILE_VIEWPORT_THRESHOLD;
+        if(isMobile){
+            globalThis.SetPlaylistForcedHeight && globalThis.SetPlaylistForcedHeight(true);
+        }
+        if (IsPlaylistPlaying) {
             thisBot.Playlistplaying({
                 skipAll: true,
             })
@@ -459,6 +465,7 @@ const Playlist = () => {
             globalThis.makingPlaylist = false;
             globalThis.SetMediaURL && globalThis.SetMediaURL(null);
             globalThis.SetVideoSrc && globalThis.SetVideoSrc(null);
+            globalThis.SetPlaylistForcedHeight && globalThis.SetPlaylistForcedHeight(false);
         }
     }, []);
 
@@ -563,7 +570,7 @@ const Playlist = () => {
                 style={{
                     display: 'flex',
                     flexDirection: 'column',
-                    height: 'calc(100dvh - 1.3rem)',
+                    height: '100%',
                     containerType: "inline-size" /* Enables container query */
                 }}
             >
@@ -603,8 +610,8 @@ const Playlist = () => {
                         )}
 
                         <div
-                            id="sidebar-bar"
-                            className={`playlist-cont-parent ${queueOpen && "queueOpen"} ${hide && "hide"} ${sidebarOpen ? "sidebarOpen" : ""}`}
+                            id={`sidebar-bar`}
+                            className={`playlist-cont-parent ${IsPlaylistPlaying ? "playing-playlist" :""} ${queueOpen && "queueOpen"} ${hide && "hide"} ${sidebarOpen ? "sidebarOpen" : ""}`}
                             onPointerEnter={(e) => {
                                 if (e.currentTarget.id === "sidebar-bar") {
                                     setTagMask(gridPortalBot, "portalZoomable", false);

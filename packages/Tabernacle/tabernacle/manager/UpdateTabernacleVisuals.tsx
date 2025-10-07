@@ -17,7 +17,7 @@ const keysFirstAppearance = [
         } 
     },
     { 
-        key: "blueprint-ark-of-covenan",
+        key: "blueprint-ark-of-covenant",
         chaptersInfo: { 
             "35": MeshState.Shown, 
             "36": MeshState.Shown,

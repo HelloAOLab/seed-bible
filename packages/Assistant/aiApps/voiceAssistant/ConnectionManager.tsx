@@ -18,7 +18,7 @@ function attachQueryToURL(url, params) {
     const queryString = generateQuery(params);
     return url + (url.includes('?') ? '&' : '?') + queryString;
 }
-const ConnectionManager = ({ start, setConnected, audioRef, pcRef, micRef, micActive, speakerActive, dcRef }) => {
+const ConnectionManager = ({ start, setConnected, audioRef, pcRef, micRef, micActive, speakerActive, dcRef, setIsAssistantListening }) => {
 
     const init = async () => {
 
@@ -51,9 +51,9 @@ const ConnectionManager = ({ start, setConnected, audioRef, pcRef, micRef, micAc
         dcRef.current = dc;
         dc.onmessage = (e) => {
             const data = JSON.parse(e.data);
-            console.log(data)
-            HandleEventMessage(data);
+            HandleEventMessage(data, setIsAssistantListening);
             if (data.type === "response.function_call_arguments.done") {
+                console.log(data)
                 HandleEvents({ dc, data })
             }
         };

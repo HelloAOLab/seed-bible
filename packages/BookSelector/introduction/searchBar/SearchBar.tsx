@@ -292,7 +292,6 @@ const SearchBar = () => {
                         os.toast(`Translation ${value} added!`)
                     }
                 } else {
-                    console.log(value)
                     web.hook({
                         method: 'GET',
                         url: value
@@ -306,7 +305,6 @@ const SearchBar = () => {
                             let defaultTranslation;
                             for (let i = 0; i < translations.length; i++) {
                                 let translation = translations[i];
-                                console.log(translation, "translation")
                                 let languageEnglishName = translation.languageEnglishName.toLowerCase()
                                 let controlledTranslation = {
                                     languageEnglishName: languageEnglishName,
@@ -428,7 +426,6 @@ const SearchBar = () => {
     }, [selectedTestamentData, query, focusOnBook])
 
     const fetchBookdata = useCallback(() => {
-        console.log(selectedTranslation, "selectedTranslation")
         if (selectedTranslation?.listOfBooksApiLink?.includes("https")) {
             web.get(`${selectedTranslation.listOfBooksApiLink}`).then(e => {
                 let book0 = e.data.books[0];
@@ -457,7 +454,6 @@ const SearchBar = () => {
             translations[selectedTranslation.languageEnglishName?.toLowerCase() || ""] = {
                 [selectedTranslation.shortName?.toLowerCase() || ""]: selectedTranslation
             }
-            console.log(translations, "1 trans")
             setTagMask(thePage, "apiTranslations", translations, "local")
             setTagMask(thePage, "defaultTranslations", [...defaultTranslations, selectedTranslation.languageEnglishName?.toLowerCase() || ""], "local")
             setApiTranslations(translations)
@@ -517,7 +513,6 @@ const SearchBar = () => {
                             }
                         }
                     })
-                    console.log(translations, "2 trans")
                     setTagMask(thePage, "apiTranslations", translations, "local")
                     setTagMask(thePage, "defaultTranslations", defaultTranslations, "local")
                     setApiTranslations(translations);
@@ -565,7 +560,6 @@ const SearchBar = () => {
                     }
                 }
             })
-            console.log(translations, "3 trans")
             setTagMask(thePage, "apiTranslations", translations, "local")
             setTagMask(thePage, "defaultTranslations", defaultTranslations, "local")
             setApiTranslations(translations);
@@ -594,7 +588,7 @@ const SearchBar = () => {
     }, [selectedTestament, setQuery, query, openSearchBar, setOpenSearchBar, searchBarFocused, handleEnter])
 
     // Use State of Element
-    const [showCheck, setShowCheck] = useState(globalThis.IS_PLAYLIST_ACTIVE);
+    const [showCheck, setShowCheck] = useState(globalThis.IS_PLAYLIST_ACTIVE || globalThis.IsPlaylistPlaying);
     const [dontopn, setDontOpen] = useState(false);
     globalThis.SET_SHOW_CHECK = setShowCheck;
     globalThis.SetDontOpenPlaylist = setDontOpen;
@@ -787,7 +781,6 @@ const NewTransOptions = ({ translationName, translations, selectedTranslation, s
     const [show, setShow] = useState(false)
 
     const shareTranslatation = async ({ translation }) => {
-        console.log(translation)
         if (translation?.origin) {
             let url = `https://aolab-bible-api.netlify.app/api/translations/addTranslation`;
             let params = {
@@ -918,11 +911,9 @@ const SideBarBooks = ({ booksData, focusOnBook, selectedTestament, selectedTrans
 
     useLayoutEffect(() => {
         if (booksData.length === 1) {
-            console.log("book available 1", booksData)
             setLastBookClicked(0);
             setBookData(booksData[0]);
         } else {
-            console.log("book available more than 1", booksData)
             setLastBookClicked(-1);
             setBookData(null);
         }
@@ -1104,7 +1095,6 @@ const SideBarBooks = ({ booksData, focusOnBook, selectedTestament, selectedTrans
                 </div>
             </div>
         } else if (selectedTestament === 1) {
-            console.log("New Testament")
             let chapterPos = calcChapterPos(lastBookClicked, allowedRows);
             let booksWithGhost = ghostArray(booksData, allowedRows);
             return <div class="books-container" style={showCheck ? {paddingTop: "40px"} : {}}>
@@ -1147,7 +1137,6 @@ const SideBarBooks = ({ booksData, focusOnBook, selectedTestament, selectedTrans
                 </div>
             </div>
         } else if (selectedTestament === 0) {
-            console.log("Old testament")
             let chapterPos = calcChapterPos(lastBookClicked, allowedRows);
             let booksWithGhost = ghostArray(booksData.slice(0, 39), allowedRows);
             return <div class="books-container" style={showCheck ? {paddingTop: "40px"} : {}}>
@@ -1190,7 +1179,7 @@ const SideBarBooks = ({ booksData, focusOnBook, selectedTestament, selectedTrans
                 </div>
             </div>
         }
-    }, [booksData, lastBookClicked, bookData, selectedTestament, windowSize, chT])
+    }, [booksData, lastBookClicked, bookData, dontOpen,selectedTestament, windowSize, chT])
 
     return <>
         {
@@ -1201,6 +1190,7 @@ const SideBarBooks = ({ booksData, focusOnBook, selectedTestament, selectedTrans
 const SideBarChapters = ({ bookData, dontOpen, focusOnBook, setLastBookClicked, setBookData, refsObject, selectedTranslation }) => {
     const [renderingJSX, setRenderingJSX] = useState([]);
     const [highLightedButtonsID, setHighlightedButtonID] = useState({});
+
 
     const handleChapterClick = ({ bookName, chapterNo, bookData, ...data }) => {
         if (globalThis?.findNameRank) {
@@ -1217,7 +1207,7 @@ const SideBarChapters = ({ bookData, dontOpen, focusOnBook, setLastBookClicked, 
             }
 
             const isShiftHold = globalThis?.KEY_HOLD?.['Shift'];
-            const isPlaylistMode = globalThis.makingPlaylist;
+            const isPlaylistMode = globalThis.makingPlaylist || globalThis.IsPlaylistPlaying;
 
             shout('playSound', { soundName: 'UI_Numpad_Click' })
 

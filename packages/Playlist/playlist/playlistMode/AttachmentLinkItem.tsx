@@ -2,7 +2,7 @@ const { useState, useLayoutEffect } = os.appHooks;
 // check_circle
 const { Input, Modal, Button, ButtonsCover, Checkbox } = Components;
 const Linking = thisBot.LinkingItems();
-const isMobile = gridPortalBot.tags.pixelWidth < MOBILE_VIEWPORT_THRESHOLD;
+const isMobile = (window?.innerWidth || gridPortalBot.tags.pixelWidth) < MOBILE_VIEWPORT_THRESHOLD;
 
 const editAbleTypes = {
     "youtube": true,

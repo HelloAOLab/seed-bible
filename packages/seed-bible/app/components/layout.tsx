@@ -60,7 +60,12 @@ const Layout = ({ children }) => {
         closePopupSettings()
       }}
       onMouseUp={() => {
-        globalThis?.setOpenSidebar(false)
+        try {
+
+          globalThis?.setOpenSidebar(false)
+        } catch {
+
+        }
       }}
       className="layout" style={{ background: 'white' }}>
 
@@ -95,8 +100,8 @@ const Layout = ({ children }) => {
       </main>
       <div>
         <Toolbar />
-        
-        <NowBar/>
+
+        <NowBar />
       </div>
 
       <style>{getStyleOf('main.css')}</style>
