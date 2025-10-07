@@ -93,7 +93,6 @@ const Main = () => {
 
     globalThis.AddApplication = addApplication
     globalThis.RemoveApplication = removeApplication
-    globalThis.AddApplication = addApplication;
     globalThis.RemoveApplicationByID = removeApplicationByID;
     globalThis.ReplaceApplication = replaceApplication
     globalThis.UpdateApplication = updateApplication;

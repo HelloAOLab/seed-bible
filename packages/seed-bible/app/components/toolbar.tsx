@@ -182,8 +182,10 @@ export function Toolbar() {
                       onMouseUp={(e) => {
                         e.stopPropagation();
                         clearTimeout(holdTimeoutRef.current);
-                        if (!hasHeldRef.current && tool?.onClick)
+                        if (!hasHeldRef.current && tool?.onClick) {
                           tool.onClick();
+                        }
+                         
                         if (isDragging) {
                           setIsDragging(false);
                           setElement(null);

@@ -17,7 +17,7 @@ export const OutputMessageLog = () => {
     return messages.filter(messages => messages)
 }
 
-export const HandleEventMessage = (event) => {
+export const HandleEventMessage = (event, setIsAssistantListening, setIsAssistantThinking) => {
     switch (event.type) {
         case "conversation.item.input_audio_transcription.completed": {
             setTagMask(thisBot, 'chatMessages', {
@@ -29,6 +29,7 @@ export const HandleEventMessage = (event) => {
             }, "tempLocal");
             globalThis?.SetUserWriting && globalThis.SetUserWriting(false);
             globalThis?.SetAiTextMessages && globalThis.SetAiTextMessages([...OutputMessageLog()]);
+            globalThis?.SetAssistantWriting && globalThis.SetAssistantWriting(true);
             break
         }
         case "response.content_part.done": {
@@ -49,7 +50,12 @@ export const HandleEventMessage = (event) => {
         }
         case "input_audio_buffer.speech_started": {
             setTagMask(thisBot, 'itemArray', [...masks.itemArray, event.item_id], "tempLocal");
+            setIsAssistantListening(true);
             globalThis?.SetUserWriting && globalThis.SetUserWriting(true);
+            break
+        }
+        case "input_audio_buffer.speech_stopped": {
+            setIsAssistantListening(false);
             break
         }
     }

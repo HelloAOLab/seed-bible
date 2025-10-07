@@ -75,9 +75,10 @@ function NowBar() {
 
         if (isMobile) {
             return {
-                width: Math.min(windowWidth - 32, 350), // 16px margin on each side
+                // width: Math.min(windowWidth - 32, 350), // 16px margin on each side
+                width: windowWidth - (7*16),
                 height: 150, // Proportional height with max
-                bottom: windowWidth <= 480 ? '70px' : '75px', // Adjust for very small screens
+                bottom: windowWidth <= 480 ? '40px' : '100px', // Adjust for very small screens
                 borderRadius: '16px'
             };
         } else if (isTablet) {
@@ -166,11 +167,13 @@ function NowBar() {
 
     // Mouse events
     const handleMouseDown = (e) => {
-        e.preventDefault();
+        // We need to click input box inside here
+        // e.preventDefault();
         handleStart(e.clientY);
     };
 
     const handleMouseMove = (e) => {
+        e.preventDefault();
         handleMove(e.clientY);
     };
 
@@ -216,10 +219,11 @@ function NowBar() {
             left: '50%',
             transform: 'translateX(-50%)',
             width: `${dimensions.width}px`,
-            height: `${dimensions.height}px`,
+            // Shall be min height not exact height
+            minHeight: `${dimensions.height}px`,
             zIndex: '999999',
             // Ensure it doesn't overflow on very small screens
-            maxWidth: '95vw'
+            maxWidth: '95vw',
         }}>
             {apps.map((app, index) => {
                 const isVisible = index >= currentIndex;
@@ -258,9 +262,10 @@ function NowBar() {
                         onTouchMove={isTopApp ? handleTouchMove : undefined}
                         onTouchEnd={isTopApp ? handleTouchEnd : undefined}
                         style={{
-                            position: 'absolute',
-                            bottom: '0',
-                            left: '0',
+                            // We dont need absolute in this since we have upper parent fixed.
+                            // position: 'absolute',
+                            // bottom: '0',
+                            // left: '0',
                             width: '100%',
                             height: '100%',
                             borderRadius: dimensions.borderRadius,
@@ -275,7 +280,8 @@ function NowBar() {
                             touchAction: 'none',
                             // Prevent text selection on mobile
                             WebkitUserSelect: 'none',
-                            WebkitTouchCallout: 'none'
+                            WebkitTouchCallout: 'none',
+                            backgroundColor: 'white'
                         }}
                     >
                         {app.component}

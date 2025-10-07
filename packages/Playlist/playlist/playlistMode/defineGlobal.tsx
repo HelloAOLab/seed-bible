@@ -48,6 +48,7 @@ globalThis.CheckMultiFuntionHold = () => globalThis?.KEY_HOLD?.['shift'] || glob
 globalThis.Playlist = thisBot;
 
 const getBookmarks = async () => {
+  setTag(thisBot, "bookmarks", { });
   let apiResults = {};
   try {
     const authBot = await os.requestAuthBotInBackground();
@@ -653,7 +654,7 @@ const getPosition = () => {
   const pointerX = gridPortalBot.tags.pointerPixelX;
   const pointerY = gridPortalBot.tags.pointerPixelY;
   const height = gridPortalBot.tags.pixelHeight;
-  const width = gridPortalBot.tags.pixelWidth;
+  const width = window?.innerWidth || gridPortalBot.tags.pixelWidth;
 
   const edgeThreshold = 200; // Distance from edges to adjust position
   const safeMargin = "2rem"; // Fixed margin when near edges

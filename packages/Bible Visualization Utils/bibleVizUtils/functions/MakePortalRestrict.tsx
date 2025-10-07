@@ -4,7 +4,7 @@
  * @example
  * shout("MakePortalRestrict");
  */
-
+console.log(`[Debug] MakePortalRestrict`)
 setTagMask(gridPortalBot, "portalPannable", false);
 setTagMask(gridPortalBot, "portalZoomable", false);
 setTagMask(gridPortalBot, "portalRotatable", false);

@@ -1,5 +1,5 @@
 const { useLayoutEffect, useState, useMemo } = os.appHooks;
-const isMobile = gridPortalBot.tags.pixelWidth < MOBILE_VIEWPORT_THRESHOLD;
+const isMobile = (window?.innerWidth || gridPortalBot.tags.pixelWidth) < MOBILE_VIEWPORT_THRESHOLD;
 
 
 const UNBOOKMARK_ICON = 'https://auth-aux-aobot-prod-filesbucket-141297942820.s3.amazonaws.com/aoBot/71edcb41d7fbda4b963eb8b177f190341e7b11f0e150be7aad1a8f102f72e1c4.svg';

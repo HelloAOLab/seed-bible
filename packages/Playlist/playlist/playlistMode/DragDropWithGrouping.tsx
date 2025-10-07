@@ -7,7 +7,7 @@ const Linking = await thisBot.LinkingItems();
 const RenderHTMLContent = await thisBot.RenderHTMLContent();
 const { Checkbox } = Components;
 
-const isMobile = gridPortalBot.tags.pixelWidth < MOBILE_VIEWPORT_THRESHOLD;
+const isMobile = (window?.innerWidth || gridPortalBot.tags.pixelWidth) < MOBILE_VIEWPORT_THRESHOLD;
 
 // Replaced now with props toggleRemoved cause no need to show like this now use is to show active element
 const toggle = 'null';

@@ -1,6 +1,5 @@
-const isMobile = gridPortalBot.tags.pixelWidth < MOBILE_VIEWPORT_THRESHOLD;
-
-if (isMobile && globalThis.makingPlaylist) {
+const isMobile = (window?.innerWidth || gridPortalBot.tags.pixelWidth) < MOBILE_VIEWPORT_THRESHOLD;
+if ((isMobile || that?.force) && globalThis.makingPlaylist) {
     if (globalThis["Playlist_package"]) {
         globalThis["Playlist_package"].onClick();
     } else {
