@@ -26,6 +26,8 @@ const Discover = ({
   style,
   setOpenModal,
 }) => {
+  const IsPlaylistPlaying = globalThis.IsPlaylistPlaying;
+
   const [selectedChip, setSelectedChip] = useState({
     All: true,
   });
@@ -109,7 +111,7 @@ const Discover = ({
       setSelectedChip((prev) => ({
         ...prev,
         [val]: !prev[val],
-        "All": false
+        All: false,
       }));
     }
   };
@@ -231,6 +233,11 @@ const Discover = ({
       (isAll || selectedChip["Bookmarks"]) ? (
         <Bookmarks />
       ) : null}
+      <div
+        className={`mobile-pseudogap-element ${
+          IsPlaylistPlaying ? "playing-playlist" : ""
+        }`}
+      />
     </div>
   );
 };

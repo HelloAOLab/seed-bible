@@ -349,5 +349,7 @@ globalThis.NagiationTimeout = setTimeout(async () => {
       return;
     }
   }
+
+  thisBot.CloseSelf();
   globalThis.HISTORYExploreMode = initialValue;
 }, 100);

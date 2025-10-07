@@ -15,6 +15,8 @@ const AttachLink = await thisBot.AttachLink();
 const AddNewPlaylist = await thisBot.AddNewPlaylist();
 const VideoPlayer = await thisBot.VideoSmallScreen();
 const AudioPlayer = await thisBot.AudioPlayer();
+const TogglePlaylistHeight = await thisBot.TogglePlaylistHeight();
+
 // const AttachmentLinkItem = thisBot.AttachmentLinkItem();
 
 globalThis.DEFAULT_UPLOAD_ICON =
@@ -1235,21 +1237,24 @@ const Playlist = ({
                 <span class="material-symbols-outlined">playlist_play</span>
                 <span>Playlist Settings</span>
               </div>
-              <div
-                className="publish-setting"
-                onClick={(e) => {
-                  const rect = e.currentTarget.getBoundingClientRect();
+              <div className="align-center">
+                <TogglePlaylistHeight />
+                <div
+                  className="publish-setting"
+                  onClick={(e) => {
+                    const rect = e.currentTarget.getBoundingClientRect();
 
-                  const x = rect.left; // X position where the element starts (from left of screen)
-                  const y = rect.bottom; // Y position where the element ends (bottom of element from top of screen)
+                    const x = rect.left; // X position where the element starts (from left of screen)
+                    const y = rect.bottom; // Y position where the element ends (bottom of element from top of screen)
 
-                  globalThis.LastClickX = x;
-                  globalThis.LastClickY = y;
-                  showMorePosition.current = { ...getPosition() };
-                  setShowMoreOptions(true);
-                }}>
-                <span class="material-symbols-outlined">settings</span>
-                <span>Publish Settings</span>
+                    globalThis.LastClickX = x;
+                    globalThis.LastClickY = y;
+                    showMorePosition.current = { ...getPosition() };
+                    setShowMoreOptions(true);
+                  }}>
+                  <span class="material-symbols-outlined">settings</span>
+                  <span>Publish Settings</span>
+                </div>
               </div>
             </div>
 
