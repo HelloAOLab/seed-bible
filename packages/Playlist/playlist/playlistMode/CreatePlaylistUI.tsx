@@ -17,6 +17,7 @@ const AddAnotationUI = await thisBot.AddAnotationUI();
 const ProjectMode = await thisBot.ProjectMode();
 const VideoPlayer = await thisBot.VideoSmallScreen();
 const AudioPlayer = await thisBot.AudioPlayer();
+const TogglePlaylistHeight = await thisBot.TogglePlaylistHeight();
 // const AttachmentLinkItem = thisBot.AttachmentLinkItem();
 
 globalThis.DEFAULT_UPLOAD_ICON =
@@ -116,6 +117,7 @@ const CreatePlaylistUI = ({
   playingPlaylist,
   editData,
 }) => {
+  const IsPlaylistPlaying = globalThis.IsPlaylistPlaying;
   const isloggedIN = authBot?.id;
 
   // Audio
@@ -1317,7 +1319,7 @@ const CreatePlaylistUI = ({
         </>
       )}
 
-      <div className="playlists">
+      <div className="playlists" style={{ height: "max-content" }}>
         {creatingPlaylist ? null : (
           <div
             className="align-center justify-between"
@@ -1353,20 +1355,23 @@ const CreatePlaylistUI = ({
                 </span>
               </div>
             </div>
-            <div
-              className="publish-setting"
-              onClick={(e) => {
-                const rect = e.currentTarget.getBoundingClientRect();
+            <div className="align-center">
+              <TogglePlaylistHeight />
+              <div
+                className="publish-setting"
+                onClick={(e) => {
+                  const rect = e.currentTarget.getBoundingClientRect();
 
-                const x = rect.left; // X position where the element starts (from left of screen)
-                const y = rect.bottom; // Y position where the element ends (bottom of element from top of screen)
+                  const x = rect.left; // X position where the element starts (from left of screen)
+                  const y = rect.bottom; // Y position where the element ends (bottom of element from top of screen)
 
-                globalThis.LastClickX = x;
-                globalThis.LastClickY = y;
-                showMorePosition.current = { ...getPosition() };
-                setShowMoreOptions(true);
-              }}>
-              <img src={Settings_Icon} alt="Settings_Icon" />
+                  globalThis.LastClickX = x;
+                  globalThis.LastClickY = y;
+                  showMorePosition.current = { ...getPosition() };
+                  setShowMoreOptions(true);
+                }}>
+                <img src={Settings_Icon} alt="Settings_Icon" />
+              </div>
             </div>
           </div>
         )}
@@ -1776,6 +1781,11 @@ const CreatePlaylistUI = ({
               style={{ width: "10px", height: "10px" }}
               ref={creatingPlaylistRef}
               tabIndex="-1"
+            />
+            <div
+              className={`mobile-pseudogap-element ${
+                IsPlaylistPlaying ? "playing-playlist" : ""
+              }`}
             />
           </div>
         ) : (
