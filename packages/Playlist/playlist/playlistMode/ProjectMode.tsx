@@ -15,7 +15,7 @@ catch (error) {
 const { useState, useLayoutEffect, useRef, useMemo, useCallback } = os.appHooks;
 import { useProjectMenu } from "playlist.playlistMode.useProjectContext";
 
-const isMobile = gridPortalBot.tags.pixelWidth < MOBILE_VIEWPORT_THRESHOLD;
+const isMobile = (window?.innerWidth || gridPortalBot.tags.pixelWidth) < MOBILE_VIEWPORT_THRESHOLD;
 const { Chips, Checkbox, Button, Tooltip } = Components;
 
 const ChecklistGIf = "https://auth-aux-aobot-prod-filesbucket-141297942820.s3.amazonaws.com/aoBot/90e85308635064b3d0fdaa9c220b8547a9467a10affe3cf22f06ad6b26fbf0a1.gif"

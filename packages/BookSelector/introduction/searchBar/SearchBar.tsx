@@ -594,7 +594,7 @@ const SearchBar = () => {
     }, [selectedTestament, setQuery, query, openSearchBar, setOpenSearchBar, searchBarFocused, handleEnter])
 
     // Use State of Element
-    const [showCheck, setShowCheck] = useState(globalThis.IS_PLAYLIST_ACTIVE);
+    const [showCheck, setShowCheck] = useState(globalThis.IS_PLAYLIST_ACTIVE || globalThis.IsPlaylistPlaying);
     const [dontopn, setDontOpen] = useState(false);
     globalThis.SET_SHOW_CHECK = setShowCheck;
     globalThis.SetDontOpenPlaylist = setDontOpen;
@@ -1217,7 +1217,7 @@ const SideBarChapters = ({ bookData, dontOpen, focusOnBook, setLastBookClicked, 
             }
 
             const isShiftHold = globalThis?.KEY_HOLD?.['Shift'];
-            const isPlaylistMode = globalThis.makingPlaylist;
+            const isPlaylistMode = globalThis.makingPlaylist || globalThis.IsPlaylistPlaying;
 
             shout('playSound', { soundName: 'UI_Numpad_Click' })
 

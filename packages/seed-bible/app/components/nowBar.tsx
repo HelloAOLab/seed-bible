@@ -75,9 +75,10 @@ function NowBar() {
 
         if (isMobile) {
             return {
-                width: Math.min(windowWidth - 32, 350), // 16px margin on each side
+                // width: Math.min(windowWidth - 32, 350), // 16px margin on each side
+                width: windowWidth - (7*16),
                 height: 150, // Proportional height with max
-                bottom: windowWidth <= 480 ? '95px' : '100px', // Adjust for very small screens
+                bottom: windowWidth <= 480 ? '35px' : '100px', // Adjust for very small screens
                 borderRadius: '16px'
             };
         } else if (isTablet) {

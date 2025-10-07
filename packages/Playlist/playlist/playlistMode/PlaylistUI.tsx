@@ -49,6 +49,8 @@ const sortFunc = (a, b) => {
 
 const Playlist = () => {
 
+    const IsPlaylistPlaying = globalThis.IsPlaylistPlaying;
+
     const [editAnnoData, setEditAnnoData] = useState({
         address: '',
         title: ''
@@ -396,11 +398,12 @@ const Playlist = () => {
     }, []);
 
     useLayoutEffect(() => {
-        if (globalThis.IsPlaylistPlaying) {
-            const isMobile = gridPortalBot.tags.pixelWidth < MOBILE_VIEWPORT_THRESHOLD;
-            if(isMobile){
-                globalThis.SetPlaylistForcedHeight && globalThis.SetPlaylistForcedHeight(true);
-            }
+        const isMobile = (window?.innerWidth || gridPortalBot.tags.pixelWidth) < MOBILE_VIEWPORT_THRESHOLD;
+        console.log(isMobile,MOBILE_VIEWPORT_THRESHOLD,gridPortalBot.tags.pixelWidth,window.innerWidth);
+        if(isMobile){
+            globalThis.SetPlaylistForcedHeight && globalThis.SetPlaylistForcedHeight(true);
+        }
+        if (IsPlaylistPlaying) {
             thisBot.Playlistplaying({
                 skipAll: true,
             })
@@ -568,7 +571,7 @@ const Playlist = () => {
                 style={{
                     display: 'flex',
                     flexDirection: 'column',
-                    height: 'calc(100dvh - 1.3rem)',
+                    height: '100%',
                     containerType: "inline-size" /* Enables container query */
                 }}
             >
@@ -608,8 +611,8 @@ const Playlist = () => {
                         )}
 
                         <div
-                            id="sidebar-bar"
-                            className={`playlist-cont-parent ${queueOpen && "queueOpen"} ${hide && "hide"} ${sidebarOpen ? "sidebarOpen" : ""}`}
+                            id={`sidebar-bar`}
+                            className={`playlist-cont-parent ${IsPlaylistPlaying ? "playing-playlist" :""} ${queueOpen && "queueOpen"} ${hide && "hide"} ${sidebarOpen ? "sidebarOpen" : ""}`}
                             onPointerEnter={(e) => {
                                 if (e.currentTarget.id === "sidebar-bar") {
                                     setTagMask(gridPortalBot, "portalZoomable", false);

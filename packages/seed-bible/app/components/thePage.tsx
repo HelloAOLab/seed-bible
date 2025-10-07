@@ -556,7 +556,6 @@ function ThePage({
 
   const onScrollToRef = useCallback(
     ({ vNumber = -1 }) => {
-      console.log("vNumber", vNumber);
       if (globalThis.ScrollTimerToVerse) {
         clearTimeout(globalThis.ScrollTimerToVerse);
         globalThis.ScrollTimerToVerse = null;
@@ -1306,6 +1305,7 @@ function Section({
               <span key={verse.verseNumber}>
                 <span
                   ref={verseRefs[verse.verseNumber]}
+                  id={`ref-verse-number-${verse.verseNumber}`}
                   onContextMenu={(e) => {
                     e.preventDefault();
                     setInHold(verse.verseNumber);
