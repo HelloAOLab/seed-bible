@@ -848,6 +848,7 @@ const AttachLink = ({
       const isTempID = EditorId;
       if (globalThis[`${isTempID}ClearEditorContent`])
         globalThis[`${isTempID}ClearEditorContent`]();
+      globalThis.RawName = "";
       return attachLink(name, link, { isValid: true, type: "text" });
     }
   };

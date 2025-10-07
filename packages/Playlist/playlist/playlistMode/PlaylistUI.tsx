@@ -399,7 +399,6 @@ const Playlist = () => {
 
     useLayoutEffect(() => {
         const isMobile = (window?.innerWidth || gridPortalBot.tags.pixelWidth) < MOBILE_VIEWPORT_THRESHOLD;
-        console.log(isMobile,MOBILE_VIEWPORT_THRESHOLD,gridPortalBot.tags.pixelWidth,window.innerWidth);
         if(isMobile){
             globalThis.SetPlaylistForcedHeight && globalThis.SetPlaylistForcedHeight(true);
         }
