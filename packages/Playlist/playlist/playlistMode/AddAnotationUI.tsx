@@ -1,7 +1,7 @@
 const { useState, useLayoutEffect, useRef, useMemo } = os.appHooks;
 import { getUserRecord, createAnnotation, saveAnnotation } from "db.annotations.library";
 
-const isMobile = gridPortalBot.tags.pixelWidth < MOBILE_VIEWPORT_THRESHOLD;
+const isMobile = (window?.innerWidth || gridPortalBot.tags.pixelWidth) < MOBILE_VIEWPORT_THRESHOLD;
 const { Chips, Checkbox, Button, Tooltip, LoaderSecondary } = Components;
 
 

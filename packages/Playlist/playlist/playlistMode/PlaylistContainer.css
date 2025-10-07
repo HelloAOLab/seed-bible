@@ -132,8 +132,11 @@ div.flaoting-attach-link  .add-new-playlist{
 }
 
 @media (max-width: 550px) {
-    .playing-queue-container,.sidebar-bar {
-        padding-bottom: 5rem;
+    #sidebar-bar {
+        padding-bottom: 3rem !important;
+    }
+    .playing-queue,#sidebar-bar.playing-playlist {
+        padding-bottom: 11rem !important;
     }
 }  
 

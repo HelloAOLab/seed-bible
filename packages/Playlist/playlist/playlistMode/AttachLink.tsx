@@ -169,6 +169,7 @@ function SubComponent({
           <div className="align-center" style={{ gap: "0.5rem" }}>
             <div
               onClick={() => {
+                globalThis.SET_SHOW_CHECK?.(true);
                 globalThis.setOpenSidebar && globalThis.setOpenSidebar(true);
                 setTimeout(() => {
                   globalThis.SetDontOpenPlaylist &&
@@ -977,26 +978,30 @@ const AttachLink = ({
                 />
               </div>
             ))}
-          {canClose && (
-            <div
-              onClick={onClose}
-              style={{ marginLeft: "auto" }}
-              className={`active  select_item_type`}>
-              <img src={CLOSE} style={{ width: "20px" }} />
-            </div>
-          )}
-          <button
-            type="submit"
-            style={{
-              marginLeft: "auto",
-              cursor: isDisabled ? "not-allowed" : "",
-            }}
-            className={`${
-              !isDisabled ? "active" : "disabled"
-            } select_item_type`}
-            disabled={isDisabled}>
-            <img src={SEND} style={{ width: "20px" }} />
-          </button>
+          <div
+            className="align-center"
+            style={{ gap: "0.25rem", marginLeft: "auto" }}>
+            {canClose && (
+              <div
+                onClick={onClose}
+                style={{ marginLeft: "auto" }}
+                className={`active  select_item_type`}>
+                <img src={CLOSE} style={{ width: "20px" }} />
+              </div>
+            )}
+            <button
+              type="submit"
+              style={{
+                marginLeft: "auto",
+                cursor: isDisabled ? "not-allowed" : "",
+              }}
+              className={`${
+                !isDisabled ? "active" : "disabled"
+              } select_item_type`}
+              disabled={isDisabled}>
+              <img src={SEND} style={{ width: "20px" }} />
+            </button>
+          </div>
         </div>
       )}
     </form>
