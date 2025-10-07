@@ -55,7 +55,7 @@ export const HandleEventMessage = (event, setIsAssistantListening, setIsAssistan
             break
         }
         case "input_audio_buffer.speech_stopped": {
-            setIsAssistantListening(false);z
+            setIsAssistantListening(false);
             break
         }
     }
