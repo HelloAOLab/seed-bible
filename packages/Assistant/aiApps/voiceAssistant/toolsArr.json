@@ -231,5 +231,16 @@
             },
             "required": ["packages"]
         }
+    },
+    {
+        "type": "function",
+        "name": "close",
+        "description": "whenever the user tells you to close yourself or tells you to shut down",
+        "parameters": {
+            "type": "object",
+            "properties": {
+            },
+            "required": []
+        }
     }
 ]

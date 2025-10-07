@@ -58,9 +58,13 @@ const ConnectionManager = ({ start, setConnected, audioRef, pcRef, micRef, micAc
             }
         };
 
-        dc.onopen = () => console.log("oai-events open");
+        dc.onopen = () => {
+            console.log("oai-events open");
+            globalThis.DCRef = dc;
+        };
 
         dc.onclose = () => {
+            globalThis.DCRef = null;
             console.log("data channel closing")
         }
 
@@ -112,9 +116,9 @@ const ConnectionManager = ({ start, setConnected, audioRef, pcRef, micRef, micAc
 
     const handleMicAndSpeaker = async () => {
         if (micActive) {
-            micRef.current.getTracks().forEach(track => {track.enabled = true});
+            micRef.current.getTracks().forEach(track => { track.enabled = true });
         } else {
-            micRef.current.getTracks().forEach(track => {track.enabled = false});
+            micRef.current.getTracks().forEach(track => { track.enabled = false });
         }
 
         if (speakerActive) {

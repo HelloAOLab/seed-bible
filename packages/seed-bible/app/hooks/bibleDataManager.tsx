@@ -124,12 +124,14 @@ export class BibleDataManager {
                     numberOfChapters: json?.data?.book?.numberOfChapters || json?.numberOfChapters,
                 };
 
+                this.chapter = json?.data?.chapter?.number || json.chapter;
+
                 this.footnotes = json?.data?.chapter?.footnotes || null;
 
                 if (this.tabId) {
                     setCachedTabData(this.tabId, this.data);
                 }
-               
+
                 // schedule the "open ≥ 1 min" record
                 this._scheduleMaskRecord();
             }
@@ -165,18 +167,44 @@ export class BibleDataManager {
     }
 
     async changeTranslation(newTranslation, bookData, forcedBaseUrl) {
-        console.log("changeTranslation tra");
         this.translation = newTranslation;
-        this.bookId = bookData?.id || 'GEN';
-        if (forcedBaseUrl) {
+        // this.bookId = bookData?.id || 'GEN';
+        if (forcedBaseUrl && forcedBaseUrl !== this.baseUrl) {
+            console.log("chapter changed");
             this.chapter = 1;
+            this.baseUrl = forcedBaseUrl
         }
-        this.baseUrl = forcedBaseUrl || this.baseUrl;
-        await this.fetch(
-            bookData ? bookData.firstChapterApiLink : `/api/${newTranslation}/${bookData?.id || 'GEN'}/1.json`,
-            newTranslation,
-            forcedBaseUrl
-        );
+        const translationRes = await web.get(`${this.baseUrl}/api/${newTranslation}/books.json`);
+        if (translationRes.status == '200') {
+            let bookIdMatches = false;
+            for (let i = 0; i < translationRes.data.books.length; i++) {
+                if (translationRes.data.books[i].id === this.bookId && translationRes.data.books[i].lastChapterNumber >= this.chapter) {
+                    bookIdMatches = true;
+                    break
+                }
+            }
+            if (bookIdMatches) {
+                await this.fetch(
+                    `/api/${newTranslation}/${this.bookId || 'GEN'}/${this.chapter}.json`,
+                    newTranslation,
+                    forcedBaseUrl
+                );
+            } else {
+                this.bookId = bookData?.id || 'GEN';
+                await this.fetch(
+                    bookData ? bookData.firstChapterApiLink : `/api/${newTranslation}/${bookData?.id || 'GEN'}/1.json`,
+                    newTranslation,
+                    forcedBaseUrl
+                );
+            }
+        } else {
+            this.bookId = bookData?.id || 'GEN';
+            await this.fetch(
+                bookData ? bookData.firstChapterApiLink : `/api/${newTranslation}/${bookData?.id || 'GEN'}/1.json`,
+                newTranslation,
+                forcedBaseUrl
+            );
+        }
     }
 
     getState() {

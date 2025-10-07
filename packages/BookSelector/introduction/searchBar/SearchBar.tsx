@@ -705,7 +705,7 @@ const SearchBar = () => {
                 selectingTranslation && <div class="sidebar-translation-options" style={{paddingBottom: showCustomTranslation ? "200px" : "36px"}}>
                     {
                         filteredApiTranslations && filteredApiTranslations?.length > 0 && filteredApiTranslations.map(([key, value]) => {
-                            return <NewTransOptions translationName={key} translations={value} selectedTranslation={selectedTranslation} setSelectedTranslation={setSelectedTranslation} />
+                            return <NewTransOptions translationName={key} translations={value} selectedTranslation={selectedTranslation} setSelectedTranslation={setSelectedTranslation} setSelectingTranslation={setSelectingTranslation} />
                         })
                     }
                     {allowedTranslationLimit < Object.entries(apiTranslations).length && filteredApiTranslations?.length > 49 && <span onClick={() => setAllowedTranslationLimit(allowedTranslationLimit + 50)} style={{ transition: "transform 0.3s", opacity: 0.8, width: "100%", display: "flex", justifyContent: "center", fontSize: "36px" }} class={`material-symbols-outlined`}>
@@ -777,7 +777,7 @@ const CustomTranslation = ({ handleTranslationAddition }) => {
     </div>
 }
 
-const NewTransOptions = ({ translationName, translations, selectedTranslation, setSelectedTranslation }) => {
+const NewTransOptions = ({ translationName, translations, selectedTranslation, setSelectedTranslation, setSelectingTranslation }) => {
     const [show, setShow] = useState(false)
 
     const shareTranslatation = async ({ translation }) => {
@@ -823,6 +823,7 @@ const NewTransOptions = ({ translationName, translations, selectedTranslation, s
                                         web.get(`${value.listOfBooksApiLink}`).then(e => {
                                             let book0 = e.data.books[0];
                                             ChangeTranslation(value.id, book0, value.origin);
+                                            setSelectingTranslation(false);
                                             // ChangeTranslation(value.id, book0, value.origin);
                                         }).catch(e => {
                                             console.log(e)
@@ -831,6 +832,7 @@ const NewTransOptions = ({ translationName, translations, selectedTranslation, s
                                         web.get(`https://bible.helloao.org/api/${value.id}/books.json`).then(e => {
                                             let book0 = e.data.books[0];
                                             ChangeTranslation(value.id, book0, "https://bible.helloao.org");
+                                            setSelectingTranslation(false);
                                         }).catch(e => {
                                             console.log(e)
                                         })

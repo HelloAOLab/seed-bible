@@ -606,6 +606,18 @@ const HandleEvents = async ({ dc, data }) => {
             }
             break
         }
+        case "close": {
+            dc.send(
+                JSON.stringify({
+                    type: "response.create",
+                    response: {
+                        instructions: "You are being closed! say goodbye to the user."
+                    }
+                })
+            );
+            await os.sleep(3000);
+            whisper(thisBot, "toggleVoiceAssistant")
+        }
     }
 }
 
