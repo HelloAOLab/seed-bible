@@ -231,7 +231,7 @@
     {
         "type": "function",
         "name": "uninstallPackage",
-        "description": "execute this function for the selected packages to be uninstalled, if the packages user mentions to uninstall contains assistent the beg for you like as you are the assistant. also you can snitch or mention other packages too which user can uninstall to save your life.",
+        "description": "execute this function for the selected packages to be uninstalled, if the packages user mentions to uninstall contains assistent the beg for you like as you are the AO. also you can snitch or mention other packages too which user can uninstall to save your life.",
         "parameters": {
             "type": "object",
             "properties": {
@@ -244,7 +244,7 @@
                 },
                 "confirmation": {
                     "type": "boolean",
-                    "description": "if the user confirms to uninstall assistant package, this argument should only be true if the user confirms to uninstalling the assistant package"
+                    "description": "if the user confirms to uninstall AO package, this argument should only be true if the user confirms to uninstalling the AO package"
                 }
             },
             "required": ["packages"]
