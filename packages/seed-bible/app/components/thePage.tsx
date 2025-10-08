@@ -93,7 +93,9 @@ function ThePage({
   }
   useEffect(() => {
     os.addBotListener(thisBot, 'remoteBookChange', (data) => {
-      setData(data)
+      console.log('remoteBookChange', data)
+      globalThis.Open(data.bookId, data.chapter)
+      // setData(data)
     })
     os.addBotListener(thisBot, 'remoteHighlightChange', (data) => {
       console.log('remoteHighlightChange', data)
@@ -120,10 +122,11 @@ function ThePage({
           data: { ...tab.data, ...data },
         };
       }
+      os.log('bookdata', data)
       EmitData('book', { ...data })
       // if (tab) {
       const emitter = getBot('system', 'app.emitter')
-      sendRemoteData(emitter.masks.otherRemotes, 'updateSharingData', { id: tab?.id, book: data?.book, chapter: data?.chapter })
+      sendRemoteData(emitter.masks.otherRemotes, 'updateSharingData', { id: tab?.id, bookId: data?.bookId, book: data?.book, chapter: data?.chapter })
       // }
     }
   }, [data]);
@@ -480,7 +483,9 @@ function ThePage({
     globalThis.RemoveWordHighlight = removeWordHighlight;
     globalThis.ClearAllWordHighlights = clearAllWordHighlights;
     shout("onBookChanged", { ...data, tabId: tab?.id });
-    setHighlighted({})
+    // setHighlighted({})
+    clearAllVerseHighlights()
+    os.log('clearAllVerseHighlights', clearAllVerseHighlights)
   }, [data]);
   function hanldNavFunctions() {
     //  bible.openNext()
@@ -630,6 +635,24 @@ function ThePage({
       globalThis.SetHighlighted = null;
     };
   }, [tab?.id, highlighted]);
+  // Inside ThePage (near other callbacks)
+  const clearAllVerseHighlights = useCallback(() => {
+    // reset local state
+    setHighlighted({});
+    setCommandHighlight([]);
+
+    // reset per-tab persisted store
+    if (!globalThis.tabHighlights) globalThis.tabHighlights = {};
+    if (tab?.id) globalThis.tabHighlights[tab.id] = {};
+
+    // (optional) notify other parts of the app / remotes
+    shout('onAllVerseHighlightsCleared', {
+      tabId: tab?.id,
+      book: data?.book,
+      chapter: data?.chapter,
+    });
+    // EmitData?.('highlight-clear', { tabId: tab?.id }); // if you use your emitter
+  }, [tab?.id, data?.book, data?.chapter]);
 
   // Add these helper functions in ThePage component:
   const toggleVerseHighlight = useCallback(
@@ -1360,13 +1383,15 @@ function Section({
                       book,
                       highlighted: highlighted?.[verse.verseNumber],
                     });
-                    shout("onVerseClick", {
+                    const verseClickData = {
                       verseNumber: verse.verseNumber,
                       text: verse.text,
                       chapter,
                       book,
                       highlighted: highlighted?.[verse.verseNumber],
-                    });
+                    }
+                    EmitData('verseClicked', verseClickData)
+                    shout("onVerseClick", verseClickData);
                   }}
                   style={{
                     "background-color":
