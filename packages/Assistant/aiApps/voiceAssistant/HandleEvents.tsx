@@ -1,6 +1,6 @@
 import { captureElement } from 'aiApps.voiceAssistant.Utils'
 
-const HandleEvents = ({ dc, data }) => {
+const HandleEvents = async ({ dc, data }) => {
     console.log(data);
     switch (data.name) {
         case "getTime": {
@@ -320,6 +320,24 @@ const HandleEvents = ({ dc, data }) => {
             }));
             dc.send(JSON.stringify({ type: "response.create" }));
         }
+        case "highlightVerses": {
+            let { verses } = JSON.parse(data.arguments || "{}");
+            if (verses && Array.isArray(verses)) {
+                ToggleVerseHighlight(verses)
+                globalThis.ClearAllWordHighlights()
+                dc.send(JSON.stringify({
+                    type: "conversation.item.create",
+                    item: {
+                        type: "function_call_output",
+                        call_id: data.call_id,
+                        output: "cleared highlighted words"
+                    }
+                }));
+                dc.send(JSON.stringify({ type: "response.create" }));
+            }
+            console.log(verses, "verses");
+            break
+        }
         case "highlightLocation": {
             let { color } = JSON.parse(data.arguments || "{}");
             let searchBar = getBot('system', 'introduction.searchBar');
@@ -429,7 +447,7 @@ const HandleEvents = ({ dc, data }) => {
                 }));
                 dc.send(JSON.stringify({ type: "response.create" }));
             }
-
+            break
         }
         case "getChapterContext": {
             let chapterContent = `${BibleData.book}-${BibleData.chapter} \n`;
@@ -449,6 +467,144 @@ const HandleEvents = ({ dc, data }) => {
                 }
             }));
             dc.send(JSON.stringify({ type: "response.create" }));
+            break
+        }
+        case "getTranslations": {
+            let { language } = JSON.parse(data.arguments || "{}");
+            console.log(language, "language")
+            let available_translations_req = await web.get("https://bible.helloao.org/api/available_translations.json");
+            let translationOptions = [];
+            available_translations_req.data.translations.map(translation => {
+                if (language.toLowerCase() === translation?.languageEnglishName?.toLowerCase()) {
+                    translationOptions.push(translation.id);
+                }
+            })
+            console.log(translationOptions, "translationOptions")
+            dc.send(JSON.stringify({
+                type: "conversation.item.create",
+                item: {
+                    type: "function_call_output",
+                    call_id: data.call_id,
+                    output: `available translation options are ${translationOptions.join(", ")}`
+                }
+            }));
+            dc.send(JSON.stringify({ type: "response.create" }));
+            break
+        }
+        case "changeTranslation": {
+            let { translation } = JSON.parse(data.arguments || "{}");
+            let translationReq = await web.get(`https://bible.helloao.org/api/${translation}/books.json`);
+            let translationData = { ...translationReq.data };
+            let book0 = translationData.books[0];
+            console.log(translationData, book0)
+            ChangeTranslation(translationData.translation.id, book0, "https://bible.helloao.org");
+            dc.send(JSON.stringify({
+                type: "conversation.item.create",
+                item: {
+                    type: "function_call_output",
+                    call_id: data.call_id,
+                    output: `Translation changes to ${translationData.translation.englishName}`
+                }
+            }));
+            dc.send(JSON.stringify({ type: "response.create" }));
+            break
+        }
+        case "checkInstallablePackages": {
+            let packageManager = getBot("system", "app.packager");
+            let installedPackages = packageManager.masks.installedPackages;
+            let installablePackages = packageManager.tags.availablePackages.map(availablePackage => {
+                if (installedPackages.includes(availablePackage.name)) {
+                    return null;
+                } else {
+                    return availablePackage.name;
+                }
+            })
+            installablePackages = installablePackages.filter(item => item);
+            console.log(installablePackages, "installablePackages")
+            dc.send(JSON.stringify({
+                type: "conversation.item.create",
+                item: {
+                    type: "function_call_output",
+                    call_id: data.call_id,
+                    output: `installable packages are ${installablePackages.join(", ")}`
+                }
+            }));
+            dc.send(JSON.stringify({ type: "response.create" }));
+            break
+        }
+        case "checkInstalledPackages": {
+            let packageManager = getBot("system", "app.packager");
+            let installedPackages = packageManager.masks.installedPackages;
+            dc.send(JSON.stringify({
+                type: "conversation.item.create",
+                item: {
+                    type: "function_call_output",
+                    call_id: data.call_id,
+                    output: `installable packages are ${installedPackages.join(", ")}`
+                }
+            }));
+            dc.send(JSON.stringify({ type: "response.create" }));
+            break
+        }
+        case "installPackage": {
+            let { packages } = JSON.parse(data.arguments || "{}");
+            let packageManager = getBot("system", "app.packager");
+            packages.map(packageName => {
+                whisper(packageManager, "installPackage", { name: packageName });
+            })
+            dc.send(JSON.stringify({
+                type: "conversation.item.create",
+                item: {
+                    type: "function_call_output",
+                    call_id: data.call_id,
+                    output: `packages ${packages.join(", ")} are being installed and will be available shortly!`
+                }
+            }));
+            dc.send(JSON.stringify({ type: "response.create" }));
+            break
+        }
+        case "uninstallPackage": {
+            let { packages, confirmation } = JSON.parse(data.arguments || "{}");
+            let packageManager = getBot("system", "app.packager");
+            packages.map(packageName => {
+                if (packageName === "Assistant" && confirmation) {
+                    whisper(packageManager, "uninstallPackage", { address: packageName });
+                } else {
+                    whisper(packageManager, "uninstallPackage", { address: packageName });
+                }
+            })
+            if (packages.includes("Assistant") && confirmation) {
+                dc.send(JSON.stringify({
+                    type: "conversation.item.create",
+                    item: {
+                        type: "function_call_output",
+                        call_id: data.call_id,
+                        output: `packages ${packages.join(", ")} are uninstalled and say a goodbye as assistant is being uninstalled!`
+                    }
+                }));
+                dc.send(JSON.stringify({ type: "response.create" }));
+            } else if (packages.includes("Assistant") && !confirmation) {
+                dc.send(JSON.stringify({
+                    type: "conversation.item.create",
+                    item: {
+                        type: "function_call_output",
+                        call_id: data.call_id,
+                        output: `all the packages are being uninstalled except for assistant`
+                    }
+                }));
+                dc.send(JSON.stringify({ type: "response.create" }));
+            } else {
+                dc.send(JSON.stringify({
+                    type: "conversation.item.create",
+                    item: {
+                        type: "function_call_output",
+                        call_id: data.call_id,
+                        output: `packages ${packages.join(", ")} are being uninstalled!`
+                    }
+                }));
+                dc.send(JSON.stringify({ type: "response.create" }));
+            }
+            break
         }
     }
 }

@@ -6,6 +6,12 @@ const items = [
         icon: <MenuIcon name="file_export" />,
         title: () => !globalThis.IsPlaylistPlaying ? 'Add annotation' : 'Add to queue',
         onClick: (item) => {
+            if(!authBot?.id) {
+                return ShowNotification({
+                    message: "Login to user this feature",
+                    severity: "error"
+                })
+            }
 
             const id = createUUID();
             const booksDetails = globalThis.findNameRank(item.book);
@@ -45,13 +51,18 @@ const items = [
         icon: <MenuIcon name="book" />,
         title: (item = {}) => {
             const title = `${item?.book} ${item?.chapter}:${item?.verseNumber}`;
-            console.log("thisBot.tags.bookmarks", title, thisBot.tags.bookmarks);
             if (thisBot.tags.bookmarks[title]) {
                 return "Remove Bookmark";
             }
             return "Add bookmark"
         },
         onClick: async (item) => {
+            if(!authBot?.id) {
+                return ShowNotification({
+                    message: "Login to user this feature",
+                    severity: "error"
+                })
+            }
             const id = createUUID();
             const booksDetails = globalThis.findNameRank(item.book);
             const title = `${item.book} ${item.chapter}:${item.verseNumber}`;

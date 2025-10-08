@@ -42,6 +42,7 @@ export const useDivSpliter = ({
             if (layout.leftWidth) setLeftWidth(layout.leftWidth);
             if (layout.topHeight) setTopHeight(layout.topHeight);
         }
+        globalThis.CurrentPanelAvailable = null;
     }, [activeSpace]);
 
     useEffect(() => {
@@ -113,7 +114,7 @@ export const useDivSpliter = ({
     const addApplication = (newApp) => {
         // TODO: Replace with a better alternative
         const clone = cloneElement(newApp.App, { prop: 'test' })
-        os.log(clone, 'cloned')
+        os.log(newApp.to, apps, 'cloned')
         if (newApp.to === 'panel') {
             if (apps.length > 2) {
                 setApps([apps[0], apps[1], newApp]);
@@ -227,6 +228,7 @@ export const SplitApp = ({
 
 }) => {
     const { panelMode, screens } = useBibleContext();
+    const [forcedHeightPlaylist,setForcedHeightPlaylist] = useState(false);
     useEffect(() => {
         (function installScrollerScrollIndicator() {
             const timers = new WeakMap();
@@ -251,6 +253,11 @@ export const SplitApp = ({
             document.addEventListener('scroll', onScrollCapture, { capture: true, passive: true });
         })();
 
+        globalThis.SetPlaylistForcedHeight = setForcedHeightPlaylist;
+
+        return () => {
+            globalThis.SetPlaylistForcedHeight = false;
+        }
     }, [])
     const { activeSpace } = useTabsContext();
     const [panelWidths, setPanelWidths] = useState(Array(count).fill(currentContainerWidth / count));
@@ -340,7 +347,7 @@ export const SplitApp = ({
                     key={apps[0]?.id} 
                     style={{ 
                         width: isMobile ? '100%' : leftWidth, 
-                        height: isMobile ? topHeight : '100%', 
+                        height: forcedHeightPlaylist ? "0px" : isMobile ? topHeight : '100%', 
                         overflow: 'auto', 
                         padding: '0px', 
                         borderRadius: '12px' 
