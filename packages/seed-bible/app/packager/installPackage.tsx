@@ -48,7 +48,7 @@ await(async function mainInstaller(that) {
     }
 
     const data = await FindExtensionData(name);
-    
+
     let errorInstall = false;
 
     function GetBotsFromData(aux) {
@@ -148,7 +148,10 @@ await(async function mainInstaller(that) {
                 });
             };
 
-            globalThis[`${name}_package`].onClick = onClick;
+            globalThis[`${name}_package`].onClick = () => {
+                EmitData('appClick', { name: `${name}_package` })
+                onClick()
+            }
 
             return {
                 icon,
@@ -156,6 +159,7 @@ await(async function mainInstaller(that) {
                 hasToggle: true,
                 active: true,
                 onHold,
+                pkgName:name,
                 onClick,
                 hasToggle,
                 showInPageToolbar, 

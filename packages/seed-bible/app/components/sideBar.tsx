@@ -191,17 +191,22 @@ const CircleCounter = ({ data, book, chapter }) => {
                   </div>
                   <button
                     onClick={() => {
-                      const idx = data[id][0]
+                      const idx = data[id][0];
                       console.log('Following user:', idx);
-                      if (!Reciver.masks['remotes'])
-                        Reciver.masks['remotes'] = []
-                      if (Reciver?.masks['remotes']?.includes(idx)) {
-                        Reciver.masks['remotes'] = Reciver.masks['remotes'].filter(e => e === idx)
+
+                      if (!Reciver.masks['remotes']) Reciver.masks['remotes'] = [];
+
+                      if (Reciver.masks['remotes'].includes(idx)) {
+                        // remove idx
+                        Reciver.masks['remotes'] = Reciver.masks['remotes'].filter(e => e !== idx);
                       } else {
-                        Reciver.masks['remotes'].push(idx)
+                        // add idx
+                        Reciver.masks['remotes'].push(idx);
                       }
-                      setFollow(!follow)
+
+                      setFollow(f => !f);
                     }}
+
                     style={{
                       padding: '8px 16px',
                       backgroundColor: '#3b82f6',
@@ -422,7 +427,7 @@ function Tab({
   const circles = onlineUsers
     ? Object.fromEntries(
       Object.entries(onlineUsers).filter(
-        ([, v]) => v?.book === el?.data?.book && v?.chapter === el?.data?.chapter
+        ([, v]) => v?.bookId === el?.data?.bookId && v?.chapter === el?.data?.chapter
       )
     )
     : {};

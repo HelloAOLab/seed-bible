@@ -3,7 +3,7 @@
 
 console.log(that)
 if (that.name === 'updateSharingData') {
-    console.log(that,'updateSharingData')
+    console.log(that, 'updateSharingData')
     shout('updatedYourData', { user: that.remoteId, tab: { ...that.that } })
 }
 if (masks['remotes'] && masks['remotes'].includes(that.remoteId)) {
@@ -16,6 +16,13 @@ if (masks['remotes'] && masks['remotes'].includes(that.remoteId)) {
     }
     else if (that.name === 'scrollPresence') {
         shout('remoteScrollPresence', { ...that.that })
+    }
+    else if (that.name === 'verseClicked') {
+        shout('remoteVerseClick', { ...that.that })
+    } else if (that.name === 'appClick') {
+        // os.log('appClick', that.that)
+        const { name } = that.that
+        globalThis[name].onClick()
     }
 
 
