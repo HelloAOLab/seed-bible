@@ -171,7 +171,7 @@ export function Toolbar() {
                                             onMouseLeave={() => clearTimeout(holdTimeoutRef.current)}
                                         >
                                             {tool.isImg ? (
-                                                <img src={tool.icon} style={{ width: '40px' }} alt={tool.label} />
+                                                <img src={tool.icon} style={{ width: '22px' }} alt={tool.label} />
                                             ) : (
                                                 <span className="material-symbols-outlined">{tool.icon}</span>
                                             )}

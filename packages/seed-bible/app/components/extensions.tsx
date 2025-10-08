@@ -40,7 +40,7 @@ const ToggleSwitch = ({ isOn, onToggle, disabled = false }) => {
     );
 };
 
-function SettingsPanel({ icon, name, address, installed, setUpdate, data }) {
+function SettingsPanel({ icon, name, address, installed, setUpdate, data, iconUrl}) {
     const [buttonEnabled, setbuttonEnabled] = useState(true);
     const [showInToolbar, setShowInToolbar] = useState(false);
     const [showInPanel, setShowInPanel] = useState(false);
@@ -69,7 +69,13 @@ function SettingsPanel({ icon, name, address, installed, setUpdate, data }) {
             <div style={containerStyle}>
                 <div style={headerStyle}>
                     <div style={headerLeftStyle}>
-                        <span className="material-symbols-outlined" style={iconStyle}>{icon}</span>
+                        {iconUrl ? <img
+                            src={iconUrl}
+                            style={{
+                                width: '18px',
+                                objectPosition: 'center',
+                            }}
+                        /> : <span className="material-symbols-outlined" style={iconStyle}>{icon}</span>}
                         <h3 style={titleStyle}>{name}</h3>
                     </div>
                     <div style={headerRightStyle}>
@@ -176,7 +182,7 @@ const Extensions = () => {
                     }
 
                     // getBot('')
-                    return <SettingsPanel data={data} address={address} setUpdate={setUpdate} installed={getBot('system', data?.mainBotTag)} icon={data?.configEditor?.toolbarConfig?.icon} name={data?.configEditor?.toolbarConfig?.label || address} />
+                    return <SettingsPanel data={data} address={address} setUpdate={setUpdate} installed={getBot('system', data?.mainBotTag)} icon={data?.configEditor?.toolbarConfig?.icon} iconUrl={data?.configEditor?.toolbarConfig?.iconUrl} name={data?.configEditor?.toolbarConfig?.label || address} />
                 })
             }
             </div>

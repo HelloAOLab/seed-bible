@@ -197,7 +197,7 @@ export function Toolbar() {
                       {tool.isImg ? (
                         <img
                           src={tool.icon}
-                          style={{ width: "40px" }}
+                          style={{ width: "22px" }}
                           alt={tool.label}
                         />
                       ) : (
