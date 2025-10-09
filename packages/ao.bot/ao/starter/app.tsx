@@ -1615,6 +1615,37 @@ export function AOBotInterface() {
             Generate Configuration
           </button>
         </div>
+
+        <button
+          onClick={() => {
+            const url = new URL(`https://ao.bot/`);
+
+            os.goToURL(`${url.href}`);
+          }}
+          style={{
+            width: "220px",
+            backgroundColor: "transparent",
+            border: "solid 1px #3a3a3a",
+            borderRadius: "6px",
+            cursor: "pointer",
+            padding: "14px 20px",
+            fontSize: "15px",
+            fontWeight: "600",
+            color: "#ccc",
+            transition: "all 0.2s",
+            marginTop: "22px",
+          }}
+          onMouseEnter={(e) => {
+            e.currentTarget.style.transform = "translateY(-2px)";
+            e.currentTarget.style.boxShadow = "0 8px 20px rgba(179, 179, 179, 0.3)";
+          }}
+          onMouseLeave={(e) => {
+            e.currentTarget.style.transform = "translateY(0)";
+            e.currentTarget.style.boxShadow = "none";
+          }}
+        >
+          Enter IDE
+        </button>
       </div>
     );
   }
