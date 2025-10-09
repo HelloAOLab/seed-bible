@@ -89,7 +89,6 @@ let playlist = that.remoteClick
     );
 
 if (!skipAll) {
-  console.log("EDITDATA", EmitData);
   EmitData("playlistPlayed", { features: that, playlist });
 }
 

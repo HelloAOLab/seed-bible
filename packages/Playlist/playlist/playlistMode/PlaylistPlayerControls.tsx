@@ -506,6 +506,8 @@ const PlayerControls = ({ parentId = "default" }) => {
     return () => {
       globalThis.IsPlaylistPlaying = false;
       globalThis.IsQueuePresent = false;
+      globalThis.RemotePlaylistPlayed = false;
+      EmitData("playlistStopped", {});
     };
   }, []);
 
@@ -697,7 +699,7 @@ const PlayerControls = ({ parentId = "default" }) => {
     if (!globalThis.UPDATE_VIA_SHOUT) {
       EmitData("playlistQueueUpdated", { playlists });
       EmitData("playlistCurrentIndexUpdate", { currIndex });
-    }else {
+    } else {
       globalThis.UPDATE_VIA_SHOUT = false;
     }
   }, [currIndex, playlists]);
@@ -949,6 +951,13 @@ const PlayerControls = ({ parentId = "default" }) => {
               </p>
               <p
                 onClick={() => {
+                  if (globalThis.RemotePlaylistPlayed) {
+                    return ShowNotification({
+                      message:
+                        "Only Host can add items to the queue..",
+                      severity: "error",
+                    });
+                  }
                   setOpenAttachLink(true);
                 }}
                 style={{

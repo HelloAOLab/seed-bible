@@ -1,4 +1,5 @@
 const playlist = that.playlist;
 const features = that.features;
-console.log("YOU FIND ME :)",that);
+thisBot.OpenSelf();
+globalThis.RemotePlaylistPlayed = true;
 thisBot.Playlistplaying({ features, playlist, remoteClick: true });
