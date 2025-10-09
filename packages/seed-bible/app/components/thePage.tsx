@@ -143,7 +143,7 @@ function ThePage({
       await bible.open(
         configBot.tags.book.toUpperCase(),
         configBot.tags.chapter,
-        configBot.tags.translation || "BSB"
+        configBot.tags.translation || configBot.tags.translationId || "BSB"
       );
       setData(bible.data);
       configBot.tags.book = null;
