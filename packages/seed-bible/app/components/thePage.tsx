@@ -76,7 +76,7 @@ function ThePage({
   // Add state for word highlights
   const [wordHighlights, setWordHighlights] = useState({});
   const [wordHighlightsTC, setWordHighlightsTC] = useState("black");
-  const [wordHighlightsBC, setWordHighlightsBC] = useState("transparent");
+  const [wordHighlightsBC, setWordHighlightsBC] = useState("#ffeb3b");
 
   const loadTranslationFromUrl = async () => {
     console.log(configBot.tags.translationId, "translation id")
