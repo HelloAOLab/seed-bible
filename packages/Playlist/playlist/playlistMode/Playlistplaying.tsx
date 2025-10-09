@@ -6,7 +6,7 @@ const {
   parentId,
   name: playlistName,
   list = undefined,
-} = that;
+} = that.remoteClick ? that.features : that;
 if (skipAll) {
   os.unregisterApp("playing-playlist");
   os.registerApp("playing-playlist");
@@ -80,11 +80,17 @@ const ButtonStyle = {
 
 let subIndex = startSubIndex;
 
-let playlist = !playingPlaylist
+let playlist = that.remoteClick
+  ? { ...that.playlist }
+  : !playingPlaylist
   ? {}
   : globalThis[`${parentId}playlists`].find(
       (ele) => ele.id === playingPlaylist
     );
+
+if (!skipAll) {
+  EmitData("playlistPlayed", { features: that, playlist });
+}
 
 if (list) {
   playlist = {
