@@ -11,6 +11,7 @@ import TextAi from 'aiApps.voiceAssistant.TextAI';
 import UserSettings from 'aiApps.voiceAssistant.UserSettings';
 import { AOIcon2, Voice, Text, } from 'aiApps.voiceAssistant.icons';
 import StreamTextAi from "aiApps.voiceAssistant.StreamTextAI";
+import TextAndAvatar from "aiApps.voiceAssistant.TextAndAvatar";
 
 function VoiceAssistant() {
     const [connected, setConnected] = useState(false);
@@ -28,6 +29,7 @@ function VoiceAssistant() {
         Modes: [Voice, Text],
         type: "webrtc"
     })
+    const [isFullScreen, setIsFullScreen] = useState(false);
 
     const audioRef = useRef(null);
     const pcRef = useRef(null);
@@ -73,7 +75,7 @@ function VoiceAssistant() {
         <>
             <link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Material+Symbols+Outlined:opsz,wght,FILL,GRAD@24,400,0,0&icon_names=mic" />
             <style>{style}</style>
-            <DraggableContainer>
+            <DraggableContainer isFullScreen={isFullScreen}>
                 <ConnectionManager
                     start={start}
                     setConnected={setConnected}
@@ -96,6 +98,8 @@ function VoiceAssistant() {
                     setAIMode={setAIMode}
                     setOpenSettings={setOpenSettings}
                     currentAIConfig={currentAIConfig}
+                    isFullScreen={isFullScreen}
+                    setIsFullScreen={setIsFullScreen}
                 />}
                 {aiMode === "Voice" && !openSettings && currentAIConfig.type === "webrtc" && <VoiceAi
                     start={start}
@@ -115,6 +119,19 @@ function VoiceAssistant() {
                         setSpeakerActive={setSpeakerActive}
                         dcRef={dcRef}
                         aiState={aiState}
+                    />
+                }
+                {
+                    isFullScreen && <TextAndAvatar
+                        setMicActive={setMicActive} 
+                        dcRef={dcRef} 
+                        start={start} 
+                        connected={connected} 
+                        isAssistantSpeaking={isAssistantSpeaking} 
+                        setStart={setStart} 
+                        setSpeakerActive={setSpeakerActive} 
+                        aiState={aiState}
+                        micActive={micActive}
                     />
                 }
                 {

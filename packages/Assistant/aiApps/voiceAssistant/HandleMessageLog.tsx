@@ -32,6 +32,18 @@ export const HandleEventMessage = (event, setIsAssistantListening, setIsAssistan
             globalThis?.SetAssistantWriting && globalThis.SetAssistantWriting(true);
             break
         }
+        case "response.output_audio_transcript.delta": {
+            setTagMask(thisBot, 'chatMessages', {
+                ...masks.chatMessages,
+                [`${event.item_id}`]: {
+                    message: masks.chatMessages[event.item_id] ? masks.chatMessages[event.item_id].message + event.delta : event.delta,
+                    role: "assistant"
+                }
+            }, "tempLocal");
+            globalThis?.SetAiTextMessages && globalThis.SetAiTextMessages([...OutputMessageLog()]);
+            globalThis?.SetAssistantWriting && globalThis.SetAssistantWriting(false);
+            break
+        }
         case "response.content_part.done": {
             setTagMask(thisBot, 'chatMessages', {
                 ...masks.chatMessages,
@@ -41,7 +53,6 @@ export const HandleEventMessage = (event, setIsAssistantListening, setIsAssistan
                 }
             }, "tempLocal");
             globalThis?.SetAiTextMessages && globalThis.SetAiTextMessages([...OutputMessageLog()]);
-            globalThis?.SetAssistantWriting && globalThis.SetAssistantWriting(false);
             break
         }
         case "response.content_part.added": {
