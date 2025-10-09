@@ -1,3 +1,31 @@
+.voice-text-container {
+    display: flex;
+    flex-direction: column;
+    /* background: red; */
+    width: 100%;
+    height: 100%;
+}
+
+.voice-text-container-upper {
+      display: flex;
+    width: 100%;
+    height: 100%;
+    justify-content: center;
+    align-items: center;
+    gap: 10px;
+}
+
+.separator {
+    height: 97%;
+    width: 2px;
+    background: black;
+}
+
+.big-avatar {
+  height: 17dvh !important;
+  width: 17dvh !important;
+}
+
 .voiceAssistant {
   z-index: 10 !important;
 }
@@ -92,6 +120,7 @@
     padding: 10px;
     box-shadow: rgba(0, 0, 0, 0.35) 0px 5px 15px;
     height: fit-content;
+    font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, "Helvetica Neue", Arial, sans-serif;
 }
 
 .draggable {

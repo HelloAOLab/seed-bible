@@ -1,10 +1,10 @@
 const { useState, useRef, useEffect } = os.appHooks;
 
-const DraggableContainer = ({ children }) => {
+const DraggableContainer = ({ children, isFullScreen }) => {
     const [isDragging, setIsDragging] = useState(false);
-    const [position, setPosition] = useState({ 
-        x: window.innerWidth - 300, 
-        y: 20 
+    const [position, setPosition] = useState({
+        x: window.innerWidth - 300,
+        y: 20
     });
     const [offset, setOffset] = useState({ x: 0, y: 0 });
     const dragRef = useRef(null);
@@ -42,16 +42,26 @@ const DraggableContainer = ({ children }) => {
         }
     }, [isDragging]);
 
+    const modelStyle = {
+        cursor: isDragging ? 'grabbing' : 'grab',
+        position: 'fixed',
+        top: position.y,
+        left: position.x
+    }
+
+    const fullscreenStyle = {
+        position: "absolute",
+        top: "0",
+        left: "0",
+        width: "100dvw",
+        height: "100dvh",
+    }
+
     return (
         <div
             ref={dragRef}
             className="draggable ai-container"
-            style={{
-                cursor: isDragging ? 'grabbing' : 'grab',
-                position: 'fixed',
-                top: position.y,
-                left: position.x
-            }}
+            style={isFullScreen ? fullscreenStyle : modelStyle}
             onMouseDown={handleMouseDown}
             onContextMenu={e => e.stopPropagation()}
         >
