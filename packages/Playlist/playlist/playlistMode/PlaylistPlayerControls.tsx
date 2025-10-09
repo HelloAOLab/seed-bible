@@ -9,6 +9,14 @@ const EditPlaylist =
 const SharePlaylist =
   "https://auth-aux-aobot-prod-filesbucket-141297942820.s3.amazonaws.com/aoBot/d205ab2613e2feb14123b39522527dc72a7b649078fd434c81b0b44ede4cdecf.svg";
 
+const outerWebsiteItem = {
+  youtube: true,
+  iframe: true,
+  video: true,
+  Video: true,
+  externalLink: true,
+};
+
 const PrevIcon = ({ fill = "#939393" }) => (
   <svg
     width="32"
@@ -685,6 +693,8 @@ const PlayerControls = ({ parentId = "default" }) => {
     globalThis.SetQueue(items);
   };
 
+  const isItemLink = outerWebsiteItem[currentItem?.additionalInfo?.type];
+
   return (
     <>
       <style>{thisBot.tags["Linking.css"]}</style>
@@ -708,8 +718,7 @@ const PlayerControls = ({ parentId = "default" }) => {
             backgroundColor: "#F7F7F5",
             height: "auto",
           }}
-            className="flaoting-attach-link"
-          >
+          className="flaoting-attach-link">
           <AttachLink
             canClose
             massAdd={massAdd}
@@ -733,6 +742,18 @@ const PlayerControls = ({ parentId = "default" }) => {
             <VideoPlayer videoSrc={videoSrc} playlistItem={currentItem} />
           )}
           {!!mediaURL && <AudioPlayer mediaURL={mediaURL} />}
+          {isItemLink && false && (
+            <div>
+              <p>Link showing refuse to connect Problems? </p>
+              <a
+                href={currentItem?.additionalInfo?.link}
+                target="_blank"
+                rel="noopener noreferrer"
+                title="Visit link">
+                Click here to open
+              </a>
+            </div>
+          )}
           <div
             style={{
               display: "flex",

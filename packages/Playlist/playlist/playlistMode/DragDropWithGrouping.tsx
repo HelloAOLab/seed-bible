@@ -527,7 +527,6 @@ const DragDrop = ({ massAdd, attachLink, onGenClick = () => { }, setItemSelected
                                 </p>
                                 <div className="actions"
                                     onClick={(e) => {
-                                        console.log("FIRED!");
                                         e.stopPropagation();
                                     }}
                                 >
@@ -781,7 +780,6 @@ const PlaylistContentRenderer = ({
                             editDataFromPlaylist(allIds);
                         }
                     }
-                    console.log("clickPass", clickPass);
                     if (clickPass) {
                         globalThis.ADDING_TOPLAYLIST_TIMEOUT = null;
                         onClick({ dataItem: itemToBeShared, bulkAdd: true, index });

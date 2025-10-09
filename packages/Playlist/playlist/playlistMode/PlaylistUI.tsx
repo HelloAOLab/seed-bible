@@ -256,6 +256,7 @@ const Playlist = () => {
   //                 </button>
 
   const apiCallforAnnotationRef = useRef(null);
+  const [authSwtich, setAuthSwitch] = useState(false);
   const lastFetchAddress = useRef(null);
   const lastFetchTab = useRef("discover");
   const [playlistSharerName, setPLaylistSharerName] = useState("");
@@ -264,7 +265,7 @@ const Playlist = () => {
   useLayoutEffect(() => {
     globalThis.currentActiveItem = tab;
     globalThis.setTabPlaylist = setTab;
-
+    globalThis.SetAuthSwtich = setAuthSwitch;
     if (apiCallforAnnotationRef.current) {
       clearTimeout(apiCallforAnnotationRef.current);
       apiCallforAnnotationRef.current = null;
@@ -352,8 +353,9 @@ const Playlist = () => {
 
     return () => {
       globalThis.setTabPlaylist = null;
+      globalThis.SetAuthSwtich = null;
     };
-  }, [tab, currentOpenedBook]);
+  }, [tab, authSwtich, currentOpenedBook]);
 
   const isLayers = tab === "discover";
 
@@ -816,8 +818,6 @@ const Playlist = () => {
                     setOpenModal={setOpenModal}
                     playingPlaylist={playingPlaylist}
                   />
-
-                 
                 </div>
               ) : (
                 <div
