@@ -3,7 +3,7 @@
     height: 100vh;
     display: flex;
     flex-direction: column;
-    font-family: 'Segoe UI', Arial, sans-serif;
+    font-family: 'DM Sans', system-ui, sans-serif;
     border-left: 1px solid #e0e0e0;
     background-color: #f0f1f1;
     padding: 10px;

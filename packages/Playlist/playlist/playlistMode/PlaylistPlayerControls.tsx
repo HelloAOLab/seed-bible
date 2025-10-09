@@ -787,7 +787,7 @@ const PlayerControls = ({ parentId = "default" }) => {
                   alignItems: "center",
                   margin: "0",
                   marginBottom: "0.5rem",
-                  fontFamily: "DM Mono",
+                  fontFamily: "DM Sans",
                   height: "12px",
                 }}>
                 {showCurrent

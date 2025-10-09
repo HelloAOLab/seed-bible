@@ -28,7 +28,7 @@
 }
 
 .ScreenRecording .hide {
-    font-family: DM Sans;
+    font-family: 'DM Sans', system-ui, sans-serif;
     font-weight: 400;
     font-style: Regular;
     font-size: 14px;

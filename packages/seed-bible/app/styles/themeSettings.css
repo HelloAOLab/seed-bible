@@ -1,5 +1,5 @@
 .themeSettings-container {
-  font-family: sans-serif;
+  font-family: 'Satoshi', system-ui, sans-serif;
   padding: 16px;
   width: 245px !important;
   height: 100%;
@@ -15,7 +15,7 @@
 
 .themeText {
   color: #000;
-  font-family: "Open Sans";
+  font-family: 'Satoshi', system-ui, sans-serif;
   font-size: 14px;
   font-style: normal;
   font-weight: 600;
@@ -77,7 +77,7 @@
 }
 
 .readyTheme-name {
-  font-family: "Open Sans";
+  font-family: 'Satoshi', system-ui, sans-serif;
   font-size: 14px;
   font-weight: 500;
   line-height: normal;
