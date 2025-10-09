@@ -6,8 +6,8 @@ import { useTabsContext } from 'app.hooks.tabs';
 import { useSideBarContext } from 'app.hooks.sideBar'
 export const defaultTextConfig = {
     bookchapter: {
-        font: `'Helvetica Neue', sans-serif`,
-        weight: '500',
+        font: `'Newsreader', serif`,
+        weight: '600',
         color: 'black',
         marginVertical: '0',
         marginHorizontal: '27',
@@ -19,20 +19,21 @@ export const defaultTextConfig = {
         },
     },
     heading: {
-        font: `'Montserrat', sans-serif`,
-        weight: '600',
+        font: `'Plus Jakarta Sans', sans-serif`,
+        weight: '200',
         color: 'black',
-        marginVertical: '24',
+        marginTop: '18',
+        marginBottom: '12',
         marginHorizontal: '27',
         styles: {
-            bold: true,
-            italic: false,
+            bold: false,
+            italic: true,
             underline: false,
             alignment: 'left',
         },
     },
     chapter: {
-        font: `'Montserrat', sans-serif`,
+        font: `'Newsreader', serif`,
         weight: '600',
         color: 'black',
         marginVertical: '8',
@@ -45,7 +46,7 @@ export const defaultTextConfig = {
         },
     },
     verse: {
-        font: 'EB Garamond',
+        font: `'Newsreader', serif`,
         weight: '400',
         color: 'black',
         marginVertical: '30',
@@ -72,8 +73,8 @@ export function exportTextConfigToCSS(textConfig) {
         cssVars.push(`${toCSSVarName(section, 'font-bold')}: ${styles.bold ? 'bold' : config.weight || 'normal'};`);
         cssVars.push(`${toCSSVarName(section, 'alignment')}: ${styles.alignment || 'left'};`);
         cssVars.push(`${toCSSVarName(section, 'color')}: ${config.color || 'black'};`);
-        cssVars.push(`${toCSSVarName(section, 'margin-top')}: ${config.marginVertical || '16'}px;`);
-        cssVars.push(`${toCSSVarName(section, 'margin-bottom')}: ${config.marginVertical || '16'}px;`);
+        cssVars.push(`${toCSSVarName(section, 'margin-top')}: ${config.marginTop || config.marginVertical || '16'}px;`);
+        cssVars.push(`${toCSSVarName(section, 'margin-bottom')}: ${config.marginBottom || config.marginVertical || '16'}px;`);
         cssVars.push(`${toCSSVarName(section, 'margin-left')}: ${config.marginHorizontal || '0'}%;`);
         cssVars.push(`${toCSSVarName(section, 'margin-right')}: ${config.marginHorizontal || '0'}%;`);
 

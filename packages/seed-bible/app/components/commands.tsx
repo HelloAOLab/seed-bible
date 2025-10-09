@@ -1123,7 +1123,7 @@ const BiblePassageDisplay = ({ content }) => {
         <div className="bible-passage-container">
             <style jsx>{`
         .bible-passage-container {
-  font-family: 'Georgia', 'Times New Roman', serif;
+  font-family: "Newsreader", "Georgia", "Times New Roman", serif;
   line-height: 1.15;
   color: #2c3e50;
   max-width: 100%;
@@ -1189,7 +1189,7 @@ const BiblePassageDisplay = ({ content }) => {
   font-size: 1.3em;
   color: #e67e22;
   opacity: 0.25;
-  font-family: Georgia, serif;
+  font-family: "Newsreader", "Georgia", "Times New Roman", serif;
 }
 
 /* Bullet points */

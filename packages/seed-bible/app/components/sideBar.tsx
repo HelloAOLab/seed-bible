@@ -811,7 +811,7 @@ function SideBar() {
             textAlign: "left",
             marginBottom: "10px",
             color: " #FFF",
-            "font-family": "Satoshi",
+            "font-family": "'Satoshi', system-ui, sans-serif",
             "font-size": "16px",
             "font-style": "normal",
             "font-weight": "700",

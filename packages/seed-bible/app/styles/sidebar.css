@@ -5,9 +5,7 @@
     position: relative;
     /* transition: width 0.3s ease; */
     background-color: var(--themeSideMenu);
-
-    font-family: 'Segoe UI', Arial, sans-serif;
-    
+    font-family: "Satoshi", sans-serif;
 }
 
 .customCheckboxWrapper {
@@ -422,7 +420,7 @@
     background: transparent;
     width: 100%;
     color: #FFF;
-    font-family: "Helvetica Neue";
+    font-family: 'Satoshi', system-ui, sans-serif;
     font-size: 14px;
     font-style: normal;
     font-weight: 400;

@@ -16,7 +16,7 @@
 }
 
 .testament-title {
-    font-family: Satoshi;
+    font-family: 'Satoshi', system-ui, sans-serif;
     font-weight: 700;
     font-style: Bold;
     font-size: 18px;
