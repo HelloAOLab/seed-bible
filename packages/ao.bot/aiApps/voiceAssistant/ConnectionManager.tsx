@@ -18,6 +18,34 @@ function attachQueryToURL(url, params) {
     const queryString = generateQuery(params);
     return url + (url.includes('?') ? '&' : '?') + queryString;
 }
+const theTools = [
+    {
+        "type": "function",
+        "name": "getSeedBibleUrl",
+        "description": "Generate AO Seed Bible URLs according to user input (translation, book, chapter, or verse). example https://ao.bot/?pattern=SeedBibleDev&noGridPortal=true&book=jhn&chapter=3&verse=16",
+        "parameters": {
+            "type": "object",
+            "properties": {
+                "translation": {
+                    "type": "string",
+                    "description": "Optional. Bible translation code exaple BSB ."
+                },
+                "book": {
+                    "type": "string",
+                    "description": "Optional. The book ID (e.g., gen, jhn, psa)."
+                },
+                "chapter": {
+                    "type": "string",
+                    "description": "Optional. Chapter number."
+                },
+                "verse": {
+                    "type": "string",
+                    "description": "Optional. Verse number."
+                }
+            }
+        }
+    }
+]
 const ConnectionManager = ({ start, setConnected, audioRef, pcRef, micRef, micActive, speakerActive, dcRef, setIsAssistantListening }) => {
 
     const init = async () => {
