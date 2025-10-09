@@ -194,6 +194,7 @@ export function AOBotInterface() {
   const [translationID, setTranslationID] = useState("BSB");
   const [book, setBook] = useState("");
   const [chapter, setChapter] = useState("");
+  const [enableCollaboration, setEnableCollaboration] = useState(false);
   useEffect(() => {
     console.log(messages);
   }, [messages]);
@@ -1481,10 +1482,108 @@ export function AOBotInterface() {
             </p>
           </div>
 
+          <div style={{ marginBottom: "32px" }}>
+            <div
+              style={{
+                display: "flex",
+                alignItems: "center",
+                justifyContent: "space-between",
+                marginBottom: "8px",
+              }}
+            >
+              <label
+                style={{
+                  fontSize: "14px",
+                  fontWeight: "600",
+                  color: "#e0e0e0",
+                }}
+              >
+                Enable Collaboration
+              </label>
+              <div
+                onClick={() => setEnableCollaboration(!enableCollaboration)}
+                style={{
+                  width: "48px",
+                  height: "26px",
+                  backgroundColor: enableCollaboration ? "#e67e50" : "#3a3a3a",
+                  borderRadius: "13px",
+                  position: "relative",
+                  cursor: "pointer",
+                  transition: "background-color 0.3s",
+                  border: "1px solid " + (enableCollaboration ? "#e67e50" : "#4a4a4a"),
+                }}
+                onMouseEnter={(e) => {
+                  if (!enableCollaboration) {
+                    e.currentTarget.style.backgroundColor = "#4a4a4a";
+                  }
+                }}
+                onMouseLeave={(e) => {
+                  if (!enableCollaboration) {
+                    e.currentTarget.style.backgroundColor = "#3a3a3a";
+                  }
+                }}
+              >
+                <div
+                  style={{
+                    width: "18px",
+                    height: "18px",
+                    backgroundColor: "#ffffff",
+                    borderRadius: "50%",
+                    position: "absolute",
+                    top: "3px",
+                    left: enableCollaboration ? "26px" : "4px",
+                    transition: "left 0.3s",
+                    boxShadow: "0 2px 4px rgba(0,0,0,0.2)",
+                  }}
+                />
+              </div>
+            </div>
+            <p style={{ fontSize: "12px", color: "#808080", marginTop: "6px" }}>
+              {enableCollaboration
+                ? "Multi-user collaboration enabled with unique instance ID"
+                : "Static instance for single-user experience"}
+            </p>
+          </div>
+
           <button
             onClick={() => {
-              // TODO: Handle form submission
-              console.log("Form submitted:", { translationID, book, chapter });
+              // Generate UUID for collaboration mode
+              const generateUUID = () => {
+                return 'xxxxxxxx-xxxx-4xxx-yxxx-xxxxxxxxxxxx'.replace(/[xy]/g, function(c) {
+                  const r = Math.random() * 16 | 0;
+                  const v = c === 'x' ? r : (r & 0x3 | 0x8);
+                  return v.toString(16);
+                });
+              };
+
+              console.log("Form submitted:", { translationID, book, chapter, enableCollaboration });
+
+              const url = new URL(`https://ao.bot/?pattern=SeedBibleDev`);
+              
+              if (enableCollaboration) {
+                // Collaboration mode: add inst and owner parameters
+                url.searchParams.set("inst", generateUUID());
+                url.searchParams.set("owner", "public");
+              } else {
+                // Static mode: add bios=local inst parameter
+                url.searchParams.set("bios", "local inst");
+              }
+              
+              if (translationID && translationID !== 'BSB') {
+                url.searchParams.set("translationID", translationID);
+              }
+
+              if (book && book !== 'GEN') {
+                url.searchParams.set("book", book);
+              }
+              if (chapter && chapter !== '1') {
+                url.searchParams.set("chapter", chapter);
+              }
+
+              os.goToURL(
+                `${url.href}&noGridPortal`
+              );
+
               // For now, just go back to home
               setCurrentView("home");
             }}
