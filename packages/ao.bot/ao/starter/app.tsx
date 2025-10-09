@@ -671,7 +671,10 @@ export function AOBotInterface() {
           onMouseEnter={(e) => (e.currentTarget.style.color = "#fff")}
           onMouseLeave={(e) => (e.currentTarget.style.color = "#999")}
         >
-          ← <span style={{ fontSize: "14px" }}>Back</span>
+          <span class="material-symbols-outlined" style={{ fontSize: "18px" }}>
+            arrow_back
+          </span>
+          <span style={{ fontSize: "14px" }}>Back</span>
         </button>
 
         <div style={{ marginBottom: "40px", textAlign: "center" }}>
@@ -1077,6 +1080,7 @@ export function AOBotInterface() {
                   height: "66px",
                   transition: "transform 0.2s, border-color 0.2s",
                 }}
+                onClick={() => setCurrentView("join")}
                 onMouseEnter={(e) => {
                   e.currentTarget.style.transform = "translateY(-2px)";
                   e.currentTarget.style.borderColor = "#4a4a4a";
