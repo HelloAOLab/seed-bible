@@ -311,7 +311,7 @@ globalThis.validateUrl = (url) => {
 
     // Generic iframe
     if (iframeRegex.test(url)) {
-      return { isValid: true, type: 'iframe' };
+      return { isValid: true, type: 'externalLink' };
     }
   } catch (err) {
     // Invalid URL
