@@ -61,7 +61,7 @@ function ThePage({
   // Add state for word highlights
   const [wordHighlights, setWordHighlights] = useState({});
   const [wordHighlightsTC, setWordHighlightsTC] = useState("black");
-  const [wordHighlightsBC, setWordHighlightsBC] = useState("#ffeb3b");
+  const [wordHighlightsBC, setWordHighlightsBC] = useState("transparent");
 
   const [bible, setBible] = useState();
   if (tab) globalThis[`SetEnableEditorOf${tab?.id}`] = setEnableEditor;
