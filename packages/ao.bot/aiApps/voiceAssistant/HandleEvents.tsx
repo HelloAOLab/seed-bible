@@ -27,7 +27,7 @@ const addTranslationId = (translationData, url, translationPass) => {
 const addBookIdandChapter = (translationData, url, bookId, chapter, bookPass, chapterPass) => {
     let tempUrl = "";
     for (let i = 0; i < translationData.books.length; i++) {
-        if (translationData.books[i].id.toLowerCase() === bookId.toLowerCase()) {
+        if (translationData.books[i].id.toLowerCase() === bookId?.toLowerCase()) {
             bookPass = translationData.books[i].id;
             tempUrl = `${url}&book=${translationData.books[i].id}`;
             if (chapter <= translationData.books[i].numberOfChapters) {
