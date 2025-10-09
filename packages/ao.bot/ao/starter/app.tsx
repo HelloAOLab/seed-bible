@@ -189,6 +189,11 @@ export function AOBotInterface() {
   const [sessionCode, setSessionCode] = useState("");
   const [messages, setMessages] = useState([]);
   const [isLoading, setIsLoading] = useState(false);
+  
+  // Build with Seed Bible form state
+  const [translationID, setTranslationID] = useState("BSB");
+  const [book, setBook] = useState("");
+  const [chapter, setChapter] = useState("");
   useEffect(() => {
     console.log(messages);
   }, [messages]);
@@ -1101,6 +1106,7 @@ export function AOBotInterface() {
             </div>
             <div style={{ width: "500px", maxWidth: "90%", marginBottom: "0" }}>
               <button
+                onClick={() => setCurrentView("build")}
                 style={{
                   width: "100%",
                   backgroundColor: "#2a2a2a",
@@ -1292,6 +1298,219 @@ export function AOBotInterface() {
               <span style={{ fontSize: "16px", color: "#1a1a1a" }}>↑</span>
             </button>
           </div>
+        </div>
+      </div>
+    );
+  }
+
+  // Build View
+  if (currentView === "build") {
+    return (
+      <div
+        style={{
+          height: "100vh",
+          width: "100vw",
+          boxSizing: 'border-box',
+          backgroundColor: "#1a1a1a",
+          color: "#ffffff",
+          fontFamily:
+            '-apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, "Helvetica Neue", Arial, sans-serif',
+          display: "flex",
+          flexDirection: "column",
+          alignItems: "center",
+          justifyContent: "center",
+        }}
+      >
+        <link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Material+Symbols+Outlined:opsz,wght,FILL,GRAD@20..48,100..700,0..1,-50..200&icon_names=arrow_back" />
+        <button
+          onClick={() => setCurrentView("home")}
+          style={{
+            position: "absolute",
+            top: "20px",
+            left: "20px",
+            backgroundColor: "transparent",
+            border: "1px solid #3a3a3a",
+            borderRadius: "6px",
+            color: "#ffffff",
+            cursor: "pointer",
+            padding: "10px 16px",
+            display: "flex",
+            alignItems: "center",
+            gap: "8px",
+            fontSize: "14px",
+            transition: "all 0.2s",
+          }}
+          onMouseEnter={(e) => {
+            e.currentTarget.style.borderColor = "#4a4a4a";
+            e.currentTarget.style.backgroundColor = "#2a2a2a";
+          }}
+          onMouseLeave={(e) => {
+            e.currentTarget.style.borderColor = "#3a3a3a";
+            e.currentTarget.style.backgroundColor = "transparent";
+          }}
+        >
+          <span class="material-symbols-outlined" style={{ fontSize: "18px" }}>
+            arrow_back
+          </span>
+          Back
+        </button>
+
+        <div style={{ marginBottom: "40px", textAlign: "center" }}>
+          <h1 style={{ fontSize: "32px", fontWeight: "700", marginBottom: "12px" }}>
+            Build with Seed Bible
+          </h1>
+          <p style={{ fontSize: "15px", color: "#a0a0a0" }}>
+            Configure default settings for your Seed Bible instance
+          </p>
+        </div>
+
+        <div
+          style={{
+            width: "500px",
+            maxWidth: "90%",
+            backgroundColor: "#2a2a2a",
+            border: "1px solid #3a3a3a",
+            borderRadius: "12px",
+            padding: "32px",
+          }}
+        >
+          <div style={{ marginBottom: "24px" }}>
+            <label
+              style={{
+                display: "block",
+                fontSize: "14px",
+                fontWeight: "600",
+                marginBottom: "8px",
+                color: "#e0e0e0",
+              }}
+            >
+              Translation ID
+            </label>
+            <input
+              type="text"
+              placeholder="e.g., BSB, ENGWEBP, etc."
+              value={translationID}
+              onChange={(e) => setTranslationID(e.target.value)}
+              style={{
+                width: "100%",
+                backgroundColor: "#1a1a1a",
+                border: "1px solid #3a3a3a",
+                borderRadius: "6px",
+                padding: "12px 16px",
+                color: "#ffffff",
+                fontSize: "14px",
+                outline: "none",
+                transition: "border-color 0.2s",
+              }}
+              onFocus={(e) => (e.currentTarget.style.borderColor = "#4a4a4a")}
+              onBlur={(e) => (e.currentTarget.style.borderColor = "#3a3a3a")}
+            />
+            <p style={{ fontSize: "12px", color: "#808080", marginTop: "6px" }}>
+              The ID of the translation to load by default
+            </p>
+          </div>
+
+          <div style={{ marginBottom: "24px" }}>
+            <label
+              style={{
+                display: "block",
+                fontSize: "14px",
+                fontWeight: "600",
+                marginBottom: "8px",
+                color: "#e0e0e0",
+              }}
+            >
+              Book
+            </label>
+            <input
+              type="text"
+              placeholder="e.g., GEN, EXO, PSA"
+              value={book}
+              onChange={(e) => setBook(e.target.value)}
+              style={{
+                width: "100%",
+                backgroundColor: "#1a1a1a",
+                border: "1px solid #3a3a3a",
+                borderRadius: "6px",
+                padding: "12px 16px",
+                color: "#ffffff",
+                fontSize: "14px",
+                outline: "none",
+                transition: "border-color 0.2s",
+              }}
+              onFocus={(e) => (e.currentTarget.style.borderColor = "#4a4a4a")}
+              onBlur={(e) => (e.currentTarget.style.borderColor = "#3a3a3a")}
+            />
+            <p style={{ fontSize: "12px", color: "#808080", marginTop: "6px" }}>
+              The ID of the book to load by default
+            </p>
+          </div>
+          <div style={{ marginBottom: "32px" }}>
+            <label
+              style={{
+                display: "block",
+                fontSize: "14px",
+                fontWeight: "600",
+                marginBottom: "8px",
+                color: "#e0e0e0",
+              }}
+            >
+              Chapter
+            </label>
+            <input
+              type="number"
+              placeholder="e.g., 1, 3, 10"
+              value={chapter}
+              onChange={(e) => setChapter(e.target.value)}
+              style={{
+                width: "100%",
+                backgroundColor: "#1a1a1a",
+                border: "1px solid #3a3a3a",
+                borderRadius: "6px",
+                padding: "12px 16px",
+                color: "#ffffff",
+                fontSize: "14px",
+                outline: "none",
+                transition: "border-color 0.2s",
+              }}
+              onFocus={(e) => (e.currentTarget.style.borderColor = "#4a4a4a")}
+              onBlur={(e) => (e.currentTarget.style.borderColor = "#3a3a3a")}
+            />
+            <p style={{ fontSize: "12px", color: "#808080", marginTop: "6px" }}>
+              The chapter number to load by default
+            </p>
+          </div>
+
+          <button
+            onClick={() => {
+              // TODO: Handle form submission
+              console.log("Form submitted:", { translationID, book, chapter });
+              // For now, just go back to home
+              setCurrentView("home");
+            }}
+            style={{
+              width: "100%",
+              backgroundColor: "#e67e50",
+              border: "none",
+              borderRadius: "6px",
+              cursor: "pointer",
+              padding: "14px 20px",
+              fontSize: "15px",
+              fontWeight: "600",
+              color: "#1a1a1a",
+              transition: "all 0.2s",
+            }}
+            onMouseEnter={(e) => {
+              e.currentTarget.style.transform = "translateY(-2px)";
+              e.currentTarget.style.boxShadow = "0 8px 20px rgba(230, 126, 80, 0.3)";
+            }}
+            onMouseLeave={(e) => {
+              e.currentTarget.style.transform = "translateY(0)";
+              e.currentTarget.style.boxShadow = "none";
+            }}
+          >
+            Generate Configuration
+          </button>
         </div>
       </div>
     );
