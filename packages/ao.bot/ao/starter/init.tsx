@@ -11,7 +11,12 @@ import { AOBotInterface } from 'ao.starter.app'
 
 if (configBot.tags.systemPortal) return
 configBot.tags.gridPortal = null;
-render(<VoiceAssistantProvider> <AOBotInterface /> </VoiceAssistantProvider>, document.body)
+render(<>
+    <style>{tags['App.css']}</style>
+    <VoiceAssistantProvider>
+        <AOBotInterface /> 
+    </VoiceAssistantProvider>
+</>, document.body)
 document.body.style.overscrollBehavior = 'none';
 os.hideLoadingScreen()
 
