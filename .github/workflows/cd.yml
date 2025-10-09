@@ -30,8 +30,7 @@ jobs:
           pnpm install
       - name: Package
         run: |
-          pnpm package:seed-bible
-          pnpm package:playlist
+          pnpm package
       - name: Upload AUXes
         uses: actions/upload-artifact@v4
         with:
