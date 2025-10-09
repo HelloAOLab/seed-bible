@@ -181,6 +181,7 @@ const MessageContent = (({ text, isWriting }) => {
                     fontSize: "14px",
                     lineHeight: "1.6",
                     marginBottom: urls.length > 0 && !isWriting ? "16px" : "0",
+                    wordWrap: "break-word",
                 }}
             >
                 {text}
@@ -356,6 +357,7 @@ export const ChatView = ({ initialQuery, newMessageId }) => {
                             <div
                                 style={{
                                     flex: 1,
+                                    maxWidth: "calc(100% - 40px)",
                                     backgroundColor: msg.role === "user" ? "#3a3d3d57" : "transparent",
                                     padding: msg.role === "user" ? "12px 16px" : "0",
                                     borderRadius: msg.role === "user" ? "12px" : "0",

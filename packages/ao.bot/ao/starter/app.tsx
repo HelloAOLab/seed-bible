@@ -189,6 +189,12 @@ export function AOBotInterface() {
   const [sessionCode, setSessionCode] = useState("");
   const [messages, setMessages] = useState([]);
   const [isLoading, setIsLoading] = useState(false);
+  
+  // Build with Seed Bible form state
+  const [translationID, setTranslationID] = useState("BSB");
+  const [book, setBook] = useState("");
+  const [chapter, setChapter] = useState("");
+  const [enableCollaboration, setEnableCollaboration] = useState(false);
   useEffect(() => {
     console.log(messages);
   }, [messages]);
@@ -665,7 +671,10 @@ export function AOBotInterface() {
           onMouseEnter={(e) => (e.currentTarget.style.color = "#fff")}
           onMouseLeave={(e) => (e.currentTarget.style.color = "#999")}
         >
-          ← <span style={{ fontSize: "14px" }}>Back</span>
+          <span class="material-symbols-outlined" style={{ fontSize: "18px" }}>
+            arrow_back
+          </span>
+          <span style={{ fontSize: "14px" }}>Back</span>
         </button>
 
         <div style={{ marginBottom: "40px", textAlign: "center" }}>
@@ -1071,6 +1080,7 @@ export function AOBotInterface() {
                   height: "66px",
                   transition: "transform 0.2s, border-color 0.2s",
                 }}
+                onClick={() => setCurrentView("join")}
                 onMouseEnter={(e) => {
                   e.currentTarget.style.transform = "translateY(-2px)";
                   e.currentTarget.style.borderColor = "#4a4a4a";
@@ -1101,6 +1111,7 @@ export function AOBotInterface() {
             </div>
             <div style={{ width: "500px", maxWidth: "90%", marginBottom: "0" }}>
               <button
+                onClick={() => setCurrentView("build")}
                 style={{
                   width: "100%",
                   backgroundColor: "#2a2a2a",
@@ -1293,6 +1304,348 @@ export function AOBotInterface() {
             </button>
           </div>
         </div>
+      </div>
+    );
+  }
+
+  // Build View
+  if (currentView === "build") {
+    return (
+      <div
+        style={{
+          height: "100vh",
+          width: "100vw",
+          boxSizing: 'border-box',
+          backgroundColor: "#1a1a1a",
+          color: "#ffffff",
+          fontFamily:
+            '-apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, "Helvetica Neue", Arial, sans-serif',
+          display: "flex",
+          flexDirection: "column",
+          alignItems: "center",
+          justifyContent: "center",
+        }}
+      >
+        <link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Material+Symbols+Outlined:opsz,wght,FILL,GRAD@20..48,100..700,0..1,-50..200&icon_names=arrow_back" />
+        <button
+          onClick={() => setCurrentView("home")}
+          style={{
+            position: "absolute",
+            top: "20px",
+            left: "20px",
+            backgroundColor: "transparent",
+            border: "1px solid #3a3a3a",
+            borderRadius: "6px",
+            color: "#ffffff",
+            cursor: "pointer",
+            padding: "10px 16px",
+            display: "flex",
+            alignItems: "center",
+            gap: "8px",
+            fontSize: "14px",
+            transition: "all 0.2s",
+          }}
+          onMouseEnter={(e) => {
+            e.currentTarget.style.borderColor = "#4a4a4a";
+            e.currentTarget.style.backgroundColor = "#2a2a2a";
+          }}
+          onMouseLeave={(e) => {
+            e.currentTarget.style.borderColor = "#3a3a3a";
+            e.currentTarget.style.backgroundColor = "transparent";
+          }}
+        >
+          <span class="material-symbols-outlined" style={{ fontSize: "18px" }}>
+            arrow_back
+          </span>
+          Back
+        </button>
+
+        <div style={{ marginBottom: "40px", textAlign: "center" }}>
+          <h1 style={{ fontSize: "32px", fontWeight: "700", marginBottom: "12px" }}>
+            Build with Seed Bible
+          </h1>
+          <p style={{ fontSize: "15px", color: "#a0a0a0" }}>
+            Configure default settings for your Seed Bible instance
+          </p>
+        </div>
+
+        <div
+          style={{
+            width: "500px",
+            maxWidth: "90%",
+            backgroundColor: "#2a2a2a",
+            border: "1px solid #3a3a3a",
+            borderRadius: "12px",
+            padding: "32px",
+          }}
+        >
+          <div style={{ marginBottom: "24px" }}>
+            <label
+              style={{
+                display: "block",
+                fontSize: "14px",
+                fontWeight: "600",
+                marginBottom: "8px",
+                color: "#e0e0e0",
+              }}
+            >
+              Translation ID
+            </label>
+            <input
+              type="text"
+              placeholder="e.g., BSB, ENGWEBP, etc."
+              value={translationID}
+              onChange={(e) => setTranslationID(e.target.value)}
+              style={{
+                width: "100%",
+                backgroundColor: "#1a1a1a",
+                border: "1px solid #3a3a3a",
+                borderRadius: "6px",
+                padding: "12px 16px",
+                color: "#ffffff",
+                fontSize: "14px",
+                outline: "none",
+                transition: "border-color 0.2s",
+              }}
+              onFocus={(e) => (e.currentTarget.style.borderColor = "#4a4a4a")}
+              onBlur={(e) => (e.currentTarget.style.borderColor = "#3a3a3a")}
+            />
+            <p style={{ fontSize: "12px", color: "#808080", marginTop: "6px" }}>
+              The ID of the translation to load by default
+            </p>
+          </div>
+
+          <div style={{ marginBottom: "24px" }}>
+            <label
+              style={{
+                display: "block",
+                fontSize: "14px",
+                fontWeight: "600",
+                marginBottom: "8px",
+                color: "#e0e0e0",
+              }}
+            >
+              Book
+            </label>
+            <input
+              type="text"
+              placeholder="e.g., GEN, EXO, PSA"
+              value={book}
+              onChange={(e) => setBook(e.target.value)}
+              style={{
+                width: "100%",
+                backgroundColor: "#1a1a1a",
+                border: "1px solid #3a3a3a",
+                borderRadius: "6px",
+                padding: "12px 16px",
+                color: "#ffffff",
+                fontSize: "14px",
+                outline: "none",
+                transition: "border-color 0.2s",
+              }}
+              onFocus={(e) => (e.currentTarget.style.borderColor = "#4a4a4a")}
+              onBlur={(e) => (e.currentTarget.style.borderColor = "#3a3a3a")}
+            />
+            <p style={{ fontSize: "12px", color: "#808080", marginTop: "6px" }}>
+              The ID of the book to load by default
+            </p>
+          </div>
+          <div style={{ marginBottom: "32px" }}>
+            <label
+              style={{
+                display: "block",
+                fontSize: "14px",
+                fontWeight: "600",
+                marginBottom: "8px",
+                color: "#e0e0e0",
+              }}
+            >
+              Chapter
+            </label>
+            <input
+              type="number"
+              placeholder="e.g., 1, 3, 10"
+              value={chapter}
+              onChange={(e) => setChapter(e.target.value)}
+              style={{
+                width: "100%",
+                backgroundColor: "#1a1a1a",
+                border: "1px solid #3a3a3a",
+                borderRadius: "6px",
+                padding: "12px 16px",
+                color: "#ffffff",
+                fontSize: "14px",
+                outline: "none",
+                transition: "border-color 0.2s",
+              }}
+              onFocus={(e) => (e.currentTarget.style.borderColor = "#4a4a4a")}
+              onBlur={(e) => (e.currentTarget.style.borderColor = "#3a3a3a")}
+            />
+            <p style={{ fontSize: "12px", color: "#808080", marginTop: "6px" }}>
+              The chapter number to load by default
+            </p>
+          </div>
+
+          <div style={{ marginBottom: "32px" }}>
+            <div
+              style={{
+                display: "flex",
+                alignItems: "center",
+                justifyContent: "space-between",
+                marginBottom: "8px",
+              }}
+            >
+              <label
+                style={{
+                  fontSize: "14px",
+                  fontWeight: "600",
+                  color: "#e0e0e0",
+                }}
+              >
+                Enable Collaboration
+              </label>
+              <div
+                onClick={() => setEnableCollaboration(!enableCollaboration)}
+                style={{
+                  width: "48px",
+                  height: "26px",
+                  backgroundColor: enableCollaboration ? "#e67e50" : "#3a3a3a",
+                  borderRadius: "13px",
+                  position: "relative",
+                  cursor: "pointer",
+                  transition: "background-color 0.3s",
+                  border: "1px solid " + (enableCollaboration ? "#e67e50" : "#4a4a4a"),
+                }}
+                onMouseEnter={(e) => {
+                  if (!enableCollaboration) {
+                    e.currentTarget.style.backgroundColor = "#4a4a4a";
+                  }
+                }}
+                onMouseLeave={(e) => {
+                  if (!enableCollaboration) {
+                    e.currentTarget.style.backgroundColor = "#3a3a3a";
+                  }
+                }}
+              >
+                <div
+                  style={{
+                    width: "18px",
+                    height: "18px",
+                    backgroundColor: "#ffffff",
+                    borderRadius: "50%",
+                    position: "absolute",
+                    top: "3px",
+                    left: enableCollaboration ? "26px" : "4px",
+                    transition: "left 0.3s",
+                    boxShadow: "0 2px 4px rgba(0,0,0,0.2)",
+                  }}
+                />
+              </div>
+            </div>
+            <p style={{ fontSize: "12px", color: "#808080", marginTop: "6px" }}>
+              {enableCollaboration
+                ? "Multi-user collaboration enabled with unique instance ID"
+                : "Static instance for single-user experience"}
+            </p>
+          </div>
+
+          <button
+            onClick={() => {
+              // Generate UUID for collaboration mode
+              const generateUUID = () => {
+                return 'xxxxxxxx-xxxx-4xxx-yxxx-xxxxxxxxxxxx'.replace(/[xy]/g, function(c) {
+                  const r = Math.random() * 16 | 0;
+                  const v = c === 'x' ? r : (r & 0x3 | 0x8);
+                  return v.toString(16);
+                });
+              };
+
+              console.log("Form submitted:", { translationID, book, chapter, enableCollaboration });
+
+              const url = new URL(`https://ao.bot/?pattern=SeedBibleDev`);
+              
+              if (enableCollaboration) {
+                // Collaboration mode: add inst and owner parameters
+                url.searchParams.set("inst", generateUUID());
+                url.searchParams.set("owner", "public");
+              } else {
+                // Static mode: add bios=local inst parameter
+                url.searchParams.set("bios", "local inst");
+              }
+              
+              if (translationID && translationID !== 'BSB') {
+                url.searchParams.set("translation", translationID);
+              }
+
+              if (book && book !== 'GEN') {
+                url.searchParams.set("book", book);
+              }
+              if (chapter && chapter !== '1') {
+                url.searchParams.set("chapter", chapter);
+              }
+
+              os.goToURL(
+                `${url.href}&noGridPortal`
+              );
+
+              // For now, just go back to home
+              setCurrentView("home");
+            }}
+            style={{
+              width: "100%",
+              backgroundColor: "#e67e50",
+              border: "none",
+              borderRadius: "6px",
+              cursor: "pointer",
+              padding: "14px 20px",
+              fontSize: "15px",
+              fontWeight: "600",
+              color: "#1a1a1a",
+              transition: "all 0.2s",
+            }}
+            onMouseEnter={(e) => {
+              e.currentTarget.style.transform = "translateY(-2px)";
+              e.currentTarget.style.boxShadow = "0 8px 20px rgba(230, 126, 80, 0.3)";
+            }}
+            onMouseLeave={(e) => {
+              e.currentTarget.style.transform = "translateY(0)";
+              e.currentTarget.style.boxShadow = "none";
+            }}
+          >
+            Generate Configuration
+          </button>
+        </div>
+
+        <button
+          onClick={() => {
+            const url = new URL(`https://ao.bot/`);
+
+            os.goToURL(`${url.href}`);
+          }}
+          style={{
+            width: "220px",
+            backgroundColor: "transparent",
+            border: "solid 1px #3a3a3a",
+            borderRadius: "6px",
+            cursor: "pointer",
+            padding: "14px 20px",
+            fontSize: "15px",
+            fontWeight: "600",
+            color: "#ccc",
+            transition: "all 0.2s",
+            marginTop: "22px",
+          }}
+          onMouseEnter={(e) => {
+            e.currentTarget.style.transform = "translateY(-2px)";
+            e.currentTarget.style.boxShadow = "0 8px 20px rgba(179, 179, 179, 0.3)";
+          }}
+          onMouseLeave={(e) => {
+            e.currentTarget.style.transform = "translateY(0)";
+            e.currentTarget.style.boxShadow = "none";
+          }}
+        >
+          Enter IDE
+        </button>
       </div>
     );
   }
