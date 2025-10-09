@@ -151,7 +151,8 @@ function TextSettings() {
                                 })
                             }
                         >
-                            <option selected={textConfig[section].font === 'EB Garamond'}>EB Garamond</option>
+                            <option selected={textConfig[section].font === `'Newsreader', serif`}>Newsreader</option>
+                            <option selected={textConfig[section].font === `'Plus Jakarta Sans', sans-serif`}>Plus Jakarta Sans</option>
                             <option selected={textConfig[section].font === `'Helvetica Neue', sans-serif`}>Montserrat</option>
                             <option selected={textConfig[section].font === `Helvetica Neue`}>Helvetica Neue</option>
                             <option selected={textConfig[section].font === 'Roboto'}>Roboto</option>
