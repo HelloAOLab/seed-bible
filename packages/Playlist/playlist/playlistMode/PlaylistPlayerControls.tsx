@@ -693,8 +693,6 @@ const PlayerControls = ({ parentId = "default" }) => {
     globalThis.SetQueue(items);
   };
 
-  console.log(currentItem);
-
   const isItemLink = outerWebsiteItem[currentItem?.additionalInfo?.type];
 
   return (
