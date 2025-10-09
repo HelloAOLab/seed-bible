@@ -826,15 +826,6 @@ function ThePage({
       onMouseUp={handleMouseUp}
       onClick={hanldNavFunctions}
     >
-      <link
-        href="https://fonts.cdnfonts.com/css/helvetica-neue-55"
-        rel="stylesheet"
-      />
-      <link href="https://fonts.cdnfonts.com/css/montserrat" rel="stylesheet" />
-      <link
-        href="https://fonts.googleapis.com/css2?family=EB+Garamond:ital,wght@0,400..800;1,400..800&display=swap"
-        rel="stylesheet"
-      />
       {data && tab && !tabEntered ? (
         <>
           <div
@@ -1420,9 +1411,7 @@ function Section({
           });
         }}
         className="sectionTitle"
-      >
-        {heading}
-      </div>
+      >{heading}</div>
       <div style={textEdit ? editTextStyle : null}>
         {textEdit && <div className="editVerseTitle">Verse - Text</div>}
         {textEdit && (

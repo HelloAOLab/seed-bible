@@ -506,6 +506,8 @@ const PlayerControls = ({ parentId = "default" }) => {
     return () => {
       globalThis.IsPlaylistPlaying = false;
       globalThis.IsQueuePresent = false;
+      globalThis.RemotePlaylistPlayed = false;
+      EmitData("playlistStopped", {});
     };
   }, []);
 
@@ -693,6 +695,15 @@ const PlayerControls = ({ parentId = "default" }) => {
     globalThis.SetQueue(items);
   };
 
+  useLayoutEffect(() => {
+    if (!globalThis.UPDATE_VIA_SHOUT) {
+      EmitData("playlistQueueUpdated", { playlists });
+      EmitData("playlistCurrentIndexUpdate", { currIndex });
+    } else {
+      globalThis.UPDATE_VIA_SHOUT = false;
+    }
+  }, [currIndex, playlists]);
+
   const isItemLink = outerWebsiteItem[currentItem?.additionalInfo?.type];
 
   return (
@@ -776,7 +787,7 @@ const PlayerControls = ({ parentId = "default" }) => {
                   alignItems: "center",
                   margin: "0",
                   marginBottom: "0.5rem",
-                  fontFamily: "DM Mono",
+                  fontFamily: "DM Sans",
                   height: "12px",
                 }}>
                 {showCurrent
@@ -940,6 +951,13 @@ const PlayerControls = ({ parentId = "default" }) => {
               </p>
               <p
                 onClick={() => {
+                  if (globalThis.RemotePlaylistPlayed) {
+                    return ShowNotification({
+                      message:
+                        "Only Host can add items to the queue..",
+                      severity: "error",
+                    });
+                  }
                   setOpenAttachLink(true);
                 }}
                 style={{

@@ -3,6 +3,7 @@ body {
   position: fixed !important;
   left: -10px !important;
   top: -10px !important;
+  font-optical-sizing: auto;
 }
 
 * {
@@ -183,7 +184,7 @@ body {
 
 .softText {
   color: var(--text2);
-  font-family: "Helvetica Neue";
+  font-family: 'Satoshi', system-ui, sans-serif;
   font-size: 14px;
   font-style: normal;
   font-weight: 400;
@@ -192,7 +193,7 @@ body {
 
 .mediumText {
   color: var(--themeText1);
-  font-family: "Open Sans";
+  font-family: 'Satoshi', system-ui, sans-serif;
   font-size: 14px;
   font-style: normal;
   font-weight: 400;
@@ -203,7 +204,7 @@ body {
 
 .blackText {
   color: var(--themeText2);
-  font-family: "Helvetica Neue";
+  font-family: 'Satoshi', system-ui, sans-serif;
   font-size: 16px;
   font-style: normal;
   font-weight: 400;
@@ -215,7 +216,7 @@ body {
   border: 1px solid #e1e3ea;
   background: #e6e6e6;
   color: #5f5e5c;
-  font-family: Inter;
+  font-family: 'Satoshi', system-ui, sans-serif;
   font-size: 15px;
   font-style: normal;
   font-weight: 400;
