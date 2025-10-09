@@ -250,7 +250,8 @@ const PlaylistRowItem = ({ currentDateActive, shareProfileName, oldItemsMap = {}
             description,
             icons: globalThis.PREDEFINED_ICONS,
             shareProfileName,
-            shareProfilePic
+            shareProfilePic,
+            sharerID: authBot?.id
         };
 
         const sanitizedItem = sanitizeObject(playlistObj);
