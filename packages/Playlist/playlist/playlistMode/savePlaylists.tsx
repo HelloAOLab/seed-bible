@@ -5,13 +5,13 @@ let playlistsToSave = [...that.playlists];
 const isCurrAuth = !!authBot?.id;
 
 if (!globalThis.WAS_PREV_AUTH && isCurrAuth) {
+  thisBot.getBookmarks();
   const playlistRes = await thisBot.getPlaylists({
     initialList: playlistsToSave,
   });
   if (playlistRes?.length) {
     playlistsToSave = [...playlistRes];
   }
-  await thisBot.getBookmarks();
   globalThis.SetAuthSwtich?.((p) => !p);
 }
 
