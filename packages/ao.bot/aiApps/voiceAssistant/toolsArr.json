@@ -2,24 +2,24 @@
     {
         "type": "function",
         "name": "getSeedBibleUrl",
-        "description": "Generate AO Seed Bible URLs according to user input (translation, book, chapter, or verse). example https://ao.bot/?pattern=SeedBibleDev&noGridPortal=true&book=jhn&chapter=3&verse=16",
+        "description": "Generate AO Seed Bible URLs according to user input (language, book, chapter, or verse).",
         "parameters": {
             "type": "object",
             "properties": {
-                "translation": {
+                "language": {
                     "type": "string",
-                    "description": "Optional. Bible translation code exaple BSB ."
+                    "description": "Optional. the language user specifies."
                 },
-                "book": {
+                "bookId": {
                     "type": "string",
-                    "description": "Optional. The book ID (e.g., gen, jhn, psa)."
+                    "description": "Optional. get the book id by the book name user mentions. available book ids are GEN, EXO, LEV, NUM, DEU, JOS, JDG, RUT, 1SA, 2SA, 1KI, 2KI, 1CH, 2CH, EZR, NEH, EST, JOB, PSA, PRO, ECC, SNG, ISA, JER, LAM, EZK, DAN, HOS, JOL, AMO, OBA, JON, MIC, NAM, HAB, ZEP, HAG, ZEC, MAL, MAT, MRK, LUK, JHN, ACT, ROM, 1CO, 2CO, GAL, EPH, PHP, COL, 1TH, 2TH, 1TI, 2TI, TIT, PHM, HEB, JAS, 1PE, 2PE, 1JN, 2JN, 3JN, JUD and REV"
                 },
                 "chapter": {
-                    "type": "string",
+                    "type": "number",
                     "description": "Optional. Chapter number."
                 },
                 "verse": {
-                    "type": "string",
+                    "type": "number",
                     "description": "Optional. Verse number."
                 }
             }
