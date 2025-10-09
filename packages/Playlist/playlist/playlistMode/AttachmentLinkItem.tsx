@@ -9,6 +9,7 @@ const editAbleTypes = {
     "iframe": true,
     "video": true,
     "Video": true,
+    "externalLink": true,
 }
 
 const AutoplayIcons = {
