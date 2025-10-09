@@ -1424,6 +1424,10 @@ function Section({
         )}
         <div className="sectionCover">
           {verses.map((verse) => {
+            if (verse.lineBreak) {
+              return <p class="verseLineBreak"></p>
+            }
+
             const [c, setC] = useState(false);
             const isActive = verse.verseNumber.toString() === activeVerse;
             const shouldShowCommands =

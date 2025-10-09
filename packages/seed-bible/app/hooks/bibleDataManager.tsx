@@ -28,6 +28,8 @@ function parseContent(content) {
         } else if (type === 'verse') {
             const verseText = parseText(sectionContent);
             currentSection.verses.push({ verseNumber: number, text: verseText });
+        } else if (type === 'line_break') {
+            currentSection.verses.push({ verseNumber: null, text: '\n', lineBreak: true });
         }
     });
 
