@@ -7,7 +7,6 @@ if (that.name === 'updateSharingData') {
     shout('updatedYourData', { user: that.remoteId, tab: { ...that.that } })
 }
 if (masks['remotes'] && masks['remotes'].includes(that.remoteId)) {
-    console.log(that)
     if (that.name === 'book') {
         shout('remoteBookChange', { ...that.that })
     }
@@ -23,10 +22,13 @@ if (masks['remotes'] && masks['remotes'].includes(that.remoteId)) {
         // os.log('appClick', that.that)
         const { name } = that.that
         globalThis[name].onClick()
+    } else if (that.name === "playlistPlayed") {
+        shout('remotePlaylistPlayed', { ...that.that })
+    } else if (that.name === "playlistQueueUpdated") {
+        shout('remotePlaylistMetaDataUpdate', { ...that.that, playlistUpdated: true })
+    } else if (that.name === "playlistCurrentIndexUpdate") {
+        shout('remotePlaylistMetaDataUpdate', { ...that.that, indexesUpdate: true })
     }
-
-
-
 } else {
 
 

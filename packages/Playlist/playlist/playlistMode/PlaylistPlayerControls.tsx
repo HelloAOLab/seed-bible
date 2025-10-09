@@ -693,6 +693,15 @@ const PlayerControls = ({ parentId = "default" }) => {
     globalThis.SetQueue(items);
   };
 
+  useLayoutEffect(() => {
+    if (!globalThis.UPDATE_VIA_SHOUT) {
+      EmitData("playlistQueueUpdated", { playlists });
+      EmitData("playlistCurrentIndexUpdate", { currIndex });
+    }else {
+      globalThis.UPDATE_VIA_SHOUT = false;
+    }
+  }, [currIndex, playlists]);
+
   const isItemLink = outerWebsiteItem[currentItem?.additionalInfo?.type];
 
   return (
