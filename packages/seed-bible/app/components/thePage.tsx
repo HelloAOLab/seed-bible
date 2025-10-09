@@ -22,6 +22,21 @@ import { MiniTextEditor } from "app.components.smallEditor";
 
 import { ConfigurableFunctionCommands } from "app.components.commands";
 
+function generateQuery(params) {
+  let queryArray = [];
+  for (let key in params) {
+    if (params.hasOwnProperty(key)) {
+      queryArray.push(encodeURIComponent(key) + '=' + encodeURIComponent(params[key]));
+    }
+  }
+  return queryArray.join('&');
+}
+
+function attachQueryToURL(url, params) {
+  const queryString = generateQuery(params);
+  return url + (url.includes('?') ? '&' : '?') + queryString;
+}
+
 function ThePage({
   tab: T,
   setPanalApp,
@@ -63,15 +78,182 @@ function ThePage({
   const [wordHighlightsTC, setWordHighlightsTC] = useState("black");
   const [wordHighlightsBC, setWordHighlightsBC] = useState("transparent");
 
+  const loadTranslationFromUrl = async () => {
+    console.log(configBot.tags.translationId, "translation id")
+    let translationId = configBot.tags.translationId;
+    let baseUrl = "https://bible.helloao.org";
+    let bookId = "GEN";
+    let bookTranslationId = "BSB";
+    let firstChapterApiLink;
+    if (translationId) {
+      os.toast(`Loading ${translationId} translation`)
+
+      let available_translations_req = await web.get("https://bible.helloao.org/api/available_translations.json");
+      let allTranslations = [];
+      let translations = {};
+      let defaultTranslations = [
+        "english",
+        "spanish",
+        "arabic",
+        "hindi",
+        "hebrew",
+        "ancient greek",
+        "custom"
+      ]
+      allTranslations = available_translations_req.data.translations.map(item => {
+        return {
+          ...item,
+          languageEnglishName: item?.languageEnglishName || item.englishName
+        }
+      });
+
+      let trValue = {
+        pass: false,
+        value: null
+      };
+      if (available_translations_req.status === 200) {
+        allTranslations.forEach(translationData => {
+          if (translationData.id.toLowerCase() === translationId.toLowerCase()) {
+            trValue.pass = true;
+            trValue.value = translationData;
+          }
+        })
+
+        let urlId = translationId.includes("https://");
+
+        if (trValue.pass && !urlId) {
+          let bookData = await web.get(`https://bible.helloao.org/api/${trValue.value.id}/books.json`);
+          let book0 = bookData.data.books[0];
+          setTagMask(thisBot, "selectedTranslation", trValue.value, "local");
+          setTagMask(thisBot, "booksData", bookData.data.books, "local");
+          bookId = book0.id;
+          bookTranslationId = trValue.value.id;
+          firstChapterApiLink = book0.firstChapterApiLink;
+        } else if (!urlId) {
+          let url = `https://aolab-bible-api.netlify.app/api/translations/getTranslation`;
+          let params = {
+            uid: translationId
+          }
+          let queryUrl = attachQueryToURL(url, params);
+          let result = await web.get(queryUrl);
+          if (result.status === 200 && result.data.data) {
+            let translation = JSON.parse(result.data.data.translation);
+            console.log("1 trans")
+            let englishName = translation.languageEnglishName.toLowerCase();
+            let shortName = translation.shortName.toLowerCase();
+
+            let bookData = await web.get(translation.listOfBooksApiLink);
+
+            let book0 = bookData.data.books[0];
+            setTagMask(thisBot, "selectedTranslation", translation, "local");
+            setTagMask(thisBot, "booksData", bookData.data.books, "local");
+            if (!defaultTranslations.includes(englishName)) {
+              defaultTranslations.push(englishName)
+              translations[englishName] = {
+                [shortName]: translation
+              }
+            }
+            baseUrl = translation.origin;
+            bookId = book0.id;
+            bookTranslationId = translation.id;
+            firstChapterApiLink = book0.firstChapterApiLink;
+          }
+        } else {
+          let result = await web.get(translationId);
+          if (result.status === 200) {
+            const url = new URL(translationId);
+            let newTranslations = result.data.translations;
+            let defaultTranslation = newTranslations[0];
+            newTranslations = newTranslations.map(trans => {
+              return {
+                languageEnglishName: trans.languageEnglishName,
+                id: trans.id,
+                listOfBooksApiLink: `${url.origin}${trans.listOfBooksApiLink}`,
+                origin: url.origin,
+                shortName: trans.shortName
+              }
+            })
+            console.log(newTranslations, "newTranslations")
+            allTranslations = [...allTranslations, ...newTranslations];
+            for (let translation of newTranslations) {
+              console.log("2 trans")
+              let englishName = translation.languageEnglishName.toLowerCase();
+              if (!defaultTranslations.includes(englishName)) {
+                defaultTranslations.push(englishName);
+              }
+            }
+            let translation = {
+              languageEnglishName: defaultTranslation.languageEnglishName,
+              id: defaultTranslation.id,
+              listOfBooksApiLink: `${url.origin}${defaultTranslation.listOfBooksApiLink}`,
+              origin: url.origin,
+              shortName: defaultTranslation.shortName
+            }
+            console.log(translation, "translation")
+            console.log("3 trans")
+            let englishName = translation.languageEnglishName.toLowerCase();
+            let shortName = translation.shortName.toLowerCase();
+
+            let bookData = await web.get(translation.listOfBooksApiLink);
+
+            let book0 = bookData.data.books[0];
+            setTagMask(thisBot, "selectedTranslation", translation, "local");
+            setTagMask(thisBot, "booksData", bookData.data.books, "local");
+            if (!defaultTranslations.includes(englishName)) {
+              defaultTranslations.push(englishName)
+              translations[englishName] = {
+                [shortName]: translation
+              }
+            }
+            baseUrl = translation.origin;
+            bookId = book0.id;
+            bookTranslationId = translation.id;
+            firstChapterApiLink = book0.firstChapterApiLink;
+          }
+        }
+        allTranslations.forEach(translation => {
+          console.log("4 trans", translation)
+          if (!translation?.languageEnglishName?.toLowerCase()) {
+            console.log(translation, "culprit")
+          }
+          let englishName = translation?.languageEnglishName?.toLowerCase() || translation?.englishName?.toLowerCase();
+          let shortName = translation.shortName.toLowerCase();
+          if (translations[englishName]) {
+            if (!translations[englishName][shortName]) {
+              translations[englishName][shortName] = translation;
+            }
+          } else {
+            translations[englishName] = {
+              [shortName]: translation
+            }
+          }
+        })
+        setTagMask(thisBot, "allTranslations", allTranslations, "local");
+        setTagMask(thisBot, "apiTranslations", { ...translations }, "local")
+        setTagMask(thisBot, "defaultTranslations", defaultTranslations, "local")
+        console.log(defaultTranslations, translations, "trans")
+        configBot.tags.translationId = null;
+      }
+    }
+    return {
+      baseUrl,
+      bookId,
+      bookTranslationId,
+      firstChapterApiLink
+    }
+  }
+
   const [bible, setBible] = useState();
   if (tab) globalThis[`SetEnableEditorOf${tab?.id}`] = setEnableEditor;
   async function loadData() {
     if (!tab) return;
+    let { baseUrl, bookId, bookTranslationId } = await loadTranslationFromUrl();
     const bible = new BibleDataManager({
       tabId: tab?.id,
-      translation: tab.data.translation,
-      bookId: tab.data.bookId,
+      translation: bookTranslationId || tab.data.translation,
+      bookId: bookId || tab.data.bookId,
       chapter: tab.data.chapter,
+      basuUrl: baseUrl
     });
     setBible(bible);
 
@@ -143,7 +325,7 @@ function ThePage({
       await bible.open(
         configBot.tags.book.toUpperCase(),
         configBot.tags.chapter,
-        configBot.tags.translation || configBot.tags.translationId || "BSB"
+        configBot.tags.translation || "BSB"
       );
       setData(bible.data);
       configBot.tags.book = null;
@@ -215,9 +397,8 @@ function ThePage({
         setLastSelectedVerse(selectedArray[selectedArray.length - 1]);
         setContextData({
           verse: window.getSelection().toString(),
-          reference: `${data?.book} ${data?.chapter}:${selectedArray[0]}-${
-            selectedArray[selectedArray.length - 1]
-          }`,
+          reference: `${data?.book} ${data?.chapter}:${selectedArray[0]}-${selectedArray[selectedArray.length - 1]
+            }`,
           book: data?.book,
           chapter: data?.chapter,
           verses: selectedArray,
@@ -426,8 +607,8 @@ function ThePage({
               createAttributes: config?.createAttributes
                 ? config.createAttributes
                 : () => {
-                    return {};
-                  },
+                  return {};
+                },
             };
           });
         });
@@ -504,11 +685,11 @@ function ThePage({
       openPrevChapter,
       open,
       changeTranslation: bible?.changeTranslation || undefined,
-      setPanalApp: () => {},
+      setPanalApp: () => { },
     });
     globalThis.Open = open;
     globalThis.ChangeTranslation = changeTranslation;
-    globalThis.SetPanalApp = () => {};
+    globalThis.SetPanalApp = () => { };
     globalThis.ToggleVerseHighlight = toggleVerseHighlight;
     globalThis.UnHighlightVerse = unHighlightVerse;
     globalThis.HighlightVerse = highlightVerse;
@@ -670,11 +851,10 @@ function ThePage({
       if (!tab?.id) return;
       EmitData("highlight", verseNumbers);
       // console.log(data, 'remoteData')
-      const verseId = `v-${
-        typeof verseNumbers === "object"
+      const verseId = `v-${typeof verseNumbers === "object"
           ? verseNumbers[verseNumbers.length - 1]
           : verseNumbers
-      }`;
+        }`;
       // console.log(verseId, 'verseId', document.getElementById(verseId))
       document.getElementById(verseId).scrollIntoView({
         behavior: "smooth", // enables smooth animation
@@ -726,11 +906,10 @@ function ThePage({
       if (!tab?.id) return;
       EmitData("highlight", verseNumbers);
       // console.log(data, 'remoteData')
-      const verseId = `v-${
-        typeof verseNumbers === "object"
+      const verseId = `v-${typeof verseNumbers === "object"
           ? verseNumbers[verseNumbers.length - 1]
           : verseNumbers
-      }`;
+        }`;
       // console.log(verseId, 'verseId', document.getElementById(verseId))
       document.getElementById(verseId).scrollIntoView({
         behavior: "smooth", // enables smooth animation
@@ -773,11 +952,10 @@ function ThePage({
       if (!tab?.id) return;
       EmitData("highlight", verseNumbers);
       // console.log(data, 'remoteData')
-      const verseId = `v-${
-        typeof verseNumbers === "object"
+      const verseId = `v-${typeof verseNumbers === "object"
           ? verseNumbers[verseNumbers.length - 1]
           : verseNumbers
-      }`;
+        }`;
       // console.log(verseId, 'verseId', document.getElementById(verseId))
       document.getElementById(verseId).scrollIntoView({
         behavior: "smooth", // enables smooth animation
@@ -917,9 +1095,8 @@ function ThePage({
               justifyContent: "center",
               backgroundColor: "#f8f9fa",
             }}
-            className={`pageContainer ${
-              tabEntered ? "tabEntered" : "tabDrop"
-            } ${highlightOnce ? "tabHighlightBg" : ""}`}
+            className={`pageContainer ${tabEntered ? "tabEntered" : "tabDrop"
+              } ${highlightOnce ? "tabHighlightBg" : ""}`}
           >
             <div
               style={{
@@ -1368,9 +1545,8 @@ function Section({
         return (
           <span
             key={i}
-            className={`clickableCursor highlightened ${
-              isActive ? "highlighted-word" : ""
-            }`}
+            className={`clickableCursor highlightened ${isActive ? "highlighted-word" : ""
+              }`}
             style={{ animationDelay: `${i * 0.1}s` }}
             onClick={() => {
               console.log(part.key);
@@ -1509,14 +1685,14 @@ function Section({
                       (highlighted?.[verse.verseNumber] &&
                         highlighted?.[verse.verseNumber].book === book &&
                         highlighted?.[verse.verseNumber].chapter === chapter) ||
-                      commandHighlight.includes(verse.verseNumber)
+                        commandHighlight.includes(verse.verseNumber)
                         ? wordHighlightsBC
                         : "transparent",
                     color:
                       (highlighted?.[verse.verseNumber] &&
                         highlighted?.[verse.verseNumber].book === book &&
                         highlighted?.[verse.verseNumber].chapter === chapter) ||
-                      commandHighlight.includes(verse.verseNumber)
+                        commandHighlight.includes(verse.verseNumber)
                         ? wordHighlightsTC
                         : "black",
                     transition: "background-color 0.2s ease",
@@ -1534,18 +1710,15 @@ function Section({
                         ? "dotted"
                         : "",
                   }}
-                  className={`sectionText ${
-                    verse?.verseNumber.toString() === activeVerse.toString()
+                  className={`sectionText ${verse?.verseNumber.toString() === activeVerse.toString()
                       ? "highlighted"
                       : ""
-                  } ${
-                    highlighted?.[verse.verseNumber] ? "verse-highlighted" : ""
-                  }`}
+                    } ${highlighted?.[verse.verseNumber] ? "verse-highlighted" : ""
+                    }`}
                 >
                   <span
-                    className={`sectionTextNumber ${
-                      globalThis.studyNotesPresent ? "clickableCursor" : ""
-                    }`}
+                    className={`sectionTextNumber ${globalThis.studyNotesPresent ? "clickableCursor" : ""
+                      }`}
                     onClick={() => {
                       if (globalThis.studyNotesPresent) {
                         HighlightStudyNoteSection(verse?.verseNumber);
@@ -1612,7 +1785,7 @@ export const ThePageWithPanel = ({ tab }) => {
         initialWidth={gridPortalBot.tags.pixelWidth}
         containerWidth={gridPortalBot.tags.pixelWidth}
         containerHeight={1000}
-        onResize={() => {}}
+        onResize={() => { }}
         otherTab={panalApp}
       >
         <ThePage setPanalApp={setPanalApp} tab={tab} />
