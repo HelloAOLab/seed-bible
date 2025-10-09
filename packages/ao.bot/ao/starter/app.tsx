@@ -1138,7 +1138,7 @@ export function AOBotInterface() {
                     textAlign: "left",
                   }}
                 >
-                  Build with seed bible
+                  Build with Seed Bible
                 </div>
               </button>
             </div>
