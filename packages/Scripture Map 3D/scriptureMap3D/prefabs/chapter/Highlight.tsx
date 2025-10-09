@@ -1,4 +1,4 @@
-const chapterData = scriptureMap3DManager.GetPieceData({piece: thisBot});
+const chapterData = ScriptureMap3DManager.GetPieceData({piece: thisBot});
 const duration = 0.1;
 
 let rgbTargetColor;

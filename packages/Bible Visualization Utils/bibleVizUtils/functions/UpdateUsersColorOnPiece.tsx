@@ -28,7 +28,7 @@ for(const fixedPiece of fixedPieces)
         case BibleVizUtils.Data.tags.ObjectPoolTags.LayoutBook:
         case BibleVizUtils.Data.tags.ObjectPoolTags.LayoutChapter:
             pieceData = fixedPiece.tags.poolTag == BibleVizUtils.Data.tags.ObjectPoolTags.StackChapter ? BibleStackManager.GetPieceData({piece: fixedPiece}) :
-                scriptureMap3DManager.GetPieceData({piece: fixedPiece})
+                ScriptureMap3DManager.GetPieceData({piece: fixedPiece})
             selectionsPiece = fixedPiece;
             userColorScales = BibleVizUtils.Data.tags.UsersColorValues.GroundedElementColorScales;
             extraUsersContentScales = BibleVizUtils.Data.tags.UsersColorValues.GroundedElementExtraUsersContentScales;

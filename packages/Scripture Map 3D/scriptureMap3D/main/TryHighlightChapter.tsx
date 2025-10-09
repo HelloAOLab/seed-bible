@@ -7,6 +7,6 @@ if(chapterData.piece.masks.isSelecting        ||
 
 if(chapterData.piece.masks.isOnTheGround && !chapterData.isSelected) 
 {
-    BibleVizUtis.Functions.TryHideUsersNotificationOnPiece({piece: chapterData.piece})
+    BibleVizUtils.Functions.TryHideActivityNotificationOnPiece({piece: chapterData.piece})
 }
 chapterData.piece.Highlight({chapterData});

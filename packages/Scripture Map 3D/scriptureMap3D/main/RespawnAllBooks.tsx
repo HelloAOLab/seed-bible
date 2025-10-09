@@ -27,7 +27,7 @@ for(const respawnableBookStructure of respawnableBooksStructure)
 
     const bookPositionMod = {
         [dimension + "X"]: nameLabelPosition.x,
-        [dimension + "Y"]: nameLabelPosition.y - (BibleVizUtils.Data.BibleLayoutMeasurements.BookLabelHeight/2) - (book.tags.scaleY/2),
+        [dimension + "Y"]: nameLabelPosition.y - (BibleVizUtils.Data.tags.BibleLayoutMeasurements.BookLabelHeight/2) - (book.tags.scaleY/2),
     }
     applyMod(book, bookPositionMod);
 }

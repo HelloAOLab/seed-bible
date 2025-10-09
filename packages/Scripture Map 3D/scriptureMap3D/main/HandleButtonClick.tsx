@@ -21,7 +21,7 @@ switch(button.tags.buttonType)
     }
     break;
 
-    case BibleVizUtils.Data.tags.LayoutButtonType.BibleVizUtils.Data.tags.DateFormatselectorButton: {
+    case BibleVizUtils.Data.tags.LayoutButtonType.DateFormatselectorButton: {
         
         const currentDateFormatIndex = Object.keys(BibleVizUtils.Data.tags.DateFormats).findIndex((key) => {return BibleVizUtils.Data.tags.DateFormats[key] === layoutData.currentDateFormat})
         

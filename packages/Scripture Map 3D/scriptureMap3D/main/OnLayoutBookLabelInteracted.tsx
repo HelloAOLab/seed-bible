@@ -1,1 +1,1 @@
-thisBot.HandlebookLabelInteraction(that);
+thisBot.HandleBookLabelInteraction(that);

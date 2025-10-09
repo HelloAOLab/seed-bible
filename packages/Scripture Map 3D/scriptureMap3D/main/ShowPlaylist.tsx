@@ -46,7 +46,7 @@ for(const playlistEntryInfoIndex in playlistItemsList)
 
             const chapterPosition = getBotPosition(chapterData.piece, dimension);
 
-            const itemPositionZ = BibleVizUtils.Data.BibleLayoutMeasurements.BookPositionZ + (chapterData.playlistEntriesItems.length * (playlistEntryItemHeight + BibleVizUtils.Data.BibleLayoutMeasurements.PlaylistStackedEntryItemGap))
+            const itemPositionZ = BibleVizUtils.Data.tags.BibleLayoutMeasurements.BookPositionZ + (chapterData.playlistEntriesItems.length * (playlistEntryItemHeight + BibleVizUtils.Data.tags.BibleLayoutMeasurements.PlaylistStackedEntryItemGap))
 
             const entryItem = ObjectPooler.GetObjectFromPool({tag: BibleVizUtils.Data.tags.ObjectPoolTags.LayoutChapterPlaylistEntryItem});
             chapterData.AddEntryItem(entryItem);
@@ -56,8 +56,8 @@ for(const playlistEntryInfoIndex in playlistItemsList)
                 [dimension + "X"]: chapterPosition.x,
                 [dimension + "Y"]: chapterPosition.y,
                 [dimension + "Z"]: itemPositionZ,
-                scaleX: BibleVizUtils.Data.BibleLayoutMeasurements.ChapterWidth + BibleVizUtils.Data.BibleLayoutMeasurements.PlaylistEntryItemPadding,
-                scaleY: BibleVizUtils.Data.BibleLayoutMeasurements.ChapterHeight + BibleVizUtils.Data.BibleLayoutMeasurements.PlaylistEntryItemPadding,
+                scaleX: BibleVizUtils.Data.tags.BibleLayoutMeasurements.Chapter3DWidth + BibleVizUtils.Data.tags.BibleLayoutMeasurements.PlaylistEntryItemPadding,
+                scaleY: BibleVizUtils.Data.tags.BibleLayoutMeasurements.Chapter3DHeight + BibleVizUtils.Data.tags.BibleLayoutMeasurements.PlaylistEntryItemPadding,
                 scaleZ: playlistEntryItemHeight,
                 label: chapterData.piece.tags.label,
                 color: index < layoutData.playlistSelectedEntryIndex ? "#D3D3D3" : (index > layoutData.playlistSelectedEntryIndex ? "#FFFFFF" : "#DCF0EC"),
@@ -99,7 +99,7 @@ const prevButtonMod = {
     scaleZ: prevButton.tags.scaleZ,
     [dimension]: true,
     [dimension + "X"]: coverPosition.x - (coverScales.x/2) + (prevButton.tags.scaleX/2),
-    [dimension + "Y"]: coverPosition.y - (coverScales.y/2) - BibleVizUtils.Data.BibleLayoutMeasurements.PlaylistNavigationButtonVerticalGap - (prevButton.tags.scaleY/2),
+    [dimension + "Y"]: coverPosition.y - (coverScales.y/2) - BibleVizUtils.Data.tags.BibleLayoutMeasurements.PlaylistNavigationButtonVerticalGap - (prevButton.tags.scaleY/2),
     [dimension + "Z"]: 0,
     navigationValue: -1,
     layoutId: layoutData.id
@@ -113,7 +113,7 @@ const nextButtonMod = {
     scaleZ: prevButton.tags.scaleZ,
     [dimension]: true,
     [dimension + "X"]: coverPosition.x + (coverScales.x/2) - (prevButton.tags.scaleX/2),
-    [dimension + "Y"]: coverPosition.y - (coverScales.y/2) - BibleVizUtils.Data.BibleLayoutMeasurements.PlaylistNavigationButtonVerticalGap - (prevButton.tags.scaleY/2),
+    [dimension + "Y"]: coverPosition.y - (coverScales.y/2) - BibleVizUtils.Data.tags.BibleLayoutMeasurements.PlaylistNavigationButtonVerticalGap - (prevButton.tags.scaleY/2),
     [dimension + "Z"]: 0,
     navigationValue: 1,
     layoutId: layoutData.id

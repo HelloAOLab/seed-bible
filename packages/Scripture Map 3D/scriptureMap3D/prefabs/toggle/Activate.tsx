@@ -5,7 +5,7 @@ const backgroundCurrentColor = BibleVizUtils.Functions.HexToRgb({hexColor: links
 const duration = 0.125;
 thisBot.StopToggleAnimation();
 
-const layoutData = scriptureMap3DManager.GetMapDataById({ layoutId: thisBot.tags.layoutId })
+const layoutData = ScriptureMap3DManager.GetLayoutDataById({ layoutId: thisBot.tags.layoutId })
 
 
 ColorLerper.LerpTag({
