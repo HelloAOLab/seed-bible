@@ -7,8 +7,8 @@ const { useState, useEffect } = os.appHooks;
 
 const voiceAssistant = getBot('system', 'aiApps.voiceAssistant');
 
-export const ChatView = ({ initialQuery }) => {
-    const { setMicActive, setSpeakerActive, micActive, dcRef, aiState, isAssistantSpeaking, showAssistant, setShowAssistant, messages, setMessesages } = useAssistantContext();
+export const ChatView = ({ initialQuery, newMessageId }) => {
+    const { setMicActive, setSpeakerActive, micActive, dcRef, aiState, isAssistantSpeaking, showAssistant, setShowAssistant, messages, setMessesages, messageHistory, currentMessageId, setMessageHistory, setCurrentMessageId } = useAssistantContext();
     const [query, setQuery] = useState(initialQuery || "");
     const [userWriting, setUserWriting] = useState(false);
     const [assistantWriting, setAssistantWriting] = useState(false);
@@ -75,17 +75,19 @@ export const ChatView = ({ initialQuery }) => {
         }
     }, [setMessesages])
 
-    useEffect(() => {
-        if (initialQuery) {
+    useEffect(async () => {
+        if (initialQuery && newMessageId) {
+            setCurrentMessageId(newMessageId)
+            await os.sleep(100)
             handleSubmit();
         }
     }, [])
 
     useEffect(() => {
-        if(showAssistant){
+        if (showAssistant) {
             setMicActive(true);
             setSpeakerActive(true);
-        }else{
+        } else {
             setMicActive(false);
             setSpeakerActive(false);
         }
@@ -97,8 +99,7 @@ export const ChatView = ({ initialQuery }) => {
                 JSON.stringify({
                     type: "session.update",
                     session: {
-                        instructions: "",
-                        // put you instructions here mazen
+                        instructions: ``
                     }
                 })
             );
@@ -124,7 +125,7 @@ export const ChatView = ({ initialQuery }) => {
                     </div>
                     <div className="separaotr" />
                 </>}
-                <div style={{ flex: 1, overflowY: "auto", padding: "40px 20px", display: "flex", flexDirection: "column", gap: "30px", height: "calc(100dvh - 150px)", scrollbarWifth: "none" }}>
+                <div style={{ flex: 1, overflowY: "auto", padding: "40px 20px", display: "flex", flexDirection: "column", gap: "30px", height: "calc(100dvh - 150px)", scrollbarWidth: "none" }}>
                     {messages.map((msg, idx) => (
                         <div
                             key={idx}
@@ -251,8 +252,8 @@ export const ChatView = ({ initialQuery }) => {
                                     mic
                                 </span>
                             </button>
-                            <button onClick={() => {setShowAssistant(prev => !prev)}} style={{ width: '32px', height: '32px', backgroundColor: 'transparent', border: 'none', cursor: 'pointer', fontSize: '16px', display: 'flex', alignItems: 'center', justifyContent: 'center', opacity: '0.6', transition: 'opacity 0.2s' }} onMouseEnter={(e) => e.currentTarget.style.opacity = '1'} onMouseLeave={(e) => e.currentTarget.style.opacity = '0.6'}>
-                                <span style={{color: showAssistant ? "white" : "#1a1a1a"}} class="material-symbols-outlined">
+                            <button onClick={() => { setShowAssistant(prev => !prev) }} style={{ width: '32px', height: '32px', backgroundColor: 'transparent', border: 'none', cursor: 'pointer', fontSize: '16px', display: 'flex', alignItems: 'center', justifyContent: 'center', opacity: '0.6', transition: 'opacity 0.2s' }} onMouseEnter={(e) => e.currentTarget.style.opacity = '1'} onMouseLeave={(e) => e.currentTarget.style.opacity = '0.6'}>
+                                <span style={{ color: showAssistant ? "white" : "#1a1a1a" }} class="material-symbols-outlined">
                                     graphic_eq
                                 </span>
                             </button>

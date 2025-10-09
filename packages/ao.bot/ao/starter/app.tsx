@@ -7,7 +7,7 @@
 // - Dynamically loads qrcodejs if not already present.
 
 const { useState, useEffect, useRef } = os.appHooks;
-import { VoiceAssistantProvider, useAssistantContext  } from "aiApps.voiceAssistant.VoiceAssistant"
+import { VoiceAssistantProvider, useAssistantContext } from "aiApps.voiceAssistant.VoiceAssistant"
 import { ChatView } from "ao.starter.ChatView";
 const style = tags["App.css"];
 
@@ -168,7 +168,7 @@ function QRCodeComponent({ url, index }) {
 }
 
 export function AOBotInterface() {
-    const { setMicActive, setSpeakerActive, micActive, dcRef, aiState, isAssistantSpeaking  } = useAssistantContext();
+    const { setMicActive, setSpeakerActive, messageHistory, currentMessageId, setMessageHistory, setCurrentMessageId, dcRef } = useAssistantContext();
     const [currentView, setCurrentView] = useState("home");
     const [inputValue, setInputValue] = useState("");
     const [sessionCode, setSessionCode] = useState("");
@@ -1165,14 +1165,20 @@ export function AOBotInterface() {
                         CHAT HISTORY
                     </div>
 
-                    {chatHistory.map((chat) => (
+                    {Object.keys(messageHistory).map((key) => (
                         <div
-                            key={chat.id}
-                            onClick={() => loadChat(chat.id)}
+                            key={key}
+                            onClick={() => {
+                                setCurrentMessageId(key);
+                                const dc = dcRef.current;
+                                if (dc && dc.readyState === "open") {
+                                    dc.send(JSON.stringify({ type: "output_audio_buffer.clear" }));
+                                }
+                            }}
                             style={{
                                 width: "100%",
                                 padding: "12px 16px",
-                                backgroundColor: currentChatId === chat.id ? "#2a2a2a" : "transparent",
+                                backgroundColor: currentMessageId === key ? "#2a2a2a" : "transparent",
                                 border: "none",
                                 color: "#fff",
                                 fontSize: "13px",
@@ -1186,13 +1192,12 @@ export function AOBotInterface() {
                                 marginBottom: "4px",
                             }}
                             onMouseEnter={(e) => (e.currentTarget.style.backgroundColor = "#2a2a2a")}
-                            onMouseLeave={(e) => (e.currentTarget.style.backgroundColor = currentChatId === chat.id ? "#2a2a2a" : "transparent")}
+                            onMouseLeave={(e) => (e.currentTarget.style.backgroundColor = currentMessageId === key ? "#2a2a2a" : "transparent")}
                         >
                             <div style={{ flex: 1, overflow: "hidden", textOverflow: "ellipsis", whiteSpace: "nowrap" }}>
-                                💬 {chat.title}
+                                💬 {messageHistory[key]?.chatMessages[messageHistory[key].itemArray[0]]?.message || "New Chat"}
                             </div>
                             <button
-                                onClick={(e) => deleteChat(chat.id, e)}
                                 style={{
                                     backgroundColor: "transparent",
                                     border: "none",
@@ -1212,7 +1217,7 @@ export function AOBotInterface() {
                         </div>
                     ))}
 
-                    {chatHistory.length === 0 && (
+                    {Object.keys(messageHistory).length === 0 && (
                         <div style={{ padding: "20px 16px", fontSize: "13px", color: "#666", textAlign: "center" }}>
                             No chat history yet.
                             <br />
@@ -1222,7 +1227,7 @@ export function AOBotInterface() {
                 </div>
             </div>
 
-            <ChatView initialQuery={inputValue} />
+            <ChatView initialQuery={inputValue} newMessageId={uuid()} />
         </div>
     );
 }

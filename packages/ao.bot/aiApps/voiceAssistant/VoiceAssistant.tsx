@@ -14,7 +14,7 @@ import StreamTextAi from "aiApps.voiceAssistant.StreamTextAI";
 import TextAndAvatar from "aiApps.voiceAssistant.TextAndAvatar";
 import { OutputMessageLog } from 'aiApps.voiceAssistant.HandleMessageLog';
 
-export function VoiceAssistantProvider({children}) {
+export function VoiceAssistantProvider({ children }) {
     const [connected, setConnected] = useState(false);
     const [start, setStart] = useState(true);
     const [isAssistantSpeaking, setIsAssistantSpeaking] = useState(false);
@@ -42,25 +42,35 @@ export function VoiceAssistantProvider({children}) {
     const dcRef = useRef(null);
 
     useEffect(() => {
-        if(currentMessageId){
-//             chatMessages
-// itemArray
-            
-
+        if (currentMessageId && messageHistory[currentMessageId]) {
+            setTagMask(thisBot, 'chatMessages', { ...messageHistory[currentMessageId].chatMessages }, "tempLocal");
+            setTagMask(thisBot, 'itemArray', [...messageHistory[currentMessageId].itemArray], "tempLocal");
+            setMessesages([...OutputMessageLog()])
+        }else if(currentMessageId && !messageHistory[currentMessageId]){
+            setTagMask(thisBot, 'chatMessages', {}, "tempLocal");
+            setTagMask(thisBot, 'itemArray', [], "tempLocal");
+            setMessageHistory({
+                ...messageHistory,
+                [currentMessageId]: {
+                    chatMessages: {},
+                    itemArray: []
+                }
+            })
+            setMessesages([...OutputMessageLog()])
         }
     }, [currentMessageId])
 
     useEffect(() => {
-        if(messages && currentMessageId){
+        if (messages && messageHistory[currentMessageId]) {
             setMessageHistory({
                 ...messageHistory,
-                currentMessageId: {
-                    chatMessages: [...masks.chatMessages],
+                [currentMessageId]: {
+                    chatMessages: { ...masks.chatMessages },
                     itemArray: [...masks.itemArray]
                 }
             })
         }
-    }, [messages, currentMessageId])
+    }, [messages])
 
     useEffect(() => {
         globalThis.AISetStart = setStart;
@@ -68,6 +78,10 @@ export function VoiceAssistantProvider({children}) {
             globalThis.AISetStart = null;
         }
     }, [])
+
+    useEffect(() => {
+        console.log(messageHistory, "messageHistory")
+    }, [messageHistory])
 
     useEffect(() => {
         if (start) {
@@ -129,7 +143,11 @@ export function VoiceAssistantProvider({children}) {
                 showAssistant,
                 setShowAssistant,
                 messages,
-                setMessesages
+                setMessesages,
+                messageHistory,
+                currentMessageId,
+                setMessageHistory,
+                setCurrentMessageId,
             }}
         >
             <ConnectionManager
