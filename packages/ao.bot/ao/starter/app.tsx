@@ -679,7 +679,7 @@ export function AOBotInterface() {
           >
             <img
               style={{ width: 100 }}
-              src="https://res.cloudinary.com/dfbtwwa8p/image/upload/v1759246219/Group_1338_gsqgta.png"
+              src="https://res.cloudinary.com/dfbtwwa8p/image/upload/v1760042693/AO_Lab_Logo_White_-_No_Text_sivdge.webp"
               alt="AO Logo"
             />
           </div>
@@ -961,7 +961,7 @@ export function AOBotInterface() {
           >
             <img
               style={{ width: 100 }}
-              src="https://res.cloudinary.com/dfbtwwa8p/image/upload/v1759246219/Group_1338_gsqgta.png"
+              src="https://res.cloudinary.com/dfbtwwa8p/image/upload/v1760042926/aobot-logo-white_avr7ix.png"
               alt="AO Logo"
             />
           </div>
