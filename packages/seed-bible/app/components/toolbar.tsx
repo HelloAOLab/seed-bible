@@ -143,20 +143,18 @@ export function Toolbar() {
                 <span className="material-symbols-outlined">chevron_left</span>
               </button>
             </div>
-            {isMobile && (
-              <div
-                onClick={() => {
-                  setSidebarWidth(300);
-                  setOpenOnMobile(true);
-                  globalThis[`setOpenSidebar`] && setOpenSidebar(false);
-                }}
-                className="toolbar-item-wrapper"
-              >
-                <button className={`toolbar-button firstToolbarbutton`}>
-                  <span className="material-symbols-outlined">menu</span>
-                </button>
-              </div>
-            )}
+            <div
+              onClick={() => {
+                setSidebarWidth(300);
+                setOpenOnMobile(true);
+                globalThis[`setOpenSidebar`] && setOpenSidebar(false);
+              }}
+              className="toolbar-item-wrapper mobile-only"
+            >
+              <button className={`toolbar-button firstToolbarbutton`}>
+                <span className="material-symbols-outlined">menu</span>
+              </button>
+            </div>
             {tools?.map((tool, index) =>
               tool?.active === false ? null : (
                 <div
