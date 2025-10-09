@@ -1570,7 +1570,7 @@ export function AOBotInterface() {
               }
               
               if (translationID && translationID !== 'BSB') {
-                url.searchParams.set("translationID", translationID);
+                url.searchParams.set("translation", translationID);
               }
 
               if (book && book !== 'GEN') {
