@@ -58,7 +58,6 @@ function ThePage({
   const [lastSelectedVerse, setLastSelectedVerse] = useState(null);
   const [highlighted, setHighlighted] = useState({});
 
-
   // Add state for word highlights
   const [wordHighlights, setWordHighlights] = useState({});
   const [wordHighlightsTC, setWordHighlightsTC] = useState("black");
@@ -94,16 +93,17 @@ function ThePage({
     // await bible.changeTranslation('KJV');
   }
   useEffect(() => {
-    os.addBotListener(thisBot, 'remoteBookChange', (data) => {
-      console.log('remoteBookChange', data)
-      globalThis.Open(data.bookId, data.chapter)
+    os.addBotListener(thisBot, "remoteBookChange", (data) => {
+      console.log("remoteBookChange", data);
+      globalThis.Open(data.bookId, data.chapter);
       // setData(data)
-    })
-    os.addBotListener(thisBot, 'remoteHighlightChange', (data) => {
-      console.log('remoteHighlightChange', data)
-      toggleVerseHighlight(data)
-    })
-  }, [])
+    });
+    os.addBotListener(thisBot, "remoteHighlightChange", (data) => {
+      console.log("remoteHighlightChange", data);
+      // toggleVerseHighlight(data)
+      globalThis.ToggleVerseHighlight(data);
+    });
+  }, []);
 
   useEffect(() => {
     loadData();
@@ -124,11 +124,16 @@ function ThePage({
           data: { ...tab.data, ...data },
         };
       }
-      os.log('bookdata', data)
-      EmitData('book', { ...data })
+      os.log("bookdata", data);
+      EmitData("book", { ...data });
       // if (tab) {
-      const emitter = getBot('system', 'app.emitter')
-      sendRemoteData(emitter.masks.otherRemotes, 'updateSharingData', { id: tab?.id, bookId: data?.bookId, book: data?.book, chapter: data?.chapter })
+      const emitter = getBot("system", "app.emitter");
+      sendRemoteData(emitter.masks.otherRemotes, "updateSharingData", {
+        id: tab?.id,
+        bookId: data?.bookId,
+        book: data?.book,
+        chapter: data?.chapter,
+      });
       // }
     }
   }, [data]);
@@ -210,8 +215,9 @@ function ThePage({
         setLastSelectedVerse(selectedArray[selectedArray.length - 1]);
         setContextData({
           verse: window.getSelection().toString(),
-          reference: `${data?.book} ${data?.chapter}:${selectedArray[0]}-${selectedArray[selectedArray.length - 1]
-            }`,
+          reference: `${data?.book} ${data?.chapter}:${selectedArray[0]}-${
+            selectedArray[selectedArray.length - 1]
+          }`,
           book: data?.book,
           chapter: data?.chapter,
           verses: selectedArray,
@@ -420,8 +426,8 @@ function ThePage({
               createAttributes: config?.createAttributes
                 ? config.createAttributes
                 : () => {
-                  return {};
-                },
+                    return {};
+                  },
             };
           });
         });
@@ -486,8 +492,8 @@ function ThePage({
     globalThis.ClearAllWordHighlights = clearAllWordHighlights;
     shout("onBookChanged", { ...data, tabId: tab?.id });
     // setHighlighted({})
-    clearAllVerseHighlights()
-    os.log('clearAllVerseHighlights', clearAllVerseHighlights)
+    clearAllVerseHighlights();
+    os.log("clearAllVerseHighlights", clearAllVerseHighlights);
   }, [data]);
   function hanldNavFunctions() {
     //  bible.openNext()
@@ -498,11 +504,11 @@ function ThePage({
       openPrevChapter,
       open,
       changeTranslation: bible?.changeTranslation || undefined,
-      setPanalApp: () => { },
+      setPanalApp: () => {},
     });
     globalThis.Open = open;
     globalThis.ChangeTranslation = changeTranslation;
-    globalThis.SetPanalApp = () => { };
+    globalThis.SetPanalApp = () => {};
     globalThis.ToggleVerseHighlight = toggleVerseHighlight;
     globalThis.UnHighlightVerse = unHighlightVerse;
     globalThis.HighlightVerse = highlightVerse;
@@ -618,7 +624,6 @@ function ThePage({
 
   const [highlightOnce, setHighlightOnce] = useState(false);
 
-
   // Add this useEffect after the existing globalThis assignments:
   useEffect(() => {
     // Initialize tab highlights if not exists
@@ -651,7 +656,7 @@ function ThePage({
     if (tab?.id) globalThis.tabHighlights[tab.id] = {};
 
     // (optional) notify other parts of the app / remotes
-    shout('onAllVerseHighlightsCleared', {
+    shout("onAllVerseHighlightsCleared", {
       tabId: tab?.id,
       book: data?.book,
       chapter: data?.chapter,
@@ -663,14 +668,18 @@ function ThePage({
   const toggleVerseHighlight = useCallback(
     (verseNumbers) => {
       if (!tab?.id) return;
-      EmitData('highlight', verseNumbers)
+      EmitData("highlight", verseNumbers);
       // console.log(data, 'remoteData')
-      const verseId = `v-${typeof verseNumbers === 'object' ? verseNumbers[verseNumbers.length - 1] : verseNumbers}`
+      const verseId = `v-${
+        typeof verseNumbers === "object"
+          ? verseNumbers[verseNumbers.length - 1]
+          : verseNumbers
+      }`;
       // console.log(verseId, 'verseId', document.getElementById(verseId))
       document.getElementById(verseId).scrollIntoView({
-        behavior: 'smooth',      // enables smooth animation
-        block: 'center',         // positions the element in the center of the screen
-        inline: 'nearest'
+        behavior: "smooth", // enables smooth animation
+        block: "center", // positions the element in the center of the screen
+        inline: "nearest",
       });
       const numbers = Array.isArray(verseNumbers)
         ? verseNumbers
@@ -715,14 +724,18 @@ function ThePage({
   const highlightVerse = useCallback(
     (verseNumbers) => {
       if (!tab?.id) return;
-      EmitData('highlight', verseNumbers)
+      EmitData("highlight", verseNumbers);
       // console.log(data, 'remoteData')
-      const verseId = `v-${typeof verseNumbers === 'object' ? verseNumbers[verseNumbers.length - 1] : verseNumbers}`
+      const verseId = `v-${
+        typeof verseNumbers === "object"
+          ? verseNumbers[verseNumbers.length - 1]
+          : verseNumbers
+      }`;
       // console.log(verseId, 'verseId', document.getElementById(verseId))
       document.getElementById(verseId).scrollIntoView({
-        behavior: 'smooth',      // enables smooth animation
-        block: 'center',         // positions the element in the center of the screen
-        inline: 'nearest'
+        behavior: "smooth", // enables smooth animation
+        block: "center", // positions the element in the center of the screen
+        inline: "nearest",
       });
       const numbers = Array.isArray(verseNumbers)
         ? verseNumbers
@@ -758,14 +771,18 @@ function ThePage({
   const unHighlightVerse = useCallback(
     (verseNumbers) => {
       if (!tab?.id) return;
-      EmitData('highlight', verseNumbers)
+      EmitData("highlight", verseNumbers);
       // console.log(data, 'remoteData')
-      const verseId = `v-${typeof verseNumbers === 'object' ? verseNumbers[verseNumbers.length - 1] : verseNumbers}`
+      const verseId = `v-${
+        typeof verseNumbers === "object"
+          ? verseNumbers[verseNumbers.length - 1]
+          : verseNumbers
+      }`;
       // console.log(verseId, 'verseId', document.getElementById(verseId))
       document.getElementById(verseId).scrollIntoView({
-        behavior: 'smooth',      // enables smooth animation
-        block: 'center',         // positions the element in the center of the screen
-        inline: 'nearest'
+        behavior: "smooth", // enables smooth animation
+        block: "center", // positions the element in the center of the screen
+        inline: "nearest",
       });
       const numbers = Array.isArray(verseNumbers)
         ? verseNumbers
@@ -900,8 +917,9 @@ function ThePage({
               justifyContent: "center",
               backgroundColor: "#f8f9fa",
             }}
-            className={`pageContainer ${tabEntered ? "tabEntered" : "tabDrop"
-              } ${highlightOnce ? "tabHighlightBg" : ""}`}
+            className={`pageContainer ${
+              tabEntered ? "tabEntered" : "tabDrop"
+            } ${highlightOnce ? "tabHighlightBg" : ""}`}
           >
             <div
               style={{
@@ -1168,7 +1186,7 @@ function Section({
   selectedText,
   lastSelectedVerse,
   wordHighlightsTC,
-  wordHighlightsBC
+  wordHighlightsBC,
 }) {
   const stripRe = /[.,'"""'']/g;
   const normalize = (k) => k.replace(stripRe, "").toLowerCase().trim();
@@ -1350,8 +1368,9 @@ function Section({
         return (
           <span
             key={i}
-            className={`clickableCursor highlightened ${isActive ? "highlighted-word" : ""
-              }`}
+            className={`clickableCursor highlightened ${
+              isActive ? "highlighted-word" : ""
+            }`}
             style={{ animationDelay: `${i * 0.1}s` }}
             onClick={() => {
               console.log(part.key);
@@ -1392,7 +1411,9 @@ function Section({
                   backgroundColor: wordHighlightsBC,
                 }}
                 {...attributes}
-              >{part.text}</span>
+              >
+                {part.text}
+              </span>
             );
           }
           return <span key={i}>{part.text}</span>;
@@ -1411,7 +1432,9 @@ function Section({
           });
         }}
         className="sectionTitle"
-      >{heading}</div>
+      >
+        {heading}
+      </div>
       <div style={textEdit ? editTextStyle : null}>
         {textEdit && <div className="editVerseTitle">Verse - Text</div>}
         {textEdit && (
@@ -1425,7 +1448,7 @@ function Section({
         <div className="sectionCover">
           {verses.map((verse) => {
             if (verse.lineBreak) {
-              return <p class="verseLineBreak"></p>
+              return <p class="verseLineBreak"></p>;
             }
 
             const [c, setC] = useState(false);
@@ -1477,18 +1500,23 @@ function Section({
                       chapter,
                       book,
                       highlighted: highlighted?.[verse.verseNumber],
-                    }
-                    EmitData('verseClicked', verseClickData)
+                    };
+                    EmitData("verseClicked", verseClickData);
                     shout("onVerseClick", verseClickData);
                   }}
                   style={{
                     "background-color":
-                      (highlighted?.[verse.verseNumber] && highlighted?.[verse.verseNumber].book === book && highlighted?.[verse.verseNumber].chapter === chapter) ||
-                        commandHighlight.includes(verse.verseNumber)
+                      (highlighted?.[verse.verseNumber] &&
+                        highlighted?.[verse.verseNumber].book === book &&
+                        highlighted?.[verse.verseNumber].chapter === chapter) ||
+                      commandHighlight.includes(verse.verseNumber)
                         ? wordHighlightsBC
                         : "transparent",
-                    color: (highlighted?.[verse.verseNumber] && highlighted?.[verse.verseNumber].book === book && highlighted?.[verse.verseNumber].chapter === chapter) ||
-                        commandHighlight.includes(verse.verseNumber)
+                    color:
+                      (highlighted?.[verse.verseNumber] &&
+                        highlighted?.[verse.verseNumber].book === book &&
+                        highlighted?.[verse.verseNumber].chapter === chapter) ||
+                      commandHighlight.includes(verse.verseNumber)
                         ? wordHighlightsTC
                         : "black",
                     transition: "background-color 0.2s ease",
@@ -1506,15 +1534,18 @@ function Section({
                         ? "dotted"
                         : "",
                   }}
-                  className={`sectionText ${verse?.verseNumber.toString() === activeVerse.toString()
-                    ? "highlighted"
-                    : ""
-                    } ${highlighted?.[verse.verseNumber] ? "verse-highlighted" : ""
-                    }`}
+                  className={`sectionText ${
+                    verse?.verseNumber.toString() === activeVerse.toString()
+                      ? "highlighted"
+                      : ""
+                  } ${
+                    highlighted?.[verse.verseNumber] ? "verse-highlighted" : ""
+                  }`}
                 >
                   <span
-                    className={`sectionTextNumber ${globalThis.studyNotesPresent ? "clickableCursor" : ""
-                      }`}
+                    className={`sectionTextNumber ${
+                      globalThis.studyNotesPresent ? "clickableCursor" : ""
+                    }`}
                     onClick={() => {
                       if (globalThis.studyNotesPresent) {
                         HighlightStudyNoteSection(verse?.verseNumber);
@@ -1581,7 +1612,7 @@ export const ThePageWithPanel = ({ tab }) => {
         initialWidth={gridPortalBot.tags.pixelWidth}
         containerWidth={gridPortalBot.tags.pixelWidth}
         containerHeight={1000}
-        onResize={() => { }}
+        onResize={() => {}}
         otherTab={panalApp}
       >
         <ThePage setPanalApp={setPanalApp} tab={tab} />
