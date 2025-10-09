@@ -1,10 +1,13 @@
 import { OutputMessageLog } from 'aiApps.voiceAssistant.HandleMessageLog';
+import { AOIcon } from 'aiApps.voiceAssistant.icons';
 
 const { useState, useEffect } = os.appHooks;
 
-const TextAi = ({ setMicActive, setSpeakerActive, micActive, dcRef }) => {
+const TextAi = ({ setMicActive, setSpeakerActive, micActive, dcRef, aiState }) => {
     const [messages, setMessesages] = useState([...OutputMessageLog()]);
     const [query, setQuery] = useState("");
+    const [userWriting, setUserWriting] = useState(false);
+    const [assistantWriting, setAssistantWriting] = useState(false);
 
     const handleSubmit = () => {
         const dc = dcRef.current;
@@ -22,6 +25,17 @@ const TextAi = ({ setMicActive, setSpeakerActive, micActive, dcRef }) => {
             dc.send(
                 JSON.stringify({ type: "response.create" })
             );
+            let uid = uuid();
+            setTagMask(thisBot, 'chatMessages', {
+                ...masks.chatMessages,
+                [`${uid}`]: {
+                    message: query,
+                    role: "user"
+                }
+            }, "tempLocal");
+            setTagMask(thisBot, 'itemArray', [...masks.itemArray, uid], "tempLocal");
+            setMessesages([...OutputMessageLog()])
+            setAssistantWriting(true);
             setQuery("")
         } else {
             console.warn("DataChannel not open yet, skipping:", dc);
@@ -30,8 +44,12 @@ const TextAi = ({ setMicActive, setSpeakerActive, micActive, dcRef }) => {
 
     useEffect(() => {
         globalThis.SetAiTextMessages = setMessesages;
+        globalThis.SetAssistantWriting = setAssistantWriting;
+        globalThis.SetUserWriting = setUserWriting;
         return () => {
             globalThis.SetAiTextMessages = null;
+            globalThis.SetAssistantWriting = null;
+            globalThis.SetUserWriting = null;
         }
     }, [setMessesages])
 
@@ -53,8 +71,26 @@ const TextAi = ({ setMicActive, setSpeakerActive, micActive, dcRef }) => {
         <div id="message-container" class="message-container">
             {
                 messages.map(message => {
-                    return <span className={`${message.role === "user" ? "user-message" : "assistant-message"}`}>{message.message}</span>
+                    if (message.role === "assistant") {
+                        return <div style={{ display: "flex", width: "100%" }}>
+                            <AOIcon style={{ height: "10px", width: "10px", margin: "0px 5px", marginTop: "3.5px" }} />
+                            <span className={`assistant-message`}>{message.message}</span>
+                        </div>
+                    } else {
+                        return <span className={`user-message`}>{message.message}</span>
+                    }
                 })
+            }
+            {
+                !userWriting && assistantWriting && <div style={{ display: "flex", width: "100%" }}>
+                    <AOIcon style={{ height: "10px", width: "10px", margin: "0px 5px", marginTop: "3.5px" }} />
+                    <span className={`assistant-message thinking`}>Thinking.<span></span></span>
+                </div>
+            }
+            {
+                (userWriting || aiState === "listening") && <div style={{ display: "flex", width: "100%" }}>
+                    <span className={`user-message thinking`}>{aiState === "listening" ? "Listening." : "..."}<span></span></span>
+                </div>
             }
         </div>
         <div class="input-mic-wrapper">

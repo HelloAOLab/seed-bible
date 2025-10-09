@@ -4,7 +4,7 @@
     {
         "icon": "stacks",
         "label": "Bible Stack",
-        "hasToggle": "true",
+        "hasToggle": true,
         "run": "DisplayApp",
         "active": false,
         "showInPageToolbar": true,

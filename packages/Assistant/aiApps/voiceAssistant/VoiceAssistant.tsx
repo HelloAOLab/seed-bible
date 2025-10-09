@@ -8,14 +8,26 @@ import DraggableContainer from 'aiApps.voiceAssistant.DraggableContainer';
 import VoiceAi from 'aiApps.voiceAssistant.VoiceAI';
 import ModeManager from 'aiApps.voiceAssistant.ModeManager';
 import TextAi from 'aiApps.voiceAssistant.TextAI';
+import UserSettings from 'aiApps.voiceAssistant.UserSettings';
+import { AOIcon2, Voice, Text, } from 'aiApps.voiceAssistant.icons';
+import StreamTextAi from "aiApps.voiceAssistant.StreamTextAI";
 
 function VoiceAssistant() {
     const [connected, setConnected] = useState(false);
     const [start, setStart] = useState(true);
     const [isAssistantSpeaking, setIsAssistantSpeaking] = useState(false);
+    const [isAssistantListening, setIsAssistantListening] = useState(false);
     const [aiMode, setAIMode] = useState("Voice");
     const [micActive, setMicActive] = useState(false);
     const [speakerActive, setSpeakerActive] = useState(false);
+    const [openSettings, setOpenSettings] = useState(false);
+    const [aiState, setAiState] = useState("disconnected");
+    const [currentAIConfig, setCurrentAIConfig] = useState({
+        Name: "GPT-Realtime",
+        Description: "The realtime AI using the latest gpt-5",
+        Modes: [Voice, Text],
+        type: "webrtc"
+    })
 
     const audioRef = useRef(null);
     const pcRef = useRef(null);
@@ -28,6 +40,34 @@ function VoiceAssistant() {
             globalThis.AISetStart = null;
         }
     }, [])
+
+    useEffect(() => {
+        if (start) {
+            if (connected) {
+                if(!micActive){
+                    setAiState("muted")
+                }else if (isAssistantListening) {
+                    setAiState("listening");
+                } else if (isAssistantSpeaking) {
+                    setAiState("speaking");
+                } else {
+                    setAiState("connected");
+                }
+            } else {
+                setAiState("connecting");
+            }
+        } else {
+            setAiState("disconnected")
+        }
+    }, [start, connected, isAssistantListening, isAssistantSpeaking, micActive])
+
+    useEffect(() => {
+        if (currentAIConfig.type === "webrtc") {
+            setStart(true)
+        } else {
+            setStart(false)
+        }
+    }, [currentAIConfig])
 
     return (
         <>
@@ -43,6 +83,7 @@ function VoiceAssistant() {
                     micActive={micActive}
                     speakerActive={speakerActive}
                     dcRef={dcRef}
+                    setIsAssistantListening={setIsAssistantListening}
                 />
                 <AudioMonitor
                     audioRef={audioRef}
@@ -50,26 +91,43 @@ function VoiceAssistant() {
                     setIsAssistantSpeaking={setIsAssistantSpeaking}
                 />
 
-                <ModeManager
+                {!openSettings && <ModeManager
                     aiMode={aiMode}
                     setAIMode={setAIMode}
-                />
-                {aiMode === "Voice" && <VoiceAi
+                    setOpenSettings={setOpenSettings}
+                    currentAIConfig={currentAIConfig}
+                />}
+                {aiMode === "Voice" && !openSettings && currentAIConfig.type === "webrtc" && <VoiceAi
                     start={start}
                     connected={connected}
                     isAssistantSpeaking={isAssistantSpeaking}
                     setStart={setStart}
                     setMicActive={setMicActive}
                     setSpeakerActive={setSpeakerActive}
+                    aiState={aiState}
+                    micActive={micActive}
                 />}
                 {
-                    aiMode === "Text" && <TextAi
+                    aiMode === "Text" && !openSettings && currentAIConfig.type === "webrtc" && <TextAi
                         micActive={micActive}
                         setMicActive={setMicActive}
                         speakerActive={speakerActive}
                         setSpeakerActive={setSpeakerActive}
                         dcRef={dcRef}
+                        aiState={aiState}
                     />
+                }
+                {
+                    openSettings && <UserSettings
+                        setMicActive={setMicActive}
+                        setSpeakerActive={setSpeakerActive}
+                        setOpenSettings={setOpenSettings}
+                        setCurrentAIConfig={setCurrentAIConfig}
+                        currentAIConfig={currentAIConfig}
+                    />
+                }
+                {
+                    currentAIConfig.type === "stream" && !openSettings && <StreamTextAi aiConfig={currentAIConfig} />
                 }
             </DraggableContainer>
         </>

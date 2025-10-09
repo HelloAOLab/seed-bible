@@ -1,0 +1,150 @@
+{
+  "author": "Gabriel Souki",
+  "configEditor": {
+    "author": "Gabriel Souki",
+    "contextMenuConfig": {
+      "optionsIsOn": ""
+    },
+    "tabConfig": {
+      "title": "Scripture Map 3D"
+    },
+    "toolbarConfig":
+    {
+        "label": "Scripture Map 3D",
+        "hasToggle": true,
+        "icon": "dashboard",
+        "run": "DisplayApp",
+        "active": false,
+        "showInPageToolbar": true,
+        "showInStarterToolbar": true
+    }
+  },
+  "createdAt": "2025-09-15T16:43:58.673Z",
+  "dependencies": [
+    {
+      "depId": 1757953914413,
+      "name": "Object Pooler",
+      "type": "dependency"
+    },
+    {
+      "depId": 1756665263918,
+      "name": "Bible Visualization Utils",
+      "type": "dependency"
+    }
+  ],
+  "description": "Bible layout to use as a tool in user interfaces.",
+  "id": 1757954638674,
+  "license": "MIT",
+  "linkedDependencies": [],
+  "mainBotTag": "scriptureMap3D.main",
+  "name": "Scripture Map 3D",
+  "otherBots": [
+    {
+      "description": "scriptureMap3D.prefabs.book",
+      "tag": "scriptureMap3D.prefabs.book"
+    },
+    {
+      "description": "scriptureMap3D.prefabs.bookDateLabel",
+      "tag": "scriptureMap3D.prefabs.bookDateLabel"
+    },
+    {
+      "description": "scriptureMap3D.prefabs.bookInfoCardBackground",
+      "tag": "scriptureMap3D.prefabs.bookInfoCardBackground"
+    },
+    {
+      "description": "scriptureMap3D.prefabs.bookInfoCardContent",
+      "tag": "scriptureMap3D.prefabs.bookInfoCardContent"
+    },
+    {
+      "description": "scriptureMap3D.prefabs.bookInfoCardTransformer",
+      "tag": "scriptureMap3D.prefabs.bookInfoCardTransformer"
+    },
+    {
+      "description": "scriptureMap3D.prefabs.button",
+      "tag": "scriptureMap3D.prefabs.button"
+    },
+    {
+      "description": "scriptureMap3D.prefabs.buttonIcon",
+      "tag": "scriptureMap3D.prefabs.buttonIcon"
+    },
+    {
+      "description": "scriptureMap3D.prefabs.buttonLabel",
+      "tag": "scriptureMap3D.prefabs.buttonLabel"
+    },
+    {
+      "description": "scriptureMap3D.prefabs.chapter",
+      "tag": "scriptureMap3D.prefabs.chapter"
+    },
+    {
+      "description": "scriptureMap3D.prefabs.chapterPlaylistEntryItem",
+      "tag": "scriptureMap3D.prefabs.chapterPlaylistEntryItem"
+    },
+    {
+      "description": "scriptureMap3D.prefabs.chapterPlaylistEntryItemNode",
+      "tag": "scriptureMap3D.prefabs.chapterPlaylistEntryItemNode"
+    },
+    {
+      "description": "scriptureMap3D.prefabs.chapterView",
+      "tag": "scriptureMap3D.prefabs.chapterView"
+    },
+    {
+      "description": "scriptureMap3D.prefabs.chunkOfVerses",
+      "tag": "scriptureMap3D.prefabs.chunkOfVerses"
+    },
+    {
+      "description": "scriptureMap3D.prefabs.colorPickerBackground",
+      "tag": "scriptureMap3D.prefabs.colorPickerBackground"
+    },
+    {
+      "description": "scriptureMap3D.prefabs.colorPickerContent",
+      "tag": "scriptureMap3D.prefabs.colorPickerContent"
+    },
+    {
+      "description": "scriptureMap3D.prefabs.cover",
+      "tag": "scriptureMap3D.prefabs.cover"
+    },
+    {
+      "description": "scriptureMap3D.prefabs.label",
+      "tag": "scriptureMap3D.prefabs.label"
+    },
+    {
+      "description": "scriptureMap3D.prefabs.line",
+      "tag": "scriptureMap3D.prefabs.line"
+    },
+    {
+      "description": "scriptureMap3D.prefabs.playlistNavigationButton",
+      "tag": "scriptureMap3D.prefabs.playlistNavigationButton"
+    },
+    {
+      "description": "scriptureMap3D.prefabs.settingsButton",
+      "tag": "scriptureMap3D.prefabs.settingsButton"
+    },
+    {
+      "description": "scriptureMap3D.prefabs.toggle",
+      "tag": "scriptureMap3D.prefabs.toggle"
+    },
+    {
+      "description": "scriptureMap3D.prefabs.toggleBackground",
+      "tag": "scriptureMap3D.prefabs.toggleBackground"
+    },
+    {
+      "description": "scriptureMap3D.prefabs.toggleHandle",
+      "tag": "scriptureMap3D.prefabs.toggleHandle"
+    },
+    {
+      "description": "scriptureMap3D.prefabs.verse",
+      "tag": "scriptureMap3D.prefabs.verse"
+    }
+  ],
+  "recordFile": {
+    "sha256Hash": "0793f76a97452abc57914179748fcc8f739f1f2a51dc9d8017850781170a5062",
+    "success": true,
+    "url": "https://auth-aux-aobot-prod-filesbucket-141297942820.s3.amazonaws.com/testingPublickKey/0793f76a97452abc57914179748fcc8f739f1f2a51dc9d8017850781170a5062.json"
+  },
+  "source": "https://auth-aux-aobot-prod-filesbucket-141297942820.s3.amazonaws.com/testingPublickKey/0793f76a97452abc57914179748fcc8f739f1f2a51dc9d8017850781170a5062.json",
+  "status": "active",
+  "type": "package",
+  "updatedAt": "2025-09-15T17:33:52.980Z",
+  "userAuth": "2225616f-cc40-4129-89a6-b8448743687b",
+  "version": "1.0.1"
+}

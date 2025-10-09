@@ -18,7 +18,7 @@ function attachQueryToURL(url, params) {
     const queryString = generateQuery(params);
     return url + (url.includes('?') ? '&' : '?') + queryString;
 }
-const ConnectionManager = ({ start, setConnected, audioRef, pcRef, micRef, micActive, speakerActive, dcRef }) => {
+const ConnectionManager = ({ start, setConnected, audioRef, pcRef, micRef, micActive, speakerActive, dcRef, setIsAssistantListening }) => {
 
     const init = async () => {
 
@@ -51,16 +51,20 @@ const ConnectionManager = ({ start, setConnected, audioRef, pcRef, micRef, micAc
         dcRef.current = dc;
         dc.onmessage = (e) => {
             const data = JSON.parse(e.data);
-
-            HandleEventMessage(data);
+            HandleEventMessage(data, setIsAssistantListening);
             if (data.type === "response.function_call_arguments.done") {
+                console.log(data)
                 HandleEvents({ dc, data })
             }
         };
 
-        dc.onopen = () => console.log("oai-events open");
+        dc.onopen = () => {
+            console.log("oai-events open");
+            globalThis.DCRef = dc;
+        };
 
         dc.onclose = () => {
+            globalThis.DCRef = null;
             console.log("data channel closing")
         }
 
@@ -112,9 +116,9 @@ const ConnectionManager = ({ start, setConnected, audioRef, pcRef, micRef, micAc
 
     const handleMicAndSpeaker = async () => {
         if (micActive) {
-            micRef.current.getTracks().forEach(track => {track.enabled = true});
+            micRef.current.getTracks().forEach(track => { track.enabled = true });
         } else {
-            micRef.current.getTracks().forEach(track => {track.enabled = false});
+            micRef.current.getTracks().forEach(track => { track.enabled = false });
         }
 
         if (speakerActive) {

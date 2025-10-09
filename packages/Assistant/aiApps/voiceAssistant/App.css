@@ -1,5 +1,43 @@
 .voiceAssistant {
-  x z-index: 10 !important;
+  z-index: 10 !important;
+}
+
+.header-container{
+      display: flex;
+    width: 100%;
+    justify-content: space-between;
+    align-items: center;
+}
+
+.thinking {
+  font-family: Arial, sans-serif;
+  font-size: 18px;
+  font-weight: 500;
+  color: #444;
+}
+
+.thinking span::after {
+  content: "...";
+  /* the dots */
+  animation: dots 1.5s steps(4, end) infinite;
+}
+
+@keyframes dots {
+  0%, 100%{
+    content: "";
+  }
+
+  25% {
+    content: ".";
+  }
+
+  50% {
+    content: "..";
+  }
+
+  75% {
+    content: "...";
+  }
 }
 
 .text-container {
@@ -43,16 +81,17 @@
 }
 
 .ai-container {
-  display: flex;
-  justify-content: flex-start;
-  align-items: center;
-  flex-direction: column;
-  height: 400px;
-  width: 250px;
-  background: white;
-  border-radius: 10px;
-  padding: 10px;
-  box-shadow: rgba(0, 0, 0, 0.35) 0px 5px 15px;
+    display: flex;
+    justify-content: flex-start;
+    align-items: center;
+    flex-direction: column;
+    min-height: 400px;
+    width: 250px;
+    background: white;
+    border-radius: 10px;
+    padding: 10px;
+    box-shadow: rgba(0, 0, 0, 0.35) 0px 5px 15px;
+    height: fit-content;
 }
 
 .draggable {
@@ -68,37 +107,21 @@
 }
 
 .ai-btn {
-  width: 120px;
-  aspect-ratio: 1/1;
-  border-radius: 50%;
-  background: #E0E0E0;
-  display: flex;
-  align-items: center;
-  justify-content: center;
-  cursor: pointer;
-  transition: all 0.3s ease;
-  position: relative;
-  border: none;
-  box-shadow: 0px 0px 10px 0px rgba(211, 100, 51, 0.2);
+    aspect-ratio: 1/1;
+    border-radius: 50%;
+    background: transparent;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    cursor: pointer;
+    transition: all 0.3s ease;
+    position: relative;
+    border: none;
 }
 
-.ai-btn.disconnected {
-  background: #F1F1F1;
-}
-
-.ai-btn.connecting {
-  background: #FFCC80;
-  animation: pulse 1.2s infinite ease-in-out;
-}
-
-.ai-btn.connected {
-  background: #A5D6A7;
-  transform: scale(1.1);
-  box-shadow: 0 0 12px rgba(165, 214, 167, 0.7);
-}
-
-.ai-btn:hover {
-  transform: scale(1.05);
+.AO {
+  width: 150px;
+  height: 150px;
 }
 
 .ai-btn.speaking {
@@ -133,12 +156,14 @@
 }
 
 .voice-container {
-  display: flex;
-  flex-direction: column;
-  width: 100%;
-  height: 100%;
-  justify-content: center;
-  align-items: center;
+    display: flex;
+    flex-direction: column;
+    width: 100%;
+    height: 100%;
+    justify-content: center;
+    align-items: center;
+    margin-top: auto;
+    margin-bottom: auto;
 }
 
 .input-mic-wrapper {
@@ -210,4 +235,105 @@
     transform: scale(1);
     opacity: 0.95;
   }
+}
+
+body {
+  font-family: Arial, sans-serif;
+  display: flex;
+  justify-content: center;
+  align-items: center;
+  height: 100vh;
+  background: #f9f9f9;
+}
+
+.card {
+    padding: 10px;
+    width: 100%;
+    text-align: center;
+}
+
+.card-image img {
+  width: 60px;
+  height: 60px;
+  border-radius: 50%;
+  margin-bottom: 10px;
+}
+
+.title {
+  font-size: 16px;
+  margin-bottom: 16px;
+}
+
+.agents {
+    display: flex;
+    flex-direction: column;
+    gap: 8px;
+    margin-bottom: 20px;
+    background: #F1F1F1;
+    border-radius: 10px;
+}
+
+.agents .agent:last-child {
+  border-bottom: 0px;
+}
+
+.agent {
+    display: flex;
+    align-items: center;
+    border-bottom: 1px solid #ddd;
+    /* border-radius: 6px; */
+    padding: 10px;
+    cursor: pointer;
+    transition: border-color 0.2s;
+    justify-content: space-between;
+}
+
+.agent:hover {
+  border-color: #999;
+}
+
+.agent input[type="radio"] {
+  margin-right: 10px;
+  accent-color: #e0642a; /* orange check */
+}
+
+.agent-info {
+  display: flex;
+  flex-direction: column;
+  align-items: flex-start;
+}
+
+.agent-name {
+  font-weight: bold;
+  font-size: 14px;
+}
+
+.agent-desc {
+    font-size: 12px;
+    color: #555;
+    text-align: left;
+}
+
+.start-btn {
+  background: #e0642a;
+  color: white;
+  border: none;
+  border-radius: 8px;
+  padding: 10px;
+  font-size: 14px;
+  width: 100%;
+  cursor: pointer;
+  margin-bottom: 10px;
+}
+
+.start-btn:hover {
+  background: #c65323;
+}
+
+.cancel-btn {
+  background: transparent;
+  border: none;
+  color: #444;
+  font-size: 14px;
+  cursor: pointer;
 }

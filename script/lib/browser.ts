@@ -252,7 +252,7 @@ export const DEFAULT_EXTENSIONS = [
     'Bible Visualization Utils',
     'Bible Layout 2D',
     'Painter',
-    'Bible Layout 3D',
+    'Scripture Map 3D',
     'Bible Stack',
     'Playlist',
 ];

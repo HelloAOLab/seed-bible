@@ -18,6 +18,7 @@ data.forEach((info) => {
 
     const {key, value} = info;
     const bot = getBot(byTag("key", key));
+    console.log(`[Debug] SetBotsVisibility`, {key, bot});
     const startTime = delay + os.localTime;
     const fixedDuration = !isNaN(bot.tags.customDuration) && bot.tags.customDuration != null ? bot.tags.customDuration : duration
 

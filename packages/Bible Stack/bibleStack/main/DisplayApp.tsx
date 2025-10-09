@@ -5,6 +5,8 @@ if(thisBot.vars.appId)
 else
 {
     gridPortalBot.tags.portalCameraType = "orthographic";
+    gridPortalBot.tags.portalZoomableMin = 5;
+    
     const App = await thisBot.App();
     const id = globalThis.AddFloatingApp({
         App: <App />,

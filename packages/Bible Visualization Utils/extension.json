@@ -42,7 +42,7 @@
     }
   ],
   "createdAt": "2025-08-31T18:34:23.918Z",
-  "description": "Includes common data, functions, prefabs and modules used by systems like the Stack, BibleLayout2D and BibleLayout3D.",
+  "description": "Includes common data, functions, prefabs and modules used by systems like the Stack, BibleLayout2D and scriptureMap3D.",
   "id": 1756665263918,
   "name": "Bible Visualization Utils",
   "recordFile": {
