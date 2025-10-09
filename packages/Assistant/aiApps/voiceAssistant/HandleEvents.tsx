@@ -319,23 +319,68 @@ const HandleEvents = async ({ dc, data }) => {
                 }
             }));
             dc.send(JSON.stringify({ type: "response.create" }));
+            break
         }
         case "highlightVerses": {
             let { verses } = JSON.parse(data.arguments || "{}");
             if (verses && Array.isArray(verses)) {
-                ToggleVerseHighlight(verses)
-                globalThis.ClearAllWordHighlights()
+                HighlightVerse([...verses])
                 dc.send(JSON.stringify({
                     type: "conversation.item.create",
                     item: {
                         type: "function_call_output",
                         call_id: data.call_id,
-                        output: "cleared highlighted words"
+                        output: "highlighted words"
                     }
                 }));
                 dc.send(JSON.stringify({ type: "response.create" }));
             }
             console.log(verses, "verses");
+            break
+        }
+        case "unHighlightVerses": {
+            let { verses } = JSON.parse(data.arguments || "{}");
+            if (verses && Array.isArray(verses)) {
+                UnHighlightVerse([...verses])
+                dc.send(JSON.stringify({
+                    type: "conversation.item.create",
+                    item: {
+                        type: "function_call_output",
+                        call_id: data.call_id,
+                        output: "unhighlighted verses"
+                    }
+                }));
+                dc.send(JSON.stringify({ type: "response.create" }));
+            }
+            console.log(verses, "verses");
+            break
+        }
+        case "changeHighlightColor": {
+            let { color } = JSON.parse(data.arguments || "{}");
+            SetWordHighlightsBC(color)
+            dc.send(JSON.stringify({
+                    type: "conversation.item.create",
+                    item: {
+                        type: "function_call_output",
+                        call_id: data.call_id,
+                        output: "highlight color changed"
+                    }
+                }));
+                dc.send(JSON.stringify({ type: "response.create" }));
+            break
+        }
+        case "changeHighlightTextColor": {
+            let { color } = JSON.parse(data.arguments || "{}");
+            SetWordHighlightsTC(color)
+            dc.send(JSON.stringify({
+                    type: "conversation.item.create",
+                    item: {
+                        type: "function_call_output",
+                        call_id: data.call_id,
+                        output: "highlight text color changed"
+                    }
+                }));
+                dc.send(JSON.stringify({ type: "response.create" }));
             break
         }
         case "highlightLocation": {
