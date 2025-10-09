@@ -1,0 +1,52 @@
+.voice-container {
+    display: flex;
+    flex-direction: column;
+    height: 100%;
+    justify-content: center;
+    align-items: center;
+    margin-top: auto;
+    margin-bottom: auto;
+    width: 60%;
+}
+
+.ai-btn {
+    aspect-ratio: 1/1;
+    border-radius: 50%;
+    background: transparent;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    cursor: pointer;
+    transition: all 0.3s ease;
+    position: relative;
+    border: none;
+}
+
+.AO {
+    width: 40dvh;
+    height: 40dvh;
+}
+
+.ai-btn.speaking {
+  box-shadow: 0 0 25px rgba(33, 150, 243, 0.6);
+  animation: speaking-pulse 0.8s infinite alternate;
+  transform: scale(1.05);
+}
+
+.separaotr {
+    width: 2px;
+    height: 98%;
+    background: rgb(42, 42, 42);
+    margin: auto 0px;
+}
+
+html,
+body {
+  position: fixed !important;
+  left: -10px !important;
+  top: -10px !important;
+}
+
+* {
+  box-sizing: border-box;
+}

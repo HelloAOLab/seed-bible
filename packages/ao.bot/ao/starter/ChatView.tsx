@@ -1,0 +1,268 @@
+import { OutputMessageLog } from 'aiApps.voiceAssistant.HandleMessageLog';
+import { useAssistantContext } from "aiApps.voiceAssistant.VoiceAssistant";
+import FluidAvatarCircle from "aiApps.voiceAssistant.VoiceAvatar"
+import { AOIcon2 } from 'aiApps.voiceAssistant.icons';
+
+const { useState, useEffect } = os.appHooks;
+
+const voiceAssistant = getBot('system', 'aiApps.voiceAssistant');
+
+export const ChatView = ({ initialQuery }) => {
+    const { setMicActive, setSpeakerActive, micActive, dcRef, aiState, isAssistantSpeaking, showAssistant, setShowAssistant, messages, setMessesages } = useAssistantContext();
+    const [query, setQuery] = useState(initialQuery || "");
+    const [userWriting, setUserWriting] = useState(false);
+    const [assistantWriting, setAssistantWriting] = useState(false);
+
+    const copyMessage = (text) => {
+        navigator.clipboard.writeText(text).catch((err) => {
+            console.error("Failed to copy:", err);
+        });
+    };
+
+    const retryLastMessage = () => {
+        // if (messages.length >= 2) {
+        //     const lastUserMessage = [...messages].reverse().find((msg) => msg.type === "user");
+        //     if (lastUserMessage) {
+        //         setQuery(lastUserMessage.text);
+        //         // Remove last bot response
+        //         setMessages((prev) => prev.slice(0, -1));
+        //         setTimeout(handleSendMessage, 100);
+        //     }
+        // }
+    };
+
+    const handleSubmit = () => {
+        const dc = dcRef.current;
+        if (dc && dc.readyState === "open") {
+            dc.send(
+                JSON.stringify({
+                    type: "conversation.item.create",
+                    item: {
+                        type: "message",
+                        role: "user",
+                        content: [{ type: "input_text", text: query }]
+                    }
+                })
+            );
+            dc.send(
+                JSON.stringify({ type: "response.create" })
+            );
+            let uid = uuid();
+            setTagMask(voiceAssistant, 'chatMessages', {
+                ...voiceAssistant.masks.chatMessages,
+                [`${uid}`]: {
+                    message: query,
+                    role: "user"
+                }
+            }, "tempLocal");
+            setTagMask(voiceAssistant, 'itemArray', [...voiceAssistant.masks.itemArray, uid], "tempLocal");
+            setMessesages([...OutputMessageLog()])
+            setAssistantWriting(true);
+            setQuery("")
+        } else {
+            console.warn("DataChannel not open yet, skipping:", dc);
+        }
+    }
+
+    useEffect(() => {
+        globalThis.SetAiTextMessages = setMessesages;
+        globalThis.SetAssistantWriting = setAssistantWriting;
+        globalThis.SetUserWriting = setUserWriting;
+        return () => {
+            globalThis.SetAiTextMessages = null;
+            globalThis.SetAssistantWriting = null;
+            globalThis.SetUserWriting = null;
+        }
+    }, [setMessesages])
+
+    useEffect(() => {
+        if (initialQuery) {
+            handleSubmit();
+        }
+    }, [])
+
+    useEffect(() => {
+        if(showAssistant){
+            setMicActive(true);
+            setSpeakerActive(true);
+        }else{
+            setMicActive(false);
+            setSpeakerActive(false);
+        }
+    }, [showAssistant])
+
+    useEffect(() => {
+        if (dcRef.current && dcRef.current.readyState === "open") {
+            dcRef.current.send(
+                JSON.stringify({
+                    type: "session.update",
+                    session: {
+                        instructions: "",
+                        // put you instructions here mazen
+                    }
+                })
+            );
+        }
+    }, [])
+    return (
+        <div style={{ flex: 1, display: "flex", flexDirection: "column", position: "relative" }}>
+            <div style={{ height: "100%", display: "flex", gap: "10px" }}>
+                {showAssistant && <>
+                    <div className="voice-container">
+                        <button
+                            className={`ai-btn`}
+                            onClick={() => {
+                                console.log(!micActive)
+                                setMicActive(prev => !prev);
+                                setSpeakerActive(prev => !prev);
+                            }}
+                        >
+
+                            <AOIcon2 className="AO" />
+                            <FluidAvatarCircle className={aiState} speaking={isAssistantSpeaking} />
+                        </button>
+                    </div>
+                    <div className="separaotr" />
+                </>}
+                <div style={{ flex: 1, overflowY: "auto", padding: "40px 20px", display: "flex", flexDirection: "column", gap: "30px", height: "calc(100dvh - 150px)", scrollbarWifth: "none" }}>
+                    {messages.map((msg, idx) => (
+                        <div
+                            key={idx}
+                            style={{
+                                maxWidth: "800px",
+                                width: "100%",
+                                margin: msg.role === "user" ? "0 0 0 auto" : "0",
+                                display: "flex",
+                                gap: "12px",
+                                alignItems: "flex-start",
+                            }}
+                        >
+                            {msg.role === "assistant" && (
+                                <div
+                                    style={{
+                                        width: "28px",
+                                        height: "28px",
+                                        minWidth: "28px",
+                                        backgroundColor: "#2a2a2a",
+                                        borderRadius: "50%",
+                                        display: "flex",
+                                        alignItems: "center",
+                                        justifyContent: "center",
+                                        fontSize: "14px",
+                                    }}
+                                >
+                                    🤖
+                                </div>
+                            )}
+                            <div
+                                style={{
+                                    flex: 1,
+                                    backgroundColor: msg.role === "user" ? "#3a3d3d57" : "transparent",
+                                    padding: msg.role === "user" ? "12px 16px" : "0",
+                                    borderRadius: msg.role === "user" ? "12px" : "0",
+                                    fontSize: "14px",
+                                    lineHeight: 1.6,
+                                    color: "#e0e0e0",
+                                }}
+                            >
+                                {msg?.subtype === "html" ? (
+                                    <div dangerouslySetInnerHTML={{ __html: msg.message }} />
+                                ) : (
+                                    <div>{msg.message}</div>
+                                )}
+
+                                {msg.role === "assistant" && msg?.links && msg?.links.length > 1 && (
+                                    <div style={{ marginTop: "20px", display: "flex", gap: "16px", flexWrap: "wrap" }}>
+
+                                        {msg?.links.map((link, linkIdx) => (
+                                            <QRCodeComponent key={linkIdx} url={link} index={linkIdx} />
+                                        ))}
+                                    </div>
+                                )}
+
+                                {msg.role === "assistant" && (
+                                    <div style={{ marginTop: "12px", display: "flex", gap: "10px" }}>
+                                        <button
+                                            onClick={() => copyMessage(msg.message)}
+                                            style={{
+                                                padding: "6px 12px",
+                                                backgroundColor: "transparent",
+                                                border: "1px solid #3a3a3a",
+                                                borderRadius: "6px",
+                                                color: "#999",
+                                                fontSize: "12px",
+                                                cursor: "pointer",
+                                                display: "flex",
+                                                alignItems: "center",
+                                                gap: "6px",
+                                                transition: "border-color 0.2s, color 0.2s",
+                                            }}
+                                            onMouseEnter={(e) => {
+                                                e.currentTarget.style.borderColor = "#5a5a5a";
+                                                e.currentTarget.style.color = "#fff";
+                                            }}
+                                            onMouseLeave={(e) => {
+                                                e.currentTarget.style.borderColor = "#3a3a3a";
+                                                e.currentTarget.style.color = "#999";
+                                            }}
+                                        >
+                                            📋 Copy
+                                        </button>
+                                        <button onClick={retryLastMessage} style={{ padding: '6px 12px', backgroundColor: 'transparent', border: '1px solid #3a3a3a', borderRadius: '6px', color: '#999', fontSize: '12px', cursor: 'pointer', display: 'flex', alignItems: 'center', gap: '6px', transition: 'border-color 0.2s, color 0.2s' }} onMouseEnter={(e) => { e.currentTarget.style.borderColor = '#5a5a5a'; e.currentTarget.style.color = '#fff'; }} onMouseLeave={(e) => { e.currentTarget.style.borderColor = '#3a3a3a'; e.currentTarget.style.color = '#999'; }}>
+                                            🔄 Try again
+                                        </button>
+                                    </div>
+                                )}
+                            </div>
+                        </div>
+                    ))}
+
+                    {assistantWriting && !userWriting && (
+                        <div style={{ display: 'flex', gap: '12px', alignItems: 'flex-start' }}>
+                            <div style={{ width: '28px', height: '28px', backgroundColor: '#2a2a2a', borderRadius: '50%', display: 'flex', alignItems: 'center', justifyContent: 'center', fontSize: '14px' }}>🤖</div>
+                            <div style={{ padding: '12px 0', fontSize: '14px', color: '#999' }}>Thinking...</div>
+                        </div>
+                    )}
+                </div>
+
+            </div>
+
+            <div style={{ padding: '20px', backgroundColor: '#1a1a1a', borderTop: '1px solid #2a2a2a' }}>
+                <div style={{ maxWidth: '800px', margin: '0 auto' }}>
+                    {messages.length > 0 && (
+                        <div style={{ display: 'flex', gap: '10px', marginBottom: '15px', flexWrap: 'wrap' }}>
+                            <button onClick={() => setQuery('Tell me more about reading plans')} style={{ padding: '8px 16px', backgroundColor: '#2a2a2a', border: '1px solid #3a3a3a', borderRadius: '20px', color: '#999', fontSize: '13px', cursor: 'pointer', transition: 'border-color 0.2s, color 0.2s' }} onMouseEnter={(e) => { e.currentTarget.style.borderColor = '#5a5a5a'; e.currentTarget.style.color = '#fff'; }} onMouseLeave={(e) => { e.currentTarget.style.borderColor = '#3a3a3a'; e.currentTarget.style.color = '#999'; }}>
+                                Tell me more ↗
+                            </button>
+                            <button onClick={() => setQuery('How do I join a study group?')} style={{ padding: '8px 16px', backgroundColor: '#2a2a2a', border: '1px solid #3a3a3a', borderRadius: '20px', color: '#999', fontSize: '13px', cursor: 'pointer', transition: 'border-color 0.2s, color 0.2s' }} onMouseEnter={(e) => { e.currentTarget.style.borderColor = '#5a5a5a'; e.currentTarget.style.color = '#fff'; }} onMouseLeave={(e) => { e.currentTarget.style.borderColor = '#3a3a3a'; e.currentTarget.style.color = '#999'; }}>
+                                Study groups ↗
+                            </button>
+                            <button style={{ padding: '8px 16px', backgroundColor: '#2a2a2a', border: '1px solid #3a3a3a', borderRadius: '20px', color: '#999', fontSize: '13px', cursor: 'pointer', transition: 'border-color 0.2s, color 0.2s' }} onMouseEnter={(e) => { e.currentTarget.style.borderColor = '#5a5a5a'; e.currentTarget.style.color = '#fff'; }} onMouseLeave={(e) => { e.currentTarget.style.borderColor = '#3a3a3a'; e.currentTarget.style.color = '#999'; }}>
+                                ···
+                            </button>
+                        </div>
+                    )}
+
+                    <div style={{ position: 'relative' }}>
+                        <input type="text" placeholder={messages.length === 0 ? "What is seed bible?" : "Ask a follow-up..."} value={query} onChange={(e) => setQuery(e.target.value)} onKeyPress={(e) => { if (e.key === 'Enter') handleSubmit(); }} style={{ width: '100%', backgroundColor: '#2a2a2a', border: '1px solid #3a3a3a', borderRadius: '12px', padding: '16px 120px 16px 20px', color: '#ffffff', fontSize: '15px', outline: 'none', transition: 'border-color 0.2s' }} onFocus={(e) => e.currentTarget.style.borderColor = '#4a4a4a'} onBlur={(e) => e.currentTarget.style.borderColor = '#3a3a3a'} />
+                        <div style={{ position: 'absolute', right: '15px', top: '50%', transform: 'translateY(-50%)', display: 'flex', gap: '8px', alignItems: 'center' }}>
+                            <button onClick={() => setMicActive(prev => !prev)} style={{ color: micActive ? 'red' : 'white' }} style={{ width: '32px', height: '32px', backgroundColor: 'transparent', border: 'none', cursor: 'pointer', fontSize: '16px', display: 'flex', alignItems: 'center', justifyContent: 'center', opacity: '0.6', transition: 'opacity 0.2s' }} onMouseEnter={(e) => e.currentTarget.style.opacity = '1'} onMouseLeave={(e) => e.currentTarget.style.opacity = '0.6'}>
+                                <span style={{ color: micActive ? 'white' : '#1a1a1a' }} class="material-symbols-outlined">
+                                    mic
+                                </span>
+                            </button>
+                            <button onClick={() => {setShowAssistant(prev => !prev)}} style={{ width: '32px', height: '32px', backgroundColor: 'transparent', border: 'none', cursor: 'pointer', fontSize: '16px', display: 'flex', alignItems: 'center', justifyContent: 'center', opacity: '0.6', transition: 'opacity 0.2s' }} onMouseEnter={(e) => e.currentTarget.style.opacity = '1'} onMouseLeave={(e) => e.currentTarget.style.opacity = '0.6'}>
+                                <span style={{color: showAssistant ? "white" : "#1a1a1a"}} class="material-symbols-outlined">
+                                    graphic_eq
+                                </span>
+                            </button>
+                            <button onClick={handleSubmit} disabled={!query.trim()} style={{ width: '32px', height: '32px', backgroundColor: query.trim() ? '#e67e50' : '#3a3a3a', border: 'none', borderRadius: '8px', cursor: query.trim() ? 'pointer' : 'not-allowed', display: 'flex', alignItems: 'center', justifyContent: 'center', transition: 'transform 0.2s', opacity: query.trim() ? '1' : '0.5' }} onMouseEnter={(e) => { if (query.trim()) e.currentTarget.style.transform = 'scale(1.05)'; }} onMouseLeave={(e) => e.currentTarget.style.transform = 'scale(1)'}>
+                                <span style={{ fontSize: '16px', color: '#1a1a1a' }}>↑</span>
+                            </button>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    );
+}

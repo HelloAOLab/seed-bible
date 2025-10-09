@@ -1,0 +1,11 @@
+[
+    {
+        "type": "function",
+        "name": "getTime",
+        "description": "Get the current time",
+        "parameters": {
+            "type": "object",
+            "properties": {}
+        }
+    }
+]
