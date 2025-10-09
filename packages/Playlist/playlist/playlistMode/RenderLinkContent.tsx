@@ -92,11 +92,12 @@ globalThis.RenderLinkTimer = setTimeout(async () => {
                 })
                 return;
             }
-            globalThis.window?.open(
-                link,
-                "_blank",
-                "noopener,noreferrer"
-            );
+            // globalThis.window?.open(
+            //     link,
+            //     "_blank",
+            //     "noopener,noreferrer"
+            // );
+            os.openURL(link);
         }, 200);
         return;
     }
