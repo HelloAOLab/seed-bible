@@ -41,7 +41,7 @@ jobs:
           if [[ "$BRANCH_NAME" == "develop" ]]; then
             PATTERN_NAME="SeedBibleDev"
             pnpm pattern publish-seed-bible -p "$PATTERN_NAME" --session-key "$SESSION_KEY" --record-key "$PATTERN_RECORD_KEY" --ext-record-key "$EXTENSION_RECORD_KEY" --no-save-meta --telegram-bot-token "$TELEGRAM_BOT_TOKEN" --telegram-chat-id "$TELEGRAM_CHAT_ID"
-          elif [[ "$BRANCH_NAME" =~ ^"releases/ao.bot"]]
+          elif [[ "$BRANCH_NAME" =~ ^"releases/ao.bot" ]]
             PATTERN_NAME=${BRANCH_NAME:9}
             pnpm pattern publish "ao.bot" -p "$PATTERN_NAME" --session-key "$SESSION_KEY" --record-key "$PATTERN_RECORD_KEY" --ext-record-key "$EXTENSION_RECORD_KEY" --telegram-bot-token "$TELEGRAM_BOT_TOKEN" --telegram-chat-id "$TELEGRAM_CHAT_ID"
           else
