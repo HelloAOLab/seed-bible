@@ -1,10 +1,31 @@
 const authBot = await os.requestAuthBotInBackground();
 
+let playlistsToSave = [...that.playlists];
+
+const isCurrAuth = !!authBot?.id;
+
+if (!globalThis.WAS_PREV_AUTH && isCurrAuth && !!globalThis.Playlist) {
+  const playlistRes = await globalThis.Playlist.getPlaylists({
+    initialList: playlistsToSave,
+  });
+  if (playlistRes?.length) {
+    playlistsToSave = [...playlistRes];
+  }
+  await globalThis.Playlist.getBookmarks();
+  globalThis.SetAuthSwtich?.((p) => !p);
+}
+
+globalThis.WAS_PREV_AUTH = !!authBot?.id;
 if (authBot?.id) {
-    const res = await os.recordData(authBot.id, 'playlists', { playlists: [...that.playlists] }, {
-        marker: 'bookmarks'
-    });
-    return res;
+  const res = await os.recordData(
+    authBot.id,
+    "playlists",
+    { playlists: [...playlistsToSave] },
+    {
+      marker: "bookmarks",
+    }
+  );
+  return res;
 } else {
-    throw new Error("User not logged in!");
+  throw new Error("User not logged in!");
 }
