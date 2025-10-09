@@ -55,7 +55,7 @@ for(const testamentIndex in testaments)
             layer.push(bookInfo);
 
             column++
-            if(column >= BibleVizUtils.Data.BibleLayoutMeasurements.MaxAmountOfColumns)
+            if(column >= BibleVizUtils.Data.tags.BibleLayoutMeasurements.MaxAmountOfColumns)
             {
                 column = 0;
                 row++;

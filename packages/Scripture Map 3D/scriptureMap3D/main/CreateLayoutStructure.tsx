@@ -1,6 +1,6 @@
 const { layoutData } = that;
 
-const bookStructures = [];
+const layoutBookStructures = [];
 const arrangementIndex = BibleVizUtils.Functions.GetCurrentArrangementIndex();
 const arrangement = BibleVizUtils.Data.vars.fixedArrangementsInfo[arrangementIndex];
 let column = 0;
@@ -52,11 +52,11 @@ for(const testamentIndex in testaments)
                 sectionIndex
                 
             });
-            bookStructures.push(layoutBookStructure);
+            layoutBookStructures.push(layoutBookStructure);
 
             bookIndex++
             column++
-            if(column >= BibleVizUtils.Data.BibleLayoutMeasurements.MaxAmountOfColumns)
+            if(column >= BibleVizUtils.Data.tags.BibleLayoutMeasurements.MaxAmountOfColumns)
             {
                 column = 0;
                 row++;
@@ -299,4 +299,4 @@ const staticLayoutPieces = {
 
 }
 
-return { bookStructures, staticLayoutPieces, amountOfRows: row, sectionLinesInfo, testamentLinesInfo };
+return { layoutBookStructures, staticLayoutPieces, amountOfRows: row, sectionLinesInfo, testamentLinesInfo };

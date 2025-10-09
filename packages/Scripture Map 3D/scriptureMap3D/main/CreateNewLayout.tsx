@@ -1,9 +1,9 @@
-import {LayoutBibleData} from 'scriptureMap3D.main.LayoutBibleData'
+import {LayoutBibleData} from 'bibleVizUtils.classes.LayoutBibleData'
 
 const {position} = that;
 
 const layoutData = new LayoutBibleData({id: uuid()});
-const {layoutBookStructures, staticLayoutPieces, amountOfRows, sectionLinesInfo, testamentLinesInfo } = await thisBot.CreateLayoutStructure({layoutData});
+const { layoutBookStructures, staticLayoutPieces, amountOfRows, sectionLinesInfo, testamentLinesInfo } = await thisBot.CreateLayoutStructure({layoutData});
 
 layoutBookStructures.forEach((layoutBookStructure) => {layoutData.AddChild(layoutBookStructure)});
 layoutData.amountOfRows = amountOfRows
