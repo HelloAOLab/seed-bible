@@ -3,9 +3,206 @@ import { useAssistantContext } from "aiApps.voiceAssistant.VoiceAssistant";
 import FluidAvatarCircle from "aiApps.voiceAssistant.VoiceAvatar"
 import { AOIcon2 } from 'aiApps.voiceAssistant.icons';
 
-const { useState, useEffect } = os.appHooks;
+const { useState, useEffect, useRef, useMemo } = os.appHooks;
 
 const voiceAssistant = getBot('system', 'aiApps.voiceAssistant');
+
+// Move QRCodeComponent OUTSIDE and memoize it
+const QRCodeComponent = (({ url, index }) => {
+    const qrRef = useRef(null);
+    const [qrGenerated, setQrGenerated] = useState(false);
+    const [copied, setCopied] = useState(false);
+
+    useEffect(() => {
+        if (url && qrRef.current && !qrGenerated && window.QRCode) {
+            qrRef.current.innerHTML = "";
+            new window.QRCode(qrRef.current, {
+                text: url,
+                width: 120,
+                height: 120,
+                colorDark: "#000000",
+                colorLight: "#ffffff",
+                correctLevel: window.QRCode.CorrectLevel.H,
+            });
+            setQrGenerated(true);
+        }
+    }, [url, qrGenerated]);
+
+    const handleOpenLink = () => {
+        if (url) {
+            window.open(url, '_blank');
+        }
+    };
+
+    const handleCopyLink = async () => {
+        try {
+            await navigator.clipboard.writeText(url);
+            setCopied(true);
+            setTimeout(() => setCopied(false), 2000);
+        } catch (err) {
+            console.error('Failed to copy:', err);
+        }
+    };
+
+    const getLabel = () => {
+        try {
+            const u = new URL(url);
+            const book = u.searchParams.get("book");
+            const chapter = u.searchParams.get("chapter");
+            const verse = u.searchParams.get("verse");
+            const translation = u.searchParams.get("translation");
+
+            if (book && chapter) {
+                return `${book.toUpperCase()} ${chapter}${verse ? `:${verse}` : ""}` +
+                    `${translation ? ` (${translation})` : ""}`;
+            }
+            return `Passage ${index + 1}`;
+        } catch {
+            return `Link ${index + 1}`;
+        }
+    };
+
+    const getTruncatedUrl = () => {
+        if (url.length > 40) {
+            return url.substring(0, 37) + "...";
+        }
+        return url;
+    };
+
+    return (
+        <div
+            style={{
+                display: "flex",
+                flexDirection: "column",
+                alignItems: "center",
+                gap: "8px",
+                padding: "16px",
+                backgroundColor: "#2a2a2a",
+                borderRadius: "12px",
+                border: "1px solid #3a3a3a",
+            }}
+        >
+            <div style={{ fontSize: "12px", fontWeight: "600", color: "#e67e50" }}>
+                {getLabel()}
+            </div>
+            <div
+                ref={qrRef}
+                style={{
+                    backgroundColor: "#ffffff",
+                    padding: "8px",
+                    borderRadius: "8px",
+                    display: "flex",
+                    alignItems: "center",
+                    justifyContent: "center",
+                }}
+            />
+            <div
+                style={{
+                    fontSize: "10px",
+                    color: "#888",
+                    maxWidth: "200px",
+                    textAlign: "center",
+                    wordBreak: "break-all",
+                    marginTop: "4px",
+                }}
+                title={url}
+            >
+                {getTruncatedUrl()}
+            </div>
+            <div style={{ display: "flex", gap: "8px", marginTop: "4px" }}>
+                <button
+                    onClick={handleOpenLink}
+                    style={{
+                        padding: "8px 16px",
+                        backgroundColor: "#e67e50",
+                        border: "none",
+                        borderRadius: "8px",
+                        color: "#1a1a1a",
+                        fontSize: "12px",
+                        fontWeight: "600",
+                        cursor: "pointer",
+                        transition: "transform 0.2s",
+                    }}
+                    onMouseEnter={(e) => (e.currentTarget.style.transform = "scale(1.05)")}
+                    onMouseLeave={(e) => (e.currentTarget.style.transform = "scale(1)")}
+                >
+                    Open Link
+                </button>
+                <button
+                    onClick={handleCopyLink}
+                    style={{
+                        padding: "8px 16px",
+                        backgroundColor: copied ? "#4ade80" : "#3a3a3a",
+                        border: "none",
+                        borderRadius: "8px",
+                        color: copied ? "#1a1a1a" : "#e0e0e0",
+                        fontSize: "12px",
+                        fontWeight: "600",
+                        cursor: "pointer",
+                        transition: "all 0.2s",
+                    }}
+                    onMouseEnter={(e) => {
+                        if (!copied) {
+                            e.currentTarget.style.backgroundColor = "#4a4a4a";
+                        }
+                        e.currentTarget.style.transform = "scale(1.05)";
+                    }}
+                    onMouseLeave={(e) => {
+                        if (!copied) {
+                            e.currentTarget.style.backgroundColor = "#3a3a3a";
+                        }
+                        e.currentTarget.style.transform = "scale(1)";
+                    }}
+                >
+                    {copied ? "✓ Copied!" : "Copy Link"}
+                </button>
+            </div>
+        </div>
+    );
+});
+
+// Memoize MessageContent component too
+const MessageContent = (({ text, isWriting }) => {
+    const urls = useMemo(() => {
+        const urlRegex = /(https?:\/\/[^\s]+)/g;
+        const matches = text.match(urlRegex);
+        return matches || [];
+    }, [text]);
+
+    return (
+        <div>
+            <div
+                style={{
+                    padding: "16px",
+                    backgroundColor: "#2a2a2a",
+                    borderRadius: "12px",
+                    border: "1px solid #3a3a3a",
+                    color: "#e0e0e0",
+                    fontSize: "14px",
+                    lineHeight: "1.6",
+                    marginBottom: urls.length > 0 && !isWriting ? "16px" : "0",
+                }}
+            >
+                {text}
+            </div>
+
+            {!isWriting && urls.length > 0 && (
+                <div
+                    style={{
+                        display: "grid",
+                        gridTemplateColumns: "repeat(auto-fit, minmax(200px, 1fr))",
+                        gap: "16px",
+                        marginTop: "16px",
+                    }}
+                >
+                    {urls.map((url, idx) => (
+                        <QRCodeComponent key={url} url={url} index={idx} />
+                    ))}
+                </div>
+            )}
+        </div>
+    );
+});
 
 export const ChatView = ({ initialQuery, newMessageId }) => {
     const { setMicActive, setSpeakerActive, micActive, dcRef, aiState, isAssistantSpeaking, showAssistant, setShowAssistant, messages, setMessesages, messageHistory, currentMessageId, setMessageHistory, setCurrentMessageId } = useAssistantContext();
@@ -105,6 +302,7 @@ export const ChatView = ({ initialQuery, newMessageId }) => {
             );
         }
     }, [])
+
     return (
         <div style={{ flex: 1, display: "flex", flexDirection: "column", position: "relative" }}>
             <div style={{ height: "100%", display: "flex", gap: "10px" }}>
@@ -166,19 +364,11 @@ export const ChatView = ({ initialQuery, newMessageId }) => {
                                     color: "#e0e0e0",
                                 }}
                             >
-                                {msg?.subtype === "html" ? (
-                                    <div dangerouslySetInnerHTML={{ __html: msg.message }} />
-                                ) : (
+
+                                {msg.role !== "assistant" ? (
                                     <div>{msg.message}</div>
-                                )}
-
-                                {msg.role === "assistant" && msg?.links && msg?.links.length > 1 && (
-                                    <div style={{ marginTop: "20px", display: "flex", gap: "16px", flexWrap: "wrap" }}>
-
-                                        {msg?.links.map((link, linkIdx) => (
-                                            <QRCodeComponent key={linkIdx} url={link} index={linkIdx} />
-                                        ))}
-                                    </div>
+                                ) : (
+                                    <MessageContent text={msg.message} isWriting={assistantWriting || userWriting} />
                                 )}
 
                                 {msg.role === "assistant" && (

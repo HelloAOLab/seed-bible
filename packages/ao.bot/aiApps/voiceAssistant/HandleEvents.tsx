@@ -1,9 +1,9 @@
 import { captureElement } from 'aiApps.voiceAssistant.Utils'
 
 const HandleEvents = async ({ dc, data }) => {
-    console.log(data);
+    console.log(data, 'eventat datat');
     switch (data.name) {
-        case "getTime": {
+        case "getSeedBibleUrl": {
             const now = new Date().toLocaleTimeString();
             dc.send(
                 JSON.stringify({
@@ -15,12 +15,22 @@ const HandleEvents = async ({ dc, data }) => {
                     }
                 })
             );
+            dc.send(JSON.stringify({
+                type: "conversation.item.create",
+                item: {
+                    type: "message",
+                    role: "assistant",
+                    content: [
+                        { type: "input_text", text: `Here you go: urlllll` }
+                    ]
+                }
+            }));
             dc.send(
                 JSON.stringify({ type: "response.create" })
             );
             break
         }
-        
+
     }
 }
 

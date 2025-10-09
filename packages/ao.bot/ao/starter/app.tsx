@@ -567,13 +567,13 @@ export function AOBotInterface() {
     };
 
     useEffect(() => {
-        if (currentView === "chat") {
-            setMicActive(true);
-            setSpeakerActive(true);
-        } else {
-            setMicActive(false);
-            setSpeakerActive(false);
-        }
+        // if (currentView === "chat") {
+        //     setMicActive(true);
+        //     setSpeakerActive(true);
+        // } else {
+        //     setMicActive(false);
+        //     setSpeakerActive(false);
+        // }
     }, [currentView])
 
     // Views

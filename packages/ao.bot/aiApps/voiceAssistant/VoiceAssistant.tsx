@@ -31,7 +31,7 @@ export function VoiceAssistantProvider({ children }) {
         type: "webrtc"
     })
     const [isFullScreen, setIsFullScreen] = useState(false);
-    const [showAssistant, setShowAssistant] = useState(true);
+    const [showAssistant, setShowAssistant] = useState(false);
     const [messages, setMessesages] = useState([...OutputMessageLog()]);
     const [messageHistory, setMessageHistory] = useState({});
     const [currentMessageId, setCurrentMessageId] = useState(null);
