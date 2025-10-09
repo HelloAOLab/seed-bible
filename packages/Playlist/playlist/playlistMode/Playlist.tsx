@@ -841,7 +841,7 @@ const Playlist = ({
       const name = ele.name?.toLocaleLowerCase();
       const des = ele.description?.toLocaleLowerCase();
       if (name.includes(q) || des.includes(q)) {
-        if (ele.shareProfileName) {
+        if (ele.shareProfileName && ele.sharerID !== authBot?.id) {
           shared.push({ ...ele });
         } else {
           owned.push({ ...ele });
