@@ -1,27 +1,91 @@
 import { captureElement } from 'aiApps.voiceAssistant.Utils'
 
+const getTranslationData = async ({ language = "english" }) => {
+    let available_translations_req = await web.get("https://bible.helloao.org/api/available_translations.json");
+    let translationId;
+    for (let i = 0; i < available_translations_req.data.translations.length; i++) {
+        let translation = available_translations_req.data.translations[i];
+        if (language.toLowerCase() === translation?.languageEnglishName?.toLowerCase()) {
+            translationId = translation.id;
+            break
+        }
+    }
+    console.log(translationId, language, "translationId")
+    let translationReq = await web.get(`https://bible.helloao.org/api/${translationId}/books.json`);
+    return { ...translationReq.data }
+}
+
+const addTranslationId = (translationData, url, translationPass) => {
+    console.log(translationData, "translationData")
+    if (translationData.translation.id) {
+        translationPass = translationData.translation.id;
+        return `${url}&translationId=${translationData.translation.id}`
+    } else {
+        return url
+    }
+};
+const addBookIdandChapter = (translationData, url, bookId, chapter, bookPass, chapterPass) => {
+    let tempUrl = "";
+    for (let i = 0; i < translationData.books.length; i++) {
+        if (translationData.books[i].id.toLowerCase() === bookId.toLowerCase()) {
+            bookPass = translationData.books[i].id;
+            tempUrl = `${url}&book=${translationData.books[i].id}`;
+            if (chapter <= translationData.books[i].numberOfChapters) {
+                chapterPass = chapter;
+                tempUrl = `${tempUrl}&chapter=${chapter}`
+            }
+            return tempUrl;
+        }
+    }
+    return url;
+};
+const verifyVerse = async (url, translationPass, bookPass, chapterPass, verse, versePass) => {
+    let chapterReq = await web.get(`https://bible.helloao.org/api/${translationPass}/${bookPass}/${chapterPass}.json`)
+    let chapterData = { ...chapterReq.data };
+    if (verse <= chapterData.numberOfVerses) {
+        versePass = verse;
+        return `${url}&verse${verse}`
+    } else {
+        return url;
+    }
+}
 const HandleEvents = async ({ dc, data }) => {
     console.log(data, 'eventat datat');
     switch (data.name) {
         case "getSeedBibleUrl": {
-            const now = new Date().toLocaleTimeString();
-            dc.send(
-                JSON.stringify({
-                    type: "conversation.item.create",
-                    item: {
-                        type: "function_call_output",
-                        call_id: data.call_id,
-                        output: now,
-                    }
-                })
-            );
+            // https://ao.bot/?pattern=SeedBibleDev&noGridPortal=true&book=jhn&chapter=3&verse=16
+            const { language, bookId, chapter, verse } = JSON.parse(data.arguments || "{}");
+
+            let url = `https://ao.bot/?pattern=SeedBibleDev&noGridPortal=true`;
+            let translationPass = false;
+            let bookPass = false;
+            let chapterPass = false;
+            let versePass = false;
+
+            let translationData = await getTranslationData({ language: language || "english" });
+
+            url = addTranslationId(translationData, url, translationPass);
+            url = addBookIdandChapter(translationData, url, bookId, chapter, bookPass, chapterPass);
+            url = `${url}&verse=${verse}`
+
+            console.log(url, "url")
+
+            dc.send(JSON.stringify({
+                type: "conversation.item.create",
+                item: {
+                    type: "function_call_output",
+                    call_id: data.call_id,
+                    output: `url generated:- ${url}`
+                }
+            }));
+
             dc.send(JSON.stringify({
                 type: "conversation.item.create",
                 item: {
                     type: "message",
                     role: "assistant",
                     content: [
-                        { type: "input_text", text: `Here you go: urlllll` }
+                        { type: "input_text", text: `Here you go: ${url}` }
                     ]
                 }
             }));

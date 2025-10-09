@@ -13,7 +13,6 @@ export const OutputMessageLog = () => {
     let messages = [...masks.itemArray.map(item => {
         return masks.chatMessages[item]
     })]
-    console.log(messages, messages.filter(messages => messages))
     return messages.filter(messages => messages)
 }
 
