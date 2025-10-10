@@ -36,7 +36,8 @@ const QRCodeComponent = ({ url, index }) => {
 
   const handleCopyLink = async () => {
     try {
-      await navigator.clipboard.writeText(url);
+      // await navigator.clipboard.writeText(url);
+      os.setClipboard(url);
       setCopied(true);
       setTimeout(() => setCopied(false), 2000);
     } catch (err) {
@@ -173,23 +174,23 @@ const MessageContent = ({ text, isWriting }) => {
     return matches || [];
   }, [text]);
 
-    return (
-        <div>
-            <div
-                style={{
-                    padding: "16px",
-                    backgroundColor: "#2a2a2a",
-                    borderRadius: "12px",
-                    border: "1px solid #3a3a3a",
-                    color: "#e0e0e0",
-                    fontSize: "14px",
-                    lineHeight: "1.6",
-                    marginBottom: urls.length > 0 && !isWriting ? "16px" : "0",
-                    wordWrap: "break-word",
-                }}
-            >
-                {text}
-            </div>
+  return (
+    <div>
+      <div
+        style={{
+          padding: "16px",
+          backgroundColor: "#2a2a2a",
+          borderRadius: "12px",
+          border: "1px solid #3a3a3a",
+          color: "#e0e0e0",
+          fontSize: "14px",
+          lineHeight: "1.6",
+          marginBottom: urls.length > 0 && !isWriting ? "16px" : "0",
+          wordWrap: "break-word",
+        }}
+      >
+        {text}
+      </div>
 
       {!isWriting && urls.length > 0 && (
         <div

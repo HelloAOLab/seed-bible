@@ -6,9 +6,12 @@
         "parameters": {
             "type": "object",
             "properties": {
-                "language": {
-                    "type": "string",
-                    "description": "Optional. the language user specifies."
+                "languages": {
+                    "type": "array",
+                    "description": "Optional. the language user specifies. if not specified then put english.",
+                    "items": {
+                        "type": "string"
+                    }
                 },
                 "bookId": {
                     "type": "string",
@@ -21,6 +24,10 @@
                 "verse": {
                     "type": "number",
                     "description": "Optional. Verse number."
+                },
+                "colaborativeId": {
+                    "type": "string",
+                    "description": "Optional. random 3 fruit names words joined with '-' if a user asks for collaborative instance"
                 }
             }
         }
