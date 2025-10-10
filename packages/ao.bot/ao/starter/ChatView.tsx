@@ -341,7 +341,10 @@ export const ChatView = ({ initialQuery, newMessageId }) => {
         position: "relative",
       }}
     >
-      <div style={{ height: "100%", display: "flex", gap: "10px" }}>
+      <div
+        className="allCont"
+        style={{ height: "100%", display: "flex", gap: "10px" }}
+      >
         {showAssistant && (
           <>
             <div className="voice-container">
@@ -515,7 +518,10 @@ export const ChatView = ({ initialQuery, newMessageId }) => {
                   fontSize: "14px",
                 }}
               >
-                🤖
+                <img
+                  style={{ width: "12px" }}
+                  src="https://res.cloudinary.com/dfbtwwa8p/image/upload/v1760042693/AO_Lab_Logo_White_-_No_Text_sivdge.webp"
+                />
               </div>
               <div
                 style={{ padding: "12px 0", fontSize: "14px", color: "#999" }}

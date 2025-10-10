@@ -189,7 +189,7 @@ export function AOBotInterface() {
   const [sessionCode, setSessionCode] = useState("");
   const [messages, setMessages] = useState([]);
   const [isLoading, setIsLoading] = useState(false);
-  
+
   // Build with Seed Bible form state
   const [translationID, setTranslationID] = useState("BSB");
   const [book, setBook] = useState("");
@@ -1315,7 +1315,7 @@ export function AOBotInterface() {
         style={{
           height: "100vh",
           width: "100vw",
-          boxSizing: 'border-box',
+          boxSizing: "border-box",
           backgroundColor: "#1a1a1a",
           color: "#ffffff",
           fontFamily:
@@ -1326,7 +1326,10 @@ export function AOBotInterface() {
           justifyContent: "center",
         }}
       >
-        <link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Material+Symbols+Outlined:opsz,wght,FILL,GRAD@20..48,100..700,0..1,-50..200&icon_names=arrow_back" />
+        <link
+          rel="stylesheet"
+          href="https://fonts.googleapis.com/css2?family=Material+Symbols+Outlined:opsz,wght,FILL,GRAD@20..48,100..700,0..1,-50..200&icon_names=arrow_back"
+        />
         <button
           onClick={() => setCurrentView("home")}
           style={{
@@ -1361,7 +1364,13 @@ export function AOBotInterface() {
         </button>
 
         <div style={{ marginBottom: "40px", textAlign: "center" }}>
-          <h1 style={{ fontSize: "32px", fontWeight: "700", marginBottom: "12px" }}>
+          <h1
+            style={{
+              fontSize: "32px",
+              fontWeight: "700",
+              marginBottom: "12px",
+            }}
+          >
             Build with Seed Bible
           </h1>
           <p style={{ fontSize: "15px", color: "#a0a0a0" }}>
@@ -1514,7 +1523,9 @@ export function AOBotInterface() {
                   position: "relative",
                   cursor: "pointer",
                   transition: "background-color 0.3s",
-                  border: "1px solid " + (enableCollaboration ? "#e67e50" : "#4a4a4a"),
+                  border:
+                    "1px solid " +
+                    (enableCollaboration ? "#e67e50" : "#4a4a4a"),
                 }}
                 onMouseEnter={(e) => {
                   if (!enableCollaboration) {
@@ -1553,17 +1564,25 @@ export function AOBotInterface() {
             onClick={() => {
               // Generate UUID for collaboration mode
               const generateUUID = () => {
-                return 'xxxxxxxx-xxxx-4xxx-yxxx-xxxxxxxxxxxx'.replace(/[xy]/g, function(c) {
-                  const r = Math.random() * 16 | 0;
-                  const v = c === 'x' ? r : (r & 0x3 | 0x8);
-                  return v.toString(16);
-                });
+                return "xxxxxxxx-xxxx-4xxx-yxxx-xxxxxxxxxxxx".replace(
+                  /[xy]/g,
+                  function (c) {
+                    const r = (Math.random() * 16) | 0;
+                    const v = c === "x" ? r : (r & 0x3) | 0x8;
+                    return v.toString(16);
+                  }
+                );
               };
 
-              console.log("Form submitted:", { translationID, book, chapter, enableCollaboration });
+              console.log("Form submitted:", {
+                translationID,
+                book,
+                chapter,
+                enableCollaboration,
+              });
 
               const url = new URL(`https://ao.bot/?pattern=SeedBibleDev`);
-              
+
               if (enableCollaboration) {
                 // Collaboration mode: add inst and owner parameters
                 url.searchParams.set("inst", generateUUID());
@@ -1572,21 +1591,19 @@ export function AOBotInterface() {
                 // Static mode: add bios=local inst parameter
                 url.searchParams.set("bios", "local inst");
               }
-              
-              if (translationID && translationID !== 'BSB') {
+
+              if (translationID && translationID !== "BSB") {
                 url.searchParams.set("translation", translationID);
               }
 
-              if (book && book !== 'GEN') {
+              if (book && book !== "GEN") {
                 url.searchParams.set("book", book);
               }
-              if (chapter && chapter !== '1') {
+              if (chapter && chapter !== "1") {
                 url.searchParams.set("chapter", chapter);
               }
 
-              os.goToURL(
-                `${url.href}&noGridPortal`
-              );
+              os.goToURL(`${url.href}&noGridPortal`);
 
               // For now, just go back to home
               setCurrentView("home");
@@ -1605,7 +1622,8 @@ export function AOBotInterface() {
             }}
             onMouseEnter={(e) => {
               e.currentTarget.style.transform = "translateY(-2px)";
-              e.currentTarget.style.boxShadow = "0 8px 20px rgba(230, 126, 80, 0.3)";
+              e.currentTarget.style.boxShadow =
+                "0 8px 20px rgba(230, 126, 80, 0.3)";
             }}
             onMouseLeave={(e) => {
               e.currentTarget.style.transform = "translateY(0)";
@@ -1637,7 +1655,8 @@ export function AOBotInterface() {
           }}
           onMouseEnter={(e) => {
             e.currentTarget.style.transform = "translateY(-2px)";
-            e.currentTarget.style.boxShadow = "0 8px 20px rgba(179, 179, 179, 0.3)";
+            e.currentTarget.style.boxShadow =
+              "0 8px 20px rgba(179, 179, 179, 0.3)";
           }}
           onMouseLeave={(e) => {
             e.currentTarget.style.transform = "translateY(0)";
@@ -1668,6 +1687,31 @@ export function AOBotInterface() {
         href="https://fonts.googleapis.com/css2?family=Material+Symbols+Outlined:opsz,wght,FILL,GRAD@20..48,100..700,0..1,-50..200"
       />
       <style>{style}</style>
+
+      <button
+        style={{
+          position: "fixed",
+          top: 10,
+          left: 10,
+          zIndex: 1010,
+          background: "#2a2a2a",
+          color: "#fff",
+          border: "1px solid #3a3a3a",
+          padding: "8px 12px",
+          borderRadius: "8px",
+          cursor: "pointer",
+          display: "none",
+        }}
+        className="mobileMenuBtn"
+        onClick={() => {
+          const chatSidebar = document.querySelector(".chatSideBar");
+          chatSidebar.classList.toggle("hiddenSidebar");
+        }}
+      >
+        ☰
+      </button>
+      <style>{`@media (max-width: 980px){ .mobileMenuBtn { display: block !important; } }`}</style>
+
       <div
         style={{
           width: "250px",
@@ -1677,6 +1721,7 @@ export function AOBotInterface() {
           flexDirection: "column",
           padding: "20px 0",
         }}
+        className="chatSideBar"
       >
         <button
           onClick={startNewChat}
