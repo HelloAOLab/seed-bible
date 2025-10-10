@@ -337,6 +337,8 @@ const keysFirstAppearance = [
     }
 ]
 
+thisBot.FixBotsPosition();
+
 const isValidChapter = thisBot.vars.currentChapter != null && !isNaN(Number(thisBot.vars.currentChapter));
 
 if (thisBot.vars.currentBook && isValidChapter) {
