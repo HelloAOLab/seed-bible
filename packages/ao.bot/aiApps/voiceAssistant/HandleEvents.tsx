@@ -49,44 +49,61 @@ const verifyVerse = async (url, translationPass, bookPass, chapterPass, verse, v
         return url;
     }
 }
+
+const handleUrls = async ({ language, bookId, chapter, verse, colaborativeId, dc}) => {
+    let url = `https://ao.bot/?pattern=SeedBibleDev&noGridPortal=true&bios=free`;
+    let translationPass = false;
+    let bookPass = false;
+    let chapterPass = false;
+    let versePass = false;
+
+    let translationData = await getTranslationData({ language: language || "english" });
+
+    url = addTranslationId(translationData, url, translationPass);
+    url = addBookIdandChapter(translationData, url, bookId, chapter, bookPass, chapterPass);
+    url = `${url}&verse=${verse || 1}`
+
+    if (colaborativeId) {
+        url = `${url}&inst=${colaborativeId}`
+    }
+    dc.send(JSON.stringify({
+        type: "conversation.item.create",
+        item: {
+            type: "message",
+            role: "assistant",
+            content: [
+                { type: "input_text", text: `Here you go: ${url}` }
+            ]
+        }
+    }));
+    return url;
+}
 const HandleEvents = async ({ dc, data }) => {
     console.log(data, 'eventat datat');
     switch (data.name) {
         case "getSeedBibleUrl": {
             // https://ao.bot/?pattern=SeedBibleDev&noGridPortal=true&book=jhn&chapter=3&verse=16
-            const { language, bookId, chapter, verse } = JSON.parse(data.arguments || "{}");
+            const { languages, bookId, chapter, verse, colaborativeId } = JSON.parse(data.arguments || "{}");
 
-            let url = `https://ao.bot/?pattern=SeedBibleDev&noGridPortal=true`;
-            let translationPass = false;
-            let bookPass = false;
-            let chapterPass = false;
-            let versePass = false;
+            console.log(languages, bookId, chapter, verse, colaborativeId)
 
-            let translationData = await getTranslationData({ language: language || "english" });
+            let promises = [];
+            if (languages && Array.isArray(languages)) {
+                languages.map((language) => {
+                    promises.push(handleUrls({ language, bookId, chapter, verse, colaborativeId, dc}))
+                })
+            }
 
-            url = addTranslationId(translationData, url, translationPass);
-            url = addBookIdandChapter(translationData, url, bookId, chapter, bookPass, chapterPass);
-            url = `${url}&verse=${verse}`
+            let urls = await Promise.all(promises);
 
-            console.log(url, "url")
+            console.log(urls, "urls")
 
             dc.send(JSON.stringify({
                 type: "conversation.item.create",
                 item: {
                     type: "function_call_output",
                     call_id: data.call_id,
-                    output: `url generated:- ${url}`
-                }
-            }));
-
-            dc.send(JSON.stringify({
-                type: "conversation.item.create",
-                item: {
-                    type: "message",
-                    role: "assistant",
-                    content: [
-                        { type: "input_text", text: `Here you go: ${url}` }
-                    ]
+                    output: `url generated:- ${urls.join(", ")}`
                 }
             }));
             dc.send(
