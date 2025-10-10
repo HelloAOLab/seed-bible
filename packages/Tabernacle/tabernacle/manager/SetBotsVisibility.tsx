@@ -1,5 +1,5 @@
-const {data} = that;
-const dimension = os.getCurrentDimension();
+const {data, customDimension} = that;
+const dimension = os.getCurrentDimension() ?? customDimension;
 const duration = 1;
 const easing = {type: "sinusoidal", mode: "inout"};
 if(!dimension) return;
@@ -18,7 +18,6 @@ data.forEach((info) => {
 
     const {key, value} = info;
     const bot = getBot(byTag("key", key));
-    console.log(`[Debug] SetBotsVisibility`, {key, bot});
     const startTime = delay + os.localTime;
     const fixedDuration = !isNaN(bot.tags.customDuration) && bot.tags.customDuration != null ? bot.tags.customDuration : duration
 
