@@ -1710,12 +1710,15 @@ export function AOBotInterface() {
         className="mobileMenuBtn"
         onClick={() => {
           const chatSidebar = document.querySelector(".chatSideBar");
-          chatSidebar.classList.toggle("hiddenSidebar");
+          chatSidebar.classList.toggle("visible");
         }}
       >
         ☰
       </button>
-      <style>{`@media (max-width: 980px){ .mobileMenuBtn { display: block !important; } }`}</style>
+      <style>{`@media (max-width: 980px){ 
+      .mobileMenuBtn { display: block !important; }
+      .chatSideBar { display: none !important; } .chatSideBar.visible { display: flex !important; } 
+      }`}</style>
 
       <div
         style={{
