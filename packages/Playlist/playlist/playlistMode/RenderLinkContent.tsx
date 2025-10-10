@@ -1,5 +1,8 @@
 if (globalThis.RenderLinkTimer) clearTimeout(globalThis.RenderLinkTimer);
-
+if (globalThis.NagiationTimeout) {
+    clearTimeout(globalThis.NagiationTimeout);
+    globalThis.NagiationTimeout = null;
+  }
 
 globalThis.RenderLinkTimer = setTimeout(async () => {
     const appName = 'media-linked-playlist';
@@ -147,4 +150,4 @@ globalThis.RenderLinkTimer = setTimeout(async () => {
     if (globalThis.updateCustomHeight) updateCustomHeight(0);
 
     os.compileApp(appName, <MediaLinkedPlaylist />);
-}, 100);
+}, 50);

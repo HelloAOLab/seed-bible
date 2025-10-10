@@ -444,6 +444,9 @@ const PlayerControls = ({ parentId = "default" }) => {
         .sort((a, b) => Number(a) - Number(b)) // Sort numerically
         .forEach((key, index) => {
           reorderedPlaylists[index] = { ...updatedPlaylists[key] };
+          if(!reorderedPlaylists[index]?.list?.length) {
+            delete reorderedPlaylists[index];
+          }
         });
 
       return reorderedPlaylists;
@@ -578,6 +581,14 @@ const PlayerControls = ({ parentId = "default" }) => {
         targetItem?.type === "heading" ||
         (!!targetItem?.nextTargetItem?.id && currIndex.fromButton === 1)
       ) {
+        if (globalThis.SetMediaURL && !that.skipEmbed) {
+          globalThis.SetMediaURL(null);
+        }
+        thisBot.CloseFloatingApp();
+
+        if (globalThis.SetVideoSrc && !that.skipEmbed) {
+          globalThis.SetVideoSrc(null);
+        }
         if (targetItem?.type === "heading")
           globalThis.PlayingPlaylistSetHeading(targetItem.content);
         const allKeys = Object.keys(playlists);
@@ -634,7 +645,7 @@ const PlayerControls = ({ parentId = "default" }) => {
       });
       globalThis.RenderPlaylist && globalThis.RenderPlaylist();
       globalThis.RenderPlaylistTimer = null;
-    }, 100);
+    }, 50);
     // nextItemName, nextItemType, prevItemName, prevItemType
     //  nextItemName, nextItemType, prevItemName, prevItemType
     return [
@@ -697,11 +708,22 @@ const PlayerControls = ({ parentId = "default" }) => {
 
   useLayoutEffect(() => {
     if (!globalThis.UPDATE_VIA_SHOUT) {
-      EmitData("playlistQueueUpdated", { playlists });
-      EmitData("playlistCurrentIndexUpdate", { currIndex });
+      if (globalThis.REMOTE_UPDATE_TIMER) {
+        clearTimeout(globalThis.REMOTE_UPDATE_TIMER);
+        globalThis.REMOTE_UPDATE_TIMER = null;
+      }
+      globalThis.REMOTE_UPDATE_TIMER = setTimeout(() => {
+        EmitData("playlistQueueUpdated", { playlists });
+        EmitData("playlistCurrentIndexUpdate", { currIndex });
+      }, 100);
     } else {
       globalThis.UPDATE_VIA_SHOUT = false;
     }
+
+    return () => {
+      clearTimeout(globalThis.REMOTE_UPDATE_TIMER);
+      globalThis.REMOTE_UPDATE_TIMER = null;
+    };
   }, [currIndex, playlists]);
 
   const isItemLink = outerWebsiteItem[currentItem?.additionalInfo?.type];
@@ -953,8 +975,7 @@ const PlayerControls = ({ parentId = "default" }) => {
                 onClick={() => {
                   if (globalThis.RemotePlaylistPlayed) {
                     return ShowNotification({
-                      message:
-                        "Only Host can add items to the queue..",
+                      message: "Only Host can add items to the queue..",
                       severity: "error",
                     });
                   }

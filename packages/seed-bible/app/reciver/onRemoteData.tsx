@@ -1,6 +1,3 @@
-
-
-
 if (that.name === 'updateSharingData') {
     shout('updatedYourData', { user: that.remoteId, tab: { ...that.that } })
 }
@@ -17,6 +14,9 @@ if (masks['remotes'] && masks['remotes'].includes(that.remoteId)) {
     else if (that.name === 'verseClicked') {
         shout('remoteVerseClick', { ...that.that })
     } else if (that.name === 'appClick') {
+        if(that.that.name === "Playlist_package" && globalThis.IsPlaylistPlaying) {
+            return;
+        }
         // os.log('appClick', that.that)
         const { name } = that.that
         globalThis[name].onClick()

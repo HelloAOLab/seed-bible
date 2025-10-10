@@ -2,6 +2,7 @@ if (globalThis.NagiationTimeout) {
   clearTimeout(globalThis.NagiationTimeout);
   globalThis.NagiationTimeout = null;
 }
+if (globalThis.RenderLinkTimer) clearTimeout(globalThis.RenderLinkTimer);
 
 function scrollToVerse(verseNumber) {
   const element = document.getElementById(`v-${verseNumber}`);
@@ -352,4 +353,4 @@ globalThis.NagiationTimeout = setTimeout(async () => {
 
   thisBot.CloseSelf();
   globalThis.HISTORYExploreMode = initialValue;
-}, 100);
+}, 75);
