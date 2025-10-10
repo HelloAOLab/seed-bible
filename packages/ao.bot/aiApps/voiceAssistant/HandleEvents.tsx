@@ -50,8 +50,8 @@ const verifyVerse = async (url, translationPass, bookPass, chapterPass, verse, v
     }
 }
 
-const handleUrls = async ({ config, colaborativeId, dc, uid}) => {
-    let url = `https://ao.bot/?pattern=SeedBibleDev&noGridPortal=true&bios=free`;
+const handleUrls = async ({ config, colaborativeId, dc, uid, isCollaborative}) => {
+    let url = `https://ao.bot/?pattern=SeedBibleDev&noGridPortal=true`;
     let {language, bookId, chapter, verse} = config;
     let translationPass = false;
     let bookPass = false;
@@ -64,8 +64,8 @@ const handleUrls = async ({ config, colaborativeId, dc, uid}) => {
     url = addBookIdandChapter(translationData, url, bookId, chapter, bookPass, chapterPass);
     url = `${url}&verse=${verse || 1}`
 
-    if (colaborativeId) {
-        url = `${url}&inst=${colaborativeId}`
+    if (isCollaborative) {
+        url = `${url}&inst=${colaborativeId}&bios=free`
     }
 
     url = `${url}&chatUid=${uid}`
@@ -93,7 +93,7 @@ const HandleEvents = async ({ dc, data }) => {
     switch (data.name) {
         case "getSeedBibleUrl": {
             // https://ao.bot/?pattern=SeedBibleDev&noGridPortal=true&book=jhn&chapter=3&verse=16
-            const { bibleUrlData } = JSON.parse(data.arguments || "{}");
+            const { bibleUrlData, isCollaborative} = JSON.parse(data.arguments || "{}");
             const colaborativeId = uuid();
             console.log(bibleUrlData)
             const uid = await saveChat();
@@ -102,7 +102,7 @@ const HandleEvents = async ({ dc, data }) => {
             let promises = [];
             if (bibleUrlData && Array.isArray(bibleUrlData)) {
                 bibleUrlData.map((config) => {
-                    promises.push(handleUrls({ config, colaborativeId, dc, uid}))
+                    promises.push(handleUrls({ config, colaborativeId, dc, uid, isCollaborative}))
                 })
             }
 

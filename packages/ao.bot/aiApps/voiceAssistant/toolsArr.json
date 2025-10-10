@@ -30,6 +30,10 @@
                             }
                         }
                     }
+                },
+                "isCollaborative": {
+                    "type": "boolean",
+                    "description": "if the user wants collaborative instance"
                 }
             }
         }
