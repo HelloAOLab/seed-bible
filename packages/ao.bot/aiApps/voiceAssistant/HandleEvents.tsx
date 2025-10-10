@@ -19,7 +19,7 @@ const addTranslationId = (translationData, url, translationPass) => {
     console.log(translationData, "translationData")
     if (translationData.translation.id) {
         translationPass = translationData.translation.id;
-        return `${url}&translationId=${translationData.translation.id}`
+        return `${url}&translation=${translationData.translation.id}`
     } else {
         return url
     }
