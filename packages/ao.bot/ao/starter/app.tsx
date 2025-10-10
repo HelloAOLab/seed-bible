@@ -175,6 +175,11 @@ function QRCodeComponent({ url, index }) {
 }
 
 export function AOBotInterface() {
+  const assistantContext = useAssistantContext();
+
+  if (!assistantContext) {
+    return null;
+  }
   const {
     setMicActive,
     setSpeakerActive,
@@ -183,7 +188,7 @@ export function AOBotInterface() {
     setMessageHistory,
     setCurrentMessageId,
     dcRef,
-  } = useAssistantContext();
+  } = assistantContext;
   const [currentView, setCurrentView] = useState("home");
   const [inputValue, setInputValue] = useState("");
   const [sessionCode, setSessionCode] = useState("");
