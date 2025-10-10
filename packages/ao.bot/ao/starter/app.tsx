@@ -567,7 +567,7 @@ export function AOBotInterface() {
     const newChatId = `chat-${Date.now()}`;
     setCurrentChatId(newChatId);
     setMessages([]);
-    setCurrentView("home");
+    setCurrentView("build");
   };
 
   const loadChat = (chatId) => {
