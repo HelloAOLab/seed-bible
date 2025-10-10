@@ -1251,30 +1251,6 @@ export function AOBotInterface() {
             }}
           >
             <button
-              style={{
-                width: "32px",
-                height: "32px",
-                backgroundColor: "transparent",
-                border: "none",
-                cursor: "pointer",
-                fontSize: "18px",
-                display: "flex",
-                alignItems: "center",
-                justifyContent: "center",
-                opacity: 0.6,
-                transition: "opacity 0.2s",
-              }}
-              onMouseEnter={(e) => (e.currentTarget.style.opacity = 1)}
-              onMouseLeave={(e) => (e.currentTarget.style.opacity = 0.6)}
-            >
-              <span
-                style={{ color: "white" }}
-                class="material-symbols-outlined"
-              >
-                mic
-              </span>
-            </button>
-            <button
               onClick={() => {
                 const newChatId = `chat-${Date.now()}`;
                 setCurrentChatId(newChatId);

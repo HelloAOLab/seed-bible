@@ -93,8 +93,8 @@ const HandleEvents = async ({ dc, data }) => {
     switch (data.name) {
         case "getSeedBibleUrl": {
             // https://ao.bot/?pattern=SeedBibleDev&noGridPortal=true&book=jhn&chapter=3&verse=16
-            const { bibleUrlData, colaborativeId } = JSON.parse(data.arguments || "{}");
-
+            const { bibleUrlData } = JSON.parse(data.arguments || "{}");
+            const colaborativeId = uuid();
             console.log(bibleUrlData)
             const uid = await saveChat();
             console.log(uid, "uid")
