@@ -6,10 +6,6 @@
         "parameters": {
             "type": "object",
             "properties": {
-                "colaborativeId": {
-                    "type": "string",
-                    "description": "Optional. random 3 fruit names words joined with '-' if a user asks for collaborative instance"
-                },
                 "bibleUrlData": {
                     "type": "array",
                     "description": "the data users defines for his bibleUrl. there should always be one entry present here if user doesn't specifies anthing",
@@ -34,6 +30,10 @@
                             }
                         }
                     }
+                },
+                "isCollaborative": {
+                    "type": "boolean",
+                    "description": "if the user wants collaborative instance"
                 }
             }
         }
