@@ -156,7 +156,9 @@ globalThis.NagiationTimeout = setTimeout(async () => {
   if (globalThis.SetMediaURL && !that.skipEmbed) {
     globalThis.SetMediaURL(null);
   }
-  thisBot.CloseFloatingApp();
+  setTimeout(() => {
+    thisBot.CloseFloatingApp();
+  }, 100);
 
   if (globalThis.SetVideoSrc && !that.skipEmbed) {
     globalThis.SetVideoSrc(null);

@@ -522,6 +522,7 @@ const PlayerControls = ({ parentId = "default" }) => {
     prevItemName,
     currentItem,
   ] = useMemo(() => {
+    
     const { name: currentPlaylistName } = playlists[currIndex.key];
 
     const targetItem = getCurrentItem(
@@ -584,7 +585,9 @@ const PlayerControls = ({ parentId = "default" }) => {
         if (globalThis.SetMediaURL) {
           globalThis.SetMediaURL(null);
         }
-        thisBot.CloseFloatingApp();
+        setTimeout(() => {
+          thisBot.CloseFloatingApp();
+        }, 100);
 
         if (globalThis.SetVideoSrc) {
           globalThis.SetVideoSrc(null);
