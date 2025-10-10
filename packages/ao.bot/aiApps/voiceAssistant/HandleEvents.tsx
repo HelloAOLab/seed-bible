@@ -50,7 +50,7 @@ const verifyVerse = async (url, translationPass, bookPass, chapterPass, verse, v
     }
 }
 
-const handleUrls = async ({ config, colaborativeId, dc}) => {
+const handleUrls = async ({ config, colaborativeId, dc, uid}) => {
     let url = `https://ao.bot/?pattern=SeedBibleDev&noGridPortal=true&bios=free`;
     let {language, bookId, chapter, verse} = config;
     let translationPass = false;
@@ -67,6 +67,8 @@ const handleUrls = async ({ config, colaborativeId, dc}) => {
     if (colaborativeId) {
         url = `${url}&inst=${colaborativeId}`
     }
+
+    url = `${url}&chatUid=${uid}`
     dc.send(JSON.stringify({
         type: "conversation.item.create",
         item: {
@@ -79,6 +81,13 @@ const handleUrls = async ({ config, colaborativeId, dc}) => {
     }));
     return url;
 }
+
+const saveChat = async () => {
+    const chatMessages = {...masks.chatMessages};
+    const itemArray = [...masks.itemArray];
+    let res = await web.get(`https://aolab-bible-api.netlify.app/api/ai/saveMessages?chatMessages=${JSON.stringify(chatMessages)}&itemArray=${JSON.stringify(itemArray)}`);
+    return res.data.uid;
+}
 const HandleEvents = async ({ dc, data }) => {
     console.log(data, 'eventat datat');
     switch (data.name) {
@@ -87,11 +96,13 @@ const HandleEvents = async ({ dc, data }) => {
             const { bibleUrlData, colaborativeId } = JSON.parse(data.arguments || "{}");
 
             console.log(bibleUrlData)
+            const uid = await saveChat();
+            console.log(uid, "uid")
 
             let promises = [];
             if (bibleUrlData && Array.isArray(bibleUrlData)) {
                 bibleUrlData.map((config) => {
-                    promises.push(handleUrls({ config, colaborativeId, dc}))
+                    promises.push(handleUrls({ config, colaborativeId, dc, uid}))
                 })
             }
 
@@ -104,7 +115,7 @@ const HandleEvents = async ({ dc, data }) => {
                 item: {
                     type: "function_call_output",
                     call_id: data.call_id,
-                    output: `url generated:- ${urls.join(", ")}`
+                    output: `url generated (always include chatUid param):- ${urls.join(", ")}`
                 }
             }));
             dc.send(
