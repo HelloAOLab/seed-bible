@@ -50,8 +50,9 @@ const verifyVerse = async (url, translationPass, bookPass, chapterPass, verse, v
     }
 }
 
-const handleUrls = async ({ language, bookId, chapter, verse, colaborativeId, dc}) => {
+const handleUrls = async ({ config, colaborativeId, dc}) => {
     let url = `https://ao.bot/?pattern=SeedBibleDev&noGridPortal=true&bios=free`;
+    let {language, bookId, chapter, verse} = config;
     let translationPass = false;
     let bookPass = false;
     let chapterPass = false;
@@ -83,14 +84,14 @@ const HandleEvents = async ({ dc, data }) => {
     switch (data.name) {
         case "getSeedBibleUrl": {
             // https://ao.bot/?pattern=SeedBibleDev&noGridPortal=true&book=jhn&chapter=3&verse=16
-            const { languages, bookId, chapter, verse, colaborativeId } = JSON.parse(data.arguments || "{}");
+            const { bibleUrlData, colaborativeId } = JSON.parse(data.arguments || "{}");
 
-            console.log(languages, bookId, chapter, verse, colaborativeId)
+            console.log(bibleUrlData)
 
             let promises = [];
-            if (languages && Array.isArray(languages)) {
-                languages.map((language) => {
-                    promises.push(handleUrls({ language, bookId, chapter, verse, colaborativeId, dc}))
+            if (bibleUrlData && Array.isArray(bibleUrlData)) {
+                bibleUrlData.map((config) => {
+                    promises.push(handleUrls({ config, colaborativeId, dc}))
                 })
             }
 
