@@ -92,7 +92,7 @@ const saveChat = async () => {
 const HandleEvents = async ({ dc, data }) => {
     console.log(data, 'eventat datat');
     switch (data.name) {
-        case "getSeedBibleUrl": {
+        case "displaySeedBibleUrl": {
             const { bibleUrlData, isCollaborative } = JSON.parse(data.arguments || "{}");
             const colaborativeId = uuid();
             console.log(bibleUrlData)
@@ -127,7 +127,7 @@ const HandleEvents = async ({ dc, data }) => {
                 item: {
                     type: "function_call_output",
                     call_id: data.call_id,
-                    output: `url generated`
+                    output: `url displayed`
                 }
             }));
             dc.send(

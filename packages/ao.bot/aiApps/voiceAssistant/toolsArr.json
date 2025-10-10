@@ -1,8 +1,8 @@
 [
     {
         "type": "function",
-        "name": "getSeedBibleUrl",
-        "description": "Generate AO Seed Bible URLs according to user input (language, book, chapter, or verse).",
+        "name": "displaySeedBibleUrl",
+        "description": "Display AO Seed Bible URLs according to user input (language, book, chapter, or verse).",
         "parameters": {
             "type": "object",
             "properties": {
