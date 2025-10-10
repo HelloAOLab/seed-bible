@@ -566,9 +566,9 @@ export function AOBotInterface() {
   const startNewChat = () => {
     const newChatId = `chat-${Date.now()}`;
     setCurrentChatId(newChatId);
-    setCurrentMessageId(newChatId)
-    // setMessages([]);
-    // setCurrentView("build");
+    setMessages([]);
+    setCurrentView("build");
+    setEnableCollaboration(true);
   };
 
   const loadChat = (chatId) => {
@@ -969,8 +969,6 @@ export function AOBotInterface() {
         <div style={{ marginBottom: "60px", textAlign: "center" }}>
           <div
             style={{
-              width: "80px",
-              height: "80px",
               margin: "0 auto 15px",
               position: "relative",
             }}
@@ -989,7 +987,6 @@ export function AOBotInterface() {
             gap: "20px",
             marginBottom: "130px",
             flexWrap: "wrap",
-            "margin-left": "60px",
             justifyContent: "center",
           }}
         >
@@ -1066,70 +1063,27 @@ export function AOBotInterface() {
           </button>
 
           <div>
-            <div
-              style={{
-                width: "500px",
-                maxWidth: "90%",
-                marginBottom: "14px",
-              }}
-            >
-              <button
-                style={{
-                  width: "100%",
-                  backgroundColor: "#2a2a2a",
-                  border: "1px solid #3a3a3a",
-                  borderRadius: "6px",
-                  cursor: "pointer",
-                  padding: "18px 20px",
-                  display: "flex",
-                  alignItems: "center",
-                  gap: "12px",
-                  height: "66px",
-                  transition: "transform 0.2s, border-color 0.2s",
-                }}
-                onClick={() => setCurrentView("join")}
-                onMouseEnter={(e) => {
-                  e.currentTarget.style.transform = "translateY(-2px)";
-                  e.currentTarget.style.borderColor = "#4a4a4a";
-                }}
-                onMouseLeave={(e) => {
-                  e.currentTarget.style.transform = "translateY(0)";
-                  e.currentTarget.style.borderColor = "#3a3a3a";
-                }}
-              >
-                <div style={{ fontSize: "16px" }}>
-                  <span
-                    style={{ color: "white" }}
-                    class="material-symbols-outlined"
-                  >
-                    logout
-                  </span>
-                </div>
-                <div
-                  style={{
-                    fontSize: "15px",
-                    color: "#ffffff",
-                    textAlign: "left",
-                  }}
-                >
-                  Join Session
-                </div>
-              </button>
-            </div>
-            <div style={{ width: "500px", maxWidth: "90%", marginBottom: "0" }}>
+            <div style={{ maxWidth: "90%", marginBottom: "0" }}>
               <button
                 onClick={() => setCurrentView("build")}
                 style={{
-                  width: "100%",
+                  width: "240px",
+                  height: "146px",
+                  borderRadius: "6px",
+                  cursor: "pointer",
+                  position: "relative",
+                  padding: "20px",
+                  display: "flex",
+                  flexDirection: "column",
+                  justifyContent: "space-between",
                   backgroundColor: "#2a2a2a",
                   border: "1px solid #3a3a3a",
                   borderRadius: "6px",
                   cursor: "pointer",
                   padding: "18px 20px",
                   display: "flex",
-                  alignItems: "center",
+                  alignItems: "left",
                   gap: "12px",
-                  height: "66px",
                   transition: "transform 0.2s, border-color 0.2s",
                 }}
                 onMouseEnter={(e) => {
@@ -1141,7 +1095,7 @@ export function AOBotInterface() {
                   e.currentTarget.style.borderColor = "#3a3a3a";
                 }}
               >
-                <div style={{ fontSize: "16px" }}>
+                <div style={{ fontSize: "16px", display: 'flex' }}>
                   <span
                     style={{ color: "white" }}
                     class="material-symbols-outlined"
