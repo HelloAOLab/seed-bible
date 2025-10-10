@@ -1,5 +1,10 @@
 const { useEffect, useRef, useState, render, createContext, useContext } = os.appHooks;
-const MyContext = createContext();
+
+if (!thisBot.vars.MyContext) {
+    thisBot.vars.MyContext = createContext();
+}
+
+const MyContext = thisBot.vars.MyContext;
 const style = tags["App.css"]
 
 import AudioMonitor from 'aiApps.voiceAssistant.Audio';

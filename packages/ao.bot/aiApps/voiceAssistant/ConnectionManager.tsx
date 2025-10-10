@@ -59,6 +59,7 @@ const ConnectionManager = ({ start, setConnected, audioRef, pcRef, micRef, micAc
 
         dc.onopen = () => {
             console.log("oai-events open");
+            os.hideLoadingScreen()
             globalThis.DCRef = dc;
         };
 

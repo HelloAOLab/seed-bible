@@ -23,7 +23,6 @@ const App = () => {
 }
 render(<App />, document.body)
 // document.body.style.overscrollBehavior = 'none';
-os.hideLoadingScreen()
 
 // const res = await web.get('https://bible.helloao.org/api/BSB/books.json')
 // console.log(res)

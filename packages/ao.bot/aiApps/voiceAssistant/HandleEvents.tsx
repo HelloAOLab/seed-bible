@@ -50,9 +50,9 @@ const verifyVerse = async (url, translationPass, bookPass, chapterPass, verse, v
     }
 }
 
-const handleUrls = async ({ config, colaborativeId, dc, uid, isCollaborative}) => {
+const handleUrls = async ({ config, colaborativeId, dc, uid, isCollaborative }) => {
     let url = `https://ao.bot/?pattern=SeedBibleDev&noGridPortal=true`;
-    let {language, bookId, chapter, verse} = config;
+    let { language, bookId, chapter, verse } = config;
     let translationPass = false;
     let bookPass = false;
     let chapterPass = false;
@@ -67,15 +67,16 @@ const handleUrls = async ({ config, colaborativeId, dc, uid, isCollaborative}) =
     if (isCollaborative) {
         url = `${url}&inst=${colaborativeId}&bios=free`
     }
-
-    url = `${url}&chatUid=${uid}`
+    if(uid){
+        url = `${url}&chatUid=${uid}`
+    }
     dc.send(JSON.stringify({
         type: "conversation.item.create",
         item: {
             type: "message",
             role: "assistant",
             content: [
-                { type: "input_text", text: `Here you go: ${url}` }
+                { type: "input_text", text: `url (always include chatUid in the url and don't skip it): ${url}` }
             ]
         }
     }));
@@ -83,17 +84,16 @@ const handleUrls = async ({ config, colaborativeId, dc, uid, isCollaborative}) =
 }
 
 const saveChat = async () => {
-    const chatMessages = {...masks.chatMessages};
+    const chatMessages = { ...masks.chatMessages };
     const itemArray = [...masks.itemArray];
-    let res = await web.get(`https://aolab-bible-api.netlify.app/api/ai/saveMessages?chatMessages=${JSON.stringify(chatMessages)}&itemArray=${JSON.stringify(itemArray)}`);
+    let res = await web.get(`https://aolab-bible-api.netlify.app/api/ai/saveMessages?chatMessages=${encodeURIComponent(JSON.stringify(chatMessages))}&itemArray=${JSON.stringify(itemArray)}`);
     return res.data.uid;
 }
 const HandleEvents = async ({ dc, data }) => {
     console.log(data, 'eventat datat');
     switch (data.name) {
         case "getSeedBibleUrl": {
-            // https://ao.bot/?pattern=SeedBibleDev&noGridPortal=true&book=jhn&chapter=3&verse=16
-            const { bibleUrlData, isCollaborative} = JSON.parse(data.arguments || "{}");
+            const { bibleUrlData, isCollaborative } = JSON.parse(data.arguments || "{}");
             const colaborativeId = uuid();
             console.log(bibleUrlData)
             const uid = await saveChat();
@@ -102,7 +102,7 @@ const HandleEvents = async ({ dc, data }) => {
             let promises = [];
             if (bibleUrlData && Array.isArray(bibleUrlData)) {
                 bibleUrlData.map((config) => {
-                    promises.push(handleUrls({ config, colaborativeId, dc, uid, isCollaborative}))
+                    promises.push(handleUrls({ config, colaborativeId, dc, uid, isCollaborative }))
                 })
             }
 
@@ -110,12 +110,24 @@ const HandleEvents = async ({ dc, data }) => {
 
             console.log(urls, "urls")
 
+            let urlmsgUid = uuid();
+
+            setTagMask(thisBot, 'chatMessages', {
+                ...masks.chatMessages,
+                [`${urlmsgUid}`]: {
+                    message: `${urls.join(",\n")}`,
+                    role: "assistant"
+                }
+            }, "tempLocal");
+
+            setTagMask(thisBot, 'itemArray', [...masks.itemArray, urlmsgUid], "tempLocal");
+
             dc.send(JSON.stringify({
                 type: "conversation.item.create",
                 item: {
                     type: "function_call_output",
                     call_id: data.call_id,
-                    output: `url generated (always include chatUid param):- ${urls.join(", ")}`
+                    output: `url generated`
                 }
             }));
             dc.send(

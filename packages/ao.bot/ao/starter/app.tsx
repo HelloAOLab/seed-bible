@@ -175,6 +175,11 @@ function QRCodeComponent({ url, index }) {
 }
 
 export function AOBotInterface() {
+  const assistantContext = useAssistantContext();
+
+  if (!assistantContext) {
+    return null;
+  }
   const {
     setMicActive,
     setSpeakerActive,
@@ -183,7 +188,7 @@ export function AOBotInterface() {
     setMessageHistory,
     setCurrentMessageId,
     dcRef,
-  } = useAssistantContext();
+  } = assistantContext;
   const [currentView, setCurrentView] = useState("home");
   const [inputValue, setInputValue] = useState("");
   const [sessionCode, setSessionCode] = useState("");
@@ -561,8 +566,9 @@ export function AOBotInterface() {
   const startNewChat = () => {
     const newChatId = `chat-${Date.now()}`;
     setCurrentChatId(newChatId);
-    setMessages([]);
-    setCurrentView("home");
+    setCurrentMessageId(newChatId)
+    // setMessages([]);
+    // setCurrentView("build");
   };
 
   const loadChat = (chatId) => {
@@ -680,9 +686,9 @@ export function AOBotInterface() {
         <div style={{ marginBottom: "40px", textAlign: "center" }}>
           <div
             style={{
-              width: "60px",
+              width: "100px",
               height: "60px",
-              margin: "0 auto 15px",
+              margin: "15px auto",
               position: "relative",
             }}
           >
@@ -703,6 +709,7 @@ export function AOBotInterface() {
             borderRadius: "16px",
             padding: "40px",
             textAlign: "center",
+            margin: "10px auto"
           }}
         >
           <h2
@@ -861,7 +868,7 @@ export function AOBotInterface() {
           </h3>
           <div
             style={{
-              display: "grid",
+              display: "flex",
               gridTemplateColumns: "repeat(auto-fit, minmax(140px, 1fr))",
               gap: "16px",
               fontSize: "13px",
@@ -989,7 +996,7 @@ export function AOBotInterface() {
           <button
             onClick={() => {
               os.goToURL(
-                `https://ao.bot/?pattern=SeedBibleDev&noGridPortal=true`
+                `https://ao.bot/?pattern=SeedBibleDev&noGridPortal=true&bios=free`
               );
             }}
             style={{
@@ -1213,7 +1220,7 @@ export function AOBotInterface() {
         >
           <input
             type="text"
-            placeholder="Ask..."
+            placeholder="E.g. Give me a Seed Bible link set to a Chinese translation that opens to Matthew 3."
             value={inputValue}
             onChange={(e) => setInputValue(e.target.value)}
             onKeyDown={(e) => {
@@ -1681,12 +1688,15 @@ export function AOBotInterface() {
         className="mobileMenuBtn"
         onClick={() => {
           const chatSidebar = document.querySelector(".chatSideBar");
-          chatSidebar.classList.toggle("hiddenSidebar");
+          chatSidebar.classList.toggle("visible");
         }}
       >
         ☰
       </button>
-      <style>{`@media (max-width: 980px){ .mobileMenuBtn { display: block !important; } }`}</style>
+      <style>{`@media (max-width: 980px){ 
+      .mobileMenuBtn { display: block !important; }
+      .chatSideBar { display: none !important; } .chatSideBar.visible { display: flex !important; } 
+      }`}</style>
 
       <div
         style={{
@@ -1825,21 +1835,6 @@ export function AOBotInterface() {
                   messageHistory[key].itemArray[0]
                 ]?.message || "New Chat"}
               </div>
-              <button
-                style={{
-                  backgroundColor: "transparent",
-                  border: "none",
-                  color: "#666",
-                  cursor: "pointer",
-                  padding: "4px",
-                  fontSize: "16px",
-                  transition: "color 0.2s",
-                }}
-                onMouseEnter={(e) => (e.currentTarget.style.color = "#ff4444")}
-                onMouseLeave={(e) => (e.currentTarget.style.color = "#666")}
-              >
-                <span class="material-symbols-outlined">delete</span>
-              </button>
             </div>
           ))}
 

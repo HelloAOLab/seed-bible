@@ -10,9 +10,12 @@ const voiceAssistant = getBot("system", "aiApps.voiceAssistant");
 // Move QRCodeComponent OUTSIDE and memoize it
 const QRCodeComponent = ({ url, index }) => {
   const qrRef = useRef(null);
+  const expandedQrRef = useRef(null);
   const [qrGenerated, setQrGenerated] = useState(false);
   const [copied, setCopied] = useState(false);
+  const [isExpanded, setIsExpanded] = useState(false);
 
+  // Generate small QR code
   useEffect(() => {
     if (url && qrRef.current && !qrGenerated && window.QRCode) {
       qrRef.current.innerHTML = "";
@@ -27,6 +30,21 @@ const QRCodeComponent = ({ url, index }) => {
       setQrGenerated(true);
     }
   }, [url, qrGenerated]);
+
+  // Generate large QR code when expanded
+  useEffect(() => {
+    if (url && isExpanded && expandedQrRef.current && window.QRCode) {
+      expandedQrRef.current.innerHTML = "";
+      new window.QRCode(expandedQrRef.current, {
+        text: url,
+        width: 400,
+        height: 400,
+        colorDark: "#000000",
+        colorLight: "#ffffff",
+        correctLevel: window.QRCode.CorrectLevel.H,
+      });
+    }
+  }, [isExpanded, url]);
 
   const handleOpenLink = () => {
     if (url) {
@@ -73,96 +91,207 @@ const QRCodeComponent = ({ url, index }) => {
   };
 
   return (
-    <div
-      style={{
-        display: "flex",
-        flexDirection: "column",
-        alignItems: "center",
-        gap: "8px",
-        padding: "16px",
-        backgroundColor: "#2a2a2a",
-        borderRadius: "12px",
-        border: "1px solid #3a3a3a",
-      }}
-    >
-      <div style={{ fontSize: "12px", fontWeight: "600", color: "#e67e50" }}>
-        {getLabel()}
-      </div>
+    <>
       <div
-        ref={qrRef}
         style={{
-          backgroundColor: "#ffffff",
-          padding: "8px",
-          borderRadius: "8px",
           display: "flex",
+          flexDirection: "column",
           alignItems: "center",
-          justifyContent: "center",
+          gap: "8px",
+          padding: "16px",
+          backgroundColor: "#2a2a2a",
+          borderRadius: "12px",
+          border: "1px solid #3a3a3a",
         }}
-      />
-      <div
-        style={{
-          fontSize: "10px",
-          color: "#888",
-          maxWidth: "200px",
-          textAlign: "center",
-          wordBreak: "break-all",
-          marginTop: "4px",
-        }}
-        title={url}
       >
-        {getTruncatedUrl()}
-      </div>
-      <div style={{ display: "flex", gap: "8px", marginTop: "4px" }}>
-        <button
-          onClick={handleOpenLink}
+        <div style={{ fontSize: "12px", fontWeight: "600", color: "#e67e50" }}>
+          {getLabel()}
+        </div>
+        <div
+          ref={qrRef}
+          onClick={() => setIsExpanded(true)}
+          title="Click to enlarge QR code"
           style={{
-            padding: "8px 16px",
-            backgroundColor: "#e67e50",
-            border: "none",
+            backgroundColor: "#ffffff",
+            padding: "8px",
             borderRadius: "8px",
-            color: "#1a1a1a",
-            fontSize: "12px",
-            fontWeight: "600",
+            display: "flex",
+            alignItems: "center",
+            justifyContent: "center",
             cursor: "pointer",
-            transition: "transform 0.2s",
-          }}
-          onMouseEnter={(e) =>
-            (e.currentTarget.style.transform = "scale(1.05)")
-          }
-          onMouseLeave={(e) => (e.currentTarget.style.transform = "scale(1)")}
-        >
-          Open Link
-        </button>
-        <button
-          onClick={handleCopyLink}
-          style={{
-            padding: "8px 16px",
-            backgroundColor: copied ? "#4ade80" : "#3a3a3a",
-            border: "none",
-            borderRadius: "8px",
-            color: copied ? "#1a1a1a" : "#e0e0e0",
-            fontSize: "12px",
-            fontWeight: "600",
-            cursor: "pointer",
-            transition: "all 0.2s",
+            transition: "transform 0.2s, box-shadow 0.2s",
+            boxShadow: "0 2px 4px rgba(0, 0, 0, 0.1)",
           }}
           onMouseEnter={(e) => {
-            if (!copied) {
-              e.currentTarget.style.backgroundColor = "#4a4a4a";
-            }
             e.currentTarget.style.transform = "scale(1.05)";
+            e.currentTarget.style.boxShadow = "0 4px 12px rgba(230, 126, 80, 0.3)";
           }}
           onMouseLeave={(e) => {
-            if (!copied) {
-              e.currentTarget.style.backgroundColor = "#3a3a3a";
-            }
             e.currentTarget.style.transform = "scale(1)";
+            e.currentTarget.style.boxShadow = "0 2px 4px rgba(0, 0, 0, 0.1)";
+          }}
+        />
+        <div
+          style={{
+            fontSize: "10px",
+            color: "#888",
+            maxWidth: "200px",
+            textAlign: "center",
+            wordBreak: "break-all",
+            marginTop: "4px",
+          }}
+          title={url}
+        >
+          {getTruncatedUrl()}
+        </div>
+        <div style={{ display: "flex", gap: "8px", marginTop: "4px" }}>
+          <button
+            onClick={handleOpenLink}
+            style={{
+              padding: "8px 16px",
+              backgroundColor: "#e67e50",
+              border: "none",
+              borderRadius: "8px",
+              color: "#1a1a1a",
+              fontSize: "12px",
+              fontWeight: "600",
+              cursor: "pointer",
+              transition: "transform 0.2s",
+            }}
+            onMouseEnter={(e) =>
+              (e.currentTarget.style.transform = "scale(1.05)")
+            }
+            onMouseLeave={(e) => (e.currentTarget.style.transform = "scale(1)")}
+          >
+            Open Link
+          </button>
+          <button
+            onClick={handleCopyLink}
+            style={{
+              padding: "8px 16px",
+              backgroundColor: copied ? "#4ade80" : "#3a3a3a",
+              border: "none",
+              borderRadius: "8px",
+              color: copied ? "#1a1a1a" : "#e0e0e0",
+              fontSize: "12px",
+              fontWeight: "600",
+              cursor: "pointer",
+              transition: "all 0.2s",
+            }}
+            onMouseEnter={(e) => {
+              if (!copied) {
+                e.currentTarget.style.backgroundColor = "#4a4a4a";
+              }
+              e.currentTarget.style.transform = "scale(1.05)";
+            }}
+            onMouseLeave={(e) => {
+              if (!copied) {
+                e.currentTarget.style.backgroundColor = "#3a3a3a";
+              }
+              e.currentTarget.style.transform = "scale(1)";
+            }}
+          >
+            {copied ? "✓ Copied!" : "Copy Link"}
+          </button>
+        </div>
+      </div>
+
+      {isExpanded && (
+        <div
+          onClick={() => setIsExpanded(false)}
+          style={{
+            position: "fixed",
+            top: 0,
+            left: 0,
+            right: 0,
+            bottom: 0,
+            backgroundColor: "rgba(0, 0, 0, 0.95)",
+            display: "flex",
+            flexDirection: "column",
+            alignItems: "center",
+            justifyContent: "center",
+            zIndex: 9999,
+            cursor: "pointer",
+            animation: "fadeIn 0.3s ease-in-out",
           }}
         >
-          {copied ? "✓ Copied!" : "Copy Link"}
-        </button>
-      </div>
-    </div>
+          <style>{`
+            @keyframes fadeIn {
+              from {
+                opacity: 0;
+              }
+              to {
+                opacity: 1;
+              }
+            }
+          `}</style>
+          <div
+            style={{
+              fontSize: "20px",
+              fontWeight: "600",
+              color: "#e67e50",
+              marginBottom: "24px",
+              animation: "slideDown 0.4s ease-out",
+            }}
+          >
+            <style>{`
+              @keyframes slideDown {
+                from {
+                  opacity: 0;
+                  transform: translateY(-20px);
+                }
+                to {
+                  opacity: 1;
+                  transform: translateY(0);
+                }
+              }
+            `}</style>
+            {getLabel()}
+          </div>
+          <div
+            onClick={(e) => e.stopPropagation()}
+            style={{
+              backgroundColor: "#ffffff",
+              padding: "32px",
+              borderRadius: "16px",
+              boxShadow: "0 20px 60px rgba(0, 0, 0, 0.5)",
+              animation: "scaleUp 0.4s cubic-bezier(0.34, 1.56, 0.64, 1)",
+            }}
+          >
+            <style>{`
+              @keyframes scaleUp {
+                from {
+                  opacity: 0;
+                  transform: scale(0.5);
+                }
+                to {
+                  opacity: 1;
+                  transform: scale(1);
+                }
+              }
+            `}</style>
+            <div
+              ref={expandedQrRef}
+              style={{
+                display: "flex",
+                alignItems: "center",
+                justifyContent: "center",
+              }}
+            />
+          </div>
+          <div
+            style={{
+              fontSize: "14px",
+              color: "#888",
+              marginTop: "24px",
+              animation: "fadeIn 0.6s ease-in-out",
+            }}
+          >
+            Click anywhere to close
+          </div>
+        </div>
+      )}
+    </>
   );
 };
 
@@ -325,12 +454,21 @@ export const ChatView = ({ initialQuery, newMessageId }) => {
         JSON.stringify({
           type: "session.update",
           session: {
-            instructions: ``,
+            instructions: `never include urls in response.`,
           },
         })
       );
     }
   }, []);
+
+  useEffect(() => {
+    const messageContainer = document.getElementById("message-container");
+    messageContainer.scrollTo({
+      top: messageContainer.scrollHeight,
+      behavior: "smooth"
+    });
+    console.log("scrolling")
+  }, [messages])
 
   return (
     <div
@@ -344,6 +482,7 @@ export const ChatView = ({ initialQuery, newMessageId }) => {
       <div
         className="allCont"
         style={{ height: "100%", display: "flex", gap: "10px" }}
+        id="message-container"
       >
         {showAssistant && (
           <>
@@ -376,6 +515,7 @@ export const ChatView = ({ initialQuery, newMessageId }) => {
             gap: "30px",
             height: "calc(100dvh - 150px)",
             scrollbarWidth: "none",
+            width: "45dvw"
           }}
         >
           {messages.map((msg, idx) => (
@@ -393,15 +533,7 @@ export const ChatView = ({ initialQuery, newMessageId }) => {
               {msg.role === "assistant" && (
                 <div
                   style={{
-                    width: "28px",
-                    height: "28px",
-                    minWidth: "28px",
-                    backgroundColor: "#2a2a2a",
-                    borderRadius: "50%",
-                    display: "flex",
-                    alignItems: "center",
-                    justifyContent: "center",
-                    fontSize: "14px",
+                    width: "28px", height: "28px", minWidth: "28px", backgroundColor: "#2a2a2a", borderRadius: "50%", display: "flex", alignItems: "center", justifyContent: "center", fontSize: "14px",
                   }}
                 >
                   <img
@@ -412,7 +544,6 @@ export const ChatView = ({ initialQuery, newMessageId }) => {
               )}
               <div
                 style={{
-                  flex: 1,
                   backgroundColor:
                     msg.role === "user" ? "#3a3d3d57" : "transparent",
                   padding: msg.role === "user" ? "12px 16px" : "0",
@@ -421,11 +552,12 @@ export const ChatView = ({ initialQuery, newMessageId }) => {
                   lineHeight: 1.6,
                   color: "#e0e0e0",
                   maxWidth: "calc(100% - 40px)",
+                  width: "fit-content",
+                  marginLeft: msg.role === "user" ? "auto" : null,
+                  marginRight: msg.role === "user" ? null : "auto",
                 }}
               >
-                {msg.role !== "assistant" ? (
-                  <div>{msg.message}</div>
-                ) : (
+                {msg.role !== "assistant" ? <div>{msg.message}</div> : (
                   <MessageContent
                     text={msg.message}
                     isWriting={assistantWriting || userWriting}
@@ -466,32 +598,6 @@ export const ChatView = ({ initialQuery, newMessageId }) => {
                     >
                       📋 Copy
                     </button>
-                    <button
-                      onClick={retryLastMessage}
-                      style={{
-                        padding: "6px 12px",
-                        backgroundColor: "transparent",
-                        border: "1px solid #3a3a3a",
-                        borderRadius: "6px",
-                        color: "#999",
-                        fontSize: "12px",
-                        cursor: "pointer",
-                        display: "flex",
-                        alignItems: "center",
-                        gap: "6px",
-                        transition: "border-color 0.2s, color 0.2s",
-                      }}
-                      onMouseEnter={(e) => {
-                        e.currentTarget.style.borderColor = "#5a5a5a";
-                        e.currentTarget.style.color = "#fff";
-                      }}
-                      onMouseLeave={(e) => {
-                        e.currentTarget.style.borderColor = "#3a3a3a";
-                        e.currentTarget.style.color = "#999";
-                      }}
-                    >
-                      🔄 Try again
-                    </button>
                   </div>
                 )}
               </div>
@@ -527,6 +633,22 @@ export const ChatView = ({ initialQuery, newMessageId }) => {
                 style={{ padding: "12px 0", fontSize: "14px", color: "#999" }}
               >
                 Thinking...
+              </div>
+            </div>
+          )}
+          {aiState === "listening" && (
+            <div
+              style={{
+                display: "flex",
+                gap: "12px",
+                alignItems: "flex-start",
+                marginLeft: "auto"
+              }}
+            >
+              <div
+                style={{ padding: "12px 0", fontSize: "14px", color: "#999" }}
+              >
+                Listening...
               </div>
             </div>
           )}
