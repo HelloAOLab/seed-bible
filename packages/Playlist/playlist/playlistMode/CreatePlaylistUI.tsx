@@ -79,7 +79,7 @@ const PROMPT_OPTIONS = [
 ];
 
 const AI_OPTIONS = [
-  // { value: "openai/gpt/5", label: "OpenAI GPT-5" },
+  // { value: "openai/gpt/5-mini", label: "OpenAI GPT-5 Mini" },
   { value: "openai/gpt/4o-mini", label: "OpenAI GPT-4o Mini" },
   { value: "openai/gpt/o1-mini", label: "OpenAI GPT-o1 Mini" },
   { value: "openai/gpt/o3-mini", label: "OpenAI GPT-o3 Mini" },
