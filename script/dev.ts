@@ -18,6 +18,7 @@ import {
   waitForPackage,
   loadSeedBible,
   DEFAULT_EXTENSIONS,
+  loadAoBot,
 } from "./lib/browser.js";
 import { rmdir, writeFile } from "node:fs/promises";
 import path from "node:path";
@@ -28,6 +29,7 @@ import type { StoredAux } from "../typings/AuxLibraryDefinitions.js";
 
 const extraExtensions = process.argv.slice(2).filter(a => !a.startsWith("-"));
 const collaborative = process.argv.slice(2).some(a => a === "--collaborative");
+const aoBot = process.argv.slice(2).find(a => a === "--ao-bot");
 
 const browser = await puppeteer.launch({
   headless: false,
@@ -39,29 +41,33 @@ const extraPages: puppeteer.Page[] = [];
 let currentInst: string | undefined;
 
 async function startPage() {
-  const allPackages = [...new Set([...DEFAULT_EXTENSIONS, ...extraExtensions])];
-
-  await Promise.all(allPackages.map((pkg) => packageSingle(pkg, "ignore")));
-
   page = await browser.newPage();
 
-  currentInst = await loadSeedBible(page, extraExtensions, undefined, collaborative);
+  if (aoBot) {
+    await Promise.all(['ao.bot'].map((pkg) => packageSingle(pkg, "ignore")));
+    currentInst = await loadAoBot(page);
+  } else {
+    const allPackages = [...new Set([...DEFAULT_EXTENSIONS, ...extraExtensions])];
 
-  const newTabPromises: Promise<string> = [];
+    await Promise.all(allPackages.map((pkg) => packageSingle(pkg, "ignore")));
+    currentInst = await loadSeedBible(page, extraExtensions, undefined, collaborative);
 
-  for(let i = 0; i < extraPages.length; i++) {
-    const p = extraPages[i];
+    const newTabPromises: Promise<string> = [];
 
-    newTabPromises.push(p.close()
-      .then(() => browser.newPage())
-      .then(async (p) => {
-        extraPages[i] = p;
-        await loadInst(p, currentInst, collaborative);
-      })
-    );
+    for(let i = 0; i < extraPages.length; i++) {
+      const p = extraPages[i];
+
+      newTabPromises.push(p.close()
+        .then(() => browser.newPage())
+        .then(async (p) => {
+          extraPages[i] = p;
+          await loadInst(p, currentInst, collaborative);
+        })
+      );
+    }
+
+    await Promise.all(newTabPromises);
   }
-
-  await Promise.all(newTabPromises);
 }
 
 await startPage();

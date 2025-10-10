@@ -292,3 +292,17 @@ export async function loadSeedBible(page: Page, extraExtensions: string[] = [], 
 
     return inst;
 }
+
+export async function loadAoBot(page: Page, inst: string = uuid()) {
+    await initPage(page);
+    await loadInst(page, inst, false);
+
+    await addAux(page, await readPackage('ao.bot'));
+    // await waitForPackage(page, 'ao.bot');
+
+    console.log('Loaded!');
+
+    shout(page, 'onInstJoined', null, { inst });
+
+    return inst;
+}
