@@ -581,12 +581,12 @@ const PlayerControls = ({ parentId = "default" }) => {
         targetItem?.type === "heading" ||
         (!!targetItem?.nextTargetItem?.id && currIndex.fromButton === 1)
       ) {
-        if (globalThis.SetMediaURL && !that.skipEmbed) {
+        if (globalThis.SetMediaURL) {
           globalThis.SetMediaURL(null);
         }
         thisBot.CloseFloatingApp();
 
-        if (globalThis.SetVideoSrc && !that.skipEmbed) {
+        if (globalThis.SetVideoSrc) {
           globalThis.SetVideoSrc(null);
         }
         if (targetItem?.type === "heading")
