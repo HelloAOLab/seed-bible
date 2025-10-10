@@ -6,28 +6,34 @@
         "parameters": {
             "type": "object",
             "properties": {
-                "languages": {
-                    "type": "array",
-                    "description": "Optional. the language user specifies. if not specified then put english.",
-                    "items": {
-                        "type": "string"
-                    }
-                },
-                "bookId": {
-                    "type": "string",
-                    "description": "Optional. get the book id by the book name user mentions. available book ids are GEN, EXO, LEV, NUM, DEU, JOS, JDG, RUT, 1SA, 2SA, 1KI, 2KI, 1CH, 2CH, EZR, NEH, EST, JOB, PSA, PRO, ECC, SNG, ISA, JER, LAM, EZK, DAN, HOS, JOL, AMO, OBA, JON, MIC, NAM, HAB, ZEP, HAG, ZEC, MAL, MAT, MRK, LUK, JHN, ACT, ROM, 1CO, 2CO, GAL, EPH, PHP, COL, 1TH, 2TH, 1TI, 2TI, TIT, PHM, HEB, JAS, 1PE, 2PE, 1JN, 2JN, 3JN, JUD and REV"
-                },
-                "chapter": {
-                    "type": "number",
-                    "description": "Optional. Chapter number."
-                },
-                "verse": {
-                    "type": "number",
-                    "description": "Optional. Verse number."
-                },
                 "colaborativeId": {
                     "type": "string",
                     "description": "Optional. random 3 fruit names words joined with '-' if a user asks for collaborative instance"
+                },
+                "bibleUrlData": {
+                    "type": "array",
+                    "description": "the data users defines for his bibleUrl. there should always be one entry present here if user doesn't specifies anthing",
+                    "items": {
+                        "type": "object",
+                        "properties": {
+                            "languages": {
+                                "type": "string",
+                                "description": "the language user specifies. if not specified then use english."
+                            },
+                            "bookId": {
+                                "type": "string",
+                                "description": "Optional. get the book id by the book name user mentions. if not mentioned use GEN. available book ids are GEN, EXO, LEV, NUM, DEU, JOS, JDG, RUT, 1SA, 2SA, 1KI, 2KI, 1CH, 2CH, EZR, NEH, EST, JOB, PSA, PRO, ECC, SNG, ISA, JER, LAM, EZK, DAN, HOS, JOL, AMO, OBA, JON, MIC, NAM, HAB, ZEP, HAG, ZEC, MAL, MAT, MRK, LUK, JHN, ACT, ROM, 1CO, 2CO, GAL, EPH, PHP, COL, 1TH, 2TH, 1TI, 2TI, TIT, PHM, HEB, JAS, 1PE, 2PE, 1JN, 2JN, 3JN, JUD and REV"
+                            },
+                            "chapter": {
+                                "type": "number",
+                                "description": "Optional. Chapter number. if not mentioned use 1"
+                            },
+                            "verse": {
+                                "type": "number",
+                                "description": "Optional. Verse number. if not mentioned use 1"
+                            }
+                        }
+                    }
                 }
             }
         }
