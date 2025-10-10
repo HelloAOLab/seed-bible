@@ -86,7 +86,7 @@ const HandleEvents = async ({ dc, data }) => {
             // https://ao.bot/?pattern=SeedBibleDev&noGridPortal=true&book=jhn&chapter=3&verse=16
             const { bibleUrlData, colaborativeId } = JSON.parse(data.arguments || "{}");
 
-            // console.log(languages, bookId, chapter, verse, colaborativeId)
+            console.log(bibleUrlData)
 
             let promises = [];
             if (bibleUrlData && Array.isArray(bibleUrlData)) {

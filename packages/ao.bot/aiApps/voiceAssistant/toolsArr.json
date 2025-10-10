@@ -16,7 +16,7 @@
                     "items": {
                         "type": "object",
                         "properties": {
-                            "languages": {
+                            "language": {
                                 "type": "string",
                                 "description": "the language user specifies. if not specified then use english."
                             },
