@@ -224,8 +224,6 @@ await(async function mainInstaller(that) {
             isImg: !!toolbarConfig?.iconUrl,
         };
 
-        console.log(`[Debug] installPackage`, {toolbarOption, toolbarConfig})
-
         if (globalThis.AddTool) {
             globalThis.AddTool(toolbarOption, { to: toolbarConfig.to ? toolbarConfig.to : 'page' });
         }
