@@ -53,19 +53,6 @@ for(const pieceData of fixedElementsData)
         }).find((data) => {
             return data.tab === pieceActivity[0]
         })?.user?.color ?? BibleVizUtils.Data.tags.myUserColor;
-        
-        // console.log(`[Debug] UpdateActivityNotificationOnPieces`, {
-        //     info: Object.keys(BibleVizUtils.Data.vars.userPresenceData ?? {}).find((key) => { 
-        //         return BibleVizUtils.Data.vars.userPresenceData[key].tab === pieceActivity[0]
-        //     }),
-        //     user: Object.keys(BibleVizUtils.Data.vars.userPresenceData ?? {}).find((key) => { 
-        //         return BibleVizUtils.Data.vars.userPresenceData[key].tab === pieceActivity[0]
-        //     })?.user,
-        //     color: Object.keys(BibleVizUtils.Data.vars.userPresenceData ?? {}).find((key) => { 
-        //         return BibleVizUtils.Data.vars.userPresenceData[key].tab === pieceActivity[0]
-        //     })?.user?.color,
-        //     myUserColor: BibleVizUtils.Data.tags.myUserColor
-        // });
 
         if(pieceData.piece.links.activityNotification)
         {
