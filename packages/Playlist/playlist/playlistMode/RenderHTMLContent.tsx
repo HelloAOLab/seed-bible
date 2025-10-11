@@ -17,7 +17,7 @@ const RenderHTMLContent = ({ htmlContent }) => {
         <div>
             <div
                 ref={containerRef}
-                style={{ height: shouldRender ? open ? 'auto' : '60px' : 'auto', overflow: 'hidden', textTransform: "none", transition: 'all 0.2s linear', overflowX: 'auto', paddingRight: '1.25rem' }}
+                style={{ height: shouldRender ? open ? 'auto' : '60px' : 'auto',textTransform: "none", transition: 'all 0.2s linear', paddingRight: '1.25rem' }}
                 dangerouslySetInnerHTML={{ __html: htmlContent }}
             />
 
