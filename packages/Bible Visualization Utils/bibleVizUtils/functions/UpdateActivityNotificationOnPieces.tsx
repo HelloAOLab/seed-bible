@@ -48,7 +48,24 @@ for(const pieceData of fixedElementsData)
     {
         const formOpacity = pieceActivity.some((activity) => {return manager.vars.tabsContext.activeTab === activity.id;}) ? 1 : 0.5;
         const label = pieceActivity.length > 1 ? pieceActivity.length : "";
-        const color = BibleVizUtils.Data.tags.dumbUserPresenceData.find((dumbData) => { return dumbData.tab === pieceActivity[0]})?.user?.color ?? BibleVizUtils.Data.tags.myUserColor;
+        const color = Object.keys(BibleVizUtils.Data.vars.userPresenceData ?? {})?.map((userId) => {
+            return BibleVizUtils.Data.vars.userPresenceData[userId];
+        }).find((data) => {
+            return data.tab === pieceActivity[0]
+        })?.user?.color ?? BibleVizUtils.Data.tags.myUserColor;
+        
+        // console.log(`[Debug] UpdateActivityNotificationOnPieces`, {
+        //     info: Object.keys(BibleVizUtils.Data.vars.userPresenceData ?? {}).find((key) => { 
+        //         return BibleVizUtils.Data.vars.userPresenceData[key].tab === pieceActivity[0]
+        //     }),
+        //     user: Object.keys(BibleVizUtils.Data.vars.userPresenceData ?? {}).find((key) => { 
+        //         return BibleVizUtils.Data.vars.userPresenceData[key].tab === pieceActivity[0]
+        //     })?.user,
+        //     color: Object.keys(BibleVizUtils.Data.vars.userPresenceData ?? {}).find((key) => { 
+        //         return BibleVizUtils.Data.vars.userPresenceData[key].tab === pieceActivity[0]
+        //     })?.user?.color,
+        //     myUserColor: BibleVizUtils.Data.tags.myUserColor
+        // });
 
         if(pieceData.piece.links.activityNotification)
         {
