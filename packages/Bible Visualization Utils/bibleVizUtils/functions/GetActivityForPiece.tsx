@@ -1,7 +1,9 @@
 const {piece, tabsContext} = that;
 
-const dumbTabs = BibleVizUtils.Data.tags.dumbUserPresenceData.map((data) => {return data.tab})
-const allTabs = [...tabsContext.tabs, ...dumbTabs];
+const remoteTabs = Object.keys(BibleVizUtils.Data.vars.userPresenceData ?? {}).map((key) => {
+    return BibleVizUtils.Data.vars.userPresenceData[key].tab
+})
+const allTabs = [...tabsContext.tabs, ...remoteTabs];
 
 const tabsPathMap = new Map(allTabs.map((tab) => {
     let {book, chapter} = tab.data;

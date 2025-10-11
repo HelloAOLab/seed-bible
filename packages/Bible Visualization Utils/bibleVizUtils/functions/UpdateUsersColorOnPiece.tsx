@@ -127,7 +127,8 @@ for(const fixedPiece of fixedPieces)
             else
             {
                 const isActiveTab = activity.id === manager.vars.tabsContext.activeTab;
-                const color = BibleVizUtils.Data.tags.dumbUserPresenceData.find((dumbData) => { return dumbData.tab === activity})?.user?.color ?? BibleVizUtils.Data.tags.myUserColor;
+                const color = Object.keys(BibleVizUtils.Data.vars.userPresenceData ?? {}).find((key) => { return BibleVizUtils.Data.vars.userPresenceData[key].tab === activity})?.user?.color ?? BibleVizUtils.Data.tags.myUserColor;
+
 
                 const opacity = isActiveTab ? 1 : 0.5;
                 const formRenderOrder = isActiveTab ? -1 : 10 - Number(activityIndex)

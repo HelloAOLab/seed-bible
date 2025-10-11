@@ -715,6 +715,10 @@ function SideBar() {
     globalThis.changes.editMode = editMode;
   }, [editMode]);
 
+  useEffect(() => {
+    shout("OnOnlineUsersChanged", {onlineUsers});
+  }, [onlineUsers])
+
   const {
     sidebarMode,
     setSideBarMode,
