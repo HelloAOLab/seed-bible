@@ -38,7 +38,7 @@ for(const pieceData of fixedElementsData)
     }
 
     if(
-        (pieceData instanceof StackChapterData) && // To show activity notification only in chapters
+        ((pieceData instanceof StackChapterData) || (pieceData instanceof LayoutChapterData)) && // To show activity notification only in chapters
         pieceActivity.length > 0 && 
         !isPieceSelected &&
         pieceData.piece.tags.isInUse && 

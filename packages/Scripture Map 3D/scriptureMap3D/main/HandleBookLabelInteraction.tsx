@@ -25,7 +25,7 @@ if(!layoutBookStructure.layoutBookData.piece || layoutBookStructure.layoutBookDa
     }
     applyMod(book, bookPositionMod);
 
-    animateTag(layoutBookStructure.layoutBookData.piece, {
+    await animateTag(layoutBookStructure.layoutBookData.piece, {
         fromValue: {
             formOpacity: 0
         },
@@ -34,4 +34,5 @@ if(!layoutBookStructure.layoutBookData.piece || layoutBookStructure.layoutBookDa
         },
         duration: 0.007
     })
+    thisBot.UserPresenceUpdate();
 }
