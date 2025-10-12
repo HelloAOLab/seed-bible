@@ -7,12 +7,11 @@ const transformer = ownerBot.tags.transformer ? getBot(byID(ownerBot.tags.transf
 const ownerBotPosition = getBotPosition(ownerBot, dimension);
 const ownerBotScales = BibleVizUtils.Functions.GetBotScales(ownerBot);
 const transformerOffset = 1;
-const notificationOffset = 0.15
 const transformerPosition = transformer ? getBotPosition(transformer, dimension).add(new Vector3(0, 0, transformerOffset)) : new Vector3(0, 0, 0);
 const activityNotificationDesiredPosition = new Vector3(
-    ownerBotPosition.x + (thisBot.tags.direction.x * ((ownerBotScales.x / 2) + notificationOffset)), 
-    ownerBotPosition.y + (thisBot.tags.direction.y * ((ownerBotScales.y / 2) + notificationOffset)), 
-    ownerBotPosition.z + ownerBotScales.z + notificationOffset
+    ownerBotPosition.x + (thisBot.tags.direction.x * ((ownerBotScales.x / 2) + thisBot.tags.notificationOffset)), 
+    ownerBotPosition.y + (thisBot.tags.direction.y * ((ownerBotScales.y / 2) + thisBot.tags.notificationOffset)), 
+    ownerBotPosition.z + ownerBotScales.z + thisBot.tags.notificationOffset
 ).add(transformerPosition);
 
 if(setX) setTagMask(thisBot, dimension + "X", activityNotificationDesiredPosition.x);
