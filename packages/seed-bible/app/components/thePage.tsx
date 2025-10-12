@@ -344,8 +344,8 @@ function ThePage({
       setData(bible.data);
     }
   }
-  async function changeTranslation(id) {
-    await bible.changeTranslation(id);
+  async function changeTranslation(id, bookData, forcedBaseUrl) {
+    await bible.changeTranslation(id, bookData, forcedBaseUrl);
     setData(bible.data);
   }
 

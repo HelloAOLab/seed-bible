@@ -733,17 +733,6 @@ input:checked + .slider:not(#slider):before {
   border-radius: 5px;
 }
 
-.sidebar-chapter-itm {
-}
-
-.sidebar-chapter-itm:hover {
-  background-color: rgba(1, 87, 155, 0.9);
-}
-
-.sidebar-chapter-itm.highlight {
-  background-color: rgba(1, 87, 155, 0.9);
-}
-
 .close-input {
   position: fixed;
   display: flex;
