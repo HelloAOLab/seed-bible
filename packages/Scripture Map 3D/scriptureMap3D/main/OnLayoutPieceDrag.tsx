@@ -14,6 +14,8 @@ switch(true)
     break;
     case data instanceof LayoutChapterData:
         if(layoutData || layoutBookData) pulledOutFromParent = true;
+        BibleVizUtils.Functions.TryHideActivityNotificationOnPiece({piece: data.piece})
+        await data.piece.Unhighlight({chapterData: data})
     break;
     default: break;
 }
