@@ -10,12 +10,12 @@
     * infoLabelTransformer.Show({duration: 0.2, speedMultiplier: 1.5})
 */
 
-let {duration = 0.15} = that ?? {};
-const {speedMultiplier = 1, isInstantaneous = false} = that ?? {};
+let {duration = 0.15 } = that ?? {};
+const {speedMultiplier = 1, isInstantaneous = false, manager} = that ?? {};
 duration = isInstantaneous ? 0 : (duration/speedMultiplier);
 thisBot.StopOpacityTransition();
 
-const infoLabelUsersColor = BibleVizUtils.Functions.UpdateUsersColorOnPiece({source: "Show", piece: thisBot, manager: BibleStackManager});
+const infoLabelUsersColor = BibleVizUtils.Functions.UpdateUsersColorOnPiece({source: "Show", piece: thisBot, manager});
 const { infoLabel, infoLabelTail, infoLabelDate} = thisBot.GetLabelElements();
 const easing = {type: "sinusoidal", mode: "inout"};
 try
