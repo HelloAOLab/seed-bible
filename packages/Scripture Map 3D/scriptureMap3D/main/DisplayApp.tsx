@@ -1,6 +1,6 @@
 if(thisBot.vars.appId)
 {
-    globalThis.RemoveFloatingApp(thisBot.vars.appId)
+    globalThis.RemoveFloatingApp(thisBot.vars.appId);
 }
 else
 {

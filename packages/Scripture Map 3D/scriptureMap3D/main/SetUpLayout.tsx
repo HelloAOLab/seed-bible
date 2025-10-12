@@ -297,7 +297,7 @@ layoutData.staticLayoutPieces.settingsButtons.forEach((settingsButton, index) =>
             applyMod(settingsButton.links.colorBackground, colorPickerBackgroundMod);
         }
         break;
-        case BibleVizUtils.Data.tags.LayoutButtonType.DateFormatselectorButton:
+        case BibleVizUtils.Data.tags.LayoutButtonType.DateFormatSelectorButton:
         case BibleVizUtils.Data.tags.LayoutButtonType.OpenAllBooksButton:
         case BibleVizUtils.Data.tags.LayoutButtonType.PlaylistSelectorButton: {
             

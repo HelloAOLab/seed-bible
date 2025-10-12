@@ -7,7 +7,7 @@
     * ObjectPooler.ReleaseObject({obj: thisBot, tag: thisBot.tags.poolTag});
 */
 
-const {obj, tag} = that;
+const {obj, tag, log = false} = that;
 const dimension = os.getCurrentDimension();
 
 if(Array.isArray(obj))
