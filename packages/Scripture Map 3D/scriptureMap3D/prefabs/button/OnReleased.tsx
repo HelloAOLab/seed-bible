@@ -2,8 +2,8 @@ switch(thisBot.tags.buttonType)
 {
     case BibleVizUtils.Data.tags.LayoutButtonType.ColorPickerButton: 
     {
-        ObjectPooler.ReleaseObject({obj: thisBot.links.colorContent, tag: BibleVizUtils.Data.tags.ObjectPoolTags.LayoutColorPickerContent});
-        ObjectPooler.ReleaseObject({obj: thisBot.links.colorBackground, tag: BibleVizUtils.Data.tags.ObjectPoolTags.LayoutColorPickerBackground});
+        ObjectPooler.ReleaseObject({obj: thisBot.links.colorContent, tag: thisBot.links.colorContent.tags.poolTag});
+        ObjectPooler.ReleaseObject({obj: thisBot.links.colorBackground, tag: thisBot.links.colorBackground.tags.poolTag});
         thisBot.tags.colorContent = null;
         thisBot.tags.colorBackground = null;
     }
@@ -12,8 +12,9 @@ switch(thisBot.tags.buttonType)
     case BibleVizUtils.Data.tags.LayoutButtonType.OpenAllBooksButton:
     case BibleVizUtils.Data.tags.LayoutButtonType.PlaylistSelectorButton: 
     {
-        ObjectPooler.ReleaseObject({obj: thisBot.links.buttonLabel, tag: BibleVizUtils.Data.tags.ObjectPoolTags.LayoutButtonLabel});
-        ObjectPooler.ReleaseObject({obj: thisBot.links.buttonIcon, tag: BibleVizUtils.Data.tags.ObjectPoolTags.LayoutButtonIcon});
+        ObjectPooler.ReleaseObject({obj: thisBot.links.buttonLabel, tag: thisBot.links.buttonLabel.tags.poolTag});
+        ObjectPooler.ReleaseObject({obj: thisBot.links.buttonIcon, tag: thisBot.links.buttonIcon.tags.poolTag});
+
         thisBot.tags.buttonLabel = null;
         thisBot.tags.buttonIcon = null;
     }
