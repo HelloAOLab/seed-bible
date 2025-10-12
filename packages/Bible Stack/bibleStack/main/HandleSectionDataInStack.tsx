@@ -105,7 +105,7 @@ if(sectionData.isSplitIntoBooks)
                     targetOpacity: 0.5
                 });
 
-                newSectionAnimations.push(infoLabelTransformer.Show({speedMultiplier, isInstantaneous}));
+                newSectionAnimations.push(infoLabelTransformer.Show({speedMultiplier, isInstantaneous, manager: BibleStackManager}));
             }
         }
         else
@@ -141,7 +141,7 @@ if(sectionData.isSplitIntoBooks)
                             targetOpacity: 0.5
                         });
 
-                        return infoLabelTransformer.Show({speedMultiplier, isInstantaneous});
+                        return infoLabelTransformer.Show({speedMultiplier, isInstantaneous, manager: BibleStackManager});
                     }
                 })
             )
@@ -189,7 +189,7 @@ if(sectionData.isSplitIntoBooks)
                     targetOpacity: 0.5
                 })
                 newSectionAnimations.push(
-                    infoLabelTransformer.Show({isInstantaneous})
+                    infoLabelTransformer.Show({isInstantaneous, manager: BibleStackManager})
                 )
             }
         }
@@ -214,7 +214,7 @@ if(sectionData.isSplitIntoBooks)
                             isAnimatable: false,
                             targetOpacity: 0.5
                         })
-                        return infoLabelTransformer.Show();
+                        return infoLabelTransformer.Show({manager: BibleStackManager});
                     }
                 })
             )

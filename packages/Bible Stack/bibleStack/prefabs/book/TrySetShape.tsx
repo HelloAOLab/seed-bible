@@ -158,7 +158,7 @@ switch(shape)
             easing
         })
         setTagMask(thisBot, "color", "clear");
-        await infoLabelTransformer.Show({isInstantaneous});
+        await infoLabelTransformer.Show({isInstantaneous, manager: BibleStackManager});
     }
     break;
 }
