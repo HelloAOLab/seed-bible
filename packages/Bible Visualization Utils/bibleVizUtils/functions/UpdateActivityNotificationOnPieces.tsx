@@ -69,7 +69,10 @@ for(const pieceData of fixedElementsData)
                 ownerBotId: pieceData.piece.id,
                 formOpacity,
                 direction,
-                color
+                color,
+                notificationOffset: manager.tags.activityNotificationOffset,
+                scaleX: manager.tags.activityNotificationScaleX,
+                scaleY: manager.tags.activityNotificationScaleY
             }
             activityNotification.OnSpawned({mod: activityNotificationMod});
             activityNotification.SetPosition({setX: true, setY: true, setZ: true});
