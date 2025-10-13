@@ -1,4 +1,4 @@
-const chapterData = scriptureMap3DManager.GetPieceData({piece: thisBot});
+const chapterData = ScriptureMap3DManager.GetPieceData({piece: thisBot});
 const duration = 0.1;
 
 let rgbTargetColor;
@@ -33,7 +33,7 @@ else
         isAnimatable: false
     }).infoLabelTransformer;
 
-    animations.push(infoLabelTransformer.Show({duration}))
+    animations.push(infoLabelTransformer.Show({duration, manager: ScriptureMap3DManager}))
     if(!chapterData.isSelected)
     {
         rgbTargetColor = BibleVizUtils.Functions.HexToRgb({hexColor: BibleVizUtils.Data.masks.isInHistoryMode ? BibleVizUtils.Functions.GetHistoryColor({piece: thisBot}) : (chapterData.highlightColor ?? thisBot.tags.highlightedColor)});

@@ -46,7 +46,7 @@ try
             duration: animationDuration,
             easing: animationEasing
         }),
-        infoLabelTransformer.Show()
+        infoLabelTransformer.Show({manager: BibleStackManager})
     ])
 }
 catch(error){throw new Error(error)}

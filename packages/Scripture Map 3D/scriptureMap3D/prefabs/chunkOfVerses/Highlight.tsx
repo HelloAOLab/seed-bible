@@ -8,7 +8,7 @@ const desiredScaleZ = thisBot.tags.desiredScaleZ + 0.1;
 const duration = 0.1;
 const easing = {type: 'sinusoidal', mode: 'inout'}
 const chapterData = thisBot.masks.chapterDataId ? BibleStackManager.GetChapterDataById({id: thisBot.masks.chapterDataId}) :
-                    scriptureMap3DManager.GetChapterDataById({id: thisBot.masks.chapterDataId});
+                    ScriptureMap3DManager.GetChapterDataById({id: thisBot.masks.chapterDataId});
 const chunkHighlightInfo = chapterData.HighlightsInfo.find((currHighlightInfo) => {return currHighlightInfo.key == thisBot.masks.chunkPath})
 const rgbTargetColor = BibleVizUtils.Functions.HexToRgb({hexColor: BibleVizUtils.Data.masks.isInHistoryMode ? BibleVizUtils.Functions.GetHistoryColor({piece: thisBot}) : (chunkHighlightInfo?.color ?? thisBot.tags.highlightedColor)});
 thisBot.StopHighlightTransition();

@@ -21,11 +21,11 @@ if(!layoutBookStructure.layoutBookData.piece || layoutBookStructure.layoutBookDa
     
     const bookPositionMod = {
         [dimension + "X"]: nameLabelPosition.x,
-        [dimension + "Y"]: nameLabelPosition.y - (BibleVizUtils.Data.BibleLayoutMeasurements.BookLabelHeight/2) - (book.tags.scaleY/2),
+        [dimension + "Y"]: nameLabelPosition.y - (BibleVizUtils.Data.tags.BibleLayoutMeasurements.BookLabelHeight/2) - (book.tags.scaleY/2),
     }
     applyMod(book, bookPositionMod);
 
-    animateTag(layoutBookStructure.layoutBookData.piece, {
+    await animateTag(layoutBookStructure.layoutBookData.piece, {
         fromValue: {
             formOpacity: 0
         },
@@ -34,4 +34,5 @@ if(!layoutBookStructure.layoutBookData.piece || layoutBookStructure.layoutBookDa
         },
         duration: 0.007
     })
+    thisBot.UserPresenceUpdate();
 }

@@ -51,7 +51,7 @@ verses.forEach((verse) => {
     else
     {
         const chapterData = thisBot.masks.chapterDataId ? BibleStackManager.GetChapterDataById({id: thisBot.masks.chapterDataId}) :
-            scriptureMap3DManager.GetChapterDataById({id: thisBot.masks.chapterDataId});
+            ScriptureMap3DManager.GetChapterDataById({id: thisBot.masks.chapterDataId});
         const currentHighlightInfo = chapterData.GetHighlightInfoByKey(verse.masks.versePath)
         if(currentHighlightInfo) setTagMask(verse, "color", currentHighlightInfo.color)
     }

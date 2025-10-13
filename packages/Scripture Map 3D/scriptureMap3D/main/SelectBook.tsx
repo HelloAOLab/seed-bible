@@ -52,17 +52,17 @@ for(const chapterData of layoutBookData.childrenData)
     const chapter = ObjectPooler.GetObjectFromPool({tag: BibleVizUtils.Data.tags.ObjectPoolTags.LayoutChapter});
     const chapterMod = {
         [dimension]: true,
-        [dimension + "X"]: chaptersOriginPosition.x + (BibleVizUtils.Data.BibleLayoutMeasurements.ChapterWidth/2) + BibleVizUtils.Data.BibleLayoutMeasurements.ChapterPadding + (column * (BibleVizUtils.Data.BibleLayoutMeasurements.ChapterWidth + BibleVizUtils.Data.BibleLayoutMeasurements.ChapterGap)),
-        [dimension + "Y"]: chaptersOriginPosition.y - (BibleVizUtils.Data.BibleLayoutMeasurements.ChapterHeight/2) - BibleVizUtils.Data.BibleLayoutMeasurements.ChapterPadding - (row * (BibleVizUtils.Data.BibleLayoutMeasurements.ChapterHeight + BibleVizUtils.Data.BibleLayoutMeasurements.ChapterGap)),
-        [dimension + "Z"]: BibleVizUtils.Data.BibleLayoutMeasurements.BookPositionZ,
+        [dimension + "X"]: chaptersOriginPosition.x + (BibleVizUtils.Data.tags.BibleLayoutMeasurements.Chapter3DWidth/2) + BibleVizUtils.Data.tags.BibleLayoutMeasurements.Chapter3DPadding + (column * (BibleVizUtils.Data.tags.BibleLayoutMeasurements.Chapter3DWidth + BibleVizUtils.Data.tags.BibleLayoutMeasurements.Chapter3DGap)),
+        [dimension + "Y"]: chaptersOriginPosition.y - (BibleVizUtils.Data.tags.BibleLayoutMeasurements.Chapter3DHeight/2) - BibleVizUtils.Data.tags.BibleLayoutMeasurements.Chapter3DPadding - (row * (BibleVizUtils.Data.tags.BibleLayoutMeasurements.Chapter3DHeight + BibleVizUtils.Data.tags.BibleLayoutMeasurements.Chapter3DGap)),
+        [dimension + "Z"]: BibleVizUtils.Data.tags.BibleLayoutMeasurements.BookPositionZ,
         scale: 0,
-        scaleX: BibleVizUtils.Data.BibleLayoutMeasurements.ChapterWidth,
-        scaleY: BibleVizUtils.Data.BibleLayoutMeasurements.ChapterHeight,
-        scaleZ: BibleVizUtils.Data.BibleLayoutMeasurements.ChapterInitialScaleZ,
-        initialScaleX: BibleVizUtils.Data.BibleLayoutMeasurements.ChapterWidth,
-        initialScaleY: BibleVizUtils.Data.BibleLayoutMeasurements.ChapterHeight,
-        initialScaleZ: BibleVizUtils.Data.BibleLayoutMeasurements.ChapterInitialScaleZ,
-        selectedScaleZ: BibleVizUtils.Data.BibleLayoutMeasurements.ChapterSelectedScaleZ,
+        scaleX: BibleVizUtils.Data.tags.BibleLayoutMeasurements.Chapter3DWidth,
+        scaleY: BibleVizUtils.Data.tags.BibleLayoutMeasurements.Chapter3DHeight,
+        scaleZ: BibleVizUtils.Data.tags.BibleLayoutMeasurements.ChapterInitialScaleZ,
+        initialScaleX: BibleVizUtils.Data.tags.BibleLayoutMeasurements.Chapter3DWidth,
+        initialScaleY: BibleVizUtils.Data.tags.BibleLayoutMeasurements.Chapter3DHeight,
+        initialScaleZ: BibleVizUtils.Data.tags.BibleLayoutMeasurements.ChapterInitialScaleZ,
+        selectedScaleZ: BibleVizUtils.Data.tags.BibleLayoutMeasurements.ChapterSelectedScaleZ,
         desiredLabel: (layoutBookData.piece.tags.startChapter) + chapterData.pieceInfo.number ,
         toErase: layoutBookData.piece.tags.toErase,
         initialColor: "#FFFFFF",
@@ -85,7 +85,7 @@ for(const chapterData of layoutBookData.childrenData)
     else if(chapterData.highlightColor) setTagMask(chapter, "color", chapterData.highlightColor);
     column += 1
 
-    if (column >= (BibleVizUtils.Data.BibleLayoutMeasurements.BookMaxAmountOfColumns)) {
+    if (column >= (BibleVizUtils.Data.tags.BibleLayoutMeasurements.Book3DMaxAmountOfColumns)) {
         column = 0
         row += 1
     }

@@ -62,7 +62,7 @@ function ThePage({
   const [wordHighlights, setWordHighlights] = useState({});
   const [wordHighlightsTC, setWordHighlightsTC] = useState("black");
   const [wordHighlightsBC, setWordHighlightsBC] = useState("#ffeb3b");
-
+  
   const [bible, setBible] = useState();
   if (tab) globalThis[`SetEnableEditorOf${tab?.id}`] = setEnableEditor;
   async function loadData() {
@@ -71,7 +71,7 @@ function ThePage({
       tabId: tab?.id,
       translation: tab.data.translation,
       bookId: tab.data.bookId,
-      chapter: tab.data.chapter,
+      chapter: tab.data.chapter
     });
     setBible(bible);
 
@@ -100,7 +100,8 @@ function ThePage({
     });
     os.addBotListener(thisBot, "remoteHighlightChange", (data) => {
       console.log("remoteHighlightChange", data);
-      toggleVerseHighlight(data);
+      // toggleVerseHighlight(data)
+      globalThis.ToggleVerseHighlight(data);
     });
   }, []);
 
@@ -344,8 +345,8 @@ function ThePage({
       setData(bible.data);
     }
   }
-  async function changeTranslation(id) {
-    await bible.changeTranslation(id);
+  async function changeTranslation(id, bookData, forcedBaseUrl) {
+    await bible.changeTranslation(id, bookData, forcedBaseUrl);
     setData(bible.data);
   }
 
@@ -670,11 +671,18 @@ function ThePage({
       if (!tab?.id) return;
       EmitData("highlight", verseNumbers);
       // console.log(data, 'remoteData')
+<<<<<<< HEAD
       const verseId = `v-${
         typeof verseNumbers === "object"
           ? verseNumbers[verseNumbers.length - 1]
           : verseNumbers
       }`;
+=======
+      const verseId = `v-${typeof verseNumbers === "object"
+          ? verseNumbers[verseNumbers.length - 1]
+          : verseNumbers
+        }`;
+>>>>>>> a89abd47428b1ef17414f98f9e7a2e74cc7689b7
       // console.log(verseId, 'verseId', document.getElementById(verseId))
       document.getElementById(verseId).scrollIntoView({
         behavior: "smooth", // enables smooth animation
@@ -726,11 +734,18 @@ function ThePage({
       if (!tab?.id) return;
       EmitData("highlight", verseNumbers);
       // console.log(data, 'remoteData')
+<<<<<<< HEAD
       const verseId = `v-${
         typeof verseNumbers === "object"
           ? verseNumbers[verseNumbers.length - 1]
           : verseNumbers
       }`;
+=======
+      const verseId = `v-${typeof verseNumbers === "object"
+          ? verseNumbers[verseNumbers.length - 1]
+          : verseNumbers
+        }`;
+>>>>>>> a89abd47428b1ef17414f98f9e7a2e74cc7689b7
       // console.log(verseId, 'verseId', document.getElementById(verseId))
       document.getElementById(verseId).scrollIntoView({
         behavior: "smooth", // enables smooth animation
@@ -773,11 +788,18 @@ function ThePage({
       if (!tab?.id) return;
       EmitData("highlight", verseNumbers);
       // console.log(data, 'remoteData')
+<<<<<<< HEAD
       const verseId = `v-${
         typeof verseNumbers === "object"
           ? verseNumbers[verseNumbers.length - 1]
           : verseNumbers
       }`;
+=======
+      const verseId = `v-${typeof verseNumbers === "object"
+          ? verseNumbers[verseNumbers.length - 1]
+          : verseNumbers
+        }`;
+>>>>>>> a89abd47428b1ef17414f98f9e7a2e74cc7689b7
       // console.log(verseId, 'verseId', document.getElementById(verseId))
       document.getElementById(verseId).scrollIntoView({
         behavior: "smooth", // enables smooth animation
@@ -841,6 +863,7 @@ function ThePage({
       onMouseLeave={handleMouseLeave}
       onMouseEnter={handleMouseEnter}
       onMouseUp={handleMouseUp}
+<<<<<<< HEAD
       onClick={hanldNavFunctions}>
       <link
         href="https://fonts.cdnfonts.com/css/helvetica-neue-55"
@@ -851,6 +874,10 @@ function ThePage({
         href="https://fonts.googleapis.com/css2?family=EB+Garamond:ital,wght@0,400..800;1,400..800&display=swap"
         rel="stylesheet"
       />
+=======
+      onClick={hanldNavFunctions}
+    >
+>>>>>>> a89abd47428b1ef17414f98f9e7a2e74cc7689b7
       {data && tab && !tabEntered ? (
         <>
           <div
@@ -1407,7 +1434,12 @@ function Section({
                   color: wordHighlightsTC,
                   backgroundColor: wordHighlightsBC,
                 }}
+<<<<<<< HEAD
                 {...attributes}>
+=======
+                {...attributes}
+              >
+>>>>>>> a89abd47428b1ef17414f98f9e7a2e74cc7689b7
                 {part.text}
               </span>
             );
@@ -1441,6 +1473,10 @@ function Section({
         )}
         <div className="sectionCover">
           {verses.map((verse) => {
+            if (verse.lineBreak) {
+              return <p class="verseLineBreak"></p>;
+            }
+
             const [c, setC] = useState(false);
             const isActive = verse.verseNumber.toString() === activeVerse;
             const shouldShowCommands =
@@ -1499,14 +1535,22 @@ function Section({
                       (highlighted?.[verse.verseNumber] &&
                         highlighted?.[verse.verseNumber].book === book &&
                         highlighted?.[verse.verseNumber].chapter === chapter) ||
+<<<<<<< HEAD
                       commandHighlight.includes(verse.verseNumber)
+=======
+                        commandHighlight.includes(verse.verseNumber)
+>>>>>>> a89abd47428b1ef17414f98f9e7a2e74cc7689b7
                         ? wordHighlightsBC
                         : "transparent",
                     color:
                       (highlighted?.[verse.verseNumber] &&
                         highlighted?.[verse.verseNumber].book === book &&
                         highlighted?.[verse.verseNumber].chapter === chapter) ||
+<<<<<<< HEAD
                       commandHighlight.includes(verse.verseNumber)
+=======
+                        commandHighlight.includes(verse.verseNumber)
+>>>>>>> a89abd47428b1ef17414f98f9e7a2e74cc7689b7
                         ? wordHighlightsTC
                         : "black",
                     transition: "background-color 0.2s ease",
@@ -1524,6 +1568,7 @@ function Section({
                         ? "dotted"
                         : "",
                   }}
+<<<<<<< HEAD
                   className={`sectionText ${
                     verse?.verseNumber.toString() === activeVerse.toString()
                       ? "highlighted"
@@ -1531,6 +1576,14 @@ function Section({
                   } ${
                     highlighted?.[verse.verseNumber] ? "verse-highlighted" : ""
                   }`}>
+=======
+                  className={`sectionText ${verse?.verseNumber.toString() === activeVerse.toString()
+                      ? "highlighted"
+                      : ""
+                    } ${highlighted?.[verse.verseNumber] ? "verse-highlighted" : ""
+                    }`}
+                >
+>>>>>>> a89abd47428b1ef17414f98f9e7a2e74cc7689b7
                   <span
                     className={`sectionTextNumber ${
                       globalThis.studyNotesPresent ? "clickableCursor" : ""

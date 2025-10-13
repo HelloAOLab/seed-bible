@@ -46,7 +46,7 @@ try
             duration,
             easing
         }),
-        infoLabelTransformer.Show({speedMultiplier, isInstantaneous})
+        infoLabelTransformer.Show({speedMultiplier, isInstantaneous, manager: BibleStackManager})
     ])
 }
 catch(error){throw new Error(error)}

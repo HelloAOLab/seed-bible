@@ -33,7 +33,7 @@ await Promise.allSettled([
         duration: animationDuration,
         easing: animationEasing
     }),
-    infoLabelTransformer.Show({speedMultiplier, isInstantaneous})
+    infoLabelTransformer.Show({speedMultiplier, isInstantaneous, manager: BibleStackManager})
 ])
 
 setTagMask(thisBot, "isHighlighting", false);

@@ -1,6 +1,6 @@
 if(thisBot.vars.appId)
 {
-    globalThis.RemoveFloatingApp(thisBot.vars.appId)
+    globalThis.RemoveFloatingApp(thisBot.vars.appId);
 }
 else
 {
@@ -22,7 +22,7 @@ else
     {
         setTagMask(thisBot, "isBibleAnimating", true);
         thisBot.CreateNewLayout({position: {x: 0, y: 0}}).then(() => {
-            // thisBot.UpdateStackTabsVisualization({source: "DisplayApp"});
+            thisBot.UserPresenceUpdate();
         });
     }
 }

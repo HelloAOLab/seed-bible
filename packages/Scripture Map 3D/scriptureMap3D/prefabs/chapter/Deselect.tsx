@@ -4,7 +4,7 @@
     * chapter.Deselect();
 */
 
-const chapterData = scriptureMap3DManager.GetPieceData({piece: thisBot});
+const chapterData = ScriptureMap3DManager.GetPieceData({piece: thisBot});
 const dimension = os.getCurrentDimension();
 const duration = 0.15;
 const easing = {type: "sinusoidal", mode: "out"};

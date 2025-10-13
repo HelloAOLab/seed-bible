@@ -25,8 +25,8 @@ const columnsSegments = [];
 for(let i = 0 ; i < Math.min(BibleVizUtils.Data.tags.BibleLayoutMeasurements.MaxAmountOfColumns, layoutData.childrenStructures.length) ; i++)
 {
     const segment = {
-        start: booksOriginPosition.x + ((BibleVizUtils.Data.tags.BibleLayoutMeasurements.BookScaleX + BibleVizUtils.Data.tags.BibleLayoutMeasurements.BookHorizontalGap) * i),
-        end: booksOriginPosition.x + ((BibleVizUtils.Data.tags.BibleLayoutMeasurements.BookScaleX + BibleVizUtils.Data.tags.BibleLayoutMeasurements.BookHorizontalGap) * i) + BibleVizUtils.Data.tags.BibleLayoutMeasurements.BookScaleX
+        start: booksOriginPosition.x + ((BibleVizUtils.Data.tags.BibleLayoutMeasurements.Book3DScaleX + BibleVizUtils.Data.tags.BibleLayoutMeasurements.BookHorizontalGap) * i),
+        end: booksOriginPosition.x + ((BibleVizUtils.Data.tags.BibleLayoutMeasurements.Book3DScaleX + BibleVizUtils.Data.tags.BibleLayoutMeasurements.BookHorizontalGap) * i) + BibleVizUtils.Data.tags.BibleLayoutMeasurements.Book3DScaleX
     }
     columnsSegments.push(segment)
 }
@@ -56,18 +56,18 @@ for(let row = 0; row < layoutData.amountOfRows; row++)
             [dimension + "Z"]: 0.5,
             isClick: false,
             label: layoutBookStructure.layoutBookData.pieceInfo.commonName,
-            scaleX: BibleVizUtils.Data.tags.BibleLayoutMeasurements.BookScaleX,
+            scaleX: BibleVizUtils.Data.tags.BibleLayoutMeasurements.Book3DScaleX,
             scaleY: BibleVizUtils.Data.tags.BibleLayoutMeasurements.BookLabelHeight
         }
 
         let bookDateLabelLabel;
         switch(layoutData.currentDateFormat)
         {
-            case BibleVizUtils.Data.tags.BibleVizUtils.Data.tags.DateFormats.ElapsedYears: {
+            case BibleVizUtils.Data.tags.DateFormats.ElapsedYears: {
                 bookDateLabelLabel = layoutBookStructure.elapsedYearsRange
             }
             break;
-            case BibleVizUtils.Data.tags.BibleVizUtils.Data.tags.DateFormats.HistoricalDate: {
+            case BibleVizUtils.Data.tags.DateFormats.HistoricalDate: {
                 bookDateLabelLabel = layoutBookStructure.historicalDateRange
             }
             break;
@@ -89,7 +89,7 @@ for(let row = 0; row < layoutData.amountOfRows; row++)
             isHover: true,
             hidden: false,
             isClick: true,
-            scaleX: BibleVizUtils.Data.tags.BibleLayoutMeasurements.BookScaleX,
+            scaleX: BibleVizUtils.Data.tags.BibleLayoutMeasurements.Book3DScaleX,
             label: bookDateLabelLabel,
             labelColor: "black",
             initialLabelcolor: labelColor
@@ -297,7 +297,7 @@ layoutData.staticLayoutPieces.settingsButtons.forEach((settingsButton, index) =>
             applyMod(settingsButton.links.colorBackground, colorPickerBackgroundMod);
         }
         break;
-        case BibleVizUtils.Data.tags.LayoutButtonType.BibleVizUtils.Data.tags.DateFormatselectorButton:
+        case BibleVizUtils.Data.tags.LayoutButtonType.DateFormatSelectorButton:
         case BibleVizUtils.Data.tags.LayoutButtonType.OpenAllBooksButton:
         case BibleVizUtils.Data.tags.LayoutButtonType.PlaylistSelectorButton: {
             

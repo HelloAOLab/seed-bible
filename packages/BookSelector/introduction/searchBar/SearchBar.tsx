@@ -96,16 +96,6 @@ const SearchBar = () => {
     const [showCustomTranslation, setShowCustomTranslation] = useState(false);
     const [selectingTranslation, setSelectingTranslation] = useState(false);
 
-    const handleSelectTestament = useCallback(() => {
-        if (selectedTestament === 0) {
-            setSelectedTestament(1);
-        } else if (selectedTestament === 1) {
-            setSelectedTestament(2)
-        } else if (selectedTestament === 2) {
-            setSelectedTestament(0)
-        }
-    }, [selectedTestament]);
-
     const handleNameMatch = useCallback(({ query, bookData }) => {
         let lowercaseQuery = query?.toLowerCase() || "";
         let commonName = bookData.commonName?.toLowerCase() || "";
@@ -237,14 +227,16 @@ const SearchBar = () => {
                     let translationValue = {
                         ...trValue.value
                     }
-                    if (apiTranslations[translationValue.languageEnglishName.toLowerCase()] && apiTranslations[translationValue.languageEnglishName.toLowerCase()][value]) {
-                        os.toast(`Translation Already Exists!`)
+                    console.log(apiTranslations, "apiTranslations")
+                    if (apiTranslations[translationValue.languageEnglishName.toLowerCase()] && apiTranslations[translationValue.languageEnglishName.toLowerCase()][translationValue.shortName.toLowerCase()]) {
+                        ChangeTranslation(translationValue.id);
+                        os.toast(`Translation Already Exists!`);
                     } else {
                         let translations = { ...apiTranslations };
-                        translations[translationValue.languageEnglishName.toLowerCase()] = translations[translationValue.languageEnglishName.toLowerCase()] ? { ...translations[translationValue.languageEnglishName.toLowerCase()], [value.toLowerCase()]: translationValue } : { [value.toLowerCase()]: translationValue };
+                        translations[translationValue.languageEnglishName.toLowerCase()] = translations[translationValue.languageEnglishName.toLowerCase()] ? { ...translations[translationValue.languageEnglishName.toLowerCase()], [translationValue.shortName.toLowerCase()]: translationValue } : { [translationValue.shortName.toLowerCase()]: translationValue };
                         setSelectedTranslation({
                             languageEnglishName: translationValue.languageEnglishName.toLowerCase(),
-                            id: translationValue.shortName,
+                            id: translationValue.id,
                             shortName: translationValue.shortName
                         });
                         setApiTranslations(translations)
@@ -252,6 +244,7 @@ const SearchBar = () => {
                         if (!defaultTranslations.includes(translationValue.languageEnglishName.toLowerCase())) {
                             setDefaultTranslations([...defaultTranslations, translationValue.languageEnglishName.toLowerCase()])
                         }
+                        ChangeTranslation(translationValue.id);
                         os.toast(`Translation ${value} added!`)
                     }
                 } else {
@@ -337,6 +330,7 @@ const SearchBar = () => {
                                 }
                                 if (apiTranslations[translation.languageEnglishName.toLowerCase()] && apiTranslations[translation.languageEnglishName.toLowerCase()][trValue.value.shortName.toLowerCase()]) {
                                     os.toast(`Translation Already Exists!`)
+                                    ChangeTranslation(controlledTranslation.id, book0, controlledTranslation.origin);
                                 } else {
                                     let translations = { ...apiTranslations };
 
@@ -349,6 +343,7 @@ const SearchBar = () => {
                                     if (!defaultTranslations.includes(translation.languageEnglishName.toLowerCase())) {
                                         setDefaultTranslations([...defaultTranslations, translation.languageEnglishName.toLowerCase()])
                                     }
+                                    ChangeTranslation(controlledTranslation.id, book0, controlledTranslation.origin);
                                     os.toast(`Translation ${value} added!`)
                                 }
                             } else {
@@ -702,7 +697,7 @@ const SearchBar = () => {
                 booksData && selectedTestamentData && !selectingTranslation && selectedTranslation && <SideBarBooks showCheck={!selectingTranslation && showCheck} dontOpen={dontOpen} selectedTranslation={selectedTranslation} selectedTestament={selectedTestament} booksData={selectedTestamentData} focusOnBook={focusOnBook} />
             }
             {
-                selectingTranslation && <div class="sidebar-translation-options" style={{paddingBottom: showCustomTranslation ? "200px" : "36px"}}>
+                selectingTranslation && <div class="sidebar-translation-options" style={{ paddingBottom: showCustomTranslation ? "200px" : "36px" }}>
                     {
                         filteredApiTranslations && filteredApiTranslations?.length > 0 && filteredApiTranslations.map(([key, value]) => {
                             return <NewTransOptions translationName={key} translations={value} selectedTranslation={selectedTranslation} setSelectedTranslation={setSelectedTranslation} setSelectingTranslation={setSelectingTranslation} />
@@ -803,7 +798,7 @@ const NewTransOptions = ({ translationName, translations, selectedTranslation, s
         })
     }, [selectedTranslation])
     return <div style={{ width: "100%" }}>
-        <div class="translation-language" style={{backgroundColor: show ? "rgb(225, 245, 254)" : "rgb(250, 250, 250)", marginBottom: show ? "0px" : "10px"}} onClick={() => {
+        <div class="translation-language" style={{ backgroundColor: show ? "rgb(225, 245, 254)" : "rgb(250, 250, 250)", marginBottom: show ? "0px" : "10px" }} onClick={() => {
             setShow(!show)
         }}>
             <span style={{ textTransform: "capitalize" }}>{translationName}</span>
@@ -853,44 +848,7 @@ const NewTransOptions = ({ translationName, translations, selectedTranslation, s
         }
     </div>
 }
-const TransOption = ({ translationOption, index, idx = 0, setSelectedTranslation, selectedTranslation }) => {
-    const [show, setShowFasle] = useState(
-        translationOption.translations.find(e => e.short === selectedTranslation)
-    )
-    return <div>
-        <div class="translation-language" onClick={() => {
-            setShowFasle(!show)
-        }}>
-            {translationOption?.language}
-            <span style={{ transition: "transform 0.3s", opacity: 0.3 }} class={`material-symbols-outlined ${show ? "upside-down" : ""}`}>
-                expand_more
-            </span>
-        </div>
-        {
-            show && <>
-                <div style={{ margin: '16px 0px' }}>
-                    {
-                        translationOption?.translations && translationOption.translations.map(e => {
-                            return <div
-                                onClick={async () => {
-                                    setSelectedTranslation(e.short)
-                                    let bot = getBot('system', 'main.UI2')
-                                    bot.masks.transilation = e.id
-                                    SetTransilation(e.id)
-                                    bot.masks.transilationShort = e.short
-                                    RefreshBible()
-                                }}
-                                style={{ background: selectedTranslation === e.short ? "#E1F5FE" : "#B388FF" }} class="translation-option" >
-                                <span class="translation-title">{e.short}</span>
-                                <span class="translation-description">{e.name}</span>
-                            </div>
-                        })
-                    }
-                </div>
-            </>
-        }
-    </div>
-}
+
 const SideBarBooks = ({ booksData, focusOnBook, selectedTestament, selectedTranslation, dontOpen, showCheck }) => {
     const [lastBookClicked, setLastBookClicked] = useState(-1);
     const [bookData, setBookData] = useState(null);
@@ -990,10 +948,10 @@ const SideBarBooks = ({ booksData, focusOnBook, selectedTestament, selectedTrans
         let booksLength = booksArray.length;
         let additionalElements = allowedRows - (booksLength % allowedRows === 0 ? allowedRows : booksLength % allowedRows);
         let tempBooksArray = [...booksArray];
-        for(let i = 0; i < additionalElements; i++){
-            tempBooksArray.push({ghost: true});
+        for (let i = 0; i < additionalElements; i++) {
+            tempBooksArray.push({ ghost: true });
         }
-        return  [...tempBooksArray];
+        return [...tempBooksArray];
     }
 
     const RenderBooksByTestament = useMemo(() => {
@@ -1016,7 +974,7 @@ const SideBarBooks = ({ booksData, focusOnBook, selectedTestament, selectedTrans
             let NTChapterPos = calcChapterPos(lastBookClicked, NTChapterSeparator);
             let OTBooks = ghostArray(booksData.slice(0, 39), OTChapterSeparator);
             let NTBooks = ghostArray(booksData.slice(39), NTChapterSeparator);
-            return <div class="books-container" style={showCheck ? {paddingTop: "40px"} : {}}>
+            return <div class="books-container" style={showCheck ? { paddingTop: "40px" } : {}}>
                 <div class="testament-container" style={{ width: `${allowedRows === 5 ? 60 : allowedRows === 3 ? 66.66 : 50}%` }}>
                     <span class="testament-title">Old Testament</span>
                     <div class="books-item">
@@ -1037,7 +995,7 @@ const SideBarBooks = ({ booksData, focusOnBook, selectedTestament, selectedTrans
                                         book?.ghost && <div class={`sidebar-ghost-itm`} ref={(ref) => updateRefsArray(index, ref)} tabIndex={index + 1} />
                                     }
                                     {
-                                        (OTChapterPos === index) && bookData && chT === 0 && <div class={`sidebar-chapters show-sidebar-chapter`} style={{justifyContent: bookData.numberOfChapters < 3 * OTChapterSeparator ? "flex-start" : "space-between"}}>
+                                        (OTChapterPos === index) && bookData && chT === 0 && <div class={`sidebar-chapters show-sidebar-chapter`} style={{ justifyContent: bookData.numberOfChapters < 3 * OTChapterSeparator ? "flex-start" : "space-between" }}>
                                             <SideBarChapters
                                                 refsObject={refsObject}
                                                 bookData={bookData}
@@ -1075,7 +1033,7 @@ const SideBarBooks = ({ booksData, focusOnBook, selectedTestament, selectedTrans
                                         book?.ghost && <div class={`sidebar-ghost-itm`} ref={(ref) => updateRefsArray(index, ref)} tabIndex={index + 1} />
                                     }
                                     {
-                                        (NTChapterPos === index) && bookData && chT === 1 && <div class={`sidebar-chapters show-sidebar-chapter`} style={{justifyContent: bookData.numberOfChapters < 3 * NTChapterSeparator ? "flex-start" : "space-between"}}>
+                                        (NTChapterPos === index) && bookData && chT === 1 && <div class={`sidebar-chapters show-sidebar-chapter`} style={{ justifyContent: bookData.numberOfChapters < 3 * NTChapterSeparator ? "flex-start" : "space-between" }}>
                                             <style>{allowedRows === 3 && `
                                                 .show-sidebar-chapter{width: calc(100% - 5px);}
                                             `}</style>
@@ -1099,7 +1057,7 @@ const SideBarBooks = ({ booksData, focusOnBook, selectedTestament, selectedTrans
         } else if (selectedTestament === 1) {
             let chapterPos = calcChapterPos(lastBookClicked, allowedRows);
             let booksWithGhost = ghostArray(booksData, allowedRows);
-            return <div class="books-container" style={showCheck ? {paddingTop: "40px"} : {}}>
+            return <div class="books-container" style={showCheck ? { paddingTop: "40px" } : {}}>
                 <div class="testament-container">
                     <span class="testament-title">New Testament</span>
                     <div class="books-item">
@@ -1120,7 +1078,7 @@ const SideBarBooks = ({ booksData, focusOnBook, selectedTestament, selectedTrans
                                         book?.ghost && <div class={`sidebar-ghost-itm`} ref={(ref) => updateRefsArray(index, ref)} tabIndex={index + 1} />
                                     }
                                     {
-                                        (chapterPos === index) && bookData && <div class={`sidebar-chapters show-sidebar-chapter`} style={{justifyContent: bookData.numberOfChapters < 3 * allowedRows ? "flex-start" : "space-between"}}>
+                                        (chapterPos === index) && bookData && <div class={`sidebar-chapters show-sidebar-chapter`} style={{ justifyContent: bookData.numberOfChapters < 3 * allowedRows ? "flex-start" : "space-between" }}>
                                             <SideBarChapters
                                                 refsObject={refsObject}
                                                 bookData={bookData}
@@ -1141,7 +1099,7 @@ const SideBarBooks = ({ booksData, focusOnBook, selectedTestament, selectedTrans
         } else if (selectedTestament === 0) {
             let chapterPos = calcChapterPos(lastBookClicked, allowedRows);
             let booksWithGhost = ghostArray(booksData.slice(0, 39), allowedRows);
-            return <div class="books-container" style={showCheck ? {paddingTop: "40px"} : {}}>
+            return <div class="books-container" style={showCheck ? { paddingTop: "40px" } : {}}>
                 <div class="testament-container">
                     <span class="testament-title">Old Testament</span>
                     <div class="books-item">
@@ -1162,7 +1120,7 @@ const SideBarBooks = ({ booksData, focusOnBook, selectedTestament, selectedTrans
                                         book?.ghost && <div class={`sidebar-ghost-itm`} ref={(ref) => updateRefsArray(index, ref)} tabIndex={index + 1} />
                                     }
                                     {
-                                        (chapterPos === index) && bookData && <div class={`sidebar-chapters show-sidebar-chapter`} style={{justifyContent: bookData.numberOfChapters < 3 * allowedRows ? "flex-start" : "space-between"}}>
+                                        (chapterPos === index) && bookData && <div class={`sidebar-chapters show-sidebar-chapter`} style={{ justifyContent: bookData.numberOfChapters < 3 * allowedRows ? "flex-start" : "space-between" }}>
                                             <SideBarChapters
                                                 refsObject={refsObject}
                                                 bookData={bookData}
@@ -1181,7 +1139,7 @@ const SideBarBooks = ({ booksData, focusOnBook, selectedTestament, selectedTrans
                 </div>
             </div>
         }
-    }, [booksData, lastBookClicked, bookData, dontOpen,selectedTestament, windowSize, chT])
+    }, [booksData, lastBookClicked, bookData, dontOpen, selectedTestament, windowSize, chT])
 
     return <>
         {
@@ -1189,6 +1147,7 @@ const SideBarBooks = ({ booksData, focusOnBook, selectedTestament, selectedTrans
         }
     </>
 }
+
 const SideBarChapters = ({ bookData, dontOpen, focusOnBook, setLastBookClicked, setBookData, refsObject, selectedTranslation }) => {
     const [renderingJSX, setRenderingJSX] = useState([]);
     const [highLightedButtonsID, setHighlightedButtonID] = useState({});

@@ -50,19 +50,14 @@ switch(typeOfInteraction)
     case BibleVizUtils.Data.tags.InteractionType.Drop:
     {
         setTagMask(chapter, 'isBeingDragged', false);
-        if(chapterData.isSelected)
+        if(originalLayoutData.isChapterExpandEnabled)
         {
-            if(chapterData.piece.masks.isExpanded || originalLayoutData.isChapterExpandEnabled)
-            {
-                thisBot.DeselectChapter({chapterData, layoutData: originalLayoutData}).then(() => {thisBot.TrySelectChapter({chapterData, layoutData: originalLayoutData});})
-            }
+            (chapterData.isSelected ? thisBot.DeselectChapter({chapterData, layoutData: originalLayoutData}) : Promise.resolve())
+            .then(() => {thisBot.TrySelectChapter({chapterData, layoutData: originalLayoutData});})
         }
         else
         {
-            if(originalLayoutData.isChapterExpandEnabled)
-            {
-                thisBot.TrySelectChapter({chapterData, layoutData: originalLayoutData});
-            }
+            if(!chapterData.piece.masks.hovered) thisBot.UserPresenceUpdate();
         }
     }
     break;

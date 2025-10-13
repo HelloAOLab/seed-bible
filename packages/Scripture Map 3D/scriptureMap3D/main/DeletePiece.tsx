@@ -37,7 +37,7 @@ function DeleteChapter(chapterData)
     const chapterDataIndex = thisBot.vars.layoutChaptersData.indexOf(chapterData);
     if(chapterData.piece)
     {
-        BibleVizUtils.Functions.TryHideUsersNotificationOnPiece({piece: chapterData.piece});
+        BibleVizUtils.Functions.TryHideActivityNotificationOnPiece({piece: chapterData.piece});
         if(chapterData.isSelected && Array.isArray(chapterData.piece.vars.chunksOfVerses) && chapterData.piece.vars.chunksOfVerses.length > 0)
         {
             chapterData.piece.vars.chunksOfVerses.forEach((chunk) => {

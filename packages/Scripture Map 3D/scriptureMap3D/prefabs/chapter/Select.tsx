@@ -7,7 +7,7 @@
 
 const {duration = 0.15, layoutData} = that;
 const dimension = os.getCurrentDimension()
-const chapterData = scriptureMap3DManager.GetPieceData({piece: thisBot})
+const chapterData = ScriptureMap3DManager.GetPieceData({piece: thisBot})
 const easing = {type: "sinusoidal", mode: "out"};
 const chapterPosition = getBotPosition(thisBot, dimension);
 const delayBetweenChunkAnimations = 35;

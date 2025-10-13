@@ -5,6 +5,7 @@ import path from 'node:path';
 import { execSync } from 'node:child_process';
 import { uploadAll } from './lib/extension';
 import os from 'node:os';
+import { existsSync } from 'node:fs';
 
 const packageNameMap = new Map([
     ['SeedBible', 'seed-bible'],
@@ -22,6 +23,22 @@ program.command('download')
         await downloadAndSave(name, options.version);
     });
 
+program.command('unpack-aux')
+    .description('Unpacks the given AUX file as the given pattern into the packages folder.')
+    .argument('<file>', 'The path to the AUX file to unpack.')
+    .argument('<pattern>', 'The name of the pattern to unpack as.')
+    .action(async (file, pattern) => {
+        const filePath = path.resolve(file);
+        const copyPath = path.resolve(os.tmpdir(), `${pattern}.aux`);
+        await cp(filePath, copyPath, { force: true });
+        const packagePath = path.resolve('packages', pattern);
+        if (existsSync(packagePath)) {
+            await rmdir(packagePath, { recursive: true });
+        }
+        execSync(`casualos unpack-aux --overwrite "${copyPath}" ./packages`, { stdio: 'ignore' });
+        console.log(`Unpacked AUX from ${filePath} to packages/${pattern} folder.`);
+    });
+
 program.command('unpack-seed-bible-aux')
     .description('Unpacks the given AUX file as the Seed Bible pattern into the packages folder.')
     .argument('<file>', 'The path to the AUX file to unpack.')
@@ -30,7 +47,9 @@ program.command('unpack-seed-bible-aux')
         const copyPath = path.resolve(os.tmpdir(), 'seed-bible.aux');
         await cp(filePath, copyPath, { force: true });
         const packagePath = path.resolve('packages', 'seed-bible');
-        await rmdir(packagePath, { recursive: true });
+        if (existsSync(packagePath)) {
+            await rmdir(packagePath, { recursive: true });
+        }
         execSync(`casualos unpack-aux --overwrite "${copyPath}" ./packages`, { stdio: 'ignore' });
         console.log(`Unpacked Seed Bible AUX from ${filePath} to packages folder.`);
     });

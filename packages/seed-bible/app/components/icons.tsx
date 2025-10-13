@@ -55,7 +55,7 @@ export function SeedBibleIcon() {
   );
 }
 export const ApologistIcon = () => {
-  return <img style={{ filter: "invert(1)" }} src="https://res.cloudinary.com/dfbtwwa8p/image/upload/v1755794631/svgviewer-png-output_1_tgtfvm.png" />
+  return <img style={{ filter: "invert(1)", width: "24px" }} src="https://res.cloudinary.com/dfbtwwa8p/image/upload/v1755794631/svgviewer-png-output_1_tgtfvm.png" />
 }
 const AiIcon = (props) => (
   <svg
