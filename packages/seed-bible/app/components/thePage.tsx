@@ -137,6 +137,24 @@ function ThePage({
       // }
     }
   }, [data]);
+
+  useEffect(() => {
+    const handleBeforeUnload = (e) => {
+      const emitter = getBot("system", "app.emitter");
+      sendRemoteData(emitter.masks.otherRemotes, "personLeftTheChat", {
+        id: tab?.id,
+        bookId: data?.bookId,
+        book: data?.book,
+        chapter: data?.chapter,
+      });
+    };
+
+    window.addEventListener("beforeunload", handleBeforeUnload);
+    return () => {
+      window.removeEventListener("beforeunload", handleBeforeUnload);
+    };
+  }, []);
+
   async function checkDefault() {
     if (configBot.tags.book && configBot.tags.chapter) {
       await os.sleep(1000);

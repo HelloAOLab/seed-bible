@@ -1,6 +1,9 @@
 if (that.name === 'updateSharingData') {
     shout('updatedYourData', { user: that.remoteId, tab: { ...that.that } })
 }
+if(that.name === 'personLeftTheChat') {
+    shout('onPersonLeftRemote', { user: that.remoteId, tab: { ...that.that } })    
+}
 if (masks['remotes'] && masks['remotes'].includes(that.remoteId)) {
     if (that.name === 'book') {
         shout('remoteBookChange', { ...that.that })
