@@ -320,7 +320,7 @@ globalThis.NagiationTimeout = setTimeout(async () => {
       }
 
       if (os.device().supportsDOM) {
-        scrollToVerse(vNumber);
+        setTimeout(() => scrollToVerse(vNumber), 25);
       }
 
       // if (os.device().supportsDOM) {
