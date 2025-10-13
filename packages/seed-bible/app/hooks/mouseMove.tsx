@@ -728,7 +728,7 @@ const FloatingAppContainer = ({
     top: `${(app.isMinimized ? 40 : height) + toolbarGap}px`,
     left: "50%",
     transform: "translateX(-50%)",
-    width: `280px`,
+    width: `max-content`,
     height: `${toolbarH}px`,
     borderRadius: 12,
     boxShadow: `0 0 0 2px ${stroke}`,
@@ -811,122 +811,133 @@ const FloatingAppContainer = ({
   };
 
   return (
-    <div
-      className="floating-wrap"
-      style={wrapperStyle}
-      onMouseDown={handleMouseDown}
-      ref={wrapRef}>
-      <div className="floating-app" style={windowStyle}>
-        <div style={contentStyle}>{app.App}</div>
-        {!app.isDocked && !app.isMinimized && (
-          <>
-            <ResizeHandle
-              handle="nw"
-              style={{ top: -4, left: -4, width: 8, height: 8 }}
-              cursor="nw-resize"
-            />
-            <ResizeHandle
-              handle="ne"
-              style={{ top: -4, right: -4, width: 8, height: 8 }}
-              cursor="ne-resize"
-            />
-            <ResizeHandle
-              handle="sw"
-              style={{ bottom: -4, left: -4, width: 8, height: 8 }}
-              cursor="sw-resize"
-            />
-            <ResizeHandle
-              handle="se"
-              style={{ bottom: -4, right: -4, width: 8, height: 8 }}
-              cursor="se-resize"
-            />
-            <ResizeHandle
-              handle="n"
-              style={{ top: -4, left: 8, right: 8, height: 8 }}
-              cursor="n-resize"
-            />
-            <ResizeHandle
-              handle="s"
-              style={{ bottom: -4, left: 8, right: 8, height: 8 }}
-              cursor="s-resize"
-            />
-            <ResizeHandle
-              handle="w"
-              style={{ left: -4, top: 8, bottom: 8, width: 8 }}
-              cursor="w-resize"
-            />
-            <ResizeHandle
-              handle="e"
-              style={{ right: -4, top: 8, bottom: 8, width: 8 }}
-              cursor="e-resize"
-            />
-          </>
-        )}
-      </div>
+    <>
+      <style>
+        {`
+          @media (max-width: 550px) {
+            .view-only-laptop { display: none !important; }
+          }`
+        }
+      </style>
 
-      {!app.isDocked && (
-        <div style={toolbarStyle}>
-          <button
-            onClick={screen2}
-            style={pillBtn}
-            title="Square"
-            className="control-button">
-            <span
-              className="material-symbols-outlined"
-              style={{ fontSize: 20 }}>
-              rectangle
-            </span>
-          </button>
+      <div
+        className="floating-wrap"
+        style={wrapperStyle}
+        onMouseDown={handleMouseDown}
+        onMouseEnter={()=>setToolbarVisible(true)}
+        onMouseLeave={()=>setToolbarVisible(false)}
+        ref={wrapRef}>
+        <div className="floating-app" style={windowStyle}>
+          <div style={contentStyle}>{app.App}</div>
+          {!app.isDocked && !app.isMinimized && (
+            <>
+              <ResizeHandle
+                handle="nw"
+                style={{ top: -4, left: -4, width: 8, height: 8 }}
+                cursor="nw-resize"
+              />
+              <ResizeHandle
+                handle="ne"
+                style={{ top: -4, right: -4, width: 8, height: 8 }}
+                cursor="ne-resize"
+              />
+              <ResizeHandle
+                handle="sw"
+                style={{ bottom: -4, left: -4, width: 8, height: 8 }}
+                cursor="sw-resize"
+              />
+              <ResizeHandle
+                handle="se"
+                style={{ bottom: -4, right: -4, width: 8, height: 8 }}
+                cursor="se-resize"
+              />
+              <ResizeHandle
+                handle="n"
+                style={{ top: -4, left: 8, right: 8, height: 8 }}
+                cursor="n-resize"
+              />
+              <ResizeHandle
+                handle="s"
+                style={{ bottom: -4, left: 8, right: 8, height: 8 }}
+                cursor="s-resize"
+              />
+              <ResizeHandle
+                handle="w"
+                style={{ left: -4, top: 8, bottom: 8, width: 8 }}
+                cursor="w-resize"
+              />
+              <ResizeHandle
+                handle="e"
+                style={{ right: -4, top: 8, bottom: 8, width: 8 }}
+                cursor="e-resize"
+              />
+            </>
+          )}
+        </div>
 
-          <button
-            onClick={screen1}
-            style={pillBtn}
-            title="Bring to front / Pop out"
-            className="control-button">
-            <span
-              className="material-symbols-outlined"
-              style={{ fontSize: 25 }}>
-              rectangle
-            </span>
-          </button>
+        {!app.isDocked && (
+          <div style={toolbarStyle}>
+            <button
+              onClick={screen2}
+              style={pillBtn}
+              title="Square"
+              className="control-button view-only-laptop">
+              <span
+                className="material-symbols-outlined"
+                style={{ fontSize: 20 }}>
+                rectangle
+              </span>
+            </button>
 
-          <button
-            onClick={() => handleFullscreen()}
-            style={pillBtn}
-            className="control-button">
-            <span
-              className="material-symbols-outlined"
-              style={{ fontSize: 25 }}>
-              fullscreen
-            </span>
-          </button>
+            <button
+              onClick={screen1}
+              style={pillBtn}
+              title="Bring to front / Pop out"
+              className="control-button view-only-laptop">
+              <span
+                className="material-symbols-outlined"
+                style={{ fontSize: 25 }}>
+                rectangle
+              </span>
+            </button>
 
-          <button
-            className="control-button"
-            onClick={handleSlideOut}
-            title="Hide to side panel"
-            style={pillBtn}>
-            <span
-              className="material-symbols-outlined"
-              style={{ fontSize: 25 }}>
-              chevron_right
-            </span>
-          </button>
+            <button
+              onClick={() => handleFullscreen()}
+              style={pillBtn}
+              className="control-button">
+              <span
+                className="material-symbols-outlined"
+                style={{ fontSize: 25 }}>
+                fullscreen
+              </span>
+            </button>
 
-          <button
-            className="control-button"
-            onClick={moveToPanel}
-            title="Move to panel (or restore)"
-            style={pillBtn}>
-            <span
-              className="material-symbols-outlined"
-              style={{ fontSize: 25 }}>
-              dock_to_left
-            </span>
-          </button>
+            <button
+              className="control-button view-only-laptop"
+              onClick={handleSlideOut}
+              title="Hide to side panel"
+              style={pillBtn}>
+              <span
+                className="material-symbols-outlined"
+                style={{ fontSize: 25 }}>
+                chevron_right
+              </span>
+            </button>
 
-          {
-            null /* <button
+            <button
+              className="control-button"
+              onClick={moveToPanel}
+              title="Move to panel (or restore)"
+              style={pillBtn}>
+              <span
+                className="material-symbols-outlined"
+                style={{ fontSize: 25 }}>
+                dock_to_left
+              </span>
+            </button>
+
+            {
+              null /* <button
             className="control-button"
             onClick={handleMinimize}
             title={app.isMinimized ? "Restore" : "Minimize"}
@@ -939,22 +950,23 @@ const FloatingAppContainer = ({
               {app.isMinimized ? "keyboard_arrow_up" : "keyboard_arrow_down"}
             </span>
           </button> */
-          }
+            }
 
-          <button
-            className="control-button"
-            onClick={handleClose}
-            title="Close"
-            style={{ ...pillBtn, outlineColor: "rgba(255,80,80,.9)" }}>
-            <span
-              className="material-symbols-outlined"
-              style={{ fontSize: 25 }}>
-              close
-            </span>
-          </button>
-        </div>
-      )}
-    </div>
+            <button
+              className="control-button"
+              onClick={handleClose}
+              title="Close"
+              style={{ ...pillBtn, outlineColor: "rgba(255,80,80,.9)" }}>
+              <span
+                className="material-symbols-outlined"
+                style={{ fontSize: 25 }}>
+                close
+              </span>
+            </button>
+          </div>
+        )}
+      </div>
+    </>
   );
 };
 
