@@ -48,6 +48,11 @@ HighlightWords({
                         }
                     ]
                 });
+            },
+            style: () => {
+                return {
+                    backgroundColor: "transparent"
+                }
             }
         }
     }
