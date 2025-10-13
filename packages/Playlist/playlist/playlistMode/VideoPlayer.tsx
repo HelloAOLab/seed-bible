@@ -78,7 +78,6 @@ function VideoPlayerApp() {
             width: "auto",
             flexGrow: "1",
             objectFit: "cover",
-            marginBottom: "6px",
           }}
           title={content}
           allow="accelerometer;encrypted-media;gyroscope;"
@@ -92,7 +91,6 @@ function VideoPlayerApp() {
           style={{
             flexGrow: "1",
             objectFit: "cover",
-            marginBottom: "6px",
           }}>
           <source
             src={src || "https://www.w3schools.com/html/mov_bbb.mp4"}
