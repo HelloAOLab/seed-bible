@@ -42,7 +42,7 @@ function ThePage({
   const [tabEntered, setTabEntered] = useState(false);
   const { updateTab, tabs, setActiveTab } = useTabsContext();
   const { isDragging, setIsDragging, Element } = useMouseMove();
-  const { navFunctions, setNavFunctions } = useBibleContext();
+  const { navFunctions, setNavFunctions, scrollToVerse } = useBibleContext();
   const [inHold, setInHold] = useState();
   const [contextData, setContextData] = useState({
     verse:
@@ -62,7 +62,7 @@ function ThePage({
   const [wordHighlights, setWordHighlights] = useState({});
   const [wordHighlightsTC, setWordHighlightsTC] = useState("black");
   const [wordHighlightsBC, setWordHighlightsBC] = useState("#ffeb3b");
-  
+
   const [bible, setBible] = useState();
   if (tab) globalThis[`SetEnableEditorOf${tab?.id}`] = setEnableEditor;
   async function loadData() {
@@ -71,7 +71,7 @@ function ThePage({
       tabId: tab?.id,
       translation: tab.data.translation,
       bookId: tab.data.bookId,
-      chapter: tab.data.chapter
+      chapter: tab.data.chapter,
     });
     setBible(bible);
 
@@ -215,8 +215,9 @@ function ThePage({
         setLastSelectedVerse(selectedArray[selectedArray.length - 1]);
         setContextData({
           verse: window.getSelection().toString(),
-          reference: `${data?.book} ${data?.chapter}:${selectedArray[0]}-${selectedArray[selectedArray.length - 1]
-            }`,
+          reference: `${data?.book} ${data?.chapter}:${selectedArray[0]}-${
+            selectedArray[selectedArray.length - 1]
+          }`,
           book: data?.book,
           chapter: data?.chapter,
           verses: selectedArray,
@@ -425,8 +426,8 @@ function ThePage({
               createAttributes: config?.createAttributes
                 ? config.createAttributes
                 : () => {
-                  return {};
-                },
+                    return {};
+                  },
             };
           });
         });
@@ -503,11 +504,11 @@ function ThePage({
       openPrevChapter,
       open,
       changeTranslation: bible?.changeTranslation || undefined,
-      setPanalApp: () => { },
+      setPanalApp: () => {},
     });
     globalThis.Open = open;
     globalThis.ChangeTranslation = changeTranslation;
-    globalThis.SetPanalApp = () => { };
+    globalThis.SetPanalApp = () => {};
     globalThis.ToggleVerseHighlight = toggleVerseHighlight;
     globalThis.UnHighlightVerse = unHighlightVerse;
     globalThis.HighlightVerse = highlightVerse;
@@ -557,6 +558,8 @@ function ThePage({
   const [holded, setHolded] = useState({});
 
   useEffect(() => {
+    setInHold(null);
+    scrollToVerse(1);
     if (globalThis.SetCurrentBook) {
       globalThis.SetCurrentBook(data);
       globalThis.CHAPTER_DATA = {
@@ -669,10 +672,11 @@ function ThePage({
       if (!tab?.id) return;
       EmitData("highlight", verseNumbers);
       // console.log(data, 'remoteData')
-      const verseId = `v-${typeof verseNumbers === "object"
+      const verseId = `v-${
+        typeof verseNumbers === "object"
           ? verseNumbers[verseNumbers.length - 1]
           : verseNumbers
-        }`;
+      }`;
       // console.log(verseId, 'verseId', document.getElementById(verseId))
       document.getElementById(verseId).scrollIntoView({
         behavior: "smooth", // enables smooth animation
@@ -724,10 +728,11 @@ function ThePage({
       if (!tab?.id) return;
       EmitData("highlight", verseNumbers);
       // console.log(data, 'remoteData')
-      const verseId = `v-${typeof verseNumbers === "object"
+      const verseId = `v-${
+        typeof verseNumbers === "object"
           ? verseNumbers[verseNumbers.length - 1]
           : verseNumbers
-        }`;
+      }`;
       // console.log(verseId, 'verseId', document.getElementById(verseId))
       document.getElementById(verseId).scrollIntoView({
         behavior: "smooth", // enables smooth animation
@@ -770,10 +775,11 @@ function ThePage({
       if (!tab?.id) return;
       EmitData("highlight", verseNumbers);
       // console.log(data, 'remoteData')
-      const verseId = `v-${typeof verseNumbers === "object"
+      const verseId = `v-${
+        typeof verseNumbers === "object"
           ? verseNumbers[verseNumbers.length - 1]
           : verseNumbers
-        }`;
+      }`;
       // console.log(verseId, 'verseId', document.getElementById(verseId))
       document.getElementById(verseId).scrollIntoView({
         behavior: "smooth", // enables smooth animation
@@ -837,14 +843,12 @@ function ThePage({
       onMouseLeave={handleMouseLeave}
       onMouseEnter={handleMouseEnter}
       onMouseUp={handleMouseUp}
-      onClick={hanldNavFunctions}
-    >
+      onClick={hanldNavFunctions}>
       {data && tab && !tabEntered ? (
         <>
           <div
             style={{ "pointer-events": isDragging ? "none" : null }}
-            className="bookTitle"
-          >{`${data?.book} ${data?.chapter}`}</div>
+            className="bookTitle">{`${data?.book} ${data?.chapter}`}</div>
           {data &&
             data.content.map((e) => {
               return (
@@ -887,8 +891,7 @@ function ThePage({
               width: "80%",
               height: "1px",
               background: "gray",
-            }}
-          ></div>
+            }}></div>
           <div
             style={{
               width: "50%",
@@ -896,8 +899,7 @@ function ThePage({
               "align-items": "center",
               "justify-content": "center",
               position: "relative",
-            }}
-          >
+            }}>
             <PageToolbar />
           </div>
           <div style={{ height: "160px" }}></div>
@@ -913,9 +915,9 @@ function ThePage({
               justifyContent: "center",
               backgroundColor: "#f8f9fa",
             }}
-            className={`pageContainer ${tabEntered ? "tabEntered" : "tabDrop"
-              } ${highlightOnce ? "tabHighlightBg" : ""}`}
-          >
+            className={`pageContainer ${
+              tabEntered ? "tabEntered" : "tabDrop"
+            } ${highlightOnce ? "tabHighlightBg" : ""}`}>
             <div
               style={{
                 pointerEvents: isDragging ? "none" : undefined,
@@ -929,8 +931,7 @@ function ThePage({
                 // boxShadow: '0 4px 12px rgba(0, 0, 0, 0.1)',
                 maxWidth: "400px",
                 width: "90%",
-              }}
-            >
+              }}>
               <div
                 onClick={() => {
                   setOpenSidebar((prev) => !prev);
@@ -940,8 +941,7 @@ function ThePage({
                   fontSize: "24px",
                   marginBottom: "20px",
                   color: "#333",
-                }}
-              >
+                }}>
                 <img
                   style={{ width: "50px" }}
                   src="https://res.cloudinary.com/dfbtwwa8p/image/upload/v1755365776/717a8527988cca7e0bdc9449ec68581a8400b977_vqc7mx.png"
@@ -955,8 +955,7 @@ function ThePage({
                   background: "#e0e0e0",
                   marginTop: "40px",
                   margin: "auto",
-                }}
-              ></div>
+                }}></div>
               <div
                 style={{
                   width: "100%",
@@ -965,8 +964,7 @@ function ThePage({
                   alignItems: "center",
                   justifyContent: "center",
                   position: "relative",
-                }}
-              >
+                }}>
                 <PageToolbar path="showInStarterToolbar" />
               </div>
             </div>
@@ -988,8 +986,7 @@ function PageToolbar({ path = "showInPageToolbar" }) {
         <div
           onClick={tool.onClick}
           className="tool-preview-page"
-          key={tool.label}
-        >
+          key={tool.label}>
           {tool.isImg ? (
             <img
               src={tool.icon}
@@ -1342,8 +1339,7 @@ function Section({
                           verse.verseNumber
                         );
                       }
-                    }}
-                  >
+                    }}>
                     {wordPart.text}
                   </span>
                 );
@@ -1363,8 +1359,9 @@ function Section({
         return (
           <span
             key={i}
-            className={`clickableCursor highlightened ${isActive ? "highlighted-word" : ""
-              }`}
+            className={`clickableCursor highlightened ${
+              isActive ? "highlighted-word" : ""
+            }`}
             style={{ animationDelay: `${i * 0.1}s` }}
             onClick={() => {
               console.log(part.key);
@@ -1375,8 +1372,7 @@ function Section({
               const sec = m ? m[1] : part.key;
               console.log(sec);
               globalThis.HighlightStudyNoteSection(raw);
-            }}
-          >
+            }}>
             {part.text}
           </span>
         );
@@ -1404,8 +1400,7 @@ function Section({
                   color: wordHighlightsTC,
                   backgroundColor: wordHighlightsBC,
                 }}
-                {...attributes}
-              >
+                {...attributes}>
                 {part.text}
               </span>
             );
@@ -1425,8 +1420,7 @@ function Section({
             heading,
           });
         }}
-        className="sectionTitle"
-      >
+        className="sectionTitle">
         {heading}
       </div>
       <div style={textEdit ? editTextStyle : null}>
@@ -1434,8 +1428,7 @@ function Section({
         {textEdit && (
           <div
             style={{ right: "20px", top: "-65px", background: "transparent" }}
-            className="flexElementGap-4 editVerseTitle"
-          >
+            className="flexElementGap-4 editVerseTitle">
             <TextFormattingToolbar sectionStyles={styles} />
           </div>
         )}
@@ -1503,14 +1496,14 @@ function Section({
                       (highlighted?.[verse.verseNumber] &&
                         highlighted?.[verse.verseNumber].book === book &&
                         highlighted?.[verse.verseNumber].chapter === chapter) ||
-                        commandHighlight.includes(verse.verseNumber)
+                      commandHighlight.includes(verse.verseNumber)
                         ? wordHighlightsBC
                         : "transparent",
                     color:
                       (highlighted?.[verse.verseNumber] &&
                         highlighted?.[verse.verseNumber].book === book &&
                         highlighted?.[verse.verseNumber].chapter === chapter) ||
-                        commandHighlight.includes(verse.verseNumber)
+                      commandHighlight.includes(verse.verseNumber)
                         ? wordHighlightsTC
                         : "black",
                     transition: "background-color 0.2s ease",
@@ -1528,21 +1521,22 @@ function Section({
                         ? "dotted"
                         : "",
                   }}
-                  className={`sectionText ${verse?.verseNumber.toString() === activeVerse.toString()
+                  className={`sectionText ${
+                    verse?.verseNumber.toString() === activeVerse.toString()
                       ? "highlighted"
                       : ""
-                    } ${highlighted?.[verse.verseNumber] ? "verse-highlighted" : ""
-                    }`}
-                >
+                  } ${
+                    highlighted?.[verse.verseNumber] ? "verse-highlighted" : ""
+                  }`}>
                   <span
-                    className={`sectionTextNumber ${globalThis.studyNotesPresent ? "clickableCursor" : ""
-                      }`}
+                    className={`sectionTextNumber ${
+                      globalThis.studyNotesPresent ? "clickableCursor" : ""
+                    }`}
                     onClick={() => {
                       if (globalThis.studyNotesPresent) {
                         HighlightStudyNoteSection(verse?.verseNumber);
                       }
-                    }}
-                  >
+                    }}>
                     {verse?.verseNumber}
                   </span>
                   {!c ? (
@@ -1579,8 +1573,7 @@ function Section({
                       marginBottom: "20px",
                       borderTop: "1px solid #eee",
                       paddingTop: "10px",
-                    }}
-                  >
+                    }}>
                     <ConfigurableFunctionCommands contextData={contextData} />
                   </div>
                 )}
@@ -1603,9 +1596,8 @@ export const ThePageWithPanel = ({ tab }) => {
         initialWidth={gridPortalBot.tags.pixelWidth}
         containerWidth={gridPortalBot.tags.pixelWidth}
         containerHeight={1000}
-        onResize={() => { }}
-        otherTab={panalApp}
-      >
+        onResize={() => {}}
+        otherTab={panalApp}>
         <ThePage setPanalApp={setPanalApp} tab={tab} />
       </DivSpliter>
     </>
