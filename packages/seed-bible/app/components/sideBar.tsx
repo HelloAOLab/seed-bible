@@ -716,8 +716,8 @@ function SideBar() {
   }, [editMode]);
 
   useEffect(() => {
-    shout("OnOnlineUsersChanged", {onlineUsers});
-  }, [onlineUsers])
+    shout("OnOnlineUsersChanged", { onlineUsers });
+  }, [onlineUsers]);
 
   const {
     sidebarMode,
@@ -1185,7 +1185,7 @@ function SideBar() {
                       {customIcon.icon}
                     </span>
                   ) : (
-                    <span>{currentSpace.name}</span>
+                    <span></span>
                   )}
                 </div>
               </div>
