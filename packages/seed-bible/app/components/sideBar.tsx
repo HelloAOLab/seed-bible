@@ -1232,7 +1232,7 @@ function SideBar() {
               </div>
             )}
             <div className="tabsContainer">
-              <span>Tabs & Folders</span>
+              <span>Tabs</span>
               <div
                 style={{ display: "flex", alignItems: "center", gap: "5px" }}
               >

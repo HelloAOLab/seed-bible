@@ -134,6 +134,13 @@ function ThePage({
         book: data?.book,
         chapter: data?.chapter,
       });
+      const url = new URL(window.location);
+      url.searchParams.set("book", data?.bookId);
+      url.searchParams.set("chapter", data?.chapter);
+      window.history.pushState({}, "", url);
+      configBot.tags.book = "a booolol";
+      console.log(window.location, "loic");
+
       // }
     }
   }, [data]);
@@ -156,7 +163,10 @@ function ThePage({
   }, []);
 
   async function checkDefault() {
-    if (configBot.tags.book && configBot.tags.chapter) {
+    if (
+      configBot.tags.book &&
+      configBot.tags.chapter & !configBot.tags.defaultChecked
+    ) {
       await os.sleep(1000);
       await bible.open(
         configBot.tags.book.toUpperCase(),
@@ -164,9 +174,10 @@ function ThePage({
         configBot.tags.translation || "BSB"
       );
       setData(bible.data);
-      configBot.tags.book = null;
-      configBot.tags.chapter = null;
-      configBot.tags.translation = null;
+      configBot.tags.defaultChecked = true;
+      // configBot.tags.book = null;
+      // configBot.tags.chapter = null;
+      // configBot.tags.translation = null;
     }
   }
   useEffect(() => {
@@ -861,12 +872,14 @@ function ThePage({
       onMouseLeave={handleMouseLeave}
       onMouseEnter={handleMouseEnter}
       onMouseUp={handleMouseUp}
-      onClick={hanldNavFunctions}>
+      onClick={hanldNavFunctions}
+    >
       {data && tab && !tabEntered ? (
         <>
           <div
             style={{ "pointer-events": isDragging ? "none" : null }}
-            className="bookTitle">{`${data?.book} ${data?.chapter}`}</div>
+            className="bookTitle"
+          >{`${data?.book} ${data?.chapter}`}</div>
           {data &&
             data.content.map((e) => {
               return (
@@ -909,7 +922,8 @@ function ThePage({
               width: "80%",
               height: "1px",
               background: "gray",
-            }}></div>
+            }}
+          ></div>
           <div
             style={{
               width: "50%",
@@ -917,7 +931,8 @@ function ThePage({
               "align-items": "center",
               "justify-content": "center",
               position: "relative",
-            }}>
+            }}
+          >
             <PageToolbar />
           </div>
           <div style={{ height: "160px" }}></div>
@@ -935,7 +950,8 @@ function ThePage({
             }}
             className={`pageContainer ${
               tabEntered ? "tabEntered" : "tabDrop"
-            } ${highlightOnce ? "tabHighlightBg" : ""}`}>
+            } ${highlightOnce ? "tabHighlightBg" : ""}`}
+          >
             <div
               style={{
                 pointerEvents: isDragging ? "none" : undefined,
@@ -949,7 +965,8 @@ function ThePage({
                 // boxShadow: '0 4px 12px rgba(0, 0, 0, 0.1)',
                 maxWidth: "400px",
                 width: "90%",
-              }}>
+              }}
+            >
               <div
                 onClick={() => {
                   setOpenSidebar((prev) => !prev);
@@ -959,7 +976,8 @@ function ThePage({
                   fontSize: "24px",
                   marginBottom: "20px",
                   color: "#333",
-                }}>
+                }}
+              >
                 <img
                   style={{ width: "50px" }}
                   src="https://res.cloudinary.com/dfbtwwa8p/image/upload/v1755365776/717a8527988cca7e0bdc9449ec68581a8400b977_vqc7mx.png"
@@ -973,7 +991,8 @@ function ThePage({
                   background: "#e0e0e0",
                   marginTop: "40px",
                   margin: "auto",
-                }}></div>
+                }}
+              ></div>
               <div
                 style={{
                   width: "100%",
@@ -982,7 +1001,8 @@ function ThePage({
                   alignItems: "center",
                   justifyContent: "center",
                   position: "relative",
-                }}>
+                }}
+              >
                 <PageToolbar path="showInStarterToolbar" />
               </div>
             </div>
@@ -1004,7 +1024,8 @@ function PageToolbar({ path = "showInPageToolbar" }) {
         <div
           onClick={tool.onClick}
           className="tool-preview-page"
-          key={tool.label}>
+          key={tool.label}
+        >
           {tool.isImg ? (
             <img
               src={tool.icon}
@@ -1357,7 +1378,8 @@ function Section({
                           verse.verseNumber
                         );
                       }
-                    }}>
+                    }}
+                  >
                     {wordPart.text}
                   </span>
                 );
@@ -1390,7 +1412,8 @@ function Section({
               const sec = m ? m[1] : part.key;
               console.log(sec);
               globalThis.HighlightStudyNoteSection(raw);
-            }}>
+            }}
+          >
             {part.text}
           </span>
         );
@@ -1418,7 +1441,8 @@ function Section({
                   color: wordHighlightsTC,
                   backgroundColor: wordHighlightsBC,
                 }}
-                {...attributes}>
+                {...attributes}
+              >
                 {part.text}
               </span>
             );
@@ -1438,7 +1462,8 @@ function Section({
             heading,
           });
         }}
-        className="sectionTitle">
+        className="sectionTitle"
+      >
         {heading}
       </div>
       <div style={textEdit ? editTextStyle : null}>
@@ -1446,7 +1471,8 @@ function Section({
         {textEdit && (
           <div
             style={{ right: "20px", top: "-65px", background: "transparent" }}
-            className="flexElementGap-4 editVerseTitle">
+            className="flexElementGap-4 editVerseTitle"
+          >
             <TextFormattingToolbar sectionStyles={styles} />
           </div>
         )}
@@ -1545,7 +1571,8 @@ function Section({
                       : ""
                   } ${
                     highlighted?.[verse.verseNumber] ? "verse-highlighted" : ""
-                  }`}>
+                  }`}
+                >
                   <span
                     className={`sectionTextNumber ${
                       globalThis.studyNotesPresent ? "clickableCursor" : ""
@@ -1554,7 +1581,8 @@ function Section({
                       if (globalThis.studyNotesPresent) {
                         HighlightStudyNoteSection(verse?.verseNumber);
                       }
-                    }}>
+                    }}
+                  >
                     {verse?.verseNumber}
                   </span>
                   {!c ? (
@@ -1591,7 +1619,8 @@ function Section({
                       marginBottom: "20px",
                       borderTop: "1px solid #eee",
                       paddingTop: "10px",
-                    }}>
+                    }}
+                  >
                     <ConfigurableFunctionCommands contextData={contextData} />
                   </div>
                 )}
@@ -1615,7 +1644,8 @@ export const ThePageWithPanel = ({ tab }) => {
         containerWidth={gridPortalBot.tags.pixelWidth}
         containerHeight={1000}
         onResize={() => {}}
-        otherTab={panalApp}>
+        otherTab={panalApp}
+      >
         <ThePage setPanalApp={setPanalApp} tab={tab} />
       </DivSpliter>
     </>
