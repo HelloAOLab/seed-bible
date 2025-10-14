@@ -1806,12 +1806,12 @@ function StudyNotes() {
     const chapter = globalThis.GlobalChapter ?? 0;
 
     const TAB_LIST = [
-        { id: 'notes', label: 'Study Notes' },
-        { id: 'devotion', label: 'Devotional' },  // Apologist
+        // { id: 'notes', label: 'Study Notes' },
+        // { id: 'devotion', label: 'Devotional' },  // Apologist
         { id: 'discover', label: 'Discovery' },  // SgSearch
     ];
 
-    const initialTab = tags?.studyNotesActiveTab || 'notes';
+    const initialTab = tags?.studyNotesActiveTab || 'discover';
     const [active, setActive] = useState(initialTab);
     const [searchType, setSearchType] = useState('apologist'); // 'apologist' or 'tapos'
 
@@ -1866,16 +1866,6 @@ function StudyNotes() {
             </div>
 
             <div className="sn-panels">
-                <div className={`sn-panel ${active === 'notes' ? 'show' : 'hide'}`}>
-                    <StudyNotesWithoutWrap chapter={chapter} />
-                </div>
-
-                <div className={`sn-panel ${active === 'devotion' ? 'show' : 'hide'}`}>
-                    <div className="sg-searchWrap">
-                        <TableTalkEmbed />
-                    </div>
-                </div>
-
                 <div className={`sn-panel ${active === 'discover' ? 'show' : 'hide'}`}>
                     <div className="sg-searchWrap">
                         {searchType === 'apologist' ? (
