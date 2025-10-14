@@ -24,7 +24,7 @@ const SN_Components_Bot = getBot(byTag("system", "app.sn_components"));
 import { ConfigurableFunctionCommands } from "app.components.commands";
 
 function prepareAISearchParamOnChapter(chapterData) {
-  const combinedText = chapterData.book + " Chapter " + chapterData.chapter;
+  const combinedText = chapterData.book + ' ' + chapterData.chapter;
   globalThis.GlobalSearch = combinedText.trim();
 }
 
