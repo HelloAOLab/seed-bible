@@ -380,8 +380,45 @@
   background: #fcfef8;
   display: flex;
   flex-direction: column;
+  align-items: center;
+  gap: 12px;
   position: relative;
   width: 100%;
+}
+
+.sg-previewImgContainer {
+  width: 100%;
+  height: 25vh;
+  max-height: 400px;
+  display: flex;
+  justify-content: center;
+}
+
+.sg-previewImg {
+  max-width: 100%;
+  max-height: 100%;
+  object-fit: contain;
+}
+
+.sg-preview-learnMoreLink {
+    margin-bottom: 8px;
+    border: 1px solid var(--sg-green);
+    border-radius: 4px;
+    padding: 6px;
+    background-color: transparent;
+    color: var(--sg-green);
+    text-decoration: none;
+    font-weight: 500;
+
+    display: inline-flex;
+    align-items: center;
+    gap: 8px;
+}
+
+.sg-preview-learnMoreLink:hover {
+    background-color: var(--sg-green);
+    color: #fff;
+    stroke: #fff;
 }
 
 .sg-previewBar {
