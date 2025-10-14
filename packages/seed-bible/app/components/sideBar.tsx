@@ -1191,13 +1191,40 @@ function SideBar() {
               </div>
               <div className="canvasOptions">
                 <span
-                  onClick={() => {
-                    openPopupSettings(
-                      <ScreenOptions setCustomScreens={setCustomScreens} />,
-                      null,
-                      true
-                    );
+                  onContextMenu={(e) => {
+                    e.preventDefault();
+                    globalThis._skipNextMouse = true; // block next onMouseUp
+                    SetShowScreenPanelOption(true);
                   }}
+                  onMouseDown={(e) => {
+                    // ignore if it's a right-click
+                    if (e.button === 2) return;
+
+                    globalThis._hold = false;
+                    globalThis._holdTimeout = setTimeout(() => {
+                      SetShowScreenPanelOption(true);
+                      globalThis._hold = true;
+                    }, 1000);
+                  }}
+                  onMouseUp={(e) => {
+                    // ignore if we just did a right-click
+                    setTimeout(() => {
+                      if (globalThis._skipNextMouse) {
+                        globalThis._skipNextMouse = false;
+                        return;
+                      }
+
+                      clearTimeout(globalThis._holdTimeout);
+                      if (!globalThis._hold) {
+                        openPopupSettings(
+                          <ScreenOptions setCustomScreens={setCustomScreens} />,
+                          null,
+                          true
+                        );
+                      }
+                    }, 10);
+                  }}
+                  onMouseLeave={() => clearTimeout(globalThis._holdTimeout)}
                 >
                   {customScreens?.value <= 1 ? (
                     <SingleScreenIcon />
