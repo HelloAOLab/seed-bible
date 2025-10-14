@@ -1,7 +1,7 @@
 
 
 
-os.log(that, 'app')
+//os.log(that, 'app')
 
 if (that.buttonId === 'left') {
     isAbleToRightClick.leftClickAction()
@@ -25,4 +25,4 @@ const MenuOptions = {
     ]
 };
 
-openPopupSettings(MenuOptions)
+//openPopupSettings(MenuOptions)
