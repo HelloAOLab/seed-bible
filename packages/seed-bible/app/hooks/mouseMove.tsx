@@ -90,6 +90,80 @@ export function MouseMoveProvider({ children }) {
       __autoCenteredMobile: autoCentered,
     };
 
+    // Check if new app contains mainCanvas class
+    const tempDiv = document.createElement("div");
+    const renderToString = (element) => {
+      const container = document.createElement("div");
+      try {
+        // Simple check: render React element to temp container
+        const root = ReactDOM.createRoot
+          ? ReactDOM.createRoot(container)
+          : null;
+        if (root) {
+          root.render(element);
+        }
+        return container.innerHTML;
+      } catch (e) {
+        // Fallback: convert to string
+        return String(element);
+      }
+    };
+
+    let hasMainCanvas = false;
+    try {
+      const appString = String(appConfig.App);
+      hasMainCanvas =
+        appString.includes("mainCanvas") ||
+        appConfig.App?.props?.className?.includes("mainCanvas") ||
+        (appConfig.App?.type === "div" &&
+          appConfig.App?.props?.className?.includes("mainCanvas"));
+    } catch (e) {
+      // Silent fail for string check
+    }
+
+    // Remove previous apps with mainCanvas if this new app has mainCanvas
+    if (hasMainCanvas) {
+      setFloatingApps((prev) => {
+        const appsToRemove = prev.filter((app) => {
+          try {
+            const appString = String(app.App);
+            return (
+              appString.includes("mainCanvas") ||
+              app.App?.props?.className?.includes("mainCanvas") ||
+              (app.App?.type === "div" &&
+                app.App?.props?.className?.includes("mainCanvas"))
+            );
+          } catch (e) {
+            return false;
+          }
+        });
+
+        // Notify about removed apps
+        appsToRemove.forEach((app) => {
+          shout("onFloatingAppRemoved", { appId: app.id });
+        });
+
+        return prev.filter((app) => !appsToRemove.includes(app));
+      });
+
+      // Also remove from hidden apps
+      setHiddenApps((prev) => {
+        return prev.filter((app) => {
+          try {
+            const appString = String(app.App);
+            return !(
+              appString.includes("mainCanvas") ||
+              app.App?.props?.className?.includes("mainCanvas") ||
+              (app.App?.type === "div" &&
+                app.App?.props?.className?.includes("mainCanvas"))
+            );
+          } catch (e) {
+            return true;
+          }
+        });
+      });
+    }
+
     setFloatingApps((prev) => [...prev, newApp]);
     return newApp.id;
   };
