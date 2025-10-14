@@ -1264,23 +1264,6 @@ function SideBar() {
                 style={{ display: "flex", alignItems: "center", gap: "5px" }}
               >
                 <span
-                  // onClick={() => setMultiSelectMode(!multiSelectMode)}
-                  className="material-symbols-outlined "
-                  style={{
-                    cursor: "pointer",
-                    fontSize: "18px",
-                    color: multiSelectMode ? "#4CAF50" : "inherit",
-                    background: multiSelectMode
-                      ? "rgba(76, 175, 80, 0.1)"
-                      : "transparent",
-                    borderRadius: "4px",
-                    padding: "2px",
-                  }}
-                  // title={}
-                >
-                  {`home`}
-                </span>
-                <span
                   style={{ "user-select": "none" }}
                   onMouseDown={() => {
                     clearTimeout(holdTimeout.current.time);
