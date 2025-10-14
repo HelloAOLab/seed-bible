@@ -76,7 +76,7 @@ function SgCard({ item, isOpen, onToggle, viewMode = "list" }) {
     };
 
     const embUrl = toEmbeddableUrl(item);
-    const canPreview = Boolean(embUrl);
+    const canPreview = false; //Boolean(embUrl);
 
     // short description (whatever exists in payload)
     const desc = item.description || item.summary || item.snippet || item.excerpt || "";
