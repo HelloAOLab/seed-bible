@@ -260,7 +260,7 @@ function ApologistSearch({
                        setData(allResults.slice(0, 10)); // Show first 10
                        setHasMore(allResults.length > 10); // Show "Load More" if there are more than 10 results
                        // Open all cards initially
-                       setOpenIds(new Set(allResults.map(item => item.id)));
+                    //    setOpenIds(new Set(allResults.map(item => item.id)));
             } catch (e) {
                 if (!cancelled) { setErr(e?.message || "Network error"); setData([]); setAllData([]); setOpenIds(new Set()); }
             } finally {
