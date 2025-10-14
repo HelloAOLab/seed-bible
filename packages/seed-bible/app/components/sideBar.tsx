@@ -1622,6 +1622,9 @@ export const SettingsProfile = () => {
 
   const handleMouseDown = (spaceId) => {
     setActiveSpace(spaceId);
+    setTimeout(() => {
+      globalThis.setOpenOnMobile(true);
+    }, 10);
     // setIsHolding(false);
     // holdTimeout.current = setTimeout(() => {
     //     setIsHolding(true);

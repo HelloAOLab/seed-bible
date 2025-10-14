@@ -145,7 +145,7 @@ export function Toolbar() {
             </div>
             <div
               onClick={() => {
-                setSidebarWidth(300);
+                setSidebarWidth(280);
                 setOpenOnMobile(true);
                 globalThis[`setOpenSidebar`] && setOpenSidebar(false);
               }}
@@ -167,8 +167,9 @@ export function Toolbar() {
                     <div className={`toolbar-button placeholder`}></div>
                   ) : (
                     <button
-                      className={`toolbar-button ${index === 0 ? "firstToolbarbutton" : ""
-                        }`}
+                      className={`toolbar-button ${
+                        index === 0 ? "firstToolbarbutton" : ""
+                      }`}
                       onMouseDown={() => {
                         hasHeldRef.current = false;
                         holdTimeoutRef.current = setTimeout(() => {
@@ -182,7 +183,9 @@ export function Toolbar() {
                         clearTimeout(holdTimeoutRef.current);
                         if (!hasHeldRef.current && tool?.onClick) {
                           tool.onClick();
-                          EmitData('appClick', { name: `${tool?.pkgName}_package` })
+                          EmitData("appClick", {
+                            name: `${tool?.pkgName}_package`,
+                          });
                         }
                         if (isDragging) {
                           setIsDragging(false);

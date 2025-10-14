@@ -43,6 +43,7 @@ const Layout = ({ children }) => {
     useSideBarContext();
   const { canvasMode, setCanvasMode } = useBibleContext();
   const { openOnMobile, setOpenOnMobile } = useSideBarContext();
+  globalThis.setOpenOnMobile = setOpenOnMobile;
   const {
     spaces,
     activeSpace,
