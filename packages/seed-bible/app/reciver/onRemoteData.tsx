@@ -17,7 +17,7 @@ if (masks['remotes'] && masks['remotes'].includes(that.remoteId)) {
     else if (that.name === 'verseClicked') {
         shout('remoteVerseClick', { ...that.that })
     } else if (that.name === 'appClick') {
-        if(that.that.name === "Playlist_package" && globalThis.IsPlaylistPlaying) {
+        if(that.that.name === "Playlist_package") {
             return;
         }
         // os.log('appClick', that.that)
