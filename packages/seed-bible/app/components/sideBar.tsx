@@ -1503,43 +1503,50 @@ export const SpaceUI = () => {
   globalThis.SetGlobalProfilePic = setGlobalProfilePic;
   if (sidebarWidth !== 0)
     return (
-      <div
-        style={{ width: sidebarWidth }}
-        className={
-          collapsed
-            ? "profileSection-collapsed"
-            : `profileSection ${openOnMobile ? "open" : ""} ${
-                fullScreen ? "floatProfileSection" : null
-              }`
-        }
-      >
-        {!collapsed ? (
-          <>
-            <span
-              style={{ cursor: "pointer" }}
-              onClick={() => setSideBarMode("settings")}
-              className="material-symbols-outlined"
-            >
-              settings
-            </span>
-            <SettingsProfile />
-            <UserProfile />
-          </>
-        ) : (
-          <>
-            <Icon
-              icon="settings"
-              onClick={() => {
-                setCollapsed(false);
-                setSidebarWidth(280);
-                setSideBarMode("settings");
-              }}
-            />
-            <UserProfile collapsed={true} />
-          </>
-        )}
-        <style>{getStyleOf("sidebar.css")}</style>
-      </div>
+      <>
+        <style>{`
+            .profileSection{
+              width:${sidebarWidth}px !important;
+            }
+        `}</style>
+        <div
+          // style={{ width: `${sidebarWidth}px !important` }}
+          className={
+            collapsed
+              ? "profileSection-collapsed"
+              : `profileSection ${openOnMobile ? "open" : ""} ${
+                  fullScreen ? "floatProfileSection" : null
+                }`
+          }
+        >
+          {!collapsed ? (
+            <>
+              <span
+                style={{ cursor: "pointer" }}
+                onClick={() => setSideBarMode("settings")}
+                className="material-symbols-outlined"
+              >
+                settings
+              </span>
+              <SettingsProfile />
+              <UserProfile />
+            </>
+          ) : (
+            <>
+              <Icon
+                icon="settings"
+                onClick={() => {
+                  setCollapsed(false);
+                  setSidebarWidth(280);
+                  setSideBarMode("settings");
+                }}
+              />
+              <UserProfile collapsed={true} />
+            </>
+          )}
+          <style>{getStyleOf("sidebar.css")}</style>
+        </div>
+      </>
     );
 };
 const Icon = ({ icon, onClick }) => {
