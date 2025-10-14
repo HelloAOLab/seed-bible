@@ -53,7 +53,6 @@
   padding: 8px 36px 8px 12px;
   /* space for arrow on right */
   font-size: 14px;
-  font-family: inherit;
 
   border: 1px solid #ccc;
   border-radius: 6px;
@@ -66,6 +65,7 @@
   outline: none;
   transition: border-color 0.2s, box-shadow 0.2s;
   margin-right: 5px;
+  font-family: Satoshi;
 }
 
 .dropdown-select:hover {
@@ -107,6 +107,7 @@
   outline: none;
   flex: 1;
   font-size: 14px;
+  font-family: "DM Sans", sans-serif;
 }
 
 .share-btn {
@@ -401,12 +402,14 @@ input:checked + .slider:not(#slider):before {
   justify-content: space-between;
   padding: 6px;
   border-radius: 5px;
+  font-family: "Satoshi", system-ui, sans-serif;
 }
 
 .translation-title {
   width: 25%;
   font-weight: bold;
   font-size: 14px;
+  font-family: "Satoshi", system-ui, sans-serif;
 }
 
 .sidebar-selected-title {
@@ -418,12 +421,14 @@ input:checked + .slider:not(#slider):before {
   font-size: 18px;
   text-overflow: ellipsis;
   white-space: nowrap;
+  font-family: Satoshi;
 }
 
 .translation-description {
   font-weight: normal;
   font-size: 14px;
   width: 60%;
+  font-family: "DM Sans", sans-serif;
 }
 
 .experience-container {
@@ -864,6 +869,7 @@ input:checked + .slider:not(#slider):before {
   transition: all 0.3s;
   font-size: 14px;
   padding: 10px;
+  font-family: "Satoshi", system-ui, sans-serif;
   /* color: black; */
 }
 
