@@ -26,15 +26,16 @@ export function SideBarProvider({ children }) {
   const [isMobile, setIsMobile] = useState(false);
   useEffect(() => {
     const handleResize = () => {
-      if (window.innerWidth <= 940) {
+      const check = window.innerWidth < 768;
+      setIsMobile(check);
+      if (window.innerWidth <= 940 && !check) {
         setCollapsed(true);
         setSidebarWidth(60);
       } else {
+        if (check) return;
         setCollapsed(false);
         setSidebarWidth(280);
       }
-      const check = window.innerWidth < 768;
-      setIsMobile(check);
     };
     window.addEventListener("resize", handleResize);
     return () => window.removeEventListener("resize", handleResize);
