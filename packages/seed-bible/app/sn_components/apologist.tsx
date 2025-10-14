@@ -94,6 +94,8 @@ function SgCard({ item, isOpen, onToggle, viewMode = "list" }) {
         return () => document.removeEventListener("visibilitychange", onVis);
     }, []);
 
+    const url = item.url || item.referral_url;
+
     return (
         <article className={`sg-card ${viewMode === "grid" ? "sg-card-grid" : "sg-card-list"} ${isOpen ? "is-open" : ""}`}>
 
@@ -112,11 +114,10 @@ function SgCard({ item, isOpen, onToggle, viewMode = "list" }) {
                     </>}
                 </div>
                 <div className="sg2-headRight">
-                    {item.url && (
+                    {url && (
                         <a
                             className="sg2-open"
-                            href={item.url}
-                            onClick={openInNewTab}
+                            href={url}
                             target="_blank"
                             rel="noopener noreferrer"
                             referrerPolicy="no-referrer"
@@ -134,8 +135,13 @@ function SgCard({ item, isOpen, onToggle, viewMode = "list" }) {
             
             <div className="sg2-bodyTitle">
 
-            <h3 className="sg2-title" title={item.title}>{item.title}</h3>
-            
+            {url ? 
+                (<a className="sg2-title-link" href={url} target="_blank" rel="noopener noreferrer" title="Open in new tab" aria-label="Open in new tab">
+                    <h3 className="sg2-title" title={item.title}>{item.title}</h3>
+                </a>) :
+                (<h3 className="sg2-title" title={item.title}>{item.title}</h3>)
+            }
+
             {canPreview && !isOpen && (
                     <button
                         className="sg2-previewLink"

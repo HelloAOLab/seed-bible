@@ -643,6 +643,10 @@
   gap: 8px;
 }
 
+.sg2-title-link {
+  text-decoration: none;
+}
+
 .sg2-open {
   display: inline-grid;
   place-items: center;
