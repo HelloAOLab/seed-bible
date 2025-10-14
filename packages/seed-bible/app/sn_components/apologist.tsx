@@ -416,7 +416,6 @@ function ApologistSearch({
                     <div className="sg-empty">
                         <div className="sg-emptyIcon">🔎</div>
                         <div className="sg-emptyTitle">No results</div>
-                        <div className="sg-emptyHint">Try a broader term or different keywords.</div>
                     </div>
                 )}
 
