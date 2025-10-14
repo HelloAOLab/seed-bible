@@ -32,7 +32,7 @@ function ThePage({
 }) {
   const [tab, setTab] = useState(T);
   const [commandHighlight, setCommandHighlight] = useState([]);
-
+  const [direction, setDirection] = useState(null);
   const commandsRef = useRef(null);
 
   useEffect(() => {
@@ -125,6 +125,11 @@ function ThePage({
         };
       }
       os.log("bookdata", data);
+      if (data.translation === "ARBNAV" || data.translation === "arb_vdv") {
+        setDirection("rtl");
+      } else {
+        setDirection(null);
+      }
       EmitData("book", { ...data });
       // if (tab) {
       const emitter = getBot("system", "app.emitter");
@@ -134,13 +139,8 @@ function ThePage({
         book: data?.book,
         chapter: data?.chapter,
       });
-      const url = new URL(window.location);
-      url.searchParams.set("book", data?.bookId);
-      url.searchParams.set("chapter", data?.chapter);
-      window.history.pushState({}, "", url);
-      configBot.tags.book = "a booolol";
-      console.log(window.location, "loic");
-
+      configBot.tags.book = data?.bookId;
+      configBot.tags.chapter = data?.chapter;
       // }
     }
   }, [data]);
@@ -874,6 +874,18 @@ function ThePage({
       onMouseUp={handleMouseUp}
       onClick={hanldNavFunctions}
     >
+      <style>
+        {`
+        .pageContainer{
+          direction:${direction};
+        }
+
+        .bookTitle,
+        .sectionTitle {
+          display:${direction ? "ruby" : null}
+        }
+         `}
+      </style>
       {data && tab && !tabEntered ? (
         <>
           <div
