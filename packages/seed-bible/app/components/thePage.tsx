@@ -59,7 +59,7 @@ function MoreResources() {
         alignItems: "center",
         gap: "6px",
         cursor: "pointer",
-        color: "#859E3B",
+        color: "var(--sg-green)",
         fontSize: "14px",
         fontWeight: "500",
       }}
@@ -73,25 +73,25 @@ function MoreResources() {
       >
         <path
           d="M15.3235 1H2.67645C1.75056 1 1 1.7506 1 2.6765V15.3235C1 16.2494 1.75056 17 2.67645 17H15.3235C16.2494 17 17 16.2494 17 15.3235V2.6765C17 1.7506 16.2494 1 15.3235 1Z"
-          stroke="#859E3B"
+          stroke="var(--sg-green)"
           strokeWidth="2"
           strokeMiterlimit="10"
         />
         <path
           d="M9.96308 12.6438H5.19916"
-          stroke="#859E3B"
+          stroke="var(--sg-green)"
           strokeWidth="2"
           strokeMiterlimit="10"
         />
         <path
           d="M12.8018 9H5.19916"
-          stroke="#859E3B"
+          stroke="var(--sg-green)"
           strokeWidth="2"
           strokeMiterlimit="10"
         />
         <path
           d="M11.3095 5.35718H5.19916"
-          stroke="#859E3B"
+          stroke="var(--sg-green)"
           strokeWidth="2"
           strokeMiterlimit="10"
         />

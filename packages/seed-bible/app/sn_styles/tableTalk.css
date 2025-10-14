@@ -1,4 +1,6 @@
-:root { --sg-green:#8ca443; }
+:root {
+  --sg-green: #7137FF;
+}
 
 .tt-frameWrap{
   width:105%;

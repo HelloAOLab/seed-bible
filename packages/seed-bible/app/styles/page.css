@@ -1,3 +1,7 @@
+:root {
+  --sg-green: #7137FF;
+}
+
 .pageContainer {
   height: 100%;
   width: 100%;
@@ -136,7 +140,7 @@
   align-items: center;
   gap: 6px;
   cursor: pointer;
-  color: #859E3B;
+  color: var(--sg-green);
   font-size: 14px;
   font-weight: 500;
   transition: opacity 0.2s ease;
@@ -205,12 +209,12 @@
 }
 
 .highlightened:hover {
-  color: #859E3B;
+  color: var(--sg-green);
 }
 
 /* for the word spans when that word is active */
 .highlightened.highlighted-word {
-  color: #859E3B;
+  color: var(--sg-green);
 }
 
 @keyframes flashHighlight {
@@ -221,7 +225,7 @@
   30%,
   50%,
   70% {
-    color: #859E3B;
+    color: var(--sg-green);
   }
 
   100% {

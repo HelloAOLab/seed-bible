@@ -125,7 +125,7 @@ function SgCard({ item, isOpen, onToggle, viewMode = "list" }) {
                             aria-label="Open in new tab"
                         >
                             <svg width="16" height="16" viewBox="0 0 12 12" fill="none" xmlns="http://www.w3.org/2000/svg">
-                                <path d="M1 12C0.733333 12 0.5 11.9 0.3 11.7C0.1 11.5 0 11.2667 0 11V1C0 0.733333 0.1 0.5 0.3 0.3C0.5 0.1 0.733333 0 1 0H5.65V1H1V11H11V6.35H12V11C12 11.2667 11.9 11.5 11.7 11.7C11.5 11.9 11.2667 12 11 12H1ZM4.36667 8.35L3.66667 7.63333L10.3 1H6.65V0H12V5.35H11V1.71667L4.36667 8.35Z" fill="#859E3B" />
+                                <path d="M1 12C0.733333 12 0.5 11.9 0.3 11.7C0.1 11.5 0 11.2667 0 11V1C0 0.733333 0.1 0.5 0.3 0.3C0.5 0.1 0.733333 0 1 0H5.65V1H1V11H11V6.35H12V11C12 11.2667 11.9 11.5 11.7 11.7C11.5 11.9 11.2667 12 11 12H1ZM4.36667 8.35L3.66667 7.63333L10.3 1H6.65V0H12V5.35H11V1.71667L4.36667 8.35Z" />
                             </svg>
                         </a>
                     )}
@@ -198,7 +198,8 @@ function SgCard({ item, isOpen, onToggle, viewMode = "list" }) {
 
 
 // const DEFAULT_URL = "https://temp-proxy-server-nu.vercel.app/proxy/search";
-const DEFAULT_URL = "https://ligonier.ministries.bot/api/v1/search?cache_ttl=300";
+// const DEFAULT_URL = "https://ligonier.ministries.bot/api/v1/search?cache_ttl=300";
+const DEFAULT_URL = 'https://arc.fellowship.bot/api/v1/search?cache_ttl=300';
 
 /**
  * Props:
@@ -246,7 +247,8 @@ function ApologistSearch({
                 const headers = {
                     "Content-Type": "application/json",
                     "Accept": "application/json",
-                    ...(authHeader ? { "Authorization": authHeader } : { "Authorization": "Bearer apg_TS0V0FHInZlAavPDG5MA9gCGziBz" }),
+                    // ...(authHeader ? { "Authorization": authHeader } : { "Authorization": "Bearer apg_TS0V0FHInZlAavPDG5MA9gCGziBz" }),
+                    ...(authHeader ? { "Authorization": authHeader } : { "Authorization": "Bearer apg_s8CcqsQGpuOCfwQHApfI04nB8qKz" }),
                     // ...(cacheTtl ? { "x-cache-ttl": String(cacheTtl) } : { "x-cache-ttl": "300" }),
                 };
 
@@ -254,7 +256,7 @@ function ApologistSearch({
                     "query": searchParam.trim(),
                     "limit": 100, // Get all results
                     "filters": {
-                        "team_id": 111
+                        "team_id": 157, //111
                     }
                 }
 

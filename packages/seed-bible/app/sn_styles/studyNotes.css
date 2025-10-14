@@ -87,7 +87,7 @@
 }
 
 .studyCitation {
-  color: #859E3B;
+  color: var(--sg-green);
   cursor: pointer;
   font-size: 20px;
   line-height: 1.6;
@@ -152,7 +152,7 @@
 
 /* book ref line, e.g., "John 1:1" */
 .cite-heading {
-  color: #859E3B;
+  color: var(--sg-green);
   /* green similar to screenshot */
   font-weight: 700;
   font-size: 18px;
@@ -458,10 +458,10 @@
   cursor: pointer;
   transition: color .15s, border-bottom-color .15s, transform .05s;
 }
-.sn-tab:hover { color: #8ca443; }
+.sn-tab:hover { color: var(--sg-green); }
 .sn-tab.is-active {
-  color: #8ca443;
-  border-bottom-color: #8ca443;
+  color: var(--sg-green);
+  border-bottom-color: var(--sg-green);
 }
 
 /* panels */
@@ -501,11 +501,11 @@
 
 .search-toggle-btn:hover {
   background: #f8faf1;
-  border-color: #8ca443;
+  border-color: var(--sg-green);
 }
 
 .search-toggle-btn.active {
-  background: #8ca443;
+  background: var(--sg-green);
   color: #fff;
-  border-color: #8ca443;
+  border-color: var(--sg-green);
 }
