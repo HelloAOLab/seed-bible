@@ -1206,6 +1206,7 @@ function splitByWordHighlights(
 
 function Section({
   heading,
+  hebrew_subtitle,
   commandHighlight,
   setCommandHighlight,
   setLastSelectedVerse,
@@ -1478,6 +1479,7 @@ function Section({
       >
         {heading}
       </div>
+      {hebrew_subtitle && <div className="sectionTitle">{hebrew_subtitle}</div>}
       <div style={textEdit ? editTextStyle : null}>
         {textEdit && <div className="editVerseTitle">Verse - Text</div>}
         {textEdit && (

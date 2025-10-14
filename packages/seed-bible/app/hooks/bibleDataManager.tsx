@@ -34,6 +34,9 @@ function parseContent(content) {
       currentSection.verses.push({ verseNumber: number, text: verseText });
     } else if (type === 'line_break') {
       currentSection.verses.push({ verseNumber: null, text: '\n', lineBreak: true });
+    }else if (type === "hebrew_subtitle") {
+      console.log(sectionContent, "sectionContent")
+      currentSection.hebrew_subtitle = parseText(sectionContent);
     }
   });
 
