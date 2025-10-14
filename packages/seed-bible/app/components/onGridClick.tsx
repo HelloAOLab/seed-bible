@@ -7,6 +7,11 @@ if (that.buttonId === 'left') {
     isAbleToRightClick.leftClickAction()
     return
 }
+
+if(!globalThis?.activeCanvasId){
+    return
+}
+
 import { DualScreenIcon, ThreeScreenIcon, QuadScreenIcon, SingleScreenIcon, MenuIcon } from 'app.components.icons'
 const MenuOptions = {
     type: 'normal', items: [
