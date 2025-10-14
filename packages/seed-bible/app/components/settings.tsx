@@ -694,7 +694,7 @@ const SettingsSidebar = () => {
                     ) : (
                       <input
                         onBlur={() => setEditSpaceName(false)}
-                        style={{ height: "10px", width: "100px" }}
+                        style={{ height: "10px", width: "fit-content" }}
                         id="input"
                         value={spaceName}
                         onChange={(e) => {
@@ -1524,6 +1524,7 @@ const SettingsSidebar = () => {
                 .space-name-container {
                     position: relative;
                     display: inline-block;
+                    margin-top:-12px;
                 }
                 
                 .space-name-hide {

@@ -401,7 +401,6 @@ await(async function mainInstaller(that) {
   if (errorInstall) {
     // optional uninstall / rollback here if you want
   }
-  thisBot.removeDublicates();
   const { feedback } = that;
   if (feedback) feedback();
 })(that); // self-invoking to run immediately

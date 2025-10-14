@@ -671,7 +671,7 @@ function SideBar() {
   const [customScreens, setCustomScreens] = useState({ value: 1 });
   const [onlineUsers, setOnlineUsers] = useState(false);
   globalThis.SetOnlineUsers = setOnlineUsers;
-  const [showSearch, setShowSearch] = useState(true); // New state for search visibility
+  const [showSearch, setShowSearch] = useState(false); // New state for search visibility
   const [editMode, setEditMode] = useState(false); // New state for edit mode
   useEffect(() => {
     setEditMode(ReSeed);
