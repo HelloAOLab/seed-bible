@@ -211,8 +211,8 @@
   font-weight: 500;
   line-height: 30px;
   font-style: normal;
-  vertical-align: super;
-  /* margin: 0 5px; */
+  position: relative;
+  top: -0.6em;
 }
 
 .tabDrop {
