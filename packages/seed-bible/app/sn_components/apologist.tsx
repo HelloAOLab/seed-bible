@@ -189,7 +189,8 @@ function SgCard({ item, isOpen, onToggle, viewMode = "list" }) {
 }
 
 
-const DEFAULT_URL = "https://temp-proxy-server-nu.vercel.app/proxy/search";
+// const DEFAULT_URL = "https://temp-proxy-server-nu.vercel.app/proxy/search";
+const DEFAULT_URL = "https://ligonier.ministries.bot/api/v1/search?cache_ttl=300";
 
 /**
  * Props:
@@ -238,7 +239,7 @@ function ApologistSearch({
                     "Content-Type": "application/json",
                     "Accept": "application/json",
                     ...(authHeader ? { "Authorization": authHeader } : { "Authorization": "Bearer apg_TS0V0FHInZlAavPDG5MA9gCGziBz" }),
-                    ...(cacheTtl ? { "x-cache-ttl": String(cacheTtl) } : { "x-cache-ttl": "300" }),
+                    // ...(cacheTtl ? { "x-cache-ttl": String(cacheTtl) } : { "x-cache-ttl": "300" }),
                 };
 
                 const payload = {
