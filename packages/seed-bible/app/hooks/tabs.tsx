@@ -15,7 +15,7 @@ export function TabsProvider({ children }) {
   const [spaces, setSpaces] = useState([
     {
       id: uuid(),
-      name: "(Optional) type to odd a spase",
+      name: "(Optional) Add space name",
       settings: {
         theme: {},
         toolbar: {
@@ -44,7 +44,7 @@ export function TabsProvider({ children }) {
     },
     {
       id: uuid(),
-      name: "(Optional) type to odd a spase",
+      name: "(Optional) Add space name",
       settings: {
         theme: {},
         toolbar: {
@@ -71,7 +71,7 @@ export function TabsProvider({ children }) {
     },
     {
       id: uuid(),
-      name: "(Optional) type to odd a spase",
+      name: "(Optional) Add space name",
       settings: {
         theme: {},
         toolbar: {
