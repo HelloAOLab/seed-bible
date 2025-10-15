@@ -250,7 +250,8 @@ const PlaylistRowItem = ({ currentDateActive, shareProfileName, oldItemsMap = {}
             description,
             icons: globalThis.PREDEFINED_ICONS,
             shareProfileName,
-            shareProfilePic
+            shareProfilePic,
+            sharerID: authBot?.id || "N/A"
         };
 
         const sanitizedItem = sanitizeObject(playlistObj);
@@ -271,7 +272,7 @@ const PlaylistRowItem = ({ currentDateActive, shareProfileName, oldItemsMap = {}
                 query: stringItems
             }
         }).then((dbRes) => {
-            const shareURL = `https://ao.bot/?${key}=${deployBot}&Playlist=${dbRes.data.data.uid}`;
+            const shareURL = `https://ao.bot/?${key}=${deployBot}&Playlist=${dbRes.data.data.uid}&noGridPortal=true`;
             os.setClipboard(shareURL);
             setShowMoreOptions(false);
             setCopyURL(shareURL);

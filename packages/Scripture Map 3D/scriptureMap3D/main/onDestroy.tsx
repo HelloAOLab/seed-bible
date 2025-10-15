@@ -1,4 +1,4 @@
-globalThis.scriptureMap3DManager = null;
+globalThis.ScriptureMap3DManager = null;
 
 ObjectPooler.RemoveObjectPools({
     poolTags: [

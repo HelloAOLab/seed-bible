@@ -28,9 +28,8 @@ import { AOLabUpdateCard } from "app.components.notifications";
 import { ThePageWithEditor } from "app.components.thePage";
 // import { CircleCounter } from 'app.components.circleCounter'
 // console.log(CircleCounter, 'CircleCounter')
-const Reciver = getBot('system', 'app.reciver')
+const Reciver = getBot("system", "app.reciver");
 const { useState, useRef, useEffect, useMemo } = os.appHooks;
-
 
 const CircleCounter = ({ data, book, chapter }) => {
   const [isModalOpen, setIsModalOpen] = useState(false);
@@ -42,32 +41,32 @@ const CircleCounter = ({ data, book, chapter }) => {
   const remaining = entries.length - visibleCount;
 
   const circleStyle = {
-    width: '20px',
-    height: '20px',
-    borderRadius: '50%',
-    display: 'flex',
-    alignItems: 'center',
-    justifyContent: 'center',
-    color: 'white',
-    fontWeight: '600',
-    fontSize: '16px',
-    boxShadow: '0 4px 6px rgba(0, 0, 0, 0.1)',
-    border: '2px solid white',
-    cursor: 'pointer'
+    width: "20px",
+    height: "20px",
+    borderRadius: "50%",
+    display: "flex",
+    alignItems: "center",
+    justifyContent: "center",
+    color: "white",
+    fontWeight: "600",
+    fontSize: "16px",
+    boxShadow: "0 4px 6px rgba(0, 0, 0, 0.1)",
+    border: "2px solid white",
+    cursor: "pointer",
   };
 
   const colorMap = {
-    0: '#3b82f6',
-    1: '#ef4444',
-    2: '#10b981',
-    3: '#a855f7',
-    4: '#eab308',
-    5: '#ec4899'
+    0: "#3b82f6",
+    1: "#ef4444",
+    2: "#10b981",
+    3: "#a855f7",
+    4: "#eab308",
+    5: "#ec4899",
   };
 
   return (
     <>
-      <div style={{ display: 'flex', alignItems: 'center', padding: '0' }}>
+      <div style={{ display: "flex", alignItems: "center", padding: "0" }}>
         {entries.slice(0, visibleCount).map(([id, value], index) => (
           <div
             key={id}
@@ -75,8 +74,8 @@ const CircleCounter = ({ data, book, chapter }) => {
             style={{
               ...circleStyle,
               backgroundColor: colorMap[index % 6],
-              marginLeft: index > 0 ? '-12px' : '0',
-              zIndex: visibleCount - index
+              marginLeft: index > 0 ? "-12px" : "0",
+              zIndex: visibleCount - index,
             }}
           />
         ))}
@@ -86,10 +85,10 @@ const CircleCounter = ({ data, book, chapter }) => {
             onClick={() => setIsModalOpen(true)}
             style={{
               ...circleStyle,
-              backgroundColor: '#9ca3af',
-              fontSize: '12px',
-              marginLeft: '-12px',
-              zIndex: 0
+              backgroundColor: "#9ca3af",
+              fontSize: "12px",
+              marginLeft: "-12px",
+              zIndex: 0,
             }}
           >
             +{remaining}
@@ -100,127 +99,165 @@ const CircleCounter = ({ data, book, chapter }) => {
       {isModalOpen && (
         <div
           style={{
-            position: 'fixed',
+            position: "fixed",
             top: 0,
             left: 0,
             right: 0,
             bottom: 0,
-            backgroundColor: 'rgba(0, 0, 0, 0.5)',
-            display: 'flex',
-            alignItems: 'center',
-            justifyContent: 'center',
-            zIndex: 1000
+            backgroundColor: "rgba(0, 0, 0, 0.5)",
+            display: "flex",
+            alignItems: "center",
+            justifyContent: "center",
+            zIndex: 1000,
           }}
           onClick={() => setIsModalOpen(false)}
         >
           <div
             style={{
-              backgroundColor: 'white',
-              borderRadius: '12px',
-              padding: '24px',
-              maxWidth: '500px',
-              width: '90%',
-              maxHeight: '80vh',
-              overflow: 'auto',
-              boxShadow: '0 20px 25px -5px rgba(0, 0, 0, 0.1), 0 10px 10px -5px rgba(0, 0, 0, 0.04)'
+              backgroundColor: "white",
+              borderRadius: "12px",
+              padding: "24px",
+              maxWidth: "500px",
+              width: "90%",
+              maxHeight: "80vh",
+              overflow: "auto",
+              boxShadow:
+                "0 20px 25px -5px rgba(0, 0, 0, 0.1), 0 10px 10px -5px rgba(0, 0, 0, 0.04)",
             }}
             onClick={(e) => e.stopPropagation()}
           >
-            <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '20px' }}>
-              <h2 style={{ fontSize: '20px', fontWeight: '600', color: '#111827', margin: 0 }}>
+            <div
+              style={{
+                display: "flex",
+                justifyContent: "space-between",
+                alignItems: "center",
+                marginBottom: "20px",
+              }}
+            >
+              <h2
+                style={{
+                  fontSize: "20px",
+                  fontWeight: "600",
+                  color: "#111827",
+                  margin: 0,
+                }}
+              >
                 All Users ({entries.length})
               </h2>
               <button
                 onClick={() => setIsModalOpen(false)}
                 style={{
-                  background: 'none',
-                  border: 'none',
-                  fontSize: '24px',
-                  cursor: 'pointer',
-                  color: '#6b7280',
-                  padding: '0',
-                  width: '30px',
-                  height: '30px',
-                  display: 'flex',
-                  alignItems: 'center',
-                  justifyContent: 'center'
+                  background: "none",
+                  border: "none",
+                  fontSize: "24px",
+                  cursor: "pointer",
+                  color: "#6b7280",
+                  padding: "0",
+                  width: "30px",
+                  height: "30px",
+                  display: "flex",
+                  alignItems: "center",
+                  justifyContent: "center",
                 }}
               >
                 ×
               </button>
             </div>
 
-            <div style={{ display: 'flex', flexDirection: 'column', gap: '12px' }}>
+            <div
+              style={{ display: "flex", flexDirection: "column", gap: "12px" }}
+            >
               {entries.map(([id, value], index) => {
-                const [follow, setFollow] = useState(Reciver?.masks['remotes']?.includes(data[id][0]))
-                return <div
-                  key={id}
-                  style={{
-                    display: 'flex',
-                    alignItems: 'center',
-                    padding: '12px',
-                    backgroundColor: '#f9fafb',
-                    borderRadius: '8px',
-                    gap: '12px'
-                  }}
-                >
+                const [follow, setFollow] = useState(
+                  Reciver?.masks["remotes"]?.includes(data[id][0])
+                );
+                return (
                   <div
+                    key={id}
                     style={{
-                      width: '32px',
-                      height: '32px',
-                      borderRadius: '50%',
-                      backgroundColor: colorMap[index % 6],
-                      display: 'flex',
-                      alignItems: 'center',
-                      justifyContent: 'center',
-                      color: 'white',
-                      fontWeight: '600',
-                      fontSize: '14px',
-                      flexShrink: 0
+                      display: "flex",
+                      alignItems: "center",
+                      padding: "12px",
+                      backgroundColor: "#f9fafb",
+                      borderRadius: "8px",
+                      gap: "12px",
                     }}
                   >
-                    {index + 1}
-                  </div>
-                  <div style={{ flex: 1 }}>
-                    <div style={{ fontWeight: '600', color: '#111827', marginBottom: '4px' }}>
-                      User : <span style={{ fontSize: '12px' }}>{data[id][0]}</span>
+                    <div
+                      style={{
+                        width: "32px",
+                        height: "32px",
+                        borderRadius: "50%",
+                        backgroundColor: colorMap[index % 6],
+                        display: "flex",
+                        alignItems: "center",
+                        justifyContent: "center",
+                        color: "white",
+                        fontWeight: "600",
+                        fontSize: "14px",
+                        flexShrink: 0,
+                      }}
+                    >
+                      {index + 1}
                     </div>
-                    <div style={{ fontSize: '14px', color: '#6b7280' }}>
-                      Book: {book} • Chapter: {chapter}
+                    <div style={{ flex: 1 }}>
+                      <div
+                        style={{
+                          fontWeight: "600",
+                          color: "#111827",
+                          marginBottom: "4px",
+                        }}
+                      >
+                        User :{" "}
+                        <span style={{ fontSize: "12px" }}>{data[id][0]}</span>
+                      </div>
+                      <div style={{ fontSize: "14px", color: "#6b7280" }}>
+                        Book: {book} • Chapter: {chapter}
+                      </div>
                     </div>
-                  </div>
-                  <button
-                    onClick={() => {
-                      const idx = data[id][0]
-                      console.log('Following user:', idx);
-                      if (!Reciver.masks['remotes'])
-                        Reciver.masks['remotes'] = []
-                      if (Reciver?.masks['remotes']?.includes(idx)) {
-                        Reciver.masks['remotes'] = Reciver.masks['remotes'].filter(e => e === idx)
-                      } else {
-                        Reciver.masks['remotes'].push(idx)
+                    <button
+                      onClick={() => {
+                        const idx = data[id][0];
+                        console.log("Following user:", idx);
+
+                        if (!Reciver.masks["remotes"])
+                          Reciver.masks["remotes"] = [];
+
+                        if (Reciver.masks["remotes"].includes(idx)) {
+                          // remove idx
+                          Reciver.masks["remotes"] = Reciver.masks[
+                            "remotes"
+                          ].filter((e) => e !== idx);
+                        } else {
+                          // add idx
+                          Reciver.masks["remotes"].push(idx);
+                        }
+
+                        setFollow((f) => !f);
+                      }}
+                      style={{
+                        padding: "8px 16px",
+                        backgroundColor: "#3b82f6",
+                        color: "white",
+                        border: "none",
+                        borderRadius: "6px",
+                        fontSize: "14px",
+                        fontWeight: "600",
+                        cursor: "pointer",
+                        transition: "background-color 0.2s",
+                      }}
+                      onMouseOver={(e) =>
+                        (e.target.style.backgroundColor = "#2563eb")
                       }
-                      setFollow(!follow)
-                    }}
-                    style={{
-                      padding: '8px 16px',
-                      backgroundColor: '#3b82f6',
-                      color: 'white',
-                      border: 'none',
-                      borderRadius: '6px',
-                      fontSize: '14px',
-                      fontWeight: '600',
-                      cursor: 'pointer',
-                      transition: 'background-color 0.2s'
-                    }}
-                    onMouseOver={(e) => e.target.style.backgroundColor = '#2563eb'}
-                    onMouseOut={(e) => e.target.style.backgroundColor = '#3b82f6'}
-                  >
-                    {!follow ? "Follow" : "Unfollow"}
-                  </button>
-                </div>
-              }
-              )}
+                      onMouseOut={(e) =>
+                        (e.target.style.backgroundColor = "#3b82f6")
+                      }
+                    >
+                      {!follow ? "Follow" : "Unfollow"}
+                    </button>
+                  </div>
+                );
+              })}
             </div>
           </div>
         </div>
@@ -235,14 +272,12 @@ function Tab({
   setIsDragging,
   setElement,
   collapsed,
-  onlineUsers
+  onlineUsers,
 }) {
   const { openPopupSettings, closePopupSettings, userURL } =
     useSideBarContext();
   const { setCanvasMode, setMapMode } = useBibleContext();
-  useEffect(() => {
-
-  }, [onlineUsers])
+  useEffect(() => {}, [onlineUsers]);
   const {
     removeTab,
     multiSelectMode,
@@ -421,10 +456,11 @@ function Tab({
   };
   const circles = onlineUsers
     ? Object.fromEntries(
-      Object.entries(onlineUsers).filter(
-        ([, v]) => v?.book === el?.data?.book && v?.chapter === el?.data?.chapter
+        Object.entries(onlineUsers).filter(
+          ([, v]) =>
+            v?.bookId === el?.data?.bookId && v?.chapter === el?.data?.chapter
+        )
       )
-    )
     : {};
   return (
     <div
@@ -432,14 +468,15 @@ function Tab({
       onMouseUp={handleMouseUpOrLeave}
       onMouseLeave={handleMouseUpOrLeave}
       onClick={handleTabClick}
-      className={`${activeTab === el.id && !multiSelectMode && !collapsed
-        ? "activeTab"
-        : activeTab === el.id && collapsed
+      className={`${
+        activeTab === el.id && !multiSelectMode && !collapsed
+          ? "activeTab"
+          : activeTab === el.id && collapsed
           ? "activeTabCollapsed"
           : collapsed
-            ? "collabsedTab"
-            : "tab"
-        } ${selectedTabs?.includes?.(el.id) ? "selected" : ""}`}
+          ? "collabsedTab"
+          : "tab"
+      } ${selectedTabs?.includes?.(el.id) ? "selected" : ""}`}
     >
       {!collapsed ? (
         <>
@@ -456,7 +493,7 @@ function Tab({
                       : [...prev, el.id]
                   );
                 }}
-              // style={{ marginRight: '8px' }}
+                // style={{ marginRight: '8px' }}
               />
             )}
             {tabsIcons && (
@@ -464,22 +501,26 @@ function Tab({
                 {el?.data?.type === "book"
                   ? "description"
                   : el?.data?.type === "canvas"
-                    ? "deployed_code"
-                    : el?.data?.type === "map"
-                      ? "map"
-                      : null}
+                  ? "deployed_code"
+                  : el?.data?.type === "map"
+                  ? "map"
+                  : null}
               </span>
             )}
             <span className="tabName">
               {el?.data?.type === "map"
                 ? "map"
                 : el?.data?.type === "canvas"
-                  ? el?.data?.title || "canvas"
-                  : el?.data?.book
-                    ? `${el?.data?.book} - ${el?.data?.chapter}`
-                    : el?.data?.title}
+                ? el?.data?.title || "canvas"
+                : el?.data?.book
+                ? `${el?.data?.book} - ${el?.data?.chapter}`
+                : el?.data?.title}
             </span>
-            <CircleCounter data={Object.entries(circles)} book={el?.data?.book} chapter={el?.data?.chapter} />
+            <CircleCounter
+              data={Object.entries(circles)}
+              book={el?.data?.book}
+              chapter={el?.data?.chapter}
+            />
           </div>
 
           {activeTab === el.id && (
@@ -628,9 +669,9 @@ function SideBar() {
   const { screens, setScreens, fullScreen, setFullScreen, ReSeed, setReSeed } =
     useBibleContext();
   const [customScreens, setCustomScreens] = useState({ value: 1 });
-  const [onlineUsers, setOnlineUsers] = useState(false)
-  globalThis.SetOnlineUsers = setOnlineUsers
-  const [showSearch, setShowSearch] = useState(true); // New state for search visibility
+  const [onlineUsers, setOnlineUsers] = useState(false);
+  globalThis.SetOnlineUsers = setOnlineUsers;
+  const [showSearch, setShowSearch] = useState(false); // New state for search visibility
   const [editMode, setEditMode] = useState(false); // New state for edit mode
   useEffect(() => {
     setEditMode(ReSeed);
@@ -673,6 +714,10 @@ function SideBar() {
     }
     globalThis.changes.editMode = editMode;
   }, [editMode]);
+
+  useEffect(() => {
+    shout("OnOnlineUsersChanged", { onlineUsers });
+  }, [onlineUsers]);
 
   const {
     sidebarMode,
@@ -806,7 +851,7 @@ function SideBar() {
             textAlign: "left",
             marginBottom: "10px",
             color: " #FFF",
-            "font-family": "Satoshi",
+            "font-family": "'Satoshi', system-ui, sans-serif",
             "font-size": "16px",
             "font-style": "normal",
             "font-weight": "700",
@@ -893,7 +938,24 @@ function SideBar() {
         disabled: true,
         icon: <MenuIcon name="logout" />,
         title: "Join a Lobby",
-        onClick: () => { },
+        onClick: async () => {
+          const id = await os.showInput("", {
+            title: "Enter session link",
+          });
+          if (id) os.goToURL(id);
+        },
+      },
+      {
+        disabled: true,
+        icon: <MenuIcon name="content_copy" />,
+        title: "Copy session link",
+        onClick: () => {
+          os.setClipboard(
+            `https://ao.bot/?pattern=SeedBibleDev&noGridPortal=true&inst=${os.getCurrentInst()}&join=${
+              configBot.id
+            }`
+          );
+        },
       },
       { type: "line" },
       {
@@ -923,13 +985,13 @@ function SideBar() {
         disabled: true,
         icon: <MenuIcon name="bug_report" />,
         title: "Report a bug",
-        onClick: () => { },
+        onClick: () => {},
       },
       {
         disabled: true,
         icon: <MenuIcon name="help" />,
         title: "Help",
-        onClick: () => { },
+        onClick: () => {},
       },
     ],
   };
@@ -1073,8 +1135,9 @@ function SideBar() {
         className={
           collapsed
             ? "sidebar-collapsed"
-            : `sidebar-1 ${openOnMobile ? "open" : null} ${fullScreen ? "floatSidebar" : null
-            }`
+            : `sidebar-1 ${openOnMobile ? "open" : null} ${
+                fullScreen ? "floatSidebar" : null
+              }`
         }
       >
         <div
@@ -1122,19 +1185,46 @@ function SideBar() {
                       {customIcon.icon}
                     </span>
                   ) : (
-                    <span>{currentSpace.name}</span>
+                    <span></span>
                   )}
                 </div>
               </div>
               <div className="canvasOptions">
                 <span
-                  onClick={() => {
-                    openPopupSettings(
-                      <ScreenOptions setCustomScreens={setCustomScreens} />,
-                      null,
-                      true
-                    );
+                  onContextMenu={(e) => {
+                    e.preventDefault();
+                    globalThis._skipNextMouse = true; // block next onMouseUp
+                    SetShowScreenPanelOption(true);
                   }}
+                  onMouseDown={(e) => {
+                    // ignore if it's a right-click
+                    if (e.button === 2) return;
+
+                    globalThis._hold = false;
+                    globalThis._holdTimeout = setTimeout(() => {
+                      SetShowScreenPanelOption(true);
+                      globalThis._hold = true;
+                    }, 1000);
+                  }}
+                  onMouseUp={(e) => {
+                    // ignore if we just did a right-click
+                    setTimeout(() => {
+                      if (globalThis._skipNextMouse) {
+                        globalThis._skipNextMouse = false;
+                        return;
+                      }
+
+                      clearTimeout(globalThis._holdTimeout);
+                      if (!globalThis._hold) {
+                        openPopupSettings(
+                          <ScreenOptions setCustomScreens={setCustomScreens} />,
+                          null,
+                          true
+                        );
+                      }
+                    }, 10);
+                  }}
+                  onMouseLeave={() => clearTimeout(globalThis._holdTimeout)}
                 >
                   {customScreens?.value <= 1 ? (
                     <SingleScreenIcon />
@@ -1169,27 +1259,10 @@ function SideBar() {
               </div>
             )}
             <div className="tabsContainer">
-              <span>Tabs & Folders</span>
+              <span>Tabs</span>
               <div
                 style={{ display: "flex", alignItems: "center", gap: "5px" }}
               >
-                <span
-                  // onClick={() => setMultiSelectMode(!multiSelectMode)}
-                  className="material-symbols-outlined "
-                  style={{
-                    cursor: "pointer",
-                    fontSize: "18px",
-                    color: multiSelectMode ? "#4CAF50" : "inherit",
-                    background: multiSelectMode
-                      ? "rgba(76, 175, 80, 0.1)"
-                      : "transparent",
-                    borderRadius: "4px",
-                    padding: "2px",
-                  }}
-                // title={}
-                >
-                  {`home`}
-                </span>
                 <span
                   style={{ "user-select": "none" }}
                   onMouseDown={() => {
@@ -1231,7 +1304,12 @@ function SideBar() {
           </>
         )}
         {folders.map((folder) => (
-          <Folder onlineUsers={onlineUsers} folder={folder} collapsed={collapsed} editMode={editMode} />
+          <Folder
+            onlineUsers={onlineUsers}
+            folder={folder}
+            collapsed={collapsed}
+            editMode={editMode}
+          />
         ))}
         {folders.length > 0 && (
           <div style={{ marginBottom: "10px" }} className={"sidebarLine"}></div>
@@ -1408,42 +1486,50 @@ export const SpaceUI = () => {
   globalThis.SetGlobalProfilePic = setGlobalProfilePic;
   if (sidebarWidth !== 0)
     return (
-      <div
-        style={{ width: sidebarWidth }}
-        className={
-          collapsed
-            ? "profileSection-collapsed"
-            : `profileSection ${openOnMobile ? "open" : ""} ${fullScreen ? "floatProfileSection" : null
-            }`
-        }
-      >
-        {!collapsed ? (
-          <>
-            <span
-              style={{ cursor: "pointer" }}
-              onClick={() => setSideBarMode("settings")}
-              className="material-symbols-outlined"
-            >
-              settings
-            </span>
-            <SettingsProfile />
-            <UserProfile />
-          </>
-        ) : (
-          <>
-            <Icon
-              icon="settings"
-              onClick={() => {
-                setCollapsed(false);
-                setSidebarWidth(280);
-                setSideBarMode("settings");
-              }}
-            />
-            <UserProfile collapsed={true} />
-          </>
-        )}
-        <style>{getStyleOf("sidebar.css")}</style>
-      </div>
+      <>
+        <style>{`
+            .profileSection{
+              width:${sidebarWidth}px !important;
+            }
+        `}</style>
+        <div
+          // style={{ width: `${sidebarWidth}px !important` }}
+          className={
+            collapsed
+              ? "profileSection-collapsed"
+              : `profileSection ${openOnMobile ? "open" : ""} ${
+                  fullScreen ? "floatProfileSection" : null
+                }`
+          }
+        >
+          {!collapsed ? (
+            <>
+              <span
+                style={{ cursor: "pointer" }}
+                onClick={() => setSideBarMode("settings")}
+                className="material-symbols-outlined"
+              >
+                settings
+              </span>
+              <SettingsProfile />
+              <UserProfile />
+            </>
+          ) : (
+            <>
+              <Icon
+                icon="settings"
+                onClick={() => {
+                  setCollapsed(false);
+                  setSidebarWidth(280);
+                  setSideBarMode("settings");
+                }}
+              />
+              <UserProfile collapsed={true} />
+            </>
+          )}
+          <style>{getStyleOf("sidebar.css")}</style>
+        </div>
+      </>
     );
 };
 const Icon = ({ icon, onClick }) => {
@@ -1482,7 +1568,7 @@ export const SettingsProfile = () => {
           external: (
             <CreateNewSpaceModal addSpace={addSpace} activeSpace={id} />
           ),
-          onClick: () => { },
+          onClick: () => {},
         },
         { type: "line" },
         {
@@ -1498,10 +1584,10 @@ export const SettingsProfile = () => {
           icon: <MenuIcon name="download" />,
           title: "Import space",
           external: <ImportSpaceModal />,
-          onClick: () => { },
+          onClick: () => {},
         },
         { type: "line" },
-        { icon: <MenuIcon name="share" />, title: "Share", onClick: () => { } },
+        { icon: <MenuIcon name="share" />, title: "Share", onClick: () => {} },
         {
           icon: <MenuIcon name="delete" />,
           title: "Delete",
@@ -1519,6 +1605,9 @@ export const SettingsProfile = () => {
 
   const handleMouseDown = (spaceId) => {
     setActiveSpace(spaceId);
+    setTimeout(() => {
+      globalThis.setOpenOnMobile(true);
+    }, 10);
     // setIsHolding(false);
     // holdTimeout.current = setTimeout(() => {
     //     setIsHolding(true);

@@ -1,6 +1,6 @@
 const { layoutData } = that;
 
-const bookStructures = [];
+const layoutBookStructures = [];
 const arrangementIndex = BibleVizUtils.Functions.GetCurrentArrangementIndex();
 const arrangement = BibleVizUtils.Data.vars.fixedArrangementsInfo[arrangementIndex];
 let column = 0;
@@ -52,11 +52,11 @@ for(const testamentIndex in testaments)
                 sectionIndex
                 
             });
-            bookStructures.push(layoutBookStructure);
+            layoutBookStructures.push(layoutBookStructure);
 
             bookIndex++
             column++
-            if(column >= BibleVizUtils.Data.BibleLayoutMeasurements.MaxAmountOfColumns)
+            if(column >= BibleVizUtils.Data.tags.BibleLayoutMeasurements.MaxAmountOfColumns)
             {
                 column = 0;
                 row++;
@@ -112,9 +112,9 @@ const settingsButton = ObjectPooler.GetObjectFromPool({ tag: BibleVizUtils.Data.
 const playlistSelectorButton = ObjectPooler.GetObjectFromPool({ tag: BibleVizUtils.Data.tags.ObjectPoolTags.LayoutButton });
 const playlistSelectorIcon = ObjectPooler.GetObjectFromPool({ tag: BibleVizUtils.Data.tags.ObjectPoolTags.LayoutButtonIcon });
 const playlistSelectorLabel = ObjectPooler.GetObjectFromPool({ tag: BibleVizUtils.Data.tags.ObjectPoolTags.LayoutButtonLabel });
-const dateFormatselectorButton = ObjectPooler.GetObjectFromPool({ tag: BibleVizUtils.Data.tags.ObjectPoolTags.LayoutButton });
-const dateFormatselectorIcon = ObjectPooler.GetObjectFromPool({ tag: BibleVizUtils.Data.tags.ObjectPoolTags.LayoutButtonIcon });
-const dateFormatselectorLabel = ObjectPooler.GetObjectFromPool({ tag: BibleVizUtils.Data.tags.ObjectPoolTags.LayoutButtonLabel });
+const dateFormatSelectorButton = ObjectPooler.GetObjectFromPool({ tag: BibleVizUtils.Data.tags.ObjectPoolTags.LayoutButton });
+const dateFormatSelectorIcon = ObjectPooler.GetObjectFromPool({ tag: BibleVizUtils.Data.tags.ObjectPoolTags.LayoutButtonIcon });
+const dateFormatSelectorLabel = ObjectPooler.GetObjectFromPool({ tag: BibleVizUtils.Data.tags.ObjectPoolTags.LayoutButtonLabel });
 
 const playlistPathToggle = ObjectPooler.GetObjectFromPool({ tag: BibleVizUtils.Data.tags.ObjectPoolTags.LayoutToggleButton });
 const playlistPathToggleBackground = ObjectPooler.GetObjectFromPool({ tag: BibleVizUtils.Data.tags.ObjectPoolTags.LayoutToggleBackground });
@@ -198,10 +198,10 @@ const showDatesToggleBackgroundMod = settingsButtonsBaseTags;
 const showDatesToggleHandleMod = settingsButtonsBaseTags;
 
 const dateFormatselectorButtonMod = {
-    buttonIcon: `🔗${dateFormatselectorIcon.id}`,
-    buttonLabel: `🔗${dateFormatselectorLabel.id}`,
+    buttonIcon: `🔗${dateFormatSelectorIcon.id}`,
+    buttonLabel: `🔗${dateFormatSelectorLabel.id}`,
     draggable: false,
-    buttonType: BibleVizUtils.Data.tags.LayoutButtonType.DateFormatselectorButton,
+    buttonType: BibleVizUtils.Data.tags.LayoutButtonType.DateFormatSelectorButton,
     ...settingsButtonsBaseTags
 };
 const dateFormatselectorLabelMod = { label: "Change date format", ...settingsButtonsBaseTags };
@@ -252,9 +252,9 @@ playlistSelectorButton.OnSpawned({mod: playlistSelectorButtonMod});
 playlistSelectorLabel.OnSpawned({mod: playlistSelectorLabelMod});
 playlistSelectorIcon.OnSpawned({mod: playlistSelectorIconMod});
 
-dateFormatselectorButton.OnSpawned({ mod: dateFormatselectorButtonMod });
-dateFormatselectorLabel.OnSpawned({ mod: dateFormatselectorLabelMod });
-dateFormatselectorIcon.OnSpawned({ mod: dateFormatselectorIconMod });
+dateFormatSelectorButton.OnSpawned({ mod: dateFormatselectorButtonMod });
+dateFormatSelectorLabel.OnSpawned({ mod: dateFormatselectorLabelMod });
+dateFormatSelectorIcon.OnSpawned({ mod: dateFormatselectorIconMod });
 
 labelsToggle.OnSpawned({ mod: labelsToggleMod })
 labelsToggleBackground.OnSpawned({ mod: labelsToggleBackgroundMod })
@@ -288,7 +288,7 @@ const staticLayoutPieces = {
         playlistPathToggle,
         colorPickerButton,
         openAllBooksButton,
-        dateFormatselectorButton,
+        dateFormatSelectorButton,
         playlistSelectorButton
     ],
     settingsButton,
@@ -299,4 +299,4 @@ const staticLayoutPieces = {
 
 }
 
-return { bookStructures, staticLayoutPieces, amountOfRows: row, sectionLinesInfo, testamentLinesInfo };
+return { layoutBookStructures, staticLayoutPieces, amountOfRows: row, sectionLinesInfo, testamentLinesInfo };

@@ -9,6 +9,14 @@ const EditPlaylist =
 const SharePlaylist =
   "https://auth-aux-aobot-prod-filesbucket-141297942820.s3.amazonaws.com/aoBot/d205ab2613e2feb14123b39522527dc72a7b649078fd434c81b0b44ede4cdecf.svg";
 
+const outerWebsiteItem = {
+  youtube: true,
+  iframe: true,
+  video: true,
+  Video: true,
+  externalLink: true,
+};
+
 const PrevIcon = ({ fill = "#939393" }) => (
   <svg
     width="32"
@@ -436,6 +444,9 @@ const PlayerControls = ({ parentId = "default" }) => {
         .sort((a, b) => Number(a) - Number(b)) // Sort numerically
         .forEach((key, index) => {
           reorderedPlaylists[index] = { ...updatedPlaylists[key] };
+          if(!reorderedPlaylists[index]?.list?.length) {
+            delete reorderedPlaylists[index];
+          }
         });
 
       return reorderedPlaylists;
@@ -498,6 +509,8 @@ const PlayerControls = ({ parentId = "default" }) => {
     return () => {
       globalThis.IsPlaylistPlaying = false;
       globalThis.IsQueuePresent = false;
+      globalThis.RemotePlaylistPlayed = false;
+      EmitData("playlistStopped", {});
     };
   }, []);
 
@@ -509,6 +522,7 @@ const PlayerControls = ({ parentId = "default" }) => {
     prevItemName,
     currentItem,
   ] = useMemo(() => {
+    
     const { name: currentPlaylistName } = playlists[currIndex.key];
 
     const targetItem = getCurrentItem(
@@ -568,6 +582,16 @@ const PlayerControls = ({ parentId = "default" }) => {
         targetItem?.type === "heading" ||
         (!!targetItem?.nextTargetItem?.id && currIndex.fromButton === 1)
       ) {
+        if (globalThis.SetMediaURL) {
+          globalThis.SetMediaURL(null);
+        }
+        setTimeout(() => {
+          thisBot.CloseFloatingApp();
+        }, 100);
+
+        if (globalThis.SetVideoSrc) {
+          globalThis.SetVideoSrc(null);
+        }
         if (targetItem?.type === "heading")
           globalThis.PlayingPlaylistSetHeading(targetItem.content);
         const allKeys = Object.keys(playlists);
@@ -624,7 +648,7 @@ const PlayerControls = ({ parentId = "default" }) => {
       });
       globalThis.RenderPlaylist && globalThis.RenderPlaylist();
       globalThis.RenderPlaylistTimer = null;
-    }, 100);
+    }, 50);
     // nextItemName, nextItemType, prevItemName, prevItemType
     //  nextItemName, nextItemType, prevItemName, prevItemType
     return [
@@ -685,6 +709,28 @@ const PlayerControls = ({ parentId = "default" }) => {
     globalThis.SetQueue(items);
   };
 
+  useLayoutEffect(() => {
+    if (!globalThis.UPDATE_VIA_SHOUT) {
+      if (globalThis.REMOTE_UPDATE_TIMER) {
+        clearTimeout(globalThis.REMOTE_UPDATE_TIMER);
+        globalThis.REMOTE_UPDATE_TIMER = null;
+      }
+      globalThis.REMOTE_UPDATE_TIMER = setTimeout(() => {
+        EmitData("playlistQueueUpdated", { playlists });
+        EmitData("playlistCurrentIndexUpdate", { currIndex });
+      }, 100);
+    } else {
+      globalThis.UPDATE_VIA_SHOUT = false;
+    }
+
+    return () => {
+      clearTimeout(globalThis.REMOTE_UPDATE_TIMER);
+      globalThis.REMOTE_UPDATE_TIMER = null;
+    };
+  }, [currIndex, playlists]);
+
+  const isItemLink = outerWebsiteItem[currentItem?.additionalInfo?.type];
+
   return (
     <>
       <style>{thisBot.tags["Linking.css"]}</style>
@@ -708,8 +754,7 @@ const PlayerControls = ({ parentId = "default" }) => {
             backgroundColor: "#F7F7F5",
             height: "auto",
           }}
-            className="flaoting-attach-link"
-          >
+          className="flaoting-attach-link">
           <AttachLink
             canClose
             massAdd={massAdd}
@@ -733,6 +778,18 @@ const PlayerControls = ({ parentId = "default" }) => {
             <VideoPlayer videoSrc={videoSrc} playlistItem={currentItem} />
           )}
           {!!mediaURL && <AudioPlayer mediaURL={mediaURL} />}
+          {isItemLink && false && (
+            <div>
+              <p>Link showing refuse to connect Problems? </p>
+              <a
+                href={currentItem?.additionalInfo?.link}
+                target="_blank"
+                rel="noopener noreferrer"
+                title="Visit link">
+                Click here to open
+              </a>
+            </div>
+          )}
           <div
             style={{
               display: "flex",
@@ -755,7 +812,7 @@ const PlayerControls = ({ parentId = "default" }) => {
                   alignItems: "center",
                   margin: "0",
                   marginBottom: "0.5rem",
-                  fontFamily: "DM Mono",
+                  fontFamily: "DM Sans",
                   height: "12px",
                 }}>
                 {showCurrent
@@ -919,6 +976,12 @@ const PlayerControls = ({ parentId = "default" }) => {
               </p>
               <p
                 onClick={() => {
+                  if (globalThis.RemotePlaylistPlayed) {
+                    return ShowNotification({
+                      message: "Only Host can add items to the queue..",
+                      severity: "error",
+                    });
+                  }
                   setOpenAttachLink(true);
                 }}
                 style={{

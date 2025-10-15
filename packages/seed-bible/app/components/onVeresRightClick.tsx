@@ -1,4 +1,6 @@
 import { MenuIcon, ApologistIcon } from "app.components.icons";
+// import { SharePopup } from "app.components.shareModel";
+const SharePopup = thisBot.Chips();
 const MenuOptions = {
   type: "normal",
   items: [
@@ -33,7 +35,15 @@ const MenuOptions = {
       icon: <MenuIcon name="share" />,
       title: "Share verse",
       onClick: () => {
-        SetInHold(null);
+        closePopupSettings();
+        setTimeout(() => {
+          openPopupSettings(
+            <SharePopup shareTitle={`Check this out! ${that.text}`} />,
+            null,
+            true
+          );
+          SetInHold(null);
+        }, 50);
       },
     },
   ],
@@ -51,8 +61,8 @@ globalThis.ContextMenuOptions.forEach(({ address, label, items }) => {
       },
       // For dynamic title
       title: () => {
-        return typeof el.title === "function" ? el.title(that) : item.title
-      }
+        return typeof el.title === "function" ? el.title(that) : item.title;
+      },
     };
   });
   const panelKey = `${label.toUpperCase().replace(/\s/g, "_")}_PANEL_ID`;

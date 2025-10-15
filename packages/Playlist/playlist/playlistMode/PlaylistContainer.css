@@ -131,13 +131,25 @@ div.flaoting-attach-link  .add-new-playlist{
     border: none;
 }
 
+.mobile-pseudogap-element {
+    height: 0;
+}
+
 @media (max-width: 550px) {
-    #sidebar-bar {
+    .mobile-pseudogap-element {
+        height: 5rem;
+        width: 100%;
+    }
+    /* #sidebar-bar {
         padding-bottom: 3rem !important;
-    }
-    .playing-queue,#sidebar-bar.playing-playlist {
+    } */
+    /* .playing-queue,#sidebar-bar.playing-playlist {
         padding-bottom: 11rem !important;
-    }
+    } */
+    .mobile-pseudogap-element.playing-playlist {
+        height: 8.25rem;
+        width: 100%;
+     }
 }  
 
 .playing-queue {

@@ -104,7 +104,10 @@ async function SetUpApplication(applicationFunction, bot, toolbarConfig) {
             });
         };
 
-        globalThis[`${name}_package`].onClick = onClick;
+        globalThis[`${name}_package`].onClick = () => {
+            EmitData('appClick', { name: `${name}_package` })
+            onClick()
+        }
 
         return {
             icon,
@@ -112,6 +115,7 @@ async function SetUpApplication(applicationFunction, bot, toolbarConfig) {
             hasToggle: true,
             active: true,
             onHold,
+            pkgName:name,
             onClick,
             hasToggle,
             showInPageToolbar, 

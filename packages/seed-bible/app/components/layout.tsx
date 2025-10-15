@@ -1,43 +1,57 @@
-import useBibleData from 'app.hooks.bibleData'
-import { getStyleOf } from 'app.styles.styler'
-import { SideBar } from 'app.components.sideBar'
+import useBibleData from "app.hooks.bibleData";
+import { getStyleOf } from "app.styles.styler";
+import { SideBar } from "app.components.sideBar";
 const { useEffect, useState, useRef } = os.appHooks;
-import { useMouseMove } from 'app.hooks.mouseMove'
-import { Toolbar } from 'app.components.toolbar'
-import { ToolbarReal } from 'app.components.renderToolbar'
-import SettingsSidebar from 'app.components.settings'
-import { TextSettings, defaultTextConfig, exportTextConfigToCSS } from 'app.components.textSettings'
+import { useMouseMove } from "app.hooks.mouseMove";
+import { Toolbar } from "app.components.toolbar";
+import { ToolbarReal } from "app.components.renderToolbar";
+import SettingsSidebar from "app.components.settings";
+import {
+  TextSettings,
+  defaultTextConfig,
+  exportTextConfigToCSS,
+} from "app.components.textSettings";
 // const SearchBar = getBot('system', "introduction.searchBar").SearchBar();
-import { useSideBarContext } from 'app.hooks.sideBar'
-import { useTabsContext } from 'app.hooks.tabs';
-import { ToolbarSettings } from 'app.components.toolbarSettings'
-import { SpaceUI } from 'app.components.sideBar'
-import { ThemeSettings } from 'app.components.themeSettings'
-import { AiSettings } from 'app.components.aiSettings'
-import { TabSettings } from 'app.components.tabSettings'
-import { CanvasAiSettings } from 'app.components.canvasAiSettings'
-import { PromtBarSettings } from 'app.components.PromtBarSettings'
-import { CreateAccountSettings } from 'app.components.createAccountSettings'
-import { MenuTextSettings } from 'app.components.menuTextSettings'
-import { Extensions } from 'app.components.extensions'
-import { useBibleContext } from 'app.hooks.bibleVariables'
-import { PanelSettingsDialog } from 'app.components.screenSettingsOptions'
-import { EditorToolbarSettings } from 'app.components.editorSettings'
-import { NowBar } from 'app.components.nowBar'
+import { useSideBarContext } from "app.hooks.sideBar";
+import { useTabsContext } from "app.hooks.tabs";
+import { ToolbarSettings } from "app.components.toolbarSettings";
+import { SpaceUI } from "app.components.sideBar";
+import { ThemeSettings } from "app.components.themeSettings";
+import { AiSettings } from "app.components.aiSettings";
+import { TabSettings } from "app.components.tabSettings";
+import { CanvasAiSettings } from "app.components.canvasAiSettings";
+import { PromtBarSettings } from "app.components.PromtBarSettings";
+import { CreateAccountSettings } from "app.components.createAccountSettings";
+import { MenuTextSettings } from "app.components.menuTextSettings";
+import { Extensions } from "app.components.extensions";
+import { useBibleContext } from "app.hooks.bibleVariables";
+import { PanelSettingsDialog } from "app.components.screenSettingsOptions";
+import { EditorToolbarSettings } from "app.components.editorSettings";
+import { NowBar } from "app.components.nowBar";
 
-shout('initialize')
+shout("initialize");
 globalThis.PanelTabsMap = {}; // { panelId: tabObject }
 
 const Layout = ({ children }) => {
   // using this to recored the mouse position always
   // u can use the position anywhere if needed (i will need it for tabs dragging)
   // const { spaces, activeSpace } = useTabsContext()
-  const { setPosition, showScreenPanelOption, setShowScreenPanelOption } = useMouseMove()
-  globalThis.SetShowScreenPanelOption = setShowScreenPanelOption
-  const { sidebarMode, setSideBarMode, closePopupSettings, themeColors } = useSideBarContext()
-  const { canvasMode, setCanvasMode } = useBibleContext()
-  const { openOnMobile, setOpenOnMobile, } = useSideBarContext()
-  const { spaces, activeSpace, setActiveSpace, addSpace, updateSpace, removeSpace } = useTabsContext();
+  const { setPosition, showScreenPanelOption, setShowScreenPanelOption } =
+    useMouseMove();
+  globalThis.SetShowScreenPanelOption = setShowScreenPanelOption;
+  const { sidebarMode, setSideBarMode, closePopupSettings, themeColors } =
+    useSideBarContext();
+  const { canvasMode, setCanvasMode } = useBibleContext();
+  const { openOnMobile, setOpenOnMobile } = useSideBarContext();
+  globalThis.setOpenOnMobile = setOpenOnMobile;
+  const {
+    spaces,
+    activeSpace,
+    setActiveSpace,
+    addSpace,
+    updateSpace,
+    removeSpace,
+  } = useTabsContext();
   useEffect(() => {
     const handleContextMenu = (e) => {
       // e.preventDefault();
@@ -49,53 +63,76 @@ const Layout = ({ children }) => {
     };
   }, []);
   return (
-    <div onMouseMove={(e) => {
-      setPosition({ x: e.clientX, y: e.clientY })
-    }}
+    <div
+      onMouseMove={(e) => {
+        setPosition({ x: e.clientX, y: e.clientY });
+      }}
       onContextMenu={(e) => {
         // e.preventDefault()
         // os.log('works')
       }}
       onClick={() => {
-        closePopupSettings()
+        closePopupSettings();
       }}
       onMouseUp={() => {
         try {
-
-          globalThis?.setOpenSidebar(false)
-        } catch {
-
-        }
+          globalThis?.setOpenSidebar(false);
+        } catch {}
       }}
-      className="layout" style={{ background: 'white' }}>
-
-      <style>{`${spaces.find(e => e.id === activeSpace)?.settings?.text?.root || exportTextConfigToCSS(defaultTextConfig)}`}</style>
-      {sidebarMode === 'default' ? <SideBar /> : null}
-      <div className={`floatsidebar ${openOnMobile ? 'open' : ''}`}>
-        {
-          sidebarMode === 'settings' ? <SettingsSidebar /> :
-            sidebarMode === 'textSettings' ? <TextSettings /> :
-              sidebarMode.includes('toolbarSettings') ? <ToolbarSettings /> :
-                sidebarMode === 'promtSettings' ? <PromtBarSettings /> :
-                  sidebarMode === 'canvasAiSettings' ? <CanvasAiSettings /> :
-                    sidebarMode === 'themeSettings' ? <ThemeSettings /> :
-                      sidebarMode === 'aiSettings' ? <AiSettings /> :
-                        sidebarMode === 'tabSettings' ? <TabSettings /> :
-                          sidebarMode === 'menuTextSettings' ? <MenuTextSettings /> :
-                            sidebarMode === 'editorToolbarSettings' ? <EditorToolbarSettings /> :
-                              sidebarMode === 'extensions' ? <Extensions /> :
-                                sidebarMode === 'createAccountSettings' ? <CreateAccountSettings />
-                                  : null
-        }
+      className="layout"
+      style={{ background: "white" }}
+    >
+      <style>{`${
+        spaces.find((e) => e.id === activeSpace)?.settings?.text?.root ||
+        exportTextConfigToCSS(defaultTextConfig)
+      }`}</style>
+      {sidebarMode === "default" ? <SideBar /> : null}
+      <div className={`floatsidebar ${openOnMobile ? "open" : ""}`}>
+        {sidebarMode === "settings" ? (
+          <SettingsSidebar />
+        ) : sidebarMode === "textSettings" ? (
+          <TextSettings />
+        ) : sidebarMode.includes("toolbarSettings") ? (
+          <ToolbarSettings />
+        ) : sidebarMode === "promtSettings" ? (
+          <PromtBarSettings />
+        ) : sidebarMode === "canvasAiSettings" ? (
+          <CanvasAiSettings />
+        ) : sidebarMode === "themeSettings" ? (
+          <ThemeSettings />
+        ) : sidebarMode === "aiSettings" ? (
+          <AiSettings />
+        ) : sidebarMode === "tabSettings" ? (
+          <TabSettings />
+        ) : sidebarMode === "menuTextSettings" ? (
+          <MenuTextSettings />
+        ) : sidebarMode === "editorToolbarSettings" ? (
+          <EditorToolbarSettings />
+        ) : sidebarMode === "extensions" ? (
+          <Extensions />
+        ) : sidebarMode === "createAccountSettings" ? (
+          <CreateAccountSettings />
+        ) : null}
       </div>
-      {/* handling mobile ui*/null}
-      {(sidebarMode === 'default' || sidebarMode === 'settings' || sidebarMode === 'themeSettings') && !openOnMobile && <SpaceUI />}
-      {openOnMobile && sidebarMode === 'default' && <SpaceUI />}
-      {showScreenPanelOption && <PanelSettingsDialog openPanelCount={showScreenPanelOption} onClose={() => setShowScreenPanelOption(null)} />}
-      <main onClick={() => {
-        setSideBarMode('default')
-        setOpenOnMobile(false)
-      }} className="content">
+      {/* handling mobile ui*/ null}
+      {(sidebarMode === "default" ||
+        sidebarMode === "settings" ||
+        sidebarMode === "themeSettings") &&
+        !openOnMobile && <SpaceUI />}
+      {openOnMobile && sidebarMode === "default" && <SpaceUI />}
+      {showScreenPanelOption && (
+        <PanelSettingsDialog
+          openPanelCount={showScreenPanelOption}
+          onClose={() => setShowScreenPanelOption(null)}
+        />
+      )}
+      <main
+        onClick={() => {
+          if (globalThis.IsMobileNow()) setSideBarMode("default");
+          setOpenOnMobile(false);
+        }}
+        className="content"
+      >
         {children}
       </main>
       <div>
@@ -104,11 +141,10 @@ const Layout = ({ children }) => {
         <NowBar />
       </div>
 
-      <style>{getStyleOf('main.css')}</style>
+      <style>{getStyleOf("main.css")}</style>
     </div>
   );
 };
-
 
 function SwipeOverlay({
   active = true,
@@ -146,7 +182,9 @@ function SwipeOverlay({
 
       setDragging(true);
 
-      try { el.setPointerCapture?.(e.pointerId); } catch { }
+      try {
+        el.setPointerCapture?.(e.pointerId);
+      } catch {}
 
       const now = Date.now();
       start.current = { x: e.clientX, y: e.clientY, t: now };
@@ -169,13 +207,18 @@ function SwipeOverlay({
     const onUp = (e) => {
       if (!dragging || !start.current || !last.current) return;
       setDragging(false);
-      try { el.releasePointerCapture?.(e.pointerId); } catch { }
+      try {
+        el.releasePointerCapture?.(e.pointerId);
+      } catch {}
 
       const distX = last.current.x - start.current.x;
       const distY = last.current.y - start.current.y;
       const dt = last.current.t - start.current.t;
 
-      if (Math.abs(distX) >= threshold && Math.abs(distY) <= verticalTolerance) {
+      if (
+        Math.abs(distX) >= threshold &&
+        Math.abs(distY) <= verticalTolerance
+      ) {
         const ev = {
           direction: distX > 0 ? "right" : "left",
           distanceX: distX,
@@ -206,23 +249,27 @@ function SwipeOverlay({
       el.removeEventListener("pointerup", onUp);
       el.removeEventListener("pointercancel", onUp);
     };
-  }, [active, threshold, verticalTolerance, preventScroll, edgeStartPx, onSwipeLeft, onSwipeRight]);
+  }, [
+    active,
+    threshold,
+    verticalTolerance,
+    preventScroll,
+    edgeStartPx,
+    onSwipeLeft,
+    onSwipeRight,
+  ]);
 
   return (
     <div
       ref={ref}
       style={{
-        position: 'relative',
+        position: "relative",
         // zIndex: '999999'
       }}
     >
-      <div style={{ 'pointer-evenets': 'none' }}>
-        {children}
-      </div>
+      <div style={{ "pointer-evenets": "none" }}>{children}</div>
     </div>
   );
 }
-
-
 
 export default Layout;

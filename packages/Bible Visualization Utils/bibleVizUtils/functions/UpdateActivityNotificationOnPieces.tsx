@@ -38,7 +38,7 @@ for(const pieceData of fixedElementsData)
     }
 
     if(
-        (pieceData instanceof StackChapterData) && // To show activity notification only in chapters
+        ((pieceData instanceof StackChapterData) || (pieceData instanceof LayoutChapterData)) && // To show activity notification only in chapters
         pieceActivity.length > 0 && 
         !isPieceSelected &&
         pieceData.piece.tags.isInUse && 
@@ -48,7 +48,11 @@ for(const pieceData of fixedElementsData)
     {
         const formOpacity = pieceActivity.some((activity) => {return manager.vars.tabsContext.activeTab === activity.id;}) ? 1 : 0.5;
         const label = pieceActivity.length > 1 ? pieceActivity.length : "";
-        const color = BibleVizUtils.Data.tags.dumbUserPresenceData.find((dumbData) => { return dumbData.tab === pieceActivity[0]})?.user?.color ?? BibleVizUtils.Data.tags.myUserColor;
+        const color = Object.keys(BibleVizUtils.Data.vars.userPresenceData ?? {})?.map((userId) => {
+            return BibleVizUtils.Data.vars.userPresenceData[userId];
+        }).find((data) => {
+            return data.tab === pieceActivity[0]
+        })?.user?.color ?? BibleVizUtils.Data.tags.myUserColor;
 
         if(pieceData.piece.links.activityNotification)
         {
@@ -65,7 +69,10 @@ for(const pieceData of fixedElementsData)
                 ownerBotId: pieceData.piece.id,
                 formOpacity,
                 direction,
-                color
+                color,
+                notificationOffset: manager.tags.activityNotificationOffset,
+                scaleX: manager.tags.activityNotificationScaleX,
+                scaleY: manager.tags.activityNotificationScaleY
             }
             activityNotification.OnSpawned({mod: activityNotificationMod});
             activityNotification.SetPosition({setX: true, setY: true, setZ: true});

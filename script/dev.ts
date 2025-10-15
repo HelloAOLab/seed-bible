@@ -18,6 +18,7 @@ import {
   waitForPackage,
   loadSeedBible,
   DEFAULT_EXTENSIONS,
+  loadAoBot,
 } from "./lib/browser.js";
 import { rmdir, writeFile } from "node:fs/promises";
 import path from "node:path";
@@ -26,7 +27,9 @@ import repl from "node:repl";
 import { v4 as uuid } from "uuid";
 import type { StoredAux } from "../typings/AuxLibraryDefinitions.js";
 
-const extraExtensions = process.argv.slice(2);
+const extraExtensions = process.argv.slice(2).filter(a => !a.startsWith("-"));
+const collaborative = process.argv.slice(2).some(a => a === "--collaborative");
+const aoBot = process.argv.slice(2).find(a => a === "--ao-bot");
 
 const browser = await puppeteer.launch({
   headless: false,
@@ -34,15 +37,37 @@ const browser = await puppeteer.launch({
 });
 
 let page: puppeteer.Page;
+const extraPages: puppeteer.Page[] = [];
+let currentInst: string | undefined;
 
 async function startPage() {
-  const allPackages = [...new Set([...DEFAULT_EXTENSIONS, ...extraExtensions])];
-
-  await Promise.all(allPackages.map((pkg) => packageSingle(pkg, "ignore")));
-
   page = await browser.newPage();
 
-  await loadSeedBible(page, extraExtensions);
+  if (aoBot) {
+    await Promise.all(['ao.bot'].map((pkg) => packageSingle(pkg, "ignore")));
+    currentInst = await loadAoBot(page);
+  } else {
+    const allPackages = [...new Set([...DEFAULT_EXTENSIONS, ...extraExtensions])];
+
+    await Promise.all(allPackages.map((pkg) => packageSingle(pkg, "ignore")));
+    currentInst = await loadSeedBible(page, extraExtensions, undefined, collaborative);
+
+    const newTabPromises: Promise<string> = [];
+
+    for(let i = 0; i < extraPages.length; i++) {
+      const p = extraPages[i];
+
+      newTabPromises.push(p.close()
+        .then(() => browser.newPage())
+        .then(async (p) => {
+          extraPages[i] = p;
+          await loadInst(p, currentInst, collaborative);
+        })
+      );
+    }
+
+    await Promise.all(newTabPromises);
+  }
 }
 
 await startPage();
@@ -86,6 +111,23 @@ server.defineCommand("system", {
     } finally {
       sim.dispose();
     }
+  },
+});
+
+server.defineCommand("newTab", {
+  help: "Open a new tab",
+  action: async (inst) => {
+    server.clearBufferedCommand();
+
+    if (!inst) {
+      inst = currentInst;
+    }
+
+    const newPage = await browser.newPage();
+    extraPages.push(newPage);
+    await loadInst(newPage, inst, collaborative);
+
+    server.displayPrompt();
   },
 });
 

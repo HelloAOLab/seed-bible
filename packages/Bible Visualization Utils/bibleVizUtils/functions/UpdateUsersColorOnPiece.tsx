@@ -1,6 +1,7 @@
-if(!thisBot.vars.tabsContext) return [];
-
 const {piece, pieces, manager, source = "Unknown"} = that;
+
+if(!manager.vars.tabsContext) return [];
+
 const dimension = os.getCurrentDimension();
 const fixedPieces = (Array.isArray(pieces) ? pieces : [piece]).filter((currElement) => {return currElement.tags[dimension] == true});
 const allUsersColor = [];
@@ -28,7 +29,7 @@ for(const fixedPiece of fixedPieces)
         case BibleVizUtils.Data.tags.ObjectPoolTags.LayoutBook:
         case BibleVizUtils.Data.tags.ObjectPoolTags.LayoutChapter:
             pieceData = fixedPiece.tags.poolTag == BibleVizUtils.Data.tags.ObjectPoolTags.StackChapter ? BibleStackManager.GetPieceData({piece: fixedPiece}) :
-                scriptureMap3DManager.GetPieceData({piece: fixedPiece})
+                ScriptureMap3DManager.GetPieceData({piece: fixedPiece})
             selectionsPiece = fixedPiece;
             userColorScales = BibleVizUtils.Data.tags.UsersColorValues.GroundedElementColorScales;
             extraUsersContentScales = BibleVizUtils.Data.tags.UsersColorValues.GroundedElementExtraUsersContentScales;
@@ -127,7 +128,11 @@ for(const fixedPiece of fixedPieces)
             else
             {
                 const isActiveTab = activity.id === manager.vars.tabsContext.activeTab;
-                const color = BibleVizUtils.Data.tags.dumbUserPresenceData.find((dumbData) => { return dumbData.tab === activity})?.user?.color ?? BibleVizUtils.Data.tags.myUserColor;
+                const color = Object.keys(BibleVizUtils.Data.vars.userPresenceData ?? {})?.map((userId) => {
+                    return BibleVizUtils.Data.vars.userPresenceData[userId];
+                }).find((data) => {
+                    return data.tab === activity
+                })?.user?.color ?? BibleVizUtils.Data.tags.myUserColor;
 
                 const opacity = isActiveTab ? 1 : 0.5;
                 const formRenderOrder = isActiveTab ? -1 : 10 - Number(activityIndex)

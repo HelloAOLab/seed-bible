@@ -21,5 +21,7 @@ if(layoutData?.isCameraAnimationEnabled)
         z: 1.5
     },{rotation: {x: 0.3, y: 0.3, z: 0}})
 }
-BibleVizUtis.Functions.TryHideUsersNotificationOnPiece({piece: chapterData.piece})
-return chapterData.piece.Select({layoutData})
+BibleVizUtils.Functions.TryHideActivityNotificationOnPiece({piece: chapterData.piece})
+return chapterData.piece.Select({layoutData}).then(() => {
+    shout("OnScriptureMap3DChapterSelected")
+})

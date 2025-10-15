@@ -2,6 +2,7 @@ if (globalThis.NagiationTimeout) {
   clearTimeout(globalThis.NagiationTimeout);
   globalThis.NagiationTimeout = null;
 }
+if (globalThis.RenderLinkTimer) clearTimeout(globalThis.RenderLinkTimer);
 
 function scrollToVerse(verseNumber) {
   const element = document.getElementById(`v-${verseNumber}`);
@@ -155,7 +156,9 @@ globalThis.NagiationTimeout = setTimeout(async () => {
   if (globalThis.SetMediaURL && !that.skipEmbed) {
     globalThis.SetMediaURL(null);
   }
-  thisBot.CloseFloatingApp();
+  setTimeout(() => {
+    thisBot.CloseFloatingApp();
+  }, 100);
 
   if (globalThis.SetVideoSrc && !that.skipEmbed) {
     globalThis.SetVideoSrc(null);
@@ -317,7 +320,7 @@ globalThis.NagiationTimeout = setTimeout(async () => {
       }
 
       if (os.device().supportsDOM) {
-        scrollToVerse(vNumber);
+        setTimeout(() => scrollToVerse(vNumber), 25);
       }
 
       // if (os.device().supportsDOM) {
@@ -349,5 +352,7 @@ globalThis.NagiationTimeout = setTimeout(async () => {
       return;
     }
   }
+
+  thisBot.CloseSelf();
   globalThis.HISTORYExploreMode = initialValue;
-}, 100);
+}, 75);

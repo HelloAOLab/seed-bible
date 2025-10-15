@@ -15,6 +15,8 @@ const AttachLink = await thisBot.AttachLink();
 const AddNewPlaylist = await thisBot.AddNewPlaylist();
 const VideoPlayer = await thisBot.VideoSmallScreen();
 const AudioPlayer = await thisBot.AudioPlayer();
+const TogglePlaylistHeight = await thisBot.TogglePlaylistHeight();
+
 // const AttachmentLinkItem = thisBot.AttachmentLinkItem();
 
 globalThis.DEFAULT_UPLOAD_ICON =
@@ -76,7 +78,7 @@ const PROMPT_OPTIONS = [
 ];
 
 const AI_OPTIONS = [
-  { value: "openai/gpt/5", label: "OpenAI GPT-5" },
+  // { value: "openai/gpt/5-mini", label: "OpenAI GPT-5 Mini" },
   { value: "openai/gpt/4o-mini", label: "OpenAI GPT-4o Mini" },
   { value: "openai/gpt/o1-mini", label: "OpenAI GPT-o1 Mini" },
   { value: "openai/gpt/o3-mini", label: "OpenAI GPT-o3 Mini" },
@@ -839,7 +841,7 @@ const Playlist = ({
       const name = ele.name?.toLocaleLowerCase();
       const des = ele.description?.toLocaleLowerCase();
       if (name.includes(q) || des.includes(q)) {
-        if (ele.shareProfileName) {
+        if (ele.shareProfileName && ele.sharerID !== authBot?.id) {
           shared.push({ ...ele });
         } else {
           owned.push({ ...ele });
@@ -1235,21 +1237,24 @@ const Playlist = ({
                 <span class="material-symbols-outlined">playlist_play</span>
                 <span>Playlist Settings</span>
               </div>
-              <div
-                className="publish-setting"
-                onClick={(e) => {
-                  const rect = e.currentTarget.getBoundingClientRect();
+              <div className="align-center">
+                <TogglePlaylistHeight />
+                <div
+                  className="publish-setting"
+                  onClick={(e) => {
+                    const rect = e.currentTarget.getBoundingClientRect();
 
-                  const x = rect.left; // X position where the element starts (from left of screen)
-                  const y = rect.bottom; // Y position where the element ends (bottom of element from top of screen)
+                    const x = rect.left; // X position where the element starts (from left of screen)
+                    const y = rect.bottom; // Y position where the element ends (bottom of element from top of screen)
 
-                  globalThis.LastClickX = x;
-                  globalThis.LastClickY = y;
-                  showMorePosition.current = { ...getPosition() };
-                  setShowMoreOptions(true);
-                }}>
-                <span class="material-symbols-outlined">settings</span>
-                <span>Publish Settings</span>
+                    globalThis.LastClickX = x;
+                    globalThis.LastClickY = y;
+                    showMorePosition.current = { ...getPosition() };
+                    setShowMoreOptions(true);
+                  }}>
+                  <span class="material-symbols-outlined">settings</span>
+                  <span>Publish Settings</span>
+                </div>
               </div>
             </div>
 

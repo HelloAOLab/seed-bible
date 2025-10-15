@@ -143,20 +143,18 @@ export function Toolbar() {
                 <span className="material-symbols-outlined">chevron_left</span>
               </button>
             </div>
-            {isMobile && (
-              <div
-                onClick={() => {
-                  setSidebarWidth(300);
-                  setOpenOnMobile(true);
-                  globalThis[`setOpenSidebar`] && setOpenSidebar(false);
-                }}
-                className="toolbar-item-wrapper"
-              >
-                <button className={`toolbar-button firstToolbarbutton`}>
-                  <span className="material-symbols-outlined">menu</span>
-                </button>
-              </div>
-            )}
+            <div
+              onClick={() => {
+                setSidebarWidth(280);
+                setOpenOnMobile(true);
+                globalThis[`setOpenSidebar`] && setOpenSidebar(false);
+              }}
+              className="toolbar-item-wrapper mobile-only"
+            >
+              <button className={`toolbar-button firstToolbarbutton`}>
+                <span className="material-symbols-outlined">menu</span>
+              </button>
+            </div>
             {tools?.map((tool, index) =>
               tool?.active === false ? null : (
                 <div
@@ -169,8 +167,9 @@ export function Toolbar() {
                     <div className={`toolbar-button placeholder`}></div>
                   ) : (
                     <button
-                      className={`toolbar-button ${index === 0 ? "firstToolbarbutton" : ""
-                        }`}
+                      className={`toolbar-button ${
+                        index === 0 ? "firstToolbarbutton" : ""
+                      }`}
                       onMouseDown={() => {
                         hasHeldRef.current = false;
                         holdTimeoutRef.current = setTimeout(() => {
@@ -184,8 +183,10 @@ export function Toolbar() {
                         clearTimeout(holdTimeoutRef.current);
                         if (!hasHeldRef.current && tool?.onClick) {
                           tool.onClick();
+                          EmitData("appClick", {
+                            name: `${tool?.pkgName}_package`,
+                          });
                         }
-                         
                         if (isDragging) {
                           setIsDragging(false);
                           setElement(null);
@@ -197,7 +198,7 @@ export function Toolbar() {
                       {tool.isImg ? (
                         <img
                           src={tool.icon}
-                          style={{ width: "40px" }}
+                          style={{ width: "22px" }}
                           alt={tool.label}
                         />
                       ) : (

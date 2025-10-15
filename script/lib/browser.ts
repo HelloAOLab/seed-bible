@@ -257,12 +257,9 @@ export const DEFAULT_EXTENSIONS = [
     'Playlist',
 ];
 
-export async function loadSeedBible(page: Page, extraExtensions: string[] = []) {
+export async function loadSeedBible(page: Page, extraExtensions: string[] = [], inst: string = uuid(), collaborative: boolean = false) {
     await initPage(page);
-    
-    const inst = uuid();
-
-    await loadInst(page, inst);
+    await loadInst(page, inst, collaborative);
 
     console.log('Uploading Seed Bible...');
 
@@ -292,4 +289,20 @@ export async function loadSeedBible(page: Page, extraExtensions: string[] = []) 
     console.log('Loaded!');
 
     shout(page, 'onInstJoined', null, { inst });
+
+    return inst;
+}
+
+export async function loadAoBot(page: Page, inst: string = uuid()) {
+    await initPage(page);
+    await loadInst(page, inst, false);
+
+    await addAux(page, await readPackage('ao.bot'));
+    // await waitForPackage(page, 'ao.bot');
+
+    console.log('Loaded!');
+
+    shout(page, 'onInstJoined', null, { inst });
+
+    return inst;
 }

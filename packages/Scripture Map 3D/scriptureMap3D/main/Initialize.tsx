@@ -1,11 +1,19 @@
-return;
-
-if(thisBot.masks.initialized || configBot.tags.systemPortal) return;
+if(thisBot.masks.initialized || configBot.tags.systemPortal || globalThis.ScriptureMap3DManager || !globalThis.ObjectPooler || !globalThis.BibleVizUtils) return;
 
 setTagMask(thisBot, "initialized", true);
-if(typeof scriptureMap3DManager === "undefined")
+if(typeof ScriptureMap3DManager === "undefined")
 {
-    globalThis.scriptureMap3DManager = thisBot;
+    globalThis.ScriptureMap3DManager = thisBot;
+}
+
+let PoolData, CustomTag;
+
+try {
+  ({ PoolData } = await import("objectPooler.main.PoolData"));
+  ({ CustomTag } = await import("objectPooler.main.CustomTag"));
+} 
+catch (err) {
+  throw new Error("[Debug] bibleStack.main.Initialize Could not load module", err);
 }
 
 thisBot.vars.arrangementIndex = 0;
@@ -75,7 +83,7 @@ const labelsPool = new PoolData({
 })
 const chaptersPool = new PoolData({
     tag: BibleVizUtils.Data.tags.ObjectPoolTags.LayoutChapter,
-    bot: getBot("system", "scriptureMap3D.prefabs.layoutChapter"),
+    bot: getBot("system", "scriptureMap3D.prefabs.chapter"),
     customTags: [
         new CustomTag({name: "poolTag", value: BibleVizUtils.Data.tags.ObjectPoolTags.LayoutChapter}),
         new CustomTag({name: "typeOfPiece", value: BibleVizUtils.Data.tags.BiblePieceType.LayoutChapter}),

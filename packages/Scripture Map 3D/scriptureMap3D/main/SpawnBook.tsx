@@ -1,18 +1,18 @@
 const {layoutBookStructure, position} = that;
 const dimension = os.getCurrentDimension();
 const {chaptersInfo} = BibleVizUtils.Data.tags.booksStaticInfo[layoutBookStructure.layoutBookData.pieceInfo.commonName];
-const amountOfRows = Math.ceil(chaptersInfo.length / BibleVizUtils.Data.BibleLayoutMeasurements.BookMaxAmountOfColumns)
-// Delete? -> const amountOfColumns = Math.min(BibleVizUtils.Data.BibleLayoutMeasurements.BookMaxAmountOfColumns, chaptersInfo.length)
+const amountOfRows = Math.ceil(chaptersInfo.length / BibleVizUtils.Data.tags.BibleLayoutMeasurements.Book3DMaxAmountOfColumns)
+// Delete? -> const amountOfColumns = Math.min(BibleVizUtils.Data.tags.BibleLayoutMeasurements.Book3DMaxAmountOfColumns, chaptersInfo.length)
 // Integrage -> const bookScaleY = thisBot.GetBookHeightByName({bookName: layoutBookStructure.layoutBookData.pieceInfo.commonName})
 const bookScales = new Vector3(
-    BibleVizUtils.Data.BibleLayoutMeasurements.BookScaleX,
-    (amountOfRows * BibleVizUtils.Data.BibleLayoutMeasurements.ChapterHeight) + (BibleVizUtils.Data.BibleLayoutMeasurements.ChapterPadding * 2) + (BibleVizUtils.Data.BibleLayoutMeasurements.ChapterGap * (amountOfRows - 1)), 
+    BibleVizUtils.Data.tags.BibleLayoutMeasurements.Book3DScaleX,
+    (amountOfRows * BibleVizUtils.Data.tags.BibleLayoutMeasurements.Chapter3DHeight) + (BibleVizUtils.Data.tags.BibleLayoutMeasurements.Chapter3DPadding * 2) + (BibleVizUtils.Data.tags.BibleLayoutMeasurements.Chapter3DGap * (amountOfRows - 1)), 
     0.175
 );
 
 const book = layoutBookStructure.layoutBookData.piece ?? ObjectPooler.GetObjectFromPool({tag: BibleVizUtils.Data.tags.ObjectPoolTags.LayoutBook});
 
-const {arrangementIndex, testamentIndex, sectionIndex} = BibleStackManager.GetBookInfoPathByName({
+const {arrangementIndex, testamentIndex, sectionIndex} = BibleVizUtils.Functions.GetBookInfoPathByName({
     name: layoutBookStructure.layoutBookData.pieceInfo.commonName, 
     arrangementIndex: BibleVizUtils.Functions.GetCurrentArrangementIndex()
 });
@@ -24,7 +24,7 @@ const bookIndexWithinSection = BibleVizUtils.Data.vars.fixedArrangementsInfo[arr
 })
 
 const sectionInfo = BibleVizUtils.Data.vars.fixedArrangementsInfo.slice()[arrangementIndex].testaments[testamentIndex].sections[sectionIndex]
-const sectionLevelsColors = GetChildrenLevelColors({
+const sectionLevelsColors = BibleVizUtils.Functions.GetChildrenLevelColors({
     sectionColorRGB: BibleVizUtils.Functions.HexToRgb({hexColor: sectionInfo.color}), 
     colorRange: sectionInfo.customColorRange ?? 70, 
     levelsLength: sectionInfo.books.length
@@ -38,7 +38,7 @@ const layoutBookMod = {
     [dimension]: true,
     [dimension + "X"]: position ? position.x : null,
     [dimension + "Y"]: position ? position.y : null,
-    [dimension + "Z"]: BibleVizUtils.Data.BibleLayoutMeasurements.BookPositionZ,
+    [dimension + "Z"]: BibleVizUtils.Data.tags.BibleLayoutMeasurements.BookPositionZ,
     scaleX: bookScales.x,
     scaleY: bookScales.y,
     scaleZ: bookScales.z,

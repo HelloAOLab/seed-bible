@@ -81,7 +81,8 @@ export function MiniTextEditor({
     priorityKey = 'simple_rich_editor_toolbar_priority',
     defaultPriority = DEFAULT_TOOLBAR_PRIORITY,
     onChange,
-    onAIHighlight
+    onAIHighlight,
+    id = "editor"
 }) {
     // ----- ids & storage
     const _instanceId = useRef(instanceId || `sre_${Math.random().toString(36).slice(2)}`).current;
@@ -186,6 +187,8 @@ export function MiniTextEditor({
                 try { onChange(editor.getHTML(), editor.getJSON()); } catch { }
             });
         }
+
+        globalThis[`${id}ClearEditorContent`] = () => editor.commands.setContent("");
 
         // apply initial paddings
         applyPadding(padY, padX);

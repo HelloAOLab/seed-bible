@@ -1,6 +1,6 @@
 const { useEffect } = os.appHooks;
 import HandleEvents from 'aiApps.voiceAssistant.HandleEvents';
-import { HandleEventMessage, CreateMessageLog, ClearMessageLog } from 'aiApps.voiceAssistant.HandleMessageLog';
+import { HandleEventMessage, CreateMessageLog, ClearMessageLog, OutputMessageLog } from 'aiApps.voiceAssistant.HandleMessageLog';
 function generateQuery(params) {
     let queryArray = [];
     for (let key in params) {
@@ -19,6 +19,35 @@ function attachQueryToURL(url, params) {
     return url + (url.includes('?') ? '&' : '?') + queryString;
 }
 const ConnectionManager = ({ start, setConnected, audioRef, pcRef, micRef, micActive, speakerActive, dcRef, setIsAssistantListening }) => {
+
+    const handlePrevChat = async (dc) => {
+        if (configBot.tags.chatUid) {
+            const prevChatReq = await web.get(`https://aolab-bible-api.netlify.app/api/ai/getMessages?uid=${configBot.tags.chatUid}`);
+            if (prevChatReq.status == '200') {
+                console.log(prevChatReq, "prevChatReq")
+                setTagMask(thisBot, 'chatMessages', { ...prevChatReq.data.chatMessages }, "tempLocal");
+                setTagMask(thisBot, 'itemArray', [...prevChatReq.data.itemArray], "tempLocal");
+                const prevChats = [...OutputMessageLog()];
+                for (const m of prevChats) {
+                    const isAssistant = m.role === "assistant";
+                    dc.send(JSON.stringify({
+                        type: "conversation.item.create",
+                        item: {
+                            type: "message",
+                            role: m.role,
+                            status: "completed",
+                            content: [{
+                                type: isAssistant ? "output_text" : "input_text",
+                                text: m.content
+                            }]
+                        }
+                    }));
+                }
+                dc.send(JSON.stringify({ type: "response.create" }));
+            }
+            configBot.tags.chatUid = null;
+        }
+    }
 
     const init = async () => {
 
@@ -51,6 +80,7 @@ const ConnectionManager = ({ start, setConnected, audioRef, pcRef, micRef, micAc
         dcRef.current = dc;
         dc.onmessage = (e) => {
             const data = JSON.parse(e.data);
+            console.log(data)
             HandleEventMessage(data, setIsAssistantListening);
             if (data.type === "response.function_call_arguments.done") {
                 console.log(data)
@@ -58,9 +88,14 @@ const ConnectionManager = ({ start, setConnected, audioRef, pcRef, micRef, micAc
             }
         };
 
-        dc.onopen = () => console.log("oai-events open");
+        dc.onopen = () => {
+            console.log("oai-events open");
+            globalThis.DCRef = dc;
+            handlePrevChat(dc);
+        };
 
         dc.onclose = () => {
+            globalThis.DCRef = null;
             console.log("data channel closing")
         }
 
@@ -112,9 +147,9 @@ const ConnectionManager = ({ start, setConnected, audioRef, pcRef, micRef, micAc
 
     const handleMicAndSpeaker = async () => {
         if (micActive) {
-            micRef.current.getTracks().forEach(track => {track.enabled = true});
+            micRef.current.getTracks().forEach(track => { track.enabled = true });
         } else {
-            micRef.current.getTracks().forEach(track => {track.enabled = false});
+            micRef.current.getTracks().forEach(track => { track.enabled = false });
         }
 
         if (speakerActive) {

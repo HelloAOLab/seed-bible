@@ -47,27 +47,7 @@ globalThis.CheckMultiFuntionHold = () => globalThis?.KEY_HOLD?.['shift'] || glob
 
 globalThis.Playlist = thisBot;
 
-const getBookmarks = async () => {
-  setTag(thisBot, "bookmarks", { });
-  let apiResults = {};
-  try {
-    const authBot = await os.requestAuthBotInBackground();
-    if (authBot.id) {
-      apiResults = await os.getData(authBot.id, "bookmarks");
-      if (apiResults.data) {
-        setTag(thisBot, "bookmarks", { ...apiResults.data });
-        if (globalThis.SetBookmarks) {
-          globalThis.SetBookmarks({ ...apiResults.data });
-        }
-      }
-    }
-  } catch (err) {
-    console.log('err', err);
-  }
-  return apiResults;
-}
-
-const bookmarks = await getBookmarks();
+const bookmarks = await thisBot.getBookmarks();
 
 let recored = getBot("system", 'main.Recorder')
 
@@ -311,7 +291,7 @@ globalThis.validateUrl = (url) => {
 
     // Generic iframe
     if (iframeRegex.test(url)) {
-      return { isValid: true, type: 'iframe' };
+      return { isValid: true, type: 'externalLink' };
     }
   } catch (err) {
     // Invalid URL

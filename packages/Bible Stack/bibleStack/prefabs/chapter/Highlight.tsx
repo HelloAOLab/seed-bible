@@ -36,7 +36,7 @@ else
         pointableDefault: false
     }).infoLabelTransformer;
 
-    animations.push(infoLabelTransformer.Show({duration}))
+    animations.push(infoLabelTransformer.Show({duration, manager: BibleStackManager}))
 }
 
 setTagMask(thisBot, "isHighlighting", true);

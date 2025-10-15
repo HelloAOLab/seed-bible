@@ -63,6 +63,8 @@ const AddNewPlaylist = ({
   setTags,
   isLayers,
 }) => {
+  const IsPlaylistPlaying = globalThis.IsPlaylistPlaying;
+
   const listPlaylist = useMemo(() => {
     if (renameScreen) {
       return (
@@ -929,6 +931,11 @@ const AddNewPlaylist = ({
             Close
           </Button>
         </div>
+        <div
+          className={`mobile-pseudogap-element ${
+            IsPlaylistPlaying ? "playing-playlist" : ""
+          }`}
+        />
       </div>
     </>
   );

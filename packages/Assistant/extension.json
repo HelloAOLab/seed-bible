@@ -5,9 +5,9 @@
     "author": "Sujan Barman",
     "toolbarConfig": {
       "hasToggle": "true",
-      "icon": "robot_2",
-      "label": "Assistant",
-      "run": "toggleVoiceAssistant"
+      "label": "AO",
+      "run": "toggleVoiceAssistant",
+      "iconUrl": "https://res.cloudinary.com/dacw0qnpr/image/upload/v1759843780/AO_logo_no_text_black_jcr3za.png"
     }
   },
   "createdAt": "2025-09-17T11:11:09.060Z",
@@ -17,7 +17,7 @@
   "license": "MIT",
   "linkedDependencies": [],
   "mainBotTag": "aiApps.voiceAssistant",
-  "name": "Assistant",
+  "name": "AO",
   "otherBots": [],
   "recordFile": {
     "errorCode": "file_already_exists",

@@ -304,6 +304,18 @@ export function BibleVariablesProvider({ children }) {
         return tool?.showInStarterToolbar === true;
     }
 
+    function scrollToVerse(verseNumber) {
+        const element = document.getElementById(`v-${verseNumber}`);
+        if (element) {
+          element.scrollIntoView({
+            behavior: "smooth", // smooth scrolling animation
+            block: "center", // scroll so it's centered in the viewport
+          });
+        } else {
+          console.warn(`Verse ${verseNumber} not found`);
+        }
+    }
+
     globalThis.AddTool = addTool
     globalThis.RemoveTool = removeTool
     globalThis.UpdateTool = updateTool
@@ -321,7 +333,7 @@ export function BibleVariablesProvider({ children }) {
                 tools, setTools, setScreens, navFunctions, setNavFunctions,
                 panelMode, setPanelMode, canvasMode, setCanvasMode, mapMode, setMapMode,
                 canvasTools, mapTools, setCanvasTools, setMapTools,
-                addTool, removeTool, updateTool, toggleToolActive
+                addTool, removeTool, updateTool, toggleToolActive,scrollToVerse
             }}
         >
 
