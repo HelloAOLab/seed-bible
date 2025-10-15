@@ -163,12 +163,6 @@ const SettingsSidebar = () => {
       expandable: true,
       subItems: [
         {
-          key: "toolbar",
-          label: "Toolbar",
-          icon: `construction`,
-          onClick: () => setSideBarMode("toolbarSettings-Canvas"),
-        },
-        {
           key: "tab",
           label: "Tab",
           icon: "description",
