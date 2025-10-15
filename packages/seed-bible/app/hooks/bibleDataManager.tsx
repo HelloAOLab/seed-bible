@@ -175,12 +175,32 @@ export class BibleDataManager {
 
   async openNext() {
     if (this.data?.nextChapter) {
+
+      const match = this.data.nextChapter.match(/^\/api\/([^/]+)\/([^/]+)\/(\d+)\.json$/);
+
+      if (match) 
+      {
+        const [, , bookId, chapter] = match;
+        this.bookId = bookId;
+        this.chapter = Number(chapter);
+      }
+
       await this.fetch(this.data.nextChapter);
     }
   }
 
   async openPrevious() {
     if (this.data?.prevChapter) {
+
+      const match = this.data.prevChapter.match(/^\/api\/([^/]+)\/([^/]+)\/(\d+)\.json$/);
+
+      if (match) 
+      {
+        const [, , bookId, chapter] = match;
+        this.bookId = bookId;
+        this.chapter = Number(chapter);
+      }
+
       await this.fetch(this.data.prevChapter);
     }
   }
