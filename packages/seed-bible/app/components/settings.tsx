@@ -162,12 +162,12 @@ const SettingsSidebar = () => {
       icon: "dashboard_customize",
       expandable: true,
       subItems: [
-        {
-          key: "toolbar",
-          label: "Toolbar",
-          icon: `construction`,
-          onClick: () => setSideBarMode("toolbarSettings-Canvas"),
-        },
+      //  {
+        //  key: "toolbar",
+        //  label: "Toolbar",
+        //  icon: `construction`,
+      //    onClick: () => setSideBarMode("toolbarSettings-Canvas"),
+      //  },
         {
           key: "tab",
           label: "Tab",
