@@ -1,4 +1,4 @@
-const { createContext, useRef, useState, useContext, useCallback, useMemo } = os.appHooks;
+const { createContext, useRef, useState, useContext, useCallback, useMemo, useEffect } = os.appHooks;
 
 const BibleLayout2DContext = createContext();
 
@@ -168,27 +168,6 @@ const userPresence = {
     }
 }
 
-const readingHistory = {
-    Gabriel: [
-        {book: "Genesis", chapter: 1, daysAgo: 2}
-    ],
-    Craig: [
-        {book: "Genesis", chapter: 1, daysAgo: 4}
-    ],
-    Sujan: [
-        {book: "Genesis", chapter: 1, daysAgo: 6}
-    ],
-    Mazen: [
-        {book: "Genesis", chapter: 7, daysAgo: 1}
-    ],
-    Amir: [
-        {book: "Genesis", chapter: 7, daysAgo: 1}
-    ],
-    Kushagra: [
-        {book: "Genesis", chapter: 5, daysAgo: 5}
-    ]
-}
-
 const upcomingEvents = {
     Gabriel: [
         {book: "Genesis", chapter: 1, remainingDays: 2}
@@ -233,6 +212,18 @@ export const BibleLayout2DProvider = ({
         ProjectChapterState
     }) => {
 
+    const hooksBot = useMemo(() => {return getBot("system", "app.hooks")}, []);
+
+    const [readingHistory, setReadingHistory] = useState({...hooksBot.vars.tempReadingHistory});
+
+    useEffect(() => {
+        const id = setInterval(() => {
+            setReadingHistory({...hooksBot.vars.tempReadingHistory})
+        }, 1000);
+
+        return () => {clearInterval(id)}
+    }, [])
+
     const projectStateStyle = useMemo(() => {
         return {
             [ProjectChapterState.None]: {backgroundColor: "rgb(227, 227, 227)", borderColor: "rgb(227, 227, 227)", borderStyle: "solid"},
@@ -243,13 +234,14 @@ export const BibleLayout2DProvider = ({
         }
     }, [ProjectChapterState])
 
-    const { arrangementIndex } = parentContext;
+    const { arrangementIndex, initialScaleFactor = 1, initialIsReadingHistoryEnabled = false } = parentContext;
 
-    const [scaleFactor, setScaleFactor] = useState(1)
+    const [scaleFactor, setScaleFactor] = useState(initialScaleFactor)
     const [showLabels, setShowLabels] = useState(true);
     // const [showingAllChapters, setShowingAllChapters] = useState(true);
     const arrangement = useMemo(() => {return BibleVizUtils.Data.vars.fixedArrangementsInfo[arrangementIndex]}, [arrangementIndex]);
     const [isUserPresenceEnabled, setIsUserPresenceEnabled] = useState(false);
+    const [isReadingHistoryEnabled, setIsReadingHistoryEnabled] = useState(initialIsReadingHistoryEnabled)
     const [usersStatus, setUsersStatus] = useState(new Map(Array.from(content).map(([key]) => {return [key, true]})))
     const [modes, setModes] = useState(new Map([
         ["Content", false],
@@ -378,6 +370,7 @@ export const BibleLayout2DProvider = ({
             subscribeToHistoryUpdate,
             handleContentHeatmapToggle,
             isUserPresenceEnabled,
+            isReadingHistoryEnabled,
             content,
             usersStatus,
             maxChapterHeatCount,

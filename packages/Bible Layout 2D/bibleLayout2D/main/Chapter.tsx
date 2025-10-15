@@ -1,84 +1,111 @@
 const { useState, useCallback, useEffect, useMemo } = os.appHooks;
 import { useBibleLayout2DContext } from "bibleLayout2D.main.BibleLayout2DContext"
-// import { Tooltip } from "bibleLayout2D.main.Tooltip"
+import { Tooltip } from "bibleLayout2D.main.Tooltip"
 // import { PresentUserPresenceTooltipIcon } from "bibleLayout2D.main.PresentUserPresenceIcon"
 import { useTestamentContext } from "bibleLayout2D.main.TestamentContext"
 
 import {useClickAndHold} from "bibleLayout2D.main.CustomHooks"
 
-// const ChapterNotificationContainer = ({
-//     bookName,
-//     chapterIndex,
-//     contextKey,
-//     filterFn,
-//     renderTooltipItem,
-//     renderContent,
-//     tooltipDirection = "up",
-//     className,
-// }) => {
-//     const context = useBibleLayout2DContext();
-//     const [containerRect, setContainerRect] = useState(null);
+const ChapterNotificationContainer = ({
+    bookName,
+    chapterIndex,
+    contextKey,
+    filterFn,
+    renderTooltipItem,
+    renderContent,
+    tooltipDirection = "up",
+    className,
+}) => {
+    const context = useBibleLayout2DContext();
+    const [containerRect, setContainerRect] = useState(null);
 
-//     const { tooltipContent, tooltipAnchor, items } = useMemo(() => {
-//         const dataSource = context[contextKey];
-//         const items = Object.keys(dataSource).map((user) => {
-//             const item = filterFn(dataSource[user], user, bookName, chapterIndex);
-//             return item && { ...item, user };
-//         }).filter(Boolean);
+    const { tooltipContent, tooltipAnchor, items } = useMemo(() => {
+        const usersIds = [configBot.id];
+        const dataSource = context[contextKey];
+        const items = usersIds.map((userId) => {
+            const item = filterFn(dataSource[userId], userId, bookName, chapterIndex);
+            return item
+        }).filter(Boolean);
 
-//         let tooltipAnchor, tooltipContent;
+        let tooltipAnchor, tooltipContent;
 
-//         if (containerRect) {
-//             tooltipAnchor = {
-//                 x: containerRect.left + containerRect.width / 2,
-//                 y: containerRect.top + (tooltipDirection === "down" ? containerRect.height : 0),
-//             };
-//         }
+        if (containerRect) {
+            tooltipAnchor = {
+                x: containerRect.left + containerRect.width / 2,
+                y: containerRect.top + (tooltipDirection === "down" ? containerRect.height : 0),
+            };
+        }
 
-//         if (items.length > 0) {
-//             tooltipContent = items.map(renderTooltipItem);
-//         }
+        if (items.length > 0) {
+            tooltipContent = items.map(renderTooltipItem);
+        }
 
-//         return { tooltipContent, tooltipAnchor, items };
-//     }, [containerRect, context[contextKey], bookName, chapterIndex]);
+        return { tooltipContent, tooltipAnchor, items };
+    }, [containerRect, context[contextKey], bookName, chapterIndex]);
 
-//     if (items.length === 0) return null;
+    if (items?.length === 0) return null;
 
-//     return (
-//         <div
-//             onPointerEnter={(e) => setContainerRect(e.currentTarget.getBoundingClientRect())}
-//             onPointerLeave={() => setContainerRect(null)}
-//             className={className}
-//         >
-//             {containerRect && tooltipContent && (
-//                 <Tooltip direction={tooltipDirection} anchor={tooltipAnchor} content={tooltipContent} />
-//             )}
-//             {renderContent?.(items)}
-//         </div>
-//     );
-// };
-// const ReadingHistoryChapterNotificationContainer = ({ bookName, chapterIndex }) => (
-//     <ChapterNotificationContainer
-//         bookName={bookName}
-//         chapterIndex={chapterIndex}
-//         contextKey="readingHistory"
-//         className="readingHistoryChapterNotificationContainer"
-//         tooltipDirection="down"
-//         filterFn={ (entries, _, book, chapterIndex) => {return entries.find((reading) => reading.book === book && reading.chapter === chapterIndex + 1)} }
-//         renderTooltipItem={(reading) => (
-//             <span key={reading.user}>
-//                 <PresentUserPresenceTooltipIcon user={reading.user} />
-//                 {`read ${reading.daysAgo} day${reading.daysAgo > 1 ? "s" : ""} ago`}
-//             </span>
-//         )}
-//         renderContent={(items) => (
-//             <>
-//                 <span className="notificationCount">{items.length}</span>
-//                 <span className="material-symbols-outlined">history</span>
-//             </>
-//         )}
-//     />
-// );
+    return (
+        <div
+            onPointerEnter={(e) => setContainerRect(e.currentTarget.getBoundingClientRect())}
+            onPointerLeave={() => setContainerRect(null)}
+            className={className}
+        >
+            {containerRect && tooltipContent && (
+                <Tooltip direction={tooltipDirection} anchor={tooltipAnchor} content={tooltipContent} />
+            )}
+            {renderContent?.(items)}
+        </div>
+    );
+};
+
+function GetReadingFixedElapsedTime(timestamp)
+{
+    const now = Date.now();
+    const diff = now - timestamp;
+    const diffInSec = diff / 1000;
+    const diffInMin = diffInSec / 60;
+    const diffInHours = diffInMin / 60;
+    const diffInDays = diffInHours / 24;
+
+    if(diffInDays >= 1) return {amount: Math.floor(diffInDays), unit: "day"};
+    if(diffInHours >= 1) return {amount: Math.floor(diffInHours), unit: "hour"};
+    if(diffInMin >= 1) return {amount: Math.floor(diffInMin), unit: "minute"};
+    return {amount: 1, unit: "minute"}
+}
+
+const ReadingHistoryChapterNotificationContainer = ({ bookName, chapterIndex }) => (
+    <ChapterNotificationContainer
+        bookName={bookName}
+        chapterIndex={chapterIndex}
+        contextKey="readingHistory"
+        className="readingHistoryChapterNotificationContainer"
+        tooltipDirection="down"
+        filterFn={ (data, userId, book, chapterIndex) => {
+            const timestamp = data[BibleVizUtils.Data.tags.booksStaticInfo[book].abbreviation]?.[chapterIndex + 1]
+            if(timestamp)
+            {
+                return {userId, book, chapter: chapterIndex + 1, timestamp}
+            }
+            return null
+        }}
+        renderTooltipItem={(reading) => {
+            const {amount, unit} = GetReadingFixedElapsedTime(reading.timestamp);
+            return (
+                <span key={reading.userId}>
+                    {reading.userId === configBot.id ? "You" : "Unknown"}
+                    {` read ${amount} ${unit}${amount > 1 ? "s" : ""} ago`}
+                </span>
+            )
+        }}
+        renderContent={(items) => (
+            <>
+                <span className="notificationCount">{items.length}</span>
+                <span className="material-symbols-outlined">history</span>
+            </>
+        )}
+    />
+);
 // const UpcomingEventsChapterNotificationContainer = ({ bookName, chapterIndex }) => (
 //     <ChapterNotificationContainer
 //         bookName={bookName}
@@ -156,6 +183,7 @@ export const Chapter = ({ index, bookName, sectionName}) => {
         unsubscribeFromHistoryUpdate,
         subscribeToHistoryUpdate,
         isUserPresenceEnabled,
+        isReadingHistoryEnabled,
         content,
         usersStatus,
         // maxChapterHeatCount,
@@ -179,7 +207,7 @@ export const Chapter = ({ index, bookName, sectionName}) => {
     
     const { testament } = useTestamentContext();
     
-    const checked = useMemo(() => { return selection[testament.name][sectionName][bookName][index] }, [selection])
+    const checked = useMemo(() => { return selection?.[testament.name]?.[sectionName]?.[bookName]?.[index] ?? false }, [selection])
 
     // const handleChapterClick = useCallback((e) => {
     //     const key = {testamentName: testament.name, sectionName, bookName, chapterIndex: index}
@@ -346,8 +374,9 @@ export const Chapter = ({ index, bookName, sectionName}) => {
                 borderStyle,
                 borderColor
             }}
-        >
+            >
             {index + 1}
+            {mode === BibleLayout2DModes.Viewer && isReadingHistoryEnabled && <ReadingHistoryChapterNotificationContainer bookName={bookName} chapterIndex={index} />}
         </div>
     )
 }

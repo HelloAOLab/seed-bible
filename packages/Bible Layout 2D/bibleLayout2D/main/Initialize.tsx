@@ -5,3 +5,5 @@ if(typeof BibleLayout2DManager === "undefined")
 {
     globalThis.BibleLayout2DManager = thisBot;
 }
+
+thisBot.StartReadingHistoryUpdate();
