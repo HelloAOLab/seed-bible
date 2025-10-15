@@ -1,14 +1,18 @@
 {
     "author": "Gabriel Souki",
+    "app": "@GetScriptureMap2D",
     "toolbarConfig":
     {
-        "label": "Bible Layout 2D",
-        "hasToggle": "false",
-        "icon": "dashboard_2"
+        "label": "Scripture Map 2D",
+        "hasToggle": true,
+        "icon": "browse",
+        "active": true,
+        "showInPageToolbar": true,
+        "showInStarterToolbar": true
     },
     "tabConfig":
     {
-        "title": "Bible Layout 2D"
+        "title": "Scripture Map 2D"
     },
     "contextMenuConfig": 
     {
