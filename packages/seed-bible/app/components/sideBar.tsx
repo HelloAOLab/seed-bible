@@ -671,7 +671,7 @@ function SideBar() {
   const [customScreens, setCustomScreens] = useState({ value: 1 });
   const [onlineUsers, setOnlineUsers] = useState(false);
   globalThis.SetOnlineUsers = setOnlineUsers;
-  const [showSearch, setShowSearch] = useState(true); // New state for search visibility
+  const [showSearch, setShowSearch] = useState(false); // New state for search visibility
   const [editMode, setEditMode] = useState(false); // New state for edit mode
   useEffect(() => {
     setEditMode(ReSeed);
@@ -716,8 +716,8 @@ function SideBar() {
   }, [editMode]);
 
   useEffect(() => {
-    shout("OnOnlineUsersChanged", {onlineUsers});
-  }, [onlineUsers])
+    shout("OnOnlineUsersChanged", { onlineUsers });
+  }, [onlineUsers]);
 
   const {
     sidebarMode,
@@ -1185,19 +1185,46 @@ function SideBar() {
                       {customIcon.icon}
                     </span>
                   ) : (
-                    <span>{currentSpace.name}</span>
+                    <span></span>
                   )}
                 </div>
               </div>
               <div className="canvasOptions">
                 <span
-                  onClick={() => {
-                    openPopupSettings(
-                      <ScreenOptions setCustomScreens={setCustomScreens} />,
-                      null,
-                      true
-                    );
+                  onContextMenu={(e) => {
+                    e.preventDefault();
+                    globalThis._skipNextMouse = true; // block next onMouseUp
+                    SetShowScreenPanelOption(true);
                   }}
+                  onMouseDown={(e) => {
+                    // ignore if it's a right-click
+                    if (e.button === 2) return;
+
+                    globalThis._hold = false;
+                    globalThis._holdTimeout = setTimeout(() => {
+                      SetShowScreenPanelOption(true);
+                      globalThis._hold = true;
+                    }, 1000);
+                  }}
+                  onMouseUp={(e) => {
+                    // ignore if we just did a right-click
+                    setTimeout(() => {
+                      if (globalThis._skipNextMouse) {
+                        globalThis._skipNextMouse = false;
+                        return;
+                      }
+
+                      clearTimeout(globalThis._holdTimeout);
+                      if (!globalThis._hold) {
+                        openPopupSettings(
+                          <ScreenOptions setCustomScreens={setCustomScreens} />,
+                          null,
+                          true
+                        );
+                      }
+                    }, 10);
+                  }}
+                  onMouseLeave={() => clearTimeout(globalThis._holdTimeout)}
                 >
                   {customScreens?.value <= 1 ? (
                     <SingleScreenIcon />
@@ -1232,27 +1259,10 @@ function SideBar() {
               </div>
             )}
             <div className="tabsContainer">
-              <span>Tabs & Folders</span>
+              <span>Tabs</span>
               <div
                 style={{ display: "flex", alignItems: "center", gap: "5px" }}
               >
-                <span
-                  // onClick={() => setMultiSelectMode(!multiSelectMode)}
-                  className="material-symbols-outlined "
-                  style={{
-                    cursor: "pointer",
-                    fontSize: "18px",
-                    color: multiSelectMode ? "#4CAF50" : "inherit",
-                    background: multiSelectMode
-                      ? "rgba(76, 175, 80, 0.1)"
-                      : "transparent",
-                    borderRadius: "4px",
-                    padding: "2px",
-                  }}
-                  // title={}
-                >
-                  {`home`}
-                </span>
                 <span
                   style={{ "user-select": "none" }}
                   onMouseDown={() => {
@@ -1476,43 +1486,50 @@ export const SpaceUI = () => {
   globalThis.SetGlobalProfilePic = setGlobalProfilePic;
   if (sidebarWidth !== 0)
     return (
-      <div
-        style={{ width: sidebarWidth }}
-        className={
-          collapsed
-            ? "profileSection-collapsed"
-            : `profileSection ${openOnMobile ? "open" : ""} ${
-                fullScreen ? "floatProfileSection" : null
-              }`
-        }
-      >
-        {!collapsed ? (
-          <>
-            <span
-              style={{ cursor: "pointer" }}
-              onClick={() => setSideBarMode("settings")}
-              className="material-symbols-outlined"
-            >
-              settings
-            </span>
-            <SettingsProfile />
-            <UserProfile />
-          </>
-        ) : (
-          <>
-            <Icon
-              icon="settings"
-              onClick={() => {
-                setCollapsed(false);
-                setSidebarWidth(280);
-                setSideBarMode("settings");
-              }}
-            />
-            <UserProfile collapsed={true} />
-          </>
-        )}
-        <style>{getStyleOf("sidebar.css")}</style>
-      </div>
+      <>
+        <style>{`
+            .profileSection{
+              width:${sidebarWidth}px !important;
+            }
+        `}</style>
+        <div
+          // style={{ width: `${sidebarWidth}px !important` }}
+          className={
+            collapsed
+              ? "profileSection-collapsed"
+              : `profileSection ${openOnMobile ? "open" : ""} ${
+                  fullScreen ? "floatProfileSection" : null
+                }`
+          }
+        >
+          {!collapsed ? (
+            <>
+              <span
+                style={{ cursor: "pointer" }}
+                onClick={() => setSideBarMode("settings")}
+                className="material-symbols-outlined"
+              >
+                settings
+              </span>
+              <SettingsProfile />
+              <UserProfile />
+            </>
+          ) : (
+            <>
+              <Icon
+                icon="settings"
+                onClick={() => {
+                  setCollapsed(false);
+                  setSidebarWidth(280);
+                  setSideBarMode("settings");
+                }}
+              />
+              <UserProfile collapsed={true} />
+            </>
+          )}
+          <style>{getStyleOf("sidebar.css")}</style>
+        </div>
+      </>
     );
 };
 const Icon = ({ icon, onClick }) => {
@@ -1588,6 +1605,9 @@ export const SettingsProfile = () => {
 
   const handleMouseDown = (spaceId) => {
     setActiveSpace(spaceId);
+    setTimeout(() => {
+      globalThis.setOpenOnMobile(true);
+    }, 10);
     // setIsHolding(false);
     // holdTimeout.current = setTimeout(() => {
     //     setIsHolding(true);

@@ -34,6 +34,9 @@ function parseContent(content) {
       currentSection.verses.push({ verseNumber: number, text: verseText });
     } else if (type === 'line_break') {
       currentSection.verses.push({ verseNumber: null, text: '\n', lineBreak: true });
+    }else if (type === "hebrew_subtitle") {
+      console.log(sectionContent, "sectionContent")
+      currentSection.hebrew_subtitle = parseText(sectionContent);
     }
   });
 
@@ -172,12 +175,32 @@ export class BibleDataManager {
 
   async openNext() {
     if (this.data?.nextChapter) {
+
+      const match = this.data.nextChapter.match(/^\/api\/([^/]+)\/([^/]+)\/(\d+)\.json$/);
+
+      if (match) 
+      {
+        const [, , bookId, chapter] = match;
+        this.bookId = bookId;
+        this.chapter = Number(chapter);
+      }
+
       await this.fetch(this.data.nextChapter);
     }
   }
 
   async openPrevious() {
     if (this.data?.prevChapter) {
+
+      const match = this.data.prevChapter.match(/^\/api\/([^/]+)\/([^/]+)\/(\d+)\.json$/);
+
+      if (match) 
+      {
+        const [, , bookId, chapter] = match;
+        this.bookId = bookId;
+        this.chapter = Number(chapter);
+      }
+
       await this.fetch(this.data.prevChapter);
     }
   }

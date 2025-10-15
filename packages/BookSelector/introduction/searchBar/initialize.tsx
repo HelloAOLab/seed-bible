@@ -24,6 +24,11 @@ const App = () => {
         <style>{css}</style>
         <link href="https://fonts.googleapis.com/icon?family=Material+Icons" rel="stylesheet" />
         <link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Material+Symbols+Outlined:opsz,wght,FILL,GRAD@24,400,0,0" />
+        <link rel="preconnect" href="https://fonts.googleapis.com" />
+        <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
+        <link href="https://fonts.googleapis.com/css2?family=DM+Sans:ital,opsz,wght@0,9..40,100..1000;1,9..40,100..1000&family=Newsreader:ital,opsz,wght@0,6..72,200..800;1,6..72,200..800&family=Plus+Jakarta+Sans:ital,wght@0,200..800;1,200..800&display=swap" rel="stylesheet" />
+        <link href="https://fonts.googleapis.com/css2?family=DM+Mono:ital,wght@0,300;0,400;0,500;1,300;1,400;1,500&family=DM+Sans:ital,opsz,wght@0,9..40,100..1000;1,9..40,100..1000&display=swap" rel="stylesheet" />
+        <link href="https://api.fontshare.com/v2/css?f[]=satoshi@400&display=swap" rel="stylesheet" />
         <>
             <div
                 id="sidebar-bar"
@@ -72,7 +77,7 @@ const setTranslation = async () => {
         console.log("changing translation 2")
         let selectedTranslation = thePage.masks?.selectedTranslation;
         if (selectedTranslation?.listOfBooksApiLink?.includes("https")) {
-        console.log("changing translation 3")
+            console.log("changing translation 3")
             web.get(`${selectedTranslation.listOfBooksApiLink}`).then(e => {
                 let book0 = e.data.books[0];
                 console.log(selectedTranslation.id, book0, selectedTranslation.origin, "changing translation 5")
@@ -81,7 +86,7 @@ const setTranslation = async () => {
                 console.log(e)
             })
         } else {
-        console.log("changing translation 4")
+            console.log("changing translation 4")
             web.get(`https://bible.helloao.org/api/${selectedTranslation.id}/books.json`).then(e => {
                 let book0 = e.data.books[0];
                 ChangeTranslation(selectedTranslation.id, book0, "https://bible.helloao.org");
