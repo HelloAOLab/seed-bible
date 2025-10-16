@@ -1,17 +1,17 @@
 const {piece, data} = that;
 
-let entries;
-if(piece) entries = thisBot.GetHistoryEntriesForElement({piece});
+let timestamp;
+if(piece) timestamp = thisBot.GetHistoryEntriesForElement({piece});
 else if(data)
 {
-    const {typeOfPiece, key} = data;
-    entries = thisBot.GetHistoryEntries({typeOfPiece, key});
+    const {typeOfPiece, book, chapter} = data;
+    timestamp = thisBot.GetHistoryEntries({typeOfPiece, book, chapter});
 }
 let color;
-if(entries.length > 0)
+if(timestamp)
 {
-    const entriesDeltaTime = entries.map((entry) => {return os.localTime - entry.date.getTime()});
-    color = thisBot.GetHistoryColorByDeltaTime({deltaTime: entriesDeltaTime[entriesDeltaTime.length - 1]});
+    const deltaTime = (os.localTime - timestamp);
+    color = thisBot.GetHistoryColorByDeltaTime({deltaTime});
 }
 else color = BibleVizUtils.Data.tags.historyNullColor
 return color;

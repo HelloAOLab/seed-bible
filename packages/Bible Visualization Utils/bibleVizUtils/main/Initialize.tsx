@@ -71,8 +71,13 @@ globalThis.BibleVizUtils = {
 }
 const {HistoryTimePeriodInfo} = await import("bibleVizUtils.classes.HistoryTimePeriodInfo");
 
-const nowTimePeriod = new HistoryTimePeriodInfo({color: "#ea42ea", isNowTimePeriod: true})
-const defaultTimePeriod = new HistoryTimePeriodInfo({color: "#42ea6b", timeAmount: 30, timeUnit: bibleVizData.tags.TimeUnit.Days})
+const nowTimePeriod      = new HistoryTimePeriodInfo({color: "#D36433", isNowTimePeriod: true})
+const defaultTimePeriod1 = new HistoryTimePeriodInfo({color: "#D49833", timeAmount: 1, timeUnit: bibleVizData.tags.TimeUnit.Minutes});
+const defaultTimePeriod2 = new HistoryTimePeriodInfo({color: "#D4C033", timeAmount: 1, timeUnit: bibleVizData.tags.TimeUnit.Hours});
+const defaultTimePeriod3 = new HistoryTimePeriodInfo({color: "#9ED659", timeAmount: 1, timeUnit: bibleVizData.tags.TimeUnit.Days});
+const defaultTimePeriod4 = new HistoryTimePeriodInfo({color: "#81D698", timeAmount: 1, timeUnit: bibleVizData.tags.TimeUnit.Weeks});
+const defaultTimePeriod5 = new HistoryTimePeriodInfo({color: "#A0D3D6", timeAmount: 1, timeUnit: bibleVizData.tags.TimeUnit.Months});
+const defaultTimePeriod6 = new HistoryTimePeriodInfo({color: "#ADB9D5", timeAmount: 1, timeUnit: bibleVizData.tags.TimeUnit.Years});
 
 
 const UsersColorValues = {
@@ -136,7 +141,15 @@ setTag(bibleVizData, "BibleLayoutMeasurements", BibleLayoutMeasurements);
 setTag(bibleVizData, "StackPieceMeasurements", StackPieceMeasurements);
 setTagMask(bibleVizData, "isInHistoryMode", false);
 setTagMask(bibleVizData, 'highlightHistoryIndex', -1);
-setTagMask(bibleVizData, "historyTimePeriodsInfo", [nowTimePeriod, defaultTimePeriod])
+setTagMask(bibleVizData, "historyTimePeriodsInfo", [
+    nowTimePeriod, 
+    defaultTimePeriod1,
+    defaultTimePeriod2,
+    defaultTimePeriod3,
+    defaultTimePeriod4,
+    defaultTimePeriod5,
+    defaultTimePeriod6
+])
 bibleVizData.vars.history = [];
 bibleVizData.vars.highlightHistory = [];
 bibleVizData.vars.customArrangements = [];
@@ -229,3 +242,5 @@ if(PoolData && CustomTag)
 }
 
 shout("OnBibleVizUtilsInitialized")
+
+thisBot.StartHistoryUpdate();
