@@ -1,10 +1,10 @@
-import {ProjectFiltersSelectorOption} from "bibleLayout2D.main.ProjectFiltersSelectorOption"
-import { useBibleLayout2DContext } from "bibleLayout2D.main.BibleLayout2DContext"
+import {ProjectFiltersSelectorOption} from "scriptureMap2D.main.ProjectFiltersSelectorOption"
+import { useScriptureMap2DContext } from "scriptureMap2D.main.ScriptureMap2DContext"
 
 const {useMemo, useCallback} = os.appHooks
 
 export const ProjectFiltersSelector = () => {
-    const { projectFilters, handleProjectFilterOptionClick, ProjectChapterState, projectStateStyle } = useBibleLayout2DContext();
+    const { projectFilters, handleProjectFilterOptionClick, ProjectChapterState, projectStateStyle } = useScriptureMap2DContext();
 
     const allSelected = useMemo(() => {
         return Array.from(projectFilters).every(([, value]) => { return value });

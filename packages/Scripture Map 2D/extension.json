@@ -8,7 +8,7 @@
         "label": "Scripture Map 2D",
         "hasToggle": true,
         "icon": "browse",
-        "active": true,
+        "active": false,
         "showInPageToolbar": true,
         "showInStarterToolbar": true
     },
@@ -38,8 +38,8 @@
   "id": 1757954638673,
   "license": "MIT",
   "linkedDependencies": [],
-  "mainBotTag": "bibleLayout2D.main",
-  "name": "Bible Layout 2D",
+  "mainBotTag": "scriptureMap2D.main",
+  "name": "Scripture Map 2D",
   "otherBots": [],
   "recordFile": {
     "sha256Hash": "0793f76a97452abc57914179748fcc8f739f1f2a51dc9d8017850781170a5062",

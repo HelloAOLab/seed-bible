@@ -1,8 +1,8 @@
-import { useTestamentContext } from "bibleLayout2D.main.TestamentContext"
-import { useBibleLayout2DContext } from "bibleLayout2D.main.BibleLayout2DContext"
-import { Book } from "bibleLayout2D.main.Book"
-import {useResizeObserver} from "bibleLayout2D.main.CustomHooks"
-import {SectionToggle} from "bibleLayout2D.main.SectionToggle"
+import { useTestamentContext } from "scriptureMap2D.main.TestamentContext"
+import { useScriptureMap2DContext } from "scriptureMap2D.main.ScriptureMap2DContext"
+import { Book } from "scriptureMap2D.main.Book"
+import {useResizeObserver} from "scriptureMap2D.main.CustomHooks"
+import {SectionToggle} from "scriptureMap2D.main.SectionToggle"
 const { useMemo, useCallback, useState, useRef } = os.appHooks;
 
 export const TestamentContent = ({hidden}) => {
@@ -12,7 +12,7 @@ export const TestamentContent = ({hidden}) => {
         scaleFactor,
         showLabels,
         bookWidth
-    } = useBibleLayout2DContext();
+    } = useScriptureMap2DContext();
 
     const contentRef = useRef(null);
     const {width: contentWidth} = useResizeObserver(contentRef);

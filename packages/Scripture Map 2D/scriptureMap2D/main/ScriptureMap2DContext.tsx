@@ -1,6 +1,6 @@
 const { createContext, useRef, useState, useContext, useCallback, useMemo, useEffect } = os.appHooks;
 
-const BibleLayout2DContext = createContext();
+const ScriptureMap2DContext = createContext();
 
 const usersInfo = {
     Gabriel: {
@@ -205,10 +205,10 @@ const ContentVisualizationType = {
 const MIN_SCALE_FACTOR = 0.25;
 const MAX_SCALE_FACTOR = 1.5;
 
-export const BibleLayout2DProvider = ({
+export const ScriptureMap2DProvider = ({
         children,
         parentContext,
-        BibleLayout2DModes, 
+        ScriptureMap2DModes, 
         ProjectChapterState
     }) => {
 
@@ -278,7 +278,7 @@ export const BibleLayout2DProvider = ({
     const subscribeToHistoryUpdate = useCallback((callback) => {
         historyUpdateListeners.current.add(callback);
     }, [])
-    globalThis.bibleLayout2DHistoryUpdate = useCallback(() => {
+    globalThis.scriptureMap2DHistoryUpdate = useCallback(() => {
         historyUpdateListeners.current.forEach((currFunction) => {currFunction?.()});
     }, [])
 
@@ -309,7 +309,7 @@ export const BibleLayout2DProvider = ({
     const maxChapterHeatCount = useMemo(() => {return 5}, []);
 
     useEffect(() => {
-        return () => {globalThis.bibleLayout2DHistoryUpdate = null}
+        return () => {globalThis.scriptureMap2DHistoryUpdate = null}
     }, [])
 
     const handleUserButtonClick = useCallback(({user}) => {
@@ -354,7 +354,7 @@ export const BibleLayout2DProvider = ({
     }, [projectFilters])
 
     return (
-        <BibleLayout2DContext.Provider value={{ 
+        <ScriptureMap2DContext.Provider value={{ 
             scaleFactor,
             MIN_SCALE_FACTOR,
             setScaleFactor,
@@ -392,16 +392,16 @@ export const BibleLayout2DProvider = ({
             readingHistory,
             upcomingEvents,
             projectFilters,
-            BibleLayout2DModes,
+            ScriptureMap2DModes,
             ProjectChapterState,
             projectStateStyle,
             ...parentContext
         }} >
             {children}
-        </BibleLayout2DContext.Provider>
+        </ScriptureMap2DContext.Provider>
     );
 }
 
-export const useBibleLayout2DContext = () => {
-    return useContext(BibleLayout2DContext);
+export const useScriptureMap2DContext = () => {
+    return useContext(ScriptureMap2DContext);
 }

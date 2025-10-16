@@ -1,4 +1,4 @@
-import { useTestamentContext } from "bibleLayout2D.main.TestamentContext"
+import { useTestamentContext } from "scriptureMap2D.main.TestamentContext"
 // const { useMemo, useCallback, useState } = os.appHooks;
 
 export const TestamentToggle = ({ toggleshowContent, showingContent }) => {

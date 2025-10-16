@@ -1,4 +1,4 @@
-import {BibleLayout2D, BibleLayout2DModes} from "bibleLayout2D.main.BibleLayout2D"
+import {ScriptureMap2D, ScriptureMap2DModes} from "scriptureMap2D.main.ScriptureMap2D"
 
 const App = () => {
     return (
@@ -10,8 +10,8 @@ const App = () => {
             padding: "20px 0",
             backgroundColor: "white"
         }}>
-            <BibleLayout2D parentContext={{
-                mode: BibleLayout2DModes.Viewer,
+            <ScriptureMap2D parentContext={{
+                mode: ScriptureMap2DModes.Viewer,
                 arrangementIndex: 0,
                 // selection,
                 // isInSelectionMode,

@@ -1,6 +1,6 @@
-import { SelectionOptions } from "bibleLayout2D.main.SelectionOptions"
-import { ProjectStateSetterOption } from "bibleLayout2D.main.ProjectStateSetterOption"
-import { useBibleLayout2DContext } from "bibleLayout2D.main.BibleLayout2DContext"
+import { SelectionOptions } from "scriptureMap2D.main.SelectionOptions"
+import { ProjectStateSetterOption } from "scriptureMap2D.main.ProjectStateSetterOption"
+import { useScriptureMap2DContext } from "scriptureMap2D.main.ScriptureMap2DContext"
 
 const {useCallback} = os.appHooks;
 
@@ -14,7 +14,7 @@ export const ProjectStateSetter = () => {
         onSelectionModeDoneButtonClick,
         onStateSetterOptionClick,
         onSelectionModeClearSelectionButtonClick
-    } = useBibleLayout2DContext()
+    } = useScriptureMap2DContext()
 
     const getOptionContent = useCallback((key) => {
         let title;

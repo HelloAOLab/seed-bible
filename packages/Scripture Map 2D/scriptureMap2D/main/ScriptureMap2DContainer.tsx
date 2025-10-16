@@ -1,9 +1,9 @@
-import { useBibleLayout2DContext } from "bibleLayout2D.main.BibleLayout2DContext"
-import { TestamentContainer } from "bibleLayout2D.main.TestamentContainer"
+import { useScriptureMap2DContext } from "scriptureMap2D.main.ScriptureMap2DContext"
+import { TestamentContainer } from "scriptureMap2D.main.TestamentContainer"
 
-export const BibleLayout2DContainer = () => {
+export const ScriptureMap2DContainer = () => {
     
-    const { scaleFactor, arrangement } = useBibleLayout2DContext();
+    const { scaleFactor, arrangement } = useScriptureMap2DContext();
     
     return (
         <div className="mapContainer" >

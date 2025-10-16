@@ -1,9 +1,9 @@
 if(thisBot.masks.initialized) return;
 
 setTagMask(thisBot, "initialized", true);
-if(typeof BibleLayout2DManager === "undefined")
+if(typeof ScriptureMap2DManager === "undefined")
 {
-    globalThis.BibleLayout2DManager = thisBot;
+    globalThis.ScriptureMap2DManager = thisBot;
 }
 
 thisBot.StartReadingHistoryUpdate();

@@ -1,7 +1,7 @@
-import { BibleLayout2DProvider } from "bibleLayout2D.main.BibleLayout2DContext"
-import { Wrapper } from "bibleLayout2D.main.Wrapper"
+import { ScriptureMap2DProvider } from "scriptureMap2D.main.ScriptureMap2DContext"
+import { Wrapper } from "scriptureMap2D.main.Wrapper"
 
-export const BibleLayout2DModes = Object.freeze({
+export const ScriptureMap2DModes = Object.freeze({
     Viewer: "Viewer",
     Checkbox: "Checkbox",
     Project: "Project"
@@ -15,23 +15,23 @@ export const ProjectChapterState = Object.freeze({
     Completed: "Completed",
 });
 
-export const BibleLayout2D = ({parentContext}) => {
+export const ScriptureMap2D = ({parentContext}) => {
 
     const {mode, project, mapToolProviderRef} = parentContext;
 
-    if(mode === BibleLayout2DModes.Project && !project) return null
+    if(mode === ScriptureMap2DModes.Project && !project) return null
     
     return (
         <>
-            <style>{thisBot.tags["BibleLayout2D.css"]}</style>
-            <BibleLayout2DProvider 
+            <style>{thisBot.tags["ScriptureMap2D.css"]}</style>
+            <ScriptureMap2DProvider 
                 ref={mapToolProviderRef}
                 parentContext={parentContext}
-                BibleLayout2DModes={BibleLayout2DModes}
+                ScriptureMap2DModes={ScriptureMap2DModes}
                 ProjectChapterState={ProjectChapterState}
             >
                 <Wrapper />
-            </ BibleLayout2DProvider>
+            </ ScriptureMap2DProvider>
         </>
     );
 };

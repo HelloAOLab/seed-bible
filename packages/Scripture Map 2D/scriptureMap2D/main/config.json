@@ -6,7 +6,7 @@
         "label": "Scripture Map 2D",
         "hasToggle": true,
         "icon": "browse",
-        "active": true,
+        "active": false,
         "showInPageToolbar": true,
         "showInStarterToolbar": true
     },
