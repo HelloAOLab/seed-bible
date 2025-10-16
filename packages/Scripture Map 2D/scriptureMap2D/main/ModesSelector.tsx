@@ -1,9 +1,9 @@
-import { useBibleLayout2DContext } from "bibleLayout2D.main.BibleLayout2DContext"
-import { ToggleButton } from "bibleLayout2D.main.ToggleButton"
+import { useScriptureMap2DContext } from "scriptureMap2D.main.ScriptureMap2DContext"
+import { ToggleButton } from "scriptureMap2D.main.ToggleButton"
 
 export const ModesSelector = () => {
     
-    const { modes, handleModeButtonClick } = useBibleLayout2DContext();
+    const { modes, handleModeButtonClick } = useScriptureMap2DContext();
     
     return (
         <div className="modesSelector">

@@ -1,8 +1,8 @@
-// import { useBibleLayout2DContext } from "bibleLayout2D.main.BibleLayout2DContext"
+// import { useScriptureMap2DContext } from "scriptureMap2D.main.ScriptureMap2DContext"
 
 // const UserButton = ({name, color, borderColor}) => {
     
-//     const { handleUserButtonClick } = useBibleLayout2DContext();
+//     const { handleUserButtonClick } = useScriptureMap2DContext();
 
 //     return (
 //         <button onClick={() => {handleUserButtonClick({user: name})}} className="userButton">
@@ -14,7 +14,7 @@
 
 // export const UsersSelector = () => {
     
-//     const { usersStatus, content, usersInfo } = useBibleLayout2DContext();
+//     const { usersStatus, content, usersInfo } = useScriptureMap2DContext();
     
 //     return (
 //         <div className="usersSelector">

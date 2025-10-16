@@ -1,8 +1,8 @@
-import { useBibleLayout2DContext } from "bibleLayout2D.main.BibleLayout2DContext"
+import { useScriptureMap2DContext } from "scriptureMap2D.main.ScriptureMap2DContext"
 
 export const PresentUserPresenceBookIcon = ({user, index, length, }) => {
 
-    const { usersInfo } = useBibleLayout2DContext();
+    const { usersInfo } = useScriptureMap2DContext();
 
     return (
         <div className="presentUserPresenceIcon presentUserPresenceIcon-book" style={{
@@ -17,7 +17,7 @@ export const PresentUserPresenceBookIcon = ({user, index, length, }) => {
 
 export const PresentUserPresenceTooltipIcon = ({user}) => {
 
-    const { usersInfo } = useBibleLayout2DContext();
+    const { usersInfo } = useScriptureMap2DContext();
 
     return (
         <div className="presentUserPresenceIcon presentUserPresenceIcon-tooltip" style={{

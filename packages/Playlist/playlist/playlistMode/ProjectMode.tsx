@@ -1,14 +1,14 @@
-// import { BibleLayout2D, BibleLayout2DModes, ProjectChapterState } from "interactiveBible.managers.MapsManager.BibleLayout2D"
+// import { ScriptureMap2D, ScriptureMap2DModes, ProjectChapterState } from "interactiveBible.managers.MapsManager.ScriptureMap2D"
 
-let BibleLayout2D, BibleLayout2DModes, ProjectChapterState;
+let ScriptureMap2D, ScriptureMap2DModes, ProjectChapterState;
 
 try {
-    const module = await import("bibleLayout2D.main.BibleLayout2D");
-    ({ BibleLayout2D, BibleLayout2DModes, ProjectChapterState } = module);
+    const module = await import("scriptureMap2D.main.ScriptureMap2D");
+    ({ ScriptureMap2D, ScriptureMap2DModes, ProjectChapterState } = module);
 }
 catch (error) {
-    console.warn("Could not find modules BibleLayout2D, BibleLayout2DModes and ProjectChapterState in bibleLayout2D.main.BibleLayout2D", { error });
-    BibleLayout2DModes = {};
+    console.warn("Could not find modules ScriptureMap2D, ScriptureMap2DModes and ProjectChapterState in scriptureMap2D.main.ScriptureMap2D", { error });
+    ScriptureMap2DModes = {};
     ProjectChapterState = {};
 }
 
@@ -91,7 +91,7 @@ const ProjectMode = ({
             })
         ) : {}
     }, [])
-    const [mapMode, setMapMode] = useState(BibleLayout2DModes?.Project);
+    const [mapMode, setMapMode] = useState(ScriptureMap2DModes?.Project);
     const [project, setProject] = useState(getNewProject());
     const [selection, setSelection] = useState(getEmptySelection())
     const [isInSelectionMode, setIsInSelectionMode] = useState(false);
@@ -442,7 +442,7 @@ const ProjectMode = ({
                 </div>
             </div>
 
-            {BibleLayout2D && <BibleLayout2D parentContext={{
+            {ScriptureMap2D && <ScriptureMap2D parentContext={{
                 mode: mapMode,
                 arrangementIndex,
                 selection,

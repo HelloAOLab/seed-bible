@@ -1,10 +1,10 @@
 const { useState, useCallback, useEffect, useMemo } = os.appHooks;
-import { useBibleLayout2DContext } from "bibleLayout2D.main.BibleLayout2DContext"
-import { Tooltip } from "bibleLayout2D.main.Tooltip"
-// import { PresentUserPresenceTooltipIcon } from "bibleLayout2D.main.PresentUserPresenceIcon"
-import { useTestamentContext } from "bibleLayout2D.main.TestamentContext"
+import { useScriptureMap2DContext } from "scriptureMap2D.main.ScriptureMap2DContext"
+import { Tooltip } from "scriptureMap2D.main.Tooltip"
+// import { PresentUserPresenceTooltipIcon } from "scriptureMap2D.main.PresentUserPresenceIcon"
+import { useTestamentContext } from "scriptureMap2D.main.TestamentContext"
 
-import {useClickAndHold} from "bibleLayout2D.main.CustomHooks"
+import {useClickAndHold} from "scriptureMap2D.main.CustomHooks"
 
 // const ChapterNotificationContainer = ({
 //     bookName,
@@ -16,7 +16,7 @@ import {useClickAndHold} from "bibleLayout2D.main.CustomHooks"
 //     tooltipDirection = "up",
 //     className,
 // }) => {
-//     const context = useBibleLayout2DContext();
+//     const context = useScriptureMap2DContext();
 //     const [containerRect, setContainerRect] = useState(null);
 
 //     const { tooltipContent, tooltipAnchor, items } = useMemo(() => {
@@ -129,7 +129,7 @@ import {useClickAndHold} from "bibleLayout2D.main.CustomHooks"
 //     />
 // );
 // const PresentUserPresenceDotContainer = ({ bookName, chapterIndex, usersInChapter }) => {
-//     const { userPresence } = useBibleLayout2DContext();
+//     const { userPresence } = useScriptureMap2DContext();
 
 //     return (
 //         <ChapterNotificationContainer
@@ -162,7 +162,7 @@ import {useClickAndHold} from "bibleLayout2D.main.CustomHooks"
 // };
 // const PresentUserPresenceDot = ({ user, index, length }) => {
 
-//     const { usersInfo } = useBibleLayout2DContext();
+//     const { usersInfo } = useScriptureMap2DContext();
 
 //     return (
 //         <div
@@ -194,7 +194,7 @@ export const Chapter = ({ index, bookName, sectionName}) => {
         ContentVisualizationType,
         mode,
         selection,
-        BibleLayout2DModes,
+        ScriptureMap2DModes,
         project,
         projectFilters,
         projectStateStyle,
@@ -202,7 +202,7 @@ export const Chapter = ({ index, bookName, sectionName}) => {
         onChapterClickDependencies,
         onChapterClickAndHold,
         isInSelectionMode
-    } = useBibleLayout2DContext();
+    } = useScriptureMap2DContext();
     
     const { testament } = useTestamentContext();
     
@@ -244,7 +244,7 @@ export const Chapter = ({ index, bookName, sectionName}) => {
     const { background, borderStyle, borderColor, color/*displayContainer, gridColumns, gridRows, filteredUsers*/ } = useMemo(() => {
 
         const baseColor = [227, 227, 227];
-        const hasProjectContent = project && mode === BibleLayout2DModes.Project && (isInSelectionMode || projectFilters.get(project.structure[testament.name][sectionName][bookName][index]));
+        const hasProjectContent = project && mode === ScriptureMap2DModes.Project && (isInSelectionMode || projectFilters.get(project.structure[testament.name][sectionName][bookName][index]));
 
         const filteredUsers = Array.from(usersStatus).filter(([user, enabled]) => {
             return enabled && content.get(user).books?.[bookName]?.[index + 1]?.length > 0
@@ -293,7 +293,7 @@ export const Chapter = ({ index, bookName, sectionName}) => {
 
         switch(mode)
         {
-            case BibleLayout2DModes.Project: {
+            case ScriptureMap2DModes.Project: {
                 if(hasProjectContent || checked)
                 {
                     const style = projectStateStyle[project.structure[testament.name][sectionName][bookName][index]];
@@ -304,7 +304,7 @@ export const Chapter = ({ index, bookName, sectionName}) => {
             }
             break;
 
-            case BibleLayout2DModes.Viewer: {
+            case ScriptureMap2DModes.Viewer: {
                 if(isReadingHistoryEnabled && historyColor) 
                 {
                     background = historyColor;
@@ -314,7 +314,7 @@ export const Chapter = ({ index, bookName, sectionName}) => {
             }
             break;
 
-            case BibleLayout2DModes.Checkbox: {
+            case ScriptureMap2DModes.Checkbox: {
                 if(checked) borderColor = "#2AB80D"
             }
             break;
@@ -354,7 +354,7 @@ export const Chapter = ({ index, bookName, sectionName}) => {
     //     return { usersInChapter }
     // }, [userPresence, isUserPresenceEnabled, modes])
 
-    /*{mode === BibleLayout2DModes.Viewer && isUserPresenceEnabled && displayContainer && <div className="contentContainer" style={{
+    /*{mode === ScriptureMap2DModes.Viewer && isUserPresenceEnabled && displayContainer && <div className="contentContainer" style={{
         gridTemplateColumns: gridColumns,
         gridTemplateRows: gridRows
     }}>
@@ -364,12 +364,12 @@ export const Chapter = ({ index, bookName, sectionName}) => {
     </div>}
 
     
-    {mode === BibleLayout2DModes.Viewer && isUserPresenceEnabled && modes.get("Reading") && <>
+    {mode === ScriptureMap2DModes.Viewer && isUserPresenceEnabled && modes.get("Reading") && <>
         <PresentUserPresenceDotContainer bookName={bookName} chapterIndex={index} usersInChapter={usersInChapter} />
         <ReadingHistoryChapterNotificationContainer bookName={bookName} chapterIndex={index} />
         <UpcomingEventsChapterNotificationContainer bookName={bookName} chapterIndex={index} />
     </>}*/
-    // {mode === BibleLayout2DModes.Viewer && isReadingHistoryEnabled && <ReadingHistoryChapterNotificationContainer bookName={bookName} chapterIndex={index} />}
+    // {mode === ScriptureMap2DModes.Viewer && isReadingHistoryEnabled && <ReadingHistoryChapterNotificationContainer bookName={bookName} chapterIndex={index} />}
     return (
         <div
             className="chapter"

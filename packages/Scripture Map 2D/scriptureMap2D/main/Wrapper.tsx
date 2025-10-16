@@ -1,7 +1,7 @@
-import { BibleLayout2DContainer } from "bibleLayout2D.main.BibleLayout2DContainer"
-import { Settings } from "bibleLayout2D.main.Settings"
-import { useBibleLayout2DContext } from "bibleLayout2D.main.BibleLayout2DContext"
-import { Controls } from "bibleLayout2D.main.Controls"
+import { ScriptureMap2DContainer } from "scriptureMap2D.main.ScriptureMap2DContainer"
+import { Settings } from "scriptureMap2D.main.Settings"
+import { useScriptureMap2DContext } from "scriptureMap2D.main.ScriptureMap2DContext"
+import { Controls } from "scriptureMap2D.main.Controls"
 
 export const Wrapper = () => {
 
@@ -12,7 +12,7 @@ export const Wrapper = () => {
         chapterWidth,
         chapterHeight,
         scaleFactor
-    } = useBibleLayout2DContext();
+    } = useScriptureMap2DContext();
     
     return (
         <div 
@@ -27,7 +27,7 @@ export const Wrapper = () => {
             }}
         >
             <Settings />
-            <BibleLayout2DContainer />
+            <ScriptureMap2DContainer />
             <Controls />
         </div>
     )    

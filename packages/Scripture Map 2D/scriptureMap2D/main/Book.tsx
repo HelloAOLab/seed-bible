@@ -1,8 +1,8 @@
-import { useBibleLayout2DContext } from "bibleLayout2D.main.BibleLayout2DContext"
-import { Chapter } from "bibleLayout2D.main.Chapter"
-import { PresentUserPresenceBookIcon } from "bibleLayout2D.main.PresentUserPresenceIcon"
-import { useTestamentContext } from "bibleLayout2D.main.TestamentContext"
-import {useClickAndHold} from "bibleLayout2D.main.CustomHooks"
+import { useScriptureMap2DContext } from "scriptureMap2D.main.ScriptureMap2DContext"
+import { Chapter } from "scriptureMap2D.main.Chapter"
+import { PresentUserPresenceBookIcon } from "scriptureMap2D.main.PresentUserPresenceIcon"
+import { useTestamentContext } from "scriptureMap2D.main.TestamentContext"
+import {useClickAndHold} from "scriptureMap2D.main.CustomHooks"
 const { useMemo, useState, useEffect, useCallback } = os.appHooks;
 
 export const Book = ({
@@ -26,7 +26,7 @@ export const Book = ({
         contentVisualization,
         ContentVisualizationType,
         // mode,
-        // BibleLayout2DModes,
+        // ScriptureMap2DModes,
         selection,
         // handleCheckboxChange,
         // isInSelectionMode,
@@ -40,7 +40,7 @@ export const Book = ({
         chapterPadding,
         chapterWidth,
         chapterHeight,
-    } = useBibleLayout2DContext();
+    } = useScriptureMap2DContext();
     const { testament } = useTestamentContext() 
     
     const [showChapters, setShowChapters] = useState(showingAllChapters);

@@ -1,10 +1,10 @@
-import { useBibleLayout2DContext } from "bibleLayout2D.main.BibleLayout2DContext"
+import { useScriptureMap2DContext } from "scriptureMap2D.main.ScriptureMap2DContext"
 
 const { useState, useCallback, useMemo } = os.appHooks;
 
 const ZoomLevelOption = ({value, handleZoomLevelClick}) => {
 
-    const { scaleFactor } = useBibleLayout2DContext();
+    const { scaleFactor } = useScriptureMap2DContext();
 
     const zoom = useMemo(() => {
         return value * 100
@@ -22,7 +22,7 @@ const ZoomLevelOption = ({value, handleZoomLevelClick}) => {
 
 const ZoomLevelSelector = ({setShowOptions}) => {
 
-    const { setScaleFactor } = useBibleLayout2DContext();
+    const { setScaleFactor } = useScriptureMap2DContext();
 
     const handleZoomLevelClick = useCallback((e, value) => {
         setShowOptions(false)
@@ -63,7 +63,7 @@ const ZoomButton = ({onClick, children}) => {
 
 export const Controls = () => {
 
-    const { scaleFactor } = useBibleLayout2DContext();
+    const { scaleFactor } = useScriptureMap2DContext();
 
     const currZoom = useMemo(() => {
         return Math.round(scaleFactor * 100)
@@ -71,7 +71,7 @@ export const Controls = () => {
 
     const [showOptions, setShowOptions] = useState(false);
 
-    const { handleZoomIn, handleZoomOut, /*handleLabelsToggle, handleShowAllChaptersToggle, showingAllChapters, handleContentHeatmapToggle*/ } = useBibleLayout2DContext();
+    const { handleZoomIn, handleZoomOut, /*handleLabelsToggle, handleShowAllChaptersToggle, showingAllChapters, handleContentHeatmapToggle*/ } = useScriptureMap2DContext();
     
     /*{<>
         <button onClick={handleLabelsToggle}><span class="material-symbols-outlined">sell</span></button>
