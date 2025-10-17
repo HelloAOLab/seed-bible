@@ -1,0 +1,178 @@
+.hints-tries {
+    padding: 8px 12px;
+    top: 20px;
+    left: 50%;
+    transform: translateX(-50%);
+    background-color: transparent;
+    font-weight: 700;
+}
+
+.hints-details {
+    display: flex;
+    flex-direction: column;
+}
+
+.buttons {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+}
+
+.hints-details-circle {
+    display: flex;
+}
+
+.tries-circle {
+    width: 20px;
+    background-color: transparent;
+    height: 20px;
+    border-radius: 50%;
+    border: 1px solid gray;
+    margin: 0 4px;
+}
+
+.tries-circle.incorrect {
+    background-color: black;
+}
+
+.tries-circle.correct {
+    background-color: lightgreen;
+}
+
+.chance-message {
+    padding: 8px 12px;
+    background-color: #739bd0;  
+    border: 1px solid #ccc;
+    color: white;
+    text-align: center;
+    border-radius: 8px;
+}
+
+.chance-message.colder {
+    background-color: #739bd0;
+    animation: float-up 3.5s ease-in-out forwards;
+    color: white;
+}
+
+.chance-message.hotter {
+    animation: float-down 3.5s ease-in-out forwards;
+    color: white;
+}
+
+.game-results {
+  position: absolute;
+  z-index: 2;
+  top: 50%;
+  left: 50%;
+  padding: 8px 12px;
+  animation: 0.5s ease-in 1 forwards bounceIN;
+  transform: translate(-50%,-50%);
+  background-color: white;
+  opacity: 0;
+  border-radius: 8px; 
+  font-size: 16px;
+  color: black;
+}
+
+/* .game-results.success {
+  color: greenyellow;
+} */
+
+@keyframes shake {
+  0%, 100% {
+    transform: translateX(0);
+  }
+  10%, 30%, 50%, 70%, 90% {
+    transform: translateX(-5px);
+  }
+  20%, 40%, 60%, 80% {
+    transform: translateX(5px);
+  }
+}
+
+@keyframes float-up {
+  from {
+    transform: translateY(0);
+  }
+  to {
+    transform: translateY(-50px);
+  }
+}
+
+@keyframes float-down {
+  from {
+    transform: translateY(0);
+  }
+  to {
+    transform: translateY(50px);
+  }
+}
+
+/* Message  Box */
+
+.message-box {
+  position: relative;
+}
+
+.message-box p {
+  margin: 0;
+}
+
+.verse-block {
+  opacity: 1;
+  font-size: 18px;
+  /* position: absolute;
+  top: 0;
+  left: 0;
+  opacity: 1;
+  animation: bounceOut 2s 2s linear forwards; */
+}
+
+.message-block {
+  opacity: 1;
+  /* animation: bounceIN 0.2s 4.3s linear forwards; */
+}
+
+@keyframes bounceIN {
+    0% {
+        opacity: 0;
+    }
+    100% {
+        opacity: 1;
+    }
+}
+
+@keyframes bounceOut {
+    0% {
+        opacity: 1;
+    }
+    100% {
+        opacity: 0;
+    }
+}
+
+.location-verse-details {
+    background-image: url(https://auth-aux-aobot-prod-filesbucket-141297942820.s3.amazonaws.com/aoBot/293472411a0de0fc3389893446bdb71861cf94f3912033368c69cccb6f347757.gif);
+    background-clip: text;
+    color: transparent;
+    position: relative;
+}
+
+.location-verse-details::after {
+  content: "";
+  top: 0;
+  left: 0;
+  width: 110%;
+  height: 100%;
+  backdrop-filter: blur(4px);
+  background: rgba(255,255,255,0.1);
+  position: absolute;
+}
+
+.location-verse-details.show {
+  color: black;
+}
+
+.location-verse-details.show::after {
+  content: none;
+}

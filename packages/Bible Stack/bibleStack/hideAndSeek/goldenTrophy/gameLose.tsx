@@ -1,0 +1,1 @@
+whisper(thisBot,"showResults",{gameWon: false});
