@@ -1,4 +1,4 @@
-const {typeOfPiece, book, chapter} = that;
+const {book, chapter, userId} = that;
 
 if(!thisBot.vars.hooksBot)
 {
@@ -8,6 +8,6 @@ if(!thisBot.vars.hooksBot)
 if(!thisBot.vars.hooksBot) return null;
 
 const bookId = BibleVizUtils.Data.tags.booksStaticInfo[book].abbreviation
-const timestamp = thisBot.vars.hooksBot.vars.tempReadingHistory[configBot.id]?.[bookId]?.[chapter]
+const timestamp = thisBot.vars.hooksBot.vars.tempReadingHistory[userId]?.[bookId]?.[chapter]
 
 return timestamp

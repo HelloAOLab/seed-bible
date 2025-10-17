@@ -2,9 +2,9 @@ import {uuid} from "casualos"
 
 export class HistoryTimePeriodInfo
 {
-    constructor({color, timeAmount = 0, timeUnit = BibleVizUtils.Data.tags.TimeUnit.Minutes, isNowTimePeriod = false})
+    constructor({value, timeAmount = 0, timeUnit = BibleVizUtils.Data.tags.TimeUnit.Minutes, isNowTimePeriod = false})
     {
-        this.color = color
+        this.value = value
         this.timeAmount = timeAmount
         this.timeUnit = timeUnit;
         this.isNowTimePeriod = isNowTimePeriod;
@@ -16,12 +16,13 @@ export class HistoryTimePeriodInfo
         let time;
         switch(this.timeUnit)
         {
-            case BibleVizUtils.Data.tags.TimeUnit.Minutes: time = this.timeAmount * 60000; break;
-            case BibleVizUtils.Data.tags.TimeUnit.Hours: time = this.timeAmount * 3.6 * Math.pow(10, 6); break;
-            case BibleVizUtils.Data.tags.TimeUnit.Days: time = this.timeAmount * 8.64 * Math.pow(10, 7); break;
-            case BibleVizUtils.Data.tags.TimeUnit.Weeks: time = this.timeAmount * 6048 * Math.pow(10, 8); break;
-            case BibleVizUtils.Data.tags.TimeUnit.Months: time = this.timeAmount * 2628 * Math.pow(10, 9); break;
-            case BibleVizUtils.Data.tags.TimeUnit.Years: time = this.timeAmount * 3154 * Math.pow(10, 10); break;
+            case BibleVizUtils.Data.tags.TimeUnit.Minutes: time = this.timeAmount * 60 * 1000; break;
+            case BibleVizUtils.Data.tags.TimeUnit.Hours:   time = this.timeAmount * 60 * 60 * 1000; break;
+            case BibleVizUtils.Data.tags.TimeUnit.Days:    time = this.timeAmount * 24 * 60 * 60 * 1000; break;
+            case BibleVizUtils.Data.tags.TimeUnit.Weeks:   time = this.timeAmount * 7 * 24 * 60 * 60 * 1000; break;
+            case BibleVizUtils.Data.tags.TimeUnit.Months:  time = this.timeAmount * 30.44 * 24 * 60 * 60 * 1000; break;
+            case BibleVizUtils.Data.tags.TimeUnit.Years:   time = this.timeAmount * 365.25 * 24 * 60 * 60 * 1000; break;
+
             default: break;
         }
         return time;

@@ -716,7 +716,26 @@ function SideBar() {
   }, [editMode]);
 
   useEffect(() => {
+    
+    const usersIds = Object.keys(onlineUsers);
+    const timestamp = Date.now()
+    const hooks = getBot("system", "app.hooks");
+    
+    usersIds.forEach((userId) => {
+      const { bookId, chapter } = onlineUsers[userId];
+      if(hooks && (!thisBot.vars.prevOnlineUsers || thisBot.vars.prevOnlineUsers[userId].bookId !== bookId || thisBot.vars.prevOnlineUsers[userId].chapter !== chapter))
+      {
+        const tempHistory = hooks.vars.tempReadingHistory ??= {};
+        const userHistory = tempHistory[userId] ??= {};
+        const bookHistory = userHistory[bookId] ??= {};
+        bookHistory[chapter] = timestamp;
+      }
+    });
+      
+    thisBot.vars.prevOnlineUsers = onlineUsers;
+    
     shout("OnOnlineUsersChanged", { onlineUsers });
+
   }, [onlineUsers]);
 
   const {

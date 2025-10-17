@@ -169,7 +169,8 @@
 }
 
 
-.projectFiltersSelector
+.projectFiltersSelector,
+.readingHistoryUserSelector
 {
     display: flex;
     justify-content: flex-start;
@@ -189,6 +190,7 @@
     justify-content: center;
     align-items: center;
     gap: 8px;
+    cursor: pointer;
 }
 
 .projectFiltersSelectorOption.selected,

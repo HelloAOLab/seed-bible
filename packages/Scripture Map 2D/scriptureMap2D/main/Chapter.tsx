@@ -1,6 +1,7 @@
 const { useState, useCallback, useEffect, useMemo } = os.appHooks;
 import { useScriptureMap2DContext } from "scriptureMap2D.main.ScriptureMap2DContext"
 import { Tooltip } from "scriptureMap2D.main.Tooltip"
+
 // import { PresentUserPresenceTooltipIcon } from "scriptureMap2D.main.PresentUserPresenceIcon"
 import { useTestamentContext } from "scriptureMap2D.main.TestamentContext"
 
@@ -201,17 +202,20 @@ export const Chapter = ({ index, bookName, sectionName}) => {
         onChapterClick,
         onChapterClickDependencies,
         onChapterClickAndHold,
-        isInSelectionMode
+        isInSelectionMode,
+
+        readingHistoryUserId,
+        readingHistory,
     } = useScriptureMap2DContext();
     
     const { testament } = useTestamentContext();
     
     const checked = useMemo(() => { return selection?.[testament.name]?.[sectionName]?.[bookName]?.[index] ?? false }, [selection])
 
-    // const handleChapterClick = useCallback((e) => {
-    //     const key = {testamentName: testament.name, sectionName, bookName, chapterIndex: index}
-    //     onChapterClick(e, key, checked) 
-    // }, onChapterClickDependencies);
+    const handleChapterClick = useCallback((e) => {
+        const key = {testamentName: testament.name, sectionName, bookName, chapterIndex: index}
+        onChapterClick(e, key, checked) 
+    }, onChapterClickDependencies);
     
     const {onHoldStart, onHoldEnd} = useClickAndHold({
         holdTime: 400,
@@ -226,33 +230,51 @@ export const Chapter = ({ index, bookName, sectionName}) => {
         dependencies: onChapterClickDependencies
     })
 
-    const getChapterHistoryColor = useCallback(() => {
-        return BibleVizUtils.Functions.GetHistoryColor({ data: { typeOfElement: BibleVizUtils.Data.tags.BiblePieceType.Chapter, book: bookName, chapter: index + 1} })
+    const { baseColor, bookId, chapter } = useMemo(() => {
+        return {
+            baseColor: "#E3E3E3",
+            bookId: BibleVizUtils.Data.tags.booksStaticInfo[bookName].abbreviation,
+            chapter: index + 1
+        }
     }, [])
+
+    const getChapterHistoryColor = useCallback(() => {
+        const timestamp = readingHistory[readingHistoryUserId]?.[bookId]?.[chapter];
+
+        if(!timestamp) return baseColor;
+
+        const color = BibleVizUtils.Functions.GetHistoryColor({
+            baseColor, 
+            userColor: readingHistoryUserId === configBot.id ? BibleVizUtils.Data.tags.myUserColor : BibleVizUtils.Data.vars.userPresenceData[readingHistoryUserId].user.color, 
+            timestamp,
+        })
+
+        return color;
+    }, [readingHistoryUserId, readingHistory])
 
     const [historyColor, setHistoryColor] = useState(getChapterHistoryColor())
 
     const updateHistoryColor = useCallback(() => {
         setHistoryColor(getChapterHistoryColor())
-    }, [])
+    }, [getChapterHistoryColor])
 
     useEffect(() => {
         subscribeToHistoryUpdate(updateHistoryColor)
         return () => { unsubscribeFromHistoryUpdate(updateHistoryColor) }
-    }, [])
+    }, [updateHistoryColor])
 
     const { background, borderStyle, borderColor, color/*displayContainer, gridColumns, gridRows, filteredUsers*/ } = useMemo(() => {
 
-        const baseColor = [227, 227, 227];
+        const baseColorRgb = BibleVizUtils.Functions.HexToRgb({hexColor: baseColor});
         const hasProjectContent = project && mode === ScriptureMap2DModes.Project && (isInSelectionMode || projectFilters.get(project.structure[testament.name][sectionName][bookName][index]));
 
         const filteredUsers = Array.from(usersStatus).filter(([user, enabled]) => {
             return enabled && content.get(user).books?.[bookName]?.[index + 1]?.length > 0
         });
-        // let userPresenceBackground = `rgb(${baseColor[0]}, ${baseColor[1]}, ${baseColor[2]})`;
+        // let userPresenceBackground = `rgb(${baseColorRgb[0]}, ${baseColorRgb[1]}, ${baseColorRgb[2]})`;
         // if (modes.get("Content")) {
         //     if (filteredUsers.length === 0) {
-        //         userPresenceBackground = `rgb(${baseColor[0]}, ${baseColor[1]}, ${baseColor[2]})`
+        //         userPresenceBackground = `rgb(${baseColorRgb[0]}, ${baseColorRgb[1]}, ${baseColorRgb[2]})`
         //     }
         //     else {
         //         const colors = filteredUsers.map(([user]) => {
@@ -262,8 +284,8 @@ export const Chapter = ({ index, bookName, sectionName}) => {
 
         //             const heatMaxColor = HexToRgb(usersInfo[user].color);
         //             const progress = entriesCount / maxChapterHeatCount;
-        //             const deltaColor = [heatMaxColor[0] - baseColor[0], heatMaxColor[1] - baseColor[1], heatMaxColor[2] - baseColor[2]].map((value) => { return Math.floor(value * progress) });
-        //             const heatColor = baseColor.map((value, index) => { return value + deltaColor[index] });
+        //             const deltaColor = [heatMaxColor[0] - baseColorRgb[0], heatMaxColor[1] - baseColorRgb[1], heatMaxColor[2] - baseColorRgb[2]].map((value) => { return Math.floor(value * progress) });
+        //             const heatColor = baseColorRgb.map((value, index) => { return value + deltaColor[index] });
 
         //             return heatColor
         //         })
@@ -286,9 +308,9 @@ export const Chapter = ({ index, bookName, sectionName}) => {
 
         // const fixedBackground = isUserPresenceEnabled ? (displayContainer ? "transparent" : userPresenceBackground) : historyColor;
 
-        let background = `rgb(${baseColor[0]}, ${baseColor[1]}, ${baseColor[2]})`
+        let background = `rgb(${baseColorRgb[0]}, ${baseColorRgb[1]}, ${baseColorRgb[2]})`
         let borderStyle = "solid";
-        let borderColor = `rgb(${baseColor[0]}, ${baseColor[1]}, ${baseColor[2]})`;
+        let borderColor = `rgb(${baseColorRgb[0]}, ${baseColorRgb[1]}, ${baseColorRgb[2]})`;
         let color = "black";
 
         switch(mode)
@@ -308,8 +330,8 @@ export const Chapter = ({ index, bookName, sectionName}) => {
                 if(isReadingHistoryEnabled && historyColor) 
                 {
                     background = historyColor;
-                    borderColor = historyColor
-                    color = BibleVizUtils.Functions.GetTextColorBasedOnBackground({backgroundColor: historyColor})
+                    borderColor = historyColor;
+                    color = BibleVizUtils.Functions.GetTextColorBasedOnBackground({backgroundColor: historyColor});
                 }
             }
             break;
@@ -332,6 +354,7 @@ export const Chapter = ({ index, bookName, sectionName}) => {
         return { background, borderStyle, borderColor, displayContainer, gridColumns, gridRows, filteredUsers, color }
     }, [
         historyColor,
+        readingHistoryUserId,
         isUserPresenceEnabled,
         isReadingHistoryEnabled,
         content,
@@ -373,7 +396,7 @@ export const Chapter = ({ index, bookName, sectionName}) => {
     return (
         <div
             className="chapter"
-            onClick={() => {} /*handleChapterClick*/}
+            onClick={handleChapterClick}
             onPointerDown={onHoldStart}
             onPointerUp={onHoldEnd}
             style={{
