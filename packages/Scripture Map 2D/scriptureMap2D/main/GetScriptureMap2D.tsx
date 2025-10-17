@@ -1,6 +1,28 @@
 import {ScriptureMap2D, ScriptureMap2DModes} from "scriptureMap2D.main.ScriptureMap2D"
+import { useBibleContext } from 'app.hooks.bibleVariables'
+
+const {useCallback} = os.appHooks;
 
 const App = () => {
+    
+    const { navFunctions } = useBibleContext()
+
+    const handleChapterClick = useCallback(( _, key) => {
+        const {bookName, chapterIndex} = key;
+
+        
+        let bookId = BibleVizUtils.Data.tags.booksStaticInfo[bookName].abbreviation;
+        let chapter = chapterIndex + 1;
+
+        if(bookName.includes("Psalms"))
+        {
+            ({chapter} = BibleVizUtils.Functions.ConvertDividedPsalmsToComplete({book: bookName, chapter}))
+            bookId = "PSA";
+        }
+
+        navFunctions?.open?.(bookId, chapter)
+    }, [navFunctions])
+    
     return (
         <div style={{
             height: "100%",
@@ -15,7 +37,7 @@ const App = () => {
                 arrangementIndex: 0,
                 // selection,
                 // isInSelectionMode,
-                onChapterClick: () => {},
+                onChapterClick: handleChapterClick,
                 onChapterClickDependencies: [],
                 onChapterClickAndHold: () => {},
                 onBookNameClickAndHold: () => {},

@@ -6,12 +6,10 @@ const usersIds = Object.keys(onlineUsers);
 
 const colorMap = new Map(usersIds.map((userId) => {
     const currColor = BibleVizUtils.Data.vars.userPresenceData?.[userId]?.user?.color;
-
     return [
         userId,
         currColor ?? BibleVizUtils.Functions.GetRandomColor()
-    ]
-        
+    ] 
 }))
 
 BibleVizUtils.Data.vars.userPresenceData = {}
@@ -29,7 +27,7 @@ usersIds.forEach((userId) => {
                 bookId,
                 chapter,
             },
-            id  
+            id
         }
     }
 });

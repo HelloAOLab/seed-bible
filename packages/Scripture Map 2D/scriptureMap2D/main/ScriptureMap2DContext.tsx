@@ -216,6 +216,12 @@ export const ScriptureMap2DProvider = ({
 
     const [readingHistory, setReadingHistory] = useState({...hooksBot.vars.tempReadingHistory});
 
+    const [readingHistoryUserId, setReadingHistoryUserId] = useState(configBot.id);
+
+    const handleReadingHistoryUserSelectorClick = useCallback((id) => {
+        setReadingHistoryUserId(id)
+    }, [])
+
     useEffect(() => {
         const id = setInterval(() => {
             setReadingHistory({...hooksBot.vars.tempReadingHistory})
@@ -395,6 +401,10 @@ export const ScriptureMap2DProvider = ({
             ScriptureMap2DModes,
             ProjectChapterState,
             projectStateStyle,
+            
+            handleReadingHistoryUserSelectorClick,
+            hooksBot,
+            readingHistoryUserId,
             ...parentContext
         }} >
             {children}

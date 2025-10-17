@@ -2,11 +2,12 @@
 import { useScriptureMap2DContext } from "scriptureMap2D.main.ScriptureMap2DContext"
 import {ProjectFiltersSelector} from "scriptureMap2D.main.ProjectFiltersSelector"
 import { ProjectStateSetter } from "scriptureMap2D.main.ProjectStateSetter"
+import { ReadingHistoryUserSelector } from "scriptureMap2D.main.ReadingHistoryUserSelector"
 
 export const Settings = () => {
-    const { isUserPresenceEnabled, mode, ScriptureMap2DModes, project, isInSelectionMode } = useScriptureMap2DContext();
+    const { isUserPresenceEnabled, mode, ScriptureMap2DModes, project, isInSelectionMode, isReadingHistoryEnabled } = useScriptureMap2DContext();
 
-    if(mode !== ScriptureMap2DModes.Project || !project) return null;
+    if(mode === ScriptureMap2DModes.Project && !project) return null;
 
     return (
         <div className="mapSettings">
@@ -14,6 +15,7 @@ export const Settings = () => {
                 <ProjectStateSetter />
                 {!isInSelectionMode && <ProjectFiltersSelector />}
             </>}
+            {mode === ScriptureMap2DModes.Viewer && isReadingHistoryEnabled && <ReadingHistoryUserSelector />}
         </div>
     )
 }

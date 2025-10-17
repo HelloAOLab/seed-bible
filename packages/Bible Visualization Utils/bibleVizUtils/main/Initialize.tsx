@@ -71,14 +71,12 @@ globalThis.BibleVizUtils = {
 }
 const {HistoryTimePeriodInfo} = await import("bibleVizUtils.classes.HistoryTimePeriodInfo");
 
-const nowTimePeriod      = new HistoryTimePeriodInfo({color: "#D36433", isNowTimePeriod: true})
-const defaultTimePeriod1 = new HistoryTimePeriodInfo({color: "#D49833", timeAmount: 1, timeUnit: bibleVizData.tags.TimeUnit.Minutes});
-const defaultTimePeriod2 = new HistoryTimePeriodInfo({color: "#D4C033", timeAmount: 1, timeUnit: bibleVizData.tags.TimeUnit.Hours});
-const defaultTimePeriod3 = new HistoryTimePeriodInfo({color: "#9ED659", timeAmount: 1, timeUnit: bibleVizData.tags.TimeUnit.Days});
-const defaultTimePeriod4 = new HistoryTimePeriodInfo({color: "#81D698", timeAmount: 1, timeUnit: bibleVizData.tags.TimeUnit.Weeks});
-const defaultTimePeriod5 = new HistoryTimePeriodInfo({color: "#A0D3D6", timeAmount: 1, timeUnit: bibleVizData.tags.TimeUnit.Months});
-const defaultTimePeriod6 = new HistoryTimePeriodInfo({color: "#ADB9D5", timeAmount: 1, timeUnit: bibleVizData.tags.TimeUnit.Years});
-
+const nowTimePeriod       = new HistoryTimePeriodInfo({value: 1, isNowTimePeriod: true})
+const defaultTimePeriod_1 = new HistoryTimePeriodInfo({value: 1, timeAmount: 1, timeUnit: bibleVizData.tags.TimeUnit.Days});
+const defaultTimePeriod_2 = new HistoryTimePeriodInfo({value: 0.75, timeAmount: 1, timeUnit: bibleVizData.tags.TimeUnit.Weeks});
+const defaultTimePeriod_3 = new HistoryTimePeriodInfo({value: 0.5, timeAmount: 1, timeUnit: bibleVizData.tags.TimeUnit.Months});
+const defaultTimePeriod_4 = new HistoryTimePeriodInfo({value: 0.25, timeAmount: 6, timeUnit: bibleVizData.tags.TimeUnit.Months});
+const defaultTimePeriod_5 = new HistoryTimePeriodInfo({value: 0, timeAmount: 1, timeUnit: bibleVizData.tags.TimeUnit.Years});
 
 const UsersColorValues = {
     InfoLabelColorScales: {x: 0.5, y: 0.5, z: 0},
@@ -143,12 +141,11 @@ setTagMask(bibleVizData, "isInHistoryMode", false);
 setTagMask(bibleVizData, 'highlightHistoryIndex', -1);
 setTagMask(bibleVizData, "historyTimePeriodsInfo", [
     nowTimePeriod, 
-    defaultTimePeriod1,
-    defaultTimePeriod2,
-    defaultTimePeriod3,
-    defaultTimePeriod4,
-    defaultTimePeriod5,
-    defaultTimePeriod6
+    defaultTimePeriod_1,
+    defaultTimePeriod_2,
+    defaultTimePeriod_3,
+    defaultTimePeriod_4,
+    defaultTimePeriod_5,
 ])
 bibleVizData.vars.history = [];
 bibleVizData.vars.highlightHistory = [];
