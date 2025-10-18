@@ -1,8 +1,8 @@
-import { getStyleOf } from 'app.sn_styles.styler';
+const getStyleOf = await thisBot.GetStyle();
 import { BibleDataManager } from 'app.hooks.bibleDataManager';
-import { ApologistSearch } from 'app.sn_components.apologist';
-import { SgSearch } from 'app.sn_components.tapos';
-import { TableTalkEmbed } from 'app.sn_components.tableTalk';
+const ApologistSearch = await thisBot.Apologist();
+const SgSearch = await thisBot.Tapos();
+const TableTalkEmbed = await thisBot.TableTalk();
 const { useEffect, useState, useRef, useLayoutEffect } = os.appHooks;
 
 const bibleBooks = [
@@ -633,7 +633,8 @@ async function loadTabsData(bookId, chapter, tabId, tabData) {
 // Fetch the study-note chapter for (bookId, chapter) — no caching, just fetch.
 function fetchStudyNoteByBookChapter(bookId, chapter) {
     if (!bookId || !chapter) return;
-    const url = tags[bookId] ?? tags[String(bookId).toUpperCase()] ?? null;
+    const mainBot = getBot('system', 'studyNote.main');
+    const url = mainBot?.tags[bookId] ?? mainBot?.tags[String(bookId).toUpperCase()] ?? null;
     if (!url) return; // no notes for this book
     try {
         os.getFile(url);
@@ -681,6 +682,8 @@ async function prefetchNeighborsViaCurrentBibleObject() {
 
 
 function StudyNotesWithoutWrap({ chapter }) {
+    // Get extension bot for state management
+    const mainBot = getBot('system', 'studyNote.main');
 
     const bookId = globalThis.BookId;
     const currentChapter = chapter + 1;
@@ -719,7 +722,7 @@ function StudyNotesWithoutWrap({ chapter }) {
     const hoverTokenRef = useRef(0);
 
     // --- Back FAB fade-out control ---
-    const [showBackFab, setShowBackFab] = useState(!!tags.previousTab?.tabId);
+    const [showBackFab, setShowBackFab] = useState(!!mainBot?.tags.previousTab?.tabId);
     const [backFabFading, setBackFabFading] = useState(false);
     const [backFabHovering, setBackFabHovering] = useState(false);
 
@@ -791,7 +794,8 @@ function StudyNotesWithoutWrap({ chapter }) {
         console.log("start fetching study note: ", newBookId);
         if (globalThis.BookId !== newBookId || chapter !== currentChapter) {
             console.log("start fetching study note");
-            const studyNoteDataURL = tags[newBookId.toUpperCase()] ?? null;
+            const mainBot = getBot('system', 'studyNote.main');
+            const studyNoteDataURL = mainBot?.tags[newBookId.toUpperCase()] ?? null;
             console.log(studyNoteDataURL);
             if (studyNoteDataURL) {
                 console.log("attempting to fetch the note...")
@@ -896,14 +900,15 @@ function StudyNotesWithoutWrap({ chapter }) {
     // whenever chapter changes, pull in the new notes
     useEffect(() => {
         const getStudyNote = async () => {
-            const studyNoteDataURL = tags[bookId] ?? null;
+            const mainBot = getBot('system', 'studyNote.main');
+            const studyNoteDataURL = mainBot?.tags[bookId] ?? null;
             if (studyNoteDataURL) {
                 const studyNoteData = await os.getFile(studyNoteDataURL);
                 // if (!chapter || chapter < 0) return;
                 if (![studyNoteData[chapter]]) cancelled = true;
                 let note = [studyNoteData[chapter]];
                 console.log(note);
-                tags.currentStudyNote = note;
+                setTagMask(mainBot, 'currentStudyNote', note);
                 setStudyNote(note);
                 setPageLoading(false);
                 // reset any old highlights
@@ -912,17 +917,19 @@ function StudyNotesWithoutWrap({ chapter }) {
                 setPointer(0)
                 setHighlightedPos(null)
                 const map = {};
-                ([studyNoteData[chapter]] ?? []).forEach((book, bIdx) =>
-                    book.sections.forEach((verse, vIdx) => {
-                        const raw = verse.section.toString();
-                        const cleaned = raw
-                            .replace(/\d+:\d+/g, "")
-                            .replace(/\./g, "")
-                            .replace(/\s+/g, " ")
-                            .trim();
-                        map[cleaned] = { bookIdx: bIdx, verseIdx: vIdx, original: raw };
-                    })
-                );
+                ([studyNoteData[chapter]] ?? []).forEach((book, bIdx) => {
+                    if (book && book.sections) {
+                        book.sections.forEach((verse, vIdx) => {
+                            const raw = verse.section.toString();
+                            const cleaned = raw
+                                .replace(/\d+:\d+/g, "")
+                                .replace(/\./g, "")
+                                .replace(/\s+/g, " ")
+                                .trim();
+                            map[cleaned] = { bookIdx: bIdx, verseIdx: vIdx, original: raw };
+                        });
+                    }
+                });
                 setSectionMap(map);
                 globalThis.VerseSectionMap = map;
                 // if(!tags.shouldHighlight) {
@@ -958,8 +965,8 @@ function StudyNotesWithoutWrap({ chapter }) {
                 block: 'start',
             });
 
-            tags.canHighlight = true;
-            console.log("tags.canHighlight is true now", tags.canHighlight);
+            setTagMask(mainBot, 'canHighlight', true);
+            console.log("canHighlight is true now", mainBot?.tags.canHighlight);
         }
 
     }, [chapter, studyNote, sectionMap]);
@@ -994,25 +1001,27 @@ function StudyNotesWithoutWrap({ chapter }) {
             const byNumber = /^\d+$/.test(key)
             newMatches = []
 
-            tags.currentStudyNote.forEach((book, bIdx) => {
-                book.sections.forEach((verse, vIdx) => {
-                    if (byNumber) {
-                        console.log("attepmting to highlight by number: ", key);
-                        // match verse.section’s “a:b” → compare part after “:”
-                        const m = /(\d+):(\d+)/.exec(verse.section.toString());
-                        console.log("matching: ", m);
-                        if (m && m[2] === key) {
-                            console.log("found a match!!");
-                            newMatches.push({ bookIdx: bIdx, verseIdx: vIdx })
+            mainBot?.tags.currentStudyNote?.forEach((book, bIdx) => {
+                if (book && book.sections) {
+                    book.sections.forEach((verse, vIdx) => {
+                        if (byNumber) {
+                            console.log("attepmting to highlight by number: ", key);
+                            // match verse.section's "a:b" → compare part after ":"
+                            const m = /(\d+):(\d+)/.exec(verse.section.toString());
+                            console.log("matching: ", m);
+                            if (m && m[2] === key) {
+                                console.log("found a match!!");
+                                newMatches.push({ bookIdx: bIdx, verseIdx: vIdx })
+                            }
+                        } else {
+                            const token = verse.section.toString().replace(stripRe, '');
+                            console.log("token: ", token);
+                            if (token.includes(key)) {
+                                newMatches.push({ bookIdx: bIdx, verseIdx: vIdx })
+                            }
                         }
-                    } else {
-                        const token = verse.section.toString().replace(stripRe, '');
-                        console.log("token: ", token);
-                        if (token.includes(key)) {
-                            newMatches.push({ bookIdx: bIdx, verseIdx: vIdx })
-                        }
-                    }
-                })
+                    });
+                }
             })
 
             newPointer = 0
@@ -1104,8 +1113,8 @@ function StudyNotesWithoutWrap({ chapter }) {
     }
 
     function scheduleStudyNoteHighlight(payload) {
-        tags.canHighlight = false;
-        console.log("tags.canHighlight is false now: ", tags.canHighlight);
+        setTagMask(mainBot, 'canHighlight', false);
+        console.log("canHighlight is false now: ", mainBot?.tags.canHighlight);
         globalThis.ScheduleHighlight(payload, highlightSection);
     }
 
@@ -1118,14 +1127,14 @@ function StudyNotesWithoutWrap({ chapter }) {
         console.log("passage: ", passage);
 
         if (globalThis.BookId === internalBookId && currentChapter === chapter) {
-            tags.shouldHighlight = true;
+            setTagMask(mainBot, 'shouldHighlight', true);
             // Empty for now :D
         } else {
             // GlobalLoadingDataFromSN(bookId, chapter);
             HandleClosePopup();
 
             const currentTab = ActiveTab;
-            tags.previousTab = {
+            setTagMask(mainBot, 'previousTab', {
                 tabId: currentTab,
                 bookId: globalThis.BookId,
                 chapter: currentChapter,
@@ -1137,9 +1146,9 @@ function StudyNotesWithoutWrap({ chapter }) {
                     chapter: currentChapter,
                     translation: 'BSB'
                 }
-            };
+            });
 
-            tags.shouldHighlight = false;
+            setTagMask(mainBot, 'shouldHighlight', false);
 
             const same = (a, b) => String(a ?? '').toLowerCase() === String(b ?? '').toLowerCase();
 
@@ -1209,7 +1218,7 @@ function StudyNotesWithoutWrap({ chapter }) {
         console.log("passage: ", passage);
 
         if (globalThis.BookId === internalBookId && currentChapter === chapter) {
-            tags.shouldHighlight = true;
+            setTagMask(mainBot, 'shouldHighlight', true);
             os.toast("you are already opening this book.", 2);
             if (source === 'study-note') {
                 console.log("is study note");
@@ -1235,7 +1244,7 @@ function StudyNotesWithoutWrap({ chapter }) {
             HandleClosePopup();
 
             const currentTab = ActiveTab;
-            tags.previousTab = {
+            setTagMask(mainBot, 'previousTab', {
                 tabId: currentTab,
                 bookId: globalThis.BookId,
                 chapter: currentChapter,
@@ -1247,9 +1256,9 @@ function StudyNotesWithoutWrap({ chapter }) {
                     chapter: currentChapter,
                     translation: 'BSB'
                 }
-            };
+            });
 
-            tags.shouldHighlight = false;
+            setTagMask(mainBot, 'shouldHighlight', false);
 
             const same = (a, b) => String(a ?? '').toLowerCase() === String(b ?? '').toLowerCase();
 
@@ -1307,9 +1316,9 @@ function StudyNotesWithoutWrap({ chapter }) {
     function changeGlobalHighlighting(flag) {
         const isBool = (val) => typeof val === "boolean";
         if (isBool(flag)) {
-            tags.shouldHighlight = flag;
+            setTagMask(mainBot, 'shouldHighlight', flag);
         } else {
-            tags.shouldHighlight = true;
+            setTagMask(mainBot, 'shouldHighlight', true);
         }
     }
 
@@ -1421,8 +1430,8 @@ function StudyNotesWithoutWrap({ chapter }) {
         clearBackTimers();
         setBackFabFading(true);
         backCleanupTimerRef.current = setTimeout(() => {
-            tags.previousTab = {};
-            tags._prevTabCache = {};
+            setTagMask(mainBot, 'previousTab', {});
+            setTagMask(mainBot, '_prevTabCache', {});
             setShowBackFab(false);
             setBackFabFading(false);
             setLastDismissReason("close");
@@ -1432,18 +1441,18 @@ function StudyNotesWithoutWrap({ chapter }) {
     globalThis.RemoveStudyNoteBackButton = removeStudyNoteBackButton;
 
     async function handleBackFabClick() {
-        if (tags._prevTabCache && !tags.previousTab?.tabId) {
+        if (mainBot?.tags._prevTabCache && !mainBot?.tags.previousTab?.tabId) {
             // ignore cache when user explicitly clicks: treat as normal back using cache if needed
-            tags.previousTab = tags._prevTabCache;
+            setTagMask(mainBot, 'previousTab', mainBot.tags._prevTabCache);
         }
 
-        if (tags.previousTab?.tabId) {
-            SetActiveTab(tags.previousTab.tabId);
+        if (mainBot?.tags.previousTab?.tabId) {
+            SetActiveTab(mainBot.tags.previousTab.tabId);
             await loadTabsData(
-                tags.previousTab.bookId,
-                tags.previousTab.chapter,
-                tags.previousTab.tabId,
-                tags.previousTab.tabData
+                mainBot.tags.previousTab.bookId,
+                mainBot.tags.previousTab.chapter,
+                mainBot.tags.previousTab.tabId,
+                mainBot.tags.previousTab.tabData
             );
         }
 
@@ -1451,7 +1460,7 @@ function StudyNotesWithoutWrap({ chapter }) {
     }
 
     // derive current visibility from the tag each render
-    const shouldShowBackFab = !!tags.previousTab?.tabId;
+    const shouldShowBackFab = !!mainBot?.tags.previousTab?.tabId;
 
     // whenever it appears, show it, then fade after 3s, then clear the tag
     useEffect(() => {
@@ -1473,8 +1482,8 @@ function StudyNotesWithoutWrap({ chapter }) {
                 setBackFabFading(true);
                 // after transition, clear tag & hide
                 backCleanupTimerRef.current = setTimeout(() => {
-                    tags._prevTabCache = tags.previousTab || {};
-                    tags.previousTab = {};
+                    setTagMask(mainBot, '_prevTabCache', mainBot?.tags.previousTab || {});
+                    setTagMask(mainBot, 'previousTab', {});
                     setShowBackFab(false);
                     setBackFabFading(false);
                     setLastDismissReason("timeout");
@@ -1496,9 +1505,9 @@ function StudyNotesWithoutWrap({ chapter }) {
     }
 
     function onBackHotspotMouseEnter() {
-        if (lastDismissReason === "timeout" && tags._prevTabCache?.tabId) {
+        if (lastDismissReason === "timeout" && mainBot?.tags._prevTabCache?.tabId) {
             // restore cached target, arm fade-in
-            tags.previousTab = tags._prevTabCache;
+            setTagMask(mainBot, 'previousTab', mainBot.tags._prevTabCache);
 
             // prevent the 3s idle timer from arming while pointer is in the area
             setBackFabHovering(true);
@@ -1580,7 +1589,7 @@ function StudyNotesWithoutWrap({ chapter }) {
                     <span className="sn-back-fab-text">Back</span>
                 </button>
             )}
-            {studyNote.map((book, bookIdx) => {
+            {studyNote && studyNote.length > 0 ? studyNote.map((book, bookIdx) => {
                 const [c1, setC1] = useState(false)
                 return (
                     <div key={bookIdx} className="studyTextContainer">
@@ -1591,7 +1600,7 @@ function StudyNotesWithoutWrap({ chapter }) {
 
                         </h2>
 
-                        {book.sections.map((verse, vIdx) => {
+                        {book && book.sections && book.sections.map((verse, vIdx) => {
                             const isCurrent =
                                 highlightedPos?.bookIdx === bookIdx &&
                                 highlightedPos?.verseIdx === vIdx
@@ -1724,7 +1733,13 @@ function StudyNotesWithoutWrap({ chapter }) {
                         })}
                     </div>
                 )
-            })}
+            }) : (
+                <div className="judeTextPage">
+                    <div className="verseText" style={{ padding: '20px', textAlign: 'center' }}>
+                        {pageLoading ? 'Loading study notes...' : `No study notes available for this book.`}
+                    </div>
+                </div>
+            )}
 
             {shouldRender && (
                 <div
@@ -1800,10 +1815,39 @@ function StudyNotesWithoutWrap({ chapter }) {
 }
 
 
-function StudyNotes() {
-    // reuse globals you already set in StudyNotes/loadTabsData
-    const bookId = globalThis.BookId;
-    const chapter = globalThis.GlobalChapter ?? 0;
+function StudyNotes({ id, chapter: propChapter }) {
+    // Get extension bot for state management
+    const mainBot = getBot('system', 'studyNote.main');
+    
+    // Track book and chapter changes - use prop if provided, otherwise use globals
+    const [bookId, setBookId] = useState(globalThis.BookId);
+    const [chapter, setChapter] = useState(propChapter ?? globalThis.GlobalChapter ?? 0);
+    
+    // Update when prop changes (from UpdateApplication)
+    useEffect(() => {
+        if (propChapter !== undefined && propChapter !== chapter) {
+            setChapter(propChapter);
+        }
+    }, [propChapter]);
+    
+    // Poll for changes to global book/chapter
+    useEffect(() => {
+        const checkChanges = () => {
+            if (globalThis.BookId !== bookId) {
+                setBookId(globalThis.BookId);
+            }
+            // Only update from globals if prop is not provided
+            if (propChapter === undefined) {
+                const globalChapter = globalThis.GlobalChapter ?? 0;
+                if (globalChapter !== chapter) {
+                    setChapter(globalChapter);
+                }
+            }
+        };
+
+        const interval = setInterval(checkChanges, 100);
+        return () => clearInterval(interval);
+    }, [bookId, chapter, propChapter]);
 
     const TAB_LIST = [
         { id: 'notes', label: 'Study Notes' },
@@ -1811,12 +1855,18 @@ function StudyNotes() {
         { id: 'discover', label: 'Discovery' },  // SgSearch
     ];
 
-    const initialTab = tags?.studyNotesActiveTab || 'notes';
+    const initialTab = mainBot?.tags.studyNotesActiveTab || 'notes';
     const [active, setActive] = useState(initialTab);
     const [searchType, setSearchType] = useState('apologist'); // 'apologist' or 'tapos'
+    const [, setForceUpdate] = useState(0); // For forcing re-renders
 
     useEffect(() => {
-        tags.studyNotesActiveTab = active;
+        setTagMask(mainBot, 'studyNotesActiveTab', active);
+    }, [active]);
+    
+    // Expose current tab globally so thePage can check before updating
+    useEffect(() => {
+        globalThis.StudyNoteActiveTab = active;
     }, [active]);
 
     // Force re-render when global search changes
@@ -1826,7 +1876,7 @@ function StudyNotes() {
         const checkGlobalSearch = () => {
             if (globalThis.GlobalSearch !== lastSearch) {
                 lastSearch = globalThis.GlobalSearch;
-                forceUpdate({});
+                setForceUpdate(prev => prev + 1); // Trigger re-render
             }
         };
 
@@ -1894,4 +1944,4 @@ function StudyNotes() {
 
 globalThis.GlobalStudyNotes = StudyNotes;
 
-export { StudyNotes, StudyNotesWithoutWrap };
+return StudyNotes;

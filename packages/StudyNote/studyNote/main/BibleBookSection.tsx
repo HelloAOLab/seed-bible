@@ -263,4 +263,4 @@ function Section({ heading, setRef, verses, book, chapter, holded, blinker, sele
     </div >
 }
 
-export { Section };
+return Section;

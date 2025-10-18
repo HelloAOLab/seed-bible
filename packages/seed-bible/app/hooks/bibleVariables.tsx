@@ -1,8 +1,5 @@
 const { createContext, useContext, useState, useEffect } = os.appHooks;
 const MyContext = createContext();
-import { StudyNotes } from "app.sn_components.studyNotes";
-import { SgSearch } from "app.sn_components.tapos";
-import { ApologistSearch } from "app.sn_components.apologist";
 import {
   MenuIcon,
   SeedBibleIcon,
@@ -33,17 +30,17 @@ export function BibleVariablesProvider({ children }) {
   }, [ReSeed]);
   // const { isDragging, setIsDragging, Element, setElement } = useMouseMove()
   const [tools, setTools] = useState([
-    {
-        icon: <LigonierSeedBibleIcon />,
-        // isImg: true,
-        label: 'Books',
-        hasToggle: true,
-        active: true,
-        onClick: () => {
-            setOpenSidebar(prev => !prev);
-            setCurrentExperience(0);
-        }
-    },
+    // {
+    //     icon: <LigonierSeedBibleIcon />,
+    //     // isImg: true,
+    //     label: 'Books',
+    //     hasToggle: true,
+    //     active: true,
+    //     onClick: () => {
+    //         setOpenSidebar(prev => !prev);
+    //         setCurrentExperience(0);
+    //     }
+    // },
     // {
     //     icon: 'playlist_play', label: 'Playlist', hasToggle: true, active: true,
     //     onHold: async () => {
@@ -237,39 +234,39 @@ export function BibleVariablesProvider({ children }) {
 
     //     }
     // },
-    {
-      icon: "splitscreen_right",
-      label: "Study Notes",
-      hasToggle: true,
-      active: true,
-      onRightClick: () => {
-        const MenuOptions = {
-          type: "normal",
-          items: [
-            {
-              icon: <MenuIcon name="open_in_new" />,
-              title: "open",
-              onClick: () => {
-                openStudyNotes();
-              },
-            },
-            { type: "line" },
-            {
-              icon: <MenuIcon name="edit" />,
-              title: "Edit mode",
-              onClick: () => {
-                globalThis?.SetEnableEditStudyNotes((prev) => !prev);
-              },
-            },
-          ],
-        };
+    // {
+    //   icon: "splitscreen_right",
+    //   label: "Study Notes",
+    //   hasToggle: true,
+    //   active: true,
+    //   onRightClick: () => {
+    //     const MenuOptions = {
+    //       type: "normal",
+    //       items: [
+    //         {
+    //           icon: <MenuIcon name="open_in_new" />,
+    //           title: "open",
+    //           onClick: () => {
+    //             openStudyNotes();
+    //           },
+    //         },
+    //         { type: "line" },
+    //         {
+    //           icon: <MenuIcon name="edit" />,
+    //           title: "Edit mode",
+    //           onClick: () => {
+    //             globalThis?.SetEnableEditStudyNotes((prev) => !prev);
+    //           },
+    //         },
+    //       ],
+    //     };
 
-        openPopupSettings(MenuOptions);
-      },
-      onClick: async () => {
-        openStudyNotes();
-      },
-    },
+    //     openPopupSettings(MenuOptions);
+    //   },
+    //   onClick: async () => {
+    //     openStudyNotes();
+    //   },
+    // },
     // {
     //     icon: 'network_intel_node',
     //     label: 'Tapos Search',
@@ -318,13 +315,27 @@ export function BibleVariablesProvider({ children }) {
       globalThis.studyNotesPresent = false;
       return;
     }
+    
+    // Dynamic check - only works if StudyNote extension is installed
+    const StudyNotes = globalThis.GlobalStudyNotes;
+    if (!StudyNotes) {
+      os.toast('StudyNote extension not installed', 3);
+      return;
+    }
+    
     if (!panelMode) {
       globalThis.studyNotesPresent = true;
       let id = uuid();
       globalThis.STUDYNOTES_PANEL_ID = id;
       AddApplication({
         id,
-        App: <StudyNotes id={id} chapter={globalThis.GlobalChapter} />,
+        App: (
+          <StudyNotes
+            key={`${globalThis.BookId}-${globalThis.GlobalChapter}`}
+            id={id}
+            chapter={globalThis.GlobalChapter}
+          />
+        ),
         to: "panel",
         minWidth: "30rem",
       });
@@ -337,6 +348,14 @@ export function BibleVariablesProvider({ children }) {
       globalThis.TaposSearchPresent = false;
       return;
     }
+    
+    // Dynamic check - only works if StudyNote extension is installed
+    const SgSearch = globalThis.TaposSearch;
+    if (!SgSearch) {
+      os.toast('StudyNote extension not installed (Tapos search unavailable)', 3);
+      return;
+    }
+    
     if (!panelMode) {
       globalThis.TaposSearchPresent = true;
       let id = uuid();
@@ -358,6 +377,14 @@ export function BibleVariablesProvider({ children }) {
       globalThis.ApologistSearchPresent = false;
       return;
     }
+    
+    // Dynamic check - StudyNote extension needs to be installed
+    const ApologistSearch = globalThis.ApologistSearch;
+    if (!ApologistSearch) {
+      os.toast('StudyNote extension not installed (Apologist search unavailable)', 3);
+      return;
+    }
+    
     if (!panelMode) {
       globalThis.ApologistSearchPresent = true;
       let id = uuid();

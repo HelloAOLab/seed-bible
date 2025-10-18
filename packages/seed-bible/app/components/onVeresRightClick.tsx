@@ -1,6 +1,4 @@
 import { MenuIcon } from "app.components.icons";
-import { SgSearch } from "app.sn_components.tapos";
-import { ApologistSearch } from "app.sn_components.apologist";
 console.log(that);
 const MenuOptions = {
   type: "normal",
@@ -52,52 +50,34 @@ const MenuOptions = {
 const aiSearch = () => {
   let App = <></>;
   let id = uuid();
-  if (globalThis.ApologistSearchPresent) {
+  
+  // Dynamic checks - get components from globalThis
+  const ApologistSearch = globalThis.ApologistSearch;
+  const SgSearch = globalThis.TaposSearch;
+  
+  if (!ApologistSearch && !SgSearch) {
+    os.toast('StudyNote extension not installed (AI Search unavailable)', 3);
+    return;
+  }
+  
+  if (globalThis.ApologistSearchPresent && ApologistSearch) {
     App = (
       <ApologistSearch
         id={id}
         search={globalThis.GlobalSearch ?? "galations 5"}
       />
     );
-    // RemoveApplicationByID(globalThis.ApologistSearch_PANEL_ID);
-    // let id = uuid();
-    // globalThis.ApologistSearch_PANEL_ID = id;
-    // AddApplication({
-    //     id,
-    //     App: <ApologistSearch id={id} search={globalThis.GlobalSearch ?? "galations 5"} />,
-    //     to: 'panel',
-    //     minWidth: '30rem'
-    // });
-  } else if (globalThis.TaposSearchPresent) {
+  } else if (globalThis.TaposSearchPresent && SgSearch) {
     App = (
       <SgSearch id={id} search={globalThis.GlobalSearch ?? "galations 5"} />
     );
-    // RemoveApplicationByID(globalThis.TaposSearch_PANEL_ID);
-    // globalThis.TaposSearchPresent = true;
-    // let id = uuid();
-    // globalThis.TaposSearch_PANEL_ID = id;
-    // AddApplication({
-    //     id,
-    //     App: <SgSearch id={id} search={globalThis.GlobalSearch ?? "galations 5"} />,
-    //     to: 'panel',
-    //     minWidth: '30rem'
-    // });
-  } else if (!globalThis.panelMode) {
+  } else if (!globalThis.panelMode && ApologistSearch) {
     App = (
       <ApologistSearch
         id={id}
         search={globalThis.GlobalSearch ?? "galations 5"}
       />
     );
-    // globalThis.ApologistSearchPresent = true;
-    // let id = uuid();
-    // globalThis.ApologistSearch_PANEL_ID = id;
-    // AddApplication({
-    //     id,
-    //     App: <ApologistSearch id={id} search={globalThis.GlobalSearch ?? "galations 5"} />,
-    //     to: 'panel',
-    //     minWidth: '30rem'
-    // });
   }
 
   SetShowSearch({

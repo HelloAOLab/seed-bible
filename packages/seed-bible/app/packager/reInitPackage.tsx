@@ -110,7 +110,7 @@ async function SetUpApplication(applicationFunction, bot, toolbarConfig) {
             icon,
             label,
             hasToggle: true,
-            active: false,
+            active: true,
             onHold,
             onClick,
         };
@@ -157,7 +157,7 @@ async function SetUpApplicationWithoutApp(toolbarConfig, bot) {
         icon: !toolbarConfig?.iconUrl ? toolbarConfig.icon : toolbarConfig.iconUrl,
         label: toolbarConfig.label,
         hasToggle: true,
-        active: false,
+        active: true,
         onHold: runFn,
         onClick: runFn,
         isImg: !!toolbarConfig?.iconUrl,
@@ -190,13 +190,21 @@ async function SetUpTabApplication(tabConfig, bot) {
 }
 
 
+console.log(that)
+
+// Check if bot exists before setting up UI
+if (!bot) {
+    console.error(`[${name}] Bot not found for mainBotTag:`, pkgData.mainBotTag);
+    console.error(`[${name}] This might happen if the extension was just uninstalled or is being reinstalled.`);
+    return;
+}
+
 // Context menu
 if (configEditor?.contextMenuConfig) {
     const contextOptions = configEditor.contextMenuConfig.optionsIsOn.replace('@', '');
     await SetUpConextMenu(contextOptions, bot, configEditor.toolbarConfig?.label);
 }
 
-console.log(that)
 // Toolbar / App
 if (configEditor?.toolbarConfig?.run) {
     await SetUpApplicationWithoutApp(configEditor.toolbarConfig, bot);
