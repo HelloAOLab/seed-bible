@@ -1,76 +1,92 @@
-// SgSearch.jsx
 const { useEffect, useState, useMemo } = os.appHooks;
-import { getStyleOf } from 'app.sn_styles.styler';
+const getStyleOf = await thisBot.GetStyle();
 
-function formatDate(ms) {
-    if (!ms) return null;
+function formatDateISO(s) {
+    if (!s) return null;
     try {
-        return new Date(ms).toLocaleDateString(undefined, {
-            year: "numeric",
-            month: "short",
-            day: "2-digit",
-        });
+        return new Date(s).toLocaleDateString(undefined, { year: "numeric", month: "short", day: "2-digit" });
     } catch { return null; }
 }
 
-function Highlighted({ texts }) {
-    if (!texts || !texts.length) return null;
-    return (
-        <div className="sg-hl">
-            {texts.map((t, i) =>
-                t.type === "hit"
-                    ? <mark key={`hit-${i}`} className="sg-hit">{t.value}</mark>
-                    : <span key={`txt-${i}`}>{t.value}</span>
-            )}
-        </div>
-    );
+// function Chips({ items }) {
+//     if (!items || !items.length) return null;
+//     return (
+//         <div className="sg-chips">
+//             {items.map((k, i) => <span className="sg-chip" key={`${k}-${i}`}>{k}</span>)}
+//         </div>
+//     );
+// }
+
+// function pill(text) { return text ? <span className="sg-pill">{text}</span> : null; }
+
+function getDomain(u) {
+    if (!u) return "";
+
+    try {
+        if (!/^https?:\/\//i.test(u)) {
+            u = "http://" + u;
+        }
+
+        let hostname = new URL(u).hostname;
+
+        // Remove leading "www."
+        hostname = hostname.replace(/^www\./, "");
+
+        return hostname;
+    } catch {
+        return "";
+    }
 }
 
-function Chips({ items }) {
-    if (!items || !items.length) return null;
-    return (
-        <div className="sg-chips">
-            {items.map((k, i) => (
-                <span className="sg-chip" key={`${k}-${i}`}>{k}</span>
-            ))}
-        </div>
-    );
-}
+// function getFavicon(u) {
+//     const d = getDomain(u);
+//     if (!d) return null;
+//     // lightweight favicon service (works for most sites)
+//     return `https://www.google.com/s2/favicons?domain=${encodeURIComponent(d)}&sz=64`;
+// }
 
-function CompactReferences({ refs }) {
-    if (!refs) return null;
-    const entries = Object.entries(refs).filter(([, arr]) => Array.isArray(arr) && arr.length > 0);
-    if (!entries.length) return null;
-    return (
-        <div className="sg-refs">
-            <div className="sg-refs-title">References</div>
-            <div className="sg-refs-grid">
-                {entries.map(([section, arr]) => (
-                    <div className="sg-ref-block" key={`sec-${section}`}>
-                        <div className="sg-ref-name">{section}</div>
-                        <ul className="sg-ref-list">
-                            {arr.map((v, i) => (
-                                <li key={`${section}-${i}`} className="sg-ref-item">{v}</li>
-                            ))}
-                        </ul>
-                    </div>
-                ))}
-            </div>
-        </div>
-    );
+function toEmbeddableUrl(item) {
+    const url = item?.listing_url || "";
+    if (!url) return "";
+    if ((item.type === "youtube" || /youtube\.com\/watch\?v=|youtu\.be\//i.test(url))) {
+        const idMatch = url.match(/[?&]v=([^&]+)/) || url.match(/youtu\.be\/([^?&]+)/);
+        const vid = idMatch ? idMatch[1] : null;
+        return vid ? `https://www.youtube.com/embed/${vid}` : url;
+    }
+    if (item.type === "image") return ""; // never iframe images
+    return url;
 }
 
 function SgCard({ item, isOpen, onToggle, viewMode = "list" }) {
-    const date = formatDate(item.ContentDateUTC);
-    const hlName = Array.isArray(item.highlights) && item.highlights.find((h) => h.path === "Name");
-
-    const embUrl = item?.ContentLink || "";
-    const canPreview = Boolean(embUrl);
-
-    // preview animation height + iframe remount on tab switching
     const [previewH, setPreviewH] = useState(0);
-    const [frameKey, setFrameKey] = useState(0);
     const previewRef = useMemo(() => ({ el: null }), []);
+    const [frameKey, setFrameKey] = useState(0);
+
+    const date =
+        formatDateISO(item.published_on) ||
+        formatDateISO(item.created_at) ||
+        null;
+
+    const domain = useMemo(() => getDomain(item.referral_url), [item.referral_url]);
+    const icon = useMemo(() => item.image_url, [item.image_url]);
+
+    const openInNewTab = (e) => {
+        e.preventDefault();
+        window.open(item.url, "_blank", "noopener");
+    };
+
+    const embUrl = toEmbeddableUrl(item);
+    const canPreview = !!item.image_url; //Boolean(embUrl);
+
+    // short description (whatever exists in payload)
+    const desc = item.description || item.summary || item.snippet || item.excerpt || "";
+
+    useEffect(() => {
+        if (previewRef.el) {
+            const h = previewRef.el.scrollHeight || 0;
+            setPreviewH(h > 8 ? h : 8);
+        }
+    }, [isOpen, frameKey, item.url]);
 
     useEffect(() => {
         const onVis = () => { if (!document.hidden) setFrameKey(k => k + 1); };
@@ -78,41 +94,30 @@ function SgCard({ item, isOpen, onToggle, viewMode = "list" }) {
         return () => document.removeEventListener("visibilitychange", onVis);
     }, []);
 
-    useEffect(() => {
-        if (previewRef.el) {
-            const h = previewRef.el.scrollHeight || 0;
-            setPreviewH(h > 8 ? h : 8);
-        }
-    }, [isOpen, frameKey, embUrl, item.Summary, item.Keywords, item.References]);
-
-    const openInNewTab = (e) => {
-        e.preventDefault();
-        if (!embUrl) return;
-        window.open(embUrl, "_blank", "noopener");
-    };
-
-    const tagsText = Array.isArray(item.Keywords) && item.Keywords.length
-        ? item.Keywords.join(", ")
-        : "";
+    const url = item.url || item.referral_url;
 
     return (
-        <article className={`sg-card sg2 ${viewMode === "grid" ? "sg-card-grid" : "sg-card-list"} ${isOpen ? "is-open" : ""}`}>
+        <article className={`sg-card ${viewMode === "grid" ? "sg-card-grid" : "sg-card-list"} ${isOpen ? "is-open" : ""}`}>
 
             <header className="sg2-head">
                 <div className="sg2-headLeft">
-                    <span className="sg2-favicon sg2-fallback" />
-                    <span className="sg2-domain" title="result">result</span>
+                    {icon ? <img className="sg2-favicon" src={icon} alt="" /> : <span className="sg2-favicon sg2-fallback" />}
+                    <span className="sg2-domain" title={domain}>{domain || "external"}</span>
                     {date && <>
                         <span className="sg2-dot" />
+                        <span className="sg2-calendar" >
+                            <svg width="10" height="10" viewBox="0 0 10 10" fill="none" xmlns="http://www.w3.org/2000/svg">
+                                <path d="M1.25 10C1.05 10 0.875 9.925 0.725 9.775C0.575 9.625 0.5 9.45 0.5 9.25V1.5C0.5 1.3 0.575 1.125 0.725 0.975C0.875 0.825 1.05 0.75 1.25 0.75H2.0625V0H2.875V0.75H7.125V0H7.9375V0.75H8.75C8.95 0.75 9.125 0.825 9.275 0.975C9.425 1.125 9.5 1.3 9.5 1.5V9.25C9.5 9.45 9.425 9.625 9.275 9.775C9.125 9.925 8.95 10 8.75 10H1.25ZM1.25 9.25H8.75V3.875H1.25V9.25ZM1.25 3.125H8.75V1.5H1.25V3.125ZM5 6C4.85833 6 4.73958 5.95208 4.64375 5.85625C4.54792 5.76042 4.5 5.64167 4.5 5.5C4.5 5.35833 4.54792 5.23958 4.64375 5.14375C4.73958 5.04792 4.85833 5 5 5C5.14167 5 5.26042 5.04792 5.35625 5.14375C5.45208 5.23958 5.5 5.35833 5.5 5.5C5.5 5.64167 5.45208 5.76042 5.35625 5.85625C5.26042 5.95208 5.14167 6 5 6ZM3 6C2.85833 6 2.73957 5.95208 2.64375 5.85625C2.54792 5.76042 2.5 5.64167 2.5 5.5C2.5 5.35833 2.54792 5.23958 2.64375 5.14375C2.73957 5.04792 2.85833 5 3 5C3.14167 5 3.26042 5.04792 3.35625 5.14375C3.45207 5.23958 3.5 5.35833 3.5 5.5C3.5 5.64167 3.45207 5.76042 3.35625 5.85625C3.26042 5.95208 3.14167 6 3 6ZM7 6C6.85833 6 6.73958 5.95208 6.64375 5.85625C6.54792 5.76042 6.5 5.64167 6.5 5.5C6.5 5.35833 6.54792 5.23958 6.64375 5.14375C6.73958 5.04792 6.85833 5 7 5C7.14167 5 7.26042 5.04792 7.35625 5.14375C7.45208 5.23958 7.5 5.35833 7.5 5.5C7.5 5.64167 7.45208 5.76042 7.35625 5.85625C7.26042 5.95208 7.14167 6 7 6ZM5 8C4.85833 8 4.73958 7.95208 4.64375 7.85625C4.54792 7.76042 4.5 7.64167 4.5 7.5C4.5 7.35833 4.54792 7.23958 4.64375 7.14375C4.73958 7.04792 4.85833 7 5 7C5.14167 7 5.26042 7.04792 5.35625 7.14375C5.45208 7.23958 5.5 7.35833 5.5 7.5C5.5 7.64167 5.45208 7.76042 5.35625 7.85625C5.26042 7.95208 5.14167 8 5 8ZM3 8C2.85833 8 2.73957 7.95208 2.64375 7.85625C2.54792 7.76042 2.5 7.64167 2.5 7.5C2.5 7.35833 2.54792 7.23958 2.64375 7.14375C2.73957 7.04792 2.85833 7 3 7C3.14167 7 3.26042 7.04792 3.35625 7.14375C3.45207 7.23958 3.5 7.35833 3.5 7.5C3.5 7.64167 3.45207 7.76042 3.35625 7.85625C3.26042 7.95208 3.14167 8 3 8ZM7 8C6.85833 8 6.73958 7.95208 6.64375 7.85625C6.54792 7.76042 6.5 7.64167 6.5 7.5C6.5 7.35833 6.54792 7.23958 6.64375 7.14375C6.73958 7.04792 6.85833 7 7 7C7.14167 7 7.26042 7.04792 7.35625 7.14375C7.45208 7.23958 7.5 7.35833 7.5 7.5C7.5 7.64167 7.45208 7.76042 7.35625 7.85625C7.26042 7.95208 7.14167 8 7 8Z" fill="#949494" />
+                            </svg>
+                        </span>
                         <span className="sg2-date">{date}</span>
                     </>}
                 </div>
                 <div className="sg2-headRight">
-                    {canPreview && (
+                    {url && (
                         <a
                             className="sg2-open"
-                            href={embUrl}
-                            onClick={openInNewTab}
+                            href={url}
                             target="_blank"
                             rel="noopener noreferrer"
                             referrerPolicy="no-referrer"
@@ -126,25 +131,20 @@ function SgCard({ item, isOpen, onToggle, viewMode = "list" }) {
                     )}
                 </div>
             </header>
+            
+            <div className="sg2-bodyTitle">
 
-            <h3 className="sg2-title" title={item.Name}>{item.Name}</h3>
-            {item.Summary
-                ? <p className="sg2-desc">{item.Summary}</p>
-                : null}
+            {url ? 
+                (<a className="sg2-title-link" href={url} target="_blank" rel="noopener noreferrer" title="Open in new tab" aria-label="Open in new tab">
+                    <h3 className="sg2-title" title={item.title}>{item.title}</h3>
+                </a>) :
+                (<h3 className="sg2-title" title={item.title}>{item.title}</h3>)
+            }
 
-            <div className="sg2-tagsRow">
-                {tagsText
-                    ? (<>
-                        <span className="sg2-tagsLabel">Tags:</span>
-                        <span className="sg2-tagsText">{tagsText}</span>
-                    </>)
-                    : <span className="sg2-tagsEmpty"> </span>
-                }
-
-                {canPreview && !isOpen && (
+            {canPreview && !isOpen && (
                     <button
                         className="sg2-previewLink"
-                        onClick={() => onToggle(item._id)}
+                        onClick={() => onToggle(item.id)}
                         type="button"
                     >
                         <svg width="16" height="11" viewBox="0 0 16 11" fill="none" xmlns="http://www.w3.org/2000/svg">
@@ -156,17 +156,18 @@ function SgCard({ item, isOpen, onToggle, viewMode = "list" }) {
                 {canPreview && isOpen && (
                     <button
                         className="sg2-previewLink"
-                        onClick={() => onToggle(item._id)}
+                        onClick={() => onToggle(item.id)}
                         type="button"
                     >
                         <svg width="16" height="14" viewBox="0 0 16 14" fill="none" xmlns="http://www.w3.org/2000/svg">
                             <path d="M10.4833 8.01671L9.75 7.28337C10.0389 6.49447 9.8889 5.83894 9.3 5.31671C8.7111 4.79447 8.07223 4.66114 7.38333 4.91671L6.65 4.18337C6.8389 4.06114 7.05 3.97227 7.28333 3.91671C7.51666 3.86114 7.75556 3.83337 8 3.83337C8.7889 3.83337 9.45833 4.10837 10.0083 4.65837C10.5583 5.20837 10.8333 5.87781 10.8333 6.66671C10.8333 6.91114 10.8028 7.15281 10.7417 7.39171C10.6806 7.63061 10.5944 7.83894 10.4833 8.01671ZM12.6333 10.1667L11.9667 9.50004C12.5111 9.10004 12.9861 8.65281 13.3917 8.15837C13.7972 7.66394 14.0944 7.16671 14.2833 6.66671C13.7278 5.43337 12.8944 4.45837 11.7833 3.74171C10.6722 3.02504 9.46666 2.66671 8.16666 2.66671C7.7 2.66671 7.22223 2.71114 6.73333 2.80004C6.24443 2.88894 5.8611 2.99447 5.58333 3.11671L4.81666 2.33337C5.20556 2.1556 5.70276 2.00004 6.30833 1.86671C6.9139 1.73337 7.50556 1.66671 8.08333 1.66671C9.67223 1.66671 11.125 2.11948 12.4417 3.02504C13.7583 3.93061 14.7222 5.14447 15.3333 6.66671C15.0444 7.37781 14.6722 8.02781 14.2167 8.61671C13.7611 9.20561 13.2333 9.72227 12.6333 10.1667ZM13.6 13.9334L10.8 11.1834C10.4111 11.3389 9.97223 11.4584 9.48333 11.5417C8.99443 11.625 8.5 11.6667 8 11.6667C6.37776 11.6667 4.90556 11.2139 3.58333 10.3084C2.26111 9.40281 1.28889 8.18894 0.666664 6.66671C0.888887 6.08894 1.19722 5.52504 1.59166 4.97504C1.98611 4.42504 2.46666 3.90004 3.03333 3.40004L0.933331 1.30004L1.63333 0.583374L14.25 13.2L13.6 13.9334ZM3.71666 4.10004C3.30555 4.40004 2.90833 4.79447 2.525 5.28337C2.14166 5.77227 1.86666 6.23337 1.7 6.66671C2.26666 7.90004 3.11944 8.87504 4.25833 9.59171C5.39723 10.3084 6.6889 10.6667 8.13333 10.6667C8.5 10.6667 8.8611 10.6445 9.21666 10.6C9.57223 10.5556 9.8389 10.4889 10.0167 10.4L8.95 9.33337C8.82776 9.38894 8.67776 9.43061 8.5 9.45837C8.32223 9.48614 8.15556 9.50004 8 9.50004C7.22223 9.50004 6.55556 9.22781 6 8.68337C5.44443 8.13894 5.16666 7.46671 5.16666 6.66671C5.16666 6.50004 5.18056 6.33337 5.20833 6.16671C5.2361 6.00004 5.27776 5.85004 5.33333 5.71671L3.71666 4.10004Z" fill="#8ca443" />
                         </svg>
-
                         Hide
                     </button>
                 )}
             </div>
+
+            {desc ? <p className="sg2-desc">{desc}</p> : null}
 
             <div
                 className="sg-previewAnim"
@@ -175,23 +176,19 @@ function SgCard({ item, isOpen, onToggle, viewMode = "list" }) {
             >
                 {isOpen && canPreview && (
                     <div className="sg-preview" ref={(n) => (previewRef.el = n)}>
-                        <div className="sg-cardBody">
-                            {hlName && <Highlighted texts={hlName.texts} />}
-                            {item.Summary && <p className="sg-summary">{item.Summary}</p>}
-                            <Chips items={item.Keywords} />
-                            <CompactReferences refs={item.References} />
+                        <div className="sg-previewImgContainer">
+                            <img className="sg-previewImg" src={item.image_url} alt={item.title || `preview-${item.id}`} />
                         </div>
-
-                        <div className="sg-iframeWrap">
-                            <div className="sg-iframeBox">
-                                <iframe
-                                    key={frameKey}
-                                    src={embUrl}
-                                    title={item.Name || `preview-${item._id}`}
-                                    loading="lazy"
-                                />
-                            </div>
-                        </div>
+                        {url && <a href={url} className="sg-preview-learnMoreLink" target="_blank"
+                            rel="noopener noreferrer"
+                            referrerPolicy="no-referrer"
+                            title="Open in new tab"
+                            aria-label="Open in new tab">
+                                Learn More
+                                <svg width="16" height="16" viewBox="0 0 12 12" fill="none" xmlns="http://www.w3.org/2000/svg">
+                                    <path d="M1 12C0.733333 12 0.5 11.9 0.3 11.7C0.1 11.5 0 11.2667 0 11V1C0 0.733333 0.1 0.5 0.3 0.3C0.5 0.1 0.733333 0 1 0H5.65V1H1V11H11V6.35H12V11C12 11.2667 11.9 11.5 11.7 11.7C11.5 11.9 11.2667 12 11 12H1ZM4.36667 8.35L3.66667 7.63333L10.3 1H6.65V0H12V5.35H11V1.71667L4.36667 8.35Z" fill="#859E3B" />
+                                </svg>
+                            </a>}
                     </div>
                 )}
             </div>
@@ -199,22 +196,32 @@ function SgCard({ item, isOpen, onToggle, viewMode = "list" }) {
     );
 }
 
-const DEFAULT_URL = "https://splinteredglass.retool.com/url/search";
-const DEFAULT_ORG = "67355031aea5f406546577d0";
 
-function SgSearch({
+// const DEFAULT_URL = "https://temp-proxy-server-nu.vercel.app/proxy/search";
+const DEFAULT_URL = "https://ligonier.ministries.bot/api/v1/search?cache_ttl=300";
+
+/**
+ * Props:
+ * - search: string (required)
+ * - url?: string
+ * - enabled?: boolean
+ * - className?: string
+ * - authHeader?: string
+ * - cacheTtl?: number
+ */
+function ApologistSearch({
     search,
-    organizationId = DEFAULT_ORG,
-    authHeader = null,
     url = DEFAULT_URL,
     enabled = true,
     className = "",
+    authHeader = null,
+    cacheTtl = null,
 }) {
     const [data, setData] = useState([]);
-    const [message, setMessage] = useState("");
     const [loading, setLoading] = useState(false);
     const [err, setErr] = useState("");
     const [openIds, setOpenIds] = useState(new Set());
+    const [searchParam, setSearchParam] = useState("");
     const [viewMode, setViewMode] = useState("list"); // "list" or "grid"
     const [hasMore, setHasMore] = useState(false);
     const [loadingMore, setLoadingMore] = useState(false);
@@ -222,52 +229,48 @@ function SgSearch({
     const [allData, setAllData] = useState([]);
 
     useEffect(() => {
+        if (globalThis.GlobalSearch && globalThis.GlobalSearch.trim()) setSearchParam(globalThis.GlobalSearch.trim());
+    }, [globalThis.GlobalSearch]);
+
+    useEffect(() => {
         let cancelled = false;
+        console.log("searchParam: ", searchParam);
 
         async function run() {
-            if (!enabled || !search || !search.trim()) {
-                   setData([]); setAllData([]); setMessage(""); setErr(""); setOpenIds(new Set()); setHasMore(false); setDisplayedCount(10);
-                return;
+            if (!searchParam || !searchParam.trim()) {
+                   setData([]); setAllData([]); setErr(""); setOpenIds(new Set()); setHasMore(false); setDisplayedCount(10); return;
             }
             setLoading(true); setErr(""); setOpenIds(new Set()); setHasMore(false); setDisplayedCount(10);
 
             try {
-                const res = await web.post(
-                    url,
-                    { 
-                        _OrganizationId: organizationId, 
-                        search: search.trim(),
-                        limit: 100 // Get all results
-                    },
-                    {
-                        headers: {
-                            "Content-Type": "application/json",
-                            "Accept": "application/json",
-                            ...(authHeader ? { "Authorization": authHeader } : {}),
-                        },
+                const headers = {
+                    "Content-Type": "application/json",
+                    "Accept": "application/json",
+                    ...(authHeader ? { "Authorization": authHeader } : { "Authorization": "Bearer apg_TS0V0FHInZlAavPDG5MA9gCGziBz" }),
+                    // ...(cacheTtl ? { "x-cache-ttl": String(cacheTtl) } : { "x-cache-ttl": "300" }),
+                };
+
+                const payload = {
+                    "query": searchParam.trim(),
+                    "limit": 100, // Get all results
+                    "filters": {
+                        "team_id": 111
                     }
-                );
+                }
+
+                const res = await web.post(url, payload, { headers });
 
                 if (cancelled) return;
+                if (res.status !== 200) { setErr(res?.error || `HTTP ${res.status}`); setData([]); setAllData([]); setOpenIds(new Set()); return; }
 
-                if (res.status !== 200) {
-                    setErr(res?.error || `HTTP ${res.status}`);
-                    setData([]); setAllData([]); setMessage(""); setOpenIds(new Set());
-                    return;
-                }
-
-                const allResults = Array.isArray(res?.data?.data) ? res.data.data : [];
-                setAllData(allResults);
-                setData(allResults.slice(0, 10)); // Show first 10
-                setMessage(res?.data?.message || "");
-                setHasMore(allResults.length > 10); // Show "Load More" if there are more than 10 results
-                // Open all cards initially
-                setOpenIds(new Set(allResults.map((item) => item._id)));
+                const allResults = Array.isArray(res?.data?.results) ? res.data.results : [];
+                       setAllData(allResults);
+                       setData(allResults.slice(0, 10)); // Show first 10
+                       setHasMore(allResults.length > 10); // Show "Load More" if there are more than 10 results
+                       // Open all cards initially
+                    //    setOpenIds(new Set(allResults.map(item => item.id)));
             } catch (e) {
-                if (!cancelled) {
-                    setErr(e?.message || "Network error");
-                    setData([]); setAllData([]); setMessage(""); setOpenIds(new Set());
-                }
+                if (!cancelled) { setErr(e?.message || "Network error"); setData([]); setAllData([]); setOpenIds(new Set()); }
             } finally {
                 if (!cancelled) setLoading(false);
             }
@@ -275,7 +278,7 @@ function SgSearch({
 
         run();
         return () => { cancelled = true; };
-    }, [search, organizationId, authHeader, url, enabled]);
+    }, [searchParam]);
 
     const loadMore = () => {
         if (loadingMore || !hasMore) return;
@@ -294,15 +297,14 @@ function SgSearch({
         }, 300);
     };
 
-    if (!search?.trim()) {
-        return <div className="sg-muted">Type a search to begin…</div>;
-    }
+    if (!search?.trim()) return <div className="sg-muted">Type a search to begin…</div>;
 
     if (loading) {
         return (
             <div className={`sg-loading ${className}`} aria-busy="true" aria-live="polite">
                 <div className="sg-spinner" role="status" aria-label="Loading" />
                 <div className="sg-loading-text">Loading…</div>
+
                 <style>{getStyleOf('apologist.css')}</style>
             </div>
         );
@@ -312,7 +314,8 @@ function SgSearch({
         return (
             <div className="sg-error">
                 <b>Search error:</b> {err}
-                <div className="sg-muted sg-small">If you see a CORS error, allow this origin in Retool or use a proxy.</div>
+                <div className="sg-muted sg-small">If a preview is blocked, use “Open”.</div>
+
                 <style>{getStyleOf('apologist.css')}</style>
             </div>
         );
@@ -366,14 +369,14 @@ function SgSearch({
                 )}
             </div>
 
-            <div className={`sg-results ${viewMode === "grid" ? "sg-grid" : "sg-list"} ${className}`} key={`results-${Boolean(data?.length)}-${search}`}>
+            <div className={`sg-results ${viewMode === "grid" ? "sg-grid" : "sg-list"} ${className}`}>
                 {data && data.length > 0 ? (
                     <>
                         {data.map((item, i) => (
                             <SgCard
-                                key={item?._id ? String(item._id) : `row-${i}`}
+                                key={item?.id ? String(item.id) : `row-${i}`}
                                 item={item}
-                                isOpen={openIds.has(item._id)}
+                                isOpen={openIds.has(item.id)}
                                 onToggle={(id) => {
                                     setOpenIds(prev => {
                                         const newSet = new Set(prev);
@@ -414,12 +417,13 @@ function SgSearch({
                         <div className="sg-emptyHint">Try a broader term or different keywords.</div>
                     </div>
                 )}
-            </div>
 
-            <style>{getStyleOf('apologist.css')}</style>
+                <style>{getStyleOf('apologist.css')}</style>
+            </div>
         </div>
     );
 }
 
-globalThis.TaposSearch = SgSearch;
-export { SgSearch };
+globalThis.ApologistSearch = ApologistSearch;
+
+return ApologistSearch;

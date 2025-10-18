@@ -148,7 +148,7 @@ await(async function mainInstaller(that) {
                 icon,
                 label,
                 hasToggle: true,
-                active: false,
+                active: true,
                 onHold,
                 onClick,
             };
@@ -199,7 +199,7 @@ await(async function mainInstaller(that) {
             icon: !toolbarConfig?.iconUrl ? toolbarConfig.icon : toolbarConfig.iconUrl,
             label: toolbarConfig.label,
             hasToggle: true,
-            active: false,
+            active: true,
             // active: typeof toolbarConfig?.active === 'boolean' ? toolbarConfig.active : true,
             onHold: runFn,
             onClick: runFn,

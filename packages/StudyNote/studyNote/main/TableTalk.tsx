@@ -1,6 +1,6 @@
 // TableTalkEmbed.jsx
 const { useState } = os.appHooks;
-import { getStyleOf } from 'app.sn_styles.styler';
+const getStyleOf = await thisBot.GetStyle();
 
 const TT_URL = "https://tabletalkmagazine.com/";
 
@@ -33,4 +33,5 @@ function TableTalkEmbed({ height = "70vh", className = "" }) {
 }
 
 globalThis.TableTalkEmbed = TableTalkEmbed;
-export { TableTalkEmbed };
+
+return TableTalkEmbed;

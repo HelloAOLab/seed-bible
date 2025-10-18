@@ -1,0 +1,24 @@
+{
+  "name": "StudyNote",
+  "id": 1760287800000,
+  "description": "Study notes, devotionals, and discovery search for Bible study",
+  "version": "1.0.0",
+  "author": "Ahmed Alaa",
+  "license": "AGPL-3.0-or-later",
+  "status": "active",
+  "type": "package",
+  "mainBotTag": "studyNote.main",
+  "dependencies": [],
+  "otherBots": [],
+  "configEditor": {
+    "author": "Ahmed Alaa",
+    "app": "@GetApp",
+    "toolbarConfig": {
+      "icon": "splitscreen_right",
+      "label": "Study Notes",
+      "hasToggle": "true",
+      "to": "page"
+    }
+  }
+}
+

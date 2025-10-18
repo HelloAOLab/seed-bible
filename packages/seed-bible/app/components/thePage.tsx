@@ -17,9 +17,6 @@ import { TextEditor } from "app.components.editor";
 import { MiniTextEditor } from "app.components.smallEditor";
 
 // Additions ------>
-import { StudyNotes, StudyNotesWithPanel } from "app.sn_components.studyNotes";
-
-const SN_Components_Bot = getBot(byTag("system", "app.sn_components"));
 
 import { ConfigurableFunctionCommands } from "app.components.commands";
 
@@ -37,13 +34,27 @@ function MoreResources() {
       globalThis.studyNotesPresent = false;
       return;
     }
+    
+    // Dynamic check - only works if StudyNote extension is installed
+    const StudyNotes = globalThis.GlobalStudyNotes;
+    if (!StudyNotes) {
+      os.toast('StudyNote extension not installed', 3);
+      return;
+    }
+    
     if (!globalThis.panelMode) {
       globalThis.studyNotesPresent = true;
       let id = uuid();
       globalThis.STUDYNOTES_PANEL_ID = id;
       AddApplication({
         id,
-        App: <StudyNotes id={id} chapter={globalThis.GlobalChapter} />,
+        App: (
+          <StudyNotes
+            key={`${globalThis.BookId}-${globalThis.GlobalChapter}`}
+            id={id}
+            chapter={globalThis.GlobalChapter}
+          />
+        ),
         to: "panel",
         minWidth: "30rem",
       });
@@ -203,16 +214,22 @@ function ThePage({
 
     prepareAISearchParamOnChapter(bible.data);
 
-    if (globalThis.studyNotesPresent) {
-      UpdateApplication(globalThis.STUDYNOTES_PANEL_ID, {
-        App: (
-          <StudyNotes
-            id={globalThis.STUDYNOTES_PANEL_ID}
-            chapter={globalThis.GlobalChapter}
-          />
-        ),
-        to: "panel",
-      });
+    // Only update StudyNote if it's on the "notes" or "discover" tab (not devotion which doesn't depend on book/chapter)
+    if (globalThis.studyNotesPresent && globalThis.GlobalStudyNotes) {
+      const activeTab = globalThis.StudyNoteActiveTab || 'notes';
+      if (activeTab === 'notes' || activeTab === 'discover') {
+        const StudyNotes = globalThis.GlobalStudyNotes;
+        UpdateApplication(globalThis.STUDYNOTES_PANEL_ID, {
+          App: (
+            <StudyNotes
+              key={`${globalThis.BookId}-${globalThis.GlobalChapter}`}
+              id={globalThis.STUDYNOTES_PANEL_ID}
+              chapter={globalThis.GlobalChapter}
+            />
+          ),
+          to: "panel",
+        });
+      }
     }
   }
 
@@ -384,16 +401,22 @@ function ThePage({
 
     prepareAISearchParamOnChapter(bible.data);
 
-    if (globalThis.studyNotesPresent) {
-      UpdateApplication(globalThis.STUDYNOTES_PANEL_ID, {
-        App: (
-          <StudyNotes
-            id={globalThis.STUDYNOTES_PANEL_ID}
-            chapter={globalThis.GlobalChapter}
-          />
-        ),
-        to: "panel",
-      });
+    // Only update StudyNote if it's on the "notes" or "discover" tab (not devotion which doesn't depend on book/chapter)
+    if (globalThis.studyNotesPresent && globalThis.GlobalStudyNotes) {
+      const activeTab = globalThis.StudyNoteActiveTab || 'notes';
+      if (activeTab === 'notes' || activeTab === 'discover') {
+        const StudyNotes = globalThis.GlobalStudyNotes;
+        UpdateApplication(globalThis.STUDYNOTES_PANEL_ID, {
+          App: (
+            <StudyNotes
+              key={`${globalThis.BookId}-${globalThis.GlobalChapter}`}
+              id={globalThis.STUDYNOTES_PANEL_ID}
+              chapter={globalThis.GlobalChapter}
+            />
+          ),
+          to: "panel",
+        });
+      }
     }
   }
   async function openPrevChapter() {
@@ -408,7 +431,8 @@ function ThePage({
 
     prepareAISearchParamOnChapter(bible.data);
 
-    if (globalThis.studyNotesPresent) {
+    if (globalThis.studyNotesPresent && globalThis.GlobalStudyNotes) {
+      const StudyNotes = globalThis.GlobalStudyNotes;
       UpdateApplication(globalThis.STUDYNOTES_PANEL_ID, {
         App: (
           <StudyNotes
@@ -430,16 +454,22 @@ function ThePage({
 
     prepareAISearchParamOnChapter(bible.data);
 
-    if (globalThis.studyNotesPresent) {
-      UpdateApplication(globalThis.STUDYNOTES_PANEL_ID, {
-        App: (
-          <StudyNotes
-            id={globalThis.STUDYNOTES_PANEL_ID}
-            chapter={globalThis.GlobalChapter}
-          />
-        ),
-        to: "panel",
-      });
+    // Only update StudyNote if it's on the "notes" or "discover" tab (not devotion which doesn't depend on book/chapter)
+    if (globalThis.studyNotesPresent && globalThis.GlobalStudyNotes) {
+      const activeTab = globalThis.StudyNoteActiveTab || 'notes';
+      if (activeTab === 'notes' || activeTab === 'discover') {
+        const StudyNotes = globalThis.GlobalStudyNotes;
+        UpdateApplication(globalThis.STUDYNOTES_PANEL_ID, {
+          App: (
+            <StudyNotes
+              key={`${globalThis.BookId}-${globalThis.GlobalChapter}`}
+              id={globalThis.STUDYNOTES_PANEL_ID}
+              chapter={globalThis.GlobalChapter}
+            />
+          ),
+          to: "panel",
+        });
+      }
     }
   }
   async function changeTranslation(id, book, url) {
@@ -472,16 +502,22 @@ function ThePage({
     // Additions ------>
     globalThis.GlobalChapter = data.chapter - 1;
 
-    if (globalThis.studyNotesPresent) {
-      UpdateApplication(globalThis.STUDYNOTES_PANEL_ID, {
-        App: (
-          <StudyNotes
-            id={globalThis.STUDYNOTES_PANEL_ID}
-            chapter={globalThis.GlobalChapter}
-          />
-        ),
-        to: "panel",
-      });
+    // Only update StudyNote if it's on the "notes" or "discover" tab (not devotion which doesn't depend on book/chapter)
+    if (globalThis.studyNotesPresent && globalThis.GlobalStudyNotes) {
+      const activeTab = globalThis.StudyNoteActiveTab || 'notes';
+      if (activeTab === 'notes' || activeTab === 'discover') {
+        const StudyNotes = globalThis.GlobalStudyNotes;
+        UpdateApplication(globalThis.STUDYNOTES_PANEL_ID, {
+          App: (
+            <StudyNotes
+              key={`${globalThis.BookId}-${globalThis.GlobalChapter}`}
+              id={globalThis.STUDYNOTES_PANEL_ID}
+              chapter={globalThis.GlobalChapter}
+            />
+          ),
+          to: "panel",
+        });
+      }
     }
   }
   function Update(tab) {
@@ -997,7 +1033,9 @@ function Section({
   const [chunksMap, setChunksMap] = useState(null);
 
   function readGlobalShouldHighlight() {
-    const v = SN_Components_Bot?.tags?.shouldHighlight;
+    // Check if StudyNote extension is installed
+    const mainBot = getBot('system', 'studyNote.main');
+    const v = mainBot?.tags?.shouldHighlight;
     return v === true || String(v) === "true";
   }
 

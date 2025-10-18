@@ -248,6 +248,7 @@ export const DEFAULT_EXTENSIONS = [
     'Bible Layout 2D',
     'Painter',
     'Playlist',
+    'StudyNote',
 ];
 
 export async function loadSeedBible(page: Page, extraExtensions: string[] = []) {
