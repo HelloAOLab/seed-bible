@@ -1,6 +1,7 @@
 import { program } from 'commander';
 import { readFile, rmdir, cp } from 'node:fs/promises';
 import { downloadAndSave, uploadPattern } from './lib/pattern';
+import { uploadFile, getCurrentSessionKey } from './lib/records';
 import path from 'node:path';
 import { execSync } from 'node:child_process';
 import { uploadAll } from './lib/extension';
@@ -128,6 +129,25 @@ program.command('publish-seed-bible')
         packager.tags.alwaysUseAvailablePackages = true;
 
         await uploadPattern(options.pattern, auxJson, options.sessionKey, options.recordKey, options.telegramBotToken, options.telegramChatId);
+    });
+
+program.command('upload')
+    .description('Uploads the given file to the records server.')
+    .argument('<recordKeyOrName>', 'The record key or name to upload the file to.')
+    .argument('<file>', 'The path to the file to upload.')
+    .option('--session-key <sessionKey>', 'The session key to use for authentication.')
+    .option('--record-key <recordKey>', 'The record key to use. If not specified, the default record name will be used.')
+    .option('--markers <markers...>', 'The markers to use for the uploaded file.', (val) => val.split(','))
+    .action(async (recordKeyOrName, file, options) => {
+        if (!options.sessionKey) {
+            options.sessionKey = await getCurrentSessionKey();
+            if (!options.sessionKey) {
+                throw new Error('You must specify a session key either by using the --session-key option or by logging into the casualos CLI for https://api.ao.bot.');
+            }
+        }
+        const data = await readFile(path.resolve(file));
+        const { fileUrl } = await uploadFile(recordKeyOrName, data, options.sessionKey, options.markers);
+        console.log('File uploaded to:', fileUrl);
     });
 
 program.parse();
