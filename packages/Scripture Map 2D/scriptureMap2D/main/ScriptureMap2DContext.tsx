@@ -215,16 +215,70 @@ export const ScriptureMap2DProvider = ({
     const hooksBot = useMemo(() => {return getBot("system", "app.hooks")}, []);
 
     const [readingHistory, setReadingHistory] = useState({...hooksBot.vars.tempReadingHistory});
+    
+    const [readingHistoryUsersFilters, setReadingHistoryUsersFilters] = useState(new Map(
+        Object.keys(readingHistory).map((userId) => {
+            return [userId, userId === configBot.id ? true : false]
+        })
+    ))
 
-    const [readingHistoryUserId, setReadingHistoryUserId] = useState(configBot.id);
+    const [readingHistoryRange, setReadingHistoryRange] = useState(null);
 
-    const handleReadingHistoryUserSelectorClick = useCallback((id) => {
-        setReadingHistoryUserId(id)
-    }, [])
+    const tryUpdateReadingHistoryUsersFilters = useCallback(() => {
+        const newUsersIds = [];
+        Object.keys(readingHistory).forEach((userId) => {
+            if(!readingHistoryUsersFilters.has(userId))
+            {
+                newUsersIds.push(userId);
+            }
+        })
+        if(newUsersIds.length > 0)
+        {
+            const copy = new Map(readingHistoryUsersFilters)
+            newUsersIds.forEach((userId) => {
+                copy.set(userId, false);
+            })
+            setReadingHistoryUsersFilters(copy);
+        }
+    }, [readingHistoryUsersFilters, readingHistory])
+
+    const handleReadingHistoryUserSelectorClick = useCallback((key) => {
+        
+        const copy = new Map(readingHistoryUsersFilters)
+        if(key === "all")
+        {
+            Array.from(readingHistoryUsersFilters).forEach(([stateKey]) => {
+                copy.set(stateKey, true)
+            })
+        }
+        else
+        {
+            const allSelected = Array.from(readingHistoryUsersFilters).every(([, value]) => { return value });
+            if(allSelected)
+            {
+                Array.from(readingHistoryUsersFilters).forEach(([stateKey]) => {
+                    copy.set(stateKey, stateKey === key ? true : false)
+                })
+            }
+            else
+            {
+                copy.set(key, !copy.get(key));
+            }
+        }
+        setReadingHistoryUsersFilters(copy);
+    }, [readingHistoryUsersFilters])
+
+    const handleReadingHistoryRangeSelectorClick = useCallback((range) => {
+        setReadingHistoryRange(range)
+    })
+
+    useEffect(() => {
+        tryUpdateReadingHistoryUsersFilters();
+    }, [readingHistory]);
 
     useEffect(() => {
         const id = setInterval(() => {
-            setReadingHistory({...hooksBot.vars.tempReadingHistory})
+            setReadingHistory({...hooksBot.vars.tempReadingHistory});
         }, 1000);
 
         return () => {clearInterval(id)}
@@ -312,7 +366,9 @@ export const ScriptureMap2DProvider = ({
     //     setShowingAllChapters(prev => !prev);
     // }, [])
 
-    const maxChapterHeatCount = useMemo(() => {return 5}, []);
+    const {maxChapterHeatCount, chapterBaseBackgroundColor} = useMemo(() => {
+        return {chapterBaseBackgroundColor: "#E3E3E3", maxChapterHeatCount: 5}
+    }, []);
 
     useEffect(() => {
         return () => {globalThis.scriptureMap2DHistoryUpdate = null}
@@ -402,9 +458,12 @@ export const ScriptureMap2DProvider = ({
             ProjectChapterState,
             projectStateStyle,
             
+            readingHistoryUsersFilters,
             handleReadingHistoryUserSelectorClick,
             hooksBot,
-            readingHistoryUserId,
+            readingHistoryRange,
+            handleReadingHistoryRangeSelectorClick,
+            chapterBaseBackgroundColor,
             ...parentContext
         }} >
             {children}
