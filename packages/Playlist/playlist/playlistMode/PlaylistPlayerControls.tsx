@@ -216,7 +216,7 @@ const PlayerControls = ({ parentId = "default" }) => {
 
           const prevItemList = wasPrevItemArray
             ? prevItem?.additionalInfo
-            : !!prevItem?.additionalInfo?.layers?.length
+            : prevItem?.additionalInfo?.layers?.length
             ? prevItem?.additionalInfo?.layers
             : [];
           // This Might Break When Order is > 1
@@ -259,7 +259,7 @@ const PlayerControls = ({ parentId = "default" }) => {
       }
     }
 
-    let newValues = {
+    const newValues = {
       index: newIndex,
       key: newKey,
       fromButton: order,

@@ -82,10 +82,24 @@ export class BibleDataManager {
 
     const timestamp = Date.now()
 
+    const lastReading = thisBot.vars.tempLastReading ??= {};
     const tempHistory = thisBot.vars.tempReadingHistory ??= {};
     const userHistory = tempHistory[configBot.id] ??= {};
     const bookHistory = userHistory[this.bookId] ??= {};
-    bookHistory[this.chapter] = timestamp;
+    if(!bookHistory[this.chapter]) bookHistory[this.chapter] = [];
+    const length = bookHistory[this.chapter].push({start: timestamp});
+    if(lastReading[configBot.id]) 
+    {
+      const {bookId, chapter, index} = lastReading[configBot.id];
+      const lastEntry = userHistory[bookId]?.[chapter]?.[index];
+      if(lastEntry) lastEntry.end = timestamp;
+      else
+      {
+        console.warn(`[Debug] BibleDataManager._scheduleMaskRecord lastEntry not found`, thisBot.vars.tempLastReading[configBot.id]);
+      }
+    }
+
+    lastReading[configBot.id] = {bookId: this.bookId, chapter: this.chapter, index: length - 1};
     
     if (!this.tabId) return;
     
