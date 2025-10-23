@@ -2,6 +2,8 @@ import { createRecordsClient } from '@casual-simulation/aux-records/RecordsClien
 import hash from 'hash.js';
 import axios from 'axios';
 import stringify from '@casual-simulation/fast-json-stable-stringify';
+import { isArrayBuffer, isArrayBufferView } from 'node:util/types';
+import Conf from 'conf';
 
 const headers = {
     'Origin': 'https://auth.ao.bot',
@@ -24,6 +26,19 @@ const UNSAFE_HEADERS = new Set([
 ]);
 
 /**
+ * Gets the current session key for the user.
+ * If they are not logged into ao.bot, then this will return null.
+ */
+export async function getCurrentSessionKey(): Promise<string> {
+    // Get current session key
+    const config = new Conf({
+        projectName: 'casualos-cli',
+    });
+
+    return config.get(`https://api.ao.bot:sessionKey`) as string || null;
+}
+
+/**
  * Uploads a file to the records server. Returns the URL of the file that was uploaded.
  * @param recordNameOrKey The name or key of the record to upload to.
  * @param data The data to upload
@@ -34,10 +49,17 @@ export async function uploadFile(recordNameOrKey: string, data: object | string 
 
     client.sessionKey = sessionKey;
 
-    const json = stringify(data);
-    const encodedData = new TextEncoder().encode(json);
+    let encodedData;
+    let mimeType: string;
+    if (isArrayBuffer(data) || isArrayBufferView(data)) {
+        encodedData = data;
+        mimeType = 'application/octet-stream';
+    } else {
+        const json = stringify(data);
+        encodedData = new TextEncoder().encode(json);
+        mimeType = 'application/json';
+    }
     const byteLength = encodedData.byteLength;
-    const mimeType = 'application/json';
     const hash = getHash(encodedData);
 
     const recordFileResult = await client.recordFile({
