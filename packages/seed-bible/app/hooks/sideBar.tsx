@@ -1,5 +1,11 @@
-const { createContext, useContext, useState, useEffect, useLayoutEffect } =
-  os.appHooks;
+const {
+  createContext,
+  useContext,
+  useState,
+  useEffect,
+  useRef,
+  useLayoutEffect,
+} = os.appHooks;
 import { getStyleOf } from "app.styles.styler";
 import {
   DualScreenIcon,
@@ -24,15 +30,19 @@ export function SideBarProvider({ children }) {
   const [packageAddingOptions, setPackageAddingOptions] = useState([]);
   const [openOnMobile, setOpenOnMobile] = useState(false);
   const [isMobile, setIsMobile] = useState(false);
+
+  const oldWidthRef = useRef(window.innerWidth);
+
   useEffect(() => {
     const handleResize = () => {
       const check = window.innerWidth < 768;
+      oldWidthRef.current = window.innerWidth;
       setIsMobile(check);
-      if (window.innerWidth <= 940 && !check) {
+      if (window.innerWidth <= 940 && !check && oldWidthRef.current > 940) {
         setCollapsed(true);
         setSidebarWidth(60);
-      } else {
-        if (check) return;
+      }
+      if (window.innerWidth > 940 && check && oldWidthRef.current < 940) {
         setCollapsed(false);
         setSidebarWidth(280);
       }
@@ -41,12 +51,11 @@ export function SideBarProvider({ children }) {
     return () => window.removeEventListener("resize", handleResize);
   }, []);
   globalThis.SetPackageAddingOptions = setPackageAddingOptions;
-  useEffect(() => {
-    console.log(packageAddingOptions, "addingOptions");
-  }, [packageAddingOptions]);
+
   useEffect(() => {
     // ShowToolbar(!openOnMobile)
   }, [openOnMobile]);
+
   useEffect(() => {
     const handleMouseMove = (event) => {
       setMousePosition({ x: event.clientX, y: event.clientY });
@@ -58,7 +67,7 @@ export function SideBarProvider({ children }) {
     };
   }, []);
 
-  function openPopupSettings(props, wait, popupComponent) {
+  function openPopupSettings(props, wait, popupComponent, popupHeight = 230) {
     setWait(wait);
     if (popupSettings) {
       closePopupSettings();
@@ -67,7 +76,11 @@ export function SideBarProvider({ children }) {
     const pointerX = mousePosition.x;
     const pointerY = mousePosition.y;
 
-    const adjustedPosition = adjustPositionWithinScreen(pointerX, pointerY);
+    const adjustedPosition = adjustPositionWithinScreen(
+      pointerX,
+      pointerY,
+      popupHeight
+    );
     setPosition(adjustedPosition);
 
     setTimeout(() => {
@@ -79,9 +92,8 @@ export function SideBarProvider({ children }) {
     }, 100);
   }
 
-  function adjustPositionWithinScreen(x, y) {
+  function adjustPositionWithinScreen(x, y, popupHeight = 230) {
     const popupWidth = 250;
-    const popupHeight = 230;
     const margin = 10;
     const cursorOffset = 10; // Small offset from cursor
 
@@ -182,8 +194,7 @@ export function SideBarProvider({ children }) {
         setOpenOnMobile,
         closePopupSettings,
         isMobile,
-      }}
-    >
+      }}>
       {children}
     </MyContext.Provider>
   );
@@ -200,8 +211,7 @@ export function PopupSettings({ items, type, disabled, sidebarContext }) {
         top: `${sidebarContext.position.y}px`,
         zIndex: "10000",
         pointerEvents: "auto",
-      }}
-    >
+      }}>
       <link rel="preconnect" href="https://fonts.googleapis.com" />
       <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
       <link
@@ -225,8 +235,7 @@ export function PopupSettings({ items, type, disabled, sidebarContext }) {
                     width: "100%",
                     height: "1px",
                     backgroundColor: "#cdcccc3b",
-                  }}
-                ></div>
+                  }}></div>
               );
             else
               return (
@@ -239,8 +248,7 @@ export function PopupSettings({ items, type, disabled, sidebarContext }) {
                   style={{
                     cursor: item?.disabled ? "not-allowed" : "pointer",
                     color: item?.disabled ? "#929292" : "",
-                  }}
-                >
+                  }}>
                   <div>{item.icon}</div>
                   <div>
                     {typeof item.title === "function"

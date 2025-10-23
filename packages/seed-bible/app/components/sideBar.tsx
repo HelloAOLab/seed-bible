@@ -89,8 +89,7 @@ const CircleCounter = ({ data, book, chapter }) => {
               fontSize: "12px",
               marginLeft: "-12px",
               zIndex: 0,
-            }}
-          >
+            }}>
             +{remaining}
           </div>
         )}
@@ -110,8 +109,7 @@ const CircleCounter = ({ data, book, chapter }) => {
             justifyContent: "center",
             zIndex: 1000,
           }}
-          onClick={() => setIsModalOpen(false)}
-        >
+          onClick={() => setIsModalOpen(false)}>
           <div
             style={{
               backgroundColor: "white",
@@ -124,24 +122,21 @@ const CircleCounter = ({ data, book, chapter }) => {
               boxShadow:
                 "0 20px 25px -5px rgba(0, 0, 0, 0.1), 0 10px 10px -5px rgba(0, 0, 0, 0.04)",
             }}
-            onClick={(e) => e.stopPropagation()}
-          >
+            onClick={(e) => e.stopPropagation()}>
             <div
               style={{
                 display: "flex",
                 justifyContent: "space-between",
                 alignItems: "center",
                 marginBottom: "20px",
-              }}
-            >
+              }}>
               <h2
                 style={{
                   fontSize: "20px",
                   fontWeight: "600",
                   color: "#111827",
                   margin: 0,
-                }}
-              >
+                }}>
                 All Users ({entries.length})
               </h2>
               <button
@@ -158,15 +153,13 @@ const CircleCounter = ({ data, book, chapter }) => {
                   display: "flex",
                   alignItems: "center",
                   justifyContent: "center",
-                }}
-              >
+                }}>
                 ×
               </button>
             </div>
 
             <div
-              style={{ display: "flex", flexDirection: "column", gap: "12px" }}
-            >
+              style={{ display: "flex", flexDirection: "column", gap: "12px" }}>
               {entries.map(([id, value], index) => {
                 const [follow, setFollow] = useState(
                   Reciver?.masks["remotes"]?.includes(data[id][0])
@@ -181,8 +174,7 @@ const CircleCounter = ({ data, book, chapter }) => {
                       backgroundColor: "#f9fafb",
                       borderRadius: "8px",
                       gap: "12px",
-                    }}
-                  >
+                    }}>
                     <div
                       style={{
                         width: "32px",
@@ -196,8 +188,7 @@ const CircleCounter = ({ data, book, chapter }) => {
                         fontWeight: "600",
                         fontSize: "14px",
                         flexShrink: 0,
-                      }}
-                    >
+                      }}>
                       {index + 1}
                     </div>
                     <div style={{ flex: 1 }}>
@@ -206,8 +197,7 @@ const CircleCounter = ({ data, book, chapter }) => {
                           fontWeight: "600",
                           color: "#111827",
                           marginBottom: "4px",
-                        }}
-                      >
+                        }}>
                         User :{" "}
                         <span style={{ fontSize: "12px" }}>{data[id][0]}</span>
                       </div>
@@ -251,8 +241,7 @@ const CircleCounter = ({ data, book, chapter }) => {
                       }
                       onMouseOut={(e) =>
                         (e.target.style.backgroundColor = "#3b82f6")
-                      }
-                    >
+                      }>
                       {!follow ? "Follow" : "Unfollow"}
                     </button>
                   </div>
@@ -476,8 +465,7 @@ function Tab({
           : collapsed
           ? "collabsedTab"
           : "tab"
-      } ${selectedTabs?.includes?.(el.id) ? "selected" : ""}`}
-    >
+      } ${selectedTabs?.includes?.(el.id) ? "selected" : ""}`}>
       {!collapsed ? (
         <>
           <div className="tabInfo">
@@ -529,8 +517,7 @@ function Tab({
                 openPopupSettings(OPTIONS(el));
               }}
               style={{ display: activeTab ? "" : "none" }}
-              className="material-symbols-outlined "
-            >
+              className="material-symbols-outlined ">
               more_vert
             </span>
           )}
@@ -602,8 +589,7 @@ function Folder({ folder, onlineUsers, collapsed }) {
       onPointerEnter={handleMouseEnter}
       onPointerLeave={handleMouseLeave}
       onPointerUp={handleMouseUp}
-      className="folder"
-    >
+      className="folder">
       <div onClick={() => setOpen(!open)} className="folderHeader">
         {open ? <MenuIcon name="folder_open" /> : <MenuIcon name={"folder"} />}
         {!collapsed && <span>{folder.name}</span>}
@@ -612,16 +598,14 @@ function Folder({ folder, onlineUsers, collapsed }) {
           onClick={() => {
             openPopupSettings(OPTIONS);
           }}
-          className="material-symbols-outlined "
-        >
+          className="material-symbols-outlined ">
           more_vert
         </span>
       </div>
       {open && (
         <div
           style={{ "margin-left": collapsed ? "0px" : null }}
-          className="folderTabs"
-        >
+          className="folderTabs">
           {folder.tabs.map((el) => (
             <Tab
               key={el.id}
@@ -776,6 +760,7 @@ function SideBar() {
 
   const isResizing = useRef(false);
   const sidebarRef = useRef();
+  const oldWidthRef = useRef(window.innerWidth);
 
   const handleMouseDown = (e) => {
     isResizing.current = true;
@@ -784,9 +769,12 @@ function SideBar() {
   const handleMouseMove = (e) => {
     if (!isResizing.current) return;
     const newWidth = Math.max(40, Math.min(e.clientX, 300));
-    if (newWidth <= 140) {
+    oldWidthRef.current = newWidth;
+    if (newWidth <= 140 && oldWidthRef.current > 140) {
       setCollapsed(true);
-    } else {
+    }
+
+    if (newWidth > 140 && oldWidthRef.current < 140) {
       setCollapsed(false);
     }
     if (newWidth < 55) {
@@ -811,11 +799,14 @@ function SideBar() {
     };
   }, []);
 
+  const oldWidth = useRef(window.innerWidth);
+
   useEffect(() => {
     const handleResize = () => {
       const check = window.innerWidth < 768;
-      setIsMobile(check);
-      if (!check) {
+      oldWidth.current = window.innerWidth;
+      setIsMobile(check && oldWidth.current > 768);
+      if (!check && oldWidth.current < 768) {
         setSidebarWidth(280);
       }
     };
@@ -877,8 +868,7 @@ function SideBar() {
           "border-radius": "10px",
           background: " #202020",
           padding: "20px",
-        }}
-      >
+        }}>
         <div
           style={{
             color: "white",
@@ -890,8 +880,7 @@ function SideBar() {
             "font-style": "normal",
             "font-weight": "700",
             "line-height": "normal",
-          }}
-        >
+          }}>
           Panels
         </div>
         <div
@@ -899,15 +888,13 @@ function SideBar() {
             gap: "10px",
             display: "grid",
             "grid-template-columns": "repeat(3, 1fr)",
-          }}
-        >
+          }}>
           <div
             onClick={() => {
               setCustomScreens({ value: 1 });
               setScreens({ value: 1 });
             }}
-            style={{ cursor: "pointer" }}
-          >
+            style={{ cursor: "pointer" }}>
             <Panel1 />
           </div>
           <div
@@ -915,8 +902,7 @@ function SideBar() {
               setCustomScreens({ value: 2 });
               setScreens({ value: 2 });
             }}
-            style={{ cursor: "pointer" }}
-          >
+            style={{ cursor: "pointer" }}>
             <Panel2 />
           </div>
           {!isMobile && (
@@ -927,8 +913,7 @@ function SideBar() {
                   setCustomScreens({ value: 3 });
                   setScreens({ value: 3 });
                 }}
-                style={{ cursor: "pointer" }}
-              >
+                style={{ cursor: "pointer" }}>
                 <Panel3 />
               </div>
               <div
@@ -936,8 +921,7 @@ function SideBar() {
                   setCustomScreens({ value: 3, row: true });
                   setScreens({ value: 3, row: true });
                 }}
-                style={{ cursor: "pointer" }}
-              >
+                style={{ cursor: "pointer" }}>
                 <Panel3Row />
               </div>
               <div
@@ -945,8 +929,7 @@ function SideBar() {
                   setCustomScreens({ value: 4 });
                   setScreens({ value: 4 });
                 }}
-                style={{ cursor: "pointer" }}
-              >
+                style={{ cursor: "pointer" }}>
                 <Panel4 />
               </div>
               <div
@@ -954,8 +937,7 @@ function SideBar() {
                   setCustomScreens({ value: 4, row: true });
                   setScreens({ value: 4, row: true });
                 }}
-                style={{ cursor: "pointer" }}
-              >
+                style={{ cursor: "pointer" }}>
                 <Panel4Row />
               </div>
             </>
@@ -1112,8 +1094,7 @@ function SideBar() {
             left: "10px",
             top: "20px",
             zIndex: 99999,
-          }}
-        >
+          }}>
           <span className="material-symbols-outlined">menu</span>
         </div>
       )}
@@ -1156,8 +1137,7 @@ function SideBar() {
             cursor: "pointer",
           }}
           onMouseEnter={(e) => (e.target.style.opacity = "1")}
-          onMouseLeave={(e) => (e.target.style.opacity = "0")}
-        ></div>
+          onMouseLeave={(e) => (e.target.style.opacity = "0")}></div>
       )}
       <div
         onMouseUp={() => setIsDragging(false)}
@@ -1172,8 +1152,7 @@ function SideBar() {
             : `sidebar-1 ${openOnMobile ? "open" : null} ${
                 fullScreen ? "floatSidebar" : null
               }`
-        }
-      >
+        }>
         <div
           onMouseDown={handleMouseDown}
           style={{
@@ -1184,8 +1163,7 @@ function SideBar() {
             height: "100%",
             background: "",
             cursor: "pointer",
-          }}
-        ></div>
+          }}></div>
 
         <div className="headbar">
           {!collapsed ? (
@@ -1204,8 +1182,7 @@ function SideBar() {
                       setOpenOnMobile(false);
                     }
                   }}
-                  className="material-symbols-outlined"
-                >
+                  className="material-symbols-outlined">
                   menu_open
                 </span>
                 <div>
@@ -1214,8 +1191,7 @@ function SideBar() {
                       onClick={() =>
                         customIcon.link && os.openURL(customIcon.link)
                       }
-                      className="material-symbols-outlined"
-                    >
+                      className="material-symbols-outlined">
                       {customIcon.icon}
                     </span>
                   ) : (
@@ -1258,8 +1234,7 @@ function SideBar() {
                       }
                     }, 10);
                   }}
-                  onMouseLeave={() => clearTimeout(globalThis._holdTimeout)}
-                >
+                  onMouseLeave={() => clearTimeout(globalThis._holdTimeout)}>
                   {customScreens?.value <= 1 ? (
                     <SingleScreenIcon />
                   ) : customScreens?.value === 2 ? (
@@ -1274,8 +1249,7 @@ function SideBar() {
                   onClick={() => {
                     openPopupSettings(MenuOptions);
                   }}
-                  className="material-symbols-outlined PageOptionsButton"
-                >
+                  className="material-symbols-outlined PageOptionsButton">
                   more_vert
                 </span>
               </div>
@@ -1295,8 +1269,7 @@ function SideBar() {
             <div className="tabsContainer">
               <span>Tabs</span>
               <div
-                style={{ display: "flex", alignItems: "center", gap: "5px" }}
-              >
+                style={{ display: "flex", alignItems: "center", gap: "5px" }}>
                 <span
                   style={{ "user-select": "none" }}
                   onMouseDown={() => {
@@ -1329,8 +1302,7 @@ function SideBar() {
                     clearTimeout(holdTimeout.current.time);
                     holdTimeout.current.clicked = false;
                   }}
-                  className="material-symbols-outlined addIcon"
-                >
+                  className="material-symbols-outlined addIcon">
                   add
                 </span>
               </div>
@@ -1356,8 +1328,7 @@ function SideBar() {
                 "justify-content": "center",
                 "align-items": "center",
                 gap: "6px",
-              }}
-            >
+              }}>
               <input
                 type="checkbox"
                 className="customCheckbox"
@@ -1369,8 +1340,11 @@ function SideBar() {
               Select All
             </label>
             <div
-              style={{ background: "#bbc2c2", height: "20px", width: "2px" }}
-            ></div>
+              style={{
+                background: "#bbc2c2",
+                height: "20px",
+                width: "2px",
+              }}></div>
             <div
               style={{
                 display: "flex",
@@ -1383,19 +1357,20 @@ function SideBar() {
                 selectedTabs.forEach((id) => removeTab(id));
                 setSelectedTabs([]);
                 setMultiSelectMode(false);
-              }}
-            >
+              }}>
               <span
                 style={{ "font-size": "19px" }}
-                class="material-symbols-outlined"
-              >
+                class="material-symbols-outlined">
                 delete
               </span>
               <span>Delete All</span>
             </div>
             <div
-              style={{ background: "#bbc2c2", height: "20px", width: "2px" }}
-            ></div>
+              style={{
+                background: "#bbc2c2",
+                height: "20px",
+                width: "2px",
+              }}></div>
             <div
               style={{
                 display: "flex",
@@ -1422,12 +1397,10 @@ function SideBar() {
                   });
                 });
                 openPopupSettings(OPTIONS);
-              }}
-            >
+              }}>
               <span
                 style={{ "font-size": "19px" }}
-                class="material-symbols-outlined"
-              >
+                class="material-symbols-outlined">
                 create_new_folder
               </span>
             </div>
@@ -1444,15 +1417,13 @@ function SideBar() {
               gap: "12px",
               "padding-top": "10px",
               cursor: "pointer",
-            }}
-          >
+            }}>
             <span
               onclick={() => {
                 setSidebarWidth(280);
                 setCollapsed(false);
               }}
-              class="material-symbols-outlined"
-            >
+              class="material-symbols-outlined">
               menu
             </span>
             <div
@@ -1460,8 +1431,7 @@ function SideBar() {
                 height: "1px",
                 width: "90%",
                 background: "rgb(187, 194, 194)",
-              }}
-            ></div>
+              }}></div>
           </div>
         )}
         <div
@@ -1472,8 +1442,7 @@ function SideBar() {
           onPointerEnter={handleMouseEnter}
           onPointerLeave={handleMouseLeave}
           onPointerUp={handleMouseUpTab}
-          className={collapsed ? "tabs-collapsed" : "tabs"}
-        >
+          className={collapsed ? "tabs-collapsed" : "tabs"}>
           {tabs.map((el) => (
             <Tab
               key={el.id}
@@ -1493,8 +1462,7 @@ function SideBar() {
               onClick={() => {
                 openPopupSettings(AddingOption());
               }}
-              class="material-symbols-outlined addIconCollapsed"
-            >
+              class="material-symbols-outlined addIconCollapsed">
               add
             </span>
           )}
@@ -1534,15 +1502,13 @@ export const SpaceUI = () => {
               : `profileSection ${openOnMobile ? "open" : ""} ${
                   fullScreen ? "floatProfileSection" : null
                 }`
-          }
-        >
+          }>
           {!collapsed ? (
             <>
               <span
                 style={{ cursor: "pointer" }}
                 onClick={() => setSideBarMode("settings")}
-                className="material-symbols-outlined"
-              >
+                className="material-symbols-outlined">
                 settings
               </span>
               <SettingsProfile />
@@ -1670,15 +1636,13 @@ export const SettingsProfile = () => {
                 handleMouseDown(space.id);
                 handleRightClick(space.id);
               }}
-              className={space.id === activeSpace ? "activeBg" : "bg"}
-            >
+              className={space.id === activeSpace ? "activeBg" : "bg"}>
               {!space?.icon ? (
                 <span></span>
               ) : (
                 <div
                   className="material-symbols-outlined"
-                  style={{ scale: "0.6", cursor: "pointer" }}
-                >
+                  style={{ scale: "0.6", cursor: "pointer" }}>
                   {space.icon}
                 </div>
               )}
@@ -1713,8 +1677,7 @@ export const UserProfile = ({ collapsed }) => {
         setSideBarMode("createAccountSettings");
       }}
       style={{ background: userData?.photoLink && "transparent" }}
-      className="userProfile"
-    >
+      className="userProfile">
       {userData?.photoLink ? (
         <img
           style={{ "border-radius": "50%", width: "35px", border: "" }}
