@@ -6,7 +6,7 @@ function getHash(buffer: Uint8Array): string {
     return hash.sha256().update(buffer).digest('hex');
 }
 
-type StoredAuxOrFile = { [key: string]: string } | Uint8Array | Buffer | Blob;
+type StoredAuxOrFile = { [key: string]: any } | Uint8Array | Buffer | Blob;
 
 const files = await os.showUploadFiles()
 if (files.length === 0)

@@ -9,6 +9,9 @@ keys?.forEach(key => {
     if (!globalThis.KEY_HOLD) {
         globalThis.KEY_HOLD = {};
     }
-    console.log("EY",key);
     globalThis.KEY_HOLD[key.toLocaleLowerCase()] = true;
+    if (multiSelectKeys[key.toLocaleLowerCase()]) {
+        globalThis[`SetSelectPlaylist`] && globalThis[`SetSelectPlaylist`](true);
+        globalThis[`SetChecklistEnabled`] && globalThis[`SetChecklistEnabled`](true);
+    }
 });
