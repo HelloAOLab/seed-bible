@@ -455,16 +455,53 @@ export interface ReadingHistorySummary {
 }
 
 /**
- * Gets the reading history summary for today for the given record name.
- * @param recordName 
- * @returns 
+ * Gets a time span that goes from the start of today to the end of today in unix seconds.
  */
-export async function getTodaysReadingHistorySummary(recordName: string): Promise<ReadingHistorySummary> {
+export function getTodayTimeSpan() {
     const now = new Date();
     const startOfDay = Date.UTC(now.getUTCFullYear(), now.getUTCMonth(), now.getUTCDate()) / 1000;
-    const endOfDay = startOfDay + 86400 - 1; // End of day in unix seconds
+    const endOfDay = Date.UTC(now.getUTCFullYear(), now.getUTCMonth(), now.getUTCDate(), 23, 59, 59) / 1000; // End of day in unix seconds
 
-    return getReadingHistorySummary(recordName, startOfDay, endOfDay);
+    return { start: startOfDay, end: endOfDay };
+}
+
+/**
+ * Gets a time span that goes from the start of this date one year ago to the end of today in unix seconds.
+ */
+export function getPastYearTimeSpan() {
+    const now = new Date();
+    const startOfDay = Date.UTC(now.getUTCFullYear() - 1, now.getUTCMonth(), now.getUTCDate()) / 1000;
+    const endOfDay = Date.UTC(now.getUTCFullYear(), now.getUTCMonth(), now.getUTCDate(), 23, 59, 59) / 1000; // End of day in unix seconds
+
+    return { start: startOfDay, end: endOfDay };
+}
+
+/**
+ * Gets a time span that goes from the start of this year to the end of today in unix seconds.
+ */
+export function getCurrentYearTimeSpan() {
+    const now = new Date();
+    const startOfDay = Date.UTC(now.getUTCFullYear(), 1, 1) / 1000;
+    const endOfDay = Date.UTC(now.getUTCFullYear(), now.getUTCMonth(), now.getUTCDate(), 23, 59, 59) / 1000; // End of day in unix seconds
+
+    return { start: startOfDay, end: endOfDay };
+}
+
+/**
+ * Gets the reading history summary for the given user for the given time range. Returns null if the user is not logged in.
+ * @param startTime The start time in unix seconds to filter the reading history events.
+ * @param endTime The end time in unix seconds to filter the reading history events.
+ * @returns A promise that resolves to the reading history summary.
+ */
+export async function getUserReadingHistorySummary(startTime: number, endTime: number): Promise<ReadingHistorySummary> {
+    const authBot = await os.requestAuthBotInBackground();
+
+    if (!authBot) {
+        // User is not logged in, so we can't get reading history
+        return null;
+    }
+
+    return getReadingHistorySummary(authBot.id, startTime, endTime);
 }
 
 /**
