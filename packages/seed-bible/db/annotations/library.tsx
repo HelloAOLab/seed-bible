@@ -350,13 +350,13 @@ export async function saveUserReadingHistory(bookId: string, chapter: number, re
  * @param recencyThresholdSeconds The time in seconds to consider an event recent. Defaults to 30 minutes.
  */
 export async function saveReadingHistory(recordName: string, userId: string, bookId: string, chapter: number, recencyThresholdSeconds: number = 30 * 60): Promise<void> {
+    console.log(`Saving reading history for user ${userId}, book ${bookId}, chapter ${chapter}`);
     const currentTimeSeconds = Math.floor(Date.now() / 1000);
     const currentYear = new Date().getUTCFullYear();
 
     const doc = await getReadingHistoryDocument(recordName, currentYear);
-
     const recencyThreshold = currentTimeSeconds - recencyThresholdSeconds;
-    const array = doc.getArray<ReadingEvent>('events');
+    const array = doc.getArray('events');
     const event = findMostRecentReadingEvent(array, userId, bookId, chapter, recencyThreshold);
     const now = Math.floor(Date.now() / 1000);
     if (event) {
@@ -555,7 +555,7 @@ async function getYearlyReadingHistorySummary(recordName: string, year: number, 
     };
 
     const doc = await getReadingHistoryDocument(recordName, year);
-    const eventsArray = doc.getArray<SharedMap<any>>('events');
+    const eventsArray = doc.getArray('events').type;
     
     for(let i = 0; i < eventsArray.length; i++) {
         const e: SharedMap<any> = eventsArray.get(i);
@@ -624,8 +624,9 @@ function updateSummaryTotals(summary: ReadingHistorySummary) {
  */
 function findMostRecentReadingEvent(events: SharedArray<SharedMap<any>>, userId: string, bookId: string, chapter: number, oldestTime: number): ReadingEvent | null {
     for(let i = events.length - 1; i >= 0; i--) {
-        const event: SharedMap<any> = events.get(i);
+        const event: SharedMap<any> = events.type.get(i);
         if (event.get('userId') === userId && event.get('bookId') === bookId && event.get('chapter') === chapter) {
+            console.log(`Found recent reading event: ${event.get('bookId')} ${event.get('chapter')} ${new Date(event.get('start') * 1000).toISOString()} - ${new Date(event.get('end') * 1000).toISOString()}`);
             return event;
         } else if (event.get('end') < oldestTime) {
             break;
