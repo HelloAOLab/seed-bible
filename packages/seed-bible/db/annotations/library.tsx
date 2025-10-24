@@ -312,12 +312,13 @@ export function getReadingHistoryDocument(recordName: string, year: number): Pro
     if (!bot.vars.readingHistoryDocs) {
         bot.vars.readingHistoryDocs = {};
     }
-    if (bot.vars.readingHistoryDocs[year]) {
-        return bot.vars.readingHistoryDocs[year];
+    const key = `${recordName}-${year}`;
+    if (bot.vars.readingHistoryDocs[key]) {
+        return bot.vars.readingHistoryDocs[key];
     }
 
     const marker = `publicRead:reading_history/${year}`;
-    const docPromise = bot.vars.readingHistoryDocs[year] = os.getSharedDocument(recordName, 'reading_history', `${year}`, {
+    const docPromise = bot.vars.readingHistoryDocs[key] = os.getSharedDocument(recordName, 'reading_history', `${year}`, {
         markers: [marker]
     });
     return docPromise;
