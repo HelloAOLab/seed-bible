@@ -324,6 +324,23 @@ export function getReadingHistoryDocument(recordName: string, year: number): Pro
 }
 
 /**
+ * Saves the user's reading history for the given book and chapter.
+ * @param bookId The ID of the book.
+ * @param chapter The chapter number.
+ * @param recencyThresholdSeconds The time in seconds to consider an event recent. Defaults to 30 minutes.
+ */
+export async function saveUserReadingHistory(bookId: string, chapter: number, recencyThresholdSeconds: number = 30 * 60): Promise<void> {
+    const authBot = await os.requestAuthBotInBackground();
+
+    if (!authBot) {
+        // User is not logged in, so we can't save reading history
+        return;
+    }
+
+    await saveReadingHistory(authBot.id, authBot.id, bookId, chapter, recencyThresholdSeconds);
+}
+
+/**
  * Saves a reading history event.
  * If the user has already read the chapter within the last 30 minutes, then end time of the event will be updated instead of creating a new event.
  * @param userId The ID of the user that the event is for.
