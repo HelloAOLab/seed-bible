@@ -1579,7 +1579,17 @@ function Section({
                       if (globalThis.studyNotesPresent) {
                         HighlightStudyNoteSection(verse?.verseNumber);
                       }
-                    }}>
+                    }}
+                    onPointerEnter={() => {
+                      globalThis.showRefModal = true;
+                      setTimeout(() => {
+                        if(globalThis.showRefModal){
+                          shout("toggleReferenceModal", {book, chapter, verse})
+                        }
+                      }, 500)
+                    }}
+                    onPointerLeave={() => {globalThis.showRefModal = false;}}
+                    >
                     {verse?.verseNumber}
                   </span>
                   {!c ? (
