@@ -2,7 +2,8 @@
 import { useScriptureMap2DContext } from "scriptureMap2D.main.ScriptureMap2DContext"
 import {ProjectFiltersSelector} from "scriptureMap2D.main.ProjectFiltersSelector"
 import { ProjectStateSetter } from "scriptureMap2D.main.ProjectStateSetter"
-import { ReadingHistoryUserSelector } from "scriptureMap2D.main.ReadingHistoryUserSelector"
+import { ReadingHistoryUserFiltersSelector } from "scriptureMap2D.main.ReadingHistoryUserFiltersSelector"
+import { ReadingHistoryTimeline } from "scriptureMap2D.main.ReadingHistoryTimeline"
 
 export const Settings = () => {
     const { isUserPresenceEnabled, mode, ScriptureMap2DModes, project, isInSelectionMode, isReadingHistoryEnabled } = useScriptureMap2DContext();
@@ -15,7 +16,10 @@ export const Settings = () => {
                 <ProjectStateSetter />
                 {!isInSelectionMode && <ProjectFiltersSelector />}
             </>}
-            {mode === ScriptureMap2DModes.Viewer && isReadingHistoryEnabled && <ReadingHistoryUserSelector />}
+            {mode === ScriptureMap2DModes.Viewer && isReadingHistoryEnabled && <>
+                <ReadingHistoryUserFiltersSelector />
+                <ReadingHistoryTimeline />
+            </>}
         </div>
     )
 }

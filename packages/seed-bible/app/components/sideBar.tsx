@@ -706,18 +706,33 @@ function SideBar() {
 
     usersIds.forEach((userId) => {
       const { bookId, chapter } = onlineUsers[userId];
-      if (
-        hooks &&
-        (!thisBot.vars.prevOnlineUsers ||
-          thisBot.vars.prevOnlineUsers[userId].bookId !== bookId ||
-          thisBot.vars.prevOnlineUsers[userId].chapter !== chapter)
-      ) {
-        const tempHistory = (hooks.vars.tempReadingHistory ??= {});
-        const userHistory = (tempHistory[userId] ??= {});
-        const bookHistory = (userHistory[bookId] ??= {});
-        bookHistory[chapter] = timestamp;
+      if(hooks && (!thisBot.vars.prevOnlineUsers || !thisBot.vars.prevOnlineUsers[userId] || thisBot.vars.prevOnlineUsers[userId].bookId !== bookId || thisBot.vars.prevOnlineUsers[userId].chapter !== chapter))
+      {
+        const lastReading = hooks.vars.tempLastReading ??= {};
+        const tempHistory = hooks.vars.tempReadingHistory ??= {};
+        const userHistory = tempHistory[userId] ??= {};
+        const bookHistory = userHistory[bookId] ??= {};
+        if(!bookHistory[chapter]) bookHistory[chapter] = [];
+        const length = bookHistory[chapter].push({start: timestamp});
+        
+        if(lastReading[userId]) 
+        {
+          const {bookId, chapter, index} = lastReading[userId];
+          const lastEntry = userHistory[bookId]?.[chapter]?.[index];
+          if(lastEntry) lastEntry.end = timestamp;
+          else
+          {
+            console.warn(`[Debug] BibleDataManager._scheduleMaskRecord lastEntry not found`, lastReading[userId]);
+          }
+        }
+
+        lastReading[userId] = {bookId: bookId, chapter: chapter, index: length - 1};
       }
     });
+      
+    hooks.vars.prevOnlineUsers = onlineUsers;
+    
+    shout("OnOnlineUsersChanged", { onlineUsers });
 
     thisBot.vars.prevOnlineUsers = onlineUsers;
 
