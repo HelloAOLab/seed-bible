@@ -47,6 +47,22 @@ const sortFunc = (a, b) => {
   return aOrder.num - bOrder.num;
 };
 
+const GetLabel = ({ value, currentOpenedBook }) => {
+  const isMobile =
+    (window?.innerWidth || gridPortalBot.tags.pixelWidth) <
+    MOBILE_VIEWPORT_THRESHOLD;
+
+  return value === "discover"
+    ? `${
+        !isMobile
+          ? currentOpenedBook?.book
+          : thisBot.tags.LowerCaseBookMapping[
+              currentOpenedBook?.book?.toLocaleLowerCase()
+            ]
+      } - ${currentOpenedBook?.chapter} `
+    : "";
+};
+
 const Playlist = () => {
   const IsPlaylistPlaying = globalThis.IsPlaylistPlaying;
 
@@ -414,7 +430,7 @@ const Playlist = () => {
       MOBILE_VIEWPORT_THRESHOLD;
     if (isMobile) {
       globalThis.SetPlaylistForcedHeight &&
-        globalThis.SetPlaylistForcedHeight(true);
+        globalThis.SetPlaylistForcedHeight(1);
     }
     if (IsPlaylistPlaying) {
       thisBot.Playlistplaying({
@@ -481,7 +497,7 @@ const Playlist = () => {
       globalThis.SetMediaURL && globalThis.SetMediaURL(null);
       globalThis.SetVideoSrc && globalThis.SetVideoSrc(null);
       globalThis.SetPlaylistForcedHeight &&
-        globalThis.SetPlaylistForcedHeight(false);
+        globalThis.SetPlaylistForcedHeight(0);
     };
   }, []);
 
@@ -536,15 +552,21 @@ const Playlist = () => {
               alt="share"
             />
             <div className="align-center" style={{ gap: "1rem" }}>
-              <img
-                className="welcome-box-profile"
-                src={globalThis.shareProfilePic}
-                alt={playlistSharerName || "Kusharg karki"}
-              />
-              <p>
-                {" "}
-                <b>{playlistSharerName}</b> shared a playlist.
-              </p>
+              {!!globalThis.shareProfilePic && (
+                <img
+                  className="welcome-box-profile"
+                  src={globalThis.shareProfilePic}
+                  alt={playlistSharerName}
+                />
+              )}
+              {!!playlistSharerName ? (
+                <p>
+                  {" "}
+                  <b>{playlistSharerName}</b> shared a playlist.
+                </p>
+              ) : (
+                <p>Here is your shared playlist.</p>
+              )}
             </div>
             <div
               className="welcome-box-content"
@@ -730,9 +752,10 @@ const Playlist = () => {
                           </span>
                           <span>
                             {label}{" "}
-                            {value === "discover"
-                              ? `${currentOpenedBook?.book} - ${currentOpenedBook?.chapter} `
-                              : ""}
+                            <GetLabel
+                              value={value}
+                              currentOpenedBook={currentOpenedBook}
+                            />
                           </span>
                         </h4>
                       ))}

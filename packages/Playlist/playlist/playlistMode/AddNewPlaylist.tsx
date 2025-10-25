@@ -238,8 +238,8 @@ const AddNewPlaylist = ({
             <p>
               <b style={{ color: "white" }}>Publish settings</b>
             </p>
-            <span style={{ fontSize: "10px" }}>
-              You annotations will be published to the selected place below
+            <span style={{ fontSize: "10px", color: "#c9c8c6" }}>
+              Your annotations will be available to everyone if public. If private only you will have access.
             </span>
             <div
               className="more-menu-items"

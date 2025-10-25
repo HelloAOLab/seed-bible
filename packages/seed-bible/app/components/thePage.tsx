@@ -914,7 +914,9 @@ function ThePage({
 
   return (
     <div
-      className="pageContainer"
+      className={`pageContainer ${
+        Object.values(inHold).length > 0 ? "no-select" : ""
+      }`}
       onMouseLeave={handleMouseLeave}
       onMouseEnter={handleMouseEnter}
       onMouseUp={handleMouseUp}
@@ -929,7 +931,8 @@ function ThePage({
         .sectionTitle {
           display:${direction ? "ruby" : null}
         }
-         `}
+
+        `}
       </style>
       {data && tab && !tabEntered ? (
         <>
@@ -1135,13 +1138,6 @@ const ColorPickerBar = ({
         borderRadius: "8px",
         alignItems: "center",
       }}>
-      <span
-        style={{
-          color: "#00000070",
-          fontSize: "12px",
-        }}>
-        Selected Verse:{" "}
-      </span>
       <p
         style={{
           fontWeight: "600",
