@@ -22,6 +22,98 @@ import { MiniTextEditor } from "app.components.smallEditor";
 
 import { ConfigurableFunctionCommands } from "app.components.commands";
 
+function prepareAISearchParamOnChapter(chapterData) {
+  const combinedText = chapterData.book + " " + chapterData.chapter;
+  globalThis.GlobalSearch = combinedText.trim();
+}
+
+// MoreResources component
+function MoreResources() {
+  function openStudyNotes() {
+    if (globalThis.studyNotesPresent) {
+      RemoveApplicationByID(globalThis.STUDYNOTES_PANEL_ID);
+      globalThis.STUDYNOTES_PANEL_ID = null;
+      globalThis.studyNotesPresent = false;
+      return;
+    }
+
+    // Dynamic check - only works if StudyNote extension is installed
+    const StudyNotes = globalThis.GlobalStudyNotes;
+    if (!StudyNotes) {
+      os.toast("StudyNote extension not installed", 3);
+      return;
+    }
+
+    if (!globalThis.panelMode) {
+      globalThis.studyNotesPresent = true;
+      let id = uuid();
+      globalThis.STUDYNOTES_PANEL_ID = id;
+      AddApplication({
+        id,
+        App: (
+          <StudyNotes
+            key={`${globalThis.BookId}-${globalThis.GlobalChapter}`}
+            id={id}
+            chapter={globalThis.GlobalChapter}
+          />
+        ),
+        to: "panel",
+        minWidth: "30rem",
+      });
+    }
+  }
+
+  return (
+    <div
+      className="more-resources"
+      onClick={openStudyNotes}
+      style={{
+        display: "flex",
+        alignItems: "center",
+        gap: "6px",
+        cursor: "pointer",
+        color: "#859E3B",
+        fontSize: "14px",
+        fontWeight: "500",
+      }}
+    >
+      <svg
+        width="18"
+        height="18"
+        viewBox="0 0 18 18"
+        fill="none"
+        xmlns="http://www.w3.org/2000/svg"
+      >
+        <path
+          d="M15.3235 1H2.67645C1.75056 1 1 1.7506 1 2.6765V15.3235C1 16.2494 1.75056 17 2.67645 17H15.3235C16.2494 17 17 16.2494 17 15.3235V2.6765C17 1.7506 16.2494 1 15.3235 1Z"
+          stroke="#859E3B"
+          strokeWidth="2"
+          strokeMiterlimit="10"
+        />
+        <path
+          d="M9.96308 12.6438H5.19916"
+          stroke="#859E3B"
+          strokeWidth="2"
+          strokeMiterlimit="10"
+        />
+        <path
+          d="M12.8018 9H5.19916"
+          stroke="#859E3B"
+          strokeWidth="2"
+          strokeMiterlimit="10"
+        />
+        <path
+          d="M11.3095 5.35718H5.19916"
+          stroke="#859E3B"
+          strokeWidth="2"
+          strokeMiterlimit="10"
+        />
+      </svg>
+      <span>More Resources</span>
+    </div>
+  );
+}
+
 function ThePage({
   tab: T,
   setPanalApp,
@@ -62,6 +154,8 @@ function ThePage({
   const [wordHighlights, setWordHighlights] = useState({});
   const [wordHighlightsTC, setWordHighlightsTC] = useState("black");
   const [wordHighlightsBC, setWordHighlightsBC] = useState("#ffeb3b");
+  const [ShowSearch, setShowSearch] = useState(<></>);
+  globalThis.SetShowSearch = setShowSearch;
 
   const [bible, setBible] = useState();
   if (tab) globalThis[`SetEnableEditorOf${tab?.id}`] = setEnableEditor;
@@ -79,8 +173,15 @@ function ThePage({
 
     await bible.fetch();
 
+    let tempBibleObject = bible;
+
+    globalThis.CurrentBibleObject = tempBibleObject;
+
     // Additional Data ----------->
     globalThis.BookId = bible.bookId;
+    globalThis.GlobalChapter = bible.data.chapter - 1;
+
+    prepareAISearchParamOnChapter(bible.data);
 
     const { data, loading, error } = bible.getState();
     console.log(data, tab, "the data loaded");
@@ -92,6 +193,53 @@ function ThePage({
     globalThis.refreshScrollers && globalThis.refreshScrollers();
     // await bible.changeTranslation('KJV');
   }
+
+  async function globalLoadingDataFromSN(bookId, chapter) {
+    if (!tab) return;
+    const bible = new BibleDataManager({
+      tabId: tab?.id,
+      translation: tab.data.translation,
+      bookId: bookId,
+      chapter: chapter,
+    });
+    setBible(bible);
+
+    console.log("bible data: ", bible);
+
+    await bible.fetch();
+
+    // Additional Data ----------->
+    globalThis.BookId = bible.bookId;
+
+    const { data, loading, error } = bible.getState();
+    console.log(data, tab, "the data loaded");
+    setData(data);
+
+    globalThis.GlobalChapter = bible.data.chapter - 1;
+
+    prepareAISearchParamOnChapter(bible.data);
+
+    // Only update StudyNote if it's on the "notes" or "discover" tab (not devotion which doesn't depend on book/chapter)
+    if (globalThis.studyNotesPresent && globalThis.GlobalStudyNotes) {
+      const activeTab = globalThis.StudyNoteActiveTab || "notes";
+      if (activeTab === "notes" || activeTab === "discover") {
+        const StudyNotes = globalThis.GlobalStudyNotes;
+        UpdateApplication(globalThis.STUDYNOTES_PANEL_ID, {
+          App: (
+            <StudyNotes
+              key={`${globalThis.BookId}-${globalThis.GlobalChapter}`}
+              id={globalThis.STUDYNOTES_PANEL_ID}
+              chapter={globalThis.GlobalChapter}
+            />
+          ),
+          to: "panel",
+        });
+      }
+    }
+  }
+
+  globalThis.GlobalLoadingDataFromSN = globalLoadingDataFromSN;
+
   useEffect(() => {
     os.addBotListener(thisBot, "remoteBookChange", (data) => {
       console.log("remoteBookChange", data);
@@ -320,17 +468,26 @@ function ThePage({
 
     // Additions ------>
     globalThis.GlobalChapter = bible.data.chapter - 1;
+    globalThis.BookId = bible.data.bookId;
 
-    if (globalThis.studyNotesPresent) {
-      UpdateApplication(globalThis.STUDYNOTES_PANEL_ID, {
-        App: (
-          <StudyNotes
-            id={globalThis.STUDYNOTES_PANEL_ID}
-            chapter={globalThis.GlobalChapter}
-          />
-        ),
-        to: "panel",
-      });
+    prepareAISearchParamOnChapter(bible.data);
+
+    // Only update StudyNote if it's on the "notes" or "discover" tab (not devotion which doesn't depend on book/chapter)
+    if (globalThis.studyNotesPresent && globalThis.GlobalStudyNotes) {
+      const activeTab = globalThis.StudyNoteActiveTab || "notes";
+      if (activeTab === "notes" || activeTab === "discover") {
+        const StudyNotes = globalThis.GlobalStudyNotes;
+        UpdateApplication(globalThis.STUDYNOTES_PANEL_ID, {
+          App: (
+            <StudyNotes
+              key={`${globalThis.BookId}-${globalThis.GlobalChapter}`}
+              id={globalThis.STUDYNOTES_PANEL_ID}
+              chapter={globalThis.GlobalChapter}
+            />
+          ),
+          to: "panel",
+        });
+      }
     }
   }
   async function openPrevChapter() {
@@ -339,8 +496,12 @@ function ThePage({
 
     // Additions ------>
     globalThis.GlobalChapter = bible.data.chapter - 1;
+    globalThis.BookId = bible.data.bookId;
 
-    if (globalThis.studyNotesPresent) {
+    prepareAISearchParamOnChapter(bible.data);
+
+    if (globalThis.studyNotesPresent && globalThis.GlobalStudyNotes) {
+      const StudyNotes = globalThis.GlobalStudyNotes;
       UpdateApplication(globalThis.STUDYNOTES_PANEL_ID, {
         App: (
           <StudyNotes
@@ -372,6 +533,30 @@ function ThePage({
       setTab(tab);
       //   await bible.open(bookId, chapter, (translation = null));
       setData(bible.data);
+    }
+
+    // Additions ------>
+    globalThis.GlobalChapter = bible.data.chapter - 1;
+    globalThis.BookId = bible.data.bookId;
+
+    prepareAISearchParamOnChapter(bible.data);
+
+    // Only update StudyNote if it's on the "notes" or "discover" tab (not devotion which doesn't depend on book/chapter)
+    if (globalThis.studyNotesPresent && globalThis.GlobalStudyNotes) {
+      const activeTab = globalThis.StudyNoteActiveTab || "notes";
+      if (activeTab === "notes" || activeTab === "discover") {
+        const StudyNotes = globalThis.GlobalStudyNotes;
+        UpdateApplication(globalThis.STUDYNOTES_PANEL_ID, {
+          App: (
+            <StudyNotes
+              key={`${globalThis.BookId}-${globalThis.GlobalChapter}`}
+              id={globalThis.STUDYNOTES_PANEL_ID}
+              chapter={globalThis.GlobalChapter}
+            />
+          ),
+          to: "panel",
+        });
+      }
     }
   }
   async function changeTranslation(id, bookData, forcedBaseUrl) {
@@ -558,18 +743,24 @@ function ThePage({
     //     }
 
     // Additions ------>
-    globalThis.GlobalChapter = (data?.chapter || 1) - 1;
+    globalThis.GlobalChapter = data.chapter - 1;
 
-    if (globalThis.studyNotesPresent) {
-      UpdateApplication(globalThis.STUDYNOTES_PANEL_ID, {
-        App: (
-          <StudyNotes
-            id={globalThis.STUDYNOTES_PANEL_ID}
-            chapter={globalThis.GlobalChapter}
-          />
-        ),
-        to: "panel",
-      });
+    // Only update StudyNote if it's on the "notes" or "discover" tab (not devotion which doesn't depend on book/chapter)
+    if (globalThis.studyNotesPresent && globalThis.GlobalStudyNotes) {
+      const activeTab = globalThis.StudyNoteActiveTab || "notes";
+      if (activeTab === "notes" || activeTab === "discover") {
+        const StudyNotes = globalThis.GlobalStudyNotes;
+        UpdateApplication(globalThis.STUDYNOTES_PANEL_ID, {
+          App: (
+            <StudyNotes
+              key={`${globalThis.BookId}-${globalThis.GlobalChapter}`}
+              id={globalThis.STUDYNOTES_PANEL_ID}
+              chapter={globalThis.GlobalChapter}
+            />
+          ),
+          to: "panel",
+        });
+      }
     }
   }
   function Update(tab) {
@@ -872,7 +1063,8 @@ function ThePage({
       onMouseLeave={handleMouseLeave}
       onMouseEnter={handleMouseEnter}
       onMouseUp={handleMouseUp}
-      onClick={hanldNavFunctions}>
+      onClick={hanldNavFunctions}
+    >
       <style>
         {`
         .pageContainer{
@@ -888,8 +1080,24 @@ function ThePage({
       {data && tab && !tabEntered ? (
         <>
           <div
-            style={{ "pointer-events": isDragging ? "none" : null }}
-            className="bookTitle">{`${data?.book} ${data?.chapter}`}</div>
+            style={{
+              "pointer-events": isDragging ? "none" : null,
+              display: "flex",
+              justifyContent: "space-between",
+              alignItems: "center",
+              marginBottom: "20px",
+            }}
+            className="chapter-header"
+          >
+            <div className="bookTitleContainer">
+              <div className="bookTitle">
+                {`${data?.book} ${data?.chapter}`}
+              </div>
+              <div className="bookTitleMoreResources">
+                <MoreResources />
+              </div>
+            </div>
+          </div>
           {data &&
             data.content.map((e) => {
               return (
@@ -910,6 +1118,8 @@ function ThePage({
                       textEdit={false}
                       showCommands={showCommands}
                       setShowCommands={setShowCommands}
+                      ShowSearch={ShowSearch}
+                      setShowSearch={setShowSearch}
                       selectedText={selectedText}
                       lastSelectedVerse={lastSelectedVerse}
                       contextData={contextData}
@@ -932,7 +1142,8 @@ function ThePage({
               width: "80%",
               height: "1px",
               background: "gray",
-            }}></div>
+            }}
+          ></div>
           <div
             style={{
               width: "50%",
@@ -940,7 +1151,8 @@ function ThePage({
               "align-items": "center",
               "justify-content": "center",
               position: "relative",
-            }}>
+            }}
+          >
             <PageToolbar />
           </div>
           <div style={{ height: "160px" }}></div>
@@ -958,7 +1170,8 @@ function ThePage({
             }}
             className={`pageContainer ${
               tabEntered ? "tabEntered" : "tabDrop"
-            } ${highlightOnce ? "tabHighlightBg" : ""}`}>
+            } ${highlightOnce ? "tabHighlightBg" : ""}`}
+          >
             <div
               style={{
                 pointerEvents: isDragging ? "none" : undefined,
@@ -972,7 +1185,8 @@ function ThePage({
                 // boxShadow: '0 4px 12px rgba(0, 0, 0, 0.1)',
                 maxWidth: "400px",
                 width: "90%",
-              }}>
+              }}
+            >
               <div
                 onClick={() => {
                   setOpenSidebar((prev) => !prev);
@@ -982,7 +1196,8 @@ function ThePage({
                   fontSize: "24px",
                   marginBottom: "20px",
                   color: "#333",
-                }}>
+                }}
+              >
                 <img
                   style={{ width: "50px" }}
                   src="https://res.cloudinary.com/dfbtwwa8p/image/upload/v1755365776/717a8527988cca7e0bdc9449ec68581a8400b977_vqc7mx.png"
@@ -996,7 +1211,8 @@ function ThePage({
                   background: "#e0e0e0",
                   marginTop: "40px",
                   margin: "auto",
-                }}></div>
+                }}
+              ></div>
               <div
                 style={{
                   width: "100%",
@@ -1005,7 +1221,8 @@ function ThePage({
                   alignItems: "center",
                   justifyContent: "center",
                   position: "relative",
-                }}>
+                }}
+              >
                 <PageToolbar path="showInStarterToolbar" />
               </div>
             </div>
@@ -1027,7 +1244,8 @@ function PageToolbar({ path = "showInPageToolbar" }) {
         <div
           onClick={tool.onClick}
           className="tool-preview-page"
-          key={tool.label}>
+          key={tool.label}
+        >
           {tool.isImg ? (
             <img
               src={tool.icon}
@@ -1049,7 +1267,7 @@ function PageToolbar({ path = "showInPageToolbar" }) {
  * matching any multi-word subphrase (≥2 words) *and* any single-word keys.
  */
 function splitBySectionKeys(text, verseSectionMap) {
-  const stripRe = /[.,'"""'']/g;
+  const stripRe = /[.,'"“”‘’]/g;
 
   // 1) Build a map of all subphrases (length ≥2) and single-word keys → parent key
   const subphraseMap = {};
@@ -1118,6 +1336,47 @@ function splitBySectionKeys(text, verseSectionMap) {
   }
 
   return chunks;
+}
+
+function normalizeToSet(payload) {
+  // Accept shapes: "5", "5-8", [5,7,9], {start:5,end:8}, [{start:1,end:3},{start:10,end:11}]
+  const out = new Set();
+
+  if (payload == null) return out;
+
+  const addRange = (a, b) => {
+    const start = Math.min(+a, +b);
+    const end = Math.max(+a, +b);
+    for (let v = start; v <= end; v++) out.add(v);
+  };
+
+  if (typeof payload === "string") {
+    const t = payload.trim();
+    const m = t.match(/^(\d+)\s*[-–]\s*(\d+)$/);
+    if (m) addRange(m[1], m[2]);
+    else if (/^\d+$/.test(t)) out.add(+t);
+    return out;
+  }
+
+  if (Array.isArray(payload)) {
+    // array of numbers OR array of ranges
+    if (payload.length && typeof payload[0] === "object") {
+      payload.forEach((r) => {
+        if (r && r.start != null && r.end != null) addRange(r.start, r.end);
+      });
+    } else {
+      payload.forEach((n) => /^\d+$/.test(String(n)) && out.add(+n));
+    }
+    return out;
+  }
+
+  if (typeof payload === "object") {
+    const { start, end } = payload;
+    if (start != null && end != null) addRange(start, end);
+    return out;
+  }
+
+  return out;
 }
 
 // Helper function to split text by word highlights
@@ -1208,6 +1467,7 @@ function Section({
   book,
   chapter,
   holded,
+  ShowSearch,
   blinker,
   selected,
   highlighted,
@@ -1233,6 +1493,21 @@ function Section({
     globalThis.HighlightedVerseNumber || ""
   );
 
+  const [activeVerses, setActiveVerses] = useState(() => new Set());
+
+  const [animating, setAnimating] = useState(false);
+  const [sectionMap, setSectionMap] = useState(null);
+  const [chunksMap, setChunksMap] = useState(null);
+
+  function readGlobalShouldHighlight() {
+    // Check if StudyNote extension is installed
+    const mainBot = getBot('system', 'studyNote.main');
+    const v = mainBot?.tags?.shouldHighlight;
+    return v === true || String(v) === "true";
+  }
+
+  const shouldHighlight = readGlobalShouldHighlight();
+
   // 1) build refs once per verse
   const verseRefs = useMemo(() => {
     const m = {};
@@ -1241,6 +1516,15 @@ function Section({
     });
     return m;
   }, [verses]);
+
+  useEffect(() => {
+    const handler = () => {
+      setActiveKey(globalThis.HighlightedSectionKey || "");
+    };
+    window.addEventListener("highlightedSectionKeyChanged", handler);
+    return () =>
+      window.removeEventListener("highlightedSectionKeyChanged", handler);
+  }, []);
 
   useEffect(() => {
     const handler = () => {
@@ -1262,6 +1546,36 @@ function Section({
     window.addEventListener("highlightedVerseChanged", handler);
     return () => window.removeEventListener("highlightedVerseChanged", handler);
   }, []);
+
+  useEffect(() => {
+    const handler = () => {
+      const payload =
+        globalThis.HighlightedVerses ??
+        globalThis.HighlightedVerseRange ??
+        null;
+
+      setActiveVerses(normalizeToSet(payload));
+    };
+    window.addEventListener("highlightedVersesChanged", handler);
+    return () =>
+      window.removeEventListener("highlightedVersesChanged", handler);
+  }, []);
+
+  useLayoutEffect(() => {
+    // prefer multi-verse; fall back to single-verse for backward compat
+    let target = null;
+    if (activeVerses && activeVerses.size) {
+      target = Math.min(...Array.from(activeVerses));
+    } else if (activeVerse) {
+      target = activeVerse;
+    }
+    if (!target) return;
+
+    const ref = verseRefs[target];
+    if (ref?.current) {
+      ref.current.scrollIntoView({ behavior: "smooth", block: "center" });
+    }
+  }, [activeVerses, activeVerse, verseRefs]);
 
   useLayoutEffect(() => {
     if (!activeVerse) return;
@@ -1293,19 +1607,31 @@ function Section({
     },
   };
 
-  // inside your Section component, before the return:
-  const chunksMap = useMemo(() => {
-    const result = {};
-    if (globalThis.studyNotesPresent) {
-      verses.forEach((v) => {
-        result[v.verseNumber] = splitBySectionKeys(
-          v.text,
-          globalThis.VerseSectionMap
-        );
-      });
+  // 1) listen for the map
+  useEffect(() => {
+    function onMapReady(e) {
+      const map = e.detail || null;
+      setSectionMap(map);
+      setAnimating(!!map);
     }
-    return result;
-  }, [verses, globalThis.studyNotesPresent, globalThis.VerseSectionMap]);
+    window.addEventListener("sectionMapReady", onMapReady);
+    return () => window.removeEventListener("sectionMapReady", onMapReady);
+  }, []);
+
+  useEffect(() => {
+    if (!globalThis.VerseSectionMap) {
+      setChunksMap(null);
+      return;
+    }
+    const result = {};
+    verses.forEach((v) => {
+      result[v.verseNumber] = splitBySectionKeys(
+        v.text,
+        globalThis.VerseSectionMap
+      );
+    });
+    setChunksMap(result);
+  }, [globalThis.VerseSectionMap, verses]);
 
   // Create word highlight chunks map
   const wordChunksMap = useMemo(() => {
@@ -1348,77 +1674,41 @@ function Section({
 
     if (globalThis.studyNotesPresent) {
       // Use section-based rendering
-      return (chunksMap[verse.verseNumber] || []).map((part, i) => {
-        if (!part.isSection) {
-          // For non-section text, apply word highlights if any
-          if (hasWordHighlights) {
-            const wordParts = splitByWordHighlights(
-              part.text,
-              wordHighlights,
-              book,
-              chapter,
-              verse.verseNumber
-            );
-            return wordParts.map((wordPart, wordIndex) => {
-              if (wordPart.isHighlighted) {
-                return (
-                  <span
-                    key={`${i}-word-${wordIndex}`}
-                    style={{
-                      color: wordHighlightsTC,
-                      backgroundColor: wordHighlightsBC,
-                      cursor: wordPart.highlightConfig.onClick
-                        ? "pointer"
-                        : "default",
-                      padding: "1px 2px",
-                      borderRadius: "2px",
-                    }}
-                    onClick={(e) => {
-                      e.stopPropagation();
-                      if (wordPart.highlightConfig.onClick) {
-                        wordPart.highlightConfig.onClick(
-                          wordPart.text,
-                          verse.verseNumber
-                        );
-                      }
-                    }}>
-                    {wordPart.text}
-                  </span>
-                );
-              }
-              return (
-                <span key={`${i}-word-${wordIndex}`}>{wordPart.text}</span>
-              );
-            });
+      if (chunksMap?.[verse.verseNumber]) {
+        return (chunksMap[verse.verseNumber] || []).map((part, i) => {
+          if (!part.isSection) {
+            return <span key={i}>{part.text}</span>;
           }
-          return <span key={i}>{part.text}</span>;
-        }
 
-        const partNorm = normalize(part.key);
-        const activeNorm = (activeKey || "").toLowerCase();
-        const isActive = activeNorm.includes(partNorm);
+          const partNorm = normalize(part.key);
+          const activeNorm = (activeKey || "").toLowerCase();
+          const isActive = activeNorm.includes(partNorm);
 
-        return (
-          <span
-            key={i}
-            className={`clickableCursor highlightened ${
-              isActive ? "highlighted-word" : ""
-            }`}
-            style={{ animationDelay: `${i * 0.1}s` }}
-            onClick={() => {
-              console.log(part.key);
-              const raw = globalThis.VerseSectionMap[part.key].original;
-              console.log(raw);
-              const m = /:(\d+)$/.exec(raw);
-              console.log(m);
-              const sec = m ? m[1] : part.key;
-              console.log(sec);
-              globalThis.HighlightStudyNoteSection(raw);
-            }}>
-            {part.text}
-          </span>
-        );
-      });
+          return (
+            <span
+              key={i}
+              className={`clickableCursor linkedWord ${
+                shouldHighlight ? "highlightened" : ""
+              } ${isActive ? "highlighted-word" : ""}`}
+              style={{ animationDelay: `${i * 0.1}s` }}
+              onClick={() => {
+                console.log(part.key);
+                const raw = globalThis.VerseSectionMap[part.key].original;
+                console.log(raw);
+                const m = /:(\d+)$/.exec(raw);
+                console.log(m);
+                const sec = m ? m[1] : part.key;
+                console.log(sec);
+                globalThis.HighlightStudyNoteSection(raw);
+              }}
+            >
+              {part.text}
+            </span>
+          );
+        });
+      } else {
+        return verse.text;
+      }
     } else {
       // Use word highlighting only
       if (hasWordHighlights) {
@@ -1442,7 +1732,8 @@ function Section({
                   color: wordHighlightsTC,
                   backgroundColor: wordHighlightsBC,
                 }}
-                {...attributes}>
+                {...attributes}
+              >
                 {part.text}
               </span>
             );
@@ -1462,7 +1753,8 @@ function Section({
             heading,
           });
         }}
-        className="sectionTitle">
+        className="sectionTitle"
+      >
         {heading}
       </div>
       {hebrew_subtitle && <div className="sectionTitle">{hebrew_subtitle}</div>}
@@ -1471,7 +1763,8 @@ function Section({
         {textEdit && (
           <div
             style={{ right: "20px", top: "-65px", background: "transparent" }}
-            className="flexElementGap-4 editVerseTitle">
+            className="flexElementGap-4 editVerseTitle"
+          >
             <TextFormattingToolbar sectionStyles={styles} />
           </div>
         )}
@@ -1482,9 +1775,13 @@ function Section({
             }
 
             const [c, setC] = useState(false);
-            const isActive = verse.verseNumber.toString() === activeVerse;
+            const isVerseActive =
+              activeVerses.has(verse.verseNumber) ||
+              verse?.verseNumber.toString() === String(activeVerse);
             const shouldShowCommands =
               showCommands && lastSelectedVerse === verse.verseNumber;
+            const shouldShowSearch =
+              ShowSearch && ShowSearch.verseNumber === verse.verseNumber;
             const isTextDecorUnderline =
               holded?.[verse.verseNumber] ||
               selected[verse.verseNumber] ||
@@ -1507,6 +1804,7 @@ function Section({
                       chapter,
                       verses: [verse.verseNumber],
                     });
+                    globalThis.GlobalSearch = verse.text;
                     shout("onVeresRightClick", {
                       verseNumber: verse.verseNumber,
                       text: verse.text,
@@ -1565,12 +1863,11 @@ function Section({
                         : "",
                   }}
                   className={`sectionText ${
-                    verse?.verseNumber.toString() === activeVerse.toString()
-                      ? "highlighted"
-                      : ""
+                    isVerseActive ? "highlighted" : ""
                   } ${
                     highlighted?.[verse.verseNumber] ? "verse-highlighted" : ""
-                  }`}>
+                  }`}
+                >
                   <span
                     className={`sectionTextNumber ${
                       globalThis.studyNotesPresent ? "clickableCursor" : ""
@@ -1583,13 +1880,19 @@ function Section({
                     onPointerEnter={() => {
                       globalThis.showRefModal = true;
                       setTimeout(() => {
-                        if(globalThis.showRefModal){
-                          shout("toggleReferenceModal", {book, chapter, verse})
+                        if (globalThis.showRefModal) {
+                          shout("toggleReferenceModal", {
+                            book,
+                            chapter,
+                            verse,
+                          });
                         }
-                      }, 500)
+                      }, 500);
                     }}
-                    onPointerLeave={() => {globalThis.showRefModal = false;}}
-                    >
+                    onPointerLeave={() => {
+                      globalThis.showRefModal = false;
+                    }}
+                  >
                     {verse?.verseNumber}
                   </span>
                   {!c ? (
@@ -1626,7 +1929,8 @@ function Section({
                       marginBottom: "20px",
                       borderTop: "1px solid #eee",
                       paddingTop: "10px",
-                    }}>
+                    }}
+                  >
                     <ConfigurableFunctionCommands contextData={contextData} />
                   </div>
                 )}
@@ -1650,7 +1954,8 @@ export const ThePageWithPanel = ({ tab }) => {
         containerWidth={gridPortalBot.tags.pixelWidth}
         containerHeight={1000}
         onResize={() => {}}
-        otherTab={panalApp}>
+        otherTab={panalApp}
+      >
         <ThePage setPanalApp={setPanalApp} tab={tab} />
       </DivSpliter>
     </>

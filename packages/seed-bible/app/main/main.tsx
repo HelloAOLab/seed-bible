@@ -23,6 +23,7 @@ globalThis.SpaceLayouts = {}; // To store layout per space
 globalThis.SpaceScreens = {}; // Already used for screen count
 globalThis.CheckToolbarOverflow = () => { }
 
+const themeManagerBot = getBot(byTag("system", "app.themeManager"));
 
 const TestingApp = ({ myProp }) => {
     const divRef = useRef(null);
@@ -237,7 +238,7 @@ const Main = () => {
 
         return `:root {\n  ${vars.join("\n  ")}\n}`;
     };
-    const defaultTheme = {
+    const defaultTheme = themeManagerBot?.tags?.newTheme ||{
         menuBackground: '#F0F1F1',
         primaryButton: '#E6E6E6',
         primaryButtonColor: '#606060',
@@ -249,8 +250,8 @@ const Main = () => {
         toolbarBackground: '#ffffff',
         text1: '#606060',
         text2: '#000000',
-
     };
+
     return <MouseMoveProvider>
         <link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Material+Symbols+Outlined:opsz,wght,FILL,GRAD@24,400,0,0" />
         <style>

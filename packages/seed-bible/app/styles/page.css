@@ -101,6 +101,25 @@
   display: none;
 }
 
+.chapter-header {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  margin-bottom: 20px;
+  width: 100%;
+}
+
+.bookTitleContainer {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  width: 100%;
+  margin-right: var(--text-bookchapter-margin-right);
+  margin-left: var(--text-bookchapter-margin-left);
+  margin-top: var(--text-bookchapter-margin-top);
+  margin-bottom: var(--text-bookchapter-margin-bottom);
+}
+
 .bookTitle {
   font-size: 32px;
   margin-bottom: 60px;
@@ -116,6 +135,17 @@
   margin-right: var(--text-bookchapter-margin-right);
 }
 
+.more-resources {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  cursor: pointer;
+  color: #859E3B;
+  font-size: 14px;
+  font-weight: 500;
+  transition: opacity 0.2s ease;
+  margin-right: 20px;
+}
 
 .sectionTitle {
   font-family: var(--text-heading-font);

@@ -318,8 +318,31 @@ await(async function mainInstaller(that) {
   setTagMask(thisBot, `${name}-data`, data, "local");
 
   // Load record/source
-  const read = await web.get(data.recordFile?.url || data.source);
-  const bots = GetBotsFromData(read.data);
+  // Load record/source
+  let bots;
+  const hasRemoteSource = data.recordFile?.url || data.source;
+
+  if (hasRemoteSource) {
+    // Load from remote
+    os.log("Loading package from remote source", hasRemoteSource);
+    const read = await web.get(hasRemoteSource);
+    bots = GetBotsFromData(read.data);
+  } else {
+    // Load from local - try multiple strategies
+    os.log("No remote source, loading local package", name);
+
+    // Strategy 1: Try local URL (adjust to your actual local path)
+    let localData;
+    try {
+      const localUrl = `./dist/${name}.aux`;
+      localData = await web.get(localUrl);
+    } catch {
+      // Strategy 2: Check if data already contains the package
+      localData = { data };
+    }
+
+    bots = GetBotsFromData(localData.data || data);
+  }
 
   // Push secondary bots first (await if async)
   for (let i = 1; i < bots.length; i++) {

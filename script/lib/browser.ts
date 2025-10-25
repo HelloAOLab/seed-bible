@@ -237,7 +237,7 @@ export async function uploadFile(page: Page, filePath: string) {
 }
 
 export async function loadInst(page: Page, inst: string, collaborative: boolean = false) {
-    await page.goto(`https://ao.bot?gridPortal=home&${collaborative ? 'inst' : 'staticInst'}=${inst}`);
+    await page.goto(`https://ao.bot?noGridPortal=true&${collaborative ? 'inst' : 'staticInst'}=${inst}`);
     console.log('Waiting for ao.bot to load...');
     await waitForInstLoad(page);
 }
@@ -255,6 +255,7 @@ export const DEFAULT_EXTENSIONS = [
     'Scripture Map 3D',
     'Bible Stack',
     'Playlist',
+    'StudyNote',
 ];
 
 export async function loadSeedBible(page: Page, extraExtensions: string[] = [], inst: string = uuid(), collaborative: boolean = false) {
