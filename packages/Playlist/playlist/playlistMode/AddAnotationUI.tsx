@@ -1250,8 +1250,7 @@ const AddAnotationUI = ({
               </div>
               <Tooltip
                 forRight={true}
-                text="Annotation mode is the way to annotate the bible so you can see content while exploring other who have subscribed to you."
-                gifUrl={ChecklistGIf}>
+                text="Annotation mode is the way to annotate the bible so you can see content while exploring other who have subscribed to you.">
                 <p
                   className="what-this center"
                   style={{ margin: "0 0 0 0.5rem" }}>
@@ -1305,8 +1304,7 @@ const AddAnotationUI = ({
               </div>
               <Tooltip
                 forRight={true}
-                text="Playlist mode is to create playlist and share with other or play them."
-                gifUrl={ChecklistGIf}>
+                text="Playlist mode is to create playlist and share with other or play them.">
                 <p
                   className="what-this center"
                   style={{ margin: "0 0 0 0.5rem" }}>
@@ -1357,10 +1355,7 @@ const AddAnotationUI = ({
                   Project Mode
                 </label>
               </div>
-              <Tooltip
-                forRight={true}
-                text="Project mode is awesome."
-                gifUrl={ChecklistGIf}>
+              <Tooltip forRight={true} text="Project mode is awesome.">
                 <p
                   className="what-this center"
                   style={{ margin: "0 0 0 0.5rem" }}>
@@ -1386,13 +1381,15 @@ const AddAnotationUI = ({
               right: "4rem",
               width: "200px",
               padding: "1rem",
+              top: "5rem",
             }}
             className="overlay linked-item-custom">
             <p>
               <b style={{ color: "white" }}>Publish settings</b>
             </p>
-            <span style={{ fontSize: "10px" }}>
-              You annotations will be published to the selected place below
+            <span style={{ fontSize: "10px", color: "#c9c8c6" }}>
+              Your annotations will be available to everyone if public. If
+              private only you will have access.
             </span>
             <div
               className="more-menu-items"

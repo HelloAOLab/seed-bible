@@ -7,42 +7,62 @@ const MenuOptions = {
     {
       icon: <MenuIcon name="format_ink_highlighter" />,
       title: that.highlighted ? `Unhighlight verse` : `Highlight verse`,
-      onClick: () => {
-        if (globalThis.ToggleVerseHighlight) {
-          globalThis.ToggleVerseHighlight(that.verseNumber);
-        }
-        SetInHold(null);
+      onClick: (items) => {
+        items.forEach((verse) => {
+          if (globalThis.ToggleVerseHighlight) {
+            globalThis.ToggleVerseHighlight(verse.verseNumber);
+          }
+        });
+        SetInHold({});
       },
     },
     {
       icon: <MenuIcon name="copy_all" />,
       title: "Copy text",
-      onClick: () => {
-        os.setClipboard(that.text);
-        SetInHold(null);
+      onClick: (items) => {
+        let text = "";
+
+        const textItems = items.map((verse) => {
+          return verse.text;
+        });
+
+        text = textItems.join(" ");
+
+        console.log("text", text, items);
+
+        os.setClipboard(text);
+
+        SetInHold({});
       },
     },
     {
-      icon: <ApologistIcon />,
+      icon: <ApologistIcon noFilter />,
       title: "Apologist AI",
-      onClick: () => {
+      onClick: (items) => {
         ClearUserSelection();
         SetShowCommands(true);
-        SetInHold(null);
+        SetInHold({});
       },
     },
     {
       icon: <MenuIcon name="share" />,
       title: "Share verse",
-      onClick: () => {
+      onClick: (items) => {
         closePopupSettings();
         setTimeout(() => {
+          let text = "";
+
+          const textItems = items.map((verse) => {
+            return verse.text;
+          });
+
+          text = textItems.join(" ");
           openPopupSettings(
-            <SharePopup shareTitle={`Check this out! ${that.text}`} />,
+            <SharePopup shareTitle={`Check this out! ${text}`} />,
             null,
             true
           );
-          SetInHold(null);
+          SetInHold({});
         }, 50);
       },
     },
@@ -55,9 +75,9 @@ globalThis.ContextMenuOptions.forEach(({ address, label, items }) => {
   const itemsHolder = items.map((el) => {
     return {
       ...el,
-      onClick: () => {
-        if (el.onClick) el.onClick(that);
-        SetInHold(null);
+      onClick: (items) => {
+        if (el.onClick) el.onClick(items);
+        SetInHold({});
       },
       // For dynamic title
       title: () => {
@@ -76,9 +96,9 @@ that?.extraContext?.forEach(({ address, label, items }) => {
   const itemsHolder = items.map((el) => {
     return {
       ...el,
-      onClick: () => {
-        if (el.onClick) el.onClick(that);
-        SetInHold(null);
+      onClick: (items) => {
+        if (el.onClick) el.onClick(items);
+        SetInHold({});
       },
     };
   });
@@ -93,7 +113,7 @@ that?.extraContext?.forEach(({ address, label, items }) => {
 //         if (option.onClick) {
 //             return {
 //                 ...option,
-//                 onClick: () => { option.onClick(that); SetInHold(null) }
+//                 onClick: () => { option.onClick(that); SetInHold({}) }
 //             }
 //         }
 
@@ -101,9 +121,9 @@ that?.extraContext?.forEach(({ address, label, items }) => {
 //     MenuOptions.items.push({ ...optionsHolder })
 // })
 
-// globalThis.ContextMenuOptions = MenuOptions
-// globalThis.OnClosePopup = () => SetInHold(null)
-closePopupSettings();
-setTimeout(() => {
-  openPopupSettings(MenuOptions);
-}, 50);
+globalThis.VerseActionItems = MenuOptions.items;
+// globalThis.OnClosePopup = () => SetInHold({})
+// closePopupSettings();
+// setTimeout(() => {
+//   openPopupSettings(MenuOptions);
+// }, 50);

@@ -10,5 +10,11 @@ keys?.forEach(key => {
         globalThis.KEY_HOLD = {};
     }
     globalThis.KEY_HOLD[key.toLocaleLowerCase()] = false;
+
+    if (multiSelectKeys[key.toLocaleLowerCase()]) {
+        globalThis[`SetSelectPlaylist`] && globalThis[`SetSelectPlaylist`](false);
+
+        globalThis[`SetChecklistEnabled`] && globalThis[`SetChecklistEnabled`](false);
+    }
     delete globalThis.KEY_HOLD[key];
 });

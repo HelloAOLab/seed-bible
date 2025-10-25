@@ -58,7 +58,7 @@ html * {
 }
 
 .backdrop {
-    width: 100vw;
+    width: 100dvw;
     height: 100dvh;
     animation: 0.5s ease-in 1 forwards bounceIN;
     top: 0;

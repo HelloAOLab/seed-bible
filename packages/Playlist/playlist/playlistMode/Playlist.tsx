@@ -908,13 +908,14 @@ const Playlist = ({
               right: "4rem",
               width: "200px",
               padding: "1rem",
+              top: '5rem'
             }}
             className="overlay linked-item-custom">
             <p>
               <b style={{ color: "white" }}>Publish settings</b>
             </p>
-            <span style={{ fontSize: "10px" }}>
-              You annotations will be published to the selected place below
+            <span style={{ fontSize: "10px", color: "#c9c8c6" }}>
+              Your annotations will be available to everyone if public. If private only you will have access.
             </span>
             <div
               className="more-menu-items"
@@ -1041,8 +1042,7 @@ const Playlist = ({
               </div>
               <Tooltip
                 forRight={true}
-                text="Checklist Mode gives your Playlist an option to checkout the visited items so you can keep track of your playlist progress."
-                gifUrl={ChecklistGIf}>
+                text="Checklist Mode gives your Playlist an option to checkout the visited items so you can keep track of your playlist progress.">
                 <p
                   className="what-this center"
                   style={{ margin: "0 0 0 0.5rem" }}>
@@ -1091,13 +1091,10 @@ const Playlist = ({
                     color: "white",
                   }}
                   for="playlistInclude">
-                  Plan
+                  Reading Plan
                 </label>
               </div>
-              <Tooltip
-                forRight={true}
-                text="Plan Mode lets you add dates in your playlist which keeps the date and progress in track according to date."
-                gifUrl={ChecklistGIf}>
+              <Tooltip text="Plan Mode lets you add dates in your playlist which keeps the date and progress in track according to date.">
                 <p
                   className="what-this center"
                   style={{ margin: "0 0 0 0.5rem" }}>

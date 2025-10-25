@@ -177,6 +177,34 @@ export function MiniTextEditor({
                 Image.configure({ inline: false, allowBase64: true }),
                 Link.configure({ openOnClick: true, linkOnPaste: true }),
             ],
+            editorProps: {
+                attributes: {
+                  class: 'no-select', // <- hook for the CSS above
+                },
+                handleDOMEvents: {
+                  // Block keyboard and menu copy/cut
+                  copy: (_view, event) => {
+                    event.preventDefault();
+                    return true;
+                  },
+                  cut: (_view, event) => {
+                    event.preventDefault();
+                    return true;
+                  },
+            
+                  // (Optional) make it harder to start a selection at all
+                  selectstart: (_view, event) => {
+                    event.preventDefault();
+                    return true;
+                  },
+            
+                  // (Optional) stop dragging out selections / drags
+                  dragstart: (_view, event) => {
+                    event.preventDefault();
+                    return true;
+                  },
+                },
+            },
             content: contentHTML
         });
 
