@@ -7,6 +7,7 @@ function NowBar() {
     const [dragOffset, setDragOffset] = useState(0);
     const [startY, setStartY] = useState(0);
     const [startDragIndex, setStartDragIndex] = useState(0);
+    const [extraHeight,setExtraHeight] = useState(0);
     const [windowWidth, setWindowWidth] = useState(typeof window !== 'undefined' ? window.innerWidth : 400);
     const cardRef = useRef(null);
 
@@ -16,8 +17,13 @@ function NowBar() {
             setWindowWidth(window.innerWidth);
         };
 
+        globalThis.SetExtraHeight = setExtraHeight;
+
         window.addEventListener('resize', handleResize);
-        return () => window.removeEventListener('resize', handleResize);
+        return () =>{
+            window.removeEventListener('resize', handleResize);
+            globalThis.SetExtraHeight = null;
+        }
     }, []);
 
     // Global function to add apps to NowBar
@@ -219,8 +225,9 @@ function NowBar() {
             left: '50%',
             transform: 'translateX(-50%)',
             width: `${dimensions.width}px`,
+            transition: 'all 0.3s linear',
             // Shall be min height not exact height
-            minHeight: `${dimensions.height}px`,
+            minHeight: `${dimensions.height + (extraHeight)}px`,
             zIndex: '999999',
             // Ensure it doesn't overflow on very small screens
             maxWidth: '95vw',
