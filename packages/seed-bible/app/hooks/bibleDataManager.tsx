@@ -100,6 +100,8 @@ export class BibleDataManager {
     }
 
     lastReading[configBot.id] = {bookId: this.bookId, chapter: this.chapter, index: length - 1};
+
+    shout("OnHistoryUpdated");
     
     if (!this.tabId) return;
     

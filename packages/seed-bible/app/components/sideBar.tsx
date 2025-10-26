@@ -727,6 +727,8 @@ function SideBar() {
         }
 
         lastReading[userId] = {bookId: bookId, chapter: chapter, index: length - 1};
+
+        shout("OnHistoryUpdated");
       }
     });
       

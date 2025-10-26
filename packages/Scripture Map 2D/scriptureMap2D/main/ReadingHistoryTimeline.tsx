@@ -43,7 +43,7 @@ export const ReadingHistoryTimeline = () => {
         readingHistoryRange, 
         handleReadingHistoryRangeSelectorClick, 
         readingHistoryUsersFilters,
-        chapterBaseBackgroundColor
+        CHAPTER_BASE_BACKGROUND_COLOR
     } = useScriptureMap2DContext();
 
     const firstItemContent = "Overview";
@@ -61,9 +61,9 @@ export const ReadingHistoryTimeline = () => {
                 const dayRange = GetDayRange(time);
                 const description = index === 0 ? "Today" : `${weekday} ${month}/${day}`;
                 const selected = readingHistoryRange && readingHistoryRange.start <= time && readingHistoryRange.end >= time;
-                let background = chapterBaseBackgroundColor;
+                let background = CHAPTER_BASE_BACKGROUND_COLOR;
 
-                const firstFourSelectedFilters = Array.from(readingHistoryUsersFilters).filter(([userId, selected]) => { 
+                const selectedFilters = Array.from(readingHistoryUsersFilters).filter(([userId, selected]) => { 
                     return selected && 
                         Object.keys(readingHistory[userId] ?? {})?.some((bookId) => {
                             return Object.keys(readingHistory[userId][bookId])?.some((chapter) =>{
@@ -73,12 +73,12 @@ export const ReadingHistoryTimeline = () => {
                                 })
                             })
                         });
-                }).slice(0, 4);
+                })//.slice(0, 4);
 
                 
-                if(firstFourSelectedFilters.length > 0)
+                if(selectedFilters.length > 0)
                 {
-                    const colors = firstFourSelectedFilters.map(([userId]) => {
+                    const colors = selectedFilters.map(([userId]) => {
                         const customReading = [];
                         
                         Object.keys(readingHistory[userId] ?? {})?.forEach((bookId) => {
@@ -97,7 +97,7 @@ export const ReadingHistoryTimeline = () => {
                         });
                         
                         return BibleVizUtils.Functions.GetHistoryColor({
-                            baseColor: chapterBaseBackgroundColor, 
+                            baseColor: CHAPTER_BASE_BACKGROUND_COLOR, 
                             userColor: userId === configBot.id ? BibleVizUtils.Data.tags.myUserColor : (BibleVizUtils.Data.vars.userPresenceData?.[userId]?.user?.color ?? thisBot.vars.FakeReadingHistoryUsersColorMap?.get(userId) ?? "pink"), 
                             reading: customReading,
                             range: dayRange
