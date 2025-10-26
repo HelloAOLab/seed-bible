@@ -791,15 +791,16 @@ const PlayerControls = ({ parentId = "default" }) => {
             borderRadius: "8px",
             justifyContent: "center",
           }}>
-          {!!videoSrc && (
-            <VideoPlayer videoSrc={videoSrc} playlistItem={currentItem} />
-          )}
-          {!!mediaURL && <AudioPlayer mediaURL={mediaURL} />}
           {!!textInfo && (
             <div className="textinfo-playlist">
               <RenderHTMLContent htmlContent={textInfo} />
             </div>
           )}
+          {!!videoSrc && (
+            <VideoPlayer videoSrc={videoSrc} playlistItem={currentItem} />
+          )}
+          {!!mediaURL && <AudioPlayer mediaURL={mediaURL} />}
+
           {isItemLink && false && (
             <div>
               <p>Link showing refuse to connect Problems? </p>
