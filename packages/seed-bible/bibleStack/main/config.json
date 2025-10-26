@@ -1,0 +1,13 @@
+{
+    "author": "Gabriel Souki",
+    "toolbarConfig":
+    {
+        "icon": "stacks",
+        "label": "Bible Stack",
+        "hasToggle": true,
+        "run": "DisplayApp",
+        "active": false,
+        "showInPageToolbar": true,
+        "showInStarterToolbar": true
+    }
+}

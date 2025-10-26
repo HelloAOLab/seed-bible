@@ -1,0 +1,1 @@
+setTagMask(thisBot, "isAnimatingBible", false);

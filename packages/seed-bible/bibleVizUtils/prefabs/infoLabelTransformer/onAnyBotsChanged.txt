@@ -1,0 +1,17 @@
+const dimension = os.getCurrentDimension();
+if(thisBot.tags.isBaseInfoLabelTransformer || thisBot.tags.dimension !== dimension) return;
+
+if(that.some((botChangedObject) => {
+    if(botChangedObject)
+    {
+        return getID(botChangedObject.bot) === thisBot.tags.ownerBotId;
+    }
+}))
+{
+    const changedTags = that.find((botChangedObject) => {return getID(botChangedObject.bot) === thisBot.tags.ownerBotId}).tags;
+
+    if(changedTags.includes(dimension + "X") || changedTags.includes(dimension + "Y") || changedTags.includes(dimension + "Z"))
+    {
+        thisBot.SetPosition({setX: changedTags.includes(dimension + "X"), setY: changedTags.includes(dimension + "Y"), setZ: changedTags.includes(dimension + "Z")})
+    }
+}

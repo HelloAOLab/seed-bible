@@ -1,0 +1,13 @@
+{
+    "author": "Gabriel Souki",
+    "toolbarConfig":
+    {
+        "label": "Scripture Map 3D",
+        "hasToggle": true,
+        "icon": "dashboard",
+        "run": "DisplayApp",
+        "active": false,
+        "showInPageToolbar": true,
+        "showInStarterToolbar": true
+    }
+}

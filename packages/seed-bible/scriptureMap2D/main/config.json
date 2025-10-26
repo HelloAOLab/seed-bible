@@ -1,0 +1,21 @@
+{
+    "author": "Gabriel Souki",
+    "app": "@GetScriptureMap2D",
+    "toolbarConfig":
+    {
+        "label": "Scripture Map 2D",
+        "hasToggle": true,
+        "icon": "browse",
+        "active": false,
+        "showInPageToolbar": true,
+        "showInStarterToolbar": true
+    },
+    "tabConfig":
+    {
+        "title": "Scripture Map 2D"
+    },
+    "contextMenuConfig": 
+    {
+        "optionsIsOn": ""
+    }
+}

@@ -1,0 +1,40 @@
+import {HighlightInfo} from "bibleVizUtils.classes.HighlightInfo"
+const {piece} = that;
+
+let key, prevColor;
+let highlightSuccessful = false;
+switch(piece.tags.typeOfPiece)
+{
+    case BibleElementType.MapBook:
+        key = piece.tags.bookName;
+    break;
+    case BibleElementType.MapChapter:
+        key = `${piece.tags.bookName} ${piece.tags.chapterNumber}`;
+    break;
+    case BibleElementType.ChunkOfVerses:
+        key = piece.masks.chunkPath
+    break;
+    case BibleElementType.Verse: 
+        key = piece.masks.versePath
+    break;
+    default: break;
+}
+const currentHighlightInfo = thisBot.tags.highlightsInfo.find((highlightInfo) => {return highlightInfo.key == key})
+if(currentHighlightInfo)
+{
+    if(currentHighlightInfo.color != InstanceManager.tags.highlightColor)
+    {
+        if(!BibleVizUtils.Data.masks.isInHistoryMode) setTagMask(piece, "color", InstanceManager.tags.highlightColor);
+        prevColor = currentHighlightInfo.color;
+        currentHighlightInfo.color = InstanceManager.tags.highlightColor;
+        highlightSuccessful = true;
+    }
+}
+else
+{
+    if(!BibleVizUtils.Data.masks.isInHistoryMode) setTagMask(piece, "color", InstanceManager.tags.highlightColor);
+    thisBot.tags.highlightsInfo.push(new HighlightInfo({key, typeOfPiece: piece.tags.typeOfPiece, color: InstanceManager.tags.highlightColor}))
+    highlightSuccessful = true;
+}
+
+if(highlightSuccessful) shout(`OnElementHighlighted`, {color: InstanceManager.tags.highlightColor, prevColor, piece})

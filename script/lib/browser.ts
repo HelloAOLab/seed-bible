@@ -254,8 +254,8 @@ export const DEFAULT_EXTENSIONS = [
     'Painter',
     'Scripture Map 3D',
     'Bible Stack',
-    'Playlist',
     'StudyNote',
+    'Playlist',
 ];
 
 export async function loadSeedBible(page: Page, extraExtensions: string[] = [], inst: string = uuid(), collaborative: boolean = false) {

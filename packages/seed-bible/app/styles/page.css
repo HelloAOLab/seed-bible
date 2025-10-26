@@ -122,17 +122,11 @@
 
 .bookTitle {
   font-size: 32px;
-  margin-bottom: 60px;
-  font-weight: 500;
   font-family: var(--text-bookchapter-font);
   color: var(--text-bookchapter-color);
   font-weight: var(--text-bookchapter-weight);
   text-align: var(--text-bookchapter-alignment);
   text-decoration: var(--text-bookchapter-text-decoration);
-  margin-top: var(--text-bookchapter-margin-top);
-  margin-bottom: var(--text-bookchapter-margin-bottom);
-  margin-left: var(--text-bookchapter-margin-left);
-  margin-right: var(--text-bookchapter-margin-right);
 }
 
 .more-resources {

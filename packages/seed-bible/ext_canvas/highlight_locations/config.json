@@ -1,0 +1,12 @@
+{
+    "app": "@",
+    "author": "Sujan",
+    "contextMenuConfig": {
+        "optionsIsOn": "@options"
+    },
+    "toolbarConfig": {
+        "icon": "location_on",
+        "label": "Locations",
+        "hasToggle": "true"
+    }
+}
