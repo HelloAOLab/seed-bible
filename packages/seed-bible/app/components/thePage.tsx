@@ -912,11 +912,21 @@ function ThePage({
     return vText;
   }, [data]);
 
+  const isVerseSelected = useMemo(() => {
+    const isVerseSelected = Object.values(inHold).length > 0;
+    if (globalThis.SetExtraHeight) {
+      if (isVerseSelected) {
+        globalThis.SetExtraHeight(60);
+      } else {
+        globalThis.SetExtraHeight(0);
+      }
+    }
+    return isVerseSelected;
+  }, [inHold]);
+
   return (
     <div
-      className={`pageContainer ${
-        Object.values(inHold).length > 0 ? "no-select" : ""
-      }`}
+      className={`pageContainer ${isVerseSelected ? "no-select" : ""}`}
       onMouseLeave={handleMouseLeave}
       onMouseEnter={handleMouseEnter}
       onMouseUp={handleMouseUp}
@@ -1129,13 +1139,14 @@ const ColorPickerBar = ({
         padding: "8px",
         display: "flex",
         left: "50%",
-        bottom: "76px",
+        bottom: "86px",
         zIndex: "99",
         transform: "translateX(-50%)",
         gap: "0.5rem",
         position: "fixed",
+        boxShadow: "0px 1px 6px 0px #00000026",
         backgroundColor: "white",
-        borderRadius: "8px",
+        borderRadius: "5rem",
         alignItems: "center",
       }}>
       <p
@@ -1779,6 +1790,15 @@ function Section({
                       chapter,
                       verses: [verse.verseNumber],
                     });
+                    const verseClickData = {
+                      verseNumber: verse.verseNumber,
+                      text: verse.text,
+                      chapter,
+                      book,
+                      highlighted: highlighted?.[verse.verseNumber],
+                    };
+                    EmitData("verseClicked", verseClickData);
+                    shout("onVerseClick", verseClickData);
                   }}
                   // onClick={() => {
                   //   SetShowCommands(false);
@@ -1848,13 +1868,18 @@ function Section({
                     onPointerEnter={() => {
                       globalThis.showRefModal = true;
                       setTimeout(() => {
-                        if(globalThis.showRefModal){
-                          shout("toggleReferenceModal", {book, chapter, verse})
+                        if (globalThis.showRefModal) {
+                          shout("toggleReferenceModal", {
+                            book,
+                            chapter,
+                            verse,
+                          });
                         }
-                      }, 500)
+                      }, 500);
                     }}
-                    onPointerLeave={() => {globalThis.showRefModal = false;}}
-                    >
+                    onPointerLeave={() => {
+                      globalThis.showRefModal = false;
+                    }}>
                     {verse?.verseNumber}
                   </span>
                   {!c ? (

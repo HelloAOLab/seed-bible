@@ -22,6 +22,11 @@ const OPTIONS = [
   // { value: "aux", label: "AUX", disabled: true }
 ];
 
+const OPTIONS_TEXTTYPE = [
+  { value: "heading", label: "Heading" },
+  { value: "text", label: "Text" },
+];
+
 const BIBLE_ICON =
   "https://auth-aux-aobot-prod-filesbucket-141297942820.s3.amazonaws.com/aoBot/f48f63986bd37713cb7d24d0634e87c63f7f82aa078237e827b70d1e7f65b12e.svg";
 
@@ -88,6 +93,8 @@ function SubComponent({
   data,
   setData,
   type,
+  textType,
+  setTextType,
 }) {
   const playlists = useMemo(
     () => globalThis[`${"default"}playlists`] || [],
@@ -271,6 +278,16 @@ function SubComponent({
     case "TEXT":
       return (
         <div className="input-conainter-type">
+          <Select
+            sxSelect={{ width: "7rem", marginBottom: "1rem" }}
+            secondary
+            value={textType}
+            onChangeListener={(val) => {
+              setTextType(val);
+            }}
+            name="Role:"
+            options={OPTIONS_TEXTTYPE}
+          />
           <MiniTextEditor
             id={EditorId}
             minHeight={60}
@@ -502,6 +519,7 @@ const AttachLink = ({
       ? "RECORDING"
       : "SCRIPTURE"
   );
+  const [textType, setTextType] = useState("heading");
   const [mediaType, setType] = useState(sMediaType ? sMediaType : "youtube");
   const [data, setData] = useState(sData ? sData : null);
   const [linkState, setLinkState] = useState(false);
@@ -849,7 +867,11 @@ const AttachLink = ({
       if (globalThis[`${isTempID}ClearEditorContent`])
         globalThis[`${isTempID}ClearEditorContent`]();
       globalThis.RawName = "";
-      return attachLink(name, link, { isValid: true, type: "text" });
+      return attachLink(name, link, {
+        isValid: true,
+        subType: textType,
+        type: "text",
+      });
     }
   };
 
@@ -894,6 +916,8 @@ const AttachLink = ({
           data={data}
           setData={setData}
           editMode={editMode}
+          textType={textType}
+          setTextType={setTextType}
           onAddFiles={onAddFiles}
           setLinkState={setLinkState}
           dragState={dragState}
