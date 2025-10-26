@@ -3,6 +3,7 @@ import { Chapter } from "scriptureMap2D.main.Chapter"
 import { PresentUserPresenceBookIcon } from "scriptureMap2D.main.PresentUserPresenceIcon"
 import { useTestamentContext } from "scriptureMap2D.main.TestamentContext"
 import {useClickAndHold} from "scriptureMap2D.main.CustomHooks"
+import { useTimeContext } from "scriptureMap2D.main.TimeContext"
 const { useMemo, useState, useEffect, useCallback } = os.appHooks;
 
 export const Book = ({
@@ -14,13 +15,15 @@ export const Book = ({
 }) => {
 
     const { 
+        arrangement,
         scaleFactor, 
         showingAllChapters, 
         isUserPresenceEnabled, 
+        isReadingHistoryEnabled,
         content, 
         modes, 
         usersStatus, 
-        maxChapterHeatCount, 
+        MAX_CHAPTER_HEAT_COUNT, 
         userPresence,
         usersInfo,
         contentVisualization,
@@ -40,8 +43,12 @@ export const Book = ({
         chapterPadding,
         chapterWidth,
         chapterHeight,
+        CHAPTER_BASE_BACKGROUND_COLOR,
+        filteredReadingHistory, 
+        readingHistoryRange
     } = useScriptureMap2DContext();
     const { testament } = useTestamentContext() 
+    const { tick } = useTimeContext();
     
     const [showChapters, setShowChapters] = useState(showingAllChapters);
     const {chaptersCount, shortName} = useMemo(() => { 
@@ -103,12 +110,12 @@ export const Book = ({
                     const userContent = content.get(user);
                     const bookContent = userContent.books[bookInfo.commonName];
                     const entriesCount = Object.keys(bookContent).reduce((currentValue, key) => {
-                        return currentValue + Math.min(bookContent[key].length, maxChapterHeatCount)
+                        return currentValue + Math.min(bookContent[key].length, MAX_CHAPTER_HEAT_COUNT)
                     }, 0)
                     
                     const heatMaxColor = HexToRgb(usersInfo[user].color);
                     const normalizer = 3;
-                    const progress = Math.min(entriesCount / (maxChapterHeatCount * chaptersCount / normalizer), 1);
+                    const progress = Math.min(entriesCount / (MAX_CHAPTER_HEAT_COUNT * chaptersCount / normalizer), 1);
                     const deltaColor = [heatMaxColor[0] - baseColor[0], heatMaxColor[1] - baseColor[1], heatMaxColor[2] - baseColor[2]].map((value) => {return Math.floor(value * progress)});
                     const heatColor = baseColor.map((value, index) => {return value + deltaColor[index]});
 
@@ -168,6 +175,50 @@ export const Book = ({
         })
     }, [userPresence, isUserPresenceEnabled, modes])
 
+    const chapterUserEntriesMap = useMemo(() => {
+        return new Map([...Array(chaptersCount)].map((_, index) => {
+            const chapter = index + 1;
+            const userEntries = Object.keys(filteredReadingHistory).map((userId) => {
+                const entries = filteredReadingHistory[userId]?.[shortName]?.[chapter];
+                if(entries && (!readingHistoryRange || entries.some((entry) => {return BibleVizUtils.Functions.IsValueBetween({value: entry.start, min: readingHistoryRange.start, max: readingHistoryRange.end}) || BibleVizUtils.Functions.IsValueBetween({value: entry.end, min: readingHistoryRange.start, max: readingHistoryRange.end})})))
+                {
+                    return {userId, entries}
+                }
+                return null
+            }).filter(Boolean)
+            return [chapter, userEntries]
+        }))
+
+    }, [filteredReadingHistory, readingHistoryRange])
+
+    const historyColorsMap = useMemo(() => {
+
+        if(!isReadingHistoryEnabled) return null;
+
+        return new Map([...Array(chaptersCount)].map((_, index) => {
+            const chapter = index + 1;
+            const userEntries = chapterUserEntriesMap.get(chapter)
+            let colors;
+
+            if(userEntries.length === 0) colors = [CHAPTER_BASE_BACKGROUND_COLOR]
+            else
+            {
+                colors = userEntries.map(({userId, entries}) => {    
+                    return BibleVizUtils.Functions.GetHistoryColor({
+                        baseColor: CHAPTER_BASE_BACKGROUND_COLOR, 
+                        userColor: userId === configBot.id ? BibleVizUtils.Data.tags.myUserColor : (BibleVizUtils.Data.vars.userPresenceData?.[userId]?.user?.color ?? thisBot.vars.FakeReadingHistoryUsersColorMap?.get(userId) ?? "pink"), 
+                        reading: entries,
+                        range: readingHistoryRange
+                    })
+                })
+            }
+    
+            return [chapter, colors];
+        }))
+
+
+    }, [readingHistoryRange, chapterUserEntriesMap, tick, isReadingHistoryEnabled])
+
     return (
         <div 
             className={`mapBookContainer${showChapters ? "" : " pointable"}`} 
@@ -200,7 +251,24 @@ export const Book = ({
                 }}
             >
                 {showChapters ? [...Array(chaptersCount)].map((_, index) => {
-                    return <Chapter sectionName={sectionName} bookName={bookInfo.commonName} index={index} />
+                    const chapter = index + 1
+                    let historyBackground = null;
+                    let historyColor = null;
+                    
+                    if(isReadingHistoryEnabled)
+                    {
+                        historyBackground = BibleVizUtils.Functions.GetHistoryColorConicGradient(historyColorsMap.get(chapter));
+                        historyColor = BibleVizUtils.Functions.GetTextColorBasedOnBackground({backgroundColor: historyColorsMap.get(chapter)});
+                    }
+
+                    return <Chapter 
+                        key={`${shortName}-${chapter}`} 
+                        sectionName={sectionName} 
+                        bookName={bookInfo.commonName} 
+                        index={index}  
+                        historyBackground={historyBackground}
+                        historyColor={historyColor}
+                    />
                 }) : (<>
                     {isUserPresenceEnabled && modes.get("Reading") && usersInBook?.length > 0 && usersInBook.map((user, index) => {
                         return <PresentUserPresenceBookIcon index={index} user={user} length={usersInBook.length} />
