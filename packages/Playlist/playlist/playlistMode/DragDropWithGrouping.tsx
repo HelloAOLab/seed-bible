@@ -9,6 +9,8 @@ const { Checkbox } = Components;
 
 const isMobile = (window?.innerWidth || gridPortalBot.tags.pixelWidth) < MOBILE_VIEWPORT_THRESHOLD;
 
+const DEV_ENV = configBot.tags.pattern === 'SeedBibleDev' || !configBot.tags.pattern;
+
 // Replaced now with props toggleRemoved cause no need to show like this now use is to show active element
 const toggle = 'null';
 
@@ -258,8 +260,10 @@ const DragDrop = ({ massAdd, attachLink, onGenClick = () => { }, setItemSelected
 
         {list.length === 0 && <div className="no-items-box">
             <h4 style={{ margin: "8px 0" }}>Add items below.</h4>
-            <p className='or' />
-            <p onClick={onGenClick}>Click here to generate playlist</p>
+            {DEV_ENV && <>
+                <p className='or' />
+                <p onClick={onGenClick}>Click here to generate playlist</p>
+            </>}
         </div>}
         {
             transformedHistory.map((data, index) => data.type?.includes("range") || (data.additionalInfo?.layers?.length > 0 && layers)
