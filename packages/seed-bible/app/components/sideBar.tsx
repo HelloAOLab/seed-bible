@@ -708,34 +708,44 @@ function SideBar() {
 
     usersIds.forEach((userId) => {
       const { bookId, chapter } = onlineUsers[userId];
-      if(hooks && (!thisBot.vars.prevOnlineUsers || !thisBot.vars.prevOnlineUsers[userId] || thisBot.vars.prevOnlineUsers[userId].bookId !== bookId || thisBot.vars.prevOnlineUsers[userId].chapter !== chapter))
-      {
-        const lastReading = hooks.vars.tempLastReading ??= {};
-        const tempHistory = hooks.vars.tempReadingHistory ??= {};
-        const userHistory = tempHistory[userId] ??= {};
-        const bookHistory = userHistory[bookId] ??= {};
-        if(!bookHistory[chapter]) bookHistory[chapter] = [];
-        const length = bookHistory[chapter].push({start: timestamp});
-        
-        if(lastReading[userId]) 
-        {
-          const {bookId, chapter, index} = lastReading[userId];
+      if (
+        hooks &&
+        (!thisBot.vars.prevOnlineUsers ||
+          !thisBot.vars.prevOnlineUsers[userId] ||
+          thisBot.vars.prevOnlineUsers[userId].bookId !== bookId ||
+          thisBot.vars.prevOnlineUsers[userId].chapter !== chapter)
+      ) {
+        const lastReading = (hooks.vars.tempLastReading ??= {});
+        const tempHistory = (hooks.vars.tempReadingHistory ??= {});
+        const userHistory = (tempHistory[userId] ??= {});
+        const bookHistory = (userHistory[bookId] ??= {});
+        if (!bookHistory[chapter]) bookHistory[chapter] = [];
+        const length = bookHistory[chapter].push({ start: timestamp });
+
+        if (lastReading[userId]) {
+          const { bookId, chapter, index } = lastReading[userId];
           const lastEntry = userHistory[bookId]?.[chapter]?.[index];
-          if(lastEntry) lastEntry.end = timestamp;
-          else
-          {
-            console.warn(`[Debug] BibleDataManager._scheduleMaskRecord lastEntry not found`, lastReading[userId]);
+          if (lastEntry) lastEntry.end = timestamp;
+          else {
+            console.warn(
+              `[Debug] BibleDataManager._scheduleMaskRecord lastEntry not found`,
+              lastReading[userId]
+            );
           }
         }
 
-        lastReading[userId] = {bookId: bookId, chapter: chapter, index: length - 1};
+        lastReading[userId] = {
+          bookId: bookId,
+          chapter: chapter,
+          index: length - 1,
+        };
 
         shout("OnHistoryUpdated");
       }
     });
-      
+
     hooks.vars.prevOnlineUsers = onlineUsers;
-    
+
     shout("OnOnlineUsersChanged", { onlineUsers });
 
     thisBot.vars.prevOnlineUsers = onlineUsers;
@@ -955,73 +965,76 @@ function SideBar() {
 
   const MenuOptions = {
     type: "normal",
-    items: [
-      {
-        disabled: true,
-        icon: <MenuIcon name="logout" />,
-        title: "Join a Lobby",
-        onClick: async () => {
-          const id = await os.showInput("", {
-            title: "Enter session link",
-          });
-          if (id) os.goToURL(id);
+    items: (() =>
+      [
+        {
+          disabled: true,
+          icon: <MenuIcon name="logout" />,
+          title: "Join a Lobby",
+          onClick: async () => {
+            const id = await os.showInput("", {
+              title: "Enter session link",
+            });
+            if (id) os.goToURL(id);
+          },
         },
-      },
-      {
-        disabled: true,
-        icon: <MenuIcon name="content_copy" />,
-        title: "Copy session link",
-        onClick: () => {
-          os.setClipboard(
-            `https://ao.bot/?pattern=SeedBibleDev&noGridPortal=true&inst=${os.getCurrentInst()}&join=${
-              configBot.id
-            }`
-          );
+        {
+          disabled: true,
+          icon: <MenuIcon name="content_copy" />,
+          title: "Copy session link",
+          onClick: () => {
+            os.setClipboard(
+              `https://ao.bot/?pattern=SeedBibleDev&noGridPortal=true&inst=${os.getCurrentInst()}&join=${
+                configBot.id
+              }`
+            );
+          },
         },
-      },
-      { type: "line" },
-      {
-        disabled: false,
-        icon: <MenuIcon name="fullscreen" />,
-        title: "Full screen",
-        onClick: () => {
-          setFullScreen(true);
+        { type: "line" },
+        {
+          disabled: false,
+          icon: <MenuIcon name="fullscreen" />,
+          title: "Full screen",
+          onClick: () => {
+            setFullScreen(true);
+          },
         },
-      },
-      { type: "line" },
-      {
-        disabled: false,
-        icon: <MenuIcon name={showSearch ? "visibility_off" : "visibility"} />,
-        title: showSearch ? "Hide Search" : "Show Search",
-        onClick: toggleSearchVisibility,
-      },
-      LOCAL_ENV && {
-        disabled: false,
-        icon: <MenuIcon name={"upload_file"} />,
-        title: "Upload Files",
-        onClick: () => thisBot.uploadFile(),
-      },
-      // {
-      //     disabled: false,
-      //     icon: <MenuIcon name={editMode ? "edit_off" : "edit"} />,
-      //     title: editMode ? 'Exit ReSeed Mode' : 'Enter ReSeed Mode',
-      //     onClick: toggleEditMode
-      // },
-      // { disabled: true, icon: <MenuIcon name="extension" />, title: 'Extensions', onClick: () => { } },
-      { type: "line" },
-      {
-        disabled: true,
-        icon: <MenuIcon name="bug_report" />,
-        title: "Report a bug",
-        onClick: () => {},
-      },
-      {
-        disabled: true,
-        icon: <MenuIcon name="help" />,
-        title: "Help",
-        onClick: () => {},
-      },
-    ],
+        { type: "line" },
+        {
+          disabled: false,
+          icon: (
+            <MenuIcon name={showSearch ? "visibility_off" : "visibility"} />
+          ),
+          title: showSearch ? "Hide Search" : "Show Search",
+          onClick: toggleSearchVisibility,
+        },
+        LOCAL_ENV && {
+          disabled: false,
+          icon: <MenuIcon name={"upload_file"} />,
+          title: "Upload Files",
+          onClick: () => thisBot.uploadFile(),
+        },
+        // {
+        //     disabled: false,
+        //     icon: <MenuIcon name={editMode ? "edit_off" : "edit"} />,
+        //     title: editMode ? 'Exit ReSeed Mode' : 'Enter ReSeed Mode',
+        //     onClick: toggleEditMode
+        // },
+        // { disabled: true, icon: <MenuIcon name="extension" />, title: 'Extensions', onClick: () => { } },
+        { type: "line" },
+        {
+          disabled: true,
+          icon: <MenuIcon name="bug_report" />,
+          title: "Report a bug",
+          onClick: () => {},
+        },
+        {
+          disabled: true,
+          icon: <MenuIcon name="help" />,
+          title: "Help",
+          onClick: () => {},
+        },
+      ].filter((ele) => !!ele?.title))(),
   };
 
   const AddingOption = () => {
