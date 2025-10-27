@@ -1,3 +1,4 @@
+import { saveUserReadingHistory } from 'db.annotations.library';
 const bibleTabDataCache = new Map();
 
 export function getCachedTabData(tabId) {
@@ -100,6 +101,8 @@ export class BibleDataManager {
     }
 
     lastReading[configBot.id] = {bookId: this.bookId, chapter: this.chapter, index: length - 1};
+
+    saveUserReadingHistory(this.bookId, this.chapter);
 
     shout("OnHistoryUpdated");
     
