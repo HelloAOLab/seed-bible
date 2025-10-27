@@ -14,7 +14,7 @@ const EditorId = "attachfile";
 const OPTIONS = [
   // { value: "text", label: "Heading Text" },
   // { value: SEARCH_ADD_VALUE, label: "Search & Add Verse,Chapter" },
-  { value: "youtube", label: "Youtube" },
+  { value: "youtube", label: "YouTube" },
   { value: "externalLink", label: "External Link" },
   { value: "Video", label: "Video" },
   { value: "iframe", label: "Iframe" },
@@ -271,26 +271,30 @@ function SubComponent({
           <Input
             value={name}
             onChangeListener={setName}
-            placeholder="(Optional) type to add title"
+            placeholder="(Optional) type to add a custom title"
           />
         </div>
       );
     case "TEXT":
       return (
         <div className="input-conainter-type">
-          <Select
-            sxSelect={{ width: "7rem", marginBottom: "1rem" }}
-            secondary
-            value={textType}
-            onChangeListener={(val) => {
-              setTextType(val);
-            }}
-            name="Role:"
-            options={OPTIONS_TEXTTYPE}
-          />
+          {false && (
+            <Select
+              sxSelect={{ width: "7rem", marginBottom: "1rem" }}
+              secondary
+              value={textType}
+              onChangeListener={(val) => {
+                setTextType(val);
+              }}
+              name="Role:"
+              options={OPTIONS_TEXTTYPE}
+            />
+          )}
           <MiniTextEditor
             id={EditorId}
             minHeight={60}
+            headingControls
+            showMoreOptions={false}
             placeholderHTML={name}
             initialHtml={name}
             onChange={(html) => {
@@ -313,7 +317,7 @@ function SubComponent({
             style={{ width: "100%" }}
             value={name}
             onChangeListener={setName}
-            placeholder="(Optional) type to add title"
+            placeholder="(Optional) type to add a custom title"
           />
           <div style={{ width: "100%", display: "flex", gap: "1rem" }}>
             <Select
@@ -331,7 +335,7 @@ function SubComponent({
               style={{ marginBottom: "0", flexGrow: "1" }}
               value={link}
               onChangeListener={setLink}
-              placeholder="e.g.: https://www.youtube.com/watch?v=ALsluAKBZ-c"
+              placeholder="e.g. https://www.youtube.com/watch?v=ALsluAKBZ-c"
             />
           </div>
         </div>
@@ -1037,12 +1041,12 @@ return AttachLink;
 
 // <div className="add-new-playlist alter" >
 //         <p style={{ fontSize: '12px' }} ><b>Title:</b></p>
-// <Input value={name} onChangeListener={setName} placeholder="(Optional) type to add title" />
+// <Input value={name} onChangeListener={setName} placeholder="(Optional) type to add a custom title" />
 
 //         <div style={{ padding: '1px 0', display: 'flex', alignItems: 'center' }}>
 //             <Select sxSelect={{ width: '7rem' }} secondary value={mediaType} onChangeListener={(val) => { setLinkState({ isValid: false, type: val }); setType(val); }} name="Type:" options={OPTIONS} />
 //             {mediaType !== SEARCH_ADD_VALUE && mediaType !== RECORDING_VALUE &&
-//                 <Input style={{ marginBottom: '0', flexGrow: '1' }} value={link} onChangeListener={setLink} placeholder="e.g.: https://www.youtube.com/watch?v=ALsluAKBZ-c" />
+//                 <Input style={{ marginBottom: '0', flexGrow: '1' }} value={link} onChangeListener={setLink} placeholder="e.g. https://www.youtube.com/watch?v=ALsluAKBZ-c" />
 //             }
 //         </div>
 // {mediaType === RECORDING_VALUE && <RecordingUI data={data} setData={setData} />}

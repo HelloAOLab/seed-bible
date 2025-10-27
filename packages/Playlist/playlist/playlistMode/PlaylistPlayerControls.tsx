@@ -288,10 +288,15 @@ const PlayerControls = ({ parentId = "default" }) => {
     ) {
       if (
         targetItem?.type === "heading" &&
-        targetItem?.additionalInfo?.subType === "text" &&
+        // targetItem?.additionalInfo?.subType === "text" &&
         !getIndexOnly
       ) {
-        globalThis.SetTextInfo(targetItem.content);
+        const isMobile =
+          (window?.innerWidth || gridPortalBot.tags.pixelWidth) <
+          MOBILE_VIEWPORT_THRESHOLD;
+        if (isMobile) {
+          globalThis.SetTextInfo(targetItem.content);
+        }
       }
 
       if (targetItem?.type === "date" && !getIndexOnly) {
@@ -594,10 +599,16 @@ const PlayerControls = ({ parentId = "default" }) => {
         (!!targetItem?.nextTargetItem?.id && currIndex.fromButton === 1)
       ) {
         if (
-          targetItem?.type === "heading" &&
-          targetItem?.additionalInfo?.subType === "text"
+          targetItem?.type === "heading"
+          // &&
+          // targetItem?.additionalInfo?.subType === "text"
         ) {
-          globalThis.SetTextInfo(targetItem.content);
+          const isMobile =
+            (window?.innerWidth || gridPortalBot.tags.pixelWidth) <
+            MOBILE_VIEWPORT_THRESHOLD;
+          if (isMobile) {
+            globalThis.SetTextInfo(targetItem.content);
+          }
         }
         if (globalThis.SetMediaURL) {
           globalThis.SetMediaURL(null);
