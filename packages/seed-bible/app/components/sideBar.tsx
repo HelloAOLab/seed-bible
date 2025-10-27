@@ -739,6 +739,8 @@ function SideBar() {
           chapter: chapter,
           index: length - 1,
         };
+
+        shout("OnHistoryUpdated");
       }
     });
 

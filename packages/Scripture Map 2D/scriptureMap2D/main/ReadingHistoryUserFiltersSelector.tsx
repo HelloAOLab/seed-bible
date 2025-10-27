@@ -36,8 +36,7 @@ export const ReadingHistoryUserFiltersSelector = () => {
                     onClick={() => {handleReadingHistoryUserSelectorClick(userId)}} 
                     selected={selected}
                 />
-            })
-            }
+            })}
         </div>
     )
 }

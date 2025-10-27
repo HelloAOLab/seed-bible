@@ -10,7 +10,7 @@ const colorsMap = new Map();
 
 randomUsersIds.forEach((userId) => {
   const userHistory = tempHistory[userId] ??= {};
-  const randomBooksAmount = GetRandomArbitrary(5, 50);
+  const randomBooksAmount = GetRandomArbitrary(10, 60);
   const randomBooksIndexes = Array.from({ length: allBooksNames.length }, (_, i) => i)
     .sort(() => Math.random() - 0.5)
     .slice(0, randomBooksAmount);
