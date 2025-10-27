@@ -358,16 +358,15 @@ export async function saveReadingHistory(recordName: string, userId: string, boo
     const recencyThreshold = currentTimeSeconds - recencyThresholdSeconds;
     const array = doc.getArray('events');
     const event = findMostRecentReadingEvent(array, userId, bookId, chapter, recencyThreshold);
-    const now = Math.floor(Date.now() / 1000);
     if (event) {
-        event.set('end', now);
+        event.set('end', currentTimeSeconds);
     } else {
         const newEvent = doc.createMap();
         newEvent.set('userId', userId);
         newEvent.set('bookId', bookId);
         newEvent.set('chapter', chapter);
-        newEvent.set('start', now);
-        newEvent.set('end', now);
+        newEvent.set('start', currentTimeSeconds);
+        newEvent.set('end', currentTimeSeconds);
         array.push(newEvent);
     }
 }
@@ -662,11 +661,13 @@ function updateSummaryTotals(summary: ReadingHistorySummary) {
 function findMostRecentReadingEvent(events: SharedArray<SharedMap<any>>, userId: string, bookId: string, chapter: number, oldestTime: number): ReadingEvent | null {
     for(let i = events.length - 1; i >= 0; i--) {
         const event: SharedMap<any> = events.type.get(i);
+        if (event.get('end') < oldestTime) {
+            break;
+        }
+
         if (event.get('userId') === userId && event.get('bookId') === bookId && event.get('chapter') === chapter) {
             console.log(`Found recent reading event: ${event.get('bookId')} ${event.get('chapter')} ${new Date(event.get('start') * 1000).toISOString()} - ${new Date(event.get('end') * 1000).toISOString()}`);
             return event;
-        } else if (event.get('end') < oldestTime) {
-            break;
         }
     }
     return null;
