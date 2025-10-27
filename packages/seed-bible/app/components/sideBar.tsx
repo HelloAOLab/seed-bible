@@ -31,6 +31,8 @@ import { ThePageWithEditor } from "app.components.thePage";
 const Reciver = getBot("system", "app.reciver");
 const { useState, useRef, useEffect, useMemo } = os.appHooks;
 
+const LOCAL_ENV = !configBot.tags.pattern;
+
 const CircleCounter = ({ data, book, chapter }) => {
   const [isModalOpen, setIsModalOpen] = useState(false);
 
@@ -993,10 +995,10 @@ function SideBar() {
         title: showSearch ? "Hide Search" : "Show Search",
         onClick: toggleSearchVisibility,
       },
-      {
+      LOCAL_ENV && {
         disabled: false,
         icon: <MenuIcon name={"upload_file"} />,
-        title: "Upload File",
+        title: "Upload Files",
         onClick: () => thisBot.uploadFile(),
       },
       // {
