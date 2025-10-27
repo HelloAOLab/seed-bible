@@ -245,7 +245,7 @@ const HandleEvents = async ({ dc, data }) => {
                         HighlightWords({
                             words: [verse],
                             color: "#000", // text color
-                            backgroundColor: "#ffeb3b", // highlight color
+                            backgroundColor: globalThis.HIGHLIGHT_BG_COLOR || "#ffeb3b", // highlight color
                             createAttributes: (book, chapter, verse) => {
                                 return {
                                     style: {
@@ -271,7 +271,7 @@ const HandleEvents = async ({ dc, data }) => {
                         HighlightWords({
                             words: [highlightWord],
                             color: "#000", // text color
-                            backgroundColor: "#ffeb3b", // highlight color
+                            backgroundColor: globalThis.HIGHLIGHT_BG_COLOR || "#ffeb3b", // highlight color
                             createAttributes: (book, chapter, verse) => {
                                 return {
                                     style: {
@@ -407,7 +407,7 @@ const HandleEvents = async ({ dc, data }) => {
                 HighlightWords({
                     words: locationsArr,
                     color: "#000", // text color
-                    backgroundColor: "#ffeb3b", // highlight color
+                    backgroundColor: globalThis.HIGHLIGHT_BG_COLOR || "#ffeb3b", // highlight color
                     createAttributes: (book, chapter, verse) => {
                         return {
                             onMouseEnter: async (e) => {

@@ -205,6 +205,10 @@ const ContentVisualizationType = {
 const MIN_SCALE_FACTOR = 0.25;
 const MAX_SCALE_FACTOR = 1.5;
 
+
+const MAX_CHAPTER_HEAT_COUNT = 5;
+const CHAPTER_BASE_BACKGROUND_COLOR = "#E3E3E3";
+
 export const ScriptureMap2DProvider = ({
         children,
         parentContext,
@@ -212,18 +216,19 @@ export const ScriptureMap2DProvider = ({
         ProjectChapterState
     }) => {
 
+    const { arrangementIndex, initialScaleFactor = 1, initialIsReadingHistoryEnabled = false } = parentContext;
+
     const hooksBot = useMemo(() => {return getBot("system", "app.hooks")}, []);
+    const arrangement = useMemo(() => {return BibleVizUtils.Data.vars.fixedArrangementsInfo[arrangementIndex]}, [arrangementIndex]);
 
     const [readingHistory, setReadingHistory] = useState({...hooksBot.vars.tempReadingHistory});
-    
     const [readingHistoryUsersFilters, setReadingHistoryUsersFilters] = useState(new Map(
         Object.keys(readingHistory).map((userId) => {
             return [userId, userId === configBot.id ? true : false]
         })
     ))
-
     const [readingHistoryRange, setReadingHistoryRange] = useState(null);
-
+    
     const tryUpdateReadingHistoryUsersFilters = useCallback(() => {
         const newUsersIds = [];
         Object.keys(readingHistory).forEach((userId) => {
@@ -241,9 +246,7 @@ export const ScriptureMap2DProvider = ({
             setReadingHistoryUsersFilters(copy);
         }
     }, [readingHistoryUsersFilters, readingHistory])
-
     const handleReadingHistoryUserSelectorClick = useCallback((key) => {
-        
         const copy = new Map(readingHistoryUsersFilters)
         if(key === "all")
         {
@@ -276,14 +279,6 @@ export const ScriptureMap2DProvider = ({
         tryUpdateReadingHistoryUsersFilters();
     }, [readingHistory]);
 
-    useEffect(() => {
-        const id = setInterval(() => {
-            setReadingHistory({...hooksBot.vars.tempReadingHistory});
-        }, 1000);
-
-        return () => {clearInterval(id)}
-    }, [])
-
     const projectStateStyle = useMemo(() => {
         return {
             [ProjectChapterState.None]: {backgroundColor: "rgb(227, 227, 227)", borderColor: "rgb(227, 227, 227)", borderStyle: "solid"},
@@ -294,12 +289,9 @@ export const ScriptureMap2DProvider = ({
         }
     }, [ProjectChapterState])
 
-    const { arrangementIndex, initialScaleFactor = 1, initialIsReadingHistoryEnabled = false } = parentContext;
-
     const [scaleFactor, setScaleFactor] = useState(initialScaleFactor)
     const [showLabels, setShowLabels] = useState(true);
-    // const [showingAllChapters, setShowingAllChapters] = useState(true);
-    const arrangement = useMemo(() => {return BibleVizUtils.Data.vars.fixedArrangementsInfo[arrangementIndex]}, [arrangementIndex]);
+    const [showingAllChapters, setShowingAllChapters] = useState(true);
     const [isUserPresenceEnabled, setIsUserPresenceEnabled] = useState(false);
     const [isReadingHistoryEnabled, setIsReadingHistoryEnabled] = useState(initialIsReadingHistoryEnabled)
     const [usersStatus, setUsersStatus] = useState(new Map(Array.from(content).map(([key]) => {return [key, true]})))
@@ -331,17 +323,6 @@ export const ScriptureMap2DProvider = ({
         setIsUserPresenceEnabled(prev => !prev);
     }, [isUserPresenceEnabled])
 
-    const historyUpdateListeners = useRef(new Set());
-    const unsubscribeFromHistoryUpdate = useCallback((callback) => {
-        historyUpdateListeners.current.delete(callback);
-    }, [])
-    const subscribeToHistoryUpdate = useCallback((callback) => {
-        historyUpdateListeners.current.add(callback);
-    }, [])
-    globalThis.scriptureMap2DHistoryUpdate = useCallback(() => {
-        historyUpdateListeners.current.forEach((currFunction) => {currFunction?.()});
-    }, [])
-
     const handleZoomIn = useCallback(() => {
         if(scaleFactor < MAX_SCALE_FACTOR)
         {
@@ -366,11 +347,10 @@ export const ScriptureMap2DProvider = ({
     //     setShowingAllChapters(prev => !prev);
     // }, [])
 
-    const {maxChapterHeatCount, chapterBaseBackgroundColor} = useMemo(() => {
-        return {chapterBaseBackgroundColor: "#E3E3E3", maxChapterHeatCount: 5}
-    }, []);
-
     useEffect(() => {
+        globalThis.scriptureMap2DHistoryUpdate = () => {
+            setReadingHistory({...hooksBot.vars.tempReadingHistory})
+        }
         return () => {globalThis.scriptureMap2DHistoryUpdate = null}
     }, [])
 
@@ -415,6 +395,17 @@ export const ScriptureMap2DProvider = ({
         setProjectFilters(copy);
     }, [projectFilters])
 
+    const filteredReadingHistory = useMemo(() => {
+        const filtered = {};
+        readingHistoryUsersFilters.forEach((selected, userId) => {
+            if(selected && readingHistory[userId])
+            {
+                filtered[userId] = readingHistory[userId];
+            }
+        })
+        return filtered;
+    }, [readingHistory, readingHistoryUsersFilters]);
+
     return (
         <ScriptureMap2DContext.Provider value={{ 
             scaleFactor,
@@ -427,15 +418,13 @@ export const ScriptureMap2DProvider = ({
             arrangementIndex, 
             arrangement,
             // handleShowAllChaptersToggle, 
-            // showingAllChapters,
-            unsubscribeFromHistoryUpdate,
-            subscribeToHistoryUpdate,
+            showingAllChapters,
             handleContentHeatmapToggle,
             isUserPresenceEnabled,
             isReadingHistoryEnabled,
             content,
             usersStatus,
-            maxChapterHeatCount,
+            MAX_CHAPTER_HEAT_COUNT,
             handleUserButtonClick,
             modes,
             handleModeButtonClick,
@@ -463,7 +452,8 @@ export const ScriptureMap2DProvider = ({
             hooksBot,
             readingHistoryRange,
             handleReadingHistoryRangeSelectorClick,
-            chapterBaseBackgroundColor,
+            CHAPTER_BASE_BACKGROUND_COLOR,
+            filteredReadingHistory,
             ...parentContext
         }} >
             {children}

@@ -1,7 +1,7 @@
 
 
 const files = await os.showUploadFiles()
-if (files.lenght === 0)
+if (files.length === 0)
     return
 
 const file = files[0]

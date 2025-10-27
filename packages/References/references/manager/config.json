@@ -1,0 +1,9 @@
+{
+    "author": "Sujan Barman",
+    "app": "",
+    "toolbarConfig": {
+        "icon": "quick_reference_all",
+        "label": "References",
+        "hasToggle": "true"
+    }
+}
