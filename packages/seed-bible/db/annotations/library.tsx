@@ -319,9 +319,9 @@ export function getReadingHistoryDocument(recordName: string, year: number, mark
         return bot.vars.readingHistoryDocs[key];
     }
 
-    const marker = `${marker}:${name}/${year}`;
+    const markers = `${marker}:${name}/${year}`;
     const docPromise = bot.vars.readingHistoryDocs[key] = os.getSharedDocument(recordName, name, `${year}`, {
-        markers: [marker]
+        markers
     });
     return docPromise;
 }
