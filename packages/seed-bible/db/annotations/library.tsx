@@ -306,19 +306,21 @@ interface ReadingEvent {
  * Gets the reading history document for the given record name and year.
  * @param recordName The name of the record that the reading history is stored in.
  * @param year The year to get the reading history for.
+ * @param marker The marker to use for the reading history document. Use `publicRead` to allow anyone to read, but only users who have access to the record can write. Use `publicWrite` to allow anyone to write. Defaults to `publicRead`.
+ * @param name The name of the shared document. Defaults to `reading_history`.
  * @returns A promise that resolves to the reading history document.
  */
-export function getReadingHistoryDocument(recordName: string, year: number): Promise<SharedDocument> {
+export function getReadingHistoryDocument(recordName: string, year: number, marker: string = 'publicRead', name: string = 'reading_history'): Promise<SharedDocument> {
     if (!bot.vars.readingHistoryDocs) {
         bot.vars.readingHistoryDocs = {};
     }
-    const key = `${recordName}-${year}`;
+    const key = `${recordName}-${name}-${year}`;
     if (bot.vars.readingHistoryDocs[key]) {
         return bot.vars.readingHistoryDocs[key];
     }
 
-    const marker = `publicRead:reading_history/${year}`;
-    const docPromise = bot.vars.readingHistoryDocs[key] = os.getSharedDocument(recordName, 'reading_history', `${year}`, {
+    const marker = `${marker}:${name}/${year}`;
+    const docPromise = bot.vars.readingHistoryDocs[key] = os.getSharedDocument(recordName, name, `${year}`, {
         markers: [marker]
     });
     return docPromise;
@@ -348,13 +350,15 @@ export async function saveUserReadingHistory(bookId: string, chapter: number, re
  * @param bookId The ID of the book that the event is for.
  * @param chapter The chapter number that was read.
  * @param recencyThresholdSeconds The time in seconds to consider an event recent. Defaults to 30 minutes.
+ * @param marker The marker to use for the reading history document. Use `publicRead` to allow anyone to read, but only users who have access to the record can write. Use `publicWrite` to allow anyone to write. Defaults to `publicRead`.
+ * @param name The name of the shared document. Defaults to `reading_history`.
  */
-export async function saveReadingHistory(recordName: string, userId: string, bookId: string, chapter: number, recencyThresholdSeconds: number = 30 * 60): Promise<void> {
+export async function saveReadingHistory(recordName: string, userId: string, bookId: string, chapter: number, recencyThresholdSeconds: number = 30 * 60, marker?: string, name?: string): Promise<void> {
     console.log(`Saving reading history for user ${userId}, book ${bookId}, chapter ${chapter}`);
     const currentTimeSeconds = Math.floor(Date.now() / 1000);
     const currentYear = new Date().getUTCFullYear();
 
-    const doc = await getReadingHistoryDocument(recordName, currentYear);
+    const doc = await getReadingHistoryDocument(recordName, currentYear, marker, name);
     const recencyThreshold = currentTimeSeconds - recencyThresholdSeconds;
     const array = doc.getArray('events');
     const event = findMostRecentReadingEvent(array, userId, bookId, chapter, recencyThreshold);
@@ -581,8 +585,11 @@ export async function getReadingHistorySummary(recordName: string, startTime: nu
  * @param year The year to get the reading history summary for.
  * @param startTime The start time in unix seconds to filter the reading history events.
  * @param endTime The end time in unix seconds to filter the reading history events.
+ * @param marker The marker to use for the reading history document. Use `publicRead` to allow anyone to read, but only users who have access to the record can write. Use `publicWrite` to allow anyone to write. Defaults to `publicRead`.
+ * @param name The name of the shared document. Defaults to `reading_history`.
+ * @returns A promise that resolves to the reading history summary.
  */
-async function getYearlyReadingHistorySummary(recordName: string, year: number, startTime: number, endTime: number): Promise<any> {
+async function getYearlyReadingHistorySummary(recordName: string, year: number, startTime: number, endTime: number, marker?: string, name?: string): Promise<any> {
     let summary: ReadingHistorySummary = {
         uniqueBooksRead: 0,
         uniqueChaptersRead: 0,
@@ -590,7 +597,7 @@ async function getYearlyReadingHistorySummary(recordName: string, year: number, 
         users: {}
     };
 
-    const doc = await getReadingHistoryDocument(recordName, year);
+    const doc = await getReadingHistoryDocument(recordName, year, marker, name);
     const eventsArray = doc.getArray('events').type;
     
     for(let i = 0; i < eventsArray.length; i++) {
