@@ -12,7 +12,8 @@
       "toolbarConfig": {
         "hasToggle": "true",
         "icon": "playlist_play",
-        "label": "Playlist"
+        "label": "Playlist",
+        "active": false
       }
     },
     "createdAt": "2025-09-25T16:39:37.463Z",

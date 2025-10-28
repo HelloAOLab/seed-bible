@@ -112,8 +112,8 @@ async function SetUpApplication(applicationFunction, bot, toolbarConfig) {
         return {
             icon,
             label,
-            hasToggle: true,
-            active: true,
+            hasToggle: toolbarConfig.hasToggle,
+            active: toolbarConfig.active || false,
             onHold,
             pkgName:name,
             onClick,

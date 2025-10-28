@@ -17,7 +17,8 @@
       "icon": "splitscreen_right",
       "label": "Study Notes",
       "hasToggle": "true",
-      "to": "page"
+      "to": "page",
+      "active": true
     }
   }
 }

@@ -167,8 +167,8 @@ await(async function mainInstaller(that) {
       return {
         icon,
         label,
-        hasToggle: true,
-        active: true,
+        hasToggle: toolbarConfig.hasToggle,
+        active: toolbarConfig.active,
         onHold,
         pkgName: name,
         onClick,

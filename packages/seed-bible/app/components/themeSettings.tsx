@@ -13,7 +13,7 @@ const COLOR_FIELDS = [
   { label: "Primary button background", field: "primaryButton" },
   { label: "Primary button text", field: "primaryButtonColor" },
   { label: "Secondary button background", field: "secondaryButton" },
-  { label: "Secondary button text", field: "secondaryButton" },
+  { label: 'Secondary button text', field: 'secondaryButtonColor' },
   { label: "Button border", field: "buttonBorder" },
   { label: "Tab Selection", field: "tabSelection" },
   { label: "Space selection", field: "spaceSelection" },
@@ -166,6 +166,8 @@ const READY_THEMES = [
     },
   },
 ];
+
+const themeBot = getBot(byTag("system", "app.themeManager"));
 
 const ThemeSettings = () => {
   const { updateSpace, activeSpace, currentSpace, tabsIcons, setTabsIcons } =
@@ -409,6 +411,7 @@ const ThemeSettings = () => {
           setChagesSaved(true);
           // capture the latest committed theme as "CurrentColors"
           globalThis.CurrentColors = themeColors?.[activeSpace] || colors;
+          themeBot.tags.newTheme = globalThis.CurrentColors;
         }}
         className="themeButton"
       >

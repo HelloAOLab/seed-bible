@@ -8,7 +8,8 @@
       "icon": "book",
       "iconUrl": "https://res.cloudinary.com/dacw0qnpr/image/upload/v1759916122/Seed_Bible_-_All_Logos_2025-25_vvawwg.png",
       "label": "Books",
-      "run": "togglePanel"
+      "run": "togglePanel",
+      "active": true
     }
   },
   "createdAt": "2025-08-28T03:00:19.215Z",

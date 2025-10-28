@@ -1519,15 +1519,7 @@ function Section({
 
   useEffect(() => {
     const handler = () => {
-      setActiveKey(globalThis.HighlightedSectionKey || "");
-    };
-    window.addEventListener("highlightedSectionKeyChanged", handler);
-    return () =>
-      window.removeEventListener("highlightedSectionKeyChanged", handler);
-  }, []);
-
-  useEffect(() => {
-    const handler = () => {
+      console.log("highlightedSectionKeyChanged: ", globalThis.HighlightedSectionKey);
       setActiveKey(globalThis.HighlightedSectionKey || "");
     };
     window.addEventListener("highlightedSectionKeyChanged", handler);
@@ -1864,9 +1856,7 @@ function Section({
                   }}
                   className={`sectionText ${
                     isVerseActive ? "highlighted" : ""
-                  } ${
-                    highlighted?.[verse.verseNumber] ? "verse-highlighted" : ""
-                  }`}
+                  } `}
                 >
                   <span
                     className={`sectionTextNumber ${
