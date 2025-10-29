@@ -637,13 +637,32 @@ export const ThemeIcon = (props) => (
     />
   </svg>
 );
-const MenuIcon = ({ name, size = 24 }) => {
-  return (
-    <span className="material-symbols-outlined" style={{ fontSize: size }}>
+const MenuIcon = ({ name, size = 24, invert = false }) => {
+  // Check if `name` looks like an image URL
+  const isImage =
+    typeof name === "string" && name.match(/\.(png|jpg|jpeg|svg|gif|webp)$/i);
+
+  const imageStyle = {
+    width: isImage ? size : undefined,
+    height: isImage ? size : undefined,
+    filter: invert ? "invert(1)" : undefined,
+    objectFit: "contain",
+  };
+
+  const iconStyle = {
+    fontSize: isImage ? 16 : size,
+    filter: invert ? "invert(1)" : undefined,
+  };
+
+  return isImage ? (
+    <img src={name} alt="icon" style={imageStyle} />
+  ) : (
+    <span className="material-symbols-outlined" style={iconStyle}>
       {name}
     </span>
   );
 };
+
 const T = (props) => (
   <svg
     xmlns="http://www.w3.org/2000/svg"

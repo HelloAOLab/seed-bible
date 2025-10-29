@@ -28,6 +28,13 @@ const COLOR_HEX = [
   "#A7D63C", // yellow-green
 ];
 
+const icons = {
+  "Color Wheel":
+    "https://auth-aux-aobot-prod-filesbucket-141297942820.s3.amazonaws.com/annotations/94f3938a054949bf116211db987d0e4fc80ff2fc75f72ace2f4fb9fdd891a353.svg",
+  Highlighter:
+    "https://auth-aux-aobot-prod-filesbucket-141297942820.s3.amazonaws.com/annotations/16a6bc66099d9153e9ae5685c6e0d5517509811db6107405c0273af32b253801.svg",
+};
+
 function ThePage({
   tab: T,
   setPanalApp,
@@ -67,10 +74,10 @@ function ThePage({
   // Add state for word highlights
   const [wordHighlights, setWordHighlights] = useState({});
   const [wordHighlightsTC, setWordHighlightsTC] = useState("black");
-  const [wordHighlightsBC, setWordHighlightsBC] = useState(
-    globalThis.HIGHLIGHT_BG_COLOR || "#ffeb3b"
+  const [wordHighlightsBC, setWordHighlightsBC] = useState({});
+  const [customColor, setCustomColor] = useState(
+    globalThis.HIGHLIGHT_BG_COLOR || "#FFA500"
   );
-  const [customColor, setCustomColor] = useState(null);
 
   const onKeyUp = useCallback((e) => {
     whisper(thisBot, "onKeyUp", {
@@ -873,10 +880,18 @@ function ThePage({
   useEffect(() => {
     if (showCommands) {
       const values = Object.values(inHold);
-      if (values[values.length - 1]?.verses) {
-        setCommandHighlight(values[values.length - 1].verses);
+      let allVerses = [];
+      values.forEach((verse) => {
+        allVerses = [...allVerses, ...verse.verses];
+      });
+      if (allVerses.length) {
+        // setCommandHighlight(allVerses);
+        // setInHold(
+        //   allVerses.reduce((prev, curr) => ({ ...prev, [curr]: true }), {})
+        // );
       }
     } else {
+      setInHold({});
       setCommandHighlight([]);
     }
   }, [showCommands]);
@@ -1006,6 +1021,7 @@ function ThePage({
           <ColorPickerBar
             data={data}
             contextData={contextData}
+            setInHold={setInHold}
             verseHold={inHold}
             wordHighlightsBC={wordHighlightsBC}
             setWordHighlightsBC={setWordHighlightsBC}
@@ -1078,6 +1094,7 @@ function ThePage({
                 <PageToolbar path="showInStarterToolbar" />
               </div>
               <ColorPickerBar
+                setInHold={setInHold}
                 contextData={contextData}
                 verseHold={inHold}
                 data={data}
@@ -1118,7 +1135,7 @@ function formatVerseRanges(obj) {
   }
 
   // Step 3: Join ranges with commas
-  return ranges.join(",");
+  return ranges.join(", ");
 }
 
 const ColorPickerBar = ({
@@ -1129,14 +1146,19 @@ const ColorPickerBar = ({
   verseHold,
   data,
   contextData,
+  setInHold,
 }) => {
   if (!Object.keys(verseHold).length) return null;
+
+  const isAnyVerseHighlighted = Object.keys(verseHold).some(
+    (ele) => !!wordHighlightsBC[ele]
+  );
 
   return (
     <div
       style={{
         width: "max-content",
-        padding: "8px",
+        padding: "8px 16px",
         display: "flex",
         left: "50%",
         bottom: "86px",
@@ -1157,77 +1179,124 @@ const ColorPickerBar = ({
         {data?.bookId} {data?.chapter}:{formatVerseRanges(verseHold)}
       </p>
       <Pipe />
-      {COLOR_HEX.map((ele: string) => (
+      <div
+        style={{
+          display: "flex",
+          alignItems: "center",
+          backgroundColor: "#F0F1F1",
+          borderRadius: "4px",
+          padding: "8px",
+          gap: "0.5rem",
+        }}>
+        {COLOR_HEX.map((ele: string) => (
+          <div
+            key={ele}
+            onClick={() => {
+              setWordHighlightsBC((prev) => {
+                {
+                  const old = { ...prev };
+                  Object.keys(verseHold).forEach((verse) => {
+                    if (!old[verse]) {
+                      globalThis.ToggleVerseHighlight(verse);
+                    }
+                    old[verse] = ele;
+                  });
+                  return old;
+                }
+              });
+              setInHold({});
+            }}
+            style={{
+              backgroundColor: ele,
+              borderRadius: "50%",
+              width: "24px",
+              height: "24px",
+              cursor: "pointer",
+              display: "grid",
+              placeItems: "center",
+            }}
+          />
+        ))}
         <div
-          key={ele}
-          onClick={() => setWordHighlightsBC(ele)}
+          onClick={() => {
+            setWordHighlightsBC((prev) => {
+              {
+                const old = { ...prev };
+                Object.keys(verseHold).forEach((verse) => {
+                  if (!old[verse]) {
+                    globalThis.ToggleVerseHighlight(verse);
+                  }
+                  old[verse] = customColor;
+                });
+                return old;
+              }
+            });
+            setInHold({});
+          }}
           style={{
-            backgroundColor: ele,
+            backgroundColor: customColor,
             borderRadius: "50%",
             width: "24px",
             height: "24px",
             cursor: "pointer",
             display: "grid",
             placeItems: "center",
-          }}>
-          {ele === wordHighlightsBC && (
-            <span
-              style={{ fontSize: "14px" }}
-              className="material-symbols-outlined">
-              brush
-            </span>
-          )}
-        </div>
-      ))}
-      <div
-        style={{
-          width: "24px",
-          height: "24px",
-          backgroundColor: customColor,
-          border: "2px solid #D36433",
-          cursor: "pointer",
-          borderRadius: "50%",
-          position: "relative",
-          display: "grid",
-          placeItems: "center",
-        }}
-        onClick={() => setWordHighlightsBC(customColor)}>
-        <input
-          type="color"
-          value={customColor}
-          onChange={(e) => {
-            setCustomColor(e.target.value);
-            setWordHighlightsBC(e.target.value);
-          }}
-          style={{
-            position: "absolute",
-            top: "0",
-            left: "0",
-            width: "100%",
-            height: "100%",
-            opacity: "0",
-            cursor: "pointer",
           }}
         />
-        <span
-          style={{ fontSize: "14px" }}
-          className="material-symbols-outlined color-inherit">
-          {customColor === wordHighlightsBC ? "brush" : "add"}
-        </span>
+        <div
+          style={{
+            width: "24px",
+            height: "24px",
+            cursor: "pointer",
+            borderRadius: "50%",
+            position: "relative",
+            display: "grid",
+            placeItems: "center",
+            backgroundImage: `url(${icons["Color Wheel"]})`,
+          }}>
+          <input
+            type="color"
+            value={customColor}
+            onChange={(e) => {
+              setCustomColor(e.target.value);
+            }}
+            style={{
+              position: "absolute",
+              top: "0",
+              left: "0",
+              width: "100%",
+              height: "100%",
+              opacity: "0",
+              cursor: "pointer",
+            }}
+          />
+        </div>
       </div>
       <Pipe />
       <div style={{ display: "flex", gap: "0.5rem", alignItems: "center" }}>
-        {(globalThis.VerseActionItems || []).map((ele) =>
-          ele.icon ? (
-            <div
-              style={{ cursor: "pointer" }}
-              onClick={() => {
-                ele.onClick(Object.values(verseHold));
-              }}>
-              {ele.icon}
-            </div>
-          ) : null
-        )}
+        {(globalThis.VerseActionItems || [])
+          .filter((ele) =>
+            isAnyVerseHighlighted ? true : ele.title !== "Unhighlight verse"
+          )
+          .map((ele) =>
+            ele.icon ? (
+              <div
+                style={{
+                  cursor: "pointer",
+                  backgroundColor: "#F0F1F1",
+                  width: "42px",
+                  height: "42px",
+                  borderRadius: "50%",
+                  display: "grid",
+                  placeItems: "center",
+                }}
+                onClick={() => {
+                  ele.onClick(Object.values(verseHold));
+                }}>
+                {ele.icon}
+              </div>
+            ) : null
+          )}
       </div>
     </div>
   );
@@ -1548,7 +1617,7 @@ function Section({
         chapter,
         v.verseNumber,
         wordHighlightsTC,
-        wordHighlightsBC
+        wordHighlightsBC[v.verseNumber]
       );
     });
     return result;
@@ -1596,7 +1665,7 @@ function Section({
                     key={`${i}-word-${wordIndex}`}
                     style={{
                       color: wordHighlightsTC,
-                      backgroundColor: wordHighlightsBC,
+                      backgroundColor: wordHighlightsBC[verse.verseNumber],
                       cursor: wordPart.highlightConfig.onClick
                         ? "pointer"
                         : "default",
@@ -1666,7 +1735,7 @@ function Section({
                   padding: "1px 2px",
                   borderRadius: "2px",
                   color: wordHighlightsTC,
-                  backgroundColor: wordHighlightsBC,
+                  backgroundColor: wordHighlightsBC[verse.verseNumber],
                 }}
                 {...attributes}>
                 {part.text}
@@ -1825,7 +1894,7 @@ function Section({
                         highlighted?.[verse.verseNumber].book === book &&
                         highlighted?.[verse.verseNumber].chapter === chapter) ||
                       commandHighlight.includes(verse.verseNumber)
-                        ? wordHighlightsBC
+                        ? wordHighlightsBC[verse.verseNumber]
                         : "transparent",
                     color:
                       (highlighted?.[verse.verseNumber] &&
