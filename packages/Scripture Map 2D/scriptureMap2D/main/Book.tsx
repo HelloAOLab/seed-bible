@@ -51,10 +51,12 @@ export const Book = ({
     const { tick } = useTimeContext();
     
     const [showChapters, setShowChapters] = useState(showingAllChapters);
-    const {chaptersCount, shortName} = useMemo(() => { 
+    const {chaptersCount, shortName, staticChaptersArray} = useMemo(() => { 
+        const chaptersCount = BibleVizUtils.Data.tags.booksStaticInfo[bookInfo.commonName].numberOfChapters
         return {
-            chaptersCount: BibleVizUtils.Data.tags.booksStaticInfo[bookInfo.commonName].numberOfChapters,
-            shortName: BibleVizUtils.Data.tags.booksStaticInfo[bookInfo.commonName].abbreviation
+            chaptersCount,
+            shortName: BibleVizUtils.Data.tags.booksStaticInfo[bookInfo.commonName].abbreviation,
+            staticChaptersArray: [...Array(chaptersCount)]
         } 
     }, [])
 
@@ -67,7 +69,9 @@ export const Book = ({
 
     }, [scaleFactor, chapterGap, chapterPadding, chapterHeight])
     
-    const bookCoverHeight = useMemo(() => { return `${ getBookHeight() }px` }, [scaleFactor, getBookHeight, chapterGap, chapterPadding, chapterHeight]);
+    const bookCoverHeight = useMemo(() => { 
+        return `${ getBookHeight() }px` 
+    }, [scaleFactor, getBookHeight, chapterGap, chapterPadding, chapterHeight]);
 
     const checked = useMemo(() => {
         return selection?.[testament.name]?.[sectionName]?.[bookInfo.commonName]?.every((chapter) => {return chapter});
@@ -176,17 +180,27 @@ export const Book = ({
     }, [userPresence, isUserPresenceEnabled, modes])
 
     const chapterUserEntriesMap = useMemo(() => {
-        return new Map([...Array(chaptersCount)].map((_, index) => {
+        return new Map(staticChaptersArray.map((_, index) => {
             const chapter = index + 1;
+            let chapterReadingTime = 0;
             const userEntries = Object.keys(filteredReadingHistory).map((userId) => {
                 const entries = filteredReadingHistory[userId]?.[shortName]?.[chapter];
                 if(entries && (!readingHistoryRange || entries.some((entry) => {return BibleVizUtils.Functions.IsValueBetween({value: entry.start, min: readingHistoryRange.start, max: readingHistoryRange.end}) || BibleVizUtils.Functions.IsValueBetween({value: entry.end, min: readingHistoryRange.start, max: readingHistoryRange.end})})))
                 {
-                    return {userId, entries}
+                    const userReadingTime = entries.reduce((acc, entry) => {
+                        const clampedReading = {
+                            start: Math.min(Math.max(entry.start, readingHistoryRange?.start ?? 0), readingHistoryRange?.end ?? Date.now()),
+                            end: Math.min(Math.max(entry.end ?? Date.now(), readingHistoryRange?.start ?? 0), readingHistoryRange?.end ?? Date.now())
+                        }
+                        const entryReadingTime = (clampedReading.end - clampedReading.start);
+                        return acc + entryReadingTime;
+                    }, 0)
+                    chapterReadingTime += userReadingTime;
+                    return {userId, entries, readingTime: userReadingTime}
                 }
                 return null
             }).filter(Boolean)
-            return [chapter, userEntries]
+            return [chapter, {userEntries, readingTime: chapterReadingTime}]
         }))
 
     }, [filteredReadingHistory, readingHistoryRange])
@@ -195,29 +209,54 @@ export const Book = ({
 
         if(!isReadingHistoryEnabled) return null;
 
-        return new Map([...Array(chaptersCount)].map((_, index) => {
+        return new Map(staticChaptersArray.map((_, index) => {
             const chapter = index + 1;
-            const userEntries = chapterUserEntriesMap.get(chapter)
+            const {userEntries, readingTime: chapterReadingTime} = chapterUserEntriesMap.get(chapter);
             let colors;
 
-            if(userEntries.length === 0) colors = [CHAPTER_BASE_BACKGROUND_COLOR]
+            if(userEntries.length === 0) colors = [{color: CHAPTER_BASE_BACKGROUND_COLOR, value: 1}]
             else
             {
-                colors = userEntries.map(({userId, entries}) => {    
-                    return BibleVizUtils.Functions.GetHistoryColor({
+                colors = userEntries.map(({userId, entries, readingTime: userReadingTime}) => {
+                    const color = BibleVizUtils.Functions.GetHistoryColor({
                         baseColor: CHAPTER_BASE_BACKGROUND_COLOR, 
                         userColor: userId === configBot.id ? BibleVizUtils.Data.tags.myUserColor : (BibleVizUtils.Data.vars.userPresenceData?.[userId]?.user?.color ?? thisBot.vars.FakeReadingHistoryUsersColorMap?.get(userId) ?? "pink"), 
                         reading: entries,
                         range: readingHistoryRange
                     })
+                    const value = userReadingTime / chapterReadingTime;
+                    return {color, value}
                 })
             }
     
             return [chapter, colors];
         }))
-
-
     }, [readingHistoryRange, chapterUserEntriesMap, tick, isReadingHistoryEnabled])
+
+    const chapters = useMemo(() => {
+        return staticChaptersArray.map((_, index) => {
+            const chapter = index + 1
+            let historyBackground = null;
+            let historyColor = null;
+            
+            if(isReadingHistoryEnabled)
+            {
+                // historyBackground = BibleVizUtils.Functions.GetHistoryColorConicGradient(historyColorsMap.get(chapter));
+                // historyColor = BibleVizUtils.Functions.GetTextColorBasedOnBackground({backgroundColor: historyColorsMap.get(chapter)});
+                historyBackground = BibleVizUtils.Functions.GetHistoryColorLinearGradient(historyColorsMap.get(chapter));
+                historyColor = BibleVizUtils.Functions.GetTextColorBasedOnBackground({backgroundColor: historyColorsMap.get(chapter)});
+            }
+
+            return <Chapter
+                key={`${shortName}-${chapter}`}
+                sectionName={sectionName} 
+                bookName={bookInfo.commonName} 
+                index={index}  
+                historyBackground={historyBackground}
+                historyColor={historyColor}
+            />
+        })
+    }, [isReadingHistoryEnabled, historyColorsMap]);
 
     return (
         <div 
@@ -250,26 +289,7 @@ export const Book = ({
                     gridTemplateRows: gridRows
                 }}
             >
-                {showChapters ? [...Array(chaptersCount)].map((_, index) => {
-                    const chapter = index + 1
-                    let historyBackground = null;
-                    let historyColor = null;
-                    
-                    if(isReadingHistoryEnabled)
-                    {
-                        historyBackground = BibleVizUtils.Functions.GetHistoryColorConicGradient(historyColorsMap.get(chapter));
-                        historyColor = BibleVizUtils.Functions.GetTextColorBasedOnBackground({backgroundColor: historyColorsMap.get(chapter)});
-                    }
-
-                    return <Chapter 
-                        key={`${shortName}-${chapter}`} 
-                        sectionName={sectionName} 
-                        bookName={bookInfo.commonName} 
-                        index={index}  
-                        historyBackground={historyBackground}
-                        historyColor={historyColor}
-                    />
-                }) : (<>
+                {showChapters ? chapters : (<>
                     {isUserPresenceEnabled && modes.get("Reading") && usersInBook?.length > 0 && usersInBook.map((user, index) => {
                         return <PresentUserPresenceBookIcon index={index} user={user} length={usersInBook.length} />
                     })}

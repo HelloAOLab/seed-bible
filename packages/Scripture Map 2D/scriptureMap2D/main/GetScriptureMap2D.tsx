@@ -1,7 +1,7 @@
 import {ScriptureMap2D, ScriptureMap2DModes} from "scriptureMap2D.main.ScriptureMap2D"
 import { useBibleContext } from 'app.hooks.bibleVariables'
 
-const {useCallback} = os.appHooks;
+const {useCallback, useMemo} = os.appHooks;
 
 const App = () => {
     
@@ -22,6 +22,15 @@ const App = () => {
 
         navFunctions?.open?.(bookId, chapter)
     }, [navFunctions])
+
+    const {onChapterClickDependencies, onChapterClickAndHold, onBookNameClickAndHold, onBookNameClickAndHoldDependencies} = useMemo(() => {
+        return {
+            onChapterClickDependencies: [], 
+            onChapterClickAndHold: () => {}, 
+            onBookNameClickAndHold: () => {}, 
+            onBookNameClickAndHoldDependencies: []
+        }
+    }, [])
     
     return (
         <div style={{
@@ -38,17 +47,17 @@ const App = () => {
                 // selection,
                 // isInSelectionMode,
                 onChapterClick: handleChapterClick,
-                onChapterClickDependencies: [],
-                onChapterClickAndHold: () => {},
-                onBookNameClickAndHold: () => {},
-                onBookNameClickAndHoldDependencies: [],
+                onChapterClickDependencies,
+                onChapterClickAndHold,
+                onBookNameClickAndHold,
+                onBookNameClickAndHoldDependencies,
                 // project,
                 // selectedChaptersKeys,
                 // onSelectionModeCheckboxClick: handleSelectionModeCheckboxClick,
                 // onSelectionModeDoneButtonClick: handleSelectionModeDoneButtonClick,
                 // onStateSetterOptionClick: handleStateSetterOptionClick,
                 // onSelectionModeClearSelectionButtonClick: clearSelection,
-                showingAllChapters: false, // !menuState.areBooksClosed,
+                showingAllChapters: true, // !menuState.areBooksClosed,
                 showLabels: true, // !menuState.hideHeadings,
                 initialScaleFactor: 0.5,
                 initialIsReadingHistoryEnabled: true

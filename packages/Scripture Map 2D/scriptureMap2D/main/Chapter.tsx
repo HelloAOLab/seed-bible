@@ -1,7 +1,6 @@
 const { useState, useCallback, useEffect, useMemo } = os.appHooks;
 import { useScriptureMap2DContext } from "scriptureMap2D.main.ScriptureMap2DContext"
 import { Tooltip } from "scriptureMap2D.main.Tooltip"
-import { useTimeContext } from "scriptureMap2D.main.TimeContext";
 const { memo } = os.appCompat
 
 // import { PresentUserPresenceTooltipIcon } from "scriptureMap2D.main.PresentUserPresenceIcon"
@@ -181,6 +180,7 @@ import {useClickAndHold} from "scriptureMap2D.main.CustomHooks"
 // };
 
 export const Chapter = memo(({ index, bookName, sectionName, historyBackground, historyColor}) => {
+    
     const {
         isUserPresenceEnabled,
         isReadingHistoryEnabled,
@@ -204,8 +204,6 @@ export const Chapter = memo(({ index, bookName, sectionName, historyBackground, 
         isInSelectionMode,
         CHAPTER_BASE_BACKGROUND_COLOR: baseColor,
     } = useScriptureMap2DContext();
-
-    console.log(`[Debug] Chapter`);
 
     const { testament } = useTestamentContext();
     
