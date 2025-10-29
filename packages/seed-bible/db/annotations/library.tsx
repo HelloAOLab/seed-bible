@@ -37,7 +37,8 @@ export type AnnotationData =
   | CommentAnnotationData
   | LinkAnnotationData
   | FileAnnotationData
-  | PlaylistAnnotationData;
+  | PlaylistAnnotationData
+  | HighlightAnnotationData;
 
 // /**
 //  * Data for a scripture annotation.
@@ -127,6 +128,18 @@ export interface FileAnnotationData {
    * The URL of the file record.
    */
   url: string;
+}
+
+/**
+ * Data for a highlight annotation.
+ */
+export interface HighlightAnnotationData {
+  type: "highlight";
+
+  /**
+   * The color of the highlight.
+   */
+  color: string;
 }
 
 /**
