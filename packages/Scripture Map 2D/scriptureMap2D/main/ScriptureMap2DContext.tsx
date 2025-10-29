@@ -291,7 +291,7 @@ export const ScriptureMap2DProvider = ({
 
     const [scaleFactor, setScaleFactor] = useState(initialScaleFactor)
     const [showLabels, setShowLabels] = useState(true);
-    const [showingAllChapters, setShowingAllChapters] = useState(true);
+    // const [showingAllChapters, setShowingAllChapters] = useState(true);
     const [isUserPresenceEnabled, setIsUserPresenceEnabled] = useState(false);
     const [isReadingHistoryEnabled, setIsReadingHistoryEnabled] = useState(initialIsReadingHistoryEnabled)
     const [usersStatus, setUsersStatus] = useState(new Map(Array.from(content).map(([key]) => {return [key, true]})))
@@ -418,7 +418,7 @@ export const ScriptureMap2DProvider = ({
             arrangementIndex, 
             arrangement,
             // handleShowAllChaptersToggle, 
-            showingAllChapters,
+            // showingAllChapters,
             handleContentHeatmapToggle,
             isUserPresenceEnabled,
             isReadingHistoryEnabled,

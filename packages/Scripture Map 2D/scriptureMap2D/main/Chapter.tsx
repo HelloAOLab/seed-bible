@@ -180,6 +180,7 @@ import {useClickAndHold} from "scriptureMap2D.main.CustomHooks"
 // };
 
 export const Chapter = memo(({ index, bookName, sectionName, historyBackground, historyColor}) => {
+    
     const {
         isUserPresenceEnabled,
         isReadingHistoryEnabled,
