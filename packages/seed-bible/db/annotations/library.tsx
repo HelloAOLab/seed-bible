@@ -25,7 +25,7 @@ export interface Annotation {
   /**
    * The data of the annotation.
    */
-  data: unknown;
+  data: AnnotationData;
 
   /**
    * The optional sort order of the annotation.
@@ -33,14 +33,122 @@ export interface Annotation {
   order?: number;
 }
 
+export type AnnotationData =
+  | CommentAnnotationData
+  | LinkAnnotationData
+  | FileAnnotationData
+  | PlaylistAnnotationData;
+
+// /**
+//  * Data for a scripture annotation.
+//  */
+// export interface ScriptureAnnotationData {
+//     type: 'scripture';
+
+//     /**
+//      * The ID of the book that the scripture annotation references.
+//      */
+//     book: string;
+
+//     /**
+//      * The chapter number that the scripture annotation references.
+//      */
+//     chapterNumber: number;
+
+//     /**
+//      * The starting verse number that the scripture annotation references.
+//      */
+//     verseStart: number;
+
+//     /**
+//      * The ending verse number that the scripture annotation references, if any.
+//      */
+//     verseEnd?: number;
+// }
+
+/**
+ * Data for a comment annotation.
+ */
+export interface CommentAnnotationData {
+  type: "comment";
+
+  /**
+   * The html content of the comment.
+   *
+   * @see https://tiptap.dev/docs/guides/output-json-html#option-2-generate-html-from-prosemirror-json
+   */
+  html: string;
+
+  /**
+   * The ID of the annotation that this comment is replying to, if any.
+   */
+  replyTo?: string;
+}
+
+/**
+ * Data for a link annotation.
+ */
+export interface LinkAnnotationData {
+  type: "link";
+
+  /**
+   * The title for the link.
+   */
+  title?: string;
+
+  /**
+   * The URL that the link points to.
+   */
+  url: string;
+
+  /**
+   * The kind of the link.
+   */
+  kind: "youtube" | "external-link" | "video" | "iframe";
+}
+
 /**
  * Data for an annotation that is stored in a file record.
  */
 export interface FileAnnotationData {
+  type: "file";
+
+  /**
+   * The title for the file.
+   */
+  title?: string;
+
+  /**
+   * The kind of the file.
+   */
+  kind: "audio" | "video" | "file";
+
   /**
    * The URL of the file record.
    */
   url: string;
+}
+
+/**
+ * Data for a playlist annotation.
+ */
+export interface PlaylistAnnotationData {
+  type: "playlist";
+
+  /**
+   * The title of the playlist.
+   */
+  title: string;
+
+  /**
+   * The ID of the playlist.
+   */
+  id: string;
+
+  /**
+   * The name of the record that the playlist is stored in.
+   */
+  recordName: string;
 }
 
 /**
@@ -51,22 +159,21 @@ export interface FileAnnotationData {
 export async function saveFileAnnotationData(
   recordName: string,
   data: unknown
-): Promise<FileAnnotationData> {
+): Promise<string> {
   const result = await os.recordFile(recordName, data, {
     marker: "publicRead",
   });
 
   if (result.success === false) {
     if (result.errorCode === "file_already_exists") {
-      return {
-        url: result.existingFileUrl,
-      };
+      return result.existingFileUrl;
     }
 
     console.error("Error saving file annotation data: ", result);
     throw new Error(`Error saving file annotation data: ${result.errorCode}`);
   }
 
+  return result.url;
   return {
     url: result.url,
   };
@@ -82,7 +189,7 @@ export async function saveFileAnnotationData(
 export function createAnnotation(
   bookId: string,
   chapterNumber: number,
-  data: unknown
+  data: AnnotationData
 ): Annotation {
   return {
     id: uuid(),
