@@ -79,24 +79,16 @@ export class BibleDataManager {
   }
 
   _scheduleMaskRecord() {
-
-    const timestamp = Date.now()
-
-    const tempHistory = thisBot.vars.tempReadingHistory ??= {};
-    const userHistory = tempHistory[configBot.id] ??= {};
-    const bookHistory = userHistory[this.bookId] ??= {};
-    bookHistory[this.chapter] = timestamp;
-    
     if (!this.tabId) return;
-    
+
     if (!Array.isArray(masks[this.tabId])) {
       masks[this.tabId] = [];
     }
-    
+
     if (this._viewingTimer) clearTimeout(this._viewingTimer);
-      
+
+    this._viewingStart = Date.now();
     const keyAtScheduleTime = this._getKey();
-    this._viewingStart = timestamp;
 
     this._viewingTimer = setTimeout(() => {
       if (keyAtScheduleTime === this._getKey()) {
