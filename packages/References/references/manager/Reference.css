@@ -15,7 +15,7 @@
 }
 
 .subRef {
-    color: #651FFF;
+    color: #546E7A;
     cursor: pointer;
     font-family: 'Satoshi', system-ui, sans-serif;
 }
@@ -29,7 +29,7 @@
 }
 
 .openTab:hover{
-    color: #651FFF;
+    color: #546E7A;
     cursor: pointer;
 }
 
@@ -47,7 +47,6 @@
 }
 
 .reference-title {
-    color: blue;
     cursor: pointer;
     font-weight: bold;
     font-family: 'Satoshi', system-ui, sans-serif;
@@ -79,4 +78,6 @@
     }
 }
 
-.reference-content {}
+.reference-content {
+    max-height: 400px;
+}
