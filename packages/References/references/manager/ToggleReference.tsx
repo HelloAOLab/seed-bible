@@ -1,29 +1,14 @@
-import ReferenceApp from "references.manager.ReferenceApp";
+import ReferenceApp from "references.manager.NewReferenceApp";
 const { book, chapter, verse } = that;
-const verseNumber = verse.verseNumber;
 
-const references = () => {
-    let referenceManager = getBot('system', 'references.manager');
-    const key = `${tags.NameToId[book]}.${chapter}.${verseNumber}`;
-    console.log(key, "key")
-    const referencesArray = referenceManager.tags.references[key];
-    return {
-        key,
-        referencesArray: referencesArray.map(item => item.split(",")[0])
-    }
-}
+const reference = await thisBot.GetReferences({bookId: tags.NameToId[book], chapter, verse});
 
-console.log(globalThis.currentReference, "globalThis.currentReference")
-
-if (globalThis.currentReference && globalThis?.SetReferenceArray && globalThis?.SetReferenceArrayKey && globalThis.currentReference !== `${tags.NameToId[book]}.${chapter}.${verseNumber}`) {
-    let referenceObj = references();
-    globalThis.SetReferenceArray(referenceObj.referencesArray);
-    globalThis.SetReferenceArrayKey(referenceObj.key);
-    globalThis.currentReference = `${tags.NameToId[book]}.${chapter}.${verseNumber}`;;
+if (globalThis?.SetCurrentReference && globalThis?.currentReferenceKey !== `${tags.NameToId[book]}.${chapter}.${verse}`) {
+    globalThis.SetCurrentReference(reference);
     return
 }
 
-globalThis.currentReference = `${tags.NameToId[book]}.${chapter}.${verseNumber}`;
+globalThis.currentReference = `${tags.NameToId[book]}.${chapter}.${verse}`;
 
 const panelKey = `reference_PANEL_ID`;
 
@@ -35,8 +20,6 @@ if (globalThis.makingApp === "reference") {
     return;
 }
 
-console.log(book, chapter, verse, ReferenceApp)
-
 const InitializedApp = ReferenceApp;
 if (!InitializedApp) return;
 const id = uuid();
@@ -46,7 +29,7 @@ globalThis.makingApp = "reference";
 if (globalThis.CurrentPanelAvailable) {
     ReplaceApplication(globalThis.CurrentPanelAvailable, {
         id,
-        App: <InitializedApp references={references()} id={id} />,
+        App: <InitializedApp reference={reference} />,
         to: "panel",
         minWidth: "23rem",
     });
@@ -55,7 +38,7 @@ if (globalThis.CurrentPanelAvailable) {
 
 AddApplication({
     id,
-    App: <InitializedApp references={references()} id={id} />,
+    App: <InitializedApp reference={reference} />,
     to: "panel",
     minWidth: "23rem",
 });
