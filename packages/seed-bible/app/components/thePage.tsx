@@ -1794,6 +1794,15 @@ function Section({
                     e.preventDefault();
                     let verseToSelect = [verse.verseNumber];
 
+                    if (globalThis?.SetCurrentReference) {
+                      shout("ToggleReference", {
+                        book,
+                        chapter,
+                        verse: verse.verseNumber,
+                      });
+                      return;
+                    }
+
                     const isShiftHold = globalThis?.KEY_HOLD?.["shift"];
 
                     if (isShiftHold && globalThis.LastSelectVerse) {
@@ -1941,7 +1950,7 @@ function Section({
                           shout("toggleReferenceModal", {
                             book,
                             chapter,
-                            verse,
+                            verse: verse.verseNumber,
                           });
                         }
                       }, 500);
