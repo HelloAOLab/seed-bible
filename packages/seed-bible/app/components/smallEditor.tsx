@@ -190,13 +190,6 @@ export function MiniTextEditor({
                     event.preventDefault();
                     return true;
                   },
-            
-                  // (Optional) make it harder to start a selection at all
-                  selectstart: (_view, event) => {
-                    event.preventDefault();
-                    return true;
-                  },
-            
                   // (Optional) stop dragging out selections / drags
                   dragstart: (_view, event) => {
                     event.preventDefault();
