@@ -186,7 +186,7 @@ const ReferenceApp = ({ reference }) => {
                                 <span>{referenceData[`${childReference.book}.${childReference.chapter}.${childReference.verse}`].content}</span>
                                 {
                                     referenceData[`${childReference.book}.${childReference.chapter}.${childReference.verse}`]?.references?.map(subRef => {
-                                        return <span onClick={() => { showVerse({ reference: subRef }) }} class="subRef">{`(${subRef.book} ${subRef.chapter}:${subRef.verse}) `}</span>
+                                        return <span onClick={() => { showVerse({ reference: subRef }) }} class="subRef">{`(${isNaN(subRef.book[0]) ? `${subRef.book}` : `${subRef.book[0]} ${subRef.book.slice(1)}`} ${subRef.chapter}:${subRef.verse}) `}</span>
                                     })
                                 }
                             </div>
