@@ -65,10 +65,7 @@
   "pnpm": {
     "onlyBuiltDependencies": [
       "puppeteer"
-    ],
-    "patchedDependencies": {
-      "@casual-simulation/fast-json-stable-stringify": "patches/@casual-simulation__fast-json-stable-stringify.patch"
-    }
+    ]
   },
   "dependencies": {
     "@tiptap/core": "^3.6.2",
