@@ -28,7 +28,7 @@ if (bibleVizUtils) {
 
 const sortFunc = (a, b) => {
   const getOrder = (heading) => {
-    if (heading.startsWith("Chapter")) return { order: 0, num: 0 };
+    if (heading?.startsWith("Chapter")) return { order: 0, num: 0 };
     const match = heading.match(/Verse (\d+)(?:-(\d+))?/);
     if (match) {
       const num = parseInt(match[1], 10);
@@ -318,6 +318,8 @@ const Playlist = () => {
           );
           let allAnnotations = [];
 
+          console.log("annotations", annotations);
+
           annotations.forEach((ele) => {
             const data = {
               bookid: currentOpenedBook?.bookId,
@@ -325,10 +327,9 @@ const Playlist = () => {
             };
             const innerele = ele?.data?.data;
 
-            if (!!innerele.additionalInfo) {
+            if (!!innerele.additionalInfo && !!innerele.additionalInfo.layers) {
               const tags = [...(ele.data.chronicle_tags || [])];
               const layers = [...innerele.additionalInfo.layers];
-
               if (innerele?.type === "chapter") {
                 data.heading = "Chapter";
                 data.data = [...layers];
@@ -352,16 +353,17 @@ const Playlist = () => {
               }
             }
 
-            if (!!data.address || true) {
+            if (data.data) {
               allAnnotations.push(data);
             }
           });
+          console.log("allAnnotations", allAnnotations);
 
           allAnnotations = allAnnotations.sort(sortFunc);
-
           setFetchingAnnotation(false);
           setAnnotationData(allAnnotations);
         } catch (e) {
+          console.log(e);
           setFetchingAnnotation(false);
         }
       })();
