@@ -23,22 +23,50 @@ Follow the given steps to get started developing the Seed Bible:
     -   `git clone git@github.com:HelloAOLab/seed-bible.git`
 3. Install dependencies
     -   `pnpm install`
-4. Open the repository with your favorite editor.
+    -   `pnpm puppeteer browsers install chrome` - (Optional) Install Chrome for developing directly from the repo.
+4. Open the repository with your favorite editor
+5. Run the Seed bible package in Chrome
+    -   `pnpm dev`
+    -   Each run gives you a clean inst static to work in with the local seed bible.
 
 ### Scripts
 
-How to get a `.aux` file:
+There are several utility scripts:
 
-1.   Run the `package:seed-bible` script:
-    -   `npm run package:seed-bible`
-    -   It will put the file in `dist/seed-bible.aux`.
+-   `pnpm dev` - Runs the SeedBible in development mode.
+    -   It will open Chrome in a clean inst from the state in the repository.
+    -   It also opens a REPL that has a couple helper scripts:
+        -   `.save [extension]` - Saves the state in the inst to the local file system. If an extension name is provided, then it will be saved. If none is provided, then the core seed bible app will be saved.
+        -   `.reload` - Reloads and resets the page to match what is in the local file system. Useful if you've made changes in VSCode and want to quickly update chrome to them.
+        -   `.system` - Opens the system portal.
+        -   `.chat [message]` - Sends the given message via the `@onChat` shout, just like the chat bar.
+        -   `.download` - Sends the `.download` chat message to download the AUX file.
+    -   The REPL also has a couple helper functions:
+        -   `run(script)` - Executes the given AUX Script.
+        -   `shout(name, arg?)` - Runs the given shout with the given argument.
+-   `pnpm package` - Builds all of the packages and extensions into `.aux` files in the `dist` folder.
+-   `pnpm pattern` - A simple CLI that makes it easier to work with AO patterns.
+    -   `download <pattern>` - Downloads the given pattern and saves it to the `dist` folder.
+    -   `unpack <pattern>` - Downloads and unpacks the given pattern so that it is applied to the packages folder.
+    -   `publish <package>` - Uploads the given package as a pattern.
+-   `pnpm extension` - A simple CLI that makes it easier to work with SeedBible extensions.
+    -   `list` - Lists the extensions that are in the records system.
+    -   `download <extension>` - Downloads the given extension as an AUX and saves it to the `dist` folder.
+    -   `unpack <extension>` - Downloads and unpacks the extension to the packages folder.
 
-How to update the files from a `seed-bible.aux` file:
+#### How to start the dev server
 
-1.   First, delete all the existing files in the `packages/seed-bible` folder:
-    -   `rm -r ./packages/seed-bible`
-2.   Second, unpack the aux file into the `packages` folder (it should be named `seed-bible.aux` so that the folder name matches):
-    -   `casualos unpack-aux path/to/seed-bible.aux ./packages`
+-   `pnpm dev`
+
+#### How to download the core app to the repository
+
+1. Use the `pattern` CLI:
+    -   `pnpm pattern unpack SeedBible`
+
+### How to download an extension (e.g. Playlist) to the repository
+
+1. Use the `extension` CLI:
+    -   `pnpm extension unpack Playlist`
 
 ## About Us
 

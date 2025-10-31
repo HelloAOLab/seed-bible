@@ -8,10 +8,12 @@ const ResourceHeaderModal = await thisBot.ResourceHeaderModal();
 const CalendarTitle = await thisBot.CalendarTitle();
 const EventView = await thisBot.EventView();
 const Menu = await thisBot.Menu();
+const { Playlistplaying } = Playlist
 const EditEvent = await thisBot.EditEvent();
 const ResourceTitle = await thisBot.ResourceTitle();
 const GoToCalendar = await thisBot.GoToClanedar();
 const showEventPopup = await thisBot.showEventPopup();
+const getHolidaysForRange = await thisBot.getHolidays();
 import { useCalendar } from 'ext_calendar.calendar.CalendarContext';
 const MapPanel = await MapsManager?.GetMapPanel?.();
 function getDayDifference(startDateStr, endDateStr) {
@@ -45,10 +47,6 @@ function updateTodayButtonLabel() {
 };
 
 
-function pad(n) {
-  return n < 10 ? '0' + n : String(n);
-}
-
 function getDayHeaderFormat(width, viewType) {
 
   if (viewType.startsWith('timeGridDay')) {
@@ -59,6 +57,7 @@ function getDayHeaderFormat(width, viewType) {
   }
 
 
+
   if (width < 400) {
     return { weekday: 'narrow' };     // S, M, T
   } else if (width < 700) {
@@ -67,6 +66,43 @@ function getDayHeaderFormat(width, viewType) {
     return { weekday: 'long' };       // Sunday, Monday
   }
 }
+function isSameDate(date1, date2) {
+  // Convert both inputs to Date objects safely
+  const d1 = new Date(date1);
+
+  // Handle cases like "Oct - 14 - 2025" or "14-10-25"
+  let d2;
+  if (typeof date2 === "string") {
+    const clean = date2.replace(/\s+/g, '');
+    // Try "Mon - DD - YYYY" (e.g., Oct-14-2025)
+    if (/[a-zA-Z]{3}-\d{1,2}-\d{4}/.test(clean)) {
+      const [monthStr, day, year] = clean.split('-');
+      const monthMap = {
+        Jan: 0, Feb: 1, Mar: 2, Apr: 3, May: 4, Jun: 5,
+        Jul: 6, Aug: 7, Sep: 8, Oct: 9, Nov: 10, Dec: 11
+      };
+      d2 = new Date(year, monthMap[monthStr], parseInt(day));
+    }
+    // Try "DD-MM-YY" or "DD-MM-YYYY"
+    else if (/^\d{1,2}-\d{1,2}-\d{2,4}$/.test(clean)) {
+      const [day, month, year] = clean.split('-').map(Number);
+      d2 = new Date(year < 100 ? 2000 + year : year, month - 1, day);
+    } else {
+      // Fallback to Date parser
+      d2 = new Date(date2);
+    }
+  } else {
+    d2 = new Date(date2);
+  }
+
+  // Compare only date parts (ignore time)
+  return (
+    d1.getFullYear() === d2.getFullYear() &&
+    d1.getMonth() === d2.getMonth() &&
+    d1.getDate() === d2.getDate()
+  );
+}
+
 
 
 function updateCalendarHeader(calendar) {
@@ -104,11 +140,12 @@ const types = ["events", "reading", "content", "projects", "sources"];
 
 if (!globalThis.C_E) globalThis.C_E = [];
 
-//caledar component
+
 const App = () => {
   //states
   const [readings, setReadings] = useState([]);
-  const [customDays, setCustomDays] = useState([]);
+  const [readingsList, setReadingsList] = useState([]);
+
   const [modalOpen, setModalOpen] = useState(false);
   const [playListMode, setPlaylistMode] = useState(false);
   const [isReady, setIsReady] = useState(false);
@@ -124,13 +161,34 @@ const App = () => {
   const [eventInView, setEventInView] = useState([]);
   const [eventViewSelected, setEventViewSelected] = useState(true);
   const [mapViewSelected, setMapViewSelected] = useState(false);
+  const [playlistsToAdd, setPlaylistsToAdd] = useState([]);
 
 
   const [hasTitle, setHasTitle] = useState(true);
-  const [allEvents, setAllEvents] = useState([]);
-  const [selectedTypes, setSelectedTypes] = useState(['events']);
+  const [allEvents, setAllEvents] = useState(() => {
+    try {
+      const saved = localStorage.getItem("allEvents");
+      if (!saved) return [];
+
+      const parsed = JSON.parse(saved);
+
+      // 🔥 Remove duplicates based on the "id" field
+      const unique = parsed.filter(
+        (event, index, self) =>
+          index === self.findIndex((e) => e.id === event.id)
+      );
+
+      // (Optional) Clean up localStorage to remove duplicates permanently
+      localStorage.setItem("allEvents", JSON.stringify(unique));
+
+      return unique;
+    } catch (error) {
+      console.error("Error parsing saved events:", error);
+      return [];
+    }
+  });
+  const [selectedTypes, setSelectedTypes] = useState(['events', 'reading']);
   const [isModalOpen, setIsModalOpen] = useState(false);
-  const [viewType, setViewType] = useState('calendar')
 
 
 
@@ -147,14 +205,43 @@ const App = () => {
   const [isSchedule, setIsSchedule] = useState(false);
   const [scheduleDescription, setScheduleDescription] = useState('');
   const [showSchedules, setShowSchedules] = useState(true);
+  const [showHolidays, setShowHolidays] = useState(false);
   const [resourcesByDate, setResourcesByDate] = useState({});
   const [resourceGroupName, setResourceGroupName] = useState('');
   const [isResourceGroupHiding, setIsResourceGroupHiding] = useState(false);
   const [resourceStartDate, setResourceStartDate] = useState();
+  const [hiddenGroups, setHiddenGroups] = useState({});
+  const [allGroups, setAllGroups] = useState([]);
+  let popoverOpen = false;
+
+  // Detect popover open (when clicking "more")
+  document.addEventListener("click", (e) => {
+    const moreBtn = e.target.closest(".fc-daygrid-more-link");
+    if (moreBtn) {
+      // Wait a moment for popover to appear
+      setTimeout(() => {
+        const pop = document.querySelector(".fc-popover");
+        popoverOpen = !!pop;
+        console.log("Popover opened:", popoverOpen);
+      }, 50);
+    }
+  });
+
+  // Detect popover close (click outside)
+  document.addEventListener("mousedown", (e) => {
+    const pop = document.querySelector(".fc-popover");
+    if (pop && !pop.contains(e.target)) {
+      popoverOpen = false;
+      console.log("Popover closed:", popoverOpen);
+    }
+  });
+
+
 
 
 
   //refs
+  const readingsRef = useRef(null);
   const dropdownRef = useRef(null);
   const calendarRef = useRef(null);
   const calendarApi = useRef(null);
@@ -165,38 +252,65 @@ const App = () => {
 
 
   let { name, apiCalendar, setApiCalendar } = useCalendar();
+
+  useEffect(() => {
+    // Load from localStorage only once
+    const savedEvents = localStorage.getItem("allEvents");
+    if (savedEvents) {
+      try {
+        const parsed = JSON.parse(savedEvents);
+        setAllEvents(parsed);
+      } catch (error) {
+        console.error("Error loading events:", error);
+      }
+    }
+  }, []);
+  useEffect(() => {
+    try {
+
+      localStorage.setItem("allEvents", JSON.stringify(allEvents));
+    } catch (error) {
+      console.error("Error saving events:", error);
+    }
+  }, [allEvents]);
   useEffect(() => {
     setApiCalendar(calendarApi.current);
   });
   //useeffects
+
+  /* useEffect(() => {
+     // Load styles
  
+ 
+     // Load scripts sequentially
+     const scripts = [
+       "https://cdn.jsdelivr.net/npm/@fullcalendar/core@6.1.17/index.global.min.js",
+       "https://cdn.jsdelivr.net/npm/@fullcalendar/daygrid@6.1.17/index.global.min.js",
+       "https://cdn.jsdelivr.net/npm/@fullcalendar/timegrid@6.1.17/index.global.min.js",
+       "https://cdn.jsdelivr.net/npm/@fullcalendar/interaction@6.1.17/index.global.min.js",
+       "https://cdn.jsdelivr.net/npm/@fullcalendar/resource-timegrid@6.1.17/index.global.min.js",
+       "https://cdn.jsdelivr.net/npm/@fullcalendar/icalendar@6.1.17/index.global.min.js",
+       "https://cdnjs.cloudflare.com/ajax/libs/ical.js/1.4.0/ical.min.js",
+ 
+     ];
+ 
+     function loadScriptsSequentially(index = 0, callback) {
+       if (index >= scripts.length) return callback();
+ 
+       const script = document.createElement("script");
+       script.src = scripts[index];
+       script.onload = () => loadScriptsSequentially(index + 1, callback);
+       script.onerror = () => console.error("Failed to load", scripts[index]);
+       document.body.appendChild(script);
+     }
+ 
+     loadScriptsSequentially(0, () => {
+       console.log("FullCalendar scripts loaded");
+     });
+   }, []);*/
   useEffect(() => {
-    // Load styles
-  
-
-    // Load scripts sequentially
-    const scripts = [
-      "https://cdn.jsdelivr.net/npm/@fullcalendar/core@6.1.17/index.global.min.js",
-      "https://cdn.jsdelivr.net/npm/@fullcalendar/daygrid@6.1.17/index.global.min.js",
-      "https://cdn.jsdelivr.net/npm/@fullcalendar/timegrid@6.1.17/index.global.min.js",
-      "https://cdn.jsdelivr.net/npm/@fullcalendar/interaction@6.1.17/index.global.min.js",
-      "https://cdn.jsdelivr.net/npm/@fullcalendar/resource-timegrid@6.1.17/index.global.min.js" // this is enough
-    ];
-
-    function loadScriptsSequentially(index = 0, callback) {
-      if (index >= scripts.length) return callback();
-
-      const script = document.createElement("script");
-      script.src = scripts[index];
-      script.onload = () => loadScriptsSequentially(index + 1, callback);
-      script.onerror = () => console.error("Failed to load", scripts[index]);
-      document.body.appendChild(script);
-    }
-
-    loadScriptsSequentially(0, () => {
-      console.log("FullCalendar scripts loaded");
-    });
-  }, []);
+    readingsRef.current = readingsList;
+  }, [readingsList]);
 
   useEffect(() => {
     const loadScript = (src) =>
@@ -268,6 +382,8 @@ const App = () => {
     return () => {
       globalThis['AddReadingPlans'] = null;
       globalThis['readings'] = null;
+
+
     };
   });
 
@@ -283,8 +399,6 @@ const App = () => {
         calendarApi.current.addEvent(evt);
       }
     });
-
-
     return () => {
       // Optional cleanup if readings change or component unmounts
       readings.forEach(evt => {
@@ -295,6 +409,36 @@ const App = () => {
       });
     };
   }, [readings]);
+
+
+
+
+  useEffect(() => {
+
+    if (!calendarApi.current) return;
+
+    const currentYear = new Date().getFullYear();
+    const endYear = currentYear + 10;
+    const holidays = getHolidaysForRange(currentYear, endYear);
+    console.log(holidays, "holidays");
+
+    // Remove existing holiday events directly
+    calendarApi.current.getEvents()
+      .filter(event => event.extendedProps?.isHoliday)
+      .forEach(event => event.remove());
+
+    if (showHolidays && holidays.length > 0) {
+      // Mark events as holidays
+      holidays.forEach(event => {
+        event.extendedProps = { ...(event.extendedProps || {}), isHoliday: true };
+      });
+      calendarApi.current.addEventSource(holidays);
+    }
+  }, [showHolidays]);
+
+
+
+
   useEffect(() => {
     console.log("Updated resourcesByDate:", resourcesByDate);
   }, [resourcesByDate]);
@@ -313,9 +457,6 @@ const App = () => {
         : [...prev, type]
     );
   };
-
-
-
   function onToolbarDateClick1(e) {
     const titleEl = e.target.closest('.fc-toolbar-title');
     if (!titleEl) return;
@@ -344,6 +485,10 @@ const App = () => {
     input.addEventListener('keydown', ke => ke.key === 'Enter' && input.blur(),
       { once: true });
   }
+
+
+
+
 
   function onToolbarDateClick(e) {
     const titleEl = e.target.closest('.fc-toolbar-title');
@@ -436,6 +581,7 @@ const App = () => {
     setOpenMap(true)
   }
   const handleDelete = (id) => {
+    setReadings(prev => prev.filter(item => item.id !== id));
     setEventInView(prev => prev.filter(ev => ev.id !== id));
     const evt = calendarApi.current.getEventById(id);
     setAllEvents(prev => prev.filter(ev => ev.id !== id));
@@ -451,6 +597,8 @@ const App = () => {
 
   const addReadingPlans = (selected) => {
     const playLists = selected.reduce((acc, item) => acc.concat({ list: item.list, playList: item.name }), []);
+    setReadingsList(prev => [...prev, ...playLists]);
+
     let start = new Date();
     if (playLists[0]?.list[0]?.type !== 'date') {
       start = start
@@ -469,6 +617,7 @@ const App = () => {
           start = parseDashedDateToValidDate(itm.content);
         } else {
           const value = itm.content.replace(/Genesis/g, 'GEN');
+
           list.push(value);
           const eventDate = start;
 
@@ -489,7 +638,7 @@ const App = () => {
               id: uuid(),
               isReadingPlan: true,
               classNames: ['readingPlan'],
-              color: 'green',
+              color: 'white',
               extendedProps: { startTime: '', endTime: '', isReapeating: false, type: "reading" },
 
 
@@ -533,6 +682,32 @@ const App = () => {
     } else {
       return
 
+    }
+  };
+
+
+  globalThis.OpenSelf = async function () {
+
+    if (!globalThis.makingPlaylist) {
+      if (globalThis["Playlist_package"]) {
+        globalThis["Playlist_package"].onClick();
+      } else {
+
+        const PlayList = await Playlist.tryInitPlaylistMaker();
+        if (PlayList) {
+
+          const id = uuid();
+          globalThis.PLAYLIST_PANEL_ID = id;
+
+
+          AddApplication({
+            id,
+            App: <PlayList id={id} />,
+            to: "panel",
+            minWidth: "23rem",
+          });
+        }
+      }
     }
   };
 
@@ -627,6 +802,8 @@ const App = () => {
   console.log(resourcesRef.current, 'resourcesref')
   console.log(isResourceGroupHiding, 'isresourcegrouphiding')
   useEffect(() => {
+
+
     const link = document.createElement('link');
     const container = document.querySelector('.experience-container');
     link.href = 'https://api.fontshare.com/v2/css?f[]=satoshi@400,500,700&display=swap';
@@ -680,11 +857,130 @@ const App = () => {
           }
 
         },
+
         slotMinTime: '00:00:00',
         slotMaxTime: '25:00:00',
         slotDuration: '00:30:00',
         scrollTime: '07:00:00',
         initialView: 'dayGridMonth',
+        /* moreLinkClick: (arg) => {
+           const existingPopover = document.querySelector(".custom-popover");
+ 
+           if (existingPopover && existingPopover.dataset.date === arg.dateStr) {
+             existingPopover.remove();
+             return;
+           }
+ 
+           document.querySelectorAll(".custom-popover").forEach(p => p.remove());
+ 
+           const date = arg.date;
+           const eventsForDate = arg.view.calendar.getEvents().filter(ev =>
+             new Date(ev.start).toDateString() === new Date(date).toDateString()
+           );
+           if (!eventsForDate.length) return;
+ 
+           const popover = document.createElement("div");
+           popover.className = "custom-popover";
+           popover.dataset.date = arg.dateStr;
+ 
+           Object.assign(popover.style, {
+             position: "absolute",
+             background: "#fff",
+             border: "1px solid #ccc",
+             borderRadius: "8px",
+             padding: "6px 8px",
+             zIndex: 10000,
+             boxShadow: "0 4px 10px rgba(0,0,0,0.15)",
+             minWidth: "150px",
+             maxWidth: "180px",
+             maxHeight: "220px",
+             overflowY: "auto",
+             fontFamily: "Inter, sans-serif",
+             fontSize: "12px",
+           });
+ 
+           const header = document.createElement("div");
+           const dateObj = new Date(arg.date);
+           const options = { weekday: "short", month: "short", day: "numeric" };
+           header.innerText = dateObj.toLocaleDateString("en-US", options);
+           Object.assign(header.style, {
+             fontWeight: "600",
+             marginBottom: "6px",
+             textAlign: "center",
+             textTransform: "capitalize",
+             borderBottom: "1px solid #eee",
+             paddingBottom: "4px",
+             fontSize: "12px",
+           });
+           popover.appendChild(header);
+ 
+           eventsForDate.forEach(ev => {
+             const div = document.createElement("div");
+             const title =
+               ev.title.charAt(0).toUpperCase() + ev.title.slice(1).toLowerCase();
+             div.innerText = title;
+             Object.assign(div.style, {
+               backgroundColor: "#007bff",
+               color: "white",
+               borderRadius: "5px",
+               padding: "4px 6px",
+               marginBottom: "4px",
+               textAlign: "center",
+               cursor: "pointer",
+               fontSize: "11px",
+             });
+ 
+             div.addEventListener("mouseenter", () => {
+               div.style.backgroundColor = "#0056b3";
+             });
+             div.addEventListener("mouseleave", () => {
+               div.style.backgroundColor = "#007bff";
+             });
+ 
+             popover.appendChild(div);
+           });
+ 
+           document.body.appendChild(popover);
+ 
+           const { pageX, pageY } = arg.jsEvent;
+           popover.style.top = `${pageY - 20}px`;
+           popover.style.left = `${pageX - 5}px`;
+ 
+           const popRect = popover.getBoundingClientRect();
+           if (popRect.right > window.innerWidth) {
+             popover.style.left = `${window.innerWidth - popRect.width - 10}px`;
+           }
+           if (popRect.bottom > window.innerHeight) {
+             popover.style.top = `${window.innerHeight - popRect.height - 10}px`;
+           }
+ 
+           const removePopover = (e) => {
+             const isInsidePopover = popover.contains(e.target);
+             const isMoreBtn = e.target.closest(".fc-daygrid-more-link");
+             if (!isInsidePopover && !isMoreBtn) {
+               popover.remove();
+               document.removeEventListener("mousedown", removePopover);
+             }
+           };
+ 
+           setTimeout(() => {
+             document.addEventListener("mousedown", removePopover);
+           }, 0);
+         }
+ 
+ 
+         ,*/
+        moreLinkClick: (arg) => {
+          popoverOpen = true;
+          return 'popover';
+        },
+
+
+
+
+
+
+
         resourceAreaHeaderContent: function () {
           const wrapper = document.createElement('div');
           wrapper.style.display = 'flex';
@@ -720,10 +1016,18 @@ const App = () => {
           setResourceGroupName(arg.groupValue);
 
 
-          if (isResourceGroupHiding) {
-            // Only show the button with SVG, nothing else
-            return (
+
+          return (
+            <div
+              style={{
+                display: 'flex',
+                alignItems: 'center',
+                justifyContent: 'space-between',
+              }}
+            >
+              <span>{arg.groupValue}</span>
               <button
+
                 ref={(el) => {
                   if (el) el.dataset.groupValue = arg.groupValue;
                 }}
@@ -732,9 +1036,6 @@ const App = () => {
                   border: 'none',
                   cursor: 'pointer',
                   padding: '4px',
-                  display: 'flex',
-                  alignItems: 'center',
-                  justifyContent: 'center',
                 }}
                 onClick={(e) => {
                   e.stopPropagation();
@@ -754,50 +1055,10 @@ const App = () => {
                   <circle cx="12" cy="19" r="2" />
                 </svg>
               </button>
-            );
-          } else {
-            // Show group name + button normally
-            return (
-              <div
-                style={{
-                  display: 'flex',
-                  alignItems: 'center',
-                  justifyContent: 'space-between',
-                }}
-              >
-                <span>{arg.groupValue}</span>
-                <button
-                  ref={(el) => {
-                    if (el) el.dataset.groupValue = arg.groupValue;
-                  }}
-                  style={{
-                    background: 'none',
-                    border: 'none',
-                    cursor: 'pointer',
-                    padding: '4px',
-                  }}
-                  onClick={(e) => {
-                    e.stopPropagation();
-                    const rect = e.currentTarget.getBoundingClientRect();
-                    setGroupMenu({
-                      groupValue: arg.groupValue,
-                      position: {
-                        top: rect.top + window.scrollY + 20,
-                        left: rect.left + window.scrollX,
-                      },
-                    });
-                  }}
-                >
-                  <svg width="16" height="16" viewBox="0 0 24 24" fill="gray">
-                    <circle cx="12" cy="5" r="2" />
-                    <circle cx="12" cy="12" r="2" />
-                    <circle cx="12" cy="19" r="2" />
-                  </svg>
-                </button>
-              </div>
-            );
-          }
+            </div>
+          );
         }
+
         ,
 
         resourceGroupField: isResourceGroupHiding ? undefined : 'group',
@@ -809,123 +1070,126 @@ const App = () => {
         eventContent: function (arg) {
           const isSchedule = arg.event.extendedProps.isResource === true;
           const eventType = arg.event.extendedProps.type;
-
           const container = document.querySelector(".experience-container");
           const isNarrow = container && container.offsetWidth < 500;
+          const isPopoverOpen = popoverOpen;
 
           const clockSvg = (color) => `
-           <svg xmlns="http://www.w3.org/2000/svg" width="14" height="14"
-               viewBox="0 0 24 24" fill="none" stroke="${color}"
-              stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
-             <circle cx="12" cy="12" r="10"/>
-             <line x1="12" y1="12" x2="12" y2="7"/>
-            <line x1="12" y1="12" x2="16" y2="14"/>
-            </svg>
-  `;
+      <svg xmlns="http://www.w3.org/2000/svg" width="14" height="14"
+        viewBox="0 0 24 24" fill="none" stroke="${color}"
+        stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+        <circle cx="12" cy="12" r="10"></circle>
+        <line x1="12" y1="12" x2="12" y2="7"></line>
+        <line x1="12" y1="12" x2="16" y2="14"></line>
+      </svg>
+    `;
 
-          // Dot + optional clock
           const makeDot = (color, withClock = false) => `
-    <div style="
-      display:flex;
-      align-items:center;
-      justify-content:center;
-      gap:0.2em;
-      width:100%;
-    ">
-      <div style="
-        width:10px;
-        height:10px;
-        border-radius:50%;
-        background:${color};
-        flex-shrink:0;
-      "></div>
-      ${withClock ? clockSvg(color) : ""}
-    </div>
-  `;
+      <div style="display:flex;align-items:center;justify-content:center;gap:0.2em;width:100%;">
+        <div style="width:8px;height:8px;border-radius:50%;background:${color};flex-shrink:0;"></div>
+        ${withClock ? clockSvg(color) : ""}
+      </div>
+    `;
 
-
-          if (isNarrow) {
-            if (isSchedule) return { html: '' };
+          // Compact mode (mobile, no popover)
+          if (isNarrow && !isPopoverOpen) {
+            if (isSchedule) return { html: "" };
             if (eventType === "reading") return { html: makeDot("#20c997") };
-            return { html: makeDot("#339af0") }; // blue dot
+            return { html: makeDot("#339af0") };
           }
 
-          // Schedule (large screen: pill with clock + title)
+          // Popover open — show full event
+          if (isPopoverOpen) {
+            return {
+              html: `
+          <div style="
+            display:flex;align-items:center;
+            background:#e7f5ff;
+            color:#1c3d5a;
+            border:1px solid #74c0fc;
+            border-radius:0.5em;
+            padding:0.3em 0.5em;
+            font-size:clamp(0.65rem, 0.8vw, 0.85rem);
+            max-width:100%;
+            overflow:hidden;
+            text-overflow:ellipsis;">
+            <span>${arg.event.title}</span>
+          </div>
+        `,
+            };
+          }
+
+          // Normal schedule
           if (isSchedule) {
             return {
               html: `
-        <div style="
-          display:flex;align-items:center;gap:0.4em;
-          background:#fdfdea;
-          color:#2d3436;
-          border:1px solid #a5d8ff;
+         <div style="
+          display:flex;align-items:center;
+          background:#e7f5ff;color:#1c3d5a;
+          border:1px solid #74c0fc;
           border-radius:0.5em;
           padding:0.3em 0.5em;
           font-size:clamp(0.65rem, 0.8vw, 0.85rem);
           max-width:100%;
-          overflow:hidden;
-          text-overflow:ellipsis;">
-          ${clockSvg("#f1c40f")}
+          overflow:hidden;text-overflow:ellipsis;">
           <span>${arg.event.title}</span>
         </div>
-      `
+        `,
             };
           }
 
-          // Reading (large screen: green pill)
+          // Reading events
           if (eventType === "reading") {
             return {
               html: `
+          <div style="
+            display:flex;align-items:center;
+            background:#e6fcf5;
+            color:#0b7285;
+            border:1px solid #63e6be;
+            border-radius:0.5em;
+            padding:0.3em 0.5em;
+            font-size:clamp(0.65rem, 0.8vw, 0.85rem);
+            max-width:100%;
+            overflow:hidden;text-overflow:ellipsis;">
+            <span>${arg.event.title}</span>
+          </div>
+        `,
+            };
+          }
+
+          // Default event style
+          return {
+            html: `
         <div style="
           display:flex;align-items:center;
-          background:#e6fcf5;
-          color:#0b7285;
-          border:1px solid #63e6be;
+          background:#e7f5ff;color:#1c3d5a;
+          border:1px solid #74c0fc;
           border-radius:0.5em;
           padding:0.3em 0.5em;
           font-size:clamp(0.65rem, 0.8vw, 0.85rem);
           max-width:100%;
-          overflow:hidden;
-          text-overflow:ellipsis;">
+          overflow:hidden;text-overflow:ellipsis;">
           <span>${arg.event.title}</span>
         </div>
-      `
-            };
-          }
-
-          // Default (large screen: blue pill)
-          return {
-            html: `
-      <div style="
-        display:flex;align-items:center;
-        background:#e7f5ff;
-        color:#1c3d5a;
-        border:1px solid #74c0fc;
-        border-radius:0.5em;
-        padding:0.3em 0.5em;
-        font-size:clamp(0.65rem, 0.8vw, 0.85rem);
-        max-width:100%;
-        overflow:hidden;
-        text-overflow:ellipsis;">
-        <span>${arg.event.title}</span>
-      </div>
-    `
+      `,
           };
         },
         eventClassNames: function (arg) {
           const width = document.querySelector('.experience-container')?.offsetWidth || 0;
+          const popover = document.querySelector('.fc-popover');
+
 
           const start = new Date(arg.event.start);
           const end = new Date(arg.event.end || arg.event.start);
 
-          // Make sure end is NOT exclusive — FullCalendar treats end as exclusive for all-day events
+
           const isMultiDay = start.toDateString() !== new Date(end.getTime() - 1).toDateString();
 
-          if (isMultiDay && width <= 500) {
-            return ['event-line'];
-          } else if (!isMultiDay) {
-            return width > 500 ? ['full-view'] : ['dot-view'];
-          } else {
+          if (width <= 500) {
+            return ['dot-view'];
+          }
+          else {
             return ['full-view'];
           }
         },
@@ -988,7 +1252,7 @@ const App = () => {
             console.log('no-multimonth');
 
 
-            showEventPopup(info, setPlaylistMode, setScheduleTitle, setScheduleDescription, addReadingPlans, calendarApi, ({ title, description, link, start, end, startTime, endTime, recurVal, isPlansTabActive }) => {
+            showEventPopup(info, setPlaylistMode, setScheduleTitle, setScheduleDescription, addReadingPlans, playlistsToAdd, setPlaylistsToAdd, calendarApi, setCalendarView, ({ title, description, link, start, end, startTime, endTime, recurVal, isPlansTabActive }) => {
 
               console.log(isPlansTabActive, 'hghghgh');
               if (isPlansTabActive) return;
@@ -1010,7 +1274,7 @@ const App = () => {
                     start: isTimed ? `${start}T${startTime}:00` : start,
                     end: isTimed ? `${end}T${endTime}:00` : end,
                     allDay: isTimed ? false : true,
-                    color: 'blue',
+                    color: 'white',
                     eventDisplay: 'list-item',
 
                     theme: 'simple-borderless',
@@ -1045,7 +1309,7 @@ const App = () => {
                     start: isTimed ? `${start}T${startTime}:00` : start,
                     end: isTimed ? `${end}T${endTime}:00` : end,
                     allDay: isTimed ? false : true,
-                    color: 'blue',
+                    color: 'white',
 
 
                     theme: 'simple-borderless',
@@ -1090,7 +1354,7 @@ const App = () => {
                     end: isTimed ? `${end}T${endTime}:00` : end,
                     daysOfWeek: [day],
                     allDay: isTimed ? false : true,
-                    color: 'blue',
+                    color: 'white',
 
                     theme: 'simple-borderless',
 
@@ -1129,7 +1393,7 @@ const App = () => {
                       start: start,
 
                       end: end,
-                      color: 'blue',
+                      color: 'white',
                       allDay: true,
                       theme: 'simple-borderless',
                       classNames: ['user-event'],
@@ -1150,7 +1414,6 @@ const App = () => {
                       setSelectedTypes(prev => ['events', ...prev])
 
                     }
-                    console.log(eventInView, 'dadadad')
 
                     calendarApi.current.addEvent(newEvent);
                   }
@@ -1208,11 +1471,13 @@ const App = () => {
         },
 
         datesSet: (info) => {
-          console.log(info.startStr);
+          calendarApi.current.removeAllEvents();
+          calendarApi.current.addEventSource(allEvents);
+
           const startDate = new Date(info.startStr).toLocaleDateString('en-CA');
-          console.log(startDate)
+
           const newResources = resourcesRef.current[startDate] || [];
-          console.log(resourcesRef.current);
+
           calendarApi.current.setOption("resources", newResources);
 
           updateCalendarHeader(calendarApi.current);
@@ -1379,6 +1644,8 @@ const App = () => {
                 addButton = document.createElement('button');
                 addButton.id = 'add-event-button';
                 addButton.innerHTML = `
+                
+          
           <svg width="20" height="20" viewBox="0 0 20 20" fill="none"
                xmlns="http://www.w3.org/2000/svg" style="margin-right: 6px;">
             <path d="M9.95441 4.16602V15.8327" stroke="white" stroke-width="2"
@@ -1386,13 +1653,12 @@ const App = () => {
             <path d="M4.12109 10H15.738" stroke="white" stroke-width="2"
                   stroke-linecap="round" stroke-linejoin="round"/>
           </svg>
-          <span>Add Event</span>`;
+          <span>Add Event</span> `;
                 Object.assign(addButton.style, {
                   display: 'flex',
-                  alignItems: 'center',
-
-
-                  justifyContent: 'space-between',
+                  alignItems: 'center',      // vertical center
+                  justifyContent: 'center',  // keep icon + text grouped
+                  gap: '6px',                // space between icon and text
                   backgroundColor: '#D36433',
                   color: 'white',
                   fontSize: '14px',
@@ -1403,7 +1669,7 @@ const App = () => {
                   marginLeft: '20px',
                   padding: '6px 6px',
                   cursor: 'pointer',
-                  transform: 'translate(7px,3px)',
+                  lineHeight: '1',           // ensures no extra vertical space
                 });
 
                 addButton.addEventListener('click', () => setModalOpen(true));
@@ -1498,6 +1764,7 @@ const App = () => {
                 const span = document.createElement('span');
                 span.innerText = 'Add Event';
                 span.style.marginLeft = '6px';
+                span.style.transform = 'translateY(-10px)';
                 addBtn.appendChild(span);
               }
             }
@@ -1513,118 +1780,130 @@ const App = () => {
           }
         },
 
-
-
-
         eventDidMount: (info) => {
-
-          const eventType = info.event.extendedProps.type;
-          const el = info.el;
-          const isResource = info.event.extendedProps.isResource;
-
-          const isInPopover = info.el.closest('.fc-popover');
-          if (isInPopover) {
-            // Inside modal: show full title
-            info.el.classList.remove('dot-view');
-            info.el.classList.add('full-view');
-          } else {
-
-
-            const width = document.querySelector('.experience-container')?.offsetWidth || 0;
-            if (width < 500) {
-              info.el.classList.add('dot-view');
-              info.el.classList.remove('full-view');
-            } else {
-              info.el.classList.add('full-view');
-              info.el.classList.remove('dot-view');
-            }
-          }
-
-
+          let readingsLists = [];
           const { title, extendedProps, start, id } = info.event;
+          console.log(start, 'jjjj')
 
-          const { description, link, readingPlans } = extendedProps;
+          const { type: eventType, isResource, description, link, readingPlans } = extendedProps;
+
           const formattedDate = start.toLocaleDateString('en-GB', {
             day: '2-digit',
             month: 'short',
             year: 'numeric'
           }).replace(/ /g, '-');
 
-
           const formattedTime = start.toLocaleTimeString('en-US', {
             hour: '2-digit',
             minute: '2-digit',
             hour12: true
           });
+
           const wrapper = document.createElement('div');
+
+          // Options (Edit/Delete/Close)
           const options = document.createElement('div');
-          const dlt = document.createElement('span');
-          dlt.innerHTML = `<svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" fill="currentColor" viewBox="0 0 20 20" class="icon-btn">
-  <path d="M6 2a1 1 0 0 0-1 1v1h10V3a1 1 0 1 0-2 0h-6a1 1 0 0 0-1-1zM5 6h10l-.603 9.04A2 2 0 0 1 12.405 17H7.595a2 2 0 0 1-1.992-1.96L5 6z"/>
-</svg>
-`
-          dlt.style.cssText = `
-            color: gray;
-          `;
-          dlt.addEventListener('click', () => handleDelete(id));
-          const edit = document.createElement('span');
-          edit.innerHTML = `<svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 20 20" fill="currentColor" class="icon-btn"  >
-  <path
-    d="M9.99992 6.66611L3.33325 13.3328V16.6661L6.66659 16.6661L13.3332 9.99944M9.99992 6.66611L12.3904 4.27557L12.3919 4.27415C12.7209 3.94508 12.8858 3.78026 13.0758 3.71852C13.2431 3.66414 13.4235 3.66414 13.5908 3.71852C13.7807 3.78021 13.9453 3.94485 14.2739 4.27345L15.7238 5.72328C16.0538 6.0533 16.2189 6.21838 16.2807 6.40865C16.3351 6.57602 16.335 6.75631 16.2807 6.92368C16.2189 7.11382 16.054 7.27865 15.7245 7.60819L15.7238 7.6089L13.3332 9.99944M9.99992 6.66611L13.3332 9.99944"
-    stroke="#000000"
-    strokeWidth="2"
-    strokeLinecap="round"
-    strokeLinejoin="round"
-  />
-</svg>`;
-          edit.style.cssText = `
-            color: gray;
-            
-          `;
-          edit.addEventListener('click', () => handleEditing(id, isResource))
-          const close = document.createElement('span');
-          close.innerHTML = `<svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" fill="currentColor" viewBox="0 0 20 20" class="icon-btn">
-                              <path fill-rule="evenodd" d="M4.293 4.293a1 1 0 0 1 1.414 0L10 8.586l4.293-4.293a1 1 0 1 1 1.414 1.414L11.414 10l4.293 4.293a1 1 0 0 1-1.414 1.414L10 11.414l-4.293 4.293a1 1 0 0 1-1.414-1.414L8.586 10 4.293 5.707a1 1 0 0 1 0-1.414z" clip-rule="evenodd"/>
-                            </svg>`;
-          close.style.cssText = `
-            color: gray;
-          `;
           options.style.cssText = `
-             display:flex;
-             gap:6px;
-             positon:absolute;
-             top:2px;
-             
-             transform: translate(115px,-10px);
-             right:2px;
-          `;
+    display: flex;
+    gap: 3px;
+   
+    top: 2px;
+    transform: translate(115px,-10px);
+    right: 2px;
+  `;
+
+          // Delete button
+          const dlt = document.createElement('span');
+          dlt.innerHTML = `<svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" fill="currentColor" viewBox="0 0 20 20" class="icon-btn">
+    <path d="M6 2a1 1 0 0 0-1 1v1h10V3a1 1 0 1 0-2 0h-6a1 1 0 0 0-1-1zM5 6h10l-.603 9.04A2 2 0 0 1 12.405 17H7.595a2 2 0 0 1-1.992-1.96L5 6z"/>
+  </svg>`;
+          dlt.style.color = 'gray';
+          dlt.addEventListener('click', () => {
+            wrapper.remove();
+            handleDelete(id)
+          });
+
+          // Edit button
+          const edit = document.createElement('span');
+          edit.innerHTML = `<svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 20 20" fill="currentColor" class="icon-btn">
+    <path d="M9.99992 6.66611L3.33325 13.3328V16.6661L6.66659 16.6661L13.3332 9.99944M9.99992 6.66611L12.3904 4.27557L12.3919 4.27415C12.7209 3.94508 12.8858 3.78026 13.0758 3.71852C13.2431 3.66414 13.4235 3.66414 13.5908 3.71852C13.7807 3.78021 13.9453 3.94485 14.2739 4.27345L15.7238 5.72328C16.0538 6.0533 16.2189 6.21838 16.2807 6.40865C16.3351 6.57602 16.335 6.75631 16.2807 6.92368C16.2189 7.11382 16.054 7.27865 15.7245 7.60819L15.7238 7.6089L13.3332 9.99944M9.99992 6.66611L13.3332 9.99944" stroke="#000" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/>
+  </svg>`;
+          edit.style.color = 'gray';
+          edit.addEventListener('click', () => {
+            wrapper.remove();
+            const popover = document.querySelector('.fc-popover');
+            if (popover) {
+              popover.remove();
+            }
+            handleEditing(id, isResource)
+          });
+
+          // Close button
+          const close = document.createElement('span');
+          close.innerHTML = `<svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" fill="currentColor" viewBox="0 0 20 20" class="icon-btn">
+    <path fill-rule="evenodd" d="M4.293 4.293a1 1 0 0 1 1.414 0L10 8.586l4.293-4.293a1 1 0 1 1 1.414 1.414L11.414 10l4.293 4.293a1 1 0 0 1-1.414 1.414L10 11.414l-4.293 4.293a1 1 0 0 1-1.414-1.414L8.586 10 4.293 5.707a1 1 0 0 1 0-1.414z" clip-rule="evenodd"/>
+  </svg>`;
+          close.style.color = 'gray';
+          close.addEventListener('click', () => wrapper.remove());
 
           options.appendChild(dlt);
           options.appendChild(edit);
           options.appendChild(close);
-          if (readingPlans && Array.isArray(readingPlans)) {
-            const plansSection = document.createElement('div');
-            plansSection.style.marginTop = '16px';
 
-            const heading = document.createElement('div');
-            heading.textContent = '📚 Reading Plans';
-            heading.style.cssText = `
+          // Reading Plans Section
+          console.log(readingsRef.current);
+          console.log(globalThis['defaultplaylists'], 'redings');
+
+          readingsLists = globalThis['defaultplaylists'].filter(item => item.name === title);
+
+          const parentId = 'default'
+          const playingPlaylist = readingsLists[0]?.id;
+          const playlist = globalThis[`${parentId}playlists`].find(ele => ele.id === playingPlaylist);
+          let val;
+          if (readingsLists.length > 0) {
+            const readaingsToAdd = readingsLists[0].list.filter(item => {
+
+              if (item.type === 'date') {
+                val = item.content;
+              }
+              console.log(start, val);
+              if (isSameDate(start, val) & item.type !== 'date') {
+                ;
+                return item;
+              }
+
+            })
+            console.log(readaingsToAdd);
+
+
+
+
+
+
+            if (readingsLists && readingsLists.length > 0) {
+              const plansSection = document.createElement('div');
+
+
+              const heading = document.createElement('div');
+              heading.textContent = '📚 Reading Plans';
+              heading.style.cssText = `
       font-weight: 500;
-      margin-bottom: 8px;
+      
       color: #3c4043;
     `;
-            plansSection.appendChild(heading);
+              plansSection.appendChild(heading);
 
-            const ul = document.createElement('ul');
-            ul.style.cssText = 'padding-left: 0; margin: 0; list-style: none;';
+              const ul = document.createElement('ul');
+              ul.style.cssText = 'padding-left: 0; margin: 0; list-style: none;';
 
-            readingPlans.forEach(plan => {
-              const li = document.createElement('li');
-              const button = document.createElement('button');
+              readaingsToAdd.forEach(plan => {
 
-              button.textContent = plan;
-              button.dataset.plan = plan;
-              button.style.cssText = `
+                if (plan.type !== 'date') {
+                  const li = document.createElement('li');
+                  const button = document.createElement('button');
+                  button.textContent = plan.content;
+                  button.dataset.plan = plan;
+                  button.style.cssText = `
         display: inline-block;
         background-color: #e8f0fe;
         color: #1967d2;
@@ -1636,29 +1915,93 @@ const App = () => {
         font-weight: 500;
         cursor: pointer;
       `;
+                  button.addEventListener('click', () => alert(`You clicked: ${plan}`));
+                  li.appendChild(button);
+                  ul.appendChild(li);
+                }
+              });
+              // Create the container div
+              const playButtonCon = document.createElement('div');
 
-              button.addEventListener('click', () => {
-                alert(`You clicked: ${plan}`);
+              // Apply styling (optional)
+              playButtonCon.style.display = 'flex';
+              playButtonCon.style.alignItems = 'center';
+              playButtonCon.style.gap = '3px';
+              playButtonCon.style.cursor = 'pointer';
+              playButtonCon.style.padding = '2px 4px';
+              playButtonCon.style.borderRadius = '8px';
+              playButtonCon.style.background = '#1e88e5';
+              playButtonCon.style.color = '#fff';
+              playButtonCon.style.fontFamily = 'sans-serif';
+              playButtonCon.style.fontWeight = '400';
+              playButtonCon.style.width = 'fit-content';
+              playButtonCon.style.fontSize = '10px'
+
+              // Add SVG Play icon
+              playButtonCon.innerHTML = `
+  <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" fill="currentColor">
+    <polygon points="6,4 20,12 6,20"></polygon>
+  </svg>
+  <span>Play Playlist</span>
+`;
+
+
+              playButtonCon.addEventListener('mouseenter', () => {
+                playButtonCon.style.background = '#1565c0';
+              });
+              playButtonCon.addEventListener('mouseleave', () => {
+                playButtonCon.style.background = '#1e88e5';
+              });
+              playButtonCon.addEventListener("click", async () => {
+                wrapper.remove();
+                if (!playlist) {
+                  console.error("Playlist not found");
+                  return;
+                }
+
+                globalThis.OpenSelf();
+                await os.sleep(100);
+                globalThis.IsQueuePresent = false;
+
+                Playlistplaying({
+                  playingPlaylist: playlist.id,
+                  startIndex: 0,
+                  startSubIndex: -1,
+                  parentId: "default",
+                  name: playlist.name || "Untitled Playlist",
+                  list: [...playlist.list],
+                });
               });
 
-              li.appendChild(button);
-              ul.appendChild(li);
-            });
 
-            plansSection.appendChild(ul);
-            wrapper.appendChild(plansSection);
-          }
-          else {
+
+              document.body.appendChild(playButtonCon);
+
+
+
+              plansSection.appendChild(ul);
+              wrapper.style.position = 'relative';
+              wrapper.style.padding = '12px';
+              wrapper.style.width = '190px'
+
+              plansSection.appendChild(playButtonCon)
+              wrapper.appendChild(options)
+              wrapper.appendChild(plansSection);
+            }
+          } else {
+            // Regular event section
             wrapper.style.position = 'relative';
             wrapper.style.padding = '12px';
+            wrapper.style.width = '180px'
             wrapper.appendChild(options);
 
             const container = document.createElement('div');
             container.style.cssText = `
-               display:flex;
-               flex-direction:column;
-               gap:4px;
-            `;
+      display: flex;
+      flex-direction: column;
+      gap: 4px;
+    `;
+
             const titleContainer = document.createElement('div');
             titleContainer.style.display = 'flex';
             titleContainer.style.alignItems = 'center';
@@ -1672,66 +2015,59 @@ const App = () => {
               borderRadius: '50%',
               backgroundColor: isResource ? '#f1c40f' : '#87ceeb',
             });
+
             const titleELC = document.createElement('div');
             titleELC.style.cssText = `
-              display:flex;
-              flex-direction:column;
-              gap:'1px';
-            `
+      display: flex;
+      flex-direction: column;
+      gap: 1px;
+    `;
+
             const titleEl = document.createElement('div');
             titleEl.textContent = title || 'Untitled Event';
-
             Object.assign(titleEl.style, {
-              fontSize: '20px',
+              fontSize: '16px',
               fontWeight: '800',
               color: '#000',
             });
+
             const date = document.createElement('p');
-            date.innerHTML = `
-  <div style="
-    display: inline-block;
-   
-   
-  ">
-    <span>${formattedDate} (${formattedTime})</span>
-  </div>
-`;
+            date.innerHTML = `<span>${formattedDate} (${formattedTime})</span>`;
             date.style.cssText = `
-               font-size:10px;
-               color:black;
-               margin-left:4px;
-              transform:translateY(-10px)
-               
-            `;
-            titleContainer.appendChild(greenDot);
+      font-size: 10px;
+      color: black;
+      margin-left: 4px;
+      transform: translateY(-10px);
+    `;
+
             titleELC.appendChild(titleEl);
             titleELC.appendChild(date);
+            titleContainer.appendChild(greenDot);
             titleContainer.appendChild(titleELC);
             container.appendChild(titleContainer);
-            container.appendChild(date);
 
+            // Description
             if (description) {
               const descSection = document.createElement('div');
               descSection.style.marginBottom = '12px';
               descSection.innerHTML = `
-      <div style="display:flex; align-items:center; gap:4px;">
-       <svg style="color: gray" xmlns="http://www.w3.org/2000/svg" width="24" height="24"
-          fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"
-          stroke-linejoin="round" class="feather feather-file-text">
-          <path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z" />
-          <polyline points="14 2 14 8 20 8" />
-          <line x1="16" y1="13" x2="8" y2="13" />
-          <line x1="16" y1="17" x2="8" y2="17" />
-          <line x1="10" y1="9" x2="8" y2="9" />
-        </svg>
-       
-        <strong style="color:black">${description}</strong>
-      </div>
+        <div style="display:flex; align-items:center; gap:4px;">
+          <svg style="color: gray" xmlns="http://www.w3.org/2000/svg" width="24" height="24"
+               fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"
+               stroke-linejoin="round" class="feather feather-file-text">
+            <path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z" />
+            <polyline points="14 2 14 8 20 8" />
+            <line x1="16" y1="13" x2="8" y2="13" />
+            <line x1="16" y1="17" x2="8" y2="17" />
+            <line x1="10" y1="9" x2="8" y2="9" />
+          </svg>
+          <strong style="color:black">${description}</strong>
+        </div>
       `;
               container.appendChild(descSection);
             }
 
-            // 🔗 Link section with icon
+            // Link
             if (link) {
               const linkSection = document.createElement('div');
               linkSection.style.display = 'flex';
@@ -1743,7 +2079,7 @@ const App = () => {
           stroke-linejoin="round" class="feather feather-link">
           <path d="M10 13a5 5 0 0 1 0-7l1-1a5 5 0 0 1 7 7l-1 1" />
           <path d="M14 11a5 5 0 0 1 0 7l-1 1a5 5 0 0 1-7-7l1-1" />
-        </svg>`
+        </svg>`;
               linkSection.appendChild(linkIcon);
 
               const linkBtn = document.createElement('a');
@@ -1760,9 +2096,11 @@ const App = () => {
               linkSection.appendChild(linkBtn);
               container.appendChild(linkSection);
             }
+
+            // Resource button
             if (isResource && !calendarApi.current.view.type.includes('resourceTimeline')) {
-              const resourceButton = document.createElement('div')
-              resourceButton.innerHTML = 'Go To Schedule'
+              const resourceButton = document.createElement('div');
+              resourceButton.textContent = 'Go To Schedule';
               Object.assign(resourceButton.style, {
                 padding: '2px 3px',
                 backgroundColor: '#87ceeb',
@@ -1771,45 +2109,110 @@ const App = () => {
                 textAlign: 'center',
                 borderRadius: '20px',
                 cursor: 'pointer',
-
-
-
-              })
-              resourceButton?.addEventListener('click', (e) => {
+              });
+              resourceButton.addEventListener('click', (e) => {
                 e.preventDefault();
-                calendarApi.current.changeView('resourceTimeline')
-              })
-
+                calendarApi.current.changeView('resourceTimeline');
+              });
               container.appendChild(resourceButton);
-
-
             }
-
-
-
 
             wrapper.appendChild(container);
-
           }
-          const instance = tippy(info.el, {
-            content: wrapper,
-            allowHTML: true,
-            theme: 'custom',
-            arrow: true,
-            interactive: true,
-            placement: 'auto',
-            delay: [100, 0],
 
-            maxWidth: 520,
-            trigger: 'click',
-            hideOnClick: true,
-            onShow(ins) {
-              close.addEventListener('click', () => {
-                ins.hide();
-              })
+          // Initialize Tippy.js
+          /*  if (typeof tippy === 'function') {
+              const instance = tippy(info.el, {
+                content: wrapper,
+                allowHTML: true,
+                theme: 'custom',
+                arrow: true,
+                interactive: true,
+                placement: 'auto',
+                delay: [100, 0],
+                maxWidth: 520,
+                trigger: 'click',
+                hideOnClick: true,
+                onShow(ins) {
+                  close.addEventListener('click', () => ins.hide());
+                }
+              });
+             
+              setTimeout(() => {
+                const isInPopover = info.el.closest('.fc-popover');
+                if (isInPopover) {
+                  info.el.addEventListener('click', (e) => {
+                    e.stopPropagation();
+                    if (instance.state.isShown) {
+                      instance.hide();
+                    } else {
+                      instance.show();
+                    }
+                  });
+                }
+              }, 0);
             }
+            else {
+              console.warn("Tippy.js is not loaded yet!");
+            }*/
+          info.el.addEventListener("click", (e) => {
+            e.stopPropagation();
+
+            // Remove any existing wrapper before adding a new one
+            const existing = document.querySelector(".custom-wrapper");
+            if (existing) existing.remove();
+
+            // Get event element position
+            const rect = info.el.getBoundingClientRect();
+
+            // Style your wrapper
+            Object.assign(wrapper.style, {
+              position: "absolute",
+              top: `${rect.bottom + window.scrollY + 8}px`,
+              left: `${rect.left - 150 + window.scrollX}px`,
+              zIndex: 9999,
+              background: "#e7e7e7",
+              border: "1px solid #ccc",
+              boxShadow: "0 2px 6px rgba(0,0,0,0.15)",
+              borderRadius: "8px",
+              padding: "12px",
+            });
+
+            wrapper.classList.add("custom-wrapper");
+            document.body.appendChild(wrapper);
+
+            // 👇 Close function (for reuse)
+            const closeWrapper = () => {
+              wrapper.remove();
+              document.removeEventListener("mousedown", handleOutsideClick);
+              document.removeEventListener("scroll", handleScroll, true);
+            };
+
+            // 👇 Handle outside click
+            const handleOutsideClick = (event) => {
+              if (!wrapper.contains(event.target) && !info.el.contains(event.target)) {
+                closeWrapper();
+              }
+            };
+
+            // 👇 Handle scroll anywhere in page (capture = true to catch nested scrolls)
+            const handleScroll = () => {
+              closeWrapper();
+            };
+
+            // Delay adding listeners so this same click doesn't trigger them
+            setTimeout(() => {
+              document.addEventListener("mousedown", handleOutsideClick);
+              document.addEventListener("scroll", handleScroll, true);
+            }, 0);
           });
+
+
+
+
+
         }
+
 
 
       });
@@ -1849,17 +2252,44 @@ const App = () => {
 
     const observer = new ResizeObserver(entries => {
       for (let entry of entries) {
-        const w = entry.contentRect.width;
+        const width = entry.contentRect.width;
 
-        // Toggle dot vs. full event mode
-        calendarApi.current.updateSize(); // refresh layout
-        calendarApi.current.render();     // reapply eventClassNames
+        // Select all day grid events
+        const dayEvents = document.querySelectorAll('.fc-daygrid-day-events');
+        const moreBtn = document.querySelectorAll('.fc-more-link');
+
+
+
+        dayEvents.forEach(el => {
+          if (width < 470) {
+            el.style.display = 'flex';
+            el.style.gap = '';
+            el.style.flexDirection = 'row';
+            el.style.flexWrap = 'wrap'
+
+          } else {
+            el.style.display = 'flex';
+            el.style.flexDirection = 'column';
+          }
+        });
+        moreBtn.forEach(el => {
+          el.style.display = 'block';
+          el.style.marginTop = '10px';
+        })
+
+
+
+
+
+        // Refresh calendar layout if needed
+        calendarApi.current.updateSize();
       }
     });
 
     observer.observe(container);
     return () => observer.disconnect();
   }, []);
+
 
 
   useEffect(() => {
@@ -1895,18 +2325,18 @@ const App = () => {
       window.removeEventListener('resize', updateFontSize);
     };
   }, []);
-  console.log(allEvents, 'allevents')
-
 
 
   return (
     <>
-     <script src="https://cdn.jsdelivr.net/npm/fullcalendar-scheduler@6.1.18/index.global.min.js"></script>
+      <script src="https://cdnjs.cloudflare.com/ajax/libs/ical.js/1.4.0/ical.min.js"></script>
+      <script src="https://cdn.jsdelivr.net/npm/@fullcalendar/icalendar@6.1.17/index.global.min.js"></script>
+      <script src="https://cdn.jsdelivr.net/npm/fullcalendar-scheduler@6.1.18/index.global.min.js"></script>
       <script src='fullcalendar-scheduler/dist/index.global.js'></script>
       <style>{tags["calendar.css"]}</style>
       <link href="https://fonts.googleapis.com/icon?family=Material+Icons" rel="stylesheet" />
       <link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Material+Symbols+Outlined:opsz,wght,FILL,GRAD@24,400,0,0" />
-      <div class="experience-container" style={{ backgroundColor: 'white', padding: '10px', position: 'relative', height: '100%' }}>
+      <div class="experience-container" style={{ backgroundColor: 'white', padding: '10px', position: 'relative', minHeight: '100%', height: 'min-content' }}>
         <div style={{ position: 'absolute', display: 'inline-block', right: '10px', top: '10px' }} ref={dropdownRef} onClick={handleToggleSetting}>
           <div style={{ padding: '4px 6px', border: '1px solid #d3d3d3', borderRadius: '5px' }}>
             <svg width="16" height="16" viewBox="0 0 14 14" fill="none" xmlns="http://www.w3.org/2000/svg" style={{ transform: 'translateY(2px)' }}>
@@ -1914,12 +2344,12 @@ const App = () => {
               <path d="M5 6.99919C5 8.10376 5.89543 8.99919 7 8.99919C8.10457 8.99919 9 8.10376 9 6.99919C9 5.89462 8.10457 4.99919 7 4.99919C5.89543 4.99919 5 5.89462 5 6.99919Z" stroke="black" stroke-linecap="round" stroke-linejoin="round" />
             </svg>
           </div>
-          {openSetting && <Setting setOpenSetting={setOpenSetting} dropdownRef={dropdownRef} setOpenCalendar={setOpenCalendar} setOpenMap={setOpenMap} setMapViewSelected={setMapViewSelected} setHasTitle={setHasTitle} hasTitle={hasTitle} calendarApi={calendarApi} setShowSchedules={setShowSchedules} showSchedules={showSchedules} />}
+          {openSetting && <Setting setOpenSetting={setOpenSetting} dropdownRef={dropdownRef} setOpenCalendar={setOpenCalendar} setOpenMap={setOpenMap} setMapViewSelected={setMapViewSelected} setHasTitle={setHasTitle} hasTitle={hasTitle} calendarApi={calendarApi} setShowSchedules={setShowSchedules} showSchedules={showSchedules} showHolidays={showHolidays} setShowHolidays={setShowHolidays} />}
         </div>
         {hasTitle && <CalendarTitle setScheduleTitle={setScheduleTitle} isSchedule={isSchedule} scheduleTitle={scheduleTitle} />}
 
 
-        {isSchedule && <GoToCalendar calendarApi={calendarApi} />}
+        {isSchedule && <GoToCalendar calendarApi={calendarApi} setCalendarView={setCalendarView} />}
 
         <div style={{ display: openCalendar ? 'block' : 'none', marginTop: hasTitle ? '' : '40px' }}>
           <div class="calendar-wrapper">
@@ -1931,7 +2361,7 @@ const App = () => {
             }}></div>}
           </div>
           {isSchedule && <ResourceTitle scheduleDescription={scheduleDescription} />}
-          {isModalOpen && <ResourceHeaderModal setIsResourceGroupHiding={setIsResourceGroupHiding} calendarApi={calendarApi} isModalOpen={isModalOpen} resourcesRef={resourcesRef} setIsModalOpen={setIsModalOpen} resourcesByDate={resourcesByDate} setResourcesByDate={setResourcesByDate} />}
+          {isModalOpen && <ResourceHeaderModal setIsResourceGroupHiding={setIsResourceGroupHiding} calendarApi={calendarApi} isModalOpen={isModalOpen} resourcesRef={resourcesRef} setIsModalOpen={setIsModalOpen} resourcesByDate={resourcesByDate} setResourcesByDate={setResourcesByDate} allGroups={allGroups} setAllGroups={setAllGroups} />}
           <GroupSettingsModal
             open={groupModalOpen}
             groupValue={currentGroupValue}
@@ -2049,6 +2479,9 @@ const App = () => {
             position={groupMenu.position}
             groupMenu={groupMenu}
             setGroupMenu={setGroupMenu}
+            hiddenGroups={hiddenGroups}
+            setHiddenGroups={setHiddenGroups}
+            calendarView={calendarView}
 
             groupValue={groupMenu.groupValue}
             onClose={() => setGroupMenu({ groupValue: null, position: null })}

@@ -1,0 +1,476 @@
+{
+  "data": {
+    "book": {
+      "commonName": "Genesis",
+      "firstChapterApiLink": "/api/BSB/GEN/1.json",
+      "id": "GEN",
+      "lastChapterApiLink": "/api/BSB/GEN/50.json",
+      "name": "Genesis",
+      "numberOfChapters": 50,
+      "order": 1,
+      "sha256": "9ae507188093d846873e8affd9e88c21ac55abdbc6d8adb9beb220345494f0f1",
+      "title": "Genesis",
+      "totalNumberOfVerses": 1533,
+      "translationId": "BSB"
+    },
+    "chapter": {
+      "content": [
+        {
+          "content": [
+            "Cain and Abel"
+          ],
+          "type": "heading"
+        },
+        {
+          "content": [
+            "And Adam had relations with his wife Eve, and she conceived and gave birth to Cain.",
+            {
+              "noteId": 4332
+            },
+            {
+              "lineBreak": true
+            },
+            "“With the help of the LORD I have brought forth a man,” she said."
+          ],
+          "number": 1,
+          "type": "verse"
+        },
+        {
+          "type": "line_break"
+        },
+        {
+          "content": [
+            "Later she gave birth to Cain’s brother Abel.",
+            {
+              "lineBreak": true
+            },
+            "Now Abel was a keeper of sheep, while Cain was a tiller of the soil."
+          ],
+          "number": 2,
+          "type": "verse"
+        },
+        {
+          "content": [
+            "So in the course of time, Cain brought some of the fruit of the soil as an offering to the LORD,"
+          ],
+          "number": 3,
+          "type": "verse"
+        },
+        {
+          "content": [
+            "while Abel brought the best portions of the firstborn of his flock.",
+            {
+              "lineBreak": true
+            },
+            "And the LORD looked with favor on Abel and his offering,"
+          ],
+          "number": 4,
+          "type": "verse"
+        },
+        {
+          "content": [
+            "but He had no regard for Cain and his offering. So Cain became very angry, and his countenance fell."
+          ],
+          "number": 5,
+          "type": "verse"
+        },
+        {
+          "type": "line_break"
+        },
+        {
+          "content": [
+            "“Why are you angry,” said the LORD to Cain, “and why has your countenance fallen?"
+          ],
+          "number": 6,
+          "type": "verse"
+        },
+        {
+          "content": [
+            "If you do what is right, will you not be accepted? But if you refuse to do what is right, sin is crouching at your door; it desires you,",
+            {
+              "noteId": 4333
+            },
+            "but you must master it.”"
+          ],
+          "number": 7,
+          "type": "verse"
+        },
+        {
+          "type": "line_break"
+        },
+        {
+          "content": [
+            "Then Cain said to his brother Abel, “Let us go out to the field.”",
+            {
+              "noteId": 4334
+            },
+            "And while they were in the field, Cain rose up against his brother Abel and killed him."
+          ],
+          "number": 8,
+          "type": "verse"
+        },
+        {
+          "type": "line_break"
+        },
+        {
+          "content": [
+            "And the LORD said to Cain, “Where is your brother Abel?”",
+            {
+              "lineBreak": true
+            },
+            "“I do not know!” he answered. “Am I my brother’s keeper?”"
+          ],
+          "number": 9,
+          "type": "verse"
+        },
+        {
+          "type": "line_break"
+        },
+        {
+          "content": [
+            "“What have you done?” replied the LORD. “The voice of your brother’s blood cries out to Me from the ground."
+          ],
+          "number": 10,
+          "type": "verse"
+        },
+        {
+          "content": [
+            "Now you are cursed and banished from the ground, which has opened its mouth to receive your brother’s blood from your hand."
+          ],
+          "number": 11,
+          "type": "verse"
+        },
+        {
+          "content": [
+            "When you till the ground, it will no longer yield its produce to you. You will be a fugitive and a wanderer on the earth.”"
+          ],
+          "number": 12,
+          "type": "verse"
+        },
+        {
+          "type": "line_break"
+        },
+        {
+          "content": [
+            "But Cain said to the LORD, “My punishment",
+            {
+              "noteId": 4335
+            },
+            "is greater than I can bear."
+          ],
+          "number": 13,
+          "type": "verse"
+        },
+        {
+          "content": [
+            "Behold, this day You have driven me from the face of the earth, and from Your face I will be hidden; I will be a fugitive and a wanderer on the earth, and whoever finds me will kill me.”"
+          ],
+          "number": 14,
+          "type": "verse"
+        },
+        {
+          "type": "line_break"
+        },
+        {
+          "content": [
+            "“Not so!”",
+            {
+              "noteId": 4336
+            },
+            "replied the LORD. “If anyone slays Cain, then Cain will be avenged sevenfold.” And the LORD placed a mark on Cain, so that no one who found him would kill him."
+          ],
+          "number": 15,
+          "type": "verse"
+        },
+        {
+          "type": "line_break"
+        },
+        {
+          "content": [
+            "So Cain went out from the presence of the LORD and settled in the land of Nod,",
+            {
+              "noteId": 4337
+            },
+            "east of Eden."
+          ],
+          "number": 16,
+          "type": "verse"
+        },
+        {
+          "content": [
+            "The Descendants of Cain"
+          ],
+          "type": "heading"
+        },
+        {
+          "type": "line_break"
+        },
+        {
+          "content": [
+            "And Cain had relations with his wife, and she conceived and gave birth to Enoch. Then Cain built a city and named it after his son Enoch."
+          ],
+          "number": 17,
+          "type": "verse"
+        },
+        {
+          "type": "line_break"
+        },
+        {
+          "content": [
+            "Now to Enoch was born Irad, and Irad was the father of Mehujael, and Mehujael was the father of Methusael, and Methusael was the father of Lamech."
+          ],
+          "number": 18,
+          "type": "verse"
+        },
+        {
+          "content": [
+            "And Lamech married two women, one named Adah and the other Zillah."
+          ],
+          "number": 19,
+          "type": "verse"
+        },
+        {
+          "type": "line_break"
+        },
+        {
+          "content": [
+            "Adah gave birth to Jabal; he was the father of those who dwell in tents and raise livestock."
+          ],
+          "number": 20,
+          "type": "verse"
+        },
+        {
+          "content": [
+            "And his brother’s name was Jubal; he was the father of all who play the harp and flute."
+          ],
+          "number": 21,
+          "type": "verse"
+        },
+        {
+          "type": "line_break"
+        },
+        {
+          "content": [
+            "And Zillah gave birth to Tubal-cain, a forger of every implement of bronze and iron. And the sister of Tubal-cain was Naamah."
+          ],
+          "number": 22,
+          "type": "verse"
+        },
+        {
+          "type": "line_break"
+        },
+        {
+          "content": [
+            "Then Lamech said to his wives:",
+            {
+              "lineBreak": true
+            },
+            {
+              "poem": 1,
+              "text": "“Adah and Zillah, hear my voice;"
+            },
+            {
+              "poem": 2,
+              "text": "wives of Lamech, listen to my speech."
+            },
+            {
+              "poem": 1,
+              "text": "For I have slain a man for wounding me,"
+            },
+            {
+              "poem": 2,
+              "text": "a young man for striking me."
+            }
+          ],
+          "number": 23,
+          "type": "verse"
+        },
+        {
+          "content": [
+            {
+              "poem": 1,
+              "text": "If Cain is avenged sevenfold,"
+            },
+            {
+              "poem": 2,
+              "text": "then Lamech seventy-sevenfold.”"
+            },
+            {
+              "noteId": 4338
+            }
+          ],
+          "number": 24,
+          "type": "verse"
+        },
+        {
+          "content": [
+            "Seth and Enosh"
+          ],
+          "type": "heading"
+        },
+        {
+          "type": "line_break"
+        },
+        {
+          "content": [
+            "And Adam again had relations with his wife, and she gave birth to a son and named him Seth,",
+            {
+              "noteId": 4339
+            },
+            "saying, “God has granted me another seed in place of Abel, since Cain killed him.”"
+          ],
+          "number": 25,
+          "type": "verse"
+        },
+        {
+          "type": "line_break"
+        },
+        {
+          "content": [
+            "And to Seth also a son was born, and he called him Enosh.",
+            {
+              "lineBreak": true
+            },
+            "At that time men began to call upon",
+            {
+              "noteId": 4340
+            },
+            "the name of the LORD."
+          ],
+          "number": 26,
+          "type": "verse"
+        }
+      ],
+      "footnotes": [
+        {
+          "caller": "+",
+          "noteId": 4332,
+          "reference": {
+            "chapter": 4,
+            "verse": 1
+          },
+          "text": "Cain sounds like the Hebrew for acquired or brought forth."
+        },
+        {
+          "caller": "+",
+          "noteId": 4333,
+          "reference": {
+            "chapter": 4,
+            "verse": 7
+          },
+          "text": "Or it desires to control you"
+        },
+        {
+          "caller": "+",
+          "noteId": 4334,
+          "reference": {
+            "chapter": 4,
+            "verse": 8
+          },
+          "text": "SP, LXX, Syriac, and Vulgate; Hebrew Then Cain spoke to his brother Abel."
+        },
+        {
+          "caller": "+",
+          "noteId": 4335,
+          "reference": {
+            "chapter": 4,
+            "verse": 13
+          },
+          "text": "Or guilt or sin"
+        },
+        {
+          "caller": "+",
+          "noteId": 4336,
+          "reference": {
+            "chapter": 4,
+            "verse": 15
+          },
+          "text": "LXX, Vulgate, and Syriac; Hebrew “Very well!” or “Therefore:”"
+        },
+        {
+          "caller": "+",
+          "noteId": 4337,
+          "reference": {
+            "chapter": 4,
+            "verse": 16
+          },
+          "text": "Nod means wandering."
+        },
+        {
+          "caller": "+",
+          "noteId": 4338,
+          "reference": {
+            "chapter": 4,
+            "verse": 24
+          },
+          "text": "Hebrew; LXX can be translated as either seventy times seven or seventy-sevenfold; see also Matthew 18:22."
+        },
+        {
+          "caller": "+",
+          "noteId": 4339,
+          "reference": {
+            "chapter": 4,
+            "verse": 25
+          },
+          "text": "Seth probably means granted or appointed."
+        },
+        {
+          "caller": "+",
+          "noteId": 4340,
+          "reference": {
+            "chapter": 4,
+            "verse": 26
+          },
+          "text": "Or to proclaim; some translators to invoke or to call themselves by or to profane"
+        }
+      ],
+      "number": 4
+    },
+    "nextChapterApiLink": "/api/BSB/GEN/5.json",
+    "nextChapterAudioLinks": {
+      "gilbert": "https://openbible.com/audio/gilbert/BSB_01_Gen_005_G.mp3",
+      "hays": "https://openbible.com/audio/hays/BSB_01_Gen_005_H.mp3",
+      "souer": "https://openbible.com/audio/souer/BSB_01_Gen_005.mp3"
+    },
+    "numberOfVerses": 26,
+    "previousChapterApiLink": "/api/BSB/GEN/3.json",
+    "previousChapterAudioLinks": {
+      "gilbert": "https://openbible.com/audio/gilbert/BSB_01_Gen_003_G.mp3",
+      "hays": "https://openbible.com/audio/hays/BSB_01_Gen_003_H.mp3",
+      "souer": "https://openbible.com/audio/souer/BSB_01_Gen_003.mp3"
+    },
+    "thisChapterAudioLinks": {
+      "gilbert": "https://openbible.com/audio/gilbert/BSB_01_Gen_004_G.mp3",
+      "hays": "https://openbible.com/audio/hays/BSB_01_Gen_004_H.mp3",
+      "souer": "https://openbible.com/audio/souer/BSB_01_Gen_004.mp3"
+    },
+    "thisChapterLink": "/api/BSB/GEN/4.json",
+    "translation": {
+      "availableFormats": [
+        "json"
+      ],
+      "englishName": "Berean Standard Bible",
+      "id": "BSB",
+      "language": "eng",
+      "languageEnglishName": "English",
+      "languageName": "English",
+      "licenseNotes": null,
+      "licenseUrl": "https://berean.bible/",
+      "listOfBooksApiLink": "/api/BSB/books.json",
+      "name": "Berean Standard Bible",
+      "numberOfBooks": 66,
+      "sha256": "17c5ac87e26de77bf1f09c1c3ee0c3fafeb3c876849038e8df9b64a7a9504674",
+      "shortName": "BSB",
+      "textDirection": "ltr",
+      "totalNumberOfChapters": 1189,
+      "totalNumberOfVerses": 31086,
+      "website": "https://berean.bible/"
+    }
+  },
+  "headers": {
+    "content-type": "application/json",
+    "last-modified": "Thu, 19 Dec 2024 17:49:01 GMT"
+  },
+  "status": 200,
+  "statusText": ""
+}

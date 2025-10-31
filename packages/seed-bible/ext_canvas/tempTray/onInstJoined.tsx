@@ -1,1 +1,0 @@
-setTagMask(thisBot, "currentChaism", null, "tempLocal");

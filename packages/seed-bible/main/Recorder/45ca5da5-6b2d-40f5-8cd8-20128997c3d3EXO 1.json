@@ -1,0 +1,317 @@
+{
+  "data": {
+    "book": {
+      "commonName": "Exodus",
+      "firstChapterApiLink": "/api/BSB/EXO/1.json",
+      "id": "EXO",
+      "lastChapterApiLink": "/api/BSB/EXO/40.json",
+      "name": "Exodus",
+      "numberOfChapters": 40,
+      "order": 2,
+      "sha256": "f036511ae774f868007d0f0b59ff020699f21228d9293b390f4fc9d3f6f2dee2",
+      "title": "Exodus",
+      "totalNumberOfVerses": 1213,
+      "translationId": "BSB"
+    },
+    "chapter": {
+      "content": [
+        {
+          "content": [
+            "The Israelites Multiply in Egypt"
+          ],
+          "type": "heading"
+        },
+        {
+          "content": [
+            "These are the names of the sons of Israel who went to Egypt with Jacob, each with his family:"
+          ],
+          "number": 1,
+          "type": "verse"
+        },
+        {
+          "type": "line_break"
+        },
+        {
+          "content": [
+            "Reuben, Simeon, Levi, and Judah;"
+          ],
+          "number": 2,
+          "type": "verse"
+        },
+        {
+          "type": "line_break"
+        },
+        {
+          "content": [
+            "Issachar, Zebulun, and Benjamin;"
+          ],
+          "number": 3,
+          "type": "verse"
+        },
+        {
+          "type": "line_break"
+        },
+        {
+          "content": [
+            "Dan and Naphtali;",
+            {
+              "lineBreak": true
+            },
+            "Gad and Asher."
+          ],
+          "number": 4,
+          "type": "verse"
+        },
+        {
+          "type": "line_break"
+        },
+        {
+          "content": [
+            "The descendants of Jacob numbered seventy",
+            {
+              "noteId": 1595
+            },
+            "in all, including Joseph, who was already in Egypt."
+          ],
+          "number": 5,
+          "type": "verse"
+        },
+        {
+          "type": "line_break"
+        },
+        {
+          "content": [
+            "Now Joseph and all his brothers and all that generation died,"
+          ],
+          "number": 6,
+          "type": "verse"
+        },
+        {
+          "content": [
+            "but the Israelites were fruitful and increased rapidly; they multiplied and became exceedingly numerous, so that the land was filled with them."
+          ],
+          "number": 7,
+          "type": "verse"
+        },
+        {
+          "content": [
+            "Oppression by a New King"
+          ],
+          "type": "heading"
+        },
+        {
+          "type": "line_break"
+        },
+        {
+          "content": [
+            "Then a new king, who did not know Joseph, came to power in Egypt."
+          ],
+          "number": 8,
+          "type": "verse"
+        },
+        {
+          "content": [
+            "“Look,” he said to his people, “the Israelites have become too numerous and too powerful for us."
+          ],
+          "number": 9,
+          "type": "verse"
+        },
+        {
+          "content": [
+            "Come, let us deal shrewdly with them, or they will increase even more; and if a war breaks out, they may join our enemies, fight against us, and leave the country.",
+            {
+              "noteId": 1596
+            },
+            "”"
+          ],
+          "number": 10,
+          "type": "verse"
+        },
+        {
+          "type": "line_break"
+        },
+        {
+          "content": [
+            "So the Egyptians appointed taskmasters over the Israelites to oppress them with forced labor. As a result, they built Pithom and Rameses as store cities for Pharaoh."
+          ],
+          "number": 11,
+          "type": "verse"
+        },
+        {
+          "content": [
+            "But the more they were oppressed, the more they multiplied and flourished; so the Egyptians came to dread the Israelites."
+          ],
+          "number": 12,
+          "type": "verse"
+        },
+        {
+          "type": "line_break"
+        },
+        {
+          "content": [
+            "They worked the Israelites ruthlessly"
+          ],
+          "number": 13,
+          "type": "verse"
+        },
+        {
+          "content": [
+            "and made their lives bitter with hard labor in brick and mortar, and with all kinds of work in the fields. Every service they imposed was harsh."
+          ],
+          "number": 14,
+          "type": "verse"
+        },
+        {
+          "type": "line_break"
+        },
+        {
+          "content": [
+            "Then the king of Egypt said to the Hebrew midwives, whose names were Shiphrah and Puah,"
+          ],
+          "number": 15,
+          "type": "verse"
+        },
+        {
+          "content": [
+            "“When you help the Hebrew women give birth, observe them on the birthstools. If the child is a son, kill him; but if it is a daughter, let her live.”"
+          ],
+          "number": 16,
+          "type": "verse"
+        },
+        {
+          "type": "line_break"
+        },
+        {
+          "content": [
+            "The midwives, however, feared God and did not do as the king of Egypt had instructed; they let the boys live."
+          ],
+          "number": 17,
+          "type": "verse"
+        },
+        {
+          "content": [
+            "So the king of Egypt summoned the midwives and asked them, “Why have you done this? Why have you let the boys live?”"
+          ],
+          "number": 18,
+          "type": "verse"
+        },
+        {
+          "type": "line_break"
+        },
+        {
+          "content": [
+            "The midwives answered Pharaoh, “The Hebrew women are not like the Egyptian women, for they are vigorous and give birth before a midwife arrives.”"
+          ],
+          "number": 19,
+          "type": "verse"
+        },
+        {
+          "type": "line_break"
+        },
+        {
+          "content": [
+            "So God was good to the midwives, and the people multiplied and became even more numerous."
+          ],
+          "number": 20,
+          "type": "verse"
+        },
+        {
+          "content": [
+            "And because the midwives feared God, He gave them families of their own."
+          ],
+          "number": 21,
+          "type": "verse"
+        },
+        {
+          "type": "line_break"
+        },
+        {
+          "content": [
+            "Then Pharaoh commanded all his people: “Every son born to the Hebrews",
+            {
+              "noteId": 1597
+            },
+            "you must throw into the Nile, but every daughter you may allow to live.”"
+          ],
+          "number": 22,
+          "type": "verse"
+        }
+      ],
+      "footnotes": [
+        {
+          "caller": "+",
+          "noteId": 1595,
+          "reference": {
+            "chapter": 1,
+            "verse": 5
+          },
+          "text": "MT (see also Genesis 46:27); DSS and LXX (see also Acts 7:14) seventy-five"
+        },
+        {
+          "caller": "+",
+          "noteId": 1596,
+          "reference": {
+            "chapter": 1,
+            "verse": 10
+          },
+          "text": "Or and take the country"
+        },
+        {
+          "caller": "+",
+          "noteId": 1597,
+          "reference": {
+            "chapter": 1,
+            "verse": 22
+          },
+          "text": "SP, LXX, and Targum Yonaton; Hebrew does not include to the Hebrews."
+        }
+      ],
+      "number": 1
+    },
+    "nextChapterApiLink": "/api/BSB/EXO/2.json",
+    "nextChapterAudioLinks": {
+      "gilbert": "https://openbible.com/audio/gilbert/BSB_02_Exo_002_G.mp3",
+      "hays": "https://openbible.com/audio/hays/BSB_02_Exo_002_H.mp3",
+      "souer": "https://openbible.com/audio/souer/BSB_02_Exo_002.mp3"
+    },
+    "numberOfVerses": 22,
+    "previousChapterApiLink": "/api/BSB/GEN/50.json",
+    "previousChapterAudioLinks": {
+      "gilbert": "https://openbible.com/audio/gilbert/BSB_01_Gen_050_G.mp3",
+      "hays": "https://openbible.com/audio/hays/BSB_01_Gen_050_H.mp3",
+      "souer": "https://openbible.com/audio/souer/BSB_01_Gen_050.mp3"
+    },
+    "thisChapterAudioLinks": {
+      "gilbert": "https://openbible.com/audio/gilbert/BSB_02_Exo_001_G.mp3",
+      "hays": "https://openbible.com/audio/hays/BSB_02_Exo_001_H.mp3",
+      "souer": "https://openbible.com/audio/souer/BSB_02_Exo_001.mp3"
+    },
+    "thisChapterLink": "/api/BSB/EXO/1.json",
+    "translation": {
+      "availableFormats": [
+        "json"
+      ],
+      "englishName": "Berean Standard Bible",
+      "id": "BSB",
+      "language": "eng",
+      "languageEnglishName": "English",
+      "languageName": "English",
+      "licenseUrl": "https://berean.bible/",
+      "listOfBooksApiLink": "/api/BSB/books.json",
+      "name": "Berean Standard Bible",
+      "numberOfBooks": 66,
+      "sha256": "587b6d4528b746696e90560a23115d4da5dac426bbd75e288276092f5a45ad21",
+      "shortName": "BSB",
+      "textDirection": "ltr",
+      "totalNumberOfChapters": 1189,
+      "totalNumberOfVerses": 31086,
+      "website": "https://berean.bible/"
+    }
+  },
+  "headers": {
+    "content-type": "application/json",
+    "last-modified": "Wed, 13 Nov 2024 21:19:48 GMT"
+  },
+  "status": 200,
+  "statusText": ""
+}

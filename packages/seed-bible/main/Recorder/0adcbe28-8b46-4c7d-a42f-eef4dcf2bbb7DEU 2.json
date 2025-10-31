@@ -1,0 +1,429 @@
+{
+  "data": {
+    "book": {
+      "commonName": "Deuteronomy",
+      "firstChapterApiLink": "/api/BSB/DEU/1.json",
+      "id": "DEU",
+      "lastChapterApiLink": "/api/BSB/DEU/34.json",
+      "name": "Deuteronomy",
+      "numberOfChapters": 34,
+      "order": 5,
+      "sha256": "df873168e1395e1474b634411d26d8f18c000e6473f87f89609c390b9312833e",
+      "title": "Deuteronomy",
+      "totalNumberOfVerses": 959,
+      "translationId": "BSB"
+    },
+    "chapter": {
+      "content": [
+        {
+          "content": [
+            "Wanderings in the Wilderness"
+          ],
+          "type": "heading"
+        },
+        {
+          "content": [
+            "Then we turned back and headed for the wilderness by way of the Red Sea,",
+            {
+              "noteId": 3611
+            },
+            "as the LORD had instructed me, and for many days we wandered around Mount Seir."
+          ],
+          "number": 1,
+          "type": "verse"
+        },
+        {
+          "type": "line_break"
+        },
+        {
+          "content": [
+            "At this time the LORD said to me,"
+          ],
+          "number": 2,
+          "type": "verse"
+        },
+        {
+          "content": [
+            "“You have been wandering around this hill country long enough; turn to the north"
+          ],
+          "number": 3,
+          "type": "verse"
+        },
+        {
+          "content": [
+            "and command the people: ‘You will pass through the territory of your brothers, the descendants of Esau, who live in Seir. They will be afraid of you, so you must be very careful."
+          ],
+          "number": 4,
+          "type": "verse"
+        },
+        {
+          "content": [
+            "Do not provoke them, for I will not give you any of their land, not even a footprint, because I have given Mount Seir to Esau as his possession."
+          ],
+          "number": 5,
+          "type": "verse"
+        },
+        {
+          "content": [
+            "You are to pay them in silver for the food you eat and the water you drink.’”"
+          ],
+          "number": 6,
+          "type": "verse"
+        },
+        {
+          "type": "line_break"
+        },
+        {
+          "content": [
+            "Indeed, the LORD your God has blessed you in all the work of your hands. He has watched over your journey through this vast wilderness. The LORD your God has been with you these forty years, and you have lacked nothing."
+          ],
+          "number": 7,
+          "type": "verse"
+        },
+        {
+          "type": "line_break"
+        },
+        {
+          "content": [
+            "So we passed by our brothers, the descendants of Esau, who live in Seir. We turned away from the Arabah road, which comes up from Elath and Ezion-geber, and traveled along the road of the Wilderness of Moab."
+          ],
+          "number": 8,
+          "type": "verse"
+        },
+        {
+          "content": [
+            "Then the LORD said to me, “Do not harass the Moabites or provoke them to war, for I will not give you any of their land, because I have given Ar to the descendants of Lot as their possession.”"
+          ],
+          "number": 9,
+          "type": "verse"
+        },
+        {
+          "type": "line_break"
+        },
+        {
+          "content": [
+            "(The Emites used to live there, a people great and many, as tall as the Anakites."
+          ],
+          "number": 10,
+          "type": "verse"
+        },
+        {
+          "content": [
+            "Like the Anakites, they were also regarded as Rephaim, though the Moabites called them Emites."
+          ],
+          "number": 11,
+          "type": "verse"
+        },
+        {
+          "content": [
+            "The Horites used to live in Seir, but the descendants of Esau drove them out. They destroyed the Horites from before them and settled in their place, just as Israel did in the land that the LORD gave them as their possession.)"
+          ],
+          "number": 12,
+          "type": "verse"
+        },
+        {
+          "type": "line_break"
+        },
+        {
+          "content": [
+            "“Now arise and cross over the Brook of Zered.”",
+            {
+              "lineBreak": true
+            },
+            "So we crossed over the Brook of Zered."
+          ],
+          "number": 13,
+          "type": "verse"
+        },
+        {
+          "type": "line_break"
+        },
+        {
+          "content": [
+            "The time we spent traveling from Kadesh-barnea until we crossed over the Brook of Zered was thirty-eight years, until that entire generation of fighting men had perished from the camp, as the LORD had sworn to them."
+          ],
+          "number": 14,
+          "type": "verse"
+        },
+        {
+          "content": [
+            "Indeed, the LORD’s hand was against them, to eliminate them from the camp, until they had all perished."
+          ],
+          "number": 15,
+          "type": "verse"
+        },
+        {
+          "type": "line_break"
+        },
+        {
+          "content": [
+            "Now when all the fighting men among the people had died,"
+          ],
+          "number": 16,
+          "type": "verse"
+        },
+        {
+          "content": [
+            "the LORD said to me,"
+          ],
+          "number": 17,
+          "type": "verse"
+        },
+        {
+          "content": [
+            "“Today you are going to cross the border of Moab at Ar."
+          ],
+          "number": 18,
+          "type": "verse"
+        },
+        {
+          "content": [
+            "But when you get close to the Ammonites, do not harass them or provoke them, for I will not give you any of the land of the Ammonites. I have given it to the descendants of Lot as their possession.”"
+          ],
+          "number": 19,
+          "type": "verse"
+        },
+        {
+          "type": "line_break"
+        },
+        {
+          "content": [
+            "(That too was regarded as the land of the Rephaim, who used to live there, though the Ammonites called them Zamzummites."
+          ],
+          "number": 20,
+          "type": "verse"
+        },
+        {
+          "content": [
+            "They were a people great and many, as tall as the Anakites. But the LORD destroyed them from before the Ammonites, who drove them out and settled in their place,"
+          ],
+          "number": 21,
+          "type": "verse"
+        },
+        {
+          "content": [
+            "just as He had done for the descendants of Esau who lived in Seir, when He destroyed the Horites from before them. They drove them out and have lived in their place to this day."
+          ],
+          "number": 22,
+          "type": "verse"
+        },
+        {
+          "content": [
+            "And the Avvim, who lived in villages as far as Gaza, were destroyed by the Caphtorites, who came out of Caphtor",
+            {
+              "noteId": 3612
+            },
+            "and settled in their place.)"
+          ],
+          "number": 23,
+          "type": "verse"
+        },
+        {
+          "content": [
+            "The Defeat of Sihon"
+          ],
+          "type": "heading"
+        },
+        {
+          "type": "line_break"
+        },
+        {
+          "content": [
+            "“Arise, set out, and cross the Arnon Valley. See, I have delivered into your hand Sihon the Amorite, king of Heshbon, and his land. Begin to take possession of it and engage him in battle."
+          ],
+          "number": 24,
+          "type": "verse"
+        },
+        {
+          "content": [
+            "This very day I will begin to put the dread and fear of you upon all the nations under heaven. They will hear the reports of you and tremble in anguish because of you.”"
+          ],
+          "number": 25,
+          "type": "verse"
+        },
+        {
+          "type": "line_break"
+        },
+        {
+          "content": [
+            "So from the Wilderness of Kedemoth I sent messengers with an offer of peace to Sihon king of Heshbon, saying,"
+          ],
+          "number": 26,
+          "type": "verse"
+        },
+        {
+          "content": [
+            "“Let us pass through your land; we will stay on the main road. We will not turn to the right or to the left."
+          ],
+          "number": 27,
+          "type": "verse"
+        },
+        {
+          "content": [
+            "You can sell us food to eat and water to drink in exchange for silver. Only let us pass through on foot,"
+          ],
+          "number": 28,
+          "type": "verse"
+        },
+        {
+          "content": [
+            "just as the descendants of Esau who live in Seir and the Moabites who live in Ar did for us, until we cross the Jordan into the land that the LORD our God is giving us.”"
+          ],
+          "number": 29,
+          "type": "verse"
+        },
+        {
+          "type": "line_break"
+        },
+        {
+          "content": [
+            "But Sihon king of Heshbon would not let us pass through, for the LORD your God had made his spirit stubborn and his heart obstinate, that He might deliver him into your hand, as is the case this day."
+          ],
+          "number": 30,
+          "type": "verse"
+        },
+        {
+          "type": "line_break"
+        },
+        {
+          "content": [
+            "Then the LORD said to me, “See, I have begun to deliver Sihon and his land over to you. Now begin to conquer and possess his land.”"
+          ],
+          "number": 31,
+          "type": "verse"
+        },
+        {
+          "type": "line_break"
+        },
+        {
+          "content": [
+            "So Sihon and his whole army came out for battle against us at Jahaz."
+          ],
+          "number": 32,
+          "type": "verse"
+        },
+        {
+          "content": [
+            "And the LORD our God delivered him over to us, and we defeated him and his sons and his whole army."
+          ],
+          "number": 33,
+          "type": "verse"
+        },
+        {
+          "type": "line_break"
+        },
+        {
+          "content": [
+            "At that time we captured all his cities and devoted to destruction",
+            {
+              "noteId": 3613
+            },
+            "the people of every city, including women and children. We left no survivors."
+          ],
+          "number": 34,
+          "type": "verse"
+        },
+        {
+          "content": [
+            "We carried off for ourselves only the livestock and the plunder from the cities we captured."
+          ],
+          "number": 35,
+          "type": "verse"
+        },
+        {
+          "type": "line_break"
+        },
+        {
+          "content": [
+            "From Aroer on the rim of the Arnon Valley, along with the city in the valley, even as far as Gilead, not one city had walls too high for us. The LORD our God gave us all of them."
+          ],
+          "number": 36,
+          "type": "verse"
+        },
+        {
+          "content": [
+            "But you did not go near the land of the Ammonites, or the land along the banks of the Jabbok River, or the cities of the hill country, or any place that the LORD our God had forbidden."
+          ],
+          "number": 37,
+          "type": "verse"
+        }
+      ],
+      "footnotes": [
+        {
+          "caller": "+",
+          "noteId": 3611,
+          "reference": {
+            "chapter": 2,
+            "verse": 1
+          },
+          "text": "Or the Sea of Reeds"
+        },
+        {
+          "caller": "+",
+          "noteId": 3612,
+          "reference": {
+            "chapter": 2,
+            "verse": 23
+          },
+          "text": "That is, Crete"
+        },
+        {
+          "caller": "+",
+          "noteId": 3613,
+          "reference": {
+            "chapter": 2,
+            "verse": 34
+          },
+          "text": "Forms of the Hebrew cherem refer to the giving over of things or persons to the LORD, either by destroying them or by giving them as an offering."
+        }
+      ],
+      "number": 2
+    },
+    "nextChapterApiLink": "/api/BSB/DEU/3.json",
+    "nextChapterAudioLinks": {
+      "gilbert": "https://openbible.com/audio/gilbert/BSB_05_Deu_003_G.mp3",
+      "hays": "https://openbible.com/audio/hays/BSB_05_Deu_003_H.mp3",
+      "souer": "https://openbible.com/audio/souer/BSB_05_Deu_003.mp3"
+    },
+    "numberOfVerses": 37,
+    "previousChapterApiLink": "/api/BSB/DEU/1.json",
+    "previousChapterAudioLinks": {
+      "gilbert": "https://openbible.com/audio/gilbert/BSB_05_Deu_001_G.mp3",
+      "hays": "https://openbible.com/audio/hays/BSB_05_Deu_001_H.mp3",
+      "souer": "https://openbible.com/audio/souer/BSB_05_Deu_001.mp3"
+    },
+    "thisChapterAudioLinks": {
+      "gilbert": "https://openbible.com/audio/gilbert/BSB_05_Deu_002_G.mp3",
+      "hays": "https://openbible.com/audio/hays/BSB_05_Deu_002_H.mp3",
+      "souer": "https://openbible.com/audio/souer/BSB_05_Deu_002.mp3"
+    },
+    "thisChapterLink": "/api/BSB/DEU/2.json",
+    "translation": {
+      "availableFormats": [
+        "json"
+      ],
+      "englishName": "Berean Standard Bible",
+      "id": "BSB",
+      "language": "eng",
+      "languageEnglishName": "English",
+      "languageName": "English",
+      "licenseNotes": null,
+      "licenseUrl": "https://berean.bible/",
+      "listOfBooksApiLink": "/api/BSB/books.json",
+      "name": "Berean Standard Bible",
+      "numberOfBooks": 66,
+      "sha256": "17c5ac87e26de77bf1f09c1c3ee0c3fafeb3c876849038e8df9b64a7a9504674",
+      "shortName": "BSB",
+      "textDirection": "ltr",
+      "totalNumberOfChapters": 1189,
+      "totalNumberOfVerses": 31086,
+      "website": "https://berean.bible/"
+    }
+  },
+  "headers": {
+    "content-type": "application/json",
+    "last-modified": "Thu, 19 Dec 2024 17:49:02 GMT"
+  },
+  "status": 200,
+  "statusText": ""
+}

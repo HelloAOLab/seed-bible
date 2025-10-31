@@ -1,0 +1,180 @@
+{
+  "data": {
+    "book": {
+      "commonName": "2 Samuel",
+      "firstChapterApiLink": "/api/BSB/2SA/1.json",
+      "id": "2SA",
+      "lastChapterApiLink": "/api/BSB/2SA/24.json",
+      "name": "2 Samuel",
+      "numberOfChapters": 24,
+      "order": 10,
+      "sha256": "7b7113978ed2715ef54fb972b8fc68071d6ba36e7705a69190665fbb79f08b09",
+      "title": "2 Samuel",
+      "totalNumberOfVerses": 695,
+      "translationId": "BSB"
+    },
+    "chapter": {
+      "content": [
+        {
+          "content": [
+            "The Murder of Ish-bosheth"
+          ],
+          "type": "heading"
+        },
+        {
+          "content": [
+            "Now when Ish-bosheth son of Saul heard that Abner had died in Hebron, he lost courage, and all Israel was dismayed."
+          ],
+          "number": 1,
+          "type": "verse"
+        },
+        {
+          "content": [
+            "Saul’s son had two men who were leaders of raiding parties. One was named Baanah and the other Rechab; they were sons of Rimmon the Beerothite of the tribe of Benjamin—Beeroth is considered part of Benjamin,"
+          ],
+          "number": 2,
+          "type": "verse"
+        },
+        {
+          "content": [
+            "because the Beerothites fled to Gittaim and have lived there as foreigners to this day."
+          ],
+          "number": 3,
+          "type": "verse"
+        },
+        {
+          "type": "line_break"
+        },
+        {
+          "content": [
+            "And Jonathan son of Saul had a son who was lame in his feet. He was five years old when the report about Saul and Jonathan came from Jezreel. His nurse picked him up and fled, but as she was hurrying to escape, he fell and became lame. His name was Mephibosheth."
+          ],
+          "number": 4,
+          "type": "verse"
+        },
+        {
+          "type": "line_break"
+        },
+        {
+          "content": [
+            "Now Rechab and Baanah, the sons of Rimmon the Beerothite, set out and arrived at the house of Ish-bosheth in the heat of the day, while the king was taking his midday nap."
+          ],
+          "number": 5,
+          "type": "verse"
+        },
+        {
+          "content": [
+            "They entered the interior of the house as if to get some wheat, and they stabbed him in the stomach. Then Rechab and his brother Baanah slipped away."
+          ],
+          "number": 6,
+          "type": "verse"
+        },
+        {
+          "type": "line_break"
+        },
+        {
+          "content": [
+            "They had entered the house while Ish-bosheth was lying on his bed, and having stabbed and killed him, they beheaded him, took his head, and traveled all night by way of the Arabah."
+          ],
+          "number": 7,
+          "type": "verse"
+        },
+        {
+          "content": [
+            "They brought the head of Ish-bosheth to David at Hebron and said to the king, “Here is the head of Ish-bosheth son of Saul, your enemy who sought your life. Today the LORD has granted vengeance to my lord the king against Saul and his offspring.”"
+          ],
+          "number": 8,
+          "type": "verse"
+        },
+        {
+          "content": [
+            "The Execution of Rechab and Baanah"
+          ],
+          "type": "heading"
+        },
+        {
+          "type": "line_break"
+        },
+        {
+          "content": [
+            "But David answered Rechab and his brother Baanah, the sons of Rimmon the Beerothite, “As surely as the LORD lives, who has redeemed my life from all distress,"
+          ],
+          "number": 9,
+          "type": "verse"
+        },
+        {
+          "content": [
+            "when someone told me, ‘Look, Saul is dead,’ and thought he was a bearer of good news, I seized him and put him to death at Ziklag. That was his reward for his news!"
+          ],
+          "number": 10,
+          "type": "verse"
+        },
+        {
+          "content": [
+            "How much more, when wicked men kill a righteous man in his own house and on his own bed, shall I not now require his blood from your hands and remove you from the earth!”"
+          ],
+          "number": 11,
+          "type": "verse"
+        },
+        {
+          "type": "line_break"
+        },
+        {
+          "content": [
+            "So David commanded his young men, and they killed Rechab and Baanah. They cut off their hands and feet and hung their bodies by the pool in Hebron, but they took the head of Ish-bosheth and buried it in Abner’s tomb in Hebron."
+          ],
+          "number": 12,
+          "type": "verse"
+        }
+      ],
+      "footnotes": [],
+      "number": 4
+    },
+    "nextChapterApiLink": "/api/BSB/2SA/5.json",
+    "nextChapterAudioLinks": {
+      "gilbert": "https://openbible.com/audio/gilbert/BSB_10_2Sa_005_G.mp3",
+      "hays": "https://openbible.com/audio/hays/BSB_10_2Sa_005_H.mp3",
+      "souer": "https://openbible.com/audio/souer/BSB_10_2Sa_005.mp3"
+    },
+    "numberOfVerses": 12,
+    "previousChapterApiLink": "/api/BSB/2SA/3.json",
+    "previousChapterAudioLinks": {
+      "gilbert": "https://openbible.com/audio/gilbert/BSB_10_2Sa_003_G.mp3",
+      "hays": "https://openbible.com/audio/hays/BSB_10_2Sa_003_H.mp3",
+      "souer": "https://openbible.com/audio/souer/BSB_10_2Sa_003.mp3"
+    },
+    "thisChapterAudioLinks": {
+      "gilbert": "https://openbible.com/audio/gilbert/BSB_10_2Sa_004_G.mp3",
+      "hays": "https://openbible.com/audio/hays/BSB_10_2Sa_004_H.mp3",
+      "souer": "https://openbible.com/audio/souer/BSB_10_2Sa_004.mp3"
+    },
+    "thisChapterLink": "/api/BSB/2SA/4.json",
+    "translation": {
+      "availableFormats": [
+        "json"
+      ],
+      "englishName": "Berean Standard Bible",
+      "id": "BSB",
+      "language": "eng",
+      "languageEnglishName": "English",
+      "languageName": "English",
+      "licenseNotes": null,
+      "licenseUrl": "https://berean.bible/",
+      "listOfBooksApiLink": "/api/BSB/books.json",
+      "name": "Berean Standard Bible",
+      "numberOfBooks": 66,
+      "sha256": "17c5ac87e26de77bf1f09c1c3ee0c3fafeb3c876849038e8df9b64a7a9504674",
+      "shortName": "BSB",
+      "textDirection": "ltr",
+      "totalNumberOfChapters": 1189,
+      "totalNumberOfVerses": 31086,
+      "website": "https://berean.bible/"
+    }
+  },
+  "headers": {
+    "content-type": "application/json",
+    "last-modified": "Thu, 19 Dec 2024 17:49:03 GMT"
+  },
+  "status": 200,
+  "statusText": ""
+}

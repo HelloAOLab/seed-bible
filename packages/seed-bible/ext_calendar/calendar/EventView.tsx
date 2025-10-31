@@ -81,7 +81,7 @@ const EventView = ({ visibleEvents, calendarApi, setEventInView, visibleCount, s
                                 <circle cx="12" cy="12" r="2" />
                                 <circle cx="12" cy="18" r="2" />
                             </svg>
-                            {menuOpenForId === ev.id && <Menu onClose={() => setMenuOpenForId(null)} setOpenEditModal={setOpenEditModal} onDelete={() => handleDelete_2(ev.id)} />}
+                            {menuOpenForId === ev.id && <Menu onClose={() => setMenuOpenForId(null)} setOpenEditModal={setOpenEditModal} onDelete={() => handleDelete_2(ev.id)} menuOpenForId={menuOpenForId} />}
                         </div>
                     </div>
                 ))}

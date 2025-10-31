@@ -1,0 +1,303 @@
+{
+  "data": {
+    "book": {
+      "commonName": "Genesis",
+      "firstChapterApiLink": "/api/BSB/GEN/1.json",
+      "id": "GEN",
+      "lastChapterApiLink": "/api/BSB/GEN/50.json",
+      "name": "Genesis",
+      "numberOfChapters": 50,
+      "order": 1,
+      "sha256": "9ae507188093d846873e8affd9e88c21ac55abdbc6d8adb9beb220345494f0f1",
+      "title": "Genesis",
+      "totalNumberOfVerses": 1533,
+      "translationId": "BSB"
+    },
+    "chapter": {
+      "content": [
+        {
+          "content": [
+            "The Great Flood"
+          ],
+          "type": "heading"
+        },
+        {
+          "content": [
+            "Then the LORD said to Noah, “Go into the ark, you and all your family, because I have found you righteous in this generation."
+          ],
+          "number": 1,
+          "type": "verse"
+        },
+        {
+          "content": [
+            "You are to take with you seven pairs of",
+            {
+              "noteId": 4352
+            },
+            "every kind of clean animal, a male and its mate; a pair of every kind of unclean animal, a male and its mate;"
+          ],
+          "number": 2,
+          "type": "verse"
+        },
+        {
+          "content": [
+            "and seven pairs of every kind of bird of the air, male and female, to preserve their offspring on the face of all the earth."
+          ],
+          "number": 3,
+          "type": "verse"
+        },
+        {
+          "content": [
+            "For seven days from now I will send rain on the earth for forty days and forty nights, and I will wipe from the face of the earth every living thing I have made.”"
+          ],
+          "number": 4,
+          "type": "verse"
+        },
+        {
+          "type": "line_break"
+        },
+        {
+          "content": [
+            "And Noah did all that the LORD had commanded him."
+          ],
+          "number": 5,
+          "type": "verse"
+        },
+        {
+          "type": "line_break"
+        },
+        {
+          "content": [
+            "Now Noah was 600 years old when the floodwaters came upon the earth."
+          ],
+          "number": 6,
+          "type": "verse"
+        },
+        {
+          "content": [
+            "And Noah and his wife, with his sons and their wives, entered the ark to escape the waters of the flood."
+          ],
+          "number": 7,
+          "type": "verse"
+        },
+        {
+          "content": [
+            "The clean and unclean animals, the birds, and everything that crawls along the ground"
+          ],
+          "number": 8,
+          "type": "verse"
+        },
+        {
+          "content": [
+            "came to Noah to enter the ark, two by two, male and female, as God had commanded Noah."
+          ],
+          "number": 9,
+          "type": "verse"
+        },
+        {
+          "type": "line_break"
+        },
+        {
+          "content": [
+            "And after seven days the floodwaters came upon the earth."
+          ],
+          "number": 10,
+          "type": "verse"
+        },
+        {
+          "content": [
+            "In the six hundredth year of Noah’s life, on the seventeenth day of the second month, all the fountains of the great deep burst forth, and the floodgates of the heavens were opened."
+          ],
+          "number": 11,
+          "type": "verse"
+        },
+        {
+          "content": [
+            "And the rain fell upon the earth for forty days and forty nights."
+          ],
+          "number": 12,
+          "type": "verse"
+        },
+        {
+          "type": "line_break"
+        },
+        {
+          "content": [
+            "On that very day Noah entered the ark, along with his sons Shem, Ham, and Japheth, and his wife, and the three wives of his sons—"
+          ],
+          "number": 13,
+          "type": "verse"
+        },
+        {
+          "content": [
+            "they and every kind of wild animal, livestock, crawling creature, bird, and winged creature."
+          ],
+          "number": 14,
+          "type": "verse"
+        },
+        {
+          "content": [
+            "They came to Noah to enter the ark, two by two of every creature",
+            {
+              "noteId": 4353
+            },
+            "with the breath of life."
+          ],
+          "number": 15,
+          "type": "verse"
+        },
+        {
+          "content": [
+            "And they entered, the male and female of every living thing, as God had commanded Noah. Then the LORD shut him in."
+          ],
+          "number": 16,
+          "type": "verse"
+        },
+        {
+          "type": "line_break"
+        },
+        {
+          "content": [
+            "For forty days the flood kept coming on the earth, and the waters rose and lifted the ark high above the earth."
+          ],
+          "number": 17,
+          "type": "verse"
+        },
+        {
+          "content": [
+            "So the waters continued to surge and rise greatly on the earth, and the ark floated on the surface of the waters."
+          ],
+          "number": 18,
+          "type": "verse"
+        },
+        {
+          "content": [
+            "Finally, the waters completely inundated the earth, so that all the high mountains under all the heavens were covered."
+          ],
+          "number": 19,
+          "type": "verse"
+        },
+        {
+          "type": "line_break"
+        },
+        {
+          "content": [
+            "The waters rose and covered the mountaintops to a depth of fifteen cubits.",
+            {
+              "noteId": 4354
+            }
+          ],
+          "number": 20,
+          "type": "verse"
+        },
+        {
+          "content": [
+            "And every living thing that moved upon the earth perished—birds, livestock, animals, every creature that swarms upon the earth, and all mankind."
+          ],
+          "number": 21,
+          "type": "verse"
+        },
+        {
+          "content": [
+            "Of all that was on dry land, everything that had the breath of life in its nostrils died."
+          ],
+          "number": 22,
+          "type": "verse"
+        },
+        {
+          "content": [
+            "And every living thing on the face of the earth was destroyed—man and livestock, crawling creatures and birds of the air; they were blotted out from the earth, and only Noah and those with him in the ark remained."
+          ],
+          "number": 23,
+          "type": "verse"
+        },
+        {
+          "type": "line_break"
+        },
+        {
+          "content": [
+            "And the waters prevailed upon the earth for 150 days."
+          ],
+          "number": 24,
+          "type": "verse"
+        }
+      ],
+      "footnotes": [
+        {
+          "caller": "+",
+          "noteId": 4352,
+          "reference": {
+            "chapter": 7,
+            "verse": 2
+          },
+          "text": "Or by sevens; also in verse 3"
+        },
+        {
+          "caller": "+",
+          "noteId": 4353,
+          "reference": {
+            "chapter": 7,
+            "verse": 15
+          },
+          "text": "Literally of all flesh; similarly in verses 16 and 21"
+        },
+        {
+          "caller": "+",
+          "noteId": 4354,
+          "reference": {
+            "chapter": 7,
+            "verse": 20
+          },
+          "text": "15 cubits is approximately 22.5 feet or 6.9 meters."
+        }
+      ],
+      "number": 7
+    },
+    "nextChapterApiLink": "/api/BSB/GEN/8.json",
+    "nextChapterAudioLinks": {
+      "gilbert": "https://openbible.com/audio/gilbert/BSB_01_Gen_008_G.mp3",
+      "hays": "https://openbible.com/audio/hays/BSB_01_Gen_008_H.mp3",
+      "souer": "https://openbible.com/audio/souer/BSB_01_Gen_008.mp3"
+    },
+    "numberOfVerses": 24,
+    "previousChapterApiLink": "/api/BSB/GEN/6.json",
+    "previousChapterAudioLinks": {
+      "gilbert": "https://openbible.com/audio/gilbert/BSB_01_Gen_006_G.mp3",
+      "hays": "https://openbible.com/audio/hays/BSB_01_Gen_006_H.mp3",
+      "souer": "https://openbible.com/audio/souer/BSB_01_Gen_006.mp3"
+    },
+    "thisChapterAudioLinks": {
+      "gilbert": "https://openbible.com/audio/gilbert/BSB_01_Gen_007_G.mp3",
+      "hays": "https://openbible.com/audio/hays/BSB_01_Gen_007_H.mp3",
+      "souer": "https://openbible.com/audio/souer/BSB_01_Gen_007.mp3"
+    },
+    "thisChapterLink": "/api/BSB/GEN/7.json",
+    "translation": {
+      "availableFormats": [
+        "json"
+      ],
+      "englishName": "Berean Standard Bible",
+      "id": "BSB",
+      "language": "eng",
+      "languageEnglishName": "English",
+      "languageName": "English",
+      "licenseNotes": null,
+      "licenseUrl": "https://berean.bible/",
+      "listOfBooksApiLink": "/api/BSB/books.json",
+      "name": "Berean Standard Bible",
+      "numberOfBooks": 66,
+      "sha256": "17c5ac87e26de77bf1f09c1c3ee0c3fafeb3c876849038e8df9b64a7a9504674",
+      "shortName": "BSB",
+      "textDirection": "ltr",
+      "totalNumberOfChapters": 1189,
+      "totalNumberOfVerses": 31086,
+      "website": "https://berean.bible/"
+    }
+  },
+  "headers": {
+    "content-type": "application/json",
+    "last-modified": "Thu, 19 Dec 2024 17:49:01 GMT"
+  },
+  "status": 200,
+  "statusText": ""
+}

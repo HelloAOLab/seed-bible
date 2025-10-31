@@ -1,0 +1,545 @@
+{
+  "data": {
+    "book": {
+      "commonName": "Deuteronomy",
+      "firstChapterApiLink": "/api/BSB/DEU/1.json",
+      "id": "DEU",
+      "lastChapterApiLink": "/api/BSB/DEU/34.json",
+      "name": "Deuteronomy",
+      "numberOfChapters": 34,
+      "order": 5,
+      "sha256": "df873168e1395e1474b634411d26d8f18c000e6473f87f89609c390b9312833e",
+      "title": "Deuteronomy",
+      "totalNumberOfVerses": 959,
+      "translationId": "BSB"
+    },
+    "chapter": {
+      "content": [
+        {
+          "content": [
+            "The Command to Leave Horeb"
+          ],
+          "type": "heading"
+        },
+        {
+          "content": [
+            "These are the words that Moses spoke to all Israel in the wilderness east of the Jordan—in the Arabah opposite Suph—between Paran and Tophel, Laban, Hazeroth, and Dizahab."
+          ],
+          "number": 1,
+          "type": "verse"
+        },
+        {
+          "type": "line_break"
+        },
+        {
+          "content": [
+            "It is an eleven-day journey from Horeb",
+            {
+              "noteId": 3607
+            },
+            "to Kadesh-barnea by way of Mount Seir."
+          ],
+          "number": 2,
+          "type": "verse"
+        },
+        {
+          "content": [
+            "In the fortieth year, on the first day of the eleventh month, Moses proclaimed to the Israelites all that the LORD had commanded him concerning them."
+          ],
+          "number": 3,
+          "type": "verse"
+        },
+        {
+          "content": [
+            "This was after he had defeated Sihon king of the Amorites, who lived in Heshbon, and then at Edrei had defeated Og king of Bashan, who lived in Ashtaroth."
+          ],
+          "number": 4,
+          "type": "verse"
+        },
+        {
+          "type": "line_break"
+        },
+        {
+          "content": [
+            "On the east side of the Jordan in the land of Moab, Moses began to explain this law, saying:",
+            {
+              "noteId": 3608
+            }
+          ],
+          "number": 5,
+          "type": "verse"
+        },
+        {
+          "type": "line_break"
+        },
+        {
+          "content": [
+            "The LORD our God said to us at Horeb: “You have stayed at this mountain long enough."
+          ],
+          "number": 6,
+          "type": "verse"
+        },
+        {
+          "content": [
+            "Resume your journey and go to the hill country of the Amorites; go to all the neighboring peoples in the Arabah, in the hill country, in the foothills,",
+            {
+              "noteId": 3609
+            },
+            "in the Negev, and along the seacoast to the land of the Canaanites and to Lebanon, as far as the great River Euphrates."
+          ],
+          "number": 7,
+          "type": "verse"
+        },
+        {
+          "type": "line_break"
+        },
+        {
+          "content": [
+            "See, I have placed the land before you. Enter and possess the land that the LORD swore He would give to your fathers Abraham, Isaac, and Jacob, and to their descendants after them.”"
+          ],
+          "number": 8,
+          "type": "verse"
+        },
+        {
+          "content": [
+            "Moses Appoints Leaders"
+          ],
+          "type": "heading"
+        },
+        {
+          "type": "line_break"
+        },
+        {
+          "content": [
+            "At that time I said to you, “I cannot carry the burden for you alone."
+          ],
+          "number": 9,
+          "type": "verse"
+        },
+        {
+          "content": [
+            "The LORD your God has multiplied you, so that today you are as numerous as the stars in the sky."
+          ],
+          "number": 10,
+          "type": "verse"
+        },
+        {
+          "content": [
+            "May the LORD, the God of your fathers, increase you a thousand times over and bless you as He has promised."
+          ],
+          "number": 11,
+          "type": "verse"
+        },
+        {
+          "content": [
+            "But how can I bear your troubles, burdens, and disputes all by myself?"
+          ],
+          "number": 12,
+          "type": "verse"
+        },
+        {
+          "content": [
+            "Choose for yourselves wise, understanding, and respected men from each of your tribes, and I will appoint them as your leaders.”"
+          ],
+          "number": 13,
+          "type": "verse"
+        },
+        {
+          "type": "line_break"
+        },
+        {
+          "content": [
+            "And you answered me and said, “What you propose to do is good.”"
+          ],
+          "number": 14,
+          "type": "verse"
+        },
+        {
+          "type": "line_break"
+        },
+        {
+          "content": [
+            "So I took the leaders of your tribes, wise and respected men, and appointed them as leaders over you—as commanders of thousands, of hundreds, of fifties, and of tens, and as officers for your tribes."
+          ],
+          "number": 15,
+          "type": "verse"
+        },
+        {
+          "type": "line_break"
+        },
+        {
+          "content": [
+            "At that time I charged your judges: “Hear the disputes between your brothers, and judge fairly between a man and his brother or a foreign resident."
+          ],
+          "number": 16,
+          "type": "verse"
+        },
+        {
+          "content": [
+            "Show no partiality in judging; hear both small and great alike. Do not be intimidated by anyone, for judgment belongs to God. And bring to me any case too difficult for you, and I will hear it.”"
+          ],
+          "number": 17,
+          "type": "verse"
+        },
+        {
+          "type": "line_break"
+        },
+        {
+          "content": [
+            "And at that time I commanded you all the things you were to do."
+          ],
+          "number": 18,
+          "type": "verse"
+        },
+        {
+          "content": [
+            "Twelve Spies Sent Out"
+          ],
+          "type": "heading"
+        },
+        {
+          "type": "line_break"
+        },
+        {
+          "content": [
+            "And just as the LORD our God had commanded us, we set out from Horeb and went toward the hill country of the Amorites, through all the vast and terrifying wilderness you have seen. When we reached Kadesh-barnea,"
+          ],
+          "number": 19,
+          "type": "verse"
+        },
+        {
+          "content": [
+            "I said: “You have reached the hill country of the Amorites, which the LORD our God is giving us."
+          ],
+          "number": 20,
+          "type": "verse"
+        },
+        {
+          "content": [
+            "See, the LORD your God has placed the land before you. Go up and take possession of it as the LORD, the God of your fathers, has told you. Do not be afraid or discouraged.”"
+          ],
+          "number": 21,
+          "type": "verse"
+        },
+        {
+          "type": "line_break"
+        },
+        {
+          "content": [
+            "Then all of you approached me and said, “Let us send men ahead of us to search out the land and bring us word of what route to follow and which cities to enter.”"
+          ],
+          "number": 22,
+          "type": "verse"
+        },
+        {
+          "type": "line_break"
+        },
+        {
+          "content": [
+            "The plan seemed good to me, so I selected twelve men from among you, one from each tribe."
+          ],
+          "number": 23,
+          "type": "verse"
+        },
+        {
+          "content": [
+            "They left and went up into the hill country, and came to the Valley of Eshcol and spied out the land."
+          ],
+          "number": 24,
+          "type": "verse"
+        },
+        {
+          "content": [
+            "They took some of the fruit of the land in their hands, carried it down to us, and brought us word: “It is a good land that the LORD our God is giving us.”"
+          ],
+          "number": 25,
+          "type": "verse"
+        },
+        {
+          "content": [
+            "Israel’s Rebellion"
+          ],
+          "type": "heading"
+        },
+        {
+          "type": "line_break"
+        },
+        {
+          "content": [
+            "But you were unwilling to go up; you rebelled against the command of the LORD your God."
+          ],
+          "number": 26,
+          "type": "verse"
+        },
+        {
+          "content": [
+            "You grumbled in your tents and said, “Because the LORD hates us, He has brought us out of the land of Egypt to deliver us into the hand of the Amorites to be annihilated."
+          ],
+          "number": 27,
+          "type": "verse"
+        },
+        {
+          "content": [
+            "Where can we go? Our brothers have made our hearts melt, saying: ‘The people are larger and taller than we are; the cities are large, with walls up to the heavens. We even saw the descendants of the Anakim there.’”"
+          ],
+          "number": 28,
+          "type": "verse"
+        },
+        {
+          "type": "line_break"
+        },
+        {
+          "content": [
+            "So I said to you: “Do not be terrified or afraid of them!"
+          ],
+          "number": 29,
+          "type": "verse"
+        },
+        {
+          "content": [
+            "The LORD your God, who goes before you, will fight for you, just as you saw Him do for you in Egypt"
+          ],
+          "number": 30,
+          "type": "verse"
+        },
+        {
+          "content": [
+            "and in the wilderness, where the LORD your God carried you, as a man carries his son, all the way by which you traveled until you reached this place.”"
+          ],
+          "number": 31,
+          "type": "verse"
+        },
+        {
+          "type": "line_break"
+        },
+        {
+          "content": [
+            "But in spite of all this, you did not trust the LORD your God,"
+          ],
+          "number": 32,
+          "type": "verse"
+        },
+        {
+          "content": [
+            "who went before you on the journey, in the fire by night and in the cloud by day, to seek out a place for you to camp and to show you the road to travel."
+          ],
+          "number": 33,
+          "type": "verse"
+        },
+        {
+          "content": [
+            "Israel’s Penalty"
+          ],
+          "type": "heading"
+        },
+        {
+          "type": "line_break"
+        },
+        {
+          "content": [
+            "When the LORD heard your words, He grew angry and swore an oath, saying,"
+          ],
+          "number": 34,
+          "type": "verse"
+        },
+        {
+          "content": [
+            "“Not one of the men of this evil generation shall see the good land I swore to give your fathers,"
+          ],
+          "number": 35,
+          "type": "verse"
+        },
+        {
+          "content": [
+            "except Caleb son of Jephunneh. He will see it, and I will give him and his descendants the land on which he has set foot, because he followed the LORD wholeheartedly.”"
+          ],
+          "number": 36,
+          "type": "verse"
+        },
+        {
+          "type": "line_break"
+        },
+        {
+          "content": [
+            "The LORD was also angry with me on your account, and He said, “Not even you shall enter the land."
+          ],
+          "number": 37,
+          "type": "verse"
+        },
+        {
+          "content": [
+            "Joshua son of Nun, who stands before you, will enter it. Encourage him, for he will enable Israel to inherit the land."
+          ],
+          "number": 38,
+          "type": "verse"
+        },
+        {
+          "content": [
+            "And the little ones you said would become captives—your children who on that day did not know good from evil—will enter the land that I will give them, and they will possess it."
+          ],
+          "number": 39,
+          "type": "verse"
+        },
+        {
+          "content": [
+            "But you are to turn back and head for the wilderness along the route to the Red Sea.",
+            {
+              "noteId": 3610
+            },
+            "”"
+          ],
+          "number": 40,
+          "type": "verse"
+        },
+        {
+          "content": [
+            "The Defeat at Hormah"
+          ],
+          "type": "heading"
+        },
+        {
+          "type": "line_break"
+        },
+        {
+          "content": [
+            "“We have sinned against the LORD,” you replied. “We will go up and fight, as the LORD our God has commanded us.” Then each of you put on his weapons of war, thinking it easy to go up into the hill country."
+          ],
+          "number": 41,
+          "type": "verse"
+        },
+        {
+          "type": "line_break"
+        },
+        {
+          "content": [
+            "But the LORD said to me, “Tell them not to go up and fight, for I am not with you to keep you from defeat by your enemies.”"
+          ],
+          "number": 42,
+          "type": "verse"
+        },
+        {
+          "type": "line_break"
+        },
+        {
+          "content": [
+            "So I spoke to you, but you would not listen. You rebelled against the command of the LORD and presumptuously went up into the hill country."
+          ],
+          "number": 43,
+          "type": "verse"
+        },
+        {
+          "type": "line_break"
+        },
+        {
+          "content": [
+            "Then the Amorites who lived in the hills came out against you and chased you like a swarm of bees. They routed you from Seir all the way to Hormah."
+          ],
+          "number": 44,
+          "type": "verse"
+        },
+        {
+          "content": [
+            "And you returned and wept before the LORD, but He would not listen to your voice or give ear to you."
+          ],
+          "number": 45,
+          "type": "verse"
+        },
+        {
+          "type": "line_break"
+        },
+        {
+          "content": [
+            "For this reason you stayed in Kadesh for a long time—a very long time."
+          ],
+          "number": 46,
+          "type": "verse"
+        }
+      ],
+      "footnotes": [
+        {
+          "caller": "+",
+          "noteId": 3607,
+          "reference": {
+            "chapter": 1,
+            "verse": 2
+          },
+          "text": "That is, Mount Sinai, or possibly a mountain in the range containing Mount Sinai; also in verses 6 and 19"
+        },
+        {
+          "caller": "+",
+          "noteId": 3608,
+          "reference": {
+            "chapter": 1,
+            "verse": 5
+          },
+          "text": "Note that Deuteronomy 1:6 through Deuteronomy 4:40 may be presented as a continuous section of unbroken speech by Moses. In place of multiple levels of nested quotes, this section has been set apart with a double space."
+        },
+        {
+          "caller": "+",
+          "noteId": 3609,
+          "reference": {
+            "chapter": 1,
+            "verse": 7
+          },
+          "text": "Hebrew Shephelah or lowlands; that is, the western foothills of Judea"
+        },
+        {
+          "caller": "+",
+          "noteId": 3610,
+          "reference": {
+            "chapter": 1,
+            "verse": 40
+          },
+          "text": "Or the Sea of Reeds"
+        }
+      ],
+      "number": 1
+    },
+    "nextChapterApiLink": "/api/BSB/DEU/2.json",
+    "nextChapterAudioLinks": {
+      "gilbert": "https://openbible.com/audio/gilbert/BSB_05_Deu_002_G.mp3",
+      "hays": "https://openbible.com/audio/hays/BSB_05_Deu_002_H.mp3",
+      "souer": "https://openbible.com/audio/souer/BSB_05_Deu_002.mp3"
+    },
+    "numberOfVerses": 46,
+    "previousChapterApiLink": "/api/BSB/NUM/36.json",
+    "previousChapterAudioLinks": {
+      "gilbert": "https://openbible.com/audio/gilbert/BSB_04_Num_036_G.mp3",
+      "hays": "https://openbible.com/audio/hays/BSB_04_Num_036_H.mp3",
+      "souer": "https://openbible.com/audio/souer/BSB_04_Num_036.mp3"
+    },
+    "thisChapterAudioLinks": {
+      "gilbert": "https://openbible.com/audio/gilbert/BSB_05_Deu_001_G.mp3",
+      "hays": "https://openbible.com/audio/hays/BSB_05_Deu_001_H.mp3",
+      "souer": "https://openbible.com/audio/souer/BSB_05_Deu_001.mp3"
+    },
+    "thisChapterLink": "/api/BSB/DEU/1.json",
+    "translation": {
+      "availableFormats": [
+        "json"
+      ],
+      "englishName": "Berean Standard Bible",
+      "id": "BSB",
+      "language": "eng",
+      "languageEnglishName": "English",
+      "languageName": "English",
+      "licenseNotes": null,
+      "licenseUrl": "https://berean.bible/",
+      "listOfBooksApiLink": "/api/BSB/books.json",
+      "name": "Berean Standard Bible",
+      "numberOfBooks": 66,
+      "sha256": "17c5ac87e26de77bf1f09c1c3ee0c3fafeb3c876849038e8df9b64a7a9504674",
+      "shortName": "BSB",
+      "textDirection": "ltr",
+      "totalNumberOfChapters": 1189,
+      "totalNumberOfVerses": 31086,
+      "website": "https://berean.bible/"
+    }
+  },
+  "headers": {
+    "content-type": "application/json",
+    "last-modified": "Thu, 19 Dec 2024 17:49:02 GMT"
+  },
+  "status": 200,
+  "statusText": ""
+}

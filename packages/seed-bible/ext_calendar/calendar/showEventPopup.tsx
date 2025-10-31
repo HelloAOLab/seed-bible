@@ -5,7 +5,7 @@ function formatToYYYYMMDD(date) {
   const year = d.getFullYear();
   return `${year}-${month}-${day}`;
 }
-function showEventPopup(info, setPlaylistMode,setScheduleTitle, setScheduleDescription,addReadingPlans, calendarApi, onSubmit) {
+function showEventPopup(info, setPlaylistMode,setScheduleTitle, setScheduleDescription,addReadingPlans, setPlaylistsToAdd,playlistsToAdd,calendarApi,setCalendarView, onSubmit) {
   let playListsFiltered = [];
   let readingPlays = globalThis['defaultplaylists'];
 
@@ -529,7 +529,9 @@ function showEventPopup(info, setPlaylistMode,setScheduleTitle, setScheduleDescr
   addButton?.addEventListener('click', (e) => {
     e.preventDefault();
     if (addButton.textContent === 'Create') {
+      setCalendarView('resourceTimeline')
       calendarApi.current.changeView('resourceTimeline');
+      
 
       const title = popup.querySelector('#popup-title')?.value || 'Untitled';
       const description = popup.querySelector('#popup-description')?.value || '';
@@ -586,10 +588,14 @@ function showEventPopup(info, setPlaylistMode,setScheduleTitle, setScheduleDescr
       console.log(isPlansTabActive, 'sass');
 
       if (isPlansTabActive) {
+        console.log(playListsFiltered,'playlistsfiltered');
         const selected = playListsFiltered.filter(p => checked[p.id]);
-        console.log('asasasas', selected);
+     
+        
 
-        addReadingPlans(selected); // Optional: handle separately or pass via onSubmit
+
+        addReadingPlans(selected);
+        
       }
 
       onSubmit({ title, description, link, start, end, startTime, endTime, recurVal, isPlansTabActive });

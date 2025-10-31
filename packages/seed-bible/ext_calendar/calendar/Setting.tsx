@@ -1,5 +1,5 @@
 const { useEffect } = os.appHooks
-const Setting = ({ setOpenSetting, dropdownRef, setOpenCalendar, setMapViewSelected, setOpenMap, setHasTitle, hasTitle,calendarApi,setShowSchedules,showSchedules }) => {
+const Setting = ({ setOpenSetting, dropdownRef, setOpenCalendar, setMapViewSelected, setOpenMap, setHasTitle, hasTitle, calendarApi, setShowSchedules, showSchedules, showHolidays, setShowHolidays }) => {
   const handleToggle = () => setOpenSetting(prev => !prev);
   useEffect(() => {
     const handleClickOutside = (event) => {
@@ -30,6 +30,9 @@ const Setting = ({ setOpenSetting, dropdownRef, setOpenCalendar, setMapViewSelec
   const handleTitle = () => {
     setHasTitle(prev => !prev)
 
+  }
+  const handleHolidays = () => {
+    setShowHolidays(prev => !prev)
   }
 
 
@@ -89,8 +92,8 @@ const Setting = ({ setOpenSetting, dropdownRef, setOpenCalendar, setMapViewSelec
           {hasTitle ? 'Hide Title' : 'Show Title'}
         </span>
       </div>
-      {calendarApi.current.view.type.includes('resourceTimeline')?'':<div
-        onClick={()=>setShowSchedules(prev=>!prev)}
+      {calendarApi.current.view.type.includes('resourceTimeline') ? '' : <div
+        onClick={() => setShowSchedules(prev => !prev)}
         style={{ width: '100%', borderRadius: '6px', padding: '2px 2px' }}
 
         onMouseEnter={e => {
@@ -116,11 +119,11 @@ const Setting = ({ setOpenSetting, dropdownRef, setOpenCalendar, setMapViewSelec
             stroke-linecap="round"
             stroke-linejoin="round"
             viewBox="0 0 24 24">
-           
+
             <circle cx="12" cy="12" r="9" />
-           
+
             <line x1="12" y1="12" x2="12" y2="7" />
-            
+
             <line x1="12" y1="12" x2="16" y2="12" />
           </svg>
 
@@ -131,6 +134,44 @@ const Setting = ({ setOpenSetting, dropdownRef, setOpenCalendar, setMapViewSelec
 
 
       </div>}
+      <div
+        onClick={handleHolidays}
+        style={{ width: '100%', borderRadius: '6px', padding: '2px 2px' }}
+
+        onMouseEnter={e => {
+          (e.target.style.backgroundColor = '#f0f0f0')
+          e.target.style.color = 'black'
+          e.target.style.cursor = 'pointer'
+          const svg = e.currentTarget.querySelector('svg');
+          if (svg) svg.style.stroke = 'black';
+        }}
+        onMouseLeave={e => {
+          (e.target.style.backgroundColor = 'transparent')
+          e.target.style.color = 'white'
+          const svg = e.currentTarget.querySelector('svg');
+          if (svg) svg.style.stroke = 'white';
+        }}
+      >
+        <span style={{ display: 'flex', alignItems: 'center', gap: '5px' }}>
+          <svg
+            xmlns="http://www.w3.org/2000/svg"
+            width="15"
+            height="15"
+            fill="none"
+            stroke="currentColor"
+            stroke-width="2"
+            stroke-linecap="round"
+            stroke-linejoin="round"
+            viewBox="0 0 28 24"
+          >
+            <rect x="6" y="9" width="16" height="12" rx="2" ry="2" />
+            <path d="M6 9h16M14 9v12M9 5a2 2 0 104 0 2 2 0 10-4 0zM15 5a2 2 0 104 0 2 2 0 10-4 0z" />
+          </svg>
+
+
+          {showHolidays ? 'Hide Holidays' : 'Show Holidays'}
+        </span>
+      </div>
       <div
         style={{ width: '100%', borderRadius: '6px', padding: '2px 2px' }}
 
@@ -258,6 +299,8 @@ const Setting = ({ setOpenSetting, dropdownRef, setOpenCalendar, setMapViewSelec
           Open Both
         </span>
       </div>
+
+
     </div>
   );
 };

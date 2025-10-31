@@ -1,0 +1,520 @@
+{
+  "data": {
+    "book": {
+      "commonName": "Genesis",
+      "firstChapterApiLink": "/api/BSB/GEN/1.json",
+      "id": "GEN",
+      "lastChapterApiLink": "/api/BSB/GEN/50.json",
+      "name": "Genesis",
+      "numberOfChapters": 50,
+      "order": 1,
+      "sha256": "9ae507188093d846873e8affd9e88c21ac55abdbc6d8adb9beb220345494f0f1",
+      "title": "Genesis",
+      "totalNumberOfVerses": 1533,
+      "translationId": "BSB"
+    },
+    "chapter": {
+      "content": [
+        {
+          "content": [
+            "The Serpent’s Deception"
+          ],
+          "type": "heading"
+        },
+        {
+          "content": [
+            "Now the serpent",
+            {
+              "noteId": 4327
+            },
+            "was more crafty than any beast of the field that the LORD God had made. And he said to the woman, “Did God really say, ‘You must not eat from any tree in the garden?’”"
+          ],
+          "number": 1,
+          "type": "verse"
+        },
+        {
+          "type": "line_break"
+        },
+        {
+          "content": [
+            "The woman answered the serpent, “We may eat the fruit of the trees of the garden,"
+          ],
+          "number": 2,
+          "type": "verse"
+        },
+        {
+          "content": [
+            "but about the fruit of the tree in the middle of the garden, God has said, ‘You must not eat of it or touch it, or you will die.’”"
+          ],
+          "number": 3,
+          "type": "verse"
+        },
+        {
+          "type": "line_break"
+        },
+        {
+          "content": [
+            "“You will not surely die,” the serpent told her."
+          ],
+          "number": 4,
+          "type": "verse"
+        },
+        {
+          "content": [
+            "“For God knows that in the day you eat of it, your eyes will be opened and you will be like God, knowing good and evil.”"
+          ],
+          "number": 5,
+          "type": "verse"
+        },
+        {
+          "type": "line_break"
+        },
+        {
+          "content": [
+            "When the woman saw that the tree was good for food and pleasing to the eyes, and that it was desirable for obtaining wisdom, she took the fruit and ate it. She also gave some to her husband who was with her, and he ate it."
+          ],
+          "number": 6,
+          "type": "verse"
+        },
+        {
+          "type": "line_break"
+        },
+        {
+          "content": [
+            "And the eyes of both of them were opened, and they knew that they were naked; so they sewed together fig leaves and made coverings for themselves."
+          ],
+          "number": 7,
+          "type": "verse"
+        },
+        {
+          "content": [
+            "God Arraigns Adam and Eve"
+          ],
+          "type": "heading"
+        },
+        {
+          "type": "line_break"
+        },
+        {
+          "content": [
+            "Then the man and his wife heard the voice of the LORD God walking in the garden in the breeze",
+            {
+              "noteId": 4328
+            },
+            "of the day, and they hid themselves from the presence of the LORD God among the trees of the garden."
+          ],
+          "number": 8,
+          "type": "verse"
+        },
+        {
+          "type": "line_break"
+        },
+        {
+          "content": [
+            "But the LORD God called out to the man, “Where are you?”"
+          ],
+          "number": 9,
+          "type": "verse"
+        },
+        {
+          "type": "line_break"
+        },
+        {
+          "content": [
+            "“I heard Your voice in the garden,” he replied, “and I was afraid because I was naked; so I hid myself.”"
+          ],
+          "number": 10,
+          "type": "verse"
+        },
+        {
+          "type": "line_break"
+        },
+        {
+          "content": [
+            "“Who told you that you were naked?” asked the LORD God. “Have you eaten from the tree of which I commanded you not to eat?”"
+          ],
+          "number": 11,
+          "type": "verse"
+        },
+        {
+          "type": "line_break"
+        },
+        {
+          "content": [
+            "And the man answered, “The woman whom You gave me, she gave me fruit from the tree, and I ate it.”"
+          ],
+          "number": 12,
+          "type": "verse"
+        },
+        {
+          "type": "line_break"
+        },
+        {
+          "content": [
+            "Then the LORD God said to the woman, “What is this you have done?”",
+            {
+              "lineBreak": true
+            },
+            "“The serpent deceived me,” she replied, “and I ate.”"
+          ],
+          "number": 13,
+          "type": "verse"
+        },
+        {
+          "content": [
+            "The Fate of the Serpent"
+          ],
+          "type": "heading"
+        },
+        {
+          "type": "line_break"
+        },
+        {
+          "content": [
+            "So the LORD God said to the serpent:",
+            {
+              "lineBreak": true
+            },
+            {
+              "poem": 1,
+              "text": "“Because you have done this,"
+            },
+            {
+              "poem": 2,
+              "text": "cursed are you above all livestock"
+            },
+            {
+              "lineBreak": true
+            },
+            {
+              "poem": 2,
+              "text": "and every beast of the field!"
+            },
+            {
+              "poem": 1,
+              "text": "On your belly will you go,"
+            },
+            {
+              "poem": 2,
+              "text": "and dust you will eat,"
+            },
+            {
+              "lineBreak": true
+            },
+            {
+              "poem": 2,
+              "text": "all the days of your life."
+            }
+          ],
+          "number": 14,
+          "type": "verse"
+        },
+        {
+          "content": [
+            {
+              "poem": 1,
+              "text": "And I will put enmity between you and the woman,"
+            },
+            {
+              "poem": 2,
+              "text": "and between your seed and her seed."
+            },
+            {
+              "poem": 1,
+              "text": "He will crush your head,"
+            },
+            {
+              "poem": 2,
+              "text": "and you will strike his heel."
+            },
+            {
+              "noteId": 4329
+            },
+            {
+              "poem": 2,
+              "text": "”"
+            }
+          ],
+          "number": 15,
+          "type": "verse"
+        },
+        {
+          "content": [
+            "The Punishment of Mankind"
+          ],
+          "type": "heading"
+        },
+        {
+          "type": "line_break"
+        },
+        {
+          "content": [
+            "To the woman He said:",
+            {
+              "lineBreak": true
+            },
+            {
+              "poem": 1,
+              "text": "“I will sharply increase your pain in childbirth;"
+            },
+            {
+              "poem": 2,
+              "text": "in pain you will bring forth children."
+            },
+            {
+              "poem": 1,
+              "text": "Your desire will be for your husband,"
+            },
+            {
+              "noteId": 4330
+            },
+            {
+              "poem": 2,
+              "text": "and he will rule over you.”"
+            }
+          ],
+          "number": 16,
+          "type": "verse"
+        },
+        {
+          "type": "line_break"
+        },
+        {
+          "content": [
+            "And to Adam He said:",
+            {
+              "lineBreak": true
+            },
+            {
+              "poem": 1,
+              "text": "“Because you have listened to the voice of your wife"
+            },
+            {
+              "poem": 2,
+              "text": "and have eaten from the tree"
+            },
+            {
+              "lineBreak": true
+            },
+            {
+              "poem": 2,
+              "text": "of which I commanded you not to eat,"
+            },
+            {
+              "poem": 1,
+              "text": "cursed is the ground because of you;"
+            },
+            {
+              "poem": 2,
+              "text": "through toil you will eat of it"
+            },
+            {
+              "lineBreak": true
+            },
+            {
+              "poem": 2,
+              "text": "all the days of your life."
+            }
+          ],
+          "number": 17,
+          "type": "verse"
+        },
+        {
+          "content": [
+            {
+              "poem": 1,
+              "text": "Both thorns and thistles it will yield for you,"
+            },
+            {
+              "poem": 2,
+              "text": "and you will eat the plants of the field."
+            }
+          ],
+          "number": 18,
+          "type": "verse"
+        },
+        {
+          "content": [
+            {
+              "poem": 1,
+              "text": "By the sweat of your brow"
+            },
+            {
+              "poem": 2,
+              "text": "you will eat your bread,"
+            },
+            {
+              "poem": 1,
+              "text": "until you return to the ground—"
+            },
+            {
+              "poem": 2,
+              "text": "because out of it were you taken."
+            },
+            {
+              "poem": 1,
+              "text": "For dust you are,"
+            },
+            {
+              "poem": 2,
+              "text": "and to dust you shall return.”"
+            }
+          ],
+          "number": 19,
+          "type": "verse"
+        },
+        {
+          "type": "line_break"
+        },
+        {
+          "content": [
+            "And Adam named his wife Eve,",
+            {
+              "noteId": 4331
+            },
+            "because she would be the mother of all the living."
+          ],
+          "number": 20,
+          "type": "verse"
+        },
+        {
+          "content": [
+            "The Expulsion from Paradise"
+          ],
+          "type": "heading"
+        },
+        {
+          "type": "line_break"
+        },
+        {
+          "content": [
+            "And the LORD God made garments of skin for Adam and his wife, and He clothed them."
+          ],
+          "number": 21,
+          "type": "verse"
+        },
+        {
+          "type": "line_break"
+        },
+        {
+          "content": [
+            "Then the LORD God said, “Behold, the man has become like one of Us, knowing good and evil. And now, lest he reach out his hand and take also from the tree of life, and eat, and live forever...”"
+          ],
+          "number": 22,
+          "type": "verse"
+        },
+        {
+          "type": "line_break"
+        },
+        {
+          "content": [
+            "Therefore the LORD God banished him from the Garden of Eden to work the ground from which he had been taken."
+          ],
+          "number": 23,
+          "type": "verse"
+        },
+        {
+          "content": [
+            "So He drove out the man and stationed cherubim on the east side of the Garden of Eden, along with a whirling sword of flame to guard the way to the tree of life."
+          ],
+          "number": 24,
+          "type": "verse"
+        }
+      ],
+      "footnotes": [
+        {
+          "caller": "+",
+          "noteId": 4327,
+          "reference": {
+            "chapter": 3,
+            "verse": 1
+          },
+          "text": "Hebrew nachash, translated in this chapter as serpent, is translated in most cases as snake."
+        },
+        {
+          "caller": "+",
+          "noteId": 4328,
+          "reference": {
+            "chapter": 3,
+            "verse": 8
+          },
+          "text": "Or at the breezy (time); Hebrew unto the Ruach"
+        },
+        {
+          "caller": "+",
+          "noteId": 4329,
+          "reference": {
+            "chapter": 3,
+            "verse": 15
+          },
+          "text": "Or He will bruise your head, and you will bruise his heel. The same Hebrew root for crush, bruise, or strike appears twice in this verse."
+        },
+        {
+          "caller": "+",
+          "noteId": 4330,
+          "reference": {
+            "chapter": 3,
+            "verse": 16
+          },
+          "text": "Or You will desire to control your husband"
+        },
+        {
+          "caller": "+",
+          "noteId": 4331,
+          "reference": {
+            "chapter": 3,
+            "verse": 20
+          },
+          "text": "Eve sounds like the Hebrew for giving life or living."
+        }
+      ],
+      "number": 3
+    },
+    "nextChapterApiLink": "/api/BSB/GEN/4.json",
+    "nextChapterAudioLinks": {
+      "gilbert": "https://openbible.com/audio/gilbert/BSB_01_Gen_004_G.mp3",
+      "hays": "https://openbible.com/audio/hays/BSB_01_Gen_004_H.mp3",
+      "souer": "https://openbible.com/audio/souer/BSB_01_Gen_004.mp3"
+    },
+    "numberOfVerses": 24,
+    "previousChapterApiLink": "/api/BSB/GEN/2.json",
+    "previousChapterAudioLinks": {
+      "gilbert": "https://openbible.com/audio/gilbert/BSB_01_Gen_002_G.mp3",
+      "hays": "https://openbible.com/audio/hays/BSB_01_Gen_002_H.mp3",
+      "souer": "https://openbible.com/audio/souer/BSB_01_Gen_002.mp3"
+    },
+    "thisChapterAudioLinks": {
+      "gilbert": "https://openbible.com/audio/gilbert/BSB_01_Gen_003_G.mp3",
+      "hays": "https://openbible.com/audio/hays/BSB_01_Gen_003_H.mp3",
+      "souer": "https://openbible.com/audio/souer/BSB_01_Gen_003.mp3"
+    },
+    "thisChapterLink": "/api/BSB/GEN/3.json",
+    "translation": {
+      "availableFormats": [
+        "json"
+      ],
+      "englishName": "Berean Standard Bible",
+      "id": "BSB",
+      "language": "eng",
+      "languageEnglishName": "English",
+      "languageName": "English",
+      "licenseNotes": null,
+      "licenseUrl": "https://berean.bible/",
+      "listOfBooksApiLink": "/api/BSB/books.json",
+      "name": "Berean Standard Bible",
+      "numberOfBooks": 66,
+      "sha256": "17c5ac87e26de77bf1f09c1c3ee0c3fafeb3c876849038e8df9b64a7a9504674",
+      "shortName": "BSB",
+      "textDirection": "ltr",
+      "totalNumberOfChapters": 1189,
+      "totalNumberOfVerses": 31086,
+      "website": "https://berean.bible/"
+    }
+  },
+  "headers": {
+    "content-type": "application/json",
+    "last-modified": "Thu, 19 Dec 2024 17:49:01 GMT"
+  },
+  "status": 200,
+  "statusText": ""
+}

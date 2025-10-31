@@ -1,0 +1,255 @@
+{
+  "data": {
+    "book": {
+      "commonName": "Joshua",
+      "firstChapterApiLink": "/api/BSB/JOS/1.json",
+      "id": "JOS",
+      "lastChapterApiLink": "/api/BSB/JOS/24.json",
+      "name": "Joshua",
+      "numberOfChapters": 24,
+      "order": 6,
+      "sha256": "7fa8be7a5f1d55cecf0bbaaac5e95c176e46d71a64fd65d3f3ba42a5e103c219",
+      "title": "Joshua",
+      "totalNumberOfVerses": 658,
+      "translationId": "BSB"
+    },
+    "chapter": {
+      "content": [
+        {
+          "content": [
+            "God Instructs Joshua"
+          ],
+          "type": "heading"
+        },
+        {
+          "content": [
+            "Now after the death of His servant Moses, the LORD spoke to Joshua son of Nun, Moses’ assistant, saying,"
+          ],
+          "number": 1,
+          "type": "verse"
+        },
+        {
+          "content": [
+            "“Moses My servant is dead. Now therefore arise, you and all these people, and cross over the Jordan into the land that I am giving to the children of Israel."
+          ],
+          "number": 2,
+          "type": "verse"
+        },
+        {
+          "type": "line_break"
+        },
+        {
+          "content": [
+            "I have given you every place where the sole of your foot will tread, just as I promised to Moses."
+          ],
+          "number": 3,
+          "type": "verse"
+        },
+        {
+          "content": [
+            "Your territory shall extend from the wilderness and Lebanon to the great River Euphrates—all the land of the Hittites—and west as far as the Great Sea.",
+            {
+              "noteId": 3255
+            }
+          ],
+          "number": 4,
+          "type": "verse"
+        },
+        {
+          "type": "line_break"
+        },
+        {
+          "content": [
+            "No one shall stand against you all the days of your life. As I was with Moses, so will I be with you; I will never leave you nor forsake you.",
+            {
+              "noteId": 3256
+            }
+          ],
+          "number": 5,
+          "type": "verse"
+        },
+        {
+          "type": "line_break"
+        },
+        {
+          "content": [
+            "Be strong and courageous, for you shall give these people the inheritance of the land that I swore to their fathers I would give them."
+          ],
+          "number": 6,
+          "type": "verse"
+        },
+        {
+          "type": "line_break"
+        },
+        {
+          "content": [
+            "Above all, be strong and very courageous. Be careful to observe all the law that My servant Moses commanded you. Do not turn from it to the right or to the left, so that you may prosper wherever you go."
+          ],
+          "number": 7,
+          "type": "verse"
+        },
+        {
+          "content": [
+            "This Book of the Law must not depart from your mouth; meditate on it day and night, so that you may be careful to do everything written in it. For then you will prosper and succeed in all you do."
+          ],
+          "number": 8,
+          "type": "verse"
+        },
+        {
+          "type": "line_break"
+        },
+        {
+          "content": [
+            "Have I not commanded you to be strong and courageous? Do not be afraid; do not be discouraged, for the LORD your God is with you wherever you go.”"
+          ],
+          "number": 9,
+          "type": "verse"
+        },
+        {
+          "content": [
+            "Joshua Takes Charge"
+          ],
+          "type": "heading"
+        },
+        {
+          "type": "line_break"
+        },
+        {
+          "content": [
+            "Then Joshua commanded the officers of the people:"
+          ],
+          "number": 10,
+          "type": "verse"
+        },
+        {
+          "content": [
+            "“Go through the camp and tell the people, ‘Prepare your provisions, for within three days you will cross the Jordan to go in and take possession of the land that the LORD your God is giving you to possess.’”"
+          ],
+          "number": 11,
+          "type": "verse"
+        },
+        {
+          "type": "line_break"
+        },
+        {
+          "content": [
+            "But to the Reubenites, the Gadites, and the half-tribe of Manasseh, Joshua said,"
+          ],
+          "number": 12,
+          "type": "verse"
+        },
+        {
+          "content": [
+            "“Remember what Moses the servant of the LORD commanded you when he said, ‘The LORD your God will give you rest, and He will give you this land.’"
+          ],
+          "number": 13,
+          "type": "verse"
+        },
+        {
+          "content": [
+            "Your wives, your young children, and your livestock may remain in the land that Moses gave you on this side of the Jordan. But all your mighty men of valor must be armed for battle to cross over ahead of your brothers and help them,"
+          ],
+          "number": 14,
+          "type": "verse"
+        },
+        {
+          "content": [
+            "until the LORD gives them rest as He has done for you, and your brothers also possess the land that the LORD your God is giving them. Then you may return to the land of your inheritance and take possession of that which Moses the servant of the LORD gave you on the east side of the Jordan.”"
+          ],
+          "number": 15,
+          "type": "verse"
+        },
+        {
+          "type": "line_break"
+        },
+        {
+          "content": [
+            "So they answered Joshua, “Everything you have commanded us we will do, and everywhere you send us we will go."
+          ],
+          "number": 16,
+          "type": "verse"
+        },
+        {
+          "content": [
+            "Just as we obeyed Moses in all things, so we will obey you. And may the LORD your God be with you, as He was with Moses."
+          ],
+          "number": 17,
+          "type": "verse"
+        },
+        {
+          "content": [
+            "Anyone who rebels against your order and does not obey your words, all that you command him, will be put to death. Above all, be strong and courageous!”"
+          ],
+          "number": 18,
+          "type": "verse"
+        }
+      ],
+      "footnotes": [
+        {
+          "caller": "+",
+          "noteId": 3255,
+          "reference": {
+            "chapter": 1,
+            "verse": 4
+          },
+          "text": "That is, the Mediterranean Sea"
+        },
+        {
+          "caller": "+",
+          "noteId": 3256,
+          "reference": {
+            "chapter": 1,
+            "verse": 5
+          },
+          "text": "Cited in Hebrews 13:5"
+        }
+      ],
+      "number": 1
+    },
+    "nextChapterApiLink": "/api/BSB/JOS/2.json",
+    "nextChapterAudioLinks": {
+      "gilbert": "https://openbible.com/audio/gilbert/BSB_06_Jos_002_G.mp3",
+      "hays": "https://openbible.com/audio/hays/BSB_06_Jos_002_H.mp3",
+      "souer": "https://openbible.com/audio/souer/BSB_06_Jos_002.mp3"
+    },
+    "numberOfVerses": 18,
+    "previousChapterApiLink": "/api/BSB/DEU/34.json",
+    "previousChapterAudioLinks": {
+      "gilbert": "https://openbible.com/audio/gilbert/BSB_05_Deu_034_G.mp3",
+      "hays": "https://openbible.com/audio/hays/BSB_05_Deu_034_H.mp3",
+      "souer": "https://openbible.com/audio/souer/BSB_05_Deu_034.mp3"
+    },
+    "thisChapterAudioLinks": {
+      "gilbert": "https://openbible.com/audio/gilbert/BSB_06_Jos_001_G.mp3",
+      "hays": "https://openbible.com/audio/hays/BSB_06_Jos_001_H.mp3",
+      "souer": "https://openbible.com/audio/souer/BSB_06_Jos_001.mp3"
+    },
+    "thisChapterLink": "/api/BSB/JOS/1.json",
+    "translation": {
+      "availableFormats": [
+        "json"
+      ],
+      "englishName": "Berean Standard Bible",
+      "id": "BSB",
+      "language": "eng",
+      "languageEnglishName": "English",
+      "languageName": "English",
+      "licenseUrl": "https://berean.bible/",
+      "listOfBooksApiLink": "/api/BSB/books.json",
+      "name": "Berean Standard Bible",
+      "numberOfBooks": 66,
+      "sha256": "587b6d4528b746696e90560a23115d4da5dac426bbd75e288276092f5a45ad21",
+      "shortName": "BSB",
+      "textDirection": "ltr",
+      "totalNumberOfChapters": 1189,
+      "totalNumberOfVerses": 31086,
+      "website": "https://berean.bible/"
+    }
+  },
+  "headers": {
+    "content-type": "application/json",
+    "last-modified": "Wed, 13 Nov 2024 21:19:49 GMT"
+  },
+  "status": 200,
+  "statusText": ""
+}

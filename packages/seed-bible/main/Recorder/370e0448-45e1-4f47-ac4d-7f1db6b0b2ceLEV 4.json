@@ -1,0 +1,349 @@
+{
+  "data": {
+    "book": {
+      "commonName": "Leviticus",
+      "firstChapterApiLink": "/api/BSB/LEV/1.json",
+      "id": "LEV",
+      "lastChapterApiLink": "/api/BSB/LEV/27.json",
+      "name": "Leviticus",
+      "numberOfChapters": 27,
+      "order": 3,
+      "sha256": "05beac99320a59b8a946cbfb765866ecb6579064e384679ac8ce8eefb0ea3dd0",
+      "title": "Leviticus",
+      "totalNumberOfVerses": 859,
+      "translationId": "BSB"
+    },
+    "chapter": {
+      "content": [
+        {
+          "content": [
+            "Laws for Sin Offerings"
+          ],
+          "type": "heading"
+        },
+        {
+          "content": [
+            "Then the LORD said to Moses,"
+          ],
+          "number": 1,
+          "type": "verse"
+        },
+        {
+          "content": [
+            "“Tell the Israelites to do as follows with one who sins unintentionally against any of the LORD’s commandments and does what is forbidden by them:"
+          ],
+          "number": 2,
+          "type": "verse"
+        },
+        {
+          "type": "line_break"
+        },
+        {
+          "content": [
+            "If the anointed priest sins, bringing guilt on the people, he must bring to the LORD a young bull without blemish as a sin offering",
+            {
+              "noteId": 5572
+            },
+            "for the sin he has committed."
+          ],
+          "number": 3,
+          "type": "verse"
+        },
+        {
+          "content": [
+            "He must bring the bull to the entrance to the Tent of Meeting before the LORD, lay his hand on the bull’s head, and slaughter it before the LORD."
+          ],
+          "number": 4,
+          "type": "verse"
+        },
+        {
+          "content": [
+            "Then the anointed priest shall take some of the bull’s blood and bring it into the Tent of Meeting."
+          ],
+          "number": 5,
+          "type": "verse"
+        },
+        {
+          "content": [
+            "The priest is to dip his finger in the blood and sprinkle some of it seven times before the LORD, in front of the veil of the sanctuary."
+          ],
+          "number": 6,
+          "type": "verse"
+        },
+        {
+          "content": [
+            "The priest must then put some of the blood on the horns of the altar of fragrant incense that is before the LORD in the Tent of Meeting. And he is to pour out the rest of the bull’s blood at the base of the altar of burnt offering at the entrance to the Tent of Meeting."
+          ],
+          "number": 7,
+          "type": "verse"
+        },
+        {
+          "content": [
+            "Then he shall remove all the fat from the bull of the sin offering—the fat that covers the entrails, all the fat that is on them,"
+          ],
+          "number": 8,
+          "type": "verse"
+        },
+        {
+          "content": [
+            "both kidneys with the fat on them near the loins, and the lobe of the liver, which he is to remove with the kidneys—"
+          ],
+          "number": 9,
+          "type": "verse"
+        },
+        {
+          "content": [
+            "just as the fat is removed from the ox of the peace offering. Then the priest shall burn them on the altar of burnt offering."
+          ],
+          "number": 10,
+          "type": "verse"
+        },
+        {
+          "content": [
+            "But the hide of the bull and all its flesh, with its head and legs and its entrails and dung—"
+          ],
+          "number": 11,
+          "type": "verse"
+        },
+        {
+          "content": [
+            "all the rest of the bull—he must take outside the camp to a ceremonially clean place where the ashes are poured out, and there he must burn it on a wood fire on the ash heap."
+          ],
+          "number": 12,
+          "type": "verse"
+        },
+        {
+          "type": "line_break"
+        },
+        {
+          "content": [
+            "Now if the whole congregation of Israel strays unintentionally and the matter escapes the notice of the assembly so that they violate any of the LORD’s commandments and incur guilt by doing what is forbidden,"
+          ],
+          "number": 13,
+          "type": "verse"
+        },
+        {
+          "content": [
+            "when they become aware of the sin they have committed, then the assembly must bring a young bull as a sin offering and present it before the Tent of Meeting."
+          ],
+          "number": 14,
+          "type": "verse"
+        },
+        {
+          "content": [
+            "The elders of the congregation are to lay their hands on the bull’s head before the LORD, and it shall be slaughtered before the LORD."
+          ],
+          "number": 15,
+          "type": "verse"
+        },
+        {
+          "content": [
+            "Then the anointed priest is to bring some of the bull’s blood into the Tent of Meeting,"
+          ],
+          "number": 16,
+          "type": "verse"
+        },
+        {
+          "content": [
+            "and he is to dip his finger in the blood and sprinkle it seven times before the LORD in front of the veil."
+          ],
+          "number": 17,
+          "type": "verse"
+        },
+        {
+          "content": [
+            "He is also to put some of the blood on the horns of the altar that is before the LORD in the Tent of Meeting, and he must pour out the rest of the blood at the base of the altar of burnt offering at the entrance to the Tent of Meeting."
+          ],
+          "number": 18,
+          "type": "verse"
+        },
+        {
+          "content": [
+            "And he is to remove all the fat from it and burn it on the altar."
+          ],
+          "number": 19,
+          "type": "verse"
+        },
+        {
+          "content": [
+            "He shall offer this bull just as he did the bull for the sin offering; in this way the priest will make atonement on their behalf, and they will be forgiven."
+          ],
+          "number": 20,
+          "type": "verse"
+        },
+        {
+          "content": [
+            "Then he is to take the bull outside the camp and burn it, just as he burned the first bull. It is the sin offering for the assembly."
+          ],
+          "number": 21,
+          "type": "verse"
+        },
+        {
+          "type": "line_break"
+        },
+        {
+          "content": [
+            "When a leader sins unintentionally and does what is prohibited by any of the commandments of the LORD his God, he incurs guilt."
+          ],
+          "number": 22,
+          "type": "verse"
+        },
+        {
+          "content": [
+            "When he becomes aware of the sin he has committed, he must bring an unblemished male goat as his offering."
+          ],
+          "number": 23,
+          "type": "verse"
+        },
+        {
+          "content": [
+            "He is to lay his hand on the head of the goat and slaughter it at the place where the burnt offering is slaughtered before the LORD. It is a sin offering."
+          ],
+          "number": 24,
+          "type": "verse"
+        },
+        {
+          "content": [
+            "Then the priest is to take some of the blood of the sin offering with his finger, put it on the horns of the altar of burnt offering, and pour out the rest of the blood at the base of the altar."
+          ],
+          "number": 25,
+          "type": "verse"
+        },
+        {
+          "content": [
+            "He must burn all its fat on the altar, like the fat of the peace offerings; thus the priest will make atonement for that man’s sin, and he will be forgiven."
+          ],
+          "number": 26,
+          "type": "verse"
+        },
+        {
+          "type": "line_break"
+        },
+        {
+          "content": [
+            "And if one of the common people sins unintentionally and does what is prohibited by any of the LORD’s commandments, he incurs guilt."
+          ],
+          "number": 27,
+          "type": "verse"
+        },
+        {
+          "content": [
+            "When he becomes aware of the sin he has committed, he must bring an unblemished female goat as his offering for that sin."
+          ],
+          "number": 28,
+          "type": "verse"
+        },
+        {
+          "content": [
+            "He is to lay his hand on the head of the sin offering and slaughter it at the place of the burnt offering."
+          ],
+          "number": 29,
+          "type": "verse"
+        },
+        {
+          "content": [
+            "Then the priest is to take some of its blood with his finger, put it on the horns of the altar of burnt offering, and pour out the rest of the blood at the base of the altar."
+          ],
+          "number": 30,
+          "type": "verse"
+        },
+        {
+          "content": [
+            "Then he is to remove all the fat, just as it is removed from the peace offering, and the priest is to burn it on the altar as a pleasing aroma to the LORD. In this way the priest will make atonement for him, and he will be forgiven."
+          ],
+          "number": 31,
+          "type": "verse"
+        },
+        {
+          "type": "line_break"
+        },
+        {
+          "content": [
+            "If, however, he brings a lamb as a sin offering, he must bring an unblemished female."
+          ],
+          "number": 32,
+          "type": "verse"
+        },
+        {
+          "content": [
+            "And he is to lay his hand on the head of the sin offering and slaughter it as a sin offering at the place where the burnt offering is slaughtered."
+          ],
+          "number": 33,
+          "type": "verse"
+        },
+        {
+          "content": [
+            "Then the priest is to take some of the blood of the sin offering with his finger, put it on the horns of the altar of burnt offering, and pour out the rest of its blood at the base of the altar."
+          ],
+          "number": 34,
+          "type": "verse"
+        },
+        {
+          "content": [
+            "And he shall remove all the fat, just as the fat of the lamb is removed from the peace offerings, and he shall burn it on the altar along with the offerings made by fire to the LORD. In this way the priest will make atonement for him for the sin he has committed, and he will be forgiven."
+          ],
+          "number": 35,
+          "type": "verse"
+        }
+      ],
+      "footnotes": [
+        {
+          "caller": "+",
+          "noteId": 5572,
+          "reference": {
+            "chapter": 4,
+            "verse": 3
+          },
+          "text": "Or purification offering; here and throughout Leviticus"
+        }
+      ],
+      "number": 4
+    },
+    "nextChapterApiLink": "/api/BSB/LEV/5.json",
+    "nextChapterAudioLinks": {
+      "gilbert": "https://openbible.com/audio/gilbert/BSB_03_Lev_005_G.mp3",
+      "hays": "https://openbible.com/audio/hays/BSB_03_Lev_005_H.mp3",
+      "souer": "https://openbible.com/audio/souer/BSB_03_Lev_005.mp3"
+    },
+    "numberOfVerses": 35,
+    "previousChapterApiLink": "/api/BSB/LEV/3.json",
+    "previousChapterAudioLinks": {
+      "gilbert": "https://openbible.com/audio/gilbert/BSB_03_Lev_003_G.mp3",
+      "hays": "https://openbible.com/audio/hays/BSB_03_Lev_003_H.mp3",
+      "souer": "https://openbible.com/audio/souer/BSB_03_Lev_003.mp3"
+    },
+    "thisChapterAudioLinks": {
+      "gilbert": "https://openbible.com/audio/gilbert/BSB_03_Lev_004_G.mp3",
+      "hays": "https://openbible.com/audio/hays/BSB_03_Lev_004_H.mp3",
+      "souer": "https://openbible.com/audio/souer/BSB_03_Lev_004.mp3"
+    },
+    "thisChapterLink": "/api/BSB/LEV/4.json",
+    "translation": {
+      "availableFormats": [
+        "json"
+      ],
+      "englishName": "Berean Standard Bible",
+      "id": "BSB",
+      "language": "eng",
+      "languageEnglishName": "English",
+      "languageName": "English",
+      "licenseNotes": null,
+      "licenseUrl": "https://berean.bible/",
+      "listOfBooksApiLink": "/api/BSB/books.json",
+      "name": "Berean Standard Bible",
+      "numberOfBooks": 66,
+      "sha256": "17c5ac87e26de77bf1f09c1c3ee0c3fafeb3c876849038e8df9b64a7a9504674",
+      "shortName": "BSB",
+      "textDirection": "ltr",
+      "totalNumberOfChapters": 1189,
+      "totalNumberOfVerses": 31086,
+      "website": "https://berean.bible/"
+    }
+  },
+  "headers": {
+    "content-type": "application/json",
+    "last-modified": "Thu, 19 Dec 2024 17:49:01 GMT"
+  },
+  "status": 200,
+  "statusText": ""
+}

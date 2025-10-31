@@ -1,8 +1,11 @@
 const { createContext, useContext, useRef, useState, useEffect } = os.appHooks;
 
-const Menu = ({ onClose, setOpenEditModal, onDelete, position, groupValue, isResourceGroupHiding, groupMenu, setGroupMenu, setIsResourceGroupHiding, setResourcesByDate, calendarApi }) => {
+const Menu = ({ onClose, setOpenEditModal, onDelete, position, groupValue, setGroupMenu, calendarView, calendarApi, setHiddenGroups, hiddenGroups, menuOpenForId }) => {
   const menuRef = useRef();
   const [hovered, setHovered] = useState(null);
+
+
+
 
   useEffect(() => {
     const handleClickOutside = (event) => {
@@ -14,8 +17,22 @@ const Menu = ({ onClose, setOpenEditModal, onDelete, position, groupValue, isRes
     document.addEventListener('mousedown', handleClickOutside);
     return () => document.removeEventListener('mousedown', handleClickOutside);
   }, [onClose]);
+  useEffect(() => {
+    const container = document.querySelector(".fc");
+    const buttons = document.querySelectorAll(".collapsed-btn"); // use class instead of id
+    console.log(buttons);
 
-  const resourceGroupShaded = document.querySelector('.fc-cell-shaded');
+    if (calendarView && container) {
+      if (calendarView !== "resourceTimeline") {
+        buttons.forEach((btn) => container.removeChild(btn));
+      }
+    }
+  },[calendarView]);
+
+
+
+
+
 
 
 
@@ -27,12 +44,15 @@ const Menu = ({ onClose, setOpenEditModal, onDelete, position, groupValue, isRes
         fontFamily: 'Satoshi',
         position: 'absolute',
         right: position ? `` : '12px',
-        left: position ? "90px" : '',
+        left: position ? hiddenGroups[groupValue] ? "24px" : '53px' : '',
 
-        top: position ? `${position.top - 20}px` : '10px',
-        borderRadius: '4px',
+        top: position ? `${position.top - 7}px` : '23px',
+        borderRadius: '10px',
         padding: '4px 2px 4px 2px',
-        backgroundColor: '#f4f7f8',
+        width: '80px',
+        backgroundColor: 'black',
+        color: 'white',
+
         zIndex: 1000,
       }}
     >
@@ -42,7 +62,8 @@ const Menu = ({ onClose, setOpenEditModal, onDelete, position, groupValue, isRes
           flexDirection: 'column',
           alignItems: 'flex-start',
           gap: '5px',
-          backgroundColor: '#f4f7f8',
+          color: 'white',
+          backgroundColor: 'black',
         }}
       >
         <div
@@ -56,21 +77,22 @@ const Menu = ({ onClose, setOpenEditModal, onDelete, position, groupValue, isRes
             fontSize: '15px',
             cursor: 'pointer',
             borderRadius: '4px',
+            color: hovered === 'edit' ? 'black' : 'white',
 
 
             width: '100%',
             borderRadius: '4px',
-            backgroundColor: hovered === 'edit' ? '#d3d3d3' : 'transparent',
+            backgroundColor: hovered === 'edit' ? 'white' : 'transparent',
           }}
         >
-          <span style={{ display: 'flex', alignItems: 'center', gap: '4px' }}>
+          <span style={{ display: 'flex', alignItems: 'center', gap: '6px' }}>
             <svg
               xmlns="http://www.w3.org/2000/svg"
               width="15"
               height="15"
               viewBox="0 0 20 20"
               fill="none"
-              stroke="black"
+              stroke={hovered === 'edit' ? "black" : 'white'}
             >
               <path
                 d="M9.99992 6.66611L3.33325 13.3328V16.6661L6.66659 16.6661L13.3332 9.99944M9.99992 6.66611L12.3904 4.27557L12.3919 4.27415C12.7209 3.94508 12.8858 3.78026 13.0758 3.71852C13.2431 3.66414 13.4235 3.66414 13.5908 3.71852C13.7807 3.78021 13.9453 3.94485 14.2739 4.27345L15.7238 5.72328C16.0538 6.0533 16.2189 6.21838 16.2807 6.40865C16.3351 6.57602 16.335 6.75631 16.2807 6.92368C16.2189 7.11382 16.054 7.27865 15.7245 7.60819L15.7238 7.6089L13.3332 9.99944M9.99992 6.66611L13.3332 9.99944"
@@ -83,6 +105,7 @@ const Menu = ({ onClose, setOpenEditModal, onDelete, position, groupValue, isRes
           </span>
         </div>
 
+
         <div
           onClick={() => {
             onDelete(groupValue || '')
@@ -94,15 +117,16 @@ const Menu = ({ onClose, setOpenEditModal, onDelete, position, groupValue, isRes
             fontSize: '15px',
             cursor: 'pointer',
             borderRadius: '4px',
+            color: hovered === 'delete' ? 'black' : 'white',
 
             width: '100%',
             borderRadius: '4px',
-            backgroundColor: hovered === 'delete' ? '#d3d3d3' : 'transparent',
+            backgroundColor: hovered === 'delete' ? 'white' : 'transparent',
           }}
         >
-          <span style={{ display: 'flex', alignItems: 'center', gap: '4px' }}>
+          <span style={{ display: 'flex', alignItems: 'center', gap: '6px' }}>
             <svg
-              stroke="currentColor"
+              stroke={hovered === 'delete' ? 'black' : 'white'}
               fill="currentColor"
               strokeWidth="0"
               viewBox="0 0 24 24"
@@ -119,118 +143,126 @@ const Menu = ({ onClose, setOpenEditModal, onDelete, position, groupValue, isRes
             Delete
           </span>
         </div>
-        <div
-          onClick={() => {
-            setIsResourceGroupHiding(prev => !prev);
+        {!menuOpenForId ?
+          <div
+            onClick={() => {
+              const groups = document.querySelectorAll(".fc-resource-group");
 
-            const groups = document.querySelectorAll('.fc-resource-group');
+              groups.forEach((group) => {
+                const label = group.innerText.trim();
+                console.log(label);
 
-            groups.forEach(group => {
-              const label = group.innerText.trim();
+                if (label === groupValue) {
+                  const currentlyHidden = hiddenGroups[label] || false;
 
-              if (label === groupValue && !isResourceGroupHiding) {
-                // shrink the group row completely
-                group.style.overflow = "";
-                group.style.height = '0';
-                group.style.display = "none"; // fully collapse
+                  if (!currentlyHidden) {
+                    // hide this group
+                    group.style.overflow = "hidden";
+                    group.style.height = "0";
+                    group.style.display = "none";
 
-                // check if replacement svg button already exists
-                if (!document.querySelector(`#collapsed-btn-${label}`)) {
-                  const btn = document.createElement("button");
-                  btn.id = `collapsed-btn-${label}`;
-                  btn.style.position = "absolute";
+                    // add collapsed button if missing
+                    if (!document.querySelector(`#collapsed-btn-${label}`)) {
+                      const btn = document.createElement("button");
+                      btn.id = `collapsed-btn-${label}`;
+                      btn.style.background = "transparent";
+                      btn.style.border = "none";
+                      btn.style.position = 'fixed';
+                      btn.style.cursor = "pointer";
 
-                  // position button near the hidden row
+                      btn.style.padding = "2px";
+                      btn.style.top = `${position.top}px`;
+                      btn.classList.add("collapsed-btn");
 
-
-                  btn.style.background = "transparent";
-                  btn.style.border = "none";
-                  btn.style.cursor = "pointer";
-                  btn.style.padding = "2px";
-                  btn.style.top = `${position.top - 10}px`;
-
-                  btn.innerHTML = `
-          <svg width="16" height="16" viewBox="0 0 24 24" fill="gray">
-            <circle cx="12" cy="5" r="2" />
-            <circle cx="12" cy="12" r="2" />
-            <circle cx="12" cy="19" r="2" />
-          </svg>
-        `;
-
-                  // when clicked → open menu again
-                  btn.onclick = (e) => {
-
-                    e.stopPropagation();
-                    const rect = btn.getBoundingClientRect();
-                    setGroupMenu({
-                      groupValue,
-                      position: {
-                        top: rect.top + window.scrollY + 20,
-                        left: rect.left + window.scrollX - 30
-                      }
-                    });
-                  };
-
-
-                  // append into calendar container
-                  document.querySelector(".fc").appendChild(btn);
-                }
-                calendarApi.current.setOption('resourceAreaWidth', `${Math.floor(Math.random() * 200 + 120)}px`)
-              }
-              else {
-
-                group.style.display = "block";
-                group.style.height = '100%';
-                
-
-                calendarApi.current.setOption('resourceAreaWidth', `${Math.floor(Math.random() * 200 + 120)}px`)
-
-
-              }
-            });
-
-            onClose();
-          }}
-
-
-
-
-
-
-
-
-
-
-
-          onMouseEnter={() => setHovered('hide')}
-          onMouseLeave={() => setHovered(null)}
-          style={{
-            fontSize: '15px',
-            cursor: 'pointer',
-            borderRadius: '4px',
-
-            width: '100%',
-            borderRadius: '4px',
-            backgroundColor: hovered === 'hide' ? '#d3d3d3' : 'transparent',
-          }}
-        >
-          <span style={{ display: 'flex', alignItems: 'center', gap: '4px' }}>
-            <svg
-              stroke="currentColor"
-              fill="currentColor"
-              strokeWidth="0"
-              viewBox="0 0 24 24"
-              height="15"
-              width="15"
-              xmlns="http://www.w3.org/2000/svg"
-            >
-              <path d="M12 5c-7.633 0-11 7-11 7s1.753 3.41 5.247 5.438l-2.707 2.707 1.414 1.414 16.97-16.97-1.414-1.414-2.717 2.717C16.65 6.383 14.415 5 12 5zm0 2c1.635 0 3.118.802 4.373 1.908l-1.461 1.461A3.99 3.99 0 0 0 12 9c-1.654 0-3 1.346-3 3 0 .739.268 1.414.708 1.938l-1.462 1.462A5.985 5.985 0 0 1 6 12c0-3.309 2.691-6 6-6zm0 10c-1.64 0-3.122-.8-4.374-1.906l1.463-1.463A3.99 3.99 0 0 0 12 15c1.654 0 3-1.346 3-3 0-.737-.266-1.41-.705-1.934l1.461-1.461A5.978 5.978 0 0 1 18 12c0 3.309-2.691 6-6 6z" />
+                      btn.innerHTML = `
+            <svg width="16" height="16" viewBox="0 0 24 24" fill="gray">
+              <circle cx="12" cy="5" r="2" />
+              <circle cx="12" cy="12" r="2" />
+              <circle cx="12" cy="19" r="2" />
             </svg>
-            {!isResourceGroupHiding ? 'hide' : 'show'}
+          `;
+
+                      btn.onclick = (e) => {
+                        e.stopPropagation();
+                        const rect = btn.getBoundingClientRect();
+                        const top = rect.top + window.scrollY + 20;
+                        const left = rect.left + window.scrollX - 200;
+                        console.log("Menu position:", { top, left });
+
+                        setGroupMenu({
+                          groupValue,
+                          position: { top, left },
+                        });
+                      };
+
+                      // ✅ attach to the first "room" (expander) of this group only
+
+                      document.querySelector('.fc').appendChild(btn);
+
+                    }
+                  } else {
+                    // show this group again
+                    group.style.display = "block";
+                    group.style.height = "100%";
+
+                    // remove the button if it exists
+                    const btn = document.querySelector(`#collapsed-btn-${label}`);
+                    if (btn) {
+                      btn.remove();
+                    }
+                  }
+
+                  // ✅ update state once
+                  setHiddenGroups((prev) => ({
+                    ...prev,
+                    [label]: !currentlyHidden,
+                  }));
+
+                  calendarApi.current.setOption(
+                    "resourceAreaWidth",
+                    `${Math.floor(Math.random() * 200 + 120)}px`
+                  );
+                }
+              });
+
+              onClose();
+            }}
+
+            onMouseEnter={() => setHovered('hide')}
+            onMouseLeave={() => setHovered(null)}
+            style={{
+              fontSize: '15px',
+              cursor: 'pointer',
+              borderRadius: '4px',
+              color: hovered === 'hide' ? 'black' : 'white',
+
+              width: '100%',
+              borderRadius: '4px',
+              backgroundColor: hovered === 'hide' ? 'white' : 'transparent',
+            }}
+          >
+            <span style={{ display: 'flex', alignItems: 'center', gap: '6px' }}>
+              {hiddenGroups[groupValue] ? <svg width="16" height="16" viewBox="0 0 24 24" xmlns="http://www.w3.org/2000/svg" aria-hidden="true">
+                <title>Show</title>
+                <path d="M2 12s4-7 10-7 10 7 10 7-4 7-10 7S2 12 2 12z" stroke={hovered === 'hide' ? 'black' : 'white'} stroke-width="1.25" fill="none" stroke-linecap="round" stroke-linejoin="round" />
+                <circle cx="12" cy="12" r="2.5" fill="currentColor" />
+              </svg>
+                : <svg
+                  stroke={hovered === 'hide' ? 'black' : 'white'}
+                  fill="currentColor"
+                  strokeWidth="0"
+                  viewBox="0 0 24 24"
+                  height="15"
+                  width="15"
+                  xmlns="http://www.w3.org/2000/svg"
+                >
+                  <path d="M12 5c-7.633 0-11 7-11 7s1.753 3.41 5.247 5.438l-2.707 2.707 1.414 1.414 16.97-16.97-1.414-1.414-2.717 2.717C16.65 6.383 14.415 5 12 5zm0 2c1.635 0 3.118.802 4.373 1.908l-1.461 1.461A3.99 3.99 0 0 0 12 9c-1.654 0-3 1.346-3 3 0 .739.268 1.414.708 1.938l-1.462 1.462A5.985 5.985 0 0 1 6 12c0-3.309 2.691-6 6-6zm0 10c-1.64 0-3.122-.8-4.374-1.906l1.463-1.463A3.99 3.99 0 0 0 12 15c1.654 0 3-1.346 3-3 0-.737-.266-1.41-.705-1.934l1.461-1.461A5.978 5.978 0 0 1 18 12c0 3.309-2.691 6-6 6z" />
+                </svg>}
+              {hiddenGroups[groupValue] ? "show" : "hide"}
 
 
-          </span>
-        </div>
+            </span>
+          </div> : ''}
       </div>
     </div>
   );

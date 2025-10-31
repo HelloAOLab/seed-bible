@@ -1,0 +1,487 @@
+{
+  "data": {
+    "book": {
+      "commonName": "John",
+      "firstChapterApiLink": "/api/BSB/JHN/1.json",
+      "id": "JHN",
+      "lastChapterApiLink": "/api/BSB/JHN/21.json",
+      "name": "John",
+      "numberOfChapters": 21,
+      "order": 43,
+      "sha256": "528cfea0fe3ca68fc84a2a026203b468f6d7ab87a9abb33bd94f933c98ae2212",
+      "title": "John",
+      "totalNumberOfVerses": 878,
+      "translationId": "BSB"
+    },
+    "chapter": {
+      "content": [
+        {
+          "content": [
+            "Jesus and Nicodemus"
+          ],
+          "type": "heading"
+        },
+        {
+          "content": [
+            "Now there was a man of the Pharisees named Nicodemus, a leader of the Jews."
+          ],
+          "number": 1,
+          "type": "verse"
+        },
+        {
+          "content": [
+            "He came to Jesus at night and said, “Rabbi, we know that You are a teacher who has come from God. For no one could perform the signs You are doing if God were not with him.”"
+          ],
+          "number": 2,
+          "type": "verse"
+        },
+        {
+          "type": "line_break"
+        },
+        {
+          "content": [
+            "Jesus replied, “Truly, truly, I tell you, no one can see the kingdom of God unless he is born again.",
+            {
+              "noteId": 3043
+            },
+            "”"
+          ],
+          "number": 3,
+          "type": "verse"
+        },
+        {
+          "type": "line_break"
+        },
+        {
+          "content": [
+            "“How can a man be born when he is old?” Nicodemus asked. “Can he enter his mother’s womb a second time to be born?”"
+          ],
+          "number": 4,
+          "type": "verse"
+        },
+        {
+          "type": "line_break"
+        },
+        {
+          "content": [
+            "Jesus answered, “Truly, truly, I tell you, no one can enter the kingdom of God unless he is born of water and the Spirit."
+          ],
+          "number": 5,
+          "type": "verse"
+        },
+        {
+          "content": [
+            "Flesh is born of flesh, but spirit is born of the Spirit."
+          ],
+          "number": 6,
+          "type": "verse"
+        },
+        {
+          "content": [
+            "Do not be amazed that I said, ‘You",
+            {
+              "noteId": 3044
+            },
+            "must be born again.’"
+          ],
+          "number": 7,
+          "type": "verse"
+        },
+        {
+          "content": [
+            "The wind blows where it wishes. You hear its sound, but you do not know where it comes from or where it is going. So it is with everyone born of the Spirit.”"
+          ],
+          "number": 8,
+          "type": "verse"
+        },
+        {
+          "type": "line_break"
+        },
+        {
+          "content": [
+            "“How can this be?” Nicodemus asked."
+          ],
+          "number": 9,
+          "type": "verse"
+        },
+        {
+          "type": "line_break"
+        },
+        {
+          "content": [
+            "“You are Israel’s teacher,” said Jesus, “and you do not understand these things?"
+          ],
+          "number": 10,
+          "type": "verse"
+        },
+        {
+          "content": [
+            "Truly, truly, I tell you, we speak of what we know, and we testify to what we have seen, and yet you people do not accept our testimony."
+          ],
+          "number": 11,
+          "type": "verse"
+        },
+        {
+          "type": "line_break"
+        },
+        {
+          "content": [
+            "If I have told you about earthly things and you do not believe, how will you believe if I tell you about heavenly things?"
+          ],
+          "number": 12,
+          "type": "verse"
+        },
+        {
+          "content": [
+            "No one has ascended into heaven except the One who descended from heaven—the Son of Man.",
+            {
+              "noteId": 3045
+            }
+          ],
+          "number": 13,
+          "type": "verse"
+        },
+        {
+          "content": [
+            "Just as Moses lifted up the snake in the wilderness, so the Son of Man must be lifted up,"
+          ],
+          "number": 14,
+          "type": "verse"
+        },
+        {
+          "content": [
+            "that everyone who believes in Him may have eternal life.",
+            {
+              "noteId": 3046
+            }
+          ],
+          "number": 15,
+          "type": "verse"
+        },
+        {
+          "type": "line_break"
+        },
+        {
+          "content": [
+            "For God so loved the world that He gave His one and only",
+            {
+              "noteId": 3047
+            },
+            "Son, that everyone who believes in Him shall not perish but have eternal life."
+          ],
+          "number": 16,
+          "type": "verse"
+        },
+        {
+          "content": [
+            "For God did not send His Son into the world to condemn the world, but to save the world through Him."
+          ],
+          "number": 17,
+          "type": "verse"
+        },
+        {
+          "content": [
+            "Whoever believes in Him is not condemned, but whoever does not believe has already been condemned, because he has not believed in the name of God’s one and only Son."
+          ],
+          "number": 18,
+          "type": "verse"
+        },
+        {
+          "type": "line_break"
+        },
+        {
+          "content": [
+            "And this is the verdict: The Light has come into the world, but men loved the darkness rather than the Light because their deeds were evil."
+          ],
+          "number": 19,
+          "type": "verse"
+        },
+        {
+          "content": [
+            "Everyone who does evil hates the Light, and does not come into the Light for fear that his deeds will be exposed."
+          ],
+          "number": 20,
+          "type": "verse"
+        },
+        {
+          "content": [
+            "But whoever practices the truth comes into the Light, so that it may be seen clearly that what he has done has been accomplished in God.”",
+            {
+              "noteId": 3048
+            }
+          ],
+          "number": 21,
+          "type": "verse"
+        },
+        {
+          "content": [
+            "John’s Testimony about Jesus"
+          ],
+          "type": "heading"
+        },
+        {
+          "type": "line_break"
+        },
+        {
+          "content": [
+            "After this, Jesus and His disciples went into the Judean countryside, where He spent some time with them and baptized."
+          ],
+          "number": 22,
+          "type": "verse"
+        },
+        {
+          "type": "line_break"
+        },
+        {
+          "content": [
+            "Now John was also baptizing at Aenon near Salim, because the water was plentiful there, and people kept coming to be baptized."
+          ],
+          "number": 23,
+          "type": "verse"
+        },
+        {
+          "content": [
+            "(For John had not yet been thrown into prison.)"
+          ],
+          "number": 24,
+          "type": "verse"
+        },
+        {
+          "type": "line_break"
+        },
+        {
+          "content": [
+            "Then a dispute arose between John’s disciples and a certain Jew",
+            {
+              "noteId": 3049
+            },
+            "over the issue of ceremonial washing."
+          ],
+          "number": 25,
+          "type": "verse"
+        },
+        {
+          "content": [
+            "So John’s disciples came to him and said, “Look, Rabbi, the One who was with you beyond the Jordan, the One you testified about—He is baptizing, and everyone is going to Him.”"
+          ],
+          "number": 26,
+          "type": "verse"
+        },
+        {
+          "type": "line_break"
+        },
+        {
+          "content": [
+            "John replied, “A man can receive only what is given him from heaven."
+          ],
+          "number": 27,
+          "type": "verse"
+        },
+        {
+          "content": [
+            "You yourselves can testify that I said, ‘I am not the Christ, but am sent ahead of Him.’"
+          ],
+          "number": 28,
+          "type": "verse"
+        },
+        {
+          "content": [
+            "The bride belongs to the bridegroom. The friend of the bridegroom stands and listens for him, and is overjoyed to hear the bridegroom’s voice. That joy is mine, and it is now complete."
+          ],
+          "number": 29,
+          "type": "verse"
+        },
+        {
+          "content": [
+            "He must increase; I must decrease."
+          ],
+          "number": 30,
+          "type": "verse"
+        },
+        {
+          "type": "line_break"
+        },
+        {
+          "content": [
+            "The One who comes from above is above all. The one who is from the earth belongs to the earth and speaks as one from the earth. The One who comes from heaven is above all.",
+            {
+              "noteId": 3050
+            }
+          ],
+          "number": 31,
+          "type": "verse"
+        },
+        {
+          "content": [
+            "He testifies to what He has seen and heard, yet no one accepts His testimony."
+          ],
+          "number": 32,
+          "type": "verse"
+        },
+        {
+          "content": [
+            "Whoever accepts His testimony has certified that God is truthful."
+          ],
+          "number": 33,
+          "type": "verse"
+        },
+        {
+          "content": [
+            "For the One whom God has sent speaks the words of God, for God gives the Spirit without limit."
+          ],
+          "number": 34,
+          "type": "verse"
+        },
+        {
+          "type": "line_break"
+        },
+        {
+          "content": [
+            "The Father loves the Son and has placed all things in His hands."
+          ],
+          "number": 35,
+          "type": "verse"
+        },
+        {
+          "content": [
+            "Whoever believes in the Son has eternal life. Whoever rejects the Son will not see life. Instead, the wrath of God remains on him.”",
+            {
+              "noteId": 3051
+            }
+          ],
+          "number": 36,
+          "type": "verse"
+        }
+      ],
+      "footnotes": [
+        {
+          "caller": "+",
+          "noteId": 3043,
+          "reference": {
+            "chapter": 3,
+            "verse": 3
+          },
+          "text": "Or born from above; also in verse 7."
+        },
+        {
+          "caller": "+",
+          "noteId": 3044,
+          "reference": {
+            "chapter": 3,
+            "verse": 7
+          },
+          "text": "The Greek word for you is plural; also in verse 12."
+        },
+        {
+          "caller": "+",
+          "noteId": 3045,
+          "reference": {
+            "chapter": 3,
+            "verse": 13
+          },
+          "text": "BYZ and TR include who is in heaven."
+        },
+        {
+          "caller": "+",
+          "noteId": 3046,
+          "reference": {
+            "chapter": 3,
+            "verse": 15
+          },
+          "text": "Or everyone who believes may have eternal life in Him."
+        },
+        {
+          "caller": "+",
+          "noteId": 3047,
+          "reference": {
+            "chapter": 3,
+            "verse": 16
+          },
+          "text": "Or only begotten or unique; also in verse 18"
+        },
+        {
+          "caller": "+",
+          "noteId": 3048,
+          "reference": {
+            "chapter": 3,
+            "verse": 21
+          },
+          "text": "Some translators close this quotation after verse 15."
+        },
+        {
+          "caller": "+",
+          "noteId": 3049,
+          "reference": {
+            "chapter": 3,
+            "verse": 25
+          },
+          "text": "TR and the Jews"
+        },
+        {
+          "caller": "+",
+          "noteId": 3050,
+          "reference": {
+            "chapter": 3,
+            "verse": 31
+          },
+          "text": "Tischendorf The One comes from heaven."
+        },
+        {
+          "caller": "+",
+          "noteId": 3051,
+          "reference": {
+            "chapter": 3,
+            "verse": 36
+          },
+          "text": "Some translators close this quotation after verse 30."
+        }
+      ],
+      "number": 3
+    },
+    "nextChapterApiLink": "/api/BSB/JHN/4.json",
+    "nextChapterAudioLinks": {
+      "gilbert": "https://openbible.com/audio/gilbert/BSB_43_Jhn_004_G.mp3",
+      "hays": "https://openbible.com/audio/hays/BSB_43_Jhn_004_H.mp3",
+      "souer": "https://openbible.com/audio/souer/BSB_43_Jhn_004.mp3"
+    },
+    "numberOfVerses": 36,
+    "previousChapterApiLink": "/api/BSB/JHN/2.json",
+    "previousChapterAudioLinks": {
+      "gilbert": "https://openbible.com/audio/gilbert/BSB_43_Jhn_002_G.mp3",
+      "hays": "https://openbible.com/audio/hays/BSB_43_Jhn_002_H.mp3",
+      "souer": "https://openbible.com/audio/souer/BSB_43_Jhn_002.mp3"
+    },
+    "thisChapterAudioLinks": {
+      "gilbert": "https://openbible.com/audio/gilbert/BSB_43_Jhn_003_G.mp3",
+      "hays": "https://openbible.com/audio/hays/BSB_43_Jhn_003_H.mp3",
+      "souer": "https://openbible.com/audio/souer/BSB_43_Jhn_003.mp3"
+    },
+    "thisChapterLink": "/api/BSB/JHN/3.json",
+    "translation": {
+      "availableFormats": [
+        "json"
+      ],
+      "englishName": "Berean Standard Bible",
+      "id": "BSB",
+      "language": "eng",
+      "languageEnglishName": "English",
+      "languageName": "English",
+      "licenseUrl": "https://berean.bible/",
+      "listOfBooksApiLink": "/api/BSB/books.json",
+      "name": "Berean Standard Bible",
+      "numberOfBooks": 66,
+      "sha256": "587b6d4528b746696e90560a23115d4da5dac426bbd75e288276092f5a45ad21",
+      "shortName": "BSB",
+      "textDirection": "ltr",
+      "totalNumberOfChapters": 1189,
+      "totalNumberOfVerses": 31086,
+      "website": "https://berean.bible/"
+    }
+  },
+  "headers": {
+    "content-type": "application/json",
+    "last-modified": "Wed, 13 Nov 2024 21:19:54 GMT"
+  },
+  "status": 200,
+  "statusText": ""
+}

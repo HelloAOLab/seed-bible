@@ -1,0 +1,408 @@
+{
+  "data": {
+    "book": {
+      "commonName": "Genesis",
+      "firstChapterApiLink": "/api/BSB/GEN/1.json",
+      "id": "GEN",
+      "lastChapterApiLink": "/api/BSB/GEN/50.json",
+      "name": "Genesis",
+      "numberOfChapters": 50,
+      "order": 1,
+      "sha256": "9ae507188093d846873e8affd9e88c21ac55abdbc6d8adb9beb220345494f0f1",
+      "title": "Genesis",
+      "totalNumberOfVerses": 1533,
+      "translationId": "BSB"
+    },
+    "chapter": {
+      "content": [
+        {
+          "content": [
+            "The Descendants of Adam"
+          ],
+          "type": "heading"
+        },
+        {
+          "content": [
+            "This is the book of the generations of Adam. In the day that God created man, He made him in His own likeness."
+          ],
+          "number": 1,
+          "type": "verse"
+        },
+        {
+          "content": [
+            "Male and female He created them,",
+            {
+              "noteId": 4341
+            },
+            "and He blessed them. And in the day they were created, He called them “man.”",
+            {
+              "noteId": 4342
+            }
+          ],
+          "number": 2,
+          "type": "verse"
+        },
+        {
+          "type": "line_break"
+        },
+        {
+          "content": [
+            "When Adam was 130 years old, he had a son in his own likeness, after his own image; and he named him Seth."
+          ],
+          "number": 3,
+          "type": "verse"
+        },
+        {
+          "content": [
+            "And after he had become the father of Seth, Adam lived 800 years and had other sons and daughters."
+          ],
+          "number": 4,
+          "type": "verse"
+        },
+        {
+          "content": [
+            "So Adam lived a total of 930 years, and then he died."
+          ],
+          "number": 5,
+          "type": "verse"
+        },
+        {
+          "type": "line_break"
+        },
+        {
+          "content": [
+            "When Seth was 105 years old, he became the father of Enosh."
+          ],
+          "number": 6,
+          "type": "verse"
+        },
+        {
+          "content": [
+            "And after he had become the father of Enosh, Seth lived 807 years and had other sons and daughters."
+          ],
+          "number": 7,
+          "type": "verse"
+        },
+        {
+          "content": [
+            "So Seth lived a total of 912 years, and then he died."
+          ],
+          "number": 8,
+          "type": "verse"
+        },
+        {
+          "type": "line_break"
+        },
+        {
+          "content": [
+            "When Enosh was 90 years old, he became the father of Kenan."
+          ],
+          "number": 9,
+          "type": "verse"
+        },
+        {
+          "content": [
+            "And after he had become the father of Kenan, Enosh lived 815 years and had other sons and daughters."
+          ],
+          "number": 10,
+          "type": "verse"
+        },
+        {
+          "content": [
+            "So Enosh lived a total of 905 years, and then he died."
+          ],
+          "number": 11,
+          "type": "verse"
+        },
+        {
+          "type": "line_break"
+        },
+        {
+          "content": [
+            "When Kenan was 70 years old, he became the father of Mahalalel."
+          ],
+          "number": 12,
+          "type": "verse"
+        },
+        {
+          "content": [
+            "And after he had become the father of Mahalalel, Kenan lived 840 years and had other sons and daughters."
+          ],
+          "number": 13,
+          "type": "verse"
+        },
+        {
+          "content": [
+            "So Kenan lived a total of 910 years, and then he died."
+          ],
+          "number": 14,
+          "type": "verse"
+        },
+        {
+          "type": "line_break"
+        },
+        {
+          "content": [
+            "When Mahalalel was 65 years old, he became the father of Jared."
+          ],
+          "number": 15,
+          "type": "verse"
+        },
+        {
+          "content": [
+            "And after he had become the father of Jared, Mahalalel lived 830 years and had other sons and daughters."
+          ],
+          "number": 16,
+          "type": "verse"
+        },
+        {
+          "content": [
+            "So Mahalalel lived a total of 895 years, and then he died."
+          ],
+          "number": 17,
+          "type": "verse"
+        },
+        {
+          "content": [
+            "God Takes Up Enoch"
+          ],
+          "type": "heading"
+        },
+        {
+          "type": "line_break"
+        },
+        {
+          "content": [
+            "When Jared was 162 years old, he became the father of Enoch."
+          ],
+          "number": 18,
+          "type": "verse"
+        },
+        {
+          "content": [
+            "And after he had become the father of Enoch, Jared lived 800 years and had other sons and daughters."
+          ],
+          "number": 19,
+          "type": "verse"
+        },
+        {
+          "content": [
+            "So Jared lived a total of 962 years, and then he died."
+          ],
+          "number": 20,
+          "type": "verse"
+        },
+        {
+          "type": "line_break"
+        },
+        {
+          "content": [
+            "When Enoch was 65 years old, he became the father of Methuselah."
+          ],
+          "number": 21,
+          "type": "verse"
+        },
+        {
+          "content": [
+            "And after he had become the father of Methuselah, Enoch walked with God",
+            {
+              "noteId": 4343
+            },
+            "300 years and had other sons and daughters."
+          ],
+          "number": 22,
+          "type": "verse"
+        },
+        {
+          "content": [
+            "So Enoch lived a total of 365 years."
+          ],
+          "number": 23,
+          "type": "verse"
+        },
+        {
+          "type": "line_break"
+        },
+        {
+          "content": [
+            "Enoch walked with God, and then he was no more, because God had taken him away.",
+            {
+              "noteId": 4344
+            }
+          ],
+          "number": 24,
+          "type": "verse"
+        },
+        {
+          "content": [
+            "From Methuselah to Noah"
+          ],
+          "type": "heading"
+        },
+        {
+          "type": "line_break"
+        },
+        {
+          "content": [
+            "When Methuselah was 187 years old, he became the father of Lamech."
+          ],
+          "number": 25,
+          "type": "verse"
+        },
+        {
+          "content": [
+            "And after he had become the father of Lamech, Methuselah lived 782 years and had other sons and daughters."
+          ],
+          "number": 26,
+          "type": "verse"
+        },
+        {
+          "content": [
+            "So Methuselah lived a total of 969 years, and then he died."
+          ],
+          "number": 27,
+          "type": "verse"
+        },
+        {
+          "type": "line_break"
+        },
+        {
+          "content": [
+            "When Lamech was 182 years old, he had a son."
+          ],
+          "number": 28,
+          "type": "verse"
+        },
+        {
+          "content": [
+            "And he named him Noah,",
+            {
+              "noteId": 4345
+            },
+            "saying, “May this one comfort us in the labor and toil of our hands caused by the ground that the LORD has cursed.”"
+          ],
+          "number": 29,
+          "type": "verse"
+        },
+        {
+          "content": [
+            "And after he had become the father of Noah, Lamech lived 595 years and had other sons and daughters."
+          ],
+          "number": 30,
+          "type": "verse"
+        },
+        {
+          "content": [
+            "So Lamech lived a total of 777 years, and then he died."
+          ],
+          "number": 31,
+          "type": "verse"
+        },
+        {
+          "type": "line_break"
+        },
+        {
+          "content": [
+            "After Noah was 500 years old, he became the father of Shem, Ham, and Japheth."
+          ],
+          "number": 32,
+          "type": "verse"
+        }
+      ],
+      "footnotes": [
+        {
+          "caller": "+",
+          "noteId": 4341,
+          "reference": {
+            "chapter": 5,
+            "verse": 2
+          },
+          "text": "Cited in Matthew 19:4 and Mark 10:6"
+        },
+        {
+          "caller": "+",
+          "noteId": 4342,
+          "reference": {
+            "chapter": 5,
+            "verse": 2
+          },
+          "text": "Hebrew Adam"
+        },
+        {
+          "caller": "+",
+          "noteId": 4343,
+          "reference": {
+            "chapter": 5,
+            "verse": 22
+          },
+          "text": "LXX pleased God; also in verse 24"
+        },
+        {
+          "caller": "+",
+          "noteId": 4344,
+          "reference": {
+            "chapter": 5,
+            "verse": 24
+          },
+          "text": "LXX and he was not found, because God had taken him away; cited in Hebrews 11:5"
+        },
+        {
+          "caller": "+",
+          "noteId": 4345,
+          "reference": {
+            "chapter": 5,
+            "verse": 29
+          },
+          "text": "Noah sounds like the Hebrew for rest or comfort."
+        }
+      ],
+      "number": 5
+    },
+    "nextChapterApiLink": "/api/BSB/GEN/6.json",
+    "nextChapterAudioLinks": {
+      "gilbert": "https://openbible.com/audio/gilbert/BSB_01_Gen_006_G.mp3",
+      "hays": "https://openbible.com/audio/hays/BSB_01_Gen_006_H.mp3",
+      "souer": "https://openbible.com/audio/souer/BSB_01_Gen_006.mp3"
+    },
+    "numberOfVerses": 32,
+    "previousChapterApiLink": "/api/BSB/GEN/4.json",
+    "previousChapterAudioLinks": {
+      "gilbert": "https://openbible.com/audio/gilbert/BSB_01_Gen_004_G.mp3",
+      "hays": "https://openbible.com/audio/hays/BSB_01_Gen_004_H.mp3",
+      "souer": "https://openbible.com/audio/souer/BSB_01_Gen_004.mp3"
+    },
+    "thisChapterAudioLinks": {
+      "gilbert": "https://openbible.com/audio/gilbert/BSB_01_Gen_005_G.mp3",
+      "hays": "https://openbible.com/audio/hays/BSB_01_Gen_005_H.mp3",
+      "souer": "https://openbible.com/audio/souer/BSB_01_Gen_005.mp3"
+    },
+    "thisChapterLink": "/api/BSB/GEN/5.json",
+    "translation": {
+      "availableFormats": [
+        "json"
+      ],
+      "englishName": "Berean Standard Bible",
+      "id": "BSB",
+      "language": "eng",
+      "languageEnglishName": "English",
+      "languageName": "English",
+      "licenseNotes": null,
+      "licenseUrl": "https://berean.bible/",
+      "listOfBooksApiLink": "/api/BSB/books.json",
+      "name": "Berean Standard Bible",
+      "numberOfBooks": 66,
+      "sha256": "17c5ac87e26de77bf1f09c1c3ee0c3fafeb3c876849038e8df9b64a7a9504674",
+      "shortName": "BSB",
+      "textDirection": "ltr",
+      "totalNumberOfChapters": 1189,
+      "totalNumberOfVerses": 31086,
+      "website": "https://berean.bible/"
+    }
+  },
+  "headers": {
+    "content-type": "application/json",
+    "last-modified": "Thu, 19 Dec 2024 17:49:01 GMT"
+  },
+  "status": 200,
+  "statusText": ""
+}

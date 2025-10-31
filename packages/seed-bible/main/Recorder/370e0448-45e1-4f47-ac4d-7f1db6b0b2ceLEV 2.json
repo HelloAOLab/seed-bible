@@ -1,0 +1,232 @@
+{
+  "data": {
+    "book": {
+      "commonName": "Leviticus",
+      "firstChapterApiLink": "/api/BSB/LEV/1.json",
+      "id": "LEV",
+      "lastChapterApiLink": "/api/BSB/LEV/27.json",
+      "name": "Leviticus",
+      "numberOfChapters": 27,
+      "order": 3,
+      "sha256": "05beac99320a59b8a946cbfb765866ecb6579064e384679ac8ce8eefb0ea3dd0",
+      "title": "Leviticus",
+      "totalNumberOfVerses": 859,
+      "translationId": "BSB"
+    },
+    "chapter": {
+      "content": [
+        {
+          "content": [
+            "Laws for Grain Offerings"
+          ],
+          "type": "heading"
+        },
+        {
+          "content": [
+            "“When anyone brings a grain offering to the LORD, his offering must consist of fine flour. He is to pour olive oil on it, put frankincense on it,"
+          ],
+          "number": 1,
+          "type": "verse"
+        },
+        {
+          "content": [
+            "and bring it to Aaron’s sons the priests. The priest shall take a handful of the flour and oil, together with all the frankincense, and burn this as a memorial portion on the altar, an offering made by fire, a pleasing aroma to the LORD."
+          ],
+          "number": 2,
+          "type": "verse"
+        },
+        {
+          "content": [
+            "The remainder of the grain offering shall belong to Aaron and his sons; it is a most holy part of the offerings made by fire to the LORD."
+          ],
+          "number": 3,
+          "type": "verse"
+        },
+        {
+          "type": "line_break"
+        },
+        {
+          "content": [
+            "Now if you bring an offering of grain baked in an oven, it must consist of fine flour, either unleavened cakes mixed with oil or unleavened wafers coated with oil."
+          ],
+          "number": 4,
+          "type": "verse"
+        },
+        {
+          "type": "line_break"
+        },
+        {
+          "content": [
+            "If your offering is a grain offering prepared on a griddle,",
+            {
+              "noteId": 5570
+            },
+            "it must be unleavened bread made of fine flour mixed with oil."
+          ],
+          "number": 5,
+          "type": "verse"
+        },
+        {
+          "content": [
+            "Crumble it and pour oil on it; it is a grain offering."
+          ],
+          "number": 6,
+          "type": "verse"
+        },
+        {
+          "type": "line_break"
+        },
+        {
+          "content": [
+            "If your offering is a grain offering cooked in a pan,",
+            {
+              "noteId": 5571
+            },
+            "it must consist of fine flour with oil."
+          ],
+          "number": 7,
+          "type": "verse"
+        },
+        {
+          "type": "line_break"
+        },
+        {
+          "content": [
+            "When you bring to the LORD the grain offering made in any of these ways, it is to be presented to the priest, and he shall take it to the altar."
+          ],
+          "number": 8,
+          "type": "verse"
+        },
+        {
+          "content": [
+            "The priest is to remove the memorial portion from the grain offering and burn it on the altar as an offering made by fire, a pleasing aroma to the LORD."
+          ],
+          "number": 9,
+          "type": "verse"
+        },
+        {
+          "content": [
+            "But the remainder of the grain offering shall belong to Aaron and his sons; it is a most holy part of the offerings made by fire to the LORD."
+          ],
+          "number": 10,
+          "type": "verse"
+        },
+        {
+          "type": "line_break"
+        },
+        {
+          "content": [
+            "No grain offering that you present to the LORD may be made with leaven, for you are not to burn any leaven or honey as an offering made by fire to the LORD."
+          ],
+          "number": 11,
+          "type": "verse"
+        },
+        {
+          "content": [
+            "You may bring them to the LORD as an offering of firstfruits, but they are not to be offered on the altar as a pleasing aroma."
+          ],
+          "number": 12,
+          "type": "verse"
+        },
+        {
+          "content": [
+            "And you shall season each of your grain offerings with salt. You must not leave the salt of the covenant of your God out of your grain offering; you are to add salt to each of your offerings."
+          ],
+          "number": 13,
+          "type": "verse"
+        },
+        {
+          "type": "line_break"
+        },
+        {
+          "content": [
+            "If you bring a grain offering of firstfruits to the LORD, you shall offer crushed heads of new grain roasted on the fire."
+          ],
+          "number": 14,
+          "type": "verse"
+        },
+        {
+          "content": [
+            "And you are to put oil and frankincense on it; it is a grain offering."
+          ],
+          "number": 15,
+          "type": "verse"
+        },
+        {
+          "content": [
+            "The priest shall then burn the memorial portion of the crushed grain and the oil, together with all its frankincense, as an offering made by fire to the LORD."
+          ],
+          "number": 16,
+          "type": "verse"
+        }
+      ],
+      "footnotes": [
+        {
+          "caller": "+",
+          "noteId": 5570,
+          "reference": {
+            "chapter": 2,
+            "verse": 5
+          },
+          "text": "That is, a shallow pan for baking or frying"
+        },
+        {
+          "caller": "+",
+          "noteId": 5571,
+          "reference": {
+            "chapter": 2,
+            "verse": 7
+          },
+          "text": "That is, a deep pan or stew pan"
+        }
+      ],
+      "number": 2
+    },
+    "nextChapterApiLink": "/api/BSB/LEV/3.json",
+    "nextChapterAudioLinks": {
+      "gilbert": "https://openbible.com/audio/gilbert/BSB_03_Lev_003_G.mp3",
+      "hays": "https://openbible.com/audio/hays/BSB_03_Lev_003_H.mp3",
+      "souer": "https://openbible.com/audio/souer/BSB_03_Lev_003.mp3"
+    },
+    "numberOfVerses": 16,
+    "previousChapterApiLink": "/api/BSB/LEV/1.json",
+    "previousChapterAudioLinks": {
+      "gilbert": "https://openbible.com/audio/gilbert/BSB_03_Lev_001_G.mp3",
+      "hays": "https://openbible.com/audio/hays/BSB_03_Lev_001_H.mp3",
+      "souer": "https://openbible.com/audio/souer/BSB_03_Lev_001.mp3"
+    },
+    "thisChapterAudioLinks": {
+      "gilbert": "https://openbible.com/audio/gilbert/BSB_03_Lev_002_G.mp3",
+      "hays": "https://openbible.com/audio/hays/BSB_03_Lev_002_H.mp3",
+      "souer": "https://openbible.com/audio/souer/BSB_03_Lev_002.mp3"
+    },
+    "thisChapterLink": "/api/BSB/LEV/2.json",
+    "translation": {
+      "availableFormats": [
+        "json"
+      ],
+      "englishName": "Berean Standard Bible",
+      "id": "BSB",
+      "language": "eng",
+      "languageEnglishName": "English",
+      "languageName": "English",
+      "licenseNotes": null,
+      "licenseUrl": "https://berean.bible/",
+      "listOfBooksApiLink": "/api/BSB/books.json",
+      "name": "Berean Standard Bible",
+      "numberOfBooks": 66,
+      "sha256": "17c5ac87e26de77bf1f09c1c3ee0c3fafeb3c876849038e8df9b64a7a9504674",
+      "shortName": "BSB",
+      "textDirection": "ltr",
+      "totalNumberOfChapters": 1189,
+      "totalNumberOfVerses": 31086,
+      "website": "https://berean.bible/"
+    }
+  },
+  "headers": {
+    "content-type": "application/json",
+    "last-modified": "Thu, 19 Dec 2024 17:49:01 GMT"
+  },
+  "status": 200,
+  "statusText": ""
+}

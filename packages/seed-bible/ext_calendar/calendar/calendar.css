@@ -35,6 +35,14 @@ calendar {
 }
 
 
+.fc-popover .fc-event-title {
+  white-space: normal !important; /* allow wrapping */
+  overflow: visible !important;
+  text-overflow: clip !important;
+  display: block !important;
+}
+
+
 
 
 
@@ -122,20 +130,20 @@ calendar {
 }
 
 .user-event {
-  color: skyblue; 
+  color: blue; 
  
 }
 .hide-events {
   display: none !important;
 }
 
-/* Multi-day events as line */
+
 .event-line {
-  display: block !important;
-  height: 6px;
-  color:blue;
-  width: auto;
-  overflow:visible;
+   display: inline-block;
+  width: 7px;
+  
+  height: 7px;
+  border-radius: 50%;
 
 }
 .event-line .fc-event-title{
@@ -144,16 +152,19 @@ calendar {
 .dot-view .fc-event-title{
   display: none;
 }
-
-
-/* Single-day full view (default styling) */
 .dot-view{
-  display: inline-block;
-  width: 7px;
+   width: auto;
+  height: auto;
   
-  height: 7px;
-  border-radius: 50%;
+ 
+ 
 }
+
+
+.fc-event{
+  display: flex;
+}
+
 
 /* Single-day dot view */
 
@@ -207,11 +218,7 @@ calendar {
   border: none;
 }
 
- .fc-daygrid-day-events{
-  display: flex;
-  flex-direction: column;
-}
-
+ 
 
 /* Style the today button */
 .fc-today-button {
@@ -605,10 +612,13 @@ svg:hover{
   width: 100% !important;
 
 }
-.full-view .fc-daygrid-event-harness {
-  display: block !important;
+ .fc-event{
   width: 100%;
 }
+.dot-view .fc-event-main{
+  width: 100%;
+}
+
 .readingPlan{
   color: white;
   background-color: white;

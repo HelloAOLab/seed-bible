@@ -1,0 +1,422 @@
+{
+  "data": {
+    "book": {
+      "commonName": "Genesis",
+      "firstChapterApiLink": "/api/BSB/GEN/1.json",
+      "id": "GEN",
+      "lastChapterApiLink": "/api/BSB/GEN/50.json",
+      "name": "Genesis",
+      "numberOfChapters": 50,
+      "order": 1,
+      "sha256": "9ae507188093d846873e8affd9e88c21ac55abdbc6d8adb9beb220345494f0f1",
+      "title": "Genesis",
+      "totalNumberOfVerses": 1533,
+      "translationId": "BSB"
+    },
+    "chapter": {
+      "content": [
+        {
+          "content": [
+            "The Covenant of the Rainbow"
+          ],
+          "type": "heading"
+        },
+        {
+          "content": [
+            "And God blessed Noah and his sons and said to them, “Be fruitful and multiply and fill the earth."
+          ],
+          "number": 1,
+          "type": "verse"
+        },
+        {
+          "content": [
+            "The fear and dread of you will fall on every living creature on the earth, every bird of the air, every creature that crawls on the ground, and all the fish of the sea. They are delivered into your hand."
+          ],
+          "number": 2,
+          "type": "verse"
+        },
+        {
+          "content": [
+            "Everything that lives and moves will be food for you; just as I gave you the green plants, I now give you all things."
+          ],
+          "number": 3,
+          "type": "verse"
+        },
+        {
+          "content": [
+            "But you must not eat meat with its lifeblood still in it."
+          ],
+          "number": 4,
+          "type": "verse"
+        },
+        {
+          "content": [
+            "And surely I will require the life of any man or beast by whose hand your lifeblood is shed. I will demand an accounting from anyone who takes the life of his fellow man:"
+          ],
+          "number": 5,
+          "type": "verse"
+        },
+        {
+          "type": "line_break"
+        },
+        {
+          "content": [
+            {
+              "poem": 1,
+              "text": "Whoever sheds the blood of man,"
+            },
+            {
+              "poem": 2,
+              "text": "by man his blood will be shed;"
+            },
+            {
+              "poem": 1,
+              "text": "for in His own image"
+            },
+            {
+              "poem": 2,
+              "text": "God has made mankind."
+            }
+          ],
+          "number": 6,
+          "type": "verse"
+        },
+        {
+          "content": [
+            {
+              "poem": 1,
+              "text": "But as for you,"
+            },
+            {
+              "poem": 2,
+              "text": "be fruitful and multiply;"
+            },
+            {
+              "poem": 1,
+              "text": "spread out across the earth"
+            },
+            {
+              "poem": 2,
+              "text": "and multiply upon it.”"
+            }
+          ],
+          "number": 7,
+          "type": "verse"
+        },
+        {
+          "type": "line_break"
+        },
+        {
+          "content": [
+            "Then God said to Noah and his sons with him,"
+          ],
+          "number": 8,
+          "type": "verse"
+        },
+        {
+          "content": [
+            "“Behold, I now establish My covenant with you and your descendants after you,"
+          ],
+          "number": 9,
+          "type": "verse"
+        },
+        {
+          "content": [
+            "and with every living creature that was with you—the birds, the livestock, and every beast of the earth—every living thing that came out of the ark."
+          ],
+          "number": 10,
+          "type": "verse"
+        },
+        {
+          "content": [
+            "And I establish My covenant with you: Never again will all life be cut off by the waters of a flood; never again will there be a flood to destroy the earth.”"
+          ],
+          "number": 11,
+          "type": "verse"
+        },
+        {
+          "type": "line_break"
+        },
+        {
+          "content": [
+            "And God said, “This is the sign of the covenant I am making between Me and you and every living creature with you, a covenant for all generations to come:"
+          ],
+          "number": 12,
+          "type": "verse"
+        },
+        {
+          "content": [
+            "I have set My rainbow in the clouds, and it will be a sign of the covenant between Me and the earth."
+          ],
+          "number": 13,
+          "type": "verse"
+        },
+        {
+          "type": "line_break"
+        },
+        {
+          "content": [
+            "Whenever I form clouds over the earth and the rainbow appears in the clouds,"
+          ],
+          "number": 14,
+          "type": "verse"
+        },
+        {
+          "content": [
+            "I will remember My covenant between Me and you and every living creature of every kind. Never again will the waters become a flood to destroy all life."
+          ],
+          "number": 15,
+          "type": "verse"
+        },
+        {
+          "content": [
+            "And whenever the rainbow appears in the clouds, I will see it and remember the everlasting covenant between God and every living creature of every kind that is on the earth.”"
+          ],
+          "number": 16,
+          "type": "verse"
+        },
+        {
+          "type": "line_break"
+        },
+        {
+          "content": [
+            "So God said to Noah, “This is the sign of the covenant that I have established between Me and every creature on the earth.”"
+          ],
+          "number": 17,
+          "type": "verse"
+        },
+        {
+          "content": [
+            "Noah’s Shame and Canaan’s Curse"
+          ],
+          "type": "heading"
+        },
+        {
+          "type": "line_break"
+        },
+        {
+          "content": [
+            "The sons of Noah who came out of the ark were Shem, Ham, and Japheth. And Ham was the father of Canaan."
+          ],
+          "number": 18,
+          "type": "verse"
+        },
+        {
+          "content": [
+            "These three were the sons of Noah, and from them the whole earth was populated."
+          ],
+          "number": 19,
+          "type": "verse"
+        },
+        {
+          "type": "line_break"
+        },
+        {
+          "content": [
+            "Now Noah, a man of the soil, proceeded",
+            {
+              "noteId": 4356
+            },
+            "to plant a vineyard."
+          ],
+          "number": 20,
+          "type": "verse"
+        },
+        {
+          "content": [
+            "But when he drank some of its wine, he became drunk and uncovered himself inside his tent."
+          ],
+          "number": 21,
+          "type": "verse"
+        },
+        {
+          "content": [
+            "And Ham, the father of Canaan, saw his father’s nakedness and told his two brothers outside."
+          ],
+          "number": 22,
+          "type": "verse"
+        },
+        {
+          "type": "line_break"
+        },
+        {
+          "content": [
+            "Then Shem and Japheth took a garment and placed it across their shoulders, and walking backward, they covered their father’s nakedness. Their faces were turned away so that they did not see their father’s nakedness."
+          ],
+          "number": 23,
+          "type": "verse"
+        },
+        {
+          "type": "line_break"
+        },
+        {
+          "content": [
+            "When Noah awoke from his drunkenness and learned what his youngest son had done to him,"
+          ],
+          "number": 24,
+          "type": "verse"
+        },
+        {
+          "content": [
+            "he said,",
+            {
+              "lineBreak": true
+            },
+            {
+              "poem": 1,
+              "text": "“Cursed be Canaan!"
+            },
+            {
+              "poem": 2,
+              "text": "A servant of servants"
+            },
+            {
+              "lineBreak": true
+            },
+            {
+              "poem": 2,
+              "text": "shall he be to his brothers.”"
+            }
+          ],
+          "number": 25,
+          "type": "verse"
+        },
+        {
+          "content": [
+            "Shem’s Blessing and Noah’s Death"
+          ],
+          "type": "heading"
+        },
+        {
+          "type": "line_break"
+        },
+        {
+          "content": [
+            "He also declared:",
+            {
+              "lineBreak": true
+            },
+            {
+              "poem": 1,
+              "text": "“Blessed be the LORD, the God of Shem!"
+            },
+            {
+              "poem": 2,
+              "text": "May Canaan be the servant of Shem."
+            }
+          ],
+          "number": 26,
+          "type": "verse"
+        },
+        {
+          "content": [
+            {
+              "poem": 1,
+              "text": "May God expand the territory of Japheth;"
+            },
+            {
+              "noteId": 4357
+            },
+            {
+              "poem": 2,
+              "text": "may he dwell in the tents of Shem,"
+            },
+            {
+              "lineBreak": true
+            },
+            {
+              "poem": 2,
+              "text": "and may Canaan be his servant.”"
+            }
+          ],
+          "number": 27,
+          "type": "verse"
+        },
+        {
+          "type": "line_break"
+        },
+        {
+          "content": [
+            "After the flood, Noah lived 350 years."
+          ],
+          "number": 28,
+          "type": "verse"
+        },
+        {
+          "content": [
+            "So Noah lived a total of 950 years, and then he died."
+          ],
+          "number": 29,
+          "type": "verse"
+        }
+      ],
+      "footnotes": [
+        {
+          "caller": "+",
+          "noteId": 4356,
+          "reference": {
+            "chapter": 9,
+            "verse": 20
+          },
+          "text": "Or was the first"
+        },
+        {
+          "caller": "+",
+          "noteId": 4357,
+          "reference": {
+            "chapter": 9,
+            "verse": 27
+          },
+          "text": "Japheth sounds like the Hebrew for expand."
+        }
+      ],
+      "number": 9
+    },
+    "nextChapterApiLink": "/api/BSB/GEN/10.json",
+    "nextChapterAudioLinks": {
+      "gilbert": "https://openbible.com/audio/gilbert/BSB_01_Gen_010_G.mp3",
+      "hays": "https://openbible.com/audio/hays/BSB_01_Gen_010_H.mp3",
+      "souer": "https://openbible.com/audio/souer/BSB_01_Gen_010.mp3"
+    },
+    "numberOfVerses": 29,
+    "previousChapterApiLink": "/api/BSB/GEN/8.json",
+    "previousChapterAudioLinks": {
+      "gilbert": "https://openbible.com/audio/gilbert/BSB_01_Gen_008_G.mp3",
+      "hays": "https://openbible.com/audio/hays/BSB_01_Gen_008_H.mp3",
+      "souer": "https://openbible.com/audio/souer/BSB_01_Gen_008.mp3"
+    },
+    "thisChapterAudioLinks": {
+      "gilbert": "https://openbible.com/audio/gilbert/BSB_01_Gen_009_G.mp3",
+      "hays": "https://openbible.com/audio/hays/BSB_01_Gen_009_H.mp3",
+      "souer": "https://openbible.com/audio/souer/BSB_01_Gen_009.mp3"
+    },
+    "thisChapterLink": "/api/BSB/GEN/9.json",
+    "translation": {
+      "availableFormats": [
+        "json"
+      ],
+      "englishName": "Berean Standard Bible",
+      "id": "BSB",
+      "language": "eng",
+      "languageEnglishName": "English",
+      "languageName": "English",
+      "licenseNotes": null,
+      "licenseUrl": "https://berean.bible/",
+      "listOfBooksApiLink": "/api/BSB/books.json",
+      "name": "Berean Standard Bible",
+      "numberOfBooks": 66,
+      "sha256": "17c5ac87e26de77bf1f09c1c3ee0c3fafeb3c876849038e8df9b64a7a9504674",
+      "shortName": "BSB",
+      "textDirection": "ltr",
+      "totalNumberOfChapters": 1189,
+      "totalNumberOfVerses": 31086,
+      "website": "https://berean.bible/"
+    }
+  },
+  "headers": {
+    "content-type": "application/json",
+    "last-modified": "Thu, 19 Dec 2024 17:49:01 GMT"
+  },
+  "status": 200,
+  "statusText": ""
+}

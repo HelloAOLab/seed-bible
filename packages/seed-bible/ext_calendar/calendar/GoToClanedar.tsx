@@ -1,6 +1,6 @@
 const { useState } = os.appHooks;
 
-const GoToCalendar = ({ calendarApi }) => {
+const GoToCalendar = ({ calendarApi ,calendarView,setCalendarView}) => {
   const [hover, setHover] = useState(false);
 
   return (
@@ -35,7 +35,9 @@ const GoToCalendar = ({ calendarApi }) => {
       )}
 
       <button
-        onClick={() => calendarApi.current.changeView("dayGridMonth")}
+        onClick={() => {calendarApi.current.changeView("dayGridMonth") 
+        setCalendarView('dayGridMonth')
+        }}
         style={{
           outline: "none",
           border: "none",

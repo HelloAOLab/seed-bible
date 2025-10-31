@@ -1,5 +1,5 @@
 const { useEffect, useRef, useState } = os.appHooks;
-const ResourceHeaderModal = ({ calendarApi, isModalOpen, setIsModalOpen, resourcesByDate, setResourcesByDate, resourcesRef,setIsResourceGroupHiding }) => {
+const ResourceHeaderModal = ({ calendarApi, isModalOpen, setIsModalOpen, resourcesByDate, setResourcesByDate, resourcesRef,setIsResourceGroupHiding ,setAllGroups,allGroups}) => {
     const [roomInput, setRoomInput] = useState('');
     const [roomTitles, setRoomTitles] = useState([]);
     const [platform, setPlatform] = useState('');
@@ -34,6 +34,7 @@ const ResourceHeaderModal = ({ calendarApi, isModalOpen, setIsModalOpen, resourc
         if (!calendarApi.current) return;
 
 
+
         const currentDate = calendarApi.current.view.currentStart.toLocaleDateString('en-CA');
             
 
@@ -42,6 +43,7 @@ const ResourceHeaderModal = ({ calendarApi, isModalOpen, setIsModalOpen, resourc
             title: room,
             group: platform,
         }));
+        setAllGroups(prev=>[...prev,platform]);
 
 
         setResourcesByDate((prev) => {
@@ -70,7 +72,7 @@ const ResourceHeaderModal = ({ calendarApi, isModalOpen, setIsModalOpen, resourc
         <div
             ref={modalRef}
             className="google-modal"
-            style={{ position: 'absolute', top: '20%', width: '150px', height: 'auto' }}
+            style={{ position: 'absolute', top: '20%', width: '150px', height: 'auto',left:'20px' }}
         >
             <div ref={contentRef}>
                 <h3 style={{ marginBottom: '8px', fontSize: '16px', color: '#333' }}>Add Resource</h3>

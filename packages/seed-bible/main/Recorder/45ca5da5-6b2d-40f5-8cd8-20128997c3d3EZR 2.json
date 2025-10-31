@@ -1,0 +1,1216 @@
+{
+  "data": {
+    "book": {
+      "commonName": "Ezra",
+      "firstChapterApiLink": "/api/BSB/EZR/1.json",
+      "id": "EZR",
+      "lastChapterApiLink": "/api/BSB/EZR/10.json",
+      "name": "Ezra",
+      "numberOfChapters": 10,
+      "order": 15,
+      "sha256": "125369103f3016ee761c572add0090fd219af0f51930cd59a34bbe383b9995f1",
+      "title": "Ezra",
+      "totalNumberOfVerses": 280,
+      "translationId": "BSB"
+    },
+    "chapter": {
+      "content": [
+        {
+          "content": [
+            "The List of Returning Exiles"
+          ],
+          "type": "heading"
+        },
+        {
+          "content": [
+            "Now these are the people of the province who came up from the captivity of the exiles carried away to Babylon by Nebuchadnezzar its king. They returned to Jerusalem and Judah, each to his own town,"
+          ],
+          "number": 1,
+          "type": "verse"
+        },
+        {
+          "content": [
+            "accompanied by Zerubbabel, Jeshua, Nehemiah, Seraiah, Reelaiah, Mordecai, Bilshan, Mispar, Bigvai, Rehum, and Baanah.",
+            {
+              "noteId": 2022
+            },
+            {
+              "lineBreak": true
+            },
+            "This is the count of the men of Israel:"
+          ],
+          "number": 2,
+          "type": "verse"
+        },
+        {
+          "type": "line_break"
+        },
+        {
+          "content": [
+            "the descendants of Parosh, 2,172;"
+          ],
+          "number": 3,
+          "type": "verse"
+        },
+        {
+          "type": "line_break"
+        },
+        {
+          "content": [
+            "the descendants of Shephatiah, 372;"
+          ],
+          "number": 4,
+          "type": "verse"
+        },
+        {
+          "type": "line_break"
+        },
+        {
+          "content": [
+            "the descendants of Arah, 775;"
+          ],
+          "number": 5,
+          "type": "verse"
+        },
+        {
+          "type": "line_break"
+        },
+        {
+          "content": [
+            "the descendants of Pahath-moab (through the line of Jeshua and Joab), 2,812;"
+          ],
+          "number": 6,
+          "type": "verse"
+        },
+        {
+          "type": "line_break"
+        },
+        {
+          "content": [
+            "the descendants of Elam, 1,254;"
+          ],
+          "number": 7,
+          "type": "verse"
+        },
+        {
+          "type": "line_break"
+        },
+        {
+          "content": [
+            "the descendants of Zattu, 945;"
+          ],
+          "number": 8,
+          "type": "verse"
+        },
+        {
+          "type": "line_break"
+        },
+        {
+          "content": [
+            "the descendants of Zaccai, 760;"
+          ],
+          "number": 9,
+          "type": "verse"
+        },
+        {
+          "type": "line_break"
+        },
+        {
+          "content": [
+            "the descendants of Bani,",
+            {
+              "noteId": 2023
+            },
+            "642;"
+          ],
+          "number": 10,
+          "type": "verse"
+        },
+        {
+          "type": "line_break"
+        },
+        {
+          "content": [
+            "the descendants of Bebai, 623;"
+          ],
+          "number": 11,
+          "type": "verse"
+        },
+        {
+          "type": "line_break"
+        },
+        {
+          "content": [
+            "the descendants of Azgad, 1,222;"
+          ],
+          "number": 12,
+          "type": "verse"
+        },
+        {
+          "type": "line_break"
+        },
+        {
+          "content": [
+            "the descendants of Adonikam, 666;"
+          ],
+          "number": 13,
+          "type": "verse"
+        },
+        {
+          "type": "line_break"
+        },
+        {
+          "content": [
+            "the descendants of Bigvai, 2,056;"
+          ],
+          "number": 14,
+          "type": "verse"
+        },
+        {
+          "type": "line_break"
+        },
+        {
+          "content": [
+            "the descendants of Adin, 454;"
+          ],
+          "number": 15,
+          "type": "verse"
+        },
+        {
+          "type": "line_break"
+        },
+        {
+          "content": [
+            "the descendants of Ater (through Hezekiah), 98;"
+          ],
+          "number": 16,
+          "type": "verse"
+        },
+        {
+          "type": "line_break"
+        },
+        {
+          "content": [
+            "the descendants of Bezai, 323;"
+          ],
+          "number": 17,
+          "type": "verse"
+        },
+        {
+          "type": "line_break"
+        },
+        {
+          "content": [
+            "the descendants of Jorah,",
+            {
+              "noteId": 2024
+            },
+            "112;"
+          ],
+          "number": 18,
+          "type": "verse"
+        },
+        {
+          "type": "line_break"
+        },
+        {
+          "content": [
+            "the descendants of Hashum, 223;"
+          ],
+          "number": 19,
+          "type": "verse"
+        },
+        {
+          "type": "line_break"
+        },
+        {
+          "content": [
+            "the descendants of Gibbar,",
+            {
+              "noteId": 2025
+            },
+            "95;"
+          ],
+          "number": 20,
+          "type": "verse"
+        },
+        {
+          "type": "line_break"
+        },
+        {
+          "content": [
+            "the men",
+            {
+              "noteId": 2026
+            },
+            "of Bethlehem, 123;"
+          ],
+          "number": 21,
+          "type": "verse"
+        },
+        {
+          "type": "line_break"
+        },
+        {
+          "content": [
+            "the men of Netophah, 56;"
+          ],
+          "number": 22,
+          "type": "verse"
+        },
+        {
+          "type": "line_break"
+        },
+        {
+          "content": [
+            "the men of Anathoth, 128;"
+          ],
+          "number": 23,
+          "type": "verse"
+        },
+        {
+          "type": "line_break"
+        },
+        {
+          "content": [
+            "the descendants of Azmaveth,",
+            {
+              "noteId": 2027
+            },
+            "42;"
+          ],
+          "number": 24,
+          "type": "verse"
+        },
+        {
+          "type": "line_break"
+        },
+        {
+          "content": [
+            "the men of Kiriath-jearim,",
+            {
+              "noteId": 2028
+            },
+            "Chephirah, and Beeroth, 743;"
+          ],
+          "number": 25,
+          "type": "verse"
+        },
+        {
+          "type": "line_break"
+        },
+        {
+          "content": [
+            "the men of Ramah and Geba, 621;"
+          ],
+          "number": 26,
+          "type": "verse"
+        },
+        {
+          "type": "line_break"
+        },
+        {
+          "content": [
+            "the men of Michmash, 122;"
+          ],
+          "number": 27,
+          "type": "verse"
+        },
+        {
+          "type": "line_break"
+        },
+        {
+          "content": [
+            "the men of Bethel and Ai, 223;"
+          ],
+          "number": 28,
+          "type": "verse"
+        },
+        {
+          "type": "line_break"
+        },
+        {
+          "content": [
+            "the descendants of Nebo, 52;"
+          ],
+          "number": 29,
+          "type": "verse"
+        },
+        {
+          "type": "line_break"
+        },
+        {
+          "content": [
+            "the descendants of Magbish, 156;"
+          ],
+          "number": 30,
+          "type": "verse"
+        },
+        {
+          "type": "line_break"
+        },
+        {
+          "content": [
+            "the descendants of the other Elam,",
+            {
+              "noteId": 2029
+            },
+            "1,254;"
+          ],
+          "number": 31,
+          "type": "verse"
+        },
+        {
+          "type": "line_break"
+        },
+        {
+          "content": [
+            "the descendants of Harim, 320;"
+          ],
+          "number": 32,
+          "type": "verse"
+        },
+        {
+          "type": "line_break"
+        },
+        {
+          "content": [
+            "the men of Lod, Hadid, and Ono, 725;"
+          ],
+          "number": 33,
+          "type": "verse"
+        },
+        {
+          "type": "line_break"
+        },
+        {
+          "content": [
+            "the men of Jericho, 345;"
+          ],
+          "number": 34,
+          "type": "verse"
+        },
+        {
+          "type": "line_break"
+        },
+        {
+          "content": [
+            "and the descendants of Senaah, 3,630."
+          ],
+          "number": 35,
+          "type": "verse"
+        },
+        {
+          "type": "line_break"
+        },
+        {
+          "content": [
+            "The priests:",
+            {
+              "lineBreak": true
+            },
+            "The descendants of Jedaiah (through the house of Jeshua), 973;"
+          ],
+          "number": 36,
+          "type": "verse"
+        },
+        {
+          "type": "line_break"
+        },
+        {
+          "content": [
+            "the descendants of Immer, 1,052;"
+          ],
+          "number": 37,
+          "type": "verse"
+        },
+        {
+          "type": "line_break"
+        },
+        {
+          "content": [
+            "the descendants of Pashhur, 1,247;"
+          ],
+          "number": 38,
+          "type": "verse"
+        },
+        {
+          "type": "line_break"
+        },
+        {
+          "content": [
+            "and the descendants of Harim, 1,017."
+          ],
+          "number": 39,
+          "type": "verse"
+        },
+        {
+          "type": "line_break"
+        },
+        {
+          "content": [
+            "The Levites:",
+            {
+              "lineBreak": true
+            },
+            "the descendants of Jeshua and Kadmiel (through the line of Hodaviah",
+            {
+              "noteId": 2030
+            },
+            "), 74."
+          ],
+          "number": 40,
+          "type": "verse"
+        },
+        {
+          "type": "line_break"
+        },
+        {
+          "content": [
+            "The singers:",
+            {
+              "lineBreak": true
+            },
+            "the descendants of Asaph, 128."
+          ],
+          "number": 41,
+          "type": "verse"
+        },
+        {
+          "type": "line_break"
+        },
+        {
+          "content": [
+            "The gatekeepers:",
+            {
+              "lineBreak": true
+            },
+            "the descendants of Shallum,",
+            {
+              "lineBreak": true
+            },
+            "the descendants of Ater,",
+            {
+              "lineBreak": true
+            },
+            "the descendants of Talmon,",
+            {
+              "lineBreak": true
+            },
+            "the descendants of Akkub,",
+            {
+              "lineBreak": true
+            },
+            "the descendants of Hatita,",
+            {
+              "lineBreak": true
+            },
+            "and the descendants of Shobai,",
+            {
+              "lineBreak": true
+            },
+            "139 in all."
+          ],
+          "number": 42,
+          "type": "verse"
+        },
+        {
+          "type": "line_break"
+        },
+        {
+          "content": [
+            "The temple servants:",
+            {
+              "noteId": 2031
+            },
+            {
+              "lineBreak": true
+            },
+            "the descendants of Ziha,",
+            {
+              "lineBreak": true
+            },
+            "the descendants of Hasupha,",
+            {
+              "lineBreak": true
+            },
+            "the descendants of Tabbaoth,"
+          ],
+          "number": 43,
+          "type": "verse"
+        },
+        {
+          "type": "line_break"
+        },
+        {
+          "content": [
+            "the descendants of Keros,",
+            {
+              "lineBreak": true
+            },
+            "the descendants of Siaha,",
+            {
+              "noteId": 2032
+            },
+            {
+              "lineBreak": true
+            },
+            "the descendants of Padon,"
+          ],
+          "number": 44,
+          "type": "verse"
+        },
+        {
+          "type": "line_break"
+        },
+        {
+          "content": [
+            "the descendants of Lebanah,",
+            {
+              "lineBreak": true
+            },
+            "the descendants of Hagabah,",
+            {
+              "lineBreak": true
+            },
+            "the descendants of Akkub,"
+          ],
+          "number": 45,
+          "type": "verse"
+        },
+        {
+          "type": "line_break"
+        },
+        {
+          "content": [
+            "the descendants of Hagab,",
+            {
+              "lineBreak": true
+            },
+            "the descendants of Shalmai,",
+            {
+              "noteId": 2033
+            },
+            {
+              "lineBreak": true
+            },
+            "the descendants of Hanan,"
+          ],
+          "number": 46,
+          "type": "verse"
+        },
+        {
+          "type": "line_break"
+        },
+        {
+          "content": [
+            "the descendants of Giddel,",
+            {
+              "lineBreak": true
+            },
+            "the descendants of Gahar,",
+            {
+              "lineBreak": true
+            },
+            "the descendants of Reaiah,"
+          ],
+          "number": 47,
+          "type": "verse"
+        },
+        {
+          "type": "line_break"
+        },
+        {
+          "content": [
+            "the descendants of Rezin,",
+            {
+              "lineBreak": true
+            },
+            "the descendants of Nekoda,",
+            {
+              "lineBreak": true
+            },
+            "the descendants of Gazzam,"
+          ],
+          "number": 48,
+          "type": "verse"
+        },
+        {
+          "type": "line_break"
+        },
+        {
+          "content": [
+            "the descendants of Uzza,",
+            {
+              "lineBreak": true
+            },
+            "the descendants of Paseah,",
+            {
+              "lineBreak": true
+            },
+            "the descendants of Besai,"
+          ],
+          "number": 49,
+          "type": "verse"
+        },
+        {
+          "type": "line_break"
+        },
+        {
+          "content": [
+            "the descendants of Asnah,",
+            {
+              "lineBreak": true
+            },
+            "the descendants of Meunim,",
+            {
+              "lineBreak": true
+            },
+            "the descendants of Nephusim,",
+            {
+              "noteId": 2034
+            }
+          ],
+          "number": 50,
+          "type": "verse"
+        },
+        {
+          "type": "line_break"
+        },
+        {
+          "content": [
+            "the descendants of Bakbuk,",
+            {
+              "lineBreak": true
+            },
+            "the descendants of Hakupha,",
+            {
+              "lineBreak": true
+            },
+            "the descendants of Harhur,"
+          ],
+          "number": 51,
+          "type": "verse"
+        },
+        {
+          "type": "line_break"
+        },
+        {
+          "content": [
+            "the descendants of Bazluth,",
+            {
+              "noteId": 2035
+            },
+            {
+              "lineBreak": true
+            },
+            "the descendants of Mehida,",
+            {
+              "lineBreak": true
+            },
+            "the descendants of Harsha,"
+          ],
+          "number": 52,
+          "type": "verse"
+        },
+        {
+          "type": "line_break"
+        },
+        {
+          "content": [
+            "the descendants of Barkos,",
+            {
+              "lineBreak": true
+            },
+            "the descendants of Sisera,",
+            {
+              "lineBreak": true
+            },
+            "the descendants of Temah,"
+          ],
+          "number": 53,
+          "type": "verse"
+        },
+        {
+          "type": "line_break"
+        },
+        {
+          "content": [
+            "the descendants of Neziah,",
+            {
+              "lineBreak": true
+            },
+            "and the descendants of Hatipha."
+          ],
+          "number": 54,
+          "type": "verse"
+        },
+        {
+          "type": "line_break"
+        },
+        {
+          "content": [
+            "The descendants of the servants of Solomon:",
+            {
+              "lineBreak": true
+            },
+            "the descendants of Sotai,",
+            {
+              "lineBreak": true
+            },
+            "the descendants of Sophereth,",
+            {
+              "lineBreak": true
+            },
+            "the descendants of Peruda,",
+            {
+              "noteId": 2036
+            }
+          ],
+          "number": 55,
+          "type": "verse"
+        },
+        {
+          "type": "line_break"
+        },
+        {
+          "content": [
+            "the descendants of Jaala,",
+            {
+              "lineBreak": true
+            },
+            "the descendants of Darkon,",
+            {
+              "lineBreak": true
+            },
+            "the descendants of Giddel,"
+          ],
+          "number": 56,
+          "type": "verse"
+        },
+        {
+          "type": "line_break"
+        },
+        {
+          "content": [
+            "the descendants of Shephatiah,",
+            {
+              "lineBreak": true
+            },
+            "the descendants of Hattil,",
+            {
+              "lineBreak": true
+            },
+            "the descendants of Pochereth-hazzebaim,",
+            {
+              "lineBreak": true
+            },
+            "and the descendants of Ami.",
+            {
+              "noteId": 2037
+            }
+          ],
+          "number": 57,
+          "type": "verse"
+        },
+        {
+          "type": "line_break"
+        },
+        {
+          "content": [
+            "The temple servants and descendants of the servants of Solomon numbered 392 in all."
+          ],
+          "number": 58,
+          "type": "verse"
+        },
+        {
+          "type": "line_break"
+        },
+        {
+          "content": [
+            "The following came up from Tel-melah, Tel-harsha, Cherub, Addan,",
+            {
+              "noteId": 2038
+            },
+            "and Immer, but could not prove that their families were descended from Israel:"
+          ],
+          "number": 59,
+          "type": "verse"
+        },
+        {
+          "type": "line_break"
+        },
+        {
+          "content": [
+            "the descendants of Delaiah,",
+            {
+              "lineBreak": true
+            },
+            "the descendants of Tobiah,",
+            {
+              "lineBreak": true
+            },
+            "and the descendants of Nekoda,",
+            {
+              "lineBreak": true
+            },
+            "652 in all."
+          ],
+          "number": 60,
+          "type": "verse"
+        },
+        {
+          "type": "line_break"
+        },
+        {
+          "content": [
+            "And from among the priests: the descendants of Hobaiah,",
+            {
+              "lineBreak": true
+            },
+            "the descendants of Hakkoz,",
+            {
+              "lineBreak": true
+            },
+            "and the descendants of Barzillai (who had married a daughter of Barzillai the Gileadite and was called by their name)."
+          ],
+          "number": 61,
+          "type": "verse"
+        },
+        {
+          "type": "line_break"
+        },
+        {
+          "content": [
+            "These men searched for their family records, but they could not find them and so were excluded from the priesthood as unclean."
+          ],
+          "number": 62,
+          "type": "verse"
+        },
+        {
+          "content": [
+            "The governor ordered them not to eat the most holy things until there was a priest to consult the Urim and Thummim.",
+            {
+              "noteId": 2039
+            }
+          ],
+          "number": 63,
+          "type": "verse"
+        },
+        {
+          "type": "line_break"
+        },
+        {
+          "content": [
+            "The whole assembly numbered 42,360,"
+          ],
+          "number": 64,
+          "type": "verse"
+        },
+        {
+          "content": [
+            "in addition to their 7,337 menservants and maidservants, as well as their 200 male and female singers."
+          ],
+          "number": 65,
+          "type": "verse"
+        },
+        {
+          "content": [
+            "They had 736 horses, 245 mules,"
+          ],
+          "number": 66,
+          "type": "verse"
+        },
+        {
+          "content": [
+            "435 camels, and 6,720 donkeys."
+          ],
+          "number": 67,
+          "type": "verse"
+        },
+        {
+          "content": [
+            "Offerings by the Exiles"
+          ],
+          "type": "heading"
+        },
+        {
+          "type": "line_break"
+        },
+        {
+          "content": [
+            "When they arrived at the house of the LORD in Jerusalem, some of the heads of the families gave freewill offerings to rebuild the house of God on its original site."
+          ],
+          "number": 68,
+          "type": "verse"
+        },
+        {
+          "content": [
+            "According to their ability, they gave to the treasury for this work 61,000 darics of gold,",
+            {
+              "noteId": 2040
+            },
+            "5,000 minas of silver,",
+            {
+              "noteId": 2041
+            },
+            "and 100 priestly garments."
+          ],
+          "number": 69,
+          "type": "verse"
+        },
+        {
+          "type": "line_break"
+        },
+        {
+          "content": [
+            "So the priests, the Levites, the singers, the gatekeepers, and the temple servants, along with some of the people, settled in their own towns; and the rest of the Israelites",
+            {
+              "noteId": 2042
+            },
+            "settled in their towns."
+          ],
+          "number": 70,
+          "type": "verse"
+        }
+      ],
+      "footnotes": [
+        {
+          "caller": "+",
+          "noteId": 2022,
+          "reference": {
+            "chapter": 2,
+            "verse": 2
+          },
+          "text": "Parallel text at Nehemiah 7:7 accompanied by Zerubbabel, Jeshua, Nehemiah, Azariah, Raamiah, Nahamani, Mordecai, Bilshan, Mispereth, Bigvai, Nehum, and Baanah"
+        },
+        {
+          "caller": "+",
+          "noteId": 2023,
+          "reference": {
+            "chapter": 2,
+            "verse": 10
+          },
+          "text": "Bani is a variant of Binnui; see Nehemiah 7:15."
+        },
+        {
+          "caller": "+",
+          "noteId": 2024,
+          "reference": {
+            "chapter": 2,
+            "verse": 18
+          },
+          "text": "Jorah is a variant of Hariph; see Nehemiah 7:24."
+        },
+        {
+          "caller": "+",
+          "noteId": 2025,
+          "reference": {
+            "chapter": 2,
+            "verse": 20
+          },
+          "text": "Gibbar is a variant of Gibeon; see Nehemiah 7:25."
+        },
+        {
+          "caller": "+",
+          "noteId": 2026,
+          "reference": {
+            "chapter": 2,
+            "verse": 21
+          },
+          "text": "Literally the sons; here and in verses 25, 26, 33, and 34"
+        },
+        {
+          "caller": "+",
+          "noteId": 2027,
+          "reference": {
+            "chapter": 2,
+            "verse": 24
+          },
+          "text": "Azmaveth is a variant of Beth-azmaveth; see Nehemiah 7:28."
+        },
+        {
+          "caller": "+",
+          "noteId": 2028,
+          "reference": {
+            "chapter": 2,
+            "verse": 25
+          },
+          "text": "LXX (see also Nehemiah 7:29); Hebrew Kiriath-arim"
+        },
+        {
+          "caller": "+",
+          "noteId": 2029,
+          "reference": {
+            "chapter": 2,
+            "verse": 31
+          },
+          "text": "Or of West Elam"
+        },
+        {
+          "caller": "+",
+          "noteId": 2030,
+          "reference": {
+            "chapter": 2,
+            "verse": 40
+          },
+          "text": "Hodaviah is a variant of Hodevah; see Nehemiah 7:43."
+        },
+        {
+          "caller": "+",
+          "noteId": 2031,
+          "reference": {
+            "chapter": 2,
+            "verse": 43
+          },
+          "text": "Hebrew The Nethinim; also in verses 58 and 70"
+        },
+        {
+          "caller": "+",
+          "noteId": 2032,
+          "reference": {
+            "chapter": 2,
+            "verse": 44
+          },
+          "text": "Siaha is a variant of Sia; see Nehemiah 7:47."
+        },
+        {
+          "caller": "+",
+          "noteId": 2033,
+          "reference": {
+            "chapter": 2,
+            "verse": 46
+          },
+          "text": "Alternate MT reading (see also Nehemiah 7:48); the other alternate reads Shamlai"
+        },
+        {
+          "caller": "+",
+          "noteId": 2034,
+          "reference": {
+            "chapter": 2,
+            "verse": 50
+          },
+          "text": "Nephusim is a variant of Nephushesim; see Nehemiah 7:52."
+        },
+        {
+          "caller": "+",
+          "noteId": 2035,
+          "reference": {
+            "chapter": 2,
+            "verse": 52
+          },
+          "text": "Bazluth is a variant of Bazlith; see Nehemiah 7:54."
+        },
+        {
+          "caller": "+",
+          "noteId": 2036,
+          "reference": {
+            "chapter": 2,
+            "verse": 55
+          },
+          "text": "Peruda is a variant of Perida; see Nehemiah 7:57."
+        },
+        {
+          "caller": "+",
+          "noteId": 2037,
+          "reference": {
+            "chapter": 2,
+            "verse": 57
+          },
+          "text": "Ami is a variant of Amon; see Nehemiah 7:59."
+        },
+        {
+          "caller": "+",
+          "noteId": 2038,
+          "reference": {
+            "chapter": 2,
+            "verse": 59
+          },
+          "text": "Addan is a variant of Addon; see Nehemiah 7:61."
+        },
+        {
+          "caller": "+",
+          "noteId": 2039,
+          "reference": {
+            "chapter": 2,
+            "verse": 63
+          },
+          "text": "Literally Lights and Perfections"
+        },
+        {
+          "caller": "+",
+          "noteId": 2040,
+          "reference": {
+            "chapter": 2,
+            "verse": 69
+          },
+          "text": "Or 61,000 gold drachmas; that is, approximately 1,129.7 pounds or 512.4 kilograms of gold coins"
+        },
+        {
+          "caller": "+",
+          "noteId": 2041,
+          "reference": {
+            "chapter": 2,
+            "verse": 69
+          },
+          "text": "5,000 minas is approximately 3.14 tons or 2.85 metric tons of silver."
+        },
+        {
+          "caller": "+",
+          "noteId": 2042,
+          "reference": {
+            "chapter": 2,
+            "verse": 70
+          },
+          "text": "Or all Israel"
+        }
+      ],
+      "number": 2
+    },
+    "nextChapterApiLink": "/api/BSB/EZR/3.json",
+    "nextChapterAudioLinks": {
+      "gilbert": "https://openbible.com/audio/gilbert/BSB_15_Ezr_003_G.mp3",
+      "hays": "https://openbible.com/audio/hays/BSB_15_Ezr_003_H.mp3",
+      "souer": "https://openbible.com/audio/souer/BSB_15_Ezr_003.mp3"
+    },
+    "numberOfVerses": 70,
+    "previousChapterApiLink": "/api/BSB/EZR/1.json",
+    "previousChapterAudioLinks": {
+      "gilbert": "https://openbible.com/audio/gilbert/BSB_15_Ezr_001_G.mp3",
+      "hays": "https://openbible.com/audio/hays/BSB_15_Ezr_001_H.mp3",
+      "souer": "https://openbible.com/audio/souer/BSB_15_Ezr_001.mp3"
+    },
+    "thisChapterAudioLinks": {
+      "gilbert": "https://openbible.com/audio/gilbert/BSB_15_Ezr_002_G.mp3",
+      "hays": "https://openbible.com/audio/hays/BSB_15_Ezr_002_H.mp3",
+      "souer": "https://openbible.com/audio/souer/BSB_15_Ezr_002.mp3"
+    },
+    "thisChapterLink": "/api/BSB/EZR/2.json",
+    "translation": {
+      "availableFormats": [
+        "json"
+      ],
+      "englishName": "Berean Standard Bible",
+      "id": "BSB",
+      "language": "eng",
+      "languageEnglishName": "English",
+      "languageName": "English",
+      "licenseUrl": "https://berean.bible/",
+      "listOfBooksApiLink": "/api/BSB/books.json",
+      "name": "Berean Standard Bible",
+      "numberOfBooks": 66,
+      "sha256": "587b6d4528b746696e90560a23115d4da5dac426bbd75e288276092f5a45ad21",
+      "shortName": "BSB",
+      "textDirection": "ltr",
+      "totalNumberOfChapters": 1189,
+      "totalNumberOfVerses": 31086,
+      "website": "https://berean.bible/"
+    }
+  },
+  "headers": {
+    "content-type": "application/json",
+    "last-modified": "Wed, 13 Nov 2024 21:19:50 GMT"
+  },
+  "status": 200,
+  "statusText": ""
+}
