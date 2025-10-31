@@ -34,7 +34,7 @@ import {
   CatIcon,
   DogIcon,
   CoffeBeanIcon,
-} from "app.components.phosphoricons"
+} from "app.components.phosphoricons";
 // import { CircleCounter } from 'app.components.circleCounter'
 // console.log(CircleCounter, 'CircleCounter')
 const Reciver = getBot("system", "app.reciver");
@@ -234,7 +234,9 @@ const CircleCounter = ({ data, book, chapter }) => {
                         flexShrink: 0,
                       }}
                     >
-                      <IconComponent style={{ width: "18px", height: "18px" }} />
+                      <IconComponent
+                        style={{ width: "18px", height: "18px" }}
+                      />
                     </div>
                     <div style={{ flex: 1 }}>
                       <div
@@ -277,7 +279,7 @@ function Tab({
     useSideBarContext();
   const { setCanvasMode, setMapMode } = useBibleContext();
   useEffect(() => {
-    console.log(onlineUsers, 'onlineUsers var')
+    console.log(onlineUsers, "onlineUsers var");
   }, [onlineUsers]);
   const {
     removeTab,
@@ -457,11 +459,11 @@ function Tab({
   };
   const circles = onlineUsers
     ? Object.fromEntries(
-      Object.entries(onlineUsers).filter(
-        ([, v]) =>
-          v?.bookId === el?.data?.bookId && v?.chapter === el?.data?.chapter
+        Object.entries(onlineUsers).filter(
+          ([, v]) =>
+            v?.bookId === el?.data?.bookId && v?.chapter === el?.data?.chapter
+        )
       )
-    )
     : {};
   return (
     <div
@@ -469,14 +471,15 @@ function Tab({
       onMouseUp={handleMouseUpOrLeave}
       onMouseLeave={handleMouseUpOrLeave}
       onClick={handleTabClick}
-      className={`${activeTab === el.id && !multiSelectMode && !collapsed
-        ? "activeTab"
-        : activeTab === el.id && collapsed
-          ? "activeTabCollapsed"
-          : collapsed
-            ? "collabsedTab"
-            : "tab"
-        } ${selectedTabs?.includes?.(el.id) ? "selected" : ""}`}
+      className={`${
+        activeTab === el.id && !multiSelectMode && !collapsed
+          ? "activeTab"
+          : activeTab === el.id && collapsed
+            ? "activeTabCollapsed"
+            : collapsed
+              ? "collabsedTab"
+              : "tab"
+      } ${selectedTabs?.includes?.(el.id) ? "selected" : ""}`}
     >
       {!collapsed ? (
         <>
@@ -493,7 +496,7 @@ function Tab({
                       : [...prev, el.id]
                   );
                 }}
-              // style={{ marginRight: '8px' }}
+                // style={{ marginRight: '8px' }}
               />
             )}
             {tabsIcons && (
@@ -717,7 +720,6 @@ function SideBar() {
 
   useEffect(() => {
     shout("OnOnlineUsersChanged", { onlineUsers });
-
   }, [onlineUsers]);
 
   const {
@@ -934,18 +936,16 @@ function SideBar() {
 
   const MenuOptions = {
     type: "normal",
-    items: (() =>
-      [
-        {
-          disabled: true,
-          icon: <MenuIcon name="logout" />,
-          title: "Join a Lobby",
-          onClick: async () => {
-            const id = await os.showInput("", {
-              title: "Enter session link",
-            });
-            if (id) os.goToURL(id);
-          },
+    items: () => [
+      {
+        disabled: true,
+        icon: <MenuIcon name="logout" />,
+        title: "Join a Lobby",
+        onClick: async () => {
+          const id = await os.showInput("", {
+            title: "Enter session link",
+          });
+          if (id) os.goToURL(id);
         },
       },
       {
@@ -954,19 +954,19 @@ function SideBar() {
         title: "Copy session link",
         onClick: () => {
           os.setClipboard(
-            `https://ao.bot/?pattern=SeedBibleDev&noGridPortal=true&inst=${os.getCurrentInst()}&join=${configBot.id
+            `https://ao.bot/?pattern=SeedBibleDev&noGridPortal=true&inst=${os.getCurrentInst()}&join=${
+              configBot.id
             }`
           );
-
         },
-        { type: "line" },
-        {
-          disabled: false,
-          icon: <MenuIcon name="fullscreen" />,
-          title: "Full screen",
-          onClick: () => {
-            setFullScreen(true);
-          },
+      },
+      { type: "line" },
+      {
+        disabled: false,
+        icon: <MenuIcon name="fullscreen" />,
+        title: "Full screen",
+        onClick: () => {
+          setFullScreen(true);
         },
       },
       { type: "line" },
@@ -988,16 +988,15 @@ function SideBar() {
         disabled: true,
         icon: <MenuIcon name="bug_report" />,
         title: "Report a bug",
-        onClick: () => { },
+        onClick: () => {},
       },
       {
         disabled: true,
         icon: <MenuIcon name="help" />,
         title: "Help",
-        onClick: () => { },
+        onClick: () => {},
       },
     ],
-
   };
 
   const AddingOption = () => {
@@ -1139,8 +1138,9 @@ function SideBar() {
         className={
           collapsed
             ? "sidebar-collapsed"
-            : `sidebar-1 ${openOnMobile ? "open" : null} ${fullScreen ? "floatSidebar" : null
-            }`
+            : `sidebar-1 ${openOnMobile ? "open" : null} ${
+                fullScreen ? "floatSidebar" : null
+              }`
         }
       >
         <div
@@ -1501,8 +1501,9 @@ export const SpaceUI = () => {
           className={
             collapsed
               ? "profileSection-collapsed"
-              : `profileSection ${openOnMobile ? "open" : ""} ${fullScreen ? "floatProfileSection" : null
-              }`
+              : `profileSection ${openOnMobile ? "open" : ""} ${
+                  fullScreen ? "floatProfileSection" : null
+                }`
           }
         >
           {!collapsed ? (
@@ -1571,7 +1572,7 @@ export const SettingsProfile = () => {
           external: (
             <CreateNewSpaceModal addSpace={addSpace} activeSpace={id} />
           ),
-          onClick: () => { },
+          onClick: () => {},
         },
         { type: "line" },
         {
@@ -1587,10 +1588,10 @@ export const SettingsProfile = () => {
           icon: <MenuIcon name="download" />,
           title: "Import space",
           external: <ImportSpaceModal />,
-          onClick: () => { },
+          onClick: () => {},
         },
         { type: "line" },
-        { icon: <MenuIcon name="share" />, title: "Share", onClick: () => { } },
+        { icon: <MenuIcon name="share" />, title: "Share", onClick: () => {} },
         {
           icon: <MenuIcon name="delete" />,
           title: "Delete",
@@ -1686,8 +1687,8 @@ export const UserProfile = ({ collapsed }) => {
     "#10B981",
     "#F59E0B",
   ];
-  const { colorIndex, iconIndex } = GetOrSetVisualInTags(configBot.id)
-  const Icon = icons[iconIndex]
+  const { colorIndex, iconIndex } = GetOrSetVisualInTags(configBot.id);
+  const Icon = icons[iconIndex];
   return (
     <div
       onClick={() => {
@@ -1698,9 +1699,7 @@ export const UserProfile = ({ collapsed }) => {
       className="userProfile"
     >
       <div
-        onClick={() => {
-
-        }}
+        onClick={() => {}}
         style={{
           width: 30,
           height: 30,
@@ -1715,14 +1714,16 @@ export const UserProfile = ({ collapsed }) => {
       >
         <Icon width={15} height={15} />
       </div>
-      {null/*userData?.photoLink ? (
+      {
+        null /*userData?.photoLink ? (
         <img
           style={{ "border-radius": "50%", width: "35px", border: "" }}
           src={userData?.photoLink}
         />
       ) : (
         <span className="material-symbols-outlined">person</span>
-      )*/}
+      )*/
+      }
     </div>
   );
 };
