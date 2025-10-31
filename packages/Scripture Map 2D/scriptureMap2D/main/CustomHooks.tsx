@@ -52,3 +52,16 @@ export const useClickAndHold = ({holdTime = 1, holdCompleteCallback, holdCancelC
     
     return {onHoldStart, onHoldEnd}
 }
+
+export const useWhyChanged = (name, value) => {
+    const prev = useRef(value);
+    useEffect(() => {
+        if (prev.current !== value) {
+            console.log(`[WhyChanged] ${name} changed:`, {
+                before: prev.current,
+                after: value
+            });
+            prev.current = value;
+        }
+    });
+}

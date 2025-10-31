@@ -60,7 +60,7 @@ export const TestamentContent = ({hidden}) => {
         return { fittingBooksCount, rowPairCount }
     }, [scaleFactor, contentWidth, testament, bookWidth]);
 
-    const renderSections = useCallback(() => {
+    const sections = useMemo(() => {
 
         const elements = [];
         let sectionIndex = 0;
@@ -131,7 +131,7 @@ export const TestamentContent = ({hidden}) => {
                 
             }}
         >
-            {renderSections()}
+            {sections}
         </div>
     )
 }

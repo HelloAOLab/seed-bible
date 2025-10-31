@@ -82,6 +82,8 @@ export function MiniTextEditor({
     defaultPriority = DEFAULT_TOOLBAR_PRIORITY,
     onChange,
     onAIHighlight,
+    showMoreOptions = true,
+    headingControls = false,
     id = "editor"
 }) {
     // ----- ids & storage
@@ -177,6 +179,24 @@ export function MiniTextEditor({
                 Image.configure({ inline: false, allowBase64: true }),
                 Link.configure({ openOnClick: true, linkOnPaste: true }),
             ],
+            editorProps: {
+                handleDOMEvents: {
+                  // Block keyboard and menu copy/cut
+                  copy: (_view, event) => {
+                    event.preventDefault();
+                    return true;
+                  },
+                  cut: (_view, event) => {
+                    event.preventDefault();
+                    return true;
+                  },
+                  // (Optional) stop dragging out selections / drags
+                  dragstart: (_view, event) => {
+                    event.preventDefault();
+                    return true;
+                  },
+                },
+            },
             content: contentHTML
         });
 
@@ -377,12 +397,21 @@ export function MiniTextEditor({
             const el = itemsRef.current[id];
             if (!el) continue;
             const w = el.offsetWidth + 12;
-            if (used + w <= available) { vis.push(id); used += w; }
+            if (used + w <= available && (!headingControls || vis.length<3)) { vis.push(id); used += w; }
             else { over.push(id); }
         }
+
+        if(headingControls) {
+           ['text-color','bg-color','align'].forEach(ele=>{
+                vis.push(ele);
+           })
+        }
+        
         setVisibleIds(vis);
         setOverflowIds(over);
     };
+
+
 
     useEffect(() => {
         const ro = new ResizeObserver(() => computeLayout());
@@ -406,7 +435,7 @@ export function MiniTextEditor({
         // tune last
         const out = [...known, ...missing];
         // ensure tune is last
-        const idxTune = out.indexOf('tune');
+        const idxTune = out.indexOf("tune");
         if (idxTune !== -1) out.splice(idxTune, 1);
         out.push('tune');
         return out;
@@ -460,11 +489,11 @@ export function MiniTextEditor({
                     <div key={`v-${id}`} className="sre-item">{toolbarMap[id]}</div>
                 ))}
 
-                <div className="sre-item">
+               {showMoreOptions && <div className="sre-item">
                     <button className="sre-overflow-btn" onClick={() => setShowOverflow(v => !v)} title="More">
                         <span className="material-symbols-outlined">more_vert</span>
                     </button>
-                </div>
+                </div>}
             </div>
 
             {showOverflow && (
@@ -522,7 +551,7 @@ export function MiniTextEditor({
         } = ctx;
 
         const iconBtn = (title, icon, onClick) => (
-            <button className="sre-ib" onClick={onClick} title={title}>
+            <button className="sre-ib" onClick={(e)=>{ e.preventDefault(); onClick(e); }} title={title}>
                 <span className="material-symbols-outlined">{icon}</span>
             </button>
         );
@@ -538,9 +567,9 @@ export function MiniTextEditor({
 
         const numberChip = (value, setValue, min, max, step, onApply) => (
             <div className="sre-numchip">
-                <button onClick={() => { const v = clamp((+value || 0) - step, min, max); setValue(v); onApply(v); }}>−</button>
+                <button onClick={(e) => {  e.preventDefault(); const v = clamp((+value || 0) - step, min, max); setValue(v); onApply(v); }}>−</button>
                 <div>{value}</div>
-                <button onClick={() => { const v = clamp((+value || 0) + step, min, max); setValue(v); onApply(v); }}>+</button>
+                <button onClick={(e) => {  e.preventDefault(); const v = clamp((+value || 0) + step, min, max); setValue(v); onApply(v); }}>+</button>
             </div>
         );
 
@@ -554,10 +583,10 @@ export function MiniTextEditor({
             <div className="sre-drop">
                 <button className="sre-ib"><span className="material-symbols-outlined">format_align_left</span></button>
                 <div className="sre-drop-menu">
-                    <button onClick={Cmds.alignLeft}><span className="material-symbols-outlined">format_align_left</span></button>
-                    <button onClick={Cmds.alignCenter}><span className="material-symbols-outlined">format_align_center</span></button>
-                    <button onClick={Cmds.alignRight}><span className="material-symbols-outlined">format_align_right</span></button>
-                    <button onClick={Cmds.alignJustify}><span className="material-symbols-outlined">format_align_justify</span></button>
+                    <button onClick={(e)=>{ e.preventDefault(); Cmds.alignLeft(e); }}><span className="material-symbols-outlined">format_align_left</span></button>
+                    <button onClick={(e)=>{ e.preventDefault(); Cmds.alignCenter(e); }}><span className="material-symbols-outlined">format_align_center</span></button>
+                    <button onClick={(e)=>{ e.preventDefault(); Cmds.alignRight(e); }}><span className="material-symbols-outlined">format_align_right</span></button>
+                    <button onClick={(e)=>{ e.preventDefault(); Cmds.alignJustify(e); }}><span className="material-symbols-outlined">format_align_justify</span></button>
                 </div>
             </div>
         );
@@ -566,18 +595,18 @@ export function MiniTextEditor({
             <div className="sre-drop">
                 <button className="sre-ib"><span className="material-symbols-outlined">format_list_bulleted</span></button>
                 <div className="sre-drop-menu">
-                    <button onClick={Cmds.toggleBulletList}><span className="material-symbols-outlined">format_list_bulleted</span></button>
-                    <button onClick={Cmds.toggleOrderedList}><span className="material-symbols-outlined">format_list_numbered</span></button>
+                    <button onClick={(e)=>{ e.preventDefault(); Cmds.toggleBulletList(e); }}><span className="material-symbols-outlined">format_list_bulleted</span></button>
+                    <button onClick={(e)=>{ e.preventDefault(); Cmds.toggleOrderedList(e); }}><span className="material-symbols-outlined">format_list_numbered</span></button>
                 </div>
             </div>
         );
 
         const paragraphDrop = (
             <select className="sre-select" title="Paragraph">
-                <option onClick={() => chain('setParagraph')}>P</option>
-                <option onClick={() => chainArg('toggleHeading', { level: 1 })}>H1</option>
-                <option onClick={() => chainArg('toggleHeading', { level: 2 })}>H2</option>
-                <option onClick={() => chainArg('toggleHeading', { level: 3 })}>H3</option>
+                <option onClick={(e) => { e.preventDefault(); chain('setParagraph') }}>P</option>
+                <option onClick={(e) => { e.preventDefault(); chainArg('toggleHeading', { level: 1 }) }}>H1</option>
+                <option onClick={(e) => { e.preventDefault(); chainArg('toggleHeading', { level: 2 }) }}>H2</option>
+                <option onClick={(e) =>{ e.preventDefault();  chainArg('toggleHeading', { level: 3 }) }}>H3</option>
             </select>
         );
 
@@ -727,7 +756,7 @@ const SRE_STYLES = (minH) => `
   display: none; position: absolute; top: 100%; left: 0; background: #fff; border: 1px solid #ddd;
   border-radius: 8px; padding: 6px; box-shadow: 0 6px 20px rgba(0,0,0,0.12); z-index: 10;
 }
-.sre-drop:hover .sre-drop-menu { display: grid; grid-template-columns: repeat(4, minmax(0, 1fr)); gap: 4px; }
+.sre-drop:hover .sre-drop-menu {  width: max-content; display: grid; grid-template-columns: repeat(4, minmax(0, 1fr)); gap: 4px; }
 .sre-measurer {
   position: absolute; left: -9999px; top: 0; visibility: hidden;
   display: flex; gap: 12px; align-items: center; height: 0; padding: 0;

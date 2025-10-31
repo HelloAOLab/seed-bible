@@ -1,4 +1,4 @@
-import {ProjectFiltersSelectorOption} from "scriptureMap2D.main.ProjectFiltersSelectorOption"
+import {FiltersSelectorOption} from "scriptureMap2D.main.FiltersSelectorOption"
 import { useScriptureMap2DContext } from "scriptureMap2D.main.ScriptureMap2DContext"
 
 const {useMemo, useCallback} = os.appHooks
@@ -40,14 +40,14 @@ export const ProjectFiltersSelector = () => {
 
     return (
         <div className="projectFiltersSelector">
-            <ProjectFiltersSelectorOption 
+            <FiltersSelectorOption 
                 content="All" 
                 onClick={() => {handleProjectFilterOptionClick("all")}} 
                 selected={allSelected} 
             />
             {Array.from(projectFilters).map(([key, value]) => {
 
-                return <ProjectFiltersSelectorOption 
+                return <FiltersSelectorOption 
                     content={getOptionContent(key)}
                     onClick={() => {handleProjectFilterOptionClick(key)}} 
                     selected={ allSelected ? false : value} 

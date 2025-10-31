@@ -28,7 +28,7 @@ if (bibleVizUtils) {
 
 const sortFunc = (a, b) => {
   const getOrder = (heading) => {
-    if (heading.startsWith("Chapter")) return { order: 0, num: 0 };
+    if (heading?.startsWith("Chapter")) return { order: 0, num: 0 };
     const match = heading.match(/Verse (\d+)(?:-(\d+))?/);
     if (match) {
       const num = parseInt(match[1], 10);
@@ -45,6 +45,22 @@ const sortFunc = (a, b) => {
   }
 
   return aOrder.num - bOrder.num;
+};
+
+const GetLabel = ({ value, currentOpenedBook }) => {
+  const isMobile =
+    (window?.innerWidth || gridPortalBot.tags.pixelWidth) <
+    MOBILE_VIEWPORT_THRESHOLD;
+
+  return value === "discover"
+    ? `${
+        !isMobile
+          ? currentOpenedBook?.book
+          : thisBot.tags.LowerCaseBookMapping[
+              currentOpenedBook?.book?.toLocaleLowerCase()
+            ]
+      } - ${currentOpenedBook?.chapter} `
+    : "";
 };
 
 const Playlist = () => {
@@ -302,6 +318,8 @@ const Playlist = () => {
           );
           let allAnnotations = [];
 
+          console.log("annotations", annotations);
+
           annotations.forEach((ele) => {
             const data = {
               bookid: currentOpenedBook?.bookId,
@@ -309,10 +327,9 @@ const Playlist = () => {
             };
             const innerele = ele?.data?.data;
 
-            if (!!innerele.additionalInfo) {
+            if (!!innerele.additionalInfo && !!innerele.additionalInfo.layers) {
               const tags = [...(ele.data.chronicle_tags || [])];
               const layers = [...innerele.additionalInfo.layers];
-
               if (innerele?.type === "chapter") {
                 data.heading = "Chapter";
                 data.data = [...layers];
@@ -336,16 +353,17 @@ const Playlist = () => {
               }
             }
 
-            if (!!data.address || true) {
+            if (data.data) {
               allAnnotations.push(data);
             }
           });
+          console.log("allAnnotations", allAnnotations);
 
           allAnnotations = allAnnotations.sort(sortFunc);
-
           setFetchingAnnotation(false);
           setAnnotationData(allAnnotations);
         } catch (e) {
+          console.log(e);
           setFetchingAnnotation(false);
         }
       })();
@@ -414,7 +432,7 @@ const Playlist = () => {
       MOBILE_VIEWPORT_THRESHOLD;
     if (isMobile) {
       globalThis.SetPlaylistForcedHeight &&
-        globalThis.SetPlaylistForcedHeight(true);
+        globalThis.SetPlaylistForcedHeight(1);
     }
     if (IsPlaylistPlaying) {
       thisBot.Playlistplaying({
@@ -481,7 +499,7 @@ const Playlist = () => {
       globalThis.SetMediaURL && globalThis.SetMediaURL(null);
       globalThis.SetVideoSrc && globalThis.SetVideoSrc(null);
       globalThis.SetPlaylistForcedHeight &&
-        globalThis.SetPlaylistForcedHeight(false);
+        globalThis.SetPlaylistForcedHeight(0);
     };
   }, []);
 
@@ -536,15 +554,21 @@ const Playlist = () => {
               alt="share"
             />
             <div className="align-center" style={{ gap: "1rem" }}>
-              <img
-                className="welcome-box-profile"
-                src={globalThis.shareProfilePic}
-                alt={playlistSharerName || "Kusharg karki"}
-              />
-              <p>
-                {" "}
-                <b>{playlistSharerName}</b> shared a playlist.
-              </p>
+              {!!globalThis.shareProfilePic && (
+                <img
+                  className="welcome-box-profile"
+                  src={globalThis.shareProfilePic}
+                  alt={playlistSharerName}
+                />
+              )}
+              {!!playlistSharerName ? (
+                <p>
+                  {" "}
+                  <b>{playlistSharerName}</b> shared a playlist.
+                </p>
+              ) : (
+                <p>Here is your shared playlist.</p>
+              )}
             </div>
             <div
               className="welcome-box-content"
@@ -730,9 +754,10 @@ const Playlist = () => {
                           </span>
                           <span>
                             {label}{" "}
-                            {value === "discover"
-                              ? `${currentOpenedBook?.book} - ${currentOpenedBook?.chapter} `
-                              : ""}
+                            <GetLabel
+                              value={value}
+                              currentOpenedBook={currentOpenedBook}
+                            />
                           </span>
                         </h4>
                       ))}

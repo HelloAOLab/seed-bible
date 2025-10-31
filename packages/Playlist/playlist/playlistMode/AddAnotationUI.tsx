@@ -44,6 +44,7 @@ const AnnotationInnerDiv = ({
   dragOverSet,
   onClickCheckbox,
   deleteFromList,
+  singleMode,
   embeded = false,
   handleDragStart,
   handleDragOver,
@@ -149,8 +150,10 @@ const AnnotationInnerDiv = ({
                     globalThis.KEY_HOLD["control"] ||
                     globalThis.KEY_HOLD["meta"]
                   ) {
-                    setEmbedding(data.id);
-                    return;
+                    if (!singleMode) {
+                      setEmbedding(data.id);
+                      return;
+                    }
                   }
                 }
                 editDataFromPlaylist(data.id, false);
@@ -216,6 +219,7 @@ const AnnotationInnerDiv = ({
             </p>
           ) : (
             data.type !== "heading" &&
+            data.id !== "singleMode" &&
             !embedding && (
               <p
                 className={`end-icon without-right-margin ${`${
@@ -230,7 +234,7 @@ const AnnotationInnerDiv = ({
                     });
                   } else {
                     if (!isEditAddress) {
-                      setEmbedding(data.id);
+                      if (!singleMode) setEmbedding(data.id);
                       if (checkListData[data.id]) {
                         editDataFromPlaylist(data.id, false);
                       }
@@ -262,7 +266,7 @@ const AnnotationInnerDiv = ({
             } end-icon without-right-margin`}`}
             onClick={(e) => {
               e.stopPropagation();
-              deleteFromList(data.id);
+              deleteFromList(data.id, pId);
             }}>
             <span class="material-symbols-outlined unfollow delete-icon">
               delete
@@ -458,13 +462,17 @@ const AddAnotationUI = ({
   setShowPlaylistSettings,
   onReset,
   setList,
-  editData,
+  editData = null,
   setTab,
 }) => {
   // Audio
   const [mediaURL, setMediaURL] = useState("");
   const [videoSrc, setVideoSrc] = useState(false);
   const [currentItem, setCurrentItem] = useState({});
+
+  const [singleMode, setSingleMode] = useState(true);
+  const [embedItems, setEmbedItems] = useState([]);
+  const [tags, setTags] = useState([]);
 
   // Edit Mode
   const [isEditAddress, setIsEditAddress] = useState(editData?.address);
@@ -504,6 +512,7 @@ const AddAnotationUI = ({
           if (data.data) {
             setEditDataDetails({ ...data.data });
             setList([...data.data.additionalInfo.layers]);
+            setTags([...(data.chronicle_tags || [])]);
           } else {
             setDataFetching(false);
             ShowNotification({
@@ -549,6 +558,10 @@ const AddAnotationUI = ({
   }, [checklistEnabled]);
 
   const massAdd = (items) => {
+    if (singleMode) {
+      setEmbedItems((prev) => [...prev, ...items]);
+      return;
+    }
     setList((old) => {
       const prev = [...old];
       const index = prev.findIndex((ele) => ele.id === selectedAnnotation);
@@ -563,20 +576,26 @@ const AddAnotationUI = ({
   };
 
   const onEmbedItems = (title, link, linkState) => {
+    const embedItem = {
+      id: createUUID(),
+      content: title,
+      additionalInfo: {
+        link,
+        ...linkState,
+      },
+      type: linkState.type === "text" ? "heading" : "attachment-link",
+    };
+    if (singleMode) {
+      setEmbedItems((prev) => [...prev, { ...embedItem }]);
+      return;
+    }
+
     setList((old) => {
       const prev = [...old];
       const index = prev.findIndex((ele) => ele.id === selectedAnnotation);
       const targetVerse = prev[index];
       targetVerse.additionalInfo.layers = [
-        {
-          id: createUUID(),
-          content: title,
-          additionalInfo: {
-            link,
-            ...linkState,
-          },
-          type: linkState.type === "text" ? "heading" : "attachment-link",
-        },
+        { ...embedItem },
         ...(targetVerse.additionalInfo.layers || []),
       ];
       prev[index] = targetVerse;
@@ -663,12 +682,44 @@ const AddAnotationUI = ({
     setOpenAttachLink(false);
   };
 
-  const deleteFromList = (id) => {
-    setList((prev) => prev.filter((ele) => ele.id !== id));
+  const deleteFromList = (id, pid) => {
+    if (singleMode && !editData.address) {
+      if (pid) {
+        setEmbedItems((prev) => prev.filter((ele) => ele.id !== id));
+      } else {
+        setList([]);
+      }
+      setSelectedAnnotation(null);
+      return;
+    } else {
+      if (pid) {
+        setList((prev) => {
+          const old = [...prev];
+          const index = old.findIndex((ele) => ele.id === pID);
+          if (index > -1) {
+            old[index].additionalInfo.layers = old[
+              index
+            ].additionalInfo.layers.filter((ele) => ele.id !== id);
+          }
+          return old;
+        });
+      } else {
+        setList((prev) => prev.filter((ele) => ele.id !== id));
+      }
+    }
+
     setSelectedAnnotation(null);
   };
 
   const deleteAttachment = (index, pID, id) => {
+    if (singleMode && !editData.address) {
+      setEmbedItems((prev) => {
+        const old = [...prev];
+        old = old.filter((ele) => ele.id !== id);
+        return old;
+      });
+      return;
+    }
     setList((prev) => {
       const old = [...prev];
       const index = old.findIndex((ele) => ele.id === pID);
@@ -682,6 +733,10 @@ const AddAnotationUI = ({
   };
 
   const onAddTags = (tags) => {
+    if (singleMode) {
+      setTags((prev) => [...prev, ...tags]);
+      return;
+    }
     setList((old) => {
       const prev = [...old];
       const index = prev.findIndex((ele) => ele.id === selectedAnnotation);
@@ -696,6 +751,14 @@ const AddAnotationUI = ({
   };
 
   const onRemoveTag = (indexofTag, idOfParent) => {
+    if (singleMode || editData.address) {
+      setTags((prev) => {
+        const old = [...prev];
+        old.splice(indexofTag, 1);
+        return old;
+      });
+      return;
+    }
     setList((old) => {
       const prev = [...old];
       const index = prev.findIndex((ele) => ele.id === idOfParent);
@@ -719,6 +782,27 @@ const AddAnotationUI = ({
       idsMap[ele.idFinal] = true;
       pidsMap[ele.pId] = true;
     });
+
+    if (singleMode) {
+      if (isDelete) {
+        if (Object.keys(idsMap).length) {
+          setEmbedItems((prev) => {
+            let old = [...prev];
+            old = old.filter((ele) => !idsMap[ele.id]);
+            return old;
+          });
+        }
+
+        setChecklistData({});
+        setChecklistEmbeded({});
+        return;
+      }
+      ShowNotification({
+        message: `You cannot unlink attachments in annotation mode!`,
+        severity: "error",
+      });
+      return;
+    }
 
     setList((prev) => {
       const toBeAddedAtIndex = {};
@@ -806,12 +890,16 @@ const AddAnotationUI = ({
   const isSomethingEmbededChecked = Object.keys(checkListEmbeded).length > 0;
 
   const onBulkDeleteItems = () => {
-    setList((prev) => {
-      const old = prev.filter(
-        (ele) => !checkListData[ele.id] && embedding !== ele.id
-      );
-      return old;
-    });
+    if (singleMode) {
+      setList([]);
+    } else {
+      setList((prev) => {
+        const old = prev.filter(
+          (ele) => !checkListData[ele.id] && embedding !== ele.id
+        );
+        return old;
+      });
+    }
     setChecklistData({});
     setSelectedAnnotation(null);
     setEmbedding(null);
@@ -836,7 +924,7 @@ const AddAnotationUI = ({
           editDataDetails.additionalInfo?.data?.bookId,
         chapter: editDataDetails.additionalInfo.chapter,
         translation: "",
-        chronicle_tags: [...(editDataDetails.additionalInfo.tags || [])],
+        chronicle_tags: [...(tags || [])],
         data: {
           ...editDataDetails,
           additionalInfo: {
@@ -853,7 +941,9 @@ const AddAnotationUI = ({
       );
 
       const userRecord = await getUserRecord();
-      promisesArray.push(saveAnnotation(userRecord, annotation));
+      promisesArray.push(
+        saveAnnotation(userRecord, { ...annotation, id: isEditAddress })
+      );
       await Promise.all(promisesArray);
       globalThis.SelectedItemIDForAttachments = null;
       ShowNotification({
@@ -878,7 +968,7 @@ const AddAnotationUI = ({
 
   const onClickSave = async () => {
     if (loading) return;
-    if (finalHistoryObject.length < 1) {
+    if (list.length < 1) {
       return ShowNotification({
         message: "Cannot save empty annotations.",
         severity: "error",
@@ -888,7 +978,13 @@ const AddAnotationUI = ({
       await onEditSave();
       return;
     }
-    const currentList = [...finalHistoryObject];
+    const currentList = [...list].filter((ele) =>
+      singleMode
+        ? ele.type === "verse" ||
+          ele.type === "verse-range" ||
+          ele.type === "verse-grouped"
+        : true
+    );
     const nonScriptureName = {
       date: true,
       "attachment-link": true,
@@ -897,27 +993,36 @@ const AddAnotationUI = ({
 
     let somethingNotScripture = false;
     let somethingNotEmbedded = false;
-    currentList.forEach((ele) => {
-      if (nonScriptureName[ele.type]) {
-        somethingNotScripture = true;
+    if (singleMode) {
+      if (embedItems.length === 0) {
+        return ShowNotification({
+          message: `Please embed something to save annotations!`,
+          severity: "error",
+        });
       }
-      if (!Array.isArray(ele.additionalInfo.layers)) {
-        somethingNotEmbedded = true;
+    } else {
+      currentList.forEach((ele) => {
+        if (nonScriptureName[ele.type]) {
+          somethingNotScripture = true;
+        }
+        if (!Array.isArray(ele.additionalInfo.layers)) {
+          somethingNotEmbedded = true;
+        }
+      });
+
+      if (somethingNotScripture) {
+        return ShowNotification({
+          message: `Only Verses and Chapters are allowed for top-level annotation!`,
+          severity: "error",
+        });
       }
-    });
 
-    if (somethingNotScripture) {
-      return ShowNotification({
-        message: `Only Verses and Chapters are allowed for top-level annotation!`,
-        severity: "error",
-      });
-    }
-
-    if (somethingNotEmbedded) {
-      return ShowNotification({
-        message: `Some of your scriptures are not embedded. Please embed or delete them!`,
-        severity: "error",
-      });
+      if (somethingNotEmbedded) {
+        return ShowNotification({
+          message: `Some of your scriptures are not embedded. Please embed or delete them!`,
+          severity: "error",
+        });
+      }
     }
 
     setLoading(true);
@@ -935,8 +1040,18 @@ const AddAnotationUI = ({
               ele.additionalInfo?.data?.bookId,
             chapter: ele.additionalInfo.chapter,
             translation: "",
-            chronicle_tags: [...(ele.additionalInfo.tags || [])],
-            data: { ...ele },
+            chronicle_tags: [
+              ...(singleMode ? tags : ele.additionalInfo.tags || []),
+            ],
+            data: {
+              ...ele,
+              additionalInfo: {
+                ...ele.additionalInfo,
+                layers: [
+                  ...(singleMode ? embedItems : ele.additionalInfo.layers),
+                ],
+              },
+            },
           };
           const annotation = createAnnotation(
             chroAddData.book,
@@ -999,7 +1114,41 @@ const AddAnotationUI = ({
 
   // const transformedHistory = useMemo(() => thisBot.groupVerse(list), [list, selectedCount, unSelectedCount]);
 
-  const finalHistoryObject = useMemo(() => list, [list]);
+  const finalHistoryObject = useMemo(() => {
+    if (!singleMode || editData.address) return list;
+    const listFinal = list.filter(
+      (ele) =>
+        ele.type === "verse" ||
+        ele.type === "verse-range" ||
+        ele.type === "verse-grouped"
+    );
+    if (listFinal.length < 1) {
+      setSelectedAnnotation(null);
+      return listFinal;
+    }
+    const item = {
+      content: listFinal[0].content,
+      type: "chapter",
+      additionalInfo: {
+        ...listFinal[0],
+      },
+      id: "singleMode",
+    };
+    if (singleMode && listFinal.length) {
+      setSelectedAnnotation("singleMode");
+    } else {
+      setSelectedAnnotation(null);
+    }
+    let content = "";
+
+    listFinal.forEach((ele, i) => {
+      content += ` ${i > 0 ? ele.additionalInfo.verse : ele.content}${
+        i < listFinal.length - 1 ? "," : ""
+      }`;
+    });
+    item.content = content;
+    return [item];
+  }, [list, singleMode]);
 
   const [draggedItemID, setDraggedItemID] = useState(null);
   const [draggedParent, setDraggedItemParent] = useState(null);
@@ -1250,8 +1399,7 @@ const AddAnotationUI = ({
               </div>
               <Tooltip
                 forRight={true}
-                text="Annotation mode is the way to annotate the bible so you can see content while exploring other who have subscribed to you."
-                gifUrl={ChecklistGIf}>
+                text="Annotation mode is the way to annotate the bible so you can see content while exploring other who have subscribed to you.">
                 <p
                   className="what-this center"
                   style={{ margin: "0 0 0 0.5rem" }}>
@@ -1305,8 +1453,7 @@ const AddAnotationUI = ({
               </div>
               <Tooltip
                 forRight={true}
-                text="Playlist mode is to create playlist and share with other or play them."
-                gifUrl={ChecklistGIf}>
+                text="Playlist mode is to create playlist and share with other or play them.">
                 <p
                   className="what-this center"
                   style={{ margin: "0 0 0 0.5rem" }}>
@@ -1357,10 +1504,7 @@ const AddAnotationUI = ({
                   Project Mode
                 </label>
               </div>
-              <Tooltip
-                forRight={true}
-                text="Project mode is awesome."
-                gifUrl={ChecklistGIf}>
+              <Tooltip forRight={true} text="Project mode is awesome.">
                 <p
                   className="what-this center"
                   style={{ margin: "0 0 0 0.5rem" }}>
@@ -1386,13 +1530,15 @@ const AddAnotationUI = ({
               right: "4rem",
               width: "200px",
               padding: "1rem",
+              top: "5rem",
             }}
             className="overlay linked-item-custom">
             <p>
               <b style={{ color: "white" }}>Publish settings</b>
             </p>
-            <span style={{ fontSize: "10px" }}>
-              You annotations will be published to the selected place below
+            <span style={{ fontSize: "10px", color: "#c9c8c6" }}>
+              Your annotations will be available to everyone if public. If
+              private only you will have access.
             </span>
             <div
               className="more-menu-items"
@@ -1466,6 +1612,36 @@ const AddAnotationUI = ({
             <h4 style={{ margin: "8px 0" }}>
               Editing Annotation For {editData.title}
             </h4>
+            {!!tags.length && (
+              <div style={{ display: "flex" }}>
+                <p
+                  style={{
+                    padding: "1rem",
+                    fontSize: "1rem",
+                    fontWeight: "700",
+                  }}>
+                  Tags:
+                </p>
+                <div
+                  className="align-center"
+                  style={{
+                    flexWrap: "wrap",
+                    flexGrow: "1",
+                    margin: "0.5rem 0",
+                    gap: "0.5rem",
+                  }}>
+                  {tags.map((ele, index) => (
+                    <Chips
+                      label={ele}
+                      key={index}
+                      onDelete={() => {
+                        onRemoveTag(index);
+                      }}
+                    />
+                  ))}
+                </div>
+              </div>
+            )}
           </>
         ) : (
           <div
@@ -1591,22 +1767,24 @@ const AddAnotationUI = ({
               </span>
               <span className="color-inherit">Delete</span>
             </Button>
-            <Button
-              onClick={() => {
-                const values = Object.keys(checkListEmbeded).map(
-                  (ele) => checkListEmbeded[ele]
-                );
-                onDisembed(values);
-              }}
-              secondaryAlt
-              color="#3B82F6">
-              <span
-                style={{ marginRight: "0.5rem" }}
-                class="material-symbols-outlined unfollow color-inherit">
-                link_off
-              </span>
-              <span className="color-inherit">Remove</span>
-            </Button>
+            {!singleMode && (
+              <Button
+                onClick={() => {
+                  const values = Object.keys(checkListEmbeded).map(
+                    (ele) => checkListEmbeded[ele]
+                  );
+                  onDisembed(values);
+                }}
+                secondaryAlt
+                color="#3B82F6">
+                <span
+                  style={{ marginRight: "0.5rem" }}
+                  class="material-symbols-outlined unfollow color-inherit">
+                  link_off
+                </span>
+                <span className="color-inherit">Remove</span>
+              </Button>
+            )}
             <Button
               onClick={() => {
                 setChecklistEmbeded({});
@@ -1704,10 +1882,26 @@ const AddAnotationUI = ({
                 handleDragEnd={handleDragEnd}
                 onRemoveTag={onRemoveTag}
                 deleteAttachment={deleteAttachment}
+                singleMode={singleMode}
                 setEmbedding={setEmbedding}
                 deleteFromList={deleteFromList}
                 selected={ele.id === selectedAnnotation}
-                data={ele}
+                data={{
+                  ...ele,
+                  additionalInfo: {
+                    ...ele.additionalInfo,
+                    layers: [
+                      ...(ele.id === "singleMode"
+                        ? embedItems
+                        : ele.additionalInfo.layers || []),
+                    ],
+                    tags: [
+                      ...(ele.id === "singleMode"
+                        ? tags
+                        : ele.additionalInfo.tags || []),
+                    ],
+                  },
+                }}
                 key={ele.id}
                 onClick={(id) => {
                   if (isEditAddress) {
@@ -1720,9 +1914,11 @@ const AddAnotationUI = ({
                   if (ele.type !== "heading" && !checkEnabled) {
                     const isMultiFunctionHold = CheckMultiFuntionHold();
                     if (!isMultiFunctionHold) {
-                      setSelectedAnnotation((prev) =>
-                        prev === id ? null : id
-                      );
+                      if (!singleMode) {
+                        setSelectedAnnotation((prev) =>
+                          prev === id ? null : id
+                        );
+                      }
                     } else if (embedding) {
                       // const isShiftHold = globalThis?.KEY_HOLD?.['shift'];
                       // if (isShiftHold && id === globalThis.LAST_CLICK_EMBED_PARENT) {
@@ -1759,9 +1955,18 @@ const AddAnotationUI = ({
           )
         )}
 
-        {!selectedAnnotation && !draggedItemID && !embedding && (
-          <AttachLink isPlaylist attachLink={attachLink} massAdd={onMassAdd} />
-        )}
+        {!selectedAnnotation &&
+          (!singleMode || editData.address) &&
+          !draggedItemID &&
+          !embedding && (
+            <AttachLink
+              isTags={editData}
+              isPlaylist
+              onAddTags={onAddTags}
+              attachLink={attachLink}
+              massAdd={onMassAdd}
+            />
+          )}
 
         {!!videoSrc && (
           <VideoPlayer videoSrc={videoSrc} playlistItem={{ ...currentItem }} />

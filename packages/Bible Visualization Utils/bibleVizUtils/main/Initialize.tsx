@@ -71,12 +71,20 @@ globalThis.BibleVizUtils = {
 }
 const {HistoryTimePeriodInfo} = await import("bibleVizUtils.classes.HistoryTimePeriodInfo");
 
-const nowTimePeriod       = new HistoryTimePeriodInfo({value: 1, isNowTimePeriod: true})
-const defaultTimePeriod_1 = new HistoryTimePeriodInfo({value: 1, timeAmount: 1, timeUnit: bibleVizData.tags.TimeUnit.Days});
-const defaultTimePeriod_2 = new HistoryTimePeriodInfo({value: 0.75, timeAmount: 1, timeUnit: bibleVizData.tags.TimeUnit.Weeks});
-const defaultTimePeriod_3 = new HistoryTimePeriodInfo({value: 0.5, timeAmount: 1, timeUnit: bibleVizData.tags.TimeUnit.Months});
-const defaultTimePeriod_4 = new HistoryTimePeriodInfo({value: 0.25, timeAmount: 6, timeUnit: bibleVizData.tags.TimeUnit.Months});
-const defaultTimePeriod_5 = new HistoryTimePeriodInfo({value: 0, timeAmount: 1, timeUnit: bibleVizData.tags.TimeUnit.Years});
+const historyTimePeriodsInfo = [
+    new HistoryTimePeriodInfo({value: 1, isNowTimePeriod: true}),
+    new HistoryTimePeriodInfo({value: 1, timeAmount: 1, timeUnit: bibleVizData.tags.TimeUnit.Days}),
+    new HistoryTimePeriodInfo({value: 0.9, timeAmount: 2, timeUnit: bibleVizData.tags.TimeUnit.Days}),
+    new HistoryTimePeriodInfo({value: 0.8, timeAmount: 3, timeUnit: bibleVizData.tags.TimeUnit.Days}),
+    new HistoryTimePeriodInfo({value: 0.7, timeAmount: 4, timeUnit: bibleVizData.tags.TimeUnit.Days}),
+    new HistoryTimePeriodInfo({value: 0.6, timeAmount: 5, timeUnit: bibleVizData.tags.TimeUnit.Days}),
+    new HistoryTimePeriodInfo({value: 0.5, timeAmount: 6, timeUnit: bibleVizData.tags.TimeUnit.Days}),
+    new HistoryTimePeriodInfo({value: 0.4, timeAmount: 7, timeUnit: bibleVizData.tags.TimeUnit.Days}),
+    new HistoryTimePeriodInfo({value: 0.3, timeAmount: 8, timeUnit: bibleVizData.tags.TimeUnit.Days}),
+    new HistoryTimePeriodInfo({value: 0.2, timeAmount: 9, timeUnit: bibleVizData.tags.TimeUnit.Days}),
+    new HistoryTimePeriodInfo({value: 0.1, timeAmount: 10, timeUnit: bibleVizData.tags.TimeUnit.Days}),
+    new HistoryTimePeriodInfo({value: 0, timeAmount: 11, timeUnit: bibleVizData.tags.TimeUnit.Days})
+]
 
 const UsersColorValues = {
     InfoLabelColorScales: {x: 0.5, y: 0.5, z: 0},
@@ -139,14 +147,7 @@ setTag(bibleVizData, "BibleLayoutMeasurements", BibleLayoutMeasurements);
 setTag(bibleVizData, "StackPieceMeasurements", StackPieceMeasurements);
 setTagMask(bibleVizData, "isInHistoryMode", false);
 setTagMask(bibleVizData, 'highlightHistoryIndex', -1);
-setTagMask(bibleVizData, "historyTimePeriodsInfo", [
-    nowTimePeriod, 
-    defaultTimePeriod_1,
-    defaultTimePeriod_2,
-    defaultTimePeriod_3,
-    defaultTimePeriod_4,
-    defaultTimePeriod_5,
-])
+setTagMask(bibleVizData, "historyTimePeriodsInfo", historyTimePeriodsInfo)
 bibleVizData.vars.history = [];
 bibleVizData.vars.highlightHistory = [];
 bibleVizData.vars.customArrangements = [];
@@ -239,5 +240,3 @@ if(PoolData && CustomTag)
 }
 
 shout("OnBibleVizUtilsInitialized")
-
-thisBot.StartHistoryUpdate();

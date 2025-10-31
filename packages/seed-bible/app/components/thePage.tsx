@@ -142,7 +142,7 @@ function ThePage({
     });
     os.addBotListener(thisBot, "remoteHighlightChange", (data) => {
       console.log("remoteHighlightChange", data);
-      globalThis.ToggleVerseHighlight(data?.verseNumbers, data?.color, data?.scroll, data?.fadeIn);
+      globalThis.ToggleVerseHighlight(data?.verseNumbers, data?.color, data?.scroll, data?.fadeIn, true);
     });
   }, []);
 
@@ -692,11 +692,11 @@ function ThePage({
   }, [tab?.id, data?.book, data?.chapter]);
 
   const toggleVerseHighlight = useCallback(
-    (verseNumbers, color, scroll, fadeIn) => {
+    (verseNumbers, color, scroll, fadeIn, skipIt) => {
       const { inSession, role, config } = getUserSessionInfo(configBot.id)
-      if (inSession && role === 'follower' && config.onlyHostHighlight)
-      return
-        if (!tab?.id) return;
+      if (inSession && role === 'follower' && config.onlyHostHighlight && !skipIt)
+        return
+      if (!tab?.id) return;
       EmitData("highlight", { verseNumbers, color });
 
       const verseId = `v-${Array.isArray(verseNumbers)

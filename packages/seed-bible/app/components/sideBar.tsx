@@ -40,6 +40,8 @@ import {
 const Reciver = getBot("system", "app.reciver");
 const { useState, useRef, useEffect, useMemo } = os.appHooks;
 
+const LOCAL_ENV = !configBot.tags.pattern;
+
 const CircleCounter = ({ data, book, chapter }) => {
   const [isModalOpen, setIsModalOpen] = useState(false);
 
@@ -715,6 +717,7 @@ function SideBar() {
 
   useEffect(() => {
     shout("OnOnlineUsersChanged", { onlineUsers });
+
   }, [onlineUsers]);
 
   const {
@@ -931,16 +934,18 @@ function SideBar() {
 
   const MenuOptions = {
     type: "normal",
-    items: [
-      {
-        disabled: true,
-        icon: <MenuIcon name="logout" />,
-        title: "Join a Lobby",
-        onClick: async () => {
-          const id = await os.showInput("", {
-            title: "Enter session link",
-          });
-          if (id) os.goToURL(id);
+    items: (() =>
+      [
+        {
+          disabled: true,
+          icon: <MenuIcon name="logout" />,
+          title: "Join a Lobby",
+          onClick: async () => {
+            const id = await os.showInput("", {
+              title: "Enter session link",
+            });
+            if (id) os.goToURL(id);
+          },
         },
       },
       {
@@ -952,15 +957,16 @@ function SideBar() {
             `https://ao.bot/?pattern=SeedBibleDev&noGridPortal=true&inst=${os.getCurrentInst()}&join=${configBot.id
             }`
           );
+
         },
-      },
-      { type: "line" },
-      {
-        disabled: false,
-        icon: <MenuIcon name="fullscreen" />,
-        title: "Full screen",
-        onClick: () => {
-          setFullScreen(true);
+        { type: "line" },
+        {
+          disabled: false,
+          icon: <MenuIcon name="fullscreen" />,
+          title: "Full screen",
+          onClick: () => {
+            setFullScreen(true);
+          },
         },
       },
       { type: "line" },
@@ -991,6 +997,7 @@ function SideBar() {
         onClick: () => { },
       },
     ],
+
   };
 
   const AddingOption = () => {
