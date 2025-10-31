@@ -11,7 +11,7 @@ const newOpacity = 0.75;
 const easing = {type: "sinusoidal", mode: "inout"};
 if(infoLabelTransformer)
 {
-    let {infoLabel, infoLabelTail, infoLabelDate} = infoLabelTransformer.GetLabelElements();
+    const {infoLabel, infoLabelTail, infoLabelDate} = infoLabelTransformer.GetLabelElements();
     infoLabelTransformer.StopShakeAnimation();
     await Promise.allSettled([
         animateTag([infoLabel, infoLabelTail, infoLabelDate], "formOpacity", {

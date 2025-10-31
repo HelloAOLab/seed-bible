@@ -8,7 +8,7 @@
 const dimension = os.getCurrentDimension();
 
 const infoLabelTransformer = GetCurrentInfoLabelTransformer(thisBot);
-let {infoLabel, infoLabelTail} = infoLabelTransformer.GetLabelElements();
+const {infoLabel, infoLabelTail} = infoLabelTransformer.GetLabelElements();
 animateTag(thisBot, "scaleX", null);
 animateTag(thisBot, "scaleY", null);
 if(infoLabelTransformer)

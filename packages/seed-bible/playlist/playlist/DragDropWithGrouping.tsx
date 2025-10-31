@@ -84,7 +84,7 @@ const DragDrop = ({ isSomethingEmbededChecked, checkListEmbeded, setChecklistEmb
 
         let newItems = [];
 
-        let filterAbleItems = {
+        const filterAbleItems = {
             [draggedItemID]: true,
         };
 

@@ -251,7 +251,7 @@ const App = () => {
   const resourceGroupNameRef = useRef(null);
 
 
-  let { name, apiCalendar, setApiCalendar } = useCalendar();
+  const { name, apiCalendar, setApiCalendar } = useCalendar();
 
   useEffect(() => {
     // Load from localStorage only once
@@ -599,9 +599,9 @@ const App = () => {
     const playLists = selected.reduce((acc, item) => acc.concat({ list: item.list, playList: item.name }), []);
     setReadingsList(prev => [...prev, ...playLists]);
 
-    let start = new Date();
+    let start;
     if (playLists[0]?.list[0]?.type !== 'date') {
-      start = start
+      start = new Date();
 
     }
     const newEvents = [];
@@ -2251,7 +2251,7 @@ const App = () => {
     if (!container) return;
 
     const observer = new ResizeObserver(entries => {
-      for (let entry of entries) {
+      for (const entry of entries) {
         const width = entry.contentRect.width;
 
         // Select all day grid events

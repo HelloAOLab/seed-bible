@@ -15,7 +15,7 @@ import {SectionBookData} from 'managers.StacksManager.SectionBookData'
 
 const {bibleData} = that;
 
-for(let testamentData of bibleData.childrenData)
+for(const testamentData of bibleData.childrenData)
 {
     if(testamentData.element)
     {
@@ -24,7 +24,7 @@ for(let testamentData of bibleData.childrenData)
     }
     testamentData.isSplitIntoSections = true;
     testamentData.isActive = false;
-    for(let sectionData of testamentData.childrenData)
+    for(const sectionData of testamentData.childrenData)
     {
         if(sectionData.element)
         {
@@ -38,7 +38,7 @@ for(let testamentData of bibleData.childrenData)
             sectionData.currentSelectedChapterData = null;
             sectionData.currentShape = BookShapeType.Regular;
             sectionData.isActive = false
-            for(let chapterData of sectionData.childrenData)
+            for(const chapterData of sectionData.childrenData)
             {
                 chapterData.isHidden = false;
             }
@@ -49,9 +49,9 @@ for(let testamentData of bibleData.childrenData)
             sectionData.isInExplodedView = false;
             sectionData.isSplitIntoBooks = false;
             sectionData.isActive = false
-            for(let level of sectionData.childrenData)
+            for(const level of sectionData.childrenData)
             {
-                for(let bookData of level)
+                for(const bookData of level)
                 {
                     if(bookData.element)
                     {
@@ -63,7 +63,7 @@ for(let testamentData of bibleData.childrenData)
                     bookData.queuedChapterData = null;
                     bookData.currentSelectedChapterData = null;
                     bookData.currentShape = null;      
-                    for(let chapterData of bookData.childrenData)
+                    for(const chapterData of bookData.childrenData)
                     {
                         chapterData.isHidden = false;
                     }

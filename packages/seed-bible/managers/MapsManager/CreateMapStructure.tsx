@@ -1,7 +1,7 @@
 const { mapData } = that;
 
 const mapBookStructures = [];
-let staticMapElements;
+const staticMapElements;
 const arrangementIndex = StacksManager.GetCurrentArrangementIndex();
 const arrangement = InstanceManager.vars.fixedArrangementsInfo[arrangementIndex];
 let column = 0;
@@ -14,7 +14,7 @@ const labelInitialSpace = "   ";
 // const { testamentLinesInfo, sectionLinesInfo, mapBooksInfo, layers } = GetMapStructure({arrangementIndex, arrangement})
 
 const testaments = arrangement.testaments.toReversed()
-for(let testamentIndex in testaments)
+for(const testamentIndex in testaments)
 {
     const testamentInfo = testaments[testamentIndex];
     const testamentLineInfo = {
@@ -26,7 +26,7 @@ for(let testamentIndex in testaments)
         testamentIndex
     }
     const sections = testamentInfo.sections.toReversed()
-    for(let sectionIndex in sections)
+    for(const sectionIndex in sections)
     {
         const sectionInfo = sections[sectionIndex]
         const sectionLinePoints = []
@@ -39,7 +39,7 @@ for(let testamentIndex in testaments)
             testamentIndex,
             sectionIndex
         }
-        for(let bookInfo of sectionInfo.books.toReversed())
+        for(const bookInfo of sectionInfo.books.toReversed())
         {
             sectionLinePoints.push({row, column});
             const mapBookStructure = await thisBot.CreateMapBookStructure({

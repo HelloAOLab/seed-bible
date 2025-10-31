@@ -13,7 +13,7 @@ if( thisBot.vars.lastInteractedBookData &&
 }
 else
 {
-    let bookData = thisBot.vars.lastInteractedSectionData ? thisBot.vars.lastInteractedSectionData.childrenData.flat().find((currBookData) => {return currBookData.elementInfo.commonName === bookName}) : null
+    const bookData = thisBot.vars.lastInteractedSectionData ? thisBot.vars.lastInteractedSectionData.childrenData.flat().find((currBookData) => {return currBookData.elementInfo.commonName === bookName}) : null
     if( thisBot.vars.lastInteractedSectionData && 
         thisBot.vars.lastInteractedSectionData.isActive &&
         bookData &&

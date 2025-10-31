@@ -4,7 +4,7 @@ const duration = 0.1;
 let rgbTargetColor;
 
 
-let animations = [];
+const animations = [];
 const dimension = os.getCurrentDimension();
 const easing = {type: "sinusoidal", mode: "inout"};
 thisBot.StopChapterTransition()
@@ -23,7 +23,7 @@ else
 {
     const label = `${thisBot.tags.parentBookName} ${thisBot.tags.chapterNumber}`
     
-    let infoLabelTransformer = GetCurrentInfoLabelTransformer(thisBot) ?? StacksManager.GetLabelForElement({
+    const infoLabelTransformer = GetCurrentInfoLabelTransformer(thisBot) ?? StacksManager.GetLabelForElement({
         element: thisBot, 
         label,
         color: 'white', 

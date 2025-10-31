@@ -13,7 +13,7 @@ const chapterPosition = getBotPosition(thisBot, dimension);
 const delayBetweenChunkAnimations = 35;
 const chunkAnimationDuration = 0.15;
 const chapterScales = GetBotScales(thisBot);
-let infoLabelTransformer = GetCurrentInfoLabelTransformer(thisBot);
+const infoLabelTransformer = GetCurrentInfoLabelTransformer(thisBot);
 
 setTagMask(thisBot, "isDeselecting", true);
 if(infoLabelTransformer)

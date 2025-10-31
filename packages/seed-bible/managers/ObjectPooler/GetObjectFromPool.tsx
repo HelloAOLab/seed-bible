@@ -19,7 +19,7 @@ if(!tag in thisBot.vars.poolDictionary)
 
 if(amount && amount > 1)
 {
-    let objects = [];
+    const objects = [];
     for(let i = 0; i < amount; i++)
     {
         obj = GetObject();

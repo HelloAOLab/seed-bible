@@ -77,7 +77,7 @@ const getPosition = () => {
     const edgeThreshold = 200; // Distance from edges to adjust position
     const safeMargin = "2rem"; // Fixed margin when near edges
 
-    let position = {};
+    const position = {};
 
     // Horizontal positioning
     if (width - pointerX < edgeThreshold) {
@@ -519,7 +519,7 @@ const PlaylistRowItem = ({ currentDateActive, oldItemsMap = {}, checkListData, s
                     {
                         opendedList
                         &&
-                        <DragDrop description={description} icon={icon} isCustomIcon={isCustomIcon} isCustomColor={isCustomColor} color={color} currentFormat={currentFormat} currentDateActive={currentDateActive} checkListData={checkListData} oldItemsMap={oldItemsMap} clickPass={clickPass} onLinking={onLink} playlistName={`${playlistParentName}${!!playlistParentName ? " - " : ''}${name}`} linkingMode={linkingMode} viewOnly={viewOnly} parentId={parentId} checklistEnabled={checklistEnabled} toggle={toggle} creatingPlaylist={creatingPlaylist} playingPlaylist={playingPlaylist} list={list} editDataFromPlaylist={editDataFromPlaylist} playListSubIndex={playListIndex} playListSubId={id} setPlaylistFromRow={setPlaylists} onClick={onClick} setList={setPlaylist} deleteFromList={deleteDataFromPlaylist} onClickItem={hanldeAdd} />
+                        <DragDrop description={description} icon={icon} isCustomIcon={isCustomIcon} isCustomColor={isCustomColor} color={color} currentFormat={currentFormat} currentDateActive={currentDateActive} checkListData={checkListData} oldItemsMap={oldItemsMap} clickPass={clickPass} onLinking={onLink} playlistName={`${playlistParentName}${playlistParentName ? " - " : ''}${name}`} linkingMode={linkingMode} viewOnly={viewOnly} parentId={parentId} checklistEnabled={checklistEnabled} toggle={toggle} creatingPlaylist={creatingPlaylist} playingPlaylist={playingPlaylist} list={list} editDataFromPlaylist={editDataFromPlaylist} playListSubIndex={playListIndex} playListSubId={id} setPlaylistFromRow={setPlaylists} onClick={onClick} setList={setPlaylist} deleteFromList={deleteDataFromPlaylist} onClickItem={hanldeAdd} />
                     }
                 </div>
 
@@ -605,7 +605,7 @@ const PlaylistRowItem = ({ currentDateActive, oldItemsMap = {}, checkListData, s
                             >
                                 <p>Delete </p>
                             </div>}
-                        {!creatingPlaylist && !viewOnly && !playingPlaylist && (!!playListSubId ? <div
+                        {!creatingPlaylist && !viewOnly && !playingPlaylist && (playListSubId ? <div
                             className="more-menu-items"
                             onClick={() => {
                                 exportNestedList();

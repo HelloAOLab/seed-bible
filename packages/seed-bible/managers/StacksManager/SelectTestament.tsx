@@ -80,7 +80,7 @@ if(currentInfoLabelTransformer)
     })
 }
 
-for(let data of testamentData.childrenData)
+for(const data of testamentData.childrenData)
 {
     const sectionIndex = testamentData.childrenData.indexOf(data);
     const desiredScaleZ = data.creationInfo.amountOfChaptersInSection * StackElementMeasurements.SectionDesiredScaleZRatio;
@@ -140,7 +140,7 @@ try
     const testamentDesiredScaleZ = sectionsDesiredScaleZ.reduce((accumulator, currentValue) => {return (accumulator + currentValue)}) + ((testamentData.childrenData.length+1) * StackSpacing.BetweenSections);
     const deltaScaleZ = testamentDesiredScaleZ - testamentScales.z;
     
-    let firstAnimationSequence = [];
+    const firstAnimationSequence = [];
     if(isInstantaneous) setTagMask(testamentData.element, "scaleZ", testamentDesiredScaleZ);
     else firstAnimationSequence.push(animateTag(testamentData.element, "scaleZ", {
         toValue: testamentDesiredScaleZ,
@@ -204,17 +204,17 @@ return Promise.all(shout("OnTestamentSelectionAnimationComplete", {testamentData
 
 function GetElementsAboveTestament()
 {
-    let elements = [];
+    const elements = [];
     for(let i = (testament.tags.testamentIndex+1); i < bibleData.childrenData.length; i++)
     {
         const currentTestamentData = bibleData.childrenData[i];
         if(currentTestamentData.isSplitIntoSections)
         {
-            for(let currentSectionData of currentTestamentData.childrenData)
+            for(const currentSectionData of currentTestamentData.childrenData)
             {
                 if(currentSectionData.isSplitIntoBooks)
                 {
-                    for(let currentBookData of currentSectionData.childrenData.flat())
+                    for(const currentBookData of currentSectionData.childrenData.flat())
                     {
                         if(currentBookData.isActive)
                         {

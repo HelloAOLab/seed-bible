@@ -1,4 +1,4 @@
-let exportTargets = [
+const exportTargets = [
     {
         abName: "ext_calendar",
         targets: [
@@ -8,12 +8,12 @@ let exportTargets = [
     }
 ]
 
-for (let exportTarget of exportTargets) {
-    let exportTargetBots = exportTarget.targets.map(item => {
+for (const exportTarget of exportTargets) {
+    const exportTargetBots = exportTarget.targets.map(item => {
         return getBot("system", item)
     })
 
-    let myAB = await shout("aoPublishAB", {
+    const myAB = await shout("aoPublishAB", {
         ab: exportTarget.abName,
         target: exportTargetBots
     });

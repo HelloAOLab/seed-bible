@@ -1,7 +1,7 @@
 try{
     const sheetData = await thisBot.fetchSheetData()
-    let verse1 = sheetData[Math.floor(Math.random()* sheetData.length - 1)]
-    let {data,verse} = await thisBot.getVerse({verse:verse1[0]})
+    const verse1 = sheetData[Math.floor(Math.random()* sheetData.length - 1)]
+    const {data,verse} = await thisBot.getVerse({verse:verse1[0]})
     if(!verse){
         return thisBot.fetchVerseOfTheDay()
     }

@@ -1,4 +1,4 @@
-var file = that.file.data;
+const file = that.file.data;
 console.log("good", that.file)
 
 const arrayBuffer = file;

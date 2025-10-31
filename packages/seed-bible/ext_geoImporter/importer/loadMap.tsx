@@ -1,4 +1,4 @@
-var file = that.file;
+const file = that.file;
 // return
 function getRandomNumber(min, max) {
     return Math.floor(Math.random() * (max - min + 1)) + min;
@@ -23,12 +23,12 @@ const earthAnimation = async ({ x, y }) => {
             setInitialized(initialized + 1);
         }
     }
-    let outZoom = 50000000;
-    let cooridnates = [
+    const outZoom = 50000000;
+    const cooridnates = [
         [x - getRandomNumber(1, 2), y - getRandomNumber(1, 2), outZoom * 0.07]
     ];
     for (let i = 0; i < cooridnates.length; i++) {
-        let coordinateElement = create({
+        const coordinateElement = create({
             space: "tempLocal",
             [tags.targetDim]: true,
             [tags.targetDim + "X"]: cooridnates[i][0],
@@ -51,7 +51,7 @@ const earthAnimation = async ({ x, y }) => {
     }
 }
 
-var geoObj
+let geoObj
 try {
     if (typeof file === 'object') {
         geoObj = file;
@@ -60,8 +60,8 @@ try {
     }
 } catch (e) {
     os.log("geoJSONImporter - Object is not JSON serializable. Details: \n", e)
-    var enc = new TextDecoder("utf-8");
-    var parsedString = enc.decode(file);
+    const enc = new TextDecoder("utf-8");
+    const parsedString = enc.decode(file);
     geoObj = JSON.parse(parsedString);
 }
 
@@ -94,7 +94,7 @@ if (!configBot.tags.miniMapPortal) {
 
 os.log("geoObj: ", geoObj);
 
-let geo_json_elements = {
+const geo_json_elements = {
     polygon: [],
     line_string: [],
     multi_line_string: [],
@@ -109,15 +109,15 @@ if (geoObj.type == "FeatureCollection") {
     return
 }
 
-var zoomValue = 1.0;
+let zoomValue = 1.0;
 
 async function parseFeatureCollection(geoObj) {
     // Parse features
     if (geoObj.features != null) {
-        var features = geoObj.features
+        const features = geoObj.features
         if (features.length > 0) {
-            for (var i = 0; i < features.length; i++) {
-                var feature = features[i];
+            for (let i = 0; i < features.length; i++) {
+                const feature = features[i];
                 parseFeature(feature, i);
             }
         } else {
@@ -129,25 +129,25 @@ async function parseFeatureCollection(geoObj) {
 
     // Parsing Labels
     if (geoObj.metadata != null) {
-        var meta = geoObj.metadata
-        var label = meta.name
+        const meta = geoObj.metadata
+        const label = meta.name
 
         if (geoObj.bbox != null) {
-            var currElements = getBots(byTag("label", label))
+            const currElements = getBots(byTag("label", label))
             if (currElements.length > 0) {
                 destroy(currElements);
             }
-            var bbox = geoObj.bbox;
+            const bbox = geoObj.bbox;
             os.log("bbox: ", bbox);
-            var dx = angularDifference(bbox[0], bbox[2]);
-            var dy = angularDifference(bbox[1], bbox[3]);
-            var dh = Math.sqrt((dx * dx) + (dy * dy));
-            var xPos = bbox[2] + (dx * .5);
-            var yPos = bbox[3] + (dy * .5);
+            const dx = angularDifference(bbox[0], bbox[2]);
+            const dy = angularDifference(bbox[1], bbox[3]);
+            const dh = Math.sqrt((dx * dx) + (dy * dy));
+            const xPos = bbox[2] + (dx * .5);
+            const yPos = bbox[3] + (dy * .5);
 
             zoomValue = mapRange(dh, 0.0, 1.0, 0.0, 500000.0)
 
-            let elem = createLabelElement({
+            const elem = createLabelElement({
                 label: label,
                 labelSize: dh * 500.0,
                 xPos: parseFloat(xPos) + (0.000002 * dh * 500.0),
@@ -191,7 +191,7 @@ async function parseFeatureCollection(geoObj) {
                 zoom: zoomValue
             })
 
-            let backgroundElem = createLabelElement({
+            const backgroundElem = createLabelElement({
                 label: label,
                 labelSize: dh * 500.0,
                 xPos: parseFloat(xPos),
@@ -219,18 +219,18 @@ async function parseFeatureCollection(geoObj) {
 }
 
 async function parseFeature(feature, i = 0, showName = false) {
-    var type = feature.type;
+    const type = feature.type;
     if (type != null) {
         if (type == "Feature") {
             if (feature.geometry != null) {
                 if (thisBot.tags[feature.geometry.type] != null) {
                     eval("thisBot." + feature.geometry.type + "(" + JSON.stringify(feature) + ")")
                     if (showName) {
-                        var currElements = getBots(byTag("label", feature.properties.id))
+                        const currElements = getBots(byTag("label", feature.properties.id))
                         if (currElements.length > 0) {
                             destroy(currElements);
                         }
-                        let elem = createLabelElement({
+                        const elem = createLabelElement({
                             label: feature.properties.id,
                             labelSize: 50,
                             xPos: parseFloat(feature.geometry.coordinates[1]) + 0.000002 * 50,
@@ -270,7 +270,7 @@ async function parseFeature(feature, i = 0, showName = false) {
                             labelColor: "white",
                             zoom: 50000
                         })
-                        let backgroundElem = createLabelElement({
+                        const backgroundElem = createLabelElement({
                             label: feature.properties.id,
                             labelSize: 50,
                             xPos: parseFloat(feature.geometry.coordinates[1]),
@@ -333,7 +333,7 @@ function mapRangeAngleToValue(value, low1, high1, low2, high2) {
 
 async function forceFocus({ focusBot, zoom, trying = false }) {
     if (thisBot.masks.focusing && !trying) {
-        let checkInterval = setInterval(() => {
+        const checkInterval = setInterval(() => {
             if (thisBot.masks.focusing) {
                 forceFocus({ focusBot, zoom, trying: true });
             } else {
@@ -361,7 +361,7 @@ async function forceFocus({ focusBot, zoom, trying = false }) {
 }
 
 function createLabelElement({ label, labelSize, xPos, yPos, zPos, labelColor, scaleZ, labelFontAddress, zoom }) {
-    let elem = create({
+    const elem = create({
         form: "nothing",
         label,
         labelSize,

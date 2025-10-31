@@ -1,15 +1,15 @@
 const {arrangementIndex, arrangement} = that;
 let column = 0;
 let row = 0;
-let bookIndex = 0;
+const bookIndex = 0;
 const testamentLinesInfo = [];
 const sectionLinesInfo = [];
 const mapBooksInfo = [];
-let layers = []
+const layers = []
 let layer;
 
 const testaments = arrangement.testaments.toReversed()
-for(let testamentIndex in testaments)
+for(const testamentIndex in testaments)
 {
     layer = [];
     const testamentInfo = testaments[testamentIndex];
@@ -22,7 +22,7 @@ for(let testamentIndex in testaments)
         testamentIndex
     }
     const sections = testamentInfo.sections.toReversed()
-    for(let sectionIndex in sections)
+    for(const sectionIndex in sections)
     {
         const sectionInfo = sections[sectionIndex]
         const sectionLinePoints = []
@@ -36,7 +36,7 @@ for(let testamentIndex in testaments)
             sectionIndex
         }
         const books = sectionInfo.books.toReversed()
-        for(let bookIndex in books)
+        for(const bookIndex in books)
         {
             const bookInfo = books[bookIndex];
             sectionLinePoints.push({row, column});

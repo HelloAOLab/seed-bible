@@ -14,7 +14,7 @@ if(thisBot.masks.shakeIntervalId)
     thisBot.StopShakeAnimation();
 }
 
-let intervalId;
+const intervalId;
 const shakeAnimationDelayTimeInMs = 5000;
 let shakeDirection;
 

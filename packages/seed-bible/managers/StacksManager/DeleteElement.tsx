@@ -143,7 +143,7 @@ function DeleteSection(sectionData)
      * @param {SectionData} sectionData - The SectionData object to delete.
      */
 
-    let sectionDataIndex = thisBot.vars.sectionsData.indexOf(sectionData);
+    const sectionDataIndex = thisBot.vars.sectionsData.indexOf(sectionData);
     sectionData.childrenData.flat().forEach((bookData) => {DeleteBook(bookData)});
     sectionData.childrenData.splice(0, sectionData.childrenData.length);
     if(sectionData.element)
@@ -178,7 +178,7 @@ function DeleteTestament(testamentData)
      * @param {TestamentData} testamentData - The TestamentData object to delete.
      */
 
-    let testamentDataIndex = thisBot.vars.testamentsData.indexOf(testamentData);
+    const testamentDataIndex = thisBot.vars.testamentsData.indexOf(testamentData);
     testamentData.childrenData.forEach((data) => {
         if(data instanceof SectionData) DeleteSection(data);
         else if(data instanceof SectionBookData) DeleteBook(data);
@@ -211,7 +211,7 @@ function DeleteBible(bibleData)
      * @param {BibleData} bibleData - The BibleData object to delete.
      */
 
-    let bibleDataIndex = thisBot.vars.biblesData.indexOf(bibleData);
+    const bibleDataIndex = thisBot.vars.biblesData.indexOf(bibleData);
     const staticBibleElementsKeys = Object.keys(bibleData.staticBibleElements)
     bibleData.childrenData.forEach((testamentData) => {DeleteTestament(testamentData);});
     bibleData.childrenData.splice(0, bibleData.childrenData.length);

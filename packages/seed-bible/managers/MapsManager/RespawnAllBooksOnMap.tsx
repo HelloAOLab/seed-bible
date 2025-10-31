@@ -12,7 +12,7 @@ const openAllBooksButton = mapData.staticMapElements.settingsButtons.find((butto
 openAllBooksButton.links.buttonIcon.tags.formAddress = openAllBooksButton.tags.openIcon;
 openAllBooksButton.links.buttonLabel.tags.label = "Open all books"
 mapData.hasSelectAllBooksBeenCalled = false
-for(let respawnableBookStructure of respawnableBooksStructure)
+for(const respawnableBookStructure of respawnableBooksStructure)
 {
     const activeChaptersData = respawnableBookStructure.mapBookData.childrenData
     .filter((mapChapterData) => {return mapChapterData.element})
