@@ -56,7 +56,8 @@ const MenuOptions = {
       },
     },
     {
-      icon: <ApologistIcon noFilter />,
+      icon: <ApologistIcon invert={true} />,
+
       title: "Apologist AI",
       onClick: (items) => {
         ClearUserSelection();
@@ -141,9 +142,7 @@ that?.extraContext?.forEach(({ address, label, items }) => {
 //     MenuOptions.items.push({ ...optionsHolder })
 // })
 
-globalThis.VerseActionItems = MenuOptions.items;
-// globalThis.OnClosePopup = () => SetInHold({})
-// closePopupSettings();
-// setTimeout(() => {
-//   openPopupSettings(MenuOptions);
-// }, 50);
+// globalThis.ContextMenuOptions = MenuOptions
+// globalThis.OnClosePopup = () => SetInHold(null)
+openPopupSettings(MenuOptions);
+

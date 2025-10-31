@@ -356,7 +356,7 @@
 }
 
 .userProfile {
-    background: var(--spaceSelection) !important;
+    /* background: var(--spaceSelection) !important; */
     display: flex;
     justify-content: center;
     align-items: center;

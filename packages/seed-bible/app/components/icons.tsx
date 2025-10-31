@@ -56,6 +56,7 @@ export function SeedBibleIcon() {
     />
   );
 }
+
 export const ApologistIcon = (noFilter = false) => {
   return (
     <img
@@ -64,6 +65,7 @@ export const ApologistIcon = (noFilter = false) => {
     />
   );
 };
+
 const AiIcon = (props) => (
   <svg
     width={24}

@@ -16,24 +16,51 @@ import { TextFormattingToolbar } from "app.components.textSettings";
 import { DivSpliter } from "app.hooks.screenDevider";
 import { TextEditor } from "app.components.editor";
 import { MiniTextEditor } from "app.components.smallEditor";
-
-// Additions ------>
-// import { StudyNotes, StudyNotesWithPanel } from 'app.sn_components.studyNotes';
-
 import { ConfigurableFunctionCommands } from "app.components.commands";
+import { VerseToolbar } from 'app.components.verseToolbar'
 
-const COLOR_HEX = [
-  "#ffeb3b", // yellow
-  "#65CDBE", // teal
-  "#A7D63C", // yellow-green
-];
+function getUserSessionInfo(userId) {
+  try {
+    if (typeof tags === "undefined" || !tags.sessions) {
+      return { inSession: false, role: "none", config: null };
+    }
 
-const icons = {
-  "Color Wheel":
-    "https://auth-aux-aobot-prod-filesbucket-141297942820.s3.amazonaws.com/annotations/94f3938a054949bf116211db987d0e4fc80ff2fc75f72ace2f4fb9fdd891a353.svg",
-  Highlighter:
-    "https://auth-aux-aobot-prod-filesbucket-141297942820.s3.amazonaws.com/annotations/16a6bc66099d9153e9ae5685c6e0d5517509811db6107405c0273af32b253801.svg",
-};
+    const sessions = tags.sessions;
+    let role = "none";
+    let config = null;
+    let hostId = null;
+
+    // 1️⃣ Check if user is a host
+    if (sessions[userId]) {
+      role = "host";
+      config = sessions[userId].config || null;
+      hostId = userId;
+    } else {
+      // 2️⃣ Check if user is a co-host or follower in another session
+      for (const [hId, sess] of Object.entries(sessions)) {
+        if (sess.coHosts?.includes(userId)) {
+          role = "coHost";
+          config = sess.config || null;
+          hostId = hId;
+          break;
+        }
+        if (sess.followers?.includes(userId)) {
+          role = "follower";
+          config = sess.config || null;
+          hostId = hId;
+          break;
+        }
+      }
+    }
+
+    const inSession = role !== "none";
+    return { inSession, role, config, hostId };
+  } catch (err) {
+    os.log?.("getUserSessionInfo failed:", err);
+    return { inSession: false, role: "none", config: null };
+  }
+}
+
 
 function ThePage({
   tab: T,
@@ -52,11 +79,12 @@ function ThePage({
     if (!T) globalThis.CurrentPanelAvailable = panelId;
     else globalThis.CurrentPanelAvailable = null;
   }, [T]);
+
   const [tabEntered, setTabEntered] = useState(false);
   const { updateTab, tabs, setActiveTab } = useTabsContext();
   const { isDragging, setIsDragging, Element } = useMouseMove();
   const { navFunctions, setNavFunctions, scrollToVerse } = useBibleContext();
-  const [inHold, setInHold] = useState({});
+  const [inHold, setInHold] = useState();
   const [contextData, setContextData] = useState({
     verse:
       "And God said, 'Let there be light,' and there was light. And God saw that the light was good, and He separated the light from the darkness. God called the light 'day,' and the darkness He called 'night.' And there was evening, and there was morning—the first day.",
@@ -65,47 +93,24 @@ function ThePage({
     chapter: 1,
     verses: [3, 4, 5],
   });
-  // Add state for text selection and commands
+
   const [selectedText, setSelectedText] = useState("");
   const [showCommands, setShowCommands] = useState(false);
   const [lastSelectedVerse, setLastSelectedVerse] = useState(null);
   const [highlighted, setHighlighted] = useState({});
 
-  // Add state for word highlights
+  // NEW: State for clicked verses
+  const [clickedVerses, setClickedVerses] = useState([]);
+  const [clickedVersesContext, setClickedVersesContext] = useState({});
+  const [showVerseToolbar, setShowVerseToolbar] = useState(false);
+
   const [wordHighlights, setWordHighlights] = useState({});
   const [wordHighlightsTC, setWordHighlightsTC] = useState("black");
-  const [wordHighlightsBC, setWordHighlightsBC] = useState({});
-  const [customColor, setCustomColor] = useState(
-    globalThis.HIGHLIGHT_BG_COLOR || "#FFA500"
-  );
-
-  const onKeyUp = useCallback((e) => {
-    whisper(thisBot, "onKeyUp", {
-      keys: [e.key],
-    });
-  }, []);
-
-  const onKeyDown = useCallback((e) => {
-    whisper(thisBot, "onKeyDown", {
-      keys: [e.key],
-    });
-  }, []);
-
-  useEffect(() => {
-    globalThis.HIGHLIGHT_BG_COLOR = wordHighlightsBC;
-    globalThis.SetWordHighlightsBC = setWordHighlightsBC;
-    document.addEventListener("keyup", onKeyUp);
-    document.addEventListener("keydown", onKeyDown);
-
-    return () => {
-      globalThis.SetWordHighlightsBC = null;
-      document.removeEventListener("keyup", onKeyUp);
-      document.removeEventListener("keydown", onKeyDown);
-    };
-  }, [wordHighlightsBC]);
+  const [wordHighlightsBC, setWordHighlightsBC] = useState("#ffeb3b");
 
   const [bible, setBible] = useState();
   if (tab) globalThis[`SetEnableEditorOf${tab?.id}`] = setEnableEditor;
+
   async function loadData() {
     if (!tab) return;
     const bible = new BibleDataManager({
@@ -116,35 +121,35 @@ function ThePage({
     });
     setBible(bible);
 
+    console.log("bible data: ", bible);
+
     await bible.fetch();
 
-    // Additional Data ----------->
     globalThis.BookId = bible.bookId;
 
     const { data, loading, error } = bible.getState();
+    console.log(data, tab, "the data loaded");
 
     setData(data);
 
-    // setContent(data)
-    // await bible.openNext();
     globalThis.refreshScrollers && globalThis.refreshScrollers();
-    // await bible.changeTranslation('KJV');
   }
+
   useEffect(() => {
     os.addBotListener(thisBot, "remoteBookChange", (data) => {
+      console.log("remoteBookChange", data);
       globalThis.Open(data.bookId, data.chapter);
-      // setData(data)
     });
     os.addBotListener(thisBot, "remoteHighlightChange", (data) => {
-      // toggleVerseHighlight(data)
-      globalThis.ToggleVerseHighlight(data);
+      console.log("remoteHighlightChange", data);
+      globalThis.ToggleVerseHighlight(data?.verseNumbers, data?.color, data?.scroll, data?.fadeIn, true);
     });
   }, []);
 
   useEffect(() => {
     loadData();
-    // after you change something that affects height:
   }, [tab]);
+
   useEffect(() => {
     if (data) {
       hanldNavFunctions();
@@ -167,8 +172,15 @@ function ThePage({
         setDirection(null);
       }
       EmitData("book", { ...data });
-      // if (tab) {
+      // const emitter = getBot("system", "app.emitter");
+      // sendRemoteData(emitter.masks.otherRemotes, "updateSharingData", {
+      //   id: tab?.id,
+      //   bookId: data?.bookId,
+      //   book: data?.book,
+      //   chapter: data?.chapter,
+      // });
       const emitter = getBot("system", "app.emitter");
+
       sendRemoteData(emitter.masks.otherRemotes, "updateSharingData", {
         id: tab?.id,
         bookId: data?.bookId,
@@ -177,8 +189,25 @@ function ThePage({
       });
       configBot.tags.book = data?.bookId;
       configBot.tags.chapter = data?.chapter;
-      // }
     }
+  }, [data]);
+  useEffect(() => {
+    // Create the interval
+    const interval = setInterval(() => {
+      if (data) {
+
+        const emitter = getBot("system", "app.emitter");
+
+        sendRemoteData(emitter.masks.otherRemotes, "updateSharingData", {
+          id: tab?.id,
+          bookId: data?.bookId,
+          book: data?.book,
+          chapter: data?.chapter,
+        });
+      }
+    }, 1000);
+
+    return () => clearInterval(interval);
   }, [data]);
 
   useEffect(() => {
@@ -211,11 +240,9 @@ function ThePage({
       );
       setData(bible.data);
       configBot.tags.defaultChecked = true;
-      // configBot.tags.book = null;
-      // configBot.tags.chapter = null;
-      // configBot.tags.translation = null;
     }
   }
+
   useEffect(() => {
     globalThis.NavFunctions = navFunctions;
     globalThis.BibleData = data;
@@ -241,7 +268,7 @@ function ThePage({
         setShowCommands(true);
         return;
       }
-      // Use TreeWalker to collect all .sectionText spans inside selection
+
       const treeWalker = document.createTreeWalker(
         selectedRange.commonAncestorContainer,
         NodeFilter.SHOW_ELEMENT,
@@ -274,14 +301,13 @@ function ThePage({
 
       if (selectedVerses.size > 0) {
         const selectedArray = Array.from(selectedVerses).sort((a, b) => a - b);
-        // setShowCommands(false);
+        console.log("Selected verse numbers:", selectedArray);
         setSelectedText(selection.toString());
         setLastSelectedVerse(selectedArray[selectedArray.length - 1]);
         setContextData({
           verse: window.getSelection().toString(),
-          reference: `${data?.book} ${data?.chapter}:${selectedArray[0]}-${
-            selectedArray[selectedArray.length - 1]
-          }`,
+          reference: `${data?.book} ${data?.chapter}:${selectedArray[0]}-${selectedArray[selectedArray.length - 1]
+            }`,
           book: data?.book,
           chapter: data?.chapter,
           verses: selectedArray,
@@ -293,6 +319,7 @@ function ThePage({
           chapter: data?.chapter,
           highlighted: false,
         });
+
       } else {
         setShowCommands(false);
         setSelectedText("");
@@ -305,25 +332,11 @@ function ThePage({
     };
   }, [data]);
 
-  // const {
-  //     data,
-  //     footnotes,
-  //     loading,
-  //     open,
-  //     // translation,
-  //     openNextChapter,
-  //     openPrevChapter,
-  //     changeTranslation,
-  // } = useBibleData({
-  //     initialTranslation: tab?.data?.translation,
-  //     initialBookId: tab?.data?.bookId,
-  //     initialChapter: tab?.data?.chapter,
-  //     tab: T,
-  // });
   function handleMouseEnter() {
     if (!isDragging) return;
     setTabEntered(true);
   }
+
   function handleMouseLeave() {
     if (!isDragging) return;
     setTabEntered(false);
@@ -331,11 +344,13 @@ function ThePage({
 
   function handleMouseUp() {
     if (!isDragging) return;
+    console.log(Element.data, "El.data");
     if (Element?.data?.data?.pkgApp) {
       const handoff = Element?.data?.data;
       const App = handoff.app;
       const id = uuid();
       ReplaceApplication(panelId, { id, App, to: "panel", minWidth: "30rem" });
+      console.log("replaced");
     } else {
       Update(Element.data);
       if (globalThis.GetBooksDataForMenu)
@@ -347,11 +362,11 @@ function ThePage({
     setIsDragging(false);
     setTabEntered(false);
   }
+
   async function openNextChapter() {
     await bible.openNext();
     setData(bible.data);
 
-    // Additions ------>
     globalThis.GlobalChapter = bible.data.chapter - 1;
 
     if (globalThis.studyNotesPresent) {
@@ -366,11 +381,11 @@ function ThePage({
       });
     }
   }
+
   async function openPrevChapter() {
     await bible.openPrevious();
     setData(bible.data);
 
-    // Additions ------>
     globalThis.GlobalChapter = bible.data.chapter - 1;
 
     if (globalThis.studyNotesPresent) {
@@ -385,6 +400,7 @@ function ThePage({
       });
     }
   }
+
   async function open(bookId, chapter, translation = null) {
     try {
       await bible.open(bookId, chapter, (translation = null));
@@ -403,49 +419,26 @@ function ThePage({
         },
       });
       setTab(tab);
-      //   await bible.open(bookId, chapter, (translation = null));
       setData(bible.data);
     }
+
   }
+
   async function changeTranslation(id, bookData, forcedBaseUrl) {
     await bible.changeTranslation(id, bookData, forcedBaseUrl);
     setData(bible.data);
   }
 
-  // Add word highlighting functions
   const highlightWords = useCallback(
     (config) => {
-      /*
-        UPDATED CONFIG BEHAVIOR
-        -----------------------
-        - If any of book / chapter / verse is null, it will default to the CURRENT data in view and expand as follows:
-            book: null   -> use current data.book
-            chapter: null-> use current data.chapter
-            verse: null  -> apply to ALL verses in the current data (current chapter's verses)
-        - verse may be a single number or an array of numbers. If omitted or null, all verses are targeted.
-
-        Example:
-        HighlightWords({
-            book: null,
-            chapter: null,
-            verse: null,
-            words: ["light", "God", "LORD"],
-            color: "#000",
-            backgroundColor: globalThis.HIGHLIGHT_BG_COLOR || "#ffeb3b",
-            onClick: (word, verseNumber) => console.log(word, verseNumber)
-        })
-        */
       if (!tab?.id) return;
 
-      // Derive targets from current data when null
       const targetBook = config.book == null ? data?.book : config.book;
       const targetChapter =
         config.chapter == null ? data?.chapter : config.chapter;
 
-      // Build list of verse numbers to apply to
       let targetVerses = [];
       if (config.verse == null) {
-        // Apply to all verses visible in current data
         const content = data?.content || [];
         content.forEach(({ verses }) => {
           verses.forEach((v) => {
@@ -459,7 +452,6 @@ function ThePage({
         targetVerses = [config.verse];
       }
 
-      // Guard: if we still have no verses, do nothing
       if (!targetVerses.length) return;
 
       const wordsToAdd = (config.words || []).filter(Boolean);
@@ -468,12 +460,10 @@ function ThePage({
       setWordHighlights((prev) => {
         const newHighlights = { ...prev };
 
-        // Ensure container for this tab in global store
         if (!globalThis.wordHighlights) globalThis.wordHighlights = {};
         if (!globalThis.wordHighlights[tab?.id])
           globalThis.wordHighlights[tab?.id] = {};
 
-        // Apply highlights to each targeted verse
         targetVerses.forEach((vn) => {
           const key = `${targetBook}-${targetChapter}-${vn}`;
           if (!newHighlights[key]) newHighlights[key] = {};
@@ -488,13 +478,12 @@ function ThePage({
               createAttributes: config?.createAttributes
                 ? config.createAttributes
                 : () => {
-                    return {};
-                  },
+                  return {};
+                },
             };
           });
         });
 
-        // Persist per-tab
         globalThis.wordHighlights[tab?.id] = newHighlights;
         return newHighlights;
       });
@@ -504,9 +493,6 @@ function ThePage({
 
   const removeWordHighlight = useCallback(
     (config) => {
-      /*
-        Original behavior preserved.
-        */
       if (!tab?.id) return;
 
       setWordHighlights((prev) => {
@@ -521,16 +507,13 @@ function ThePage({
             delete newHighlights[key][wordKey];
           });
 
-          // Remove verse key if no words left
           if (Object.keys(newHighlights[key]).length === 0) {
             delete newHighlights[key];
           }
         } else {
-          // Remove all words for this verse
           delete newHighlights[key];
         }
 
-        // Update global storage
         if (globalThis.wordHighlights) {
           globalThis.wordHighlights[tab?.id] = newHighlights;
         }
@@ -547,30 +530,28 @@ function ThePage({
       delete globalThis.wordHighlights[tab?.id];
     }
   }, [data]);
+
   useEffect(() => {
-    // Add global word highlighting functions for developers
     globalThis.HighlightWords = highlightWords;
     globalThis.RemoveWordHighlight = removeWordHighlight;
     globalThis.ClearAllWordHighlights = clearAllWordHighlights;
     shout("onBookChanged", { ...data, tabId: tab?.id });
-    // setHighlighted({})
     clearAllVerseHighlights();
     os.log("clearAllVerseHighlights", clearAllVerseHighlights);
   }, [data]);
+
   function hanldNavFunctions() {
-    //  bible.openNext()
-    // console.log(bible, 'nextChapterData')
     if (tab && tab?.id) setActiveTab(tab?.id);
     setNavFunctions({
       openNextChapter,
       openPrevChapter,
       open,
       changeTranslation: bible?.changeTranslation || undefined,
-      setPanalApp: () => {},
+      setPanalApp: () => { },
     });
     globalThis.Open = open;
     globalThis.ChangeTranslation = changeTranslation;
-    globalThis.SetPanalApp = () => {};
+    globalThis.SetPanalApp = () => { };
     globalThis.ToggleVerseHighlight = toggleVerseHighlight;
     globalThis.UnHighlightVerse = unHighlightVerse;
     globalThis.HighlightVerse = highlightVerse;
@@ -579,18 +560,10 @@ function ThePage({
     globalThis.SetInHold = setInHold;
     globalThis.SetShowCommands = setShowCommands;
 
-    // Add global word highlighting functions for developers
     globalThis.HighlightWords = highlightWords;
     globalThis.RemoveWordHighlight = removeWordHighlight;
     globalThis.ClearAllWordHighlights = clearAllWordHighlights;
 
-    //     os.log(tab)
-    //     if (globalThis.GetBooksDataForMenu) {
-    //         os.log(`https://bible.helloao.org/api/${data?.translation}/books.json`)
-    //         globalThis.GetBooksDataForMenu(`https://bible.helloao.org/api/${data?.translation}/books.json`, data?.translation)
-    //     }
-
-    // Additions ------>
     globalThis.GlobalChapter = (data?.chapter || 1) - 1;
 
     if (globalThis.studyNotesPresent) {
@@ -605,13 +578,11 @@ function ThePage({
       });
     }
   }
+
   function Update(tab) {
-    // return
     os.log("Update-data", tab);
     setTab(tab);
     hanldNavFunctions();
-    // globalThis.PanelTabsMap[id]
-    // open(tab.data.bookId, tab.data.chapter, tab.data.translation)
   }
   globalThis.UpdateTab = Update;
 
@@ -620,9 +591,8 @@ function ThePage({
   const [holded, setHolded] = useState({});
 
   useEffect(() => {
-    setInHold({});
+    setInHold(null);
     scrollToVerse(1);
-    globalThis.LastSelectVerse = null;
     if (globalThis.SetCurrentBook) {
       globalThis.SetCurrentBook(data);
       globalThis.CHAPTER_DATA = {
@@ -642,7 +612,7 @@ function ThePage({
       globalThis.SetHolded = null;
     };
   }, [blinker, selected, holded]);
-  // const refs = {}
+
   const refs = useMemo(() => {
     const refs = {};
     if (data && data.content)
@@ -677,7 +647,6 @@ function ThePage({
     };
   }, [onScrollToRef]);
 
-  // Load existing word highlights for this tab
   useEffect(() => {
     if (!globalThis.wordHighlights) {
       globalThis.wordHighlights = {};
@@ -689,9 +658,7 @@ function ThePage({
 
   const [highlightOnce, setHighlightOnce] = useState(false);
 
-  // Add this useEffect after the existing globalThis assignments:
   useEffect(() => {
-    // Initialize tab highlights if not exists
     if (!globalThis.tabHighlights) {
       globalThis.tabHighlights = {};
     }
@@ -699,7 +666,6 @@ function ThePage({
       globalThis.tabHighlights[tab?.id] = {};
     }
 
-    // Load existing highlights for this tab
     if (tab?.id && globalThis.tabHighlights[tab?.id]) {
       setHighlighted(globalThis.tabHighlights[tab?.id]);
     }
@@ -710,75 +676,85 @@ function ThePage({
       globalThis.SetHighlighted = null;
     };
   }, [tab?.id, highlighted]);
-  // Inside ThePage (near other callbacks)
+
   const clearAllVerseHighlights = useCallback(() => {
-    // reset local state
     setHighlighted({});
     setCommandHighlight([]);
 
-    // reset per-tab persisted store
     if (!globalThis.tabHighlights) globalThis.tabHighlights = {};
     if (tab?.id) globalThis.tabHighlights[tab.id] = {};
 
-    // (optional) notify other parts of the app / remotes
     shout("onAllVerseHighlightsCleared", {
       tabId: tab?.id,
       book: data?.book,
       chapter: data?.chapter,
     });
-    // EmitData?.('highlight-clear', { tabId: tab?.id }); // if you use your emitter
   }, [tab?.id, data?.book, data?.chapter]);
 
-  // Add these helper functions in ThePage component:
   const toggleVerseHighlight = useCallback(
-    (verseNumbers) => {
+    (verseNumbers, color, scroll, fadeIn, skipIt) => {
+      const { inSession, role, config } = getUserSessionInfo(configBot.id)
+      if (inSession && role === 'follower' && config.onlyHostHighlight && !skipIt)
+        return
       if (!tab?.id) return;
-      EmitData("highlight", verseNumbers);
-      // console.log(data, 'remoteData')
-      const verseId = `v-${
-        typeof verseNumbers === "object"
-          ? verseNumbers[verseNumbers.length - 1]
-          : verseNumbers
-      }`;
-      // console.log(verseId, 'verseId', document.getElementById(verseId))
-      document.getElementById(verseId).scrollIntoView({
-        behavior: "smooth", // enables smooth animation
-        block: "center", // positions the element in the center of the screen
-        inline: "nearest",
-      });
-      const numbers = Array.isArray(verseNumbers)
-        ? verseNumbers
-        : [verseNumbers];
+      EmitData("highlight", { verseNumbers, color });
+
+      const verseId = `v-${Array.isArray(verseNumbers)
+        ? verseNumbers[verseNumbers.length - 1]
+        : verseNumbers}`;
+
+      if (scroll)
+        document.getElementById(verseId)?.scrollIntoView({
+          behavior: "smooth",
+          block: "center",
+          inline: "nearest",
+        });
+
+      const numbers = Array.isArray(verseNumbers) ? verseNumbers : [verseNumbers];
 
       setHighlighted((prev) => {
         const newHighlighted = { ...prev };
-
-        // Check if all verses in this group are already highlighted together
         const allHighlighted = numbers.every((vn) => newHighlighted[vn]);
-        const groupId = Date.now(); // Unique group ID for new highlights
+        const groupId = Date.now();
 
         if (allHighlighted) {
-          // All are highlighted → unhighlight them as a group
-          numbers.forEach((vn) => {
-            delete newHighlighted[vn];
-          });
+          numbers.forEach((vn) => delete newHighlighted[vn]);
         } else {
-          // Highlight them together with same groupId
           numbers.forEach((vn) => {
             newHighlighted[vn] = {
               timestamp: groupId,
               book: data?.book,
               chapter: data?.chapter,
               group: groupId,
+              color: color || wordHighlightsBC,
             };
           });
         }
 
-        // Update global storage
-        if (!globalThis.tabHighlights) {
-          globalThis.tabHighlights = {};
-        }
+        if (!globalThis.tabHighlights) globalThis.tabHighlights = {};
         globalThis.tabHighlights[tab?.id] = newHighlighted;
+
+        if (fadeIn || tags?.sessions[configBot.id]?.config.highlightDuration) {
+          let duration = 0;
+          if (tags?.sessions[configBot.id]?.config.highlightDuration)
+            fadeIn = tags?.sessions[configBot.id]?.config.highlightDuration
+          if (fadeIn === 4) {
+            duration = 0; // Never remove highlight
+          } else if (typeof fadeIn === "number") {
+            duration = fadeIn * 1000; // Convert seconds to ms
+          }
+
+          if (duration > 0) {
+            setTimeout(() => {
+              setHighlighted((prevFade) => {
+                const faded = { ...prevFade };
+                numbers.forEach((vn) => delete faded[vn]);
+                globalThis.tabHighlights[tab?.id] = faded;
+                return faded;
+              });
+            }, duration);
+          }
+        }
 
         return newHighlighted;
       });
@@ -786,22 +762,23 @@ function ThePage({
     [tab?.id, data, data?.book, data?.chapter]
   );
 
+
   const highlightVerse = useCallback(
-    (verseNumbers) => {
+    (verseNumbers, color) => {
       if (!tab?.id) return;
-      EmitData("highlight", verseNumbers);
-      // console.log(data, 'remoteData')
-      const verseId = `v-${
-        typeof verseNumbers === "object"
-          ? verseNumbers[verseNumbers.length - 1]
-          : verseNumbers
-      }`;
-      // console.log(verseId, 'verseId', document.getElementById(verseId))
+      EmitData("highlight", { verseNumbers, color });
+
+      const verseId = `v-${typeof verseNumbers === "object"
+        ? verseNumbers[verseNumbers.length - 1]
+        : verseNumbers
+        }`;
+
       document.getElementById(verseId).scrollIntoView({
-        behavior: "smooth", // enables smooth animation
-        block: "center", // positions the element in the center of the screen
+        behavior: "smooth",
+        block: "center",
         inline: "nearest",
       });
+
       const numbers = Array.isArray(verseNumbers)
         ? verseNumbers
         : [verseNumbers];
@@ -809,9 +786,8 @@ function ThePage({
       setHighlighted((prev) => {
         const newHighlighted = { ...prev };
 
-        // Check if all verses in this group are already highlighted together
         const allHighlighted = numbers.every((vn) => newHighlighted[vn]);
-        const groupId = Date.now(); // Unique group ID for new highlights
+        const groupId = Date.now();
 
         numbers.forEach((vn) => {
           newHighlighted[vn] = {
@@ -819,10 +795,10 @@ function ThePage({
             book: data?.book,
             chapter: data?.chapter,
             group: groupId,
+            color,
           };
         });
 
-        // Update global storage
         if (!globalThis.tabHighlights) {
           globalThis.tabHighlights = {};
         }
@@ -833,22 +809,23 @@ function ThePage({
     },
     [tab?.id, data, data?.book, data?.chapter]
   );
+
   const unHighlightVerse = useCallback(
     (verseNumbers) => {
       if (!tab?.id) return;
-      EmitData("highlight", verseNumbers);
-      // console.log(data, 'remoteData')
-      const verseId = `v-${
-        typeof verseNumbers === "object"
-          ? verseNumbers[verseNumbers.length - 1]
-          : verseNumbers
-      }`;
-      // console.log(verseId, 'verseId', document.getElementById(verseId))
+      EmitData("highlight", { verseNumbers });
+
+      const verseId = `v-${typeof verseNumbers === "object"
+        ? verseNumbers[verseNumbers.length - 1]
+        : verseNumbers
+        }`;
+
       document.getElementById(verseId).scrollIntoView({
-        behavior: "smooth", // enables smooth animation
-        block: "center", // positions the element in the center of the screen
+        behavior: "smooth",
+        block: "center",
         inline: "nearest",
       });
+
       const numbers = Array.isArray(verseNumbers)
         ? verseNumbers
         : [verseNumbers];
@@ -856,17 +833,14 @@ function ThePage({
       setHighlighted((prev) => {
         const newHighlighted = { ...prev };
 
-        // Check if all verses in this group are already highlighted together
         const allHighlighted = numbers.every((vn) => newHighlighted[vn]);
 
         if (allHighlighted) {
-          // All are highlighted → unhighlight them as a group
           numbers.forEach((vn) => {
             delete newHighlighted[vn];
           });
         }
 
-        // Update global storage
         if (!globalThis.tabHighlights) {
           globalThis.tabHighlights = {};
         }
@@ -877,93 +851,147 @@ function ThePage({
     },
     [tab?.id, data, data?.book, data?.chapter]
   );
+
   useEffect(() => {
     if (showCommands) {
-      const values = Object.values(inHold);
-      let allVerses = [];
-      values.forEach((verse) => {
-        allVerses = [...allVerses, ...verse.verses];
-      });
-      if (allVerses.length) {
-        // setCommandHighlight(allVerses);
-        // setInHold(
-        //   allVerses.reduce((prev, curr) => ({ ...prev, [curr]: true }), {})
-        // );
-      }
+      setCommandHighlight(contextData.verses);
     } else {
-      setInHold({});
       setCommandHighlight([]);
     }
   }, [showCommands]);
+
   function clearUserSelection() {
     if (window.getSelection) {
       const selection = window.getSelection();
       if (selection.empty) {
-        // Chrome
         selection.empty();
       } else if (selection.removeAllRanges) {
-        // Firefox / Edge
         selection.removeAllRanges();
       }
     } else if (document.selection) {
-      // IE
       document.selection.empty();
     }
   }
   globalThis.ClearUserSelection = clearUserSelection;
 
-  const verseText = useMemo(() => {
-    const vText = {};
-    if (data) {
-      data.content.forEach((ele) => {
-        const verses = ele.verses;
-        verses.forEach((v) => {
-          if (v.verseNumber) {
-            vText[v.verseNumber] = v.text;
-          }
-        });
-      });
-    }
-    return vText;
-  }, [data]);
-
-  const isVerseSelected = useMemo(() => {
-    const isVerseSelected = Object.values(inHold).length > 0;
-    if (globalThis.SetExtraHeight) {
-      if (isVerseSelected) {
-        globalThis.SetExtraHeight(60);
+  // NEW: Handle verse clicks
+  const handleVerseClick = useCallback((verseNumber) => {
+    setClickedVerses(prev => {
+      const isAlreadyClicked = prev.includes(verseNumber);
+      if (isAlreadyClicked) {
+        // Remove verse from clicked list
+        const newClicked = prev.filter(v => v !== verseNumber);
+        if (newClicked.length === 0) {
+          setShowVerseToolbar(false);
+          setClickedVersesContext({});
+        } else {
+          // Update context with remaining clicked verses
+          const remainingVerseObjects = newClicked.map(v => {
+            const verseObj = data?.content?.flatMap(c => c.verses).find(vv => vv.verseNumber === v);
+            return {
+              verseNumber: v,
+              text: verseObj?.text || "",
+              book: data?.book,
+              chapter: data?.chapter,
+              highlighted: !!highlighted?.[v],
+            };
+          });
+          setClickedVersesContext({
+            verses: newClicked,
+            book: data?.book,
+            chapter: data?.chapter,
+            reference: `${data?.book} ${data?.chapter}:${newClicked.join(",")}`,
+            text: remainingVerseObjects.map(o => o.text).join(" "),
+          });
+        }
+        return newClicked;
       } else {
-        globalThis.SetExtraHeight(0);
+        // Add verse to clicked list
+        const newClicked = [...prev, verseNumber];
+        const verseObj = data?.content?.flatMap(c => c.verses).find(v => v.verseNumber === verseNumber);
+
+        // Build context data like onVeresRightClick
+        const context = {
+          verseNumber: newClicked,
+          text: newClicked.map(v => {
+            const vo = data?.content?.flatMap(c => c.verses).find(vv => vv.verseNumber === v);
+            return vo?.text || "";
+          }).join(" "),
+          book: data?.book,
+          chapter: data?.chapter,
+          highlighted: !!highlighted?.[verseNumber],
+        };
+
+        setClickedVersesContext(context);
+        setShowVerseToolbar(true);
+        return newClicked;
       }
-    }
-    return isVerseSelected;
-  }, [inHold]);
+    });
+  }, [data, highlighted]);
+
+
+  // NEW: Handle color selection from toolbar
+  const handleColorSelect = useCallback((color) => {
+    if (clickedVerses.length === 0) return;
+    setWordHighlightsBC(color)
+    // Apply the selected color to all clicked verses
+    clickedVerses.forEach(verseNum => {
+      toggleVerseHighlight(verseNum, color);
+    });
+
+    // Clear clicked verses and hide toolbar
+    setClickedVerses([]);
+    setShowVerseToolbar(false);
+  }, [clickedVerses, toggleVerseHighlight]);
+
+  // NEW: Close toolbar when clicking outside
+  useEffect(() => {
+    const handleClickOutside = (e) => {
+      if (showVerseToolbar && !e.target.closest('.verse-toolbar') && !e.target.closest('.sectionText') && !e.target.closest('.sectionCover') && !e.target.closest('.sectionTitle')) {
+        setClickedVerses([]);
+        setShowVerseToolbar(false);
+      }
+    };
+
+    document.addEventListener('mousedown', handleClickOutside);
+    return () => document.removeEventListener('mousedown', handleClickOutside);
+  }, [showVerseToolbar]);
 
   return (
     <div
-      className={`pageContainer ${isVerseSelected ? "no-select" : ""}`}
+      className="pageContainer"
       onMouseLeave={handleMouseLeave}
       onMouseEnter={handleMouseEnter}
       onMouseUp={handleMouseUp}
-      onClick={hanldNavFunctions}>
+      onClick={hanldNavFunctions}
+    >
       <style>
         {`
         .pageContainer{
           direction:${direction};
+          position: relative;
         }
-
+        .toolbar-1 {
+          display:${showVerseToolbar ? 'none !important' : ''}
+        }
         .bookTitle,
         .sectionTitle {
           display:${direction ? "ruby" : null}
         }
 
-        `}
+        .verse-clicked {
+          border-bottom: 2px dashed #4459F3 !important;
+          padding: 2px 4px !important;
+          border-radius: 3px !important;
+        }
+         `}
       </style>
       {data && tab && !tabEntered ? (
         <>
           <div
             style={{ "pointer-events": isDragging ? "none" : null }}
-            className="bookTitle">{`${data?.book} ${data?.chapter}`}</div>
+            className="bookTitle"
+          >{`${data?.book} ${data?.chapter}`}</div>
           {data &&
             data.content.map((e) => {
               return (
@@ -972,7 +1000,6 @@ function ThePage({
                     <Section
                       {...e}
                       inHold={inHold}
-                      verseText={verseText}
                       setInHold={setInHold}
                       book={data.book}
                       chapter={data.chapter}
@@ -995,6 +1022,8 @@ function ThePage({
                       commandHighlight={commandHighlight}
                       wordHighlightsTC={wordHighlightsTC}
                       wordHighlightsBC={wordHighlightsBC}
+                      clickedVerses={clickedVerses}
+                      handleVerseClick={handleVerseClick}
                     />
                   </div>
                 </>
@@ -1007,7 +1036,8 @@ function ThePage({
               width: "80%",
               height: "1px",
               background: "gray",
-            }}></div>
+            }}
+          ></div>
           <div
             style={{
               width: "50%",
@@ -1015,20 +1045,28 @@ function ThePage({
               "align-items": "center",
               "justify-content": "center",
               position: "relative",
-            }}>
+            }}
+          >
             <PageToolbar />
           </div>
-          <ColorPickerBar
-            data={data}
-            contextData={contextData}
-            setInHold={setInHold}
-            verseHold={inHold}
-            wordHighlightsBC={wordHighlightsBC}
-            setWordHighlightsBC={setWordHighlightsBC}
-            customColor={customColor}
-            setCustomColor={setCustomColor}
-          />
           <div style={{ height: "160px" }}></div>
+
+          {showVerseToolbar && (
+            <VerseToolbar
+              clickedVerses={clickedVerses}
+              toggleVerseHighlight={toggleVerseHighlight}
+              book={data?.book}
+              setClickedVerses={setClickedVerses}
+              chapter={data?.chapter}
+              highlighted={highlighted}
+              clickedVersesContext={clickedVersesContext}
+              onColorSelect={handleColorSelect}
+              onClose={() => {
+                setClickedVerses([]);
+                setShowVerseToolbar(false);
+              }}
+            />
+          )}
         </>
       ) : (
         <>
@@ -1041,9 +1079,9 @@ function ThePage({
               justifyContent: "center",
               backgroundColor: "#f8f9fa",
             }}
-            className={`pageContainer ${
-              tabEntered ? "tabEntered" : "tabDrop"
-            } ${highlightOnce ? "tabHighlightBg" : ""}`}>
+            className={`pageContainer ${tabEntered ? "tabEntered" : "tabDrop"
+              } ${highlightOnce ? "tabHighlightBg" : ""}`}
+          >
             <div
               style={{
                 pointerEvents: isDragging ? "none" : undefined,
@@ -1052,12 +1090,11 @@ function ThePage({
                 alignItems: "center",
                 textAlign: "center",
                 padding: "40px",
-                // backgroundColor: 'white',
                 borderRadius: "12px",
-                // boxShadow: '0 4px 12px rgba(0, 0, 0, 0.1)',
                 maxWidth: "400px",
                 width: "90%",
-              }}>
+              }}
+            >
               <div
                 onClick={() => {
                   setOpenSidebar((prev) => !prev);
@@ -1067,7 +1104,8 @@ function ThePage({
                   fontSize: "24px",
                   marginBottom: "20px",
                   color: "#333",
-                }}>
+                }}
+              >
                 <img
                   style={{ width: "50px" }}
                   src="https://res.cloudinary.com/dfbtwwa8p/image/upload/v1755365776/717a8527988cca7e0bdc9449ec68581a8400b977_vqc7mx.png"
@@ -1081,7 +1119,8 @@ function ThePage({
                   background: "#e0e0e0",
                   marginTop: "40px",
                   margin: "auto",
-                }}></div>
+                }}
+              ></div>
               <div
                 style={{
                   width: "100%",
@@ -1090,19 +1129,10 @@ function ThePage({
                   alignItems: "center",
                   justifyContent: "center",
                   position: "relative",
-                }}>
+                }}
+              >
                 <PageToolbar path="showInStarterToolbar" />
               </div>
-              <ColorPickerBar
-                setInHold={setInHold}
-                contextData={contextData}
-                verseHold={inHold}
-                data={data}
-                wordHighlightsBC={wordHighlightsBC}
-                setWordHighlightsBC={setWordHighlightsBC}
-                customColor={customColor}
-                setCustomColor={setCustomColor}
-              />
             </div>
           </div>
         </>
@@ -1110,212 +1140,6 @@ function ThePage({
     </div>
   );
 }
-
-function formatVerseRanges(obj) {
-  // Step 1: Get all keys and convert them to sorted numbers
-  const keys = Object.keys(obj)
-    .map(Number)
-    .sort((a, b) => a - b);
-
-  // Step 2: Build the compressed ranges
-  const ranges = [];
-  let start = keys[0];
-  let end = keys[0];
-
-  for (let i = 1; i <= keys.length; i++) {
-    if (keys[i] === end + 1) {
-      // still in a continuous range
-      end = keys[i];
-    } else {
-      // range breaks, push current range
-      ranges.push(start === end ? `${start}` : `${start}-${end}`);
-      start = keys[i];
-      end = keys[i];
-    }
-  }
-
-  // Step 3: Join ranges with commas
-  return ranges.join(", ");
-}
-
-const ColorPickerBar = ({
-  wordHighlightsBC,
-  setWordHighlightsBC,
-  customColor,
-  setCustomColor,
-  verseHold,
-  data,
-  contextData,
-  setInHold,
-}) => {
-  if (!Object.keys(verseHold).length) return null;
-
-  const isAnyVerseHighlighted = Object.keys(verseHold).some(
-    (ele) => !!wordHighlightsBC[ele]
-  );
-
-  return (
-    <div
-      style={{
-        width: "max-content",
-        padding: "8px 16px",
-        display: "flex",
-        left: "50%",
-        bottom: "86px",
-        zIndex: "99",
-        transform: "translateX(-50%)",
-        gap: "0.5rem",
-        position: "fixed",
-        boxShadow: "0px 1px 6px 0px #00000026",
-        backgroundColor: "white",
-        borderRadius: "5rem",
-        alignItems: "center",
-      }}>
-      <p
-        style={{
-          fontWeight: "600",
-          fontSize: "12px",
-        }}>
-        {data?.bookId} {data?.chapter}:{formatVerseRanges(verseHold)}
-      </p>
-      <Pipe />
-      <div
-        style={{
-          display: "flex",
-          alignItems: "center",
-          backgroundColor: "#F0F1F1",
-          borderRadius: "4px",
-          padding: "8px",
-          gap: "0.5rem",
-        }}>
-        {COLOR_HEX.map((ele: string) => (
-          <div
-            key={ele}
-            onClick={() => {
-              setWordHighlightsBC((prev) => {
-                {
-                  const old = { ...prev };
-                  Object.keys(verseHold).forEach((verse) => {
-                    if (!old[verse]) {
-                      globalThis.ToggleVerseHighlight(verse);
-                    }
-                    old[verse] = ele;
-                  });
-                  return old;
-                }
-              });
-              setInHold({});
-            }}
-            style={{
-              backgroundColor: ele,
-              borderRadius: "50%",
-              width: "24px",
-              height: "24px",
-              cursor: "pointer",
-              display: "grid",
-              placeItems: "center",
-            }}
-          />
-        ))}
-        <div
-          onClick={() => {
-            setWordHighlightsBC((prev) => {
-              {
-                const old = { ...prev };
-                Object.keys(verseHold).forEach((verse) => {
-                  if (!old[verse]) {
-                    globalThis.ToggleVerseHighlight(verse);
-                  }
-                  old[verse] = customColor;
-                });
-                return old;
-              }
-            });
-            setInHold({});
-          }}
-          style={{
-            backgroundColor: customColor,
-            borderRadius: "50%",
-            width: "24px",
-            height: "24px",
-            cursor: "pointer",
-            display: "grid",
-            placeItems: "center",
-          }}
-        />
-        <div
-          style={{
-            width: "24px",
-            height: "24px",
-            cursor: "pointer",
-            borderRadius: "50%",
-            position: "relative",
-            display: "grid",
-            placeItems: "center",
-            backgroundImage: `url(${icons["Color Wheel"]})`,
-          }}>
-          <input
-            type="color"
-            value={customColor}
-            onChange={(e) => {
-              setCustomColor(e.target.value);
-            }}
-            style={{
-              position: "absolute",
-              top: "0",
-              left: "0",
-              width: "100%",
-              height: "100%",
-              opacity: "0",
-              cursor: "pointer",
-            }}
-          />
-        </div>
-      </div>
-      <Pipe />
-      <div style={{ display: "flex", gap: "0.5rem", alignItems: "center" }}>
-        {(globalThis.VerseActionItems || [])
-          .filter((ele) =>
-            isAnyVerseHighlighted ? true : ele.title !== "Unhighlight verse"
-          )
-          .map((ele) =>
-            ele.icon ? (
-              <div
-                style={{
-                  cursor: "pointer",
-                  backgroundColor: "#F0F1F1",
-                  width: "42px",
-                  height: "42px",
-                  borderRadius: "50%",
-                  display: "grid",
-                  placeItems: "center",
-                }}
-                onClick={() => {
-                  ele.onClick(Object.values(verseHold));
-                }}>
-                {ele.icon}
-              </div>
-            ) : null
-          )}
-      </div>
-    </div>
-  );
-};
-
-const Pipe = () => (
-  <div
-    style={{
-      backgroundColor: "grey",
-      height: "100%",
-      width: "1px",
-      margin: "0 0.5rem",
-      height: "1rem",
-    }}
-  />
-);
-
-const range = (a, b) =>
-  Array.from({ length: Math.abs(b - a) + 1 }, (_, i) => Math.min(a, b) + i);
 
 function PageToolbar({ path = "showInPageToolbar" }) {
   const { tools } = useBibleContext();
@@ -1329,7 +1153,8 @@ function PageToolbar({ path = "showInPageToolbar" }) {
         <div
           onClick={tool.onClick}
           className="tool-preview-page"
-          key={tool.label}>
+          key={tool.label}
+        >
           {tool.isImg ? (
             <img
               src={tool.icon}
@@ -1345,30 +1170,21 @@ function PageToolbar({ path = "showInPageToolbar" }) {
   );
 }
 
-// Additions ------>
-/**
- * Split text into chunks of words vs. exact section-keys,
- * matching any multi-word subphrase (≥2 words) *and* any single-word keys.
- */
 function splitBySectionKeys(text, verseSectionMap) {
   const stripRe = /[.,'"""'']/g;
 
-  // 1) Build a map of all subphrases (length ≥2) and single-word keys → parent key
   const subphraseMap = {};
   let maxLen = 1;
 
   Object.keys(verseSectionMap).forEach((fullKey) => {
-    // normalize the key
     const normalized = fullKey.replace(stripRe, "").trim();
     const wordsKey = normalized.split(/\s+/);
     const n = wordsKey.length;
     maxLen = Math.max(maxLen, n);
 
     if (n === 1) {
-      // single-word key
       subphraseMap[normalized] = fullKey;
     } else {
-      // all contiguous subphrases of length ≥2
       for (let L = n; L >= 2; L--) {
         for (let start = 0; start + L <= n; start++) {
           const phrase = wordsKey.slice(start, start + L).join(" ");
@@ -1378,18 +1194,15 @@ function splitBySectionKeys(text, verseSectionMap) {
     }
   });
 
-  // 2) Tokenize & normalize your text
   const words = text.split(/\s+/);
   const norm = words.map((w) => w.replace(stripRe, ""));
 
-  // 3) Scan through words greedily
   const chunks = [];
   let i = 0;
   while (i < words.length) {
     let matchLen = 0,
       matchKey = null;
 
-    // try lengths from maxLen down to 1
     const limit = Math.min(maxLen, words.length - i);
     for (let L = limit; L >= 1; L--) {
       const slice = norm.slice(i, i + L).join(" ");
@@ -1401,7 +1214,6 @@ function splitBySectionKeys(text, verseSectionMap) {
     }
 
     if (matchLen > 0) {
-      // emit matched chunk
       chunks.push({
         text: words.slice(i, i + matchLen).join(" "),
         isSection: true,
@@ -1409,7 +1221,6 @@ function splitBySectionKeys(text, verseSectionMap) {
       });
       i += matchLen;
     } else {
-      // no match → emit/merge single plain word
       const w = words[i++];
       if (chunks.length && !chunks[chunks.length - 1].isSection) {
         chunks[chunks.length - 1].text += " " + w;
@@ -1422,7 +1233,6 @@ function splitBySectionKeys(text, verseSectionMap) {
   return chunks;
 }
 
-// Helper function to split text by word highlights
 function splitByWordHighlights(
   text,
   wordHighlights,
@@ -1443,13 +1253,11 @@ function splitByWordHighlights(
     return [{ text, isHighlighted: false }];
   }
 
-  // Create regex pattern for all highlighted words
   const highlightWords = Object.keys(highlights);
   if (highlightWords.length === 0) {
     return [{ text, isHighlighted: false }];
   }
 
-  // Sort by length (longest first) to handle overlapping words correctly
   highlightWords.sort((a, b) => b.length - a.length);
 
   const pattern = new RegExp(
@@ -1464,7 +1272,6 @@ function splitByWordHighlights(
   let match;
 
   while ((match = pattern.exec(text)) !== null) {
-    // Add text before the match
     if (match.index > lastIndex) {
       parts.push({
         text: text.slice(lastIndex, match.index),
@@ -1472,7 +1279,6 @@ function splitByWordHighlights(
       });
     }
 
-    // Add the highlighted word
     const matchedWord = match[1].toLowerCase();
     parts.push({
       text: match[1],
@@ -1483,7 +1289,6 @@ function splitByWordHighlights(
     lastIndex = match.index + match[1].length;
   }
 
-  // Add remaining text
   if (lastIndex < text.length) {
     parts.push({
       text: text.slice(lastIndex),
@@ -1494,8 +1299,6 @@ function splitByWordHighlights(
   return parts;
 }
 
-// Replace the Section component with this updated one:
-
 function Section({
   heading,
   hebrew_subtitle,
@@ -1503,7 +1306,6 @@ function Section({
   setCommandHighlight,
   setLastSelectedVerse,
   setRef,
-  verseText,
   commandsRef,
   setContextData,
   contextData,
@@ -1524,11 +1326,12 @@ function Section({
   lastSelectedVerse,
   wordHighlightsTC,
   wordHighlightsBC,
+  clickedVerses,
+  handleVerseClick,
 }) {
   const stripRe = /[.,'"""'']/g;
   const normalize = (k) => k.replace(stripRe, "").toLowerCase().trim();
 
-  // read the active key
   const [activeKey, setActiveKey] = useState(
     globalThis.HighlightedSectionKey || ""
   );
@@ -1536,7 +1339,6 @@ function Section({
     globalThis.HighlightedVerseNumber || ""
   );
 
-  // 1) build refs once per verse
   const verseRefs = useMemo(() => {
     const m = {};
     verses.forEach((v) => {
@@ -1557,6 +1359,10 @@ function Section({
   useEffect(() => {
     const handler = () => {
       setActiveVerse(globalThis.HighlightedVerseNumber || "");
+      console.log(
+        "verse number clicked: ",
+        globalThis.HighlightedVerseNumber || ""
+      );
     };
     window.addEventListener("highlightedVerseChanged", handler);
     return () => window.removeEventListener("highlightedVerseChanged", handler);
@@ -1580,6 +1386,7 @@ function Section({
     padding: "8px",
     position: "relative",
   };
+
   const styles = {
     font: `'Montserrat', sans-serif`,
     weight: "600",
@@ -1592,7 +1399,6 @@ function Section({
     },
   };
 
-  // inside your Section component, before the return:
   const chunksMap = useMemo(() => {
     const result = {};
     if (globalThis.studyNotesPresent) {
@@ -1606,7 +1412,6 @@ function Section({
     return result;
   }, [verses, globalThis.studyNotesPresent, globalThis.VerseSectionMap]);
 
-  // Create word highlight chunks map
   const wordChunksMap = useMemo(() => {
     const result = {};
     verses.forEach((v) => {
@@ -1617,13 +1422,12 @@ function Section({
         chapter,
         v.verseNumber,
         wordHighlightsTC,
-        wordHighlightsBC[v.verseNumber]
+        wordHighlightsBC
       );
     });
     return result;
   }, [verses, wordHighlights, book, chapter]);
 
-  // Get context data for the selected verse
   const getContextData = (verseNumber) => {
     const verse = verses.find((v) => v.verseNumber === verseNumber);
     if (!verse) return null;
@@ -1638,7 +1442,6 @@ function Section({
     };
   };
 
-  // Function to render verse text with word highlights
   const renderVerseText = (verse) => {
     const verseKey = `${book}-${chapter}-${verse.verseNumber}`;
     const hasWordHighlights =
@@ -1646,10 +1449,8 @@ function Section({
       Object.keys(wordHighlights[verseKey]).length > 0;
 
     if (globalThis.studyNotesPresent) {
-      // Use section-based rendering
       return (chunksMap[verse.verseNumber] || []).map((part, i) => {
         if (!part.isSection) {
-          // For non-section text, apply word highlights if any
           if (hasWordHighlights) {
             const wordParts = splitByWordHighlights(
               part.text,
@@ -1665,7 +1466,7 @@ function Section({
                     key={`${i}-word-${wordIndex}`}
                     style={{
                       color: wordHighlightsTC,
-                      backgroundColor: wordHighlightsBC[verse.verseNumber],
+                      backgroundColor: wordHighlightsBC,
                       cursor: wordPart.highlightConfig.onClick
                         ? "pointer"
                         : "default",
@@ -1680,7 +1481,8 @@ function Section({
                           verse.verseNumber
                         );
                       }
-                    }}>
+                    }}
+                  >
                     {wordPart.text}
                   </span>
                 );
@@ -1700,22 +1502,25 @@ function Section({
         return (
           <span
             key={i}
-            className={`clickableCursor highlightened ${
-              isActive ? "highlighted-word" : ""
-            }`}
+            className={`clickableCursor highlightened ${isActive ? "highlighted-word" : ""
+              }`}
             style={{ animationDelay: `${i * 0.1}s` }}
             onClick={() => {
+              console.log(part.key);
               const raw = globalThis.VerseSectionMap[part.key].original;
+              console.log(raw);
               const m = /:(\d+)$/.exec(raw);
+              console.log(m);
               const sec = m ? m[1] : part.key;
+              console.log(sec);
               globalThis.HighlightStudyNoteSection(raw);
-            }}>
+            }}
+          >
             {part.text}
           </span>
         );
       });
     } else {
-      // Use word highlighting only
       if (hasWordHighlights) {
         const wordParts = wordChunksMap[verse.verseNumber] || [
           { text: verse.text, isHighlighted: false },
@@ -1735,9 +1540,10 @@ function Section({
                   padding: "1px 2px",
                   borderRadius: "2px",
                   color: wordHighlightsTC,
-                  backgroundColor: wordHighlightsBC[verse.verseNumber],
+                  backgroundColor: wordHighlightsBC,
                 }}
-                {...attributes}>
+                {...attributes}
+              >
                 {part.text}
               </span>
             );
@@ -1757,7 +1563,8 @@ function Section({
             heading,
           });
         }}
-        className="sectionTitle">
+        className="sectionTitle"
+      >
         {heading}
       </div>
       {hebrew_subtitle && <div className="sectionTitle">{hebrew_subtitle}</div>}
@@ -1766,7 +1573,8 @@ function Section({
         {textEdit && (
           <div
             style={{ right: "20px", top: "-65px", background: "transparent" }}
-            className="flexElementGap-4 editVerseTitle">
+            className="flexElementGap-4 editVerseTitle"
+          >
             <TextFormattingToolbar sectionStyles={styles} />
           </div>
         )}
@@ -1784,67 +1592,25 @@ function Section({
               holded?.[verse.verseNumber] ||
               selected[verse.verseNumber] ||
               blinker[verse.verseNumber];
+            const isClicked = clickedVerses.includes(verse.verseNumber);
 
             return (
               <span key={verse.verseNumber}>
                 <span
                   ref={verseRefs[verse.verseNumber]}
                   id={`v-${verse.verseNumber}`}
-                  onClick={(e) => {
+                  onContextMenu={(e) => {
                     e.preventDefault();
-                    let verseToSelect = [verse.verseNumber];
-
-                    const isShiftHold = globalThis?.KEY_HOLD?.["shift"];
-
-                    if (isShiftHold && globalThis.LastSelectVerse) {
-                      const newRangeVerse = range(
-                        globalThis.LastSelectVerse,
-                        verse.verseNumber
-                      );
-                      if (newRangeVerse.length > 1) {
-                        verseToSelect = newRangeVerse;
-                      }
-                    }
-
-                    globalThis.LastSelectVerse = verse.verseNumber;
-
-                    setInHold((prev) => {
-                      const old = { ...prev };
-                      let isDelete = false;
-                      if (verseToSelect.length > 1) {
-                        isDelete = verseToSelect.every((ele) => old[ele]);
-                      }
-                      verseToSelect.forEach((vN) => {
-                        if (verseToSelect.length > 1) {
-                          if (isDelete) {
-                            delete old[vN];
-                          } else {
-                            old[vN] = {
-                              verseNumber: vN,
-                              text: verseText[vN],
-                              chapter,
-                              book,
-                              highlighted: highlighted?.[vN],
-                              verses: [verse.verseNumber],
-                            };
-                          }
-                        } else if (old[vN]) {
-                          delete old[vN];
-                        } else {
-                          old[vN] = {
-                            verseNumber: vN,
-                            text: verseText[vN],
-                            chapter,
-                            book,
-                            highlighted: highlighted?.[vN],
-                            verses: [verse.verseNumber],
-                          };
-                        }
-                      });
-
-                      return old;
-                    });
+                    setInHold(verse.verseNumber);
                     setLastSelectedVerse(verse.verseNumber);
+
+                    setContextData({
+                      verse: verse.text,
+                      reference: `${book} ${chapter}:${verse.verseNumber}`,
+                      book,
+                      chapter,
+                      verses: [verse.verseNumber],
+                    });
                     shout("onVeresRightClick", {
                       verseNumber: verse.verseNumber,
                       text: verse.text,
@@ -1852,12 +1618,17 @@ function Section({
                       book,
                       highlighted: highlighted?.[verse.verseNumber],
                     });
-                    setContextData({
-                      verse: verse.text,
-                      reference: `${book} ${chapter}:${verse.verseNumber}`,
-                      book,
+                  }}
+                  onClick={(e) => {
+                    e.stopPropagation();
+                    handleVerseClick(verse.verseNumber);
+                    SetShowCommands(false);
+                    os.log({
+                      verseNumber: verse.verseNumber,
+                      text: verse.text,
                       chapter,
-                      verses: [verse.verseNumber],
+                      book,
+                      highlighted: highlighted?.[verse.verseNumber],
                     });
                     const verseClickData = {
                       verseNumber: verse.verseNumber,
@@ -1869,86 +1640,52 @@ function Section({
                     EmitData("verseClicked", verseClickData);
                     shout("onVerseClick", verseClickData);
                   }}
-                  // onClick={() => {
-                  //   SetShowCommands(false);
-                  //   os.log({
-                  //     verseNumber: verse.verseNumber,
-                  //     text: verse.text,
-                  //     chapter,
-                  //     book,
-                  //     highlighted: highlighted?.[verse.verseNumber],
-                  //   });
-                  //   const verseClickData = {
-                  //     verseNumber: verse.verseNumber,
-                  //     text: verse.text,
-                  //     chapter,
-                  //     book,
-                  //     highlighted: highlighted?.[verse.verseNumber],
-                  //   };
-                  //   EmitData("verseClicked", verseClickData);
-                  //   shout("onVerseClick", verseClickData);
-                  // }}
                   style={{
                     "background-color":
                       (highlighted?.[verse.verseNumber] &&
                         highlighted?.[verse.verseNumber].book === book &&
                         highlighted?.[verse.verseNumber].chapter === chapter) ||
-                      commandHighlight.includes(verse.verseNumber)
-                        ? wordHighlightsBC[verse.verseNumber]
+                        commandHighlight.includes(verse.verseNumber)
+                        ? highlighted?.[verse.verseNumber]?.color
                         : "transparent",
                     color:
                       (highlighted?.[verse.verseNumber] &&
                         highlighted?.[verse.verseNumber].book === book &&
                         highlighted?.[verse.verseNumber].chapter === chapter) ||
-                      commandHighlight.includes(verse.verseNumber)
+                        commandHighlight.includes(verse.verseNumber)
                         ? wordHighlightsTC
                         : "black",
-                    transition: "background-color 0.2s ease",
-                    "border-radius": highlighted?.[verse.verseNumber]
+                    transition: "background-color 0.2s ease, border 0.2s ease",
+                    "border-radius": highlighted?.[verse.verseNumber] || isClicked
                       ? "3px"
                       : "0",
-                    padding: highlighted?.[verse.verseNumber] ? "2px 4px" : "0",
-                    margin: highlighted?.[verse.verseNumber] ? "0 1px" : "0",
+                    padding: highlighted?.[verse.verseNumber] || isClicked ? "2px 4px" : "0",
+                    margin: highlighted?.[verse.verseNumber] || isClicked ? "0 1px" : "0",
                     "text-decoration":
-                      inHold[verse.verseNumber] || isTextDecorUnderline
+                      inHold === verse.verseNumber || isTextDecorUnderline
                         ? "underline"
                         : "",
                     "text-decoration-style":
-                      inHold[verse.verseNumber] || isTextDecorUnderline
+                      inHold === verse.verseNumber || isTextDecorUnderline
                         ? "dotted"
                         : "",
+                    borderBottom: isClicked ? "2px dashed #4459F3" : "none",
                   }}
-                  className={`sectionText ${
-                    verse?.verseNumber.toString() === activeVerse.toString()
-                      ? "highlighted"
-                      : ""
-                  } ${
-                    highlighted?.[verse.verseNumber] ? "verse-highlighted" : ""
-                  }`}>
+                  className={`sectionText ${verse?.verseNumber.toString() === activeVerse.toString()
+                    ? "highlighted"
+                    : ""
+                    } ${highlighted?.[verse.verseNumber] ? "verse-highlighted" : ""
+                    } ${isClicked ? "verse-clicked" : ""}`}
+                >
                   <span
-                    className={`sectionTextNumber ${
-                      globalThis.studyNotesPresent ? "clickableCursor" : ""
-                    }`}
+                    className={`sectionTextNumber ${globalThis.studyNotesPresent ? "clickableCursor" : ""
+                      }`}
                     onClick={() => {
                       if (globalThis.studyNotesPresent) {
                         HighlightStudyNoteSection(verse?.verseNumber);
                       }
                     }}
-                    onPointerEnter={() => {
-                      globalThis.showRefModal = true;
-                      setTimeout(() => {
-                        if (globalThis.showRefModal) {
-                          shout("toggleReferenceModal", {
-                            book,
-                            chapter,
-                            verse,
-                          });
-                        }
-                      }, 500);
-                    }}
-                    onPointerLeave={() => {
-                      globalThis.showRefModal = false;
-                    }}>
+                  >
                     {verse?.verseNumber}
                   </span>
                   {!c ? (
@@ -1985,10 +1722,9 @@ function Section({
                       marginBottom: "20px",
                       borderTop: "1px solid #eee",
                       paddingTop: "10px",
-                    }}>
-                    <ConfigurableFunctionCommands
-                      contextData={inHold[verse.verseNumber]}
-                    />
+                    }}
+                  >
+                    <ConfigurableFunctionCommands contextData={contextData} />
                   </div>
                 )}
               </span>
@@ -2010,13 +1746,15 @@ export const ThePageWithPanel = ({ tab }) => {
         initialWidth={gridPortalBot.tags.pixelWidth}
         containerWidth={gridPortalBot.tags.pixelWidth}
         containerHeight={1000}
-        onResize={() => {}}
-        otherTab={panalApp}>
+        onResize={() => { }}
+        otherTab={panalApp}
+      >
         <ThePage setPanalApp={setPanalApp} tab={tab} />
       </DivSpliter>
     </>
   );
 };
+
 export const ThePageWithEditor = ({ tab, setPanalApp, panelId }) => {
   useEffect(() => {
     os.log("tab in the page", panelId, tab);
@@ -2025,8 +1763,6 @@ export const ThePageWithEditor = ({ tab, setPanalApp, panelId }) => {
   const activeTab = panelId ? globalThis.PanelTabsMap[panelId] || tab : tab;
   const [enableEditor, setEnableEditor] = useState(false);
   useEffect(() => {
-    // console.log("enableEditor", enableEditor, "updates");
-    // globalThis[`ElableEditorFor${tab.id}`] = enableEditor;
   }, [enableEditor]);
   const [data, setData] = useState();
   if (tab) globalThis[`SetEnableEditorOf${tab?.id}`] = setEnableEditor;
