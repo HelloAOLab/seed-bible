@@ -813,6 +813,16 @@ const SRE_STYLES = (minH) => `
 @media (max-width: 480px) {
   .sre-number { width: 50px; }
 }
+
+.ProseMirror {
+  min-height: 100px;
+  outline: none;
+  caret-color: black;
+}
+.ProseMirror:focus {
+  outline: none;
+}
+
 `;
 
 // ---------------- utils ----------------
