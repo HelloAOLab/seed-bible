@@ -176,7 +176,7 @@ const AnnotationInnerDiv = ({
           style={{
             border: selected ? "1px solid #D36433" : "",
             backgroundColor: selected ? "#D364334D" : "",
-            paddingRight: "1rem",
+            paddingRight: "3rem",
             textAlign: "justify",
           }}
           className={`playlist-item-type ${
