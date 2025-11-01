@@ -78,7 +78,7 @@ const ShowScreenRecordingStopButton = () => {
             <span style={{ cursor: 'grab' }} class="material-symbols-outlined">
                 drag_indicator
             </span>
-            {painterApp && false && <span style={{ cursor: 'pointer' }} onClick={() => { painterApp.togglePainter() }} class="material-symbols-outlined">
+            {painterApp && <span style={{ cursor: 'pointer' }} onClick={() => { painterApp.togglePainter() }} class="material-symbols-outlined">
                 brush
             </span>}
             <p>You're sharing your screen.</p>

@@ -527,7 +527,9 @@ const AttachLink = ({
   const [mediaType, setType] = useState(sMediaType ? sMediaType : "youtube");
   const [data, setData] = useState(sData ? sData : null);
   const [linkState, setLinkState] = useState(false);
-  const [name, setName] = useState(sName ? sName : globalThis.RawName || "");
+  const [name, setName] = useState(
+    sName ? sName : selectedType === "TEXT" ? globalThis.RawName || "" : ""
+  );
   const [link, setLink] = useState(sLink ? sLink : "");
 
   // Audio or Video

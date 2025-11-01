@@ -176,6 +176,8 @@ const AnnotationInnerDiv = ({
           style={{
             border: selected ? "1px solid #D36433" : "",
             backgroundColor: selected ? "#D364334D" : "",
+            paddingRight: "1rem",
+            textAlign: "justify",
           }}
           className={`playlist-item-type ${
             data.type !== "date" && checklistEnabled
@@ -683,7 +685,7 @@ const AddAnotationUI = ({
   };
 
   const deleteFromList = (id, pid) => {
-    if (singleMode && !editData.address) {
+    if (singleMode && !editData?.address) {
       if (pid) {
         setEmbedItems((prev) => prev.filter((ele) => ele.id !== id));
       } else {
@@ -712,7 +714,7 @@ const AddAnotationUI = ({
   };
 
   const deleteAttachment = (index, pID, id) => {
-    if (singleMode && !editData.address) {
+    if (singleMode && !editData?.address) {
       setEmbedItems((prev) => {
         const old = [...prev];
         old = old.filter((ele) => ele.id !== id);
@@ -751,7 +753,7 @@ const AddAnotationUI = ({
   };
 
   const onRemoveTag = (indexofTag, idOfParent) => {
-    if (singleMode || editData.address) {
+    if (singleMode || editData?.address) {
       setTags((prev) => {
         const old = [...prev];
         old.splice(indexofTag, 1);
@@ -1030,8 +1032,17 @@ const AddAnotationUI = ({
     try {
       const promisesArray = [];
       const userRecord = await getUserRecord();
+      const singleRangeTrack = {};
+
       currentList.forEach((ele) => {
-        if (ele.type !== "chapter-range" && ele.type !== "chapter-grouped") {
+        if (
+          ele.type !== "chapter-range" &&
+          ele.type !== "chapter-grouped" &&
+          !singleRangeTrack[ele.additionalInfo.verse]
+        ) {
+          if (singleMode) {
+            singleRangeTrack[ele.additionalInfo.verse] = true;
+          }
           const chroAddData = {
             book:
               ele.additionalInfo.chapterData?.id ||
@@ -1115,7 +1126,7 @@ const AddAnotationUI = ({
   // const transformedHistory = useMemo(() => thisBot.groupVerse(list), [list, selectedCount, unSelectedCount]);
 
   const finalHistoryObject = useMemo(() => {
-    if (!singleMode || editData.address) return list;
+    if (!singleMode || editData?.address) return list;
     const listFinal = list.filter(
       (ele) =>
         ele.type === "verse" ||
@@ -1350,6 +1361,41 @@ const AddAnotationUI = ({
 
   const showPlaylistPosition = useRef(getPosition());
 
+  useLayoutEffect(() => {
+    if (!singleMode) {
+      setList((prev) => {
+        let old = [...prev];
+        old = old.map((ele) => {
+          return {
+            ...ele,
+            additionalInfo: {
+              ...ele.additionalInfo,
+              layers: [...embedItems],
+              tags: [...tags],
+            },
+          };
+        });
+        return old;
+      });
+      setSelectedAnnotation(null);
+    } else {
+      setList((prev) => {
+        let old = [...prev];
+        old = old.map((ele) => {
+          return {
+            ...ele,
+            additionalInfo: {
+              ...ele.additionalInfo,
+              layers: [],
+              tags: [],
+            },
+          };
+        });
+        return old;
+      });
+    }
+  }, [singleMode]);
+
   return (
     <>
       {showPlaylistSettings && (
@@ -1577,6 +1623,26 @@ const AddAnotationUI = ({
                 style={{ color: "white" }}
                 class="material-symbols-outlined">
                 {publishAccess === "public"
+                  ? "radio_button_checked"
+                  : "radio_button_unchecked"}
+              </span>
+            </div>
+
+            <div
+              className="more-menu-items"
+              onClick={() => {
+                setSingleMode((p) => !p);
+              }}>
+              <span
+                style={{ color: "white" }}
+                class="material-symbols-outlined">
+                auto_awesome_motion
+              </span>
+              <p>Advance UI</p>
+              <span
+                style={{ color: "white" }}
+                class="material-symbols-outlined">
+                {!singleMode
                   ? "radio_button_checked"
                   : "radio_button_unchecked"}
               </span>
@@ -1956,7 +2022,7 @@ const AddAnotationUI = ({
         )}
 
         {!selectedAnnotation &&
-          (!singleMode || editData.address) &&
+          (!singleMode || editData?.address) &&
           !draggedItemID &&
           !embedding && (
             <AttachLink
