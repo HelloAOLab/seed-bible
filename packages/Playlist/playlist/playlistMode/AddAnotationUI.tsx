@@ -8,7 +8,15 @@ import {
 const isMobile =
   (window?.innerWidth || gridPortalBot.tags.pixelWidth) <
   MOBILE_VIEWPORT_THRESHOLD;
-const { Chips, Checkbox, Button, Tooltip, LoaderSecondary } = Components;
+const {
+  Chips,
+  Checkbox,
+  Button,
+  Tooltip,
+  LoaderSecondary,
+  Modal,
+  ButtonsCover,
+} = Components;
 
 const AttachLink = await thisBot.AttachLink();
 const AttachmentLinkItem = thisBot.AttachmentLinkItem();
@@ -471,6 +479,9 @@ const AddAnotationUI = ({
   const [mediaURL, setMediaURL] = useState("");
   const [videoSrc, setVideoSrc] = useState(false);
   const [currentItem, setCurrentItem] = useState({});
+
+  const [loseProgresss, setLoseProgresss] = useState(false);
+  const loseProgressAction = useRef(null);
 
   const [singleMode, setSingleMode] = useState(true);
   const [embedItems, setEmbedItems] = useState([]);
@@ -1151,11 +1162,15 @@ const AddAnotationUI = ({
       setSelectedAnnotation(null);
     }
     let content = "";
-
+    const trackVerse = {};
     listFinal.forEach((ele, i) => {
-      content += ` ${i > 0 ? ele.additionalInfo.verse : ele.content}${
-        i < listFinal.length - 1 ? "," : ""
-      }`;
+      const verse = ele.additionalInfo.verse;
+      if (!trackVerse[verse]) {
+        content += ` ${i > 0 ? verse : ele.content}${
+          i < listFinal.length - 1 ? "," : ""
+        }`;
+      }
+      trackVerse[verse] = true;
     });
     item.content = content;
     return [item];
@@ -1398,6 +1413,36 @@ const AddAnotationUI = ({
 
   return (
     <>
+      {loseProgresss && (
+        <Modal
+          showIcon={false}
+          onClose={() => {
+            setLoseProgresss(false);
+          }}>
+          <h2 style={{ fontSize: "1rem" }}>Embedded items will be lost.</h2>
+          <p>
+            Switching to another mode will lose the embedded items. Do you want
+            to continue?
+          </p>
+          <ButtonsCover>
+            <Button
+              secondary
+              onClick={() => {
+                loseProgressAction.current?.();
+              }}
+              variant="black">
+              Confirm
+            </Button>
+            <Button
+              secondaryAlt
+              onClick={() => {
+                setLoseProgresss(false);
+              }}>
+              No
+            </Button>
+          </ButtonsCover>
+        </Modal>
+      )}
       {showPlaylistSettings && (
         <>
           <div
@@ -1460,24 +1505,31 @@ const AddAnotationUI = ({
             <div
               className="more-menu-items"
               onClick={() => {
-                setList((prev) => {
-                  let old = [...prev];
-                  old = old.filter(
-                    (ele) => ele.additionalInfo.type !== "playlist"
-                  );
-                  old = old.map((ele) => {
-                    const eleprev = { ...ele };
-                    if (eleprev.additionalInfo.layers) {
-                      eleprev.additionalInfo.layers =
-                        eleprev.additionalInfo.layers.filter(
-                          (ele) => ele.additionalInfo.type !== "playlist"
-                        );
-                    }
-                    return eleprev;
+                loseProgressAction.current = () => {
+                  setList((prev) => {
+                    let old = [...prev];
+                    old = old.filter(
+                      (ele) => ele.additionalInfo.type !== "playlist"
+                    );
+                    old = old.map((ele) => {
+                      const eleprev = { ...ele };
+                      if (eleprev.additionalInfo.layers) {
+                        eleprev.additionalInfo.layers =
+                          eleprev.additionalInfo.layers.filter(
+                            (ele) => ele.additionalInfo.type !== "playlist"
+                          );
+                      }
+                      return eleprev;
+                    });
+                    return old;
                   });
-                  return old;
-                });
-                setMode(PlaylistModeTypes.playlist);
+                  setMode(PlaylistModeTypes.playlist);
+                };
+                if (singleMode && embedItems.length > 0) {
+                  setLoseProgresss(true);
+                } else {
+                  loseProgressAction.current?.();
+                }
                 setShowPlaylistSettings(false);
               }}>
               <div className="align-center">
@@ -1514,23 +1566,30 @@ const AddAnotationUI = ({
             <div
               className="more-menu-items"
               onClick={() => {
-                setList((prev) => {
-                  let old = [...prev];
-                  old = old.filter(
-                    (ele) => ele.additionalInfo.type === "playlist"
-                  );
-                  old = old.map((ele) => {
-                    const eleprev = { ...ele };
-                    if (eleprev.additionalInfo.layers) {
-                      eleprev.additionalInfo.layers =
-                        eleprev.additionalInfo.layers.filter(
-                          (ele) => ele.additionalInfo.type === "playlist"
-                        );
-                    }
+                loseProgressAction.current = () => {
+                  setList((prev) => {
+                    let old = [...prev];
+                    old = old.filter(
+                      (ele) => ele.additionalInfo.type === "playlist"
+                    );
+                    old = old.map((ele) => {
+                      const eleprev = { ...ele };
+                      if (eleprev.additionalInfo.layers) {
+                        eleprev.additionalInfo.layers =
+                          eleprev.additionalInfo.layers.filter(
+                            (ele) => ele.additionalInfo.type === "playlist"
+                          );
+                      }
+                    });
+                    return old;
                   });
-                  return old;
-                });
-                setMode(PlaylistModeTypes.project);
+                  setMode(PlaylistModeTypes.project);
+                };
+                if (singleMode && embedItems.length > 0) {
+                  setLoseProgresss(true);
+                } else {
+                  loseProgressAction.current?.();
+                }
                 setShowPlaylistSettings(false);
               }}>
               <div className="align-center">
