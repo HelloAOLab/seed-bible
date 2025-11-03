@@ -1,9 +1,42 @@
 import { Tooltip } from "scriptureMap2D.main.Tooltip"
 import { useScriptureMap2DContext } from "scriptureMap2D.main.ScriptureMap2DContext"
+import { useTimeContext } from "scriptureMap2D.main.TimeContext"
 
-const { useState, useCallback, useMemo } = os.appHooks;
+const { useState, useCallback, useMemo, useEffect, useRef } = os.appHooks;
+const { memo } = os.appCompat;
 
-const Item = ({ index, selected, content, description, handleItemClick, background, dayRange }) => {
+const step = 0.25;
+const stepColors = [
+    "#E3E3E3",
+    "#FFEEA9",
+    "#FFBF78",
+    "#D36433",
+    "#7B4019"
+]
+
+const Label = memo(({ gridRow, gridColumn, children, isDay }) => {
+    
+    const style = useMemo(() => {
+        return {gridRow, gridColumn}
+    }, [gridRow, gridColumn])
+    
+    return (
+        <div style={style} className={`readingHistoryTimeline-label readingHistoryTimeline-label-${isDay ? "day": "month"}`}
+        >
+            {children}
+        </div>
+    )
+})
+
+const Item = memo(({ backgroundColor, gridRow, gridColumn, description, handleItemClick, range, readingHistoryRange }) => {
+
+    const selected = useMemo(() => {
+        return range === readingHistoryRange
+    }, [range, readingHistoryRange])
+    
+    const style = useMemo(() => {
+        return {backgroundColor, gridRow, gridColumn}
+    }, [backgroundColor, gridRow, gridColumn])
 
     const [containerRect, setContainerRect] = useState(null);
 
@@ -22,111 +55,269 @@ const Item = ({ index, selected, content, description, handleItemClick, backgrou
     }, [containerRect]);
     
     return (
-        <div 
+        <div
             onPointerEnter={(e) => setContainerRect(e.currentTarget.getBoundingClientRect())}
             onPointerLeave={() => setContainerRect(null)}
-            key={index} 
+            style={style}
             className={`readingHistoryTimeline-item${selected ? " selected" : ""}`} 
-            onClick={() => {handleItemClick(dayRange)}}
-            style={{background}}
+            onClick={() => {handleItemClick(selected ? null : range)}}
         >
-            { content }
-            { containerRect && <Tooltip direction="up" anchor={tooltipAnchor} content={description} /> }
+            { containerRect && <Tooltip anchor={tooltipAnchor} content={description} /> }
         </div>
     )
-}
+})
 
 export const ReadingHistoryTimeline = () => {
     
     const { 
-        readingHistory, 
+        filteredReadingHistory, 
         readingHistoryRange, 
         handleReadingHistoryRangeSelectorClick, 
         readingHistoryUsersFilters,
-        CHAPTER_BASE_BACKGROUND_COLOR
+        CHAPTER_BASE_BACKGROUND_COLOR,
+        filteredReadingHistoryCount
     } = useScriptureMap2DContext();
+    const { tick } = useTimeContext();
 
-    const firstItemContent = "Overview";
+    const prevItemsColorMapRef = useRef(new Map());
 
     const handleItemClick = useCallback((range) => {
         handleReadingHistoryRangeSelectorClick(range)
     }, [])
+
+    const { now, startOfWeek, startOfWeekAYearAgo, weeksCount } = useMemo(() => {
+        const now = new Date();
+
+        const getStartOfWeek = (date) => {
+            const tempDate = new Date(date);
+            tempDate.setDate(tempDate.getDate() - tempDate.getDay());
+            tempDate.setHours(0, 0, 0, 0);
+            return tempDate;
+        };
+
+        const startOfWeek = getStartOfWeek(now);
+
+        const aYearAgo = new Date(now);
+        aYearAgo.setFullYear(now.getFullYear() - 1);
+
+        const startOfWeekAYearAgo = getStartOfWeek(aYearAgo);
+        
+        const MS_PER_WEEK = 1000 * 60 * 60 * 24 * 7;
+        const weeksCount = Math.floor(
+            (startOfWeek - startOfWeekAYearAgo) / MS_PER_WEEK
+        ) + 1;
+
+        return { now, startOfWeek, startOfWeekAYearAgo, weeksCount };
+    }, []);
+    
+    const dayRangesMap = useMemo(() => {
+        const map = new Map();
+        for (let week = 0; week < weeksCount; week++) 
+        {
+            for (let day = 0; day < 7; day++) 
+            {
+                if(week === (weeksCount - 1) && day > now.getDay()) break;
+                const dayDate = new Date(startOfWeekAYearAgo);
+                dayDate.setDate(dayDate.getDate() + (week * 7) + day);
+                const { start, end } = GetDayRange(dayDate.getTime());
+                map.set(`${week}-${day}`, { start, end })
+            }
+        }
+        return map;
+    }, [weeksCount, startOfWeekAYearAgo]);
+
+    const computeEntriesMap = useCallback((currFilteredReadingHistory, currDayRangesMap) => {
+        const dayKeys = Array.from(currDayRangesMap.keys());
+        const dayRanges = Array.from(currDayRangesMap.values());
+        const entriesMap = new Map( dayKeys.map( (key) => { return [ key, [] ] } ) );
+        const now = Date.now();
+
+        const DAY_MS = 1000 * 60 * 60 * 24;
+        const firstDayStart = dayRanges[0].start;
+
+        for (const userId in currFilteredReadingHistory) 
+        {
+            const userEntries = currFilteredReadingHistory[userId];
+            for (const bookId in userEntries) 
+            {
+                const bookEntries = userEntries[bookId];
+                for (const chapter in bookEntries) 
+                {
+                    const chapterEntries = bookEntries[chapter];
+                    for (const entry of chapterEntries)
+                    {
+                        const dayIndex = Math.floor((entry.start - firstDayStart) / DAY_MS);
+                        const endDayIndex = Math.floor(((entry.end ?? now) - firstDayStart) / DAY_MS);
+
+                        for (let i = dayIndex; i <= endDayIndex; i++) 
+                        {
+                            if (i >= 0 && i < dayKeys.length) {
+                                entriesMap.get(dayKeys[i]).push(entry);
+                            }
+                        }
+                    }
+                }
+            }
+        }
+
+        return entriesMap
+    }, [])
+
+    const [entriesMap, setEntriesMap] = useState(null)
+
+    useEffect(() => {
+        const map = computeEntriesMap(filteredReadingHistory, dayRangesMap);
+        setEntriesMap(map);
+    }, [filteredReadingHistory, dayRangesMap])
+
+    const itemsColorMap = useMemo(() => {
+        const colorMap = new Map();
+
+        if(!entriesMap) return colorMap;
+
+        let shouldReassign = false;
+        const fullColorTime = filteredReadingHistoryCount * 3600000
+        for(let week = 0; week < weeksCount ; week++)
+        {
+            for(let day = 0; day < 7; day++)
+            {
+                if(week === (weeksCount - 1) && day > now.getDay()) break;
+                
+                const key = `${week}-${day}`
+
+                const range = dayRangesMap.get(key);
+
+                const entries = entriesMap.get(key);
+                if(entries)
+                {
+                    const prevColor = prevItemsColorMapRef.current.get(key)
+                    const color = BibleVizUtils.Functions.GetHistoryColorByRange({
+                        step, 
+                        stepColors, 
+                        reading: entries, 
+                        range, 
+                        fullColorTime
+                    });
+                    if(!shouldReassign && (!prevColor || prevColor !== color)) shouldReassign = true
+                    colorMap.set(key, color);
+                }
+                else
+                {
+                    throw new Error(`Entries not found for ${key}`)
+                }
+            }
+        }
+
+        if(shouldReassign)
+        {
+            prevItemsColorMapRef.current = colorMap;
+            return colorMap
+        }
+
+        return prevItemsColorMapRef.current;
+    }, [entriesMap, startOfWeekAYearAgo, tick])
+
+    const items = useMemo(() => {
+        const items = [];
+        const monthsSet = new Set();
+        const monthLabelGridRow = `1 / 2`;
+        const dayLabelGridColumn = `1 / 2`;
+
+        items.push(
+            <Label
+                gridRow={`3 / 4`}
+                gridColumn={dayLabelGridColumn}
+                isDay={true}
+            >
+                {`Mon `}
+            </Label>,
+            <Label
+                gridRow={`5 / 6`}
+                gridColumn={dayLabelGridColumn}
+                isDay={true}
+            >
+                {`Wed `}
+            </Label>,
+            <Label
+                gridRow={`7 / 8`}
+                gridColumn={dayLabelGridColumn}
+                isDay={true}
+            >
+                {`Fri `}
+            </Label>
+        )
+
+        for(let week = 0; week < weeksCount ; week++)
+        {
+            for(let day = 0; day < 7; day++)
+            {
+                if(week === (weeksCount - 1) && day > now.getDay()) break;
+
+                const key = `${week}-${day}`
+                const dayDate = new Date(startOfWeekAYearAgo);
+                dayDate.setDate(dayDate.getDate() + (week * 7) + (day));
+                const time = dayDate.getTime();
+                const range = dayRangesMap.get(key);
+
+                const { weekday, day: dayOfTheMonth, month, monthName, year } = GetPastDateInfo(time)
+                const description = week === (weeksCount - 1) && day === now.getDay() ? "Today" : `${weekday} ${month}/${dayOfTheMonth}/${year}`;
+                const backgroundColor = itemsColorMap?.get?.(key) ?? stepColors[0];
+                
+                const itemGridRow = `${day + 2} / ${day + 3}`
+                const itemGridColumn = `${week + 2} / ${week + 3}`
+
+                if(!monthsSet.has(month))
+                {
+                    monthsSet.add(month);
+                    const monthLabelGridColumn = `${week + 2} / ${week + 4}`
+                    const fixedName = BibleVizUtils.Functions.CapitalizeFirstLetter(monthName)
+                    items.push(
+                        <Label
+                            gridRow={monthLabelGridRow}
+                            gridColumn={monthLabelGridColumn}
+                            isDay={false}
+                        >
+                            {fixedName}
+                        </Label>
+                    )
+                }
+                
+                items.push(
+                    <Item
+                        key={key}
+                        backgroundColor={backgroundColor}
+                        gridRow={itemGridRow}
+                        gridColumn={itemGridColumn}
+                        description={description}
+                        range={range}
+                        handleItemClick={handleItemClick}
+                        readingHistoryRange={readingHistoryRange}
+                    />
+                )
+            }
+        }
+
+        return items;
+    }, [startOfWeekAYearAgo, now, itemsColorMap, readingHistoryRange])
     
     return(
         <div className="readingHistoryTimeline">
-            <Item index={-1} key={firstItemContent} selected={!readingHistoryRange} description={firstItemContent} content={firstItemContent} handleItemClick={handleItemClick} />
-            {Array.from({ length: 10 }).map((_, index) => {
-
-                const { weekday, day, month, time } = GetPastDateInfo(index)
-                const dayRange = GetDayRange(time);
-                const description = index === 0 ? "Today" : `${weekday} ${month}/${day}`;
-                const selected = readingHistoryRange && readingHistoryRange.start <= time && readingHistoryRange.end >= time;
-                let background = CHAPTER_BASE_BACKGROUND_COLOR;
-
-                const selectedFilters = Array.from(readingHistoryUsersFilters).filter(([userId, selected]) => { 
-                    return selected && 
-                        Object.keys(readingHistory[userId] ?? {})?.some((bookId) => {
-                            return Object.keys(readingHistory[userId][bookId])?.some((chapter) =>{
-                                return readingHistory[userId][bookId][chapter]?.some((entry) => {
-                                    return BibleVizUtils.Functions.IsValueBetween({value: entry.start, min: dayRange.start, max: dayRange.end}) || 
-                                        BibleVizUtils.Functions.IsValueBetween({value: entry.end, min: dayRange.start, max: dayRange.end})
-                                })
-                            })
-                        });
-                })//.slice(0, 4);
-
-                
-                if(selectedFilters.length > 0)
-                {
-                    const colors = selectedFilters.map(([userId]) => {
-                        const customReading = [];
-                        
-                        Object.keys(readingHistory[userId] ?? {})?.forEach((bookId) => {
-                            Object.keys(readingHistory[userId][bookId])?.forEach((chapter) =>{
-                                readingHistory[userId][bookId][chapter]?.forEach((entry) => {
-                                    if(BibleVizUtils.Functions.IsValueBetween({value: entry.start, min: dayRange.start, max: dayRange.end}) ||
-                                    BibleVizUtils.Functions.IsValueBetween({value: entry.end, min: dayRange.start, max: dayRange.end}))
-                                    {
-                                        customReading.push({
-                                            start: Math.max(entry.start, dayRange.start), 
-                                            end: Math.min(entry.end ?? Date.now(), dayRange.end)
-                                        })
-                                    }
-                                })
-                            })
-                        });
-                        
-                        return BibleVizUtils.Functions.GetHistoryColor({
-                            baseColor: CHAPTER_BASE_BACKGROUND_COLOR, 
-                            userColor: userId === configBot.id ? BibleVizUtils.Data.tags.myUserColor : (BibleVizUtils.Data.vars.userPresenceData?.[userId]?.user?.color ?? thisBot.vars.FakeReadingHistoryUsersColorMap?.get(userId) ?? "pink"), 
-                            reading: customReading,
-                            range: dayRange
-                        })
-                    })
-                        
-                    background = BibleVizUtils.Functions.GetHistoryColorConicGradient(colors)
-                }
-
-                
-                return <Item index={index} key={description} selected={selected} description={description} handleItemClick={handleItemClick} background={background} dayRange={dayRange} />
-            })}
+            {items}
         </div>
     )
 }
 
-function GetPastDateInfo(amount) {
-  const MS_PER_DAY = 86400000;
+function GetPastDateInfo(time) {
+    const date = new Date(time);
 
-  const date = new Date(os.localTime - (MS_PER_DAY * amount));
+    const weekdays = ["Sunday", "Monday", "Tuesday", "Wednesday", "Thursday", "Friday", "Saturday"];
+    const weekday = weekdays[date.getDay()];
+    const day = date.getDate();
+    const month = date.getMonth() + 1;
+    const year = date.getFullYear();
+    const monthName = date.toLocaleString('en-US', { month: 'short' });
 
-  const time = date.getTime()
-  const weekdays = ["Sunday", "Monday", "Tuesday", "Wednesday", "Thursday", "Friday", "Saturday"];
-  const weekday = weekdays[date.getDay()];
-  const day = date.getDate();
-  const month = date.getMonth() + 1;
-  const year = date.getFullYear();
-
-  return { weekday, day, month, year, time };
+    return { weekday, day, month, monthName, year };
 }
 
 function GetDayRange(timestamp) {
