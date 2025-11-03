@@ -1,1 +1,1 @@
-// thisBot.HandleHistoryUpdate();
+thisBot.HandleHistoryUpdate();

@@ -63,7 +63,9 @@
 
   cursor: pointer;
   outline: none;
-  transition: border-color 0.2s, box-shadow 0.2s;
+  transition:
+    border-color 0.2s,
+    box-shadow 0.2s;
   margin-right: 5px;
   font-family: Satoshi;
 }
@@ -1264,7 +1266,11 @@ input:checked + .slider:not(#slider):before {
   }
 
   .books-container {
-    height: calc(80dvh - 75px);
+    height: calc(100dvh - 110px);
+  }
+
+  .testament-title {
+    text-align: center;
   }
 
   .defocus-input {
@@ -1318,7 +1324,11 @@ input:checked + .slider:not(#slider):before {
   .open-sideBar {
     right: 0;
     opacity: 1;
-    bottom: 55px;
+    bottom: 45px;
+    height: calc(100dvh - 40px);
+    width: 100dvw;
+    border-radius: 0px;
+    box-shadow: none;
   }
 
   .close-sideBar {
