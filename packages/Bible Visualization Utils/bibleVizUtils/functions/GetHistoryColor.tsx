@@ -16,8 +16,7 @@ if(reading)
     }
     else
     {
-
-        const deltaTime = (os.localTime - (reading[reading.length - 1].end ?? Date.now()));
+        const deltaTime = (os.localTime - (reading?.[reading?.length - 1]?.end ?? Date.now()));
         color = thisBot.GetHistoryColorByDeltaTime({deltaTime, baseColor, userColor});
     }
 }

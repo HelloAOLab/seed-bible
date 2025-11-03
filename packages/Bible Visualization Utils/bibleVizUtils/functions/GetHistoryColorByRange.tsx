@@ -1,4 +1,5 @@
-const {baseColor, userColor, reading, range} = that;
+let {userColor} = that;
+const {baseColor, reading, range, fullColorTime = 900000, step, stepColors} = that;
 
 const readingTime = reading.reduce((acc, entry) => {
     const clampedReading = {
@@ -8,9 +9,16 @@ const readingTime = reading.reduce((acc, entry) => {
     const entryReadingTime = (clampedReading.end - clampedReading.start);
     return acc + entryReadingTime;
 }, 0)
-const fullColorTime = 900000 // 15 minutes
 
-const progress = Math.min(1, (readingTime * 10) / fullColorTime);
+let progress = Math.min(1, readingTime / fullColorTime);
+
+if(step && stepColors)
+{
+    progress = RoundToStep(progress, step);
+    const index = progress / step;
+    userColor = stepColors[index];
+    return userColor;
+}
 
 const baseColorRgb = BibleVizUtils.Functions.HexToRgb({hexColor: baseColor});
 const userColorRgb = BibleVizUtils.Functions.HexToRgb({hexColor: userColor});
@@ -30,4 +38,8 @@ function ClampRGBColor(colorToClamp)
         Math.max(Math.min(Math.round(colorToClamp[2]), 255), 0)
     ]
     return colorClamped;
+}
+
+function RoundToStep(value, step = 0.25) {
+  return Math.round(value / step) * step;
 }

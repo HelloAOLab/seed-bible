@@ -1,44 +1,43 @@
-const MS_PER_DAY = 86400000;
 const now = Date.now();
-const tenDaysAgo = now - (MS_PER_DAY * 10);
+const aYearAgo = new Date(now);
+aYearAgo.setFullYear(aYearAgo.getFullYear() - 1);
+const startOfWeekAYearAgo = GetStartOfWeek(aYearAgo).getTime();
 const hooks = getBot("system", "app.hooks");
 const tempHistory = hooks.vars.tempReadingHistory ??= {};
 const allBooksNames = Object.keys(BibleVizUtils.Data.tags.booksStaticInfo);
 
-const randomUsersIds = Array.from({ length: GetRandomArbitrary(3, 7) }).map(() => uuid());
+const randomUsersIds = Array.from({ length: GetRandomArbitrary(3, 6) }).map(() => uuid());
 const colorsMap = new Map();
+
+const books = allBooksNames.map((book) => {return BibleVizUtils.Data.tags.booksStaticInfo[book]});
 
 randomUsersIds.forEach((userId) => {
   const userHistory = tempHistory[userId] ??= {};
-  const randomBooksAmount = GetRandomArbitrary(10, 60);
-  const randomBooksIndexes = Array.from({ length: allBooksNames.length }, (_, i) => i)
-    .sort(() => Math.random() - 0.5)
-    .slice(0, randomBooksAmount);
 
-  const randomReadBooks = randomBooksIndexes.map(
-    (i) => BibleVizUtils.Data.tags.booksStaticInfo[allBooksNames[i]]
-  );
-
-  randomReadBooks.forEach(({ abbreviation, numberOfChapters }) => {
+  books.forEach(({ abbreviation, numberOfChapters }) => {
     const bookHistory = userHistory[abbreviation] ??= {};
-    const randomChapters = GetRandomUniqueNumbers(1, numberOfChapters, Math.min(numberOfChapters, 10));
 
-    randomChapters.forEach((chapter) => {
+    const chapters = Array.from({length: numberOfChapters}).map((_, i) => { return i + 1 })
+
+    chapters.forEach((chapter) => {
       const chapterHistory = bookHistory[chapter] ??= [];
-      const randomEntriesAmount = GetRandomArbitrary(1, 15);
+      const randomEntriesAmount = GetRandomArbitrary(0, 5);
 
-      Array.from({ length: randomEntriesAmount }).forEach(() => {
-        const start = GetRandomArbitrary(tenDaysAgo, now);
-        const end = GetRandomArbitrary(start, Math.min(now, start + GetRandomArbitrary(60000, 1200000)));
-
+      for(let i = 0 ; i < randomEntriesAmount ; i++)
+      {
+        const start = GetRandomArbitrary(startOfWeekAYearAgo, now);
+        const end = GetRandomArbitrary(start, Math.min(now, start + GetRandomArbitrary(0, 1200000)));
+  
         chapterHistory.push({ start, end });
-      });
+      }
     });
   });
 
   const color = BibleVizUtils.Functions.GetRandomColor();
   colorsMap.set(userId, color);
 });
+
+// console.log(`[Debug] CreateFakeReadingHistoryData`, {"hooks.vars.tempReadingHistory": hooks.vars.tempReadingHistory})
 
 thisBot.vars.FakeReadingHistoryUsersColorMap = colorsMap;
 
@@ -53,3 +52,11 @@ function GetRandomUniqueNumbers(min, max, count) {
   }
   return [...result];
 }
+
+function GetStartOfWeek(date)
+{
+    const tempDate = new Date(date);
+    tempDate.setDate(tempDate.getDate() - tempDate.getDay());
+    tempDate.setHours(0, 0, 0, 0);
+    return tempDate;
+};

@@ -395,15 +395,17 @@ export const ScriptureMap2DProvider = ({
         setProjectFilters(copy);
     }, [projectFilters])
 
-    const filteredReadingHistory = useMemo(() => {
-        const filtered = {};
+    const { filteredReadingHistory, filteredReadingHistoryCount } = useMemo(() => {
+        const filteredReadingHistory = {};
+        let filteredReadingHistoryCount = 0;
         readingHistoryUsersFilters.forEach((selected, userId) => {
             if(selected && readingHistory[userId])
             {
-                filtered[userId] = readingHistory[userId];
+                filteredReadingHistory[userId] = readingHistory[userId];
+                filteredReadingHistoryCount++;
             }
         })
-        return filtered;
+        return {filteredReadingHistory, filteredReadingHistoryCount};
     }, [readingHistory, readingHistoryUsersFilters]);
 
     return (
@@ -454,6 +456,7 @@ export const ScriptureMap2DProvider = ({
             handleReadingHistoryRangeSelectorClick,
             CHAPTER_BASE_BACKGROUND_COLOR,
             filteredReadingHistory,
+            filteredReadingHistoryCount,
             ...parentContext
         }} >
             {children}

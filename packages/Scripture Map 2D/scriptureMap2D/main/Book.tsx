@@ -180,26 +180,43 @@ export const Book = ({
     }, [userPresence, isUserPresenceEnabled, modes])
 
     const chapterUserEntriesMap = useMemo(() => {
+        const lastTimePeriod = BibleVizUtils.Data.masks.historyTimePeriodsInfo[BibleVizUtils.Data.masks.historyTimePeriodsInfo.length - 1].GetTimePeriodInMs();
+        const now = Date.now();
+        const lastTimePeriodTime = now - lastTimePeriod
+        const effectiveRange = readingHistoryRange ?? {start: lastTimePeriodTime, end: now}
         return new Map(staticChaptersArray.map((_, index) => {
             const chapter = index + 1;
             let chapterReadingTime = 0;
-            const userEntries = Object.keys(filteredReadingHistory).map((userId) => {
+            const userEntries = [];
+            for(const userId in filteredReadingHistory)
+            {
                 const entries = filteredReadingHistory[userId]?.[shortName]?.[chapter];
-                if(entries && (!readingHistoryRange || entries.some((entry) => {return BibleVizUtils.Functions.IsValueBetween({value: entry.start, min: readingHistoryRange.start, max: readingHistoryRange.end}) || BibleVizUtils.Functions.IsValueBetween({value: entry.end, min: readingHistoryRange.start, max: readingHistoryRange.end})})))
+                if(entries)
                 {
-                    const userReadingTime = entries.reduce((acc, entry) => {
-                        const clampedReading = {
-                            start: Math.min(Math.max(entry.start, readingHistoryRange?.start ?? 0), readingHistoryRange?.end ?? Date.now()),
-                            end: Math.min(Math.max(entry.end ?? Date.now(), readingHistoryRange?.start ?? 0), readingHistoryRange?.end ?? Date.now())
+                    const filteredEntries = [];
+                    let userReadingTime = 0;
+                    for(const entry of entries)
+                    {
+                        if(
+                            BibleVizUtils.Functions.IsValueBetween({value: entry.start, min: effectiveRange.start, max: effectiveRange.end}) || 
+                            BibleVizUtils.Functions.IsValueBetween({value: entry.end ?? now, min: effectiveRange.start, max: effectiveRange.end})
+                        ) {
+                            filteredEntries.push(entry);
+                            const clampedReading = {
+                                start: Math.min(Math.max(entry.start, effectiveRange.start), effectiveRange.end),
+                                end: Math.min(Math.max(entry.end ?? now, effectiveRange.start), effectiveRange.end)
+                            }
+                            const entryReadingTime = (clampedReading.end - clampedReading.start);
+                            userReadingTime += entryReadingTime;
                         }
-                        const entryReadingTime = (clampedReading.end - clampedReading.start);
-                        return acc + entryReadingTime;
-                    }, 0)
+                    }
                     chapterReadingTime += userReadingTime;
-                    return {userId, entries, readingTime: userReadingTime}
+                    if(filteredEntries.length > 0)
+                    {
+                        userEntries.push({userId, entries: filteredEntries, readingTime: userReadingTime})
+                    }
                 }
-                return null
-            }).filter(Boolean)
+            }
             return [chapter, {userEntries, readingTime: chapterReadingTime}]
         }))
 
@@ -212,12 +229,14 @@ export const Book = ({
         return new Map(staticChaptersArray.map((_, index) => {
             const chapter = index + 1;
             const {userEntries, readingTime: chapterReadingTime} = chapterUserEntriesMap.get(chapter);
-            let colors;
 
-            if(userEntries.length === 0) colors = [{color: CHAPTER_BASE_BACKGROUND_COLOR, value: 1}]
+            const colors = [];
+
+            if(userEntries.length === 0) colors.push({color: CHAPTER_BASE_BACKGROUND_COLOR, value: 1})
             else
             {
-                colors = userEntries.map(({userId, entries, readingTime: userReadingTime}) => {
+                for(const {userId, entries, readingTime: userReadingTime} of userEntries)
+                {
                     const color = BibleVizUtils.Functions.GetHistoryColor({
                         baseColor: CHAPTER_BASE_BACKGROUND_COLOR, 
                         userColor: userId === configBot.id ? BibleVizUtils.Data.tags.myUserColor : (BibleVizUtils.Data.vars.userPresenceData?.[userId]?.user?.color ?? thisBot.vars.FakeReadingHistoryUsersColorMap?.get(userId) ?? "pink"), 
@@ -225,8 +244,8 @@ export const Book = ({
                         range: readingHistoryRange
                     })
                     const value = userReadingTime / chapterReadingTime;
-                    return {color, value}
-                })
+                    colors.push({color, value});
+                }
             }
     
             return [chapter, colors];
@@ -241,10 +260,9 @@ export const Book = ({
             
             if(isReadingHistoryEnabled)
             {
-                // historyBackground = BibleVizUtils.Functions.GetHistoryColorConicGradient(historyColorsMap.get(chapter));
-                // historyColor = BibleVizUtils.Functions.GetTextColorBasedOnBackground({backgroundColor: historyColorsMap.get(chapter)});
-                historyBackground = BibleVizUtils.Functions.GetHistoryColorLinearGradient(historyColorsMap.get(chapter));
-                historyColor = BibleVizUtils.Functions.GetTextColorBasedOnBackground({backgroundColor: historyColorsMap.get(chapter)});
+                const colors = historyColorsMap.get(chapter)
+                historyBackground = BibleVizUtils.Functions.GetHistoryColorLinearGradient(colors);
+                historyColor = BibleVizUtils.Functions.GetTextColorBasedOnBackground({backgroundColor: colors});
             }
 
             return <Chapter

@@ -8,8 +8,9 @@ export const TimeProvider = ({children}) => {
 
     useEffect(() => {
         const interval = setInterval(() => {
+            console.log(`[Debug] TimeContext setInterval`)
             setTick(Date.now())
-        }, 2500);
+        }, 10000);
         return () => clearInterval(interval);
     }, []);
 

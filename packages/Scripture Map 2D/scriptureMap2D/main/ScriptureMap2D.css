@@ -21,6 +21,8 @@
     overflow: scroll;
     gap: 8px;
     height: 100%;
+
+    --timelineItemSize: 16px
 }
 
 /* .mapWrapper.showingContent
@@ -179,35 +181,44 @@
     flex-wrap: wrap;
 }
 
-.readingHistoryTimeline {
-    display: flex;
-    gap: 8px;
-    flex-wrap: wrap;
-    flex-direction: row-reverse;
-    justify-content: space-between;
+.readingHistoryTimeline {    
     width: 100%;
+    display: grid;
+    gap: 2px;
+    align-items: start;
+    overflow-x: scroll;
+    scrollbar-width: thin !important;
 }
 
 .readingHistoryTimeline-item {
+    width: var(--timelineItemSize);
+    height: var(--timelineItemSize);
     background-color: #E3E3E3;
-    min-width: 36px;
-    height: 36px;
-    display: flex;
-    align-items: center;
-    padding: 8px 12px;
-    border-radius: 20px;
+    border-radius: 4px;
     border-style: solid;
     border-width: 2px;
     border-color: transparent;
-    color: #303030;
-    border-color: #7a7a7a;
 }
 
 .readingHistoryTimeline-item.selected
 {
-    border-color: #D36433;
-    color: #D36433;
-    background-color: #ffe3d7;
+    border-color: #497F77;
+}
+
+.readingHistoryTimeline-label
+{
+    font-family: system-ui;
+    font-size: 12px;
+}
+
+.readingHistoryTimeline-label-month
+{
+    margin-bottom: 4px;
+}
+
+.readingHistoryTimeline-label-day
+{
+    margin-right: 4px;
 }
 
 .projectStateButton
@@ -839,6 +850,7 @@
     justify-content: center;
     align-items: center;
     gap: 4px;
+    white-space: nowrap;
 }
 
 .tooltip.tooltip-up
@@ -855,7 +867,7 @@
 {
   content: " ";
   position: absolute;
-  left: 50%;
+  left: var(--arrowLeft);
   transform: translateX(-50%);
   border-width: 5px;
   border-style: solid;
