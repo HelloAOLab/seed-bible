@@ -28,7 +28,7 @@ const Label = memo(({ gridRow, gridColumn, children, isDay }) => {
     )
 })
 
-const Item = memo(({ backgroundColor, gridRow, gridColumn, description, handleItemClick, range, readingHistoryRange }) => {
+const Item = memo(({ backgroundColor, gridRow, gridColumn, description, handleItemClick, range, readingHistoryRange, id }) => {
 
     const selected = useMemo(() => {
         return range === readingHistoryRange
@@ -56,6 +56,7 @@ const Item = memo(({ backgroundColor, gridRow, gridColumn, description, handleIt
     
     return (
         <div
+            id={id}
             onPointerEnter={(e) => setContainerRect(e.currentTarget.getBoundingClientRect())}
             onPointerLeave={() => setContainerRect(null)}
             style={style}
@@ -284,6 +285,7 @@ export const ReadingHistoryTimeline = () => {
                 
                 items.push(
                     <Item
+                        id={key}
                         key={key}
                         backgroundColor={backgroundColor}
                         gridRow={itemGridRow}
@@ -299,9 +301,24 @@ export const ReadingHistoryTimeline = () => {
 
         return items;
     }, [startOfWeekAYearAgo, now, itemsColorMap, readingHistoryRange])
+
+    useEffect(() => {
+
+        const lastKey = Array.from(dayRangesMap.keys()).pop();
+        const element = document.getElementById(lastKey);
+
+        console.log(`[Debug] ReadingHistoryTimeline`, {element})
+        
+        if (element) {
+          element.scrollIntoView({
+            behavior: "smooth", // smooth scrolling animation
+            block: "center", // scroll so it's centered in the viewport
+          });
+        }
+    }, [])
     
     return(
-        <div className="readingHistoryTimeline">
+        <div id={`readingHistoryTimeline`} className="readingHistoryTimeline">
             {items}
         </div>
     )
