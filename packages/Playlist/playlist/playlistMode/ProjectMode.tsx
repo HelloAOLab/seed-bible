@@ -310,17 +310,20 @@ const ProjectMode = ({
               width: "206px",
               padding: "1rem",
             }}
-            className="overlay linked-item-custom">
+            className="overlay linked-item-custom"
+          >
             <div className="more-menu-items">
               <div
                 className="align-center"
                 onClick={() => {
                   setMode(PlaylistModeTypes.annotations);
                   setShowPlaylistSettings(false);
-                }}>
+                }}
+              >
                 <span
                   style={{ fontSize: "20px", color: "white" }}
-                  class="material-symbols-outlined">
+                  class="material-symbols-outlined"
+                >
                   team_dashboard
                 </span>
                 <label
@@ -330,19 +333,23 @@ const ProjectMode = ({
                     marginLeft: "4px",
                     color: "white",
                   }}
-                  for="playlistInclude">
+                  for="playlistInclude"
+                >
                   Annotation Mode
                 </label>
               </div>
               <Tooltip
                 forRight={true}
-                text="Annotation mode is the way to annotate the bible so you can see content while exploring other who have subscribed to you.">
+                text="Annotation mode is the way to annotate the bible so you can see content while exploring other who have subscribed to you."
+              >
                 <p
                   className="what-this center"
-                  style={{ margin: "0 0 0 0.5rem" }}>
+                  style={{ margin: "0 0 0 0.5rem" }}
+                >
                   <span
                     style={{ fontSize: "24px" }}
-                    class="material-symbols-outlined unfollow">
+                    class="material-symbols-outlined unfollow"
+                  >
                     info
                   </span>
                 </p>
@@ -354,10 +361,12 @@ const ProjectMode = ({
                 onClick={() => {
                   setMode(PlaylistModeTypes.playlist);
                   setShowPlaylistSettings(false);
-                }}>
+                }}
+              >
                 <span
                   style={{ fontSize: "20px", color: "white" }}
-                  class="material-symbols-outlined">
+                  class="material-symbols-outlined"
+                >
                   playlist_play
                 </span>
                 <label
@@ -367,19 +376,23 @@ const ProjectMode = ({
                     marginLeft: "4px",
                     color: "white",
                   }}
-                  for="playlistInclude">
+                  for="playlistInclude"
+                >
                   Playlist Mode
                 </label>
               </div>
               <Tooltip
                 forRight={true}
-                text="Playlist mode is to create playlist and share with other or play them.">
+                text="Playlist mode is to create playlist and share with other or play them."
+              >
                 <p
                   className="what-this center"
-                  style={{ margin: "0 0 0 0.5rem" }}>
+                  style={{ margin: "0 0 0 0.5rem" }}
+                >
                   <span
                     style={{ fontSize: "24px" }}
-                    class="material-symbols-outlined unfollow">
+                    class="material-symbols-outlined unfollow"
+                  >
                     info
                   </span>
                 </p>
@@ -390,10 +403,12 @@ const ProjectMode = ({
                 className="align-center"
                 onClick={() => {
                   setMode(PlaylistModeTypes.project);
-                }}>
+                }}
+              >
                 <span
                   style={{ fontSize: "20px", color: "white" }}
-                  class="material-symbols-outlined">
+                  class="material-symbols-outlined"
+                >
                   team_dashboard
                 </span>
                 <label
@@ -403,17 +418,20 @@ const ProjectMode = ({
                     marginLeft: "4px",
                     color: "white",
                   }}
-                  for="playlistInclude">
+                  for="playlistInclude"
+                >
                   Project Mode
                 </label>
               </div>
               <Tooltip forRight={true} text="Project mode is awesome.">
                 <p
                   className="what-this center"
-                  style={{ margin: "0 0 0 0.5rem" }}>
+                  style={{ margin: "0 0 0 0.5rem" }}
+                >
                   <span
                     style={{ fontSize: "24px" }}
-                    class="material-symbols-outlined unfollow">
+                    class="material-symbols-outlined unfollow"
+                  >
                     info
                   </span>
                 </p>
@@ -435,7 +453,8 @@ const ProjectMode = ({
               padding: "1rem",
               top: "5rem",
             }}
-            className="overlay linked-item-custom">
+            className="overlay linked-item-custom"
+          >
             <p>
               <b style={{ color: "white" }}>View options</b>
             </p>
@@ -452,19 +471,22 @@ const ProjectMode = ({
                     }}
                     style={{
                       borderTop: "1px solid #3E3E3E",
-                    }}>
+                    }}
+                  >
                     <img style={{ height: "18px" }} src={icon} />
                     <p style={{ fontWeight: "400" }}>{label}</p>
                     {menuState[value] ? (
                       <span
                         style={{ fontSize: "20px", color: "white" }}
-                        class="material-symbols-outlined unfollow">
+                        class="material-symbols-outlined unfollow"
+                      >
                         check_box
                       </span>
                     ) : (
                       <span
                         style={{ fontSize: "20px", color: "white" }}
-                        class="material-symbols-outlined unfollow">
+                        class="material-symbols-outlined unfollow"
+                      >
                         check_box_outline_blank
                       </span>
                     )}
@@ -490,16 +512,19 @@ const ProjectMode = ({
           display: "flex",
           flexDirection: "column",
           height: "100%",
-        }}>
+        }}
+      >
         {false && (
           <div
             className="align-center justify-between"
-            style={{ padding: "0.5rem 0 ", justifyContent: "space-between" }}>
+            style={{ padding: "0.5rem 0 ", justifyContent: "space-between" }}
+          >
             <div
               className="back-button"
               onClick={() => {
                 if (setTab) setTab("discover");
-              }}>
+              }}
+            >
               <span class="material-symbols-outlined">keyboard_backspace</span>
               <span>Back to Create</span>
             </div>
@@ -507,7 +532,8 @@ const ProjectMode = ({
         )}
         <div
           className="align-center justify-between"
-          style={{ padding: "0.5rem 0 ", justifyContent: "space-between" }}>
+          style={{ padding: "0.5rem 0 ", justifyContent: "space-between" }}
+        >
           <div className="align-center" style={{ gap: "0.5rem" }}>
             <div
               className="publish-setting"
@@ -521,7 +547,8 @@ const ProjectMode = ({
                 globalThis.LastClickY = y;
                 showPlaylistPosition.current = { ...getPosition() };
                 setShowPlaylistSettings(true);
-              }}>
+              }}
+            >
               <span class="material-symbols-outlined">team_dashboard</span>
             </div>
             <p>Project Mode</p>
@@ -538,7 +565,8 @@ const ProjectMode = ({
               globalThis.LastClickY = y;
               showMorePosition.current = { ...getPosition() };
               setShowMoreOptions(true);
-            }}>
+            }}
+          >
             <img src={Settings_Icon} alt="Settings_Icon" />
           </div>
         </div>
@@ -580,7 +608,8 @@ const ProjectMode = ({
                 }
               }}
               secondaryAlt
-              loading={loading}>
+              loading={loading}
+            >
               Close
             </Button>
           </div>

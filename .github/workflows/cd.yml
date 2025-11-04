@@ -6,8 +6,8 @@ name: Continous Deployment
 on:
   push:
     branches:
-      - 'releases/**'
-      - 'develop'
+      - "releases/**"
+      - "develop"
 
 jobs:
   build:
@@ -34,7 +34,7 @@ jobs:
       - name: Upload AUXes
         uses: actions/upload-artifact@v4
         with:
-          path: 'dist/*.aux'
+          path: "dist/*.aux"
           if-no-files-found: error
       - name: Publish SeedBible Pattern
         run: |

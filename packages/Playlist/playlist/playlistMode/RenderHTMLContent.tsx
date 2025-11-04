@@ -39,7 +39,8 @@ const RenderHTMLContent = ({ htmlContent }) => {
           onClick={(e) => {
             e.stopPropagation();
             setOpen(!open);
-          }}>
+          }}
+        >
           {open ? "Show Less" : "Show more"}
         </span>
       )}

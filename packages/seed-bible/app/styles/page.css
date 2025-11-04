@@ -10,7 +10,8 @@
 
 .no-select .ProseMirror,
 .no-select .ProseMirror *,
-.no-select , .no-select * {
+.no-select,
+.no-select * {
   user-select: none;
   -webkit-user-select: none;
   -ms-user-select: none;
@@ -147,7 +148,9 @@
   /* set up a transparent border to animate */
   border: 2px solid transparent;
   border-radius: 4px;
-  transition: border-color 0.3s ease-in-out, background-color 0.3s ease-in-out;
+  transition:
+    border-color 0.3s ease-in-out,
+    background-color 0.3s ease-in-out;
 }
 
 /* Additions ------> */

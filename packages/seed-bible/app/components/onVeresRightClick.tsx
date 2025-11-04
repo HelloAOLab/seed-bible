@@ -145,4 +145,3 @@ that?.extraContext?.forEach(({ address, label, items }) => {
 // globalThis.ContextMenuOptions = MenuOptions
 // globalThis.OnClosePopup = () => SetInHold(null)
 openPopupSettings(MenuOptions);
-
