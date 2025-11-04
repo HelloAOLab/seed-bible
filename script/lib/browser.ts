@@ -255,6 +255,7 @@ export const DEFAULT_EXTENSIONS = [
     'Scripture Map 3D',
     'Bible Stack',
     'Playlist',
+    'Calendar',
 ];
 
 export async function loadSeedBible(page: Page, extraExtensions: string[] = [], inst: string = uuid(), collaborative: boolean = false) {

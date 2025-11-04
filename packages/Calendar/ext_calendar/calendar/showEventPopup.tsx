@@ -1,0 +1,607 @@
+function formatToYYYYMMDD(date) {
+  const d = new Date(date);
+  const day = String(d.getDate()).padStart(2, '0');
+  const month = String(d.getMonth() + 1).padStart(2, '0');
+  const year = d.getFullYear();
+  return `${year}-${month}-${day}`;
+}
+function showEventPopup(info, setPlaylistMode,setScheduleTitle, setScheduleDescription,addReadingPlans, setPlaylistsToAdd,playlistsToAdd,calendarApi,setCalendarView, onSubmit) {
+  let playListsFiltered = [];
+  let readingPlays = globalThis['defaultplaylists'];
+
+  if (readingPlays.length === 0) {
+    readingPlays = [{
+      checklistEnabled: false, color: "#D9D9D9", dateFormat: "MM-DD-YYYY", description: "", icon: "subscriptions", id: "aa9be68e-33f8-4f55-8452-a56447b5c347"
+      , isCustomColor: false, isCustomIcon: false, isLayers: false, list:
+        [{ type: 'verse', content: 'Genesis 1:1', additionalInfo: {}, id: 'ab7ba93b-15a0-4144-a51c-4c9840a5c2e1' }, { type: 'verse', content: 'Genesis 1:4', additionalInfo: {}, id: 'ca6b309e-9a44-45b0-9dac-19ed9113c7ad' }, { type: 'verse', content: 'Genesis 1:6', additionalInfo: {}, id: '305aafbc-cf29-446f-91a5-12cb8cacc752' }]
+      ,
+      name: "Craigs",
+      nesting
+        :
+        1,
+      readingPlanEnabled
+        :
+        true,
+      selectedTags
+        :
+        []
+    }]
+  }
+  playListsFiltered = readingPlays.filter(item => item.readingPlanEnabled);
+
+  const popup = document.createElement('div');
+  const dayNumber = info.date.getDay();
+  const days = ["Sunday", "Monday", "Tuesday", "Wednesday", "Thursday", "Friday", "Saturday"];
+  const dayName = days[dayNumber];
+  const date = (info.date);
+  const dateStr = formatToYYYYMMDD(info.date);
+  console.log(dateStr)
+  const d = new Date(date);
+  const h = String(d.getHours()).padStart(2, '0');
+  const m = String(d.getMinutes()).padStart(2, '0');
+  const endH = String(d.getHours() + 1).padStart(2, '0');
+
+  const time = `${h}:${m}`;
+  const endTime = `${endH}:${m}`;
+
+  let val;
+  let endVal;
+  if (time === '00:00') {
+    val = '';
+    endVal = '';
+
+  }
+  else {
+    endVal = endTime;
+
+    val = time;
+
+  }
+
+  const checked = {};
+  console.log(info, 'info');
+
+  popup.addEventListener('mousedown', (e) => e.stopPropagation());
+
+  popup.innerHTML = `
+    <div class="google-modal">
+      <input type="text" id="popup-title" placeholder="Add title" class="gm-input title" />
+      <div class="gm-modal-select">
+        <span class="gm-modal-select-1">Event</span>
+        <span class="gm-modal-select-2">Reading plans</span>
+        <span class="gm-modal-select-3">Schedule</span>
+      </div>
+      <div class="gm-modal-event"></div>
+      <div class="gm-actions">
+        <button id="popup-add-btn" class="gm-button gm-button-save">Save</button>
+        <button id="popup-cancel-btn" class="gm-button cancel">Cancel</button>
+      </div>
+    </div>
+  `;
+
+  const modalEvent = popup.querySelector('.gm-modal-event');
+  const eventTab = popup.querySelector('.gm-modal-select-1');
+  const plansTab = popup.querySelector('.gm-modal-select-2');
+  const scheduleTab = popup.querySelector('.gm-modal-select-3');
+
+  const modalOverlay = document.createElement('div');
+  modalOverlay.className = 'custom-modal-overlay';
+  modalOverlay.innerHTML = `
+    <div class="custom-modal">
+      <h1>Custom recurrence</h1>
+      <div class='custom-modal-repeat'>
+        <h4>Repeat on</h4>
+        <div class="custom-modal-repeat-week">
+          <label><input type="checkbox" value="1" /> M</label>
+          <label><input type="checkbox" value="2" /> T</label>
+          <label><input type="checkbox" value="3" /> W</label>
+          <label><input type="checkbox" value="4" /> T</label>
+          <label><input type="checkbox" value="5" /> F</label>
+          <label><input type="checkbox" value="6" /> S</label>
+          <label><input type="checkbox" value="7" /> S</label>
+        </div>
+      </div>
+      <div class="custom-modal-date">
+        <div class='custom-modal-date-start'>
+          <label class="label">Start date</label>
+          <input id="start-date" value="${dateStr}" type='date'/>
+        </div>
+        <div class='custom-modal-date-end'>
+          <label class="label">End date</label>
+          <input id="end-date" value="${dateStr}" type='date'/>
+        </div>
+      </div>
+      <div class="custom-modal-actions" style="margin-top: 12px; text-align: right;">
+        <button id="custom-modal-save">Save</button>
+        <button id="custom-modal-cancel">Cancel</button>
+      </div>
+    </div>
+  `;
+  document.body.appendChild(modalOverlay);
+
+  const customModal = modalOverlay.querySelector('.custom-modal');
+
+  modalOverlay.addEventListener('pointerdown', (e) => e.stopPropagation());
+  modalOverlay.addEventListener('mousedown', (e) => e.stopPropagation());
+  customModal.addEventListener('mousedown', e => e.stopPropagation());
+  customModal.addEventListener('click', e => e.stopPropagation());
+
+
+  modalOverlay.querySelector('#custom-modal-cancel').addEventListener('click', () => {
+    modalOverlay.classList.remove('custom-modal-overlay-show');
+    customModal.classList.remove('custom-modal-show');
+  });
+
+  modalOverlay.querySelector('#custom-modal-save').addEventListener('click', () => {
+    const selected = Array.from(modalOverlay.querySelectorAll('input[type=checkbox]:checked'))
+      .map(cb => Number(cb.value));
+
+    setCustomDays(prev => [...prev, ...selected]); // This assumes setCustomDays is available in your scope
+    modalOverlay.classList.remove('custom-modal-overlay-show');
+    customModal.classList.remove('custom-modal-show');
+  });
+  document.querySelectorAll('input[type="date"]').forEach(input => {
+    input.addEventListener('click', () => {
+      input.showPicker?.(); // Only works in Chromium-based browsers
+    });
+  });
+
+  function renderEventFields() {
+    modalEvent.innerHTML = `
+      <div class='gm-event'>
+       
+       <div class="gm-input-date">
+      <svg
+          style={{ color: 'gray' }}
+          width="24"
+          height="24"
+          fill="none"
+          stroke="gray"
+          strokeWidth="2"
+          strokeLinecap="round"
+          strokeLinejoin="round"
+          viewBox="0 0 24 24"
+        >
+          <rect x="3" y="4" width="18" height="18" rx="2" ry="2" />
+          <line x1="16" y1="2" x2="16" y2="6" />
+          <line x1="8" y1="2" x2="8" y2="6" />
+          <line x1="3" y1="10" x2="21" y2="10" />
+        </svg>
+      <div class="gm-input-date-input">
+           <input id="start-date" class='gm-input-date-input' value="${dateStr}" type="date" />
+           <span class="gm-input-date-span">to</span>
+           <input id="end-date" class='gm-input-date-input' value="${dateStr}"1a13sq3 type="date" />
+       </div>
+    </div>
+   <div style="display: flex; align-items: center; gap: 16px;">
+        <svg
+            style="color: gray; flex-shrink: 0;"
+            width="24"
+            height="24"
+            fill="none"
+            stroke="gray"
+            stroke-width="2"
+            stroke-linecap="round"
+            stroke-linejoin="round"
+            viewBox="0 0 24 24"
+          >
+          <circle cx="12" cy="12" r="10" />
+          <polyline points="12 6 12 12 16 14" />
+        </svg>
+
+  <div style="display: flex; align-items: center; gap: 6px;">
+    <input
+      class="gm-input-start_time"
+      value="${val}"
+      
+      type="time"
+      name="startTime"
+      style="padding: 4px 6px; font-size: 12px; border: 1px solid #ccc; border-radius: 4px;"
+    />
+    <span style="color: gray;">to</span>
+    <input
+    value="${endVal}"
+    class='gm-input-end_time'
+      type="time"
+      name="endTime"
+      style="padding: 4px 6px; font-size: 12px; border: 1px solid #ccc; border-radius: 4px;"
+    />
+
+
+  </div>
+</div>
+
+      <div class="gm-input-svg">
+        <label for="repeatSelect">
+          <svg style="color:gray" xmlns="http://www.w3.org/2000/svg" width="24" height="24"
+            fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"
+            stroke-linejoin="round" class="feather feather-repeat">
+            <polyline points="17 1 21 5 17 9" />
+            <path d="M3 11V9a4 4 0 0 1 4-4h14" />
+            <polyline points="7 23 3 19 7 15" />
+            <path d="M21 13v2a4 4 0 0 1-4 4H3" />
+          </svg>
+        </label>
+        <select id="repeatSelect">
+          <option value="No Repeat">No Repeat</option>
+          <option id="repeatDayOption">Repeat on ${dayName}</option>
+          <option value="custom">Custom</option>
+        </select>
+      </div>
+
+      <div class="gm-input-svg">
+        <svg style="color: gray" xmlns="http://www.w3.org/2000/svg" width="24" height="24"
+          fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"
+          stroke-linejoin="round" class="feather feather-file-text">
+          <path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z" />
+          <polyline points="14 2 14 8 20 8" />
+          <line x1="16" y1="13" x2="8" y2="13" />
+          <line x1="16" y1="17" x2="8" y2="17" />
+          <line x1="10" y1="9" x2="8" y2="9" />
+        </svg>
+        <textarea class="gm-input-description" id="popup-description" placeholder="Add Description" class="gm-input" rows="2"></textarea>
+      </div>
+
+      <div class="gm-input-svg">
+        <svg style="color:gray" xmlns="http://www.w3.org/2000/svg" width="24" height="24"
+          fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"
+          stroke-linejoin="round" class="feather feather-link">
+          <path d="M10 13a5 5 0 0 1 0-7l1-1a5 5 0 0 1 7 7l-1 1" />
+          <path d="M14 11a5 5 0 0 1 0 7l-1 1a5 5 0 0 1-7-7l1-1" />
+        </svg>
+        <input type="text" class='gm-input-link' id="popup-link" placeholder="Link" class="gm-input" />
+      </div>   
+      </div>
+    `;
+    popup.querySelector('#repeatSelect')?.addEventListener('change', (e) => {
+      if (e.target.value === 'custom') {
+        customModal?.classList.add('custom-modal-show');
+        modalOverlay?.classList.add('custom-modal-overlay-show');
+      }
+    });
+
+
+  }
+  function renderReadingPlans() {
+
+
+    modalEvent.innerHTML = '';
+    const title = document.createElement('h2');
+    title.textContent = 'Available Playlists';
+    title.style.marginBottom = '16px';
+    title.style.marginLeft = '30px';
+    title.style.fontSize = '1.25rem';
+    title.style.fontWeight = 'bold';
+    title.style.color = 'black';
+
+    const list = document.createElement('ul');
+    list.style.listStyle = 'none';
+    list.style.padding = '0';
+    list.style.marginLeft = '30px';
+    list.style.maxHeight = '300px';
+    list.style.overflowY = 'auto';
+
+    playListsFiltered.forEach((play) => {
+      const li = document.createElement('li');
+      li.style.marginBottom = '10px';
+      li.style.color = 'black';
+
+      const wrapper = document.createElement('div');
+      wrapper.style.display = 'flex';
+      wrapper.style.alignItems = 'center';
+      wrapper.style.gap = '3px';
+
+      const checkbox = document.createElement('input');
+      checkbox.type = 'checkbox';
+      checkbox.checked = !!checked[play.id];
+      checkbox.onclick = () => {
+        checked[play.id] = !checked[play.id];
+      };
+
+      const label = document.createElement('div');
+      label.textContent = play.name;
+      label.style.border = '1px solid #ddd';
+      label.style.padding = '5px 10px';
+      label.style.cursor = 'pointer';
+      label.style.borderRadius = '6px';
+      label.style.backgroundColor = '#f9f9f9';
+
+      label.onmouseenter = () => label.style.backgroundColor = '#eee';
+      label.onmouseleave = () => label.style.backgroundColor = '#f9f9f9';
+
+      wrapper.appendChild(checkbox);
+      wrapper.appendChild(label);
+      li.appendChild(wrapper);
+      list.appendChild(li);
+    });
+
+    modalEvent.appendChild(title);
+    modalEvent.appendChild(list);
+  }
+
+  function addSchedule() {
+    modalEvent.innerHTML = `
+      <div class='gm-event'>
+       
+       <div class="gm-input-date">
+      <svg
+          style={{ color: 'gray' }}
+          width="24"
+          height="24"
+          fill="none"
+          stroke="gray"
+          strokeWidth="2"
+          strokeLinecap="round"
+          strokeLinejoin="round"
+          viewBox="0 0 24 24"
+        >
+          <rect x="3" y="4" width="18" height="18" rx="2" ry="2" />
+          <line x1="16" y1="2" x2="16" y2="6" />
+          <line x1="8" y1="2" x2="8" y2="6" />
+          <line x1="3" y1="10" x2="21" y2="10" />
+        </svg>
+      <div class="gm-input-date-input">
+           <input id="start-date" class='gm-input-date-input' value="${dateStr}" type="date" />
+           <span class="gm-input-date-span">to</span>
+           <input id="end-date" class='gm-input-date-input' value="${dateStr}"1a13sq3 type="date" />
+       </div>
+    </div>
+   <div style="display: flex; align-items: center; gap: 16px;">
+        <svg
+            style="color: gray; flex-shrink: 0;"
+            width="24"
+            height="24"
+            fill="none"
+            stroke="gray"
+            stroke-width="2"
+            stroke-linecap="round"
+            stroke-linejoin="round"
+            viewBox="0 0 24 24"
+          >
+          <circle cx="12" cy="12" r="10" />
+          <polyline points="12 6 12 12 16 14" />
+        </svg>
+
+  <div style="display: flex; align-items: center; gap: 6px;">
+    <input
+      class="gm-input-start_time"
+      value="${val}"
+      
+      type="time"
+      name="startTime"
+      style="padding: 4px 6px; font-size: 12px; border: 1px solid #ccc; border-radius: 4px;"
+    />
+    <span style="color: gray;">to</span>
+    <input
+    value="${endVal}"
+    class='gm-input-end_time'
+      type="time"
+      name="endTime"
+      style="padding: 4px 6px; font-size: 12px; border: 1px solid #ccc; border-radius: 4px;"
+    />
+
+
+  </div>
+</div>
+
+      <div class="gm-input-svg">
+        <label for="repeatSelect">
+          <svg style="color:gray" xmlns="http://www.w3.org/2000/svg" width="24" height="24"
+            fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"
+            stroke-linejoin="round" class="feather feather-repeat">
+            <polyline points="17 1 21 5 17 9" />
+            <path d="M3 11V9a4 4 0 0 1 4-4h14" />
+            <polyline points="7 23 3 19 7 15" />
+            <path d="M21 13v2a4 4 0 0 1-4 4H3" />
+          </svg>
+        </label>
+        <select id="repeatSelect">
+          <option value="No Repeat">No Repeat</option>
+          <option id="repeatDayOption">Repeat on ${dayName}</option>
+          <option value="custom">Custom</option>
+        </select>
+      </div>
+
+      <div class="gm-input-svg">
+        <svg style="color: gray" xmlns="http://www.w3.org/2000/svg" width="24" height="24"
+          fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"
+          stroke-linejoin="round" class="feather feather-file-text">
+          <path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z" />
+          <polyline points="14 2 14 8 20 8" />
+          <line x1="16" y1="13" x2="8" y2="13" />
+          <line x1="16" y1="17" x2="8" y2="17" />
+          <line x1="10" y1="9" x2="8" y2="9" />
+        </svg>
+        <textarea class="gm-input-description" id="popup-description" placeholder="Add Description" class="gm-input" rows="2"></textarea>
+      </div>
+      </div>`
+
+
+  }
+
+  // Initial render
+  eventTab.classList.add('gm-modal-select-item-selected');
+  renderEventFields();
+
+  eventTab.onclick = () => {
+    setPlaylistMode(prev => !prev);
+    eventTab.classList.add('gm-modal-select-item-selected');
+    plansTab.classList.remove('gm-modal-select-item-selected');
+    scheduleTab.classList.remove('gm-modal-select-item-selected')
+    renderEventFields();
+  };
+
+  plansTab.onclick = () => {
+    setPlaylistMode(prev => !prev);
+    plansTab.classList.add('gm-modal-select-item-selected');
+    eventTab.classList.remove('gm-modal-select-item-selected');
+    scheduleTab.classList.remove('gm-modal-select-item-selected')
+
+    renderReadingPlans();
+
+  };
+
+
+
+  const instance = tippy(document.body, {
+    getReferenceClientRect: () => info.dayEl.getBoundingClientRect(),
+    content: popup,
+    interactive: true,
+    allowHTML: true,
+    trigger: 'manual',
+    placement: 'auto',
+    hideOnClick: false,
+    theme: 'custom-light',
+    appendTo: document.body,
+  });
+
+  instance.show();
+  function addOneHour(startTime) {
+    const [hr, mn] = startTime.split(':').map(Number);
+
+    // Create a Date for today at that time
+    const date = new Date();
+    date.setHours(hr, mn, 0, 0);
+
+    // Add 1 hour
+    date.setHours(date.getHours() + 1);
+
+    // Format back to "HH:mm"
+    const hh = String(date.getHours()).padStart(2, '0');
+    const mm = String(date.getMinutes()).padStart(2, '0');
+    return `${hh}:${mm}`;
+  }
+  const startInput = modalEvent.querySelector('.gm-input-start_time');
+  const endInput = modalEvent.querySelector('.gm-input-end_time');
+  startInput.value = val;        // e.g. "02:11"
+  endInput.value = addOneHour(val);
+
+  // Update end time whenever the user changes start time
+  startInput.addEventListener('change', () => {
+    if (startInput.value) {
+      endInput.value = addOneHour(startInput.value);
+    }
+  });
+
+
+
+
+
+  // Autofocus title
+  setTimeout(() => {
+    popup.querySelector('#popup-title')?.focus();
+  }, 0);
+  scheduleTab.onclick = () => {
+    addSchedule();
+    scheduleTab.classList.add('gm-modal-select-item-selected');
+    eventTab.classList.remove('gm-modal-select-item-selected');
+    plansTab.classList.remove('gm-modal-select-item-selected');
+    const btn = popup.querySelector('.gm-button-save'); // Added dot for class selector
+    if (btn) {
+      btn.textContent = 'Create'; // Use textContent instead of .text
+    }
+
+
+
+  }
+
+
+  function handleClickOutside(e) {
+    const isClickInsidePopup = popup.contains(e.target);
+    const isClickInsideCustomModal = modalOverlay.contains(e.target);
+    if (!isClickInsidePopup && !isClickInsideCustomModal) {
+      instance.hide();
+      modalOverlay.remove();
+      document.removeEventListener('mousedown', handleClickOutside);
+    }
+  }
+  document.addEventListener('mousedown', handleClickOutside);
+
+  // Cancel button
+  popup.querySelector('#popup-cancel-btn')?.addEventListener('click', () => {
+    instance.destroy();
+    instance.hide();
+    modalOverlay.remove();
+  });
+
+  // Save button
+  const addButton = popup.querySelector('#popup-add-btn')
+  addButton?.addEventListener('click', (e) => {
+    e.preventDefault();
+    if (addButton.textContent === 'Create') {
+      setCalendarView('resourceTimeline')
+      calendarApi.current.changeView('resourceTimeline');
+      
+
+      const title = popup.querySelector('#popup-title')?.value || 'Untitled';
+      const description = popup.querySelector('#popup-description')?.value || '';
+
+    
+      const todayStr = new Date().toISOString().split('T')[0];
+
+      const start = popup.querySelector('#start-date')?.value || todayStr;
+      const end = popup.querySelector('#end-date')?.value || todayStr;
+
+      const startTime = popup.querySelector('.gm-input-start_time')?.value || '07:00:00';
+      const endTime = popup.querySelector('.gm-input-end_time')?.value || '19:00:00';
+    
+      
+
+     
+
+      
+      calendarApi.current.setOption('slotMinTime', startTime);
+      calendarApi.current.setOption('slotMaxTime', endTime);
+
+      
+      const endPlusOne = new Date(end);
+      endPlusOne.setDate(endPlusOne.getDate() + 1);
+
+      calendarApi.current.setOption('visibleRange', {
+        start: start, 
+        end: endPlusOne.toISOString().split('T')[0]
+      });
+      setScheduleTitle(title);
+      setScheduleDescription(description);
+
+      
+      calendarApi.current.gotoDate(start);
+      instance.hide();
+      modalOverlay.remove();
+    }
+
+    else {
+
+
+      const title = popup.querySelector('#popup-title')?.value || 'Untitled';
+      const description = popup.querySelector('#popup-description')?.value || '';
+      const link = popup.querySelector('#popup-link')?.value || '';
+      const start = popup.querySelector('#start-date')?.value || date;
+      const end = popup.querySelector('#end-date')?.value || date;
+      const startTime = popup.querySelector('.gm-input-start_time')?.value;
+      const endTime = popup.querySelector('.gm-input-end_time')?.value;
+
+
+
+      const recurVal = popup.querySelector('#repeatSelect')?.value || 'No Repeat';
+      const isPlansTabActive = plansTab.classList.contains('gm-modal-select-item-selected');
+      console.log(isPlansTabActive, 'sass');
+
+      if (isPlansTabActive) {
+        console.log(playListsFiltered,'playlistsfiltered');
+        const selected = playListsFiltered.filter(p => checked[p.id]);
+     
+        
+
+
+        addReadingPlans(selected);
+        
+      }
+
+      onSubmit({ title, description, link, start, end, startTime, endTime, recurVal, isPlansTabActive });
+      instance.hide();
+      modalOverlay.remove();
+    }
+  });
+}
+return showEventPopup;

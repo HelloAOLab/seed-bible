@@ -117,6 +117,8 @@ export function Toolbar() {
 
   if (!showToolbar) return <></>;
 
+  console.log("tools",tools);
+
   return (
     <>
       <link
