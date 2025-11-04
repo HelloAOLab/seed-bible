@@ -1637,7 +1637,7 @@ function Section({
                       book,
                       highlighted: highlighted?.[verse.verseNumber],
                     };
-                    EmitData("verseClicked", verseClickData);
+                    EmitData("onVerseClick", verseClickData);
                     shout("onVerseClick", verseClickData);
                   }}
                   style={{
