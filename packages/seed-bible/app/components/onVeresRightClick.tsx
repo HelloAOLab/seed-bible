@@ -16,7 +16,7 @@ const IconsURL = {
     "https://auth-aux-aobot-prod-filesbucket-141297942820.s3.amazonaws.com/annotations/16a6bc66099d9153e9ae5685c6e0d5517509811db6107405c0273af32b253801.svg",
 };
 
-const SharePopup = thisBot.Chips();
+const {SharePopup} = thisBot.Chips();
 const MenuOptions = {
   type: "normal",
   items: [

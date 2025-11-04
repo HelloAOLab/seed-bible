@@ -155,6 +155,9 @@ export function UserPresence() {
     };
   }, [showSettings]);
   useEffect(() => {
+    if(configBot.hosted){
+      handleBarClick()
+    }
     (async () => {
       const id = await getSelfIdSafe();
       setSelfId(id);

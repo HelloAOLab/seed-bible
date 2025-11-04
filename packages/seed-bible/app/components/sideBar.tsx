@@ -1013,7 +1013,7 @@ function SideBar() {
     type: "normal",
     items: [
       {
-        disabled: false,
+        disabled: !configBot.inst,
         icon: <MenuIcon name="screen_record" />,
         title: "Start session",
         onClick: () => {
@@ -1022,26 +1022,24 @@ function SideBar() {
         },
       },
       {
-        disabled: true,
+        disabled: false,
         icon: <MenuIcon name="logout" />,
-        title: "Join a Lobby",
+        title: "Invite to session",
         onClick: async () => {
+          const {QRCodeComponent} = thisBot.Chips();
+          const url = `https://ao.bot/?pattern=SeedBibleDev&inst=${uuid()}&hosted=${configBot.id}`;
+          ShowModal(<QRCodeComponent url={url} />);
+        },
+      },
+      {
+        disabled: false,
+        icon: <MenuIcon name="content_copy" />,
+        title: "Join another session",
+         onClick: async () => {
           const id = await os.showInput("", {
             title: "Enter session link",
           });
           if (id) os.goToURL(id);
-        },
-      },
-      {
-        disabled: true,
-        icon: <MenuIcon name="content_copy" />,
-        title: "Copy session link",
-        onClick: () => {
-          os.setClipboard(
-            `https://ao.bot/?pattern=SeedBibleDev&noGridPortal=true&inst=${os.getCurrentInst()}&join=${
-              configBot.id
-            }`
-          );
         },
       },
       { type: "line" },

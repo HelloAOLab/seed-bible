@@ -42,6 +42,7 @@ export function MouseMoveProvider({ children }) {
   const [floatingApps, setFloatingApps] = useState([]);
   const [slideIn, setSlideIn] = useState(false);
   const [hiddenApps, setHiddenApps] = useState([]);
+  const [modalContent, setModalContent] = useState(null);
 
   useEffect(() => {
     // safe if not defined
@@ -52,6 +53,8 @@ export function MouseMoveProvider({ children }) {
   globalThis.SetElement = setElement;
   globalThis.SetIsDragging = setIsDragging;
   globalThis.isAbleToRightClick = isAbleToRightClick;
+  globalThis.ShowModal = (content) => setModalContent(content);
+  globalThis.CloseModal = () => setModalContent(null);
 
   // create
   globalThis.AddFloatingApp = (appConfig) => {
@@ -463,6 +466,8 @@ export function MouseMoveProvider({ children }) {
         hiddenApps,
         slideOutApp,
         slideInApp,
+        modalContent,
+        setModalContent,
       }}
     >
       {isDragging && (
@@ -540,6 +545,35 @@ export function MouseMoveProvider({ children }) {
               </span>
             </button>
           ))}
+        </div>
+      )}
+
+      {modalContent && (
+        <div
+          onClick={() => setModalContent(null)}
+          style={{
+            position: "fixed",
+            inset: 0,
+            zIndex: 9999,
+            display: "flex",
+            alignItems: "center",
+            justifyContent: "center",
+            background: "rgba(0,0,0,0.5)",
+            backdropFilter: "blur(4px)",
+          }}
+        >
+          <div
+            onClick={(e) => e.stopPropagation()}
+            style={{
+              maxWidth: "90vw",
+              maxHeight: "90vh",
+              height:'fit-content',
+              width:'fit-content',
+              overflow: "auto",
+            }}
+          >
+            {modalContent}
+          </div>
         </div>
       )}
 

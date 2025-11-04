@@ -386,4 +386,114 @@ function SharePopup({
   );
 }
 
-return SharePopup;
+const QRCodeComponent = ({ url = "https://example.com/session/12345" }) => {
+  const [copied, setCopied] = useState(false);
+  
+  // Generate QR code URL using a free API
+  const qrCodeUrl = `https://api.qrserver.com/v1/create-qr-code/?size=200x200&data=${encodeURIComponent(url)}`;
+  
+  const handleCopy = async () => {
+    os.setClipboard(url)
+  };
+  
+  return (
+    <div style={{
+      display: 'flex',
+      flexDirection: 'column',
+      alignItems: 'center',
+      justifyContent: 'center',
+      // minHeight: '100vh',
+      // background: 'linear-gradient(135deg, #667eea 0%, #764ba2 100%)',
+      // fontFamily: '-apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif',
+      padding: '20px'
+    }}>
+      <div style={{
+        background: 'white',
+        borderRadius: '20px',
+        padding: '40px',
+        boxShadow: '0 20px 60px rgba(0, 0, 0, 0.3)',
+        maxWidth: '400px',
+        width: '100%'
+      }}>
+        <h2 style={{
+          textAlign: 'center',
+          color: '#333',
+          marginTop: 0,
+          marginBottom: '30px',
+          fontSize: '24px',
+          fontWeight: '600'
+        }}>
+          Session QR Code
+        </h2>
+        
+        <div style={{
+          background: '#f8f9fa',
+          borderRadius: '12px',
+          padding: '20px',
+          marginBottom: '24px',
+          display: 'flex',
+          justifyContent: 'center',
+          alignItems: 'center'
+        }}>
+          <img 
+            src={qrCodeUrl} 
+            alt="QR Code"
+            style={{
+              width: '200px',
+              height: '200px',
+              display: 'block'
+            }}
+          />
+        </div>
+        
+        <div style={{
+          background: '#f1f3f5',
+          borderRadius: '8px',
+          padding: '12px 16px',
+          marginBottom: '16px',
+          fontSize: '14px',
+          color: '#495057',
+          wordBreak: 'break-all',
+          fontFamily: 'monospace'
+        }}>
+          {url}
+        </div>
+        
+        <button
+          onClick={handleCopy}
+          style={{
+            width: '100%',
+            padding: '14px',
+            background: copied ? '#28a745' : '#667eea',
+            color: 'white',
+            border: 'none',
+            borderRadius: '8px',
+            fontSize: '16px',
+            fontWeight: '600',
+            cursor: 'pointer',
+            transition: 'all 0.3s ease',
+            transform: copied ? 'scale(0.98)' : 'scale(1)',
+            boxShadow: copied ? 'none' : '0 4px 12px rgba(102, 126, 234, 0.4)'
+          }}
+          onMouseEnter={(e) => {
+            if (!copied) {
+              e.target.style.background = '#5568d3';
+              e.target.style.transform = 'translateY(-2px)';
+              e.target.style.boxShadow = '0 6px 16px rgba(102, 126, 234, 0.5)';
+            }
+          }}
+          onMouseLeave={(e) => {
+            if (!copied) {
+              e.target.style.background = '#667eea';
+              e.target.style.transform = 'translateY(0)';
+              e.target.style.boxShadow = '0 4px 12px rgba(102, 126, 234, 0.4)';
+            }
+          }}
+        >
+          {copied ? '✓ Copied!' : 'Copy Session Link'}
+        </button>
+      </div>
+    </div>
+  );
+};
+return {SharePopup,QRCodeComponent};
