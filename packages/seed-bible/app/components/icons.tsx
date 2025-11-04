@@ -3,30 +3,30 @@ const SplitScreenIcon = ({ size = 24 }) => {
 
   const styles = {
     iconWrapper: {
-      display: 'inline-flex',
-      position: 'relative',
+      display: "inline-flex",
+      position: "relative",
       width: size,
       height: size,
     },
     screenLeft: {
-      position: 'absolute',
+      position: "absolute",
       left: 2 * scale,
       top: 2 * scale,
       width: 9 * scale,
       height: 20 * scale,
       border: `${1 * scale}px solid #666`,
       borderRadius: 1 * scale,
-      backgroundColor: '#e0e0e0',
+      backgroundColor: "#e0e0e0",
     },
     screenRight: {
-      position: 'absolute',
+      position: "absolute",
       right: 2 * scale,
       top: 2 * scale,
       width: 9 * scale,
       height: 20 * scale,
       borderRadius: 1 * scale,
-      backgroundColor: '#666',
-    }
+      backgroundColor: "#666",
+    },
   };
 
   return (
@@ -37,10 +37,12 @@ const SplitScreenIcon = ({ size = 24 }) => {
   );
 };
 export const SpaceDefaultIcon = () => {
-  return <div class="activeBg">
-    <span></span>
-  </div>
-}
+  return (
+    <div class="activeBg">
+      <span></span>
+    </div>
+  );
+};
 export function SeedBibleIcon() {
   return (
     <img
@@ -48,15 +50,22 @@ export function SeedBibleIcon() {
       style={{
         width: "40px",
         height: "42px",
-        objectFit: "cover",      // crop to fit box
-        objectPosition: "center" // adjust focal point
+        objectFit: "cover", // crop to fit box
+        objectPosition: "center", // adjust focal point
       }}
     />
   );
 }
-export const ApologistIcon = () => {
-  return <img style={{ filter: "invert(1)", width: "24px" }} src="https://res.cloudinary.com/dfbtwwa8p/image/upload/v1755794631/svgviewer-png-output_1_tgtfvm.png" />
-}
+
+export const ApologistIcon = (noFilter = false) => {
+  return (
+    <img
+      style={{ filter: noFilter ? "" : "invert(1)", width: "24px" }}
+      src="https://res.cloudinary.com/dfbtwwa8p/image/upload/v1755794631/svgviewer-png-output_1_tgtfvm.png"
+    />
+  );
+};
+
 const AiIcon = (props) => (
   <svg
     width={24}
@@ -65,16 +74,14 @@ const AiIcon = (props) => (
     fill="none"
     xmlns="http://www.w3.org/2000/svg"
     xmlnsXlink="http://www.w3.org/1999/xlink"
-    {...props}
-  >
+    {...props}>
     <rect width={24} height={24} fill="url(#pattern0_1_7061)" />
     <defs>
       <pattern
         id="pattern0_1_7061"
         patternContentUnits="objectBoundingBox"
         width={1}
-        height={1}
-      >
+        height={1}>
         <use xlinkHref="#image0_1_7061" transform="scale(0.00195312)" />
       </pattern>
       <image
@@ -86,7 +93,7 @@ const AiIcon = (props) => (
       />
     </defs>
   </svg>
-)
+);
 const AiChatIcon = (props) => (
   <svg
     width={24}
@@ -95,16 +102,14 @@ const AiChatIcon = (props) => (
     fill="none"
     xmlns="http://www.w3.org/2000/svg"
     xmlnsXlink="http://www.w3.org/1999/xlink"
-    {...props}
-  >
+    {...props}>
     <rect width={24} height={24} fill="url(#pattern0_88_7498)" />
     <defs>
       <pattern
         id="pattern0_88_7498"
         patternContentUnits="objectBoundingBox"
         width={1}
-        height={1}
-      >
+        height={1}>
         <use xlinkHref="#image0_88_7498" transform="scale(0.00195312)" />
       </pattern>
       <image
@@ -124,8 +129,7 @@ const UserAvatar = (props) => (
     height={24}
     viewBox="0 0 24 24"
     fill="none"
-    {...props}
-  >
+    {...props}>
     <path
       d="M5.85 17.1C6.7 16.45 7.65 15.9375 8.7 15.5625C9.75 15.1875 10.85 15 12 15C13.15 15 14.25 15.1875 15.3 15.5625C16.35 15.9375 17.3 16.45 18.15 17.1C18.7333 16.4167 19.1875 15.6417 19.5125 14.775C19.8375 13.9083 20 12.9833 20 12C20 9.78333 19.2208 7.89583 17.6625 6.3375C16.1042 4.77917 14.2167 4 12 4C9.78333 4 7.89583 4.77917 6.3375 6.3375C4.77917 7.89583 4 9.78333 4 12C4 12.9833 4.1625 13.9083 4.4875 14.775C4.8125 15.6417 5.26667 16.4167 5.85 17.1ZM12 13C11.0167 13 10.1875 12.6625 9.5125 11.9875C8.8375 11.3125 8.5 10.4833 8.5 9.5C8.5 8.51667 8.8375 7.6875 9.5125 7.0125C10.1875 6.3375 11.0167 6 12 6C12.9833 6 13.8125 6.3375 14.4875 7.0125C15.1625 7.6875 15.5 8.51667 15.5 9.5C15.5 10.4833 15.1625 11.3125 14.4875 11.9875C13.8125 12.6625 12.9833 13 12 13ZM12 22C10.6167 22 9.31667 21.7375 8.1 21.2125C6.88333 20.6875 5.825 19.975 4.925 19.075C4.025 18.175 3.3125 17.1167 2.7875 15.9C2.2625 14.6833 2 13.3833 2 12C2 10.6167 2.2625 9.31667 2.7875 8.1C3.3125 6.88333 4.025 5.825 4.925 4.925C5.825 4.025 6.88333 3.3125 8.1 2.7875C9.31667 2.2625 10.6167 2 12 2C13.3833 2 14.6833 2.2625 15.9 2.7875C17.1167 3.3125 18.175 4.025 19.075 4.925C19.975 5.825 20.6875 6.88333 21.2125 8.1C21.7375 9.31667 22 10.6167 22 12C22 13.3833 21.7375 14.6833 21.2125 15.9C20.6875 17.1167 19.975 18.175 19.075 19.075C18.175 19.975 17.1167 20.6875 15.9 21.2125C14.6833 21.7375 13.3833 22 12 22Z"
       fill="#606060"
@@ -138,31 +142,31 @@ const DualScreenIcon = ({ size = 24 }) => {
 
   const styles = {
     iconWrapper: {
-      display: 'inline-flex',
-      position: 'relative',
+      display: "inline-flex",
+      position: "relative",
       width: size,
       height: size,
     },
     screenLeft: {
-      position: 'absolute',
+      position: "absolute",
       left: 2 * scale,
       top: 2 * scale,
       width: 9 * scale,
       height: 20 * scale,
       border: `${1 * scale}px solid #666`,
       borderRadius: 1 * scale,
-      backgroundColor: '#e0e0e0',
+      backgroundColor: "#e0e0e0",
     },
     screenRight: {
-      position: 'absolute',
+      position: "absolute",
       right: 2 * scale,
       top: 2 * scale,
       width: 9 * scale,
       height: 20 * scale,
       border: `${1 * scale}px solid #666`,
       borderRadius: 1 * scale,
-      backgroundColor: '#e0e0e0',
-    }
+      backgroundColor: "#e0e0e0",
+    },
   };
 
   return (
@@ -178,8 +182,7 @@ const ToolbarIcon = (props) => (
     width="24"
     height="24"
     viewBox="0 0 24 24"
-    fill="black"
-  >
+    fill="black">
     <path
       d="M18.85 21.975C18.7167 21.975 18.5917 21.9542 18.475 21.9125C18.3583 21.8708 18.25 21.8 18.15 21.7L13.05 16.6C12.95 16.5 12.8792 16.3917 12.8375 16.275C12.7958 16.1583 12.775 16.0333 12.775 15.9C12.775 15.7667 12.7958 15.6417 12.8375 15.525C12.8792 15.4083 12.95 15.3 13.05 15.2L15.175 13.075C15.275 12.975 15.3833 12.9042 15.5 12.8625C15.6167 12.8208 15.7417 12.8 15.875 12.8C16.0083 12.8 16.1333 12.8208 16.25 12.8625C16.3667 12.9042 16.475 12.975 16.575 13.075L21.675 18.175C21.775 18.275 21.8458 18.3833 21.8875 18.5C21.9292 18.6167 21.95 18.7417 21.95 18.875C21.95 19.0083 21.9292 19.1333 21.8875 19.25C21.8458 19.3667 21.775 19.475 21.675 19.575L19.55 21.7C19.45 21.8 19.3417 21.8708 19.225 21.9125C19.1083 21.9542 18.9833 21.975 18.85 21.975ZM5.125 22C4.99167 22 4.8625 21.975 4.7375 21.925C4.6125 21.875 4.5 21.8 4.4 21.7L2.3 19.6C2.2 19.5 2.125 19.3875 2.075 19.2625C2.025 19.1375 2 19.0083 2 18.875C2 18.7417 2.025 18.6167 2.075 18.5C2.125 18.3833 2.2 18.275 2.3 18.175L7.6 12.875H9.725L10.575 12.025L6.45 7.9H5.025L2 4.875L4.825 2.05L7.85 5.075V6.5L11.975 10.625L14.875 7.725L13.8 6.65L15.2 5.25H12.375L11.675 4.55L15.225 1L15.925 1.7V4.525L17.325 3.125L20.875 6.675C21.1583 6.95833 21.375 7.27917 21.525 7.6375C21.675 7.99583 21.75 8.375 21.75 8.775C21.75 9.175 21.675 9.55833 21.525 9.925C21.375 10.2917 21.1583 10.6167 20.875 10.9L18.75 8.775L17.35 10.175L16.3 9.125L11.125 14.3V16.4L5.825 21.7C5.725 21.8 5.61667 21.875 5.5 21.925C5.38333 21.975 5.25833 22 5.125 22Z"
       fill="black"
@@ -192,41 +195,41 @@ const ThreeScreenIcon = ({ size = 24 }) => {
 
   const styles = {
     iconWrapper: {
-      display: 'inline-flex',
-      position: 'relative',
+      display: "inline-flex",
+      position: "relative",
       width: size,
       height: size,
     },
     screenLeft: {
-      position: 'absolute',
+      position: "absolute",
       left: 2 * scale,
       top: 2 * scale,
       width: 9 * scale,
       height: 18.5 * scale,
       border: `${1 * scale}px solid #666`,
       borderRadius: 1 * scale,
-      backgroundColor: '#e0e0e0',
+      backgroundColor: "#e0e0e0",
     },
     screenRightTop: {
-      position: 'absolute',
+      position: "absolute",
       right: 2 * scale,
       top: 2 * scale,
       width: 9 * scale,
       height: 9 * scale,
       border: `${1 * scale}px solid #666`,
       borderRadius: 1 * scale,
-      backgroundColor: '#e0e0e0',
+      backgroundColor: "#e0e0e0",
     },
     screenRightBottom: {
-      position: 'absolute',
+      position: "absolute",
       right: 2 * scale,
       bottom: 2 * scale,
       width: 9 * scale,
       height: 9 * scale,
       border: `${1 * scale}px solid #666`,
       borderRadius: 1 * scale,
-      backgroundColor: '#e0e0e0',
-    }
+      backgroundColor: "#e0e0e0",
+    },
   };
 
   return (
@@ -244,51 +247,51 @@ const QuadScreenIcon = ({ size = 24 }) => {
 
   const styles = {
     iconWrapper: {
-      display: 'inline-flex',
-      position: 'relative',
+      display: "inline-flex",
+      position: "relative",
       width: size,
       height: size,
     },
     screenTopLeft: {
-      position: 'absolute',
+      position: "absolute",
       left: 2 * scale,
       top: 2 * scale,
       width: 9 * scale,
       height: 9 * scale,
       border: `${1 * scale}px solid #666`,
       borderRadius: 1 * scale,
-      backgroundColor: '#e0e0e0',
+      backgroundColor: "#e0e0e0",
     },
     screenTopRight: {
-      position: 'absolute',
+      position: "absolute",
       right: 2 * scale,
       top: 2 * scale,
       width: 9 * scale,
       height: 9 * scale,
       border: `${1 * scale}px solid #666`,
       borderRadius: 1 * scale,
-      backgroundColor: '#e0e0e0',
+      backgroundColor: "#e0e0e0",
     },
     screenBottomLeft: {
-      position: 'absolute',
+      position: "absolute",
       left: 2 * scale,
       bottom: 2 * scale,
       width: 9 * scale,
       height: 9 * scale,
       border: `${1 * scale}px solid #666`,
       borderRadius: 1 * scale,
-      backgroundColor: '#e0e0e0',
+      backgroundColor: "#e0e0e0",
     },
     screenBottomRight: {
-      position: 'absolute',
+      position: "absolute",
       right: 2 * scale,
       bottom: 2 * scale,
       width: 9 * scale,
       height: 9 * scale,
       border: `${1 * scale}px solid #666`,
       borderRadius: 1 * scale,
-      backgroundColor: '#e0e0e0',
-    }
+      backgroundColor: "#e0e0e0",
+    },
   };
 
   return (
@@ -301,7 +304,6 @@ const QuadScreenIcon = ({ size = 24 }) => {
   );
 };
 
-
 const Playlist = (props) => (
   <svg
     width={24}
@@ -309,8 +311,7 @@ const Playlist = (props) => (
     viewBox="0 0 24 24"
     fill="none"
     xmlns="http://www.w3.org/2000/svg"
-    {...props}
-  >
+    {...props}>
     <path
       d="M2 14.6667V12.5333H10.5333V14.6667H2ZM2 10.4V8.26667H14.8V10.4H2ZM2 6.13333V4H14.8V6.13333H2ZM15.8667 20V11.4667L22.2667 15.7333L15.8667 20Z"
       fill="black"
@@ -324,8 +325,7 @@ const MenuDown = (props) => (
     height={16}
     viewBox="0 0 16 16"
     fill="none"
-    {...props}
-  >
+    {...props}>
     <path
       d="M7.99935 9.99935L4.66602 6.66602H11.3327L7.99935 9.99935Z"
       fill="black"
@@ -338,20 +338,20 @@ const SingleScreenIcon = ({ size = 24 }) => {
 
   const styles = {
     iconWrapper: {
-      display: 'inline-flex',
-      position: 'relative',
+      display: "inline-flex",
+      position: "relative",
       width: size,
       height: size,
     },
     screen: {
-      position: 'absolute',
+      position: "absolute",
       left: 2 * scale,
       top: 2 * scale,
       width: 20 * scale,
       height: 20 * scale,
       border: `${1 * scale}px solid #666`,
       borderRadius: 1 * scale,
-      backgroundColor: '#e0e0e0',
+      backgroundColor: "#e0e0e0",
     },
   };
 
@@ -374,8 +374,7 @@ export const Panel1 = () => {
         width: "105px",
         height: "65px",
         "border-radius": "5px",
-      }}
-    >
+      }}>
       <span style={{ fontSize: "10px" }}>1</span>
     </div>
   );
@@ -393,8 +392,7 @@ export const Panel2 = () => {
           width: "60px",
           height: "65px",
           "border-radius": "3px 0px 0px 3px",
-        }}
-      >
+        }}>
         <span style={{ fontSize: "10px" }}>1</span>
       </div>
       <div
@@ -407,8 +405,7 @@ export const Panel2 = () => {
           width: "40px",
           height: "65px",
           "border-radius": " 0px 3px 3px 0px",
-        }}
-      >
+        }}>
         <span style={{ fontSize: "10px" }}>2</span>
       </div>
     </div>
@@ -427,8 +424,7 @@ export const Panel3 = () => {
           width: "60px",
           height: "65px",
           "border-radius": "3px 0px 0px 3px",
-        }}
-      >
+        }}>
         <span style={{ fontSize: "10px" }}>1</span>
       </div>
       <div style={{ display: "flex", flexDirection: "column", gap: "1px" }}>
@@ -442,8 +438,7 @@ export const Panel3 = () => {
             width: "40px",
             height: "32px",
             "border-radius": " 0px 3px 0px 0px",
-          }}
-        >
+          }}>
           <span style={{ fontSize: "10px" }}>2</span>
         </div>
         <div
@@ -456,8 +451,7 @@ export const Panel3 = () => {
             width: "40px",
             height: "32px",
             "border-radius": " 0px 0px 3px 0px",
-          }}
-        >
+          }}>
           <span style={{ fontSize: "10px" }}>3</span>
         </div>
       </div>
@@ -478,8 +472,7 @@ export const Panel4 = () => {
             width: "50px",
             height: "32px",
             "border-radius": " 3px 0px 0px 0px",
-          }}
-        >
+          }}>
           <span style={{ fontSize: "10px" }}>1</span>
         </div>
         <div
@@ -492,8 +485,7 @@ export const Panel4 = () => {
             width: "50px",
             height: "32px",
             "border-radius": "  0px 0px 0px 3px",
-          }}
-        >
+          }}>
           <span style={{ fontSize: "10px" }}>2</span>
         </div>
       </div>
@@ -508,8 +500,7 @@ export const Panel4 = () => {
             width: "50px",
             height: "32px",
             "border-radius": " 0px 3px 0px 0px",
-          }}
-        >
+          }}>
           <span style={{ fontSize: "10px" }}>3</span>
         </div>
         <div
@@ -522,8 +513,7 @@ export const Panel4 = () => {
             width: "50px",
             height: "32px",
             "border-radius": " 0px 0px 3px 0px",
-          }}
-        >
+          }}>
           <span style={{ fontSize: "10px" }}>4</span>
         </div>
       </div>
@@ -544,8 +534,7 @@ export const Panel3Row = () => {
           width: "35px",
           height: "65px",
           "border-radius": "3px 0px 0px 3px",
-        }}
-      >
+        }}>
         <span style={{ fontSize: "10px" }}>1</span>
       </div>
       <div
@@ -558,8 +547,7 @@ export const Panel3Row = () => {
           width: "33px",
           height: "65px",
           "border-radius": " 0px 0px 0px 0px",
-        }}
-      >
+        }}>
         <span style={{ fontSize: "10px" }}>2</span>
       </div>
       <div
@@ -572,8 +560,7 @@ export const Panel3Row = () => {
           width: "33px",
           height: "65px",
           "border-radius": " 0px 3px 3px 0px",
-        }}
-      >
+        }}>
         <span style={{ fontSize: "10px" }}>3</span>
       </div>
     </div>
@@ -593,8 +580,7 @@ export const Panel4Row = () => {
           width: "25px",
           height: "65px",
           "border-radius": "3px 0px 0px 3px",
-        }}
-      >
+        }}>
         <span style={{ fontSize: "10px" }}>1</span>
       </div>
       <div
@@ -607,8 +593,7 @@ export const Panel4Row = () => {
           width: "25px",
           height: "65px",
           "border-radius": " 0px 0px 0px 0px",
-        }}
-      >
+        }}>
         <span style={{ fontSize: "10px" }}>2</span>
       </div>
       <div
@@ -621,8 +606,7 @@ export const Panel4Row = () => {
           width: "25px",
           height: "65px",
           "border-radius": " 0px 0px 0px 0px",
-        }}
-      >
+        }}>
         <span style={{ fontSize: "10px" }}>3</span>
       </div>
       <div
@@ -635,8 +619,7 @@ export const Panel4Row = () => {
           width: "25px",
           height: "65px",
           "border-radius": " 0px 3px 3px 0px",
-        }}
-      >
+        }}>
         <span style={{ fontSize: "10px" }}>4</span>
       </div>
     </div>
@@ -649,19 +632,39 @@ export const ThemeIcon = (props) => (
     viewBox="0 0 24 24"
     fill="none"
     xmlns="http://www.w3.org/2000/svg"
-    {...props}
-  >
+    {...props}>
     <path
       d="M7 16C6.80222 16 6.60888 16.0586 6.44443 16.1685C6.27998 16.2784 6.15181 16.4346 6.07612 16.6173C6.00043 16.8 5.98063 17.0011 6.01921 17.1951C6.0578 17.3891 6.15304 17.5673 6.29289 17.7071C6.43275 17.847 6.61093 17.9422 6.80491 17.9808C6.99889 18.0194 7.19996 17.9996 7.38268 17.9239C7.56541 17.8482 7.72159 17.72 7.83147 17.5556C7.94135 17.3911 8 17.1978 8 17C8 16.7348 7.89464 16.4804 7.70711 16.2929C7.51957 16.1054 7.26522 16 7 16ZM19.06 12L20.29 10.77C20.8518 10.2075 21.1674 9.445 21.1674 8.65C21.1674 7.855 20.8518 7.0925 20.29 6.53L17.46 3.71C16.8975 3.1482 16.135 2.83264 15.34 2.83264C14.545 2.83264 13.7825 3.1482 13.22 3.71L12 4.94C11.9843 4.15479 11.6613 3.40706 11.1004 2.85736C10.5395 2.30766 9.78536 1.99984 9 2H5C4.20435 2 3.44129 2.31607 2.87868 2.87868C2.31607 3.44129 2 4.20435 2 5V19C2 19.7956 2.31607 20.5587 2.87868 21.1213C3.44129 21.6839 4.20435 22 5 22H19C19.7956 22 20.5587 21.6839 21.1213 21.1213C21.6839 20.5587 22 19.7956 22 19V15C22.0002 14.2146 21.6923 13.4605 21.1426 12.8996C20.5929 12.3387 19.8452 12.0157 19.06 12ZM10 19C10 19.2652 9.89464 19.5196 9.70711 19.7071C9.51957 19.8946 9.26522 20 9 20H5C4.73478 20 4.48043 19.8946 4.29289 19.7071C4.10536 19.5196 4 19.2652 4 19V5C4 4.73478 4.10536 4.48043 4.29289 4.29289C4.48043 4.10536 4.73478 4 5 4H9C9.26522 4 9.51957 4.10536 9.70711 4.29289C9.89464 4.48043 10 4.73478 10 5V19ZM12 7.76L14.64 5.12C14.8274 4.93375 15.0808 4.82921 15.345 4.82921C15.6092 4.82921 15.8626 4.93375 16.05 5.12L18.88 8C19.0662 8.18736 19.1708 8.44081 19.1708 8.705C19.1708 8.96919 19.0662 9.22264 18.88 9.41L16 12.29L12 16.24V7.76ZM20 19C20 19.2652 19.8946 19.5196 19.7071 19.7071C19.5196 19.8946 19.2652 20 19 20H11.82C11.9226 19.7036 11.9799 19.3935 11.99 19.08L17.07 14H19C19.2652 14 19.5196 14.1054 19.7071 14.2929C19.8946 14.4804 20 14.7348 20 15V19Z"
       fill="black"
     />
   </svg>
 );
-const MenuIcon = ({ name, size = 24 }) => {
-  return <span className="material-symbols-outlined" style={{ fontSize: size }}>
-    {name}
-  </span>
+const MenuIcon = ({ name, size = 24, invert = false }) => {
+  // Check if `name` looks like an image URL
+  const isImage =
+    typeof name === "string" && name.match(/\.(png|jpg|jpeg|svg|gif|webp)$/i);
+
+  const imageStyle = {
+    width: isImage ? size : undefined,
+    height: isImage ? size : undefined,
+    filter: invert ? "invert(1)" : undefined,
+    objectFit: "contain",
+  };
+
+  const iconStyle = {
+    fontSize: isImage ? 16 : size,
+    filter: invert ? "invert(1)" : undefined,
+  };
+
+  return isImage ? (
+    <img src={name} alt="icon" style={imageStyle} />
+  ) : (
+    <span className="material-symbols-outlined" style={iconStyle}>
+      {name}
+    </span>
+  );
 };
+
 const T = (props) => (
   <svg
     xmlns="http://www.w3.org/2000/svg"
@@ -669,8 +672,7 @@ const T = (props) => (
     height={24}
     viewBox="0 0 24 24"
     fill="none"
-    {...props}
-  >
+    {...props}>
     <path
       d="M4 7V4H20V7"
       stroke="black"
@@ -702,16 +704,14 @@ const Panal = (props) => (
     fill="none"
     xmlns="http://www.w3.org/2000/svg"
     xmlnsXlink="http://www.w3.org/1999/xlink"
-    {...props}
-  >
+    {...props}>
     <rect width={24} height={24} fill="url(#pattern0_1_6904)" />
     <defs>
       <pattern
         id="pattern0_1_6904"
         patternContentUnits="objectBoundingBox"
         width={1}
-        height={1}
-      >
+        height={1}>
         <use xlinkHref="#image0_1_6904" transform="scale(0.00195312)" />
       </pattern>
       <image
@@ -732,16 +732,14 @@ const Space = (props) => (
     fill="none"
     xmlns="http://www.w3.org/2000/svg"
     xmlnsXlink="http://www.w3.org/1999/xlink"
-    {...props}
-  >
+    {...props}>
     <rect opacity={0.6} width={24} height={24} fill="url(#pattern0_88_6761)" />
     <defs>
       <pattern
         id="pattern0_88_6761"
         patternContentUnits="objectBoundingBox"
         width={1}
-        height={1}
-      >
+        height={1}>
         <use xlinkHref="#image0_88_6761" transform="scale(0.00195312)" />
       </pattern>
       <image
@@ -761,8 +759,7 @@ const LoadSpace = (props) => (
     height={24}
     viewBox="0 0 24 24"
     fill="none"
-    {...props}
-  >
+    {...props}>
     <path
       d="M12 22C10.6167 22 9.31667 21.7375 8.1 21.2125C6.88333 20.6875 5.825 19.975 4.925 19.075C4.025 18.175 3.3125 17.1167 2.7875 15.9C2.2625 14.6833 2 13.3833 2 12C2 9.8 2.64167 7.82083 3.925 6.0625C5.20833 4.30417 6.9 3.1 9 2.45V4.6C7.48333 5.21667 6.27083 6.19583 5.3625 7.5375C4.45417 8.87917 4 10.3667 4 12C4 14.2333 4.775 16.125 6.325 17.675C7.875 19.225 9.76667 20 12 20C14.2333 20 16.125 19.225 17.675 17.675C19.225 16.125 20 14.2333 20 12C20 10.3667 19.5458 8.87917 18.6375 7.5375C17.7292 6.19583 16.5167 5.21667 15 4.6V2.45C17.1 3.1 18.7917 4.30417 20.075 6.0625C21.3583 7.82083 22 9.8 22 12C22 13.3833 21.7375 14.6833 21.2125 15.9C20.6875 17.1167 19.975 18.175 19.075 19.075C18.175 19.975 17.1167 20.6875 15.9 21.2125C14.6833 21.7375 13.3833 22 12 22ZM12 16L7 11L8.4 9.6L11 12.175V2H13V12.175L15.6 9.6L17 11L12 16Z"
       fill="#727272"
@@ -770,9 +767,17 @@ const LoadSpace = (props) => (
   </svg>
 );
 const FolderIcon = () => (
-  <svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none">
+  <svg
+    xmlns="http://www.w3.org/2000/svg"
+    width="24"
+    height="24"
+    viewBox="0 0 24 24"
+    fill="none">
     <g clip-path="url(#clip0_1_2625)">
-      <path d="M19.5 20.5002H4.5C3.84661 20.5082 3.21666 20.257 2.7481 19.8015C2.27953 19.3461 2.01053 18.7235 2 18.0702V5.93019C2.01053 5.27683 2.27953 4.65427 2.7481 4.19883C3.21666 3.74338 3.84661 3.49216 4.5 3.50019H9.1C9.24771 3.50116 9.39336 3.53485 9.5265 3.59882C9.65964 3.6628 9.77695 3.75547 9.87 3.87019L12.47 7.05019H19.47C19.796 7.04222 20.1204 7.09891 20.4244 7.21697C20.7285 7.33503 21.0061 7.51213 21.2413 7.73805C21.4765 7.96396 21.6647 8.23423 21.7949 8.53324C21.9251 8.83225 21.9948 9.15409 22 9.48019V18.0702C21.9895 18.7235 21.7205 19.3461 21.2519 19.8015C20.7833 20.257 20.1534 20.5082 19.5 20.5002Z" fill="#545454" />
+      <path
+        d="M19.5 20.5002H4.5C3.84661 20.5082 3.21666 20.257 2.7481 19.8015C2.27953 19.3461 2.01053 18.7235 2 18.0702V5.93019C2.01053 5.27683 2.27953 4.65427 2.7481 4.19883C3.21666 3.74338 3.84661 3.49216 4.5 3.50019H9.1C9.24771 3.50116 9.39336 3.53485 9.5265 3.59882C9.65964 3.6628 9.77695 3.75547 9.87 3.87019L12.47 7.05019H19.47C19.796 7.04222 20.1204 7.09891 20.4244 7.21697C20.7285 7.33503 21.0061 7.51213 21.2413 7.73805C21.4765 7.96396 21.6647 8.23423 21.7949 8.53324C21.9251 8.83225 21.9948 9.15409 22 9.48019V18.0702C21.9895 18.7235 21.7205 19.3461 21.2519 19.8015C20.7833 20.257 20.1534 20.5082 19.5 20.5002Z"
+        fill="#545454"
+      />
     </g>
     <defs>
       <clipPath id="clip0_1_2625">
@@ -780,7 +785,7 @@ const FolderIcon = () => (
       </clipPath>
     </defs>
   </svg>
-)
+);
 const OpenFolderIcon = (props) => (
   <svg
     xmlns="http://www.w3.org/2000/svg"
@@ -788,8 +793,7 @@ const OpenFolderIcon = (props) => (
     height={24}
     viewBox="0 0 24 24"
     fill="none"
-    {...props}
-  >
+    {...props}>
     <path
       d="M22.3823 14.0979L19.8048 19.5943C19.6042 20.0221 19.317 20.3769 18.9717 20.6236C18.6265 20.8702 18.2354 21 17.8373 21H3.60245C2.94321 21 2.53247 20.1105 2.86463 19.4021L5.44222 13.9057C5.64282 13.4779 5.93003 13.1231 6.27525 12.8764C6.62046 12.6298 7.01162 12.5 7.40972 12.5H21.6446C22.3038 12.5 22.7145 13.3895 22.3823 14.0979ZM7.40972 11.0833H19.0833V8.95833C19.0833 7.78471 18.3185 6.83333 17.375 6.83333H11.6806L9.40278 4H3.70833C2.76484 4 2 4.95138 2 6.125V18.4343L4.45847 13.1919C5.06838 11.8913 6.19926 11.0833 7.40972 11.0833Z"
       fill="#545454"
@@ -803,8 +807,7 @@ const FormatLine = (props) => (
     height={16}
     viewBox="0 0 16 16"
     fill="none"
-    {...props}
-  >
+    {...props}>
     <g clipPath="url(#clip0_1_8275)">
       <path
         d="M4.98433 4.5859C5.33695 4.5859 5.50935 4.16275 5.25859 3.91983L3.46414 2.11754C3.30742 1.96082 3.0645 1.96082 2.90778 2.11754L1.11332 3.91983C0.870406 4.16275 1.0428 4.5859 1.39542 4.5859H2.40627V12.4219H1.39542C1.0428 12.4219 0.870406 12.8451 1.12116 13.088L2.91561 14.8825C3.07234 15.0392 3.31525 15.0392 3.47197 14.8825L5.26643 13.088C5.50935 12.8451 5.33695 12.4219 4.98433 12.4219H3.97348V4.5859H4.98433ZM7.27246 4.5859H15.1085C15.5395 4.5859 15.8921 4.23327 15.8921 3.80229C15.8921 3.37131 15.5395 3.01869 15.1085 3.01869H7.27246C6.84147 3.01869 6.48885 3.37131 6.48885 3.80229C6.48885 4.23327 6.84147 4.5859 7.27246 4.5859ZM15.1085 12.4219H7.27246C6.84147 12.4219 6.48885 12.7746 6.48885 13.2055C6.48885 13.6365 6.84147 13.9892 7.27246 13.9892H15.1085C15.5395 13.9892 15.8921 13.6365 15.8921 13.2055C15.8921 12.7746 15.5395 12.4219 15.1085 12.4219ZM15.1085 7.72031H7.27246C6.84147 7.72031 6.48885 8.07294 6.48885 8.50392C6.48885 8.9349 6.84147 9.28752 7.27246 9.28752H15.1085C15.5395 9.28752 15.8921 8.9349 15.8921 8.50392C15.8921 8.07294 15.5395 7.72031 15.1085 7.72031Z"
@@ -826,8 +829,7 @@ const ColorSelect = (props) => (
     viewBox="0 0 16 16"
     fill="black"
     style={{}}
-    {...props}
-  >
+    {...props}>
     <circle cx={8} cy={8} r={7.5} fill="black" stroke="black" style={{}} />
   </svg>
 );
@@ -838,7 +840,7 @@ const MarginYIcon = (props) => (
       fill="black"
     />
   </svg>
-)
+);
 const MarginXIcon = (props) => (
   <svg width={14} height={14} viewBox="0 0 14 14" fill="none">
     <path
@@ -846,7 +848,7 @@ const MarginXIcon = (props) => (
       fill="black"
     />
   </svg>
-)
+);
 export {
   DualScreenIcon,
   ColorSelect,
@@ -868,4 +870,4 @@ export {
   UserAvatar,
   MarginYIcon,
   MarginXIcon,
-}
+};

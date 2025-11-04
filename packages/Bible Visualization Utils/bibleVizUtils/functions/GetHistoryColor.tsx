@@ -1,4 +1,4 @@
-const {piece, data, baseColor, userColor, timestamp} = that;
+const {piece, data, baseColor, userColor, reading, range} = that;
 
 // if(piece) timestamp = thisBot.GetHistoryEntriesForElement({piece});
 // else if(data)
@@ -6,11 +6,19 @@ const {piece, data, baseColor, userColor, timestamp} = that;
     // const {book, chapter} = data;
     // timestamp = thisBot.GetHistoryEntries({book, chapter, userId});
 // }
+
 let color;
-if(timestamp)
+if(reading)
 {
-    const deltaTime = (os.localTime - timestamp) * 100000;
-    color = thisBot.GetHistoryColorByDeltaTime({deltaTime, baseColor, userColor});
+    if(range)
+    {
+        color = thisBot.GetHistoryColorByRange({baseColor, userColor, reading, range});
+    }
+    else
+    {
+        const deltaTime = (os.localTime - (reading?.[reading?.length - 1]?.end ?? Date.now()));
+        color = thisBot.GetHistoryColorByDeltaTime({deltaTime, baseColor, userColor});
+    }
 }
 else color = BibleVizUtils.Data.tags.historyNullColor
 return color;

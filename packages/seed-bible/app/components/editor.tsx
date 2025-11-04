@@ -321,6 +321,34 @@ const TextEditor = ({
       onUpdate({ editor }) {
         saveData(editor);
       },
+      editorProps: {
+        attributes: {
+          class: 'no-select', // <- hook for the CSS above
+        },
+        handleDOMEvents: {
+          // Block keyboard and menu copy/cut
+          copy: (_view, event) => {
+            event.preventDefault();
+            return true;
+          },
+          cut: (_view, event) => {
+            event.preventDefault();
+            return true;
+          },
+    
+          // (Optional) make it harder to start a selection at all
+          selectstart: (_view, event) => {
+            event.preventDefault();
+            return true;
+          },
+    
+          // (Optional) stop dragging out selections / drags
+          dragstart: (_view, event) => {
+            event.preventDefault();
+            return true;
+          },
+        },
+      },
       extensions: [
         StarterKit.configure({
           heading: true,

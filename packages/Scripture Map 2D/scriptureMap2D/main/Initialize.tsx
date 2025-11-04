@@ -1,4 +1,4 @@
-if(thisBot.masks.initialized) return;
+if(thisBot.masks.initialized || configBot.tags.systemPortal || globalThis.ScriptureMap2DManager || !globalThis.BibleVizUtils) return;
 
 setTagMask(thisBot, "initialized", true);
 if(typeof ScriptureMap2DManager === "undefined")
@@ -7,3 +7,4 @@ if(typeof ScriptureMap2DManager === "undefined")
 }
 
 thisBot.StartReadingHistoryUpdate();
+thisBot.CreateFakeReadingHistoryData();

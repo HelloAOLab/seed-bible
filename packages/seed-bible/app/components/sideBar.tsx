@@ -26,10 +26,21 @@ import {
 } from "app.components.spaceSettings";
 import { AOLabUpdateCard } from "app.components.notifications";
 import { ThePageWithEditor } from "app.components.thePage";
+import { UserPresence } from "app.components.userPresence";
+import {
+  TreeIcon,
+  LogIcon,
+  LeafIcon,
+  CatIcon,
+  DogIcon,
+  CoffeBeanIcon,
+} from "app.components.phosphoricons";
 // import { CircleCounter } from 'app.components.circleCounter'
 // console.log(CircleCounter, 'CircleCounter')
 const Reciver = getBot("system", "app.reciver");
 const { useState, useRef, useEffect, useMemo } = os.appHooks;
+
+const LOCAL_ENV = !configBot.tags.pattern;
 
 const CircleCounter = ({ data, book, chapter }) => {
   const [isModalOpen, setIsModalOpen] = useState(false);
@@ -55,30 +66,57 @@ const CircleCounter = ({ data, book, chapter }) => {
     cursor: "pointer",
   };
 
-  const colorMap = {
-    0: "#3b82f6",
-    1: "#ef4444",
-    2: "#10b981",
-    3: "#a855f7",
-    4: "#eab308",
-    5: "#ec4899",
+  const icons = [TreeIcon, LogIcon, LeafIcon, CatIcon, DogIcon, CoffeBeanIcon];
+  const colors = [
+    "#34D399",
+    "#60A5FA",
+    "#F472B6",
+    "#FBBF24",
+    "#A78BFA",
+    "#F87171",
+    "#10B981",
+    "#F59E0B",
+  ];
+
+  // Helper to get user's visual style
+  const getUserVisual = (userId, value, index) => {
+    try {
+      const visual = globalThis?.GetOrSetVisualInTags(value[0]);
+      // console.log(value,'the get inside')
+      if (visual) {
+        const IconComponent = icons[visual.iconIndex];
+        const color = colors[visual.colorIndex];
+        return { IconComponent, color };
+      }
+    } catch (e) {
+      // fallback
+    }
+    // fallback deterministic
+    // const IconComponent = icons[index % icons.length];
+    // const color = colors[index % colors.length];
+    // return { IconComponent, color };
   };
 
   return (
     <>
-      <div style={{ display: "flex", alignItems: "center", padding: "0" }}>
-        {entries.slice(0, visibleCount).map(([id, value], index) => (
-          <div
-            key={id}
-            onClick={() => setIsModalOpen(true)}
-            style={{
-              ...circleStyle,
-              backgroundColor: colorMap[index % 6],
-              marginLeft: index > 0 ? "-12px" : "0",
-              zIndex: visibleCount - index,
-            }}
-          />
-        ))}
+      <div style={{ display: "flex", alignItems: "center", padding: 0 }}>
+        {entries.slice(0, visibleCount).map(([id, value], index) => {
+          const { IconComponent, color } = getUserVisual(id, value, index);
+          return (
+            <div
+              key={id}
+              onClick={() => setIsModalOpen(true)}
+              style={{
+                ...circleStyle,
+                backgroundColor: color,
+                marginLeft: index > 0 ? "-4px" : "0",
+                zIndex: visibleCount - index,
+              }}
+            >
+              <IconComponent style={{ width: "12px", height: "12px" }} />
+            </div>
+          );
+        })}
 
         {remaining > 0 && (
           <div
@@ -89,7 +127,8 @@ const CircleCounter = ({ data, book, chapter }) => {
               fontSize: "12px",
               marginLeft: "-12px",
               zIndex: 0,
-            }}>
+            }}
+          >
             +{remaining}
           </div>
         )}
@@ -109,7 +148,8 @@ const CircleCounter = ({ data, book, chapter }) => {
             justifyContent: "center",
             zIndex: 1000,
           }}
-          onClick={() => setIsModalOpen(false)}>
+          onClick={() => setIsModalOpen(false)}
+        >
           <div
             style={{
               backgroundColor: "white",
@@ -122,21 +162,24 @@ const CircleCounter = ({ data, book, chapter }) => {
               boxShadow:
                 "0 20px 25px -5px rgba(0, 0, 0, 0.1), 0 10px 10px -5px rgba(0, 0, 0, 0.04)",
             }}
-            onClick={(e) => e.stopPropagation()}>
+            onClick={(e) => e.stopPropagation()}
+          >
             <div
               style={{
                 display: "flex",
                 justifyContent: "space-between",
                 alignItems: "center",
                 marginBottom: "20px",
-              }}>
+              }}
+            >
               <h2
                 style={{
                   fontSize: "20px",
                   fontWeight: "600",
                   color: "#111827",
                   margin: 0,
-                }}>
+                }}
+              >
                 All Users ({entries.length})
               </h2>
               <button
@@ -153,17 +196,17 @@ const CircleCounter = ({ data, book, chapter }) => {
                   display: "flex",
                   alignItems: "center",
                   justifyContent: "center",
-                }}>
+                }}
+              >
                 ×
               </button>
             </div>
 
             <div
-              style={{ display: "flex", flexDirection: "column", gap: "12px" }}>
+              style={{ display: "flex", flexDirection: "column", gap: "12px" }}
+            >
               {entries.map(([id, value], index) => {
-                const [follow, setFollow] = useState(
-                  Reciver?.masks["remotes"]?.includes(data[id][0])
-                );
+                const { IconComponent, color } = getUserVisual(id, index);
                 return (
                   <div
                     key={id}
@@ -174,13 +217,14 @@ const CircleCounter = ({ data, book, chapter }) => {
                       backgroundColor: "#f9fafb",
                       borderRadius: "8px",
                       gap: "12px",
-                    }}>
+                    }}
+                  >
                     <div
                       style={{
                         width: "32px",
                         height: "32px",
                         borderRadius: "50%",
-                        backgroundColor: colorMap[index % 6],
+                        backgroundColor: color,
                         display: "flex",
                         alignItems: "center",
                         justifyContent: "center",
@@ -188,8 +232,11 @@ const CircleCounter = ({ data, book, chapter }) => {
                         fontWeight: "600",
                         fontSize: "14px",
                         flexShrink: 0,
-                      }}>
-                      {index + 1}
+                      }}
+                    >
+                      <IconComponent
+                        style={{ width: "18px", height: "18px" }}
+                      />
                     </div>
                     <div style={{ flex: 1 }}>
                       <div
@@ -197,53 +244,17 @@ const CircleCounter = ({ data, book, chapter }) => {
                           fontWeight: "600",
                           color: "#111827",
                           marginBottom: "4px",
-                        }}>
-                        User :{" "}
-                        <span style={{ fontSize: "12px" }}>{data[id][0]}</span>
+                        }}
+                      >
+                        User:{" "}
+                        <span style={{ fontSize: "12px" }}>
+                          {value?.[0] || id}
+                        </span>
                       </div>
                       <div style={{ fontSize: "14px", color: "#6b7280" }}>
                         Book: {book} • Chapter: {chapter}
                       </div>
                     </div>
-                    <button
-                      onClick={() => {
-                        const idx = data[id][0];
-                        console.log("Following user:", idx);
-
-                        if (!Reciver.masks["remotes"])
-                          Reciver.masks["remotes"] = [];
-
-                        if (Reciver.masks["remotes"].includes(idx)) {
-                          // remove idx
-                          Reciver.masks["remotes"] = Reciver.masks[
-                            "remotes"
-                          ].filter((e) => e !== idx);
-                        } else {
-                          // add idx
-                          Reciver.masks["remotes"].push(idx);
-                        }
-
-                        setFollow((f) => !f);
-                      }}
-                      style={{
-                        padding: "8px 16px",
-                        backgroundColor: "#3b82f6",
-                        color: "white",
-                        border: "none",
-                        borderRadius: "6px",
-                        fontSize: "14px",
-                        fontWeight: "600",
-                        cursor: "pointer",
-                        transition: "background-color 0.2s",
-                      }}
-                      onMouseOver={(e) =>
-                        (e.target.style.backgroundColor = "#2563eb")
-                      }
-                      onMouseOut={(e) =>
-                        (e.target.style.backgroundColor = "#3b82f6")
-                      }>
-                      {!follow ? "Follow" : "Unfollow"}
-                    </button>
                   </div>
                 );
               })}
@@ -254,6 +265,7 @@ const CircleCounter = ({ data, book, chapter }) => {
     </>
   );
 };
+
 function Tab({
   el,
   activeTab,
@@ -266,7 +278,9 @@ function Tab({
   const { openPopupSettings, closePopupSettings, userURL } =
     useSideBarContext();
   const { setCanvasMode, setMapMode } = useBibleContext();
-  useEffect(() => {}, [onlineUsers]);
+  useEffect(() => {
+    console.log(onlineUsers, "onlineUsers var");
+  }, [onlineUsers]);
   const {
     removeTab,
     multiSelectMode,
@@ -461,11 +475,12 @@ function Tab({
         activeTab === el.id && !multiSelectMode && !collapsed
           ? "activeTab"
           : activeTab === el.id && collapsed
-          ? "activeTabCollapsed"
-          : collapsed
-          ? "collabsedTab"
-          : "tab"
-      } ${selectedTabs?.includes?.(el.id) ? "selected" : ""}`}>
+            ? "activeTabCollapsed"
+            : collapsed
+              ? "collabsedTab"
+              : "tab"
+      } ${selectedTabs?.includes?.(el.id) ? "selected" : ""}`}
+    >
       {!collapsed ? (
         <>
           <div className="tabInfo">
@@ -489,20 +504,20 @@ function Tab({
                 {el?.data?.type === "book"
                   ? "description"
                   : el?.data?.type === "canvas"
-                  ? "deployed_code"
-                  : el?.data?.type === "map"
-                  ? "map"
-                  : null}
+                    ? "deployed_code"
+                    : el?.data?.type === "map"
+                      ? "map"
+                      : null}
               </span>
             )}
             <span className="tabName">
               {el?.data?.type === "map"
                 ? "map"
                 : el?.data?.type === "canvas"
-                ? el?.data?.title || "canvas"
-                : el?.data?.book
-                ? `${el?.data?.book} - ${el?.data?.chapter}`
-                : el?.data?.title}
+                  ? el?.data?.title || "canvas"
+                  : el?.data?.book
+                    ? `${el?.data?.book} - ${el?.data?.chapter}`
+                    : el?.data?.title}
             </span>
             <CircleCounter
               data={Object.entries(circles)}
@@ -517,7 +532,8 @@ function Tab({
                 openPopupSettings(OPTIONS(el));
               }}
               style={{ display: activeTab ? "" : "none" }}
-              className="material-symbols-outlined ">
+              className="material-symbols-outlined "
+            >
               more_vert
             </span>
           )}
@@ -589,7 +605,8 @@ function Folder({ folder, onlineUsers, collapsed }) {
       onPointerEnter={handleMouseEnter}
       onPointerLeave={handleMouseLeave}
       onPointerUp={handleMouseUp}
-      className="folder">
+      className="folder"
+    >
       <div onClick={() => setOpen(!open)} className="folderHeader">
         {open ? <MenuIcon name="folder_open" /> : <MenuIcon name={"folder"} />}
         {!collapsed && <span>{folder.name}</span>}
@@ -598,14 +615,16 @@ function Folder({ folder, onlineUsers, collapsed }) {
           onClick={() => {
             openPopupSettings(OPTIONS);
           }}
-          className="material-symbols-outlined ">
+          className="material-symbols-outlined "
+        >
           more_vert
         </span>
       </div>
       {open && (
         <div
           style={{ "margin-left": collapsed ? "0px" : null }}
-          className="folderTabs">
+          className="folderTabs"
+        >
           {folder.tabs.map((el) => (
             <Tab
               key={el.id}
@@ -700,26 +719,7 @@ function SideBar() {
   }, [editMode]);
 
   useEffect(() => {
-    
-    const usersIds = Object.keys(onlineUsers);
-    const timestamp = Date.now()
-    const hooks = getBot("system", "app.hooks");
-    
-    usersIds.forEach((userId) => {
-      const { bookId, chapter } = onlineUsers[userId];
-      if(hooks && (!thisBot.vars.prevOnlineUsers || thisBot.vars.prevOnlineUsers[userId].bookId !== bookId || thisBot.vars.prevOnlineUsers[userId].chapter !== chapter))
-      {
-        const tempHistory = hooks.vars.tempReadingHistory ??= {};
-        const userHistory = tempHistory[userId] ??= {};
-        const bookHistory = userHistory[bookId] ??= {};
-        bookHistory[chapter] = timestamp;
-      }
-    });
-      
-    thisBot.vars.prevOnlineUsers = onlineUsers;
-    
     shout("OnOnlineUsersChanged", { onlineUsers });
-
   }, [onlineUsers]);
 
   const {
@@ -745,7 +745,6 @@ function SideBar() {
 
   const isResizing = useRef(false);
   const sidebarRef = useRef();
-  const oldWidthRef = useRef(window.innerWidth);
 
   const handleMouseDown = (e) => {
     isResizing.current = true;
@@ -754,12 +753,9 @@ function SideBar() {
   const handleMouseMove = (e) => {
     if (!isResizing.current) return;
     const newWidth = Math.max(40, Math.min(e.clientX, 300));
-    oldWidthRef.current = newWidth;
-    if (newWidth <= 140 && oldWidthRef.current > 140) {
+    if (newWidth <= 140) {
       setCollapsed(true);
-    }
-
-    if (newWidth > 140 && oldWidthRef.current < 140) {
+    } else {
       setCollapsed(false);
     }
     if (newWidth < 55) {
@@ -784,14 +780,11 @@ function SideBar() {
     };
   }, []);
 
-  const oldWidth = useRef(window.innerWidth);
-
   useEffect(() => {
     const handleResize = () => {
       const check = window.innerWidth < 768;
-      oldWidth.current = window.innerWidth;
-      setIsMobile(check && oldWidth.current > 768);
-      if (!check && oldWidth.current < 768) {
+      setIsMobile(check);
+      if (!check) {
         setSidebarWidth(280);
       }
     };
@@ -853,7 +846,8 @@ function SideBar() {
           "border-radius": "10px",
           background: " #202020",
           padding: "20px",
-        }}>
+        }}
+      >
         <div
           style={{
             color: "white",
@@ -865,7 +859,8 @@ function SideBar() {
             "font-style": "normal",
             "font-weight": "700",
             "line-height": "normal",
-          }}>
+          }}
+        >
           Panels
         </div>
         <div
@@ -873,13 +868,15 @@ function SideBar() {
             gap: "10px",
             display: "grid",
             "grid-template-columns": "repeat(3, 1fr)",
-          }}>
+          }}
+        >
           <div
             onClick={() => {
               setCustomScreens({ value: 1 });
               setScreens({ value: 1 });
             }}
-            style={{ cursor: "pointer" }}>
+            style={{ cursor: "pointer" }}
+          >
             <Panel1 />
           </div>
           <div
@@ -887,7 +884,8 @@ function SideBar() {
               setCustomScreens({ value: 2 });
               setScreens({ value: 2 });
             }}
-            style={{ cursor: "pointer" }}>
+            style={{ cursor: "pointer" }}
+          >
             <Panel2 />
           </div>
           {!isMobile && (
@@ -898,7 +896,8 @@ function SideBar() {
                   setCustomScreens({ value: 3 });
                   setScreens({ value: 3 });
                 }}
-                style={{ cursor: "pointer" }}>
+                style={{ cursor: "pointer" }}
+              >
                 <Panel3 />
               </div>
               <div
@@ -906,7 +905,8 @@ function SideBar() {
                   setCustomScreens({ value: 3, row: true });
                   setScreens({ value: 3, row: true });
                 }}
-                style={{ cursor: "pointer" }}>
+                style={{ cursor: "pointer" }}
+              >
                 <Panel3Row />
               </div>
               <div
@@ -914,7 +914,8 @@ function SideBar() {
                   setCustomScreens({ value: 4 });
                   setScreens({ value: 4 });
                 }}
-                style={{ cursor: "pointer" }}>
+                style={{ cursor: "pointer" }}
+              >
                 <Panel4 />
               </div>
               <div
@@ -922,7 +923,8 @@ function SideBar() {
                   setCustomScreens({ value: 4, row: true });
                   setScreens({ value: 4, row: true });
                 }}
-                style={{ cursor: "pointer" }}>
+                style={{ cursor: "pointer" }}
+              >
                 <Panel4Row />
               </div>
             </>
@@ -934,7 +936,7 @@ function SideBar() {
 
   const MenuOptions = {
     type: "normal",
-    items: [
+    items: () => [
       {
         disabled: true,
         icon: <MenuIcon name="logout" />,
@@ -1079,7 +1081,8 @@ function SideBar() {
             left: "10px",
             top: "20px",
             zIndex: 99999,
-          }}>
+          }}
+        >
           <span className="material-symbols-outlined">menu</span>
         </div>
       )}
@@ -1122,7 +1125,8 @@ function SideBar() {
             cursor: "pointer",
           }}
           onMouseEnter={(e) => (e.target.style.opacity = "1")}
-          onMouseLeave={(e) => (e.target.style.opacity = "0")}></div>
+          onMouseLeave={(e) => (e.target.style.opacity = "0")}
+        ></div>
       )}
       <div
         onMouseUp={() => setIsDragging(false)}
@@ -1137,7 +1141,8 @@ function SideBar() {
             : `sidebar-1 ${openOnMobile ? "open" : null} ${
                 fullScreen ? "floatSidebar" : null
               }`
-        }>
+        }
+      >
         <div
           onMouseDown={handleMouseDown}
           style={{
@@ -1148,7 +1153,8 @@ function SideBar() {
             height: "100%",
             background: "",
             cursor: "pointer",
-          }}></div>
+          }}
+        ></div>
 
         <div className="headbar">
           {!collapsed ? (
@@ -1167,7 +1173,8 @@ function SideBar() {
                       setOpenOnMobile(false);
                     }
                   }}
-                  className="material-symbols-outlined">
+                  className="material-symbols-outlined"
+                >
                   menu_open
                 </span>
                 <div>
@@ -1176,7 +1183,8 @@ function SideBar() {
                       onClick={() =>
                         customIcon.link && os.openURL(customIcon.link)
                       }
-                      className="material-symbols-outlined">
+                      className="material-symbols-outlined"
+                    >
                       {customIcon.icon}
                     </span>
                   ) : (
@@ -1219,7 +1227,8 @@ function SideBar() {
                       }
                     }, 10);
                   }}
-                  onMouseLeave={() => clearTimeout(globalThis._holdTimeout)}>
+                  onMouseLeave={() => clearTimeout(globalThis._holdTimeout)}
+                >
                   {customScreens?.value <= 1 ? (
                     <SingleScreenIcon />
                   ) : customScreens?.value === 2 ? (
@@ -1234,7 +1243,8 @@ function SideBar() {
                   onClick={() => {
                     openPopupSettings(MenuOptions);
                   }}
-                  className="material-symbols-outlined PageOptionsButton">
+                  className="material-symbols-outlined PageOptionsButton"
+                >
                   more_vert
                 </span>
               </div>
@@ -1251,10 +1261,12 @@ function SideBar() {
                 <input placeholder="Search..." />
               </div>
             )}
+            <UserPresence />
             <div className="tabsContainer">
               <span>Tabs</span>
               <div
-                style={{ display: "flex", alignItems: "center", gap: "5px" }}>
+                style={{ display: "flex", alignItems: "center", gap: "5px" }}
+              >
                 <span
                   style={{ "user-select": "none" }}
                   onMouseDown={() => {
@@ -1287,7 +1299,8 @@ function SideBar() {
                     clearTimeout(holdTimeout.current.time);
                     holdTimeout.current.clicked = false;
                   }}
-                  className="material-symbols-outlined addIcon">
+                  className="material-symbols-outlined addIcon"
+                >
                   add
                 </span>
               </div>
@@ -1313,7 +1326,8 @@ function SideBar() {
                 "justify-content": "center",
                 "align-items": "center",
                 gap: "6px",
-              }}>
+              }}
+            >
               <input
                 type="checkbox"
                 className="customCheckbox"
@@ -1325,11 +1339,8 @@ function SideBar() {
               Select All
             </label>
             <div
-              style={{
-                background: "#bbc2c2",
-                height: "20px",
-                width: "2px",
-              }}></div>
+              style={{ background: "#bbc2c2", height: "20px", width: "2px" }}
+            ></div>
             <div
               style={{
                 display: "flex",
@@ -1342,20 +1353,19 @@ function SideBar() {
                 selectedTabs.forEach((id) => removeTab(id));
                 setSelectedTabs([]);
                 setMultiSelectMode(false);
-              }}>
+              }}
+            >
               <span
                 style={{ "font-size": "19px" }}
-                class="material-symbols-outlined">
+                class="material-symbols-outlined"
+              >
                 delete
               </span>
               <span>Delete All</span>
             </div>
             <div
-              style={{
-                background: "#bbc2c2",
-                height: "20px",
-                width: "2px",
-              }}></div>
+              style={{ background: "#bbc2c2", height: "20px", width: "2px" }}
+            ></div>
             <div
               style={{
                 display: "flex",
@@ -1382,10 +1392,12 @@ function SideBar() {
                   });
                 });
                 openPopupSettings(OPTIONS);
-              }}>
+              }}
+            >
               <span
                 style={{ "font-size": "19px" }}
-                class="material-symbols-outlined">
+                class="material-symbols-outlined"
+              >
                 create_new_folder
               </span>
             </div>
@@ -1402,13 +1414,15 @@ function SideBar() {
               gap: "12px",
               "padding-top": "10px",
               cursor: "pointer",
-            }}>
+            }}
+          >
             <span
               onclick={() => {
                 setSidebarWidth(280);
                 setCollapsed(false);
               }}
-              class="material-symbols-outlined">
+              class="material-symbols-outlined"
+            >
               menu
             </span>
             <div
@@ -1416,7 +1430,8 @@ function SideBar() {
                 height: "1px",
                 width: "90%",
                 background: "rgb(187, 194, 194)",
-              }}></div>
+              }}
+            ></div>
           </div>
         )}
         <div
@@ -1427,7 +1442,8 @@ function SideBar() {
           onPointerEnter={handleMouseEnter}
           onPointerLeave={handleMouseLeave}
           onPointerUp={handleMouseUpTab}
-          className={collapsed ? "tabs-collapsed" : "tabs"}>
+          className={collapsed ? "tabs-collapsed" : "tabs"}
+        >
           {tabs.map((el) => (
             <Tab
               key={el.id}
@@ -1447,7 +1463,8 @@ function SideBar() {
               onClick={() => {
                 openPopupSettings(AddingOption());
               }}
-              class="material-symbols-outlined addIconCollapsed">
+              class="material-symbols-outlined addIconCollapsed"
+            >
               add
             </span>
           )}
@@ -1487,13 +1504,15 @@ export const SpaceUI = () => {
               : `profileSection ${openOnMobile ? "open" : ""} ${
                   fullScreen ? "floatProfileSection" : null
                 }`
-          }>
+          }
+        >
           {!collapsed ? (
             <>
               <span
                 style={{ cursor: "pointer" }}
                 onClick={() => setSideBarMode("settings")}
-                className="material-symbols-outlined">
+                className="material-symbols-outlined"
+              >
                 settings
               </span>
               <SettingsProfile />
@@ -1621,13 +1640,15 @@ export const SettingsProfile = () => {
                 handleMouseDown(space.id);
                 handleRightClick(space.id);
               }}
-              className={space.id === activeSpace ? "activeBg" : "bg"}>
+              className={space.id === activeSpace ? "activeBg" : "bg"}
+            >
               {!space?.icon ? (
                 <span></span>
               ) : (
                 <div
                   className="material-symbols-outlined"
-                  style={{ scale: "0.6", cursor: "pointer" }}>
+                  style={{ scale: "0.6", cursor: "pointer" }}
+                >
                   {space.icon}
                 </div>
               )}
@@ -1655,6 +1676,19 @@ export const UserProfile = ({ collapsed }) => {
   useEffect(() => {
     getUserData();
   }, []);
+  const icons = [TreeIcon, LogIcon, LeafIcon, CatIcon, DogIcon, CoffeBeanIcon];
+  const colors = [
+    "#34D399",
+    "#60A5FA",
+    "#F472B6",
+    "#FBBF24",
+    "#A78BFA",
+    "#F87171",
+    "#10B981",
+    "#F59E0B",
+  ];
+  const { colorIndex, iconIndex } = GetOrSetVisualInTags(configBot.id);
+  const Icon = icons[iconIndex];
   return (
     <div
       onClick={() => {
@@ -1662,15 +1696,34 @@ export const UserProfile = ({ collapsed }) => {
         setSideBarMode("createAccountSettings");
       }}
       style={{ background: userData?.photoLink && "transparent" }}
-      className="userProfile">
-      {userData?.photoLink ? (
+      className="userProfile"
+    >
+      <div
+        onClick={() => {}}
+        style={{
+          width: 30,
+          height: 30,
+          borderRadius: "50%",
+          border: `2px solid ${colors[colorIndex]}`,
+          padding: 2,
+          display: "flex",
+          alignItems: "center",
+          justifyContent: "center",
+          overflow: "hidden",
+        }}
+      >
+        <Icon width={15} height={15} />
+      </div>
+      {
+        null /*userData?.photoLink ? (
         <img
           style={{ "border-radius": "50%", width: "35px", border: "" }}
           src={userData?.photoLink}
         />
       ) : (
         <span className="material-symbols-outlined">person</span>
-      )}
+      )*/
+      }
     </div>
   );
 };

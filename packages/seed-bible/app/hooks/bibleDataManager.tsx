@@ -1,3 +1,4 @@
+import { saveUserReadingHistory } from 'db.annotations.library';
 const bibleTabDataCache = new Map();
 
 export function getCachedTabData(tabId) {
@@ -80,23 +81,42 @@ export class BibleDataManager {
 
   _scheduleMaskRecord() {
 
+
     const timestamp = Date.now()
 
+    const lastReading = thisBot.vars.tempLastReading ??= {};
     const tempHistory = thisBot.vars.tempReadingHistory ??= {};
     const userHistory = tempHistory[configBot.id] ??= {};
     const bookHistory = userHistory[this.bookId] ??= {};
-    bookHistory[this.chapter] = timestamp;
+    if(!bookHistory[this.chapter]) bookHistory[this.chapter] = [];
+    const length = bookHistory[this.chapter].push({start: timestamp});
+    if(lastReading[configBot.id]) 
+    {
+      const {bookId, chapter, index} = lastReading[configBot.id];
+      const lastEntry = userHistory[bookId]?.[chapter]?.[index];
+      if(lastEntry) lastEntry.end = timestamp;
+      else
+      {
+        console.warn(`[Debug] BibleDataManager._scheduleMaskRecord lastEntry not found`, thisBot.vars.tempLastReading[configBot.id]);
+      }
+    }
+
+    lastReading[configBot.id] = {bookId: this.bookId, chapter: this.chapter, index: length - 1};
+
+    saveUserReadingHistory(this.bookId, this.chapter);
+
+    shout("OnHistoryUpdated");
     
     if (!this.tabId) return;
-    
+
     if (!Array.isArray(masks[this.tabId])) {
       masks[this.tabId] = [];
     }
-    
+
     if (this._viewingTimer) clearTimeout(this._viewingTimer);
-      
+
+    this._viewingStart = Date.now();
     const keyAtScheduleTime = this._getKey();
-    this._viewingStart = timestamp;
 
     this._viewingTimer = setTimeout(() => {
       if (keyAtScheduleTime === this._getKey()) {

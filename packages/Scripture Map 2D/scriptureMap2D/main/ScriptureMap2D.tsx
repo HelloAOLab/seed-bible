@@ -1,5 +1,7 @@
 import { ScriptureMap2DProvider } from "scriptureMap2D.main.ScriptureMap2DContext"
 import { Wrapper } from "scriptureMap2D.main.Wrapper"
+import { TimeProvider } from "scriptureMap2D.main.TimeContext";
+const  { memo } = os.appCompat;
 
 export const ScriptureMap2DModes = Object.freeze({
     Viewer: "Viewer",
@@ -15,7 +17,7 @@ export const ProjectChapterState = Object.freeze({
     Completed: "Completed",
 });
 
-export const ScriptureMap2D = ({parentContext}) => {
+export const ScriptureMap2D = memo(({parentContext}) => {
 
     const {mode, project, mapToolProviderRef} = parentContext;
 
@@ -24,14 +26,16 @@ export const ScriptureMap2D = ({parentContext}) => {
     return (
         <>
             <style>{thisBot.tags["ScriptureMap2D.css"]}</style>
-            <ScriptureMap2DProvider 
-                ref={mapToolProviderRef}
-                parentContext={parentContext}
-                ScriptureMap2DModes={ScriptureMap2DModes}
-                ProjectChapterState={ProjectChapterState}
-            >
-                <Wrapper />
-            </ ScriptureMap2DProvider>
+            <TimeProvider>
+                <ScriptureMap2DProvider 
+                    ref={mapToolProviderRef}
+                    parentContext={parentContext}
+                    ScriptureMap2DModes={ScriptureMap2DModes}
+                    ProjectChapterState={ProjectChapterState}
+                    >
+                    <Wrapper />
+                </ ScriptureMap2DProvider>
+            </TimeProvider>
         </>
     );
-};
+});

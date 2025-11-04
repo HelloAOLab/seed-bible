@@ -21,6 +21,8 @@
     overflow: scroll;
     gap: 8px;
     height: 100%;
+
+    --timelineItemSize: 16px
 }
 
 /* .mapWrapper.showingContent
@@ -177,6 +179,46 @@
     align-items: center;
     gap: 8px;
     flex-wrap: wrap;
+}
+
+.readingHistoryTimeline {    
+    width: 100%;
+    display: grid;
+    gap: 2px;
+    align-items: start;
+    overflow-x: scroll;
+    scrollbar-width: thin !important;
+}
+
+.readingHistoryTimeline-item {
+    width: var(--timelineItemSize);
+    height: var(--timelineItemSize);
+    background-color: #E3E3E3;
+    border-radius: 4px;
+    border-style: solid;
+    border-width: 2px;
+    border-color: transparent;
+}
+
+.readingHistoryTimeline-item.selected
+{
+    border-color: #497F77;
+}
+
+.readingHistoryTimeline-label
+{
+    font-family: system-ui;
+    font-size: 12px;
+}
+
+.readingHistoryTimeline-label-month
+{
+    margin-bottom: 4px;
+}
+
+.readingHistoryTimeline-label-day
+{
+    margin-right: 4px;
 }
 
 .projectStateButton
@@ -614,6 +656,9 @@
     text-box: auto;
     vertical-align: middle;
     text-align: center;
+    display: flex;
+    justify-content: center;
+    align-items: center;
 }
 
 /* .mapWrapper .mapContainer .testamentContainer .mapBookContainer .bookCover .chapter .contentContainer,
@@ -805,6 +850,7 @@
     justify-content: center;
     align-items: center;
     gap: 4px;
+    white-space: nowrap;
 }
 
 .tooltip.tooltip-up
@@ -821,7 +867,7 @@
 {
   content: " ";
   position: absolute;
-  left: 50%;
+  left: var(--arrowLeft);
   transform: translateX(-50%);
   border-width: 5px;
   border-style: solid;

@@ -6,4 +6,5 @@
 // console.log(masks['usersData'], "masks['usersData']")
 // await os.sleep(10)
 // console.log(that,'that final')
-globalThis.SetOnlineUsers &&  SetOnlineUsers(prev => ({ ...prev, [`${that.user}`]: that.tab }))
+// console.log(GetOrSetVisualInTags(that.user))
+globalThis.SetOnlineUsers && SetOnlineUsers(prev => ({ ...prev, [`${that.user}`]: that.tab, info: globalThis?.GetOrSetVisualInTags(that.user) }))
