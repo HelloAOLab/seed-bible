@@ -1,72 +1,82 @@
-import { Tooltip } from "scriptureMap2D.main.Tooltip"
-import { useScriptureMap2DContext } from "scriptureMap2D.main.ScriptureMap2DContext"
-import { useTimeContext } from "scriptureMap2D.main.TimeContext"
+import { Tooltip } from "scriptureMap2D.main.Tooltip";
+import { useScriptureMap2DContext } from "scriptureMap2D.main.ScriptureMap2DContext";
+import { useTimeContext } from "scriptureMap2D.main.TimeContext";
 
 const { useState, useCallback, useMemo, useEffect, useRef } = os.appHooks;
 const { memo } = os.appCompat;
 
 const step = 0.25;
-const stepColors = [
-    "#E3E3E3",
-    "#FFEEA9",
-    "#FFBF78",
-    "#D36433",
-    "#7B4019"
-]
+const stepColors = ["#E3E3E3", "#FFEEA9", "#FFBF78", "#D36433", "#7B4019"];
 
 const Label = memo(({ gridRow, gridColumn, children, isDay }) => {
-    
-    const style = useMemo(() => {
-        return {gridRow, gridColumn}
-    }, [gridRow, gridColumn])
-    
-    return (
-        <div style={style} className={`readingHistoryTimeline-label readingHistoryTimeline-label-${isDay ? "day": "month"}`}
-        >
-            {children}
-        </div>
-    )
-})
+  const style = useMemo(() => {
+    return { gridRow, gridColumn };
+  }, [gridRow, gridColumn]);
 
-const Item = memo(({ backgroundColor, gridRow, gridColumn, description, handleItemClick, range, readingHistoryRange, id }) => {
+  return (
+    <div
+      style={style}
+      className={`readingHistoryTimeline-label readingHistoryTimeline-label-${isDay ? "day" : "month"}`}
+    >
+      {children}
+    </div>
+  );
+});
 
+const Item = memo(
+  ({
+    backgroundColor,
+    gridRow,
+    gridColumn,
+    description,
+    handleItemClick,
+    range,
+    readingHistoryRange,
+    id,
+  }) => {
     const selected = useMemo(() => {
-        return range === readingHistoryRange
-    }, [range, readingHistoryRange])
-    
+      return range === readingHistoryRange;
+    }, [range, readingHistoryRange]);
+
     const style = useMemo(() => {
-        return {backgroundColor, gridRow, gridColumn}
-    }, [backgroundColor, gridRow, gridColumn])
+      return { backgroundColor, gridRow, gridColumn };
+    }, [backgroundColor, gridRow, gridColumn]);
 
     const [containerRect, setContainerRect] = useState(null);
 
     const { tooltipAnchor } = useMemo(() => {
+      let tooltipAnchor;
 
-        let tooltipAnchor;
+      if (containerRect) {
+        tooltipAnchor = {
+          x: containerRect.left + containerRect.width / 2,
+          y: containerRect.top,
+        };
+      }
 
-        if (containerRect) {
-            tooltipAnchor = {
-                x: containerRect.left + containerRect.width / 2,
-                y: containerRect.top,
-            };
-        }
-
-        return { tooltipAnchor};
+      return { tooltipAnchor };
     }, [containerRect]);
-    
+
     return (
-        <div
-            id={id}
-            onPointerEnter={(e) => setContainerRect(e.currentTarget.getBoundingClientRect())}
-            onPointerLeave={() => setContainerRect(null)}
-            style={style}
-            className={`readingHistoryTimeline-item${selected ? " selected" : ""}`} 
-            onClick={() => {handleItemClick(selected ? null : range)}}
-        >
-            { containerRect && <Tooltip anchor={tooltipAnchor} content={description} /> }
-        </div>
-    )
-})
+      <div
+        id={id}
+        onPointerEnter={(e) =>
+          setContainerRect(e.currentTarget.getBoundingClientRect())
+        }
+        onPointerLeave={() => setContainerRect(null)}
+        style={style}
+        className={`readingHistoryTimeline-item${selected ? " selected" : ""}`}
+        onClick={() => {
+          handleItemClick(selected ? null : range);
+        }}
+      >
+        {containerRect && (
+          <Tooltip anchor={tooltipAnchor} content={description} />
+        )}
+      </div>
+    );
+  }
+);
 
 export const ReadingHistoryTimeline = () => {
     
@@ -168,8 +178,11 @@ export const ReadingHistoryTimeline = () => {
                         }
                     }
                 }
+              }
             }
+          }
         }
+      }
 
         return {entriesMap, timeSpentMap, dailyUsersMap}
     }, [])
@@ -223,14 +236,12 @@ export const ReadingHistoryTimeline = () => {
             }
         }
 
-        if(shouldReassign)
-        {
-            prevItemsColorMapRef.current = colorMap;
-            return colorMap
-        }
+  const [entriesMap, setEntriesMap] = useState(null);
 
-        return prevItemsColorMapRef.current;
-    }, [entriesMap, startOfWeekAYearAgo, tick])
+  useEffect(() => {
+    const map = computeEntriesMap(filteredReadingHistory, dayRangesMap);
+    setEntriesMap(map);
+  }, [filteredReadingHistory, dayRangesMap]);
 
     const items = useMemo(() => {
         const items = [];
@@ -336,39 +347,156 @@ export const ReadingHistoryTimeline = () => {
         return items;
     }, [startOfWeekAYearAgo, now, itemsColorMap, readingHistoryRange, timeSpentMap, dailyUsersMap])
 
-    useEffect(() => {
+        const key = `${week}-${day}`;
 
-        const lastKey = Array.from(dayRangesMap.keys()).pop();
-        const element = document.getElementById(lastKey);
+        const range = dayRangesMap.get(key);
 
-        console.log(`[Debug] ReadingHistoryTimeline`, {element})
-        
-        if (element) {
-          element.scrollIntoView({
-            behavior: "smooth", // smooth scrolling animation
-            block: "center", // scroll so it's centered in the viewport
+        const entries = entriesMap.get(key);
+        if (entries) {
+          const prevColor = prevItemsColorMapRef.current.get(key);
+          const color = BibleVizUtils.Functions.GetHistoryColorByRange({
+            step,
+            stepColors,
+            reading: entries,
+            range,
+            fullColorTime,
           });
+          if (!shouldReassign && (!prevColor || prevColor !== color))
+            shouldReassign = true;
+          colorMap.set(key, color);
+        } else {
+          throw new Error(`Entries not found for ${key}`);
         }
-    }, [])
-    
-    return(
-        <div id={`readingHistoryTimeline`} className="readingHistoryTimeline">
-            {items}
-        </div>
-    )
-}
+      }
+    }
+
+    if (shouldReassign) {
+      prevItemsColorMapRef.current = colorMap;
+      return colorMap;
+    }
+
+    return prevItemsColorMapRef.current;
+  }, [entriesMap, startOfWeekAYearAgo, tick]);
+
+  const items = useMemo(() => {
+    const items = [];
+    const monthsSet = new Set();
+    const monthLabelGridRow = `1 / 2`;
+    const dayLabelGridColumn = `1 / 2`;
+
+    items.push(
+      <Label gridRow={`3 / 4`} gridColumn={dayLabelGridColumn} isDay={true}>
+        {`Mon `}
+      </Label>,
+      <Label gridRow={`5 / 6`} gridColumn={dayLabelGridColumn} isDay={true}>
+        {`Wed `}
+      </Label>,
+      <Label gridRow={`7 / 8`} gridColumn={dayLabelGridColumn} isDay={true}>
+        {`Fri `}
+      </Label>
+    );
+
+    for (let week = 0; week < weeksCount; week++) {
+      for (let day = 0; day < 7; day++) {
+        if (week === weeksCount - 1 && day > now.getDay()) break;
+
+        const key = `${week}-${day}`;
+        const dayDate = new Date(startOfWeekAYearAgo);
+        dayDate.setDate(dayDate.getDate() + week * 7 + day);
+        const time = dayDate.getTime();
+        const range = dayRangesMap.get(key);
+
+        const {
+          weekday,
+          day: dayOfTheMonth,
+          month,
+          monthName,
+          year,
+        } = GetPastDateInfo(time);
+        const description =
+          week === weeksCount - 1 && day === now.getDay()
+            ? "Today"
+            : `${weekday} ${month}/${dayOfTheMonth}/${year}`;
+        const backgroundColor = itemsColorMap?.get?.(key) ?? stepColors[0];
+
+        const itemGridRow = `${day + 2} / ${day + 3}`;
+        const itemGridColumn = `${week + 2} / ${week + 3}`;
+
+        if (!monthsSet.has(month)) {
+          monthsSet.add(month);
+          const monthLabelGridColumn = `${week + 2} / ${week + 4}`;
+          const fixedName =
+            BibleVizUtils.Functions.CapitalizeFirstLetter(monthName);
+          items.push(
+            <Label
+              gridRow={monthLabelGridRow}
+              gridColumn={monthLabelGridColumn}
+              isDay={false}
+            >
+              {fixedName}
+            </Label>
+          );
+        }
+
+        items.push(
+          <Item
+            id={key}
+            key={key}
+            backgroundColor={backgroundColor}
+            gridRow={itemGridRow}
+            gridColumn={itemGridColumn}
+            description={description}
+            range={range}
+            handleItemClick={handleItemClick}
+            readingHistoryRange={readingHistoryRange}
+          />
+        );
+      }
+    }
+
+    return items;
+  }, [startOfWeekAYearAgo, now, itemsColorMap, readingHistoryRange]);
+
+  useEffect(() => {
+    const lastKey = Array.from(dayRangesMap.keys()).pop();
+    const element = document.getElementById(lastKey);
+
+    console.log(`[Debug] ReadingHistoryTimeline`, { element });
+
+    if (element) {
+      element.scrollIntoView({
+        behavior: "smooth", // smooth scrolling animation
+        block: "center", // scroll so it's centered in the viewport
+      });
+    }
+  }, []);
+
+  return (
+    <div id={`readingHistoryTimeline`} className="readingHistoryTimeline">
+      {items}
+    </div>
+  );
+};
 
 function GetPastDateInfo(time) {
-    const date = new Date(time);
+  const date = new Date(time);
 
-    const weekdays = ["Sunday", "Monday", "Tuesday", "Wednesday", "Thursday", "Friday", "Saturday"];
-    const weekday = weekdays[date.getDay()];
-    const day = date.getDate();
-    const month = date.getMonth() + 1;
-    const year = date.getFullYear();
-    const monthName = date.toLocaleString('en-US', { month: 'short' });
+  const weekdays = [
+    "Sunday",
+    "Monday",
+    "Tuesday",
+    "Wednesday",
+    "Thursday",
+    "Friday",
+    "Saturday",
+  ];
+  const weekday = weekdays[date.getDay()];
+  const day = date.getDate();
+  const month = date.getMonth() + 1;
+  const year = date.getFullYear();
+  const monthName = date.toLocaleString("en-US", { month: "short" });
 
-    return { weekday, day, month, monthName, year };
+  return { weekday, day, month, monthName, year };
 }
 
 function GetDayRange(timestamp) {

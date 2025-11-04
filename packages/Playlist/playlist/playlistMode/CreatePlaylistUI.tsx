@@ -878,7 +878,8 @@ const CreatePlaylistUI = ({
           // minWidth: `min(396p    flex-gro            flexGrow: '1',
           width: "100%",
           padding: "12px",
-        }}>
+        }}
+      >
         <ProjectMode
           setTab={setTab}
           name={name}
@@ -903,7 +904,8 @@ const CreatePlaylistUI = ({
           // minWidth: `min(396p    flex-gro            flexGrow: '1',
           width: "100%",
           padding: "12px",
-        }}>
+        }}
+      >
         <AddAnotationUI
           editData={editData}
           id={id}
@@ -936,12 +938,14 @@ const CreatePlaylistUI = ({
         // minWidth: `min(396p    flex-gro            flexGrow: '1',
         width: "100%",
         padding: "12px",
-      }}>
+      }}
+    >
       {layersWarning && (
         <Modal
           title="Not Embded Items Found"
           onClose={() => setLayersWarning(false)}
-          showIcon={false}>
+          showIcon={false}
+        >
           <h2 style={{ fontSize: "1rem" }}>
             Some of your item are not embedded. Layers Should have all Embeded
             Items.
@@ -973,7 +977,8 @@ const CreatePlaylistUI = ({
                   publishAccess
                 );
                 setLayersWarning(false);
-              }}>
+              }}
+            >
               Remove & Save
             </Button>
             <Button secondaryAlt onClick={() => setLayersWarning(false)}>
@@ -986,7 +991,8 @@ const CreatePlaylistUI = ({
         <Modal
           title="Copy Items"
           showIcon={false}
-          onClose={() => setOpenModal(false)}>
+          onClose={() => setOpenModal(false)}
+        >
           <p style={{ fontSize: "12px" }}>
             {" "}
             <b>Click & Hold</b> any Playlist to add it to{" "}
@@ -1024,18 +1030,21 @@ const CreatePlaylistUI = ({
               width: "220px",
               padding: "1rem",
             }}
-            className="overlay linked-item-custom">
+            className="overlay linked-item-custom"
+          >
             {isloggedIN ? (
               <div
                 className="more-menu-items"
                 onClick={() => {
                   setMode(PlaylistModeTypes.annotations);
                   setShowPlaylistSettings(false);
-                }}>
+                }}
+              >
                 <div className="align-center">
                   <span
                     style={{ fontSize: "20px", color: "white" }}
-                    class="material-symbols-outlined">
+                    class="material-symbols-outlined"
+                  >
                     draft
                   </span>
                   <label
@@ -1045,19 +1054,23 @@ const CreatePlaylistUI = ({
                       marginLeft: "4px",
                       color: "white",
                     }}
-                    for="playlistInclude">
+                    for="playlistInclude"
+                  >
                     Annotation Mode
                   </label>
                 </div>
                 <Tooltip
                   forRight={true}
-                  text="Annotation mode is the way to annotate the bible so you can see content while exploring other who have subscribed to you.">
+                  text="Annotation mode is the way to annotate the bible so you can see content while exploring other who have subscribed to you."
+                >
                   <p
                     className="what-this center"
-                    style={{ margin: "0 0 0 0.5rem" }}>
+                    style={{ margin: "0 0 0 0.5rem" }}
+                  >
                     <span
                       style={{ fontSize: "24px" }}
-                      class="material-symbols-outlined unfollow">
+                      class="material-symbols-outlined unfollow"
+                    >
                       info
                     </span>
                   </p>
@@ -1069,11 +1082,13 @@ const CreatePlaylistUI = ({
               onClick={() => {
                 setMode(PlaylistModeTypes.playlist);
                 setShowPlaylistSettings(false);
-              }}>
+              }}
+            >
               <div className="align-center">
                 <span
                   style={{ fontSize: "20px", color: "white" }}
-                  class="material-symbols-outlined">
+                  class="material-symbols-outlined"
+                >
                   playlist_play
                 </span>
                 <label
@@ -1083,19 +1098,23 @@ const CreatePlaylistUI = ({
                     marginLeft: "4px",
                     color: "white",
                   }}
-                  for="playlistInclude">
+                  for="playlistInclude"
+                >
                   Playlist Mode
                 </label>
               </div>
               <Tooltip
                 forRight={true}
-                text="Playlist mode is to create playlist and share with other or play them.">
+                text="Playlist mode is to create playlist and share with other or play them."
+              >
                 <p
                   className="what-this center"
-                  style={{ margin: "0 0 0 0.5rem" }}>
+                  style={{ margin: "0 0 0 0.5rem" }}
+                >
                   <span
                     style={{ fontSize: "24px" }}
-                    class="material-symbols-outlined unfollow">
+                    class="material-symbols-outlined unfollow"
+                  >
                     info
                   </span>
                 </p>
@@ -1107,11 +1126,13 @@ const CreatePlaylistUI = ({
                 onClick={() => {
                   setMode(PlaylistModeTypes.project);
                   setShowPlaylistSettings(false);
-                }}>
+                }}
+              >
                 <div className="align-center">
                   <span
                     style={{ fontSize: "20px", color: "white" }}
-                    class="material-symbols-outlined">
+                    class="material-symbols-outlined"
+                  >
                     team_dashboard
                   </span>
                   <label
@@ -1121,17 +1142,20 @@ const CreatePlaylistUI = ({
                       marginLeft: "4px",
                       color: "white",
                     }}
-                    for="playlistInclude">
+                    for="playlistInclude"
+                  >
                     Project Mode
                   </label>
                 </div>
                 <Tooltip forRight={true} text="Project mode is awesome.">
                   <p
                     className="what-this center"
-                    style={{ margin: "0 0 0 0.5rem" }}>
+                    style={{ margin: "0 0 0 0.5rem" }}
+                  >
                     <span
                       style={{ fontSize: "24px" }}
-                      class="material-symbols-outlined unfollow">
+                      class="material-symbols-outlined unfollow"
+                    >
                       info
                     </span>
                   </p>
@@ -1153,9 +1177,10 @@ const CreatePlaylistUI = ({
               left: "none",
               right: "4rem",
               padding: "1rem",
-              top: '5rem',
+              top: "5rem",
             }}
-            className="overlay linked-item-custom">
+            className="overlay linked-item-custom"
+          >
             <p>
               <b style={{ color: "white" }}>Publish settings</b>
             </p>
@@ -1170,16 +1195,19 @@ const CreatePlaylistUI = ({
               }}
               style={{
                 borderTop: "1px solid #3E3E3E",
-              }}>
+              }}
+            >
               <span
                 style={{ color: "white" }}
-                class="material-symbols-outlined">
+                class="material-symbols-outlined"
+              >
                 lock
               </span>
               <p>Private Access</p>
               <span
                 style={{ color: "white" }}
-                class="material-symbols-outlined">
+                class="material-symbols-outlined"
+              >
                 {publishAccess === "private"
                   ? "radio_button_checked"
                   : "radio_button_unchecked"}
@@ -1189,16 +1217,19 @@ const CreatePlaylistUI = ({
               className="more-menu-items"
               onClick={() => {
                 setPublishAccess("public");
-              }}>
+              }}
+            >
               <span
                 style={{ color: "white" }}
-                class="material-symbols-outlined">
+                class="material-symbols-outlined"
+              >
                 public
               </span>
               <p>Public Access</p>
               <span
                 style={{ color: "white" }}
-                class="material-symbols-outlined">
+                class="material-symbols-outlined"
+              >
                 {publishAccess === "public"
                   ? "radio_button_checked"
                   : "radio_button_unchecked"}
@@ -1214,22 +1245,26 @@ const CreatePlaylistUI = ({
             </span>
             <div
               className="more-menu-items"
-              onClick={(e) => e.stopPropagation()}>
+              onClick={(e) => e.stopPropagation()}
+            >
               <div
                 className="align-center"
                 onClick={() => {
                   setChecklist((p) => !p);
-                }}>
+                }}
+              >
                 {checklist ? (
                   <span
                     style={{ fontSize: "20px", color: "white" }}
-                    class="material-symbols-outlined unfollow">
+                    class="material-symbols-outlined unfollow"
+                  >
                     check_box
                   </span>
                 ) : (
                   <span
                     style={{ fontSize: "20px", color: "white" }}
-                    class="material-symbols-outlined unfollow">
+                    class="material-symbols-outlined unfollow"
+                  >
                     check_box_outline_blank
                   </span>
                 )}
@@ -1240,19 +1275,23 @@ const CreatePlaylistUI = ({
                     marginLeft: "4px",
                     color: "white",
                   }}
-                  for="playlistInclude">
+                  for="playlistInclude"
+                >
                   Checklist
                 </label>
               </div>
               <Tooltip
                 forRight={true}
-                text="Checklist Mode gives your Playlist an option to checkout the visited items so you can keep track of your playlist progress.">
+                text="Checklist Mode gives your Playlist an option to checkout the visited items so you can keep track of your playlist progress."
+              >
                 <p
                   className="what-this center"
-                  style={{ margin: "0 0 0 0.5rem" }}>
+                  style={{ margin: "0 0 0 0.5rem" }}
+                >
                   <span
                     style={{ fontSize: "24px" }}
-                    class="material-symbols-outlined unfollow">
+                    class="material-symbols-outlined unfollow"
+                  >
                     info
                   </span>
                 </p>
@@ -1260,7 +1299,8 @@ const CreatePlaylistUI = ({
             </div>
             <div
               className="more-menu-items"
-              onClick={(e) => e.stopPropagation()}>
+              onClick={(e) => e.stopPropagation()}
+            >
               <div
                 className="align-center"
                 style={{
@@ -1271,17 +1311,20 @@ const CreatePlaylistUI = ({
                     deleteDateData();
                   }
                   setReadingPlan((p) => !p);
-                }}>
+                }}
+              >
                 {readingPlan ? (
                   <span
                     style={{ fontSize: "20px", color: "white" }}
-                    class="material-symbols-outlined unfollow">
+                    class="material-symbols-outlined unfollow"
+                  >
                     check_box
                   </span>
                 ) : (
                   <span
                     style={{ fontSize: "20px", color: "white" }}
-                    class="material-symbols-outlined unfollow">
+                    class="material-symbols-outlined unfollow"
+                  >
                     check_box_outline_blank
                   </span>
                 )}
@@ -1292,19 +1335,23 @@ const CreatePlaylistUI = ({
                     marginLeft: "4px",
                     color: "white",
                   }}
-                  for="playlistInclude">
+                  for="playlistInclude"
+                >
                   Reading Plan
                 </label>
               </div>
               <Tooltip
                 forRight={true}
-                text="Plan Mode lets you add dates in your playlist which keeps the date and progress in track according to date.">
+                text="Plan Mode lets you add dates in your playlist which keeps the date and progress in track according to date."
+              >
                 <p
                   className="what-this center"
-                  style={{ margin: "0 0 0 0.5rem" }}>
+                  style={{ margin: "0 0 0 0.5rem" }}
+                >
                   <span
                     style={{ fontSize: "24px" }}
-                    class="material-symbols-outlined unfollow ">
+                    class="material-symbols-outlined unfollow "
+                  >
                     info
                   </span>
                 </p>
@@ -1318,7 +1365,8 @@ const CreatePlaylistUI = ({
         {creatingPlaylist ? null : (
           <div
             className="align-center justify-between"
-            style={{ padding: "0.5rem 0 ", justifyContent: "space-between" }}>
+            style={{ padding: "0.5rem 0 ", justifyContent: "space-between" }}
+          >
             <div className="align-center" style={{ gap: "0.5rem" }}>
               <div
                 className="publish-setting"
@@ -1333,7 +1381,8 @@ const CreatePlaylistUI = ({
                   globalThis.LastClickY = y;
                   showPlaylistPosition.current = { ...getPosition() };
                   setShowPlaylistSettings(true);
-                }}>
+                }}
+              >
                 <span class="material-symbols-outlined">playlist_play</span>
               </div>
               <div
@@ -1341,11 +1390,13 @@ const CreatePlaylistUI = ({
                   isTempEdit.current = true;
                   startCreatingPlaylist(name, playList, id);
                 }}
-                className="pointer">
+                className="pointer"
+              >
                 {!name ? "[ Untitled ]" : name}
                 <span
                   class="material-symbols-outlined"
-                  style={{ color: "#D36433" }}>
+                  style={{ color: "#D36433" }}
+                >
                   edit
                 </span>
               </div>
@@ -1364,7 +1415,8 @@ const CreatePlaylistUI = ({
                   globalThis.LastClickY = y;
                   showMorePosition.current = { ...getPosition() };
                   setShowMoreOptions(true);
-                }}>
+                }}
+              >
                 <img src={Settings_Icon} alt="Settings_Icon" />
               </div>
             </div>
@@ -1376,11 +1428,13 @@ const CreatePlaylistUI = ({
               height: "100%",
               display: "flex",
               flexDirection: "column",
-            }}>
+            }}
+          >
             {readingPlan && (
               <div
                 className="align-center"
-                style={{ gap: "12px", margin: "12px 0" }}>
+                style={{ gap: "12px", margin: "12px 0" }}
+              >
                 <div style={{ width: "100%" }} className="align-center">
                   <Select
                     hidden={true}
@@ -1399,7 +1453,8 @@ const CreatePlaylistUI = ({
             {(isSomethingChecked || embedding) && (
               <div
                 style={{ justifyContent: "space-between", margin: "0.5rem 0" }}
-                className="align-center">
+                className="align-center"
+              >
                 <Button
                   onClick={() => {
                     onBulkDeleteItems();
@@ -1411,10 +1466,12 @@ const CreatePlaylistUI = ({
                     }
                   }}
                   secondaryAlt
-                  color="#C20104">
+                  color="#C20104"
+                >
                   <span
                     style={{ marginRight: "0.5rem" }}
-                    class="material-symbols-outlined unfollow color-inherit">
+                    class="material-symbols-outlined unfollow color-inherit"
+                  >
                     delete_forever
                   </span>
                   <span className="color-inherit">Delete</span>
@@ -1423,7 +1480,8 @@ const CreatePlaylistUI = ({
                   <Button onClick={onEmbedItems} secondaryAlt color="#3B82F6">
                     <span
                       style={{ marginRight: "0.5rem" }}
-                      class="material-symbols-outlined unfollow color-inherit">
+                      class="material-symbols-outlined unfollow color-inherit"
+                    >
                       frame_source
                     </span>
                     <span className="color-inherit">Embed</span>
@@ -1435,10 +1493,12 @@ const CreatePlaylistUI = ({
                     setChecklistData({});
                     setChecklistEmbeded({});
                   }}
-                  secondaryAlt>
+                  secondaryAlt
+                >
                   <span
                     style={{ marginRight: "0.5rem" }}
-                    class="material-symbols-outlined unfollow color-inherit">
+                    class="material-symbols-outlined unfollow color-inherit"
+                  >
                     close
                   </span>
                   <span className="color-inherit">Cancel</span>
@@ -1448,7 +1508,8 @@ const CreatePlaylistUI = ({
             {isSomethingEmbededChecked && !isSomethingChecked && (
               <div
                 style={{ justifyContent: "space-between", margin: "0.5rem 0" }}
-                className="align-center">
+                className="align-center"
+              >
                 <Button
                   onClick={() => {
                     const values = Object.keys(checkListEmbeded).map(
@@ -1457,10 +1518,12 @@ const CreatePlaylistUI = ({
                     onDisembed(values, true);
                   }}
                   secondaryAlt
-                  color="#C20104">
+                  color="#C20104"
+                >
                   <span
                     style={{ marginRight: "0.5rem" }}
-                    class="material-symbols-outlined unfollow color-inherit">
+                    class="material-symbols-outlined unfollow color-inherit"
+                  >
                     delete_forever
                   </span>
                   <span className="color-inherit">Delete</span>
@@ -1473,10 +1536,12 @@ const CreatePlaylistUI = ({
                     onDisembed(values);
                   }}
                   secondaryAlt
-                  color="#3B82F6">
+                  color="#3B82F6"
+                >
                   <span
                     style={{ marginRight: "0.5rem" }}
-                    class="material-symbols-outlined unfollow color-inherit">
+                    class="material-symbols-outlined unfollow color-inherit"
+                  >
                     link_off
                   </span>
                   <span className="color-inherit">Remove</span>
@@ -1485,10 +1550,12 @@ const CreatePlaylistUI = ({
                   onClick={() => {
                     setChecklistEmbeded({});
                   }}
-                  secondaryAlt>
+                  secondaryAlt
+                >
                   <span
                     style={{ marginRight: "0.5rem" }}
-                    class="material-symbols-outlined unfollow color-inherit">
+                    class="material-symbols-outlined unfollow color-inherit"
+                  >
                     close
                   </span>
                   <span className="color-inherit">Cancel</span>
@@ -1534,7 +1601,8 @@ const CreatePlaylistUI = ({
                   gap: "1rem",
                   justifyContent: "space-between",
                   width: "100%",
-                }}>
+                }}
+              >
                 <Input
                   value={searchText}
                   style={{ marginBottom: "0" }}
@@ -1543,7 +1611,8 @@ const CreatePlaylistUI = ({
                 />
                 <p
                   onClick={onSearchHit}
-                  className="playlist-action secondary self-start">
+                  className="playlist-action secondary self-start"
+                >
                   <span class="material-symbols-outlined unfollow">search</span>
                   <span>Search & Add</span>
                 </p>
@@ -1556,7 +1625,8 @@ const CreatePlaylistUI = ({
                   gap: "1rem",
                   alignItems: "center",
                   width: "100%",
-                }}>
+                }}
+              >
                 <Button
                   style={{ fontSize: "12px" }}
                   onClick={() => {
@@ -1564,10 +1634,12 @@ const CreatePlaylistUI = ({
                     setOpenAttachLink(true);
                   }}
                   small
-                  secondary>
+                  secondary
+                >
                   <span
                     class="material-symbols-outlined unfollow color-inherit"
-                    style={{ fontSize: "1.25rem", marginRight: "0.25rem" }}>
+                    style={{ fontSize: "1.25rem", marginRight: "0.25rem" }}
+                  >
                     photo_library
                   </span>
                   <span className="color-inherit">Add Media</span>
@@ -1575,7 +1647,8 @@ const CreatePlaylistUI = ({
                 <p
                   onClick={() => {}}
                   style={{ width: "fit-content" }}
-                  className="playlist-action small">
+                  className="playlist-action small"
+                >
                   <span class="material-symbols-outlined unfollow">
                     calendar_month
                   </span>
@@ -1608,10 +1681,12 @@ const CreatePlaylistUI = ({
             {regenrateUI && (
               <div
                 className="add-new-playlist alter"
-                style={{ border: "none" }}>
+                style={{ border: "none" }}
+              >
                 <div
                   class="align-center"
-                  style={{ justifyContent: "space-between" }}>
+                  style={{ justifyContent: "space-between" }}
+                >
                   <p style={{ fontSize: "12px", margin: "0.5rem 0" }}>
                     <b>Generation Prompt:</b>
                   </p>
@@ -1632,10 +1707,12 @@ const CreatePlaylistUI = ({
                         small
                         onClick={() => {
                           setSystemPrompt(globalThis.SYSTEM_PROMPT);
-                        }}>
+                        }}
+                      >
                         <span
                           style={{ fontSize: "14px" }}
-                          class="material-symbols-outlined unfollow">
+                          class="material-symbols-outlined unfollow"
+                        >
                           reset_settings
                         </span>
                       </Button>
@@ -1684,7 +1761,8 @@ const CreatePlaylistUI = ({
                   <Button
                     // isDisabled={loading}
                     onClick={onRegenration}
-                    secondary>
+                    secondary
+                  >
                     {loading ? "Generating" : "Generate"}
                   </Button>
                 </div>
@@ -1710,7 +1788,8 @@ const CreatePlaylistUI = ({
                   setOpenAttachLink(false);
                   startCreatingPlaylist("", playList, id);
                 }}
-                secondary>
+                secondary
+              >
                 Save
               </Button>
               {hasOldRef.current && (
@@ -1725,7 +1804,8 @@ const CreatePlaylistUI = ({
                     os.download(jsonStr, `${name}.json`);
                   }}
                   style={{ width: "100%", padding: "0" }}
-                  className="playlist-action self-start">
+                  className="playlist-action self-start"
+                >
                   <span class="material-symbols-outlined unfollow">
                     download
                   </span>
@@ -1739,7 +1819,8 @@ const CreatePlaylistUI = ({
                     setRegenrateUI(true);
                   }}
                   style={{ width: "100%", padding: "0" }}
-                  className="playlist-action self-start">
+                  className="playlist-action self-start"
+                >
                   <span class="material-symbols-outlined unfollow">
                     animated_images
                   </span>
@@ -1755,7 +1836,8 @@ const CreatePlaylistUI = ({
                     setOpenModal(true);
                   }}
                   style={{ width: "100%", padding: "0" }}
-                  className="playlist-action self-start">
+                  className="playlist-action self-start"
+                >
                   <span class="material-symbols-outlined unfollow">
                     content_copy
                   </span>
@@ -1768,7 +1850,8 @@ const CreatePlaylistUI = ({
                   setPlaylist([]);
                   setCreatingPlaylist(false);
                 }}
-                secondaryAlt>
+                secondaryAlt
+              >
                 Reset
               </Button>
             </div>

@@ -1,11 +1,5 @@
 // console.log("globalThis.CHAPTER_DATA", globalThis.CHAPTER_DATA);
 
-
-const { useState } = os.appHooks
-
-
-
-return
 if (!that.verseNumber) return;
 
 const isShiftHold = globalThis?.KEY_HOLD?.['shift'];

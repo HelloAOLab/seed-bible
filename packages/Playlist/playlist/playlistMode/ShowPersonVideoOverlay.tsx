@@ -95,7 +95,8 @@ const VideoOverlay = () => {
           left: `${position.x}${`${position.x}`.endsWith("w") ? "" : "px"}`,
           transition: "0.01s linear all",
         }}
-        className={`person-video-overlay ${size}`}>
+        className={`person-video-overlay ${size}`}
+      >
         <video
           poster={`https://dummyimage.com/240x240/000/fff&text=Preview`}
           className={`size-${size}`}
@@ -111,7 +112,8 @@ const VideoOverlay = () => {
             onClick={() => {
               globalThis.CloseVideoOverlay();
               globalThis.ToggleVideoLayout(true);
-            }}>
+            }}
+          >
             close
           </span>
           {sizes.map((ele) => {
@@ -152,7 +154,8 @@ const VideoOverlay = () => {
                   });
                 }, 50);
               }
-            }}>
+            }}
+          >
             {size === "full" ? "fullscreen_exit" : "fullscreen"}
           </span>
         </div>

@@ -79,7 +79,7 @@ function ThePage({
     if (!T) globalThis.CurrentPanelAvailable = panelId;
     else globalThis.CurrentPanelAvailable = null;
   }, [T]);
-
+  const { inSession, role, config } = getUserSessionInfo(configBot.id)
   const [tabEntered, setTabEntered] = useState(false);
   const { updateTab, tabs, setActiveTab } = useTabsContext();
   const { isDragging, setIsDragging, Element } = useMouseMove();
@@ -134,27 +134,69 @@ function ThePage({
 
     globalThis.refreshScrollers && globalThis.refreshScrollers();
   }
-
+    useEffect(() => {
+    const onKey = (e) => {
+      if (e.key === "Escape") {
+        setClickedVerses([]);
+        setShowVerseToolbar(false)
+      };
+    };
+    if (window) {
+      window.addEventListener("keydown", onKey);
+    }
+    return () => {
+      if (window) {
+        window.removeEventListener("keydown", onKey);
+      }
+    };
+  }, []);
   useEffect(() => {
-    os.addBotListener(thisBot, "remoteBookChange", (data) => {
+    const onBookChange = (data) => {
+      os.log("updated shared tab",'not approved');
+      if (!globalThis.CurrentTab?.sharedTab) {
+        updateTab(masks['sharedTab'], data)
+        return
+      };
       console.log("remoteBookChange", data);
-      globalThis.Open(data.bookId, data.chapter);
-    });
-    os.addBotListener(thisBot, "remoteHighlightChange", (data) => {
+      globalThis.Open?.(data.bookId, data.chapter);
+    };
+
+    const onHighlightChange = (data) => {
+      if (!globalThis.CurrentTab?.sharedTab) return;
       console.log("remoteHighlightChange", data);
-      globalThis.ToggleVerseHighlight(data?.verseNumbers, data?.color, data?.scroll, data?.fadeIn, true);
-    });
+      globalThis.ToggleVerseHighlight?.(
+        data?.verseNumbers,
+        data?.color,
+        data?.scroll,
+        data?.fadeIn,
+        true
+      );
+    };
+    os.addBotListener(thisBot, "remoteBookChange", onBookChange)
+    os.addBotListener(thisBot, "remoteHighlightChange", onHighlightChange)
+    return () => {
+      // os.removeBotListener(thisBot, 'remoteBookChange', onBookChange)
+      // os.removeBotListener(thisBot, 'remoteHighlightChange', onHighlightChange)
+    }
   }, []);
 
   useEffect(() => {
     loadData();
+    globalThis.CurrentTab = tab
   }, [tab]);
 
   useEffect(() => {
     if (data) {
+      //  EmitData("book", { ...data });
       hanldNavFunctions();
       SetShowCommands(false);
       updateTab(tab?.id, data);
+      if (config && !config?.sharedTab && role === 'host' && masks['sharedTab'] !== tab.id) {
+        updateTab(tab?.id, data);
+        updateTab(masks['sharedTab'], data);
+      }
+      if (role === 'host')
+        EmitData("book", { ...data });
       if (panelId && tab) {
         os.log("recoreded", panelId, {
           ...tab,
@@ -171,7 +213,8 @@ function ThePage({
       } else {
         setDirection(null);
       }
-      EmitData("book", { ...data });
+      if (masks['sharedTab'] === tab.id)
+        EmitData("book", { ...data });
       // const emitter = getBot("system", "app.emitter");
       // sendRemoteData(emitter.masks.otherRemotes, "updateSharingData", {
       //   id: tab?.id,
@@ -206,7 +249,7 @@ function ThePage({
         });
       }
     }, 1000);
-
+    globalThis.CurrentTab = tab
     return () => clearInterval(interval);
   }, [data]);
 
@@ -537,7 +580,10 @@ function ThePage({
     globalThis.ClearAllWordHighlights = clearAllWordHighlights;
     shout("onBookChanged", { ...data, tabId: tab?.id });
     clearAllVerseHighlights();
-    os.log("clearAllVerseHighlights", clearAllVerseHighlights);
+    // os.log("clearAllVerseHighlights", clearAllVerseHighlights);
+    if (data && JSON.stringify(tab?.data) !== JSON.stringify(data)) {
+      setTab(prev => ({ ...prev, data }))
+    }
   }, [data]);
 
   function hanldNavFunctions() {
@@ -691,11 +737,11 @@ function ThePage({
     });
   }, [tab?.id, data?.book, data?.chapter]);
 
+
   const toggleVerseHighlight = useCallback(
     (verseNumbers, color, scroll, fadeIn, skipIt) => {
-      const { inSession, role, config } = getUserSessionInfo(configBot.id)
-      if (inSession && role === 'follower' && config.onlyHostHighlight && !skipIt)
-        return
+      // if (!skipIt)
+      //   return
       if (!tab?.id) return;
       EmitData("highlight", { verseNumbers, color });
 
@@ -964,11 +1010,13 @@ function ThePage({
       onMouseEnter={handleMouseEnter}
       onMouseUp={handleMouseUp}
       onClick={hanldNavFunctions}
+      style={{
+        direction
+      }}
     >
       <style>
         {`
         .pageContainer{
-          direction:${direction};
           position: relative;
         }
         .toolbar-1 {
@@ -1051,7 +1099,7 @@ function ThePage({
           </div>
           <div style={{ height: "160px" }}></div>
 
-          {showVerseToolbar && (
+          {showVerseToolbar && !(role === 'follower' && config.onlyHostHighlight) && (
             <VerseToolbar
               clickedVerses={clickedVerses}
               toggleVerseHighlight={toggleVerseHighlight}
@@ -1637,7 +1685,7 @@ function Section({
                       book,
                       highlighted: highlighted?.[verse.verseNumber],
                     };
-                    EmitData("verseClicked", verseClickData);
+                    EmitData("onVerseClick", verseClickData);
                     shout("onVerseClick", verseClickData);
                   }}
                   style={{

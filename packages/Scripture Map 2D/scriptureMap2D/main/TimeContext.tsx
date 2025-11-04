@@ -2,9 +2,8 @@ const { createContext, useContext, useState, useEffect } = os.appHooks;
 
 const TimeContext = createContext();
 
-export const TimeProvider = ({children}) => {
-    
-    const [tick, setTick] = useState(Date.now());
+export const TimeProvider = ({ children }) => {
+  const [tick, setTick] = useState(Date.now());
 
     useEffect(() => {
         const interval = setInterval(() => {
@@ -13,13 +12,11 @@ export const TimeProvider = ({children}) => {
         return () => clearInterval(interval);
     }, []);
 
-    return (
-        <TimeContext.Provider value={{tick}} >
-            {children}
-        </TimeContext.Provider>
-    );
-}
+  return (
+    <TimeContext.Provider value={{ tick }}>{children}</TimeContext.Provider>
+  );
+};
 
 export const useTimeContext = () => {
-    return useContext(TimeContext);
-}
+  return useContext(TimeContext);
+};

@@ -1,4 +1,4 @@
-import { saveUserReadingHistory } from 'db.annotations.library';
+import { saveUserReadingHistory } from "db.annotations.library";
 const bibleTabDataCache = new Map();
 
 export function getCachedTabData(tabId) {
@@ -33,10 +33,14 @@ function parseContent(content) {
     } else if (type === "verse") {
       const verseText = parseText(sectionContent);
       currentSection.verses.push({ verseNumber: number, text: verseText });
-    } else if (type === 'line_break') {
-      currentSection.verses.push({ verseNumber: null, text: '\n', lineBreak: true });
-    }else if (type === "hebrew_subtitle") {
-      console.log(sectionContent, "sectionContent")
+    } else if (type === "line_break") {
+      currentSection.verses.push({
+        verseNumber: null,
+        text: "\n",
+        lineBreak: true,
+      });
+    } else if (type === "hebrew_subtitle") {
+      console.log(sectionContent, "sectionContent");
       currentSection.hebrew_subtitle = parseText(sectionContent);
     }
   });
@@ -80,33 +84,36 @@ export class BibleDataManager {
   }
 
   _scheduleMaskRecord() {
+    const timestamp = Date.now();
 
-
-    const timestamp = Date.now()
-
-    const lastReading = thisBot.vars.tempLastReading ??= {};
-    const tempHistory = thisBot.vars.tempReadingHistory ??= {};
-    const userHistory = tempHistory[configBot.id] ??= {};
-    const bookHistory = userHistory[this.bookId] ??= {};
-    if(!bookHistory[this.chapter]) bookHistory[this.chapter] = [];
-    const length = bookHistory[this.chapter].push({start: timestamp});
-    if(lastReading[configBot.id]) 
-    {
-      const {bookId, chapter, index} = lastReading[configBot.id];
+    const lastReading = (thisBot.vars.tempLastReading ??= {});
+    const tempHistory = (thisBot.vars.tempReadingHistory ??= {});
+    const userHistory = (tempHistory[configBot.id] ??= {});
+    const bookHistory = (userHistory[this.bookId] ??= {});
+    if (!bookHistory[this.chapter]) bookHistory[this.chapter] = [];
+    const length = bookHistory[this.chapter].push({ start: timestamp });
+    if (lastReading[configBot.id]) {
+      const { bookId, chapter, index } = lastReading[configBot.id];
       const lastEntry = userHistory[bookId]?.[chapter]?.[index];
-      if(lastEntry) lastEntry.end = timestamp;
-      else
-      {
-        console.warn(`[Debug] BibleDataManager._scheduleMaskRecord lastEntry not found`, thisBot.vars.tempLastReading[configBot.id]);
+      if (lastEntry) lastEntry.end = timestamp;
+      else {
+        console.warn(
+          `[Debug] BibleDataManager._scheduleMaskRecord lastEntry not found`,
+          thisBot.vars.tempLastReading[configBot.id]
+        );
       }
     }
 
-    lastReading[configBot.id] = {bookId: this.bookId, chapter: this.chapter, index: length - 1};
+    lastReading[configBot.id] = {
+      bookId: this.bookId,
+      chapter: this.chapter,
+      index: length - 1,
+    };
 
     saveUserReadingHistory(this.bookId, this.chapter);
 
     shout("OnHistoryUpdated");
-    
+
     if (!this.tabId) return;
 
     if (!Array.isArray(masks[this.tabId])) {
@@ -150,8 +157,9 @@ export class BibleDataManager {
     try {
       const url = customUrl
         ? `${forcedBaseUrl || this.baseUrl}${customUrl}`
-        : `${forcedBaseUrl || this.baseUrl}/api/${forcedTranslation || this.translation
-        }/${this.bookId}/${this.chapter}.json`;
+        : `${forcedBaseUrl || this.baseUrl}/api/${
+            forcedTranslation || this.translation
+          }/${this.bookId}/${this.chapter}.json`;
       console.log(url, customUrl, "firstChapterApiLink");
 
       const response = await web.get(url);
@@ -167,9 +175,12 @@ export class BibleDataManager {
           content: parsedContent,
           bookId: json?.data?.book?.id || this.bookId,
           translation: forcedTranslation || this.translation,
-          nextChapter: json?.data?.nextChapterApiLink || json?.nextChapterApiLink,
-          prevChapter: json?.data?.previousChapterApiLink || json?.previousChapterApiLink,
-          numberOfChapters: json?.data?.book?.numberOfChapters || json?.numberOfChapters,
+          nextChapter:
+            json?.data?.nextChapterApiLink || json?.nextChapterApiLink,
+          prevChapter:
+            json?.data?.previousChapterApiLink || json?.previousChapterApiLink,
+          numberOfChapters:
+            json?.data?.book?.numberOfChapters || json?.numberOfChapters,
         };
 
         this.footnotes = json?.data?.chapter?.footnotes || null;
@@ -183,7 +194,7 @@ export class BibleDataManager {
       }
     } catch (err) {
       this.error = err;
-      console.error('Failed to fetch bible data:', err);
+      console.error("Failed to fetch bible data:", err);
     } finally {
       this.loading = false;
     }
@@ -203,11 +214,11 @@ export class BibleDataManager {
 
   async openNext() {
     if (this.data?.nextChapter) {
+      const match = this.data.nextChapter.match(
+        /^\/api\/([^/]+)\/([^/]+)\/(\d+)\.json$/
+      );
 
-      const match = this.data.nextChapter.match(/^\/api\/([^/]+)\/([^/]+)\/(\d+)\.json$/);
-
-      if (match) 
-      {
+      if (match) {
         const [, , bookId, chapter] = match;
         this.bookId = bookId;
         this.chapter = Number(chapter);
@@ -219,11 +230,11 @@ export class BibleDataManager {
 
   async openPrevious() {
     if (this.data?.prevChapter) {
+      const match = this.data.prevChapter.match(
+        /^\/api\/([^/]+)\/([^/]+)\/(\d+)\.json$/
+      );
 
-      const match = this.data.prevChapter.match(/^\/api\/([^/]+)\/([^/]+)\/(\d+)\.json$/);
-
-      if (match) 
-      {
+      if (match) {
         const [, , bookId, chapter] = match;
         this.bookId = bookId;
         this.chapter = Number(chapter);
@@ -236,13 +247,15 @@ export class BibleDataManager {
   async changeTranslation(newTranslation, bookData, forcedBaseUrl) {
     console.log("changeTranslation tra");
     this.translation = newTranslation;
-    this.bookId = bookData?.id || 'GEN';
+    this.bookId = bookData?.id || "GEN";
     if (forcedBaseUrl) {
       this.chapter = 1;
     }
     this.baseUrl = forcedBaseUrl || this.baseUrl;
     await this.fetch(
-      bookData ? bookData.firstChapterApiLink : `/api/${newTranslation}/${bookData?.id || 'GEN'}/1.json`,
+      bookData
+        ? bookData.firstChapterApiLink
+        : `/api/${newTranslation}/${bookData?.id || "GEN"}/1.json`,
       newTranslation,
       forcedBaseUrl
     );

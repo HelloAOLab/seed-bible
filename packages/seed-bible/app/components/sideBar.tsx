@@ -206,7 +206,10 @@ const CircleCounter = ({ data, book, chapter }) => {
               style={{ display: "flex", flexDirection: "column", gap: "12px" }}
             >
               {entries.map(([id, value], index) => {
-                const { IconComponent, color } = getUserVisual(id, index);
+                const { Icon, color } = globalThis?.GetOrSetVisualInTags(
+                  value[0]
+                );
+                const { role } = globalThis.GetUserSessionInfo(value[0]);
                 return (
                   <div
                     key={id}
@@ -234,9 +237,7 @@ const CircleCounter = ({ data, book, chapter }) => {
                         flexShrink: 0,
                       }}
                     >
-                      <IconComponent
-                        style={{ width: "18px", height: "18px" }}
-                      />
+                      <Icon style={{ width: "18px", height: "18px" }} />
                     </div>
                     <div style={{ flex: 1 }}>
                       <div
@@ -254,6 +255,50 @@ const CircleCounter = ({ data, book, chapter }) => {
                       <div style={{ fontSize: "14px", color: "#6b7280" }}>
                         Book: {book} • Chapter: {chapter}
                       </div>
+                    </div>
+                    <div style={{ display: "flex", gap: "8px" }}>
+                      <button
+                        // disabled={role !== 'host'}
+                        onClick={() => {
+                          InviteUser(value[0]);
+                          setIsModalOpen(false);
+                        }}
+                        style={{
+                          padding: "6px 12px",
+                          borderRadius: "6px",
+                          border: false
+                            ? "1px solid #10B981"
+                            : "1px solid #d1d5db",
+                          backgroundColor: false ? "#10B981" : "white",
+                          color: false ? "white" : "#374151",
+                          fontSize: "12px",
+                          fontWeight: "500",
+                          cursor: "pointer",
+                          transition: "all 0.2s",
+                        }}
+                      >
+                        {"Follow"}
+                      </button>
+                      <button
+                        // disabled={role !== 'host'}
+                        onClick={() => {
+                          HandleSharedTablick();
+                          setIsModalOpen(false);
+                        }}
+                        style={{
+                          padding: "6px 12px",
+                          borderRadius: "6px",
+                          border: "1px solid #3B82F6",
+                          backgroundColor: "#3B82F6",
+                          color: "white",
+                          fontSize: "12px",
+                          fontWeight: "500",
+                          cursor: "pointer",
+                          transition: "all 0.2s",
+                        }}
+                      >
+                        Invite
+                      </button>
                     </div>
                   </div>
                 );
@@ -274,13 +319,15 @@ function Tab({
   setElement,
   collapsed,
   onlineUsers,
+  index,
+  sharedTab,
 }) {
   const { openPopupSettings, closePopupSettings, userURL } =
     useSideBarContext();
   const { setCanvasMode, setMapMode } = useBibleContext();
-  useEffect(() => {
-    console.log(onlineUsers, "onlineUsers var");
-  }, [onlineUsers]);
+  // useEffect(() => {
+  //   // console.log(onlineUsers, "onlineUsers var");
+  // }, [onlineUsers]);
   const {
     removeTab,
     multiSelectMode,
@@ -385,6 +432,10 @@ function Tab({
 
   const handleTabClick = () => {
     if (activeTab === el.id) return;
+
+    if (el.sharedTab) {
+      globalThis?.HandleSharedTablick();
+    }
     const checkEmpty = PanelsApps.find((e) => !e.tabData);
     console.log(checkEmpty, PanelsApps);
     if (el.data.type === "book" && checkEmpty) {
@@ -465,22 +516,47 @@ function Tab({
         )
       )
     : {};
+  const notJoinedSharedTab =
+    sharedTab && activeTab !== el.id;
+  const info = el.sharedTab && globalThis?.GetOrSetVisualInTags(tags.hostIdForOnlineTab);
+
   return (
     <div
       onMouseDown={handleMouseDown}
       onMouseUp={handleMouseUpOrLeave}
       onMouseLeave={handleMouseUpOrLeave}
       onClick={handleTabClick}
-      className={`${
-        activeTab === el.id && !multiSelectMode && !collapsed
-          ? "activeTab"
-          : activeTab === el.id && collapsed
-            ? "activeTabCollapsed"
-            : collapsed
-              ? "collabsedTab"
-              : "tab"
+      style={{
+        ...(index === 0 &&
+          sharedTab && {
+            "border-top": "none",
+            "border-radius": "0 0 5px 5px",
+            border: `1px solid ${info.color} !important`,
+            background: `color-mix(in srgb, ${info.color} 50%, transparent) !important`,
+            marginBottom: "5px",
+          }),
+      }}
+      className={`
+
+      ${index === 0 && sharedTab && "sharedTab"}
+      ${
+        notJoinedSharedTab
+          ? "tab notJoinedSharedTab"
+          : activeTab === el.id && !multiSelectMode && !collapsed
+            ? "activeTab"
+            : activeTab === el.id && collapsed
+              ? "activeTabCollapsed"
+              : collapsed
+                ? "collabsedTab"
+                : "tab"
       } ${selectedTabs?.includes?.(el.id) ? "selected" : ""}`}
     >
+      <style>{`
+        .notJoinedSharedTab {
+            border: 1px solid var(--tabSelection);
+            border-radius:5px;
+        }
+    `}</style>
       {!collapsed ? (
         <>
           <div className="tabInfo">
@@ -526,7 +602,7 @@ function Tab({
             />
           </div>
 
-          {activeTab === el.id && (
+          {!sharedTab&&activeTab === el.id && (
             <span
               onClick={() => {
                 openPopupSettings(OPTIONS(el));
@@ -936,28 +1012,35 @@ function SideBar() {
 
   const MenuOptions = {
     type: "normal",
-    items: () => [
+    items: [
       {
-        disabled: true,
+        disabled: false,
+        icon: <MenuIcon name="screen_record" />,
+        title: "Start session",
+        onClick: () => {
+          // os.log(globalThis?.StartSession,globalThis)
+          HandleSharedTablick();
+        },
+      },
+      {
+        disabled: false,
         icon: <MenuIcon name="logout" />,
-        title: "Join a Lobby",
+        title: "Invite to session",
         onClick: async () => {
+          const {QRCodeComponent} = thisBot.Chips();
+          const url = `https://ao.bot/?pattern=SeedBibleDev&inst=${uuid()}&hosted=${configBot.id}`;
+          ShowModal(<QRCodeComponent url={url} />);
+        },
+      },
+      {
+        disabled: false,
+        icon: <MenuIcon name="content_copy" />,
+        title: "Join another session",
+         onClick: async () => {
           const id = await os.showInput("", {
             title: "Enter session link",
           });
           if (id) os.goToURL(id);
-        },
-      },
-      {
-        disabled: true,
-        icon: <MenuIcon name="content_copy" />,
-        title: "Copy session link",
-        onClick: () => {
-          os.setClipboard(
-            `https://ao.bot/?pattern=SeedBibleDev&noGridPortal=true&inst=${os.getCurrentInst()}&join=${
-              configBot.id
-            }`
-          );
         },
       },
       { type: "line" },
@@ -1262,6 +1345,23 @@ function SideBar() {
               </div>
             )}
             <UserPresence />
+            {tabs
+              .filter((tab) => tab.sharedTab)
+              .map((el, index) => (
+                <Tab
+                  key={el.id}
+                  el={el}
+                  index={index}
+                  onlineUsers={onlineUsers}
+                  activeTab={activeTab}
+                  setActiveTab={setActiveTab}
+                  setIsDragging={setIsDragging}
+                  setElement={setElement}
+                  collapsed={collapsed}
+                  editMode={editMode}
+                  sharedTab={true}
+                />
+              ))}
             <div className="tabsContainer">
               <span>Tabs</span>
               <div
@@ -1444,19 +1544,22 @@ function SideBar() {
           onPointerUp={handleMouseUpTab}
           className={collapsed ? "tabs-collapsed" : "tabs"}
         >
-          {tabs.map((el) => (
-            <Tab
-              key={el.id}
-              el={el}
-              onlineUsers={onlineUsers}
-              activeTab={activeTab}
-              setActiveTab={setActiveTab}
-              setIsDragging={setIsDragging}
-              setElement={setElement}
-              collapsed={collapsed}
-              editMode={editMode}
-            />
-          ))}
+          {tabs
+            .filter((tab) => !tab.sharedTab)
+            .map((el, index) => (
+              <Tab
+                key={el.id}
+                el={el}
+                index={index}
+                onlineUsers={onlineUsers}
+                activeTab={activeTab}
+                setActiveTab={setActiveTab}
+                setIsDragging={setIsDragging}
+                setElement={setElement}
+                collapsed={collapsed}
+                editMode={editMode}
+              />
+            ))}
 
           {collapsed && (
             <span

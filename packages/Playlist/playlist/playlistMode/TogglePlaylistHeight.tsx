@@ -11,7 +11,8 @@ const TogglePlaylistHeight = () => {
         globalThis.SetPlaylistForcedHeight((p) =>
           p === 0 ? 1 : p === 1 ? 2 : 0
         );
-      }}>
+      }}
+    >
       <span class="material-symbols-outlined" style={{ color: "#D36433" }}>
         unfold_more_double
       </span>

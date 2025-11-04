@@ -9,20 +9,19 @@
     overflow: scroll;
 } */
 
-.mapWrapper
-{
-    width: 100%;
-    display: flex;
-    flex-direction: column;
-    justify-content: space-between;
-    align-items: flex-start;
-    background-color: white;
-    pointer-events: all;
-    overflow: scroll;
-    gap: 8px;
-    height: 100%;
+.mapWrapper {
+  width: 100%;
+  display: flex;
+  flex-direction: column;
+  justify-content: space-between;
+  align-items: flex-start;
+  background-color: white;
+  pointer-events: all;
+  overflow: scroll;
+  gap: 8px;
+  height: 100%;
 
-    --timelineItemSize: 16px
+  --timelineItemSize: 16px;
 }
 
 /* .mapWrapper.showingContent
@@ -30,399 +29,352 @@
     grid-template-rows: 60px 1fr auto;
 } */
 
-.mapSettings
-{
-    position: sticky;
-    z-index: 10;
-    top: 0;
-    background-color: white;
-    width: 100%;
-    display: flex;
-    flex-direction: column;
-    justify-content: flex-start;
-    align-items: flex-start;
-    padding: 16px;
-    gap: 8px;
+.mapSettings {
+  position: sticky;
+  z-index: 10;
+  top: 0;
+  background-color: white;
+  width: 100%;
+  display: flex;
+  flex-direction: column;
+  justify-content: flex-start;
+  align-items: flex-start;
+  padding: 16px;
+  gap: 8px;
 }
 
-.projectStateSetter
-{
-    width: 100%;
-    padding: 4px;
-    display: flex;
-    flex-direction: column;
-    justify-content: flex-start;
-    align-items: center;
-    gap: 12px;
+.projectStateSetter {
+  width: 100%;
+  padding: 4px;
+  display: flex;
+  flex-direction: column;
+  justify-content: flex-start;
+  align-items: center;
+  gap: 12px;
 }
 
-.projectStateSetter > div:nth-of-type(1)
-{
-    display: flex;
-    justify-content: space-between;
-    align-items: center;
-    width: 100%;
+.projectStateSetter > div:nth-of-type(1) {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  width: 100%;
 }
 
-.projectStateSetter > div:nth-of-type(2)
-{
-    display: flex;
-    justify-content: flex-start;
-    align-items: center;
-    gap: 8px;
-    flex-wrap: wrap;
-    width: 100%;
+.projectStateSetter > div:nth-of-type(2) {
+  display: flex;
+  justify-content: flex-start;
+  align-items: center;
+  gap: 8px;
+  flex-wrap: wrap;
+  width: 100%;
 }
 
-.projectStateSetter > div:nth-of-type(2) > span:nth-of-type(1)
-{
-    font-family: system-ui;
-    font-size: 16px;
+.projectStateSetter > div:nth-of-type(2) > span:nth-of-type(1) {
+  font-family: system-ui;
+  font-size: 16px;
 }
 
-.selectionModeToggle
-{
-    display: flex;
-    justify-content: center;
-    align-items: center;
-    gap: 8px;
+.selectionModeToggle {
+  display: flex;
+  justify-content: center;
+  align-items: center;
+  gap: 8px;
 }
 
-.selectionModeToggle > span:nth-of-type(1)
-{
-    background-color: white;
-    border: solid 2px black;
-    width: 16px;
-    height: 16px;
-    border-radius: 4px;
-    display: flex;
-    justify-content: center;
-    align-items: center;
-    font-size: 16px;
+.selectionModeToggle > span:nth-of-type(1) {
+  background-color: white;
+  border: solid 2px black;
+  width: 16px;
+  height: 16px;
+  border-radius: 4px;
+  display: flex;
+  justify-content: center;
+  align-items: center;
+  font-size: 16px;
 }
 
-.selectionModeToggle > span:nth-of-type(1).checked
-{
-    background-color: #D36433;
-    border-color: #D36433;
-    color: white;
+.selectionModeToggle > span:nth-of-type(1).checked {
+  background-color: #d36433;
+  border-color: #d36433;
+  color: white;
 }
 
-.selectionModeToggle > span:nth-of-type(2)
-{
-    font-family: system-ui;
+.selectionModeToggle > span:nth-of-type(2) {
+  font-family: system-ui;
 }
 
-.selectionModeToggle > span:nth-of-type(3)
-{
-    font-size: 16px;
+.selectionModeToggle > span:nth-of-type(3) {
+  font-size: 16px;
 }
 
-.selectionOptions
-{
-    display: flex;
-    justify-content: center;
-    align-items: center;
-    gap: 8px;
+.selectionOptions {
+  display: flex;
+  justify-content: center;
+  align-items: center;
+  gap: 8px;
 }
 
-.selectionOptions > button
-{
-    display: flex;
-    justify-content: center;
-    align-items: center;
-    gap: 4px;
-    appearance: none;
-    border: none;
-    background-color: transparent;
+.selectionOptions > button {
+  display: flex;
+  justify-content: center;
+  align-items: center;
+  gap: 4px;
+  appearance: none;
+  border: none;
+  background-color: transparent;
 }
 
-.selectionOptions > button:nth-of-type(1) 
-{
-    color: #808080;
+.selectionOptions > button:nth-of-type(1) {
+  color: #808080;
 }
 
-.selectionOptions > button:nth-of-type(2) 
-{
-    color: #D36433;
+.selectionOptions > button:nth-of-type(2) {
+  color: #d36433;
 }
 
-.selectionOptions > button > span 
-{
-    font-size: 16px;
+.selectionOptions > button > span {
+  font-size: 16px;
 }
 
-.divider
-{
-    width: 1px;
-    height: 20px;
-    background-color: #d2d2d2;
+.divider {
+  width: 1px;
+  height: 20px;
+  background-color: #d2d2d2;
 }
 
 .mapWrapper .mapControls,
-.mapWrapper .userPresenceSettings
-{
-    width: 100%;
+.mapWrapper .userPresenceSettings {
+  width: 100%;
 }
 
-.userPresenceSettings > div
-{
-    padding: 8px;
+.userPresenceSettings > div {
+  padding: 8px;
 }
-
 
 .projectFiltersSelector,
-.readingHistoryUserSelector
-{
-    display: flex;
-    justify-content: flex-start;
-    align-items: center;
-    gap: 8px;
-    flex-wrap: wrap;
+.readingHistoryUserSelector {
+  display: flex;
+  justify-content: flex-start;
+  align-items: center;
+  gap: 8px;
+  flex-wrap: wrap;
 }
 
-.readingHistoryTimeline {    
-    width: 100%;
-    display: grid;
-    gap: 2px;
-    align-items: start;
-    overflow-x: scroll;
-    scrollbar-width: thin !important;
+.readingHistoryTimeline {
+  width: 100%;
+  display: grid;
+  gap: 2px;
+  align-items: start;
+  overflow-x: scroll;
+  scrollbar-width: thin !important;
 }
 
 .readingHistoryTimeline-item {
-    width: var(--timelineItemSize);
-    height: var(--timelineItemSize);
-    background-color: #E3E3E3;
-    border-radius: 4px;
-    border-style: solid;
-    border-width: 2px;
-    border-color: transparent;
+  width: var(--timelineItemSize);
+  height: var(--timelineItemSize);
+  background-color: #e3e3e3;
+  border-radius: 4px;
+  border-style: solid;
+  border-width: 2px;
+  border-color: transparent;
 }
 
-.readingHistoryTimeline-item.selected
-{
-    border-color: #497F77;
+.readingHistoryTimeline-item.selected {
+  border-color: #497f77;
 }
 
-.readingHistoryTimeline-label
-{
-    font-family: system-ui;
-    font-size: 12px;
+.readingHistoryTimeline-label {
+  font-family: system-ui;
+  font-size: 12px;
 }
 
-.readingHistoryTimeline-label-month
-{
-    margin-bottom: 4px;
+.readingHistoryTimeline-label-month {
+  margin-bottom: 4px;
 }
 
-.readingHistoryTimeline-label-day
-{
-    margin-right: 4px;
+.readingHistoryTimeline-label-day {
+  margin-right: 4px;
 }
 
-.projectStateButton
-{
-    padding: 8px 12px;
-    background-color: #F0F1F1;
-    border: solid 2px #DEDEDE;
-    border-radius: 25px;
-    font-family: system-ui;
-    display: flex;
-    justify-content: center;
-    align-items: center;
-    gap: 8px;
-    cursor: pointer;
+.projectStateButton {
+  padding: 8px 12px;
+  background-color: #f0f1f1;
+  border: solid 2px #dedede;
+  border-radius: 25px;
+  font-family: system-ui;
+  display: flex;
+  justify-content: center;
+  align-items: center;
+  gap: 8px;
+  cursor: pointer;
 }
 
 .projectFiltersSelectorOption.selected,
-.projectStateSetterOption:hover
-{
-    background-color: #ffe3d7;
-    border-color: #D36433;
+.projectStateSetterOption:hover {
+  background-color: #ffe3d7;
+  border-color: #d36433;
 }
 
-.filterOptionIcon
-{
-    width: 16px;
-    height: 16px;
-    border-radius: 20px;
-    border-width: 2px;
+.filterOptionIcon {
+  width: 16px;
+  height: 16px;
+  border-radius: 20px;
+  border-width: 2px;
 }
 
-.usersSelector
-{
-    display: flex;
-    justify-content: flex-start;
-    align-items: center;
-    gap: 8px;
+.usersSelector {
+  display: flex;
+  justify-content: flex-start;
+  align-items: center;
+  gap: 8px;
 }
 
-.userButton
-{
-    appearance: none;
-    background-color: transparent;
-    padding: 8px;
-    border: none;
-    display: grid;
-    grid-template-columns: 44px;
-    grid-template-rows: 44px auto;
-    gap: 8px;
+.userButton {
+  appearance: none;
+  background-color: transparent;
+  padding: 8px;
+  border: none;
+  display: grid;
+  grid-template-columns: 44px;
+  grid-template-rows: 44px auto;
+  gap: 8px;
 }
 
-.userButton span:nth-of-type(1) 
-{
-    width: 100%;
-    height: 100%;
-    display: flex;
-    justify-content: center;
-    align-items: center;
-    background-color: #ffb2b2;
-    border-radius: 25px;
-    border: solid 2px #545454;
-    font-size: 20px;
+.userButton span:nth-of-type(1) {
+  width: 100%;
+  height: 100%;
+  display: flex;
+  justify-content: center;
+  align-items: center;
+  background-color: #ffb2b2;
+  border-radius: 25px;
+  border: solid 2px #545454;
+  font-size: 20px;
 }
 
-.userButton span:nth-of-type(2) 
-{
-    overflow: hidden;
-    text-overflow: ellipsis;
-    font-size: 10px;
-    white-space: nowrap;
+.userButton span:nth-of-type(2) {
+  overflow: hidden;
+  text-overflow: ellipsis;
+  font-size: 10px;
+  white-space: nowrap;
 }
 
-.modesSelector, .contentVisualizationSelector
-{
-    display: flex;
-    justify-content: flex-start;
-    align-items: center;
-    gap: 8px;
+.modesSelector,
+.contentVisualizationSelector {
+  display: flex;
+  justify-content: flex-start;
+  align-items: center;
+  gap: 8px;
 }
 
-.toggleButton
-{
-    appearance: none;
-    border: none;
-    padding: 4px 8px;
-    border-radius: 4px;
-    background-color: #a0a0a0;
-    color: white;
-    display: flex;
-    justify-content: center;
-    align-items: center;
-    gap: 4px;
+.toggleButton {
+  appearance: none;
+  border: none;
+  padding: 4px 8px;
+  border-radius: 4px;
+  background-color: #a0a0a0;
+  color: white;
+  display: flex;
+  justify-content: center;
+  align-items: center;
+  gap: 4px;
 }
 
-.toggleButton.enabled
-{
-    background-color: #40bf40;
-    box-shadow: 0 0 4px 0 #40bf40;
+.toggleButton.enabled {
+  background-color: #40bf40;
+  box-shadow: 0 0 4px 0 #40bf40;
 }
 
-.toggleButton span 
-{
-    font-size: 14px;
+.toggleButton span {
+  font-size: 14px;
 }
 
-.timeFrameSetter
-{
-    display: flex;
-    justify-content: space-evenly;
-    align-items: center;
+.timeFrameSetter {
+  display: flex;
+  justify-content: space-evenly;
+  align-items: center;
 }
 
-.timeFrameSetter > div 
-{
-    display: flex;
-    justify-content: center;
-    align-items: center;
+.timeFrameSetter > div {
+  display: flex;
+  justify-content: center;
+  align-items: center;
 }
 
-.timeFrameSetter > div > .timeSetter
-{
-    appearance: none;
-    border: none;
-    width: 24px;
-    height: 24px;
-    display: flex;
-    justify-content: center;
-    align-items: center;
-    background-color: transparent;
+.timeFrameSetter > div > .timeSetter {
+  appearance: none;
+  border: none;
+  width: 24px;
+  height: 24px;
+  display: flex;
+  justify-content: center;
+  align-items: center;
+  background-color: transparent;
 }
-.timeFrameSetter > div > .timeSetter span 
-{
-    font-size: 14px;
+.timeFrameSetter > div > .timeSetter span {
+  font-size: 14px;
 }
 
-.mapWrapper, .mapWrapper *
-{
-    box-sizing: border-box;
-    scrollbar-width: none;
+.mapWrapper,
+.mapWrapper * {
+  box-sizing: border-box;
+  scrollbar-width: none;
 }
 
-.mapWrapper .mapControls
-{
-    height: 60px;
-    display: flex;
-    justify-content: center;
-    align-items: center;
-    gap: 8px;
+.mapWrapper .mapControls {
+  height: 60px;
+  display: flex;
+  justify-content: center;
+  align-items: center;
+  gap: 8px;
 
-    
-    position: sticky;
-    z-index: 10;
-    bottom: 0;
-    
-    padding: 12px 0;
+  position: sticky;
+  z-index: 10;
+  bottom: 0;
+
+  padding: 12px 0;
 }
 
-.mapWrapper .mapControls .zoomContainer
-{
-    background-color: #F0F1F1;
-    box-shadow: 0 0 6px 0 #0000002e;
-    display: flex;
-    border-radius: 4px;
-    padding: 4px;
+.mapWrapper .mapControls .zoomContainer {
+  background-color: #f0f1f1;
+  box-shadow: 0 0 6px 0 #0000002e;
+  display: flex;
+  border-radius: 4px;
+  padding: 4px;
 }
 
-.mapWrapper .mapControls .zoomContainer > button
-{
-    appearance: none;
-    display: flex;
-    justify-content: center;
-    align-items: center;
-    height: 32px;
-    border: none;
-    border-radius: 4px;
-    padding: 0 8px;
+.mapWrapper .mapControls .zoomContainer > button {
+  appearance: none;
+  display: flex;
+  justify-content: center;
+  align-items: center;
+  height: 32px;
+  border: none;
+  border-radius: 4px;
+  padding: 0 8px;
 }
 
-.mapWrapper .mapControls .zoomContainer > button.hovered
-{
-    background-color: #D36433;
-    color: white !important;
+.mapWrapper .mapControls .zoomContainer > button.hovered {
+  background-color: #d36433;
+  color: white !important;
 }
 
 .mapWrapper .mapControls .zoomContainer > button:nth-of-type(1),
-.mapWrapper .mapControls .zoomContainer > button:nth-of-type(3)
-{
-    width: 32px;
+.mapWrapper .mapControls .zoomContainer > button:nth-of-type(3) {
+  width: 32px;
 }
 
-.mapWrapper .mapControls .zoomContainer > button > span 
-{
-    color: inherit;
+.mapWrapper .mapControls .zoomContainer > button > span {
+  color: inherit;
 }
 
-.mapWrapper .mapControls .zoomContainer > button:nth-of-type(1) > span, 
-.mapWrapper .mapControls .zoomContainer > button:nth-of-type(3) > span 
-{
-    font-size: 16px;
+.mapWrapper .mapControls .zoomContainer > button:nth-of-type(1) > span,
+.mapWrapper .mapControls .zoomContainer > button:nth-of-type(3) > span {
+  font-size: 16px;
 }
 
-.mapWrapper .mapControls .zoomContainer > button:nth-of-type(2) > span
-{
-    text-box: auto;
+.mapWrapper .mapControls .zoomContainer > button:nth-of-type(2) > span {
+  text-box: auto;
 }
 
 /* .mapWrapper .mapControls .zoomContainer > button:hover 
@@ -431,234 +383,254 @@
     color: white;
 } */
 
-.zoomLevelSelector
-{
-    position: absolute;
-    left: 50%;
-    transform: translateX(-50%);
-    bottom: 100%;
-    background-color: #202020;
-    padding: 4px;
-    border-radius: 8px;
-    display: flex;
-    flex-direction: column;
-    justify-content: flex-start;
-    align-items: flex-start;
-    min-width: 148px;
+.zoomLevelSelector {
+  position: absolute;
+  left: 50%;
+  transform: translateX(-50%);
+  bottom: 100%;
+  background-color: #202020;
+  padding: 4px;
+  border-radius: 8px;
+  display: flex;
+  flex-direction: column;
+  justify-content: flex-start;
+  align-items: flex-start;
+  min-width: 148px;
 }
 
-.zoomLevelSelector > * 
-{
-    padding: 8px;
-    width: 100%;
-    color: white;
+.zoomLevelSelector > * {
+  padding: 8px;
+  width: 100%;
+  color: white;
 }
 
-.zoomLevelSelector > span
-{
-    font-size: 16px;
-    font-weight: 600;
-    text-align: start;
-    /* margin-bottom: 8px; */
+.zoomLevelSelector > span {
+  font-size: 16px;
+  font-weight: 600;
+  text-align: start;
+  /* margin-bottom: 8px; */
 }
 
-.zoomLevelSelector > button
-{
-    display: flex;
-    justify-content: space-between;
-    align-items: center;
-    appearance: none;
-    border: none;
-    background-color: transparent;
-    font-size: 16px;
+.zoomLevelSelector > button {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  appearance: none;
+  border: none;
+  background-color: transparent;
+  font-size: 16px;
 }
 
-.zoomLevelSelector button:hover
-{
-    background-color: #D364334D;
+.zoomLevelSelector button:hover {
+  background-color: #d364334d;
 }
 
-.zoomLevelSelector > button > span
-{
-    color: inherit;
+.zoomLevelSelector > button > span {
+  color: inherit;
 }
 
-.zoomLevelSelector > button > span:nth-of-type(2) 
-{
-    border-radius: 25px;
-    width: 16px;
-    height: 16px;
-    background-color: transparent;
-    border: solid 5px #D36433;
+.zoomLevelSelector > button > span:nth-of-type(2) {
+  border-radius: 25px;
+  width: 16px;
+  height: 16px;
+  background-color: transparent;
+  border: solid 5px #d36433;
 }
 
-.mapWrapper .mapContainer
-{
-    display: flex;
-    flex-direction: column;
-    justify-content: flex-start;
-    align-items: flex-start;
-    justify-self: center;
-    width: 100%;
-    gap: calc(8px * var(--scaleFactor));
-    padding-right: 24px;
-    padding-left: 16px;
+.mapWrapper .mapContainer {
+  display: flex;
+  flex-direction: column;
+  justify-content: flex-start;
+  align-items: flex-start;
+  justify-self: center;
+  width: 100%;
+  gap: calc(8px * var(--scaleFactor));
+  padding-right: 24px;
+  padding-left: 16px;
 }
 
-.mapWrapper .mapContainer .testamentContainer
-{
-    display: flex;
-    flex-direction: column;
-    justify-content: flex-start;
-    align-items: flex-start;
-    gap: calc(16px * var(--scaleFactor));
-    width: 100%;
+.mapWrapper .mapContainer .testamentContainer {
+  display: flex;
+  flex-direction: column;
+  justify-content: flex-start;
+  align-items: flex-start;
+  gap: calc(16px * var(--scaleFactor));
+  width: 100%;
 }
 
-
-.mapWrapper .mapContainer .testamentContainer .testamentContent
-{
-    width: 100%;
-    display: grid;
-    grid-template-columns: repeat(auto-fill, minmax(var(--bookWidth), 1fr));
-    grid-auto-columns: var(--bookWidth);
-    gap: calc(16px * var(--scaleFactor));
-    align-items: start;
+.mapWrapper .mapContainer .testamentContainer .testamentContent {
+  width: 100%;
+  display: grid;
+  grid-template-columns: repeat(auto-fill, minmax(var(--bookWidth), 1fr));
+  grid-auto-columns: var(--bookWidth);
+  gap: calc(16px * var(--scaleFactor));
+  align-items: start;
 }
 
-.mapWrapper .mapContainer .testamentContainer .mapBookContainer
-{
-    display: flex;
-    flex-direction: column;
-    justify-content: flex-start;
-    align-items: center;
-    min-height: 80px;
-    width: 100%;
+.mapWrapper .mapContainer .testamentContainer .mapBookContainer {
+  display: flex;
+  flex-direction: column;
+  justify-content: flex-start;
+  align-items: center;
+  min-height: 80px;
+  width: 100%;
 }
 
-.mapWrapper .mapContainer .testamentContainer .mapBookContainer .mapBook .bookName,
-.mapWrapper .mapContainer .testamentContainer .mapBookContainer .sectionNameContainer
-{
-    width: 100%;
-    height: calc(80px * var(--scaleFactor));
-    display: flex;
-    justify-content: center;
-    align-items: center;
-    padding: calc(16px * var(--scaleFactor));
-    /* background-color: transparent; */
+.mapWrapper
+  .mapContainer
+  .testamentContainer
+  .mapBookContainer
+  .mapBook
+  .bookName,
+.mapWrapper
+  .mapContainer
+  .testamentContainer
+  .mapBookContainer
+  .sectionNameContainer {
+  width: 100%;
+  height: calc(80px * var(--scaleFactor));
+  display: flex;
+  justify-content: center;
+  align-items: center;
+  padding: calc(16px * var(--scaleFactor));
+  /* background-color: transparent; */
 }
 
-.mapWrapper .mapContainer .testamentContainer .mapBookContainer .sectionNameContainer
-{
-    border-radius: calc(16px * var(--scaleFactor)) calc(16px * var(--scaleFactor)) 0 0;
-    margin-left: 0;
-    box-sizing: border-box;
-    border-top: solid calc(8px * var(--scaleFactor)) transparent;
-    border-right: solid calc(8px * var(--scaleFactor)) transparent;
-    border-left: solid calc(8px * var(--scaleFactor)) transparent;
+.mapWrapper
+  .mapContainer
+  .testamentContainer
+  .mapBookContainer
+  .sectionNameContainer {
+  border-radius: calc(16px * var(--scaleFactor)) calc(16px * var(--scaleFactor))
+    0 0;
+  margin-left: 0;
+  box-sizing: border-box;
+  border-top: solid calc(8px * var(--scaleFactor)) transparent;
+  border-right: solid calc(8px * var(--scaleFactor)) transparent;
+  border-left: solid calc(8px * var(--scaleFactor)) transparent;
 }
 
-.mapWrapper .mapContainer .testamentContainer .mapBookContainer .sectionNameContainer span
-{
-    overflow: hidden;
-    text-overflow: ellipsis;
-    width: 100%;
-    text-box: auto;
-    font-size: calc(32px * var(--scaleFactor));
-    text-align: center;
-    white-space: nowrap;
+.mapWrapper
+  .mapContainer
+  .testamentContainer
+  .mapBookContainer
+  .sectionNameContainer
+  span {
+  overflow: hidden;
+  text-overflow: ellipsis;
+  width: 100%;
+  text-box: auto;
+  font-size: calc(32px * var(--scaleFactor));
+  text-align: center;
+  white-space: nowrap;
 }
 
-.mapWrapper .mapContainer .testamentContainer .mapBookContainer.collapsed .sectionNameContainer
-{
-    border-bottom: solid calc(8px * var(--scaleFactor)) transparent;
-    border-radius: calc(16px * var(--scaleFactor));
+.mapWrapper
+  .mapContainer
+  .testamentContainer
+  .mapBookContainer.collapsed
+  .sectionNameContainer {
+  border-bottom: solid calc(8px * var(--scaleFactor)) transparent;
+  border-radius: calc(16px * var(--scaleFactor));
 }
 
-.mapWrapper .mapContainer .testamentContainer .mapBookContainer.collapsed
-{
-    margin-right: calc(16px * var(--scaleFactor));
+.mapWrapper .mapContainer .testamentContainer .mapBookContainer.collapsed {
+  margin-right: calc(16px * var(--scaleFactor));
 }
 
-.mapWrapper .mapContainer .testamentContainer .mapBookContainer .bookCover
-{
-    background: red;
-    width: 100%;
-    border-radius: calc(8px * var(--scaleFactor));
-    border: solid 1px transparent;
-    display: grid;
-    gap: var(--chapterGap);
-    position: relative;
-    grid-template-columns: repeat(var(--bookMaxAmountOfColumns), var(--chapterWidth));
-    grid-template-rows: repeat(auto-fill, var(--chapterWidth));
-    justify-content: center;
+.mapWrapper .mapContainer .testamentContainer .mapBookContainer .bookCover {
+  background: red;
+  width: 100%;
+  border-radius: calc(8px * var(--scaleFactor));
+  border: solid 1px transparent;
+  display: grid;
+  gap: var(--chapterGap);
+  position: relative;
+  grid-template-columns: repeat(
+    var(--bookMaxAmountOfColumns),
+    var(--chapterWidth)
+  );
+  grid-template-rows: repeat(auto-fill, var(--chapterWidth));
+  justify-content: center;
 }
 
-.mapWrapper .mapContainer .testamentContainer .mapBookContainer .bookCover.displayingContainer
-{
-    gap: calc(2px * var(--scaleFactor));
-    display: grid;
-    /* overflow: hidden; */
+.mapWrapper
+  .mapContainer
+  .testamentContainer
+  .mapBookContainer
+  .bookCover.displayingContainer {
+  gap: calc(2px * var(--scaleFactor));
+  display: grid;
+  /* overflow: hidden; */
 }
 
-.mapWrapper .mapContainer .testamentContainer .mapBookContainer .bookCover.displayingContainer > div:not(.presentUserPresenceIcon)
-{
-    width: 100%;
-    height: 100%;
-    border-radius: calc(4px * var(--scaleFactor));
+.mapWrapper
+  .mapContainer
+  .testamentContainer
+  .mapBookContainer
+  .bookCover.displayingContainer
+  > div:not(.presentUserPresenceIcon) {
+  width: 100%;
+  height: 100%;
+  border-radius: calc(4px * var(--scaleFactor));
 }
 
-
-.mapWrapper .mapContainer .testamentContainer .mapBookContainer .bookName
-{
-    cursor: pointer;
-    font-size: calc(32px * var(--scaleFactor));
-    height: calc(80px * var(--scaleFactor));
-    padding: calc(16px * var(--scaleFactor));
-    font-family: system-ui;
-    width: 100%;
-    display: flex;
-    justify-content: center;
-    align-items: center;
+.mapWrapper .mapContainer .testamentContainer .mapBookContainer .bookName {
+  cursor: pointer;
+  font-size: calc(32px * var(--scaleFactor));
+  height: calc(80px * var(--scaleFactor));
+  padding: calc(16px * var(--scaleFactor));
+  font-family: system-ui;
+  width: 100%;
+  display: flex;
+  justify-content: center;
+  align-items: center;
 }
 
-.mapWrapper .mapContainer .testamentContainer .mapBookContainer .bookName span
-{
-    width: calc(40px * var(--scaleFactor));
-    height: calc(40px * var(--scaleFactor));
-    background-color: #e0e0e0;
-    border-radius: calc(32px * var(--scaleFactor));
-    color: white;
-    font-size: calc(32px * var(--scaleFactor));
-    display: flex;
-    justify-content: center;
-    align-items: center;
+.mapWrapper .mapContainer .testamentContainer .mapBookContainer .bookName span {
+  width: calc(40px * var(--scaleFactor));
+  height: calc(40px * var(--scaleFactor));
+  background-color: #e0e0e0;
+  border-radius: calc(32px * var(--scaleFactor));
+  color: white;
+  font-size: calc(32px * var(--scaleFactor));
+  display: flex;
+  justify-content: center;
+  align-items: center;
 }
 
-.mapWrapper .mapContainer .testamentContainer .mapBookContainer .bookName span.checked
-{
-    background-color: #2AB80D;
+.mapWrapper
+  .mapContainer
+  .testamentContainer
+  .mapBookContainer
+  .bookName
+  span.checked {
+  background-color: #2ab80d;
 }
 
-.mapWrapper .mapContainer .testamentContainer .mapBookContainer .bookCover .chapter
-{
-    background: rgb(227, 227, 227);
-    visibility: visible;
-    font-size: calc(12px * var(--scaleFactor));
-    width: var(--chapterWidth);
-    height: var(--chapterHeight);
-    position: relative;
-    border-radius: calc(4px * var(--scaleFactor));
-    color: #4b4b4b;
-    cursor: pointer;
-    border-width: calc(3px * var(--scaleFactor));
-    font-family: system-ui;
-    text-box: auto;
-    vertical-align: middle;
-    text-align: center;
-    display: flex;
-    justify-content: center;
-    align-items: center;
+.mapWrapper
+  .mapContainer
+  .testamentContainer
+  .mapBookContainer
+  .bookCover
+  .chapter {
+  background: rgb(227, 227, 227);
+  visibility: visible;
+  font-size: calc(12px * var(--scaleFactor));
+  width: var(--chapterWidth);
+  height: var(--chapterHeight);
+  position: relative;
+  border-radius: calc(4px * var(--scaleFactor));
+  color: #4b4b4b;
+  cursor: pointer;
+  border-width: calc(3px * var(--scaleFactor));
+  font-family: system-ui;
+  text-box: auto;
+  vertical-align: middle;
+  text-align: center;
+  display: flex;
+  justify-content: center;
+  align-items: center;
 }
 
 /* .mapWrapper .mapContainer .testamentContainer .mapBookContainer .bookCover .chapter .contentContainer,
@@ -672,10 +644,15 @@
     pointer-events: none;
 } */
 
-.mapWrapper .mapContainer .testamentContainer .mapBookContainer .bookCover .chapter .contentContainer
-{
-    gap: 1px;
-    display: grid;
+.mapWrapper
+  .mapContainer
+  .testamentContainer
+  .mapBookContainer
+  .bookCover
+  .chapter
+  .contentContainer {
+  gap: 1px;
+  display: grid;
 }
 
 /* .mapWrapper .mapContainer .testamentContainer .mapBookContainer .bookCover .chapter > span:nth-of-type(1)
@@ -688,149 +665,137 @@
     align-items: center;
 } */
 
-.mapWrapper .mapContainer .testamentContainer .mapBookContainer .bookCover .chapter .contentContainer div
-{
-    width: 100%;
-    height: 100%;
-    border-radius: calc(2px * var(--scaleFactor));
+.mapWrapper
+  .mapContainer
+  .testamentContainer
+  .mapBookContainer
+  .bookCover
+  .chapter
+  .contentContainer
+  div {
+  width: 100%;
+  height: 100%;
+  border-radius: calc(2px * var(--scaleFactor));
 }
 
-.toggle
-{
-    width: 100%;
-    display: flex;
-    justify-content: space-between;
-    align-items: center;
-    padding: calc(16px * var(--scaleFactor));
-    color: black;
-    border-radius: calc(8px * var(--scaleFactor));
-    border-bottom: solid calc(8px * var(--scaleFactor)) transparent;
+.toggle {
+  width: 100%;
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  padding: calc(16px * var(--scaleFactor));
+  color: black;
+  border-radius: calc(8px * var(--scaleFactor));
+  border-bottom: solid calc(8px * var(--scaleFactor)) transparent;
 }
 
-.toggle > span
-{
-    text-align: center;
-    vertical-align: middle;
-    text-box: auto;
-    font-size: calc(32px * var(--scaleFactor));
+.toggle > span {
+  text-align: center;
+  vertical-align: middle;
+  text-box: auto;
+  font-size: calc(32px * var(--scaleFactor));
 }
 
-.toggle > span:nth-of-type(1) 
-{
-    font-family: system-ui;
-    overflow: hidden;
-    text-overflow: ellipsis;
+.toggle > span:nth-of-type(1) {
+  font-family: system-ui;
+  overflow: hidden;
+  text-overflow: ellipsis;
 }
 
-.testamentToggle
-{
-    background-color: #e4e4e4;
+.testamentToggle {
+  background-color: #e4e4e4;
 }
 
-.sectionToggle
-{
-
+.sectionToggle {
 }
 
-.presentUserPresenceIcon 
-{
-    display: flex;
-    justify-content: center;
-    align-items: center;
-    border-radius: 35px;
+.presentUserPresenceIcon {
+  display: flex;
+  justify-content: center;
+  align-items: center;
+  border-radius: 35px;
 }
 
 .presentUserPresenceIcon.presentUserPresenceIcon-book {
-    position: absolute;
-    top: calc(calc(32px * var(--scaleFactor)) / 2 * (-1));
-    height: calc(32px * var(--scaleFactor));
-    width: calc(32px * var(--scaleFactor));
-    border: solid calc(2px * var(--scaleFactor)) white
+  position: absolute;
+  top: calc(calc(32px * var(--scaleFactor)) / 2 * (-1));
+  height: calc(32px * var(--scaleFactor));
+  width: calc(32px * var(--scaleFactor));
+  border: solid calc(2px * var(--scaleFactor)) white;
 }
 
 .presentUserPresenceIcon.presentUserPresenceIcon-tooltip {
-    height: 20px;
-    width: 20px;
-    min-height: 20px;
-    min-width: 20px;
+  height: 20px;
+  width: 20px;
+  min-height: 20px;
+  min-width: 20px;
 }
 
-.presentUserPresenceIcon.presentUserPresenceIcon-book > span 
-{    
-    font-size: calc(12px * var(--scaleFactor));
-    font-family: sans-serif;
+.presentUserPresenceIcon.presentUserPresenceIcon-book > span {
+  font-size: calc(12px * var(--scaleFactor));
+  font-family: sans-serif;
 }
 
-.presentUserPresenceIcon.presentUserPresenceIcon-tooltip > span 
-{
-    font-size: 12px;
-    color: black;
+.presentUserPresenceIcon.presentUserPresenceIcon-tooltip > span {
+  font-size: 12px;
+  color: black;
 }
 
 .readingHistoryChapterNotificationContainer,
 .upcomingEventsChapterNotificationContainer,
-.presentUserPresenceDotContainer
-{
-    position: absolute;
-    display: flex;
-    flex-direction: row-reverse;
-    padding: calc(var(--scaleFactor) * 2px);
-    border-radius: calc(16px * var(--scaleFactor));
-    background-color: white;
-    gap: calc(1px * var(--scaleFactor));
+.presentUserPresenceDotContainer {
+  position: absolute;
+  display: flex;
+  flex-direction: row-reverse;
+  padding: calc(var(--scaleFactor) * 2px);
+  border-radius: calc(16px * var(--scaleFactor));
+  background-color: white;
+  gap: calc(1px * var(--scaleFactor));
 }
 
-.presentUserPresenceDotContainer
-{
-    top: calc(calc(8px * var(--scaleFactor)) / 2 * (-1));
-    right: calc(calc(8px * var(--scaleFactor)) / 2 * (-1));
+.presentUserPresenceDotContainer {
+  top: calc(calc(8px * var(--scaleFactor)) / 2 * (-1));
+  right: calc(calc(8px * var(--scaleFactor)) / 2 * (-1));
 }
 
 .readingHistoryChapterNotificationContainer,
-.upcomingEventsChapterNotificationContainer
-{
-    bottom: calc(calc(14px * var(--scaleFactor)) / 2 * (-1));
+.upcomingEventsChapterNotificationContainer {
+  bottom: calc(calc(14px * var(--scaleFactor)) / 2 * (-1));
 }
 
-.readingHistoryChapterNotificationContainer
-{
-    left: calc(calc(12px * var(--scaleFactor)) / 2 * (-1));
+.readingHistoryChapterNotificationContainer {
+  left: calc(calc(12px * var(--scaleFactor)) / 2 * (-1));
 }
 
-.upcomingEventsChapterNotificationContainer
-{
-    right: calc(calc(12px * var(--scaleFactor)) / 2 * (-1));
+.upcomingEventsChapterNotificationContainer {
+  right: calc(calc(12px * var(--scaleFactor)) / 2 * (-1));
 }
 
 .readingHistoryChapterNotificationContainer > span:not(.tooltip),
-.upcomingEventsChapterNotificationContainer > span:not(.tooltip) 
-{
-    height: calc(8px * var(--scaleFactor));
-    display: flex;
-    justify-content: center;
-    align-items: center;
-    font-size: calc(8px * var(--scaleFactor));
+.upcomingEventsChapterNotificationContainer > span:not(.tooltip) {
+  height: calc(8px * var(--scaleFactor));
+  display: flex;
+  justify-content: center;
+  align-items: center;
+  font-size: calc(8px * var(--scaleFactor));
 }
 
 .readingHistoryChapterNotificationContainer > span.material-symbols-outlined,
-.upcomingEventsChapterNotificationContainer > span.material-symbols-outlined 
-{
-    width: calc(8px * var(--scaleFactor));
+.upcomingEventsChapterNotificationContainer > span.material-symbols-outlined {
+  width: calc(8px * var(--scaleFactor));
 }
 
 .readingHistoryChapterNotificationContainer > span.notificationCount,
-.upcomingEventsChapterNotificationContainer > span.notificationCount
-{
-    /* padding: 0 calc(var(--scaleFactor) * 1px); */
+.upcomingEventsChapterNotificationContainer > span.notificationCount {
+  /* padding: 0 calc(var(--scaleFactor) * 1px); */
 }
 
-.presentUserPresenceDot
-{
-    width: calc(8px * var(--scaleFactor));
-    height: calc(8px * var(--scaleFactor));
-    border-radius: 25px;
-    border: solid calc(calc(2px * var(--scaleFactor)) / 2) white;
-    pointer-events: none;
+.presentUserPresenceDot {
+  width: calc(8px * var(--scaleFactor));
+  height: calc(8px * var(--scaleFactor));
+  border-radius: 25px;
+  border: solid calc(calc(2px * var(--scaleFactor)) / 2) white;
+  pointer-events: none;
 }
 
 .tooltip 
@@ -855,18 +820,15 @@
     font-family: system-ui;
 }
 
-.tooltip.tooltip-up
-{
-    transform: translate(-50%, calc((100% + 8px) * (-1)));
+.tooltip.tooltip-up {
+  transform: translate(-50%, calc((100% + 8px) * (-1)));
 }
 
-.tooltip.tooltip-down
-{
-    transform: translate(-50%, 8px);
+.tooltip.tooltip-down {
+  transform: translate(-50%, 8px);
 }
 
-.tooltip::after 
-{
+.tooltip::after {
   content: " ";
   position: absolute;
   left: var(--arrowLeft);
@@ -876,28 +838,25 @@
   pointer-events: none;
 }
 
-.tooltip.tooltip-up::after 
-{
+.tooltip.tooltip-up::after {
   top: 100%;
   border-color: black transparent transparent transparent;
 }
 
-.tooltip.tooltip-down::after 
-{
+.tooltip.tooltip-down::after {
   bottom: 100%;
   border-color: transparent transparent black transparent;
 }
 
-.tooltip > span
-{
-    width: 100%;
-    display: flex;
-    justify-content: flex-start;
-    align-items: center;
-    font-size: 16px;
-    gap: 8px;
-    overflow: hidden;
-    text-overflow: ellipsis;
+.tooltip > span {
+  width: 100%;
+  display: flex;
+  justify-content: flex-start;
+  align-items: center;
+  font-size: 16px;
+  gap: 8px;
+  overflow: hidden;
+  text-overflow: ellipsis;
 }
 
 .tooltip .chapterTooltipContent
@@ -916,12 +875,10 @@
     cursor: pointer;
 }
 
-.invisible
-{
-    visibility: hidden;
+.invisible {
+  visibility: hidden;
 }
 
-.hidden
-{
-    display: none !important;
+.hidden {
+  display: none !important;
 }

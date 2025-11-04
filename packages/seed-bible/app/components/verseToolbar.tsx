@@ -413,7 +413,7 @@ export function VerseToolbar({ clickedVersesContext, clickedVerses, setClickedVe
 }
 
 function getMenuActions(that) {
-    const SharePopup = thisBot.Chips();
+    const {SharePopup} = thisBot.Chips();
     const MenuOptions = {
         type: "normal",
         items: [

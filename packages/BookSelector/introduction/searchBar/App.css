@@ -56,12 +56,16 @@
 
   border: 1px solid #ccc;
   border-radius: 6px;
-  background: white url("data:image/svg+xml;utf8,<svg fill='gray' height='20' viewBox='0 0 24 24' width='20' xmlns='http://www.w3.org/2000/svg'><path d='M7 10l5 5 5-5z'/></svg>") no-repeat right 10px center;
+  background: white
+    url("data:image/svg+xml;utf8,<svg fill='gray' height='20' viewBox='0 0 24 24' width='20' xmlns='http://www.w3.org/2000/svg'><path d='M7 10l5 5 5-5z'/></svg>")
+    no-repeat right 10px center;
   background-size: 16px;
 
   cursor: pointer;
   outline: none;
-  transition: border-color 0.2s, box-shadow 0.2s;
+  transition:
+    border-color 0.2s,
+    box-shadow 0.2s;
   margin-right: 5px;
   font-family: Satoshi;
 }
@@ -186,15 +190,15 @@ body {
   transition: 0.4s;
 }
 
-input:checked+.slider:not(#slider) {
+input:checked + .slider:not(#slider) {
   background-color: #2196f3;
 }
 
-input:focus+.slider:not(#slider) {
+input:focus + .slider:not(#slider) {
   box-shadow: 0 0 1px #2196f3;
 }
 
-input:checked+.slider:not(#slider):before {
+input:checked + .slider:not(#slider):before {
   -webkit-transform: translateX(13px);
   -ms-transform: translateX(13px);
   transform: translateX(13px);
@@ -514,11 +518,13 @@ input:checked+.slider:not(#slider):before {
   border: 3px solid black;
   padding: 5px;
   background: rgb(255, 255, 255);
-  background: linear-gradient(90deg,
-      rgba(255, 255, 255, 1) 25%,
-      rgba(0, 0, 0, 1) 25%,
-      rgba(0, 0, 0, 1) 75%,
-      rgba(255, 255, 255, 1) 75%);
+  background: linear-gradient(
+    90deg,
+    rgba(255, 255, 255, 1) 25%,
+    rgba(0, 0, 0, 1) 25%,
+    rgba(0, 0, 0, 1) 75%,
+    rgba(255, 255, 255, 1) 75%
+  );
   background-size: 400%;
   border-radius: 5px;
   font-size: small;
@@ -924,7 +930,6 @@ input:checked+.slider:not(#slider):before {
 }
 
 @keyframes blinking {
-
   0%,
   50%,
   100% {
