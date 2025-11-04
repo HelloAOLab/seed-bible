@@ -1,7 +1,11 @@
 // Float system with window on top and toolbar underneath
 // Enhanced with slide-in/out functionality like iPhone
 // + Mobile tweaks: center at top & keep toolbar visible
-
+import {
+ 
+  preactRenderToString ,
+ 
+} from "https://esm.helloao.org/vendor-RPNXNWQB.js";
 const { createContext, useContext, useState, useEffect, useRef } = os.appHooks;
 
 const MyContext = createContext();
@@ -43,7 +47,8 @@ export function MouseMoveProvider({ children }) {
   const [slideIn, setSlideIn] = useState(false);
   const [hiddenApps, setHiddenApps] = useState([]);
   const [modalContent, setModalContent] = useState(null);
-
+globalThis.ShowModal = (content) => setModalContent(content);
+  globalThis.CloseModal = () => setModalContent(null);
   useEffect(() => {
     // safe if not defined
     globalThis.LocateCanvas?.();
@@ -53,11 +58,11 @@ export function MouseMoveProvider({ children }) {
   globalThis.SetElement = setElement;
   globalThis.SetIsDragging = setIsDragging;
   globalThis.isAbleToRightClick = isAbleToRightClick;
-  globalThis.ShowModal = (content) => setModalContent(content);
-  globalThis.CloseModal = () => setModalContent(null);
 
   // create
   globalThis.AddFloatingApp = (appConfig) => {
+    configBot.tags.mapPortal = null
+    configBot.tags.miniMapPortal = null
     const baseSize = appConfig.size || { width: 360, height: 240 };
 
     let initialSize = baseSize;
@@ -93,39 +98,24 @@ export function MouseMoveProvider({ children }) {
       __autoCenteredMobile: autoCentered,
     };
 
-    // Check if new app contains mainCanvas class
-    const tempDiv = document.createElement("div");
-    const renderToString = (element) => {
-      const container = document.createElement("div");
-      try {
-        // Simple check: render React element to temp container
-        const root = ReactDOM.createRoot
-          ? ReactDOM.createRoot(container)
-          : null;
-        if (root) {
-          root.render(element);
-        }
-        return container.innerHTML;
-      } catch (e) {
-        // Fallback: convert to string
-        return String(element);
-      }
-    };
-
     let hasMainCanvas = false;
-    try {
-      const appString = String(appConfig.App);
+    // try {
+      const appString = preactRenderToString(appConfig.App);
+      os.log(appString,'appString')
+      console.log(appString)
       hasMainCanvas =
         appString.includes("mainCanvas") ||
         appConfig.App?.props?.className?.includes("mainCanvas") ||
         (appConfig.App?.type === "div" &&
           appConfig.App?.props?.className?.includes("mainCanvas"));
-    } catch (e) {
-      // Silent fail for string check
-    }
+    // } catch (e) {
+    //   os.log("Error checking for mainCanvas in floating app:", e);
+    //   // Silent fail for string check
+    // }
 
     // Remove previous apps with mainCanvas if this new app has mainCanvas
     if (hasMainCanvas) {
+      
       setFloatingApps((prev) => {
         const appsToRemove = prev.filter((app) => {
           try {
@@ -466,8 +456,6 @@ export function MouseMoveProvider({ children }) {
         hiddenApps,
         slideOutApp,
         slideInApp,
-        modalContent,
-        setModalContent,
       }}
     >
       {isDragging && (
@@ -547,7 +535,6 @@ export function MouseMoveProvider({ children }) {
           ))}
         </div>
       )}
-
       {modalContent && (
         <div
           onClick={() => setModalContent(null)}
@@ -576,7 +563,6 @@ export function MouseMoveProvider({ children }) {
           </div>
         </div>
       )}
-
       <div
         style={{
           width: "100%",
@@ -600,7 +586,7 @@ const FloatingAppContainer = ({
   // visual constants to match the sketch
   const stroke = "rgba(255,255,255,0.85)";
   const radius = 16;
-  const toolbarGap = 12;
+  const toolbarGap = 0.5;
   const toolbarH = 44;
 
   // per-window toolbar auto-hide state
