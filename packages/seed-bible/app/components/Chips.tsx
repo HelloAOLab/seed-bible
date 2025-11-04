@@ -425,9 +425,10 @@ const QRCodeComponent = ({ url = "https://example.com/session/12345" }) => {
 
   const handleCopy = async () => {
     try {
-      await navigator.clipboard.writeText(url);
-      setCopied(true);
-      setTimeout(() => setCopied(false), 2000);
+      // await navigator.clipboard.writeText(url);
+      // setCopied(true);
+      // setTimeout(() => setCopied(false), 2000);
+      setCopied(url)
     } catch (err) {
       console.error("Failed to copy:", err);
     }

@@ -155,7 +155,7 @@ export function UserPresence() {
     };
   }, [showSettings]);
   useEffect(() => {
-    if(configBot.hosted){
+    if(configBot.tags.hosted){
       handleBarClick()
     }
     (async () => {

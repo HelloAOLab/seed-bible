@@ -282,7 +282,7 @@ const CircleCounter = ({ data, book, chapter }) => {
                       <button
                         // disabled={role !== 'host'}
                         onClick={() => {
-                          HandleSharedTabClick();
+                          HandleSharedTablick();
                           setIsModalOpen(false);
                         }}
                         style={{
@@ -434,7 +434,7 @@ function Tab({
     if (activeTab === el.id) return;
 
     if (el.sharedTab) {
-      globalThis?.HandleSharedTabClick();
+      globalThis?.HandleSharedTablick();
     }
     const checkEmpty = PanelsApps.find((e) => !e.tabData);
     console.log(checkEmpty, PanelsApps);
@@ -517,8 +517,8 @@ function Tab({
       )
     : {};
   const notJoinedSharedTab =
-    masks["sharedTab"] === el.id && activeTab !== el.id;
-  const info = el.sharedTab && globalThis?.GetOrSetVisualInTags(el.hostId);
+    sharedTab && activeTab !== el.id;
+  const info = el.sharedTab && globalThis?.GetOrSetVisualInTags(tags.hostIdForOnlineTab);
 
   return (
     <div
@@ -528,7 +528,7 @@ function Tab({
       onClick={handleTabClick}
       style={{
         ...(index === 0 &&
-          masks["sharedTab"] === el.id && {
+          sharedTab && {
             "border-top": "none",
             "border-radius": "0 0 5px 5px",
             border: `1px solid ${info.color} !important`,
@@ -538,7 +538,7 @@ function Tab({
       }}
       className={`
 
-      ${index === 0 && masks["sharedTab"] === el.id && "sharedTab"}
+      ${index === 0 && sharedTab && "sharedTab"}
       ${
         notJoinedSharedTab
           ? "tab notJoinedSharedTab"
@@ -1019,7 +1019,7 @@ function SideBar() {
         title: "Start session",
         onClick: () => {
           // os.log(globalThis?.StartSession,globalThis)
-          HandleSharedTabClick();
+          HandleSharedTablick();
         },
       },
       {
