@@ -2,7 +2,7 @@ let { backgroundColor } = that;
 
 /* For further reference visit https://www.w3.org/TR/WCAG21/#dfn-contrast-ratio */
 
-backgroundColor = Array.isArray(backgroundColor) ? backgroundColor : [backgroundColor];
+backgroundColor = Array.isArray(backgroundColor) ? backgroundColor : [{color: backgroundColor, value: 1}];
 
 let totalWeightedLuminance = 0;
 let totalWeight = 0;

@@ -179,7 +179,9 @@ import {useClickAndHold} from "scriptureMap2D.main.CustomHooks"
 //     )
 // };
 
-export const Chapter = memo(({ index, bookName, sectionName, historyBackground, historyColor}) => {
+export const Chapter = memo(({ index, bookName, sectionName, historyBackground, historyColor, tooltipContent}) => {
+
+    const [containerRect, setContainerRect] = useState(null);
     
     const {
         isUserPresenceEnabled,
@@ -334,6 +336,20 @@ export const Chapter = memo(({ index, bookName, sectionName, historyBackground, 
         historyColor
     ])
 
+    const { tooltipAnchor } = useMemo(() => {
+
+        let tooltipAnchor;
+
+        if (containerRect) {
+            tooltipAnchor = {
+                x: containerRect.left + containerRect.width / 2,
+                y: containerRect.top,
+            };
+        }
+
+        return { tooltipAnchor};
+    }, [containerRect]);
+
     // const { usersInChapter } = useMemo(() => {
     //     const usersInChapter = Object.keys(userPresence).filter((user) => {
     //         return userPresence[user].book === bookName && userPresence[user].chapter === (index + 1)
@@ -360,6 +376,8 @@ export const Chapter = memo(({ index, bookName, sectionName, historyBackground, 
     return (
         <div
             className="chapter"
+            onPointerEnter={(e) => setContainerRect(e.currentTarget.getBoundingClientRect())}
+            onPointerLeave={() => setContainerRect(null)}
             onClick={handleChapterClick}
             onPointerDown={onHoldStart}
             onPointerUp={onHoldEnd}
@@ -371,6 +389,7 @@ export const Chapter = memo(({ index, bookName, sectionName, historyBackground, 
             }}
             >
             {index + 1}
+            { tooltipAnchor && tooltipContent?.length > 0 && <Tooltip anchor={tooltipAnchor} content={tooltipContent} /> }
         </div>
     )
 })

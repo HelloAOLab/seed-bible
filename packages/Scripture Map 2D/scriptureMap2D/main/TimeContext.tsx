@@ -1,4 +1,4 @@
-const { createContext, useContext, useRef, useState, useCallback, useMemo, useEffect } = os.appHooks;
+const { createContext, useContext, useState, useEffect } = os.appHooks;
 
 const TimeContext = createContext();
 
@@ -8,7 +8,6 @@ export const TimeProvider = ({children}) => {
 
     useEffect(() => {
         const interval = setInterval(() => {
-            console.log(`[Debug] TimeContext setInterval`)
             setTick(Date.now())
         }, 10000);
         return () => clearInterval(interval);

@@ -73,9 +73,7 @@ export const ReadingHistoryTimeline = () => {
     const { 
         filteredReadingHistory, 
         readingHistoryRange, 
-        handleReadingHistoryRangeSelectorClick, 
-        readingHistoryUsersFilters,
-        CHAPTER_BASE_BACKGROUND_COLOR,
+        handleReadingHistoryRangeSelectorClick,
         filteredReadingHistoryCount
     } = useScriptureMap2DContext();
     const { tick } = useTimeContext();
@@ -130,7 +128,9 @@ export const ReadingHistoryTimeline = () => {
     const computeEntriesMap = useCallback((currFilteredReadingHistory, currDayRangesMap) => {
         const dayKeys = Array.from(currDayRangesMap.keys());
         const dayRanges = Array.from(currDayRangesMap.values());
-        const entriesMap = new Map( dayKeys.map( (key) => { return [ key, [] ] } ) );
+        const entriesMap = new Map(dayKeys.map( (key) => { return [ key, [] ] } ));
+        const dailyUsersMap = new Map(dayKeys.map( (key) => { return [ key, new Set() ] } ))
+        const timeSpentMap = new Map(dayKeys.map( (key) => { return [ key, 0 ] } ))
         const now = Date.now();
 
         const DAY_MS = 1000 * 60 * 60 * 24;
@@ -147,13 +147,23 @@ export const ReadingHistoryTimeline = () => {
                     const chapterEntries = bookEntries[chapter];
                     for (const entry of chapterEntries)
                     {
-                        const dayIndex = Math.floor((entry.start - firstDayStart) / DAY_MS);
-                        const endDayIndex = Math.floor(((entry.end ?? now) - firstDayStart) / DAY_MS);
+                        const {start, end = now} = entry;
+                        const dayIndex = Math.floor((start - firstDayStart) / DAY_MS);
+                        const endDayIndex = Math.floor((end - firstDayStart) / DAY_MS);
 
                         for (let i = dayIndex; i <= endDayIndex; i++) 
                         {
                             if (i >= 0 && i < dayKeys.length) {
-                                entriesMap.get(dayKeys[i]).push(entry);
+                                const {start: dayStart, end: dayEnd} = dayRanges[i]
+                                const key = dayKeys[i]
+                                entriesMap.get(key).push(entry);
+                                let newValue = timeSpentMap.get(key);
+                                const fixedStart = Math.max(start, dayStart);
+                                const fixedEnd = Math.min(end, dayEnd);
+                                const timeSpent = fixedEnd - fixedStart;
+                                newValue += timeSpent;
+                                timeSpentMap.set(key, newValue);
+                                dailyUsersMap.get(key).add(userId);
                             }
                         }
                     }
@@ -161,14 +171,18 @@ export const ReadingHistoryTimeline = () => {
             }
         }
 
-        return entriesMap
+        return {entriesMap, timeSpentMap, dailyUsersMap}
     }, [])
 
     const [entriesMap, setEntriesMap] = useState(null)
+    const [timeSpentMap, setTimeSpentMap] = useState(null)
+    const [dailyUsersMap, setDailyUsersMap] = useState(null)
 
     useEffect(() => {
-        const map = computeEntriesMap(filteredReadingHistory, dayRangesMap);
-        setEntriesMap(map);
+        const {entriesMap: newEntriesMap, timeSpentMap: newTimeSpentMap, dailyUsersMap: newDailyUsersMap} = computeEntriesMap(filteredReadingHistory, dayRangesMap);
+        setEntriesMap(newEntriesMap);
+        setTimeSpentMap(newTimeSpentMap);
+        setDailyUsersMap(newDailyUsersMap);
     }, [filteredReadingHistory, dayRangesMap])
 
     const itemsColorMap = useMemo(() => {
@@ -223,6 +237,8 @@ export const ReadingHistoryTimeline = () => {
         const monthsSet = new Set();
         const monthLabelGridRow = `1 / 2`;
         const dayLabelGridColumn = `1 / 2`;
+        const MS_PER_MINUTE = 1000 * 60;
+        const MS_PER_HOUR = MS_PER_MINUTE * 60;
 
         items.push(
             <Label
@@ -259,9 +275,27 @@ export const ReadingHistoryTimeline = () => {
                 dayDate.setDate(dayDate.getDate() + (week * 7) + (day));
                 const time = dayDate.getTime();
                 const range = dayRangesMap.get(key);
+                const isToday = week === (weeksCount - 1) && day === now.getDay();
 
                 const { weekday, day: dayOfTheMonth, month, monthName, year } = GetPastDateInfo(time)
-                const description = week === (weeksCount - 1) && day === now.getDay() ? "Today" : `${weekday} ${month}/${dayOfTheMonth}/${year}`;
+                const timeSpent = timeSpentMap?.get?.(key) ?? 0;
+                const isTimeSpentNoticeable = timeSpent > MS_PER_MINUTE
+                let fixedTimeSpent;
+                if(isTimeSpentNoticeable)
+                {
+                    if(timeSpent > MS_PER_HOUR)
+                    {
+                        const hoursCount = Math.floor(timeSpent / MS_PER_HOUR);
+                        fixedTimeSpent = `${hoursCount} hour${hoursCount > 1 ? "s" : ""}`
+                    }
+                    else
+                    {
+                        const minutesCount = Math.floor(timeSpent / MS_PER_MINUTE);
+                        fixedTimeSpent = `${minutesCount} minute${minutesCount > 1 ? "s" : ""}`
+                    }
+                }
+                const usersCount = dailyUsersMap?.get?.(key)?.size ?? 0
+                const description = `${isTimeSpentNoticeable ? `${usersCount} user${usersCount > 1 ? "s" : ""} spent ${fixedTimeSpent} ` : ""}${isToday ? "Today" : `${isTimeSpentNoticeable ? "on " : ""}${weekday} ${monthName} ${dayOfTheMonth}, ${year}`}`;
                 const backgroundColor = itemsColorMap?.get?.(key) ?? stepColors[0];
                 
                 const itemGridRow = `${day + 2} / ${day + 3}`
@@ -300,7 +334,7 @@ export const ReadingHistoryTimeline = () => {
         }
 
         return items;
-    }, [startOfWeekAYearAgo, now, itemsColorMap, readingHistoryRange])
+    }, [startOfWeekAYearAgo, now, itemsColorMap, readingHistoryRange, timeSpentMap, dailyUsersMap])
 
     useEffect(() => {
 

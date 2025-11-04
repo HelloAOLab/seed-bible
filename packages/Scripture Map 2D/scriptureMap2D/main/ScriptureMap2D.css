@@ -851,6 +851,8 @@
     align-items: center;
     gap: 4px;
     white-space: nowrap;
+    font-size: 14px;
+    font-family: system-ui;
 }
 
 .tooltip.tooltip-up
@@ -896,6 +898,17 @@
     gap: 8px;
     overflow: hidden;
     text-overflow: ellipsis;
+}
+
+.tooltip .chapterTooltipContent
+{
+    
+}
+
+.tooltip .chapterTooltipContent > span:nth-of-type(1)
+{
+    padding: 2px 8px;
+    border-radius: 4px;
 }
 
 .pointable

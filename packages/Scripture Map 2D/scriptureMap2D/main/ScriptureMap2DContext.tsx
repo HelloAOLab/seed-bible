@@ -218,7 +218,15 @@ export const ScriptureMap2DProvider = ({
 
     const { arrangementIndex, initialScaleFactor = 1, initialIsReadingHistoryEnabled = false } = parentContext;
 
-    const hooksBot = useMemo(() => {return getBot("system", "app.hooks")}, []);
+    const {hooksBot, sortedTimePeriods, greaterTimePeriodTime} = useMemo(() => {
+        const sortedTimePeriods = BibleVizUtils.Data.masks.historyTimePeriodsInfo.toSorted((periodInfoA, periodInfoB) => {
+            return periodInfoA.GetTimePeriodInMs() - periodInfoB.GetTimePeriodInMs()
+        })
+        const greaterTimePeriodTime = sortedTimePeriods[sortedTimePeriods.length - 1].GetTimePeriodInMs();
+        const hooksBot = getBot("system", "app.hooks")
+
+        return {hooksBot, sortedTimePeriods, greaterTimePeriodTime}
+    }, []);
     const arrangement = useMemo(() => {return BibleVizUtils.Data.vars.fixedArrangementsInfo[arrangementIndex]}, [arrangementIndex]);
 
     const [readingHistory, setReadingHistory] = useState({...hooksBot.vars.tempReadingHistory});
@@ -457,6 +465,8 @@ export const ScriptureMap2DProvider = ({
             CHAPTER_BASE_BACKGROUND_COLOR,
             filteredReadingHistory,
             filteredReadingHistoryCount,
+            sortedTimePeriods,
+            greaterTimePeriodTime,
             ...parentContext
         }} >
             {children}
