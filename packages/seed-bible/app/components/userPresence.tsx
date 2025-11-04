@@ -251,14 +251,14 @@ export function UserPresence() {
         const rid = evt?.remoteId;
         if (!rid) return;
         const { iconIndex, colorIndex } = getOrSetVisualInTags(rid);
-        setUsers((prev) => {
-          if (prev.some((u) => u.remoteId === rid)) return prev;
-          const next = [...prev, { remoteId: rid, iconIndex, colorIndex }];
-          next.sort((a, b) =>
-            String(a.remoteId).localeCompare(String(b.remoteId))
-          );
-          return next;
-        });
+        // setUsers((prev) => {
+        //   if (prev.some((u) => u.remoteId === rid)) return prev;
+        //   const next = [...prev, { remoteId: rid, iconIndex, colorIndex }];
+        //   next.sort((a, b) =>
+        //     String(a.remoteId).localeCompare(String(b.remoteId))
+        //   );
+        //   return next;
+        // });
       };
       const onLeave = (evt) => {
         const rid = evt?.remoteId;
