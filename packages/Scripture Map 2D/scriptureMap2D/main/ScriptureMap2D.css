@@ -798,23 +798,26 @@
   pointer-events: none;
 }
 
-.tooltip {
-  width: auto;
-  /* max-width: 140px; */
-  background-color: black;
-  color: #fff;
-  text-align: center;
-  z-index: 10;
-  border-radius: 4px;
-  position: fixed;
-  padding: 8px;
-  pointer-events: none;
-  display: flex;
-  flex-direction: column;
-  justify-content: center;
-  align-items: center;
-  gap: 4px;
-  white-space: nowrap;
+.tooltip 
+{
+    width: auto;
+    /* max-width: 140px; */
+    background-color: black;
+    color: #fff;
+    text-align: center;
+    z-index: 10;
+    border-radius: 4px;
+    position: fixed;
+    padding: 8px;
+    pointer-events: none;
+    display: flex;
+    flex-direction: column;
+    justify-content: center;
+    align-items: center;
+    gap: 4px;
+    white-space: nowrap;
+    font-size: 14px;
+    font-family: system-ui;
 }
 
 .tooltip.tooltip-up {
@@ -856,8 +859,20 @@
   text-overflow: ellipsis;
 }
 
-.pointable {
-  cursor: pointer;
+.tooltip .chapterTooltipContent
+{
+    
+}
+
+.tooltip .chapterTooltipContent > span:nth-of-type(1)
+{
+    padding: 2px 8px;
+    border-radius: 4px;
+}
+
+.pointable
+{
+    cursor: pointer;
 }
 
 .invisible {

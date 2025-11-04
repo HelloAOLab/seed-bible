@@ -6,6 +6,26 @@ import { useClickAndHold } from "scriptureMap2D.main.CustomHooks";
 import { useTimeContext } from "scriptureMap2D.main.TimeContext";
 const { useMemo, useState, useEffect, useCallback } = os.appHooks;
 
+const TooltipContent = ({userId, fixedContent}) => {
+
+    const {userName, backgroundColor, color} = useMemo(() => {
+        const isMe = userId === configBot.id
+        const userName = isMe ? "You" : "Guest";
+        const backgroundColor = isMe ? BibleVizUtils.Data.tags.myUserColor : (BibleVizUtils.Data.vars.userPresenceData?.[userId]?.user?.color ?? thisBot.vars.FakeReadingHistoryUsersColorMap?.get(userId) ?? "pink"); 
+        const color = BibleVizUtils.Functions.GetTextColorBasedOnBackground({backgroundColor});
+
+        return {userName, backgroundColor, color}
+    }, [])
+    
+    
+    return (
+        <span className="chapterTooltipContent" >
+            <span style={{backgroundColor, color}}>{userName}</span>
+            <span>{fixedContent}</span>
+        </span>
+    )
+}
+
 export const Book = ({
   bookInfo,
   bookCoverBackgroundColor,
@@ -49,19 +69,28 @@ export const Book = ({
   const { testament } = useTestamentContext();
   const { tick } = useTimeContext();
 
-  const [showChapters, setShowChapters] = useState(showingAllChapters);
-  const { chaptersCount, shortName, staticChaptersArray } = useMemo(() => {
-    const chaptersCount =
-      BibleVizUtils.Data.tags.booksStaticInfo[bookInfo.commonName]
-        .numberOfChapters;
-    return {
-      chaptersCount,
-      shortName:
-        BibleVizUtils.Data.tags.booksStaticInfo[bookInfo.commonName]
-          .abbreviation,
-      staticChaptersArray: [...Array(chaptersCount)],
-    };
-  }, []);
+        bookWidth,
+        chapterGap,
+        chapterPadding,
+        chapterWidth,
+        chapterHeight,
+        CHAPTER_BASE_BACKGROUND_COLOR,
+        filteredReadingHistory, 
+        readingHistoryRange,
+        greaterTimePeriodTime
+    } = useScriptureMap2DContext();
+    const { testament } = useTestamentContext() 
+    const { tick } = useTimeContext();
+    
+    const [showChapters, setShowChapters] = useState(showingAllChapters);
+    const {chaptersCount, shortName, staticChaptersArray} = useMemo(() => { 
+        const chaptersCount = BibleVizUtils.Data.tags.booksStaticInfo[bookInfo.commonName].numberOfChapters
+        return {
+            chaptersCount,
+            shortName: BibleVizUtils.Data.tags.booksStaticInfo[bookInfo.commonName].abbreviation,
+            staticChaptersArray: [...Array(chaptersCount)]
+        } 
+    }, [])
 
   const getBookHeight = useCallback(() => {
     const { chaptersInfo } =
@@ -311,76 +340,138 @@ export const Book = ({
   const historyColorsMap = useMemo(() => {
     if (!isReadingHistoryEnabled) return null;
 
-    return new Map(
-      staticChaptersArray.map((_, index) => {
-        const chapter = index + 1;
-        const { userEntries, readingTime: chapterReadingTime } =
-          chapterUserEntriesMap.get(chapter);
+    const {historyColorsMap, timeSpentMap, recencyMap} = useMemo(() => {
 
-        const colors = [];
+        if(!isReadingHistoryEnabled) return {};
 
-        if (userEntries.length === 0)
-          colors.push({ color: CHAPTER_BASE_BACKGROUND_COLOR, value: 1 });
-        else {
-          for (const {
-            userId,
-            entries,
-            readingTime: userReadingTime,
-          } of userEntries) {
-            const color = BibleVizUtils.Functions.GetHistoryColor({
-              baseColor: CHAPTER_BASE_BACKGROUND_COLOR,
-              userColor:
-                userId === configBot.id
-                  ? BibleVizUtils.Data.tags.myUserColor
-                  : (BibleVizUtils.Data.vars.userPresenceData?.[userId]?.user
-                      ?.color ??
-                    thisBot.vars.FakeReadingHistoryUsersColorMap?.get(userId) ??
-                    "pink"),
-              reading: entries,
-              range: readingHistoryRange,
-            });
-            const value = userReadingTime / chapterReadingTime;
-            colors.push({ color, value });
-          }
+        const historyColorsMap = new Map();
+        const timeSpentMap = new Map();
+        const recencyMap = new Map();
+
+        for(let i = 0; i < staticChaptersArray.length ; i++)
+        {
+            const chapter = i + 1;
+            const {userEntries, readingTime: chapterReadingTime} = chapterUserEntriesMap.get(chapter);
+    
+            const colors = [];
+            const userTimeSpentMap = new Map()
+            const userRecencyMap = new Map()
+            timeSpentMap.set(chapter, userTimeSpentMap);
+            recencyMap.set(chapter, userRecencyMap);
+    
+            if(userEntries.length === 0) colors.push({color: CHAPTER_BASE_BACKGROUND_COLOR, value: 1})
+            else
+            {
+                for(const {userId, entries, readingTime: userReadingTime} of userEntries)
+                {
+                    const recencyTime = os.localTime - (entries?.[entries?.length - 1]?.end ?? os.localTime);
+                    const color = BibleVizUtils.Functions.GetHistoryColor({
+                        baseColor: CHAPTER_BASE_BACKGROUND_COLOR, 
+                        userColor: userId === configBot.id ? BibleVizUtils.Data.tags.myUserColor : (BibleVizUtils.Data.vars.userPresenceData?.[userId]?.user?.color ?? thisBot.vars.FakeReadingHistoryUsersColorMap?.get(userId) ?? "pink"), 
+                        reading: entries,
+                        range: readingHistoryRange
+                    })
+                    const value = userReadingTime / chapterReadingTime;
+                    colors.push({color, value});
+                    userTimeSpentMap.set(userId, userReadingTime);
+                    userRecencyMap.set(userId, recencyTime);
+                }
+            }
+    
+            historyColorsMap.set(chapter, colors);
         }
 
-        return [chapter, colors];
-      })
-    );
-  }, [
-    readingHistoryRange,
-    chapterUserEntriesMap,
-    tick,
-    isReadingHistoryEnabled,
-  ]);
+        return { historyColorsMap, timeSpentMap, recencyMap }
 
-  const chapters = useMemo(() => {
-    return staticChaptersArray.map((_, index) => {
-      const chapter = index + 1;
-      let historyBackground = null;
-      let historyColor = null;
+    }, [readingHistoryRange, chapterUserEntriesMap, tick, isReadingHistoryEnabled])
 
-      if (isReadingHistoryEnabled) {
-        const colors = historyColorsMap.get(chapter);
-        historyBackground =
-          BibleVizUtils.Functions.GetHistoryColorLinearGradient(colors);
-        historyColor = BibleVizUtils.Functions.GetTextColorBasedOnBackground({
-          backgroundColor: colors,
-        });
-      }
+    const chapters = useMemo(() => {
+        const MS_PER_MINUTE = 1000 * 60;
+        const MS_PER_HOUR = MS_PER_MINUTE * 60;
+        const MS_PER_DAY = MS_PER_HOUR * 24;
 
-      return (
-        <Chapter
-          key={`${shortName}-${chapter}`}
-          sectionName={sectionName}
-          bookName={bookInfo.commonName}
-          index={index}
-          historyBackground={historyBackground}
-          historyColor={historyColor}
-        />
-      );
-    });
-  }, [isReadingHistoryEnabled, historyColorsMap]);
+        return staticChaptersArray.map((_, index) => {
+            const chapter = index + 1
+            let historyBackground = null;
+            let historyColor = null;
+            const tooltipContent = [];
+
+            if(readingHistoryRange)
+            {
+                const userTimeSpentMap = timeSpentMap.get(chapter);
+                for(const [userId, timeSpent] of userTimeSpentMap)
+                {
+                    const isTimeSpentNoticeable = timeSpent > MS_PER_MINUTE
+
+                    if(isTimeSpentNoticeable)
+                    {
+                        let fixedContent;
+                        if(timeSpent >= MS_PER_HOUR)
+                        {
+                            const hoursCount = Math.floor(timeSpent / MS_PER_HOUR);
+                            fixedContent = `spent ${hoursCount} hour${hoursCount > 1 ? "s" : ""}`
+                        }
+                        else
+                        {
+                            const minutesCount = Math.floor(timeSpent / MS_PER_MINUTE);
+                            fixedContent = `spent ${minutesCount} minute${minutesCount > 1 ? "s" : ""}`
+                        }
+                        tooltipContent.push(<TooltipContent userId={userId} fixedContent={fixedContent} />);
+                    }
+                }
+            }
+            else
+            {
+                const userRecencyMap = recencyMap.get(chapter);
+                for(const [userId, recencyTime] of userRecencyMap)
+                {
+                    const isRecentEnough = recencyTime <= greaterTimePeriodTime
+                    if(isRecentEnough)
+                    {
+                        let fixedContent;
+                        if(recencyTime >= MS_PER_DAY)
+                        {
+                            const daysCount = Math.floor(recencyTime / MS_PER_DAY);
+                            fixedContent = `read ${daysCount} day${daysCount > 1 ? "s" : ""} ago`
+                        }
+                        else if(recencyTime >= MS_PER_HOUR)
+                        {
+                            const hoursCount = Math.floor(recencyTime / MS_PER_HOUR);
+                            fixedContent = `read ${hoursCount} hour${hoursCount > 1 ? "s" : ""} ago`
+                        }
+                        else if(recencyTime >= MS_PER_MINUTE)
+                        {
+                            const minutesCount = Math.floor(recencyTime / MS_PER_MINUTE);
+                            fixedContent = `read ${minutesCount} minute${minutesCount > 1 ? "s" : ""} ago`
+                        }
+                        else
+                        {
+                            fixedContent = `${userId === configBot.id ? "are" : "is"} reading now`
+                        }
+                        tooltipContent.push(<TooltipContent userId={userId} fixedContent={fixedContent} />);
+                    }
+                }
+            }
+
+            
+            if(isReadingHistoryEnabled)
+            {
+                const colors = historyColorsMap.get(chapter)
+                historyBackground = BibleVizUtils.Functions.GetHistoryColorLinearGradient(colors);
+                historyColor = BibleVizUtils.Functions.GetTextColorBasedOnBackground({backgroundColor: colors});
+            }
+
+            return <Chapter
+                key={`${shortName}-${chapter}`}
+                sectionName={sectionName} 
+                bookName={bookInfo.commonName} 
+                index={index}  
+                historyBackground={historyBackground}
+                historyColor={historyColor}
+                tooltipContent={tooltipContent}
+            />
+        })
+    }, [isReadingHistoryEnabled, historyColorsMap, timeSpentMap, recencyMap, readingHistoryRange]);
 
   return (
     <div
