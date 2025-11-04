@@ -134,7 +134,22 @@ function ThePage({
 
     globalThis.refreshScrollers && globalThis.refreshScrollers();
   }
-
+    useEffect(() => {
+    const onKey = (e) => {
+      if (e.key === "Escape") {
+        setClickedVerses([]);
+        setShowVerseToolbar(false)
+      };
+    };
+    if (window) {
+      window.addEventListener("keydown", onKey);
+    }
+    return () => {
+      if (window) {
+        window.removeEventListener("keydown", onKey);
+      }
+    };
+  }, []);
   useEffect(() => {
     const onBookChange = (data) => {
       os.log("updated shared tab",'not approved');
