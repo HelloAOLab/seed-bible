@@ -994,11 +994,13 @@ function ThePage({
       onMouseEnter={handleMouseEnter}
       onMouseUp={handleMouseUp}
       onClick={hanldNavFunctions}
+      style={{
+        direction
+      }}
     >
       <style>
         {`
         .pageContainer{
-          direction:${direction};
           position: relative;
         }
         .toolbar-1 {
