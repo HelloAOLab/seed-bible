@@ -155,39 +155,39 @@ const SettingsSidebar = () => {
         },
       ],
     },
-    { key: "divider2", type: "divider" },
-    {
-      key: "canvasSettings",
-      label: "Canvas Settings",
-      icon: "dashboard_customize",
-      expandable: true,
-      subItems: [
-      //  {
-        //  key: "toolbar",
-        //  label: "Toolbar",
-        //  icon: `construction`,
-      //    onClick: () => setSideBarMode("toolbarSettings-Canvas"),
-      //  },
-        {
-          key: "tab",
-          label: "Tab",
-          icon: "description",
-          onClick: () => setSideBarMode("tabSettings"),
-        },
-        {
-          key: "text",
-          label: "Promt Bar",
-          icon: "text_fields",
-          onClick: () => setSideBarMode("promtSettings"),
-        },
-        {
-          key: "ai",
-          label: "AI",
-          icon: "smart_toy",
-          onClick: () => setSideBarMode("canvasAiSettings"),
-        },
-      ],
-    },
+    // { key: "divider2", type: "divider" },
+    // {
+    //   key: "canvasSettings",
+    //   label: "Canvas Settings",
+    //   icon: "dashboard_customize",
+    //   expandable: true,
+    //   subItems: [
+    //   //  {
+    //     //  key: "toolbar",
+    //     //  label: "Toolbar",
+    //     //  icon: `construction`,
+    //   //    onClick: () => setSideBarMode("toolbarSettings-Canvas"),
+    //   //  },
+    //     {
+    //       key: "tab",
+    //       label: "Tab",
+    //       icon: "description",
+    //       onClick: () => setSideBarMode("tabSettings"),
+    //     },
+    //     {
+    //       key: "text",
+    //       label: "Promt Bar",
+    //       icon: "text_fields",
+    //       onClick: () => setSideBarMode("promtSettings"),
+    //     },
+    //     {
+    //       key: "ai",
+    //       label: "AI",
+    //       icon: "smart_toy",
+    //       onClick: () => setSideBarMode("canvasAiSettings"),
+    //     },
+    //   ],
+    // },
     // { key: 'divider2b', type: 'divider' },
     // {
     //     key: 'mapSettings', label: 'Map Settings', icon: 'map', expandable: true, subItems: [
