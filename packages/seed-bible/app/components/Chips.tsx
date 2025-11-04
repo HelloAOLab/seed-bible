@@ -390,7 +390,7 @@ const QRCodeComponent = ({ url = "https://example.com/session/12345" }) => {
   const [copied, setCopied] = useState(false);
   
   // Generate QR code URL using a free API
-  const qrCodeUrl = `https://api.qrserver.com/v1/create-qr-code/?size=200x200&data=${encodeURIComponent(url)}`;
+  const qrCodeUrl = `https://api.qrserver.com/v1/create-qr-code/?size=200x200&data=${url.toString()}`;
   
   const handleCopy = async () => {
     os.setClipboard(url)

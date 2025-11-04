@@ -320,13 +320,14 @@ function Tab({
   collapsed,
   onlineUsers,
   index,
+  sharedTab,
 }) {
   const { openPopupSettings, closePopupSettings, userURL } =
     useSideBarContext();
   const { setCanvasMode, setMapMode } = useBibleContext();
-  useEffect(() => {
-    console.log(onlineUsers, "onlineUsers var");
-  }, [onlineUsers]);
+  // useEffect(() => {
+  //   // console.log(onlineUsers, "onlineUsers var");
+  // }, [onlineUsers]);
   const {
     removeTab,
     multiSelectMode,
@@ -601,7 +602,7 @@ function Tab({
             />
           </div>
 
-          {activeTab === el.id && (
+          {!sharedTab&&activeTab === el.id && (
             <span
               onClick={() => {
                 openPopupSettings(OPTIONS(el));
@@ -1013,7 +1014,7 @@ function SideBar() {
     type: "normal",
     items: [
       {
-        disabled: !configBot.inst,
+        disabled: false,
         icon: <MenuIcon name="screen_record" />,
         title: "Start session",
         onClick: () => {
@@ -1358,6 +1359,7 @@ function SideBar() {
                   setElement={setElement}
                   collapsed={collapsed}
                   editMode={editMode}
+                  sharedTab={true}
                 />
               ))}
             <div className="tabsContainer">

@@ -276,7 +276,8 @@ export function UserPresence() {
           if (!hostId || hostId === selfId) return;
           addTab({ ...tab, sharedTab: true, hostId: hostId })
           masks['sharedTab'] = tab.id
-          setTagMask(thisBot, 'onlineTab', tab, 'tempShared')
+          // setTagMask(thisBot, 'onlineTab', tab, 'tempShared')
+          // tags.onlineTab = tab
           update(prev => !prev)
           if (masks['invitationFor'] === hostId) {
             os.log(masks['invitationFor'], hostId, tab, `masks['invitationFor'] === hostId`)
@@ -317,6 +318,7 @@ export function UserPresence() {
           }
         } else if (name === "sessionEnd") {
           os.log(tabs)
+          tags.onlineTab = null
           removeTab(masks['sharedTab'])
           const { hostId } = that.that || {};
           if (!hostId) return;
@@ -384,7 +386,13 @@ export function UserPresence() {
       os.addBotListener(thisBot, "onRemoteData", onRemoteData);
     }
   }, [following, sessions, selfId]);
-
+  useEffect(()=>{
+    if(tags.onlineTab){
+      addTab({ ...tags.onlineTab, sharedTab: true, hostId: tags.hostIdForOnlineTab })
+      masks['sharedTab'] = tags.onlineTab
+    }
+          // setTagMask(thisBot, 'onlineTab', tab, 'tempShared')
+  },[])
   const defaultConfig = () => ({
     onlyHostNav: true,
     sharedTab: true,
@@ -409,7 +417,10 @@ export function UserPresence() {
     } else {
       // Host exists - become a follower
       const hostId = existingHosts[0];
+      os.log(configBot.id,'following',hostId)
       followHost(hostId);
+      setActiveTab(tags.onlineTab.id)
+                  UpdateTab(tags.onlineTab)
     }
   };
   globalThis.HandleSharedTabClick = handleBarClick
@@ -444,6 +455,8 @@ export function UserPresence() {
     });
     globalThis.UpdateTab(globalThis.CurrentTab);
     setActiveTab(globalThis.CurrentTab.id);
+    tags.onlineTab = globalThis.CurrentTab
+    tags.hostIdForOnlineTab = configBot.id
     // Notify all other users
     const notifyOthers = async () => {
       const remotes = (await os.remotes()) || [];
@@ -514,6 +527,7 @@ export function UserPresence() {
   }
   const stopSession = () => {
     const myFollowers = sessions[selfId]?.followers || [];
+    tags.onlineTab = null
     // if (myFollowers.length) {
     //   sendRemoteData(myFollowers, "sessionEnd", { hostId: selfId });
     // }

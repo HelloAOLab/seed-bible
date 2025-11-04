@@ -137,6 +137,7 @@ function ThePage({
 
   useEffect(() => {
     const onBookChange = (data) => {
+      os.log("updated shared tab",'not approved');
       if (!globalThis.CurrentTab?.sharedTab) {
         updateTab(masks['sharedTab'], data)
         return
@@ -171,16 +172,16 @@ function ThePage({
 
   useEffect(() => {
     if (data) {
+      //  EmitData("book", { ...data });
       hanldNavFunctions();
       SetShowCommands(false);
       updateTab(tab?.id, data);
       if (config && !config?.sharedTab && role === 'host' && masks['sharedTab'] !== tab.id) {
         updateTab(tab?.id, data);
         updateTab(masks['sharedTab'], data);
-        if (role === 'host')
-          EmitData("book", { ...data });
-
       }
+      if (role === 'host')
+        EmitData("book", { ...data });
       if (panelId && tab) {
         os.log("recoreded", panelId, {
           ...tab,
