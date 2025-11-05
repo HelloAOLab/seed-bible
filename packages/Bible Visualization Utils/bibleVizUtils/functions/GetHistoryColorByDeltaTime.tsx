@@ -1,29 +1,53 @@
-const {deltaTime} = that;
+const {deltaTime, baseColor, userColor} = that;
 
 const sortedTimePeriods = BibleVizUtils.Data.masks.historyTimePeriodsInfo.toSorted((periodInfoA, periodInfoB) => {
     return periodInfoA.GetTimePeriodInMs() - periodInfoB.GetTimePeriodInMs()
 })
 const greaterTimePeriodTime = sortedTimePeriods[sortedTimePeriods.length - 1].GetTimePeriodInMs();
-const normalizedTimePeriods = sortedTimePeriods.map((timePeriod) => {
-    return {normalizedTime: timePeriod.GetTimePeriodInMs() / greaterTimePeriodTime, timePeriod}
-})
 const actualDeltaTime = Math.min(deltaTime, greaterTimePeriodTime);
-const actualDeltaTimeNormalized = actualDeltaTime / greaterTimePeriodTime;
 let timePeriodLowerIndex = -1;
 let timePeriodUpperIndex = -1;
 
-for (let i = 0; i < normalizedTimePeriods.length - 1; i++) {
-    if (actualDeltaTimeNormalized >= normalizedTimePeriods[i].normalizedTime && actualDeltaTimeNormalized <= normalizedTimePeriods[i + 1].normalizedTime) 
+for (let i = 0; i < sortedTimePeriods.length - 1; i++) {
+    if (actualDeltaTime >= sortedTimePeriods[i].GetTimePeriodInMs() && actualDeltaTime <= sortedTimePeriods[i + 1].GetTimePeriodInMs()) 
     {
         timePeriodLowerIndex = i;
         timePeriodUpperIndex = i + 1;
         break;
     }
 }
-const endColorRgb = thisBot.HexToRgb({hexColor: normalizedTimePeriods[timePeriodUpperIndex].timePeriod.color})
-const startColorRgb = thisBot.HexToRgb({hexColor: normalizedTimePeriods[timePeriodLowerIndex].timePeriod.color})
-const colorProgress = Math.max(0, Math.min(1, (actualDeltaTimeNormalized - normalizedTimePeriods[timePeriodLowerIndex].normalizedTime) / (normalizedTimePeriods[timePeriodUpperIndex].normalizedTime - normalizedTimePeriods[timePeriodLowerIndex].normalizedTime)));
-const deltaColor = [endColorRgb[0] - startColorRgb[0], endColorRgb[1] - startColorRgb[1], endColorRgb[2] - startColorRgb[2]]
-const finalColor = [startColorRgb[0] + (Math.floor(deltaColor[0] * colorProgress)), startColorRgb[1] + (Math.floor(deltaColor[1] * colorProgress)), startColorRgb[2] + (Math.floor(deltaColor[2] * colorProgress))]
+
+if (timePeriodUpperIndex === -1) {
+    return baseColor;
+}
+
+const lowerTimePeriod = sortedTimePeriods[timePeriodLowerIndex];
+const upperTimePeriod = sortedTimePeriods[timePeriodUpperIndex];
+
+const timeDiff = upperTimePeriod.GetTimePeriodInMs() - lowerTimePeriod.GetTimePeriodInMs();
+const valueDiff = upperTimePeriod.value - lowerTimePeriod.value;
+
+const clampedDeltaTime = actualDeltaTime - lowerTimePeriod.GetTimePeriodInMs();
+const clampedProgress = clampedDeltaTime / timeDiff;
+const clampedValue = clampedProgress * valueDiff;
+const value = clampedValue + lowerTimePeriod.value
+
+const baseColorRgb = BibleVizUtils.Functions.HexToRgb({hexColor: baseColor});
+const userColorRgb = BibleVizUtils.Functions.HexToRgb({hexColor: userColor});
+
+const deltaColor = [userColorRgb[0] - baseColorRgb[0], userColorRgb[1] - baseColorRgb[1], userColorRgb[2] - baseColorRgb[2]];
+const colorToAdd = [deltaColor[0] * value, deltaColor[1] * value, deltaColor[2] * value];
+const finalColor = ClampRGBColor([baseColorRgb[0] + colorToAdd[0], baseColorRgb[1] + colorToAdd[1], baseColorRgb[2] + colorToAdd[2]]);
 const finalColorHex = thisBot.RgbToHex({rgbColor: finalColor});
+
 return finalColorHex
+
+function ClampRGBColor(colorToClamp)
+{
+    const colorClamped = [
+        Math.max(Math.min(Math.round(colorToClamp[0]), 255), 0),
+        Math.max(Math.min(Math.round(colorToClamp[1]), 255), 0),
+        Math.max(Math.min(Math.round(colorToClamp[2]), 255), 0)
+    ]
+    return colorClamped;
+}

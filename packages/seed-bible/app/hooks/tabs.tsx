@@ -128,15 +128,15 @@ export function TabsProvider({ children }) {
       prev.map((space) =>
         space.id === spaceId
           ? {
-              ...space,
-              settings: {
-                ...space.settings,
-                toolbar: {
-                  ...space.settings.toolbar,
-                  tools,
-                },
+            ...space,
+            settings: {
+              ...space.settings,
+              toolbar: {
+                ...space.settings.toolbar,
+                tools,
               },
-            }
+            },
+          }
           : space
       )
     );
@@ -144,13 +144,22 @@ export function TabsProvider({ children }) {
 
   // Add standalone tab (not in a folder)
   const addTab = (tab) => {
-    setSpaces((prevSpaces) =>
-      prevSpaces.map((space) =>
-        space.id === activeSpace
-          ? { ...space, tabs: [...space.tabs, tab] }
-          : space
-      )
-    );
+    if (tab.sharedTab)
+      setSpaces((prevSpaces) =>
+        prevSpaces.map((space) =>
+          space.id === activeSpace
+            ? { ...space, tabs: [tab, ...space.tabs] }
+            : space
+        )
+      );
+    else
+      setSpaces((prevSpaces) =>
+        prevSpaces.map((space) =>
+          space.id === activeSpace
+            ? { ...space, tabs: [...space.tabs, tab] }
+            : space
+        )
+      );
     return tab;
   };
 
@@ -177,6 +186,7 @@ export function TabsProvider({ children }) {
       })
     );
   };
+  globalThis.RemoveTab = removeTab
 
   const getAllTabsInSpace = (spaceId) => {
     // Gather standalone tabs
@@ -192,25 +202,26 @@ export function TabsProvider({ children }) {
   };
   // Update tab
   const updateTab = (tabId, newData) => {
+    
     setSpaces((prevSpaces) =>
       prevSpaces.map((space) =>
         space.id === activeSpace
           ? {
-              ...space,
-              tabs: space.tabs.map((tab) =>
+            ...space,
+            tabs: space.tabs.map((tab) =>
+              tab.id === tabId
+                ? { ...tab, data: { ...tab.data, ...newData } }
+                : tab
+            ),
+            folders: space.folders.map((folder) => ({
+              ...folder,
+              tabs: folder.tabs.map((tab) =>
                 tab.id === tabId
                   ? { ...tab, data: { ...tab.data, ...newData } }
                   : tab
               ),
-              folders: space.folders.map((folder) => ({
-                ...folder,
-                tabs: folder.tabs.map((tab) =>
-                  tab.id === tabId
-                    ? { ...tab, data: { ...tab.data, ...newData } }
-                    : tab
-                ),
-              })),
-            }
+            })),
+          }
           : space
       )
     );
@@ -231,29 +242,29 @@ export function TabsProvider({ children }) {
       prevSpaces.map((space) =>
         space.id === activeSpace
           ? {
-              ...space,
-              // Remove the tab from standalone tabs if it exists there
-              tabs: space.tabs.filter((t) => t.id !== tab.id),
+            ...space,
+            // Remove the tab from standalone tabs if it exists there
+            tabs: space.tabs.filter((t) => t.id !== tab.id),
 
-              // Remove the tab from any folder it may exist in
-              folders: space.folders.map((folder) => ({
-                ...folder,
-                tabs: folder.tabs.filter((t) => t.id !== tab.id),
-              })),
+            // Remove the tab from any folder it may exist in
+            folders: space.folders.map((folder) => ({
+              ...folder,
+              tabs: folder.tabs.filter((t) => t.id !== tab.id),
+            })),
 
-              // Now add the tab to the specified location if action is "add"
-              ...(action === "add"
-                ? folderId
-                  ? {
-                      folders: space.folders.map((folder) =>
-                        folder.id === folderId
-                          ? { ...folder, tabs: [...folder.tabs, tab] }
-                          : folder
-                      ),
-                    }
-                  : { tabs: [...space.tabs, tab] }
-                : {}),
-            }
+            // Now add the tab to the specified location if action is "add"
+            ...(action === "add"
+              ? folderId
+                ? {
+                  folders: space.folders.map((folder) =>
+                    folder.id === folderId
+                      ? { ...folder, tabs: [...folder.tabs, tab] }
+                      : folder
+                  ),
+                }
+                : { tabs: [...space.tabs, tab] }
+              : {}),
+          }
           : space
       )
     );
@@ -303,16 +314,16 @@ export function TabsProvider({ children }) {
       prevSpaces.map((space) =>
         space.id === spaceId
           ? {
-              ...space,
-              name: importedSpace.name,
-              folders: importedSpace.folders || [],
-              tabs: importedSpace.tabs || [],
-              settings: importedSpace.settings || {
-                theme: {},
-                toolbar: {},
-                text: {},
-              },
-            }
+            ...space,
+            name: importedSpace.name,
+            folders: importedSpace.folders || [],
+            tabs: importedSpace.tabs || [],
+            settings: importedSpace.settings || {
+              theme: {},
+              toolbar: {},
+              text: {},
+            },
+          }
           : space
       )
     );
@@ -342,9 +353,9 @@ export function TabsProvider({ children }) {
       prevSpaces.map((space) =>
         space.id === activeSpace
           ? {
-              ...space,
-              folders: space.folders.filter((folder) => folder.id !== folderId),
-            }
+            ...space,
+            folders: space.folders.filter((folder) => folder.id !== folderId),
+          }
           : space
       )
     );
@@ -355,13 +366,13 @@ export function TabsProvider({ children }) {
       prevSpaces.map((space) =>
         space.id === activeSpace
           ? {
-              ...space,
-              folders: space.folders.map((folder) =>
-                folder.id === folderId
-                  ? { ...folder, tabs: [...folder.tabs, tab] }
-                  : folder
-              ),
-            }
+            ...space,
+            folders: space.folders.map((folder) =>
+              folder.id === folderId
+                ? { ...folder, tabs: [...folder.tabs, tab] }
+                : folder
+            ),
+          }
           : space
       )
     );
@@ -371,13 +382,13 @@ export function TabsProvider({ children }) {
       prevSpaces.map((space) =>
         space.id === activeSpace
           ? {
-              ...space,
-              folders: space.folders.map((folder) =>
-                folder.id === folderId
-                  ? { ...folder, tabs: [...folder.tabs, ...tabs] }
-                  : folder
-              ),
-            }
+            ...space,
+            folders: space.folders.map((folder) =>
+              folder.id === folderId
+                ? { ...folder, tabs: [...folder.tabs, ...tabs] }
+                : folder
+            ),
+          }
           : space
       )
     );
@@ -388,16 +399,16 @@ export function TabsProvider({ children }) {
       prevSpaces.map((space) =>
         space.id === activeSpace
           ? {
-              ...space,
-              folders: space.folders.map((folder) =>
-                folder.id === folderId
-                  ? {
-                      ...folder,
-                      tabs: folder.tabs.filter((tab) => tab.id !== tabId),
-                    }
-                  : folder
-              ),
-            }
+            ...space,
+            folders: space.folders.map((folder) =>
+              folder.id === folderId
+                ? {
+                  ...folder,
+                  tabs: folder.tabs.filter((tab) => tab.id !== tabId),
+                }
+                : folder
+            ),
+          }
           : space
       )
     );

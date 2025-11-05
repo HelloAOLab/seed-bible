@@ -250,7 +250,7 @@ export const DEFAULT_EXTENSIONS = [
     'Color Lerper',
     'Location',
     'Bible Visualization Utils',
-    'Bible Layout 2D',
+    'Scripture Map 2D',
     'Painter',
     'Scripture Map 3D',
     'Bible Stack',

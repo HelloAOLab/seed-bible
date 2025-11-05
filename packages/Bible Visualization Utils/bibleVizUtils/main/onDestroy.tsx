@@ -29,3 +29,8 @@ ObjectPooler.RemoveObjectPools({
         BibleVizUtils.Data.tags.ObjectPoolTags.ActivityNotification
     ]
 })
+
+if(thisBot.masks.historyUpdateIntervalId)
+{
+    clearInterval(thisBot.masks.historyUpdateIntervalId)
+}

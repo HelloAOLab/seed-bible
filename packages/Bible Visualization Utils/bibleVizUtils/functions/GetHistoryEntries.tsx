@@ -1,4 +1,13 @@
-const {typeOfPiece, key} = that;
+const {book, chapter, userId} = that;
 
-const entries = BibleVizUtils.Data.vars.history.filter((entry) => {return entry.typeOfPiece == typeOfPiece && entry.key == key});
-return entries
+if(!thisBot.vars.hooksBot)
+{
+    const hooksBot = getBot("system", "app.hooks");
+    if(hooksBot) thisBot.vars.hooksBot = hooksBot;
+}
+if(!thisBot.vars.hooksBot) return null;
+
+const bookId = BibleVizUtils.Data.tags.booksStaticInfo[book].abbreviation
+const timestamp = thisBot.vars.hooksBot.vars.tempReadingHistory[userId]?.[bookId]?.[chapter]
+
+return timestamp

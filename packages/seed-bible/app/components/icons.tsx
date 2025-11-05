@@ -3,30 +3,30 @@ const SplitScreenIcon = ({ size = 24 }) => {
 
   const styles = {
     iconWrapper: {
-      display: 'inline-flex',
-      position: 'relative',
+      display: "inline-flex",
+      position: "relative",
       width: size,
       height: size,
     },
     screenLeft: {
-      position: 'absolute',
+      position: "absolute",
       left: 2 * scale,
       top: 2 * scale,
       width: 9 * scale,
       height: 20 * scale,
       border: `${1 * scale}px solid #666`,
       borderRadius: 1 * scale,
-      backgroundColor: '#e0e0e0',
+      backgroundColor: "#e0e0e0",
     },
     screenRight: {
-      position: 'absolute',
+      position: "absolute",
       right: 2 * scale,
       top: 2 * scale,
       width: 9 * scale,
       height: 20 * scale,
       borderRadius: 1 * scale,
-      backgroundColor: '#666',
-    }
+      backgroundColor: "#666",
+    },
   };
 
   return (
@@ -37,10 +37,12 @@ const SplitScreenIcon = ({ size = 24 }) => {
   );
 };
 export const SpaceDefaultIcon = () => {
-  return <div class="activeBg">
-    <span></span>
-  </div>
-}
+  return (
+    <div class="activeBg">
+      <span></span>
+    </div>
+  );
+};
 export function SeedBibleIcon() {
   return (
     <img
@@ -48,15 +50,22 @@ export function SeedBibleIcon() {
       style={{
         width: "40px",
         height: "42px",
-        objectFit: "cover",      // crop to fit box
-        objectPosition: "center" // adjust focal point
+        objectFit: "cover", // crop to fit box
+        objectPosition: "center", // adjust focal point
       }}
     />
   );
 }
-export const ApologistIcon = () => {
-  return <img style={{ filter: "invert(1)", width: "24px" }} src="https://res.cloudinary.com/dfbtwwa8p/image/upload/v1755794631/svgviewer-png-output_1_tgtfvm.png" />
-}
+
+export const ApologistIcon = (noFilter = false) => {
+  return (
+    <img
+      style={{ filter: noFilter ? "" : "invert(1)", width: "24px" }}
+      src="https://res.cloudinary.com/dfbtwwa8p/image/upload/v1755794631/svgviewer-png-output_1_tgtfvm.png"
+    />
+  );
+};
+
 const AiIcon = (props) => (
   <svg
     width={24}
@@ -86,7 +95,7 @@ const AiIcon = (props) => (
       />
     </defs>
   </svg>
-)
+);
 const AiChatIcon = (props) => (
   <svg
     width={24}
@@ -138,31 +147,31 @@ const DualScreenIcon = ({ size = 24 }) => {
 
   const styles = {
     iconWrapper: {
-      display: 'inline-flex',
-      position: 'relative',
+      display: "inline-flex",
+      position: "relative",
       width: size,
       height: size,
     },
     screenLeft: {
-      position: 'absolute',
+      position: "absolute",
       left: 2 * scale,
       top: 2 * scale,
       width: 9 * scale,
       height: 20 * scale,
       border: `${1 * scale}px solid #666`,
       borderRadius: 1 * scale,
-      backgroundColor: '#e0e0e0',
+      backgroundColor: "#e0e0e0",
     },
     screenRight: {
-      position: 'absolute',
+      position: "absolute",
       right: 2 * scale,
       top: 2 * scale,
       width: 9 * scale,
       height: 20 * scale,
       border: `${1 * scale}px solid #666`,
       borderRadius: 1 * scale,
-      backgroundColor: '#e0e0e0',
-    }
+      backgroundColor: "#e0e0e0",
+    },
   };
 
   return (
@@ -192,41 +201,41 @@ const ThreeScreenIcon = ({ size = 24 }) => {
 
   const styles = {
     iconWrapper: {
-      display: 'inline-flex',
-      position: 'relative',
+      display: "inline-flex",
+      position: "relative",
       width: size,
       height: size,
     },
     screenLeft: {
-      position: 'absolute',
+      position: "absolute",
       left: 2 * scale,
       top: 2 * scale,
       width: 9 * scale,
       height: 18.5 * scale,
       border: `${1 * scale}px solid #666`,
       borderRadius: 1 * scale,
-      backgroundColor: '#e0e0e0',
+      backgroundColor: "#e0e0e0",
     },
     screenRightTop: {
-      position: 'absolute',
+      position: "absolute",
       right: 2 * scale,
       top: 2 * scale,
       width: 9 * scale,
       height: 9 * scale,
       border: `${1 * scale}px solid #666`,
       borderRadius: 1 * scale,
-      backgroundColor: '#e0e0e0',
+      backgroundColor: "#e0e0e0",
     },
     screenRightBottom: {
-      position: 'absolute',
+      position: "absolute",
       right: 2 * scale,
       bottom: 2 * scale,
       width: 9 * scale,
       height: 9 * scale,
       border: `${1 * scale}px solid #666`,
       borderRadius: 1 * scale,
-      backgroundColor: '#e0e0e0',
-    }
+      backgroundColor: "#e0e0e0",
+    },
   };
 
   return (
@@ -244,51 +253,51 @@ const QuadScreenIcon = ({ size = 24 }) => {
 
   const styles = {
     iconWrapper: {
-      display: 'inline-flex',
-      position: 'relative',
+      display: "inline-flex",
+      position: "relative",
       width: size,
       height: size,
     },
     screenTopLeft: {
-      position: 'absolute',
+      position: "absolute",
       left: 2 * scale,
       top: 2 * scale,
       width: 9 * scale,
       height: 9 * scale,
       border: `${1 * scale}px solid #666`,
       borderRadius: 1 * scale,
-      backgroundColor: '#e0e0e0',
+      backgroundColor: "#e0e0e0",
     },
     screenTopRight: {
-      position: 'absolute',
+      position: "absolute",
       right: 2 * scale,
       top: 2 * scale,
       width: 9 * scale,
       height: 9 * scale,
       border: `${1 * scale}px solid #666`,
       borderRadius: 1 * scale,
-      backgroundColor: '#e0e0e0',
+      backgroundColor: "#e0e0e0",
     },
     screenBottomLeft: {
-      position: 'absolute',
+      position: "absolute",
       left: 2 * scale,
       bottom: 2 * scale,
       width: 9 * scale,
       height: 9 * scale,
       border: `${1 * scale}px solid #666`,
       borderRadius: 1 * scale,
-      backgroundColor: '#e0e0e0',
+      backgroundColor: "#e0e0e0",
     },
     screenBottomRight: {
-      position: 'absolute',
+      position: "absolute",
       right: 2 * scale,
       bottom: 2 * scale,
       width: 9 * scale,
       height: 9 * scale,
       border: `${1 * scale}px solid #666`,
       borderRadius: 1 * scale,
-      backgroundColor: '#e0e0e0',
-    }
+      backgroundColor: "#e0e0e0",
+    },
   };
 
   return (
@@ -300,7 +309,6 @@ const QuadScreenIcon = ({ size = 24 }) => {
     </div>
   );
 };
-
 
 const Playlist = (props) => (
   <svg
@@ -338,20 +346,20 @@ const SingleScreenIcon = ({ size = 24 }) => {
 
   const styles = {
     iconWrapper: {
-      display: 'inline-flex',
-      position: 'relative',
+      display: "inline-flex",
+      position: "relative",
       width: size,
       height: size,
     },
     screen: {
-      position: 'absolute',
+      position: "absolute",
       left: 2 * scale,
       top: 2 * scale,
       width: 20 * scale,
       height: 20 * scale,
       border: `${1 * scale}px solid #666`,
       borderRadius: 1 * scale,
-      backgroundColor: '#e0e0e0',
+      backgroundColor: "#e0e0e0",
     },
   };
 
@@ -657,11 +665,32 @@ export const ThemeIcon = (props) => (
     />
   </svg>
 );
-const MenuIcon = ({ name, size = 24 }) => {
-  return <span className="material-symbols-outlined" style={{ fontSize: size }}>
-    {name}
-  </span>
+const MenuIcon = ({ name, size = 24, invert = false }) => {
+  // Check if `name` looks like an image URL
+  const isImage =
+    typeof name === "string" && name.match(/\.(png|jpg|jpeg|svg|gif|webp)$/i);
+
+  const imageStyle = {
+    width: isImage ? size : undefined,
+    height: isImage ? size : undefined,
+    filter: invert ? "invert(1)" : undefined,
+    objectFit: "contain",
+  };
+
+  const iconStyle = {
+    fontSize: isImage ? 16 : size,
+    filter: invert ? "invert(1)" : undefined,
+  };
+
+  return isImage ? (
+    <img src={name} alt="icon" style={imageStyle} />
+  ) : (
+    <span className="material-symbols-outlined" style={iconStyle}>
+      {name}
+    </span>
+  );
 };
+
 const T = (props) => (
   <svg
     xmlns="http://www.w3.org/2000/svg"
@@ -770,9 +799,18 @@ const LoadSpace = (props) => (
   </svg>
 );
 const FolderIcon = () => (
-  <svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none">
+  <svg
+    xmlns="http://www.w3.org/2000/svg"
+    width="24"
+    height="24"
+    viewBox="0 0 24 24"
+    fill="none"
+  >
     <g clip-path="url(#clip0_1_2625)">
-      <path d="M19.5 20.5002H4.5C3.84661 20.5082 3.21666 20.257 2.7481 19.8015C2.27953 19.3461 2.01053 18.7235 2 18.0702V5.93019C2.01053 5.27683 2.27953 4.65427 2.7481 4.19883C3.21666 3.74338 3.84661 3.49216 4.5 3.50019H9.1C9.24771 3.50116 9.39336 3.53485 9.5265 3.59882C9.65964 3.6628 9.77695 3.75547 9.87 3.87019L12.47 7.05019H19.47C19.796 7.04222 20.1204 7.09891 20.4244 7.21697C20.7285 7.33503 21.0061 7.51213 21.2413 7.73805C21.4765 7.96396 21.6647 8.23423 21.7949 8.53324C21.9251 8.83225 21.9948 9.15409 22 9.48019V18.0702C21.9895 18.7235 21.7205 19.3461 21.2519 19.8015C20.7833 20.257 20.1534 20.5082 19.5 20.5002Z" fill="#545454" />
+      <path
+        d="M19.5 20.5002H4.5C3.84661 20.5082 3.21666 20.257 2.7481 19.8015C2.27953 19.3461 2.01053 18.7235 2 18.0702V5.93019C2.01053 5.27683 2.27953 4.65427 2.7481 4.19883C3.21666 3.74338 3.84661 3.49216 4.5 3.50019H9.1C9.24771 3.50116 9.39336 3.53485 9.5265 3.59882C9.65964 3.6628 9.77695 3.75547 9.87 3.87019L12.47 7.05019H19.47C19.796 7.04222 20.1204 7.09891 20.4244 7.21697C20.7285 7.33503 21.0061 7.51213 21.2413 7.73805C21.4765 7.96396 21.6647 8.23423 21.7949 8.53324C21.9251 8.83225 21.9948 9.15409 22 9.48019V18.0702C21.9895 18.7235 21.7205 19.3461 21.2519 19.8015C20.7833 20.257 20.1534 20.5082 19.5 20.5002Z"
+        fill="#545454"
+      />
     </g>
     <defs>
       <clipPath id="clip0_1_2625">
@@ -780,7 +818,7 @@ const FolderIcon = () => (
       </clipPath>
     </defs>
   </svg>
-)
+);
 const OpenFolderIcon = (props) => (
   <svg
     xmlns="http://www.w3.org/2000/svg"
@@ -838,7 +876,7 @@ const MarginYIcon = (props) => (
       fill="black"
     />
   </svg>
-)
+);
 const MarginXIcon = (props) => (
   <svg width={14} height={14} viewBox="0 0 14 14" fill="none">
     <path
@@ -846,7 +884,7 @@ const MarginXIcon = (props) => (
       fill="black"
     />
   </svg>
-)
+);
 export {
   DualScreenIcon,
   ColorSelect,
@@ -868,4 +906,4 @@ export {
   UserAvatar,
   MarginYIcon,
   MarginXIcon,
-}
+};

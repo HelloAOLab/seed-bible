@@ -6,7 +6,16 @@
   overflow: scroll;
   border-radius: 12px;
   user-select: text;
+}
 
+.no-select .ProseMirror,
+.no-select .ProseMirror *,
+.no-select,
+.no-select * {
+  user-select: none;
+  -webkit-user-select: none;
+  -ms-user-select: none;
+  -webkit-touch-callout: none;
 }
 
 .thePageToolbar {
@@ -37,10 +46,9 @@
   justify-content: center;
   align-items: center;
   flex-direction: row;
-
 }
 
-.scroller>div:first-child {
+.scroller > div:first-child {
   /* min-height: 100px; */
   /* height: 100px !important;  */
   /* overrides inline height: '100%' */
@@ -73,8 +81,6 @@
   background: #555;
 }
 
-
-
 @keyframes backgroundFlash {
   0% {
     background-color: #f0f0f0;
@@ -89,13 +95,11 @@
   100% {
     background-color: #f0f0f0;
   }
-
 }
 
 .tabHighlightBg {
   animation: backgroundFlash 1s ease-out;
 }
-
 
 ::-webkit-scrollbar {
   display: none;
@@ -116,7 +120,6 @@
   margin-right: var(--text-bookchapter-margin-right);
 }
 
-
 .sectionTitle {
   font-family: var(--text-heading-font);
   color: var(--text-heading-color);
@@ -130,7 +133,6 @@
   margin-left: var(--text-heading-margin-left);
   margin-right: var(--text-heading-margin-right);
 }
-
 
 .sectionText {
   font-family: var(--text-verse-font);
@@ -149,13 +151,12 @@
   transition:
     border-color 0.3s ease-in-out,
     background-color 0.3s ease-in-out;
-
 }
 
 /* Additions ------> */
 
 .sectionText.highlighted {
-  border-color: #4F645B;
+  border-color: #4f645b;
   background-color: #639498;
 }
 
@@ -173,12 +174,12 @@
 }
 
 .highlightened:hover {
-  color: #859E3B;
+  color: #859e3b;
 }
 
 /* for the word spans when that word is active */
 .highlightened.highlighted-word {
-  color: #859E3B;
+  color: #859e3b;
 }
 
 @keyframes flashHighlight {
@@ -189,7 +190,7 @@
   30%,
   50%,
   70% {
-    color: #859E3B;
+    color: #859e3b;
   }
 
   100% {
@@ -205,8 +206,8 @@
 }
 
 .sectionTextNumber {
-  color: #287F71;
-  font-family: 'Plus Jakarta Sans', sans-serif;
+  color: #287f71;
+  font-family: "Plus Jakarta Sans", sans-serif;
   font-size: 12px;
   font-weight: 500;
   line-height: 30px;
@@ -224,7 +225,6 @@
   background: white !important;
   border-radius: 12px;
   /* height: 100vh !important; */
-
 }
 
 .tabEntered {
@@ -237,10 +237,9 @@
   border-radius: 12px;
 }
 
-
 .editVerseTitle {
   border-radius: 6px 6px 0px 0px;
-  background: #4459F3;
+  background: #4459f3;
   width: fit-content;
   padding: 10px 30px;
   color: white;

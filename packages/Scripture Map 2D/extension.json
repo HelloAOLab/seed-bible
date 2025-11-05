@@ -1,0 +1,55 @@
+{
+  "author": "Gabriel Souki",
+  "configEditor": {
+    "author": "Gabriel Souki",
+    "app": "@GetScriptureMap2D",
+    "toolbarConfig":
+    {
+        "label": "Scripture Map 2D",
+        "hasToggle": true,
+        "icon": "browse",
+        "active": false,
+        "showInPageToolbar": true,
+        "showInStarterToolbar": true
+    },
+    "tabConfig":
+    {
+        "title": "Scripture Map 2D"
+    },
+    "contextMenuConfig": 
+    {
+        "optionsIsOn": ""
+    }
+  },
+  "createdAt": "2025-09-15T16:43:58.673Z",
+  "dependencies": [
+    {
+      "depId": 1757953914413,
+      "name": "Object Pooler",
+      "type": "dependency"
+    },
+    {
+      "depId": 1756665263918,
+      "name": "Bible Visualization Utils",
+      "type": "dependency"
+    }
+  ],
+  "description": "Bible layout to use as a tool in user interfaces.",
+  "id": 1757954638673,
+  "license": "MIT",
+  "linkedDependencies": [],
+  "mainBotTag": "scriptureMap2D.main",
+  "name": "Scripture Map 2D",
+  "otherBots": [],
+  "recordFile": {
+    "sha256Hash": "0793f76a97452abc57914179748fcc8f739f1f2a51dc9d8017850781170a5062",
+    "success": true,
+    "url": "https://auth-aux-aobot-prod-filesbucket-141297942820.s3.amazonaws.com/testingPublickKey/0793f76a97452abc57914179748fcc8f739f1f2a51dc9d8017850781170a5062.json"
+  },
+  "source": "https://auth-aux-aobot-prod-filesbucket-141297942820.s3.amazonaws.com/testingPublickKey/0793f76a97452abc57914179748fcc8f739f1f2a51dc9d8017850781170a5062.json",
+  "status": "active",
+  "type": "package",
+  "updatedAt": "2025-09-15T17:33:52.980Z",
+  "userAuth": "2225616f-cc40-4129-89a6-b8448743687b",
+  "version": "1.0.1"
+}

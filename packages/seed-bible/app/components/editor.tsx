@@ -18,7 +18,7 @@ import {
   BulletList,
   OrderedList,
   ListItem,
-} from 'https://esm.helloao.org/vendor-RPNXNWQB.js';
+} from "https://esm.helloao.org/vendor-RPNXNWQB.js";
 
 import { MarginYIcon, MarginXIcon } from "app.components.icons";
 const localStorage = getBot("system", "app.localStorage");
@@ -320,6 +320,34 @@ const TextEditor = ({
       element: document.getElementById("tiptapEditor"),
       onUpdate({ editor }) {
         saveData(editor);
+      },
+      editorProps: {
+        attributes: {
+          class: "no-select", // <- hook for the CSS above
+        },
+        handleDOMEvents: {
+          // Block keyboard and menu copy/cut
+          copy: (_view, event) => {
+            event.preventDefault();
+            return true;
+          },
+          cut: (_view, event) => {
+            event.preventDefault();
+            return true;
+          },
+
+          // (Optional) make it harder to start a selection at all
+          selectstart: (_view, event) => {
+            event.preventDefault();
+            return true;
+          },
+
+          // (Optional) stop dragging out selections / drags
+          dragstart: (_view, event) => {
+            event.preventDefault();
+            return true;
+          },
+        },
       },
       extensions: [
         StarterKit.configure({

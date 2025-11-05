@@ -28,7 +28,7 @@ if (bibleVizUtils) {
 
 const sortFunc = (a, b) => {
   const getOrder = (heading) => {
-    if (heading.startsWith("Chapter")) return { order: 0, num: 0 };
+    if (heading?.startsWith("Chapter")) return { order: 0, num: 0 };
     const match = heading.match(/Verse (\d+)(?:-(\d+))?/);
     if (match) {
       const num = parseInt(match[1], 10);
@@ -45,6 +45,22 @@ const sortFunc = (a, b) => {
   }
 
   return aOrder.num - bOrder.num;
+};
+
+const GetLabel = ({ value, currentOpenedBook }) => {
+  const isMobile =
+    (window?.innerWidth || gridPortalBot.tags.pixelWidth) <
+    MOBILE_VIEWPORT_THRESHOLD;
+
+  return value === "discover"
+    ? `${
+        !isMobile
+          ? currentOpenedBook?.book
+          : thisBot.tags.LowerCaseBookMapping[
+              currentOpenedBook?.book?.toLocaleLowerCase()
+            ]
+      } - ${currentOpenedBook?.chapter} `
+    : "";
 };
 
 const Playlist = () => {
@@ -302,6 +318,8 @@ const Playlist = () => {
           );
           let allAnnotations = [];
 
+          console.log("annotations", annotations);
+
           annotations.forEach((ele) => {
             const data = {
               bookid: currentOpenedBook?.bookId,
@@ -309,10 +327,9 @@ const Playlist = () => {
             };
             const innerele = ele?.data?.data;
 
-            if (!!innerele.additionalInfo) {
+            if (!!innerele.additionalInfo && !!innerele.additionalInfo.layers) {
               const tags = [...(ele.data.chronicle_tags || [])];
               const layers = [...innerele.additionalInfo.layers];
-
               if (innerele?.type === "chapter") {
                 data.heading = "Chapter";
                 data.data = [...layers];
@@ -336,16 +353,17 @@ const Playlist = () => {
               }
             }
 
-            if (!!data.address || true) {
+            if (data.data) {
               allAnnotations.push(data);
             }
           });
+          console.log("allAnnotations", allAnnotations);
 
           allAnnotations = allAnnotations.sort(sortFunc);
-
           setFetchingAnnotation(false);
           setAnnotationData(allAnnotations);
         } catch (e) {
+          console.log(e);
           setFetchingAnnotation(false);
         }
       })();
@@ -414,7 +432,7 @@ const Playlist = () => {
       MOBILE_VIEWPORT_THRESHOLD;
     if (isMobile) {
       globalThis.SetPlaylistForcedHeight &&
-        globalThis.SetPlaylistForcedHeight(true);
+        globalThis.SetPlaylistForcedHeight(1);
     }
     if (IsPlaylistPlaying) {
       thisBot.Playlistplaying({
@@ -481,7 +499,7 @@ const Playlist = () => {
       globalThis.SetMediaURL && globalThis.SetMediaURL(null);
       globalThis.SetVideoSrc && globalThis.SetVideoSrc(null);
       globalThis.SetPlaylistForcedHeight &&
-        globalThis.SetPlaylistForcedHeight(false);
+        globalThis.SetPlaylistForcedHeight(0);
     };
   }, []);
 
@@ -529,22 +547,29 @@ const Playlist = () => {
           sxContainer={{ width: "460px" }}
           title="Welcome to Seed Bible"
           showIcon={false}
-          onClose={onCloseSharPlaylistModal}>
+          onClose={onCloseSharPlaylistModal}
+        >
           <div className="welcome-box">
             <img
               src="https://auth-aux-aobot-prod-filesbucket-141297942820.s3.amazonaws.com/aoBot/08ff23d5216230e0fe9b9c0f80b8192aee35c320d4c87e60046e7cc396d8f5a7.svg"
               alt="share"
             />
             <div className="align-center" style={{ gap: "1rem" }}>
-              <img
-                className="welcome-box-profile"
-                src={globalThis.shareProfilePic}
-                alt={playlistSharerName || "Kusharg karki"}
-              />
-              <p>
-                {" "}
-                <b>{playlistSharerName}</b> shared a playlist.
-              </p>
+              {!!globalThis.shareProfilePic && (
+                <img
+                  className="welcome-box-profile"
+                  src={globalThis.shareProfilePic}
+                  alt={playlistSharerName}
+                />
+              )}
+              {!!playlistSharerName ? (
+                <p>
+                  {" "}
+                  <b>{playlistSharerName}</b> shared a playlist.
+                </p>
+              ) : (
+                <p>Here is your shared playlist.</p>
+              )}
             </div>
             <div
               className="welcome-box-content"
@@ -552,7 +577,8 @@ const Playlist = () => {
                 alignItems: !playlistShared.description
                   ? "center"
                   : "flex-start",
-              }}>
+              }}
+            >
               <RenderIcon
                 isCustomIcons={playlistShared.isCustomIcon}
                 icon={playlistShared.icon}
@@ -564,7 +590,8 @@ const Playlist = () => {
                     fontSize: !!playlistShared.description
                       ? "1rem"
                       : "1.125rem",
-                  }}>
+                  }}
+                >
                   {playlistShared.name}
                 </h4>
                 {!!playlistShared.description && (
@@ -588,7 +615,8 @@ const Playlist = () => {
                   });
                 setPLaylistSharerName("");
                 globalThis.hasASharedPlaylist = false;
-              }}>
+              }}
+            >
               Start
             </Button>
           </div>
@@ -615,7 +643,8 @@ const Playlist = () => {
                   globalThis.PendingAction = null;
                 }
               }}
-              variant="black">
+              variant="black"
+            >
               Confirm
             </Button>
             <Button secondaryAlt onClick={closeConfirmStopPlaylist}>
@@ -630,7 +659,8 @@ const Playlist = () => {
           flexDirection: "column",
           height: "100%",
           containerType: "inline-size" /* Enables container query */,
-        }}>
+        }}
+      >
         {showVideoOverlay && <ShowPersonVideoOverlay />}
         <ProjectProvider>
           <div
@@ -639,15 +669,16 @@ const Playlist = () => {
               position: "relative",
               flexGrow: "1",
               overflow: "auto",
-            }}>
+            }}
+          >
             <style>
               {`.playlist-cont-actions, .playlist-cont-parent {
                             --width: ${
                               viewHistroy === 1
                                 ? 400
                                 : viewHistroy === 2
-                                ? ((collection?.length ? 1 : 1) || 1) * 400
-                                : activePlaylists.length * 400
+                                  ? ((collection?.length ? 1 : 1) || 1) * 400
+                                  : activePlaylists.length * 400
                             }px 
                         }`}
             </style>
@@ -686,11 +717,13 @@ const Playlist = () => {
                 if (e.currentTarget.id === "sidebar-bar") {
                   setTagMask(gridPortalBot, "portalZoomable", true);
                 }
-              }}>
+              }}
+            >
               <div>
                 <div
                   className={`playlist-cont-actions`}
-                  style={{ padding: !editData.id ? "" : "12px" }}>
+                  style={{ padding: !editData.id ? "" : "12px" }}
+                >
                   {editData.id && (
                     <span
                       class="material-symbols-outlined unfollow"
@@ -703,7 +736,8 @@ const Playlist = () => {
                       onClick={() => {
                         globalThis[`setOpenAttachLink`](false);
                         thisBot.resetEditingState({ id: editData.id });
-                      }}>
+                      }}
+                    >
                       arrow_back
                     </span>
                   )}
@@ -722,17 +756,20 @@ const Playlist = () => {
                           style={{ width: `${100 / buttonConfigs.length}%` }}
                           className={`tabs-playlist-item ${
                             value === tab ? "active" : ""
-                          }`}>
+                          }`}
+                        >
                           <span
                             className="material-symbols-outlined unfollow"
-                            style={{ fontSize: "20px" }}>
+                            style={{ fontSize: "20px" }}
+                          >
                             {icon}
                           </span>
                           <span>
                             {label}{" "}
-                            {value === "discover"
-                              ? `${currentOpenedBook?.book} - ${currentOpenedBook?.chapter} `
-                              : ""}
+                            <GetLabel
+                              value={value}
+                              currentOpenedBook={currentOpenedBook}
+                            />
                           </span>
                         </h4>
                       ))}
@@ -741,7 +778,8 @@ const Playlist = () => {
                   {editData.id && (
                     <div
                       className="align-center"
-                      style={{ marginLeft: "1rem" }}>
+                      style={{ marginLeft: "1rem" }}
+                    >
                       <RenderIcon
                         isAllowSet
                         isCustomIcons={isCustomIcon}
@@ -790,7 +828,8 @@ const Playlist = () => {
                         globalThis.PLAYLIST_PANEL_ID = null;
                         globalThis.makingPlaylist = false;
                         return;
-                      }}>
+                      }}
+                    >
                       close
                     </span>
                   )}
@@ -806,7 +845,8 @@ const Playlist = () => {
                     height: `calc(100% - ${
                       playingPlaylist || !!editData.id ? "130px" : "40px"
                     })`,
-                  }}>
+                  }}
+                >
                   <Discover
                     setAnnotationData={setAnnotationData}
                     editingPlaylist={editData.id}
@@ -828,7 +868,8 @@ const Playlist = () => {
                     height: `calc(100% - ${
                       playingPlaylist || !!editData.id ? "90px" : "0px"
                     })`,
-                  }}>
+                  }}
+                >
                   <CreatePlaylistUI
                     editData={editAnnoData}
                     setTab={setTab}

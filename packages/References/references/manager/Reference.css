@@ -1,0 +1,89 @@
+.reference-container {
+  display: flex;
+  flex-direction: column;
+  justify-content: flex-start;
+  align-items: flex-start;
+  gap: 10px;
+  width: 98%;
+  height: 100%;
+  padding: 10px;
+  max-height: 100%;
+  border-radius: 10px;
+  background: white;
+  overflow-y: auto;
+  scrollbar-width: none;
+}
+
+.subRef {
+  color: #546e7a;
+  cursor: pointer;
+  font-family: "Satoshi", system-ui, sans-serif;
+}
+
+.heading {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  width: 100%;
+  font-family: "Satoshi", system-ui, sans-serif;
+}
+
+.openTab:hover {
+  color: #546e7a;
+  cursor: pointer;
+}
+
+.reference-components {
+  display: flex;
+  flex-direction: column;
+  gap: 5px;
+  width: 100%;
+  height: fit-content;
+  background: white;
+  padding: 5px;
+  border-radius: 5px;
+  cursor: "text";
+  font-family: "DM Sans", system-ui, sans-serif;
+}
+
+.reference-title {
+  cursor: pointer;
+  font-weight: bold;
+  font-family: "Satoshi", system-ui, sans-serif;
+  width: fit-content;
+}
+
+.loading-section {
+  height: 44px;
+  width: 100%;
+  border-radius: 5px;
+  cursor: progress;
+  margin: 0;
+  background: linear-gradient(
+    to bottom right,
+    #8c8c8c,
+    #b0b0b0,
+    #d0d0d0,
+    #f0f0f0
+  );
+  background-size: 400% 400%;
+  animation: gradientShift 4s ease infinite;
+}
+
+@keyframes gradientShift {
+  0% {
+    background-position: 0% 50%;
+  }
+
+  50% {
+    background-position: 100% 50%;
+  }
+
+  100% {
+    background-position: 0% 50%;
+  }
+}
+
+.reference-content {
+  max-height: 400px;
+}
