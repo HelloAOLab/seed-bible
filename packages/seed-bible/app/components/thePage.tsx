@@ -127,13 +127,13 @@ function ThePage({
 
   const loadTranslationFromUrl = async () => {
     console.log(configBot.tags.translationId, "translation id")
-    let translationId = configBot.tags.translationId || configBot.tags.translation;
+    let translationId = configBot.tags.translationId || configBot.tags.translation || "BSB";
     let baseUrl = "https://bible.helloao.org";
     let bookId = "GEN";
     let bookTranslationId = "BSB";
     let firstBookData;
     let firstChapterApiLink;
-    let books;
+    let books = [];
     if (translationId) {
       os.toast(`Loading ${translationId} translation`)
 
@@ -216,6 +216,14 @@ function ThePage({
           if (result.status === 200) {
             const url = new URL(translationId);
             let newTranslations = result.data.translations;
+            if (newTranslations.length === 0) {
+              configBot.tags.translationId = null;
+              configBot.tags.translation = null;
+              const translationData = await loadTranslationFromUrl();
+              return {
+                ...translationData
+              }
+            }
             let defaultTranslation = newTranslations[0];
             newTranslations = newTranslations.map(trans => {
               return {
@@ -322,7 +330,7 @@ function ThePage({
 
     globalThis.refreshScrollers && globalThis.refreshScrollers();
     let { firstBookData, bookTranslationId, baseUrl, books } = await loadTranslationFromUrl();
-    if (firstBookData || bookTranslationId || baseUrl) {
+    if (firstBookData && bookTranslationId && baseUrl) {
       await bible.changeTranslation(bookTranslationId, firstBookData, baseUrl)
       if (configBot.tags?.book && books && books.length > 1) {
         let bookData;
@@ -334,7 +342,7 @@ function ThePage({
 
         if (bookData) {
           let chapterNo;
-          if(Number(configBot.tags.chapter) < bookData.numberOfChapters) chapterNo = configBot.tags.chapter;
+          if (Number(configBot.tags.chapter) < bookData.numberOfChapters) chapterNo = configBot.tags.chapter;
           let chapterUrl = chapterNo ? bookData.firstChapterApiLink.replace("1.json", `${chapterNo}.json`) : bookData.firstChapterApiLink;
           console.log(chapterUrl, "chapterUrl")
           await bible.open(
@@ -344,10 +352,21 @@ function ThePage({
             chapterUrl
           );
         }
+      } else if (configBot.tags?.chapter && books.length > 0) {
+        let bookData = books[0];
+        let chapterNo;
+        if (Number(configBot.tags.chapter) < bookData.numberOfChapters) chapterNo = configBot.tags.chapter;
+        let chapterUrl = chapterNo ? bookData.firstChapterApiLink.replace("1.json", `${chapterNo}.json`) : bookData.firstChapterApiLink;
+        console.log(chapterUrl, "chapterUrl")
+        await bible.open(
+          bookData.id,
+          configBot.tags.chapter || 1,
+          bookTranslationId,
+          chapterUrl
+        );
       }
-      setData(bible.data);
     }
-
+    setData(bible.data);
     whisper(getBot('system', 'introduction.searchBar'), 'initialize')
   }
   useEffect(() => {
