@@ -127,7 +127,7 @@ function ThePage({
 
   const loadTranslationFromUrl = async () => {
     console.log(configBot.tags.translationId, "translation id")
-    let translationId = configBot.tags.translationId || configBot.tags.translation;
+    let translationId = configBot.tags.translationId || configBot.tags.translation || "BSB";
     let baseUrl = "https://bible.helloao.org";
     let bookId = "GEN";
     let bookTranslationId = "BSB";
