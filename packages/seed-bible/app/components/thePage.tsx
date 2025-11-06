@@ -334,7 +334,7 @@ function ThePage({
 
         if (bookData) {
           let chapterNo;
-          if(Number(configBot.tags.chapter) < bookData.numberOfChapters) chapterNo = configBot.tags.chapter;
+          if (Number(configBot.tags.chapter) < bookData.numberOfChapters) chapterNo = configBot.tags.chapter;
           let chapterUrl = chapterNo ? bookData.firstChapterApiLink.replace("1.json", `${chapterNo}.json`) : bookData.firstChapterApiLink;
           console.log(chapterUrl, "chapterUrl")
           await bible.open(
@@ -344,6 +344,18 @@ function ThePage({
             chapterUrl
           );
         }
+      } else if (configBot.tags?.chapter && books[0]) {
+        let bookData = books[0];
+        let chapterNo;
+        if (Number(configBot.tags.chapter) < bookData.numberOfChapters) chapterNo = configBot.tags.chapter;
+        let chapterUrl = chapterNo ? bookData.firstChapterApiLink.replace("1.json", `${chapterNo}.json`) : bookData.firstChapterApiLink;
+        console.log(chapterUrl, "chapterUrl")
+        await bible.open(
+          bookData.id,
+          configBot.tags.chapter || 1,
+          bookTranslationId,
+          chapterUrl
+        );
       }
       setData(bible.data);
     }
