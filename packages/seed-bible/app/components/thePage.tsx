@@ -324,7 +324,7 @@ function ThePage({
     let { firstBookData, bookTranslationId, baseUrl, books } = await loadTranslationFromUrl();
     if (firstBookData || bookTranslationId || baseUrl) {
       await bible.changeTranslation(bookTranslationId, firstBookData, baseUrl)
-      if (books && books.length > 1) {
+      if (configBot.tags?.book && books && books.length > 1) {
         let bookData;
         books.forEach(book => {
           if (book.id.toLowerCase() === configBot.tags.book.toLowerCase()) {
