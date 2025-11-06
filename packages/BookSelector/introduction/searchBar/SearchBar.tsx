@@ -61,7 +61,6 @@ const SearchBar = () => {
 
     const [query, setQuery] = useState("");
     const inputRef = useRef(null);
-    const [onlineUsers, setOnlineUsers] = useState(null);
 
     const [booksData, setBooksData] = useState(thePage.masks?.booksData || tags.booksData);
     const [selectedTestament, setSelectedTestament] = useState(2);
@@ -394,9 +393,9 @@ const SearchBar = () => {
         } else {
             if (query?.toLowerCase() || "".includes("psalm")) {
                 if (query.split(" ").length > 1) {
-                    const queryArr = query.split(" ");
-                    const chapterNo = parseInt(queryArr[queryArr.length - 1]);
-                    if (!isNaN(chapterNo)) {
+                    let queryArr = query.split(" ");
+                    let chapterNo = parseInt(queryArr[queryArr.length - 1]);
+                    if (chapterNo !== NaN) {
                         let bookName;
                         for (let i = 0; i < PsalmsData.length; i++) {
                             if (chapterNo <= PsalmsData[i].endingBook + 1) {
@@ -590,7 +589,6 @@ const SearchBar = () => {
     globalThis.SetDontOpenPlaylist = setDontOpen;
 
     const dontOpen = dontopn && showCheck;
-    globalThis.SetBooksOnlineUsers = setOnlineUsers;
 
     return <>
         <div class="testament-selection starterAnimation">
@@ -696,7 +694,7 @@ const SearchBar = () => {
                 </div>
             }
             {
-                booksData && selectedTestamentData && !selectingTranslation && selectedTranslation && <SideBarBooks onlineUsers={onlineUsers} showCheck={!selectingTranslation && showCheck} dontOpen={dontOpen} selectedTranslation={selectedTranslation} selectedTestament={selectedTestament} booksData={selectedTestamentData} focusOnBook={focusOnBook} />
+                booksData && selectedTestamentData && !selectingTranslation && selectedTranslation && <SideBarBooks showCheck={!selectingTranslation && showCheck} dontOpen={dontOpen} selectedTranslation={selectedTranslation} selectedTestament={selectedTestament} booksData={selectedTestamentData} focusOnBook={focusOnBook} />
             }
             {
                 selectingTranslation && <div class="sidebar-translation-options" style={{ paddingBottom: showCustomTranslation ? "200px" : "36px" }}>
@@ -851,7 +849,7 @@ const NewTransOptions = ({ translationName, translations, selectedTranslation, s
     </div>
 }
 
-const SideBarBooks = ({ booksData, focusOnBook, selectedTestament, selectedTranslation, dontOpen, showCheck, onlineUsers }) => {
+const SideBarBooks = ({ booksData, focusOnBook, selectedTestament, selectedTranslation, dontOpen, showCheck }) => {
     const [lastBookClicked, setLastBookClicked] = useState(-1);
     const [bookData, setBookData] = useState(null);
     const [isMobile, setIsMobile] = useState(false);
@@ -986,9 +984,8 @@ const SideBarBooks = ({ booksData, focusOnBook, selectedTestament, selectedTrans
                                     {!book?.ghost && <div class={`sidebar-itm ${index === lastBookClicked && bookData?.id === book.id ? "sidebar-selected-itm" : ""}`} ref={(ref) => updateRefsArray(index, ref)} tabIndex={index + 1} onClick={() => {
                                         handleClick({ index, book, cht: 0 })
                                     }}>
-                                        <span style={{ display: "flex", gap: "3px" }}>
+                                        <span >
                                             {book.commonName}
-                                            <CircleCounter data={onlineUsers} book={book.id} />
                                         </span>
                                         <span style={{ transition: "transform 0.3s", opacity: 0.3 }} class={`material-symbols-outlined ${index === lastBookClicked && bookData?.id === book.id ? "upside-down" : ""}`}>
                                             expand_more
@@ -1000,7 +997,6 @@ const SideBarBooks = ({ booksData, focusOnBook, selectedTestament, selectedTrans
                                     {
                                         (OTChapterPos === index) && bookData && chT === 0 && <div class={`sidebar-chapters show-sidebar-chapter`} style={{ justifyContent: bookData.numberOfChapters < 3 * OTChapterSeparator ? "flex-start" : "space-between" }}>
                                             <SideBarChapters
-                                                onlineUsers={onlineUsers}
                                                 refsObject={refsObject}
                                                 bookData={bookData}
                                                 focusOnBook={focusOnBook}
@@ -1026,9 +1022,8 @@ const SideBarBooks = ({ booksData, focusOnBook, selectedTestament, selectedTrans
                                     {!book?.ghost && <div class={`sidebar-itm ${index === lastBookClicked && bookData?.id === book.id ? "sidebar-selected-itm" : ""}`} ref={(ref) => updateRefsArray(index, ref)} tabIndex={index + 1} onClick={() => {
                                         handleClick({ index, book, cht: 1 })
                                     }}>
-                                        <span style={{ display: "flex", gap: "3px" }}>
+                                        <span >
                                             {book.commonName}
-                                            <CircleCounter data={onlineUsers} book={book.id} />
                                         </span>
                                         <span style={{ transition: "transform 0.3s", opacity: 0.3 }} class={`material-symbols-outlined ${index === lastBookClicked && bookData?.id === book.id ? "upside-down" : ""}`}>
                                             expand_more
@@ -1043,7 +1038,6 @@ const SideBarBooks = ({ booksData, focusOnBook, selectedTestament, selectedTrans
                                                 .show-sidebar-chapter{width: calc(100% - 5px);}
                                             `}</style>
                                             <SideBarChapters
-                                                onlineUsers={onlineUsers}
                                                 refsObject={refsObject}
                                                 bookData={bookData}
                                                 focusOnBook={focusOnBook}
@@ -1073,9 +1067,8 @@ const SideBarBooks = ({ booksData, focusOnBook, selectedTestament, selectedTrans
                                     {!book.ghost && <div class={`sidebar-itm ${index === lastBookClicked && bookData?.id === book.id ? "sidebar-selected-itm" : ""}`} ref={(ref) => updateRefsArray(index, ref)} tabIndex={index + 1} onClick={() => {
                                         handleClick({ index, book })
                                     }}>
-                                        <span style={{ display: "flex", gap: "3px" }}>
+                                        <span >
                                             {book.commonName}
-                                            <CircleCounter data={onlineUsers} book={book.id} />
                                         </span>
                                         <span style={{ transition: "transform 0.3s", opacity: 0.3 }} class={`material-symbols-outlined ${index === lastBookClicked && bookData?.id === book.id ? "upside-down" : ""}`}>
                                             expand_more
@@ -1087,7 +1080,6 @@ const SideBarBooks = ({ booksData, focusOnBook, selectedTestament, selectedTrans
                                     {
                                         (chapterPos === index) && bookData && <div class={`sidebar-chapters show-sidebar-chapter`} style={{ justifyContent: bookData.numberOfChapters < 3 * allowedRows ? "flex-start" : "space-between" }}>
                                             <SideBarChapters
-                                                onlineUsers={onlineUsers}
                                                 refsObject={refsObject}
                                                 bookData={bookData}
                                                 focusOnBook={focusOnBook}
@@ -1117,9 +1109,8 @@ const SideBarBooks = ({ booksData, focusOnBook, selectedTestament, selectedTrans
                                     {!book.ghost && <div class={`sidebar-itm ${index === lastBookClicked && bookData?.id === book.id ? "sidebar-selected-itm" : ""}`} ref={(ref) => updateRefsArray(index, ref)} tabIndex={index + 1} onClick={() => {
                                         handleClick({ index, book })
                                     }}>
-                                        <span style={{ display: "flex", gap: "3px" }}>
+                                        <span >
                                             {book.commonName}
-                                            <CircleCounter data={onlineUsers} book={book.id} />
                                         </span>
                                         <span style={{ transition: "transform 0.3s", opacity: 0.3 }} class={`material-symbols-outlined ${index === lastBookClicked && bookData?.id === book.id ? "upside-down" : ""}`}>
                                             expand_more
@@ -1131,7 +1122,6 @@ const SideBarBooks = ({ booksData, focusOnBook, selectedTestament, selectedTrans
                                     {
                                         (chapterPos === index) && bookData && <div class={`sidebar-chapters show-sidebar-chapter`} style={{ justifyContent: bookData.numberOfChapters < 3 * allowedRows ? "flex-start" : "space-between" }}>
                                             <SideBarChapters
-                                                onlineUsers={onlineUsers}
                                                 refsObject={refsObject}
                                                 bookData={bookData}
                                                 focusOnBook={focusOnBook}
@@ -1149,11 +1139,7 @@ const SideBarBooks = ({ booksData, focusOnBook, selectedTestament, selectedTrans
                 </div>
             </div>
         }
-    }, [booksData, lastBookClicked, bookData, dontOpen, selectedTestament, windowSize, chT, onlineUsers])
-
-    useEffect(() => {
-        console.log(onlineUsers, authBot.tags.id, "books onlineUsers")
-    }, [onlineUsers])
+    }, [booksData, lastBookClicked, bookData, dontOpen, selectedTestament, windowSize, chT])
 
     return <>
         {
@@ -1162,7 +1148,7 @@ const SideBarBooks = ({ booksData, focusOnBook, selectedTestament, selectedTrans
     </>
 }
 
-const SideBarChapters = ({ bookData, dontOpen, focusOnBook, setLastBookClicked, setBookData, refsObject, selectedTranslation, onlineUsers }) => {
+const SideBarChapters = ({ bookData, dontOpen, focusOnBook, setLastBookClicked, setBookData, refsObject, selectedTranslation }) => {
     const [renderingJSX, setRenderingJSX] = useState([]);
     const [highLightedButtonsID, setHighlightedButtonID] = useState({});
 
@@ -1319,10 +1305,7 @@ const SideBarChapters = ({ bookData, dontOpen, focusOnBook, setLastBookClicked, 
                     bookName: bookData.commonName,
                     chapterNo: i + 1,
                     bookData
-                })} ><span className={`sidebar-chapter-itm ${highLightedButtonsID[i + 1] ? "highlight" : 'un-highlight'}`}>
-                        {i + 1}
-                        <CircleCounter data={onlineUsers} book={bookData.id} chapter={i + 1} />
-                    </span></div>)
+                })} ><span className={`sidebar-chapter-itm ${highLightedButtonsID[i + 1] ? "highlight" : 'un-highlight'}`}>{i + 1}</span></div>)
             }
         } else {
             if (bookData.commonName === "Psalms") {
@@ -1358,6 +1341,7 @@ const SideBarChapters = ({ bookData, dontOpen, focusOnBook, setLastBookClicked, 
                     })} ><span className={`sidebar-chapter-itm ${highLightedButtonsID[i + 1] ? "highlight" : 'un-highlight'}`}>{i + 1}</span></button>)
                 }
             } else {
+
                 for (let i = 0; i < bookData.numberOfChapters; i++) {
                     renderJSX.push(<button ref={refsObject[i]} class={`chapter-btn ${i === bookData.numberOfChapters - 1 ? "lastOne" : ""}`} onCLick={() => handleChapterClick({
                         id: bookData.id,
@@ -1366,15 +1350,12 @@ const SideBarChapters = ({ bookData, dontOpen, focusOnBook, setLastBookClicked, 
                         bookName: bookData.commonName,
                         chapterNo: i + 1,
                         bookData
-                    })} ><span className={`sidebar-chapter-itm ${highLightedButtonsID[i + 1] ? "highlight" : 'un-highlight'}`}>
-                            {i + 1}
-                            <CircleCounter data={onlineUsers} book={bookData.id} chapter={i + 1} />
-                        </span></button>)
+                    })} ><span className={`sidebar-chapter-itm ${highLightedButtonsID[i + 1] ? "highlight" : 'un-highlight'}`}>{i + 1}</span></button>)
                 }
             }
         }
         return renderJSX
-    }, [bookData, highLightedButtonsID, dontOpen, currentPsalms, onlineUsers])
+    }, [bookData, highLightedButtonsID, dontOpen, currentPsalms])
 
     return <>
         {
@@ -1384,110 +1365,5 @@ const SideBarChapters = ({ bookData, dontOpen, focusOnBook, setLastBookClicked, 
         }
     </>
 }
-
-const CircleCounter = ({ data, book, chapter }) => {
-
-    if (!data) return null;
-
-    const circles = data
-        ? !chapter ? Object.fromEntries(
-            Object.entries(data).filter(
-                ([, v]) =>
-                    v?.bookId === book
-            )
-        ) : Object.fromEntries(
-            Object.entries(data).filter(
-                ([, v]) =>
-                    v?.bookId === book && v?.chapter === chapter
-            )
-        )
-        : {};
-
-    const preEntries = Object.entries(circles);
-
-    const entries = Object.entries(preEntries);
-    const visibleCount = 2;
-    const remaining = entries.length - visibleCount;
-
-    const circleStyle = {
-        width: !chapter ? "20px" : "15px",
-        height: !chapter ? "20px" : "15px",
-        borderRadius: "50%",
-        display: "flex",
-        alignItems: "center",
-        justifyContent: "center",
-        color: "white",
-        fontWeight: "600",
-        fontSize: "16px",
-        boxShadow: "0 4px 6px rgba(0, 0, 0, 0.1)",
-        border: "2px solid white",
-        cursor: "pointer",
-    };
-
-    const { TreeIcon, LogIcon, LeafIcon, CatIcon, DogIcon, CoffeBeanIcon } = thisBot.userIcons();
-
-    const icons = [TreeIcon, LogIcon, LeafIcon, CatIcon, DogIcon, CoffeBeanIcon];
-    const colors = [
-        "#34D399",
-        "#60A5FA",
-        "#F472B6",
-        "#FBBF24",
-        "#A78BFA",
-        "#F87171",
-        "#10B981",
-        "#F59E0B",
-    ];
-
-    // Helper to get user's visual style
-    const getUserVisual = (userId, value, index) => {
-        try {
-            const visual = globalThis?.GetOrSetVisualInTags(value[0]);
-            console.log(visual, value, 'testviz sidebar')
-            if (visual) {
-                const IconComponent = icons[visual.iconIndex];
-                const color = colors[visual.colorIndex];
-                return { IconComponent, color };
-            }
-        } catch (e) {
-        }
-    };
-
-    return (
-        <>
-            <div style={{ display: "flex", alignItems: "center", padding: 0, position: chapter ? "absolute" : "", top: "-5px", right: "-5px" }}>
-                {entries.slice(0, visibleCount).map(([id, value], index) => {
-                    const { IconComponent, color } = getUserVisual(id, value, index);
-                    return (
-                        <div
-                            key={id}
-                            style={{
-                                ...circleStyle,
-                                backgroundColor: color,
-                                marginLeft: index > 0 ? "-4px" : "0",
-                                zIndex: visibleCount - index,
-                            }}
-                        >
-                            <IconComponent style={{ width: "12px", height: "12px" }} />
-                        </div>
-                    );
-                })}
-
-                {remaining > 0 && (
-                    <div
-                        style={{
-                            ...circleStyle,
-                            backgroundColor: "#9ca3af",
-                            fontSize: "12px",
-                            marginLeft: "-12px",
-                            zIndex: 0,
-                        }}
-                    >
-                        +{remaining}
-                    </div>
-                )}
-            </div>
-        </>
-    );
-};
 
 return SearchBar;
