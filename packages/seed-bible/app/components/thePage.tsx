@@ -127,11 +127,13 @@ function ThePage({
 
   const loadTranslationFromUrl = async () => {
     console.log(configBot.tags.translationId, "translation id")
-    let translationId = configBot.tags.translationId;
+    let translationId = configBot.tags.translationId || configBot.tags.translation;
     let baseUrl = "https://bible.helloao.org";
     let bookId = "GEN";
     let bookTranslationId = "BSB";
+    let firstBookData;
     let firstChapterApiLink;
+    let books;
     if (translationId) {
       os.toast(`Loading ${translationId} translation`)
 
@@ -170,7 +172,9 @@ function ThePage({
 
         if (trValue.pass && !urlId) {
           let bookData = await web.get(`https://bible.helloao.org/api/${trValue.value.id}/books.json`);
+          books = bookData.data.books;
           let book0 = bookData.data.books[0];
+          firstBookData = book0;
           setTagMask(thisBot, "selectedTranslation", trValue.value, "local");
           setTagMask(thisBot, "booksData", bookData.data.books, "local");
           bookId = book0.id;
@@ -191,7 +195,9 @@ function ThePage({
 
             let bookData = await web.get(translation.listOfBooksApiLink);
 
+            books = bookData.data.books;
             let book0 = bookData.data.books[0];
+            firstBookData = book0;
             setTagMask(thisBot, "selectedTranslation", translation, "local");
             setTagMask(thisBot, "booksData", bookData.data.books, "local");
             if (!defaultTranslations.includes(englishName)) {
@@ -243,7 +249,9 @@ function ThePage({
 
             let bookData = await web.get(translation.listOfBooksApiLink);
 
+            books = bookData.data.books;
             let book0 = bookData.data.books[0];
+            firstBookData = book0;
             setTagMask(thisBot, "selectedTranslation", translation, "local");
             setTagMask(thisBot, "booksData", bookData.data.books, "local");
             if (!defaultTranslations.includes(englishName)) {
@@ -279,26 +287,25 @@ function ThePage({
         setTagMask(thisBot, "apiTranslations", { ...translations }, "local")
         setTagMask(thisBot, "defaultTranslations", defaultTranslations, "local")
         console.log(defaultTranslations, translations, "trans")
-        configBot.tags.translationId = null;
       }
     }
     return {
       baseUrl,
       bookId,
       bookTranslationId,
-      firstChapterApiLink
+      firstChapterApiLink,
+      firstBookData,
+      books
     }
   }
 
   async function loadData() {
     if (!tab) return;
-    let { baseUrl, bookId, bookTranslationId } = await loadTranslationFromUrl();
     const bible = new BibleDataManager({
       tabId: tab?.id,
-      translation: bookTranslationId || tab.data.translation,
-      bookId: bookId || tab.data.bookId,
-      chapter: tab.data.chapter,
-      baseUrl
+      translation: tab.data.translation,
+      bookId: tab.data.bookId,
+      chapter: tab.data.chapter
     });
     setBible(bible);
 
@@ -311,9 +318,36 @@ function ThePage({
     const { data, loading, error } = bible.getState();
     console.log(data, tab, "the data loaded");
 
-    setData(data);
+    // setData(data);
 
     globalThis.refreshScrollers && globalThis.refreshScrollers();
+    let { firstBookData, bookTranslationId, baseUrl, books } = await loadTranslationFromUrl();
+    if (firstBookData || bookTranslationId || baseUrl) {
+      await bible.changeTranslation(bookTranslationId, firstBookData, baseUrl)
+      if (books && books.length > 1) {
+        let bookData;
+        books.forEach(book => {
+          if (book.id.toLowerCase() === configBot.tags.book.toLowerCase()) {
+            bookData = book;
+          }
+        })
+
+        if (bookData) {
+          let chapterNo;
+          if(Number(configBot.tags.chapter) < bookData.numberOfChapters) chapterNo = configBot.tags.chapter;
+          let chapterUrl = chapterNo ? bookData.firstChapterApiLink.replace("1.json", `${chapterNo}.json`) : bookData.firstChapterApiLink;
+          console.log(chapterUrl, "chapterUrl")
+          await bible.open(
+            bookData.id,
+            configBot.tags.chapter || 1,
+            bookTranslationId,
+            chapterUrl
+          );
+        }
+      }
+      setData(bible.data);
+    }
+
     whisper(getBot('system', 'introduction.searchBar'), 'initialize')
   }
   useEffect(() => {

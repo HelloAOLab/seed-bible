@@ -108,6 +108,6 @@ const tr = () => {
     }
 }
 
-tr()
+// tr()
 
 os.compileApp('searchBar', <App />);
