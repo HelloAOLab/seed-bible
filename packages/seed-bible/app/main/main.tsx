@@ -119,13 +119,13 @@ const Main = () => {
         globalThis.SpaceScreens[activeSpace] = screens.value;
     }, [screens]);
     globalThis.LocateCanvas = () => {
-        // const nodes = document.querySelectorAll(".mainCanvas");
-        // const el = nodes[nodes.length - 1]; // last match
-        // if (!el) {
-        //     configBot.tags.gridPortal = null;
-        //     configBot.tags.mapPortal = null;
-        //     return;
-        // }
+        const nodes = document.querySelectorAll(".mainCanvas");
+        const el = nodes[nodes.length - 1]; // last match
+        if (!el) {
+            configBot.tags.gridPortal = null;
+            configBot.tags.mapPortal = null;
+            return;
+        }
 
         // Viewport-relative bounds:
         const { left, top, width, height } = el.getBoundingClientRect();
