@@ -666,6 +666,7 @@ input:checked + .slider:not(#slider):before {
   border-radius: 5px;
   color: white;
   transition: all 0.3s;
+  position: relative;
 }
 
 .chapter-btn:hover {
