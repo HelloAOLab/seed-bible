@@ -986,8 +986,8 @@ const SideBarBooks = ({ booksData, focusOnBook, selectedTestament, selectedTrans
                                     {!book?.ghost && <div class={`sidebar-itm ${index === lastBookClicked && bookData?.id === book.id ? "sidebar-selected-itm" : ""}`} ref={(ref) => updateRefsArray(index, ref)} tabIndex={index + 1} onClick={() => {
                                         handleClick({ index, book, cht: 0 })
                                     }}>
-                                        <span style={{ display: "flex", gap: "3px" }}>
-                                            {book.commonName}
+                                        <span style={{ display: "flex", gap: "3px", width: "100%", justifyContent: "space-between" }}>
+                                            {book.commonName.length > 7 ? book.id.toUpperCase() : book.commonName}
                                             <CircleCounter data={onlineUsers} book={book.id} />
                                         </span>
                                         <span style={{ transition: "transform 0.3s", opacity: 0.3 }} class={`material-symbols-outlined ${index === lastBookClicked && bookData?.id === book.id ? "upside-down" : ""}`}>
@@ -1026,8 +1026,8 @@ const SideBarBooks = ({ booksData, focusOnBook, selectedTestament, selectedTrans
                                     {!book?.ghost && <div class={`sidebar-itm ${index === lastBookClicked && bookData?.id === book.id ? "sidebar-selected-itm" : ""}`} ref={(ref) => updateRefsArray(index, ref)} tabIndex={index + 1} onClick={() => {
                                         handleClick({ index, book, cht: 1 })
                                     }}>
-                                        <span style={{ display: "flex", gap: "3px" }}>
-                                            {book.commonName}
+                                        <span style={{ display: "flex", gap: "3px", width: "100%", justifyContent: "space-between" }}>
+                                            {book.commonName.length > 7 ? book.id.toUpperCase() : book.commonName}
                                             <CircleCounter data={onlineUsers} book={book.id} />
                                         </span>
                                         <span style={{ transition: "transform 0.3s", opacity: 0.3 }} class={`material-symbols-outlined ${index === lastBookClicked && bookData?.id === book.id ? "upside-down" : ""}`}>
@@ -1073,8 +1073,8 @@ const SideBarBooks = ({ booksData, focusOnBook, selectedTestament, selectedTrans
                                     {!book.ghost && <div class={`sidebar-itm ${index === lastBookClicked && bookData?.id === book.id ? "sidebar-selected-itm" : ""}`} ref={(ref) => updateRefsArray(index, ref)} tabIndex={index + 1} onClick={() => {
                                         handleClick({ index, book })
                                     }}>
-                                        <span style={{ display: "flex", gap: "3px" }}>
-                                            {book.commonName}
+                                        <span style={{ display: "flex", gap: "3px", width: "100%", justifyContent: "space-between" }}>
+                                            {book.commonName.length > 7 ? book.id.toUpperCase() : book.commonName}
                                             <CircleCounter data={onlineUsers} book={book.id} />
                                         </span>
                                         <span style={{ transition: "transform 0.3s", opacity: 0.3 }} class={`material-symbols-outlined ${index === lastBookClicked && bookData?.id === book.id ? "upside-down" : ""}`}>
@@ -1117,8 +1117,8 @@ const SideBarBooks = ({ booksData, focusOnBook, selectedTestament, selectedTrans
                                     {!book.ghost && <div class={`sidebar-itm ${index === lastBookClicked && bookData?.id === book.id ? "sidebar-selected-itm" : ""}`} ref={(ref) => updateRefsArray(index, ref)} tabIndex={index + 1} onClick={() => {
                                         handleClick({ index, book })
                                     }}>
-                                        <span style={{ display: "flex", gap: "3px" }}>
-                                            {book.commonName}
+                                        <span style={{ display: "flex", gap: "3px", width: "100%", justifyContent: "space-between" }}>
+                                            {book.commonName.length > 7 ? book.id.toUpperCase() : book.commonName}
                                             <CircleCounter data={onlineUsers} book={book.id} />
                                         </span>
                                         <span style={{ transition: "transform 0.3s", opacity: 0.3 }} class={`material-symbols-outlined ${index === lastBookClicked && bookData?.id === book.id ? "upside-down" : ""}`}>
@@ -1385,6 +1385,8 @@ const CircleCounter = ({ data, book, chapter }) => {
 
     if (!data) return null;
 
+    const [isModalOpen, setIsModalOpen] = useState(false);
+
     const circles = data
         ? !chapter ? Object.fromEntries(
             Object.entries(data).filter(
@@ -1406,18 +1408,19 @@ const CircleCounter = ({ data, book, chapter }) => {
     const remaining = entries.length - visibleCount;
 
     const circleStyle = {
-        width: !chapter ? "20px" : "15px",
-        height: !chapter ? "20px" : "15px",
+        width: !chapter ? "16px" : "12px",
+        height: !chapter ? "16px" : "12px",
         borderRadius: "50%",
         display: "flex",
         alignItems: "center",
         justifyContent: "center",
         color: "white",
         fontWeight: "600",
-        fontSize: "16px",
+        fontSize: !chapter ? "12px" : "8px",
         boxShadow: "0 4px 6px rgba(0, 0, 0, 0.1)",
-        border: "2px solid white",
+        border: "1px solid white",
         cursor: "pointer",
+        marginLeft: "-4px"
     };
 
     const { TreeIcon, LogIcon, LeafIcon, CatIcon, DogIcon, CoffeBeanIcon } = thisBot.userIcons();
@@ -1448,9 +1451,21 @@ const CircleCounter = ({ data, book, chapter }) => {
         }
     };
 
+    useEffect(() => {
+        if (isModalOpen) {
+            globalThis.bookModalOpen = setIsModalOpen;
+            return () => {
+                globalThis.bookModalOpen = null;
+            }
+        }
+        return () => {
+            globalThis.bookModalOpen = null;
+        }
+    }, [isModalOpen])
+
     return (
         <>
-            <div style={{ display: "flex", alignItems: "center", padding: 0, position: chapter ? "absolute" : "", top: "-5px", right: "-5px" }}>
+            <div style={{ display: "flex", alignItems: "center", padding: 0, position: chapter ? "absolute" : "", top: "-5px", right: "0px" }}>
                 {entries.slice(0, visibleCount).map(([id, value], index) => {
                     const { IconComponent, color } = getUserVisual(id, value, index);
                     return (
@@ -1458,9 +1473,14 @@ const CircleCounter = ({ data, book, chapter }) => {
                             key={id}
                             style={{
                                 ...circleStyle,
-                                backgroundColor: color,
-                                marginLeft: index > 0 ? "-4px" : "0",
-                                zIndex: visibleCount - index,
+                                backgroundColor: "white",
+                                zIndex: index + 1,
+                                marginLeft: index === 0 ? "0px" : "-4px",
+                                border: `1px solid ${color}`,
+                            }}
+                            onClick={(e) => {
+                                e.stopPropagation()
+                                setIsModalOpen(true)
                             }}
                         >
                             <IconComponent style={{ width: "12px", height: "12px" }} />
@@ -1472,16 +1492,195 @@ const CircleCounter = ({ data, book, chapter }) => {
                     <div
                         style={{
                             ...circleStyle,
-                            backgroundColor: "#9ca3af",
-                            fontSize: "12px",
-                            marginLeft: "-12px",
-                            zIndex: 0,
+                            backgroundColor: "rgba(196, 196, 196, 1)",
+                            border: `1px solid rgba(131, 131, 131, 1)`,
+                            zIndex: 20,
+                        }}
+                        onClick={(e) => {
+                            e.stopPropagation()
+                            setIsModalOpen(true)
                         }}
                     >
-                        +{remaining}
+                        <span style={{ fontSize: !chapter ? "9px" : "6px", color: "black", lineHeight: !chapter ? "16px" : "12px", marginLeft: "-1px" }}>
+                            +{remaining}
+                        </span>
                     </div>
                 )}
             </div>
+            {isModalOpen && (
+                <div
+                    style={{
+                        position: "fixed",
+                        top: 0,
+                        left: 0,
+                        right: 0,
+                        bottom: 0,
+                        backgroundColor: "rgba(0, 0, 0, 0.5)",
+                        display: "flex",
+                        alignItems: "center",
+                        justifyContent: "center",
+                        zIndex: 1000,
+                    }}
+                    onClick={(e) => {
+                        e.stopPropagation()
+                        setIsModalOpen(false)
+                    }}
+                >
+                    <div
+                        style={{
+                            backgroundColor: "white",
+                            borderRadius: "12px",
+                            padding: "24px",
+                            maxWidth: "500px",
+                            width: "90%",
+                            maxHeight: "80vh",
+                            overflow: "auto",
+                            boxShadow:
+                                "0 20px 25px -5px rgba(0, 0, 0, 0.1), 0 10px 10px -5px rgba(0, 0, 0, 0.04)",
+                        }}
+                        onClick={(e) => e.stopPropagation()}
+                    >
+                        <div
+                            style={{
+                                display: "flex",
+                                justifyContent: "space-between",
+                                alignItems: "center",
+                                marginBottom: "20px",
+                            }}
+                        >
+                            <h2
+                                style={{
+                                    fontSize: "20px",
+                                    fontWeight: "600",
+                                    color: "#111827",
+                                    margin: 0,
+                                }}
+                            >
+                                All Users ({entries.length})
+                            </h2>
+                            <button
+                                onClick={() => setIsModalOpen(false)}
+                                style={{
+                                    background: "none",
+                                    border: "none",
+                                    fontSize: "24px",
+                                    cursor: "pointer",
+                                    color: "#6b7280",
+                                    padding: "0",
+                                    width: "30px",
+                                    height: "30px",
+                                    display: "flex",
+                                    alignItems: "center",
+                                    justifyContent: "center",
+                                }}
+                            >
+                                ×
+                            </button>
+                        </div>
+
+                        <div
+                            style={{ display: "flex", flexDirection: "column", gap: "12px" }}
+                        >
+                            {entries.map(([id, value], index) => {
+                                const { Icon, color } = globalThis?.GetOrSetVisualInTags ? globalThis.GetOrSetVisualInTags(value[0]) : {Icon: TreeIcon, color: "#34D399"};
+                                const { role } = globalThis.GetUserSessionInfo(value[0]);
+                                return (
+                                    <div
+                                        key={id}
+                                        style={{
+                                            display: "flex",
+                                            alignItems: "center",
+                                            padding: "12px",
+                                            backgroundColor: "#f9fafb",
+                                            borderRadius: "8px",
+                                            gap: "12px",
+                                        }}
+                                    >
+                                        <div
+                                            style={{
+                                                width: "32px",
+                                                height: "32px",
+                                                borderRadius: "50%",
+                                                backgroundColor: color,
+                                                display: "flex",
+                                                alignItems: "center",
+                                                justifyContent: "center",
+                                                color: "white",
+                                                fontWeight: "600",
+                                                fontSize: "14px",
+                                                flexShrink: 0,
+                                            }}
+                                        >
+                                            <Icon style={{ width: "18px", height: "18px" }} />
+                                        </div>
+                                        <div style={{ flex: 1 }}>
+                                            <div
+                                                style={{
+                                                    fontWeight: "600",
+                                                    color: "#111827",
+                                                    marginBottom: "4px",
+                                                }}
+                                            >
+                                                User:{" "}
+                                                <span style={{ fontSize: "12px" }}>
+                                                    {value?.[0] || id}
+                                                </span>
+                                            </div>
+                                            <div style={{ fontSize: "14px", color: "#6b7280" }}>
+                                                Book: {book} • Chapter: {chapter}
+                                            </div>
+                                        </div>
+                                        <div style={{ display: "flex", gap: "8px" }}>
+                                            <button
+                                                // disabled={role !== 'host'}
+                                                onClick={() => {
+                                                    InviteUser(value[0]);
+                                                    setIsModalOpen(false);
+                                                }}
+                                                style={{
+                                                    padding: "6px 12px",
+                                                    borderRadius: "6px",
+                                                    border: false
+                                                        ? "1px solid #10B981"
+                                                        : "1px solid #d1d5db",
+                                                    backgroundColor: false ? "#10B981" : "white",
+                                                    color: false ? "white" : "#374151",
+                                                    fontSize: "12px",
+                                                    fontWeight: "500",
+                                                    cursor: "pointer",
+                                                    transition: "all 0.2s",
+                                                }}
+                                            >
+                                                {"Follow"}
+                                            </button>
+                                            <button
+                                                // disabled={role !== 'host'}
+                                                onClick={() => {
+                                                    HandleSharedTablick();
+                                                    setIsModalOpen(false);
+                                                }}
+                                                style={{
+                                                    padding: "6px 12px",
+                                                    borderRadius: "6px",
+                                                    border: "1px solid #3B82F6",
+                                                    backgroundColor: "#3B82F6",
+                                                    color: "white",
+                                                    fontSize: "12px",
+                                                    fontWeight: "500",
+                                                    cursor: "pointer",
+                                                    transition: "all 0.2s",
+                                                }}
+                                            >
+                                                Invite
+                                            </button>
+                                        </div>
+                                    </div>
+                                );
+                            })}
+                        </div>
+                    </div>
+                </div>
+            )}
         </>
     );
 };

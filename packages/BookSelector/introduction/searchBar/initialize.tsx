@@ -20,6 +20,12 @@ const App = () => {
     globalThis.currentExperience = currentExperience;
     globalThis.setCurrentExperience = setCurrentExperience;
 
+    useEffect(() => {
+        if(!openSidebar && globalThis?.bookModalOpen){
+            globalThis.bookModalOpen(false);
+        }
+    }, [openSidebar])
+
     return <>
         <style>{css}</style>
         <link href="https://fonts.googleapis.com/icon?family=Material+Icons" rel="stylesheet" />
