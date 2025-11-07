@@ -133,7 +133,7 @@ function ThePage({
     let bookTranslationId = "BSB";
     let firstBookData;
     let firstChapterApiLink;
-    let books;
+    let books = [];
     if (translationId) {
       os.toast(`Loading ${translationId} translation`)
 
@@ -216,6 +216,14 @@ function ThePage({
           if (result.status === 200) {
             const url = new URL(translationId);
             let newTranslations = result.data.translations;
+            if (newTranslations.length === 0) {
+              configBot.tags.translationId = null;
+              configBot.tags.translation = null;
+              const translationData = await loadTranslationFromUrl();
+              return {
+                ...translationData
+              }
+            }
             let defaultTranslation = newTranslations[0];
             newTranslations = newTranslations.map(trans => {
               return {
@@ -288,6 +296,8 @@ function ThePage({
         setTagMask(thisBot, "defaultTranslations", defaultTranslations, "local")
         console.log(defaultTranslations, translations, "trans")
       }
+    } else {
+      return {}
     }
     return {
       baseUrl,
@@ -322,21 +332,39 @@ function ThePage({
 
     globalThis.refreshScrollers && globalThis.refreshScrollers();
     let { firstBookData, bookTranslationId, baseUrl, books } = await loadTranslationFromUrl();
-    if (firstBookData || bookTranslationId || baseUrl) {
+    if (firstBookData && bookTranslationId && baseUrl) {
       await bible.changeTranslation(bookTranslationId, firstBookData, baseUrl)
-      if (configBot.tags?.book && books && books.length > 1) {
-        let bookData;
-        books.forEach(book => {
-          if (book.id.toLowerCase() === configBot.tags.book.toLowerCase()) {
-            bookData = book;
+    }
+    if (!configBot.tags.defaultChecked) {
+      if (books) {
+        if (configBot.tags?.book && books && books?.length > 0) {
+          let bookData;
+          books.forEach(book => {
+            if (book.id.toLowerCase() === configBot.tags.book.toLowerCase()) {
+              bookData = book;
+            }
+          })
+          if (bookData) {
+            let chapterNo;
+            if (Number(configBot.tags.chapter) < bookData.numberOfChapters) chapterNo = configBot.tags.chapter;
+            let chapterUrl = chapterNo ? bookData.firstChapterApiLink.replace("1.json", `${chapterNo}.json`) : bookData.firstChapterApiLink.replace("1.json", `${tab.data.chapter}.json`);
+            await bible.open(
+              bookData.id,
+              configBot.tags.chapter || 1,
+              bookTranslationId,
+              chapterUrl
+            );
           }
-        })
-
-        if (bookData) {
+        } else if (configBot.tags?.chapter && books?.length > 0) {
+          let bookData;
+          books.forEach(book => {
+            if (book.id.toLowerCase() === tab.data.bookId.toLowerCase()) {
+              bookData = book;
+            }
+          })
           let chapterNo;
-          if(Number(configBot.tags.chapter) < bookData.numberOfChapters) chapterNo = configBot.tags.chapter;
-          let chapterUrl = chapterNo ? bookData.firstChapterApiLink.replace("1.json", `${chapterNo}.json`) : bookData.firstChapterApiLink;
-          console.log(chapterUrl, "chapterUrl")
+          if (Number(configBot.tags.chapter) < bookData.numberOfChapters) chapterNo = configBot.tags.chapter;
+          let chapterUrl = chapterNo ? bookData.firstChapterApiLink.replace("1.json", `${chapterNo}.json`) : bookData.firstChapterApiLink.replace("1.json", `${tab.data.chapter}.json`);
           await bible.open(
             bookData.id,
             configBot.tags.chapter || 1,
@@ -344,10 +372,16 @@ function ThePage({
             chapterUrl
           );
         }
+      } else {
+        if (configBot.tags?.book) {
+          await bible.open(configBot.tags?.book, configBot.tags?.chapter || tab.data.chapter);
+        } else if (configBot.tags?.chapter) {
+          await bible.open(tab.data.book, configBot.tags?.chapter);
+        }
       }
-      setData(bible.data);
+      configBot.tags.defaultChecked = true;
     }
-
+    setData(bible.data);
     whisper(getBot('system', 'introduction.searchBar'), 'initialize')
   }
   useEffect(() => {
@@ -1885,6 +1919,14 @@ function Section({
                   }}
                   onClick={(e) => {
                     e.stopPropagation();
+                    if (globalThis?.SetCurrentReference) {
+                      shout("ToggleReference", {
+                        book,
+                        chapter,
+                        verse: verse.verseNumber,
+                      });
+                      return;
+                    }
                     handleVerseClick(verse.verseNumber);
                     SetShowCommands(false);
                     os.log({
@@ -1948,6 +1990,21 @@ function Section({
                       if (globalThis.studyNotesPresent) {
                         HighlightStudyNoteSection(verse?.verseNumber);
                       }
+                    }}
+                    onPointerEnter={() => {
+                      globalThis.showRefModal = true;
+                      setTimeout(() => {
+                        if (globalThis.showRefModal) {
+                          shout("toggleReferenceModal", {
+                            book,
+                            chapter,
+                            verse: verse.verseNumber,
+                          });
+                        }
+                      }, 500);
+                    }}
+                    onPointerLeave={() => {
+                      globalThis.showRefModal = false;
                     }}
                   >
                     {verse?.verseNumber}
