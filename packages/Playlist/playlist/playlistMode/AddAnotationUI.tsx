@@ -1138,12 +1138,18 @@ const AddAnotationUI = ({
 
   const finalHistoryObject = useMemo(() => {
     if (!singleMode || editData?.address) return list;
+
+    const trackVerse = {};
+
+
     const listFinal = list.filter(
-      (ele) =>
-        ele.type === "verse" ||
-        ele.type === "verse-range" ||
-        ele.type === "verse-grouped"
-    );
+      (ele) =>{
+        const verse = ele.additionalInfo.verse;
+        trackVerse[verse] = true;
+        return (ele.type === "verse" || ele.type === "verse-range" || ele.type === "verse-grouped" || !trackVerse[verse] ) 
+      }
+    ).sort((a,b)=>a.additionalInfo.verse > b.additionalInfo.verse);
+
     if (listFinal.length < 1) {
       setSelectedAnnotation(null);
       return listFinal;
@@ -1161,18 +1167,24 @@ const AddAnotationUI = ({
     } else {
       setSelectedAnnotation(null);
     }
-    let content = "";
-    const trackVerse = {};
-    listFinal.forEach((ele, i) => {
-      const verse = ele.additionalInfo.verse;
-      if (!trackVerse[verse]) {
-        content += ` ${i > 0 ? verse : ele.content}${
-          i < listFinal.length - 1 ? "," : ""
-        }`;
+    // Compress consecutive numbers into ranges
+    const verses = listFinal.map(ele => ele.additionalInfo.verse).sort((a,b)=>a-b);
+    const ranges = [];
+    let start = verses[0];
+    let end = verses[0];
+
+    for (let i = 1; i < verses.length; i++) {
+      if (verses[i] === end + 1) {
+        end = verses[i];
+      } else {
+        ranges.push(start === end ? `${start}` : `${start}-${end}`);
+        start = end = verses[i];
       }
-      trackVerse[verse] = true;
-    });
-    item.content = content;
+    }
+    ranges.push(start === end ? `${start}` : `${start}-${end}`);
+
+    item.content = `${item.content.split(":")[0]}:${ranges.join(", ")}`;
+    
     return [item];
   }, [list, singleMode]);
 
