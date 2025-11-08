@@ -3,11 +3,17 @@ import { useScriptureMap2DContext } from "scriptureMap2D.main.ScriptureMap2DCont
 import { Book } from "scriptureMap2D.main.Book";
 import { useResizeObserver } from "scriptureMap2D.main.CustomHooks";
 import { SectionToggle } from "scriptureMap2D.main.SectionToggle";
-const { useMemo, useCallback, useState, useRef } = os.appHooks;
+const { useMemo, useCallback, useState, useRef, useEffect } = os.appHooks;
 
 export const TestamentContent = ({ hidden }) => {
-  const { arrangementIndex, scaleFactor, showLabels, bookWidth } =
-    useScriptureMap2DContext();
+  const {
+    arrangementIndex,
+    scaleFactor,
+    showLabels,
+    bookWidth,
+    readingHistoryRange,
+    booksWithReadingHistory,
+  } = useScriptureMap2DContext();
 
   const contentRef = useRef(null);
   const { width: contentWidth } = useResizeObserver(contentRef);
@@ -16,10 +22,44 @@ export const TestamentContent = ({ hidden }) => {
   const reversedSections = useMemo(() => {
     return testament.sections.toReversed();
   }, []);
+
+  const filteredSections = useMemo(() => {
+    console.log(`[Debug] TestamentContent filteredSections useMemo`);
+
+    if (!readingHistoryRange) return reversedSections;
+
+    const filteredSections = [];
+
+    for (
+      let sectionIndex = 0;
+      sectionIndex < reversedSections.length;
+      sectionIndex++
+    ) {
+      const section = reversedSections[sectionIndex];
+      const filteredBooks = [];
+      for (let bookIndex = 0; bookIndex < section.books.length; bookIndex++) {
+        const book = section.books[bookIndex];
+        const bookId =
+          BibleVizUtils.Data.tags.booksStaticInfo[book.commonName].abbreviation;
+        if (booksWithReadingHistory.has(bookId)) {
+          filteredBooks.push(book);
+        }
+      }
+      if (filteredBooks.length > 0) {
+        filteredSections.push({
+          ...section,
+          books: filteredBooks,
+        });
+      }
+    }
+
+    return filteredSections;
+  }, [reversedSections, booksWithReadingHistory, readingHistoryRange]);
+
   const sectionLevelsColorsMap = useMemo(() => {
     const map = new Map();
 
-    reversedSections.forEach((section, sectionIndex) => {
+    filteredSections.forEach((section, sectionIndex) => {
       const levelColorsKey = `${testamentIndex} ${sectionIndex}`;
       const sectionLevelsColors =
         BibleVizUtils.Functions.GetChildrenLevelColors({
@@ -32,15 +72,26 @@ export const TestamentContent = ({ hidden }) => {
       map.set(levelColorsKey, sectionLevelsColors);
     });
     return map;
-  }, [reversedSections]);
+  }, [filteredSections]);
 
   const [sectionsShown, setSectionsShown] = useState(
     new Map(
-      reversedSections.map((section) => {
+      filteredSections.map((section) => {
         return [section, true];
       })
     )
   );
+
+  useEffect(() => {
+    setSectionsShown(
+      new Map(
+        filteredSections.map((section) => {
+          return [section, true];
+        })
+      )
+    );
+  }, [filteredSections]);
+
   const toggleShowSection = useCallback(
     (section) => {
       const copy = new Map(sectionsShown);
@@ -71,12 +122,12 @@ export const TestamentContent = ({ hidden }) => {
       bookWidth,
       gridGap
     );
-    const totalBooks = reversedSections.flatMap((section) => {
+    const totalBooks = filteredSections.flatMap((section) => {
       return section.books;
     }).length;
     const rowPairCount = Math.ceil(totalBooks / fittingBooksCount);
     return { fittingBooksCount, rowPairCount };
-  }, [scaleFactor, contentWidth, testament, bookWidth]);
+  }, [scaleFactor, contentWidth, testament, bookWidth, filteredSections]);
 
   const sections = useMemo(() => {
     const elements = [];
@@ -89,33 +140,33 @@ export const TestamentContent = ({ hidden }) => {
     for (let i = 1; i <= rowPairCount; i++) {
       while (
         currentBookColumn <= fittingBooksCount &&
-        sectionIndex < reversedSections.length
+        sectionIndex < filteredSections.length
       ) {
         if (bookIndex === 0 && showLabels) {
           const sectionOcupiedColumns = Math.min(
             fittingBooksCount - (currentBookColumn - 1),
-            reversedSections[sectionIndex].books.length
+            filteredSections[sectionIndex].books.length
           );
           elements.push(
             <SectionToggle
               key={`${arrangementIndex} ${testamentIndex} ${sectionIndex}`}
-              section={reversedSections[sectionIndex]}
+              section={filteredSections[sectionIndex]}
               toggleShowSection={toggleShowSection}
-              showingContent={sectionsShown.get(reversedSections[sectionIndex])}
+              showingContent={sectionsShown.get(filteredSections[sectionIndex])}
               style={{
-                backgroundColor: `${reversedSections[sectionIndex].color}80`,
-                borderBottomColor: reversedSections[sectionIndex].color,
+                backgroundColor: `${filteredSections[sectionIndex].color}80`,
+                borderBottomColor: filteredSections[sectionIndex].color,
                 gridRow: `${i * 2 - 1} / ${i * 2}`,
-                gridColumn: `${currentBookColumn} / ${sectionsShown.get(reversedSections[sectionIndex]) ? currentBookColumn + sectionOcupiedColumns : currentBookColumn + 1}`,
+                gridColumn: `${currentBookColumn} / ${sectionsShown.get(filteredSections[sectionIndex]) ? currentBookColumn + sectionOcupiedColumns : currentBookColumn + 1}`,
               }}
             />
           );
         }
 
-        if (sectionsShown.get(reversedSections[sectionIndex])) {
+        if (sectionsShown.get(filteredSections[sectionIndex])) {
           const levelColorsKey = `${testamentIndex} ${sectionIndex}`;
           const color =
-            reversedSections[sectionIndex].books.toReversed()[bookIndex]
+            filteredSections[sectionIndex].books.toReversed()[bookIndex]
               .customColor ??
             sectionLevelsColorsMap.get(levelColorsKey).toReversed()[bookIndex];
 
@@ -123,10 +174,10 @@ export const TestamentContent = ({ hidden }) => {
             <Book
               key={`${arrangementIndex} ${testamentIndex} ${sectionIndex} ${bookIndex}`}
               bookInfo={
-                reversedSections[sectionIndex].books.toReversed()[bookIndex]
+                filteredSections[sectionIndex].books.toReversed()[bookIndex]
               }
               bookCoverBackgroundColor={color}
-              sectionName={reversedSections[sectionIndex].name}
+              sectionName={filteredSections[sectionIndex].name}
               style={{
                 gridRow: `${i * 2} / ${i * 2 + 1}`,
                 gridColumn: `${currentBookColumn} / ${currentBookColumn + 1}`,
@@ -134,7 +185,7 @@ export const TestamentContent = ({ hidden }) => {
             />
           );
           bookIndex++;
-          if (bookIndex === reversedSections[sectionIndex].books.length) {
+          if (bookIndex === filteredSections[sectionIndex].books.length) {
             bookIndex = 0;
             sectionIndex++;
           }
@@ -149,7 +200,7 @@ export const TestamentContent = ({ hidden }) => {
   }, [
     fittingBooksCount,
     rowPairCount,
-    reversedSections,
+    filteredSections,
     sectionLevelsColorsMap,
     sectionsShown,
     showLabels,
@@ -159,7 +210,6 @@ export const TestamentContent = ({ hidden }) => {
     <div
       className={`testamentContent ${hidden ? "hidden" : ""}`}
       ref={contentRef}
-      style={{}}
     >
       {sections}
     </div>
