@@ -1,22 +1,22 @@
-let PoolData, CustomTag;
-
-import { PieceInfo } from "bibleVizUtils.classes.PieceInfo";
-import { StackBibleData } from "bibleVizUtils.classes.StackBibleData";
-import { StackTestamentData } from "bibleVizUtils.classes.StackTestamentData";
-import { StackSectionData } from "bibleVizUtils.classes.StackSectionData";
-import { StackSectionBookData } from "bibleVizUtils.classes.StackSectionBookData";
-import { StackBookData } from "bibleVizUtils.classes.StackBookData";
-import { StackChapterData } from "bibleVizUtils.classes.StackChapterData";
-import { LayoutChapterData } from "bibleVizUtils.classes.LayoutChapterData";
-import { AnimateTagObject } from "bibleVizUtils.classes.AnimateTagObject";
-import { LayoutBibleData } from "bibleVizUtils.classes.LayoutBibleData";
-import { LayoutBookData } from "bibleVizUtils.classes.LayoutBookData";
-import { LayoutBookStructure } from "bibleVizUtils.classes.LayoutBookStructure";
-import { ParentDataIds } from "bibleVizUtils.classes.ParentDataIds";
-import { QueuedChapterData } from "bibleVizUtils.classes.QueuedChapterData";
-import { StackData } from "bibleVizUtils.classes.StackData";
-import { TourGuideData } from "bibleVizUtils.classes.TourGuideData";
-import { UnhighlightDelayInfo } from "bibleVizUtils.classes.UnhighlightDelayInfo";
+let PoolData;
+let CustomTag;
+let PieceInfo;
+let StackBibleData;
+let StackTestamentData;
+let StackSectionData;
+let StackSectionBookData;
+let StackBookData;
+let StackChapterData;
+let LayoutChapterData;
+let AnimateTagObject;
+let LayoutBibleData;
+let LayoutBookData;
+let LayoutBookStructure;
+let ParentDataIds;
+let QueuedChapterData;
+let StackData;
+let TourGuideData;
+let UnhighlightDelayInfo;
 
 const bibleVizClasses = getBot(byTag("system", "bibleVizUtils.classes"));
 const bibleVizData = getBot(byTag("system", "bibleVizUtils.data"));
@@ -32,6 +32,48 @@ if (
   !globalThis.ObjectPooler
 )
   return;
+
+try {
+  ({ PoolData } = await import("objectPooler.main.PoolData"));
+  ({ CustomTag } = await import("objectPooler.main.CustomTag"));
+  ({ PieceInfo } = await import("bibleVizUtils.classes.PieceInfo"));
+  ({ StackBibleData } = await import("bibleVizUtils.classes.StackBibleData"));
+  ({ StackTestamentData } = await import(
+    "bibleVizUtils.classes.StackTestamentData"
+  ));
+  ({ StackSectionData } = await import(
+    "bibleVizUtils.classes.StackSectionData"
+  ));
+  ({ StackSectionBookData } = await import(
+    "bibleVizUtils.classes.StackSectionBookData"
+  ));
+  ({ StackBookData } = await import("bibleVizUtils.classes.StackBookData"));
+  ({ StackChapterData } = await import(
+    "bibleVizUtils.classes.StackChapterData"
+  ));
+  ({ LayoutChapterData } = await import(
+    "bibleVizUtils.classes.LayoutChapterData"
+  ));
+  ({ AnimateTagObject } = await import(
+    "bibleVizUtils.classes.AnimateTagObject"
+  ));
+  ({ LayoutBibleData } = await import("bibleVizUtils.classes.LayoutBibleData"));
+  ({ LayoutBookData } = await import("bibleVizUtils.classes.LayoutBookData"));
+  ({ LayoutBookStructure } = await import(
+    "bibleVizUtils.classes.LayoutBookStructure"
+  ));
+  ({ ParentDataIds } = await import("bibleVizUtils.classes.ParentDataIds"));
+  ({ QueuedChapterData } = await import(
+    "bibleVizUtils.classes.QueuedChapterData"
+  ));
+  ({ StackData } = await import("bibleVizUtils.classes.StackData"));
+  ({ TourGuideData } = await import("bibleVizUtils.classes.TourGuideData"));
+  ({ UnhighlightDelayInfo } = await import(
+    "bibleVizUtils.classes.UnhighlightDelayInfo"
+  ));
+} catch (err) {
+  console.warn("Module not found:", err);
+}
 
 globalThis.PieceInfo = PieceInfo;
 globalThis.StackBibleData = StackBibleData;
@@ -214,13 +256,6 @@ bibleVizData.vars.highlightHistory = [];
 bibleVizData.vars.customArrangements = [];
 bibleVizData.vars.fixedArrangementsInfo = [];
 bibleVizFunctions.UpdateFixedArrangementsInfo();
-
-try {
-  ({ PoolData } = await import("objectPooler.main.PoolData"));
-  ({ CustomTag } = await import("objectPooler.main.CustomTag"));
-} catch (err) {
-  console.warn("Module not found:", err);
-}
 
 if (PoolData && CustomTag) {
   const infoLabelPool = new PoolData({
