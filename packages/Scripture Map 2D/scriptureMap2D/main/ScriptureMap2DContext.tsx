@@ -200,6 +200,7 @@ const ContentVisualizationType = {
 
 const MIN_SCALE_FACTOR = 0.25;
 const MAX_SCALE_FACTOR = 1.5;
+const SCALE_FACTOR_STEP = 0.05;
 
 const MAX_CHAPTER_HEAT_COUNT = 5;
 const CHAPTER_BASE_BACKGROUND_COLOR = "#E3E3E3";
@@ -384,7 +385,7 @@ export const ScriptureMap2DProvider = ({
     if (scaleFactor < MAX_SCALE_FACTOR) {
       const newValue = Math.min(
         MAX_SCALE_FACTOR,
-        scaleFactor + MIN_SCALE_FACTOR
+        scaleFactor + SCALE_FACTOR_STEP
       );
       setScaleFactor(newValue);
     }
@@ -394,7 +395,7 @@ export const ScriptureMap2DProvider = ({
     if (scaleFactor > MIN_SCALE_FACTOR) {
       const newValue = Math.max(
         MIN_SCALE_FACTOR,
-        scaleFactor - MIN_SCALE_FACTOR
+        scaleFactor - SCALE_FACTOR_STEP
       );
       setScaleFactor(newValue);
     }
