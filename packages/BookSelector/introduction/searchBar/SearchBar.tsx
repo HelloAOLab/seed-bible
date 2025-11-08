@@ -982,12 +982,24 @@ const SideBarBooks = ({ booksData, focusOnBook, selectedTestament, selectedTrans
                     <div class="books-item">
                         {
                             OTBooks.map((book, index) => {
+                                const users = onlineUsers ? Object.entries(onlineUsers || {}).filter(([, v]) => v?.bookId === book.id) : [];
+                                let bookName = "";
+                                if(book?.commonName?.length > 7 && users.length > 0){
+                                    let name = book.id.toLowerCase()
+                                    if(isNaN(Number(name[0]))){
+                                        bookName = name;
+                                    }else{
+                                        bookName = `${name[0]} ${name[1].toUpperCase()}${name.slice(2)}`
+                                    }
+                                }else{
+                                    bookName = book.commonName;
+                                }
                                 return <>
                                     {!book?.ghost && <div class={`sidebar-itm ${index === lastBookClicked && bookData?.id === book.id ? "sidebar-selected-itm" : ""}`} ref={(ref) => updateRefsArray(index, ref)} tabIndex={index + 1} onClick={() => {
                                         handleClick({ index, book, cht: 0 })
                                     }}>
-                                        <span style={{ display: "flex", gap: "3px", width: "100%", justifyContent: "space-between" }}>
-                                            {book.commonName.length > 7 ? book.id.toUpperCase() : book.commonName}
+                                        <span style={{ display: "flex", gap: "3px", width: "100%", justifyContent: "space-between", textTransform: "capitalize" }}>
+                                            {bookName}
                                             <CircleCounter data={onlineUsers} book={book.id} />
                                         </span>
                                         <span style={{ transition: "transform 0.3s", opacity: 0.3 }} class={`material-symbols-outlined ${index === lastBookClicked && bookData?.id === book.id ? "upside-down" : ""}`}>
@@ -1022,12 +1034,24 @@ const SideBarBooks = ({ booksData, focusOnBook, selectedTestament, selectedTrans
                     <div class="books-item">
                         {
                             NTBooks.map((book, index) => {
+                                const users = onlineUsers ? Object.entries(onlineUsers || {}).filter(([, v]) => v?.bookId === book.id) : [];
+                                let bookName = "";
+                                if(book?.commonName?.length > 7 && users.length > 0){
+                                    let name = book.id.toLowerCase()
+                                    if(isNaN(Number(name[0]))){
+                                        bookName = name;
+                                    }else{
+                                        bookName = `${name[0]} ${name[1].toUpperCase()}${name.slice(2)}`
+                                    }
+                                }else{
+                                    bookName = book.commonName;
+                                }
                                 return <>
                                     {!book?.ghost && <div class={`sidebar-itm ${index === lastBookClicked && bookData?.id === book.id ? "sidebar-selected-itm" : ""}`} ref={(ref) => updateRefsArray(index, ref)} tabIndex={index + 1} onClick={() => {
                                         handleClick({ index, book, cht: 1 })
                                     }}>
                                         <span style={{ display: "flex", gap: "3px", width: "100%", justifyContent: "space-between" }}>
-                                            {book.commonName.length > 7 ? book.id.toUpperCase() : book.commonName}
+                                            {bookName}
                                             <CircleCounter data={onlineUsers} book={book.id} />
                                         </span>
                                         <span style={{ transition: "transform 0.3s", opacity: 0.3 }} class={`material-symbols-outlined ${index === lastBookClicked && bookData?.id === book.id ? "upside-down" : ""}`}>
@@ -1069,12 +1093,24 @@ const SideBarBooks = ({ booksData, focusOnBook, selectedTestament, selectedTrans
                     <div class="books-item">
                         {
                             booksWithGhost.map((book, index) => {
+                                const users = onlineUsers ? Object.entries(onlineUsers || {}).filter(([, v]) => v?.bookId === book.id) : [];
+                                let bookName = "";
+                                if(book?.commonName?.length > 7 && users.length > 0){
+                                    let name = book.id.toLowerCase()
+                                    if(isNaN(Number(name[0]))){
+                                        bookName = name;
+                                    }else{
+                                        bookName = `${name[0]} ${name[1].toUpperCase()}${name.slice(2)}`
+                                    }
+                                }else{
+                                    bookName = book.commonName;
+                                }
                                 return <>
                                     {!book.ghost && <div class={`sidebar-itm ${index === lastBookClicked && bookData?.id === book.id ? "sidebar-selected-itm" : ""}`} ref={(ref) => updateRefsArray(index, ref)} tabIndex={index + 1} onClick={() => {
                                         handleClick({ index, book })
                                     }}>
                                         <span style={{ display: "flex", gap: "3px", width: "100%", justifyContent: "space-between" }}>
-                                            {book.commonName.length > 7 ? book.id.toUpperCase() : book.commonName}
+                                            {bookName}
                                             <CircleCounter data={onlineUsers} book={book.id} />
                                         </span>
                                         <span style={{ transition: "transform 0.3s", opacity: 0.3 }} class={`material-symbols-outlined ${index === lastBookClicked && bookData?.id === book.id ? "upside-down" : ""}`}>
@@ -1113,12 +1149,24 @@ const SideBarBooks = ({ booksData, focusOnBook, selectedTestament, selectedTrans
                     <div class="books-item">
                         {
                             booksWithGhost.map((book, index) => {
+                                const users = onlineUsers ? Object.entries(onlineUsers || {}).filter(([, v]) => v?.bookId === book.id) : [];
+                                let bookName = "";
+                                if(book?.commonName?.length > 7 && users.length > 0){
+                                    let name = book.id.toLowerCase()
+                                    if(isNaN(Number(name[0]))){
+                                        bookName = name;
+                                    }else{
+                                        bookName = `${name[0]} ${name[1].toUpperCase()}${name.slice(2)}`
+                                    }
+                                }else{
+                                    bookName = book.commonName;
+                                }
                                 return <>
                                     {!book.ghost && <div class={`sidebar-itm ${index === lastBookClicked && bookData?.id === book.id ? "sidebar-selected-itm" : ""}`} ref={(ref) => updateRefsArray(index, ref)} tabIndex={index + 1} onClick={() => {
                                         handleClick({ index, book })
                                     }}>
                                         <span style={{ display: "flex", gap: "3px", width: "100%", justifyContent: "space-between" }}>
-                                            {book.commonName.length > 7 ? book.id.toUpperCase() : book.commonName}
+                                            {bookName}
                                             <CircleCounter data={onlineUsers} book={book.id} />
                                         </span>
                                         <span style={{ transition: "transform 0.3s", opacity: 0.3 }} class={`material-symbols-outlined ${index === lastBookClicked && bookData?.id === book.id ? "upside-down" : ""}`}>
@@ -1582,7 +1630,7 @@ const CircleCounter = ({ data, book, chapter }) => {
                             style={{ display: "flex", flexDirection: "column", gap: "12px" }}
                         >
                             {entries.map(([id, value], index) => {
-                                const { Icon, color } = globalThis?.GetOrSetVisualInTags ? globalThis.GetOrSetVisualInTags(value[0]) : {Icon: TreeIcon, color: "#34D399"};
+                                const { Icon, color } = globalThis?.GetOrSetVisualInTags ? globalThis.GetOrSetVisualInTags(value[0]) : { Icon: TreeIcon, color: "#34D399" };
                                 const { role } = globalThis.GetUserSessionInfo(value[0]);
                                 return (
                                     <div
