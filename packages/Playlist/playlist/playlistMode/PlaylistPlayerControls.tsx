@@ -196,7 +196,7 @@ const PlayerControls = ({ parentId = "default" }) => {
 
     const isCurrentItemChapterRange =
       currentItem?.type === "chapter-range" ||
-      !!currentItem.additionalInfo?.layers?.length;
+      !!currentItem?.additionalInfo?.layers?.length;
 
     if (!isCurrentItemChapterRange) newSubIndex = 0;
 
