@@ -120,6 +120,22 @@ const SearchBar = () => {
             return true;
         }
         return false;
+    }, []);
+
+    const sortBooksByTestament = useCallback((books) => {
+        const OTBooks = [];
+        const NTBooks = [];
+        for (let i = 0; i < books.length; i++) {
+            if (books[i].order <= 39) {
+                OTBooks.push(books[i]);
+            } else {
+                NTBooks.push(books[i])
+            }
+        }
+        return {
+            OTBooks,
+            NTBooks
+        };
     }, [])
 
     const selectedTestamentData = useMemo(() => {
@@ -135,28 +151,26 @@ const SearchBar = () => {
                         sortedBook.push(booksData[i])
                     }
                 }
-                return [...sortedBook]
+                const { OTBooks, NTBooks } = sortBooksByTestament(sortedBook);
+                if (selectedTestament === 0) {
+                    return OTBooks
+                } else if (selectedTestament === 1) {
+                    return NTBooks
+                } else {
+                    return [...OTBooks, ...NTBooks]
+                }
             } else {
                 return []
             }
         } else {
             if (booksData) {
-                if (booksData.length > 39) {
-                    if (selectedTestament === 0) {
-                        return [...booksData.slice(0, 39)]
-                    } else if (selectedTestament === 1) {
-                        return [...booksData.slice(39)]
-                    } else {
-                        return [...booksData]
-                    }
+                const { OTBooks, NTBooks } = sortBooksByTestament(booksData);
+                if (selectedTestament === 0) {
+                    return OTBooks
+                } else if (selectedTestament === 1) {
+                    return NTBooks
                 } else {
-                    if (selectedTestament === 0) {
-                        return [...booksData.slice(0, booksData.length)]
-                    } else if (selectedTestament === 1) {
-                        return [...booksData.slice(booksData.length)]
-                    } else {
-                        return [...booksData]
-                    }
+                    return [...OTBooks, ...NTBooks]
                 }
             } else {
                 return []
@@ -695,7 +709,7 @@ const SearchBar = () => {
                 </div>
             }
             {
-                booksData && selectedTestamentData && !selectingTranslation && selectedTranslation && <SideBarBooks onlineUsers={onlineUsers} showCheck={!selectingTranslation && showCheck} dontOpen={dontOpen} selectedTranslation={selectedTranslation} selectedTestament={selectedTestament} booksData={selectedTestamentData} focusOnBook={focusOnBook} />
+                booksData && selectedTestamentData && !selectingTranslation && selectedTranslation && <SideBarBooks onlineUsers={onlineUsers} showCheck={!selectingTranslation && showCheck} dontOpen={dontOpen} selectedTranslation={selectedTranslation} selectedTestament={selectedTestament} booksData={selectedTestamentData} focusOnBook={focusOnBook} sortBooksByTestament={sortBooksByTestament} />
             }
             {
                 selectingTranslation && <div class="sidebar-translation-options" style={{ paddingBottom: showCustomTranslation ? "200px" : "36px" }}>
@@ -850,7 +864,7 @@ const NewTransOptions = ({ translationName, translations, selectedTranslation, s
     </div>
 }
 
-const SideBarBooks = ({ booksData, focusOnBook, selectedTestament, selectedTranslation, dontOpen, showCheck, onlineUsers }) => {
+const SideBarBooks = ({ booksData, focusOnBook, selectedTestament, selectedTranslation, dontOpen, showCheck, onlineUsers, sortBooksByTestament }) => {
     const [lastBookClicked, setLastBookClicked] = useState(-1);
     const [bookData, setBookData] = useState(null);
     const [windowSize, setWindowSize] = useState(window.innerWidth);
@@ -873,9 +887,15 @@ const SideBarBooks = ({ booksData, focusOnBook, selectedTestament, selectedTrans
         if (booksData.length === 1) {
             setLastBookClicked(0);
             setBookData(booksData[0]);
+            if (booksData[0].order > 39) {
+                setChT(1);
+            } else {
+                setChT(0);
+            }
         } else {
             setLastBookClicked(-1);
             setBookData(null);
+            setChT(0);
         }
     }, [booksData]);
 
@@ -953,18 +973,36 @@ const SideBarBooks = ({ booksData, focusOnBook, selectedTestament, selectedTrans
     const getBookName = useCallback((book, onlineUsers) => {
         const users = onlineUsers ? Object.entries(onlineUsers || {}).filter(([, v]) => v?.bookId === book.id) : [];
         let bookName = "";
-        if(book?.commonName?.length > 7 && users.length > 0){
+        if (book?.commonName?.length > 7 && users.length > 0) {
             const name = book.id.toLowerCase();
-            if(isNaN(Number(name[0]))){
+            if (isNaN(Number(name[0]))) {
                 bookName = name;
-            }else{
+            } else {
                 bookName = `${name[0]} ${name[1].toUpperCase()}${name.slice(2)}`;
             }
-        }else{
+        } else {
             bookName = book.commonName;
         }
         return bookName;
     }, []);
+
+    const rearrangeBooks = useCallback((books, rows) => {
+        const cols = Math.ceil(books.length / rows);
+        const rearrangedBooksMatrix = [];
+        let index = 0;
+        for (let j = 0; j < rows; j++) {
+            for (let i = 0; i < cols; i++) {
+                if (!rearrangedBooksMatrix[i]) rearrangedBooksMatrix[i] = [];
+                rearrangedBooksMatrix[i][j] = books[index];
+                index += 1;
+            }
+        }
+        const rearrangeBooks = [];
+        for (let row of rearrangedBooksMatrix) {
+            rearrangeBooks.push(...row)
+        }
+        return rearrangeBooks;
+    }, [])
 
     const RenderBooksByTestament = useMemo(() => {
         const isMobile = windowSize < 768;
@@ -979,13 +1017,15 @@ const SideBarBooks = ({ booksData, focusOnBook, selectedTestament, selectedTrans
             allowedRows = 5;
         }
 
+        const sortedBooks = sortBooksByTestament(booksData)
+
         if (selectedTestament === 2) {
             const OTChapterSeparator = allowedRows === 2 ? 1 : allowedRows === 3 ? 2 : 3;
             const OTChapterPos = calcChapterPos(lastBookClicked, OTChapterSeparator);
             const NTChapterSeparator = allowedRows === 2 ? 1 : allowedRows === 3 ? 1 : 2;
             const NTChapterPos = calcChapterPos(lastBookClicked, NTChapterSeparator);
-            const OTBooks = ghostArray(booksData.slice(0, 39), OTChapterSeparator);
-            const NTBooks = ghostArray(booksData.slice(39), NTChapterSeparator);
+            const OTBooks = ghostArray(sortedBooks.OTBooks, OTChapterSeparator);
+            const NTBooks = ghostArray(sortedBooks.NTBooks, NTChapterSeparator);
             return <div class="books-container" style={showCheck ? { paddingTop: "40px" } : {}}>
                 <div class="testament-container" style={{ width: `${allowedRows === 5 ? 60 : allowedRows === 3 ? 66.66 : 50}%` }}>
                     <span class="testament-title">Old Testament</span>
@@ -1072,7 +1112,7 @@ const SideBarBooks = ({ booksData, focusOnBook, selectedTestament, selectedTrans
             </div>
         } else if (selectedTestament === 1) {
             const chapterPos = calcChapterPos(lastBookClicked, allowedRows);
-            const booksWithGhost = ghostArray(booksData, allowedRows);
+            const booksWithGhost = ghostArray(sortedBooks.NTBooks, allowedRows);
             return <div class="books-container" style={showCheck ? { paddingTop: "40px" } : {}}>
                 <div class="testament-container">
                     <span class="testament-title">New Testament</span>
@@ -1116,7 +1156,7 @@ const SideBarBooks = ({ booksData, focusOnBook, selectedTestament, selectedTrans
             </div>
         } else if (selectedTestament === 0) {
             const chapterPos = calcChapterPos(lastBookClicked, allowedRows);
-            const booksWithGhost = ghostArray(booksData.slice(0, 39), allowedRows);
+            const booksWithGhost = ghostArray(sortedBooks.OTBooks, allowedRows);
             return <div class="books-container" style={showCheck ? { paddingTop: "40px" } : {}}>
                 <div class="testament-container">
                     <span class="testament-title">Old Testament</span>
@@ -1361,8 +1401,8 @@ const SideBarChapters = ({ bookData, dontOpen, setLastBookClicked, setBookData, 
                         chapterNo: i + 1,
                         bookData
                     })} ><span className={`sidebar-chapter-itm ${highLightedButtonsID[i + 1] ? "highlight" : 'un-highlight'}`}>
-                        {i + 1}
-                        <CircleCounter data={onlineUsers} book={bookData.id} chapter={i + 1} />
+                            {i + 1}
+                            <CircleCounter data={onlineUsers} book={bookData.id} chapter={i + 1} />
                         </span></button>)
                 }
             } else {
