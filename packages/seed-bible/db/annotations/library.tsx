@@ -857,6 +857,7 @@ function* getReadingEvents(doc: SharedDocument): Generator<ReadingEvent> {
   const eventsArray = doc.getArray("events").type;
 
   for (let i = 0; i < eventsArray.length; i++) {
+    const e = eventsArray.get(i);
     const event: ReadingEvent = {
       userId: e.get("userId"),
       bookId: e.get("bookId"),
