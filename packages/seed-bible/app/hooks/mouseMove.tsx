@@ -390,6 +390,7 @@ export function MouseMoveProvider({ children }) {
       }
       await os.unregisterApp("exitButton");
       await os.registerApp("exitButton", thisBot);
+      globalThis?.setOpenSidebar(false);
       os.compileApp(
         "exitButton",
         <button
