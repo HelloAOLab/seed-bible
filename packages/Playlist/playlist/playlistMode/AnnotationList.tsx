@@ -109,12 +109,14 @@ const AnnotationList = ({
                   {ele?.tags?.length > 0 ? (
                     <div
                       style={{ margin: "0.5rem 0", flexGrow: "1" }}
-                      className="align-center">
+                      className="align-center"
+                    >
                       <img src={TagsIcon} alt="Tags" />
                       {ele.tags.map((ele) => (
                         <div
                           style={{ marginLeft: "0.5rem" }}
-                          className="align-center">
+                          className="align-center"
+                        >
                           <p>{ele}</p>
                           <img
                             style={{ margin: "0 0.5rem" }}
@@ -127,7 +129,8 @@ const AnnotationList = ({
                   ) : (
                     <div
                       style={{ margin: "0.5rem 0", flexGrow: "1" }}
-                      className="align-center"></div>
+                      className="align-center"
+                    ></div>
                   )}
                   <div>
                     <p
@@ -143,7 +146,8 @@ const AnnotationList = ({
                         globalThis.LastClickY = y;
                         position.current = { ...getPosition() };
                         setDeleteOverlay(ele.address);
-                      }}>
+                      }}
+                    >
                       <img src={MoreIcon} alt="more" />
                     </p>
                   </div>
@@ -281,7 +285,8 @@ const AnnodataMapper = ({ data }) => {
                 }}
                 className={`annotation-list-item ${
                   contentData.type === "heading" ? "heading" : "scriptures"
-                }`}>
+                }`}
+              >
                 <div>
                   {contentData.type === "heading" ? (
                     <RenderHTMLContent htmlContent={contentData.content} />

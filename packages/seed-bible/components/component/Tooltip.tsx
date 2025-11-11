@@ -14,7 +14,8 @@ const Tooltip = ({ children, text, forRight, gifUrl }) => {
         <Modal
           showIcon={false}
           title="How to create Playlist from Google Spreadsheet"
-          onClose={() => setInfoModal(false)}>
+          onClose={() => setInfoModal(false)}
+        >
           <p style={{ fontSize: "24px" }}>
             <span class="material-symbols-outlined">info</span>
             Information
@@ -40,7 +41,8 @@ const Tooltip = ({ children, text, forRight, gifUrl }) => {
             left: !forRight ? "0" : "auto",
             right: forRight ? "0" : "auto",
           }}
-          className="tooltip-bubble">
+          className="tooltip-bubble"
+        >
           <div className="tooltip-message">{text}</div>
         </div>
       </div>

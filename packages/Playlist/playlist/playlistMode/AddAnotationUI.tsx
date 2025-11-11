@@ -110,7 +110,8 @@ const AnnotationInnerDiv = ({
         onTouchEnd={() => {
           if (globalThis.ADDING_TOPLAYLIST_TIMEOUT)
             clearInterval(globalThis.ADDING_TOPLAYLIST_TIMEOUT);
-        }}>
+        }}
+      >
         <div className="start-actions">
           {checklistEnabled ? (
             <Checkbox
@@ -191,7 +192,8 @@ const AnnotationInnerDiv = ({
             data.type !== "date" && checklistEnabled
               ? "checklistEnabled two"
               : "no-left-padding"
-          } playlist-item-${data.type}`}>
+          } playlist-item-${data.type}`}
+        >
           {data.type === "heading" ? (
             <RenderHTMLContent htmlContent={data.content} />
           ) : (
@@ -210,7 +212,8 @@ const AnnotationInnerDiv = ({
                   id: data.id,
                   text: data.content,
                 });
-              }}>
+              }}
+            >
               <span class="material-symbols-outlined">edit</span>
             </p>
           ) : null}
@@ -222,7 +225,8 @@ const AnnotationInnerDiv = ({
               onClick={(e) => {
                 e.stopPropagation();
                 onDisembed({ idFinal: data.id, pId: pId });
-              }}>
+              }}
+            >
               <span class="material-symbols-outlined unfollow delete-icon">
                 link_off
               </span>
@@ -252,7 +256,8 @@ const AnnotationInnerDiv = ({
                       editDataFromPlaylist(data.id, false);
                     }
                   }
-                }}>
+                }}
+              >
                 <span class="material-symbols-outlined">pip</span>
               </p>
             )
@@ -265,7 +270,8 @@ const AnnotationInnerDiv = ({
                   setExpand((p) => !p);
                 }}
                 class="material-symbols-outlined unfollow "
-                style={{ fontSize: "1.2rem" }}>
+                style={{ fontSize: "1.2rem" }}
+              >
                 {expand ? "collapse_content" : "expand_content"}
               </span>
             </p>
@@ -277,7 +283,8 @@ const AnnotationInnerDiv = ({
             onClick={(e) => {
               e.stopPropagation();
               deleteFromList(data.id, pId);
-            }}>
+            }}
+          >
             <span class="material-symbols-outlined unfollow delete-icon">
               delete
             </span>
@@ -296,7 +303,8 @@ const AnnotationInnerDiv = ({
               flexGrow: "1",
               margin: "0.5rem 0",
               gap: "0.5rem",
-            }}>
+            }}
+          >
             {data.additionalInfo.tags.map((ele, index) => (
               <Chips
                 label={ele}
@@ -1279,8 +1287,8 @@ const AddAnotationUI = ({
           isNearCenter && !pseudoID
             ? "Embed"
             : originalRespectiveIndex > draggedItemIndex
-            ? "Bottom"
-            : "Top",
+              ? "Bottom"
+              : "Top",
       });
     }
 
@@ -1431,7 +1439,8 @@ const AddAnotationUI = ({
           showIcon={false}
           onClose={() => {
             setLoseProgresss(false);
-          }}>
+          }}
+        >
           <h2 style={{ fontSize: "1rem" }}>Embedded items will be lost.</h2>
           <p>
             Switching to another mode will lose the embedded items. Do you want
@@ -1443,14 +1452,16 @@ const AddAnotationUI = ({
               onClick={() => {
                 loseProgressAction.current?.();
               }}
-              variant="black">
+              variant="black"
+            >
               Confirm
             </Button>
             <Button
               secondaryAlt
               onClick={() => {
                 setLoseProgresss(false);
-              }}>
+              }}
+            >
               No
             </Button>
           </ButtonsCover>
@@ -1477,17 +1488,20 @@ const AddAnotationUI = ({
               width: "220px",
               padding: "1rem",
             }}
-            className="overlay linked-item-custom">
+            className="overlay linked-item-custom"
+          >
             <div
               className="more-menu-items active"
               onClick={() => {
                 setMode(PlaylistModeTypes.annotations);
                 setShowPlaylistSettings(false);
-              }}>
+              }}
+            >
               <div className="align-center">
                 <span
                   style={{ fontSize: "20px", color: "white" }}
-                  class="material-symbols-outlined">
+                  class="material-symbols-outlined"
+                >
                   draft
                 </span>
                 <label
@@ -1497,19 +1511,23 @@ const AddAnotationUI = ({
                     marginLeft: "4px",
                     color: "white",
                   }}
-                  for="playlistInclude">
+                  for="playlistInclude"
+                >
                   Annotation Mode
                 </label>
               </div>
               <Tooltip
                 forRight={true}
-                text="Annotation mode is the way to annotate the bible so you can see content while exploring other who have subscribed to you.">
+                text="Annotation mode is the way to annotate the bible so you can see content while exploring other who have subscribed to you."
+              >
                 <p
                   className="what-this center"
-                  style={{ margin: "0 0 0 0.5rem" }}>
+                  style={{ margin: "0 0 0 0.5rem" }}
+                >
                   <span
                     style={{ fontSize: "24px" }}
-                    class="material-symbols-outlined unfollow">
+                    class="material-symbols-outlined unfollow"
+                  >
                     info
                   </span>
                 </p>
@@ -1544,11 +1562,13 @@ const AddAnotationUI = ({
                   loseProgressAction.current?.();
                 }
                 setShowPlaylistSettings(false);
-              }}>
+              }}
+            >
               <div className="align-center">
                 <span
                   style={{ fontSize: "20px", color: "white" }}
-                  class="material-symbols-outlined">
+                  class="material-symbols-outlined"
+                >
                   playlist_play
                 </span>
                 <label
@@ -1558,19 +1578,23 @@ const AddAnotationUI = ({
                     marginLeft: "4px",
                     color: "white",
                   }}
-                  for="playlistInclude">
+                  for="playlistInclude"
+                >
                   Playlist Mode
                 </label>
               </div>
               <Tooltip
                 forRight={true}
-                text="Playlist mode is to create playlist and share with other or play them.">
+                text="Playlist mode is to create playlist and share with other or play them."
+              >
                 <p
                   className="what-this center"
-                  style={{ margin: "0 0 0 0.5rem" }}>
+                  style={{ margin: "0 0 0 0.5rem" }}
+                >
                   <span
                     style={{ fontSize: "24px" }}
-                    class="material-symbols-outlined unfollow">
+                    class="material-symbols-outlined unfollow"
+                  >
                     info
                   </span>
                 </p>
@@ -1604,11 +1628,13 @@ const AddAnotationUI = ({
                   loseProgressAction.current?.();
                 }
                 setShowPlaylistSettings(false);
-              }}>
+              }}
+            >
               <div className="align-center">
                 <span
                   style={{ fontSize: "20px", color: "white" }}
-                  class="material-symbols-outlined">
+                  class="material-symbols-outlined"
+                >
                   team_dashboard
                 </span>
                 <label
@@ -1618,17 +1644,20 @@ const AddAnotationUI = ({
                     marginLeft: "4px",
                     color: "white",
                   }}
-                  for="playlistInclude">
+                  for="playlistInclude"
+                >
                   Project Mode
                 </label>
               </div>
               <Tooltip forRight={true} text="Project mode is awesome.">
                 <p
                   className="what-this center"
-                  style={{ margin: "0 0 0 0.5rem" }}>
+                  style={{ margin: "0 0 0 0.5rem" }}
+                >
                   <span
                     style={{ fontSize: "24px" }}
-                    class="material-symbols-outlined unfollow">
+                    class="material-symbols-outlined unfollow"
+                  >
                     info
                   </span>
                 </p>
@@ -1650,7 +1679,8 @@ const AddAnotationUI = ({
               padding: "1rem",
               top: "5rem",
             }}
-            className="overlay linked-item-custom">
+            className="overlay linked-item-custom"
+          >
             <p>
               <b style={{ color: "white" }}>Publish settings</b>
             </p>
@@ -1665,16 +1695,19 @@ const AddAnotationUI = ({
               }}
               style={{
                 borderTop: "1px solid #3E3E3E",
-              }}>
+              }}
+            >
               <span
                 style={{ color: "white" }}
-                class="material-symbols-outlined">
+                class="material-symbols-outlined"
+              >
                 lock
               </span>
               <p>Private Access</p>
               <span
                 style={{ color: "white" }}
-                class="material-symbols-outlined">
+                class="material-symbols-outlined"
+              >
                 {publishAccess === "private"
                   ? "radio_button_checked"
                   : "radio_button_unchecked"}
@@ -1684,16 +1717,19 @@ const AddAnotationUI = ({
               className="more-menu-items"
               onClick={() => {
                 setPublishAccess("public");
-              }}>
+              }}
+            >
               <span
                 style={{ color: "white" }}
-                class="material-symbols-outlined">
+                class="material-symbols-outlined"
+              >
                 public
               </span>
               <p>Public Access</p>
               <span
                 style={{ color: "white" }}
-                class="material-symbols-outlined">
+                class="material-symbols-outlined"
+              >
                 {publishAccess === "public"
                   ? "radio_button_checked"
                   : "radio_button_unchecked"}
@@ -1704,16 +1740,19 @@ const AddAnotationUI = ({
               className="more-menu-items"
               onClick={() => {
                 setSingleMode((p) => !p);
-              }}>
+              }}
+            >
               <span
                 style={{ color: "white" }}
-                class="material-symbols-outlined">
+                class="material-symbols-outlined"
+              >
                 auto_awesome_motion
               </span>
               <p>Advanced UI</p>
               <span
                 style={{ color: "white" }}
-                class="material-symbols-outlined">
+                class="material-symbols-outlined"
+              >
                 {!singleMode
                   ? "radio_button_checked"
                   : "radio_button_unchecked"}
@@ -1727,12 +1766,14 @@ const AddAnotationUI = ({
           flexGrow: "1",
           display: "flex",
           flexDirection: "column",
-        }}>
+        }}
+      >
         {isEditAddress ? (
           <>
             <div
               className="align-center justify-between"
-              style={{ padding: "0.5rem 0 ", justifyContent: "space-between" }}>
+              style={{ padding: "0.5rem 0 ", justifyContent: "space-between" }}
+            >
               <div
                 className="back-button"
                 onClick={() => {
@@ -1740,7 +1781,8 @@ const AddAnotationUI = ({
                   setIsEditAddress(false);
                   globalThis.SetEditAnnoData?.(null);
                   if (setTab) setTab("discover");
-                }}>
+                }}
+              >
                 <span class="material-symbols-outlined">
                   keyboard_backspace
                 </span>
@@ -1757,7 +1799,8 @@ const AddAnotationUI = ({
                     padding: "1rem",
                     fontSize: "1rem",
                     fontWeight: "700",
-                  }}>
+                  }}
+                >
                   Tags:
                 </p>
                 <div
@@ -1767,7 +1810,8 @@ const AddAnotationUI = ({
                     flexGrow: "1",
                     margin: "0.5rem 0",
                     gap: "0.5rem",
-                  }}>
+                  }}
+                >
                   {tags.map((ele, index) => (
                     <Chips
                       label={ele}
@@ -1784,7 +1828,8 @@ const AddAnotationUI = ({
         ) : (
           <div
             className="align-center justify-between"
-            style={{ padding: "0.5rem 0 ", justifyContent: "space-between" }}>
+            style={{ padding: "0.5rem 0 ", justifyContent: "space-between" }}
+          >
             <div className="align-center" style={{ gap: "0.5rem" }}>
               <div
                 className="publish-setting"
@@ -1798,7 +1843,8 @@ const AddAnotationUI = ({
                   globalThis.LastClickY = y;
                   showPlaylistPosition.current = { ...getPosition() };
                   setShowPlaylistSettings(true);
-                }}>
+                }}
+              >
                 <span class="material-symbols-outlined">
                   {annoation ? "draft" : "playlist_play"}
                 </span>
@@ -1819,7 +1865,8 @@ const AddAnotationUI = ({
                   globalThis.LastClickY = y;
                   showMorePosition.current = { ...getPosition() };
                   setShowMoreOptions(true);
-                }}>
+                }}
+              >
                 <img src={Settings_Icon} alt="Settings_Icon" />
               </div>
             </div>
@@ -1836,7 +1883,8 @@ const AddAnotationUI = ({
         {(isSomethingChecked || embedding) && (
           <div
             style={{ justifyContent: "space-between", margin: "0.5rem 0" }}
-            className="align-center">
+            className="align-center"
+          >
             <Button
               onClick={() => {
                 onBulkDeleteItems();
@@ -1848,10 +1896,12 @@ const AddAnotationUI = ({
                 }
               }}
               secondaryAlt
-              color="#C20104">
+              color="#C20104"
+            >
               <span
                 style={{ marginRight: "0.5rem" }}
-                class="material-symbols-outlined unfollow color-inherit">
+                class="material-symbols-outlined unfollow color-inherit"
+              >
                 delete_forever
               </span>
               <span className="color-inherit">Delete</span>
@@ -1863,7 +1913,8 @@ const AddAnotationUI = ({
                 <Button onClick={onEmbedInside} secondaryAlt color="#3B82F6">
                   <span
                     style={{ marginRight: "0.5rem" }}
-                    class="material-symbols-outlined unfollow color-inherit">
+                    class="material-symbols-outlined unfollow color-inherit"
+                  >
                     frame_source
                   </span>
                   <span className="color-inherit">Embed</span>
@@ -1875,10 +1926,12 @@ const AddAnotationUI = ({
                 setChecklistData({});
                 setChecklistEmbeded({});
               }}
-              secondaryAlt>
+              secondaryAlt
+            >
               <span
                 style={{ marginRight: "0.5rem" }}
-                class="material-symbols-outlined unfollow color-inherit">
+                class="material-symbols-outlined unfollow color-inherit"
+              >
                 close
               </span>
               <span className="color-inherit">Cancel</span>
@@ -1888,7 +1941,8 @@ const AddAnotationUI = ({
         {isSomethingEmbededChecked && !isSomethingChecked && (
           <div
             style={{ justifyContent: "space-between", margin: "0.5rem 0" }}
-            className="align-center">
+            className="align-center"
+          >
             <Button
               onClick={() => {
                 const values = Object.keys(checkListEmbeded).map(
@@ -1897,10 +1951,12 @@ const AddAnotationUI = ({
                 onDisembed(values, true);
               }}
               secondaryAlt
-              color="#C20104">
+              color="#C20104"
+            >
               <span
                 style={{ marginRight: "0.5rem" }}
-                class="material-symbols-outlined unfollow color-inherit">
+                class="material-symbols-outlined unfollow color-inherit"
+              >
                 delete_forever
               </span>
               <span className="color-inherit">Delete</span>
@@ -1914,10 +1970,12 @@ const AddAnotationUI = ({
                   onDisembed(values);
                 }}
                 secondaryAlt
-                color="#3B82F6">
+                color="#3B82F6"
+              >
                 <span
                   style={{ marginRight: "0.5rem" }}
-                  class="material-symbols-outlined unfollow color-inherit">
+                  class="material-symbols-outlined unfollow color-inherit"
+                >
                   link_off
                 </span>
                 <span className="color-inherit">Remove</span>
@@ -1927,10 +1985,12 @@ const AddAnotationUI = ({
               onClick={() => {
                 setChecklistEmbeded({});
               }}
-              secondaryAlt>
+              secondaryAlt
+            >
               <span
                 style={{ marginRight: "0.5rem" }}
-                class="material-symbols-outlined unfollow color-inherit">
+                class="material-symbols-outlined unfollow color-inherit"
+              >
                 close
               </span>
               <span className="color-inherit">Cancel</span>
@@ -1940,7 +2000,8 @@ const AddAnotationUI = ({
         {dataFetching && (
           <div
             className="align-center"
-            style={{ gap: "1rem", margin: "0.5rem 0" }}>
+            style={{ gap: "1rem", margin: "0.5rem 0" }}
+          >
             <LoaderSecondary />
             <p>Fetching Annotation Data</p>
           </div>
@@ -2122,7 +2183,8 @@ const AddAnotationUI = ({
                   onReset();
                 }
               }}
-              secondaryAlt>
+              secondaryAlt
+            >
               Close
             </Button>
           </div>
