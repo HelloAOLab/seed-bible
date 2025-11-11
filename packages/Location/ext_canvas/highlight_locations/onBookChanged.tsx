@@ -12,7 +12,7 @@ const makeLocationOptions = ({ location }) => {
     icon: (
       <span class="material-symbols-outlined">location_on</span>
     ),
-    title: `Locate ${location}`,
+    title: `${location}`,
     onClick: async () => {
       if (!globalThis.activeCanvasId) {
         globalThis.AddFloatingApp({
