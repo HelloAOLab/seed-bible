@@ -1,4 +1,4 @@
-const { useState, useEffect } = os.appHooks;
+const { useState, useEffect, useMemo } = os.appHooks;
 import { MenuIcon, ApologistIcon } from "app.components.icons";
 
 export function VerseToolbar({ clickedVersesContext, clickedVerses, setClickedVerses, toggleVerseHighlight, book, chapter, onColorSelect, highlighted, onClose }) {
@@ -201,7 +201,10 @@ export function VerseToolbar({ clickedVersesContext, clickedVerses, setClickedVe
         handleColorClick(selectedColor);
         setShowColorPicker(false);
     };
-    const menuOptions = getMenuActions(clickedVersesContext) || []
+
+    const menuOptions = useMemo(() => {
+        return getMenuActions(clickedVersesContext) || []
+    }, [clickedVersesContext])
     return (
         <div className="verse-toolbar" style={containerStyle}>
             <style>
@@ -413,7 +416,7 @@ export function VerseToolbar({ clickedVersesContext, clickedVerses, setClickedVe
 }
 
 function getMenuActions(that) {
-    const {SharePopup} = thisBot.Chips();
+    const { SharePopup } = thisBot.Chips();
     const MenuOptions = {
         type: "normal",
         items: [
@@ -465,6 +468,40 @@ function getMenuActions(that) {
                 });
             }
         });
+    }
+
+    const locationOptions = {
+        type: "normal",
+        items: []
+    }
+
+    if (that.verseNumber) {
+        for (let verseNumber of that.verseNumber) {
+            if (globalThis?.VerseContextMenuOptions[`${that.book}-${verseNumber}`]) {
+                const itemsHolder = globalThis.VerseContextMenuOptions[`${that.book}-${verseNumber}`].map(el => {
+                    return {
+                        ...el,
+                        onClick: (items) => {
+                            if (el.onClick) el.onClick(items);
+                            SetInHold({});
+                        },
+                    };
+                })
+                locationOptions.items.push(...itemsHolder)
+            }
+        }
+    }
+
+    if (locationOptions.items.length > 0) {
+        MenuOptions.items.push({
+            icon: (
+                <span class="material-symbols-outlined">location_on</span>
+            ),
+            title: `Locations`,
+            onClick: async () => {
+                openPopupSettings(locationOptions);
+            },
+        })
     }
 
     // Add extra contextual items
