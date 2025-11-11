@@ -1153,8 +1153,9 @@ const AddAnotationUI = ({
     const listFinal = list.filter(
       (ele) =>{
         const verse = ele.additionalInfo.verse;
+        if(trackVerse[verse]) return false;
         trackVerse[verse] = true;
-        return (ele.type === "verse" || ele.type === "verse-range" || ele.type === "verse-grouped" || !trackVerse[verse] ) 
+        return (ele.type === "verse" || ele.type === "verse-range" || ele.type === "verse-grouped") 
       }
     ).sort((a,b)=>a.additionalInfo.verse > b.additionalInfo.verse);
 
@@ -1747,7 +1748,7 @@ const AddAnotationUI = ({
               >
                 auto_awesome_motion
               </span>
-              <p>Advance UI</p>
+              <p>Advanced UI</p>
               <span
                 style={{ color: "white" }}
                 class="material-symbols-outlined"

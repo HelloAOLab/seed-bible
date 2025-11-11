@@ -1371,7 +1371,13 @@ const CreatePlaylistUI = ({
               <div
                 className="publish-setting"
                 onClick={(e) => {
-                  if (!isloggedIN) return;
+                  if (!isloggedIN) {
+                    ShowNotification({
+                      message: `Please login to use different features.`,
+                      severity: "error",
+                    });
+                  return;
+                }
                   const rect = e.currentTarget.getBoundingClientRect();
 
                   const x = rect.left; // X position where the element starts (from left of screen)
