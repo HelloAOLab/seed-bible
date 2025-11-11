@@ -4,6 +4,7 @@ import {
 } from "scriptureMap2D.main.Tooltip";
 import { useScriptureMap2DContext } from "scriptureMap2D.main.ScriptureMap2DContext";
 import { useTimeContext } from "scriptureMap2D.main.TimeContext";
+import { getUserReadingHistorySummary } from "db.annotations.library";
 
 const { useState, useCallback, useMemo, useEffect, useRef } = os.appHooks;
 const { memo } = os.appCompat;
@@ -121,6 +122,24 @@ export const ReadingHistoryTimeline = () => {
 
     return { now, startOfWeek, startOfWeekAYearAgo, weeksCount };
   }, []);
+
+  useEffect(() => {
+    const nowInSeconds = Math.floor(Date.now() / 1000);
+    const startOfWeekAYearAgoSeconds = Math.floor(
+      startOfWeekAYearAgo.getTime() / 1000
+    );
+    console.log("[Debug] ReadingHistoryTimeline useEffect", {
+      nowInSeconds,
+      startOfWeekAYearAgoSeconds,
+    });
+    getUserReadingHistorySummary(startOfWeekAYearAgoSeconds, nowInSeconds)
+      .then((res) => {
+        console.log("[Debug] User Reading History Summary:", res);
+      })
+      .catch((err) => {
+        console.error("[Debug] Fetching User Reading History Summary:", err);
+      });
+  }, [tick]);
 
   const dayRangesMap = useMemo(() => {
     const map = new Map();

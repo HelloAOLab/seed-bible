@@ -24,8 +24,6 @@ export const TestamentContent = ({ hidden }) => {
   }, []);
 
   const filteredSections = useMemo(() => {
-    console.log(`[Debug] TestamentContent filteredSections useMemo`);
-
     if (!readingHistoryRange) return reversedSections;
 
     const filteredSections = [];

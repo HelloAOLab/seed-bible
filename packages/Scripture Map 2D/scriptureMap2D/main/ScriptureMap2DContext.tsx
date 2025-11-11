@@ -478,10 +478,6 @@ export const ScriptureMap2DProvider = ({
     }, [readingHistory, readingHistoryUsersFilters]);
 
   const booksWithReadingHistory = useMemo(() => {
-    console.log(
-      `[Debug] ScriptureMap2DContext booksWithReadingHistory useMemo`
-    );
-
     const booksSet = new Set();
     const lastTimePeriod =
       BibleVizUtils.Data.masks.historyTimePeriodsInfo[
