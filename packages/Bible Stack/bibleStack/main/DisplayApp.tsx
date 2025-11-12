@@ -6,7 +6,7 @@ if (thisBot.vars.appId) {
 
   const App = await thisBot.App();
   const id = globalThis.AddFloatingApp({
-    App,
+    App: <App />,
     title: "Stack",
     position: { x: 200, y: 150 },
     size: { width: 350, height: 200 },
