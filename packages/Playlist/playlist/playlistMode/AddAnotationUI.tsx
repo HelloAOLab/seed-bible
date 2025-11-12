@@ -27,6 +27,9 @@ const AudioPlayer = await thisBot.AudioPlayer();
 const RenderHTMLContent = await thisBot.RenderHTMLContent();
 const TogglePlaylistHeight = await thisBot.TogglePlaylistHeight();
 
+const DEV_ENV =
+  configBot.tags.pattern === "SeedBibleDev" || !configBot.tags.pattern;
+
 const AnnotationInnerDiv = ({
   data,
   onRemoveTag,
@@ -1600,7 +1603,7 @@ const AddAnotationUI = ({
                 </p>
               </Tooltip>
             </div>
-            <div
+            {DEV_ENV && <div
               className="more-menu-items"
               onClick={() => {
                 loseProgressAction.current = () => {
@@ -1662,7 +1665,7 @@ const AddAnotationUI = ({
                   </span>
                 </p>
               </Tooltip>
-            </div>
+            </div>}
           </div>
         </>
       )}
