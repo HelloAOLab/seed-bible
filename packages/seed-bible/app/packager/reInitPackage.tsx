@@ -23,6 +23,7 @@ async function waitForGlobals(required = [], delay = 250) {
 
 await waitForGlobals([
     'AddTool',
+    "AppStartedSuccessfully",
     'SetElement',
     'ReplaceApplication',
     'AddApplication',
