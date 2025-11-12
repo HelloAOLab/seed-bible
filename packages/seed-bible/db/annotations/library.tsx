@@ -849,7 +849,12 @@ async function getYearlyReadingHistoryEvents(
   return events;
 }
 
-function* filter<T>(
+/**
+ * Filters the given iterable using the provided predicate function.
+ * @param iterable The iterable to filter.
+ * @param predicate The predicate function to use for filtering.
+ */
+export function* filter<T>(
   iterable: Iterable<T>,
   predicate: (item: T) => boolean
 ): Generator<T> {
@@ -860,7 +865,11 @@ function* filter<T>(
   }
 }
 
-function* flat<T>(iterables: Iterable<Iterable<T>>): Generator<T> {
+/**
+ * Flattens the given iterables into a single iterable.
+ * @param iterables The iterables to flatten.
+ */
+export function* flat<T>(iterables: Iterable<Iterable<T>>): Generator<T> {
   for (const iterable of iterables) {
     for (const item of iterable) {
       yield item;
