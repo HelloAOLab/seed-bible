@@ -3,7 +3,7 @@ const { useRef, useState, useLayoutEffect } = os.appHooks;
 
 thisBot.CloseFloatingApp();
 
-function VideoPlayerApp() {
+const VideoPlayerApp = () => {
   const videoRef = useRef(null);
   const seekRef = useRef(null);
   const [playing, setPlaying] = useState(true);
@@ -39,6 +39,7 @@ function VideoPlayerApp() {
   };
 
   const handleSeek = (e) => {
+    if(!videoRef?.current) return;
     const video = videoRef.current;
     const newTime = (e.target.value / 100) * video.duration;
     video.currentTime = newTime;
@@ -46,12 +47,14 @@ function VideoPlayerApp() {
   };
 
   const handleVolume = (e) => {
+    if(!videoRef.current) return;
     const newVol = e.target.value;
     videoRef.current.volume = newVol;
     setVolume(newVol);
   };
 
   const goFullscreen = () => {
+    if(!videoRef?.current) return;
     const video = videoRef.current;
     if (video.requestFullscreen) video.requestFullscreen();
   };
