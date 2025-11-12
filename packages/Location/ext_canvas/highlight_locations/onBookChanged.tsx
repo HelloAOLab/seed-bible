@@ -5,7 +5,9 @@ const locations = tags.locations;
 
 const locationsArr = [];
 
-const verseContextMenuOptions = {};
+const locationOptionsConfig = {
+
+};
 
 const makeLocationOptions = ({ location }) => {
   return {
@@ -73,22 +75,39 @@ for (let i = 0; i < that.content.length; i++) {
     for (let word of verseArray) {
       if (locations[word.replace(/[^a-zA-Z]/g, "").toLowerCase()]) {
         locationsArr.push(word.replace(/[^a-zA-Z]/g, "").toLowerCase());
-        if (verseContextMenuOptions[`${that.book}-${verse[j].verseNumber}`]) {
-          verseContextMenuOptions[`${that.book}-${verse[j].verseNumber}`] = [
-            ...verseContextMenuOptions[`${that.book}-${verse[j].verseNumber}`],
-            makeLocationOptions({location: word.replace(/[^a-zA-Z]/g, "")})
-          ]
+        if (locationOptionsConfig[`${that.book}-${verse[j].verseNumber}`]) {
+          locationOptionsConfig[`${that.book}-${verse[j].verseNumber}`].items.push(makeLocationOptions({ location: word.replace(/[^a-zA-Z]/g, "") }));
         } else {
-          verseContextMenuOptions[`${that.book}-${verse[j].verseNumber}`] = [
-            makeLocationOptions({location: word.replace(/[^a-zA-Z]/g, "")})
-          ]
+          locationOptionsConfig[`${that.book}-${verse[j].verseNumber}`] = {
+            icon: (<span class="material-symbols-outlined">location_on</span>),
+            title: "Locations",
+            items: [makeLocationOptions({ location: word.replace(/[^a-zA-Z]/g, "") })]
+          }
         }
       }
     }
   }
 }
 
-globalThis.VerseContextMenuOptions = verseContextMenuOptions;
+if(!globalThis?.VerseContextMenuOptions){
+  globalThis.VerseContextMenuOptions = {};
+}
+for (let key of Object.keys(locationOptionsConfig)) {
+  let options = [];
+  if (globalThis?.VerseContextMenuOptions?.[key]) {
+    options = [
+      ...globalThis.VerseContextMenuOptions[key],
+      locationOptionsConfig[key]
+    ]
+  } else {
+    options = [
+      locationOptionsConfig[key]
+    ]
+  }
+  const uniqueOptions = [...new Set(options)];
+  globalThis.VerseContextMenuOptions[key] = uniqueOptions;
+  console.log(globalThis.VerseContextMenuOptions[key], "globalThis.VerseContextMenuOptions[key]")
+}
 
 HighlightWords({
   words: [...locationsArr],

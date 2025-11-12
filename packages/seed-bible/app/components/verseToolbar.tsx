@@ -470,38 +470,52 @@ function getMenuActions(that) {
         });
     }
 
-    const locationOptions = {
-        type: "normal",
-        items: []
-    }
+    let verseContextMenuOptions = {}
 
     if (that.verseNumber) {
         for (let verseNumber of that.verseNumber) {
-            if (globalThis?.VerseContextMenuOptions[`${that.book}-${verseNumber}`]) {
-                const itemsHolder = globalThis.VerseContextMenuOptions[`${that.book}-${verseNumber}`].map(el => {
-                    return {
-                        ...el,
-                        onClick: (items) => {
-                            if (el.onClick) el.onClick(items);
-                            SetInHold({});
-                        },
-                    };
+            if (globalThis?.VerseContextMenuOptions?.[`${that.book}-${verseNumber}`]) {
+                globalThis.VerseContextMenuOptions[`${that.book}-${verseNumber}`].forEach(item => {
+                    if (verseContextMenuOptions[item.title]) {
+                        verseContextMenuOptions[item.title] = {
+                            ...verseContextMenuOptions[item.title],
+                            items: [
+                                ...verseContextMenuOptions[item.title].items,
+                                ...item.items
+                            ]
+                        }
+                    } else {
+                        verseContextMenuOptions[item.title] = {
+                            ...item
+                        }
+                    }
                 })
-                locationOptions.items.push(...itemsHolder)
             }
         }
     }
 
-    if (locationOptions.items.length > 0) {
+    for (let title of Object.keys(verseContextMenuOptions)) {
         MenuOptions.items.push({
-            icon: (
-                <span class="material-symbols-outlined">location_on</span>
-            ),
-            title: `Locations`,
-            onClick: async () => {
-                openPopupSettings(locationOptions);
+            ...verseContextMenuOptions[title],
+            onClick: () => {
+                console.log(verseContextMenuOptions[title].items, "item.items")
+                const subMenuItems = {
+                    type: "normal",
+                    items: []
+                }
+                const itemsHolder = verseContextMenuOptions[title].items.map(el => {
+                    return {
+                        ...el,
+                        onClick: () => {
+                            if (el.onClick) el.onClick();
+                            SetInHold({});
+                        },
+                    };
+                })
+                subMenuItems.items.push(...itemsHolder)
+                openPopupSettings(subMenuItems);
             },
-        })
+        });
     }
 
     // Add extra contextual items
