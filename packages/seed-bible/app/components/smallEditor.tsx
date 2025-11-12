@@ -777,7 +777,12 @@ export function MiniTextEditor({
 
     const alignDrop = (
       <div className="sre-drop">
-        <button className="sre-ib">
+        <button 
+          className="sre-ib"
+          onClick={(e) => {
+            e.preventDefault();
+          }}
+        >
           <span className="material-symbols-outlined">format_align_left</span>
         </button>
         <div className="sre-drop-menu">
