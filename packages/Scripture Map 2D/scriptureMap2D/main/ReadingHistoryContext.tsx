@@ -1,5 +1,9 @@
 import { useTimeContext } from "scriptureMap2D.main.TimeContext";
-import { getReadingHistorySummary } from "db.annotations.library";
+import {
+  getReadingHistoryEvents,
+  flat,
+  calculateReadingHistorySummary,
+} from "db.annotations.library";
 import { useScriptureMap2DContext } from "scriptureMap2D.main.ScriptureMap2DContext";
 
 const { createContext, useContext, useState, useMemo, useEffect } = os.appHooks;
@@ -7,9 +11,33 @@ const { createContext, useContext, useState, useMemo, useEffect } = os.appHooks;
 const ReadingHistoryContext = createContext();
 
 export const ReadingHistoryProvider = ({ children }) => {
-  const [usersAuthId, setUsersAuthId] = useState([]);
+  const { readingHistoryUsersFilters, readingHistoryRange } =
+    useScriptureMap2DContext();
+  const { tick } = useTimeContext();
 
-  const { now, startOfWeek, startOfWeekAYearAgo, weeksCount } = useMemo(() => {
+  const [myAuthBotId, setMyAuthBotId] = useState(null);
+  const [usersAuthId, setUsersAuthId] = useState([]);
+  const [readingHistorySummary, setReadingHistorySummary] = useState(null);
+
+  useEffect(() => {
+    os.requestAuthBotInBackground().then((authBot) => {
+      setMyAuthBotId(authBot.id);
+    });
+  }, []);
+
+  useEffect(() => {
+    setUsersAuthId([myAuthBotId]);
+  }, [myAuthBotId]);
+
+  const {
+    now,
+    startOfWeek,
+    startOfWeekAYearAgo,
+    weeksCount,
+    rangeStartSeconds,
+    rangeEndSeconds,
+  } = useMemo(() => {
+    let rangeStartSeconds, rangeEndSeconds;
     const now = new Date();
 
     const getStartOfWeek = (date) => {
@@ -30,31 +58,20 @@ export const ReadingHistoryProvider = ({ children }) => {
     const weeksCount =
       Math.floor((startOfWeek - startOfWeekAYearAgo) / MS_PER_WEEK) + 1;
 
-    return { now, startOfWeek, startOfWeekAYearAgo, weeksCount };
-  }, []);
+    if (readingHistoryRange) {
+      const { start, end } = readingHistoryRange;
+      rangeStartSeconds = Math.floor(start / 1000);
+      rangeEndSeconds = Math.floor(end / 1000);
+    }
 
-  const { readingHistoryUsersFilters, readingHistoryRange } =
-    useScriptureMap2DContext();
-  const { tick } = useTimeContext();
-  const { rangeStartSeconds, rangeEndSeconds } = useMemo(() => {
-    if (!readingHistoryRange) return {};
-    const { start, end } = readingHistoryRange;
     return {
-      rangeStartSeconds: Math.floor(start / 1000),
-      rangeEndSeconds: Math.floor(end / 1000),
+      now,
+      startOfWeek,
+      startOfWeekAYearAgo,
+      weeksCount,
+      rangeStartSeconds,
+      rangeEndSeconds,
     };
-  }, []);
-
-  const [readingHistorySummaries, setReadingHistorySummaries] = useState(null);
-
-  useEffect(() => {
-    const ids = [];
-    os.requestAuthBotInBackground().then((authBot) => {
-      if (authBot) {
-        ids.push(authBot.id);
-      }
-    });
-    setUsersAuthId(ids);
   }, []);
 
   useEffect(() => {
@@ -66,24 +83,22 @@ export const ReadingHistoryProvider = ({ children }) => {
     const nowInSeconds = Math.floor(Date.now() / 1000);
     const start = rangeStartSeconds ?? startOfWeekAYearAgoSeconds;
     const end = rangeEndSeconds ?? nowInSeconds;
-    getReadingHistorySummary(authBot.id, start, end);
 
-    Promise.all(
-      usersAuthId.map((authId) => {
-        return getReadingHistorySummary(authId, start, end);
-      })
-    ).then((summaries) => {
-      const filteredSummaries = summaries.filter(Boolean);
-      setReadingHistorySummaries(filteredSummaries);
+    const allEventPromises = usersAuthId.map((recordName) =>
+      getReadingHistoryEvents(recordName, start, end)
+    );
+    Promise.all(allEventPromises).then((allEvents) => {
+      const flattenedEvents = flat(allEvents);
+      const summary = calculateReadingHistorySummary(flattenedEvents);
+      setReadingHistorySummary(summary);
     });
   }, [tick, rangeStartSeconds, rangeEndSeconds, usersAuthId]);
 
   useEffect(() => {
-    console.log(
-      `[Debug] ReadingHistoryContext readingHistorySummaries updated`,
-      { readingHistorySummaries }
-    );
-  }, [readingHistorySummaries]);
+    console.log(`[Debug] ReadingHistoryContext readingHistorySummary updated`, {
+      readingHistorySummary,
+    });
+  }, [readingHistorySummary]);
 
   return (
     <ReadingHistoryContext.Provider value={{}}>
