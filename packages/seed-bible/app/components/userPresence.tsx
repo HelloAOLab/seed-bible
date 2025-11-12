@@ -274,6 +274,7 @@ export function UserPresence() {
           const { hostId, tab } = that.that || {};
 
           if (!hostId || hostId === selfId) return;
+          // if(!tags.onlineTab)
           addTab({ ...tab, sharedTab: true, hostId: hostId })
           masks['sharedTab'] = tab.id
           // setTagMask(thisBot, 'onlineTab', tab, 'tempShared')
@@ -318,8 +319,9 @@ export function UserPresence() {
           }
         } else if (name === "sessionEnd") {
           os.log(tabs)
+          removeTab(tags.onlineTab.id)
           tags.onlineTab = null
-          removeTab(masks['sharedTab'])
+
           const { hostId } = that.that || {};
           if (!hostId) return;
           setNotifications([])
@@ -438,6 +440,7 @@ export function UserPresence() {
     // os.log(globalThis?.CurrentTab.id, 'globalThis?.CurrentTab.id')
     // updateActiveTab({ sharedTab: true, hostId: selfId })
     const { color } = getOrSetVisualInTags(configBot.id)
+    if(!tags.onlineTab)
     globalThis.CurrentTab = addTab({
       id: uuid(),
       taken: false,
@@ -544,7 +547,7 @@ export function UserPresence() {
     const cloned = JSON.parse(JSON.stringify(tags));
     cloned.sessions = next;
     tags.sessions = cloned.sessions;
-    removeTab(masks['sharedTab'])
+    removeTab(tags.onlineTab.id)
     // os.emit?.("sessionsUpdated", next);
     setSessions(next);
     setIsHost(false);

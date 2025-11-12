@@ -15,6 +15,8 @@ import { useTabsContext } from 'app.hooks.tabs';
 import { useSideBarContext } from 'app.hooks.sideBar'
 import { PackageManager } from 'app.packager.main'
 import { DragDropOverlay } from 'app.main.dragOverlay'
+        globalThis.AppStartedSuccessfully = false;
+
 //this for defining nav functions globaly
 globalThis.Open = () => { }
 globalThis.OpenNextChapter = () => { }
@@ -177,6 +179,7 @@ const Main = () => {
                 // console.log('testing update now working', tabs[0])
                 globalThis.UpdateTab(tabs[0])
             }
+            globalThis.AppStartedSuccessfully = true;
         }, 10)
         globalThis.SpaceScreens[activeSpace] = savedScreens;
 

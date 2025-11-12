@@ -1196,6 +1196,7 @@ function ThePage({
             verses: newClicked,
             book: data?.book,
             chapter: data?.chapter,
+            verseNumber: newClicked,
             reference: `${data?.book} ${data?.chapter}:${newClicked.join(",")}`,
             text: remainingVerseObjects.map(o => o.text).join(" "),
           });

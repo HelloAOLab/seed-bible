@@ -1,4 +1,4 @@
-const { useState, useEffect } = os.appHooks;
+const { useState, useEffect, useMemo } = os.appHooks;
 import { MenuIcon, ApologistIcon } from "app.components.icons";
 
 export function VerseToolbar({ clickedVersesContext, clickedVerses, setClickedVerses, toggleVerseHighlight, book, chapter, onColorSelect, highlighted, onClose }) {
@@ -201,7 +201,10 @@ export function VerseToolbar({ clickedVersesContext, clickedVerses, setClickedVe
         handleColorClick(selectedColor);
         setShowColorPicker(false);
     };
-    const menuOptions = getMenuActions(clickedVersesContext) || []
+
+    const menuOptions = useMemo(() => {
+        return getMenuActions(clickedVersesContext) || []
+    }, [clickedVersesContext])
     return (
         <div className="verse-toolbar" style={containerStyle}>
             <style>
@@ -413,7 +416,7 @@ export function VerseToolbar({ clickedVersesContext, clickedVerses, setClickedVe
 }
 
 function getMenuActions(that) {
-    const {SharePopup} = thisBot.Chips();
+    const { SharePopup } = thisBot.Chips();
     const MenuOptions = {
         type: "normal",
         items: [
@@ -464,6 +467,54 @@ function getMenuActions(that) {
                     });
                 });
             }
+        });
+    }
+
+    let verseContextMenuOptions = {}
+
+    if (that.verseNumber) {
+        for (let verseNumber of that.verseNumber) {
+            if (globalThis?.VerseContextMenuOptions?.[`${that.book}-${verseNumber}`]) {
+                globalThis.VerseContextMenuOptions[`${that.book}-${verseNumber}`].forEach(item => {
+                    if (verseContextMenuOptions[item.title]) {
+                        verseContextMenuOptions[item.title] = {
+                            ...verseContextMenuOptions[item.title],
+                            items: [
+                                ...verseContextMenuOptions[item.title].items,
+                                ...item.items
+                            ]
+                        }
+                    } else {
+                        verseContextMenuOptions[item.title] = {
+                            ...item
+                        }
+                    }
+                })
+            }
+        }
+    }
+
+    for (let title of Object.keys(verseContextMenuOptions)) {
+        MenuOptions.items.push({
+            ...verseContextMenuOptions[title],
+            onClick: () => {
+                console.log(verseContextMenuOptions[title].items, "item.items")
+                const subMenuItems = {
+                    type: "normal",
+                    items: []
+                }
+                const itemsHolder = verseContextMenuOptions[title].items.map(el => {
+                    return {
+                        ...el,
+                        onClick: () => {
+                            if (el.onClick) el.onClick();
+                            SetInHold({});
+                        },
+                    };
+                })
+                subMenuItems.items.push(...itemsHolder)
+                openPopupSettings(subMenuItems);
+            },
         });
     }
 
