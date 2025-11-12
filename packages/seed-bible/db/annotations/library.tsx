@@ -761,9 +761,24 @@ export async function getReadingHistorySummary(
   startTime: number,
   endTime: number
 ): Promise<ReadingHistorySummary> {
+  const events = await getReadingHistoryEvents(recordName, startTime, endTime);
+  return calculateReadingHistorySummary(events);
+}
+
+/**
+ * Gets the reading history events for the given record name and time range.
+ * @param recordName The name of the record that the reading history is stored in.
+ * @param startTime The start time in unix seconds to filter the reading history events.
+ * @param endTime The end time in unix seconds to filter the reading history events.
+ * @returns A promise that resolves to an iterable of reading events.
+ */
+export async function getReadingHistoryEvents(
+  recordName: string,
+  startTime: number,
+  endTime: number
+): Promise<Iterable<ReadingEvent>> {
   const startYear = new Date(startTime * 1000).getUTCFullYear();
   const endYear = new Date(endTime * 1000).getUTCFullYear();
-
   const allEventPromises: Promise<Iterable<ReadingEvent>>[] = [];
   for (let y = startYear; y <= endYear; y++) {
     const events = getYearlyReadingHistoryEvents(
@@ -776,7 +791,7 @@ export async function getReadingHistorySummary(
   }
 
   const allEvents = await Promise.all(allEventPromises);
-  return calculateReadingHistorySummary(flat(allEvents));
+  return flat(allEvents);
 }
 
 /**
