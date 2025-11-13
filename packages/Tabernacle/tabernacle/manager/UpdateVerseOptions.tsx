@@ -46,12 +46,12 @@ await os.sleep(200);
 
 if (content) {
   const optionsConfig = {};
+  const item = {
+    icon: <span class="material-symbols-outlined">camping</span>,
+    title: `${thisBot.vars.appId ? "Hide" : "Show"} Tabernacle`,
+    onClick: thisBot.DisplayApp,
+  };
   for (const verseNumber of content) {
-    const item = {
-      icon: <span class="material-symbols-outlined">camping</span>,
-      title: `${thisBot.vars.appId ? "Hide" : "Show"} Tabernacle`,
-      onClick: thisBot.DisplayApp,
-    };
     const key = `${book}-${verseNumber}`;
     optionsConfig[key] = {
       icon: <span class="material-symbols-outlined">camping</span>,
