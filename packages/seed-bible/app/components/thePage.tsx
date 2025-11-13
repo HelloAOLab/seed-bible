@@ -61,21 +61,6 @@ function getUserSessionInfo(userId) {
   }
 }
 
-function generateQuery(params) {
-  let queryArray = [];
-  for (let key in params) {
-    if (params.hasOwnProperty(key)) {
-      queryArray.push(encodeURIComponent(key) + '=' + encodeURIComponent(params[key]));
-    }
-  }
-  return queryArray.join('&');
-}
-
-function attachQueryToURL(url, params) {
-  const queryString = generateQuery(params);
-  return url + (url.includes('?') ? '&' : '?') + queryString;
-}
-
 function ThePage({
   tab: T,
   setPanalApp,
@@ -127,16 +112,14 @@ function ThePage({
 
   const loadTranslationFromUrl = async () => {
     console.log(configBot.tags.translationId, "translation id")
-    let translationId = configBot.tags.translationId || configBot.tags.translation;
+    let translationId = configBot.tags.translationId || configBot.tags.translation || tab.data.translation;
     let baseUrl = "https://bible.helloao.org";
     let bookId = "GEN";
-    let bookTranslationId = "BSB";
+    let bookTranslationId = tab.data.translation;
     let firstBookData;
     let firstChapterApiLink;
     let books = [];
     if (translationId) {
-      os.toast(`Loading ${translationId} translation`)
-
       let available_translations_req = await web.get("https://bible.helloao.org/api/available_translations.json");
       let allTranslations = [];
       let translations = {};
@@ -180,37 +163,6 @@ function ThePage({
           bookId = book0.id;
           bookTranslationId = trValue.value.id;
           firstChapterApiLink = book0.firstChapterApiLink;
-        } else if (!urlId) {
-          let url = `https://aolab-bible-api.netlify.app/api/translations/getTranslation`;
-          let params = {
-            uid: translationId
-          }
-          let queryUrl = attachQueryToURL(url, params);
-          let result = await web.get(queryUrl);
-          if (result.status === 200 && result.data.data) {
-            let translation = JSON.parse(result.data.data.translation);
-            console.log("1 trans")
-            let englishName = translation.languageEnglishName.toLowerCase();
-            let shortName = translation.shortName.toLowerCase();
-
-            let bookData = await web.get(translation.listOfBooksApiLink);
-
-            books = bookData.data.books;
-            let book0 = bookData.data.books[0];
-            firstBookData = book0;
-            setTagMask(thisBot, "selectedTranslation", translation, "local");
-            setTagMask(thisBot, "booksData", bookData.data.books, "local");
-            if (!defaultTranslations.includes(englishName)) {
-              defaultTranslations.push(englishName)
-              translations[englishName] = {
-                [shortName]: translation
-              }
-            }
-            baseUrl = translation.origin;
-            bookId = book0.id;
-            bookTranslationId = translation.id;
-            firstChapterApiLink = book0.firstChapterApiLink;
-          }
         } else {
           let result = await web.get(translationId);
           if (result.status === 200) {
@@ -234,10 +186,8 @@ function ThePage({
                 shortName: trans.shortName
               }
             })
-            console.log(newTranslations, "newTranslations")
             allTranslations = [...allTranslations, ...newTranslations];
             for (let translation of newTranslations) {
-              console.log("2 trans")
               let englishName = translation.languageEnglishName.toLowerCase();
               if (!defaultTranslations.includes(englishName)) {
                 defaultTranslations.push(englishName);
@@ -250,8 +200,6 @@ function ThePage({
               origin: url.origin,
               shortName: defaultTranslation.shortName
             }
-            console.log(translation, "translation")
-            console.log("3 trans")
             let englishName = translation.languageEnglishName.toLowerCase();
             let shortName = translation.shortName.toLowerCase();
 
@@ -275,10 +223,6 @@ function ThePage({
           }
         }
         allTranslations.forEach(translation => {
-          console.log("4 trans", translation)
-          if (!translation?.languageEnglishName?.toLowerCase()) {
-            console.log(translation, "culprit")
-          }
           let englishName = translation?.languageEnglishName?.toLowerCase() || translation?.englishName?.toLowerCase();
           let shortName = translation.shortName.toLowerCase();
           if (translations[englishName]) {
@@ -328,14 +272,13 @@ function ThePage({
     const { data, loading, error } = bible.getState();
     console.log(data, tab, "the data loaded");
 
-    // setData(data);
-
     globalThis.refreshScrollers && globalThis.refreshScrollers();
     let { firstBookData, bookTranslationId, baseUrl, books } = await loadTranslationFromUrl();
-    if (firstBookData && bookTranslationId && baseUrl) {
-      await bible.changeTranslation(bookTranslationId, firstBookData, baseUrl)
-    }
+
     if (!configBot.tags.defaultChecked) {
+      if (firstBookData && bookTranslationId && baseUrl) {
+        await bible.changeTranslation(bookTranslationId, firstBookData, baseUrl)
+      }
       if (books) {
         if (configBot.tags?.book && books && books?.length > 0) {
           let bookData;
@@ -380,7 +323,17 @@ function ThePage({
         }
       }
       configBot.tags.defaultChecked = true;
+    } else {
+      if (masks?.allTranslations) {
+        for (let translation of masks.allTranslations) {
+          if (translation.id === tab.data.translation) {
+            setTagMask(thisBot, "selectedTranslation", translation, "local");
+            break
+          }
+        }
+      }
     }
+
     setData(bible.data);
     whisper(getBot('system', 'introduction.searchBar'), 'initialize')
   }
