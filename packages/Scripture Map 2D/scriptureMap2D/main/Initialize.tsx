@@ -12,4 +12,4 @@ if (typeof ScriptureMap2DManager === "undefined") {
 }
 
 thisBot.StartReadingHistoryUpdate();
-thisBot.CreateFakeReadingHistoryData();
+// thisBot.CreateFakeReadingHistoryData();

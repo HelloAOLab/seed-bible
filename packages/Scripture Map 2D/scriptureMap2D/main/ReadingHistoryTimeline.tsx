@@ -5,6 +5,7 @@ import {
 import { useScriptureMap2DContext } from "scriptureMap2D.main.ScriptureMap2DContext";
 import { useTimeContext } from "scriptureMap2D.main.TimeContext";
 import { getUserReadingHistorySummary } from "db.annotations.library";
+import { useReadingHistoryContext } from "scriptureMap2D.main.ReadingHistoryContext";
 
 const { useState, useCallback, useMemo, useEffect, useRef } = os.appHooks;
 const { memo } = os.appCompat;
@@ -86,11 +87,11 @@ const Item = memo(
 
 export const ReadingHistoryTimeline = () => {
   const {
-    filteredReadingHistory,
     readingHistoryRange,
     handleReadingHistoryRangeSelectorClick,
-    filteredReadingHistoryCount,
-  } = useScriptureMap2DContext();
+    startOfWeekAYearAgo,
+    weeksCount,
+  } = useReadingHistoryContext();
   const { tick } = useTimeContext();
 
   const prevItemsColorMapRef = useRef(new Map());
@@ -98,48 +99,6 @@ export const ReadingHistoryTimeline = () => {
   const handleItemClick = useCallback((range) => {
     handleReadingHistoryRangeSelectorClick(range);
   }, []);
-
-  const { now, startOfWeek, startOfWeekAYearAgo, weeksCount } = useMemo(() => {
-    const now = new Date();
-
-    const getStartOfWeek = (date) => {
-      const tempDate = new Date(date);
-      tempDate.setDate(tempDate.getDate() - tempDate.getDay());
-      tempDate.setHours(0, 0, 0, 0);
-      return tempDate;
-    };
-
-    const startOfWeek = getStartOfWeek(now);
-
-    const aYearAgo = new Date(now);
-    aYearAgo.setFullYear(now.getFullYear() - 1);
-
-    const startOfWeekAYearAgo = getStartOfWeek(aYearAgo);
-
-    const MS_PER_WEEK = 1000 * 60 * 60 * 24 * 7;
-    const weeksCount =
-      Math.floor((startOfWeek - startOfWeekAYearAgo) / MS_PER_WEEK) + 1;
-
-    return { now, startOfWeek, startOfWeekAYearAgo, weeksCount };
-  }, []);
-
-  useEffect(() => {
-    const nowInSeconds = Math.floor(Date.now() / 1000);
-    const startOfWeekAYearAgoSeconds = Math.floor(
-      startOfWeekAYearAgo.getTime() / 1000
-    );
-    console.log("[Debug] ReadingHistoryTimeline useEffect", {
-      nowInSeconds,
-      startOfWeekAYearAgoSeconds,
-    });
-    getUserReadingHistorySummary(startOfWeekAYearAgoSeconds, nowInSeconds)
-      .then((res) => {
-        console.log("[Debug] User Reading History Summary:", res);
-      })
-      .catch((err) => {
-        console.error("[Debug] Fetching User Reading History Summary:", err);
-      });
-  }, [tick]);
 
   const dayRangesMap = useMemo(() => {
     const map = new Map();
@@ -156,7 +115,7 @@ export const ReadingHistoryTimeline = () => {
   }, [weeksCount, startOfWeekAYearAgo]);
 
   const computeEntriesMap = useCallback(
-    (currFilteredReadingHistory, currDayRangesMap) => {
+    (currReadingHistorySummary, currDayRangesMap) => {
       const dayKeys = Array.from(currDayRangesMap.keys());
       const dayRanges = Array.from(currDayRangesMap.values());
       const dailyEntriesBreakdownMap = new Map(
@@ -177,8 +136,8 @@ export const ReadingHistoryTimeline = () => {
       const DAY_MS = 1000 * 60 * 60 * 24;
       const firstDayStart = dayRanges[0].start;
 
-      for (const userId in currFilteredReadingHistory) {
-        const userEntries = currFilteredReadingHistory[userId];
+      for (const userId in currReadingHistorySummary) {
+        const userEntries = currReadingHistorySummary[userId];
         for (const bookId in userEntries) {
           const bookEntries = userEntries[bookId];
           for (const chapter in bookEntries) {
