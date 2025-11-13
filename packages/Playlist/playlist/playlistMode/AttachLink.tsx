@@ -466,12 +466,12 @@ function SubComponent({
 }
 
 const tags = [
-  "SCRIPTURE",
-  "LINK",
   "TEXT",
   "RECORDING",
+  "LINK",
   "FILE_UPLOAD",
   "PLAYLIST",
+  "SCRIPTURE",
   "DATE",
   "TAG",
 ];
@@ -532,7 +532,7 @@ const AttachLink = ({
       ? sSelectedType
       : globalThis.isScreenRecording
         ? "RECORDING"
-        : "SCRIPTURE"
+        : tags[0]
   );
   const [textType, setTextType] = useState("heading");
   const [mediaType, setType] = useState(sMediaType ? sMediaType : "youtube");
