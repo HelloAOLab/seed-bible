@@ -95,7 +95,7 @@ export function MouseMoveProvider({ children }) {
     };
 
     let hasMainCanvas = false;
-    // try {
+    try {
     const appString = preactRenderToString(appConfig.App);
     os.log(appString, "appString");
     console.log(appString);
@@ -104,10 +104,10 @@ export function MouseMoveProvider({ children }) {
       appConfig.App?.props?.className?.includes("mainCanvas") ||
       (appConfig.App?.type === "div" &&
         appConfig.App?.props?.className?.includes("mainCanvas"));
-    // } catch (e) {
-    //   os.log("Error checking for mainCanvas in floating app:", e);
-    //   // Silent fail for string check
-    // }
+    } catch (e) {
+      os.log("Error checking for mainCanvas in floating app:", e);
+      // Silent fail for string check
+    }
 
     // Remove previous apps with mainCanvas if this new app has mainCanvas
     if (hasMainCanvas) {
@@ -390,6 +390,7 @@ export function MouseMoveProvider({ children }) {
       }
       await os.unregisterApp("exitButton");
       await os.registerApp("exitButton", thisBot);
+      globalThis?.setOpenSidebar(false);
       os.compileApp(
         "exitButton",
         <button

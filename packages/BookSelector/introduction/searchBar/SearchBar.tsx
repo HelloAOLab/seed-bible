@@ -64,6 +64,7 @@ const SearchBar = () => {
 
     const [booksData, setBooksData] = useState(thePage.masks?.booksData || tags.booksData);
     const [selectedTestament, setSelectedTestament] = useState(2);
+    const [apocryphaAvailable, setApocryphaAvailable] = useState(false);
     const [openSearchBar, setOpenSearchBar] = useState(false);
     const [searchBarFocused, setSearchBarFocused] = useState(false);
 
@@ -120,6 +121,26 @@ const SearchBar = () => {
             return true;
         }
         return false;
+    }, []);
+
+    const sortBooksByTestament = useCallback((books) => {
+        const OTBooks = [];
+        const NTBooks = [];
+        const ApocryphaBooks = [];
+        for (let i = 0; i < books.length; i++) {
+            if (books[i].order <= 39) {
+                OTBooks.push(books[i]);
+            } else if (books[i].order > 39 && books[i].order <= 66) {
+                NTBooks.push(books[i]);
+            } else {
+                ApocryphaBooks.push(books[i]);
+            }
+        }
+        return {
+            OTBooks,
+            NTBooks,
+            ApocryphaBooks
+        };
     }, [])
 
     const selectedTestamentData = useMemo(() => {
@@ -135,28 +156,40 @@ const SearchBar = () => {
                         sortedBook.push(booksData[i])
                     }
                 }
-                return [...sortedBook]
+                const { OTBooks, NTBooks, ApocryphaBooks } = sortBooksByTestament(sortedBook);
+                if(ApocryphaBooks.length > 0){
+                    setApocryphaAvailable(true);
+                }else{
+                    setApocryphaAvailable(false);
+                }
+                if (selectedTestament === 0) {
+                    return OTBooks
+                } else if (selectedTestament === 1) {
+                    return NTBooks
+                } else if (selectedTestament === 2) {
+                    return [...OTBooks, ...NTBooks]
+                }else{
+                    return ApocryphaBooks
+                }
             } else {
                 return []
             }
         } else {
             if (booksData) {
-                if (booksData.length > 39) {
-                    if (selectedTestament === 0) {
-                        return [...booksData.slice(0, 39)]
-                    } else if (selectedTestament === 1) {
-                        return [...booksData.slice(39)]
-                    } else {
-                        return [...booksData]
-                    }
-                } else {
-                    if (selectedTestament === 0) {
-                        return [...booksData.slice(0, booksData.length)]
-                    } else if (selectedTestament === 1) {
-                        return [...booksData.slice(booksData.length)]
-                    } else {
-                        return [...booksData]
-                    }
+                const { OTBooks, NTBooks, ApocryphaBooks } = sortBooksByTestament(booksData);
+                if(ApocryphaBooks.length > 0){
+                    setApocryphaAvailable(true);
+                }else{
+                    setApocryphaAvailable(false);
+                }
+                if (selectedTestament === 0) {
+                    return OTBooks
+                } else if (selectedTestament === 1) {
+                    return NTBooks
+                } else if (selectedTestament === 2) {
+                    return [...OTBooks, ...NTBooks]
+                }else{
+                    return ApocryphaBooks
                 }
             } else {
                 return []
@@ -582,6 +615,10 @@ const SearchBar = () => {
         }
     }, [selectedTestament, setQuery, query, openSearchBar, setOpenSearchBar, searchBarFocused, handleEnter])
 
+    useEffect(() => {
+        setQuery("");
+    }, [selectingTranslation])
+
     // Use State of Element
     const [showCheck, setShowCheck] = useState(globalThis.IS_PLAYLIST_ACTIVE || globalThis.IsPlaylistPlaying);
     const [dontopn, setDontOpen] = useState(false);
@@ -633,6 +670,11 @@ const SearchBar = () => {
                             <option value={1} className="dropdown-option">
                                 New Testament
                             </option>
+                            {
+                                apocryphaAvailable && <option value={3} className="dropdown-option">
+                                    Apocrypha
+                                </option>
+                            }
                         </select>
                     </div>}
                     {selectingTranslation && <div className="dropdown">
@@ -695,7 +737,7 @@ const SearchBar = () => {
                 </div>
             }
             {
-                booksData && selectedTestamentData && !selectingTranslation && selectedTranslation && <SideBarBooks onlineUsers={onlineUsers} showCheck={!selectingTranslation && showCheck} dontOpen={dontOpen} selectedTranslation={selectedTranslation} selectedTestament={selectedTestament} booksData={selectedTestamentData} focusOnBook={focusOnBook} />
+                booksData && selectedTestamentData && !selectingTranslation && selectedTranslation && <SideBarBooks onlineUsers={onlineUsers} showCheck={!selectingTranslation && showCheck} dontOpen={dontOpen} selectedTranslation={selectedTranslation} selectedTestament={selectedTestament} booksData={selectedTestamentData} focusOnBook={focusOnBook} sortBooksByTestament={sortBooksByTestament} />
             }
             {
                 selectingTranslation && <div class="sidebar-translation-options" style={{ paddingBottom: showCustomTranslation ? "200px" : "36px" }}>
@@ -820,7 +862,6 @@ const NewTransOptions = ({ translationName, translations, selectedTranslation, s
                                             let book0 = e.data.books[0];
                                             ChangeTranslation(value.id, book0, value.origin);
                                             setSelectingTranslation(false);
-                                            // ChangeTranslation(value.id, book0, value.origin);
                                         }).catch(e => {
                                             console.log(e)
                                         })
@@ -850,7 +891,7 @@ const NewTransOptions = ({ translationName, translations, selectedTranslation, s
     </div>
 }
 
-const SideBarBooks = ({ booksData, focusOnBook, selectedTestament, selectedTranslation, dontOpen, showCheck, onlineUsers }) => {
+const SideBarBooks = ({ booksData, focusOnBook, selectedTestament, selectedTranslation, dontOpen, showCheck, onlineUsers, sortBooksByTestament }) => {
     const [lastBookClicked, setLastBookClicked] = useState(-1);
     const [bookData, setBookData] = useState(null);
     const [windowSize, setWindowSize] = useState(window.innerWidth);
@@ -873,31 +914,37 @@ const SideBarBooks = ({ booksData, focusOnBook, selectedTestament, selectedTrans
         if (booksData.length === 1) {
             setLastBookClicked(0);
             setBookData(booksData[0]);
+            if (booksData[0].order > 39) {
+                setChT(1);
+            } else {
+                setChT(0);
+            }
         } else {
             setLastBookClicked(-1);
             setBookData(null);
+            setChT(0);
         }
     }, [booksData]);
 
-    useEffect(() => {
-        globalThis.handleClickHeader = (bookName) => {
-            if (globalThis.timeoutClicker) clearTimeout(globalThis.timeoutClicker);
-            const index = booksData?.findIndex(book => book.name === bookName);
-            if (index > -1) {
-                globalThis.timeoutClicker = setTimeout(() => {
-                    handleClick({ index, book: booksData[index] });
-                }, 500)
+    // useEffect(() => {
+    //     globalThis.handleClickHeader = (bookName) => {
+    //         if (globalThis.timeoutClicker) clearTimeout(globalThis.timeoutClicker);
+    //         const index = booksData?.findIndex(book => book.name === bookName);
+    //         if (index > -1) {
+    //             globalThis.timeoutClicker = setTimeout(() => {
+    //                 handleClick({ index, book: booksData[index] });
+    //             }, 500)
 
-                setTimeout(() => {
-                    BooksRefSearchBar.current[index]?.focus();
-                }, 5000);
-            }
-        };
+    //             setTimeout(() => {
+    //                 BooksRefSearchBar.current[index]?.focus();
+    //             }, 5000);
+    //         }
+    //     };
 
-        return () => {
-            if (globalThis.timeoutClicker) clearTimeout(globalThis.timeoutClicker);
-        }
-    }, [booksData]);
+    //     return () => {
+    //         if (globalThis.timeoutClicker) clearTimeout(globalThis.timeoutClicker);
+    //     }
+    // }, [booksData]);
     const refsObject = useMemo(() => {
         const refs = [];
         if (bookData?.numberOfChapters)
@@ -953,18 +1000,36 @@ const SideBarBooks = ({ booksData, focusOnBook, selectedTestament, selectedTrans
     const getBookName = useCallback((book, onlineUsers) => {
         const users = onlineUsers ? Object.entries(onlineUsers || {}).filter(([, v]) => v?.bookId === book.id) : [];
         let bookName = "";
-        if(book?.commonName?.length > 7 && users.length > 0){
+        if (book?.commonName?.length > 7 && users.length > 0) {
             const name = book.id.toLowerCase();
-            if(isNaN(Number(name[0]))){
+            if (isNaN(Number(name[0]))) {
                 bookName = name;
-            }else{
+            } else {
                 bookName = `${name[0]} ${name[1].toUpperCase()}${name.slice(2)}`;
             }
-        }else{
+        } else {
             bookName = book.commonName;
         }
         return bookName;
     }, []);
+
+    const rearrangeBooks = useCallback((books, rows) => {
+        const cols = Math.ceil(books.length / rows);
+        const rearrangedBooksMatrix = [];
+        let index = 0;
+        for (let j = 0; j < rows; j++) {
+            for (let i = 0; i < cols; i++) {
+                if (!rearrangedBooksMatrix[i]) rearrangedBooksMatrix[i] = [];
+                rearrangedBooksMatrix[i][j] = books[index];
+                index += 1;
+            }
+        }
+        const rearrangeBooks = [];
+        for (let row of rearrangedBooksMatrix) {
+            rearrangeBooks.push(...row)
+        }
+        return rearrangeBooks;
+    }, [])
 
     const RenderBooksByTestament = useMemo(() => {
         const isMobile = windowSize < 768;
@@ -979,13 +1044,15 @@ const SideBarBooks = ({ booksData, focusOnBook, selectedTestament, selectedTrans
             allowedRows = 5;
         }
 
+        const sortedBooks = sortBooksByTestament(booksData)
+
         if (selectedTestament === 2) {
             const OTChapterSeparator = allowedRows === 2 ? 1 : allowedRows === 3 ? 2 : 3;
             const OTChapterPos = calcChapterPos(lastBookClicked, OTChapterSeparator);
             const NTChapterSeparator = allowedRows === 2 ? 1 : allowedRows === 3 ? 1 : 2;
             const NTChapterPos = calcChapterPos(lastBookClicked, NTChapterSeparator);
-            const OTBooks = ghostArray(booksData.slice(0, 39), OTChapterSeparator);
-            const NTBooks = ghostArray(booksData.slice(39), NTChapterSeparator);
+            const OTBooks = ghostArray(sortedBooks.OTBooks, OTChapterSeparator);
+            const NTBooks = ghostArray(sortedBooks.NTBooks, NTChapterSeparator);
             return <div class="books-container" style={showCheck ? { paddingTop: "40px" } : {}}>
                 <div class="testament-container" style={{ width: `${allowedRows === 5 ? 60 : allowedRows === 3 ? 66.66 : 50}%` }}>
                     <span class="testament-title">Old Testament</span>
@@ -1072,7 +1139,7 @@ const SideBarBooks = ({ booksData, focusOnBook, selectedTestament, selectedTrans
             </div>
         } else if (selectedTestament === 1) {
             const chapterPos = calcChapterPos(lastBookClicked, allowedRows);
-            const booksWithGhost = ghostArray(booksData, allowedRows);
+            const booksWithGhost = ghostArray(sortedBooks.NTBooks, allowedRows);
             return <div class="books-container" style={showCheck ? { paddingTop: "40px" } : {}}>
                 <div class="testament-container">
                     <span class="testament-title">New Testament</span>
@@ -1116,10 +1183,54 @@ const SideBarBooks = ({ booksData, focusOnBook, selectedTestament, selectedTrans
             </div>
         } else if (selectedTestament === 0) {
             const chapterPos = calcChapterPos(lastBookClicked, allowedRows);
-            const booksWithGhost = ghostArray(booksData.slice(0, 39), allowedRows);
+            const booksWithGhost = ghostArray(sortedBooks.OTBooks, allowedRows);
             return <div class="books-container" style={showCheck ? { paddingTop: "40px" } : {}}>
                 <div class="testament-container">
                     <span class="testament-title">Old Testament</span>
+                    <div class="books-item">
+                        {
+                            booksWithGhost.map((book, index) => {
+                                return <>
+                                    {!book.ghost && <div class={`sidebar-itm ${index === lastBookClicked && bookData?.id === book.id ? "sidebar-selected-itm" : ""}`} ref={(ref) => updateRefsArray(index, ref)} tabIndex={index + 1} onClick={() => {
+                                        handleClick({ index, book })
+                                    }}>
+                                        <span style={{ display: "flex", gap: "3px", width: "100%", justifyContent: "space-between" }}>
+                                            {getBookName(book, onlineUsers)}
+                                            <CircleCounter data={onlineUsers} book={book.id} />
+                                        </span>
+                                        <span style={{ transition: "transform 0.3s", opacity: 0.3 }} class={`material-symbols-outlined ${index === lastBookClicked && bookData?.id === book.id ? "upside-down" : ""}`}>
+                                            expand_more
+                                        </span>
+                                    </div>}
+                                    {
+                                        book?.ghost && <div class={`sidebar-ghost-itm`} ref={(ref) => updateRefsArray(index, ref)} tabIndex={index + 1} />
+                                    }
+                                    {
+                                        (chapterPos === index) && bookData && <div class={`sidebar-chapters show-sidebar-chapter`} style={{ justifyContent: bookData.numberOfChapters < 3 * allowedRows ? "flex-start" : "space-between" }}>
+                                            <SideBarChapters
+                                                onlineUsers={onlineUsers}
+                                                refsObject={refsObject}
+                                                bookData={bookData}
+                                                focusOnBook={focusOnBook}
+                                                setLastBookClicked={setLastBookClicked}
+                                                dontOpen={dontOpen}
+                                                setBookData={setBookData}
+                                                selectedTranslation={selectedTranslation}
+                                            />
+                                        </div>
+                                    }
+                                </>
+                            })
+                        }
+                    </div>
+                </div>
+            </div>
+        }else if (selectedTestament === 3) {
+            const chapterPos = calcChapterPos(lastBookClicked, allowedRows);
+            const booksWithGhost = ghostArray(sortedBooks.ApocryphaBooks, allowedRows);
+            return <div class="books-container" style={showCheck ? { paddingTop: "40px" } : {}}>
+                <div class="testament-container">
+                    <span class="testament-title">Apocrypha</span>
                     <div class="books-item">
                         {
                             booksWithGhost.map((book, index) => {
@@ -1361,8 +1472,8 @@ const SideBarChapters = ({ bookData, dontOpen, setLastBookClicked, setBookData, 
                         chapterNo: i + 1,
                         bookData
                     })} ><span className={`sidebar-chapter-itm ${highLightedButtonsID[i + 1] ? "highlight" : 'un-highlight'}`}>
-                        {i + 1}
-                        <CircleCounter data={onlineUsers} book={bookData.id} chapter={i + 1} />
+                            {i + 1}
+                            <CircleCounter data={onlineUsers} book={bookData.id} chapter={i + 1} />
                         </span></button>)
                 }
             } else {
