@@ -245,13 +245,11 @@ export async function uploadFile(page: Page, filePath: string) {
         id: fileInputIdentifier,
         type: "file",
         onchange: (e) => {
-          document
-            .querySelector("body")
-            .dispatchEvent(
-              Object.assign(new Event("drop"), {
-                dataTransfer: (e.target as HTMLInputElement).files,
-              })
-            );
+          document.querySelector("body").dispatchEvent(
+            Object.assign(new Event("drop"), {
+              dataTransfer: (e.target as HTMLInputElement).files,
+            })
+          );
         },
       })
     );
@@ -296,6 +294,8 @@ export const DEFAULT_EXTENSIONS = [
   "Scripture Map 3D",
   "Bible Stack",
   "Playlist",
+
+  "Tabernacle",
 ];
 
 export async function loadSeedBible(
