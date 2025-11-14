@@ -2,7 +2,6 @@ import {
   Tooltip,
   ReadingHistoryTooltipContent,
 } from "scriptureMap2D.main.Tooltip";
-import { useScriptureMap2DContext } from "scriptureMap2D.main.ScriptureMap2DContext";
 import { useTimeContext } from "scriptureMap2D.main.TimeContext";
 import { getUserReadingHistorySummary } from "db.annotations.library";
 import { useReadingHistoryContext } from "scriptureMap2D.main.ReadingHistoryContext";
