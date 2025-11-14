@@ -1,13 +1,17 @@
 const TogglePlaylistHeight = () => {
   const isMobile =
     (window?.innerWidth || gridPortalBot.tags.pixelWidth) <
-    MOBILE_VIEWPORT_THRESHOLD;
-
+    766;
   return isMobile ? (
     <div
       className="publish-setting"
       style={{ marginRight: "0.5rem" }}
       onClick={(e) => {
+        const isMobile = (window?.innerWidth || gridPortalBot.tags.pixelWidth) < 766;
+        if(!isMobile) return ShowNotification({
+          message: `Unable to toggle playlist height in desktop view.`,
+          severity: "error",
+        });
         globalThis.SetPlaylistForcedHeight((p) =>
           p === 0 ? 1 : p === 1 ? 2 : 0
         );
