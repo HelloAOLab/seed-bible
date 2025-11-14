@@ -1376,7 +1376,7 @@ const CreatePlaylistUI = ({
                 onClick={(e) => {
                   if (!isloggedIN) {
                     ShowNotification({
-                      message: `Please login to use different features.`,
+                      message: `Please login to use more features.`,
                       severity: "error",
                     });
                   return;
