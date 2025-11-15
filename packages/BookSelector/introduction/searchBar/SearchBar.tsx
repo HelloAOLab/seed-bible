@@ -1,3 +1,12 @@
+import {
+  TreeIcon,
+  LogIcon,
+  LeafIcon,
+  CatIcon,
+  DogIcon,
+  CoffeBeanIcon,
+} from "app.components.phosphoricons";
+
 const { useState, useEffect, useMemo, useRef, useCallback, createRef, useLayoutEffect } = os.appHooks;
 
 const PsalmsData = [
@@ -60,7 +69,7 @@ const SearchBar = () => {
 
     const [query, setQuery] = useState("");
     const inputRef = useRef(null);
-    const [onlineUsers, setOnlineUsers] = useState(masks?.onlineUsers || null);
+    const [onlineUsers, setOnlineUsers] = useState(null);
 
     const [booksData, setBooksData] = useState(thePage.masks?.booksData || tags.booksData);
     const [selectedTestament, setSelectedTestament] = useState(2);
@@ -1546,8 +1555,6 @@ const CircleCounter = ({ data, book, chapter }) => {
         marginLeft: "-4px"
     };
 
-    const { TreeIcon, LogIcon, LeafIcon, CatIcon, DogIcon, CoffeBeanIcon } = thisBot.userIcons();
-
     const icons = [TreeIcon, LogIcon, LeafIcon, CatIcon, DogIcon, CoffeBeanIcon];
     const colors = [
         "#34D399",
@@ -1809,4 +1816,4 @@ const CircleCounter = ({ data, book, chapter }) => {
     );
 };
 
-return SearchBar;
+export default SearchBar;

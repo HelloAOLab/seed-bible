@@ -1,4 +1,6 @@
 if (configBot.tags.systemPortal) return;
+
+import SearchBar from 'introduction.searchBar.SearchBar'
 await os.unregisterApp('searchBar');
 await os.registerApp('searchBar', thisBot);
 const css = thisBot.tags["App.css"];
@@ -9,7 +11,6 @@ if (typeof introductionSearchBar === "undefined") {
 
 if (!masks.index)
     masks.index = 0
-const SearchBar = thisBot.SearchBar();
 
 const App = () => {
     const [openSidebar, setOpenSidebar] = useState(false);
