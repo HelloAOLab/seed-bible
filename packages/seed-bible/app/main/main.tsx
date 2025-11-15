@@ -101,6 +101,37 @@ const Main = () => {
     useEffect(() => {
         setStarted(true)
     }, [])
+     useEffect(() => {
+     // Load styles
+ 
+ 
+     // Load scripts sequentially
+     const scripts = [
+       "https://cdn.jsdelivr.net/npm/@fullcalendar/core@6.1.17/index.global.min.js",
+       "https://cdn.jsdelivr.net/npm/@fullcalendar/daygrid@6.1.17/index.global.min.js",
+       "https://cdn.jsdelivr.net/npm/@fullcalendar/timegrid@6.1.17/index.global.min.js",
+       "https://cdn.jsdelivr.net/npm/@fullcalendar/interaction@6.1.17/index.global.min.js",
+       "https://cdn.jsdelivr.net/npm/@fullcalendar/resource-timegrid@6.1.17/index.global.min.js",
+       "https://cdn.jsdelivr.net/npm/@fullcalendar/icalendar@6.1.17/index.global.min.js",
+       "https://cdnjs.cloudflare.com/ajax/libs/ical.js/1.4.0/ical.min.js",
+       "https://cdn.jsdelivr.net/npm/fullcalendar-scheduler@6.1.18/index.global.min.js"
+ 
+     ];
+ 
+     function loadScriptsSequentially(index = 0, callback) {
+       if (index >= scripts.length) return callback();
+ 
+       const script = document.createElement("script");
+       script.src = scripts[index];
+       script.onload = () => loadScriptsSequentially(index + 1, callback);
+       script.onerror = () => console.error("Failed to load", scripts[index]);
+       document.body.appendChild(script);
+     }
+ 
+     loadScriptsSequentially(0, () => {
+       console.log("FullCalendar scripts loaded");
+     });
+   }, []);
     useEffect(() => {
         if (!started)
             return
