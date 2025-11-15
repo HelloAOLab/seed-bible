@@ -1,91 +1,119 @@
 function formatToYYYYMMDD(date) {
   const d = new Date(date);
-  const day = String(d.getDate()).padStart(2, '0');
-  const month = String(d.getMonth() + 1).padStart(2, '0');
+  const day = String(d.getDate()).padStart(2, "0");
+  const month = String(d.getMonth() + 1).padStart(2, "0");
   const year = d.getFullYear();
   return `${year}-${month}-${day}`;
 }
-function showEventPopup(info, setPlaylistMode,setScheduleTitle, setScheduleDescription,addReadingPlans, setPlaylistsToAdd,playlistsToAdd,calendarApi,setCalendarView, onSubmit) {
-  let playListsFiltered = [];
-  let readingPlays = globalThis['defaultplaylists'];
 
-  if (readingPlays.length === 0) {
-    readingPlays = [{
-      checklistEnabled: false, color: "#D9D9D9", dateFormat: "MM-DD-YYYY", description: "", icon: "subscriptions", id: "aa9be68e-33f8-4f55-8452-a56447b5c347"
-      , isCustomColor: false, isCustomIcon: false, isLayers: false, list:
-        [{ type: 'verse', content: 'Genesis 1:1', additionalInfo: {}, id: 'ab7ba93b-15a0-4144-a51c-4c9840a5c2e1' }, { type: 'verse', content: 'Genesis 1:4', additionalInfo: {}, id: 'ca6b309e-9a44-45b0-9dac-19ed9113c7ad' }, { type: 'verse', content: 'Genesis 1:6', additionalInfo: {}, id: '305aafbc-cf29-446f-91a5-12cb8cacc752' }]
-      ,
-      name: "Craigs",
-      nesting
-        :
-        1,
-      readingPlanEnabled
-        :
-        true,
-      selectedTags
-        :
-        []
-    }]
+const fnnn = async function () {
+  console.log("11111111");
+};
+
+const openSelf = async function () {
+  if (globalThis["Playlist_package"]) {
+    console.log("2222");
+    globalThis["Playlist_package"].onClick();
+  } else {
+    console.log("2222");
+    const PlayList = await Playlist.tryInitPlaylistMaker();
+    console.log(PlayList);
+    if (PlayList) {
+      const id = uuid();
+      globalThis.PLAYLIST_PANEL_ID = id;
+
+      AddApplication({
+        id,
+        App: <PlayList id={id} />,
+        to: "panel",
+        minWidth: "23rem",
+      });
+    }
   }
-  playListsFiltered = readingPlays.filter(item => item.readingPlanEnabled);
+};
 
-  const popup = document.createElement('div');
+function showEventPopup(
+  info,
+  setPlaylistMode,
+  setScheduleTitle,
+  setScheduleDescription,
+  addReadingPlans,
+  setPlaylistsToAdd,
+  playlistsToAdd,
+  calendarApi,
+  setCalendarView,
+  onSubmit
+) {
+  let playListsFiltered = [];
+  const readingPlays = globalThis["defaultplaylists"];
+  playListsFiltered = readingPlays.filter((item) => item.readingPlanEnabled);
+
+  const popup = document.createElement("div");
   const dayNumber = info.date.getDay();
-  const days = ["Sunday", "Monday", "Tuesday", "Wednesday", "Thursday", "Friday", "Saturday"];
+  const days = [
+    "Sunday",
+    "Monday",
+    "Tuesday",
+    "Wednesday",
+    "Thursday",
+    "Friday",
+    "Saturday",
+  ];
   const dayName = days[dayNumber];
-  const date = (info.date);
+  const date = info.date;
   const dateStr = formatToYYYYMMDD(info.date);
-  console.log(dateStr)
+  console.log(dateStr);
   const d = new Date(date);
-  const h = String(d.getHours()).padStart(2, '0');
-  const m = String(d.getMinutes()).padStart(2, '0');
-  const endH = String(d.getHours() + 1).padStart(2, '0');
+  const h = String(d.getHours()).padStart(2, "0");
+  const m = String(d.getMinutes()).padStart(2, "0");
+  const endH = String(d.getHours() + 1).padStart(2, "0");
 
   const time = `${h}:${m}`;
   const endTime = `${endH}:${m}`;
 
   let val;
   let endVal;
-  if (time === '00:00') {
-    val = '';
-    endVal = '';
-
-  }
-  else {
+  if (time === "00:00") {
+    val = "";
+    endVal = "";
+  } else {
     endVal = endTime;
 
     val = time;
-
   }
 
   const checked = {};
-  console.log(info, 'info');
+  console.log(info, "info");
 
-  popup.addEventListener('mousedown', (e) => e.stopPropagation());
+  popup.addEventListener("mousedown", (e) => e.stopPropagation());
 
   popup.innerHTML = `
-    <div class="google-modal">
-      <input type="text" id="popup-title" placeholder="Add title" class="gm-input title" />
-      <div class="gm-modal-select">
-        <span class="gm-modal-select-1">Event</span>
-        <span class="gm-modal-select-2">Reading plans</span>
-        <span class="gm-modal-select-3">Schedule</span>
-      </div>
-      <div class="gm-modal-event"></div>
-      <div class="gm-actions">
-        <button id="popup-add-btn" class="gm-button gm-button-save">Save</button>
-        <button id="popup-cancel-btn" class="gm-button cancel">Cancel</button>
-      </div>
+  <div class="google-modal">
+    <input type="text" id="popup-title" placeholder="Add title" class="gm-input title" />
+    <div class="gm-modal-select">
+      <span class="gm-modal-select-1">Event</span>
+      ${
+        playListsFiltered.length > 0
+          ? `<span class="gm-modal-select-2">Readings</span>`
+          : ""
+      }
+      <span class="gm-modal-select-3">Schedule</span>
     </div>
-  `;
+    <div class="gm-modal-event"></div>
+    <div class="gm-actions">
+      <button id="popup-add-btn" class="gm-button gm-button-save">Save</button>
+      <button id="popup-cancel-btn" class="gm-button cancel">Cancel</button>
+    </div>
+  </div>
+`;
 
-  const modalEvent = popup.querySelector('.gm-modal-event');
-  const eventTab = popup.querySelector('.gm-modal-select-1');
-  const plansTab = popup.querySelector('.gm-modal-select-2');
-  const scheduleTab = popup.querySelector('.gm-modal-select-3');
+  const modalEvent = popup.querySelector(".gm-modal-event");
+  const eventTab = popup.querySelector(".gm-modal-select-1");
+  const plansTab = popup.querySelector(".gm-modal-select-2");
+  const scheduleTab = popup.querySelector(".gm-modal-select-3");
 
-  const modalOverlay = document.createElement('div');
-  modalOverlay.className = 'custom-modal-overlay';
+  const modalOverlay = document.createElement("div");
+  modalOverlay.className = "custom-modal-overlay";
   modalOverlay.innerHTML = `
     <div class="custom-modal">
       <h1>Custom recurrence</h1>
@@ -119,29 +147,33 @@ function showEventPopup(info, setPlaylistMode,setScheduleTitle, setScheduleDescr
   `;
   document.body.appendChild(modalOverlay);
 
-  const customModal = modalOverlay.querySelector('.custom-modal');
+  const customModal = modalOverlay.querySelector(".custom-modal");
 
-  modalOverlay.addEventListener('pointerdown', (e) => e.stopPropagation());
-  modalOverlay.addEventListener('mousedown', (e) => e.stopPropagation());
-  customModal.addEventListener('mousedown', e => e.stopPropagation());
-  customModal.addEventListener('click', e => e.stopPropagation());
+  modalOverlay.addEventListener("pointerdown", (e) => e.stopPropagation());
+  modalOverlay.addEventListener("mousedown", (e) => e.stopPropagation());
+  customModal.addEventListener("mousedown", (e) => e.stopPropagation());
+  customModal.addEventListener("click", (e) => e.stopPropagation());
 
+  modalOverlay
+    .querySelector("#custom-modal-cancel")
+    .addEventListener("click", () => {
+      modalOverlay.classList.remove("custom-modal-overlay-show");
+      customModal.classList.remove("custom-modal-show");
+    });
 
-  modalOverlay.querySelector('#custom-modal-cancel').addEventListener('click', () => {
-    modalOverlay.classList.remove('custom-modal-overlay-show');
-    customModal.classList.remove('custom-modal-show');
-  });
+  modalOverlay
+    .querySelector("#custom-modal-save")
+    .addEventListener("click", () => {
+      const selected = Array.from(
+        modalOverlay.querySelectorAll("input[type=checkbox]:checked")
+      ).map((cb) => Number(cb.value));
 
-  modalOverlay.querySelector('#custom-modal-save').addEventListener('click', () => {
-    const selected = Array.from(modalOverlay.querySelectorAll('input[type=checkbox]:checked'))
-      .map(cb => Number(cb.value));
-
-    setCustomDays(prev => [...prev, ...selected]); // This assumes setCustomDays is available in your scope
-    modalOverlay.classList.remove('custom-modal-overlay-show');
-    customModal.classList.remove('custom-modal-show');
-  });
-  document.querySelectorAll('input[type="date"]').forEach(input => {
-    input.addEventListener('click', () => {
+      setCustomDays((prev) => [...prev, ...selected]); // This assumes setCustomDays is available in your scope
+      modalOverlay.classList.remove("custom-modal-overlay-show");
+      customModal.classList.remove("custom-modal-show");
+    });
+  document.querySelectorAll('input[type="date"]').forEach((input) => {
+    input.addEventListener("click", () => {
       input.showPicker?.(); // Only works in Chromium-based browsers
     });
   });
@@ -253,70 +285,89 @@ function showEventPopup(info, setPlaylistMode,setScheduleTitle, setScheduleDescr
       </div>   
       </div>
     `;
-    popup.querySelector('#repeatSelect')?.addEventListener('change', (e) => {
-      if (e.target.value === 'custom') {
-        customModal?.classList.add('custom-modal-show');
-        modalOverlay?.classList.add('custom-modal-overlay-show');
+    popup.querySelector("#repeatSelect")?.addEventListener("change", (e) => {
+      if (e.target.value === "custom") {
+        customModal?.classList.add("custom-modal-show");
+        modalOverlay?.classList.add("custom-modal-overlay-show");
       }
     });
-
-
   }
   function renderReadingPlans() {
+    modalEvent.innerHTML = "";
+    const title = document.createElement("h2");
+    title.textContent =
+      playListsFiltered.length > 0
+        ? "Available Readings"
+        : "No Available Readings";
+    title.style.marginBottom = playListsFiltered.length > 0 ? "16px" : "10px";
+    title.style.marginLeft = playListsFiltered.length > 0 ? "30px" : "50px";
+    title.style.fontSize = playListsFiltered.length > 0 ? "1.25rem" : "0.95rem";
+    title.style.fontWeight = playListsFiltered.length > 0 ? "bold" : "300";
+    title.style.color = "black";
 
+    if (playListsFiltered.length <= 0) {
+      
+     
+      modalEvent.appendChild(title);
 
-    modalEvent.innerHTML = '';
-    const title = document.createElement('h2');
-    title.textContent = 'Available Playlists';
-    title.style.marginBottom = '16px';
-    title.style.marginLeft = '30px';
-    title.style.fontSize = '1.25rem';
-    title.style.fontWeight = 'bold';
-    title.style.color = 'black';
+    
+      const saveBtn = popup.querySelector(".gm-button-save");
+      saveBtn.textContent = "Create New";
+       saveBtn.addEventListener("click", async () => {
+        console.log("111");
+        instance.hide();
+        modalOverlay.remove();
 
-    const list = document.createElement('ul');
-    list.style.listStyle = 'none';
-    list.style.padding = '0';
-    list.style.marginLeft = '30px';
-    list.style.maxHeight = '300px';
-    list.style.overflowY = 'auto';
+        openSelf();
+        globalThis.currentActiveItem='create';
+        await os.sleep(100);
+      });
+     
+    } else {
+      const list = document.createElement("ul");
+      list.style.listStyle = "none";
+      list.style.padding = "0";
+      list.style.marginLeft = "30px";
+      list.style.maxHeight = "300px";
+      list.style.overflowY = "auto";
 
-    playListsFiltered.forEach((play) => {
-      const li = document.createElement('li');
-      li.style.marginBottom = '10px';
-      li.style.color = 'black';
+      playListsFiltered.forEach((play) => {
+        const li = document.createElement("li");
+        li.style.marginBottom = "10px";
+        li.style.color = "black";
 
-      const wrapper = document.createElement('div');
-      wrapper.style.display = 'flex';
-      wrapper.style.alignItems = 'center';
-      wrapper.style.gap = '3px';
+        const wrapper = document.createElement("div");
+        wrapper.style.display = "flex";
+        wrapper.style.alignItems = "center";
+        wrapper.style.gap = "3px";
 
-      const checkbox = document.createElement('input');
-      checkbox.type = 'checkbox';
-      checkbox.checked = !!checked[play.id];
-      checkbox.onclick = () => {
-        checked[play.id] = !checked[play.id];
-      };
+        const checkbox = document.createElement("input");
+        checkbox.type = "checkbox";
+        checkbox.checked = !!checked[play.id];
+        checkbox.onclick = () => {
+          checked[play.id] = !checked[play.id];
+        };
 
-      const label = document.createElement('div');
-      label.textContent = play.name;
-      label.style.border = '1px solid #ddd';
-      label.style.padding = '5px 10px';
-      label.style.cursor = 'pointer';
-      label.style.borderRadius = '6px';
-      label.style.backgroundColor = '#f9f9f9';
+        const label = document.createElement("div");
+        label.textContent = play.name;
+        label.style.border = "1px solid #ddd";
+        label.style.padding = "5px 10px";
+        label.style.cursor = "pointer";
+        label.style.borderRadius = "6px";
+        label.style.backgroundColor = "#f9f9f9";
 
-      label.onmouseenter = () => label.style.backgroundColor = '#eee';
-      label.onmouseleave = () => label.style.backgroundColor = '#f9f9f9';
+        label.onmouseenter = () => (label.style.backgroundColor = "#eee");
+        label.onmouseleave = () => (label.style.backgroundColor = "#f9f9f9");
 
-      wrapper.appendChild(checkbox);
-      wrapper.appendChild(label);
-      li.appendChild(wrapper);
-      list.appendChild(li);
-    });
+        wrapper.appendChild(checkbox);
+        wrapper.appendChild(label);
+        li.appendChild(wrapper);
+        list.appendChild(li);
+      });
 
-    modalEvent.appendChild(title);
-    modalEvent.appendChild(list);
+      modalEvent.appendChild(title);
+      modalEvent.appendChild(list);
+    }
   }
 
   function addSchedule() {
@@ -414,50 +465,48 @@ function showEventPopup(info, setPlaylistMode,setScheduleTitle, setScheduleDescr
         </svg>
         <textarea class="gm-input-description" id="popup-description" placeholder="Add Description" class="gm-input" rows="2"></textarea>
       </div>
-      </div>`
-
-
+      </div>`;
   }
 
   // Initial render
-  eventTab.classList.add('gm-modal-select-item-selected');
+  eventTab.classList.add("gm-modal-select-item-selected");
   renderEventFields();
 
   eventTab.onclick = () => {
-    setPlaylistMode(prev => !prev);
-    eventTab.classList.add('gm-modal-select-item-selected');
-    plansTab.classList.remove('gm-modal-select-item-selected');
-    scheduleTab.classList.remove('gm-modal-select-item-selected')
+    setPlaylistMode((prev) => !prev);
+    eventTab.classList.add("gm-modal-select-item-selected");
+    if(plansTab){
+    plansTab.classList.remove("gm-modal-select-item-selected");}
+    scheduleTab.classList.remove("gm-modal-select-item-selected");
     renderEventFields();
   };
+  if(plansTab){
 
   plansTab.onclick = () => {
-    setPlaylistMode(prev => !prev);
-    plansTab.classList.add('gm-modal-select-item-selected');
-    eventTab.classList.remove('gm-modal-select-item-selected');
-    scheduleTab.classList.remove('gm-modal-select-item-selected')
+    setPlaylistMode((prev) => !prev);
+    plansTab.classList.add("gm-modal-select-item-selected");
+    eventTab.classList.remove("gm-modal-select-item-selected");
+    scheduleTab.classList.remove("gm-modal-select-item-selected");
 
     renderReadingPlans();
-
   };
-
-
+}
 
   const instance = tippy(document.body, {
     getReferenceClientRect: () => info.dayEl.getBoundingClientRect(),
     content: popup,
     interactive: true,
     allowHTML: true,
-    trigger: 'manual',
-    placement: 'auto',
+    trigger: "manual",
+    placement: "auto",
     hideOnClick: false,
-    theme: 'custom-light',
+    theme: "custom-light",
     appendTo: document.body,
   });
 
   instance.show();
   function addOneHour(startTime) {
-    const [hr, mn] = startTime.split(':').map(Number);
+    const [hr, mn] = startTime.split(":").map(Number);
 
     // Create a Date for today at that time
     const date = new Date();
@@ -467,44 +516,36 @@ function showEventPopup(info, setPlaylistMode,setScheduleTitle, setScheduleDescr
     date.setHours(date.getHours() + 1);
 
     // Format back to "HH:mm"
-    const hh = String(date.getHours()).padStart(2, '0');
-    const mm = String(date.getMinutes()).padStart(2, '0');
+    const hh = String(date.getHours()).padStart(2, "0");
+    const mm = String(date.getMinutes()).padStart(2, "0");
     return `${hh}:${mm}`;
   }
-  const startInput = modalEvent.querySelector('.gm-input-start_time');
-  const endInput = modalEvent.querySelector('.gm-input-end_time');
-  startInput.value = val;        // e.g. "02:11"
+  const startInput = modalEvent.querySelector(".gm-input-start_time");
+  const endInput = modalEvent.querySelector(".gm-input-end_time");
+  startInput.value = val; // e.g. "02:11"
   endInput.value = addOneHour(val);
 
   // Update end time whenever the user changes start time
-  startInput.addEventListener('change', () => {
+  startInput.addEventListener("change", () => {
     if (startInput.value) {
       endInput.value = addOneHour(startInput.value);
     }
   });
 
-
-
-
-
   // Autofocus title
   setTimeout(() => {
-    popup.querySelector('#popup-title')?.focus();
+    popup.querySelector("#popup-title")?.focus();
   }, 0);
   scheduleTab.onclick = () => {
     addSchedule();
-    scheduleTab.classList.add('gm-modal-select-item-selected');
-    eventTab.classList.remove('gm-modal-select-item-selected');
-    plansTab.classList.remove('gm-modal-select-item-selected');
-    const btn = popup.querySelector('.gm-button-save'); // Added dot for class selector
+    scheduleTab.classList.add("gm-modal-select-item-selected");
+    eventTab.classList.remove("gm-modal-select-item-selected");
+    if(plansTab){plansTab.classList.remove("gm-modal-select-item-selected");}
+    const btn = popup.querySelector(".gm-button-save"); // Added dot for class selector
     if (btn) {
-      btn.textContent = 'Create'; // Use textContent instead of .text
+      btn.textContent = "Create"; // Use textContent instead of .text
     }
-
-
-
-  }
-
+  };
 
   function handleClickOutside(e) {
     const isClickInsidePopup = popup.contains(e.target);
@@ -512,93 +553,93 @@ function showEventPopup(info, setPlaylistMode,setScheduleTitle, setScheduleDescr
     if (!isClickInsidePopup && !isClickInsideCustomModal) {
       instance.hide();
       modalOverlay.remove();
-      document.removeEventListener('mousedown', handleClickOutside);
+      document.removeEventListener("mousedown", handleClickOutside);
     }
   }
-  document.addEventListener('mousedown', handleClickOutside);
+  document.addEventListener("mousedown", handleClickOutside);
 
   // Cancel button
-  popup.querySelector('#popup-cancel-btn')?.addEventListener('click', () => {
+  popup.querySelector("#popup-cancel-btn")?.addEventListener("click", () => {
     instance.destroy();
     instance.hide();
     modalOverlay.remove();
   });
 
   // Save button
-  const addButton = popup.querySelector('#popup-add-btn')
-  addButton?.addEventListener('click', (e) => {
+  const addButton = popup.querySelector("#popup-add-btn");
+  addButton?.addEventListener("click", (e) => {
     e.preventDefault();
-    if (addButton.textContent === 'Create') {
-      setCalendarView('resourceTimeline')
-      calendarApi.current.changeView('resourceTimeline');
-      
+    if (addButton.textContent === "Create") {
+      setCalendarView("resourceTimeline");
+      calendarApi.current.changeView("resourceTimeline");
 
-      const title = popup.querySelector('#popup-title')?.value || 'Untitled';
-      const description = popup.querySelector('#popup-description')?.value || '';
+      const title = popup.querySelector("#popup-title")?.value || "Untitled";
+      const description =
+        popup.querySelector("#popup-description")?.value || "";
 
-    
-      const todayStr = new Date().toISOString().split('T')[0];
+      const todayStr = new Date().toISOString().split("T")[0];
 
-      const start = popup.querySelector('#start-date')?.value || todayStr;
-      const end = popup.querySelector('#end-date')?.value || todayStr;
+      const start = popup.querySelector("#start-date")?.value || todayStr;
+      const end = popup.querySelector("#end-date")?.value || todayStr;
 
-      const startTime = popup.querySelector('.gm-input-start_time')?.value || '07:00:00';
-      const endTime = popup.querySelector('.gm-input-end_time')?.value || '19:00:00';
-    
-      
+      const startTime =
+        popup.querySelector(".gm-input-start_time")?.value || "07:00:00";
+      const endTime =
+        popup.querySelector(".gm-input-end_time")?.value || "19:00:00";
 
-     
+      calendarApi.current.setOption("slotMinTime", startTime);
+      calendarApi.current.setOption("slotMaxTime", endTime);
 
-      
-      calendarApi.current.setOption('slotMinTime', startTime);
-      calendarApi.current.setOption('slotMaxTime', endTime);
-
-      
       const endPlusOne = new Date(end);
       endPlusOne.setDate(endPlusOne.getDate() + 1);
 
-      calendarApi.current.setOption('visibleRange', {
-        start: start, 
-        end: endPlusOne.toISOString().split('T')[0]
+      calendarApi.current.setOption("visibleRange", {
+        start: start,
+        end: endPlusOne.toISOString().split("T")[0],
       });
       setScheduleTitle(title);
       setScheduleDescription(description);
 
-      
       calendarApi.current.gotoDate(start);
       instance.hide();
       modalOverlay.remove();
-    }
+    } else {
+      const title = popup.querySelector("#popup-title")?.value || "Untitled";
+      const description =
+        popup.querySelector("#popup-description")?.value || "";
+      const link = popup.querySelector("#popup-link")?.value || "";
+      const start = popup.querySelector("#start-date")?.value || date;
+      const end = popup.querySelector("#end-date")?.value || date;
+      const startTime = popup.querySelector(".gm-input-start_time")?.value;
+      const endTime = popup.querySelector(".gm-input-end_time")?.value;
 
-    else {
-
-
-      const title = popup.querySelector('#popup-title')?.value || 'Untitled';
-      const description = popup.querySelector('#popup-description')?.value || '';
-      const link = popup.querySelector('#popup-link')?.value || '';
-      const start = popup.querySelector('#start-date')?.value || date;
-      const end = popup.querySelector('#end-date')?.value || date;
-      const startTime = popup.querySelector('.gm-input-start_time')?.value;
-      const endTime = popup.querySelector('.gm-input-end_time')?.value;
-
-
-
-      const recurVal = popup.querySelector('#repeatSelect')?.value || 'No Repeat';
-      const isPlansTabActive = plansTab.classList.contains('gm-modal-select-item-selected');
-      console.log(isPlansTabActive, 'sass');
+      const recurVal =
+        popup.querySelector("#repeatSelect")?.value || "No Repeat";
+        let isPlansTabActive;
+        if(plansTab){
+       isPlansTabActive = plansTab.classList.contains(
+        "gm-modal-select-item-selected"
+      );}
+      console.log(isPlansTabActive, "sass");
 
       if (isPlansTabActive) {
-        console.log(playListsFiltered,'playlistsfiltered');
-        const selected = playListsFiltered.filter(p => checked[p.id]);
-     
-        
-
+        console.log(playListsFiltered, "playlistsfiltered");
+        const selected = playListsFiltered.filter((p) => checked[p.id]);
 
         addReadingPlans(selected);
-        
       }
 
-      onSubmit({ title, description, link, start, end, startTime, endTime, recurVal, isPlansTabActive });
+      onSubmit({
+        title,
+        description,
+        link,
+        start,
+        end,
+        startTime,
+        endTime,
+        recurVal,
+        isPlansTabActive,
+      });
       instance.hide();
       modalOverlay.remove();
     }

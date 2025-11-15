@@ -13,13 +13,13 @@ const Setting = ({ setOpenSetting, dropdownRef, setOpenCalendar, setMapViewSelec
   const handleOpenCalendar = () => {
     setOpenCalendar(true);
     setOpenMap(false);
-    setOpenSetting(false)
+   
   }
   const handleOpenMap = () => {
     setOpenCalendar(false);
     setOpenMap(true);
     setMapViewSelected(true)
-    setOpenSetting(false);
+   
   }
   const handleOpenBoth = () => {
     setOpenCalendar(true);
