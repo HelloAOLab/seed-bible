@@ -1013,29 +1013,27 @@ function ThePage({
 
 
   const highlightVerse = useCallback(
-    (verseNumbers, color) => {
+    (verseNumbers, color, scroll, fadeIn, skipIt) => {
+      // if (!skipIt)
+      //   return
       if (!tab?.id) return;
       EmitData("highlight", { verseNumbers, color });
 
-      const verseId = `v-${typeof verseNumbers === "object"
+      const verseId = `v-${Array.isArray(verseNumbers)
         ? verseNumbers[verseNumbers.length - 1]
-        : verseNumbers
-        }`;
+        : verseNumbers}`;
 
-      document.getElementById(verseId).scrollIntoView({
-        behavior: "smooth",
-        block: "center",
-        inline: "nearest",
-      });
+      if (scroll)
+        document.getElementById(verseId)?.scrollIntoView({
+          behavior: "smooth",
+          block: "center",
+          inline: "nearest",
+        });
 
-      const numbers = Array.isArray(verseNumbers)
-        ? verseNumbers
-        : [verseNumbers];
+      const numbers = Array.isArray(verseNumbers) ? verseNumbers : [verseNumbers];
 
       setHighlighted((prev) => {
         const newHighlighted = { ...prev };
-
-        const allHighlighted = numbers.every((vn) => newHighlighted[vn]);
         const groupId = Date.now();
 
         numbers.forEach((vn) => {
@@ -1044,14 +1042,34 @@ function ThePage({
             book: data?.book,
             chapter: data?.chapter,
             group: groupId,
-            color,
+            color: color || wordHighlightsBC,
           };
         });
 
-        if (!globalThis.tabHighlights) {
-          globalThis.tabHighlights = {};
-        }
+        if (!globalThis.tabHighlights) globalThis.tabHighlights = {};
         globalThis.tabHighlights[tab?.id] = newHighlighted;
+
+        if (fadeIn || tags?.sessions[configBot.id]?.config.highlightDuration) {
+          let duration = 0;
+          if (tags?.sessions[configBot.id]?.config.highlightDuration)
+            fadeIn = tags?.sessions[configBot.id]?.config.highlightDuration
+          if (fadeIn === 4) {
+            duration = 0; // Never remove highlight
+          } else if (typeof fadeIn === "number") {
+            duration = fadeIn * 1000; // Convert seconds to ms
+          }
+
+          if (duration > 0) {
+            setTimeout(() => {
+              setHighlighted((prevFade) => {
+                const faded = { ...prevFade };
+                numbers.forEach((vn) => delete faded[vn]);
+                globalThis.tabHighlights[tab?.id] = faded;
+                return faded;
+              });
+            }, duration);
+          }
+        }
 
         return newHighlighted;
       });
