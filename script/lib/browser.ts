@@ -294,8 +294,8 @@ export const DEFAULT_EXTENSIONS = [
     'Scripture Map 3D',
     'Bible Stack',
     'Playlist',
-    'Calendar'
-  'Tabernacle',
+    'Calendar',
+  'Tabernacle'
 ];
 
 export async function loadSeedBible(
