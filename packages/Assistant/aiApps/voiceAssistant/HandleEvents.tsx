@@ -502,7 +502,8 @@ const HandleEvents = async ({ dc, data }) => {
                                     width: "100%",
                                     height: "100%",
                                     "border-radius": "16px",
-                                  }}></div>
+                                  }}
+                                ></div>
                               ),
                               title: `Canvas`,
                               position: { x: 200, y: 150 },

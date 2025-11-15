@@ -24,7 +24,8 @@ const PrevIcon = ({ fill = "#939393" }) => (
     height="32"
     viewBox="0 0 32 32"
     fill="none"
-    xmlns="http://www.w3.org/2000/svg">
+    xmlns="http://www.w3.org/2000/svg"
+  >
     <path
       d="M7.33325 24V8H9.99992V24H7.33325ZM24.6666 24L12.6666 16L24.6666 8V24Z"
       fill={fill}
@@ -38,7 +39,8 @@ const NextIcon = ({ fill = "#939393" }) => (
     height="16"
     viewBox="0 0 18 16"
     fill="none"
-    xmlns="http://www.w3.org/2000/svg">
+    xmlns="http://www.w3.org/2000/svg"
+  >
     <path
       d="M14.9999 16V0H17.6666V16H14.9999ZM0.333252 16V0L12.3333 8L0.333252 16Z"
       fill={fill}
@@ -115,8 +117,8 @@ const PlayerControls = ({ parentId = "default" }) => {
     index: globalThis.PPchecklistEnabled
       ? -1
       : globalThis.PPreadingPlanEnabled
-      ? globalThis.PPfirstActiveIndex
-      : globalThis.PPfirstIndex,
+        ? globalThis.PPfirstActiveIndex
+        : globalThis.PPfirstIndex,
     fromButton: 0,
     isPreviousQueue: false,
     subIndex: globalThis.PPsubIndex,
@@ -194,7 +196,7 @@ const PlayerControls = ({ parentId = "default" }) => {
 
     const isCurrentItemChapterRange =
       currentItem?.type === "chapter-range" ||
-      !!currentItem.additionalInfo?.layers?.length;
+      !!currentItem?.additionalInfo?.layers?.length;
 
     if (!isCurrentItemChapterRange) newSubIndex = 0;
 
@@ -219,8 +221,8 @@ const PlayerControls = ({ parentId = "default" }) => {
           const prevItemList = wasPrevItemArray
             ? prevItem?.additionalInfo
             : prevItem?.additionalInfo?.layers?.length
-            ? prevItem?.additionalInfo?.layers
-            : [];
+              ? prevItem?.additionalInfo?.layers
+              : [];
           // This Might Break When Order is > 1
           newSubIndex = prevItemList.length + newSubIndex + order;
           if (prevItem) newIndex -= 1;
@@ -782,7 +784,8 @@ const PlayerControls = ({ parentId = "default" }) => {
             backgroundColor: "#F7F7F5",
             height: "auto",
           }}
-          className="flaoting-attach-link">
+          className="flaoting-attach-link"
+        >
           <AttachLink
             canClose
             massAdd={massAdd}
@@ -801,7 +804,8 @@ const PlayerControls = ({ parentId = "default" }) => {
             padding: "0.5rem",
             borderRadius: "8px",
             justifyContent: "center",
-          }}>
+          }}
+        >
           {!!textInfo && (
             <div className="textinfo-playlist">
               <RenderHTMLContent htmlContent={textInfo} />
@@ -819,7 +823,8 @@ const PlayerControls = ({ parentId = "default" }) => {
                 href={currentItem?.additionalInfo?.link}
                 target="_blank"
                 rel="noopener noreferrer"
-                title="Visit link">
+                title="Visit link"
+              >
                 Click here to open
               </a>
             </div>
@@ -831,13 +836,15 @@ const PlayerControls = ({ parentId = "default" }) => {
               justifyContent: "space-between",
               gap: "0.5rem",
               width: "calc(100%)",
-            }}>
+            }}
+          >
             <div
               style={{
                 width: "50%",
                 flexDirection: "column",
                 display: "flex",
-              }}>
+              }}
+            >
               <p
                 style={{
                   fontSize: "12px",
@@ -848,12 +855,13 @@ const PlayerControls = ({ parentId = "default" }) => {
                   marginBottom: "0.5rem",
                   fontFamily: "DM Sans",
                   height: "12px",
-                }}>
+                }}
+              >
                 {showCurrent
                   ? "Playing now"
                   : nextItemName?.content
-                  ? "Playing Next"
-                  : null}
+                    ? "Playing Next"
+                    : null}
               </p>
               <div style={{ gap: "0.5rem" }} className="align-center">
                 <div
@@ -864,10 +872,12 @@ const PlayerControls = ({ parentId = "default" }) => {
                     placeItems: "center",
                     backgroundColor: "#D3643329",
                     borderRadius: "0.25rem",
-                  }}>
+                  }}
+                >
                   <span
                     style={{ margin: "0", fontSize: "18px" }}
-                    class="material-symbols-outlined unfollow">
+                    class="material-symbols-outlined unfollow"
+                  >
                     {nextItemName?.type === "attachment-link"
                       ? "media_link"
                       : "description"}
@@ -877,7 +887,8 @@ const PlayerControls = ({ parentId = "default" }) => {
                   <div
                     className={`fade-in-animation  ${
                       showCurrent ? "" : "show"
-                    }`}>
+                    }`}
+                  >
                     {nextItemName?.content ? (
                       <p
                         style={{
@@ -887,7 +898,8 @@ const PlayerControls = ({ parentId = "default" }) => {
                           alignItems: "center",
                           fontFamily: "DM Sans",
                           margin: "0",
-                        }}>
+                        }}
+                      >
                         {nextItemName?.content
                           ? `${nextItemName?.content}${nextItemName?.prefix}`.substring(
                               0,
@@ -907,7 +919,8 @@ const PlayerControls = ({ parentId = "default" }) => {
                           fontWeight: "900",
                           fontFamily: "DM Sans",
                           margin: "0",
-                        }}>
+                        }}
+                      >
                         Playlist Ended
                       </p>
                     )}
@@ -919,7 +932,8 @@ const PlayerControls = ({ parentId = "default" }) => {
                           color: "#0000001",
                           margin: "0",
                           textTransform: "capitalize",
-                        }}>
+                        }}
+                      >
                         {nextItemName?.type}
                       </p>
                     )}
@@ -928,7 +942,8 @@ const PlayerControls = ({ parentId = "default" }) => {
                     style={{ width: "100%" }}
                     className={`fade-in-animation overlay-top-left  ${
                       showCurrent ? "show" : ""
-                    }`}>
+                    }`}
+                  >
                     {currentItem?.content ? (
                       <p
                         style={{
@@ -938,7 +953,8 @@ const PlayerControls = ({ parentId = "default" }) => {
                           alignItems: "center",
                           fontFamily: "DM Sans",
                           margin: "0",
-                        }}>
+                        }}
+                      >
                         {currentItem?.content
                           ? `${currentItem?.content}${currentItem?.prefix}`.substring(
                               0,
@@ -958,7 +974,8 @@ const PlayerControls = ({ parentId = "default" }) => {
                           fontWeight: "900",
                           fontFamily: "DM Sans",
                           margin: "0",
-                        }}>
+                        }}
+                      >
                         Playlist Ended
                       </p>
                     )}
@@ -971,7 +988,8 @@ const PlayerControls = ({ parentId = "default" }) => {
                           color: "#0000001",
                           margin: "0",
                           textTransform: "capitalize",
-                        }}>
+                        }}
+                      >
                         {currentItem?.type}
                       </p>
                     )}
@@ -996,7 +1014,8 @@ const PlayerControls = ({ parentId = "default" }) => {
                   } else {
                     thisBot.OpenSelf();
                   }
-                }}>
+                }}
+              >
                 <img
                   src="https://auth-aux-aobot-prod-filesbucket-141297942820.s3.amazonaws.com/aoBot/fe3ea1784fbed6a33fb06bc8885bca18211293462adcb06311db83f1450589b8.svg"
                   class="material-symbols-outlined unfollow"
@@ -1027,10 +1046,12 @@ const PlayerControls = ({ parentId = "default" }) => {
                   border: "0px solid #D36433",
                   backgroundColor: "#E6E6E6",
                 }}
-                className="playlist-action small">
+                className="playlist-action small"
+              >
                 <span
                   style={{ margin: "0", fontSize: "20px" }}
-                  class="material-symbols-outlined unfollow">
+                  class="material-symbols-outlined unfollow"
+                >
                   add
                 </span>
               </p>
@@ -1054,7 +1075,8 @@ const PlayerControls = ({ parentId = "default" }) => {
               gap: "1rem",
               justifyContent: "space-between",
               alignItems: "center",
-            }}>
+            }}
+          >
             {false && (
               <img
                 src={EditPlaylist}
@@ -1085,7 +1107,8 @@ const PlayerControls = ({ parentId = "default" }) => {
                 DataManager.cancelCurrentPlayingSound();
                 if (globalThis.HandleOnButtonPress)
                   globalThis.HandleOnButtonPress(-1);
-              }}>
+              }}
+            >
               <PrevIcon fill={!prevItemName?.content ? "#939393" : "#000"} />
             </Button>
             <p
@@ -1117,14 +1140,16 @@ const PlayerControls = ({ parentId = "default" }) => {
                 borderRadius: "50%",
                 border: "none",
               }}
-              className="playlist-action small">
+              className="playlist-action small"
+            >
               <span
                 style={{
                   margin: "0",
                   fontSize: "14px",
                   backgroundColor: "#D36433",
                 }}
-                class="material-symbols-outlined unfollow">
+                class="material-symbols-outlined unfollow"
+              >
                 stop
               </span>
             </p>
@@ -1164,7 +1189,8 @@ const PlayerControls = ({ parentId = "default" }) => {
                 if (globalThis.RemoveNowBarApp) {
                   globalThis.RemoveNowBarApp("player-playlist-bar");
                 }
-              }}>
+              }}
+            >
               <NextIcon fill={!nextItemName?.content ? "#939393" : "#000"} />
             </Button>
             {false && (

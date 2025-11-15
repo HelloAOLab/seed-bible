@@ -857,7 +857,8 @@ const Playlist = ({
         <Modal
           title="Not Embded Items Found"
           onClose={() => setLayersWarning(false)}
-          showIcon={false}>
+          showIcon={false}
+        >
           <h2 style={{ fontSize: "1rem" }}>
             Some of your item are not embedded. Layers Should have all Embeded
             Items.
@@ -888,7 +889,8 @@ const Playlist = ({
                   layers
                 );
                 setLayersWarning(false);
-              }}>
+              }}
+            >
               Remove & Save
             </Button>
             <Button secondaryAlt onClick={() => setLayersWarning(false)}>
@@ -908,14 +910,16 @@ const Playlist = ({
               right: "4rem",
               width: "200px",
               padding: "1rem",
-              top: '5rem'
+              top: "5rem",
             }}
-            className="overlay linked-item-custom">
+            className="overlay linked-item-custom"
+          >
             <p>
               <b style={{ color: "white" }}>Publish settings</b>
             </p>
             <span style={{ fontSize: "10px", color: "#c9c8c6" }}>
-              Your annotations will be available to everyone if public. If private only you will have access.
+              Your annotations will be available to everyone if public. If
+              private only you will have access.
             </span>
             <div
               className="more-menu-items"
@@ -924,16 +928,19 @@ const Playlist = ({
               }}
               style={{
                 borderTop: "1px solid #3E3E3E",
-              }}>
+              }}
+            >
               <span
                 style={{ color: "white" }}
-                class="material-symbols-outlined">
+                class="material-symbols-outlined"
+              >
                 lock
               </span>
               <p>Private Access</p>
               <span
                 style={{ color: "white" }}
-                class="material-symbols-outlined">
+                class="material-symbols-outlined"
+              >
                 {publishAccess === "private"
                   ? "radio_button_checked"
                   : "radio_button_unchecked"}
@@ -943,16 +950,19 @@ const Playlist = ({
               className="more-menu-items"
               onClick={() => {
                 setPublishAccess("public");
-              }}>
+              }}
+            >
               <span
                 style={{ color: "white" }}
-                class="material-symbols-outlined">
+                class="material-symbols-outlined"
+              >
                 public
               </span>
               <p>Public Access</p>
               <span
                 style={{ color: "white" }}
-                class="material-symbols-outlined">
+                class="material-symbols-outlined"
+              >
                 {publishAccess === "public"
                   ? "radio_button_checked"
                   : "radio_button_unchecked"}
@@ -965,7 +975,8 @@ const Playlist = ({
         <Modal
           title="Copy Items"
           showIcon={false}
-          onClose={() => setOpenModal(false)}>
+          onClose={() => setOpenModal(false)}
+        >
           <p style={{ fontSize: "12px" }}>
             {" "}
             <b>Click & Hold</b> any Playlist to add it to{" "}
@@ -1004,28 +1015,33 @@ const Playlist = ({
               width: "200px",
               padding: "1rem",
             }}
-            className="overlay linked-item-custom">
+            className="overlay linked-item-custom"
+          >
             <div
               className="more-menu-items"
               onClick={() => {
                 setPublishAccess("public");
-              }}>
+              }}
+            >
               <div
                 className="align-center"
                 style={{}}
                 onClick={() => {
                   setChecklist((p) => !p);
-                }}>
+                }}
+              >
                 {checklist ? (
                   <span
                     style={{ fontSize: "20px", color: "white" }}
-                    class="material-symbols-outlined unfollow">
+                    class="material-symbols-outlined unfollow"
+                  >
                     check_box
                   </span>
                 ) : (
                   <span
                     style={{ fontSize: "20px", color: "white" }}
-                    class="material-symbols-outlined unfollow">
+                    class="material-symbols-outlined unfollow"
+                  >
                     check_box_outline_blank
                   </span>
                 )}
@@ -1036,19 +1052,23 @@ const Playlist = ({
                     marginLeft: "4px",
                     color: "white",
                   }}
-                  for="playlistInclude">
+                  for="playlistInclude"
+                >
                   Checklist
                 </label>
               </div>
               <Tooltip
                 forRight={true}
-                text="Checklist Mode gives your Playlist an option to checkout the visited items so you can keep track of your playlist progress.">
+                text="Checklist Mode gives your Playlist an option to checkout the visited items so you can keep track of your playlist progress."
+              >
                 <p
                   className="what-this center"
-                  style={{ margin: "0 0 0 0.5rem" }}>
+                  style={{ margin: "0 0 0 0.5rem" }}
+                >
                   <span
                     style={{ fontSize: "24px" }}
-                    class="material-symbols-outlined unfollow">
+                    class="material-symbols-outlined unfollow"
+                  >
                     info
                   </span>
                 </p>
@@ -1058,7 +1078,8 @@ const Playlist = ({
               className="more-menu-items"
               onClick={() => {
                 setPublishAccess("public");
-              }}>
+              }}
+            >
               <div
                 className="align-center"
                 style={{
@@ -1069,17 +1090,20 @@ const Playlist = ({
                     deleteDateData();
                   }
                   setReadingPlan((p) => !p);
-                }}>
+                }}
+              >
                 {readingPlan ? (
                   <span
                     style={{ fontSize: "20px", color: "white" }}
-                    class="material-symbols-outlined unfollow">
+                    class="material-symbols-outlined unfollow"
+                  >
                     check_box
                   </span>
                 ) : (
                   <span
                     style={{ fontSize: "20px", color: "white" }}
-                    class="material-symbols-outlined unfollow">
+                    class="material-symbols-outlined unfollow"
+                  >
                     check_box_outline_blank
                   </span>
                 )}
@@ -1090,17 +1114,20 @@ const Playlist = ({
                     marginLeft: "4px",
                     color: "white",
                   }}
-                  for="playlistInclude">
+                  for="playlistInclude"
+                >
                   Reading Plan
                 </label>
               </div>
               <Tooltip text="Plan Mode lets you add dates in your playlist which keeps the date and progress in track according to date.">
                 <p
                   className="what-this center"
-                  style={{ margin: "0 0 0 0.5rem" }}>
+                  style={{ margin: "0 0 0 0.5rem" }}
+                >
                   <span
                     style={{ fontSize: "24px" }}
-                    class="material-symbols-outlined unfollow ">
+                    class="material-symbols-outlined unfollow "
+                  >
                     info
                   </span>
                 </p>
@@ -1119,11 +1146,13 @@ const Playlist = ({
               style={{
                 borderBottom: "1px solid #E1E3EA",
                 marginBottom: "0.5rem",
-              }}>
+              }}
+            >
               <Button onClick={onBulkDelete} secondaryAlt color="#C20104">
                 <span
                   style={{ marginRight: "0.5rem" }}
-                  class="material-symbols-outlined unfollow color-inherit">
+                  class="material-symbols-outlined unfollow color-inherit"
+                >
                   delete_forever
                 </span>
                 <span className="color-inherit">Delete</span>
@@ -1131,7 +1160,8 @@ const Playlist = ({
               <Button onClick={onBulkJsonDownload} secondaryAlt color="#C20104">
                 <span
                   style={{ marginRight: "0.5rem" }}
-                  class="material-symbols-outlined unfollow color-inherit">
+                  class="material-symbols-outlined unfollow color-inherit"
+                >
                   system_update_alt
                 </span>
                 <span className="color-inherit">Download JSON</span>
@@ -1214,10 +1244,12 @@ const Playlist = ({
               height: "100%",
               display: "flex",
               flexDirection: "column",
-            }}>
+            }}
+          >
             <div
               className="align-center justify-between"
-              style={{ padding: "0.5rem 0 ", justifyContent: "space-between" }}>
+              style={{ padding: "0.5rem 0 ", justifyContent: "space-between" }}
+            >
               <div
                 className="publish-setting"
                 onClick={(e) => {
@@ -1230,7 +1262,8 @@ const Playlist = ({
                   globalThis.LastClickY = y;
                   showPlaylistPosition.current = { ...getPosition() };
                   setShowPlaylistSettings(true);
-                }}>
+                }}
+              >
                 <span class="material-symbols-outlined">playlist_play</span>
                 <span>Playlist Settings</span>
               </div>
@@ -1248,7 +1281,8 @@ const Playlist = ({
                     globalThis.LastClickY = y;
                     showMorePosition.current = { ...getPosition() };
                     setShowMoreOptions(true);
-                  }}>
+                  }}
+                >
                   <span class="material-symbols-outlined">settings</span>
                   <span>Publish Settings</span>
                 </div>
@@ -1258,7 +1292,8 @@ const Playlist = ({
             {(isSomethingChecked || embedding) && (
               <div
                 style={{ justifyContent: "space-between", margin: "0.5rem 0" }}
-                className="align-center">
+                className="align-center"
+              >
                 <Button
                   onClick={() => {
                     onBulkDeleteItems();
@@ -1270,10 +1305,12 @@ const Playlist = ({
                     }
                   }}
                   secondaryAlt
-                  color="#C20104">
+                  color="#C20104"
+                >
                   <span
                     style={{ marginRight: "0.5rem" }}
-                    class="material-symbols-outlined unfollow color-inherit">
+                    class="material-symbols-outlined unfollow color-inherit"
+                  >
                     delete_forever
                   </span>
                   <span className="color-inherit">Delete</span>
@@ -1282,7 +1319,8 @@ const Playlist = ({
                   <Button onClick={onEmbedItems} secondaryAlt color="#3B82F6">
                     <span
                       style={{ marginRight: "0.5rem" }}
-                      class="material-symbols-outlined unfollow color-inherit">
+                      class="material-symbols-outlined unfollow color-inherit"
+                    >
                       frame_source
                     </span>
                     <span className="color-inherit">Embed</span>
@@ -1294,10 +1332,12 @@ const Playlist = ({
                     setChecklistData({});
                     setChecklistEmbeded({});
                   }}
-                  secondaryAlt>
+                  secondaryAlt
+                >
                   <span
                     style={{ marginRight: "0.5rem" }}
-                    class="material-symbols-outlined unfollow color-inherit">
+                    class="material-symbols-outlined unfollow color-inherit"
+                  >
                     close
                   </span>
                   <span className="color-inherit">Cancel</span>
@@ -1307,7 +1347,8 @@ const Playlist = ({
             {isSomethingEmbededChecked && !isSomethingChecked && (
               <div
                 style={{ justifyContent: "space-between", margin: "0.5rem 0" }}
-                className="align-center">
+                className="align-center"
+              >
                 <Button
                   onClick={() => {
                     const values = Object.keys(checkListEmbeded).map(
@@ -1316,10 +1357,12 @@ const Playlist = ({
                     onDisembed(values, true);
                   }}
                   secondaryAlt
-                  color="#C20104">
+                  color="#C20104"
+                >
                   <span
                     style={{ marginRight: "0.5rem" }}
-                    class="material-symbols-outlined unfollow color-inherit">
+                    class="material-symbols-outlined unfollow color-inherit"
+                  >
                     delete_forever
                   </span>
                   <span className="color-inherit">Delete</span>
@@ -1332,10 +1375,12 @@ const Playlist = ({
                     onDisembed(values);
                   }}
                   secondaryAlt
-                  color="#3B82F6">
+                  color="#3B82F6"
+                >
                   <span
                     style={{ marginRight: "0.5rem" }}
-                    class="material-symbols-outlined unfollow color-inherit">
+                    class="material-symbols-outlined unfollow color-inherit"
+                  >
                     link_off
                   </span>
                   <span className="color-inherit">Remove</span>
@@ -1344,10 +1389,12 @@ const Playlist = ({
                   onClick={() => {
                     setChecklistEmbeded({});
                   }}
-                  secondaryAlt>
+                  secondaryAlt
+                >
                   <span
                     style={{ marginRight: "0.5rem" }}
-                    class="material-symbols-outlined unfollow color-inherit">
+                    class="material-symbols-outlined unfollow color-inherit"
+                  >
                     close
                   </span>
                   <span className="color-inherit">Cancel</span>
@@ -1393,7 +1440,8 @@ const Playlist = ({
                   gap: "1rem",
                   justifyContent: "space-between",
                   width: "100%",
-                }}>
+                }}
+              >
                 <Input
                   value={searchText}
                   style={{ marginBottom: "0" }}
@@ -1402,7 +1450,8 @@ const Playlist = ({
                 />
                 <p
                   onClick={onSearchHit}
-                  className="playlist-action secondary self-start">
+                  className="playlist-action secondary self-start"
+                >
                   <span class="material-symbols-outlined unfollow">search</span>
                   <span>Search & Add</span>
                 </p>
@@ -1415,7 +1464,8 @@ const Playlist = ({
                   justifyContent: "space-between",
                   alignItems: "center",
                   width: "100%",
-                }}>
+                }}
+              >
                 <Button
                   style={{ fontSize: "12px" }}
                   onClick={() => {
@@ -1423,10 +1473,12 @@ const Playlist = ({
                     setOpenAttachLink(true);
                   }}
                   small
-                  secondary>
+                  secondary
+                >
                   <span
                     class="material-symbols-outlined unfollow color-inherit"
-                    style={{ fontSize: "1.25rem", marginRight: "0.25rem" }}>
+                    style={{ fontSize: "1.25rem", marginRight: "0.25rem" }}
+                  >
                     photo_library
                   </span>
                   <span className="color-inherit">Add Media</span>
@@ -1437,7 +1489,8 @@ const Playlist = ({
                     attachDate();
                   }}
                   style={{ width: "fit-content" }}
-                  className="playlist-action small">
+                  className="playlist-action small"
+                >
                   <span class="material-symbols-outlined unfollow">
                     calendar_month
                   </span>
@@ -1469,16 +1522,19 @@ const Playlist = ({
             {regenrateUI && (
               <div
                 className="add-new-playlist alter"
-                style={{ border: "none" }}>
+                style={{ border: "none" }}
+              >
                 <div
                   class="align-center"
-                  style={{ justifyContent: "space-between" }}>
+                  style={{ justifyContent: "space-between" }}
+                >
                   <p style={{ fontSize: "12px", margin: "0.5rem 0" }}>
                     <b>Regeneration Prompt:</b>
                   </p>
                   <div
                     className="align-center"
-                    style={{ gap: "0.5rem", marginBottom: "0.5rem" }}>
+                    style={{ gap: "0.5rem", marginBottom: "0.5rem" }}
+                  >
                     <Select
                       hidden={true}
                       secondary
@@ -1495,10 +1551,12 @@ const Playlist = ({
                         small
                         onClick={() => {
                           setSystemPrompt(globalThis.SYSTEM_PROMPT);
-                        }}>
+                        }}
+                      >
                         <span
                           style={{ fontSize: "14px" }}
-                          class="material-symbols-outlined unfollow">
+                          class="material-symbols-outlined unfollow"
+                        >
                           reset_settings
                         </span>
                       </Button>
@@ -1547,7 +1605,8 @@ const Playlist = ({
                   <Button
                     // isDisabled={loading}
                     onClick={onRegenration}
-                    secondary>
+                    secondary
+                  >
                     Regenrate
                   </Button>
                 </div>
@@ -1580,7 +1639,8 @@ const Playlist = ({
                     layers
                   );
                 }}
-                secondary>
+                secondary
+              >
                 Save
               </Button>
               {hasOldRef.current && (
@@ -1595,7 +1655,8 @@ const Playlist = ({
                     os.download(jsonStr, `${name}.json`);
                   }}
                   style={{ width: "100%", padding: "0" }}
-                  className="playlist-action self-start">
+                  className="playlist-action self-start"
+                >
                   <span class="material-symbols-outlined unfollow">
                     download
                   </span>
@@ -1609,7 +1670,8 @@ const Playlist = ({
                     setRegenrateUI(true);
                   }}
                   style={{ width: "100%", padding: "0" }}
-                  className="playlist-action self-start">
+                  className="playlist-action self-start"
+                >
                   <span class="material-symbols-outlined unfollow">
                     animated_images
                   </span>
@@ -1625,7 +1687,8 @@ const Playlist = ({
                     setOpenModal(true);
                   }}
                   style={{ width: "100%", padding: "0" }}
-                  className="playlist-action self-start">
+                  className="playlist-action self-start"
+                >
                   <span class="material-symbols-outlined unfollow">
                     content_copy
                   </span>
@@ -1638,7 +1701,8 @@ const Playlist = ({
                   setHasGenrated(false);
                   onClose();
                 }}
-                secondaryAlt>
+                secondaryAlt
+              >
                 Close
               </Button>
             </div>
@@ -1657,14 +1721,16 @@ const Playlist = ({
               justifyContent: "space-between",
               flexDirection: "column",
               marginTop: openModalName ? "0" : "auto",
-            }}>
+            }}
+          >
             {playLists.length < 0 && (
               <div
                 style={{
                   display: "flex",
                   alignItems: "center",
                   marginBottom: "8px",
-                }}>
+                }}
+              >
                 <input
                   type="checkbox"
                   checked={mergeMode}
@@ -1679,7 +1745,8 @@ const Playlist = ({
                     fontWeight: "600",
                     marginLeft: "12px",
                   }}
-                  for="mergeMode">
+                  for="mergeMode"
+                >
                   Merge Mode
                 </label>
               </div>
@@ -1688,7 +1755,8 @@ const Playlist = ({
               <div style={{ margin: "0.5rem", width: "100%" }}>
                 <div
                   className="align-center"
-                  style={{ gap: "0.5rem", marginBottom: "0.5rem" }}>
+                  style={{ gap: "0.5rem", marginBottom: "0.5rem" }}
+                >
                   <Select
                     hidden={true}
                     secondary
@@ -1705,10 +1773,12 @@ const Playlist = ({
                       small
                       onClick={() => {
                         setSystemPrompt(globalThis.SYSTEM_PROMPT);
-                      }}>
+                      }}
+                    >
                       <span
                         style={{ fontSize: "14px" }}
-                        class="material-symbols-outlined unfollow">
+                        class="material-symbols-outlined unfollow"
+                      >
                         reset_settings
                       </span>
                     </Button>
@@ -1742,7 +1812,8 @@ const Playlist = ({
             {!openModalName && (
               <div
                 className="align-center"
-                style={{ gap: "0.5rem", width: "100%" }}>
+                style={{ gap: "0.5rem", width: "100%" }}
+              >
                 <p
                   onClick={() => {
                     if (loading) return;
@@ -1751,10 +1822,12 @@ const Playlist = ({
                   style={{ width: "3rem", padding: "0" }}
                   className={`playlist-action self-start ${
                     loading && "disabled"
-                  }`}>
+                  }`}
+                >
                   <span
                     class="material-symbols-outlined unfollow"
-                    style={{ fontSize: "1.3rem", margin: "0" }}>
+                    style={{ fontSize: "1.3rem", margin: "0" }}
+                  >
                     cached
                   </span>
                 </p>
@@ -1823,7 +1896,8 @@ const Playlist = ({
                   style={{ width: "100%", padding: "0" }}
                   className={`playlist-action self-start ${
                     loading && "disabled"
-                  }`}>
+                  }`}
+                >
                   {autoGenerateOn ? (
                     <>
                       <span class="material-symbols-outlined unfollow">

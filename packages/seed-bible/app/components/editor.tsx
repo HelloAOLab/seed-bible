@@ -18,7 +18,7 @@ import {
   BulletList,
   OrderedList,
   ListItem,
-} from 'https://esm.helloao.org/vendor-RPNXNWQB.js';
+} from "https://esm.helloao.org/vendor-RPNXNWQB.js";
 
 import { MarginYIcon, MarginXIcon } from "app.components.icons";
 const localStorage = getBot("system", "app.localStorage");
@@ -323,7 +323,7 @@ const TextEditor = ({
       },
       editorProps: {
         attributes: {
-          class: 'no-select', // <- hook for the CSS above
+          class: "no-select", // <- hook for the CSS above
         },
         handleDOMEvents: {
           // Block keyboard and menu copy/cut
@@ -335,13 +335,13 @@ const TextEditor = ({
             event.preventDefault();
             return true;
           },
-    
+
           // (Optional) make it harder to start a selection at all
           selectstart: (_view, event) => {
             event.preventDefault();
             return true;
           },
-    
+
           // (Optional) stop dragging out selections / drags
           dragstart: (_view, event) => {
             event.preventDefault();

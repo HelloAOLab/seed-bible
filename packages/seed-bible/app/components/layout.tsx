@@ -118,8 +118,9 @@ const Layout = ({ children }) => {
       {(sidebarMode === "default" ||
         sidebarMode === "settings" ||
         sidebarMode === "themeSettings") &&
-        !openOnMobile && <SpaceUI />}
-      {openOnMobile && sidebarMode === "default" && <SpaceUI />}
+        !globalThis.IsMobileNow() && <SpaceUI />}
+        
+      {globalThis.IsMobileNow() && sidebarMode === "default" && <SpaceUI />}
       {showScreenPanelOption && (
         <PanelSettingsDialog
           openPanelCount={showScreenPanelOption}

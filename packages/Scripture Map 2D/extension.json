@@ -3,22 +3,19 @@
   "configEditor": {
     "author": "Gabriel Souki",
     "app": "@GetScriptureMap2D",
-    "toolbarConfig":
-    {
-        "label": "Scripture Map 2D",
-        "hasToggle": true,
-        "icon": "browse",
-        "active": false,
-        "showInPageToolbar": true,
-        "showInStarterToolbar": true
+    "toolbarConfig": {
+      "label": "Scripture Map 2D",
+      "hasToggle": true,
+      "icon": "article",
+      "active": false,
+      "showInPageToolbar": true,
+      "showInStarterToolbar": true
     },
-    "tabConfig":
-    {
-        "title": "Scripture Map 2D"
+    "tabConfig": {
+      "title": "Scripture Map 2D"
     },
-    "contextMenuConfig": 
-    {
-        "optionsIsOn": ""
+    "contextMenuConfig": {
+      "optionsIsOn": ""
     }
   },
   "createdAt": "2025-09-15T16:43:58.673Z",

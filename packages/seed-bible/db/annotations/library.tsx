@@ -441,7 +441,7 @@ export async function loadTranslationDocument(
 // shared document - record: <user record>/<studio record>, inst: reading_history, branch: <current year utc>
 // stores reading events
 
-interface ReadingEvent {
+export interface ReadingEvent {
   /**
    * The ID of the book that was read.
    */
@@ -588,13 +588,21 @@ export async function saveReadingHistory(
 export interface ReadingHistorySummary {
   /**
    * The total number of books that were read over the time period.
+   *
+   * That is, the number of books that have at least one chapter read, per user.
+   *
+   * e.g. If user1 read Genesis and Exodus, and user2 read Genesis, then totalBooksRead is 3.
    */
-  uniqueBooksRead: number;
+  totalBooksRead: number;
 
   /**
    * The total number of chapters that were read over the time period.
+   *
+   * That is, the number of chapters that were read per user.
+   *
+   * e.g. If user1 read Genesis chapters 1 and 2, and user2 read Genesis chapter 1, then totalChaptersRead is 3.
    */
-  uniqueChaptersRead: number;
+  totalChaptersRead: number;
 
   /**
    * The total time spent reading over the time period (in seconds).
@@ -610,12 +618,12 @@ export interface ReadingHistorySummary {
      */
     [userId: string]: {
       /**
-       * The total number of books that the user read over the time period.
+       * The unique number of books that the user read over the time period.
        */
       uniqueBooksRead: number;
 
       /**
-       * The total number of chapters that the user read over the time period.
+       * The unique number of chapters that the user read over the time period.
        */
       uniqueChaptersRead: number;
 
@@ -651,12 +659,12 @@ export interface ReadingHistorySummary {
   };
 
   /**
-   * The start time in unix seconds of the summary.
+   * The time of the first event in the summary (in unix seconds).
    */
   startTime: number;
 
   /**
-   * The end time in unix seconds of the summary.
+   * The time of the last event in the summary (in unix seconds).
    */
   endTime: number;
 }
@@ -753,75 +761,37 @@ export async function getReadingHistorySummary(
   startTime: number,
   endTime: number
 ): Promise<ReadingHistorySummary> {
+  const events = await getReadingHistoryEvents(recordName, startTime, endTime);
+  return calculateReadingHistorySummary(events);
+}
+
+/**
+ * Gets the reading history events for the given record name and time range.
+ * @param recordName The name of the record that the reading history is stored in.
+ * @param startTime The start time in unix seconds to filter the reading history events.
+ * @param endTime The end time in unix seconds to filter the reading history events.
+ * @returns A promise that resolves to an iterable of reading events.
+ */
+export async function getReadingHistoryEvents(
+  recordName: string,
+  startTime: number,
+  endTime: number
+): Promise<Iterable<ReadingEvent>> {
   const startYear = new Date(startTime * 1000).getUTCFullYear();
   const endYear = new Date(endTime * 1000).getUTCFullYear();
-
-  const overallSummary: ReadingHistorySummary = {
-    uniqueBooksRead: 0,
-    uniqueChaptersRead: 0,
-    totalTimeSpentReading: 0,
-    users: {},
-    startTime,
-    endTime,
-  };
-
-  const allYearsPromises: Promise<ReadingHistorySummary>[] = [];
+  const allEventPromises: Promise<Iterable<ReadingEvent>>[] = [];
   for (let y = startYear; y <= endYear; y++) {
-    const yearlySummary = getYearlyReadingHistorySummary(
+    const events = getYearlyReadingHistoryEvents(
       recordName,
       y,
       startTime,
       endTime
     );
-    allYearsPromises.push(yearlySummary);
+    allEventPromises.push(events);
   }
 
-  const allYears = await Promise.all(allYearsPromises);
-
-  if (allYears.length === 0) {
-    return overallSummary;
-  } else if (allYears.length === 1) {
-    return allYears[0];
-  }
-  // Merge the yearly summaries into the overall summary
-  for (const yearlySummary of allYears) {
-    for (const userId in yearlySummary.users) {
-      const yearlyUser = yearlySummary.users[userId];
-
-      if (!overallSummary.users[userId]) {
-        overallSummary.users[userId] = { ...yearlyUser };
-      } else {
-        const overallUser = overallSummary.users[userId];
-
-        for (const bookId in yearlyUser.books) {
-          const yearlyBook = yearlyUser.books[bookId];
-
-          if (!overallUser.books[bookId]) {
-            overallUser.books[bookId] = { ...yearlyBook };
-          } else {
-            const overallBook = overallUser.books[bookId];
-
-            for (const chapterNumber in yearlyBook.chapters) {
-              const yearlyChapterEvents = yearlyBook.chapters[chapterNumber];
-
-              if (!overallBook.chapters[chapterNumber]) {
-                overallBook.chapters[chapterNumber] =
-                  yearlyChapterEvents.slice();
-              } else {
-                const overallChapterEvents =
-                  overallBook.chapters[chapterNumber];
-                overallChapterEvents.push(...yearlyChapterEvents);
-              }
-            }
-          }
-        }
-      }
-    }
-  }
-
-  updateSummaryTotals(overallSummary);
-
-  return overallSummary;
+  const allEvents = await Promise.all(allEventPromises);
+  return flat(allEvents);
 }
 
 /**
@@ -842,18 +812,76 @@ async function getYearlyReadingHistorySummary(
   marker?: string,
   name?: string
 ): Promise<any> {
-  let summary: ReadingHistorySummary = {
-    uniqueBooksRead: 0,
-    uniqueChaptersRead: 0,
-    totalTimeSpentReading: 0,
-    users: {},
-  };
+  const events = await getYearlyReadingHistoryEvents(
+    recordName,
+    year,
+    startTime,
+    endTime,
+    marker,
+    name
+  );
+  return calculateReadingHistorySummary(events);
+}
 
+/**
+ * Gets the reading history events for the given record name and year.
+ * @param recordName The name of the record that the reading history is stored in.
+ * @param year The year to get the reading history events for.
+ * @param startTime The start time in unix seconds to filter the reading history events.
+ * @param endTime The end time in unix seconds to filter the reading history events.
+ * @param marker The marker to use for the reading history document. Use `publicRead` to allow anyone to read, but only users who have access to the record can write. Use `publicWrite` to allow anyone to write. Defaults to `publicRead`.
+ * @param name The name of the shared document. Defaults to `reading_history`.
+ * @returns
+ */
+async function getYearlyReadingHistoryEvents(
+  recordName: string,
+  year: number,
+  startTime: number,
+  endTime: number,
+  marker?: string,
+  name?: string
+): Promise<Iterable<ReadingEvent>> {
   const doc = await getReadingHistoryDocument(recordName, year, marker, name);
+  const events = filter(
+    getReadingEvents(doc),
+    (e) => e.start >= startTime || e.start < endTime
+  );
+  return events;
+}
+
+/**
+ * Filters the given iterable using the provided predicate function.
+ * @param iterable The iterable to filter.
+ * @param predicate The predicate function to use for filtering.
+ */
+export function* filter<T>(
+  iterable: Iterable<T>,
+  predicate: (item: T) => boolean
+): Generator<T> {
+  for (const item of iterable) {
+    if (predicate(item)) {
+      yield item;
+    }
+  }
+}
+
+/**
+ * Flattens the given iterables into a single iterable.
+ * @param iterables The iterables to flatten.
+ */
+export function* flat<T>(iterables: Iterable<Iterable<T>>): Generator<T> {
+  for (const iterable of iterables) {
+    for (const item of iterable) {
+      yield item;
+    }
+  }
+}
+
+function* getReadingEvents(doc: SharedDocument): Generator<ReadingEvent> {
   const eventsArray = doc.getArray("events").type;
 
   for (let i = 0; i < eventsArray.length; i++) {
-    const e: SharedMap<any> = eventsArray.get(i);
+    const e = eventsArray.get(i);
     const event: ReadingEvent = {
       userId: e.get("userId"),
       bookId: e.get("bookId"),
@@ -862,12 +890,33 @@ async function getYearlyReadingHistorySummary(
       end: e.get("end"),
     };
 
-    // Skip events outside the specified time range
-    // Only consider start time for filtering to avoid skipping time sections
-    if (event.start < startTime || event.start > endTime) {
-      continue;
-    }
+    yield event;
+  }
+}
 
+/**
+ * Calculates the reading history summary from the given reading events.
+ * @param events The events to calculate the summary from.
+ */
+export function calculateReadingHistorySummary(
+  events: Iterable<ReadingEvent>
+): ReadingHistorySummary {
+  const summary: ReadingHistorySummary = {
+    totalBooksRead: 0,
+    totalChaptersRead: 0,
+    totalTimeSpentReading: 0,
+    users: {},
+    startTime: Infinity,
+    endTime: -Infinity,
+  };
+
+  for (const event of events) {
+    if (event.start < summary.startTime) {
+      summary.startTime = event.start;
+    }
+    if (event.end > summary.endTime) {
+      summary.endTime = event.end;
+    }
     const length = event.end - event.start;
     summary.totalTimeSpentReading += length;
     const userSummary = (summary.users[event.userId] ??= {
@@ -903,9 +952,10 @@ function updateSummaryTotals(summary: ReadingHistorySummary) {
       const book = user.books[bookId];
       user.uniqueBooksRead += 1;
       user.uniqueChaptersRead += Object.keys(book.chapters).length;
-      summary.uniqueBooksRead += 1;
-      summary.uniqueChaptersRead += Object.keys(book.chapters).length;
+      book.uniqueChaptersRead = Object.keys(book.chapters).length;
+      summary.totalBooksRead += 1;
     }
+    summary.totalChaptersRead += user.uniqueChaptersRead;
   }
 }
 

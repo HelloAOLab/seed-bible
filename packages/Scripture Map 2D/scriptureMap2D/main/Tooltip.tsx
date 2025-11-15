@@ -1,51 +1,76 @@
-const {useRef, useState, useEffect} = os.appHooks
+const { useRef, useState, useLayoutEffect, useMemo } = os.appHooks;
+
+export const ReadingHistoryTooltipContent = ({ userId, fixedContent }) => {
+  const { userName, backgroundColor, color } = useMemo(() => {
+    const isMe = userId === configBot.id;
+    const userName = isMe ? "You" : "Guest";
+    const backgroundColor = isMe
+      ? BibleVizUtils.Data.tags.myUserColor
+      : (BibleVizUtils.Data.vars.userPresenceData?.[userId]?.user?.color ??
+        thisBot.vars.FakeReadingHistoryUsersColorMap?.get(userId) ??
+        "pink");
+    const color = BibleVizUtils.Functions.GetTextColorBasedOnBackground({
+      backgroundColor,
+    });
+
+    return { userName, backgroundColor, color };
+  }, []);
+
+  return (
+    <span className="readingHistoryTooltipContent">
+      <span style={{ backgroundColor, color }}>{userName}</span>
+      <span>{fixedContent}</span>
+    </span>
+  );
+};
 
 export const Tooltip = ({ content, anchor }) => {
-    const ref = useRef(null);
-    const [style, setStyle] = useState({ top: anchor.y, left: anchor.x, "--arrowLeft": "50%" });
-    const [direction, setDirection] = useState("up");
+  const ref = useRef(null);
+  const [style, setStyle] = useState({
+    top: anchor.y,
+    left: anchor.x,
+    "--arrowLeft": "50%",
+  });
+  const [direction, setDirection] = useState("up");
 
-    useEffect(() => {
-        if (!ref.current) return;
+  useLayoutEffect(() => {
+    if (!ref.current) return;
 
-        const rect = ref.current.getBoundingClientRect();
-        const viewportWidth = window.innerWidth
-        const offset = 8;
+    const rect = ref.current.getBoundingClientRect();
+    const viewportWidth = window.innerWidth;
+    const offset = 8;
 
-        let newDirection = "up";
+    let newDirection = "up";
+    let newTop = anchor.y;
 
-        if (anchor.y - rect.height - offset < 0) 
-        {
-            newDirection = "down";
-        }
+    if (anchor.y - rect.height - offset < 0) {
+      newDirection = "down";
+      newTop += anchor.height ?? 0;
+    }
 
-        let newLeft = anchor.x;
-        const halfWidth = rect.width / 2;
-        let newArrowLeft = "50%"
-        
-        if (anchor.x - halfWidth < 0) 
-        {
-            newLeft = halfWidth;
-        } 
-        else if (anchor.x + halfWidth > viewportWidth) 
-        {
-            newLeft = viewportWidth - halfWidth;
-        }
+    let newLeft = anchor.x;
+    const halfWidth = rect.width / 2;
+    let newArrowLeft = "50%";
 
-        const leftDiff = newLeft - anchor.x;
-        if(leftDiff !== 0)
-        {
-            const leftDiffPercent = Math.round((leftDiff / rect.width) * 100);
-            newArrowLeft = `${50 - leftDiffPercent}%`
-        }
+    if (anchor.x - halfWidth < 0) {
+      newLeft = halfWidth;
+    } else if (anchor.x + halfWidth > viewportWidth) {
+      newLeft = viewportWidth - halfWidth;
+    }
 
-        setDirection(newDirection);
-        setStyle({ top: anchor.y, left: newLeft, "--arrowLeft": newArrowLeft });
-    }, [anchor]);
+    const leftDiff = newLeft - anchor.x;
+    if (leftDiff !== 0) {
+      const leftDiffPercent = Math.round((leftDiff / rect.width) * 100);
+      newArrowLeft = `${50 - leftDiffPercent}%`;
+    }
 
-    return (
-        <span ref={ref} className={`tooltip tooltip-${direction}`} style={style}>
-            {content}
-        </span>
-    );
+    setDirection(newDirection);
+    setStyle({ top: newTop, left: newLeft, "--arrowLeft": newArrowLeft });
+  }, [anchor]);
+
+  return (
+    <span ref={ref} className={`tooltip tooltip-${direction}`} style={style}>
+      {content}
+    </span>
+  );
 };
