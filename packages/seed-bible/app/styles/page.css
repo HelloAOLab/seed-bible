@@ -247,3 +247,28 @@
   top: -42px;
   font-size: 17px;
 }
+
+.toolbar-icon-container {
+  display: flex;
+  flex-direction: column;
+  position: relative;
+  align-items: center;
+  gap: 2px;
+  font-size: 10px;
+}
+
+.toolbar-icon-count {
+  position: absolute;
+  font-size: 8px;
+  background: rgba(211, 100, 51, 1);
+  padding: 0px 1px 2px 0px;
+  border-radius: 50%;
+  height: 12px;
+  width: 12px;
+  display: flex;
+  justify-content: center;
+  align-items: center;
+  top: -5px;
+  right: -5px;
+  color: white;
+}
