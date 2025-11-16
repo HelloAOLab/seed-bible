@@ -335,6 +335,7 @@ if (globalThis.AddNowBarApp && !globalThis.IsQueuePresent) {
 
 const PlayingPlaylist = () => {
   const [render, setRender] = useState(0);
+  const [renderPlaylist, setRenderPlaylist] = useState(0);
 
   const [{ currentPlaylistName, currentItemID }, setItemsPlayer] = useState({
     currentPlaylistName: globalThis.PPcurrentPlaylistName,
@@ -462,7 +463,7 @@ const PlayingPlaylist = () => {
     let startI = Number.MAX_SAFE_INTEGER;
     let endI = Number.MIN_SAFE_INTEGER;
 
-    globalThis.PPplaylist.list.forEach((ele, index) => {
+    playlist.list.forEach((ele, index) => {
       if (newIdsmap[ele.id]) {
         if (firstIDIndex === -1) {
           firstIDIndex = index;
@@ -476,7 +477,7 @@ const PlayingPlaylist = () => {
       endI = Math.max(lastIdIndex, firstIDIndex);
     }
 
-    globalThis.PPplaylist.list.forEach((ele, index) => {
+    playlist.list.forEach((ele, index) => {
       if (newIdsmap[ele.id]) {
         if (firstIDIndex === -1) {
           firstIDIndex = index;
@@ -492,7 +493,7 @@ const PlayingPlaylist = () => {
 
     globalThis.LAST_INDEX_CHECKLIST_CHECKED = firstIDIndex;
 
-    const thCurrent = globalThis.PPplaylist.list;
+    const thCurrent = playlist.list;
 
     if (targetItem.length > 1) {
       thCurrent.forEach((ele) => {
@@ -524,7 +525,6 @@ const PlayingPlaylist = () => {
         });
       }
     }
-
     globalThis.SetCheckedItemsPlayingPlaylist(prevIds);
   };
 
@@ -534,6 +534,7 @@ const PlayingPlaylist = () => {
     globalThis.SetActiveDate = setActiveDate;
     globalThis.PlaylistPlaytoggleHide = toggleHide;
     globalThis.RenderPlaylist = () => setRender((p) => p + 1);
+    globalThis.RenderPlaylistPlaying = () => setRenderPlaylist((p) => p + 1);
     globalThis.SetItemsPlayer = setItemsPlayer;
     return () => {
       globalThis.SetActiveDate = null;

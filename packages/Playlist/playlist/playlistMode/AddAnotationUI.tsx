@@ -159,8 +159,8 @@ const AnnotationInnerDiv = ({
                   !isEditAddress
                 ) {
                   if (
-                    globalThis.KEY_HOLD["control"] ||
-                    globalThis.KEY_HOLD["meta"]
+                    globalThis.KEY_HOLD?.["control"] ||
+                    globalThis.KEY_HOLD?.["meta"]
                   ) {
                     if (!singleMode) {
                       setEmbedding(data.id);
