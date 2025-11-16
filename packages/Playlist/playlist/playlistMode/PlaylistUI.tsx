@@ -547,7 +547,8 @@ const Playlist = () => {
           sxContainer={{ width: "460px" }}
           title="Welcome to Seed Bible"
           showIcon={false}
-          onClose={onCloseSharPlaylistModal}>
+          onClose={onCloseSharPlaylistModal}
+        >
           <div className="welcome-box">
             <img
               src="https://auth-aux-aobot-prod-filesbucket-141297942820.s3.amazonaws.com/aoBot/08ff23d5216230e0fe9b9c0f80b8192aee35c320d4c87e60046e7cc396d8f5a7.svg"
@@ -576,7 +577,8 @@ const Playlist = () => {
                 alignItems: !playlistShared.description
                   ? "center"
                   : "flex-start",
-              }}>
+              }}
+            >
               <RenderIcon
                 isCustomIcons={playlistShared.isCustomIcon}
                 icon={playlistShared.icon}
@@ -588,7 +590,8 @@ const Playlist = () => {
                     fontSize: !!playlistShared.description
                       ? "1rem"
                       : "1.125rem",
-                  }}>
+                  }}
+                >
                   {playlistShared.name}
                 </h4>
                 {!!playlistShared.description && (
@@ -612,7 +615,8 @@ const Playlist = () => {
                   });
                 setPLaylistSharerName("");
                 globalThis.hasASharedPlaylist = false;
-              }}>
+              }}
+            >
               Start
             </Button>
           </div>
@@ -639,7 +643,8 @@ const Playlist = () => {
                   globalThis.PendingAction = null;
                 }
               }}
-              variant="black">
+              variant="black"
+            >
               Confirm
             </Button>
             <Button secondaryAlt onClick={closeConfirmStopPlaylist}>
@@ -654,7 +659,8 @@ const Playlist = () => {
           flexDirection: "column",
           height: "100%",
           containerType: "inline-size" /* Enables container query */,
-        }}>
+        }}
+      >
         {showVideoOverlay && <ShowPersonVideoOverlay />}
         <ProjectProvider>
           <div
@@ -663,15 +669,16 @@ const Playlist = () => {
               position: "relative",
               flexGrow: "1",
               overflow: "auto",
-            }}>
+            }}
+          >
             <style>
               {`.playlist-cont-actions, .playlist-cont-parent {
                             --width: ${
                               viewHistroy === 1
                                 ? 400
                                 : viewHistroy === 2
-                                ? ((collection?.length ? 1 : 1) || 1) * 400
-                                : activePlaylists.length * 400
+                                  ? ((collection?.length ? 1 : 1) || 1) * 400
+                                  : activePlaylists.length * 400
                             }px 
                         }`}
             </style>
@@ -710,11 +717,13 @@ const Playlist = () => {
                 if (e.currentTarget.id === "sidebar-bar") {
                   setTagMask(gridPortalBot, "portalZoomable", true);
                 }
-              }}>
+              }}
+            >
               <div>
                 <div
                   className={`playlist-cont-actions`}
-                  style={{ padding: !editData.id ? "" : "12px" }}>
+                  style={{ padding: !editData.id ? "" : "12px" }}
+                >
                   {editData.id && (
                     <span
                       class="material-symbols-outlined unfollow"
@@ -727,7 +736,8 @@ const Playlist = () => {
                       onClick={() => {
                         globalThis[`setOpenAttachLink`](false);
                         thisBot.resetEditingState({ id: editData.id });
-                      }}>
+                      }}
+                    >
                       arrow_back
                     </span>
                   )}
@@ -746,10 +756,12 @@ const Playlist = () => {
                           style={{ width: `${100 / buttonConfigs.length}%` }}
                           className={`tabs-playlist-item ${
                             value === tab ? "active" : ""
-                          }`}>
+                          }`}
+                        >
                           <span
                             className="material-symbols-outlined unfollow"
-                            style={{ fontSize: "20px" }}>
+                            style={{ fontSize: "20px" }}
+                          >
                             {icon}
                           </span>
                           <span>
@@ -766,7 +778,8 @@ const Playlist = () => {
                   {editData.id && (
                     <div
                       className="align-center"
-                      style={{ marginLeft: "1rem" }}>
+                      style={{ marginLeft: "1rem" }}
+                    >
                       <RenderIcon
                         isAllowSet
                         isCustomIcons={isCustomIcon}
@@ -815,7 +828,8 @@ const Playlist = () => {
                         globalThis.PLAYLIST_PANEL_ID = null;
                         globalThis.makingPlaylist = false;
                         return;
-                      }}>
+                      }}
+                    >
                       close
                     </span>
                   )}
@@ -831,7 +845,8 @@ const Playlist = () => {
                     height: `calc(100% - ${
                       playingPlaylist || !!editData.id ? "130px" : "40px"
                     })`,
-                  }}>
+                  }}
+                >
                   <Discover
                     setAnnotationData={setAnnotationData}
                     editingPlaylist={editData.id}
@@ -853,7 +868,8 @@ const Playlist = () => {
                     height: `calc(100% - ${
                       playingPlaylist || !!editData.id ? "90px" : "0px"
                     })`,
-                  }}>
+                  }}
+                >
                   <CreatePlaylistUI
                     editData={editAnnoData}
                     setTab={setTab}

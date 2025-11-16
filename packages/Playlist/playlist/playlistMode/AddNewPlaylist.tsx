@@ -234,12 +234,14 @@ const AddNewPlaylist = ({
               width: "220px",
               padding: "1rem",
             }}
-            className="overlay linked-item-custom">
+            className="overlay linked-item-custom"
+          >
             <p>
               <b style={{ color: "white" }}>Publish settings</b>
             </p>
             <span style={{ fontSize: "10px", color: "#c9c8c6" }}>
-              Your annotations will be available to everyone if public. If private only you will have access.
+              Your annotations will be available to everyone if public. If
+              private only you will have access.
             </span>
             <div
               className="more-menu-items"
@@ -248,16 +250,19 @@ const AddNewPlaylist = ({
               }}
               style={{
                 borderTop: "1px solid #3E3E3E",
-              }}>
+              }}
+            >
               <span
                 style={{ color: "white" }}
-                class="material-symbols-outlined">
+                class="material-symbols-outlined"
+              >
                 lock
               </span>
               <p>Private Access</p>
               <span
                 style={{ color: "white" }}
-                class="material-symbols-outlined">
+                class="material-symbols-outlined"
+              >
                 {publishAccess === "private"
                   ? "radio_button_checked"
                   : "radio_button_unchecked"}
@@ -267,16 +272,19 @@ const AddNewPlaylist = ({
               className="more-menu-items"
               onClick={() => {
                 setPublishAccess("public");
-              }}>
+              }}
+            >
               <span
                 style={{ color: "white" }}
-                class="material-symbols-outlined">
+                class="material-symbols-outlined"
+              >
                 public
               </span>
               <p>Public Access</p>
               <span
                 style={{ color: "white" }}
-                class="material-symbols-outlined">
+                class="material-symbols-outlined"
+              >
                 {publishAccess === "public"
                   ? "radio_button_checked"
                   : "radio_button_unchecked"}
@@ -290,7 +298,8 @@ const AddNewPlaylist = ({
         <Modal
           showIcon={false}
           title="How to create Playlist from Google Spreadsheet"
-          onClose={() => setInformationModal(false)}>
+          onClose={() => setInformationModal(false)}
+        >
           {isActiveSheetImport ? (
             <>
               <p style={{ fontSize: "12px" }}>
@@ -303,7 +312,8 @@ const AddNewPlaylist = ({
                 <a
                   href="chrome-extension://oemmndcbldboiebfnladdacbdfmadadm/https://www.bc.edu/content/dam/files/research_sites/cjl/pdf/Biblical%20Abbreviations_SBL%20Handbook.pdf"
                   target="_blank"
-                  relrel="noreferrer">
+                  relrel="noreferrer"
+                >
                   <b>Abbreviations</b>
                 </a>
                 or Book name for the user case.
@@ -315,7 +325,8 @@ const AddNewPlaylist = ({
               <a
                 href="https://docs.google.com/spreadsheets/d/1VlBdswNKkxpkZ4y-s6eDG-3k3HHXCHJRPtvPMPGlPxw/edit?gid=0#gid=0"
                 target="_blank"
-                relrel="noreferrer">
+                relrel="noreferrer"
+              >
                 See Sample List
                 <br />
               </a>
@@ -337,7 +348,8 @@ const AddNewPlaylist = ({
               <a
                 href="https://auth-aux-aobot-prod-filesbucket-141297942820.s3.amazonaws.com/tedcasca/433b8ec62a5ecb249ca4dacdd4707b2186e598b4b74c1fb6e690c875bc48cf92.json"
                 target="_blank"
-                relrel="noreferrer">
+                relrel="noreferrer"
+              >
                 See Sample JSON
                 <br />
               </a>
@@ -358,12 +370,14 @@ const AddNewPlaylist = ({
       <div className="add-new-playlist" style={{ border: "none" }}>
         <div
           className="align-center justify-between"
-          style={{ padding: "0.5rem 0 ", justifyContent: "space-between" }}>
+          style={{ padding: "0.5rem 0 ", justifyContent: "space-between" }}
+        >
           <div
             className="back-button"
             onClick={() => {
               if (onClickBackToDiscover) onClickBackToDiscover();
-            }}>
+            }}
+          >
             <span class="material-symbols-outlined">keyboard_backspace</span>
             <span>Back to {editId ? "Discover" : "Create"}</span>
           </div>
@@ -391,10 +405,12 @@ const AddNewPlaylist = ({
               <h4>IMPORT</h4>
               <p
                 onClick={() => setInformationModal(true)}
-                className="align-center f-10 pointer what-this">
+                className="align-center f-10 pointer what-this"
+              >
                 <span
                   style={{ marginRight: "4px" }}
-                  class="material-symbols-outlined unfollow">
+                  class="material-symbols-outlined unfollow"
+                >
                   info
                 </span>{" "}
                 <p class="underline">What's this?</p>
@@ -452,7 +468,8 @@ const AddNewPlaylist = ({
                     });
                   }
                 }}
-                secondary>
+                secondary
+              >
                 {uploadedFileData.length ? "Re-" : ""}Upload File
               </Button>
             )}
@@ -468,7 +485,8 @@ const AddNewPlaylist = ({
                 gap: "10px",
                 marginBottom: "10px",
                 padding: "0.5rem 0",
-              }}>
+              }}
+            >
               {predefinedColors.map((color, index) => (
                 <div
                   key={index}
@@ -485,7 +503,8 @@ const AddNewPlaylist = ({
                     display: "grid",
                     placeItems: "center",
                   }}
-                  onClick={() => setSelectedColor(color)}>
+                  onClick={() => setSelectedColor(color)}
+                >
                   {selectedColor === color && (
                     <span class="big-bold material-symbols-outlined unfollow color-inherit">
                       check
@@ -508,7 +527,8 @@ const AddNewPlaylist = ({
                   display: "grid",
                   placeItems: "center",
                 }}
-                onClick={() => setSelectedColor(customColor)}>
+                onClick={() => setSelectedColor(customColor)}
+              >
                 <input
                   onChange={(e) => {
                     setCustomColor(e.target.value);
@@ -538,7 +558,8 @@ const AddNewPlaylist = ({
                 marginBottom: "10px",
                 flexWrap: "wrap",
                 padding: "0.5rem 0",
-              }}>
+              }}
+            >
               {predefinedIcons.map((icon, index) => {
                 const url = icon?.startsWith("https");
                 return (
@@ -557,7 +578,8 @@ const AddNewPlaylist = ({
                       placeItems: "center",
                       borderRadius: "50%",
                     }}
-                    onClick={() => setSelectedIcon(icon)}>
+                    onClick={() => setSelectedIcon(icon)}
+                  >
                     {!url ? (
                       <span class="big-bold material-symbols-outlined unfollow color-inherit">
                         {icon}
@@ -587,7 +609,8 @@ const AddNewPlaylist = ({
                   display: "grid",
                   placeItems: "center",
                 }}
-                onClick={() => setSelectedIcon(customIcon)}>
+                onClick={() => setSelectedIcon(customIcon)}
+              >
                 <div
                   onClick={async () => {
                     const files = await os.showUploadFiles();
@@ -840,13 +863,15 @@ const AddNewPlaylist = ({
                 return old;
               });
             }}
-            secondary>
+            secondary
+          >
             Add
           </Button>
         </div>
         <div
           className="align-center"
-          style={{ flexWrap: "wrap", margin: "0.5rem 0", gap: "0.5rem" }}>
+          style={{ flexWrap: "wrap", margin: "0.5rem 0", gap: "0.5rem" }}
+        >
           {selectedTags.map((ele, index) => (
             <Chips
               label={ele}
@@ -919,7 +944,8 @@ const AddNewPlaylist = ({
                 onImport();
               }
             }}
-            secondary>
+            secondary
+          >
             {loading ? "Saving.." : isActiveTabManual() ? "Save" : "Import"}
           </Button>
           <Button
@@ -927,7 +953,8 @@ const AddNewPlaylist = ({
             onClick={() => {
               onClickBackToDiscover();
             }}
-            secondaryAlt>
+            secondaryAlt
+          >
             Close
           </Button>
         </div>

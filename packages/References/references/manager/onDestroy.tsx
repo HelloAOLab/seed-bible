@@ -1,1 +1,1 @@
-console.trace('DESTROYING References package');
+console.trace("DESTROYING References package");

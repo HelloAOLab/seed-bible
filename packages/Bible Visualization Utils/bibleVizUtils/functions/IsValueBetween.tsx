@@ -1,3 +1,3 @@
-const {value, min, max} = that;
+const { value, min, max } = that;
 
-return value >= min && value <= max
+return value >= min && value <= max;

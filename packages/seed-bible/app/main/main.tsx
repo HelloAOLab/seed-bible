@@ -15,6 +15,8 @@ import { useTabsContext } from 'app.hooks.tabs';
 import { useSideBarContext } from 'app.hooks.sideBar'
 import { PackageManager } from 'app.packager.main'
 import { DragDropOverlay } from 'app.main.dragOverlay'
+        globalThis.AppStartedSuccessfully = false;
+
 //this for defining nav functions globaly
 globalThis.Open = () => { }
 globalThis.OpenNextChapter = () => { }
@@ -99,6 +101,37 @@ const Main = () => {
     useEffect(() => {
         setStarted(true)
     }, [])
+     useEffect(() => {
+     // Load styles
+ 
+ 
+     // Load scripts sequentially
+     const scripts = [
+       "https://cdn.jsdelivr.net/npm/@fullcalendar/core@6.1.17/index.global.min.js",
+       "https://cdn.jsdelivr.net/npm/@fullcalendar/daygrid@6.1.17/index.global.min.js",
+       "https://cdn.jsdelivr.net/npm/@fullcalendar/timegrid@6.1.17/index.global.min.js",
+       "https://cdn.jsdelivr.net/npm/@fullcalendar/interaction@6.1.17/index.global.min.js",
+       "https://cdn.jsdelivr.net/npm/@fullcalendar/resource-timegrid@6.1.17/index.global.min.js",
+       "https://cdn.jsdelivr.net/npm/@fullcalendar/icalendar@6.1.17/index.global.min.js",
+       "https://cdnjs.cloudflare.com/ajax/libs/ical.js/1.4.0/ical.min.js",
+       "https://cdn.jsdelivr.net/npm/fullcalendar-scheduler@6.1.18/index.global.min.js"
+ 
+     ];
+ 
+     function loadScriptsSequentially(index = 0, callback) {
+       if (index >= scripts.length) return callback();
+ 
+       const script = document.createElement("script");
+       script.src = scripts[index];
+       script.onload = () => loadScriptsSequentially(index + 1, callback);
+       script.onerror = () => console.error("Failed to load", scripts[index]);
+       document.body.appendChild(script);
+     }
+ 
+     loadScriptsSequentially(0, () => {
+       console.log("FullCalendar scripts loaded");
+     });
+   }, []);
     useEffect(() => {
         if (!started)
             return
@@ -177,6 +210,7 @@ const Main = () => {
                 // console.log('testing update now working', tabs[0])
                 globalThis.UpdateTab(tabs[0])
             }
+            globalThis.AppStartedSuccessfully = true;
         }, 10)
         globalThis.SpaceScreens[activeSpace] = savedScreens;
 

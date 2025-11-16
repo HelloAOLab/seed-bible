@@ -223,6 +223,8 @@ await(async function mainInstaller(that) {
       showInStarterToolbar: toolbarConfig.showInStarterToolbar,
     });
 
+    console.log("WE ARE ADDING TOOL?",toolbarOption);
+
     if (globalThis.AddTool) globalThis.AddTool(toolbarOption);
 
     return toolbarOption;

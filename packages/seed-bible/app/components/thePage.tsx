@@ -61,7 +61,6 @@ function getUserSessionInfo(userId) {
   }
 }
 
-
 function ThePage({
   tab: T,
   setPanalApp,
@@ -79,7 +78,7 @@ function ThePage({
     if (!T) globalThis.CurrentPanelAvailable = panelId;
     else globalThis.CurrentPanelAvailable = null;
   }, [T]);
-
+  const { inSession, role, config } = getUserSessionInfo(configBot.id)
   const [tabEntered, setTabEntered] = useState(false);
   const { updateTab, tabs, setActiveTab } = useTabsContext();
   const { isDragging, setIsDragging, Element } = useMouseMove();
@@ -111,13 +110,156 @@ function ThePage({
   const [bible, setBible] = useState();
   if (tab) globalThis[`SetEnableEditorOf${tab?.id}`] = setEnableEditor;
 
+  const loadTranslationFromUrl = async () => {
+    console.log(configBot.tags.translationId, "translation id")
+    let translationId = configBot.tags.translationId || configBot.tags.translation || tab.data.translation;
+    let baseUrl = "https://bible.helloao.org";
+    let bookId = "GEN";
+    let bookTranslationId = tab.data.translation;
+    let firstBookData;
+    let firstChapterApiLink;
+    let books = [];
+    if (translationId) {
+      let available_translations_req = await web.get("https://bible.helloao.org/api/available_translations.json");
+      let allTranslations = [];
+      let translations = {};
+      let defaultTranslations = [
+        "english",
+        "spanish",
+        "arabic",
+        "hindi",
+        "hebrew",
+        "ancient greek",
+        "custom"
+      ]
+      allTranslations = available_translations_req.data.translations.map(item => {
+        return {
+          ...item,
+          languageEnglishName: item?.languageEnglishName || item.englishName
+        }
+      });
+
+      let trValue = {
+        pass: false,
+        value: null
+      };
+      if (available_translations_req.status === 200) {
+        allTranslations.forEach(translationData => {
+          if (translationData.id.toLowerCase() === translationId.toLowerCase()) {
+            trValue.pass = true;
+            trValue.value = translationData;
+          }
+        })
+
+        let urlId = translationId.includes("https://");
+
+        if (trValue.pass && !urlId) {
+          let bookData = await web.get(`https://bible.helloao.org/api/${trValue.value.id}/books.json`);
+          books = bookData.data.books;
+          let book0 = bookData.data.books[0];
+          firstBookData = book0;
+          setTagMask(thisBot, "selectedTranslation", trValue.value, "local");
+          setTagMask(thisBot, "booksData", bookData.data.books, "local");
+          bookId = book0.id;
+          bookTranslationId = trValue.value.id;
+          firstChapterApiLink = book0.firstChapterApiLink;
+        } else {
+          let result = await web.get(translationId);
+          if (result.status === 200) {
+            const url = new URL(translationId);
+            let newTranslations = result.data.translations;
+            if (newTranslations.length === 0) {
+              configBot.tags.translationId = null;
+              configBot.tags.translation = null;
+              const translationData = await loadTranslationFromUrl();
+              return {
+                ...translationData
+              }
+            }
+            let defaultTranslation = newTranslations[0];
+            newTranslations = newTranslations.map(trans => {
+              return {
+                languageEnglishName: trans.languageEnglishName,
+                id: trans.id,
+                listOfBooksApiLink: `${url.origin}${trans.listOfBooksApiLink}`,
+                origin: url.origin,
+                shortName: trans.shortName
+              }
+            })
+            allTranslations = [...allTranslations, ...newTranslations];
+            for (let translation of newTranslations) {
+              let englishName = translation.languageEnglishName.toLowerCase();
+              if (!defaultTranslations.includes(englishName)) {
+                defaultTranslations.push(englishName);
+              }
+            }
+            let translation = {
+              languageEnglishName: defaultTranslation.languageEnglishName,
+              id: defaultTranslation.id,
+              listOfBooksApiLink: `${url.origin}${defaultTranslation.listOfBooksApiLink}`,
+              origin: url.origin,
+              shortName: defaultTranslation.shortName
+            }
+            let englishName = translation.languageEnglishName.toLowerCase();
+            let shortName = translation.shortName.toLowerCase();
+
+            let bookData = await web.get(translation.listOfBooksApiLink);
+
+            books = bookData.data.books;
+            let book0 = bookData.data.books[0];
+            firstBookData = book0;
+            setTagMask(thisBot, "selectedTranslation", translation, "local");
+            setTagMask(thisBot, "booksData", bookData.data.books, "local");
+            if (!defaultTranslations.includes(englishName)) {
+              defaultTranslations.push(englishName)
+              translations[englishName] = {
+                [shortName]: translation
+              }
+            }
+            baseUrl = translation.origin;
+            bookId = book0.id;
+            bookTranslationId = translation.id;
+            firstChapterApiLink = book0.firstChapterApiLink;
+          }
+        }
+        allTranslations.forEach(translation => {
+          let englishName = translation?.languageEnglishName?.toLowerCase() || translation?.englishName?.toLowerCase();
+          let shortName = translation.shortName.toLowerCase();
+          if (translations[englishName]) {
+            if (!translations[englishName][shortName]) {
+              translations[englishName][shortName] = translation;
+            }
+          } else {
+            translations[englishName] = {
+              [shortName]: translation
+            }
+          }
+        })
+        setTagMask(thisBot, "allTranslations", allTranslations, "local");
+        setTagMask(thisBot, "apiTranslations", { ...translations }, "local")
+        setTagMask(thisBot, "defaultTranslations", defaultTranslations, "local")
+        console.log(defaultTranslations, translations, "trans")
+      }
+    } else {
+      return {}
+    }
+    return {
+      baseUrl,
+      bookId,
+      bookTranslationId,
+      firstChapterApiLink,
+      firstBookData,
+      books
+    }
+  }
+
   async function loadData() {
     if (!tab) return;
     const bible = new BibleDataManager({
       tabId: tab?.id,
       translation: tab.data.translation,
       bookId: tab.data.bookId,
-      chapter: tab.data.chapter,
+      chapter: tab.data.chapter
     });
     setBible(bible);
 
@@ -130,31 +272,134 @@ function ThePage({
     const { data, loading, error } = bible.getState();
     console.log(data, tab, "the data loaded");
 
-    setData(data);
-
     globalThis.refreshScrollers && globalThis.refreshScrollers();
-  }
+    let { firstBookData, bookTranslationId, baseUrl, books } = await loadTranslationFromUrl();
 
+    if (!configBot.tags.defaultChecked) {
+      if (firstBookData && bookTranslationId && baseUrl) {
+        await bible.changeTranslation(bookTranslationId, firstBookData, baseUrl)
+      }
+      if (books) {
+        if (configBot.tags?.book && books && books?.length > 0) {
+          let bookData;
+          books.forEach(book => {
+            if (book.id.toLowerCase() === configBot.tags.book.toLowerCase()) {
+              bookData = book;
+            }
+          })
+          if (bookData) {
+            let chapterNo;
+            if (Number(configBot.tags.chapter) < bookData.numberOfChapters) chapterNo = configBot.tags.chapter;
+            let chapterUrl = chapterNo ? bookData.firstChapterApiLink.replace("1.json", `${chapterNo}.json`) : bookData.firstChapterApiLink.replace("1.json", `${tab.data.chapter}.json`);
+            await bible.open(
+              bookData.id,
+              configBot.tags.chapter || 1,
+              bookTranslationId,
+              chapterUrl
+            );
+          }
+        } else if (configBot.tags?.chapter && books?.length > 0) {
+          let bookData;
+          books.forEach(book => {
+            if (book.id.toLowerCase() === tab.data.bookId.toLowerCase()) {
+              bookData = book;
+            }
+          })
+          let chapterNo;
+          if (Number(configBot.tags.chapter) < bookData.numberOfChapters) chapterNo = configBot.tags.chapter;
+          let chapterUrl = chapterNo ? bookData.firstChapterApiLink.replace("1.json", `${chapterNo}.json`) : bookData.firstChapterApiLink.replace("1.json", `${tab.data.chapter}.json`);
+          await bible.open(
+            bookData.id,
+            configBot.tags.chapter || 1,
+            bookTranslationId,
+            chapterUrl
+          );
+        }
+      } else {
+        if (configBot.tags?.book) {
+          await bible.open(configBot.tags?.book, configBot.tags?.chapter || tab.data.chapter);
+        } else if (configBot.tags?.chapter) {
+          await bible.open(tab.data.book, configBot.tags?.chapter);
+        }
+      }
+      configBot.tags.defaultChecked = true;
+    } else {
+      if (masks?.allTranslations) {
+        for (let translation of masks.allTranslations) {
+          if (translation.id === tab.data.translation) {
+            setTagMask(thisBot, "selectedTranslation", translation, "local");
+            break
+          }
+        }
+      }
+    }
+
+    setData(bible.data);
+    whisper(getBot('system', 'introduction.searchBar'), 'initialize')
+  }
   useEffect(() => {
-    os.addBotListener(thisBot, "remoteBookChange", (data) => {
+    const onKey = (e) => {
+      if (e.key === "Escape") {
+        setClickedVerses([]);
+        setShowVerseToolbar(false)
+      };
+    };
+    if (window) {
+      window.addEventListener("keydown", onKey);
+    }
+    return () => {
+      if (window) {
+        window.removeEventListener("keydown", onKey);
+      }
+    };
+  }, []);
+  useEffect(() => {
+    const onBookChange = (data) => {
+      os.log("updated shared tab", 'not approved');
+      if (!globalThis.CurrentTab?.sharedTab) {
+        updateTab(masks['sharedTab'], data)
+        return
+      };
       console.log("remoteBookChange", data);
-      globalThis.Open(data.bookId, data.chapter);
-    });
-    os.addBotListener(thisBot, "remoteHighlightChange", (data) => {
+      globalThis.Open?.(data.bookId, data.chapter);
+    };
+
+    const onHighlightChange = (data) => {
+      if (!globalThis.CurrentTab?.sharedTab) return;
       console.log("remoteHighlightChange", data);
-      globalThis.ToggleVerseHighlight(data?.verseNumbers, data?.color, data?.scroll, data?.fadeIn, true);
-    });
+      globalThis.ToggleVerseHighlight?.(
+        data?.verseNumbers,
+        data?.color,
+        data?.scroll,
+        data?.fadeIn,
+        true
+      );
+    };
+    os.addBotListener(thisBot, "remoteBookChange", onBookChange)
+    os.addBotListener(thisBot, "remoteHighlightChange", onHighlightChange)
+    return () => {
+      // os.removeBotListener(thisBot, 'remoteBookChange', onBookChange)
+      // os.removeBotListener(thisBot, 'remoteHighlightChange', onHighlightChange)
+    }
   }, []);
 
   useEffect(() => {
     loadData();
-  }, [tab]);
+    globalThis.CurrentTab = tab
+  }, []);
 
   useEffect(() => {
     if (data) {
+      //  EmitData("book", { ...data });
       hanldNavFunctions();
       SetShowCommands(false);
       updateTab(tab?.id, data);
+      if (config && !config?.sharedTab && role === 'host' && masks['sharedTab'] !== tab.id) {
+        updateTab(tab?.id, data);
+        updateTab(masks['sharedTab'], data);
+      }
+      if (role === 'host')
+        EmitData("book", { ...data });
       if (panelId && tab) {
         os.log("recoreded", panelId, {
           ...tab,
@@ -171,7 +416,8 @@ function ThePage({
       } else {
         setDirection(null);
       }
-      EmitData("book", { ...data });
+      if (masks['sharedTab'] === tab.id)
+        EmitData("book", { ...data });
       // const emitter = getBot("system", "app.emitter");
       // sendRemoteData(emitter.masks.otherRemotes, "updateSharingData", {
       //   id: tab?.id,
@@ -206,7 +452,7 @@ function ThePage({
         });
       }
     }, 1000);
-
+    globalThis.CurrentTab = tab
     return () => clearInterval(interval);
   }, [data]);
 
@@ -246,7 +492,7 @@ function ThePage({
   useEffect(() => {
     globalThis.NavFunctions = navFunctions;
     globalThis.BibleData = data;
-    checkDefault();
+    // checkDefault();
     return () => {
       globalThis.BibleData = null;
       globalThis.NavFunctions = navFunctions;
@@ -401,9 +647,9 @@ function ThePage({
     }
   }
 
-  async function open(bookId, chapter, translation = null) {
+  async function open(bookId, chapter, translation = null, chapterUrl = null) {
     try {
-      await bible.open(bookId, chapter, (translation = null));
+      await bible.open(bookId, chapter, (translation = null), chapterUrl);
       setData(bible.data);
     } catch {
       const tab = globalThis.AddTab({
@@ -537,7 +783,10 @@ function ThePage({
     globalThis.ClearAllWordHighlights = clearAllWordHighlights;
     shout("onBookChanged", { ...data, tabId: tab?.id });
     clearAllVerseHighlights();
-    os.log("clearAllVerseHighlights", clearAllVerseHighlights);
+    // os.log("clearAllVerseHighlights", clearAllVerseHighlights);
+    if (data && JSON.stringify(tab?.data) !== JSON.stringify(data)) {
+      setTab(prev => ({ ...prev, data }))
+    }
   }, [data]);
 
   function hanldNavFunctions() {
@@ -691,11 +940,11 @@ function ThePage({
     });
   }, [tab?.id, data?.book, data?.chapter]);
 
+
   const toggleVerseHighlight = useCallback(
     (verseNumbers, color, scroll, fadeIn, skipIt) => {
-      const { inSession, role, config } = getUserSessionInfo(configBot.id)
-      if (inSession && role === 'follower' && config.onlyHostHighlight && !skipIt)
-        return
+      // if (!skipIt)
+      //   return
       if (!tab?.id) return;
       EmitData("highlight", { verseNumbers, color });
 
@@ -900,6 +1149,7 @@ function ThePage({
             verses: newClicked,
             book: data?.book,
             chapter: data?.chapter,
+            verseNumber: newClicked,
             reference: `${data?.book} ${data?.chapter}:${newClicked.join(",")}`,
             text: remainingVerseObjects.map(o => o.text).join(" "),
           });
@@ -964,11 +1214,13 @@ function ThePage({
       onMouseEnter={handleMouseEnter}
       onMouseUp={handleMouseUp}
       onClick={hanldNavFunctions}
+      style={{
+        direction
+      }}
     >
       <style>
         {`
         .pageContainer{
-          direction:${direction};
           position: relative;
         }
         .toolbar-1 {
@@ -1051,7 +1303,7 @@ function ThePage({
           </div>
           <div style={{ height: "160px" }}></div>
 
-          {showVerseToolbar && (
+          {showVerseToolbar && !(role === 'follower' && config.onlyHostHighlight) && (
             <VerseToolbar
               clickedVerses={clickedVerses}
               toggleVerseHighlight={toggleVerseHighlight}
@@ -1621,6 +1873,14 @@ function Section({
                   }}
                   onClick={(e) => {
                     e.stopPropagation();
+                    if (globalThis?.SetCurrentReference) {
+                      shout("ToggleReference", {
+                        book,
+                        chapter,
+                        verse: verse.verseNumber,
+                      });
+                      return;
+                    }
                     handleVerseClick(verse.verseNumber);
                     SetShowCommands(false);
                     os.log({
@@ -1684,6 +1944,21 @@ function Section({
                       if (globalThis.studyNotesPresent) {
                         HighlightStudyNoteSection(verse?.verseNumber);
                       }
+                    }}
+                    onPointerEnter={() => {
+                      globalThis.showRefModal = true;
+                      setTimeout(() => {
+                        if (globalThis.showRefModal) {
+                          shout("toggleReferenceModal", {
+                            book,
+                            chapter,
+                            verse: verse.verseNumber,
+                          });
+                        }
+                      }, 500);
+                    }}
+                    onPointerLeave={() => {
+                      globalThis.showRefModal = false;
                     }}
                   >
                     {verse?.verseNumber}
