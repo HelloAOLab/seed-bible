@@ -8,7 +8,10 @@ const emitter = getBot('system', 'app.emitter')
 const evt = that;
 const name = evt?.name;
 const remoteId = evt?.remoteId;      // sender of this event
-const payload = evt?.that ?? {};     // event payload
+if(!evt?.that?.sd)
+    return
+os.log(evt.that,'payloaddd')    // event payload
+const payload = JSON.parse(evt.that.sd);
 if (!name || !remoteId) return;
 
 const selfId = configBot.id;
@@ -93,10 +96,10 @@ switch (name) {
             os.log("Blocked 'book' (host-only): follower tried to navigate.");
             return;
         }
-        if (allowAllNav || iAmCoHost) {
+       
+        if(payload?.skip){
             emitter.masks.skip = true
         }
-
         shout("remoteBookChange", { ...(payload || {}) });
 
         // rebroadcast only if host

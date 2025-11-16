@@ -284,7 +284,7 @@ const CircleCounter = ({ data, book, chapter }) => {
                       <button
                         // disabled={role !== 'host'}
                         onClick={() => {
-                          HandleSharedTablick();
+                          HandleSharedTabClick();
                           setIsModalOpen(false);
                         }}
                         style={{
@@ -436,7 +436,7 @@ function Tab({
     if (activeTab === el.id) return;
 
     if (el.sharedTab) {
-      globalThis?.HandleSharedTablick();
+      globalThis.HandleSharedTabClick();
     }
     const checkEmpty = PanelsApps.find((e) => !e.tabData);
     console.log(checkEmpty, PanelsApps);
@@ -1020,7 +1020,7 @@ function SideBar() {
         title: "Start session",
         onClick: () => {
           // os.log(globalThis?.StartSession,globalThis)
-          HandleSharedTablick();
+          HandleSharedTabClick();
         },
       },
       {

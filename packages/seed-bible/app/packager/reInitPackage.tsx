@@ -20,7 +20,7 @@ async function waitForGlobals(required = [], delay = 250) {
     }
 }
 
-
+// await os.sleep(3000);
 await waitForGlobals([
     'AddTool',
     // "AppStartedSuccessfully",

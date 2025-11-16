@@ -272,7 +272,7 @@ export function UserPresence() {
 
         if (name === "sessionStarted") {
           const { hostId, tab } = that.that || {};
-
+          console.log(hostId, 'sessionStarted','sessionData',that.that)
           if (!hostId || hostId === selfId) return;
           // if(!tags.onlineTab)
           addTab({ ...tab, sharedTab: true, hostId: hostId })
@@ -318,8 +318,8 @@ export function UserPresence() {
             });
           }
         } else if (name === "sessionEnd") {
-          os.log(tabs)
-          removeTab(tags.onlineTab.id)
+          os.log(tabs,'allTabs',"sessionEnd")
+          removeTab(masks['sharedTab'])
           tags.onlineTab = null
 
           const { hostId } = that.that || {};
@@ -675,6 +675,7 @@ export function UserPresence() {
             justifyContent: "space-between",
             cursor: !hasInteracted ? "pointer" : "default",
             transition: "all 0.2s ease",
+            height:'38px'
           }}
         >
           <style>{getStatusText() !== "Start session" && `
@@ -699,7 +700,7 @@ export function UserPresence() {
                 fontSize: 12,
                 color: "black",
                 fontWeight: 600,
-                marginLeft: 4
+                marginLeft: 4,
               }}>
                 {getStatusText()}
               </span>
