@@ -1,3 +1,4 @@
+import { LocationIcon } from "app.components.icons";
 await os.sleep(200);
 if (!that?.content) return;
 
@@ -79,7 +80,7 @@ for (let i = 0; i < that.content.length; i++) {
           locationOptionsConfig[`${that.book}-${verse[j].verseNumber}`].items.push(makeLocationOptions({ location: word.replace(/[^a-zA-Z]/g, "") }));
         } else {
           locationOptionsConfig[`${that.book}-${verse[j].verseNumber}`] = {
-            icon: (<span class="material-symbols-outlined">location_on</span>),
+            icon: (<LocationIcon />),
             title: "Locations",
             items: [makeLocationOptions({ location: word.replace(/[^a-zA-Z]/g, "") })]
           }

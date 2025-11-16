@@ -1,5 +1,5 @@
 const { useState, useEffect, useMemo } = os.appHooks;
-import { MenuIcon, ApologistIcon } from "app.components.icons";
+import { MenuIcon, ApologistIcon, CopyIcon, ShareIcon, LocationIcon } from "app.components.icons";
 
 export function VerseToolbar({
   clickedVersesContext,
@@ -117,6 +117,7 @@ export function VerseToolbar({
     display: "flex",
     gap: "12px",
     marginLeft: "auto",
+    alignItems: "center"
   };
 
   const iconButtonStyle = {
@@ -131,7 +132,7 @@ export function VerseToolbar({
     color: "#333",
     transition: "background-color 0.2s",
     borderRadius: "4px",
-    fontSize: "20px",
+    fontSize: "10px",
   };
 
   const colorPickerOverlayStyle = {
@@ -264,7 +265,9 @@ export function VerseToolbar({
         href="https://fonts.googleapis.com/css2?family=Material+Symbols+Outlined:opsz,wght,FILL,GRAD@20..48,100..700,0..1,-50..200"
       />
 
-      <div className="header-ref" style={headerStyle}>
+      <div className="header-ref" style={headerStyle} onContextMenu={e => {
+        e.stopPropagation()
+      }}>
         <span className="verse-ref" style={verseRefStyle}>
           {getVerseReference()}
         </span>
@@ -413,15 +416,22 @@ export function VerseToolbar({
         <div className="divider-vertical" style={dividerStyle}></div>
 
         <div className="tool-buttons" style={toolButtonsStyle}>
-          {menuOptions.map((option) => (
-            <div
-              onClick={option?.onClick}
-              className="icon-button"
-              style={iconButtonStyle}
-            >
-              {option.icon}
-            </div>
-          ))}
+          {menuOptions.map((option) => {
+            if (option?.type === "line") {
+              return <div className="divider-vertical" style={dividerStyle}></div>
+            } else {
+              return <div class="toolbar-icon-container">
+                <div
+                  onClick={option?.onClick}
+                  className="icon-button"
+                  style={iconButtonStyle}
+                >
+                  {option.icon}
+                </div>
+                <span>{option.title}</span>
+              </div>
+            }
+          })}
           {
             null /*<button className="icon-button" style={iconButtonStyle} aria-label="Edit">
                         <span className="material-symbols-outlined">edit</span>
@@ -454,11 +464,12 @@ function getMenuActions(that) {
     type: "normal",
     items: [
       {
-        icon: <MenuIcon name="copy_all" />,
+        icon: <CopyIcon height="24" width="24" />,
         onClick: () => {
           os.setClipboard(that.text);
           SetInHold(null);
         },
+        title: "Copy"
       },
       {
         icon: <ApologistIcon />,
@@ -467,9 +478,10 @@ function getMenuActions(that) {
           SetShowCommands(true);
           SetInHold(null);
         },
+        title: "Apologist"
       },
       {
-        icon: <MenuIcon name="share" />,
+        icon: <ShareIcon height="24" width="24" />,
         onClick: () => {
           closePopupSettings();
           setTimeout(() => {
@@ -481,7 +493,8 @@ function getMenuActions(that) {
             SetInHold(null);
           }, 50);
         },
-      },
+        title: "Share"
+      }
     ],
   };
 
@@ -532,31 +545,35 @@ function getMenuActions(that) {
   }
 
   for (const title of Object.keys(verseContextMenuOptions)) {
+    const titleArray = [];
+    const itemsHolder = [];
+    MenuOptions.items.push({type: "line"})
+    verseContextMenuOptions[title].items.forEach((el) => {
+      if (!titleArray.includes(el.title)) {
+        itemsHolder.push({
+          ...el,
+          onClick: () => {
+            if (el.onClick) el.onClick();
+            SetInHold({});
+          },
+        });
+        titleArray.push(el.title);
+      }
+    });
     MenuOptions.items.push({
       ...verseContextMenuOptions[title],
+      icon: <span class="toolbar-icon-container">
+        {verseContextMenuOptions[title].icon}
+        <span class="toolbar-icon-count">{titleArray.length}</span>
+      </span>,
       onClick: () => {
-        console.log(verseContextMenuOptions[title].items, "item.items");
         const subMenuItems = {
           type: "normal",
           items: [],
         };
-        const titelArray = [];
-        const itemsHolder = [];
-        verseContextMenuOptions[title].items.forEach((el) => {
-          if (!titelArray.includes(el.title)) {
-            itemsHolder.push({
-              ...el,
-              onClick: () => {
-                if (el.onClick) el.onClick();
-                SetInHold({});
-              },
-            });
-            titelArray.push(el.title);
-          }
-        });
         subMenuItems.items.push(...itemsHolder);
         openPopupSettings(subMenuItems);
-      },
+      }
     });
   }
 
@@ -579,6 +596,6 @@ function getMenuActions(that) {
   return (
     MenuOptions.items
       // .filter((i) => i.icon && typeof i.onClick === "function")
-      .map(({ icon, onClick }) => ({ icon, onClick }))
+      .map(({ icon, onClick, title, type }) => ({ icon, onClick, title, type }))
   );
 }
