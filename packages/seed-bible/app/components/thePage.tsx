@@ -346,7 +346,7 @@ useEffect(() => {
           : selectedRange.commonAncestorContainer;
 
       if (commandsRef.current && commandsRef.current.contains(container)) {
-        setShowCommands(true);
+        // setShowCommands(true);
         return;
       }
 
@@ -420,7 +420,7 @@ useEffect(() => {
         chapter: data?.chapter
     });
 
-    setShowCommands(true);
+    // setShowCommands(true);
 } else {
     setShowCommands(false);
     setSelectedText("");

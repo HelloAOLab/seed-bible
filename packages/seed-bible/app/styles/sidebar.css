@@ -156,7 +156,7 @@
 .tabsContainer {
     display: flex;
     gap: 16px;
-    margin-top: 25px;
+    margin-top: 15px;
     justify-content: space-between;
     color: var(--themeText1);
     font-weight: 700;
