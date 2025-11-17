@@ -456,6 +456,7 @@ export function UserPresence() {
         translation: "BSB",
       },
     });
+    masks['sharedTab'] = globalThis.CurrentTab.id
     globalThis.UpdateTab(globalThis.CurrentTab);
     setActiveTab(globalThis.CurrentTab.id);
     tags.onlineTab = globalThis.CurrentTab
@@ -529,6 +530,10 @@ export function UserPresence() {
 
   }
   const stopSession = () => {
+    os.log('removeTab',masks['sharedTab'],removeTab,'removeTab')
+    // return
+    removeTab(masks['sharedTab'])
+
     const myFollowers = sessions[selfId]?.followers || [];
     tags.onlineTab = null
     // if (myFollowers.length) {
@@ -547,7 +552,7 @@ export function UserPresence() {
     const cloned = JSON.parse(JSON.stringify(tags));
     cloned.sessions = next;
     tags.sessions = cloned.sessions;
-    removeTab(tags.onlineTab.id)
+    
     // os.emit?.("sessionsUpdated", next);
     setSessions(next);
     setIsHost(false);
