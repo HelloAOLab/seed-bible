@@ -136,7 +136,7 @@ export function UserPresence() {
   const [hasInteracted, setHasInteracted] = useState(false);
   const [notifications, setNotifications] = useState([]);
   const [, update] = useState()
-  const { addTab, updateTab, setActiveTab, tabs, removeTab, activeTab } = useTabsContext();
+  const { addTab, updateTab, setActiveTab, tabs, removeTab, activeTab ,sharedTab,setSharedTab} = useTabsContext();
 
   useEffect(() => {
     const handleClickOutside = (event) => {
@@ -318,8 +318,9 @@ export function UserPresence() {
             });
           }
         } else if (name === "sessionEnd") {
-          os.log(tabs,'allTabs',"sessionEnd")
+          os.log(tabs,sharedTab,masks['sharedTab'],'allTabs',"sessionEnd")
           removeTab(masks['sharedTab'])
+          setSharedTab(null)
           tags.onlineTab = null
 
           const { hostId } = that.that || {};
@@ -387,7 +388,7 @@ export function UserPresence() {
       os.addBotListener(thisBot, "onRemoteLeave", onLeave);
       os.addBotListener(thisBot, "onRemoteData", onRemoteData);
     }
-  }, [following, sessions, selfId]);
+  }, [following, sessions, selfId,sharedTab,setSharedTab]);
   useEffect(()=>{
     if(tags.onlineTab){
       addTab({ ...tags.onlineTab, sharedTab: true, hostId: tags.hostIdForOnlineTab })

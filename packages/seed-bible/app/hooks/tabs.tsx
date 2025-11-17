@@ -641,6 +641,7 @@ const addTab = (tab) => {
         replaceActiveSpaceWithJSON,
         updateSpace,
         addSpace,
+        setSharedTab,
         removeSpace,
         multiSelectMode,
         setMultiSelectMode,

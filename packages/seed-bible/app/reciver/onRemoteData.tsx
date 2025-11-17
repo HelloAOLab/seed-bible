@@ -97,11 +97,9 @@ switch (name) {
             return;
         }
        
-        if(payload?.skip){
-            emitter.masks.skip = true
-        }
+       
+        globalThis.__remoteBookUpdate = true;
         shout("remoteBookChange", { ...(payload || {}) });
-
         // rebroadcast only if host
         if (iAmHost && allowAllNav && remoteId !== hostId) {
             forwardToFollowersExcept(remoteId, "book", payload || {});

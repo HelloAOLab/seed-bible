@@ -172,72 +172,98 @@ function ThePage({
     globalThis.CurrentTab = tab
   }, [tab]);
 
-  useEffect(() => {
-    if (data) {
-      hanldNavFunctions();
-      SetShowCommands(false);
-      updateTab(tab?.id, data);
-      if(role === 'host'){
-        if(!masks.skip){
-          
-          EmitData("book", { ...data });
-        }else{
-          masks.skip = true
-        }
-        if(config && config?.sharedTab){
-          updateTab(masks['sharedTab'], data);
-        }
-      }else if(role === 'follower' && !config?.onlyHostNav && !masks.skip){
-        console.log('working','follower')
-        EmitData("book", { ...data,skip:true });
-        // updateTab(masks['sharedTab'], data);
-      }else{
-         masks.skip = true
-      }
-      // if (config && !config?.sharedTab && role === 'host' && masks['sharedTab'] !== tab.id) {
-      //   updateTab(tab?.id, data);
-      //   updateTab(masks['sharedTab'], data);
-      //   if (role === 'host')
-      //     EmitData("book", { ...data });
+ // GLOBAL GUARDS
+if (!globalThis.__remoteBookUpdate) globalThis.__remoteBookUpdate = false;
+if (!globalThis.__lastBookEmit) globalThis.__lastBookEmit = 0;
+const BOOK_EMIT_DEBOUNCE = 250; // ms
 
-      // }
-      if (panelId && tab) {
-        os.log("recoreded", panelId, {
-          ...tab,
-          data: { ...tab.data, ...data },
+// SAFELY EMIT BOOK WITHOUT LOOPS OR SPAM
+function safeEmitBook(payload) {
+    const now = Date.now();
+
+    // 1) Prevent loop from remote → local → remote
+    if (globalThis.__remoteBookUpdate) {
+        globalThis.__remoteBookUpdate = false;
+        return;
+    }
+
+    // 2) Prevent spam when navigating fast
+    if (now - globalThis.__lastBookEmit < BOOK_EMIT_DEBOUNCE) {
+        return;
+    }
+
+    globalThis.__lastBookEmit = now;
+
+    // 3) Finally emit
+    EmitData("book", payload);
+}
+
+
+
+// ----------------------
+// 🔥 REPLACE YOUR EFFECT WITH THIS
+// ----------------------
+useEffect(() => {
+    if (!data) return;
+
+    hanldNavFunctions();
+    SetShowCommands(false);
+    updateTab(tab?.id, data);
+
+    // ---------- HOST ----------
+    if (role === "host") {
+
+        // Update shared tab if configured
+        if (config?.sharedTab) {
+            updateTab(masks["sharedTab"], data);
+        }
+
+        // Emit navigation (with debounce + loop guard)
+        safeEmitBook({ ...data });
+    }
+
+    // ---------- FOLLOWER ----------
+    else if (role === "follower" && !config?.onlyHostNav) {
+
+        // Emit follower navigation (debounced + guarded)
+        safeEmitBook({ ...data, skip: true });
+    }
+
+    // ---------- PANEL RECORDING ----------
+    if (panelId && tab) {
+        os.log("recorded", panelId, {
+            ...tab,
+            data: { ...tab.data, ...data }
         });
-        globalThis.PanelTabsMap[panelId] = {
-          ...tab,
-          data: { ...tab.data, ...data },
-        };
-      }
-      os.log("bookdata", data);
-      if (data.translation === "ARBNAV" || data.translation === "arb_vdv") {
-        setDirection("rtl");
-      } else {
-        setDirection(null);
-      }
-      // if (masks['sharedTab'] === tab.id)
-      //   EmitData("book", { ...data });
-      // const emitter = getBot("system", "app.emitter");
-      // sendRemoteData(emitter.masks.otherRemotes, "updateSharingData", {
-      //   id: tab?.id,
-      //   bookId: data?.bookId,
-      //   book: data?.book,
-      //   chapter: data?.chapter,
-      // });
-      const emitter = getBot("system", "app.emitter");
 
-      sendRemoteData(emitter.masks.otherRemotes, "updateSharingData", {
+        globalThis.PanelTabsMap[panelId] = {
+            ...tab,
+            data: { ...tab.data, ...data }
+        };
+    }
+
+    // ---------- RTL / LTR MODE ----------
+    if (data.translation === "ARBNAV" || data.translation === "arb_vdv") {
+        setDirection("rtl");
+    } else {
+        setDirection(null);
+    }
+
+    // ---------- SHARING META ----------
+    const emitter = getBot("system", "app.emitter");
+    sendRemoteData(emitter.masks.otherRemotes, "updateSharingData", {
         id: tab?.id,
         bookId: data?.bookId,
         book: data?.book,
         chapter: data?.chapter,
-      });
-      configBot.tags.book = data?.bookId;
-      configBot.tags.chapter = data?.chapter;
-    }
-  }, [data]);
+    });
+
+    // sync for later openings
+    configBot.tags.book = data?.bookId;
+    configBot.tags.chapter = data?.chapter;
+
+}, [data]);
+
   useEffect(() => {
     // Create the interval
     const interval = setInterval(() => {
