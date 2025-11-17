@@ -1031,8 +1031,7 @@ function ThePage({
 
         .verse-clicked {
           border-bottom: 2px dashed #4459F3 !important;
-          padding: 2px 4px !important;
-          border-radius: 3px !important;
+         
         }
          `}
       </style>
@@ -1709,8 +1708,8 @@ function Section({
                     "border-radius": highlighted?.[verse.verseNumber] || isClicked
                       ? "3px"
                       : "0",
-                    padding: highlighted?.[verse.verseNumber] || isClicked ? "2px 4px" : "0",
-                    margin: highlighted?.[verse.verseNumber] || isClicked ? "0 1px" : "0",
+                    padding: highlighted?.[verse.verseNumber] || isClicked ? "" : "0",
+                    margin: highlighted?.[verse.verseNumber] || isClicked ? "" : "0",
                     "text-decoration":
                       inHold === verse.verseNumber || isTextDecorUnderline
                         ? "underline"
