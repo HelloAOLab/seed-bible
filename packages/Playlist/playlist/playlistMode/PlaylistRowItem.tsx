@@ -79,8 +79,8 @@ const PlaylistRowItem = ({ currentDateActive, shareProfileName, oldItemsMap = {}
 
     const isCustomIcons = icon?.startsWith("https") || isCustomIcon;
     const [warningMessage, setWarningMsg] = useState(null);
-
     const [showMoreOptions, setShowMoreOptions] = useState(false);
+    const isPlayingPLaylist = playingPlaylist || globalThis.IsPlaylistPlaying;
     const toggleOpen = () => setOpenedList(prev => prev === id ? "" : id);
     const [isPlay, setIsPlay] = useState(false);
 
@@ -387,8 +387,8 @@ const PlaylistRowItem = ({ currentDateActive, shareProfileName, oldItemsMap = {}
                 }}
                 style={{ zIndex: (100 - playListIndex), position: "relative" }}
                 onDragEnd={handleDragEnd}
-                draggable={!playingPlaylist && !viewOnly}
-                className={`playlist ${(playingPlaylist || isPlay) && "playingPlaylist"} ${id === opendedList ? "opened" : ""}  ${dragOverSet.itemId === id && `dropabble-${dragOverSet.position}`}`}
+                draggable={!isPlayingPLaylist && !viewOnly}
+                className={`playlist ${(isPlayingPLaylist || isPlay) && "playingPlaylist-removeme"} ${id === opendedList ? "opened" : ""}  ${dragOverSet.itemId === id && `dropabble-${dragOverSet.position}`}`}
             >
                 <div
                     onContextMenu={(e) => {
@@ -493,7 +493,7 @@ const PlaylistRowItem = ({ currentDateActive, shareProfileName, oldItemsMap = {}
                     </span>}
                     <CircleProgress id={id} progress={`${percentageCompleted}`} />
                     {
-                        !creatingPlaylist && !viewOnly ? !playingPlaylist
+                        !creatingPlaylist && !viewOnly ? (!isPlayingPLaylist || true)
                             ?
                             <span
                                 style={{
@@ -573,7 +573,7 @@ const PlaylistRowItem = ({ currentDateActive, shareProfileName, oldItemsMap = {}
                     {
                         opendedList
                         &&
-                        <DragDrop access={access} description={description} icon={icon} isCustomIcon={isCustomIcon} isCustomColor={isCustomColor} color={color} currentFormat={currentFormat} currentDateActive={currentDateActive} checkListData={checkListData} oldItemsMap={oldItemsMap} clickPass={clickPass} onLinking={onLink} playlistName={`${playlistParentName}${!!playlistParentName ? " - " : ''}${name}`} linkingMode={linkingMode} viewOnly={viewOnly} parentId={parentId} checklistEnabled={checklistEnabled} toggle={toggle} creatingPlaylist={creatingPlaylist} playingPlaylist={playingPlaylist} list={list} editDataFromPlaylist={editDataFromPlaylist} playListSubIndex={playListIndex} playListSubId={id} setPlaylistFromRow={setPlaylists} onClick={onClick} setList={setPlaylist} deleteFromList={deleteDataFromPlaylist} onClickItem={hanldeAdd} />
+                        <DragDrop access={access} description={description} icon={icon} isCustomIcon={isCustomIcon} isCustomColor={isCustomColor} color={color} currentFormat={currentFormat} currentDateActive={currentDateActive} checkListData={checkListData} oldItemsMap={oldItemsMap} clickPass={clickPass} onLinking={onLink} playlistName={`${playlistParentName}${!!playlistParentName ? " - " : ''}${name}`} linkingMode={linkingMode} viewOnly={viewOnly} parentId={parentId} checklistEnabled={checklistEnabled} toggle={toggle} creatingPlaylist={creatingPlaylist} playingPlaylist={isPlayingPLaylist} list={list} editDataFromPlaylist={editDataFromPlaylist} playListSubIndex={playListIndex} playListSubId={id} setPlaylistFromRow={setPlaylists} onClick={onClick} setList={setPlaylist} deleteFromList={deleteDataFromPlaylist} onClickItem={hanldeAdd} />
                     }
                 </div>
 
@@ -595,7 +595,7 @@ const PlaylistRowItem = ({ currentDateActive, shareProfileName, oldItemsMap = {}
 
                     >
                         {
-                            !creatingPlaylist && !viewOnly && !playingPlaylist &&
+                            !creatingPlaylist && !viewOnly && !isPlayingPLaylist &&
                             <>
 
                                 <div className="more-menu-items"
@@ -623,7 +623,7 @@ const PlaylistRowItem = ({ currentDateActive, shareProfileName, oldItemsMap = {}
                                 >
                                     <p>Rename Playlist</p>
                                 </div>
-                                <div className="more-menu-items"
+                               <div className="more-menu-items"
                                     onClick={() => {
                                         if (shareProfileName) {
                                             setWarningMsg(id);
@@ -662,7 +662,7 @@ const PlaylistRowItem = ({ currentDateActive, shareProfileName, oldItemsMap = {}
                             <p>Share Playlist</p>
                         </div>
                         {
-                            !creatingPlaylist && !viewOnly && !playingPlaylist && <div className="more-menu-items"
+                            !creatingPlaylist && !viewOnly && !isPlayingPLaylist && <div className="more-menu-items"
                                 onClick={() => {
                                     deletePlayList(id);
                                     setShowMoreOptions(false);
@@ -671,7 +671,7 @@ const PlaylistRowItem = ({ currentDateActive, shareProfileName, oldItemsMap = {}
                             >
                                 <p>Delete </p>
                             </div>}
-                        {!creatingPlaylist && !viewOnly && !playingPlaylist && (!!playListSubId ? <div
+                        {!creatingPlaylist && !viewOnly && !isPlayingPLaylist && (!!playListSubId ? <div
                             className="more-menu-items"
                             onClick={() => {
                                 exportNestedList();
