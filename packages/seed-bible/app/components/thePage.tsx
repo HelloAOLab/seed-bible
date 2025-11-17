@@ -978,6 +978,31 @@ useEffect(() => {
     }
   }
   globalThis.ClearUserSelection = clearUserSelection;
+  useEffect(() => {
+  function handleEsc(e) {
+    if (e.key === "Escape") {
+      // Clear verse clicks
+      setClickedVerses([]);
+      setClickedVersesContext({});
+      setShowVerseToolbar(false);
+
+      // Clear selection highlight
+      setCommandHighlight([]);
+      setLastSelectedVerse(null);
+      setSelectedText("");
+      setShowCommands(false);
+
+      // Remove browser selected text
+      if (window.getSelection) {
+        const sel = window.getSelection();
+        if (sel.removeAllRanges) sel.removeAllRanges();
+      }
+    }
+  }
+
+  document.addEventListener("keydown", handleEsc);
+  return () => document.removeEventListener("keydown", handleEsc);
+}, []);
 
   // NEW: Handle verse clicks
  const handleVerseClick = useCallback((verseNumber, verseElement) => {
