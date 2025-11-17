@@ -20,24 +20,24 @@ const {SharePopup} = thisBot.Chips();
 const MenuOptions = {
   type: "normal",
   items: [
-    {
-      icon: <MenuIcon name={IconsURL.Highlighter} invert />,
-      title: `Unhighlight verse`,
-      onClick: (items) => {
-        SetWordHighlightsBC((prev) => {
-          const old = { ...prev };
-          items.forEach((verse) => {
-            if (globalThis.ToggleVerseHighlight) {
-              delete old[verse.verseNumber];
-              globalThis.ToggleVerseHighlight(verse.verseNumber);
-            }
-          });
-          return old;
-        });
+    // {
+    //   icon: <MenuIcon name={IconsURL.Highlighter} invert />,
+    //   title: `Unhighlight verse`,
+    //   onClick: (items) => {
+    //     SetWordHighlightsBC((prev) => {
+    //       const old = { ...prev };
+    //       items.forEach((verse) => {
+    //         if (globalThis.ToggleVerseHighlight) {
+    //           delete old[verse.verseNumber];
+    //           globalThis.ToggleVerseHighlight(verse.verseNumber);
+    //         }
+    //       });
+    //       return old;
+    //     });
 
-        SetInHold({});
-      },
-    },
+    //     SetInHold({});
+    //   },
+    // },
     {
       icon: <MenuIcon name={IconsURL.Library} />,
       title: "Copy text",
