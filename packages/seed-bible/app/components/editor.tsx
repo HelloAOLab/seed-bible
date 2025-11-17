@@ -327,26 +327,26 @@ const TextEditor = ({
         },
         handleDOMEvents: {
           // Block keyboard and menu copy/cut
-          copy: (_view, event) => {
-            event.preventDefault();
-            return true;
-          },
-          cut: (_view, event) => {
-            event.preventDefault();
-            return true;
-          },
+          // copy: (_view, event) => {
+          //   event.preventDefault();
+          //   return true;
+          // },
+          // cut: (_view, event) => {
+          //   event.preventDefault();
+          //   return true;
+          // },
 
-          // (Optional) make it harder to start a selection at all
-          selectstart: (_view, event) => {
-            event.preventDefault();
-            return true;
-          },
+          // // (Optional) make it harder to start a selection at all
+          // selectstart: (_view, event) => {
+          //   event.preventDefault();
+          //   return true;
+          // },
 
-          // (Optional) stop dragging out selections / drags
-          dragstart: (_view, event) => {
-            event.preventDefault();
-            return true;
-          },
+          // // (Optional) stop dragging out selections / drags
+          // dragstart: (_view, event) => {
+          //   event.preventDefault();
+          //   return true;
+          // },
         },
       },
       extensions: [
@@ -1550,7 +1550,7 @@ function Counter({ value, onChange, min = 8, max = 72 }) {
           color: "#5F5E5C",
           minWidth: "40px",
           textAlign: "center",
-          userSelect: "none",
+          userSelect: "text",
         }}
       >
         {fontSize}

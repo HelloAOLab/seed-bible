@@ -12,10 +12,10 @@
 .no-select .ProseMirror *,
 .no-select,
 .no-select * {
-  user-select: none;
-  -webkit-user-select: none;
-  -ms-user-select: none;
-  -webkit-touch-callout: none;
+  user-select: text !important;
+  -webkit-user-select: text !important;
+  -ms-user-select: text !important;
+  -webkit-touch-callout: text !important;
 }
 
 .thePageToolbar {
