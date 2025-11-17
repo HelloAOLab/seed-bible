@@ -172,7 +172,7 @@ const Main = () => {
         const borderBottomLeft = style.borderBottomLeftRadius;
         const borderBottomRight = style.borderBottomRightRadius;
 
-        configBot.tags.gridPortal = 'thePortal';
+        configBot.tags.gridPortal =globalThis?.defaultPortalName || 'thePortal';
         globalThis.SetCanvasPositions({
             // ...style,
             left,
