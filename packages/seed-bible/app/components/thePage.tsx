@@ -18,7 +18,7 @@ import { TextEditor } from "app.components.editor";
 import { MiniTextEditor } from "app.components.smallEditor";
 import { ConfigurableFunctionCommands } from "app.components.commands";
 import { VerseToolbar } from 'app.components.verseToolbar'
-
+import { useHoldAction } from "app.hooks.useHold";
 function getUserSessionInfo(userId) {
   try {
     if (typeof tags === "undefined" || !tags.sessions) {
@@ -82,7 +82,7 @@ function ThePage({
   const { inSession, role, config } = getUserSessionInfo(configBot.id)
   const [tabEntered, setTabEntered] = useState(false);
   const { updateTab, tabs, setActiveTab,sharedTab } = useTabsContext();
-  const { isDragging, setIsDragging, Element } = useMouseMove();
+  const { isDragging, setIsDragging, Element,position } = useMouseMove();
   const { navFunctions, setNavFunctions, scrollToVerse } = useBibleContext();
   const [inHold, setInHold] = useState();
   const [contextData, setContextData] = useState({
@@ -301,6 +301,14 @@ function ThePage({
   }, [navFunctions, data]);
 
   useEffect(() => {
+    function getUnifiedSelectedVerses(rawSelectedVerses, clickedVerses) {
+  if (clickedVerses && clickedVerses.length > 0) {
+    return [...new Set(clickedVerses)].sort((a, b) => a - b);
+  }
+
+  return [...new Set(rawSelectedVerses)].sort((a, b) => a - b);
+}
+
     const handleMouseUp = () => {
       const selection = window.getSelection();
       if (!selection || selection.isCollapsed) return;
@@ -346,32 +354,53 @@ function ThePage({
         currentNode = treeWalker.nextNode();
       }
 
-      if (selectedVerses.size > 0) {
-        const selectedArray = Array.from(selectedVerses).sort((a, b) => a - b);
-        console.log("Selected verse numbers:", selectedArray);
-        setSelectedText(selection.toString());
-        setLastSelectedVerse(selectedArray[selectedArray.length - 1]);
-        setContextData({
-          verse: window.getSelection().toString(),
-          reference: `${data?.book} ${data?.chapter}:${selectedArray[0]}-${selectedArray[selectedArray.length - 1]
-            }`,
-          book: data?.book,
-          chapter: data?.chapter,
-          verses: selectedArray,
-        });
-        shout("onVeresRightClick", {
-          verseNumber: selectedArray,
-          text: window.getSelection().toString(),
-          book: data?.book,
-          chapter: data?.chapter,
-          highlighted: false,
-        });
+     if (selectedVerses.size > 0 || clickedVerses.length > 0) {
 
-      } else {
-        setShowCommands(false);
-        setSelectedText("");
-        setLastSelectedVerse(null);
-      }
+    const unifiedVerses = getUnifiedSelectedVerses(
+        Array.from(selectedVerses),
+        clickedVerses
+    );
+
+    const highestVerse = unifiedVerses[unifiedVerses.length - 1];
+    const lowestVerse = unifiedVerses[0];
+
+    const selectedTextFinal =
+      selection && !selection.isCollapsed
+        ? selection.toString()
+        : unifiedVerses
+            .map(v => {
+                const verseObj = data?.content?.flatMap(c => c.verses)
+                  .find(x => x.verseNumber === v);
+                return verseObj?.text || "";
+            })
+            .join(" ");
+
+    setSelectedText(selectedTextFinal);
+
+    setLastSelectedVerse(highestVerse);
+
+    setContextData({
+        verse: selectedTextFinal,
+        reference: `${data?.book} ${data?.chapter}:${lowestVerse}${lowestVerse !== highestVerse ? `-${highestVerse}` : ""}`,
+        book: data?.book,
+        chapter: data?.chapter,
+        verses: unifiedVerses
+    });
+
+    shout("onVeresRightClick", {
+        verseNumber: unifiedVerses,
+        text: selectedTextFinal,
+        book: data?.book,
+        chapter: data?.chapter
+    });
+
+    setShowCommands(true);
+} else {
+    setShowCommands(false);
+    setSelectedText("");
+    setLastSelectedVerse(null);
+}
+
     };
     document.addEventListener("mouseup", handleMouseUp);
     return () => {
@@ -925,59 +954,52 @@ function ThePage({
   globalThis.ClearUserSelection = clearUserSelection;
 
   // NEW: Handle verse clicks
-  const handleVerseClick = useCallback((verseNumber) => {
+ const handleVerseClick = useCallback((verseNumber, verseElement) => {
+  const ele  = document.getElementById(`v-${verseNumber}`);
+    const rect = ele.getBoundingClientRect();
+
+    // Position under the verse
+    setToolbarPos({
+      x: rect.left + rect.width / 2,
+      y: rect.bottom + 10,
+    });
+
     setClickedVerses(prev => {
       const isAlreadyClicked = prev.includes(verseNumber);
+
       if (isAlreadyClicked) {
-        // Remove verse from clicked list
         const newClicked = prev.filter(v => v !== verseNumber);
+
         if (newClicked.length === 0) {
-          setShowVerseToolbar(false);
+          setTimeout(()=>{setShowVerseToolbar(false)},5);
           setClickedVersesContext({});
-        } else {
-          // Update context with remaining clicked verses
-          const remainingVerseObjects = newClicked.map(v => {
-            const verseObj = data?.content?.flatMap(c => c.verses).find(vv => vv.verseNumber === v);
-            return {
-              verseNumber: v,
-              text: verseObj?.text || "",
-              book: data?.book,
-              chapter: data?.chapter,
-              highlighted: !!highlighted?.[v],
-            };
-          });
-          setClickedVersesContext({
-            verses: newClicked,
-            book: data?.book,
-            chapter: data?.chapter,
-            reference: `${data?.book} ${data?.chapter}:${newClicked.join(",")}`,
-            text: remainingVerseObjects.map(o => o.text).join(" "),
-          });
         }
-        return newClicked;
-      } else {
-        // Add verse to clicked list
-        const newClicked = [...prev, verseNumber];
-        const verseObj = data?.content?.flatMap(c => c.verses).find(v => v.verseNumber === verseNumber);
-
-        // Build context data like onVeresRightClick
-        const context = {
-          verseNumber: newClicked,
-          text: newClicked.map(v => {
-            const vo = data?.content?.flatMap(c => c.verses).find(vv => vv.verseNumber === v);
-            return vo?.text || "";
-          }).join(" "),
-          book: data?.book,
-          chapter: data?.chapter,
-          highlighted: !!highlighted?.[verseNumber],
-        };
-
-        setClickedVersesContext(context);
-        setShowVerseToolbar(true);
+        
         return newClicked;
       }
+
+      const newClicked = [...prev, verseNumber];
+      const verseObj = data?.content?.flatMap(c => c.verses)
+        .find(v => v.verseNumber === verseNumber);
+
+      setClickedVersesContext({
+        verseNumber: newClicked,
+        text: newClicked
+          .map(v => {
+            const obj = data?.content?.flatMap(c => c.verses)
+              .find(vv => vv.verseNumber === v);
+            return obj?.text || "";
+          })
+          .join(" "),
+        book: data?.book,
+        chapter: data?.chapter
+      });
+
+      setShowVerseToolbar(true);
+      return newClicked;
     });
-  }, [data, highlighted]);
+}, [data,highlighted]);
+
 
 
   // NEW: Handle color selection from toolbar
@@ -991,7 +1013,7 @@ function ThePage({
 
     // Clear clicked verses and hide toolbar
     setClickedVerses([]);
-    setShowVerseToolbar(false);
+    setTimeout(()=>{setShowVerseToolbar(false)},5);
   }, [clickedVerses, toggleVerseHighlight]);
 
   // NEW: Close toolbar when clicking outside
@@ -999,13 +1021,22 @@ function ThePage({
     const handleClickOutside = (e) => {
       if (showVerseToolbar && !e.target.closest('.verse-toolbar') && !e.target.closest('.sectionText') && !e.target.closest('.sectionCover') && !e.target.closest('.sectionTitle')) {
         setClickedVerses([]);
-        setShowVerseToolbar(false);
+        setTimeout(()=>{setShowVerseToolbar(false)},5);
       }
     };
 
     document.addEventListener('mousedown', handleClickOutside);
     return () => document.removeEventListener('mousedown', handleClickOutside);
   }, [showVerseToolbar]);
+  const [dragToolbar, setDragToolbar] = useState(false);
+const [toolbarPos, setToolbarPos] = useState({ x: 200, y: 200 }); // initial position
+  useEffect(() => {
+  if (!dragToolbar) return;
+  setToolbarPos({
+    x: position.x,
+    y: position.y,
+  });
+}, [position, dragToolbar]);
 
   return (
     <div
@@ -1073,6 +1104,8 @@ function ThePage({
                       wordHighlightsBC={wordHighlightsBC}
                       clickedVerses={clickedVerses}
                       handleVerseClick={handleVerseClick}
+                      setClickedVerses={setClickedVerses }
+                        setShowVerseToolbar={setShowVerseToolbar} 
                     />
                   </div>
                 </>
@@ -1101,6 +1134,18 @@ function ThePage({
           <div style={{ height: "160px" }}></div>
 
           {showVerseToolbar && !(role === 'follower' && config.onlyHostHighlight) && (
+            <div onMouseDown={() => {setDragToolbar(true)}}
+  onMouseUp={() => setDragToolbar(false)}
+  onMouseLeave={() => setDragToolbar(false)}
+  style={{
+    position: "fixed",
+    left: toolbarPos.x - 190,
+    top: toolbarPos.y,
+    zIndex: 10000,
+    cursor: dragToolbar ? "grabbing" : "grab",
+    userSelect: "none",
+  }}>
+
             <VerseToolbar
               clickedVerses={clickedVerses}
               toggleVerseHighlight={toggleVerseHighlight}
@@ -1112,9 +1157,10 @@ function ThePage({
               onColorSelect={handleColorSelect}
               onClose={() => {
                 setClickedVerses([]);
-                setShowVerseToolbar(false);
+                setTimeout(()=>{setShowVerseToolbar(false)},5);
               }}
-            />
+              />
+              </div>
           )}
         </>
       ) : (
@@ -1377,7 +1423,45 @@ function Section({
   wordHighlightsBC,
   clickedVerses,
   handleVerseClick,
+  setClickedVerses ,
+  setShowVerseToolbar 
 }) {
+  const selectAllHeadingVerses = useCallback(() => {
+    const verseNumbers = verses.map(v => v.verseNumber);
+
+    setClickedVerses(prev => {
+        const merged = [...new Set([...prev, ...verseNumbers])].sort((a, b) => a - b);
+
+        // Build unified text
+        const text = merged
+            .map(v => {
+                const verseObj = verses.find(vv => vv.verseNumber === v);
+                return verseObj?.text || "";
+            })
+            .join(" ");
+
+        // Show verse toolbar
+        setShowVerseToolbar(true);
+        setLastSelectedVerse(merged[merged.length - 1]);
+
+        // Update context
+        setContextData({
+            verses: merged,
+            verse: text,
+            text,
+            book,
+            chapter,
+            reference: `${book} ${chapter}:${merged[0]}-${merged[merged.length - 1]}`,
+        });
+
+        return merged;
+    });
+}, [verses, setClickedVerses, setShowVerseToolbar, setLastSelectedVerse, setContextData, book, chapter]);
+const { eventHandlers, shouldSuppressClick } = useHoldAction(
+    selectAllHeadingVerses,
+    1500 // 1.5 seconds hold
+);
+
   const stripRe = /[.,'"""'']/g;
   const normalize = (k) => k.replace(stripRe, "").toLowerCase().trim();
 
@@ -1607,15 +1691,17 @@ function Section({
   return (
     <div>
       <div
-        onClick={() => {
-          shout("onHeadingClick", {
-            heading,
-          });
-        }}
-        className="sectionTitle"
-      >
-        {heading}
-      </div>
+  className="sectionTitle"
+  {...eventHandlers}
+  onClick={(e) => {
+    if (shouldSuppressClick()) return; // Prevent normal click if hold already triggered
+
+    shout("onHeadingClick", { heading });
+  }}
+>
+    {heading}
+</div>
+
       {hebrew_subtitle && <div className="sectionTitle">{hebrew_subtitle}</div>}
       <div style={textEdit ? editTextStyle : null}>
         {textEdit && <div className="editVerseTitle">Verse - Text</div>}
@@ -1635,8 +1721,15 @@ function Section({
 
             const [c, setC] = useState(false);
             const isActive = verse.verseNumber.toString() === activeVerse;
-            const shouldShowCommands =
-              showCommands && lastSelectedVerse === verse.verseNumber;
+           const maxClicked = clickedVerses?.length 
+  ? Math.max(...clickedVerses) 
+  : null;
+
+const commandAnchorVerse = maxClicked || lastSelectedVerse;
+
+const shouldShowCommands =
+  showCommands && commandAnchorVerse === verse.verseNumber;
+
             const isTextDecorUnderline =
               holded?.[verse.verseNumber] ||
               selected[verse.verseNumber] ||
