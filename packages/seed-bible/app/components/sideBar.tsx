@@ -744,6 +744,7 @@ function SideBar() {
     setMultiSelectMode,
     selectedTabs,
     setSelectedTabs,
+    sharedTab
   } = useTabsContext();
   globalThis.AddTab = addTab;
   const { screens, setScreens, fullScreen, setFullScreen, ReSeed, setReSeed } =
@@ -1345,13 +1346,10 @@ function SideBar() {
               </div>
             )}
             <UserPresence />
-            {tabs
-              .filter((tab) => tab.sharedTab)
-              .map((el, index) => (
-                <Tab
-                  key={el.id}
-                  el={el}
-                  index={index}
+           {sharedTab && <Tab
+                  key={sharedTab.id}
+                  el={sharedTab}
+                  index={0}
                   onlineUsers={onlineUsers}
                   activeTab={activeTab}
                   setActiveTab={setActiveTab}
@@ -1360,8 +1358,7 @@ function SideBar() {
                   collapsed={collapsed}
                   editMode={editMode}
                   sharedTab={true}
-                />
-              ))}
+                />}
             <div className="tabsContainer">
               <span>Tabs</span>
               <div

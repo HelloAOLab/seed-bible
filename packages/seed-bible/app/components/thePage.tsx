@@ -81,7 +81,7 @@ function ThePage({
   }, [T]);
   const { inSession, role, config } = getUserSessionInfo(configBot.id)
   const [tabEntered, setTabEntered] = useState(false);
-  const { updateTab, tabs, setActiveTab } = useTabsContext();
+  const { updateTab, tabs, setActiveTab,sharedTab } = useTabsContext();
   const { isDragging, setIsDragging, Element } = useMouseMove();
   const { navFunctions, setNavFunctions, scrollToVerse } = useBibleContext();
   const [inHold, setInHold] = useState();
@@ -591,7 +591,7 @@ function ThePage({
   }, [data]);
 
   function hanldNavFunctions() {
-    if (tab && tab?.id) setActiveTab(tab?.id);
+    if (tab && tab?.id && !sharedTab) setActiveTab(tab?.id);
     setNavFunctions({
       openNextChapter,
       openPrevChapter,

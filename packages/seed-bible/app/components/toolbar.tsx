@@ -39,9 +39,9 @@ export function Toolbar() {
 
   // === keep original default-toolbar logic ===
   const [showToolbar, setShowToolbar] = useState(true);
-  useEffect(() => {
-    setShowToolbar(!openOnMobile);
-  }, [openOnMobile]);
+  // useEffect(() => {
+  //   setShowToolbar(!openOnMobile);
+  // }, [openOnMobile]);
 
   const TabTools = getToolsForActiveSpace();
   const setActiveTools = (newTools) =>
