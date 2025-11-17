@@ -1345,7 +1345,7 @@ function SideBar() {
                 <input placeholder="Search..." />
               </div>
             )}
-            <UserPresence />
+           {!configBot.tags.staticInst&& <UserPresence />}
            {sharedTab && <Tab
                   key={sharedTab.id}
                   el={sharedTab}
