@@ -74,6 +74,7 @@ function ThePage({
   const [commandHighlight, setCommandHighlight] = useState([]);
   const [direction, setDirection] = useState(null);
   const commandsRef = useRef(null);
+  const userMovedToolbar = useRef(false);
 
   useEffect(() => {
     if (!T) globalThis.CurrentPanelAvailable = panelId;
@@ -335,99 +336,130 @@ useEffect(() => {
   return [...new Set(rawSelectedVerses)].sort((a, b) => a - b);
 }
 
-    const handleMouseUp = () => {
-      const selection = window.getSelection();
-      if (!selection || selection.isCollapsed) return;
+   const handleMouseUp = () => {
+  const selection = window.getSelection();
+  if (!selection || selection.isCollapsed) return;
 
-      const selectedRange = selection.getRangeAt(0);
-      const container =
-        selectedRange.commonAncestorContainer.nodeType === Node.TEXT_NODE
-          ? selectedRange.commonAncestorContainer.parentElement
-          : selectedRange.commonAncestorContainer;
+  const selectedRange = selection.getRangeAt(0);
+  const container =
+    selectedRange.commonAncestorContainer.nodeType === Node.TEXT_NODE
+      ? selectedRange.commonAncestorContainer.parentElement
+      : selectedRange.commonAncestorContainer;
 
-      if (commandsRef.current && commandsRef.current.contains(container)) {
-        // setShowCommands(true);
-        return;
-      }
+  if (commandsRef.current && commandsRef.current.contains(container)) {
+    return;
+  }
 
-      const treeWalker = document.createTreeWalker(
-        selectedRange.commonAncestorContainer,
-        NodeFilter.SHOW_ELEMENT,
-        {
-          acceptNode: (node) => {
-            if (
-              node.classList?.contains("sectionText") &&
-              selectedRange.intersectsNode(node)
-            ) {
-              return NodeFilter.FILTER_ACCEPT;
-            }
-            return NodeFilter.FILTER_SKIP;
-          },
+  // Collect selected verse numbers
+  const treeWalker = document.createTreeWalker(
+    selectedRange.commonAncestorContainer,
+    NodeFilter.SHOW_ELEMENT,
+    {
+      acceptNode: (node) => {
+        if (
+          node.classList?.contains("sectionText") &&
+          selectedRange.intersectsNode(node)
+        ) {
+          return NodeFilter.FILTER_ACCEPT;
         }
-      );
+        return NodeFilter.FILTER_SKIP;
+      },
+    }
+  );
 
-      const selectedVerses = new Set();
+  const selectedVerses = new Set();
+  let currentNode = treeWalker.nextNode();
 
-      let currentNode = treeWalker.nextNode();
-      while (currentNode) {
-        const verseNumberElem = currentNode.querySelector(".sectionTextNumber");
-        if (verseNumberElem) {
-          const verseNum = parseInt(verseNumberElem.textContent);
-          if (!isNaN(verseNum)) {
-            selectedVerses.add(verseNum);
-          }
-        }
-        currentNode = treeWalker.nextNode();
+  while (currentNode) {
+    const verseNumberElem = currentNode.querySelector(".sectionTextNumber");
+    if (verseNumberElem) {
+      const verseNum = parseInt(verseNumberElem.textContent);
+      if (!isNaN(verseNum)) {
+        selectedVerses.add(verseNum);
       }
+    }
+    currentNode = treeWalker.nextNode();
+  }
 
-     if (selectedVerses.size > 0 || clickedVerses.length > 0) {
-
-    const unifiedVerses = getUnifiedSelectedVerses(
-        Array.from(selectedVerses),
-        clickedVerses
-    );
-
-    const highestVerse = unifiedVerses[unifiedVerses.length - 1];
-    const lowestVerse = unifiedVerses[0];
-
-    const selectedTextFinal =
-      selection && !selection.isCollapsed
-        ? selection.toString()
-        : unifiedVerses
-            .map(v => {
-                const verseObj = data?.content?.flatMap(c => c.verses)
-                  .find(x => x.verseNumber === v);
-                return verseObj?.text || "";
-            })
-            .join(" ");
-
-    setSelectedText(selectedTextFinal);
-
-    setLastSelectedVerse(highestVerse);
-
-    setContextData({
-        verse: selectedTextFinal,
-        reference: `${data?.book} ${data?.chapter}:${lowestVerse}${lowestVerse !== highestVerse ? `-${highestVerse}` : ""}`,
-        book: data?.book,
-        chapter: data?.chapter,
-        verses: unifiedVerses
-    });
-
-    shout("onVeresRightClick", {
-        verseNumber: unifiedVerses,
-        text: selectedTextFinal,
-        book: data?.book,
-        chapter: data?.chapter
-    });
-
-    // setShowCommands(true);
-} else {
+  // Exit if nothing selected and no clicked verses
+  if (selectedVerses.size === 0 && clickedVerses.length === 0) {
     setShowCommands(false);
     setSelectedText("");
     setLastSelectedVerse(null);
-}
+    return;
+  }
 
-    };
+  // Merge selection with clicked verses
+  const unifiedVerses = getUnifiedSelectedVerses(
+    Array.from(selectedVerses),
+    clickedVerses
+  );
+
+  const highestVerse = unifiedVerses[unifiedVerses.length - 1];
+  const lowestVerse = unifiedVerses[0];
+
+  // Build selected text
+  const selectedTextFinal =
+    selection && !selection.isCollapsed
+      ? selection.toString()
+      : unifiedVerses
+          .map(v => {
+              const verseObj = data?.content?.flatMap(c => c.verses)
+                .find(x => x.verseNumber === v);
+              return verseObj?.text || "";
+          })
+          .join(" ");
+
+  setSelectedText(selectedTextFinal);
+  setLastSelectedVerse(highestVerse);
+
+  // Build context data
+  setContextData({
+    verse: selectedTextFinal,
+    reference: `${data?.book} ${data?.chapter}:${lowestVerse}${
+      lowestVerse !== highestVerse ? `-${highestVerse}` : ""
+    }`,
+    book: data?.book,
+    chapter: data?.chapter,
+    verses: unifiedVerses
+  });
+
+  // 🔥 NEW — Convert selection into clicked verses
+  setClickedVerses(unifiedVerses);
+  setClickedVersesContext({
+    verseNumber: unifiedVerses,
+    text: selectedTextFinal,
+    book: data?.book,
+    chapter: data?.chapter
+  });
+   const sel = window.getSelection();
+  if (sel && sel.removeAllRanges) sel.removeAllRanges();
+  setShowVerseToolbar(true);
+
+  // Reset toolbar drag state on new selection
+  userMovedToolbar.current = false;
+
+  // 🔥 NEW — Auto-position toolbar under final selected verse
+  if (!userMovedToolbar.current) {
+    const ele = document.getElementById(`v-${highestVerse}`);
+    if (ele) {
+      const rect = ele.getBoundingClientRect();
+      setToolbarPos({
+        x: rect.left + rect.width / 2,
+        y: rect.bottom + 10,
+      });
+    }
+  }
+
+  // Notify systems about verse selection
+  shout("onVeresRightClick", {
+    verseNumber: unifiedVerses,
+    text: selectedTextFinal,
+    book: data?.book,
+    chapter: data?.chapter
+  });
+};
+
     document.addEventListener("mouseup", handleMouseUp);
     return () => {
       document.removeEventListener("mouseup", handleMouseUp);
@@ -463,6 +495,8 @@ useEffect(() => {
     }
     setIsDragging(false);
     setTabEntered(false);
+ 
+
   }
 
   async function openNextChapter() {
@@ -1008,12 +1042,14 @@ useEffect(() => {
  const handleVerseClick = useCallback((verseNumber, verseElement) => {
   const ele  = document.getElementById(`v-${verseNumber}`);
     const rect = ele.getBoundingClientRect();
-    if(!showVerseToolbar)
-    // Position under the verse
-    setToolbarPos({
-      x: rect.left + rect.width / 2,
-      y: rect.bottom + 10,
-    });
+    // Only auto-position if the user has NOT moved the toolbar manually
+if (!userMovedToolbar.current) {
+  setToolbarPos({
+    x: rect.left + rect.width / 2,
+    y: rect.bottom + 10,
+  });
+}
+
 
     setClickedVerses(prev => {
       const isAlreadyClicked = prev.includes(verseNumber);
@@ -1186,9 +1222,13 @@ const [toolbarPos, setToolbarPos] = useState({ x: 200, y: 200 }); // initial pos
 
           {showVerseToolbar && !(role === 'follower' && config.onlyHostHighlight) && (
   <div
-    onMouseDown={() => {
-      if (!globalThis.IsMobileNow()) setDragToolbar(true);
-    }}
+   onMouseDown={() => { 
+   if (!globalThis.IsMobileNow()) {
+      userMovedToolbar.current = true;
+      setDragToolbar(true);
+   }
+}}
+
     onMouseUp={() => setDragToolbar(false)}
     onMouseLeave={() => setDragToolbar(false)}
     style={
