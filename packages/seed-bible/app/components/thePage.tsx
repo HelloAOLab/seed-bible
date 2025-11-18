@@ -1008,7 +1008,7 @@ useEffect(() => {
  const handleVerseClick = useCallback((verseNumber, verseElement) => {
   const ele  = document.getElementById(`v-${verseNumber}`);
     const rect = ele.getBoundingClientRect();
-
+    if(!showVerseToolbar)
     // Position under the verse
     setToolbarPos({
       x: rect.left + rect.width / 2,
@@ -1049,7 +1049,7 @@ useEffect(() => {
       setShowVerseToolbar(true);
       return newClicked;
     });
-}, [data,highlighted]);
+}, [data,highlighted,showVerseToolbar]);
 
 
 
@@ -1104,7 +1104,7 @@ const [toolbarPos, setToolbarPos] = useState({ x: 200, y: 200 }); // initial pos
           position: relative;
         }
         .toolbar-1 {
-          display:${showVerseToolbar ? 'none !important' : ''}
+          display:${showVerseToolbar && globalThis.IsMobileNow()  ? 'none !important' : ''}
         }
         .bookTitle,
         .sectionTitle {
@@ -1185,34 +1185,55 @@ const [toolbarPos, setToolbarPos] = useState({ x: 200, y: 200 }); // initial pos
           <div style={{ height: "160px" }}></div>
 
           {showVerseToolbar && !(role === 'follower' && config.onlyHostHighlight) && (
-            <div onMouseDown={() => {setDragToolbar(true)}}
-  onMouseUp={() => setDragToolbar(false)}
-  onMouseLeave={() => setDragToolbar(false)}
-  style={{
-    position: "fixed",
-    left: toolbarPos.x - 190,
-    top: toolbarPos.y,
-    zIndex: 10000,
-    cursor: dragToolbar ? "grabbing" : "grab",
-    userSelect: "none",
-  }}>
+  <div
+    onMouseDown={() => {
+      if (!globalThis.IsMobileNow()) setDragToolbar(true);
+    }}
+    onMouseUp={() => setDragToolbar(false)}
+    onMouseLeave={() => setDragToolbar(false)}
+    style={
+      globalThis.IsMobileNow()
+        ? {
+            position: "fixed",
+            left: "50%",
+            bottom: "20px",
+            transform: "translateX(-50%)",
+            zIndex: 10000,
+            width: "90%",
+            maxWidth: "420px",
+            cursor: "default",
+            userSelect: "none",
+          }
+        : {
+            position: "fixed",
+            left: toolbarPos.x - 190,
+            top: toolbarPos.y,
+            zIndex: 10000,
+            cursor: dragToolbar ? "grabbing" : "grab",
+            userSelect: "none",
+          }
+    }
+    className="verse-toolbar"
+  >
+    <VerseToolbar
+      clickedVerses={clickedVerses}
+      toggleVerseHighlight={toggleVerseHighlight}
+      book={data?.book}
+      setClickedVerses={setClickedVerses}
+      chapter={data?.chapter}
+      highlighted={highlighted}
+      clickedVersesContext={clickedVersesContext}
+      onColorSelect={handleColorSelect}
+      onClose={() => {
+        setClickedVerses([]);
+        setTimeout(() => {
+          setShowVerseToolbar(false);
+        }, 5);
+      }}
+    />
+  </div>
+)}
 
-            <VerseToolbar
-              clickedVerses={clickedVerses}
-              toggleVerseHighlight={toggleVerseHighlight}
-              book={data?.book}
-              setClickedVerses={setClickedVerses}
-              chapter={data?.chapter}
-              highlighted={highlighted}
-              clickedVersesContext={clickedVersesContext}
-              onColorSelect={handleColorSelect}
-              onClose={() => {
-                setClickedVerses([]);
-                setTimeout(()=>{setShowVerseToolbar(false)},5);
-              }}
-              />
-              </div>
-          )}
         </>
       ) : (
         <>

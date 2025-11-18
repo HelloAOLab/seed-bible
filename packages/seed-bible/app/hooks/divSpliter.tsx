@@ -1,7 +1,7 @@
 const { useState, useRef, useEffect, useCallback } = os.appHooks;
 import { useBibleContext } from "app.hooks.bibleVariables";
 import { useTabsContext } from "app.hooks.tabs";
-import { cloneElement } from "https://esm.sh/react@18";
+import { cloneElement } from "https://cdn.skypack.dev/react@18";
 /**
  * useDivSpliter - Hook to manage split layout logic
  */
