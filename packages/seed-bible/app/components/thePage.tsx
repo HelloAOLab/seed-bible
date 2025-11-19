@@ -74,7 +74,7 @@ function ThePage({
   const [commandHighlight, setCommandHighlight] = useState([]);
   const [direction, setDirection] = useState(null);
   const commandsRef = useRef(null);
-  const userMovedToolbar = useRef(false);
+  const [userMovedToolbar,setUserMovedToolbar] = useState()
 
   useEffect(() => {
     if (!T) globalThis.CurrentPanelAvailable = panelId;
@@ -425,7 +425,10 @@ useEffect(() => {
   });
 
   // 🔥 NEW — Convert selection into clicked verses
-  setClickedVerses(unifiedVerses);
+setClickedVerses(prev => {
+  const newOnes = unifiedVerses.filter(v => !prev.includes(v));
+  return [...prev, ...newOnes];
+});
   setClickedVersesContext({
     verseNumber: unifiedVerses,
     text: selectedTextFinal,
@@ -437,16 +440,16 @@ useEffect(() => {
   setShowVerseToolbar(true);
 
   // Reset toolbar drag state on new selection
-  userMovedToolbar.current = false;
+  // userMovedToolbar.current = false;
 
   // 🔥 NEW — Auto-position toolbar under final selected verse
-  if (!userMovedToolbar.current) {
+  if (!userMovedToolbar) {
     const ele = document.getElementById(`v-${highestVerse}`);
     if (ele) {
       const rect = ele.getBoundingClientRect();
       setToolbarPos({
         x: rect.left + rect.width / 2,
-        y: rect.bottom + 10,
+        y: rect.bottom - 150,
       });
     }
   }
@@ -464,7 +467,7 @@ useEffect(() => {
     return () => {
       document.removeEventListener("mouseup", handleMouseUp);
     };
-  }, [data]);
+  }, [data,userMovedToolbar]);
 
   function handleMouseEnter() {
     if (!isDragging) return;
@@ -1043,12 +1046,12 @@ useEffect(() => {
   const ele  = document.getElementById(`v-${verseNumber}`);
     const rect = ele.getBoundingClientRect();
     // Only auto-position if the user has NOT moved the toolbar manually
-if (!userMovedToolbar.current) {
-  setToolbarPos({
-    x: rect.left + rect.width / 2,
-    y: rect.bottom + 10,
-  });
-}
+      if (!userMovedToolbar) {
+        setToolbarPos({
+          x: rect.left + rect.width / 2,
+          y: rect.bottom - 150,
+        });
+      }
 
 
     setClickedVerses(prev => {
@@ -1085,7 +1088,7 @@ if (!userMovedToolbar.current) {
       setShowVerseToolbar(true);
       return newClicked;
     });
-}, [data,highlighted,showVerseToolbar]);
+}, [data,highlighted,showVerseToolbar,userMovedToolbar]);
 
 
 
@@ -1224,7 +1227,8 @@ const [toolbarPos, setToolbarPos] = useState({ x: 200, y: 200 }); // initial pos
   <div
    onMouseDown={() => { 
    if (!globalThis.IsMobileNow()) {
-      userMovedToolbar.current = true;
+      // userMovedToolbar.current = true;
+      setUserMovedToolbar(true)
       setDragToolbar(true);
    }
 }}
@@ -1855,6 +1859,8 @@ const shouldShowCommands =
                   id={`v-${verse.verseNumber}`}
                   onContextMenu={(e) => {
                     e.preventDefault();
+                     handleVerseClick(verse.verseNumber);
+                    SetShowCommands(false);
                     setInHold(verse.verseNumber);
                     setLastSelectedVerse(verse.verseNumber);
 
