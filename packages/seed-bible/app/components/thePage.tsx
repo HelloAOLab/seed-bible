@@ -1861,8 +1861,8 @@ const shouldShowCommands =
                     e.preventDefault();
                      handleVerseClick(verse.verseNumber);
                     SetShowCommands(false);
-                    setInHold(verse.verseNumber);
-                    setLastSelectedVerse(verse.verseNumber);
+                    // setInHold(verse.verseNumber);
+                    // setLastSelectedVerse(verse.verseNumber);
 
                     setContextData({
                       verse: verse.text,
@@ -1871,13 +1871,13 @@ const shouldShowCommands =
                       chapter,
                       verses: [verse.verseNumber],
                     });
-                    shout("onVeresRightClick", {
-                      verseNumber: verse.verseNumber,
-                      text: verse.text,
-                      chapter,
-                      book,
-                      highlighted: highlighted?.[verse.verseNumber],
-                    });
+                    // shout("onVeresRightClick", {
+                    //   verseNumber: verse.verseNumber,
+                    //   text: verse.text,
+                    //   chapter,
+                    //   book,
+                    //   highlighted: highlighted?.[verse.verseNumber],
+                    // });
                   }}
                   onClick={(e) => {
                     e.stopPropagation();
