@@ -5,12 +5,16 @@ import { useResizeObserver } from "scriptureMap2D.main.CustomHooks";
 import { SectionToggle } from "scriptureMap2D.main.SectionToggle";
 import { useReadingHistoryContext } from "scriptureMap2D.main.ReadingHistoryContext";
 const { useMemo, useCallback, useState, useRef, useEffect } = os.appHooks;
+const { memo } = os.appCompat;
 
-export const TestamentContent = ({ hidden }) => {
+export const TestamentContent = memo(({ hidden }) => {
   const { arrangementIndex, scaleFactor, showLabels, bookWidth } =
     useScriptureMap2DContext();
-  const { readingEventsByBook, readingHistoryRange } =
-    useReadingHistoryContext();
+  const {
+    rangedReadingEventsByBook,
+    readingHistoryRangeSeconds,
+    SEC_PER_MINUTE,
+  } = useReadingHistoryContext();
 
   const contentRef = useRef(null);
   const { width: contentWidth } = useResizeObserver(contentRef);
@@ -20,80 +24,105 @@ export const TestamentContent = ({ hidden }) => {
     return testament.sections.toReversed();
   }, []);
 
-  const filteredSections = useMemo(() => {
-    if (!readingHistoryRange) return reversedSections;
+  const { filteredSections, sectionLevelColorMap } = useMemo(() => {
+    const getLevelColorMap = (sections) => {
+      return new Map(
+        sections.map((section, sectionIndex) => {
+          const levelColorsKey = `${testamentIndex} ${sectionIndex}`;
+          const sectionLevelsColors =
+            BibleVizUtils.Functions.GetChildrenLevelColors({
+              sectionColorRGB: BibleVizUtils.Functions.HexToRgb({
+                hexColor: section.color,
+              }),
+              colorRange: section.customColorRange ?? 70,
+              levelsLength: section.books.length,
+            });
+          return [levelColorsKey, sectionLevelsColors];
+        })
+      );
+    };
 
-    const filteredSections = [];
+    let filteredSections;
 
-    for (
-      let sectionIndex = 0;
-      sectionIndex < reversedSections.length;
-      sectionIndex++
-    ) {
-      const section = reversedSections[sectionIndex];
-      const filteredBooks = [];
-      for (let bookIndex = 0; bookIndex < section.books.length; bookIndex++) {
-        const book = section.books[bookIndex];
-        const bookId =
-          BibleVizUtils.Data.tags.booksStaticInfo[book.commonName].abbreviation;
-        if (readingEventsByBook.has(bookId)) {
-          filteredBooks.push(book);
+    if (readingHistoryRangeSeconds) {
+      filteredSections = [];
+
+      for (
+        let sectionIndex = 0;
+        sectionIndex < reversedSections.length;
+        sectionIndex++
+      ) {
+        const section = reversedSections[sectionIndex];
+        const filteredBooks = [];
+        for (let bookIndex = 0; bookIndex < section.books.length; bookIndex++) {
+          const book = section.books[bookIndex];
+          const bookId =
+            BibleVizUtils.Data.tags.booksStaticInfo[book.commonName]
+              .abbreviation;
+          const bookEvents = rangedReadingEventsByBook.get(bookId);
+          if (bookEvents) {
+            const readingTimeSeconds = bookEvents.reduce((acc, event) => {
+              return acc + event.end - event.start;
+            }, 0);
+            const isReadingTimeNoticeable =
+              readingTimeSeconds >= SEC_PER_MINUTE;
+            if (isReadingTimeNoticeable) {
+              filteredBooks.push(book);
+            }
+          }
+        }
+        if (filteredBooks.length > 0) {
+          filteredSections.push({
+            ...section,
+            books: filteredBooks,
+          });
         }
       }
-      if (filteredBooks.length > 0) {
-        filteredSections.push({
-          ...section,
-          books: filteredBooks,
-        });
-      }
-    }
+    } else filteredSections = reversedSections;
 
-    return filteredSections;
-  }, [reversedSections, readingEventsByBook, readingHistoryRange]);
-
-  const sectionLevelColorMap = useMemo(() => {
-    const map = new Map();
-
-    filteredSections.forEach((section, sectionIndex) => {
-      const levelColorsKey = `${testamentIndex} ${sectionIndex}`;
-      const sectionLevelsColors =
-        BibleVizUtils.Functions.GetChildrenLevelColors({
-          sectionColorRGB: BibleVizUtils.Functions.HexToRgb({
-            hexColor: section.color,
-          }),
-          colorRange: section.customColorRange ?? 70,
-          levelsLength: section.books.length,
-        });
-      map.set(levelColorsKey, sectionLevelsColors);
-    });
-    return map;
-  }, [filteredSections]);
+    return {
+      filteredSections,
+      sectionLevelColorMap: getLevelColorMap(filteredSections),
+    };
+  }, [reversedSections, rangedReadingEventsByBook, readingHistoryRangeSeconds]);
 
   const [sectionsShown, setSectionsShown] = useState(
     new Map(
-      filteredSections.map((section) => {
-        return [section, true];
+      filteredSections.map((section, sectionIndex) => {
+        const key = `${testamentIndex}-${testament.name}-${sectionIndex}-${section.name}`;
+        return [key, true];
       })
     )
   );
 
   useEffect(() => {
-    setSectionsShown(
-      new Map(
-        filteredSections.map((section) => {
-          return [section, true];
-        })
-      )
+    const next = new Map(
+      filteredSections.map((section, sectionIndex) => {
+        const key = `${testamentIndex}-${testament.name}-${sectionIndex}-${section.name}`;
+        return [key, true];
+      })
     );
+
+    setSectionsShown((prev) => {
+      if (!prev || prev.size !== next.size) return next;
+
+      for (const key of next.keys()) {
+        if (!prev.has(key)) {
+          return next;
+        }
+      }
+
+      return prev;
+    });
   }, [filteredSections]);
 
   const toggleShowSection = useCallback(
-    (section) => {
+    (sectionKey) => {
       const copy = new Map(sectionsShown);
-      copy.set(section, !copy.get(section));
+      copy.set(sectionKey, !copy.get(sectionKey));
       setSectionsShown(copy);
     },
-    [testament, sectionsShown]
+    [sectionsShown]
   );
 
   const getFittingItemCount = useCallback(
@@ -140,6 +169,7 @@ export const TestamentContent = ({ hidden }) => {
         const section = filteredSections[sectionIndex];
         const reversedBooks = section.books.toReversed();
         const bookInfo = reversedBooks[bookIndex];
+        const sectionKey = `${testamentIndex}-${testament.name}-${sectionIndex}-${section.name}`;
         if (bookIndex === 0 && showLabels) {
           const sectionOcupiedColumns = Math.min(
             fittingBooksCount - (currentBookColumn - 1),
@@ -147,34 +177,35 @@ export const TestamentContent = ({ hidden }) => {
           );
           elements.push(
             <SectionToggle
-              key={`${arrangementIndex} ${testamentIndex} ${sectionIndex}`}
+              key={`${arrangementIndex}-${testament.name}-${section.name}`}
               section={filteredSections[sectionIndex]}
+              sectionKey={sectionKey}
               toggleShowSection={toggleShowSection}
-              showingContent={sectionsShown.get(filteredSections[sectionIndex])}
+              showingContent={sectionsShown.get(sectionKey)}
               style={{
                 backgroundColor: `${filteredSections[sectionIndex].color}80`,
                 borderBottomColor: filteredSections[sectionIndex].color,
                 gridRow: `${i * 2 - 1} / ${i * 2}`,
-                gridColumn: `${currentBookColumn} / ${sectionsShown.get(filteredSections[sectionIndex]) ? currentBookColumn + sectionOcupiedColumns : currentBookColumn + 1}`,
+                gridColumn: `${currentBookColumn} / ${sectionsShown.get(sectionKey) ? currentBookColumn + sectionOcupiedColumns : currentBookColumn + 1}`,
               }}
             />
           );
         }
 
-        if (sectionsShown.get(section)) {
+        if (sectionsShown.get(sectionKey)) {
           const levelColorsKey = `${testamentIndex} ${sectionIndex}`;
           const color =
             bookInfo.customColor ??
             sectionLevelColorMap.get(levelColorsKey).toReversed()[bookIndex];
           const readingEvents =
-            readingEventsByBook.get(
+            rangedReadingEventsByBook.get(
               BibleVizUtils.Data.tags.booksStaticInfo[bookInfo.commonName]
                 .abbreviation
             ) ?? [];
 
           elements.push(
             <Book
-              key={`${arrangementIndex} ${testamentIndex} ${sectionIndex} ${bookIndex}`}
+              key={`book-${arrangementIndex}-${testament.name}-${section.name}-${bookInfo.commonName}`}
               bookInfo={bookInfo}
               bookCoverBackgroundColor={color}
               sectionName={section.name}
@@ -205,7 +236,7 @@ export const TestamentContent = ({ hidden }) => {
     sectionLevelColorMap,
     sectionsShown,
     showLabels,
-    readingEventsByBook,
+    rangedReadingEventsByBook,
   ]);
 
   return (
@@ -216,4 +247,4 @@ export const TestamentContent = ({ hidden }) => {
       {sections}
     </div>
   );
-};
+});
