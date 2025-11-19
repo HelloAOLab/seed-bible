@@ -2,8 +2,8 @@ import {
   Tooltip,
   ReadingHistoryTooltipContent,
 } from "scriptureMap2D.main.Tooltip";
-import { useScriptureMap2DContext } from "scriptureMap2D.main.ScriptureMap2DContext";
 import { useTimeContext } from "scriptureMap2D.main.TimeContext";
+import { useReadingHistoryContext } from "scriptureMap2D.main.ReadingHistoryContext";
 
 const { useState, useCallback, useMemo, useEffect, useRef } = os.appHooks;
 const { memo } = os.appCompat;
@@ -34,12 +34,12 @@ const Item = memo(
     tooltipContent,
     handleItemClick,
     range,
-    readingHistoryRange,
+    readingHistoryRangeSeconds,
     id,
   }) => {
     const selected = useMemo(() => {
-      return range === readingHistoryRange;
-    }, [range, readingHistoryRange]);
+      return range === readingHistoryRangeSeconds;
+    }, [range, readingHistoryRangeSeconds]);
 
     const style = useMemo(() => {
       return { backgroundColor, gridRow, gridColumn };
@@ -85,165 +85,59 @@ const Item = memo(
 
 export const ReadingHistoryTimeline = () => {
   const {
-    filteredReadingHistory,
-    readingHistoryRange,
+    readingHistoryRangeSeconds,
     handleReadingHistoryRangeSelectorClick,
-    filteredReadingHistoryCount,
-  } = useScriptureMap2DContext();
+    startOfWeekAYearAgoDate,
+    weeksCount,
+    SEC_PER_HOUR,
+    SEC_PER_MINUTE,
+    dayRangesMap,
+    dailyReadingHistorySummaries,
+    readingEventsByDay,
+    selectedUsersCount,
+  } = useReadingHistoryContext();
   const { tick } = useTimeContext();
 
   const prevItemsColorMapRef = useRef(new Map());
 
-  const handleItemClick = useCallback((range) => {
-    handleReadingHistoryRangeSelectorClick(range);
-  }, []);
-
-  const { now, startOfWeek, startOfWeekAYearAgo, weeksCount } = useMemo(() => {
-    const now = new Date();
-
-    const getStartOfWeek = (date) => {
-      const tempDate = new Date(date);
-      tempDate.setDate(tempDate.getDate() - tempDate.getDay());
-      tempDate.setHours(0, 0, 0, 0);
-      return tempDate;
-    };
-
-    const startOfWeek = getStartOfWeek(now);
-
-    const aYearAgo = new Date(now);
-    aYearAgo.setFullYear(now.getFullYear() - 1);
-
-    const startOfWeekAYearAgo = getStartOfWeek(aYearAgo);
-
-    const MS_PER_WEEK = 1000 * 60 * 60 * 24 * 7;
-    const weeksCount =
-      Math.floor((startOfWeek - startOfWeekAYearAgo) / MS_PER_WEEK) + 1;
-
-    return { now, startOfWeek, startOfWeekAYearAgo, weeksCount };
-  }, []);
-
-  const dayRangesMap = useMemo(() => {
-    const map = new Map();
-    for (let week = 0; week < weeksCount; week++) {
-      for (let day = 0; day < 7; day++) {
-        if (week === weeksCount - 1 && day > now.getDay()) break;
-        const dayDate = new Date(startOfWeekAYearAgo);
-        dayDate.setDate(dayDate.getDate() + week * 7 + day);
-        const { start, end } = GetDayRange(dayDate.getTime());
-        map.set(`${week}-${day}`, { start, end });
-      }
-    }
-    return map;
-  }, [weeksCount, startOfWeekAYearAgo]);
-
-  const computeEntriesMap = useCallback(
-    (currFilteredReadingHistory, currDayRangesMap) => {
-      const dayKeys = Array.from(currDayRangesMap.keys());
-      const dayRanges = Array.from(currDayRangesMap.values());
-      const dailyEntriesBreakdownMap = new Map(
-        dayKeys.map((key) => {
-          return [
-            key,
-            {
-              timeSpent: 0,
-              usersCount: 0,
-              usersMap: new Map(),
-              ungroupedEntries: [],
-            },
-          ];
-        })
-      );
-      const now = Date.now();
-
-      const DAY_MS = 1000 * 60 * 60 * 24;
-      const firstDayStart = dayRanges[0].start;
-
-      for (const userId in currFilteredReadingHistory) {
-        const userEntries = currFilteredReadingHistory[userId];
-        for (const bookId in userEntries) {
-          const bookEntries = userEntries[bookId];
-          for (const chapter in bookEntries) {
-            const chapterEntries = bookEntries[chapter];
-            for (const entry of chapterEntries) {
-              const { start, end = now } = entry;
-              const dayIndex = Math.floor((start - firstDayStart) / DAY_MS);
-              const endDayIndex = Math.floor((end - firstDayStart) / DAY_MS);
-
-              for (let i = dayIndex; i <= endDayIndex; i++) {
-                if (i >= 0 && i < dayKeys.length) {
-                  const { start: dayStart, end: dayEnd } = dayRanges[i];
-                  const key = dayKeys[i];
-                  const fixedStart = Math.max(start, dayStart);
-                  const fixedEnd = Math.min(end, dayEnd);
-                  const timeSpent = fixedEnd - fixedStart;
-
-                  const dayBreakdown = dailyEntriesBreakdownMap.get(key);
-                  dayBreakdown.ungroupedEntries.push(entry);
-                  dayBreakdown.timeSpent += timeSpent;
-                  if (!dayBreakdown.usersMap.has(userId)) {
-                    dayBreakdown.usersCount++;
-                    dayBreakdown.usersMap.set(userId, {
-                      timeSpent: 0,
-                      entriesCount: 0,
-                      entries: [],
-                    });
-                  }
-                  const userDayBreakdown = dayBreakdown.usersMap.get(userId);
-                  userDayBreakdown.timeSpent += timeSpent;
-                  userDayBreakdown.entriesCount++;
-                  userDayBreakdown.entries.push(entry);
-                }
-              }
-            }
-          }
-        }
-      }
-
-      return { dailyEntriesBreakdownMap };
+  const handleItemClick = useCallback(
+    (range) => {
+      handleReadingHistoryRangeSelectorClick(range);
     },
-    []
+    [handleReadingHistoryRangeSelectorClick]
   );
 
-  const [dailyEntriesBreakdownMap, setDailyEntriesBreakdownMap] =
-    useState(null);
-
-  useEffect(() => {
-    const { dailyEntriesBreakdownMap: newDailyEntriesBreakdownMap } =
-      computeEntriesMap(filteredReadingHistory, dayRangesMap);
-    setDailyEntriesBreakdownMap(newDailyEntriesBreakdownMap);
-  }, [filteredReadingHistory, dayRangesMap]);
-
   const itemsColorMap = useMemo(() => {
+    const now = new Date();
     const colorMap = new Map();
 
-    if (!dailyEntriesBreakdownMap) return colorMap;
+    if (!dailyReadingHistorySummaries) return colorMap;
 
     let shouldReassign = false;
-    const fullColorTime = filteredReadingHistoryCount * 3600000;
+    const fullColorTimeSeconds = selectedUsersCount * SEC_PER_HOUR; // 1 hour per selected user
     for (let week = 0; week < weeksCount; week++) {
       for (let day = 0; day < 7; day++) {
         if (week === weeksCount - 1 && day > now.getDay()) break;
 
         const key = `${week}-${day}`;
 
-        const range = dayRangesMap.get(key);
+        const summary = dailyReadingHistorySummaries?.get?.(key);
+        let color;
+        const prevColor = prevItemsColorMapRef.current.get(key);
 
-        const entries = dailyEntriesBreakdownMap?.get?.(key)?.ungroupedEntries;
-        if (entries) {
-          const prevColor = prevItemsColorMapRef.current.get(key);
-          const color = BibleVizUtils.Functions.GetHistoryColorByRange({
+        if (summary) {
+          color = BibleVizUtils.Functions.GetHistoryColorByReadingTime({
             step,
             stepColors,
-            reading: entries,
-            range,
-            fullColorTime,
+            readingTimeSeconds: summary.totalTimeSpentReading,
+            fullColorTimeSeconds,
           });
-          if (!shouldReassign && (!prevColor || prevColor !== color))
-            shouldReassign = true;
-          colorMap.set(key, color);
-        } else {
-          throw new Error(`Entries not found for ${key}`);
-        }
+        } else color = stepColors[0];
+
+        if (!shouldReassign && (!prevColor || prevColor !== color))
+          shouldReassign = true;
+
+        colorMap.set(key, color);
       }
     }
 
@@ -253,15 +147,19 @@ export const ReadingHistoryTimeline = () => {
     }
 
     return prevItemsColorMapRef.current;
-  }, [startOfWeekAYearAgo, tick, dailyEntriesBreakdownMap]);
+  }, [
+    startOfWeekAYearAgoDate,
+    tick,
+    dailyReadingHistorySummaries,
+    selectedUsersCount,
+  ]);
 
   const items = useMemo(() => {
+    const now = new Date();
     const items = [];
     const monthsSet = new Set();
     const monthLabelGridRow = `1 / 2`;
     const dayLabelGridColumn = `1 / 2`;
-    const MS_PER_MINUTE = 1000 * 60;
-    const MS_PER_HOUR = MS_PER_MINUTE * 60;
 
     items.push(
       <Label gridRow={`3 / 4`} gridColumn={dayLabelGridColumn} isDay={true}>
@@ -280,12 +178,12 @@ export const ReadingHistoryTimeline = () => {
         if (week === weeksCount - 1 && day > now.getDay()) break;
 
         const key = `${week}-${day}`;
-        const dayDate = new Date(startOfWeekAYearAgo);
+        const dayDate = new Date(startOfWeekAYearAgoDate);
         dayDate.setDate(dayDate.getDate() + week * 7 + day);
         const time = dayDate.getTime();
         const range = dayRangesMap.get(key);
         const isToday = week === weeksCount - 1 && day === now.getDay();
-        const dayBreakdown = dailyEntriesBreakdownMap?.get?.(key);
+        const daySummary = dailyReadingHistorySummaries?.get?.(key);
 
         const {
           weekday,
@@ -294,34 +192,43 @@ export const ReadingHistoryTimeline = () => {
           monthName,
           year,
         } = GetPastDateInfo(time);
-        const timeSpent = dayBreakdown?.timeSpent ?? 0;
-        const isTimeSpentNoticeable = timeSpent > MS_PER_MINUTE;
+        const timeSpent = daySummary?.totalTimeSpentReading ?? 0;
+        const isTimeSpentNoticeable = timeSpent > SEC_PER_MINUTE; // more than 1 minute
         const tooltipContent = [
           isToday
             ? "Today"
             : `${weekday} ${monthName} ${dayOfTheMonth}, ${year}`,
         ];
         if (isTimeSpentNoticeable) {
-          const sortedUserActivity = Array.from(dayBreakdown.usersMap.entries())
-            .map(([userId, acivity]) => {
-              return { userId, ...acivity };
+          const userTimes = [];
+          for (const userId in daySummary.users) {
+            const userTimeSpentSeconds =
+              daySummary.users[userId].totalTimeSpentReading;
+            userTimes.push([userId, userTimeSpentSeconds]);
+          }
+          const sortedUsers = userTimes
+            .toSorted(([, timeSpentA], [, timeSpentB]) => {
+              return timeSpentB - timeSpentA;
             })
-            .sort((activityA, activityB) => {
-              return activityB.timeSpent - activityA.timeSpent;
+            .map(([userId]) => {
+              return userId;
             });
-          const topUserActivity = sortedUserActivity.slice(0, 3);
-          const extraUserActivity = sortedUserActivity.slice(3);
+          const topUsers = sortedUsers.slice(0, 3);
+          const extraUsers = sortedUsers.slice(3);
 
-          for (const userActivity of topUserActivity) {
-            const { timeSpent: userTimeSpent, userId } = userActivity;
+          for (const userId of topUsers) {
+            const userSummary = daySummary.users[userId];
+            const { totalTimeSpentReading: userTimeSpentSeconds } = userSummary;
             let fixedContent;
-            if (userTimeSpent > MS_PER_HOUR) {
-              const hoursCount = Math.floor(userTimeSpent / MS_PER_HOUR);
+            if (userTimeSpentSeconds > SEC_PER_HOUR) {
+              const hoursCount = Math.floor(
+                userTimeSpentSeconds / SEC_PER_HOUR
+              );
               fixedContent = `spent ${hoursCount} hour${hoursCount > 1 ? "s" : ""}`;
             } else {
               const minutesCount = Math.max(
                 1,
-                Math.floor(userTimeSpent / MS_PER_MINUTE)
+                Math.floor(userTimeSpentSeconds / SEC_PER_MINUTE)
               );
               fixedContent = `spent ${minutesCount} minute${minutesCount > 1 ? "s" : ""}`;
             }
@@ -332,23 +239,27 @@ export const ReadingHistoryTimeline = () => {
               />
             );
           }
-          if (extraUserActivity.length > 0) {
-            const extraTimeSpent = Math.max(
-              extraUserActivity.reduce((curr, { timeSpent: userTimeSpent }) => {
-                return curr + userTimeSpent;
+          if (extraUsers.length > 0) {
+            const extraTimeSpentSeconds = Math.max(
+              extraUsers.reduce((curr, userId) => {
+                const userTimeSpentSeconds =
+                  daySummary.users[userId].totalTimeSpentReading;
+                return curr + userTimeSpentSeconds;
               }, 0),
               1
             );
             let extraActivityContent;
-            if (extraTimeSpent > MS_PER_HOUR) {
-              const hoursCount = Math.floor(extraTimeSpent / MS_PER_HOUR);
-              extraActivityContent = `+${extraUserActivity.length} spent ${hoursCount} hour${hoursCount > 1 ? "s" : ""}`;
+            if (extraTimeSpentSeconds > SEC_PER_HOUR) {
+              const hoursCount = Math.floor(
+                extraTimeSpentSeconds / SEC_PER_HOUR
+              );
+              extraActivityContent = `+${extraUsers.length} spent ${hoursCount} hour${hoursCount > 1 ? "s" : ""}`;
             } else {
               const minutesCount = Math.max(
                 1,
-                Math.floor(extraTimeSpent / MS_PER_MINUTE)
+                Math.floor(extraTimeSpentSeconds / SEC_PER_MINUTE)
               );
-              extraActivityContent = `+${extraUserActivity.length} spent ${minutesCount} minute${minutesCount > 1 ? "s" : ""}`;
+              extraActivityContent = `+${extraUsers.length} spent ${minutesCount} minute${minutesCount > 1 ? "s" : ""}`;
             }
             tooltipContent.push(extraActivityContent);
           }
@@ -384,7 +295,7 @@ export const ReadingHistoryTimeline = () => {
             tooltipContent={tooltipContent}
             range={range}
             handleItemClick={handleItemClick}
-            readingHistoryRange={readingHistoryRange}
+            readingHistoryRangeSeconds={readingHistoryRangeSeconds}
           />
         );
       }
@@ -392,11 +303,10 @@ export const ReadingHistoryTimeline = () => {
 
     return items;
   }, [
-    startOfWeekAYearAgo,
-    now,
+    startOfWeekAYearAgoDate,
     itemsColorMap,
-    readingHistoryRange,
-    dailyEntriesBreakdownMap,
+    readingHistoryRangeSeconds,
+    dailyReadingHistorySummaries,
   ]);
 
   useEffect(() => {
@@ -437,19 +347,4 @@ function GetPastDateInfo(time) {
   const monthName = date.toLocaleString("en-US", { month: "short" });
 
   return { weekday, day, month, monthName, year };
-}
-
-function GetDayRange(timestamp) {
-  const date = new Date(timestamp);
-
-  const start = new Date(date);
-  start.setHours(0, 0, 0, 0);
-
-  const end = new Date(date);
-  end.setHours(23, 59, 59, 999);
-
-  return {
-    start: start.getTime(),
-    end: end.getTime(),
-  };
 }

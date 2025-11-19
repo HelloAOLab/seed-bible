@@ -1,21 +1,27 @@
-const { deltaTime, baseColor, userColor } = that;
+const { recencyTimeSeconds, baseColor, userColor } = that;
 
-const sortedTimePeriods =
+const sortedTimePeriods = (thisBot.vars.sortedTimePeriods ??=
   BibleVizUtils.Data.masks.historyTimePeriodsInfo.toSorted(
     (periodInfoA, periodInfoB) => {
       return periodInfoA.GetTimePeriodInMs() - periodInfoB.GetTimePeriodInMs();
     }
-  );
+  ));
 const greaterTimePeriodSeconds =
-  sortedTimePeriods[sortedTimePeriods.length - 1].GetTimePeriodInMs();
-const actualDeltaTime = Math.min(deltaTime, greaterTimePeriodSeconds);
+  sortedTimePeriods[sortedTimePeriods.length - 1].GetTimePeriodInMs() / 1000;
+const actualRecencyTimeSeconds = Math.min(
+  recencyTimeSeconds,
+  greaterTimePeriodSeconds
+);
 let timePeriodLowerIndex = -1;
 let timePeriodUpperIndex = -1;
 
 for (let i = 0; i < sortedTimePeriods.length - 1; i++) {
+  const currTimePeriodSeconds = sortedTimePeriods[i].GetTimePeriodInMs() / 1000;
+  const nextTimePeriodSeconds =
+    sortedTimePeriods[i + 1].GetTimePeriodInMs() / 1000;
   if (
-    actualDeltaTime >= sortedTimePeriods[i].GetTimePeriodInMs() &&
-    actualDeltaTime <= sortedTimePeriods[i + 1].GetTimePeriodInMs()
+    actualRecencyTimeSeconds >= currTimePeriodSeconds &&
+    actualRecencyTimeSeconds <= nextTimePeriodSeconds
   ) {
     timePeriodLowerIndex = i;
     timePeriodUpperIndex = i + 1;
@@ -30,12 +36,14 @@ if (timePeriodUpperIndex === -1) {
 const lowerTimePeriod = sortedTimePeriods[timePeriodLowerIndex];
 const upperTimePeriod = sortedTimePeriods[timePeriodUpperIndex];
 
-const timeDiff =
-  upperTimePeriod.GetTimePeriodInMs() - lowerTimePeriod.GetTimePeriodInMs();
+const timeDiffSeconds =
+  (upperTimePeriod.GetTimePeriodInMs() - lowerTimePeriod.GetTimePeriodInMs()) /
+  1000;
 const valueDiff = upperTimePeriod.value - lowerTimePeriod.value;
 
-const clampedDeltaTime = actualDeltaTime - lowerTimePeriod.GetTimePeriodInMs();
-const clampedProgress = clampedDeltaTime / timeDiff;
+const clampedRecencyTimeSeconds =
+  actualRecencyTimeSeconds - lowerTimePeriod.GetTimePeriodInMs() / 1000;
+const clampedProgress = clampedRecencyTimeSeconds / timeDiffSeconds;
 const clampedValue = clampedProgress * valueDiff;
 const value = clampedValue + lowerTimePeriod.value;
 
