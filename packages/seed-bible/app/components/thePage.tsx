@@ -17,7 +17,7 @@ import { DivSpliter } from "app.hooks.screenDevider";
 import { TextEditor } from "app.components.editor";
 import { MiniTextEditor } from "app.components.smallEditor";
 import { ConfigurableFunctionCommands } from "app.components.commands";
-import { VerseToolbar } from 'app.components.verseToolbar'
+import { VerseToolbar } from "app.components.verseToolbar";
 
 function getUserSessionInfo(userId) {
   try {
@@ -61,7 +61,6 @@ function getUserSessionInfo(userId) {
   }
 }
 
-
 function ThePage({
   tab: T,
   setPanalApp,
@@ -79,7 +78,7 @@ function ThePage({
     if (!T) globalThis.CurrentPanelAvailable = panelId;
     else globalThis.CurrentPanelAvailable = null;
   }, [T]);
-  const { inSession, role, config } = getUserSessionInfo(configBot.id)
+  const { inSession, role, config } = getUserSessionInfo(configBot.id);
   const [tabEntered, setTabEntered] = useState(false);
   const { updateTab, tabs, setActiveTab } = useTabsContext();
   const { isDragging, setIsDragging, Element } = useMouseMove();
@@ -111,6 +110,167 @@ function ThePage({
   const [bible, setBible] = useState();
   if (tab) globalThis[`SetEnableEditorOf${tab?.id}`] = setEnableEditor;
 
+  const loadTranslationFromUrl = async () => {
+    console.log(configBot.tags.translationId, "translation id");
+    let translationId =
+      configBot.tags.translationId ||
+      configBot.tags.translation ||
+      tab.data.translation;
+    let baseUrl = "https://bible.helloao.org";
+    let bookId = "GEN";
+    let bookTranslationId = tab.data.translation;
+    let firstBookData;
+    let firstChapterApiLink;
+    let books = [];
+    if (translationId) {
+      let available_translations_req = await web.get(
+        "https://bible.helloao.org/api/available_translations.json"
+      );
+      let allTranslations = [];
+      let translations = {};
+      let defaultTranslations = [
+        "english",
+        "spanish",
+        "arabic",
+        "hindi",
+        "hebrew",
+        "ancient greek",
+        "custom",
+      ];
+      allTranslations = available_translations_req.data.translations.map(
+        (item) => {
+          return {
+            ...item,
+            languageEnglishName: item?.languageEnglishName || item.englishName,
+          };
+        }
+      );
+
+      let trValue = {
+        pass: false,
+        value: null,
+      };
+      if (available_translations_req.status === 200) {
+        allTranslations.forEach((translationData) => {
+          if (
+            translationData.id.toLowerCase() === translationId.toLowerCase()
+          ) {
+            trValue.pass = true;
+            trValue.value = translationData;
+          }
+        });
+
+        let urlId = translationId.includes("https://");
+
+        if (trValue.pass && !urlId) {
+          let bookData = await web.get(
+            `https://bible.helloao.org/api/${trValue.value.id}/books.json`
+          );
+          books = bookData.data.books;
+          let book0 = bookData.data.books[0];
+          firstBookData = book0;
+          setTagMask(thisBot, "selectedTranslation", trValue.value, "local");
+          setTagMask(thisBot, "booksData", bookData.data.books, "local");
+          bookId = book0.id;
+          bookTranslationId = trValue.value.id;
+          firstChapterApiLink = book0.firstChapterApiLink;
+        } else {
+          let result = await web.get(translationId);
+          if (result.status === 200) {
+            const url = new URL(translationId);
+            let newTranslations = result.data.translations;
+            if (newTranslations.length === 0) {
+              configBot.tags.translationId = null;
+              configBot.tags.translation = null;
+              const translationData = await loadTranslationFromUrl();
+              return {
+                ...translationData,
+              };
+            }
+            let defaultTranslation = newTranslations[0];
+            newTranslations = newTranslations.map((trans) => {
+              return {
+                languageEnglishName: trans.languageEnglishName,
+                id: trans.id,
+                listOfBooksApiLink: `${url.origin}${trans.listOfBooksApiLink}`,
+                origin: url.origin,
+                shortName: trans.shortName,
+              };
+            });
+            allTranslations = [...allTranslations, ...newTranslations];
+            for (let translation of newTranslations) {
+              let englishName = translation.languageEnglishName.toLowerCase();
+              if (!defaultTranslations.includes(englishName)) {
+                defaultTranslations.push(englishName);
+              }
+            }
+            let translation = {
+              languageEnglishName: defaultTranslation.languageEnglishName,
+              id: defaultTranslation.id,
+              listOfBooksApiLink: `${url.origin}${defaultTranslation.listOfBooksApiLink}`,
+              origin: url.origin,
+              shortName: defaultTranslation.shortName,
+            };
+            let englishName = translation.languageEnglishName.toLowerCase();
+            let shortName = translation.shortName.toLowerCase();
+
+            let bookData = await web.get(translation.listOfBooksApiLink);
+
+            books = bookData.data.books;
+            let book0 = bookData.data.books[0];
+            firstBookData = book0;
+            setTagMask(thisBot, "selectedTranslation", translation, "local");
+            setTagMask(thisBot, "booksData", bookData.data.books, "local");
+            if (!defaultTranslations.includes(englishName)) {
+              defaultTranslations.push(englishName);
+              translations[englishName] = {
+                [shortName]: translation,
+              };
+            }
+            baseUrl = translation.origin;
+            bookId = book0.id;
+            bookTranslationId = translation.id;
+            firstChapterApiLink = book0.firstChapterApiLink;
+          }
+        }
+        allTranslations.forEach((translation) => {
+          let englishName =
+            translation?.languageEnglishName?.toLowerCase() ||
+            translation?.englishName?.toLowerCase();
+          let shortName = translation.shortName.toLowerCase();
+          if (translations[englishName]) {
+            if (!translations[englishName][shortName]) {
+              translations[englishName][shortName] = translation;
+            }
+          } else {
+            translations[englishName] = {
+              [shortName]: translation,
+            };
+          }
+        });
+        setTagMask(thisBot, "allTranslations", allTranslations, "local");
+        setTagMask(thisBot, "apiTranslations", { ...translations }, "local");
+        setTagMask(
+          thisBot,
+          "defaultTranslations",
+          defaultTranslations,
+          "local"
+        );
+        console.log(defaultTranslations, translations, "trans");
+      }
+    } else {
+      return {};
+    }
+    return {
+      baseUrl,
+      bookId,
+      bookTranslationId,
+      firstChapterApiLink,
+      firstBookData,
+      books,
+    };
+  };
+
   async function loadData() {
     if (!tab) return;
     const bible = new BibleDataManager({
@@ -130,21 +290,121 @@ function ThePage({
     const { data, loading, error } = bible.getState();
     console.log(data, tab, "the data loaded");
 
-    setData(data);
-
     globalThis.refreshScrollers && globalThis.refreshScrollers();
-  }
+    let { firstBookData, bookTranslationId, baseUrl, books } =
+      await loadTranslationFromUrl();
 
+    if (!configBot.tags.defaultChecked) {
+      if (firstBookData && bookTranslationId && baseUrl) {
+        await bible.changeTranslation(
+          bookTranslationId,
+          firstBookData,
+          baseUrl
+        );
+      }
+      if (books) {
+        if (configBot.tags?.book && books && books?.length > 0) {
+          let bookData;
+          books.forEach((book) => {
+            if (book.id.toLowerCase() === configBot.tags.book.toLowerCase()) {
+              bookData = book;
+            }
+          });
+          if (bookData) {
+            let chapterNo;
+            if (Number(configBot.tags.chapter) < bookData.numberOfChapters)
+              chapterNo = configBot.tags.chapter;
+            let chapterUrl = chapterNo
+              ? bookData.firstChapterApiLink.replace(
+                  "1.json",
+                  `${chapterNo}.json`
+                )
+              : bookData.firstChapterApiLink.replace(
+                  "1.json",
+                  `${tab.data.chapter}.json`
+                );
+            await bible.open(
+              bookData.id,
+              configBot.tags.chapter || 1,
+              bookTranslationId,
+              chapterUrl
+            );
+          }
+        } else if (configBot.tags?.chapter && books?.length > 0) {
+          let bookData;
+          books.forEach((book) => {
+            if (book.id.toLowerCase() === tab.data.bookId.toLowerCase()) {
+              bookData = book;
+            }
+          });
+          let chapterNo;
+          if (Number(configBot.tags.chapter) < bookData.numberOfChapters)
+            chapterNo = configBot.tags.chapter;
+          let chapterUrl = chapterNo
+            ? bookData.firstChapterApiLink.replace(
+                "1.json",
+                `${chapterNo}.json`
+              )
+            : bookData.firstChapterApiLink.replace(
+                "1.json",
+                `${tab.data.chapter}.json`
+              );
+          await bible.open(
+            bookData.id,
+            configBot.tags.chapter || 1,
+            bookTranslationId,
+            chapterUrl
+          );
+        }
+      } else {
+        if (configBot.tags?.book) {
+          await bible.open(
+            configBot.tags?.book,
+            configBot.tags?.chapter || tab.data.chapter
+          );
+        } else if (configBot.tags?.chapter) {
+          await bible.open(tab.data.book, configBot.tags?.chapter);
+        }
+      }
+      configBot.tags.defaultChecked = true;
+    } else {
+      if (masks?.allTranslations) {
+        for (let translation of masks.allTranslations) {
+          if (translation.id === tab.data.translation) {
+            setTagMask(thisBot, "selectedTranslation", translation, "local");
+            break;
+          }
+        }
+      }
+    }
+
+    setData(bible.data);
+    whisper(getBot("system", "introduction.searchBar"), "initialize");
+  }
+  useEffect(() => {
+    const onKey = (e) => {
+      if (e.key === "Escape") {
+        setClickedVerses([]);
+        setShowVerseToolbar(false);
+      }
+    };
+    if (window) {
+      window.addEventListener("keydown", onKey);
+    }
+    return () => {
+      if (window) {
+        window.removeEventListener("keydown", onKey);
+      }
+    };
+  }, []);
   useEffect(() => {
     const onBookChange = (data) => {
-       masks.skip = false
+      os.log("updated shared tab", "not approved");
       if (!globalThis.CurrentTab?.sharedTab) {
-        updateTab(masks['sharedTab'], data)
-        return
-      };
+        updateTab(masks["sharedTab"], data);
+        return;
+      }
       console.log("remoteBookChange", data);
-      if(data.skip)
-        masks.skip = true
       globalThis.Open?.(data.bookId, data.chapter);
     };
 
@@ -159,48 +419,35 @@ function ThePage({
         true
       );
     };
-    os.addBotListener(thisBot, "remoteBookChange", onBookChange)
-    os.addBotListener(thisBot, "remoteHighlightChange", onHighlightChange)
+    os.addBotListener(thisBot, "remoteBookChange", onBookChange);
+    os.addBotListener(thisBot, "remoteHighlightChange", onHighlightChange);
     return () => {
       // os.removeBotListener(thisBot, 'remoteBookChange', onBookChange)
       // os.removeBotListener(thisBot, 'remoteHighlightChange', onHighlightChange)
-    }
+    };
   }, []);
 
   useEffect(() => {
     loadData();
-    globalThis.CurrentTab = tab
-  }, [tab]);
+    globalThis.CurrentTab = tab;
+  }, []);
 
   useEffect(() => {
     if (data) {
+      //  EmitData("book", { ...data });
       hanldNavFunctions();
       SetShowCommands(false);
       updateTab(tab?.id, data);
-      if(role === 'host'){
-        if(!masks.skip){
-          
-          EmitData("book", { ...data });
-        }else{
-          masks.skip = true
-        }
-        if(config && config?.sharedTab){
-          updateTab(masks['sharedTab'], data);
-        }
-      }else if(role === 'follower' && !config?.onlyHostNav && !masks.skip){
-        console.log('working','follower')
-        EmitData("book", { ...data,skip:true });
-        // updateTab(masks['sharedTab'], data);
-      }else{
-         masks.skip = true
+      if (
+        config &&
+        !config?.sharedTab &&
+        role === "host" &&
+        masks["sharedTab"] !== tab.id
+      ) {
+        updateTab(tab?.id, data);
+        updateTab(masks["sharedTab"], data);
       }
-      // if (config && !config?.sharedTab && role === 'host' && masks['sharedTab'] !== tab.id) {
-      //   updateTab(tab?.id, data);
-      //   updateTab(masks['sharedTab'], data);
-      //   if (role === 'host')
-      //     EmitData("book", { ...data });
-
-      // }
+      if (role === "host") EmitData("book", { ...data });
       if (panelId && tab) {
         os.log("recoreded", panelId, {
           ...tab,
@@ -217,8 +464,7 @@ function ThePage({
       } else {
         setDirection(null);
       }
-      // if (masks['sharedTab'] === tab.id)
-      //   EmitData("book", { ...data });
+      if (masks["sharedTab"] === tab.id) EmitData("book", { ...data });
       // const emitter = getBot("system", "app.emitter");
       // sendRemoteData(emitter.masks.otherRemotes, "updateSharingData", {
       //   id: tab?.id,
@@ -242,7 +488,6 @@ function ThePage({
     // Create the interval
     const interval = setInterval(() => {
       if (data) {
-
         const emitter = getBot("system", "app.emitter");
 
         sendRemoteData(emitter.masks.otherRemotes, "updateSharingData", {
@@ -253,7 +498,7 @@ function ThePage({
         });
       }
     }, 1000);
-    globalThis.CurrentTab = tab
+    globalThis.CurrentTab = tab;
     return () => clearInterval(interval);
   }, [data]);
 
@@ -293,7 +538,7 @@ function ThePage({
   useEffect(() => {
     globalThis.NavFunctions = navFunctions;
     globalThis.BibleData = data;
-    checkDefault();
+    // checkDefault();
     return () => {
       globalThis.BibleData = null;
       globalThis.NavFunctions = navFunctions;
@@ -353,8 +598,9 @@ function ThePage({
         setLastSelectedVerse(selectedArray[selectedArray.length - 1]);
         setContextData({
           verse: window.getSelection().toString(),
-          reference: `${data?.book} ${data?.chapter}:${selectedArray[0]}-${selectedArray[selectedArray.length - 1]
-            }`,
+          reference: `${data?.book} ${data?.chapter}:${selectedArray[0]}-${
+            selectedArray[selectedArray.length - 1]
+          }`,
           book: data?.book,
           chapter: data?.chapter,
           verses: selectedArray,
@@ -366,7 +612,6 @@ function ThePage({
           chapter: data?.chapter,
           highlighted: false,
         });
-
       } else {
         setShowCommands(false);
         setSelectedText("");
@@ -448,9 +693,9 @@ function ThePage({
     }
   }
 
-  async function open(bookId, chapter, translation = null) {
+  async function open(bookId, chapter, translation = null, chapterUrl = null) {
     try {
-      await bible.open(bookId, chapter, (translation = null));
+      await bible.open(bookId, chapter, (translation = null), chapterUrl);
       setData(bible.data);
     } catch {
       const tab = globalThis.AddTab({
@@ -468,7 +713,6 @@ function ThePage({
       setTab(tab);
       setData(bible.data);
     }
-
   }
 
   async function changeTranslation(id, bookData, forcedBaseUrl) {
@@ -525,8 +769,8 @@ function ThePage({
               createAttributes: config?.createAttributes
                 ? config.createAttributes
                 : () => {
-                  return {};
-                },
+                    return {};
+                  },
             };
           });
         });
@@ -586,7 +830,7 @@ function ThePage({
     clearAllVerseHighlights();
     // os.log("clearAllVerseHighlights", clearAllVerseHighlights);
     if (data && JSON.stringify(tab?.data) !== JSON.stringify(data)) {
-      setTab(prev => ({ ...prev, data }))
+      setTab((prev) => ({ ...prev, data }));
     }
   }, [data]);
 
@@ -597,11 +841,11 @@ function ThePage({
       openPrevChapter,
       open,
       changeTranslation: bible?.changeTranslation || undefined,
-      setPanalApp: () => { },
+      setPanalApp: () => {},
     });
     globalThis.Open = open;
     globalThis.ChangeTranslation = changeTranslation;
-    globalThis.SetPanalApp = () => { };
+    globalThis.SetPanalApp = () => {};
     globalThis.ToggleVerseHighlight = toggleVerseHighlight;
     globalThis.UnHighlightVerse = unHighlightVerse;
     globalThis.HighlightVerse = highlightVerse;
@@ -741,7 +985,6 @@ function ThePage({
     });
   }, [tab?.id, data?.book, data?.chapter]);
 
-
   const toggleVerseHighlight = useCallback(
     (verseNumbers, color, scroll, fadeIn, skipIt) => {
       // if (!skipIt)
@@ -749,9 +992,11 @@ function ThePage({
       if (!tab?.id) return;
       EmitData("highlight", { verseNumbers, color });
 
-      const verseId = `v-${Array.isArray(verseNumbers)
-        ? verseNumbers[verseNumbers.length - 1]
-        : verseNumbers}`;
+      const verseId = `v-${
+        Array.isArray(verseNumbers)
+          ? verseNumbers[verseNumbers.length - 1]
+          : verseNumbers
+      }`;
 
       if (scroll)
         document.getElementById(verseId)?.scrollIntoView({
@@ -760,7 +1005,9 @@ function ThePage({
           inline: "nearest",
         });
 
-      const numbers = Array.isArray(verseNumbers) ? verseNumbers : [verseNumbers];
+      const numbers = Array.isArray(verseNumbers)
+        ? verseNumbers
+        : [verseNumbers];
 
       setHighlighted((prev) => {
         const newHighlighted = { ...prev };
@@ -787,7 +1034,7 @@ function ThePage({
         if (fadeIn || tags?.sessions[configBot.id]?.config.highlightDuration) {
           let duration = 0;
           if (tags?.sessions[configBot.id]?.config.highlightDuration)
-            fadeIn = tags?.sessions[configBot.id]?.config.highlightDuration
+            fadeIn = tags?.sessions[configBot.id]?.config.highlightDuration;
           if (fadeIn === 4) {
             duration = 0; // Never remove highlight
           } else if (typeof fadeIn === "number") {
@@ -812,16 +1059,16 @@ function ThePage({
     [tab?.id, data, data?.book, data?.chapter]
   );
 
-
   const highlightVerse = useCallback(
     (verseNumbers, color) => {
       if (!tab?.id) return;
       EmitData("highlight", { verseNumbers, color });
 
-      const verseId = `v-${typeof verseNumbers === "object"
-        ? verseNumbers[verseNumbers.length - 1]
-        : verseNumbers
-        }`;
+      const verseId = `v-${
+        typeof verseNumbers === "object"
+          ? verseNumbers[verseNumbers.length - 1]
+          : verseNumbers
+      }`;
 
       document.getElementById(verseId).scrollIntoView({
         behavior: "smooth",
@@ -865,10 +1112,11 @@ function ThePage({
       if (!tab?.id) return;
       EmitData("highlight", { verseNumbers });
 
-      const verseId = `v-${typeof verseNumbers === "object"
-        ? verseNumbers[verseNumbers.length - 1]
-        : verseNumbers
-        }`;
+      const verseId = `v-${
+        typeof verseNumbers === "object"
+          ? verseNumbers[verseNumbers.length - 1]
+          : verseNumbers
+      }`;
 
       document.getElementById(verseId).scrollIntoView({
         behavior: "smooth",
@@ -925,86 +1173,106 @@ function ThePage({
   globalThis.ClearUserSelection = clearUserSelection;
 
   // NEW: Handle verse clicks
-  const handleVerseClick = useCallback((verseNumber) => {
-    setClickedVerses(prev => {
-      const isAlreadyClicked = prev.includes(verseNumber);
-      if (isAlreadyClicked) {
-        // Remove verse from clicked list
-        const newClicked = prev.filter(v => v !== verseNumber);
-        if (newClicked.length === 0) {
-          setShowVerseToolbar(false);
-          setClickedVersesContext({});
-        } else {
-          // Update context with remaining clicked verses
-          const remainingVerseObjects = newClicked.map(v => {
-            const verseObj = data?.content?.flatMap(c => c.verses).find(vv => vv.verseNumber === v);
-            return {
-              verseNumber: v,
-              text: verseObj?.text || "",
+  const handleVerseClick = useCallback(
+    (verseNumber) => {
+      setClickedVerses((prev) => {
+        const isAlreadyClicked = prev.includes(verseNumber);
+        if (isAlreadyClicked) {
+          // Remove verse from clicked list
+          const newClicked = prev.filter((v) => v !== verseNumber);
+          if (newClicked.length === 0) {
+            setShowVerseToolbar(false);
+            setClickedVersesContext({});
+          } else {
+            // Update context with remaining clicked verses
+            const remainingVerseObjects = newClicked.map((v) => {
+              const verseObj = data?.content
+                ?.flatMap((c) => c.verses)
+                .find((vv) => vv.verseNumber === v);
+              return {
+                verseNumber: v,
+                text: verseObj?.text || "",
+                book: data?.book,
+                chapter: data?.chapter,
+                highlighted: !!highlighted?.[v],
+              };
+            });
+            setClickedVersesContext({
+              verses: newClicked,
               book: data?.book,
               chapter: data?.chapter,
-              highlighted: !!highlighted?.[v],
-            };
-          });
-          setClickedVersesContext({
-            verses: newClicked,
+              verseNumber: newClicked,
+              reference: `${data?.book} ${data?.chapter}:${newClicked.join(",")}`,
+              text: remainingVerseObjects.map((o) => o.text).join(" "),
+            });
+          }
+          return newClicked;
+        } else {
+          // Add verse to clicked list
+          const newClicked = [...prev, verseNumber];
+          const verseObj = data?.content
+            ?.flatMap((c) => c.verses)
+            .find((v) => v.verseNumber === verseNumber);
+
+          // Build context data like onVeresRightClick
+          const context = {
+            verseNumber: newClicked,
+            text: newClicked
+              .map((v) => {
+                const vo = data?.content
+                  ?.flatMap((c) => c.verses)
+                  .find((vv) => vv.verseNumber === v);
+                return vo?.text || "";
+              })
+              .join(" "),
             book: data?.book,
             chapter: data?.chapter,
-            reference: `${data?.book} ${data?.chapter}:${newClicked.join(",")}`,
-            text: remainingVerseObjects.map(o => o.text).join(" "),
-          });
+            highlighted: !!highlighted?.[verseNumber],
+          };
+
+          setClickedVersesContext(context);
+          setShowVerseToolbar(true);
+          return newClicked;
         }
-        return newClicked;
-      } else {
-        // Add verse to clicked list
-        const newClicked = [...prev, verseNumber];
-        const verseObj = data?.content?.flatMap(c => c.verses).find(v => v.verseNumber === verseNumber);
-
-        // Build context data like onVeresRightClick
-        const context = {
-          verseNumber: newClicked,
-          text: newClicked.map(v => {
-            const vo = data?.content?.flatMap(c => c.verses).find(vv => vv.verseNumber === v);
-            return vo?.text || "";
-          }).join(" "),
-          book: data?.book,
-          chapter: data?.chapter,
-          highlighted: !!highlighted?.[verseNumber],
-        };
-
-        setClickedVersesContext(context);
-        setShowVerseToolbar(true);
-        return newClicked;
-      }
-    });
-  }, [data, highlighted]);
-
+      });
+    },
+    [data, highlighted]
+  );
 
   // NEW: Handle color selection from toolbar
-  const handleColorSelect = useCallback((color) => {
-    if (clickedVerses.length === 0) return;
-    setWordHighlightsBC(color)
-    // Apply the selected color to all clicked verses
-    clickedVerses.forEach(verseNum => {
-      toggleVerseHighlight(verseNum, color);
-    });
+  const handleColorSelect = useCallback(
+    (color) => {
+      if (clickedVerses.length === 0) return;
+      setWordHighlightsBC(color);
+      // Apply the selected color to all clicked verses
+      clickedVerses.forEach((verseNum) => {
+        toggleVerseHighlight(verseNum, color);
+      });
 
-    // Clear clicked verses and hide toolbar
-    setClickedVerses([]);
-    setShowVerseToolbar(false);
-  }, [clickedVerses, toggleVerseHighlight]);
+      // Clear clicked verses and hide toolbar
+      setClickedVerses([]);
+      setShowVerseToolbar(false);
+    },
+    [clickedVerses, toggleVerseHighlight]
+  );
 
   // NEW: Close toolbar when clicking outside
   useEffect(() => {
     const handleClickOutside = (e) => {
-      if (showVerseToolbar && !e.target.closest('.verse-toolbar') && !e.target.closest('.sectionText') && !e.target.closest('.sectionCover') && !e.target.closest('.sectionTitle')) {
+      if (
+        showVerseToolbar &&
+        !e.target.closest(".verse-toolbar") &&
+        !e.target.closest(".sectionText") &&
+        !e.target.closest(".sectionCover") &&
+        !e.target.closest(".sectionTitle")
+      ) {
         setClickedVerses([]);
         setShowVerseToolbar(false);
       }
     };
 
-    document.addEventListener('mousedown', handleClickOutside);
-    return () => document.removeEventListener('mousedown', handleClickOutside);
+    document.addEventListener("mousedown", handleClickOutside);
+    return () => document.removeEventListener("mousedown", handleClickOutside);
   }, [showVerseToolbar]);
 
   return (
@@ -1014,15 +1282,17 @@ function ThePage({
       onMouseEnter={handleMouseEnter}
       onMouseUp={handleMouseUp}
       onClick={hanldNavFunctions}
+      style={{
+        direction,
+      }}
     >
       <style>
         {`
         .pageContainer{
-          direction:${direction};
           position: relative;
         }
         .toolbar-1 {
-          display:${showVerseToolbar ? 'none !important' : ''}
+          display:${showVerseToolbar ? "none !important" : ""}
         }
         .bookTitle,
         .sectionTitle {
@@ -1101,22 +1371,23 @@ function ThePage({
           </div>
           <div style={{ height: "160px" }}></div>
 
-          {showVerseToolbar && !(role === 'follower' && config.onlyHostHighlight) && (
-            <VerseToolbar
-              clickedVerses={clickedVerses}
-              toggleVerseHighlight={toggleVerseHighlight}
-              book={data?.book}
-              setClickedVerses={setClickedVerses}
-              chapter={data?.chapter}
-              highlighted={highlighted}
-              clickedVersesContext={clickedVersesContext}
-              onColorSelect={handleColorSelect}
-              onClose={() => {
-                setClickedVerses([]);
-                setShowVerseToolbar(false);
-              }}
-            />
-          )}
+          {showVerseToolbar &&
+            !(role === "follower" && config.onlyHostHighlight) && (
+              <VerseToolbar
+                clickedVerses={clickedVerses}
+                toggleVerseHighlight={toggleVerseHighlight}
+                book={data?.book}
+                setClickedVerses={setClickedVerses}
+                chapter={data?.chapter}
+                highlighted={highlighted}
+                clickedVersesContext={clickedVersesContext}
+                onColorSelect={handleColorSelect}
+                onClose={() => {
+                  setClickedVerses([]);
+                  setShowVerseToolbar(false);
+                }}
+              />
+            )}
         </>
       ) : (
         <>
@@ -1129,8 +1400,9 @@ function ThePage({
               justifyContent: "center",
               backgroundColor: "#f8f9fa",
             }}
-            className={`pageContainer ${tabEntered ? "tabEntered" : "tabDrop"
-              } ${highlightOnce ? "tabHighlightBg" : ""}`}
+            className={`pageContainer ${
+              tabEntered ? "tabEntered" : "tabDrop"
+            } ${highlightOnce ? "tabHighlightBg" : ""}`}
           >
             <div
               style={{
@@ -1552,8 +1824,9 @@ function Section({
         return (
           <span
             key={i}
-            className={`clickableCursor highlightened ${isActive ? "highlighted-word" : ""
-              }`}
+            className={`clickableCursor highlightened ${
+              isActive ? "highlighted-word" : ""
+            }`}
             style={{ animationDelay: `${i * 0.1}s` }}
             onClick={() => {
               console.log(part.key);
@@ -1671,6 +1944,14 @@ function Section({
                   }}
                   onClick={(e) => {
                     e.stopPropagation();
+                    if (globalThis?.SetCurrentReference) {
+                      shout("ToggleReference", {
+                        book,
+                        chapter,
+                        verse: verse.verseNumber,
+                      });
+                      return;
+                    }
                     handleVerseClick(verse.verseNumber);
                     SetShowCommands(false);
                     os.log({
@@ -1687,7 +1968,7 @@ function Section({
                       book,
                       highlighted: highlighted?.[verse.verseNumber],
                     };
-                    EmitData("verseClicked", verseClickData);
+                    EmitData("onVerseClick", verseClickData);
                     shout("onVerseClick", verseClickData);
                   }}
                   style={{
@@ -1695,22 +1976,29 @@ function Section({
                       (highlighted?.[verse.verseNumber] &&
                         highlighted?.[verse.verseNumber].book === book &&
                         highlighted?.[verse.verseNumber].chapter === chapter) ||
-                        commandHighlight.includes(verse.verseNumber)
+                      commandHighlight.includes(verse.verseNumber)
                         ? highlighted?.[verse.verseNumber]?.color
                         : "transparent",
                     color:
                       (highlighted?.[verse.verseNumber] &&
                         highlighted?.[verse.verseNumber].book === book &&
                         highlighted?.[verse.verseNumber].chapter === chapter) ||
-                        commandHighlight.includes(verse.verseNumber)
+                      commandHighlight.includes(verse.verseNumber)
                         ? wordHighlightsTC
                         : "black",
                     transition: "background-color 0.2s ease, border 0.2s ease",
-                    "border-radius": highlighted?.[verse.verseNumber] || isClicked
-                      ? "3px"
-                      : "0",
-                    padding: highlighted?.[verse.verseNumber] || isClicked ? "2px 4px" : "0",
-                    margin: highlighted?.[verse.verseNumber] || isClicked ? "0 1px" : "0",
+                    "border-radius":
+                      highlighted?.[verse.verseNumber] || isClicked
+                        ? "3px"
+                        : "0",
+                    padding:
+                      highlighted?.[verse.verseNumber] || isClicked
+                        ? "2px 4px"
+                        : "0",
+                    margin:
+                      highlighted?.[verse.verseNumber] || isClicked
+                        ? "0 1px"
+                        : "0",
                     "text-decoration":
                       inHold === verse.verseNumber || isTextDecorUnderline
                         ? "underline"
@@ -1721,19 +2009,37 @@ function Section({
                         : "",
                     borderBottom: isClicked ? "2px dashed #4459F3" : "none",
                   }}
-                  className={`sectionText ${verse?.verseNumber.toString() === activeVerse.toString()
-                    ? "highlighted"
-                    : ""
-                    } ${highlighted?.[verse.verseNumber] ? "verse-highlighted" : ""
-                    } ${isClicked ? "verse-clicked" : ""}`}
+                  className={`sectionText ${
+                    verse?.verseNumber.toString() === activeVerse.toString()
+                      ? "highlighted"
+                      : ""
+                  } ${
+                    highlighted?.[verse.verseNumber] ? "verse-highlighted" : ""
+                  } ${isClicked ? "verse-clicked" : ""}`}
                 >
                   <span
-                    className={`sectionTextNumber ${globalThis.studyNotesPresent ? "clickableCursor" : ""
-                      }`}
+                    className={`sectionTextNumber ${
+                      globalThis.studyNotesPresent ? "clickableCursor" : ""
+                    }`}
                     onClick={() => {
                       if (globalThis.studyNotesPresent) {
                         HighlightStudyNoteSection(verse?.verseNumber);
                       }
+                    }}
+                    onPointerEnter={() => {
+                      globalThis.showRefModal = true;
+                      setTimeout(() => {
+                        if (globalThis.showRefModal) {
+                          shout("toggleReferenceModal", {
+                            book,
+                            chapter,
+                            verse: verse.verseNumber,
+                          });
+                        }
+                      }, 500);
+                    }}
+                    onPointerLeave={() => {
+                      globalThis.showRefModal = false;
                     }}
                   >
                     {verse?.verseNumber}
@@ -1796,7 +2102,7 @@ export const ThePageWithPanel = ({ tab }) => {
         initialWidth={gridPortalBot.tags.pixelWidth}
         containerWidth={gridPortalBot.tags.pixelWidth}
         containerHeight={1000}
-        onResize={() => { }}
+        onResize={() => {}}
         otherTab={panalApp}
       >
         <ThePage setPanalApp={setPanalApp} tab={tab} />
@@ -1812,8 +2118,7 @@ export const ThePageWithEditor = ({ tab, setPanalApp, panelId }) => {
 
   const activeTab = panelId ? globalThis.PanelTabsMap[panelId] || tab : tab;
   const [enableEditor, setEnableEditor] = useState(false);
-  useEffect(() => {
-  }, [enableEditor]);
+  useEffect(() => {}, [enableEditor]);
   const [data, setData] = useState();
   if (tab) globalThis[`SetEnableEditorOf${tab?.id}`] = setEnableEditor;
   return (
