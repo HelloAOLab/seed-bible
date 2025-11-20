@@ -1,5 +1,13 @@
-const { useState, useEffect, useMemo, useRef, useCallback, createRef, useContext, useLayoutEffect } = os.appHooks;
-const { Modal, Button } = Components;
+import {
+  TreeIcon,
+  LogIcon,
+  LeafIcon,
+  CatIcon,
+  DogIcon,
+  CoffeBeanIcon,
+} from "app.components.phosphoricons";
+
+const { useState, useEffect, useMemo, useRef, useCallback, createRef, useLayoutEffect } = os.appHooks;
 
 const PsalmsData = [
     {
@@ -40,8 +48,8 @@ const PsalmsData = [
 ];
 
 function generateQuery(params) {
-    let queryArray = [];
-    for (let key in params) {
+    const queryArray = [];
+    for (const key in params) {
         if (params.hasOwnProperty(key)) {
             queryArray.push(encodeURIComponent(key) + '=' + encodeURIComponent(params[key]));
         }
@@ -55,7 +63,7 @@ function attachQueryToURL(url, params) {
     return url + (url.includes('?') ? '&' : '?') + queryString;
 }
 
-let thePage = getBot('system', 'app.components')
+const thePage = getBot('system', 'app.components')
 
 const SearchBar = () => {
 
@@ -65,6 +73,7 @@ const SearchBar = () => {
 
     const [booksData, setBooksData] = useState(thePage.masks?.booksData || tags.booksData);
     const [selectedTestament, setSelectedTestament] = useState(2);
+    const [apocryphaAvailable, setApocryphaAvailable] = useState(false);
     const [openSearchBar, setOpenSearchBar] = useState(false);
     const [searchBarFocused, setSearchBarFocused] = useState(false);
 
@@ -99,9 +108,9 @@ const SearchBar = () => {
 
     const handleNameMatch = useCallback(({ query, bookData }) => {
         let lowercaseQuery = query?.toLowerCase() || "";
-        let commonName = bookData.commonName?.toLowerCase() || "";
-        let bookId = bookData.id?.toLowerCase() || "";
-        let lowercaseQueryArr = lowercaseQuery.split(" ");
+        const commonName = bookData.commonName?.toLowerCase() || "";
+        const bookId = bookData.id?.toLowerCase() || "";
+        const lowercaseQueryArr = lowercaseQuery.split(" ");
         if (lowercaseQueryArr.length > 1) {
             if (lowercaseQueryArr[lowercaseQueryArr.length - 1] === "" || parseInt(lowercaseQueryArr[lowercaseQueryArr.length - 1])) {
                 lowercaseQuery = lowercaseQueryArr.slice(0, lowercaseQueryArr.length - 1).join(" ");
@@ -121,6 +130,26 @@ const SearchBar = () => {
             return true;
         }
         return false;
+    }, []);
+
+    const sortBooksByTestament = useCallback((books) => {
+        const OTBooks = [];
+        const NTBooks = [];
+        const ApocryphaBooks = [];
+        for (let i = 0; i < books.length; i++) {
+            if (books[i].order <= 39) {
+                OTBooks.push(books[i]);
+            } else if (books[i].order > 39 && books[i].order <= 66) {
+                NTBooks.push(books[i]);
+            } else {
+                ApocryphaBooks.push(books[i]);
+            }
+        }
+        return {
+            OTBooks,
+            NTBooks,
+            ApocryphaBooks
+        };
     }, [])
 
     const selectedTestamentData = useMemo(() => {
@@ -136,28 +165,40 @@ const SearchBar = () => {
                         sortedBook.push(booksData[i])
                     }
                 }
-                return [...sortedBook]
+                const { OTBooks, NTBooks, ApocryphaBooks } = sortBooksByTestament(sortedBook);
+                if(ApocryphaBooks.length > 0){
+                    setApocryphaAvailable(true);
+                }else{
+                    setApocryphaAvailable(false);
+                }
+                if (selectedTestament === 0) {
+                    return OTBooks
+                } else if (selectedTestament === 1) {
+                    return NTBooks
+                } else if (selectedTestament === 2) {
+                    return [...OTBooks, ...NTBooks]
+                }else{
+                    return ApocryphaBooks
+                }
             } else {
                 return []
             }
         } else {
             if (booksData) {
-                if (booksData.length > 39) {
-                    if (selectedTestament === 0) {
-                        return [...booksData.slice(0, 39)]
-                    } else if (selectedTestament === 1) {
-                        return [...booksData.slice(39)]
-                    } else {
-                        return [...booksData]
-                    }
-                } else {
-                    if (selectedTestament === 0) {
-                        return [...booksData.slice(0, booksData.length)]
-                    } else if (selectedTestament === 1) {
-                        return [...booksData.slice(booksData.length)]
-                    } else {
-                        return [...booksData]
-                    }
+                const { OTBooks, NTBooks, ApocryphaBooks } = sortBooksByTestament(booksData);
+                if(ApocryphaBooks.length > 0){
+                    setApocryphaAvailable(true);
+                }else{
+                    setApocryphaAvailable(false);
+                }
+                if (selectedTestament === 0) {
+                    return OTBooks
+                } else if (selectedTestament === 1) {
+                    return NTBooks
+                } else if (selectedTestament === 2) {
+                    return [...OTBooks, ...NTBooks]
+                }else{
+                    return ApocryphaBooks
                 }
             } else {
                 return []
@@ -583,6 +624,10 @@ const SearchBar = () => {
         }
     }, [selectedTestament, setQuery, query, openSearchBar, setOpenSearchBar, searchBarFocused, handleEnter])
 
+    useEffect(() => {
+        setQuery("");
+    }, [selectingTranslation])
+
     // Use State of Element
     const [showCheck, setShowCheck] = useState(globalThis.IS_PLAYLIST_ACTIVE || globalThis.IsPlaylistPlaying);
     const [dontopn, setDontOpen] = useState(false);
@@ -634,6 +679,11 @@ const SearchBar = () => {
                             <option value={1} className="dropdown-option">
                                 New Testament
                             </option>
+                            {
+                                apocryphaAvailable && <option value={3} className="dropdown-option">
+                                    Apocrypha
+                                </option>
+                            }
                         </select>
                     </div>}
                     {selectingTranslation && <div className="dropdown">
@@ -696,7 +746,7 @@ const SearchBar = () => {
                 </div>
             }
             {
-                booksData && selectedTestamentData && !selectingTranslation && selectedTranslation && <SideBarBooks onlineUsers={onlineUsers} showCheck={!selectingTranslation && showCheck} dontOpen={dontOpen} selectedTranslation={selectedTranslation} selectedTestament={selectedTestament} booksData={selectedTestamentData} focusOnBook={focusOnBook} />
+                booksData && selectedTestamentData && !selectingTranslation && selectedTranslation && <SideBarBooks onlineUsers={onlineUsers} showCheck={!selectingTranslation && showCheck} dontOpen={dontOpen} selectedTranslation={selectedTranslation} selectedTestament={selectedTestament} booksData={selectedTestamentData} focusOnBook={focusOnBook} sortBooksByTestament={sortBooksByTestament} />
             }
             {
                 selectingTranslation && <div class="sidebar-translation-options" style={{ paddingBottom: showCustomTranslation ? "200px" : "36px" }}>
@@ -821,7 +871,6 @@ const NewTransOptions = ({ translationName, translations, selectedTranslation, s
                                             let book0 = e.data.books[0];
                                             ChangeTranslation(value.id, book0, value.origin);
                                             setSelectingTranslation(false);
-                                            // ChangeTranslation(value.id, book0, value.origin);
                                         }).catch(e => {
                                             console.log(e)
                                         })
@@ -851,10 +900,9 @@ const NewTransOptions = ({ translationName, translations, selectedTranslation, s
     </div>
 }
 
-const SideBarBooks = ({ booksData, focusOnBook, selectedTestament, selectedTranslation, dontOpen, showCheck, onlineUsers }) => {
+const SideBarBooks = ({ booksData, focusOnBook, selectedTestament, selectedTranslation, dontOpen, showCheck, onlineUsers, sortBooksByTestament }) => {
     const [lastBookClicked, setLastBookClicked] = useState(-1);
     const [bookData, setBookData] = useState(null);
-    const [isMobile, setIsMobile] = useState(false);
     const [windowSize, setWindowSize] = useState(window.innerWidth);
     const [chT, setChT] = useState(0);
 
@@ -875,31 +923,37 @@ const SideBarBooks = ({ booksData, focusOnBook, selectedTestament, selectedTrans
         if (booksData.length === 1) {
             setLastBookClicked(0);
             setBookData(booksData[0]);
+            if (booksData[0].order > 39) {
+                setChT(1);
+            } else {
+                setChT(0);
+            }
         } else {
             setLastBookClicked(-1);
             setBookData(null);
+            setChT(0);
         }
     }, [booksData]);
 
-    useEffect(() => {
-        globalThis.handleClickHeader = (bookName) => {
-            if (globalThis.timeoutClicker) clearTimeout(globalThis.timeoutClicker);
-            const index = booksData?.findIndex(book => book.name === bookName);
-            if (index > -1) {
-                globalThis.timeoutClicker = setTimeout(() => {
-                    handleClick({ index, book: booksData[index] });
-                }, 500)
+    // useEffect(() => {
+    //     globalThis.handleClickHeader = (bookName) => {
+    //         if (globalThis.timeoutClicker) clearTimeout(globalThis.timeoutClicker);
+    //         const index = booksData?.findIndex(book => book.name === bookName);
+    //         if (index > -1) {
+    //             globalThis.timeoutClicker = setTimeout(() => {
+    //                 handleClick({ index, book: booksData[index] });
+    //             }, 500)
 
-                setTimeout(() => {
-                    BooksRefSearchBar.current[index]?.focus();
-                }, 5000);
-            }
-        };
+    //             setTimeout(() => {
+    //                 BooksRefSearchBar.current[index]?.focus();
+    //             }, 5000);
+    //         }
+    //     };
 
-        return () => {
-            if (globalThis.timeoutClicker) clearTimeout(globalThis.timeoutClicker);
-        }
-    }, [booksData]);
+    //     return () => {
+    //         if (globalThis.timeoutClicker) clearTimeout(globalThis.timeoutClicker);
+    //     }
+    // }, [booksData]);
     const refsObject = useMemo(() => {
         const refs = [];
         if (bookData?.numberOfChapters)
@@ -910,15 +964,11 @@ const SideBarBooks = ({ booksData, focusOnBook, selectedTestament, selectedTrans
     }, [bookData]);
 
     globalThis.FocusOnChapter = (number) => {
-        // os.log(number)
         refsObject[number]?.current.focus()
     }
 
     useEffect(() => {
         const handleResize = () => {
-            // if (window.innerWidth > 768) {
-            //     setWindowSize(false);
-            // } else {
             setWindowSize(window.innerWidth);
         };
 
@@ -947,17 +997,51 @@ const SideBarBooks = ({ booksData, focusOnBook, selectedTestament, selectedTrans
     }
 
     const ghostArray = (booksArray, allowedRows) => {
-        let booksLength = booksArray.length;
-        let additionalElements = allowedRows - (booksLength % allowedRows === 0 ? allowedRows : booksLength % allowedRows);
-        let tempBooksArray = [...booksArray];
+        const booksLength = booksArray.length;
+        const additionalElements = allowedRows - (booksLength % allowedRows === 0 ? allowedRows : booksLength % allowedRows);
+        const tempBooksArray = [...booksArray];
         for (let i = 0; i < additionalElements; i++) {
             tempBooksArray.push({ ghost: true });
         }
         return [...tempBooksArray];
     }
 
+    const getBookName = useCallback((book, onlineUsers) => {
+        const users = onlineUsers ? Object.entries(onlineUsers || {}).filter(([, v]) => v?.bookId === book.id) : [];
+        let bookName = "";
+        if (book?.commonName?.length > 7 && users.length > 0) {
+            const name = book.id.toLowerCase();
+            if (isNaN(Number(name[0]))) {
+                bookName = name;
+            } else {
+                bookName = `${name[0]} ${name[1].toUpperCase()}${name.slice(2)}`;
+            }
+        } else {
+            bookName = book.commonName;
+        }
+        return bookName;
+    }, []);
+
+    const rearrangeBooks = useCallback((books, rows) => {
+        const cols = Math.ceil(books.length / rows);
+        const rearrangedBooksMatrix = [];
+        let index = 0;
+        for (let j = 0; j < rows; j++) {
+            for (let i = 0; i < cols; i++) {
+                if (!rearrangedBooksMatrix[i]) rearrangedBooksMatrix[i] = [];
+                rearrangedBooksMatrix[i][j] = books[index];
+                index += 1;
+            }
+        }
+        const rearrangeBooks = [];
+        for (let row of rearrangedBooksMatrix) {
+            rearrangeBooks.push(...row)
+        }
+        return rearrangeBooks;
+    }, [])
+
     const RenderBooksByTestament = useMemo(() => {
-        let isMobile = windowSize < 768;
+        const isMobile = windowSize < 768;
 
         let allowedRows = 5;
 
@@ -969,13 +1053,15 @@ const SideBarBooks = ({ booksData, focusOnBook, selectedTestament, selectedTrans
             allowedRows = 5;
         }
 
+        const sortedBooks = sortBooksByTestament(booksData)
+
         if (selectedTestament === 2) {
-            let OTChapterSeparator = allowedRows === 2 ? 1 : allowedRows === 3 ? 2 : 3;
-            let OTChapterPos = calcChapterPos(lastBookClicked, OTChapterSeparator);
-            let NTChapterSeparator = allowedRows === 2 ? 1 : allowedRows === 3 ? 1 : 2;
-            let NTChapterPos = calcChapterPos(lastBookClicked, NTChapterSeparator);
-            let OTBooks = ghostArray(booksData.slice(0, 39), OTChapterSeparator);
-            let NTBooks = ghostArray(booksData.slice(39), NTChapterSeparator);
+            const OTChapterSeparator = allowedRows === 2 ? 1 : allowedRows === 3 ? 2 : 3;
+            const OTChapterPos = calcChapterPos(lastBookClicked, OTChapterSeparator);
+            const NTChapterSeparator = allowedRows === 2 ? 1 : allowedRows === 3 ? 1 : 2;
+            const NTChapterPos = calcChapterPos(lastBookClicked, NTChapterSeparator);
+            const OTBooks = ghostArray(sortedBooks.OTBooks, OTChapterSeparator);
+            const NTBooks = ghostArray(sortedBooks.NTBooks, NTChapterSeparator);
             return <div class="books-container" style={showCheck ? { paddingTop: "40px" } : {}}>
                 <div class="testament-container" style={{ width: `${allowedRows === 5 ? 60 : allowedRows === 3 ? 66.66 : 50}%` }}>
                     <span class="testament-title">Old Testament</span>
@@ -986,8 +1072,8 @@ const SideBarBooks = ({ booksData, focusOnBook, selectedTestament, selectedTrans
                                     {!book?.ghost && <div class={`sidebar-itm ${index === lastBookClicked && bookData?.id === book.id ? "sidebar-selected-itm" : ""}`} ref={(ref) => updateRefsArray(index, ref)} tabIndex={index + 1} onClick={() => {
                                         handleClick({ index, book, cht: 0 })
                                     }}>
-                                        <span style={{ display: "flex", gap: "3px" }}>
-                                            {book.commonName}
+                                        <span style={{ display: "flex", gap: "3px", width: "100%", justifyContent: "space-between", textTransform: "capitalize" }}>
+                                            {getBookName(book, onlineUsers)}
                                             <CircleCounter data={onlineUsers} book={book.id} />
                                         </span>
                                         <span style={{ transition: "transform 0.3s", opacity: 0.3 }} class={`material-symbols-outlined ${index === lastBookClicked && bookData?.id === book.id ? "upside-down" : ""}`}>
@@ -1026,8 +1112,8 @@ const SideBarBooks = ({ booksData, focusOnBook, selectedTestament, selectedTrans
                                     {!book?.ghost && <div class={`sidebar-itm ${index === lastBookClicked && bookData?.id === book.id ? "sidebar-selected-itm" : ""}`} ref={(ref) => updateRefsArray(index, ref)} tabIndex={index + 1} onClick={() => {
                                         handleClick({ index, book, cht: 1 })
                                     }}>
-                                        <span style={{ display: "flex", gap: "3px" }}>
-                                            {book.commonName}
+                                        <span style={{ display: "flex", gap: "3px", width: "100%", justifyContent: "space-between" }}>
+                                            {getBookName(book, onlineUsers)}
                                             <CircleCounter data={onlineUsers} book={book.id} />
                                         </span>
                                         <span style={{ transition: "transform 0.3s", opacity: 0.3 }} class={`material-symbols-outlined ${index === lastBookClicked && bookData?.id === book.id ? "upside-down" : ""}`}>
@@ -1061,8 +1147,8 @@ const SideBarBooks = ({ booksData, focusOnBook, selectedTestament, selectedTrans
                 </div>
             </div>
         } else if (selectedTestament === 1) {
-            let chapterPos = calcChapterPos(lastBookClicked, allowedRows);
-            let booksWithGhost = ghostArray(booksData, allowedRows);
+            const chapterPos = calcChapterPos(lastBookClicked, allowedRows);
+            const booksWithGhost = ghostArray(sortedBooks.NTBooks, allowedRows);
             return <div class="books-container" style={showCheck ? { paddingTop: "40px" } : {}}>
                 <div class="testament-container">
                     <span class="testament-title">New Testament</span>
@@ -1073,8 +1159,8 @@ const SideBarBooks = ({ booksData, focusOnBook, selectedTestament, selectedTrans
                                     {!book.ghost && <div class={`sidebar-itm ${index === lastBookClicked && bookData?.id === book.id ? "sidebar-selected-itm" : ""}`} ref={(ref) => updateRefsArray(index, ref)} tabIndex={index + 1} onClick={() => {
                                         handleClick({ index, book })
                                     }}>
-                                        <span style={{ display: "flex", gap: "3px" }}>
-                                            {book.commonName}
+                                        <span style={{ display: "flex", gap: "3px", width: "100%", justifyContent: "space-between" }}>
+                                            {getBookName(book, onlineUsers)}
                                             <CircleCounter data={onlineUsers} book={book.id} />
                                         </span>
                                         <span style={{ transition: "transform 0.3s", opacity: 0.3 }} class={`material-symbols-outlined ${index === lastBookClicked && bookData?.id === book.id ? "upside-down" : ""}`}>
@@ -1105,8 +1191,8 @@ const SideBarBooks = ({ booksData, focusOnBook, selectedTestament, selectedTrans
                 </div>
             </div>
         } else if (selectedTestament === 0) {
-            let chapterPos = calcChapterPos(lastBookClicked, allowedRows);
-            let booksWithGhost = ghostArray(booksData.slice(0, 39), allowedRows);
+            const chapterPos = calcChapterPos(lastBookClicked, allowedRows);
+            const booksWithGhost = ghostArray(sortedBooks.OTBooks, allowedRows);
             return <div class="books-container" style={showCheck ? { paddingTop: "40px" } : {}}>
                 <div class="testament-container">
                     <span class="testament-title">Old Testament</span>
@@ -1117,8 +1203,52 @@ const SideBarBooks = ({ booksData, focusOnBook, selectedTestament, selectedTrans
                                     {!book.ghost && <div class={`sidebar-itm ${index === lastBookClicked && bookData?.id === book.id ? "sidebar-selected-itm" : ""}`} ref={(ref) => updateRefsArray(index, ref)} tabIndex={index + 1} onClick={() => {
                                         handleClick({ index, book })
                                     }}>
-                                        <span style={{ display: "flex", gap: "3px" }}>
-                                            {book.commonName}
+                                        <span style={{ display: "flex", gap: "3px", width: "100%", justifyContent: "space-between" }}>
+                                            {getBookName(book, onlineUsers)}
+                                            <CircleCounter data={onlineUsers} book={book.id} />
+                                        </span>
+                                        <span style={{ transition: "transform 0.3s", opacity: 0.3 }} class={`material-symbols-outlined ${index === lastBookClicked && bookData?.id === book.id ? "upside-down" : ""}`}>
+                                            expand_more
+                                        </span>
+                                    </div>}
+                                    {
+                                        book?.ghost && <div class={`sidebar-ghost-itm`} ref={(ref) => updateRefsArray(index, ref)} tabIndex={index + 1} />
+                                    }
+                                    {
+                                        (chapterPos === index) && bookData && <div class={`sidebar-chapters show-sidebar-chapter`} style={{ justifyContent: bookData.numberOfChapters < 3 * allowedRows ? "flex-start" : "space-between" }}>
+                                            <SideBarChapters
+                                                onlineUsers={onlineUsers}
+                                                refsObject={refsObject}
+                                                bookData={bookData}
+                                                focusOnBook={focusOnBook}
+                                                setLastBookClicked={setLastBookClicked}
+                                                dontOpen={dontOpen}
+                                                setBookData={setBookData}
+                                                selectedTranslation={selectedTranslation}
+                                            />
+                                        </div>
+                                    }
+                                </>
+                            })
+                        }
+                    </div>
+                </div>
+            </div>
+        }else if (selectedTestament === 3) {
+            const chapterPos = calcChapterPos(lastBookClicked, allowedRows);
+            const booksWithGhost = ghostArray(sortedBooks.ApocryphaBooks, allowedRows);
+            return <div class="books-container" style={showCheck ? { paddingTop: "40px" } : {}}>
+                <div class="testament-container">
+                    <span class="testament-title">Apocrypha</span>
+                    <div class="books-item">
+                        {
+                            booksWithGhost.map((book, index) => {
+                                return <>
+                                    {!book.ghost && <div class={`sidebar-itm ${index === lastBookClicked && bookData?.id === book.id ? "sidebar-selected-itm" : ""}`} ref={(ref) => updateRefsArray(index, ref)} tabIndex={index + 1} onClick={() => {
+                                        handleClick({ index, book })
+                                    }}>
+                                        <span style={{ display: "flex", gap: "3px", width: "100%", justifyContent: "space-between" }}>
+                                            {getBookName(book, onlineUsers)}
                                             <CircleCounter data={onlineUsers} book={book.id} />
                                         </span>
                                         <span style={{ transition: "transform 0.3s", opacity: 0.3 }} class={`material-symbols-outlined ${index === lastBookClicked && bookData?.id === book.id ? "upside-down" : ""}`}>
@@ -1151,10 +1281,6 @@ const SideBarBooks = ({ booksData, focusOnBook, selectedTestament, selectedTrans
         }
     }, [booksData, lastBookClicked, bookData, dontOpen, selectedTestament, windowSize, chT, onlineUsers])
 
-    useEffect(() => {
-        console.log(onlineUsers, authBot.tags.id, "books onlineUsers")
-    }, [onlineUsers])
-
     return <>
         {
             RenderBooksByTestament
@@ -1162,8 +1288,7 @@ const SideBarBooks = ({ booksData, focusOnBook, selectedTestament, selectedTrans
     </>
 }
 
-const SideBarChapters = ({ bookData, dontOpen, focusOnBook, setLastBookClicked, setBookData, refsObject, selectedTranslation, onlineUsers }) => {
-    const [renderingJSX, setRenderingJSX] = useState([]);
+const SideBarChapters = ({ bookData, dontOpen, setLastBookClicked, setBookData, refsObject, selectedTranslation, onlineUsers }) => {
     const [highLightedButtonsID, setHighlightedButtonID] = useState({});
 
 
@@ -1287,7 +1412,7 @@ const SideBarChapters = ({ bookData, dontOpen, focusOnBook, setLastBookClicked, 
                 }
             }
         } else {
-            let chapterUrl = bookData.firstChapterApiLink.replace("1.json", `${chapterNo}.json`)
+            const chapterUrl = bookData.firstChapterApiLink.replace("1.json", `${chapterNo}.json`)
             globalThis.Open(data.id, chapterNo, selectedTranslation.id, chapterUrl);
             setOpenSidebar(prev => !prev);
             setCurrentExperience(0);
@@ -1355,7 +1480,10 @@ const SideBarChapters = ({ bookData, dontOpen, focusOnBook, setLastBookClicked, 
                         bookName: psalmsPartName({ index: i }),
                         chapterNo: i + 1,
                         bookData
-                    })} ><span className={`sidebar-chapter-itm ${highLightedButtonsID[i + 1] ? "highlight" : 'un-highlight'}`}>{i + 1}</span></button>)
+                    })} ><span className={`sidebar-chapter-itm ${highLightedButtonsID[i + 1] ? "highlight" : 'un-highlight'}`}>
+                            {i + 1}
+                            <CircleCounter data={onlineUsers} book={bookData.id} chapter={i + 1} />
+                        </span></button>)
                 }
             } else {
                 for (let i = 0; i < bookData.numberOfChapters; i++) {
@@ -1389,6 +1517,8 @@ const CircleCounter = ({ data, book, chapter }) => {
 
     if (!data) return null;
 
+    const [isModalOpen, setIsModalOpen] = useState(false);
+
     const circles = data
         ? !chapter ? Object.fromEntries(
             Object.entries(data).filter(
@@ -1410,21 +1540,20 @@ const CircleCounter = ({ data, book, chapter }) => {
     const remaining = entries.length - visibleCount;
 
     const circleStyle = {
-        width: !chapter ? "20px" : "15px",
-        height: !chapter ? "20px" : "15px",
+        width: !chapter ? "16px" : "12px",
+        height: !chapter ? "16px" : "12px",
         borderRadius: "50%",
         display: "flex",
         alignItems: "center",
         justifyContent: "center",
         color: "white",
         fontWeight: "600",
-        fontSize: "16px",
+        fontSize: !chapter ? "12px" : "8px",
         boxShadow: "0 4px 6px rgba(0, 0, 0, 0.1)",
-        border: "2px solid white",
+        border: "1px solid white",
         cursor: "pointer",
+        marginLeft: "-4px"
     };
-
-    const { TreeIcon, LogIcon, LeafIcon, CatIcon, DogIcon, CoffeBeanIcon } = thisBot.userIcons();
 
     const icons = [TreeIcon, LogIcon, LeafIcon, CatIcon, DogIcon, CoffeBeanIcon];
     const colors = [
@@ -1449,12 +1578,25 @@ const CircleCounter = ({ data, book, chapter }) => {
                 return { IconComponent, color };
             }
         } catch (e) {
+            console.error("Error getting user visual:", e);
         }
     };
 
+    useEffect(() => {
+        if (isModalOpen) {
+            globalThis.bookModalOpen = setIsModalOpen;
+            return () => {
+                globalThis.bookModalOpen = null;
+            }
+        }
+        return () => {
+            globalThis.bookModalOpen = null;
+        }
+    }, [isModalOpen])
+
     return (
         <>
-            <div style={{ display: "flex", alignItems: "center", padding: 0, position: chapter ? "absolute" : "", top: "-5px", right: "-5px" }}>
+            <div style={{ display: "flex", alignItems: "center", padding: 0, position: chapter ? "absolute" : "", top: "-5px", right: "0px" }}>
                 {entries.slice(0, visibleCount).map(([id, value], index) => {
                     const { IconComponent, color } = getUserVisual(id, value, index);
                     return (
@@ -1462,9 +1604,14 @@ const CircleCounter = ({ data, book, chapter }) => {
                             key={id}
                             style={{
                                 ...circleStyle,
-                                backgroundColor: color,
-                                marginLeft: index > 0 ? "-4px" : "0",
-                                zIndex: visibleCount - index,
+                                backgroundColor: "white",
+                                zIndex: index + 1,
+                                marginLeft: index === 0 ? "0px" : "-4px",
+                                border: `1px solid ${color}`,
+                            }}
+                            onClick={(e) => {
+                                e.stopPropagation()
+                                setIsModalOpen(true)
                             }}
                         >
                             <IconComponent style={{ width: "12px", height: "12px" }} />
@@ -1476,18 +1623,197 @@ const CircleCounter = ({ data, book, chapter }) => {
                     <div
                         style={{
                             ...circleStyle,
-                            backgroundColor: "#9ca3af",
-                            fontSize: "12px",
-                            marginLeft: "-12px",
-                            zIndex: 0,
+                            backgroundColor: "rgba(196, 196, 196, 1)",
+                            border: `1px solid rgba(131, 131, 131, 1)`,
+                            zIndex: 20,
+                        }}
+                        onClick={(e) => {
+                            e.stopPropagation()
+                            setIsModalOpen(true)
                         }}
                     >
-                        +{remaining}
+                        <span style={{ fontSize: !chapter ? "9px" : "6px", color: "black", lineHeight: !chapter ? "16px" : "12px", marginLeft: "-1px" }}>
+                            +{remaining}
+                        </span>
                     </div>
                 )}
             </div>
+            {isModalOpen && (
+                <div
+                    style={{
+                        position: "fixed",
+                        top: 0,
+                        left: 0,
+                        right: 0,
+                        bottom: 0,
+                        backgroundColor: "rgba(0, 0, 0, 0.5)",
+                        display: "flex",
+                        alignItems: "center",
+                        justifyContent: "center",
+                        zIndex: 1000,
+                    }}
+                    onClick={(e) => {
+                        e.stopPropagation()
+                        setIsModalOpen(false)
+                    }}
+                >
+                    <div
+                        style={{
+                            backgroundColor: "white",
+                            borderRadius: "12px",
+                            padding: "24px",
+                            maxWidth: "500px",
+                            width: "90%",
+                            maxHeight: "80vh",
+                            overflow: "auto",
+                            boxShadow:
+                                "0 20px 25px -5px rgba(0, 0, 0, 0.1), 0 10px 10px -5px rgba(0, 0, 0, 0.04)",
+                        }}
+                        onClick={(e) => e.stopPropagation()}
+                    >
+                        <div
+                            style={{
+                                display: "flex",
+                                justifyContent: "space-between",
+                                alignItems: "center",
+                                marginBottom: "20px",
+                            }}
+                        >
+                            <h2
+                                style={{
+                                    fontSize: "20px",
+                                    fontWeight: "600",
+                                    color: "#111827",
+                                    margin: 0,
+                                }}
+                            >
+                                All Users ({entries.length})
+                            </h2>
+                            <button
+                                onClick={() => setIsModalOpen(false)}
+                                style={{
+                                    background: "none",
+                                    border: "none",
+                                    fontSize: "24px",
+                                    cursor: "pointer",
+                                    color: "#6b7280",
+                                    padding: "0",
+                                    width: "30px",
+                                    height: "30px",
+                                    display: "flex",
+                                    alignItems: "center",
+                                    justifyContent: "center",
+                                }}
+                            >
+                                ×
+                            </button>
+                        </div>
+
+                        <div
+                            style={{ display: "flex", flexDirection: "column", gap: "12px" }}
+                        >
+                            {entries.map(([id, value], index) => {
+                                const { Icon, color } = globalThis?.GetOrSetVisualInTags ? globalThis.GetOrSetVisualInTags(value[0]) : { Icon: TreeIcon, color: "#34D399" };
+                                const { role } = globalThis.GetUserSessionInfo(value[0]);
+                                return (
+                                    <div
+                                        key={id}
+                                        style={{
+                                            display: "flex",
+                                            alignItems: "center",
+                                            padding: "12px",
+                                            backgroundColor: "#f9fafb",
+                                            borderRadius: "8px",
+                                            gap: "12px",
+                                        }}
+                                    >
+                                        <div
+                                            style={{
+                                                width: "32px",
+                                                height: "32px",
+                                                borderRadius: "50%",
+                                                backgroundColor: color,
+                                                display: "flex",
+                                                alignItems: "center",
+                                                justifyContent: "center",
+                                                color: "white",
+                                                fontWeight: "600",
+                                                fontSize: "14px",
+                                                flexShrink: 0,
+                                            }}
+                                        >
+                                            <Icon style={{ width: "18px", height: "18px" }} />
+                                        </div>
+                                        <div style={{ flex: 1 }}>
+                                            <div
+                                                style={{
+                                                    fontWeight: "600",
+                                                    color: "#111827",
+                                                    marginBottom: "4px",
+                                                }}
+                                            >
+                                                User:{" "}
+                                                <span style={{ fontSize: "12px" }}>
+                                                    {value?.[0] || id}
+                                                </span>
+                                            </div>
+                                            <div style={{ fontSize: "14px", color: "#6b7280" }}>
+                                                Book: {book} • Chapter: {chapter}
+                                            </div>
+                                        </div>
+                                        <div style={{ display: "flex", gap: "8px" }}>
+                                            <button
+                                                // disabled={role !== 'host'}
+                                                onClick={() => {
+                                                    InviteUser(value[0]);
+                                                    setIsModalOpen(false);
+                                                }}
+                                                style={{
+                                                    padding: "6px 12px",
+                                                    borderRadius: "6px",
+                                                    border: false
+                                                        ? "1px solid #10B981"
+                                                        : "1px solid #d1d5db",
+                                                    backgroundColor: false ? "#10B981" : "white",
+                                                    color: false ? "white" : "#374151",
+                                                    fontSize: "12px",
+                                                    fontWeight: "500",
+                                                    cursor: "pointer",
+                                                    transition: "all 0.2s",
+                                                }}
+                                            >
+                                                {"Follow"}
+                                            </button>
+                                            <button
+                                                // disabled={role !== 'host'}
+                                                onClick={() => {
+                                                    HandleSharedTablick();
+                                                    setIsModalOpen(false);
+                                                }}
+                                                style={{
+                                                    padding: "6px 12px",
+                                                    borderRadius: "6px",
+                                                    border: "1px solid #3B82F6",
+                                                    backgroundColor: "#3B82F6",
+                                                    color: "white",
+                                                    fontSize: "12px",
+                                                    fontWeight: "500",
+                                                    cursor: "pointer",
+                                                    transition: "all 0.2s",
+                                                }}
+                                            >
+                                                Invite
+                                            </button>
+                                        </div>
+                                    </div>
+                                );
+                            })}
+                        </div>
+                    </div>
+                </div>
+            )}
         </>
     );
 };
 
-return SearchBar;
+export default SearchBar;

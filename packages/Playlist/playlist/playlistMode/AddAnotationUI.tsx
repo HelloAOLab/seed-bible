@@ -27,6 +27,9 @@ const AudioPlayer = await thisBot.AudioPlayer();
 const RenderHTMLContent = await thisBot.RenderHTMLContent();
 const TogglePlaylistHeight = await thisBot.TogglePlaylistHeight();
 
+const DEV_ENV =
+  configBot.tags.pattern === "SeedBibleDev" || !configBot.tags.pattern;
+
 const AnnotationInnerDiv = ({
   data,
   onRemoveTag,
@@ -156,8 +159,8 @@ const AnnotationInnerDiv = ({
                   !isEditAddress
                 ) {
                   if (
-                    globalThis.KEY_HOLD["control"] ||
-                    globalThis.KEY_HOLD["meta"]
+                    globalThis.KEY_HOLD?.["control"] ||
+                    globalThis.KEY_HOLD?.["meta"]
                   ) {
                     if (!singleMode) {
                       setEmbedding(data.id);
@@ -1146,12 +1149,19 @@ const AddAnotationUI = ({
 
   const finalHistoryObject = useMemo(() => {
     if (!singleMode || editData?.address) return list;
+
+    const trackVerse = {};
+
+
     const listFinal = list.filter(
-      (ele) =>
-        ele.type === "verse" ||
-        ele.type === "verse-range" ||
-        ele.type === "verse-grouped"
-    );
+      (ele) =>{
+        const verse = ele.additionalInfo.verse;
+        if(trackVerse[verse]) return false;
+        trackVerse[verse] = true;
+        return (ele.type === "verse" || ele.type === "verse-range" || ele.type === "verse-grouped") 
+      }
+    ).sort((a,b)=>a.additionalInfo.verse > b.additionalInfo.verse);
+
     if (listFinal.length < 1) {
       setSelectedAnnotation(null);
       return listFinal;
@@ -1169,18 +1179,24 @@ const AddAnotationUI = ({
     } else {
       setSelectedAnnotation(null);
     }
-    let content = "";
-    const trackVerse = {};
-    listFinal.forEach((ele, i) => {
-      const verse = ele.additionalInfo.verse;
-      if (!trackVerse[verse]) {
-        content += ` ${i > 0 ? verse : ele.content}${
-          i < listFinal.length - 1 ? "," : ""
-        }`;
+    // Compress consecutive numbers into ranges
+    const verses = listFinal.map(ele => ele.additionalInfo.verse).sort((a,b)=>a-b);
+    const ranges = [];
+    let start = verses[0];
+    let end = verses[0];
+
+    for (let i = 1; i < verses.length; i++) {
+      if (verses[i] === end + 1) {
+        end = verses[i];
+      } else {
+        ranges.push(start === end ? `${start}` : `${start}-${end}`);
+        start = end = verses[i];
       }
-      trackVerse[verse] = true;
-    });
-    item.content = content;
+    }
+    ranges.push(start === end ? `${start}` : `${start}-${end}`);
+
+    item.content = `${item.content.split(":")[0]}:${ranges.join(", ")}`;
+    
     return [item];
   }, [list, singleMode]);
 
@@ -1587,7 +1603,7 @@ const AddAnotationUI = ({
                 </p>
               </Tooltip>
             </div>
-            <div
+            {DEV_ENV && <div
               className="more-menu-items"
               onClick={() => {
                 loseProgressAction.current = () => {
@@ -1649,7 +1665,7 @@ const AddAnotationUI = ({
                   </span>
                 </p>
               </Tooltip>
-            </div>
+            </div>}
           </div>
         </>
       )}
@@ -1735,7 +1751,7 @@ const AddAnotationUI = ({
               >
                 auto_awesome_motion
               </span>
-              <p>Advance UI</p>
+              <p>Advanced UI</p>
               <span
                 style={{ color: "white" }}
                 class="material-symbols-outlined"

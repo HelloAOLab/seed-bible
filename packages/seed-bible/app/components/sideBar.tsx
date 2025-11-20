@@ -108,9 +108,10 @@ const CircleCounter = ({ data, book, chapter }) => {
               onClick={() => setIsModalOpen(true)}
               style={{
                 ...circleStyle,
-                backgroundColor: color,
-                marginLeft: index > 0 ? "-4px" : "0",
-                zIndex: visibleCount - index,
+                backgroundColor: "white",
+                zIndex: index + 1,
+                marginLeft: index === 0 ? "0px" : "-4px",
+                border: `1px solid ${color}`,
               }}
             >
               <IconComponent style={{ width: "12px", height: "12px" }} />
@@ -123,13 +124,16 @@ const CircleCounter = ({ data, book, chapter }) => {
             onClick={() => setIsModalOpen(true)}
             style={{
               ...circleStyle,
-              backgroundColor: "#9ca3af",
               fontSize: "12px",
-              marginLeft: "-12px",
-              zIndex: 0,
+              marginLeft: "-5px",
+              backgroundColor: "rgba(196, 196, 196, 1)",
+              border: `1px solid rgba(131, 131, 131, 1)`,
+              zIndex: 20,
             }}
           >
-            +{remaining}
+            <span style={{ fontSize: "10px", color: "black", lineHeight: "20px", marginLeft: "-1.5px" }}>
+              +{remaining}
+            </span>
           </div>
         )}
       </div>
@@ -206,9 +210,7 @@ const CircleCounter = ({ data, book, chapter }) => {
               style={{ display: "flex", flexDirection: "column", gap: "12px" }}
             >
               {entries.map(([id, value], index) => {
-                const { Icon, color } = globalThis?.GetOrSetVisualInTags(
-                  value[0]
-                );
+                const { Icon, color } = globalThis?.GetOrSetVisualInTags ? globalThis.GetOrSetVisualInTags(value[0]) : {Icon: TreeIcon, color: "#34D399"};
                 const { role } = globalThis.GetUserSessionInfo(value[0]);
                 return (
                   <div
@@ -510,11 +512,11 @@ function Tab({
   };
   const circles = onlineUsers
     ? Object.fromEntries(
-        Object.entries(onlineUsers).filter(
-          ([, v]) =>
-            v?.bookId === el?.data?.bookId && v?.chapter === el?.data?.chapter
-        )
+      Object.entries(onlineUsers).filter(
+        ([, v]) =>
+          v?.bookId === el?.data?.bookId && v?.chapter === el?.data?.chapter
       )
+    )
     : {};
   const notJoinedSharedTab =
     sharedTab && activeTab !== el.id;
@@ -529,18 +531,17 @@ function Tab({
       style={{
         ...(index === 0 &&
           sharedTab && {
-            "border-top": "none",
-            "border-radius": "0 0 5px 5px",
-            border: `1px solid ${info.color} !important`,
-            background: `color-mix(in srgb, ${info.color} 50%, transparent) !important`,
-            marginBottom: "5px",
-          }),
+          "border-top": "none",
+          "border-radius": "0 0 5px 5px",
+          border: `1px solid ${info.color} !important`,
+          background: `color-mix(in srgb, ${info.color} 50%, transparent) !important`,
+          marginBottom: "5px",
+        }),
       }}
       className={`
 
       ${index === 0 && sharedTab && "sharedTab"}
-      ${
-        notJoinedSharedTab
+      ${notJoinedSharedTab
           ? "tab notJoinedSharedTab"
           : activeTab === el.id && !multiSelectMode && !collapsed
             ? "activeTab"
@@ -549,7 +550,7 @@ function Tab({
               : collapsed
                 ? "collabsedTab"
                 : "tab"
-      } ${selectedTabs?.includes?.(el.id) ? "selected" : ""}`}
+        } ${selectedTabs?.includes?.(el.id) ? "selected" : ""}`}
     >
       <style>{`
         .notJoinedSharedTab {
@@ -572,7 +573,7 @@ function Tab({
                       : [...prev, el.id]
                   );
                 }}
-                // style={{ marginRight: '8px' }}
+              // style={{ marginRight: '8px' }}
               />
             )}
             {tabsIcons && (
@@ -602,7 +603,7 @@ function Tab({
             />
           </div>
 
-          {!sharedTab&&activeTab === el.id && (
+          {!sharedTab && activeTab === el.id && (
             <span
               onClick={() => {
                 openPopupSettings(OPTIONS(el));
@@ -1027,7 +1028,7 @@ function SideBar() {
         icon: <MenuIcon name="logout" />,
         title: "Invite to session",
         onClick: async () => {
-          const {QRCodeComponent} = thisBot.Chips();
+          const { QRCodeComponent } = thisBot.Chips();
           const url = `https://ao.bot/?pattern=SeedBibleDev&inst=${uuid()}&hosted=${configBot.id}`;
           ShowModal(<QRCodeComponent url={url} />);
         },
@@ -1036,7 +1037,7 @@ function SideBar() {
         disabled: false,
         icon: <MenuIcon name="content_copy" />,
         title: "Join another session",
-         onClick: async () => {
+        onClick: async () => {
           const id = await os.showInput("", {
             title: "Enter session link",
           });
@@ -1071,13 +1072,13 @@ function SideBar() {
         disabled: true,
         icon: <MenuIcon name="bug_report" />,
         title: "Report a bug",
-        onClick: () => {},
+        onClick: () => { },
       },
       {
         disabled: true,
         icon: <MenuIcon name="help" />,
         title: "Help",
-        onClick: () => {},
+        onClick: () => { },
       },
     ],
   };
@@ -1221,9 +1222,8 @@ function SideBar() {
         className={
           collapsed
             ? "sidebar-collapsed"
-            : `sidebar-1 ${openOnMobile ? "open" : null} ${
-                fullScreen ? "floatSidebar" : null
-              }`
+            : `sidebar-1 ${openOnMobile ? "open" : null} ${fullScreen ? "floatSidebar" : null
+            }`
         }
       >
         <div
@@ -1604,9 +1604,8 @@ export const SpaceUI = () => {
           className={
             collapsed
               ? "profileSection-collapsed"
-              : `profileSection ${openOnMobile ? "open" : ""} ${
-                  fullScreen ? "floatProfileSection" : null
-                }`
+              : `profileSection ${openOnMobile ? "open" : ""} ${fullScreen ? "floatProfileSection" : null
+              }`
           }
         >
           {!collapsed ? (
@@ -1675,7 +1674,7 @@ export const SettingsProfile = () => {
           external: (
             <CreateNewSpaceModal addSpace={addSpace} activeSpace={id} />
           ),
-          onClick: () => {},
+          onClick: () => { },
         },
         { type: "line" },
         {
@@ -1691,10 +1690,10 @@ export const SettingsProfile = () => {
           icon: <MenuIcon name="download" />,
           title: "Import space",
           external: <ImportSpaceModal />,
-          onClick: () => {},
+          onClick: () => { },
         },
         { type: "line" },
-        { icon: <MenuIcon name="share" />, title: "Share", onClick: () => {} },
+        { icon: <MenuIcon name="share" />, title: "Share", onClick: () => { } },
         {
           icon: <MenuIcon name="delete" />,
           title: "Delete",
@@ -1802,7 +1801,7 @@ export const UserProfile = ({ collapsed }) => {
       className="userProfile"
     >
       <div
-        onClick={() => {}}
+        onClick={() => { }}
         style={{
           width: 30,
           height: 30,

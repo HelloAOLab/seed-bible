@@ -1,15 +1,16 @@
 if (configBot.tags.systemPortal) return;
+
+import SearchBar from 'introduction.searchBar.SearchBar'
 await os.unregisterApp('searchBar');
 await os.registerApp('searchBar', thisBot);
 const css = thisBot.tags["App.css"];
-const { useState, useEffect, useMemo, useCallback } = os.appHooks;
+const { useState, useEffect } = os.appHooks;
 if (typeof introductionSearchBar === "undefined") {
     globalThis.introductionSearchBar = thisBot;
 }
 
 if (!masks.index)
     masks.index = 0
-const SearchBar = thisBot.SearchBar();
 
 const App = () => {
     const [openSidebar, setOpenSidebar] = useState(false);
@@ -19,6 +20,12 @@ const App = () => {
     globalThis.openSidebar = openSidebar;
     globalThis.currentExperience = currentExperience;
     globalThis.setCurrentExperience = setCurrentExperience;
+
+    useEffect(() => {
+        if(!openSidebar && globalThis?.bookModalOpen){
+            globalThis.bookModalOpen(false);
+        }
+    }, [openSidebar])
 
     return <>
         <style>{css}</style>
@@ -48,66 +55,5 @@ const App = () => {
         </>
     </>
 }
-
-function generateQuery(params) {
-    let queryArray = [];
-    for (let key in params) {
-        if (params.hasOwnProperty(key)) {
-            queryArray.push(encodeURIComponent(key) + '=' + encodeURIComponent(params[key]));
-        }
-    }
-    return queryArray.join('&');
-}
-
-// Function to attach query string to URL
-function attachQueryToURL(url, params) {
-    const queryString = generateQuery(params);
-    return url + (url.includes('?') ? '&' : '?') + queryString;
-}
-
-let thePage = getBot('system', 'app.components')
-
-const setTranslation = async () => {
-    if (!thePage.masks?.selectedTranslation) {
-        return
-    }
-    let translationId = configBot.tags.translationId
-
-    if (!translationId) {
-        console.log("changing translation 2")
-        let selectedTranslation = thePage.masks?.selectedTranslation;
-        if (selectedTranslation?.listOfBooksApiLink?.includes("https")) {
-            console.log("changing translation 3")
-            web.get(`${selectedTranslation.listOfBooksApiLink}`).then(e => {
-                let book0 = e.data.books[0];
-                console.log(selectedTranslation.id, book0, selectedTranslation.origin, "changing translation 5")
-                ChangeTranslation(selectedTranslation.id, book0, selectedTranslation.origin);
-            }).catch(e => {
-                console.log(e)
-            })
-        } else {
-            console.log("changing translation 4")
-            web.get(`https://bible.helloao.org/api/${selectedTranslation.id}/books.json`).then(e => {
-                let book0 = e.data.books[0];
-                ChangeTranslation(selectedTranslation.id, book0, "https://bible.helloao.org");
-            }).catch(e => {
-                console.log(e)
-            })
-        }
-    }
-}
-
-const tr = () => {
-    if (globalThis?.ChangeTranslation) {
-        console.log("changing translation")
-        setTranslation()
-    } else {
-        setTimeout(() => {
-            tr()
-        }, 500)
-    }
-}
-
-tr()
 
 os.compileApp('searchBar', <App />);

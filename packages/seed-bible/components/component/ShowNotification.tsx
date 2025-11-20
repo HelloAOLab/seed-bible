@@ -37,8 +37,10 @@ const Notification = () => {
     </FloatingBanner>
 }
 
+const timeoutTime = message.length * 75;
+
 globalThis.TOAST_NOTIFICATION_TIMEOUT = setTimeout(() => {
     os.unregisterApp("toast-notification");
-}, 1500);
+}, timeoutTime);
 
 os.compileApp("toast-notification", <Notification />);

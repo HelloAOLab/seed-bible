@@ -1,11 +1,7 @@
 // Float system with window on top and toolbar underneath
 // Enhanced with slide-in/out functionality like iPhone
 // + Mobile tweaks: center at top & keep toolbar visible
-import {
- 
-  preactRenderToString ,
- 
-} from "https://esm.helloao.org/vendor-RPNXNWQB.js";
+import { preactRenderToString } from "https://esm.helloao.org/vendor-RPNXNWQB.js";
 const { createContext, useContext, useState, useEffect, useRef } = os.appHooks;
 
 const MyContext = createContext();
@@ -47,7 +43,7 @@ export function MouseMoveProvider({ children }) {
   const [slideIn, setSlideIn] = useState(false);
   const [hiddenApps, setHiddenApps] = useState([]);
   const [modalContent, setModalContent] = useState(null);
-globalThis.ShowModal = (content) => setModalContent(content);
+  globalThis.ShowModal = (content) => setModalContent(content);
   globalThis.CloseModal = () => setModalContent(null);
   useEffect(() => {
     // safe if not defined
@@ -61,8 +57,8 @@ globalThis.ShowModal = (content) => setModalContent(content);
 
   // create
   globalThis.AddFloatingApp = (appConfig) => {
-    configBot.tags.mapPortal = null
-    configBot.tags.miniMapPortal = null
+    configBot.tags.mapPortal = null;
+    configBot.tags.miniMapPortal = null;
     const baseSize = appConfig.size || { width: 360, height: 240 };
 
     let initialSize = baseSize;
@@ -99,23 +95,22 @@ globalThis.ShowModal = (content) => setModalContent(content);
     };
 
     let hasMainCanvas = false;
-    // try {
-      const appString = preactRenderToString(appConfig.App);
-      os.log(appString,'appString')
-      console.log(appString)
-      hasMainCanvas =
-        appString.includes("mainCanvas") ||
-        appConfig.App?.props?.className?.includes("mainCanvas") ||
-        (appConfig.App?.type === "div" &&
-          appConfig.App?.props?.className?.includes("mainCanvas"));
-    // } catch (e) {
-    //   os.log("Error checking for mainCanvas in floating app:", e);
-    //   // Silent fail for string check
-    // }
+    try {
+    const appString = preactRenderToString(appConfig.App);
+    os.log(appString, "appString");
+    console.log(appString);
+    hasMainCanvas =
+      appString.includes("mainCanvas") ||
+      appConfig.App?.props?.className?.includes("mainCanvas") ||
+      (appConfig.App?.type === "div" &&
+        appConfig.App?.props?.className?.includes("mainCanvas"));
+    } catch (e) {
+      os.log("Error checking for mainCanvas in floating app:", e);
+      // Silent fail for string check
+    }
 
     // Remove previous apps with mainCanvas if this new app has mainCanvas
     if (hasMainCanvas) {
-      
       setFloatingApps((prev) => {
         const appsToRemove = prev.filter((app) => {
           try {
@@ -213,8 +208,8 @@ globalThis.ShowModal = (content) => setModalContent(content);
             const dx = e.clientX - app.resizeStartPos.x;
             const dy = e.clientY - app.resizeStartPos.y;
 
-            let size = { ...app.size };
-            let pos = { ...app.position };
+            const size = { ...app.size };
+            const pos = { ...app.position };
 
             switch (app.resizeHandle) {
               case "se":
@@ -395,6 +390,7 @@ globalThis.ShowModal = (content) => setModalContent(content);
       }
       await os.unregisterApp("exitButton");
       await os.registerApp("exitButton", thisBot);
+      globalThis?.setOpenSidebar(false);
       os.compileApp(
         "exitButton",
         <button
@@ -554,8 +550,8 @@ globalThis.ShowModal = (content) => setModalContent(content);
             style={{
               maxWidth: "90vw",
               maxHeight: "90vh",
-              height:'fit-content',
-              width:'fit-content',
+              height: "fit-content",
+              width: "fit-content",
               overflow: "auto",
             }}
           >

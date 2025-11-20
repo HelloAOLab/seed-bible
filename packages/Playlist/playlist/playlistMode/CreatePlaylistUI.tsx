@@ -23,6 +23,9 @@ const TogglePlaylistHeight = await thisBot.TogglePlaylistHeight();
 globalThis.DEFAULT_UPLOAD_ICON =
   "https://auth-aux-aobot-prod-filesbucket-141297942820.s3.amazonaws.com/aoBot/67bba604a31cc7e116124f92179d8fe06317fcf70a3c62f071dff529362ebc25.png";
 
+const DEV_ENV =
+  configBot.tags.pattern === "SeedBibleDev" || !configBot.tags.pattern;
+
 const startCreatingPlaylist = (name, playlist = [], id) => {
   globalThis.HISTORYExploreMode = false;
   globalThis[`${id}creatingPlaylistName`] = name;
@@ -1120,7 +1123,7 @@ const CreatePlaylistUI = ({
                 </p>
               </Tooltip>
             </div>
-            {isloggedIN ? (
+            {isloggedIN  && DEV_ENV ? (
               <div
                 className="more-menu-items"
                 onClick={() => {
@@ -1371,7 +1374,13 @@ const CreatePlaylistUI = ({
               <div
                 className="publish-setting"
                 onClick={(e) => {
-                  if (!isloggedIN) return;
+                  if (!isloggedIN) {
+                    ShowNotification({
+                      message: `Please login to use more features.`,
+                      severity: "error",
+                    });
+                  return;
+                }
                   const rect = e.currentTarget.getBoundingClientRect();
 
                   const x = rect.left; // X position where the element starts (from left of screen)

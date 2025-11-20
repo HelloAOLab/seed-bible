@@ -196,7 +196,7 @@ const PlayerControls = ({ parentId = "default" }) => {
 
     const isCurrentItemChapterRange =
       currentItem?.type === "chapter-range" ||
-      !!currentItem.additionalInfo?.layers?.length;
+      !!currentItem?.additionalInfo?.layers?.length;
 
     if (!isCurrentItemChapterRange) newSubIndex = 0;
 
@@ -490,7 +490,12 @@ const PlayerControls = ({ parentId = "default" }) => {
     globalThis.PlayingPlaylists = playlists;
     globalThis.SetPlayingPlaylists = setPlaylists;
     globalThis.CurrentIndexItem = currIndex;
-    globalThis.SetCheckedItemsPlayingPlaylist = setCheckedItems;
+    globalThis.SetCheckedItemsPlayingPlaylist = (ids) => {
+      setCheckedItems(ids);
+      setTimeout(() => {
+        globalThis.RenderPlaylistPlaying?.();
+      }, 100);
+    };
 
     globalThis.UpdateJustAddedToQueue = (val) => {
       justAddedQueue.current = val;

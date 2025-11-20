@@ -30,7 +30,7 @@ const DragDrop = ({
   onDisembed = () => {},
   layers = true,
   embedding,
-  setEmbedding,
+  setEmbedding = () => {},
   setRef = {},
   allowHeadingCheck,
   selectedTags,
@@ -618,10 +618,10 @@ const DragDrop = ({
                         globalThis.LAST_CLICK_ID = index;
                       }
 
-                      if (!embedding && layers) {
+                      if (!embedding && layers && !playingPlaylist) {
                         if (
-                          globalThis.KEY_HOLD["control"] ||
-                          globalThis.KEY_HOLD["meta"]
+                          globalThis.KEY_HOLD?.["control"] ||
+                          globalThis.KEY_HOLD?.["meta"]
                         ) {
                           setEmbedding(data.id);
                           return;
@@ -945,10 +945,10 @@ const PlaylistContentRenderer = ({
                 } else {
                   globalThis.LAST_CLICK_ID = index;
                 }
-                if (!embedding && layers) {
+                if (!embedding && layers && !playingPlaylist) {
                   if (
-                    globalThis.KEY_HOLD["control"] ||
-                    globalThis.KEY_HOLD["meta"]
+                    globalThis.KEY_HOLD?.["control"] ||
+                    globalThis.KEY_HOLD?.["meta"]
                   ) {
                     setEmbedding(data.id);
                     return;
