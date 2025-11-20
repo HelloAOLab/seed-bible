@@ -1,5 +1,11 @@
-const { useState, useEffect,useRef , useMemo } = os.appHooks;
-import { MenuIcon, ApologistIcon, CopyIcon, ShareIcon, LocationIcon } from "app.components.icons";
+const { useState, useEffect, useRef, useMemo } = os.appHooks;
+import {
+  MenuIcon,
+  ApologistIcon,
+  CopyIcon,
+  ShareIcon,
+  LocationIcon,
+} from "app.components.icons";
 
 export function VerseToolbar({
   clickedVersesContext,
@@ -24,11 +30,10 @@ export function VerseToolbar({
       //   if (!customColors.includes(tempColor)) {
       //     setCustomColors((prev) => [...prev, tempColor]);
       //   }
-      if(tempColor) {
-
+      if (tempColor) {
         handleColorClick(tempColor);
         setSelectedColor(tempColor);
-        setTempColor(null)
+        setTempColor(null);
       }
       // }
     };
@@ -132,15 +137,14 @@ export function VerseToolbar({
     position: "relative",
     padding: "0",
     lineHeight: "1",
-      "-webkit-user-drag": "none",
-
+    "-webkit-user-drag": "none",
   };
 
   const toolButtonsStyle = {
     display: "flex",
     gap: "12px",
     marginLeft: "auto",
-    alignItems: "center"
+    alignItems: "center",
   };
 
   const iconButtonStyle = {
@@ -164,7 +168,7 @@ export function VerseToolbar({
     border: "1px solid #d1d1d1",
     borderRadius: "4px",
     cursor: "pointer",
-    "pointer-events":"none",
+    "pointer-events": "none",
     position: "absolute",
   };
 
@@ -184,7 +188,7 @@ export function VerseToolbar({
 
   const { color } = GetOrSetVisualInTags(configBot.id);
 
-  const defaultColors = [color,"#FDE047"];
+  const defaultColors = [color, "#FDE047"];
 
   const allHighlighted = clickedVerses.some((num) => highlighted[num]);
 
@@ -222,7 +226,7 @@ export function VerseToolbar({
   }, [clickedVersesContext]);
 
   return (
-    <div className="verse-toolbar" style={containerStyle} >
+    <div className="verse-toolbar" style={containerStyle}>
       <style>
         {`
           @keyframes slideUp {
@@ -270,16 +274,24 @@ export function VerseToolbar({
         href="https://fonts.googleapis.com/css2?family=Material+Symbols+Outlined:opsz,wght,FILL,GRAD@20..48,100..700,0..1,-50..200"
       />
 
-      <div className="header-ref" style={headerStyle}  onContextMenu={e => {
-        e.stopPropagation()
-      }}>
-        <span className="verse-ref"  style={verseRefStyle}>
+      <div
+        className="header-ref"
+        style={headerStyle}
+        onContextMenu={(e) => {
+          e.stopPropagation();
+        }}
+      >
+        <span className="verse-ref" style={verseRefStyle}>
           {getVerseReference()}
         </span>
 
         <div className="divider-vertical" style={dividerStyle}></div>
 
-        <div onMouseDown={(e) => e.stopPropagation()} className="color-buttons" style={colorButtonsStyle}>
+        <div
+          onMouseDown={(e) => e.stopPropagation()}
+          className="color-buttons"
+          style={colorButtonsStyle}
+        >
           {allHighlighted ? (
             <>
               <button
@@ -402,21 +414,29 @@ export function VerseToolbar({
 
         <div className="divider-vertical" style={dividerStyle}></div>
 
-        <div onMouseDown={(e) => e.stopPropagation()} className="tool-buttons" style={toolButtonsStyle}>
+        <div
+          onMouseDown={(e) => e.stopPropagation()}
+          className="tool-buttons"
+          style={toolButtonsStyle}
+        >
           {menuOptions.map((option) => {
             if (option?.type === "line") {
-              return <div className="divider-vertical" style={dividerStyle}></div>
+              return (
+                <div className="divider-vertical" style={dividerStyle}></div>
+              );
             } else {
-              return <div class="toolbar-icon-container">
-                <div
-                  onClick={option?.onClick}
-                  className="icon-button"
-                  style={iconButtonStyle}
-                >
-                  {option.icon}
+              return (
+                <div class="toolbar-icon-container">
+                  <div
+                    onClick={option?.onClick}
+                    className="icon-button"
+                    style={iconButtonStyle}
+                  >
+                    {option.icon}
+                  </div>
+                  <span>{option.title}</span>
                 </div>
-                <span>{option.title}</span>
-              </div>
+              );
             }
           })}
         </div>
@@ -436,7 +456,7 @@ function getMenuActions(that) {
           os.setClipboard(that.text);
           SetInHold(null);
         },
-        title: "Copy"
+        title: "Copy",
       },
       {
         icon: <ApologistIcon />,
@@ -445,7 +465,7 @@ function getMenuActions(that) {
           SetShowCommands(true);
           SetInHold(null);
         },
-        title: "Apologist"
+        title: "Apologist",
       },
       {
         icon: <ShareIcon height="24" width="24" />,
@@ -460,8 +480,8 @@ function getMenuActions(that) {
             SetInHold(null);
           }, 50);
         },
-        title: "Share"
-      }
+        title: "Share",
+      },
     ],
   };
 
@@ -514,7 +534,7 @@ function getMenuActions(that) {
   for (const title of Object.keys(verseContextMenuOptions)) {
     const titleArray = [];
     const itemsHolder = [];
-    MenuOptions.items.push({type: "line"})
+    MenuOptions.items.push({ type: "line" });
     verseContextMenuOptions[title].items.forEach((el) => {
       if (!titleArray.includes(el.title)) {
         itemsHolder.push({
@@ -529,10 +549,12 @@ function getMenuActions(that) {
     });
     MenuOptions.items.push({
       ...verseContextMenuOptions[title],
-      icon: <span class="toolbar-icon-container">
-        {verseContextMenuOptions[title].icon}
-        <span class="toolbar-icon-count">{titleArray.length}</span>
-      </span>,
+      icon: (
+        <span class="toolbar-icon-container">
+          {verseContextMenuOptions[title].icon}
+          <span class="toolbar-icon-count">{titleArray.length}</span>
+        </span>
+      ),
       onClick: () => {
         const subMenuItems = {
           type: "normal",
@@ -540,7 +562,7 @@ function getMenuActions(that) {
         };
         subMenuItems.items.push(...itemsHolder);
         openPopupSettings(subMenuItems);
-      }
+      },
     });
   }
 

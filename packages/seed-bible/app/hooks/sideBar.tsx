@@ -79,33 +79,32 @@ export function SideBarProvider({ children }) {
     }, 100);
   }
 
- function adjustPositionWithinScreen(x, y) {
-  const popupWidth = 250;
-  const popupHeight = 230;
-  const margin = 10;
-  const offset = 10;
+  function adjustPositionWithinScreen(x, y) {
+    const popupWidth = 250;
+    const popupHeight = 230;
+    const margin = 10;
+    const offset = 10;
 
-  let adjustedX = x + offset;
-  let adjustedY = y + offset;
+    let adjustedX = x + offset;
+    let adjustedY = y + offset;
 
-  // ---- Horizontal Bounds ----
-  if (adjustedX + popupWidth > window.innerWidth - margin) {
-    adjustedX = window.innerWidth - popupWidth - margin;
+    // ---- Horizontal Bounds ----
+    if (adjustedX + popupWidth > window.innerWidth - margin) {
+      adjustedX = window.innerWidth - popupWidth - margin;
+    }
+    if (adjustedX < margin) adjustedX = margin;
+
+    // ---- Vertical Bounds ----
+    // If the popup extends off the bottom, move it upward
+    if (adjustedY + popupHeight > window.innerHeight - margin) {
+      adjustedY = window.innerHeight - popupHeight - margin;
+    }
+
+    // If popup still goes above top, clamp it
+    if (adjustedY < margin) adjustedY = margin;
+
+    return { x: adjustedX, y: adjustedY };
   }
-  if (adjustedX < margin) adjustedX = margin;
-
-  // ---- Vertical Bounds ----
-  // If the popup extends off the bottom, move it upward
-  if (adjustedY + popupHeight > window.innerHeight - margin) {
-    adjustedY = window.innerHeight - popupHeight - margin;
-  }
-
-  // If popup still goes above top, clamp it
-  if (adjustedY < margin) adjustedY = margin;
-
-  return { x: adjustedX, y: adjustedY };
-}
-
 
   globalThis.openPopupSettings = openPopupSettings;
 
