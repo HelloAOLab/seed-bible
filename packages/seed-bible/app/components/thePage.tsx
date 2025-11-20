@@ -18,7 +18,7 @@ import { TextEditor } from "app.components.editor";
 import { MiniTextEditor } from "app.components.smallEditor";
 import { ConfigurableFunctionCommands } from "app.components.commands";
 import { VerseToolbar } from "app.components.verseToolbar";
-
+import { useHoldAction } from "app.hooks.useHold";
 function getUserSessionInfo(userId) {
   try {
     if (typeof tags === "undefined" || !tags.sessions) {
@@ -73,6 +73,7 @@ function ThePage({
   const [commandHighlight, setCommandHighlight] = useState([]);
   const [direction, setDirection] = useState(null);
   const commandsRef = useRef(null);
+  const [userMovedToolbar, setUserMovedToolbar] = useState();
 
   useEffect(() => {
     if (!T) globalThis.CurrentPanelAvailable = panelId;
@@ -80,8 +81,8 @@ function ThePage({
   }, [T]);
   const { inSession, role, config } = getUserSessionInfo(configBot.id);
   const [tabEntered, setTabEntered] = useState(false);
-  const { updateTab, tabs, setActiveTab } = useTabsContext();
-  const { isDragging, setIsDragging, Element } = useMouseMove();
+  const { updateTab, tabs, setActiveTab, sharedTab } = useTabsContext();
+  const { isDragging, setIsDragging, Element, position } = useMouseMove();
   const { navFunctions, setNavFunctions, scrollToVerse } = useBibleContext();
   const [inHold, setInHold] = useState();
   const [contextData, setContextData] = useState({
@@ -432,58 +433,93 @@ function ThePage({
     globalThis.CurrentTab = tab;
   }, []);
 
+  // GLOBAL GUARDS
+  if (!globalThis.__remoteBookUpdate) globalThis.__remoteBookUpdate = false;
+  if (!globalThis.__lastBookEmit) globalThis.__lastBookEmit = 0;
+  const BOOK_EMIT_DEBOUNCE = 250; // ms
+
+  // SAFELY EMIT BOOK WITHOUT LOOPS OR SPAM
+  function safeEmitBook(payload) {
+    const now = Date.now();
+
+    // 1) Prevent loop from remote → local → remote
+    if (globalThis.__remoteBookUpdate) {
+      globalThis.__remoteBookUpdate = false;
+      return;
+    }
+
+    // 2) Prevent spam when navigating fast
+    if (now - globalThis.__lastBookEmit < BOOK_EMIT_DEBOUNCE) {
+      return;
+    }
+
+    globalThis.__lastBookEmit = now;
+
+    // 3) Finally emit
+    EmitData("book", payload);
+  }
+
+  // ----------------------
+  // 🔥 REPLACE YOUR EFFECT WITH THIS
+  // ----------------------
   useEffect(() => {
-    if (data) {
-      //  EmitData("book", { ...data });
-      hanldNavFunctions();
-      SetShowCommands(false);
-      updateTab(tab?.id, data);
-      if (
-        config &&
-        !config?.sharedTab &&
-        role === "host" &&
-        masks["sharedTab"] !== tab.id
-      ) {
-        updateTab(tab?.id, data);
+    if (!data) return;
+
+    hanldNavFunctions();
+    SetShowCommands(false);
+    updateTab(tab?.id, data);
+
+    // ---------- HOST ----------
+    if (role === "host") {
+      // Update shared tab if configured
+      if (config?.sharedTab) {
         updateTab(masks["sharedTab"], data);
       }
-      if (role === "host") EmitData("book", { ...data });
-      if (panelId && tab) {
-        os.log("recoreded", panelId, {
-          ...tab,
-          data: { ...tab.data, ...data },
-        });
-        globalThis.PanelTabsMap[panelId] = {
-          ...tab,
-          data: { ...tab.data, ...data },
-        };
-      }
-      os.log("bookdata", data);
-      if (data.translation === "ARBNAV" || data.translation === "arb_vdv") {
-        setDirection("rtl");
-      } else {
-        setDirection(null);
-      }
-      if (masks["sharedTab"] === tab.id) EmitData("book", { ...data });
-      // const emitter = getBot("system", "app.emitter");
-      // sendRemoteData(emitter.masks.otherRemotes, "updateSharingData", {
-      //   id: tab?.id,
-      //   bookId: data?.bookId,
-      //   book: data?.book,
-      //   chapter: data?.chapter,
-      // });
-      const emitter = getBot("system", "app.emitter");
 
-      sendRemoteData(emitter.masks.otherRemotes, "updateSharingData", {
-        id: tab?.id,
-        bookId: data?.bookId,
-        book: data?.book,
-        chapter: data?.chapter,
-      });
-      configBot.tags.book = data?.bookId;
-      configBot.tags.chapter = data?.chapter;
+      // Emit navigation (with debounce + loop guard)
+      safeEmitBook({ ...data });
     }
+
+    // ---------- FOLLOWER ----------
+    else if (role === "follower" && !config?.onlyHostNav) {
+      // Emit follower navigation (debounced + guarded)
+      safeEmitBook({ ...data, skip: true });
+    }
+
+    // ---------- PANEL RECORDING ----------
+    if (panelId && tab) {
+      os.log("recorded", panelId, {
+        ...tab,
+        data: { ...tab.data, ...data },
+      });
+
+      globalThis.PanelTabsMap[panelId] = {
+        ...tab,
+        data: { ...tab.data, ...data },
+      };
+    }
+
+    // ---------- RTL / LTR MODE ----------
+    if (data.translation === "ARBNAV" || data.translation === "arb_vdv") {
+      setDirection("rtl");
+    } else {
+      setDirection(null);
+    }
+
+    // ---------- SHARING META ----------
+    const emitter = getBot("system", "app.emitter");
+    sendRemoteData(emitter.masks.otherRemotes, "updateSharingData", {
+      id: tab?.id,
+      bookId: data?.bookId,
+      book: data?.book,
+      chapter: data?.chapter,
+    });
+
+    // sync for later openings
+    configBot.tags.book = data?.bookId;
+    configBot.tags.chapter = data?.chapter;
   }, [data]);
+
   useEffect(() => {
     // Create the interval
     const interval = setInterval(() => {
@@ -546,6 +582,14 @@ function ThePage({
   }, [navFunctions, data]);
 
   useEffect(() => {
+    function getUnifiedSelectedVerses(rawSelectedVerses, clickedVerses) {
+      if (clickedVerses && clickedVerses.length > 0) {
+        return [...new Set(clickedVerses)].sort((a, b) => a - b);
+      }
+
+      return [...new Set(rawSelectedVerses)].sort((a, b) => a - b);
+    }
+
     const handleMouseUp = () => {
       const selection = window.getSelection();
       if (!selection || selection.isCollapsed) return;
@@ -557,10 +601,10 @@ function ThePage({
           : selectedRange.commonAncestorContainer;
 
       if (commandsRef.current && commandsRef.current.contains(container)) {
-        setShowCommands(true);
         return;
       }
 
+      // Collect selected verse numbers
       const treeWalker = document.createTreeWalker(
         selectedRange.commonAncestorContainer,
         NodeFilter.SHOW_ELEMENT,
@@ -578,8 +622,8 @@ function ThePage({
       );
 
       const selectedVerses = new Set();
-
       let currentNode = treeWalker.nextNode();
+
       while (currentNode) {
         const verseNumberElem = currentNode.querySelector(".sectionTextNumber");
         if (verseNumberElem) {
@@ -591,38 +635,94 @@ function ThePage({
         currentNode = treeWalker.nextNode();
       }
 
-      if (selectedVerses.size > 0) {
-        const selectedArray = Array.from(selectedVerses).sort((a, b) => a - b);
-        console.log("Selected verse numbers:", selectedArray);
-        setSelectedText(selection.toString());
-        setLastSelectedVerse(selectedArray[selectedArray.length - 1]);
-        setContextData({
-          verse: window.getSelection().toString(),
-          reference: `${data?.book} ${data?.chapter}:${selectedArray[0]}-${
-            selectedArray[selectedArray.length - 1]
-          }`,
-          book: data?.book,
-          chapter: data?.chapter,
-          verses: selectedArray,
-        });
-        shout("onVeresRightClick", {
-          verseNumber: selectedArray,
-          text: window.getSelection().toString(),
-          book: data?.book,
-          chapter: data?.chapter,
-          highlighted: false,
-        });
-      } else {
+      // Exit if nothing selected and no clicked verses
+      if (selectedVerses.size === 0 && clickedVerses.length === 0) {
         setShowCommands(false);
         setSelectedText("");
         setLastSelectedVerse(null);
+        return;
       }
+
+      // Merge selection with clicked verses
+      const unifiedVerses = getUnifiedSelectedVerses(
+        Array.from(selectedVerses),
+        clickedVerses
+      );
+
+      const highestVerse = unifiedVerses[unifiedVerses.length - 1];
+      const lowestVerse = unifiedVerses[0];
+
+      // Build selected text
+      const selectedTextFinal =
+        selection && !selection.isCollapsed
+          ? selection.toString()
+          : unifiedVerses
+              .map((v) => {
+                const verseObj = data?.content
+                  ?.flatMap((c) => c.verses)
+                  .find((x) => x.verseNumber === v);
+                return verseObj?.text || "";
+              })
+              .join(" ");
+
+      setSelectedText(selectedTextFinal);
+      setLastSelectedVerse(highestVerse);
+
+      // Build context data
+      setContextData({
+        verse: selectedTextFinal,
+        reference: `${data?.book} ${data?.chapter}:${lowestVerse}${
+          lowestVerse !== highestVerse ? `-${highestVerse}` : ""
+        }`,
+        book: data?.book,
+        chapter: data?.chapter,
+        verses: unifiedVerses,
+      });
+
+      // 🔥 NEW — Convert selection into clicked verses
+      setClickedVerses((prev) => {
+        const newOnes = unifiedVerses.filter((v) => !prev.includes(v));
+        return [...prev, ...newOnes];
+      });
+      setClickedVersesContext({
+        verseNumber: unifiedVerses,
+        text: selectedTextFinal,
+        book: data?.book,
+        chapter: data?.chapter,
+      });
+      const sel = window.getSelection();
+      if (sel && sel.removeAllRanges) sel.removeAllRanges();
+      setShowVerseToolbar(true);
+
+      // Reset toolbar drag state on new selection
+      // userMovedToolbar.current = false;
+
+      // 🔥 NEW — Auto-position toolbar under final selected verse
+      if (!userMovedToolbar) {
+        const ele = document.getElementById(`v-${highestVerse}`);
+        if (ele) {
+          const rect = ele.getBoundingClientRect();
+          setToolbarPos({
+            x: rect.left + rect.width / 2,
+            y: rect.bottom - 150,
+          });
+        }
+      }
+
+      // Notify systems about verse selection
+      shout("onVeresRightClick", {
+        verseNumber: unifiedVerses,
+        text: selectedTextFinal,
+        book: data?.book,
+        chapter: data?.chapter,
+      });
     };
+
     document.addEventListener("mouseup", handleMouseUp);
     return () => {
       document.removeEventListener("mouseup", handleMouseUp);
     };
-  }, [data]);
+  }, [data, userMovedToolbar]);
 
   function handleMouseEnter() {
     if (!isDragging) return;
@@ -835,7 +935,7 @@ function ThePage({
   }, [data]);
 
   function hanldNavFunctions() {
-    if (tab && tab?.id) setActiveTab(tab?.id);
+    if (tab && tab?.id && !sharedTab) setActiveTab(tab?.id);
     setNavFunctions({
       openNextChapter,
       openPrevChapter,
@@ -1171,72 +1271,85 @@ function ThePage({
     }
   }
   globalThis.ClearUserSelection = clearUserSelection;
+  useEffect(() => {
+    function handleEsc(e) {
+      if (e.key === "Escape") {
+        // Clear verse clicks
+        setClickedVerses([]);
+        setClickedVersesContext({});
+        setShowVerseToolbar(false);
+
+        // Clear selection highlight
+        setCommandHighlight([]);
+        setLastSelectedVerse(null);
+        setSelectedText("");
+        setShowCommands(false);
+
+        // Remove browser selected text
+        if (window.getSelection) {
+          const sel = window.getSelection();
+          if (sel.removeAllRanges) sel.removeAllRanges();
+        }
+      }
+    }
+
+    document.addEventListener("keydown", handleEsc);
+    return () => document.removeEventListener("keydown", handleEsc);
+  }, []);
 
   // NEW: Handle verse clicks
   const handleVerseClick = useCallback(
-    (verseNumber) => {
+    (verseNumber, verseElement) => {
+      const ele = document.getElementById(`v-${verseNumber}`);
+      const rect = ele.getBoundingClientRect();
+      // Only auto-position if the user has NOT moved the toolbar manually
+      if (!userMovedToolbar) {
+        setToolbarPos({
+          x: rect.left + rect.width / 2,
+          y: rect.bottom - 150,
+        });
+      }
+
       setClickedVerses((prev) => {
         const isAlreadyClicked = prev.includes(verseNumber);
+
         if (isAlreadyClicked) {
-          // Remove verse from clicked list
           const newClicked = prev.filter((v) => v !== verseNumber);
+
           if (newClicked.length === 0) {
-            setShowVerseToolbar(false);
+            setTimeout(() => {
+              setShowVerseToolbar(false);
+            }, 5);
             setClickedVersesContext({});
-          } else {
-            // Update context with remaining clicked verses
-            const remainingVerseObjects = newClicked.map((v) => {
-              const verseObj = data?.content
-                ?.flatMap((c) => c.verses)
-                .find((vv) => vv.verseNumber === v);
-              return {
-                verseNumber: v,
-                text: verseObj?.text || "",
-                book: data?.book,
-                chapter: data?.chapter,
-                highlighted: !!highlighted?.[v],
-              };
-            });
-            setClickedVersesContext({
-              verses: newClicked,
-              book: data?.book,
-              chapter: data?.chapter,
-              verseNumber: newClicked,
-              reference: `${data?.book} ${data?.chapter}:${newClicked.join(",")}`,
-              text: remainingVerseObjects.map((o) => o.text).join(" "),
-            });
           }
-          return newClicked;
-        } else {
-          // Add verse to clicked list
-          const newClicked = [...prev, verseNumber];
-          const verseObj = data?.content
-            ?.flatMap((c) => c.verses)
-            .find((v) => v.verseNumber === verseNumber);
 
-          // Build context data like onVeresRightClick
-          const context = {
-            verseNumber: newClicked,
-            text: newClicked
-              .map((v) => {
-                const vo = data?.content
-                  ?.flatMap((c) => c.verses)
-                  .find((vv) => vv.verseNumber === v);
-                return vo?.text || "";
-              })
-              .join(" "),
-            book: data?.book,
-            chapter: data?.chapter,
-            highlighted: !!highlighted?.[verseNumber],
-          };
-
-          setClickedVersesContext(context);
-          setShowVerseToolbar(true);
           return newClicked;
         }
+
+        const newClicked = [...prev, verseNumber];
+        const verseObj = data?.content
+          ?.flatMap((c) => c.verses)
+          .find((v) => v.verseNumber === verseNumber);
+
+        setClickedVersesContext({
+          verseNumber: newClicked,
+          text: newClicked
+            .map((v) => {
+              const obj = data?.content
+                ?.flatMap((c) => c.verses)
+                .find((vv) => vv.verseNumber === v);
+              return obj?.text || "";
+            })
+            .join(" "),
+          book: data?.book,
+          chapter: data?.chapter,
+        });
+
+        setShowVerseToolbar(true);
+        return newClicked;
       });
     },
-    [data, highlighted]
+    [data, highlighted, showVerseToolbar, userMovedToolbar]
   );
 
   // NEW: Handle color selection from toolbar
@@ -1251,7 +1364,9 @@ function ThePage({
 
       // Clear clicked verses and hide toolbar
       setClickedVerses([]);
-      setShowVerseToolbar(false);
+      setTimeout(() => {
+        setShowVerseToolbar(false);
+      }, 5);
     },
     [clickedVerses, toggleVerseHighlight]
   );
@@ -1267,13 +1382,24 @@ function ThePage({
         !e.target.closest(".sectionTitle")
       ) {
         setClickedVerses([]);
-        setShowVerseToolbar(false);
+        setTimeout(() => {
+          setShowVerseToolbar(false);
+        }, 5);
       }
     };
 
     document.addEventListener("mousedown", handleClickOutside);
     return () => document.removeEventListener("mousedown", handleClickOutside);
   }, [showVerseToolbar]);
+  const [dragToolbar, setDragToolbar] = useState(false);
+  const [toolbarPos, setToolbarPos] = useState({ x: 200, y: 200 }); // initial position
+  useEffect(() => {
+    if (!dragToolbar) return;
+    setToolbarPos({
+      x: position.x,
+      y: position.y,
+    });
+  }, [position, dragToolbar]);
 
   return (
     <div
@@ -1292,7 +1418,7 @@ function ThePage({
           position: relative;
         }
         .toolbar-1 {
-          display:${showVerseToolbar ? "none !important" : ""}
+          display:${showVerseToolbar && globalThis.IsMobileNow() ? "none !important" : ""}
         }
         .bookTitle,
         .sectionTitle {
@@ -1301,8 +1427,7 @@ function ThePage({
 
         .verse-clicked {
           border-bottom: 2px dashed #4459F3 !important;
-          padding: 2px 4px !important;
-          border-radius: 3px !important;
+         
         }
          `}
       </style>
@@ -1344,6 +1469,8 @@ function ThePage({
                       wordHighlightsBC={wordHighlightsBC}
                       clickedVerses={clickedVerses}
                       handleVerseClick={handleVerseClick}
+                      setClickedVerses={setClickedVerses}
+                      setShowVerseToolbar={setShowVerseToolbar}
                     />
                   </div>
                 </>
@@ -1373,20 +1500,57 @@ function ThePage({
 
           {showVerseToolbar &&
             !(role === "follower" && config.onlyHostHighlight) && (
-              <VerseToolbar
-                clickedVerses={clickedVerses}
-                toggleVerseHighlight={toggleVerseHighlight}
-                book={data?.book}
-                setClickedVerses={setClickedVerses}
-                chapter={data?.chapter}
-                highlighted={highlighted}
-                clickedVersesContext={clickedVersesContext}
-                onColorSelect={handleColorSelect}
-                onClose={() => {
-                  setClickedVerses([]);
-                  setShowVerseToolbar(false);
+              <div
+                onMouseDown={() => {
+                  if (!globalThis.IsMobileNow()) {
+                    // userMovedToolbar.current = true;
+                    setUserMovedToolbar(true);
+                    setDragToolbar(true);
+                  }
                 }}
-              />
+                onMouseUp={() => setDragToolbar(false)}
+                onMouseLeave={() => setDragToolbar(false)}
+                style={
+                  globalThis.IsMobileNow()
+                    ? {
+                        position: "fixed",
+                        left: "50%",
+                        bottom: "20px",
+                        transform: "translateX(-50%)",
+                        zIndex: 10000,
+                        width: "90%",
+                        maxWidth: "420px",
+                        cursor: "default",
+                        userSelect: "none",
+                      }
+                    : {
+                        position: "fixed",
+                        left: toolbarPos.x - 190,
+                        top: toolbarPos.y,
+                        zIndex: 10000,
+                        cursor: dragToolbar ? "grabbing" : "grab",
+                        userSelect: "none",
+                      }
+                }
+                className="verse-toolbar"
+              >
+                <VerseToolbar
+                  clickedVerses={clickedVerses}
+                  toggleVerseHighlight={toggleVerseHighlight}
+                  book={data?.book}
+                  setClickedVerses={setClickedVerses}
+                  chapter={data?.chapter}
+                  highlighted={highlighted}
+                  clickedVersesContext={clickedVersesContext}
+                  onColorSelect={handleColorSelect}
+                  onClose={() => {
+                    setClickedVerses([]);
+                    setTimeout(() => {
+                      setShowVerseToolbar(false);
+                    }, 5);
+                  }}
+                />
+              </div>
             )}
         </>
       ) : (
@@ -1650,7 +1814,55 @@ function Section({
   wordHighlightsBC,
   clickedVerses,
   handleVerseClick,
+  setClickedVerses,
+  setShowVerseToolbar,
 }) {
+  const selectAllHeadingVerses = useCallback(() => {
+    const verseNumbers = verses.map((v) => v.verseNumber);
+
+    setClickedVerses((prev) => {
+      const merged = [...new Set([...prev, ...verseNumbers])].sort(
+        (a, b) => a - b
+      );
+
+      // Build unified text
+      const text = merged
+        .map((v) => {
+          const verseObj = verses.find((vv) => vv.verseNumber === v);
+          return verseObj?.text || "";
+        })
+        .join(" ");
+
+      // Show verse toolbar
+      setShowVerseToolbar(true);
+      setLastSelectedVerse(merged[merged.length - 1]);
+
+      // Update context
+      setContextData({
+        verses: merged,
+        verse: text,
+        text,
+        book,
+        chapter,
+        reference: `${book} ${chapter}:${merged[0]}-${merged[merged.length - 1]}`,
+      });
+
+      return merged;
+    });
+  }, [
+    verses,
+    setClickedVerses,
+    setShowVerseToolbar,
+    setLastSelectedVerse,
+    setContextData,
+    book,
+    chapter,
+  ]);
+  const { eventHandlers, shouldSuppressClick } = useHoldAction(
+    selectAllHeadingVerses,
+    1500 // 1.5 seconds hold
+  );
+
   const stripRe = /[.,'"""'']/g;
   const normalize = (k) => k.replace(stripRe, "").toLowerCase().trim();
 
@@ -1881,15 +2093,17 @@ function Section({
   return (
     <div>
       <div
-        onClick={() => {
-          shout("onHeadingClick", {
-            heading,
-          });
-        }}
         className="sectionTitle"
+        {...eventHandlers}
+        onClick={(e) => {
+          if (shouldSuppressClick()) return; // Prevent normal click if hold already triggered
+
+          shout("onHeadingClick", { heading });
+        }}
       >
         {heading}
       </div>
+
       {hebrew_subtitle && <div className="sectionTitle">{hebrew_subtitle}</div>}
       <div style={textEdit ? editTextStyle : null}>
         {textEdit && <div className="editVerseTitle">Verse - Text</div>}
@@ -1909,8 +2123,15 @@ function Section({
 
             const [c, setC] = useState(false);
             const isActive = verse.verseNumber.toString() === activeVerse;
+            const maxClicked = clickedVerses?.length
+              ? Math.max(...clickedVerses)
+              : null;
+
+            const commandAnchorVerse = maxClicked || lastSelectedVerse;
+
             const shouldShowCommands =
-              showCommands && lastSelectedVerse === verse.verseNumber;
+              showCommands && commandAnchorVerse === verse.verseNumber;
+
             const isTextDecorUnderline =
               holded?.[verse.verseNumber] ||
               selected[verse.verseNumber] ||
@@ -1924,8 +2145,10 @@ function Section({
                   id={`v-${verse.verseNumber}`}
                   onContextMenu={(e) => {
                     e.preventDefault();
-                    setInHold(verse.verseNumber);
-                    setLastSelectedVerse(verse.verseNumber);
+                    handleVerseClick(verse.verseNumber);
+                    SetShowCommands(false);
+                    // setInHold(verse.verseNumber);
+                    // setLastSelectedVerse(verse.verseNumber);
 
                     setContextData({
                       verse: verse.text,
@@ -1934,13 +2157,13 @@ function Section({
                       chapter,
                       verses: [verse.verseNumber],
                     });
-                    shout("onVeresRightClick", {
-                      verseNumber: verse.verseNumber,
-                      text: verse.text,
-                      chapter,
-                      book,
-                      highlighted: highlighted?.[verse.verseNumber],
-                    });
+                    // shout("onVeresRightClick", {
+                    //   verseNumber: verse.verseNumber,
+                    //   text: verse.text,
+                    //   chapter,
+                    //   book,
+                    //   highlighted: highlighted?.[verse.verseNumber],
+                    // });
                   }}
                   onClick={(e) => {
                     e.stopPropagation();
@@ -1992,13 +2215,9 @@ function Section({
                         ? "3px"
                         : "0",
                     padding:
-                      highlighted?.[verse.verseNumber] || isClicked
-                        ? "2px 4px"
-                        : "0",
+                      highlighted?.[verse.verseNumber] || isClicked ? "" : "0",
                     margin:
-                      highlighted?.[verse.verseNumber] || isClicked
-                        ? "0 1px"
-                        : "0",
+                      highlighted?.[verse.verseNumber] || isClicked ? "" : "0",
                     "text-decoration":
                       inHold === verse.verseNumber || isTextDecorUnderline
                         ? "underline"

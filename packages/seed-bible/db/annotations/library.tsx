@@ -844,7 +844,7 @@ async function getYearlyReadingHistoryEvents(
   const doc = await getReadingHistoryDocument(recordName, year, marker, name);
   const events = filter(
     getReadingEvents(doc),
-    (e) => e.start >= startTime || e.start < endTime
+    (e) => e.start >= startTime && e.start < endTime
   );
   return events;
 }

@@ -83,42 +83,25 @@ export function SideBarProvider({ children }) {
     const popupWidth = 250;
     const popupHeight = 230;
     const margin = 10;
-    const cursorOffset = 10; // Small offset from cursor
+    const offset = 10;
 
-    let adjustedX = x + cursorOffset;
-    let adjustedY = y + cursorOffset;
+    let adjustedX = x + offset;
+    let adjustedY = y + offset;
 
-    // Check horizontal bounds
+    // ---- Horizontal Bounds ----
     if (adjustedX + popupWidth > window.innerWidth - margin) {
-      // Position to the left of cursor instead
-      adjustedX = x - popupWidth - cursorOffset;
-
-      // If still off screen, clamp to right edge
-      if (adjustedX < margin) {
-        adjustedX = window.innerWidth - popupWidth - margin;
-      }
+      adjustedX = window.innerWidth - popupWidth - margin;
     }
+    if (adjustedX < margin) adjustedX = margin;
 
-    // Check vertical bounds
+    // ---- Vertical Bounds ----
+    // If the popup extends off the bottom, move it upward
     if (adjustedY + popupHeight > window.innerHeight - margin) {
-      // Position above cursor instead
-      adjustedY = y - popupHeight - cursorOffset;
-
-      // If still off screen, clamp to bottom edge
-      if (adjustedY < margin) {
-        adjustedY = window.innerHeight - popupHeight - margin;
-      }
+      adjustedY = window.innerHeight - popupHeight - margin;
     }
 
-    // Final safety checks
-    adjustedX = Math.max(
-      margin,
-      Math.min(adjustedX, window.innerWidth - popupWidth - margin)
-    );
-    adjustedY = Math.max(
-      margin,
-      Math.min(adjustedY, window.innerHeight - popupHeight - margin)
-    );
+    // If popup still goes above top, clamp it
+    if (adjustedY < margin) adjustedY = margin;
 
     return { x: adjustedX, y: adjustedY };
   }

@@ -84,33 +84,12 @@ export class BibleDataManager {
   }
 
   _scheduleMaskRecord() {
-    const timestamp = Date.now();
-
-    const lastReading = (thisBot.vars.tempLastReading ??= {});
-    const tempHistory = (thisBot.vars.tempReadingHistory ??= {});
-    const userHistory = (tempHistory[configBot.id] ??= {});
-    const bookHistory = (userHistory[this.bookId] ??= {});
-    if (!bookHistory[this.chapter]) bookHistory[this.chapter] = [];
-    const length = bookHistory[this.chapter].push({ start: timestamp });
-    if (lastReading[configBot.id]) {
-      const { bookId, chapter, index } = lastReading[configBot.id];
-      const lastEntry = userHistory[bookId]?.[chapter]?.[index];
-      if (lastEntry) lastEntry.end = timestamp;
-      else {
-        console.warn(
-          `[Debug] BibleDataManager._scheduleMaskRecord lastEntry not found`,
-          thisBot.vars.tempLastReading[configBot.id]
-        );
-      }
-    }
-
-    lastReading[configBot.id] = {
-      bookId: this.bookId,
-      chapter: this.chapter,
-      index: length - 1,
-    };
-
-    saveUserReadingHistory(this.bookId, this.chapter);
+    if (thisBot.masks.readingHistoryInterval)
+      clearInterval(thisBot.masks.readingHistoryInterval);
+    const readingHistoryInterval = setInterval(() => {
+      saveUserReadingHistory(this.bookId, this.chapter);
+    }, 5000); // every 5 seconds
+    setTagMask(thisBot, "readingHistoryInterval", readingHistoryInterval);
 
     shout("OnHistoryUpdated");
 

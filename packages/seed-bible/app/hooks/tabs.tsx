@@ -103,6 +103,8 @@ export function TabsProvider({ children }) {
   const [multiSelectMode, setMultiSelectMode] = useState(false);
   const [selectedTabs, setSelectedTabs] = useState([]);
   const [tabsIcons, setTabsIcons] = useState(false);
+  const [sharedTab, setSharedTab] = useState(null);
+
   // Get current space
   const activeSpaceData =
     spaces.find((space) => space.id === activeSpace) || spaces[0];
@@ -128,15 +130,15 @@ export function TabsProvider({ children }) {
       prev.map((space) =>
         space.id === spaceId
           ? {
-            ...space,
-            settings: {
-              ...space.settings,
-              toolbar: {
-                ...space.settings.toolbar,
-                tools,
+              ...space,
+              settings: {
+                ...space.settings,
+                toolbar: {
+                  ...space.settings.toolbar,
+                  tools,
+                },
               },
-            },
-          }
+            }
           : space
       )
     );
@@ -144,27 +146,30 @@ export function TabsProvider({ children }) {
 
   // Add standalone tab (not in a folder)
   const addTab = (tab) => {
-    if (tab.sharedTab)
-      setSpaces((prevSpaces) =>
-        prevSpaces.map((space) =>
-          space.id === activeSpace
-            ? { ...space, tabs: [tab, ...space.tabs] }
-            : space
-        )
-      );
-    else
-      setSpaces((prevSpaces) =>
-        prevSpaces.map((space) =>
-          space.id === activeSpace
-            ? { ...space, tabs: [...space.tabs, tab] }
-            : space
-        )
-      );
+    if (tab.sharedTab) {
+      // Only ONE shared tab is allowed
+      setSharedTab(tab);
+      return tab;
+    }
+
+    // Normal tab → add inside active space
+    setSpaces((prevSpaces) =>
+      prevSpaces.map((space) =>
+        space.id === activeSpace
+          ? { ...space, tabs: [...space.tabs, tab] }
+          : space
+      )
+    );
+
     return tab;
   };
 
   // Remove standalone tab
   const removeTab = (tabId) => {
+    if (sharedTab?.id === tabId) {
+      setSharedTab(null);
+      return;
+    }
     setSpaces((prevSpaces) =>
       prevSpaces.map((space) => {
         if (space.id !== activeSpace) return space;
@@ -186,7 +191,7 @@ export function TabsProvider({ children }) {
       })
     );
   };
-  globalThis.RemoveTab = removeTab
+  globalThis.RemoveTab = removeTab;
 
   const getAllTabsInSpace = (spaceId) => {
     // Gather standalone tabs
@@ -202,30 +207,42 @@ export function TabsProvider({ children }) {
   };
   // Update tab
   const updateTab = (tabId, newData) => {
-    
+    // 1️⃣ Update shared tab if it matches this tabId
+    setSharedTab((prev) => {
+      if (prev && prev.id === tabId) {
+        return {
+          ...prev,
+          data: { ...prev.data, ...newData },
+        };
+      }
+      return prev;
+    });
+
+    // 2️⃣ Update tabs inside spaces as usual
     setSpaces((prevSpaces) =>
       prevSpaces.map((space) =>
         space.id === activeSpace
           ? {
-            ...space,
-            tabs: space.tabs.map((tab) =>
-              tab.id === tabId
-                ? { ...tab, data: { ...tab.data, ...newData } }
-                : tab
-            ),
-            folders: space.folders.map((folder) => ({
-              ...folder,
-              tabs: folder.tabs.map((tab) =>
+              ...space,
+              tabs: space.tabs.map((tab) =>
                 tab.id === tabId
                   ? { ...tab, data: { ...tab.data, ...newData } }
                   : tab
               ),
-            })),
-          }
+              folders: space.folders.map((folder) => ({
+                ...folder,
+                tabs: folder.tabs.map((tab) =>
+                  tab.id === tabId
+                    ? { ...tab, data: { ...tab.data, ...newData } }
+                    : tab
+                ),
+              })),
+            }
           : space
       )
     );
   };
+
   function updateActiveTab(newData) {
     updateTab(activeTab, newData);
   }
@@ -242,29 +259,29 @@ export function TabsProvider({ children }) {
       prevSpaces.map((space) =>
         space.id === activeSpace
           ? {
-            ...space,
-            // Remove the tab from standalone tabs if it exists there
-            tabs: space.tabs.filter((t) => t.id !== tab.id),
+              ...space,
+              // Remove the tab from standalone tabs if it exists there
+              tabs: space.tabs.filter((t) => t.id !== tab.id),
 
-            // Remove the tab from any folder it may exist in
-            folders: space.folders.map((folder) => ({
-              ...folder,
-              tabs: folder.tabs.filter((t) => t.id !== tab.id),
-            })),
+              // Remove the tab from any folder it may exist in
+              folders: space.folders.map((folder) => ({
+                ...folder,
+                tabs: folder.tabs.filter((t) => t.id !== tab.id),
+              })),
 
-            // Now add the tab to the specified location if action is "add"
-            ...(action === "add"
-              ? folderId
-                ? {
-                  folders: space.folders.map((folder) =>
-                    folder.id === folderId
-                      ? { ...folder, tabs: [...folder.tabs, tab] }
-                      : folder
-                  ),
-                }
-                : { tabs: [...space.tabs, tab] }
-              : {}),
-          }
+              // Now add the tab to the specified location if action is "add"
+              ...(action === "add"
+                ? folderId
+                  ? {
+                      folders: space.folders.map((folder) =>
+                        folder.id === folderId
+                          ? { ...folder, tabs: [...folder.tabs, tab] }
+                          : folder
+                      ),
+                    }
+                  : { tabs: [...space.tabs, tab] }
+                : {}),
+            }
           : space
       )
     );
@@ -314,16 +331,16 @@ export function TabsProvider({ children }) {
       prevSpaces.map((space) =>
         space.id === spaceId
           ? {
-            ...space,
-            name: importedSpace.name,
-            folders: importedSpace.folders || [],
-            tabs: importedSpace.tabs || [],
-            settings: importedSpace.settings || {
-              theme: {},
-              toolbar: {},
-              text: {},
-            },
-          }
+              ...space,
+              name: importedSpace.name,
+              folders: importedSpace.folders || [],
+              tabs: importedSpace.tabs || [],
+              settings: importedSpace.settings || {
+                theme: {},
+                toolbar: {},
+                text: {},
+              },
+            }
           : space
       )
     );
@@ -345,7 +362,7 @@ export function TabsProvider({ children }) {
 
     // Optionally update the active tab to the first tab in imported data
     const firstTabId = importedSpace.tabs?.[0]?.id || null;
-    setActiveTab(firstTabId);
+    // setActiveTab(firstTabId);
   }
 
   const removeFolder = (folderId) => {
@@ -353,9 +370,9 @@ export function TabsProvider({ children }) {
       prevSpaces.map((space) =>
         space.id === activeSpace
           ? {
-            ...space,
-            folders: space.folders.filter((folder) => folder.id !== folderId),
-          }
+              ...space,
+              folders: space.folders.filter((folder) => folder.id !== folderId),
+            }
           : space
       )
     );
@@ -366,13 +383,13 @@ export function TabsProvider({ children }) {
       prevSpaces.map((space) =>
         space.id === activeSpace
           ? {
-            ...space,
-            folders: space.folders.map((folder) =>
-              folder.id === folderId
-                ? { ...folder, tabs: [...folder.tabs, tab] }
-                : folder
-            ),
-          }
+              ...space,
+              folders: space.folders.map((folder) =>
+                folder.id === folderId
+                  ? { ...folder, tabs: [...folder.tabs, tab] }
+                  : folder
+              ),
+            }
           : space
       )
     );
@@ -382,13 +399,13 @@ export function TabsProvider({ children }) {
       prevSpaces.map((space) =>
         space.id === activeSpace
           ? {
-            ...space,
-            folders: space.folders.map((folder) =>
-              folder.id === folderId
-                ? { ...folder, tabs: [...folder.tabs, ...tabs] }
-                : folder
-            ),
-          }
+              ...space,
+              folders: space.folders.map((folder) =>
+                folder.id === folderId
+                  ? { ...folder, tabs: [...folder.tabs, ...tabs] }
+                  : folder
+              ),
+            }
           : space
       )
     );
@@ -399,16 +416,16 @@ export function TabsProvider({ children }) {
       prevSpaces.map((space) =>
         space.id === activeSpace
           ? {
-            ...space,
-            folders: space.folders.map((folder) =>
-              folder.id === folderId
-                ? {
-                  ...folder,
-                  tabs: folder.tabs.filter((tab) => tab.id !== tabId),
-                }
-                : folder
-            ),
-          }
+              ...space,
+              folders: space.folders.map((folder) =>
+                folder.id === folderId
+                  ? {
+                      ...folder,
+                      tabs: folder.tabs.filter((tab) => tab.id !== tabId),
+                    }
+                  : folder
+              ),
+            }
           : space
       )
     );
@@ -622,12 +639,14 @@ export function TabsProvider({ children }) {
         replaceActiveSpaceWithJSON,
         updateSpace,
         addSpace,
+        setSharedTab,
         removeSpace,
         multiSelectMode,
         setMultiSelectMode,
         selectedTabs,
         setSelectedTabs,
         getToolsForActiveSpace,
+        sharedTab,
         tabsIcons,
         setTabsIcons,
         currentSpace: spaces.find((e) => e.id === activeSpace),

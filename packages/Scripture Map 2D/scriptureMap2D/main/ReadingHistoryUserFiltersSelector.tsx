@@ -1,16 +1,19 @@
 import { FiltersSelectorOption } from "scriptureMap2D.main.FiltersSelectorOption";
-import { useScriptureMap2DContext } from "scriptureMap2D.main.ScriptureMap2DContext";
+import { useReadingHistoryContext } from "scriptureMap2D.main.ReadingHistoryContext";
 const { useMemo, useEffect } = os.appHooks;
 
 export const ReadingHistoryUserFiltersSelector = () => {
-  const { handleReadingHistoryUserSelectorClick, readingHistoryUsersFilters } =
-    useScriptureMap2DContext();
+  const {
+    handleReadingHistoryUserSelectorClick,
+    readingHistoryUserFilters,
+    myAuthBotId,
+  } = useReadingHistoryContext();
 
   const allSelected = useMemo(() => {
-    return Array.from(readingHistoryUsersFilters).every(([, value]) => {
+    return Array.from(readingHistoryUserFilters).every(([, value]) => {
       return value;
     });
-  }, [readingHistoryUsersFilters]);
+  }, [readingHistoryUserFilters]);
 
   return (
     <div className="readingHistoryUserSelector">
@@ -22,14 +25,14 @@ export const ReadingHistoryUserFiltersSelector = () => {
         selected={allSelected}
       />
 
-      {Array.from(readingHistoryUsersFilters).map(([userId, selected]) => {
+      {Array.from(readingHistoryUserFilters).map(([userId, selected]) => {
         return (
           <FiltersSelectorOption
             content={[
               <div
                 style={{
                   backgroundColor:
-                    userId === configBot.id
+                    userId === myAuthBotId
                       ? BibleVizUtils.Data.tags.myUserColor
                       : (BibleVizUtils.Data.vars.userPresenceData?.[userId]
                           ?.user?.color ??
@@ -39,7 +42,7 @@ export const ReadingHistoryUserFiltersSelector = () => {
                         "pink"),
                   borderStyle: "solid",
                   borderColor:
-                    userId === configBot.id
+                    userId === myAuthBotId
                       ? BibleVizUtils.Data.tags.myUserColor
                       : (BibleVizUtils.Data.vars.userPresenceData?.[userId]
                           ?.user?.color ??
@@ -50,7 +53,7 @@ export const ReadingHistoryUserFiltersSelector = () => {
                 }}
                 className="filterOptionIcon"
               ></div>,
-              userId === configBot.id ? "You" : "Guest",
+              userId === myAuthBotId ? "You" : "Guest",
             ]}
             onClick={() => {
               handleReadingHistoryUserSelectorClick(userId);

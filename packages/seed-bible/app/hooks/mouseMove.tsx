@@ -96,14 +96,14 @@ export function MouseMoveProvider({ children }) {
 
     let hasMainCanvas = false;
     try {
-    const appString = preactRenderToString(appConfig.App);
-    os.log(appString, "appString");
-    console.log(appString);
-    hasMainCanvas =
-      appString.includes("mainCanvas") ||
-      appConfig.App?.props?.className?.includes("mainCanvas") ||
-      (appConfig.App?.type === "div" &&
-        appConfig.App?.props?.className?.includes("mainCanvas"));
+      const appString = preactRenderToString(appConfig.App);
+      os.log(appString, "appString");
+      console.log(appString);
+      hasMainCanvas =
+        appString.includes("mainCanvas") ||
+        appConfig.App?.props?.className?.includes("mainCanvas") ||
+        (appConfig.App?.type === "div" &&
+          appConfig.App?.props?.className?.includes("mainCanvas"));
     } catch (e) {
       os.log("Error checking for mainCanvas in floating app:", e);
       // Silent fail for string check
@@ -152,7 +152,7 @@ export function MouseMoveProvider({ children }) {
       });
     }
 
-    setFloatingApps((prev) => [...prev, newApp]);
+    setFloatingApps((prev) => [...prev, { ...newApp, hasMainCanvas }]);
     return newApp.id;
   };
 
@@ -579,6 +579,16 @@ const FloatingAppContainer = ({
   setSlideIn,
   slideOutApp,
 }) => {
+  const [userHaveVR, setUserHaveVR] = useState(true);
+  const checkVR = async () => {
+    if (app?.hasMainCanvas) {
+      const support = await os.vrSupported();
+      setUserHaveVR(support);
+    }
+  };
+  useEffect(() => {
+    checkVR();
+  }, []);
   // visual constants to match the sketch
   const stroke = "rgba(255,255,255,0.85)";
   const radius = 16;
@@ -976,6 +986,23 @@ const FloatingAppContainer = ({
 
         {!app.isDocked && (
           <div style={toolbarStyle}>
+            {userHaveVR && (
+              <button
+                onClick={async () => {
+                  os.enableVR();
+                }}
+                style={pillBtn}
+                title="Square"
+                className="control-button view-only-laptop"
+              >
+                <span
+                  className="material-symbols-outlined"
+                  style={{ fontSize: 20 }}
+                >
+                  360
+                </span>
+              </button>
+            )}
             <button
               onClick={screen2}
               style={pillBtn}
