@@ -1,0 +1,385 @@
+{
+  "EXO": {
+    "25": {
+      "10": ["ark-of-covenant"],
+      "11": ["ark-of-covenant"],
+      "12": ["ark-of-covenant"],
+      "13": ["ark-of-covenant"],
+      "14": ["ark-of-covenant"],
+      "15": ["ark-of-covenant"],
+      "16": ["ark-of-covenant"],
+      "17": ["ark-of-covenant"],
+      "18": ["ark-of-covenant"],
+      "19": ["ark-of-covenant"],
+      "20": ["ark-of-covenant"],
+      "21": ["ark-of-covenant"],
+      "22": ["ark-of-covenant"],
+      "23": ["table-showbread"],
+      "24": ["table-showbread"],
+      "25": ["table-showbread"],
+      "26": ["table-showbread"],
+      "27": ["table-showbread"],
+      "28": ["table-showbread"],
+      "29": ["table-showbread"],
+      "30": ["table-showbread"],
+      "31": ["menorah"],
+      "32": ["menorah"],
+      "33": ["menorah"],
+      "34": ["menorah"],
+      "35": ["menorah"],
+      "36": ["menorah"],
+      "37": ["menorah"],
+      "38": ["menorah"],
+      "39": ["menorah"],
+      "40": ["menorah"]
+    },
+    "26": {
+      "1": ["cloth-brown", "cloth-red", "cloth-grey", "cloth-purple"],
+      "2": ["cloth-brown", "cloth-red", "cloth-grey", "cloth-purple"],
+      "3": ["cloth-brown", "cloth-red", "cloth-grey", "cloth-purple"],
+      "4": ["cloth-brown", "cloth-red", "cloth-grey", "cloth-purple"],
+      "5": ["cloth-brown", "cloth-red", "cloth-grey", "cloth-purple"],
+      "6": ["cloth-brown", "cloth-red", "cloth-grey", "cloth-purple"],
+      "7": ["cloth-brown", "cloth-red", "cloth-grey", "cloth-purple"],
+      "8": ["cloth-brown", "cloth-red", "cloth-grey", "cloth-purple"],
+      "9": ["cloth-brown", "cloth-red", "cloth-grey", "cloth-purple"],
+      "10": ["cloth-brown", "cloth-red", "cloth-grey", "cloth-purple"],
+      "11": ["cloth-brown", "cloth-red", "cloth-grey", "cloth-purple"],
+      "12": ["cloth-brown", "cloth-red", "cloth-grey", "cloth-purple"],
+      "13": ["cloth-brown", "cloth-red", "cloth-grey", "cloth-purple"],
+      "14": ["cloth-brown", "cloth-red", "cloth-grey", "cloth-purple"],
+      "15": [
+        "structure-front-pillars",
+        "structure-inner-pillars",
+        "structure-rings",
+        "structure-bars",
+        "structure-walls"
+      ],
+      "16": [
+        "structure-front-pillars",
+        "structure-inner-pillars",
+        "structure-rings",
+        "structure-bars",
+        "structure-walls"
+      ],
+      "17": [
+        "structure-front-pillars",
+        "structure-inner-pillars",
+        "structure-rings",
+        "structure-bars",
+        "structure-walls"
+      ],
+      "18": [
+        "structure-front-pillars",
+        "structure-inner-pillars",
+        "structure-rings",
+        "structure-bars",
+        "structure-walls"
+      ],
+      "19": [
+        "structure-front-pillars",
+        "structure-inner-pillars",
+        "structure-rings",
+        "structure-bars",
+        "structure-walls"
+      ],
+      "20": [
+        "structure-front-pillars",
+        "structure-inner-pillars",
+        "structure-rings",
+        "structure-bars",
+        "structure-walls"
+      ],
+      "21": [
+        "structure-front-pillars",
+        "structure-inner-pillars",
+        "structure-rings",
+        "structure-bars",
+        "structure-walls"
+      ],
+      "22": [
+        "structure-front-pillars",
+        "structure-inner-pillars",
+        "structure-rings",
+        "structure-bars",
+        "structure-walls"
+      ],
+      "23": [
+        "structure-front-pillars",
+        "structure-inner-pillars",
+        "structure-rings",
+        "structure-bars",
+        "structure-walls"
+      ],
+      "24": [
+        "structure-front-pillars",
+        "structure-inner-pillars",
+        "structure-rings",
+        "structure-bars",
+        "structure-walls"
+      ],
+      "25": [
+        "structure-front-pillars",
+        "structure-inner-pillars",
+        "structure-rings",
+        "structure-bars",
+        "structure-walls"
+      ],
+      "26": [
+        "structure-front-pillars",
+        "structure-inner-pillars",
+        "structure-rings",
+        "structure-bars",
+        "structure-walls"
+      ],
+      "27": [
+        "structure-front-pillars",
+        "structure-inner-pillars",
+        "structure-rings",
+        "structure-bars",
+        "structure-walls"
+      ],
+      "28": [
+        "structure-front-pillars",
+        "structure-inner-pillars",
+        "structure-rings",
+        "structure-bars",
+        "structure-walls"
+      ],
+      "29": [
+        "structure-front-pillars",
+        "structure-inner-pillars",
+        "structure-rings",
+        "structure-bars",
+        "structure-walls"
+      ],
+      "30": [
+        "structure-front-pillars",
+        "structure-inner-pillars",
+        "structure-rings",
+        "structure-bars",
+        "structure-walls"
+      ],
+      "31": ["structure-inner-curtain"],
+      "32": ["structure-inner-curtain"],
+      "33": ["structure-inner-curtain"],
+      "34": ["structure-inner-curtain"],
+      "35": ["structure-inner-curtain"],
+      "36": ["structure-front-curtain"],
+      "37": ["structure-front-curtain"]
+    },
+    "27": {
+      "1": ["altar-of-sacrifice"],
+      "2": ["altar-of-sacrifice"],
+      "3": ["altar-of-sacrifice"],
+      "4": ["altar-of-sacrifice"],
+      "5": ["altar-of-sacrifice"],
+      "6": ["altar-of-sacrifice"],
+      "7": ["altar-of-sacrifice"],
+      "8": ["altar-of-sacrifice"],
+      "9": ["ground", "fence"],
+      "10": ["ground", "fence"],
+      "11": ["ground", "fence"],
+      "12": ["ground", "fence"],
+      "13": ["ground", "fence"],
+      "14": ["ground", "fence"],
+      "15": ["ground", "fence"],
+      "16": ["ground", "fence"],
+      "17": ["ground", "fence"],
+      "18": ["ground", "fence"],
+      "19": ["ground", "fence"]
+    },
+    "30": {
+      "1": ["incense-altar"],
+      "2": ["incense-altar"],
+      "3": ["incense-altar"],
+      "4": ["incense-altar"],
+      "5": ["incense-altar"],
+      "6": ["incense-altar"],
+      "7": ["incense-altar"],
+      "8": ["incense-altar"],
+      "9": ["incense-altar"],
+      "10": ["incense-altar"],
+      "17": ["bronze-laver"],
+      "18": ["bronze-laver"],
+      "19": ["bronze-laver"],
+      "20": ["bronze-laver"],
+      "21": ["bronze-laver"]
+    },
+    "36": {
+      "8": ["cloth-brown", "cloth-red", "cloth-grey", "cloth-purple"],
+      "9": ["cloth-brown", "cloth-red", "cloth-grey", "cloth-purple"],
+      "10": ["cloth-brown", "cloth-red", "cloth-grey", "cloth-purple"],
+      "11": ["cloth-brown", "cloth-red", "cloth-grey", "cloth-purple"],
+      "12": ["cloth-brown", "cloth-red", "cloth-grey", "cloth-purple"],
+      "13": ["cloth-brown", "cloth-red", "cloth-grey", "cloth-purple"],
+      "14": ["cloth-brown", "cloth-red", "cloth-grey", "cloth-purple"],
+      "15": ["cloth-brown", "cloth-red", "cloth-grey", "cloth-purple"],
+      "16": ["cloth-brown", "cloth-red", "cloth-grey", "cloth-purple"],
+      "17": ["cloth-brown", "cloth-red", "cloth-grey", "cloth-purple"],
+      "18": ["cloth-brown", "cloth-red", "cloth-grey", "cloth-purple"],
+      "19": ["cloth-brown", "cloth-red", "cloth-grey", "cloth-purple"],
+      "20": [
+        "structure-front-pillars",
+        "structure-inner-pillars",
+        "structure-rings",
+        "structure-bars",
+        "structure-walls"
+      ],
+      "21": [
+        "structure-front-pillars",
+        "structure-inner-pillars",
+        "structure-rings",
+        "structure-bars",
+        "structure-walls"
+      ],
+      "22": [
+        "structure-front-pillars",
+        "structure-inner-pillars",
+        "structure-rings",
+        "structure-bars",
+        "structure-walls"
+      ],
+      "23": [
+        "structure-front-pillars",
+        "structure-inner-pillars",
+        "structure-rings",
+        "structure-bars",
+        "structure-walls"
+      ],
+      "24": [
+        "structure-front-pillars",
+        "structure-inner-pillars",
+        "structure-rings",
+        "structure-bars",
+        "structure-walls"
+      ],
+      "25": [
+        "structure-front-pillars",
+        "structure-inner-pillars",
+        "structure-rings",
+        "structure-bars",
+        "structure-walls"
+      ],
+      "26": [
+        "structure-front-pillars",
+        "structure-inner-pillars",
+        "structure-rings",
+        "structure-bars",
+        "structure-walls"
+      ],
+      "27": [
+        "structure-front-pillars",
+        "structure-inner-pillars",
+        "structure-rings",
+        "structure-bars",
+        "structure-walls"
+      ],
+      "28": [
+        "structure-front-pillars",
+        "structure-inner-pillars",
+        "structure-rings",
+        "structure-bars",
+        "structure-walls"
+      ],
+      "29": [
+        "structure-front-pillars",
+        "structure-inner-pillars",
+        "structure-rings",
+        "structure-bars",
+        "structure-walls"
+      ],
+      "30": [
+        "structure-front-pillars",
+        "structure-inner-pillars",
+        "structure-rings",
+        "structure-bars",
+        "structure-walls"
+      ],
+      "31": [
+        "structure-front-pillars",
+        "structure-inner-pillars",
+        "structure-rings",
+        "structure-bars",
+        "structure-walls"
+      ],
+      "32": [
+        "structure-front-pillars",
+        "structure-inner-pillars",
+        "structure-rings",
+        "structure-bars",
+        "structure-walls"
+      ],
+      "33": [
+        "structure-front-pillars",
+        "structure-inner-pillars",
+        "structure-rings",
+        "structure-bars",
+        "structure-walls"
+      ],
+      "34": [
+        "structure-front-pillars",
+        "structure-inner-pillars",
+        "structure-rings",
+        "structure-bars",
+        "structure-walls"
+      ],
+      "35": ["structure-inner-curtain"],
+      "36": ["structure-inner-curtain"],
+      "37": ["structure-front-curtain"],
+      "38": ["structure-front-curtain"]
+    },
+    "37": {
+      "1": ["ark-of-covenant"],
+      "2": ["ark-of-covenant"],
+      "3": ["ark-of-covenant"],
+      "4": ["ark-of-covenant"],
+      "5": ["ark-of-covenant"],
+      "6": ["ark-of-covenant"],
+      "7": ["ark-of-covenant"],
+      "8": ["ark-of-covenant"],
+      "9": ["ark-of-covenant"],
+      "10": ["table-showbread"],
+      "11": ["table-showbread"],
+      "12": ["table-showbread"],
+      "13": ["table-showbread"],
+      "14": ["table-showbread"],
+      "15": ["table-showbread"],
+      "16": ["table-showbread"],
+      "17": ["menorah"],
+      "18": ["menorah"],
+      "19": ["menorah"],
+      "20": ["menorah"],
+      "21": ["menorah"],
+      "22": ["menorah"],
+      "23": ["menorah"],
+      "24": ["menorah"],
+      "25": ["incense-altar"],
+      "26": ["incense-altar"],
+      "27": ["incense-altar"],
+      "28": ["incense-altar"]
+    },
+    "38": {
+      "1": ["altar-of-sacrifice"],
+      "2": ["altar-of-sacrifice"],
+      "3": ["altar-of-sacrifice"],
+      "4": ["altar-of-sacrifice"],
+      "5": ["altar-of-sacrifice"],
+      "6": ["altar-of-sacrifice"],
+      "7": ["altar-of-sacrifice"],
+      "8": ["bronze-laver"],
+      "9": ["ground", "fence"],
+      "10": ["ground", "fence"],
+      "11": ["ground", "fence"],
+      "12": ["ground", "fence"],
+      "13": ["ground", "fence"],
+      "14": ["ground", "fence"],
+      "15": ["ground", "fence"],
+      "16": ["ground", "fence"],
+      "17": ["ground", "fence"],
+      "18": ["ground", "fence"],
+      "19": ["ground", "fence"],
+      "20": ["ground", "fence"]
+    }
+  }
+}

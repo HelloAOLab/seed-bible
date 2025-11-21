@@ -113,7 +113,7 @@ function ThePage({
 
   const loadTranslationFromUrl = async () => {
     console.log(configBot.tags.translationId, "translation id");
-    let translationId =
+    const translationId =
       configBot.tags.translationId ||
       configBot.tags.translation ||
       tab.data.translation;
@@ -124,12 +124,12 @@ function ThePage({
     let firstChapterApiLink;
     let books = [];
     if (translationId) {
-      let available_translations_req = await web.get(
+      const available_translations_req = await web.get(
         "https://bible.helloao.org/api/available_translations.json"
       );
       let allTranslations = [];
-      let translations = {};
-      let defaultTranslations = [
+      const translations = {};
+      const defaultTranslations = [
         "english",
         "spanish",
         "arabic",
@@ -147,7 +147,7 @@ function ThePage({
         }
       );
 
-      let trValue = {
+      const trValue = {
         pass: false,
         value: null,
       };
@@ -161,14 +161,14 @@ function ThePage({
           }
         });
 
-        let urlId = translationId.includes("https://");
+        const urlId = translationId.includes("https://");
 
         if (trValue.pass && !urlId) {
-          let bookData = await web.get(
+          const bookData = await web.get(
             `https://bible.helloao.org/api/${trValue.value.id}/books.json`
           );
           books = bookData.data.books;
-          let book0 = bookData.data.books[0];
+          const book0 = bookData.data.books[0];
           firstBookData = book0;
           setTagMask(thisBot, "selectedTranslation", trValue.value, "local");
           setTagMask(thisBot, "booksData", bookData.data.books, "local");
@@ -176,7 +176,7 @@ function ThePage({
           bookTranslationId = trValue.value.id;
           firstChapterApiLink = book0.firstChapterApiLink;
         } else {
-          let result = await web.get(translationId);
+          const result = await web.get(translationId);
           if (result.status === 200) {
             const url = new URL(translationId);
             let newTranslations = result.data.translations;
@@ -188,7 +188,7 @@ function ThePage({
                 ...translationData,
               };
             }
-            let defaultTranslation = newTranslations[0];
+            const defaultTranslation = newTranslations[0];
             newTranslations = newTranslations.map((trans) => {
               return {
                 languageEnglishName: trans.languageEnglishName,
@@ -199,26 +199,26 @@ function ThePage({
               };
             });
             allTranslations = [...allTranslations, ...newTranslations];
-            for (let translation of newTranslations) {
-              let englishName = translation.languageEnglishName.toLowerCase();
+            for (const translation of newTranslations) {
+              const englishName = translation.languageEnglishName.toLowerCase();
               if (!defaultTranslations.includes(englishName)) {
                 defaultTranslations.push(englishName);
               }
             }
-            let translation = {
+            const translation = {
               languageEnglishName: defaultTranslation.languageEnglishName,
               id: defaultTranslation.id,
               listOfBooksApiLink: `${url.origin}${defaultTranslation.listOfBooksApiLink}`,
               origin: url.origin,
               shortName: defaultTranslation.shortName,
             };
-            let englishName = translation.languageEnglishName.toLowerCase();
-            let shortName = translation.shortName.toLowerCase();
+            const englishName = translation.languageEnglishName.toLowerCase();
+            const shortName = translation.shortName.toLowerCase();
 
-            let bookData = await web.get(translation.listOfBooksApiLink);
+            const bookData = await web.get(translation.listOfBooksApiLink);
 
             books = bookData.data.books;
-            let book0 = bookData.data.books[0];
+            const book0 = bookData.data.books[0];
             firstBookData = book0;
             setTagMask(thisBot, "selectedTranslation", translation, "local");
             setTagMask(thisBot, "booksData", bookData.data.books, "local");
@@ -235,10 +235,10 @@ function ThePage({
           }
         }
         allTranslations.forEach((translation) => {
-          let englishName =
+          const englishName =
             translation?.languageEnglishName?.toLowerCase() ||
             translation?.englishName?.toLowerCase();
-          let shortName = translation.shortName.toLowerCase();
+          const shortName = translation.shortName.toLowerCase();
           if (translations[englishName]) {
             if (!translations[englishName][shortName]) {
               translations[englishName][shortName] = translation;
@@ -292,7 +292,7 @@ function ThePage({
     console.log(data, tab, "the data loaded");
 
     globalThis.refreshScrollers && globalThis.refreshScrollers();
-    let { firstBookData, bookTranslationId, baseUrl, books } =
+    const { firstBookData, bookTranslationId, baseUrl, books } =
       await loadTranslationFromUrl();
 
     if (!configBot.tags.defaultChecked) {
@@ -315,7 +315,7 @@ function ThePage({
             let chapterNo;
             if (Number(configBot.tags.chapter) < bookData.numberOfChapters)
               chapterNo = configBot.tags.chapter;
-            let chapterUrl = chapterNo
+            const chapterUrl = chapterNo
               ? bookData.firstChapterApiLink.replace(
                   "1.json",
                   `${chapterNo}.json`
@@ -341,7 +341,7 @@ function ThePage({
           let chapterNo;
           if (Number(configBot.tags.chapter) < bookData.numberOfChapters)
             chapterNo = configBot.tags.chapter;
-          let chapterUrl = chapterNo
+          const chapterUrl = chapterNo
             ? bookData.firstChapterApiLink.replace(
                 "1.json",
                 `${chapterNo}.json`
@@ -370,7 +370,7 @@ function ThePage({
       configBot.tags.defaultChecked = true;
     } else {
       if (masks?.allTranslations) {
-        for (let translation of masks.allTranslations) {
+        for (const translation of masks.allTranslations) {
           if (translation.id === tab.data.translation) {
             setTagMask(thisBot, "selectedTranslation", translation, "local");
             break;
@@ -1131,10 +1131,13 @@ function ThePage({
         if (!globalThis.tabHighlights) globalThis.tabHighlights = {};
         globalThis.tabHighlights[tab?.id] = newHighlighted;
 
-        if (fadeIn || tags?.sessions[configBot.id]?.config.highlightDuration) {
+        if (
+          fadeIn ||
+          tags?.sessions?.[configBot.id]?.config.highlightDuration
+        ) {
           let duration = 0;
-          if (tags?.sessions[configBot.id]?.config.highlightDuration)
-            fadeIn = tags?.sessions[configBot.id]?.config.highlightDuration;
+          if (tags?.sessions?.[configBot.id]?.config.highlightDuration)
+            fadeIn = tags?.sessions?.[configBot.id]?.config.highlightDuration;
           if (fadeIn === 4) {
             duration = 0; // Never remove highlight
           } else if (typeof fadeIn === "number") {
@@ -2062,7 +2065,7 @@ function Section({
         ];
         return wordParts.map((part, i) => {
           if (part.isHighlighted) {
-            let attributes = part.highlightConfig.createAttributes(
+            const attributes = part.highlightConfig.createAttributes(
               book,
               chapter,
               part
