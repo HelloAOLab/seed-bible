@@ -29,7 +29,7 @@ data.forEach((info) => {
   switch (value) {
     case MeshState.Hidden:
       {
-        if (hitbox) setTagMask(hitbox, dimension, null);
+        if (hitbox) setTag(hitbox, dimension, null);
         if (bot.masks.state !== MeshState.Hidden) {
           animateTag(bot, "formOpacity", null);
           animations.push(
@@ -47,7 +47,7 @@ data.forEach((info) => {
       break;
     case MeshState.Shown:
       {
-        if (hitbox) setTagMask(hitbox, dimension, true);
+        if (hitbox) setTag(hitbox, dimension, true);
         if (bot.masks.state !== MeshState.Shown) {
           animateTag(bot, "formOpacity", null);
           if (bot.masks.state === MeshState.Translucent) {
@@ -86,7 +86,7 @@ data.forEach((info) => {
       break;
     case MeshState.Translucent:
       {
-        if (hitbox) setTagMask(hitbox, dimension, true);
+        if (hitbox) setTag(hitbox, dimension, null);
         if (bot.masks.state !== MeshState.Translucent) {
           const targetOpacity = 0.025;
           animateTag(bot, "formOpacity", null);

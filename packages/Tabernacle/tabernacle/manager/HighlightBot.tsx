@@ -8,13 +8,22 @@ const blinkDuration = 1;
 const coneTargetFormOpacity = 0.75;
 const botPosition = getBotPosition(bot, dimension);
 
+const botsToSetState = {};
+for (const { key } of bot.tags.keysStateOnHighlight ?? []) {
+  const botToSetState = getBot("system", `tabernacle.${key}`);
+  botsToSetState[key] = botToSetState;
+}
+
 const duration = 1;
 const easing = { type: "sinusoidal", mode: "inout" };
 const rotation = { x: 1.01229, y: 0.5 };
 const startTime =
   os.localTime +
-  (bot.tags.keysStateOnHighlight?.some((info) => {
-    return info.state === "Hidden";
+  (bot.tags.keysStateOnHighlight?.some(({ state, key }) => {
+    return (
+      state === MeshState.Hidden &&
+      botsToSetState[key]?.masks.state !== MeshState.Hidden
+    );
   })
     ? 1000
     : 0);
