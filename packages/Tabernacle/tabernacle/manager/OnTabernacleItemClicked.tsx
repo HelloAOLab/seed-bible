@@ -15,7 +15,3 @@ for (const verse in versesData) {
 }
 
 thisBot.HandleTabernacleSectionInteraction({ keys: [key], type: "itemClick" });
-
-if (verses.length > 0) {
-  globalThis.ToggleVerseHighlight(verses.toReversed(), "#8df5f3", true, 1);
-}

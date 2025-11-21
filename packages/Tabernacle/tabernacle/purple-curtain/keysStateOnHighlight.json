@@ -8,23 +8,19 @@
     "state": "Hidden"
   },
   {
-    "key": "purple-curtain",
-    "state": "Hidden"
-  },
-  {
     "key": "red-curtain",
     "state": "Hidden"
   },
   {
     "key": "rings",
-    "state": "Hidden"
+    "state": "Shown"
   },
   {
     "key": "walls",
-    "state": "Hidden"
+    "state": "Shown"
   },
   {
     "key": "bars",
-    "state": "Hidden"
+    "state": "Shown"
   }
 ]

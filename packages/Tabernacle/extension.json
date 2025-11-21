@@ -25,20 +25,20 @@
       "tag": "tabernacle.bronze-laver"
     },
     {
-      "description": "tabernacle.cloth-brown",
-      "tag": "tabernacle.cloth-brown"
+      "description": "tabernacle.brown-curtain",
+      "tag": "tabernacle.brown-curtain"
     },
     {
-      "description": "tabernacle.cloth-grey",
-      "tag": "tabernacle.cloth-grey"
+      "description": "tabernacle.grey-curtain",
+      "tag": "tabernacle.grey-curtain"
     },
     {
-      "description": "tabernacle.cloth-purple",
-      "tag": "tabernacle.cloth-purple"
+      "description": "tabernacle.purple-curtain",
+      "tag": "tabernacle.purple-curtain"
     },
     {
-      "description": "tabernacle.cloth-red",
-      "tag": "tabernacle.cloth-red"
+      "description": "tabernacle.red-curtain",
+      "tag": "tabernacle.red-curtain"
     },
     {
       "description": "tabernacle.cone",
@@ -65,36 +65,36 @@
       "tag": "tabernacle.menorah"
     },
     {
-      "description": "tabernacle.structure-bars",
-      "tag": "tabernacle.structure-bars"
+      "description": "tabernacle.bars",
+      "tag": "tabernacle.bars"
     },
     {
-      "description": "tabernacle.structure-front-curtain",
-      "tag": "tabernacle.structure-front-curtain"
+      "description": "tabernacle.front-curtain",
+      "tag": "tabernacle.front-curtain"
     },
     {
-      "description": "tabernacle.structure-front-pillars",
-      "tag": "tabernacle.structure-front-pillars"
+      "description": "tabernacle.front-pillars",
+      "tag": "tabernacle.front-pillars"
     },
     {
-      "description": "tabernacle.structure-inner-curtain",
-      "tag": "tabernacle.structure-inner-curtain"
+      "description": "tabernacle.inner-curtain",
+      "tag": "tabernacle.inner-curtain"
     },
     {
-      "description": "tabernacle.structure-inner-pillars",
-      "tag": "tabernacle.structure-inner-pillars"
+      "description": "tabernacle.inner-pillars",
+      "tag": "tabernacle.inner-pillars"
     },
     {
-      "description": "tabernacle.structure-rings",
-      "tag": "tabernacle.structure-rings"
+      "description": "tabernacle.rings",
+      "tag": "tabernacle.rings"
     },
     {
-      "description": "tabernacle.structure-walls",
-      "tag": "tabernacle.structure-walls"
+      "description": "tabernacle.walls",
+      "tag": "tabernacle.walls"
     },
     {
-      "description": "tabernacle.table-showbread",
-      "tag": "tabernacle.table-showbread"
+      "description": "tabernacle.table-of-showbread",
+      "tag": "tabernacle.table-of-showbread"
     }
   ],
   "recordFile": {

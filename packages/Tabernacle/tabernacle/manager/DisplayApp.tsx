@@ -20,7 +20,7 @@ if (thisBot.vars.appId) {
       !isNaN(Number(thisBot.vars.currentChapter));
     if (thisBot.vars.currentBook && isValidChapter) {
       thisBot.FixBotsPosition();
-      thisBot.UpdateTabernacleVisuals();
+      return thisBot.UpdateTabernacleVisuals();
     } else
       console.warn(
         "Book or Chapter not available at tabernacle.manager.DisplayApp"

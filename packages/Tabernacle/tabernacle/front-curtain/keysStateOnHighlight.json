@@ -16,15 +16,23 @@
     "state": "Hidden"
   },
   {
-    "key": "rings",
-    "state": "Hidden"
+    "key": "front-pillars",
+    "state": "Translucent"
+  },
+  {
+    "key": "inner-pillars",
+    "state": "Translucent"
   },
   {
     "key": "walls",
-    "state": "Hidden"
+    "state": "Translucent"
+  },
+  {
+    "key": "rings",
+    "state": "Translucent"
   },
   {
     "key": "bars",
-    "state": "Hidden"
+    "state": "Translucent"
   }
 ]
