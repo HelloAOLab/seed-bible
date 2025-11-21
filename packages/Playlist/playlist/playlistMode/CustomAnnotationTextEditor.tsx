@@ -13,16 +13,14 @@ import {
   Image,
   Link,
   BulletList,
+  Node,
   OrderedList,
   ListItem,
   Mark,
   Extension,
   Plugin
 } from "https://esm.helloao.org/vendor-RPNXNWQB.js";
-
-console.log("Extension", Extension);    
-console.log("Plugin", Plugin);
-
+import { useDragRef } from "playlist.playlistMode.useDragRef";
 
 /**
  * -----------------------------------------------------------
@@ -50,70 +48,6 @@ console.log("Plugin", Plugin);
  *   window.SimpleEditorToolbar[instanceId].getPriorities()
  *   window.SimpleEditorToolbar[instanceId].resetPriorities()
  */
-
-export const ImageUpload = Extension.create({
-    name: 'imageUpload',
-  
-    addProseMirrorPlugins() {
-      return [
-        new Plugin({
-          props: {
-            handlePaste: async (view, event) => {
-              const items = event.clipboardData?.items;
-              console.log("items", items);
-              if (!items) return false;
-  
-              for (let i = 0; i < items.length; i++) {
-                // const item = items[i];
-  
-                // if (item.type.indexOf("image") === 0) {
-                //   const file = item.getAsFile();
-                //   if (!file) return false;
-  
-                //   // 🔥 Upload to server
-                // //   const url = await uploadFile(file);
-  
-                //   // Insert uploaded image into editor
-                //   const { schema } = view.state;
-                //   const node = schema.nodes.image.create({ src: url });
-                //   const transaction = view.state.tr.replaceSelectionWith(node);
-                //   view.dispatch(transaction);
-  
-                  return true;
-                // }
-              }
-  
-              return false;
-            },
-  
-            handleDrop: async (view, event) => {
-              const files = event.dataTransfer?.files;
-              if (!files?.length) return false;
-  
-              for (let i = 0; i < files.length; i++) {
-                const file = files[i];
-                if (!file.type.startsWith("image/")) continue;
-  
-                // 🔥 Upload to server
-                const url = await uploadFile(file);
-  
-                const { schema } = view.state;
-                const node = schema.nodes.image.create({ src: url });
-                const pos = view.posAtCoords({ left: event.clientX, top: event.clientY });
-  
-                if (pos) {
-                  const transaction = view.state.tr.insert(pos.pos, node);
-                  view.dispatch(transaction);
-                }
-              }
-  
-              return true;
-            }
-          }
-        })
-      ]
-    },
-  })
 
 const DEFAULT_TOOLBAR_PRIORITY = [
   "bold",
@@ -166,6 +100,110 @@ const LineHeight = Mark.create({
   },
 });
 
+
+
+export const Video = Node.create({
+  name: "video",
+
+  group: "block",
+  atom: true, // makes it behave like a single unit
+
+  addAttributes() {
+    return {
+      src: { default: null },
+      controls: { default: true },
+      style: { default: "max-width: 360px;" },
+    };
+  },
+
+  parseHTML() {
+    return [
+      {
+        tag: "video",
+      },
+    ];
+  },
+
+  renderHTML({ HTMLAttributes }) {
+    return ["video", {
+      ...HTMLAttributes,
+      controls: true,
+    }];
+  },
+});
+
+export const Iframe = Node.create({
+  name: "iframe",
+
+  group: "block",
+  atom: true,   // behaves as a single unit
+  selectable: true,
+
+  addAttributes() {
+    return {
+      src: {
+        default: null,
+      },
+      width: {
+        default: "560",
+      },
+      height: {
+        default: "315",
+      },
+      frameborder: {
+        default: "0",
+      },
+      allow: {
+        default: "accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture",
+      },
+      allowfullscreen: {
+        default: true,
+      },
+      style: {
+        default: "max-width: 100%;",
+      },
+    };
+  },
+
+  parseHTML() {
+    return [
+      {
+        tag: "iframe",
+      },
+    ];
+  },
+
+  renderHTML({ HTMLAttributes }) {
+    return ["iframe", {
+      ...HTMLAttributes,
+      allowfullscreen: "true",
+    }];
+  },
+});
+
+
+const CustomImage = Image.extend({
+  addAttributes() {
+    return {
+      ...this.parent?.(),
+
+      class: {
+        default: null,
+        parseHTML: element => element.getAttribute("class"),
+        renderHTML: attributes => {
+          if (!attributes.class) {
+            return {};
+          }
+
+          return {
+            class: attributes.class,
+          };
+        },
+      },
+    };
+  },
+});
+
 export function CustomAnnotationTextEditor({
   instanceId,
   className,
@@ -205,6 +243,32 @@ export function CustomAnnotationTextEditor({
   // ----- editor dom & state
   const editorRef = useRef(null);
   const editorObjRef = useRef(null);
+  const [loading, setLoading] = useState(false);
+
+  const handleDropFiles = async (files) => {
+    if(loading) return;
+    setLoading(true);
+    const data = await uploadFilesReusable(
+      files
+    );
+    let html = "";
+
+    data.forEach((file) => {
+      const htmlSuffix = appendImageToEditorHTML(file);
+      html += htmlSuffix;
+    });
+
+    if (html) {
+      setTimeout(() => {
+        if (!editorObjRef.current) return;
+        editorObjRef.current.chain().focus().insertContent(html).run();
+      }, 50);
+    }
+
+    setLoading(false);
+  };
+
+  const { dragRef, dragState } = useDragRef({ onUploadFiles: handleDropFiles });
 
   // colors & font size
   const [textColor, setTextColor] = useState("#000000");
@@ -292,9 +356,11 @@ export function CustomAnnotationTextEditor({
         Highlight.configure({ multicolor: true }),
         BulletList,
         OrderedList,
+        Video,
+        Iframe,
         ListItem,
         LineHeight,
-        Image.configure({ inline: false, allowBase64: true }),
+        CustomImage.configure({ inline: false, allowBase64: true }),
         Link.configure({ openOnClick: true, linkOnPaste: true }),
       ],
       editorProps: {
@@ -314,13 +380,65 @@ export function CustomAnnotationTextEditor({
             return true;
           },
           paste: async (view, event) => {
-            console.log("paste", view, event);
-            event.preventDefault();
+            const items = event?.clipboardData?.items;
+
+            const plainText = event.clipboardData.getData("text/plain");
+            const htmlText = event.clipboardData.getData("text/html");
+
+            // const pastedText = [];
+            if (!items || !(items.length)) return false;
+            const files = [];
+            for (let i = 0; i < items.length; i++) {
+              const item = items[i];
+              if (item.kind === "file") {
+                const file = item.getAsFile();
+                if (file) files.push(file);
+              }
+              // if (item.kind === "string") {
+              //   const text = await item.getAsString();
+              //   console.log("text", text);
+              //   pastedText.push(text);
+              // }
+            }
+            setLoading(true);
+            const data = await uploadFilesReusable({
+              files,
+            });
+            setLoading(false);
+
+            let html = "";
+
+            data.forEach((file) => {
+              const htmlSuffix = appendImageToEditorHTML(file);
+              html += htmlSuffix;
+            });
+
+            if (html) {
+              setTimeout(() => {
+                editor.chain().focus().insertContent(html).run();
+              }, 50);
+            }
+
+            if (plainText) {
+              const embedHTML = generateEmbedFromUrl(plainText.trim());
+
+              if (embedHTML) {
+                setTimeout(() => {
+                  editor.chain().focus().insertContent(embedHTML).run();
+                }, 50); 
+              } else if (htmlText) {
+                setTimeout(() => {
+                  editor.chain().focus().insertContent(htmlText).run();
+                }, 50);
+              } else {
+                setTimeout(() => {
+                  editor.chain().focus().insertContent(plainText).run();
+                }, 50);
+              }
+            }
             return true;
           },
           drop: async (view, event) => {
-            console.log("onDrop", view, event);
-            event.preventDefault();
             return true;
           },
         },
@@ -650,7 +768,75 @@ export function CustomAnnotationTextEditor({
   }, [padY, padX]);
 
   return (
-    <div className={`sre-root ${className || ""}`} style={{ ...style }}>
+    <div ref={dragRef} className={`sre-root ${className || ""}`} style={{ ...style }}>
+      {(dragState.isDragOver || loading) && (
+            <div
+              style={{
+                position: "absolute",
+                top: 0,
+                left: 0,
+                right: 0,
+                bottom: 0,
+                backgroundColor: "rgba(0, 0, 0, 0.5)",
+                zIndex: 10000,
+                display: "flex",
+                alignItems: "center",
+                justifyContent: "center",
+                backdropFilter: "blur(2px)",
+              }}
+            >
+              <div
+                style={{
+                  backgroundColor: "white",
+                  padding: "4px",
+                  borderRadius: "12px",
+                  border: "3px dashed #4459F3",
+                  textAlign: "center",
+                  minWidth: "280px",
+                  boxShadow: "0 10px 30px rgba(0,0,0,0.3)",
+                }}
+              >
+             {loading ? 
+              <div style={{color: '#333' ,display: 'flex', flexDirection: 'column', alignItems: 'center', justifyContent: 'center', gap: '10px'}}>
+                  <div className="sre-loading-spinner" ></div>
+                  <p>Uploading files...</p>
+                  <p>Please wait while we upload the files...</p>
+                  <p>This may take a few seconds...</p>
+                  <p>Thank you for your patience...</p>
+              </div>
+             : 
+              <div>
+                  <div
+                    style={{
+                      fontSize: "1rem",
+                      color: "#4459F3",
+                    }}
+                  >
+                    📁
+                  </div>
+                  <h3
+                    style={{
+                      margin: "0 0 8px 0",
+                      color: "#333",
+                      fontSize: "14px",
+                    }}
+                  >
+                    Drop files here
+                  </h3>
+                  <p
+                    style={{
+                      margin: "0",
+                      color: "#666",
+                      fontSize: "12px",
+                    }}
+                  >
+                    Release to upload files
+                  </p>
+                </div>
+              }
+              </div>
+            </div>
+          )}
       <link
         rel="stylesheet"
         href="https://fonts.googleapis.com/css2?family=Material+Symbols+Outlined:opsz,wght,FILL,GRAD@20..48,100..700,0..1,-50..200"
@@ -1137,7 +1323,7 @@ export function CustomAnnotationTextEditor({
 
 // ---------------- styles ----------------
 const SRE_STYLES = (minH) => `
-.sre-root { width: 100%; }
+.sre-root { width: 100%; position: relative; }
 .sre-editor {
   min-height: ${minH}px;
   outline: none;
@@ -1148,6 +1334,18 @@ const SRE_STYLES = (minH) => `
   border-top: none;
   border-radius: 0 0 8px 8px;
 }
+  .sre-loading-spinner {
+    width: 20px;
+    height: 20px;
+    border: 2px solid #4459F3;
+    border-top: 2px solid #fff;
+    border-radius: 50%;
+    animation: spin 1s linear infinite;
+  }
+  @keyframes spin {
+    0% { transform: rotate(0deg); }
+    100% { transform: rotate(360deg); }
+  }
 .sre-toolbar {
   width: 100%;
   background: var(--themeSideMenu, #f7f7f9);
@@ -1233,6 +1431,10 @@ const SRE_STYLES = (minH) => `
 }
 .ProseMirror:focus {
   outline: none;
+}
+.sre-image {
+  max-width: 100%;
+  height: auto;
 }
 
 `;
