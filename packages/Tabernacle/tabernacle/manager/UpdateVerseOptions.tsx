@@ -12,7 +12,7 @@ if (verses) {
     for (const key of keys) {
       const item = {
         icon: <span class="material-symbols-outlined">camping</span>,
-        title: `Show ${GetFixedTitle(key)}`,
+        title: `Show ${thisBot.GetFixedTitle(key)}`,
         onClick: () => {
           thisBot.OnTabernacleSectionClick({ keys: [key] });
         },
@@ -38,11 +38,4 @@ if (verses) {
     const uniqueOptions = [...new Set(options)];
     globalThis.VerseContextMenuOptions[key] = uniqueOptions;
   }
-}
-
-function GetFixedTitle(key) {
-  return key
-    .split("-")
-    .map((word) => word.charAt(0).toUpperCase() + word.slice(1))
-    .join(" ");
 }
