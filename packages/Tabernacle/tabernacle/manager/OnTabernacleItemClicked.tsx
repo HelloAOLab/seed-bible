@@ -1,17 +1,31 @@
 const { key } = that;
 
-const verses = [];
-const bookId = thisBot.vars.currentBookId;
-const chapter = thisBot.vars.currentChapter;
+const versesInChapter = [];
+const versesInOtherChapters = [];
 
-const versesData = thisBot.tags.scriptureData?.[bookId]?.[chapter] ?? [];
-
-for (const verse in versesData) {
-  const keys = versesData[verse];
-  const isKeyMentionedInVerse = keys.some((currKey) => currKey === key);
-  if (isKeyMentionedInVerse) {
-    verses.push(verse);
+for (const bookId in thisBot.tags.scriptureData) {
+  const chapters = thisBot.tags.scriptureData[bookId];
+  for (const chapter in chapters) {
+    const verses = chapters[chapter];
+    for (const verse in verses) {
+      const keys = verses[verse];
+      if (keys.includes(key)) {
+        const path = { bookId, chapter, verse };
+        if (
+          bookId === thisBot.vars.currentBookId &&
+          Number(chapter) === Number(thisBot.vars.currentChapter)
+        ) {
+          versesInChapter.push(path);
+        } else versesInOtherChapters.push(path);
+      }
+    }
   }
 }
 
 thisBot.HandleTabernacleSectionInteraction({ keys: [key], type: "itemClick" });
+
+thisBot.ToggleContextMenuForPiece({
+  key,
+  versesInChapter,
+  versesInOtherChapters,
+});
