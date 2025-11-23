@@ -11,8 +11,7 @@ if (verses) {
     const items = [];
     for (const key of keys) {
       const item = {
-        icon: <span class="material-symbols-outlined">camping</span>,
-        title: `Show ${thisBot.GetFixedTitle(key)}`,
+        title: thisBot.GetFixedTitle(key),
         onClick: () => {
           thisBot.OnTabernacleSectionClick({ keys: [key] });
         },
