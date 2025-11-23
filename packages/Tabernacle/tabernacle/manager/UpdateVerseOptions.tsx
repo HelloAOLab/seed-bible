@@ -52,7 +52,7 @@ if (content) {
     onClick: thisBot.DisplayApp,
   };
   for (const verseNumber of content) {
-    const key = `${book}-${verseNumber}`;
+    const key = `${book}-${chapter}-${verseNumber}`;
     optionsConfig[key] = {
       icon: <span class="material-symbols-outlined">camping</span>,
       title: "Tabernacle",
