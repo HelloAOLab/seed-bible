@@ -7,3 +7,5 @@ thisBot.vars.currentBookId = bookId;
 thisBot.UpdateVerseOptions(that);
 
 if (thisBot.vars.appId) thisBot.UpdateTabernacleVisuals();
+
+thisBot.TryUpdatePieceContextMenu();

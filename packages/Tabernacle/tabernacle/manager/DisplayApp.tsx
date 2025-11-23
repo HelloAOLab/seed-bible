@@ -2,7 +2,8 @@ if (thisBot.vars.appId) {
   globalThis.RemoveFloatingApp(thisBot.vars.appId);
 } else {
   globalThis.defaultPortalName = thisBot.tags.dimension;
-  gridPortalBot.tags.portalCameraType = "perspective";
+  // gridPortalBot.tags.portalCameraType = "perspective";
+  gridPortalBot.tags.portalCameraType = "orthographic";
   const App = await thisBot.App();
   const id = globalThis.AddFloatingApp({
     App: <App />,
