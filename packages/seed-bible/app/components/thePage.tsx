@@ -518,6 +518,7 @@ function ThePage({
     // sync for later openings
     configBot.tags.book = data?.bookId;
     configBot.tags.chapter = data?.chapter;
+    os.syncConfigBotTagsToURL(['book','chapter']);
   }, [data]);
 
   useEffect(() => {
