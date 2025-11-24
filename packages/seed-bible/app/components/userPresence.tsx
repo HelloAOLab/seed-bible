@@ -28,17 +28,43 @@ export const colors = [
   "#F59E0B",
 ];
 
-function hashString(str) {
-  let h = 5381;
-  for (let i = 0; i < str.length; i++) h = ((h << 5) + h) ^ str.charCodeAt(i);
-  return h >>> 0;
+// Storage for used assignments
+const assignedVisuals = new Map();
+  if(!tags.iconPointer)
+ tags.iconPointer = 0;
+if(!tags.colorPointer)
+ tags.colorPointer = 0;
+
+function getNextIcon() {
+  const icon = icons[tags.iconPointer];
+  tags.iconPointer = (tags.iconPointer + 1) % icons.length;
+  return icon;
 }
 
-function computeVisual(remoteId) {
-  const h = hashString(String(remoteId));
-  const iconIndex = h % icons.length;
-  const colorIndex = Math.floor(h / icons.length) % colors.length;
-  return { iconIndex, colorIndex };
+function getNextColor() {
+  const color = colors[tags.colorPointer];
+  tags.colorPointer = (tags.colorPointer + 1) % colors.length;
+  return color;
+}
+
+function computeNonDuplicateVisual(remoteId) {
+  // If already assigned, return the stable assignment
+  if (assignedVisuals.has(remoteId)) {
+    return assignedVisuals.get(remoteId);
+  }
+
+  const icon = getNextIcon();
+  const color = getNextColor();
+
+  const data = {
+    iconIndex: icons.indexOf(icon),
+    colorIndex: colors.indexOf(color),
+    Icon: icon,
+    color,
+  };
+
+  assignedVisuals.set(remoteId, data);
+  return data;
 }
 
 function getOrSetVisualInTags(remoteId) {
@@ -46,22 +72,22 @@ function getOrSetVisualInTags(remoteId) {
     if (typeof tags !== "undefined") {
       if (!tags.userPresenceData) tags.userPresenceData = {};
       if (!tags.userPresenceData.visuals) tags.userPresenceData.visuals = {};
+
       if (!tags.userPresenceData.visuals[remoteId]) {
-        tags.userPresenceData.visuals[remoteId] = computeVisual(remoteId);
+        tags.userPresenceData.visuals[remoteId] = computeNonDuplicateVisual(remoteId);
       }
-      const data = tags.userPresenceData.visuals[remoteId];
-      return {
-        ...data,
-        color: colors[data.colorIndex],
-        Icon: icons[data.iconIndex],
-      };
+
+      return tags.userPresenceData.visuals[remoteId];
     }
   } catch (_) {
     return { color: null, icon: null };
   }
-  return computeVisual(remoteId);
+
+  return computeNonDuplicateVisual(remoteId);
 }
+
 globalThis.GetOrSetVisualInTags = getOrSetVisualInTags;
+
 
 async function getSelfIdSafe() {
   try {
