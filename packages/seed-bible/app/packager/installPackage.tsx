@@ -169,7 +169,7 @@ await(async function mainInstaller(that) {
         icon,
         label,
         hasToggle: true,
-        active:  active:
+        active:
         typeof toolbarConfig?.active === "boolean"
           ? toolbarConfig.active
           : true,
