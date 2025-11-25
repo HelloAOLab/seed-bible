@@ -1153,21 +1153,22 @@ function ThePage({
   );
 
   const highlightVerse = useCallback(
-    (verseNumbers, color) => {
+    (verseNumbers, color, scroll = true) => {
       if (!tab?.id) return;
       EmitData("highlight", { verseNumbers, color });
 
       const verseId = `v-${
-        typeof verseNumbers === "object"
+        Array.isArray(verseNumbers)
           ? verseNumbers[verseNumbers.length - 1]
           : verseNumbers
       }`;
 
-      document.getElementById(verseId).scrollIntoView({
-        behavior: "smooth",
-        block: "center",
-        inline: "nearest",
-      });
+      if (scroll)
+        document.getElementById(verseId)?.scrollIntoView({
+          behavior: "smooth",
+          block: "center",
+          inline: "nearest",
+        });
 
       const numbers = Array.isArray(verseNumbers)
         ? verseNumbers
@@ -1175,8 +1176,6 @@ function ThePage({
 
       setHighlighted((prev) => {
         const newHighlighted = { ...prev };
-
-        const allHighlighted = numbers.every((vn) => newHighlighted[vn]);
         const groupId = Date.now();
 
         numbers.forEach((vn) => {
@@ -1185,13 +1184,11 @@ function ThePage({
             book: data?.book,
             chapter: data?.chapter,
             group: groupId,
-            color,
+            color: color || wordHighlightsBC,
           };
         });
 
-        if (!globalThis.tabHighlights) {
-          globalThis.tabHighlights = {};
-        }
+        if (!globalThis.tabHighlights) globalThis.tabHighlights = {};
         globalThis.tabHighlights[tab?.id] = newHighlighted;
 
         return newHighlighted;
