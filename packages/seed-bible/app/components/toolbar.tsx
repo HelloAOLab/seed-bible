@@ -183,9 +183,9 @@ export function Toolbar() {
                         clearTimeout(holdTimeoutRef.current);
                         if (!hasHeldRef.current && tool?.onClick) {
                           tool.onClick();
-                          EmitData("appClick", {
-                            name: `${tool?.pkgName}_package`,
-                          });
+                          // EmitData("appClick", {
+                          //   name: `${tool?.pkgName}_package`,
+                          // });
                         }
                         if (isDragging) {
                           setIsDragging(false);
