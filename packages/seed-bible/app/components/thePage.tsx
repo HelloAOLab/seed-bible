@@ -380,6 +380,7 @@ function ThePage({
     }
 
     setData(bible.data);
+    SetShowToolbar(true);
     whisper(getBot("system", "introduction.searchBar"), "initialize");
   }
   useEffect(() => {

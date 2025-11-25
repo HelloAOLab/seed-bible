@@ -38,7 +38,8 @@ export function Toolbar() {
   } = useTabsContext();
 
   // === keep original default-toolbar logic ===
-  const [showToolbar, setShowToolbar] = useState(true);
+  const [showToolbar, setShowToolbar] = useState(false);
+  globalThis.SetShowToolbar = setShowToolbar;
   // useEffect(() => {
   //   setShowToolbar(!openOnMobile);
   // }, [openOnMobile]);
