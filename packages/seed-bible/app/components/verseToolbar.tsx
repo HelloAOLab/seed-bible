@@ -508,10 +508,12 @@ function getMenuActions(that) {
   if (that.verseNumber) {
     for (const verseNumber of that.verseNumber) {
       if (
-        globalThis?.VerseContextMenuOptions?.[`${that.book}-${verseNumber}`]
+        globalThis?.VerseContextMenuOptions?.[
+          `${that.book}-${that.chapter}-${verseNumber}`
+        ]
       ) {
         globalThis.VerseContextMenuOptions[
-          `${that.book}-${verseNumber}`
+          `${that.book}-${that.chapter}-${verseNumber}`
         ].forEach((item) => {
           if (verseContextMenuOptions[item.title]) {
             verseContextMenuOptions[item.title] = {

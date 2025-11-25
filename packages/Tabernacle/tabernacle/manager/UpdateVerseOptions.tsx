@@ -18,7 +18,7 @@ if (verses) {
       };
       items.push(item);
     }
-    const key = `${book}-${verse}`;
+    const key = `${book}-${chapter}-${verse}`;
     optionsConfig[key] = {
       icon: <span class="material-symbols-outlined">camping</span>,
       title: "Tabernacle",
