@@ -11,7 +11,7 @@ const ReferenceApp = ({ reference }) => {
   const populateReferenceData = useCallback(async () => {
     setRdLoading(true);
 
-    let referenceBot = getBot("system", "references.manager");
+    const referenceBot = getBot("system", "references.manager");
 
     const referenceArrayKey = `${reference.book}.${reference.chapter}.${reference.verse}`;
 
@@ -35,9 +35,9 @@ const ReferenceApp = ({ reference }) => {
 
       const referenceReqs = await Promise.all(referenceDataPromises);
 
-      let tempReferenceData = {};
+      const tempReferenceData = {};
 
-      let subReferences = [];
+      const subReferences = [];
 
       referenceReqs.forEach((res, index) => {
         if (res.status !== 200) {
@@ -45,15 +45,15 @@ const ReferenceApp = ({ reference }) => {
         }
         const contentArray = [...res.data.chapter.content];
         let content = "";
-        let reference = currentReference.references[index];
+        const reference = currentReference.references[index];
         const referenceKey = `${reference.book}.${reference.chapter}.${reference.verse}`;
-        let start = reference.verse;
-        let end = reference?.endVerse || reference.verse;
+        const start = reference.verse;
+        const end = reference?.endVerse || reference.verse;
         if (start <= end) {
           for (let i = start; i <= end; i++) {
             for (let j = 0; j < contentArray.length; j++) {
               if (contentArray[j]?.number == i) {
-                let contentString = contentArray[j].content
+                const contentString = contentArray[j].content
                   .map((data) => {
                     if (typeof data === "string") {
                       return data;
@@ -80,10 +80,10 @@ const ReferenceApp = ({ reference }) => {
         );
       });
 
-      let subReferencesRes = await Promise.all(subReferences);
+      const subReferencesRes = await Promise.all(subReferences);
 
       subReferencesRes.forEach((res, index) => {
-        let reference = currentReference.references[index];
+        const reference = currentReference.references[index];
         const referenceKey = `${reference.book}.${reference.chapter}.${reference.verse}`;
         if (!res) {
           return;
@@ -141,12 +141,12 @@ const ReferenceApp = ({ reference }) => {
       minWidth: "30rem",
     });
     await os.sleep(2000);
-    let start = reference.verse;
-    let end = reference?.endVerse || reference.verse;
+    const start = reference.verse;
+    const end = reference?.endVerse || reference.verse;
     if (start <= end) {
       for (let i = start; i <= end; i++) {
         console.log(`highlighting verse ${i}`);
-        HighlightVerse(i);
+        HighlightVerse(i, "#ffeb3b");
       }
     }
   };

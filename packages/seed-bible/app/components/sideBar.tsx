@@ -331,6 +331,9 @@ function Tab({
   collapsed,
   onlineUsers,
   index,
+  setSidebarWidth,
+  setCollapsed,
+
   sharedTab,
 }) {
   const { openPopupSettings, closePopupSettings, userURL } =
@@ -426,6 +429,8 @@ function Tab({
             setIsDragging={setIsDragging}
             setElement={setElement}
             collapsed={collapsed}
+            setSidebarWidth={setSidebarWidth}
+            setCollapsed={setCollapsed}
           />
         ),
         data: el,
@@ -442,6 +447,14 @@ function Tab({
   }, [selectedTabs]);
 
   const handleTabClick = () => {
+
+    if(globalThis.IsMobileNow()){
+      setSidebarWidth(0);
+                      // setCollapsed(true);
+                      // setMultiSelectMode(false);
+      
+    }
+
     if (activeTab === el.id) return;
 
     if (el.sharedTab) {
@@ -722,6 +735,8 @@ function Folder({ folder, onlineUsers, collapsed }) {
               setIsDragging={setIsDragging}
               setElement={setElement}
               collapsed={collapsed}
+                          setSidebarWidth={setSidebarWidth}
+            setCollapsed={setCollapsed}
             />
           ))}
           {
@@ -1370,6 +1385,8 @@ function SideBar() {
                 collapsed={collapsed}
                 editMode={editMode}
                 sharedTab={true}
+                            setSidebarWidth={setSidebarWidth}
+            setCollapsed={setCollapsed}
               />
             )}
             <div className="tabsContainer">
@@ -1568,6 +1585,8 @@ function SideBar() {
                 setElement={setElement}
                 collapsed={collapsed}
                 editMode={editMode}
+                            setSidebarWidth={setSidebarWidth}
+            setCollapsed={setCollapsed}
               />
             ))}
 

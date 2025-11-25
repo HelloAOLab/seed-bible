@@ -46,22 +46,46 @@ function getOrSetVisualInTags(remoteId) {
     if (typeof tags !== "undefined") {
       if (!tags.userPresenceData) tags.userPresenceData = {};
       if (!tags.userPresenceData.visuals) tags.userPresenceData.visuals = {};
+
+      // If not assigned yet → assign a unique pair
       if (!tags.userPresenceData.visuals[remoteId]) {
-        tags.userPresenceData.visuals[remoteId] = computeVisual(remoteId);
+        let visual = computeVisual(remoteId);
+        const used = new Set(
+          Object.values(tags.userPresenceData.visuals)
+            .map(v => `${v.iconIndex}-${v.colorIndex}`)
+        );
+
+        let attempts = 0;
+        const totalCombos = icons.length * colors.length;
+
+        // ensure uniqueness by cycling until an unused combo is found
+        while (
+          used.has(`${visual.iconIndex}-${visual.colorIndex}`) &&
+          attempts < totalCombos
+        ) {
+          // increment iconIndex first, then overflow into colorIndex
+          visual.iconIndex = (visual.iconIndex + 1) % icons.length;
+          if (visual.iconIndex === 0) {
+            visual.colorIndex = (visual.colorIndex + 1) % colors.length;
+          }
+          attempts++;
+        }
+
+        tags.userPresenceData.visuals[remoteId] = visual;
       }
+
       const data = tags.userPresenceData.visuals[remoteId];
-      return {
-        ...data,
-        color: colors[data.colorIndex],
-        Icon: icons[data.iconIndex],
-      };
+      return { ...data, color: colors[data.colorIndex], Icon: icons[data.iconIndex] };
     }
   } catch (_) {
     return { color: null, icon: null };
   }
   return computeVisual(remoteId);
 }
+
 globalThis.GetOrSetVisualInTags = getOrSetVisualInTags;
+
+
 
 async function getSelfIdSafe() {
   try {

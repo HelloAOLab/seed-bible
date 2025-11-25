@@ -113,7 +113,7 @@ function ThePage({
 
   const loadTranslationFromUrl = async () => {
     console.log(configBot.tags.translationId, "translation id");
-    let translationId =
+    const translationId =
       configBot.tags.translationId ||
       configBot.tags.translation ||
       tab.data.translation;
@@ -124,12 +124,12 @@ function ThePage({
     let firstChapterApiLink;
     let books = [];
     if (translationId) {
-      let available_translations_req = await web.get(
+      const available_translations_req = await web.get(
         "https://bible.helloao.org/api/available_translations.json"
       );
       let allTranslations = [];
-      let translations = {};
-      let defaultTranslations = [
+      const translations = {};
+      const defaultTranslations = [
         "english",
         "spanish",
         "arabic",
@@ -147,7 +147,7 @@ function ThePage({
         }
       );
 
-      let trValue = {
+      const trValue = {
         pass: false,
         value: null,
       };
@@ -161,14 +161,14 @@ function ThePage({
           }
         });
 
-        let urlId = translationId.includes("https://");
+        const urlId = translationId.includes("https://");
 
         if (trValue.pass && !urlId) {
-          let bookData = await web.get(
+          const bookData = await web.get(
             `https://bible.helloao.org/api/${trValue.value.id}/books.json`
           );
           books = bookData.data.books;
-          let book0 = bookData.data.books[0];
+          const book0 = bookData.data.books[0];
           firstBookData = book0;
           setTagMask(thisBot, "selectedTranslation", trValue.value, "local");
           setTagMask(thisBot, "booksData", bookData.data.books, "local");
@@ -176,7 +176,7 @@ function ThePage({
           bookTranslationId = trValue.value.id;
           firstChapterApiLink = book0.firstChapterApiLink;
         } else {
-          let result = await web.get(translationId);
+          const result = await web.get(translationId);
           if (result.status === 200) {
             const url = new URL(translationId);
             let newTranslations = result.data.translations;
@@ -188,7 +188,7 @@ function ThePage({
                 ...translationData,
               };
             }
-            let defaultTranslation = newTranslations[0];
+            const defaultTranslation = newTranslations[0];
             newTranslations = newTranslations.map((trans) => {
               return {
                 languageEnglishName: trans.languageEnglishName,
@@ -199,26 +199,26 @@ function ThePage({
               };
             });
             allTranslations = [...allTranslations, ...newTranslations];
-            for (let translation of newTranslations) {
-              let englishName = translation.languageEnglishName.toLowerCase();
+            for (const translation of newTranslations) {
+              const englishName = translation.languageEnglishName.toLowerCase();
               if (!defaultTranslations.includes(englishName)) {
                 defaultTranslations.push(englishName);
               }
             }
-            let translation = {
+            const translation = {
               languageEnglishName: defaultTranslation.languageEnglishName,
               id: defaultTranslation.id,
               listOfBooksApiLink: `${url.origin}${defaultTranslation.listOfBooksApiLink}`,
               origin: url.origin,
               shortName: defaultTranslation.shortName,
             };
-            let englishName = translation.languageEnglishName.toLowerCase();
-            let shortName = translation.shortName.toLowerCase();
+            const englishName = translation.languageEnglishName.toLowerCase();
+            const shortName = translation.shortName.toLowerCase();
 
-            let bookData = await web.get(translation.listOfBooksApiLink);
+            const bookData = await web.get(translation.listOfBooksApiLink);
 
             books = bookData.data.books;
-            let book0 = bookData.data.books[0];
+            const book0 = bookData.data.books[0];
             firstBookData = book0;
             setTagMask(thisBot, "selectedTranslation", translation, "local");
             setTagMask(thisBot, "booksData", bookData.data.books, "local");
@@ -235,10 +235,10 @@ function ThePage({
           }
         }
         allTranslations.forEach((translation) => {
-          let englishName =
+          const englishName =
             translation?.languageEnglishName?.toLowerCase() ||
             translation?.englishName?.toLowerCase();
-          let shortName = translation.shortName.toLowerCase();
+          const shortName = translation.shortName.toLowerCase();
           if (translations[englishName]) {
             if (!translations[englishName][shortName]) {
               translations[englishName][shortName] = translation;
@@ -292,7 +292,7 @@ function ThePage({
     console.log(data, tab, "the data loaded");
 
     globalThis.refreshScrollers && globalThis.refreshScrollers();
-    let { firstBookData, bookTranslationId, baseUrl, books } =
+    const { firstBookData, bookTranslationId, baseUrl, books } =
       await loadTranslationFromUrl();
 
     if (!configBot.tags.defaultChecked) {
@@ -315,7 +315,7 @@ function ThePage({
             let chapterNo;
             if (Number(configBot.tags.chapter) < bookData.numberOfChapters)
               chapterNo = configBot.tags.chapter;
-            let chapterUrl = chapterNo
+            const chapterUrl = chapterNo
               ? bookData.firstChapterApiLink.replace(
                   "1.json",
                   `${chapterNo}.json`
@@ -341,7 +341,7 @@ function ThePage({
           let chapterNo;
           if (Number(configBot.tags.chapter) < bookData.numberOfChapters)
             chapterNo = configBot.tags.chapter;
-          let chapterUrl = chapterNo
+          const chapterUrl = chapterNo
             ? bookData.firstChapterApiLink.replace(
                 "1.json",
                 `${chapterNo}.json`
@@ -370,7 +370,7 @@ function ThePage({
       configBot.tags.defaultChecked = true;
     } else {
       if (masks?.allTranslations) {
-        for (let translation of masks.allTranslations) {
+        for (const translation of masks.allTranslations) {
           if (translation.id === tab.data.translation) {
             setTagMask(thisBot, "selectedTranslation", translation, "local");
             break;
@@ -380,6 +380,7 @@ function ThePage({
     }
 
     setData(bible.data);
+    SetShowToolbar(true);
     whisper(getBot("system", "introduction.searchBar"), "initialize");
   }
   useEffect(() => {
@@ -459,65 +460,57 @@ function ThePage({
     EmitData("book", payload);
   }
 
-  // ----------------------
-  // 🔥 REPLACE YOUR EFFECT WITH THIS
-  // ----------------------
+
   useEffect(() => {
-    if (!data) return;
-
-    hanldNavFunctions();
-    SetShowCommands(false);
-    updateTab(tab?.id, data);
-
-    // ---------- HOST ----------
-    if (role === "host") {
-      // Update shared tab if configured
-      if (config?.sharedTab) {
-        updateTab(masks["sharedTab"], data);
+    if (data) {
+      //  EmitData("book", { ...data });
+      hanldNavFunctions();
+      SetShowCommands(false);
+      updateTab(tab?.id, data);
+      if (config && !config?.sharedTab && role === 'host' && masks['sharedTab'] !== tab.id) {
+        updateTab(tab?.id, data);
+        updateTab(masks['sharedTab'], data);
       }
+      if (role === 'host')
+        EmitData("book", { ...data });
+      if (panelId && tab) {
+        os.log("recoreded", panelId, {
+          ...tab,
+          data: { ...tab.data, ...data },
+        });
+        globalThis.PanelTabsMap[panelId] = {
+          ...tab,
+          data: { ...tab.data, ...data },
+        };
+      }
+      os.log("bookdata", data);
+      if (data.translation === "ARBNAV" || data.translation === "arb_vdv") {
+        setDirection("rtl");
+      } else {
+        setDirection(null);
+      }
+      if (masks['sharedTab'] === tab.id)
+        EmitData("book", { ...data });
+      // const emitter = getBot("system", "app.emitter");
+      // sendRemoteData(emitter.masks.otherRemotes, "updateSharingData", {
+      //   id: tab?.id,
+      //   bookId: data?.bookId,
+      //   book: data?.book,
+      //   chapter: data?.chapter,
+      // });
+      const emitter = getBot("system", "app.emitter");
 
-      // Emit navigation (with debounce + loop guard)
-      safeEmitBook({ ...data });
-    }
-
-    // ---------- FOLLOWER ----------
-    else if (role === "follower" && !config?.onlyHostNav) {
-      // Emit follower navigation (debounced + guarded)
-      safeEmitBook({ ...data, skip: true });
-    }
-
-    // ---------- PANEL RECORDING ----------
-    if (panelId && tab) {
-      os.log("recorded", panelId, {
-        ...tab,
-        data: { ...tab.data, ...data },
+      sendRemoteData(emitter.masks.otherRemotes, "updateSharingData", {
+        id: tab?.id,
+        bookId: data?.bookId,
+        book: data?.book,
+        chapter: data?.chapter,
       });
-
-      globalThis.PanelTabsMap[panelId] = {
-        ...tab,
-        data: { ...tab.data, ...data },
-      };
+    
+      configBot.tags.book = data?.bookId;
+      configBot.tags.chapter = data?.chapter;
+      os.syncConfigBotTagsToURL(['book','chapter']);
     }
-
-    // ---------- RTL / LTR MODE ----------
-    if (data.translation === "ARBNAV" || data.translation === "arb_vdv") {
-      setDirection("rtl");
-    } else {
-      setDirection(null);
-    }
-
-    // ---------- SHARING META ----------
-    const emitter = getBot("system", "app.emitter");
-    sendRemoteData(emitter.masks.otherRemotes, "updateSharingData", {
-      id: tab?.id,
-      bookId: data?.bookId,
-      book: data?.book,
-      chapter: data?.chapter,
-    });
-
-    // sync for later openings
-    configBot.tags.book = data?.bookId;
-    configBot.tags.chapter = data?.chapter;
   }, [data]);
 
   useEffect(() => {
@@ -1131,10 +1124,13 @@ function ThePage({
         if (!globalThis.tabHighlights) globalThis.tabHighlights = {};
         globalThis.tabHighlights[tab?.id] = newHighlighted;
 
-        if (fadeIn || tags?.sessions[configBot.id]?.config.highlightDuration) {
+        if (
+          fadeIn ||
+          tags?.sessions?.[configBot.id]?.config.highlightDuration
+        ) {
           let duration = 0;
-          if (tags?.sessions[configBot.id]?.config.highlightDuration)
-            fadeIn = tags?.sessions[configBot.id]?.config.highlightDuration;
+          if (tags?.sessions?.[configBot.id]?.config.highlightDuration)
+            fadeIn = tags?.sessions?.[configBot.id]?.config.highlightDuration;
           if (fadeIn === 4) {
             duration = 0; // Never remove highlight
           } else if (typeof fadeIn === "number") {
@@ -1160,21 +1156,22 @@ function ThePage({
   );
 
   const highlightVerse = useCallback(
-    (verseNumbers, color) => {
+    (verseNumbers, color, scroll = true) => {
       if (!tab?.id) return;
       EmitData("highlight", { verseNumbers, color });
 
       const verseId = `v-${
-        typeof verseNumbers === "object"
+        Array.isArray(verseNumbers)
           ? verseNumbers[verseNumbers.length - 1]
           : verseNumbers
       }`;
 
-      document.getElementById(verseId).scrollIntoView({
-        behavior: "smooth",
-        block: "center",
-        inline: "nearest",
-      });
+      if (scroll)
+        document.getElementById(verseId)?.scrollIntoView({
+          behavior: "smooth",
+          block: "center",
+          inline: "nearest",
+        });
 
       const numbers = Array.isArray(verseNumbers)
         ? verseNumbers
@@ -1182,8 +1179,6 @@ function ThePage({
 
       setHighlighted((prev) => {
         const newHighlighted = { ...prev };
-
-        const allHighlighted = numbers.every((vn) => newHighlighted[vn]);
         const groupId = Date.now();
 
         numbers.forEach((vn) => {
@@ -1192,13 +1187,11 @@ function ThePage({
             book: data?.book,
             chapter: data?.chapter,
             group: groupId,
-            color,
+            color: color || wordHighlightsBC,
           };
         });
 
-        if (!globalThis.tabHighlights) {
-          globalThis.tabHighlights = {};
-        }
+        if (!globalThis.tabHighlights) globalThis.tabHighlights = {};
         globalThis.tabHighlights[tab?.id] = newHighlighted;
 
         return newHighlighted;
@@ -2062,7 +2055,7 @@ function Section({
         ];
         return wordParts.map((part, i) => {
           if (part.isHighlighted) {
-            let attributes = part.highlightConfig.createAttributes(
+            const attributes = part.highlightConfig.createAttributes(
               book,
               chapter,
               part
