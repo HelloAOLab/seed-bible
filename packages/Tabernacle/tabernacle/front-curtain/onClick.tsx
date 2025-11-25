@@ -1,0 +1,1 @@
+shout("OnTabernacleItemClicked", { key: thisBot.tags.key });
