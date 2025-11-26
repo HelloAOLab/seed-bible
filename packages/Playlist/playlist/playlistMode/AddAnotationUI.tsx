@@ -27,6 +27,8 @@ const AudioPlayer = await thisBot.AudioPlayer();
 const RenderHTMLContent = await thisBot.RenderHTMLContent();
 const TogglePlaylistHeight = await thisBot.TogglePlaylistHeight();
 
+import { CustomAnnotationTextEditor } from "playlist.playlistMode.CustomAnnotationTextEditor";
+
 const DEV_ENV =
   configBot.tags.pattern === "SeedBibleDev" || !configBot.tags.pattern;
 
@@ -2144,12 +2146,9 @@ const AddAnotationUI = ({
                 selectedAnnotation === ele.id &&
                 !embedding && (
                   <div style={{ padding: "1rem" }}>
-                    <AttachLink
-                      isPlaylist
-                      onAddTags={onAddTags}
-                      isTags
-                      attachLink={onEmbedItems}
-                      massAdd={massAdd}
+                    <CustomAnnotationTextEditor
+                      massAdd={onMassAdd}
+                      attachLink={attachLink}
                     />
                   </div>
                 )}
@@ -2161,12 +2160,9 @@ const AddAnotationUI = ({
           (!singleMode || editData?.address) &&
           !draggedItemID &&
           !embedding && (
-            <AttachLink
-              isTags={editData}
-              isPlaylist
-              onAddTags={onAddTags}
-              attachLink={attachLink}
-              massAdd={onMassAdd}
+            <CustomAnnotationTextEditor
+                massAdd={onMassAdd}
+                attachLink={attachLink}
             />
           )}
 

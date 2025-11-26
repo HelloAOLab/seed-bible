@@ -549,11 +549,11 @@ export function CustomAnnotationTextEditor({
       tr.addMark(0, doc.content.size, mt.create({ lineHeight: lh }));
       if (tr.docChanged) view.dispatch(tr);
     },
-    insertImageDataURL: (dataURL) => {
-      const ed = editorObjRef.current;
-      if (!ed) return;
-      ed.chain().focus().setImage({ src: dataURL }).run();
-    },
+    // insertImageDataURL: (dataURL) => {
+    //   const ed = editorObjRef.current;
+    //   if (!ed) return;
+    //   ed.chain().focus().setImage({ src: dataURL }).run();
+    // },
     insertLink: (href) => {
       const ed = editorObjRef.current;
       if (!ed) return;

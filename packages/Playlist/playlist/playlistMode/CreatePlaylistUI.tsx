@@ -4,7 +4,6 @@
 // number -> Index of chpater / verse / book
 
 const { useState, useLayoutEffect, useRef, useMemo } = os.appHooks;
-import { CustomAnnotationTextEditor } from "playlist.playlistMode.CustomAnnotationTextEditor";
 const { Input, Modal, Button, ButtonsCover, Checkbox, Tooltip, Select } =
   Components;
 
@@ -1667,8 +1666,8 @@ const CreatePlaylistUI = ({
             )}
 
             {!itemSelected && !regenrateUI && (
-              <CustomAnnotationTextEditor
-                isDate={readingPlan}
+              <AttachLink
+                isDate
                 onDateClick={() => {
                   setRegenrateUI(false);
                   attachDate();
