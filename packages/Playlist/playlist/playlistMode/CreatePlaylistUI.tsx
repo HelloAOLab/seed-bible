@@ -1041,6 +1041,12 @@ const CreatePlaylistUI = ({
               <div
                 className="more-menu-items"
                 onClick={() => {
+                  if (!authBot?.id) {
+                    return ShowNotification({
+                      message: "Login to user this feature",
+                      severity: "error",
+                    });
+                  }
                   setMode(PlaylistModeTypes.annotations);
                   setShowPlaylistSettings(false);
                 }}

@@ -677,17 +677,17 @@ const Playlist = () => {
 
       {createOptions &&  
             <>
-              <div className="backdrop" onClick={() => setShowMoreOptions(false)} />
+              <div className="backdrop" onClick={() => setCreateOptions(false)} />
                 <div
                     onClick={() => setCreateOptions(false)}
                     style={{
                       ...showPlaylistPosition.current,
-                      width: "250px",
-                      maxHeight: "400px",
+                      width: "210px",
+                      maxHeight: "105px",
                       left: "none",
-                      right: "-14rem",
-                      padding: "1rem",
-                      top: "5rem",
+                      right: "-12rem",
+                      padding: "0.5rem",
+                      top: "3rem",
                     }}
                     className="overlay linked-item-custom"
                   >
@@ -706,7 +706,7 @@ const Playlist = () => {
                     >
                       <div
                         className="align-center"
-                        style={{gap: '1rem'}}
+                        style={{gap: '0.5rem'}}
                       >
                         <span
                           style={{ fontSize: "20px", color: "white" }}
@@ -714,7 +714,7 @@ const Playlist = () => {
                         >
                           playlist_play
                         </span>
-                        <span>
+                        <span style={{fontFamily: `"Satoshi", system-ui, sans-serif`}}>
                           New playlist
                         </span>
                       </div>
@@ -734,7 +734,7 @@ const Playlist = () => {
                     >
                       <div
                           className="align-center"
-                          style={{gap: '1rem'}}
+                          style={{gap: '0.5rem'}}
                         >
                           <span
                             style={{ fontSize: "20px", color: "white" }}
@@ -742,7 +742,7 @@ const Playlist = () => {
                           >
                             draft
                           </span>
-                          <span>
+                          <span style={{fontFamily: `"Satoshi", system-ui, sans-serif`}}>
                             New annotation
                         </span>
                       </div>
