@@ -1,8 +1,12 @@
+import { useReadingHistoryContext } from "scriptureMap2D.main.ReadingHistoryContext";
+
 const { useRef, useState, useLayoutEffect, useMemo } = os.appHooks;
 
 export const ReadingHistoryTooltipContent = ({ userId, fixedContent }) => {
+  const { myAuthBotId } = useReadingHistoryContext();
+
   const { userName, backgroundColor, color } = useMemo(() => {
-    const isMe = userId === configBot.id;
+    const isMe = userId === myAuthBotId;
     const userName = isMe ? "You" : "Guest";
     const backgroundColor = isMe
       ? BibleVizUtils.Data.tags.myUserColor

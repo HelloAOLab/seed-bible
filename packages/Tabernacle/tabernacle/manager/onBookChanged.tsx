@@ -1,8 +1,11 @@
-const { book, chapter } = that;
+const { book, bookId, chapter } = that;
 
 thisBot.vars.currentBook = book;
 thisBot.vars.currentChapter = chapter;
+thisBot.vars.currentBookId = bookId;
 
-thisBot.UpdateHighlightedWords(that);
+thisBot.UpdateVerseOptions(that);
 
-if(thisBot.vars.appId) thisBot.UpdateTabernacleVisuals()
+if (thisBot.vars.appId) thisBot.UpdateTabernacleVisuals();
+
+thisBot.TryUpdatePieceContextMenu();

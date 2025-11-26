@@ -1,0 +1,3017 @@
+[
+    {
+        "name": "Hebrew",
+        "layers": [
+            [
+                {
+                    "name": "Genesis",
+                    "author": "Moses",
+                    "dateWrote": "(1445-1405 BC)",
+                    "chapterWidth": 5,
+                    "chapterHeight": 10,
+                    "chapters": 50,
+                    "start": 0,
+                    "height": 5,
+                    "group": 0
+                },
+                {
+                    "name": "Exodus",
+                    "author": "Moses",
+                    "dateWrote": "(1445-1405 BC)",
+                    "chapterWidth": 5,
+                    "chapterHeight": 8,
+                    "chapters": 40,
+                    "start": 0,
+                    "group": 0
+                },
+                {
+                    "name": "Leviticus",
+                    "author": "Moses",
+                    "dateWrote": "(1445-1405 BC)",
+                    "chapterWidth": 5,
+                    "chapterHeight": 6,
+                    "chapters": 27,
+                    "start": 0,
+                    "group": 0
+                },
+                {
+                    "name": "Numbers",
+                    "author": "Moses",
+                    "dateWrote": "(1445-1405 BC)",
+                    "chapterWidth": 5,
+                    "chapterHeight": 8,
+                    "chapters": 36,
+                    "start": 0,
+                    "group": 0
+                },
+                {
+                    "name": "Deuteronomy",
+                    "author": "Moses",
+                    "dateWrote": "(1445-1405 BC)",
+                    "chapterWidth": 5,
+                    "chapterHeight": 7,
+                    "chapters": 34,
+                    "start": 0,
+                    "group": 0
+                },
+                {
+                    "name": "Joshua",
+                    "author": "Joshua",
+                    "dateWrote": "(1405-1385 BC)",
+                    "chapterWidth": 5,
+                    "chapterHeight": 5,
+                    "chapters": 24,
+                    "start": 0,
+                    "group": 1
+                },
+                {
+                    "name": "Judges",
+                    "author": "Samuel",
+                    "dateWrote": "(1370-1050 BC)",
+                    "chapterWidth": 5,
+                    "chapterHeight": 5,
+                    "chapters": 21,
+                    "start": 0,
+                    "group": 1
+                }
+            ],
+            [
+                {
+                    "name": "1 Samuel",
+                    "author": "Samuel, Gad, and Nathan",
+                    "dateWrote": "(930-722 BC)",
+                    "chapterWidth": 5,
+                    "chapterHeight": 7,
+                    "apiName": "1_Samuel",
+                    "chapters": 31,
+                    "start": 0,
+                    "group": 1
+                },
+                {
+                    "name": "2 Samuel",
+                    "author": "Samuel, Gad, and Nathan",
+                    "dateWrote": "(930-722 BC)",
+                    "chapterWidth": 5,
+                    "chapterHeight": 5,
+                    "apiName": "2_Samuel",
+                    "chapters": 24,
+                    "start": 0,
+                    "group": 1
+                },
+                {
+                    "name": "1 Kings",
+                    "author": "Jeremiah",
+                    "dateWrote": "(560-538 BC)",
+                    "chapterWidth": 5,
+                    "chapterHeight": 5,
+                    "apiName": "1_Kings",
+                    "chapters": 22,
+                    "start": 0,
+                    "group": 1
+                },
+                {
+                    "name": "2 Kings",
+                    "author": "Jeremiah",
+                    "dateWrote": "(560-538 BC)",
+                    "chapterWidth": 5,
+                    "chapterHeight": 5,
+                    "apiName": "2_Kings",
+                    "chapters": 25,
+                    "start": 0,
+                    "group": 1
+                },
+                {
+                    "name": "Isaiah",
+                    "author": "Isaiah",
+                    "dateWrote": "(740-680 BC)",
+                    "chapterWidth": 5,
+                    "chapterHeight": 14,
+                    "chapters": 66,
+                    "start": 0,
+                    "group": 1
+                },
+                {
+                    "name": "Jeremiah",
+                    "author": "Jeremiah",
+                    "dateWrote": "(627-586 BC)",
+                    "chapterWidth": 5,
+                    "chapterHeight": 11,
+                    "chapters": 52,
+                    "start": 0,
+                    "group": 1
+                },
+                {
+                    "name": "Ezekiel",
+                    "author": "Ezekiel",
+                    "dateWrote": "(593-571 BC)",
+                    "chapterWidth": 5,
+                    "chapterHeight": 10,
+                    "chapters": 48,
+                    "start": 0,
+                    "group": 1
+                }
+            ],
+            [
+                {
+                    "name": "Hosea",
+                    "author": "Hosea",
+                    "dateWrote": "(755-715 BC)",
+                    "chapterWidth": 5,
+                    "chapterHeight": 3,
+                    "chapters": 14,
+                    "start": 0,
+                    "height": 22,
+                    "group": 1
+                },
+                {
+                    "name": "Joel",
+                    "author": "Joel",
+                    "dateWrote": "(835-796 BC)",
+                    "chapterWidth": 3,
+                    "chapterHeight": 1,
+                    "chapters": 3,
+                    "start": 0,
+                    "group": 1
+                },
+                {
+                    "name": "Amos",
+                    "author": "Amos",
+                    "dateWrote": "(760-750 BC)",
+                    "chapterWidth": 5,
+                    "chapterHeight": 2,
+                    "chapters": 9,
+                    "start": 0,
+                    "group": 1
+                },
+                {
+                    "name": "Obadiah",
+                    "author": "Obadiah",
+                    "dateWrote": "(586 BC)",
+                    "chapterWidth": 1,
+                    "chapterHeight": 1,
+                    "chapters": 1,
+                    "start": 0,
+                    "group": 1
+                },
+                {
+                    "name": "Jonah",
+                    "author": "Jonah",
+                    "dateWrote": "(785-760 BC)",
+                    "chapterWidth": 4,
+                    "chapterHeight": 1,
+                    "chapters": 4,
+                    "start": 0,
+                    "group": 1
+                },
+                {
+                    "name": "Micah",
+                    "author": "Micah",
+                    "dateWrote": "(735-700 BC)",
+                    "chapterWidth": 5,
+                    "chapterHeight": 2,
+                    "chapters": 7,
+                    "start": 0,
+                    "group": 1
+                },
+                {
+                    "name": "Nahum",
+                    "author": "Nahum",
+                    "dateWrote": "(660-630 BC)",
+                    "chapterWidth": 3,
+                    "chapterHeight": 1,
+                    "chapters": 3,
+                    "start": 0,
+                    "group": 1
+                }
+            ],
+            [
+                {
+                    "name": "Habakkuk",
+                    "author": "Habakkuk",
+                    "dateWrote": "(610-605 BC)",
+                    "chapterWidth": 3,
+                    "chapterHeight": 1,
+                    "chapters": 3,
+                    "start": 0,
+                    "group": 1
+                },
+                {
+                    "name": "Zephaniah",
+                    "author": "Zephaniah",
+                    "dateWrote": "(640-630 BC)",
+                    "chapterWidth": 3,
+                    "chapterHeight": 1,
+                    "chapters": 3,
+                    "start": 0,
+                    "group": 1
+                },
+                {
+                    "name": "Haggai",
+                    "author": "Haggai",
+                    "dateWrote": "(520 BC)",
+                    "chapterWidth": 2,
+                    "chapterHeight": 1,
+                    "chapters": 2,
+                    "start": 0,
+                    "group": 1
+                },
+                {
+                    "name": "Zechariah",
+                    "author": "Zechariah",
+                    "dateWrote": "(520-518 BC)",
+                    "chapterWidth": 5,
+                    "chapterHeight": 3,
+                    "chapters": 14,
+                    "start": 0,
+                    "group": 1
+                },
+                {
+                    "name": "1 Psalms",
+                    "author": "David, Asaph, and others",
+                    "dateWrote": "(1410-450 BC)",
+                    "chapterWidth": 5,
+                    "chapterHeight": 8,
+                    "apiName": "Psalms",
+                    "chapters": 41,
+                    "start": 0,
+                    "group": 2
+                },
+                {
+                    "name": "2 Psalms",
+                    "author": "David, Asaph, and others",
+                    "dateWrote": "(1410-450 BC)",
+                    "chapterWidth": 5,
+                    "apiName": "Psalms",
+                    "chapterHeight": 7,
+                    "chapters": 31,
+                    "start": 41,
+                    "group": 2
+                },
+                {
+                    "name": "3 Psalms",
+                    "author": "David, Asaph, and others",
+                    "dateWrote": "(1410-450 BC)",
+                    "chapterWidth": 5,
+                    "chapterHeight": 4,
+                    "apiName": "Psalms",
+                    "chapters": 17,
+                    "start": 72,
+                    "group": 2
+                }
+            ],
+            [
+                {
+                    "name": "4 Psalms",
+                    "author": "David, Asaph, and others",
+                    "dateWrote": "(1410-450 BC)",
+                    "chapterWidth": 5,
+                    "apiName": "Psalms",
+                    "chapterHeight": 3,
+                    "chapters": 17,
+                    "start": 89,
+                    "height": 18,
+                    "group": 2
+                },
+                {
+                    "name": "5 Psalms",
+                    "author": "David, Asaph, and others",
+                    "dateWrote": "(1410-450 BC)",
+                    "chapterWidth": 5,
+                    "chapterHeight": 9,
+                    "chapters": 44,
+                    "apiName": "Psalms",
+                    "start": 106,
+                    "group": 2
+                },
+                {
+                    "name": "Proverbs",
+                    "author": "Solomon",
+                    "dateWrote": "(970-700 BC)",
+                    "chapterWidth": 5,
+                    "chapterHeight": 7,
+                    "chapters": 31,
+                    "start": 0,
+                    "group": 2
+                },
+                {
+                    "name": "Job",
+                    "author": "Unknown (Traditionally Paul)",
+                    "dateWrote": "(2000-1000 BC)",
+                    "chapterWidth": 5,
+                    "chapterHeight": 9,
+                    "chapters": 42,
+                    "start": 0,
+                    "group": 2
+                },
+                {
+                    "name": "Song of Songs",
+                    "author": "Solomon",
+                    "dateWrote": "(970-930 BC)",
+                    "chapterWidth": 5,
+                    "chapterHeight": 2,
+                    "chapters": 8,
+                    "apiName": "Song_of_Songs",
+                    "start": 0,
+                    "group": 2
+                },
+                {
+                    "name": "Ruth",
+                    "author": "Samuel ",
+                    "dateWrote": "(1050-1000 BC)",
+                    "chapterWidth": 4,
+                    "chapterHeight": 1,
+                    "chapters": 4,
+                    "start": 0,
+                    "height": 12,
+                    "group": 2
+                },
+                {
+                    "name": "Lamentations",
+                    "author": "Jeremiah",
+                    "dateWrote": "(586 BC)",
+                    "chapterWidth": 5,
+                    "chapterHeight": 1,
+                    "chapters": 5,
+                    "start": 0,
+                    "height": 14,
+                    "group": 2
+                }
+            ],
+            [
+                {
+                    "name": "Ecclesiastes",
+                    "author": "Solomon",
+                    "dateWrote": "(935 BC)",
+                    "chapterWidth": 5,
+                    "chapterHeight": 2,
+                    "chapters": 12,
+                    "start": 0,
+                    "group": 2
+                },
+                {
+                    "name": "Esther",
+                    "author": "Mordecai and Esther",
+                    "dateWrote": "(470-450 BC)",
+                    "chapterWidth": 5,
+                    "chapterHeight": 5,
+                    "chapters": 10,
+                    "start": 0,
+                    "group": 2
+                },
+                {
+                    "name": "Daniel",
+                    "author": "Daniel",
+                    "dateWrote": "(605-536 BC)",
+                    "chapterWidth": 5,
+                    "chapterHeight": 3,
+                    "chapters": 12,
+                    "start": 0,
+                    "group": 2
+                },
+                {
+                    "name": "Ezra",
+                    "author": "Ezra",
+                    "dateWrote": "(450-400 BC)",
+                    "chapterWidth": 5,
+                    "chapterHeight": 2,
+                    "chapters": 10,
+                    "start": 0,
+                    "height": 13,
+                    "group": 2
+                },
+                {
+                    "name": "Nehemiah",
+                    "author": "Nehemiah",
+                    "dateWrote": "(445-420 BC)",
+                    "chapterWidth": 5,
+                    "chapterHeight": 3,
+                    "chapters": 13,
+                    "start": 0,
+                    "group": 2
+                },
+                {
+                    "name": "1 Chronicles",
+                    "author": "Ezra",
+                    "dateWrote": "(450-400 BC)",
+                    "chapterWidth": 5,
+                    "chapterHeight": 6,
+                    "chapters": 29,
+                    "apiName": "1_Chronicles",
+                    "start": 0,
+                    "group": 2
+                },
+                {
+                    "name": "2 Chronicles",
+                    "author": "Ezra",
+                    "dateWrote": "(450-400 BC)",
+                    "chapterWidth": 5,
+                    "chapterHeight": 8,
+                    "apiName": "2_Chronicles",
+                    "chapters": 36,
+                    "start": 0,
+                    "group": 2
+                }
+            ],
+            [
+                {
+                    "name": "Matthew",
+                    "author": "Matthew",
+                    "dateWrote": "(AD 50-70)",
+                    "chapterWidth": 5,
+                    "chapterHeight": 6,
+                    "chapters": 28,
+                    "height": 10,
+                    "start": 0,
+                    "group": 3
+                },
+                {
+                    "name": "Mark",
+                    "author": "Mark",
+                    "dateWrote": "(AD 50-60)",
+                    "chapterWidth": 5,
+                    "chapterHeight": 4,
+                    "start": 0,
+                    "chapters": 16,
+                    "group": 3
+                },
+                {
+                    "name": "Luke",
+                    "author": "Luke",
+                    "dateWrote": "(AD 60-62)",
+                    "chapterWidth": 5,
+                    "chapterHeight": 5,
+                    "chapters": 24,
+                    "start": 0,
+                    "group": 3
+                },
+                {
+                    "name": "John",
+                    "author": "John",
+                    "dateWrote": "(AD 85-90)",
+                    "chapterWidth": 5,
+                    "chapterHeight": 5,
+                    "chapters": 21,
+                    "start": 0,
+                    "group": 3
+                },
+                {
+                    "name": "Acts",
+                    "author": "Luke",
+                    "dateWrote": "AD 62-64",
+                    "chapterWidth": 5,
+                    "chapterHeight": 6,
+                    "chapters": 28,
+                    "start": 0,
+                    "group": 4
+                },
+                {
+                    "name": "Romans",
+                    "author": "Paul",
+                    "dateWrote": "AD 56-58",
+                    "chapterWidth": 5,
+                    "chapterHeight": 4,
+                    "chapters": 16,
+                    "start": 0,
+                    "group": 4
+                },
+                {
+                    "name": "1 Corinthians",
+                    "author": "Paul",
+                    "dateWrote": "AD 55",
+                    "chapterWidth": 5,
+                    "chapterHeight": 4,
+                    "chapters": 16,
+                    "start": 0,
+                    "apiName": "1_Corinthians",
+                    "group": 4
+                }
+            ],
+            [
+                {
+                    "name": "2 Corinthians",
+                    "author": "Paul",
+                    "dateWrote": "AD 56",
+                    "chapterWidth": 5,
+                    "chapterHeight": 3,
+                    "apiName": "2_Corinthians",
+                    "chapters": 13,
+                    "height": 7,
+                    "start": 0,
+                    "group": 4
+                },
+                {
+                    "name": "Galatians",
+                    "author": "Paul",
+                    "dateWrote": "AD 48-50",
+                    "chapterWidth": 5,
+                    "chapterHeight": 2,
+                    "start": 0,
+                    "chapters": 6,
+                    "group": 4
+                },
+                {
+                    "name": "Ephesians",
+                    "author": "Paul",
+                    "dateWrote": "AD 60-62",
+                    "chapterWidth": 5,
+                    "chapterHeight": 2,
+                    "chapters": 6,
+                    "start": 0,
+                    "group": 4
+                },
+                {
+                    "name": "Philippians",
+                    "author": "Paul",
+                    "dateWrote": "AD 60-62",
+                    "chapterWidth": 4,
+                    "chapterHeight": 1,
+                    "chapters": 4,
+                    "start": 0,
+                    "group": 4
+                },
+                {
+                    "name": "Colossians",
+                    "author": "Paul",
+                    "dateWrote": "AD 60-62",
+                    "chapterWidth": 4,
+                    "chapterHeight": 1,
+                    "start": 0,
+                    "chapters": 4,
+                    "group": 4
+                },
+                {
+                    "name": "1 Thessalonians",
+                    "author": "Paul",
+                    "dateWrote": "AD 50-51",
+                    "chapterWidth": 5,
+                    "chapterHeight": 1,
+                    "apiName": "1_Thessalonians",
+                    "start": 0,
+                    "chapters": 5,
+                    "group": 4
+                },
+                {
+                    "name": "2 Thessalonians",
+                    "author": "Paul",
+                    "dateWrote": "AD 50-51",
+                    "chapterWidth": 3,
+                    "apiName": "2_Thessalonians",
+                    "start": 0,
+                    "chapterHeight": 3,
+                    "chapters": 3,
+                    "group": 4
+                }
+            ],
+            [
+                {
+                    "name": "1 Timothy",
+                    "author": "Paul",
+                    "dateWrote": "AD 62-64",
+                    "chapterWidth": 5,
+                    "chapterHeight": 2,
+                    "start": 0,
+                    "apiName": "1_Timothy",
+                    "chapters": 6,
+                    "height": 7,
+                    "group": 4
+                },
+                {
+                    "name": "2 Timothy",
+                    "author": "Paul",
+                    "dateWrote": "AD 66-67",
+                    "chapterWidth": 4,
+                    "apiName": "2_Timothy",
+                    "start": 0,
+                    "chapterHeight": 1,
+                    "chapters": 4,
+                    "group": 4
+                },
+                {
+                    "name": "Titus",
+                    "author": "Paul",
+                    "dateWrote": "AD 62-64",
+                    "chapterWidth": 3,
+                    "chapterHeight": 1,
+                    "start": 0,
+                    "chapters": 3,
+                    "group": 4
+                },
+                {
+                    "name": "Philemon",
+                    "author": "Paul",
+                    "dateWrote": "AD 60-62",
+                    "chapterWidth": 1,
+                    "chapterHeight": 1,
+                    "chapters": 1,
+                    "group": 4,
+                    "start": 0
+                },
+                {
+                    "name": "Hebrews",
+                    "author": "Unknown (Traditionally Paul)",
+                    "dateWrote": "AD 60-70",
+                    "chapterWidth": 5,
+                    "start": 0,
+                    "chapterHeight": 3,
+                    "chapters": 13,
+                    "group": 4
+                },
+                {
+                    "name": "James",
+                    "author": "James",
+                    "dateWrote": "AD 44-49",
+                    "chapterWidth": 5,
+                    "chapterHeight": 1,
+                    "start": 0,
+                    "chapters": 5,
+                    "group": 4
+                },
+                {
+                    "name": "1 Peter",
+                    "author": "Peter",
+                    "dateWrote": "AD 60-64",
+                    "chapterWidth": 5,
+                    "chapterHeight": 1,
+                    "apiName": "1_Peter",
+                    "start": 0,
+                    "chapters": 5,
+                    "group": 4
+                }
+            ],
+            [
+                {
+                    "name": "2 Peter",
+                    "author": "Peter",
+                    "dateWrote": "AD 64-68",
+                    "chapterWidth": 3,
+                    "chapterHeight": 1,
+                    "start": 0,
+                    "apiName": "2_Peter",
+                    "chapters": 3,
+                    "group": 4
+                },
+                {
+                    "name": "1 John",
+                    "author": "John",
+                    "dateWrote": "AD 85-95",
+                    "chapterWidth": 4,
+                    "apiName": "1_John",
+                    "chapterHeight": 1,
+                    "start": 0,
+                    "chapters": 4,
+                    "group": 4
+                },
+                {
+                    "name": "2 John",
+                    "author": "John",
+                    "dateWrote": "AD 85-95",
+                    "chapterWidth": 1,
+                    "chapterHeight": 1,
+                    "apiName": "2_John",
+                    "start": 0,
+                    "chapters": 1,
+                    "group": 4
+                },
+                {
+                    "name": "3 John",
+                    "author": "John",
+                    "dateWrote": "AD 85-95",
+                    "chapterWidth": 1,
+                    "chapterHeight": 1,
+                    "apiName": "3_John",
+                    "chapters": 1,
+                    "start": 0,
+                    "group": 4
+                },
+                {
+                    "name": "Jude",
+                    "author": "Jude",
+                    "dateWrote": "AD 60-80",
+                    "chapterWidth": 1,
+                    "chapterHeight": 1,
+                    "start": 0,
+                    "chapters": 1,
+                    "group": 4
+                },
+                {
+                    "name": "Revelation",
+                    "author": "John",
+                    "dateWrote": "AD 95-96",
+                    "chapterWidth": 5,
+                    "chapterHeight": 5,
+                    "start": 0,
+                    "chapters": 22,
+                    "group": 4
+                }
+            ]
+        ]
+    },
+    {
+        "name": "Protestant",
+        "layers": [
+            [
+                {
+                    "name": "Genesis",
+                    "author": "Moses",
+                    "dateWrote": "1445-1405 BC",
+                    "chapterWidth": 5,
+                    "chapterHeight": 10,
+                    "chapters": 50,
+                    "start": 0,
+                    "height": 14,
+                    "group": 0
+                },
+                {
+                    "name": "Exodus",
+                    "author": "Moses",
+                    "dateWrote": "1450-1400 BC",
+                    "chapterWidth": 5,
+                    "chapterHeight": 8,
+                    "chapters": 40,
+                    "start": 0,
+                    "group": 0
+                },
+                {
+                    "name": "Leviticus",
+                    "author": "Moses",
+                    "dateWrote": "1450-1400 BC",
+                    "chapterWidth": 5,
+                    "chapterHeight": 6,
+                    "chapters": 27,
+                    "start": 0,
+                    "group": 0
+                },
+                {
+                    "name": "Numbers",
+                    "author": "Moses",
+                    "dateWrote": "1450-1400 BC",
+                    "chapterWidth": 5,
+                    "chapterHeight": 8,
+                    "chapters": 36,
+                    "start": 0,
+                    "group": 0
+                },
+                {
+                    "name": "Deuteronomy",
+                    "author": "Moses",
+                    "dateWrote": "1450-1400 BC",
+                    "chapterWidth": 5,
+                    "chapterHeight": 7,
+                    "chapters": 34,
+                    "start": 0,
+                    "group": 0
+                },
+                {
+                    "name": "Joshua",
+                    "author": "Joshua",
+                    "dateWrote": "1400-1370 BC",
+                    "chapterWidth": 5,
+                    "chapterHeight": 5,
+                    "chapters": 24,
+                    "start": 0,
+                    "group": 1
+                },
+                {
+                    "name": "Judges",
+                    "author": "Samuel",
+                    "dateWrote": "1370-1050 BC",
+                    "chapterWidth": 5,
+                    "chapterHeight": 5,
+                    "chapters": 21,
+                    "start": 0,
+                    "group": 1
+                }
+            ],
+            [
+                {
+                    "name": "Ruth",
+                    "author": "Samuel",
+                    "dateWrote": "1050-1000 BC",
+                    "chapterWidth": 4,
+                    "chapterHeight": 1,
+                    "chapters": 4,
+                    "start": 0,
+                    "height": 12,
+                    "group": 1
+                },
+                {
+                    "name": "1 Samuel",
+                    "author": "Samuel",
+                    "dateWrote": "930-722 BC",
+                    "chapterWidth": 5,
+                    "chapterHeight": 7,
+                    "apiName": "1_Samuel",
+                    "chapters": 31,
+                    "start": 0,
+                    "group": 1
+                },
+                {
+                    "name": "2 Samuel",
+                    "author": "Samuel",
+                    "dateWrote": "930-722 BC",
+                    "chapterWidth": 5,
+                    "chapterHeight": 5,
+                    "apiName": "2_Samuel",
+                    "chapters": 24,
+                    "start": 0,
+                    "group": 1
+                },
+                {
+                    "name": "1 Kings",
+                    "author": "Jeremiah",
+                    "dateWrote": "560-538 BC",
+                    "chapterWidth": 5,
+                    "chapterHeight": 5,
+                    "apiName": "1_Kings",
+                    "chapters": 22,
+                    "start": 0,
+                    "group": 1
+                },
+                {
+                    "name": "2 Kings",
+                    "author": "Jeremiah",
+                    "dateWrote": "560-538 BC",
+                    "chapterWidth": 5,
+                    "chapterHeight": 5,
+                    "apiName": "2_Kings",
+                    "chapters": 25,
+                    "start": 0,
+                    "group": 1
+                },
+                {
+                    "name": "1 Chronicles",
+                    "author": "Ezra",
+                    "dateWrote": "450-400 BC",
+                    "chapterWidth": 5,
+                    "chapterHeight": 6,
+                    "chapters": 29,
+                    "apiName": "1_Chronicles",
+                    "start": 0,
+                    "group": 1
+                },
+                {
+                    "name": "2 Chronicles",
+                    "author": "Ezra",
+                    "dateWrote": "450-400 BC",
+                    "chapterWidth": 5,
+                    "chapterHeight": 8,
+                    "apiName": "2_Chronicles",
+                    "chapters": 36,
+                    "start": 0,
+                    "group": 1
+                }
+            ],
+            [
+                {
+                    "name": "Ezra",
+                    "author": "Ezra",
+                    "dateWrote": "450-400 BC",
+                    "chapterWidth": 5,
+                    "chapterHeight": 2,
+                    "chapters": 10,
+                    "start": 0,
+                    "height": 13,
+                    "group": 1
+                },
+                {
+                    "name": "Nehemiah",
+                    "author": "Nehemiah",
+                    "dateWrote": "445-420 BC",
+                    "chapterWidth": 5,
+                    "chapterHeight": 3,
+                    "chapters": 13,
+                    "start": 0,
+                    "group": 1
+                },
+                {
+                    "name": "Esther",
+                    "author": "Mordecai/Esther",
+                    "dateWrote": "470-450 BC",
+                    "chapterWidth": 5,
+                    "chapterHeight": 5,
+                    "chapters": 10,
+                    "start": 0,
+                    "group": 1
+                },
+                {
+                    "name": "Job",
+                    "author": "Moses ",
+                    "dateWrote": "2000-1000 BC",
+                    "chapterWidth": 5,
+                    "chapterHeight": 9,
+                    "chapters": 42,
+                    "start": 0,
+                    "group": 2
+                },
+                {
+                    "name": "1 Psalms",
+                    "author": "David",
+                    "dateWrote": "1410-450 BC",
+                    "chapterWidth": 5,
+                    "chapterHeight": 8,
+                    "apiName": "Psalms",
+                    "chapters": 41,
+                    "start": 0,
+                    "group": 2
+                },
+                {
+                    "name": "2 Psalms",
+                    "author": "David",
+                    "dateWrote": "1410-450 BC",
+                    "chapterWidth": 5,
+                    "apiName": "Psalms",
+                    "chapterHeight": 7,
+                    "chapters": 31,
+                    "start": 41,
+                    "group": 2
+                },
+                {
+                    "name": "3 Psalms",
+                    "author": "David",
+                    "dateWrote": "1410-450 BC",
+                    "chapterWidth": 5,
+                    "chapterHeight": 4,
+                    "apiName": "Psalms",
+                    "chapters": 17,
+                    "start": 72,
+                    "group": 2
+                }
+            ],
+            [
+                {
+                    "name": "4 Psalms",
+                    "author": "David",
+                    "dateWrote": "1410-450 BC",
+                    "chapterWidth": 5,
+                    "apiName": "Psalms",
+                    "chapterHeight": 3,
+                    "chapters": 17,
+                    "start": 89,
+                    "height": 18,
+                    "group": 2
+                },
+                {
+                    "name": "5 Psalms",
+                    "author": "David",
+                    "dateWrote": "1410-450 BC",
+                    "chapterWidth": 5,
+                    "chapterHeight": 9,
+                    "chapters": 44,
+                    "apiName": "Psalms",
+                    "start": 106,
+                    "group": 2
+                },
+                {
+                    "name": "Proverbs",
+                    "author": "Solomon",
+                    "dateWrote": "970-700 BC",
+                    "chapterWidth": 5,
+                    "chapterHeight": 7,
+                    "chapters": 31,
+                    "start": 0,
+                    "group": 2
+                },
+                {
+                    "name": "Ecclesiastes",
+                    "author": "Solomon",
+                    "dateWrote": "935 BC",
+                    "chapterWidth": 5,
+                    "chapterHeight": 2,
+                    "chapters": 12,
+                    "start": 0,
+                    "group": 2
+                },
+                {
+                    "name": "Song of Songs",
+                    "author": "Solomon",
+                    "dateWrote": "970-930 BC",
+                    "chapterWidth": 5,
+                    "chapterHeight": 2,
+                    "chapters": 8,
+                    "apiName": "Song_of_Songs",
+                    "start": 0,
+                    "group": 2
+                },
+                {
+                    "name": "Isaiah",
+                    "author": "Isaiah",
+                    "dateWrote": "740-680 BC",
+                    "chapterWidth": 5,
+                    "chapterHeight": 14,
+                    "chapters": 66,
+                    "start": 0,
+                    "group": 3
+                },
+                {
+                    "name": "Jeremiah",
+                    "author": "Jeremiah",
+                    "dateWrote": "627-586 BC",
+                    "chapterWidth": 5,
+                    "chapterHeight": 11,
+                    "chapters": 52,
+                    "start": 0,
+                    "group": 3
+                }
+            ],
+            [
+                {
+                    "name": "Lamentations",
+                    "author": "Jeremiah",
+                    "dateWrote": "586 BC",
+                    "chapterWidth": 5,
+                    "chapterHeight": 1,
+                    "chapters": 5,
+                    "start": 0,
+                    "height": 14,
+                    "group": 3
+                },
+                {
+                    "name": "Ezekiel",
+                    "author": "Ezekiel",
+                    "dateWrote": "593-571 BC",
+                    "chapterWidth": 5,
+                    "chapterHeight": 10,
+                    "chapters": 48,
+                    "start": 0,
+                    "group": 3
+                },
+                {
+                    "name": "Daniel",
+                    "author": "Daniel",
+                    "dateWrote": "605-536 BC",
+                    "chapterWidth": 5,
+                    "chapterHeight": 3,
+                    "chapters": 12,
+                    "start": 0,
+                    "group": 3
+                },
+                {
+                    "name": "Hosea",
+                    "author": "Hosea",
+                    "dateWrote": "755-715 BC",
+                    "chapterWidth": 5,
+                    "chapterHeight": 3,
+                    "chapters": 14,
+                    "start": 0,
+                    "group": 3
+                },
+                {
+                    "name": "Joel",
+                    "author": "Joel",
+                    "dateWrote": "835-796 BC",
+                    "chapterWidth": 3,
+                    "chapterHeight": 1,
+                    "chapters": 3,
+                    "start": 0,
+                    "group": 3
+                },
+                {
+                    "name": "Amos",
+                    "author": "Amos",
+                    "dateWrote": "760-750 BC",
+                    "chapterWidth": 5,
+                    "chapterHeight": 2,
+                    "chapters": 9,
+                    "start": 0,
+                    "group": 3
+                },
+                {
+                    "name": "Obadiah",
+                    "author": "Obadiah",
+                    "dateWrote": "586 BC",
+                    "chapterWidth": 1,
+                    "chapterHeight": 1,
+                    "chapters": 1,
+                    "start": 0,
+                    "group": 3
+                }
+            ],
+            [
+                {
+                    "name": "Jonah",
+                    "author": "Jonah",
+                    "dateWrote": "785-760 BC",
+                    "chapterWidth": 4,
+                    "chapterHeight": 1,
+                    "chapters": 4,
+                    "start": 0,
+                    "height": 6,
+                    "group": 3
+                },
+                {
+                    "name": "Micah",
+                    "author": "Micah",
+                    "dateWrote": "735-700 BC",
+                    "chapterWidth": 5,
+                    "chapterHeight": 2,
+                    "chapters": 7,
+                    "start": 0,
+                    "group": 3
+                },
+                {
+                    "name": "Nahum",
+                    "author": "Nahum",
+                    "dateWrote": "660-630 BC",
+                    "chapterWidth": 3,
+                    "chapterHeight": 1,
+                    "chapters": 3,
+                    "start": 0,
+                    "group": 3
+                },
+                {
+                    "name": "Habakkuk",
+                    "author": "Habakkuk",
+                    "dateWrote": "610-605 BC",
+                    "chapterWidth": 3,
+                    "chapterHeight": 1,
+                    "chapters": 3,
+                    "start": 0,
+                    "group": 3
+                },
+                {
+                    "name": "Zephaniah",
+                    "author": "Zephaniah",
+                    "dateWrote": "640-630 BC",
+                    "chapterWidth": 3,
+                    "chapterHeight": 1,
+                    "chapters": 3,
+                    "start": 0,
+                    "group": 3
+                },
+                {
+                    "name": "Haggai",
+                    "author": "Haggai",
+                    "dateWrote": "520 BC",
+                    "chapterWidth": 2,
+                    "chapterHeight": 1,
+                    "chapters": 2,
+                    "start": 0,
+                    "group": 3
+                },
+                {
+                    "name": "Zechariah",
+                    "author": "Zechariah",
+                    "dateWrote": "520-518 BC",
+                    "chapterWidth": 5,
+                    "chapterHeight": 3,
+                    "chapters": 14,
+                    "start": 0,
+                    "group": 3
+                }
+            ],
+            [
+                {
+                    "name": "Malachi",
+                    "author": "Malachi",
+                    "dateWrote": "430 BC",
+                    "chapterWidth": 4,
+                    "chapterHeight": 1,
+                    "chapters": 4,
+                    "start": 0,
+                    "height": 5,
+                    "group": 3
+                }
+            ],
+            [
+                {
+                    "name": "Matthew",
+                    "author": "Matthew",
+                    "dateWrote": "AD 50-70",
+                    "chapterWidth": 5,
+                    "chapterHeight": 6,
+                    "chapters": 28,
+                    "height": 10,
+                    "start": 0,
+                    "group": 4
+                },
+                {
+                    "name": "Mark",
+                    "author": "Mark",
+                    "dateWrote": "AD 50-60",
+                    "chapterWidth": 5,
+                    "chapterHeight": 4,
+                    "start": 0,
+                    "chapters": 16,
+                    "group": 4
+                },
+                {
+                    "name": "Luke",
+                    "author": "Luke",
+                    "dateWrote": "AD 60-62",
+                    "chapterWidth": 5,
+                    "chapterHeight": 5,
+                    "chapters": 24,
+                    "start": 0,
+                    "group": 4
+                },
+                {
+                    "name": "John",
+                    "author": "John",
+                    "dateWrote": "AD 85-90",
+                    "chapterWidth": 5,
+                    "chapterHeight": 5,
+                    "chapters": 21,
+                    "start": 0,
+                    "group": 4
+                },
+                {
+                    "name": "Acts",
+                    "author": "Luke",
+                    "dateWrote": "AD 62-64",
+                    "chapterWidth": 5,
+                    "chapterHeight": 6,
+                    "chapters": 28,
+                    "start": 0,
+                    "group": 5
+                },
+                {
+                    "name": "Romans",
+                    "author": "Paul",
+                    "dateWrote": "AD 56-58",
+                    "chapterWidth": 5,
+                    "chapterHeight": 4,
+                    "chapters": 16,
+                    "start": 0,
+                    "group": 6
+                },
+                {
+                    "name": "1 Corinthians",
+                    "author": "Paul",
+                    "dateWrote": "AD 55",
+                    "chapterWidth": 5,
+                    "chapterHeight": 4,
+                    "chapters": 16,
+                    "start": 0,
+                    "apiName": "1_Corinthians",
+                    "group": 6
+                }
+            ],
+            [
+                {
+                    "name": "2 Corinthians",
+                    "author": "Paul",
+                    "dateWrote": "AD 56",
+                    "chapterWidth": 5,
+                    "chapterHeight": 3,
+                    "apiName": "2_Corinthians",
+                    "chapters": 13,
+                    "height": 7,
+                    "start": 0,
+                    "group": 6
+                },
+                {
+                    "name": "Galatians",
+                    "author": "Paul",
+                    "dateWrote": "AD 48-50",
+                    "chapterWidth": 5,
+                    "chapterHeight": 2,
+                    "start": 0,
+                    "chapters": 6,
+                    "group": 6
+                },
+                {
+                    "name": "Ephesians",
+                    "author": "Paul",
+                    "dateWrote": "AD 60-62",
+                    "chapterWidth": 5,
+                    "chapterHeight": 2,
+                    "chapters": 6,
+                    "start": 0,
+                    "group": 6
+                },
+                {
+                    "name": "Philippians",
+                    "author": "Paul",
+                    "dateWrote": "AD 60-62",
+                    "chapterWidth": 4,
+                    "chapterHeight": 1,
+                    "chapters": 4,
+                    "start": 0,
+                    "group": 6
+                },
+                {
+                    "name": "Colossians",
+                    "author": "Paul",
+                    "dateWrote": "AD 60-62",
+                    "chapterWidth": 4,
+                    "chapterHeight": 1,
+                    "start": 0,
+                    "chapters": 4,
+                    "group": 6
+                },
+                {
+                    "name": "1 Thessalonians",
+                    "author": "Paul",
+                    "dateWrote": "AD 50-51",
+                    "chapterWidth": 5,
+                    "chapterHeight": 1,
+                    "apiName": "1_Thessalonians",
+                    "start": 0,
+                    "chapters": 5,
+                    "group": 6
+                },
+                {
+                    "name": "2 Thessalonians",
+                    "author": "Paul",
+                    "dateWrote": "AD 50-51",
+                    "chapterWidth": 3,
+                    "apiName": "2_Thessalonians",
+                    "start": 0,
+                    "chapterHeight": 3,
+                    "chapters": 3,
+                    "group": 6
+                }
+            ],
+            [
+                {
+                    "name": "1 Timothy",
+                    "author": "Paul",
+                    "dateWrote": "AD 62-64",
+                    "chapterWidth": 5,
+                    "chapterHeight": 2,
+                    "start": 0,
+                    "apiName": "1_Timothy",
+                    "chapters": 6,
+                    "height": 7,
+                    "group": 6
+                },
+                {
+                    "name": "2 Timothy",
+                    "author": "Paul",
+                    "dateWrote": "AD 66-67",
+                    "chapterWidth": 4,
+                    "apiName": "2_Timothy",
+                    "start": 0,
+                    "chapterHeight": 1,
+                    "chapters": 4,
+                    "group": 6
+                },
+                {
+                    "name": "Titus",
+                    "author": "Paul",
+                    "dateWrote": "AD 62-64",
+                    "chapterWidth": 3,
+                    "chapterHeight": 1,
+                    "start": 0,
+                    "chapters": 3,
+                    "group": 6
+                },
+                {
+                    "name": "Philemon",
+                    "author": "Paul",
+                    "dateWrote": "AD 60-62",
+                    "chapterWidth": 1,
+                    "chapterHeight": 1,
+                    "chapters": 1,
+                    "group": 6,
+                    "start": 0
+                },
+                {
+                    "name": "Hebrews",
+                    "author": "Paul (or unknown)",
+                    "dateWrote": "AD 60-70",
+                    "chapterWidth": 5,
+                    "start": 0,
+                    "chapterHeight": 3,
+                    "chapters": 13,
+                    "group": 6
+                },
+                {
+                    "name": "James",
+                    "author": "James",
+                    "dateWrote": "AD 44-49",
+                    "chapterWidth": 5,
+                    "chapterHeight": 1,
+                    "start": 0,
+                    "chapters": 5,
+                    "group": 6
+                },
+                {
+                    "name": "1 Peter",
+                    "author": "Peter",
+                    "dateWrote": "AD 60-64",
+                    "chapterWidth": 5,
+                    "chapterHeight": 1,
+                    "apiName": "1_Peter",
+                    "start": 0,
+                    "chapters": 5,
+                    "group": 6
+                }
+            ],
+            [
+                {
+                    "name": "2 Peter",
+                    "author": "Peter",
+                    "dateWrote": "AD 64-68",
+                    "chapterWidth": 3,
+                    "chapterHeight": 1,
+                    "start": 0,
+                    "apiName": "2_Peter",
+                    "chapters": 3,
+                    "group": 6
+                },
+                {
+                    "name": "1 John",
+                    "author": "John",
+                    "dateWrote": "AD 85-95",
+                    "chapterWidth": 4,
+                    "apiName": "1_John",
+                    "chapterHeight": 1,
+                    "start": 0,
+                    "chapters": 4,
+                    "group": 6
+                },
+                {
+                    "name": "2 John",
+                    "author": "John",
+                    "dateWrote": "AD 85-95",
+                    "chapterWidth": 1,
+                    "chapterHeight": 1,
+                    "apiName": "2_John",
+                    "start": 0,
+                    "chapters": 1,
+                    "group": 6
+                },
+                {
+                    "name": "3 John",
+                    "author": "John",
+                    "dateWrote": "AD 85-95",
+                    "chapterWidth": 1,
+                    "chapterHeight": 1,
+                    "apiName": "3_John",
+                    "chapters": 1,
+                    "start": 0,
+                    "group": 6
+                },
+                {
+                    "name": "Jude",
+                    "author": "Jude",
+                    "dateWrote": "AD 60-80",
+                    "chapterWidth": 1,
+                    "chapterHeight": 1,
+                    "start": 0,
+                    "chapters": 1,
+                    "group": 6
+                },
+                {
+                    "name": "Revelation",
+                    "author": "John",
+                    "dateWrote": "AD 95-96",
+                    "chapterWidth": 5,
+                    "chapterHeight": 5,
+                    "start": 0,
+                    "chapters": 22,
+                    "group": 7
+                }
+            ]
+        ]
+    },
+    {
+        "name": "Chronological",
+        "layers": [
+            [
+                {
+                    "name": "Genesis",
+                    "author": "Moses",
+                    "dateWrote": "1445-1405 BC",
+                    "chapterWidth": 5,
+                    "chapterHeight": 10,
+                    "chapters": 50,
+                    "start": 0,
+                    "height": 14,
+                    "group": 8
+                },
+                {
+                    "name": "Job",
+                    "author": "Job ",
+                    "dateWrote": "2000-1000 BC",
+                    "chapterWidth": 5,
+                    "chapterHeight": 9,
+                    "chapters": 42,
+                    "start": 0,
+                    "group": 10
+                },
+                {
+                    "name": "Exodus",
+                    "author": "Moses",
+                    "dateWrote": "1450-1400 BC",
+                    "chapterWidth": 5,
+                    "chapterHeight": 8,
+                    "chapters": 40,
+                    "start": 0,
+                    "group": 8
+                },
+                {
+                    "name": "Leviticus",
+                    "author": "Moses",
+                    "dateWrote": "1450-1400 BC",
+                    "chapterWidth": 5,
+                    "chapterHeight": 6,
+                    "chapters": 27,
+                    "start": 0,
+                    "group": 8
+                },
+                {
+                    "name": "Numbers",
+                    "author": "Moses",
+                    "dateWrote": "1450-1400 BC",
+                    "chapterWidth": 5,
+                    "chapterHeight": 8,
+                    "chapters": 36,
+                    "start": 0,
+                    "group": 8
+                },
+                {
+                    "name": "Deuteronomy",
+                    "author": "Moses",
+                    "dateWrote": "1450-1400 BC",
+                    "chapterWidth": 5,
+                    "chapterHeight": 7,
+                    "chapters": 34,
+                    "start": 0,
+                    "group": 8
+                },
+                {
+                    "name": "Joshua",
+                    "author": "Joshua",
+                    "dateWrote": "1400-1370 BC",
+                    "chapterWidth": 5,
+                    "chapterHeight": 5,
+                    "chapters": 24,
+                    "start": 0,
+                    "group": 9
+                }
+            ],
+            [
+                {
+                    "name": "Judges",
+                    "author": "Samuel ",
+                    "dateWrote": "1370-1050 BC",
+                    "chapterWidth": 5,
+                    "chapterHeight": 5,
+                    "chapters": 21,
+                    "start": 0,
+                    "group": 9
+                },
+                {
+                    "name": "Ruth",
+                    "author": "Samuel ",
+                    "dateWrote": "1050-1000 BC",
+                    "chapterWidth": 4,
+                    "chapterHeight": 1,
+                    "chapters": 4,
+                    "start": 0,
+                    "height": 12,
+                    "group": 11
+                },
+                {
+                    "name": "1 Samuel",
+                    "author": "Samuel (with additional contributions by Nathan and Gad)",
+                    "dateWrote": "930-722 BC",
+                    "chapterWidth": 5,
+                    "chapterHeight": 7,
+                    "apiName": "1_Samuel",
+                    "chapters": 31,
+                    "start": 0,
+                    "group": 11
+                },
+                {
+                    "name": "2 Samuel",
+                    "author": "Samuel, Nathan and Gad",
+                    "dateWrote": "930-722 BC",
+                    "chapterWidth": 5,
+                    "chapterHeight": 5,
+                    "apiName": "2_Samuel",
+                    "chapters": 24,
+                    "start": 0,
+                    "group": 11
+                },
+                {
+                    "name": "1 Chronicles",
+                    "author": "Ezra ",
+                    "dateWrote": "450-400 BC",
+                    "chapterWidth": 5,
+                    "chapterHeight": 6,
+                    "chapters": 29,
+                    "apiName": "1_Chronicles",
+                    "start": 0,
+                    "group": 11
+                },
+                {
+                    "name": "1 Psalms",
+                    "author": "David ",
+                    "dateWrote": "1410-450 BC",
+                    "chapterWidth": 5,
+                    "chapterHeight": 8,
+                    "apiName": "Psalms",
+                    "chapters": 41,
+                    "start": 0,
+                    "group": 10
+                },
+                {
+                    "name": "2 Psalms",
+                    "author": "David ",
+                    "dateWrote": "1410-450 BC",
+                    "chapterWidth": 5,
+                    "apiName": "Psalms",
+                    "chapterHeight": 7,
+                    "chapters": 31,
+                    "start": 41,
+                    "group": 10
+                }
+            ],
+            [
+                {
+                    "name": "3 Psalms",
+                    "author": "David ",
+                    "dateWrote": "1410-450 BC",
+                    "chapterWidth": 5,
+                    "chapterHeight": 4,
+                    "apiName": "Psalms",
+                    "chapters": 17,
+                    "start": 72,
+                    "group": 10
+                },
+                {
+                    "name": "4 Psalms",
+                    "author": "David ",
+                    "dateWrote": "1410-450 BC",
+                    "chapterWidth": 5,
+                    "apiName": "Psalms",
+                    "chapterHeight": 3,
+                    "chapters": 17,
+                    "start": 89,
+                    "height": 18,
+                    "group": 10
+                },
+                {
+                    "name": "5 Psalms",
+                    "author": "David ",
+                    "dateWrote": "1410-450 BC",
+                    "chapterWidth": 5,
+                    "chapterHeight": 9,
+                    "chapters": 44,
+                    "apiName": "Psalms",
+                    "start": 106,
+                    "group": 10
+                },
+                {
+                    "name": "Song of Songs",
+                    "author": "Solomon",
+                    "dateWrote": "970-930 BC",
+                    "chapterWidth": 5,
+                    "chapterHeight": 2,
+                    "chapters": 8,
+                    "apiName": "Song_of_Songs",
+                    "start": 0,
+                    "group": 10
+                },
+                {
+                    "name": "Proverbs",
+                    "author": "Solomon",
+                    "dateWrote": "970-700 BC",
+                    "chapterWidth": 5,
+                    "chapterHeight": 7,
+                    "chapters": 31,
+                    "start": 0,
+                    "group": 10
+                },
+                {
+                    "name": "Ecclesiastes",
+                    "author": "Solomon",
+                    "dateWrote": "935 BC",
+                    "chapterWidth": 5,
+                    "chapterHeight": 2,
+                    "chapters": 12,
+                    "start": 0,
+                    "group": 10
+                },
+                {
+                    "name": "1 Kings",
+                    "author": "Jeremiah ",
+                    "dateWrote": "560-538 BC",
+                    "chapterWidth": 5,
+                    "chapterHeight": 5,
+                    "apiName": "1_Kings",
+                    "chapters": 22,
+                    "start": 0,
+                    "group": 11
+                }
+            ],
+            [
+                {
+                    "name": "2 Kings",
+                    "author": "Jeremiah",
+                    "dateWrote": "560-538 BC",
+                    "chapterWidth": 5,
+                    "chapterHeight": 5,
+                    "apiName": "2_kings",
+                    "chapters": 25,
+                    "start": 0,
+                    "group": 11
+                },
+                {
+                    "name": "2 Chronicles",
+                    "author": "Ezra",
+                    "dateWrote": "450-400 BC",
+                    "chapterWidth": 5,
+                    "chapterHeight": 8,
+                    "apiName": "2_Chronicles",
+                    "chapters": 36,
+                    "start": 0,
+                    "group": 11
+                },
+                {
+                    "name": "Isaiah",
+                    "author": "Isaiah",
+                    "dateWrote": "740-680 BC",
+                    "chapterWidth": 5,
+                    "chapterHeight": 14,
+                    "chapters": 66,
+                    "start": 0,
+                    "group": 9
+                },
+                {
+                    "name": "Jeremiah",
+                    "author": "Jeremiah",
+                    "dateWrote": "627-586 BC",
+                    "chapterWidth": 5,
+                    "chapterHeight": 11,
+                    "chapters": 52,
+                    "start": 0,
+                    "group": 9
+                },
+                {
+                    "name": "Lamentations",
+                    "author": "Jeremiah",
+                    "dateWrote": "586 BC",
+                    "chapterWidth": 5,
+                    "chapterHeight": 1,
+                    "chapters": 5,
+                    "start": 0,
+                    "height": 14,
+                    "group": 10
+                },
+                {
+                    "name": "Hosea",
+                    "author": "Hosea",
+                    "dateWrote": "755-715 BC",
+                    "chapterWidth": 5,
+                    "chapterHeight": 3,
+                    "chapters": 14,
+                    "start": 0,
+                    "group": 9
+                },
+                {
+                    "name": "Joel",
+                    "author": "Joel",
+                    "dateWrote": "835-796 BC",
+                    "chapterWidth": 3,
+                    "chapterHeight": 1,
+                    "chapters": 3,
+                    "start": 0,
+                    "group": 9
+                }
+            ],
+            [
+                {
+                    "name": "Amos",
+                    "author": "Amos",
+                    "dateWrote": "760-750 BC",
+                    "chapterWidth": 5,
+                    "chapterHeight": 2,
+                    "chapters": 9,
+                    "start": 0,
+                    "group": 9
+                },
+                {
+                    "name": "Obadiah",
+                    "author": "Obadiah",
+                    "dateWrote": "586 BC",
+                    "chapterWidth": 1,
+                    "chapterHeight": 1,
+                    "chapters": 1,
+                    "start": 0,
+                    "group": 9
+                },
+                {
+                    "name": "Jonah",
+                    "author": "Jonah",
+                    "dateWrote": "785-760 BC",
+                    "chapterWidth": 4,
+                    "chapterHeight": 1,
+                    "chapters": 4,
+                    "start": 0,
+                    "height": 6,
+                    "group": 9
+                },
+                {
+                    "name": "Micah",
+                    "author": "Micah",
+                    "dateWrote": "735-700 BC",
+                    "chapterWidth": 5,
+                    "chapterHeight": 2,
+                    "chapters": 7,
+                    "start": 0,
+                    "group": 9
+                },
+                {
+                    "name": "Nahum",
+                    "author": "Nahum",
+                    "dateWrote": "660-630 BC",
+                    "chapterWidth": 3,
+                    "chapterHeight": 1,
+                    "chapters": 3,
+                    "start": 0,
+                    "group": 9
+                },
+                {
+                    "name": "Habakkuk",
+                    "author": "Habakkuk",
+                    "dateWrote": "610-605 BC",
+                    "chapterWidth": 3,
+                    "chapterHeight": 1,
+                    "chapters": 3,
+                    "start": 0,
+                    "group": 9
+                },
+                {
+                    "name": "Zephaniah",
+                    "author": "Zephaniah",
+                    "dateWrote": "640-630 BC",
+                    "chapterWidth": 3,
+                    "chapterHeight": 1,
+                    "chapters": 3,
+                    "start": 0,
+                    "group": 9
+                }
+            ],
+            [
+                {
+                    "name": "Ezekiel",
+                    "author": "Ezekiel",
+                    "dateWrote": "593-571 BC",
+                    "chapterWidth": 5,
+                    "chapterHeight": 10,
+                    "chapters": 48,
+                    "start": 0,
+                    "group": 9
+                },
+                {
+                    "name": "Daniel",
+                    "author": "Daniel",
+                    "dateWrote": "605-536 BC",
+                    "chapterWidth": 5,
+                    "chapterHeight": 3,
+                    "chapters": 12,
+                    "start": 0,
+                    "group": 9
+                },
+                {
+                    "name": "Ezra",
+                    "author": "Ezra",
+                    "dateWrote": "450-400 BC",
+                    "chapterWidth": 5,
+                    "chapterHeight": 2,
+                    "chapters": 10,
+                    "start": 0,
+                    "height": 13,
+                    "group": 11
+                },
+                {
+                    "name": "Esther",
+                    "author": "Mordecai and Esther",
+                    "dateWrote": "470-450 BC",
+                    "chapterWidth": 5,
+                    "chapterHeight": 5,
+                    "chapters": 10,
+                    "start": 0,
+                    "group": 11
+                },
+                {
+                    "name": "Nehemiah",
+                    "author": "Nehemiah",
+                    "dateWrote": "445-420 BC",
+                    "chapterWidth": 5,
+                    "chapterHeight": 3,
+                    "chapters": 13,
+                    "start": 0,
+                    "group": 11
+                },
+                {
+                    "name": "Haggai",
+                    "author": "Haggai",
+                    "dateWrote": "520 BC",
+                    "chapterWidth": 2,
+                    "chapterHeight": 1,
+                    "chapters": 2,
+                    "start": 0,
+                    "group": 9
+                },
+                {
+                    "name": "Zechariah",
+                    "author": "Zechariah",
+                    "dateWrote": "520-518 BC",
+                    "chapterWidth": 5,
+                    "chapterHeight": 3,
+                    "chapters": 14,
+                    "start": 0,
+                    "group": 9
+                }
+            ],
+            [
+                {
+                    "name": "Malachi",
+                    "dateWrote": "430 BC",
+                    "author": "Malachi",
+                    "chapterWidth": 4,
+                    "chapterHeight": 1,
+                    "chapters": 4,
+                    "start": 0,
+                    "height": 5,
+                    "group": 9
+                },
+                {
+                    "name": "Matthew",
+                    "dateWrote": "AD 50-70",
+                    "author": "Matthew",
+                    "chapterWidth": 5,
+                    "chapterHeight": 6,
+                    "chapters": 28,
+                    "height": 10,
+                    "start": 0,
+                    "group": 12
+                },
+                {
+                    "name": "Mark",
+                    "dateWrote": "AD 50-60",
+                    "author": "Mark",
+                    "chapterWidth": 5,
+                    "chapterHeight": 4,
+                    "start": 0,
+                    "chapters": 16,
+                    "group": 12
+                },
+                {
+                    "name": "Luke",
+                    "dateWrote": "AD 60-62",
+                    "author": "Luke",
+                    "chapterWidth": 5,
+                    "chapterHeight": 5,
+                    "chapters": 24,
+                    "start": 0,
+                    "group": 12
+                },
+                {
+                    "name": "John",
+                    "dateWrote": "AD 85-90",
+                    "author": "John",
+                    "chapterWidth": 5,
+                    "chapterHeight": 5,
+                    "chapters": 21,
+                    "start": 0,
+                    "group": 12
+                },
+                {
+                    "name": "Acts",
+                    "dateWrote": "AD 62-64",
+                    "author": "Luke",
+                    "chapterWidth": 5,
+                    "chapterHeight": 6,
+                    "chapters": 28,
+                    "start": 0,
+                    "group": 13
+                },
+                {
+                    "name": "1 Thessalonians",
+                    "dateWrote": "AD 50-51",
+                    "author": "Paul",
+                    "chapterWidth": 5,
+                    "chapterHeight": 1,
+                    "apiName": "1_Thessalonians",
+                    "start": 0,
+                    "chapters": 5,
+                    "group": 8
+                }
+            ],
+            [
+                {
+                    "name": "2 Thessalonians",
+                    "dateWrote": "AD 50-51",
+                    "author": "Paul",
+                    "chapterWidth": 3,
+                    "apiName": "2_Thessalonians",
+                    "start": 0,
+                    "chapterHeight": 3,
+                    "chapters": 3,
+                    "group": 8
+                },
+                {
+                    "name": "1 Corinthians",
+                    "dateWrote": "AD 55",
+                    "author": "Paul",
+                    "chapterWidth": 5,
+                    "chapterHeight": 4,
+                    "chapters": 16,
+                    "start": 0,
+                    "apiName": "1_Corinthians",
+                    "group": 8
+                },
+                {
+                    "name": "2 Corinthians",
+                    "dateWrote": "AD 56",
+                    "author": "Paul",
+                    "chapterWidth": 5,
+                    "chapterHeight": 3,
+                    "apiName": "2_Corinthians",
+                    "chapters": 13,
+                    "height": 7,
+                    "start": 0,
+                    "group": 8
+                },
+                {
+                    "name": "Galatians",
+                    "dateWrote": "AD 48-50",
+                    "author": "Paul",
+                    "chapterWidth": 5,
+                    "chapterHeight": 2,
+                    "start": 0,
+                    "chapters": 6,
+                    "group": 8
+                },
+                {
+                    "name": "Romans",
+                    "dateWrote": "AD 56-58",
+                    "author": "Paul",
+                    "chapterWidth": 5,
+                    "chapterHeight": 4,
+                    "chapters": 16,
+                    "start": 0,
+                    "group": 8
+                },
+                {
+                    "name": "James",
+                    "dateWrote": "AD 44-49",
+                    "author": "James",
+                    "chapterWidth": 5,
+                    "chapterHeight": 1,
+                    "start": 0,
+                    "chapters": 5,
+                    "group": 10
+                },
+                {
+                    "name": "Colossians",
+                    "dateWrote": "AD 60-62",
+                    "author": "Paul",
+                    "chapterWidth": 4,
+                    "chapterHeight": 1,
+                    "start": 0,
+                    "chapters": 4,
+                    "group": 8
+                }
+            ],
+            [
+                {
+                    "name": "Philemon",
+                    "dateWrote": "AD 60-62",
+                    "author": "Paul",
+                    "chapterWidth": 1,
+                    "chapterHeight": 1,
+                    "chapters": 1,
+                    "group": 2,
+                    "start": 8
+                },
+                {
+                    "name": "Ephesians",
+                    "dateWrote": "AD 60-62",
+                    "author": "Paul",
+                    "chapterWidth": 5,
+                    "chapterHeight": 2,
+                    "chapters": 6,
+                    "start": 0,
+                    "group": 8
+                },
+                {
+                    "name": "Philippians",
+                    "dateWrote": "AD 60-62",
+                    "author": "Paul",
+                    "chapterWidth": 4,
+                    "chapterHeight": 1,
+                    "chapters": 4,
+                    "start": 0,
+                    "group": 8
+                },
+                {
+                    "name": "1 Peter",
+                    "dateWrote": "AD 60-64",
+                    "author": "Peter",
+                    "chapterWidth": 5,
+                    "chapterHeight": 1,
+                    "apiName": "1_Peter",
+                    "start": 0,
+                    "chapters": 5,
+                    "group": 10
+                },
+                {
+                    "name": "2 Peter",
+                    "dateWrote": "AD 64-68",
+                    "author": "Peter",
+                    "chapterWidth": 3,
+                    "chapterHeight": 1,
+                    "start": 0,
+                    "apiName": "2_Peter",
+                    "chapters": 3,
+                    "group": 10
+                },
+                {
+                    "name": "Hebrews",
+                    "dateWrote": "AD 60-70",
+                    "author": "Paul",
+                    "chapterWidth": 5,
+                    "start": 0,
+                    "chapterHeight": 3,
+                    "chapters": 13,
+                    "group": 10
+                },
+                {
+                    "name": "1 Timothy",
+                    "dateWrote": "AD 62-64",
+                    "author": "Paul",
+                    "chapterWidth": 5,
+                    "chapterHeight": 2,
+                    "start": 0,
+                    "apiName": "1_Timothy",
+                    "chapters": 6,
+                    "height": 7,
+                    "group": 8
+                }
+            ],
+            [
+                {
+                    "name": "Titus",
+                    "dateWrote": "AD 62-64",
+                    "author": "Paul",
+                    "chapterWidth": 3,
+                    "chapterHeight": 1,
+                    "start": 0,
+                    "chapters": 3,
+                    "group": 8
+                },
+                {
+                    "name": "2 Timothy",
+                    "dateWrote": "AD 66-67",
+                    "author": "Paul",
+                    "chapterWidth": 4,
+                    "apiName": "2_Timothy",
+                    "start": 0,
+                    "chapterHeight": 1,
+                    "chapters": 4,
+                    "group": 8
+                },
+                {
+                    "name": "Jude",
+                    "dateWrote": "AD 60-80",
+                    "author": "Jude",
+                    "chapterWidth": 1,
+                    "chapterHeight": 1,
+                    "start": 0,
+                    "chapters": 1,
+                    "group": 10
+                },
+                {
+                    "name": "1 John",
+                    "dateWrote": "AD 85-95",
+                    "author": "John",
+                    "chapterWidth": 4,
+                    "apiName": "1_John",
+                    "chapterHeight": 1,
+                    "start": 0,
+                    "chapters": 4,
+                    "group": 10
+                },
+                {
+                    "name": "2 John",
+                    "dateWrote": "AD 85-95",
+                    "author": "John",
+                    "chapterWidth": 1,
+                    "chapterHeight": 1,
+                    "apiName": "2_John",
+                    "start": 0,
+                    "chapters": 1,
+                    "group": 10
+                },
+                {
+                    "name": "3 John",
+                    "dateWrote": "AD 85-95",
+                    "author": "John",
+                    "chapterWidth": 1,
+                    "chapterHeight": 1,
+                    "apiName": "3_John",
+                    "chapters": 1,
+                    "start": 0,
+                    "group": 10
+                },
+                {
+                    "name": "Revelation",
+                    "dateWrote": "AD 95-96",
+                    "author": "John",
+                    "chapterWidth": 5,
+                    "chapterHeight": 5,
+                    "start": 0,
+                    "chapters": 22,
+                    "group": 10
+                }
+            ]
+        ]
+    },
+    {
+        "name": "Chronological Alternative",
+        "layers": [
+            [
+                {
+                    "name": "Genesis",
+                    "dateWrote": "1445-1405 BC",
+                    "author": "Moses",
+                    "chapterWidth": 5,
+                    "chapterHeight": 10,
+                    "chapters": 50,
+                    "start": 0,
+                    "height": 14,
+                    "group": 0
+                },
+                {
+                    "name": "Job",
+                    "dateWrote": "2000-1000 BC",
+                    "author": "Unknown (Traditionally Paul)",
+                    "chapterWidth": 5,
+                    "chapterHeight": 9,
+                    "chapters": 42,
+                    "start": 0,
+                    "group": 0
+                },
+                {
+                    "name": "Exodus",
+                    "dateWrote": "1450-1400 BC",
+                    "author": "Moses",
+                    "chapterWidth": 5,
+                    "chapterHeight": 8,
+                    "chapters": 40,
+                    "start": 0,
+                    "group": 0
+                },
+                {
+                    "name": "Leviticus",
+                    "dateWrote": "1450-1400 BC",
+                    "author": "Moses",
+                    "chapterWidth": 5,
+                    "chapterHeight": 6,
+                    "chapters": 27,
+                    "start": 0,
+                    "group": 0
+                },
+                {
+                    "name": "Numbers",
+                    "dateWrote": "1450-1400 BC",
+                    "author": "Moses",
+                    "chapterWidth": 5,
+                    "chapterHeight": 8,
+                    "chapters": 36,
+                    "start": 0,
+                    "group": 0
+                },
+                {
+                    "name": "Deuteronomy",
+                    "dateWrote": "1450-1400 BC",
+                    "author": "Moses",
+                    "chapterWidth": 5,
+                    "chapterHeight": 7,
+                    "chapters": 34,
+                    "start": 0,
+                    "group": 0
+                },
+                {
+                    "name": "Joshua",
+                    "dateWrote": "1400-1370 BC",
+                    "author": "Joshua",
+                    "chapterWidth": 5,
+                    "chapterHeight": 5,
+                    "chapters": 24,
+                    "start": 0,
+                    "group": 0
+                }
+            ],
+            [
+                {
+                    "name": "Judges",
+                    "dateWrote": "1370-1050 BC",
+                    "author": "Samuel",
+                    "chapterWidth": 5,
+                    "chapterHeight": 5,
+                    "chapters": 21,
+                    "start": 0,
+                    "group": 0
+                },
+                {
+                    "name": "Ruth",
+                    "dateWrote": "1050-1000 BC",
+                    "author": "Samuel",
+                    "chapterWidth": 4,
+                    "chapterHeight": 1,
+                    "chapters": 4,
+                    "start": 0,
+                    "height": 12,
+                    "group": 0
+                },
+                {
+                    "name": "1 Samuel",
+                    "dateWrote": "930-722 BC",
+                    "author": "Samuel, Nathan, Gad",
+                    "chapterWidth": 5,
+                    "chapterHeight": 7,
+                    "apiName": "1_Samuel",
+                    "chapters": 31,
+                    "start": 0,
+                    "group": 0
+                },
+                {
+                    "name": "2 Samuel",
+                    "dateWrote": "930-722 BC",
+                    "author": "Nathan, Gad",
+                    "chapterWidth": 5,
+                    "chapterHeight": 5,
+                    "apiName": "2_Samuel",
+                    "chapters": 24,
+                    "start": 0,
+                    "group": 0
+                },
+                {
+                    "name": "1 Chronicles",
+                    "dateWrote": "450-400 BC",
+                    "author": "Ezra",
+                    "chapterWidth": 5,
+                    "chapterHeight": 6,
+                    "chapters": 29,
+                    "apiName": "1_Chronicles",
+                    "start": 0,
+                    "group": 0
+                },
+                {
+                    "name": "1 Psalms",
+                    "dateWrote": "1410-450 BC",
+                    "author": "David",
+                    "chapterWidth": 5,
+                    "chapterHeight": 8,
+                    "apiName": "Psalms",
+                    "chapters": 41,
+                    "start": 0,
+                    "group": 0
+                },
+                {
+                    "name": "2 Psalms",
+                    "dateWrote": "1410-450 BC",
+                    "author": "David",
+                    "chapterWidth": 5,
+                    "apiName": "Psalms",
+                    "chapterHeight": 7,
+                    "chapters": 31,
+                    "start": 41,
+                    "group": 0
+                }
+            ],
+            [
+                {
+                    "name": "3 Psalms",
+                    "dateWrote": "1410-450 BC",
+                    "author": "David",
+                    "chapterWidth": 5,
+                    "chapterHeight": 4,
+                    "apiName": "Psalms",
+                    "chapters": 17,
+                    "start": 72,
+                    "group": 0
+                },
+                {
+                    "name": "4 Psalms",
+                    "dateWrote": "1410-450 BC",
+                    "author": "David",
+                    "chapterWidth": 5,
+                    "apiName": "Psalms",
+                    "chapterHeight": 3,
+                    "chapters": 17,
+                    "start": 89,
+                    "height": 18,
+                    "group": 0
+                },
+                {
+                    "name": "5 Psalms",
+                    "dateWrote": "1410-450 BC",
+                    "author": "David",
+                    "chapterWidth": 5,
+                    "chapterHeight": 9,
+                    "chapters": 44,
+                    "apiName": "Psalms",
+                    "start": 106,
+                    "group": 0
+                },
+                {
+                    "name": "Song of Songs",
+                    "dateWrote": "970-930 BC",
+                    "author": "Solomon",
+                    "chapterWidth": 5,
+                    "chapterHeight": 2,
+                    "chapters": 8,
+                    "apiName": "Song_of_Songs",
+                    "start": 0,
+                    "group": 0
+                },
+                {
+                    "name": "Proverbs",
+                    "dateWrote": "970-700 BC",
+                    "author": "Solomon",
+                    "chapterWidth": 5,
+                    "chapterHeight": 7,
+                    "chapters": 31,
+                    "start": 0,
+                    "group": 0
+                },
+                {
+                    "name": "Ecclesiastes",
+                    "dateWrote": "935 BC",
+                    "author": "Solomon",
+                    "chapterWidth": 5,
+                    "chapterHeight": 2,
+                    "chapters": 12,
+                    "start": 0,
+                    "group": 0
+                },
+                {
+                    "name": "1 Kings",
+                    "dateWrote": "560-538 BC",
+                    "author": "Jeremiah",
+                    "chapterWidth": 5,
+                    "chapterHeight": 5,
+                    "apiName": "1_Kings",
+                    "chapters": 22,
+                    "start": 0,
+                    "group": 0
+                }
+            ],
+            [
+                {
+                    "name": "2 Kings",
+                    "dateWrote": "560-538 BC",
+                    "author": "Jeremiah",
+                    "chapterWidth": 5,
+                    "chapterHeight": 5,
+                    "apiName": "2_kings",
+                    "chapters": 25,
+                    "start": 0,
+                    "group": 0
+                },
+                {
+                    "name": "2 Chronicles",
+                    "dateWrote": "450-400 BC",
+                    "author": "Ezra",
+                    "chapterWidth": 5,
+                    "chapterHeight": 8,
+                    "apiName": "2_Chronicles",
+                    "chapters": 36,
+                    "start": 0,
+                    "group": 0
+                },
+                {
+                    "name": "Isaiah",
+                    "dateWrote": "740-680 BC",
+                    "author": "Isaiah",
+                    "chapterWidth": 5,
+                    "chapterHeight": 14,
+                    "chapters": 66,
+                    "start": 0,
+                    "group": 0
+                },
+                {
+                    "name": "Jeremiah",
+                    "dateWrote": "627-586 BC",
+                    "author": "Jeremiah",
+                    "chapterWidth": 5,
+                    "chapterHeight": 11,
+                    "chapters": 52,
+                    "start": 0,
+                    "group": 0
+                },
+                {
+                    "name": "Lamentations",
+                    "dateWrote": "586 BC",
+                    "author": "Jeremiah",
+                    "chapterWidth": 5,
+                    "chapterHeight": 1,
+                    "chapters": 5,
+                    "start": 0,
+                    "height": 14,
+                    "group": 0
+                },
+                {
+                    "name": "Hosea",
+                    "dateWrote": "755-715 BC",
+                    "author": "Hosea",
+                    "chapterWidth": 5,
+                    "chapterHeight": 3,
+                    "chapters": 14,
+                    "start": 0,
+                    "group": 0
+                },
+                {
+                    "name": "Joel",
+                    "dateWrote": "835-796 BC",
+                    "author": "Joel",
+                    "chapterWidth": 3,
+                    "chapterHeight": 1,
+                    "chapters": 3,
+                    "start": 0,
+                    "group": 0
+                }
+            ],
+            [
+                {
+                    "name": "Amos",
+                    "dateWrote": "760-750 BC",
+                    "author": "Amos",
+                    "chapterWidth": 5,
+                    "chapterHeight": 2,
+                    "chapters": 9,
+                    "start": 0,
+                    "group": 0
+                },
+                {
+                    "name": "Obadiah",
+                    "dateWrote": "586 BC",
+                    "author": "Obadiah",
+                    "chapterWidth": 1,
+                    "chapterHeight": 1,
+                    "chapters": 1,
+                    "start": 0,
+                    "group": 0
+                },
+                {
+                    "name": "Jonah",
+                    "dateWrote": "785-760 BC",
+                    "author": "Jonah",
+                    "chapterWidth": 4,
+                    "chapterHeight": 1,
+                    "chapters": 4,
+                    "start": 0,
+                    "height": 6,
+                    "group": 0
+                },
+                {
+                    "name": "Micah",
+                    "dateWrote": "735-700 BC",
+                    "author": "Micah",
+                    "chapterWidth": 5,
+                    "chapterHeight": 2,
+                    "chapters": 7,
+                    "start": 0,
+                    "group": 0
+                },
+                {
+                    "name": "Nahum",
+                    "dateWrote": "660-630 BC",
+                    "author": "Nahum",
+                    "chapterWidth": 3,
+                    "chapterHeight": 1,
+                    "chapters": 3,
+                    "start": 0,
+                    "group": 0
+                },
+                {
+                    "name": "Habakkuk",
+                    "dateWrote": "610-605 BC",
+                    "author": "Habakkuk",
+                    "chapterWidth": 3,
+                    "chapterHeight": 1,
+                    "chapters": 3,
+                    "start": 0,
+                    "group": 0
+                },
+                {
+                    "name": "Zephaniah",
+                    "dateWrote": "640-630 BC",
+                    "author": "Zephaniah",
+                    "chapterWidth": 3,
+                    "chapterHeight": 1,
+                    "chapters": 3,
+                    "start": 0,
+                    "group": 0
+                }
+            ],
+            [
+                {
+                    "name": "Ezekiel",
+                    "dateWrote": "593-571 BC",
+                    "chapterWidth": 5,
+                    "chapterHeight": 10,
+                    "chapters": 48,
+                    "start": 0,
+                    "group": 0,
+                    "author": "Ezekiel"
+                },
+                {
+                    "name": "Daniel",
+                    "dateWrote": "605-536 BC",
+                    "chapterWidth": 5,
+                    "chapterHeight": 3,
+                    "chapters": 12,
+                    "start": 0,
+                    "group": 0,
+                    "author": "Daniel"
+                },
+                {
+                    "name": "Ezra",
+                    "dateWrote": "450-400 BC",
+                    "chapterWidth": 5,
+                    "chapterHeight": 2,
+                    "chapters": 10,
+                    "start": 0,
+                    "height": 13,
+                    "group": 0,
+                    "author": "Ezra"
+                },
+                {
+                    "name": "Esther",
+                    "dateWrote": "470-450 BC",
+                    "chapterWidth": 5,
+                    "chapterHeight": 5,
+                    "chapters": 10,
+                    "start": 0,
+                    "group": 0,
+                    "author": "Mordecai"
+                },
+                {
+                    "name": "Nehemiah",
+                    "dateWrote": "445-420 BC",
+                    "chapterWidth": 5,
+                    "chapterHeight": 3,
+                    "chapters": 13,
+                    "start": 0,
+                    "group": 0,
+                    "author": "Nehemiah"
+                },
+                {
+                    "name": "Haggai",
+                    "dateWrote": "520 BC",
+                    "chapterWidth": 2,
+                    "chapterHeight": 1,
+                    "chapters": 2,
+                    "start": 0,
+                    "group": 0,
+                    "author": "Haggai"
+                },
+                {
+                    "name": "Zechariah",
+                    "dateWrote": "520-518 BC",
+                    "chapterWidth": 5,
+                    "chapterHeight": 3,
+                    "chapters": 14,
+                    "start": 0,
+                    "group": 0,
+                    "author": "Zechariah"
+                },
+                {
+                    "name": "Malachi",
+                    "dateWrote": "(430 BC)",
+                    "chapterWidth": 4,
+                    "chapterHeight": 1,
+                    "chapters": 4,
+                    "start": 0,
+                    "height": 5,
+                    "group": 0,
+                    "author": "Malachi"
+                },
+                {
+                    "name": "Matthew",
+                    "dateWrote": "(AD 50-70)",
+                    "chapterWidth": 5,
+                    "chapterHeight": 6,
+                    "chapters": 28,
+                    "height": 10,
+                    "start": 0,
+                    "group": 2,
+                    "author": "Matthew"
+                },
+                {
+                    "name": "Mark",
+                    "dateWrote": "(AD 50-60)",
+                    "chapterWidth": 5,
+                    "chapterHeight": 4,
+                    "start": 0,
+                    "chapters": 16,
+                    "group": 2,
+                    "author": "Mark"
+                },
+                {
+                    "name": "Luke",
+                    "dateWrote": "(AD 60-62)",
+                    "chapterWidth": 5,
+                    "chapterHeight": 5,
+                    "chapters": 24,
+                    "start": 0,
+                    "group": 2,
+                    "author": "Luke"
+                },
+                {
+                    "name": "John",
+                    "dateWrote": "(AD 85-90)",
+                    "chapterWidth": 5,
+                    "chapterHeight": 5,
+                    "chapters": 21,
+                    "start": 0,
+                    "group": 2,
+                    "author": "John"
+                },
+                {
+                    "name": "Acts",
+                    "dateWrote": "(AD 62-64)",
+                    "chapterWidth": 5,
+                    "chapterHeight": 6,
+                    "chapters": 28,
+                    "start": 0,
+                    "group": 2,
+                    "author": "Luke"
+                },
+                {
+                    "name": "1 Thessalonians",
+                    "dateWrote": "(AD 50-51)",
+                    "chapterWidth": 5,
+                    "chapterHeight": 1,
+                    "apiName": "1_Thessalonians",
+                    "start": 0,
+                    "chapters": 5,
+                    "group": 2,
+                    "author": "Paul"
+                },
+                {
+                    "name": "2 Thessalonians",
+                    "dateWrote": "(AD 50-51)",
+                    "chapterWidth": 3,
+                    "apiName": "2_Thessalonians",
+                    "start": 0,
+                    "chapterHeight": 3,
+                    "chapters": 3,
+                    "group": 2,
+                    "author": "Paul"
+                },
+                {
+                    "name": "1 Corinthians",
+                    "dateWrote": "(AD 55)",
+                    "chapterWidth": 5,
+                    "chapterHeight": 4,
+                    "chapters": 16,
+                    "start": 0,
+                    "apiName": "1_Corinthians",
+                    "group": 2,
+                    "author": "Paul"
+                },
+                {
+                    "name": "2 Corinthians",
+                    "dateWrote": "(AD 56)",
+                    "chapterWidth": 5,
+                    "chapterHeight": 3,
+                    "apiName": "2_Corinthians",
+                    "chapters": 13,
+                    "height": 7,
+                    "start": 0,
+                    "group": 2,
+                    "author": "Paul"
+                },
+                {
+                    "name": "Galatians",
+                    "dateWrote": "(AD 48-50)",
+                    "chapterWidth": 5,
+                    "chapterHeight": 2,
+                    "start": 0,
+                    "chapters": 6,
+                    "group": 2,
+                    "author": "Paul"
+                },
+                {
+                    "name": "Romans",
+                    "dateWrote": "(AD 56-58)",
+                    "chapterWidth": 5,
+                    "chapterHeight": 4,
+                    "chapters": 16,
+                    "start": 0,
+                    "group": 2,
+                    "author": "Paul"
+                },
+                {
+                    "name": "James",
+                    "dateWrote": "(AD 44-49)",
+                    "chapterWidth": 5,
+                    "chapterHeight": 1,
+                    "start": 0,
+                    "chapters": 5,
+                    "group": 2,
+                    "author": "James"
+                },
+                {
+                    "name": "Colossians",
+                    "dateWrote": "(AD 60-62)",
+                    "chapterWidth": 4,
+                    "chapterHeight": 1,
+                    "start": 0,
+                    "chapters": 4,
+                    "group": 2,
+                    "author": "Paul"
+                },
+                {
+                    "name": "Philemon",
+                    "dateWrote": "(AD 60-62)",
+                    "chapterWidth": 1,
+                    "chapterHeight": 1,
+                    "chapters": 1,
+                    "group": 2,
+                    "start": 0,
+                    "author": "Paul"
+                },
+                {
+                    "name": "Ephesians",
+                    "dateWrote": "(AD 60-62)",
+                    "chapterWidth": 5,
+                    "chapterHeight": 2,
+                    "chapters": 6,
+                    "start": 0,
+                    "group": 2,
+                    "author": "Paul"
+                },
+                {
+                    "name": "Philippians",
+                    "dateWrote": "(AD 60-62)",
+                    "chapterWidth": 4,
+                    "chapterHeight": 1,
+                    "chapters": 4,
+                    "start": 0,
+                    "group": 2,
+                    "author": "Paul"
+                },
+                {
+                    "name": "1 Peter",
+                    "dateWrote": "(AD 60-64)",
+                    "chapterWidth": 5,
+                    "chapterHeight": 1,
+                    "apiName": "1_Peter",
+                    "start": 0,
+                    "chapters": 5,
+                    "group": 2,
+                    "author": "Peter"
+                },
+                {
+                    "name": "2 Peter",
+                    "dateWrote": "(AD 64-68)",
+                    "chapterWidth": 3,
+                    "chapterHeight": 1,
+                    "start": 0,
+                    "apiName": "2_Peter",
+                    "chapters": 3,
+                    "group": 2,
+                    "author": "Peter"
+                },
+                {
+                    "name": "Hebrews",
+                    "dateWrote": "(AD 60-70)",
+                    "chapterWidth": 5,
+                    "start": 0,
+                    "chapterHeight": 3,
+                    "chapters": 13,
+                    "group": 2,
+                    "author": "Paul or Unknown"
+                },
+                {
+                    "name": "1 Timothy",
+                    "dateWrote": "(AD 62-64)",
+                    "chapterWidth": 5,
+                    "chapterHeight": 2,
+                    "start": 0,
+                    "apiName": "1_Timothy",
+                    "chapters": 6,
+                    "height": 7,
+                    "group": 2,
+                    "author": "Paul"
+                },
+                {
+                    "name": "Titus",
+                    "dateWrote": "(AD 62-64)",
+                    "chapterWidth": 3,
+                    "chapterHeight": 1,
+                    "start": 0,
+                    "chapters": 3,
+                    "group": 2,
+                    "author": "Paul"
+                },
+                {
+                    "name": "2 Timothy",
+                    "dateWrote": "(AD 66-67)",
+                    "chapterWidth": 4,
+                    "apiName": "2_Timothy",
+                    "start": 0,
+                    "chapterHeight": 1,
+                    "chapters": 4,
+                    "group": 2,
+                    "author": "Paul"
+                },
+                {
+                    "name": "Jude",
+                    "dateWrote": "(AD 60-80)",
+                    "chapterWidth": 1,
+                    "chapterHeight": 1,
+                    "start": 0,
+                    "chapters": 1,
+                    "group": 2,
+                    "author": "Jude"
+                },
+                {
+                    "name": "1 John",
+                    "dateWrote": "(AD 85-95)",
+                    "chapterWidth": 4,
+                    "apiName": "1_John",
+                    "chapterHeight": 1,
+                    "start": 0,
+                    "chapters": 4,
+                    "group": 2,
+                    "author": "John"
+                },
+                {
+                    "name": "2 John",
+                    "dateWrote": "(AD 85-95)",
+                    "chapterWidth": 1,
+                    "chapterHeight": 1,
+                    "apiName": "2_John",
+                    "start": 0,
+                    "chapters": 1,
+                    "group": 2,
+                    "author": "John"
+                },
+                {
+                    "name": "3 John",
+                    "dateWrote": "(AD 85-95)",
+                    "chapterWidth": 1,
+                    "chapterHeight": 1,
+                    "apiName": "3_John",
+                    "chapters": 1,
+                    "start": 0,
+                    "group": 2,
+                    "author": "John"
+                },
+                {
+                    "name": "Revelation",
+                    "dateWrote": "(AD 95-96)",
+                    "chapterWidth": 5,
+                    "chapterHeight": 5,
+                    "start": 0,
+                    "chapters": 22,
+                    "group": 2,
+                    "author": "John"
+                }
+            ]
+        ]
+    }
+]

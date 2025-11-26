@@ -1,7 +1,7 @@
 const { useState, useRef, useEffect, useCallback } = os.appHooks;
 import { useBibleContext } from "app.hooks.bibleVariables";
 import { useTabsContext } from "app.hooks.tabs";
-import { cloneElement } from "https://esm.sh/react@18";
+// import { cloneElement } from "https://cdn.jsdelivr.net/npm/react@18/";
 /**
  * useDivSpliter - Hook to manage split layout logic
  */
@@ -141,8 +141,8 @@ export const useDivSpliter = ({
 
   const addApplication = (newApp) => {
     // TODO: Replace with a better alternative
-    const clone = cloneElement(newApp.App, { prop: "test" });
-    os.log(newApp.to, apps, "cloned");
+    // const clone = cloneElement(newApp.App, { prop: "test" });
+    // os.log(newApp.to, apps, "cloned");
     if (newApp.to === "panel") {
       if (apps.length > 2) {
         setApps([apps[0], apps[1], newApp]);

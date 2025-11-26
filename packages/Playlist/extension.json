@@ -11,7 +11,7 @@
       },
       "toolbarConfig": {
         "hasToggle": "true",
-        "icon": "playlist_play",
+        "icon": "explore",
         "label": "Playlist"
       }
     },

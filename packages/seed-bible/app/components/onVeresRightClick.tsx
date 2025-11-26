@@ -16,28 +16,28 @@ const IconsURL = {
     "https://auth-aux-aobot-prod-filesbucket-141297942820.s3.amazonaws.com/annotations/16a6bc66099d9153e9ae5685c6e0d5517509811db6107405c0273af32b253801.svg",
 };
 
-const {SharePopup} = thisBot.Chips();
+const { SharePopup } = thisBot.Chips();
 const MenuOptions = {
   type: "normal",
   items: [
-    {
-      icon: <MenuIcon name={IconsURL.Highlighter} invert />,
-      title: `Unhighlight verse`,
-      onClick: (items) => {
-        SetWordHighlightsBC((prev) => {
-          const old = { ...prev };
-          items.forEach((verse) => {
-            if (globalThis.ToggleVerseHighlight) {
-              delete old[verse.verseNumber];
-              globalThis.ToggleVerseHighlight(verse.verseNumber);
-            }
-          });
-          return old;
-        });
+    // {
+    //   icon: <MenuIcon name={IconsURL.Highlighter} invert />,
+    //   title: `Unhighlight verse`,
+    //   onClick: (items) => {
+    //     SetWordHighlightsBC((prev) => {
+    //       const old = { ...prev };
+    //       items.forEach((verse) => {
+    //         if (globalThis.ToggleVerseHighlight) {
+    //           delete old[verse.verseNumber];
+    //           globalThis.ToggleVerseHighlight(verse.verseNumber);
+    //         }
+    //       });
+    //       return old;
+    //     });
 
-        SetInHold({});
-      },
-    },
+    //     SetInHold({});
+    //   },
+    // },
     {
       icon: <MenuIcon name={IconsURL.Library} />,
       title: "Copy text",
@@ -144,4 +144,4 @@ that?.extraContext?.forEach(({ address, label, items }) => {
 
 // globalThis.ContextMenuOptions = MenuOptions
 // globalThis.OnClosePopup = () => SetInHold(null)
-openPopupSettings(MenuOptions);
+// openPopupSettings(MenuOptions);

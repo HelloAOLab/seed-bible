@@ -245,13 +245,11 @@ export async function uploadFile(page: Page, filePath: string) {
         id: fileInputIdentifier,
         type: "file",
         onchange: (e) => {
-          document
-            .querySelector("body")
-            .dispatchEvent(
-              Object.assign(new Event("drop"), {
-                dataTransfer: (e.target as HTMLInputElement).files,
-              })
-            );
+          document.querySelector("body").dispatchEvent(
+            Object.assign(new Event("drop"), {
+              dataTransfer: (e.target as HTMLInputElement).files,
+            })
+          );
         },
       })
     );
@@ -284,18 +282,20 @@ export async function loadInst(
 }
 
 export const DEFAULT_EXTENSIONS = [
-  "seed-bible",
-  "BookSelector",
-  "Object Pooler",
-  "GeoImporter",
-  "Color Lerper",
-  "Location",
-  "Bible Visualization Utils",
-  "Scripture Map 2D",
-  "Painter",
-  "Scripture Map 3D",
-  "Bible Stack",
-  "Playlist",
+    'seed-bible',
+    'BookSelector',
+    'Object Pooler',
+    'GeoImporter',
+    'Color Lerper',
+    'Location',
+    'Bible Visualization Utils',
+    'Scripture Map 2D',
+    'Painter',
+    'Scripture Map 3D',
+    'Bible Stack',
+    'Playlist',
+    'Calendar',
+  'Tabernacle'
 ];
 
 export async function loadSeedBible(

@@ -1,6 +1,6 @@
 const { useState, useRef, useEffect } = os.appHooks
 
-const ConfigurableFunctionCommands = ({ contextData }) => {
+const ConfigurableFunctionCommands = ({ contextData,clickedVerses }) => {
 
     const [commandInput, setCommandInput] = useState('');
     const [showSuggestions, setShowSuggestions] = useState(false);
@@ -13,7 +13,27 @@ const ConfigurableFunctionCommands = ({ contextData }) => {
     const [loadingSuggestions, setLoadingSuggestions] = useState(false);
     const inputRef = useRef(null);
     const [translation, setTranslations] = useState()
+    const getVerseReference = () => {
+    if (clickedVerses.length === 0) return "";
+    const sorted = [...clickedVerses].sort((a, b) => a - b);
 
+    const groups = [];
+    let start = sorted[0];
+    let end = sorted[0];
+
+    for (let i = 1; i < sorted.length; i++) {
+      if (sorted[i] === end + 1) {
+        end = sorted[i];
+      } else {
+        groups.push(start === end ? `${start}` : `${start}-${end}`);
+        start = sorted[i];
+        end = sorted[i];
+      }
+    }
+    groups.push(start === end ? `${start}` : `${start}-${end}`);
+
+    return `${contextData.book} ${contextData.chapter}:${groups.join(",")}`;
+  };
     // Function library - developers can define their own functions
     const functionLibrary = {
         getSupportedLanguages: async () => {
@@ -27,7 +47,8 @@ const ConfigurableFunctionCommands = ({ contextData }) => {
 
         // Generate suggested questions about the verse
         generateSuggestedQuestions: async (data) => {
-            const prompt = `Based on this biblical verse: "${data.verse}" (${data.reference}),
+            os.log('Generating suggested questions for:', data);
+            const prompt = `Based on this biblical book:${data.book} chapter:${data.chapter} verse: "${data.verseNumber.toString()}" (${data.reference}),
              suggest exactly 3 common questions that people typically ask about this passage.
               Format your response as a array of strings, with each question being concise and practical like [q1,q2,13].
                Focus on questions about meaning, application, and context that would be most helpful for Bible study.`;
@@ -915,7 +936,7 @@ const ConfigurableFunctionCommands = ({ contextData }) => {
                                     marginBottom: '12px',
                                     fontWeight: '500'
                                 }}>
-                                    Common questions about {contextData?.reference}:
+                                    Common questions about {getVerseReference()}:
                                 </div>
                                 <div style={{
                                     display: 'flex',

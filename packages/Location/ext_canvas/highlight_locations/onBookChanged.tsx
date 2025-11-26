@@ -1,3 +1,4 @@
+import { LocationIcon } from "app.components.icons";
 await os.sleep(200);
 if (!that?.content) return;
 
@@ -5,15 +6,11 @@ const locations = tags.locations;
 
 const locationsArr = [];
 
-const locationOptionsConfig = {
-
-};
+const locationOptionsConfig = {};
 
 const makeLocationOptions = ({ location }) => {
   return {
-    icon: (
-      <span class="material-symbols-outlined">location_on</span>
-    ),
+    icon: <span class="material-symbols-outlined">location_on</span>,
     title: `${location}`,
     onClick: async () => {
       if (!globalThis.activeCanvasId) {
@@ -34,12 +31,8 @@ const makeLocationOptions = ({ location }) => {
         });
       }
       let geoJson;
-      let locationBot = getBot(
-        "system",
-        "ext_canvas.highlight_locations"
-      );
-      let placeData =
-        locationBot.tags.locations[location.toLowerCase()];
+      let locationBot = getBot("system", "ext_canvas.highlight_locations");
+      let placeData = locationBot.tags.locations[location.toLowerCase()];
       if (placeData.place === placeData.geojson) {
         geoJson = await web.get(
           `https://raw.githubusercontent.com/Bored-Wizard/isreal_geojson/main/${placeData.geojson}.geojson`
@@ -50,23 +43,17 @@ const makeLocationOptions = ({ location }) => {
         );
       }
       if (geoJson.status === 200) {
-        whisper(
-          getBot("system", "ext_geoImporter.importer"),
-          "loadMap",
-          {
-            file: geoJson.data,
-            loadGame: that?.loadGame ? true : false,
-            openOverlay: true,
-          }
-        );
+        whisper(getBot("system", "ext_geoImporter.importer"), "loadMap", {
+          file: geoJson.data,
+          loadGame: that?.loadGame ? true : false,
+          openOverlay: true,
+        });
       } else {
-        os.toast(
-          "Something went wrong while retrieving the data"
-        );
+        os.toast("Something went wrong while retrieving the data");
       }
     },
-  }
-}
+  };
+};
 
 for (let i = 0; i < that.content.length; i++) {
   const verse = that.content[i].verses;
@@ -75,21 +62,33 @@ for (let i = 0; i < that.content.length; i++) {
     for (let word of verseArray) {
       if (locations[word.replace(/[^a-zA-Z]/g, "").toLowerCase()]) {
         locationsArr.push(word.replace(/[^a-zA-Z]/g, "").toLowerCase());
-        if (locationOptionsConfig[`${that.book}-${verse[j].verseNumber}`]) {
-          locationOptionsConfig[`${that.book}-${verse[j].verseNumber}`].items.push(makeLocationOptions({ location: word.replace(/[^a-zA-Z]/g, "") }));
+        if (
+          locationOptionsConfig[
+            `${that.book}-${that.chapter}-${verse[j].verseNumber}`
+          ]
+        ) {
+          locationOptionsConfig[
+            `${that.book}-${that.chapter}-${verse[j].verseNumber}`
+          ].items.push(
+            makeLocationOptions({ location: word.replace(/[^a-zA-Z]/g, "") })
+          );
         } else {
-          locationOptionsConfig[`${that.book}-${verse[j].verseNumber}`] = {
-            icon: (<span class="material-symbols-outlined">location_on</span>),
+          locationOptionsConfig[
+            `${that.book}-${that.chapter}-${verse[j].verseNumber}`
+          ] = {
+            icon: <LocationIcon />,
             title: "Locations",
-            items: [makeLocationOptions({ location: word.replace(/[^a-zA-Z]/g, "") })]
-          }
+            items: [
+              makeLocationOptions({ location: word.replace(/[^a-zA-Z]/g, "") }),
+            ],
+          };
         }
       }
     }
   }
 }
 
-if(!globalThis?.VerseContextMenuOptions){
+if (!globalThis?.VerseContextMenuOptions) {
   globalThis.VerseContextMenuOptions = {};
 }
 for (let key of Object.keys(locationOptionsConfig)) {
@@ -97,16 +96,17 @@ for (let key of Object.keys(locationOptionsConfig)) {
   if (globalThis?.VerseContextMenuOptions?.[key]) {
     options = [
       ...globalThis.VerseContextMenuOptions[key],
-      locationOptionsConfig[key]
-    ]
+      locationOptionsConfig[key],
+    ];
   } else {
-    options = [
-      locationOptionsConfig[key]
-    ]
+    options = [locationOptionsConfig[key]];
   }
   const uniqueOptions = [...new Set(options)];
   globalThis.VerseContextMenuOptions[key] = uniqueOptions;
-  console.log(globalThis.VerseContextMenuOptions[key], "globalThis.VerseContextMenuOptions[key]")
+  console.log(
+    globalThis.VerseContextMenuOptions[key],
+    "globalThis.VerseContextMenuOptions[key]"
+  );
 }
 
 HighlightWords({

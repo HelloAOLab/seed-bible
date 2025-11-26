@@ -66,6 +66,9 @@ const GetLabel = ({ value, currentOpenedBook }) => {
 const Playlist = () => {
   const IsPlaylistPlaying = globalThis.IsPlaylistPlaying;
 
+  const [createOptions, setCreateOptions] = useState(false);
+  const showPlaylistPosition = useRef(getPosition());
+
   const [editAnnoData, setEditAnnoData] = useState({
     address: "",
     title: "",
@@ -520,6 +523,24 @@ const Playlist = () => {
     setStopPlaylistModal(false);
   };
 
+  const gotoCreate = (isAnnotation = false) => {
+    if(globalThis[`${'default'}SetMode`]) {
+      if(isAnnotation) {
+        globalThis[`${'default'}SetMode`](PlaylistModeTypes.annotations);
+      } else {
+        globalThis[`${'default'}SetMode`](PlaylistModeTypes.playlist);
+      }
+    } else {
+      globalThis.SetTab("create");
+      if(isAnnotation) {
+        globalThis[`${"default"}mode`] = PlaylistModeTypes.annotations;
+      } else {
+        globalThis[`${"default"}mode`] = PlaylistModeTypes.playlist;
+      }
+    }
+    setCreateOptions(false);
+  }
+
   return (
     <>
       {!!editRichText.id && (
@@ -653,6 +674,81 @@ const Playlist = () => {
           </ButtonsCover>
         </Modal>
       )}
+
+      {createOptions &&  
+            <>
+              <div className="backdrop" onClick={() => setCreateOptions(false)} />
+                <div
+                    onClick={() => setCreateOptions(false)}
+                    style={{
+                      ...showPlaylistPosition.current,
+                      width: "210px",
+                      maxHeight: "105px",
+                      left: "none",
+                      right: "-12rem",
+                      padding: "0.5rem",
+                      top: "3rem",
+                    }}
+                    className="overlay linked-item-custom"
+                  >
+                    <div
+                      className="more-menu-items"
+                      onClick={(e) => {
+                        e.stopPropagation()
+                        if (SplitAppPanel2) {
+                          globalThis.PendingAction = gotoCreate;
+                          globalThis.StopPlayingPlaylistModal(true);
+                          return;
+                        }
+                        gotoCreate();
+                      }}
+                     
+                    >
+                      <div
+                        className="align-center"
+                        style={{gap: '0.5rem'}}
+                      >
+                        <span
+                          style={{ fontSize: "20px", color: "white" }}
+                          class="material-symbols-outlined"
+                        >
+                          playlist_play
+                        </span>
+                        <span style={{fontFamily: `"Satoshi", system-ui, sans-serif`}}>
+                          New playlist
+                        </span>
+                      </div>
+                    </div>
+                    <div 
+                    className="more-menu-items"
+                      onClick={(e) => {
+                        e.stopPropagation()
+                        if (SplitAppPanel2) {
+                          globalThis.PendingAction = () => gotoCreate(true);
+                          globalThis.StopPlayingPlaylistModal(true);
+                          return;
+                        }
+                        gotoCreate(true);
+                      }}
+                    
+                    >
+                      <div
+                          className="align-center"
+                          style={{gap: '0.5rem'}}
+                        >
+                          <span
+                            style={{ fontSize: "20px", color: "white" }}
+                            class="material-symbols-outlined"
+                          >
+                            draft
+                          </span>
+                          <span style={{fontFamily: `"Satoshi", system-ui, sans-serif`}}>
+                            New annotation
+                        </span>
+                      </div>
+                    </div>
+                </div>
+                </>}
       <div
         style={{
           display: "flex",
@@ -701,6 +797,7 @@ const Playlist = () => {
               </Modal>
             )}
 
+
             <div
               id={`sidebar-bar`}
               className={`playlist-cont-parent ${
@@ -742,8 +839,8 @@ const Playlist = () => {
                     </span>
                   )}
                   {!editData.id && (
-                    <div className="tabs-playlist" style={{ width: "100%" }}>
-                      {buttonConfigs.map(({ label, onClick, value, icon }) => (
+                    <div className="tabs-playlist-off" style={{ width: "100%", display: "flex", justifyContent: "space-between", alignItems: "center" }}>
+                      {[buttonConfigs[0]].map(({ label, onClick, value, icon }) => (
                         <h4
                           onClick={() => {
                             if (SplitAppPanel2) {
@@ -754,9 +851,7 @@ const Playlist = () => {
                             onClick();
                           }}
                           style={{ width: `${100 / buttonConfigs.length}%` }}
-                          className={`tabs-playlist-item ${
-                            value === tab ? "active" : ""
-                          }`}
+                          className={`tabs-playlist-item`}
                         >
                           <span
                             className="material-symbols-outlined unfollow"
@@ -773,8 +868,21 @@ const Playlist = () => {
                           </span>
                         </h4>
                       ))}
+                       <Button
+                        onClick={() => {
+                          setCreateOptions(true);
+                        }}
+                        secondary
+                        exClass="create-button"
+                      >
+                        <span style={{ color: "white" }} class="material-symbols-outlined">
+                          add
+                        </span>
+                        Create
+                      </Button>
                     </div>
                   )}
+                  
                   {editData.id && (
                     <div
                       className="align-center"

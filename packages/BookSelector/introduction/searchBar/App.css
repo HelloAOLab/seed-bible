@@ -1,7 +1,7 @@
 .books-container {
   display: flex;
   width: 100%;
-  height: calc(70dvh - 75px);
+  height: calc(80dvh - 75px);
   position: absolute;
   left: 0;
   padding: 0px 10px;
@@ -857,7 +857,7 @@ input:checked + .slider:not(#slider):before {
   transition: all 0.3s;
   justify-content: flex-start;
   align-items: flex-start;
-  height: calc(70dvh - 50px);
+  height: calc(80dvh - 50px);
 }
 
 .sidebar-itm {
@@ -945,7 +945,7 @@ input:checked + .slider:not(#slider):before {
 
 .open-sideBar {
   opacity: 1;
-  height: 70dvh;
+  height: 80dvh;
   bottom: 78px;
   background-color: white !important;
   box-shadow: rgba(0, 0, 0, 0.24) 0px 3px 8px;

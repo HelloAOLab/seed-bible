@@ -492,6 +492,7 @@ const CreatePlaylistUI = ({
     globalThis[`${id}setDescription`] = setDescription;
     globalThis[`setRenderAgain`] = setRenderAgain;
     globalThis[`setOpenAttachLink`] = setOpenAttachLink;
+    globalThis[`${id}SetMode`] = setMode;
     globalThis[`SetEditModal`] = setEditModal;
     globalThis[`SetSelectPlaylist`] = setSelectPlaylist;
     globalThis[`${id}SetSelectedTags`] = setTags;
@@ -499,6 +500,7 @@ const CreatePlaylistUI = ({
     return () => {
       globalThis[`${id}SetPlaylistName`] = null;
       globalThis[`${id}AddDataToPlaylist`] = null;
+      globalThis[`${id}SetMode`] = null;
       globalThis[`${id}AddPlaylist`] = null;
       globalThis[`${id}SetChecklist`] = null;
       globalThis[`${id}SetPlaylists`] = null;
@@ -1038,6 +1040,12 @@ const CreatePlaylistUI = ({
               <div
                 className="more-menu-items"
                 onClick={() => {
+                  if (!authBot?.id) {
+                    return ShowNotification({
+                      message: "Login to user this feature",
+                      severity: "error",
+                    });
+                  }
                   setMode(PlaylistModeTypes.annotations);
                   setShowPlaylistSettings(false);
                 }}

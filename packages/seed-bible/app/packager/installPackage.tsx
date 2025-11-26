@@ -89,6 +89,7 @@ await(async function mainInstaller(that) {
   }
 
   async function SetUpApplication(applicationFunction, bot, toolbarConfig) {
+    os.log("Setting up application", toolbarConfig)
     function generateAppItem({
       icon,
       iconUrl,
@@ -168,7 +169,10 @@ await(async function mainInstaller(that) {
         icon,
         label,
         hasToggle: true,
-        active: true,
+        active:
+        typeof toolbarConfig?.active === "boolean"
+          ? toolbarConfig.active
+          : true,
         onHold,
         pkgName: name,
         onClick,
@@ -217,11 +221,17 @@ await(async function mainInstaller(that) {
       icon: toolbarConfig.icon,
       label: toolbarConfig.label,
       AppComponent: App,
+      active:
+        typeof toolbarConfig?.active === "boolean"
+          ? toolbarConfig.active
+          : true,
       iconUrl: toolbarConfig?.iconUrl,
       hasToggle: toolbarConfig.hasToggle,
       showInPageToolbar: toolbarConfig.showInPageToolbar,
       showInStarterToolbar: toolbarConfig.showInStarterToolbar,
     });
+
+    console.log("WE ARE ADDING TOOL?",toolbarOption);
 
     if (globalThis.AddTool) globalThis.AddTool(toolbarOption);
 
@@ -229,6 +239,7 @@ await(async function mainInstaller(that) {
   }
 
   async function SetUpApplicationWithoutApp(toolbarConfig, bot) {
+      os.log("Setting up application", toolbarConfig)
     const runFn = () => bot[toolbarConfig.run]();
 
     const toolbarOption = {

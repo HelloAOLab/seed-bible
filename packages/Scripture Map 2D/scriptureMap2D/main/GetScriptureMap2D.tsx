@@ -74,7 +74,7 @@ const App = () => {
           // onSelectionModeClearSelectionButtonClick: clearSelection,
           showingAllChapters: true, // !menuState.areBooksClosed,
           showLabels: true, // !menuState.hideHeadings,
-          initialScaleFactor: 0.5,
+          initialScaleFactor: 0.6,
           initialIsReadingHistoryEnabled: true,
         }}
       />

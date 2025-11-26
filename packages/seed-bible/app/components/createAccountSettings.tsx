@@ -8,22 +8,8 @@ const CreateAccountSettings = () => {
     const [img, setImg] = useState();
     const [profileName, setProfileName] = useState('');
     const [description, setDescription] = useState('');
-    const [location, setLocation] = useState('');
     const [uid, setUid] = useState(authBot?.id);
-    // const [location ,setLocation] = useState()
-    async function getLocation() {
-        const location = await os.getGeolocation();
-
-        if (location.success) {
-            const address = await os.convertGeolocationToWhat3Words(location);
-            os.log(address, 'address');
-            setLocation(address)
-        } else {
-            os.log("Could not get geolocation");
-        }
-    }
     async function init() {
-        getLocation()
         const authBot = await os.requestAuthBotInBackground();
         if (!authBot?.id)
             return
@@ -33,7 +19,6 @@ const CreateAccountSettings = () => {
             setImg(payload.photoLink)
             setProfileName(payload.profileName)
             setDescription(payload.description)
-            setLocation(payload.location)
             setUid(payload.uid)
             // os.log(data, 'the data d')
         }
@@ -88,7 +73,6 @@ const CreateAccountSettings = () => {
         const payload = {
             profileName,
             description,
-            location,
             uid,
         };
         const data = await os.getData(tags.key, authBot.id);
@@ -154,16 +138,6 @@ const CreateAccountSettings = () => {
             value={description}
             onChange={(e) => setDescription(e.target.value)}
         ></textarea>
-        <div style={{ height: '20px' }}></div>
-        <div className="blackText">Location <span style={{ 'font-size': '10px', color: '#5F5E5C' }}>(Optional)</span></div>
-        <div style={{ height: '10px' }}></div>
-        <input
-            style={{ height: '25px' }}
-            placeholder="e.g Austin,TX"
-            className="selectInput"
-            value={location}
-            onChange={(e) => setLocation(e.target.value)}
-        />
         <div style={{ height: '20px' }}></div>
         <div className="blackText">Your UID will be:</div>
         <div style={{ height: '10px' }}></div>

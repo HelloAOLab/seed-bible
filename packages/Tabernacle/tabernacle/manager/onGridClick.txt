@@ -1,8 +1,0 @@
-if(gridPortalBot.tags.portalCameraType === "perspective")
-{
-    gridPortalBot.tags.portalCameraType = "orthographic";
-}
-else
-{
-    gridPortalBot.tags.portalCameraType = "perspective";
-}

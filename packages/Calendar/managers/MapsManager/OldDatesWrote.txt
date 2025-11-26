@@ -1,0 +1,12 @@
+const {mapData} = that
+shout("switchToOld")
+shout("showYears")
+mapData.childrenStructureLayer.map(e=>{
+    e.map(ee => {
+        if (ee.dateWrote.tags.clicked) {
+         ee.dateWrote.tags.label = "close"
+        } else {
+        ee.dateWrote.tags.label = ee.dateWrote.tags.old
+        }
+    })
+})

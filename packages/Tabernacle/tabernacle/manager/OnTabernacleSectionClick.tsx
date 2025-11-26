@@ -1,3 +1,9 @@
-const {keys} = that;
+const { keys } = that;
 
-thisBot.HandleTabernacleSectionInteraction({keys, type: "textClick"})
+if (!thisBot.vars.appId) {
+  await thisBot.DisplayApp();
+}
+
+if (keys) {
+  thisBot.HandleTabernacleSectionInteraction({ keys, type: "textClick" });
+}

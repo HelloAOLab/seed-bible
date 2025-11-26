@@ -3,21 +3,23 @@ const {
   baseColor,
   reading,
   range,
-  fullColorTime = 900000,
+  fullColorTimeSeconds = 900, // 15 minutes default
   step,
   stepColors,
 } = that;
 
-const readingTime = reading.reduce((acc, entry) => {
+const nowInSeconds = Date.now() / 1000;
+
+const readingTimeSeconds = reading.reduce((acc, event) => {
   const clampedReading = {
-    start: Math.min(Math.max(entry.start, range.start), range.end),
-    end: Math.min(Math.max(entry.end ?? Date.now(), range.start), range.end),
+    start: Math.min(Math.max(event.start, range.start), range.end),
+    end: Math.min(Math.max(event.end ?? nowInSeconds, range.start), range.end),
   };
   const entryReadingTime = clampedReading.end - clampedReading.start;
   return acc + entryReadingTime;
 }, 0);
 
-let progress = Math.min(1, readingTime / fullColorTime);
+let progress = Math.min(1, readingTimeSeconds / fullColorTimeSeconds);
 
 if (step && stepColors) {
   progress = RoundToStep(progress, step);
