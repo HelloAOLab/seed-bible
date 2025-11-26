@@ -1180,7 +1180,7 @@ export function PanelAppWrapper({
               onClick={onReturnToFloat}
             >
               <span className="material-symbols-outlined">open_in_new</span>
-              <span style={{ fontSize: 12 }}>Return to Float</span>
+              {null/* <span style={{ fontSize: 12 }}>Return to Float</span> */}
             </button>
           )}
           {onClose && (
@@ -1191,7 +1191,7 @@ export function PanelAppWrapper({
               onClick={onClose}
             >
               <span className="material-symbols-outlined">close</span>
-              <span style={{ fontSize: 12 }}>Close</span>
+              {null/* <span style={{ fontSize: 12 }}>Close</span> */}
             </button>
           )}
         </div>
