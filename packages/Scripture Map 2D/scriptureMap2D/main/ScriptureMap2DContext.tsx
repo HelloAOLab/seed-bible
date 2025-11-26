@@ -217,85 +217,9 @@ export const ScriptureMap2DProvider = ({
     initialIsReadingHistoryEnabled = false,
   } = parentContext;
 
-  const { hooksBot, sortedTimePeriods, greaterTimePeriodTime } = useMemo(() => {
-    const sortedTimePeriods =
-      BibleVizUtils.Data.masks.historyTimePeriodsInfo.toSorted(
-        (periodInfoA, periodInfoB) => {
-          return (
-            periodInfoA.GetTimePeriodInMs() - periodInfoB.GetTimePeriodInMs()
-          );
-        }
-      );
-    const greaterTimePeriodTime =
-      sortedTimePeriods[sortedTimePeriods.length - 1].GetTimePeriodInMs();
-    const hooksBot = getBot("system", "app.hooks");
-
-    return { hooksBot, sortedTimePeriods, greaterTimePeriodTime };
-  }, []);
   const arrangement = useMemo(() => {
     return BibleVizUtils.Data.vars.fixedArrangementsInfo[arrangementIndex];
   }, [arrangementIndex]);
-
-  const [readingHistory, setReadingHistory] = useState({
-    ...hooksBot.vars.tempReadingHistory,
-  });
-  const [readingHistoryUsersFilters, setReadingHistoryUsersFilters] = useState(
-    new Map(
-      Object.keys(readingHistory).map((userId) => {
-        return [userId, userId === configBot.id ? true : false];
-      })
-    )
-  );
-  const [readingHistoryRange, setReadingHistoryRange] = useState(null);
-
-  const tryUpdateReadingHistoryUsersFilters = useCallback(() => {
-    const newUsersIds = [];
-    Object.keys(readingHistory).forEach((userId) => {
-      if (!readingHistoryUsersFilters.has(userId)) {
-        newUsersIds.push(userId);
-      }
-    });
-    if (newUsersIds.length > 0) {
-      const copy = new Map(readingHistoryUsersFilters);
-      newUsersIds.forEach((userId) => {
-        copy.set(userId, false);
-      });
-      setReadingHistoryUsersFilters(copy);
-    }
-  }, [readingHistoryUsersFilters, readingHistory]);
-  const handleReadingHistoryUserSelectorClick = useCallback(
-    (key) => {
-      const copy = new Map(readingHistoryUsersFilters);
-      if (key === "all") {
-        Array.from(readingHistoryUsersFilters).forEach(([stateKey]) => {
-          copy.set(stateKey, true);
-        });
-      } else {
-        const allSelected = Array.from(readingHistoryUsersFilters).every(
-          ([, value]) => {
-            return value;
-          }
-        );
-        if (allSelected) {
-          Array.from(readingHistoryUsersFilters).forEach(([stateKey]) => {
-            copy.set(stateKey, stateKey === key ? true : false);
-          });
-        } else {
-          copy.set(key, !copy.get(key));
-        }
-      }
-      setReadingHistoryUsersFilters(copy);
-    },
-    [readingHistoryUsersFilters]
-  );
-
-  const handleReadingHistoryRangeSelectorClick = useCallback((range) => {
-    setReadingHistoryRange(range);
-  });
-
-  useEffect(() => {
-    tryUpdateReadingHistoryUsersFilters();
-  }, [readingHistory]);
 
   const projectStateStyle = useMemo(() => {
     return {
@@ -409,15 +333,6 @@ export const ScriptureMap2DProvider = ({
   //     setShowingAllChapters(prev => !prev);
   // }, [])
 
-  useEffect(() => {
-    globalThis.scriptureMap2DHistoryUpdate = () => {
-      setReadingHistory({ ...hooksBot.vars.tempReadingHistory });
-    };
-    return () => {
-      globalThis.scriptureMap2DHistoryUpdate = null;
-    };
-  }, []);
-
   const handleUserButtonClick = useCallback(
     ({ user }) => {
       const copy = new Map(usersStatus);
@@ -464,60 +379,6 @@ export const ScriptureMap2DProvider = ({
     [projectFilters]
   );
 
-  const { filteredReadingHistory, filteredReadingHistoryCount } =
-    useMemo(() => {
-      const filteredReadingHistory = {};
-      let filteredReadingHistoryCount = 0;
-      readingHistoryUsersFilters.forEach((selected, userId) => {
-        if (selected && readingHistory[userId]) {
-          filteredReadingHistory[userId] = readingHistory[userId];
-          filteredReadingHistoryCount++;
-        }
-      });
-      return { filteredReadingHistory, filteredReadingHistoryCount };
-    }, [readingHistory, readingHistoryUsersFilters]);
-
-  const booksWithReadingHistory = useMemo(() => {
-    console.log(
-      `[Debug] ScriptureMap2DContext booksWithReadingHistory useMemo`
-    );
-
-    const booksSet = new Set();
-    const lastTimePeriod =
-      BibleVizUtils.Data.masks.historyTimePeriodsInfo[
-        BibleVizUtils.Data.masks.historyTimePeriodsInfo.length - 1
-      ].GetTimePeriodInMs();
-    const now = Date.now();
-    const lastTimePeriodTime = now - lastTimePeriod;
-    const effectiveRange = readingHistoryRange ?? {
-      start: lastTimePeriodTime,
-      end: now,
-    };
-
-    for (const userId in filteredReadingHistory) {
-      const userHistory = filteredReadingHistory[userId];
-      for (const bookId in userHistory) {
-        if (booksSet.has(bookId)) break;
-
-        const bookHistory = userHistory[bookId];
-        for (const chapter in bookHistory) {
-          if (booksSet.has(bookId)) break;
-
-          const entries = bookHistory[chapter];
-
-          for (const entry of entries) {
-            if (DoRangesOverlap(entry, effectiveRange)) {
-              booksSet.add(bookId);
-              break;
-            }
-          }
-        }
-      }
-    }
-
-    return booksSet;
-  }, [filteredReadingHistory, readingHistoryRange]);
-
   return (
     <ScriptureMap2DContext.Provider
       value={{
@@ -553,24 +414,12 @@ export const ScriptureMap2DProvider = ({
         contentVisualization,
         handleContentVisualizationButtonClick,
         handleProjectFilterOptionClick,
-        readingHistory,
         upcomingEvents,
         projectFilters,
         ScriptureMap2DModes,
         ProjectChapterState,
         projectStateStyle,
-
-        readingHistoryUsersFilters,
-        handleReadingHistoryUserSelectorClick,
-        hooksBot,
-        readingHistoryRange,
-        handleReadingHistoryRangeSelectorClick,
         CHAPTER_BASE_BACKGROUND_COLOR,
-        filteredReadingHistory,
-        filteredReadingHistoryCount,
-        sortedTimePeriods,
-        greaterTimePeriodTime,
-        booksWithReadingHistory,
         ...parentContext,
       }}
     >
@@ -582,11 +431,3 @@ export const ScriptureMap2DProvider = ({
 export const useScriptureMap2DContext = () => {
   return useContext(ScriptureMap2DContext);
 };
-
-function DoRangesOverlap(rangeA, rangeB) {
-  const now = os.localTime;
-  return (
-    rangeA.start <= (rangeB.end ?? now) &&
-    (rangeA.end ?? now) >= (rangeB.start ?? now)
-  );
-}

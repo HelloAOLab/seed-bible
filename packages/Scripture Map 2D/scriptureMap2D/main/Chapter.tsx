@@ -1,183 +1,9 @@
-const { useState, useCallback, useEffect, useMemo } = os.appHooks;
 import { useScriptureMap2DContext } from "scriptureMap2D.main.ScriptureMap2DContext";
 import { Tooltip } from "scriptureMap2D.main.Tooltip";
-const { memo } = os.appCompat;
-
-// import { PresentUserPresenceTooltipIcon } from "scriptureMap2D.main.PresentUserPresenceIcon"
 import { useTestamentContext } from "scriptureMap2D.main.TestamentContext";
-
 import { useClickAndHold } from "scriptureMap2D.main.CustomHooks";
-
-// const ChapterNotificationContainer = ({
-//     bookName,
-//     chapterIndex,
-//     contextKey,
-//     filterFn,
-//     renderTooltipItem,
-//     renderContent,
-//     tooltipDirection = "up",
-//     className,
-// }) => {
-//     const context = useScriptureMap2DContext();
-//     const [containerRect, setContainerRect] = useState(null);
-
-//     const { tooltipContent, tooltipAnchor, items } = useMemo(() => {
-//         const usersIds = [configBot.id];
-//         const dataSource = context[contextKey];
-//         const items = usersIds.map((userId) => {
-//             const item = filterFn(dataSource[userId], userId, bookName, chapterIndex);
-//             return item
-//         }).filter(Boolean);
-
-//         let tooltipAnchor, tooltipContent;
-
-//         if (containerRect) {
-//             tooltipAnchor = {
-//                 x: containerRect.left + containerRect.width / 2,
-//                 y: containerRect.top + (tooltipDirection === "down" ? containerRect.height : 0),
-//             };
-//         }
-
-//         if (items.length > 0) {
-//             tooltipContent = items.map(renderTooltipItem);
-//         }
-
-//         return { tooltipContent, tooltipAnchor, items };
-//     }, [containerRect, context[contextKey], bookName, chapterIndex]);
-
-//     if (items?.length === 0) return null;
-
-//     return (
-//         <div
-//             onPointerEnter={(e) => setContainerRect(e.currentTarget.getBoundingClientRect())}
-//             onPointerLeave={() => setContainerRect(null)}
-//             className={className}
-//         >
-//             {containerRect && tooltipContent && (
-//                 <Tooltip direction={tooltipDirection} anchor={tooltipAnchor} content={tooltipContent} />
-//             )}
-//             {renderContent?.(items)}
-//         </div>
-//     );
-// };
-
-// function GetReadingFixedElapsedTime(timestamp)
-// {
-//     const now = Date.now();
-//     const diff = now - timestamp;
-//     const diffInSec = diff / 1000;
-//     const diffInMin = diffInSec / 60;
-//     const diffInHours = diffInMin / 60;
-//     const diffInDays = diffInHours / 24;
-
-//     if(diffInDays >= 1) return {amount: Math.floor(diffInDays), unit: "day"};
-//     if(diffInHours >= 1) return {amount: Math.floor(diffInHours), unit: "hour"};
-//     if(diffInMin >= 1) return {amount: Math.floor(diffInMin), unit: "minute"};
-//     return {amount: 1, unit: "minute"}
-// }
-
-// const ReadingHistoryChapterNotificationContainer = ({ bookName, chapterIndex }) => (
-//     <ChapterNotificationContainer
-//         bookName={bookName}
-//         chapterIndex={chapterIndex}
-//         contextKey="readingHistory"
-//         className="readingHistoryChapterNotificationContainer"
-//         tooltipDirection="down"
-//         filterFn={ (data, userId, book, chapterIndex) => {
-//             const timestamp = data[BibleVizUtils.Data.tags.booksStaticInfo[book].abbreviation]?.[chapterIndex + 1]
-//             if(timestamp)
-//             {
-//                 return {userId, book, chapter: chapterIndex + 1, timestamp}
-//             }
-//             return null
-//         }}
-//         renderTooltipItem={(reading) => {
-//             const {amount, unit} = GetReadingFixedElapsedTime(reading.timestamp);
-//             return (
-//                 <span key={reading.userId}>
-//                     {reading.userId === configBot.id ? "You" : "Unknown"}
-//                     {` read ${amount} ${unit}${amount > 1 ? "s" : ""} ago`}
-//                 </span>
-//             )
-//         }}
-//         renderContent={(items) => (
-//             <>
-//                 <span className="notificationCount">{items.length}</span>
-//                 <span className="material-symbols-outlined">history</span>
-//             </>
-//         )}
-//     />
-// );
-// const UpcomingEventsChapterNotificationContainer = ({ bookName, chapterIndex }) => (
-//     <ChapterNotificationContainer
-//         bookName={bookName}
-//         chapterIndex={chapterIndex}
-//         contextKey="upcomingEvents"
-//         className="upcomingEventsChapterNotificationContainer"
-//         tooltipDirection="down"
-//         filterFn={ (entries, _, book, chapterIndex) => {return entries.find((e) => e.book === book && e.chapter === chapterIndex + 1)} }
-//         renderTooltipItem={(event) => (
-//             <span key={event.user}>
-//                 <PresentUserPresenceTooltipIcon user={event.user} />
-//                 {`will read in ${event.remainingDays} day${event.remainingDays > 1 ? "s" : ""}`}
-//             </span>
-//         )}
-//         renderContent={(items) => (
-//             <>
-//                 <span className="notificationCount">{items.length}</span>
-//                 <span className="material-symbols-outlined">event</span>
-//             </>
-//         )}
-//     />
-// );
-// const PresentUserPresenceDotContainer = ({ bookName, chapterIndex, usersInChapter }) => {
-//     const { userPresence } = useScriptureMap2DContext();
-
-//     return (
-//         <ChapterNotificationContainer
-//             bookName={bookName}
-//             chapterIndex={chapterIndex}
-//             contextKey="userPresence"
-//             className="presentUserPresenceDotContainer"
-//             filterFn={(_, user, book, chapterIndex) => {
-//                 const presence = userPresence[user];
-//                 return presence.book === book && presence.chapter === chapterIndex + 1 ? { user } : null;
-//             }}
-//             renderTooltipItem={({ user }) => (
-//                 <span key={user}>
-//                     <PresentUserPresenceTooltipIcon user={user} />
-//                     {user}
-//                 </span>
-//             )}
-//             renderContent={() =>
-//                 usersInChapter.map((user, index) => (
-//                     <PresentUserPresenceDot
-//                         key={user}
-//                         user={user}
-//                         index={index}
-//                         length={usersInChapter.length}
-//                     />
-//                 ))
-//             }
-//         />
-//     );
-// };
-// const PresentUserPresenceDot = ({ user, index, length }) => {
-
-//     const { usersInfo } = useScriptureMap2DContext();
-
-//     return (
-//         <div
-//             className="presentUserPresenceDot"
-//             style={{
-//                 backgroundColor: usersInfo[user].color,
-//                 marginRight: index > 0 ? "calc(var(--FIXED_SIZE_2) / 2 * (-1))" : null,
-//                 zIndex: length - index
-//             }}
-//         >
-//         </div>
-//     )
-// };
+const { useState, useCallback, useEffect, useMemo } = os.appHooks;
+const { memo } = os.appCompat;
 
 export const Chapter = memo(
   ({
@@ -465,3 +291,176 @@ export const Chapter = memo(
     );
   }
 );
+
+// import { PresentUserPresenceTooltipIcon } from "scriptureMap2D.main.PresentUserPresenceIcon"
+
+// const ChapterNotificationContainer = ({
+//     bookName,
+//     chapterIndex,
+//     contextKey,
+//     filterFn,
+//     renderTooltipItem,
+//     renderContent,
+//     tooltipDirection = "up",
+//     className,
+// }) => {
+//     const context = useScriptureMap2DContext();
+//     const [containerRect, setContainerRect] = useState(null);
+
+//     const { tooltipContent, tooltipAnchor, items } = useMemo(() => {
+//         const usersIds = [configBot.id];
+//         const dataSource = context[contextKey];
+//         const items = usersIds.map((userId) => {
+//             const item = filterFn(dataSource[userId], userId, bookName, chapterIndex);
+//             return item
+//         }).filter(Boolean);
+
+//         let tooltipAnchor, tooltipContent;
+
+//         if (containerRect) {
+//             tooltipAnchor = {
+//                 x: containerRect.left + containerRect.width / 2,
+//                 y: containerRect.top + (tooltipDirection === "down" ? containerRect.height : 0),
+//             };
+//         }
+
+//         if (items.length > 0) {
+//             tooltipContent = items.map(renderTooltipItem);
+//         }
+
+//         return { tooltipContent, tooltipAnchor, items };
+//     }, [containerRect, context[contextKey], bookName, chapterIndex]);
+
+//     if (items?.length === 0) return null;
+
+//     return (
+//         <div
+//             onPointerEnter={(e) => setContainerRect(e.currentTarget.getBoundingClientRect())}
+//             onPointerLeave={() => setContainerRect(null)}
+//             className={className}
+//         >
+//             {containerRect && tooltipContent && (
+//                 <Tooltip direction={tooltipDirection} anchor={tooltipAnchor} content={tooltipContent} />
+//             )}
+//             {renderContent?.(items)}
+//         </div>
+//     );
+// };
+
+// function GetReadingFixedElapsedTime(timestamp)
+// {
+//     const now = Date.now();
+//     const diff = now - timestamp;
+//     const diffInSec = diff / 1000;
+//     const diffInMin = diffInSec / 60;
+//     const diffInHours = diffInMin / 60;
+//     const diffInDays = diffInHours / 24;
+
+//     if(diffInDays >= 1) return {amount: Math.floor(diffInDays), unit: "day"};
+//     if(diffInHours >= 1) return {amount: Math.floor(diffInHours), unit: "hour"};
+//     if(diffInMin >= 1) return {amount: Math.floor(diffInMin), unit: "minute"};
+//     return {amount: 1, unit: "minute"}
+// }
+
+// const ReadingHistoryChapterNotificationContainer = ({ bookName, chapterIndex }) => (
+//     <ChapterNotificationContainer
+//         bookName={bookName}
+//         chapterIndex={chapterIndex}
+//         contextKey="readingHistory"
+//         className="readingHistoryChapterNotificationContainer"
+//         tooltipDirection="down"
+//         filterFn={ (data, userId, book, chapterIndex) => {
+//             const timestamp = data[BibleVizUtils.Data.tags.booksStaticInfo[book].abbreviation]?.[chapterIndex + 1]
+//             if(timestamp)
+//             {
+//                 return {userId, book, chapter: chapterIndex + 1, timestamp}
+//             }
+//             return null
+//         }}
+//         renderTooltipItem={(reading) => {
+//             const {amount, unit} = GetReadingFixedElapsedTime(reading.timestamp);
+//             return (
+//                 <span key={reading.userId}>
+//                     {reading.userId === configBot.id ? "You" : "Unknown"}
+//                     {` read ${amount} ${unit}${amount > 1 ? "s" : ""} ago`}
+//                 </span>
+//             )
+//         }}
+//         renderContent={(items) => (
+//             <>
+//                 <span className="notificationCount">{items.length}</span>
+//                 <span className="material-symbols-outlined">history</span>
+//             </>
+//         )}
+//     />
+// );
+// const UpcomingEventsChapterNotificationContainer = ({ bookName, chapterIndex }) => (
+//     <ChapterNotificationContainer
+//         bookName={bookName}
+//         chapterIndex={chapterIndex}
+//         contextKey="upcomingEvents"
+//         className="upcomingEventsChapterNotificationContainer"
+//         tooltipDirection="down"
+//         filterFn={ (entries, _, book, chapterIndex) => {return entries.find((e) => e.book === book && e.chapter === chapterIndex + 1)} }
+//         renderTooltipItem={(event) => (
+//             <span key={event.user}>
+//                 <PresentUserPresenceTooltipIcon user={event.user} />
+//                 {`will read in ${event.remainingDays} day${event.remainingDays > 1 ? "s" : ""}`}
+//             </span>
+//         )}
+//         renderContent={(items) => (
+//             <>
+//                 <span className="notificationCount">{items.length}</span>
+//                 <span className="material-symbols-outlined">event</span>
+//             </>
+//         )}
+//     />
+// );
+// const PresentUserPresenceDotContainer = ({ bookName, chapterIndex, usersInChapter }) => {
+//     const { userPresence } = useScriptureMap2DContext();
+
+//     return (
+//         <ChapterNotificationContainer
+//             bookName={bookName}
+//             chapterIndex={chapterIndex}
+//             contextKey="userPresence"
+//             className="presentUserPresenceDotContainer"
+//             filterFn={(_, user, book, chapterIndex) => {
+//                 const presence = userPresence[user];
+//                 return presence.book === book && presence.chapter === chapterIndex + 1 ? { user } : null;
+//             }}
+//             renderTooltipItem={({ user }) => (
+//                 <span key={user}>
+//                     <PresentUserPresenceTooltipIcon user={user} />
+//                     {user}
+//                 </span>
+//             )}
+//             renderContent={() =>
+//                 usersInChapter.map((user, index) => (
+//                     <PresentUserPresenceDot
+//                         key={user}
+//                         user={user}
+//                         index={index}
+//                         length={usersInChapter.length}
+//                     />
+//                 ))
+//             }
+//         />
+//     );
+// };
+// const PresentUserPresenceDot = ({ user, index, length }) => {
+
+//     const { usersInfo } = useScriptureMap2DContext();
+
+//     return (
+//         <div
+//             className="presentUserPresenceDot"
+//             style={{
+//                 backgroundColor: usersInfo[user].color,
+//                 marginRight: index > 0 ? "calc(var(--FIXED_SIZE_2) / 2 * (-1))" : null,
+//                 zIndex: length - index
+//             }}
+//         >
+//         </div>
+//     )
+// };

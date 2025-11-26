@@ -20,7 +20,7 @@ async function waitForGlobals(required = [], delay = 250) {
     }
 }
 
-
+// await os.sleep(3000);
 await waitForGlobals([
     'AddTool',
     // "AppStartedSuccessfully",
@@ -114,7 +114,10 @@ async function SetUpApplication(applicationFunction, bot, toolbarConfig) {
             icon,
             label,
             hasToggle: true,
-            active: true,
+           active:
+        typeof toolbarConfig?.active === "boolean"
+          ? toolbarConfig.active
+          : true,
             onHold,
             pkgName:name,
             onClick,
@@ -170,9 +173,13 @@ async function SetUpApplicationWithoutApp(toolbarConfig, bot) {
         icon: !toolbarConfig?.iconUrl ? toolbarConfig.icon : toolbarConfig.iconUrl,
         label: toolbarConfig.label,
         hasToggle: toolbarConfig.hasToggle,
-        active: toolbarConfig.active,
+        active:
+        typeof toolbarConfig?.active === "boolean"
+          ? toolbarConfig.active
+          : true,
         showInPageToolbar: toolbarConfig.showInPageToolbar,
         showInStarterToolbar: toolbarConfig.showInStarterToolbar,
+        
         onHold: runFn,
         onClick: runFn,
         isImg: !!toolbarConfig?.iconUrl,

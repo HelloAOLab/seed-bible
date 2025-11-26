@@ -17,8 +17,8 @@ import { DivSpliter } from "app.hooks.screenDevider";
 import { TextEditor } from "app.components.editor";
 import { MiniTextEditor } from "app.components.smallEditor";
 import { ConfigurableFunctionCommands } from "app.components.commands";
-import { VerseToolbar } from 'app.components.verseToolbar'
-
+import { VerseToolbar } from "app.components.verseToolbar";
+import { useHoldAction } from "app.hooks.useHold";
 function getUserSessionInfo(userId) {
   try {
     if (typeof tags === "undefined" || !tags.sessions) {
@@ -73,15 +73,16 @@ function ThePage({
   const [commandHighlight, setCommandHighlight] = useState([]);
   const [direction, setDirection] = useState(null);
   const commandsRef = useRef(null);
+  const [userMovedToolbar, setUserMovedToolbar] = useState();
 
   useEffect(() => {
     if (!T) globalThis.CurrentPanelAvailable = panelId;
     else globalThis.CurrentPanelAvailable = null;
   }, [T]);
-  const { inSession, role, config } = getUserSessionInfo(configBot.id)
+  const { inSession, role, config } = getUserSessionInfo(configBot.id);
   const [tabEntered, setTabEntered] = useState(false);
-  const { updateTab, tabs, setActiveTab } = useTabsContext();
-  const { isDragging, setIsDragging, Element } = useMouseMove();
+  const { updateTab, tabs, setActiveTab, sharedTab } = useTabsContext();
+  const { isDragging, setIsDragging, Element, position } = useMouseMove();
   const { navFunctions, setNavFunctions, scrollToVerse } = useBibleContext();
   const [inHold, setInHold] = useState();
   const [contextData, setContextData] = useState({
@@ -111,8 +112,11 @@ function ThePage({
   if (tab) globalThis[`SetEnableEditorOf${tab?.id}`] = setEnableEditor;
 
   const loadTranslationFromUrl = async () => {
-    console.log(configBot.tags.translationId, "translation id")
-    let translationId = configBot.tags.translationId || configBot.tags.translation || tab.data.translation;
+    console.log(configBot.tags.translationId, "translation id");
+    const translationId =
+      configBot.tags.translationId ||
+      configBot.tags.translation ||
+      tab.data.translation;
     let baseUrl = "https://bible.helloao.org";
     let bookId = "GEN";
     let bookTranslationId = tab.data.translation;
@@ -120,43 +124,51 @@ function ThePage({
     let firstChapterApiLink;
     let books = [];
     if (translationId) {
-      let available_translations_req = await web.get("https://bible.helloao.org/api/available_translations.json");
+      const available_translations_req = await web.get(
+        "https://bible.helloao.org/api/available_translations.json"
+      );
       let allTranslations = [];
-      let translations = {};
-      let defaultTranslations = [
+      const translations = {};
+      const defaultTranslations = [
         "english",
         "spanish",
         "arabic",
         "hindi",
         "hebrew",
         "ancient greek",
-        "custom"
-      ]
-      allTranslations = available_translations_req.data.translations.map(item => {
-        return {
-          ...item,
-          languageEnglishName: item?.languageEnglishName || item.englishName
+        "custom",
+      ];
+      allTranslations = available_translations_req.data.translations.map(
+        (item) => {
+          return {
+            ...item,
+            languageEnglishName: item?.languageEnglishName || item.englishName,
+          };
         }
-      });
+      );
 
-      let trValue = {
+      const trValue = {
         pass: false,
-        value: null
+        value: null,
       };
       if (available_translations_req.status === 200) {
-        allTranslations.forEach(translationData => {
-          if (translationData.id.toLowerCase() === translationId.toLowerCase()) {
+        allTranslations.forEach((translationData) => {
+          if (
+            translationData.id.toLowerCase() === translationId.toLowerCase()
+          ) {
             trValue.pass = true;
             trValue.value = translationData;
           }
-        })
+        });
 
-        let urlId = translationId.includes("https://");
+        const urlId = translationId.includes("https://");
 
         if (trValue.pass && !urlId) {
-          let bookData = await web.get(`https://bible.helloao.org/api/${trValue.value.id}/books.json`);
+          const bookData = await web.get(
+            `https://bible.helloao.org/api/${trValue.value.id}/books.json`
+          );
           books = bookData.data.books;
-          let book0 = bookData.data.books[0];
+          const book0 = bookData.data.books[0];
           firstBookData = book0;
           setTagMask(thisBot, "selectedTranslation", trValue.value, "local");
           setTagMask(thisBot, "booksData", bookData.data.books, "local");
@@ -164,7 +176,7 @@ function ThePage({
           bookTranslationId = trValue.value.id;
           firstChapterApiLink = book0.firstChapterApiLink;
         } else {
-          let result = await web.get(translationId);
+          const result = await web.get(translationId);
           if (result.status === 200) {
             const url = new URL(translationId);
             let newTranslations = result.data.translations;
@@ -173,48 +185,48 @@ function ThePage({
               configBot.tags.translation = null;
               const translationData = await loadTranslationFromUrl();
               return {
-                ...translationData
-              }
+                ...translationData,
+              };
             }
-            let defaultTranslation = newTranslations[0];
-            newTranslations = newTranslations.map(trans => {
+            const defaultTranslation = newTranslations[0];
+            newTranslations = newTranslations.map((trans) => {
               return {
                 languageEnglishName: trans.languageEnglishName,
                 id: trans.id,
                 listOfBooksApiLink: `${url.origin}${trans.listOfBooksApiLink}`,
                 origin: url.origin,
-                shortName: trans.shortName
-              }
-            })
+                shortName: trans.shortName,
+              };
+            });
             allTranslations = [...allTranslations, ...newTranslations];
-            for (let translation of newTranslations) {
-              let englishName = translation.languageEnglishName.toLowerCase();
+            for (const translation of newTranslations) {
+              const englishName = translation.languageEnglishName.toLowerCase();
               if (!defaultTranslations.includes(englishName)) {
                 defaultTranslations.push(englishName);
               }
             }
-            let translation = {
+            const translation = {
               languageEnglishName: defaultTranslation.languageEnglishName,
               id: defaultTranslation.id,
               listOfBooksApiLink: `${url.origin}${defaultTranslation.listOfBooksApiLink}`,
               origin: url.origin,
-              shortName: defaultTranslation.shortName
-            }
-            let englishName = translation.languageEnglishName.toLowerCase();
-            let shortName = translation.shortName.toLowerCase();
+              shortName: defaultTranslation.shortName,
+            };
+            const englishName = translation.languageEnglishName.toLowerCase();
+            const shortName = translation.shortName.toLowerCase();
 
-            let bookData = await web.get(translation.listOfBooksApiLink);
+            const bookData = await web.get(translation.listOfBooksApiLink);
 
             books = bookData.data.books;
-            let book0 = bookData.data.books[0];
+            const book0 = bookData.data.books[0];
             firstBookData = book0;
             setTagMask(thisBot, "selectedTranslation", translation, "local");
             setTagMask(thisBot, "booksData", bookData.data.books, "local");
             if (!defaultTranslations.includes(englishName)) {
-              defaultTranslations.push(englishName)
+              defaultTranslations.push(englishName);
               translations[englishName] = {
-                [shortName]: translation
-              }
+                [shortName]: translation,
+              };
             }
             baseUrl = translation.origin;
             bookId = book0.id;
@@ -222,26 +234,33 @@ function ThePage({
             firstChapterApiLink = book0.firstChapterApiLink;
           }
         }
-        allTranslations.forEach(translation => {
-          let englishName = translation?.languageEnglishName?.toLowerCase() || translation?.englishName?.toLowerCase();
-          let shortName = translation.shortName.toLowerCase();
+        allTranslations.forEach((translation) => {
+          const englishName =
+            translation?.languageEnglishName?.toLowerCase() ||
+            translation?.englishName?.toLowerCase();
+          const shortName = translation.shortName.toLowerCase();
           if (translations[englishName]) {
             if (!translations[englishName][shortName]) {
               translations[englishName][shortName] = translation;
             }
           } else {
             translations[englishName] = {
-              [shortName]: translation
-            }
+              [shortName]: translation,
+            };
           }
-        })
+        });
         setTagMask(thisBot, "allTranslations", allTranslations, "local");
-        setTagMask(thisBot, "apiTranslations", { ...translations }, "local")
-        setTagMask(thisBot, "defaultTranslations", defaultTranslations, "local")
-        console.log(defaultTranslations, translations, "trans")
+        setTagMask(thisBot, "apiTranslations", { ...translations }, "local");
+        setTagMask(
+          thisBot,
+          "defaultTranslations",
+          defaultTranslations,
+          "local"
+        );
+        console.log(defaultTranslations, translations, "trans");
       }
     } else {
-      return {}
+      return {};
     }
     return {
       baseUrl,
@@ -249,9 +268,9 @@ function ThePage({
       bookTranslationId,
       firstChapterApiLink,
       firstBookData,
-      books
-    }
-  }
+      books,
+    };
+  };
 
   async function loadData() {
     if (!tab) return;
@@ -259,7 +278,7 @@ function ThePage({
       tabId: tab?.id,
       translation: tab.data.translation,
       bookId: tab.data.bookId,
-      chapter: tab.data.chapter
+      chapter: tab.data.chapter,
     });
     setBible(bible);
 
@@ -273,24 +292,38 @@ function ThePage({
     console.log(data, tab, "the data loaded");
 
     globalThis.refreshScrollers && globalThis.refreshScrollers();
-    let { firstBookData, bookTranslationId, baseUrl, books } = await loadTranslationFromUrl();
+    const { firstBookData, bookTranslationId, baseUrl, books } =
+      await loadTranslationFromUrl();
 
     if (!configBot.tags.defaultChecked) {
       if (firstBookData && bookTranslationId && baseUrl) {
-        await bible.changeTranslation(bookTranslationId, firstBookData, baseUrl)
+        await bible.changeTranslation(
+          bookTranslationId,
+          firstBookData,
+          baseUrl
+        );
       }
       if (books) {
         if (configBot.tags?.book && books && books?.length > 0) {
           let bookData;
-          books.forEach(book => {
+          books.forEach((book) => {
             if (book.id.toLowerCase() === configBot.tags.book.toLowerCase()) {
               bookData = book;
             }
-          })
+          });
           if (bookData) {
             let chapterNo;
-            if (Number(configBot.tags.chapter) < bookData.numberOfChapters) chapterNo = configBot.tags.chapter;
-            let chapterUrl = chapterNo ? bookData.firstChapterApiLink.replace("1.json", `${chapterNo}.json`) : bookData.firstChapterApiLink.replace("1.json", `${tab.data.chapter}.json`);
+            if (Number(configBot.tags.chapter) < bookData.numberOfChapters)
+              chapterNo = configBot.tags.chapter;
+            const chapterUrl = chapterNo
+              ? bookData.firstChapterApiLink.replace(
+                  "1.json",
+                  `${chapterNo}.json`
+                )
+              : bookData.firstChapterApiLink.replace(
+                  "1.json",
+                  `${tab.data.chapter}.json`
+                );
             await bible.open(
               bookData.id,
               configBot.tags.chapter || 1,
@@ -300,14 +333,23 @@ function ThePage({
           }
         } else if (configBot.tags?.chapter && books?.length > 0) {
           let bookData;
-          books.forEach(book => {
+          books.forEach((book) => {
             if (book.id.toLowerCase() === tab.data.bookId.toLowerCase()) {
               bookData = book;
             }
-          })
+          });
           let chapterNo;
-          if (Number(configBot.tags.chapter) < bookData.numberOfChapters) chapterNo = configBot.tags.chapter;
-          let chapterUrl = chapterNo ? bookData.firstChapterApiLink.replace("1.json", `${chapterNo}.json`) : bookData.firstChapterApiLink.replace("1.json", `${tab.data.chapter}.json`);
+          if (Number(configBot.tags.chapter) < bookData.numberOfChapters)
+            chapterNo = configBot.tags.chapter;
+          const chapterUrl = chapterNo
+            ? bookData.firstChapterApiLink.replace(
+                "1.json",
+                `${chapterNo}.json`
+              )
+            : bookData.firstChapterApiLink.replace(
+                "1.json",
+                `${tab.data.chapter}.json`
+              );
           await bible.open(
             bookData.id,
             configBot.tags.chapter || 1,
@@ -317,7 +359,10 @@ function ThePage({
         }
       } else {
         if (configBot.tags?.book) {
-          await bible.open(configBot.tags?.book, configBot.tags?.chapter || tab.data.chapter);
+          await bible.open(
+            configBot.tags?.book,
+            configBot.tags?.chapter || tab.data.chapter
+          );
         } else if (configBot.tags?.chapter) {
           await bible.open(tab.data.book, configBot.tags?.chapter);
         }
@@ -325,24 +370,25 @@ function ThePage({
       configBot.tags.defaultChecked = true;
     } else {
       if (masks?.allTranslations) {
-        for (let translation of masks.allTranslations) {
+        for (const translation of masks.allTranslations) {
           if (translation.id === tab.data.translation) {
             setTagMask(thisBot, "selectedTranslation", translation, "local");
-            break
+            break;
           }
         }
       }
     }
 
     setData(bible.data);
-    whisper(getBot('system', 'introduction.searchBar'), 'initialize')
+    SetShowToolbar(true);
+    whisper(getBot("system", "introduction.searchBar"), "initialize");
   }
   useEffect(() => {
     const onKey = (e) => {
       if (e.key === "Escape") {
         setClickedVerses([]);
-        setShowVerseToolbar(false)
-      };
+        setShowVerseToolbar(false);
+      }
     };
     if (window) {
       window.addEventListener("keydown", onKey);
@@ -355,11 +401,11 @@ function ThePage({
   }, []);
   useEffect(() => {
     const onBookChange = (data) => {
-      os.log("updated shared tab", 'not approved');
+      os.log("updated shared tab", "not approved");
       if (!globalThis.CurrentTab?.sharedTab) {
-        updateTab(masks['sharedTab'], data)
-        return
-      };
+        updateTab(masks["sharedTab"], data);
+        return;
+      }
       console.log("remoteBookChange", data);
       globalThis.Open?.(data.bookId, data.chapter);
     };
@@ -375,18 +421,45 @@ function ThePage({
         true
       );
     };
-    os.addBotListener(thisBot, "remoteBookChange", onBookChange)
-    os.addBotListener(thisBot, "remoteHighlightChange", onHighlightChange)
+    os.addBotListener(thisBot, "remoteBookChange", onBookChange);
+    os.addBotListener(thisBot, "remoteHighlightChange", onHighlightChange);
     return () => {
       // os.removeBotListener(thisBot, 'remoteBookChange', onBookChange)
       // os.removeBotListener(thisBot, 'remoteHighlightChange', onHighlightChange)
-    }
+    };
   }, []);
 
   useEffect(() => {
     loadData();
-    globalThis.CurrentTab = tab
+    globalThis.CurrentTab = tab;
   }, []);
+
+  // GLOBAL GUARDS
+  if (!globalThis.__remoteBookUpdate) globalThis.__remoteBookUpdate = false;
+  if (!globalThis.__lastBookEmit) globalThis.__lastBookEmit = 0;
+  const BOOK_EMIT_DEBOUNCE = 250; // ms
+
+  // SAFELY EMIT BOOK WITHOUT LOOPS OR SPAM
+  function safeEmitBook(payload) {
+    const now = Date.now();
+
+    // 1) Prevent loop from remote → local → remote
+    if (globalThis.__remoteBookUpdate) {
+      globalThis.__remoteBookUpdate = false;
+      return;
+    }
+
+    // 2) Prevent spam when navigating fast
+    if (now - globalThis.__lastBookEmit < BOOK_EMIT_DEBOUNCE) {
+      return;
+    }
+
+    globalThis.__lastBookEmit = now;
+
+    // 3) Finally emit
+    EmitData("book", payload);
+  }
+
 
   useEffect(() => {
     if (data) {
@@ -433,15 +506,17 @@ function ThePage({
         book: data?.book,
         chapter: data?.chapter,
       });
+    
       configBot.tags.book = data?.bookId;
       configBot.tags.chapter = data?.chapter;
+      os.syncConfigBotTagsToURL(['book','chapter']);
     }
   }, [data]);
+
   useEffect(() => {
     // Create the interval
     const interval = setInterval(() => {
       if (data) {
-
         const emitter = getBot("system", "app.emitter");
 
         sendRemoteData(emitter.masks.otherRemotes, "updateSharingData", {
@@ -452,7 +527,7 @@ function ThePage({
         });
       }
     }, 1000);
-    globalThis.CurrentTab = tab
+    globalThis.CurrentTab = tab;
     return () => clearInterval(interval);
   }, [data]);
 
@@ -500,6 +575,14 @@ function ThePage({
   }, [navFunctions, data]);
 
   useEffect(() => {
+    function getUnifiedSelectedVerses(rawSelectedVerses, clickedVerses) {
+      if (clickedVerses && clickedVerses.length > 0) {
+        return [...new Set(clickedVerses)].sort((a, b) => a - b);
+      }
+
+      return [...new Set(rawSelectedVerses)].sort((a, b) => a - b);
+    }
+
     const handleMouseUp = () => {
       const selection = window.getSelection();
       if (!selection || selection.isCollapsed) return;
@@ -511,10 +594,10 @@ function ThePage({
           : selectedRange.commonAncestorContainer;
 
       if (commandsRef.current && commandsRef.current.contains(container)) {
-        setShowCommands(true);
         return;
       }
 
+      // Collect selected verse numbers
       const treeWalker = document.createTreeWalker(
         selectedRange.commonAncestorContainer,
         NodeFilter.SHOW_ELEMENT,
@@ -532,8 +615,8 @@ function ThePage({
       );
 
       const selectedVerses = new Set();
-
       let currentNode = treeWalker.nextNode();
+
       while (currentNode) {
         const verseNumberElem = currentNode.querySelector(".sectionTextNumber");
         if (verseNumberElem) {
@@ -545,38 +628,94 @@ function ThePage({
         currentNode = treeWalker.nextNode();
       }
 
-      if (selectedVerses.size > 0) {
-        const selectedArray = Array.from(selectedVerses).sort((a, b) => a - b);
-        console.log("Selected verse numbers:", selectedArray);
-        setSelectedText(selection.toString());
-        setLastSelectedVerse(selectedArray[selectedArray.length - 1]);
-        setContextData({
-          verse: window.getSelection().toString(),
-          reference: `${data?.book} ${data?.chapter}:${selectedArray[0]}-${selectedArray[selectedArray.length - 1]
-            }`,
-          book: data?.book,
-          chapter: data?.chapter,
-          verses: selectedArray,
-        });
-        shout("onVeresRightClick", {
-          verseNumber: selectedArray,
-          text: window.getSelection().toString(),
-          book: data?.book,
-          chapter: data?.chapter,
-          highlighted: false,
-        });
-
-      } else {
+      // Exit if nothing selected and no clicked verses
+      if (selectedVerses.size === 0 && clickedVerses.length === 0) {
         setShowCommands(false);
         setSelectedText("");
         setLastSelectedVerse(null);
+        return;
       }
+
+      // Merge selection with clicked verses
+      const unifiedVerses = getUnifiedSelectedVerses(
+        Array.from(selectedVerses),
+        clickedVerses
+      );
+
+      const highestVerse = unifiedVerses[unifiedVerses.length - 1];
+      const lowestVerse = unifiedVerses[0];
+
+      // Build selected text
+      const selectedTextFinal =
+        selection && !selection.isCollapsed
+          ? selection.toString()
+          : unifiedVerses
+              .map((v) => {
+                const verseObj = data?.content
+                  ?.flatMap((c) => c.verses)
+                  .find((x) => x.verseNumber === v);
+                return verseObj?.text || "";
+              })
+              .join(" ");
+
+      setSelectedText(selectedTextFinal);
+      setLastSelectedVerse(highestVerse);
+
+      // Build context data
+      setContextData({
+        verse: selectedTextFinal,
+        reference: `${data?.book} ${data?.chapter}:${lowestVerse}${
+          lowestVerse !== highestVerse ? `-${highestVerse}` : ""
+        }`,
+        book: data?.book,
+        chapter: data?.chapter,
+        verses: unifiedVerses,
+      });
+
+      // 🔥 NEW — Convert selection into clicked verses
+      setClickedVerses((prev) => {
+        const newOnes = unifiedVerses.filter((v) => !prev.includes(v));
+        return [...prev, ...newOnes];
+      });
+      setClickedVersesContext({
+        verseNumber: unifiedVerses,
+        text: selectedTextFinal,
+        book: data?.book,
+        chapter: data?.chapter,
+      });
+      const sel = window.getSelection();
+      if (sel && sel.removeAllRanges) sel.removeAllRanges();
+      setShowVerseToolbar(true);
+
+      // Reset toolbar drag state on new selection
+      // userMovedToolbar.current = false;
+
+      // 🔥 NEW — Auto-position toolbar under final selected verse
+      if (!userMovedToolbar) {
+        const ele = document.getElementById(`v-${highestVerse}`);
+        if (ele) {
+          const rect = ele.getBoundingClientRect();
+          setToolbarPos({
+            x: rect.left ,
+            y: rect.bottom ,
+          });
+        }
+      }
+
+      // Notify systems about verse selection
+      shout("onVeresRightClick", {
+        verseNumber: unifiedVerses,
+        text: selectedTextFinal,
+        book: data?.book,
+        chapter: data?.chapter,
+      });
     };
+
     document.addEventListener("mouseup", handleMouseUp);
     return () => {
       document.removeEventListener("mouseup", handleMouseUp);
     };
-  }, [data]);
+  }, [data, userMovedToolbar]);
 
   function handleMouseEnter() {
     if (!isDragging) return;
@@ -667,7 +806,6 @@ function ThePage({
       setTab(tab);
       setData(bible.data);
     }
-
   }
 
   async function changeTranslation(id, bookData, forcedBaseUrl) {
@@ -724,8 +862,8 @@ function ThePage({
               createAttributes: config?.createAttributes
                 ? config.createAttributes
                 : () => {
-                  return {};
-                },
+                    return {};
+                  },
             };
           });
         });
@@ -785,22 +923,22 @@ function ThePage({
     clearAllVerseHighlights();
     // os.log("clearAllVerseHighlights", clearAllVerseHighlights);
     if (data && JSON.stringify(tab?.data) !== JSON.stringify(data)) {
-      setTab(prev => ({ ...prev, data }))
+      setTab((prev) => ({ ...prev, data }));
     }
   }, [data]);
 
   function hanldNavFunctions() {
-    if (tab && tab?.id) setActiveTab(tab?.id);
+    if (tab && tab?.id && !sharedTab) setActiveTab(tab?.id);
     setNavFunctions({
       openNextChapter,
       openPrevChapter,
       open,
       changeTranslation: bible?.changeTranslation || undefined,
-      setPanalApp: () => { },
+      setPanalApp: () => {},
     });
     globalThis.Open = open;
     globalThis.ChangeTranslation = changeTranslation;
-    globalThis.SetPanalApp = () => { };
+    globalThis.SetPanalApp = () => {};
     globalThis.ToggleVerseHighlight = toggleVerseHighlight;
     globalThis.UnHighlightVerse = unHighlightVerse;
     globalThis.HighlightVerse = highlightVerse;
@@ -940,7 +1078,6 @@ function ThePage({
     });
   }, [tab?.id, data?.book, data?.chapter]);
 
-
   const toggleVerseHighlight = useCallback(
     (verseNumbers, color, scroll, fadeIn, skipIt) => {
       // if (!skipIt)
@@ -948,9 +1085,11 @@ function ThePage({
       if (!tab?.id) return;
       EmitData("highlight", { verseNumbers, color });
 
-      const verseId = `v-${Array.isArray(verseNumbers)
-        ? verseNumbers[verseNumbers.length - 1]
-        : verseNumbers}`;
+      const verseId = `v-${
+        Array.isArray(verseNumbers)
+          ? verseNumbers[verseNumbers.length - 1]
+          : verseNumbers
+      }`;
 
       if (scroll)
         document.getElementById(verseId)?.scrollIntoView({
@@ -959,7 +1098,9 @@ function ThePage({
           inline: "nearest",
         });
 
-      const numbers = Array.isArray(verseNumbers) ? verseNumbers : [verseNumbers];
+      const numbers = Array.isArray(verseNumbers)
+        ? verseNumbers
+        : [verseNumbers];
 
       setHighlighted((prev) => {
         const newHighlighted = { ...prev };
@@ -983,10 +1124,13 @@ function ThePage({
         if (!globalThis.tabHighlights) globalThis.tabHighlights = {};
         globalThis.tabHighlights[tab?.id] = newHighlighted;
 
-        if (fadeIn || tags?.sessions[configBot.id]?.config.highlightDuration) {
+        if (
+          fadeIn ||
+          tags?.sessions?.[configBot.id]?.config.highlightDuration
+        ) {
           let duration = 0;
-          if (tags?.sessions[configBot.id]?.config.highlightDuration)
-            fadeIn = tags?.sessions[configBot.id]?.config.highlightDuration
+          if (tags?.sessions?.[configBot.id]?.config.highlightDuration)
+            fadeIn = tags?.sessions?.[configBot.id]?.config.highlightDuration;
           if (fadeIn === 4) {
             duration = 0; // Never remove highlight
           } else if (typeof fadeIn === "number") {
@@ -1011,22 +1155,23 @@ function ThePage({
     [tab?.id, data, data?.book, data?.chapter]
   );
 
-
   const highlightVerse = useCallback(
-    (verseNumbers, color) => {
+    (verseNumbers, color, scroll = true) => {
       if (!tab?.id) return;
       EmitData("highlight", { verseNumbers, color });
 
-      const verseId = `v-${typeof verseNumbers === "object"
-        ? verseNumbers[verseNumbers.length - 1]
-        : verseNumbers
-        }`;
+      const verseId = `v-${
+        Array.isArray(verseNumbers)
+          ? verseNumbers[verseNumbers.length - 1]
+          : verseNumbers
+      }`;
 
-      document.getElementById(verseId).scrollIntoView({
-        behavior: "smooth",
-        block: "center",
-        inline: "nearest",
-      });
+      if (scroll)
+        document.getElementById(verseId)?.scrollIntoView({
+          behavior: "smooth",
+          block: "center",
+          inline: "nearest",
+        });
 
       const numbers = Array.isArray(verseNumbers)
         ? verseNumbers
@@ -1034,8 +1179,6 @@ function ThePage({
 
       setHighlighted((prev) => {
         const newHighlighted = { ...prev };
-
-        const allHighlighted = numbers.every((vn) => newHighlighted[vn]);
         const groupId = Date.now();
 
         numbers.forEach((vn) => {
@@ -1044,13 +1187,11 @@ function ThePage({
             book: data?.book,
             chapter: data?.chapter,
             group: groupId,
-            color,
+            color: color || wordHighlightsBC,
           };
         });
 
-        if (!globalThis.tabHighlights) {
-          globalThis.tabHighlights = {};
-        }
+        if (!globalThis.tabHighlights) globalThis.tabHighlights = {};
         globalThis.tabHighlights[tab?.id] = newHighlighted;
 
         return newHighlighted;
@@ -1064,10 +1205,11 @@ function ThePage({
       if (!tab?.id) return;
       EmitData("highlight", { verseNumbers });
 
-      const verseId = `v-${typeof verseNumbers === "object"
-        ? verseNumbers[verseNumbers.length - 1]
-        : verseNumbers
-        }`;
+      const verseId = `v-${
+        typeof verseNumbers === "object"
+          ? verseNumbers[verseNumbers.length - 1]
+          : verseNumbers
+      }`;
 
       document.getElementById(verseId).scrollIntoView({
         behavior: "smooth",
@@ -1122,90 +1264,135 @@ function ThePage({
     }
   }
   globalThis.ClearUserSelection = clearUserSelection;
+  useEffect(() => {
+    function handleEsc(e) {
+      if (e.key === "Escape") {
+        // Clear verse clicks
+        setClickedVerses([]);
+        setClickedVersesContext({});
+        setShowVerseToolbar(false);
+
+        // Clear selection highlight
+        setCommandHighlight([]);
+        setLastSelectedVerse(null);
+        setSelectedText("");
+        setShowCommands(false);
+
+        // Remove browser selected text
+        if (window.getSelection) {
+          const sel = window.getSelection();
+          if (sel.removeAllRanges) sel.removeAllRanges();
+        }
+      }
+    }
+
+    document.addEventListener("keydown", handleEsc);
+    return () => document.removeEventListener("keydown", handleEsc);
+  }, []);
 
   // NEW: Handle verse clicks
-  const handleVerseClick = useCallback((verseNumber) => {
-    setClickedVerses(prev => {
-      const isAlreadyClicked = prev.includes(verseNumber);
-      if (isAlreadyClicked) {
-        // Remove verse from clicked list
-        const newClicked = prev.filter(v => v !== verseNumber);
-        if (newClicked.length === 0) {
-          setShowVerseToolbar(false);
-          setClickedVersesContext({});
-        } else {
-          // Update context with remaining clicked verses
-          const remainingVerseObjects = newClicked.map(v => {
-            const verseObj = data?.content?.flatMap(c => c.verses).find(vv => vv.verseNumber === v);
-            return {
-              verseNumber: v,
-              text: verseObj?.text || "",
-              book: data?.book,
-              chapter: data?.chapter,
-              highlighted: !!highlighted?.[v],
-            };
-          });
-          setClickedVersesContext({
-            verses: newClicked,
-            book: data?.book,
-            chapter: data?.chapter,
-            verseNumber: newClicked,
-            reference: `${data?.book} ${data?.chapter}:${newClicked.join(",")}`,
-            text: remainingVerseObjects.map(o => o.text).join(" "),
-          });
-        }
-        return newClicked;
-      } else {
-        // Add verse to clicked list
-        const newClicked = [...prev, verseNumber];
-        const verseObj = data?.content?.flatMap(c => c.verses).find(v => v.verseNumber === verseNumber);
+  const handleVerseClick = useCallback(
+    (verseNumber, verseElement) => {
+      const ele = document.getElementById(`v-${verseNumber}`);
+      const rect = ele.getBoundingClientRect();
+      // Only auto-position if the user has NOT moved the toolbar manually
+      if (!userMovedToolbar) {
+        setToolbarPos({
+          x: rect.left + rect.width / 2,
+          y: rect.bottom - 150,
+        });
+      }
 
-        // Build context data like onVeresRightClick
-        const context = {
+      setClickedVerses((prev) => {
+        const isAlreadyClicked = prev.includes(verseNumber);
+
+        if (isAlreadyClicked) {
+          const newClicked = prev.filter((v) => v !== verseNumber);
+
+          if (newClicked.length === 0) {
+            setTimeout(() => {
+              setShowVerseToolbar(false);
+            }, 5);
+            setClickedVersesContext({});
+          }
+
+          return newClicked;
+        }
+
+        const newClicked = [...prev, verseNumber];
+        const verseObj = data?.content
+          ?.flatMap((c) => c.verses)
+          .find((v) => v.verseNumber === verseNumber);
+
+        setClickedVersesContext({
           verseNumber: newClicked,
-          text: newClicked.map(v => {
-            const vo = data?.content?.flatMap(c => c.verses).find(vv => vv.verseNumber === v);
-            return vo?.text || "";
-          }).join(" "),
+          text: newClicked
+            .map((v) => {
+              const obj = data?.content
+                ?.flatMap((c) => c.verses)
+                .find((vv) => vv.verseNumber === v);
+              return obj?.text || "";
+            })
+            .join(" "),
           book: data?.book,
           chapter: data?.chapter,
-          highlighted: !!highlighted?.[verseNumber],
-        };
+        });
 
-        setClickedVersesContext(context);
         setShowVerseToolbar(true);
         return newClicked;
-      }
-    });
-  }, [data, highlighted]);
-
+      });
+    },
+    [data, highlighted, showVerseToolbar, userMovedToolbar]
+  );
 
   // NEW: Handle color selection from toolbar
-  const handleColorSelect = useCallback((color) => {
-    if (clickedVerses.length === 0) return;
-    setWordHighlightsBC(color)
-    // Apply the selected color to all clicked verses
-    clickedVerses.forEach(verseNum => {
-      toggleVerseHighlight(verseNum, color);
-    });
+  const handleColorSelect = useCallback(
+    (color) => {
+      if (clickedVerses.length === 0) return;
+      setWordHighlightsBC(color);
+      // Apply the selected color to all clicked verses
+      clickedVerses.forEach((verseNum) => {
+        toggleVerseHighlight(verseNum, color);
+      });
 
-    // Clear clicked verses and hide toolbar
-    setClickedVerses([]);
-    setShowVerseToolbar(false);
-  }, [clickedVerses, toggleVerseHighlight]);
+      // Clear clicked verses and hide toolbar
+      setClickedVerses([]);
+      setTimeout(() => {
+        setShowVerseToolbar(false);
+      }, 5);
+    },
+    [clickedVerses, toggleVerseHighlight]
+  );
 
   // NEW: Close toolbar when clicking outside
   useEffect(() => {
     const handleClickOutside = (e) => {
-      if (showVerseToolbar && !e.target.closest('.verse-toolbar') && !e.target.closest('.sectionText') && !e.target.closest('.sectionCover') && !e.target.closest('.sectionTitle')) {
+      if (
+        showVerseToolbar &&
+        !e.target.closest(".verse-toolbar") &&
+        !e.target.closest(".sectionText") &&
+        !e.target.closest(".sectionCover") &&
+        !e.target.closest(".sectionTitle")
+      ) {
         setClickedVerses([]);
-        setShowVerseToolbar(false);
+        setTimeout(() => {
+          setShowVerseToolbar(false);
+        }, 5);
       }
     };
 
-    document.addEventListener('mousedown', handleClickOutside);
-    return () => document.removeEventListener('mousedown', handleClickOutside);
+    document.addEventListener("mousedown", handleClickOutside);
+    return () => document.removeEventListener("mousedown", handleClickOutside);
   }, [showVerseToolbar]);
+  const [dragToolbar, setDragToolbar] = useState(false);
+  const [toolbarPos, setToolbarPos] = useState({ x: 200, y: 200 }); // initial position
+  useEffect(() => {
+    if (!dragToolbar) return;
+    setToolbarPos({
+      x: position.x,
+      y: position.y,
+    });
+  }, [position, dragToolbar]);
 
   return (
     <div
@@ -1215,7 +1402,7 @@ function ThePage({
       onMouseUp={handleMouseUp}
       onClick={hanldNavFunctions}
       style={{
-        direction
+        direction,
       }}
     >
       <style>
@@ -1224,7 +1411,7 @@ function ThePage({
           position: relative;
         }
         .toolbar-1 {
-          display:${showVerseToolbar ? 'none !important' : ''}
+          display:${showVerseToolbar && globalThis.IsMobileNow() ? "none !important" : ""}
         }
         .bookTitle,
         .sectionTitle {
@@ -1233,8 +1420,7 @@ function ThePage({
 
         .verse-clicked {
           border-bottom: 2px dashed #4459F3 !important;
-          padding: 2px 4px !important;
-          border-radius: 3px !important;
+         
         }
          `}
       </style>
@@ -1276,6 +1462,8 @@ function ThePage({
                       wordHighlightsBC={wordHighlightsBC}
                       clickedVerses={clickedVerses}
                       handleVerseClick={handleVerseClick}
+                      setClickedVerses={setClickedVerses}
+                      setShowVerseToolbar={setShowVerseToolbar}
                     />
                   </div>
                 </>
@@ -1303,22 +1491,61 @@ function ThePage({
           </div>
           <div style={{ height: "160px" }}></div>
 
-          {showVerseToolbar && !(role === 'follower' && config.onlyHostHighlight) && (
-            <VerseToolbar
-              clickedVerses={clickedVerses}
-              toggleVerseHighlight={toggleVerseHighlight}
-              book={data?.book}
-              setClickedVerses={setClickedVerses}
-              chapter={data?.chapter}
-              highlighted={highlighted}
-              clickedVersesContext={clickedVersesContext}
-              onColorSelect={handleColorSelect}
-              onClose={() => {
-                setClickedVerses([]);
-                setShowVerseToolbar(false);
-              }}
-            />
-          )}
+          {showVerseToolbar &&
+            !(role === "follower" && config.onlyHostHighlight) && (
+              <div
+                onMouseDown={() => {
+                  if (!globalThis.IsMobileNow()) {
+                    // userMovedToolbar.current = true;
+                    setUserMovedToolbar(true);
+                    setDragToolbar(true);
+                  }
+                }}
+                onMouseUp={() => setDragToolbar(false)}
+                // onMouseLeave={() => setDragToolbar(false)}
+                style={
+                  globalThis.IsMobileNow()
+                    ? {
+                        position: "fixed",
+                        left: "50%",
+                        bottom: "20px",
+                        transform: "translateX(-50%)",
+                        zIndex: 10000,
+                        width: "90%",
+                        maxWidth: "420px",
+                        cursor: "default",
+                        userSelect: "none",
+                      }
+                    : 
+                    {
+                        position: "fixed",
+                        left: toolbarPos.x - 190,
+                        top: toolbarPos.y,
+                        zIndex: 10000,
+                        cursor: dragToolbar ? "grabbing" : "grab",
+                        userSelect: "none",
+                      }
+                }
+                className="verse-toolbar"
+              >
+                <VerseToolbar
+                  clickedVerses={clickedVerses}
+                  toggleVerseHighlight={toggleVerseHighlight}
+                  book={data?.book}
+                  setClickedVerses={setClickedVerses}
+                  chapter={data?.chapter}
+                  highlighted={highlighted}
+                  clickedVersesContext={clickedVersesContext}
+                  onColorSelect={handleColorSelect}
+                  onClose={() => {
+                    setClickedVerses([]);
+                    setTimeout(() => {
+                      setShowVerseToolbar(false);
+                    }, 5);
+                  }}
+                />
+              </div>
+            )}
         </>
       ) : (
         <>
@@ -1331,8 +1558,9 @@ function ThePage({
               justifyContent: "center",
               backgroundColor: "#f8f9fa",
             }}
-            className={`pageContainer ${tabEntered ? "tabEntered" : "tabDrop"
-              } ${highlightOnce ? "tabHighlightBg" : ""}`}
+            className={`pageContainer ${
+              tabEntered ? "tabEntered" : "tabDrop"
+            } ${highlightOnce ? "tabHighlightBg" : ""}`}
           >
             <div
               style={{
@@ -1580,7 +1808,55 @@ function Section({
   wordHighlightsBC,
   clickedVerses,
   handleVerseClick,
+  setClickedVerses,
+  setShowVerseToolbar,
 }) {
+  const selectAllHeadingVerses = useCallback(() => {
+    const verseNumbers = verses.map((v) => v.verseNumber);
+
+    setClickedVerses((prev) => {
+      const merged = [...new Set([...prev, ...verseNumbers])].sort(
+        (a, b) => a - b
+      );
+
+      // Build unified text
+      const text = merged
+        .map((v) => {
+          const verseObj = verses.find((vv) => vv.verseNumber === v);
+          return verseObj?.text || "";
+        })
+        .join(" ");
+
+      // Show verse toolbar
+      setShowVerseToolbar(true);
+      setLastSelectedVerse(merged[merged.length - 1]);
+
+      // Update context
+      setContextData({
+        verses: merged,
+        verse: text,
+        text,
+        book,
+        chapter,
+        reference: `${book} ${chapter}:${merged[0]}-${merged[merged.length - 1]}`,
+      });
+
+      return merged;
+    });
+  }, [
+    verses,
+    setClickedVerses,
+    setShowVerseToolbar,
+    setLastSelectedVerse,
+    setContextData,
+    book,
+    chapter,
+  ]);
+  const { eventHandlers, shouldSuppressClick } = useHoldAction(
+    selectAllHeadingVerses,
+    1500 // 1.5 seconds hold
+  );
+
   const stripRe = /[.,'"""'']/g;
   const normalize = (k) => k.replace(stripRe, "").toLowerCase().trim();
 
@@ -1754,8 +2030,9 @@ function Section({
         return (
           <span
             key={i}
-            className={`clickableCursor highlightened ${isActive ? "highlighted-word" : ""
-              }`}
+            className={`clickableCursor highlightened ${
+              isActive ? "highlighted-word" : ""
+            }`}
             style={{ animationDelay: `${i * 0.1}s` }}
             onClick={() => {
               console.log(part.key);
@@ -1779,7 +2056,7 @@ function Section({
         ];
         return wordParts.map((part, i) => {
           if (part.isHighlighted) {
-            let attributes = part.highlightConfig.createAttributes(
+            const attributes = part.highlightConfig.createAttributes(
               book,
               chapter,
               part
@@ -1810,15 +2087,17 @@ function Section({
   return (
     <div>
       <div
-        onClick={() => {
-          shout("onHeadingClick", {
-            heading,
-          });
-        }}
         className="sectionTitle"
+        {...eventHandlers}
+        onClick={(e) => {
+          if (shouldSuppressClick()) return; // Prevent normal click if hold already triggered
+
+          shout("onHeadingClick", { heading });
+        }}
       >
         {heading}
       </div>
+
       {hebrew_subtitle && <div className="sectionTitle">{hebrew_subtitle}</div>}
       <div style={textEdit ? editTextStyle : null}>
         {textEdit && <div className="editVerseTitle">Verse - Text</div>}
@@ -1838,8 +2117,15 @@ function Section({
 
             const [c, setC] = useState(false);
             const isActive = verse.verseNumber.toString() === activeVerse;
+            const maxClicked = clickedVerses?.length
+              ? Math.max(...clickedVerses)
+              : null;
+
+            const commandAnchorVerse = maxClicked || lastSelectedVerse;
+
             const shouldShowCommands =
-              showCommands && lastSelectedVerse === verse.verseNumber;
+              showCommands && commandAnchorVerse === verse.verseNumber;
+
             const isTextDecorUnderline =
               holded?.[verse.verseNumber] ||
               selected[verse.verseNumber] ||
@@ -1853,8 +2139,10 @@ function Section({
                   id={`v-${verse.verseNumber}`}
                   onContextMenu={(e) => {
                     e.preventDefault();
-                    setInHold(verse.verseNumber);
-                    setLastSelectedVerse(verse.verseNumber);
+                    handleVerseClick(verse.verseNumber);
+                    SetShowCommands(false);
+                    // setInHold(verse.verseNumber);
+                    // setLastSelectedVerse(verse.verseNumber);
 
                     setContextData({
                       verse: verse.text,
@@ -1863,13 +2151,13 @@ function Section({
                       chapter,
                       verses: [verse.verseNumber],
                     });
-                    shout("onVeresRightClick", {
-                      verseNumber: verse.verseNumber,
-                      text: verse.text,
-                      chapter,
-                      book,
-                      highlighted: highlighted?.[verse.verseNumber],
-                    });
+                    // shout("onVeresRightClick", {
+                    //   verseNumber: verse.verseNumber,
+                    //   text: verse.text,
+                    //   chapter,
+                    //   book,
+                    //   highlighted: highlighted?.[verse.verseNumber],
+                    // });
                   }}
                   onClick={(e) => {
                     e.stopPropagation();
@@ -1905,22 +2193,25 @@ function Section({
                       (highlighted?.[verse.verseNumber] &&
                         highlighted?.[verse.verseNumber].book === book &&
                         highlighted?.[verse.verseNumber].chapter === chapter) ||
-                        commandHighlight.includes(verse.verseNumber)
+                      commandHighlight.includes(verse.verseNumber)
                         ? highlighted?.[verse.verseNumber]?.color
                         : "transparent",
                     color:
                       (highlighted?.[verse.verseNumber] &&
                         highlighted?.[verse.verseNumber].book === book &&
                         highlighted?.[verse.verseNumber].chapter === chapter) ||
-                        commandHighlight.includes(verse.verseNumber)
+                      commandHighlight.includes(verse.verseNumber)
                         ? wordHighlightsTC
                         : "black",
                     transition: "background-color 0.2s ease, border 0.2s ease",
-                    "border-radius": highlighted?.[verse.verseNumber] || isClicked
-                      ? "3px"
-                      : "0",
-                    padding: highlighted?.[verse.verseNumber] || isClicked ? "2px 4px" : "0",
-                    margin: highlighted?.[verse.verseNumber] || isClicked ? "0 1px" : "0",
+                    "border-radius":
+                      highlighted?.[verse.verseNumber] || isClicked
+                        ? "3px"
+                        : "0",
+                    padding:
+                      highlighted?.[verse.verseNumber] || isClicked ? "" : "0",
+                    margin:
+                      highlighted?.[verse.verseNumber] || isClicked ? "" : "0",
                     "text-decoration":
                       inHold === verse.verseNumber || isTextDecorUnderline
                         ? "underline"
@@ -1931,15 +2222,18 @@ function Section({
                         : "",
                     borderBottom: isClicked ? "2px dashed #4459F3" : "none",
                   }}
-                  className={`sectionText ${verse?.verseNumber.toString() === activeVerse.toString()
-                    ? "highlighted"
-                    : ""
-                    } ${highlighted?.[verse.verseNumber] ? "verse-highlighted" : ""
-                    } ${isClicked ? "verse-clicked" : ""}`}
+                  className={`sectionText ${
+                    verse?.verseNumber.toString() === activeVerse.toString()
+                      ? "highlighted"
+                      : ""
+                  } ${
+                    highlighted?.[verse.verseNumber] ? "verse-highlighted" : ""
+                  } ${isClicked ? "verse-clicked" : ""}`}
                 >
                   <span
-                    className={`sectionTextNumber ${globalThis.studyNotesPresent ? "clickableCursor" : ""
-                      }`}
+                    className={`sectionTextNumber ${
+                      globalThis.studyNotesPresent ? "clickableCursor" : ""
+                    }`}
                     onClick={() => {
                       if (globalThis.studyNotesPresent) {
                         HighlightStudyNoteSection(verse?.verseNumber);
@@ -2021,7 +2315,7 @@ export const ThePageWithPanel = ({ tab }) => {
         initialWidth={gridPortalBot.tags.pixelWidth}
         containerWidth={gridPortalBot.tags.pixelWidth}
         containerHeight={1000}
-        onResize={() => { }}
+        onResize={() => {}}
         otherTab={panalApp}
       >
         <ThePage setPanalApp={setPanalApp} tab={tab} />
@@ -2037,8 +2331,7 @@ export const ThePageWithEditor = ({ tab, setPanalApp, panelId }) => {
 
   const activeTab = panelId ? globalThis.PanelTabsMap[panelId] || tab : tab;
   const [enableEditor, setEnableEditor] = useState(false);
-  useEffect(() => {
-  }, [enableEditor]);
+  useEffect(() => {}, [enableEditor]);
   const [data, setData] = useState();
   if (tab) globalThis[`SetEnableEditorOf${tab?.id}`] = setEnableEditor;
   return (

@@ -1787,7 +1787,7 @@ const CircleCounter = ({ data, book, chapter }) => {
                                             <button
                                                 // disabled={role !== 'host'}
                                                 onClick={() => {
-                                                    HandleSharedTablick();
+                                                    HandleSharedTabClick();
                                                     setIsModalOpen(false);
                                                 }}
                                                 style={{

@@ -10,20 +10,31 @@ const { piece, data, baseColor, userColor, reading, range } = that;
 let color;
 if (reading) {
   if (range) {
-    color = thisBot.GetHistoryColorByRange({
+    color = thisBot.GetHistoryColorByReadingTime({
       baseColor,
       userColor,
-      reading,
-      range,
+      readingTimeSeconds,
     });
+
+    // color = thisBot.GetHistoryColorByRange({
+    //   baseColor,
+    //   userColor,
+    //   reading,
+    //   range,
+    // });
   } else {
-    const deltaTime =
-      os.localTime - (reading?.[reading?.length - 1]?.end ?? Date.now());
-    color = thisBot.GetHistoryColorByDeltaTime({
-      deltaTime,
+    color = thisBot.GetHistoryColorByRecency({
+      recencyTimeSeconds,
       baseColor,
       userColor,
     });
+    // const deltaTime =
+    //   os.localTime - (reading?.[reading?.length - 1]?.end ?? Date.now());
+    // color = thisBot.GetHistoryColorByDeltaTime({
+    //   deltaTime,
+    //   baseColor,
+    //   userColor,
+    // });
   }
 } else color = BibleVizUtils.Data.tags.historyNullColor;
 return color;

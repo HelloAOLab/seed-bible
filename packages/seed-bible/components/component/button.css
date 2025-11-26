@@ -15,6 +15,13 @@
     font-size: 16px;
 }
 
+.custom-button.secondaryAlt.create-button {
+    border-radius: 2rem !important;
+    padding: 4px 8px !important;
+    font-size: 12px !important;
+    margin-right: 14px !important;
+}
+
 .custom-button .material-symbols-outlined {
     font-size: 24px;
 }

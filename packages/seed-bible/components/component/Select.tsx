@@ -1,4 +1,4 @@
-const { useCallback, useState } = os.appHooks;
+const { useCallback, useState, useRef } = os.appHooks;
 
 const Button = thisBot.Button();
 // <option value="" disabled>
@@ -9,6 +9,7 @@ const Select = ({ name, limit = 5, sxSelect, hidden = false, value, onChangeList
 
     const [error, setError] = useState(false);
     const [hide, setHide] = useState(hidden);
+    const selectRef = useRef();
 
     const handleChange = useCallback((e) => {
         if (e.target.value === 'N/A') return setHide(false);
@@ -33,8 +34,21 @@ const Select = ({ name, limit = 5, sxSelect, hidden = false, value, onChangeList
                 id={name}
                 name={name}
                 value={value}
+                ref={selectRef}
                 style={sxSelect}
-                onChange={handleChange}
+                onChange={(e)=>{
+                    e.preventDefault();
+                    e.stopPropagation();
+                    if (e.target.value === "N/A") {
+                        setHide(false);
+                        setTimeout(() => {
+                            const el = selectRef.current;
+                            el.click();
+                        }, 50);
+                        return;
+                    }
+                    handleChange(e);
+                }}
                 className="form-control"
             >
 
@@ -45,8 +59,18 @@ const Select = ({ name, limit = 5, sxSelect, hidden = false, value, onChangeList
                         </option>
                     );
                 })}
-                {isLessOptions && <option value="N/A" onClick={() => setHide(true)} style={{ background: "#f0f0f0", border: "1px solid #ccc" }}>
-                    Show More..
+                {isLessOptions && <option 
+                    value="N/A" 
+                    style={{ background: "#f0f0f0", border: "1px solid #ccc" }}
+                    onClick={() => {
+                        setHide(false);
+                        setTimeout(() => {
+                            const el = selectRef.current;
+                            el.click();
+                        }, 50);
+                    }}
+                >
+                    Show More...
                 </option>}
             </select>
             {false && hidden && (

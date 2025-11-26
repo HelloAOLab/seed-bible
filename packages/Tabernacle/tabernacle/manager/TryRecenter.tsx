@@ -8,14 +8,6 @@ const focusPointToCenterDistance = focusPoint.subtract(center).length();
 const isFocusPointInsideArea = focusPointToCenterDistance <= threshold;
 const shouldRecenter = !isFocusPointInsideArea;
 
-console.log(`[Debug] TryRecenter`, {
-  threshold,
-  focusPoint,
-  focusPointToCenterDistance,
-  isFocusPointInsideArea,
-  shouldRecenter,
-});
-
 if (shouldRecenter) {
   BibleVizUtils.Functions.MakePortalRestrict();
   const duration = 1;

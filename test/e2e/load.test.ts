@@ -52,7 +52,7 @@ describe("load", () => {
     expect(await bookTitle?.evaluate((el) => el.textContent)).toBe("Genesis 1");
   });
 
-  test.skip("load translation book and chapter", async () => {
+  test("load translation book and chapter", async () => {
     await loadSeedBible(page, undefined, undefined, undefined, {
       translation: "eng_kjv",
       book: "MAT",

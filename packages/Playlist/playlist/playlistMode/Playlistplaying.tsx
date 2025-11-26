@@ -207,6 +207,8 @@ if (!skipAll) {
             globalThis[`${ele.id}OpenToggle`](true);
         }, 200);
         subIndex = 1;
+      } else  {
+        subIndex = 0;
       }
       break;
     }
@@ -298,7 +300,6 @@ if (!skipAll) {
     globalThis[`${parentId}ToggleGreyCheckPLayingPlaylist`] &&
       globalThis[`${parentId}ToggleGreyCheckPLayingPlaylist`](tgITM.id);
   }
-
   globalThis.PPthh = thh;
   globalThis.PPpastDateEvents = pastDateEvents;
   globalThis.PPchecklistEnabled = checklistEnabled;

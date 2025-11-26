@@ -131,7 +131,14 @@ const CircleCounter = ({ data, book, chapter }) => {
               zIndex: 20,
             }}
           >
-            <span style={{ fontSize: "10px", color: "black", lineHeight: "20px", marginLeft: "-1.5px" }}>
+            <span
+              style={{
+                fontSize: "10px",
+                color: "black",
+                lineHeight: "20px",
+                marginLeft: "-1.5px",
+              }}
+            >
               +{remaining}
             </span>
           </div>
@@ -210,7 +217,9 @@ const CircleCounter = ({ data, book, chapter }) => {
               style={{ display: "flex", flexDirection: "column", gap: "12px" }}
             >
               {entries.map(([id, value], index) => {
-                const { Icon, color } = globalThis?.GetOrSetVisualInTags ? globalThis.GetOrSetVisualInTags(value[0]) : {Icon: TreeIcon, color: "#34D399"};
+                const { Icon, color } = globalThis?.GetOrSetVisualInTags
+                  ? globalThis.GetOrSetVisualInTags(value[0])
+                  : { Icon: TreeIcon, color: "#34D399" };
                 const { role } = globalThis.GetUserSessionInfo(value[0]);
                 return (
                   <div
@@ -284,7 +293,7 @@ const CircleCounter = ({ data, book, chapter }) => {
                       <button
                         // disabled={role !== 'host'}
                         onClick={() => {
-                          HandleSharedTablick();
+                          HandleSharedTabClick();
                           setIsModalOpen(false);
                         }}
                         style={{
@@ -322,6 +331,9 @@ function Tab({
   collapsed,
   onlineUsers,
   index,
+  setSidebarWidth,
+  setCollapsed,
+
   sharedTab,
 }) {
   const { openPopupSettings, closePopupSettings, userURL } =
@@ -417,6 +429,8 @@ function Tab({
             setIsDragging={setIsDragging}
             setElement={setElement}
             collapsed={collapsed}
+            setSidebarWidth={setSidebarWidth}
+            setCollapsed={setCollapsed}
           />
         ),
         data: el,
@@ -433,10 +447,18 @@ function Tab({
   }, [selectedTabs]);
 
   const handleTabClick = () => {
+
+    if(globalThis.IsMobileNow()){
+      setSidebarWidth(0);
+                      // setCollapsed(true);
+                      // setMultiSelectMode(false);
+      
+    }
+
     if (activeTab === el.id) return;
 
     if (el.sharedTab) {
-      globalThis?.HandleSharedTablick();
+      globalThis.HandleSharedTabClick();
     }
     const checkEmpty = PanelsApps.find((e) => !e.tabData);
     console.log(checkEmpty, PanelsApps);
@@ -512,15 +534,15 @@ function Tab({
   };
   const circles = onlineUsers
     ? Object.fromEntries(
-      Object.entries(onlineUsers).filter(
-        ([, v]) =>
-          v?.bookId === el?.data?.bookId && v?.chapter === el?.data?.chapter
+        Object.entries(onlineUsers).filter(
+          ([, v]) =>
+            v?.bookId === el?.data?.bookId && v?.chapter === el?.data?.chapter
+        )
       )
-    )
     : {};
-  const notJoinedSharedTab =
-    sharedTab && activeTab !== el.id;
-  const info = el.sharedTab && globalThis?.GetOrSetVisualInTags(tags.hostIdForOnlineTab);
+  const notJoinedSharedTab = sharedTab && activeTab !== el.id;
+  const info =
+    el.sharedTab && globalThis?.GetOrSetVisualInTags(tags.hostIdForOnlineTab);
 
   return (
     <div
@@ -531,17 +553,18 @@ function Tab({
       style={{
         ...(index === 0 &&
           sharedTab && {
-          "border-top": "none",
-          "border-radius": "0 0 5px 5px",
-          border: `1px solid ${info.color} !important`,
-          background: `color-mix(in srgb, ${info.color} 50%, transparent) !important`,
-          marginBottom: "5px",
-        }),
+            "border-top": "none",
+            "border-radius": "0 0 5px 5px",
+            border: `1px solid ${info.color} !important`,
+            background: `color-mix(in srgb, ${info.color} 50%, transparent) !important`,
+            marginBottom: "5px",
+          }),
       }}
       className={`
 
       ${index === 0 && sharedTab && "sharedTab"}
-      ${notJoinedSharedTab
+      ${
+        notJoinedSharedTab
           ? "tab notJoinedSharedTab"
           : activeTab === el.id && !multiSelectMode && !collapsed
             ? "activeTab"
@@ -550,7 +573,7 @@ function Tab({
               : collapsed
                 ? "collabsedTab"
                 : "tab"
-        } ${selectedTabs?.includes?.(el.id) ? "selected" : ""}`}
+      } ${selectedTabs?.includes?.(el.id) ? "selected" : ""}`}
     >
       <style>{`
         .notJoinedSharedTab {
@@ -573,7 +596,7 @@ function Tab({
                       : [...prev, el.id]
                   );
                 }}
-              // style={{ marginRight: '8px' }}
+                // style={{ marginRight: '8px' }}
               />
             )}
             {tabsIcons && (
@@ -712,6 +735,8 @@ function Folder({ folder, onlineUsers, collapsed }) {
               setIsDragging={setIsDragging}
               setElement={setElement}
               collapsed={collapsed}
+                          setSidebarWidth={setSidebarWidth}
+            setCollapsed={setCollapsed}
             />
           ))}
           {
@@ -744,6 +769,7 @@ function SideBar() {
     setMultiSelectMode,
     selectedTabs,
     setSelectedTabs,
+    sharedTab,
   } = useTabsContext();
   globalThis.AddTab = addTab;
   const { screens, setScreens, fullScreen, setFullScreen, ReSeed, setReSeed } =
@@ -1020,7 +1046,7 @@ function SideBar() {
         title: "Start session",
         onClick: () => {
           // os.log(globalThis?.StartSession,globalThis)
-          HandleSharedTablick();
+          HandleSharedTabClick();
         },
       },
       {
@@ -1072,13 +1098,13 @@ function SideBar() {
         disabled: true,
         icon: <MenuIcon name="bug_report" />,
         title: "Report a bug",
-        onClick: () => { },
+        onClick: () => {},
       },
       {
         disabled: true,
         icon: <MenuIcon name="help" />,
         title: "Help",
-        onClick: () => { },
+        onClick: () => {},
       },
     ],
   };
@@ -1222,8 +1248,9 @@ function SideBar() {
         className={
           collapsed
             ? "sidebar-collapsed"
-            : `sidebar-1 ${openOnMobile ? "open" : null} ${fullScreen ? "floatSidebar" : null
-            }`
+            : `sidebar-1 ${openOnMobile ? "open" : null} ${
+                fullScreen ? "floatSidebar" : null
+              }`
         }
       >
         <div
@@ -1344,24 +1371,24 @@ function SideBar() {
                 <input placeholder="Search..." />
               </div>
             )}
-            <UserPresence />
-            {tabs
-              .filter((tab) => tab.sharedTab)
-              .map((el, index) => (
-                <Tab
-                  key={el.id}
-                  el={el}
-                  index={index}
-                  onlineUsers={onlineUsers}
-                  activeTab={activeTab}
-                  setActiveTab={setActiveTab}
-                  setIsDragging={setIsDragging}
-                  setElement={setElement}
-                  collapsed={collapsed}
-                  editMode={editMode}
-                  sharedTab={true}
-                />
-              ))}
+            {!configBot.tags.staticInst && <UserPresence />}
+            {sharedTab && (
+              <Tab
+                key={sharedTab.id}
+                el={sharedTab}
+                index={0}
+                onlineUsers={onlineUsers}
+                activeTab={activeTab}
+                setActiveTab={setActiveTab}
+                setIsDragging={setIsDragging}
+                setElement={setElement}
+                collapsed={collapsed}
+                editMode={editMode}
+                sharedTab={true}
+                            setSidebarWidth={setSidebarWidth}
+            setCollapsed={setCollapsed}
+              />
+            )}
             <div className="tabsContainer">
               <span>Tabs</span>
               <div
@@ -1558,6 +1585,8 @@ function SideBar() {
                 setElement={setElement}
                 collapsed={collapsed}
                 editMode={editMode}
+                            setSidebarWidth={setSidebarWidth}
+            setCollapsed={setCollapsed}
               />
             ))}
 
@@ -1604,8 +1633,9 @@ export const SpaceUI = () => {
           className={
             collapsed
               ? "profileSection-collapsed"
-              : `profileSection ${openOnMobile ? "open" : ""} ${fullScreen ? "floatProfileSection" : null
-              }`
+              : `profileSection ${openOnMobile ? "open" : ""} ${
+                  fullScreen ? "floatProfileSection" : null
+                }`
           }
         >
           {!collapsed ? (
@@ -1674,7 +1704,7 @@ export const SettingsProfile = () => {
           external: (
             <CreateNewSpaceModal addSpace={addSpace} activeSpace={id} />
           ),
-          onClick: () => { },
+          onClick: () => {},
         },
         { type: "line" },
         {
@@ -1690,10 +1720,10 @@ export const SettingsProfile = () => {
           icon: <MenuIcon name="download" />,
           title: "Import space",
           external: <ImportSpaceModal />,
-          onClick: () => { },
+          onClick: () => {},
         },
         { type: "line" },
-        { icon: <MenuIcon name="share" />, title: "Share", onClick: () => { } },
+        { icon: <MenuIcon name="share" />, title: "Share", onClick: () => {} },
         {
           icon: <MenuIcon name="delete" />,
           title: "Delete",
@@ -1801,7 +1831,7 @@ export const UserProfile = ({ collapsed }) => {
       className="userProfile"
     >
       <div
-        onClick={() => { }}
+        onClick={() => {}}
         style={{
           width: 30,
           height: 30,

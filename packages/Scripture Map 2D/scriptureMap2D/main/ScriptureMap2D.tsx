@@ -1,6 +1,7 @@
 import { ScriptureMap2DProvider } from "scriptureMap2D.main.ScriptureMap2DContext";
 import { Wrapper } from "scriptureMap2D.main.Wrapper";
 import { TimeProvider } from "scriptureMap2D.main.TimeContext";
+import { ReadingHistoryProvider } from "scriptureMap2D.main.ReadingHistoryContext";
 const { memo } = os.appCompat;
 
 export const ScriptureMap2DModes = Object.freeze({
@@ -32,7 +33,9 @@ export const ScriptureMap2D = memo(({ parentContext }) => {
           ScriptureMap2DModes={ScriptureMap2DModes}
           ProjectChapterState={ProjectChapterState}
         >
-          <Wrapper />
+          <ReadingHistoryProvider>
+            <Wrapper />
+          </ReadingHistoryProvider>
         </ScriptureMap2DProvider>
       </TimeProvider>
     </>

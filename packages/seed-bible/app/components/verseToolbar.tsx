@@ -1,5 +1,11 @@
-const { useState, useEffect, useMemo } = os.appHooks;
-import { MenuIcon, ApologistIcon, CopyIcon, ShareIcon, LocationIcon } from "app.components.icons";
+const { useState, useEffect, useRef, useMemo } = os.appHooks;
+import {
+  MenuIcon,
+  ApologistIcon,
+  CopyIcon,
+  ShareIcon,
+  LocationIcon,
+} from "app.components.icons";
 
 export function VerseToolbar({
   clickedVersesContext,
@@ -12,16 +18,36 @@ export function VerseToolbar({
   highlighted,
   onClose,
 }) {
-  const [showColorPicker, setShowColorPicker] = useState(false);
   const [selectedColor, setSelectedColor] = useState("#FDE047");
   const [customColors, setCustomColors] = useState([]);
+  const [tempColor, setTempColor] = useState(null);
+  const colorInputRef = useRef(null);
+  const colorPickerRef = useRef(null);
 
-  // Format verse reference with grouping logic
+  useEffect(() => {
+    const handleClickOutside = (event) => {
+      // if (colorPickerRef.current && !colorPickerRef.current.contains(event.target)) {
+      //   if (!customColors.includes(tempColor)) {
+      //     setCustomColors((prev) => [...prev, tempColor]);
+      //   }
+      if (tempColor) {
+        handleColorClick(tempColor);
+        setSelectedColor(tempColor);
+        setTempColor(null);
+      }
+      // }
+    };
+
+    document.addEventListener("mousedown", handleClickOutside);
+    return () => {
+      document.removeEventListener("mousedown", handleClickOutside);
+    };
+  }, [tempColor, customColors]);
+
   const getVerseReference = () => {
     if (clickedVerses.length === 0) return "";
     const sorted = [...clickedVerses].sort((a, b) => a - b);
 
-    // Group consecutive numbers
     const groups = [];
     let start = sorted[0];
     let end = sorted[0];
@@ -41,7 +67,7 @@ export function VerseToolbar({
   };
 
   const containerStyle = {
-    position: "fixed",
+    position: "relative",
     bottom: "20px",
     left: "50%",
     transform: "translateX(-50%)",
@@ -50,7 +76,7 @@ export function VerseToolbar({
     backgroundColor: "#fff",
     borderRadius: "12px",
     boxShadow: "0 4px 20px rgba(0, 0, 0, 0.15)",
-    padding: "12px 20px",
+    padding: "6px 10px",
     zIndex: 1000,
     animation: "slideUp 0.3s ease-out",
     maxWidth: "95vw",
@@ -99,7 +125,7 @@ export function VerseToolbar({
     height: "32px",
     borderRadius: "50%",
     backgroundColor: "#fff",
-    border: "2px solid #d1d1d1",
+    border: "2px solid white",
     display: "flex",
     alignItems: "center",
     justifyContent: "center",
@@ -111,13 +137,14 @@ export function VerseToolbar({
     position: "relative",
     padding: "0",
     lineHeight: "1",
+    "-webkit-user-drag": "none",
   };
 
   const toolButtonsStyle = {
     display: "flex",
     gap: "12px",
     marginLeft: "auto",
-    alignItems: "center"
+    alignItems: "center",
   };
 
   const iconButtonStyle = {
@@ -135,32 +162,14 @@ export function VerseToolbar({
     fontSize: "10px",
   };
 
-  const colorPickerOverlayStyle = {
-    position: "absolute",
-    bottom: "40px",
-    left: "0",
-    backgroundColor: "#fff",
-    border: "1px solid #d1d1d1",
-    borderRadius: "8px",
-    padding: "12px",
-    boxShadow: "0 4px 12px rgba(0, 0, 0, 0.15)",
-    zIndex: 1001,
-  };
-
-  const colorPickerLabelStyle = {
-    fontSize: "12px",
-    color: "#666",
-    marginBottom: "8px",
-    display: "block",
-    fontWeight: "500",
-  };
-
   const colorInputStyle = {
-    width: "150px",
-    height: "40px",
+    width: "0",
+    height: "0",
     border: "1px solid #d1d1d1",
     borderRadius: "4px",
     cursor: "pointer",
+    "pointer-events": "none",
+    position: "absolute",
   };
 
   const closeButtonStyle = {
@@ -177,9 +186,10 @@ export function VerseToolbar({
     marginLeft: "8px",
   };
 
-  const defaultColors = ["#FDE047", "#5EEAD4", "#A3E635", "#FCA5A5", "#C4B5FD"];
+  const { color } = GetOrSetVisualInTags(configBot.id);
 
-  // Check if all clicked verses are already highlighted
+  const defaultColors = [color, "#FDE047"];
+
   const allHighlighted = clickedVerses.some((num) => highlighted[num]);
 
   const handleColorClick = (color) => {
@@ -187,7 +197,6 @@ export function VerseToolbar({
   };
 
   const handleClearHighlights = () => {
-    // Clear highlights for clicked verses
     clickedVerses.forEach((verseNum) => {
       if (globalThis.UnHighlightVerse) {
         globalThis.UnHighlightVerse(verseNum);
@@ -197,25 +206,25 @@ export function VerseToolbar({
   };
 
   const handleClearAll = () => {
-    // globalThis.ClearAllWordHighlights()
     Object.keys(highlighted).forEach((key) => {
-      // const value = myObject[key];
       toggleVerseHighlight(Number(key));
       setClickedVerses([]);
     });
   };
 
-  const handleCustomColorAdd = () => {
-    if (!customColors.includes(selectedColor)) {
-      setCustomColors((prev) => [...prev, selectedColor]);
-    }
-    handleColorClick(selectedColor);
-    setShowColorPicker(false);
+  const handlePlusClick = () => {
+    setTempColor(selectedColor);
+    colorInputRef.current?.click();
+  };
+
+  const handleColorChange = (e) => {
+    setTempColor(e.target.value);
   };
 
   const menuOptions = useMemo(() => {
     return getMenuActions(clickedVersesContext) || [];
   }, [clickedVersesContext]);
+
   return (
     <div className="verse-toolbar" style={containerStyle}>
       <style>
@@ -265,18 +274,25 @@ export function VerseToolbar({
         href="https://fonts.googleapis.com/css2?family=Material+Symbols+Outlined:opsz,wght,FILL,GRAD@20..48,100..700,0..1,-50..200"
       />
 
-      <div className="header-ref" style={headerStyle} onContextMenu={e => {
-        e.stopPropagation()
-      }}>
+      <div
+        className="header-ref"
+        style={headerStyle}
+        onContextMenu={(e) => {
+          e.stopPropagation();
+        }}
+      >
         <span className="verse-ref" style={verseRefStyle}>
           {getVerseReference()}
         </span>
 
         <div className="divider-vertical" style={dividerStyle}></div>
 
-        <div className="color-buttons" style={colorButtonsStyle}>
+        <div
+          onMouseDown={(e) => e.stopPropagation()}
+          className="color-buttons"
+          style={colorButtonsStyle}
+        >
           {allHighlighted ? (
-            // Show clear options when verses are highlighted
             <>
               <button
                 className="clear-button"
@@ -330,7 +346,6 @@ export function VerseToolbar({
               </button>
             </>
           ) : (
-            // Show color options when verses are not highlighted
             <>
               {defaultColors.map((color) => (
                 <button
@@ -364,94 +379,66 @@ export function VerseToolbar({
                 />
               ))}
 
-              <button
-                className="plus-button"
-                style={plusButtonStyle}
-                onMouseEnter={(e) =>
-                  (e.currentTarget.style.transform = "scale(1.1)")
-                }
-                onMouseLeave={(e) =>
-                  (e.currentTarget.style.transform = "scale(1)")
-                }
-                onClick={() => setShowColorPicker(!showColorPicker)}
-                aria-label="Add color"
-              >
-                <img
-                  style={{ width: "38px" }}
-                  src={
-                    "https://res.cloudinary.com/dfbtwwa8p/image/upload/v1761753902/329cd5727522c1b0f09580e4c7b13964cb2b1a87_fvmcdy.png"
+              <div ref={colorPickerRef}>
+                <button
+                  className="plus-button"
+                  style={plusButtonStyle}
+                  onMouseEnter={(e) =>
+                    (e.currentTarget.style.transform = "scale(1.1)")
                   }
-                />
-              </button>
-
-              {showColorPicker && (
-                <div style={colorPickerOverlayStyle}>
-                  <label style={colorPickerLabelStyle}>Choose a color:</label>
-                  <input
-                    type="color"
-                    value={selectedColor}
-                    onChange={(e) => setSelectedColor(e.target.value)}
-                    style={colorInputStyle}
+                  onMouseLeave={(e) =>
+                    (e.currentTarget.style.transform = "scale(1)")
+                  }
+                  onClick={handlePlusClick}
+                  aria-label="Add color"
+                >
+                  <img
+                    style={{ width: "38px" ,"-webkit-user-drag": "none"}}
+                    src={
+                      "https://res.cloudinary.com/dfbtwwa8p/image/upload/v1761753902/329cd5727522c1b0f09580e4c7b13964cb2b1a87_fvmcdy.png"
+                    }
                   />
-                  <button
-                    onClick={handleCustomColorAdd}
-                    style={{
-                      marginTop: "8px",
-                      padding: "6px 12px",
-                      borderRadius: "4px",
-                      border: "1px solid #ccc",
-                      backgroundColor: "#f5f5f5",
-                      cursor: "pointer",
-                      fontSize: "12px",
-                    }}
-                  >
-                    Add Color
-                  </button>
-                </div>
-              )}
+                </button>
+
+                <input
+                  ref={colorInputRef}
+                  type="color"
+                  value={tempColor}
+                  onChange={handleColorChange}
+                  style={colorInputStyle}
+                />
+              </div>
             </>
           )}
         </div>
 
         <div className="divider-vertical" style={dividerStyle}></div>
 
-        <div className="tool-buttons" style={toolButtonsStyle}>
+        <div
+          onMouseDown={(e) => e.stopPropagation()}
+          className="tool-buttons"
+          style={toolButtonsStyle}
+        >
           {menuOptions.map((option) => {
             if (option?.type === "line") {
-              return <div className="divider-vertical" style={dividerStyle}></div>
+              return (
+                <div className="divider-vertical" style={dividerStyle}></div>
+              );
             } else {
-              return <div class="toolbar-icon-container">
-                <div
-                  onClick={option?.onClick}
-                  className="icon-button"
-                  style={iconButtonStyle}
-                >
-                  {option.icon}
+              return (
+                <div class="toolbar-icon-container">
+                  <div
+                    onClick={option?.onClick}
+                    className="icon-button"
+                    style={iconButtonStyle}
+                  >
+                    {option.icon}
+                  </div>
+                  <span>{option.title}</span>
                 </div>
-                <span>{option.title}</span>
-              </div>
+              );
             }
           })}
-          {
-            null /*<button className="icon-button" style={iconButtonStyle} aria-label="Edit">
-                        <span className="material-symbols-outlined">edit</span>
-                    </button>
-                    <button className="icon-button" style={iconButtonStyle} aria-label="Frame">
-                        <span className="material-symbols-outlined">crop_square</span>
-                    </button>
-                    <button className="icon-button" style={iconButtonStyle} aria-label="AI Tools">
-                        <span className="material-symbols-outlined">auto_awesome</span>
-                    </button>
-                    <button className="icon-button" style={iconButtonStyle} aria-label="Share">
-                        <span className="material-symbols-outlined">share</span>
-                    </button>
-                    <button className="icon-button" style={iconButtonStyle} aria-label="Bookmark">
-                        <span className="material-symbols-outlined">bookmark</span>
-                    </button>
-                    <button className="icon-button" style={iconButtonStyle} aria-label="Copy">
-                        <span className="material-symbols-outlined">content_copy</span>
-                    </button>*/
-          }
         </div>
       </div>
     </div>
@@ -469,7 +456,7 @@ function getMenuActions(that) {
           os.setClipboard(that.text);
           SetInHold(null);
         },
-        title: "Copy"
+        title: "Copy",
       },
       {
         icon: <ApologistIcon />,
@@ -478,7 +465,7 @@ function getMenuActions(that) {
           SetShowCommands(true);
           SetInHold(null);
         },
-        title: "Apologist"
+        title: "Apologist",
       },
       {
         icon: <ShareIcon height="24" width="24" />,
@@ -493,8 +480,8 @@ function getMenuActions(that) {
             SetInHold(null);
           }, 50);
         },
-        title: "Share"
-      }
+        title: "Share",
+      },
     ],
   };
 
@@ -521,10 +508,12 @@ function getMenuActions(that) {
   if (that.verseNumber) {
     for (const verseNumber of that.verseNumber) {
       if (
-        globalThis?.VerseContextMenuOptions?.[`${that.book}-${verseNumber}`]
+        globalThis?.VerseContextMenuOptions?.[
+          `${that.book}-${that.chapter}-${verseNumber}`
+        ]
       ) {
         globalThis.VerseContextMenuOptions[
-          `${that.book}-${verseNumber}`
+          `${that.book}-${that.chapter}-${verseNumber}`
         ].forEach((item) => {
           if (verseContextMenuOptions[item.title]) {
             verseContextMenuOptions[item.title] = {
@@ -547,7 +536,7 @@ function getMenuActions(that) {
   for (const title of Object.keys(verseContextMenuOptions)) {
     const titleArray = [];
     const itemsHolder = [];
-    MenuOptions.items.push({type: "line"})
+    MenuOptions.items.push({ type: "line" });
     verseContextMenuOptions[title].items.forEach((el) => {
       if (!titleArray.includes(el.title)) {
         itemsHolder.push({
@@ -562,10 +551,12 @@ function getMenuActions(that) {
     });
     MenuOptions.items.push({
       ...verseContextMenuOptions[title],
-      icon: <span class="toolbar-icon-container">
-        {verseContextMenuOptions[title].icon}
-        <span class="toolbar-icon-count">{titleArray.length}</span>
-      </span>,
+      icon: (
+        <span class="toolbar-icon-container">
+          {verseContextMenuOptions[title].icon}
+          <span class="toolbar-icon-count">{titleArray.length}</span>
+        </span>
+      ),
       onClick: () => {
         const subMenuItems = {
           type: "normal",
@@ -573,7 +564,7 @@ function getMenuActions(that) {
         };
         subMenuItems.items.push(...itemsHolder);
         openPopupSettings(subMenuItems);
-      }
+      },
     });
   }
 

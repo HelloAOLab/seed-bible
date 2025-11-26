@@ -38,10 +38,11 @@ export function Toolbar() {
   } = useTabsContext();
 
   // === keep original default-toolbar logic ===
-  const [showToolbar, setShowToolbar] = useState(true);
-  useEffect(() => {
-    setShowToolbar(!openOnMobile);
-  }, [openOnMobile]);
+  const [showToolbar, setShowToolbar] = useState(false);
+  globalThis.SetShowToolbar = setShowToolbar;
+  // useEffect(() => {
+  //   setShowToolbar(!openOnMobile);
+  // }, [openOnMobile]);
 
   const TabTools = getToolsForActiveSpace();
   const setActiveTools = (newTools) =>
@@ -183,9 +184,9 @@ export function Toolbar() {
                         clearTimeout(holdTimeoutRef.current);
                         if (!hasHeldRef.current && tool?.onClick) {
                           tool.onClick();
-                          EmitData("appClick", {
-                            name: `${tool?.pkgName}_package`,
-                          });
+                          // EmitData("appClick", {
+                          //   name: `${tool?.pkgName}_package`,
+                          // });
                         }
                         if (isDragging) {
                           setIsDragging(false);
