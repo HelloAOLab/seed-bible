@@ -1444,6 +1444,7 @@ function ThePage({
                       blinker={blinker}
                       setRef={refs}
                       holded={holded}
+                      clickedVersesContext={clickedVersesContext}
                       selected={selected}
                       highlighted={highlighted}
                       wordHighlights={wordHighlights}
@@ -1784,6 +1785,7 @@ function Section({
   hebrew_subtitle,
   commandHighlight,
   setCommandHighlight,
+  clickedVersesContext ,
   setLastSelectedVerse,
   setRef,
   commandsRef,
@@ -2293,7 +2295,7 @@ function Section({
                       paddingTop: "10px",
                     }}
                   >
-                    <ConfigurableFunctionCommands contextData={contextData} />
+                    <ConfigurableFunctionCommands contextData={clickedVersesContext} clickedVerses={clickedVerses} />
                   </div>
                 )}
               </span>
