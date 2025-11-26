@@ -907,7 +907,7 @@ const FloatingAppContainer = ({
     updateFloatingApp(app.id, {
       prevSize: app.size,
       prevPosition: app.position,
-      size: { width: 525, height: 300 },
+size: { width: 604, height: 345 }
     });
   };
 
@@ -915,7 +915,7 @@ const FloatingAppContainer = ({
     updateFloatingApp(app.id, {
       prevSize: app.size,
       prevPosition: app.position,
-      size: { width: 350, height: 200 },
+      size: { width: 403, height: 230 }
     });
   };
 
