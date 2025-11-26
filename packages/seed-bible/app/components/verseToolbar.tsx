@@ -465,7 +465,7 @@ function getMenuActions(that,onClose) {
           ClearUserSelection();
           SetShowCommands(true);
           SetInHold(null);
-          onClose()
+          // onClose()
         },
         title: "Apologist",
       },
@@ -480,7 +480,7 @@ function getMenuActions(that,onClose) {
               true
             );
             SetInHold(null);
-            onClose()
+            // onClose()
           }, 50);
         },
         title: "Share",
