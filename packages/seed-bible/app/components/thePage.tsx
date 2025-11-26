@@ -1083,7 +1083,7 @@ function ThePage({
       // if (!skipIt)
       //   return
       if (!tab?.id) return;
-      EmitData("highlight", { verseNumbers, color });
+      
 
       const verseId = `v-${
         Array.isArray(verseNumbers)
@@ -1158,7 +1158,7 @@ function ThePage({
   const highlightVerse = useCallback(
     (verseNumbers, color, scroll = true) => {
       if (!tab?.id) return;
-      EmitData("highlight", { verseNumbers, color });
+      // EmitData("highlight", { verseNumbers, color });
 
       const verseId = `v-${
         Array.isArray(verseNumbers)
@@ -1354,7 +1354,7 @@ function ThePage({
       clickedVerses.forEach((verseNum) => {
         toggleVerseHighlight(verseNum, color);
       });
-
+      EmitData("highlight", { verseNum, color });
       // Clear clicked verses and hide toolbar
       setClickedVerses([]);
       setTimeout(() => {
