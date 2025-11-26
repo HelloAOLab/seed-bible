@@ -46,42 +46,48 @@ function getOrSetVisualInTags(remoteId) {
     if (typeof tags !== "undefined") {
       if (!tags.userPresenceData) tags.userPresenceData = {};
       if (!tags.userPresenceData.visuals) tags.userPresenceData.visuals = {};
-
-      // If not assigned yet → assign a unique pair
+      if (!tags.userPresenceData.usedIndices) tags.userPresenceData.usedIndices = { colors: [], icons: [] };
+      
       if (!tags.userPresenceData.visuals[remoteId]) {
-        let visual = computeVisual(remoteId);
-        const used = new Set(
-          Object.values(tags.userPresenceData.visuals)
-            .map(v => `${v.iconIndex}-${v.colorIndex}`)
-        );
-
-        let attempts = 0;
-        const totalCombos = icons.length * colors.length;
-
-        // ensure uniqueness by cycling until an unused combo is found
-        while (
-          used.has(`${visual.iconIndex}-${visual.colorIndex}`) &&
-          attempts < totalCombos
-        ) {
-          // increment iconIndex first, then overflow into colorIndex
-          visual.iconIndex = (visual.iconIndex + 1) % icons.length;
-          if (visual.iconIndex === 0) {
-            visual.colorIndex = (visual.colorIndex + 1) % colors.length;
-          }
-          attempts++;
+        // Get available indices (filter out used ones)
+        let availableColorIndices = colors
+          .map((_, i) => i)
+          .filter(i => !tags.userPresenceData.usedIndices.colors.includes(i));
+        
+        let availableIconIndices = icons
+          .map((_, i) => i)
+          .filter(i => !tags.userPresenceData.usedIndices.icons.includes(i));
+        
+        // If all indices are used, reset and use all indices again
+        if (availableColorIndices.length === 0) {
+          tags.userPresenceData.usedIndices.colors = [];
+          availableColorIndices = colors.map((_, i) => i);
         }
-
+        
+        if (availableIconIndices.length === 0) {
+          tags.userPresenceData.usedIndices.icons = [];
+          availableIconIndices = icons.map((_, i) => i);
+        }
+        
+        // Compute visual with available indices
+        const visual = computeVisual(remoteId, availableColorIndices, availableIconIndices);
+        
+        // Record the used indices
+        tags.userPresenceData.usedIndices.colors.push(visual.colorIndex);
+        tags.userPresenceData.usedIndices.icons.push(visual.iconIndex);
+        
         tags.userPresenceData.visuals[remoteId] = visual;
       }
-
+      
       const data = tags.userPresenceData.visuals[remoteId];
       return { ...data, color: colors[data.colorIndex], Icon: icons[data.iconIndex] };
     }
   } catch (_) {
-    return { color: null, icon: null };
+    return { color: null, Icon: null };
   }
   return computeVisual(remoteId);
 }
+
 
 globalThis.GetOrSetVisualInTags = getOrSetVisualInTags;
 

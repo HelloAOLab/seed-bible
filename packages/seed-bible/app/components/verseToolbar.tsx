@@ -393,7 +393,7 @@ export function VerseToolbar({
                   aria-label="Add color"
                 >
                   <img
-                    style={{ width: "38px" }}
+                    style={{ width: "38px" ,"-webkit-user-drag": "none"}}
                     src={
                       "https://res.cloudinary.com/dfbtwwa8p/image/upload/v1761753902/329cd5727522c1b0f09580e4c7b13964cb2b1a87_fvmcdy.png"
                     }

@@ -380,9 +380,7 @@ function ThePage({
     }
 
     setData(bible.data);
-    setTimeout(() => {
-        SetShowToolbar(true);
-    }, 500);
+    SetShowToolbar(true);
     whisper(getBot("system", "introduction.searchBar"), "initialize");
   }
   useEffect(() => {
@@ -463,66 +461,57 @@ function ThePage({
   }
 
 
-useEffect(() => {
-    if (!data) return;
-
-    hanldNavFunctions();
-    SetShowCommands(false);
-    updateTab(tab?.id, data);
-
-    // ---------- HOST ----------
-    if (role === "host") {
-
-        // Update shared tab if configured
-        if (config?.sharedTab) {
-            updateTab(masks["sharedTab"], data);
-        }
-
-        // Emit navigation (with debounce + loop guard)
-        safeEmitBook({ ...data });
-    }
-
-    // ---------- FOLLOWER ----------
-    else if (role === "follower" && !config?.onlyHostNav) {
-
-        // Emit follower navigation (debounced + guarded)
-        safeEmitBook({ ...data, skip: true });
-    }
-
-    // ---------- PANEL RECORDING ----------
-    if (panelId && tab) {
-        os.log("recorded", panelId, {
-            ...tab,
-            data: { ...tab.data, ...data }
+  useEffect(() => {
+    if (data) {
+      //  EmitData("book", { ...data });
+      hanldNavFunctions();
+      SetShowCommands(false);
+      updateTab(tab?.id, data);
+      if (config && !config?.sharedTab && role === 'host' && masks['sharedTab'] !== tab.id) {
+        updateTab(tab?.id, data);
+        updateTab(masks['sharedTab'], data);
+      }
+      if (role === 'host')
+        EmitData("book", { ...data });
+      if (panelId && tab) {
+        os.log("recoreded", panelId, {
+          ...tab,
+          data: { ...tab.data, ...data },
         });
-
         globalThis.PanelTabsMap[panelId] = {
-            ...tab,
-            data: { ...tab.data, ...data }
+          ...tab,
+          data: { ...tab.data, ...data },
         };
-    }
-
-    // ---------- RTL / LTR MODE ----------
-    if (data.translation === "ARBNAV" || data.translation === "arb_vdv") {
+      }
+      os.log("bookdata", data);
+      if (data.translation === "ARBNAV" || data.translation === "arb_vdv") {
         setDirection("rtl");
-    } else {
+      } else {
         setDirection(null);
-    }
+      }
+      if (masks['sharedTab'] === tab.id)
+        EmitData("book", { ...data });
+      // const emitter = getBot("system", "app.emitter");
+      // sendRemoteData(emitter.masks.otherRemotes, "updateSharingData", {
+      //   id: tab?.id,
+      //   bookId: data?.bookId,
+      //   book: data?.book,
+      //   chapter: data?.chapter,
+      // });
+      const emitter = getBot("system", "app.emitter");
 
-    // ---------- SHARING META ----------
-    const emitter = getBot("system", "app.emitter");
-    sendRemoteData(emitter.masks.otherRemotes, "updateSharingData", {
+      sendRemoteData(emitter.masks.otherRemotes, "updateSharingData", {
         id: tab?.id,
         bookId: data?.bookId,
         book: data?.book,
         chapter: data?.chapter,
-    });
-
-    // sync for later openings
-    configBot.tags.book = data?.bookId;
-    configBot.tags.chapter = data?.chapter;
-
-}, [data]);
+      });
+    
+      configBot.tags.book = data?.bookId;
+      configBot.tags.chapter = data?.chapter;
+      os.syncConfigBotTagsToURL(['book','chapter']);
+    }
+  }, [data]);
 
   useEffect(() => {
     // Create the interval
@@ -707,8 +696,8 @@ useEffect(() => {
         if (ele) {
           const rect = ele.getBoundingClientRect();
           setToolbarPos({
-            x: rect.left + rect.width / 2,
-            y: rect.bottom - 150,
+            x: rect.left ,
+            y: rect.bottom ,
           });
         }
       }
@@ -1513,7 +1502,7 @@ useEffect(() => {
                   }
                 }}
                 onMouseUp={() => setDragToolbar(false)}
-                onMouseLeave={() => setDragToolbar(false)}
+                // onMouseLeave={() => setDragToolbar(false)}
                 style={
                   globalThis.IsMobileNow()
                     ? {
@@ -1527,7 +1516,8 @@ useEffect(() => {
                         cursor: "default",
                         userSelect: "none",
                       }
-                    : {
+                    : 
+                    {
                         position: "fixed",
                         left: toolbarPos.x - 190,
                         top: toolbarPos.y,
