@@ -4,6 +4,14 @@ if (!that.verseNumber) return;
 
 const isShiftHold = globalThis?.KEY_HOLD?.['shift'];
 
+if(globalThis.IsEditingAnnotation) {
+    ShowNotification({
+        message: `You are editing an annotation. Please save it first.`,
+        severity: "error",
+    });
+    return;
+}
+
 if (!isShiftHold) {
     globalThis.ADD_VERSE_ITEM_PLAYLIST_GROUP_ID = createUUID && createUUID();
 }

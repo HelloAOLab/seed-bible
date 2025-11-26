@@ -499,6 +499,7 @@ const AddAnotationUI = ({
   const [singleMode, setSingleMode] = useState(true);
   const [embedItems, setEmbedItems] = useState([]);
   const [tags, setTags] = useState([]);
+  const [textHTML, setTextHTML] = useState("");
 
   // Edit Mode
   const [isEditAddress, setIsEditAddress] = useState(editData?.address);
@@ -537,8 +538,10 @@ const AddAnotationUI = ({
           const data = res.data.data;
           if (data.data) {
             setEditDataDetails({ ...data.data });
-            setList([...data.data.additionalInfo.layers]);
+            const layers = data.data.additionalInfo?.layers?.filter((ele) => ele.type === "heading");
+            setTextHTML(layers?.[0]?.content || "");
             setTags([...(data.chronicle_tags || [])]);
+            globalThis.IsEditingAnnotation = true;
           } else {
             setDataFetching(false);
             ShowNotification({
@@ -560,6 +563,7 @@ const AddAnotationUI = ({
     globalThis.SelectedItemIDForAttachments = null;
     return () => {
       globalThis.SetSelectedAnnotations = null;
+      globalThis.IsEditingAnnotation = false;
       globalThis.SelectedItemIDForAttachments = null;
       if (isEditAddress) {
         globalThis[`${id}mode`] = PlaylistModeTypes.playlist;
@@ -933,7 +937,8 @@ const AddAnotationUI = ({
   };
 
   const onEditSave = async () => {
-    if (list.length < 1) {
+    // if (list.length < 1) {
+    if (textHTML.trim().length < 1) {
       return ShowNotification({
         message: `Cannot save empty annotation please use delete instead!`,
         severity: "error",
@@ -942,6 +947,16 @@ const AddAnotationUI = ({
     try {
       setLoading(true);
       const promisesArray = [];
+
+      const scripture = {
+        id: createUUID(),
+        content: textHTML,
+        additionalInfo: {
+          isValid: true,
+        },
+        type:  "heading"
+      };
+
       const chroAddData = {
         book:
           editDataDetails.additionalInfo.chapterData?.id ||
@@ -955,7 +970,8 @@ const AddAnotationUI = ({
           ...editDataDetails,
           additionalInfo: {
             ...editDataDetails.additionalInfo,
-            layers: [...list],
+            // layers: [...list],
+            layers: [scripture],
           },
         },
       };
@@ -994,7 +1010,8 @@ const AddAnotationUI = ({
 
   const onClickSave = async () => {
     if (loading) return;
-    if (list.length < 1) {
+    // if (list.length < 1) {
+    if (textHTML.trim().length < 1) {
       return ShowNotification({
         message: "Cannot save empty annotations.",
         severity: "error",
@@ -1004,6 +1021,16 @@ const AddAnotationUI = ({
       await onEditSave();
       return;
     }
+
+    const scripture = {
+      id: createUUID(),
+      content: textHTML,
+      additionalInfo: {
+        isValid: true,
+      },
+      type:  "heading"
+    };
+
     const currentList = [...list].filter((ele) =>
       singleMode
         ? ele.type === "verse" ||
@@ -1020,7 +1047,7 @@ const AddAnotationUI = ({
     let somethingNotScripture = false;
     let somethingNotEmbedded = false;
     if (singleMode) {
-      if (embedItems.length === 0) {
+      if (textHTML.trim().length === 0) {
         return ShowNotification({
           message: `Please embed something to save annotations!`,
           severity: "error",
@@ -1083,7 +1110,8 @@ const AddAnotationUI = ({
               additionalInfo: {
                 ...ele.additionalInfo,
                 layers: [
-                  ...(singleMode ? embedItems : ele.additionalInfo.layers),
+                  scripture
+                  // ...(singleMode ? embedItems : ele.additionalInfo.layers),
                 ],
               },
             },
@@ -2142,11 +2170,13 @@ const AddAnotationUI = ({
                   }
                 }}
               />
-              {!draggedItemID &&
+              {!draggedItemID && !dataFetching &&
                 selectedAnnotation === ele.id &&
                 !embedding && (
                   <div style={{ padding: "1rem" }}>
                     <CustomAnnotationTextEditor
+                      initialHTML={textHTML}
+                      onChange={(html) => {setTextHTML(html)}}
                       massAdd={onMassAdd}
                       attachLink={attachLink}
                     />
@@ -2156,12 +2186,14 @@ const AddAnotationUI = ({
           )
         )}
 
-        {!selectedAnnotation &&
+        {!selectedAnnotation && !dataFetching &&
           (!singleMode || editData?.address) &&
           !draggedItemID &&
           !embedding && (
             <CustomAnnotationTextEditor
                 massAdd={onMassAdd}
+                initialHTML={textHTML}
+                onChange={(html) => {setTextHTML(html)}}
                 attachLink={attachLink}
             />
           )}
