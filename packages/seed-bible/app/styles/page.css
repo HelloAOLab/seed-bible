@@ -123,6 +123,7 @@
 }
 
 .sectionTitle {
+  color: var(--pageTextColor);
   font-family: var(--text-heading-font);
   color: var(--text-heading-color);
   font-size: 18px;

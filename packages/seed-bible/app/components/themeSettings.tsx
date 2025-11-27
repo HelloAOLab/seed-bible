@@ -12,6 +12,7 @@ const COLOR_FIELDS = [
   { label: "Menu Background", field: "menuBackground" }, 
   { label: "Page Background", field: "pageBackground" }, 
   { label: "Page text color", field: "pageTextColor" }, 
+  { label: "Icons color", field: "iconColor" }, 
   { label: "Primary button background", field: "primaryButton" },
   { label: "Primary button text", field: "primaryButtonColor" },
   { label: "Secondary button background", field: "secondaryButton" },
@@ -175,6 +176,253 @@ const READY_THEMES = [
   },
 ];
 
+// ======================
+//   COLOR ENGINE
+// ======================
+class Color {
+  constructor(r, g, b) {
+    this.set(r, g, b);
+  }
+
+  set(r, g, b) {
+    this.r = this.clamp(r);
+    this.g = this.clamp(g);
+    this.b = this.clamp(b);
+  }
+
+  clamp(v) { return Math.max(0, Math.min(255, v)); }
+
+  multiply(m) {
+    const r = this.r, g = this.g, b = this.b;
+    this.r = this.clamp(r * m[0] + g * m[1] + b * m[2]);
+    this.g = this.clamp(r * m[3] + g * m[4] + b * m[5]);
+    this.b = this.clamp(r * m[6] + g * m[7] + b * m[8]);
+  }
+
+  invert(v = 1) {
+    this.r = this.clamp((v + this.r / 255 * (1 - 2 * v)) * 255);
+    this.g = this.clamp((v + this.g / 255 * (1 - 2 * v)) * 255);
+    this.b = this.clamp((v + this.b / 255 * (1 - 2 * v)) * 255);
+  }
+
+  sepia(v = 1) {
+    this.multiply([
+      0.393 + 0.607 * (1 - v),
+      0.769 - 0.769 * (1 - v),
+      0.189 - 0.189 * (1 - v),
+      0.349 - 0.349 * (1 - v),
+      0.686 + 0.314 * (1 - v),
+      0.168 - 0.168 * (1 - v),
+      0.272 - 0.272 * (1 - v),
+      0.534 - 0.534 * (1 - v),
+      0.131 + 0.869 * (1 - v)
+    ]);
+  }
+
+  saturate(v = 1) {
+    this.multiply([
+      0.213 + 0.787 * v,
+      0.715 - 0.715 * v,
+      0.072 - 0.072 * v,
+      0.213 - 0.213 * v,
+      0.715 + 0.285 * v,
+      0.072 - 0.072 * v,
+      0.213 - 0.213 * v,
+      0.715 - 0.715 * v,
+      0.072 + 0.928 * v
+    ]);
+  }
+
+  hueRotate(angle = 0) {
+    const rad = angle * Math.PI / 180;
+    const sin = Math.sin(rad);
+    const cos = Math.cos(rad);
+
+    this.multiply([
+      0.213 + cos * 0.787 - sin * 0.213,
+      0.715 - cos * 0.715 - sin * 0.715,
+      0.072 - cos * 0.072 + sin * 0.928,
+      0.213 - cos * 0.213 + sin * 0.143,
+      0.715 + cos * 0.285 + sin * 0.140,
+      0.072 - cos * 0.072 - sin * 0.283,
+      0.213 - cos * 0.213 - sin * 0.787,
+      0.715 - cos * 0.715 + sin * 0.715,
+      0.072 + cos * 0.928 + sin * 0.072
+    ]);
+  }
+
+  brightness(v = 1) { this.linear(v); }
+  contrast(v = 1) { this.linear(v, -(0.5 * v) + 0.5); }
+
+  linear(slope = 1, intercept = 0) {
+    this.r = this.clamp(this.r * slope + intercept * 255);
+    this.g = this.clamp(this.g * slope + intercept * 255);
+    this.b = this.clamp(this.b * slope + intercept * 255);
+  }
+
+  hsl() {
+    const r = this.r / 255;
+    const g = this.g / 255;
+    const b = this.b / 255;
+    const max = Math.max(r,g,b);
+    const min = Math.min(r,g,b);
+    let h, s, l = (max + min) / 2;
+
+    if (max === min) {
+      h = s = 0;
+    } else {
+      const d = max - min;
+      s = l > 0.5 ? d / (2 - max - min) : d / (max + min);
+      switch (max) {
+        case r: h = (g - b) / d + (g < b ? 6 : 0); break;
+        case g: h = (b - r) / d + 2; break;
+        case b: h = (r - g) / d + 4; break;
+      }
+      h /= 6;
+    }
+
+    return { h: h * 100, s: s * 100, l: l * 100 };
+  }
+}
+
+
+// ======================
+//   SOLVER ENGINE
+//   (optimized to run fast)
+// ======================
+class Solver {
+  constructor(target) {
+    this.target = target;
+    this.targetHSL = target.hsl();
+    this.tmp = new Color(0, 0, 0);
+  }
+
+  solve() {
+    const wide = this.solveWide();
+    const narrow = this.solveNarrow(wide);
+    return this.css(narrow.values);
+  }
+
+  // ---- Reduced iterations here ----
+  solveWide() {
+    const A = 5, c = 15;
+    const a = [60, 180, 18000, 600, 1.2, 1.2];
+    let best = { loss: Infinity };
+    const initial = [50, 20, 3750, 50, 100, 100];
+
+    const result = this.spsa(A, a, c, initial, 150);
+    if (result.loss < best.loss) best = result;
+
+    return best;
+  }
+
+  // ---- Reduced iterations here ----
+  solveNarrow(wide) {
+    const A = wide.loss;
+    const A1 = A + 1;
+    const c = 2;
+    const a = [
+      0.25 * A1,
+      0.25 * A1,
+      A1,
+      0.25 * A1,
+      0.2 * A1,
+      0.2 * A1
+    ];
+
+    return this.spsa(A, a, c, wide.values, 80);
+  }
+
+  spsa(A, a, c, values, iters) {
+    const alpha = 1, gamma = 0.166666;
+    let best = values.slice(), bestLoss = Infinity;
+
+    const tmp = this.tmp;
+    for (let k = 0; k < iters; k++) {
+      const ck = c / Math.pow(k + 1, gamma);
+
+      const high = [], low = [], delta = [];
+      for (let i = 0; i < 6; i++) {
+        delta[i] = Math.random() > 0.5 ? 1 : -1;
+        high[i] = values[i] + ck * delta[i];
+        low[i]  = values[i] - ck * delta[i];
+      }
+
+      const diff = this.loss(high) - this.loss(low);
+
+      for (let i = 0; i < 6; i++) {
+        const g = diff / (2 * ck) * delta[i];
+        const ak = a[i] / Math.pow(A + k + 1, alpha);
+
+        values[i] = this.fix(values[i] - ak * g, i);
+      }
+
+      const loss = this.loss(values);
+      if (loss < bestLoss) {
+        bestLoss = loss;
+        best = values.slice();
+      }
+    }
+
+    return { values: best, loss: bestLoss };
+  }
+
+  fix(v, idx) {
+    const max = [100,100,7500,100,200,200][idx];
+    if (idx === 3) return ((v % max) + max) % max;
+    return Math.max(0, Math.min(max, v));
+  }
+
+  loss(filters) {
+    const c = this.tmp;
+    c.set(0, 0, 0);
+
+    c.invert(filters[0]/100);
+    c.sepia(filters[1]/100);
+    c.saturate(filters[2]/100);
+    c.hueRotate(filters[3] * 3.6);
+    c.brightness(filters[4]/100);
+    c.contrast(filters[5]/100);
+
+    const hsl = c.hsl();
+
+    return Math.abs(c.r - this.target.r)
+         + Math.abs(c.g - this.target.g)
+         + Math.abs(c.b - this.target.b)
+         + Math.abs(hsl.h - this.targetHSL.h)
+         + Math.abs(hsl.s - this.targetHSL.s)
+         + Math.abs(hsl.l - this.targetHSL.l);
+  }
+
+  css(f) {
+    return `filter: invert(${Math.round(f[0])}%) sepia(${Math.round(f[1])}%) saturate(${Math.round(f[2])}%) hue-rotate(${Math.round(f[3]*3.6)}deg) brightness(${Math.round(f[4])}%) contrast(${Math.round(f[5])}%);`;
+  }
+}
+
+
+// ======================
+//   HEX → FILTER FUNCTION
+// ======================
+function hexToColor(hex) {
+  hex = hex.replace(/^#/, "");
+  if (hex.length === 3) hex = hex.split("").map(x => x + x).join("");
+
+  const num = parseInt(hex, 16);
+  return new Color(
+    (num >> 16) & 255,
+    (num >> 8) & 255,
+    num & 255
+  );
+}
+
+function getColorFilter(hex) {
+  const color = hexToColor(hex);
+  const solver = new Solver(color);
+  return solver.solve();
+}
+
+
+
 const ThemeSettings = () => {
   const { updateSpace, activeSpace, currentSpace, tabsIcons, setTabsIcons } =
     useTabsContext();
@@ -207,10 +455,13 @@ const ThemeSettings = () => {
       // preserve your side-effect hook
       globalThis.SetToolbarBackground?.(newColor);
     }
-
+ 
+    // const filter = getColorFilter(newColor);
+    // os.log("Updating color field:", newColor,filter);
     const updatedColors = {
       ...colors,
       [field]: newColor,
+      // ["filter-mode"]:filter ,
     };
 
     // keep local map keyed by space
