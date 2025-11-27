@@ -1,7 +1,8 @@
 .pageContainer {
   height: 100%;
   width: 100%;
-  background-color: white;
+  background-color: var(--pageBackground) !important;
+  
   padding: 30px 0%;
   overflow: scroll;
   border-radius: 12px;
@@ -118,6 +119,7 @@
   margin-bottom: var(--text-bookchapter-margin-bottom);
   margin-left: var(--text-bookchapter-margin-left);
   margin-right: var(--text-bookchapter-margin-right);
+  color: var(--pageTextColor);
 }
 
 .sectionTitle {

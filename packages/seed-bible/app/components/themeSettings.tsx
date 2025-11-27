@@ -9,7 +9,9 @@ import { useBibleContext } from "app.hooks.bibleVariables";
 // Fields shown in the screenshot, rendered dynamically below
 // ————————————————————————————————————————————————————————————
 const COLOR_FIELDS = [
-  { label: "Menu Background", field: "menuBackground" }, // replaces sideMenu in UI
+  { label: "Menu Background", field: "menuBackground" }, 
+  { label: "Page Background", field: "pageBackground" }, 
+  { label: "Page text color", field: "pageTextColor" }, 
   { label: "Primary button background", field: "primaryButton" },
   { label: "Primary button text", field: "primaryButtonColor" },
   { label: "Secondary button background", field: "secondaryButton" },
@@ -26,6 +28,8 @@ const COLOR_FIELDS = [
 const defaultTheme = {
   menuBackground: "#F0F1F1",
   primaryButton: "#E6E6E6",
+  pageBackground: "#FFFFFF",
+  pageTextColor: "#000000",
   primaryButtonColor: "#606060",
   secondaryButton: "#4459F34D",
   secondaryButtonColor: "#4459F3",
@@ -60,6 +64,10 @@ const READY_THEMES = [
       toolbarBackground: "#1A1A1A",
       text1: "#FFFFFF",
       text2: "#FFFFFF",
+      iconColor: "#FFFFFF",
+      "filter-mode": "invert(100%)",
+      pageBackground: "#121212",
+      pageTextColor: "white",
       showTabIcons: true,
     },
   },
@@ -258,6 +266,11 @@ const ThemeSettings = () => {
       }));
     }
   }, [activeSpace]);
+useEffect(() => {
+
+    applyReadyTheme(defaultTheme);
+
+}, []);
 
   return (
     <div className="themeSettings-container">
