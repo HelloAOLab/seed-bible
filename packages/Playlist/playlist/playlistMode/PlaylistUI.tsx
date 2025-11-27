@@ -3,7 +3,7 @@ os.registerApp("playlist-cont-ui");
 import { getUserRecord, loadAnnotations } from "db.annotations.library";
 import { ProjectProvider } from "playlist.playlistMode.useProjectContext";
 const RenderIcon = await thisBot.RenderIcon();
-
+import { MenuIcon } from "app.components.icons";
 const { useState, useLayoutEffect, useMemo, useRef, useCallback } = os.appHooks;
 const { Input, Modal, Button, ButtonsCover, Tooltip } = Components;
 
@@ -47,20 +47,47 @@ const sortFunc = (a, b) => {
   return aOrder.num - bOrder.num;
 };
 
-const GetLabel = ({ value, currentOpenedBook }) => {
-  const isMobile =
-    (window?.innerWidth || gridPortalBot.tags.pixelWidth) <
-    MOBILE_VIEWPORT_THRESHOLD;
+const LowerCaseBookMapping = thisBot.tags.LowerCaseBookMapping;
 
-  return value === "discover"
-    ? `${
-        !isMobile
-          ? currentOpenedBook?.book
-          : thisBot.tags.LowerCaseBookMapping[
-              currentOpenedBook?.book?.toLocaleLowerCase()
-            ]
-      } - ${currentOpenedBook?.chapter} `
-    : "";
+const GetLabel = ({ value, currentOpenedBook, thisBot }) => {
+  const containerRef = useRef(null);
+  const [isMobile, setIsMobile] = useState(false);
+
+  useLayoutEffect(() => {
+   
+    // Go up 3 levels
+    const targetElement =
+      containerRef.current.parentElement?.parentElement;
+
+    if (!targetElement) {
+      console.warn("GetLabel: Could not find 3rd parent");
+      return;
+    }
+
+    const observer = new ResizeObserver((entries) => {
+      const width = entries[0].contentRect.width;
+      console.log("width", width);
+      setIsMobile(width < 176);
+    });
+
+    observer.observe(targetElement);
+
+    return () => observer.disconnect();
+  }, []);
+
+  return (
+    <span ref={containerRef}>
+      {value === "discover"
+        ? `${
+            !isMobile
+              ? currentOpenedBook?.book
+              : LowerCaseBookMapping[
+                  currentOpenedBook?.book?.toLocaleLowerCase()
+                ]
+          } - ${currentOpenedBook?.chapter} `
+        : ""}
+    </span>
+  );
 };
 
 const Playlist = () => {
@@ -838,7 +865,7 @@ const Playlist = () => {
                       arrow_back
                     </span>
                   )}
-                  {!editData.id && (
+                  {!editData.id && isLayers && (
                     <div className="tabs-playlist-off" style={{ width: "100%", display: "flex", justifyContent: "space-between", alignItems: "center" }}>
                       {[buttonConfigs[0]].map(({ label, onClick, value, icon }) => (
                         <h4
