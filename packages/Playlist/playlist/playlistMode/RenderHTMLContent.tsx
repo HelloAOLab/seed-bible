@@ -7,9 +7,16 @@ const RenderHTMLContent = ({ htmlContent }) => {
   const containerRef = useRef(null);
 
   useLayoutEffect(() => {
-    const height = containerRef.current?.offsetHeight || 0;
-    if (height > 60) {
+    // If html content contains image, video , iframe, audio, etc. then set shouldRender to true
+    const hasMedia = htmlContent.includes("img") || htmlContent.includes("video") || htmlContent.includes("iframe") || htmlContent.includes("audio");
+    if (hasMedia) {
       setShouldRender(true);
+    } else {
+      const height = containerRef.current?.offsetHeight || 0;
+      console.log(height,containerRef.current,htmlContent);
+      if (height > 60 && !shouldRender) {
+        setShouldRender(true);
+      }
     }
   }, [htmlContent]);
 

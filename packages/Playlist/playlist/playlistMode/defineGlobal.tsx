@@ -263,7 +263,7 @@ globalThis.extractIdFromUrl = (url) => {
 }
 
 globalThis.validateUrl = (url) => {
-  const videoRegex = /^https?:\/\/(?:www\.|player\.)?vimeo\.com\/(?:channels\/(?:\w+\/)?|groups\/(?:[^\/]*)\/videos\/|album\/(?:\d+)\/video\/|video\/|)(\d+)(?:$|\/)/;
+  const videoRegex = /^https?:\/\/(?:www\.|player\.)?vimeo\.com\/(?:channels\/(?:\w+\/)?|groups\/(?:[^\/]*)\/videos\/|album\/(?:\d+)\/video\/|video\/|)(\d+)(?:$|\/)|https?:\/\/.*\.(mp4|webm|ogg|mov|mkv|avi|flv|wmv|m4v)(?:\?|$)/i;
   const ytShortsRegex = /^https?:\/\/(?:www\.|m\.)?youtube\.com\/shorts\/([a-zA-Z0-9_-]+)/;
   const iframeRegex = /^https?:\/\/(?:www\.)?[a-zA-Z0-9.-]+\.[a-zA-Z]{2,}\/?.*/;
 
@@ -299,6 +299,142 @@ globalThis.validateUrl = (url) => {
 
   return { isValid: false, type: null };
 };
+
+globalThis.generateEmbedFromUrl = (url: string) => {
+  if (!url) return null;
+
+  const result = validateUrl(url); // your global function
+
+  if (!result.isValid) return null;
+
+  // ✅ YouTube embed
+  if (result.type === "youtube") {
+    const videoId = result.videoId;
+    
+    return `<iframe
+          src="${globalThis.CONSTANTS.YT_PREFIX}/${videoId}"
+          style="max-width: 100%;"
+          height="auto"
+          title={content}
+          allow="accelerometer;encrypted-media;gyroscope;"
+        ></iframe>`;
+  }
+
+  // ✅ Vimeo or generic video
+  if (result.type === "video") {
+    return `
+      <video 
+        src="${url}" 
+        controls 
+        height="100%"
+        style="max-width: 100%;"
+      ></video>
+    `;
+  }
+
+  // ✅ External link (open in new tab)
+  if (result.type === "externalLink") {
+    return `
+      <a 
+        href="${url}" 
+        target="_blank" 
+        rel="noopener noreferrer"
+        style="color: blue; text-decoration: underline; cursor: pointer;"
+      >
+        ${url}
+      </a>
+    `;
+  }
+
+  return null;
+}
+
+
+
+globalThis.appendImageToEditorHTML = function appendImageToEditorHTML(fileObject: any) {
+
+  const imageExtensions = /\.(png|jpg|jpeg|gif|webp|bmp|svg)$/i;
+
+  const link = fileObject?.additionalInfo?.link;
+  const filename = fileObject?.content;
+
+  // If not a valid image file, return original HTML
+  if (!link || !imageExtensions.test(filename)) {
+    return `File ref: <a href="${link}" target="_blank" rel="noopener noreferrer">${filename}</a>`;
+  }
+
+  // Create image HTML
+  const imageHTML = `
+    <img 
+      src="${link}" 
+      alt="${filename}" 
+      class="sre-image"
+    />
+  `;
+
+  return imageHTML;
+}
+
+
+globalThis.uploadFilesReusable = async function uploadFilesReusable({files}) {
+  const filesPromises: any[] = [];
+
+  console.log("files", files);
+  console.log("files", Object.values(files));
+
+  files.forEach((file: any) => {
+    filesPromises.push(
+      os.recordFile(globalThis.RECORD_STOREKEY, file, {
+        name: file.name,
+        mimeType: file.mimeType,
+      })
+    );
+  });
+
+  try {
+    let failCount = 0;
+    const fileSave = await Promise.all(filesPromises);
+    const filesResult: any[] = [];
+
+    fileSave.forEach(({ success, url, existingFileUrl, errorCode }, index) => {
+      if (!success && errorCode !== "file_already_exists") {
+        failCount++;
+        return;
+      }
+
+      filesResult.push({
+        content: files[index].name,
+        id: createUUID(),
+        additionalInfo: {
+          link: url || existingFileUrl,
+          mimeType: files[index].mimeType,
+          type: "file",
+          isValid: true,
+        },
+        type: "attachment-link",
+      });
+    });
+
+    if (failCount > 0) {
+      ShowNotification({
+        message: "Failed to upload some Files!",
+        severity: "error",
+      });
+    }
+
+    return filesResult;
+  } catch (error) {
+    console.log(error);
+
+    ShowNotification({
+      message: "File upload failed!",
+      severity: "error",
+    });
+
+    return [];
+  }
+}
+
 
 globalThis.getPsalmsBookName = (chapter) => {
   // const psalmsDivision = [0, 41 , 72, 89, 106, 150];
