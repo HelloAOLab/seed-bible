@@ -1875,16 +1875,26 @@ const AddAnotationUI = ({
                   globalThis.LastClickX = x;
                   globalThis.LastClickY = y;
                   showPlaylistPosition.current = { ...getPosition() };
-                  setShowPlaylistSettings(true);
+                  // setShowPlaylistSettings(true);
                 }}
               >
-                <span class="material-symbols-outlined">
-                  {annoation ? "draft" : "playlist_play"}
-                </span>
+                <AnnotationIcon invert={true} />
               </div>
               <p>Annotation Mode</p>
             </div>
             <div className="align-center">
+              <div
+                className="publish-setting"
+                style={{
+                  fontSize: "12px",
+                  marginRight: "0.5rem",
+                }}
+                onClick={(e) => {
+                  if (setTab) setTab("discover");
+                }}
+              >
+                Cancel
+              </div>
               <TogglePlaylistHeight />
               <div
                 className="publish-setting"

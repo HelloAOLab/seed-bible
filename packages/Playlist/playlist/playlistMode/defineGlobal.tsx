@@ -1,5 +1,7 @@
 // scannedURL = new URL(that);
 // let targetRecord = scannedURL.searchParams.get("inst");
+import { MenuIcon } from "app.components.icons";
+
 os.hideLoadingScreen();
 
 globalThis.MOBILE_VIEWPORT_THRESHOLD = 600;
@@ -950,3 +952,15 @@ function formatRelativeTime(date) {
 
 
 globalThis.FormatRelativeTime = formatRelativeTime;
+
+
+const AnnotationIcon = ({invert = false}) => {
+  return <MenuIcon size={16} invert={invert} name="https://auth-aux-aobot-prod-filesbucket-141297942820.s3.amazonaws.com/annotations/5ea6369f9a126d9dd02e97b915f210ee6f421fdeb47b143d5fc359ee17131ea5.svg" />;
+}
+
+const PlaylistIcon = ({invert = false}) => {
+  return <MenuIcon size={16} invert={invert} name="https://auth-aux-aobot-prod-filesbucket-141297942820.s3.amazonaws.com/annotations/72d4f7e1cb9d646e08c96c9752de4914840e40b85e23d879658286a2a685d595.svg" />;
+}
+
+globalThis.AnnotationIcon = AnnotationIcon;
+globalThis.PlaylistIcon = PlaylistIcon;

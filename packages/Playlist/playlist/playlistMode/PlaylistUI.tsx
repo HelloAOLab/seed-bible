@@ -735,12 +735,7 @@ const Playlist = () => {
                         className="align-center"
                         style={{gap: '0.5rem'}}
                       >
-                        <span
-                          style={{ fontSize: "20px", color: "white" }}
-                          class="material-symbols-outlined"
-                        >
-                          playlist_play
-                        </span>
+                        <PlaylistIcon/>
                         <span style={{fontFamily: `"Satoshi", system-ui, sans-serif`}}>
                           New playlist
                         </span>
@@ -749,7 +744,14 @@ const Playlist = () => {
                     <div 
                     className="more-menu-items"
                       onClick={(e) => {
-                        e.stopPropagation()
+                        // if not login show notification
+                        if (!authBot?.id) {
+                          return ShowNotification({
+                            message: "Please login to use this feature.",
+                            severity: "error",
+                          });
+                        }
+                        e.stopPropagation();
                         if (SplitAppPanel2) {
                           globalThis.PendingAction = () => gotoCreate(true);
                           globalThis.StopPlayingPlaylistModal(true);
@@ -763,12 +765,7 @@ const Playlist = () => {
                           className="align-center"
                           style={{gap: '0.5rem'}}
                         >
-                          <span
-                            style={{ fontSize: "20px", color: "white" }}
-                            class="material-symbols-outlined"
-                          >
-                            draft
-                          </span>
+                          <AnnotationIcon/>
                           <span style={{fontFamily: `"Satoshi", system-ui, sans-serif`}}>
                             New annotation
                         </span>
@@ -843,7 +840,7 @@ const Playlist = () => {
                 }
               }}
             >
-              <div>
+              {(isLayers || !!editData.id) && <div>
                 <div
                   className={`playlist-cont-actions`}
                   style={{ padding: !editData.id ? "" : "12px" }}
@@ -969,7 +966,7 @@ const Playlist = () => {
                     </span>
                   )}
                 </div>
-              </div>
+              </div>}
               {isLayers ? (
                 <div
                   style={{
