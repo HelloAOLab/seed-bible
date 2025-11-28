@@ -3,7 +3,7 @@ os.registerApp("playlist-cont-ui");
 import { getUserRecord, loadAnnotations } from "db.annotations.library";
 import { ProjectProvider } from "playlist.playlistMode.useProjectContext";
 const RenderIcon = await thisBot.RenderIcon();
-
+import { MenuIcon } from "app.components.icons";
 const { useState, useLayoutEffect, useMemo, useRef, useCallback } = os.appHooks;
 const { Input, Modal, Button, ButtonsCover, Tooltip } = Components;
 
@@ -47,20 +47,47 @@ const sortFunc = (a, b) => {
   return aOrder.num - bOrder.num;
 };
 
-const GetLabel = ({ value, currentOpenedBook }) => {
-  const isMobile =
-    (window?.innerWidth || gridPortalBot.tags.pixelWidth) <
-    MOBILE_VIEWPORT_THRESHOLD;
+const LowerCaseBookMapping = thisBot.tags.LowerCaseBookMapping;
 
-  return value === "discover"
-    ? `${
-        !isMobile
-          ? currentOpenedBook?.book
-          : thisBot.tags.LowerCaseBookMapping[
-              currentOpenedBook?.book?.toLocaleLowerCase()
-            ]
-      } - ${currentOpenedBook?.chapter} `
-    : "";
+const GetLabel = ({ value, currentOpenedBook, thisBot }) => {
+  const containerRef = useRef(null);
+  const [isMobile, setIsMobile] = useState(false);
+
+  useLayoutEffect(() => {
+   
+    // Go up 3 levels
+    const targetElement =
+      containerRef.current.parentElement?.parentElement;
+
+    if (!targetElement) {
+      console.warn("GetLabel: Could not find 3rd parent");
+      return;
+    }
+
+    const observer = new ResizeObserver((entries) => {
+      const width = entries[0].contentRect.width;
+      console.log("width", width);
+      setIsMobile(width < 176);
+    });
+
+    observer.observe(targetElement);
+
+    return () => observer.disconnect();
+  }, []);
+
+  return (
+    <span ref={containerRef}>
+      {value === "discover"
+        ? `${
+            !isMobile
+              ? currentOpenedBook?.book
+              : LowerCaseBookMapping[
+                  currentOpenedBook?.book?.toLocaleLowerCase()
+                ]
+          } - ${currentOpenedBook?.chapter} `
+        : ""}
+    </span>
+  );
 };
 
 const Playlist = () => {
@@ -708,12 +735,7 @@ const Playlist = () => {
                         className="align-center"
                         style={{gap: '0.5rem'}}
                       >
-                        <span
-                          style={{ fontSize: "20px", color: "white" }}
-                          class="material-symbols-outlined"
-                        >
-                          playlist_play
-                        </span>
+                        <PlaylistIcon/>
                         <span style={{fontFamily: `"Satoshi", system-ui, sans-serif`}}>
                           New playlist
                         </span>
@@ -722,7 +744,14 @@ const Playlist = () => {
                     <div 
                     className="more-menu-items"
                       onClick={(e) => {
-                        e.stopPropagation()
+                        // if not login show notification
+                        if (!authBot?.id) {
+                          return ShowNotification({
+                            message: "Please login to use this feature.",
+                            severity: "error",
+                          });
+                        }
+                        e.stopPropagation();
                         if (SplitAppPanel2) {
                           globalThis.PendingAction = () => gotoCreate(true);
                           globalThis.StopPlayingPlaylistModal(true);
@@ -736,12 +765,7 @@ const Playlist = () => {
                           className="align-center"
                           style={{gap: '0.5rem'}}
                         >
-                          <span
-                            style={{ fontSize: "20px", color: "white" }}
-                            class="material-symbols-outlined"
-                          >
-                            draft
-                          </span>
+                          <AnnotationIcon/>
                           <span style={{fontFamily: `"Satoshi", system-ui, sans-serif`}}>
                             New annotation
                         </span>
@@ -816,7 +840,7 @@ const Playlist = () => {
                 }
               }}
             >
-              <div>
+              {(isLayers || !!editData.id) && <div>
                 <div
                   className={`playlist-cont-actions`}
                   style={{ padding: !editData.id ? "" : "12px" }}
@@ -838,7 +862,7 @@ const Playlist = () => {
                       arrow_back
                     </span>
                   )}
-                  {!editData.id && (
+                  {!editData.id && isLayers && (
                     <div className="tabs-playlist-off" style={{ width: "100%", display: "flex", justifyContent: "space-between", alignItems: "center" }}>
                       {[buttonConfigs[0]].map(({ label, onClick, value, icon }) => (
                         <h4
@@ -942,7 +966,7 @@ const Playlist = () => {
                     </span>
                   )}
                 </div>
-              </div>
+              </div>}
               {isLayers ? (
                 <div
                   style={{
