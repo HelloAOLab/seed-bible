@@ -46,22 +46,52 @@ function getOrSetVisualInTags(remoteId) {
     if (typeof tags !== "undefined") {
       if (!tags.userPresenceData) tags.userPresenceData = {};
       if (!tags.userPresenceData.visuals) tags.userPresenceData.visuals = {};
+      if (!tags.userPresenceData.usedIndices) tags.userPresenceData.usedIndices = { colors: [], icons: [] };
+      
       if (!tags.userPresenceData.visuals[remoteId]) {
-        tags.userPresenceData.visuals[remoteId] = computeVisual(remoteId);
+        // Get available indices (filter out used ones)
+        let availableColorIndices = colors
+          .map((_, i) => i)
+          .filter(i => !tags.userPresenceData.usedIndices.colors.includes(i));
+        
+        let availableIconIndices = icons
+          .map((_, i) => i)
+          .filter(i => !tags.userPresenceData.usedIndices.icons.includes(i));
+        
+        // If all indices are used, reset and use all indices again
+        if (availableColorIndices.length === 0) {
+          tags.userPresenceData.usedIndices.colors = [];
+          availableColorIndices = colors.map((_, i) => i);
+        }
+        
+        if (availableIconIndices.length === 0) {
+          tags.userPresenceData.usedIndices.icons = [];
+          availableIconIndices = icons.map((_, i) => i);
+        }
+        
+        // Compute visual with available indices
+        const visual = computeVisual(remoteId, availableColorIndices, availableIconIndices);
+        
+        // Record the used indices
+        tags.userPresenceData.usedIndices.colors.push(visual.colorIndex);
+        tags.userPresenceData.usedIndices.icons.push(visual.iconIndex);
+        
+        tags.userPresenceData.visuals[remoteId] = visual;
       }
+      
       const data = tags.userPresenceData.visuals[remoteId];
-      return {
-        ...data,
-        color: colors[data.colorIndex],
-        Icon: icons[data.iconIndex],
-      };
+      return { ...data, color: colors[data.colorIndex], Icon: icons[data.iconIndex] };
     }
   } catch (_) {
-    return { color: null, icon: null };
+    return { color: null, Icon: null };
   }
   return computeVisual(remoteId);
 }
+
+
 globalThis.GetOrSetVisualInTags = getOrSetVisualInTags;
+
+
 
 async function getSelfIdSafe() {
   try {

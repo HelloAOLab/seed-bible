@@ -327,7 +327,7 @@ history-item:active {
 }
 
 .tabs-playlist-item:hover {
-  border-bottom: 1px solid #d57d57;
+  /* border-bottom: 1px solid #d57d57; */
 }
 
 .tabs-playlist-item.active {
@@ -1254,4 +1254,9 @@ div.attachment-link.dropabble-Embed .playlist-item-type {
     opacity: 1;
     transform: translateY(0);
   }
+}
+
+.sre-image {
+  max-width: 100%;
+  height: auto;
 }

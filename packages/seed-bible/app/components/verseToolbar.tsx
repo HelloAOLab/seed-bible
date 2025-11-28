@@ -222,7 +222,7 @@ export function VerseToolbar({
   };
 
   const menuOptions = useMemo(() => {
-    return getMenuActions(clickedVersesContext) || [];
+    return getMenuActions(clickedVersesContext,onClose) || [];
   }, [clickedVersesContext]);
 
   return (
@@ -393,7 +393,7 @@ export function VerseToolbar({
                   aria-label="Add color"
                 >
                   <img
-                    style={{ width: "38px" }}
+                    style={{ width: "38px" ,"-webkit-user-drag": "none"}}
                     src={
                       "https://res.cloudinary.com/dfbtwwa8p/image/upload/v1761753902/329cd5727522c1b0f09580e4c7b13964cb2b1a87_fvmcdy.png"
                     }
@@ -445,7 +445,7 @@ export function VerseToolbar({
   );
 }
 
-function getMenuActions(that) {
+function getMenuActions(that,onClose) {
   const { SharePopup } = thisBot.Chips();
   const MenuOptions = {
     type: "normal",
@@ -455,6 +455,7 @@ function getMenuActions(that) {
         onClick: () => {
           os.setClipboard(that.text);
           SetInHold(null);
+          onClose()
         },
         title: "Copy",
       },
@@ -464,6 +465,7 @@ function getMenuActions(that) {
           ClearUserSelection();
           SetShowCommands(true);
           SetInHold(null);
+          // onClose()
         },
         title: "Apologist",
       },
@@ -478,6 +480,7 @@ function getMenuActions(that) {
               true
             );
             SetInHold(null);
+            // onClose()
           }, 50);
         },
         title: "Share",
@@ -508,10 +511,12 @@ function getMenuActions(that) {
   if (that.verseNumber) {
     for (const verseNumber of that.verseNumber) {
       if (
-        globalThis?.VerseContextMenuOptions?.[`${that.book}-${verseNumber}`]
+        globalThis?.VerseContextMenuOptions?.[
+          `${that.book}-${that.chapter}-${verseNumber}`
+        ]
       ) {
         globalThis.VerseContextMenuOptions[
-          `${that.book}-${verseNumber}`
+          `${that.book}-${that.chapter}-${verseNumber}`
         ].forEach((item) => {
           if (verseContextMenuOptions[item.title]) {
             verseContextMenuOptions[item.title] = {

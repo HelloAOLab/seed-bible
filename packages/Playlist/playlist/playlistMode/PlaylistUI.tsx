@@ -3,7 +3,7 @@ os.registerApp("playlist-cont-ui");
 import { getUserRecord, loadAnnotations } from "db.annotations.library";
 import { ProjectProvider } from "playlist.playlistMode.useProjectContext";
 const RenderIcon = await thisBot.RenderIcon();
-
+import { MenuIcon } from "app.components.icons";
 const { useState, useLayoutEffect, useMemo, useRef, useCallback } = os.appHooks;
 const { Input, Modal, Button, ButtonsCover, Tooltip } = Components;
 
@@ -47,24 +47,54 @@ const sortFunc = (a, b) => {
   return aOrder.num - bOrder.num;
 };
 
-const GetLabel = ({ value, currentOpenedBook }) => {
-  const isMobile =
-    (window?.innerWidth || gridPortalBot.tags.pixelWidth) <
-    MOBILE_VIEWPORT_THRESHOLD;
+const LowerCaseBookMapping = thisBot.tags.LowerCaseBookMapping;
 
-  return value === "discover"
-    ? `${
-        !isMobile
-          ? currentOpenedBook?.book
-          : thisBot.tags.LowerCaseBookMapping[
-              currentOpenedBook?.book?.toLocaleLowerCase()
-            ]
-      } - ${currentOpenedBook?.chapter} `
-    : "";
+const GetLabel = ({ value, currentOpenedBook, thisBot }) => {
+  const containerRef = useRef(null);
+  const [isMobile, setIsMobile] = useState(false);
+
+  useLayoutEffect(() => {
+   
+    // Go up 3 levels
+    const targetElement =
+      containerRef.current.parentElement?.parentElement;
+
+    if (!targetElement) {
+      console.warn("GetLabel: Could not find 3rd parent");
+      return;
+    }
+
+    const observer = new ResizeObserver((entries) => {
+      const width = entries[0].contentRect.width;
+      console.log("width", width);
+      setIsMobile(width < 176);
+    });
+
+    observer.observe(targetElement);
+
+    return () => observer.disconnect();
+  }, []);
+
+  return (
+    <span ref={containerRef}>
+      {value === "discover"
+        ? `${
+            !isMobile
+              ? currentOpenedBook?.book
+              : LowerCaseBookMapping[
+                  currentOpenedBook?.book?.toLocaleLowerCase()
+                ]
+          } - ${currentOpenedBook?.chapter} `
+        : ""}
+    </span>
+  );
 };
 
 const Playlist = () => {
   const IsPlaylistPlaying = globalThis.IsPlaylistPlaying;
+
+  const [createOptions, setCreateOptions] = useState(false);
+  const showPlaylistPosition = useRef(getPosition());
 
   const [editAnnoData, setEditAnnoData] = useState({
     address: "",
@@ -520,6 +550,24 @@ const Playlist = () => {
     setStopPlaylistModal(false);
   };
 
+  const gotoCreate = (isAnnotation = false) => {
+    if(globalThis[`${'default'}SetMode`]) {
+      if(isAnnotation) {
+        globalThis[`${'default'}SetMode`](PlaylistModeTypes.annotations);
+      } else {
+        globalThis[`${'default'}SetMode`](PlaylistModeTypes.playlist);
+      }
+    } else {
+      globalThis.SetTab("create");
+      if(isAnnotation) {
+        globalThis[`${"default"}mode`] = PlaylistModeTypes.annotations;
+      } else {
+        globalThis[`${"default"}mode`] = PlaylistModeTypes.playlist;
+      }
+    }
+    setCreateOptions(false);
+  }
+
   return (
     <>
       {!!editRichText.id && (
@@ -653,6 +701,78 @@ const Playlist = () => {
           </ButtonsCover>
         </Modal>
       )}
+
+      {createOptions &&  
+            <>
+              <div className="backdrop" onClick={() => setCreateOptions(false)} />
+                <div
+                    onClick={() => setCreateOptions(false)}
+                    style={{
+                      ...showPlaylistPosition.current,
+                      width: "210px",
+                      maxHeight: "105px",
+                      left: "none",
+                      right: "-12rem",
+                      padding: "0.5rem",
+                      top: "3rem",
+                    }}
+                    className="overlay linked-item-custom"
+                  >
+                    <div
+                      className="more-menu-items"
+                      onClick={(e) => {
+                        e.stopPropagation()
+                        if (SplitAppPanel2) {
+                          globalThis.PendingAction = gotoCreate;
+                          globalThis.StopPlayingPlaylistModal(true);
+                          return;
+                        }
+                        gotoCreate();
+                      }}
+                     
+                    >
+                      <div
+                        className="align-center"
+                        style={{gap: '0.5rem'}}
+                      >
+                        <PlaylistIcon/>
+                        <span style={{fontFamily: `"Satoshi", system-ui, sans-serif`}}>
+                          New playlist
+                        </span>
+                      </div>
+                    </div>
+                    <div 
+                    className="more-menu-items"
+                      onClick={(e) => {
+                        // if not login show notification
+                        if (!authBot?.id) {
+                          return ShowNotification({
+                            message: "Please login to use this feature.",
+                            severity: "error",
+                          });
+                        }
+                        e.stopPropagation();
+                        if (SplitAppPanel2) {
+                          globalThis.PendingAction = () => gotoCreate(true);
+                          globalThis.StopPlayingPlaylistModal(true);
+                          return;
+                        }
+                        gotoCreate(true);
+                      }}
+                    
+                    >
+                      <div
+                          className="align-center"
+                          style={{gap: '0.5rem'}}
+                        >
+                          <AnnotationIcon/>
+                          <span style={{fontFamily: `"Satoshi", system-ui, sans-serif`}}>
+                            New annotation
+                        </span>
+                      </div>
+                    </div>
+                </div>
+                </>}
       <div
         style={{
           display: "flex",
@@ -701,6 +821,7 @@ const Playlist = () => {
               </Modal>
             )}
 
+
             <div
               id={`sidebar-bar`}
               className={`playlist-cont-parent ${
@@ -719,7 +840,7 @@ const Playlist = () => {
                 }
               }}
             >
-              <div>
+              {(isLayers || !!editData.id) && <div>
                 <div
                   className={`playlist-cont-actions`}
                   style={{ padding: !editData.id ? "" : "12px" }}
@@ -741,9 +862,9 @@ const Playlist = () => {
                       arrow_back
                     </span>
                   )}
-                  {!editData.id && (
-                    <div className="tabs-playlist" style={{ width: "100%" }}>
-                      {buttonConfigs.map(({ label, onClick, value, icon }) => (
+                  {!editData.id && isLayers && (
+                    <div className="tabs-playlist-off" style={{ width: "100%", display: "flex", justifyContent: "space-between", alignItems: "center" }}>
+                      {[buttonConfigs[0]].map(({ label, onClick, value, icon }) => (
                         <h4
                           onClick={() => {
                             if (SplitAppPanel2) {
@@ -754,9 +875,7 @@ const Playlist = () => {
                             onClick();
                           }}
                           style={{ width: `${100 / buttonConfigs.length}%` }}
-                          className={`tabs-playlist-item ${
-                            value === tab ? "active" : ""
-                          }`}
+                          className={`tabs-playlist-item`}
                         >
                           <span
                             className="material-symbols-outlined unfollow"
@@ -773,8 +892,21 @@ const Playlist = () => {
                           </span>
                         </h4>
                       ))}
+                       <Button
+                        onClick={() => {
+                          setCreateOptions(true);
+                        }}
+                        secondary
+                        exClass="create-button"
+                      >
+                        <span style={{ color: "white" }} class="material-symbols-outlined">
+                          add
+                        </span>
+                        Create
+                      </Button>
                     </div>
                   )}
+                  
                   {editData.id && (
                     <div
                       className="align-center"
@@ -834,7 +966,7 @@ const Playlist = () => {
                     </span>
                   )}
                 </div>
-              </div>
+              </div>}
               {isLayers ? (
                 <div
                   style={{

@@ -87,6 +87,7 @@
   height: 100vh;
   position: relative;
   background: var(--themeSideMenu);
+  margin-left: 9px;
   /* transition: width 0.3s ease; */
 }
 

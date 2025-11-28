@@ -305,19 +305,22 @@ const Main = () => {
 
     return `:root {\n  ${vars.join("\n  ")}\n}`;
   };
-  const defaultTheme = {
-    menuBackground: "#F0F1F1",
-    primaryButton: "#E6E6E6",
-    primaryButtonColor: "#606060",
-    secondaryButton: "#4459F34D",
-    secondaryButtonColor: "#4459F3",
-    buttonBorder: "#2b00ff",
-    tabSelection: "#a5ade2",
-    spaceSelection: "#4459F3",
-    toolbarBackground: "#ffffff",
-    text1: "#606060",
-    text2: "#000000",
-  };
+const defaultTheme = {
+  menuBackground: "#F0F1F1",
+  primaryButton: "#E6E6E6",
+  pageBackground: "#FFFFFF",
+  pageTextColor: "#000000",
+  primaryButtonColor: "#606060",
+  secondaryButton: "#4459F34D",
+  secondaryButtonColor: "#4459F3",
+  buttonBorder: "#2b00ff",
+  tabSelection: "#4459F3",
+  spaceSelection: "#4459F3",
+  toolbarBackground: "#ffffff",
+  text1: "#606060",
+  text2: "#000000",
+  showTabIcons: true, // Default to showing tab icons
+};
   return (
     <MouseMoveProvider>
       <link

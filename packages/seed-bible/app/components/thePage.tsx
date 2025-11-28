@@ -380,6 +380,7 @@ function ThePage({
     }
 
     setData(bible.data);
+    SetShowToolbar(true);
     whisper(getBot("system", "introduction.searchBar"), "initialize");
   }
   useEffect(() => {
@@ -459,65 +460,57 @@ function ThePage({
     EmitData("book", payload);
   }
 
-  // ----------------------
-  // 🔥 REPLACE YOUR EFFECT WITH THIS
-  // ----------------------
+
   useEffect(() => {
-    if (!data) return;
-
-    hanldNavFunctions();
-    SetShowCommands(false);
-    updateTab(tab?.id, data);
-
-    // ---------- HOST ----------
-    if (role === "host") {
-      // Update shared tab if configured
-      if (config?.sharedTab) {
-        updateTab(masks["sharedTab"], data);
+    if (data) {
+      //  EmitData("book", { ...data });
+      hanldNavFunctions();
+      SetShowCommands(false);
+      updateTab(tab?.id, data);
+      if (config && !config?.sharedTab && role === 'host' && masks['sharedTab'] !== tab.id) {
+        updateTab(tab?.id, data);
+        updateTab(masks['sharedTab'], data);
       }
+      if (role === 'host')
+        EmitData("book", { ...data });
+      if (panelId && tab) {
+        os.log("recoreded", panelId, {
+          ...tab,
+          data: { ...tab.data, ...data },
+        });
+        globalThis.PanelTabsMap[panelId] = {
+          ...tab,
+          data: { ...tab.data, ...data },
+        };
+      }
+      os.log("bookdata", data);
+      if (data.translation === "ARBNAV" || data.translation === "arb_vdv") {
+        setDirection("rtl");
+      } else {
+        setDirection(null);
+      }
+      if (masks['sharedTab'] === tab.id)
+        EmitData("book", { ...data });
+      // const emitter = getBot("system", "app.emitter");
+      // sendRemoteData(emitter.masks.otherRemotes, "updateSharingData", {
+      //   id: tab?.id,
+      //   bookId: data?.bookId,
+      //   book: data?.book,
+      //   chapter: data?.chapter,
+      // });
+      const emitter = getBot("system", "app.emitter");
 
-      // Emit navigation (with debounce + loop guard)
-      safeEmitBook({ ...data });
-    }
-
-    // ---------- FOLLOWER ----------
-    else if (role === "follower" && !config?.onlyHostNav) {
-      // Emit follower navigation (debounced + guarded)
-      safeEmitBook({ ...data, skip: true });
-    }
-
-    // ---------- PANEL RECORDING ----------
-    if (panelId && tab) {
-      os.log("recorded", panelId, {
-        ...tab,
-        data: { ...tab.data, ...data },
+      sendRemoteData(emitter.masks.otherRemotes, "updateSharingData", {
+        id: tab?.id,
+        bookId: data?.bookId,
+        book: data?.book,
+        chapter: data?.chapter,
       });
-
-      globalThis.PanelTabsMap[panelId] = {
-        ...tab,
-        data: { ...tab.data, ...data },
-      };
+    
+      configBot.tags.book = data?.bookId;
+      configBot.tags.chapter = data?.chapter;
+      os.syncConfigBotTagsToURL(['book','chapter']);
     }
-
-    // ---------- RTL / LTR MODE ----------
-    if (data.translation === "ARBNAV" || data.translation === "arb_vdv") {
-      setDirection("rtl");
-    } else {
-      setDirection(null);
-    }
-
-    // ---------- SHARING META ----------
-    const emitter = getBot("system", "app.emitter");
-    sendRemoteData(emitter.masks.otherRemotes, "updateSharingData", {
-      id: tab?.id,
-      bookId: data?.bookId,
-      book: data?.book,
-      chapter: data?.chapter,
-    });
-
-    // sync for later openings
-    configBot.tags.book = data?.bookId;
-    configBot.tags.chapter = data?.chapter;
   }, [data]);
 
   useEffect(() => {
@@ -703,8 +696,8 @@ function ThePage({
         if (ele) {
           const rect = ele.getBoundingClientRect();
           setToolbarPos({
-            x: rect.left + rect.width / 2,
-            y: rect.bottom - 150,
+            x: rect.left ,
+            y: rect.bottom ,
           });
         }
       }
@@ -1090,7 +1083,7 @@ function ThePage({
       // if (!skipIt)
       //   return
       if (!tab?.id) return;
-      EmitData("highlight", { verseNumbers, color });
+      
 
       const verseId = `v-${
         Array.isArray(verseNumbers)
@@ -1163,21 +1156,22 @@ function ThePage({
   );
 
   const highlightVerse = useCallback(
-    (verseNumbers, color) => {
+    (verseNumbers, color, scroll = true) => {
       if (!tab?.id) return;
-      EmitData("highlight", { verseNumbers, color });
+      // EmitData("highlight", { verseNumbers, color });
 
       const verseId = `v-${
-        typeof verseNumbers === "object"
+        Array.isArray(verseNumbers)
           ? verseNumbers[verseNumbers.length - 1]
           : verseNumbers
       }`;
 
-      document.getElementById(verseId).scrollIntoView({
-        behavior: "smooth",
-        block: "center",
-        inline: "nearest",
-      });
+      if (scroll)
+        document.getElementById(verseId)?.scrollIntoView({
+          behavior: "smooth",
+          block: "center",
+          inline: "nearest",
+        });
 
       const numbers = Array.isArray(verseNumbers)
         ? verseNumbers
@@ -1185,8 +1179,6 @@ function ThePage({
 
       setHighlighted((prev) => {
         const newHighlighted = { ...prev };
-
-        const allHighlighted = numbers.every((vn) => newHighlighted[vn]);
         const groupId = Date.now();
 
         numbers.forEach((vn) => {
@@ -1195,13 +1187,11 @@ function ThePage({
             book: data?.book,
             chapter: data?.chapter,
             group: groupId,
-            color,
+            color: color || wordHighlightsBC,
           };
         });
 
-        if (!globalThis.tabHighlights) {
-          globalThis.tabHighlights = {};
-        }
+        if (!globalThis.tabHighlights) globalThis.tabHighlights = {};
         globalThis.tabHighlights[tab?.id] = newHighlighted;
 
         return newHighlighted;
@@ -1364,7 +1354,7 @@ function ThePage({
       clickedVerses.forEach((verseNum) => {
         toggleVerseHighlight(verseNum, color);
       });
-
+      EmitData("highlight", { verseNum, color });
       // Clear clicked verses and hide toolbar
       setClickedVerses([]);
       setTimeout(() => {
@@ -1454,6 +1444,7 @@ function ThePage({
                       blinker={blinker}
                       setRef={refs}
                       holded={holded}
+                      clickedVersesContext={clickedVersesContext}
                       selected={selected}
                       highlighted={highlighted}
                       wordHighlights={wordHighlights}
@@ -1512,7 +1503,7 @@ function ThePage({
                   }
                 }}
                 onMouseUp={() => setDragToolbar(false)}
-                onMouseLeave={() => setDragToolbar(false)}
+                // onMouseLeave={() => setDragToolbar(false)}
                 style={
                   globalThis.IsMobileNow()
                     ? {
@@ -1526,7 +1517,8 @@ function ThePage({
                         cursor: "default",
                         userSelect: "none",
                       }
-                    : {
+                    : 
+                    {
                         position: "fixed",
                         left: toolbarPos.x - 190,
                         top: toolbarPos.y,
@@ -1793,6 +1785,7 @@ function Section({
   hebrew_subtitle,
   commandHighlight,
   setCommandHighlight,
+  clickedVersesContext ,
   setLastSelectedVerse,
   setRef,
   commandsRef,
@@ -2211,7 +2204,7 @@ function Section({
                         highlighted?.[verse.verseNumber].chapter === chapter) ||
                       commandHighlight.includes(verse.verseNumber)
                         ? wordHighlightsTC
-                        : "black",
+                        : "var(--pageTextColor) !important",
                     transition: "background-color 0.2s ease, border 0.2s ease",
                     "border-radius":
                       highlighted?.[verse.verseNumber] || isClicked
@@ -2302,7 +2295,7 @@ function Section({
                       paddingTop: "10px",
                     }}
                   >
-                    <ConfigurableFunctionCommands contextData={contextData} />
+                    <ConfigurableFunctionCommands contextData={clickedVersesContext} clickedVerses={clickedVerses} />
                   </div>
                 )}
               </span>
