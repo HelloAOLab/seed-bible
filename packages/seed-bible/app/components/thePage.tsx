@@ -2085,10 +2085,11 @@ function Section({
       return verse.text;
     }
   };
-
+  const {showHeading,showVerses} = useBibleContext()
+  const {  activeSpace } = useTabsContext();
   return (
     <div>
-      <div
+      {showHeading[activeSpace]&&<div
         className="sectionTitle"
         {...eventHandlers}
         onClick={(e) => {
@@ -2098,7 +2099,7 @@ function Section({
         }}
       >
         {heading}
-      </div>
+      </div>}
 
       {hebrew_subtitle && <div className="sectionTitle">{hebrew_subtitle}</div>}
       <div style={textEdit ? editTextStyle : null}>
@@ -2133,7 +2134,7 @@ function Section({
               selected[verse.verseNumber] ||
               blinker[verse.verseNumber];
             const isClicked = clickedVerses.includes(verse.verseNumber);
-
+            if(showVerses[activeSpace])
             return (
               <span key={verse.verseNumber}>
                 <span

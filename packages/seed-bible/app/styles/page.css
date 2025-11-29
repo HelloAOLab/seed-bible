@@ -146,6 +146,8 @@
   text-align: var(--text-verse-alignment);
   text-decoration: var(--text-verse-text-decoration);
   line-height: var(--text-verse-margin-top);
+    font-size: var(--text-verse-font-size);
+
 
   /* Additions ------> */
   /* set up a transparent border to animate */
