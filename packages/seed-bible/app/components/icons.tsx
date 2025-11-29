@@ -46,6 +46,7 @@ export const SpaceDefaultIcon = () => {
 export function SeedBibleIcon() {
   return (
     <img
+      className='coloredIcon'
       src="https://res.cloudinary.com/dfbtwwa8p/image/upload/v1755365776/717a8527988cca7e0bdc9449ec68581a8400b977_vqc7mx.png"
       style={{
         width: "40px",
@@ -60,6 +61,7 @@ export function SeedBibleIcon() {
 export const ApologistIcon = (noFilter = false) => {
   return (
     <img
+    className='coloredIcon'
       style={{ filter: noFilter ? "" : "invert(1)", width: "24px" }}
       src="https://res.cloudinary.com/dfbtwwa8p/image/upload/v1755794631/svgviewer-png-output_1_tgtfvm.png"
     />
@@ -68,6 +70,7 @@ export const ApologistIcon = (noFilter = false) => {
 
 const AiIcon = (props) => (
   <svg
+  className='coloredIcon'
     width={24}
     height={24}
     viewBox="0 0 24 24"
@@ -98,6 +101,7 @@ const AiIcon = (props) => (
 );
 const AiChatIcon = (props) => (
   <svg
+  className='coloredIcon'
     width={24}
     height={24}
     viewBox="0 0 24 24"
@@ -128,6 +132,7 @@ const AiChatIcon = (props) => (
 );
 const UserAvatar = (props) => (
   <svg
+  className='coloredIcon'
     xmlns="http://www.w3.org/2000/svg"
     width={24}
     height={24}
@@ -312,6 +317,7 @@ const QuadScreenIcon = ({ size = 24 }) => {
 
 const Playlist = (props) => (
   <svg
+  className='coloredIcon'
     width={24}
     height={24}
     viewBox="0 0 24 24"
@@ -327,6 +333,7 @@ const Playlist = (props) => (
 );
 const MenuDown = (props) => (
   <svg
+  className='coloredIcon'
     xmlns="http://www.w3.org/2000/svg"
     width={16}
     height={16}
@@ -652,6 +659,7 @@ export const Panel4Row = () => {
 };
 export const ThemeIcon = (props) => (
   <svg
+  className='coloredIcon'
     width={24}
     height={24}
     viewBox="0 0 24 24"
@@ -693,6 +701,7 @@ const MenuIcon = ({ name, size = 24, invert = false }) => {
 
 const T = (props) => (
   <svg
+  className='coloredIcon'
     xmlns="http://www.w3.org/2000/svg"
     width={24}
     height={24}
@@ -725,6 +734,7 @@ const T = (props) => (
 );
 const Panal = (props) => (
   <svg
+  className='coloredIcon'
     width={24}
     height={24}
     viewBox="0 0 24 24"
@@ -755,6 +765,7 @@ const Panal = (props) => (
 );
 const Space = (props) => (
   <svg
+  className='coloredIcon'
     width={24}
     height={24}
     viewBox="0 0 24 24"
@@ -785,6 +796,7 @@ const Space = (props) => (
 );
 const LoadSpace = (props) => (
   <svg
+  className='coloredIcon'
     xmlns="http://www.w3.org/2000/svg"
     width={24}
     height={24}
@@ -821,6 +833,7 @@ const FolderIcon = () => (
 );
 const OpenFolderIcon = (props) => (
   <svg
+  className='coloredIcon'
     xmlns="http://www.w3.org/2000/svg"
     width={24}
     height={24}
@@ -836,6 +849,7 @@ const OpenFolderIcon = (props) => (
 );
 const FormatLine = (props) => (
   <svg
+  className='coloredIcon'
     xmlns="http://www.w3.org/2000/svg"
     width={16}
     height={16}
@@ -858,6 +872,7 @@ const FormatLine = (props) => (
 );
 const ColorSelect = (props) => (
   <svg
+  className='coloredIcon'
     xmlns="http://www.w3.org/2000/svg"
     width={16}
     height={16}
@@ -870,7 +885,7 @@ const ColorSelect = (props) => (
   </svg>
 );
 const MarginYIcon = (props) => (
-  <svg width={14} height={14} viewBox="0 0 14 14" fill="none">
+  <svg className='coloredIcon' width={14} height={14} viewBox="0 0 14 14" fill="none">
     <path
       d="M12.25 11.6667C12.25 11.9888 11.9888 12.25 11.6667 12.25H2.33333C2.01117 12.25 1.75 11.9888 1.75 11.6667V2.33333C1.75 2.01117 2.01117 1.75 2.33333 1.75H11.6667C11.9888 1.75 12.25 2.01117 12.25 2.33333V11.6667ZM11.0833 6.41667V2.91667H7.58392V4.08333H8.75L7 5.83333L5.25 4.08333H6.41667V2.91667H2.91667V6.41667H4.08333V7.58333H2.91667V11.0833H6.41667V9.91667H5.25L7 8.16667L8.75 9.91667H7.58392V11.0833H11.0833V7.58333H9.91667V6.41667H11.0833ZM6.41667 7.58333H5.25V6.41667H6.41667V7.58333ZM8.75 7.58333H7.58333V6.41667H8.75V7.58333Z"
       fill="black"
@@ -878,7 +893,7 @@ const MarginYIcon = (props) => (
   </svg>
 );
 const MarginXIcon = (props) => (
-  <svg width={14} height={14} viewBox="0 0 14 14" fill="none">
+  <svg className='coloredIcon' width={14} height={14} viewBox="0 0 14 14" fill="none">
     <path
       d="M2.33333 12.25C2.01116 12.25 1.75 11.9888 1.75 11.6667L1.75 2.33333C1.75 2.01117 2.01116 1.75 2.33333 1.75L11.6667 1.75C11.9888 1.75 12.25 2.01117 12.25 2.33333L12.25 11.6667C12.25 11.9888 11.9888 12.25 11.6667 12.25L2.33333 12.25ZM7.58333 11.0833L11.0833 11.0833L11.0833 7.58392L9.91667 7.58392L9.91667 8.75L8.16667 7L9.91667 5.25L9.91667 6.41667L11.0833 6.41667L11.0833 2.91667L7.58333 2.91667L7.58333 4.08333L6.41667 4.08333L6.41667 2.91667L2.91667 2.91667L2.91667 6.41667L4.08333 6.41667L4.08333 5.25L5.83333 7L4.08333 8.75L4.08333 7.58392L2.91667 7.58392L2.91667 11.0833L6.41667 11.0833L6.41667 9.91667L7.58333 9.91667L7.58333 11.0833ZM6.41667 6.41667L6.41667 5.25L7.58333 5.25L7.58333 6.41667L6.41667 6.41667ZM6.41667 8.75L6.41667 7.58333L7.58333 7.58333L7.58333 8.75L6.41667 8.75Z"
       fill="black"
@@ -887,7 +902,7 @@ const MarginXIcon = (props) => (
 );
 
 const CopyIcon = (props) => (
-  <svg width={40} height={40} viewBox="0 0 16 16" fill="none" xmlns="http://www.w3.org/2000/svg" {...props}>
+  <svg className='coloredIcon' width={40} height={40} viewBox="0 0 16 16" fill="none" xmlns="http://www.w3.org/2000/svg" {...props}>
     <path d="M4.6665 3.778C4.6665 3.30644 4.85383 2.8542 5.18727 2.52076C5.52071 2.18732 5.97295 2 6.4445 2H12.2218C12.4553 2 12.6865 2.04599 12.9022 2.13534C13.118 2.22469 13.314 2.35566 13.4791 2.52076C13.6442 2.68587 13.7751 2.88187 13.8645 3.09759C13.9538 3.31331 13.9998 3.54451 13.9998 3.778V9.55533C13.9998 9.78882 13.9538 10.02 13.8645 10.2357C13.7751 10.4515 13.6442 10.6475 13.4791 10.8126C13.314 10.9777 13.118 11.1086 12.9022 11.198C12.6865 11.2873 12.4553 11.3333 12.2218 11.3333H6.4445C5.97295 11.3333 5.52071 11.146 5.18727 10.8126C4.85383 10.4791 4.6665 10.0269 4.6665 9.55533V3.778Z" stroke="#404040" stroke-linecap="round" stroke-linejoin="round" />
     <path d="M2.67467 4.83984C2.47023 4.95639 2.30018 5.12485 2.18172 5.32818C2.06325 5.53151 2.00057 5.76252 2 5.99784V12.6645C2 13.3978 2.6 13.9978 3.33333 13.9978H10C10.5 13.9978 10.772 13.7412 11 13.3312" stroke="#404040" stroke-linecap="round" stroke-linejoin="round" />
     <path d="M7.3335 4.66797H10.6668" stroke="#404040" stroke-linecap="round" stroke-linejoin="round" />
@@ -897,13 +912,13 @@ const CopyIcon = (props) => (
 );
 
 const ShareIcon = (props) => (
-  <svg width={40} height={40} viewBox="0 0 16 16" fill="none" xmlns="http://www.w3.org/2000/svg" {...props}>
+  <svg className='coloredIcon' width={40} height={40} viewBox="0 0 16 16" fill="none" xmlns="http://www.w3.org/2000/svg" {...props}>
     <path d="M14.3196 6.94844L9.51246 2.14128C9.25093 1.87947 8.80406 1.99894 8.70809 2.35633C8.69719 2.39692 8.69166 2.43876 8.69164 2.48079V4.9054C7.13292 5.03879 5.41136 5.80193 3.99505 7.00312C2.28971 8.45007 1.22793 10.3146 1.005 12.2531C0.941261 12.8045 1.49834 13.2182 2.00775 12.9977C2.09844 12.9584 2.1801 12.9009 2.24765 12.8288C2.90863 12.1251 5.26053 9.90003 8.69164 9.70414V12.0951C8.69181 12.4652 9.09252 12.6962 9.4129 12.5111C9.44929 12.49 9.48276 12.4643 9.51246 12.4346L14.3196 7.62745C14.5068 7.43981 14.5068 7.13607 14.3196 6.94844ZM9.65307 10.9348V9.2108C9.65307 8.9453 9.43785 8.73007 9.17235 8.73009C7.48504 8.73009 5.8416 9.17054 4.28768 10.04C3.49627 10.4848 2.7589 11.0196 2.09021 11.6336C2.43873 10.2011 3.31724 8.83885 4.61697 7.73621C6.01225 6.55305 7.71518 5.84579 9.17235 5.84579C9.43785 5.84579 9.65307 5.63057 9.65307 5.36508V3.64172L13.2999 7.28794L9.65307 10.9348Z" fill="#404040" />
   </svg>
 );
 
 const LocationIcon = (props) => (
-  <svg width="16" height="20" viewBox="0 0 16 20" fill="none" xmlns="http://www.w3.org/2000/svg" {...props}>
+  <svg className='coloredIcon' width="16" height="20" viewBox="0 0 16 20" fill="none" xmlns="http://www.w3.org/2000/svg" {...props}>
     <path d="M8.00225 9.75C8.4841 9.75 8.89585 9.5784 9.2375 9.23525C9.57915 8.8921 9.75 8.4796 9.75 7.99775C9.75 7.5159 9.5784 7.10415 9.23525 6.7625C8.8921 6.42085 8.4796 6.25 7.99775 6.25C7.5159 6.25 7.10415 6.4216 6.7625 6.76475C6.42085 7.1079 6.25 7.5204 6.25 8.00225C6.25 8.4841 6.4216 8.89585 6.76475 9.2375C7.1079 9.57915 7.5204 9.75 8.00225 9.75ZM8 20C5.31665 17.7167 3.3125 15.5958 1.9875 13.6375C0.6625 11.6791 0 9.86665 0 8.2C0 5.7 0.804165 3.70835 2.4125 2.225C4.02085 0.741665 5.88335 0 8 0C10.1166 0 11.9791 0.741665 13.5875 2.225C15.1958 3.70835 16 5.7 16 8.2C16 9.86665 15.3375 11.6791 14.0125 13.6375C12.6875 15.5958 10.6833 17.7167 8 20Z" fill="black" />
   </svg>
 

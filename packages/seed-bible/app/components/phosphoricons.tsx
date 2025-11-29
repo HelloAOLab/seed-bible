@@ -1,5 +1,5 @@
 export const TreeIcon = (props) => (
-    <svg
+    <svg className='coloredIcon'
         xmlns="http://www.w3.org/2000/svg"
         width={40}
         height={40}
@@ -12,7 +12,7 @@ export const TreeIcon = (props) => (
 );
 
 export const LogIcon = (props) => (
-    <svg
+    <svg className='coloredIcon'
         xmlns="http://www.w3.org/2000/svg"
         width={40}
         height={40}
@@ -24,7 +24,7 @@ export const LogIcon = (props) => (
     </svg>
 )
 export const LeafIcon = (props) => (
-    <svg
+    <svg className='coloredIcon'
         xmlns="http://www.w3.org/2000/svg"
         width={40}
         height={40}
@@ -37,7 +37,7 @@ export const LeafIcon = (props) => (
 );
 
 export const CatIcon = (props) => (
-    <svg
+    <svg className='coloredIcon'
         xmlns="http://www.w3.org/2000/svg"
         width={40}
         height={40}
@@ -50,7 +50,7 @@ export const CatIcon = (props) => (
 );
 
 export const DogIcon = (props) => (
-    <svg
+    <svg className='coloredIcon'
         xmlns="http://www.w3.org/2000/svg"
         width={40}
         height={40}
@@ -63,7 +63,7 @@ export const DogIcon = (props) => (
 );
 
 export const CoffeBeanIcon = (props) => (
-    <svg
+    <svg className='coloredIcon'
         xmlns="http://www.w3.org/2000/svg"
         width={40}
         height={40}
@@ -76,7 +76,7 @@ export const CoffeBeanIcon = (props) => (
 );
 
 export const SettingsIcon = (props) => (
-    <svg
+    <svg className='coloredIcon'
         width={18}
         height={20}
         viewBox="0 0 18 20"

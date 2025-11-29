@@ -13,7 +13,7 @@ body {
 .material-symbols-outlined{
   color: var(--iconColor) !important;
 }
-svg,
+.coloredIcon,
 .toolbar-button img{
   filter: var(--filter-mode);
 }

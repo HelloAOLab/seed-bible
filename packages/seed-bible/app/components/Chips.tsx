@@ -26,6 +26,7 @@ function SharePopup({
         ),
       svg: (
         <svg
+          className='coloredIcon'
           viewBox="0 0 24 24"
           fill="currentColor"
           style={{ width: 24, height: 24 }}
@@ -46,6 +47,7 @@ function SharePopup({
         ),
       svg: (
         <svg
+          className='coloredIcon'
           viewBox="0 0 24 24"
           fill="currentColor"
           style={{ width: 24, height: 24 }}
@@ -66,6 +68,7 @@ function SharePopup({
         ),
       svg: (
         <svg
+          className='coloredIcon'
           viewBox="0 0 24 24"
           fill="currentColor"
           style={{ width: 24, height: 24 }}
@@ -84,6 +87,7 @@ function SharePopup({
         ),
       svg: (
         <svg
+          className='coloredIcon'
           viewBox="0 0 24 24"
           fill="currentColor"
           style={{ width: 24, height: 24 }}
@@ -104,6 +108,7 @@ function SharePopup({
         ),
       svg: (
         <svg
+          className='coloredIcon'
           viewBox="0 0 24 24"
           fill="currentColor"
           style={{ width: 24, height: 24 }}
@@ -124,6 +129,7 @@ function SharePopup({
         ),
       svg: (
         <svg
+          className='coloredIcon'
           viewBox="0 0 24 24"
           fill="currentColor"
           style={{ width: 24, height: 24 }}
@@ -141,6 +147,7 @@ function SharePopup({
         )}&body=${encodeURIComponent(url)}`),
       svg: (
         <svg
+          className='coloredIcon'
           viewBox="0 0 24 24"
           fill="currentColor"
           style={{ width: 24, height: 24 }}
@@ -163,6 +170,7 @@ function SharePopup({
 
   const ShareIcon = () => (
     <svg
+    className='coloredIcon'
       viewBox="0 0 24 24"
       fill="none"
       stroke="currentColor"
@@ -179,6 +187,7 @@ function SharePopup({
 
   const CloseIcon = () => (
     <svg
+    className='coloredIcon'
       viewBox="0 0 24 24"
       fill="none"
       stroke="currentColor"
@@ -192,6 +201,7 @@ function SharePopup({
 
   const CopyIcon = () => (
     <svg
+    className='coloredIcon'
       viewBox="0 0 24 24"
       fill="none"
       stroke="currentColor"
@@ -205,6 +215,7 @@ function SharePopup({
 
   const CheckIcon = () => (
     <svg
+    className='coloredIcon'
       viewBox="0 0 24 24"
       fill="none"
       stroke="currentColor"
