@@ -429,7 +429,7 @@ const CreatePlaylistUI = ({
 
   const deleteDateData = () => {
     setPlaylist((prev) => {
-      let old = [...prev.filter((ele) => ele.type !== "date")];
+      const old = [...prev.filter((ele) => ele.type !== "date")];
       return old;
     });
     setItemSelected(null);
@@ -544,7 +544,7 @@ const CreatePlaylistUI = ({
       },
       type: linkState.type === "text" ? "heading" : "attachment-link",
     };
-    if (!!itemSelected) {
+    if (itemSelected) {
       setPlaylist((old) => {
         const prev = [...old];
         const index = prev.findIndex((ele) => ele.id === itemSelected);
@@ -576,7 +576,7 @@ const CreatePlaylistUI = ({
   };
 
   const massAdd = (items) => {
-    if (!!itemSelected) {
+    if (itemSelected) {
       setPlaylist((old) => {
         const prev = [...old];
         const index = prev.findIndex((ele) => ele.id === itemSelected);
@@ -643,7 +643,7 @@ const CreatePlaylistUI = ({
   const onBulkJsonDownload = () => {
     const listToDownload = [];
     playLists.forEach(({ list, id: playlistID }) => {
-      if (!!selectedPlaylist[playlistID]) {
+      if (selectedPlaylist[playlistID]) {
         list.forEach((ele) => {
           listToDownload.push({
             ...ele,
@@ -747,13 +747,13 @@ const CreatePlaylistUI = ({
 
     playList.forEach((ele) => {
       if (checkListData[ele.id] && ele.id !== embedding) {
-        if (!!ele.additionalInfo?.layers?.length) {
+        if (ele.additionalInfo?.layers?.length) {
           embededItem = ele.content;
         }
       }
     });
 
-    if (!!embededItem) {
+    if (embededItem) {
       ShowNotification({
         message: `Cannot Embed the Embedded item! Content: ${embededItem}. Please remove it before embeding!`,
         severity: "error",
@@ -777,7 +777,7 @@ const CreatePlaylistUI = ({
         }
       });
 
-      let embeddingItemsIndex = oldItems.findIndex(
+      const embeddingItemsIndex = oldItems.findIndex(
         (ele) => ele.id === embedding
       );
       oldItems[embeddingItemsIndex] = {
@@ -1130,7 +1130,7 @@ const CreatePlaylistUI = ({
                 </p>
               </Tooltip>
             </div>
-            {isloggedIN  && DEV_ENV ? (
+            {isloggedIN && DEV_ENV ? (
               <div
                 className="more-menu-items"
                 onClick={() => {
@@ -1386,8 +1386,8 @@ const CreatePlaylistUI = ({
                       message: `Please login to use more features.`,
                       severity: "error",
                     });
-                  return;
-                }
+                    return;
+                  }
                   const rect = e.currentTarget.getBoundingClientRect();
 
                   const x = rect.left; // X position where the element starts (from left of screen)
@@ -1419,14 +1419,14 @@ const CreatePlaylistUI = ({
             </div>
             <div className="align-center">
               <div
-                  className="publish-setting"
-                  style={{
-                    fontSize: "12px",
-                    marginRight: "0.5rem",
-                  }}
-                  onClick={(e) => {
-                    if (setTab) setTab("discover");
-                  }}
+                className="publish-setting"
+                style={{
+                  fontSize: "12px",
+                  marginRight: "0.5rem",
+                }}
+                onClick={(e) => {
+                  if (setTab) setTab("discover");
+                }}
               >
                 Cancel
               </div>
