@@ -13,8 +13,8 @@ const makeLocationOptions = ({ location }) => {
     icon: <span class="material-symbols-outlined">location_on</span>,
     title: `${location}`,
     onClick: async () => {
-      if (!globalThis.activeCanvasId) {
-        globalThis.AddFloatingApp({
+      if (!masks?.appId) {
+        const appId = globalThis.AddFloatingApp({
           App: (
             <div
               className="mainCanvas"
@@ -27,12 +27,14 @@ const makeLocationOptions = ({ location }) => {
           ),
           title: `Canvas`,
           position: { x: 200, y: 150 },
-          size: { width: 525, height: 300 },
+          size: { width: 350, height: 200 },
+          type: "canvas",
         });
+        setTagMask(thisBot, "appId", appId, "tempLocal");
       }
       let geoJson;
-      let locationBot = getBot("system", "ext_canvas.highlight_locations");
-      let placeData = locationBot.tags.locations[location.toLowerCase()];
+      const locationBot = getBot("system", "ext_canvas.highlight_locations");
+      const placeData = locationBot.tags.locations[location.toLowerCase()];
       if (placeData.place === placeData.geojson) {
         geoJson = await web.get(
           `https://raw.githubusercontent.com/Bored-Wizard/isreal_geojson/main/${placeData.geojson}.geojson`
@@ -59,7 +61,7 @@ for (let i = 0; i < that.content.length; i++) {
   const verse = that.content[i].verses;
   for (let j = 0; j < verse.length; j++) {
     const verseArray = verse[j].text.split(" ");
-    for (let word of verseArray) {
+    for (const word of verseArray) {
       if (locations[word.replace(/[^a-zA-Z]/g, "").toLowerCase()]) {
         locationsArr.push(word.replace(/[^a-zA-Z]/g, "").toLowerCase());
         if (
@@ -91,7 +93,7 @@ for (let i = 0; i < that.content.length; i++) {
 if (!globalThis?.VerseContextMenuOptions) {
   globalThis.VerseContextMenuOptions = {};
 }
-for (let key of Object.keys(locationOptionsConfig)) {
+for (const key of Object.keys(locationOptionsConfig)) {
   let options = [];
   if (globalThis?.VerseContextMenuOptions?.[key]) {
     options = [
@@ -165,11 +167,11 @@ HighlightWords({
                       });
                     }
                     let geoJson;
-                    let locationBot = getBot(
+                    const locationBot = getBot(
                       "system",
                       "ext_canvas.highlight_locations"
                     );
-                    let placeData =
+                    const placeData =
                       locationBot.tags.locations[verse.text.toLowerCase()];
                     if (placeData.place === placeData.geojson) {
                       geoJson = await web.get(

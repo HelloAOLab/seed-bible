@@ -16,7 +16,7 @@ import { useSideBarContext } from "app.hooks.sideBar";
 import { useTabsContext } from "app.hooks.tabs";
 import { ToolbarSettings } from "app.components.toolbarSettings";
 import { SpaceUI } from "app.components.sideBar";
-import { ThemeSettings } from "app.components.themeSettings";
+import { ThemeSettings,SettingsUI } from "app.components.themeSettings";
 import { AiSettings } from "app.components.aiSettings";
 import { TabSettings } from "app.components.tabSettings";
 import { CanvasAiSettings } from "app.components.canvasAiSettings";
@@ -99,7 +99,7 @@ const Layout = ({ children }) => {
         ) : sidebarMode === "canvasAiSettings" ? (
           <CanvasAiSettings />
         ) : sidebarMode === "themeSettings" ? (
-          <ThemeSettings />
+          <SettingsUI />
         ) : sidebarMode === "aiSettings" ? (
           <AiSettings />
         ) : sidebarMode === "tabSettings" ? (

@@ -4,6 +4,8 @@ import { Book } from "scriptureMap2D.main.Book";
 import { useResizeObserver } from "scriptureMap2D.main.CustomHooks";
 import { SectionToggle } from "scriptureMap2D.main.SectionToggle";
 import { useReadingHistoryContext } from "scriptureMap2D.main.ReadingHistoryContext";
+import { calculateReadingHistorySummary } from "db.annotations.library";
+
 const { useMemo, useCallback, useState, useRef, useEffect } = os.appHooks;
 const { memo } = os.appCompat;
 
@@ -202,6 +204,7 @@ export const TestamentContent = memo(({ hidden }) => {
               BibleVizUtils.Data.tags.booksStaticInfo[bookInfo.commonName]
                 .abbreviation
             ) ?? [];
+          const summary = calculateReadingHistorySummary(readingEvents);
 
           elements.push(
             <Book
@@ -214,6 +217,7 @@ export const TestamentContent = memo(({ hidden }) => {
                 gridColumn: `${currentBookColumn} / ${currentBookColumn + 1}`,
               }}
               readingEvents={readingEvents}
+              readingSummary={summary}
             />
           );
           bookIndex++;

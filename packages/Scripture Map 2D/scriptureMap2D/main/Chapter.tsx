@@ -49,13 +49,14 @@ export const Chapter = memo(
     }, [selection]);
 
     const handleChapterClick = useCallback((e) => {
-      const key = {
-        testamentName: testament.name,
-        sectionName,
-        bookName,
-        chapterIndex: index,
-      };
-      onChapterClick(e, key, checked);
+      // const key = {
+      //   testamentName: testament.name,
+      //   sectionName,
+      //   bookName,
+      //   chapterIndex: index,
+      // };
+      // console.log(`[Debug] Chapter handleChapterClick`, {e, key, checked});
+      // onChapterClick(e, key, checked);
     }, onChapterClickDependencies);
 
     const { onHoldStart, onHoldEnd } = useClickAndHold({
@@ -67,7 +68,7 @@ export const Chapter = memo(
           bookName,
           chapterIndex: index,
         };
-        onChapterClickAndHold(e, key);
+        onChapterClickAndHold(e, key, checked);
       },
       holdCancelCallback: (e) => {
         const key = {
@@ -273,7 +274,6 @@ export const Chapter = memo(
           setContainerRect(e.currentTarget.getBoundingClientRect())
         }
         onPointerLeave={() => setContainerRect(null)}
-        onClick={handleChapterClick}
         onPointerDown={onHoldStart}
         onPointerUp={onHoldEnd}
         style={{
@@ -284,9 +284,11 @@ export const Chapter = memo(
         }}
       >
         {index + 1}
-        {tooltipAnchor && tooltipContent?.length > 0 && (
-          <Tooltip anchor={tooltipAnchor} content={tooltipContent} />
-        )}
+        {isReadingHistoryEnabled &&
+          tooltipAnchor &&
+          tooltipContent?.length > 0 && (
+            <Tooltip anchor={tooltipAnchor} content={tooltipContent} />
+          )}
       </div>
     );
   }

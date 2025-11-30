@@ -7,9 +7,17 @@ body {
 }
 
 * {
+  transition: color 0.3s ease, background-color 0.3s ease;
   box-sizing: border-box;
 }
 
+.material-symbols-outlined{
+  color: var(--iconColor) !important;
+}
+.coloredIcon,
+.toolbar-button img{
+  filter: var(--filter-mode);
+}
 :root {
   --primary-color: #f0f1f1;
   --secondary-color: #ffffff;

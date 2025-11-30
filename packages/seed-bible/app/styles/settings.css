@@ -107,6 +107,7 @@
   align-items: center;
   justify-content: center;
   margin-right: 12px;
+  margin-top: -10px;
 }
 
 .space-icon .material-icons {
@@ -122,17 +123,28 @@
   padding: 0px 10px;
   align-items: center;
   color: var(--themeText1);
+  margin-top: 20px;
 }
 
 .space-name {
-  font-weight: 500;
-  margin-bottom: 4px;
-}
+    margin-bottom: 4px;
+    font-family: "Helvetica Neue-Bold", Helvetica;
+    font-size: 16px;
+    font-weight: 700;
+    color: #606060;
+  }
+
 
 .space-description {
   font-size: 13px;
+  color: #5f5e5c;
   color: var(--text2);
-  line-height: 1.4;
+    line-height: 1.4;
+  font-family: "Open Sans-Regular", Helvetica;
+  font-size: 14px;
+  font-weight: 400;
+  letter-spacing: 0;
+line-height: normal;
 }
 
 .settings-list {
@@ -142,10 +154,11 @@
 .settings-item {
   display: flex;
   align-items: center;
-  padding: 10px 16px;
+  padding: 14px 16px;
   cursor: pointer;
   transition: background-color 0.2s;
   color: var(--text1);
+  gap: 7px;
 }
 
 .settings-item:hover {
@@ -154,7 +167,7 @@
 
 .item-icon {
   width: 24px;
-  margin-right: 12px;
+  /* margin-right: 12px; */
   display: flex;
   align-items: center;
   justify-content: center;
@@ -170,8 +183,9 @@
   flex: 1;
   font-size: 16px;
   /* color: var(--themeText1); */
+  font-family: "DM Sans-Medium", Helvetica;
+  font-size: 16px;
   font-weight: 500;
-  font-family: 'Satoshi', system-ui, sans-serif;
 }
 
 .item-chevron {

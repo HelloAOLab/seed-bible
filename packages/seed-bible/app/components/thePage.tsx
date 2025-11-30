@@ -1083,7 +1083,7 @@ function ThePage({
       // if (!skipIt)
       //   return
       if (!tab?.id) return;
-      EmitData("highlight", { verseNumbers, color });
+      
 
       const verseId = `v-${
         Array.isArray(verseNumbers)
@@ -1158,7 +1158,7 @@ function ThePage({
   const highlightVerse = useCallback(
     (verseNumbers, color, scroll = true) => {
       if (!tab?.id) return;
-      EmitData("highlight", { verseNumbers, color });
+      // EmitData("highlight", { verseNumbers, color });
 
       const verseId = `v-${
         Array.isArray(verseNumbers)
@@ -1354,7 +1354,7 @@ function ThePage({
       clickedVerses.forEach((verseNum) => {
         toggleVerseHighlight(verseNum, color);
       });
-
+      EmitData("highlight", { verseNum, color });
       // Clear clicked verses and hide toolbar
       setClickedVerses([]);
       setTimeout(() => {
@@ -1444,6 +1444,7 @@ function ThePage({
                       blinker={blinker}
                       setRef={refs}
                       holded={holded}
+                      clickedVersesContext={clickedVersesContext}
                       selected={selected}
                       highlighted={highlighted}
                       wordHighlights={wordHighlights}
@@ -1784,6 +1785,7 @@ function Section({
   hebrew_subtitle,
   commandHighlight,
   setCommandHighlight,
+  clickedVersesContext ,
   setLastSelectedVerse,
   setRef,
   commandsRef,
@@ -2083,10 +2085,11 @@ function Section({
       return verse.text;
     }
   };
-
+  const {showHeading,showVerses} = useBibleContext()
+  const {  activeSpace } = useTabsContext();
   return (
     <div>
-      <div
+      {showHeading[activeSpace]&&<div
         className="sectionTitle"
         {...eventHandlers}
         onClick={(e) => {
@@ -2096,7 +2099,7 @@ function Section({
         }}
       >
         {heading}
-      </div>
+      </div>}
 
       {hebrew_subtitle && <div className="sectionTitle">{hebrew_subtitle}</div>}
       <div style={textEdit ? editTextStyle : null}>
@@ -2131,7 +2134,7 @@ function Section({
               selected[verse.verseNumber] ||
               blinker[verse.verseNumber];
             const isClicked = clickedVerses.includes(verse.verseNumber);
-
+            if(showVerses[activeSpace])
             return (
               <span key={verse.verseNumber}>
                 <span
@@ -2202,7 +2205,7 @@ function Section({
                         highlighted?.[verse.verseNumber].chapter === chapter) ||
                       commandHighlight.includes(verse.verseNumber)
                         ? wordHighlightsTC
-                        : "black",
+                        : "var(--pageTextColor) !important",
                     transition: "background-color 0.2s ease, border 0.2s ease",
                     "border-radius":
                       highlighted?.[verse.verseNumber] || isClicked
@@ -2293,7 +2296,7 @@ function Section({
                       paddingTop: "10px",
                     }}
                   >
-                    <ConfigurableFunctionCommands contextData={contextData} />
+                    <ConfigurableFunctionCommands contextData={clickedVersesContext} clickedVerses={clickedVerses} />
                   </div>
                 )}
               </span>

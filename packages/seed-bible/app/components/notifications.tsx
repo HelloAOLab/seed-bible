@@ -65,7 +65,7 @@ function AOLabUpdateCard() {
                             alignItems: 'center',
                             justifyContent: 'center'
                         }}>
-                            <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="#10b981" strokeWidth="2">
+                            <svg className='coloredIcon' width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="#10b981" strokeWidth="2">
                                 <path d="M1 4v6h6" />
                                 <path d="M3.51 15a9 9 0 1 0 2.13-9.36L1 10" />
                             </svg>
@@ -80,7 +80,7 @@ function AOLabUpdateCard() {
                             Click to restart
                         </span>
                     </div>
-                    <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="#6b7280" strokeWidth="2">
+                    <svg className='coloredIcon' width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="#6b7280" strokeWidth="2">
                         <path d="M9 18l6-6-6-6" />
                     </svg>
                 </div>
@@ -100,7 +100,7 @@ function AOLabUpdateCard() {
                             alignItems: 'center',
                             justifyContent: 'center'
                         }}>
-                            <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="#ec4899" strokeWidth="2">
+                            <svg className='coloredIcon' width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="#ec4899" strokeWidth="2">
                                 <rect x="3" y="3" width="18" height="18" rx="2" />
                                 <rect x="9" y="9" width="6" height="6" />
                                 <path d="M9 1v6" />
@@ -123,7 +123,7 @@ function AOLabUpdateCard() {
                             What's new?
                         </span>
                     </div>
-                    <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="#6b7280" strokeWidth="2">
+                    <svg className='coloredIcon' width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="#6b7280" strokeWidth="2">
                         <path d="M9 18l6-6-6-6" />
                     </svg>
                 </div>

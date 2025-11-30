@@ -30,17 +30,33 @@ export const ReadingHistoryProvider = ({ children }) => {
   const [selectedUsersCount, setSelectedUsersCount] = useState(0);
   const [readingEventsByDay, setReadingEventsByDay] = useState(null);
 
+  const trySetMyAuthBotId = useCallback(() => {
+    if (!myAuthBotId) {
+      os.requestAuthBotInBackground().then((authBot) => {
+        const filtersCopy = new Map(readingHistoryUserFilters);
+        filtersCopy.set(authBot.id, true);
+        setMyAuthBotId(authBot.id);
+        setReadingHistoryUserFilters(filtersCopy);
+      });
+    }
+  }, [readingHistoryUserFilters, myAuthBotId]);
+
+  const handleUserLoggedIn = useCallback(() => {
+    trySetMyAuthBotId();
+  }, [trySetMyAuthBotId]);
+
   useEffect(() => {
-    os.requestAuthBotInBackground().then((authBot) => {
-      const filtersCopy = new Map(readingHistoryUserFilters);
-      filtersCopy.set(authBot.id, true);
-      setMyAuthBotId(authBot.id);
-      setReadingHistoryUserFilters(filtersCopy);
-    });
+    globalThis.ScriptureMapHandleUserLoggedIn = handleUserLoggedIn;
+
+    trySetMyAuthBotId();
+
+    return () => {
+      globalThis.ScriptureMapHandleUserLoggedIn = null;
+    };
   }, []);
 
   useEffect(() => {
-    if (myAuthBotId) setUsersAuthId([myAuthBotId]);
+    if (myAuthBotId) setUsersAuthId((prev) => [...prev, myAuthBotId]);
   }, [myAuthBotId]);
 
   const {
@@ -300,6 +316,7 @@ export const ReadingHistoryProvider = ({ children }) => {
         MS_PER_WEEK,
         dayRangesMap,
         selectedUsersCount,
+        usersAuthId,
       }}
     >
       {children}

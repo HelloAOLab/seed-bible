@@ -1,7 +1,8 @@
 .pageContainer {
   height: 100%;
   width: 100%;
-  background-color: white;
+  background-color: var(--pageBackground) !important;
+  
   padding: 30px 0%;
   overflow: scroll;
   border-radius: 12px;
@@ -118,9 +119,11 @@
   margin-bottom: var(--text-bookchapter-margin-bottom);
   margin-left: var(--text-bookchapter-margin-left);
   margin-right: var(--text-bookchapter-margin-right);
+  color: var(--pageTextColor);
 }
 
 .sectionTitle {
+  color: var(--pageTextColor);
   font-family: var(--text-heading-font);
   color: var(--text-heading-color);
   font-size: 18px;
@@ -143,6 +146,8 @@
   text-align: var(--text-verse-alignment);
   text-decoration: var(--text-verse-text-decoration);
   line-height: var(--text-verse-margin-top);
+    font-size: var(--text-verse-font-size);
+
 
   /* Additions ------> */
   /* set up a transparent border to animate */

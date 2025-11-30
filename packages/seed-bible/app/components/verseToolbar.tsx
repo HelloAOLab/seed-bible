@@ -222,7 +222,7 @@ export function VerseToolbar({
   };
 
   const menuOptions = useMemo(() => {
-    return getMenuActions(clickedVersesContext) || [];
+    return getMenuActions(clickedVersesContext,onClose) || [];
   }, [clickedVersesContext]);
 
   return (
@@ -445,7 +445,7 @@ export function VerseToolbar({
   );
 }
 
-function getMenuActions(that) {
+function getMenuActions(that,onClose) {
   const { SharePopup } = thisBot.Chips();
   const MenuOptions = {
     type: "normal",
@@ -455,6 +455,7 @@ function getMenuActions(that) {
         onClick: () => {
           os.setClipboard(that.text);
           SetInHold(null);
+          onClose()
         },
         title: "Copy",
       },
@@ -464,6 +465,7 @@ function getMenuActions(that) {
           ClearUserSelection();
           SetShowCommands(true);
           SetInHold(null);
+          // onClose()
         },
         title: "Apologist",
       },
@@ -478,6 +480,7 @@ function getMenuActions(that) {
               true
             );
             SetInHold(null);
+            // onClose()
           }, 50);
         },
         title: "Share",
