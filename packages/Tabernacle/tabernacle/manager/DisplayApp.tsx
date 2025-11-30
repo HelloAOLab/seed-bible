@@ -10,8 +10,14 @@ if (thisBot.vars.appId) {
     title: "Tabernacle",
     position: { x: 200, y: 150 },
     size: { width: 350, height: 200 },
+    type: "canvas",
   });
   thisBot.vars.appId = id;
+
+  configBot.tags.gridPortal = thisBot.tags.dimension;
+  configBot.tags.mapPortal = null;
+  configBot.tags.miniGridPortal = null;
+  configBot.tags.miniMapPortal = null;
 
   await os.sleep(500);
 
