@@ -30,6 +30,7 @@ const isFullCalendarEvent = (event) =>
   typeof event.setStart === 'function' && typeof event.setProp === 'function';
 
 const EditEvent = ({ editingEvent, setEditEventOpen, calendarApi, setEventInView }) => {
+  console.log(editingEvent);
   
   const isFCEvent = isFullCalendarEvent(editingEvent);
   const fcEvent = isFCEvent
@@ -40,14 +41,16 @@ const EditEvent = ({ editingEvent, setEditEventOpen, calendarApi, setEventInView
 
   const startRaw = fcEvent.start || new Date(editingEvent.start);
   const endRaw = fcEvent.end ?? null;
+  console.log(fcEvent,'fcevent');
 
   const { startDate, startTime } = formatDateTime(startRaw);
   const { date: endDateInitial, time: endTimeInitial } = formatEndDateTime(endRaw);
 
+
   const [eventTitle, setEventTitle] = useState(fcEvent.title);
   const [eventStartDate, setEventStartDate] = useState(startDate);
   const [eventStartTime, setEventStartTime] = useState(startTime);
-  const [eventEndDate, setEventEndDate] = useState(endDateInitial);
+  const [eventEndDate, setEventEndDate] = useState(endDateInitial || startDate);
   const [eventEndTime, setEventEndTime] = useState(endTimeInitial);
   const [eventDescription, setEventDescription] = useState(fcEvent.extendedProps?.description || '');
   const [eventLink, setEventLink] = useState(fcEvent.extendedProps?.link || '');
@@ -63,32 +66,27 @@ const EditEvent = ({ editingEvent, setEditEventOpen, calendarApi, setEventInView
 
     const newStart = new Date(startStr);
     let newEnd = endStr ? new Date(endStr) : null;
+    console.log(newEnd,'endstr');
 
     if (isNaN(newStart.getTime())) return alert('Invalid start date/time');
-    if (!newEnd || isNaN(newEnd.getTime()) || newEnd <= newStart) {
-      newEnd = new Date(newStart.getTime() + 60 * 60 * 1000); // Default +1 hour
-    }
+   
 
     const calendar = calendarApi?.current;
     if (!calendar) return;
+    
 
     const oldEvent = calendar.getEventById(editingEvent.id);
-    if (oldEvent) oldEvent.remove();
  if(!editingEvent._def?.resourceIds?.[0]){
-    calendar.addEvent({
-      id: editingEvent.id,
-      title: eventTitle,
-      start: newStart,
-      end: newEnd,
-      allDay: !hasTime,
+    if (oldEvent) {
+      console.log('editing')
+  oldEvent.setProp("title", eventTitle);
+  oldEvent.setStart(newStart);
+  oldEvent.setEnd(newEnd);
+  oldEvent.setAllDay(!hasTime);
 
-      classNames: editingEvent.classNames || [],
-      extendedProps: {
-        ...editingEvent.extendedProps,
-        description: eventDescription,
-        link: eventLink,
-      },
-    });}
+  oldEvent.setExtendedProp("description", eventDescription);
+  oldEvent.setExtendedProp("link", eventLink);
+};}
     else{
       calendar.addEvent({
       id: editingEvent.id,
@@ -107,6 +105,7 @@ const EditEvent = ({ editingEvent, setEditEventOpen, calendarApi, setEventInView
     });
 
     }
+    const allEvents=calendarApi.current.getEvents();
 
     setEventInView(prev =>
       prev.map(ev =>
@@ -128,7 +127,8 @@ const EditEvent = ({ editingEvent, setEditEventOpen, calendarApi, setEventInView
           : ev
       )
     );
-
+    calendarApi.current.removeAllEvents();
+    calendarApi.current.addEventSource(allEvents);
     setEditEventOpen(false);
   };
 
@@ -150,12 +150,12 @@ const EditEvent = ({ editingEvent, setEditEventOpen, calendarApi, setEventInView
           <div className="gm-input-date">
             <input type="date" value={eventStartDate} onChange={(e) => setEventStartDate(e.target.value)} />
             <span className="gm-input-date-span">to</span>
-            <input type="date" value={eventEndDate} onChange={(e) => setEventEndDate(e.target.value)} />
+            <input type="date" value={eventEndDate||eventStartDate} onChange={(e) => setEventEndDate(e.target.value)} />
           </div>
           <div style={{ display: 'flex', alignItems: 'center', gap: '10px' }}>
             <input type="time" value={eventStartTime} onChange={(e) => setEventStartTime(e.target.value)} />
             <span>to</span>
-            <input type="time" value={eventEndTime} onChange={(e) => setEventEndTime(e.target.value)} />
+            <input type="time" value={eventEndTime || eventStartTime} onChange={(e) => setEventEndTime(e.target.value)} />
           </div>
           <textarea
             className="gm-input-description"
