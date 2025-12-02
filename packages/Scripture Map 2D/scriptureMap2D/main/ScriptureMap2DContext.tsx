@@ -1,3 +1,5 @@
+import { useIsMobile } from "scriptureMap2D.main.CustomHooks";
+
 const {
   createContext,
   useRef,
@@ -217,6 +219,8 @@ export const ScriptureMap2DProvider = ({
     initialIsReadingHistoryEnabled = false,
   } = parentContext;
 
+  const isMobile = useIsMobile(768);
+
   const arrangement = useMemo(() => {
     return BibleVizUtils.Data.vars.fixedArrangementsInfo[arrangementIndex];
   }, [arrangementIndex]);
@@ -420,6 +424,7 @@ export const ScriptureMap2DProvider = ({
         ProjectChapterState,
         projectStateStyle,
         CHAPTER_BASE_BACKGROUND_COLOR,
+        isMobile,
         ...parentContext,
       }}
     >
