@@ -19,7 +19,10 @@ export function VerseToolbar({
   onClose,
 }) {
   const [selectedColor, setSelectedColor] = useState("#FDE047");
-  const [customColors, setCustomColors] = useState([]);
+  const [customColors, setCustomColors] = useState(masks?.customColors?masks.customColors:[]);
+  useEffect(()=>{
+    masks.customColors = customColors
+  },[customColors])
   const [tempColor, setTempColor] = useState(null);
   const colorInputRef = useRef(null);
   const colorPickerRef = useRef(null);
@@ -217,9 +220,26 @@ export function VerseToolbar({
     colorInputRef.current?.click();
   };
 
-  const handleColorChange = (e) => {
-    setTempColor(e.target.value);
-  };
+const handleColorChange = (e) => {
+  const newColor = e.target.value;
+  setTempColor(newColor);
+  
+  // Add color to customColors array, max 3
+  setCustomColors((prev) => {
+    // Check if color already exists
+    if (prev.includes(newColor)) {
+      return prev;
+    }
+    
+    // If less than 3, just add it
+    if (prev.length < 3) {
+      return [...prev, newColor];
+    }
+    
+    // If 3 or more, remove first and add new one at the end
+    return [...prev.slice(1), newColor];
+  });
+};
 
   const menuOptions = useMemo(() => {
     return getMenuActions(clickedVersesContext,onClose) || [];
