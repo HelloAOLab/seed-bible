@@ -1592,9 +1592,36 @@ function SideBar() {
 
           {collapsed && (
             <span
-              onClick={() => {
-                openPopupSettings(AddingOption());
-              }}
+              onMouseDown={() => {
+                    clearTimeout(holdTimeout.current.time);
+                    holdTimeout.current.clicked = false;
+                    holdTimeout.current.time = setTimeout(() => {
+                      holdTimeout.current.clicked = true;
+                      openPopupSettings(AddingOption(), true);
+                    }, 600);
+                  }}
+                  onMouseUp={() => {
+                    clearTimeout(holdTimeout.current.time);
+                    if (!holdTimeout.current.clicked) {
+                      addTab({
+                        id: uuid(),
+                        taken: false,
+                        data: {
+                          use: "thePage",
+                          type: "book",
+                          book: "Genesis",
+                          bookId: "GEN",
+                          chapter: 1,
+                          translation: "BSB",
+                        },
+                      });
+                    }
+                    holdTimeout.current.clicked = false;
+                  }}
+                  onMouseLeave={() => {
+                    clearTimeout(holdTimeout.current.time);
+                    holdTimeout.current.clicked = false;
+                  }}
               class="material-symbols-outlined addIconCollapsed"
             >
               add
