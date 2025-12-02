@@ -41,6 +41,13 @@
   gap: 8px;
 }
 
+.collapse-toggle {
+  width: 100%;
+  display: flex !important;
+  justify-content: center;
+  align-items: center;
+}
+
 .projectStateSetter {
   width: 100%;
   padding: 4px;
@@ -49,6 +56,10 @@
   justify-content: flex-start;
   align-items: center;
   gap: 12px;
+}
+
+.mapSettings.collapsed .projectStateSetter {
+  display: none;
 }
 
 .projectStateSetter > div:nth-of-type(1) {
@@ -158,9 +169,18 @@
   flex-wrap: wrap;
 }
 
+.mapSettings.collapsed .projectFiltersSelector,
+.mapSettings.collapsed .readingHistoryUserSelector {
+  display: none;
+}
+
 .readingHistoryTimelineContainer {
   width: 100%;
   padding: 8px;
+}
+
+.mapSettings.collapsed .readingHistoryTimelineContainer {
+  display: none;
 }
 
 .readingHistoryTimeline {
