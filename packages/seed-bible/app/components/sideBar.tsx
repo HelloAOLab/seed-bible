@@ -1304,6 +1304,9 @@ function SideBar() {
               </div>
               <div className="canvasOptions">
                 <span
+                  style={{
+                    paddingTop:customScreens?.value >= 2 ? "3px": "0px",
+                  }}
                   onContextMenu={(e) => {
                     e.preventDefault();
                     globalThis._skipNextMouse = true; // block next onMouseUp

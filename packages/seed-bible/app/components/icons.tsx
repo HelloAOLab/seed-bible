@@ -142,45 +142,21 @@ const UserAvatar = (props) => (
   </svg>
 );
 // Dual Screen Icon Component
-const DualScreenIcon = ({ size = 24 }) => {
-  const scale = size / 24;
-
-  const styles = {
-    iconWrapper: {
-      display: "inline-flex",
-      position: "relative",
-      width: size,
-      height: size,
-    },
-    screenLeft: {
-      position: "absolute",
-      left: 2 * scale,
-      top: 2 * scale,
-      width: 9 * scale,
-      height: 20 * scale,
-      border: `${1 * scale}px solid #666`,
-      borderRadius: 1 * scale,
-      backgroundColor: "#e0e0e0",
-    },
-    screenRight: {
-      position: "absolute",
-      right: 2 * scale,
-      top: 2 * scale,
-      width: 9 * scale,
-      height: 20 * scale,
-      border: `${1 * scale}px solid #666`,
-      borderRadius: 1 * scale,
-      backgroundColor: "#e0e0e0",
-    },
-  };
-
-  return (
-    <div style={styles.iconWrapper}>
-      <div style={styles.screenLeft}></div>
-      <div style={styles.screenRight}></div>
-    </div>
-  );
-};
+const DualScreenIcon =  (props) => (
+  <svg
+    width={19}
+    height={19}
+    viewBox="0 0 19 19"
+    fill="none"
+    xmlns="http://www.w3.org/2000/svg"
+    {...props}
+  >
+    <path
+      d="M12.509 19C11.9444 19 11.4665 18.8044 11.0753 18.4132C10.6841 18.0221 10.4886 17.5442 10.4886 16.9796V2.02043C10.4886 1.45583 10.6841 0.977941 11.0753 0.586765C11.4665 0.195588 11.9444 0 12.509 0H16.2917C16.8563 0 17.3342 0.195588 17.7253 0.586765C18.1165 0.977941 18.3121 1.45583 18.3121 2.02043V16.9796C18.3121 17.5442 18.1165 18.0221 17.7253 18.4132C17.3342 18.8044 16.8563 19 16.2917 19H12.509ZM2.02043 19C1.45583 19 0.977941 18.8044 0.586765 18.4132C0.195588 18.0221 0 17.5442 0 16.9796V2.02043C0 1.45583 0.195588 0.977941 0.586765 0.586765C0.977941 0.195588 1.45583 0 2.02043 0H5.8031C6.3677 0 6.84559 0.195588 7.23677 0.586765C7.62794 0.977941 7.82353 1.45583 7.82353 2.02043V16.9796C7.82353 17.5442 7.62794 18.0221 7.23677 18.4132C6.84559 18.8044 6.3677 19 5.8031 19H2.02043ZM1.67647 2.02043V16.9796C1.67647 17.0656 1.71233 17.1444 1.78404 17.216C1.85557 17.2877 1.93437 17.3235 2.02043 17.3235H5.8031C5.88916 17.3235 5.96796 17.2877 6.03949 17.216C6.1112 17.1444 6.14706 17.0656 6.14706 16.9796V2.02043C6.14706 1.93437 6.1112 1.85557 6.03949 1.78404C5.96796 1.71233 5.88916 1.67647 5.8031 1.67647H2.02043C1.93437 1.67647 1.85557 1.71233 1.78404 1.78404C1.71233 1.85557 1.67647 1.93437 1.67647 2.02043Z"
+      fill="#606060"
+    />
+  </svg>
+);
 const ToolbarIcon = (props) => (
   <svg
     xmlns="http://www.w3.org/2000/svg"
@@ -196,120 +172,58 @@ const ToolbarIcon = (props) => (
   </svg>
 );
 // Three Screen Icon Component
-const ThreeScreenIcon = ({ size = 24 }) => {
-  const scale = size / 24;
-
-  const styles = {
-    iconWrapper: {
-      display: "inline-flex",
-      position: "relative",
-      width: size,
-      height: size,
-    },
-    screenLeft: {
-      position: "absolute",
-      left: 2 * scale,
-      top: 2 * scale,
-      width: 9 * scale,
-      height: 18.5 * scale,
-      border: `${1 * scale}px solid #666`,
-      borderRadius: 1 * scale,
-      backgroundColor: "#e0e0e0",
-    },
-    screenRightTop: {
-      position: "absolute",
-      right: 2 * scale,
-      top: 2 * scale,
-      width: 9 * scale,
-      height: 9 * scale,
-      border: `${1 * scale}px solid #666`,
-      borderRadius: 1 * scale,
-      backgroundColor: "#e0e0e0",
-    },
-    screenRightBottom: {
-      position: "absolute",
-      right: 2 * scale,
-      bottom: 2 * scale,
-      width: 9 * scale,
-      height: 9 * scale,
-      border: `${1 * scale}px solid #666`,
-      borderRadius: 1 * scale,
-      backgroundColor: "#e0e0e0",
-    },
-  };
-
-  return (
-    <div style={styles.iconWrapper}>
-      <div style={styles.screenLeft}></div>
-      <div style={styles.screenRightTop}></div>
-      <div style={styles.screenRightBottom}></div>
-    </div>
-  );
-};
+const ThreeScreenIcon = (props) => (
+  <svg
+    width={19}
+    height={19}
+    viewBox="0 0 19 19"
+    fill="none"
+    xmlns="http://www.w3.org/2000/svg"
+    {...props}
+  >
+    <path
+      d="M2.02043 19C1.45583 19 0.977941 18.8044 0.586765 18.4132C0.195588 18.0221 0 17.5442 0 16.9796V2.02043C0 1.45583 0.195588 0.977941 0.586765 0.586765C0.977941 0.195588 1.45583 0 2.02043 0H6.3031C6.8677 0 7.34559 0.195588 7.73677 0.586765C8.12794 0.977941 8.32353 1.45583 8.32353 2.02043V16.9796C8.32353 17.5442 8.12794 18.0221 7.73677 18.4132C7.34559 18.8044 6.8677 19 6.3031 19H2.02043Z"
+      fill="#606060"
+    />
+    <path
+      d="M12.009 9C11.4444 9 10.9665 8.80441 10.5753 8.41324C10.1841 8.02206 9.98859 7.54417 9.98859 6.97957V2.02043C9.98859 1.45583 10.1841 0.977941 10.5753 0.586765C10.9665 0.195588 11.4444 0 12.009 0H16.2917C16.8563 0 17.3342 0.195588 17.7253 0.586765C18.1165 0.977941 18.3121 1.45583 18.3121 2.02043V6.97957C18.3121 7.54417 18.1165 8.02206 17.7253 8.41324C17.3342 8.80441 16.8563 9 16.2917 9H12.009Z"
+      fill="#606060"
+    />
+    <path
+      d="M12.009 19C11.4444 19 10.9665 18.8044 10.5753 18.4132C10.1841 18.0221 9.98859 17.5442 9.98859 16.9796V12.0204C9.98859 11.4558 10.1841 10.9779 10.5753 10.5868C10.9665 10.1956 11.4444 10 12.009 10H16.2917C16.8563 10 17.3342 10.1956 17.7253 10.5868C18.1165 10.9779 18.3121 11.4558 18.3121 12.0204V16.9796C18.3121 17.5442 18.1165 18.0221 17.7253 18.4132C17.3342 18.8044 16.8563 19 16.2917 19H12.009Z"
+      fill="#606060"
+    />
+  </svg>
+);
 
 // Quad Screen Icon Component
-const QuadScreenIcon = ({ size = 24 }) => {
-  const scale = size / 24;
-
-  const styles = {
-    iconWrapper: {
-      display: "inline-flex",
-      position: "relative",
-      width: size,
-      height: size,
-    },
-    screenTopLeft: {
-      position: "absolute",
-      left: 2 * scale,
-      top: 2 * scale,
-      width: 9 * scale,
-      height: 9 * scale,
-      border: `${1 * scale}px solid #666`,
-      borderRadius: 1 * scale,
-      backgroundColor: "#e0e0e0",
-    },
-    screenTopRight: {
-      position: "absolute",
-      right: 2 * scale,
-      top: 2 * scale,
-      width: 9 * scale,
-      height: 9 * scale,
-      border: `${1 * scale}px solid #666`,
-      borderRadius: 1 * scale,
-      backgroundColor: "#e0e0e0",
-    },
-    screenBottomLeft: {
-      position: "absolute",
-      left: 2 * scale,
-      bottom: 2 * scale,
-      width: 9 * scale,
-      height: 9 * scale,
-      border: `${1 * scale}px solid #666`,
-      borderRadius: 1 * scale,
-      backgroundColor: "#e0e0e0",
-    },
-    screenBottomRight: {
-      position: "absolute",
-      right: 2 * scale,
-      bottom: 2 * scale,
-      width: 9 * scale,
-      height: 9 * scale,
-      border: `${1 * scale}px solid #666`,
-      borderRadius: 1 * scale,
-      backgroundColor: "#e0e0e0",
-    },
-  };
-
-  return (
-    <div style={styles.iconWrapper}>
-      <div style={styles.screenTopLeft}></div>
-      <div style={styles.screenTopRight}></div>
-      <div style={styles.screenBottomLeft}></div>
-      <div style={styles.screenBottomRight}></div>
-    </div>
-  );
-};
-
+const QuadScreenIcon = (props) => (
+  <svg
+    width={19}
+    height={19}
+    viewBox="0 0 19 19"
+    fill="none"
+    xmlns="http://www.w3.org/2000/svg"
+    {...props}
+  >
+    <path
+      d="M2.02043 9C1.45583 9 0.977941 8.80441 0.586765 8.41324C0.195588 8.02206 0 7.54417 0 6.97957V2.02043C0 1.45583 0.195588 0.977941 0.586765 0.586765C0.977941 0.195588 1.45583 0 2.02043 0H5.8031C6.3677 0 6.84559 0.195588 7.23677 0.586765C7.62794 0.977941 7.82353 1.45583 7.82353 2.02043V6.97957C7.82353 7.54417 7.62794 8.02206 7.23677 8.41324C6.84559 8.80441 6.3677 9 5.8031 9H2.02043Z"
+      fill="#606060"
+    />
+    <path
+      d="M2.02043 19C1.45583 19 0.977941 18.8044 0.586765 18.4132C0.195588 18.0221 0 17.5442 0 16.9796V12.0204C0 11.4558 0.195588 10.9779 0.586765 10.5868C0.977941 10.1956 1.45583 10 2.02043 10H5.8031C6.3677 10 6.84559 10.1956 7.23677 10.5868C7.62794 10.9779 7.82353 11.4558 7.82353 12.0204V16.9796C7.82353 17.5442 7.62794 18.0221 7.23677 18.4132C6.84559 18.8044 6.3677 19 5.8031 19H2.02043Z"
+      fill="#606060"
+    />
+    <path
+      d="M12.509 9C11.9444 9 11.4665 8.80441 11.0753 8.41324C10.6841 8.02206 10.4886 7.54417 10.4886 6.97957V2.02043C10.4886 1.45583 10.6841 0.977941 11.0753 0.586765C11.4665 0.195588 11.9444 0 12.509 0H16.2917C16.8563 0 17.3342 0.195588 17.7253 0.586765C18.1165 0.977941 18.3121 1.45583 18.3121 2.02043V6.97957C18.3121 7.54417 18.1165 8.02206 17.7253 8.41324C17.3342 8.80441 16.8563 9 16.2917 9H12.509Z"
+      fill="#606060"
+    />
+    <path
+      d="M12.509 19C11.9444 19 11.4665 18.8044 11.0753 18.4132C10.6841 18.0221 10.4886 17.5442 10.4886 16.9796V12.0204C10.4886 11.4558 10.6841 10.9779 11.0753 10.5868C11.4665 10.1956 11.9444 10 12.509 10H16.2917C16.8563 10 17.3342 10.1956 17.7253 10.5868C18.1165 10.9779 18.3121 11.4558 18.3121 12.0204V16.9796C18.3121 17.5442 18.1165 18.0221 17.7253 18.4132C17.3342 18.8044 16.8563 19 16.2917 19H12.509Z"
+      fill="#606060"
+    />
+  </svg>
+);
 const Playlist = (props) => (
   <svg
     width={24}
@@ -341,34 +255,23 @@ const MenuDown = (props) => (
   </svg>
 );
 
-const SingleScreenIcon = ({ size = 24 }) => {
-  const scale = size / 24;
-
-  const styles = {
-    iconWrapper: {
-      display: "inline-flex",
-      position: "relative",
-      width: size,
-      height: size,
-    },
-    screen: {
-      position: "absolute",
-      left: 2 * scale,
-      top: 2 * scale,
-      width: 20 * scale,
-      height: 20 * scale,
-      border: `${1 * scale}px solid #666`,
-      borderRadius: 1 * scale,
-      backgroundColor: "#e0e0e0",
-    },
-  };
-
-  return (
-    <div style={styles.iconWrapper}>
-      <div style={styles.screen}></div>
-    </div>
-  );
-};
+const SingleScreenIcon =  (props) => (
+  <svg
+    width={24}
+    height={24}
+    viewBox="0 0 24 24"
+    fill="none"
+    xmlns="http://www.w3.org/2000/svg"
+    {...props}
+  >
+    <g opacity={0.7}>
+      <path
+        d="M5 7V17H19V7H5ZM3.5 20C3.1 20 2.75 19.85 2.45 19.55C2.15 19.25 2 18.9 2 18.5V5.5C2 5.1 2.15 4.75 2.45 4.45C2.75 4.15 3.1 4 3.5 4H20.5C20.9 4 21.25 4.15 21.55 4.45C21.85 4.75 22 5.1 22 5.5V18.5C22 18.9 21.85 19.25 21.55 19.55C21.25 19.85 20.9 20 20.5 20H3.5ZM3.5 18.5H20.5V5.5H3.5V18.5Z"
+        fill="black"
+      />
+    </g>
+  </svg>
+);
 
 export const Panel1 = () => {
   return (

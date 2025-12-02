@@ -960,7 +960,7 @@ const applyVerseFontSize = (fontSize) => {
   updateSpace(activeSpace, updateObj);
 };
 
-const LINE_HEIGHTS = [1, 2, 3, 4, 5];
+const LINE_HEIGHTS = [0.5, 1, 2, 3, 4];
 
 const [lineHeightIndex, setLineHeightIndex] = useState(0);
 

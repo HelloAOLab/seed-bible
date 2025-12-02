@@ -18,7 +18,7 @@ export function TabsProvider({ children }) {
   const [spaces, setSpaces] = useState([
     {
       id: '1',
-      name: "Space 1",
+      name: "(Optional) Add space name",
       icon:<Space/>,
       settings: {
         theme: {},
@@ -48,7 +48,7 @@ export function TabsProvider({ children }) {
     },
     {
       id: '2',
-      name: "Space 2",
+      name: "(Optional) Add space name",
       settings: {
         theme: {},
         toolbar: {
@@ -75,7 +75,7 @@ export function TabsProvider({ children }) {
     },
     {
       id: '3',
-      name: "Space 3",
+      name: "(Optional) Add space name",
       settings: {
         theme: {},
         toolbar: {
