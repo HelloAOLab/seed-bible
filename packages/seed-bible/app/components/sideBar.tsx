@@ -1874,7 +1874,11 @@ export const UserProfile = ({ collapsed }) => {
           overflow: "hidden",
         }}
       >
-        <Icon width={15} height={15} />
+      {userData?.photoLink ? (
+        <img
+          style={{ "border-radius": "50%", width: "35px", border: "" }}
+          src={userData?.photoLink}
+        />):  <Icon width={15} height={15} />}
       </div>
       {
         null /*userData?.photoLink ? (
