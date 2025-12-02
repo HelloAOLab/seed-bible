@@ -915,8 +915,8 @@ export function UserPresence() {
               style={{
                 zIndex: 99999,
                 position: "absolute",
-                left: 240,
-                top: 105,
+                left: 220,
+                top: 30,
               }}
             >
               {isHost ? (
