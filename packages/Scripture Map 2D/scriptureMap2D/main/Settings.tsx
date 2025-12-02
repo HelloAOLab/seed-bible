@@ -6,6 +6,8 @@ import { ReadingHistoryUserFiltersSelector } from "scriptureMap2D.main.ReadingHi
 import { ReadingHistoryTimeline } from "scriptureMap2D.main.ReadingHistoryTimeline";
 import { useReadingHistoryContext } from "scriptureMap2D.main.ReadingHistoryContext";
 
+const { useState } = os.appHooks;
+
 export const Settings = () => {
   const {
     isUserPresenceEnabled,
@@ -17,6 +19,8 @@ export const Settings = () => {
   } = useScriptureMap2DContext();
   const { usersAuthId } = useReadingHistoryContext();
 
+  const [collapsed, setCollapsed] = useState(false);
+
   if (
     (mode === ScriptureMap2DModes.Project && !project) ||
     (mode === ScriptureMap2DModes.Viewer &&
@@ -26,7 +30,15 @@ export const Settings = () => {
     return null;
 
   return (
-    <div className="mapSettings">
+    <div className={`mapSettings${collapsed ? " collapsed" : ""}`}>
+      <span
+        onClick={() => {
+          setCollapsed((prev) => !prev);
+        }}
+        className="material-symbols-outlined collapse-toggle"
+      >
+        {collapsed ? "keyboard_arrow_down" : "keyboard_arrow_up"}
+      </span>
       {mode === ScriptureMap2DModes.Project && project && (
         <>
           <ProjectStateSetter />
