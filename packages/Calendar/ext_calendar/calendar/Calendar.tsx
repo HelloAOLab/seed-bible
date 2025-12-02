@@ -1967,7 +1967,7 @@ const App = () => {
               linkSection.appendChild(linkIcon);
 
               const linkBtn = document.createElement("a");
-              linkBtn.href = link;
+              linkBtn.href = link.startsWith("http") ? link : `https://${link}`;
               linkBtn.target = "_blank";
               linkBtn.textContent = "Click Here";
               Object.assign(linkBtn.style, {
