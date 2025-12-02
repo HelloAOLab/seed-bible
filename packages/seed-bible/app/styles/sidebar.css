@@ -397,7 +397,8 @@
 .popupSettings {
   position: relative;
   width: 225px !important;
-  height: 200px;
+  height: fit-content;
+  max-height: 200px;
   padding: 10px;
   background: #202020;
   display: flex;
