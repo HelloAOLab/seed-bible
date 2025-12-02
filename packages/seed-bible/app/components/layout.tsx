@@ -120,7 +120,7 @@ const Layout = ({ children }) => {
       {(sidebarMode === "default" ||
         sidebarMode === "settings" ||
         sidebarMode === "themeSettings") &&
-        !globalThis.IsMobileNow() && <SpaceUI />}
+        <SpaceUI />}
         
       {globalThis.IsMobileNow() && sidebarMode === "default" && <SpaceUI />}
       {showScreenPanelOption && (
