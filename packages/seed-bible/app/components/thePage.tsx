@@ -2134,7 +2134,6 @@ function Section({
               selected[verse.verseNumber] ||
               blinker[verse.verseNumber];
             const isClicked = clickedVerses.includes(verse.verseNumber);
-            if(showVerses[activeSpace])
             return (
               <span key={verse.verseNumber}>
                 <span
@@ -2233,7 +2232,7 @@ function Section({
                     highlighted?.[verse.verseNumber] ? "verse-highlighted" : ""
                   } ${isClicked ? "verse-clicked" : ""}`}
                 >
-                  <span
+                  {showVerses[activeSpace]&&<span
                     className={`sectionTextNumber ${
                       globalThis.studyNotesPresent ? "clickableCursor" : ""
                     }`}
@@ -2259,7 +2258,7 @@ function Section({
                     }}
                   >
                     {verse?.verseNumber}
-                  </span>
+                  </span>}
                   {!c ? (
                     renderVerseText(verse)
                   ) : (

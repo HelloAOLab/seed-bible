@@ -913,15 +913,15 @@ function SideBar() {
 
   useEffect(() => {
     if (isMobile) {
-      setOpenOnMobile(false);
+      // setOpenOnMobile(false);
       setIsMobile(true);
     }
   }, [customScreens]);
 
-  const toggleSidebar = () => {
-    if (isMobile) setOpenOnMobile(false);
-    else setCollapsed(!collapsed);
-  };
+  // const toggleSidebar = () => {
+  //   if (isMobile) setOpenOnMobile(false);
+  //   else setCollapsed(!collapsed);
+  // };
 
   // Toggle search visibility function
   const toggleSearchVisibility = () => {

@@ -412,11 +412,11 @@ const handleColorChange = (field, e) => {
       }));
     }
   }, [activeSpace]);
-useEffect(() => {
+// useEffect(() => {
 
-    applyReadyTheme(defaultTheme);
+//     applyReadyTheme(defaultTheme);
 
-}, []);
+// }, []);
 
   return (
     <div className="themeSettings-container">
@@ -429,18 +429,18 @@ useEffect(() => {
                 [activeSpace]: globalThis.CurrentColors,
               }));
             }
-            setSideBarMode("settings");
+            setSideBarMode("themeSettings");
           }}
           style={{ cursor: "pointer" }}
           className="blackText"
         >
           <MenuIcon name="arrow_back" />
         </div>
-        <div className="softText">Page settings</div>
+        <div className="softText">Theme</div>
         <div className="softText">
           <MenuIcon name="chevron_right" />
         </div>
-        <div className="softText">Theme</div>
+        <div className="softText">Advanced Theme Settings</div>
       </div>
 
       <div className="routerTitle blackText">
@@ -662,10 +662,10 @@ const FONT_OPTIONS = [
 ];
 
 const FONT_SIZES = [
-  { label: 'Small', value: '14px' },
-  { label: 'Medium', value: '16px' },
-  { label: 'Large', value: '18px' },
-  { label: 'Extra Large', value: '20px' }
+  { label: 'Small', value: '14' },
+  { label: 'Medium', value: '16' },
+  { label: 'Large', value: '18' },
+  { label: 'Extra Large', value: '20' }
 ];
 
 const SURPRISE_COMBINATIONS = [
@@ -738,7 +738,7 @@ export function exportTextConfigToCSS(textConfig) {
 
     for (const [section, config] of Object.entries(textConfig)) {
         const styles = config.styles || {};
-
+        cssVars.push(`${toCSSVarName(section, 'line-height')}: ${config.lineHeight || 'normal'};`);
         cssVars.push(`${toCSSVarName(section, 'font')}: ${config.font || 'inherit'};`);
         cssVars.push(`${toCSSVarName(section, 'weight')}: ${config.weight || 'normal'};`);
         cssVars.push(`${toCSSVarName(section, 'font-style')}: ${styles.italic ? 'italic' : 'normal'};`);
@@ -915,11 +915,14 @@ const handleColorChange = (field, e) => {
       }));
     }
   }, [activeSpace]);
-useEffect(() => {
+    useEffect(() => {
+      if(!masks.firstTimeLoad){
+        applyReadyTheme(defaultTheme);
+        masks.firstTimeLoad = true;
+        
+      }
 
-    applyReadyTheme(defaultTheme);
-
-}, []);
+    }, []);
 
     const [textConfig, setTextConfig] = useState({
         heading: { ...defaultTextConfig.heading },
@@ -957,6 +960,51 @@ const applyVerseFontSize = (fontSize) => {
   updateSpace(activeSpace, updateObj);
 };
 
+const LINE_HEIGHTS = [1, 2, 3, 4, 5];
+
+const [lineHeightIndex, setLineHeightIndex] = useState(0);
+
+const handleDecreaseFontSize = () => {
+  if (selectedFontSize > 0) {
+    const newIndex = selectedFontSize - 1;
+    setSelectedFontSize(newIndex);
+    applyVerseFontSize(FONT_SIZES[newIndex].value);
+  }
+};
+
+const handleIncreaseFontSize = () => {
+  if (selectedFontSize < FONT_SIZES.length - 1) {
+    const newIndex = selectedFontSize + 1;
+    setSelectedFontSize(newIndex);
+    applyVerseFontSize(FONT_SIZES[newIndex].value);
+  }
+};
+
+const applyVerseLineHeight = (lineHeight) => {
+  const updateObj = buildTextConfigUpdate(
+    "verse",
+    FONT_OPTIONS[selectedFont].value,       // keep current font
+    FONT_SIZES[selectedFontSize].value,     // keep current font size
+    {
+      ...textConfig,
+      verse: {
+        ...textConfig.verse,
+        lineHeight,                         // override line-height
+      },
+    }
+  );
+
+  updateSpace(activeSpace, updateObj);
+};
+
+
+
+
+const handleCycleLineHeight = () => {
+  const nextIndex = (lineHeightIndex + 1) % LINE_HEIGHTS.length;
+  setLineHeightIndex(nextIndex);
+  applyVerseLineHeight(LINE_HEIGHTS[nextIndex]);
+};
 
   const containerStyle = {
     width: '280px',
@@ -1185,7 +1233,9 @@ const applyVerseFontSize = (fontSize) => {
             justifyContent: 'center',
             alignItems: 'center',
             cursor: 'pointer'
-          }}>
+          }}
+          onClick={handleDecreaseFontSize}
+          >
             <svg width="12" height="12" viewBox="0 0 12 12" fill="none">
               <text x="6" y="9" fontSize="8" textAnchor="middle" fill="black">A</text>
             </svg>
@@ -1200,7 +1250,10 @@ const applyVerseFontSize = (fontSize) => {
             justifyContent: 'center',
             alignItems: 'center',
             cursor: 'pointer'
-          }}>
+          }}
+            onClick={handleIncreaseFontSize}
+
+          >
             <svg width="20" height="20" viewBox="0 0 20 20" fill="none">
               <text x="10" y="14" fontSize="14" textAnchor="middle" fill="black">A</text>
             </svg>
@@ -1217,13 +1270,14 @@ const applyVerseFontSize = (fontSize) => {
             cursor: 'pointer',
             position: 'relative'
           }}
-          onClick={() => setShowFontSizeMenu(!showFontSizeMenu)}>
+  onClick={handleCycleLineHeight}
+          >
             <svg width="16" height="16" viewBox="0 0 16 16" fill="none">
               <rect x="2" y="3" width="12" height="2" rx="1" fill="black"/>
               <rect x="2" y="7" width="12" height="2" rx="1" fill="black"/>
               <rect x="2" y="11" width="12" height="2" rx="1" fill="black"/>
             </svg>
-            {showFontSizeMenu && (
+            {null/*showFontSizeMenu && (
               <div style={{
                 ...dropdownMenuStyle,
                 top: '48px',
@@ -1247,7 +1301,7 @@ const applyVerseFontSize = (fontSize) => {
                   </div>
                 ))}
               </div>
-            )}
+            )*/}
           </div>
         </div>
 
@@ -1283,7 +1337,7 @@ const applyVerseFontSize = (fontSize) => {
       </div>
 
       <div style={toggleRowStyle}>
-  <div style={toggleLabelStyle}>Show chapter heading</div>
+  <div style={toggleLabelStyle}>Show chapter headings</div>
 
   <div
     style={toggleStyle(showHeading[activeSpace])}
@@ -1299,7 +1353,7 @@ const applyVerseFontSize = (fontSize) => {
 </div>
 
 <div style={toggleRowStyle}>
-  <div style={toggleLabelStyle}>Show verse text</div>
+  <div style={toggleLabelStyle}>Show verses numbers</div>
 
   <div
     style={toggleStyle(showVerses[activeSpace])}
@@ -1368,7 +1422,12 @@ const applyVerseFontSize = (fontSize) => {
           </div>
         ))}
       </div>
-
+        <button
+        style={buttonStyle}
+        onClick={() => setSideBarMode("advancedThemeSettings")}
+      >
+        Advanced settings
+      </button>
       <div style={separatorStyle}></div>
     </div>
   );

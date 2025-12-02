@@ -125,7 +125,8 @@
 .sectionTitle {
   color: var(--pageTextColor);
   font-family: var(--text-heading-font);
-  color: var(--text-heading-color);
+  /* color: var(--text-heading-color); */
+  color: var(--pageTextColor) !important;
   font-size: 18px;
   font-style: var(--text-heading-font-style);
   font-weight: var(--text-heading-weight);
@@ -145,8 +146,8 @@
   font-style: var(--text-verse-font-style);
   text-align: var(--text-verse-alignment);
   text-decoration: var(--text-verse-text-decoration);
-  line-height: var(--text-verse-margin-top);
     font-size: var(--text-verse-font-size);
+    line-height: var(--text-verse-line-height);
 
 
   /* Additions ------> */

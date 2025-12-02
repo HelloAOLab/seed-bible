@@ -100,6 +100,8 @@ const Layout = ({ children }) => {
           <CanvasAiSettings />
         ) : sidebarMode === "themeSettings" ? (
           <SettingsUI />
+        )  : sidebarMode === "advancedThemeSettings" ? (
+          <ThemeSettings />
         ) : sidebarMode === "aiSettings" ? (
           <AiSettings />
         ) : sidebarMode === "tabSettings" ? (
