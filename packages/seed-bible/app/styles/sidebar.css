@@ -398,7 +398,7 @@
   position: relative;
   width: 225px !important;
   height: fit-content;
-  max-height: 200px;
+  /* max-height: 200px; */
   padding: 10px;
   background: #202020;
   display: flex;
@@ -406,7 +406,7 @@
   align-items: center;
   gap: 2px;
   border-radius: 15px;
-  overflow: auto;
+  /* overflow: auto; */
   scrollbar-width: none;
 }
 

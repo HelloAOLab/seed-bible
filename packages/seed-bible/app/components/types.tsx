@@ -6,7 +6,7 @@ export const TabOptions = {
   Edit: { id: "Edit", active: true, name: "Edit mode" },
 };
 
-const Defaulicon = () => (
+export const Defaulicon = () => (
   <div class="activeBg">
     <span></span>
   </div>

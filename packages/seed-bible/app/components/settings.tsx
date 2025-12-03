@@ -130,12 +130,12 @@ const SettingsSidebar = () => {
           icon: `instant_mix`,
           onClick: () => setSideBarMode("editorToolbarSettings"),
         },
-        {
-          key: "text",
-          label: "Text",
-          icon: "text_fields",
-          onClick: () => setSideBarMode("textSettings"),
-        },
+        // {
+        //   key: "text",
+        //   label: "Text",
+        //   icon: "text_fields",
+        //   onClick: () => setSideBarMode("textSettings"),
+        // },
         {
           key: "ai",
           label: "AI",
@@ -148,12 +148,12 @@ const SettingsSidebar = () => {
           icon: "description",
           onClick: () => setSideBarMode("tabSettings"),
         },
-        {
-          key: "mentuText",
-          label: "Menu text",
-          icon: "text_fields",
-          onClick: () => setSideBarMode("menuTextSettings"),
-        },
+        // {
+        //   key: "mentuText",
+        //   label: "Menu text",
+        //   icon: "text_fields",
+        //   onClick: () => setSideBarMode("menuTextSettings"),
+        // },
       ],
     },
     // { key: "divider2", type: "divider" },
@@ -288,7 +288,7 @@ const SettingsSidebar = () => {
     // ReSeed toggle item
     {
       key: "reseedToggle",
-      label: ReSeed ? "Exit Reseed" : "Reseed",
+      label: ReSeed ? "Exit" : "Propagate",
       icon: "face",
       onClick: () => setReSeed((prev) => !prev),
     },
@@ -655,7 +655,9 @@ const SettingsSidebar = () => {
                   className="space-icon material-symbols-outlined"
                 >
                   <div style={{ "pointer-events": "none" }}>
-                    {CurrentSpace?.icon || <Space/>}
+                    {CurrentSpace?.icon || <div class="activeBg">
+    <span></span>
+  </div>}
                   </div>
                 </div>
                 {spaceContentVisibility.spaceName !== false && (

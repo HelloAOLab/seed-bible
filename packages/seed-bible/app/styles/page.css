@@ -147,7 +147,7 @@
   text-align: var(--text-verse-alignment);
   text-decoration: var(--text-verse-text-decoration);
     font-size: var(--text-verse-font-size);
-    line-height:calc(1.5 + var(--text-verse-line-height));
+    line-height:calc(2 + var(--text-verse-line-height,0));
 
 
   /* Additions ------> */

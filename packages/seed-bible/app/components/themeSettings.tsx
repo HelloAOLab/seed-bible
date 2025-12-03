@@ -518,7 +518,7 @@ const handleColorChange = (field, e) => {
       </div>
 
       <div className="sidebarLine" />
-      <div style={{ height: 15 }} />
+      {null/*<div style={{ height: 15 }} />
       <div className="readyThemes-section">
         <div
           className="themeText"
@@ -561,6 +561,7 @@ const handleColorChange = (field, e) => {
       <div style={{ height: 15 }} />
       <div className="sidebarLine" />
       <div style={{ height: 15 }} />
+      */}
 
       <button
         onClick={() => {
@@ -665,7 +666,9 @@ const FONT_SIZES = [
   { label: 'Small', value: '14' },
   { label: 'Medium', value: '16' },
   { label: 'Large', value: '18' },
-  { label: 'Extra Large', value: '20' }
+  { label: 'Extra Large', value: '20' },
+  { label: 'Extra Large', value: '24' },
+  { label: 'Extra Large', value: '28' },
 ];
 
 const SURPRISE_COMBINATIONS = [
@@ -960,9 +963,9 @@ const applyVerseFontSize = (fontSize) => {
   updateSpace(activeSpace, updateObj);
 };
 
-const LINE_HEIGHTS = [0.5, 1, 2, 3, 4];
+const LINE_HEIGHTS = [-1, 0, 1];
 
-const [lineHeightIndex, setLineHeightIndex] = useState(0);
+const [lineHeightIndex, setLineHeightIndex] = useState(1);
 
 const handleDecreaseFontSize = () => {
   if (selectedFontSize > 0) {
@@ -1258,51 +1261,45 @@ const handleCycleLineHeight = () => {
               <text x="10" y="14" fontSize="14" textAnchor="middle" fill="black">A</text>
             </svg>
           </div>
-          <div style={{
-            width: '80px',
-            height: '43px',
-            backgroundColor: 'white',
-            border: '1px solid #E1E3EA',
-            borderRadius: '4px',
-            display: 'flex',
-            justifyContent: 'center',
-            alignItems: 'center',
-            cursor: 'pointer',
-            position: 'relative'
-          }}
+  <div
+  style={{
+    width: '80px',
+    height: '43px',
+    backgroundColor: 'white',
+    border: '1px solid #E1E3EA',
+    borderRadius: '4px',
+    display: 'flex',
+    justifyContent: 'center',
+    alignItems: 'center',
+    cursor: 'pointer',
+    position: 'relative'
+  }}
   onClick={handleCycleLineHeight}
-          >
-            <svg width="16" height="16" viewBox="0 0 16 16" fill="none">
-              <rect x="2" y="3" width="12" height="2" rx="1" fill="black"/>
-              <rect x="2" y="7" width="12" height="2" rx="1" fill="black"/>
-              <rect x="2" y="11" width="12" height="2" rx="1" fill="black"/>
-            </svg>
-            {null/*showFontSizeMenu && (
-              <div style={{
-                ...dropdownMenuStyle,
-                top: '48px',
-                left: 0,
-                width: '160px'
-              }} onClick={(e) => e.stopPropagation()}>
-                {FONT_SIZES.map((size, index) => (
-                  <div
-                    key={index}
-                    style={menuItemStyle(selectedFontSize === index)}
-                   onClick={() => {
-                          setSelectedFontSize(index);
-                          applyVerseFontSize(FONT_SIZES[index].value);
-                          setShowFontSizeMenu(false);
-                        }}
+>
+  <svg width="18" height="18" viewBox="0 0 18 18" fill="none">
+    {(() => {
+      const level = LINE_HEIGHTS[lineHeightIndex]; // -1, 0, +1
 
-                    onMouseEnter={(e) => e.target.style.backgroundColor = '#F5F5F5'}
-                    onMouseLeave={(e) => e.target.style.backgroundColor = selectedFontSize === index ? '#F5F5F5' : 'white'}
-                  >
-                    {size.label} ({size.value})
-                  </div>
-                ))}
-              </div>
-            )*/}
-          </div>
+      // base gap is 4.5 inside the 18px box
+      const baseGap = 4.5;
+
+      // each level adjusts the gap slightly
+      const gap = baseGap + level * 2;
+
+      const startY = 3; 
+
+      return (
+        <>
+          <rect x="3" y={startY}         width="12" height="2" rx="1" fill="black" />
+          <rect x="3" y={startY + gap}   width="12" height="2" rx="1" fill="black" />
+          <rect x="3" y={startY + 2*gap} width="12" height="2" rx="1" fill="black" />
+        </>
+      );
+    })()}
+  </svg>
+</div>
+
+
         </div>
 
         <div style={dropdownStyle} onClick={() => setShowFontDropdown(!showFontDropdown)}>

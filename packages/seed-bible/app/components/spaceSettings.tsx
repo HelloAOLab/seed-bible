@@ -885,7 +885,7 @@ export function SpaceSettingsForm() {
 export const SpaceSelector = ({ updateSpace, activeSpace, spaces }) => {
     // const {   } = useTabsContext();
     const CurrentSpace = spaces.find(e => e.id === activeSpace)
-    const [selectedIcon, setSelectedIcon] = useState(CurrentSpace?.iconIndex || 0);
+    const [selectedIcon, setSelectedIcon] = useState(CurrentSpace?.iconIndex || 1);
     const iconsDefault = [
         'block',
         <Space />,

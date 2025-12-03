@@ -2115,7 +2115,8 @@ function Section({
         <div className="sectionCover">
           {verses.map((verse) => {
             if (verse.lineBreak) {
-              return <p class="verseLineBreak"></p>;
+              // <p class="verseLineBreak"></p>;
+              return 
             }
 
             const [c, setC] = useState(false);
@@ -2232,7 +2233,8 @@ function Section({
                     highlighted?.[verse.verseNumber] ? "verse-highlighted" : ""
                   } ${isClicked ? "verse-clicked" : ""}`}
                 >
-                  {showVerses[activeSpace]&&<span
+                  {<span
+                   style={{display:showVerses[activeSpace]?"":"none"}}
                     className={`sectionTextNumber ${
                       globalThis.studyNotesPresent ? "clickableCursor" : ""
                     }`}
