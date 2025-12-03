@@ -150,6 +150,7 @@ export function Toolbar() {
                 setOpenOnMobile(true);
                 globalThis[`setOpenSidebar`] && setOpenSidebar(false);
               }}
+              style={{height:'100%'}}
               className="toolbar-item-wrapper mobile-only"
             >
               <button className={`toolbar-button firstToolbarbutton`}>

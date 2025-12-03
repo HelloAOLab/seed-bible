@@ -19,7 +19,6 @@ export function TabsProvider({ children }) {
     {
       id: '1',
       name: "(Optional) Add space name",
-      icon:<Space/>,
       settings: {
         theme: {},
         toolbar: {

@@ -29,16 +29,11 @@ export function VerseToolbar({
 
   useEffect(() => {
     const handleClickOutside = (event) => {
-      // if (colorPickerRef.current && !colorPickerRef.current.contains(event.target)) {
-      //   if (!customColors.includes(tempColor)) {
-      //     setCustomColors((prev) => [...prev, tempColor]);
-      //   }
       if (tempColor) {
         handleColorClick(tempColor);
         setSelectedColor(tempColor);
         setTempColor(null);
       }
-      // }
     };
 
     document.addEventListener("mousedown", handleClickOutside);
@@ -84,6 +79,9 @@ export function VerseToolbar({
     animation: "slideUp 0.3s ease-out",
     maxWidth: "95vw",
     width: "auto",
+    display: "flex",
+    flexDirection: "column",
+    alignItems: "center",
   };
 
   const headerStyle = {
@@ -98,6 +96,13 @@ export function VerseToolbar({
     color: "#000",
     letterSpacing: "0.5px",
     textTransform: "uppercase",
+    backgroundColor: "#fff",
+    padding: "8px 16px",
+    borderRadius: "8px",
+    // border: "1px solid #e5e5e5",
+    // boxShadow: "0 2px 8px rgba(0, 0, 0, 0.1)",
+    width: "fit-content",
+    // margin: "0 auto 8px auto",
   };
 
   const dividerStyle = {
@@ -246,6 +251,10 @@ const handleColorChange = (e) => {
   }, [clickedVersesContext]);
 
   return (
+    <>
+    {globalThis.IsMobileNow()&&<span className="verse-ref" style={verseRefStyle}>
+          {getVerseReference()}
+        </span>}
     <div className="verse-toolbar" style={containerStyle}>
       <style>
         {`
@@ -261,8 +270,47 @@ const handleColorChange = (e) => {
           }
           
           @media (max-width: 480px) {
+            .verse-toolbar {
+              position: fixed !important;
+              bottom: 0 !important;
+              left: 0 !important;
+              transform: none !important;
+              width: 100% !important;
+              max-width: 100% !important;
+              border-radius: 16px 16px 0 0 !important;
+              padding: 12px 16px !important;
+            }
+            
+            .header-ref {
+              flex-direction: row !important;
+              width: 100% !important;
+              gap: 8px !important;
+              align-items: center !important;
+              justify-content: center;
+            }
+            
+            .verse-ref {
+              position: absolute !important;
+              top: -95vh !important;
+              left: 50% !important;
+              transform: translateX(-50%) !important;
+              margin: 0 !important;
+              border: 1px solid rgb(229, 229, 229); 
+              box-shadow: rgba(0, 0, 0, 0.1) 0px 2px
+            }
+            
             .tool-buttons button span {
               font-size: 16px !important;
+            }
+            
+            .color-buttons {
+              
+              
+            }
+            
+            .tool-buttons {
+              
+              margin-left: 10px !important;
             }
             
             .color-circle, .plus-button, 
@@ -277,10 +325,9 @@ const handleColorChange = (e) => {
               }
             .color-circle,
             .header-ref{
-              flex-wrap:wrap;
+              // flex-wrap:wrap;
             }
             .divider-vertical{
-                display:none;
             }
             .icon-button {
               width: 28px !important;
@@ -301,11 +348,11 @@ const handleColorChange = (e) => {
           e.stopPropagation();
         }}
       >
-        <span className="verse-ref" style={verseRefStyle}>
+        {!globalThis.IsMobileNow()&&<span className="verse-ref" style={verseRefStyle}>
           {getVerseReference()}
-        </span>
+        </span>}
 
-        <div className="divider-vertical" style={dividerStyle}></div>
+        {!globalThis.IsMobileNow()&&<div className="divider-vertical" style={dividerStyle}></div>}
 
         <div
           onMouseDown={(e) => e.stopPropagation()}
@@ -462,7 +509,7 @@ const handleColorChange = (e) => {
         </div>
       </div>
     </div>
-  );
+  </>);
 }
 
 function getMenuActions(that,onClose) {
@@ -485,7 +532,6 @@ function getMenuActions(that,onClose) {
           ClearUserSelection();
           SetShowCommands(true);
           SetInHold(null);
-          // onClose()
         },
         title: "Apologist",
       },
@@ -500,7 +546,6 @@ function getMenuActions(that,onClose) {
               true
             );
             SetInHold(null);
-            // onClose()
           }, 50);
         },
         title: "Share",
@@ -609,7 +654,6 @@ function getMenuActions(that,onClose) {
   // Return only icon + onClick array
   return (
     MenuOptions.items
-      // .filter((i) => i.icon && typeof i.onClick === "function")
       .map(({ icon, onClick, title, type }) => ({ icon, onClick, title, type }))
   );
 }

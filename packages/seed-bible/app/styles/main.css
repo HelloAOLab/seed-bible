@@ -202,7 +202,7 @@ body {
 }
 
 .mediumText {
-  color: var(--themeText1);
+  color:var(--text1) !important;
   font-family: 'Satoshi', system-ui, sans-serif;
   font-size: 14px;
   font-style: normal;
@@ -213,7 +213,7 @@ body {
 }
 
 .blackText {
-  color: var(--themeText2);
+  color: var(--text1) !important;
   font-family: 'Satoshi', system-ui, sans-serif;
   font-size: 16px;
   font-style: normal;
