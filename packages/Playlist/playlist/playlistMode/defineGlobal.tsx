@@ -264,10 +264,12 @@ globalThis.extractIdFromUrl = (url) => {
   return match && match[1];
 }
 
+
 globalThis.validateUrl = (url) => {
   const videoRegex = /^https?:\/\/(?:www\.|player\.)?vimeo\.com\/(?:channels\/(?:\w+\/)?|groups\/(?:[^\/]*)\/videos\/|album\/(?:\d+)\/video\/|video\/|)(\d+)(?:$|\/)|https?:\/\/.*\.(mp4|webm|ogg|mov|mkv|avi|flv|wmv|m4v)(?:\?|$)/i;
   const ytShortsRegex = /^https?:\/\/(?:www\.|m\.)?youtube\.com\/shorts\/([a-zA-Z0-9_-]+)/;
   const iframeRegex = /^https?:\/\/(?:www\.)?[a-zA-Z0-9.-]+\.[a-zA-Z]{2,}\/?.*/;
+  const youtubeRegex = /^(?:https?:\/\/)?(?:www\.|m\.)?(?:youtube\.com\/(?:watch\?v=|embed\/|shorts\/)|youtu\.be\/)([a-zA-Z0-9_-]{6,})/i;
 
   try {
     const parsedUrl = new URL(url);
@@ -278,6 +280,15 @@ globalThis.validateUrl = (url) => {
       if (videoId) {
         return { isValid: true, type: 'youtube', videoId };
       }
+    }
+
+    const match = youtubeRegex.exec(url);
+    if (match) {
+      return {
+        isValid: true,
+        type: 'youtube',
+        videoId: match[1]
+      };
     }
 
     // YouTube Shorts
@@ -302,12 +313,40 @@ globalThis.validateUrl = (url) => {
   return { isValid: false, type: null };
 };
 
+globalThis.validateImage = (url) => {
+  const imageRegex = /^https?:\/\/.*\.(jpg|jpeg|png|gif|bmp|webp|svg|tiff?|ico)(?:\?|#|$)/i;
+
+  try {
+    const match = imageRegex.exec(url);
+    if (match) {
+      return {
+        isValid: true,
+        type: 'image',
+        extension: match[1].toLowerCase()
+      };
+    }
+  } catch (err) {
+    // invalid URL
+  }
+
+  return { isValid: false, type: null };
+};
+
+
 globalThis.generateEmbedFromUrl = (url: string) => {
   if (!url) return null;
 
   const result = validateUrl(url); // your global function
 
-  if (!result.isValid) return null;
+  if (!result.isValid)  {
+    const imageResult = validateImage(url);
+    if (imageResult.isValid) {
+      return `
+        <img src="${url}" alt="${url}" />
+      `;
+    }
+    return null;
+  }
 
   // ✅ YouTube embed
   if (result.type === "youtube") {
