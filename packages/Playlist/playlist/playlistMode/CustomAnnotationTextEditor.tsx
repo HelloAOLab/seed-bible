@@ -597,9 +597,6 @@ export function CustomAnnotationTextEditor({
               html += htmlSuffix;
             });
 
-            console.log("plainText", plainText);
-            console.log("html", html);
-
             if (plainText) {
               const embedHTML = generateEmbedFromUrl(plainText.trim());
 
