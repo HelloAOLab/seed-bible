@@ -60,6 +60,9 @@
     bottom: 60px;
     background: #f0f1f1;
     border-radius: 100%;
+            display: block !important;
+        pointer-events: all;
+    
   }
 
   .rightClick {
@@ -68,6 +71,9 @@
     bottom: 60px;
     background: #f0f1f1;
     border-radius: 100%;
+            display: block !important;
+        pointer-events: all;
+    
   }
 }
 

@@ -36,7 +36,7 @@
   width: fit-content;
   padding: 0 5px; */
   position: absolute;
-  background-color: white;
+  background-color: var(--pageBackground);
   padding: 0px 15px;
   min-width: 169px;
   border: 1px solid #0000001a;
@@ -228,7 +228,7 @@
   display: flex;
   justify-content: center;
   align-items: center;
-  background: white !important;
+  background: var(--pageBackground) !important;
   border-radius: 12px;
   /* height: 100vh !important; */
 }

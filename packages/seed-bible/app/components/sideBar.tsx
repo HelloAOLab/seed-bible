@@ -1939,7 +1939,7 @@ const sidebarStyles = `
 
     .icon-button {
         cursor: pointer;
-        color: var(--themeText1);
+        color: var(--text1);
     }
 `;
 

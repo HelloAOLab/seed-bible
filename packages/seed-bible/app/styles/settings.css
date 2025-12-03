@@ -91,7 +91,7 @@
   margin: 8px;
   cursor: pointer;
   align-items: center;
-  color: var(--themeText1);
+  color: var(--text1);
 }
 
 .space-item.selected {
@@ -122,7 +122,7 @@
   flex-direction: row;
   padding: 0px 10px;
   align-items: center;
-  color: var(--themeText1);
+  color: var(--text1);
   margin-top: 20px;
 }
 
@@ -171,18 +171,18 @@ line-height: normal;
   display: flex;
   align-items: center;
   justify-content: center;
-  /* color: var(--themeText1); */
+  /* color: var(--text1); */
 }
 
 .item-icon .material-icons {
   font-size: 16px;
-  /* color: var(--themeText1); */
+  /* color: var(--text1); */
 }
 
 .item-text {
   flex: 1;
   font-size: 16px;
-  /* color: var(--themeText1); */
+  /* color: var(--text1); */
   font-family: "DM Sans-Medium", Helvetica;
   font-size: 16px;
   font-weight: 500;

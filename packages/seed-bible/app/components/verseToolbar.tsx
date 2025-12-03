@@ -270,17 +270,19 @@ const handleColorChange = (e) => {
           }
           
           @media (max-width: 480px) {
-            .verse-toolbar {
-              position: fixed !important;
-              bottom: 0 !important;
-              left: 0 !important;
-              transform: none !important;
-              width: 100% !important;
-              max-width: 100% !important;
-              border-radius: 16px 16px 0 0 !important;
-              padding: 12px 16px !important;
-            }
-            
+                .verse-toolbar {
+        position: fixed !important;
+        bottom: 0 !important;
+        left: 0 !important;
+        transform: none !important;
+        width: 100% !important;
+        max-width: 100% !important;
+        border-radius: 0 !important;
+        padding: 3px 16px !important;
+        height: 52px;
+        /* background: var(--pageBackground) !important; */
+    }
+                    
             .header-ref {
               flex-direction: row !important;
               width: 100% !important;
