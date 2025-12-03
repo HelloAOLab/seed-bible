@@ -25,11 +25,11 @@ function computeMobilePlacement95() {
     window.innerHeight || 0
   );
 
-  const width = Math.round(vw * 0.95);
+  const width = Math.round(vw * 1);
   const height = Math.round(vh - vh * 0.7);
 
-  const x = Math.round((vw - width) / 2);
-  const y = 12; // stick to top; change if you want centered: Math.round((vh - height) / 2)
+  const x = 0
+  const y = 0; // stick to top; change if you want centered: Math.round((vh - height) / 2)
 
   return { size: { width, height }, position: { x, y } };
 }
@@ -864,8 +864,8 @@ const FloatingAppContainer = ({
   // sizes for layout: wrapper contains window (top) + toolbar (underneath)
   const wrapperStyle = {
     position: "fixed",
-    left: `${posX}px`,
-    top: `${posY}px`,
+    left: isMobileNow()?'0':`${posX}px`,
+    top: isMobileNow()?'0':`${posY}px`,
     width: `${width}px`,
     height: `${
       (app.isMinimized ? 0 : height) +
@@ -882,7 +882,7 @@ const FloatingAppContainer = ({
     position: "absolute",
     left: 0,
     top: 0,
-    width: `${width}px`,
+    width:isMobileNow()?'100vw': `${width}px`,
     height: `${app.isMinimized ? 0 : height}px`,
     borderRadius: `${radius}px`,
     boxShadow: `0 0 0 2px ${stroke}`,
