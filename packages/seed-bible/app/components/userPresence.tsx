@@ -739,7 +739,7 @@ export function UserPresence() {
             display: "flex",
             alignItems: "center",
             gap: 8,
-            backgroundColor: "#fff",
+            backgroundColor: "#ffffff3d",
             borderRadius:
               getStatusText() !== "Start session" ? "5px 5px 0 0" : 5,
             padding: "4px 8px",
@@ -775,7 +775,7 @@ export function UserPresence() {
               <span
                 style={{
                   fontSize: 12,
-                  color: "black",
+                  color: "var(--text1)",
                   fontWeight: 600,
                   marginLeft: 4,
                 }}

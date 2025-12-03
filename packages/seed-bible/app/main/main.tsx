@@ -322,10 +322,31 @@ const Main = () => {
     text2: "#000000",
     showTabIcons: true, // Default to showing tab icons
   };
+  const darkTheme = {
+      menuBackground: "#2D2D2D",
+      primaryButton: "#404040",
+      primaryButtonColor: "#FFFFFF",
+      secondaryButton: "#5A67D8",
+      secondaryButtonColor: "#FFFFFF",
+      buttonBorder: "#5A67D8",
+      tabSelection: "#5A67D8",
+      spaceSelection: "#5A67D8",
+      toolbarBackground: "#1A1A1A",
+      text1: "#FFFFFF",
+      text2: "#FFFFFF",
+      iconColor: "#FFFFFF",
+      "filter-mode": "invert(100%)",
+      pageBackground: "#121212",
+      pageTextColor: "white",
+      showTabIcons: true,
+  }
+  const isDark = window.matchMedia("(prefers-color-scheme: dark)").matches;
+
+  let theme = isDark ? darkTheme : defaultTheme;
 
   const ThemeCSS = useMemo(() => {
     const colors = {
-      ...defaultTheme, // start with defaults
+      ...theme, // start with defaults
       ...(themeColors?.[activeSpace] || {}), // overwrite with current themeColors
     };
 
