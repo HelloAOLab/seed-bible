@@ -499,7 +499,7 @@ const AddAnotationUI = ({
   const [singleMode, setSingleMode] = useState(true);
   const [embedItems, setEmbedItems] = useState([]);
   const [tags, setTags] = useState([]);
-  const [textHTML, setTextHTML] = useState("");
+  const [textHTML, setTextHTML] = useState(globalThis.PreviousHTML || "");
 
   // Edit Mode
   const [isEditAddress, setIsEditAddress] = useState(editData?.address);
@@ -578,7 +578,9 @@ const AddAnotationUI = ({
 
   useLayoutEffect(() => {
     globalThis.SelectedItemIDForAttachments = selectedAnnotation;
-  }, [selectedAnnotation]);
+    globalThis.PreviousHTML = textHTML;
+
+  }, [selectedAnnotation, textHTML]);
 
   useLayoutEffect(() => {
     globalThis[`SetChecklistEnabled`] = setChecklistEnabled;
@@ -995,6 +997,7 @@ const AddAnotationUI = ({
       setList([]);
       setSelectedAnnotation(null);
       setLoading(false);
+      globalThis.PreviousHTML = null;
       if (setTab) setTab("discover");
     } catch (e) {
       setLoading(false);
@@ -1135,6 +1138,7 @@ const AddAnotationUI = ({
       });
       setList([]);
       setSelectedAnnotation(null);
+      globalThis.PreviousHTML = null;
     } catch (e) {
       setLoading(false);
       console.error("Error saving annotations:", e);
