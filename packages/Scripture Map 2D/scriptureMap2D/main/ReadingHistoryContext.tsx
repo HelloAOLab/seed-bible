@@ -213,9 +213,21 @@ export const ReadingHistoryProvider = ({ children }) => {
       .then((allEvents) => {
         const flattenedEvents = Array.from(flat(allEvents));
 
-        for (const event of flattenedEvents) {
-          const { bookId, start, end } = event;
+        for (let event of flattenedEvents) {
+          let { start, end, chapter, bookId } = event;
           if (start >= rangeStart && end <= rengeEnd) {
+            if (bookId === "PSA") {
+              const { bookId: dividedPsalmId, chapter: dividedPsalmChapter } =
+                BibleVizUtils.Functions.ConvertCompletePsalmsToDivided({
+                  chapter,
+                });
+              event = {
+                ...event,
+                bookId: dividedPsalmId,
+                chapter: dividedPsalmChapter,
+              };
+              ({ start, end, chapter, bookId } = event);
+            }
             if (!rangedEventsByBook.has(bookId)) {
               rangedEventsByBook.set(bookId, []);
             }

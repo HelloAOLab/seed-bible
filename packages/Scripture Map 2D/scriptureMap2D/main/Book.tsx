@@ -82,23 +82,22 @@ export const Book = memo(
       return { tooltipAnchor };
     }, [containerRect]);
 
-    const { chaptersCount, shortName, staticChaptersArray } = useMemo(() => {
+    const { book, chaptersCount, bookId, staticChaptersArray } = useMemo(() => {
+      const book = bookInfo.commonName;
       const chaptersCount =
-        BibleVizUtils.Data.tags.booksStaticInfo[bookInfo.commonName]
-          .numberOfChapters;
+        BibleVizUtils.Data.tags.booksStaticInfo[book].numberOfChapters;
+      const bookId = BibleVizUtils.Data.tags.booksStaticInfo[book].abbreviation;
 
       return {
+        book,
         chaptersCount,
-        shortName:
-          BibleVizUtils.Data.tags.booksStaticInfo[bookInfo.commonName]
-            .abbreviation,
+        bookId,
         staticChaptersArray: [...Array(chaptersCount)],
       };
     }, []);
 
     const getBookHeight = useCallback(() => {
-      const { chaptersInfo } =
-        BibleVizUtils.Data.tags.booksStaticInfo[bookInfo.commonName];
+      const { chaptersInfo } = BibleVizUtils.Data.tags.booksStaticInfo[book];
       const amountOfRows = Math.ceil(
         chaptersInfo.length /
           BibleVizUtils.Data.tags.BibleLayoutMeasurements
@@ -116,11 +115,11 @@ export const Book = memo(
     }, [scaleFactor, getBookHeight, chapterGap, chapterPadding, chapterHeight]);
 
     const checked = useMemo(() => {
-      return selection?.[testament.name]?.[sectionName]?.[
-        bookInfo.commonName
-      ]?.every((chapter) => {
-        return chapter;
-      });
+      return selection?.[testament.name]?.[sectionName]?.[book]?.every(
+        (chapter) => {
+          return chapter;
+        }
+      );
     }, [selection]);
 
     const { onHoldStart, onHoldEnd } = useClickAndHold({
@@ -129,7 +128,7 @@ export const Book = memo(
         const key = {
           testamentName: testament.name,
           sectionName,
-          bookName: bookInfo.commonName,
+          bookName: book,
         };
         onBookNameClickAndHold(showChapters, key, checked);
       },
@@ -161,7 +160,7 @@ export const Book = memo(
 
       const filteredUsers = Array.from(usersStatus).filter(
         ([user, enabled]) => {
-          const bookContent = content.get(user).books?.[bookInfo.commonName];
+          const bookContent = content.get(user).books?.[book];
           return (
             enabled &&
             bookContent &&
@@ -178,7 +177,7 @@ export const Book = memo(
         } else {
           const colors = filteredUsers.map(([user]) => {
             const userContent = content.get(user);
-            const bookContent = userContent.books[bookInfo.commonName];
+            const bookContent = userContent.books[book];
             const entriesCount = Object.keys(bookContent).reduce(
               (currentValue, key) => {
                 return (
@@ -283,7 +282,7 @@ export const Book = memo(
               );
             }
           } else {
-            const { chapters } = books[shortName];
+            const { chapters } = books[bookId];
             let lastEntry;
             for (const chapter in chapters) {
               const events = chapters[chapter];
@@ -338,7 +337,7 @@ export const Book = memo(
 
       const bookEntriesCounts = filteredUsers.map(([user]) => {
         const userContent = content.get(user);
-        const bookContent = userContent.books[bookInfo.commonName];
+        const bookContent = userContent.books[book];
         const entriesCount = Object.keys(bookContent).reduce(
           (currentValue, key) => {
             return currentValue + bookContent[key].length;
@@ -383,7 +382,7 @@ export const Book = memo(
 
     const usersInBook = useMemo(() => {
       return Object.keys(userPresence).filter((user) => {
-        return userPresence[user].book === bookInfo.commonName;
+        return userPresence[user].book === book;
       });
     }, [userPresence, isUserPresenceEnabled, modes]);
 
@@ -468,7 +467,8 @@ export const Book = memo(
                   step: 0.25,
                 });
               } else {
-                const { chapters } = books[shortName];
+                const { chapters } = books[bookId];
+
                 const readingEvents = chapters[chapter];
                 const nowSeconds = Math.floor(os.localTime / 1000);
                 const recencyTimeSeconds =
@@ -502,6 +502,7 @@ export const Book = memo(
 
       return staticChaptersArray.map((_, index) => {
         const chapter = index + 1;
+
         const chapterSummary = chapterReadingHistorySummaryMap.get(chapter);
         let historyBackground = null;
         let historyColor = null;
@@ -541,7 +542,7 @@ export const Book = memo(
               }
             } else {
               const chapterReadingEvents =
-                users[userId].books[shortName].chapters[chapter];
+                users[userId].books[bookId].chapters[chapter];
               const lastReadingEvent =
                 chapterReadingEvents[chapterReadingEvents.length - 1];
               const recencyTimeSeconds = nowSeconds - lastReadingEvent.end;
@@ -589,9 +590,9 @@ export const Book = memo(
 
         return (
           <Chapter
-            key={`${shortName}-${chapter}`}
+            key={`${bookId}-${chapter}`}
             sectionName={sectionName}
-            bookName={bookInfo.commonName}
+            bookName={book}
             index={index}
             historyBackground={historyBackground}
             historyColor={historyColor}
@@ -628,7 +629,7 @@ export const Book = memo(
             e.stopPropagation();
           }}
         >
-          {shortName}
+          {bookId}
         </span>
         <div
           className={`bookCover${showChapters ? " invisible" : displayContainer ? " displayingContainer" : ""}`}
