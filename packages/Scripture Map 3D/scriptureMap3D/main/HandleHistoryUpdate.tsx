@@ -1,1 +1,2 @@
-if(BibleVizUtils.Data.masks.isInHistoryMode) thisBot.UpdateHistoryModePieces();
+if (globalThis?.BibleVizUtils?.Data?.masks.isInHistoryMode)
+  thisBot.UpdateHistoryModePieces();
