@@ -125,7 +125,7 @@ export const ReadingHistoryTimeline = () => {
         let color;
         const prevColor = prevItemsColorMapRef.current.get(key);
 
-        if (summary) {
+        if (summary && summary.totalTimeSpentReading > SEC_PER_MINUTE) {
           color = BibleVizUtils.Functions.GetHistoryColorByReadingTime({
             step,
             stepColors,
