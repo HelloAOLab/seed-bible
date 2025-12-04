@@ -4,7 +4,7 @@ const style = tags["App.css"];
 
 const { useState, useEffect, useRef, render, useCallback } = os.appHooks;
 
-let painterStorageApp = bot.CreatePainterStorage();
+// let painterStorageApp = bot.CreatePainterStorage();
 
 const App = () => {
   const canvasRef = useRef(null);
@@ -31,12 +31,12 @@ const App = () => {
   const currentStroke = useRef(null);
 
   const saveDrawingDebounced = useCallback((newDrawingData) => {
-    setTagMask(
-      painterStorageApp,
-      "drawingData",
-      JSON.stringify(newDrawingData),
-      "shared"
-    );
+    // setTagMask(
+    //   painterStorageApp,
+    //   "drawingData",
+    //   JSON.stringify(newDrawingData),
+    //   "shared"
+    // );
   }, []);
 
   useEffect(() => {
@@ -253,12 +253,12 @@ const App = () => {
     // Clear stored data and notify other tabs
     const emptyData = [];
     setDrawingData(emptyData);
-    setTagMask(
-      painterStorageApp,
-      "drawingData",
-      JSON.stringify(emptyData),
-      "shared"
-    );
+    // setTagMask(
+    //   painterStorageApp,
+    //   "drawingData",
+    //   JSON.stringify(emptyData),
+    //   "shared"
+    // );
   };
 
   const toggleDrawing = () => {
