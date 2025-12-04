@@ -164,7 +164,7 @@ export function VerseToolbar({
     backgroundColor: "transparent",
     border: "none",
     cursor: "pointer",
-    color: "#333",
+    color: "var(--text1) !important",
     transition: "background-color 0.2s",
     borderRadius: "4px",
     fontSize: "10px",
@@ -252,9 +252,16 @@ const handleColorChange = (e) => {
 
   return (
     <>
-    {globalThis.IsMobileNow()&&<span className="verse-ref" style={verseRefStyle}>
+    {globalThis.IsMobileNow()&&
+    <>
+    <div className="verse-ref">
+    <img src="https://res.cloudinary.com/dfbtwwa8p/image/upload/v1764875876/Rectangle_11_yzpmpm.svg"/>
+    </div>
+    <span className="verse-ref" style={verseRefStyle}>
           {getVerseReference()}
-        </span>}
+        </span>
+    </>
+        }
     <div className="verse-toolbar" style={containerStyle}>
       <style>
         {`
@@ -280,7 +287,7 @@ const handleColorChange = (e) => {
         border-radius: 0 !important;
         padding: 3px 16px !important;
         height: 52px;
-        /* background: var(--pageBackground) !important; */
+         background: var(--pageBackground) !important; 
     }
                     
             .header-ref {
@@ -293,12 +300,10 @@ const handleColorChange = (e) => {
             
             .verse-ref {
               position: absolute !important;
-              top: -95vh !important;
+              top: -91.8vh !important;
               left: 50% !important;
               transform: translateX(-50%) !important;
               margin: 0 !important;
-              border: 1px solid rgb(229, 229, 229); 
-              box-shadow: rgba(0, 0, 0, 0.1) 0px 2px
             }
             
             .tool-buttons button span {
@@ -503,7 +508,7 @@ const handleColorChange = (e) => {
                   >
                     {option.icon}
                   </div>
-                  <span>{option.title}</span>
+                  <span style={{color:'var(--text1) !important'}}>{option.title}</span>
                 </div>
               );
             }

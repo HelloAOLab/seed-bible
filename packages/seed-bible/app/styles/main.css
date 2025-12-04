@@ -15,8 +15,12 @@ body {
   color: var(--iconColor) !important;
 }
 .coloredIcon,
+svg,
 .toolbar-button img{
   filter: var(--filter-mode);
+}
+svg path {
+  /* fill: var(--iconColor) !important; */
 }
 :root {
   --primary-color: #f0f1f1;

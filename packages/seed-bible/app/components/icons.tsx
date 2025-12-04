@@ -60,6 +60,7 @@ export function SeedBibleIcon() {
 export const ApologistIcon = (noFilter = false) => {
   return (
     <img
+      className="coloredIcon"
       style={{ filter: noFilter ? "" : "invert(1)", width: "24px" }}
       src="https://res.cloudinary.com/dfbtwwa8p/image/upload/v1755794631/svgviewer-png-output_1_tgtfvm.png"
     />

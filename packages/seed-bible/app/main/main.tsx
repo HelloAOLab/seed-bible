@@ -319,8 +319,9 @@ const Main = () => {
     spaceSelection: "#4459F3",
     toolbarBackground: "#ffffff",
     iconColor: "#000000",
-    text1: "#606060",
+    text1: "#000000",
     text2: "#000000",
+    "filter-mode":" none",
     showTabIcons: true, // Default to showing tab icons
   };
   const darkTheme = {
