@@ -51,6 +51,7 @@ export const Book = memo(
       chapterWidth,
       chapterHeight,
       CHAPTER_BASE_BACKGROUND_COLOR,
+      showingBooksColors,
     } = useScriptureMap2DContext();
     const { testament } = useTestamentContext();
     const {
@@ -333,7 +334,11 @@ export const Book = memo(
         fixedBackground =
           BibleVizUtils.Functions.GetHistoryColorLinearGradient(colors);
       } else {
-        fixedBackground = bookCoverBackgroundColor;
+        if (showingBooksColors) {
+          fixedBackground = bookCoverBackgroundColor;
+        } else {
+          fixedBackground = CHAPTER_BASE_BACKGROUND_COLOR;
+        }
       }
 
       const bookEntriesCounts = filteredUsers.map(([user]) => {
@@ -379,6 +384,7 @@ export const Book = memo(
       readingSummary,
       isReadingHistoryEnabled,
       readingHistoryRangeSeconds,
+      showingBooksColors,
     ]);
 
     const usersInBook = useMemo(() => {

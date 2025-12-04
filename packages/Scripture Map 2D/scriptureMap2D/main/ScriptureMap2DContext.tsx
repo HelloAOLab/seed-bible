@@ -260,6 +260,7 @@ export const ScriptureMap2DProvider = ({
   const [showingAllChapters, setShowingAllChapters] = useState(
     initialShowingAllChapters
   );
+  const [showingBooksColors, setShowingBooksColors] = useState(true);
   const [showLabels, setShowLabels] = useState(true);
   const [isUserPresenceEnabled, setIsUserPresenceEnabled] = useState(false);
   const [isReadingHistoryEnabled, setIsReadingHistoryEnabled] = useState(
@@ -436,6 +437,8 @@ export const ScriptureMap2DProvider = ({
         projectStateStyle,
         CHAPTER_BASE_BACKGROUND_COLOR,
         isMobile,
+        showingBooksColors,
+        setShowingBooksColors,
       }}
     >
       {children}

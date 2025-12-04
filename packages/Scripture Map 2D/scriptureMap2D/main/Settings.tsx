@@ -8,6 +8,9 @@ import { useReadingHistoryContext } from "scriptureMap2D.main.ReadingHistoryCont
 
 const { useState, useRef, useEffect, useMemo } = os.appHooks;
 
+const Settings_Icon =
+  "https://auth-aux-aobot-prod-filesbucket-141297942820.s3.amazonaws.com/aoBot/5a87cdff4617c9047e44ec47ddd8a101aa317e2223d83dd40f615e3f9740f03a.svg";
+
 const SettingsOptions = ({
   setShowOptions,
   settingsButtonRef,
@@ -15,8 +18,12 @@ const SettingsOptions = ({
   setCollapsed,
   shouldShowReadingHistorySettings,
 }) => {
-  const { showingAllChapters, setShowingAllChapters } =
-    useScriptureMap2DContext();
+  const {
+    showingAllChapters,
+    setShowingAllChapters,
+    showingBooksColors,
+    setShowingBooksColors,
+  } = useScriptureMap2DContext();
 
   const containerRef = useRef(null);
 
@@ -84,6 +91,15 @@ const SettingsOptions = ({
         </span>
         {`${showingAllChapters ? "Close" : "Open"} books`}
       </button>
+      <button
+        onClick={(e) => {
+          e.stopPropagation();
+          setShowingBooksColors((prev) => !prev);
+        }}
+      >
+        <span className="material-symbols-outlined">palette</span>
+        {`${showingBooksColors ? "Hide" : "Show"} books color`}
+      </button>
     </div>
   );
 };
@@ -113,14 +129,14 @@ export const Settings = () => {
 
   return (
     <div className={`mapSettings${collapsed ? " collapsed" : ""}`}>
-      <span
+      <div
+        className="settings-button"
         ref={settingsButtonRef}
         onClick={() => {
           setShowOptions((prev) => !prev);
         }}
-        className="material-symbols-outlined settings-button"
       >
-        settings
+        <img src={Settings_Icon} alt="Settings_Icon" />
         {showOptions && (
           <SettingsOptions
             setShowOptions={setShowOptions}
@@ -130,7 +146,8 @@ export const Settings = () => {
             shouldShowReadingHistorySettings={shouldShowReadingHistorySettings}
           />
         )}
-      </span>
+      </div>
+
       {mode === ScriptureMap2DModes.Project && project && (
         <>
           <ProjectStateSetter />
