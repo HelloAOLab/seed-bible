@@ -17,10 +17,13 @@
   background-color: white;
   pointer-events: all;
   overflow: hidden;
-  /* gap: 8px; */
+  gap: 8px;
   height: 100%;
   --timelineItemSize: 16px;
   position: relative;
+  padding-top: 16px;
+  padding-right: 24px;
+  padding-left: 16px;
 }
 
 /* .mapWrapper.showingContent
@@ -33,20 +36,65 @@
   top: 0;
   background-color: white;
   width: 100%;
-  display: flex;
-  flex-direction: column;
-  justify-content: flex-start;
-  align-items: flex-start;
-  padding: 16px;
   gap: 8px;
+  display: grid;
+  grid-template-columns: 1fr 40px;
+  grid-template-rows: auto auto;
 }
 
-.collapse-toggle {
-  width: 100%;
+.settings-button {
+  width: 40px;
+  height: 40px;
   display: flex !important;
   justify-content: center;
   align-items: center;
   cursor: pointer;
+  position: relative;
+  grid-column: 2 / 3;
+  grid-row: 1 / 2;
+  justify-self: center;
+  align-self: center;
+  font-size: 28px !important;
+}
+
+.settingsOptionsContainer {
+  position: absolute;
+  right: 0;
+  top: 100%;
+  background-color: #202020;
+  padding: 8px;
+  gap: 4px;
+  border-radius: 8px;
+  display: flex;
+  flex-direction: column;
+  justify-content: flex-start;
+  align-items: flex-start;
+  min-width: 148px;
+  min-height: 20px;
+}
+
+.settingsOptionsContainer > button {
+  min-width: 100%;
+  background-color: transparent;
+  color: white;
+  appearance: none;
+  border: none;
+  cursor: pointer;
+  text-align: start;
+  padding: 4px 8px;
+  border-radius: 4px;
+  display: flex;
+  justify-content: flex-start;
+  align-items: center;
+  gap: 8px;
+}
+
+.settingsOptionsContainer > button > span {
+  font-size: 20px;
+}
+
+.settingsOptionsContainer > button:hover {
+  background-color: #4e4e4e;
 }
 
 .projectStateSetter {
@@ -161,6 +209,11 @@
   padding: 8px;
 }
 
+.readingHistoryUserSelector {
+  grid-column: 1 / 2;
+  grid-row: 1 / 2;
+}
+
 .projectFiltersSelector,
 .readingHistoryUserSelector {
   display: flex;
@@ -178,6 +231,8 @@
 .readingHistoryTimelineContainer {
   width: 100%;
   padding: 8px;
+  grid-column: 1 / 3;
+  grid-row: 2 / 3;
 }
 
 .mapSettings.collapsed .readingHistoryTimelineContainer {
@@ -352,7 +407,6 @@
   justify-content: center;
   align-items: center;
   gap: 8px;
-  padding: 12px 0;
   width: 100%;
 }
 
@@ -470,8 +524,6 @@
   max-width: 100%;
   overflow: scroll;
   gap: calc(8px * var(--scaleFactor));
-  padding-right: 24px;
-  padding-left: 16px;
 }
 
 .mapWrapper .mapContainer .testamentContainer {
