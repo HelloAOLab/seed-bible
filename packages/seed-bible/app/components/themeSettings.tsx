@@ -1241,7 +1241,7 @@ const handleCycleLineHeight = () => {
           }}
           onClick={handleDecreaseFontSize}
           >
-            <svg width="12" height="12" viewBox="0 0 12 12" fill="none">
+            <svg style={{filter:'none'}} width="12" height="12" viewBox="0 0 12 12" fill="none">
               <text x="6" y="9" fontSize="8" textAnchor="middle" fill="black">A</text>
             </svg>
           </div>
@@ -1259,7 +1259,7 @@ const handleCycleLineHeight = () => {
             onClick={handleIncreaseFontSize}
 
           >
-            <svg width="20" height="20" viewBox="0 0 20 20" fill="none">
+            <svg style={{filter:'none'}} width="20" height="20" viewBox="0 0 20 20" fill="none">
               <text x="10" y="14" fontSize="14" textAnchor="middle" fill="black">A</text>
             </svg>
           </div>
@@ -1278,7 +1278,7 @@ const handleCycleLineHeight = () => {
   }}
   onClick={handleCycleLineHeight}
 >
-  <svg width="18" height="18" viewBox="0 0 18 18" fill="none">
+  <svg style={{filter:'none'}} width="18" height="18" viewBox="0 0 18 18" fill="none">
     {(() => {
       const level = LINE_HEIGHTS[lineHeightIndex]; // -1, 0, +1
 

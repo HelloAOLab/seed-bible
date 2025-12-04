@@ -14,7 +14,7 @@ import { useTabsContext } from "app.hooks.tabs";
 import { useBibleContext } from "app.hooks.bibleVariables";
 import { SpaceSettingsForm, SpaceSelector } from "app.components.spaceSettings";
 import { useHoldAction } from "app.hooks.useHold";
-import {  ThemeIcon,BibleIcon,NewSettingsIcon  } from "app.components.icons";
+import {  ThemeIcon,BibleIcon,NewSettingsIcon,ExtensionsIcon  } from "app.components.icons";
 
 const SettingsSidebar = () => {
   const [activeTab, setActiveTab] = useState("space");
@@ -104,7 +104,7 @@ const SettingsSidebar = () => {
     {
       key: "Extensions",
       label: "Configure Extensions",
-      icon: "extension",
+      icon: <ExtensionsIcon/>,
       style: "",
       expandable: false,
       onClick: () => setSideBarMode("extensions"),
