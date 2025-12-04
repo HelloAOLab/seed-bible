@@ -114,7 +114,7 @@ export const Settings = () => {
   return (
     <div className={`mapSettings${collapsed ? " collapsed" : ""}`}>
       <span
-        settingsButtonRef={settingsButtonRef}
+        ref={settingsButtonRef}
         onClick={() => {
           setShowOptions((prev) => !prev);
         }}
