@@ -195,13 +195,13 @@ const Extensions = () => {
 
 const containerStyle = {
     marginBottom: '8px',
-    backgroundColor: '#f8f9fa',
-    border: '1px solid #e1e4e8',
+    backgroundColor: 'var(--pageBackground)',
+    border: '1px solid var(--pageBackground)',
     borderRadius: '8px',
     // padding: '0',
     fontFamily: '-apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif',
     fontSize: '14px',
-    color: '#24292e',
+    color: 'var(--text1)',
     // width: '400px',
     // margin: '20px'
 };
@@ -211,7 +211,7 @@ const headerStyle = {
     alignItems: 'center',
     justifyContent: 'space-between',
     padding: '16px 20px',
-    borderBottom: '1px solid #e1e4e8'
+    // borderBottom: '1px solid #e1e4e8'
 };
 
 const headerLeftStyle = {

@@ -3,7 +3,10 @@ import { Chapter } from "scriptureMap2D.main.Chapter";
 import { PresentUserPresenceBookIcon } from "scriptureMap2D.main.PresentUserPresenceIcon";
 import { useTestamentContext } from "scriptureMap2D.main.TestamentContext";
 import { useClickAndHold } from "scriptureMap2D.main.CustomHooks";
-import { ReadingHistoryTooltipContent } from "scriptureMap2D.main.Tooltip";
+import {
+  Tooltip,
+  ReadingHistoryTooltipContent,
+} from "scriptureMap2D.main.Tooltip";
 import { useReadingHistoryContext } from "scriptureMap2D.main.ReadingHistoryContext";
 import { calculateReadingHistorySummary } from "db.annotations.library";
 const { useMemo, useState, useEffect, useCallback } = os.appHooks;
@@ -16,6 +19,7 @@ export const Book = memo(
     style,
     sectionName,
     readingEvents,
+    readingSummary,
   }) => {
     const {
       arrangement,
@@ -61,23 +65,39 @@ export const Book = memo(
     } = useReadingHistoryContext();
 
     const [showChapters, setShowChapters] = useState(showingAllChapters);
-    const { chaptersCount, shortName, staticChaptersArray } = useMemo(() => {
+    const [containerRect, setContainerRect] = useState(null);
+
+    const { tooltipAnchor } = useMemo(() => {
+      let tooltipAnchor;
+
+      if (containerRect) {
+        tooltipAnchor = {
+          x: containerRect.left + containerRect.width / 2,
+          y: containerRect.top,
+          width: containerRect.width,
+          height: containerRect.height,
+        };
+      }
+
+      return { tooltipAnchor };
+    }, [containerRect]);
+
+    const { book, chaptersCount, bookId, staticChaptersArray } = useMemo(() => {
+      const book = bookInfo.commonName;
       const chaptersCount =
-        BibleVizUtils.Data.tags.booksStaticInfo[bookInfo.commonName]
-          .numberOfChapters;
+        BibleVizUtils.Data.tags.booksStaticInfo[book].numberOfChapters;
+      const bookId = BibleVizUtils.Data.tags.booksStaticInfo[book].abbreviation;
 
       return {
+        book,
         chaptersCount,
-        shortName:
-          BibleVizUtils.Data.tags.booksStaticInfo[bookInfo.commonName]
-            .abbreviation,
+        bookId,
         staticChaptersArray: [...Array(chaptersCount)],
       };
     }, []);
 
     const getBookHeight = useCallback(() => {
-      const { chaptersInfo } =
-        BibleVizUtils.Data.tags.booksStaticInfo[bookInfo.commonName];
+      const { chaptersInfo } = BibleVizUtils.Data.tags.booksStaticInfo[book];
       const amountOfRows = Math.ceil(
         chaptersInfo.length /
           BibleVizUtils.Data.tags.BibleLayoutMeasurements
@@ -95,11 +115,11 @@ export const Book = memo(
     }, [scaleFactor, getBookHeight, chapterGap, chapterPadding, chapterHeight]);
 
     const checked = useMemo(() => {
-      return selection?.[testament.name]?.[sectionName]?.[
-        bookInfo.commonName
-      ]?.every((chapter) => {
-        return chapter;
-      });
+      return selection?.[testament.name]?.[sectionName]?.[book]?.every(
+        (chapter) => {
+          return chapter;
+        }
+      );
     }, [selection]);
 
     const { onHoldStart, onHoldEnd } = useClickAndHold({
@@ -108,7 +128,7 @@ export const Book = memo(
         const key = {
           testamentName: testament.name,
           sectionName,
-          bookName: bookInfo.commonName,
+          bookName: book,
         };
         onBookNameClickAndHold(showChapters, key, checked);
       },
@@ -132,6 +152,7 @@ export const Book = memo(
       displayContainer,
       gridColumns,
       filteredUsers,
+      tooltipContent,
     } = useMemo(() => {
       const baseColor = [211, 211, 211];
 
@@ -139,7 +160,7 @@ export const Book = memo(
 
       const filteredUsers = Array.from(usersStatus).filter(
         ([user, enabled]) => {
-          const bookContent = content.get(user).books?.[bookInfo.commonName];
+          const bookContent = content.get(user).books?.[book];
           return (
             enabled &&
             bookContent &&
@@ -156,7 +177,7 @@ export const Book = memo(
         } else {
           const colors = filteredUsers.map(([user]) => {
             const userContent = content.get(user);
-            const bookContent = userContent.books[bookInfo.commonName];
+            const bookContent = userContent.books[book];
             const entriesCount = Object.keys(bookContent).reduce(
               (currentValue, key) => {
                 return (
@@ -204,15 +225,119 @@ export const Book = memo(
         filteredUsers.length > 0 &&
         modes.get("Content");
 
-      const fixedBackground = isUserPresenceEnabled
-        ? displayContainer
-          ? "transparent"
-          : userPresenceBackground
-        : bookCoverBackgroundColor;
+      let fixedBackground;
+      const tooltipContent = [];
+      if (isUserPresenceEnabled) {
+        if (displayContainer) fixedBackground = "transparent";
+        else fixedBackground = userPresenceBackground;
+      } else if (
+        isReadingHistoryEnabled &&
+        readingSummary.totalTimeSpentReading > SEC_PER_MINUTE
+      ) {
+        const { users, totalTimeSpentReading } = readingSummary;
+        const colors = [];
+        for (const userId in users) {
+          const { totalTimeSpentReading: userReadingTimeSeconds, books } =
+            users[userId];
+          let color;
+          const baseColor = CHAPTER_BASE_BACKGROUND_COLOR;
+          const userColor =
+            userId === myAuthBotId
+              ? BibleVizUtils.Data.tags.myUserColor
+              : (BibleVizUtils.Data.vars.userPresenceData?.[userId]?.user
+                  ?.color ??
+                thisBot.vars.FakeReadingHistoryUsersColorMap?.get(userId) ??
+                "pink");
+          if (readingHistoryRangeSeconds) {
+            color = BibleVizUtils.Functions.GetHistoryColorByReadingTime({
+              baseColor,
+              userColor,
+              readingTimeSeconds: userReadingTimeSeconds,
+              step: 0.25,
+            });
+
+            const isTimeSpentNoticeable =
+              userReadingTimeSeconds > SEC_PER_MINUTE; // more than a minute
+
+            if (isTimeSpentNoticeable) {
+              let fixedContent;
+              if (userReadingTimeSeconds >= SEC_PER_HOUR) {
+                // more than an hour
+                const hoursCount = Math.floor(
+                  userReadingTimeSeconds / SEC_PER_HOUR
+                );
+                fixedContent = `spent ${hoursCount} hour${hoursCount > 1 ? "s" : ""}`;
+              } else {
+                const minutesCount = Math.floor(
+                  userReadingTimeSeconds / SEC_PER_MINUTE
+                );
+                fixedContent = `spent ${minutesCount} minute${minutesCount > 1 ? "s" : ""}`;
+              }
+
+              tooltipContent.push(
+                <ReadingHistoryTooltipContent
+                  userId={userId}
+                  fixedContent={fixedContent}
+                />
+              );
+            }
+          } else {
+            const { chapters } = books[bookId];
+            let lastEntry;
+            for (const chapter in chapters) {
+              const events = chapters[chapter];
+              for (const event of events) {
+                if (!lastEntry || event.end > lastEntry.end) lastEntry = event;
+              }
+            }
+            const nowSeconds = Math.floor(os.localTime / 1000);
+            const recencyTimeSeconds = nowSeconds - lastEntry.end;
+
+            color = BibleVizUtils.Functions.GetHistoryColorByRecency({
+              recencyTimeSeconds,
+              baseColor,
+              userColor,
+            });
+            const isRecentEnough =
+              recencyTimeSeconds <= greaterTimePeriodSeconds;
+            if (isRecentEnough) {
+              let fixedContent;
+              if (recencyTimeSeconds >= SEC_PER_DAY) {
+                const daysCount = Math.floor(recencyTimeSeconds / SEC_PER_DAY);
+                fixedContent = `read ${daysCount} day${daysCount > 1 ? "s" : ""} ago`;
+              } else if (recencyTimeSeconds >= SEC_PER_HOUR) {
+                const hoursCount = Math.floor(
+                  recencyTimeSeconds / SEC_PER_HOUR
+                );
+                fixedContent = `read ${hoursCount} hour${hoursCount > 1 ? "s" : ""} ago`;
+              } else if (recencyTimeSeconds >= SEC_PER_MINUTE) {
+                const minutesCount = Math.floor(
+                  recencyTimeSeconds / SEC_PER_MINUTE
+                );
+                fixedContent = `read ${minutesCount} minute${minutesCount > 1 ? "s" : ""} ago`;
+              } else {
+                fixedContent = `${userId === myAuthBotId ? "are" : "is"} reading now`;
+              }
+              tooltipContent.push(
+                <ReadingHistoryTooltipContent
+                  userId={userId}
+                  fixedContent={fixedContent}
+                />
+              );
+            }
+          }
+          const value = userReadingTimeSeconds / totalTimeSpentReading;
+          colors.push({ color, value });
+        }
+        fixedBackground =
+          BibleVizUtils.Functions.GetHistoryColorLinearGradient(colors);
+      } else {
+        fixedBackground = bookCoverBackgroundColor;
+      }
 
       const bookEntriesCounts = filteredUsers.map(([user]) => {
         const userContent = content.get(user);
-        const bookContent = userContent.books[bookInfo.commonName];
+        const bookContent = userContent.books[book];
         const entriesCount = Object.keys(bookContent).reduce(
           (currentValue, key) => {
             return currentValue + bookContent[key].length;
@@ -237,6 +362,7 @@ export const Book = memo(
         displayContainer,
         gridColumns,
         filteredUsers,
+        tooltipContent,
       };
     }, [
       chaptersCount,
@@ -249,11 +375,14 @@ export const Book = memo(
       contentVisualization,
       ContentVisualizationType,
       showChapters,
+      readingSummary,
+      isReadingHistoryEnabled,
+      readingHistoryRangeSeconds,
     ]);
 
     const usersInBook = useMemo(() => {
       return Object.keys(userPresence).filter((user) => {
-        return userPresence[user].book === bookInfo.commonName;
+        return userPresence[user].book === book;
       });
     }, [userPresence, isUserPresenceEnabled, modes]);
 
@@ -338,7 +467,8 @@ export const Book = memo(
                   step: 0.25,
                 });
               } else {
-                const { chapters } = books[shortName];
+                const { chapters } = books[bookId];
+
                 const readingEvents = chapters[chapter];
                 const nowSeconds = Math.floor(os.localTime / 1000);
                 const recencyTimeSeconds =
@@ -372,6 +502,7 @@ export const Book = memo(
 
       return staticChaptersArray.map((_, index) => {
         const chapter = index + 1;
+
         const chapterSummary = chapterReadingHistorySummaryMap.get(chapter);
         let historyBackground = null;
         let historyColor = null;
@@ -411,7 +542,7 @@ export const Book = memo(
               }
             } else {
               const chapterReadingEvents =
-                users[userId].books[shortName].chapters[chapter];
+                users[userId].books[bookId].chapters[chapter];
               const lastReadingEvent =
                 chapterReadingEvents[chapterReadingEvents.length - 1];
               const recencyTimeSeconds = nowSeconds - lastReadingEvent.end;
@@ -459,9 +590,9 @@ export const Book = memo(
 
         return (
           <Chapter
-            key={`${shortName}-${chapter}`}
+            key={`${bookId}-${chapter}`}
             sectionName={sectionName}
-            bookName={bookInfo.commonName}
+            bookName={book}
             index={index}
             historyBackground={historyBackground}
             historyColor={historyColor}
@@ -498,10 +629,14 @@ export const Book = memo(
             e.stopPropagation();
           }}
         >
-          {shortName}
+          {bookId}
         </span>
         <div
           className={`bookCover${showChapters ? " invisible" : displayContainer ? " displayingContainer" : ""}`}
+          onPointerEnter={(e) =>
+            setContainerRect(e.currentTarget.getBoundingClientRect())
+          }
+          onPointerLeave={() => setContainerRect(null)}
           style={{
             height: bookCoverHeight,
             background: fixedBackground,
@@ -534,6 +669,11 @@ export const Book = memo(
                     ></div>
                   );
                 })}
+              {isReadingHistoryEnabled &&
+                tooltipAnchor &&
+                tooltipContent?.length > 0 && (
+                  <Tooltip anchor={tooltipAnchor} content={tooltipContent} />
+                )}
             </>
           )}
         </div>

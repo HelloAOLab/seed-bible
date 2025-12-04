@@ -10,7 +10,14 @@ if (thisBot.vars.appId) {
     title: "Stack",
     position: { x: 200, y: 150 },
     size: { width: 350, height: 200 },
+    type: "canvas",
   });
+
+  configBot.tags.gridPortal = "thePortal";
+  configBot.tags.mapPortal = null;
+  configBot.tags.miniGridPortal = null;
+  configBot.tags.miniMapPortal = null;
+
   thisBot.vars.appId = id;
 
   await os.sleep(500);

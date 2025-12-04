@@ -13,11 +13,11 @@
   width: 100%;
   display: grid;
   grid-template-columns: 100%;
-  grid-template-rows: auto 1fr;
+  grid-template-rows: auto 1fr auto;
   background-color: white;
   pointer-events: all;
   overflow: hidden;
-  gap: 8px;
+  /* gap: 8px; */
   height: 100%;
   --timelineItemSize: 16px;
   position: relative;
@@ -41,6 +41,14 @@
   gap: 8px;
 }
 
+.collapse-toggle {
+  width: 100%;
+  display: flex !important;
+  justify-content: center;
+  align-items: center;
+  cursor: pointer;
+}
+
 .projectStateSetter {
   width: 100%;
   padding: 4px;
@@ -49,6 +57,10 @@
   justify-content: flex-start;
   align-items: center;
   gap: 12px;
+}
+
+.mapSettings.collapsed .projectStateSetter {
+  display: none;
 }
 
 .projectStateSetter > div:nth-of-type(1) {
@@ -158,9 +170,18 @@
   flex-wrap: wrap;
 }
 
+.mapSettings.collapsed .projectFiltersSelector,
+.mapSettings.collapsed .readingHistoryUserSelector {
+  display: none;
+}
+
 .readingHistoryTimelineContainer {
   width: 100%;
   padding: 8px;
+}
+
+.mapSettings.collapsed .readingHistoryTimelineContainer {
+  display: none;
 }
 
 .readingHistoryTimeline {
@@ -180,6 +201,7 @@
   border-style: solid;
   border-width: 2px;
   border-color: transparent;
+  cursor: pointer;
 }
 
 .readingHistoryTimeline-item.selected {
@@ -330,9 +352,6 @@
   justify-content: center;
   align-items: center;
   gap: 8px;
-  position: absolute;
-  z-index: 10;
-  bottom: 0;
   padding: 12px 0;
   width: 100%;
 }
@@ -354,6 +373,7 @@
   border: none;
   border-radius: 4px;
   padding: 0 8px;
+  position: relative;
 }
 
 .mapWrapper .mapControls .zoomContainer > button.hovered {
@@ -389,7 +409,7 @@
   position: absolute;
   left: 50%;
   transform: translateX(-50%);
-  bottom: 100%;
+  bottom: calc(100% + 12px);
   background-color: #202020;
   padding: 4px;
   border-radius: 8px;
@@ -692,6 +712,7 @@
   color: black;
   border-radius: calc(8px * var(--scaleFactor));
   border-bottom: solid calc(8px * var(--scaleFactor)) transparent;
+  cursor: pointer;
 }
 
 .toggle > span {

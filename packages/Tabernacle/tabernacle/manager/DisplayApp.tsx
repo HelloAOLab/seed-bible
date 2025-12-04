@@ -4,14 +4,21 @@ if (thisBot.vars.appId) {
   globalThis.defaultPortalName = thisBot.tags.dimension;
   // gridPortalBot.tags.portalCameraType = "perspective";
   gridPortalBot.tags.portalCameraType = "orthographic";
+  gridPortalBot.tags.portalZoomableMin = 5;
   const App = await thisBot.App();
   const id = globalThis.AddFloatingApp({
     App: <App />,
     title: "Tabernacle",
     position: { x: 200, y: 150 },
     size: { width: 350, height: 200 },
+    type: "canvas",
   });
   thisBot.vars.appId = id;
+
+  configBot.tags.gridPortal = thisBot.tags.dimension;
+  configBot.tags.mapPortal = null;
+  configBot.tags.miniGridPortal = null;
+  configBot.tags.miniMapPortal = null;
 
   await os.sleep(500);
 

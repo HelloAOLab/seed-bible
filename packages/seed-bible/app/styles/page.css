@@ -1,7 +1,8 @@
 .pageContainer {
   height: 100%;
   width: 100%;
-  background-color: white;
+  background-color: var(--pageBackground) !important;
+  
   padding: 30px 0%;
   overflow: scroll;
   border-radius: 12px;
@@ -35,7 +36,7 @@
   width: fit-content;
   padding: 0 5px; */
   position: absolute;
-  background-color: white;
+  background-color: var(--pageBackground);
   padding: 0px 15px;
   min-width: 169px;
   border: 1px solid #0000001a;
@@ -118,11 +119,14 @@
   margin-bottom: var(--text-bookchapter-margin-bottom);
   margin-left: var(--text-bookchapter-margin-left);
   margin-right: var(--text-bookchapter-margin-right);
+  color: var(--pageTextColor);
 }
 
 .sectionTitle {
+  color: var(--pageTextColor);
   font-family: var(--text-heading-font);
-  color: var(--text-heading-color);
+  /* color: var(--text-heading-color); */
+  color: var(--pageTextColor) !important;
   font-size: 18px;
   font-style: var(--text-heading-font-style);
   font-weight: var(--text-heading-weight);
@@ -142,7 +146,9 @@
   font-style: var(--text-verse-font-style);
   text-align: var(--text-verse-alignment);
   text-decoration: var(--text-verse-text-decoration);
-  line-height: var(--text-verse-margin-top);
+    font-size: var(--text-verse-font-size);
+    line-height:calc(2 + var(--text-verse-line-height,0));
+
 
   /* Additions ------> */
   /* set up a transparent border to animate */
@@ -222,7 +228,7 @@
   display: flex;
   justify-content: center;
   align-items: center;
-  background: white !important;
+  background: var(--pageBackground) !important;
   border-radius: 12px;
   /* height: 100vh !important; */
 }

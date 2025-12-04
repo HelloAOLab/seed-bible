@@ -12,6 +12,8 @@ export function BibleVariablesProvider({ children }) {
     globalThis.panelMode = panelMode
     const [canvasMode, setCanvasMode] = useState(false)
     const [mapMode, setMapMode] = useState(false);
+    const [showHeading, setShowHeading] = useState({'1':true,'2':true,'3':true});
+    const [showVerses, setShowVerses] = useState({'1':true,'2':true,'3':true});
     const [ReSeed, setReSeed] = useState()
     useEffect(() => {
         globalThis.ToolbarReSeedMode?.(ReSeed)
@@ -333,7 +335,8 @@ export function BibleVariablesProvider({ children }) {
                 tools, setTools, setScreens, navFunctions, setNavFunctions,
                 panelMode, setPanelMode, canvasMode, setCanvasMode, mapMode, setMapMode,
                 canvasTools, mapTools, setCanvasTools, setMapTools,
-                addTool, removeTool, updateTool, toggleToolActive,scrollToVerse
+                addTool, removeTool, updateTool, toggleToolActive,scrollToVerse,showHeading, setShowHeading,
+showVerses, setShowVerses
             }}
         >
 

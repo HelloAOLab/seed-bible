@@ -1,4 +1,7 @@
 const { createContext, useContext, useState, useEffect } = os.appHooks;
+import {
+  Space,
+} from "app.components.icons";
 // const localStorage = getBot('system', 'app.localStorage')
 // const tabsData = localStorage.masks.tabsData
 // if (!tabsData) {
@@ -14,7 +17,7 @@ export function TabsProvider({ children }) {
   const { tools, setTools } = useBibleContext();
   const [spaces, setSpaces] = useState([
     {
-      id: uuid(),
+      id: '1',
       name: "(Optional) Add space name",
       settings: {
         theme: {},
@@ -43,7 +46,7 @@ export function TabsProvider({ children }) {
       ], // Standalone tabs (not in a folder)
     },
     {
-      id: uuid(),
+      id: '2',
       name: "(Optional) Add space name",
       settings: {
         theme: {},
@@ -70,7 +73,7 @@ export function TabsProvider({ children }) {
       ],
     },
     {
-      id: uuid(),
+      id: '3',
       name: "(Optional) Add space name",
       settings: {
         theme: {},
@@ -610,7 +613,13 @@ export function TabsProvider({ children }) {
       globalThis.SetActiveTab = null;
     };
   }, [activeTab]);
-
+useEffect(()=>{
+        os.log("checking active space for shared tab",tabs,activeSpace)
+          setTimeout(()=>{
+            setActiveTab(tabs[0].id);
+            globalThis.UpdateTab(tabs[0]);
+          },400)
+      },[activeSpace])
   return (
     <MyContext.Provider
       value={{
