@@ -15,6 +15,7 @@
   user-select: none;
   z-index: 1000;
   transition: box-shadow 0.2s ease;
+  pointer-events: none;
 }
 
 .draggable:active {
