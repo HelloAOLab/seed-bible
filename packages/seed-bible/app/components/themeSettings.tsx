@@ -38,7 +38,8 @@ const defaultTheme = {
   tabSelection: "#4459F3",
   spaceSelection: "#4459F3",
   toolbarBackground: "#ffffff",
-  text1: "#606060",
+  iconColor: "#000000",
+  text1: "#000000",
   text2: "#000000",
   showTabIcons: true, // Default to showing tab icons
 };
