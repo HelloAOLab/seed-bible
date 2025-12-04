@@ -217,6 +217,7 @@ export const ScriptureMap2DProvider = ({
     arrangementIndex,
     initialScaleFactor = 1,
     initialIsReadingHistoryEnabled = false,
+    showingAllChapters: initialShowingAllChapters = false,
   } = parentContext;
 
   const isMobile = useIsMobile(768);
@@ -256,8 +257,10 @@ export const ScriptureMap2DProvider = ({
   }, [ProjectChapterState]);
 
   const [scaleFactor, setScaleFactor] = useState(initialScaleFactor);
+  const [showingAllChapters, setShowingAllChapters] = useState(
+    initialShowingAllChapters
+  );
   const [showLabels, setShowLabels] = useState(true);
-  // const [showingAllChapters, setShowingAllChapters] = useState(true);
   const [isUserPresenceEnabled, setIsUserPresenceEnabled] = useState(false);
   const [isReadingHistoryEnabled, setIsReadingHistoryEnabled] = useState(
     initialIsReadingHistoryEnabled
@@ -383,9 +386,16 @@ export const ScriptureMap2DProvider = ({
     [projectFilters]
   );
 
+  useEffect(() => {
+    console.log(`[Debug] ScriptureMap2DContext showingAllChapters useEffect`, {
+      showingAllChapters,
+    });
+  }, [showingAllChapters]);
+
   return (
     <ScriptureMap2DContext.Provider
       value={{
+        ...parentContext,
         scaleFactor,
         MIN_SCALE_FACTOR,
         setScaleFactor,
@@ -396,7 +406,8 @@ export const ScriptureMap2DProvider = ({
         arrangementIndex,
         arrangement,
         // handleShowAllChaptersToggle,
-        // showingAllChapters,
+        showingAllChapters,
+        setShowingAllChapters,
         handleContentHeatmapToggle,
         isUserPresenceEnabled,
         isReadingHistoryEnabled,
@@ -425,7 +436,6 @@ export const ScriptureMap2DProvider = ({
         projectStateStyle,
         CHAPTER_BASE_BACKGROUND_COLOR,
         isMobile,
-        ...parentContext,
       }}
     >
       {children}

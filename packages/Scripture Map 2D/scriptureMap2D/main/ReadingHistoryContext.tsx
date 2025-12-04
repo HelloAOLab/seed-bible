@@ -4,6 +4,7 @@ import {
   flat,
   calculateReadingHistorySummary,
 } from "db.annotations.library";
+import { useTabsContext } from "app.hooks.tabs";
 
 const { createContext, useContext, useState, useMemo, useEffect, useCallback } =
   os.appHooks;
@@ -11,6 +12,7 @@ const { createContext, useContext, useState, useMemo, useEffect, useCallback } =
 const ReadingHistoryContext = createContext();
 
 export const ReadingHistoryProvider = ({ children }) => {
+  const { activeTab } = useTabsContext();
   const { tick } = useTimeContext();
 
   const [readingHistoryRangeSeconds, setReadingHistoryRangeSeconds] =
@@ -266,7 +268,7 @@ export const ReadingHistoryProvider = ({ children }) => {
           error
         );
       });
-  }, [tick, readingHistoryUserFilters, readingHistoryRangeSeconds]);
+  }, [tick, activeTab, readingHistoryUserFilters, readingHistoryRangeSeconds]);
 
   const handleReadingHistoryUserSelectorClick = useCallback(
     (key) => {

@@ -26,7 +26,7 @@ export const Wrapper = () => {
         "--bookMaxAmountOfColumns":
           BibleVizUtils.Data.tags.BibleLayoutMeasurements
             .Book2DMaxAmountOfColumns,
-        paddingBottom: isMobile ? "40px" : "0px",
+        paddingBottom: isMobile ? "40px" : "16px",
       }}
     >
       <Settings />

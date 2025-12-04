@@ -254,6 +254,7 @@ export const Book = memo(
               userColor,
               readingTimeSeconds: userReadingTimeSeconds,
               step: 0.25,
+              fullColorTimeSeconds: 3600, // 1 hour
             });
 
             const isTimeSpentNoticeable =
@@ -511,14 +512,14 @@ export const Book = memo(
         if (chapterSummary) {
           const users = chapterSummary.users;
           for (const userId in users) {
-            if (readingHistoryRangeSeconds) {
-              const { totalTimeSpentReading: userReadingTimeSeconds } =
-                users[userId];
+            const { totalTimeSpentReading: userReadingTimeSeconds } =
+              users[userId];
 
-              const isTimeSpentNoticeable =
-                userReadingTimeSeconds > SEC_PER_MINUTE; // more than a minute
+            const isTimeSpentNoticeable =
+              userReadingTimeSeconds > SEC_PER_MINUTE; // more than a minute
 
-              if (isTimeSpentNoticeable) {
+            if (isTimeSpentNoticeable) {
+              if (readingHistoryRangeSeconds) {
                 let fixedContent;
                 if (userReadingTimeSeconds >= SEC_PER_HOUR) {
                   // more than an hour
@@ -539,41 +540,41 @@ export const Book = memo(
                     fixedContent={fixedContent}
                   />
                 );
-              }
-            } else {
-              const chapterReadingEvents =
-                users[userId].books[bookId].chapters[chapter];
-              const lastReadingEvent =
-                chapterReadingEvents[chapterReadingEvents.length - 1];
-              const recencyTimeSeconds = nowSeconds - lastReadingEvent.end;
-              const isRecentEnough =
-                recencyTimeSeconds <= greaterTimePeriodSeconds;
-              if (isRecentEnough) {
-                let fixedContent;
-                if (recencyTimeSeconds >= SEC_PER_DAY) {
-                  const daysCount = Math.floor(
-                    recencyTimeSeconds / SEC_PER_DAY
+              } else {
+                const chapterReadingEvents =
+                  users[userId].books[bookId].chapters[chapter];
+                const lastReadingEvent =
+                  chapterReadingEvents[chapterReadingEvents.length - 1];
+                const recencyTimeSeconds = nowSeconds - lastReadingEvent.end;
+                const isRecentEnough =
+                  recencyTimeSeconds <= greaterTimePeriodSeconds;
+                if (isRecentEnough) {
+                  let fixedContent;
+                  if (recencyTimeSeconds >= SEC_PER_DAY) {
+                    const daysCount = Math.floor(
+                      recencyTimeSeconds / SEC_PER_DAY
+                    );
+                    fixedContent = `read ${daysCount} day${daysCount > 1 ? "s" : ""} ago`;
+                  } else if (recencyTimeSeconds >= SEC_PER_HOUR) {
+                    const hoursCount = Math.floor(
+                      recencyTimeSeconds / SEC_PER_HOUR
+                    );
+                    fixedContent = `read ${hoursCount} hour${hoursCount > 1 ? "s" : ""} ago`;
+                  } else if (recencyTimeSeconds >= SEC_PER_MINUTE) {
+                    const minutesCount = Math.floor(
+                      recencyTimeSeconds / SEC_PER_MINUTE
+                    );
+                    fixedContent = `read ${minutesCount} minute${minutesCount > 1 ? "s" : ""} ago`;
+                  } else {
+                    fixedContent = `${userId === myAuthBotId ? "are" : "is"} reading now`;
+                  }
+                  tooltipContent.push(
+                    <ReadingHistoryTooltipContent
+                      userId={userId}
+                      fixedContent={fixedContent}
+                    />
                   );
-                  fixedContent = `read ${daysCount} day${daysCount > 1 ? "s" : ""} ago`;
-                } else if (recencyTimeSeconds >= SEC_PER_HOUR) {
-                  const hoursCount = Math.floor(
-                    recencyTimeSeconds / SEC_PER_HOUR
-                  );
-                  fixedContent = `read ${hoursCount} hour${hoursCount > 1 ? "s" : ""} ago`;
-                } else if (recencyTimeSeconds >= SEC_PER_MINUTE) {
-                  const minutesCount = Math.floor(
-                    recencyTimeSeconds / SEC_PER_MINUTE
-                  );
-                  fixedContent = `read ${minutesCount} minute${minutesCount > 1 ? "s" : ""} ago`;
-                } else {
-                  fixedContent = `${userId === myAuthBotId ? "are" : "is"} reading now`;
                 }
-                tooltipContent.push(
-                  <ReadingHistoryTooltipContent
-                    userId={userId}
-                    fixedContent={fixedContent}
-                  />
-                );
               }
             }
           }
