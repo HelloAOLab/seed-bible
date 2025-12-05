@@ -4,6 +4,7 @@
   width: 245px !important;
   height: 100%;
   overflow: scroll;
+  user-select: none;
 }
 
 .sidebarLine {

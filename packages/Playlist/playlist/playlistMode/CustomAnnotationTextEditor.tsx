@@ -1,4 +1,7 @@
-const { useEffect, useState, useRef } = os.appHooks;
+const { useEffect, useState, useRef, useMemo } = os.appHooks;
+const { Button } = Components;
+const RecordingUI = await thisBot.RecordVoice();
+const VideoRecordUI = await thisBot.VideoRecordUI();
 
 import {
   Editor,
@@ -21,6 +24,11 @@ import {
   Plugin
 } from "https://esm.helloao.org/vendor-RPNXNWQB.js";
 import { useDragRef } from "playlist.playlistMode.useDragRef";
+
+const RECORDING_TYPES = {
+  audio: "audio/webm",
+  video: "video/mp4",
+}
 
 /**
  * -----------------------------------------------------------
@@ -50,6 +58,8 @@ import { useDragRef } from "playlist.playlistMode.useDragRef";
  */
 
 const DEFAULT_TOOLBAR_PRIORITY = [
+  "mic",
+  "video",
   "bold",
   "italic",
   "underline",
@@ -130,6 +140,33 @@ export const Video = Node.create({
       controls: true,
     }];
   },
+
+  addNodeView() {
+    return ({ node, getPos, editor }) => {
+      const el = document.createElement("video");
+
+      // apply attributes
+      Object.entries(node.attrs).forEach(([key, value]) => {
+        if (value !== null) el.setAttribute(key, value);
+      });
+
+      el.setAttribute("controls", "true");
+
+      // ⭐ Add REAL JS event listener
+      el.addEventListener("click", (e) => {
+          e.preventDefault();
+          e.stopPropagation();
+          if(!node.attrs.src) return;
+          thisBot.VideoPlayer({
+          src: node.attrs.src,
+        });
+      });
+
+      return {
+        dom: el,
+      };
+    };
+  },
 });
 
 export const Iframe = Node.create({
@@ -179,6 +216,67 @@ export const Iframe = Node.create({
       allowfullscreen: "true",
     }];
   },
+
+  addNodeView() {
+    return ({ node }) => {
+      /** Wrapper */
+      const wrapper = document.createElement("div");
+      wrapper.style.position = "relative";
+      wrapper.style.display = "inline-block";
+
+      /** iframe */
+      const iframe = document.createElement("iframe");
+      Object.entries(node.attrs).forEach(([k, v]) => {
+        if (v !== null) iframe.setAttribute(k, v);
+      });
+
+      /** Invisible overlay that captures the click */
+      const overlay = document.createElement("div");
+      overlay.style.position = "absolute";
+      overlay.style.inset = "0";
+      overlay.style.zIndex = "10";
+      overlay.style.cursor = "pointer";
+      overlay.style.background = "transparent";
+      overlay.style.pointerEvents = "auto"; // important
+
+      overlay.addEventListener("click", (e) => {
+        e.preventDefault();
+        e.stopPropagation();
+
+        if (!node.attrs.src) return;
+
+        const linkDetails = validateUrl(node.attrs.src);
+        
+        if(linkDetails.isValid && linkDetails.type === "youtube") {
+          thisBot.VideoPlayer({
+            src: node.attrs.src,
+            isYoutube: true,
+            videoID: linkDetails.videoId,
+          });
+          return;
+        }
+
+        if(linkDetails.isValid && linkDetails.type === "video") {
+          thisBot.VideoPlayer({
+            src: node.attrs.src,
+          });
+          return;
+        }
+
+        if(linkDetails.isValid && linkDetails.type === "externalLink") {
+         os.openURL(node.attrs.src);
+         return;
+        }
+      });
+
+      wrapper.appendChild(iframe);
+      wrapper.appendChild(overlay);
+
+      return {
+        dom: wrapper,
+      };
+    };
+  },
 });
 
 
@@ -203,6 +301,76 @@ const CustomImage = Image.extend({
     };
   },
 });
+
+
+const Audio = Node.create({
+  name: "audio",
+
+  group: "block",
+  atom: true,
+  draggable: true,
+  selectable: true,
+
+  addAttributes() {
+    return {
+      src: {
+        default: null,
+        parseHTML: el => el.getAttribute("src"),
+      },
+      controls: {
+        default: true,
+        parseHTML: el => el.hasAttribute("controls"),
+        renderHTML: attrs => (attrs.controls ? { controls: "true" } : {}),
+      },
+      preload: {
+        default: "metadata",
+        parseHTML: el => el.getAttribute("preload") || "metadata",
+      },
+      loop: {
+        default: false,
+        parseHTML: el => el.hasAttribute("loop"),
+        renderHTML: attrs => (attrs.loop ? { loop: "true" } : {}),
+      },
+      muted: {
+        default: false,
+        parseHTML: el => el.hasAttribute("muted"),
+        renderHTML: attrs => (attrs.muted ? { muted: "true" } : {}),
+      },
+      class: {
+        default: null,
+        parseHTML: el => el.getAttribute("class"),
+      },
+      style: {
+        default: null,
+        parseHTML: el => el.getAttribute("style"),
+      },
+    };
+  },
+
+  parseHTML() {
+    return [
+      { tag: "audio" },
+    ];
+  },
+
+  renderHTML({ HTMLAttributes }) {
+    // Normalize boolean attrs so they appear in DOM correctly
+    const attrs = {
+      ...HTMLAttributes,
+      controls: HTMLAttributes.controls ? "true" : null,
+      loop: HTMLAttributes.loop ? "true" : null,
+      muted: HTMLAttributes.muted ? "true" : null,
+    };
+
+    // Remove null entries (ProseMirror tolerates null)
+    Object.keys(attrs).forEach(k => {
+      if (attrs[k] === null || attrs[k] === undefined) delete attrs[k];
+    });
+
+    return ["audio", attrs];
+  },
+});
+
 
 export function CustomAnnotationTextEditor({
   instanceId,
@@ -244,6 +412,17 @@ export function CustomAnnotationTextEditor({
   const editorRef = useRef(null);
   const editorObjRef = useRef(null);
   const [loading, setLoading] = useState(false);
+  const [recording, setRecording] = useState(globalThis.RecordingValue || null);
+
+  useEffect(() => {
+    globalThis.RecordingValue = recording;
+    globalThis.SetRecordingData = setData;
+    globalThis.SetRecording = setRecording;
+    return () => {
+      globalThis.SetRecordingData = null;
+      globalThis.SetRecording = null;
+    };
+  }, [recording]);
 
   const handleDropFiles = async (files) => {
     if(loading) return;
@@ -360,6 +539,7 @@ export function CustomAnnotationTextEditor({
         Iframe,
         ListItem,
         LineHeight,
+        Audio,
         CustomImage.configure({ inline: false, allowBase64: true }),
         Link.configure({ openOnClick: true, linkOnPaste: true }),
       ],
@@ -381,6 +561,10 @@ export function CustomAnnotationTextEditor({
           },
           paste: async (view, event) => {
             const items = event?.clipboardData?.items;
+
+              // 🔴 STOP DEFAULT PASTE IMMEDIATELY
+            event.preventDefault();
+            event.stopPropagation();
 
             const plainText = event.clipboardData.getData("text/plain");
             const htmlText = event.clipboardData.getData("text/html");
@@ -413,12 +597,6 @@ export function CustomAnnotationTextEditor({
               html += htmlSuffix;
             });
 
-            if (html) {
-              setTimeout(() => {
-                editor.chain().focus().insertContent(html).run();
-              }, 50);
-            }
-
             if (plainText) {
               const embedHTML = generateEmbedFromUrl(plainText.trim());
 
@@ -435,8 +613,15 @@ export function CustomAnnotationTextEditor({
                   editor.chain().focus().insertContent(plainText).run();
                 }, 50);
               }
+              return true;
             }
-            return true;
+
+            if (html) {
+              setTimeout(() => {
+                editor.chain().focus().insertContent(html).run();
+              }, 50);
+              return true;
+            }
           },
           drop: async (view, event) => {
             return true;
@@ -484,6 +669,12 @@ export function CustomAnnotationTextEditor({
 
   // ---- toolbar commands (same options)
   const Cmds = {
+    video: () => {
+      shout("startRecording", RECORDING_TYPES.video);
+    },
+    mic: () =>  {
+      shout("startRecording", RECORDING_TYPES.audio);
+    },
     bold: () => chain("toggleBold"),
     italic: () => chain("toggleItalic"),
     underline: () => chain("toggleUnderline"),
@@ -760,13 +951,115 @@ export function CustomAnnotationTextEditor({
     el.style.paddingLeft = `${px}px`;
     el.style.paddingRight = `${px}px`;
   }
+
   useEffect(() => {
     applyPadding(padY, padX);
   }, [padY, padX]);
 
+  const isMic = useMemo(() => recording === RECORDING_TYPES.audio, [recording]);
+  const isVideo = useMemo(() => recording === RECORDING_TYPES.video, [recording]);
+
+  const [data, setData] = useState(null);
+
+  const onSaveAndAdd = async () => {
+    if(!data) return ShowNotification({
+      message: "Please record something to save!",
+      severity: "error",
+    });
+    
+    const finalData = recording === RECORDING_TYPES.audio ? globalThis.ORIGINAL_DATA : data;
+
+    if (recording === RECORDING_TYPES.audio || recording === RECORDING_TYPES.video) {
+      setLoading(true);
+
+      const fileSave = await os.recordFile(
+        globalThis?.RECORD_STOREKEY,
+        finalData,
+        {
+          name: `${new Date().toISOString()}.${recording === RECORDING_TYPES.audio ? "webm" : "mp4"}`,
+          mimeType: recording,
+        }
+      );
+
+      const url = fileSave.url || fileSave?.existingFileUrl;
+
+      setLoading(false);
+
+      if (!url) {
+        return ShowNotification({
+          message: "Failed to upload File!",
+          severity: "error",
+        });
+      }
+      let htmlToInsert;
+      if (isVideo) {
+        htmlToInsert = `
+        <video
+          src="${url}"
+          controls
+          height="100%"
+          style="max-width: 100%;"
+        ></video>
+        `;
+      } else {
+        htmlToInsert = `
+        <audio controls src="${url}" type="audio/webm">
+        </audio>
+        `;
+      }
+      editorObjRef.current.chain().focus().insertContent(htmlToInsert).run();
+      setRecording(null);
+      setData(null);
+    }
+  }
+
+
   return (
-    <div ref={dragRef} className={`sre-root ${className || ""}`} style={{ ...style }}>
-      {(dragState.isDragOver || loading) && (
+    <div ref={dragRef} className={`sre-root ${isVideo ? "sre-video-root" : ""} ${className || ""}`} style={{ ...style }}>
+      {(isMic || isVideo) && 
+          <div
+                  style={{
+                    position: "absolute",
+                    top: 0,
+                    left: '-4%',
+                    right: 0,
+                    bottom: 0,
+                    backgroundColor: "white",
+                    zIndex: 10000,
+                    display: "flex",
+                    flexDirection: "column",
+                    gap: "10px",
+                    width: '107%',
+                    alignItems: "center",
+                    justifyContent: "center",
+                    backdropFilter: "blur(2px)",
+                    minHeight: "max-content",
+                    height: "100%",
+                    padding: "1rem 0",
+                  }}
+                >
+                {isVideo ? <VideoRecordUI data={data} setData={setData} /> : <RecordingUI data={data} setData={setData} />}
+
+               <div style={{ display: "flex", gap: "10px" }}>
+                  <Button
+                    onClick={onSaveAndAdd}
+                    secondary
+                    loading={loading}
+                  >
+                    Save & Add
+                  </Button>
+                  <Button
+                    onClick={() => {
+                      setRecording(null);
+                    }}
+                    secondaryAlt
+                  >
+                    Cancel
+                  </Button>
+            </div>
+          </div>
+      }
+      {((dragState.isDragOver || loading) && !isMic && !isVideo) && (
             <div
               style={{
                 position: "absolute",
@@ -1162,6 +1455,8 @@ export function CustomAnnotationTextEditor({
     );
 
     return {
+      mic: iconBtn("Mic", "mic", Cmds.mic),
+      video: iconBtn("Video", "video_camera_back_add", Cmds.video),
       bold: iconBtn("Bold", "format_bold", Cmds.bold),
       italic: iconBtn("Italic", "format_italic", Cmds.italic),
       underline: iconBtn("Underline", "format_underlined", Cmds.underline),
@@ -1321,6 +1616,9 @@ export function CustomAnnotationTextEditor({
 // ---------------- styles ----------------
 const SRE_STYLES = (minH) => `
 .sre-root { width: 100%; position: relative; }
+.sre-video-root {
+  min-height: 500px;
+}
 .sre-editor {
   min-height: ${minH}px;
   outline: none;

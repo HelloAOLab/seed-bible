@@ -38,7 +38,8 @@ const defaultTheme = {
   tabSelection: "#4459F3",
   spaceSelection: "#4459F3",
   toolbarBackground: "#ffffff",
-  text1: "#606060",
+  iconColor: "#000000",
+  text1: "#000000",
   text2: "#000000",
   showTabIcons: true, // Default to showing tab icons
 };
@@ -412,11 +413,11 @@ const handleColorChange = (field, e) => {
       }));
     }
   }, [activeSpace]);
-useEffect(() => {
+// useEffect(() => {
 
-    applyReadyTheme(defaultTheme);
+//     applyReadyTheme(defaultTheme);
 
-}, []);
+// }, []);
 
   return (
     <div className="themeSettings-container">
@@ -429,18 +430,18 @@ useEffect(() => {
                 [activeSpace]: globalThis.CurrentColors,
               }));
             }
-            setSideBarMode("settings");
+            setSideBarMode("themeSettings");
           }}
           style={{ cursor: "pointer" }}
           className="blackText"
         >
           <MenuIcon name="arrow_back" />
         </div>
-        <div className="softText">Page settings</div>
+        <div className="softText">Theme</div>
         <div className="softText">
           <MenuIcon name="chevron_right" />
         </div>
-        <div className="softText">Theme</div>
+        <div className="softText">Advanced Theme Settings</div>
       </div>
 
       <div className="routerTitle blackText">
@@ -518,7 +519,7 @@ useEffect(() => {
       </div>
 
       <div className="sidebarLine" />
-      <div style={{ height: 15 }} />
+      {null/*<div style={{ height: 15 }} />
       <div className="readyThemes-section">
         <div
           className="themeText"
@@ -561,6 +562,7 @@ useEffect(() => {
       <div style={{ height: 15 }} />
       <div className="sidebarLine" />
       <div style={{ height: 15 }} />
+      */}
 
       <button
         onClick={() => {
@@ -662,10 +664,12 @@ const FONT_OPTIONS = [
 ];
 
 const FONT_SIZES = [
-  { label: 'Small', value: '14px' },
-  { label: 'Medium', value: '16px' },
-  { label: 'Large', value: '18px' },
-  { label: 'Extra Large', value: '20px' }
+  { label: 'Small', value: '14' },
+  { label: 'Medium', value: '16' },
+  { label: 'Large', value: '18' },
+  { label: 'Extra Large', value: '20' },
+  { label: 'Extra Large', value: '24' },
+  { label: 'Extra Large', value: '28' },
 ];
 
 const SURPRISE_COMBINATIONS = [
@@ -738,7 +742,7 @@ export function exportTextConfigToCSS(textConfig) {
 
     for (const [section, config] of Object.entries(textConfig)) {
         const styles = config.styles || {};
-
+        cssVars.push(`${toCSSVarName(section, 'line-height')}: ${config.lineHeight || 'normal'};`);
         cssVars.push(`${toCSSVarName(section, 'font')}: ${config.font || 'inherit'};`);
         cssVars.push(`${toCSSVarName(section, 'weight')}: ${config.weight || 'normal'};`);
         cssVars.push(`${toCSSVarName(section, 'font-style')}: ${styles.italic ? 'italic' : 'normal'};`);
@@ -893,6 +897,7 @@ const handleColorChange = (field, e) => {
       if(themeColors['iconColor'] ){
         filterMode = getColorFilterCached(themeColors['iconColor'])
       }
+      os.log("computed filter for icon color filterMode",filterMode)
     // Update local map
     setColorsMap((prev) => ({
       ...prev,
@@ -915,11 +920,14 @@ const handleColorChange = (field, e) => {
       }));
     }
   }, [activeSpace]);
-useEffect(() => {
+    useEffect(() => {
+      if(!masks.firstTimeLoad){
+        applyReadyTheme(defaultTheme);
+        masks.firstTimeLoad = true;
+        
+      }
 
-    applyReadyTheme(defaultTheme);
-
-}, []);
+    }, []);
 
     const [textConfig, setTextConfig] = useState({
         heading: { ...defaultTextConfig.heading },
@@ -957,6 +965,51 @@ const applyVerseFontSize = (fontSize) => {
   updateSpace(activeSpace, updateObj);
 };
 
+const LINE_HEIGHTS = [-1, 0, 1];
+
+const [lineHeightIndex, setLineHeightIndex] = useState(1);
+
+const handleDecreaseFontSize = () => {
+  if (selectedFontSize > 0) {
+    const newIndex = selectedFontSize - 1;
+    setSelectedFontSize(newIndex);
+    applyVerseFontSize(FONT_SIZES[newIndex].value);
+  }
+};
+
+const handleIncreaseFontSize = () => {
+  if (selectedFontSize < FONT_SIZES.length - 1) {
+    const newIndex = selectedFontSize + 1;
+    setSelectedFontSize(newIndex);
+    applyVerseFontSize(FONT_SIZES[newIndex].value);
+  }
+};
+
+const applyVerseLineHeight = (lineHeight) => {
+  const updateObj = buildTextConfigUpdate(
+    "verse",
+    FONT_OPTIONS[selectedFont].value,       // keep current font
+    FONT_SIZES[selectedFontSize].value,     // keep current font size
+    {
+      ...textConfig,
+      verse: {
+        ...textConfig.verse,
+        lineHeight,                         // override line-height
+      },
+    }
+  );
+
+  updateSpace(activeSpace, updateObj);
+};
+
+
+
+
+const handleCycleLineHeight = () => {
+  const nextIndex = (lineHeightIndex + 1) % LINE_HEIGHTS.length;
+  setLineHeightIndex(nextIndex);
+  applyVerseLineHeight(LINE_HEIGHTS[nextIndex]);
+};
 
   const containerStyle = {
     width: '280px',
@@ -1185,8 +1238,10 @@ const applyVerseFontSize = (fontSize) => {
             justifyContent: 'center',
             alignItems: 'center',
             cursor: 'pointer'
-          }}>
-            <svg width="12" height="12" viewBox="0 0 12 12" fill="none">
+          }}
+          onClick={handleDecreaseFontSize}
+          >
+            <svg style={{filter:'none'}} width="12" height="12" viewBox="0 0 12 12" fill="none">
               <text x="6" y="9" fontSize="8" textAnchor="middle" fill="black">A</text>
             </svg>
           </div>
@@ -1200,55 +1255,53 @@ const applyVerseFontSize = (fontSize) => {
             justifyContent: 'center',
             alignItems: 'center',
             cursor: 'pointer'
-          }}>
-            <svg width="20" height="20" viewBox="0 0 20 20" fill="none">
+          }}
+            onClick={handleIncreaseFontSize}
+
+          >
+            <svg style={{filter:'none'}} width="20" height="20" viewBox="0 0 20 20" fill="none">
               <text x="10" y="14" fontSize="14" textAnchor="middle" fill="black">A</text>
             </svg>
           </div>
-          <div style={{
-            width: '80px',
-            height: '43px',
-            backgroundColor: 'white',
-            border: '1px solid #E1E3EA',
-            borderRadius: '4px',
-            display: 'flex',
-            justifyContent: 'center',
-            alignItems: 'center',
-            cursor: 'pointer',
-            position: 'relative'
-          }}
-          onClick={() => setShowFontSizeMenu(!showFontSizeMenu)}>
-            <svg width="16" height="16" viewBox="0 0 16 16" fill="none">
-              <rect x="2" y="3" width="12" height="2" rx="1" fill="black"/>
-              <rect x="2" y="7" width="12" height="2" rx="1" fill="black"/>
-              <rect x="2" y="11" width="12" height="2" rx="1" fill="black"/>
-            </svg>
-            {showFontSizeMenu && (
-              <div style={{
-                ...dropdownMenuStyle,
-                top: '48px',
-                left: 0,
-                width: '160px'
-              }} onClick={(e) => e.stopPropagation()}>
-                {FONT_SIZES.map((size, index) => (
-                  <div
-                    key={index}
-                    style={menuItemStyle(selectedFontSize === index)}
-                   onClick={() => {
-                          setSelectedFontSize(index);
-                          applyVerseFontSize(FONT_SIZES[index].value);
-                          setShowFontSizeMenu(false);
-                        }}
+  <div
+  style={{
+    width: '80px',
+    height: '43px',
+    backgroundColor: 'white',
+    border: '1px solid #E1E3EA',
+    borderRadius: '4px',
+    display: 'flex',
+    justifyContent: 'center',
+    alignItems: 'center',
+    cursor: 'pointer',
+    position: 'relative'
+  }}
+  onClick={handleCycleLineHeight}
+>
+  <svg style={{filter:'none'}} width="18" height="18" viewBox="0 0 18 18" fill="none">
+    {(() => {
+      const level = LINE_HEIGHTS[lineHeightIndex]; // -1, 0, +1
 
-                    onMouseEnter={(e) => e.target.style.backgroundColor = '#F5F5F5'}
-                    onMouseLeave={(e) => e.target.style.backgroundColor = selectedFontSize === index ? '#F5F5F5' : 'white'}
-                  >
-                    {size.label} ({size.value})
-                  </div>
-                ))}
-              </div>
-            )}
-          </div>
+      // base gap is 4.5 inside the 18px box
+      const baseGap = 4.5;
+
+      // each level adjusts the gap slightly
+      const gap = baseGap + level * 2;
+
+      const startY = 3; 
+
+      return (
+        <>
+          <rect x="3" y={startY}         width="12" height="2" rx="1" fill="black" />
+          <rect x="3" y={startY + gap}   width="12" height="2" rx="1" fill="black" />
+          <rect x="3" y={startY + 2*gap} width="12" height="2" rx="1" fill="black" />
+        </>
+      );
+    })()}
+  </svg>
+</div>
+
+
         </div>
 
         <div style={dropdownStyle} onClick={() => setShowFontDropdown(!showFontDropdown)}>
@@ -1283,7 +1336,7 @@ const applyVerseFontSize = (fontSize) => {
       </div>
 
       <div style={toggleRowStyle}>
-  <div style={toggleLabelStyle}>Show chapter heading</div>
+  <div style={toggleLabelStyle}>Show chapter headings</div>
 
   <div
     style={toggleStyle(showHeading[activeSpace])}
@@ -1299,7 +1352,7 @@ const applyVerseFontSize = (fontSize) => {
 </div>
 
 <div style={toggleRowStyle}>
-  <div style={toggleLabelStyle}>Show verse text</div>
+  <div style={toggleLabelStyle}>Show verses numbers</div>
 
   <div
     style={toggleStyle(showVerses[activeSpace])}
@@ -1319,7 +1372,7 @@ const applyVerseFontSize = (fontSize) => {
       <div style={sectionTitleStyle}>Themes</div>
       
       <div style={cardContainerStyle}>
-        {READY_THEMES.map((theme, index) => (
+        {READY_THEMES.map((theme, index) => index !==1 ?(
           <div 
             key={index} 
             style={cardStyle(selectedTheme === index)}
@@ -1366,9 +1419,62 @@ const applyVerseFontSize = (fontSize) => {
               </div>
             )}
           </div>
-        ))}
+        ):   <div 
+            key={index} 
+             style={{
+        ...cardStyle(selectedTheme === index),
+        backgroundColor: '#404040',
+      }}
+            onClick={() => handleThemeSelect(index)}
+          >
+            <div style={cardSidebarStyle('rgb(255 255 255)')}>
+              <div style={cardBadgeStyle('black')}></div>
+              <div style={cardLabelStyle}></div>
+            </div>
+            <div style={cardIconStyle('black')}></div>
+            <div style={{ marginTop: '14px' }}>
+              <div style={{ ...cardLineStyle,backgroundColor:'white', width: '53px' }}></div>
+              <div style={{ ...cardLineStyle,backgroundColor:'white', width: '42px', marginTop: '7px' }}></div>
+              <div style={{ ...cardLineStyle,backgroundColor:'white', width: '53px', marginTop: '7px' }}></div>
+              <div style={{ ...cardLineStyle,backgroundColor:'white', width: '35px', marginTop: '7px' }}></div>
+            </div>
+            <div style={{
+              position: 'absolute',
+              bottom: '9px',
+              right: '13px',
+              width: '22px',
+              height: '5px',
+              backgroundColor: "white",
+              opacity: 0.1,
+              borderRadius: '1px'
+            }}></div>
+            
+            {selectedTheme === index && (
+              <div style={{
+                position: 'absolute',
+                bottom: '8px',
+                right: '8px',
+                width: '20px',
+                height: '20px',
+                backgroundColor: '#4459F3',
+                borderRadius: '50%',
+                display: 'flex',
+                justifyContent: 'center',
+                alignItems: 'center'
+              }}>
+                <svg width="12" height="12" viewBox="0 0 12 12" fill="none">
+                  <path d="M10 3L4.5 8.5L2 6" stroke="white" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"/>
+                </svg>
+              </div>
+            )}
+          </div>)}
       </div>
-
+        <button
+        style={buttonStyle}
+        onClick={() => setSideBarMode("advancedThemeSettings")}
+      >
+        Advanced settings
+      </button>
       <div style={separatorStyle}></div>
     </div>
   );

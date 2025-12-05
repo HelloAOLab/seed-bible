@@ -1,4 +1,7 @@
 const { createContext, useContext, useState, useEffect } = os.appHooks;
+import {
+  Space,
+} from "app.components.icons";
 // const localStorage = getBot('system', 'app.localStorage')
 // const tabsData = localStorage.masks.tabsData
 // if (!tabsData) {
@@ -15,7 +18,7 @@ export function TabsProvider({ children }) {
   const [spaces, setSpaces] = useState([
     {
       id: '1',
-      name: "Space 1",
+      name: "(Optional) Add space name",
       settings: {
         theme: {},
         toolbar: {
@@ -44,7 +47,7 @@ export function TabsProvider({ children }) {
     },
     {
       id: '2',
-      name: "Space 2",
+      name: "(Optional) Add space name",
       settings: {
         theme: {},
         toolbar: {
@@ -71,7 +74,7 @@ export function TabsProvider({ children }) {
     },
     {
       id: '3',
-      name: "Space 3",
+      name: "(Optional) Add space name",
       settings: {
         theme: {},
         toolbar: {

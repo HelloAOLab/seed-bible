@@ -36,16 +36,16 @@
 }
 
 @media (max-width: 480px) {
-  .toolbar-1 {
-    width: 100vw !important;
-    border: none;
-    border-radius: 0px;
-    bottom: 0px;
-    background-color: #f0f1f1 !important;
-    justify-content: flex-start !important;
-    padding: 0px 2px;
-    height: 45px;
-  }
+      .toolbar-1 {
+        width: 100vw !important;
+        border: none;
+        border-radius: 0px;
+        bottom: 0px;
+        background-color: var(--pageBackground);
+        justify-content: flex-start !important;
+        padding: 0px 0px;
+        height: 45px;
+    }
 
   .firstToolbarbutton {
     height: 100% !important;
@@ -60,6 +60,9 @@
     bottom: 60px;
     background: #f0f1f1;
     border-radius: 100%;
+            display: block !important;
+        pointer-events: all;
+    
   }
 
   .rightClick {
@@ -68,6 +71,9 @@
     bottom: 60px;
     background: #f0f1f1;
     border-radius: 100%;
+            display: block !important;
+        pointer-events: all;
+    
   }
 }
 
@@ -78,15 +84,15 @@
   align-items: center;
   justify-content: center;
   width: 40px !important;
-  height: 40px !important;
+  height: 45px !important;
   border-radius: 50%;
-  background-color: transparent;
+  /* background-color: var(--pageBackground) !important; */
   cursor: pointer;
   transition: background-color 0.2s ease;
 }
 
 .toolbar-button:hover {
-  background-color: #f0f0f0;
+ background-color: var(--pageBackground) !important;
 }
 
 .toolbar-button:focus {

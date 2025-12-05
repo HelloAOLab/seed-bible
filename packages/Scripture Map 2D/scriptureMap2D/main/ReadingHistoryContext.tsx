@@ -4,6 +4,7 @@ import {
   flat,
   calculateReadingHistorySummary,
 } from "db.annotations.library";
+import { useTabsContext } from "app.hooks.tabs";
 
 const { createContext, useContext, useState, useMemo, useEffect, useCallback } =
   os.appHooks;
@@ -11,6 +12,7 @@ const { createContext, useContext, useState, useMemo, useEffect, useCallback } =
 const ReadingHistoryContext = createContext();
 
 export const ReadingHistoryProvider = ({ children }) => {
+  const { activeTab } = useTabsContext();
   const { tick } = useTimeContext();
 
   const [readingHistoryRangeSeconds, setReadingHistoryRangeSeconds] =
@@ -213,9 +215,21 @@ export const ReadingHistoryProvider = ({ children }) => {
       .then((allEvents) => {
         const flattenedEvents = Array.from(flat(allEvents));
 
-        for (const event of flattenedEvents) {
-          const { bookId, start, end } = event;
+        for (let event of flattenedEvents) {
+          let { start, end, chapter, bookId } = event;
           if (start >= rangeStart && end <= rengeEnd) {
+            if (bookId === "PSA") {
+              const { bookId: dividedPsalmId, chapter: dividedPsalmChapter } =
+                BibleVizUtils.Functions.ConvertCompletePsalmsToDivided({
+                  chapter,
+                });
+              event = {
+                ...event,
+                bookId: dividedPsalmId,
+                chapter: dividedPsalmChapter,
+              };
+              ({ start, end, chapter, bookId } = event);
+            }
             if (!rangedEventsByBook.has(bookId)) {
               rangedEventsByBook.set(bookId, []);
             }
@@ -254,7 +268,7 @@ export const ReadingHistoryProvider = ({ children }) => {
           error
         );
       });
-  }, [tick, readingHistoryUserFilters, readingHistoryRangeSeconds]);
+  }, [tick, activeTab, readingHistoryUserFilters, readingHistoryRangeSeconds]);
 
   const handleReadingHistoryUserSelectorClick = useCallback(
     (key) => {

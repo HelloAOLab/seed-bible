@@ -43,7 +43,6 @@ const App = () => {
         display: "flex",
         flexGrow: "1",
         flexDirection: "column",
-        padding: "20px 0",
         backgroundColor: "white",
       }}
     >

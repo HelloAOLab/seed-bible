@@ -2,7 +2,14 @@
   "author": "Sujan",
   "configEditor": {
     "app": "",
-    "author": "Sujan Barman"
+    "author": "Sujan Barman",
+    "toolbarConfig": {
+      "hasToggle": "true",
+      "icon": "border_color",
+      "label": "Draw",
+      "run": "togglePainter",
+      "active": false
+    }
   },
   "createdAt": "2025-09-18T04:41:34.705Z",
   "dependencies": [],
@@ -11,7 +18,7 @@
   "license": "MIT",
   "linkedDependencies": [],
   "mainBotTag": "aiApps.painter",
-  "name": "Painter",
+  "name": "Draw",
   "otherBots": [],
   "recordFile": {
     "sha256Hash": "65fbe3690c0adc89bb0c8cf436fd1d43df070bd2db010df372a480dc1f3176ed",

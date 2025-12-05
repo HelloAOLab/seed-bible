@@ -339,14 +339,9 @@ calendar {
   white-space: normal !important;
   word-break: break-word !important;
 }
-.fc-daygrid-day-frame {
-  overflow: hidden !important;
-}
 
-.fc-daygrid-event-harness {
-  overflow: hidden !important;
-  max-height: 100% !important;
-}
+
+
 
 .gm-input.title {
   outline: none;
@@ -646,7 +641,7 @@ svg:hover{
 
 
 .full-view{
-  width: fit-content;
+  
   height: auto;
   
   display: block;

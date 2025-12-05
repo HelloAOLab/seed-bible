@@ -51,6 +51,7 @@ export const Book = memo(
       chapterWidth,
       chapterHeight,
       CHAPTER_BASE_BACKGROUND_COLOR,
+      showingBooksColors,
     } = useScriptureMap2DContext();
     const { testament } = useTestamentContext();
     const {
@@ -82,23 +83,22 @@ export const Book = memo(
       return { tooltipAnchor };
     }, [containerRect]);
 
-    const { chaptersCount, shortName, staticChaptersArray } = useMemo(() => {
+    const { book, chaptersCount, bookId, staticChaptersArray } = useMemo(() => {
+      const book = bookInfo.commonName;
       const chaptersCount =
-        BibleVizUtils.Data.tags.booksStaticInfo[bookInfo.commonName]
-          .numberOfChapters;
+        BibleVizUtils.Data.tags.booksStaticInfo[book].numberOfChapters;
+      const bookId = BibleVizUtils.Data.tags.booksStaticInfo[book].abbreviation;
 
       return {
+        book,
         chaptersCount,
-        shortName:
-          BibleVizUtils.Data.tags.booksStaticInfo[bookInfo.commonName]
-            .abbreviation,
+        bookId,
         staticChaptersArray: [...Array(chaptersCount)],
       };
     }, []);
 
     const getBookHeight = useCallback(() => {
-      const { chaptersInfo } =
-        BibleVizUtils.Data.tags.booksStaticInfo[bookInfo.commonName];
+      const { chaptersInfo } = BibleVizUtils.Data.tags.booksStaticInfo[book];
       const amountOfRows = Math.ceil(
         chaptersInfo.length /
           BibleVizUtils.Data.tags.BibleLayoutMeasurements
@@ -116,11 +116,11 @@ export const Book = memo(
     }, [scaleFactor, getBookHeight, chapterGap, chapterPadding, chapterHeight]);
 
     const checked = useMemo(() => {
-      return selection?.[testament.name]?.[sectionName]?.[
-        bookInfo.commonName
-      ]?.every((chapter) => {
-        return chapter;
-      });
+      return selection?.[testament.name]?.[sectionName]?.[book]?.every(
+        (chapter) => {
+          return chapter;
+        }
+      );
     }, [selection]);
 
     const { onHoldStart, onHoldEnd } = useClickAndHold({
@@ -129,7 +129,7 @@ export const Book = memo(
         const key = {
           testamentName: testament.name,
           sectionName,
-          bookName: bookInfo.commonName,
+          bookName: book,
         };
         onBookNameClickAndHold(showChapters, key, checked);
       },
@@ -161,7 +161,7 @@ export const Book = memo(
 
       const filteredUsers = Array.from(usersStatus).filter(
         ([user, enabled]) => {
-          const bookContent = content.get(user).books?.[bookInfo.commonName];
+          const bookContent = content.get(user).books?.[book];
           return (
             enabled &&
             bookContent &&
@@ -178,7 +178,7 @@ export const Book = memo(
         } else {
           const colors = filteredUsers.map(([user]) => {
             const userContent = content.get(user);
-            const bookContent = userContent.books[bookInfo.commonName];
+            const bookContent = userContent.books[book];
             const entriesCount = Object.keys(bookContent).reduce(
               (currentValue, key) => {
                 return (
@@ -255,6 +255,7 @@ export const Book = memo(
               userColor,
               readingTimeSeconds: userReadingTimeSeconds,
               step: 0.25,
+              fullColorTimeSeconds: 3600, // 1 hour
             });
 
             const isTimeSpentNoticeable =
@@ -283,7 +284,7 @@ export const Book = memo(
               );
             }
           } else {
-            const { chapters } = books[shortName];
+            const { chapters } = books[bookId];
             let lastEntry;
             for (const chapter in chapters) {
               const events = chapters[chapter];
@@ -333,12 +334,16 @@ export const Book = memo(
         fixedBackground =
           BibleVizUtils.Functions.GetHistoryColorLinearGradient(colors);
       } else {
-        fixedBackground = bookCoverBackgroundColor;
+        if (showingBooksColors) {
+          fixedBackground = bookCoverBackgroundColor;
+        } else {
+          fixedBackground = CHAPTER_BASE_BACKGROUND_COLOR;
+        }
       }
 
       const bookEntriesCounts = filteredUsers.map(([user]) => {
         const userContent = content.get(user);
-        const bookContent = userContent.books[bookInfo.commonName];
+        const bookContent = userContent.books[book];
         const entriesCount = Object.keys(bookContent).reduce(
           (currentValue, key) => {
             return currentValue + bookContent[key].length;
@@ -379,11 +384,12 @@ export const Book = memo(
       readingSummary,
       isReadingHistoryEnabled,
       readingHistoryRangeSeconds,
+      showingBooksColors,
     ]);
 
     const usersInBook = useMemo(() => {
       return Object.keys(userPresence).filter((user) => {
-        return userPresence[user].book === bookInfo.commonName;
+        return userPresence[user].book === book;
       });
     }, [userPresence, isUserPresenceEnabled, modes]);
 
@@ -468,7 +474,8 @@ export const Book = memo(
                   step: 0.25,
                 });
               } else {
-                const { chapters } = books[shortName];
+                const { chapters } = books[bookId];
+
                 const readingEvents = chapters[chapter];
                 const nowSeconds = Math.floor(os.localTime / 1000);
                 const recencyTimeSeconds =
@@ -502,6 +509,7 @@ export const Book = memo(
 
       return staticChaptersArray.map((_, index) => {
         const chapter = index + 1;
+
         const chapterSummary = chapterReadingHistorySummaryMap.get(chapter);
         let historyBackground = null;
         let historyColor = null;
@@ -510,14 +518,14 @@ export const Book = memo(
         if (chapterSummary) {
           const users = chapterSummary.users;
           for (const userId in users) {
-            if (readingHistoryRangeSeconds) {
-              const { totalTimeSpentReading: userReadingTimeSeconds } =
-                users[userId];
+            const { totalTimeSpentReading: userReadingTimeSeconds } =
+              users[userId];
 
-              const isTimeSpentNoticeable =
-                userReadingTimeSeconds > SEC_PER_MINUTE; // more than a minute
+            const isTimeSpentNoticeable =
+              userReadingTimeSeconds > SEC_PER_MINUTE; // more than a minute
 
-              if (isTimeSpentNoticeable) {
+            if (isTimeSpentNoticeable) {
+              if (readingHistoryRangeSeconds) {
                 let fixedContent;
                 if (userReadingTimeSeconds >= SEC_PER_HOUR) {
                   // more than an hour
@@ -538,41 +546,41 @@ export const Book = memo(
                     fixedContent={fixedContent}
                   />
                 );
-              }
-            } else {
-              const chapterReadingEvents =
-                users[userId].books[shortName].chapters[chapter];
-              const lastReadingEvent =
-                chapterReadingEvents[chapterReadingEvents.length - 1];
-              const recencyTimeSeconds = nowSeconds - lastReadingEvent.end;
-              const isRecentEnough =
-                recencyTimeSeconds <= greaterTimePeriodSeconds;
-              if (isRecentEnough) {
-                let fixedContent;
-                if (recencyTimeSeconds >= SEC_PER_DAY) {
-                  const daysCount = Math.floor(
-                    recencyTimeSeconds / SEC_PER_DAY
+              } else {
+                const chapterReadingEvents =
+                  users[userId].books[bookId].chapters[chapter];
+                const lastReadingEvent =
+                  chapterReadingEvents[chapterReadingEvents.length - 1];
+                const recencyTimeSeconds = nowSeconds - lastReadingEvent.end;
+                const isRecentEnough =
+                  recencyTimeSeconds <= greaterTimePeriodSeconds;
+                if (isRecentEnough) {
+                  let fixedContent;
+                  if (recencyTimeSeconds >= SEC_PER_DAY) {
+                    const daysCount = Math.floor(
+                      recencyTimeSeconds / SEC_PER_DAY
+                    );
+                    fixedContent = `read ${daysCount} day${daysCount > 1 ? "s" : ""} ago`;
+                  } else if (recencyTimeSeconds >= SEC_PER_HOUR) {
+                    const hoursCount = Math.floor(
+                      recencyTimeSeconds / SEC_PER_HOUR
+                    );
+                    fixedContent = `read ${hoursCount} hour${hoursCount > 1 ? "s" : ""} ago`;
+                  } else if (recencyTimeSeconds >= SEC_PER_MINUTE) {
+                    const minutesCount = Math.floor(
+                      recencyTimeSeconds / SEC_PER_MINUTE
+                    );
+                    fixedContent = `read ${minutesCount} minute${minutesCount > 1 ? "s" : ""} ago`;
+                  } else {
+                    fixedContent = `${userId === myAuthBotId ? "are" : "is"} reading now`;
+                  }
+                  tooltipContent.push(
+                    <ReadingHistoryTooltipContent
+                      userId={userId}
+                      fixedContent={fixedContent}
+                    />
                   );
-                  fixedContent = `read ${daysCount} day${daysCount > 1 ? "s" : ""} ago`;
-                } else if (recencyTimeSeconds >= SEC_PER_HOUR) {
-                  const hoursCount = Math.floor(
-                    recencyTimeSeconds / SEC_PER_HOUR
-                  );
-                  fixedContent = `read ${hoursCount} hour${hoursCount > 1 ? "s" : ""} ago`;
-                } else if (recencyTimeSeconds >= SEC_PER_MINUTE) {
-                  const minutesCount = Math.floor(
-                    recencyTimeSeconds / SEC_PER_MINUTE
-                  );
-                  fixedContent = `read ${minutesCount} minute${minutesCount > 1 ? "s" : ""} ago`;
-                } else {
-                  fixedContent = `${userId === myAuthBotId ? "are" : "is"} reading now`;
                 }
-                tooltipContent.push(
-                  <ReadingHistoryTooltipContent
-                    userId={userId}
-                    fixedContent={fixedContent}
-                  />
-                );
               }
             }
           }
@@ -589,9 +597,9 @@ export const Book = memo(
 
         return (
           <Chapter
-            key={`${shortName}-${chapter}`}
+            key={`${bookId}-${chapter}`}
             sectionName={sectionName}
-            bookName={bookInfo.commonName}
+            bookName={book}
             index={index}
             historyBackground={historyBackground}
             historyColor={historyColor}
@@ -628,7 +636,7 @@ export const Book = memo(
             e.stopPropagation();
           }}
         >
-          {shortName}
+          {bookId}
         </span>
         <div
           className={`bookCover${showChapters ? " invisible" : displayContainer ? " displayingContainer" : ""}`}

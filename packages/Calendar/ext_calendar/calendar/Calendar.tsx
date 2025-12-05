@@ -173,26 +173,7 @@ function formatWeekdayDay(date) {
   }).format(date);
 }
 
-document.addEventListener("click", (e) => {
-  const moreBtn = e.target.closest(".fc-daygrid-more-link");
-  if (moreBtn) {
-    // Wait a moment for popover to appear
-    setTimeout(() => {
-      const pop = document.querySelector(".fc-popover");
-      popoverOpen = !!pop;
-      console.log("Popover opened:", popoverOpen);
-    }, 50);
-  }
-});
-
 // Detect popover close (click outside)
-document.addEventListener("mousedown", (e) => {
-  const pop = document.querySelector(".fc-popover");
-  if (pop && !pop.contains(e.target)) {
-    popoverOpen = false;
-    console.log("Popover closed:", popoverOpen);
-  }
-});
 
 const types = ["events", "reading", "content", "projects", "sources"];
 
@@ -269,7 +250,17 @@ const App = () => {
   const [resourceStartDate, setResourceStartDate] = useState();
   const [hiddenGroups, setHiddenGroups] = useState({});
   const [allGroups, setAllGroups] = useState([]);
-  let popoverOpen = false;
+  const [popoverOpen, setPopoverOpen] = useState(false);
+
+  document.addEventListener("mousedown", (e) => {
+    const popover = document.querySelector(".fc-popover");
+
+    // TypeScript-safe check
+    if (e.target instanceof Node && !popover.contains(e.target)) {
+      setPopoverOpen(false);
+    }
+  });
+
   //refs
   const readingsRef = useRef(null);
   const dropdownRef = useRef(null);
@@ -804,7 +795,7 @@ const App = () => {
         scrollTime: "07:00:00",
         initialView: "dayGridMonth",
         moreLinkClick: (arg) => {
-          popoverOpen = true;
+          setPopoverOpen(true);
           return "popover";
         },
         resourceAreaHeaderContent: function () {
@@ -884,12 +875,13 @@ const App = () => {
         contentHeight: "auto",
         height: "auto",
         eventContent: function (arg) {
+          console.log(popoverOpen, "sdsdsd");
+
           setContainerWidth(calendarEle.offsetWidth);
           const isSchedule = arg.event.extendedProps.isResource === true;
           const eventType = arg.event.extendedProps.type;
           const container = document.querySelector(".experience-container");
           const isNarrow = container && container.offsetWidth < 500;
-          const isPopoverOpen = popoverOpen;
 
           const clockSvg = (color) => `
       <svg xmlns="http://www.w3.org/2000/svg" width="14" height="14"
@@ -914,16 +906,25 @@ const App = () => {
           const endDate = dateOnly(end);
 
           const isMultiDay = startDate !== endDate;
+          let title;
+          if (arg.event.title.length > 6) {
+            const titleEl = arg.event.title.includes(" ")
+              ? arg.event.title.split(" ")[0]
+              : arg.event.title.slice(0, 6);
+            title = `${titleEl}...`;
+          } else {
+            title = arg.event.title;
+          }
 
           // Compact mode (mobile, no popover)
-          if (isNarrow && !isPopoverOpen && !isMultiDay) {
+          if (isNarrow && !popoverOpen && !isMultiDay) {
             if (isSchedule) return { html: "" };
             if (eventType === "reading") return { html: makeDot("#20c997") };
             return { html: makeDot("#339af0") };
           }
 
           // Popover open — show full event
-          if (isPopoverOpen) {
+          if (popoverOpen) {
             return {
               html: `
           <div style="
@@ -937,7 +938,7 @@ const App = () => {
             max-width:100%;
             overflow:hidden;
             text-overflow:ellipsis;">
-            <span>${arg.event.title}</span>
+            <span>${title}</span>
           </div>
         `,
             };
@@ -945,8 +946,9 @@ const App = () => {
 
           // Normal schedule
           if (isSchedule) {
-            return {
-              html: `
+            if (!isMultiDay) {
+              return {
+                html: `
           <div style="
             display:flex;align-items:center;
             background:#e6fcf5;
@@ -957,16 +959,37 @@ const App = () => {
             font-size:clamp(0.65rem, 0.8vw, 0.85rem);
             max-width:100%;
             overflow:hidden;text-overflow:ellipsis;">
-            <span>${arg.event.title}</span>
+            <span>${title}</span>
           </div>
         `,
-            };
+              };
+            } else {
+              return {
+                html: `
+        <div style="
+          display:flex;align-items:center;gap:0.4em;
+          background:#fdfdea;
+          color:#2d3436;
+          border:1px solid #a5d8ff;
+          border-radius:0.5em;
+          padding:0.3em 0.5em;
+          font-size:clamp(0.65rem, 0.8vw, 0.85rem);
+          max-width:100%;
+          overflow:hidden;
+          text-overflow:ellipsis;">
+          ${clockSvg("#f1c40f")}
+          <span>${arg.event.title}</span>
+        </div>
+      `,
+              };
+            }
           }
 
           // Reading events
           if (eventType === "reading") {
-            return {
-              html: `
+            if (!isMultiDay) {
+              return {
+                html: `
   <div style="
     display:flex;
     margin-left:6px;
@@ -981,16 +1004,36 @@ const App = () => {
   ">
     <div style="width:3px;background:green;border-top-left-radius: 5px;
     border-bottom-left-radius: 5px;"></div>
-    <span style="padding:2px 4px;padding:2px 3px; overflow-wrap: break-word;">${arg.event.title}</span>
+    <span style="padding:2px 4px;padding:2px 3px; overflow-wrap: break-word;">${title}</span>
   </div>
 `,
-            
-            };
+              };
+            } else {
+              return {
+                html: `
+        <div style="
+          display:flex;align-items:center;
+          background:#e6fcf5;
+          color:#0b7285;
+          border:1px solid #63e6be;
+          border-radius:0.5em;
+          padding:0.3em 0.5em;
+          font-size:clamp(0.65rem, 0.8vw, 0.85rem);
+          max-width:100%;
+          overflow:hidden;
+          text-overflow:ellipsis;">
+          <span>${arg.event.title}</span>
+        </div>
+      `,
+              };
+            }
           }
 
           // Default event style
-          return {
-            html: `
+          if (!isMultiDay) {
+            console.log(isMultiDay,'sasasasaasasas');
+            return {
+              html: `
   <div style="
     display:flex;
     margin-left:6px;
@@ -1005,10 +1048,30 @@ const App = () => {
   ">
     <div style="width:3px;background:#00C8FF;border-top-left-radius: 5px;
     border-bottom-left-radius: 5px;"></div>
-    <span style="padding:2px 4px;padding:2px 3px; overflow-wrap: break-word;">${arg.event.title}</span>
+    <span style="padding:2px 4px;padding:2px 3px; overflow-wrap: break-word;">${title}</span>
   </div>
 `,
-          };
+            };
+          } else {
+
+            return {
+              html: `
+        <div style="
+          display:flex;align-items:center;
+          background:#e6fcf5;
+          color:#0b7285;
+          border:1px solid #63e6be;
+          border-radius:0.5em;
+          padding:0.3em 0.5em;
+          font-size:clamp(0.65rem, 0.8vw, 0.85rem);
+          max-width:100%;
+          overflow:hidden;
+          text-overflow:ellipsis;">
+          <span>${arg.event.title}</span>
+        </div>
+      `,
+            };
+          }
         },
         eventClassNames: function (arg) {
           const width =
@@ -1107,20 +1170,21 @@ const App = () => {
                 recurVal,
                 isPlansTabActive,
               }) => {
+               
                 if (isPlansTabActive) return;
                 let newEvent;
                 console.log(start, end, "aada");
                 const days = getDayDifference(start, end);
                 if (recurVal.charAt(0) === "N") {
-                  const isTimed = startTime && endTime;
-                  console.log(isTimed);
+                  const isTimed = Boolean(startTime && endTime);
+                  console.log(isTimed,'isTimed');
                   if (days === 0) {
                     newEvent = {
                       title: title ? title : "easter",
                       id: uuid(),
-                      start: isTimed ? `${start}T${startTime}:00` : start,
-                      end: isTimed ? `${end}T${endTime}:00` : end,
-                      allDay: isTimed ? false : true,
+                      start: `${start}T${startTime || "09:00"}`,
+                      end: `${end}T${endTime||"19:00" }`,
+                      allDay: false ,
                       color: "white",
                       eventDisplay: "list-item",
                       theme: "simple-borderless",
@@ -1134,6 +1198,7 @@ const App = () => {
                         type: "events",
                       },
                     };
+                    console.log(newEvent,'newevent');
                     const now = stripTime(new Date());
                     const startDate = stripTime(new Date(newEvent.start));
                     setAllEvents((prev) => [...prev, newEvent]);
@@ -1822,16 +1887,16 @@ const App = () => {
 
             const titleContainer = document.createElement("div");
             titleContainer.style.display = "flex";
-            titleContainer.style.alignItems = "flex-start"; 
-            
+            titleContainer.style.alignItems = "flex-start";
             titleContainer.style.gap = "8px";
             titleContainer.style.marginBottom = "12px";
-
             const greenDot = document.createElement("div");
             Object.assign(greenDot.style, {
               width: "20px",
               height: "20px",
               borderRadius: "50%",
+              flex: "0 0 auto",
+              alignSelf: "flex-start",
               backgroundColor: isResource ? "#f1c40f" : "#87ceeb",
             });
 
@@ -1902,7 +1967,7 @@ const App = () => {
               linkSection.appendChild(linkIcon);
 
               const linkBtn = document.createElement("a");
-              linkBtn.href = link;
+              linkBtn.href = link.startsWith("http") ? link : `https://${link}`;
               linkBtn.target = "_blank";
               linkBtn.textContent = "Click Here";
               Object.assign(linkBtn.style, {
@@ -1959,8 +2024,8 @@ const App = () => {
               top: `${rect.bottom + window.scrollY + 8}px`,
               left: `${rect.left - 150 + window.scrollX}px`,
               zIndex: 9999,
-              whiteSpace: 'normal',
-              wordBreak: 'break-word',
+              whiteSpace: "normal",
+              wordBreak: "break-word",
               background: "#e7e7e7",
               border: "1px solid #ccc",
               boxShadow: "0 2px 6px rgba(0,0,0,0.15)",

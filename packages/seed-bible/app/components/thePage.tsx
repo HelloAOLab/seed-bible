@@ -1411,8 +1411,12 @@ function ThePage({
           position: relative;
         }
         .toolbar-1 {
-          display:${showVerseToolbar && globalThis.IsMobileNow() ? "none !important" : ""}
+          background:${showVerseToolbar && globalThis.IsMobileNow() ? "transparent !important" : ""};
+          pointer-events:${showVerseToolbar && globalThis.IsMobileNow() ? "none" : ""};
         }
+        .toolbar-item-wrapper{
+            display:${showVerseToolbar && globalThis.IsMobileNow() ? "none !important" : ""}
+          }
         .bookTitle,
         .sectionTitle {
           display:${direction ? "ruby" : null}
@@ -1557,7 +1561,7 @@ function ThePage({
               display: "flex",
               alignItems: "center",
               justifyContent: "center",
-              backgroundColor: "#f8f9fa",
+              // backgroundColor: "#f8f9fa",
             }}
             className={`pageContainer ${
               tabEntered ? "tabEntered" : "tabDrop"
@@ -1588,6 +1592,7 @@ function ThePage({
                 }}
               >
                 <img
+                  className="coloredIcon"
                   style={{ width: "50px" }}
                   src="https://res.cloudinary.com/dfbtwwa8p/image/upload/v1755365776/717a8527988cca7e0bdc9449ec68581a8400b977_vqc7mx.png"
                 />
@@ -2115,7 +2120,8 @@ function Section({
         <div className="sectionCover">
           {verses.map((verse) => {
             if (verse.lineBreak) {
-              return <p class="verseLineBreak"></p>;
+              // <p class="verseLineBreak"></p>;
+              return 
             }
 
             const [c, setC] = useState(false);
@@ -2134,7 +2140,6 @@ function Section({
               selected[verse.verseNumber] ||
               blinker[verse.verseNumber];
             const isClicked = clickedVerses.includes(verse.verseNumber);
-            if(showVerses[activeSpace])
             return (
               <span key={verse.verseNumber}>
                 <span
@@ -2233,7 +2238,8 @@ function Section({
                     highlighted?.[verse.verseNumber] ? "verse-highlighted" : ""
                   } ${isClicked ? "verse-clicked" : ""}`}
                 >
-                  <span
+                  {<span
+                   style={{display:showVerses[activeSpace]?"":"none"}}
                     className={`sectionTextNumber ${
                       globalThis.studyNotesPresent ? "clickableCursor" : ""
                     }`}
@@ -2259,7 +2265,7 @@ function Section({
                     }}
                   >
                     {verse?.verseNumber}
-                  </span>
+                  </span>}
                   {!c ? (
                     renderVerseText(verse)
                   ) : (

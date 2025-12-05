@@ -101,7 +101,7 @@
   align-items: center;
   gap: 15px;
   justify-content: space-between;
-  color: var(--themeText1);
+  color: var(--text1);
   font-weight: 700;
 }
 
@@ -145,7 +145,7 @@
   padding: 5px;
   border-radius: 10px;
   margin-top: 25px;
-  color: var(--themeText1);
+  color: var(--text1);
 }
 
 .searchSection input {
@@ -159,7 +159,7 @@
   gap: 16px;
   margin-top: 15px;
   justify-content: space-between;
-  color: var(--themeText1);
+  color: var(--text1);
   font-weight: 700;
   margin-bottom: 27px;
   align-items: center;
@@ -190,7 +190,7 @@
 }
 
 .tab {
-  color: var(--themeText1);
+  color: var(--text1);
   display: flex;
   flex-direction: row;
   justify-content: space-between;
@@ -203,7 +203,7 @@
 
 .activeTab {
   background: white;
-  color: black;
+  color: var(--text1) !important;
   display: flex;
   flex-direction: row;
   justify-content: space-between;
@@ -372,7 +372,7 @@
 
 .icon-button {
   cursor: pointer;
-  color: var(--themeText1);
+  color: var(--text1);
 }
 
 .triangle-up {
@@ -397,7 +397,8 @@
 .popupSettings {
   position: relative;
   width: 225px !important;
-  height: 200px;
+  height: fit-content;
+  /* max-height: 200px; */
   padding: 10px;
   background: #202020;
   display: flex;
@@ -405,7 +406,7 @@
   align-items: center;
   gap: 2px;
   border-radius: 15px;
-  overflow: auto;
+  /* overflow: auto; */
   scrollbar-width: none;
 }
 
