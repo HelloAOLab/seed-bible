@@ -641,10 +641,11 @@ export const Book = memo(
             }
           }
           if (userPresenceColors.length > 0) {
-            const fixedColors = [...userPresenceColors];
-            if (fixedColors.length > 1) fixedColors.push(fixedColors[0]);
-
-            borderGradientColors = fixedColors.join(", ");
+            // borderGradientColors = fixedColors.join(", ");
+            borderGradientColors = GetChapterBorderGradientColors({
+              colors: userPresenceColors,
+              diffuse: 15,
+            });
           }
 
           if (userPresenceColors.length > 0) {
@@ -754,3 +755,15 @@ export const Book = memo(
     );
   }
 );
+
+function GetChapterBorderGradientColors({ colors, diffuse = 0 }) {
+  const fixedColors = [...colors, colors[0]];
+  const step = 360 / colors.length;
+  const offset = 45;
+  const gradientColors = fixedColors
+    .map((color, index) => {
+      return `${color} ${Math.max(0, Math.min(360, step * index - offset + (index === 0 ? 0 : diffuse)))}deg ${Math.max(0, Math.min(360, step * (index + 1) - diffuse - offset))}deg`;
+    })
+    .join(", ");
+  return gradientColors;
+}
