@@ -631,6 +631,7 @@
   );
   grid-template-rows: repeat(auto-fill, var(--chapterWidth));
   justify-content: center;
+  z-index: 0;
 }
 
 .mapWrapper
@@ -710,6 +711,60 @@
   display: flex;
   justify-content: center;
   align-items: center;
+}
+
+@property --angle {
+  syntax: "<angle>";
+  initial-value: 0deg;
+  inherits: false;
+}
+
+.mapWrapper
+  .mapContainer
+  .testamentContainer
+  .mapBookContainer
+  .bookCover
+  .chapter.showUserPresence::before,
+.mapWrapper
+  .mapContainer
+  .testamentContainer
+  .mapBookContainer
+  .bookCover
+  .chapter.showUserPresence::after {
+  content: "";
+  position: absolute;
+  height: 100%;
+  width: 100%;
+  background-image: conic-gradient(
+    from var(--angle),
+    var(--userPresenceColors)
+  );
+  top: 50%;
+  left: 50%;
+  translate: -50% -50%;
+  z-index: -1;
+  padding: calc(var(--scaleFactor) * 2px);
+  border-radius: calc(5px * var(--scaleFactor));
+  animation: 3s spin linear infinite;
+}
+
+.mapWrapper
+  .mapContainer
+  .testamentContainer
+  .mapBookContainer
+  .bookCover
+  .chapter.showUserPresence::before {
+  filter: blur(0.2rem);
+  opacity: 0.5;
+}
+
+@keyframes spin {
+  from {
+    --angle: 0deg;
+  }
+  to {
+    --angle: 360deg;
+  }
 }
 
 /* .mapWrapper .mapContainer .testamentContainer .mapBookContainer .bookCover .chapter .contentContainer,
@@ -938,7 +993,20 @@
   text-overflow: ellipsis;
 }
 
-.tooltip .readingHistoryTooltipContent {
+.tooltip .userPresenceTooltipContent > div {
+  display: flex;
+  padding-left: 8px;
+}
+
+.tooltip .userPresenceTooltipContent > div > div {
+  height: 20px;
+  width: 20px;
+  border-radius: 12px;
+  margin-left: -8px;
+}
+
+.tooltip .userPresenceTooltipContent > span {
+  padding-bottom: 4px;
 }
 
 .tooltip .readingHistoryTooltipContent > span:nth-of-type(1) {

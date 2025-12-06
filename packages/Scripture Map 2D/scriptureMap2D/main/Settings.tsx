@@ -11,6 +11,30 @@ const { useState, useRef, useEffect, useMemo } = os.appHooks;
 const Settings_Icon =
   "https://auth-aux-aobot-prod-filesbucket-141297942820.s3.amazonaws.com/aoBot/5a87cdff4617c9047e44ec47ddd8a101aa317e2223d83dd40f615e3f9740f03a.svg";
 
+const Option = ({
+  callback,
+  condition,
+  enabledIcon,
+  disabledIcon,
+  enabledText,
+  disabledText,
+  staticText,
+}) => {
+  return (
+    <button
+      onClick={(e) => {
+        e.stopPropagation();
+        callback();
+      }}
+    >
+      <span className="material-symbols-outlined">
+        {condition ? enabledIcon : disabledIcon}
+      </span>
+      {`${condition ? enabledText : disabledText} ${staticText}`}
+    </button>
+  );
+};
+
 const SettingsOptions = ({
   setShowOptions,
   settingsButtonRef,
@@ -23,9 +47,20 @@ const SettingsOptions = ({
     setShowingAllChapters,
     showingBooksColors,
     setShowingBooksColors,
+    isUserPresenceEnabled,
+    setIsUserPresenceEnabled,
+    isReadingHistoryEnabled,
+    setIsReadingHistoryEnabled,
+    mode,
+    ScriptureMap2DModes,
   } = useScriptureMap2DContext();
+  const { usersAuthId } = useReadingHistoryContext();
 
   const containerRef = useRef(null);
+
+  const shouldShowReadingHistoryOption = useMemo(() => {
+    return mode === ScriptureMap2DModes.Viewer && usersAuthId?.length > 0;
+  }, []);
 
   useEffect(() => {
     const handleClickOutside = (e) => {
@@ -68,45 +103,60 @@ const SettingsOptions = ({
       className="settingsOptionsContainer"
     >
       {shouldShowReadingHistorySettings && (
-        <button
-          onClick={(e) => {
-            e.stopPropagation();
-            setCollapsed((prev) => !prev);
-          }}
-        >
-          <span className="material-symbols-outlined">
-            {collapsed ? "visibility_off" : "visibility"}
-          </span>
-          {`${collapsed ? "Show" : "Hide"} timeline`}
-        </button>
+        <Option
+          callback={() => setCollapsed((prev) => !prev)}
+          condition={collapsed}
+          enabledIcon={"visibility_off"}
+          disabledIcon={"visibility"}
+          enabledText={"Show"}
+          disabledText={"Hide"}
+          staticText={"timeline"}
+        />
       )}
-      <button
-        onClick={(e) => {
-          e.stopPropagation();
-          setShowingAllChapters((prev) => !prev);
-        }}
-      >
-        <span className="material-symbols-outlined">
-          {showingAllChapters ? "visibility" : "visibility_off"}
-        </span>
-        {`${showingAllChapters ? "Close" : "Open"} books`}
-      </button>
-      <button
-        onClick={(e) => {
-          e.stopPropagation();
-          setShowingBooksColors((prev) => !prev);
-        }}
-      >
-        <span className="material-symbols-outlined">palette</span>
-        {`${showingBooksColors ? "Hide" : "Show"} books color`}
-      </button>
+      <Option
+        callback={() => setShowingAllChapters((prev) => !prev)}
+        condition={showingAllChapters}
+        enabledIcon={"visibility"}
+        disabledIcon={"visibility_off"}
+        enabledText={"Close"}
+        disabledText={"Open"}
+        staticText={"books"}
+      />
+      <Option
+        callback={() => setShowingBooksColors((prev) => !prev)}
+        condition={showingBooksColors}
+        enabledIcon={"palette"}
+        disabledIcon={"palette"}
+        enabledText={"Hide"}
+        disabledText={"Show"}
+        staticText={"books color"}
+      />
+      {shouldShowReadingHistoryOption && (
+        <Option
+          callback={() => setIsReadingHistoryEnabled((prev) => !prev)}
+          condition={isReadingHistoryEnabled}
+          enabledIcon={"history"}
+          disabledIcon={"history"}
+          enabledText={"Hide"}
+          disabledText={"Show"}
+          staticText={"reading history"}
+        />
+      )}
+      <Option
+        callback={() => setIsUserPresenceEnabled((prev) => !prev)}
+        condition={isUserPresenceEnabled}
+        enabledIcon={"group_off"}
+        disabledIcon={"group"}
+        enabledText={"Hide"}
+        disabledText={"Show"}
+        staticText={"user presence"}
+      />
     </div>
   );
 };
 
 export const Settings = () => {
   const {
-    isUserPresenceEnabled,
     mode,
     ScriptureMap2DModes,
     project,
