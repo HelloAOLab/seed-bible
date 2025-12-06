@@ -544,6 +544,7 @@
   grid-auto-columns: var(--bookWidth);
   gap: calc(16px * var(--scaleFactor));
   align-items: start;
+  z-index: 0;
 }
 
 .mapWrapper .mapContainer .testamentContainer .mapBookContainer {
@@ -631,7 +632,6 @@
   );
   grid-template-rows: repeat(auto-fill, var(--chapterWidth));
   justify-content: center;
-  z-index: 0;
 }
 
 .mapWrapper
@@ -993,16 +993,24 @@
   text-overflow: ellipsis;
 }
 
+.tooltip .userPresenceTooltipContent {
+  width: 100%;
+  display: flex;
+  justify-content: center;
+  align-items: center;
+}
+
 .tooltip .userPresenceTooltipContent > div {
   display: flex;
-  padding-left: 8px;
+  padding-left: 12px;
 }
 
 .tooltip .userPresenceTooltipContent > div > div {
-  height: 20px;
-  width: 20px;
+  height: 24px;
+  width: 24px;
   border-radius: 12px;
-  margin-left: -8px;
+  margin-left: -12px;
+  border: solid 3px black;
 }
 
 .tooltip .userPresenceTooltipContent > span {

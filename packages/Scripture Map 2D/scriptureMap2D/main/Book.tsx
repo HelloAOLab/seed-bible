@@ -640,13 +640,11 @@ export const Book = memo(
               userPresenceColors.push(userBorderColor);
             }
           }
-          if (userPresenceColors.length > 0) {
-            // borderGradientColors = fixedColors.join(", ");
+          if (userPresenceColors.length > 0)
             borderGradientColors = GetChapterBorderGradientColors({
               colors: userPresenceColors,
               diffuse: 15,
             });
-          }
 
           if (userPresenceColors.length > 0) {
             tooltipContent.unshift(
