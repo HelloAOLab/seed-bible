@@ -2,6 +2,37 @@ import { useReadingHistoryContext } from "scriptureMap2D.main.ReadingHistoryCont
 
 const { useRef, useState, useLayoutEffect, useMemo } = os.appHooks;
 
+export const UserPresenceTooltipContent = ({ colors }) => {
+  return (
+    <span className="userPresenceTooltipContent">
+      <div>
+        {colors.slice(0, 3).map((color, index) => {
+          return (
+            <div style={{ backgroundColor: color, "z-index": index }}></div>
+          );
+        })}
+        {colors.length > 3 && (
+          <div
+            style={{
+              backgroundColor: "white",
+              color: "black",
+              display: "flex",
+              justifyContent: "center",
+              alignItems: "center",
+              fontSize: "12px",
+              "z-index": "3",
+              fontWeight: "600",
+            }}
+          >
+            {`+${colors.length - 3}`}
+          </div>
+        )}
+      </div>
+      <span>reading now</span>
+    </span>
+  );
+};
+
 export const ReadingHistoryTooltipContent = ({ userId, fixedContent }) => {
   const { myAuthBotId } = useReadingHistoryContext();
 
