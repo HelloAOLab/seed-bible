@@ -151,7 +151,6 @@ const SettingsSidebar = () => {
                   onPointerDown={(e) => {
                     e.stopPropagation();
                     e.preventDefault();
-                    console.log("tanak");
                     setSelectedOrientation("tanak");
                     setTagMask(thisBot, "bookOrientation", "tanak", "local");
                     shout("onBookOrientationChanged", { orientation: "tanak" });
@@ -202,7 +201,6 @@ const SettingsSidebar = () => {
                   onPointerDown={(e) => {
                     e.preventDefault();
                     e.stopPropagation();
-                    console.log("traditional");
                     setSelectedOrientation("traditional");
                     setTagMask(
                       thisBot,

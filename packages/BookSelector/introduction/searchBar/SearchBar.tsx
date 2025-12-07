@@ -181,9 +181,7 @@ const SearchBar = () => {
         OTBooks = OTBooks.sort(
           (a, b) => tanakhIndex[a.order] - tanakhIndex[b.order]
         );
-        console.log(OTBooks, "OTBooks 1");
       }
-      console.log(orientation, "OTBooks 2");
       return {
         OTBooks,
         NTBooks,
