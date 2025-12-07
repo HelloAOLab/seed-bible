@@ -40,7 +40,6 @@ const SettingsOptions = ({
   settingsButtonRef,
   collapsed,
   setCollapsed,
-  shouldShowReadingHistorySettings,
 }) => {
   const {
     showingAllChapters,
@@ -53,8 +52,10 @@ const SettingsOptions = ({
     setIsReadingHistoryEnabled,
     mode,
     ScriptureMap2DModes,
+    showLabels,
+    handleLabelsToggle,
   } = useScriptureMap2DContext();
-  const { usersAuthId } = useReadingHistoryContext();
+  const { usersAuthId, shouldShowReadingHistory } = useReadingHistoryContext();
 
   const containerRef = useRef(null);
 
@@ -102,7 +103,7 @@ const SettingsOptions = ({
       }}
       className="settingsOptionsContainer"
     >
-      {shouldShowReadingHistorySettings && (
+      {shouldShowReadingHistory && (
         <Option
           callback={() => setCollapsed((prev) => !prev)}
           condition={collapsed}
@@ -151,31 +152,27 @@ const SettingsOptions = ({
         disabledText={"Show"}
         staticText={"user presence"}
       />
+      <Option
+        callback={handleLabelsToggle}
+        condition={showLabels}
+        enabledIcon={"label_off"}
+        disabledIcon={"label"}
+        enabledText={"Hide"}
+        disabledText={"Show"}
+        staticText={"labels"}
+      />
     </div>
   );
 };
 
 export const Settings = () => {
-  const {
-    mode,
-    ScriptureMap2DModes,
-    project,
-    isInSelectionMode,
-    isReadingHistoryEnabled,
-  } = useScriptureMap2DContext();
-  const { usersAuthId } = useReadingHistoryContext();
+  const { mode, ScriptureMap2DModes, project, isInSelectionMode } =
+    useScriptureMap2DContext();
+  const { shouldShowReadingHistory } = useReadingHistoryContext();
 
   const settingsButtonRef = useRef(null);
   const [collapsed, setCollapsed] = useState(false);
   const [showOptions, setShowOptions] = useState(false);
-
-  const shouldShowReadingHistorySettings = useMemo(() => {
-    return (
-      mode === ScriptureMap2DModes.Viewer &&
-      isReadingHistoryEnabled &&
-      usersAuthId?.length > 0
-    );
-  }, [mode, isReadingHistoryEnabled, usersAuthId, ScriptureMap2DModes]);
 
   return (
     <div className={`mapSettings${collapsed ? " collapsed" : ""}`}>
@@ -193,7 +190,6 @@ export const Settings = () => {
             settingsButtonRef={settingsButtonRef}
             collapsed={collapsed}
             setCollapsed={setCollapsed}
-            shouldShowReadingHistorySettings={shouldShowReadingHistorySettings}
           />
         )}
       </div>
@@ -204,7 +200,7 @@ export const Settings = () => {
           {!isInSelectionMode && <ProjectFiltersSelector />}
         </>
       )}
-      {shouldShowReadingHistorySettings && (
+      {shouldShowReadingHistory && (
         <>
           <ReadingHistoryUserFiltersSelector />
           <ReadingHistoryTimeline />
