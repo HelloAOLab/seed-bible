@@ -6,10 +6,10 @@ export const TimeProvider = ({ children }) => {
   const [tick, setTick] = useState(Date.now());
 
   useEffect(() => {
-    // const interval = setInterval(() => {
-    //     setTick(Date.now())
-    // }, 10000);
-    // return () => clearInterval(interval);
+    const interval = setInterval(() => {
+      setTick(Date.now());
+    }, 10000);
+    return () => clearInterval(interval);
   }, []);
 
   return (

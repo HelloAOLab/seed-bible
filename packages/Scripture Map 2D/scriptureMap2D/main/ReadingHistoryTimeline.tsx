@@ -9,7 +9,7 @@ const { useState, useCallback, useMemo, useEffect, useRef } = os.appHooks;
 const { memo } = os.appCompat;
 
 const step = 0.25;
-const stepColors = ["#E3E3E3", "#FFEEA9", "#FFBF78", "#D36433", "#7B4019"];
+const stepColors = ["#E3E3E3", "#BFBFBF", "#969696", "#6E6E6E", "#454545"];
 
 const Label = memo(({ gridRow, gridColumn, children, isDay }) => {
   const style = useMemo(() => {

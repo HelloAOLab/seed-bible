@@ -22,6 +22,9 @@
   --timelineItemSize: 16px;
   position: relative;
   padding-top: 16px;
+}
+
+.mapWrapper > * {
   padding-right: 24px;
   padding-left: 16px;
 }
@@ -544,6 +547,7 @@
   grid-auto-columns: var(--bookWidth);
   gap: calc(16px * var(--scaleFactor));
   align-items: start;
+  z-index: 0;
 }
 
 .mapWrapper .mapContainer .testamentContainer .mapBookContainer {
@@ -631,7 +635,6 @@
   );
   grid-template-rows: repeat(auto-fill, var(--chapterWidth));
   justify-content: center;
-  z-index: 0;
 }
 
 .mapWrapper
@@ -730,21 +733,25 @@
   .testamentContainer
   .mapBookContainer
   .bookCover
-  .chapter.showUserPresence::after {
+  .chapter.showUserPresence::after,
+.mapWrapper
+  .mapContainer
+  .testamentContainer
+  .mapBookContainer
+  .bookCover.showUserPresence::before,
+.mapWrapper
+  .mapContainer
+  .testamentContainer
+  .mapBookContainer
+  .bookCover.showUserPresence::after {
   content: "";
   position: absolute;
   height: 100%;
   width: 100%;
-  background-image: conic-gradient(
-    from var(--angle),
-    var(--userPresenceColors)
-  );
   top: 50%;
   left: 50%;
   translate: -50% -50%;
   z-index: -1;
-  padding: calc(var(--scaleFactor) * 2px);
-  border-radius: calc(5px * var(--scaleFactor));
   animation: 4s spin linear infinite;
 }
 
@@ -753,7 +760,50 @@
   .testamentContainer
   .mapBookContainer
   .bookCover
-  .chapter.showUserPresence::before {
+  .chapter.showUserPresence::before,
+.mapWrapper
+  .mapContainer
+  .testamentContainer
+  .mapBookContainer
+  .bookCover
+  .chapter.showUserPresence::after {
+  background-image: conic-gradient(
+    from var(--angle),
+    var(--userPresenceColors)
+  );
+  padding: calc(var(--scaleFactor) * 2px);
+  border-radius: calc(5px * var(--scaleFactor));
+}
+
+.mapWrapper
+  .mapContainer
+  .testamentContainer
+  .mapBookContainer
+  .bookCover.showUserPresence::before,
+.mapWrapper
+  .mapContainer
+  .testamentContainer
+  .mapBookContainer
+  .bookCover.showUserPresence::after {
+  background-image: conic-gradient(
+    from var(--angle),
+    var(--bookUserPresenceColors)
+  );
+  padding: calc(var(--scaleFactor) * 6px);
+  border-radius: calc(10px * var(--scaleFactor));
+}
+
+.mapWrapper
+  .mapContainer
+  .testamentContainer
+  .mapBookContainer
+  .bookCover
+  .chapter.showUserPresence::before,
+.mapWrapper
+  .mapContainer
+  .testamentContainer
+  .mapBookContainer
+  .bookCover::before {
   filter: blur(0.2rem);
   opacity: 0.7;
 }
@@ -993,16 +1043,24 @@
   text-overflow: ellipsis;
 }
 
+.tooltip .userPresenceTooltipContent {
+  width: 100%;
+  display: flex;
+  justify-content: center;
+  align-items: center;
+}
+
 .tooltip .userPresenceTooltipContent > div {
   display: flex;
-  padding-left: 8px;
+  padding-left: 12px;
 }
 
 .tooltip .userPresenceTooltipContent > div > div {
-  height: 20px;
-  width: 20px;
+  height: 24px;
+  width: 24px;
   border-radius: 12px;
-  margin-left: -8px;
+  margin-left: -12px;
+  border: solid 3px black;
 }
 
 .tooltip .userPresenceTooltipContent > span {
