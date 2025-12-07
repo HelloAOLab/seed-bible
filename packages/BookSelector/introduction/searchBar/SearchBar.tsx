@@ -73,12 +73,24 @@ function attachQueryToURL(url, params) {
   return url + (url.includes("?") ? "&" : "?") + queryString;
 }
 
+const tanakOrder = [
+  1, 2, 3, 4, 5, 6, 7, 9, 10, 11, 12, 23, 24, 26, 28, 29, 30, 31, 32, 33, 34,
+  35, 36, 37, 38, 39, 19, 20, 18, 22, 8, 25, 21, 17, 27, 15, 16, 13, 14,
+];
+
+const tanakhIndex = Object.fromEntries(
+  tanakOrder.map((num, idx) => [num, idx])
+);
+
 const thePage = getBot("system", "app.components");
 
 const SearchBar = () => {
   const [query, setQuery] = useState("");
   const inputRef = useRef(null);
   const [onlineUsers, setOnlineUsers] = useState(null);
+  const [orientation, setOrientation] = useState(
+    masks?.orientation || "traditional"
+  );
 
   const [booksData, setBooksData] = useState(
     thePage.masks?.booksData || tags.booksData
@@ -151,25 +163,35 @@ const SearchBar = () => {
     return false;
   }, []);
 
-  const sortBooksByTestament = useCallback((books) => {
-    const OTBooks = [];
-    const NTBooks = [];
-    const ApocryphaBooks = [];
-    for (let i = 0; i < books.length; i++) {
-      if (books[i].order <= 39) {
-        OTBooks.push(books[i]);
-      } else if (books[i].order > 39 && books[i].order <= 66) {
-        NTBooks.push(books[i]);
-      } else {
-        ApocryphaBooks.push(books[i]);
+  const sortBooksByTestament = useCallback(
+    (books) => {
+      let OTBooks = [];
+      const NTBooks = [];
+      const ApocryphaBooks = [];
+      for (let i = 0; i < books.length; i++) {
+        if (books[i].order <= 39) {
+          OTBooks.push(books[i]);
+        } else if (books[i].order > 39 && books[i].order <= 66) {
+          NTBooks.push(books[i]);
+        } else {
+          ApocryphaBooks.push(books[i]);
+        }
       }
-    }
-    return {
-      OTBooks,
-      NTBooks,
-      ApocryphaBooks,
-    };
-  }, []);
+      if (orientation === "tanak") {
+        OTBooks = OTBooks.sort(
+          (a, b) => tanakhIndex[a.order] - tanakhIndex[b.order]
+        );
+        console.log(OTBooks, "OTBooks 1");
+      }
+      console.log(orientation, "OTBooks 2");
+      return {
+        OTBooks,
+        NTBooks,
+        ApocryphaBooks,
+      };
+    },
+    [orientation]
+  );
 
   const selectedTestamentData = useMemo(() => {
     if (query.length > 0) {
@@ -223,7 +245,7 @@ const SearchBar = () => {
         return [];
       }
     }
-  }, [selectedTestament, booksData, query, handleNameMatch]);
+  }, [selectedTestament, booksData, query, handleNameMatch, orientation]);
 
   const filteredApiTranslations = useMemo(() => {
     if (query !== "") {

@@ -14,7 +14,12 @@ import { useTabsContext } from "app.hooks.tabs";
 import { useBibleContext } from "app.hooks.bibleVariables";
 import { SpaceSettingsForm, SpaceSelector } from "app.components.spaceSettings";
 import { useHoldAction } from "app.hooks.useHold";
-import {  ThemeIcon,BibleIcon,NewSettingsIcon,ExtensionsIcon  } from "app.components.icons";
+import {
+  ThemeIcon,
+  BibleIcon,
+  NewSettingsIcon,
+  ExtensionsIcon,
+} from "app.components.icons";
 
 const SettingsSidebar = () => {
   const [activeTab, setActiveTab] = useState("space");
@@ -59,7 +64,7 @@ const SettingsSidebar = () => {
   const [spaceContentVisibility, setSpaceContentVisibility] = useState({});
   const [spaceContentLabels, setSpaceContentLabels] = useState({});
   const [spaceDescription, setSpaceDescription] = useState(
-"Settings for your space. Customise toolbar, theme and add extensions."
+    "Settings for your space. Customise toolbar, theme and add extensions."
   );
 
   // Initialize globalThis.changes if it doesn't exist
@@ -104,7 +109,7 @@ const SettingsSidebar = () => {
     {
       key: "Extensions",
       label: "Configure Extensions",
-      icon: <ExtensionsIcon/>,
+      icon: <ExtensionsIcon />,
       style: "",
       expandable: false,
       onClick: () => setSideBarMode("extensions"),
@@ -113,14 +118,146 @@ const SettingsSidebar = () => {
       key: "bibleDefaults",
       label: "Bible Defaults",
       style: false,
-      icon: <BibleIcon/>,
+      icon: <BibleIcon />,
       expandable: true,
+      subItems: [
+        {
+          key: "BookOrder",
+          label: "Book Order",
+          App: () => {
+            const [selectedOrientation, setSelectedOrientation] = useState(
+              tags?.bookOrientation || "traditional"
+            );
+            return (
+              <div
+                onContextMenu={(e) => e.stopPropagation()}
+                style={{
+                  display: "flex",
+                  flexDirection: "column",
+                  padding: "5px",
+                  borderRadius: "5px",
+                  backgroundColor: "var(--pageBackground)",
+                  pointerEvents: "auto",
+                  color: "var(--text1)",
+                }}
+              >
+                <div
+                  className={`settings-item-container`}
+                  style={{
+                    display: "flex",
+                    flexDirection: "row",
+                    alignItems: "center",
+                  }}
+                  onPointerDown={(e) => {
+                    e.stopPropagation();
+                    e.preventDefault();
+                    console.log("tanak");
+                    setSelectedOrientation("tanak");
+                    setTagMask(thisBot, "bookOrientation", "tanak", "local");
+                    shout("onBookOrientationChanged", { orientation: "tanak" });
+                  }}
+                >
+                  <div style={{ width: "90%", fontSize: "14px" }}>
+                    <b>
+                      <span>TaNak order</span>
+                    </b>
+                    <p>
+                      The original, unified, three-part ordering of the Hebrew
+                      Bible (or Old Testaments)
+                    </p>
+                  </div>
+                  <div
+                    style={{
+                      width: "15px",
+                      height: "15px",
+                      backgroundColor:
+                        selectedOrientation === "tanak"
+                          ? "var(--secondaryButton)"
+                          : "var(--primaryButton)",
+                      borderRadius: "50%",
+                      display: "flex",
+                      justifyContent: "center",
+                      alignItems: "center",
+                    }}
+                  >
+                    <svg width="10" height="10" viewBox="0 0 12 12" fill="none">
+                      <path
+                        d="M10 3L4.5 8.5L2 6"
+                        stroke="white"
+                        strokeWidth="2"
+                        strokeLinecap="round"
+                        strokeLinejoin="round"
+                      />
+                    </svg>
+                  </div>
+                </div>
+                <div className="settings-divider"></div>
+                <div
+                  className={`settings-item-container`}
+                  style={{
+                    display: "flex",
+                    flexDirection: "row",
+                    alignItems: "center",
+                  }}
+                  onPointerDown={(e) => {
+                    e.preventDefault();
+                    e.stopPropagation();
+                    console.log("traditional");
+                    setSelectedOrientation("traditional");
+                    setTagMask(
+                      thisBot,
+                      "bookOrientation",
+                      "traditional",
+                      "local"
+                    );
+                    shout("onBookOrientationChanged", {
+                      orientation: "traditional",
+                    });
+                  }}
+                >
+                  <div style={{ width: "90%", fontSize: "14px" }}>
+                    <b>
+                      <span>Traditional order</span>
+                    </b>
+                    <p>The ordering found in the most modern chritain Bible</p>
+                  </div>
+                  <div
+                    style={{
+                      width: "15px",
+                      height: "15px",
+                      backgroundColor:
+                        selectedOrientation === "traditional"
+                          ? "var(--secondaryButton)"
+                          : "var(--primaryButton)",
+                      borderRadius: "50%",
+                      display: "flex",
+                      justifyContent: "center",
+                      alignItems: "center",
+                    }}
+                  >
+                    <svg width="10" height="10" viewBox="0 0 12 12" fill="none">
+                      <path
+                        d="M10 3L4.5 8.5L2 6"
+                        stroke="white"
+                        strokeWidth="2"
+                        strokeLinecap="round"
+                        strokeLinejoin="round"
+                      />
+                    </svg>
+                  </div>
+                </div>
+              </div>
+            );
+          },
+          type: "app",
+        },
+      ],
     },
     // { key: "divider1", type: "divider" },
     {
       key: "pageSettings",
       label: "Advanced Settings",
-      icon: <NewSettingsIcon/>,
+      icon: <NewSettingsIcon />,
       expandable: true,
       subItems: [
         // { key: 'toolbar', label: 'Toolbar', icon: `construction`, onClick: () => setSideBarMode('toolbarSettings-Page') },
@@ -481,7 +618,6 @@ const SettingsSidebar = () => {
     if (CurrentSpace) {
       setSpaceName(CurrentSpace.name);
     }
-    
   }, [activeSpace]);
   useEffect(() => {
     updateSpace(activeSpace, { name: spaceName });
@@ -655,9 +791,11 @@ const SettingsSidebar = () => {
                   className="space-icon material-symbols-outlined"
                 >
                   <div style={{ "pointer-events": "none" }}>
-                    {CurrentSpace?.icon || <div class="activeBg">
-    <span></span>
-  </div>}
+                    {CurrentSpace?.icon || (
+                      <div class="activeBg">
+                        <span></span>
+                      </div>
+                    )}
                   </div>
                 </div>
                 {spaceContentVisibility.spaceName !== false && (
@@ -878,97 +1016,104 @@ const SettingsSidebar = () => {
                                     icon: subIcon,
                                     onClick,
                                     hidden: subHidden,
-                                  }) => (
-                                    <div
-                                      key={subKey}
-                                      className={`settings-item-container ${
-                                        subHidden ? "hidden-item" : ""
-                                      }`}
-                                    >
-                                      <div className="settings-item-wrapper">
-                                        {editMode && (
-                                          <button
-                                            className="hide-button"
-                                            onClick={(e) => {
-                                              e.stopPropagation();
-                                              toggleVisibility(subKey, key);
-                                            }}
-                                            title={
-                                              subHidden
-                                                ? "Show item"
-                                                : "Hide item"
-                                            }
-                                          >
-                                            <span className="material-symbols-outlined">
-                                              {subHidden
-                                                ? "visibility"
-                                                : "visibility_off"}
-                                            </span>
-                                          </button>
-                                        )}
-                                        <div
-                                          onClick={onClick}
-                                          className={`settings-item sub-item ${
-                                            subHidden ? "hidden" : ""
-                                          }`}
-                                        >
-                                          <div className="item-icon">
-                                            <span className="material-symbols-outlined">
-                                              {subIcon}
-                                            </span>
-                                          </div>
-                                          <div className="item-text">
-                                            {editMode &&
-                                            editingLabel ===
-                                              `${key}.${subKey}` ? (
-                                              <input
-                                                type="text"
-                                                value={subLabel}
-                                                onChange={(e) =>
-                                                  handleLabelEdit(
-                                                    subKey,
-                                                    key,
-                                                    e.target.value
-                                                  )
-                                                }
-                                                onBlur={finishEditingLabel}
-                                                onKeyPress={(e) =>
-                                                  e.key === "Enter" &&
-                                                  finishEditingLabel()
-                                                }
-                                                className="label-edit-input"
-                                                autoFocus
-                                                onClick={(e) =>
-                                                  e.stopPropagation()
-                                                }
-                                              />
-                                            ) : (
-                                              <span
-                                                onClick={
-                                                  editMode
-                                                    ? (e) => {
-                                                        e.stopPropagation();
-                                                        startEditingLabel(
-                                                          subKey,
-                                                          key
-                                                        );
-                                                      }
-                                                    : undefined
-                                                }
-                                                className={
-                                                  editMode
-                                                    ? "editable-label"
-                                                    : ""
-                                                }
-                                              >
-                                                {subLabel}
+                                    type: subType,
+                                    App,
+                                  }) => {
+                                    if (subType === "app") {
+                                      return <App />;
+                                    }
+                                    return (
+                                      <div
+                                        key={subKey}
+                                        className={`settings-item-container ${
+                                          subHidden ? "hidden-item" : ""
+                                        }`}
+                                      >
+                                        <div className="settings-item-wrapper">
+                                          {editMode && (
+                                            <button
+                                              className="hide-button"
+                                              onClick={(e) => {
+                                                e.stopPropagation();
+                                                toggleVisibility(subKey, key);
+                                              }}
+                                              title={
+                                                subHidden
+                                                  ? "Show item"
+                                                  : "Hide item"
+                                              }
+                                            >
+                                              <span className="material-symbols-outlined">
+                                                {subHidden
+                                                  ? "visibility"
+                                                  : "visibility_off"}
                                               </span>
-                                            )}
+                                            </button>
+                                          )}
+                                          <div
+                                            onClick={onClick}
+                                            className={`settings-item sub-item ${
+                                              subHidden ? "hidden" : ""
+                                            }`}
+                                          >
+                                            <div className="item-icon">
+                                              <span className="material-symbols-outlined">
+                                                {subIcon}
+                                              </span>
+                                            </div>
+                                            <div className="item-text">
+                                              {editMode &&
+                                              editingLabel ===
+                                                `${key}.${subKey}` ? (
+                                                <input
+                                                  type="text"
+                                                  value={subLabel}
+                                                  onChange={(e) =>
+                                                    handleLabelEdit(
+                                                      subKey,
+                                                      key,
+                                                      e.target.value
+                                                    )
+                                                  }
+                                                  onBlur={finishEditingLabel}
+                                                  onKeyPress={(e) =>
+                                                    e.key === "Enter" &&
+                                                    finishEditingLabel()
+                                                  }
+                                                  className="label-edit-input"
+                                                  autoFocus
+                                                  onClick={(e) =>
+                                                    e.stopPropagation()
+                                                  }
+                                                />
+                                              ) : (
+                                                <span
+                                                  onClick={
+                                                    editMode
+                                                      ? (e) => {
+                                                          e.stopPropagation();
+                                                          startEditingLabel(
+                                                            subKey,
+                                                            key
+                                                          );
+                                                        }
+                                                      : undefined
+                                                  }
+                                                  className={
+                                                    editMode
+                                                      ? "editable-label"
+                                                      : ""
+                                                  }
+                                                >
+                                                  {subLabel}
+                                                </span>
+                                              )}
+                                            </div>
                                           </div>
                                         </div>
                                       </div>
-                                    </div>
-                                  )
+                                    );
+                                  }
                                 )}
                               </div>
                             )}
@@ -1560,6 +1705,5 @@ const SettingsSidebar = () => {
     </div>
   );
 };
-
 
 export default SettingsSidebar;
