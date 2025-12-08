@@ -10,7 +10,7 @@ function SharePopup({
   const [isOpen, setIsOpen] = useState(true);
   const [copied, setCopied] = useState(false);
 
-  const url = shareUrl || window.location.href;
+  const url = `https://ao.bot/?inst=${os.getCurrentInst()}&book=${configBot.tags.book}&chapter=${configBot.tags.chapter}` || shareUrl;
   const title = shareTitle || "Check this out!";
 
   const platforms = [

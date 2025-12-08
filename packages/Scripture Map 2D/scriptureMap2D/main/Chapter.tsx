@@ -13,6 +13,8 @@ export const Chapter = memo(
     historyBackground,
     historyColor,
     tooltipContent,
+    chapter,
+    borderGradientColors,
   }) => {
     const [containerRect, setContainerRect] = useState(null);
 
@@ -23,8 +25,6 @@ export const Chapter = memo(
       usersStatus,
       // MAX_CHAPTER_HEAT_COUNT,
       modes,
-      // userPresence,
-      usersInfo,
       contentVisualization,
       ContentVisualizationType,
       mode,
@@ -42,6 +42,8 @@ export const Chapter = memo(
 
     const { testament } = useTestamentContext();
 
+    const [showUserPresence, setShowUserPresence] = useState(false);
+
     const checked = useMemo(() => {
       return (
         selection?.[testament.name]?.[sectionName]?.[bookName]?.[index] ?? false
@@ -49,13 +51,14 @@ export const Chapter = memo(
     }, [selection]);
 
     const handleChapterClick = useCallback((e) => {
-      const key = {
-        testamentName: testament.name,
-        sectionName,
-        bookName,
-        chapterIndex: index,
-      };
-      onChapterClick(e, key, checked);
+      // const key = {
+      //   testamentName: testament.name,
+      //   sectionName,
+      //   bookName,
+      //   chapterIndex: index,
+      // };
+      // console.log(`[Debug] Chapter handleChapterClick`, {e, key, checked});
+      // onChapterClick(e, key, checked);
     }, onChapterClickDependencies);
 
     const { onHoldStart, onHoldEnd } = useClickAndHold({
@@ -67,7 +70,7 @@ export const Chapter = memo(
           bookName,
           chapterIndex: index,
         };
-        onChapterClickAndHold(e, key);
+        onChapterClickAndHold(e, key, checked);
       },
       holdCancelCallback: (e) => {
         const key = {
@@ -216,7 +219,6 @@ export const Chapter = memo(
       content,
       usersStatus,
       modes,
-      usersInfo,
       contentVisualization,
       ContentVisualizationType,
       project,
@@ -266,27 +268,32 @@ export const Chapter = memo(
         <UpcomingEventsChapterNotificationContainer bookName={bookName} chapterIndex={index} />
     </>}*/
     // {mode === ScriptureMap2DModes.Viewer && isReadingHistoryEnabled && <ReadingHistoryChapterNotificationContainer bookName={bookName} chapterIndex={index} />}
+
     return (
       <div
-        className="chapter"
+        className={`chapter${borderGradientColors && isUserPresenceEnabled ? " showUserPresence" : ""}`}
         onPointerEnter={(e) =>
           setContainerRect(e.currentTarget.getBoundingClientRect())
         }
-        onPointerLeave={() => setContainerRect(null)}
-        onClick={handleChapterClick}
+        onPointerLeave={() => {
+          setContainerRect(null);
+        }}
         onPointerDown={onHoldStart}
         onPointerUp={onHoldEnd}
         style={{
+          "--userPresenceColors": borderGradientColors,
           background,
           borderStyle,
           borderColor,
           color,
         }}
       >
-        {index + 1}
-        {tooltipAnchor && tooltipContent?.length > 0 && (
-          <Tooltip anchor={tooltipAnchor} content={tooltipContent} />
-        )}
+        {chapter}
+        {(isReadingHistoryEnabled || isUserPresenceEnabled) &&
+          tooltipAnchor &&
+          tooltipContent?.length > 0 && (
+            <Tooltip anchor={tooltipAnchor} content={tooltipContent} />
+          )}
       </div>
     );
   }

@@ -2,33 +2,25 @@ import {
   ScriptureMap2D,
   ScriptureMap2DModes,
 } from "scriptureMap2D.main.ScriptureMap2D";
-import { useBibleContext } from "app.hooks.bibleVariables";
 
 const { useCallback, useMemo } = os.appHooks;
 
 const App = () => {
-  const { navFunctions } = useBibleContext();
+  const handleChapterClick = useCallback((_, key) => {
+    const { bookName, chapterIndex } = key;
 
-  const handleChapterClick = useCallback(
-    (_, key) => {
-      const { bookName, chapterIndex } = key;
+    let bookId = BibleVizUtils.Data.tags.booksStaticInfo[bookName].abbreviation;
+    let chapter = chapterIndex + 1;
 
-      let bookId =
-        BibleVizUtils.Data.tags.booksStaticInfo[bookName].abbreviation;
-      let chapter = chapterIndex + 1;
-
-      if (bookName.includes("Psalms")) {
-        ({ chapter } = BibleVizUtils.Functions.ConvertDividedPsalmsToComplete({
-          book: bookName,
-          chapter,
-        }));
-        bookId = "PSA";
-      }
-
-      navFunctions?.open?.(bookId, chapter);
-    },
-    [navFunctions]
-  );
+    if (bookName.includes("Psalms")) {
+      ({ chapter } = BibleVizUtils.Functions.ConvertDividedPsalmsToComplete({
+        book: bookName,
+        chapter,
+      }));
+      bookId = "PSA";
+    }
+    globalThis.Open(bookId, chapter);
+  }, []);
 
   const {
     onChapterClickDependencies,
@@ -51,7 +43,6 @@ const App = () => {
         display: "flex",
         flexGrow: "1",
         flexDirection: "column",
-        padding: "20px 0",
         backgroundColor: "white",
       }}
     >

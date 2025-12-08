@@ -40,23 +40,21 @@
 .separator {
   width: 2px;
   height: 100%;
-  background-color: #f1f1f1;
+  background-color: var(--text1);
   margin-right: 10px;
 }
 
 .dropdown-select {
   appearance: none;
-  /* remove default arrow */
   -webkit-appearance: none;
   -moz-appearance: none;
 
-  padding: 8px 36px 8px 12px;
-  /* space for arrow on right */
+  padding: 8px 26px 8px 12px;
   font-size: 14px;
 
   border: 1px solid #ccc;
   border-radius: 6px;
-  background: white
+  background: var(--primaryButton)
     url("data:image/svg+xml;utf8,<svg fill='gray' height='20' viewBox='0 0 24 24' width='20' xmlns='http://www.w3.org/2000/svg'><path d='M7 10l5 5 5-5z'/></svg>")
     no-repeat right 10px center;
   background-size: 16px;
@@ -68,22 +66,18 @@
     box-shadow 0.2s;
   margin-right: 5px;
   font-family: Satoshi;
-}
-
-.dropdown-select:hover {
-  border-color: #999;
+  color: var(--text1);
 }
 
 .dropdown-option {
-  background: white;
-  color: #333;
+  background: var(--primaryButton);
+  color: var(--text1);
   padding: 8px 12px;
   font-weight: bold;
 }
 
 .dropdown-option:hover {
-  background: #f1f1f1;
-  /* some browsers ignore this */
+  /* background: #f1f1f1; */
 }
 
 .searchbar {
@@ -91,11 +85,12 @@
   align-items: center;
   border: 1px solid #ccc;
   border-radius: 6px;
-  background: white;
+  background: var(--primaryButton);
   padding: 6px 10px;
   width: 100%;
   height: 34px;
   overflow: hidden;
+  color: var(--text1);
 }
 
 .search-icon {
@@ -110,6 +105,7 @@
   flex: 1;
   font-size: 14px;
   font-family: "DM Sans", sans-serif;
+  background: transparent;
 }
 
 .share-btn {
@@ -123,6 +119,7 @@
   align-items: center;
   border-radius: 5px;
   padding: 3px;
+  color: var(--text1);
 }
 
 .share-btn:active {
@@ -220,7 +217,6 @@ input:checked + .slider:not(#slider):before {
   padding: 0px 10px;
   font-size: 18px;
   justify-content: space-between;
-  color: #4459f3;
   margin-top: 5px;
 }
 
@@ -228,7 +224,7 @@ input:checked + .slider:not(#slider):before {
   justify-content: flex-start;
   align-items: flex-start;
   height: fit-content;
-  background-color: white;
+  background-color: var(--toolbarBackground);
   flex-direction: column;
   transition: 0.5s linear all;
 }
@@ -358,7 +354,7 @@ input:checked + .slider:not(#slider):before {
 
 .sidebar-translation-selector {
   display: flex;
-  background: white;
+  background: var(--primaryButton);
   padding: 0px 5px;
   height: 32px;
   justify-content: space-between;
@@ -366,6 +362,7 @@ input:checked + .slider:not(#slider):before {
   width: 100px;
   border-radius: 5px;
   border: 1px solid #ccc;
+  color: var(--text1);
 }
 
 .sidebar-translation-options {
@@ -611,6 +608,8 @@ input:checked + .slider:not(#slider):before {
   left: 0;
   border-top: 2px solid #78909c;
   padding-top: 5px;
+  border-radius: 0px 0px 10px 10px;
+  transition: 0.5s linear all;
 }
 
 .open-sidebar-input-container {
@@ -660,17 +659,17 @@ input:checked + .slider:not(#slider):before {
   width: 40px;
   aspect-ratio: 1 / 1;
   display: flex;
-  background-color: rgba(1, 87, 155, 0.3);
+  background-color: rgba(1, 87, 155, 0.2);
   justify-content: center;
   align-items: center;
   border-radius: 5px;
-  color: white;
+  color: var(--text1);
   transition: all 0.3s;
   position: relative;
 }
 
 .chapter-btn:hover {
-  background-color: rgba(1, 87, 155, 0.9);
+  background-color: rgba(1, 87, 155, 0.5);
 }
 
 .searchbar-container:hover {
@@ -725,7 +724,7 @@ input:checked + .slider:not(#slider):before {
   height: fit-content;
   gap: clamp(5px, 0.5vw, 20px);
   flex-wrap: wrap;
-  background-color: #e1f5fe;
+  background-color: var(--secondaryButton);
   padding: 8px;
   border-radius: 5px;
 }
@@ -794,8 +793,8 @@ input:checked + .slider:not(#slider):before {
 
 .sidebar {
   width: 830px;
-  background-color: var(--bgColor) !important;
-  color: var(--textColor) !important;
+  background-color: var(--toolbarBackground) !important;
+  color: var(--text1) !important;
   display: flex;
   padding: 10px;
   transition: all 0.5s;
@@ -815,7 +814,7 @@ input:checked + .slider:not(#slider):before {
 
 .testament-selection {
   margin-bottom: 10px;
-  background: #f1f1f1 !important;
+  /* background: var(--menuBackground) !important; */
   padding: 10px 0px;
   border-radius: 5px;
 }
@@ -836,7 +835,7 @@ input:checked + .slider:not(#slider):before {
   animation-iteration-count: 1;
   animation-fill-mode: forwards;
   /* border: 1px solid black; */
-  background-color: #f1f1f1;
+  /* background-color: var(--menuBackground) !important; */
   padding-left: 5px;
   cursor: pointer;
   flex-direction: column;
@@ -864,7 +863,7 @@ input:checked + .slider:not(#slider):before {
   height: 40px;
   width: 148px;
   display: flex;
-  background-color: #fafafa;
+  background-color: var(--primaryButton);
   justify-content: space-between;
   align-items: center;
   border-radius: 5px;
@@ -873,7 +872,7 @@ input:checked + .slider:not(#slider):before {
   font-size: 14px;
   padding: 10px;
   font-family: "Satoshi", system-ui, sans-serif;
-  /* color: black; */
+  color: var(--text1);
 }
 
 .sidebar-ghost-itm {
@@ -884,18 +883,18 @@ input:checked + .slider:not(#slider):before {
 }
 
 .sidebar-itm:hover {
-  background-color: #f1f1f1;
+  background-color: var(--secondaryButton);
 }
 
 .sidebar-selected-itm {
-  background-color: #e1f5fe;
-  color: #044d87;
+  background-color: var(--secondaryButton);
+  color: var(--text1);
   font-weight: bold;
 }
 
 .sidebar-itm.sidebar-selected-itm:hover {
-  background-color: #ceeaf7;
-  color: #044d87;
+  /* background-color: #ceeaf7;
+  color: #044d87; */
   font-weight: bold;
 }
 
@@ -947,9 +946,7 @@ input:checked + .slider:not(#slider):before {
   opacity: 1;
   height: 80dvh;
   bottom: 78px;
-  background-color: white !important;
   box-shadow: rgba(0, 0, 0, 0.24) 0px 3px 8px;
-  /* opacity: 0; */
 }
 
 .close-sideBar {
@@ -1168,7 +1165,8 @@ input:checked + .slider:not(#slider):before {
 
 @media only screen and (max-width: 768px) {
   .dropdown {
-    display: none;
+    /* display: none; */
+    width: 100px;
   }
 
   .searchbar {
@@ -1263,15 +1261,32 @@ input:checked + .slider:not(#slider):before {
   }
 
   .sidebar-results {
-    height: calc(80dvh - 50px);
+    height: calc(90dvh - 50px);
   }
 
   .books-container {
     height: calc(100dvh - 110px);
+    flex-direction: column;
+    overflow: auto;
+  }
+
+  .testament-container {
+    width: 100%;
+  }
+
+  .dropdown-select {
+    width: 100px;
+    font-weight: bold;
+  }
+
+  .dropdown-option {
+    width: 100px;
+    font-weight: bold;
   }
 
   .testament-title {
-    text-align: center;
+    text-align: left;
+    padding-left: 0px;
   }
 
   .defocus-input {
@@ -1366,17 +1381,16 @@ input:checked + .slider:not(#slider):before {
   }
 
   .sidebar-itm {
-    color: black;
-    width: 148px;
+    width: 100%;
     font-weight: lighter;
   }
 
   .chapter-btn {
-    width: 34px;
+    width: 60px;
   }
 
   .show-sidebar-chapter {
-    grid-template-columns: repeat(auto-fit, 34px);
+    grid-template-columns: repeat(auto-fit, 60px);
   }
 
   .psalms-btn {
@@ -1391,7 +1405,7 @@ input:checked + .slider:not(#slider):before {
     margin-top: -10px;
     border-top-left-radius: 0;
     border-top-right-radius: 0;
-    width: 148px;
+    width: 100%;
   }
 
   .sidebar-selected-itm,
@@ -1407,12 +1421,15 @@ input:checked + .slider:not(#slider):before {
   }
 
   .separator {
-    width: 2px;
-    height: 100%;
+    width: 100%;
+    height: 2px !important;
     background-color: #f1f1f1;
     /* margin-right: 10px; */
-    position: absolute;
-    left: calc(50% - 1.5px);
+    position: relative;
+    left: 0px;
+    margin-right: 0px;
+    margin-top: 10px;
+    display: block;
   }
 }
 

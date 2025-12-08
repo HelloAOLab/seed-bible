@@ -144,7 +144,7 @@ const ProfileCard = ({
 
             <div style={contentStyle}>
                 <button style={subscribeButtonStyle}>
-                    <svg width="14" height="14" viewBox="0 0 24 24" fill="currentColor">
+                    <svg className='coloredIcon' className='coloredIcon' width="14" height="14" viewBox="0 0 24 24" fill="currentColor">
                         <path d="M12 2C13.1 2 14 2.9 14 4C14 5.1 13.1 6 12 6C10.9 6 10 5.1 10 4C10 2.9 10.9 2 12 2ZM21 9V7L15 1H5C3.89 1 3 1.89 3 3V19C3 20.11 3.89 21 5 21H11V19H5V3H13V9H21Z" />
                     </svg>
                     Subscribe
@@ -157,7 +157,7 @@ const ProfileCard = ({
                 </p>}
 
                 {link && <a href="#" style={linkStyle}>
-                    <svg style={linkIconStyle} viewBox="0 0 24 24" fill="currentColor">
+                    <svg className='coloredIcon' className='coloredIcon' style={linkIconStyle} viewBox="0 0 24 24" fill="currentColor">
                         <path d="M3.9 12c0-1.71 1.39-3.1 3.1-3.1h4V7H6.9C4.01 7 1.9 9.11 1.9 12s2.11 5 5 5h4v-1.9H6.9C5.19 17.1 3.9 15.71 3.9 12zM8 13h8v-2H8v2zm9.1-6h-4v1.9h4c1.71 0 3.1 1.39 3.1 3.1s-1.39 3.1-3.1 3.1h-4V17h4c2.89 0 5-2.11 5-5s-2.11-5-5-5z" />
                     </svg>
                     {link}

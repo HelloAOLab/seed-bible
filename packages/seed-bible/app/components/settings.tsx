@@ -14,6 +14,7 @@ import { useTabsContext } from "app.hooks.tabs";
 import { useBibleContext } from "app.hooks.bibleVariables";
 import { SpaceSettingsForm, SpaceSelector } from "app.components.spaceSettings";
 import { useHoldAction } from "app.hooks.useHold";
+import {  ThemeIcon,BibleIcon,NewSettingsIcon,ExtensionsIcon  } from "app.components.icons";
 
 const SettingsSidebar = () => {
   const [activeTab, setActiveTab] = useState("space");
@@ -58,7 +59,7 @@ const SettingsSidebar = () => {
   const [spaceContentVisibility, setSpaceContentVisibility] = useState({});
   const [spaceContentLabels, setSpaceContentLabels] = useState({});
   const [spaceDescription, setSpaceDescription] = useState(
-    "Settings for your space. Customize the toolbar, theme, text, and more. An extension store with more capability will be available at a later date."
+"Settings for your space. Customise toolbar, theme and add extensions."
   );
 
   // Initialize globalThis.changes if it doesn't exist
@@ -88,22 +89,22 @@ const SettingsSidebar = () => {
   const baseSettingsConfig = [
     {
       key: "theme",
-      label: "Theme",
-      icon: "palette",
+      label: "Theme & Text",
+      icon: <ThemeIcon />,
       expandable: false,
       onClick: () => setSideBarMode("themeSettings"),
     },
-    {
-      key: "layers",
-      label: "Layers",
-      icon: "layers",
-      style: "disabled",
-      expandable: true,
-    },
+    // {
+    //   key: "layers",
+    //   label: "Layers",
+    //   icon: "layers",
+    //   style: "disabled",
+    //   expandable: true,
+    // },
     {
       key: "Extensions",
-      label: "Extensions",
-      icon: "extension",
+      label: "Configure Extensions",
+      icon: <ExtensionsIcon/>,
       style: "",
       expandable: false,
       onClick: () => setSideBarMode("extensions"),
@@ -111,15 +112,15 @@ const SettingsSidebar = () => {
     {
       key: "bibleDefaults",
       label: "Bible Defaults",
-      style: "disabled",
-      icon: "book",
+      style: false,
+      icon: <BibleIcon/>,
       expandable: true,
     },
-    { key: "divider1", type: "divider" },
+    // { key: "divider1", type: "divider" },
     {
       key: "pageSettings",
-      label: "Page Settings",
-      icon: "article",
+      label: "Advanced Settings",
+      icon: <NewSettingsIcon/>,
       expandable: true,
       subItems: [
         // { key: 'toolbar', label: 'Toolbar', icon: `construction`, onClick: () => setSideBarMode('toolbarSettings-Page') },
@@ -129,12 +130,12 @@ const SettingsSidebar = () => {
           icon: `instant_mix`,
           onClick: () => setSideBarMode("editorToolbarSettings"),
         },
-        {
-          key: "text",
-          label: "Text",
-          icon: "text_fields",
-          onClick: () => setSideBarMode("textSettings"),
-        },
+        // {
+        //   key: "text",
+        //   label: "Text",
+        //   icon: "text_fields",
+        //   onClick: () => setSideBarMode("textSettings"),
+        // },
         {
           key: "ai",
           label: "AI",
@@ -147,12 +148,12 @@ const SettingsSidebar = () => {
           icon: "description",
           onClick: () => setSideBarMode("tabSettings"),
         },
-        {
-          key: "mentuText",
-          label: "Menu text",
-          icon: "text_fields",
-          onClick: () => setSideBarMode("menuTextSettings"),
-        },
+        // {
+        //   key: "mentuText",
+        //   label: "Menu text",
+        //   icon: "text_fields",
+        //   onClick: () => setSideBarMode("menuTextSettings"),
+        // },
       ],
     },
     // { key: "divider2", type: "divider" },
@@ -210,15 +211,15 @@ const SettingsSidebar = () => {
         }
       },
     },
-    {
-      key: "DownloadSpace",
-      label: "Download space",
-      icon: "download",
-      expandable: false,
-      onClick: () => {
-        downloadSpaceAsJSON(CurrentSpace.id);
-      },
-    },
+    // {
+    //   key: "DownloadSpace",
+    //   label: "Download space",
+    //   icon: "download",
+    //   expandable: false,
+    //   onClick: () => {
+    //     downloadSpaceAsJSON(CurrentSpace.id);
+    //   },
+    // },
     { key: "Share", label: "Share", icon: "share", expandable: false },
   ];
 
@@ -287,7 +288,7 @@ const SettingsSidebar = () => {
     // ReSeed toggle item
     {
       key: "reseedToggle",
-      label: ReSeed ? "Exit Reseed" : "Reseed",
+      label: ReSeed ? "Exit" : "Propagate",
       icon: "face",
       onClick: () => setReSeed((prev) => !prev),
     },
@@ -480,6 +481,7 @@ const SettingsSidebar = () => {
     if (CurrentSpace) {
       setSpaceName(CurrentSpace.name);
     }
+    
   }, [activeSpace]);
   useEffect(() => {
     updateSpace(activeSpace, { name: spaceName });
@@ -653,11 +655,9 @@ const SettingsSidebar = () => {
                   className="space-icon material-symbols-outlined"
                 >
                   <div style={{ "pointer-events": "none" }}>
-                    {CurrentSpace?.icon || (
-                      <div class="activeBg">
-                        <span></span>
-                      </div>
-                    )}
+                    {CurrentSpace?.icon || <div class="activeBg">
+    <span></span>
+  </div>}
                   </div>
                 </div>
                 {spaceContentVisibility.spaceName !== false && (
@@ -1511,7 +1511,8 @@ const SettingsSidebar = () => {
                 /* Space content specific styles */
                 .space-content-item {
                     position: relative;
-                    margin-bottom: 16px;
+                    margin-top: 10px;
+
                 }
                 
                 .space-content-hide {
@@ -1559,5 +1560,6 @@ const SettingsSidebar = () => {
     </div>
   );
 };
+
 
 export default SettingsSidebar;

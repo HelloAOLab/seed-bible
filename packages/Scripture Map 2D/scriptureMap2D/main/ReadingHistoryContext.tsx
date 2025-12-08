@@ -4,6 +4,8 @@ import {
   flat,
   calculateReadingHistorySummary,
 } from "db.annotations.library";
+import { useTabsContext } from "app.hooks.tabs";
+import { useScriptureMap2DContext } from "scriptureMap2D.main.ScriptureMap2DContext";
 
 const { createContext, useContext, useState, useMemo, useEffect, useCallback } =
   os.appHooks;
@@ -11,6 +13,14 @@ const { createContext, useContext, useState, useMemo, useEffect, useCallback } =
 const ReadingHistoryContext = createContext();
 
 export const ReadingHistoryProvider = ({ children }) => {
+  const {
+    mode,
+    ScriptureMap2DModes,
+    isReadingHistoryEnabled,
+    setShowingBooksColors,
+  } = useScriptureMap2DContext();
+
+  const { activeTab } = useTabsContext();
   const { tick } = useTimeContext();
 
   const [readingHistoryRangeSeconds, setReadingHistoryRangeSeconds] =
@@ -30,17 +40,33 @@ export const ReadingHistoryProvider = ({ children }) => {
   const [selectedUsersCount, setSelectedUsersCount] = useState(0);
   const [readingEventsByDay, setReadingEventsByDay] = useState(null);
 
+  const trySetMyAuthBotId = useCallback(() => {
+    if (!myAuthBotId) {
+      os.requestAuthBotInBackground().then((authBot) => {
+        const filtersCopy = new Map(readingHistoryUserFilters);
+        filtersCopy.set(authBot.id, true);
+        setMyAuthBotId(authBot.id);
+        setReadingHistoryUserFilters(filtersCopy);
+      });
+    }
+  }, [readingHistoryUserFilters, myAuthBotId]);
+
+  const handleUserLoggedIn = useCallback(() => {
+    trySetMyAuthBotId();
+  }, [trySetMyAuthBotId]);
+
   useEffect(() => {
-    os.requestAuthBotInBackground().then((authBot) => {
-      const filtersCopy = new Map(readingHistoryUserFilters);
-      filtersCopy.set(authBot.id, true);
-      setMyAuthBotId(authBot.id);
-      setReadingHistoryUserFilters(filtersCopy);
-    });
+    globalThis.ScriptureMapHandleUserLoggedIn = handleUserLoggedIn;
+
+    trySetMyAuthBotId();
+
+    return () => {
+      globalThis.ScriptureMapHandleUserLoggedIn = null;
+    };
   }, []);
 
   useEffect(() => {
-    if (myAuthBotId) setUsersAuthId([myAuthBotId]);
+    if (myAuthBotId) setUsersAuthId((prev) => [...prev, myAuthBotId]);
   }, [myAuthBotId]);
 
   const {
@@ -197,9 +223,21 @@ export const ReadingHistoryProvider = ({ children }) => {
       .then((allEvents) => {
         const flattenedEvents = Array.from(flat(allEvents));
 
-        for (const event of flattenedEvents) {
-          const { bookId, start, end } = event;
+        for (let event of flattenedEvents) {
+          let { start, end, chapter, bookId } = event;
           if (start >= rangeStart && end <= rengeEnd) {
+            if (bookId === "PSA") {
+              const { bookId: dividedPsalmId, chapter: dividedPsalmChapter } =
+                BibleVizUtils.Functions.ConvertCompletePsalmsToDivided({
+                  chapter,
+                });
+              event = {
+                ...event,
+                bookId: dividedPsalmId,
+                chapter: dividedPsalmChapter,
+              };
+              ({ start, end, chapter, bookId } = event);
+            }
             if (!rangedEventsByBook.has(bookId)) {
               rangedEventsByBook.set(bookId, []);
             }
@@ -238,7 +276,7 @@ export const ReadingHistoryProvider = ({ children }) => {
           error
         );
       });
-  }, [tick, readingHistoryUserFilters, readingHistoryRangeSeconds]);
+  }, [tick, activeTab, readingHistoryUserFilters, readingHistoryRangeSeconds]);
 
   const handleReadingHistoryUserSelectorClick = useCallback(
     (key) => {
@@ -273,6 +311,20 @@ export const ReadingHistoryProvider = ({ children }) => {
     [setReadingHistoryRangeSeconds]
   );
 
+  const shouldShowReadingHistory = useMemo(() => {
+    return (
+      mode === ScriptureMap2DModes.Viewer &&
+      isReadingHistoryEnabled &&
+      usersAuthId?.length > 0
+    );
+  }, [mode, isReadingHistoryEnabled, usersAuthId, ScriptureMap2DModes]);
+
+  useEffect(() => {
+    if (shouldShowReadingHistory) {
+      setShowingBooksColors(false);
+    }
+  }, [shouldShowReadingHistory]);
+
   return (
     <ReadingHistoryContext.Provider
       value={{
@@ -300,6 +352,8 @@ export const ReadingHistoryProvider = ({ children }) => {
         MS_PER_WEEK,
         dayRangesMap,
         selectedUsersCount,
+        usersAuthId,
+        shouldShowReadingHistory,
       }}
     >
       {children}

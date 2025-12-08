@@ -11,15 +11,13 @@ const ReferenceModal = ({ reference }) => {
   const populateReferenceData = useCallback(async () => {
     setRdLoading(true);
 
-    let referenceBot = getBot("system", "references.manager");
+    const referenceBot = getBot("system", "references.manager");
 
     const referenceArrayKey = `${reference.book}.${reference.chapter}.${reference.verse}`;
     if (
       referenceBot.masks?.referenceDataObject &&
       referenceBot.masks?.referenceDataObject[referenceArrayKey]
     ) {
-      ull;
-
       console.log("retriveing from storage");
       setReferenceData({
         ...referenceBot.masks.referenceDataObject[referenceArrayKey],
@@ -34,7 +32,7 @@ const ReferenceModal = ({ reference }) => {
 
       const referenceReqs = await Promise.all(referenceDataPromises);
 
-      let tempReferenceData = {};
+      const tempReferenceData = {};
 
       referenceReqs.forEach((res, index) => {
         if (res.status !== 200) {
@@ -42,15 +40,15 @@ const ReferenceModal = ({ reference }) => {
         }
         const contentArray = [...res.data.chapter.content];
         let content = "";
-        let reference = referenceArray[index];
+        const reference = referenceArray[index];
         const referenceKey = `${reference.book}.${reference.chapter}.${reference.verse}`;
-        let start = reference.verse;
-        let end = reference?.endVerse || reference.verse;
+        const start = reference.verse;
+        const end = reference?.endVerse || reference.verse;
         if (start <= end) {
           for (let i = start; i <= end; i++) {
             for (let j = 0; j < contentArray.length; j++) {
               if (contentArray[j]?.number == i) {
-                let contentString = contentArray[j].content
+                const contentString = contentArray[j].content
                   .map((data) => {
                     if (typeof data === "string") {
                       return data;
@@ -103,12 +101,12 @@ const ReferenceModal = ({ reference }) => {
       minWidth: "30rem",
     });
     await os.sleep(2000);
-    let start = reference.verse;
-    let end = reference?.endVerse || reference.verse;
+    const start = reference.verse;
+    const end = reference?.endVerse || reference.verse;
     if (start <= end) {
       for (let i = start; i <= end; i++) {
         console.log(`highlighting verse ${i}`);
-        HighlightVerse(i);
+        HighlightVerse(i, "#ffeb3b");
       }
     }
   };
@@ -147,13 +145,16 @@ const ReferenceModal = ({ reference }) => {
           <h2>{`${tags.IdToName[reference.book]} ${reference.chapter}:${reference.verse}`}</h2>
           <span
             onClick={() => {
-              globalThis.currentReference !==
-                `${reference.book}.${reference.chapter}.${reference.verse}` &&
+              if (
+                globalThis.currentReference !==
+                `${reference.book}.${reference.chapter}.${reference.verse}`
+              ) {
                 shout("ToggleReference", {
                   book: tags.IdToName[reference.book],
                   chapter: reference.chapter,
                   verse: reference.verse,
                 });
+              }
               closePopupSettings();
             }}
             class="openTab material-symbols-outlined"

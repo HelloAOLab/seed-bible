@@ -27,6 +27,8 @@ const AudioPlayer = await thisBot.AudioPlayer();
 const RenderHTMLContent = await thisBot.RenderHTMLContent();
 const TogglePlaylistHeight = await thisBot.TogglePlaylistHeight();
 
+import { CustomAnnotationTextEditor } from "playlist.playlistMode.CustomAnnotationTextEditor";
+
 const DEV_ENV =
   configBot.tags.pattern === "SeedBibleDev" || !configBot.tags.pattern;
 
@@ -497,6 +499,7 @@ const AddAnotationUI = ({
   const [singleMode, setSingleMode] = useState(true);
   const [embedItems, setEmbedItems] = useState([]);
   const [tags, setTags] = useState([]);
+  const [textHTML, setTextHTML] = useState(globalThis.PreviousHTML || "");
 
   // Edit Mode
   const [isEditAddress, setIsEditAddress] = useState(editData?.address);
@@ -535,8 +538,10 @@ const AddAnotationUI = ({
           const data = res.data.data;
           if (data.data) {
             setEditDataDetails({ ...data.data });
-            setList([...data.data.additionalInfo.layers]);
+            const layers = data.data.additionalInfo?.layers?.filter((ele) => ele.type === "heading");
+            setTextHTML(layers?.[0]?.content || "");
             setTags([...(data.chronicle_tags || [])]);
+            globalThis.IsEditingAnnotation = true;
           } else {
             setDataFetching(false);
             ShowNotification({
@@ -558,6 +563,7 @@ const AddAnotationUI = ({
     globalThis.SelectedItemIDForAttachments = null;
     return () => {
       globalThis.SetSelectedAnnotations = null;
+      globalThis.IsEditingAnnotation = false;
       globalThis.SelectedItemIDForAttachments = null;
       if (isEditAddress) {
         globalThis[`${id}mode`] = PlaylistModeTypes.playlist;
@@ -572,7 +578,9 @@ const AddAnotationUI = ({
 
   useLayoutEffect(() => {
     globalThis.SelectedItemIDForAttachments = selectedAnnotation;
-  }, [selectedAnnotation]);
+    globalThis.PreviousHTML = textHTML;
+
+  }, [selectedAnnotation, textHTML]);
 
   useLayoutEffect(() => {
     globalThis[`SetChecklistEnabled`] = setChecklistEnabled;
@@ -931,7 +939,8 @@ const AddAnotationUI = ({
   };
 
   const onEditSave = async () => {
-    if (list.length < 1) {
+    // if (list.length < 1) {
+    if (textHTML.trim().length < 1) {
       return ShowNotification({
         message: `Cannot save empty annotation please use delete instead!`,
         severity: "error",
@@ -940,6 +949,16 @@ const AddAnotationUI = ({
     try {
       setLoading(true);
       const promisesArray = [];
+
+      const scripture = {
+        id: createUUID(),
+        content: textHTML,
+        additionalInfo: {
+          isValid: true,
+        },
+        type:  "heading"
+      };
+
       const chroAddData = {
         book:
           editDataDetails.additionalInfo.chapterData?.id ||
@@ -953,7 +972,8 @@ const AddAnotationUI = ({
           ...editDataDetails,
           additionalInfo: {
             ...editDataDetails.additionalInfo,
-            layers: [...list],
+            // layers: [...list],
+            layers: [scripture],
           },
         },
       };
@@ -977,6 +997,7 @@ const AddAnotationUI = ({
       setList([]);
       setSelectedAnnotation(null);
       setLoading(false);
+      globalThis.PreviousHTML = null;
       if (setTab) setTab("discover");
     } catch (e) {
       setLoading(false);
@@ -992,7 +1013,8 @@ const AddAnotationUI = ({
 
   const onClickSave = async () => {
     if (loading) return;
-    if (list.length < 1) {
+    // if (list.length < 1) {
+    if (textHTML.trim().length < 1) {
       return ShowNotification({
         message: "Cannot save empty annotations.",
         severity: "error",
@@ -1002,6 +1024,16 @@ const AddAnotationUI = ({
       await onEditSave();
       return;
     }
+
+    const scripture = {
+      id: createUUID(),
+      content: textHTML,
+      additionalInfo: {
+        isValid: true,
+      },
+      type:  "heading"
+    };
+
     const currentList = [...list].filter((ele) =>
       singleMode
         ? ele.type === "verse" ||
@@ -1018,7 +1050,7 @@ const AddAnotationUI = ({
     let somethingNotScripture = false;
     let somethingNotEmbedded = false;
     if (singleMode) {
-      if (embedItems.length === 0) {
+      if (textHTML.trim().length === 0) {
         return ShowNotification({
           message: `Please embed something to save annotations!`,
           severity: "error",
@@ -1081,7 +1113,8 @@ const AddAnotationUI = ({
               additionalInfo: {
                 ...ele.additionalInfo,
                 layers: [
-                  ...(singleMode ? embedItems : ele.additionalInfo.layers),
+                  scripture
+                  // ...(singleMode ? embedItems : ele.additionalInfo.layers),
                 ],
               },
             },
@@ -1105,6 +1138,7 @@ const AddAnotationUI = ({
       });
       setList([]);
       setSelectedAnnotation(null);
+      globalThis.PreviousHTML = null;
     } catch (e) {
       setLoading(false);
       console.error("Error saving annotations:", e);
@@ -1845,16 +1879,26 @@ const AddAnotationUI = ({
                   globalThis.LastClickX = x;
                   globalThis.LastClickY = y;
                   showPlaylistPosition.current = { ...getPosition() };
-                  setShowPlaylistSettings(true);
+                  // setShowPlaylistSettings(true);
                 }}
               >
-                <span class="material-symbols-outlined">
-                  {annoation ? "draft" : "playlist_play"}
-                </span>
+                <AnnotationIcon invert={true} />
               </div>
               <p>Annotation Mode</p>
             </div>
             <div className="align-center">
+              <div
+                className="publish-setting"
+                style={{
+                  fontSize: "12px",
+                  marginRight: "0.5rem",
+                }}
+                onClick={(e) => {
+                  if (setTab) setTab("discover");
+                }}
+              >
+                Cancel
+              </div>
               <TogglePlaylistHeight />
               <div
                 className="publish-setting"
@@ -2140,16 +2184,15 @@ const AddAnotationUI = ({
                   }
                 }}
               />
-              {!draggedItemID &&
+              {!draggedItemID && !dataFetching &&
                 selectedAnnotation === ele.id &&
                 !embedding && (
                   <div style={{ padding: "1rem" }}>
-                    <AttachLink
-                      isPlaylist
-                      onAddTags={onAddTags}
-                      isTags
-                      attachLink={onEmbedItems}
-                      massAdd={massAdd}
+                    <CustomAnnotationTextEditor
+                      initialHTML={textHTML}
+                      onChange={(html) => {setTextHTML(html)}}
+                      massAdd={onMassAdd}
+                      attachLink={attachLink}
                     />
                   </div>
                 )}
@@ -2157,16 +2200,15 @@ const AddAnotationUI = ({
           )
         )}
 
-        {!selectedAnnotation &&
+        {!selectedAnnotation && !dataFetching &&
           (!singleMode || editData?.address) &&
           !draggedItemID &&
           !embedding && (
-            <AttachLink
-              isTags={editData}
-              isPlaylist
-              onAddTags={onAddTags}
-              attachLink={attachLink}
-              massAdd={onMassAdd}
+            <CustomAnnotationTextEditor
+                massAdd={onMassAdd}
+                initialHTML={textHTML}
+                onChange={(html) => {setTextHTML(html)}}
+                attachLink={attachLink}
             />
           )}
 

@@ -6,19 +6,15 @@ const locations = tags.locations;
 
 const locationsArr = [];
 
-const locationOptionsConfig = {
-
-};
+const locationOptionsConfig = {};
 
 const makeLocationOptions = ({ location }) => {
   return {
-    icon: (
-      <span class="material-symbols-outlined">location_on</span>
-    ),
+    icon: <span class="material-symbols-outlined">location_on</span>,
     title: `${location}`,
     onClick: async () => {
-      if (!globalThis.activeCanvasId) {
-        globalThis.AddFloatingApp({
+      if (!masks?.appId) {
+        const appId = globalThis.AddFloatingApp({
           App: (
             <div
               className="mainCanvas"
@@ -31,16 +27,14 @@ const makeLocationOptions = ({ location }) => {
           ),
           title: `Canvas`,
           position: { x: 200, y: 150 },
-          size: { width: 525, height: 300 },
+          size: { width: 350, height: 200 },
+          type: "canvas",
         });
+        setTagMask(thisBot, "appId", appId, "tempLocal");
       }
       let geoJson;
-      let locationBot = getBot(
-        "system",
-        "ext_canvas.highlight_locations"
-      );
-      let placeData =
-        locationBot.tags.locations[location.toLowerCase()];
+      const locationBot = getBot("system", "ext_canvas.highlight_locations");
+      const placeData = locationBot.tags.locations[location.toLowerCase()];
       if (placeData.place === placeData.geojson) {
         geoJson = await web.get(
           `https://raw.githubusercontent.com/Bored-Wizard/isreal_geojson/main/${placeData.geojson}.geojson`
@@ -51,63 +45,70 @@ const makeLocationOptions = ({ location }) => {
         );
       }
       if (geoJson.status === 200) {
-        whisper(
-          getBot("system", "ext_geoImporter.importer"),
-          "loadMap",
-          {
-            file: geoJson.data,
-            loadGame: that?.loadGame ? true : false,
-            openOverlay: true,
-          }
-        );
+        whisper(getBot("system", "ext_geoImporter.importer"), "loadMap", {
+          file: geoJson.data,
+          loadGame: that?.loadGame ? true : false,
+          openOverlay: true,
+        });
       } else {
-        os.toast(
-          "Something went wrong while retrieving the data"
-        );
+        os.toast("Something went wrong while retrieving the data");
       }
     },
-  }
-}
+  };
+};
 
 for (let i = 0; i < that.content.length; i++) {
   const verse = that.content[i].verses;
   for (let j = 0; j < verse.length; j++) {
     const verseArray = verse[j].text.split(" ");
-    for (let word of verseArray) {
+    for (const word of verseArray) {
       if (locations[word.replace(/[^a-zA-Z]/g, "").toLowerCase()]) {
         locationsArr.push(word.replace(/[^a-zA-Z]/g, "").toLowerCase());
-        if (locationOptionsConfig[`${that.book}-${verse[j].verseNumber}`]) {
-          locationOptionsConfig[`${that.book}-${verse[j].verseNumber}`].items.push(makeLocationOptions({ location: word.replace(/[^a-zA-Z]/g, "") }));
+        if (
+          locationOptionsConfig[
+            `${that.book}-${that.chapter}-${verse[j].verseNumber}`
+          ]
+        ) {
+          locationOptionsConfig[
+            `${that.book}-${that.chapter}-${verse[j].verseNumber}`
+          ].items.push(
+            makeLocationOptions({ location: word.replace(/[^a-zA-Z]/g, "") })
+          );
         } else {
-          locationOptionsConfig[`${that.book}-${verse[j].verseNumber}`] = {
-            icon: (<LocationIcon />),
+          locationOptionsConfig[
+            `${that.book}-${that.chapter}-${verse[j].verseNumber}`
+          ] = {
+            icon: <LocationIcon />,
             title: "Locations",
-            items: [makeLocationOptions({ location: word.replace(/[^a-zA-Z]/g, "") })]
-          }
+            items: [
+              makeLocationOptions({ location: word.replace(/[^a-zA-Z]/g, "") }),
+            ],
+          };
         }
       }
     }
   }
 }
 
-if(!globalThis?.VerseContextMenuOptions){
+if (!globalThis?.VerseContextMenuOptions) {
   globalThis.VerseContextMenuOptions = {};
 }
-for (let key of Object.keys(locationOptionsConfig)) {
+for (const key of Object.keys(locationOptionsConfig)) {
   let options = [];
   if (globalThis?.VerseContextMenuOptions?.[key]) {
     options = [
       ...globalThis.VerseContextMenuOptions[key],
-      locationOptionsConfig[key]
-    ]
+      locationOptionsConfig[key],
+    ];
   } else {
-    options = [
-      locationOptionsConfig[key]
-    ]
+    options = [locationOptionsConfig[key]];
   }
   const uniqueOptions = [...new Set(options)];
   globalThis.VerseContextMenuOptions[key] = uniqueOptions;
-  console.log(globalThis.VerseContextMenuOptions[key], "globalThis.VerseContextMenuOptions[key]")
+  console.log(
+    globalThis.VerseContextMenuOptions[key],
+    "globalThis.VerseContextMenuOptions[key]"
+  );
 }
 
 HighlightWords({
@@ -166,11 +167,11 @@ HighlightWords({
                       });
                     }
                     let geoJson;
-                    let locationBot = getBot(
+                    const locationBot = getBot(
                       "system",
                       "ext_canvas.highlight_locations"
                     );
-                    let placeData =
+                    const placeData =
                       locationBot.tags.locations[verse.text.toLowerCase()];
                     if (placeData.place === placeData.geojson) {
                       geoJson = await web.get(

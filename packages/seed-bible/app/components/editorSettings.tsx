@@ -3,7 +3,7 @@ import { MenuIcon, ToolbarIcon } from 'app.components.icons';
 import { useTabsContext } from 'app.hooks.tabs';
 import { useSideBarContext } from 'app.hooks.sideBar';
 import { useBibleContext } from 'app.hooks.bibleVariables';
-
+globalThis.setPriorities = ()=>{}
 const EditorToolbarSettings = () => {
     const { updateSpace, activeSpace, spaces } = useTabsContext();
     const { sidebarMode, setSideBarMode, closePopupSettings } = useSideBarContext();
@@ -179,7 +179,7 @@ const EditorToolbarSettings = () => {
                 marginBottom: '10px',
                 fontSize: '24px',
                 fontWeight: '600',
-                color: '#333'
+                color: 'var(--text1) !important'
             }}>
                 <ToolbarIcon />
                 <div>Toolbar Settings</div>
@@ -187,7 +187,7 @@ const EditorToolbarSettings = () => {
 
             <div style={{
                 fontSize: '14px',
-                color: '#666',
+                color: 'var(--text1) !important',
                 marginBottom: '30px'
             }}>
                 Customize the order of toolbar items. Drag and drop or use the arrow buttons to reorder.
@@ -242,14 +242,14 @@ const EditorToolbarSettings = () => {
             </div>
 
             <div style={{
-                backgroundColor: '#f8f9fa',
+                // backgroundColor: '#f8f9fa',
                 borderRadius: '8px',
             }}>
                 <div style={{
                     fontSize: '16px',
                     fontWeight: '600',
                     marginBottom: '15px',
-                    color: '#333'
+                    color: 'var(--text1) !important'
                 }}>
                     Editor Toolbar Item Order (Priority)
                 </div>
@@ -269,7 +269,7 @@ const EditorToolbarSettings = () => {
                                 onDragOver={handleDragOver}
                                 onDrop={(e) => handleDrop(e, index)}
                                 style={{
-                                    backgroundColor: 'white',
+                                    backgroundColor: 'transparent',
                                     border: '1px solid #dee2e6',
                                     borderRadius: '6px',
                                     padding: '12px',
@@ -293,8 +293,8 @@ const EditorToolbarSettings = () => {
                             >
                                 <div style={{ display: 'flex', alignItems: 'center', gap: '12px', flex: 1 }}>
                                     <div style={{
-                                        backgroundColor: '#e9ecef',
-                                        color: '#6c757d',
+                                        backgroundColor: 'transparent',
+                                        color: 'var(--text1) !important',
                                         borderRadius: '4px',
                                         padding: '4px 8px',
                                         fontSize: '12px',
@@ -309,14 +309,14 @@ const EditorToolbarSettings = () => {
                                         <div style={{
                                             fontSize: '14px',
                                             fontWeight: '500',
-                                            color: '#333',
+                                            color: 'var(--text1) !important',
                                             marginBottom: '2px'
                                         }}>
                                             {item.label}
                                         </div>
                                         <div style={{
                                             fontSize: '12px',
-                                            color: '#666'
+                                            color: 'var(--text1) !important'
                                         }}>
                                             {item.description}
                                         </div>
@@ -338,7 +338,7 @@ const EditorToolbarSettings = () => {
                                             justifyContent: 'center',
                                             cursor: index === 0 ? 'not-allowed' : 'pointer',
                                             opacity: index === 0 ? 0.4 : 1,
-                                            color: '#6c757d'
+                                            color: 'var(--text1) !important'
                                         }}
                                         title="Move up"
                                     >
@@ -361,7 +361,7 @@ const EditorToolbarSettings = () => {
                                             justifyContent: 'center',
                                             cursor: index === priorities.length - 1 ? 'not-allowed' : 'pointer',
                                             opacity: index === priorities.length - 1 ? 0.4 : 1,
-                                            color: '#6c757d'
+                                            color: 'var(--text1) !important'
                                         }}
                                         title="Move down"
                                     >
@@ -377,7 +377,7 @@ const EditorToolbarSettings = () => {
                                         alignItems: 'center',
                                         justifyContent: 'center',
                                         cursor: 'grab',
-                                        color: '#6c757d'
+                                        color: 'var(--text1) !important'
                                     }}>
                                         <span className="material-symbols-outlined" style={{ fontSize: '16px' }}>
                                             drag_indicator

@@ -612,6 +612,7 @@ function showEventPopup(
       const end = popup.querySelector("#end-date")?.value || date;
       const startTime = popup.querySelector(".gm-input-start_time")?.value;
       const endTime = popup.querySelector(".gm-input-end_time")?.value;
+      console.log(end,'end')
 
       const recurVal =
         popup.querySelector("#repeatSelect")?.value || "No Repeat";

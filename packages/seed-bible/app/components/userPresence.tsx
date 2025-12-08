@@ -28,43 +28,17 @@ export const colors = [
   "#F59E0B",
 ];
 
-// Storage for used assignments
-const assignedVisuals = new Map();
-  if(!tags.iconPointer)
- tags.iconPointer = 0;
-if(!tags.colorPointer)
- tags.colorPointer = 0;
-
-function getNextIcon() {
-  const icon = icons[tags.iconPointer];
-  tags.iconPointer = (tags.iconPointer + 1) % icons.length;
-  return icon;
+function hashString(str) {
+  let h = 5381;
+  for (let i = 0; i < str.length; i++) h = ((h << 5) + h) ^ str.charCodeAt(i);
+  return h >>> 0;
 }
 
-function getNextColor() {
-  const color = colors[tags.colorPointer];
-  tags.colorPointer = (tags.colorPointer + 1) % colors.length;
-  return color;
-}
-
-function computeNonDuplicateVisual(remoteId) {
-  // If already assigned, return the stable assignment
-  if (assignedVisuals.has(remoteId)) {
-    return assignedVisuals.get(remoteId);
-  }
-
-  const icon = getNextIcon();
-  const color = getNextColor();
-
-  const data = {
-    iconIndex: icons.indexOf(icon),
-    colorIndex: colors.indexOf(color),
-    Icon: icon,
-    color,
-  };
-
-  assignedVisuals.set(remoteId, data);
-  return data;
+function computeVisual(remoteId) {
+  const h = hashString(String(remoteId));
+  const iconIndex = h % icons.length;
+  const colorIndex = Math.floor(h / icons.length) % colors.length;
+  return { iconIndex, colorIndex };
 }
 
 function getOrSetVisualInTags(remoteId) {
@@ -72,21 +46,51 @@ function getOrSetVisualInTags(remoteId) {
     if (typeof tags !== "undefined") {
       if (!tags.userPresenceData) tags.userPresenceData = {};
       if (!tags.userPresenceData.visuals) tags.userPresenceData.visuals = {};
-
+      if (!tags.userPresenceData.usedIndices) tags.userPresenceData.usedIndices = { colors: [], icons: [] };
+      
       if (!tags.userPresenceData.visuals[remoteId]) {
-        tags.userPresenceData.visuals[remoteId] = computeNonDuplicateVisual(remoteId);
+        // Get available indices (filter out used ones)
+        let availableColorIndices = colors
+          .map((_, i) => i)
+          .filter(i => !tags.userPresenceData.usedIndices.colors.includes(i));
+        
+        let availableIconIndices = icons
+          .map((_, i) => i)
+          .filter(i => !tags.userPresenceData.usedIndices.icons.includes(i));
+        
+        // If all indices are used, reset and use all indices again
+        if (availableColorIndices.length === 0) {
+          tags.userPresenceData.usedIndices.colors = [];
+          availableColorIndices = colors.map((_, i) => i);
+        }
+        
+        if (availableIconIndices.length === 0) {
+          tags.userPresenceData.usedIndices.icons = [];
+          availableIconIndices = icons.map((_, i) => i);
+        }
+        
+        // Compute visual with available indices
+        const visual = computeVisual(remoteId, availableColorIndices, availableIconIndices);
+        
+        // Record the used indices
+        tags.userPresenceData.usedIndices.colors.push(visual.colorIndex);
+        tags.userPresenceData.usedIndices.icons.push(visual.iconIndex);
+        
+        tags.userPresenceData.visuals[remoteId] = visual;
       }
-
-      return tags.userPresenceData.visuals[remoteId];
+      
+      const data = tags.userPresenceData.visuals[remoteId];
+      return { ...data, color: colors[data.colorIndex], Icon: icons[data.iconIndex] };
     }
   } catch (_) {
-    return { color: null, icon: null };
+    return { color: null, Icon: null };
   }
-
-  return computeNonDuplicateVisual(remoteId);
+  return computeVisual(remoteId);
 }
 
+
 globalThis.GetOrSetVisualInTags = getOrSetVisualInTags;
+
 
 
 async function getSelfIdSafe() {
@@ -735,7 +739,7 @@ export function UserPresence() {
             display: "flex",
             alignItems: "center",
             gap: 8,
-            backgroundColor: "#fff",
+            backgroundColor: "#ffffff3d",
             borderRadius:
               getStatusText() !== "Start session" ? "5px 5px 0 0" : 5,
             padding: "4px 8px",
@@ -771,7 +775,7 @@ export function UserPresence() {
               <span
                 style={{
                   fontSize: 12,
-                  color: "black",
+                  color: "var(--text1)",
                   fontWeight: 600,
                   marginLeft: 4,
                 }}
@@ -911,8 +915,8 @@ export function UserPresence() {
               style={{
                 zIndex: 99999,
                 position: "absolute",
-                left: 240,
-                top: 105,
+                left: 220,
+                top: 30,
               }}
             >
               {isHost ? (

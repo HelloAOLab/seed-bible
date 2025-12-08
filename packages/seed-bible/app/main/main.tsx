@@ -1,6 +1,6 @@
 await os.unregisterApp("main");
 os.registerApp("main", thisBot);
-const { useEffect, useState, useRef, render } = os.appHooks;
+const { useEffect, useState, useRef, render, useMemo } = os.appHooks;
 
 import { BibleVariablesProvider } from "app.hooks.bibleVariables";
 import { TabsProvider } from "app.hooks.tabs";
@@ -293,9 +293,63 @@ const Main = () => {
     CheckToolbarOverflow();
     // os.log('resize', CheckToolbarOverflow)
   }, [containerProps.leftWidth, containerProps.topHeight]);
-  const buildThemeCSS = (themeColors, activeSpace, defaultTheme) => {
+  // const buildThemeCSS = (themeColors, activeSpace, defaultTheme) => {
+  //   const colors = {
+  //     ...defaultTheme, // start with defaults
+  //     ...(themeColors?.[activeSpace] || {}), // overwrite with current themeColors
+  //   };
+
+  //   const vars = Object.entries(colors).map(
+  //     ([key, value]) => `--${key}: ${value};`
+  //   );
+
+  //   return `:root {\n  ${vars.join("\n  ")}\n}`;
+  // };
+
+  const defaultTheme = {
+    menuBackground: "#F0F1F1",
+    primaryButton: "#E6E6E6",
+    pageBackground: "#FFFFFF",
+    pageTextColor: "#000000",
+    primaryButtonColor: "#606060",
+    secondaryButton: "#4459F34D",
+    secondaryButtonColor: "#4459F3",
+    buttonBorder: "#2b00ff",
+    tabSelection: "#4459F3",
+    spaceSelection: "#4459F3",
+    toolbarBackground: "#ffffff",
+    iconColor: "#000000",
+    text1: "#000000",
+    text2: "#000000",
+    "filter-mode":" none",
+    showTabIcons: true, // Default to showing tab icons
+  };
+  const darkTheme = {
+      menuBackground: "#2D2D2D",
+      primaryButton: "#404040",
+      primaryButtonColor: "#FFFFFF",
+      secondaryButton: "#5A67D8",
+      secondaryButtonColor: "#FFFFFF",
+      buttonBorder: "#5A67D8",
+      tabSelection: "#5A67D8",
+      spaceSelection: "#5A67D8",
+      toolbarBackground: "#1A1A1A",
+      text1: "#FFFFFF",
+      text2: "#FFFFFF",
+      iconColor: "#FFFFFF",
+      "filter-mode": "invert(100%)",
+      pageBackground: "#121212",
+      pageTextColor: "white",
+      showTabIcons: true,
+  }
+  const isDark = false
+  // window.matchMedia("(prefers-color-scheme: dark)").matches;
+
+  let theme = isDark ? darkTheme : defaultTheme;
+
+  const ThemeCSS = useMemo(() => {
     const colors = {
-      ...defaultTheme, // start with defaults
+      ...theme, // start with defaults
       ...(themeColors?.[activeSpace] || {}), // overwrite with current themeColors
     };
 
@@ -304,27 +358,22 @@ const Main = () => {
     );
 
     return `:root {\n  ${vars.join("\n  ")}\n}`;
-  };
-  const defaultTheme = {
-    menuBackground: "#F0F1F1",
-    primaryButton: "#E6E6E6",
-    primaryButtonColor: "#606060",
-    secondaryButton: "#4459F34D",
-    secondaryButtonColor: "#4459F3",
-    buttonBorder: "#2b00ff",
-    tabSelection: "#a5ade2",
-    spaceSelection: "#4459F3",
-    toolbarBackground: "#ffffff",
-    text1: "#606060",
-    text2: "#000000",
-  };
+  }, [themeColors, activeSpace]);
+
+  useEffect(() => {
+    globalThis.ThemeCSS = ThemeCSS;
+    return () => {
+      globalThis.ThemeCSS = null;
+    };
+  }, [ThemeCSS]);
+
   return (
     <MouseMoveProvider>
       <link
         rel="stylesheet"
         href="https://fonts.googleapis.com/css2?family=Material+Symbols+Outlined:opsz,wght,FILL,GRAD@24,400,0,0"
       />
-      <style>{buildThemeCSS(themeColors, activeSpace, defaultTheme)}</style>
+      <style>{ThemeCSS}</style>
       <DragDropOverlay />
       <Layout>
         <SplitApp {...containerProps} panalMode={false} />

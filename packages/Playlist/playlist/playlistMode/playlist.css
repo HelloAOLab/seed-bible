@@ -1255,3 +1255,8 @@ div.attachment-link.dropabble-Embed .playlist-item-type {
     transform: translateY(0);
   }
 }
+
+.sre-image {
+  max-width: 100%;
+  height: auto;
+}

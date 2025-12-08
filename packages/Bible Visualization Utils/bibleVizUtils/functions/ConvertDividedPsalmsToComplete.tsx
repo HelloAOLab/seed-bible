@@ -1,8 +1,11 @@
-const {book, chapter} = that;
+const { book, chapter } = that;
 
-const dividedPaslmInfo = BibleVizUtils.Data.tags.booksStaticInfo[book]
+const dividedPaslmInfo = BibleVizUtils.Data.tags.booksStaticInfo[book];
 
-if(dividedPaslmInfo)
-{
-    return {chapter: chapter + dividedPaslmInfo.startingIndex}
+if (dividedPaslmInfo) {
+  return {
+    chapter: chapter + dividedPaslmInfo.startingIndex,
+    book: "Psamls",
+    bookId: "PSA",
+  };
 }

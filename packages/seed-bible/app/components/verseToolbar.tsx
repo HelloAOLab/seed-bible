@@ -19,23 +19,21 @@ export function VerseToolbar({
   onClose,
 }) {
   const [selectedColor, setSelectedColor] = useState("#FDE047");
-  const [customColors, setCustomColors] = useState([]);
+  const [customColors, setCustomColors] = useState(masks?.customColors?masks.customColors:[]);
+  useEffect(()=>{
+    masks.customColors = customColors
+  },[customColors])
   const [tempColor, setTempColor] = useState(null);
   const colorInputRef = useRef(null);
   const colorPickerRef = useRef(null);
 
   useEffect(() => {
     const handleClickOutside = (event) => {
-      // if (colorPickerRef.current && !colorPickerRef.current.contains(event.target)) {
-      //   if (!customColors.includes(tempColor)) {
-      //     setCustomColors((prev) => [...prev, tempColor]);
-      //   }
       if (tempColor) {
         handleColorClick(tempColor);
         setSelectedColor(tempColor);
         setTempColor(null);
       }
-      // }
     };
 
     document.addEventListener("mousedown", handleClickOutside);
@@ -81,6 +79,9 @@ export function VerseToolbar({
     animation: "slideUp 0.3s ease-out",
     maxWidth: "95vw",
     width: "auto",
+    display: "flex",
+    flexDirection: "column",
+    alignItems: "center",
   };
 
   const headerStyle = {
@@ -95,6 +96,13 @@ export function VerseToolbar({
     color: "#000",
     letterSpacing: "0.5px",
     textTransform: "uppercase",
+    backgroundColor: "#fff",
+    padding: "8px 16px",
+    borderRadius: "8px",
+    // border: "1px solid #e5e5e5",
+    // boxShadow: "0 2px 8px rgba(0, 0, 0, 0.1)",
+    width: "fit-content",
+    // margin: "0 auto 8px auto",
   };
 
   const dividerStyle = {
@@ -156,7 +164,7 @@ export function VerseToolbar({
     backgroundColor: "transparent",
     border: "none",
     cursor: "pointer",
-    color: "#333",
+    color: "var(--text1) !important",
     transition: "background-color 0.2s",
     borderRadius: "4px",
     fontSize: "10px",
@@ -217,15 +225,43 @@ export function VerseToolbar({
     colorInputRef.current?.click();
   };
 
-  const handleColorChange = (e) => {
-    setTempColor(e.target.value);
-  };
+const handleColorChange = (e) => {
+  const newColor = e.target.value;
+  setTempColor(newColor);
+  
+  // Add color to customColors array, max 3
+  setCustomColors((prev) => {
+    // Check if color already exists
+    if (prev.includes(newColor)) {
+      return prev;
+    }
+    
+    // If less than 3, just add it
+    if (prev.length < 3) {
+      return [...prev, newColor];
+    }
+    
+    // If 3 or more, remove first and add new one at the end
+    return [...prev.slice(1), newColor];
+  });
+};
 
   const menuOptions = useMemo(() => {
-    return getMenuActions(clickedVersesContext) || [];
+    return getMenuActions(clickedVersesContext,onClose) || [];
   }, [clickedVersesContext]);
 
   return (
+    <>
+    {globalThis.IsMobileNow()&&
+    <>
+    <div className="verse-ref">
+    <img src="https://res.cloudinary.com/dfbtwwa8p/image/upload/v1764875876/Rectangle_11_yzpmpm.svg"/>
+    </div>
+    <span className="verse-ref" style={verseRefStyle}>
+          {getVerseReference()}
+        </span>
+    </>
+        }
     <div className="verse-toolbar" style={containerStyle}>
       <style>
         {`
@@ -241,8 +277,47 @@ export function VerseToolbar({
           }
           
           @media (max-width: 480px) {
+                .verse-toolbar {
+        position: fixed !important;
+        bottom: 0 !important;
+        left: 0 !important;
+        transform: none !important;
+        width: 100% !important;
+        max-width: 100% !important;
+        border-radius: 0 !important;
+        padding: 3px 16px !important;
+        height: 52px;
+         background: var(--pageBackground) !important; 
+    }
+                    
+            .header-ref {
+              flex-direction: row !important;
+              width: 100% !important;
+              gap: 8px !important;
+              align-items: center !important;
+              justify-content: center;
+            }
+            
+            .verse-ref {
+              position: absolute !important;
+              top: -91.8vh !important;
+              left: 50% !important;
+              transform: translateX(-50%) !important;
+              margin: 0 !important;
+            }
+            
             .tool-buttons button span {
               font-size: 16px !important;
+            }
+            
+            .color-buttons {
+              
+              
+            }
+            
+            .tool-buttons {
+              
+              margin-left: 10px !important;
             }
             
             .color-circle, .plus-button, 
@@ -257,10 +332,9 @@ export function VerseToolbar({
               }
             .color-circle,
             .header-ref{
-              flex-wrap:wrap;
+              // flex-wrap:wrap;
             }
             .divider-vertical{
-                display:none;
             }
             .icon-button {
               width: 28px !important;
@@ -281,11 +355,11 @@ export function VerseToolbar({
           e.stopPropagation();
         }}
       >
-        <span className="verse-ref" style={verseRefStyle}>
+        {!globalThis.IsMobileNow()&&<span className="verse-ref" style={verseRefStyle}>
           {getVerseReference()}
-        </span>
+        </span>}
 
-        <div className="divider-vertical" style={dividerStyle}></div>
+        {!globalThis.IsMobileNow()&&<div className="divider-vertical" style={dividerStyle}></div>}
 
         <div
           onMouseDown={(e) => e.stopPropagation()}
@@ -393,7 +467,7 @@ export function VerseToolbar({
                   aria-label="Add color"
                 >
                   <img
-                    style={{ width: "38px" }}
+                    style={{ width: "38px" ,"-webkit-user-drag": "none"}}
                     src={
                       "https://res.cloudinary.com/dfbtwwa8p/image/upload/v1761753902/329cd5727522c1b0f09580e4c7b13964cb2b1a87_fvmcdy.png"
                     }
@@ -434,7 +508,7 @@ export function VerseToolbar({
                   >
                     {option.icon}
                   </div>
-                  <span>{option.title}</span>
+                  <span style={{color:'var(--text1) !important'}}>{option.title}</span>
                 </div>
               );
             }
@@ -442,10 +516,10 @@ export function VerseToolbar({
         </div>
       </div>
     </div>
-  );
+  </>);
 }
 
-function getMenuActions(that) {
+function getMenuActions(that,onClose) {
   const { SharePopup } = thisBot.Chips();
   const MenuOptions = {
     type: "normal",
@@ -455,6 +529,7 @@ function getMenuActions(that) {
         onClick: () => {
           os.setClipboard(that.text);
           SetInHold(null);
+          onClose()
         },
         title: "Copy",
       },
@@ -508,10 +583,12 @@ function getMenuActions(that) {
   if (that.verseNumber) {
     for (const verseNumber of that.verseNumber) {
       if (
-        globalThis?.VerseContextMenuOptions?.[`${that.book}-${verseNumber}`]
+        globalThis?.VerseContextMenuOptions?.[
+          `${that.book}-${that.chapter}-${verseNumber}`
+        ]
       ) {
         globalThis.VerseContextMenuOptions[
-          `${that.book}-${verseNumber}`
+          `${that.book}-${that.chapter}-${verseNumber}`
         ].forEach((item) => {
           if (verseContextMenuOptions[item.title]) {
             verseContextMenuOptions[item.title] = {
@@ -584,7 +661,6 @@ function getMenuActions(that) {
   // Return only icon + onClick array
   return (
     MenuOptions.items
-      // .filter((i) => i.icon && typeof i.onClick === "function")
       .map(({ icon, onClick, title, type }) => ({ icon, onClick, title, type }))
   );
 }

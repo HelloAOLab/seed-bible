@@ -60,6 +60,7 @@ export function SeedBibleIcon() {
 export const ApologistIcon = (noFilter = false) => {
   return (
     <img
+      className="coloredIcon"
       style={{ filter: noFilter ? "" : "invert(1)", width: "24px" }}
       src="https://res.cloudinary.com/dfbtwwa8p/image/upload/v1755794631/svgviewer-png-output_1_tgtfvm.png"
     />
@@ -142,45 +143,21 @@ const UserAvatar = (props) => (
   </svg>
 );
 // Dual Screen Icon Component
-const DualScreenIcon = ({ size = 24 }) => {
-  const scale = size / 24;
-
-  const styles = {
-    iconWrapper: {
-      display: "inline-flex",
-      position: "relative",
-      width: size,
-      height: size,
-    },
-    screenLeft: {
-      position: "absolute",
-      left: 2 * scale,
-      top: 2 * scale,
-      width: 9 * scale,
-      height: 20 * scale,
-      border: `${1 * scale}px solid #666`,
-      borderRadius: 1 * scale,
-      backgroundColor: "#e0e0e0",
-    },
-    screenRight: {
-      position: "absolute",
-      right: 2 * scale,
-      top: 2 * scale,
-      width: 9 * scale,
-      height: 20 * scale,
-      border: `${1 * scale}px solid #666`,
-      borderRadius: 1 * scale,
-      backgroundColor: "#e0e0e0",
-    },
-  };
-
-  return (
-    <div style={styles.iconWrapper}>
-      <div style={styles.screenLeft}></div>
-      <div style={styles.screenRight}></div>
-    </div>
-  );
-};
+const DualScreenIcon =  (props) => (
+  <svg
+    width={19}
+    height={19}
+    viewBox="0 0 19 19"
+    fill="none"
+    xmlns="http://www.w3.org/2000/svg"
+    {...props}
+  >
+    <path
+      d="M12.509 19C11.9444 19 11.4665 18.8044 11.0753 18.4132C10.6841 18.0221 10.4886 17.5442 10.4886 16.9796V2.02043C10.4886 1.45583 10.6841 0.977941 11.0753 0.586765C11.4665 0.195588 11.9444 0 12.509 0H16.2917C16.8563 0 17.3342 0.195588 17.7253 0.586765C18.1165 0.977941 18.3121 1.45583 18.3121 2.02043V16.9796C18.3121 17.5442 18.1165 18.0221 17.7253 18.4132C17.3342 18.8044 16.8563 19 16.2917 19H12.509ZM2.02043 19C1.45583 19 0.977941 18.8044 0.586765 18.4132C0.195588 18.0221 0 17.5442 0 16.9796V2.02043C0 1.45583 0.195588 0.977941 0.586765 0.586765C0.977941 0.195588 1.45583 0 2.02043 0H5.8031C6.3677 0 6.84559 0.195588 7.23677 0.586765C7.62794 0.977941 7.82353 1.45583 7.82353 2.02043V16.9796C7.82353 17.5442 7.62794 18.0221 7.23677 18.4132C6.84559 18.8044 6.3677 19 5.8031 19H2.02043ZM1.67647 2.02043V16.9796C1.67647 17.0656 1.71233 17.1444 1.78404 17.216C1.85557 17.2877 1.93437 17.3235 2.02043 17.3235H5.8031C5.88916 17.3235 5.96796 17.2877 6.03949 17.216C6.1112 17.1444 6.14706 17.0656 6.14706 16.9796V2.02043C6.14706 1.93437 6.1112 1.85557 6.03949 1.78404C5.96796 1.71233 5.88916 1.67647 5.8031 1.67647H2.02043C1.93437 1.67647 1.85557 1.71233 1.78404 1.78404C1.71233 1.85557 1.67647 1.93437 1.67647 2.02043Z"
+      fill="#606060"
+    />
+  </svg>
+);
 const ToolbarIcon = (props) => (
   <svg
     xmlns="http://www.w3.org/2000/svg"
@@ -196,120 +173,58 @@ const ToolbarIcon = (props) => (
   </svg>
 );
 // Three Screen Icon Component
-const ThreeScreenIcon = ({ size = 24 }) => {
-  const scale = size / 24;
-
-  const styles = {
-    iconWrapper: {
-      display: "inline-flex",
-      position: "relative",
-      width: size,
-      height: size,
-    },
-    screenLeft: {
-      position: "absolute",
-      left: 2 * scale,
-      top: 2 * scale,
-      width: 9 * scale,
-      height: 18.5 * scale,
-      border: `${1 * scale}px solid #666`,
-      borderRadius: 1 * scale,
-      backgroundColor: "#e0e0e0",
-    },
-    screenRightTop: {
-      position: "absolute",
-      right: 2 * scale,
-      top: 2 * scale,
-      width: 9 * scale,
-      height: 9 * scale,
-      border: `${1 * scale}px solid #666`,
-      borderRadius: 1 * scale,
-      backgroundColor: "#e0e0e0",
-    },
-    screenRightBottom: {
-      position: "absolute",
-      right: 2 * scale,
-      bottom: 2 * scale,
-      width: 9 * scale,
-      height: 9 * scale,
-      border: `${1 * scale}px solid #666`,
-      borderRadius: 1 * scale,
-      backgroundColor: "#e0e0e0",
-    },
-  };
-
-  return (
-    <div style={styles.iconWrapper}>
-      <div style={styles.screenLeft}></div>
-      <div style={styles.screenRightTop}></div>
-      <div style={styles.screenRightBottom}></div>
-    </div>
-  );
-};
+const ThreeScreenIcon = (props) => (
+  <svg
+    width={19}
+    height={19}
+    viewBox="0 0 19 19"
+    fill="none"
+    xmlns="http://www.w3.org/2000/svg"
+    {...props}
+  >
+    <path
+      d="M2.02043 19C1.45583 19 0.977941 18.8044 0.586765 18.4132C0.195588 18.0221 0 17.5442 0 16.9796V2.02043C0 1.45583 0.195588 0.977941 0.586765 0.586765C0.977941 0.195588 1.45583 0 2.02043 0H6.3031C6.8677 0 7.34559 0.195588 7.73677 0.586765C8.12794 0.977941 8.32353 1.45583 8.32353 2.02043V16.9796C8.32353 17.5442 8.12794 18.0221 7.73677 18.4132C7.34559 18.8044 6.8677 19 6.3031 19H2.02043Z"
+      fill="#606060"
+    />
+    <path
+      d="M12.009 9C11.4444 9 10.9665 8.80441 10.5753 8.41324C10.1841 8.02206 9.98859 7.54417 9.98859 6.97957V2.02043C9.98859 1.45583 10.1841 0.977941 10.5753 0.586765C10.9665 0.195588 11.4444 0 12.009 0H16.2917C16.8563 0 17.3342 0.195588 17.7253 0.586765C18.1165 0.977941 18.3121 1.45583 18.3121 2.02043V6.97957C18.3121 7.54417 18.1165 8.02206 17.7253 8.41324C17.3342 8.80441 16.8563 9 16.2917 9H12.009Z"
+      fill="#606060"
+    />
+    <path
+      d="M12.009 19C11.4444 19 10.9665 18.8044 10.5753 18.4132C10.1841 18.0221 9.98859 17.5442 9.98859 16.9796V12.0204C9.98859 11.4558 10.1841 10.9779 10.5753 10.5868C10.9665 10.1956 11.4444 10 12.009 10H16.2917C16.8563 10 17.3342 10.1956 17.7253 10.5868C18.1165 10.9779 18.3121 11.4558 18.3121 12.0204V16.9796C18.3121 17.5442 18.1165 18.0221 17.7253 18.4132C17.3342 18.8044 16.8563 19 16.2917 19H12.009Z"
+      fill="#606060"
+    />
+  </svg>
+);
 
 // Quad Screen Icon Component
-const QuadScreenIcon = ({ size = 24 }) => {
-  const scale = size / 24;
-
-  const styles = {
-    iconWrapper: {
-      display: "inline-flex",
-      position: "relative",
-      width: size,
-      height: size,
-    },
-    screenTopLeft: {
-      position: "absolute",
-      left: 2 * scale,
-      top: 2 * scale,
-      width: 9 * scale,
-      height: 9 * scale,
-      border: `${1 * scale}px solid #666`,
-      borderRadius: 1 * scale,
-      backgroundColor: "#e0e0e0",
-    },
-    screenTopRight: {
-      position: "absolute",
-      right: 2 * scale,
-      top: 2 * scale,
-      width: 9 * scale,
-      height: 9 * scale,
-      border: `${1 * scale}px solid #666`,
-      borderRadius: 1 * scale,
-      backgroundColor: "#e0e0e0",
-    },
-    screenBottomLeft: {
-      position: "absolute",
-      left: 2 * scale,
-      bottom: 2 * scale,
-      width: 9 * scale,
-      height: 9 * scale,
-      border: `${1 * scale}px solid #666`,
-      borderRadius: 1 * scale,
-      backgroundColor: "#e0e0e0",
-    },
-    screenBottomRight: {
-      position: "absolute",
-      right: 2 * scale,
-      bottom: 2 * scale,
-      width: 9 * scale,
-      height: 9 * scale,
-      border: `${1 * scale}px solid #666`,
-      borderRadius: 1 * scale,
-      backgroundColor: "#e0e0e0",
-    },
-  };
-
-  return (
-    <div style={styles.iconWrapper}>
-      <div style={styles.screenTopLeft}></div>
-      <div style={styles.screenTopRight}></div>
-      <div style={styles.screenBottomLeft}></div>
-      <div style={styles.screenBottomRight}></div>
-    </div>
-  );
-};
-
+const QuadScreenIcon = (props) => (
+  <svg
+    width={19}
+    height={19}
+    viewBox="0 0 19 19"
+    fill="none"
+    xmlns="http://www.w3.org/2000/svg"
+    {...props}
+  >
+    <path
+      d="M2.02043 9C1.45583 9 0.977941 8.80441 0.586765 8.41324C0.195588 8.02206 0 7.54417 0 6.97957V2.02043C0 1.45583 0.195588 0.977941 0.586765 0.586765C0.977941 0.195588 1.45583 0 2.02043 0H5.8031C6.3677 0 6.84559 0.195588 7.23677 0.586765C7.62794 0.977941 7.82353 1.45583 7.82353 2.02043V6.97957C7.82353 7.54417 7.62794 8.02206 7.23677 8.41324C6.84559 8.80441 6.3677 9 5.8031 9H2.02043Z"
+      fill="#606060"
+    />
+    <path
+      d="M2.02043 19C1.45583 19 0.977941 18.8044 0.586765 18.4132C0.195588 18.0221 0 17.5442 0 16.9796V12.0204C0 11.4558 0.195588 10.9779 0.586765 10.5868C0.977941 10.1956 1.45583 10 2.02043 10H5.8031C6.3677 10 6.84559 10.1956 7.23677 10.5868C7.62794 10.9779 7.82353 11.4558 7.82353 12.0204V16.9796C7.82353 17.5442 7.62794 18.0221 7.23677 18.4132C6.84559 18.8044 6.3677 19 5.8031 19H2.02043Z"
+      fill="#606060"
+    />
+    <path
+      d="M12.509 9C11.9444 9 11.4665 8.80441 11.0753 8.41324C10.6841 8.02206 10.4886 7.54417 10.4886 6.97957V2.02043C10.4886 1.45583 10.6841 0.977941 11.0753 0.586765C11.4665 0.195588 11.9444 0 12.509 0H16.2917C16.8563 0 17.3342 0.195588 17.7253 0.586765C18.1165 0.977941 18.3121 1.45583 18.3121 2.02043V6.97957C18.3121 7.54417 18.1165 8.02206 17.7253 8.41324C17.3342 8.80441 16.8563 9 16.2917 9H12.509Z"
+      fill="#606060"
+    />
+    <path
+      d="M12.509 19C11.9444 19 11.4665 18.8044 11.0753 18.4132C10.6841 18.0221 10.4886 17.5442 10.4886 16.9796V12.0204C10.4886 11.4558 10.6841 10.9779 11.0753 10.5868C11.4665 10.1956 11.9444 10 12.509 10H16.2917C16.8563 10 17.3342 10.1956 17.7253 10.5868C18.1165 10.9779 18.3121 11.4558 18.3121 12.0204V16.9796C18.3121 17.5442 18.1165 18.0221 17.7253 18.4132C17.3342 18.8044 16.8563 19 16.2917 19H12.509Z"
+      fill="#606060"
+    />
+  </svg>
+);
 const Playlist = (props) => (
   <svg
     width={24}
@@ -341,34 +256,23 @@ const MenuDown = (props) => (
   </svg>
 );
 
-const SingleScreenIcon = ({ size = 24 }) => {
-  const scale = size / 24;
-
-  const styles = {
-    iconWrapper: {
-      display: "inline-flex",
-      position: "relative",
-      width: size,
-      height: size,
-    },
-    screen: {
-      position: "absolute",
-      left: 2 * scale,
-      top: 2 * scale,
-      width: 20 * scale,
-      height: 20 * scale,
-      border: `${1 * scale}px solid #666`,
-      borderRadius: 1 * scale,
-      backgroundColor: "#e0e0e0",
-    },
-  };
-
-  return (
-    <div style={styles.iconWrapper}>
-      <div style={styles.screen}></div>
-    </div>
-  );
-};
+const SingleScreenIcon =  (props) => (
+  <svg
+    width={24}
+    height={24}
+    viewBox="0 0 24 24"
+    fill="none"
+    xmlns="http://www.w3.org/2000/svg"
+    {...props}
+  >
+    <g opacity={0.7}>
+      <path
+        d="M5 7V17H19V7H5ZM3.5 20C3.1 20 2.75 19.85 2.45 19.55C2.15 19.25 2 18.9 2 18.5V5.5C2 5.1 2.15 4.75 2.45 4.45C2.75 4.15 3.1 4 3.5 4H20.5C20.9 4 21.25 4.15 21.55 4.45C21.85 4.75 22 5.1 22 5.5V18.5C22 18.9 21.85 19.25 21.55 19.55C21.25 19.85 20.9 20 20.5 20H3.5ZM3.5 18.5H20.5V5.5H3.5V18.5Z"
+        fill="black"
+      />
+    </g>
+  </svg>
+);
 
 export const Panel1 = () => {
   return (
@@ -650,8 +554,8 @@ export const Panel4Row = () => {
     </div>
   );
 };
-export const ThemeIcon = (props) => (
-  <svg
+export const ExtensionsIcon = (props) => (
+ <svg
     width={24}
     height={24}
     viewBox="0 0 24 24"
@@ -660,8 +564,27 @@ export const ThemeIcon = (props) => (
     {...props}
   >
     <path
+      d="M20.1879 11.3279H18.7251C18.697 11.3279 18.6701 11.3168 18.6503 11.297C18.6305 11.2771 18.6193 11.2502 18.6193 11.2222V7.13734C18.6193 6.59229 18.4028 6.06957 18.0174 5.68416C17.632 5.29875 17.1093 5.08223 16.5642 5.08223H12.4794C12.4514 5.08223 12.4245 5.07109 12.4046 5.05125C12.3848 5.03142 12.3737 5.00451 12.3737 4.97646V3.51366C12.3737 2.07837 11.2366 0.876823 9.80135 0.851967C9.4536 0.845857 9.10812 0.909063 8.78507 1.0379C8.46201 1.16673 8.16784 1.35861 7.91973 1.60234C7.67162 1.84607 7.47453 2.13677 7.33997 2.45749C7.2054 2.7782 7.13605 3.1225 7.13596 3.4703V4.97646C7.13596 5.00451 7.12482 5.03142 7.10498 5.05125C7.08515 5.07109 7.05825 5.08223 7.03019 5.08223H2.94539C2.3902 5.0839 1.85822 5.3052 1.46564 5.69778C1.07306 6.09036 0.851772 6.62234 0.850098 7.17753V10.8996C0.850098 10.9276 0.861241 10.9545 0.881077 10.9744C0.900912 10.9942 0.927815 11.0053 0.955867 11.0053H2.37899C3.93221 11.0053 5.21784 12.3528 5.23952 13.9061C5.26173 15.4858 3.9962 16.9285 2.4213 16.9285H0.955867C0.927815 16.9285 0.900912 16.9396 0.881077 16.9594C0.861241 16.9793 0.850098 17.0062 0.850098 17.0342V20.7563C0.851772 21.3115 1.07306 21.8434 1.46564 22.236C1.85822 22.6286 2.3902 22.8499 2.94539 22.8516H6.66741C6.69546 22.8516 6.72236 22.8404 6.7422 22.8206C6.76203 22.8007 6.77317 22.7738 6.77317 22.7458V21.6389C6.77317 20.0376 8.08207 18.6588 9.68183 18.6213C11.2737 18.5843 12.6963 19.6954 12.6963 21.2804V22.7458C12.6963 22.7738 12.7074 22.8007 12.7272 22.8206C12.7471 22.8404 12.774 22.8516 12.802 22.8516H16.5642C17.1093 22.8516 17.632 22.635 18.0174 22.2496C18.4028 21.8642 18.6193 21.3415 18.6193 20.7965V16.6714C18.6193 16.6434 18.6305 16.6165 18.6503 16.5966C18.6701 16.5768 18.697 16.5657 18.7251 16.5657H20.2313C21.6925 16.5657 22.8501 15.3668 22.8501 13.9003C22.8501 12.4338 21.6232 11.3279 20.1879 11.3279Z"
+      stroke="#606060"
+      strokeWidth={1.7}
+      strokeLinecap="round"
+      strokeLinejoin="round"
+    />
+  </svg>
+)
+export const ThemeIcon = (props) => (
+  <svg
+    width={24}
+    height={24}
+    viewBox="0 0 24 24"
+    // fill="#727272"
+    className="coloredIcon"
+    xmlns="http://www.w3.org/2000/svg"
+    {...props}
+  >
+    <path
       d="M7 16C6.80222 16 6.60888 16.0586 6.44443 16.1685C6.27998 16.2784 6.15181 16.4346 6.07612 16.6173C6.00043 16.8 5.98063 17.0011 6.01921 17.1951C6.0578 17.3891 6.15304 17.5673 6.29289 17.7071C6.43275 17.847 6.61093 17.9422 6.80491 17.9808C6.99889 18.0194 7.19996 17.9996 7.38268 17.9239C7.56541 17.8482 7.72159 17.72 7.83147 17.5556C7.94135 17.3911 8 17.1978 8 17C8 16.7348 7.89464 16.4804 7.70711 16.2929C7.51957 16.1054 7.26522 16 7 16ZM19.06 12L20.29 10.77C20.8518 10.2075 21.1674 9.445 21.1674 8.65C21.1674 7.855 20.8518 7.0925 20.29 6.53L17.46 3.71C16.8975 3.1482 16.135 2.83264 15.34 2.83264C14.545 2.83264 13.7825 3.1482 13.22 3.71L12 4.94C11.9843 4.15479 11.6613 3.40706 11.1004 2.85736C10.5395 2.30766 9.78536 1.99984 9 2H5C4.20435 2 3.44129 2.31607 2.87868 2.87868C2.31607 3.44129 2 4.20435 2 5V19C2 19.7956 2.31607 20.5587 2.87868 21.1213C3.44129 21.6839 4.20435 22 5 22H19C19.7956 22 20.5587 21.6839 21.1213 21.1213C21.6839 20.5587 22 19.7956 22 19V15C22.0002 14.2146 21.6923 13.4605 21.1426 12.8996C20.5929 12.3387 19.8452 12.0157 19.06 12ZM10 19C10 19.2652 9.89464 19.5196 9.70711 19.7071C9.51957 19.8946 9.26522 20 9 20H5C4.73478 20 4.48043 19.8946 4.29289 19.7071C4.10536 19.5196 4 19.2652 4 19V5C4 4.73478 4.10536 4.48043 4.29289 4.29289C4.48043 4.10536 4.73478 4 5 4H9C9.26522 4 9.51957 4.10536 9.70711 4.29289C9.89464 4.48043 10 4.73478 10 5V19ZM12 7.76L14.64 5.12C14.8274 4.93375 15.0808 4.82921 15.345 4.82921C15.6092 4.82921 15.8626 4.93375 16.05 5.12L18.88 8C19.0662 8.18736 19.1708 8.44081 19.1708 8.705C19.1708 8.96919 19.0662 9.22264 18.88 9.41L16 12.29L12 16.24V7.76ZM20 19C20 19.2652 19.8946 19.5196 19.7071 19.7071C19.5196 19.8946 19.2652 20 19 20H11.82C11.9226 19.7036 11.9799 19.3935 11.99 19.08L17.07 14H19C19.2652 14 19.5196 14.1054 19.7071 14.2929C19.8946 14.4804 20 14.7348 20 15V19Z"
-      fill="black"
+      fill="#727272"
     />
   </svg>
 );
@@ -908,11 +831,83 @@ const LocationIcon = (props) => (
   </svg>
 
 );
+const BibleIcon = (props) => (
+  <svg
+    width={24}
+    height={24}
+    viewBox="0 0 24 24"
+    fill="none"
+    className="coloredIcon"
+    xmlns="http://www.w3.org/2000/svg"
+    xmlnsXlink="http://www.w3.org/1999/xlink"
+    {...props}
+  >
+    <rect
+      opacity={0.6}
+      width={24}
+      height={24}
+      fill="url(#pattern0_4412_2655)"
+    />
+    <defs>
+      <pattern
+        id="pattern0_4412_2655"
+        patternContentUnits="objectBoundingBox"
+        width={1}
+        height={1}
+      >
+        <use xlinkHref="#image0_4412_2655" transform="scale(0.00195312)" />
+      </pattern>
+      <image
+        id="image0_4412_2655"
+        width={512}
+        height={512}
+        preserveAspectRatio="none"
+        xlinkHref="data:image/png;base64,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"
+      />
+    </defs>
+  </svg>
+);
+
+const NewSettingsIcon = (props) => (
+  <svg
+    width={24}
+    height={24}
+    viewBox="0 0 24 24"
+    fill="none"
+    className="coloredIcon"
+    xmlns="http://www.w3.org/2000/svg"
+    {...props}
+  >
+    <g opacity={0.6} clipPath="url(#clip0_4412_2620)">
+      <path
+        d="M10.1483 4.40625H8.9706C8.68128 4.40711 8.39897 4.49531 8.16063 4.65933C7.9223 4.82335 7.73906 5.05552 7.6349 5.32545L7.01731 6.91967L4.89166 8.12613L3.19689 7.8676C2.9147 7.8293 2.62749 7.87574 2.37175 8.00106C2.11601 8.12637 1.9033 8.32488 1.76064 8.57136L1.18615 9.57672C1.03894 9.82715 0.971111 10.1163 0.991624 10.406C1.01214 10.6958 1.12003 10.9725 1.30105 11.1997L2.37823 12.5354V14.9483L1.32977 16.284C1.14875 16.5112 1.04086 16.7879 1.02035 17.0776C0.999835 17.3673 1.06766 17.6565 1.21488 17.907L1.78937 18.9123C1.93203 19.1588 2.14474 19.3573 2.40046 19.4826C2.6562 19.6079 2.94343 19.6544 3.22562 19.6161L4.92039 19.3576L7.01731 20.564L7.6349 22.1583C7.73906 22.4281 7.9223 22.6604 8.16063 22.8244C8.39897 22.9883 8.68128 23.0766 8.9706 23.0775H10.177C10.4664 23.0766 10.7487 22.9883 10.987 22.8244C11.2254 22.6604 11.4086 22.4281 11.5128 22.1583L12.1304 20.564L14.2273 19.3576L15.922 19.6161C16.2042 19.6544 16.4914 19.6079 16.7472 19.4826C17.0029 19.3573 17.2157 19.1588 17.3583 18.9123L17.9328 17.907C18.0801 17.6565 18.1478 17.3673 18.1274 17.0776C18.1068 16.7879 17.999 16.5112 17.8179 16.284L16.7407 14.9483V13.3925M6.68697 13.7418C6.68697 14.31 6.85545 14.8653 7.17108 15.3377C7.48671 15.8101 7.93533 16.1783 8.46021 16.3957C8.98509 16.6131 9.56265 16.67 10.1199 16.5591C10.6771 16.4483 11.1889 16.1747 11.5906 15.773C11.9924 15.3713 12.2659 14.8594 12.3768 14.3022C12.4876 13.745 12.4307 13.1675 12.2133 12.6426C11.9959 12.1177 11.6277 11.6691 11.1553 11.3535C10.683 11.0378 10.1276 10.8693 9.55946 10.8693C8.79763 10.8693 8.067 11.172 7.5283 11.7107C6.98961 12.2494 6.68697 12.98 6.68697 13.7418Z"
+        stroke="black"
+        strokeWidth={2}
+        strokeLinecap="round"
+        strokeLinejoin="round"
+      />
+      <path
+        d="M13.8867 6.07229C13.3604 5.98073 13.3604 5.22514 13.8867 5.13356C15.7935 4.80183 17.3102 3.34942 17.724 1.4587L17.7557 1.31377C17.8697 0.793576 18.6103 0.790338 18.7287 1.30952L18.7673 1.47842C19.1966 3.36022 20.7135 4.80036 22.6152 5.13118C23.1442 5.22322 23.1442 5.98265 22.6152 6.07469C20.7135 6.40551 19.1966 7.84565 18.7673 9.72745L18.7287 9.89635C18.6103 10.4155 17.8697 10.4123 17.7557 9.8921L17.724 9.74717C17.3102 7.85645 15.7935 6.40404 13.8867 6.07229Z"
+        stroke="black"
+        strokeWidth={2}
+        strokeLinecap="round"
+        strokeLinejoin="round"
+      />
+    </g>
+    <defs>
+      <clipPath id="clip0_4412_2620">
+        <rect width={24} height={24} fill="white" />
+      </clipPath>
+    </defs>
+  </svg>
+);
+
 export {
   DualScreenIcon,
   ColorSelect,
   MenuDown,
   FormatLine,
+  NewSettingsIcon,
   ThreeScreenIcon,
   T,
   QuadScreenIcon,
@@ -923,6 +918,7 @@ export {
   FolderIcon,
   OpenFolderIcon,
   ToolbarIcon,
+  BibleIcon,
   Panal,
   AiIcon,
   AiChatIcon,

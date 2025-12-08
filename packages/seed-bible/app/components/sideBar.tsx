@@ -913,15 +913,15 @@ function SideBar() {
 
   useEffect(() => {
     if (isMobile) {
-      setOpenOnMobile(false);
+      // setOpenOnMobile(false);
       setIsMobile(true);
     }
   }, [customScreens]);
 
-  const toggleSidebar = () => {
-    if (isMobile) setOpenOnMobile(false);
-    else setCollapsed(!collapsed);
-  };
+  // const toggleSidebar = () => {
+  //   if (isMobile) setOpenOnMobile(false);
+  //   else setCollapsed(!collapsed);
+  // };
 
   // Toggle search visibility function
   const toggleSearchVisibility = () => {
@@ -1304,6 +1304,9 @@ function SideBar() {
               </div>
               <div className="canvasOptions">
                 <span
+                  style={{
+                    paddingTop:customScreens?.value >= 2 ? "3px": "0px",
+                  }}
                   onContextMenu={(e) => {
                     e.preventDefault();
                     globalThis._skipNextMouse = true; // block next onMouseUp
@@ -1592,9 +1595,36 @@ function SideBar() {
 
           {collapsed && (
             <span
-              onClick={() => {
-                openPopupSettings(AddingOption());
-              }}
+              onMouseDown={() => {
+                    clearTimeout(holdTimeout.current.time);
+                    holdTimeout.current.clicked = false;
+                    holdTimeout.current.time = setTimeout(() => {
+                      holdTimeout.current.clicked = true;
+                      openPopupSettings(AddingOption(), true);
+                    }, 600);
+                  }}
+                  onMouseUp={() => {
+                    clearTimeout(holdTimeout.current.time);
+                    if (!holdTimeout.current.clicked) {
+                      addTab({
+                        id: uuid(),
+                        taken: false,
+                        data: {
+                          use: "thePage",
+                          type: "book",
+                          book: "Genesis",
+                          bookId: "GEN",
+                          chapter: 1,
+                          translation: "BSB",
+                        },
+                      });
+                    }
+                    holdTimeout.current.clicked = false;
+                  }}
+                  onMouseLeave={() => {
+                    clearTimeout(holdTimeout.current.time);
+                    holdTimeout.current.clicked = false;
+                  }}
               class="material-symbols-outlined addIconCollapsed"
             >
               add
@@ -1844,7 +1874,11 @@ export const UserProfile = ({ collapsed }) => {
           overflow: "hidden",
         }}
       >
-        <Icon width={15} height={15} />
+      {userData?.photoLink ? (
+        <img
+          style={{ "border-radius": "50%", width: "35px", border: "" }}
+          src={userData?.photoLink}
+        />):  <Icon width={15} height={15} />}
       </div>
       {
         null /*userData?.photoLink ? (
@@ -1905,7 +1939,7 @@ const sidebarStyles = `
 
     .icon-button {
         cursor: pointer;
-        color: var(--themeText1);
+        color: var(--text1);
     }
 `;
 

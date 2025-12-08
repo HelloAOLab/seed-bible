@@ -7,9 +7,21 @@ body {
 }
 
 * {
+  transition: color 0.3s ease, background-color 0.3s ease;
   box-sizing: border-box;
 }
 
+.material-symbols-outlined{
+  color: var(--iconColor) !important;
+}
+.coloredIcon,
+svg,
+.toolbar-button img{
+  filter: var(--filter-mode);
+}
+svg path {
+  /* fill: var(--iconColor) !important; */
+}
 :root {
   --primary-color: #f0f1f1;
   --secondary-color: #ffffff;
@@ -194,7 +206,7 @@ body {
 }
 
 .mediumText {
-  color: var(--themeText1);
+  color:var(--text1) !important;
   font-family: 'Satoshi', system-ui, sans-serif;
   font-size: 14px;
   font-style: normal;
@@ -205,7 +217,7 @@ body {
 }
 
 .blackText {
-  color: var(--themeText2);
+  color: var(--text1) !important;
   font-family: 'Satoshi', system-ui, sans-serif;
   font-size: 16px;
   font-style: normal;
