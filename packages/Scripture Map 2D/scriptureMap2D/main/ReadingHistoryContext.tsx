@@ -4,6 +4,8 @@ import {
   flat,
   calculateReadingHistorySummary,
 } from "db.annotations.library";
+import { useTabsContext } from "app.hooks.tabs";
+import { useScriptureMap2DContext } from "scriptureMap2D.main.ScriptureMap2DContext";
 
 const { createContext, useContext, useState, useMemo, useEffect, useCallback } =
   os.appHooks;
@@ -11,6 +13,14 @@ const { createContext, useContext, useState, useMemo, useEffect, useCallback } =
 const ReadingHistoryContext = createContext();
 
 export const ReadingHistoryProvider = ({ children }) => {
+  const {
+    mode,
+    ScriptureMap2DModes,
+    isReadingHistoryEnabled,
+    setShowingBooksColors,
+  } = useScriptureMap2DContext();
+
+  const { activeTab } = useTabsContext();
   const { tick } = useTimeContext();
 
   const [readingHistoryRangeSeconds, setReadingHistoryRangeSeconds] =
@@ -266,7 +276,7 @@ export const ReadingHistoryProvider = ({ children }) => {
           error
         );
       });
-  }, [tick, readingHistoryUserFilters, readingHistoryRangeSeconds]);
+  }, [tick, activeTab, readingHistoryUserFilters, readingHistoryRangeSeconds]);
 
   const handleReadingHistoryUserSelectorClick = useCallback(
     (key) => {
@@ -301,6 +311,20 @@ export const ReadingHistoryProvider = ({ children }) => {
     [setReadingHistoryRangeSeconds]
   );
 
+  const shouldShowReadingHistory = useMemo(() => {
+    return (
+      mode === ScriptureMap2DModes.Viewer &&
+      isReadingHistoryEnabled &&
+      usersAuthId?.length > 0
+    );
+  }, [mode, isReadingHistoryEnabled, usersAuthId, ScriptureMap2DModes]);
+
+  useEffect(() => {
+    if (shouldShowReadingHistory) {
+      setShowingBooksColors(false);
+    }
+  }, [shouldShowReadingHistory]);
+
   return (
     <ReadingHistoryContext.Provider
       value={{
@@ -329,6 +353,7 @@ export const ReadingHistoryProvider = ({ children }) => {
         dayRangesMap,
         selectedUsersCount,
         usersAuthId,
+        shouldShowReadingHistory,
       }}
     >
       {children}

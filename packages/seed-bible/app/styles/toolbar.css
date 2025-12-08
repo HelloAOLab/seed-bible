@@ -86,13 +86,13 @@
   width: 40px !important;
   height: 45px !important;
   border-radius: 50%;
-  background-color: transparent;
+  /* background-color: var(--pageBackground) !important; */
   cursor: pointer;
   transition: background-color 0.2s ease;
 }
 
 .toolbar-button:hover {
-  background-color: #f0f0f0;
+ background-color: var(--pageBackground) !important;
 }
 
 .toolbar-button:focus {

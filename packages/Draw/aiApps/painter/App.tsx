@@ -4,13 +4,13 @@ const style = tags["App.css"];
 
 const { useState, useEffect, useRef, render, useCallback } = os.appHooks;
 
-let painterStorageApp = bot.CreatePainterStorage();
+// let painterStorageApp = bot.CreatePainterStorage();
 
 const App = () => {
   const canvasRef = useRef(null);
   const ctxRef = useRef(null);
-  const [drawingEnabled, setDrawingEnabled] = useState(false);
-  const [currentColor, setCurrentColor] = useState(null);
+  const [drawingEnabled, setDrawingEnabled] = useState(masks.drawingEnable);
+  const [currentColor, setCurrentColor] = useState(masks.currentColor);
   const [availableColor, setAvailableColor] = useState([
     "#000000",
     "#FF5252",
@@ -31,23 +31,25 @@ const App = () => {
   const currentStroke = useRef(null);
 
   const saveDrawingDebounced = useCallback((newDrawingData) => {
-    setTagMask(
-      painterStorageApp,
-      "drawingData",
-      JSON.stringify(newDrawingData),
-      "shared"
-    );
+    // setTagMask(
+    //   painterStorageApp,
+    //   "drawingData",
+    //   JSON.stringify(newDrawingData),
+    //   "shared"
+    // );
   }, []);
 
   useEffect(() => {
     const initializeCanvas = async () => {
       const canvas = canvasRef.current;
-      canvas.width = window.innerWidth;
-      canvas.height = window.innerHeight;
+      const dpr = window.devicePixelRatio || 2;
+      canvas.width = window.innerWidth * dpr;
+      canvas.height = window.innerHeight * dpr;
       const ctx = await canvas.getContext("2d");
       ctx.lineCap = "round";
       ctx.lineJoin = "round";
       ctx.globalAlpha = 1;
+      ctx.scale(dpr, dpr);
       ctxRef.current = ctx;
 
       // Load existing drawing data
@@ -218,6 +220,7 @@ const App = () => {
 
     ctx.strokeStyle = currentColor;
     ctx.lineWidth = brushSize;
+    console.log(brushSize, "brushSize");
     ctx.stroke();
 
     // Add point to current stroke
@@ -250,12 +253,12 @@ const App = () => {
     // Clear stored data and notify other tabs
     const emptyData = [];
     setDrawingData(emptyData);
-    setTagMask(
-      painterStorageApp,
-      "drawingData",
-      JSON.stringify(emptyData),
-      "shared"
-    );
+    // setTagMask(
+    //   painterStorageApp,
+    //   "drawingData",
+    //   JSON.stringify(emptyData),
+    //   "shared"
+    // );
   };
 
   const toggleDrawing = () => {
@@ -293,13 +296,17 @@ const App = () => {
     if (color === currentColor) {
       setDrawingEnabled(false);
       setCurrentColor(null);
+      setTagMask(thisBot, "drawingEnable", false, "local");
+      setTagMask(thisBot, "currentColor", null, "local");
     } else {
       setDrawingEnabled(true);
       setCurrentColor(color);
+      setTagMask(thisBot, "drawingEnable", true, "local");
+      setTagMask(thisBot, "currentColor", color, "local");
     }
   };
 
-  const [value, setValue] = useState(50);
+  const [value, setValue] = useState(masks.brushSize);
   const sliderRef = useRef(null);
 
   const handleInput = (e) => {
@@ -321,7 +328,8 @@ const App = () => {
   const thumbSize = 10 + (value / 100) * 30;
 
   useEffect(() => {
-    setBrushSize(Math.floor(value / 5));
+    setBrushSize(Math.ceil(value / 5));
+    setTagMask(thisBot, "brushSize", value, "local");
   }, [value]);
 
   useEffect(() => {
@@ -382,7 +390,10 @@ const App = () => {
                   })}
                 </div>
               </div>
-              <div className="tool-section">
+              <div
+                className="tool-section"
+                style={isDrawing.current ? { pointerEvents: "none" } : {}}
+              >
                 <div
                   className="container"
                   onMouseDown={(e) => e.stopPropagation()}

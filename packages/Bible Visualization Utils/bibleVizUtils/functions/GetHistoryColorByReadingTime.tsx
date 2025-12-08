@@ -10,7 +10,7 @@ const {
 let progress = Math.min(1, readingTimeSeconds / fullColorTimeSeconds);
 
 if (step) {
-  progress = RoundToStep(progress, step);
+  progress = RoundToStep(Math.max(progress, step), step);
   if (stepColors) {
     const index = progress / step;
     userColor = stepColors[index];

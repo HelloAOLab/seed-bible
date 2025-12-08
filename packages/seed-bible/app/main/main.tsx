@@ -318,8 +318,10 @@ const Main = () => {
     tabSelection: "#4459F3",
     spaceSelection: "#4459F3",
     toolbarBackground: "#ffffff",
-    text1: "#606060",
+    iconColor: "#000000",
+    text1: "#000000",
     text2: "#000000",
+    "filter-mode":" none",
     showTabIcons: true, // Default to showing tab icons
   };
   const darkTheme = {
@@ -340,7 +342,8 @@ const Main = () => {
       pageTextColor: "white",
       showTabIcons: true,
   }
-  const isDark = window.matchMedia("(prefers-color-scheme: dark)").matches;
+  const isDark = false
+  // window.matchMedia("(prefers-color-scheme: dark)").matches;
 
   let theme = isDark ? darkTheme : defaultTheme;
 

@@ -5,14 +5,6 @@ import { useClickAndHold } from "scriptureMap2D.main.CustomHooks";
 const { useState, useCallback, useEffect, useMemo } = os.appHooks;
 const { memo } = os.appCompat;
 
-const psalmsNames = [
-  "1 Psalms",
-  "2 Psalms",
-  "3 Psalms",
-  "4 Psalms",
-  "5 Psalms",
-];
-
 export const Chapter = memo(
   ({
     index,
@@ -21,6 +13,8 @@ export const Chapter = memo(
     historyBackground,
     historyColor,
     tooltipContent,
+    chapter,
+    borderGradientColors,
   }) => {
     const [containerRect, setContainerRect] = useState(null);
 
@@ -31,8 +25,6 @@ export const Chapter = memo(
       usersStatus,
       // MAX_CHAPTER_HEAT_COUNT,
       modes,
-      // userPresence,
-      usersInfo,
       contentVisualization,
       ContentVisualizationType,
       mode,
@@ -49,6 +41,8 @@ export const Chapter = memo(
     } = useScriptureMap2DContext();
 
     const { testament } = useTestamentContext();
+
+    const [showUserPresence, setShowUserPresence] = useState(false);
 
     const checked = useMemo(() => {
       return (
@@ -225,7 +219,6 @@ export const Chapter = memo(
       content,
       usersStatus,
       modes,
-      usersInfo,
       contentVisualization,
       ContentVisualizationType,
       project,
@@ -276,31 +269,19 @@ export const Chapter = memo(
     </>}*/
     // {mode === ScriptureMap2DModes.Viewer && isReadingHistoryEnabled && <ReadingHistoryChapterNotificationContainer bookName={bookName} chapterIndex={index} />}
 
-    const chapter = useMemo(() => {
-      let chapter = index + 1;
-      if (
-        psalmsNames.some((name) => {
-          return name === bookName;
-        })
-      ) {
-        ({ chapter } = BibleVizUtils.Functions.ConvertDividedPsalmsToComplete({
-          book: bookName,
-          chapter,
-        }));
-      }
-      return chapter;
-    }, []);
-
     return (
       <div
-        className="chapter"
+        className={`chapter${borderGradientColors && isUserPresenceEnabled ? " showUserPresence" : ""}`}
         onPointerEnter={(e) =>
           setContainerRect(e.currentTarget.getBoundingClientRect())
         }
-        onPointerLeave={() => setContainerRect(null)}
+        onPointerLeave={() => {
+          setContainerRect(null);
+        }}
         onPointerDown={onHoldStart}
         onPointerUp={onHoldEnd}
         style={{
+          "--userPresenceColors": borderGradientColors,
           background,
           borderStyle,
           borderColor,
@@ -308,7 +289,7 @@ export const Chapter = memo(
         }}
       >
         {chapter}
-        {isReadingHistoryEnabled &&
+        {(isReadingHistoryEnabled || isUserPresenceEnabled) &&
           tooltipAnchor &&
           tooltipContent?.length > 0 && (
             <Tooltip anchor={tooltipAnchor} content={tooltipContent} />
