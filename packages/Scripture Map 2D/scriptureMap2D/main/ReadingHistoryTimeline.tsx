@@ -93,8 +93,8 @@ export const ReadingHistoryTimeline = () => {
     SEC_PER_MINUTE,
     dayRangesMap,
     dailyReadingHistorySummaries,
-    readingEventsByDay,
     selectedUsersCount,
+    myAuthBotId,
   } = useReadingHistoryContext();
   const { tick } = useTimeContext();
 
@@ -126,9 +126,21 @@ export const ReadingHistoryTimeline = () => {
         const prevColor = prevItemsColorMapRef.current.get(key);
 
         if (summary && summary.totalTimeSpentReading > SEC_PER_MINUTE) {
+          const firstUserId = Object.keys(summary.users)[0];
+          const firstUserColor =
+            firstUserId === myAuthBotId
+              ? BibleVizUtils.Data.tags.myUserColor
+              : (BibleVizUtils.Data.vars.userPresenceData?.[firstUserId]?.user
+                  ?.color ??
+                thisBot.vars.FakeReadingHistoryUsersColorMap?.get(
+                  firstUserId
+                ) ??
+                "pink");
+          const userColor = selectedUsersCount === 1 ? firstUserColor : null;
           color = BibleVizUtils.Functions.GetHistoryColorByReadingTime({
+            baseColor: stepColors[0],
+            userColor,
             step,
-            stepColors,
             readingTimeSeconds: summary.totalTimeSpentReading,
             fullColorTimeSeconds,
           });
@@ -152,6 +164,7 @@ export const ReadingHistoryTimeline = () => {
     tick,
     dailyReadingHistorySummaries,
     selectedUsersCount,
+    myAuthBotId,
   ]);
 
   const items = useMemo(() => {

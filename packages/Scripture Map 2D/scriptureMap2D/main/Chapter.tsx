@@ -38,6 +38,7 @@ export const Chapter = memo(
       onChapterClickAndHold,
       isInSelectionMode,
       CHAPTER_BASE_BACKGROUND_COLOR: baseColor,
+      scaleFactor,
     } = useScriptureMap2DContext();
 
     const { testament } = useTestamentContext();
@@ -292,7 +293,15 @@ export const Chapter = memo(
         {(isReadingHistoryEnabled || isUserPresenceEnabled) &&
           tooltipAnchor &&
           tooltipContent?.length > 0 && (
-            <Tooltip anchor={tooltipAnchor} content={tooltipContent} />
+            <Tooltip
+              anchor={tooltipAnchor}
+              content={tooltipContent}
+              offsetY={
+                borderGradientColors && isUserPresenceEnabled
+                  ? scaleFactor * 2
+                  : 0
+              }
+            />
           )}
       </div>
     );

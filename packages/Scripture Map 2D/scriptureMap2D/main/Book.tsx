@@ -160,6 +160,7 @@ export const Book = memo(
       tooltipContent,
     } = useMemo(() => {
       const baseColor = [211, 211, 211];
+      const nowSeconds = Math.floor(os.localTime / 1000);
 
       let userPresenceBackground = `rgb(${baseColor[0]}, ${baseColor[1]}, ${baseColor[2]})`;
 
@@ -287,21 +288,31 @@ export const Book = memo(
               for (const chapter in chapters) {
                 const events = chapters[chapter];
                 for (const event of events) {
-                  if (!lastEntry || event.end > lastEntry.end)
+                  const { start, end } = event;
+                  const isEventTimeSpentNoticeable =
+                    end - start >= SEC_PER_MINUTE;
+                  const recencyTimeSeconds = nowSeconds - end;
+                  const isRecentEnough =
+                    recencyTimeSeconds <= greaterTimePeriodSeconds;
+                  const isNotTooRecent = recencyTimeSeconds >= SEC_PER_MINUTE;
+                  if (
+                    isEventTimeSpentNoticeable &&
+                    isRecentEnough &&
+                    isNotTooRecent &&
+                    (!lastEntry || event.end > lastEntry.end)
+                  ) {
                     lastEntry = event;
+                  }
                 }
               }
-              const nowSeconds = Math.floor(os.localTime / 1000);
-              const recencyTimeSeconds = nowSeconds - lastEntry.end;
-
-              color = BibleVizUtils.Functions.GetHistoryColorByRecency({
-                recencyTimeSeconds,
-                baseColor,
-                userColor,
-              });
-              const isRecentEnough =
-                recencyTimeSeconds <= greaterTimePeriodSeconds;
-              if (isRecentEnough && recencyTimeSeconds >= SEC_PER_MINUTE) {
+              if (lastEntry) {
+                const { end } = lastEntry;
+                const recencyTimeSeconds = nowSeconds - end;
+                color = BibleVizUtils.Functions.GetHistoryColorByRecency({
+                  recencyTimeSeconds,
+                  baseColor,
+                  userColor,
+                });
                 let fixedContent;
                 if (recencyTimeSeconds >= SEC_PER_DAY) {
                   const daysCount = Math.floor(
@@ -328,11 +339,17 @@ export const Book = memo(
               }
             }
           }
-          const value = userReadingTimeSeconds / totalTimeSpentReading;
-          colors.push({ color, value });
+          if (color) {
+            const value = userReadingTimeSeconds / totalTimeSpentReading;
+            colors.push({ color, value });
+          }
         }
-        fixedBackground =
-          BibleVizUtils.Functions.GetHistoryColorLinearGradient(colors);
+        if (colors.length === 0) {
+          fixedBackground = CHAPTER_BASE_BACKGROUND_COLOR;
+        } else {
+          fixedBackground =
+            BibleVizUtils.Functions.GetHistoryColorLinearGradient(colors);
+        }
       } else {
         if (showingBooksColors) {
           fixedBackground = bookCoverBackgroundColor;
@@ -442,79 +459,12 @@ export const Book = memo(
       return summaryMap;
     }, [readingEvents, readingHistoryRangeSeconds]);
 
-    const { historyColorsMap } = useMemo(() => {
-      if (!isReadingHistoryEnabled) return {};
-
-      const historyColorsMap = new Map();
-
-      for (let i = 0; i < staticChaptersArray.length; i++) {
-        const chapter = i + 1;
-        const chapterSummary = chapterReadingHistorySummaryMap.get(chapter);
-
-        const colors = [];
-
-        if (!chapterSummary) {
-          colors.push({ color: CHAPTER_BASE_BACKGROUND_COLOR, value: 1 });
-        } else {
-          const { totalTimeSpentReading: totalReadingTimeSeconds, users } =
-            chapterSummary;
-          if (totalReadingTimeSeconds < SEC_PER_MINUTE) {
-            colors.push({ color: CHAPTER_BASE_BACKGROUND_COLOR, value: 1 });
-          } else {
-            for (const userId in users) {
-              const { totalTimeSpentReading: userReadingTimeSeconds, books } =
-                users[userId];
-              let color;
-              const baseColor = CHAPTER_BASE_BACKGROUND_COLOR;
-              const userColor =
-                userId === myAuthBotId
-                  ? BibleVizUtils.Data.tags.myUserColor
-                  : (BibleVizUtils.Data.vars.userPresenceData?.[userId]?.user
-                      ?.color ??
-                    thisBot.vars.FakeReadingHistoryUsersColorMap?.get(userId) ??
-                    "pink");
-              if (readingHistoryRangeSeconds) {
-                color = BibleVizUtils.Functions.GetHistoryColorByReadingTime({
-                  baseColor,
-                  userColor,
-                  readingTimeSeconds: userReadingTimeSeconds,
-                  step: 0.25,
-                });
-              } else {
-                const { chapters } = books[bookId];
-
-                const readingEvents = chapters[chapter];
-                const nowSeconds = Math.floor(os.localTime / 1000);
-                const recencyTimeSeconds =
-                  nowSeconds - readingEvents[readingEvents.length - 1].end;
-
-                color = BibleVizUtils.Functions.GetHistoryColorByRecency({
-                  recencyTimeSeconds,
-                  baseColor,
-                  userColor,
-                });
-              }
-              const value = userReadingTimeSeconds / totalReadingTimeSeconds;
-              colors.push({ color, value });
-            }
-          }
-        }
-
-        historyColorsMap.set(chapter, colors);
-      }
-
-      return { historyColorsMap };
-    }, [
-      readingHistoryRangeSeconds,
-      chapterReadingHistorySummaryMap,
-      isReadingHistoryEnabled,
-    ]);
-
     const chapters = useMemo(() => {
+      if (!showChapters) return [];
+
       const now = Date.now();
       const nowSeconds = Math.floor(now / MS_PER_SECOND);
-
-      if (!showChapters) return [];
+      const baseColor = CHAPTER_BASE_BACKGROUND_COLOR;
 
       return staticChaptersArray.map((_, index) => {
         let chapter = index + 1;
@@ -523,19 +473,36 @@ export const Book = memo(
         let historyBackground = null;
         let historyColor = null;
         const tooltipContent = [];
+        const colors = [];
 
         if (isReadingHistoryEnabled) {
           if (chapterSummary) {
-            const users = chapterSummary.users;
+            const { users, totalTimeSpentReading: chapterReadingTimeSeconds } =
+              chapterSummary;
             for (const userId in users) {
+              let color;
+              const userColor =
+                userId === myAuthBotId
+                  ? BibleVizUtils.Data.tags.myUserColor
+                  : (BibleVizUtils.Data.vars.userPresenceData?.[userId]?.user
+                      ?.color ??
+                    thisBot.vars.FakeReadingHistoryUsersColorMap?.get(userId) ??
+                    "pink");
               const { totalTimeSpentReading: userReadingTimeSeconds } =
                 users[userId];
 
               const isTimeSpentNoticeable =
-                userReadingTimeSeconds > SEC_PER_MINUTE; // more than a minute
+                userReadingTimeSeconds >= SEC_PER_MINUTE; // more than a minute
 
               if (isTimeSpentNoticeable) {
                 if (readingHistoryRangeSeconds) {
+                  color = BibleVizUtils.Functions.GetHistoryColorByReadingTime({
+                    baseColor,
+                    userColor,
+                    readingTimeSeconds: userReadingTimeSeconds,
+                    step: 0.25,
+                  });
+
                   let fixedContent;
                   if (userReadingTimeSeconds >= SEC_PER_HOUR) {
                     // more than an hour
@@ -559,12 +526,39 @@ export const Book = memo(
                 } else {
                   const chapterReadingEvents =
                     users[userId].books[bookId].chapters[chapter];
-                  const lastReadingEvent =
-                    chapterReadingEvents[chapterReadingEvents.length - 1];
-                  const recencyTimeSeconds = nowSeconds - lastReadingEvent.end;
-                  const isRecentEnough =
-                    recencyTimeSeconds <= greaterTimePeriodSeconds;
-                  if (isRecentEnough && recencyTimeSeconds >= SEC_PER_MINUTE) {
+                  let lastValidEvent;
+                  let recencyTimeSeconds;
+                  for (
+                    let eventIndex = chapterReadingEvents.length - 1;
+                    eventIndex >= 0;
+                    eventIndex--
+                  ) {
+                    const event = chapterReadingEvents[eventIndex];
+                    const { start, end } = event;
+                    const isEventTimeSpentNoticeable =
+                      end - start >= SEC_PER_MINUTE;
+                    const currRecencyTimeSeconds = nowSeconds - event.end;
+                    const isRecentEnough =
+                      currRecencyTimeSeconds <= greaterTimePeriodSeconds;
+                    const isNotTooRecent =
+                      currRecencyTimeSeconds >= SEC_PER_MINUTE;
+
+                    if (
+                      isEventTimeSpentNoticeable &&
+                      isRecentEnough &&
+                      isNotTooRecent
+                    ) {
+                      lastValidEvent = event;
+                      recencyTimeSeconds = currRecencyTimeSeconds;
+                      break;
+                    }
+                  }
+                  if (lastValidEvent) {
+                    color = BibleVizUtils.Functions.GetHistoryColorByRecency({
+                      recencyTimeSeconds,
+                      baseColor,
+                      userColor,
+                    });
                     let fixedContent;
                     if (recencyTimeSeconds >= SEC_PER_DAY) {
                       const daysCount = Math.floor(
@@ -591,12 +585,23 @@ export const Book = memo(
                   }
                 }
               }
+              if (color) {
+                const value =
+                  userReadingTimeSeconds / chapterReadingTimeSeconds;
+                colors.push({ color, value });
+              }
             }
           }
 
-          const colors = historyColorsMap.get(chapter);
-          historyBackground =
-            BibleVizUtils.Functions.GetHistoryColorLinearGradient(colors);
+          if (colors.length > 1) {
+            historyBackground =
+              BibleVizUtils.Functions.GetHistoryColorLinearGradient(colors);
+          } else {
+            if (colors.length === 0) {
+              colors.push({ color: CHAPTER_BASE_BACKGROUND_COLOR, value: 1 });
+            }
+            historyBackground = colors[0].color;
+          }
           historyColor = BibleVizUtils.Functions.GetTextColorBasedOnBackground({
             backgroundColor: colors,
           });
@@ -650,7 +655,6 @@ export const Book = memo(
     }, [
       isReadingHistoryEnabled,
       isUserPresenceEnabled,
-      historyColorsMap,
       chapterReadingHistorySummaryMap,
       readingHistoryRangeSeconds,
       activeTab,
@@ -725,7 +729,15 @@ export const Book = memo(
               {(isReadingHistoryEnabled || isUserPresenceEnabled) &&
                 tooltipAnchor &&
                 tooltipContent?.length > 0 && (
-                  <Tooltip anchor={tooltipAnchor} content={tooltipContent} />
+                  <Tooltip
+                    anchor={tooltipAnchor}
+                    content={tooltipContent}
+                    offsetY={
+                      isUserPresenceEnabled && bookBorderGradientColors
+                        ? scaleFactor * 6
+                        : 0
+                    }
+                  />
                 )}
             </>
           )}

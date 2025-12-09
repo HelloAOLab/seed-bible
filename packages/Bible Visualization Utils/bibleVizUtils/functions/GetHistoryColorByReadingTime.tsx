@@ -1,10 +1,10 @@
-let { userColor } = that;
 const {
   baseColor,
   readingTimeSeconds,
   fullColorTimeSeconds = 900, // 15 minutes default
   step,
   stepColors,
+  userColor,
 } = that;
 
 let progress = Math.min(1, readingTimeSeconds / fullColorTimeSeconds);
@@ -13,8 +13,7 @@ if (step) {
   progress = RoundToStep(Math.max(progress, step), step);
   if (stepColors) {
     const index = progress / step;
-    userColor = stepColors[index];
-    return userColor;
+    return stepColors[index];
   }
 }
 
