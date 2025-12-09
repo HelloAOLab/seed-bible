@@ -59,10 +59,10 @@ export const ReadingHistoryTooltipContent = ({ userId, fixedContent }) => {
   );
 };
 
-export const Tooltip = ({ content, anchor }) => {
+export const Tooltip = ({ content, anchor, offsetY = 0 }) => {
   const ref = useRef(null);
   const [style, setStyle] = useState({
-    top: anchor.y,
+    top: anchor.y + offsetY,
     left: anchor.x,
     "--arrowLeft": "50%",
   });
@@ -82,6 +82,8 @@ export const Tooltip = ({ content, anchor }) => {
       newDirection = "down";
       newTop += anchor.height ?? 0;
     }
+
+    newTop += newDirection === "down" ? offsetY : -offsetY;
 
     let newLeft = anchor.x;
     const halfWidth = rect.width / 2;
