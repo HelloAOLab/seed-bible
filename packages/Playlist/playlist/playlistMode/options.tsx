@@ -5,21 +5,21 @@ const items = [
     icon: <MenuIcon name="file_export" />,
     title: () =>
       !globalThis.IsPlaylistPlaying ? "Add annotation" : "Add to queue",
-    onClick: (items) => {
+    onClick: (selectedItem) => {
       const dataTempItems = [];
-      items.forEach((item) => {
+      selectedItem.verseNumber?.forEach((vNumber) => {
         const id = createUUID();
-        const booksDetails = globalThis.findNameRank(item.book);
-
+        const booksDetails = globalThis.findNameRank(selectedItem.book);
+        console.log("booksDetails", booksDetails);
         const dataItemTemp = {
           type: "verse",
-          content: `${item.book} ${item.chapter}:${item.verseNumber}`,
+          content: `${selectedItem.book} ${selectedItem.chapter}:${vNumber}`,
           additionalInfo: {
-            verse: item.verseNumber,
-            chapter: item.chapter,
-            book: item.book,
+            verse: vNumber,
+            chapter: selectedItem.chapter,
+            book: selectedItem.book,
             bookRank: booksDetails.item,
-            data: { ...item },
+            data: { ...selectedItem },
             chapterData: { ...globalThis.CHAPTER_DATA },
             groupID: globalThis.ADD_VERSE_ITEM_PLAYLIST_GROUP_ID,
           },
@@ -64,13 +64,13 @@ const items = [
   {
     icon: <MenuIcon name="book" />,
     title: (item = {}) => {
-      const title = `${item?.book} ${item?.chapter}:${item?.verseNumber}`;
+      const title = `${item?.book} ${item?.chapter}:${item?.verseNumber.join(", ")}`;
       if (thisBot.tags.bookmarks[title]) {
         return "Remove Bookmark";
       }
       return "Add bookmark";
     },
-    onClick: async (items) => {
+    onClick: async (selectedItem) => {
       if (!authBot?.id) {
         return ShowNotification({
           message: "Login to user this feature",
@@ -82,10 +82,10 @@ const items = [
       let errorMsg = "";
       const oldBookmarks = { ...thisBot.tags.bookmarks };
 
-      items.forEach((item) => {
+      selectedItem.verseNumber.forEach((vNumber) => {
         const id = createUUID();
-        const booksDetails = globalThis.findNameRank(item.book);
-        const title = `${item.book} ${item.chapter}:${item.verseNumber}`;
+        const booksDetails = globalThis.findNameRank(selectedItem.book);
+        const title = `${selectedItem.book} ${selectedItem.chapter}:${vNumber}`;
 
         if (oldBookmarks[title]) {
           delete oldBookmarks[title];
@@ -97,11 +97,11 @@ const items = [
             type: "verse",
             content: title,
             additionalInfo: {
-              verse: item.verseNumber,
-              chapter: item.chapter,
-              book: item.book,
+              verse: vNumber,
+              chapter: selectedItem.chapter,
+              book: selectedItem.book,
               bookRank: booksDetails.item,
-              data: { ...item },
+              data: { ...selectedItem },
               chapterData: { ...globalThis.CHAPTER_DATA },
               groupID: globalThis.ADD_VERSE_ITEM_PLAYLIST_GROUP_ID,
             },
