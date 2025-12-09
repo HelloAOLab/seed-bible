@@ -737,7 +737,7 @@ const Playlist = () => {
                       >
                         <PlaylistIcon/>
                         <span style={{fontFamily: `"Satoshi", system-ui, sans-serif`}}>
-                          New playlist
+                          Playlist
                         </span>
                       </div>
                     </div>
@@ -767,7 +767,7 @@ const Playlist = () => {
                         >
                           <AnnotationIcon/>
                           <span style={{fontFamily: `"Satoshi", system-ui, sans-serif`}}>
-                            New annotation
+                            Annotation
                         </span>
                       </div>
                     </div>

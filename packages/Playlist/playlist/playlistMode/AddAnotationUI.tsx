@@ -1550,7 +1550,7 @@ const AddAnotationUI = ({
                   }}
                   for="playlistInclude"
                 >
-                  Annotation Mode
+                 Annotation Mode
                 </label>
               </div>
               <Tooltip
@@ -1884,7 +1884,7 @@ const AddAnotationUI = ({
               >
                 <AnnotationIcon invert={true} />
               </div>
-              <p>Annotation Mode</p>
+              <p>{singleMode ? (finalHistoryObject[0]?.content || "Annotations" ): "Annotation Mode"}</p>
             </div>
             <div className="align-center">
               <div
@@ -1894,6 +1894,8 @@ const AddAnotationUI = ({
                   marginRight: "0.5rem",
                 }}
                 onClick={(e) => {
+                  setList([]);
+                  globalThis[`${id}currentPlaylist`] = [];
                   if (setTab) setTab("discover");
                 }}
               >
@@ -2107,7 +2109,7 @@ const AddAnotationUI = ({
             />
           ) : (
             <>
-              <AnnotationInnerDiv
+              {!singleMode && <AnnotationInnerDiv
                 isEditAddress={isEditAddress}
                 dragOverSet={dragOverSet}
                 onDisembed={onDisembed}
@@ -2183,7 +2185,7 @@ const AddAnotationUI = ({
                     }
                   }
                 }}
-              />
+              />}
               {!draggedItemID && !dataFetching &&
                 selectedAnnotation === ele.id &&
                 !embedding && (
@@ -2222,7 +2224,7 @@ const AddAnotationUI = ({
             <Button onClick={onClickSave} secondary>
               {loading ? "Saving" : "Save"}
             </Button>
-            <Button
+            {false && <Button
               onClick={() => {
                 if (onReset && !loading) {
                   onReset();
@@ -2231,7 +2233,7 @@ const AddAnotationUI = ({
               secondaryAlt
             >
               Close
-            </Button>
+            </Button>}
           </div>
         </div>
       </div>

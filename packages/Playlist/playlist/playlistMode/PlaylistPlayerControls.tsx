@@ -806,7 +806,7 @@ const PlayerControls = ({ parentId = "default" }) => {
             flexDirection: "column",
             height: "100%",
             boxShadow: "0px 0px 9px 0px #00000026",
-            padding: "0.5rem",
+            padding: "0.75rem 1rem",
             borderRadius: "8px",
             justifyContent: "center",
           }}
@@ -845,9 +845,11 @@ const PlayerControls = ({ parentId = "default" }) => {
           >
             <div
               style={{
-                width: "50%",
-                flexDirection: "column",
+                width: "auto",
+                flexDirection: "row",
                 display: "flex",
+                alignItems: "center",
+                gap: "0.5rem",
               }}
             >
               <p
@@ -857,22 +859,22 @@ const PlayerControls = ({ parentId = "default" }) => {
                   display: "flex",
                   alignItems: "center",
                   margin: "0",
-                  marginBottom: "0.5rem",
+                  // marginBottom: "0.5rem",
                   fontFamily: "DM Sans",
                   height: "12px",
                 }}
               >
                 {showCurrent
-                  ? "Playing now"
+                  ? "Playing now:"
                   : nextItemName?.content
-                    ? "Playing Next"
+                    ? "Playing Next:"
                     : null}
               </p>
               <div style={{ gap: "0.5rem" }} className="align-center">
                 <div
                   style={{
-                    height: "2.5rem",
-                    width: "2.5rem",
+                    height: "1.5rem",
+                    width: "1.5rem",
                     display: "grid",
                     placeItems: "center",
                     backgroundColor: "#D3643329",
@@ -880,7 +882,7 @@ const PlayerControls = ({ parentId = "default" }) => {
                   }}
                 >
                   <span
-                    style={{ margin: "0", fontSize: "18px" }}
+                    style={{ margin: "0", fontSize: "14px" }}
                     class="material-symbols-outlined unfollow"
                   >
                     {nextItemName?.type === "attachment-link"
@@ -897,7 +899,7 @@ const PlayerControls = ({ parentId = "default" }) => {
                     {nextItemName?.content ? (
                       <p
                         style={{
-                          fontSize: "1rem",
+                          fontSize: "0.75rem",
                           fontWeight: "600",
                           display: "flex",
                           alignItems: "center",
@@ -952,7 +954,7 @@ const PlayerControls = ({ parentId = "default" }) => {
                     {currentItem?.content ? (
                       <p
                         style={{
-                          fontSize: "1rem",
+                          fontSize: "0.75rem",
                           fontWeight: "600",
                           display: "flex",
                           alignItems: "center",

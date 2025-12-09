@@ -312,7 +312,7 @@ const Main = () => {
     pageBackground: "#FFFFFF",
     pageTextColor: "#000000",
     primaryButtonColor: "#606060",
-    secondaryButton: "#4459F34D",
+    secondaryButton: "#4459F3",
     secondaryButtonColor: "#4459F3",
     buttonBorder: "#2b00ff",
     tabSelection: "#4459F3",
@@ -321,28 +321,28 @@ const Main = () => {
     iconColor: "#000000",
     text1: "#000000",
     text2: "#000000",
-    "filter-mode":" none",
+    "filter-mode": " none",
     showTabIcons: true, // Default to showing tab icons
   };
   const darkTheme = {
-      menuBackground: "#2D2D2D",
-      primaryButton: "#404040",
-      primaryButtonColor: "#FFFFFF",
-      secondaryButton: "#5A67D8",
-      secondaryButtonColor: "#FFFFFF",
-      buttonBorder: "#5A67D8",
-      tabSelection: "#5A67D8",
-      spaceSelection: "#5A67D8",
-      toolbarBackground: "#1A1A1A",
-      text1: "#FFFFFF",
-      text2: "#FFFFFF",
-      iconColor: "#FFFFFF",
-      "filter-mode": "invert(100%)",
-      pageBackground: "#121212",
-      pageTextColor: "white",
-      showTabIcons: true,
-  }
-  const isDark = false
+    menuBackground: "#2D2D2D",
+    primaryButton: "#404040",
+    primaryButtonColor: "#FFFFFF",
+    secondaryButton: "#5A67D8",
+    secondaryButtonColor: "#FFFFFF",
+    buttonBorder: "#5A67D8",
+    tabSelection: "#5A67D8",
+    spaceSelection: "#5A67D8",
+    toolbarBackground: "#1A1A1A",
+    text1: "#FFFFFF",
+    text2: "#FFFFFF",
+    iconColor: "#FFFFFF",
+    "filter-mode": "invert(100%)",
+    pageBackground: "#121212",
+    pageTextColor: "white",
+    showTabIcons: true,
+  };
+  const isDark = false;
   // window.matchMedia("(prefers-color-scheme: dark)").matches;
 
   let theme = isDark ? darkTheme : defaultTheme;

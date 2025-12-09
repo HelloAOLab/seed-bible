@@ -1859,7 +1859,7 @@ const App = () => {
                   startSubIndex: -1,
                   parentId: "default",
                   name: playlist.name || "Untitled Playlist",
-                  list: [...playlist.list],
+                 
                 });
               });
               document.body.appendChild(playButtonCon);

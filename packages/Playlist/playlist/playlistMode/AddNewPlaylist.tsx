@@ -359,12 +359,12 @@ const AddNewPlaylist = ({
             </>
           )}
 
-          <ButtonsCover>
+          {/* <ButtonsCover>
             <p> </p>
             <Button onClick={() => setInformationModal(false)} secondaryAlt>
               Close
             </Button>
-          </ButtonsCover>
+          </ButtonsCover> */}
         </Modal>
       )}
       <div className="add-new-playlist" style={{ border: "none" }}>

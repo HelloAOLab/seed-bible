@@ -49,7 +49,7 @@
   -webkit-appearance: none;
   -moz-appearance: none;
 
-  padding: 8px 36px 8px 12px;
+  padding: 8px 26px 8px 12px;
   font-size: 14px;
 
   border: 1px solid #ccc;
@@ -1165,7 +1165,8 @@ input:checked + .slider:not(#slider):before {
 
 @media only screen and (max-width: 768px) {
   .dropdown {
-    display: none;
+    /* display: none; */
+    width: 100px;
   }
 
   .searchbar {
@@ -1260,15 +1261,32 @@ input:checked + .slider:not(#slider):before {
   }
 
   .sidebar-results {
-    height: calc(80dvh - 50px);
+    height: calc(90dvh - 50px);
   }
 
   .books-container {
     height: calc(100dvh - 110px);
+    flex-direction: column;
+    overflow: auto;
+  }
+
+  .testament-container {
+    width: 100%;
+  }
+
+  .dropdown-select {
+    width: 100px;
+    font-weight: bold;
+  }
+
+  .dropdown-option {
+    width: 100px;
+    font-weight: bold;
   }
 
   .testament-title {
-    text-align: center;
+    text-align: left;
+    padding-left: 0px;
   }
 
   .defocus-input {
@@ -1363,17 +1381,16 @@ input:checked + .slider:not(#slider):before {
   }
 
   .sidebar-itm {
-    color: black;
-    width: 148px;
+    width: 100%;
     font-weight: lighter;
   }
 
   .chapter-btn {
-    width: 34px;
+    width: 60px;
   }
 
   .show-sidebar-chapter {
-    grid-template-columns: repeat(auto-fit, 34px);
+    grid-template-columns: repeat(auto-fit, 60px);
   }
 
   .psalms-btn {
@@ -1388,7 +1405,7 @@ input:checked + .slider:not(#slider):before {
     margin-top: -10px;
     border-top-left-radius: 0;
     border-top-right-radius: 0;
-    width: 148px;
+    width: 100%;
   }
 
   .sidebar-selected-itm,
@@ -1404,12 +1421,15 @@ input:checked + .slider:not(#slider):before {
   }
 
   .separator {
-    width: 2px;
-    height: 100%;
+    width: 100%;
+    height: 2px !important;
     background-color: #f1f1f1;
     /* margin-right: 10px; */
-    position: absolute;
-    left: calc(50% - 1.5px);
+    position: relative;
+    left: 0px;
+    margin-right: 0px;
+    margin-top: 10px;
+    display: block;
   }
 }
 
