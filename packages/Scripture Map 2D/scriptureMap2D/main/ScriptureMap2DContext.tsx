@@ -228,7 +228,7 @@ export const ScriptureMap2DProvider = ({
   ProjectChapterState,
 }) => {
   const {
-    arrangementIndex,
+    arrangementIndex = BibleVizUtils.Functions.GetCurrentArrangementIndex(),
     initialScaleFactor = 1,
     initialIsReadingHistoryEnabled = false,
     showingAllChapters: initialShowingAllChapters = false,
