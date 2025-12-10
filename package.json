@@ -5,6 +5,7 @@
   "type": "module",
   "scripts": {
     "test": "jest",
+    "test:watch": "jest --watchAll",
     "dev": "tsx script/dev.ts",
     "package": "tsx script/package.ts",
     "extension": "tsx script/extension.ts",
