@@ -42,7 +42,6 @@ describe("load", () => {
   });
 
   test("load seed bible into Genesis 1", async () => {
-    console.log("load");
     await loadSeedBible(page);
     seedBibleFrame = getSeedBibleFrame(page);
 
@@ -50,6 +49,22 @@ describe("load", () => {
       .locator("div.bookTitle")
       .waitHandle();
     expect(await bookTitle?.evaluate((el) => el.textContent)).toBe("Genesis 1");
+  });
+
+  test("should add the book ID and chapter number to the URL", async () => {
+    await loadSeedBible(page);
+    seedBibleFrame = getSeedBibleFrame(page);
+
+    // Wait for the book title to ensure the content has loaded
+    const bookTitle = await seedBibleFrame
+      .locator("div.bookTitle")
+      .waitHandle();
+    expect(await bookTitle?.evaluate((el) => el.textContent)).toBe("Genesis 1");
+
+    const url = new URL(page.url());
+
+    expect(url.searchParams.get("book")).toBe("GEN");
+    expect(url.searchParams.get("chapter")).toBe("1");
   });
 
   test("load translation book and chapter", async () => {
