@@ -49,7 +49,6 @@ const App = () => {
       <ScriptureMap2D
         parentContext={{
           mode: ScriptureMap2DModes.Viewer,
-          arrangementIndex: 0,
           // selection,
           // isInSelectionMode,
           onChapterClick: handleChapterClick,
