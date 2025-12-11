@@ -401,11 +401,11 @@ function ThePage({
   }, []);
   useEffect(() => {
     const onBookChange = (data) => {
-      os.log("updated shared tab", "not approved");
-      if (!globalThis.CurrentTab?.sharedTab) {
-        updateTab(masks["sharedTab"], data);
-        return;
-      }
+      // os.log("updated shared tab", "not approved");
+      // if (!globalThis.CurrentTab?.sharedTab) {
+      //   updateTab(masks["sharedTab"], data);
+      //   return;
+      // }
       console.log("remoteBookChange", data);
       globalThis.Open?.(data.bookId, data.chapter);
     };
@@ -1346,23 +1346,24 @@ function ThePage({
   );
 
   // NEW: Handle color selection from toolbar
-  const handleColorSelect = useCallback(
-    (color) => {
-      if (clickedVerses.length === 0) return;
-      setWordHighlightsBC(color);
-      // Apply the selected color to all clicked verses
-      clickedVerses.forEach((verseNum) => {
-        toggleVerseHighlight(verseNum, color);
-      });
-      EmitData("highlight", { verseNum, color });
-      // Clear clicked verses and hide toolbar
-      setClickedVerses([]);
-      setTimeout(() => {
-        setShowVerseToolbar(false);
-      }, 5);
-    },
-    [clickedVerses, toggleVerseHighlight]
-  );
+// NEW: Handle color selection from toolbar
+const handleColorSelect = useCallback(
+  (color) => {
+    if (clickedVerses.length === 0) return;
+    setWordHighlightsBC(color);
+    // Apply the selected color to all clicked verses
+    clickedVerses.forEach((verseNum) => {
+      toggleVerseHighlight(verseNum, color);
+    });
+    EmitData("highlight", { verseNumbers: clickedVerses, color }); // Fixed: use clickedVerses instead of undefined verseNum
+    // Clear clicked verses and hide toolbar
+    setClickedVerses([]);
+    setTimeout(() => {
+      setShowVerseToolbar(false);
+    }, 5);
+  },
+  [clickedVerses, toggleVerseHighlight]
+);
 
   // NEW: Close toolbar when clicking outside
   useEffect(() => {
