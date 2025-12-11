@@ -4,12 +4,12 @@ import {
 } from "scriptureMap2D.main.Tooltip";
 import { useTimeContext } from "scriptureMap2D.main.TimeContext";
 import { useReadingHistoryContext } from "scriptureMap2D.main.ReadingHistoryContext";
+import { useScriptureMap2DContext } from "scriptureMap2D.main.ScriptureMap2DContext";
 
 const { useState, useCallback, useMemo, useEffect, useRef } = os.appHooks;
 const { memo } = os.appCompat;
 
 const step = 0.25;
-const stepColors = ["#E3E3E3", "#BFBFBF", "#969696", "#6E6E6E", "#454545"];
 
 const Label = memo(({ gridRow, gridColumn, children, isDay }) => {
   const style = useMemo(() => {
@@ -19,7 +19,7 @@ const Label = memo(({ gridRow, gridColumn, children, isDay }) => {
   return (
     <div
       style={style}
-      className={`readingHistoryTimeline-label readingHistoryTimeline-label-${isDay ? "day" : "month"}`}
+      className={`reading-history-timeline-label reading-history-timeline-label-${isDay ? "day" : "month"}`}
     >
       {children}
     </div>
@@ -70,7 +70,7 @@ const Item = memo(
         }
         onPointerLeave={() => setContainerRect(null)}
         style={style}
-        className={`readingHistoryTimeline-item${selected ? " selected" : ""}`}
+        className={`reading-history-timeline-item${selected ? " selected" : ""}`}
         onClick={() => {
           handleItemClick(selected ? null : range);
         }}
@@ -96,6 +96,40 @@ export const ReadingHistoryTimeline = () => {
     selectedUsersCount,
     myAuthBotId,
   } = useReadingHistoryContext();
+
+  const { BASE_BACKGROUND_COLOR } = useScriptureMap2DContext();
+
+  useEffect(() => {
+    console.log(`[Debug] ReadingHistoryTimeline`, {
+      readingHistoryRangeSeconds,
+      handleReadingHistoryRangeSelectorClick,
+      startOfWeekAYearAgoDate,
+      weeksCount,
+      SEC_PER_HOUR,
+      SEC_PER_MINUTE,
+      dayRangesMap,
+      dailyReadingHistorySummaries,
+      selectedUsersCount,
+      myAuthBotId,
+      BASE_BACKGROUND_COLOR,
+    });
+  }, [
+    readingHistoryRangeSeconds,
+    handleReadingHistoryRangeSelectorClick,
+    startOfWeekAYearAgoDate,
+    weeksCount,
+    SEC_PER_HOUR,
+    SEC_PER_MINUTE,
+    dayRangesMap,
+    dailyReadingHistorySummaries,
+    selectedUsersCount,
+    myAuthBotId,
+    BASE_BACKGROUND_COLOR,
+  ]);
+
+  const stepColors = useMemo(() => {
+    return [BASE_BACKGROUND_COLOR, "#BFBFBF", "#969696", "#6E6E6E", "#454545"];
+  }, [BASE_BACKGROUND_COLOR]);
   const { tick } = useTimeContext();
 
   const prevItemsColorMapRef = useRef(new Map());
@@ -335,8 +369,8 @@ export const ReadingHistoryTimeline = () => {
   }, []);
 
   return (
-    <div className="readingHistoryTimelineContainer">
-      <div className="readingHistoryTimeline">{items}</div>
+    <div className="reading-history-timeline-container">
+      <div className="reading-history-timeline">{items}</div>
     </div>
   );
 };

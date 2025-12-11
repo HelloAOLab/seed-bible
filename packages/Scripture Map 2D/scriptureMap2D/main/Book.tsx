@@ -1,6 +1,5 @@
 import { useScriptureMap2DContext } from "scriptureMap2D.main.ScriptureMap2DContext";
 import { Chapter } from "scriptureMap2D.main.Chapter";
-import { PresentUserPresenceBookIcon } from "scriptureMap2D.main.PresentUserPresenceIcon";
 import { useTestamentContext } from "scriptureMap2D.main.TestamentContext";
 import { useClickAndHold } from "scriptureMap2D.main.CustomHooks";
 import {
@@ -15,7 +14,6 @@ const { memo } = os.appCompat;
 
 export const Book = memo(
   ({
-    bookInfo,
     book,
     bookId,
     bookCoverBackgroundColor,
@@ -29,35 +27,20 @@ export const Book = memo(
     bookUserPresenceColors,
   }) => {
     const {
-      arrangement,
       scaleFactor,
       showingAllChapters,
       isUserPresenceEnabled,
       isReadingHistoryEnabled,
       content,
-      modes,
-      usersStatus,
-      MAX_CHAPTER_HEAT_COUNT,
       userPresence,
       usersInfo,
-      contentVisualization,
-      ContentVisualizationType,
-      // mode,
-      // ScriptureMap2DModes,
       selection,
-      // handleCheckboxChange,
-      // isInSelectionMode,
-      // setIsInSelectionMode,
-
       onBookNameClickAndHold,
       onBookNameClickAndHoldDependencies,
-
-      bookWidth,
       chapterGap,
       chapterPadding,
-      chapterWidth,
       chapterHeight,
-      CHAPTER_BASE_BACKGROUND_COLOR,
+      BASE_BACKGROUND_COLOR,
       showingBooksColors,
       activeTab,
     } = useScriptureMap2DContext();
@@ -66,7 +49,6 @@ export const Book = memo(
       readingHistoryRangeSeconds,
       myAuthBotId,
       greaterTimePeriodSeconds,
-      MS_PER_DAY,
       MS_PER_SECOND,
       SEC_PER_DAY,
       SEC_PER_HOUR,
@@ -90,10 +72,12 @@ export const Book = memo(
 
       return { tooltipAnchor };
     }, [containerRect]);
+    const bookStaticInfo = useMemo(() => {
+      return BibleVizUtils.Data.tags.booksStaticInfo[book];
+    }, []);
 
     const { chaptersCount, staticChaptersArray } = useMemo(() => {
-      const chaptersCount =
-        BibleVizUtils.Data.tags.booksStaticInfo[book].numberOfChapters;
+      const chaptersCount = bookStaticInfo.numberOfChapters;
 
       return {
         chaptersCount,
@@ -102,11 +86,10 @@ export const Book = memo(
     }, []);
 
     const getBookHeight = useCallback(() => {
-      const { chaptersInfo } = BibleVizUtils.Data.tags.booksStaticInfo[book];
+      const { chaptersInfo } = bookStaticInfo;
       const amountOfRows = Math.ceil(
         chaptersInfo.length /
-          BibleVizUtils.Data.tags.BibleLayoutMeasurements
-            .Book2DMaxAmountOfColumns
+          BibleVizUtils.Data.tags.BibleLayoutMeasurements.Book2DMaxColumns
       );
       const height =
         amountOfRows * chapterHeight +
@@ -151,85 +134,8 @@ export const Book = memo(
       setShowChapters(showingAllChapters);
     }, [showingAllChapters]);
 
-    const {
-      fixedBackground,
-      gridRows,
-      displayContainer,
-      gridColumns,
-      filteredUsers,
-      tooltipContent,
-    } = useMemo(() => {
-      const baseColor = [211, 211, 211];
+    const { fixedBackground, tooltipContent } = useMemo(() => {
       const nowSeconds = Math.floor(os.localTime / 1000);
-
-      let userPresenceBackground = `rgb(${baseColor[0]}, ${baseColor[1]}, ${baseColor[2]})`;
-
-      const filteredUsers = Array.from(usersStatus).filter(
-        ([user, enabled]) => {
-          const bookContent = content.get(user).books?.[book];
-          return (
-            enabled &&
-            bookContent &&
-            Object.keys(bookContent).some((key) => {
-              return bookContent[key].length > 0;
-            })
-          );
-        }
-      );
-
-      if (modes.get("Content")) {
-        if (filteredUsers.length === 0) {
-          userPresenceBackground = `rgb(${baseColor[0]}, ${baseColor[1]}, ${baseColor[2]})`;
-        } else {
-          const colors = filteredUsers.map(([user]) => {
-            const userContent = content.get(user);
-            const bookContent = userContent.books[book];
-            const entriesCount = Object.keys(bookContent).reduce(
-              (currentValue, key) => {
-                return (
-                  currentValue +
-                  Math.min(bookContent[key].length, MAX_CHAPTER_HEAT_COUNT)
-                );
-              },
-              0
-            );
-
-            const heatMaxColor = HexToRgb(usersInfo[user].color);
-            const normalizer = 3;
-            const progress = Math.min(
-              entriesCount /
-                ((MAX_CHAPTER_HEAT_COUNT * chaptersCount) / normalizer),
-              1
-            );
-            const deltaColor = [
-              heatMaxColor[0] - baseColor[0],
-              heatMaxColor[1] - baseColor[1],
-              heatMaxColor[2] - baseColor[2],
-            ].map((value) => {
-              return Math.floor(value * progress);
-            });
-            const heatColor = baseColor.map((value, index) => {
-              return value + deltaColor[index];
-            });
-
-            return heatColor;
-          });
-          if (filteredUsers.length === 1) {
-            userPresenceBackground = `rgb(${colors[0][0]}, ${colors[0][1]}, ${colors[0][2]})`;
-          } else if (filteredUsers.length === 2) {
-            userPresenceBackground = `linear-gradient(to right, rgb(${colors[0][0]}, ${colors[0][1]}, ${colors[0][2]}), rgb(${colors[1][0]}, ${colors[1][1]}, ${colors[1][2]}))`;
-          } else if (filteredUsers.length === 3) {
-            userPresenceBackground = `linear-gradient(to bottom right, rgb(${colors[0][0]}, ${colors[0][1]}, ${colors[0][2]}), rgb(255 255 255 / 0%) 70%), linear-gradient(to bottom left, rgb(${colors[1][0]}, ${colors[1][1]}, ${colors[1][2]}), rgb(255 255 255 / 0%) 70%), linear-gradient(to top, rgb(${colors[2][0]}, ${colors[2][1]}, ${colors[2][2]}), rgb(255 255 255 / 0%) 70%)`;
-          } else if (filteredUsers.length > 3) {
-            userPresenceBackground = `linear-gradient(to bottom right, rgb(${colors[0][0]}, ${colors[0][1]}, ${colors[0][2]}), rgb(255 255 255 / 0%) 70%), linear-gradient(to bottom left, rgb(${colors[1][0]}, ${colors[1][1]}, ${colors[1][2]}), rgb(255 255 255 / 0%) 70%), linear-gradient(to top right, rgb(${colors[2][0]}, ${colors[2][1]}, ${colors[2][2]}), rgb(255 255 255 / 0%) 70%), linear-gradient(to top left, rgb(${colors[3][0]}, ${colors[3][1]}, ${colors[3][2]}), rgb(255 255 255 / 0%) 70%)`;
-          }
-        }
-      }
-
-      const displayContainer =
-        contentVisualization === ContentVisualizationType.Container &&
-        filteredUsers.length > 0 &&
-        modes.get("Content");
 
       let fixedBackground;
       const tooltipContent = [];
@@ -243,7 +149,7 @@ export const Book = memo(
           const { totalTimeSpentReading: userReadingTimeSeconds, books } =
             users[userId];
           let color;
-          const baseColor = CHAPTER_BASE_BACKGROUND_COLOR;
+          const baseColor = BASE_BACKGROUND_COLOR;
           const userColor =
             userId === myAuthBotId
               ? BibleVizUtils.Data.tags.myUserColor
@@ -345,7 +251,7 @@ export const Book = memo(
           }
         }
         if (colors.length === 0) {
-          fixedBackground = CHAPTER_BASE_BACKGROUND_COLOR;
+          fixedBackground = BASE_BACKGROUND_COLOR;
         } else {
           fixedBackground =
             BibleVizUtils.Functions.GetHistoryColorLinearGradient(colors);
@@ -354,7 +260,7 @@ export const Book = memo(
         if (showingBooksColors) {
           fixedBackground = bookCoverBackgroundColor;
         } else {
-          fixedBackground = CHAPTER_BASE_BACKGROUND_COLOR;
+          fixedBackground = BASE_BACKGROUND_COLOR;
         }
       }
 
@@ -366,56 +272,21 @@ export const Book = memo(
         }
       }
 
-      const bookEntriesCounts = filteredUsers.map(([user]) => {
-        const userContent = content.get(user);
-        const bookContent = userContent.books[book];
-        const entriesCount = Object.keys(bookContent).reduce(
-          (currentValue, key) => {
-            return currentValue + bookContent[key].length;
-          },
-          0
-        );
-        return entriesCount;
-      });
-      const gridColumns = displayContainer && !showChapters ? "1fr" : null;
-      const gridRows =
-        displayContainer && !showChapters
-          ? bookEntriesCounts
-              .map((count) => {
-                return `${count}fr`;
-              })
-              .join(" ")
-          : null;
-
       return {
         fixedBackground,
-        gridRows,
-        displayContainer,
-        gridColumns,
-        filteredUsers,
         tooltipContent,
       };
     }, [
       chaptersCount,
       content,
-      usersStatus,
-      modes,
       bookCoverBackgroundColor,
       usersInfo,
-      contentVisualization,
-      ContentVisualizationType,
       showChapters,
       readingSummary,
       isReadingHistoryEnabled,
       readingHistoryRangeSeconds,
       showingBooksColors,
     ]);
-
-    const usersInBook = useMemo(() => {
-      return Object.keys(userPresence).filter((user) => {
-        return userPresence[user].book === book;
-      });
-    }, [userPresence, isUserPresenceEnabled, modes]);
 
     const chapterReadingHistorySummaryMap = useMemo(() => {
       const lastTimePeriod =
@@ -464,7 +335,7 @@ export const Book = memo(
 
       const now = Date.now();
       const nowSeconds = Math.floor(now / MS_PER_SECOND);
-      const baseColor = CHAPTER_BASE_BACKGROUND_COLOR;
+      const baseColor = BASE_BACKGROUND_COLOR;
 
       return staticChaptersArray.map((_, index) => {
         let chapter = index + 1;
@@ -598,7 +469,7 @@ export const Book = memo(
               BibleVizUtils.Functions.GetHistoryColorLinearGradient(colors);
           } else {
             if (colors.length === 0) {
-              colors.push({ color: CHAPTER_BASE_BACKGROUND_COLOR, value: 1 });
+              colors.push({ color: BASE_BACKGROUND_COLOR, value: 1 });
             }
             historyBackground = colors[0].color;
           }
@@ -665,14 +536,14 @@ export const Book = memo(
 
     return (
       <div
-        className={`mapBookContainer${showChapters ? "" : " pointable"}`}
+        className={`book-container${showChapters ? "" : " pointable"}`}
         style={style}
         onClick={() => {
           if (!showChapters) setShowChapters(true);
         }}
       >
         <span
-          className="bookName"
+          className="book-name"
           onPointerDown={(e) => {
             e.stopPropagation();
             onHoldStart(e);
@@ -688,7 +559,7 @@ export const Book = memo(
           {bookId}
         </span>
         <div
-          className={`bookCover${showChapters ? " invisible" : isUserPresenceEnabled && bookBorderGradientColors ? " showUserPresence" : ""}`}
+          className={`book-cover${showChapters ? " invisible" : isUserPresenceEnabled && bookBorderGradientColors ? " show-user-presence" : ""}`}
           onPointerEnter={(e) =>
             setContainerRect(e.currentTarget.getBoundingClientRect())
           }
@@ -697,50 +568,23 @@ export const Book = memo(
             "--bookUserPresenceColors": bookBorderGradientColors,
             height: bookCoverHeight,
             background: fixedBackground,
-            gridTemplateColumns: gridColumns,
-            gridTemplateRows: gridRows,
           }}
         >
           {showChapters ? (
             chapters
-          ) : (
-            <>
-              {isUserPresenceEnabled &&
-                modes.get("Reading") &&
-                usersInBook?.length > 0 &&
-                usersInBook.map((user, index) => {
-                  return (
-                    <PresentUserPresenceBookIcon
-                      index={index}
-                      user={user}
-                      length={usersInBook.length}
-                    />
-                  );
-                })}
-              {isUserPresenceEnabled &&
-                displayContainer &&
-                filteredUsers.map(([user]) => {
-                  return (
-                    <div
-                      style={{ backgroundColor: usersInfo[user].color }}
-                    ></div>
-                  );
-                })}
-              {(isReadingHistoryEnabled || isUserPresenceEnabled) &&
-                tooltipAnchor &&
-                tooltipContent?.length > 0 && (
-                  <Tooltip
-                    anchor={tooltipAnchor}
-                    content={tooltipContent}
-                    offsetY={
-                      isUserPresenceEnabled && bookBorderGradientColors
-                        ? scaleFactor * 6
-                        : 0
-                    }
-                  />
-                )}
-            </>
-          )}
+          ) : (isReadingHistoryEnabled || isUserPresenceEnabled) &&
+            tooltipAnchor &&
+            tooltipContent?.length > 0 ? (
+            <Tooltip
+              anchor={tooltipAnchor}
+              content={tooltipContent}
+              offsetY={
+                isUserPresenceEnabled && bookBorderGradientColors
+                  ? scaleFactor * 6
+                  : 0
+              }
+            />
+          ) : null}
         </div>
       </div>
     );

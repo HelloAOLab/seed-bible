@@ -46,14 +46,14 @@ export const ProjectFiltersSelector = () => {
           borderStyle: style.borderStyle,
           borderColor: style.borderColor,
         }}
-        className="filterOptionIcon"
+        className="filter-option-icon"
       ></div>,
       title,
     ];
   }, []);
 
   return (
-    <div className="projectFiltersSelector">
+    <div className="project-filters-selector">
       <FiltersSelectorOption
         content="All"
         onClick={() => {

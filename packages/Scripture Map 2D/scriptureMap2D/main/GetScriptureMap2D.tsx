@@ -3,7 +3,12 @@ import {
   ScriptureMap2DModes,
 } from "scriptureMap2D.main.ScriptureMap2D";
 
-const { useCallback, useMemo } = os.appHooks;
+const onChapterClickDependencies = [];
+const onChapterClickAndHold = () => {};
+const onBookNameClickAndHold = () => {};
+const onBookNameClickAndHoldDependencies = [];
+
+const { useCallback } = os.appHooks;
 
 const App = () => {
   const handleChapterClick = useCallback((_, key) => {
@@ -22,20 +27,6 @@ const App = () => {
     globalThis.Open(bookId, chapter);
   }, []);
 
-  const {
-    onChapterClickDependencies,
-    onChapterClickAndHold,
-    onBookNameClickAndHold,
-    onBookNameClickAndHoldDependencies,
-  } = useMemo(() => {
-    return {
-      onChapterClickDependencies: [],
-      onChapterClickAndHold: () => {},
-      onBookNameClickAndHold: () => {},
-      onBookNameClickAndHoldDependencies: [],
-    };
-  }, []);
-
   return (
     <div
       style={{
@@ -49,23 +40,15 @@ const App = () => {
       <ScriptureMap2D
         parentContext={{
           mode: ScriptureMap2DModes.Viewer,
-          // selection,
-          // isInSelectionMode,
           onChapterClick: handleChapterClick,
           onChapterClickDependencies,
           onChapterClickAndHold,
           onBookNameClickAndHold,
           onBookNameClickAndHoldDependencies,
-          // project,
-          // selectedChaptersKeys,
-          // onSelectionModeCheckboxClick: handleSelectionModeCheckboxClick,
-          // onSelectionModeDoneButtonClick: handleSelectionModeDoneButtonClick,
-          // onStateSetterOptionClick: handleStateSetterOptionClick,
-          // onSelectionModeClearSelectionButtonClick: clearSelection,
-          showingAllChapters: true, // !menuState.areBooksClosed,
-          showLabels: true, // !menuState.hideHeadings,
+          initialShowingAllChapters: true,
+          initialShowLabels: true,
           initialScaleFactor: 0.6,
-          initialIsReadingHistoryEnabled: true,
+          initialIsReadingHistoryEnabled: false,
         }}
       />
     </div>

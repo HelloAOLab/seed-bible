@@ -3,7 +3,7 @@ import { TestamentContainer } from "scriptureMap2D.main.TestamentContainer";
 const { memo } = os.appCompat;
 const { useMemo } = os.appHooks;
 
-export const ScriptureMap2DContainer = memo(() => {
+export const Container = memo(() => {
   const { arrangement } = useScriptureMap2DContext();
 
   const containers = useMemo(() => {
@@ -20,5 +20,5 @@ export const ScriptureMap2DContainer = memo(() => {
       });
   }, [arrangement]);
 
-  return <div className="mapContainer">{containers}</div>;
+  return <div className="scripture-map-2d-container">{containers}</div>;
 });

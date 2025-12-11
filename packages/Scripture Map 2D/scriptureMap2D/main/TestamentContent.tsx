@@ -177,145 +177,146 @@ export const TestamentContent = memo(({ hidden }) => {
     let bookIndex = 0;
     let currentBookColumn = 1;
 
-    if (fittingBooksCount === 0) return elements;
+    if (fittingBooksCount > 0) {
+      for (let i = 1; i <= rowPairCount; i++) {
+        while (
+          currentBookColumn <= fittingBooksCount &&
+          sectionIndex < filteredSections.length
+        ) {
+          const section = filteredSections[sectionIndex];
+          const reversedBooks = section.books.toReversed();
+          const bookInfo = reversedBooks[bookIndex];
+          const book = bookInfo.commonName;
+          const bookStaticInfo = BibleVizUtils.Data.tags.booksStaticInfo[book];
+          const bookId = bookStaticInfo.abbreviation;
 
-    for (let i = 1; i <= rowPairCount; i++) {
-      while (
-        currentBookColumn <= fittingBooksCount &&
-        sectionIndex < filteredSections.length
-      ) {
-        const section = filteredSections[sectionIndex];
-        const reversedBooks = section.books.toReversed();
-        const bookInfo = reversedBooks[bookIndex];
-        const book = bookInfo.commonName;
-        const bookStaticInfo = BibleVizUtils.Data.tags.booksStaticInfo[book];
-        const bookId = bookStaticInfo.abbreviation;
-
-        const sectionKey = `${testamentIndex}-${testament.name}-${sectionIndex}-${section.name}`;
-        if (bookIndex === 0 && showLabels) {
-          const sectionOcupiedColumns = Math.min(
-            fittingBooksCount - (currentBookColumn - 1),
-            filteredSections[sectionIndex].books.length
-          );
-          elements.push(
-            <SectionToggle
-              key={`${arrangementIndex}-${testament.name}-${section.name}`}
-              section={filteredSections[sectionIndex]}
-              sectionKey={sectionKey}
-              toggleShowSection={toggleShowSection}
-              showingContent={sectionsShown.get(sectionKey)}
-              style={{
-                backgroundColor: `${filteredSections[sectionIndex].color}80`,
-                borderBottomColor: filteredSections[sectionIndex].color,
-                gridRow: `${i * 2 - 1} / ${i * 2}`,
-                gridColumn: `${currentBookColumn} / ${sectionsShown.get(sectionKey) ? currentBookColumn + sectionOcupiedColumns : currentBookColumn + 1}`,
-              }}
-            />
-          );
-        }
-
-        if (sectionsShown.get(sectionKey)) {
-          const levelColorsKey = `${testamentIndex} ${sectionIndex}`;
-          const color =
-            bookInfo.customColor ??
-            sectionLevelColorMap.get(levelColorsKey).toReversed()[bookIndex];
-          const readingEvents =
-            rangedReadingEventsByBook.get(
-              BibleVizUtils.Data.tags.booksStaticInfo[bookInfo.commonName]
-                .abbreviation
-            ) ?? [];
-          const summary = calculateReadingHistorySummary(readingEvents);
-
-          let isPsalms = false;
-          let psalmChaptersLimits;
-          if (psalmsNames.includes(book)) {
-            isPsalms = true;
-            psalmChaptersLimits = {
-              start: bookStaticInfo.startingIndex + 1,
-              end:
-                bookStaticInfo.startingIndex + bookStaticInfo.numberOfChapters,
-            };
+          const sectionKey = `${testamentIndex}-${testament.name}-${sectionIndex}-${section.name}`;
+          if (bookIndex === 0 && showLabels) {
+            const sectionOcupiedColumns = Math.min(
+              fittingBooksCount - (currentBookColumn - 1),
+              filteredSections[sectionIndex].books.length
+            );
+            elements.push(
+              <SectionToggle
+                key={`${arrangementIndex}-${testament.name}-${section.name}`}
+                section={filteredSections[sectionIndex]}
+                sectionKey={sectionKey}
+                toggleShowSection={toggleShowSection}
+                showingContent={sectionsShown.get(sectionKey)}
+                style={{
+                  backgroundColor: `${filteredSections[sectionIndex].color}80`,
+                  borderBottomColor: filteredSections[sectionIndex].color,
+                  gridRow: `${i * 2 - 1} / ${i * 2}`,
+                  gridColumn: `${currentBookColumn} / ${sectionsShown.get(sectionKey) ? currentBookColumn + sectionOcupiedColumns : currentBookColumn + 1}`,
+                }}
+              />
+            );
           }
-          const bookUserPresence = {};
 
-          const userPresenceColors = [];
-          let borderGradientColors;
-          if (isUserPresenceEnabled) {
-            if (
-              activeTab.data.bookId === bookId ||
-              (activeTab.data.bookId === "PSA" &&
-                isPsalms &&
-                activeTab.data.chapter >= psalmChaptersLimits.start &&
-                activeTab.data.chapter <= psalmChaptersLimits.end)
-            ) {
-              bookUserPresence["me"] = {
-                chapter: activeTab.data.chapter,
-                borderColor: BibleVizUtils.Data.tags.myUserColor,
+          if (sectionsShown.get(sectionKey)) {
+            const levelColorsKey = `${testamentIndex} ${sectionIndex}`;
+            const color =
+              bookInfo.customColor ??
+              sectionLevelColorMap.get(levelColorsKey).toReversed()[bookIndex];
+            const readingEvents =
+              rangedReadingEventsByBook.get(
+                BibleVizUtils.Data.tags.booksStaticInfo[bookInfo.commonName]
+                  .abbreviation
+              ) ?? [];
+            const summary = calculateReadingHistorySummary(readingEvents);
+
+            let isPsalms = false;
+            let psalmChaptersLimits;
+            if (psalmsNames.includes(book)) {
+              isPsalms = true;
+              psalmChaptersLimits = {
+                start: bookStaticInfo.startingIndex + 1,
+                end:
+                  bookStaticInfo.startingIndex +
+                  bookStaticInfo.numberOfChapters,
               };
-              userPresenceColors.push(BibleVizUtils.Data.tags.myUserColor);
             }
-            for (const user in usersInfo) {
-              const { bookId: userBookId, chapter: userChapter } =
-                userPresence[user];
-              const { borderColor: userBorderColor } = usersInfo[user];
+            const bookUserPresence = {};
+
+            const userPresenceColors = [];
+            let borderGradientColors;
+            if (isUserPresenceEnabled) {
               if (
-                bookId === userBookId ||
-                (userBookId === "PSA" &&
+                activeTab.data.bookId === bookId ||
+                (activeTab.data.bookId === "PSA" &&
                   isPsalms &&
-                  userChapter >= psalmChaptersLimits.start &&
-                  userChapter <= psalmChaptersLimits.end)
+                  activeTab.data.chapter >= psalmChaptersLimits.start &&
+                  activeTab.data.chapter <= psalmChaptersLimits.end)
               ) {
-                bookUserPresence[user] = {
-                  chapter: userChapter,
-                  borderColor: userBorderColor,
+                bookUserPresence["me"] = {
+                  chapter: activeTab.data.chapter,
+                  borderColor: BibleVizUtils.Data.tags.myUserColor,
                 };
-                userPresenceColors.push(userBorderColor);
+                userPresenceColors.push(BibleVizUtils.Data.tags.myUserColor);
               }
+              for (const user in usersInfo) {
+                const { bookId: userBookId, chapter: userChapter } =
+                  userPresence[user];
+                const { borderColor: userBorderColor } = usersInfo[user];
+                if (
+                  bookId === userBookId ||
+                  (userBookId === "PSA" &&
+                    isPsalms &&
+                    userChapter >= psalmChaptersLimits.start &&
+                    userChapter <= psalmChaptersLimits.end)
+                ) {
+                  bookUserPresence[user] = {
+                    chapter: userChapter,
+                    borderColor: userBorderColor,
+                  };
+                  userPresenceColors.push(userBorderColor);
+                }
+              }
+              if (userPresenceColors.length > 0)
+                borderGradientColors =
+                  BibleVizUtils.Functions.GetUserPresenceBorderGradientColors({
+                    colors: userPresenceColors,
+                    diffuse: 15,
+                  });
+
+              // if (userPresenceColors.length > 0) {
+              //   tooltipContent.unshift(
+              //     <UserPresenceTooltipContent colors={userPresenceColors} />
+              //   );
+              // }
             }
-            if (userPresenceColors.length > 0)
-              borderGradientColors =
-                BibleVizUtils.Functions.GetUserPresenceBorderGradientColors({
-                  colors: userPresenceColors,
-                  diffuse: 15,
-                });
 
-            // if (userPresenceColors.length > 0) {
-            //   tooltipContent.unshift(
-            //     <UserPresenceTooltipContent colors={userPresenceColors} />
-            //   );
-            // }
-          }
+            elements.push(
+              <Book
+                isPsalms={isPsalms}
+                key={`book-${arrangementIndex}-${testament.name}-${section.name}-${bookInfo.commonName}`}
+                bookInfo={bookInfo}
+                book={book}
+                bookId={bookId}
+                bookCoverBackgroundColor={color}
+                sectionName={section.name}
+                style={{
+                  gridRow: `${i * 2} / ${i * 2 + 1}`,
+                  gridColumn: `${currentBookColumn} / ${currentBookColumn + 1}`,
+                }}
+                readingEvents={readingEvents}
+                readingSummary={summary}
+                bookBorderGradientColors={borderGradientColors}
+                bookUserPresence={bookUserPresence}
+                bookUserPresenceColors={userPresenceColors}
+              />
+            );
+            bookIndex++;
+            if (bookIndex === section.books.length) {
+              bookIndex = 0;
+              sectionIndex++;
+            }
+          } else sectionIndex++;
 
-          elements.push(
-            <Book
-              isPsalms={isPsalms}
-              key={`book-${arrangementIndex}-${testament.name}-${section.name}-${bookInfo.commonName}`}
-              bookInfo={bookInfo}
-              book={book}
-              bookId={bookId}
-              bookCoverBackgroundColor={color}
-              sectionName={section.name}
-              style={{
-                gridRow: `${i * 2} / ${i * 2 + 1}`,
-                gridColumn: `${currentBookColumn} / ${currentBookColumn + 1}`,
-              }}
-              readingEvents={readingEvents}
-              readingSummary={summary}
-              bookBorderGradientColors={borderGradientColors}
-              bookUserPresence={bookUserPresence}
-              bookUserPresenceColors={userPresenceColors}
-            />
-          );
-          bookIndex++;
-          if (bookIndex === section.books.length) {
-            bookIndex = 0;
-            sectionIndex++;
-          }
-        } else sectionIndex++;
-
-        currentBookColumn++;
+          currentBookColumn++;
+        }
+        currentBookColumn = 1;
       }
-      currentBookColumn = 1;
     }
 
     return elements;
@@ -335,7 +336,7 @@ export const TestamentContent = memo(({ hidden }) => {
 
   return (
     <div
-      className={`testamentContent ${hidden ? "hidden" : ""}`}
+      className={`testament-content${hidden ? " hidden" : ""}`}
       ref={contentRef}
     >
       {sections}

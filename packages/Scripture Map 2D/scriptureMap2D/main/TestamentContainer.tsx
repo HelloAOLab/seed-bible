@@ -16,7 +16,7 @@ export const TestamentContainer = memo(({ testament, testamentIndex }) => {
 
   return (
     <TestamentContext.Provider value={{ testament, testamentIndex }}>
-      <div className="testamentContainer">
+      <div className="testament-container">
         {showLabels && (
           <TestamentToggle
             key={`toggle-${testament.name}`}

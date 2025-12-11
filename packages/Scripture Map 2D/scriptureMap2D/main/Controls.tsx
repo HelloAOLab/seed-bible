@@ -73,7 +73,7 @@ const ZoomLevelSelector = ({ setShowOptions, toggleButtonRef }) => {
       onClick={(e) => {
         e.stopPropagation();
       }}
-      className="zoomLevelSelector"
+      className="zoom-level-selector"
     >
       <span>Zoom level</span>
       <ZoomLevelOption
@@ -130,22 +130,13 @@ export const Controls = () => {
 
   const [showOptions, setShowOptions] = useState(false);
 
-  const {
-    handleZoomIn,
-    handleZoomOut /*handleLabelsToggle, handleShowAllChaptersToggle, showingAllChapters, handleContentHeatmapToggle*/,
-  } = useScriptureMap2DContext();
+  const { handleZoomIn, handleZoomOut } = useScriptureMap2DContext();
 
   const toggleButtonRef = useRef(null);
 
-  /*{<>
-        <button onClick={handleLabelsToggle}><span class="material-symbols-outlined">sell</span></button>
-        {false && <button onClick={handleShowAllChaptersToggle}><span class="material-symbols-outlined">{showingAllChapters ? "visibility_off" : "visibility"}</span></button>}
-        <button onClick={handleContentHeatmapToggle}><span class="material-symbols-outlined">description</span></button>
-    </>}*/
-
   return (
-    <div className="mapControls">
-      <div className="zoomContainer">
+    <div className="scripture-map-2d-controls">
+      <div className="zoom-container">
         <ZoomButton onClick={handleZoomOut}>
           <span className="material-symbols-outlined">remove</span>
         </ZoomButton>
