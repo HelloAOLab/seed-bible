@@ -4,7 +4,7 @@ const { useRef, useState, useLayoutEffect, useMemo } = os.appHooks;
 
 export const UserPresenceTooltipContent = ({ colors }) => {
   return (
-    <span className="userPresenceTooltipContent">
+    <span className="user-presence-tooltip-content">
       <div>
         {colors.slice(0, 3).map((color, index) => {
           return (

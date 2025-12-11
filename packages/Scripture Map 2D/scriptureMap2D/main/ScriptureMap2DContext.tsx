@@ -1,15 +1,8 @@
 import { useIsMobile } from "scriptureMap2D.main.CustomHooks";
 import { useTabsContext } from "app.hooks.tabs";
 
-const {
-  createContext,
-  useRef,
-  useState,
-  useContext,
-  useCallback,
-  useMemo,
-  useEffect,
-} = os.appHooks;
+const { createContext, useState, useContext, useCallback, useMemo } =
+  os.appHooks;
 
 const ScriptureMap2DContext = createContext();
 
@@ -201,25 +194,12 @@ const upcomingEvents = {
   Kushagra: [{ book: "Genesis", chapter: 8, remainingDays: 5 }],
 };
 
-const UserPresenceTimeType = {
-  Day: "Day",
-  Week: "Week",
-  Month: "Month",
-  Year: "Year",
-  Forever: "Forever",
-};
-
-const ContentVisualizationType = {
-  Gradient: "Gradient",
-  Container: "Container",
-};
-
 const MIN_SCALE_FACTOR = 0.25;
 const MAX_SCALE_FACTOR = 1.5;
 const SCALE_FACTOR_STEP = 0.05;
 
 const MAX_CHAPTER_HEAT_COUNT = 5;
-const CHAPTER_BASE_BACKGROUND_COLOR = "#E3E3E3";
+const BASE_BACKGROUND_COLOR = "#E3E3E3";
 
 export const ScriptureMap2DProvider = ({
   children,
@@ -231,7 +211,8 @@ export const ScriptureMap2DProvider = ({
     arrangementIndex = BibleVizUtils.Functions.GetCurrentArrangementIndex(),
     initialScaleFactor = 1,
     initialIsReadingHistoryEnabled = false,
-    showingAllChapters: initialShowingAllChapters = false,
+    initialShowingAllChapters = false,
+    initialShowLabels = true,
   } = parentContext;
 
   const isMobile = useIsMobile(768);
@@ -243,7 +224,9 @@ export const ScriptureMap2DProvider = ({
   }, [tabs, activeTabId]);
 
   const arrangement = useMemo(() => {
-    return BibleVizUtils.Data.vars.fixedArrangementsInfo[arrangementIndex];
+    return BibleVizUtils.Functions.GetArrangementByIndex({
+      index: arrangementIndex,
+    });
   }, [arrangementIndex]);
 
   const projectStateStyle = useMemo(() => {
@@ -281,26 +264,10 @@ export const ScriptureMap2DProvider = ({
     initialShowingAllChapters
   );
   const [showingBooksColors, setShowingBooksColors] = useState(true);
-  const [showLabels, setShowLabels] = useState(true);
+  const [showLabels, setShowLabels] = useState(initialShowLabels);
   const [isUserPresenceEnabled, setIsUserPresenceEnabled] = useState(false);
   const [isReadingHistoryEnabled, setIsReadingHistoryEnabled] = useState(
     initialIsReadingHistoryEnabled
-  );
-  const [usersStatus, setUsersStatus] = useState(
-    new Map(
-      Array.from(content).map(([key]) => {
-        return [key, true];
-      })
-    )
-  );
-  const [modes, setModes] = useState(
-    new Map([
-      ["Content", false],
-      ["Reading", false],
-    ])
-  );
-  const [contentVisualization, setContentVisualization] = useState(
-    ContentVisualizationType.Container
   );
 
   const [projectFilters, setProjectFilters] = useState(
@@ -329,10 +296,6 @@ export const ScriptureMap2DProvider = ({
       };
     }, [scaleFactor]);
 
-  const handleContentHeatmapToggle = useCallback(() => {
-    setIsUserPresenceEnabled((prev) => !prev);
-  }, [isUserPresenceEnabled]);
-
   const handleZoomIn = useCallback(() => {
     if (scaleFactor < MAX_SCALE_FACTOR) {
       const newValue = Math.min(
@@ -357,30 +320,8 @@ export const ScriptureMap2DProvider = ({
     setShowLabels((prev) => !prev);
   }, []);
 
-  // const handleShowAllChaptersToggle = useCallback(() => {
-  //     setShowingAllChapters(prev => !prev);
-  // }, [])
-
-  const handleUserButtonClick = useCallback(
-    ({ user }) => {
-      const copy = new Map(usersStatus);
-      copy.set(user, !copy.get(user));
-      setUsersStatus(copy);
-    },
-    [usersStatus]
-  );
-
-  const handleModeButtonClick = useCallback(
-    ({ mode }) => {
-      const copy = new Map(modes);
-      copy.set(mode, !copy.get(mode));
-      setModes(copy);
-    },
-    [modes]
-  );
-
-  const handleContentVisualizationButtonClick = useCallback((type) => {
-    setContentVisualization(type);
+  const handleShowAllChaptersToggle = useCallback(() => {
+    setShowingAllChapters((prev) => !prev);
   }, []);
 
   const handleProjectFilterOptionClick = useCallback(
@@ -414,27 +355,21 @@ export const ScriptureMap2DProvider = ({
         scaleFactor,
         MIN_SCALE_FACTOR,
         setScaleFactor,
-        showLabels,
         handleZoomIn,
         handleZoomOut,
+        showLabels,
         handleLabelsToggle,
+        handleShowAllChaptersToggle,
         arrangementIndex,
         arrangement,
-        // handleShowAllChaptersToggle,
         showingAllChapters,
         setShowingAllChapters,
-        handleContentHeatmapToggle,
         isUserPresenceEnabled,
         setIsUserPresenceEnabled,
         isReadingHistoryEnabled,
         setIsReadingHistoryEnabled,
         content,
-        usersStatus,
         MAX_CHAPTER_HEAT_COUNT,
-        handleUserButtonClick,
-        modes,
-        handleModeButtonClick,
-        UserPresenceTimeType,
         usersInfo,
         userPresence,
         bookWidth,
@@ -442,16 +377,13 @@ export const ScriptureMap2DProvider = ({
         chapterPadding,
         chapterWidth,
         chapterHeight,
-        ContentVisualizationType,
-        contentVisualization,
-        handleContentVisualizationButtonClick,
         handleProjectFilterOptionClick,
         upcomingEvents,
         projectFilters,
         ScriptureMap2DModes,
         ProjectChapterState,
         projectStateStyle,
-        CHAPTER_BASE_BACKGROUND_COLOR,
+        BASE_BACKGROUND_COLOR,
         isMobile,
         showingBooksColors,
         setShowingBooksColors,

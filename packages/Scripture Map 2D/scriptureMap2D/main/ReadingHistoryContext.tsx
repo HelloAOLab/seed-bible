@@ -157,18 +157,26 @@ export const ReadingHistoryProvider = ({ children }) => {
   }, []);
 
   const tryUpdateReadingHistoryUsersFilters = useCallback(() => {
-    const newUsersIds = [];
+    const next = new Map(readingHistoryUserFilters);
+
+    let changed = false;
+
     usersAuthId.forEach((userId) => {
-      if (!readingHistoryUserFilters.has(userId)) {
-        newUsersIds.push(userId);
+      if (!next.has(userId)) {
+        next.set(userId, false);
+        changed = true;
       }
     });
-    if (newUsersIds.length > 0) {
-      const copy = new Map(readingHistoryUserFilters);
-      newUsersIds.forEach((userId) => {
-        copy.set(userId, false);
-      });
-      setReadingHistoryUserFilters(copy);
+
+    Array.from(next.keys()).forEach((key) => {
+      if (!usersAuthId.includes(key)) {
+        next.delete(key);
+        changed = true;
+      }
+    });
+
+    if (changed) {
+      setReadingHistoryUserFilters(next);
     }
   }, [readingHistoryUserFilters, usersAuthId]);
 
@@ -187,12 +195,13 @@ export const ReadingHistoryProvider = ({ children }) => {
 
     setSelectedUsersCount(selectedUsers.length);
 
-    let summary = calculateReadingHistorySummary([]);
+    let summary;
     const rangedEventsByBook = new Map();
     const eventsByDay = new Map();
     const dailySummaries = new Map();
 
     if (selectedUsers.length === 0) {
+      summary = calculateReadingHistorySummary([]);
       setYearlyReadingHistorySummary(summary);
       setRangedReadingEventsByBook(rangedEventsByBook);
       setReadingEventsByDay(eventsByDay);
@@ -225,7 +234,9 @@ export const ReadingHistoryProvider = ({ children }) => {
 
         for (let event of flattenedEvents) {
           let { start, end, chapter, bookId } = event;
-          if (start >= rangeStart && end <= rengeEnd) {
+          const duration = end - start;
+          if (duration < SEC_PER_MINUTE) continue;
+          if (start >= rangeStart && start <= rengeEnd) {
             if (bookId === "PSA") {
               const { bookId: dividedPsalmId, chapter: dividedPsalmChapter } =
                 BibleVizUtils.Functions.ConvertCompletePsalmsToDivided({
@@ -236,7 +247,7 @@ export const ReadingHistoryProvider = ({ children }) => {
                 bookId: dividedPsalmId,
                 chapter: dividedPsalmChapter,
               };
-              ({ start, end, chapter, bookId } = event);
+              bookId = dividedPsalmId;
             }
             if (!rangedEventsByBook.has(bookId)) {
               rangedEventsByBook.set(bookId, []);

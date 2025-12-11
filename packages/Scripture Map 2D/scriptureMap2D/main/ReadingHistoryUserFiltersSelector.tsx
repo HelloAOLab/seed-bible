@@ -16,7 +16,7 @@ export const ReadingHistoryUserFiltersSelector = () => {
   }, [readingHistoryUserFilters]);
 
   return (
-    <div className="readingHistoryUserSelector">
+    <div className="reading-history-user-selector">
       <FiltersSelectorOption
         content="All"
         onClick={() => {
@@ -51,7 +51,7 @@ export const ReadingHistoryUserFiltersSelector = () => {
                         ) ??
                         "pink"),
                 }}
-                className="filterOptionIcon"
+                className="filter-option-icon"
               ></div>,
               userId === myAuthBotId ? "You" : "Guest",
             ]}

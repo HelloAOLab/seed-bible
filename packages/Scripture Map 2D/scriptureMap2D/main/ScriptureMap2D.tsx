@@ -19,7 +19,7 @@ export const ProjectChapterState = Object.freeze({
 });
 
 export const ScriptureMap2D = memo(({ parentContext }) => {
-  const { mode, project, mapToolProviderRef } = parentContext;
+  const { mode, project } = parentContext;
 
   if (mode === ScriptureMap2DModes.Project && !project) return null;
 
@@ -28,7 +28,6 @@ export const ScriptureMap2D = memo(({ parentContext }) => {
       <style>{thisBot.tags["ScriptureMap2D.css"]}</style>
       <TimeProvider>
         <ScriptureMap2DProvider
-          ref={mapToolProviderRef}
           parentContext={parentContext}
           ScriptureMap2DModes={ScriptureMap2DModes}
           ProjectChapterState={ProjectChapterState}

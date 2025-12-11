@@ -221,7 +221,7 @@ const BibleLayoutMeasurements = {
   PlaylistStackedEntryItemGap: 0.0375,
   PlaylistEntryItemPadding: 0.01,
 
-  Book2DMaxAmountOfColumns: 5,
+  Book2DMaxColumns: 5,
 };
 BibleLayoutMeasurements.Book3DScaleX =
   BibleLayoutMeasurements.Book3DMaxAmountOfColumns *
