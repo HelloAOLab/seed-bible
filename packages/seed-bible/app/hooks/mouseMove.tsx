@@ -803,7 +803,7 @@ const FloatingAppContainer = ({
   let width = app.size.width;
   let height = app.size.height;
 
-  if (mobile) {
+  if (mobile && !app.isFullscreen) {
     const margin = 12;
     const vw = Math.max(
       document.documentElement?.clientWidth || 0,
@@ -824,14 +824,14 @@ const FloatingAppContainer = ({
   // sizes for layout: wrapper contains window (top) + toolbar (underneath)
   const wrapperStyle = {
     position: "fixed",
-    left: isMobileNow()?'0':`${posX}px`,
-    top: isMobileNow()?'0':`${posY}px`,
-    width: `${width}px`,
-    height: `${
+    left: (isMobileNow() || app.isFullscreen)?'0':`${posX}px`,
+    top: (isMobileNow() || app.isFullscreen)?'0':`${posY}px`,
+    width: (mobile && app.isFullscreen) ? '100vw' : `${width}px`,
+    height: (mobile && app.isFullscreen) ? '100vh' : `${
       (app.isMinimized ? 0 : height) +
-      (app.isDocked ? 0 : toolbarGap + toolbarH)
+      (app.isDocked || app.isFullscreen ? 0 : toolbarGap + toolbarH)
     }px`,
-    zIndex: 1000,
+    zIndex: app.isFullscreen ? 999999 : 1000,
     pointerEvents: "auto",
     transition: app.isDragging || app.isResizing ? "none" : "all 0.18s ease",
     cursor: app.isDragging ? "grabbing" : "default",
@@ -842,9 +842,9 @@ const FloatingAppContainer = ({
     position: "absolute",
     left: 0,
     top: 0,
-    width:isMobileNow()?'100vw': `${width}px`,
-    height: `${app.isMinimized ? 0 : height}px`,
-    borderRadius: `${radius}px`,
+    width: (isMobileNow() || app.isFullscreen)?'100vw': `${width}px`,
+    height: (mobile && app.isFullscreen) ? '100vh' : `${app.isMinimized ? 0 : height}px`,
+    borderRadius: app.isFullscreen ? 0 : `${radius}px`,
     boxShadow: `0 0 0 2px ${stroke}`,
     background: "rgba(17,17,17,0.75)",
     color: "#e5e7eb",
@@ -868,7 +868,7 @@ const FloatingAppContainer = ({
     borderRadius: 12,
     boxShadow: `0 0 0 2px ${stroke}`,
     background: "rgba(0, 0, 0, 0.65)",
-    display: app.isDocked ? "none" : "flex",
+    display: (app.isDocked || app.isFullscreen) ? "none" : "flex",
     alignItems: "center",
     justifyContent: "center",
     gap: 8,
@@ -964,7 +964,7 @@ const FloatingAppContainer = ({
       >
         <div className="floating-app" style={windowStyle}>
           <div style={contentStyle}>{app.App}</div>
-          {!app.isDocked && !app.isMinimized && (
+          {!app.isDocked && !app.isMinimized && !app.isFullscreen && (
             <>
               <ResizeHandle
                 handle="nw"
