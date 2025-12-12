@@ -222,6 +222,10 @@ const AnnotationList = ({
 };
 
 const AnnodataMapper = ({ data }) => {
+  if (data.type === "comment") {
+    return <RenderHTMLContent htmlContent={data.html} />;
+  }
+
   return (
     <>
       {data.map((contentData, index) => (
@@ -288,8 +292,8 @@ const AnnodataMapper = ({ data }) => {
                 }`}
               >
                 <div>
-                  {contentData.type === "heading" ? (
-                    <RenderHTMLContent htmlContent={contentData.content} />
+                  {contentData.type === "comment" ? (
+                    <RenderHTMLContent htmlContent={contentData.html} />
                   ) : (
                     contentData.content
                   )}
