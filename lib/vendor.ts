@@ -1,4 +1,4 @@
-export * from '@tiptap/core';
+export * from "@tiptap/core";
 import StarterKit from "@tiptap/starter-kit";
 import TextAlign from "@tiptap/extension-text-align";
 import Underline from "@tiptap/extension-underline";
@@ -10,22 +10,22 @@ import Link from "@tiptap/extension-link";
 import BulletList from "@tiptap/extension-bullet-list";
 import OrderedList from "@tiptap/extension-ordered-list";
 import ListItem from "@tiptap/extension-list-item";
-import preactRenderToString from 'preact-render-to-string';
+import preactRenderToString from "preact-render-to-string";
+import * as z from "zod/mini";
 
 export * from "@tiptap/extension-text-style";
 export {
-    TextAlign,
-    Underline,
-    Superscript,
-    Subscript,
-    Highlight,
-    TextStyle,
-    Color,
-    Image,
-    Link,
-    BulletList,
-    OrderedList,
-    ListItem,
-    StarterKit,
-    preactRenderToString
+  TextAlign,
+  Underline,
+  Superscript,
+  Subscript,
+  Highlight,
+  Image,
+  Link,
+  BulletList,
+  OrderedList,
+  ListItem,
+  StarterKit,
+  preactRenderToString,
+  z,
 };

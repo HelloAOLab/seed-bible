@@ -1,3 +1,5 @@
+import { z } from "https://esm.helloao.org/vendor-3PZUL55I.js";
+
 /**
  * Defines an annotation. That is, a piece of information associated with a specific chapter of the Bible.
  */
@@ -23,6 +25,11 @@ export interface Annotation {
   verseNumber?: number;
 
   /**
+   * The optional verse number that the annotation ends at (inclusive).
+   */
+  endVerseNumber?: number;
+
+  /**
    * The data of the annotation.
    */
   data: AnnotationData;
@@ -33,39 +40,27 @@ export interface Annotation {
   order?: number;
 }
 
-export type AnnotationData =
-  | CommentAnnotationData
-  | LinkAnnotationData
-  | FileAnnotationData
-  | PlaylistAnnotationData
-  | HighlightAnnotationData;
+export type AnnotationData = CommentAnnotationData;
 
-// /**
-//  * Data for a scripture annotation.
-//  */
-// export interface ScriptureAnnotationData {
-//     type: 'scripture';
+export const COMMENT_SCHEMA = z.object({
+  type: z.literal("comment"),
+  html: z.string(),
+  replyTo: z.nullable(z.optional(z.string())),
+});
 
-//     /**
-//      * The ID of the book that the scripture annotation references.
-//      */
-//     book: string;
+export const ANNOTATION_DATA_SCHEMA = z.discriminatedUnion("type", [
+  COMMENT_SCHEMA,
+]);
 
-//     /**
-//      * The chapter number that the scripture annotation references.
-//      */
-//     chapterNumber: number;
-
-//     /**
-//      * The starting verse number that the scripture annotation references.
-//      */
-//     verseStart: number;
-
-//     /**
-//      * The ending verse number that the scripture annotation references, if any.
-//      */
-//     verseEnd?: number;
-// }
+export const ANNOTATION_SCHEMA = z.object({
+  id: z.string(),
+  bookId: z.string(),
+  chapterNumber: z.number(),
+  verseNumber: z.nullable(z.optional(z.number())),
+  endVerseNumber: z.nullable(z.optional(z.number())),
+  data: ANNOTATION_DATA_SCHEMA,
+  order: z.nullable(z.optional(z.number())),
+});
 
 /**
  * Data for a comment annotation.
@@ -84,84 +79,6 @@ export interface CommentAnnotationData {
    * The ID of the annotation that this comment is replying to, if any.
    */
   replyTo?: string;
-}
-
-/**
- * Data for a link annotation.
- */
-export interface LinkAnnotationData {
-  type: "link";
-
-  /**
-   * The title for the link.
-   */
-  title?: string;
-
-  /**
-   * The URL that the link points to.
-   */
-  url: string;
-
-  /**
-   * The kind of the link.
-   */
-  kind: "youtube" | "external-link" | "video" | "iframe";
-}
-
-/**
- * Data for an annotation that is stored in a file record.
- */
-export interface FileAnnotationData {
-  type: "file";
-
-  /**
-   * The title for the file.
-   */
-  title?: string;
-
-  /**
-   * The kind of the file.
-   */
-  kind: "audio" | "video" | "file";
-
-  /**
-   * The URL of the file record.
-   */
-  url: string;
-}
-
-/**
- * Data for a highlight annotation.
- */
-export interface HighlightAnnotationData {
-  type: "highlight";
-
-  /**
-   * The color of the highlight.
-   */
-  color: string;
-}
-
-/**
- * Data for a playlist annotation.
- */
-export interface PlaylistAnnotationData {
-  type: "playlist";
-
-  /**
-   * The title of the playlist.
-   */
-  title: string;
-
-  /**
-   * The ID of the playlist.
-   */
-  id: string;
-
-  /**
-   * The name of the record that the playlist is stored in.
-   */
-  recordName: string;
 }
 
 /**
@@ -204,6 +121,7 @@ export function createAnnotation(
   chapterNumber: number,
   data: AnnotationData
 ): Annotation {
+  data = COMMENT_SCHEMA.parse(data);
   return {
     id: uuid(),
     bookId,
@@ -274,13 +192,10 @@ export async function saveAnnotation(
   annotation: Annotation,
   group?: string
 ): Promise<void> {
-  const marker = getAnnotationMarker(
-    annotation.bookId,
-    annotation.chapterNumber,
-    group
-  );
+  const data = ANNOTATION_SCHEMA.parse(annotation);
+  const marker = getAnnotationMarker(data.bookId, data.chapterNumber, group);
 
-  const result = await os.recordData(recordName, annotation.id, annotation, {
+  const result = await os.recordData(recordName, data.id, data, {
     marker,
   });
 
