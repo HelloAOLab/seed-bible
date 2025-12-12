@@ -48,7 +48,6 @@ export const Book = memo(
     const {
       readingHistoryRangeSeconds,
       myAuthBotId,
-      greaterTimePeriodSeconds,
       MS_PER_SECOND,
       SEC_PER_DAY,
       SEC_PER_HOUR,
@@ -197,10 +196,12 @@ export const Book = memo(
                   const { start, end } = event;
                   const isEventTimeSpentNoticeable =
                     end - start >= SEC_PER_MINUTE;
-                  const recencyTimeSeconds = nowSeconds - end;
+                  const recencySeconds = nowSeconds - end;
                   const isRecentEnough =
-                    recencyTimeSeconds <= greaterTimePeriodSeconds;
-                  const isNotTooRecent = recencyTimeSeconds >= SEC_PER_MINUTE;
+                    end >=
+                    BibleVizUtils.Data.masks
+                      .readingHistoryRecencyThresholdTimeSeconds;
+                  const isNotTooRecent = recencySeconds >= SEC_PER_MINUTE;
                   if (
                     isEventTimeSpentNoticeable &&
                     isRecentEnough &&
@@ -213,26 +214,22 @@ export const Book = memo(
               }
               if (lastEntry) {
                 const { end } = lastEntry;
-                const recencyTimeSeconds = nowSeconds - end;
+                const recencySeconds = nowSeconds - end;
                 color = BibleVizUtils.Functions.GetHistoryColorByRecency({
-                  recencyTimeSeconds,
+                  recencyTimeSeconds: end,
                   baseColor,
                   userColor,
                 });
                 let fixedContent;
-                if (recencyTimeSeconds >= SEC_PER_DAY) {
-                  const daysCount = Math.floor(
-                    recencyTimeSeconds / SEC_PER_DAY
-                  );
+                if (recencySeconds >= SEC_PER_DAY) {
+                  const daysCount = Math.floor(recencySeconds / SEC_PER_DAY);
                   fixedContent = `read ${daysCount} day${daysCount > 1 ? "s" : ""} ago`;
-                } else if (recencyTimeSeconds >= SEC_PER_HOUR) {
-                  const hoursCount = Math.floor(
-                    recencyTimeSeconds / SEC_PER_HOUR
-                  );
+                } else if (recencySeconds >= SEC_PER_HOUR) {
+                  const hoursCount = Math.floor(recencySeconds / SEC_PER_HOUR);
                   fixedContent = `read ${hoursCount} hour${hoursCount > 1 ? "s" : ""} ago`;
                 } else {
                   const minutesCount = Math.floor(
-                    recencyTimeSeconds / SEC_PER_MINUTE
+                    recencySeconds / SEC_PER_MINUTE
                   );
                   fixedContent = `read ${minutesCount} minute${minutesCount > 1 ? "s" : ""} ago`;
                 }
@@ -289,17 +286,11 @@ export const Book = memo(
     ]);
 
     const chapterReadingHistorySummaryMap = useMemo(() => {
-      const lastTimePeriod =
-        BibleVizUtils.Data.masks.historyTimePeriodsInfo[
-          BibleVizUtils.Data.masks.historyTimePeriodsInfo.length - 1
-        ];
-      const lastTimePeriodMs = lastTimePeriod.GetTimePeriodInMs();
-      const lastTimePeriodSeconds = Math.floor(lastTimePeriodMs / 1000);
       const now = Date.now();
       const nowSeconds = Math.floor(now / 1000);
-      const lastTimePeriodTimeSeconds = nowSeconds - lastTimePeriodSeconds;
       const effectiveRange = readingHistoryRangeSeconds ?? {
-        start: lastTimePeriodTimeSeconds,
+        start:
+          BibleVizUtils.Data.masks.readingHistoryRecencyThresholdTimeSeconds,
         end: nowSeconds,
       };
       const chapterEntriesMap = new Map();
@@ -398,7 +389,7 @@ export const Book = memo(
                   const chapterReadingEvents =
                     users[userId].books[bookId].chapters[chapter];
                   let lastValidEvent;
-                  let recencyTimeSeconds;
+                  let recencySeconds;
                   for (
                     let eventIndex = chapterReadingEvents.length - 1;
                     eventIndex >= 0;
@@ -408,11 +399,12 @@ export const Book = memo(
                     const { start, end } = event;
                     const isEventTimeSpentNoticeable =
                       end - start >= SEC_PER_MINUTE;
-                    const currRecencyTimeSeconds = nowSeconds - event.end;
+                    const currRecencySeconds = nowSeconds - event.end;
                     const isRecentEnough =
-                      currRecencyTimeSeconds <= greaterTimePeriodSeconds;
-                    const isNotTooRecent =
-                      currRecencyTimeSeconds >= SEC_PER_MINUTE;
+                      event.end >=
+                      BibleVizUtils.Data.masks
+                        .readingHistoryRecencyThresholdTimeSeconds;
+                    const isNotTooRecent = currRecencySeconds >= SEC_PER_MINUTE;
 
                     if (
                       isEventTimeSpentNoticeable &&
@@ -420,30 +412,30 @@ export const Book = memo(
                       isNotTooRecent
                     ) {
                       lastValidEvent = event;
-                      recencyTimeSeconds = currRecencyTimeSeconds;
+                      recencySeconds = currRecencySeconds;
                       break;
                     }
                   }
                   if (lastValidEvent) {
                     color = BibleVizUtils.Functions.GetHistoryColorByRecency({
-                      recencyTimeSeconds,
+                      recencyTimeSeconds: lastValidEvent.end,
                       baseColor,
                       userColor,
                     });
                     let fixedContent;
-                    if (recencyTimeSeconds >= SEC_PER_DAY) {
+                    if (recencySeconds >= SEC_PER_DAY) {
                       const daysCount = Math.floor(
-                        recencyTimeSeconds / SEC_PER_DAY
+                        recencySeconds / SEC_PER_DAY
                       );
                       fixedContent = `read ${daysCount} day${daysCount > 1 ? "s" : ""} ago`;
-                    } else if (recencyTimeSeconds >= SEC_PER_HOUR) {
+                    } else if (recencySeconds >= SEC_PER_HOUR) {
                       const hoursCount = Math.floor(
-                        recencyTimeSeconds / SEC_PER_HOUR
+                        recencySeconds / SEC_PER_HOUR
                       );
                       fixedContent = `read ${hoursCount} hour${hoursCount > 1 ? "s" : ""} ago`;
                     } else {
                       const minutesCount = Math.floor(
-                        recencyTimeSeconds / SEC_PER_MINUTE
+                        recencySeconds / SEC_PER_MINUTE
                       );
                       fixedContent = `read ${minutesCount} minute${minutesCount > 1 ? "s" : ""} ago`;
                     }
