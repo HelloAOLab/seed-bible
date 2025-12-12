@@ -192,6 +192,55 @@ describe("navigate", () => {
     await delay(1000);
     expect(await bookTitle?.evaluate((el) => el.textContent)).toBe("Hosea 3");
   });
+
+  test("change translation", async () => {
+    await seedBibleFrame.waitForSelector(
+      'div.toolbar-item-wrapper[title="Books"] > button',
+      { visible: true }
+    );
+    await delay(1000);
+    await seedBibleFrame
+      .locator('div.toolbar-item-wrapper[title="Books"] > button')
+      .click({});
+    await page.locator(".sidebar-translation-selector").click();
+    await page.locator(".translation-language:nth-child(1)").click();
+    // i wanna click sidebar-translation-options 5th child which is a div
+    await page
+      .locator(".sidebar-translation-options > div:nth-child(5)")
+      .click();
+
+    await page.locator(".translation-option:nth-child(1)").click();
+
+    await delay(1000);
+
+    const bookTitle = await seedBibleFrame
+      .locator("div.bookTitle")
+      .waitHandle();
+    await delay(1000);
+    expect(await bookTitle?.evaluate((el) => el.textContent)).toBe(
+      "उत्पत्ति 1"
+    );
+  });
+
+  test("check bible nav enter", async () => {
+    await seedBibleFrame.waitForSelector(
+      'div.toolbar-item-wrapper[title="Books"] > button',
+      { visible: true }
+    );
+    await delay(1000);
+    await seedBibleFrame
+      .locator('div.toolbar-item-wrapper[title="Books"] > button')
+      .click({});
+    await page.locator(".searchbar > input").fill("Rev 3");
+    await page.keyboard.press("Enter");
+    const bookTitle = await seedBibleFrame
+      .locator("div.bookTitle")
+      .waitHandle();
+    await delay(1000);
+    expect(await bookTitle?.evaluate((el) => el.textContent)).toBe(
+      "Revelation 3"
+    );
+  });
 });
 
 function delay(time) {
