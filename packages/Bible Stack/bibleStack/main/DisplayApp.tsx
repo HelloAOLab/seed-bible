@@ -4,6 +4,7 @@ if (thisBot.vars.appId) {
   gridPortalBot.tags.portalCameraType = "orthographic";
   gridPortalBot.tags.portalZoomableMin = 5;
 
+  os.log("Displaying Bible Stack App",that);
   const App = await thisBot.App();
   const id = globalThis.AddFloatingApp({
     App: <App />,
@@ -11,6 +12,7 @@ if (thisBot.vars.appId) {
     position: { x: 200, y: 150 },
     size: { width: 350, height: 200 },
     type: "canvas",
+    mode:that?.mode
   });
 
   configBot.tags.gridPortal = "thePortal";

@@ -1638,7 +1638,9 @@ function PageToolbar({ path = "showInPageToolbar" }) {
     <div className="thePageToolbar">
       {visibleTools.map((tool) => (
         <div
-          onClick={tool.onClick}
+          onClick={(e) => {
+            tool.onClick({mode:'panel'})
+          }}
           className="tool-preview-page"
           key={tool.label}
         >
