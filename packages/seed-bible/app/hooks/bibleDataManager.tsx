@@ -91,8 +91,6 @@ export class BibleDataManager {
     }, 5000); // every 5 seconds
     setTagMask(thisBot, "readingHistoryInterval", readingHistoryInterval);
 
-    shout("OnHistoryUpdated");
-
     if (!this.tabId) return;
 
     if (!Array.isArray(masks[this.tabId])) {

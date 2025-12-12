@@ -123,64 +123,70 @@ const { HistoryTimePeriodInfo } = await import(
   "bibleVizUtils.classes.HistoryTimePeriodInfo"
 );
 
-const historyTimePeriodsInfo = [
-  new HistoryTimePeriodInfo({ value: 1, isNowTimePeriod: true }),
-  new HistoryTimePeriodInfo({
-    value: 1,
-    timeAmount: 1,
-    timeUnit: bibleVizData.tags.TimeUnit.Days,
-  }),
-  new HistoryTimePeriodInfo({
-    value: 0.9,
-    timeAmount: 2,
-    timeUnit: bibleVizData.tags.TimeUnit.Days,
-  }),
-  new HistoryTimePeriodInfo({
-    value: 0.8,
-    timeAmount: 3,
-    timeUnit: bibleVizData.tags.TimeUnit.Days,
-  }),
-  new HistoryTimePeriodInfo({
-    value: 0.7,
-    timeAmount: 4,
-    timeUnit: bibleVizData.tags.TimeUnit.Days,
-  }),
-  new HistoryTimePeriodInfo({
-    value: 0.6,
-    timeAmount: 5,
-    timeUnit: bibleVizData.tags.TimeUnit.Days,
-  }),
-  new HistoryTimePeriodInfo({
-    value: 0.5,
-    timeAmount: 6,
-    timeUnit: bibleVizData.tags.TimeUnit.Days,
-  }),
-  new HistoryTimePeriodInfo({
-    value: 0.4,
-    timeAmount: 7,
-    timeUnit: bibleVizData.tags.TimeUnit.Days,
-  }),
-  new HistoryTimePeriodInfo({
-    value: 0.3,
-    timeAmount: 8,
-    timeUnit: bibleVizData.tags.TimeUnit.Days,
-  }),
-  new HistoryTimePeriodInfo({
-    value: 0.2,
-    timeAmount: 9,
-    timeUnit: bibleVizData.tags.TimeUnit.Days,
-  }),
-  new HistoryTimePeriodInfo({
-    value: 0.1,
-    timeAmount: 10,
-    timeUnit: bibleVizData.tags.TimeUnit.Days,
-  }),
-  new HistoryTimePeriodInfo({
-    value: 0,
-    timeAmount: 11,
-    timeUnit: bibleVizData.tags.TimeUnit.Days,
-  }),
-];
+// const historyTimePeriodsInfo = [
+//   new HistoryTimePeriodInfo({ value: 1, isNowTimePeriod: true }),
+//   new HistoryTimePeriodInfo({
+//     value: 1,
+//     timeAmount: 1,
+//     timeUnit: bibleVizData.tags.TimeUnit.Days,
+//   }),
+//   new HistoryTimePeriodInfo({
+//     value: 0.9,
+//     timeAmount: 2,
+//     timeUnit: bibleVizData.tags.TimeUnit.Days,
+//   }),
+//   new HistoryTimePeriodInfo({
+//     value: 0.8,
+//     timeAmount: 3,
+//     timeUnit: bibleVizData.tags.TimeUnit.Days,
+//   }),
+//   new HistoryTimePeriodInfo({
+//     value: 0.7,
+//     timeAmount: 4,
+//     timeUnit: bibleVizData.tags.TimeUnit.Days,
+//   }),
+//   new HistoryTimePeriodInfo({
+//     value: 0.6,
+//     timeAmount: 5,
+//     timeUnit: bibleVizData.tags.TimeUnit.Days,
+//   }),
+//   new HistoryTimePeriodInfo({
+//     value: 0.5,
+//     timeAmount: 6,
+//     timeUnit: bibleVizData.tags.TimeUnit.Days,
+//   }),
+//   new HistoryTimePeriodInfo({
+//     value: 0.4,
+//     timeAmount: 7,
+//     timeUnit: bibleVizData.tags.TimeUnit.Days,
+//   }),
+//   new HistoryTimePeriodInfo({
+//     value: 0.3,
+//     timeAmount: 8,
+//     timeUnit: bibleVizData.tags.TimeUnit.Days,
+//   }),
+//   new HistoryTimePeriodInfo({
+//     value: 0.2,
+//     timeAmount: 9,
+//     timeUnit: bibleVizData.tags.TimeUnit.Days,
+//   }),
+//   new HistoryTimePeriodInfo({
+//     value: 0.1,
+//     timeAmount: 10,
+//     timeUnit: bibleVizData.tags.TimeUnit.Days,
+//   }),
+//   new HistoryTimePeriodInfo({
+//     value: 0,
+//     timeAmount: 11,
+//     timeUnit: bibleVizData.tags.TimeUnit.Days,
+//   }),
+// ];
+const tenDaysAgo = new Date();
+tenDaysAgo.setDate(tenDaysAgo.getDate() - 10);
+tenDaysAgo.setHours(0, 0, 0, 0);
+const readingHistoryRecencyThresholdTimeSeconds = Math.floor(
+  tenDaysAgo.getTime() / 1000
+);
 
 const UsersColorValues = {
   InfoLabelColorScales: { x: 0.5, y: 0.5, z: 0 },
@@ -250,7 +256,13 @@ setTag(bibleVizData, "BibleLayoutMeasurements", BibleLayoutMeasurements);
 setTag(bibleVizData, "StackPieceMeasurements", StackPieceMeasurements);
 setTagMask(bibleVizData, "isInHistoryMode", false);
 setTagMask(bibleVizData, "highlightHistoryIndex", -1);
-setTagMask(bibleVizData, "historyTimePeriodsInfo", historyTimePeriodsInfo);
+// setTagMask(bibleVizData, "historyTimePeriodsInfo", historyTimePeriodsInfo);
+setTagMask(
+  bibleVizData,
+  "readingHistoryRecencyThresholdTimeSeconds",
+  readingHistoryRecencyThresholdTimeSeconds
+);
+
 bibleVizData.vars.history = [];
 bibleVizData.vars.highlightHistory = [];
 bibleVizData.vars.customArrangements = [];

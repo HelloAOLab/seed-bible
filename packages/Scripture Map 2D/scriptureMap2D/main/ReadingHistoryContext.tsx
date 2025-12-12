@@ -72,8 +72,6 @@ export const ReadingHistoryProvider = ({ children }) => {
   const {
     startOfWeekAYearAgoDate,
     weeksCount,
-    sortedTimePeriods,
-    greaterTimePeriodSeconds,
     SEC_PER_MINUTE,
     SEC_PER_HOUR,
     SEC_PER_DAY,
@@ -115,18 +113,6 @@ export const ReadingHistoryProvider = ({ children }) => {
     const weeksCount =
       Math.floor((startOfWeekDate - startOfWeekAYearAgoDate) / MS_PER_WEEK) + 1;
 
-    const sortedTimePeriods =
-      BibleVizUtils.Data.masks.historyTimePeriodsInfo.toSorted(
-        (periodInfoA, periodInfoB) => {
-          return (
-            periodInfoA.GetTimePeriodInMs() - periodInfoB.GetTimePeriodInMs()
-          );
-        }
-      );
-    const greaterTimePeriodSeconds =
-      sortedTimePeriods[sortedTimePeriods.length - 1].GetTimePeriodInMs() /
-      MS_PER_SECOND;
-
     const dayRangesMap = new Map();
     for (let week = 0; week < weeksCount; week++) {
       for (let day = 0; day < 7; day++) {
@@ -141,8 +127,6 @@ export const ReadingHistoryProvider = ({ children }) => {
     return {
       startOfWeekAYearAgoDate,
       weeksCount,
-      sortedTimePeriods,
-      greaterTimePeriodSeconds,
       MS_PER_SECOND,
       MS_PER_MINUTE,
       MS_PER_HOUR,
@@ -350,8 +334,6 @@ export const ReadingHistoryProvider = ({ children }) => {
         handleReadingHistoryRangeSelectorClick,
         startOfWeekAYearAgoDate,
         weeksCount,
-        sortedTimePeriods,
-        greaterTimePeriodSeconds,
         SEC_PER_MINUTE,
         SEC_PER_HOUR,
         SEC_PER_DAY,
