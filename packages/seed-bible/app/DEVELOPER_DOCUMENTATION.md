@@ -3,14 +3,27 @@
 ## Table of Contents
 
 1. [Project Overview](#project-overview)
-2. [Architecture](#architecture)
-3. [Core Hooks API](#core-hooks-api)
-4. [Core Components](#core-components)
-5. [Global Functions API](#global-functions-api)
-6. [Extension System](#extension-system)
-7. [Development Patterns](#development-patterns)
-8. [User Activity Tracking](#user-activity-tracking)
-9. [Package Structure](#package-structure)
+2. [Runtime Foundation](#runtime-foundation)
+   - [CasualOS](#casualos)
+   - [Sessions](#sessions)
+   - [BIOS Configuration](#bios-configuration)
+   - [Session Lifecycle](#session-lifecycle)
+   - [Collaborative Foundation](#collaborative-foundation)
+   - [Records API](#records-api)
+   - [Identity: Profiles, Accounts, and Studios](#identity-profiles-accounts-and-studios)
+   - [Anonymous Users](#anonymous-users)
+   - [Spaces](#spaces)
+3. [Architecture](#architecture)
+4. [Core Hooks API](#core-hooks-api)
+5. [Core Components](#core-components)
+6. [Global Functions API](#global-functions-api)
+7. [Extension System](#extension-system)
+8. [Development Patterns](#development-patterns)
+9. [User Activity Tracking](#user-activity-tracking)
+10. [Package Structure](#package-structure)
+11. [AI Guardrails and Epistemic Humility](#ai-guardrails-and-epistemic-humility)
+12. [Data Philosophy](#data-philosophy)
+13. [External Services](#external-services)
 
 ---
 
@@ -25,7 +38,8 @@ Seed Bible is a modular, extensible Bible study platform built with React/Preact
 - **Flexible toolbar system** with customizable tools
 - **Workspace management** with tabs, spaces, and folders
 - **3D visualizations** (Bible Stack, Tabernacle, Scripture Maps)
-- **Canvas drawing** and annotation tools
+- **Canvas (gridPortal)** providing 3D spatial environment for collaborative visualization
+- **Drawing tools** for annotations
 - **Calendar integration** for events and scheduling
 
 ### Technology Stack
@@ -37,6 +51,191 @@ Seed Bible is a modular, extensible Bible study platform built with React/Preact
 - **Package Manager:** pnpm (monorepo)
 - **Calendar:** FullCalendar
 - **Communication:** Socket-based sync
+
+---
+
+## Runtime Foundation
+
+### CasualOS
+
+Seed Bible is built on **CasualOS**, an open-source operating system that enables real-time, collaborative environments running directly in the browser. CasualOS is the underlying runtime platform that makes Seed Bible's collaborative features possible.
+
+**Key concepts:**
+
+- **CasualOS** is the runtime platform ([docs.casualos.com](https://docs.casualos.com))
+- **AO.bot** is AO Lab's hosted deployment of CasualOS
+- **Instances (insts)** are running CasualOS environments
+- **Seed Bible sessions** compile and execute inside insts
+- **Bots** are the fundamental data structures in CasualOS (JSON objects with tags)
+- **Tags** are key-value pairs on bots that store data and behavior
+
+### Sessions
+
+A **session** is a running instance of Seed Bible. Sessions are collaborative by default—multiple users can join the same session and interact together.
+
+**Session characteristics:**
+- Default sessions self-expire in **12 hours** (see [Session Lifecycle](#session-lifecycle))
+- Permanent sessions can be provisioned for partners and ministries
+- Sessions can be collaborative or static (controlled by BIOS configuration)
+- All participants share interactions and state, but visualization is independent
+
+### BIOS Configuration
+
+**BIOS** (Basic Input/Output System) is a configuration layer that determines what an inst can and cannot do. BIOS parameters control:
+
+- Whether a session is **collaborative** or **static**
+- Access permissions and capabilities
+- Session behavior and features
+
+Developers should understand that session capabilities are controlled by BIOS parameters set when the session is created.
+
+### Session Lifecycle
+
+Understanding session lifecycle is important for developers building features that store data or track user progress.
+
+**Default sessions:**
+- Self-expire after **12 hours** of inactivity
+- All session data is lost when a session expires
+- Users are notified before expiration
+
+**Permanent sessions:**
+- Can be provisioned for partners and ministries
+- Require explicit provisioning
+- Do not self-expire
+
+**What happens when sessions expire:**
+- All bots and tags in the session are removed
+- Unsaved user data is lost
+- Records stored in the persistent layer (via Records API) are NOT affected
+- Users can create a new session and continue working
+
+**Developer guidance:**
+- For temporary data: Store in session bots/tags (lost on expiration)
+- For persistent data: Use the Records API (survives session expiration)
+- Always inform users about data persistence behavior
+
+### Collaborative Foundation
+
+Seed Bible's collaborative architecture is foundational, not a feature layer. Understanding the principle of **"shared interaction, independent visualization"** is essential for developers.
+
+**Core principles:**
+
+1. **Shared Interaction, Independent Visualization**
+   - Participants share actions and state, not screens or layouts
+   - Each user controls their own view configuration (Spaces)
+   - Interactions emit events that other participants can observe
+
+2. **Peer-Based Architecture**
+   - AI agents, web services, and IoT devices can participate as peers
+   - All participants (human or AI) interact through the same event system
+   - Because CasualOS treats all participants as peers in a shared environment, humans and AI collaborate naturally
+
+3. **Real-Time Presence**
+   - User activities are tracked and shared in real-time
+   - See [User Activity Tracking](#user-activity-tracking) for API details
+   - Presence enables features like "follow mode" and collaborative study
+
+**Developer implications:**
+- Design features that emit observable events rather than directly manipulating other users' views
+- Use the user activity API to build presence-aware features
+- Remember that actions are shared, but visualization configuration is personal
+
+### Records API
+
+All persistent data in Seed Bible is stored in **Records**. Records are the persistence layer that survives session expiration.
+
+**What are Records?**
+- Schema-free JSON documents
+- Belong to either an Account or a Studio
+- Support three types: Data Records, File Records, and Event Records
+
+**Record markers control access:**
+- `publicRead`: Anyone can read
+- `publicWrite`: Anyone can write
+- `private`: Only owner can access
+- `Account`: Account-level access
+- Custom markers for fine-grained control
+
+**When to use Records:**
+- User preferences and settings
+- Reading history and progress
+- Annotations and notes
+- Any data that must survive session expiration
+
+**Learn more:**
+- [CasualOS Records Documentation](https://docs.casualos.com/docs/records)
+- Records API is accessed through CasualOS bot actions
+
+### Identity: Profiles, Accounts, and Studios
+
+Seed Bible uses a three-level identity hierarchy:
+
+**1. Profile**
+- Individual user data within an Account
+- No email required
+- Can have multiple Profiles per Account
+- Profile-specific preferences and history
+
+**2. Account**
+- System-level identity tied to email address
+- Required for authentication
+- Can own Records
+- Can be a member of multiple Studios
+
+**3. Studio**
+- Group structure for shared collaboration
+- Multiple Accounts can be members
+- Studio-owned Records are shared among members
+- Many-to-many relationship: one Account can belong to many Studios, one Studio can have many Accounts
+
+**Developer guidance:**
+- Use **Profile** data for personal preferences within an Account
+- Use **Account** data for cross-profile settings and authentication
+- Use **Studio** data for collaborative workspaces and shared content
+- Anonymous users have temporary local storage only (no Profile/Account)
+
+### Anonymous Users
+
+Anonymous users can use Seed Bible without authentication, but with limitations.
+
+**Anonymous user capabilities:**
+- Read Scripture and use basic features
+- Create temporary sessions (expire after 12 hours)
+- Use visualization tools (Canvas, BibleStack, etc.)
+
+**Anonymous user limitations:**
+- Cannot save progress or preferences
+- Cannot join Studios
+- Cannot access restricted content
+- Data is stored locally and lost when session ends
+
+**Developer guidance:**
+- Design features that degrade gracefully for anonymous users
+- Clearly indicate when features require authentication
+- Provide save prompts before session expiration for anonymous users
+- Use local storage for temporary anonymous data
+
+### Spaces
+
+A **Space** is a personal view configuration that defines how a Seed Bible session environment is displayed. Spaces solve the "provisioning problem"—one person can set up a Space and share it with many.
+
+**Key characteristics:**
+- **Spaces are personal.** Your layout does not affect another person's view
+- **Interaction is shared; visualization configuration is not**
+- Spaces can be saved, shared, and loaded as .aux files
+
+**What Spaces contain:**
+- Tab configurations and layouts
+- Folder organization
+- Toolbar customization (per-space toolbars)
+- Split-screen arrangements
+- UI preferences
+
+**Developer guidance:**
+- Spaces are static JSON configurations
+- Users can export Spaces as .aux files for sharing
+- When designing features, remember that each user's Space is independent
+- Space configurations are stored per-user, not shared
 
 ---
 
@@ -1161,6 +1360,20 @@ The `extension.json` file defines package metadata and integration points:
 
 ---
 
+### Distribution as .aux Files
+
+Extensions developed as source packages can be compiled and distributed as **.aux files**. An .aux (Ambient User Experience) file is a portable JSON-based representation that includes all bots and tags needed to run the extension.
+
+**.aux files enable:**
+- Sharing extensions without source code access
+- Importing extensions into any CasualOS environment
+- Complete portability—.aux files remain functional even outside AO Lab
+- User ownership and independence from platform providers
+
+Extensions are developed as source packages (with `extension.json` metadata and TypeScript/TSX code), but can be distributed as .aux files for portability. If AO Lab disappeared tomorrow, every .aux file would remain fully functional JSON.
+
+---
+
 ### Available Packages
 
 #### 1. Bible Stack
@@ -1168,53 +1381,61 @@ The `extension.json` file defines package metadata and integration points:
 **Dependencies:** Object Pooler, Color Lerper, Bible Visualization Utils
 **Purpose:** 3D visualization of scripture structure with stacking effect
 
-#### 2. Canvas
+#### 2. Canvas (gridPortal)
 **Path:** `packages/Canvas/`
-**Purpose:** Drawing and visualization canvas
+**Purpose:** The gridPortal from CasualOS integrated into Seed Bible. Canvas provides a 3D spatial environment for visualization and collaborative interaction. It is the foundation on which extensions like BibleStack, Tabernacle, and ScriptureMap3D are built.
 **Tab Type:** `canvas`
+
+**Note:** Canvas is NOT a drawing tool. The drawing functionality is provided by the separate Draw package. BibleStack, Tabernacle, and ScriptureMap3D are extensions that build on Canvas to deliver specific visualization experiences.
 
 #### 3. Draw
 **Path:** `packages/Draw/`
 **Purpose:** Painting/drawing tool
 **Function:** `togglePainter()`
 
-#### 4. Scripture Map 2D
+#### 4. Land (mapPortal)
+**Path:** In development
+**Purpose:** The mapPortal from CasualOS integrated into Seed Bible. Land provides map-based visualization using geographic coordinates and ArcGIS map layers rather than the abstract 3D coordinates used by Canvas (gridPortal).
+
+**Note:** Land development is ongoing. Documentation will be expanded as the service matures. Land is distinct from Canvas—it uses geographic coordinates for terrain-aware biblical geography rather than abstract 3D spatial environments.
+
+#### 5. Scripture Map 2D
 **Path:** `packages/ScriptureMap2D/`
 **Purpose:** 2D map visualization of scripture locations
 
-#### 5. Scripture Map 3D
+#### 6. Scripture Map 3D
 **Path:** `packages/ScriptureMap3D/`
 **Purpose:** 3D map visualization of scripture locations
 
-#### 6. Calendar
+#### 7. Calendar
 **Path:** `packages/Calendar/`
 **Purpose:** Event scheduling with FullCalendar integration
 
-#### 7. Playlist
+#### 8. Playlist
 **Path:** `packages/Playlist/`
 **Purpose:** Recording and playback sequences
 
-#### 8. MindMap
+#### 9. MindMap
 **Path:** `packages/MindMap/`
 **Purpose:** Mind mapping visualization for Bible study
 
-#### 9. Tabernacle
+#### 10. Tabernacle
 **Path:** `packages/Tabernacle/`
 **Purpose:** 3D visualization of the Tabernacle
 
-#### 10. References
+#### 11. References
 **Path:** `packages/References/`
 **Purpose:** Scripture cross-reference management
 
-#### 11. Assistant
+#### 12. Assistant
 **Path:** `packages/Assistant/`
 **Purpose:** AI assistant functionality
 
-#### 12. Location
+#### 13. Location
 **Path:** `packages/Location/`
 **Purpose:** GPS and location-based features
 
-#### 13. Events
+#### 14. Events
 **Path:** `packages/Events/`
 **Purpose:** Event management system
 
@@ -2229,6 +2450,114 @@ console.log('My tool active:', isToolActive('My Tool Label'));
 
 ---
 
+## AI Guardrails and Epistemic Humility
+
+When developing AI features for Seed Bible, follow these guidelines to maintain educational integrity and epistemic humility.
+
+### AI Assistant Principles
+
+AI in Seed Bible should:
+- **Assist research, not provide answers** - AI suggests questions, enables discovery, and provides historical background
+- **Emphasize education and epistemic humility** - AI should not respond as an authoritative interpreter
+- **Redirect toward multiple perspectives** - Point users to denominational perspectives, scholarly debates, and historical context
+- **Enable user control** - Users control which AI agents participate in their sessions
+
+### What AI Should NOT Do
+
+- Claim interpretive authority on Scripture
+- Provide definitive theological answers
+- Replace human study and reflection
+- Hide denominational or theological perspectives behind "neutral" responses
+
+### Developer Guidelines for AI Features
+
+When building AI functionality:
+1. Design AI as a **research assistant**, not a teacher
+2. Always present multiple perspectives when relevant
+3. Make it clear when AI is providing suggestions vs. facts
+4. Allow users to choose which AI agents to include in their sessions
+5. Remember that AI agents participate as peers in sessions—they observe and respond to user actions
+
+**Example good AI behavior:**
+- "Here are three different interpretations of this passage from Baptist, Catholic, and Orthodox traditions..."
+- "Scholars debate whether this word means X or Y. Would you like to explore the arguments?"
+
+**Example bad AI behavior:**
+- "This passage means X."
+- "The correct interpretation is Y."
+
+---
+
+## Data Philosophy
+
+AO Lab's approach to user data reflects a commitment to user ownership and portability.
+
+### Core Principles
+
+1. **Users own their data**
+   - All user data belongs to the user, not AO Lab
+   - Users can export their data at any time
+
+2. **No walled gardens**
+   - Open data formats (.aux files are portable JSON)
+   - User-owned records are fully portable
+   - Extensions can be distributed independently
+
+3. **True deletion**
+   - Deleting data deletes it permanently
+   - AO Lab does not retain hidden shadow copies
+   - Users control their data lifecycle
+
+4. **Portability and independence**
+   - If AO Lab disappeared tomorrow, every .aux file would remain fully functional
+   - Records can be migrated to any CasualOS deployment
+   - No vendor lock-in
+
+### Developer Implications
+
+When building features:
+- Design with data portability in mind
+- Use Records API for persistent data (survives session expiration)
+- Respect user deletion requests completely
+- Document data storage locations and formats
+- Enable export functionality for user data
+
+---
+
+## External Services
+
+Seed Bible integrates with external services for specific functionality.
+
+### Free Use Bible API
+
+Seed Bible uses the **Free Use Bible API** for Scripture content.
+
+- **Base URL:** [bible.helloao.org](https://bible.helloao.org)
+- **Purpose:** Provides Bible text in multiple translations
+- **Usage:** The `useBibleData` hook fetches Scripture from this API
+- **Caching:** Scripture data is cached per-tab for performance
+
+**Developer notes:**
+- Scripture data comes from bible.helloao.org, not from Records
+- Translation availability depends on the API
+- The API is maintained by AO Lab as a public service
+
+### PostHog Analytics
+
+Seed Bible uses **PostHog** for product analytics.
+
+- **Purpose:** Anonymized usage metrics for product improvement
+- **Data collection:** We do NOT track individual users or sell data
+- **What we track:** Feature usage, performance metrics, anonymized behavior patterns
+- **Privacy:** All tracking is anonymized and aggregated
+
+**Developer notes:**
+- PostHog events should not contain PII (personally identifiable information)
+- Use PostHog for feature usage analytics, not user surveillance
+- Follow AO Lab's privacy guidelines when adding analytics events
+
+---
+
 ## Contributing
 
 When creating new features or extensions:
@@ -2240,6 +2569,8 @@ When creating new features or extensions:
 5. **Handle mobile** - Test on mobile devices
 6. **Clean up resources** - Properly dispose of managers and subscriptions
 7. **Update this documentation** - Keep docs in sync with code
+8. **Follow AI guardrails** - Ensure AI features maintain epistemic humility
+9. **Respect data philosophy** - Build with portability and user ownership in mind
 
 ---
 
@@ -2253,5 +2584,6 @@ For questions, issues, or feature requests:
 
 ---
 
-**Last Updated:** 2025-12-12
-**Version:** 1.0.0
+**Last Updated:** 2025-12-15
+**Version:** 2.0.0
+**Changes:** Added Runtime Foundation section with CasualOS architecture, session lifecycle, Records API, identity hierarchy, anonymous user handling, AI guardrails, data philosophy, and external services documentation.
