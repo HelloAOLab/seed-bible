@@ -53,7 +53,7 @@ const ConfigurableFunctionCommands = ({ contextData, clickedVerses }) => {
                Focus on questions about meaning, application, and context that would be most helpful for Bible study.`;
       try {
         const response = await ai.chat(prompt, {
-          preferredModel: "gpt/4o-mini",
+          preferredModel: "gpt-4o",
           stream: false,
           response_format: { type: "json" },
         });
@@ -110,7 +110,7 @@ const ConfigurableFunctionCommands = ({ contextData, clickedVerses }) => {
       const prompt = `Translate this biblical verse to Hindi with proper theological terms: "${data.verse}" (${data.reference})`;
       try {
         const response = await ai.chat(prompt, {
-          preferredModel: "gpt/4o-mini",
+          preferredModel: "gpt-4o",
           stream: false,
           response_format: { type: "json" },
         });
@@ -124,7 +124,7 @@ const ConfigurableFunctionCommands = ({ contextData, clickedVerses }) => {
       const prompt = `Translate this biblical verse to Arabic with proper theological terms: "${data.verse}" (${data.reference})`;
       try {
         const response = await ai.chat(prompt, {
-          preferredModel: "gpt/4o-mini",
+          preferredModel: "gpt-4o",
           stream: false,
           response_format: { type: "json" },
         });
@@ -138,7 +138,7 @@ const ConfigurableFunctionCommands = ({ contextData, clickedVerses }) => {
       const prompt = `Translate this biblical verse to Spanish with proper theological terms: "${data.verse}" (${data.reference})`;
       try {
         const response = await ai.chat(prompt, {
-          preferredModel: "gpt/4o-mini",
+          preferredModel: "gpt-4o",
           stream: false,
           response_format: { type: "json" },
         });
@@ -153,7 +153,7 @@ const ConfigurableFunctionCommands = ({ contextData, clickedVerses }) => {
       const prompt = `Provide a detailed Hebrew linguistic analysis of ${data.reference}: "${data.verse}". Include original Hebrew words, their meanings, grammatical structures, and theological significance.`;
       try {
         const response = await ai.chat(prompt, {
-          preferredModel: "gpt/4o-mini",
+          preferredModel: "gpt-4o",
           stream: false,
           response_format: { type: "json" },
         });
@@ -167,7 +167,7 @@ const ConfigurableFunctionCommands = ({ contextData, clickedVerses }) => {
       const prompt = `Provide a comprehensive explanation of ${data.reference}: "${data.verse}". Include theological, historical, and practical insights.`;
       try {
         const response = await ai.chat(prompt, {
-          preferredModel: "gpt/4o-mini",
+          preferredModel: "gpt-4o",
           stream: false,
           response_format: { type: "json" },
         });
@@ -181,7 +181,7 @@ const ConfigurableFunctionCommands = ({ contextData, clickedVerses }) => {
       const prompt = `Provide detailed historical context for ${data.reference}: "${data.verse}". Include the time period, cultural background, and historical significance.`;
       try {
         const response = await ai.chat(prompt, {
-          preferredModel: "gpt/4o-mini",
+          preferredModel: "gpt-4o",
           stream: false,
           response_format: { type: "json" },
         });
@@ -196,7 +196,7 @@ const ConfigurableFunctionCommands = ({ contextData, clickedVerses }) => {
       const prompt = `Write a commentary on ${data.reference}: "${data.verse}" in the style and theological perspective of Augustine of Hippo. Include his typical themes and approach.`;
       try {
         const response = await ai.chat(prompt, {
-          preferredModel: "gpt/4o-mini",
+          preferredModel: "gpt-4o",
           stream: false,
           response_format: { type: "json" },
         });
@@ -210,7 +210,7 @@ const ConfigurableFunctionCommands = ({ contextData, clickedVerses }) => {
       const prompt = `Write a commentary on ${data.reference}: "${data.verse}" in the style and theological perspective of John Calvin. Focus on sovereignty, providence, and Reformed theology.`;
       try {
         const response = await ai.chat(prompt, {
-          preferredModel: "gpt/4o-mini",
+          preferredModel: "gpt-4o",
           stream: false,
           response_format: { type: "json" },
         });
@@ -224,7 +224,7 @@ const ConfigurableFunctionCommands = ({ contextData, clickedVerses }) => {
       const prompt = `Provide a modern biblical commentary on ${data.reference}: "${data.verse}". Include contemporary applications and relevance for today's readers.`;
       try {
         const response = await ai.chat(prompt, {
-          preferredModel: "gpt/4o-mini",
+          preferredModel: "gpt-4o",
           stream: false,
           response_format: { type: "json" },
         });
@@ -239,7 +239,7 @@ const ConfigurableFunctionCommands = ({ contextData, clickedVerses }) => {
       const prompt = `Find and explain connections between ${data.reference}: "${data.verse}" and John 1:5. Provide detailed theological parallels and thematic connections.`;
       try {
         const response = await ai.chat(prompt, {
-          preferredModel: "gpt/4o-mini",
+          preferredModel: "gpt-4o",
           stream: false,
           response_format: { type: "json" },
         });
@@ -253,7 +253,7 @@ const ConfigurableFunctionCommands = ({ contextData, clickedVerses }) => {
       const prompt = `Find and explain connections between ${data.reference}: "${data.verse}" and 2 Corinthians 4:6. Provide detailed theological parallels and thematic connections.`;
       try {
         const response = await ai.chat(prompt, {
-          preferredModel: "gpt/4o-mini",
+          preferredModel: "gpt-4o",
           stream: false,
           response_format: { type: "json" },
         });
@@ -267,7 +267,7 @@ const ConfigurableFunctionCommands = ({ contextData, clickedVerses }) => {
       const prompt = `Find all biblical parallels and cross-references for ${data.reference}: "${data.verse}". Include both thematic and verbal parallels with explanations.`;
       try {
         const response = await ai.chat(prompt, {
-          preferredModel: "gpt/4o-mini",
+          preferredModel: "gpt-4o",
           stream: false,
           response_format: { type: "json" },
         });
@@ -282,7 +282,7 @@ const ConfigurableFunctionCommands = ({ contextData, clickedVerses }) => {
       const prompt = `Analyze the theological implications of ${data.reference}: "${data.verse}". Cover systematic theology, biblical theology, and practical theology applications.`;
       try {
         const response = await ai.chat(prompt, {
-          preferredModel: "gpt/4o-mini",
+          preferredModel: "gpt-4o",
           stream: false,
           response_format: { type: "json" },
         });
@@ -296,7 +296,7 @@ const ConfigurableFunctionCommands = ({ contextData, clickedVerses }) => {
       const prompt = `Provide a comprehensive literary analysis of ${data.reference}: "${data.verse}". Include structure, literary devices, genre, and stylistic features.`;
       try {
         const response = await ai.chat(prompt, {
-          preferredModel: "gpt/4o-mini",
+          preferredModel: "gpt-4o",
           stream: false,
           response_format: { type: "json" },
         });
@@ -311,7 +311,7 @@ const ConfigurableFunctionCommands = ({ contextData, clickedVerses }) => {
       const prompt = `Write devotional thoughts based on ${data.reference}: "${data.verse}". Include personal application, prayer points, and spiritual reflection.`;
       try {
         const response = await ai.chat(prompt, {
-          preferredModel: "gpt/4o-mini",
+          preferredModel: "gpt-4o",
           stream: false,
           response_format: { type: "json" },
         });
@@ -325,7 +325,7 @@ const ConfigurableFunctionCommands = ({ contextData, clickedVerses }) => {
       const prompt = `Create a sermon outline based on ${data.reference}: "${data.verse}". Include main points, sub-points, illustrations, and applications.`;
       try {
         const response = await ai.chat(prompt, {
-          preferredModel: "gpt/4o-mini",
+          preferredModel: "gpt-4o",
           stream: false,
           response_format: { type: "json" },
         });
@@ -339,7 +339,7 @@ const ConfigurableFunctionCommands = ({ contextData, clickedVerses }) => {
       const prompt = `Generate study questions for ${data.reference}: "${data.verse}". Include observation, interpretation, and application questions suitable for small groups.`;
       try {
         const response = await ai.chat(prompt, {
-          preferredModel: "gpt/4o-mini",
+          preferredModel: "gpt-4o",
           stream: false,
           response_format: { type: "json" },
         });
@@ -353,7 +353,7 @@ const ConfigurableFunctionCommands = ({ contextData, clickedVerses }) => {
       const prompt = `Regarding ${data.reference}: "${data.verse}", please answer this question: ${query}`;
       try {
         const response = await ai.chat(prompt, {
-          preferredModel: "gpt/4o-mini",
+          preferredModel: "gpt-4o",
           stream: false,
           response_format: { type: "json" },
         });
