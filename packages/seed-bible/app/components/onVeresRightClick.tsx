@@ -78,11 +78,7 @@ const MenuOptions = {
           });
 
           text = textItems.join(" ");
-          openPopupSettings(
-            <SharePopup shareTitle={`Check this out! ${text}`} />,
-            null,
-            true
-          );
+          openPopupSettings(<SharePopup shareTitle={`${text}`} />, null, true);
           SetInHold({});
         }, 50);
       },

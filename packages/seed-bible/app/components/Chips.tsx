@@ -1,4 +1,4 @@
-const { useState,useRef,useEffect } = os.appHooks;
+const { useState, useRef, useEffect } = os.appHooks;
 
 function SharePopup({
   shareUrl,
@@ -10,8 +10,10 @@ function SharePopup({
   const [isOpen, setIsOpen] = useState(true);
   const [copied, setCopied] = useState(false);
 
-  const url = `https://ao.bot/?inst=${os.getCurrentInst()}&book=${configBot.tags.book}&chapter=${configBot.tags.chapter}` || shareUrl;
-  const title = shareTitle || "Check this out!";
+  const url =
+    `https://ao.bot/?inst=${os.getCurrentInst()}&book=${configBot.tags.book}&chapter=${configBot.tags.chapter}` ||
+    shareUrl;
+  const title = "";
 
   const platforms = [
     {
@@ -386,7 +388,6 @@ function SharePopup({
   );
 }
 
-
 const QRCodeComponent = ({ url = "https://example.com/session/12345" }) => {
   const [copied, setCopied] = useState(false);
   const qrRef = useRef(null);
@@ -428,7 +429,7 @@ const QRCodeComponent = ({ url = "https://example.com/session/12345" }) => {
       // await navigator.clipboard.writeText(url);
       // setCopied(true);
       // setTimeout(() => setCopied(false), 2000);
-      setCopied(url)
+      setCopied(url);
     } catch (err) {
       console.error("Failed to copy:", err);
     }
@@ -521,9 +522,7 @@ const QRCodeComponent = ({ url = "https://example.com/session/12345" }) => {
             cursor: "pointer",
             transition: "all 0.3s ease",
             transform: copied ? "scale(0.98)" : "scale(1)",
-            boxShadow: copied
-              ? "none"
-              : "0 4px 12px rgba(102, 126, 234, 0.4)",
+            boxShadow: copied ? "none" : "0 4px 12px rgba(102, 126, 234, 0.4)",
           }}
         >
           {copied ? "✓ Copied!" : "Copy Session Link"}
@@ -533,5 +532,4 @@ const QRCodeComponent = ({ url = "https://example.com/session/12345" }) => {
   );
 };
 
-
-return {SharePopup,QRCodeComponent};
+return { SharePopup, QRCodeComponent };
