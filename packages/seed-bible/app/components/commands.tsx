@@ -47,7 +47,7 @@ const ConfigurableFunctionCommands = ({ contextData, clickedVerses }) => {
     // Generate suggested questions about the verse
     generateSuggestedQuestions: async (data) => {
       os.log("Generating suggested questions for:", data);
-      const prompt = `Based on this biblical book:${data.book} chapter:${data.chapter} verse: "${data.verseNumber.toString()}" (${data.reference}),
+      const prompt = `Based on this biblical book:${data.book} chapter:${data.chapter} verse: "${data.verseNumber.toString()}" (${data.text}),
              suggest exactly 3 common questions that people typically ask about this passage.
               Format your response as a array of strings, with each question being concise and practical like [q1,q2,13].
                Focus on questions about meaning, application, and context that would be most helpful for Bible study.`;
@@ -99,7 +99,7 @@ const ConfigurableFunctionCommands = ({ contextData, clickedVerses }) => {
           }
         );
 
-        return `${langCode.toUpperCase()} Translation (${data.reference}):\n\n${res.data.translatedText}`;
+        return `${langCode.toUpperCase()} Translation (${data.text}):\n\n${res.data.translatedText}`;
       } catch (err) {
         return `Translation error: ${err.message}`;
       }
@@ -107,42 +107,42 @@ const ConfigurableFunctionCommands = ({ contextData, clickedVerses }) => {
 
     // AI Translation functions
     translateToHindi: async (data) => {
-      const prompt = `Translate this biblical verse to Hindi with proper theological terms: "${data.verse}" (${data.reference})`;
+      const prompt = `Translate this biblical verse to Hindi with proper theological terms: "${data.verse}" (${data.text})`;
       try {
         const response = await ai.chat(prompt, {
           preferredModel: "gpt-4o",
           stream: false,
           response_format: { type: "json" },
         });
-        return `Hindi Translation (${data.reference}):\n\n${response?.content || response}`;
+        return `Hindi Translation (${data.text}):\n\n${response?.content || response}`;
       } catch (error) {
         return `AI Translation Error: ${error.message}`;
       }
     },
 
     translateToArabic: async (data) => {
-      const prompt = `Translate this biblical verse to Arabic with proper theological terms: "${data.verse}" (${data.reference})`;
+      const prompt = `Translate this biblical verse to Arabic with proper theological terms: "${data.verse}" (${data.text})`;
       try {
         const response = await ai.chat(prompt, {
           preferredModel: "gpt-4o",
           stream: false,
           response_format: { type: "json" },
         });
-        return `Arabic Translation (${data.reference}):\n\n${response?.content || response}`;
+        return `Arabic Translation (${data.text}):\n\n${response?.content || response}`;
       } catch (error) {
         return `AI Translation Error: ${error.message}`;
       }
     },
 
     translateToSpanish: async (data) => {
-      const prompt = `Translate this biblical verse to Spanish with proper theological terms: "${data.verse}" (${data.reference})`;
+      const prompt = `Translate this biblical verse to Spanish with proper theological terms: "${data.verse}" (${data.text})`;
       try {
         const response = await ai.chat(prompt, {
           preferredModel: "gpt-4o",
           stream: false,
           response_format: { type: "json" },
         });
-        return `Spanish Translation (${data.reference}):\n\n${response?.content || response}`;
+        return `Spanish Translation (${data.text}):\n\n${response?.content || response}`;
       } catch (error) {
         return `AI Translation Error: ${error.message}`;
       }
@@ -150,42 +150,42 @@ const ConfigurableFunctionCommands = ({ contextData, clickedVerses }) => {
 
     // AI Analysis functions
     analyzeHebrew: async (data) => {
-      const prompt = `Provide a detailed Hebrew linguistic analysis of ${data.reference}: "${data.verse}". Include original Hebrew words, their meanings, grammatical structures, and theological significance.`;
+      const prompt = `Provide a detailed Hebrew linguistic analysis of ${data.text}: "${data.verse}". Include original Hebrew words, their meanings, grammatical structures, and theological significance.`;
       try {
         const response = await ai.chat(prompt, {
           preferredModel: "gpt-4o",
           stream: false,
           response_format: { type: "json" },
         });
-        return `Hebrew Analysis for ${data.reference}:\n\n${response?.content || response}`;
+        return `Hebrew Analysis for ${data.text}:\n\n${response?.content || response}`;
       } catch (error) {
         return `AI Analysis Error: ${error.message}`;
       }
     },
 
     explainVerse: async (data) => {
-      const prompt = `Provide a comprehensive explanation of ${data.reference}: "${data.verse}". Include theological, historical, and practical insights.`;
+      const prompt = `Provide a comprehensive explanation of ${data.text}: "${data.verse}". Include theological, historical, and practical insights.`;
       try {
         const response = await ai.chat(prompt, {
           preferredModel: "gpt-4o",
           stream: false,
           response_format: { type: "json" },
         });
-        return `Explanation of ${data.reference}:\n\n${response?.content || response}`;
+        return `Explanation of ${data.text}:\n\n${response?.content || response}`;
       } catch (error) {
         return `AI Explanation Error: ${error.message}`;
       }
     },
 
     historicalContext: async (data) => {
-      const prompt = `Provide detailed historical context for ${data.reference}: "${data.verse}". Include the time period, cultural background, and historical significance.`;
+      const prompt = `Provide detailed historical context for ${data.text}: "${data.verse}". Include the time period, cultural background, and historical significance.`;
       try {
         const response = await ai.chat(prompt, {
           preferredModel: "gpt-4o",
           stream: false,
           response_format: { type: "json" },
         });
-        return `Historical Context for ${data.reference}:\n\n${response?.content || response}`;
+        return `Historical Context for ${data.text}:\n\n${response?.content || response}`;
       } catch (error) {
         return `AI Context Error: ${error.message}`;
       }
@@ -193,42 +193,42 @@ const ConfigurableFunctionCommands = ({ contextData, clickedVerses }) => {
 
     // AI Commentary functions
     augustineCommentary: async (data) => {
-      const prompt = `Write a commentary on ${data.reference}: "${data.verse}" in the style and theological perspective of Augustine of Hippo. Include his typical themes and approach.`;
+      const prompt = `Write a commentary on ${data.text}: "${data.verse}" in the style and theological perspective of Augustine of Hippo. Include his typical themes and approach.`;
       try {
         const response = await ai.chat(prompt, {
           preferredModel: "gpt-4o",
           stream: false,
           response_format: { type: "json" },
         });
-        return `Augustine-style Commentary on ${data.reference}:\n\n${response?.content || response}`;
+        return `Augustine-style Commentary on ${data.text}:\n\n${response?.content || response}`;
       } catch (error) {
         return `AI Commentary Error: ${error.message}`;
       }
     },
 
     calvinCommentary: async (data) => {
-      const prompt = `Write a commentary on ${data.reference}: "${data.verse}" in the style and theological perspective of John Calvin. Focus on sovereignty, providence, and Reformed theology.`;
+      const prompt = `Write a commentary on ${data.text}: "${data.verse}" in the style and theological perspective of John Calvin. Focus on sovereignty, providence, and Reformed theology.`;
       try {
         const response = await ai.chat(prompt, {
           preferredModel: "gpt-4o",
           stream: false,
           response_format: { type: "json" },
         });
-        return `Calvin-style Commentary on ${data.reference}:\n\n${response?.content || response}`;
+        return `Calvin-style Commentary on ${data.text}:\n\n${response?.content || response}`;
       } catch (error) {
         return `AI Commentary Error: ${error.message}`;
       }
     },
 
     modernCommentary: async (data) => {
-      const prompt = `Provide a modern biblical commentary on ${data.reference}: "${data.verse}". Include contemporary applications and relevance for today's readers.`;
+      const prompt = `Provide a modern biblical commentary on ${data.text}: "${data.verse}". Include contemporary applications and relevance for today's readers.`;
       try {
         const response = await ai.chat(prompt, {
           preferredModel: "gpt-4o",
           stream: false,
           response_format: { type: "json" },
         });
-        return `Modern Commentary on ${data.reference}:\n\n${response?.content || response}`;
+        return `Modern Commentary on ${data.text}:\n\n${response?.content || response}`;
       } catch (error) {
         return `AI Commentary Error: ${error.message}`;
       }
@@ -236,7 +236,7 @@ const ConfigurableFunctionCommands = ({ contextData, clickedVerses }) => {
 
     // AI Parallel functions
     findJohnParallel: async (data) => {
-      const prompt = `Find and explain connections between ${data.reference}: "${data.verse}" and John 1:5. Provide detailed theological parallels and thematic connections.`;
+      const prompt = `Find and explain connections between ${data.text}: "${data.verse}" and John 1:5. Provide detailed theological parallels and thematic connections.`;
       try {
         const response = await ai.chat(prompt, {
           preferredModel: "gpt-4o",
@@ -250,7 +250,7 @@ const ConfigurableFunctionCommands = ({ contextData, clickedVerses }) => {
     },
 
     findPaulParallel: async (data) => {
-      const prompt = `Find and explain connections between ${data.reference}: "${data.verse}" and 2 Corinthians 4:6. Provide detailed theological parallels and thematic connections.`;
+      const prompt = `Find and explain connections between ${data.text}: "${data.verse}" and 2 Corinthians 4:6. Provide detailed theological parallels and thematic connections.`;
       try {
         const response = await ai.chat(prompt, {
           preferredModel: "gpt-4o",
@@ -264,14 +264,14 @@ const ConfigurableFunctionCommands = ({ contextData, clickedVerses }) => {
     },
 
     findAllParallels: async (data) => {
-      const prompt = `Find all biblical parallels and cross-references for ${data.reference}: "${data.verse}". Include both thematic and verbal parallels with explanations.`;
+      const prompt = `Find all biblical parallels and cross-references for ${data.text}: "${data.verse}". Include both thematic and verbal parallels with explanations.`;
       try {
         const response = await ai.chat(prompt, {
           preferredModel: "gpt-4o",
           stream: false,
           response_format: { type: "json" },
         });
-        return `All Biblical Parallels for ${data.reference}:\n\n${response?.content || response}`;
+        return `All Biblical Parallels for ${data.text}:\n\n${response?.content || response}`;
       } catch (error) {
         return `AI Parallels Error: ${error.message}`;
       }
@@ -279,28 +279,28 @@ const ConfigurableFunctionCommands = ({ contextData, clickedVerses }) => {
 
     // AI Custom analysis functions
     theologicalImplications: async (data) => {
-      const prompt = `Analyze the theological implications of ${data.reference}: "${data.verse}". Cover systematic theology, biblical theology, and practical theology applications.`;
+      const prompt = `Analyze the theological implications of ${data.text}: "${data.verse}". Cover systematic theology, biblical theology, and practical theology applications.`;
       try {
         const response = await ai.chat(prompt, {
           preferredModel: "gpt-4o",
           stream: false,
           response_format: { type: "json" },
         });
-        return `Theological Implications of ${data.reference}:\n\n${response?.content || response}`;
+        return `Theological Implications of ${data.text}:\n\n${response?.content || response}`;
       } catch (error) {
         return `AI Theology Error: ${error.message}`;
       }
     },
 
     literaryAnalysis: async (data) => {
-      const prompt = `Provide a comprehensive literary analysis of ${data.reference}: "${data.verse}". Include structure, literary devices, genre, and stylistic features.`;
+      const prompt = `Provide a comprehensive literary analysis of ${data.text}: "${data.verse}". Include structure, literary devices, genre, and stylistic features.`;
       try {
         const response = await ai.chat(prompt, {
           preferredModel: "gpt-4o",
           stream: false,
           response_format: { type: "json" },
         });
-        return `Literary Analysis of ${data.reference}:\n\n${response?.content || response}`;
+        return `Literary Analysis of ${data.text}:\n\n${response?.content || response}`;
       } catch (error) {
         return `AI Literary Error: ${error.message}`;
       }
@@ -308,56 +308,56 @@ const ConfigurableFunctionCommands = ({ contextData, clickedVerses }) => {
 
     // New AI-powered functions
     devotionalThoughts: async (data) => {
-      const prompt = `Write devotional thoughts based on ${data.reference}: "${data.verse}". Include personal application, prayer points, and spiritual reflection.`;
+      const prompt = `Write devotional thoughts based on ${data.text}: "${data.verse}". Include personal application, prayer points, and spiritual reflection.`;
       try {
         const response = await ai.chat(prompt, {
           preferredModel: "gpt-4o",
           stream: false,
           response_format: { type: "json" },
         });
-        return `Devotional Thoughts on ${data.reference}:\n\n${response?.content || response}`;
+        return `Devotional Thoughts on ${data.text}:\n\n${response?.content || response}`;
       } catch (error) {
         return `AI Devotional Error: ${error.message}`;
       }
     },
 
     sermonOutline: async (data) => {
-      const prompt = `Create a sermon outline based on ${data.reference}: "${data.verse}". Include main points, sub-points, illustrations, and applications.`;
+      const prompt = `Create a sermon outline based on ${data.text}: "${data.verse}". Include main points, sub-points, illustrations, and applications.`;
       try {
         const response = await ai.chat(prompt, {
           preferredModel: "gpt-4o",
           stream: false,
           response_format: { type: "json" },
         });
-        return `Sermon Outline for ${data.reference}:\n\n${response?.content || response}`;
+        return `Sermon Outline for ${data.text}:\n\n${response?.content || response}`;
       } catch (error) {
         return `AI Sermon Error: ${error.message}`;
       }
     },
 
     studyQuestions: async (data) => {
-      const prompt = `Generate study questions for ${data.reference}: "${data.verse}". Include observation, interpretation, and application questions suitable for small groups.`;
+      const prompt = `Generate study questions for ${data.text}: "${data.verse}". Include observation, interpretation, and application questions suitable for small groups.`;
       try {
         const response = await ai.chat(prompt, {
           preferredModel: "gpt-4o",
           stream: false,
           response_format: { type: "json" },
         });
-        return `Study Questions for ${data.reference}:\n\n${response?.content || response}`;
+        return `Study Questions for ${data.text}:\n\n${response?.content || response}`;
       } catch (error) {
         return `AI Study Error: ${error.message}`;
       }
     },
 
     customQuery: async (data, query) => {
-      const prompt = `Regarding ${data.reference}: "${data.verse}", please answer this question: ${query}`;
+      const prompt = `Regarding ${data.text}: "${data.verse}", please answer this question: ${query}`;
       try {
         const response = await ai.chat(prompt, {
           preferredModel: "gpt-4o",
           stream: false,
           response_format: { type: "json" },
         });
-        return `Custom Analysis for ${data.reference}:\n\n${response?.content || response}`;
+        return `Custom Analysis for ${data.text}:\n\n${response?.content || response}`;
       } catch (error) {
         return `AI Query Error: ${error.message}`;
       }
