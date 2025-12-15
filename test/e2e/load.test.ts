@@ -10,6 +10,10 @@ import {
 
 let browser: Browser;
 
+type BrowserContext = ReturnType<typeof browser.defaultBrowserContext>;
+
+let context: BrowserContext;
+
 console.log = jest.fn();
 
 beforeAll(async () => {
@@ -18,6 +22,8 @@ beforeAll(async () => {
   browser = await puppeteer.launch({
     args: ["--no-sandbox"],
   });
+
+  context = browser.defaultBrowserContext();
 });
 
 afterAll(async () => {
@@ -236,10 +242,68 @@ describe("navigate", () => {
     const bookTitle = await seedBibleFrame
       .locator("div.bookTitle")
       .waitHandle();
-    await delay(1000);
+    await delay(2000);
     expect(await bookTitle?.evaluate((el) => el.textContent)).toBe(
       "Revelation 3"
     );
+  });
+});
+
+describe("collaborative", () => {
+  let page1: Page;
+  let page2: Page;
+  let browser2: Browser;
+  beforeEach(async () => {
+    console.log("new page");
+    browser2 = await puppeteer.launch({
+      args: ["--no-sandbox"],
+    });
+    page1 = await browser.newPage();
+    page2 = await browser2.newPage();
+  });
+
+  afterEach(async () => {
+    await page1?.close();
+    await page2?.close();
+    await browser2?.close();
+  });
+
+  test("test user presense", async () => {
+    await loadSeedBible(page1, undefined, undefined, true);
+
+    const seedBibleFrame1 = getSeedBibleFrame(page1);
+
+    const url1 = new URL(page1.url());
+
+    const inst1 = url1.searchParams.get("inst");
+
+    await loadSeedBible(page2, undefined, inst1, true);
+
+    const seedBibleFrame2 = getSeedBibleFrame(page2);
+
+    await seedBibleFrame1.waitForSelector(".layout", { visible: true });
+    await seedBibleFrame2.waitForSelector(".layout", { visible: true });
+
+    seedBibleFrame1.locator(".tabs-collapsed")?.click();
+
+    seedBibleFrame2.locator(".tabs-collapsed")?.click();
+
+    await delay(200);
+
+    await seedBibleFrame1
+      .locator(".userPresence-container > div:nth-child(1)")
+      .click();
+
+    await delay(1000);
+    await seedBibleFrame2.locator("button.join-session-button").click();
+
+    await delay(2000);
+
+    const userPresenceItems1 = await seedBibleFrame1.$$(".user-presence-item");
+    expect(userPresenceItems1.length).toBe(2);
+
+    const userPresenceItems2 = await seedBibleFrame2.$$(".user-presence-item");
+    expect(userPresenceItems2.length).toBe(2);
   });
 });
 
