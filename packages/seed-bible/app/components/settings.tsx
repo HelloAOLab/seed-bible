@@ -162,7 +162,7 @@ const SettingsSidebar = () => {
                     </b>
                     <p>
                       The original, unified, three-part ordering of the Hebrew
-                      Bible (or Old Testaments)
+                      Bible (or Old Testament)
                     </p>
                   </div>
                   <div
@@ -217,7 +217,7 @@ const SettingsSidebar = () => {
                     <b>
                       <span>Traditional order</span>
                     </b>
-                    <p>The ordering found in the most modern chritain Bible</p>
+                    <p>The ordering found in most modern Christian Bibles</p>
                   </div>
                   <div
                     style={{
