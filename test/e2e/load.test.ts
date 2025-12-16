@@ -10,10 +10,6 @@ import {
 
 let browser: Browser;
 
-type BrowserContext = ReturnType<typeof browser.defaultBrowserContext>;
-
-let context: BrowserContext;
-
 console.log = jest.fn();
 
 beforeAll(async () => {
@@ -66,6 +62,8 @@ describe("load", () => {
       .locator("div.bookTitle")
       .waitHandle();
     expect(await bookTitle?.evaluate((el) => el.textContent)).toBe("Genesis 1");
+
+    await delay(1000); // Wait a moment to ensure URL is updated
 
     const url = new URL(page.url());
 
@@ -260,6 +258,8 @@ describe("collaborative", () => {
     });
     page1 = await browser.newPage();
     page2 = await browser2.newPage();
+    await page1.setViewport({ width: 1080, height: 1024 });
+    await page2.setViewport({ width: 1080, height: 1024 });
   });
 
   afterEach(async () => {
@@ -269,41 +269,45 @@ describe("collaborative", () => {
   });
 
   test("test user presense", async () => {
-    await loadSeedBible(page1, undefined, undefined, true);
+    const uuid = Math.random().toString(36).substring(2, 15);
+
+    await loadSeedBible(page1, undefined, uuid, true);
+    await loadSeedBible(page2, undefined, uuid, true);
 
     const seedBibleFrame1 = getSeedBibleFrame(page1);
 
-    const url1 = new URL(page1.url());
-
-    const inst1 = url1.searchParams.get("inst");
-
-    await loadSeedBible(page2, undefined, inst1, true);
-
     const seedBibleFrame2 = getSeedBibleFrame(page2);
 
-    await seedBibleFrame1.waitForSelector(".layout", { visible: true });
-    await seedBibleFrame2.waitForSelector(".layout", { visible: true });
+    await Promise.all([
+      seedBibleFrame1.waitForSelector("div.start-session-bar", {
+        visible: true,
+      }),
+      seedBibleFrame2.waitForSelector("div.start-session-bar", {
+        visible: true,
+      }),
+    ]);
 
-    seedBibleFrame1.locator(".tabs-collapsed")?.click();
-
-    seedBibleFrame2.locator(".tabs-collapsed")?.click();
-
-    await delay(200);
-
-    await seedBibleFrame1
-      .locator(".userPresence-container > div:nth-child(1)")
-      .click();
+    await seedBibleFrame1.locator("div.start-session-bar").click();
 
     await delay(1000);
+
+    await seedBibleFrame2.waitForSelector("button.join-session-button", {
+      visible: true,
+    });
+
+    expect(seedBibleFrame2.locator("button.join-session-button")).toBeDefined();
+
+    await delay(500);
+
     await seedBibleFrame2.locator("button.join-session-button").click();
 
-    await delay(2000);
-
-    const userPresenceItems1 = await seedBibleFrame1.$$(".user-presence-item");
-    expect(userPresenceItems1.length).toBe(2);
+    await delay(500);
 
     const userPresenceItems2 = await seedBibleFrame2.$$(".user-presence-item");
     expect(userPresenceItems2.length).toBe(2);
+    await delay(5000);
+    const userPresenceItems1 = await seedBibleFrame1.$$(".user-presence-item");
+    expect(userPresenceItems1.length).toBe(2);
   });
 });
 

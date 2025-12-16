@@ -762,6 +762,7 @@ export function UserPresence({ collapsed = false }) {
             transition: "all 0.2s ease",
             height: "38px",
           }}
+          className="start-session-bar"
         >
           <style>
             {getStatusText() !== "Start session" &&
