@@ -960,15 +960,21 @@ const AddAnotationUI = ({
       //   type:  "heading"
       // };
 
+      // TODO: @kushagra - the book and chapter info should be taken from the old annotation - not the data in the old annotation
       const book =
         editDataDetails.additionalInfo.chapterData?.id ||
         editDataDetails.additionalInfo.chapterData?.bookId ||
         editDataDetails.additionalInfo?.data?.id ||
         editDataDetails.additionalInfo?.data?.bookId;
       const chapter = editDataDetails.additionalInfo.chapter;
+
       const comment = {
         type: "comment",
         html: textHTML,
+
+        createdAtMs: editDataDetails.createdAtMs ?? Date.now(),
+        updatedAtMs: Date.now(),
+
         // book:
         //   editDataDetails.additionalInfo.chapterData?.id ||
         //   editDataDetails.additionalInfo.chapterData?.bookId ||
@@ -1111,6 +1117,9 @@ const AddAnotationUI = ({
           const comment = {
             type: "comment",
             html: textHTML,
+
+            createdAtMs: Date.now(),
+            updatedAtMs: Date.now(),
             // book:
             //   ele.additionalInfo.chapterData?.id ||
             //   ele.additionalInfo.chapterData?.bookId ||

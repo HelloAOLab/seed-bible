@@ -46,6 +46,12 @@ export const COMMENT_SCHEMA = z.object({
   type: z.literal("comment"),
   html: z.string(),
   replyTo: z.nullable(z.optional(z.string())),
+
+  // The Time in miliseconds that the comment was created
+  createdAtMs: z.nullable(z.optional(z.number())),
+
+  // The Time in miliseconds that the comment was last updated
+  updatedAtMs: z.nullable(z.optional(z.number())),
 });
 
 export const ANNOTATION_DATA_SCHEMA = z.discriminatedUnion("type", [
