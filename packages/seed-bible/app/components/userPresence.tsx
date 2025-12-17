@@ -452,7 +452,7 @@ export function UserPresence({ collapsed = false }) {
     onlyHostNav: true,
     sharedTab: true,
     autoScroll: true,
-    onlyHostHighlight: true,
+    onlyHostHighlight: false,
     highlightDuration: 16,
     onlyHostSelect: true,
     showOthersActivity: false,
