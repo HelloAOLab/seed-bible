@@ -3,14 +3,27 @@
 ## Table of Contents
 
 1. [Project Overview](#project-overview)
-2. [Architecture](#architecture)
-3. [Core Hooks API](#core-hooks-api)
-4. [Core Components](#core-components)
-5. [Global Functions API](#global-functions-api)
-6. [Extension System](#extension-system)
-7. [Development Patterns](#development-patterns)
-8. [User Activity Tracking](#user-activity-tracking)
-9. [Package Structure](#package-structure)
+2. [Runtime Foundation](#runtime-foundation)
+   - [CasualOS](#casualos)
+   - [Sessions](#sessions)
+   - [BIOS Configuration](#bios-configuration)
+   - [Session Lifecycle](#session-lifecycle)
+   - [Collaborative Foundation](#collaborative-foundation)
+   - [Records API](#records-api)
+   - [Identity: Profiles, Accounts, and Studios](#identity-profiles-accounts-and-studios)
+   - [Anonymous Users](#anonymous-users)
+   - [Spaces](#spaces)
+3. [Architecture](#architecture)
+4. [Core Hooks API](#core-hooks-api)
+5. [Core Components](#core-components)
+6. [Global Functions API](#global-functions-api)
+7. [Extension System](#extension-system)
+8. [Development Patterns](#development-patterns)
+9. [User Activity Tracking](#user-activity-tracking)
+10. [Package Structure](#package-structure)
+11. [AI Guardrails and Epistemic Humility](#ai-guardrails-and-epistemic-humility)
+12. [Data Philosophy](#data-philosophy)
+13. [External Services](#external-services)
 
 ---
 
@@ -25,7 +38,8 @@ Seed Bible is a modular, extensible Bible study platform built with React/Preact
 - **Flexible toolbar system** with customizable tools
 - **Workspace management** with tabs, spaces, and folders
 - **3D visualizations** (Bible Stack, Tabernacle, Scripture Maps)
-- **Canvas drawing** and annotation tools
+- **Canvas (gridPortal)** providing 3D spatial environment for collaborative visualization
+- **Drawing tools** for annotations
 - **Calendar integration** for events and scheduling
 
 ### Technology Stack
@@ -37,6 +51,211 @@ Seed Bible is a modular, extensible Bible study platform built with React/Preact
 - **Package Manager:** pnpm (monorepo)
 - **Calendar:** FullCalendar
 - **Communication:** Socket-based sync
+
+---
+
+## Runtime Foundation
+
+### CasualOS
+
+Seed Bible is built on **CasualOS**, an open-source operating system that enables real-time, collaborative environments running directly in the browser. CasualOS is the underlying runtime platform that makes Seed Bible's collaborative features possible.
+
+**Key concepts:**
+
+- **CasualOS** is the runtime platform ([docs.casualos.com](https://docs.casualos.com))
+- **AO.bot** is AO Lab's hosted deployment of CasualOS
+- **Instances (insts)** are running CasualOS environments
+- **Seed Bible sessions** compile and execute inside insts
+- **Bots** are the fundamental data structures in CasualOS (JSON objects with tags)
+- **Tags** are key-value pairs on bots that store data and behavior
+
+### Sessions
+
+A **session** is a running instance of Seed Bible. Sessions are collaborative by default—multiple users can join the same session and interact together.
+
+**Session characteristics:**
+
+- Default sessions self-expire in **12 hours** (see [Session Lifecycle](#session-lifecycle))
+- Permanent sessions can be provisioned for partners and ministries
+- Sessions can be collaborative or static (controlled by BIOS configuration)
+- All participants share interactions and state, but visualization is independent
+
+### BIOS Configuration
+
+**BIOS** (Basic Input/Output System) is a configuration layer that determines what an inst can and cannot do. BIOS parameters control:
+
+- Whether a session is **collaborative** or **static**
+- Access permissions and capabilities
+- Session behavior and features
+
+Developers should understand that session capabilities are controlled by BIOS parameters set when the session is created.
+
+### Session Lifecycle
+
+Understanding session lifecycle is important for developers building features that store data or track user progress.
+
+**Default sessions:**
+
+- Self-expire after **12 hours** of inactivity
+- All session data is lost when a session expires
+- Users are notified before expiration
+
+**Permanent sessions:**
+
+- Can be provisioned for partners and ministries
+- Require explicit provisioning
+- Do not self-expire
+
+**What happens when sessions expire:**
+
+- All bots and tags in the session are removed
+- Unsaved user data is lost
+- Records stored in the persistent layer (via Records API) are NOT affected
+- Users can create a new session and continue working
+
+**Developer guidance:**
+
+- For temporary data: Store in session bots/tags (lost on expiration)
+- For persistent data: Use the Records API (survives session expiration)
+- Always inform users about data persistence behavior
+
+### Collaborative Foundation
+
+Seed Bible's collaborative architecture is foundational, not a feature layer. Understanding the principle of **"shared interaction, independent visualization"** is essential for developers.
+
+**Core principles:**
+
+1. **Shared Interaction, Independent Visualization**
+   - Participants share actions and state, not screens or layouts
+   - Each user controls their own view configuration (Spaces)
+   - Interactions emit events that other participants can observe
+
+2. **Peer-Based Architecture**
+   - AI agents, web services, and IoT devices can participate as peers
+   - All participants (human or AI) interact through the same event system
+   - Because CasualOS treats all participants as peers in a shared environment, humans and AI collaborate naturally
+
+3. **Real-Time Presence**
+   - User activities are tracked and shared in real-time
+   - See [User Activity Tracking](#user-activity-tracking) for API details
+   - Presence enables features like "follow mode" and collaborative study
+
+**Developer implications:**
+
+- Design features that emit observable events rather than directly manipulating other users' views
+- Use the user activity API to build presence-aware features
+- Remember that actions are shared, but visualization configuration is personal
+
+### Records API
+
+All persistent data in Seed Bible is stored in **Records**. Records are the persistence layer that survives session expiration.
+
+**What are Records?**
+
+- Schema-free JSON documents
+- Belong to either an Account or a Studio
+- Support three types: Data Records, File Records, and Event Records
+
+**Record markers control access:**
+
+- `publicRead`: Anyone can read
+- `publicWrite`: Anyone can write
+- `private`: Only owner can access
+- `Account`: Account-level access
+- Custom markers for fine-grained control
+
+**When to use Records:**
+
+- User preferences and settings
+- Reading history and progress
+- Annotations and notes
+- Any data that must survive session expiration
+
+**Learn more:**
+
+- [CasualOS Records Documentation](https://docs.casualos.com/docs/records)
+- Records API is accessed through CasualOS bot actions
+
+### Identity: Profiles, Accounts, and Studios
+
+Seed Bible uses a three-level identity hierarchy:
+
+**1. Profile**
+
+- Individual user data within an Account
+- No email required
+- Can have multiple Profiles per Account
+- Profile-specific preferences and history
+
+**2. Account**
+
+- System-level identity tied to email address
+- Required for authentication
+- Can own Records
+- Can be a member of multiple Studios
+
+**3. Studio**
+
+- Group structure for shared collaboration
+- Multiple Accounts can be members
+- Studio-owned Records are shared among members
+- Many-to-many relationship: one Account can belong to many Studios, one Studio can have many Accounts
+
+**Developer guidance:**
+
+- Use **Profile** data for personal preferences within an Account
+- Use **Account** data for cross-profile settings and authentication
+- Use **Studio** data for collaborative workspaces and shared content
+- Anonymous users have temporary local storage only (no Profile/Account)
+
+### Anonymous Users
+
+Anonymous users can use Seed Bible without authentication, but with limitations.
+
+**Anonymous user capabilities:**
+
+- Read Scripture and use basic features
+- Create temporary sessions (expire after 12 hours)
+- Use visualization tools (Canvas, BibleStack, etc.)
+
+**Anonymous user limitations:**
+
+- Cannot save progress or preferences
+- Cannot join Studios
+- Cannot access restricted content
+- Data is stored locally and lost when session ends
+
+**Developer guidance:**
+
+- Design features that degrade gracefully for anonymous users
+- Clearly indicate when features require authentication
+- Provide save prompts before session expiration for anonymous users
+- Use local storage for temporary anonymous data
+
+### Spaces
+
+A **Space** is a personal view configuration that defines how a Seed Bible session environment is displayed. Spaces solve the "provisioning problem"—one person can set up a Space and share it with many.
+
+**Key characteristics:**
+
+- **Spaces are personal.** Your layout does not affect another person's view
+- **Interaction is shared; visualization configuration is not**
+- Spaces can be saved, shared, and loaded as .aux files
+
+**What Spaces contain:**
+
+- Tab configurations and layouts
+- Folder organization
+- Toolbar customization (per-space toolbars)
+- Split-screen arrangements
+- UI preferences
+
+**Developer guidance:**
+
+- Spaces are static JSON configurations
+- Users can export Spaces as .aux files for sharing
+- When designing features, remember that each user's Space is independent
+- Space configurations are stored per-user, not shared
 
 ---
 
@@ -90,10 +309,18 @@ seed-bible/
 All state management is handled through React Context:
 
 ```tsx
-<BibleVariablesProvider>        {/* Bible state + toolbar + user activities */}
-  <TabsProvider>                 {/* Tabs, spaces, folders */}
-    <SideBarProvider>            {/* UI state, popups */}
-      <MouseMoveProvider>        {/* Mouse tracking, floating windows */}
+<BibleVariablesProvider>
+  {" "}
+  {/* Bible state + toolbar + user activities */}
+  <TabsProvider>
+    {" "}
+    {/* Tabs, spaces, folders */}
+    <SideBarProvider>
+      {" "}
+      {/* UI state, popups */}
+      <MouseMoveProvider>
+        {" "}
+        {/* Mouse tracking, floating windows */}
         <Layout>
           <YourComponent />
         </Layout>
@@ -120,25 +347,25 @@ The central state management hook for Bible application state, toolbar managemen
 ```tsx
 const {
   // Display State
-  screens,              // number: 1-4 split screens
-  panelMode,           // boolean: panel layout mode
-  canvasMode,          // boolean: canvas drawing mode
-  mapMode,             // boolean: map visualization mode
-  fullScreen,          // boolean: fullscreen state
-  showHeading,         // boolean: show chapter headings
-  showVerses,          // boolean: show verse numbers
+  screens, // number: 1-4 split screens
+  panelMode, // boolean: panel layout mode
+  canvasMode, // boolean: canvas drawing mode
+  mapMode, // boolean: map visualization mode
+  fullScreen, // boolean: fullscreen state
+  showHeading, // boolean: show chapter headings
+  showVerses, // boolean: show verse numbers
 
   // Toolbar State
-  tools,               // array: main toolbar tools
-  canvasTools,         // array: canvas mode tools
-  mapTools,            // array: map mode tools
-  ReSeed,              // boolean: toolbar edit mode
+  tools, // array: main toolbar tools
+  canvasTools, // array: canvas mode tools
+  mapTools, // array: map mode tools
+  ReSeed, // boolean: toolbar edit mode
 
   // Multi-user Activity Tracking
-  userActivities,      // object: all users' activity data
+  userActivities, // object: all users' activity data
 
   // Theme
-  themeColors,         // object: theme color configuration
+  themeColors, // object: theme color configuration
 } = useBibleContext();
 ```
 
@@ -210,19 +437,19 @@ clearAllUserActivities()
 
 ```tsx
 interface Tool {
-  icon: string;                    // Material icon name or custom icon
-  label: string;                   // Tool display name (unique identifier)
-  hasToggle?: boolean;             // Whether tool has active/inactive states
-  active?: boolean;                // Current active state
-  onClick?: () => void;            // Click handler
-  onHold?: () => Promise<void>;    // Long-press handler
-  onRightClick?: () => void;       // Right-click/context menu handler
-  showInPageToolbar?: boolean;     // Show in main toolbar
-  showInStarterToolbar?: boolean;  // Show in starter toolbar
-  color?: string;                  // Icon color
-  backgroundColor?: string;        // Background color
-  priority?: number;               // Display priority
-  customComponent?: JSX.Element;   // Custom rendering
+  icon: string; // Material icon name or custom icon
+  label: string; // Tool display name (unique identifier)
+  hasToggle?: boolean; // Whether tool has active/inactive states
+  active?: boolean; // Current active state
+  onClick?: () => void; // Click handler
+  onHold?: () => Promise<void>; // Long-press handler
+  onRightClick?: () => void; // Right-click/context menu handler
+  showInPageToolbar?: boolean; // Show in main toolbar
+  showInStarterToolbar?: boolean; // Show in starter toolbar
+  color?: string; // Icon color
+  backgroundColor?: string; // Background color
+  priority?: number; // Display priority
+  customComponent?: JSX.Element; // Custom rendering
 }
 ```
 
@@ -241,21 +468,21 @@ Manages tabs, spaces (workspaces), and folder organization.
 ```tsx
 const {
   // Spaces & Tabs
-  spaces,              // array: all workspaces
-  activeSpace,         // string: current space ID
-  activeTab,           // object: currently active tab
-  tabs,                // array: tabs in current space
+  spaces, // array: all workspaces
+  activeSpace, // string: current space ID
+  activeTab, // object: currently active tab
+  tabs, // array: tabs in current space
 
   // Organization
-  folders,             // array: folder structure
+  folders, // array: folder structure
 
   // Selection
-  multiSelectMode,     // boolean: multi-selection enabled
-  selectedTabs,        // array: currently selected tabs
+  multiSelectMode, // boolean: multi-selection enabled
+  selectedTabs, // array: currently selected tabs
 
   // Display
-  tabsIcons,           // boolean: show icons in tabs
-  sharedTab,           // object: single tab shared across spaces
+  tabsIcons, // boolean: show icons in tabs
+  sharedTab, // object: single tab shared across spaces
 } = useTabsContext();
 ```
 
@@ -329,15 +556,15 @@ moveMultipleTabs(tabIds: string[], newFolderId: string)
 
 ```tsx
 interface Tab {
-  id: string;                     // Unique tab ID
-  label: string;                  // Tab display name
-  type: string;                   // Tab type ('bible', 'canvas', 'editor', etc.)
-  icon?: string;                  // Tab icon
-  content?: any;                  // Tab content data
-  bookId?: string;                // Bible book ID (for bible tabs)
-  chapter?: number;               // Chapter number (for bible tabs)
-  translation?: string;           // Translation (for bible tabs)
-  pinned?: boolean;               // Whether tab is pinned
+  id: string; // Unique tab ID
+  label: string; // Tab display name
+  type: string; // Tab type ('bible', 'canvas', 'editor', etc.)
+  icon?: string; // Tab icon
+  content?: any; // Tab content data
+  bookId?: string; // Bible book ID (for bible tabs)
+  chapter?: number; // Chapter number (for bible tabs)
+  translation?: string; // Translation (for bible tabs)
+  pinned?: boolean; // Whether tab is pinned
 }
 ```
 
@@ -353,10 +580,10 @@ Fetches and manages Bible chapter content with automatic caching.
 
 ```tsx
 const {
-  data,           // object: chapter content with parsed verses
-  footnotes,      // array: chapter footnotes
-  loading,        // boolean: loading state
-  error,          // string: error message
+  data, // object: chapter content with parsed verses
+  footnotes, // array: chapter footnotes
+  loading, // boolean: loading state
+  error, // string: error message
 } = useBibleData();
 ```
 
@@ -384,17 +611,17 @@ setCachedTabData(tabId: string, data: object)
 
 ```tsx
 interface ChapterData {
-  book: string;              // Book name (e.g., "Genesis")
-  chapter: number;           // Chapter number
-  verses: Verse[];           // Array of verse objects
-  footnotes: Footnote[];     // Chapter footnotes
-  translation: string;       // Translation ID (e.g., "BSB")
+  book: string; // Book name (e.g., "Genesis")
+  chapter: number; // Chapter number
+  verses: Verse[]; // Array of verse objects
+  footnotes: Footnote[]; // Chapter footnotes
+  translation: string; // Translation ID (e.g., "BSB")
 }
 
 interface Verse {
-  number: number;            // Verse number
-  text: string;              // Verse text
-  words: Word[];             // Array of word objects
+  number: number; // Verse number
+  text: string; // Verse text
+  words: Word[]; // Array of word objects
 }
 ```
 
@@ -413,20 +640,20 @@ const manager = new BibleDataManager();
 
 // Subscribe to state changes
 manager.subscribe((state) => {
-  console.log('Current book:', state.book);
-  console.log('Current chapter:', state.chapter);
-  console.log('Data:', state.data);
+  console.log("Current book:", state.book);
+  console.log("Current chapter:", state.chapter);
+  console.log("Data:", state.data);
 });
 
 // Open a chapter
-await manager.open('GEN', 1, 'BSB');
+await manager.open("GEN", 1, "BSB");
 
 // Navigate
 await manager.openNext();
 await manager.openPrevious();
 
 // Change translation
-await manager.changeTranslation('KJV');
+await manager.changeTranslation("KJV");
 
 // Get current state
 const state = manager.getState();
@@ -440,28 +667,41 @@ manager.dispose();
 ```tsx
 class BibleDataManager {
   // Fetch data from URL
-  async fetch(customUrl?: string, forcedTranslation?: string, forcedBaseUrl?: string): Promise<void>
+  async fetch(
+    customUrl?: string,
+    forcedTranslation?: string,
+    forcedBaseUrl?: string
+  ): Promise<void>;
 
   // Open specific chapter
-  async open(bookId: string, chapter: number, translation: string, chapterUrl?: string): Promise<void>
+  async open(
+    bookId: string,
+    chapter: number,
+    translation: string,
+    chapterUrl?: string
+  ): Promise<void>;
 
   // Navigate to next chapter
-  async openNext(): Promise<void>
+  async openNext(): Promise<void>;
 
   // Navigate to previous chapter
-  async openPrevious(): Promise<void>
+  async openPrevious(): Promise<void>;
 
   // Change translation
-  async changeTranslation(newTranslation: string, bookData?: object, forcedBaseUrl?: string): Promise<void>
+  async changeTranslation(
+    newTranslation: string,
+    bookData?: object,
+    forcedBaseUrl?: string
+  ): Promise<void>;
 
   // Get current state
-  getState(): BibleState
+  getState(): BibleState;
 
   // Subscribe to changes
-  subscribe(callback: (state: BibleState) => void): () => void
+  subscribe(callback: (state: BibleState) => void): () => void;
 
   // Cleanup
-  dispose(): void
+  dispose(): void;
 }
 ```
 
@@ -486,13 +726,13 @@ Manages sidebar UI state and popup menus.
 
 ```tsx
 const {
-  collapsed,             // boolean: sidebar collapsed state
-  sidebarWidth,          // number: sidebar width in pixels
-  sidebarMode,           // string: display mode
-  popupSettings,         // object: current popup content
-  isMobile,              // boolean: mobile device detection
-  themeColors,           // object: theme configuration
-  packageAddingOptions,  // array: available packages to add
+  collapsed, // boolean: sidebar collapsed state
+  sidebarWidth, // number: sidebar width in pixels
+  sidebarMode, // string: display mode
+  popupSettings, // object: current popup content
+  isMobile, // boolean: mobile device detection
+  themeColors, // object: theme configuration
+  packageAddingOptions, // array: available packages to add
 } = useSideBarContext();
 ```
 
@@ -527,12 +767,12 @@ Global mouse position tracking, drag overlay system, and floating window managem
 
 ```tsx
 const {
-  position,        // { x: number, y: number }: mouse position
-  isDragging,      // boolean: dragging state
-  Element,         // JSX.Element: element being dragged
-  floatingApps,    // array: floating window applications
-  hiddenApps,      // array: hidden applications
-  modalContent,    // JSX.Element: modal dialog content
+  position, // { x: number, y: number }: mouse position
+  isDragging, // boolean: dragging state
+  Element, // JSX.Element: element being dragged
+  floatingApps, // array: floating window applications
+  hiddenApps, // array: hidden applications
+  modalContent, // JSX.Element: modal dialog content
 } = useMouseMove();
 ```
 
@@ -565,16 +805,16 @@ CloseModal()
 
 ```tsx
 interface FloatingAppConfig {
-  id: string;              // Unique app ID
-  App: JSX.Element;        // Application component
-  to: 'panel' | 'floating'; // Where to display
-  minWidth?: string;       // Minimum width (e.g., '30rem')
-  minHeight?: string;      // Minimum height
-  title?: string;          // Window title
-  icon?: string;           // Window icon
-  closable?: boolean;      // Whether can be closed
-  resizable?: boolean;     // Whether can be resized
-  draggable?: boolean;     // Whether can be dragged
+  id: string; // Unique app ID
+  App: JSX.Element; // Application component
+  to: "panel" | "floating"; // Where to display
+  minWidth?: string; // Minimum width (e.g., '30rem')
+  minHeight?: string; // Minimum height
+  title?: string; // Window title
+  icon?: string; // Window icon
+  closable?: boolean; // Whether can be closed
+  resizable?: boolean; // Whether can be resized
+  draggable?: boolean; // Whether can be dragged
 }
 ```
 
@@ -597,13 +837,13 @@ Manages split-screen layouts with drag-to-resize functionality.
 
 ```tsx
 const {
-  handleMouseDown,     // Drag handler for splitter
-  width,               // Current width
-  height,              // Current height
+  handleMouseDown, // Drag handler for splitter
+  width, // Current width
+  height, // Current height
 } = useDivSpliter({
   initialWidth: 800,
   initialHeight: 600,
-  split: 'vertical',
+  split: "vertical",
   spaceId: currentSpaceId,
 });
 ```
@@ -621,16 +861,12 @@ Detects long-press/hold gestures on elements.
 ```tsx
 const { eventHandlers, shouldSuppressClick } = useHoldAction({
   onHold: () => {
-    console.log('Long press detected!');
+    console.log("Long press detected!");
   },
-  holdDuration: 500,  // ms
+  holdDuration: 500, // ms
 });
 
-return (
-  <button {...eventHandlers}>
-    Long press me
-  </button>
-);
+return <button {...eventHandlers}>Long press me</button>;
 ```
 
 #### Returns
@@ -688,6 +924,7 @@ updateTabInFolder(folderId: string, tabId: string, newData: object)
 Main Bible scripture display component with toolbar, settings, and multi-user support.
 
 **Features:**
+
 - Multi-screen support (1-4 simultaneous screens)
 - Verse highlighting and selection
 - Word highlighting with custom colors
@@ -697,16 +934,18 @@ Main Bible scripture display component with toolbar, settings, and multi-user su
 - Session management (host/follower mode)
 
 **Props:**
+
 ```tsx
 interface ThePageProps {
-  screens?: number;              // Number of split screens (1-4)
-  panelMode?: boolean;           // Panel layout mode
-  showToolbar?: boolean;         // Show toolbar
-  showSettings?: boolean;        // Show settings panel
+  screens?: number; // Number of split screens (1-4)
+  panelMode?: boolean; // Panel layout mode
+  showToolbar?: boolean; // Show toolbar
+  showSettings?: boolean; // Show settings panel
 }
 ```
 
 **Usage:**
+
 ```tsx
 <ThePage screens={2} panelMode={false} />
 ```
@@ -720,12 +959,14 @@ interface ThePageProps {
 Root layout wrapper with sidebar and main content area.
 
 **Features:**
+
 - Mouse position tracking
 - Context menu handling
 - Responsive design
 - Sidebar integration
 
 **Usage:**
+
 ```tsx
 <Layout>
   <YourContent />
@@ -743,6 +984,7 @@ Root layout wrapper with sidebar and main content area.
 Rich text editor powered by TipTap with custom extensions.
 
 **Features:**
+
 - Custom marks/nodes (LineHeight, etc.)
 - Toolbar with priority system
 - File upload/attachment support
@@ -750,9 +992,10 @@ Rich text editor powered by TipTap with custom extensions.
 - Markdown support
 
 **Props:**
+
 ```tsx
 interface TextEditorProps {
-  content?: string;              // Initial content
+  content?: string; // Initial content
   onChange?: (content: string) => void;
   placeholder?: string;
   editable?: boolean;
@@ -776,18 +1019,18 @@ Compact version of TextEditor for inline editing.
 All settings components follow similar patterns:
 
 ```tsx
-import { SettingsSidebar } from './components/settings';
-import { ThemeSettings } from './components/themeSettings';
-import { TextSettings } from './components/textSettings';
-import { ToolbarSettings } from './components/toolbarSettings';
-import { EditorSettings } from './components/editorSettings';
-import { TabSettings } from './components/tabSettings';
-import { AiSettings } from './components/aiSettings';
-import { CanvasAiSettings } from './components/canvasAiSettings';
-import { PromptBarSettings } from './components/PromtBarSettings';
-import { ScreenSettings } from './components/screenSettingsOptions';
-import { MenuTextSettings } from './components/menuTextSettings';
-import { SpaceSettings } from './components/spaceSettings';
+import { SettingsSidebar } from "./components/settings";
+import { ThemeSettings } from "./components/themeSettings";
+import { TextSettings } from "./components/textSettings";
+import { ToolbarSettings } from "./components/toolbarSettings";
+import { EditorSettings } from "./components/editorSettings";
+import { TabSettings } from "./components/tabSettings";
+import { AiSettings } from "./components/aiSettings";
+import { CanvasAiSettings } from "./components/canvasAiSettings";
+import { PromptBarSettings } from "./components/PromtBarSettings";
+import { ScreenSettings } from "./components/screenSettingsOptions";
+import { MenuTextSettings } from "./components/menuTextSettings";
+import { SpaceSettings } from "./components/spaceSettings";
 ```
 
 **Usage:** These are typically rendered within a settings panel or modal.
@@ -807,9 +1050,9 @@ Left navigation sidebar with tabs, spaces, and navigation.
 #### Toolbar Components
 
 ```tsx
-import { Toolbar } from './components/toolbar';
-import { ToolbarReal, renderToolbar } from './components/renderToolbar';
-import { VerseToolbar } from './components/verseToolbar';
+import { Toolbar } from "./components/toolbar";
+import { ToolbarReal, renderToolbar } from "./components/renderToolbar";
+import { VerseToolbar } from "./components/verseToolbar";
 ```
 
 - **Toolbar**: Main application toolbar
@@ -821,12 +1064,12 @@ import { VerseToolbar } from './components/verseToolbar';
 #### Utility Components
 
 ```tsx
-import { Icons } from './components/icons';
-import { Phosphoricons } from './components/phosphoricons';
-import { Chips } from './components/Chips';
-import { CircleCounter } from './components/circleCounter';
-import { Notifications } from './components/notifications';
-import { ProfileCard } from './components/profileCard';
+import { Icons } from "./components/icons";
+import { Phosphoricons } from "./components/phosphoricons";
+import { Chips } from "./components/Chips";
+import { CircleCounter } from "./components/circleCounter";
+import { Notifications } from "./components/notifications";
+import { ProfileCard } from "./components/profileCard";
 ```
 
 ---
@@ -852,11 +1095,11 @@ Package/extension management interface.
 #### Event Handlers
 
 ```tsx
-import { OnVerseClick } from './components/onVerseClick';
-import { OnVerseRightClick } from './components/onVeresRightClick';
-import { OnBookChanged } from './components/onBookChanged';
-import { OnKeyDown, OnKeyUp } from './components/onKeyDown';
-import { OnGridClick } from './components/onGridClick';
+import { OnVerseClick } from "./components/onVerseClick";
+import { OnVerseRightClick } from "./components/onVeresRightClick";
+import { OnBookChanged } from "./components/onBookChanged";
+import { OnKeyDown, OnKeyUp } from "./components/onKeyDown";
+import { OnGridClick } from "./components/onGridClick";
 ```
 
 These components handle specific user interactions and can be customized.
@@ -866,8 +1109,8 @@ These components handle specific user interactions and can be customized.
 ### Upload Components
 
 ```tsx
-import { UploadFile } from './components/uploadFile';
-import { UploadHandler } from './components/uploadHandler';
+import { UploadFile } from "./components/uploadFile";
+import { UploadHandler } from "./components/uploadHandler";
 ```
 
 File upload UI and logic.
@@ -894,19 +1137,20 @@ globalThis.RemoveTab(tabId: string): void
 ```
 
 **Example:**
+
 ```tsx
 globalThis.AddTab({
-  id: 'my-tab-1',
-  label: 'My Tab',
-  type: 'bible',
-  bookId: 'GEN',
+  id: "my-tab-1",
+  label: "My Tab",
+  type: "bible",
+  bookId: "GEN",
   chapter: 1,
-  translation: 'BSB',
+  translation: "BSB",
 });
 
-globalThis.UpdateTab('my-tab-1', { chapter: 2 });
+globalThis.UpdateTab("my-tab-1", { chapter: 2 });
 
-globalThis.RemoveTab('my-tab-1');
+globalThis.RemoveTab("my-tab-1");
 ```
 
 ---
@@ -925,10 +1169,11 @@ globalThis.OpenPrevChapter(): void
 ```
 
 **Example:**
+
 ```tsx
-globalThis.Open('GEN', 1, 'BSB');     // Open Genesis 1 (BSB translation)
-globalThis.OpenNextChapter();          // Navigate to Genesis 2
-globalThis.OpenPrevChapter();          // Back to Genesis 1
+globalThis.Open("GEN", 1, "BSB"); // Open Genesis 1 (BSB translation)
+globalThis.OpenNextChapter(); // Navigate to Genesis 2
+globalThis.OpenPrevChapter(); // Back to Genesis 1
 ```
 
 ---
@@ -953,10 +1198,11 @@ globalThis.SetIsDragging(isDragging: boolean): void
 ```
 
 **Example:**
+
 ```tsx
-globalThis.SetToolbarBackground('#1e1e1e');
-globalThis.SetScreens(2);              // Split screen into 2 panels
-globalThis.ToolbarReSeedMode(true);    // Enable toolbar editing
+globalThis.SetToolbarBackground("#1e1e1e");
+globalThis.SetScreens(2); // Split screen into 2 panels
+globalThis.ToolbarReSeedMode(true); // Enable toolbar editing
 ```
 
 ---
@@ -979,23 +1225,24 @@ globalThis.UpdateApplication(id: string, config: Partial<FloatingAppConfig>): vo
 ```
 
 **Example:**
+
 ```tsx
 globalThis.AddApplication({
-  id: 'my-app-1',
+  id: "my-app-1",
   App: <MyCustomComponent />,
-  to: 'floating',
-  minWidth: '400px',
-  minHeight: '300px',
-  title: 'My App',
-  icon: 'apps',
+  to: "floating",
+  minWidth: "400px",
+  minHeight: "300px",
+  title: "My App",
+  icon: "apps",
   closable: true,
   resizable: true,
   draggable: true,
 });
 
-globalThis.UpdateApplication('my-app-1', { title: 'Updated Title' });
+globalThis.UpdateApplication("my-app-1", { title: "Updated Title" });
 
-globalThis.RemoveApplicationByID('my-app-1');
+globalThis.RemoveApplicationByID("my-app-1");
 ```
 
 ---
@@ -1026,38 +1273,42 @@ globalThis.ToToggleShowInStarterToolbar(label: string, options?: { inSet?: 'tool
 ```
 
 **Example:**
+
 ```tsx
 // Add a custom tool
-globalThis.AddTool({
-  icon: 'bookmark',
-  label: 'My Bookmark Tool',
-  hasToggle: true,
-  active: false,
-  onClick: () => {
-    console.log('Bookmark clicked!');
+globalThis.AddTool(
+  {
+    icon: "bookmark",
+    label: "My Bookmark Tool",
+    hasToggle: true,
+    active: false,
+    onClick: () => {
+      console.log("Bookmark clicked!");
+    },
+    onHold: async () => {
+      console.log("Long press detected!");
+    },
+    showInPageToolbar: true,
   },
-  onHold: async () => {
-    console.log('Long press detected!');
-  },
-  showInPageToolbar: true,
-}, { to: 'tools' });
+  { to: "tools" }
+);
 
 // Toggle the tool
-globalThis.ToggleToolActive('My Bookmark Tool');
+globalThis.ToggleToolActive("My Bookmark Tool");
 
 // Check if active
-if (globalThis.IsToolActive('My Bookmark Tool')) {
-  console.log('Tool is active!');
+if (globalThis.IsToolActive("My Bookmark Tool")) {
+  console.log("Tool is active!");
 }
 
 // Update tool
-globalThis.UpdateTool('My Bookmark Tool', {
-  icon: 'bookmark_added',
+globalThis.UpdateTool("My Bookmark Tool", {
+  icon: "bookmark_added",
   active: true,
 });
 
 // Remove tool
-globalThis.RemoveTool('My Bookmark Tool');
+globalThis.RemoveTool("My Bookmark Tool");
 ```
 
 ---
@@ -1073,12 +1324,16 @@ globalThis.closePopupSettings(): void
 ```
 
 **Example:**
+
 ```tsx
-globalThis.openPopupSettings({
-  x: 100,
-  y: 100,
-  content: <MyPopupContent />,
-}, 0);
+globalThis.openPopupSettings(
+  {
+    x: 100,
+    y: 100,
+    content: <MyPopupContent />,
+  },
+  0
+);
 
 // Later...
 globalThis.closePopupSettings();
@@ -1094,13 +1349,14 @@ globalThis.CanvasMode: boolean | null
 ```
 
 **Example:**
+
 ```tsx
 // Enable canvas mode
 globalThis.CanvasMode = true;
 
 // Check if in canvas mode
 if (globalThis.CanvasMode) {
-  console.log('Canvas mode is active');
+  console.log("Canvas mode is active");
 }
 ```
 
@@ -1149,6 +1405,7 @@ The `extension.json` file defines package metadata and integration points:
 ```
 
 **Fields:**
+
 - `name`: Display name of your package
 - `description`: Brief description
 - `id`: Unique numeric ID (timestamp)
@@ -1161,60 +1418,97 @@ The `extension.json` file defines package metadata and integration points:
 
 ---
 
+### Distribution as .aux Files
+
+Extensions developed as source packages can be compiled and distributed as **.aux files**. An .aux (Ambient User Experience) file is a portable JSON-based representation that includes all bots and tags needed to run the extension.
+
+**.aux files enable:**
+
+- Sharing extensions without source code access
+- Importing extensions into any CasualOS environment
+- Complete portability—.aux files remain functional even outside AO Lab
+- User ownership and independence from platform providers
+
+Extensions are developed as source packages (with `extension.json` metadata and TypeScript/TSX code), but can be distributed as .aux files for portability. If AO Lab disappeared tomorrow, every .aux file would remain fully functional JSON.
+
+---
+
 ### Available Packages
 
 #### 1. Bible Stack
+
 **Path:** `packages/BibleStack/`
 **Dependencies:** Object Pooler, Color Lerper, Bible Visualization Utils
 **Purpose:** 3D visualization of scripture structure with stacking effect
 
-#### 2. Canvas
+#### 2. Canvas (gridPortal)
+
 **Path:** `packages/Canvas/`
-**Purpose:** Drawing and visualization canvas
+**Purpose:** The gridPortal from CasualOS integrated into Seed Bible. Canvas provides a 3D spatial environment for visualization and collaborative interaction. It is the foundation on which extensions like BibleStack, Tabernacle, and ScriptureMap3D are built.
 **Tab Type:** `canvas`
 
+**Note:** Canvas is NOT a drawing tool. The drawing functionality is provided by the separate Draw package. BibleStack, Tabernacle, and ScriptureMap3D are extensions that build on Canvas to deliver specific visualization experiences.
+
 #### 3. Draw
+
 **Path:** `packages/Draw/`
 **Purpose:** Painting/drawing tool
 **Function:** `togglePainter()`
 
-#### 4. Scripture Map 2D
+#### 4. Land (mapPortal)
+
+**Path:** In development
+**Purpose:** The mapPortal from CasualOS integrated into Seed Bible. Land provides map-based visualization using geographic coordinates and ArcGIS map layers rather than the abstract 3D coordinates used by Canvas (gridPortal).
+
+**Note:** Land development is ongoing. Documentation will be expanded as the service matures. Land is distinct from Canvas—it uses geographic coordinates for terrain-aware biblical geography rather than abstract 3D spatial environments.
+
+#### 5. Scripture Map 2D
+
 **Path:** `packages/ScriptureMap2D/`
 **Purpose:** 2D map visualization of scripture locations
 
-#### 5. Scripture Map 3D
+#### 6. Scripture Map 3D
+
 **Path:** `packages/ScriptureMap3D/`
 **Purpose:** 3D map visualization of scripture locations
 
-#### 6. Calendar
+#### 7. Calendar
+
 **Path:** `packages/Calendar/`
 **Purpose:** Event scheduling with FullCalendar integration
 
-#### 7. Playlist
+#### 8. Playlist
+
 **Path:** `packages/Playlist/`
 **Purpose:** Recording and playback sequences
 
-#### 8. MindMap
+#### 9. MindMap
+
 **Path:** `packages/MindMap/`
 **Purpose:** Mind mapping visualization for Bible study
 
-#### 9. Tabernacle
+#### 10. Tabernacle
+
 **Path:** `packages/Tabernacle/`
 **Purpose:** 3D visualization of the Tabernacle
 
-#### 10. References
+#### 11. References
+
 **Path:** `packages/References/`
 **Purpose:** Scripture cross-reference management
 
-#### 11. Assistant
+#### 12. Assistant
+
 **Path:** `packages/Assistant/`
 **Purpose:** AI assistant functionality
 
-#### 12. Location
+#### 13. Location
+
 **Path:** `packages/Location/`
 **Purpose:** GPS and location-based features
 
-#### 13. Events
+#### 14. Events
+
 **Path:** `packages/Events/`
 **Purpose:** Event management system
 
@@ -1225,12 +1519,14 @@ And 9 more utility packages (Color Lerper, Object Pooler, Bible Visualization Ut
 ### Creating a New Package
 
 1. **Create package directory:**
+
    ```bash
    mkdir packages/MyPackage
    cd packages/MyPackage
    ```
 
 2. **Create extension.json:**
+
    ```json
    {
      "name": "My Package",
@@ -1248,23 +1544,24 @@ And 9 more utility packages (Color Lerper, Object Pooler, Bible Visualization Ut
    ```
 
 3. **Create index.tsx:**
+
    ```tsx
-   import { useBibleContext } from '../seed-bible/app/hooks/bibleVariables';
+   import { useBibleContext } from "../seed-bible/app/hooks/bibleVariables";
 
    export function initMyPackage() {
      // Add your tool to the toolbar
      globalThis.AddTool({
-       icon: 'extension',
-       label: 'My Package',
+       icon: "extension",
+       label: "My Package",
        onClick: () => {
-         console.log('My package activated!');
+         console.log("My package activated!");
        },
      });
    }
 
    // Export function that can be called from extension.json
    globalThis.toggleMyPackage = () => {
-     console.log('Toggle my package!');
+     console.log("Toggle my package!");
    };
 
    // Initialize on load
@@ -1283,9 +1580,9 @@ And 9 more utility packages (Color Lerper, Object Pooler, Bible Visualization Ut
 All components should access state through context hooks:
 
 ```tsx
-import { useBibleContext } from './hooks/bibleVariables';
-import { useTabsContext } from './hooks/tabs';
-import { useSideBarContext } from './hooks/sideBar';
+import { useBibleContext } from "./hooks/bibleVariables";
+import { useTabsContext } from "./hooks/tabs";
+import { useSideBarContext } from "./hooks/sideBar";
 
 function MyComponent() {
   const { tools, userActivities } = useBibleContext();
@@ -1311,20 +1608,23 @@ Tools should be added using the context or global functions:
 // Method 1: Using context
 const { addTool } = useBibleContext();
 
-addTool({
-  icon: 'bookmark',
-  label: 'Bookmarks',
-  hasToggle: true,
-  active: false,
-  onClick: () => handleBookmarkClick(),
-  onHold: async () => handleBookmarkLongPress(),
-  showInPageToolbar: true,
-}, { to: 'tools' });
+addTool(
+  {
+    icon: "bookmark",
+    label: "Bookmarks",
+    hasToggle: true,
+    active: false,
+    onClick: () => handleBookmarkClick(),
+    onHold: async () => handleBookmarkLongPress(),
+    showInPageToolbar: true,
+  },
+  { to: "tools" }
+);
 
 // Method 2: Using global function
 globalThis.AddTool({
-  icon: 'bookmark',
-  label: 'Bookmarks',
+  icon: "bookmark",
+  label: "Bookmarks",
   onClick: () => handleBookmarkClick(),
 });
 ```
@@ -1336,31 +1636,22 @@ globalThis.AddTool({
 Track what users are doing in real-time:
 
 ```tsx
-const {
-  updateCurrentBookChapter,
-  getUsersByBook,
-  userActivities
-} = useBibleContext();
+const { updateCurrentBookChapter, getUsersByBook, userActivities } =
+  useBibleContext();
 
 // Update when user navigates
 function handleNavigation(bookId, chapter) {
-  updateCurrentBookChapter(
-    currentUserId,
-    'Genesis',
-    bookId,
-    chapter,
-    'BSB'
-  );
+  updateCurrentBookChapter(currentUserId, "Genesis", bookId, chapter, "BSB");
 }
 
 // Get all users reading the same book
-const usersInGenesis = getUsersByBook('Genesis', 1);
+const usersInGenesis = getUsersByBook("Genesis", 1);
 
 // Render user presence
 return (
   <div>
     <h3>Users reading Genesis 1:</h3>
-    {usersInGenesis.map(user => (
+    {usersInGenesis.map((user) => (
       <ProfileCard key={user.userId} user={user} />
     ))}
   </div>
@@ -1374,7 +1665,7 @@ return (
 Add draggable, resizable windows:
 
 ```tsx
-import { useMouseMove } from './hooks/mouseMove';
+import { useMouseMove } from "./hooks/mouseMove";
 
 function MyComponent() {
   const { AddFloatingApp } = useMouseMove();
@@ -1383,11 +1674,11 @@ function MyComponent() {
     AddFloatingApp({
       id: `my-app-${Date.now()}`,
       App: <MyAppContent />,
-      to: 'floating',
-      minWidth: '400px',
-      minHeight: '300px',
-      title: 'My Application',
-      icon: 'apps',
+      to: "floating",
+      minWidth: "400px",
+      minHeight: "300px",
+      title: "My Application",
+      icon: "apps",
       closable: true,
       resizable: true,
       draggable: true,
@@ -1399,12 +1690,13 @@ function MyComponent() {
 ```
 
 **Or using global function:**
+
 ```tsx
 globalThis.AddApplication({
-  id: 'my-app',
+  id: "my-app",
   App: <MyAppContent />,
-  to: 'floating',
-  title: 'My App',
+  to: "floating",
+  title: "My App",
 });
 ```
 
@@ -1420,26 +1712,26 @@ const { addTab, updateTab, removeTab } = useTabsContext();
 // Add a new Bible tab
 addTab({
   id: `tab-${Date.now()}`,
-  label: 'Genesis 1',
-  type: 'bible',
-  bookId: 'GEN',
+  label: "Genesis 1",
+  type: "bible",
+  bookId: "GEN",
   chapter: 1,
-  translation: 'BSB',
+  translation: "BSB",
 });
 
 // Add a canvas tab
 addTab({
   id: `canvas-${Date.now()}`,
-  label: 'My Drawing',
-  type: 'canvas',
+  label: "My Drawing",
+  type: "canvas",
   content: canvasData,
 });
 
 // Update tab
-updateTab('tab-123', { chapter: 2, label: 'Genesis 2' });
+updateTab("tab-123", { chapter: 2, label: "Genesis 2" });
 
 // Remove tab
-removeTab('tab-123');
+removeTab("tab-123");
 ```
 
 ---
@@ -1449,31 +1741,26 @@ removeTab('tab-123');
 Organize tabs into spaces:
 
 ```tsx
-const {
-  spaces,
-  addSpace,
-  addFolder,
-  addTabToFolder,
-  getAllTabsInSpace
-} = useTabsContext();
+const { spaces, addSpace, addFolder, addTabToFolder, getAllTabsInSpace } =
+  useTabsContext();
 
 // Create a new workspace
-addSpace('Study Space', 'school');
+addSpace("Study Space", "school");
 
 // Create a folder in the space
-addFolder('Old Testament');
+addFolder("Old Testament");
 
 // Add tabs to the folder
-addTabToFolder('folder-123', {
-  id: 'tab-gen1',
-  label: 'Genesis 1',
-  type: 'bible',
-  bookId: 'GEN',
+addTabToFolder("folder-123", {
+  id: "tab-gen1",
+  label: "Genesis 1",
+  type: "bible",
+  bookId: "GEN",
   chapter: 1,
 });
 
 // Get all tabs in a space
-const spaceTabs = getAllTabsInSpace('space-123');
+const spaceTabs = getAllTabsInSpace("space-123");
 ```
 
 ---
@@ -1494,7 +1781,7 @@ function handleVerseClick(verseNumber, event) {
   updateLastVerseClicked(currentUserId, verseNumber);
 
   // Highlight the verse
-  event.target.classList.add('highlighted');
+  event.target.classList.add("highlighted");
 
   // Open verse toolbar
   showVerseToolbar(verseNumber);
@@ -1508,7 +1795,7 @@ function handleVerseClick(verseNumber, event) {
 For imperative data management:
 
 ```tsx
-import { BibleDataManager } from './hooks/bibleDataManager';
+import { BibleDataManager } from "./hooks/bibleDataManager";
 
 function MyComponent() {
   const [manager] = useState(() => new BibleDataManager());
@@ -1521,7 +1808,7 @@ function MyComponent() {
     });
 
     // Load initial data
-    manager.open('GEN', 1, 'BSB');
+    manager.open("GEN", 1, "BSB");
 
     return () => {
       unsubscribe();
@@ -1533,8 +1820,10 @@ function MyComponent() {
     <div>
       {chapterData && (
         <div>
-          <h2>{chapterData.book} {chapterData.chapter}</h2>
-          {chapterData.verses.map(verse => (
+          <h2>
+            {chapterData.book} {chapterData.chapter}
+          </h2>
+          {chapterData.verses.map((verse) => (
             <p key={verse.number}>{verse.text}</p>
           ))}
         </div>
@@ -1561,16 +1850,20 @@ function handleRightClick(event) {
     y: event.clientY,
     content: (
       <div className="context-menu">
-        <button onClick={() => {
-          handleAction1();
-          closePopupSettings();
-        }}>
+        <button
+          onClick={() => {
+            handleAction1();
+            closePopupSettings();
+          }}
+        >
           Action 1
         </button>
-        <button onClick={() => {
-          handleAction2();
-          closePopupSettings();
-        }}>
+        <button
+          onClick={() => {
+            handleAction2();
+            closePopupSettings();
+          }}
+        >
           Action 2
         </button>
       </div>
@@ -1578,11 +1871,7 @@ function handleRightClick(event) {
   });
 }
 
-return (
-  <div onContextMenu={handleRightClick}>
-    Right-click me
-  </div>
-);
+return <div onContextMenu={handleRightClick}>Right-click me</div>;
 ```
 
 ---
@@ -1592,7 +1881,7 @@ return (
 Use the DivSpliter component:
 
 ```tsx
-import { DivSpliter } from './hooks/screenDevider';
+import { DivSpliter } from "./hooks/screenDevider";
 
 function MyLayout() {
   return (
@@ -1600,7 +1889,7 @@ function MyLayout() {
       split="vertical"
       initialWidth={800}
       containerWidth={1600}
-      onResize={(newWidth) => console.log('Resized to:', newWidth)}
+      onResize={(newWidth) => console.log("Resized to:", newWidth)}
       otherTab={<RightPanel />}
     >
       <LeftPanel />
@@ -1652,24 +1941,24 @@ All functions are available through `useBibleContext()`:
 
 ```tsx
 const {
-  userActivities,           // Current state of all users
-  updateUserActivity,       // Generic update
+  userActivities, // Current state of all users
+  updateUserActivity, // Generic update
   updateCurrentBookChapter, // Update navigation
-  updateLastVerseClicked,   // Update verse interaction
-  updateHighlightedVerses,  // Update verse highlights
-  updateSessionInfo,        // Update session state
-  getUserActivity,          // Get specific user
-  getAllUserActivities,     // Get all users
-  getUsersByBook,           // Filter by location
-  clearUserActivity,        // Clear specific user
-  clearAllUserActivities,   // Clear all
+  updateLastVerseClicked, // Update verse interaction
+  updateHighlightedVerses, // Update verse highlights
+  updateSessionInfo, // Update session state
+  getUserActivity, // Get specific user
+  getAllUserActivities, // Get all users
+  getUsersByBook, // Filter by location
+  clearUserActivity, // Clear specific user
+  clearAllUserActivities, // Clear all
 } = useBibleContext();
 ```
 
 ### Complete Example
 
 ```tsx
-import { useBibleContext } from './hooks/bibleVariables';
+import { useBibleContext } from "./hooks/bibleVariables";
 
 function MultiUserBibleReader() {
   const {
@@ -1680,8 +1969,8 @@ function MultiUserBibleReader() {
     getUsersByBook,
   } = useBibleContext();
 
-  const currentUserId = 'user-123';
-  const [currentBook, setCurrentBook] = useState('Genesis');
+  const currentUserId = "user-123";
+  const [currentBook, setCurrentBook] = useState("Genesis");
   const [currentChapter, setCurrentChapter] = useState(1);
 
   // Update when navigating
@@ -1689,13 +1978,7 @@ function MultiUserBibleReader() {
     setCurrentBook(book);
     setCurrentChapter(chapter);
 
-    updateCurrentBookChapter(
-      currentUserId,
-      book,
-      bookId,
-      chapter,
-      'BSB'
-    );
+    updateCurrentBookChapter(currentUserId, book, bookId, chapter, "BSB");
   };
 
   // Update when clicking verse
@@ -1709,17 +1992,20 @@ function MultiUserBibleReader() {
   };
 
   // Get users in same chapter
-  const otherUsers = getUsersByBook(currentBook, currentChapter)
-    .filter(user => user.userId !== currentUserId);
+  const otherUsers = getUsersByBook(currentBook, currentChapter).filter(
+    (user) => user.userId !== currentUserId
+  );
 
   return (
     <div>
-      <h2>{currentBook} {currentChapter}</h2>
+      <h2>
+        {currentBook} {currentChapter}
+      </h2>
 
       {/* Show other users reading same chapter */}
       <div className="user-presence">
         <h3>Also reading this chapter:</h3>
-        {otherUsers.map(user => (
+        {otherUsers.map((user) => (
           <div key={user.userId} className="user-indicator">
             <img src={user.userAvatar} alt={user.userName} />
             <span>{user.userName}</span>
@@ -1731,9 +2017,7 @@ function MultiUserBibleReader() {
       </div>
 
       {/* Bible content with verse highlighting */}
-      <div className="verses">
-        {/* Verses rendered here with highlights */}
-      </div>
+      <div className="verses">{/* Verses rendered here with highlights */}</div>
     </div>
   );
 }
@@ -1775,7 +2059,7 @@ if (hostActivity) {
 
 ```tsx
 // Clear specific user (when they leave)
-clearUserActivity('user-123');
+clearUserActivity("user-123");
 
 // Clear all users (e.g., on app restart)
 clearAllUserActivities();
@@ -1837,12 +2121,14 @@ PackageName/
 ### 1. Always Use Hooks for State
 
 **Bad:**
+
 ```tsx
 // Don't access state directly
 const tools = window.someGlobalState.tools;
 ```
 
 **Good:**
+
 ```tsx
 // Use hooks
 const { tools } = useBibleContext();
@@ -1853,11 +2139,12 @@ const { tools } = useBibleContext();
 ### 2. Use Global Functions for Cross-Package Communication
 
 **Good:**
+
 ```tsx
 // From any package, add a tool
 globalThis.AddTool({
-  icon: 'my_icon',
-  label: 'My Tool',
+  icon: "my_icon",
+  label: "My Tool",
   onClick: () => {},
 });
 ```
@@ -1867,6 +2154,7 @@ globalThis.AddTool({
 ### 3. Clean Up Resources
 
 **Good:**
+
 ```tsx
 useEffect(() => {
   const manager = new BibleDataManager();
@@ -1887,6 +2175,7 @@ useEffect(() => {
 ### 4. Use TypeScript Types
 
 **Good:**
+
 ```tsx
 interface MyToolConfig {
   icon: string;
@@ -1895,8 +2184,8 @@ interface MyToolConfig {
 }
 
 const tool: MyToolConfig = {
-  icon: 'bookmark',
-  label: 'Bookmarks',
+  icon: "bookmark",
+  label: "Bookmarks",
   onClick: handleClick,
 };
 ```
@@ -1906,11 +2195,12 @@ const tool: MyToolConfig = {
 ### 5. Handle Mobile Responsively
 
 **Good:**
+
 ```tsx
 const { isMobile } = useSideBarContext();
 
 return (
-  <div className={isMobile ? 'mobile-layout' : 'desktop-layout'}>
+  <div className={isMobile ? "mobile-layout" : "desktop-layout"}>
     {/* Content */}
   </div>
 );
@@ -1921,16 +2211,11 @@ return (
 ### 6. Track User Activity for Collaboration
 
 **Good:**
+
 ```tsx
 // Update activity when users navigate
 const handleNavigation = (book, chapter) => {
-  updateCurrentBookChapter(
-    currentUserId,
-    book,
-    bookId,
-    chapter,
-    translation
-  );
+  updateCurrentBookChapter(currentUserId, book, bookId, chapter, translation);
 };
 ```
 
@@ -1939,6 +2224,7 @@ const handleNavigation = (book, chapter) => {
 ### 7. Use Unique IDs
 
 **Good:**
+
 ```tsx
 const uniqueId = `my-item-${Date.now()}-${Math.random()}`;
 ```
@@ -1950,26 +2236,29 @@ const uniqueId = `my-item-${Date.now()}-${Math.random()}`;
 ### Recipe 1: Add a Custom Toolbar Button
 
 ```tsx
-import { useBibleContext } from './hooks/bibleVariables';
+import { useBibleContext } from "./hooks/bibleVariables";
 
 function MyExtension() {
   const { addTool } = useBibleContext();
 
   useEffect(() => {
-    addTool({
-      icon: 'bookmark_add',
-      label: 'Add Bookmark',
-      hasToggle: false,
-      onClick: () => {
-        // Handle bookmark creation
-        console.log('Creating bookmark...');
+    addTool(
+      {
+        icon: "bookmark_add",
+        label: "Add Bookmark",
+        hasToggle: false,
+        onClick: () => {
+          // Handle bookmark creation
+          console.log("Creating bookmark...");
+        },
+        onHold: async () => {
+          // Handle long press (e.g., show bookmark list)
+          console.log("Show all bookmarks");
+        },
+        showInPageToolbar: true,
       },
-      onHold: async () => {
-        // Handle long press (e.g., show bookmark list)
-        console.log('Show all bookmarks');
-      },
-      showInPageToolbar: true,
-    }, { to: 'tools' });
+      { to: "tools" }
+    );
   }, [addTool]);
 
   return null;
@@ -1981,18 +2270,18 @@ function MyExtension() {
 ### Recipe 2: Create a Floating Note-Taking App
 
 ```tsx
-import { useMouseMove } from './hooks/mouseMove';
-import { TextEditor } from './components/editor';
+import { useMouseMove } from "./hooks/mouseMove";
+import { TextEditor } from "./components/editor";
 
 function NoteTakingApp() {
   const { AddFloatingApp } = useMouseMove();
-  const [notes, setNotes] = useState('');
+  const [notes, setNotes] = useState("");
 
   const openNoteApp = () => {
     AddFloatingApp({
       id: `notes-${Date.now()}`,
       App: (
-        <div style={{ padding: '1rem' }}>
+        <div style={{ padding: "1rem" }}>
           <h3>My Notes</h3>
           <TextEditor
             content={notes}
@@ -2001,22 +2290,18 @@ function NoteTakingApp() {
           />
         </div>
       ),
-      to: 'floating',
-      minWidth: '400px',
-      minHeight: '300px',
-      title: 'Notes',
-      icon: 'note',
+      to: "floating",
+      minWidth: "400px",
+      minHeight: "300px",
+      title: "Notes",
+      icon: "note",
       closable: true,
       resizable: true,
       draggable: true,
     });
   };
 
-  return (
-    <button onClick={openNoteApp}>
-      Open Notes
-    </button>
-  );
+  return <button onClick={openNoteApp}>Open Notes</button>;
 }
 ```
 
@@ -2025,14 +2310,14 @@ function NoteTakingApp() {
 ### Recipe 3: Track Reading Progress
 
 ```tsx
-import { useBibleContext, useBibleData } from './hooks';
-import { saveUserReadingHistory } from './db/annotations';
+import { useBibleContext, useBibleData } from "./hooks";
+import { saveUserReadingHistory } from "./db/annotations";
 
 function ReadingTracker() {
   const { updateCurrentBookChapter } = useBibleContext();
   const { data } = useBibleData();
 
-  const userId = 'current-user-id';
+  const userId = "current-user-id";
 
   useEffect(() => {
     if (data) {
@@ -2059,7 +2344,7 @@ function ReadingTracker() {
 ### Recipe 4: Create a Custom Context Menu
 
 ```tsx
-import { useSideBarContext } from './hooks/sideBar';
+import { useSideBarContext } from "./hooks/sideBar";
 
 function VerseWithContextMenu({ verse }) {
   const { openPopupSettings, closePopupSettings } = useSideBarContext();
@@ -2072,22 +2357,28 @@ function VerseWithContextMenu({ verse }) {
       y: event.clientY,
       content: (
         <div className="context-menu">
-          <button onClick={() => {
-            console.log('Highlight verse:', verse.number);
-            closePopupSettings();
-          }}>
+          <button
+            onClick={() => {
+              console.log("Highlight verse:", verse.number);
+              closePopupSettings();
+            }}
+          >
             Highlight
           </button>
-          <button onClick={() => {
-            console.log('Copy verse:', verse.number);
-            closePopupSettings();
-          }}>
+          <button
+            onClick={() => {
+              console.log("Copy verse:", verse.number);
+              closePopupSettings();
+            }}
+          >
             Copy
           </button>
-          <button onClick={() => {
-            console.log('Add note to verse:', verse.number);
-            closePopupSettings();
-          }}>
+          <button
+            onClick={() => {
+              console.log("Add note to verse:", verse.number);
+              closePopupSettings();
+            }}
+          >
             Add Note
           </button>
         </div>
@@ -2109,7 +2400,7 @@ function VerseWithContextMenu({ verse }) {
 ### Recipe 5: Implement Tab Syncing Across Spaces
 
 ```tsx
-import { useTabsContext } from './hooks/tabs';
+import { useTabsContext } from "./hooks/tabs";
 
 function TabSyncManager() {
   const { tabs, activeSpace, getAllTabsInSpace, addTab } = useTabsContext();
@@ -2118,7 +2409,7 @@ function TabSyncManager() {
   const syncTabsToSpace = (targetSpaceId) => {
     const currentTabs = getAllTabsInSpace(activeSpace);
 
-    currentTabs.forEach(tab => {
+    currentTabs.forEach((tab) => {
       // Create copy of tab in target space
       addTab({
         ...tab,
@@ -2128,7 +2419,7 @@ function TabSyncManager() {
   };
 
   return (
-    <button onClick={() => syncTabsToSpace('target-space-id')}>
+    <button onClick={() => syncTabsToSpace("target-space-id")}>
       Sync Tabs
     </button>
   );
@@ -2140,7 +2431,7 @@ function TabSyncManager() {
 ### Recipe 6: Build a Verse Comparison Tool
 
 ```tsx
-import { useBibleContext, useBibleData } from './hooks';
+import { useBibleContext, useBibleData } from "./hooks";
 
 function VerseComparison() {
   const { setScreens } = useBibleContext();
@@ -2159,7 +2450,9 @@ function VerseComparison() {
   };
 
   return (
-    <button onClick={() => compareTranslations('GEN', 1, ['BSB', 'KJV', 'NIV'])}>
+    <button
+      onClick={() => compareTranslations("GEN", 1, ["BSB", "KJV", "NIV"])}
+    >
       Compare Genesis 1 (BSB, KJV, NIV)
     </button>
   );
@@ -2174,9 +2467,12 @@ function VerseComparison() {
 
 ```tsx
 // In browser console
-console.log('Tools:', globalThis.tools);
-console.log('Canvas Mode:', globalThis.CanvasMode);
-console.log('All global functions:', Object.keys(globalThis).filter(k => k[0] === k[0].toUpperCase()));
+console.log("Tools:", globalThis.tools);
+console.log("Canvas Mode:", globalThis.CanvasMode);
+console.log(
+  "All global functions:",
+  Object.keys(globalThis).filter((k) => k[0] === k[0].toUpperCase())
+);
 ```
 
 ### 2. Monitor User Activities
@@ -2185,7 +2481,7 @@ console.log('All global functions:', Object.keys(globalThis).filter(k => k[0] ==
 const { userActivities } = useBibleContext();
 
 useEffect(() => {
-  console.log('User activities updated:', userActivities);
+  console.log("User activities updated:", userActivities);
 }, [userActivities]);
 ```
 
@@ -2195,7 +2491,7 @@ useEffect(() => {
 const context = useBibleContext();
 
 useEffect(() => {
-  console.log('Bible context changed:', context);
+  console.log("Bible context changed:", context);
 }, [context]);
 ```
 
@@ -2204,8 +2500,11 @@ useEffect(() => {
 ```tsx
 const { tools, isToolActive } = useBibleContext();
 
-console.log('Registered tools:', tools.map(t => t.label));
-console.log('My tool active:', isToolActive('My Tool Label'));
+console.log(
+  "Registered tools:",
+  tools.map((t) => t.label)
+);
+console.log("My tool active:", isToolActive("My Tool Label"));
 ```
 
 ---
@@ -2229,6 +2528,121 @@ console.log('My tool active:', isToolActive('My Tool Label'));
 
 ---
 
+## AI Guardrails and Epistemic Humility
+
+When developing AI features for Seed Bible, follow these guidelines to maintain educational integrity and epistemic humility.
+
+### AI Assistant Principles
+
+AI in Seed Bible should:
+
+- **Assist research, not provide answers** - AI suggests questions, enables discovery, and provides historical background
+- **Emphasize education and epistemic humility** - AI should not respond as an authoritative interpreter
+- **Redirect toward multiple perspectives** - Point users to denominational perspectives, scholarly debates, and historical context
+- **Enable user control** - Users control which AI agents participate in their sessions
+
+### What AI Should NOT Do
+
+- Claim interpretive authority on Scripture
+- Provide definitive theological answers
+- Replace human study and reflection
+- Hide denominational or theological perspectives behind "neutral" responses
+
+### Developer Guidelines for AI Features
+
+When building AI functionality:
+
+1. Design AI as a **research assistant**, not a teacher
+2. Always present multiple perspectives when relevant
+3. Make it clear when AI is providing suggestions vs. facts
+4. Allow users to choose which AI agents to include in their sessions
+5. Remember that AI agents participate as peers in sessions—they observe and respond to user actions
+
+**Example good AI behavior:**
+
+- "Here are three different interpretations of this passage from Baptist, Catholic, and Orthodox traditions..."
+- "Scholars debate whether this word means X or Y. Would you like to explore the arguments?"
+
+**Example bad AI behavior:**
+
+- "This passage means X."
+- "The correct interpretation is Y."
+
+---
+
+## Data Philosophy
+
+AO Lab's approach to user data reflects a commitment to user ownership and portability.
+
+### Core Principles
+
+1. **Users own their data**
+   - All user data belongs to the user, not AO Lab
+   - Users can export their data at any time
+
+2. **No walled gardens**
+   - Open data formats (.aux files are portable JSON)
+   - User-owned records are fully portable
+   - Extensions can be distributed independently
+
+3. **True deletion**
+   - Deleting data deletes it permanently
+   - AO Lab does not retain hidden shadow copies
+   - Users control their data lifecycle
+
+4. **Portability and independence**
+   - If AO Lab disappeared tomorrow, every .aux file would remain fully functional
+   - Records can be migrated to any CasualOS deployment
+   - No vendor lock-in
+
+### Developer Implications
+
+When building features:
+
+- Design with data portability in mind
+- Use Records API for persistent data (survives session expiration)
+- Respect user deletion requests completely
+- Document data storage locations and formats
+- Enable export functionality for user data
+
+---
+
+## External Services
+
+Seed Bible integrates with external services for specific functionality.
+
+### Free Use Bible API
+
+Seed Bible uses the **Free Use Bible API** for Scripture content.
+
+- **Base URL:** [bible.helloao.org](https://bible.helloao.org)
+- **Purpose:** Provides Bible text in multiple translations
+- **Usage:** The `useBibleData` hook fetches Scripture from this API
+- **Caching:** Scripture data is cached per-tab for performance
+
+**Developer notes:**
+
+- Scripture data comes from bible.helloao.org, not from Records
+- Translation availability depends on the API
+- The API is maintained by AO Lab as a public service
+
+### PostHog Analytics
+
+Seed Bible uses **PostHog** for product analytics.
+
+- **Purpose:** Anonymized usage metrics for product improvement
+- **Data collection:** We do NOT track individual users or sell data
+- **What we track:** Feature usage, performance metrics, anonymized behavior patterns
+- **Privacy:** All tracking is anonymized and aggregated
+
+**Developer notes:**
+
+- PostHog events should not contain PII (personally identifiable information)
+- Use PostHog for feature usage analytics, not user surveillance
+- Follow AO Lab's privacy guidelines when adding analytics events
+
+---
+
 ## Contributing
 
 When creating new features or extensions:
@@ -2240,6 +2654,8 @@ When creating new features or extensions:
 5. **Handle mobile** - Test on mobile devices
 6. **Clean up resources** - Properly dispose of managers and subscriptions
 7. **Update this documentation** - Keep docs in sync with code
+8. **Follow AI guardrails** - Ensure AI features maintain epistemic humility
+9. **Respect data philosophy** - Build with portability and user ownership in mind
 
 ---
 
@@ -2253,5 +2669,6 @@ For questions, issues, or feature requests:
 
 ---
 
-**Last Updated:** 2025-12-12
-**Version:** 1.0.0
+**Last Updated:** 2025-12-15
+**Version:** 2.0.0
+**Changes:** Added Runtime Foundation section with CasualOS architecture, session lifecycle, Records API, identity hierarchy, anonymous user handling, AI guardrails, data philosophy, and external services documentation.
