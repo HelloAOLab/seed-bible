@@ -2075,6 +2075,34 @@ function loadScript(src: string): Promise<void> {
   });
 }
 
+// Get browser language and map to supported language
+function getBrowserLanguage(): string {
+  const supportedLangs = ["en", "es", "ar", "hi"];
+
+  // Use navigator.language API
+  const browserLang = navigator.language || (navigator as any).userLanguage || "en";
+
+  // Extract the primary language code (e.g., "en" from "en-US")
+  const primaryLang = browserLang.split("-")[0].toLowerCase();
+
+  // Check if the primary language is supported
+  if (supportedLangs.includes(primaryLang)) {
+    return primaryLang;
+  }
+
+  // Check navigator.languages for fallback options
+  if (navigator.languages && navigator.languages.length > 0) {
+    for (const lang of navigator.languages) {
+      const code = lang.split("-")[0].toLowerCase();
+      if (supportedLangs.includes(code)) {
+        return code;
+      }
+    }
+  }
+
+  return "en"; // Default fallback
+}
+
 export async function initI18n(): Promise<any> {
   if (isInitialized && i18nInstance) {
     return i18nInstance;
@@ -2087,28 +2115,29 @@ export async function initI18n(): Promise<any> {
 
   // Access i18next from global
   const i18next = (globalThis as any).i18next;
-  const LanguageDetector = (globalThis as any).i18nextBrowserLanguageDetector;
 
   if (!i18next) {
     throw new Error("i18next failed to load from CDN");
   }
 
-  // Get saved language or detect
+  // Get saved language from localStorage, or detect from browser using navigator.language
   const savedLang = localStorage.getItem("i18nextLng");
+  const detectedLang = savedLang || getBrowserLanguage();
 
-  await i18next.use(LanguageDetector).init({
+  await i18next.init({
     resources,
-    lng: savedLang || undefined,
+    lng: detectedLang,
     fallbackLng: "en",
     debug: false,
     interpolation: {
       escapeValue: false,
     },
-    detection: {
-      order: ["localStorage", "navigator"],
-      caches: ["localStorage"],
-    },
   });
+
+  // Save detected language to localStorage for persistence
+  if (!savedLang) {
+    localStorage.setItem("i18nextLng", detectedLang);
+  }
 
   i18nInstance = i18next;
   isInitialized = true;
