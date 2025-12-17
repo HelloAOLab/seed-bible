@@ -1,3 +1,5 @@
+const { useSideBarContext } = await import("app.hooks.sideBar");
+
 const { useState } = os.appHooks;
 const EditEvent = await thisBot.EditEvent();
 const Menu = await thisBot.Menu();
@@ -38,6 +40,7 @@ function getHumanDuration(startTime, endTime, locale = 'en') {
     return fmt(mins, 'minute');
 }
 const EventView = ({ visibleEvents, calendarApi, setEventInView, visibleCount, setVisibleCount, eventInView }) => {
+    const { t } = useSideBarContext();
     const [openEditModal, setOpenEditModal] = useState(false)
     const [menuOpenForId, setMenuOpenForId] = useState(null);
     const handleDelete_2 = (id) => {
@@ -50,7 +53,7 @@ const EventView = ({ visibleEvents, calendarApi, setEventInView, visibleCount, s
     return (
         <div>
             <div class="event-list">
-                {eventInView.length === 0 && <p>No events in view.</p>}
+                {eventInView.length === 0 && <p>{t("noEventsInView")}</p>}
                 {visibleEvents.map(ev => (
 
                     <div key={ev.id} class="event-box">
@@ -61,7 +64,7 @@ const EventView = ({ visibleEvents, calendarApi, setEventInView, visibleCount, s
                         }}></div>
                         <div class="event-box_time">
                             <span>{ev.extendedProps.startTime ? convertTo12Hour(ev.extendedProps.startTime) : ""}</span>
-                            <span>{ev.extendedProps.startTime && ev.extendedProps.endTime ? getHumanDuration(ev.extendedProps.startTime, ev.extendedProps.endTime) : 'All Day'}</span>
+                            <span>{ev.extendedProps.startTime && ev.extendedProps.endTime ? getHumanDuration(ev.extendedProps.startTime, ev.extendedProps.endTime) : t("allDay")}</span>
                         </div>
                         <div class="event-box_about">
                             <span class="event-box_about-heading">{ev.title}</span>
@@ -87,7 +90,7 @@ const EventView = ({ visibleEvents, calendarApi, setEventInView, visibleCount, s
                 ))}
                 {visibleCount < eventInView.length && (
                     <button onClick={() => setVisibleCount(c => Math.min(c + 3, eventInView.length))}>
-                        View More →
+                        {t("viewMore")} →
                     </button>
                 )}
             </div>

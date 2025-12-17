@@ -2,9 +2,20 @@ const { useState, useRef, useLayoutEffect } = os.appHooks;
 
 const { Input } = Components;
 
+const { useSideBarContext } = await import("app.hooks.sideBar");
+
 const PlaylistCont = await thisBot.PlaylistContainer();
 const AnnotationList = await thisBot.AnnotationList();
 const Bookmarks = await thisBot.Bookmarks();
+
+const itemKeys = [
+  "all",
+  "pinnedItems",
+  "shared",
+  "playlist",
+  "annotations",
+  "bookmarks",
+];
 
 const items = [
   "All",
@@ -26,6 +37,7 @@ const Discover = ({
   style,
   setOpenModal,
 }) => {
+  const { t } = useSideBarContext();
   const IsPlaylistPlaying = globalThis.IsPlaylistPlaying;
 
   const [selectedChip, setSelectedChip] = useState({
@@ -176,12 +188,12 @@ const Discover = ({
               className="align-center chips-tag-container"
               style={{ width: "100%" }}
               ref={scrollRef}>
-              {items.map((ele) => {
+              {items.map((ele, index) => {
                 return (
                   <div
                     onClick={() => selectSelectedChip(ele)}
                     className={`chip-tag ${selectedChip[ele] ? "active" : ""}`}>
-                    {ele}
+                    {t(itemKeys[index])}
                   </div>
                 );
               })}

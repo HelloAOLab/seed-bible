@@ -2,9 +2,12 @@ import { SelectionOptions } from "scriptureMap2D.main.SelectionOptions";
 import { ProjectStateSetterOption } from "scriptureMap2D.main.ProjectStateSetterOption";
 import { useScriptureMap2DContext } from "scriptureMap2D.main.ScriptureMap2DContext";
 
+const { useSideBarContext } = await import("app.hooks.sideBar");
+
 const { useCallback } = os.appHooks;
 
 export const ProjectStateSetter = () => {
+  const { t } = useSideBarContext();
   const {
     isInSelectionMode,
     projectStateStyle,
@@ -20,19 +23,19 @@ export const ProjectStateSetter = () => {
 
     switch (key) {
       case ProjectChapterState.None:
-        title = "None";
+        title = t("stateNone");
         break;
       case ProjectChapterState.Assigned:
-        title = "Assigned";
+        title = t("stateAssigned");
         break;
       case ProjectChapterState.InProgress:
-        title = "In Progress";
+        title = t("stateInProgress");
         break;
       case ProjectChapterState.NeedsReview:
-        title = "Needs Review";
+        title = t("stateNeedsReview");
         break;
       case ProjectChapterState.Completed:
-        title = "Completed";
+        title = t("stateCompleted");
         break;
       default:
         throw new Error("Not found key", { key });
@@ -51,7 +54,7 @@ export const ProjectStateSetter = () => {
       ></div>,
       title,
     ];
-  }, []);
+  }, [t]);
 
   return (
     <div className="project-state-setter">
@@ -63,7 +66,7 @@ export const ProjectStateSetter = () => {
           >
             {isInSelectionMode ? "check" : ""}
           </span>
-          <span>Selection mode</span>
+          <span>{t("selectionMode")}</span>
           <span className="material-symbols-outlined">info</span>
         </span>
         {isInSelectionMode && (
@@ -76,7 +79,7 @@ export const ProjectStateSetter = () => {
 
       {isInSelectionMode && (
         <div>
-          <span>Status:</span>
+          <span>{t("status")}:</span>
           {Object.keys(ProjectChapterState).map((state) => {
             return (
               <ProjectStateSetterOption

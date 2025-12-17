@@ -1,6 +1,9 @@
+const { useSideBarContext } = await import("app.hooks.sideBar");
+
 const { useRef, useState, useEffect } = os.appHooks;
 
 const ResourceEventModal = ({ calendarApi, currentResourceId, setCurrentResourceId, allEvents, setAllEvents, isEventModalOpen, setIsEventModalOpen, resourceDatee, resourceTime, resourceETime, modalPosition ,showSchedules}) => {
+    const { t } = useSideBarContext();
     const [resourceTitle, setResourceTitle] = useState('');
 
     const [resourceDate, setResourceDate] = useState(resourceDatee);
@@ -166,10 +169,10 @@ const ResourceEventModal = ({ calendarApi, currentResourceId, setCurrentResource
                                 width: '220px',
                             }}
                         >
-                            <h3>Events for Selected Date</h3>
+                            <h3>{t("eventsForSelectedDate")}</h3>
                             <ul style={{ marginTop: '10px' }}>
                                 {selectedEvents.length === 0 ? (
-                                    <li >No events found for this date.</li>
+                                    <li >{t("noEventsForDate")}</li>
                                 ) : (
                                     selectedEvents.map((event, index) => (
                                         <li key={index} className="event-item" >
@@ -180,7 +183,7 @@ const ResourceEventModal = ({ calendarApi, currentResourceId, setCurrentResource
 
                                                 onClick={() => handleCopy(event)}
                                             >
-                                                Copy
+                                                {t("copy")}
                                             </button>
                                         </li>
                                     ))
@@ -191,7 +194,7 @@ const ResourceEventModal = ({ calendarApi, currentResourceId, setCurrentResource
                                 onClick={() => setResourceEventModalOpen(false)}
                                 style={{ marginTop: '10px', padding: '5px 10px' }}
                             >
-                                Close
+                                {t("close")}
                             </button>
                         </div>
                     )}
@@ -211,7 +214,7 @@ const ResourceEventModal = ({ calendarApi, currentResourceId, setCurrentResource
                                 zIndex: 10,
                             }}
                         >
-                            copy events
+                            {t("copyEvents")}
                         </div>
                     )}
                     <svg
@@ -238,7 +241,7 @@ const ResourceEventModal = ({ calendarApi, currentResourceId, setCurrentResource
                 <input
                     type="text"
                     id="popup-title"
-                    placeholder="Add title"
+                    placeholder={t("addTitle")}
                     className="gm-input title-res"
                     value={resourceTitle}
                     onChange={(e) => setResourceTitle(e.target.value)}
@@ -279,7 +282,7 @@ const ResourceEventModal = ({ calendarApi, currentResourceId, setCurrentResource
                         style={{ width: '37%' }}
                     />
 
-                    <button onClick={handleEventFetch} className="events-btn">Events</button>
+                    <button onClick={handleEventFetch} className="events-btn">{t("events")}</button>
                 </div>
             }
 
@@ -301,7 +304,7 @@ const ResourceEventModal = ({ calendarApi, currentResourceId, setCurrentResource
                                 value={resourceDate}
                                 onChange={(e) => setResourceDate(e.target.value)}
                             />
-                            <span className="gm-input-date-span">to</span>
+                            <span className="gm-input-date-span">{t("to")}</span>
                             <input
                                 type="date"
                                 className="gm-input-date-input"
@@ -324,7 +327,7 @@ const ResourceEventModal = ({ calendarApi, currentResourceId, setCurrentResource
                                 value={resourceStartTime}
                                 onChange={(e) => setResourceStartTime(e.target.value)}
                             />
-                            <span style={{ color: 'gray' }}>to</span>
+                            <span style={{ color: 'gray' }}>{t("to")}</span>
                             <input
                                 type="time"
                                 className="gm-input-end_time"
@@ -344,7 +347,7 @@ const ResourceEventModal = ({ calendarApi, currentResourceId, setCurrentResource
                         </svg>
                         <textarea
                             id="popup-description"
-                            placeholder="Add Description"
+                            placeholder={t("addDescription")}
                             className="gm-input-description"
                             rows="2"
                             value={resourceDescription}
@@ -359,7 +362,7 @@ const ResourceEventModal = ({ calendarApi, currentResourceId, setCurrentResource
                         </svg>
                         <input
                             type="text"
-                            placeholder="Link"
+                            placeholder={t("link")}
                             className="gm-input-link"
                             value={resourceUrl}
                             onChange={(e) => setResourceEventUrl(e.target.value)}
@@ -373,8 +376,8 @@ const ResourceEventModal = ({ calendarApi, currentResourceId, setCurrentResource
             </div>
 
             <div className="gm-actions">
-                <button className="gm-button" onClick={handleAddResourceEvent}>Save</button>
-                <button className="gm-button cancel" onClick={() => setIsEventModalOpen(false)}>Cancel</button>
+                <button className="gm-button" onClick={handleAddResourceEvent}>{t("save")}</button>
+                <button className="gm-button cancel" onClick={() => setIsEventModalOpen(false)}>{t("cancel")}</button>
             </div>
         </div>
 

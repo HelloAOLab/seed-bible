@@ -1,9 +1,12 @@
 const { useState, useLayoutEffect, useRef } = os.appHooks;
 const { Input } = Components;
 
+const { useSideBarContext } = await import("app.hooks.sideBar");
+
 const PlaylistRowItem = await thisBot.PlaylistRowItem();
 
 const PlaylistList = ({ selectedChip, extraActions = () => { }, mergeMode, selectedPlaylists, setSelectPlaylist, selectPlaylist = false, playLists, setPlayLists, creatingPlaylist = false, playingPlaylist, parentId, isLayers }) => {
+    const { t } = useSideBarContext();
     const [draggedItemID, setDraggedItemID] = useState(null);
     const [opendedList, setOpenedList] = useState(false);
     const toBeSetItems = useRef(null);
@@ -111,7 +114,7 @@ const PlaylistList = ({ selectedChip, extraActions = () => { }, mergeMode, selec
     return <>
         <div onClick={() => extraActions()} style={{ display: 'flex', flexDirection: 'column', gap: '1rem' }}>
 
-            {playLists.length === 0 && <p >No {isLayers ? 'Layers' : 'Playlists'} to show.</p>}
+            {playLists.length === 0 && <p >{isLayers ? (t("noLayersToShow")) : (t("noPlaylistsToShow"))}</p>}
             {playLists.filter(pl => !playingPlaylist ? true : pl.id === playingPlaylist).map(({ shareProfileName, access, name: playlistName, list, id, nesting, toggleRender, description, readingPlanEnabled, dateFormat, attachment, checklistEnabled, color, icon, isCustomColor, isCustomIcon, selectedTags, isLayers }, index) =>
                 <PlaylistRowItem
                     selectPlaylist={selectPlaylist}

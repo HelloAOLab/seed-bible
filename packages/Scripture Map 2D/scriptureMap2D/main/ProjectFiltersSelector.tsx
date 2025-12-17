@@ -1,9 +1,12 @@
 import { FiltersSelectorOption } from "scriptureMap2D.main.FiltersSelectorOption";
 import { useScriptureMap2DContext } from "scriptureMap2D.main.ScriptureMap2DContext";
 
+const { useSideBarContext } = await import("app.hooks.sideBar");
+
 const { useMemo, useCallback } = os.appHooks;
 
 export const ProjectFiltersSelector = () => {
+  const { t } = useSideBarContext();
   const {
     projectFilters,
     handleProjectFilterOptionClick,
@@ -22,16 +25,16 @@ export const ProjectFiltersSelector = () => {
 
     switch (key) {
       case ProjectChapterState.Assigned:
-        title = "Assigned";
+        title = t("stateAssigned");
         break;
       case ProjectChapterState.InProgress:
-        title = "In Progress";
+        title = t("stateInProgress");
         break;
       case ProjectChapterState.NeedsReview:
-        title = "Needs Review";
+        title = t("stateNeedsReview");
         break;
       case ProjectChapterState.Completed:
-        title = "Completed";
+        title = t("stateCompleted");
         break;
       default:
         throw new Error("Not found key", { key });
@@ -50,12 +53,12 @@ export const ProjectFiltersSelector = () => {
       ></div>,
       title,
     ];
-  }, []);
+  }, [t]);
 
   return (
     <div className="project-filters-selector">
       <FiltersSelectorOption
-        content="All"
+        content={t("all")}
         onClick={() => {
           handleProjectFilterOptionClick("all");
         }}

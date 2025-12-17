@@ -1,3 +1,5 @@
+const { useSideBarContext } = await import("app.hooks.sideBar");
+
 const { useState, useEffect, useRef } = os.appHooks;
 
 const CustomRepeatModal = await thisBot.RepeatModal();
@@ -9,6 +11,7 @@ import { useCalendar } from 'ext_calendar.calendar.CalendarContext';
 
 
 const CustomModal = ({setModalOpen, addReadingPlans, calendarApi }) => {
+  const { t } = useSideBarContext();
   const [mode, setMode] = useState('event'); // 'event' or 'readingPlans'
 
   const [eventTitle, setEventTitle] = useState('');
@@ -129,7 +132,7 @@ const CustomModal = ({setModalOpen, addReadingPlans, calendarApi }) => {
         </svg>
         <div className="gm-input-date-input">
           <input type="date" value={eventStartDate} onChange={e => setEventStartDate(e.target.value)} />
-          <span className="gm-input-date-span">to</span>
+          <span className="gm-input-date-span">{t("to")}</span>
           <input type="date" value={eventEndDate} onChange={e => setEventEndDate(e.target.value)} />
         </div>
       </div>
@@ -153,7 +156,7 @@ const CustomModal = ({setModalOpen, addReadingPlans, calendarApi }) => {
 
             <input type="time" name="startTime" value={eventStartTime} onChange={(e) => setEventStartTime(e.target.value)} />
           </label>
-          <span>to</span>
+          <span>{t("to")}</span>
           <label style={{ display: 'flex', fontSize: '10px', alignItems: 'center' }}  >
 
             <input value={eventEndTime} type="time" name="endTime" onChange={(e) => setEventEndTime(e.target.value)} />
@@ -184,8 +187,8 @@ const CustomModal = ({setModalOpen, addReadingPlans, calendarApi }) => {
             }
           }}
         >
-          <option value="No Repeat">No Repeat</option>
-          <option value="custom">Custom</option>
+          <option value="No Repeat">{t("noRepeat")}</option>
+          <option value="custom">{t("custom")}</option>
         </select>
       </div>
 
@@ -200,7 +203,7 @@ const CustomModal = ({setModalOpen, addReadingPlans, calendarApi }) => {
         </svg>
         <textarea
           className="gm-input-description"
-          placeholder="Description"
+          placeholder={t("description")}
 
           rows="2"
           value={eventDescription}
@@ -217,7 +220,7 @@ const CustomModal = ({setModalOpen, addReadingPlans, calendarApi }) => {
         <input
           type="text"
           className="gm-input-link"
-          placeholder="Link (optional)"
+          placeholder={t("linkOptional")}
 
           value={eventLink}
           onChange={e => setEventLink(e.target.value)}
@@ -230,7 +233,7 @@ const CustomModal = ({setModalOpen, addReadingPlans, calendarApi }) => {
   const renderReadingPlans = () => (
     <div style={{ paddingLeft: '30px' }}>
       <h2 style={{ marginBottom: '16px', fontSize: '1.25rem', fontWeight: 'bold', color: 'black' }}>
-        Available Playlists
+        {t("availablePlaylists")}
       </h2>
       <ul style={{ listStyle: 'none', padding: 0, maxHeight: '300px', overflowY: 'auto' }}>
         {playListsFiltered.map((play) => (
@@ -291,7 +294,7 @@ const CustomModal = ({setModalOpen, addReadingPlans, calendarApi }) => {
         <input
           className="gm-input.title"
           type="text"
-          placeholder="Add title"
+          placeholder={t("addTitle")}
           className="gm-input title"
           value={eventTitle}
           onChange={e => setEventTitle(e.target.value)}
@@ -302,13 +305,13 @@ const CustomModal = ({setModalOpen, addReadingPlans, calendarApi }) => {
             className={`gm-modal-select-1 ${mode === 'event' ? 'gm-modal-select-item-selected' : ''}`}
             onClick={() => setMode('event')}
           >
-            Event
+            {t("event")}
           </span>
           <span
             className={`gm-modal-select-2 ${mode === 'readingPlans' ? 'gm-modal-select-item-selected' : ''}`}
             onClick={() => setMode('readingPlans')}
           >
-            Reading Plans
+            {t("readingPlans")}
           </span>
         </div>
 
@@ -317,8 +320,8 @@ const CustomModal = ({setModalOpen, addReadingPlans, calendarApi }) => {
         </div>
 
         <div className="gm-actions">
-          <button className="gm-button" onClick={handleSave}>Save</button>
-          <button className="gm-button cancel" onClick={onCloseModal}>Cancel</button>
+          <button className="gm-button" onClick={handleSave}>{t("save")}</button>
+          <button className="gm-button cancel" onClick={onCloseModal}>{t("cancel")}</button>
         </div>
       </div>
       {showCustomRepeat && (

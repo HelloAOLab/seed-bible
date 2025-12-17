@@ -6,6 +6,8 @@ import { useTimeContext } from "scriptureMap2D.main.TimeContext";
 import { useReadingHistoryContext } from "scriptureMap2D.main.ReadingHistoryContext";
 import { useScriptureMap2DContext } from "scriptureMap2D.main.ScriptureMap2DContext";
 
+const { useSideBarContext } = await import("app.hooks.sideBar");
+
 const { useState, useCallback, useMemo, useEffect, useRef } = os.appHooks;
 const { memo } = os.appCompat;
 
@@ -84,6 +86,7 @@ const Item = memo(
 );
 
 export const ReadingHistoryTimeline = () => {
+  const { t } = useSideBarContext();
   const {
     readingHistoryRangeSeconds,
     handleReadingHistoryRangeSelectorClick,
@@ -210,13 +213,13 @@ export const ReadingHistoryTimeline = () => {
 
     items.push(
       <Label gridRow={`3 / 4`} gridColumn={dayLabelGridColumn} isDay={true}>
-        {`Mon `}
+        {t("monShort")}
       </Label>,
       <Label gridRow={`5 / 6`} gridColumn={dayLabelGridColumn} isDay={true}>
-        {`Wed `}
+        {t("wedShort")}
       </Label>,
       <Label gridRow={`7 / 8`} gridColumn={dayLabelGridColumn} isDay={true}>
-        {`Fri `}
+        {t("friShort")}
       </Label>
     );
 
@@ -243,7 +246,7 @@ export const ReadingHistoryTimeline = () => {
         const isTimeSpentNoticeable = timeSpent > SEC_PER_MINUTE; // more than 1 minute
         const tooltipContent = [
           isToday
-            ? "Today"
+            ? t("today")
             : `${weekday} ${monthName} ${dayOfTheMonth}, ${year}`,
         ];
         if (isTimeSpentNoticeable) {
@@ -271,13 +274,13 @@ export const ReadingHistoryTimeline = () => {
               const hoursCount = Math.floor(
                 userTimeSpentSeconds / SEC_PER_HOUR
               );
-              fixedContent = `spent ${hoursCount} hour${hoursCount > 1 ? "s" : ""}`;
+              fixedContent = hoursCount > 1 ? t("spentHours", { count: hoursCount }) : t("spentHour", { count: hoursCount });
             } else {
               const minutesCount = Math.max(
                 1,
                 Math.floor(userTimeSpentSeconds / SEC_PER_MINUTE)
               );
-              fixedContent = `spent ${minutesCount} minute${minutesCount > 1 ? "s" : ""}`;
+              fixedContent = minutesCount > 1 ? t("spentMinutes", { count: minutesCount }) : t("spentMinute", { count: minutesCount });
             }
             tooltipContent.push(
               <ReadingHistoryTooltipContent
@@ -300,13 +303,17 @@ export const ReadingHistoryTimeline = () => {
               const hoursCount = Math.floor(
                 extraTimeSpentSeconds / SEC_PER_HOUR
               );
-              extraActivityContent = `+${extraUsers.length} spent ${hoursCount} hour${hoursCount > 1 ? "s" : ""}`;
+              extraActivityContent = hoursCount > 1
+                ? `+${extraUsers.length} ${t("spentHours", { count: hoursCount })}`
+                : `+${extraUsers.length} ${t("spentHour", { count: hoursCount })}`;
             } else {
               const minutesCount = Math.max(
                 1,
                 Math.floor(extraTimeSpentSeconds / SEC_PER_MINUTE)
               );
-              extraActivityContent = `+${extraUsers.length} spent ${minutesCount} minute${minutesCount > 1 ? "s" : ""}`;
+              extraActivityContent = minutesCount > 1
+                ? `+${extraUsers.length} ${t("spentMinutes", { count: minutesCount })}`
+                : `+${extraUsers.length} ${t("spentMinute", { count: minutesCount })}`;
             }
             tooltipContent.push(extraActivityContent);
           }

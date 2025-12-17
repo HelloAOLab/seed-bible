@@ -1,6 +1,9 @@
+const { useSideBarContext } = await import("app.hooks.sideBar");
+
 const { createContext, useContext, useRef, useState, useEffect } = os.appHooks;
 
 const Menu = ({ onClose, setOpenEditModal, onDelete, position, groupValue, setGroupMenu, calendarView, calendarApi, setHiddenGroups, hiddenGroups, menuOpenForId }) => {
+  const { t } = useSideBarContext();
   const menuRef = useRef();
   const [hovered, setHovered] = useState(null);
 
@@ -101,7 +104,7 @@ const Menu = ({ onClose, setOpenEditModal, onDelete, position, groupValue, setGr
                 strokeLinejoin="round"
               />
             </svg>
-            Edit
+            {t("edit")}
           </span>
         </div>
 
@@ -140,7 +143,7 @@ const Menu = ({ onClose, setOpenEditModal, onDelete, position, groupValue, setGr
                 clipRule="evenodd"
               />
             </svg>
-            Delete
+            {t("delete")}
           </span>
         </div>
         {!menuOpenForId ?
@@ -258,7 +261,7 @@ const Menu = ({ onClose, setOpenEditModal, onDelete, position, groupValue, setGr
                 >
                   <path d="M12 5c-7.633 0-11 7-11 7s1.753 3.41 5.247 5.438l-2.707 2.707 1.414 1.414 16.97-16.97-1.414-1.414-2.717 2.717C16.65 6.383 14.415 5 12 5zm0 2c1.635 0 3.118.802 4.373 1.908l-1.461 1.461A3.99 3.99 0 0 0 12 9c-1.654 0-3 1.346-3 3 0 .739.268 1.414.708 1.938l-1.462 1.462A5.985 5.985 0 0 1 6 12c0-3.309 2.691-6 6-6zm0 10c-1.64 0-3.122-.8-4.374-1.906l1.463-1.463A3.99 3.99 0 0 0 12 15c1.654 0 3-1.346 3-3 0-.737-.266-1.41-.705-1.934l1.461-1.461A5.978 5.978 0 0 1 18 12c0 3.309-2.691 6-6 6z" />
                 </svg>}
-              {hiddenGroups[groupValue] ? "show" : "hide"}
+              {hiddenGroups[groupValue] ? t("show") : t("hide")}
 
 
             </span>

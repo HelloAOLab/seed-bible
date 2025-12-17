@@ -7,6 +7,8 @@ const { useState, useLayoutEffect, useRef, useMemo } = os.appHooks;
 const { Input, Modal, Button, ButtonsCover, Checkbox, Tooltip, Select } =
   Components;
 
+const { useSideBarContext } = await import("app.hooks.sideBar");
+
 const ChecklistGIf =
   "https://auth-aux-aobot-prod-filesbucket-141297942820.s3.amazonaws.com/aoBot/90e85308635064b3d0fdaa9c220b8547a9467a10affe3cf22f06ad6b26fbf0a1.gif";
 
@@ -116,6 +118,8 @@ const Playlist = ({
   creatingPlaylist,
   setCreatingPlaylist,
 }) => {
+  const { t } = useSideBarContext();
+
   // Audio
   const [mediaURL, setMediaURL] = useState("");
   const [videoSrc, setVideoSrc] = useState(false);
@@ -643,7 +647,7 @@ const Playlist = ({
       setLoading(false);
       if (!allItems?.length) {
         ShowNotification({
-          message: "Unable to generate playlist.Please Try Again!",
+          message: t("unableToGeneratePlaylist"),
           severity: "error",
         });
         return;
@@ -655,7 +659,7 @@ const Playlist = ({
     } catch (err) {
       setLoading(false);
       return ShowNotification({
-        message: "Regenration in Failed!",
+        message: t("regenerationFailed"),
         severity: "error",
       });
     }
@@ -855,13 +859,12 @@ const Playlist = ({
     <>
       {layersWarning && (
         <Modal
-          title="Not Embded Items Found"
+          title={t("notEmbeddedItemsFound")}
           onClose={() => setLayersWarning(false)}
           showIcon={false}
         >
           <h2 style={{ fontSize: "1rem" }}>
-            Some of your item are not embedded. Layers Should have all Embeded
-            Items.
+            {t("notEmbeddedItemsMsg")}
           </h2>
           <ButtonsCover>
             <Button
@@ -891,10 +894,10 @@ const Playlist = ({
                 setLayersWarning(false);
               }}
             >
-              Remove & Save
+              {t("removeAndSave")}
             </Button>
             <Button secondaryAlt onClick={() => setLayersWarning(false)}>
-              Close
+              {t("close")}
             </Button>
           </ButtonsCover>
         </Modal>
@@ -915,11 +918,10 @@ const Playlist = ({
             className="overlay linked-item-custom"
           >
             <p>
-              <b style={{ color: "white" }}>Publish settings</b>
+              <b style={{ color: "white" }}>{t("publishSettings")}</b>
             </p>
             <span style={{ fontSize: "10px", color: "#c9c8c6" }}>
-              Your annotations will be available to everyone if public. If
-              private only you will have access.
+              {t("publishSettingsDesc")}
             </span>
             <div
               className="more-menu-items"
@@ -936,7 +938,7 @@ const Playlist = ({
               >
                 lock
               </span>
-              <p>Private Access</p>
+              <p>{t("privateAccess")}</p>
               <span
                 style={{ color: "white" }}
                 class="material-symbols-outlined"
@@ -958,7 +960,7 @@ const Playlist = ({
               >
                 public
               </span>
-              <p>Public Access</p>
+              <p>{t("publicAccess")}</p>
               <span
                 style={{ color: "white" }}
                 class="material-symbols-outlined"
@@ -973,19 +975,16 @@ const Playlist = ({
       )}
       {openModal && creatingPlaylist && (
         <Modal
-          title="Copy Items"
+          title={t("copyItems")}
           showIcon={false}
           onClose={() => setOpenModal(false)}
         >
           <p style={{ fontSize: "12px" }}>
-            {" "}
-            <b>Click & Hold</b> any Playlist to add it to{" "}
-            <b>Current playlist</b>.
+            {t("copyItemsInstructions")}
           </p>
-          <p style={{ textAlign: "center" }}> OR </p>
+          <p style={{ textAlign: "center" }}> {t("or")} </p>
           <p style={{ fontSize: "12px" }}>
-            <b>Click & Hold</b> any Playlist item to add that item to the{" "}
-            <b>Current playlist</b>.
+            {t("copyItemInstructions")}
           </p>
           <PlaylistList
             creatingPlaylist={creatingPlaylist}
@@ -997,7 +996,7 @@ const Playlist = ({
           <ButtonsCover>
             <p> </p>
             <Button secondaryAlt onClick={() => setOpenModal(false)}>
-              Close
+              {t("close")}
             </Button>
           </ButtonsCover>
         </Modal>
@@ -1054,12 +1053,12 @@ const Playlist = ({
                   }}
                   for="playlistInclude"
                 >
-                  Checklist
+                  {t("checklist")}
                 </label>
               </div>
               <Tooltip
                 forRight={true}
-                text="Checklist Mode gives your Playlist an option to checkout the visited items so you can keep track of your playlist progress."
+                text={t("checklistTooltip")}
               >
                 <p
                   className="what-this center"
@@ -1116,10 +1115,10 @@ const Playlist = ({
                   }}
                   for="playlistInclude"
                 >
-                  Reading Plan
+                  {t("readingPlan")}
                 </label>
               </div>
-              <Tooltip text="Plan Mode lets you add dates in your playlist which keeps the date and progress in track according to date.">
+              <Tooltip text={t("readingPlanTooltip")}>
                 <p
                   className="what-this center"
                   style={{ margin: "0 0 0 0.5rem" }}
@@ -1155,7 +1154,7 @@ const Playlist = ({
                 >
                   delete_forever
                 </span>
-                <span className="color-inherit">Delete</span>
+                <span className="color-inherit">{t("delete")}</span>
               </Button>
               <Button onClick={onBulkJsonDownload} secondaryAlt color="#C20104">
                 <span
@@ -1164,19 +1163,19 @@ const Playlist = ({
                 >
                   system_update_alt
                 </span>
-                <span className="color-inherit">Download JSON</span>
+                <span className="color-inherit">{t("downloadJSON")}</span>
               </Button>
             </ButtonsCover>
           )}
 
         {creatingPlaylist || openModalName ? (
-          <h3 style={{ margin: "0.5rem 0" }}>Editing Playlists</h3>
+          <h3 style={{ margin: "0.5rem 0" }}>{t("editingPlaylists")}</h3>
         ) : (
           <>
             {selectedChip["Shared"] && sharedFilterPlaylists.length === 0 ? (
               <>
-                <h3 style={{ margin: "0.5rem 0" }}>Shared Playlists</h3>
-                <p>No {isLayers ? "Layers" : "Playlists"} to show.</p>
+                <h3 style={{ margin: "0.5rem 0" }}>{t("sharedPlaylists")}</h3>
+                <p>{isLayers ? (t("noLayersToShow")) : (t("noPlaylistsToShow"))}</p>
               </>
             ) : null}
             {(playingPlaylist ||
@@ -1184,7 +1183,7 @@ const Playlist = ({
               selectedChip["Shared"]) &&
             sharedFilterPlaylists.length > 0 ? (
               <>
-                <h3 style={{ margin: "0.5rem 0" }}>Shared Playlists</h3>
+                <h3 style={{ margin: "0.5rem 0" }}>{t("sharedPlaylists")}</h3>
                 <PlaylistList
                   selectedChip={selectedChip}
                   extraActions={() => {
@@ -1213,7 +1212,7 @@ const Playlist = ({
               selectedChip["All"] ||
               selectedChip["Playlist"]) && (
               <>
-                <h3 style={{ margin: "0.5rem 0" }}>Playlists</h3>
+                <h3 style={{ margin: "0.5rem 0" }}>{t("playlists")}</h3>
                 <PlaylistList
                   selectedChip={selectedChip}
                   extraActions={() => {
@@ -1265,7 +1264,7 @@ const Playlist = ({
                 }}
               >
                 <span class="material-symbols-outlined">playlist_play</span>
-                <span>Playlist Settings</span>
+                <span>{t("playlistSettings")}</span>
               </div>
               <div className="align-center">
                 <TogglePlaylistHeight />
@@ -1284,7 +1283,7 @@ const Playlist = ({
                   }}
                 >
                   <span class="material-symbols-outlined">settings</span>
-                  <span>Publish Settings</span>
+                  <span>{t("publishSettings")}</span>
                 </div>
               </div>
             </div>
@@ -1313,7 +1312,7 @@ const Playlist = ({
                   >
                     delete_forever
                   </span>
-                  <span className="color-inherit">Delete</span>
+                  <span className="color-inherit">{t("delete")}</span>
                 </Button>
                 {!!embedding && isSomethingChecked && (
                   <Button onClick={onEmbedItems} secondaryAlt color="#3B82F6">
@@ -1323,7 +1322,7 @@ const Playlist = ({
                     >
                       frame_source
                     </span>
-                    <span className="color-inherit">Embed</span>
+                    <span className="color-inherit">{t("embed")}</span>
                   </Button>
                 )}
                 <Button
@@ -1340,7 +1339,7 @@ const Playlist = ({
                   >
                     close
                   </span>
-                  <span className="color-inherit">Cancel</span>
+                  <span className="color-inherit">{t("cancel")}</span>
                 </Button>
               </div>
             )}
@@ -1365,7 +1364,7 @@ const Playlist = ({
                   >
                     delete_forever
                   </span>
-                  <span className="color-inherit">Delete</span>
+                  <span className="color-inherit">{t("delete")}</span>
                 </Button>
                 <Button
                   onClick={() => {
@@ -1383,7 +1382,7 @@ const Playlist = ({
                   >
                     link_off
                   </span>
-                  <span className="color-inherit">Remove</span>
+                  <span className="color-inherit">{t("remove")}</span>
                 </Button>
                 <Button
                   onClick={() => {
@@ -1397,7 +1396,7 @@ const Playlist = ({
                   >
                     close
                   </span>
-                  <span className="color-inherit">Cancel</span>
+                  <span className="color-inherit">{t("cancel")}</span>
                 </Button>
               </div>
             )}
@@ -1446,14 +1445,14 @@ const Playlist = ({
                   value={searchText}
                   style={{ marginBottom: "0" }}
                   onChangeListener={setSearchText}
-                  placeholder="Type To Search"
+                  placeholder={t("typeToSearch")}
                 />
                 <p
                   onClick={onSearchHit}
                   className="playlist-action secondary self-start"
                 >
                   <span class="material-symbols-outlined unfollow">search</span>
-                  <span>Search & Add</span>
+                  <span>{t("searchAndAdd")}</span>
                 </p>
               </div>
             )}
@@ -1481,7 +1480,7 @@ const Playlist = ({
                   >
                     photo_library
                   </span>
-                  <span className="color-inherit">Add Media</span>
+                  <span className="color-inherit">{t("addMedia")}</span>
                 </Button>
                 <p
                   onClick={() => {
@@ -1494,7 +1493,7 @@ const Playlist = ({
                   <span class="material-symbols-outlined unfollow">
                     calendar_month
                   </span>
-                  <span>Insert Date</span>
+                  <span>{t("insertDate")}</span>
                 </p>
               </div>
             )}
@@ -1529,7 +1528,7 @@ const Playlist = ({
                   style={{ justifyContent: "space-between" }}
                 >
                   <p style={{ fontSize: "12px", margin: "0.5rem 0" }}>
-                    <b>Regeneration Prompt:</b>
+                    <b>{t("regenerationPrompt")}</b>
                   </p>
                   <div
                     className="align-center"
@@ -1570,7 +1569,7 @@ const Playlist = ({
                     type="textarea"
                     value={genDetails}
                     onChangeListener={setGenDetails}
-                    placeholder="Describe the playlist you would like to make."
+                    placeholder={t("describePlaylist")}
                   />
                 ) : (
                   <Input
@@ -1579,12 +1578,12 @@ const Playlist = ({
                     type="textarea"
                     value={systemPrompt}
                     onChangeListener={setSystemPrompt}
-                    placeholder="Describe your system Prompt."
+                    placeholder={t("describeSystemPrompt")}
                   />
                 )}
                 {currentPromptText === "system-prompt" && (
                   <p className="info">
-                    Use $text$ to use your initial prompt as variable.
+                    {t("systemPromptInfo")}
                   </p>
                 )}
                 <Select
@@ -1600,14 +1599,14 @@ const Playlist = ({
                 />
                 <div className="attach-link-actions">
                   <Button onClick={() => setRegenrateUI(false)} secondaryAlt>
-                    Cancel
+                    {t("cancel")}
                   </Button>
                   <Button
                     // isDisabled={loading}
                     onClick={onRegenration}
                     secondary
                   >
-                    Regenrate
+                    {t("regenerate")}
                   </Button>
                 </div>
               </div>
@@ -1641,11 +1640,11 @@ const Playlist = ({
                 }}
                 secondary
               >
-                Save
+                {t("save")}
               </Button>
               {hasOldRef.current && (
                 <Button isDisabled={loading} onClick={onRevert} secondary>
-                  Revert to Previous
+                  {t("revertToPrevious")}
                 </Button>
               )}
               {!!playList?.length && false && (
@@ -1660,7 +1659,7 @@ const Playlist = ({
                   <span class="material-symbols-outlined unfollow">
                     download
                   </span>
-                  <span>Download JSON</span>
+                  <span>{t("downloadJSON")}</span>
                 </p>
               )}
               {false && !regenrateUI && (
@@ -1676,8 +1675,8 @@ const Playlist = ({
                     animated_images
                   </span>
                   <span>
-                    {hasGenrated ? "Regenerate" : "Generate"}{" "}
-                    {isLayers ? "layers" : "playlist"}
+                    {hasGenrated ? (t("regenerate")) : (t("generate"))}{" "}
+                    {isLayers ? (t("layers")) : (t("playlist"))}
                   </span>
                 </p>
               )}
@@ -1692,7 +1691,7 @@ const Playlist = ({
                   <span class="material-symbols-outlined unfollow">
                     content_copy
                   </span>
-                  <span>Copy Other Playlists</span>
+                  <span>{t("copyOtherPlaylists")}</span>
                 </p>
               )}
               <Button
@@ -1703,7 +1702,7 @@ const Playlist = ({
                 }}
                 secondaryAlt
               >
-                Close
+                {t("close")}
               </Button>
             </div>
             <p
@@ -1747,7 +1746,7 @@ const Playlist = ({
                   }}
                   for="mergeMode"
                 >
-                  Merge Mode
+                  {t("mergeMode")}
                 </label>
               </div>
             )}
@@ -1790,7 +1789,7 @@ const Playlist = ({
                     type="textarea"
                     value={genDetails}
                     onChangeListener={setGenDetails}
-                    placeholder="Describe the playlist you would like to make."
+                    placeholder={t("describePlaylist")}
                   />
                 ) : (
                   <Input
@@ -1799,12 +1798,12 @@ const Playlist = ({
                     type="textarea"
                     value={systemPrompt}
                     onChangeListener={setSystemPrompt}
-                    placeholder="Describe your system Prompt."
+                    placeholder={t("describeSystemPrompt")}
                   />
                 )}
                 {currentPromptText === "system-prompt" && (
                   <p className="info">
-                    Use $text$ to use your initial prompt as variable.
+                    {t("systemPromptInfo")}
                   </p>
                 )}
               </div>
@@ -1839,7 +1838,7 @@ const Playlist = ({
                       if (!genDetails) {
                         ShowNotification({
                           message:
-                            "Please enter some text for Playlist Generation!",
+                            t("enterTextForGeneration"),
                           severity: "error",
                         });
                         return;
@@ -1862,7 +1861,7 @@ const Playlist = ({
                           setLoading(false);
                           ShowNotification({
                             message:
-                              "Unable to generate playlist.Please Try Again!",
+                              t("unableToGeneratePlaylist"),
                             severity: "error",
                           });
                           return;
@@ -1883,7 +1882,7 @@ const Playlist = ({
                         console.log("ERROR IN MAKING PLAYLIST: ", er);
                         ShowNotification({
                           message:
-                            "Unable to generate playlist.Please Try Again!",
+                            t("unableToGeneratePlaylist"),
                           severity: "error",
                         });
                         setLoading(false);
@@ -1904,8 +1903,7 @@ const Playlist = ({
                         animated_images
                       </span>
                       <span>
-                        {loading ? "Generating" : "Generate"}{" "}
-                        {isLayers ? "layers" : "playlist"}
+                        {loading ? (t("generating")) : (isLayers ? (t("generateLayers")) : (t("generatePlaylist")))}
                       </span>
                     </>
                   ) : (
@@ -1913,7 +1911,7 @@ const Playlist = ({
                       <span class="material-symbols-outlined unfollow">
                         playlist_add
                       </span>
-                      <span>Create new {isLayers ? "layer" : "playlist"}</span>
+                      <span>{isLayers ? (t("createNewLayer")) : (t("createNewPlaylist"))}</span>
                     </>
                   )}
                 </p>

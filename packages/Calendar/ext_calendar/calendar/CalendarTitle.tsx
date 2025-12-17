@@ -1,7 +1,10 @@
+const { useSideBarContext } = await import("app.hooks.sideBar");
+
 const { useState ,useEffect} = os.appHooks;
 const CalendarTitle = ({setScheduleTitle,scheduleTitle,isSchedule}) => {
+    const { t } = useSideBarContext();
     const [label, setLabel] = useState(() => {
-        return localStorage.getItem('label') || 'Initial Title';
+        return localStorage.getItem('label') || t("initialTitle");
     });
     console.log(scheduleTitle,'sasasasa')
     const schTitle=scheduleTitle.toUpperCase();
@@ -10,7 +13,7 @@ const CalendarTitle = ({setScheduleTitle,scheduleTitle,isSchedule}) => {
         localStorage.setItem('label', label);
     }, [label]);
     const handleClick = async () => {
-        const labelVal = await os.showInput("", { title: 'Type calendar name' });
+        const labelVal = await os.showInput("", { title: t("typeCalendarName") });
         if (labelVal) {
             setLabel(labelVal)
         }

@@ -1,3 +1,5 @@
+const { useSideBarContext } = await import("app.hooks.sideBar");
+
 //imports
 const { useRef, useState, useEffect, useCallback } = os.appHooks;
 const CustomModal = await thisBot.CustomModal();
@@ -180,6 +182,7 @@ const types = ["events", "reading", "content", "projects", "sources"];
 if (!globalThis.C_E) globalThis.C_E = [];
 
 const App = () => {
+  const { t } = useSideBarContext();
   //states
   const [readings, setReadings] = useState([]);
   const [readingsList, setReadingsList] = useState([]);
@@ -2476,14 +2479,14 @@ const App = () => {
                   className={`calendar-addups-selection-button ${type.charAt(0)}-btn`}
                   onClick={() => handleSelectionClicking(type)}
                 >
-                  {type.charAt(0).toUpperCase() + type.slice(1)}
+                  {t(type + "Tab")}
                 </button>
               ))}
             </div>
 
             <div class="event-and-map">
               <span class="event-and-map_heading">
-                Events for {calendarTitle}
+                {t("eventsFor")} {calendarTitle}
               </span>
               <div class="event-and-map_selector">
                 <span
@@ -2494,7 +2497,7 @@ const App = () => {
                   }}
                   onClick={() => onEventsClick()}
                 >
-                  Events
+                  {t("eventsTab")}
                 </span>
                 <span
                   class="event-and-map_selector_item"
@@ -2504,7 +2507,7 @@ const App = () => {
                   }}
                   onClick={() => onMapCick()}
                 >
-                  Bible Map
+                  {t("bibleMap")}
                 </span>
               </div>
               {eventViewSelected && (

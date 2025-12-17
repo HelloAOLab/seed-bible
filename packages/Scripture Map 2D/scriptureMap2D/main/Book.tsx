@@ -9,6 +9,9 @@ import {
 } from "scriptureMap2D.main.Tooltip";
 import { useReadingHistoryContext } from "scriptureMap2D.main.ReadingHistoryContext";
 import { calculateReadingHistorySummary } from "db.annotations.library";
+
+const { useSideBarContext } = await import("app.hooks.sideBar");
+
 const { useMemo, useState, useEffect, useCallback } = os.appHooks;
 const { memo } = os.appCompat;
 
@@ -26,6 +29,7 @@ export const Book = memo(
     bookUserPresence,
     bookUserPresenceColors,
   }) => {
+    const { t } = useSideBarContext();
     const {
       scaleFactor,
       showingAllChapters,
@@ -173,12 +177,12 @@ export const Book = memo(
                 const hoursCount = Math.floor(
                   userReadingTimeSeconds / SEC_PER_HOUR
                 );
-                fixedContent = `spent ${hoursCount} hour${hoursCount > 1 ? "s" : ""}`;
+                fixedContent = hoursCount > 1 ? t("spentHours", { count: hoursCount }) : t("spentHour", { count: hoursCount });
               } else {
                 const minutesCount = Math.floor(
                   userReadingTimeSeconds / SEC_PER_MINUTE
                 );
-                fixedContent = `spent ${minutesCount} minute${minutesCount > 1 ? "s" : ""}`;
+                fixedContent = minutesCount > 1 ? t("spentMinutes", { count: minutesCount }) : t("spentMinute", { count: minutesCount });
               }
 
               tooltipContent.push(
@@ -223,15 +227,15 @@ export const Book = memo(
                 let fixedContent;
                 if (recencySeconds >= SEC_PER_DAY) {
                   const daysCount = Math.floor(recencySeconds / SEC_PER_DAY);
-                  fixedContent = `read ${daysCount} day${daysCount > 1 ? "s" : ""} ago`;
+                  fixedContent = daysCount > 1 ? t("readDaysAgo", { count: daysCount }) : t("readDayAgo", { count: daysCount });
                 } else if (recencySeconds >= SEC_PER_HOUR) {
                   const hoursCount = Math.floor(recencySeconds / SEC_PER_HOUR);
-                  fixedContent = `read ${hoursCount} hour${hoursCount > 1 ? "s" : ""} ago`;
+                  fixedContent = hoursCount > 1 ? t("readHoursAgo", { count: hoursCount }) : t("readHourAgo", { count: hoursCount });
                 } else {
                   const minutesCount = Math.floor(
                     recencySeconds / SEC_PER_MINUTE
                   );
-                  fixedContent = `read ${minutesCount} minute${minutesCount > 1 ? "s" : ""} ago`;
+                  fixedContent = minutesCount > 1 ? t("readMinutesAgo", { count: minutesCount }) : t("readMinuteAgo", { count: minutesCount });
                 }
                 tooltipContent.push(
                   <ReadingHistoryTooltipContent
@@ -371,12 +375,12 @@ export const Book = memo(
                     const hoursCount = Math.floor(
                       userReadingTimeSeconds / SEC_PER_HOUR
                     );
-                    fixedContent = `spent ${hoursCount} hour${hoursCount > 1 ? "s" : ""}`;
+                    fixedContent = hoursCount > 1 ? t("spentHours", { count: hoursCount }) : t("spentHour", { count: hoursCount });
                   } else {
                     const minutesCount = Math.floor(
                       userReadingTimeSeconds / SEC_PER_MINUTE
                     );
-                    fixedContent = `spent ${minutesCount} minute${minutesCount > 1 ? "s" : ""}`;
+                    fixedContent = minutesCount > 1 ? t("spentMinutes", { count: minutesCount }) : t("spentMinute", { count: minutesCount });
                   }
 
                   tooltipContent.push(
@@ -427,17 +431,17 @@ export const Book = memo(
                       const daysCount = Math.floor(
                         recencySeconds / SEC_PER_DAY
                       );
-                      fixedContent = `read ${daysCount} day${daysCount > 1 ? "s" : ""} ago`;
+                      fixedContent = daysCount > 1 ? t("readDaysAgo", { count: daysCount }) : t("readDayAgo", { count: daysCount });
                     } else if (recencySeconds >= SEC_PER_HOUR) {
                       const hoursCount = Math.floor(
                         recencySeconds / SEC_PER_HOUR
                       );
-                      fixedContent = `read ${hoursCount} hour${hoursCount > 1 ? "s" : ""} ago`;
+                      fixedContent = hoursCount > 1 ? t("readHoursAgo", { count: hoursCount }) : t("readHourAgo", { count: hoursCount });
                     } else {
                       const minutesCount = Math.floor(
                         recencySeconds / SEC_PER_MINUTE
                       );
-                      fixedContent = `read ${minutesCount} minute${minutesCount > 1 ? "s" : ""} ago`;
+                      fixedContent = minutesCount > 1 ? t("readMinutesAgo", { count: minutesCount }) : t("readMinuteAgo", { count: minutesCount });
                     }
                     tooltipContent.push(
                       <ReadingHistoryTooltipContent

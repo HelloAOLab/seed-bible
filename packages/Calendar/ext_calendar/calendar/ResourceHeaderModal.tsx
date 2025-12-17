@@ -1,5 +1,8 @@
+const { useSideBarContext } = await import("app.hooks.sideBar");
+
 const { useEffect, useRef, useState } = os.appHooks;
 const ResourceHeaderModal = ({ calendarApi, isModalOpen, setIsModalOpen, resourcesByDate, setResourcesByDate, resourcesRef,setIsResourceGroupHiding ,setAllGroups,allGroups}) => {
+    const { t } = useSideBarContext();
     const [roomInput, setRoomInput] = useState('');
     const [roomTitles, setRoomTitles] = useState([]);
     const [platform, setPlatform] = useState('');
@@ -75,9 +78,9 @@ const ResourceHeaderModal = ({ calendarApi, isModalOpen, setIsModalOpen, resourc
             style={{ position: 'absolute', top: '20%', width: '150px', height: 'auto',left:'20px' }}
         >
             <div ref={contentRef}>
-                <h3 style={{ marginBottom: '8px', fontSize: '16px', color: '#333' }}>Add Resource</h3>
+                <h3 style={{ marginBottom: '8px', fontSize: '16px', color: '#333' }}>{t("addResource")}</h3>
 
-                <label style={{ fontSize: '13px', color: '#444' }}>Category</label><br />
+                <label style={{ fontSize: '13px', color: '#444' }}>{t("category")}</label><br />
                 <input
                     type="text"
                     value={platform}
@@ -93,13 +96,13 @@ const ResourceHeaderModal = ({ calendarApi, isModalOpen, setIsModalOpen, resourc
                     }}
                 /><br />
 
-                <label style={{ fontSize: '13px', color: '#444' }}>Subcategory</label><br />
+                <label style={{ fontSize: '13px', color: '#444' }}>{t("subcategory")}</label><br />
                 <div style={{ display: 'flex', alignItems: 'center', width: '100%' }}>
                     <input
                         type="text"
                         value={roomInput}
                         onChange={(e) => setRoomInput(e.target.value)}
-                        placeholder="Enter room"
+                        placeholder={t("enterRoom")}
                         style={{
                             flexGrow: 1,
                             outline: 'none',
@@ -183,7 +186,7 @@ const ResourceHeaderModal = ({ calendarApi, isModalOpen, setIsModalOpen, resourc
                             color: '#333'
                         }}
                     >
-                        Cancel
+                        {t("cancel")}
                     </button>
                     <button
                         onClick={addNewResource}
@@ -197,7 +200,7 @@ const ResourceHeaderModal = ({ calendarApi, isModalOpen, setIsModalOpen, resourc
                             fontSize: '13px'
                         }}
                     >
-                        Add
+                        {t("add")}
                     </button>
                 </div>
             </div>

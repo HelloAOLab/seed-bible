@@ -1,6 +1,9 @@
+const { useSideBarContext } = await import("app.hooks.sideBar");
+
 const { useState } = os.appHooks;
 
 const GoToCalendar = ({ calendarApi ,calendarView,setCalendarView}) => {
+  const { t } = useSideBarContext();
   const [hover, setHover] = useState(false);
 
   return (
@@ -30,7 +33,7 @@ const GoToCalendar = ({ calendarApi ,calendarView,setCalendarView}) => {
             zIndex: 10,
           }}
         >
-          Go to Calendar
+          {t("goToCalendar")}
         </div>
       )}
 

@@ -1,3 +1,5 @@
+const { useSideBarContext } = await import("app.hooks.sideBar");
+
 const { createContext, useContext, useRef, useState, useEffect } = os.appHooks;
 
 const GroupSettingsModal = ({
@@ -10,6 +12,7 @@ const GroupSettingsModal = ({
   onRemoveRoom,
   groupRooms = []
 }) => {
+  const { t } = useSideBarContext();
   const [newRoomTitle, setNewRoomTitle] = useState('');
   const [groupName, setGroupName] = useState(groupValue);
   const [localRooms, setLocalRooms] = useState(groupRooms);
@@ -70,10 +73,10 @@ const GroupSettingsModal = ({
       }}
     >
       <h3 style={{ margin: '0 0 12px', fontSize: '16px', color: '#333' }}>
-        Edit Group: <span style={{ color: '#555' }}>{groupValue}</span>
+        {t("editGroup")}: <span style={{ color: '#555' }}>{groupValue}</span>
       </h3>
 
-      <label style={{ fontSize: '13px', color: '#555' }}>Group Name</label>
+      <label style={{ fontSize: '13px', color: '#555' }}>{t("groupName")}</label>
       <input
         type="text"
         value={groupName}
@@ -88,10 +91,10 @@ const GroupSettingsModal = ({
         }}
       />
 
-      <label style={{ fontSize: '13px', color: '#555' }}>Add Room to Group</label>
+      <label style={{ fontSize: '13px', color: '#555' }}>{t("addRoomToGroup")}</label>
       <input
         type="text"
-        placeholder="Room title"
+        placeholder={t("roomTitle")}
         value={newRoomTitle}
         onChange={(e) => setNewRoomTitle(e.target.value)}
         style={{
@@ -117,11 +120,11 @@ const GroupSettingsModal = ({
           fontSize: '13px',
         }}
       >
-        + Add Room
+        + {t("addRoom")}
       </button>
 
       <div>
-        <h4 style={{ margin: '8px 0 4px' }}>Rooms</h4>
+        <h4 style={{ margin: '8px 0 4px' }}>{t("rooms")}</h4>
         <ul style={{ listStyle: 'none', padding: 0 }}>
           {(showAllRooms ? localRooms : localRooms.slice(0, 3)).map(room => (
             <li
@@ -145,7 +148,7 @@ const GroupSettingsModal = ({
                   fontSize: '12px',
                 }}
               >
-                Remove
+                {t("remove")}
               </button>
             </li>
           ))}
@@ -163,7 +166,7 @@ const GroupSettingsModal = ({
               padding: 0,
             }}
           >
-            {showAllRooms ? 'Show Less' : 'Show More'}
+            {showAllRooms ? t("showLess") : t("showMore")}
           </button>
         )}
       </div>
@@ -183,7 +186,7 @@ const GroupSettingsModal = ({
             fontSize: '13px',
           }}
         >
-          Save
+          {t("save")}
         </button>
         <button
           onClick={onClose}
@@ -198,7 +201,7 @@ const GroupSettingsModal = ({
             fontSize: '13px',
           }}
         >
-          Cancel
+          {t("cancel")}
         </button>
       </div>
     </div>

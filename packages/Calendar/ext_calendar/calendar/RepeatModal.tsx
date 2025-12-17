@@ -1,7 +1,10 @@
+const { useSideBarContext } = await import("app.hooks.sideBar");
+
 const { useState, useEffect,useRef } = os.appHooks;
 
 
 const RepeatModal = ({ initialDate, onClose, onSave ,setSelectedDays,selectedDays}) => {
+  const { t } = useSideBarContext();
   
  
 
@@ -45,10 +48,10 @@ const RepeatModal = ({ initialDate, onClose, onSave ,setSelectedDays,selectedDay
           gap: '10px',
         }}
       >
-        <h1 style={{ margin: 0 }}>Custom recurrence</h1>
+        <h1 style={{ margin: 0 }}>{t("customRecurrence")}</h1>
 
         <div style={{ display: 'flex', flexDirection: 'column', gap: '1px' }}>
-          <h4 style={{ marginBottom: '4px' }}>Repeat on</h4>
+          <h4 style={{ marginBottom: '4px' }}>{t("repeatOn")}</h4>
           <div style={{ display: 'flex', gap: '5px' }}>
             {['M', 'T', 'W', 'T', 'F', 'S', 'S'].map((label, i) => (
               <label key={i} style={{ display: 'flex', alignItems: 'center', gap: '4px' }}>
@@ -65,8 +68,8 @@ const RepeatModal = ({ initialDate, onClose, onSave ,setSelectedDays,selectedDay
         </div>
 
         <div style={{ marginTop: '12px', textAlign: 'right' }}>
-          <button onClick={handleSave} style={{ marginRight: '8px' }}>Save</button>
-          <button onClick={onClose}>Cancel</button>
+          <button onClick={handleSave} style={{ marginRight: '8px' }}>{t("save")}</button>
+          <button onClick={onClose}>{t("cancel")}</button>
         </div>
       </div>
     </div>
