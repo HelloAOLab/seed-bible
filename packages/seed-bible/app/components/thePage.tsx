@@ -2247,43 +2247,134 @@ function Section({
                     highlighted?.[verse.verseNumber] ? "verse-highlighted" : ""
                   } ${isClicked ? "verse-clicked" : ""}`}
                 >
-                  {
-                    <span
-                      style={{ display: showVerses[activeSpace] ? "" : "none" }}
-                      className={`sectionTextNumber ${
-                        globalThis.studyNotesPresent ? "clickableCursor" : ""
-                      }`}
-                      onClick={() => {
-                        if (globalThis.studyNotesPresent) {
-                          HighlightStudyNoteSection(verse?.verseNumber);
-                        }
-                      }}
-                      onPointerEnter={() => {
-                        globalThis.showRefModal = true;
-                        setTimeout(() => {
-                          if (globalThis.showRefModal) {
-                            shout("toggleReferenceModal", {
-                              book,
-                              chapter,
-                              verse: verse.verseNumber,
-                            });
-                          }
-                        }, 500);
-                      }}
-                      onPointerLeave={() => {
-                        globalThis.showRefModal = false;
-                      }}
-                    >
-                      {verse?.verseNumber}
-                    </span>
-                  }
                   {!c ? (
-                    renderVerseText(verse)
+                    (() => {
+                      const verseContent = renderVerseText(verse);
+                      const verseNumberElement = showVerses[activeSpace] ? (
+                        <span
+                          className={`sectionTextNumber ${
+                            globalThis.studyNotesPresent
+                              ? "clickableCursor"
+                              : ""
+                          }`}
+                          onClick={() => {
+                            if (globalThis.studyNotesPresent) {
+                              HighlightStudyNoteSection(verse?.verseNumber);
+                            }
+                          }}
+                          onPointerEnter={() => {
+                            globalThis.showRefModal = true;
+                            setTimeout(() => {
+                              if (globalThis.showRefModal) {
+                                shout("toggleReferenceModal", {
+                                  book,
+                                  chapter,
+                                  verse: verse.verseNumber,
+                                });
+                              }
+                            }, 500);
+                          }}
+                          onPointerLeave={() => {
+                            globalThis.showRefModal = false;
+                          }}
+                        >
+                          {verse?.verseNumber}
+                        </span>
+                      ) : null;
+
+                      // If verseContent is a string, split and wrap first word with verse number
+                      if (typeof verseContent === "string") {
+                        const firstSpaceIndex = verseContent.indexOf(" ");
+                        if (firstSpaceIndex > 0) {
+                          const firstWord = verseContent.slice(
+                            0,
+                            firstSpaceIndex
+                          );
+                          const restOfText =
+                            verseContent.slice(firstSpaceIndex);
+                          return (
+                            <>
+                              <span className="verse-number-anchor">
+                                {verseNumberElement}
+                                {firstWord}
+                              </span>
+                              {restOfText}
+                            </>
+                          );
+                        }
+                        return (
+                          <span className="verse-number-anchor">
+                            {verseNumberElement}
+                            {verseContent}
+                          </span>
+                        );
+                      }
+
+                      // If verseContent is an array (JSX elements), wrap first element with verse number
+                      if (
+                        Array.isArray(verseContent) &&
+                        verseContent.length > 0
+                      ) {
+                        const firstElement = verseContent[0];
+                        const restElements = verseContent.slice(1);
+                        return (
+                          <>
+                            <span className="verse-number-anchor">
+                              {verseNumberElement}
+                              {firstElement}
+                            </span>
+                            {restElements}
+                          </>
+                        );
+                      }
+
+                      // Fallback: just render verse number and content
+                      return (
+                        <>
+                          <span className="verse-number-anchor">
+                            {verseNumberElement}
+                          </span>
+                          {verseContent}
+                        </>
+                      );
+                    })()
                   ) : (
-                    <MiniTextEditor
-                      initialHtml={verse.text}
-                      onChange={(html) => console.log("Updated HTML:", html)}
-                    />
+                    <>
+                      <span
+                        style={{
+                          display: showVerses[activeSpace] ? "" : "none",
+                        }}
+                        className={`sectionTextNumber ${
+                          globalThis.studyNotesPresent ? "clickableCursor" : ""
+                        }`}
+                        onClick={() => {
+                          if (globalThis.studyNotesPresent) {
+                            HighlightStudyNoteSection(verse?.verseNumber);
+                          }
+                        }}
+                        onPointerEnter={() => {
+                          globalThis.showRefModal = true;
+                          setTimeout(() => {
+                            if (globalThis.showRefModal) {
+                              shout("toggleReferenceModal", {
+                                book,
+                                chapter,
+                                verse: verse.verseNumber,
+                              });
+                            }
+                          }, 500);
+                        }}
+                        onPointerLeave={() => {
+                          globalThis.showRefModal = false;
+                        }}
+                      >
+                        {verse?.verseNumber}
+                      </span>
+                      <MiniTextEditor
+                        initialHtml={verse.text}
+                        onChange={(html) => console.log("Updated HTML:", html)}
+                      />
+                    </>
                   )}
                   <input
                     style={{

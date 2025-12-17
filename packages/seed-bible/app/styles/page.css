@@ -2,7 +2,7 @@
   height: 100%;
   width: 100%;
   background-color: var(--pageBackground) !important;
-  
+
   padding: 30px 0%;
   overflow: scroll;
   border-radius: 12px;
@@ -146,9 +146,8 @@
   font-style: var(--text-verse-font-style);
   text-align: var(--text-verse-alignment);
   text-decoration: var(--text-verse-text-decoration);
-    font-size: var(--text-verse-font-size);
-    line-height:calc(2 + var(--text-verse-line-height,0));
-
+  font-size: var(--text-verse-font-size);
+  line-height: calc(2 + var(--text-verse-line-height, 0));
 
   /* Additions ------> */
   /* set up a transparent border to animate */
@@ -220,6 +219,12 @@
   font-style: normal;
   position: relative;
   top: -0.6em;
+  white-space: nowrap;
+}
+
+.verse-number-anchor {
+  white-space: nowrap;
+  display: inline;
 }
 
 .tabDrop {
