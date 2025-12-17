@@ -556,8 +556,30 @@ function getMenuActions(that, onClose) {
         onClick: () => {
           closePopupSettings();
           setTimeout(() => {
+            // Build verse reference from the context
+            const verseNumbers = that.verseNumber || [];
+            const sorted = [...verseNumbers].sort((a, b) => a - b);
+            const groups = [];
+            if (sorted.length > 0) {
+              let start = sorted[0];
+              let end = sorted[0];
+              for (let i = 1; i < sorted.length; i++) {
+                if (sorted[i] === end + 1) {
+                  end = sorted[i];
+                } else {
+                  groups.push(start === end ? `${start}` : `${start}-${end}`);
+                  start = sorted[i];
+                  end = sorted[i];
+                }
+              }
+              groups.push(start === end ? `${start}` : `${start}-${end}`);
+            }
+            const reference = `${that.book} ${that.chapter}:${groups.join(",")}`;
             openPopupSettings(
-              <SharePopup shareTitle={`${that.text}`} />,
+              <SharePopup
+                shareTitle={`${that.text}`}
+                shareReference={reference}
+              />,
               null,
               true
             );

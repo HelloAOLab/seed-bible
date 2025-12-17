@@ -78,7 +78,39 @@ const MenuOptions = {
           });
 
           text = textItems.join(" ");
-          openPopupSettings(<SharePopup shareTitle={`${text}`} />, null, true);
+
+          // Build verse reference from items
+          const verseNumbers = items
+            .map((verse) => verse.verseNumber)
+            .filter(Boolean);
+          const book = items[0]?.book || configBot.tags.book;
+          const chapter = items[0]?.chapter || configBot.tags.chapter;
+          const sorted = [...verseNumbers].sort((a, b) => a - b);
+          const groups = [];
+          if (sorted.length > 0) {
+            let start = sorted[0];
+            let end = sorted[0];
+            for (let i = 1; i < sorted.length; i++) {
+              if (sorted[i] === end + 1) {
+                end = sorted[i];
+              } else {
+                groups.push(start === end ? `${start}` : `${start}-${end}`);
+                start = sorted[i];
+                end = sorted[i];
+              }
+            }
+            groups.push(start === end ? `${start}` : `${start}-${end}`);
+          }
+          const reference =
+            groups.length > 0
+              ? `${book} ${chapter}:${groups.join(",")}`
+              : `${book} ${chapter}`;
+
+          openPopupSettings(
+            <SharePopup shareTitle={`${text}`} shareReference={reference} />,
+            null,
+            true
+          );
           SetInHold({});
         }, 50);
       },
