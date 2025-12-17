@@ -2301,8 +2301,7 @@ function Section({
                           return (
                             <>
                               <span className="verse-number-anchor">
-                                {verseNumberElement}
-                                {firstWord}
+                                {verseNumberElement} {firstWord}
                               </span>
                               {restOfText}
                             </>
@@ -2310,8 +2309,7 @@ function Section({
                         }
                         return (
                           <span className="verse-number-anchor">
-                            {verseNumberElement}
-                            {verseContent}
+                            {verseNumberElement} {verseContent}
                           </span>
                         );
                       }
@@ -2326,8 +2324,7 @@ function Section({
                         return (
                           <>
                             <span className="verse-number-anchor">
-                              {verseNumberElement}
-                              {firstElement}
+                              {verseNumberElement} {firstElement}
                             </span>
                             {restElements}
                           </>
