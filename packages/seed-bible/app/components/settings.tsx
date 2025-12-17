@@ -45,9 +45,9 @@ const SettingsSidebar = () => {
   const [expandedSections, setExpandedSections] = useState({
     layers: false,
     bibleDefaults: false,
-    pageSettings: true,
+    pageSettings: false,
     canvasSettings: false,
-    mapSettings: true,
+    mapSettings: false,
   });
 
   // New state for edit mode and settings customization
