@@ -549,7 +549,7 @@ function getMenuActions(that, onClose) {
           SetShowCommands(true);
           SetInHold(null);
         },
-        title: "Apologist",
+        title: "Agent",
       },
       {
         icon: <ShareIcon height="24" width="24" />,
