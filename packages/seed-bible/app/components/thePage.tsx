@@ -460,19 +460,22 @@ function ThePage({
     EmitData("book", payload);
   }
 
-
   useEffect(() => {
     if (data) {
       //  EmitData("book", { ...data });
       hanldNavFunctions();
       SetShowCommands(false);
       updateTab(tab?.id, data);
-      if (config && !config?.sharedTab && role === 'host' && masks['sharedTab'] !== tab.id) {
+      if (
+        config &&
+        !config?.sharedTab &&
+        role === "host" &&
+        masks["sharedTab"] !== tab.id
+      ) {
         updateTab(tab?.id, data);
-        updateTab(masks['sharedTab'], data);
+        updateTab(masks["sharedTab"], data);
       }
-      if (role === 'host')
-        EmitData("book", { ...data });
+      if (role === "host") EmitData("book", { ...data });
       if (panelId && tab) {
         os.log("recoreded", panelId, {
           ...tab,
@@ -489,8 +492,7 @@ function ThePage({
       } else {
         setDirection(null);
       }
-      if (masks['sharedTab'] === tab.id)
-        EmitData("book", { ...data });
+      if (masks["sharedTab"] === tab.id) EmitData("book", { ...data });
       // const emitter = getBot("system", "app.emitter");
       // sendRemoteData(emitter.masks.otherRemotes, "updateSharingData", {
       //   id: tab?.id,
@@ -506,10 +508,10 @@ function ThePage({
         book: data?.book,
         chapter: data?.chapter,
       });
-    
+
       configBot.tags.book = data?.bookId;
       configBot.tags.chapter = data?.chapter;
-      os.syncConfigBotTagsToURL(['book','chapter']);
+      os.syncConfigBotTagsToURL(["book", "chapter"]);
     }
   }, [data]);
 
@@ -696,8 +698,8 @@ function ThePage({
         if (ele) {
           const rect = ele.getBoundingClientRect();
           setToolbarPos({
-            x: rect.left ,
-            y: rect.bottom ,
+            x: rect.left,
+            y: rect.bottom,
           });
         }
       }
@@ -1083,7 +1085,6 @@ function ThePage({
       // if (!skipIt)
       //   return
       if (!tab?.id) return;
-      
 
       const verseId = `v-${
         Array.isArray(verseNumbers)
@@ -1346,24 +1347,24 @@ function ThePage({
   );
 
   // NEW: Handle color selection from toolbar
-// NEW: Handle color selection from toolbar
-const handleColorSelect = useCallback(
-  (color) => {
-    if (clickedVerses.length === 0) return;
-    setWordHighlightsBC(color);
-    // Apply the selected color to all clicked verses
-    clickedVerses.forEach((verseNum) => {
-      toggleVerseHighlight(verseNum, color);
-    });
-    EmitData("highlight", { verseNumbers: clickedVerses, color }); // Fixed: use clickedVerses instead of undefined verseNum
-    // Clear clicked verses and hide toolbar
-    setClickedVerses([]);
-    setTimeout(() => {
-      setShowVerseToolbar(false);
-    }, 5);
-  },
-  [clickedVerses, toggleVerseHighlight]
-);
+  // NEW: Handle color selection from toolbar
+  const handleColorSelect = useCallback(
+    (color) => {
+      if (clickedVerses.length === 0) return;
+      setWordHighlightsBC(color);
+      // Apply the selected color to all clicked verses
+      clickedVerses.forEach((verseNum) => {
+        toggleVerseHighlight(verseNum, color);
+      });
+      EmitData("highlight", { verseNumbers: clickedVerses, color }); // Fixed: use clickedVerses instead of undefined verseNum
+      // Clear clicked verses and hide toolbar
+      setClickedVerses([]);
+      setTimeout(() => {
+        setShowVerseToolbar(false);
+      }, 5);
+    },
+    [clickedVerses, toggleVerseHighlight]
+  );
 
   // NEW: Close toolbar when clicking outside
   useEffect(() => {
@@ -1432,6 +1433,10 @@ const handleColorSelect = useCallback(
       {data && tab && !tabEntered ? (
         <>
           <div
+            onClick={(e) => {
+              setOpenSidebar((prev) => !prev);
+              setCurrentExperience(0);
+            }}
             style={{ "pointer-events": isDragging ? "none" : null }}
             className="bookTitle"
           >{`${data?.book} ${data?.chapter}`}</div>
@@ -1522,8 +1527,7 @@ const handleColorSelect = useCallback(
                         cursor: "default",
                         userSelect: "none",
                       }
-                    : 
-                    {
+                    : {
                         position: "fixed",
                         left: toolbarPos.x - 190,
                         top: toolbarPos.y,
@@ -1639,7 +1643,7 @@ function PageToolbar({ path = "showInPageToolbar" }) {
       {visibleTools.map((tool) => (
         <div
           onClick={(e) => {
-            tool.onClick({mode:'panel'})
+            tool.onClick({ mode: "panel" });
           }}
           className="tool-preview-page"
           key={tool.label}
@@ -1793,7 +1797,7 @@ function Section({
   hebrew_subtitle,
   commandHighlight,
   setCommandHighlight,
-  clickedVersesContext ,
+  clickedVersesContext,
   setLastSelectedVerse,
   setRef,
   commandsRef,
@@ -2093,21 +2097,23 @@ function Section({
       return verse.text;
     }
   };
-  const {showHeading,showVerses} = useBibleContext()
-  const {  activeSpace } = useTabsContext();
+  const { showHeading, showVerses } = useBibleContext();
+  const { activeSpace } = useTabsContext();
   return (
     <div>
-      {showHeading[activeSpace]&&<div
-        className="sectionTitle"
-        {...eventHandlers}
-        onClick={(e) => {
-          if (shouldSuppressClick()) return; // Prevent normal click if hold already triggered
+      {showHeading[activeSpace] && (
+        <div
+          className="sectionTitle"
+          {...eventHandlers}
+          onClick={(e) => {
+            if (shouldSuppressClick()) return; // Prevent normal click if hold already triggered
 
-          shout("onHeadingClick", { heading });
-        }}
-      >
-        {heading}
-      </div>}
+            shout("onHeadingClick", { heading });
+          }}
+        >
+          {heading}
+        </div>
+      )}
 
       {hebrew_subtitle && <div className="sectionTitle">{hebrew_subtitle}</div>}
       <div style={textEdit ? editTextStyle : null}>
@@ -2124,7 +2130,7 @@ function Section({
           {verses.map((verse) => {
             if (verse.lineBreak) {
               // <p class="verseLineBreak"></p>;
-              return 
+              return;
             }
 
             const [c, setC] = useState(false);
@@ -2241,34 +2247,36 @@ function Section({
                     highlighted?.[verse.verseNumber] ? "verse-highlighted" : ""
                   } ${isClicked ? "verse-clicked" : ""}`}
                 >
-                  {<span
-                   style={{display:showVerses[activeSpace]?"":"none"}}
-                    className={`sectionTextNumber ${
-                      globalThis.studyNotesPresent ? "clickableCursor" : ""
-                    }`}
-                    onClick={() => {
-                      if (globalThis.studyNotesPresent) {
-                        HighlightStudyNoteSection(verse?.verseNumber);
-                      }
-                    }}
-                    onPointerEnter={() => {
-                      globalThis.showRefModal = true;
-                      setTimeout(() => {
-                        if (globalThis.showRefModal) {
-                          shout("toggleReferenceModal", {
-                            book,
-                            chapter,
-                            verse: verse.verseNumber,
-                          });
+                  {
+                    <span
+                      style={{ display: showVerses[activeSpace] ? "" : "none" }}
+                      className={`sectionTextNumber ${
+                        globalThis.studyNotesPresent ? "clickableCursor" : ""
+                      }`}
+                      onClick={() => {
+                        if (globalThis.studyNotesPresent) {
+                          HighlightStudyNoteSection(verse?.verseNumber);
                         }
-                      }, 500);
-                    }}
-                    onPointerLeave={() => {
-                      globalThis.showRefModal = false;
-                    }}
-                  >
-                    {verse?.verseNumber}
-                  </span>}
+                      }}
+                      onPointerEnter={() => {
+                        globalThis.showRefModal = true;
+                        setTimeout(() => {
+                          if (globalThis.showRefModal) {
+                            shout("toggleReferenceModal", {
+                              book,
+                              chapter,
+                              verse: verse.verseNumber,
+                            });
+                          }
+                        }, 500);
+                      }}
+                      onPointerLeave={() => {
+                        globalThis.showRefModal = false;
+                      }}
+                    >
+                      {verse?.verseNumber}
+                    </span>
+                  }
                   {!c ? (
                     renderVerseText(verse)
                   ) : (
@@ -2305,7 +2313,10 @@ function Section({
                       paddingTop: "10px",
                     }}
                   >
-                    <ConfigurableFunctionCommands contextData={clickedVersesContext} clickedVerses={clickedVerses} />
+                    <ConfigurableFunctionCommands
+                      contextData={clickedVersesContext}
+                      clickedVerses={clickedVerses}
+                    />
                   </div>
                 )}
               </span>
