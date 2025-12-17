@@ -729,7 +729,7 @@ export function UserPresence({ collapsed = false }) {
         style={
           !collapsed
             ? {
-                marginTop: "4px",
+                marginTop: "10px",
                 // border: `1px solid var(--tabSelection) !important`,
                 // borderBottom: 'none',
                 // borderRadius: '5px 5px 0 0',
