@@ -74,6 +74,11 @@ Seed Bible is built on **CasualOS**, an open-source operating system that enable
 A **session** is a running instance of Seed Bible. Sessions are collaborative by default—multiple users can join the same session and interact together.
 
 **Session characteristics:**
+<<<<<<< HEAD
+
+=======
+
+> > > > > > > 50729483ec846e76589cc7c9c5086bdc6a7cbb8b
 
 - Default sessions self-expire in **12 hours** (see [Session Lifecycle](#session-lifecycle))
 - Permanent sessions can be provisioned for partners and ministries
@@ -95,18 +100,33 @@ Developers should understand that session capabilities are controlled by BIOS pa
 Understanding session lifecycle is important for developers building features that store data or track user progress.
 
 **Default sessions:**
+<<<<<<< HEAD
+
+=======
+
+> > > > > > > 50729483ec846e76589cc7c9c5086bdc6a7cbb8b
 
 - Self-expire after **12 hours** of inactivity
 - All session data is lost when a session expires
 - Users are notified before expiration
 
 **Permanent sessions:**
+<<<<<<< HEAD
+
+=======
+
+> > > > > > > 50729483ec846e76589cc7c9c5086bdc6a7cbb8b
 
 - Can be provisioned for partners and ministries
 - Require explicit provisioning
 - Do not self-expire
 
 **What happens when sessions expire:**
+<<<<<<< HEAD
+
+=======
+
+> > > > > > > 50729483ec846e76589cc7c9c5086bdc6a7cbb8b
 
 - All bots and tags in the session are removed
 - Unsaved user data is lost
@@ -114,6 +134,11 @@ Understanding session lifecycle is important for developers building features th
 - Users can create a new session and continue working
 
 **Developer guidance:**
+<<<<<<< HEAD
+
+=======
+
+> > > > > > > 50729483ec846e76589cc7c9c5086bdc6a7cbb8b
 
 - For temporary data: Store in session bots/tags (lost on expiration)
 - For persistent data: Use the Records API (survives session expiration)
@@ -141,6 +166,11 @@ Seed Bible's collaborative architecture is foundational, not a feature layer. Un
    - Presence enables features like "follow mode" and collaborative study
 
 **Developer implications:**
+<<<<<<< HEAD
+
+=======
+
+> > > > > > > 50729483ec846e76589cc7c9c5086bdc6a7cbb8b
 
 - Design features that emit observable events rather than directly manipulating other users' views
 - Use the user activity API to build presence-aware features
@@ -151,12 +181,22 @@ Seed Bible's collaborative architecture is foundational, not a feature layer. Un
 All persistent data in Seed Bible is stored in **Records**. Records are the persistence layer that survives session expiration.
 
 **What are Records?**
+<<<<<<< HEAD
+
+=======
+
+> > > > > > > 50729483ec846e76589cc7c9c5086bdc6a7cbb8b
 
 - Schema-free JSON documents
 - Belong to either an Account or a Studio
 - Support three types: Data Records, File Records, and Event Records
 
 **Record markers control access:**
+<<<<<<< HEAD
+
+=======
+
+> > > > > > > 50729483ec846e76589cc7c9c5086bdc6a7cbb8b
 
 - `publicRead`: Anyone can read
 - `publicWrite`: Anyone can write
@@ -165,6 +205,11 @@ All persistent data in Seed Bible is stored in **Records**. Records are the pers
 - Custom markers for fine-grained control
 
 **When to use Records:**
+<<<<<<< HEAD
+
+=======
+
+> > > > > > > 50729483ec846e76589cc7c9c5086bdc6a7cbb8b
 
 - User preferences and settings
 - Reading history and progress
@@ -172,6 +217,11 @@ All persistent data in Seed Bible is stored in **Records**. Records are the pers
 - Any data that must survive session expiration
 
 **Learn more:**
+<<<<<<< HEAD
+
+=======
+
+> > > > > > > 50729483ec846e76589cc7c9c5086bdc6a7cbb8b
 
 - [CasualOS Records Documentation](https://docs.casualos.com/docs/records)
 - Records API is accessed through CasualOS bot actions
@@ -181,6 +231,11 @@ All persistent data in Seed Bible is stored in **Records**. Records are the pers
 Seed Bible uses a three-level identity hierarchy:
 
 **1. Profile**
+<<<<<<< HEAD
+
+=======
+
+> > > > > > > 50729483ec846e76589cc7c9c5086bdc6a7cbb8b
 
 - Individual user data within an Account
 - No email required
@@ -188,6 +243,11 @@ Seed Bible uses a three-level identity hierarchy:
 - Profile-specific preferences and history
 
 **2. Account**
+<<<<<<< HEAD
+
+=======
+
+> > > > > > > 50729483ec846e76589cc7c9c5086bdc6a7cbb8b
 
 - System-level identity tied to email address
 - Required for authentication
@@ -195,6 +255,11 @@ Seed Bible uses a three-level identity hierarchy:
 - Can be a member of multiple Studios
 
 **3. Studio**
+<<<<<<< HEAD
+
+=======
+
+> > > > > > > 50729483ec846e76589cc7c9c5086bdc6a7cbb8b
 
 - Group structure for shared collaboration
 - Multiple Accounts can be members
@@ -202,6 +267,11 @@ Seed Bible uses a three-level identity hierarchy:
 - Many-to-many relationship: one Account can belong to many Studios, one Studio can have many Accounts
 
 **Developer guidance:**
+<<<<<<< HEAD
+
+=======
+
+> > > > > > > 50729483ec846e76589cc7c9c5086bdc6a7cbb8b
 
 - Use **Profile** data for personal preferences within an Account
 - Use **Account** data for cross-profile settings and authentication
@@ -213,12 +283,22 @@ Seed Bible uses a three-level identity hierarchy:
 Anonymous users can use Seed Bible without authentication, but with limitations.
 
 **Anonymous user capabilities:**
+<<<<<<< HEAD
+
+=======
+
+> > > > > > > 50729483ec846e76589cc7c9c5086bdc6a7cbb8b
 
 - Read Scripture and use basic features
 - Create temporary sessions (expire after 12 hours)
 - Use visualization tools (Canvas, BibleStack, etc.)
 
 **Anonymous user limitations:**
+<<<<<<< HEAD
+
+=======
+
+> > > > > > > 50729483ec846e76589cc7c9c5086bdc6a7cbb8b
 
 - Cannot save progress or preferences
 - Cannot join Studios
@@ -226,6 +306,11 @@ Anonymous users can use Seed Bible without authentication, but with limitations.
 - Data is stored locally and lost when session ends
 
 **Developer guidance:**
+<<<<<<< HEAD
+
+=======
+
+> > > > > > > 50729483ec846e76589cc7c9c5086bdc6a7cbb8b
 
 - Design features that degrade gracefully for anonymous users
 - Clearly indicate when features require authentication
@@ -237,12 +322,22 @@ Anonymous users can use Seed Bible without authentication, but with limitations.
 A **Space** is a personal view configuration that defines how a Seed Bible session environment is displayed. Spaces solve the "provisioning problem"—one person can set up a Space and share it with many.
 
 **Key characteristics:**
+<<<<<<< HEAD
+
+=======
+
+> > > > > > > 50729483ec846e76589cc7c9c5086bdc6a7cbb8b
 
 - **Spaces are personal.** Your layout does not affect another person's view
 - **Interaction is shared; visualization configuration is not**
 - Spaces can be saved, shared, and loaded as .aux files
 
 **What Spaces contain:**
+<<<<<<< HEAD
+
+=======
+
+> > > > > > > 50729483ec846e76589cc7c9c5086bdc6a7cbb8b
 
 - Tab configurations and layouts
 - Folder organization
@@ -251,6 +346,11 @@ A **Space** is a personal view configuration that defines how a Seed Bible sessi
 - UI preferences
 
 **Developer guidance:**
+<<<<<<< HEAD
+
+=======
+
+> > > > > > > 50729483ec846e76589cc7c9c5086bdc6a7cbb8b
 
 - Spaces are static JSON configurations
 - Users can export Spaces as .aux files for sharing
@@ -1423,6 +1523,11 @@ The `extension.json` file defines package metadata and integration points:
 Extensions developed as source packages can be compiled and distributed as **.aux files**. An .aux (Ambient User Experience) file is a portable JSON-based representation that includes all bots and tags needed to run the extension.
 
 **.aux files enable:**
+<<<<<<< HEAD
+
+=======
+
+> > > > > > > 50729483ec846e76589cc7c9c5086bdc6a7cbb8b
 
 - Sharing extensions without source code access
 - Importing extensions into any CasualOS environment
@@ -1443,9 +1548,14 @@ Extensions are developed as source packages (with `extension.json` metadata and 
 
 #### 2. Canvas (gridPortal)
 
-**Path:** `packages/Canvas/`
-**Purpose:** The gridPortal from CasualOS integrated into Seed Bible. Canvas provides a 3D spatial environment for visualization and collaborative interaction. It is the foundation on which extensions like BibleStack, Tabernacle, and ScriptureMap3D are built.
-**Tab Type:** `canvas`
+<<<<<<< HEAD
+
+=======
+
+> > > > > > > 50729483ec846e76589cc7c9c5086bdc6a7cbb8b
+> > > > > > > **Path:** `packages/Canvas/`
+> > > > > > > **Purpose:** The gridPortal from CasualOS integrated into Seed Bible. Canvas provides a 3D spatial environment for visualization and collaborative interaction. It is the foundation on which extensions like BibleStack, Tabernacle, and ScriptureMap3D are built.
+> > > > > > > **Tab Type:** `canvas`
 
 **Note:** Canvas is NOT a drawing tool. The drawing functionality is provided by the separate Draw package. BibleStack, Tabernacle, and ScriptureMap3D are extensions that build on Canvas to deliver specific visualization experiences.
 
@@ -1457,60 +1567,115 @@ Extensions are developed as source packages (with `extension.json` metadata and 
 
 #### 4. Land (mapPortal)
 
-**Path:** In development
-**Purpose:** The mapPortal from CasualOS integrated into Seed Bible. Land provides map-based visualization using geographic coordinates and ArcGIS map layers rather than the abstract 3D coordinates used by Canvas (gridPortal).
+<<<<<<< HEAD
+
+=======
+
+> > > > > > > 50729483ec846e76589cc7c9c5086bdc6a7cbb8b
+> > > > > > > **Path:** In development
+> > > > > > > **Purpose:** The mapPortal from CasualOS integrated into Seed Bible. Land provides map-based visualization using geographic coordinates and ArcGIS map layers rather than the abstract 3D coordinates used by Canvas (gridPortal).
 
 **Note:** Land development is ongoing. Documentation will be expanded as the service matures. Land is distinct from Canvas—it uses geographic coordinates for terrain-aware biblical geography rather than abstract 3D spatial environments.
 
 #### 5. Scripture Map 2D
 
-**Path:** `packages/ScriptureMap2D/`
-**Purpose:** 2D map visualization of scripture locations
+<<<<<<< HEAD
+
+=======
+
+> > > > > > > 50729483ec846e76589cc7c9c5086bdc6a7cbb8b
+> > > > > > > **Path:** `packages/ScriptureMap2D/`
+> > > > > > > **Purpose:** 2D map visualization of scripture locations
 
 #### 6. Scripture Map 3D
 
-**Path:** `packages/ScriptureMap3D/`
-**Purpose:** 3D map visualization of scripture locations
+<<<<<<< HEAD
+
+=======
+
+> > > > > > > 50729483ec846e76589cc7c9c5086bdc6a7cbb8b
+> > > > > > > **Path:** `packages/ScriptureMap3D/`
+> > > > > > > **Purpose:** 3D map visualization of scripture locations
 
 #### 7. Calendar
 
-**Path:** `packages/Calendar/`
-**Purpose:** Event scheduling with FullCalendar integration
+<<<<<<< HEAD
+
+=======
+
+> > > > > > > 50729483ec846e76589cc7c9c5086bdc6a7cbb8b
+> > > > > > > **Path:** `packages/Calendar/`
+> > > > > > > **Purpose:** Event scheduling with FullCalendar integration
 
 #### 8. Playlist
 
-**Path:** `packages/Playlist/`
-**Purpose:** Recording and playback sequences
+<<<<<<< HEAD
+
+=======
+
+> > > > > > > 50729483ec846e76589cc7c9c5086bdc6a7cbb8b
+> > > > > > > **Path:** `packages/Playlist/`
+> > > > > > > **Purpose:** Recording and playback sequences
 
 #### 9. MindMap
 
-**Path:** `packages/MindMap/`
-**Purpose:** Mind mapping visualization for Bible study
+<<<<<<< HEAD
+
+=======
+
+> > > > > > > 50729483ec846e76589cc7c9c5086bdc6a7cbb8b
+> > > > > > > **Path:** `packages/MindMap/`
+> > > > > > > **Purpose:** Mind mapping visualization for Bible study
 
 #### 10. Tabernacle
 
-**Path:** `packages/Tabernacle/`
-**Purpose:** 3D visualization of the Tabernacle
+<<<<<<< HEAD
+
+=======
+
+> > > > > > > 50729483ec846e76589cc7c9c5086bdc6a7cbb8b
+> > > > > > > **Path:** `packages/Tabernacle/`
+> > > > > > > **Purpose:** 3D visualization of the Tabernacle
 
 #### 11. References
 
-**Path:** `packages/References/`
-**Purpose:** Scripture cross-reference management
+<<<<<<< HEAD
+
+=======
+
+> > > > > > > 50729483ec846e76589cc7c9c5086bdc6a7cbb8b
+> > > > > > > **Path:** `packages/References/`
+> > > > > > > **Purpose:** Scripture cross-reference management
 
 #### 12. Assistant
 
-**Path:** `packages/Assistant/`
-**Purpose:** AI assistant functionality
+<<<<<<< HEAD
+
+=======
+
+> > > > > > > 50729483ec846e76589cc7c9c5086bdc6a7cbb8b
+> > > > > > > **Path:** `packages/Assistant/`
+> > > > > > > **Purpose:** AI assistant functionality
 
 #### 13. Location
 
-**Path:** `packages/Location/`
-**Purpose:** GPS and location-based features
+<<<<<<< HEAD
+
+=======
+
+> > > > > > > 50729483ec846e76589cc7c9c5086bdc6a7cbb8b
+> > > > > > > **Path:** `packages/Location/`
+> > > > > > > **Purpose:** GPS and location-based features
 
 #### 14. Events
 
-**Path:** `packages/Events/`
-**Purpose:** Event management system
+<<<<<<< HEAD
+
+=======
+
+> > > > > > > 50729483ec846e76589cc7c9c5086bdc6a7cbb8b
+> > > > > > > **Path:** `packages/Events/`
+> > > > > > > **Purpose:** Event management system
 
 And 9 more utility packages (Color Lerper, Object Pooler, Bible Visualization Utils, Book Selector, Cursor Follow, Eraser, GeoImporter, ao.bot).
 
@@ -2535,6 +2700,11 @@ When developing AI features for Seed Bible, follow these guidelines to maintain 
 ### AI Assistant Principles
 
 AI in Seed Bible should:
+<<<<<<< HEAD
+
+=======
+
+> > > > > > > 50729483ec846e76589cc7c9c5086bdc6a7cbb8b
 
 - **Assist research, not provide answers** - AI suggests questions, enables discovery, and provides historical background
 - **Emphasize education and epistemic humility** - AI should not respond as an authoritative interpreter
@@ -2551,6 +2721,11 @@ AI in Seed Bible should:
 ### Developer Guidelines for AI Features
 
 When building AI functionality:
+<<<<<<< HEAD
+
+=======
+
+> > > > > > > 50729483ec846e76589cc7c9c5086bdc6a7cbb8b
 
 1. Design AI as a **research assistant**, not a teacher
 2. Always present multiple perspectives when relevant
@@ -2559,11 +2734,21 @@ When building AI functionality:
 5. Remember that AI agents participate as peers in sessions—they observe and respond to user actions
 
 **Example good AI behavior:**
+<<<<<<< HEAD
+
+=======
+
+> > > > > > > 50729483ec846e76589cc7c9c5086bdc6a7cbb8b
 
 - "Here are three different interpretations of this passage from Baptist, Catholic, and Orthodox traditions..."
 - "Scholars debate whether this word means X or Y. Would you like to explore the arguments?"
 
 **Example bad AI behavior:**
+<<<<<<< HEAD
+
+=======
+
+> > > > > > > 50729483ec846e76589cc7c9c5086bdc6a7cbb8b
 
 - "This passage means X."
 - "The correct interpretation is Y."
@@ -2598,6 +2783,11 @@ AO Lab's approach to user data reflects a commitment to user ownership and porta
 ### Developer Implications
 
 When building features:
+<<<<<<< HEAD
+
+=======
+
+> > > > > > > 50729483ec846e76589cc7c9c5086bdc6a7cbb8b
 
 - Design with data portability in mind
 - Use Records API for persistent data (survives session expiration)
@@ -2621,6 +2811,11 @@ Seed Bible uses the **Free Use Bible API** for Scripture content.
 - **Caching:** Scripture data is cached per-tab for performance
 
 **Developer notes:**
+<<<<<<< HEAD
+
+=======
+
+> > > > > > > 50729483ec846e76589cc7c9c5086bdc6a7cbb8b
 
 - Scripture data comes from bible.helloao.org, not from Records
 - Translation availability depends on the API
@@ -2636,6 +2831,11 @@ Seed Bible uses **PostHog** for product analytics.
 - **Privacy:** All tracking is anonymized and aggregated
 
 **Developer notes:**
+<<<<<<< HEAD
+
+=======
+
+> > > > > > > 50729483ec846e76589cc7c9c5086bdc6a7cbb8b
 
 - PostHog events should not contain PII (personally identifiable information)
 - Use PostHog for feature usage analytics, not user surveillance

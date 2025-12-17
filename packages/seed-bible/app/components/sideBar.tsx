@@ -447,12 +447,10 @@ function Tab({
   }, [selectedTabs]);
 
   const handleTabClick = () => {
-
-    if(globalThis.IsMobileNow()){
+    if (globalThis.IsMobileNow()) {
       setSidebarWidth(0);
-                      // setCollapsed(true);
-                      // setMultiSelectMode(false);
-      
+      // setCollapsed(true);
+      // setMultiSelectMode(false);
     }
 
     if (activeTab === el.id) return;
@@ -735,8 +733,8 @@ function Folder({ folder, onlineUsers, collapsed }) {
               setIsDragging={setIsDragging}
               setElement={setElement}
               collapsed={collapsed}
-                          setSidebarWidth={setSidebarWidth}
-            setCollapsed={setCollapsed}
+              setSidebarWidth={setSidebarWidth}
+              setCollapsed={setCollapsed}
             />
           ))}
           {
@@ -1305,7 +1303,7 @@ function SideBar() {
               <div className="canvasOptions">
                 <span
                   style={{
-                    paddingTop:customScreens?.value >= 2 ? "3px": "0px",
+                    paddingTop: customScreens?.value >= 2 ? "3px" : "0px",
                   }}
                   onContextMenu={(e) => {
                     e.preventDefault();
@@ -1388,8 +1386,8 @@ function SideBar() {
                 collapsed={collapsed}
                 editMode={editMode}
                 sharedTab={true}
-                            setSidebarWidth={setSidebarWidth}
-            setCollapsed={setCollapsed}
+                setSidebarWidth={setSidebarWidth}
+                setCollapsed={setCollapsed}
               />
             )}
             <div className="tabsContainer">
@@ -1555,6 +1553,7 @@ function SideBar() {
             >
               menu
             </span>
+            {!configBot.tags.staticInst && <UserPresence collapsed={true} />}
             <div
               style={{
                 height: "1px",
@@ -1588,43 +1587,43 @@ function SideBar() {
                 setElement={setElement}
                 collapsed={collapsed}
                 editMode={editMode}
-                            setSidebarWidth={setSidebarWidth}
-            setCollapsed={setCollapsed}
+                setSidebarWidth={setSidebarWidth}
+                setCollapsed={setCollapsed}
               />
             ))}
 
           {collapsed && (
             <span
               onMouseDown={() => {
-                    clearTimeout(holdTimeout.current.time);
-                    holdTimeout.current.clicked = false;
-                    holdTimeout.current.time = setTimeout(() => {
-                      holdTimeout.current.clicked = true;
-                      openPopupSettings(AddingOption(), true);
-                    }, 600);
-                  }}
-                  onMouseUp={() => {
-                    clearTimeout(holdTimeout.current.time);
-                    if (!holdTimeout.current.clicked) {
-                      addTab({
-                        id: uuid(),
-                        taken: false,
-                        data: {
-                          use: "thePage",
-                          type: "book",
-                          book: "Genesis",
-                          bookId: "GEN",
-                          chapter: 1,
-                          translation: "BSB",
-                        },
-                      });
-                    }
-                    holdTimeout.current.clicked = false;
-                  }}
-                  onMouseLeave={() => {
-                    clearTimeout(holdTimeout.current.time);
-                    holdTimeout.current.clicked = false;
-                  }}
+                clearTimeout(holdTimeout.current.time);
+                holdTimeout.current.clicked = false;
+                holdTimeout.current.time = setTimeout(() => {
+                  holdTimeout.current.clicked = true;
+                  openPopupSettings(AddingOption(), true);
+                }, 600);
+              }}
+              onMouseUp={() => {
+                clearTimeout(holdTimeout.current.time);
+                if (!holdTimeout.current.clicked) {
+                  addTab({
+                    id: uuid(),
+                    taken: false,
+                    data: {
+                      use: "thePage",
+                      type: "book",
+                      book: "Genesis",
+                      bookId: "GEN",
+                      chapter: 1,
+                      translation: "BSB",
+                    },
+                  });
+                }
+                holdTimeout.current.clicked = false;
+              }}
+              onMouseLeave={() => {
+                clearTimeout(holdTimeout.current.time);
+                holdTimeout.current.clicked = false;
+              }}
               class="material-symbols-outlined addIconCollapsed"
             >
               add
@@ -1874,11 +1873,14 @@ export const UserProfile = ({ collapsed }) => {
           overflow: "hidden",
         }}
       >
-      {userData?.photoLink ? (
-        <img
-          style={{ "border-radius": "50%", width: "35px", border: "" }}
-          src={userData?.photoLink}
-        />):  <Icon width={15} height={15} />}
+        {userData?.photoLink ? (
+          <img
+            style={{ "border-radius": "50%", width: "35px", border: "" }}
+            src={userData?.photoLink}
+          />
+        ) : (
+          <Icon width={15} height={15} />
+        )}
       </div>
       {
         null /*userData?.photoLink ? (
