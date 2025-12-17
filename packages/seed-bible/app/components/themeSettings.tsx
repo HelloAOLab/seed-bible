@@ -9,20 +9,20 @@ import { useBibleContext } from "app.hooks.bibleVariables";
 // Fields shown in the screenshot, rendered dynamically below
 // ————————————————————————————————————————————————————————————
 const COLOR_FIELDS = [
-  { label: "Menu Background", field: "menuBackground" },
-  { label: "Page Background", field: "pageBackground" },
-  { label: "Page text color", field: "pageTextColor" },
-  { label: "Icons color", field: "iconColor" },
-  { label: "Primary button background", field: "primaryButton" },
-  { label: "Primary button text", field: "primaryButtonColor" },
-  { label: "Secondary button background", field: "secondaryButton" },
-  { label: "Secondary button text", field: "secondaryButton" },
-  { label: "Button border", field: "buttonBorder" },
-  { label: "Tab Selection", field: "tabSelection" },
-  { label: "Space selection", field: "spaceSelection" },
-  { label: "Toolbar background", field: "toolbarBackground" },
-  { label: "Primary text", field: "text1" },
-  { label: "Secondary text", field: "text2" },
+  { labelKey: "menuBackground", field: "menuBackground" },
+  { labelKey: "pageBackground", field: "pageBackground" },
+  { labelKey: "pageTextColor", field: "pageTextColor" },
+  { labelKey: "iconsColor", field: "iconColor" },
+  { labelKey: "primaryButtonBg", field: "primaryButton" },
+  { labelKey: "primaryButtonText", field: "primaryButtonColor" },
+  { labelKey: "secondaryButtonBg", field: "secondaryButton" },
+  { labelKey: "secondaryButtonBg", field: "secondaryButton" },
+  { labelKey: "buttonBorder", field: "buttonBorder" },
+  { labelKey: "tabSelection", field: "tabSelection" },
+  { labelKey: "spaceSelection", field: "spaceSelection" },
+  { labelKey: "toolbarBackground", field: "toolbarBackground" },
+  { labelKey: "primaryText", field: "text1" },
+  { labelKey: "secondaryText", field: "text2" },
 ];
 
 // Keep text colors to style the labels (not shown as editable rows here)
@@ -379,7 +379,7 @@ const debouncedSolve = debounce((hex, callback) => {
 const ThemeSettings = () => {
   const { updateSpace, activeSpace, currentSpace, tabsIcons, setTabsIcons } =
     useTabsContext();
-  const { setSideBarMode, closePopupSettings, setThemeColors, themeColors } =
+  const { setSideBarMode, closePopupSettings, setThemeColors, themeColors, t } =
     useSideBarContext();
 
   const [changesSaved, setChagesSaved] = useState(false);
@@ -487,18 +487,20 @@ const ThemeSettings = () => {
         >
           <MenuIcon name="arrow_back" />
         </div>
-        <div className="softText">Theme</div>
+        <div className="softText">{t("theme")}</div>
         <div className="softText">
           <MenuIcon name="chevron_right" />
         </div>
-        <div className="softText">Advanced Theme Settings</div>
+        <div className="softText">{t("advancedSettings")}</div>
       </div>
 
       <div className="routerTitle blackText">
         <div className="blackText">
           <ThemeIcon />
         </div>
-        <div>{currentSpace.name} Theme</div>
+        <div>
+          {currentSpace.name} {t("theme")}
+        </div>
       </div>
 
       <div style={{ height: 25 }} />
@@ -507,7 +509,7 @@ const ThemeSettings = () => {
         {COLOR_FIELDS.map((cfg) => (
           <ColorRow
             key={cfg.field}
-            label={cfg.label}
+            label={t(cfg.labelKey)}
             field={cfg.field}
             value={colors?.[cfg.field]}
             labelColor={labelColor}
@@ -538,7 +540,7 @@ const ThemeSettings = () => {
             lineHeight: "normal",
           }}
         >
-          Show Tab Icons
+          {t("showTabIcons")}
         </div>
         <div
           onClick={handleTabIconsToggle}
@@ -920,7 +922,7 @@ const SettingsUI = () => {
   };
   const { updateSpace, activeSpace, currentSpace, tabsIcons, setTabsIcons } =
     useTabsContext();
-  const { setSideBarMode, closePopupSettings, setThemeColors, themeColors } =
+  const { setSideBarMode, closePopupSettings, setThemeColors, themeColors, t } =
     useSideBarContext();
 
   const [changesSaved, setChagesSaved] = useState(false);
@@ -1292,18 +1294,20 @@ const SettingsUI = () => {
         >
           <MenuIcon name="arrow_back" />
         </div>
-        <div className="softText">Page settings</div>
+        <div className="softText">{t("settings")}</div>
         <div className="softText">
           <MenuIcon name="chevron_right" />
         </div>
-        <div className="softText">Theme</div>
+        <div className="softText">{t("theme")}</div>
       </div>
       <div style={{ marginTop: "20px" }}>
         <div className="routerTitle blackText">
           <div className="blackText">
             <ThemeIcon />
           </div>
-          <div>{currentSpace.name} Theme</div>
+          <div>
+            {currentSpace.name} {t("theme")}
+          </div>
         </div>
         <div style={{ display: "flex", gap: "7px", marginBottom: "30px" }}>
           <div
@@ -1438,7 +1442,7 @@ const SettingsUI = () => {
             <div style={dropdownTextStyle}>
               {FONT_OPTIONS[selectedFont].name}
             </div>
-            <div style={dropdownSubtextStyle}>Font</div>
+            <div style={dropdownSubtextStyle}>{t("font")}</div>
           </div>
           <svg width="16" height="16" viewBox="0 0 16 16" fill="none">
             <path
@@ -1474,7 +1478,7 @@ const SettingsUI = () => {
       </div>
 
       <div style={toggleRowStyle}>
-        <div style={toggleLabelStyle}>Show chapter headings</div>
+        <div style={toggleLabelStyle}>{t("showChapterHeadings")}</div>
 
         <div
           style={toggleStyle(showHeading[activeSpace])}
@@ -1490,7 +1494,7 @@ const SettingsUI = () => {
       </div>
 
       <div style={toggleRowStyle}>
-        <div style={toggleLabelStyle}>Show verses numbers</div>
+        <div style={toggleLabelStyle}>{t("showVerseNumbers")}</div>
 
         <div
           style={toggleStyle(showVerses[activeSpace])}
@@ -1507,7 +1511,7 @@ const SettingsUI = () => {
 
       <div style={separatorStyle}></div>
 
-      <div style={sectionTitleStyle}>Themes</div>
+      <div style={sectionTitleStyle}>{t("themes")}</div>
 
       <div style={cardContainerStyle}>
         {READY_THEMES.map((theme, index) =>
@@ -1668,7 +1672,7 @@ const SettingsUI = () => {
         style={buttonStyle}
         onClick={() => setSideBarMode("advancedThemeSettings")}
       >
-        Advanced settings
+        {t("advancedSettings")}
       </button>
       <div style={separatorStyle}></div>
     </div>
