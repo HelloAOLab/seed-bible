@@ -250,16 +250,10 @@ const App = () => {
   const [resourceStartDate, setResourceStartDate] = useState();
   const [hiddenGroups, setHiddenGroups] = useState({});
   const [allGroups, setAllGroups] = useState([]);
-  const [popoverOpen, setPopoverOpen] = useState(false);
+  const popoverOpenRef = useRef(false)
 
-  document.addEventListener("mousedown", (e) => {
-    const popover = document.querySelector(".fc-popover");
-
-    // TypeScript-safe check
-    if (e.target instanceof Node && !popover.contains(e.target)) {
-      setPopoverOpen(false);
-    }
-  });
+ 
+  
 
   //refs
   const readingsRef = useRef(null);
@@ -292,6 +286,48 @@ const App = () => {
       }
     }
   }, []);
+  useEffect(() => {
+  const observer = new MutationObserver(() => {
+    const popover = document.querySelector(".fc-popover");
+
+    // If popover is gone but ref says open → reset
+    if (!popover && popoverOpenRef.current) {
+      popoverOpenRef.current = false;
+      calendarRef.current?.getApi().rerenderEvents();
+    }
+  });
+
+  observer.observe(document.body, {
+    childList: true,
+    subtree: true,
+  });
+
+  return () => observer.disconnect();
+}, []);
+
+  useEffect(() => {
+  const handleClickOutside = (e) => {
+    const popover = document.querySelector(".fc-popover");
+
+    if (!popover) return; // important
+
+    if (!popover.contains(e.target)) {
+      popoverOpenRef.current = false;
+
+      // 🔑 force FullCalendar to update
+      calendarRef.current?.getApi().rerenderEvents();
+    }
+  };
+
+  document.addEventListener("mousedown", handleClickOutside);
+
+  return () => {
+    document.removeEventListener("mousedown", handleClickOutside);
+  };
+}, []);
+
+
+
   useEffect(() => {
     try {
       localStorage.setItem("allEvents", JSON.stringify(allEvents));
@@ -795,7 +831,7 @@ const App = () => {
         scrollTime: "07:00:00",
         initialView: "dayGridMonth",
         moreLinkClick: (arg) => {
-          setPopoverOpen(true);
+          popoverOpenRef.current=true
           return "popover";
         },
         resourceAreaHeaderContent: function () {
@@ -875,10 +911,12 @@ const App = () => {
         contentHeight: "auto",
         height: "auto",
         eventContent: function (arg) {
-          console.log(popoverOpen, "sdsdsd");
+          console.log(popoverOpenRef.current, "sdsdsdkkkkjj");
+         
 
           setContainerWidth(calendarEle.offsetWidth);
           const isSchedule = arg.event.extendedProps.isResource === true;
+         
           const eventType = arg.event.extendedProps.type;
           const container = document.querySelector(".experience-container");
           const isNarrow = container && container.offsetWidth < 500;
@@ -917,14 +955,15 @@ const App = () => {
           }
 
           // Compact mode (mobile, no popover)
-          if (isNarrow && !popoverOpen && !isMultiDay) {
+          if (isNarrow && !popoverOpenRef.current && !isMultiDay) {
             if (isSchedule) return { html: "" };
             if (eventType === "reading") return { html: makeDot("#20c997") };
             return { html: makeDot("#339af0") };
           }
 
           // Popover open — show full event
-          if (popoverOpen) {
+          
+          if (popoverOpenRef.current) {
             return {
               html: `
           <div style="
@@ -945,7 +984,7 @@ const App = () => {
           }
 
           // Normal schedule
-          if (isSchedule) {
+          if (isSchedule  && !popoverOpenRef.current) {
             if (!isMultiDay) {
               return {
                 html: `
@@ -986,7 +1025,7 @@ const App = () => {
           }
 
           // Reading events
-          if (eventType === "reading") {
+          if (eventType === "reading" && !popoverOpenRef.current) {
             if (!isMultiDay) {
               return {
                 html: `
@@ -1030,7 +1069,7 @@ const App = () => {
           }
 
           // Default event style
-          if (!isMultiDay) {
+          if (!isMultiDay && !popoverOpenRef.current) {
             console.log(isMultiDay,'sasasasaasasas');
             return {
               html: `
@@ -1087,7 +1126,7 @@ const App = () => {
 
           console.log(startDate, endDate, isMultiDay, "isMultiday");
 
-          if (width <= 500 && !isMultiDay) {
+          if (width <= 500 && !isMultiDay & !popoverOpenRef.current) {
             return ["dot-view"];
           } else {
             return ["full-view"];
