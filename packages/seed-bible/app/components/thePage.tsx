@@ -74,7 +74,13 @@ function ThePage({
   const [direction, setDirection] = useState(null);
   const commandsRef = useRef(null);
   const [userMovedToolbar, setUserMovedToolbar] = useState();
-
+  useEffect(() => {
+    os.addBotListener(thisBot, "onTabDelete", (data) => {
+      if (data.tabId === tab?.id) {
+        setTab(null);
+      }
+    });
+  }, []);
   useEffect(() => {
     if (!T) globalThis.CurrentPanelAvailable = panelId;
     else globalThis.CurrentPanelAvailable = null;
