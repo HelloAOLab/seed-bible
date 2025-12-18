@@ -152,25 +152,37 @@ const Main = () => {
   }, []);
   useEffect(() => {
     if (!started) return;
-    const newApps = [];
 
-    for (let i = 0; i < screens.value; i++) {
-      const id = `panel-${i}-${activeSpace}`;
-      newApps.push({
-        id,
-        App: (
-          <ThePageWithEditor
-            key={id}
-            panelId={id}
-            tab={globalThis.PanelTabsMap[id]}
-          />
-        ),
-        to: "window",
-        tabData: globalThis.PanelTabsMap[id],
-      });
-    }
-    // console.log(newApps)
-    setApps(newApps); // ✅ Update all at once
+    // setApps(newApps); // ✅ Update all at once
+
+    setApps((prevApps) => {
+      const newApps = [];
+
+      for (let i = 0; i < screens.value; i++) {
+        const id = `panel-${i}-${activeSpace}`;
+        if (prevApps[i]) {
+          newApps.push({
+            ...prevApps[i],
+            id,
+          });
+        } else {
+          newApps.push({
+            id,
+            App: (
+              <ThePageWithEditor
+                key={id}
+                panelId={id}
+                tab={globalThis.PanelTabsMap[id]}
+              />
+            ),
+            to: "window",
+            tabData: globalThis.PanelTabsMap[id],
+          });
+        }
+      }
+
+      return [...newApps];
+    });
 
     globalThis.SpaceScreens[activeSpace] = screens.value;
   }, [screens]);
