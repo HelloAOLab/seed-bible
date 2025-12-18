@@ -87,7 +87,8 @@ function ThePage({
   }, [T]);
   const { inSession, role, config } = getUserSessionInfo(configBot.id);
   const [tabEntered, setTabEntered] = useState(false);
-  const { updateTab, tabs, setActiveTab, sharedTab } = useTabsContext();
+  const { updateTab, tabs, activeTab, setActiveTab, sharedTab } =
+    useTabsContext();
   const { isDragging, setIsDragging, Element, position } = useMouseMove();
   const { navFunctions, setNavFunctions, scrollToVerse } = useBibleContext();
   const [inHold, setInHold] = useState();
@@ -438,7 +439,7 @@ function ThePage({
   useEffect(() => {
     loadData();
     globalThis.CurrentTab = tab;
-  }, []);
+  }, [tab]);
 
   // GLOBAL GUARDS
   if (!globalThis.__remoteBookUpdate) globalThis.__remoteBookUpdate = false;
@@ -514,12 +515,16 @@ function ThePage({
         book: data?.book,
         chapter: data?.chapter,
       });
-
-      configBot.tags.book = data?.bookId;
-      configBot.tags.chapter = data?.chapter;
       os.syncConfigBotTagsToURL(["book", "chapter"]);
     }
   }, [data]);
+
+  useEffect(() => {
+    if (data && tab.id === activeTab) {
+      configBot.tags.book = data?.bookId;
+      configBot.tags.chapter = data?.chapter;
+    }
+  }, [activeTab, data, tab]);
 
   useEffect(() => {
     // Create the interval
