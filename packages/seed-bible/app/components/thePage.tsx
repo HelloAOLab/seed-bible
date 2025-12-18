@@ -817,7 +817,6 @@ function ThePage({
         },
       });
       setTab(tab);
-      setData(bible.data);
     }
   }
 
