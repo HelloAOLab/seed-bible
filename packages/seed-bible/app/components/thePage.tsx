@@ -658,18 +658,15 @@ function ThePage({
       const highestVerse = unifiedVerses[unifiedVerses.length - 1];
       const lowestVerse = unifiedVerses[0];
 
-      // Build selected text
-      const selectedTextFinal =
-        selection && !selection.isCollapsed
-          ? selection.toString()
-          : unifiedVerses
-              .map((v) => {
-                const verseObj = data?.content
-                  ?.flatMap((c) => c.verses)
-                  .find((x) => x.verseNumber === v);
-                return verseObj?.text || "";
-              })
-              .join(" ");
+      //  selected text from verse data (excludes headings)
+      const selectedTextFinal = unifiedVerses
+        .map((v) => {
+          const verseObj = data?.content
+            ?.flatMap((c) => c.verses)
+            .find((x) => x.verseNumber === v);
+          return verseObj?.text || "";
+        })
+        .join(" ");
 
       setSelectedText(selectedTextFinal);
       setLastSelectedVerse(highestVerse);

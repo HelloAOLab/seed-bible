@@ -529,6 +529,7 @@ export function VerseToolbar({
 }
 
 function getMenuActions(that, onClose) {
+  os.log("GET MENU ACTIONS VERSE TOOLBAR", that);
   const { SharePopup } = thisBot.Chips();
   const MenuOptions = {
     type: "normal",

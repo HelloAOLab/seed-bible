@@ -43,7 +43,7 @@ const MenuOptions = {
       title: "Copy text",
       onClick: (items) => {
         let text = "";
-
+        os.log("COPY TEXT VERSES", items);
         const textItems = items.map((verse) => {
           return verse.text;
         });
