@@ -172,6 +172,8 @@ export function TabsProvider({ children }) {
       return;
     }
     shout("onTabDelete", { tabId });
+    // Remove deleted tab from selectedTabs to keep "Select All" checkbox in sync
+    setSelectedTabs((prev) => prev.filter((id) => id !== tabId));
     setSpaces((prevSpaces) =>
       prevSpaces.map((space) => {
         if (space.id !== activeSpace) return space;
