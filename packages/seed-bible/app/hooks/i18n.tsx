@@ -275,24 +275,30 @@ const resources = {
       regenerate: "Regenerate",
       playlistSettings: "Playlist Settings",
       publishSettings: "Publish settings",
-      publishSettingsDesc: "Your annotations will be available to everyone if public. If private only you will have access.",
+      publishSettingsDesc:
+        "Your annotations will be available to everyone if public. If private only you will have access.",
       privateAccess: "Private Access",
       publicAccess: "Public Access",
       checklist: "Checklist",
-      checklistTooltip: "Checklist Mode gives your Playlist an option to checkout the visited items so you can keep track of your playlist progress.",
+      checklistTooltip:
+        "Checklist Mode gives your Playlist an option to checkout the visited items so you can keep track of your playlist progress.",
       readingPlan: "Reading Plan",
-      readingPlanTooltip: "Plan Mode lets you add dates in your playlist which keeps the date and progress in track according to date.",
+      readingPlanTooltip:
+        "Plan Mode lets you add dates in your playlist which keeps the date and progress in track according to date.",
       revertToPrevious: "Revert to Previous",
       downloadJSON: "Download JSON",
       copyOtherPlaylists: "Copy Other Playlists",
       noPlaylistsToShow: "No Playlists to show.",
       noLayersToShow: "No Layers to show.",
       notEmbeddedItemsFound: "Not Embedded Items Found",
-      notEmbeddedItemsMsg: "Some of your item are not embedded. Layers Should have all Embedded Items.",
+      notEmbeddedItemsMsg:
+        "Some of your item are not embedded. Layers Should have all Embedded Items.",
       removeAndSave: "Remove & Save",
       copyItems: "Copy Items",
-      copyItemsInstructions: "Click & Hold any Playlist to add it to Current playlist.",
-      copyItemInstructions: "Click & Hold any Playlist item to add that item to the Current playlist.",
+      copyItemsInstructions:
+        "Click & Hold any Playlist to add it to Current playlist.",
+      copyItemInstructions:
+        "Click & Hold any Playlist item to add that item to the Current playlist.",
       embed: "Embed",
       remove: "Remove",
       mergeMode: "Merge Mode",
@@ -315,11 +321,13 @@ const resources = {
       hereIsYourSharedPlaylist: "Here is your shared playlist.",
       start: "Start",
       thisWillStopPlayingPlaylist: "This will stop playing playlist.",
-      playlistCurrentlyPlayingConfirm: "A playlist is currently playing. Do you want to stop it to continue?",
+      playlistCurrentlyPlayingConfirm:
+        "A playlist is currently playing. Do you want to stop it to continue?",
       confirm: "Confirm",
       annotation: "Annotation",
       pleaseLoginToUseFeature: "Please login to use this feature.",
-      addAnotherParallelPlaylist: "Do you want to add another Parallel Playlist?",
+      addAnotherParallelPlaylist:
+        "Do you want to add another Parallel Playlist?",
 
       // Discover chips
       all: "All",
@@ -330,9 +338,11 @@ const resources = {
 
       // AnnotationList
       deleteAnnotation: "Delete annotation",
-      deleteAnnotationConfirmation: "This annotation and all of it's versions will be permanently deleted. This action cannot be undone! Are you sure you want to delete this?",
+      deleteAnnotationConfirmation:
+        "This annotation and all of it's versions will be permanently deleted. This action cannot be undone! Are you sure you want to delete this?",
       annotationDeletedSuccessfully: "Annotation Deleted Successfully!",
-      failedToDeleteAnnotation: "Failed to Delete Annotation. Please try again!",
+      failedToDeleteAnnotation:
+        "Failed to Delete Annotation. Please try again!",
       fetchingAnnotations: "Fetching Annotations",
       noAnnotationsFound: "No Annotations Found.",
       showVersionHistory: "Show version History",
@@ -364,13 +374,17 @@ const resources = {
       reUploadFile: "Re-Upload File",
       saving: "Saving..",
       howToCreateFromSheet: "How to create Playlist from Google Spreadsheet",
-      sheetInstructions: "You can use Google Spreadsheet to create the Playlist Faster.",
-      abbreviationsInfo: "You can either use Abbreviations or Book name for the user case.",
+      sheetInstructions:
+        "You can use Google Spreadsheet to create the Playlist Faster.",
+      abbreviationsInfo:
+        "You can either use Abbreviations or Book name for the user case.",
       spellCorrectly: "But make sure you spell them right.",
       seeSampleList: "See Sample List",
       rememberPublic: "Remember to make your playlist public.",
-      jsonInstructions: "You can use JSON File Format to create the Playlist Faster.",
-      jsonDownloadInfo: "You can either use JSON File Format download from our app.",
+      jsonInstructions:
+        "You can use JSON File Format to create the Playlist Faster.",
+      jsonDownloadInfo:
+        "You can either use JSON File Format download from our app.",
       seeSampleJSON: "See Sample JSON",
       rememberJSONFormat: "Remember to make JSON in given format.",
 
@@ -389,12 +403,14 @@ const resources = {
       noItemsYet: "No items yet, add something below.",
       noDescription: "No description",
       editPlaylistTitle: "Edit playlist",
-      editSharedPlaylistMsg: "Only the creator of this shared playlist can edit this.",
+      editSharedPlaylistMsg:
+        "Only the creator of this shared playlist can edit this.",
       makeACopy: "Would you like to make a copy?",
       yes: "Yes",
       no: "No",
       shareURLCopied: "Share URL Copied to textboard.",
-      playlistShareError: "Playlist Can only be shared in published pattern. Please try export.",
+      playlistShareError:
+        "Playlist Can only be shared in published pattern. Please try export.",
       unableToCopy: "Unable to copy playlist. Please try again!",
       cannotMergeNested: "Cannot merge nested playlists!",
 
@@ -417,12 +433,15 @@ const resources = {
       saveInProgress: "Save in progress!",
       layersShouldHaveTag: "Layers Should Have at least One tag!",
       fillDescriptionForAuto: "Please fill description for auto generation!",
-      couldntAutoFind: "Couldn't auto find any items for the given description!",
-      unableToGeneratePlaylist: "Unable to generate playlist. Please Try Again!",
+      couldntAutoFind:
+        "Couldn't auto find any items for the given description!",
+      unableToGeneratePlaylist:
+        "Unable to generate playlist. Please Try Again!",
       enterTextForGeneration: "Please enter some text for Playlist Generation!",
       regenerationInProgress: "Regeneration in progress!",
       regenerationFailed: "Regeneration Failed!",
-      cannotEmbedEmbedded: "Cannot Embed the Embedded item! Content: {{content}}. Please remove it before embedding!",
+      cannotEmbedEmbedded:
+        "Cannot Embed the Embedded item! Content: {{content}}. Please remove it before embedding!",
 
       // Scripture Map 2D
       show: "Show",
@@ -784,31 +803,38 @@ const resources = {
       regenerate: "Regenerar",
       playlistSettings: "Configuración de lista",
       publishSettings: "Configuración de publicación",
-      publishSettingsDesc: "Tus anotaciones estarán disponibles para todos si es pública. Si es privada, solo tú tendrás acceso.",
+      publishSettingsDesc:
+        "Tus anotaciones estarán disponibles para todos si es pública. Si es privada, solo tú tendrás acceso.",
       privateAccess: "Acceso privado",
       publicAccess: "Acceso público",
       checklist: "Lista de verificación",
-      checklistTooltip: "El modo de lista de verificación te permite marcar los elementos visitados para seguir tu progreso.",
+      checklistTooltip:
+        "El modo de lista de verificación te permite marcar los elementos visitados para seguir tu progreso.",
       readingPlan: "Plan de lectura",
-      readingPlanTooltip: "El modo de plan te permite agregar fechas en tu lista para mantener el progreso según la fecha.",
+      readingPlanTooltip:
+        "El modo de plan te permite agregar fechas en tu lista para mantener el progreso según la fecha.",
       revertToPrevious: "Volver al anterior",
       downloadJSON: "Descargar JSON",
       copyOtherPlaylists: "Copiar otras listas",
       noPlaylistsToShow: "No hay listas para mostrar.",
       noLayersToShow: "No hay capas para mostrar.",
       notEmbeddedItemsFound: "Elementos no incrustados encontrados",
-      notEmbeddedItemsMsg: "Algunos de tus elementos no están incrustados. Las capas deben tener todos los elementos incrustados.",
+      notEmbeddedItemsMsg:
+        "Algunos de tus elementos no están incrustados. Las capas deben tener todos los elementos incrustados.",
       removeAndSave: "Eliminar y guardar",
       copyItems: "Copiar elementos",
-      copyItemsInstructions: "Mantén presionada cualquier lista para agregarla a la lista actual.",
-      copyItemInstructions: "Mantén presionado cualquier elemento para agregarlo a la lista actual.",
+      copyItemsInstructions:
+        "Mantén presionada cualquier lista para agregarla a la lista actual.",
+      copyItemInstructions:
+        "Mantén presionado cualquier elemento para agregarlo a la lista actual.",
       embed: "Incrustar",
       remove: "Eliminar",
       mergeMode: "Modo fusión",
       regenerationPrompt: "Indicación de regeneración:",
       describePlaylist: "Describe la lista que deseas crear.",
       describeSystemPrompt: "Describe tu indicación del sistema.",
-      systemPromptInfo: "Usa $text$ para usar tu indicación inicial como variable.",
+      systemPromptInfo:
+        "Usa $text$ para usar tu indicación inicial como variable.",
       addMedia: "Agregar medios",
       insertDate: "Insertar fecha",
       searchAndAdd: "Buscar y agregar",
@@ -824,10 +850,12 @@ const resources = {
       hereIsYourSharedPlaylist: "Aquí está tu lista compartida.",
       start: "Iniciar",
       thisWillStopPlayingPlaylist: "Esto detendrá la reproducción de la lista.",
-      playlistCurrentlyPlayingConfirm: "Una lista se está reproduciendo actualmente. ¿Deseas detenerla para continuar?",
+      playlistCurrentlyPlayingConfirm:
+        "Una lista se está reproduciendo actualmente. ¿Deseas detenerla para continuar?",
       confirm: "Confirmar",
       annotation: "Anotación",
-      pleaseLoginToUseFeature: "Por favor inicia sesión para usar esta función.",
+      pleaseLoginToUseFeature:
+        "Por favor inicia sesión para usar esta función.",
       addAnotherParallelPlaylist: "¿Deseas agregar otra lista paralela?",
 
       // Discover chips
@@ -839,9 +867,11 @@ const resources = {
 
       // AnnotationList
       deleteAnnotation: "Eliminar anotación",
-      deleteAnnotationConfirmation: "Esta anotación y todas sus versiones se eliminarán permanentemente. ¡Esta acción no se puede deshacer! ¿Estás seguro de que deseas eliminar esto?",
+      deleteAnnotationConfirmation:
+        "Esta anotación y todas sus versiones se eliminarán permanentemente. ¡Esta acción no se puede deshacer! ¿Estás seguro de que deseas eliminar esto?",
       annotationDeletedSuccessfully: "¡Anotación eliminada exitosamente!",
-      failedToDeleteAnnotation: "Error al eliminar anotación. ¡Intenta de nuevo!",
+      failedToDeleteAnnotation:
+        "Error al eliminar anotación. ¡Intenta de nuevo!",
       fetchingAnnotations: "Obteniendo anotaciones",
       noAnnotationsFound: "No se encontraron anotaciones.",
       showVersionHistory: "Mostrar historial de versiones",
@@ -856,7 +886,8 @@ const resources = {
       backToDiscover: "Volver a descubrir",
       backToCreate: "Volver a crear",
       enterDetailsBelow: "Ingresa los detalles a continuación.",
-      addDetailsToSave: "Agrega detalles para guardar y compartir según desees.",
+      addDetailsToSave:
+        "Agrega detalles para guardar y compartir según desees.",
       importHeader: "IMPORTAR",
       whatsThis: "¿Qué es esto?",
       jsonDataUploaded: "Datos JSON cargados",
@@ -866,20 +897,24 @@ const resources = {
       layerName: "Nombre de la capa",
       playlistNamePlaceholder: "ej. Camino Romano",
       descriptionOptional: "(Opcional) escribe una descripción aquí",
-      autoGenerateByDescription: "Generar lista automáticamente por descripción.",
+      autoGenerateByDescription:
+        "Generar lista automáticamente por descripción.",
       tagsHeader: "Etiquetas",
       tagPlaceholder: "(Opcional) ej. Evangelismo",
       uploadFile: "Subir archivo",
       reUploadFile: "Volver a subir",
       saving: "Guardando..",
       howToCreateFromSheet: "Cómo crear lista desde hoja de cálculo de Google",
-      sheetInstructions: "Puedes usar una hoja de cálculo de Google para crear la lista más rápido.",
+      sheetInstructions:
+        "Puedes usar una hoja de cálculo de Google para crear la lista más rápido.",
       abbreviationsInfo: "Puedes usar abreviaturas o nombre del libro.",
       spellCorrectly: "Asegúrate de escribirlo correctamente.",
       seeSampleList: "Ver lista de ejemplo",
       rememberPublic: "Recuerda hacer pública tu lista.",
-      jsonInstructions: "Puedes usar formato JSON para crear la lista más rápido.",
-      jsonDownloadInfo: "Puedes usar el formato JSON descargado de nuestra app.",
+      jsonInstructions:
+        "Puedes usar formato JSON para crear la lista más rápido.",
+      jsonDownloadInfo:
+        "Puedes usar el formato JSON descargado de nuestra app.",
       seeSampleJSON: "Ver JSON de ejemplo",
       rememberJSONFormat: "Recuerda usar el formato JSON indicado.",
 
@@ -898,12 +933,14 @@ const resources = {
       noItemsYet: "Sin elementos aún, agrega algo abajo.",
       noDescription: "Sin descripción",
       editPlaylistTitle: "Editar lista",
-      editSharedPlaylistMsg: "Solo el creador de esta lista compartida puede editarla.",
+      editSharedPlaylistMsg:
+        "Solo el creador de esta lista compartida puede editarla.",
       makeACopy: "¿Te gustaría hacer una copia?",
       yes: "Sí",
       no: "No",
       shareURLCopied: "URL copiada al portapapeles.",
-      playlistShareError: "La lista solo se puede compartir en patrón publicado. Intenta exportar.",
+      playlistShareError:
+        "La lista solo se puede compartir en patrón publicado. Intenta exportar.",
       unableToCopy: "No se pudo copiar la lista. ¡Intenta de nuevo!",
       cannotMergeNested: "¡No se pueden fusionar listas anidadas!",
 
@@ -921,17 +958,22 @@ const resources = {
       failedToUpload: "¡Error al subir archivo!",
       tagNameMissing: "¡Falta nombre de etiqueta!",
       tagsLimitExceeded: "¡El límite de etiquetas es 8!",
-      tagInvalidChars: "¡La etiqueta solo puede tener números, letras, espacios, -!",
+      tagInvalidChars:
+        "¡La etiqueta solo puede tener números, letras, espacios, -!",
       tagAlreadyPresent: "¡La etiqueta ya existe!",
       saveInProgress: "¡Guardado en progreso!",
       layersShouldHaveTag: "¡Las capas deben tener al menos una etiqueta!",
-      fillDescriptionForAuto: "¡Completa la descripción para generación automática!",
-      couldntAutoFind: "¡No se pudieron encontrar elementos para la descripción!",
-      unableToGeneratePlaylist: "No se pudo generar la lista. ¡Intenta de nuevo!",
+      fillDescriptionForAuto:
+        "¡Completa la descripción para generación automática!",
+      couldntAutoFind:
+        "¡No se pudieron encontrar elementos para la descripción!",
+      unableToGeneratePlaylist:
+        "No se pudo generar la lista. ¡Intenta de nuevo!",
       enterTextForGeneration: "¡Ingresa texto para generar lista!",
       regenerationInProgress: "¡Regeneración en progreso!",
       regenerationFailed: "¡Regeneración fallida!",
-      cannotEmbedEmbedded: "¡No se puede incrustar el elemento incrustado! Contenido: {{content}}. ¡Elimínalo antes de incrustar!",
+      cannotEmbedEmbedded:
+        "¡No se puede incrustar el elemento incrustado! Contenido: {{content}}. ¡Elimínalo antes de incrustar!",
 
       // Scripture Map 2D
       show: "Mostrar",
@@ -1293,24 +1335,30 @@ const resources = {
       regenerate: "إعادة الإنشاء",
       playlistSettings: "إعدادات القائمة",
       publishSettings: "إعدادات النشر",
-      publishSettingsDesc: "ستكون ملاحظاتك متاحة للجميع إذا كانت عامة. إذا كانت خاصة، ستتمكن أنت فقط من الوصول.",
+      publishSettingsDesc:
+        "ستكون ملاحظاتك متاحة للجميع إذا كانت عامة. إذا كانت خاصة، ستتمكن أنت فقط من الوصول.",
       privateAccess: "وصول خاص",
       publicAccess: "وصول عام",
       checklist: "قائمة تحقق",
-      checklistTooltip: "وضع قائمة التحقق يتيح لك تحديد العناصر التي زرتها لتتبع تقدمك.",
+      checklistTooltip:
+        "وضع قائمة التحقق يتيح لك تحديد العناصر التي زرتها لتتبع تقدمك.",
       readingPlan: "خطة القراءة",
-      readingPlanTooltip: "وضع الخطة يتيح لك إضافة تواريخ في قائمتك للحفاظ على التقدم حسب التاريخ.",
+      readingPlanTooltip:
+        "وضع الخطة يتيح لك إضافة تواريخ في قائمتك للحفاظ على التقدم حسب التاريخ.",
       revertToPrevious: "العودة للسابق",
       downloadJSON: "تحميل JSON",
       copyOtherPlaylists: "نسخ قوائم أخرى",
       noPlaylistsToShow: "لا توجد قوائم للعرض.",
       noLayersToShow: "لا توجد طبقات للعرض.",
       notEmbeddedItemsFound: "تم العثور على عناصر غير مضمنة",
-      notEmbeddedItemsMsg: "بعض عناصرك غير مضمنة. يجب أن تحتوي الطبقات على جميع العناصر المضمنة.",
+      notEmbeddedItemsMsg:
+        "بعض عناصرك غير مضمنة. يجب أن تحتوي الطبقات على جميع العناصر المضمنة.",
       removeAndSave: "إزالة وحفظ",
       copyItems: "نسخ العناصر",
-      copyItemsInstructions: "اضغط مع الاستمرار على أي قائمة لإضافتها إلى القائمة الحالية.",
-      copyItemInstructions: "اضغط مع الاستمرار على أي عنصر لإضافته إلى القائمة الحالية.",
+      copyItemsInstructions:
+        "اضغط مع الاستمرار على أي قائمة لإضافتها إلى القائمة الحالية.",
+      copyItemInstructions:
+        "اضغط مع الاستمرار على أي عنصر لإضافته إلى القائمة الحالية.",
       embed: "تضمين",
       remove: "إزالة",
       mergeMode: "وضع الدمج",
@@ -1333,7 +1381,8 @@ const resources = {
       hereIsYourSharedPlaylist: "إليك قائمتك المشتركة.",
       start: "ابدأ",
       thisWillStopPlayingPlaylist: "سيؤدي هذا إلى إيقاف تشغيل القائمة.",
-      playlistCurrentlyPlayingConfirm: "يتم تشغيل قائمة حالياً. هل تريد إيقافها للمتابعة؟",
+      playlistCurrentlyPlayingConfirm:
+        "يتم تشغيل قائمة حالياً. هل تريد إيقافها للمتابعة؟",
       confirm: "تأكيد",
       annotation: "تعليق توضيحي",
       pleaseLoginToUseFeature: "يرجى تسجيل الدخول لاستخدام هذه الميزة.",
@@ -1348,7 +1397,8 @@ const resources = {
 
       // AnnotationList
       deleteAnnotation: "حذف التعليق التوضيحي",
-      deleteAnnotationConfirmation: "سيتم حذف هذا التعليق التوضيحي وجميع نسخه بشكل دائم. لا يمكن التراجع عن هذا الإجراء! هل أنت متأكد أنك تريد حذف هذا؟",
+      deleteAnnotationConfirmation:
+        "سيتم حذف هذا التعليق التوضيحي وجميع نسخه بشكل دائم. لا يمكن التراجع عن هذا الإجراء! هل أنت متأكد أنك تريد حذف هذا؟",
       annotationDeletedSuccessfully: "تم حذف التعليق التوضيحي بنجاح!",
       failedToDeleteAnnotation: "فشل حذف التعليق التوضيحي. حاول مرة أخرى!",
       fetchingAnnotations: "جارٍ جلب التعليقات التوضيحية",
@@ -1382,7 +1432,8 @@ const resources = {
       reUploadFile: "إعادة التحميل",
       saving: "جارٍ الحفظ..",
       howToCreateFromSheet: "كيفية إنشاء قائمة من جدول بيانات جوجل",
-      sheetInstructions: "يمكنك استخدام جدول بيانات جوجل لإنشاء القائمة بشكل أسرع.",
+      sheetInstructions:
+        "يمكنك استخدام جدول بيانات جوجل لإنشاء القائمة بشكل أسرع.",
       abbreviationsInfo: "يمكنك استخدام الاختصارات أو اسم الكتاب.",
       spellCorrectly: "تأكد من كتابتها بشكل صحيح.",
       seeSampleList: "عرض قائمة نموذجية",
@@ -1412,7 +1463,8 @@ const resources = {
       yes: "نعم",
       no: "لا",
       shareURLCopied: "تم نسخ رابط المشاركة.",
-      playlistShareError: "يمكن مشاركة القائمة فقط في النمط المنشور. جرب التصدير.",
+      playlistShareError:
+        "يمكن مشاركة القائمة فقط في النمط المنشور. جرب التصدير.",
       unableToCopy: "تعذر نسخ القائمة. حاول مرة أخرى!",
       cannotMergeNested: "لا يمكن دمج القوائم المتداخلة!",
 
@@ -1440,7 +1492,8 @@ const resources = {
       enterTextForGeneration: "أدخل نصاً لإنشاء القائمة!",
       regenerationInProgress: "إعادة الإنشاء قيد التقدم!",
       regenerationFailed: "فشلت إعادة الإنشاء!",
-      cannotEmbedEmbedded: "لا يمكن تضمين العنصر المضمن! المحتوى: {{content}}. يرجى إزالته قبل التضمين!",
+      cannotEmbedEmbedded:
+        "لا يمكن تضمين العنصر المضمن! المحتوى: {{content}}. يرجى إزالته قبل التضمين!",
 
       // Scripture Map 2D
       show: "إظهار",
@@ -1802,31 +1855,38 @@ const resources = {
       regenerate: "पुनः जनरेट करें",
       playlistSettings: "प्लेलिस्ट सेटिंग्स",
       publishSettings: "प्रकाशन सेटिंग्स",
-      publishSettingsDesc: "यदि सार्वजनिक है तो आपकी टिप्पणियां सभी के लिए उपलब्ध होंगी। निजी होने पर केवल आप एक्सेस कर सकते हैं।",
+      publishSettingsDesc:
+        "यदि सार्वजनिक है तो आपकी टिप्पणियां सभी के लिए उपलब्ध होंगी। निजी होने पर केवल आप एक्सेस कर सकते हैं।",
       privateAccess: "निजी पहुंच",
       publicAccess: "सार्वजनिक पहुंच",
       checklist: "चेकलिस्ट",
-      checklistTooltip: "चेकलिस्ट मोड आपको विज़िट किए गए आइटम्स को चेक करके अपनी प्रगति ट्रैक करने देता है।",
+      checklistTooltip:
+        "चेकलिस्ट मोड आपको विज़िट किए गए आइटम्स को चेक करके अपनी प्रगति ट्रैक करने देता है।",
       readingPlan: "पठन योजना",
-      readingPlanTooltip: "प्लान मोड आपको अपनी प्लेलिस्ट में तारीखें जोड़ने देता है जो तारीख के अनुसार प्रगति ट्रैक करता है।",
+      readingPlanTooltip:
+        "प्लान मोड आपको अपनी प्लेलिस्ट में तारीखें जोड़ने देता है जो तारीख के अनुसार प्रगति ट्रैक करता है।",
       revertToPrevious: "पिछले पर वापस जाएं",
       downloadJSON: "JSON डाउनलोड करें",
       copyOtherPlaylists: "अन्य प्लेलिस्ट कॉपी करें",
       noPlaylistsToShow: "दिखाने के लिए कोई प्लेलिस्ट नहीं।",
       noLayersToShow: "दिखाने के लिए कोई परत नहीं।",
       notEmbeddedItemsFound: "गैर-एम्बेडेड आइटम्स मिले",
-      notEmbeddedItemsMsg: "आपके कुछ आइटम्स एम्बेडेड नहीं हैं। परतों में सभी एम्बेडेड आइटम्स होने चाहिए।",
+      notEmbeddedItemsMsg:
+        "आपके कुछ आइटम्स एम्बेडेड नहीं हैं। परतों में सभी एम्बेडेड आइटम्स होने चाहिए।",
       removeAndSave: "हटाएं और सहेजें",
       copyItems: "आइटम्स कॉपी करें",
-      copyItemsInstructions: "वर्तमान प्लेलिस्ट में जोड़ने के लिए किसी भी प्लेलिस्ट को दबाए रखें।",
-      copyItemInstructions: "वर्तमान प्लेलिस्ट में जोड़ने के लिए किसी भी आइटम को दबाए रखें।",
+      copyItemsInstructions:
+        "वर्तमान प्लेलिस्ट में जोड़ने के लिए किसी भी प्लेलिस्ट को दबाए रखें।",
+      copyItemInstructions:
+        "वर्तमान प्लेलिस्ट में जोड़ने के लिए किसी भी आइटम को दबाए रखें।",
       embed: "एम्बेड करें",
       remove: "हटाएं",
       mergeMode: "मर्ज मोड",
       regenerationPrompt: "पुनर्जनन प्रॉम्प्ट:",
       describePlaylist: "आप जो प्लेलिस्ट बनाना चाहते हैं उसका वर्णन करें।",
       describeSystemPrompt: "अपना सिस्टम प्रॉम्प्ट वर्णित करें।",
-      systemPromptInfo: "अपने प्रारंभिक प्रॉम्प्ट को वेरिएबल के रूप में उपयोग करने के लिए $text$ का उपयोग करें।",
+      systemPromptInfo:
+        "अपने प्रारंभिक प्रॉम्प्ट को वेरिएबल के रूप में उपयोग करने के लिए $text$ का उपयोग करें।",
       addMedia: "मीडिया जोड़ें",
       insertDate: "तारीख डालें",
       searchAndAdd: "खोजें और जोड़ें",
@@ -1842,11 +1902,14 @@ const resources = {
       hereIsYourSharedPlaylist: "यह है आपकी साझा प्लेलिस्ट।",
       start: "शुरू करें",
       thisWillStopPlayingPlaylist: "इससे प्लेलिस्ट बजना बंद हो जाएगी।",
-      playlistCurrentlyPlayingConfirm: "एक प्लेलिस्ट वर्तमान में चल रही है। क्या आप इसे रोककर जारी रखना चाहते हैं?",
+      playlistCurrentlyPlayingConfirm:
+        "एक प्लेलिस्ट वर्तमान में चल रही है। क्या आप इसे रोककर जारी रखना चाहते हैं?",
       confirm: "पुष्टि करें",
       annotation: "एनोटेशन",
-      pleaseLoginToUseFeature: "कृपया इस सुविधा का उपयोग करने के लिए लॉगिन करें।",
-      addAnotherParallelPlaylist: "क्या आप एक और समानांतर प्लेलिस्ट जोड़ना चाहते हैं?",
+      pleaseLoginToUseFeature:
+        "कृपया इस सुविधा का उपयोग करने के लिए लॉगिन करें।",
+      addAnotherParallelPlaylist:
+        "क्या आप एक और समानांतर प्लेलिस्ट जोड़ना चाहते हैं?",
 
       // Discover chips
       all: "सभी",
@@ -1857,9 +1920,11 @@ const resources = {
 
       // AnnotationList
       deleteAnnotation: "एनोटेशन हटाएं",
-      deleteAnnotationConfirmation: "यह एनोटेशन और इसके सभी संस्करण स्थायी रूप से हटा दिए जाएंगे। यह क्रिया पूर्ववत नहीं की जा सकती! क्या आप वाकई इसे हटाना चाहते हैं?",
+      deleteAnnotationConfirmation:
+        "यह एनोटेशन और इसके सभी संस्करण स्थायी रूप से हटा दिए जाएंगे। यह क्रिया पूर्ववत नहीं की जा सकती! क्या आप वाकई इसे हटाना चाहते हैं?",
       annotationDeletedSuccessfully: "एनोटेशन सफलतापूर्वक हटाया गया!",
-      failedToDeleteAnnotation: "एनोटेशन हटाने में विफल। कृपया पुनः प्रयास करें!",
+      failedToDeleteAnnotation:
+        "एनोटेशन हटाने में विफल। कृपया पुनः प्रयास करें!",
       fetchingAnnotations: "एनोटेशन प्राप्त हो रहे हैं",
       noAnnotationsFound: "कोई एनोटेशन नहीं मिला।",
       showVersionHistory: "संस्करण इतिहास दिखाएं",
@@ -1891,13 +1956,16 @@ const resources = {
       reUploadFile: "पुनः अपलोड करें",
       saving: "सहेज रहा है..",
       howToCreateFromSheet: "Google स्प्रेडशीट से प्लेलिस्ट कैसे बनाएं",
-      sheetInstructions: "आप प्लेलिस्ट तेज़ी से बनाने के लिए Google स्प्रेडशीट का उपयोग कर सकते हैं।",
+      sheetInstructions:
+        "आप प्लेलिस्ट तेज़ी से बनाने के लिए Google स्प्रेडशीट का उपयोग कर सकते हैं।",
       abbreviationsInfo: "आप संक्षिप्त नाम या पुस्तक का नाम उपयोग कर सकते हैं।",
       spellCorrectly: "सुनिश्चित करें कि आप सही वर्तनी लिखें।",
       seeSampleList: "नमूना सूची देखें",
       rememberPublic: "अपनी प्लेलिस्ट को सार्वजनिक करना याद रखें।",
-      jsonInstructions: "आप प्लेलिस्ट तेज़ी से बनाने के लिए JSON फॉर्मेट का उपयोग कर सकते हैं।",
-      jsonDownloadInfo: "आप हमारे ऐप से डाउनलोड किए गए JSON फॉर्मेट का उपयोग कर सकते हैं।",
+      jsonInstructions:
+        "आप प्लेलिस्ट तेज़ी से बनाने के लिए JSON फॉर्मेट का उपयोग कर सकते हैं।",
+      jsonDownloadInfo:
+        "आप हमारे ऐप से डाउनलोड किए गए JSON फॉर्मेट का उपयोग कर सकते हैं।",
       seeSampleJSON: "नमूना JSON देखें",
       rememberJSONFormat: "दिए गए फॉर्मेट में JSON बनाना याद रखें।",
 
@@ -1916,12 +1984,14 @@ const resources = {
       noItemsYet: "अभी तक कोई आइटम नहीं, नीचे कुछ जोड़ें।",
       noDescription: "कोई विवरण नहीं",
       editPlaylistTitle: "प्लेलिस्ट संपादित करें",
-      editSharedPlaylistMsg: "इस साझा प्लेलिस्ट को केवल निर्माता ही संपादित कर सकता है।",
+      editSharedPlaylistMsg:
+        "इस साझा प्लेलिस्ट को केवल निर्माता ही संपादित कर सकता है।",
       makeACopy: "क्या आप एक कॉपी बनाना चाहेंगे?",
       yes: "हां",
       no: "नहीं",
       shareURLCopied: "शेयर URL क्लिपबोर्ड पर कॉपी हुआ।",
-      playlistShareError: "प्लेलिस्ट केवल प्रकाशित पैटर्न में साझा की जा सकती है। निर्यात करें।",
+      playlistShareError:
+        "प्लेलिस्ट केवल प्रकाशित पैटर्न में साझा की जा सकती है। निर्यात करें।",
       unableToCopy: "प्लेलिस्ट कॉपी नहीं हो सकी। पुनः प्रयास करें!",
       cannotMergeNested: "नेस्टेड प्लेलिस्ट मर्ज नहीं हो सकती!",
 
@@ -1945,11 +2015,13 @@ const resources = {
       layersShouldHaveTag: "परतों में कम से कम एक टैग होना चाहिए!",
       fillDescriptionForAuto: "ऑटो जनरेशन के लिए विवरण भरें!",
       couldntAutoFind: "दिए गए विवरण के लिए आइटम नहीं मिले!",
-      unableToGeneratePlaylist: "प्लेलिस्ट जनरेट नहीं हो सकी। पुनः प्रयास करें!",
+      unableToGeneratePlaylist:
+        "प्लेलिस्ट जनरेट नहीं हो सकी। पुनः प्रयास करें!",
       enterTextForGeneration: "प्लेलिस्ट जनरेशन के लिए टेक्स्ट दर्ज करें!",
       regenerationInProgress: "पुनर्जनन जारी है!",
       regenerationFailed: "पुनर्जनन विफल!",
-      cannotEmbedEmbedded: "एम्बेडेड आइटम को एम्बेड नहीं कर सकते! सामग्री: {{content}}। एम्बेड करने से पहले इसे हटाएं!",
+      cannotEmbedEmbedded:
+        "एम्बेडेड आइटम को एम्बेड नहीं कर सकते! सामग्री: {{content}}। एम्बेड करने से पहले इसे हटाएं!",
 
       // Scripture Map 2D
       show: "दिखाएं",
@@ -2080,7 +2152,8 @@ function getBrowserLanguage(): string {
   const supportedLangs = ["en", "es", "ar", "hi"];
 
   // Use navigator.language API
-  const browserLang = navigator.language || (navigator as any).userLanguage || "en";
+  const browserLang =
+    navigator.language || (navigator as any).userLanguage || "en";
 
   // Extract the primary language code (e.g., "en" from "en-US")
   const primaryLang = browserLang.split("-")[0].toLowerCase();

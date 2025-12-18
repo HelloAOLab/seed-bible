@@ -863,9 +863,7 @@ const Playlist = ({
           onClose={() => setLayersWarning(false)}
           showIcon={false}
         >
-          <h2 style={{ fontSize: "1rem" }}>
-            {t("notEmbeddedItemsMsg")}
-          </h2>
+          <h2 style={{ fontSize: "1rem" }}>{t("notEmbeddedItemsMsg")}</h2>
           <ButtonsCover>
             <Button
               secondary
@@ -979,13 +977,9 @@ const Playlist = ({
           showIcon={false}
           onClose={() => setOpenModal(false)}
         >
-          <p style={{ fontSize: "12px" }}>
-            {t("copyItemsInstructions")}
-          </p>
+          <p style={{ fontSize: "12px" }}>{t("copyItemsInstructions")}</p>
           <p style={{ textAlign: "center" }}> {t("or")} </p>
-          <p style={{ fontSize: "12px" }}>
-            {t("copyItemInstructions")}
-          </p>
+          <p style={{ fontSize: "12px" }}>{t("copyItemInstructions")}</p>
           <PlaylistList
             creatingPlaylist={creatingPlaylist}
             isLayers={isLayers}
@@ -1056,10 +1050,7 @@ const Playlist = ({
                   {t("checklist")}
                 </label>
               </div>
-              <Tooltip
-                forRight={true}
-                text={t("checklistTooltip")}
-              >
+              <Tooltip forRight={true} text={t("checklistTooltip")}>
                 <p
                   className="what-this center"
                   style={{ margin: "0 0 0 0.5rem" }}
@@ -1175,7 +1166,7 @@ const Playlist = ({
             {selectedChip["Shared"] && sharedFilterPlaylists.length === 0 ? (
               <>
                 <h3 style={{ margin: "0.5rem 0" }}>{t("sharedPlaylists")}</h3>
-                <p>{isLayers ? (t("noLayersToShow")) : (t("noPlaylistsToShow"))}</p>
+                <p>{isLayers ? t("noLayersToShow") : t("noPlaylistsToShow")}</p>
               </>
             ) : null}
             {(playingPlaylist ||
@@ -1582,9 +1573,7 @@ const Playlist = ({
                   />
                 )}
                 {currentPromptText === "system-prompt" && (
-                  <p className="info">
-                    {t("systemPromptInfo")}
-                  </p>
+                  <p className="info">{t("systemPromptInfo")}</p>
                 )}
                 <Select
                   hidden={true}
@@ -1675,8 +1664,8 @@ const Playlist = ({
                     animated_images
                   </span>
                   <span>
-                    {hasGenrated ? (t("regenerate")) : (t("generate"))}{" "}
-                    {isLayers ? (t("layers")) : (t("playlist"))}
+                    {hasGenrated ? t("regenerate") : t("generate")}{" "}
+                    {isLayers ? t("layers") : t("playlist")}
                   </span>
                 </p>
               )}
@@ -1802,9 +1791,7 @@ const Playlist = ({
                   />
                 )}
                 {currentPromptText === "system-prompt" && (
-                  <p className="info">
-                    {t("systemPromptInfo")}
-                  </p>
+                  <p className="info">{t("systemPromptInfo")}</p>
                 )}
               </div>
             )}
@@ -1837,8 +1824,7 @@ const Playlist = ({
                     if (autoGenerateOn) {
                       if (!genDetails) {
                         ShowNotification({
-                          message:
-                            t("enterTextForGeneration"),
+                          message: t("enterTextForGeneration"),
                           severity: "error",
                         });
                         return;
@@ -1860,8 +1846,7 @@ const Playlist = ({
                         if (!allItems?.length) {
                           setLoading(false);
                           ShowNotification({
-                            message:
-                              t("unableToGeneratePlaylist"),
+                            message: t("unableToGeneratePlaylist"),
                             severity: "error",
                           });
                           return;
@@ -1881,8 +1866,7 @@ const Playlist = ({
                       } catch (er) {
                         console.log("ERROR IN MAKING PLAYLIST: ", er);
                         ShowNotification({
-                          message:
-                            t("unableToGeneratePlaylist"),
+                          message: t("unableToGeneratePlaylist"),
                           severity: "error",
                         });
                         setLoading(false);
@@ -1903,7 +1887,11 @@ const Playlist = ({
                         animated_images
                       </span>
                       <span>
-                        {loading ? (t("generating")) : (isLayers ? (t("generateLayers")) : (t("generatePlaylist")))}
+                        {loading
+                          ? t("generating")
+                          : isLayers
+                            ? t("generateLayers")
+                            : t("generatePlaylist")}
                       </span>
                     </>
                   ) : (
@@ -1911,7 +1899,11 @@ const Playlist = ({
                       <span class="material-symbols-outlined unfollow">
                         playlist_add
                       </span>
-                      <span>{isLayers ? (t("createNewLayer")) : (t("createNewPlaylist"))}</span>
+                      <span>
+                        {isLayers
+                          ? t("createNewLayer")
+                          : t("createNewPlaylist")}
+                      </span>
                     </>
                   )}
                 </p>

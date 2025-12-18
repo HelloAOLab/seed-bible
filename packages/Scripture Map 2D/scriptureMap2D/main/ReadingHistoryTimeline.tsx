@@ -274,13 +274,19 @@ export const ReadingHistoryTimeline = () => {
               const hoursCount = Math.floor(
                 userTimeSpentSeconds / SEC_PER_HOUR
               );
-              fixedContent = hoursCount > 1 ? t("spentHours", { count: hoursCount }) : t("spentHour", { count: hoursCount });
+              fixedContent =
+                hoursCount > 1
+                  ? t("spentHours", { count: hoursCount })
+                  : t("spentHour", { count: hoursCount });
             } else {
               const minutesCount = Math.max(
                 1,
                 Math.floor(userTimeSpentSeconds / SEC_PER_MINUTE)
               );
-              fixedContent = minutesCount > 1 ? t("spentMinutes", { count: minutesCount }) : t("spentMinute", { count: minutesCount });
+              fixedContent =
+                minutesCount > 1
+                  ? t("spentMinutes", { count: minutesCount })
+                  : t("spentMinute", { count: minutesCount });
             }
             tooltipContent.push(
               <ReadingHistoryTooltipContent
@@ -303,17 +309,19 @@ export const ReadingHistoryTimeline = () => {
               const hoursCount = Math.floor(
                 extraTimeSpentSeconds / SEC_PER_HOUR
               );
-              extraActivityContent = hoursCount > 1
-                ? `+${extraUsers.length} ${t("spentHours", { count: hoursCount })}`
-                : `+${extraUsers.length} ${t("spentHour", { count: hoursCount })}`;
+              extraActivityContent =
+                hoursCount > 1
+                  ? `+${extraUsers.length} ${t("spentHours", { count: hoursCount })}`
+                  : `+${extraUsers.length} ${t("spentHour", { count: hoursCount })}`;
             } else {
               const minutesCount = Math.max(
                 1,
                 Math.floor(extraTimeSpentSeconds / SEC_PER_MINUTE)
               );
-              extraActivityContent = minutesCount > 1
-                ? `+${extraUsers.length} ${t("spentMinutes", { count: minutesCount })}`
-                : `+${extraUsers.length} ${t("spentMinute", { count: minutesCount })}`;
+              extraActivityContent =
+                minutesCount > 1
+                  ? `+${extraUsers.length} ${t("spentMinutes", { count: minutesCount })}`
+                  : `+${extraUsers.length} ${t("spentMinute", { count: minutesCount })}`;
             }
             tooltipContent.push(extraActivityContent);
           }

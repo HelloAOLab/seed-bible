@@ -304,9 +304,7 @@ const AddNewPlaylist = ({
         >
           {isActiveSheetImport ? (
             <>
-              <p style={{ fontSize: "12px" }}>
-                {t("sheetInstructions")}
-              </p>
+              <p style={{ fontSize: "12px" }}>{t("sheetInstructions")}</p>
               <br />
               <p style={{ fontSize: "12px" }}>
                 {t("abbreviationsInfo")}
@@ -329,13 +327,9 @@ const AddNewPlaylist = ({
             </>
           ) : (
             <>
-              <p style={{ fontSize: "12px" }}>
-                {t("jsonInstructions")}
-              </p>
+              <p style={{ fontSize: "12px" }}>{t("jsonInstructions")}</p>
               <br />
-              <p style={{ fontSize: "12px" }}>
-                {t("jsonDownloadInfo")}
-              </p>
+              <p style={{ fontSize: "12px" }}>{t("jsonDownloadInfo")}</p>
               <a
                 href="https://auth-aux-aobot-prod-filesbucket-141297942820.s3.amazonaws.com/tedcasca/433b8ec62a5ecb249ca4dacdd4707b2186e598b4b74c1fb6e690c875bc48cf92.json"
                 target="_blank"
@@ -370,7 +364,7 @@ const AddNewPlaylist = ({
             }}
           >
             <span class="material-symbols-outlined">keyboard_backspace</span>
-            <span>{editId ? (t("backToDiscover")) : (t("backToCreate"))}</span>
+            <span>{editId ? t("backToDiscover") : t("backToCreate")}</span>
           </div>
         </div>
         <h3>{t("enterDetailsBelow")}</h3>
@@ -461,7 +455,7 @@ const AddNewPlaylist = ({
                 }}
                 secondary
               >
-                {uploadedFileData.length ? (t("reUploadFile")) : (t("uploadFile"))}
+                {uploadedFileData.length ? t("reUploadFile") : t("uploadFile")}
               </Button>
             )}
           </>
@@ -766,7 +760,7 @@ const AddNewPlaylist = ({
           </div>
           <div style={{ flexGrow: "1" }}>
             <h4 style={{ margin: "0 0 0.5rem 0" }}>
-              {!isLayers ? (t("playlistName")) : (t("layerName"))}
+              {!isLayers ? t("playlistName") : t("layerName")}
             </h4>
             <Input
               value={name}
@@ -936,7 +930,11 @@ const AddNewPlaylist = ({
             }}
             secondary
           >
-            {loading ? (t("saving")) : isActiveTabManual() ? (t("save")) : (t("importTab"))}
+            {loading
+              ? t("saving")
+              : isActiveTabManual()
+                ? t("save")
+                : t("importTab")}
           </Button>
           <Button
             isDisabled={loading}

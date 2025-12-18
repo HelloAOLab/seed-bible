@@ -4,6 +4,8 @@ const config = {
   transformIgnorePatterns: ["/node_modules/.pnpm/(?!(uuid))"],
   moduleNameMapper: {
     "^@packages/(.*)$": "<rootDir>/packages/$1",
+    "^https:\\/\\/esm\\.helloao\\.org\\/vendor-\\w+\\.js$":
+      "<rootDir>/lib/vendor.ts",
   },
   testTimeout: 60000,
 };

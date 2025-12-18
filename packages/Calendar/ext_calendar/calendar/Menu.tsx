@@ -2,13 +2,22 @@ const { useSideBarContext } = await import("app.hooks.sideBar");
 
 const { createContext, useContext, useRef, useState, useEffect } = os.appHooks;
 
-const Menu = ({ onClose, setOpenEditModal, onDelete, position, groupValue, setGroupMenu, calendarView, calendarApi, setHiddenGroups, hiddenGroups, menuOpenForId }) => {
+const Menu = ({
+  onClose,
+  setOpenEditModal,
+  onDelete,
+  position,
+  groupValue,
+  setGroupMenu,
+  calendarView,
+  calendarApi,
+  setHiddenGroups,
+  hiddenGroups,
+  menuOpenForId,
+}) => {
   const { t } = useSideBarContext();
   const menuRef = useRef();
   const [hovered, setHovered] = useState(null);
-
-
-
 
   useEffect(() => {
     const handleClickOutside = (event) => {
@@ -17,8 +26,8 @@ const Menu = ({ onClose, setOpenEditModal, onDelete, position, groupValue, setGr
       }
     };
 
-    document.addEventListener('mousedown', handleClickOutside);
-    return () => document.removeEventListener('mousedown', handleClickOutside);
+    document.addEventListener("mousedown", handleClickOutside);
+    return () => document.removeEventListener("mousedown", handleClickOutside);
   }, [onClose]);
   useEffect(() => {
     const container = document.querySelector(".fc");
@@ -30,43 +39,35 @@ const Menu = ({ onClose, setOpenEditModal, onDelete, position, groupValue, setGr
         buttons.forEach((btn) => container.removeChild(btn));
       }
     }
-  },[calendarView]);
-
-
-
-
-
-
-
-
+  }, [calendarView]);
 
   return (
     <div
       ref={menuRef}
       style={{
-        fontFamily: 'Satoshi',
-        position: 'absolute',
-        right: position ? `` : '12px',
-        left: position ? hiddenGroups[groupValue] ? "24px" : '53px' : '',
+        fontFamily: "Satoshi",
+        position: "absolute",
+        right: position ? `` : "12px",
+        left: position ? (hiddenGroups[groupValue] ? "24px" : "53px") : "",
 
-        top: position ? `${position.top - 7}px` : '23px',
-        borderRadius: '10px',
-        padding: '4px 2px 4px 2px',
-        width: '80px',
-        backgroundColor: 'black',
-        color: 'white',
+        top: position ? `${position.top - 7}px` : "23px",
+        borderRadius: "10px",
+        padding: "4px 2px 4px 2px",
+        width: "80px",
+        backgroundColor: "black",
+        color: "white",
 
         zIndex: 1000,
       }}
     >
       <div
         style={{
-          display: 'flex',
-          flexDirection: 'column',
-          alignItems: 'flex-start',
-          gap: '5px',
-          color: 'white',
-          backgroundColor: 'black',
+          display: "flex",
+          flexDirection: "column",
+          alignItems: "flex-start",
+          gap: "5px",
+          color: "white",
+          backgroundColor: "black",
         }}
       >
         <div
@@ -74,28 +75,27 @@ const Menu = ({ onClose, setOpenEditModal, onDelete, position, groupValue, setGr
             setOpenEditModal(true);
             onClose();
           }}
-          onMouseEnter={() => setHovered('edit')}
+          onMouseEnter={() => setHovered("edit")}
           onMouseLeave={() => setHovered(null)}
           style={{
-            fontSize: '15px',
-            cursor: 'pointer',
-            borderRadius: '4px',
-            color: hovered === 'edit' ? 'black' : 'white',
+            fontSize: "15px",
+            cursor: "pointer",
+            borderRadius: "4px",
+            color: hovered === "edit" ? "black" : "white",
 
-
-            width: '100%',
-            borderRadius: '4px',
-            backgroundColor: hovered === 'edit' ? 'white' : 'transparent',
+            width: "100%",
+            borderRadius: "4px",
+            backgroundColor: hovered === "edit" ? "white" : "transparent",
           }}
         >
-          <span style={{ display: 'flex', alignItems: 'center', gap: '6px' }}>
+          <span style={{ display: "flex", alignItems: "center", gap: "6px" }}>
             <svg
               xmlns="http://www.w3.org/2000/svg"
               width="15"
               height="15"
               viewBox="0 0 20 20"
               fill="none"
-              stroke={hovered === 'edit' ? "black" : 'white'}
+              stroke={hovered === "edit" ? "black" : "white"}
             >
               <path
                 d="M9.99992 6.66611L3.33325 13.3328V16.6661L6.66659 16.6661L13.3332 9.99944M9.99992 6.66611L12.3904 4.27557L12.3919 4.27415C12.7209 3.94508 12.8858 3.78026 13.0758 3.71852C13.2431 3.66414 13.4235 3.66414 13.5908 3.71852C13.7807 3.78021 13.9453 3.94485 14.2739 4.27345L15.7238 5.72328C16.0538 6.0533 16.2189 6.21838 16.2807 6.40865C16.3351 6.57602 16.335 6.75631 16.2807 6.92368C16.2189 7.11382 16.054 7.27865 15.7245 7.60819L15.7238 7.6089L13.3332 9.99944M9.99992 6.66611L13.3332 9.99944"
@@ -108,28 +108,27 @@ const Menu = ({ onClose, setOpenEditModal, onDelete, position, groupValue, setGr
           </span>
         </div>
 
-
         <div
           onClick={() => {
-            onDelete(groupValue || '')
-            onClose()
+            onDelete(groupValue || "");
+            onClose();
           }}
-          onMouseEnter={() => setHovered('delete')}
+          onMouseEnter={() => setHovered("delete")}
           onMouseLeave={() => setHovered(null)}
           style={{
-            fontSize: '15px',
-            cursor: 'pointer',
-            borderRadius: '4px',
-            color: hovered === 'delete' ? 'black' : 'white',
+            fontSize: "15px",
+            cursor: "pointer",
+            borderRadius: "4px",
+            color: hovered === "delete" ? "black" : "white",
 
-            width: '100%',
-            borderRadius: '4px',
-            backgroundColor: hovered === 'delete' ? 'white' : 'transparent',
+            width: "100%",
+            borderRadius: "4px",
+            backgroundColor: hovered === "delete" ? "white" : "transparent",
           }}
         >
-          <span style={{ display: 'flex', alignItems: 'center', gap: '6px' }}>
+          <span style={{ display: "flex", alignItems: "center", gap: "6px" }}>
             <svg
-              stroke={hovered === 'delete' ? 'black' : 'white'}
+              stroke={hovered === "delete" ? "black" : "white"}
               fill="currentColor"
               strokeWidth="0"
               viewBox="0 0 24 24"
@@ -146,7 +145,7 @@ const Menu = ({ onClose, setOpenEditModal, onDelete, position, groupValue, setGr
             {t("delete")}
           </span>
         </div>
-        {!menuOpenForId ?
+        {!menuOpenForId ? (
           <div
             onClick={() => {
               const groups = document.querySelectorAll(".fc-resource-group");
@@ -170,7 +169,7 @@ const Menu = ({ onClose, setOpenEditModal, onDelete, position, groupValue, setGr
                       btn.id = `collapsed-btn-${label}`;
                       btn.style.background = "transparent";
                       btn.style.border = "none";
-                      btn.style.position = 'fixed';
+                      btn.style.position = "fixed";
                       btn.style.cursor = "pointer";
 
                       btn.style.padding = "2px";
@@ -200,8 +199,7 @@ const Menu = ({ onClose, setOpenEditModal, onDelete, position, groupValue, setGr
 
                       // ✅ attach to the first "room" (expander) of this group only
 
-                      document.querySelector('.fc').appendChild(btn);
-
+                      document.querySelector(".fc").appendChild(btn);
                     }
                   } else {
                     // show this group again
@@ -209,7 +207,9 @@ const Menu = ({ onClose, setOpenEditModal, onDelete, position, groupValue, setGr
                     group.style.height = "100%";
 
                     // remove the button if it exists
-                    const btn = document.querySelector(`#collapsed-btn-${label}`);
+                    const btn = document.querySelector(
+                      `#collapsed-btn-${label}`
+                    );
                     if (btn) {
                       btn.remove();
                     }
@@ -230,28 +230,42 @@ const Menu = ({ onClose, setOpenEditModal, onDelete, position, groupValue, setGr
 
               onClose();
             }}
-
-            onMouseEnter={() => setHovered('hide')}
+            onMouseEnter={() => setHovered("hide")}
             onMouseLeave={() => setHovered(null)}
             style={{
-              fontSize: '15px',
-              cursor: 'pointer',
-              borderRadius: '4px',
-              color: hovered === 'hide' ? 'black' : 'white',
+              fontSize: "15px",
+              cursor: "pointer",
+              borderRadius: "4px",
+              color: hovered === "hide" ? "black" : "white",
 
-              width: '100%',
-              borderRadius: '4px',
-              backgroundColor: hovered === 'hide' ? 'white' : 'transparent',
+              width: "100%",
+              borderRadius: "4px",
+              backgroundColor: hovered === "hide" ? "white" : "transparent",
             }}
           >
-            <span style={{ display: 'flex', alignItems: 'center', gap: '6px' }}>
-              {hiddenGroups[groupValue] ? <svg width="16" height="16" viewBox="0 0 24 24" xmlns="http://www.w3.org/2000/svg" aria-hidden="true">
-                <title>Show</title>
-                <path d="M2 12s4-7 10-7 10 7 10 7-4 7-10 7S2 12 2 12z" stroke={hovered === 'hide' ? 'black' : 'white'} stroke-width="1.25" fill="none" stroke-linecap="round" stroke-linejoin="round" />
-                <circle cx="12" cy="12" r="2.5" fill="currentColor" />
-              </svg>
-                : <svg
-                  stroke={hovered === 'hide' ? 'black' : 'white'}
+            <span style={{ display: "flex", alignItems: "center", gap: "6px" }}>
+              {hiddenGroups[groupValue] ? (
+                <svg
+                  width="16"
+                  height="16"
+                  viewBox="0 0 24 24"
+                  xmlns="http://www.w3.org/2000/svg"
+                  aria-hidden="true"
+                >
+                  <title>Show</title>
+                  <path
+                    d="M2 12s4-7 10-7 10 7 10 7-4 7-10 7S2 12 2 12z"
+                    stroke={hovered === "hide" ? "black" : "white"}
+                    stroke-width="1.25"
+                    fill="none"
+                    stroke-linecap="round"
+                    stroke-linejoin="round"
+                  />
+                  <circle cx="12" cy="12" r="2.5" fill="currentColor" />
+                </svg>
+              ) : (
+                <svg
+                  stroke={hovered === "hide" ? "black" : "white"}
                   fill="currentColor"
                   strokeWidth="0"
                   viewBox="0 0 24 24"
@@ -260,12 +274,14 @@ const Menu = ({ onClose, setOpenEditModal, onDelete, position, groupValue, setGr
                   xmlns="http://www.w3.org/2000/svg"
                 >
                   <path d="M12 5c-7.633 0-11 7-11 7s1.753 3.41 5.247 5.438l-2.707 2.707 1.414 1.414 16.97-16.97-1.414-1.414-2.717 2.717C16.65 6.383 14.415 5 12 5zm0 2c1.635 0 3.118.802 4.373 1.908l-1.461 1.461A3.99 3.99 0 0 0 12 9c-1.654 0-3 1.346-3 3 0 .739.268 1.414.708 1.938l-1.462 1.462A5.985 5.985 0 0 1 6 12c0-3.309 2.691-6 6-6zm0 10c-1.64 0-3.122-.8-4.374-1.906l1.463-1.463A3.99 3.99 0 0 0 12 15c1.654 0 3-1.346 3-3 0-.737-.266-1.41-.705-1.934l1.461-1.461A5.978 5.978 0 0 1 18 12c0 3.309-2.691 6-6 6z" />
-                </svg>}
+                </svg>
+              )}
               {hiddenGroups[groupValue] ? t("show") : t("hide")}
-
-
             </span>
-          </div> : ''}
+          </div>
+        ) : (
+          ""
+        )}
       </div>
     </div>
   );

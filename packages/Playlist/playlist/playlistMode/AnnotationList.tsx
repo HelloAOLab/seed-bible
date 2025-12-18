@@ -291,11 +291,7 @@ const AnnodataMapper = ({ data }) => {
                 }`}
               >
                 <div>
-                  {contentData.type === "heading" ? (
-                    <RenderHTMLContent htmlContent={contentData.content} />
-                  ) : (
-                    contentData.content
-                  )}
+                  <RenderHTMLContent htmlContent={contentData.content} />
                 </div>
               </div>
             )}

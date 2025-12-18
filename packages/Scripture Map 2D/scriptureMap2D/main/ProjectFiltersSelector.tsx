@@ -20,40 +20,43 @@ export const ProjectFiltersSelector = () => {
     });
   }, [projectFilters]);
 
-  const getOptionContent = useCallback((key) => {
-    let title;
+  const getOptionContent = useCallback(
+    (key) => {
+      let title;
 
-    switch (key) {
-      case ProjectChapterState.Assigned:
-        title = t("stateAssigned");
-        break;
-      case ProjectChapterState.InProgress:
-        title = t("stateInProgress");
-        break;
-      case ProjectChapterState.NeedsReview:
-        title = t("stateNeedsReview");
-        break;
-      case ProjectChapterState.Completed:
-        title = t("stateCompleted");
-        break;
-      default:
-        throw new Error("Not found key", { key });
-    }
+      switch (key) {
+        case ProjectChapterState.Assigned:
+          title = t("stateAssigned");
+          break;
+        case ProjectChapterState.InProgress:
+          title = t("stateInProgress");
+          break;
+        case ProjectChapterState.NeedsReview:
+          title = t("stateNeedsReview");
+          break;
+        case ProjectChapterState.Completed:
+          title = t("stateCompleted");
+          break;
+        default:
+          throw new Error("Not found key", { key });
+      }
 
-    const style = projectStateStyle[key];
+      const style = projectStateStyle[key];
 
-    return [
-      <div
-        style={{
-          backgroundColor: style.backgroundColor,
-          borderStyle: style.borderStyle,
-          borderColor: style.borderColor,
-        }}
-        className="filter-option-icon"
-      ></div>,
-      title,
-    ];
-  }, [t]);
+      return [
+        <div
+          style={{
+            backgroundColor: style.backgroundColor,
+            borderStyle: style.borderStyle,
+            borderColor: style.borderColor,
+          }}
+          className="filter-option-icon"
+        ></div>,
+        title,
+      ];
+    },
+    [t]
+  );
 
   return (
     <div className="project-filters-selector">

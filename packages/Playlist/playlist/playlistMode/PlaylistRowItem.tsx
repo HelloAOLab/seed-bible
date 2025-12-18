@@ -291,8 +291,7 @@ const PlaylistRowItem = ({
   const copyClipBoard = async () => {
     if (!configBot.tags.pattern) {
       return ShowNotification({
-        message:
-          t("playlistShareError"),
+        message: t("playlistShareError"),
         severity: "error",
       });
     }
@@ -559,7 +558,7 @@ const PlaylistRowItem = ({
             >
               <b style={{ textAlign: "left" }}>{name}</b>
               <p style={{ textAlign: "left" }}>
-                {description || (t("noDescription"))}
+                {description || t("noDescription")}
               </p>
             </div>
 
@@ -711,14 +710,12 @@ const PlaylistRowItem = ({
                 check_circle
               </span>
               <span>
-                {checklistEnabled ? (t("checklistEnabled")) : (t("planEnabled"))}
+                {checklistEnabled ? t("checklistEnabled") : t("planEnabled")}
               </span>
             </p>
           )}
           {list?.length === 0 && (
-            <h4 style={{ margin: "8px 0" }}>
-              {t("noItemsYet")}
-            </h4>
+            <h4 style={{ margin: "8px 0" }}>{t("noItemsYet")}</h4>
           )}
           {opendedList && (
             <DragDrop

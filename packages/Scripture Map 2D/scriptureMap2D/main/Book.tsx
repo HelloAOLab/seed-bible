@@ -177,12 +177,18 @@ export const Book = memo(
                 const hoursCount = Math.floor(
                   userReadingTimeSeconds / SEC_PER_HOUR
                 );
-                fixedContent = hoursCount > 1 ? t("spentHours", { count: hoursCount }) : t("spentHour", { count: hoursCount });
+                fixedContent =
+                  hoursCount > 1
+                    ? t("spentHours", { count: hoursCount })
+                    : t("spentHour", { count: hoursCount });
               } else {
                 const minutesCount = Math.floor(
                   userReadingTimeSeconds / SEC_PER_MINUTE
                 );
-                fixedContent = minutesCount > 1 ? t("spentMinutes", { count: minutesCount }) : t("spentMinute", { count: minutesCount });
+                fixedContent =
+                  minutesCount > 1
+                    ? t("spentMinutes", { count: minutesCount })
+                    : t("spentMinute", { count: minutesCount });
               }
 
               tooltipContent.push(
@@ -227,15 +233,24 @@ export const Book = memo(
                 let fixedContent;
                 if (recencySeconds >= SEC_PER_DAY) {
                   const daysCount = Math.floor(recencySeconds / SEC_PER_DAY);
-                  fixedContent = daysCount > 1 ? t("readDaysAgo", { count: daysCount }) : t("readDayAgo", { count: daysCount });
+                  fixedContent =
+                    daysCount > 1
+                      ? t("readDaysAgo", { count: daysCount })
+                      : t("readDayAgo", { count: daysCount });
                 } else if (recencySeconds >= SEC_PER_HOUR) {
                   const hoursCount = Math.floor(recencySeconds / SEC_PER_HOUR);
-                  fixedContent = hoursCount > 1 ? t("readHoursAgo", { count: hoursCount }) : t("readHourAgo", { count: hoursCount });
+                  fixedContent =
+                    hoursCount > 1
+                      ? t("readHoursAgo", { count: hoursCount })
+                      : t("readHourAgo", { count: hoursCount });
                 } else {
                   const minutesCount = Math.floor(
                     recencySeconds / SEC_PER_MINUTE
                   );
-                  fixedContent = minutesCount > 1 ? t("readMinutesAgo", { count: minutesCount }) : t("readMinuteAgo", { count: minutesCount });
+                  fixedContent =
+                    minutesCount > 1
+                      ? t("readMinutesAgo", { count: minutesCount })
+                      : t("readMinuteAgo", { count: minutesCount });
                 }
                 tooltipContent.push(
                   <ReadingHistoryTooltipContent
@@ -375,12 +390,18 @@ export const Book = memo(
                     const hoursCount = Math.floor(
                       userReadingTimeSeconds / SEC_PER_HOUR
                     );
-                    fixedContent = hoursCount > 1 ? t("spentHours", { count: hoursCount }) : t("spentHour", { count: hoursCount });
+                    fixedContent =
+                      hoursCount > 1
+                        ? t("spentHours", { count: hoursCount })
+                        : t("spentHour", { count: hoursCount });
                   } else {
                     const minutesCount = Math.floor(
                       userReadingTimeSeconds / SEC_PER_MINUTE
                     );
-                    fixedContent = minutesCount > 1 ? t("spentMinutes", { count: minutesCount }) : t("spentMinute", { count: minutesCount });
+                    fixedContent =
+                      minutesCount > 1
+                        ? t("spentMinutes", { count: minutesCount })
+                        : t("spentMinute", { count: minutesCount });
                   }
 
                   tooltipContent.push(
@@ -431,17 +452,26 @@ export const Book = memo(
                       const daysCount = Math.floor(
                         recencySeconds / SEC_PER_DAY
                       );
-                      fixedContent = daysCount > 1 ? t("readDaysAgo", { count: daysCount }) : t("readDayAgo", { count: daysCount });
+                      fixedContent =
+                        daysCount > 1
+                          ? t("readDaysAgo", { count: daysCount })
+                          : t("readDayAgo", { count: daysCount });
                     } else if (recencySeconds >= SEC_PER_HOUR) {
                       const hoursCount = Math.floor(
                         recencySeconds / SEC_PER_HOUR
                       );
-                      fixedContent = hoursCount > 1 ? t("readHoursAgo", { count: hoursCount }) : t("readHourAgo", { count: hoursCount });
+                      fixedContent =
+                        hoursCount > 1
+                          ? t("readHoursAgo", { count: hoursCount })
+                          : t("readHourAgo", { count: hoursCount });
                     } else {
                       const minutesCount = Math.floor(
                         recencySeconds / SEC_PER_MINUTE
                       );
-                      fixedContent = minutesCount > 1 ? t("readMinutesAgo", { count: minutesCount }) : t("readMinuteAgo", { count: minutesCount });
+                      fixedContent =
+                        minutesCount > 1
+                          ? t("readMinutesAgo", { count: minutesCount })
+                          : t("readMinuteAgo", { count: minutesCount });
                     }
                     tooltipContent.push(
                       <ReadingHistoryTooltipContent
