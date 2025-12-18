@@ -2,6 +2,7 @@ os.unregisterApp("playlist-cont-ui");
 os.registerApp("playlist-cont-ui");
 import { getUserRecord, loadAnnotations } from "db.annotations.library";
 import { ProjectProvider } from "playlist.playlistMode.useProjectContext";
+const { useSideBarContext } = await import("app.hooks.sideBar");
 const RenderIcon = await thisBot.RenderIcon();
 import { MenuIcon } from "app.components.icons";
 const { useState, useLayoutEffect, useMemo, useRef, useCallback } = os.appHooks;
@@ -88,6 +89,7 @@ const GetLabel = ({ value, currentOpenedBook, thisBot }) => {
 };
 
 const Playlist = () => {
+  const { t } = useSideBarContext();
   const IsPlaylistPlaying = globalThis.IsPlaylistPlaying;
 
   const [createOptions, setCreateOptions] = useState(false);
@@ -255,7 +257,7 @@ const Playlist = () => {
   const buttonConfigs = useMemo(
     () => [
       {
-        label: "Discover",
+        label: t("discover"),
         value: "discover",
         onClick: () => {
           setTab("discover");
@@ -263,7 +265,7 @@ const Playlist = () => {
         icon: "explore",
       },
       {
-        label: "Create",
+        label: t("create"),
         value: "create",
         onClick: () => {
           setTab("create");
@@ -281,7 +283,7 @@ const Playlist = () => {
       //     icon: "collections_bookmark",
       // }
     ],
-    [setTab, playingPlaylist]
+    [setTab, playingPlaylist, t]
   );
 
   //   <button onClick={() => {
@@ -346,8 +348,7 @@ const Playlist = () => {
           let allAnnotations = [];
 
           annotations.forEach((ele) => {
-            
-            if(ele.data.type === 'comment' && ele.verseNumber) {
+            if (ele.data.type === "comment" && ele.verseNumber) {
               const booksDetails = globalThis.findNameRank(ele.bookId);
               const anoItem = {
                 type: "heading",
@@ -371,16 +372,18 @@ const Playlist = () => {
               data.tags = [];
               data.address = ele.id;
               allAnnotations.push(data);
-            } else if (ele.data.type !== 'comment') { 
-
+            } else if (ele.data.type !== "comment") {
               const data = {
                 bookid: currentOpenedBook?.bookId,
                 chapter: currentOpenedBook?.chapter,
               };
               const innerele = ele?.data?.data;
 
-              if(innerele) {
-                if (!!innerele.additionalInfo && !!innerele.additionalInfo.layers) {
+              if (innerele) {
+                if (
+                  !!innerele.additionalInfo &&
+                  !!innerele.additionalInfo.layers
+                ) {
                   const tags = [...(ele.data.chronicle_tags || [])];
                   const layers = [...innerele.additionalInfo.layers];
                   if (innerele?.type === "chapter") {
@@ -409,9 +412,7 @@ const Playlist = () => {
                   allAnnotations.push(data);
                 }
               }
-
             }
-            
           });
           // allAnnotations = allAnnotations.sort(sortFunc);
           setFetchingAnnotation(false);
@@ -617,7 +618,7 @@ const Playlist = () => {
       {!!playlistSharerName && (
         <Modal
           sxContainer={{ width: "460px" }}
-          title="Welcome to Seed Bible"
+          title={t("welcomeToSeedBible")}
           showIcon={false}
           onClose={onCloseSharPlaylistModal}
         >
@@ -637,10 +638,10 @@ const Playlist = () => {
               {!!playlistSharerName ? (
                 <p>
                   {" "}
-                  <b>{playlistSharerName}</b> shared a playlist.
+                  <b>{playlistSharerName}</b> {t("sharedAPlaylist")}
                 </p>
               ) : (
-                <p>Here is your shared playlist.</p>
+                <p>{t("hereIsYourSharedPlaylist")}</p>
               )}
             </div>
             <div
@@ -689,7 +690,7 @@ const Playlist = () => {
                 globalThis.hasASharedPlaylist = false;
               }}
             >
-              Start
+              {t("start")}
             </Button>
           </div>
         </Modal>
@@ -697,10 +698,10 @@ const Playlist = () => {
 
       {stopPlaylistModal && (
         <Modal showIcon={false} onClose={closeConfirmStopPlaylist}>
-          <h2 style={{ fontSize: "1rem" }}>This will stop playing playlist.</h2>
-          <p>
-            A playlist is currently playing. Do you want to stop it to continue?
-          </p>
+          <h2 style={{ fontSize: "1rem" }}>
+            {t("thisWillStopPlayingPlaylist")}
+          </h2>
+          <p>{t("playlistCurrentlyPlayingConfirm")}</p>
           <ButtonsCover>
             <Button
               secondary
@@ -717,10 +718,10 @@ const Playlist = () => {
               }}
               variant="black"
             >
-              Confirm
+              {t("confirm")}
             </Button>
             <Button secondaryAlt onClick={closeConfirmStopPlaylist}>
-              No
+              {t("no")}
             </Button>
           </ButtonsCover>
         </Modal>
@@ -759,7 +760,7 @@ const Playlist = () => {
                 <span
                   style={{ fontFamily: `"Satoshi", system-ui, sans-serif` }}
                 >
-                  Playlist
+                  {t("playlist")}
                 </span>
               </div>
             </div>
@@ -769,7 +770,7 @@ const Playlist = () => {
                 // if not login show notification
                 if (!authBot?.id) {
                   return ShowNotification({
-                    message: "Please login to use this feature.",
+                    message: t("pleaseLoginToUseFeature"),
                     severity: "error",
                   });
                 }
@@ -787,7 +788,7 @@ const Playlist = () => {
                 <span
                   style={{ fontFamily: `"Satoshi", system-ui, sans-serif` }}
                 >
-                  Annotation
+                  {t("annotation")}
                 </span>
               </div>
             </div>
@@ -831,13 +832,15 @@ const Playlist = () => {
             {openModal && (
               <Modal onClose={() => setOpenModal(false)}>
                 <h2 style={{ fontSize: "1rem" }}>
-                  Do you want to add another Parallel Playlist?
+                  {t("addAnotherParallelPlaylist")}
                 </h2>
                 <ButtonsCover>
                   <Button onClick={() => onAddPlaylist()} varient="black">
-                    Yes
+                    {t("yes")}
                   </Button>
-                  <Button onClick={() => setOpenModal(false)}>Close</Button>
+                  <Button onClick={() => setOpenModal(false)}>
+                    {t("close")}
+                  </Button>
                 </ButtonsCover>
               </Modal>
             )}
@@ -938,7 +941,7 @@ const Playlist = () => {
                           >
                             add
                           </span>
-                          Create
+                          {t("create")}
                         </Button>
                       </div>
                     )}
@@ -957,7 +960,7 @@ const Playlist = () => {
                         <h4 style={{ marginLeft: "1rem", fontWeight: "500" }}>
                           <b>{editData.name}</b>
                           <p style={{ textAlign: "left" }}>
-                            {editData.description || "No description"}
+                            {editData.description || t("noDescription")}
                           </p>
                         </h4>
                       </div>

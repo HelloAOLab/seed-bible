@@ -1,6 +1,9 @@
+const { useSideBarContext } = await import("app.hooks.sideBar");
+
 const { useState } = os.appHooks;
 
-const GoToCalendar = ({ calendarApi ,calendarView,setCalendarView}) => {
+const GoToCalendar = ({ calendarApi, calendarView, setCalendarView }) => {
+  const { t } = useSideBarContext();
   const [hover, setHover] = useState(false);
 
   return (
@@ -13,12 +16,11 @@ const GoToCalendar = ({ calendarApi ,calendarView,setCalendarView}) => {
       onMouseEnter={() => setHover(true)}
       onMouseLeave={() => setHover(false)}
     >
-    
       {hover && (
         <div
           style={{
             position: "absolute",
-            top: "20px", 
+            top: "20px",
             left: "50%",
             transform: "translateX(-50%)",
             backgroundColor: "black",
@@ -30,13 +32,14 @@ const GoToCalendar = ({ calendarApi ,calendarView,setCalendarView}) => {
             zIndex: 10,
           }}
         >
-          Go to Calendar
+          {t("goToCalendar")}
         </div>
       )}
 
       <button
-        onClick={() => {calendarApi.current.changeView("dayGridMonth") 
-        setCalendarView('dayGridMonth')
+        onClick={() => {
+          calendarApi.current.changeView("dayGridMonth");
+          setCalendarView("dayGridMonth");
         }}
         style={{
           outline: "none",
@@ -54,7 +57,6 @@ const GoToCalendar = ({ calendarApi ,calendarView,setCalendarView}) => {
           height="18"
           role="img"
           aria-label="Calendar grid"
-          
           viewBox="0 0 24 24"
           fill="none"
           stroke="currentColor"

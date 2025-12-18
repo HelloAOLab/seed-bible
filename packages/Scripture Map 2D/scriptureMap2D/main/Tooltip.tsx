@@ -1,8 +1,11 @@
 import { useReadingHistoryContext } from "scriptureMap2D.main.ReadingHistoryContext";
 
+const { useSideBarContext } = await import("app.hooks.sideBar");
+
 const { useRef, useState, useLayoutEffect, useMemo } = os.appHooks;
 
 export const UserPresenceTooltipContent = ({ colors }) => {
+  const { t } = useSideBarContext();
   return (
     <span className="user-presence-tooltip-content">
       <div>
@@ -28,17 +31,18 @@ export const UserPresenceTooltipContent = ({ colors }) => {
           </div>
         )}
       </div>
-      <span>reading now</span>
+      <span>{t("readingNow")}</span>
     </span>
   );
 };
 
 export const ReadingHistoryTooltipContent = ({ userId, fixedContent }) => {
+  const { t } = useSideBarContext();
   const { myAuthBotId } = useReadingHistoryContext();
 
   const { userName, backgroundColor, color } = useMemo(() => {
     const isMe = userId === myAuthBotId;
-    const userName = isMe ? "You" : "Guest";
+    const userName = isMe ? t("you") : t("guest");
     const backgroundColor = isMe
       ? BibleVizUtils.Data.tags.myUserColor
       : (BibleVizUtils.Data.vars.userPresenceData?.[userId]?.user?.color ??
@@ -49,7 +53,7 @@ export const ReadingHistoryTooltipContent = ({ userId, fixedContent }) => {
     });
 
     return { userName, backgroundColor, color };
-  }, []);
+  }, [t]);
 
   return (
     <span className="readingHistoryTooltipContent">

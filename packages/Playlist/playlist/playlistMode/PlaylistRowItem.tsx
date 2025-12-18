@@ -1,6 +1,8 @@
 const { useState, useLayoutEffect, useRef, useMemo } = os.appHooks;
 const { Checkbox, LoaderSecondary, Modal, ButtonsCover, Button } = Components;
 
+const { useSideBarContext } = await import("app.hooks.sideBar");
+
 const CircleProgress = await thisBot.DynamicCircle();
 const RenderIcon = await thisBot.RenderIcon();
 
@@ -138,6 +140,7 @@ const PlaylistRowItem = ({
   isLayers,
   access,
 }) => {
+  const { t } = useSideBarContext();
   const isCustomIcons = icon?.startsWith("https") || isCustomIcon;
   const [warningMessage, setWarningMsg] = useState(null);
   const [showMoreOptions, setShowMoreOptions] = useState(false);
@@ -288,8 +291,7 @@ const PlaylistRowItem = ({
   const copyClipBoard = async () => {
     if (!configBot.tags.pattern) {
       return ShowNotification({
-        message:
-          "Playlist Can only be shared in published pattern. Please try export.",
+        message: t("playlistShareError"),
         severity: "error",
       });
     }
@@ -351,14 +353,14 @@ const PlaylistRowItem = ({
         setShowMoreOptions(false);
         setCopyURL(shareURL);
         ShowNotification({
-          message: "Share URL Copied to textboard.",
+          message: t("shareURLCopied"),
           severity: "success",
         });
         setLoading(false);
       })
       .catch(() => {
         ShowNotification({
-          message: "Unable to copy playlist. Please try again!",
+          message: t("unableToCopy"),
           severity: "error",
         });
         setLoading(false);
@@ -445,12 +447,12 @@ const PlaylistRowItem = ({
     <>
       {!!warningMessage && (
         <Modal
-          title="Edit playist"
+          title={t("editPlaylistTitle")}
           showIcon={false}
           onClose={onCloseWarningPopup}
         >
-          <p>Only the creator of this shared playlist can edit this.</p>
-          <p> Would you like to make a copy?</p>
+          <p>{t("editSharedPlaylistMsg")}</p>
+          <p>{t("makeACopy")}</p>
           <ButtonsCover>
             <Button
               secondary
@@ -459,10 +461,10 @@ const PlaylistRowItem = ({
                 setWarningMsg(null);
               }}
             >
-              Yes
+              {t("yes")}
             </Button>
             <Button secondaryAlt onClick={onCloseWarningPopup}>
-              No
+              {t("no")}
             </Button>
           </ButtonsCover>
         </Modal>
@@ -556,7 +558,7 @@ const PlaylistRowItem = ({
             >
               <b style={{ textAlign: "left" }}>{name}</b>
               <p style={{ textAlign: "left" }}>
-                {description || "No description"}
+                {description || t("noDescription")}
               </p>
             </div>
 
@@ -600,7 +602,7 @@ const PlaylistRowItem = ({
               onClick={() => {
                 os.setClipboard(copyURL);
                 ShowNotification({
-                  message: "Share URL Copied to textboard.",
+                  message: t("shareURLCopied"),
                   severity: "success",
                 });
               }}
@@ -684,7 +686,7 @@ const PlaylistRowItem = ({
                     color: "#139981",
                   }}
                 >
-                  Now Playing
+                  {t("nowPlaying")}
                 </span>
               </>
             )
@@ -708,14 +710,12 @@ const PlaylistRowItem = ({
                 check_circle
               </span>
               <span>
-                {checklistEnabled ? "Checklist Enabled" : "Plan Enabled"}
+                {checklistEnabled ? t("checklistEnabled") : t("planEnabled")}
               </span>
             </p>
           )}
           {list?.length === 0 && (
-            <h4 style={{ margin: "8px 0" }}>
-              No items yet, add something below.
-            </h4>
+            <h4 style={{ margin: "8px 0" }}>{t("noItemsYet")}</h4>
           )}
           {opendedList && (
             <DragDrop
@@ -795,7 +795,7 @@ const PlaylistRowItem = ({
                     setShowMoreOptions(false);
                   }}
                 >
-                  <p>Rename Playlist</p>
+                  <p>{t("renamePlaylist")}</p>
                 </div>
                 <div
                   className="more-menu-items"
@@ -827,7 +827,7 @@ const PlaylistRowItem = ({
                     setShowMoreOptions(false);
                   }}
                 >
-                  <p>Edit Playlist</p>
+                  <p>{t("editPlaylist")}</p>
                 </div>
               </>
             )}
@@ -838,7 +838,7 @@ const PlaylistRowItem = ({
                 setShowMoreOptions(false);
               }}
             >
-              <p>Duplicate Playlist</p>
+              <p>{t("duplicatePlaylist")}</p>
             </div>
             <div
               className="more-menu-items"
@@ -847,10 +847,10 @@ const PlaylistRowItem = ({
                 setShowMoreOptions(false);
               }}
             >
-              <p>Download Playlist JSON</p>
+              <p>{t("downloadPlaylistJSON")}</p>
             </div>
             <div className="more-menu-items" onClick={copyClipBoard}>
-              <p>Share Playlist</p>
+              <p>{t("sharePlaylist")}</p>
             </div>
             {!creatingPlaylist && !viewOnly && !isPlayingPLaylist && (
               <div
@@ -861,7 +861,7 @@ const PlaylistRowItem = ({
                   setShowMoreOptions(false);
                 }}
               >
-                <p>Delete </p>
+                <p>{t("delete")}</p>
               </div>
             )}
             {!creatingPlaylist &&
@@ -874,7 +874,7 @@ const PlaylistRowItem = ({
                     exportNestedList();
                   }}
                 >
-                  <p>Export Outside</p>
+                  <p>{t("exportOutside")}</p>
                   <span
                     class="material-symbols-outlined unfollow"
                     style={{ ...ButtonStyle, fontSize: "22px" }}
@@ -892,7 +892,7 @@ const PlaylistRowItem = ({
 
                     if (isNested)
                       return ShowNotification({
-                        message: "Cannot merge nested playlists!",
+                        message: t("cannotMergeNested"),
                         severity: "error",
                       });
 
@@ -902,7 +902,7 @@ const PlaylistRowItem = ({
                     });
                   }}
                 >
-                  <p>Merge Playlist</p>
+                  <p>{t("mergePlaylist")}</p>
                   <span
                     class="material-symbols-outlined unfollow"
                     style={{ ...ButtonStyle, fontSize: "22px" }}

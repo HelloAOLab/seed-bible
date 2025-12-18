@@ -1,5 +1,7 @@
 import { useScriptureMap2DContext } from "scriptureMap2D.main.ScriptureMap2DContext";
 
+const { useSideBarContext } = await import("app.hooks.sideBar");
+
 const { useState, useCallback, useMemo, useRef, useEffect } = os.appHooks;
 const { forwardRef } = os.appCompat;
 
@@ -27,6 +29,7 @@ const ZoomLevelOption = ({ value, handleZoomLevelClick }) => {
 };
 
 const ZoomLevelSelector = ({ setShowOptions, toggleButtonRef }) => {
+  const { t } = useSideBarContext();
   const { setScaleFactor } = useScriptureMap2DContext();
   const containerRef = useRef(null);
 
@@ -75,7 +78,7 @@ const ZoomLevelSelector = ({ setShowOptions, toggleButtonRef }) => {
       }}
       className="zoom-level-selector"
     >
-      <span>Zoom level</span>
+      <span>{t("zoomLevel")}</span>
       <ZoomLevelOption
         value={1.5}
         handleZoomLevelClick={handleZoomLevelClick}

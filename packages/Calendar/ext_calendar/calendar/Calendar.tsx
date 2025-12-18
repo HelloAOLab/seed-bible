@@ -1,3 +1,5 @@
+const { useSideBarContext } = await import("app.hooks.sideBar");
+
 //imports
 const { useRef, useState, useEffect, useCallback } = os.appHooks;
 const CustomModal = await thisBot.CustomModal();
@@ -180,6 +182,7 @@ const types = ["events", "reading", "content", "projects", "sources"];
 if (!globalThis.C_E) globalThis.C_E = [];
 
 const App = () => {
+  const { t } = useSideBarContext();
   //states
   const [readings, setReadings] = useState([]);
   const [readingsList, setReadingsList] = useState([]);
@@ -250,16 +253,7 @@ const App = () => {
   const [resourceStartDate, setResourceStartDate] = useState();
   const [hiddenGroups, setHiddenGroups] = useState({});
   const [allGroups, setAllGroups] = useState([]);
-  const [popoverOpen, setPopoverOpen] = useState(false);
-
-  document.addEventListener("mousedown", (e) => {
-    const popover = document.querySelector(".fc-popover");
-
-    // TypeScript-safe check
-    if (e.target instanceof Node && !popover.contains(e.target)) {
-      setPopoverOpen(false);
-    }
-  });
+  const popoverOpenRef = useRef(false);
 
   //refs
   const readingsRef = useRef(null);
@@ -292,6 +286,46 @@ const App = () => {
       }
     }
   }, []);
+  useEffect(() => {
+    const observer = new MutationObserver(() => {
+      const popover = document.querySelector(".fc-popover");
+
+      // If popover is gone but ref says open → reset
+      if (!popover && popoverOpenRef.current) {
+        popoverOpenRef.current = false;
+        calendarRef.current?.getApi().rerenderEvents();
+      }
+    });
+
+    observer.observe(document.body, {
+      childList: true,
+      subtree: true,
+    });
+
+    return () => observer.disconnect();
+  }, []);
+
+  useEffect(() => {
+    const handleClickOutside = (e) => {
+      const popover = document.querySelector(".fc-popover");
+
+      if (!popover) return; // important
+
+      if (!popover.contains(e.target)) {
+        popoverOpenRef.current = false;
+
+        // 🔑 force FullCalendar to update
+        calendarRef.current?.getApi().rerenderEvents();
+      }
+    };
+
+    document.addEventListener("mousedown", handleClickOutside);
+
+    return () => {
+      document.removeEventListener("mousedown", handleClickOutside);
+    };
+  }, []);
+
   useEffect(() => {
     try {
       localStorage.setItem("allEvents", JSON.stringify(allEvents));
@@ -795,7 +829,7 @@ const App = () => {
         scrollTime: "07:00:00",
         initialView: "dayGridMonth",
         moreLinkClick: (arg) => {
-          setPopoverOpen(true);
+          popoverOpenRef.current = true;
           return "popover";
         },
         resourceAreaHeaderContent: function () {
@@ -875,10 +909,11 @@ const App = () => {
         contentHeight: "auto",
         height: "auto",
         eventContent: function (arg) {
-          console.log(popoverOpen, "sdsdsd");
+          console.log(popoverOpenRef.current, "sdsdsdkkkkjj");
 
           setContainerWidth(calendarEle.offsetWidth);
           const isSchedule = arg.event.extendedProps.isResource === true;
+
           const eventType = arg.event.extendedProps.type;
           const container = document.querySelector(".experience-container");
           const isNarrow = container && container.offsetWidth < 500;
@@ -917,14 +952,15 @@ const App = () => {
           }
 
           // Compact mode (mobile, no popover)
-          if (isNarrow && !popoverOpen && !isMultiDay) {
+          if (isNarrow && !popoverOpenRef.current && !isMultiDay) {
             if (isSchedule) return { html: "" };
             if (eventType === "reading") return { html: makeDot("#20c997") };
             return { html: makeDot("#339af0") };
           }
 
           // Popover open — show full event
-          if (popoverOpen) {
+
+          if (popoverOpenRef.current) {
             return {
               html: `
           <div style="
@@ -945,7 +981,7 @@ const App = () => {
           }
 
           // Normal schedule
-          if (isSchedule) {
+          if (isSchedule && !popoverOpenRef.current) {
             if (!isMultiDay) {
               return {
                 html: `
@@ -986,7 +1022,7 @@ const App = () => {
           }
 
           // Reading events
-          if (eventType === "reading") {
+          if (eventType === "reading" && !popoverOpenRef.current) {
             if (!isMultiDay) {
               return {
                 html: `
@@ -1030,8 +1066,8 @@ const App = () => {
           }
 
           // Default event style
-          if (!isMultiDay) {
-            console.log(isMultiDay,'sasasasaasasas');
+          if (!isMultiDay && !popoverOpenRef.current) {
+            console.log(isMultiDay, "sasasasaasasas");
             return {
               html: `
   <div style="
@@ -1053,7 +1089,6 @@ const App = () => {
 `,
             };
           } else {
-
             return {
               html: `
         <div style="
@@ -1087,7 +1122,7 @@ const App = () => {
 
           console.log(startDate, endDate, isMultiDay, "isMultiday");
 
-          if (width <= 500 && !isMultiDay) {
+          if (width <= 500 && !isMultiDay & !popoverOpenRef.current) {
             return ["dot-view"];
           } else {
             return ["full-view"];
@@ -1170,21 +1205,20 @@ const App = () => {
                 recurVal,
                 isPlansTabActive,
               }) => {
-               
                 if (isPlansTabActive) return;
                 let newEvent;
                 console.log(start, end, "aada");
                 const days = getDayDifference(start, end);
                 if (recurVal.charAt(0) === "N") {
                   const isTimed = Boolean(startTime && endTime);
-                  console.log(isTimed,'isTimed');
+                  console.log(isTimed, "isTimed");
                   if (days === 0) {
                     newEvent = {
                       title: title ? title : "easter",
                       id: uuid(),
                       start: `${start}T${startTime || "09:00"}`,
-                      end: `${end}T${endTime||"19:00" }`,
-                      allDay: false ,
+                      end: `${end}T${endTime || "19:00"}`,
+                      allDay: false,
                       color: "white",
                       eventDisplay: "list-item",
                       theme: "simple-borderless",
@@ -1198,7 +1232,7 @@ const App = () => {
                         type: "events",
                       },
                     };
-                    console.log(newEvent,'newevent');
+                    console.log(newEvent, "newevent");
                     const now = stripTime(new Date());
                     const startDate = stripTime(new Date(newEvent.start));
                     setAllEvents((prev) => [...prev, newEvent]);
@@ -1859,7 +1893,6 @@ const App = () => {
                   startSubIndex: -1,
                   parentId: "default",
                   name: playlist.name || "Untitled Playlist",
-                 
                 });
               });
               document.body.appendChild(playButtonCon);
@@ -2437,14 +2470,14 @@ const App = () => {
                   className={`calendar-addups-selection-button ${type.charAt(0)}-btn`}
                   onClick={() => handleSelectionClicking(type)}
                 >
-                  {type.charAt(0).toUpperCase() + type.slice(1)}
+                  {t(type + "Tab")}
                 </button>
               ))}
             </div>
 
             <div class="event-and-map">
               <span class="event-and-map_heading">
-                Events for {calendarTitle}
+                {t("eventsFor")} {calendarTitle}
               </span>
               <div class="event-and-map_selector">
                 <span
@@ -2455,7 +2488,7 @@ const App = () => {
                   }}
                   onClick={() => onEventsClick()}
                 >
-                  Events
+                  {t("eventsTab")}
                 </span>
                 <span
                   class="event-and-map_selector_item"
@@ -2465,7 +2498,7 @@ const App = () => {
                   }}
                   onClick={() => onMapCick()}
                 >
-                  Bible Map
+                  {t("bibleMap")}
                 </span>
               </div>
               {eventViewSelected && (
