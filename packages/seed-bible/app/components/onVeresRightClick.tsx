@@ -107,7 +107,7 @@ const MenuOptions = {
               : `${book} ${chapter}`;
 
           openPopupSettings(
-            <SharePopup shareTitle={`${text}`} shareReference={reference} />,
+            <SharePopup shareTitle={`${text}`} shareReference={reference} translation={that.translation} />,
             null,
             true
           );

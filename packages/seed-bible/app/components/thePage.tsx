@@ -721,6 +721,7 @@ function ThePage({
         text: selectedTextFinal,
         book: data?.book,
         chapter: data?.chapter,
+        translation: data?.translation,
       });
     };
 
