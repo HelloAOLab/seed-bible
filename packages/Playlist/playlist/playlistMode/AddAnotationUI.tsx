@@ -1,6 +1,6 @@
 const { useState, useLayoutEffect, useRef, useMemo } = os.appHooks;
 import {
-  getUserRecord,
+  getAnnotationRecord,
   createAnnotation,
   saveAnnotation,
 } from "db.annotations.library";
@@ -533,16 +533,16 @@ const AddAnotationUI = ({
         setList([]);
         try {
           // const latestData = await shout("chronicle_loadData", { record: latestRecord[0], targetVersion: 0 })[0];
-          const userRecord = await getUserRecord();
+          const userRecord = await getAnnotationRecord();
           const res = await os.getData(userRecord, editData?.address);
           let data = res.data.data;
-          if(data.type === 'comment') {
+          if (data.type === "comment") {
             data = res.data;
             setTextHTML(data.data.html);
             setTags([...(data.chronicle_tags || [])]);
             globalThis.IsEditingAnnotation = true;
             const booksDetails = globalThis.findNameRank(data.bookId);
-            setEditDataDetails({ 
+            setEditDataDetails({
               type: "heading",
               content: data.data.html,
               additionalInfo: {
@@ -555,8 +555,8 @@ const AddAnotationUI = ({
                 bookRank: booksDetails.item,
               },
               id: data.id,
-             });
-             console.log("editDataDetails", editDataDetails);
+            });
+            console.log("editDataDetails", editDataDetails);
           } else if (data.data) {
             setEditDataDetails({ ...data.data });
             const layers = data.data.additionalInfo?.layers?.filter(
@@ -1014,9 +1014,14 @@ const AddAnotationUI = ({
         // },
       };
 
-      const annotation = createAnnotation(book, chapter, comment, editDataDetails.additionalInfo?.verse);
+      const annotation = createAnnotation(
+        book,
+        chapter,
+        comment,
+        editDataDetails.additionalInfo?.verse
+      );
       console.log("annotation", annotation);
-      const userRecord = await getUserRecord();
+      const userRecord = await getAnnotationRecord();
       promisesArray.push(
         saveAnnotation(userRecord, { ...annotation, id: isEditAddress })
       );
@@ -1117,7 +1122,7 @@ const AddAnotationUI = ({
 
     try {
       const promisesArray = [];
-      const userRecord = await getUserRecord();
+      const userRecord = await getAnnotationRecord();
       const singleRangeTrack = {};
 
       currentList.forEach((ele) => {
@@ -1161,7 +1166,12 @@ const AddAnotationUI = ({
             //   },
             // },
           };
-          const annotation = createAnnotation(book, chapter, comment, ele.additionalInfo.verse);
+          const annotation = createAnnotation(
+            book,
+            chapter,
+            comment,
+            ele.additionalInfo.verse
+          );
           promisesArray.push(saveAnnotation(userRecord, annotation));
         }
       });
