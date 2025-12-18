@@ -717,6 +717,8 @@ const FONT_OPTIONS = [
   { name: "Merriweather", value: "Merriweather, serif" },
 ];
 
+const LINE_HEIGHTS = [-1, 0, 1];
+
 const FONT_SIZES = [
   { label: "Small", value: "14" },
   { label: "Medium", value: "16" },
@@ -773,10 +775,14 @@ function buildTextConfigUpdate(section, fontFamily, fontSize, currentConfig) {
   // clone config
   const updatedConfig = JSON.parse(JSON.stringify(currentConfig));
 
-  // apply new font settings
+  // apply new font settings while preserving existing lineHeight
   updatedConfig[section].font = fontFamily;
   updatedConfig[section].fontSize = fontSize; // if you want to use size
   updatedConfig[section].size = fontSize; // in case you prefer `size` key
+  // preserve lineHeight if it exists
+  if (currentConfig[section].lineHeight !== undefined) {
+    updatedConfig[section].lineHeight = currentConfig[section].lineHeight;
+  }
 
   // rebuild CSS variables using your existing exporter
   const cssVars = exportTextConfigToCSS(updatedConfig);
@@ -1014,12 +1020,45 @@ const SettingsUI = () => {
     }
   }, []);
 
-  const [textConfig, setTextConfig] = useState({
-    heading: { ...defaultTextConfig.heading },
-    chapter: { ...defaultTextConfig.chapter },
-    verse: { ...defaultTextConfig.verse },
-    bookchapter: { ...defaultTextConfig.bookchapter },
+  const [textConfig, setTextConfig] = useState(() => {
+    // Try to load from saved space settings
+    const savedConfig = currentSpace?.settings?.text?.data;
+    return savedConfig || {
+      heading: { ...defaultTextConfig.heading },
+      chapter: { ...defaultTextConfig.chapter },
+      verse: { ...defaultTextConfig.verse },
+      bookchapter: { ...defaultTextConfig.bookchapter },
+    };
   });
+
+  // Sync font size, font, and line height index when space changes
+  useEffect(() => {
+    const savedConfig = currentSpace?.settings?.text?.data;
+    if (savedConfig) {
+      setTextConfig(savedConfig);
+
+      // Sync font size
+      const savedFontSize = savedConfig?.verse?.fontSize || savedConfig?.verse?.size;
+      if (savedFontSize) {
+        const sizeIdx = FONT_SIZES.findIndex((s) => s.value === savedFontSize);
+        if (sizeIdx !== -1) setSelectedFontSize(sizeIdx);
+      }
+
+      // Sync font
+      const savedFont = savedConfig?.verse?.font;
+      if (savedFont) {
+        const fontIdx = FONT_OPTIONS.findIndex((f) => f.value === savedFont);
+        if (fontIdx !== -1) setSelectedFont(fontIdx);
+      }
+
+      // Sync line height
+      const savedLineHeight = savedConfig?.verse?.lineHeight;
+      if (savedLineHeight !== undefined) {
+        const lhIdx = LINE_HEIGHTS.indexOf(savedLineHeight);
+        if (lhIdx !== -1) setLineHeightIndex(lhIdx);
+      }
+    }
+  }, [activeSpace, currentSpace]);
 
   const handleThemeSelect = (index) => {
     setSelectedTheme(index);
@@ -1049,9 +1088,15 @@ const SettingsUI = () => {
     updateSpace(activeSpace, updateObj);
   };
 
-  const LINE_HEIGHTS = [-1, 0, 1];
-
-  const [lineHeightIndex, setLineHeightIndex] = useState(1);
+  const [lineHeightIndex, setLineHeightIndex] = useState(() => {
+    // Load saved lineHeight from config, default to index 1 (value 0)
+    const savedLineHeight = currentSpace?.settings?.text?.data?.verse?.lineHeight;
+    if (savedLineHeight !== undefined) {
+      const idx = LINE_HEIGHTS.indexOf(savedLineHeight);
+      return idx !== -1 ? idx : 1;
+    }
+    return 1;
+  });
 
   const handleDecreaseFontSize = () => {
     if (selectedFontSize > 0) {
