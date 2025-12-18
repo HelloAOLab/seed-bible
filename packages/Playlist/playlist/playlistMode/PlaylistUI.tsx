@@ -64,7 +64,6 @@ const GetLabel = ({ value, currentOpenedBook, thisBot }) => {
 
     const observer = new ResizeObserver((entries) => {
       const width = entries[0].contentRect.width;
-      console.log("width", width);
       setIsMobile(width < 176);
     });
 
@@ -346,47 +345,74 @@ const Playlist = () => {
           );
           let allAnnotations = [];
 
-          console.log("annotations", annotations);
-
           annotations.forEach((ele) => {
-            // const data = {
-            //   bookid: currentOpenedBook?.bookId,
-            //   chapter: currentOpenedBook?.chapter,
-            // };
-            // const innerele = ele?.data?.data;
+            
+            if(ele.data.type === 'comment' && ele.verseNumber) {
+              const booksDetails = globalThis.findNameRank(ele.bookId);
+              const anoItem = {
+                type: "heading",
+                content: ele.data.html,
+                additionalInfo: {
+                  verse: ele.verseNumber,
+                  chapter: ele.chapter,
+                  book: ele.book,
+                  bookRank: booksDetails.item,
+                },
+                id: ele.id,
+              };
 
-            // if (!!innerele.additionalInfo && !!innerele.additionalInfo.layers) {
-            //   const tags = [...(ele.data.chronicle_tags || [])];
-            //   const layers = [...innerele.additionalInfo.layers];
-            //   if (innerele?.type === "chapter") {
-            //     data.heading = "Chapter";
-            //     data.data = [...layers];
-            //     data.tags = [...tags];
-            //     data.address = ele.id;
-            //   }
-            //   if (innerele?.type === "verse-grouped") {
-            //     const verses = [...innerele.additionalInfo.verse];
-            //     const length = verses.length;
-            //     data.heading = `Verse ${verses[0]}-${verses[length - 1]}`;
-            //     data.data = [...layers];
-            //     data.tags = [...tags];
-            //     data.address = ele.id;
-            //   }
+              const data = {
+                bookid: currentOpenedBook?.bookId,
+                chapter: currentOpenedBook?.chapter,
+              };
 
-            //   if (innerele?.type === "verse") {
-            //     data.heading = `Verse ${innerele.additionalInfo.verse}`;
-            //     data.data = [...layers];
-            //     data.tags = [...tags];
-            //     data.address = ele.id;
-            //   }
-            // }
+              data.heading = `Verse ${ele.verseNumber}`;
+              data.data = [anoItem];
+              data.tags = [];
+              data.address = ele.id;
+              allAnnotations.push(data);
+            } else if (ele.data.type !== 'comment') { 
 
-            // if (data.data) {
-            allAnnotations.push(ele);
-            // }
+              const data = {
+                bookid: currentOpenedBook?.bookId,
+                chapter: currentOpenedBook?.chapter,
+              };
+              const innerele = ele?.data?.data;
+
+              if(innerele) {
+                if (!!innerele.additionalInfo && !!innerele.additionalInfo.layers) {
+                  const tags = [...(ele.data.chronicle_tags || [])];
+                  const layers = [...innerele.additionalInfo.layers];
+                  if (innerele?.type === "chapter") {
+                    data.heading = "Chapter";
+                    data.data = [...layers];
+                    data.tags = [...tags];
+                    data.address = ele.id;
+                  }
+                  if (innerele?.type === "verse-grouped") {
+                    const verses = [...innerele.additionalInfo.verse];
+                    const length = verses.length;
+                    data.heading = `Verse ${verses[0]}-${verses[length - 1]}`;
+                    data.data = [...layers];
+                    data.tags = [...tags];
+                    data.address = ele.id;
+                  }
+
+                  if (innerele?.type === "verse") {
+                    data.heading = `Verse ${innerele.additionalInfo.verse}`;
+                    data.data = [...layers];
+                    data.tags = [...tags];
+                    data.address = ele.id;
+                  }
+                }
+                if (data.data) {
+                  allAnnotations.push(data);
+                }
+              }
+
+            }
+            
           });
-          console.log("allAnnotations", allAnnotations);
-
           // allAnnotations = allAnnotations.sort(sortFunc);
           setFetchingAnnotation(false);
           setAnnotationData(allAnnotations);

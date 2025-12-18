@@ -125,12 +125,14 @@ export async function saveFileAnnotationData(
 export function createAnnotation(
   bookId: string,
   chapterNumber: number,
-  data: AnnotationData
+  data: AnnotationData,
+  verseNumber: number
 ): Annotation {
   data = COMMENT_SCHEMA.parse(data);
   return {
     id: uuid(),
     bookId,
+    verseNumber,
     chapterNumber,
     data,
   };

@@ -1117,7 +1117,6 @@ const AddAnotationUI = ({
           const comment = {
             type: "comment",
             html: textHTML,
-
             createdAtMs: Date.now(),
             updatedAtMs: Date.now(),
             // book:
@@ -1141,7 +1140,7 @@ const AddAnotationUI = ({
             //   },
             // },
           };
-          const annotation = createAnnotation(book, chapter, comment);
+          const annotation = createAnnotation(book, chapter, comment, ele.additionalInfo.verse);
           promisesArray.push(saveAnnotation(userRecord, annotation));
         }
       });
