@@ -355,7 +355,7 @@ const Playlist = () => {
                 additionalInfo: {
                   verse: ele.verseNumber,
                   chapter: ele.chapter,
-                  book: ele.book,
+                  book: ele.bookId,
                   bookRank: booksDetails.item,
                 },
                 id: ele.id,

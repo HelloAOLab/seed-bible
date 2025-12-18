@@ -222,7 +222,6 @@ const AnnotationList = ({
 };
 
 const AnnodataMapper = ({ data }) => {
-  console.log(data);
   return (
     <>
       {data.map((contentData, index) => (

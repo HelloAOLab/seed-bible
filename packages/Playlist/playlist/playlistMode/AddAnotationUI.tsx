@@ -535,8 +535,29 @@ const AddAnotationUI = ({
           // const latestData = await shout("chronicle_loadData", { record: latestRecord[0], targetVersion: 0 })[0];
           const userRecord = await getUserRecord();
           const res = await os.getData(userRecord, editData?.address);
-          const data = res.data.data;
-          if (data.data) {
+          let data = res.data.data;
+          if(data.type === 'comment') {
+            data = res.data;
+            setTextHTML(data.data.html);
+            setTags([...(data.chronicle_tags || [])]);
+            globalThis.IsEditingAnnotation = true;
+            const booksDetails = globalThis.findNameRank(data.bookId);
+            setEditDataDetails({ 
+              type: "heading",
+              content: data.data.html,
+              additionalInfo: {
+                verse: data.verseNumber,
+                chapter: data.chapterNumber,
+                book: data.bookId,
+                data: {
+                  bookId: data.bookId,
+                },
+                bookRank: booksDetails.item,
+              },
+              id: data.id,
+             });
+             console.log("editDataDetails", editDataDetails);
+          } else if (data.data) {
             setEditDataDetails({ ...data.data });
             const layers = data.data.additionalInfo?.layers?.filter(
               (ele) => ele.type === "heading"
@@ -962,11 +983,11 @@ const AddAnotationUI = ({
 
       // TODO: @kushagra - the book and chapter info should be taken from the old annotation - not the data in the old annotation
       const book =
-        editDataDetails.additionalInfo.chapterData?.id ||
-        editDataDetails.additionalInfo.chapterData?.bookId ||
+        editDataDetails.additionalInfo?.chapterData?.id ||
+        editDataDetails.additionalInfo?.chapterData?.bookId ||
         editDataDetails.additionalInfo?.data?.id ||
         editDataDetails.additionalInfo?.data?.bookId;
-      const chapter = editDataDetails.additionalInfo.chapter;
+      const chapter = editDataDetails?.additionalInfo?.chapter;
 
       const comment = {
         type: "comment",
@@ -993,8 +1014,8 @@ const AddAnotationUI = ({
         // },
       };
 
-      const annotation = createAnnotation(book, chapter, comment);
-
+      const annotation = createAnnotation(book, chapter, comment, editDataDetails.additionalInfo?.verse);
+      console.log("annotation", annotation);
       const userRecord = await getUserRecord();
       promisesArray.push(
         saveAnnotation(userRecord, { ...annotation, id: isEditAddress })
@@ -1109,8 +1130,8 @@ const AddAnotationUI = ({
             singleRangeTrack[ele.additionalInfo.verse] = true;
           }
           const book =
-            ele.additionalInfo.chapterData?.id ||
-            ele.additionalInfo.chapterData?.bookId ||
+            ele.additionalInfo?.chapterData?.id ||
+            ele.additionalInfo?.chapterData?.bookId ||
             ele.additionalInfo?.data?.id ||
             ele.additionalInfo?.data?.bookId;
           const chapter = ele.additionalInfo.chapter;
