@@ -1,5 +1,5 @@
 const { LoaderSecondary } = Components;
-import { deleteAnnotation, getUserRecord } from "db.annotations.library";
+import { deleteAnnotation, getAnnotationRecord } from "db.annotations.library";
 
 const { useState, useRef } = os.appHooks;
 
@@ -40,7 +40,7 @@ const AnnotationList = ({
   const onDelete = async (address) => {
     try {
       setLoading(true);
-      const userRecord = await getUserRecord();
+      const userRecord = await getAnnotationRecord();
       const res = await deleteAnnotation(userRecord, { id: address });
       if (res.success) {
         setAnnotationData((prev) => {

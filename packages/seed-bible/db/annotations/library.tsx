@@ -153,6 +153,18 @@ export function getAnnotationMarker(
 }
 
 /**
+ * Gets the record that should be used for annotations.
+ * @param forceLogin Whether to force the user to log in if they are not already logged in.
+ */
+export async function getAnnotationRecord(forceLogin?: boolean) {
+  const injectedRecordKey = configBot.tags.annotationRecordKey;
+  if (injectedRecordKey) {
+    return injectedRecordKey;
+  }
+  return await getUserRecord(forceLogin);
+}
+
+/**
  * Gets the user's record name.
  *
  * Returns null if the user isn't logged in or refuses to login.

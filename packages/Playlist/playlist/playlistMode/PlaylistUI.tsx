@@ -1,6 +1,6 @@
 os.unregisterApp("playlist-cont-ui");
 os.registerApp("playlist-cont-ui");
-import { getUserRecord, loadAnnotations } from "db.annotations.library";
+import { getAnnotationRecord, loadAnnotations } from "db.annotations.library";
 import { ProjectProvider } from "playlist.playlistMode.useProjectContext";
 const { useSideBarContext } = await import("app.hooks.sideBar");
 const RenderIcon = await thisBot.RenderIcon();
@@ -338,7 +338,7 @@ const Playlist = () => {
         try {
           setFetchingAnnotation(true);
 
-          const userRecord = await getUserRecord();
+          const userRecord = await getAnnotationRecord();
 
           const annotations = await loadAnnotations(
             userRecord,
