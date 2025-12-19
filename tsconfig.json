@@ -23,7 +23,10 @@
     "noEmit": true,
 
     /* If your code runs in the DOM: */
-    "lib": ["es2024", "dom", "dom.iterable"]
+    "lib": ["es2024", "dom", "dom.iterable"],
+    "paths": {
+      "@packages/*": ["./packages/*"]
+    }
   },
-  "include": ["packages", "typings", "script"]
+  "include": ["packages", "typings", "script", "test"]
 }

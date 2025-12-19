@@ -1,12 +1,6 @@
 import puppeteer, { Browser, Page, Frame } from "puppeteer";
 import { packageAll } from "../../script/lib/package";
-import {
-  initPage,
-  loadInst,
-  addAux,
-  shout,
-  loadSeedBible,
-} from "../../script/lib/browser";
+import { loadSeedBible } from "../../script/lib/browser";
 
 let browser: Browser;
 
@@ -18,8 +12,6 @@ beforeAll(async () => {
   browser = await puppeteer.launch({
     args: ["--no-sandbox"],
   });
-
-  context = browser.defaultBrowserContext();
 });
 
 afterAll(async () => {
@@ -28,7 +20,13 @@ afterAll(async () => {
 
 function getSeedBibleFrame(page: Page): Frame {
   console.log("page", page);
-  return page.frames().find((f) => f.url().includes("secure-ao-content.org"));
+  const frame = page
+    .frames()
+    .find((f) => f.url().includes("secure-ao-content.org"));
+  if (!frame) {
+    throw new Error("Seed Bible frame not found");
+  }
+  return frame;
 }
 
 describe("load", () => {
@@ -313,7 +311,7 @@ describe("collaborative", () => {
   });
 });
 
-function delay(time) {
+function delay(time: number) {
   return new Promise(function (resolve) {
     setTimeout(resolve, time);
   });
