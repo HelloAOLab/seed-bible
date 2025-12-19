@@ -3,6 +3,27 @@ import { readPackage } from "./package";
 import { Page, ElementHandle, JSHandle } from "puppeteer";
 import { v4 as uuid } from "uuid";
 import path from "node:path";
+import type { Simulation, SimulationManager } from "@casual-simulation/aux-vm";
+import type {
+  ApplyUpdatesToInstAction,
+  LocalActions,
+  RemoteActions,
+  StoredAux,
+} from "@casual-simulation/aux-common";
+
+declare global {
+  interface Window {
+    // eslint-disable-next-line @typescript-eslint/no-explicit-any
+    aux: any;
+    // eslint-disable-next-line @typescript-eslint/no-explicit-any
+    __name: (any: any) => any;
+  }
+}
+
+// eslint-disable-next-line @typescript-eslint/no-explicit-any
+// declare const aux: any;
+// eslint-disable-next-line @typescript-eslint/no-unused-vars
+// declare let __name: (any: any) => any;
 
 /**
  * Runs required initialization code on the page.
@@ -25,7 +46,7 @@ export async function getPrimarySim(page: Page) {
     const app = window.aux.getApp();
     const sim = app.simulationManager.primary;
     return sim;
-  })) as JSHandle<unknown>;
+  })) as JSHandle<any>;
 }
 
 /**
@@ -35,23 +56,23 @@ export async function getPrimarySim(page: Page) {
 export async function waitForInstLoad(page: Page) {
   await page.evaluate(
     () =>
-      new Promise((resolve, reject) => {
+      new Promise<void>((resolve, reject) => {
         const app = window.aux.getApp();
-        const manager = app.simulationManager;
+        const manager: SimulationManager<Simulation> = app.simulationManager;
 
-        manager.simulationAdded.subscribe(
-          (sim) => {
-            sim.connection.syncStateChanged.subscribe(
-              (connected) => {
+        manager.simulationAdded.subscribe({
+          next: (sim) => {
+            sim.connection.syncStateChanged.subscribe({
+              next: (connected) => {
                 if (connected) {
                   resolve();
                 }
               },
-              (err) => reject(err)
-            );
+              error: (err) => reject(err),
+            });
           },
-          (err) => reject(err)
-        );
+          error: (err) => reject(err),
+        });
       })
   );
 }
@@ -108,19 +129,20 @@ export async function execScript(page: Page, script: string) {
  * @param data The AUX data.
  */
 export async function addAux(page: Page, data: StoredAux) {
-  let event: BotActions;
+  let event: LocalActions | RemoteActions;
   if (data.version === 1) {
     event = {
       type: "apply_state",
       state: data.state,
     };
   } else {
+    const applyUpdatesToInst: ApplyUpdatesToInstAction = {
+      type: "apply_updates_to_inst",
+      updates: data.updates,
+    };
     event = {
       type: "remote",
-      event: {
-        type: "apply_updates_to_inst",
-        updates: data.updates,
-      },
+      event: applyUpdatesToInst,
     };
   }
 
@@ -139,7 +161,8 @@ export async function addAux(page: Page, data: StoredAux) {
 export async function waitForPackage(page: Page, name: string) {
   await page.evaluate((name) => {
     const app = window.aux.getApp();
-    const sim = app.simulationManager.primary;
+    const simManager: SimulationManager<Simulation> = app.simulationManager;
+    const sim = simManager.primary;
     return new Promise((resolve) => {
       const intervalId = setInterval(() => {
         const bots = Object.values(sim.helper.botsState);
@@ -219,7 +242,8 @@ export async function registerPackage(page: Page, name: string) {
 export async function getPackageData(page: Page, name: string) {
   return await page.evaluate((name) => {
     const app = window.aux.getApp();
-    const sim = app.simulationManager.primary;
+    const simManager: SimulationManager<Simulation> = app.simulationManager;
+    const sim = simManager.primary;
 
     const bots = Object.values(sim.helper.botsState);
     const packager = bots.find((b) => b.tags.system === "app.packager");
@@ -244,8 +268,8 @@ export async function uploadFile(page: Page, filePath: string) {
       Object.assign(document.createElement("input"), {
         id: fileInputIdentifier,
         type: "file",
-        onchange: (e) => {
-          document.querySelector("body").dispatchEvent(
+        onchange: (e: Event) => {
+          document.querySelector("body")!.dispatchEvent(
             Object.assign(new Event("drop"), {
               dataTransfer: (e.target as HTMLInputElement).files,
             })
@@ -266,14 +290,14 @@ export async function loadInst(
   page: Page,
   inst: string,
   collaborative: boolean = false,
-  query: object = {}
+  query: Record<string, string> = {}
 ) {
   const url = new URL(`https://ao.bot`);
 
   url.searchParams.set(collaborative ? "inst" : "staticInst", inst);
   url.searchParams.set("gridPortal", "home");
   for (const key in query) {
-    url.searchParams.set(key, query[key]);
+    url.searchParams.set(key, query[key]!);
   }
 
   await page.goto(url.href);
@@ -303,7 +327,7 @@ export async function loadSeedBible(
   extraExtensions: string[] = [],
   inst: string = uuid(),
   collaborative: boolean = false,
-  query: object = {}
+  query: Record<string, string> = {}
 ) {
   await initPage(page);
   await loadInst(page, inst, collaborative, query);

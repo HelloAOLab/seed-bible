@@ -44,7 +44,10 @@ export default defineConfig([
 
   // Disabled rules
   {
-    files: ["packages/**/*.{js,mjs,cjs,ts,tsx,jsx,css}"],
+    files: [
+      "packages/**/*.{js,mjs,cjs,ts,tsx,jsx,css}",
+      "script/**/*.{js,mjs,cjs,ts,tsx,jsx,css}",
+    ],
 
     rules: {
       // These rules should be fixed

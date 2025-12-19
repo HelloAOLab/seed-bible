@@ -2,20 +2,16 @@ import puppeteer from "puppeteer";
 import {
   cleanupAux,
   listPackages,
-  packageAll,
   packageSingle,
   readPackage,
 } from "./lib/package.js";
 import {
-  initPage,
   loadInst,
   addAux,
   shout,
   getPrimarySim,
   execScript,
   getPackageData,
-  registerPackage,
-  waitForPackage,
   loadSeedBible,
   DEFAULT_EXTENSIONS,
   loadAoBot,
@@ -24,9 +20,13 @@ import { rmdir, writeFile } from "node:fs/promises";
 import path from "node:path";
 import { execSync } from "node:child_process";
 import repl from "node:repl";
-import { v4 as uuid } from "uuid";
-import type { StoredAux } from "../typings/AuxLibraryDefinitions.js";
 import { KnownFlags, procHasFlag } from "./argumentUtil.js";
+import type { Page } from "puppeteer";
+import type {
+  BotsState,
+  StoredAux,
+  StoredAuxVersion1,
+} from "@casual-simulation/aux-common";
 
 const extraExtensions = process.argv.slice(2).filter((a) => !a.startsWith("-"));
 const collaborative = procHasFlag(KnownFlags.Collaborative);
@@ -39,12 +39,16 @@ const browser = await puppeteer.launch({
   devtools: startWithDevtools,
 });
 
-let page: puppeteer.Page;
-const extraPages: puppeteer.Page[] = [];
+let page: Page;
+const extraPages: Page[] = [];
 let currentInst: string | undefined;
 
 async function startPage() {
   page = await browser.newPage();
+
+  if (server && !server.context.page) {
+    server.context.page = page;
+  }
 
   if (aoBot) {
     await Promise.all(["ao.bot"].map((pkg) => packageSingle(pkg, "ignore")));
@@ -62,10 +66,14 @@ async function startPage() {
       collaborative
     );
 
-    const newTabPromises: Promise<string> = [];
+    const newTabPromises: Promise<void>[] = [];
 
     for (let i = 0; i < extraPages.length; i++) {
       const p = extraPages[i];
+
+      if (!p) {
+        continue;
+      }
 
       newTabPromises.push(
         p
@@ -73,7 +81,7 @@ async function startPage() {
           .then(() => browser.newPage())
           .then(async (p) => {
             extraPages[i] = p;
-            await loadInst(p, currentInst, collaborative);
+            await loadInst(p, currentInst!, collaborative);
           })
       );
     }
@@ -96,7 +104,7 @@ browser.on("disconnected", () => {
 
 const server = repl.start("> ");
 
-server.context.page = page;
+server.context.page = null;
 server.context.browser = browser;
 server.context.addAux = addAux;
 server.context.shout = shout;
@@ -128,11 +136,11 @@ server.defineCommand("system", {
 
 server.defineCommand("newTab", {
   help: "Open a new tab",
-  action: async (inst) => {
+  action: async (inst: string | undefined | null) => {
     server.clearBufferedCommand();
 
     if (!inst) {
-      inst = currentInst;
+      inst = currentInst!;
     }
 
     const newPage = await browser.newPage();
@@ -152,7 +160,7 @@ server.defineCommand("save", {
     try {
       const state = cleanupAux(
         await sim.evaluate((s) => {
-          const state = {};
+          const state: BotsState = {};
           for (const id in s.helper.botsState) {
             const bot = s.helper.botsState[id];
             state[id] = {
@@ -174,7 +182,7 @@ server.defineCommand("save", {
         await writeFile(filePath, JSON.stringify(aux, null, 2), "utf-8");
 
         const packagePath = path.resolve("packages", pkg);
-        await rmdir(packagePath, { recursive: true, force: true });
+        await rmdir(packagePath, { recursive: true });
         execSync(`casualos unpack-aux --overwrite "${filePath}" ./packages`, {
           stdio: "ignore",
         });
@@ -192,15 +200,18 @@ server.defineCommand("save", {
         }
       };
 
-      const seedBible = {
+      const seedBible: StoredAuxVersion1 = {
         version: 1,
         state: {},
       };
 
-      const packageAuxes = [];
+      const packageAuxes: { name: string; aux: StoredAuxVersion1 }[] = [];
 
       for (const id in state) {
         const bot = state[id];
+        if (!bot) {
+          continue;
+        }
         const system = bot.tags.system ? bot.tags.system.toLowerCase() : null;
         const packageName = bot.tags.packageName
           ? bot.tags.packageName.toLowerCase()
@@ -344,7 +355,7 @@ Object.defineProperty(server.context, "shout", {
   enumerable: false,
   value: (name: string, arg: unknown) => {
     server.clearBufferedCommand();
-    const result = shout(page, name, arg);
+    const result = shout(page, name, undefined, arg);
     server.displayPrompt();
     return result;
   },
