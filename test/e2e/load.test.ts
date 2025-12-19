@@ -97,7 +97,9 @@ describe("load", () => {
     expect(await bookTitle?.evaluate((el) => el.textContent)).toBe("Genesis 1");
 
     const v28 = await seedBibleFrame.locator("#v-28").waitHandle();
-    expect(await v28?.evaluate((el) => el.textContent)).toMatch(
+    const v28Text = await v28?.evaluate((el) => el.textContent);
+
+    expect(mergeWhitespace(v28Text)).toMatch(
       /And God blessed them, and God said unto them/
     );
   });
@@ -315,4 +317,10 @@ function delay(time) {
   return new Promise(function (resolve) {
     setTimeout(resolve, time);
   });
+}
+
+function mergeWhitespace(
+  str: string | null | undefined
+): string | null | undefined {
+  return str?.replace(/\s+/g, " ").trim();
 }
