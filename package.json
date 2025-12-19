@@ -15,7 +15,7 @@
     "lint:fix": "eslint packages --fix",
     "pattern": "tsx script/pattern.ts",
     "build": "tsx script/build.ts",
-    "check": "tsc-silent --project ./tsconfig.json --suppressConfig ./tsc-silent.config.js",
+    "check": "tsc-silent --project ./tsconfig.json --suppressConfig ./tsc-silent.config.cjs",
     "format": "prettier --write \"packages/**/*.{js,jsx,ts,tsx,css}\"",
     "format:changed": "pretty-quick",
     "prepare": "husky"
