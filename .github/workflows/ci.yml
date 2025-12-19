@@ -33,6 +33,7 @@ jobs:
           pnpm lint
       - name: Check
         continue-on-error: true
+        run: |
           pnpm check
       - name: Test
         run: |
