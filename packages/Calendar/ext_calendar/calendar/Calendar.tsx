@@ -250,10 +250,7 @@ const App = () => {
   const [resourceStartDate, setResourceStartDate] = useState();
   const [hiddenGroups, setHiddenGroups] = useState({});
   const [allGroups, setAllGroups] = useState([]);
-  const popoverOpenRef = useRef(false)
-
- 
-  
+  const popoverOpenRef = useRef(false);
 
   //refs
   const readingsRef = useRef(null);
@@ -287,46 +284,44 @@ const App = () => {
     }
   }, []);
   useEffect(() => {
-  const observer = new MutationObserver(() => {
-    const popover = document.querySelector(".fc-popover");
+    const observer = new MutationObserver(() => {
+      const popover = document.querySelector(".fc-popover");
 
-    // If popover is gone but ref says open → reset
-    if (!popover && popoverOpenRef.current) {
-      popoverOpenRef.current = false;
-      calendarRef.current?.getApi().rerenderEvents();
-    }
-  });
+      // If popover is gone but ref says open → reset
+      if (!popover && popoverOpenRef.current) {
+        popoverOpenRef.current = false;
+        calendarRef.current?.getApi().rerenderEvents();
+      }
+    });
 
-  observer.observe(document.body, {
-    childList: true,
-    subtree: true,
-  });
+    observer.observe(document.body, {
+      childList: true,
+      subtree: true,
+    });
 
-  return () => observer.disconnect();
-}, []);
+    return () => observer.disconnect();
+  }, []);
 
   useEffect(() => {
-  const handleClickOutside = (e) => {
-    const popover = document.querySelector(".fc-popover");
+    const handleClickOutside = (e) => {
+      const popover = document.querySelector(".fc-popover");
 
-    if (!popover) return; // important
+      if (!popover) return; // important
 
-    if (!popover.contains(e.target)) {
-      popoverOpenRef.current = false;
+      if (!popover.contains(e.target)) {
+        popoverOpenRef.current = false;
 
-      // 🔑 force FullCalendar to update
-      calendarRef.current?.getApi().rerenderEvents();
-    }
-  };
+        // 🔑 force FullCalendar to update
+        calendarRef.current?.getApi().rerenderEvents();
+      }
+    };
 
-  document.addEventListener("mousedown", handleClickOutside);
+    document.addEventListener("mousedown", handleClickOutside);
 
-  return () => {
-    document.removeEventListener("mousedown", handleClickOutside);
-  };
-}, []);
-
-
+    return () => {
+      document.removeEventListener("mousedown", handleClickOutside);
+    };
+  }, []);
 
   useEffect(() => {
     try {
@@ -787,6 +782,7 @@ const App = () => {
           center: "",
           right: "",
         },
+
         buttonText: {
           today: " ",
         },
@@ -826,12 +822,12 @@ const App = () => {
         },
 
         slotMinTime: "00:00:00",
-        slotMaxTime: "25:00:00",
+        slotMaxTime: "24:00:00",
         slotDuration: "00:30:00",
-        scrollTime: "07:00:00",
+        scrollTime: "09:00:00",
         initialView: "dayGridMonth",
         moreLinkClick: (arg) => {
-          popoverOpenRef.current=true
+          popoverOpenRef.current = true;
           return "popover";
         },
         resourceAreaHeaderContent: function () {
@@ -908,15 +904,14 @@ const App = () => {
         allDaySlot: true,
         allDayText: "All day",
         expandRows: true,
-        contentHeight: "auto",
-        height: "auto",
+        contentHeight: "450px",
+
         eventContent: function (arg) {
           console.log(popoverOpenRef.current, "sdsdsdkkkkjj");
-         
 
           setContainerWidth(calendarEle.offsetWidth);
           const isSchedule = arg.event.extendedProps.isResource === true;
-         
+
           const eventType = arg.event.extendedProps.type;
           const container = document.querySelector(".experience-container");
           const isNarrow = container && container.offsetWidth < 500;
@@ -962,7 +957,7 @@ const App = () => {
           }
 
           // Popover open — show full event
-          
+
           if (popoverOpenRef.current) {
             return {
               html: `
@@ -984,7 +979,7 @@ const App = () => {
           }
 
           // Normal schedule
-          if (isSchedule  && !popoverOpenRef.current) {
+          if (isSchedule && !popoverOpenRef.current) {
             if (!isMultiDay) {
               return {
                 html: `
@@ -1070,7 +1065,7 @@ const App = () => {
 
           // Default event style
           if (!isMultiDay && !popoverOpenRef.current) {
-            console.log(isMultiDay,'sasasasaasasas');
+            console.log(isMultiDay, "sasasasaasasas");
             return {
               html: `
   <div style="
@@ -1092,7 +1087,6 @@ const App = () => {
 `,
             };
           } else {
-
             return {
               html: `
         <div style="
@@ -1132,7 +1126,7 @@ const App = () => {
             return ["full-view"];
           }
         },
-        dayCellDidMount: (info) => {
+        /* dayCellDidMount: (info) => {
           const cellDateStr = info.date.toISOString().split("T")[0];
           const hasEvent = calendarApi.current.getEvents().some((ev) => {
             const evDateStr = new Date(ev.start).toISOString().split("T")[0];
@@ -1145,7 +1139,7 @@ const App = () => {
           if (hasEvent && isMultiMonth) {
             info.el.style.backgroundColor = "white"; // dark gray
           }
-        },
+        },*/
 
         editable: true,
         droppable: true,
@@ -1209,21 +1203,20 @@ const App = () => {
                 recurVal,
                 isPlansTabActive,
               }) => {
-               
                 if (isPlansTabActive) return;
                 let newEvent;
                 console.log(start, end, "aada");
                 const days = getDayDifference(start, end);
                 if (recurVal.charAt(0) === "N") {
                   const isTimed = Boolean(startTime && endTime);
-                  console.log(isTimed,'isTimed');
+                  console.log(isTimed, "isTimed");
                   if (days === 0) {
                     newEvent = {
                       title: title ? title : "easter",
                       id: uuid(),
                       start: `${start}T${startTime || "09:00"}`,
-                      end: `${end}T${endTime||"19:00" }`,
-                      allDay: false ,
+                      end: `${end}T${endTime || "19:00"}`,
+                      allDay: false,
                       color: "white",
                       eventDisplay: "list-item",
                       theme: "simple-borderless",
@@ -1237,7 +1230,7 @@ const App = () => {
                         type: "events",
                       },
                     };
-                    console.log(newEvent,'newevent');
+                    console.log(newEvent, "newevent");
                     const now = stripTime(new Date());
                     const startDate = stripTime(new Date(newEvent.start));
                     setAllEvents((prev) => [...prev, newEvent]);
@@ -1376,7 +1369,8 @@ const App = () => {
                 }
               }
             );
-          } else {
+          }
+          /* else {
             if (info.view.type !== "resourceTimeline") {
               const clickedDate = info.date;
               // JS Date
@@ -1417,7 +1411,7 @@ const App = () => {
               });
               instance.show();
             }
-          }
+          }*/
         },
 
         datesSet: (info) => {
@@ -1436,6 +1430,19 @@ const App = () => {
           const prevBtn = calendarRef.current.querySelector(".fc-prev-button");
           const nextBtn = calendarRef.current.querySelector(".fc-next-button");
           let select = document.getElementById("view-toggle-select");
+          const calendarap = info.view.calendar;
+
+          if (info.view.type === "multiMonthYear") {
+            const year = info.start.getFullYear();
+            calendarap.setOption("titleFormat", { year: "numeric" });
+
+            calendarap.setOption("title", year.toString());
+          } else {
+            calendarap.setOption("titleFormat", {
+              year: "numeric",
+              month: "long",
+            });
+          }
           if (info.view.type === "resourceTimelineDay") {
             if (todayBtn) todayBtn.style.display = "none";
             if (addButton) addButton.style.display = "none";
@@ -1898,7 +1905,6 @@ const App = () => {
                   startSubIndex: -1,
                   parentId: "default",
                   name: playlist.name || "Untitled Playlist",
-                 
                 });
               });
               document.body.appendChild(playButtonCon);
@@ -2179,7 +2185,7 @@ const App = () => {
     return () => observer.disconnect();
   }, []);
 
-  useEffect(() => {
+  /*useEffect(() => {
     const container = document.querySelector(".experience-container");
     const calendarElement = document.getElementById("calendar");
     const calendar = calendarApi.current;
@@ -2197,8 +2203,9 @@ const App = () => {
     };
 
     const observer = new ResizeObserver(() => {
+      if(calendarApi.current.view.type!=='multiMonthYear'){
       calendar.updateSize();
-      updateFontSize();
+      updateFontSize();}
     });
 
     observer.observe(container);
@@ -2212,7 +2219,7 @@ const App = () => {
       observer.disconnect();
       window.removeEventListener("resize", updateFontSize);
     };
-  }, []);
+  }, []);*/
   console.log(
     calendarRef.current,
     refCalendar.current,
