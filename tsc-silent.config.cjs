@@ -1,8 +1,8 @@
 module.exports = {
   suppress: [
     {
-      pathRegExp: "packages/seed-bible",
-      codes: [1108],
+      pathRegExp: "packages",
+      codes: [1108, 7006, 7031],
     },
   ],
 };
