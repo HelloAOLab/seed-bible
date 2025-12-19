@@ -621,6 +621,19 @@ export function TabsProvider({ children }) {
       globalThis.UpdateTab(tabs[0]);
     }, 400);
   }, [activeSpace]);
+
+  useEffect(() => {
+    const activeSpaceObject = spaces.find((space) => space.id === activeSpace);
+    if (activeSpaceObject) {
+      const activeTabObject = activeSpaceObject.tabs.find(
+        (tab) => tab.id === activeTab
+      );
+      if (activeTabObject) {
+        shout("onActiveTabChanged", { tab: activeTabObject });
+      }
+    }
+  }, [activeTab, activeSpace]);
+
   return (
     <MyContext.Provider
       value={{
