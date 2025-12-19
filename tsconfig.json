@@ -25,7 +25,8 @@
     /* If your code runs in the DOM: */
     "lib": ["es2024", "dom", "dom.iterable"],
     "paths": {
-      "@packages/*": ["./packages/*"]
+      "@packages/*": ["./packages/*"],
+      "https://esm.helloao.org/vendor-3PZUL55I.js": ["./lib/vendor.ts"]
     }
   },
   "include": ["packages", "typings", "script", "test"]
