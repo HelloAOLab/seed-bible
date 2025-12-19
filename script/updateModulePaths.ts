@@ -1,4 +1,4 @@
-import { readdir, readFile, writeFile } from "node:fs/promises";
+import { readdir, writeFile } from "node:fs/promises";
 import path from "node:path";
 import { listPackages } from "./lib/package";
 import { getTsconfig } from "get-tsconfig";
