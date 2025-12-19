@@ -1,6 +1,6 @@
 import {
   calculateReadingHistorySummary,
-  ReadingEvent,
+  type ReadingEvent,
 } from "@packages/seed-bible/db/annotations/library";
 
 describe("reading history", () => {
