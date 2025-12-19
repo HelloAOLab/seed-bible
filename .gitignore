@@ -4,3 +4,5 @@ dist
 package-lock.json
 .claude
 bun.lock
+.vscode/*
+!.vscode/settings.json
