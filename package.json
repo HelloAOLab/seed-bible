@@ -19,7 +19,8 @@
     "format": "prettier --write \"packages/**/*.{js,jsx,ts,tsx,css}\"",
     "format:changed": "pretty-quick",
     "prepare": "husky",
-    "update-ts-paths": "tsx script/updateModulePaths.ts"
+    "update-ts-paths": "tsx script/updateModulePaths.ts",
+    "update-aux-library-definitions": "tsx script/updateAuxLibraryDefinitions.ts"
   },
   "repository": {
     "type": "git",
