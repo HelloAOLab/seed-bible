@@ -2,46 +2,29 @@ import {
   ScriptureMap2D,
   ScriptureMap2DModes,
 } from "scriptureMap2D.main.ScriptureMap2D";
-import { useBibleContext } from "app.hooks.bibleVariables";
 
-const { useCallback, useMemo } = os.appHooks;
+const onChapterClickDependencies = [];
+const onChapterClickAndHold = () => {};
+const onBookNameClickAndHold = () => {};
+const onBookNameClickAndHoldDependencies = [];
+
+const { useCallback } = os.appHooks;
 
 const App = () => {
-  const { navFunctions } = useBibleContext();
+  const handleChapterClick = useCallback((_, key) => {
+    const { bookName, chapterIndex } = key;
 
-  const handleChapterClick = useCallback(
-    (_, key) => {
-      const { bookName, chapterIndex } = key;
+    let bookId = BibleVizUtils.Data.tags.booksStaticInfo[bookName].abbreviation;
+    let chapter = chapterIndex + 1;
 
-      let bookId =
-        BibleVizUtils.Data.tags.booksStaticInfo[bookName].abbreviation;
-      let chapter = chapterIndex + 1;
-
-      if (bookName.includes("Psalms")) {
-        ({ chapter } = BibleVizUtils.Functions.ConvertDividedPsalmsToComplete({
-          book: bookName,
-          chapter,
-        }));
-        bookId = "PSA";
-      }
-
-      navFunctions?.open?.(bookId, chapter);
-    },
-    [navFunctions]
-  );
-
-  const {
-    onChapterClickDependencies,
-    onChapterClickAndHold,
-    onBookNameClickAndHold,
-    onBookNameClickAndHoldDependencies,
-  } = useMemo(() => {
-    return {
-      onChapterClickDependencies: [],
-      onChapterClickAndHold: () => {},
-      onBookNameClickAndHold: () => {},
-      onBookNameClickAndHoldDependencies: [],
-    };
+    if (bookName.includes("Psalms")) {
+      ({ chapter } = BibleVizUtils.Functions.ConvertDividedPsalmsToComplete({
+        book: bookName,
+        chapter,
+      }));
+      bookId = "PSA";
+    }
+    globalThis.Open(bookId, chapter);
   }, []);
 
   return (
@@ -51,31 +34,21 @@ const App = () => {
         display: "flex",
         flexGrow: "1",
         flexDirection: "column",
-        padding: "20px 0",
         backgroundColor: "white",
       }}
     >
       <ScriptureMap2D
         parentContext={{
           mode: ScriptureMap2DModes.Viewer,
-          arrangementIndex: 0,
-          // selection,
-          // isInSelectionMode,
           onChapterClick: handleChapterClick,
           onChapterClickDependencies,
           onChapterClickAndHold,
           onBookNameClickAndHold,
           onBookNameClickAndHoldDependencies,
-          // project,
-          // selectedChaptersKeys,
-          // onSelectionModeCheckboxClick: handleSelectionModeCheckboxClick,
-          // onSelectionModeDoneButtonClick: handleSelectionModeDoneButtonClick,
-          // onStateSetterOptionClick: handleStateSetterOptionClick,
-          // onSelectionModeClearSelectionButtonClick: clearSelection,
-          showingAllChapters: true, // !menuState.areBooksClosed,
-          showLabels: true, // !menuState.hideHeadings,
+          initialShowingAllChapters: true,
+          initialShowLabels: true,
           initialScaleFactor: 0.6,
-          initialIsReadingHistoryEnabled: true,
+          initialIsReadingHistoryEnabled: false,
         }}
       />
     </div>

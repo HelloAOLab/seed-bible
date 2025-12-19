@@ -26,14 +26,17 @@ import { execSync } from "node:child_process";
 import repl from "node:repl";
 import { v4 as uuid } from "uuid";
 import type { StoredAux } from "../typings/AuxLibraryDefinitions.js";
+import { KnownFlags, procHasFlag } from "./argumentUtil.js";
 
-const extraExtensions = process.argv.slice(2).filter(a => !a.startsWith("-"));
-const collaborative = process.argv.slice(2).some(a => a === "--collaborative");
-const aoBot = process.argv.slice(2).find(a => a === "--ao-bot");
+const extraExtensions = process.argv.slice(2).filter((a) => !a.startsWith("-"));
+const collaborative = procHasFlag(KnownFlags.Collaborative);
+const aoBot = procHasFlag(KnownFlags.AoBot);
+const startWithDevtools = procHasFlag(KnownFlags.DevTools);
 
 const browser = await puppeteer.launch({
   headless: false,
   defaultViewport: null,
+  devtools: startWithDevtools,
 });
 
 let page: puppeteer.Page;
@@ -44,25 +47,34 @@ async function startPage() {
   page = await browser.newPage();
 
   if (aoBot) {
-    await Promise.all(['ao.bot'].map((pkg) => packageSingle(pkg, "ignore")));
+    await Promise.all(["ao.bot"].map((pkg) => packageSingle(pkg, "ignore")));
     currentInst = await loadAoBot(page);
   } else {
-    const allPackages = [...new Set([...DEFAULT_EXTENSIONS, ...extraExtensions])];
+    const allPackages = [
+      ...new Set([...DEFAULT_EXTENSIONS, ...extraExtensions]),
+    ];
 
     await Promise.all(allPackages.map((pkg) => packageSingle(pkg, "ignore")));
-    currentInst = await loadSeedBible(page, extraExtensions, undefined, collaborative);
+    currentInst = await loadSeedBible(
+      page,
+      extraExtensions,
+      undefined,
+      collaborative
+    );
 
     const newTabPromises: Promise<string> = [];
 
-    for(let i = 0; i < extraPages.length; i++) {
+    for (let i = 0; i < extraPages.length; i++) {
       const p = extraPages[i];
 
-      newTabPromises.push(p.close()
-        .then(() => browser.newPage())
-        .then(async (p) => {
-          extraPages[i] = p;
-          await loadInst(p, currentInst, collaborative);
-        })
+      newTabPromises.push(
+        p
+          .close()
+          .then(() => browser.newPage())
+          .then(async (p) => {
+            extraPages[i] = p;
+            await loadInst(p, currentInst, collaborative);
+          })
       );
     }
 

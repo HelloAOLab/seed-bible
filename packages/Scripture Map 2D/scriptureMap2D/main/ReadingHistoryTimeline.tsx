@@ -4,12 +4,14 @@ import {
 } from "scriptureMap2D.main.Tooltip";
 import { useTimeContext } from "scriptureMap2D.main.TimeContext";
 import { useReadingHistoryContext } from "scriptureMap2D.main.ReadingHistoryContext";
+import { useScriptureMap2DContext } from "scriptureMap2D.main.ScriptureMap2DContext";
+
+const { useSideBarContext } = await import("app.hooks.sideBar");
 
 const { useState, useCallback, useMemo, useEffect, useRef } = os.appHooks;
 const { memo } = os.appCompat;
 
 const step = 0.25;
-const stepColors = ["#E3E3E3", "#FFEEA9", "#FFBF78", "#D36433", "#7B4019"];
 
 const Label = memo(({ gridRow, gridColumn, children, isDay }) => {
   const style = useMemo(() => {
@@ -19,7 +21,7 @@ const Label = memo(({ gridRow, gridColumn, children, isDay }) => {
   return (
     <div
       style={style}
-      className={`readingHistoryTimeline-label readingHistoryTimeline-label-${isDay ? "day" : "month"}`}
+      className={`reading-history-timeline-label reading-history-timeline-label-${isDay ? "day" : "month"}`}
     >
       {children}
     </div>
@@ -70,7 +72,7 @@ const Item = memo(
         }
         onPointerLeave={() => setContainerRect(null)}
         style={style}
-        className={`readingHistoryTimeline-item${selected ? " selected" : ""}`}
+        className={`reading-history-timeline-item${selected ? " selected" : ""}`}
         onClick={() => {
           handleItemClick(selected ? null : range);
         }}
@@ -84,6 +86,7 @@ const Item = memo(
 );
 
 export const ReadingHistoryTimeline = () => {
+  const { t } = useSideBarContext();
   const {
     readingHistoryRangeSeconds,
     handleReadingHistoryRangeSelectorClick,
@@ -93,9 +96,43 @@ export const ReadingHistoryTimeline = () => {
     SEC_PER_MINUTE,
     dayRangesMap,
     dailyReadingHistorySummaries,
-    readingEventsByDay,
     selectedUsersCount,
+    myAuthBotId,
   } = useReadingHistoryContext();
+
+  const { BASE_BACKGROUND_COLOR } = useScriptureMap2DContext();
+
+  useEffect(() => {
+    console.log(`[Debug] ReadingHistoryTimeline`, {
+      readingHistoryRangeSeconds,
+      handleReadingHistoryRangeSelectorClick,
+      startOfWeekAYearAgoDate,
+      weeksCount,
+      SEC_PER_HOUR,
+      SEC_PER_MINUTE,
+      dayRangesMap,
+      dailyReadingHistorySummaries,
+      selectedUsersCount,
+      myAuthBotId,
+      BASE_BACKGROUND_COLOR,
+    });
+  }, [
+    readingHistoryRangeSeconds,
+    handleReadingHistoryRangeSelectorClick,
+    startOfWeekAYearAgoDate,
+    weeksCount,
+    SEC_PER_HOUR,
+    SEC_PER_MINUTE,
+    dayRangesMap,
+    dailyReadingHistorySummaries,
+    selectedUsersCount,
+    myAuthBotId,
+    BASE_BACKGROUND_COLOR,
+  ]);
+
+  const stepColors = useMemo(() => {
+    return [BASE_BACKGROUND_COLOR, "#BFBFBF", "#969696", "#6E6E6E", "#454545"];
+  }, [BASE_BACKGROUND_COLOR]);
   const { tick } = useTimeContext();
 
   const prevItemsColorMapRef = useRef(new Map());
@@ -125,10 +162,22 @@ export const ReadingHistoryTimeline = () => {
         let color;
         const prevColor = prevItemsColorMapRef.current.get(key);
 
-        if (summary) {
+        if (summary && summary.totalTimeSpentReading > SEC_PER_MINUTE) {
+          const firstUserId = Object.keys(summary.users)[0];
+          const firstUserColor =
+            firstUserId === myAuthBotId
+              ? BibleVizUtils.Data.tags.myUserColor
+              : (BibleVizUtils.Data.vars.userPresenceData?.[firstUserId]?.user
+                  ?.color ??
+                thisBot.vars.FakeReadingHistoryUsersColorMap?.get(
+                  firstUserId
+                ) ??
+                "pink");
+          const userColor = selectedUsersCount === 1 ? firstUserColor : null;
           color = BibleVizUtils.Functions.GetHistoryColorByReadingTime({
+            baseColor: stepColors[0],
+            userColor,
             step,
-            stepColors,
             readingTimeSeconds: summary.totalTimeSpentReading,
             fullColorTimeSeconds,
           });
@@ -152,6 +201,7 @@ export const ReadingHistoryTimeline = () => {
     tick,
     dailyReadingHistorySummaries,
     selectedUsersCount,
+    myAuthBotId,
   ]);
 
   const items = useMemo(() => {
@@ -163,13 +213,13 @@ export const ReadingHistoryTimeline = () => {
 
     items.push(
       <Label gridRow={`3 / 4`} gridColumn={dayLabelGridColumn} isDay={true}>
-        {`Mon `}
+        {t("monShort")}
       </Label>,
       <Label gridRow={`5 / 6`} gridColumn={dayLabelGridColumn} isDay={true}>
-        {`Wed `}
+        {t("wedShort")}
       </Label>,
       <Label gridRow={`7 / 8`} gridColumn={dayLabelGridColumn} isDay={true}>
-        {`Fri `}
+        {t("friShort")}
       </Label>
     );
 
@@ -196,7 +246,7 @@ export const ReadingHistoryTimeline = () => {
         const isTimeSpentNoticeable = timeSpent > SEC_PER_MINUTE; // more than 1 minute
         const tooltipContent = [
           isToday
-            ? "Today"
+            ? t("today")
             : `${weekday} ${monthName} ${dayOfTheMonth}, ${year}`,
         ];
         if (isTimeSpentNoticeable) {
@@ -224,13 +274,19 @@ export const ReadingHistoryTimeline = () => {
               const hoursCount = Math.floor(
                 userTimeSpentSeconds / SEC_PER_HOUR
               );
-              fixedContent = `spent ${hoursCount} hour${hoursCount > 1 ? "s" : ""}`;
+              fixedContent =
+                hoursCount > 1
+                  ? t("spentHours", { count: hoursCount })
+                  : t("spentHour", { count: hoursCount });
             } else {
               const minutesCount = Math.max(
                 1,
                 Math.floor(userTimeSpentSeconds / SEC_PER_MINUTE)
               );
-              fixedContent = `spent ${minutesCount} minute${minutesCount > 1 ? "s" : ""}`;
+              fixedContent =
+                minutesCount > 1
+                  ? t("spentMinutes", { count: minutesCount })
+                  : t("spentMinute", { count: minutesCount });
             }
             tooltipContent.push(
               <ReadingHistoryTooltipContent
@@ -253,13 +309,19 @@ export const ReadingHistoryTimeline = () => {
               const hoursCount = Math.floor(
                 extraTimeSpentSeconds / SEC_PER_HOUR
               );
-              extraActivityContent = `+${extraUsers.length} spent ${hoursCount} hour${hoursCount > 1 ? "s" : ""}`;
+              extraActivityContent =
+                hoursCount > 1
+                  ? `+${extraUsers.length} ${t("spentHours", { count: hoursCount })}`
+                  : `+${extraUsers.length} ${t("spentHour", { count: hoursCount })}`;
             } else {
               const minutesCount = Math.max(
                 1,
                 Math.floor(extraTimeSpentSeconds / SEC_PER_MINUTE)
               );
-              extraActivityContent = `+${extraUsers.length} spent ${minutesCount} minute${minutesCount > 1 ? "s" : ""}`;
+              extraActivityContent =
+                minutesCount > 1
+                  ? `+${extraUsers.length} ${t("spentMinutes", { count: minutesCount })}`
+                  : `+${extraUsers.length} ${t("spentMinute", { count: minutesCount })}`;
             }
             tooltipContent.push(extraActivityContent);
           }
@@ -322,8 +384,8 @@ export const ReadingHistoryTimeline = () => {
   }, []);
 
   return (
-    <div className="readingHistoryTimelineContainer">
-      <div className="readingHistoryTimeline">{items}</div>
+    <div className="reading-history-timeline-container">
+      <div className="reading-history-timeline">{items}</div>
     </div>
   );
 };

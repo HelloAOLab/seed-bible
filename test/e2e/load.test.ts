@@ -18,6 +18,8 @@ beforeAll(async () => {
   browser = await puppeteer.launch({
     args: ["--no-sandbox"],
   });
+
+  context = browser.defaultBrowserContext();
 });
 
 afterAll(async () => {
@@ -42,7 +44,6 @@ describe("load", () => {
   });
 
   test("load seed bible into Genesis 1", async () => {
-    console.log("load");
     await loadSeedBible(page);
     seedBibleFrame = getSeedBibleFrame(page);
 
@@ -50,6 +51,24 @@ describe("load", () => {
       .locator("div.bookTitle")
       .waitHandle();
     expect(await bookTitle?.evaluate((el) => el.textContent)).toBe("Genesis 1");
+  });
+
+  test("should add the book ID and chapter number to the URL", async () => {
+    await loadSeedBible(page);
+    seedBibleFrame = getSeedBibleFrame(page);
+
+    // Wait for the book title to ensure the content has loaded
+    const bookTitle = await seedBibleFrame
+      .locator("div.bookTitle")
+      .waitHandle();
+    expect(await bookTitle?.evaluate((el) => el.textContent)).toBe("Genesis 1");
+
+    await delay(1000); // Wait a moment to ensure URL is updated
+
+    const url = new URL(page.url());
+
+    expect(url.searchParams.get("book")).toBe("GEN");
+    expect(url.searchParams.get("chapter")).toBe("1");
   });
 
   test("load translation book and chapter", async () => {
@@ -78,7 +97,9 @@ describe("load", () => {
     expect(await bookTitle?.evaluate((el) => el.textContent)).toBe("Genesis 1");
 
     const v28 = await seedBibleFrame.locator("#v-28").waitHandle();
-    expect(await v28?.evaluate((el) => el.textContent)).toMatch(
+    const v28Text = await v28?.evaluate((el) => el.textContent);
+
+    expect(mergeWhitespace(v28Text)).toMatch(
       /And God blessed them, and God said unto them/
     );
   });
@@ -177,10 +198,129 @@ describe("navigate", () => {
     await delay(1000);
     expect(await bookTitle?.evaluate((el) => el.textContent)).toBe("Hosea 3");
   });
+
+  test("change translation", async () => {
+    await seedBibleFrame.waitForSelector(
+      'div.toolbar-item-wrapper[title="Books"] > button',
+      { visible: true }
+    );
+    await delay(1000);
+    await seedBibleFrame
+      .locator('div.toolbar-item-wrapper[title="Books"] > button')
+      .click({});
+    await page.locator(".sidebar-translation-selector").click();
+    await page.locator(".translation-language:nth-child(1)").click();
+    // i wanna click sidebar-translation-options 5th child which is a div
+    await page
+      .locator(".sidebar-translation-options > div:nth-child(5)")
+      .click();
+
+    await page.locator(".translation-option:nth-child(1)").click();
+
+    await delay(1000);
+
+    const bookTitle = await seedBibleFrame
+      .locator("div.bookTitle")
+      .waitHandle();
+    await delay(1000);
+    expect(await bookTitle?.evaluate((el) => el.textContent)).toBe(
+      "उत्पत्ति 1"
+    );
+  });
+
+  test("check bible nav enter", async () => {
+    await seedBibleFrame.waitForSelector(
+      'div.toolbar-item-wrapper[title="Books"] > button',
+      { visible: true }
+    );
+    await delay(1000);
+    await seedBibleFrame
+      .locator('div.toolbar-item-wrapper[title="Books"] > button')
+      .click({});
+    await page.locator(".searchbar > input").fill("Rev 3");
+    await page.keyboard.press("Enter");
+    const bookTitle = await seedBibleFrame
+      .locator("div.bookTitle")
+      .waitHandle();
+    await delay(2000);
+    expect(await bookTitle?.evaluate((el) => el.textContent)).toBe(
+      "Revelation 3"
+    );
+  });
+});
+
+describe("collaborative", () => {
+  let page1: Page;
+  let page2: Page;
+  let browser2: Browser;
+  beforeEach(async () => {
+    console.log("new page");
+    browser2 = await puppeteer.launch({
+      args: ["--no-sandbox"],
+    });
+    page1 = await browser.newPage();
+    page2 = await browser2.newPage();
+    await page1.setViewport({ width: 1080, height: 1024 });
+    await page2.setViewport({ width: 1080, height: 1024 });
+  });
+
+  afterEach(async () => {
+    await page1?.close();
+    await page2?.close();
+    await browser2?.close();
+  });
+
+  test("test user presense", async () => {
+    const uuid = Math.random().toString(36).substring(2, 15);
+
+    await loadSeedBible(page1, undefined, uuid, true);
+    await loadSeedBible(page2, undefined, uuid, true);
+
+    const seedBibleFrame1 = getSeedBibleFrame(page1);
+
+    const seedBibleFrame2 = getSeedBibleFrame(page2);
+
+    await Promise.all([
+      seedBibleFrame1.waitForSelector("div.start-session-bar", {
+        visible: true,
+      }),
+      seedBibleFrame2.waitForSelector("div.start-session-bar", {
+        visible: true,
+      }),
+    ]);
+
+    await seedBibleFrame1.locator("div.start-session-bar").click();
+
+    await delay(1000);
+
+    await seedBibleFrame2.waitForSelector("button.join-session-button", {
+      visible: true,
+    });
+
+    expect(seedBibleFrame2.locator("button.join-session-button")).toBeDefined();
+
+    await delay(500);
+
+    await seedBibleFrame2.locator("button.join-session-button").click();
+
+    await delay(500);
+
+    const userPresenceItems2 = await seedBibleFrame2.$$(".user-presence-item");
+    expect(userPresenceItems2.length).toBe(2);
+    await delay(5000);
+    const userPresenceItems1 = await seedBibleFrame1.$$(".user-presence-item");
+    expect(userPresenceItems1.length).toBe(2);
+  });
 });
 
 function delay(time) {
   return new Promise(function (resolve) {
     setTimeout(resolve, time);
   });
+}
+
+function mergeWhitespace(
+  str: string | null | undefined
+): string | null | undefined {
+  return str?.replace(/\s+/g, " ").trim();
 }

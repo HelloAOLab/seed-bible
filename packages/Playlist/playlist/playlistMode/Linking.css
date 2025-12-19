@@ -20,17 +20,17 @@
     z-index: 10001;
     border-radius: 0.625rem;
     transform: translateX(-100%);
-    background-color: black;
+    background-color: #202020;
     overflow: visible;
 }
 
 
 .more-menu-items:not(:last-of-type, .noBorderBottom) {
-    border-bottom: 1px solid #3E3E3E;
+    /* border-bottom: 1px solid #3E3E3E; */
 }
 
 .more-menu-items:hover {
-    background-color: #525151;
+    background-color: #4b4b4b;
 }
 
 .link-tag {

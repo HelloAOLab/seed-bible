@@ -331,9 +331,12 @@ function Tab({
   collapsed,
   onlineUsers,
   index,
+  setSidebarWidth,
+  setCollapsed,
+
   sharedTab,
 }) {
-  const { openPopupSettings, closePopupSettings, userURL } =
+  const { openPopupSettings, closePopupSettings, userURL, t } =
     useSideBarContext();
   const { setCanvasMode, setMapMode } = useBibleContext();
   // useEffect(() => {
@@ -353,7 +356,7 @@ function Tab({
     items: [
       {
         icon: <MenuIcon name="delete" />,
-        title: "Delete tab",
+        title: t("deleteTab"),
         onClick: () => {
           removeTab(el.id);
           closePopupSettings();
@@ -362,7 +365,7 @@ function Tab({
       },
       {
         icon: <MenuIcon name="edit" />,
-        title: "Edit mode",
+        title: t("editMode"),
         onClick: () => {
           globalThis[`SetEnableEditorOf${tab.id}`]((prev) => !prev);
           closePopupSettings();
@@ -371,7 +374,7 @@ function Tab({
       },
       {
         icon: <MenuIcon name="check_box" />,
-        title: multiSelectMode ? `Deselect` : `Select`,
+        title: multiSelectMode ? t("deselect") : t("select"),
         onClick: () => {
           setMultiSelectMode((prev) => !prev);
           setSelectedTabs([activeTab]);
@@ -385,7 +388,7 @@ function Tab({
     items: [
       {
         icon: <MenuIcon name="delete" />,
-        title: "Delete tab",
+        title: t("deleteTab"),
         onClick: () => {
           removeTab(el.id);
           closePopupSettings();
@@ -399,7 +402,7 @@ function Tab({
     items: [
       {
         icon: <MenuIcon name="delete" />,
-        title: "Delete tab",
+        title: t("deleteTab"),
         onClick: () => {
           removeTab(el.id);
           closePopupSettings();
@@ -426,6 +429,8 @@ function Tab({
             setIsDragging={setIsDragging}
             setElement={setElement}
             collapsed={collapsed}
+            setSidebarWidth={setSidebarWidth}
+            setCollapsed={setCollapsed}
           />
         ),
         data: el,
@@ -442,6 +447,12 @@ function Tab({
   }, [selectedTabs]);
 
   const handleTabClick = () => {
+    if (globalThis.IsMobileNow()) {
+      setSidebarWidth(0);
+      // setCollapsed(true);
+      // setMultiSelectMode(false);
+    }
+
     if (activeTab === el.id) return;
 
     if (el.sharedTab) {
@@ -654,7 +665,7 @@ function Folder({ folder, onlineUsers, collapsed }) {
   const [open, setOpen] = useState(true);
   const { moveTab } = useTabsContext();
   const [tabEntered, setTabEntered] = useState(false);
-  const { openPopupSettings, closePopupSettings } = useSideBarContext();
+  const { openPopupSettings, closePopupSettings, t } = useSideBarContext();
 
   function handleMouseEnter() {
     if (!isDragging) return;
@@ -674,7 +685,7 @@ function Folder({ folder, onlineUsers, collapsed }) {
     items: [
       {
         icon: <MenuIcon name="delete" />,
-        title: "Delete folder",
+        title: t("delete"),
         onClick: () => {
           removeFolder(folder.id);
           closePopupSettings();
@@ -722,6 +733,8 @@ function Folder({ folder, onlineUsers, collapsed }) {
               setIsDragging={setIsDragging}
               setElement={setElement}
               collapsed={collapsed}
+              setSidebarWidth={setSidebarWidth}
+              setCollapsed={setCollapsed}
             />
           ))}
           {
@@ -826,6 +839,7 @@ function SideBar() {
     setPackageAddingOptions,
     closePopupSettings,
     userURL,
+    t,
   } = useSideBarContext();
   const { setIsDragging, isDragging, setElement, Element } = useMouseMove();
   const [tabEntered, setTabEntered] = useState(false);
@@ -898,15 +912,15 @@ function SideBar() {
 
   useEffect(() => {
     if (isMobile) {
-      setOpenOnMobile(false);
+      // setOpenOnMobile(false);
       setIsMobile(true);
     }
   }, [customScreens]);
 
-  const toggleSidebar = () => {
-    if (isMobile) setOpenOnMobile(false);
-    else setCollapsed(!collapsed);
-  };
+  // const toggleSidebar = () => {
+  //   if (isMobile) setOpenOnMobile(false);
+  //   else setCollapsed(!collapsed);
+  // };
 
   // Toggle search visibility function
   const toggleSearchVisibility = () => {
@@ -1028,7 +1042,7 @@ function SideBar() {
       {
         disabled: false,
         icon: <MenuIcon name="screen_record" />,
-        title: "Start session",
+        title: t("startSession"),
         onClick: () => {
           // os.log(globalThis?.StartSession,globalThis)
           HandleSharedTabClick();
@@ -1037,7 +1051,7 @@ function SideBar() {
       {
         disabled: false,
         icon: <MenuIcon name="logout" />,
-        title: "Invite to session",
+        title: t("inviteToSession"),
         onClick: async () => {
           const { QRCodeComponent } = thisBot.Chips();
           const url = `https://ao.bot/?pattern=SeedBibleDev&inst=${uuid()}&hosted=${configBot.id}`;
@@ -1047,10 +1061,10 @@ function SideBar() {
       {
         disabled: false,
         icon: <MenuIcon name="content_copy" />,
-        title: "Join another session",
+        title: t("joinAnotherSession"),
         onClick: async () => {
           const id = await os.showInput("", {
-            title: "Enter session link",
+            title: t("enterUrl"),
           });
           if (id) os.goToURL(id);
         },
@@ -1059,7 +1073,7 @@ function SideBar() {
       {
         disabled: false,
         icon: <MenuIcon name="fullscreen" />,
-        title: "Full screen",
+        title: t("fullScreen"),
         onClick: () => {
           setFullScreen(true);
         },
@@ -1068,7 +1082,7 @@ function SideBar() {
       {
         disabled: false,
         icon: <MenuIcon name={showSearch ? "visibility_off" : "visibility"} />,
-        title: showSearch ? "Hide Search" : "Show Search",
+        title: showSearch ? t("hideSearch") : t("showSearch"),
         onClick: toggleSearchVisibility,
       },
       // {
@@ -1082,13 +1096,13 @@ function SideBar() {
       {
         disabled: true,
         icon: <MenuIcon name="bug_report" />,
-        title: "Report a bug",
+        title: t("reportBug"),
         onClick: () => {},
       },
       {
         disabled: true,
         icon: <MenuIcon name="help" />,
-        title: "Help",
+        title: t("help"),
         onClick: () => {},
       },
     ],
@@ -1100,7 +1114,7 @@ function SideBar() {
       items: [
         {
           icon: <MenuIcon name="description" />,
-          title: "Page tab",
+          title: t("pageTab"),
           onClick: () => {
             addTab({
               id: uuid(),
@@ -1119,7 +1133,7 @@ function SideBar() {
         },
         {
           icon: <MenuIcon name="create_new_folder" />,
-          title: "New folder",
+          title: t("newFolder"),
           onClick: () => {
             addFolder(`Folder ${folders.length + 1}`);
             closePopupSettings();
@@ -1289,6 +1303,9 @@ function SideBar() {
               </div>
               <div className="canvasOptions">
                 <span
+                  style={{
+                    paddingTop: customScreens?.value >= 2 ? "3px" : "0px",
+                  }}
                   onContextMenu={(e) => {
                     e.preventDefault();
                     globalThis._skipNextMouse = true; // block next onMouseUp
@@ -1370,10 +1387,12 @@ function SideBar() {
                 collapsed={collapsed}
                 editMode={editMode}
                 sharedTab={true}
+                setSidebarWidth={setSidebarWidth}
+                setCollapsed={setCollapsed}
               />
             )}
             <div className="tabsContainer">
-              <span>Tabs</span>
+              <span>{t("tabs")}</span>
               <div
                 style={{ display: "flex", alignItems: "center", gap: "5px" }}
               >
@@ -1535,6 +1554,7 @@ function SideBar() {
             >
               menu
             </span>
+            {!configBot.tags.staticInst && <UserPresence collapsed={true} />}
             <div
               style={{
                 height: "1px",
@@ -1568,13 +1588,42 @@ function SideBar() {
                 setElement={setElement}
                 collapsed={collapsed}
                 editMode={editMode}
+                setSidebarWidth={setSidebarWidth}
+                setCollapsed={setCollapsed}
               />
             ))}
 
           {collapsed && (
             <span
-              onClick={() => {
-                openPopupSettings(AddingOption());
+              onMouseDown={() => {
+                clearTimeout(holdTimeout.current.time);
+                holdTimeout.current.clicked = false;
+                holdTimeout.current.time = setTimeout(() => {
+                  holdTimeout.current.clicked = true;
+                  openPopupSettings(AddingOption(), true);
+                }, 600);
+              }}
+              onMouseUp={() => {
+                clearTimeout(holdTimeout.current.time);
+                if (!holdTimeout.current.clicked) {
+                  addTab({
+                    id: uuid(),
+                    taken: false,
+                    data: {
+                      use: "thePage",
+                      type: "book",
+                      book: "Genesis",
+                      bookId: "GEN",
+                      chapter: 1,
+                      translation: "BSB",
+                    },
+                  });
+                }
+                holdTimeout.current.clicked = false;
+              }}
+              onMouseLeave={() => {
+                clearTimeout(holdTimeout.current.time);
+                holdTimeout.current.clicked = false;
               }}
               class="material-symbols-outlined addIconCollapsed"
             >
@@ -1672,7 +1721,7 @@ export const SettingsProfile = () => {
   const { openPopupSettings } = useSideBarContext();
   const { setIsAbleToRightClick } = useMouseMove();
 
-  const { sidebarMode, setSideBarMode, closePopupSettings } =
+  const { sidebarMode, setSideBarMode, closePopupSettings, t } =
     useSideBarContext();
 
   const OPTIONS = (id) => {
@@ -1681,7 +1730,7 @@ export const SettingsProfile = () => {
       items: [
         {
           icon: <MenuIcon name="add" />,
-          title: "Create a new space",
+          title: t("createNewSpace"),
           external: (
             <CreateNewSpaceModal addSpace={addSpace} activeSpace={id} />
           ),
@@ -1690,7 +1739,7 @@ export const SettingsProfile = () => {
         { type: "line" },
         {
           icon: <MenuIcon name="edit" />,
-          title: "Edit space",
+          title: t("editSpace"),
           onClick: () => {
             setSideBarMode("settings");
           },
@@ -1699,15 +1748,19 @@ export const SettingsProfile = () => {
         { type: "line" },
         {
           icon: <MenuIcon name="download" />,
-          title: "Import space",
+          title: t("importSpace"),
           external: <ImportSpaceModal />,
           onClick: () => {},
         },
         { type: "line" },
-        { icon: <MenuIcon name="share" />, title: "Share", onClick: () => {} },
+        {
+          icon: <MenuIcon name="share" />,
+          title: t("share"),
+          onClick: () => {},
+        },
         {
           icon: <MenuIcon name="delete" />,
-          title: "Delete",
+          title: t("delete"),
           onClick: () => {
             removeSpace(id);
           },
@@ -1825,7 +1878,14 @@ export const UserProfile = ({ collapsed }) => {
           overflow: "hidden",
         }}
       >
-        <Icon width={15} height={15} />
+        {userData?.photoLink ? (
+          <img
+            style={{ "border-radius": "50%", width: "35px", border: "" }}
+            src={userData?.photoLink}
+          />
+        ) : (
+          <Icon width={15} height={15} />
+        )}
       </div>
       {
         null /*userData?.photoLink ? (
@@ -1886,7 +1946,7 @@ const sidebarStyles = `
 
     .icon-button {
         cursor: pointer;
-        color: var(--themeText1);
+        color: var(--text1);
     }
 `;
 

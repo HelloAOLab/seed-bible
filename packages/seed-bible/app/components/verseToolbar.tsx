@@ -19,23 +19,23 @@ export function VerseToolbar({
   onClose,
 }) {
   const [selectedColor, setSelectedColor] = useState("#FDE047");
-  const [customColors, setCustomColors] = useState([]);
+  const [customColors, setCustomColors] = useState(
+    masks?.customColors ? masks.customColors : []
+  );
+  useEffect(() => {
+    masks.customColors = customColors;
+  }, [customColors]);
   const [tempColor, setTempColor] = useState(null);
   const colorInputRef = useRef(null);
   const colorPickerRef = useRef(null);
 
   useEffect(() => {
     const handleClickOutside = (event) => {
-      // if (colorPickerRef.current && !colorPickerRef.current.contains(event.target)) {
-      //   if (!customColors.includes(tempColor)) {
-      //     setCustomColors((prev) => [...prev, tempColor]);
-      //   }
       if (tempColor) {
         handleColorClick(tempColor);
         setSelectedColor(tempColor);
         setTempColor(null);
       }
-      // }
     };
 
     document.addEventListener("mousedown", handleClickOutside);
@@ -81,6 +81,9 @@ export function VerseToolbar({
     animation: "slideUp 0.3s ease-out",
     maxWidth: "95vw",
     width: "auto",
+    display: "flex",
+    flexDirection: "column",
+    alignItems: "center",
   };
 
   const headerStyle = {
@@ -95,6 +98,13 @@ export function VerseToolbar({
     color: "#000",
     letterSpacing: "0.5px",
     textTransform: "uppercase",
+    backgroundColor: "#fff",
+    padding: "8px 16px",
+    borderRadius: "8px",
+    // border: "1px solid #e5e5e5",
+    // boxShadow: "0 2px 8px rgba(0, 0, 0, 0.1)",
+    width: "fit-content",
+    // margin: "0 auto 8px auto",
   };
 
   const dividerStyle = {
@@ -156,7 +166,7 @@ export function VerseToolbar({
     backgroundColor: "transparent",
     border: "none",
     cursor: "pointer",
-    color: "#333",
+    color: "var(--text1) !important",
     transition: "background-color 0.2s",
     borderRadius: "4px",
     fontSize: "10px",
@@ -218,17 +228,45 @@ export function VerseToolbar({
   };
 
   const handleColorChange = (e) => {
-    setTempColor(e.target.value);
+    const newColor = e.target.value;
+    setTempColor(newColor);
+
+    // Add color to customColors array, max 3
+    setCustomColors((prev) => {
+      // Check if color already exists
+      if (prev.includes(newColor)) {
+        return prev;
+      }
+
+      // If less than 3, just add it
+      if (prev.length < 3) {
+        return [...prev, newColor];
+      }
+
+      // If 3 or more, remove first and add new one at the end
+      return [...prev.slice(1), newColor];
+    });
   };
 
   const menuOptions = useMemo(() => {
-    return getMenuActions(clickedVersesContext) || [];
+    return getMenuActions(clickedVersesContext, onClose) || [];
   }, [clickedVersesContext]);
 
   return (
-    <div className="verse-toolbar" style={containerStyle}>
-      <style>
-        {`
+    <>
+      {globalThis.IsMobileNow() && (
+        <>
+          <div className="verse-ref">
+            <img src="https://res.cloudinary.com/dfbtwwa8p/image/upload/v1764875876/Rectangle_11_yzpmpm.svg" />
+          </div>
+          <span className="verse-ref" style={verseRefStyle}>
+            {getVerseReference()}
+          </span>
+        </>
+      )}
+      <div className="verse-toolbar" style={containerStyle}>
+        <style>
+          {`
           @keyframes slideUp {
             from {
               transform: translateX(-50%) translateY(20px);
@@ -241,8 +279,47 @@ export function VerseToolbar({
           }
           
           @media (max-width: 480px) {
+                .verse-toolbar {
+        position: fixed !important;
+        bottom: 0 !important;
+        left: 0 !important;
+        transform: none !important;
+        width: 100% !important;
+        max-width: 100% !important;
+        border-radius: 0 !important;
+        padding: 3px 16px !important;
+        height: 52px;
+         background: var(--pageBackground) !important; 
+    }
+                    
+            .header-ref {
+              flex-direction: row !important;
+              width: 100% !important;
+              gap: 8px !important;
+              align-items: center !important;
+              justify-content: center;
+            }
+            
+            .verse-ref {
+              position: absolute !important;
+              top: -91.8vh !important;
+              left: 50% !important;
+              transform: translateX(-50%) !important;
+              margin: 0 !important;
+            }
+            
             .tool-buttons button span {
               font-size: 16px !important;
+            }
+            
+            .color-buttons {
+              
+              
+            }
+            
+            .tool-buttons {
+              
+              margin-left: 10px !important;
             }
             
             .color-circle, .plus-button, 
@@ -257,10 +334,9 @@ export function VerseToolbar({
               }
             .color-circle,
             .header-ref{
-              flex-wrap:wrap;
+              // flex-wrap:wrap;
             }
             .divider-vertical{
-                display:none;
             }
             .icon-button {
               width: 28px !important;
@@ -268,184 +344,192 @@ export function VerseToolbar({
             }
           }
         `}
-      </style>
-      <link
-        rel="stylesheet"
-        href="https://fonts.googleapis.com/css2?family=Material+Symbols+Outlined:opsz,wght,FILL,GRAD@20..48,100..700,0..1,-50..200"
-      />
-
-      <div
-        className="header-ref"
-        style={headerStyle}
-        onContextMenu={(e) => {
-          e.stopPropagation();
-        }}
-      >
-        <span className="verse-ref" style={verseRefStyle}>
-          {getVerseReference()}
-        </span>
-
-        <div className="divider-vertical" style={dividerStyle}></div>
+        </style>
+        <link
+          rel="stylesheet"
+          href="https://fonts.googleapis.com/css2?family=Material+Symbols+Outlined:opsz,wght,FILL,GRAD@20..48,100..700,0..1,-50..200"
+        />
 
         <div
-          onMouseDown={(e) => e.stopPropagation()}
-          className="color-buttons"
-          style={colorButtonsStyle}
+          className="header-ref"
+          style={headerStyle}
+          onContextMenu={(e) => {
+            e.stopPropagation();
+          }}
         >
-          {allHighlighted ? (
-            <>
-              <button
-                className="clear-button"
-                style={{
-                  ...plusButtonStyle,
-                  width: "auto",
-                  padding: "8px 16px",
-                  borderRadius: "6px",
-                  fontSize: "13px",
-                  fontWeight: "500",
-                  color: "#dc2626",
-                  border: "2px solid #dc2626",
-                  backgroundColor: "#fff",
-                }}
-                onMouseEnter={(e) => {
-                  e.currentTarget.style.backgroundColor = "#fee2e2";
-                  e.currentTarget.style.transform = "scale(1.05)";
-                }}
-                onMouseLeave={(e) => {
-                  e.currentTarget.style.backgroundColor = "#fff";
-                  e.currentTarget.style.transform = "scale(1)";
-                }}
-                onClick={handleClearHighlights}
-              >
-                Clear Selected
-              </button>
-              <button
-                className="clear-all-button"
-                style={{
-                  ...plusButtonStyle,
-                  width: "auto",
-                  padding: "8px 16px",
-                  borderRadius: "6px",
-                  fontSize: "13px",
-                  fontWeight: "500",
-                  color: "#991b1b",
-                  border: "2px solid #991b1b",
-                  backgroundColor: "#fff",
-                }}
-                onMouseEnter={(e) => {
-                  e.currentTarget.style.backgroundColor = "#fecaca";
-                  e.currentTarget.style.transform = "scale(1.05)";
-                }}
-                onMouseLeave={(e) => {
-                  e.currentTarget.style.backgroundColor = "#fff";
-                  e.currentTarget.style.transform = "scale(1)";
-                }}
-                onClick={handleClearAll}
-              >
-                Clear All
-              </button>
-            </>
-          ) : (
-            <>
-              {defaultColors.map((color) => (
-                <button
-                  key={color}
-                  className="color-circle"
-                  style={circleButtonStyle(color)}
-                  onMouseEnter={(e) =>
-                    (e.currentTarget.style.transform = "scale(1.1)")
-                  }
-                  onMouseLeave={(e) =>
-                    (e.currentTarget.style.transform = "scale(1)")
-                  }
-                  onClick={() => handleColorClick(color)}
-                  aria-label={`Highlight with ${color}`}
-                />
-              ))}
-
-              {customColors.map((color) => (
-                <button
-                  key={color}
-                  className="color-circle"
-                  style={circleButtonStyle(color)}
-                  onMouseEnter={(e) =>
-                    (e.currentTarget.style.transform = "scale(1.1)")
-                  }
-                  onMouseLeave={(e) =>
-                    (e.currentTarget.style.transform = "scale(1)")
-                  }
-                  onClick={() => handleColorClick(color)}
-                  aria-label={`Highlight with ${color}`}
-                />
-              ))}
-
-              <div ref={colorPickerRef}>
-                <button
-                  className="plus-button"
-                  style={plusButtonStyle}
-                  onMouseEnter={(e) =>
-                    (e.currentTarget.style.transform = "scale(1.1)")
-                  }
-                  onMouseLeave={(e) =>
-                    (e.currentTarget.style.transform = "scale(1)")
-                  }
-                  onClick={handlePlusClick}
-                  aria-label="Add color"
-                >
-                  <img
-                    style={{ width: "38px" }}
-                    src={
-                      "https://res.cloudinary.com/dfbtwwa8p/image/upload/v1761753902/329cd5727522c1b0f09580e4c7b13964cb2b1a87_fvmcdy.png"
-                    }
-                  />
-                </button>
-
-                <input
-                  ref={colorInputRef}
-                  type="color"
-                  value={tempColor}
-                  onChange={handleColorChange}
-                  style={colorInputStyle}
-                />
-              </div>
-            </>
+          {!globalThis.IsMobileNow() && (
+            <span className="verse-ref" style={verseRefStyle}>
+              {getVerseReference()}
+            </span>
           )}
-        </div>
 
-        <div className="divider-vertical" style={dividerStyle}></div>
+          {!globalThis.IsMobileNow() && (
+            <div className="divider-vertical" style={dividerStyle}></div>
+          )}
 
-        <div
-          onMouseDown={(e) => e.stopPropagation()}
-          className="tool-buttons"
-          style={toolButtonsStyle}
-        >
-          {menuOptions.map((option) => {
-            if (option?.type === "line") {
-              return (
-                <div className="divider-vertical" style={dividerStyle}></div>
-              );
-            } else {
-              return (
-                <div class="toolbar-icon-container">
-                  <div
-                    onClick={option?.onClick}
-                    className="icon-button"
-                    style={iconButtonStyle}
+          <div
+            onMouseDown={(e) => e.stopPropagation()}
+            className="color-buttons"
+            style={colorButtonsStyle}
+          >
+            {allHighlighted ? (
+              <>
+                <button
+                  className="clear-button"
+                  style={{
+                    ...plusButtonStyle,
+                    width: "auto",
+                    padding: "8px 16px",
+                    borderRadius: "6px",
+                    fontSize: "13px",
+                    fontWeight: "500",
+                    color: "#dc2626",
+                    border: "2px solid #dc2626",
+                    backgroundColor: "#fff",
+                  }}
+                  onMouseEnter={(e) => {
+                    e.currentTarget.style.backgroundColor = "#fee2e2";
+                    e.currentTarget.style.transform = "scale(1.05)";
+                  }}
+                  onMouseLeave={(e) => {
+                    e.currentTarget.style.backgroundColor = "#fff";
+                    e.currentTarget.style.transform = "scale(1)";
+                  }}
+                  onClick={handleClearHighlights}
+                >
+                  Clear Selected
+                </button>
+                <button
+                  className="clear-all-button"
+                  style={{
+                    ...plusButtonStyle,
+                    width: "auto",
+                    padding: "8px 16px",
+                    borderRadius: "6px",
+                    fontSize: "13px",
+                    fontWeight: "500",
+                    color: "#991b1b",
+                    border: "2px solid #991b1b",
+                    backgroundColor: "#fff",
+                  }}
+                  onMouseEnter={(e) => {
+                    e.currentTarget.style.backgroundColor = "#fecaca";
+                    e.currentTarget.style.transform = "scale(1.05)";
+                  }}
+                  onMouseLeave={(e) => {
+                    e.currentTarget.style.backgroundColor = "#fff";
+                    e.currentTarget.style.transform = "scale(1)";
+                  }}
+                  onClick={handleClearAll}
+                >
+                  Clear All
+                </button>
+              </>
+            ) : (
+              <>
+                {defaultColors.map((color) => (
+                  <button
+                    key={color}
+                    className="color-circle"
+                    style={circleButtonStyle(color)}
+                    onMouseEnter={(e) =>
+                      (e.currentTarget.style.transform = "scale(1.1)")
+                    }
+                    onMouseLeave={(e) =>
+                      (e.currentTarget.style.transform = "scale(1)")
+                    }
+                    onClick={() => handleColorClick(color)}
+                    aria-label={`Highlight with ${color}`}
+                  />
+                ))}
+
+                {customColors.map((color) => (
+                  <button
+                    key={color}
+                    className="color-circle"
+                    style={circleButtonStyle(color)}
+                    onMouseEnter={(e) =>
+                      (e.currentTarget.style.transform = "scale(1.1)")
+                    }
+                    onMouseLeave={(e) =>
+                      (e.currentTarget.style.transform = "scale(1)")
+                    }
+                    onClick={() => handleColorClick(color)}
+                    aria-label={`Highlight with ${color}`}
+                  />
+                ))}
+
+                <div ref={colorPickerRef}>
+                  <button
+                    className="plus-button"
+                    style={plusButtonStyle}
+                    onMouseEnter={(e) =>
+                      (e.currentTarget.style.transform = "scale(1.1)")
+                    }
+                    onMouseLeave={(e) =>
+                      (e.currentTarget.style.transform = "scale(1)")
+                    }
+                    onClick={handlePlusClick}
+                    aria-label="Add color"
                   >
-                    {option.icon}
-                  </div>
-                  <span>{option.title}</span>
+                    <img
+                      style={{ width: "38px", "-webkit-user-drag": "none" }}
+                      src={
+                        "https://res.cloudinary.com/dfbtwwa8p/image/upload/v1761753902/329cd5727522c1b0f09580e4c7b13964cb2b1a87_fvmcdy.png"
+                      }
+                    />
+                  </button>
+
+                  <input
+                    ref={colorInputRef}
+                    type="color"
+                    value={tempColor}
+                    onChange={handleColorChange}
+                    style={colorInputStyle}
+                  />
                 </div>
-              );
-            }
-          })}
+              </>
+            )}
+          </div>
+
+          <div className="divider-vertical" style={dividerStyle}></div>
+
+          <div
+            onMouseDown={(e) => e.stopPropagation()}
+            className="tool-buttons"
+            style={toolButtonsStyle}
+          >
+            {menuOptions.map((option) => {
+              if (option?.type === "line") {
+                return (
+                  <div className="divider-vertical" style={dividerStyle}></div>
+                );
+              } else {
+                return (
+                  <div class="toolbar-icon-container">
+                    <div
+                      onClick={option?.onClick}
+                      className="icon-button"
+                      style={iconButtonStyle}
+                    >
+                      {option.icon}
+                    </div>
+                    <span style={{ color: "var(--text1) !important" }}>
+                      {option.title}
+                    </span>
+                  </div>
+                );
+              }
+            })}
+          </div>
         </div>
       </div>
-    </div>
+    </>
   );
 }
 
-function getMenuActions(that) {
+function getMenuActions(that, onClose) {
+  os.log("GET MENU ACTIONS VERSE TOOLBAR", that);
   const { SharePopup } = thisBot.Chips();
   const MenuOptions = {
     type: "normal",
@@ -455,6 +539,7 @@ function getMenuActions(that) {
         onClick: () => {
           os.setClipboard(that.text);
           SetInHold(null);
+          onClose();
         },
         title: "Copy",
       },
@@ -465,15 +550,37 @@ function getMenuActions(that) {
           SetShowCommands(true);
           SetInHold(null);
         },
-        title: "Apologist",
+        title: "Agent",
       },
       {
         icon: <ShareIcon height="24" width="24" />,
         onClick: () => {
           closePopupSettings();
           setTimeout(() => {
+            // Build verse reference from the context
+            const verseNumbers = that.verseNumber || [];
+            const sorted = [...verseNumbers].sort((a, b) => a - b);
+            const groups = [];
+            if (sorted.length > 0) {
+              let start = sorted[0];
+              let end = sorted[0];
+              for (let i = 1; i < sorted.length; i++) {
+                if (sorted[i] === end + 1) {
+                  end = sorted[i];
+                } else {
+                  groups.push(start === end ? `${start}` : `${start}-${end}`);
+                  start = sorted[i];
+                  end = sorted[i];
+                }
+              }
+              groups.push(start === end ? `${start}` : `${start}-${end}`);
+            }
+            const reference = `${that.book} ${that.chapter}:${groups.join(",")}`;
             openPopupSettings(
-              <SharePopup shareTitle={`Check this out! ${that.text}`} />,
+              <SharePopup
+                shareTitle={`${that.text}`}
+                shareReference={reference}
+              />,
               null,
               true
             );
@@ -508,10 +615,12 @@ function getMenuActions(that) {
   if (that.verseNumber) {
     for (const verseNumber of that.verseNumber) {
       if (
-        globalThis?.VerseContextMenuOptions?.[`${that.book}-${verseNumber}`]
+        globalThis?.VerseContextMenuOptions?.[
+          `${that.book}-${that.chapter}-${verseNumber}`
+        ]
       ) {
         globalThis.VerseContextMenuOptions[
-          `${that.book}-${verseNumber}`
+          `${that.book}-${that.chapter}-${verseNumber}`
         ].forEach((item) => {
           if (verseContextMenuOptions[item.title]) {
             verseContextMenuOptions[item.title] = {
@@ -582,9 +691,10 @@ function getMenuActions(that) {
   }
 
   // Return only icon + onClick array
-  return (
-    MenuOptions.items
-      // .filter((i) => i.icon && typeof i.onClick === "function")
-      .map(({ icon, onClick, title, type }) => ({ icon, onClick, title, type }))
-  );
+  return MenuOptions.items.map(({ icon, onClick, title, type }) => ({
+    icon,
+    onClick,
+    title,
+    type,
+  }));
 }

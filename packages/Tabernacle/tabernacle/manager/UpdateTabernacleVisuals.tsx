@@ -40,7 +40,7 @@ const keysFirstAppearance = [
     },
   },
   {
-    key: "table-showbread",
+    key: "table-of-showbread",
     chaptersInfo: {
       "25": MeshState.Shown,
       "26": MeshState.Shown,
@@ -55,7 +55,7 @@ const keysFirstAppearance = [
     },
   },
   {
-    key: "structure-inner-curtain",
+    key: "inner-curtain",
     chaptersInfo: {
       "26": MeshState.Shown,
       "27": MeshState.Shown,
@@ -70,7 +70,7 @@ const keysFirstAppearance = [
     },
   },
   {
-    key: "structure-front-curtain",
+    key: "front-curtain",
     chaptersInfo: {
       "26": MeshState.Shown,
       "27": MeshState.Shown,
@@ -85,7 +85,7 @@ const keysFirstAppearance = [
     },
   },
   {
-    key: "structure-front-pillars",
+    key: "front-pillars",
     chaptersInfo: {
       "26": MeshState.Shown,
       "27": MeshState.Shown,
@@ -99,7 +99,7 @@ const keysFirstAppearance = [
     },
   },
   {
-    key: "structure-inner-pillars",
+    key: "inner-pillars",
     chaptersInfo: {
       "26": MeshState.Shown,
       "27": MeshState.Shown,
@@ -113,7 +113,7 @@ const keysFirstAppearance = [
     },
   },
   {
-    key: "structure-walls",
+    key: "walls",
     chaptersInfo: {
       "26": MeshState.Shown,
       "27": MeshState.Shown,
@@ -127,7 +127,7 @@ const keysFirstAppearance = [
     },
   },
   {
-    key: "structure-bars",
+    key: "bars",
     chaptersInfo: {
       "26": MeshState.Shown,
       "27": MeshState.Shown,
@@ -141,7 +141,7 @@ const keysFirstAppearance = [
     },
   },
   {
-    key: "structure-rings",
+    key: "rings",
     chaptersInfo: {
       "26": MeshState.Shown,
       "27": MeshState.Shown,
@@ -176,7 +176,7 @@ const keysFirstAppearance = [
     },
   },
   {
-    key: "cloth-purple",
+    key: "purple-curtain",
     chaptersInfo: {
       "26": MeshState.Shown,
       "27": MeshState.Shown,
@@ -190,7 +190,7 @@ const keysFirstAppearance = [
     },
   },
   {
-    key: "cloth-brown",
+    key: "brown-curtain",
     chaptersInfo: {
       "26": MeshState.Shown,
       "27": MeshState.Shown,
@@ -204,7 +204,7 @@ const keysFirstAppearance = [
     },
   },
   {
-    key: "cloth-red",
+    key: "red-curtain",
     chaptersInfo: {
       "26": MeshState.Shown,
       "27": MeshState.Shown,
@@ -218,7 +218,7 @@ const keysFirstAppearance = [
     },
   },
   {
-    key: "cloth-grey",
+    key: "grey-curtain",
     chaptersInfo: {
       "26": MeshState.Shown,
       "27": MeshState.Shown,
@@ -268,7 +268,7 @@ if (thisBot.vars.currentBook && isValidChapter) {
     thisBot.vars.currentBook === "Exodus" &&
     ((thisBot.vars.currentChapter >= 25 && thisBot.vars.currentChapter <= 30) ||
       (thisBot.vars.currentChapter >= 35 && thisBot.vars.currentChapter <= 40));
-  thisBot.SetBotsVisibility({
+  return thisBot.SetBotsVisibility({
     data: keysFirstAppearance.map((info, index) => {
       return {
         key: info.key,

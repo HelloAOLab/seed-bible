@@ -74,14 +74,21 @@ function ThePage({
   const [direction, setDirection] = useState(null);
   const commandsRef = useRef(null);
   const [userMovedToolbar, setUserMovedToolbar] = useState();
-
+  useEffect(() => {
+    os.addBotListener(thisBot, "onTabDelete", (data) => {
+      if (data.tabId === tab?.id) {
+        setTab(null);
+      }
+    });
+  }, []);
   useEffect(() => {
     if (!T) globalThis.CurrentPanelAvailable = panelId;
     else globalThis.CurrentPanelAvailable = null;
   }, [T]);
   const { inSession, role, config } = getUserSessionInfo(configBot.id);
   const [tabEntered, setTabEntered] = useState(false);
-  const { updateTab, tabs, setActiveTab, sharedTab } = useTabsContext();
+  const { updateTab, tabs, activeTab, setActiveTab, sharedTab } =
+    useTabsContext();
   const { isDragging, setIsDragging, Element, position } = useMouseMove();
   const { navFunctions, setNavFunctions, scrollToVerse } = useBibleContext();
   const [inHold, setInHold] = useState();
@@ -113,7 +120,7 @@ function ThePage({
 
   const loadTranslationFromUrl = async () => {
     console.log(configBot.tags.translationId, "translation id");
-    let translationId =
+    const translationId =
       configBot.tags.translationId ||
       configBot.tags.translation ||
       tab.data.translation;
@@ -124,12 +131,12 @@ function ThePage({
     let firstChapterApiLink;
     let books = [];
     if (translationId) {
-      let available_translations_req = await web.get(
+      const available_translations_req = await web.get(
         "https://bible.helloao.org/api/available_translations.json"
       );
       let allTranslations = [];
-      let translations = {};
-      let defaultTranslations = [
+      const translations = {};
+      const defaultTranslations = [
         "english",
         "spanish",
         "arabic",
@@ -147,7 +154,7 @@ function ThePage({
         }
       );
 
-      let trValue = {
+      const trValue = {
         pass: false,
         value: null,
       };
@@ -161,14 +168,14 @@ function ThePage({
           }
         });
 
-        let urlId = translationId.includes("https://");
+        const urlId = translationId.includes("https://");
 
         if (trValue.pass && !urlId) {
-          let bookData = await web.get(
+          const bookData = await web.get(
             `https://bible.helloao.org/api/${trValue.value.id}/books.json`
           );
           books = bookData.data.books;
-          let book0 = bookData.data.books[0];
+          const book0 = bookData.data.books[0];
           firstBookData = book0;
           setTagMask(thisBot, "selectedTranslation", trValue.value, "local");
           setTagMask(thisBot, "booksData", bookData.data.books, "local");
@@ -176,7 +183,7 @@ function ThePage({
           bookTranslationId = trValue.value.id;
           firstChapterApiLink = book0.firstChapterApiLink;
         } else {
-          let result = await web.get(translationId);
+          const result = await web.get(translationId);
           if (result.status === 200) {
             const url = new URL(translationId);
             let newTranslations = result.data.translations;
@@ -188,7 +195,7 @@ function ThePage({
                 ...translationData,
               };
             }
-            let defaultTranslation = newTranslations[0];
+            const defaultTranslation = newTranslations[0];
             newTranslations = newTranslations.map((trans) => {
               return {
                 languageEnglishName: trans.languageEnglishName,
@@ -199,26 +206,26 @@ function ThePage({
               };
             });
             allTranslations = [...allTranslations, ...newTranslations];
-            for (let translation of newTranslations) {
-              let englishName = translation.languageEnglishName.toLowerCase();
+            for (const translation of newTranslations) {
+              const englishName = translation.languageEnglishName.toLowerCase();
               if (!defaultTranslations.includes(englishName)) {
                 defaultTranslations.push(englishName);
               }
             }
-            let translation = {
+            const translation = {
               languageEnglishName: defaultTranslation.languageEnglishName,
               id: defaultTranslation.id,
               listOfBooksApiLink: `${url.origin}${defaultTranslation.listOfBooksApiLink}`,
               origin: url.origin,
               shortName: defaultTranslation.shortName,
             };
-            let englishName = translation.languageEnglishName.toLowerCase();
-            let shortName = translation.shortName.toLowerCase();
+            const englishName = translation.languageEnglishName.toLowerCase();
+            const shortName = translation.shortName.toLowerCase();
 
-            let bookData = await web.get(translation.listOfBooksApiLink);
+            const bookData = await web.get(translation.listOfBooksApiLink);
 
             books = bookData.data.books;
-            let book0 = bookData.data.books[0];
+            const book0 = bookData.data.books[0];
             firstBookData = book0;
             setTagMask(thisBot, "selectedTranslation", translation, "local");
             setTagMask(thisBot, "booksData", bookData.data.books, "local");
@@ -235,10 +242,10 @@ function ThePage({
           }
         }
         allTranslations.forEach((translation) => {
-          let englishName =
+          const englishName =
             translation?.languageEnglishName?.toLowerCase() ||
             translation?.englishName?.toLowerCase();
-          let shortName = translation.shortName.toLowerCase();
+          const shortName = translation.shortName.toLowerCase();
           if (translations[englishName]) {
             if (!translations[englishName][shortName]) {
               translations[englishName][shortName] = translation;
@@ -292,7 +299,7 @@ function ThePage({
     console.log(data, tab, "the data loaded");
 
     globalThis.refreshScrollers && globalThis.refreshScrollers();
-    let { firstBookData, bookTranslationId, baseUrl, books } =
+    const { firstBookData, bookTranslationId, baseUrl, books } =
       await loadTranslationFromUrl();
 
     if (!configBot.tags.defaultChecked) {
@@ -315,7 +322,7 @@ function ThePage({
             let chapterNo;
             if (Number(configBot.tags.chapter) < bookData.numberOfChapters)
               chapterNo = configBot.tags.chapter;
-            let chapterUrl = chapterNo
+            const chapterUrl = chapterNo
               ? bookData.firstChapterApiLink.replace(
                   "1.json",
                   `${chapterNo}.json`
@@ -341,7 +348,7 @@ function ThePage({
           let chapterNo;
           if (Number(configBot.tags.chapter) < bookData.numberOfChapters)
             chapterNo = configBot.tags.chapter;
-          let chapterUrl = chapterNo
+          const chapterUrl = chapterNo
             ? bookData.firstChapterApiLink.replace(
                 "1.json",
                 `${chapterNo}.json`
@@ -370,7 +377,7 @@ function ThePage({
       configBot.tags.defaultChecked = true;
     } else {
       if (masks?.allTranslations) {
-        for (let translation of masks.allTranslations) {
+        for (const translation of masks.allTranslations) {
           if (translation.id === tab.data.translation) {
             setTagMask(thisBot, "selectedTranslation", translation, "local");
             break;
@@ -380,6 +387,7 @@ function ThePage({
     }
 
     setData(bible.data);
+    SetShowToolbar(true);
     whisper(getBot("system", "introduction.searchBar"), "initialize");
   }
   useEffect(() => {
@@ -400,11 +408,11 @@ function ThePage({
   }, []);
   useEffect(() => {
     const onBookChange = (data) => {
-      os.log("updated shared tab", "not approved");
-      if (!globalThis.CurrentTab?.sharedTab) {
-        updateTab(masks["sharedTab"], data);
-        return;
-      }
+      // os.log("updated shared tab", "not approved");
+      // if (!globalThis.CurrentTab?.sharedTab) {
+      //   updateTab(masks["sharedTab"], data);
+      //   return;
+      // }
       console.log("remoteBookChange", data);
       globalThis.Open?.(data.bookId, data.chapter);
     };
@@ -431,7 +439,7 @@ function ThePage({
   useEffect(() => {
     loadData();
     globalThis.CurrentTab = tab;
-  }, []);
+  }, [tab]);
 
   // GLOBAL GUARDS
   if (!globalThis.__remoteBookUpdate) globalThis.__remoteBookUpdate = false;
@@ -459,66 +467,64 @@ function ThePage({
     EmitData("book", payload);
   }
 
-  // ----------------------
-  // 🔥 REPLACE YOUR EFFECT WITH THIS
-  // ----------------------
   useEffect(() => {
-    if (!data) return;
-
-    hanldNavFunctions();
-    SetShowCommands(false);
-    updateTab(tab?.id, data);
-
-    // ---------- HOST ----------
-    if (role === "host") {
-      // Update shared tab if configured
-      if (config?.sharedTab) {
+    if (data) {
+      //  EmitData("book", { ...data });
+      hanldNavFunctions();
+      SetShowCommands(false);
+      updateTab(tab?.id, data);
+      if (
+        config &&
+        !config?.sharedTab &&
+        role === "host" &&
+        masks["sharedTab"] !== tab.id
+      ) {
+        updateTab(tab?.id, data);
         updateTab(masks["sharedTab"], data);
       }
+      if (role === "host") EmitData("book", { ...data });
+      if (panelId && tab) {
+        os.log("recoreded", panelId, {
+          ...tab,
+          data: { ...tab.data, ...data },
+        });
+        globalThis.PanelTabsMap[panelId] = {
+          ...tab,
+          data: { ...tab.data, ...data },
+        };
+      }
+      os.log("bookdata", data);
+      if (data.translation === "ARBNAV" || data.translation === "arb_vdv") {
+        setDirection("rtl");
+      } else {
+        setDirection(null);
+      }
+      if (masks["sharedTab"] === tab.id) EmitData("book", { ...data });
+      // const emitter = getBot("system", "app.emitter");
+      // sendRemoteData(emitter.masks.otherRemotes, "updateSharingData", {
+      //   id: tab?.id,
+      //   bookId: data?.bookId,
+      //   book: data?.book,
+      //   chapter: data?.chapter,
+      // });
+      const emitter = getBot("system", "app.emitter");
 
-      // Emit navigation (with debounce + loop guard)
-      safeEmitBook({ ...data });
-    }
-
-    // ---------- FOLLOWER ----------
-    else if (role === "follower" && !config?.onlyHostNav) {
-      // Emit follower navigation (debounced + guarded)
-      safeEmitBook({ ...data, skip: true });
-    }
-
-    // ---------- PANEL RECORDING ----------
-    if (panelId && tab) {
-      os.log("recorded", panelId, {
-        ...tab,
-        data: { ...tab.data, ...data },
+      sendRemoteData(emitter.masks.otherRemotes, "updateSharingData", {
+        id: tab?.id,
+        bookId: data?.bookId,
+        book: data?.book,
+        chapter: data?.chapter,
       });
-
-      globalThis.PanelTabsMap[panelId] = {
-        ...tab,
-        data: { ...tab.data, ...data },
-      };
+      os.syncConfigBotTagsToURL(["book", "chapter"]);
     }
-
-    // ---------- RTL / LTR MODE ----------
-    if (data.translation === "ARBNAV" || data.translation === "arb_vdv") {
-      setDirection("rtl");
-    } else {
-      setDirection(null);
-    }
-
-    // ---------- SHARING META ----------
-    const emitter = getBot("system", "app.emitter");
-    sendRemoteData(emitter.masks.otherRemotes, "updateSharingData", {
-      id: tab?.id,
-      bookId: data?.bookId,
-      book: data?.book,
-      chapter: data?.chapter,
-    });
-
-    // sync for later openings
-    configBot.tags.book = data?.bookId;
-    configBot.tags.chapter = data?.chapter;
   }, [data]);
+
+  useEffect(() => {
+    if (data && tab.id === activeTab) {
+      configBot.tags.book = data?.bookId;
+      configBot.tags.chapter = data?.chapter;
+    }
+  }, [activeTab, data, tab]);
 
   useEffect(() => {
     // Create the interval
@@ -652,18 +658,15 @@ function ThePage({
       const highestVerse = unifiedVerses[unifiedVerses.length - 1];
       const lowestVerse = unifiedVerses[0];
 
-      // Build selected text
-      const selectedTextFinal =
-        selection && !selection.isCollapsed
-          ? selection.toString()
-          : unifiedVerses
-              .map((v) => {
-                const verseObj = data?.content
-                  ?.flatMap((c) => c.verses)
-                  .find((x) => x.verseNumber === v);
-                return verseObj?.text || "";
-              })
-              .join(" ");
+      //  selected text from verse data (excludes headings)
+      const selectedTextFinal = unifiedVerses
+        .map((v) => {
+          const verseObj = data?.content
+            ?.flatMap((c) => c.verses)
+            .find((x) => x.verseNumber === v);
+          return verseObj?.text || "";
+        })
+        .join(" ");
 
       setSelectedText(selectedTextFinal);
       setLastSelectedVerse(highestVerse);
@@ -703,8 +706,8 @@ function ThePage({
         if (ele) {
           const rect = ele.getBoundingClientRect();
           setToolbarPos({
-            x: rect.left + rect.width / 2,
-            y: rect.bottom - 150,
+            x: rect.left,
+            y: rect.bottom,
           });
         }
       }
@@ -715,6 +718,7 @@ function ThePage({
         text: selectedTextFinal,
         book: data?.book,
         chapter: data?.chapter,
+        translation: data?.translation,
       });
     };
 
@@ -811,7 +815,6 @@ function ThePage({
         },
       });
       setTab(tab);
-      setData(bible.data);
     }
   }
 
@@ -1090,7 +1093,6 @@ function ThePage({
       // if (!skipIt)
       //   return
       if (!tab?.id) return;
-      EmitData("highlight", { verseNumbers, color });
 
       const verseId = `v-${
         Array.isArray(verseNumbers)
@@ -1131,10 +1133,13 @@ function ThePage({
         if (!globalThis.tabHighlights) globalThis.tabHighlights = {};
         globalThis.tabHighlights[tab?.id] = newHighlighted;
 
-        if (fadeIn || tags?.sessions[configBot.id]?.config.highlightDuration) {
+        if (
+          fadeIn ||
+          tags?.sessions?.[configBot.id]?.config.highlightDuration
+        ) {
           let duration = 0;
-          if (tags?.sessions[configBot.id]?.config.highlightDuration)
-            fadeIn = tags?.sessions[configBot.id]?.config.highlightDuration;
+          if (tags?.sessions?.[configBot.id]?.config.highlightDuration)
+            fadeIn = tags?.sessions?.[configBot.id]?.config.highlightDuration;
           if (fadeIn === 4) {
             duration = 0; // Never remove highlight
           } else if (typeof fadeIn === "number") {
@@ -1160,21 +1165,22 @@ function ThePage({
   );
 
   const highlightVerse = useCallback(
-    (verseNumbers, color) => {
+    (verseNumbers, color, scroll = true) => {
       if (!tab?.id) return;
-      EmitData("highlight", { verseNumbers, color });
+      // EmitData("highlight", { verseNumbers, color });
 
       const verseId = `v-${
-        typeof verseNumbers === "object"
+        Array.isArray(verseNumbers)
           ? verseNumbers[verseNumbers.length - 1]
           : verseNumbers
       }`;
 
-      document.getElementById(verseId).scrollIntoView({
-        behavior: "smooth",
-        block: "center",
-        inline: "nearest",
-      });
+      if (scroll)
+        document.getElementById(verseId)?.scrollIntoView({
+          behavior: "smooth",
+          block: "center",
+          inline: "nearest",
+        });
 
       const numbers = Array.isArray(verseNumbers)
         ? verseNumbers
@@ -1182,8 +1188,6 @@ function ThePage({
 
       setHighlighted((prev) => {
         const newHighlighted = { ...prev };
-
-        const allHighlighted = numbers.every((vn) => newHighlighted[vn]);
         const groupId = Date.now();
 
         numbers.forEach((vn) => {
@@ -1192,13 +1196,11 @@ function ThePage({
             book: data?.book,
             chapter: data?.chapter,
             group: groupId,
-            color,
+            color: color || wordHighlightsBC,
           };
         });
 
-        if (!globalThis.tabHighlights) {
-          globalThis.tabHighlights = {};
-        }
+        if (!globalThis.tabHighlights) globalThis.tabHighlights = {};
         globalThis.tabHighlights[tab?.id] = newHighlighted;
 
         return newHighlighted;
@@ -1353,6 +1355,7 @@ function ThePage({
   );
 
   // NEW: Handle color selection from toolbar
+  // NEW: Handle color selection from toolbar
   const handleColorSelect = useCallback(
     (color) => {
       if (clickedVerses.length === 0) return;
@@ -1361,7 +1364,7 @@ function ThePage({
       clickedVerses.forEach((verseNum) => {
         toggleVerseHighlight(verseNum, color);
       });
-
+      EmitData("highlight", { verseNumbers: clickedVerses, color }); // Fixed: use clickedVerses instead of undefined verseNum
       // Clear clicked verses and hide toolbar
       setClickedVerses([]);
       setTimeout(() => {
@@ -1418,8 +1421,12 @@ function ThePage({
           position: relative;
         }
         .toolbar-1 {
-          display:${showVerseToolbar && globalThis.IsMobileNow() ? "none !important" : ""}
+          background:${showVerseToolbar && globalThis.IsMobileNow() ? "transparent !important" : ""};
+          pointer-events:${showVerseToolbar && globalThis.IsMobileNow() ? "none" : ""};
         }
+        .toolbar-item-wrapper{
+            display:${showVerseToolbar && globalThis.IsMobileNow() ? "none !important" : ""}
+          }
         .bookTitle,
         .sectionTitle {
           display:${direction ? "ruby" : null}
@@ -1434,6 +1441,10 @@ function ThePage({
       {data && tab && !tabEntered ? (
         <>
           <div
+            onClick={(e) => {
+              setOpenSidebar((prev) => !prev);
+              setCurrentExperience(0);
+            }}
             style={{ "pointer-events": isDragging ? "none" : null }}
             className="bookTitle"
           >{`${data?.book} ${data?.chapter}`}</div>
@@ -1451,6 +1462,7 @@ function ThePage({
                       blinker={blinker}
                       setRef={refs}
                       holded={holded}
+                      clickedVersesContext={clickedVersesContext}
                       selected={selected}
                       highlighted={highlighted}
                       wordHighlights={wordHighlights}
@@ -1509,7 +1521,7 @@ function ThePage({
                   }
                 }}
                 onMouseUp={() => setDragToolbar(false)}
-                onMouseLeave={() => setDragToolbar(false)}
+                // onMouseLeave={() => setDragToolbar(false)}
                 style={
                   globalThis.IsMobileNow()
                     ? {
@@ -1525,7 +1537,7 @@ function ThePage({
                       }
                     : {
                         position: "fixed",
-                        left: toolbarPos.x - 190,
+                        left: toolbarPos.x  -50,
                         top: toolbarPos.y,
                         zIndex: 10000,
                         cursor: dragToolbar ? "grabbing" : "grab",
@@ -1562,7 +1574,7 @@ function ThePage({
               display: "flex",
               alignItems: "center",
               justifyContent: "center",
-              backgroundColor: "#f8f9fa",
+              // backgroundColor: "#f8f9fa",
             }}
             className={`pageContainer ${
               tabEntered ? "tabEntered" : "tabDrop"
@@ -1593,6 +1605,7 @@ function ThePage({
                 }}
               >
                 <img
+                  className="coloredIcon"
                   style={{ width: "50px" }}
                   src="https://res.cloudinary.com/dfbtwwa8p/image/upload/v1755365776/717a8527988cca7e0bdc9449ec68581a8400b977_vqc7mx.png"
                 />
@@ -1637,7 +1650,9 @@ function PageToolbar({ path = "showInPageToolbar" }) {
     <div className="thePageToolbar">
       {visibleTools.map((tool) => (
         <div
-          onClick={tool.onClick}
+          onClick={(e) => {
+            tool.onClick({ mode: "panel" });
+          }}
           className="tool-preview-page"
           key={tool.label}
         >
@@ -1790,6 +1805,7 @@ function Section({
   hebrew_subtitle,
   commandHighlight,
   setCommandHighlight,
+  clickedVersesContext,
   setLastSelectedVerse,
   setRef,
   commandsRef,
@@ -2062,7 +2078,7 @@ function Section({
         ];
         return wordParts.map((part, i) => {
           if (part.isHighlighted) {
-            let attributes = part.highlightConfig.createAttributes(
+            const attributes = part.highlightConfig.createAttributes(
               book,
               chapter,
               part
@@ -2089,20 +2105,23 @@ function Section({
       return verse.text;
     }
   };
-
+  const { showHeading, showVerses } = useBibleContext();
+  const { activeSpace } = useTabsContext();
   return (
     <div>
-      <div
-        className="sectionTitle"
-        {...eventHandlers}
-        onClick={(e) => {
-          if (shouldSuppressClick()) return; // Prevent normal click if hold already triggered
+      {showHeading[activeSpace] && (
+        <div
+          className="sectionTitle"
+          {...eventHandlers}
+          onClick={(e) => {
+            if (shouldSuppressClick()) return; // Prevent normal click if hold already triggered
 
-          shout("onHeadingClick", { heading });
-        }}
-      >
-        {heading}
-      </div>
+            shout("onHeadingClick", { heading });
+          }}
+        >
+          {heading}
+        </div>
+      )}
 
       {hebrew_subtitle && <div className="sectionTitle">{hebrew_subtitle}</div>}
       <div style={textEdit ? editTextStyle : null}>
@@ -2118,7 +2137,8 @@ function Section({
         <div className="sectionCover">
           {verses.map((verse) => {
             if (verse.lineBreak) {
-              return <p class="verseLineBreak"></p>;
+              // <p class="verseLineBreak"></p>;
+              return;
             }
 
             const [c, setC] = useState(false);
@@ -2137,7 +2157,6 @@ function Section({
               selected[verse.verseNumber] ||
               blinker[verse.verseNumber];
             const isClicked = clickedVerses.includes(verse.verseNumber);
-
             return (
               <span key={verse.verseNumber}>
                 <span
@@ -2208,7 +2227,7 @@ function Section({
                         highlighted?.[verse.verseNumber].chapter === chapter) ||
                       commandHighlight.includes(verse.verseNumber)
                         ? wordHighlightsTC
-                        : "black",
+                        : "var(--pageTextColor) !important",
                     transition: "background-color 0.2s ease, border 0.2s ease",
                     "border-radius":
                       highlighted?.[verse.verseNumber] || isClicked
@@ -2236,40 +2255,131 @@ function Section({
                     highlighted?.[verse.verseNumber] ? "verse-highlighted" : ""
                   } ${isClicked ? "verse-clicked" : ""}`}
                 >
-                  <span
-                    className={`sectionTextNumber ${
-                      globalThis.studyNotesPresent ? "clickableCursor" : ""
-                    }`}
-                    onClick={() => {
-                      if (globalThis.studyNotesPresent) {
-                        HighlightStudyNoteSection(verse?.verseNumber);
-                      }
-                    }}
-                    onPointerEnter={() => {
-                      globalThis.showRefModal = true;
-                      setTimeout(() => {
-                        if (globalThis.showRefModal) {
-                          shout("toggleReferenceModal", {
-                            book,
-                            chapter,
-                            verse: verse.verseNumber,
-                          });
-                        }
-                      }, 500);
-                    }}
-                    onPointerLeave={() => {
-                      globalThis.showRefModal = false;
-                    }}
-                  >
-                    {verse?.verseNumber}
-                  </span>
                   {!c ? (
-                    renderVerseText(verse)
+                    (() => {
+                      const verseContent = renderVerseText(verse);
+                      const verseNumberElement = showVerses[activeSpace] ? (
+                        <span
+                          className={`sectionTextNumber ${
+                            globalThis.studyNotesPresent
+                              ? "clickableCursor"
+                              : ""
+                          }`}
+                          onClick={() => {
+                            if (globalThis.studyNotesPresent) {
+                              HighlightStudyNoteSection(verse?.verseNumber);
+                            }
+                          }}
+                          onPointerEnter={() => {
+                            globalThis.showRefModal = true;
+                            setTimeout(() => {
+                              if (globalThis.showRefModal) {
+                                shout("toggleReferenceModal", {
+                                  book,
+                                  chapter,
+                                  verse: verse.verseNumber,
+                                });
+                              }
+                            }, 500);
+                          }}
+                          onPointerLeave={() => {
+                            globalThis.showRefModal = false;
+                          }}
+                        >
+                          {verse?.verseNumber}
+                        </span>
+                      ) : null;
+
+                      // If verseContent is a string, split and wrap first word with verse number
+                      if (typeof verseContent === "string") {
+                        const firstSpaceIndex = verseContent.indexOf(" ");
+                        if (firstSpaceIndex > 0) {
+                          const firstWord = verseContent.slice(
+                            0,
+                            firstSpaceIndex
+                          );
+                          const restOfText =
+                            verseContent.slice(firstSpaceIndex);
+                          return (
+                            <>
+                              <span className="verse-number-anchor">
+                                {verseNumberElement} {firstWord}
+                              </span>
+                              {restOfText}
+                            </>
+                          );
+                        }
+                        return (
+                          <span className="verse-number-anchor">
+                            {verseNumberElement} {verseContent}
+                          </span>
+                        );
+                      }
+
+                      // If verseContent is an array (JSX elements), wrap first element with verse number
+                      if (
+                        Array.isArray(verseContent) &&
+                        verseContent.length > 0
+                      ) {
+                        const firstElement = verseContent[0];
+                        const restElements = verseContent.slice(1);
+                        return (
+                          <>
+                            <span className="verse-number-anchor">
+                              {verseNumberElement} {firstElement}
+                            </span>
+                            {restElements}
+                          </>
+                        );
+                      }
+
+                      // Fallback: just render verse number and content
+                      return (
+                        <>
+                          <span className="verse-number-anchor">
+                            {verseNumberElement}
+                          </span>
+                          {verseContent}
+                        </>
+                      );
+                    })()
                   ) : (
-                    <MiniTextEditor
-                      initialHtml={verse.text}
-                      onChange={(html) => console.log("Updated HTML:", html)}
-                    />
+                    <>
+                      <span
+                        style={{
+                          display: showVerses[activeSpace] ? "" : "none",
+                        }}
+                        className={`sectionTextNumber ${
+                          globalThis.studyNotesPresent ? "clickableCursor" : ""
+                        }`}
+                        onClick={() => {
+                          if (globalThis.studyNotesPresent) {
+                            HighlightStudyNoteSection(verse?.verseNumber);
+                          }
+                        }}
+                        onPointerEnter={() => {
+                          globalThis.showRefModal = true;
+                          setTimeout(() => {
+                            if (globalThis.showRefModal) {
+                              shout("toggleReferenceModal", {
+                                book,
+                                chapter,
+                                verse: verse.verseNumber,
+                              });
+                            }
+                          }, 500);
+                        }}
+                        onPointerLeave={() => {
+                          globalThis.showRefModal = false;
+                        }}
+                      >
+                        {verse?.verseNumber}
+                      </span>
+                      <MiniTextEditor
+                        initialHtml={verse.text}
+                        onChange={(html) => console.log("Updated HTML:", html)}
+                      />
+                    </>
                   )}
                   <input
                     style={{
@@ -2299,7 +2409,10 @@ function Section({
                       paddingTop: "10px",
                     }}
                   >
-                    <ConfigurableFunctionCommands contextData={contextData} />
+                    <ConfigurableFunctionCommands
+                      contextData={clickedVersesContext}
+                      clickedVerses={clickedVerses}
+                    />
                   </div>
                 )}
               </span>

@@ -46,9 +46,44 @@ function getOrSetVisualInTags(remoteId) {
     if (typeof tags !== "undefined") {
       if (!tags.userPresenceData) tags.userPresenceData = {};
       if (!tags.userPresenceData.visuals) tags.userPresenceData.visuals = {};
+      if (!tags.userPresenceData.usedIndices)
+        tags.userPresenceData.usedIndices = { colors: [], icons: [] };
+
       if (!tags.userPresenceData.visuals[remoteId]) {
-        tags.userPresenceData.visuals[remoteId] = computeVisual(remoteId);
+        // Get available indices (filter out used ones)
+        let availableColorIndices = colors
+          .map((_, i) => i)
+          .filter((i) => !tags.userPresenceData.usedIndices.colors.includes(i));
+
+        let availableIconIndices = icons
+          .map((_, i) => i)
+          .filter((i) => !tags.userPresenceData.usedIndices.icons.includes(i));
+
+        // If all indices are used, reset and use all indices again
+        if (availableColorIndices.length === 0) {
+          tags.userPresenceData.usedIndices.colors = [];
+          availableColorIndices = colors.map((_, i) => i);
+        }
+
+        if (availableIconIndices.length === 0) {
+          tags.userPresenceData.usedIndices.icons = [];
+          availableIconIndices = icons.map((_, i) => i);
+        }
+
+        // Compute visual with available indices
+        const visual = computeVisual(
+          remoteId,
+          availableColorIndices,
+          availableIconIndices
+        );
+
+        // Record the used indices
+        tags.userPresenceData.usedIndices.colors.push(visual.colorIndex);
+        tags.userPresenceData.usedIndices.icons.push(visual.iconIndex);
+
+        tags.userPresenceData.visuals[remoteId] = visual;
       }
+
       const data = tags.userPresenceData.visuals[remoteId];
       return {
         ...data,
@@ -57,10 +92,11 @@ function getOrSetVisualInTags(remoteId) {
       };
     }
   } catch (_) {
-    return { color: null, icon: null };
+    return { color: null, Icon: null };
   }
   return computeVisual(remoteId);
 }
+
 globalThis.GetOrSetVisualInTags = getOrSetVisualInTags;
 
 async function getSelfIdSafe() {
@@ -128,7 +164,7 @@ function getUserSessionInfo(userId) {
 }
 globalThis.GetUserSessionInfo = getUserSessionInfo;
 
-export function UserPresence() {
+export function UserPresence({ collapsed = false }) {
   const [showSettings, setShowSettings] = useState(false);
   const [users, setUsers] = useState([]);
   const listenersAddedRef = useRef(false);
@@ -416,7 +452,7 @@ export function UserPresence() {
     onlyHostNav: true,
     sharedTab: true,
     autoScroll: true,
-    onlyHostHighlight: true,
+    onlyHostHighlight: false,
     highlightDuration: 16,
     onlyHostSelect: true,
     showOthersActivity: false,
@@ -690,17 +726,23 @@ export function UserPresence() {
   return (
     <>
       <div
-        style={{
-          marginTop: "4px",
-          // border: `1px solid var(--tabSelection) !important`,
-          // borderBottom: 'none',
-          // borderRadius: '5px 5px 0 0',
-          // background: `color-mix(in srgb, var(--tabSelection) 50%, transparent) !important`,
-          // zIndex: 1000,
-          // position: 'relative',
-          // "border-bottom": 0,
-          // "opacity": activeTab !== masks['sharedTab'] ? '0.4' : null
-        }}
+        style={
+          !collapsed
+            ? {
+                marginTop: "10px",
+                // border: `1px solid var(--tabSelection) !important`,
+                // borderBottom: 'none',
+                // borderRadius: '5px 5px 0 0',
+                // background: `color-mix(in srgb, var(--tabSelection) 50%, transparent) !important`,
+                // zIndex: 1000,
+                // position: 'relative',
+                // "border-bottom": 0,
+                // "opacity": activeTab !== masks['sharedTab'] ? '0.4' : null
+              }
+            : {
+                display: "none",
+              }
+        }
         className="userPresence-container"
       >
         <div
@@ -709,7 +751,7 @@ export function UserPresence() {
             display: "flex",
             alignItems: "center",
             gap: 8,
-            backgroundColor: "#fff",
+            backgroundColor: "#ffffff3d",
             borderRadius:
               getStatusText() !== "Start session" ? "5px 5px 0 0" : 5,
             padding: "4px 8px",
@@ -720,6 +762,7 @@ export function UserPresence() {
             transition: "all 0.2s ease",
             height: "38px",
           }}
+          className="start-session-bar"
         >
           <style>
             {getStatusText() !== "Start session" &&
@@ -745,7 +788,7 @@ export function UserPresence() {
               <span
                 style={{
                   fontSize: 12,
-                  color: "black",
+                  color: "var(--text1)",
                   fontWeight: 600,
                   marginLeft: 4,
                 }}
@@ -787,6 +830,7 @@ export function UserPresence() {
                   <div
                     key={remoteId}
                     style={{ display: "flex", alignItems: "center" }}
+                    className="user-presence-item"
                   >
                     <div
                       onClick={(e) => {
@@ -885,8 +929,8 @@ export function UserPresence() {
               style={{
                 zIndex: 99999,
                 position: "absolute",
-                left: 240,
-                top: 105,
+                left: 220,
+                top: 30,
               }}
             >
               {isHost ? (
@@ -901,60 +945,59 @@ export function UserPresence() {
             </div>
           )}
         </div>
+      </div>
+      <div
+        style={{
+          position: "fixed",
+          top: 20,
+          right: 20,
+          zIndex: 100000,
+          display: "flex",
+          flexDirection: "column",
+          gap: 12,
+        }}
+      >
+        {notifications.map((notif) =>
+          notif.type === "invite" ? (
+            <InviteNotification
+              key={notif.id}
+              inviterId={notif.inviterId}
+              onAccept={() => {
+                AcceptInvite(notif.inviterId);
+                setHasInteracted(true);
+                setNotifications((prev) =>
+                  prev.filter((n) => n.id !== notif.id)
+                );
+              }}
+              onDismiss={() =>
+                setNotifications((prev) =>
+                  prev.filter((n) => n.id !== notif.id)
+                )
+              }
+            />
+          ) : (
+            <SessionNotification
+              key={notif.id}
+              hostId={notif.hostId}
+              onJoin={() => {
+                followHost(notif.hostId);
+                setHasInteracted(true);
 
-        <div
-          style={{
-            position: "fixed",
-            top: 20,
-            right: 20,
-            zIndex: 100000,
-            display: "flex",
-            flexDirection: "column",
-            gap: 12,
-          }}
-        >
-          {notifications.map((notif) =>
-            notif.type === "invite" ? (
-              <InviteNotification
-                key={notif.id}
-                inviterId={notif.inviterId}
-                onAccept={() => {
-                  AcceptInvite(notif.inviterId);
-                  setHasInteracted(true);
-                  setNotifications((prev) =>
-                    prev.filter((n) => n.id !== notif.id)
-                  );
-                }}
-                onDismiss={() =>
-                  setNotifications((prev) =>
-                    prev.filter((n) => n.id !== notif.id)
-                  )
-                }
-              />
-            ) : (
-              <SessionNotification
-                key={notif.id}
-                hostId={notif.hostId}
-                onJoin={() => {
-                  followHost(notif.hostId);
-                  setHasInteracted(true);
+                setActiveTab(tags.onlineTab.id);
+                UpdateTab(tags.onlineTab);
 
-                  setActiveTab(tags.onlineTab.id);
-                  UpdateTab(tags.onlineTab);
-
-                  setNotifications((prev) =>
-                    prev.filter((n) => n.id !== notif.id)
-                  );
-                }}
-                onDismiss={() => {
-                  setNotifications((prev) =>
-                    prev.filter((n) => n.id !== notif.id)
-                  );
-                }}
-              />
-            )
-          )}
-        </div>
+                setNotifications((prev) =>
+                  prev.filter((n) => n.id !== notif.id)
+                );
+              }}
+              onDismiss={() => {
+                setNotifications((prev) =>
+                  prev.filter((n) => n.id !== notif.id)
+                );
+              }}
+            />
+          )
+        )}
       </div>
     </>
   );
@@ -1419,6 +1462,7 @@ function SessionNotification({ hostId, onJoin, onDismiss }) {
           onMouseLeave={(e) => {
             e.currentTarget.style.transform = "scale(1)";
           }}
+          class="join-session-button"
         >
           Join Session
         </button>

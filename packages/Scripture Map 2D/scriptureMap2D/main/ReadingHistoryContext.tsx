@@ -4,6 +4,8 @@ import {
   flat,
   calculateReadingHistorySummary,
 } from "db.annotations.library";
+import { useTabsContext } from "app.hooks.tabs";
+import { useScriptureMap2DContext } from "scriptureMap2D.main.ScriptureMap2DContext";
 
 const { createContext, useContext, useState, useMemo, useEffect, useCallback } =
   os.appHooks;
@@ -11,6 +13,14 @@ const { createContext, useContext, useState, useMemo, useEffect, useCallback } =
 const ReadingHistoryContext = createContext();
 
 export const ReadingHistoryProvider = ({ children }) => {
+  const {
+    mode,
+    ScriptureMap2DModes,
+    isReadingHistoryEnabled,
+    setShowingBooksColors,
+  } = useScriptureMap2DContext();
+
+  const { activeTab } = useTabsContext();
   const { tick } = useTimeContext();
 
   const [readingHistoryRangeSeconds, setReadingHistoryRangeSeconds] =
@@ -30,24 +40,38 @@ export const ReadingHistoryProvider = ({ children }) => {
   const [selectedUsersCount, setSelectedUsersCount] = useState(0);
   const [readingEventsByDay, setReadingEventsByDay] = useState(null);
 
+  const trySetMyAuthBotId = useCallback(() => {
+    if (!myAuthBotId) {
+      os.requestAuthBotInBackground().then((authBot) => {
+        const filtersCopy = new Map(readingHistoryUserFilters);
+        filtersCopy.set(authBot.id, true);
+        setMyAuthBotId(authBot.id);
+        setReadingHistoryUserFilters(filtersCopy);
+      });
+    }
+  }, [readingHistoryUserFilters, myAuthBotId]);
+
+  const handleUserLoggedIn = useCallback(() => {
+    trySetMyAuthBotId();
+  }, [trySetMyAuthBotId]);
+
   useEffect(() => {
-    os.requestAuthBotInBackground().then((authBot) => {
-      const filtersCopy = new Map(readingHistoryUserFilters);
-      filtersCopy.set(authBot.id, true);
-      setMyAuthBotId(authBot.id);
-      setReadingHistoryUserFilters(filtersCopy);
-    });
+    globalThis.ScriptureMapHandleUserLoggedIn = handleUserLoggedIn;
+
+    trySetMyAuthBotId();
+
+    return () => {
+      globalThis.ScriptureMapHandleUserLoggedIn = null;
+    };
   }, []);
 
   useEffect(() => {
-    if (myAuthBotId) setUsersAuthId([myAuthBotId]);
+    if (myAuthBotId) setUsersAuthId((prev) => [...prev, myAuthBotId]);
   }, [myAuthBotId]);
 
   const {
     startOfWeekAYearAgoDate,
     weeksCount,
-    sortedTimePeriods,
-    greaterTimePeriodSeconds,
     SEC_PER_MINUTE,
     SEC_PER_HOUR,
     SEC_PER_DAY,
@@ -89,18 +113,6 @@ export const ReadingHistoryProvider = ({ children }) => {
     const weeksCount =
       Math.floor((startOfWeekDate - startOfWeekAYearAgoDate) / MS_PER_WEEK) + 1;
 
-    const sortedTimePeriods =
-      BibleVizUtils.Data.masks.historyTimePeriodsInfo.toSorted(
-        (periodInfoA, periodInfoB) => {
-          return (
-            periodInfoA.GetTimePeriodInMs() - periodInfoB.GetTimePeriodInMs()
-          );
-        }
-      );
-    const greaterTimePeriodSeconds =
-      sortedTimePeriods[sortedTimePeriods.length - 1].GetTimePeriodInMs() /
-      MS_PER_SECOND;
-
     const dayRangesMap = new Map();
     for (let week = 0; week < weeksCount; week++) {
       for (let day = 0; day < 7; day++) {
@@ -115,8 +127,6 @@ export const ReadingHistoryProvider = ({ children }) => {
     return {
       startOfWeekAYearAgoDate,
       weeksCount,
-      sortedTimePeriods,
-      greaterTimePeriodSeconds,
       MS_PER_SECOND,
       MS_PER_MINUTE,
       MS_PER_HOUR,
@@ -131,18 +141,26 @@ export const ReadingHistoryProvider = ({ children }) => {
   }, []);
 
   const tryUpdateReadingHistoryUsersFilters = useCallback(() => {
-    const newUsersIds = [];
+    const next = new Map(readingHistoryUserFilters);
+
+    let changed = false;
+
     usersAuthId.forEach((userId) => {
-      if (!readingHistoryUserFilters.has(userId)) {
-        newUsersIds.push(userId);
+      if (!next.has(userId)) {
+        next.set(userId, false);
+        changed = true;
       }
     });
-    if (newUsersIds.length > 0) {
-      const copy = new Map(readingHistoryUserFilters);
-      newUsersIds.forEach((userId) => {
-        copy.set(userId, false);
-      });
-      setReadingHistoryUserFilters(copy);
+
+    Array.from(next.keys()).forEach((key) => {
+      if (!usersAuthId.includes(key)) {
+        next.delete(key);
+        changed = true;
+      }
+    });
+
+    if (changed) {
+      setReadingHistoryUserFilters(next);
     }
   }, [readingHistoryUserFilters, usersAuthId]);
 
@@ -161,12 +179,13 @@ export const ReadingHistoryProvider = ({ children }) => {
 
     setSelectedUsersCount(selectedUsers.length);
 
-    let summary = calculateReadingHistorySummary([]);
+    let summary;
     const rangedEventsByBook = new Map();
     const eventsByDay = new Map();
     const dailySummaries = new Map();
 
     if (selectedUsers.length === 0) {
+      summary = calculateReadingHistorySummary([]);
       setYearlyReadingHistorySummary(summary);
       setRangedReadingEventsByBook(rangedEventsByBook);
       setReadingEventsByDay(eventsByDay);
@@ -197,9 +216,23 @@ export const ReadingHistoryProvider = ({ children }) => {
       .then((allEvents) => {
         const flattenedEvents = Array.from(flat(allEvents));
 
-        for (const event of flattenedEvents) {
-          const { bookId, start, end } = event;
-          if (start >= rangeStart && end <= rengeEnd) {
+        for (let event of flattenedEvents) {
+          let { start, end, chapter, bookId } = event;
+          const duration = end - start;
+          if (duration < SEC_PER_MINUTE) continue;
+          if (start >= rangeStart && start <= rengeEnd) {
+            if (bookId === "PSA") {
+              const { bookId: dividedPsalmId, chapter: dividedPsalmChapter } =
+                BibleVizUtils.Functions.ConvertCompletePsalmsToDivided({
+                  chapter,
+                });
+              event = {
+                ...event,
+                bookId: dividedPsalmId,
+                chapter: dividedPsalmChapter,
+              };
+              bookId = dividedPsalmId;
+            }
             if (!rangedEventsByBook.has(bookId)) {
               rangedEventsByBook.set(bookId, []);
             }
@@ -238,7 +271,7 @@ export const ReadingHistoryProvider = ({ children }) => {
           error
         );
       });
-  }, [tick, readingHistoryUserFilters, readingHistoryRangeSeconds]);
+  }, [tick, activeTab, readingHistoryUserFilters, readingHistoryRangeSeconds]);
 
   const handleReadingHistoryUserSelectorClick = useCallback(
     (key) => {
@@ -273,6 +306,20 @@ export const ReadingHistoryProvider = ({ children }) => {
     [setReadingHistoryRangeSeconds]
   );
 
+  const shouldShowReadingHistory = useMemo(() => {
+    return (
+      mode === ScriptureMap2DModes.Viewer &&
+      isReadingHistoryEnabled &&
+      usersAuthId?.length > 0
+    );
+  }, [mode, isReadingHistoryEnabled, usersAuthId, ScriptureMap2DModes]);
+
+  useEffect(() => {
+    if (shouldShowReadingHistory) {
+      setShowingBooksColors(false);
+    }
+  }, [shouldShowReadingHistory]);
+
   return (
     <ReadingHistoryContext.Provider
       value={{
@@ -287,8 +334,6 @@ export const ReadingHistoryProvider = ({ children }) => {
         handleReadingHistoryRangeSelectorClick,
         startOfWeekAYearAgoDate,
         weeksCount,
-        sortedTimePeriods,
-        greaterTimePeriodSeconds,
         SEC_PER_MINUTE,
         SEC_PER_HOUR,
         SEC_PER_DAY,
@@ -300,6 +345,8 @@ export const ReadingHistoryProvider = ({ children }) => {
         MS_PER_WEEK,
         dayRangesMap,
         selectedUsersCount,
+        usersAuthId,
+        shouldShowReadingHistory,
       }}
     >
       {children}

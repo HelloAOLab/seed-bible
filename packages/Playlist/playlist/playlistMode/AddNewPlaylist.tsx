@@ -3,6 +3,8 @@ const { useState, useLayoutEffect, useRef, useMemo } = os.appHooks;
 const { Input, Modal, Button, Chips, Checkbox, ButtonsCover, Tooltip, Select } =
   Components;
 
+const { useSideBarContext } = await import("app.hooks.sideBar");
+
 globalThis.RECORD_STOREKEY =
   "vRK2.YW5ub3RhdGlvbnM=.TDVlSEZzRHdBWGw4UXloR2Fha3Zjdz09.subjectfull";
 
@@ -25,9 +27,6 @@ const predefinedIconsOptions = [
 
 const Tabs = await thisBot.Tabs();
 const RenderIcon = await thisBot.RenderIcon();
-
-const tabsVals = ["Create Manually", "Import"];
-const importTabsVal = ["Google Sheet", "JSON Format"];
 
 const AddNewPlaylist = ({
   id,
@@ -63,6 +62,7 @@ const AddNewPlaylist = ({
   setTags,
   isLayers,
 }) => {
+  const { t } = useSideBarContext();
   const IsPlaylistPlaying = globalThis.IsPlaylistPlaying;
 
   const listPlaylist = useMemo(() => {
@@ -76,6 +76,9 @@ const AddNewPlaylist = ({
   }, [list, editId]);
 
   const [showMoreOptions, setShowMoreOptions] = useState(false);
+
+  const tabsVals = [t("createManually"), t("importTab")];
+  const importTabsVal = [t("googleSheet"), t("jsonFormat")];
 
   const [activeTab, setActiveTab] = useState(tabsVals[0]);
 
@@ -237,11 +240,10 @@ const AddNewPlaylist = ({
             className="overlay linked-item-custom"
           >
             <p>
-              <b style={{ color: "white" }}>Publish settings</b>
+              <b style={{ color: "white" }}>{t("publishSettings")}</b>
             </p>
             <span style={{ fontSize: "10px", color: "#c9c8c6" }}>
-              Your annotations will be available to everyone if public. If
-              private only you will have access.
+              {t("publishSettingsDesc")}
             </span>
             <div
               className="more-menu-items"
@@ -258,7 +260,7 @@ const AddNewPlaylist = ({
               >
                 lock
               </span>
-              <p>Private Access</p>
+              <p>{t("privateAccess")}</p>
               <span
                 style={{ color: "white" }}
                 class="material-symbols-outlined"
@@ -280,7 +282,7 @@ const AddNewPlaylist = ({
               >
                 public
               </span>
-              <p>Public Access</p>
+              <p>{t("publicAccess")}</p>
               <span
                 style={{ color: "white" }}
                 class="material-symbols-outlined"
@@ -297,28 +299,17 @@ const AddNewPlaylist = ({
       {informationModal && (
         <Modal
           showIcon={false}
-          title="How to create Playlist from Google Spreadsheet"
+          title={t("howToCreateFromSheet")}
           onClose={() => setInformationModal(false)}
         >
           {isActiveSheetImport ? (
             <>
-              <p style={{ fontSize: "12px" }}>
-                You can use <b>Google Spreadsheet</b> to create the Playlist
-                Faster.
-              </p>
+              <p style={{ fontSize: "12px" }}>{t("sheetInstructions")}</p>
               <br />
               <p style={{ fontSize: "12px" }}>
-                You can either use{" "}
-                <a
-                  href="chrome-extension://oemmndcbldboiebfnladdacbdfmadadm/https://www.bc.edu/content/dam/files/research_sites/cjl/pdf/Biblical%20Abbreviations_SBL%20Handbook.pdf"
-                  target="_blank"
-                  relrel="noreferrer"
-                >
-                  <b>Abbreviations</b>
-                </a>
-                or Book name for the user case.
+                {t("abbreviationsInfo")}
                 <br />
-                But make sure <b>you spell them right.</b>
+                {t("spellCorrectly")}
                 <br />
               </p>
 
@@ -327,44 +318,38 @@ const AddNewPlaylist = ({
                 target="_blank"
                 relrel="noreferrer"
               >
-                See Sample List
+                {t("seeSampleList")}
                 <br />
               </a>
               <p style={{ fontSize: "12px" }}>
-                <b> Remember to make your playlist public.</b>
+                <b>{t("rememberPublic")}</b>
               </p>
             </>
           ) : (
             <>
-              <p style={{ fontSize: "12px" }}>
-                You can use <b>JSON File Format</b> to create the Playlist
-                Faster.
-              </p>
+              <p style={{ fontSize: "12px" }}>{t("jsonInstructions")}</p>
               <br />
-              <p style={{ fontSize: "12px" }}>
-                You can either use <b>JSON File Format</b>
-                download from our app.
-              </p>
+              <p style={{ fontSize: "12px" }}>{t("jsonDownloadInfo")}</p>
               <a
                 href="https://auth-aux-aobot-prod-filesbucket-141297942820.s3.amazonaws.com/tedcasca/433b8ec62a5ecb249ca4dacdd4707b2186e598b4b74c1fb6e690c875bc48cf92.json"
                 target="_blank"
                 relrel="noreferrer"
               >
-                See Sample JSON
+                {t("seeSampleJSON")}
                 <br />
               </a>
               <p style={{ fontSize: "12px" }}>
-                <b> Remember to make JSON in given format.</b>
+                <b>{t("rememberJSONFormat")}</b>
               </p>
             </>
           )}
 
-          <ButtonsCover>
+          {/* <ButtonsCover>
             <p> </p>
             <Button onClick={() => setInformationModal(false)} secondaryAlt>
               Close
             </Button>
-          </ButtonsCover>
+          </ButtonsCover> */}
         </Modal>
       )}
       <div className="add-new-playlist" style={{ border: "none" }}>
@@ -379,13 +364,13 @@ const AddNewPlaylist = ({
             }}
           >
             <span class="material-symbols-outlined">keyboard_backspace</span>
-            <span>Back to {editId ? "Discover" : "Create"}</span>
+            <span>{editId ? t("backToDiscover") : t("backToCreate")}</span>
           </div>
         </div>
-        <h3>Enter details below.{true ? "" : editId ? "update" : "save"}</h3>
+        <h3>{t("enterDetailsBelow")}</h3>
 
         <p style={{ color: "#606060", margin: "8px 0" }}>
-          Add details to save & shared as desired.
+          {t("addDetailsToSave")}
         </p>
 
         {false && (
@@ -402,7 +387,7 @@ const AddNewPlaylist = ({
               onTabChange={handleImportTabChange}
             />
             <div className="flex-col">
-              <h4>IMPORT</h4>
+              <h4>{t("importHeader")}</h4>
               <p
                 onClick={() => setInformationModal(true)}
                 className="align-center f-10 pointer what-this"
@@ -413,7 +398,7 @@ const AddNewPlaylist = ({
                 >
                   info
                 </span>{" "}
-                <p class="underline">What's this?</p>
+                <p class="underline">{t("whatsThis")}</p>
               </p>
             </div>
 
@@ -422,7 +407,7 @@ const AddNewPlaylist = ({
                 <span class="material-symbols-outlined unfollow">
                   cloud_done
                 </span>
-                <span> JSON Data Uploaded</span>
+                <span> {t("jsonDataUploaded")}</span>
               </p>
             ) : null}
 
@@ -470,7 +455,7 @@ const AddNewPlaylist = ({
                 }}
                 secondary
               >
-                {uploadedFileData.length ? "Re-" : ""}Upload File
+                {uploadedFileData.length ? t("reUploadFile") : t("uploadFile")}
               </Button>
             )}
           </>
@@ -478,7 +463,7 @@ const AddNewPlaylist = ({
 
         {false && (
           <>
-            <h3 style={{ marginTop: "0.75rem" }}>Choose Color</h3>
+            <h3 style={{ marginTop: "0.75rem" }}>{t("chooseColor")}</h3>
             <div
               style={{
                 display: "flex",
@@ -550,7 +535,7 @@ const AddNewPlaylist = ({
                 </span>
               </div>
             </div>
-            <h3>Choose Icon</h3>
+            <h3>{t("chooseIcon")}</h3>
             <div
               style={{
                 display: "flex",
@@ -775,12 +760,12 @@ const AddNewPlaylist = ({
           </div>
           <div style={{ flexGrow: "1" }}>
             <h4 style={{ margin: "0 0 0.5rem 0" }}>
-              {!isLayers ? "Playlist name" : "Layer name"}
+              {!isLayers ? t("playlistName") : t("layerName")}
             </h4>
             <Input
               value={name}
               onChangeListener={setName}
-              placeholder="e.g. Roman's Road"
+              placeholder={t("playlistNamePlaceholder")}
             />
           </div>
         </div>
@@ -793,7 +778,7 @@ const AddNewPlaylist = ({
                 type="textarea"
                 value={description}
                 onChangeListener={setDescription}
-                placeholder="(Optional) type to add a description here"
+                placeholder={t("descriptionOptional")}
               />
             </div>
           </div>
@@ -812,30 +797,30 @@ const AddNewPlaylist = ({
                 setIsChecked(val);
               }}
             />
-            <p>Auto generate playlist by description.</p>
+            <p>{t("autoGenerateByDescription")}</p>
           </div>
         )}
-        <h3>Tags</h3>
+        <h3>{t("tagsHeader")}</h3>
         <div className="align-center" style={{ gap: "1rem" }}>
           <Input
             style={{ marginBottom: "0", flexGrow: "1" }}
             value={tagName}
             name="tagName"
             onChangeListener={setTagName}
-            placeholder="(Optional) e.g. Evangelism"
+            placeholder={t("tagPlaceholder")}
           />
           <Button
             onClick={() => {
               const nameFinal = tagName.trim();
               if (!nameFinal) {
                 return ShowNotification({
-                  message: "Tag Name Missing!",
+                  message: t("tagNameMissing"),
                   severity: "error",
                 });
               }
               if (selectedTags.length === 8) {
                 return ShowNotification({
-                  message: "Tags limit cannot exceeds 8!",
+                  message: t("tagsLimitExceeded"),
                   severity: "error",
                 });
               }
@@ -843,8 +828,7 @@ const AddNewPlaylist = ({
                 !/^(?! )[A-Za-z0-9&-]+(?: [A-Za-z0-9&-]+)*$/.test(nameFinal)
               ) {
                 return ShowNotification({
-                  message:
-                    "Tag Can Only Consist of Number, Aplhabets, Spaces, -!",
+                  message: t("tagInvalidChars"),
                   severity: "error",
                 });
               }
@@ -853,7 +837,7 @@ const AddNewPlaylist = ({
                 const index = old.findIndex((ele) => ele === nameFinal);
                 if (index > -1) {
                   ShowNotification({
-                    message: "Tag Already Present!",
+                    message: t("tagAlreadyPresent"),
                     severity: "error",
                   });
                 } else {
@@ -865,7 +849,7 @@ const AddNewPlaylist = ({
             }}
             secondary
           >
-            Add
+            {t("add")}
           </Button>
         </div>
         <div
@@ -891,24 +875,24 @@ const AddNewPlaylist = ({
             onClick={() => {
               if (loading) {
                 return ShowNotification({
-                  message: "Save in progress!",
+                  message: t("saveInProgress"),
                   severity: "error",
                 });
               }
               if (!name?.trim())
                 return ShowNotification({
-                  message: "Enter Playlist Name!",
+                  message: t("enterPlaylistName"),
                   severity: "error",
                 });
               if (!link.trim() && !isActiveTabManual() && isActiveSheetImport)
                 return ShowNotification({
-                  message: "Enter Link to Import Playlist!",
+                  message: t("enterLinkToImport"),
                   severity: "error",
                 });
               if (!isActiveTabManual() && !isActiveSheetImport) {
                 if (uploadedFileData.length < 1) {
                   return ShowNotification({
-                    message: "Upload a File to Import Data!",
+                    message: t("uploadFileToImport"),
                     severity: "error",
                   });
                 }
@@ -917,7 +901,7 @@ const AddNewPlaylist = ({
                 const nameValue = (newName || name).trim();
                 if (!nameValue)
                   return ShowNotification({
-                    message: "Please enter playlist name!",
+                    message: t("enterPlaylistName"),
                     severity: "error",
                   });
 
@@ -930,7 +914,7 @@ const AddNewPlaylist = ({
 
                 if (names.includes(nameValue)) {
                   ShowNotification({
-                    message: "Playlist Name already present!",
+                    message: t("playlistNameExists"),
                     severity: "error",
                   });
                   return true;
@@ -946,7 +930,11 @@ const AddNewPlaylist = ({
             }}
             secondary
           >
-            {loading ? "Saving.." : isActiveTabManual() ? "Save" : "Import"}
+            {loading
+              ? t("saving")
+              : isActiveTabManual()
+                ? t("save")
+                : t("importTab")}
           </Button>
           <Button
             isDisabled={loading}
@@ -955,7 +943,7 @@ const AddNewPlaylist = ({
             }}
             secondaryAlt
           >
-            Close
+            {t("close")}
           </Button>
         </div>
         <div

@@ -114,7 +114,10 @@ async function SetUpApplication(applicationFunction, bot, toolbarConfig) {
             icon,
             label,
             hasToggle: true,
-            active: true,
+           active:
+        typeof toolbarConfig?.active === "boolean"
+          ? toolbarConfig.active
+          : true,
             onHold,
             pkgName:name,
             onClick,
@@ -164,15 +167,24 @@ async function SetUpApplication(applicationFunction, bot, toolbarConfig) {
 }
 
 async function SetUpApplicationWithoutApp(toolbarConfig, bot) {
-    const runFn = () => bot[toolbarConfig.run]();
+  os.log("Setting up application", toolbarConfig)
+    const runFn = (e) => {
+      os.log("Running toolbar action", toolbarConfig.run, e)
+      bot[toolbarConfig.run]({...e})
+    }
+
 
     const toolbarOption = {
         icon: !toolbarConfig?.iconUrl ? toolbarConfig.icon : toolbarConfig.iconUrl,
         label: toolbarConfig.label,
         hasToggle: toolbarConfig.hasToggle,
-        active: toolbarConfig.active,
+        active:
+        typeof toolbarConfig?.active === "boolean"
+          ? toolbarConfig.active
+          : true,
         showInPageToolbar: toolbarConfig.showInPageToolbar,
         showInStarterToolbar: toolbarConfig.showInStarterToolbar,
+        
         onHold: runFn,
         onClick: runFn,
         isImg: !!toolbarConfig?.iconUrl,

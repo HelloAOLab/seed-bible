@@ -1,5 +1,7 @@
+const { useSideBarContext } = await import("app.hooks.sideBar");
+
 //imports
-const { useRef, useState, useEffect } = os.appHooks;
+const { useRef, useState, useEffect, useCallback } = os.appHooks;
 const CustomModal = await thisBot.CustomModal();
 const GroupSettingsModal = await thisBot.ResourceGroupSettingModal();
 const ResourceEventModal = await thisBot.ResourceEventModal();
@@ -42,6 +44,9 @@ function updateTodayButtonLabel() {
     todayBtn.textContent = label;
   }
 }
+function dateOnly(d) {
+  return `${d.getFullYear()},${d.getMonth()},${d.getDate()}`;
+}
 
 function getDayHeaderFormat(width, viewType) {
   if (viewType.startsWith("timeGridDay")) {
@@ -60,14 +65,12 @@ function getDayHeaderFormat(width, viewType) {
   }
 }
 function isSameDate(date1, date2) {
-  // Convert both inputs to Date objects safely
   const d1 = new Date(date1);
 
-  // Handle cases like "Oct - 14 - 2025" or "14-10-25"
   let d2;
   if (typeof date2 === "string") {
     const clean = date2.replace(/\s+/g, "");
-    // Try "Mon - DD - YYYY" (e.g., Oct-14-2025)
+
     if (/[a-zA-Z]{3}-\d{1,2}-\d{4}/.test(clean)) {
       const [monthStr, day, year] = clean.split("-");
       const monthMap = {
@@ -140,7 +143,6 @@ function parseDashedDateToValidDate(dateStr) {
 const openSelf = async function () {
   if (!globalThis.makingPlaylist) {
     if (globalThis["Playlist_package"]) {
-   
       globalThis["Playlist_package"].onClick();
     } else {
       const PlayList = await Playlist.tryInitPlaylistMaker();
@@ -173,32 +175,14 @@ function formatWeekdayDay(date) {
   }).format(date);
 }
 
-document.addEventListener("click", (e) => {
-  const moreBtn = e.target.closest(".fc-daygrid-more-link");
-  if (moreBtn) {
-    // Wait a moment for popover to appear
-    setTimeout(() => {
-      const pop = document.querySelector(".fc-popover");
-      popoverOpen = !!pop;
-      console.log("Popover opened:", popoverOpen);
-    }, 50);
-  }
-});
-
 // Detect popover close (click outside)
-document.addEventListener("mousedown", (e) => {
-  const pop = document.querySelector(".fc-popover");
-  if (pop && !pop.contains(e.target)) {
-    popoverOpen = false;
-    console.log("Popover closed:", popoverOpen);
-  }
-});
 
 const types = ["events", "reading", "content", "projects", "sources"];
 
 if (!globalThis.C_E) globalThis.C_E = [];
 
 const App = () => {
+  const { t } = useSideBarContext();
   //states
   const [readings, setReadings] = useState([]);
   const [readingsList, setReadingsList] = useState([]);
@@ -211,6 +195,7 @@ const App = () => {
   const [calendarTitle, setCalendarTitle] = useState("");
   const [visibleCount, setVisibleCount] = useState(3);
   const [calendarView, setCalendarView] = useState("dayGridMonth");
+  const [containerWidth, setContainerWidth] = useState("");
 
   const [openSetting, setOpenSetting] = useState(false);
   const [openMap, setOpenMap] = useState(true);
@@ -268,7 +253,8 @@ const App = () => {
   const [resourceStartDate, setResourceStartDate] = useState();
   const [hiddenGroups, setHiddenGroups] = useState({});
   const [allGroups, setAllGroups] = useState([]);
-  let popoverOpen = false;
+  const popoverOpenRef = useRef(false);
+
   //refs
   const readingsRef = useRef(null);
   const dropdownRef = useRef(null);
@@ -300,6 +286,46 @@ const App = () => {
       }
     }
   }, []);
+  useEffect(() => {
+    const observer = new MutationObserver(() => {
+      const popover = document.querySelector(".fc-popover");
+
+      // If popover is gone but ref says open → reset
+      if (!popover && popoverOpenRef.current) {
+        popoverOpenRef.current = false;
+        calendarRef.current?.getApi().rerenderEvents();
+      }
+    });
+
+    observer.observe(document.body, {
+      childList: true,
+      subtree: true,
+    });
+
+    return () => observer.disconnect();
+  }, []);
+
+  useEffect(() => {
+    const handleClickOutside = (e) => {
+      const popover = document.querySelector(".fc-popover");
+
+      if (!popover) return; // important
+
+      if (!popover.contains(e.target)) {
+        popoverOpenRef.current = false;
+
+        // 🔑 force FullCalendar to update
+        calendarRef.current?.getApi().rerenderEvents();
+      }
+    };
+
+    document.addEventListener("mousedown", handleClickOutside);
+
+    return () => {
+      document.removeEventListener("mousedown", handleClickOutside);
+    };
+  }, []);
+
   useEffect(() => {
     try {
       localStorage.setItem("allEvents", JSON.stringify(allEvents));
@@ -391,7 +417,7 @@ const App = () => {
     applyFilterByReinit();
   }, [selectedTypes, calendarView]);
 
-  useEffect(() => {
+  /*useEffect(() => {
     readings.forEach((evt) => {
       const existing = calendarApi.current.getEventById(evt.id);
       if (!existing) {
@@ -407,7 +433,7 @@ const App = () => {
         }
       });
     };
-  }, [readings]);
+  }, [readings]);*/
   useEffect(() => {
     resourcesRef.current = resourcesByDate;
   }, [resourcesByDate]);
@@ -509,7 +535,6 @@ const App = () => {
       { once: true }
     );
   }
-
   function onToolbarDateClick(e) {
     const titleEl = e.target.closest(".fc-toolbar-title");
     if (!titleEl) return;
@@ -581,6 +606,7 @@ const App = () => {
 
     startInput.focus();
   }
+
   const handleToggleSetting = () => setOpenSetting((prev) => !prev);
   const handleSelectionClicking = (type) => {
     setSelectedTypes((prev) =>
@@ -755,10 +781,11 @@ const App = () => {
       calendarApi.current = new FullCalendar.Calendar(calendarRef.current, {
         schedulerLicenseKey: "CC-Attribution-NonCommercial-NoDerivatives",
         headerToolbar: {
-          left: "prev,next,today,title",
+          left: "today,prev,next,title",
           center: "",
           right: "",
         },
+
         buttonText: {
           today: " ",
         },
@@ -798,12 +825,12 @@ const App = () => {
         },
 
         slotMinTime: "00:00:00",
-        slotMaxTime: "25:00:00",
+        slotMaxTime: "24:00:00",
         slotDuration: "00:30:00",
-        scrollTime: "07:00:00",
+        scrollTime: "09:00:00",
         initialView: "dayGridMonth",
         moreLinkClick: (arg) => {
-          popoverOpen = true;
+          popoverOpenRef.current = true;
           return "popover";
         },
         resourceAreaHeaderContent: function () {
@@ -880,13 +907,17 @@ const App = () => {
         allDaySlot: true,
         allDayText: "All day",
         expandRows: true,
-        contentHeight: "400px",
+        contentHeight: "450px",
+
         eventContent: function (arg) {
+          console.log(popoverOpenRef.current, "sdsdsdkkkkjj");
+
+          setContainerWidth(calendarEle.offsetWidth);
           const isSchedule = arg.event.extendedProps.isResource === true;
+
           const eventType = arg.event.extendedProps.type;
           const container = document.querySelector(".experience-container");
           const isNarrow = container && container.offsetWidth < 500;
-          const isPopoverOpen = popoverOpen;
 
           const clockSvg = (color) => `
       <svg xmlns="http://www.w3.org/2000/svg" width="14" height="14"
@@ -904,16 +935,33 @@ const App = () => {
         ${withClock ? clockSvg(color) : ""}
       </div>
     `;
+          const start = new Date(arg.event.start);
+          const end = new Date(arg.event.end || arg.event.start);
+
+          const startDate = dateOnly(start);
+          const endDate = dateOnly(end);
+
+          const isMultiDay = startDate !== endDate;
+          let title;
+          if (arg.event.title.length > 6) {
+            const titleEl = arg.event.title.includes(" ")
+              ? arg.event.title.split(" ")[0]
+              : arg.event.title.slice(0, 6);
+            title = `${titleEl}...`;
+          } else {
+            title = arg.event.title;
+          }
 
           // Compact mode (mobile, no popover)
-          if (isNarrow && !isPopoverOpen) {
+          if (isNarrow && !popoverOpenRef.current && !isMultiDay) {
             if (isSchedule) return { html: "" };
             if (eventType === "reading") return { html: makeDot("#20c997") };
             return { html: makeDot("#339af0") };
           }
 
           // Popover open — show full event
-          if (isPopoverOpen) {
+
+          if (popoverOpenRef.current) {
             return {
               html: `
           <div style="
@@ -927,35 +975,17 @@ const App = () => {
             max-width:100%;
             overflow:hidden;
             text-overflow:ellipsis;">
-            <span>${arg.event.title}</span>
+            <span>${title}</span>
           </div>
         `,
             };
           }
 
           // Normal schedule
-          if (isSchedule) {
-            return {
-              html: `
-         <div style="
-          display:flex;align-items:center;
-          background:#e7f5ff;color:#1c3d5a;
-          border:1px solid #74c0fc;
-          border-radius:0.5em;
-          padding:0.3em 0.5em;
-          font-size:clamp(0.65rem, 0.8vw, 0.85rem);
-          max-width:100%;
-          overflow:hidden;text-overflow:ellipsis;">
-          <span>${arg.event.title}</span>
-        </div>
-        `,
-            };
-          }
-
-          // Reading events
-          if (eventType === "reading") {
-            return {
-              html: `
+          if (isSchedule && !popoverOpenRef.current) {
+            if (!isMultiDay) {
+              return {
+                html: `
           <div style="
             display:flex;align-items:center;
             background:#e6fcf5;
@@ -966,28 +996,118 @@ const App = () => {
             font-size:clamp(0.65rem, 0.8vw, 0.85rem);
             max-width:100%;
             overflow:hidden;text-overflow:ellipsis;">
-            <span>${arg.event.title}</span>
+            <span>${title}</span>
           </div>
         `,
-            };
-          }
-
-          // Default event style
-          return {
-            html: `
+              };
+            } else {
+              return {
+                html: `
         <div style="
-          display:flex;align-items:center;
-          background:#e7f5ff;color:#1c3d5a;
-          border:1px solid #74c0fc;
+          display:flex;align-items:center;gap:0.4em;
+          background:#fdfdea;
+          color:#2d3436;
+          border:1px solid #a5d8ff;
           border-radius:0.5em;
           padding:0.3em 0.5em;
           font-size:clamp(0.65rem, 0.8vw, 0.85rem);
           max-width:100%;
-          overflow:hidden;text-overflow:ellipsis;">
+          overflow:hidden;
+          text-overflow:ellipsis;">
+          ${clockSvg("#f1c40f")}
           <span>${arg.event.title}</span>
         </div>
       `,
-          };
+              };
+            }
+          }
+
+          // Reading events
+          if (eventType === "reading" && !popoverOpenRef.current) {
+            if (!isMultiDay) {
+              return {
+                html: `
+  <div style="
+    display:flex;
+    margin-left:6px;
+    align-items:stretch;  /* important */
+    background:#e6fcf5;
+    color:green;
+    border-top-left-radius: 5px;
+    border-bottom-left-radius: 5px;
+   
+    width:max-content;
+    font-size:clamp(0.65rem, 0.8vw, 0.85rem);
+  ">
+    <div style="width:3px;background:green;border-top-left-radius: 5px;
+    border-bottom-left-radius: 5px;"></div>
+    <span style="padding:2px 4px;padding:2px 3px; overflow-wrap: break-word;">${title}</span>
+  </div>
+`,
+              };
+            } else {
+              return {
+                html: `
+        <div style="
+          display:flex;align-items:center;
+          background:#e6fcf5;
+          color:#0b7285;
+          border:1px solid #63e6be;
+          border-radius:0.5em;
+          padding:0.3em 0.5em;
+          font-size:clamp(0.65rem, 0.8vw, 0.85rem);
+          max-width:100%;
+          overflow:hidden;
+          text-overflow:ellipsis;">
+          <span>${arg.event.title}</span>
+        </div>
+      `,
+              };
+            }
+          }
+
+          // Default event style
+          if (!isMultiDay && !popoverOpenRef.current) {
+            console.log(isMultiDay, "sasasasaasasas");
+            return {
+              html: `
+  <div style="
+    display:flex;
+    margin-left:6px;
+    align-items:stretch;  /* important */
+    background:#F0FAFF;
+    color:#00C8FF;
+    border-top-left-radius: 5px;
+    border-bottom-left-radius: 5px;
+   
+    width:max-content;
+    font-size:clamp(0.65rem, 0.8vw, 0.85rem);
+  ">
+    <div style="width:3px;background:#00C8FF;border-top-left-radius: 5px;
+    border-bottom-left-radius: 5px;"></div>
+    <span style="padding:2px 4px;padding:2px 3px; overflow-wrap: break-word;">${title}</span>
+  </div>
+`,
+            };
+          } else {
+            return {
+              html: `
+        <div style="
+          display:flex;align-items:center;
+          background:#e6fcf5;
+          color:#0b7285;
+          border:1px solid #63e6be;
+          border-radius:0.5em;
+          padding:0.3em 0.5em;
+          font-size:clamp(0.65rem, 0.8vw, 0.85rem);
+          max-width:100%;
+          overflow:hidden;
+          text-overflow:ellipsis;">
+          <span>${arg.event.title}</span>
+        </div>
+      `,
+            };
+          }
         },
         eventClassNames: function (arg) {
           const width =
@@ -996,17 +1116,20 @@ const App = () => {
 
           const start = new Date(arg.event.start);
           const end = new Date(arg.event.end || arg.event.start);
+          const startDate = dateOnly(start);
+          const endDate = dateOnly(end);
 
-          const isMultiDay =
-            start.toDateString() !== new Date(end.getTime() - 1).toDateString();
+          const isMultiDay = startDate !== endDate;
 
-          if (width <= 500) {
+          console.log(startDate, endDate, isMultiDay, "isMultiday");
+
+          if (width <= 500 && !isMultiDay & !popoverOpenRef.current) {
             return ["dot-view"];
           } else {
             return ["full-view"];
           }
         },
-        dayCellDidMount: (info) => {
+        /* dayCellDidMount: (info) => {
           const cellDateStr = info.date.toISOString().split("T")[0];
           const hasEvent = calendarApi.current.getEvents().some((ev) => {
             const evDateStr = new Date(ev.start).toISOString().split("T")[0];
@@ -1019,7 +1142,7 @@ const App = () => {
           if (hasEvent && isMultiMonth) {
             info.el.style.backgroundColor = "white"; // dark gray
           }
-        },
+        },*/
 
         editable: true,
         droppable: true,
@@ -1088,15 +1211,15 @@ const App = () => {
                 console.log(start, end, "aada");
                 const days = getDayDifference(start, end);
                 if (recurVal.charAt(0) === "N") {
-                  const isTimed = startTime && endTime;
-                  console.log(isTimed);
+                  const isTimed = Boolean(startTime && endTime);
+                  console.log(isTimed, "isTimed");
                   if (days === 0) {
                     newEvent = {
                       title: title ? title : "easter",
                       id: uuid(),
-                      start: isTimed ? `${start}T${startTime}:00` : start,
-                      end: isTimed ? `${end}T${endTime}:00` : end,
-                      allDay: isTimed ? false : true,
+                      start: `${start}T${startTime || "09:00"}`,
+                      end: `${end}T${endTime || "19:00"}`,
+                      allDay: false,
                       color: "white",
                       eventDisplay: "list-item",
                       theme: "simple-borderless",
@@ -1110,6 +1233,7 @@ const App = () => {
                         type: "events",
                       },
                     };
+                    console.log(newEvent, "newevent");
                     const now = stripTime(new Date());
                     const startDate = stripTime(new Date(newEvent.start));
                     setAllEvents((prev) => [...prev, newEvent]);
@@ -1248,7 +1372,8 @@ const App = () => {
                 }
               }
             );
-          } else {
+          }
+          /* else {
             if (info.view.type !== "resourceTimeline") {
               const clickedDate = info.date;
               // JS Date
@@ -1289,7 +1414,7 @@ const App = () => {
               });
               instance.show();
             }
-          }
+          }*/
         },
 
         datesSet: (info) => {
@@ -1308,10 +1433,24 @@ const App = () => {
           const prevBtn = calendarRef.current.querySelector(".fc-prev-button");
           const nextBtn = calendarRef.current.querySelector(".fc-next-button");
           let select = document.getElementById("view-toggle-select");
+          const calendarap = info.view.calendar;
+
+          if (info.view.type === "multiMonthYear") {
+            const year = info.start.getFullYear();
+            calendarap.setOption("titleFormat", { year: "numeric" });
+
+            calendarap.setOption("title", year.toString());
+          } else {
+            calendarap.setOption("titleFormat", {
+              year: "numeric",
+              month: "long",
+            });
+          }
           if (info.view.type === "resourceTimelineDay") {
             if (todayBtn) todayBtn.style.display = "none";
             if (addButton) addButton.style.display = "none";
             if (select) select.style.display = "none";
+
             if (prevBtn) {
               prevBtn.onclick = (e) => e.preventDefault();
               prevBtn.style.pointerEvents = "none";
@@ -1329,11 +1468,13 @@ const App = () => {
             if (prevBtn) prevBtn.style.pointerEvents = "auto";
             if (nextBtn) nextBtn.style.pointerEvents = "auto";
           }
+
           const events = onRangeChange(start, end);
           const sortedEvents = events.sort(
             (a, b) => new Date(a.start) - new Date(b.start)
           );
           setEventInView(sortedEvents);
+
           const styleButtons = () => {
             if (prevBtn) {
               Object.assign(prevBtn.style, {
@@ -1343,6 +1484,7 @@ const App = () => {
                 padding: "0",
                 border: "none",
                 marginRight: "10px",
+
                 alignSelf: "center",
                 cursor:
                   info.view.type === "resourceTimelineDay"
@@ -1355,6 +1497,7 @@ const App = () => {
                 prevBtn.style.boxShadow = "none";
               };
             }
+
             if (nextBtn) {
               Object.assign(nextBtn.style, {
                 backgroundColor: "white",
@@ -1374,6 +1517,7 @@ const App = () => {
                 nextBtn.style.boxShadow = "none";
               };
             }
+
             if (todayBtn) {
               if (info.view.type.includes("resourceTimeline")) {
                 todayBtn.style.display = "none";
@@ -1397,18 +1541,24 @@ const App = () => {
               }
             }
           };
+
           const toolbar = calendarRef.current.querySelector(".fc-toolbar");
+
           if (toolbar) {
             if (activeToolbarHandler) {
               toolbar.removeEventListener("click", activeToolbarHandler);
             }
-            if (info.view.type === "resourceTimeline") {
+
+            if (info.view.type.includes("resourceTimeline")) {
               activeToolbarHandler = onToolbarDateClick;
+              console.log("yeees");
             } else {
               activeToolbarHandler = onToolbarDateClick1;
             }
+
             toolbar.addEventListener("click", activeToolbarHandler);
           }
+
           const rightHeaderEl = calendarRef.current.querySelector(
             ".fc-header-toolbar .fc-toolbar-chunk:last-child"
           );
@@ -1417,10 +1567,9 @@ const App = () => {
             Object.assign(rightHeaderEl.style, {
               display: "flex",
               alignItems: "center",
-              flexWrap: "nowrap",
-              gap: "10px",
               justifyContent: "flex-end",
             });
+
             let addButton = document.getElementById("add-event-button");
             if (info.view.type.includes("resourceTimeline")) {
               addButton.style.display = "none";
@@ -1429,45 +1578,37 @@ const App = () => {
                 addButton = document.createElement("button");
                 addButton.id = "add-event-button";
                 addButton.innerHTML = `
-    <svg width="18" height="18" viewBox="0 0 20 20" fill="none"
-         xmlns="http://www.w3.org/2000/svg"
-         style="display:block; margin-right:6px;">
-      <path d="M9.95441 4.16602V15.8327" stroke="white" stroke-width="2"
-            stroke-linecap="round" stroke-linejoin="round"/>
-      <path d="M4.12109 10H15.738" stroke="white" stroke-width="2"
-            stroke-linecap="round" stroke-linejoin="round"/>
-    </svg>
-    <div style="display:block;">Add Event</div>
-  `;
-
+                
+          
+          <svg width="16" height="16" viewBox="0 0 20 20" fill="none"
+               xmlns="http://www.w3.org/2000/svg" style="margin-right: 6px;">
+            <path d="M9.95441 4.16602V15.8327" stroke="white" stroke-width="2"
+                  stroke-linecap="round" stroke-linejoin="round"/>
+            <path d="M4.12109 10H15.738" stroke="white" stroke-width="2"
+                  stroke-linecap="round" stroke-linejoin="round"/>
+          </svg>
+          <span>Add Event</span> `;
                 Object.assign(addButton.style, {
-                 
+                  display: "block",
+
                   backgroundColor: "#D36433",
                   color: "white",
                   fontSize: "14px",
-                  fontFamily: "Satoshi, sans-serif",
-                  fontWeight: "500",
+                  transform: "translateX(10px)",
+                  fontFamily: "Satoshi",
+                  fontWeight: "400",
+                  width: "100%",
                   border: "none",
-                  borderRadius: "8px",
-                  marginLeft: "20px",
-                  padding: "6px 10px",
+                  borderRadius: "4px",
+                  padding: "5px 7px",
                   cursor: "pointer",
-                  lineHeight: "1", // removes weird vertical spacing
-                  transition: "background-color 0.2s ease",
-                });
-
-                addButton.addEventListener("mouseenter", () => {
-                  addButton.style.backgroundColor = "#b9542b";
-                });
-                addButton.addEventListener("mouseleave", () => {
-                  addButton.style.backgroundColor = "#D36433";
                 });
 
                 addButton.addEventListener("click", () => setModalOpen(true));
               }
-
               rightHeaderEl.appendChild(addButton);
             }
+
             if (info.view.type.includes("resourceTimeline")) {
               select.style.display = "none";
             } else {
@@ -1475,14 +1616,15 @@ const App = () => {
                 select = document.createElement("select");
                 select.id = "view-toggle-select";
                 Object.assign(select.style, {
-                  marginLeft: "10px",
-                  padding: "4px 6px 2px 4px",
+                  padding: "5px 7px",
                   fontSize: "14px",
                   fontFamily: "Satoshi",
+
+                  fontWeight: "400",
                   color: "#606266",
                   border: "1px solid #d3d3d3",
                   borderRadius: "0",
-                  transform: "translateY(3px)",
+
                   cursor: "pointer",
                 });
 
@@ -1511,15 +1653,20 @@ const App = () => {
               select.selectedIndex = 0;
             }
           }
+
           styleButtons();
+
           const applyResponsiveToCalendarWidth = () => {
             const calendarEl = calendarRef.current;
             if (!calendarEl) return;
+
             const width = calendarEl.offsetWidth;
+
             const todayBtn = calendarEl.querySelector(".fc-today-button");
             if (todayBtn && !info.view.type.includes("resourceTimeline")) {
               todayBtn.textContent = width < 500 ? "T" : "Today";
             }
+
             const viewSelect = document.getElementById("view-toggle-select");
             if (viewSelect) {
               const d = viewSelect.querySelector('option[value="timeGridDay"]');
@@ -1537,10 +1684,12 @@ const App = () => {
               if (m) m.text = width < 550 ? "M" : "Monthly";
               if (y) y.text = width < 550 ? "Y" : "Yearly";
             }
+
             const addBtn = document.getElementById("add-event-button");
             if (addBtn && !info.view.type.includes("resourceTimeline")) {
               addBtn.innerHTML = `
-        <svg width="20" height="20" viewBox="0 0 20 20" fill="none"
+             
+        <svg width="16" height="16" viewBox="0 0 20 20" fill="none"
              xmlns="http://www.w3.org/2000/svg">
           <path d="M9.95441 4.16602V15.8327" stroke="white" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/>
           <path d="M4.12109 10H15.738" stroke="white" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/>
@@ -1549,8 +1698,10 @@ const App = () => {
               if (width >= 550) {
                 const span = document.createElement("span");
                 span.innerText = "Add Event";
-                span.style.marginLeft = "6px";
-                span.style.transform = "translateY(-10px)";
+                span.style.marginLeft = "4px";
+                span.style.display = "inline-block"; // important!
+                span.style.transform = "translateY(-2px)";
+
                 addBtn.appendChild(span);
               }
             }
@@ -1749,7 +1900,7 @@ const App = () => {
 
                 openSelf();
                 await os.sleep(100);
-                  globalThis.IsQueuePresent = false;
+                globalThis.IsQueuePresent = false;
 
                 Playlistplaying({
                   playingPlaylist: playlist.id,
@@ -1757,7 +1908,6 @@ const App = () => {
                   startSubIndex: -1,
                   parentId: "default",
                   name: playlist.name || "Untitled Playlist",
-                  list: [...playlist.list],
                 });
               });
               document.body.appendChild(playButtonCon);
@@ -1785,15 +1935,16 @@ const App = () => {
 
             const titleContainer = document.createElement("div");
             titleContainer.style.display = "flex";
-            titleContainer.style.alignItems = "center";
+            titleContainer.style.alignItems = "flex-start";
             titleContainer.style.gap = "8px";
             titleContainer.style.marginBottom = "12px";
-
             const greenDot = document.createElement("div");
             Object.assign(greenDot.style, {
               width: "20px",
               height: "20px",
               borderRadius: "50%",
+              flex: "0 0 auto",
+              alignSelf: "flex-start",
               backgroundColor: isResource ? "#f1c40f" : "#87ceeb",
             });
 
@@ -1864,7 +2015,7 @@ const App = () => {
               linkSection.appendChild(linkIcon);
 
               const linkBtn = document.createElement("a");
-              linkBtn.href = link;
+              linkBtn.href = link.startsWith("http") ? link : `https://${link}`;
               linkBtn.target = "_blank";
               linkBtn.textContent = "Click Here";
               Object.assign(linkBtn.style, {
@@ -1886,16 +2037,18 @@ const App = () => {
               const resourceButton = document.createElement("div");
               resourceButton.textContent = "Go To Schedule";
               Object.assign(resourceButton.style, {
-                padding: "2px 3px",
+                padding: "1px 3px",
                 backgroundColor: "#87ceeb",
                 color: "white",
-                width: "200px",
+                font: "8px",
+                width: "150px",
                 textAlign: "center",
                 borderRadius: "20px",
                 cursor: "pointer",
               });
               resourceButton.addEventListener("click", (e) => {
                 e.preventDefault();
+                wrapper.remove();
                 calendarApi.current.changeView("resourceTimeline");
               });
               container.appendChild(resourceButton);
@@ -1919,6 +2072,8 @@ const App = () => {
               top: `${rect.bottom + window.scrollY + 8}px`,
               left: `${rect.left - 150 + window.scrollX}px`,
               zIndex: 9999,
+              whiteSpace: "normal",
+              wordBreak: "break-word",
               background: "#e7e7e7",
               border: "1px solid #ccc",
               boxShadow: "0 2px 6px rgba(0,0,0,0.15)",
@@ -1984,6 +2139,18 @@ const App = () => {
     }
   }, []);
 
+  const resizeCalendar = () => {
+    const calendarElement = document.querySelector(".fc"); // or your ref
+    const width = calendarElement.offsetWidth;
+
+    const newHeight = width * 0.5; // example ratio
+    calendarElement.style.height = `${newHeight}px`;
+  };
+  window.addEventListener("resize", resizeCalendar);
+  useEffect(() => {
+    resizeCalendar();
+  }, []);
+
   useEffect(() => {
     const container = document.querySelector(".experience-container");
     if (!container) return;
@@ -2021,7 +2188,7 @@ const App = () => {
     return () => observer.disconnect();
   }, []);
 
-  useEffect(() => {
+  /*useEffect(() => {
     const container = document.querySelector(".experience-container");
     const calendarElement = document.getElementById("calendar");
     const calendar = calendarApi.current;
@@ -2033,13 +2200,15 @@ const App = () => {
       const height = calendarElement.offsetHeight;
 
       // Example: scale font size based on width, clamp between 12px and 24px
-      const newFontSize = Math.max(8, Math.min(14, width / 30));
+      const newFontSize = Math.max(14, Math.min(20, width / 26));
+
       calendarElement.style.fontSize = `${newFontSize}px`;
     };
 
     const observer = new ResizeObserver(() => {
+      if(calendarApi.current.view.type!=='multiMonthYear'){
       calendar.updateSize();
-      updateFontSize();
+      updateFontSize();}
     });
 
     observer.observe(container);
@@ -2053,8 +2222,13 @@ const App = () => {
       observer.disconnect();
       window.removeEventListener("resize", updateFontSize);
     };
-  }, []);
-  console.log(calendarRef.current, refCalendar.current, "refsss");
+  }, []);*/
+  console.log(
+    calendarRef.current,
+    refCalendar.current,
+    "refsss",
+    containerWidth
+  );
 
   return (
     <>
@@ -2072,16 +2246,27 @@ const App = () => {
         rel="stylesheet"
         href="https://fonts.googleapis.com/css2?family=Material+Symbols+Outlined:opsz,wght,FILL,GRAD@24,400,0,0"
       />
+
       <div
         class="experience-container"
         style={{
           backgroundColor: "white",
-          padding: "10px",
+          padding: "12px",
           position: "relative",
           minHeight: "100%",
           height: "min-content",
         }}
       >
+        <div
+          style={{
+            position: "absolute",
+            top: "147px", // place at very top of container
+            left: "0",
+            right: "0",
+            height: "1px",
+            backgroundColor: "#ddd",
+          }}
+        ></div>
         <div
           style={{
             position: "absolute",
@@ -2301,14 +2486,14 @@ const App = () => {
                   className={`calendar-addups-selection-button ${type.charAt(0)}-btn`}
                   onClick={() => handleSelectionClicking(type)}
                 >
-                  {type.charAt(0).toUpperCase() + type.slice(1)}
+                  {t(type + "Tab")}
                 </button>
               ))}
             </div>
 
             <div class="event-and-map">
               <span class="event-and-map_heading">
-                Events for {calendarTitle}
+                {t("eventsFor")} {calendarTitle}
               </span>
               <div class="event-and-map_selector">
                 <span
@@ -2319,7 +2504,7 @@ const App = () => {
                   }}
                   onClick={() => onEventsClick()}
                 >
-                  Events
+                  {t("eventsTab")}
                 </span>
                 <span
                   class="event-and-map_selector_item"
@@ -2329,7 +2514,7 @@ const App = () => {
                   }}
                   onClick={() => onMapCick()}
                 >
-                  Bible Map
+                  {t("bibleMap")}
                 </span>
               </div>
               {eventViewSelected && (

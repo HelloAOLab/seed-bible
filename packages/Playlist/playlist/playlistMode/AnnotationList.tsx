@@ -1,7 +1,9 @@
 const { LoaderSecondary } = Components;
-import { deleteAnnotation, getUserRecord } from "db.annotations.library";
+import { deleteAnnotation, getAnnotationRecord } from "db.annotations.library";
 
 const { useState, useRef } = os.appHooks;
+
+const { useSideBarContext } = await import("app.hooks.sideBar");
 
 const ChevronDown =
   "https://auth-aux-aobot-prod-filesbucket-141297942820.s3.amazonaws.com/aoBot/d03c885823b300c141eed037466a2ad6ab59f9523e2ada5ac781f4f3e5e7e45f.svg";
@@ -25,6 +27,7 @@ const AnnotationList = ({
   setAnnotationData,
   annotationData,
 }) => {
+  const { t } = useSideBarContext();
   const [deleteModal, setDeleteModal] = useState(false);
   const [loading, setLoading] = useState(false);
   const [deleteOverlay, setDeleteOverlay] = useState(false);
@@ -37,7 +40,7 @@ const AnnotationList = ({
   const onDelete = async (address) => {
     try {
       setLoading(true);
-      const userRecord = await getUserRecord();
+      const userRecord = await getAnnotationRecord();
       const res = await deleteAnnotation(userRecord, { id: address });
       if (res.success) {
         setAnnotationData((prev) => {
@@ -45,19 +48,19 @@ const AnnotationList = ({
         });
         closeModal();
         ShowNotification({
-          message: `Annotation Deleted Successfully!`,
+          message: t("annotationDeletedSuccessfully"),
           severity: "success",
         });
       } else {
         ShowNotification({
-          message: `Failed to Delete Annotation. Please try again!`,
+          message: t("failedToDeleteAnnotation"),
           severity: "error",
         });
       }
       setLoading(false);
     } catch (err) {
       ShowNotification({
-        message: `Failed to Delete Annotation. Please try again!`,
+        message: t("failedToDeleteAnnotation"),
         severity: "error",
       });
       setLoading(false);
@@ -69,8 +72,8 @@ const AnnotationList = ({
       {deleteModal && (
         <ConfirmationModal
           loading={loading}
-          title="Delete annotation"
-          para="This annotation and all of it's versions will be permanently deleted. This action cannot be undone! Are you sure you want to delete this?"
+          title={t("deleteAnnotation")}
+          para={t("deleteAnnotationConfirmation")}
           onClose={() => {
             if (!loading) closeModal();
           }}
@@ -78,16 +81,16 @@ const AnnotationList = ({
         />
       )}
 
-      <h3 style={{ margin: "1rem 0 0 0 " }}>Annotations</h3>
+      <h3 style={{ margin: "1rem 0 0 0 " }}>{t("annotations")}</h3>
       {fetchingAnnotation && (
         <div style={{ margin: "1rem 0", gap: "1rem" }} className="align-center">
           <LoaderSecondary />
-          <p>Fetching Annotations</p>
+          <p>{t("fetchingAnnotations")}</p>
         </div>
       )}
       {!fetchingAnnotation ? (
         annotationData.length === 0 ? (
-          <p style={{ marginTop: "12px" }}>No Annotations Found.</p>
+          <p style={{ marginTop: "12px" }}>{t("noAnnotationsFound")}</p>
         ) : (
           <div className="annotation">
             <div className="heading">
@@ -166,20 +169,20 @@ const AnnotationList = ({
                             click: () => {},
                             icon: "history",
                             disabled: true,
-                            label: "Show version History",
+                            label: t("showVersionHistory"),
                           },
                           {
                             disabled: true,
                             click: () => {},
                             icon: "download",
-                            label: "Download",
+                            label: t("download"),
                             noBorderBottom: true,
                           },
                           {
                             disabled: true,
                             click: () => {},
                             icon: "share",
-                            label: "Share",
+                            label: t("share"),
                           },
                           {
                             click: () => {
@@ -188,14 +191,14 @@ const AnnotationList = ({
                                 prefixAddress: `${authBot?.id}.${currentOpenedBook?.bookId}.${currentOpenedBook?.chapter}`,
                                 title: `${currentOpenedBook?.book} ${
                                   ele.heading === "Chapter"
-                                    ? `Chapter ${chapter}`
+                                    ? `${t("chapter")} ${chapter}`
                                     : ele.heading
                                 }`,
                               });
                               globalThis.SetTab("create");
                             },
                             icon: "edit",
-                            label: "Edit annotations",
+                            label: t("editAnnotations"),
                             noBorderBottom: true,
                           },
                           {
@@ -204,7 +207,7 @@ const AnnotationList = ({
                               closeOverlay();
                             },
                             icon: "delete",
-                            label: "Delete annotations",
+                            label: t("deleteAnnotations"),
                           },
                         ]}
                       />
@@ -288,11 +291,7 @@ const AnnodataMapper = ({ data }) => {
                 }`}
               >
                 <div>
-                  {contentData.type === "heading" ? (
-                    <RenderHTMLContent htmlContent={contentData.content} />
-                  ) : (
-                    contentData.content
-                  )}
+                  <RenderHTMLContent htmlContent={contentData.content} />
                 </div>
               </div>
             )}

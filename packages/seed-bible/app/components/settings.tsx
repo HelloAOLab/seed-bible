@@ -14,8 +14,16 @@ import { useTabsContext } from "app.hooks.tabs";
 import { useBibleContext } from "app.hooks.bibleVariables";
 import { SpaceSettingsForm, SpaceSelector } from "app.components.spaceSettings";
 import { useHoldAction } from "app.hooks.useHold";
+import {
+  ThemeIcon,
+  BibleIcon,
+  NewSettingsIcon,
+  ExtensionsIcon,
+} from "app.components.icons";
 
 const SettingsSidebar = () => {
+  const { t, changeLanguage, availableLanguages, language } =
+    useSideBarContext();
   const [activeTab, setActiveTab] = useState("space");
   globalThis.SetActiveSettingsTab = setActiveTab;
   const { sidebarMode, setSideBarMode } = useSideBarContext();
@@ -37,9 +45,9 @@ const SettingsSidebar = () => {
   const [expandedSections, setExpandedSections] = useState({
     layers: false,
     bibleDefaults: false,
-    pageSettings: true,
+    pageSettings: false,
     canvasSettings: false,
-    mapSettings: true,
+    mapSettings: false,
   });
 
   // New state for edit mode and settings customization
@@ -58,7 +66,7 @@ const SettingsSidebar = () => {
   const [spaceContentVisibility, setSpaceContentVisibility] = useState({});
   const [spaceContentLabels, setSpaceContentLabels] = useState({});
   const [spaceDescription, setSpaceDescription] = useState(
-    "Settings for your space. Customize the toolbar, theme, text, and more. An extension store with more capability will be available at a later date."
+    "Settings for your space. Customise toolbar, theme and add extensions."
   );
 
   // Initialize globalThis.changes if it doesn't exist
@@ -71,88 +79,217 @@ const SettingsSidebar = () => {
     };
   }
 
-  // Space content configuration
+  // Space content configuration - store keys, translate in JSX
   const spaceContentConfig = [
-    { key: "spaceIcon", label: "Space Icon", type: "component" },
-    { key: "spaceName", label: "Space Name", type: "component" },
+    { key: "spaceIcon", labelKey: "spaceIcon", type: "component" },
+    { key: "spaceName", labelKey: "spaceName", type: "component" },
     {
       key: "spaceDescription",
-      label: "Space Description",
+      labelKey: "spaceDescription",
       type: "text",
-      content:
-        "Settings for your space. Customize the toolbar, theme, text, and more. An extension store with more capability will be available at a later date.",
+      contentKey: "spaceSettingsDescription",
     },
   ];
 
-  // SPACE tab base config
+  // SPACE tab base config - store labelKey, translate in JSX
   const baseSettingsConfig = [
     {
       key: "theme",
-      label: "Theme",
-      icon: "palette",
+      labelKey: "themeAndText",
+      icon: <ThemeIcon />,
       expandable: false,
       onClick: () => setSideBarMode("themeSettings"),
     },
-    {
-      key: "layers",
-      label: "Layers",
-      icon: "layers",
-      style: "disabled",
-      expandable: true,
-    },
+    // {
+    //   key: "layers",
+    //   label: "Layers",
+    //   icon: "layers",
+    //   style: "disabled",
+    //   expandable: true,
+    // },
     {
       key: "Extensions",
-      label: "Extensions",
-      icon: "extension",
+      labelKey: "configureExtensions",
+      icon: <ExtensionsIcon />,
       style: "",
       expandable: false,
       onClick: () => setSideBarMode("extensions"),
     },
     {
       key: "bibleDefaults",
-      label: "Bible Defaults",
-      style: "disabled",
-      icon: "book",
+      labelKey: "bibleDefaults",
+      style: false,
+      icon: <BibleIcon />,
       expandable: true,
+      subItems: [
+        {
+          key: "BookOrder",
+          labelKey: "bookOrder",
+          App: () => {
+            const [selectedOrientation, setSelectedOrientation] = useState(
+              tags?.bookOrientation || "traditional"
+            );
+            return (
+              <div
+                onContextMenu={(e) => e.stopPropagation()}
+                style={{
+                  display: "flex",
+                  flexDirection: "column",
+                  padding: "5px",
+                  borderRadius: "5px",
+                  backgroundColor: "var(--pageBackground)",
+                  pointerEvents: "auto",
+                  color: "var(--text1)",
+                }}
+              >
+                <div
+                  className={`settings-item-container`}
+                  style={{
+                    display: "flex",
+                    flexDirection: "row",
+                    alignItems: "center",
+                  }}
+                  onPointerDown={(e) => {
+                    e.stopPropagation();
+                    e.preventDefault();
+                    setSelectedOrientation("tanak");
+                    setTagMask(thisBot, "bookOrientation", "tanak", "local");
+                    shout("onBookOrientationChanged", { orientation: "tanak" });
+                  }}
+                >
+                  <div style={{ width: "90%", fontSize: "14px" }}>
+                    <b>
+                      <span>TaNak order</span>
+                    </b>
+                    <p>
+                      The original, unified, three-part ordering of the Hebrew
+                      Bible (or Old Testament)
+                    </p>
+                  </div>
+                  <div
+                    style={{
+                      width: "15px",
+                      height: "15px",
+                      backgroundColor:
+                        selectedOrientation === "tanak"
+                          ? "var(--secondaryButton)"
+                          : "var(--primaryButton)",
+                      borderRadius: "50%",
+                      display: "flex",
+                      justifyContent: "center",
+                      alignItems: "center",
+                    }}
+                  >
+                    <svg width="10" height="10" viewBox="0 0 12 12" fill="none">
+                      <path
+                        d="M10 3L4.5 8.5L2 6"
+                        stroke="white"
+                        strokeWidth="2"
+                        strokeLinecap="round"
+                        strokeLinejoin="round"
+                      />
+                    </svg>
+                  </div>
+                </div>
+                <div className="settings-divider"></div>
+                <div
+                  className={`settings-item-container`}
+                  style={{
+                    display: "flex",
+                    flexDirection: "row",
+                    alignItems: "center",
+                  }}
+                  onPointerDown={(e) => {
+                    e.preventDefault();
+                    e.stopPropagation();
+                    setSelectedOrientation("traditional");
+                    setTagMask(
+                      thisBot,
+                      "bookOrientation",
+                      "traditional",
+                      "local"
+                    );
+                    shout("onBookOrientationChanged", {
+                      orientation: "traditional",
+                    });
+                  }}
+                >
+                  <div style={{ width: "90%", fontSize: "14px" }}>
+                    <b>
+                      <span>Traditional order</span>
+                    </b>
+                    <p>The ordering found in most modern Christian Bibles</p>
+                  </div>
+                  <div
+                    style={{
+                      width: "15px",
+                      height: "15px",
+                      backgroundColor:
+                        selectedOrientation === "traditional"
+                          ? "var(--secondaryButton)"
+                          : "var(--primaryButton)",
+                      borderRadius: "50%",
+                      display: "flex",
+                      justifyContent: "center",
+                      alignItems: "center",
+                    }}
+                  >
+                    <svg width="10" height="10" viewBox="0 0 12 12" fill="none">
+                      <path
+                        d="M10 3L4.5 8.5L2 6"
+                        stroke="white"
+                        strokeWidth="2"
+                        strokeLinecap="round"
+                        strokeLinejoin="round"
+                      />
+                    </svg>
+                  </div>
+                </div>
+              </div>
+            );
+          },
+          type: "app",
+        },
+      ],
     },
-    { key: "divider1", type: "divider" },
+    // { key: "divider1", type: "divider" },
     {
       key: "pageSettings",
-      label: "Page Settings",
-      icon: "article",
+      labelKey: "advancedSettings",
+      icon: <NewSettingsIcon />,
       expandable: true,
       subItems: [
         // { key: 'toolbar', label: 'Toolbar', icon: `construction`, onClick: () => setSideBarMode('toolbarSettings-Page') },
         {
           key: "instant_mix",
-          label: "Editor",
+          labelKey: "editor",
           icon: `instant_mix`,
           onClick: () => setSideBarMode("editorToolbarSettings"),
         },
-        {
-          key: "text",
-          label: "Text",
-          icon: "text_fields",
-          onClick: () => setSideBarMode("textSettings"),
-        },
+        // {
+        //   key: "text",
+        //   label: "Text",
+        //   icon: "text_fields",
+        //   onClick: () => setSideBarMode("textSettings"),
+        // },
         {
           key: "ai",
-          label: "AI",
+          labelKey: "ai",
           icon: "smart_toy",
           onClick: () => setSideBarMode("aiSettings"),
         },
         {
           key: "tab",
-          label: "Tab",
+          labelKey: "tab",
           icon: "description",
           onClick: () => setSideBarMode("tabSettings"),
         },
-        {
-          key: "mentuText",
-          label: "Menu text",
-          icon: "text_fields",
-          onClick: () => setSideBarMode("menuTextSettings"),
-        },
+        // {
+        //   key: "mentuText",
+        //   label: "Menu text",
+        //   icon: "text_fields",
+        //   onClick: () => setSideBarMode("menuTextSettings"),
+        // },
       ],
     },
     // { key: "divider2", type: "divider" },
@@ -199,7 +336,7 @@ const SettingsSidebar = () => {
     { key: "divider3", type: "divider" },
     {
       key: "LoadSpace",
-      label: "Load new space",
+      labelKey: "loadNewSpace",
       icon: <LoadSpace />,
       expandable: false,
       onClick: async () => {
@@ -210,31 +347,31 @@ const SettingsSidebar = () => {
         }
       },
     },
-    {
-      key: "DownloadSpace",
-      label: "Download space",
-      icon: "download",
-      expandable: false,
-      onClick: () => {
-        downloadSpaceAsJSON(CurrentSpace.id);
-      },
-    },
-    { key: "Share", label: "Share", icon: "share", expandable: false },
+    // {
+    //   key: "DownloadSpace",
+    //   label: "Download space",
+    //   icon: "download",
+    //   expandable: false,
+    //   onClick: () => {
+    //     downloadSpaceAsJSON(CurrentSpace.id);
+    //   },
+    // },
+    { key: "Share", labelKey: "share", icon: "share", expandable: false },
   ];
 
-  // GENERAL tab config (adds hide/show + label editing via the same machinery)
+  // GENERAL tab config - store labelKey, translate in JSX
   const generalSettingsConfig = [
     // Move account section to the top as the first item
-    { key: "generalHeader", type: "header", label: "General Settings" },
+    { key: "generalHeader", type: "header", labelKey: "generalSettings" },
     {
       key: "generalDesc",
       type: "desc",
-      label: "Manage your account, profile, and preferences.",
+      labelKey: "manageAccountDesc",
     },
     {
       key: "yourAccount",
       type: "account",
-      label: "Your account",
+      labelKey: "yourAccount",
     },
 
     // { key: 'dividerG1', type: 'divider' },
@@ -242,7 +379,7 @@ const SettingsSidebar = () => {
     // Account row
     {
       key: "accountSettings",
-      label: "Account settings",
+      labelKey: "accountSettings",
       icon: "manage_accounts",
       onClick: () => {
         globalThis.AccountSettingsEnteredFrom = "settings";
@@ -253,19 +390,19 @@ const SettingsSidebar = () => {
     // Disabled rows
     {
       key: "billing",
-      label: "Billing & services",
+      labelKey: "billingServices",
       icon: "rule_settings",
       style: "disabled",
     },
     {
       key: "permissions",
-      label: "Permissions",
+      labelKey: "permissions",
       icon: "action_key",
       style: "disabled",
     },
     {
       key: "notifications",
-      label: "Notifications",
+      labelKey: "notifications",
       icon: "notification_settings",
       style: "disabled",
     },
@@ -276,18 +413,23 @@ const SettingsSidebar = () => {
     {
       key: "subscriptions",
       type: "section",
-      label: "Subscriptions", // header text; content rendered below
+      labelKey: "subscriptions", // header text; content rendered below
     },
 
     // { key: 'dividerG3', type: 'divider' },
 
-    // Language (disabled)
-    { key: "language", label: "Language", icon: "language", style: "disabled" },
+    // Language selector
+    {
+      key: "language",
+      labelKey: "language",
+      icon: "language",
+      type: "language",
+    },
 
     // ReSeed toggle item
     {
       key: "reseedToggle",
-      label: ReSeed ? "Exit Reseed" : "Reseed",
+      labelKey: ReSeed ? "exit" : "propagate",
       icon: "face",
       onClick: () => setReSeed((prev) => !prev),
     },
@@ -313,9 +455,10 @@ const SettingsSidebar = () => {
             savedVisibility[fullKey] !== undefined
               ? savedVisibility[fullKey]
               : true;
-          // Use saved label or default label
-          // Some items have dynamic labels; use saved first, else current static label
-          initialLabels[fullKey] = savedLabels[fullKey] || item.label || "";
+          // Use saved label if exists (don't set default - we'll translate in render)
+          if (savedLabels[fullKey]) {
+            initialLabels[fullKey] = savedLabels[fullKey];
+          }
           if (item.subItems) {
             initializeSettings(item.subItems, item.key);
           }
@@ -333,7 +476,10 @@ const SettingsSidebar = () => {
           savedSpaceVisibility[item.key] !== undefined
             ? savedSpaceVisibility[item.key]
             : true;
-        spaceLabels[item.key] = savedSpaceLabels[item.key] || item.label;
+        // Use saved label if exists (don't set default - we'll translate in render)
+        if (savedSpaceLabels[item.key]) {
+          spaceLabels[item.key] = savedSpaceLabels[item.key];
+        }
       });
 
       setSpaceContentVisibility(spaceVisibility);
@@ -357,7 +503,9 @@ const SettingsSidebar = () => {
       const isVisible = settingsVisibility[item.key] !== false;
       if (!isVisible && !editMode) return null;
 
-      const customLabel = settingsLabels[item.key] || item.label;
+      // Use saved label if exists, otherwise translate the labelKey
+      const customLabel =
+        settingsLabels[item.key] || (item.labelKey ? t(item.labelKey) : "");
 
       return {
         ...item,
@@ -371,7 +519,9 @@ const SettingsSidebar = () => {
 
             return {
               ...subItem,
-              label: settingsLabels[subKey] || subItem.label,
+              label:
+                settingsLabels[subKey] ||
+                (subItem.labelKey ? t(subItem.labelKey) : ""),
               hidden: !subVisible,
             };
           })
@@ -388,8 +538,9 @@ const SettingsSidebar = () => {
       const isVisible = settingsVisibility[item.key] !== false;
       if (!isVisible && !editMode) return null;
 
-      // For dynamic items (like reseed label), prefer saved label if exists
-      const computedLabel = settingsLabels[item.key] || item.label || "";
+      // Use saved label if exists, otherwise translate the labelKey
+      const computedLabel =
+        settingsLabels[item.key] || (item.labelKey ? t(item.labelKey) : "");
       return {
         ...item,
         label: computedLabel,
@@ -576,7 +727,7 @@ const SettingsSidebar = () => {
   return (
     <div onClick={() => setSearchResult(null)} className="settings-sidebar">
       <div className="settings-header">
-        <h2>Settings</h2>
+        <h2>{t("settings")}</h2>
         <div style={{ display: "flex", alignItems: "center", gap: "8px" }}>
           {editMode && (
             <button
@@ -603,13 +754,13 @@ const SettingsSidebar = () => {
           className={`tab-button ${activeTab === "space" ? "active" : ""}`}
           onClick={() => setActiveTab("space")}
         >
-          Space Settings
+          {t("spaceSettings")}
         </button>
         <button
           className={`tab-button ${activeTab === "general" ? "active" : ""}`}
           onClick={() => setActiveTab("general")}
         >
-          General Settings
+          {t("generalSettings")}
         </button>
       </div>
 
@@ -878,97 +1029,104 @@ const SettingsSidebar = () => {
                                     icon: subIcon,
                                     onClick,
                                     hidden: subHidden,
-                                  }) => (
-                                    <div
-                                      key={subKey}
-                                      className={`settings-item-container ${
-                                        subHidden ? "hidden-item" : ""
-                                      }`}
-                                    >
-                                      <div className="settings-item-wrapper">
-                                        {editMode && (
-                                          <button
-                                            className="hide-button"
-                                            onClick={(e) => {
-                                              e.stopPropagation();
-                                              toggleVisibility(subKey, key);
-                                            }}
-                                            title={
-                                              subHidden
-                                                ? "Show item"
-                                                : "Hide item"
-                                            }
-                                          >
-                                            <span className="material-symbols-outlined">
-                                              {subHidden
-                                                ? "visibility"
-                                                : "visibility_off"}
-                                            </span>
-                                          </button>
-                                        )}
-                                        <div
-                                          onClick={onClick}
-                                          className={`settings-item sub-item ${
-                                            subHidden ? "hidden" : ""
-                                          }`}
-                                        >
-                                          <div className="item-icon">
-                                            <span className="material-symbols-outlined">
-                                              {subIcon}
-                                            </span>
-                                          </div>
-                                          <div className="item-text">
-                                            {editMode &&
-                                            editingLabel ===
-                                              `${key}.${subKey}` ? (
-                                              <input
-                                                type="text"
-                                                value={subLabel}
-                                                onChange={(e) =>
-                                                  handleLabelEdit(
-                                                    subKey,
-                                                    key,
-                                                    e.target.value
-                                                  )
-                                                }
-                                                onBlur={finishEditingLabel}
-                                                onKeyPress={(e) =>
-                                                  e.key === "Enter" &&
-                                                  finishEditingLabel()
-                                                }
-                                                className="label-edit-input"
-                                                autoFocus
-                                                onClick={(e) =>
-                                                  e.stopPropagation()
-                                                }
-                                              />
-                                            ) : (
-                                              <span
-                                                onClick={
-                                                  editMode
-                                                    ? (e) => {
-                                                        e.stopPropagation();
-                                                        startEditingLabel(
-                                                          subKey,
-                                                          key
-                                                        );
-                                                      }
-                                                    : undefined
-                                                }
-                                                className={
-                                                  editMode
-                                                    ? "editable-label"
-                                                    : ""
-                                                }
-                                              >
-                                                {subLabel}
+                                    type: subType,
+                                    App,
+                                  }) => {
+                                    if (subType === "app") {
+                                      return <App />;
+                                    }
+                                    return (
+                                      <div
+                                        key={subKey}
+                                        className={`settings-item-container ${
+                                          subHidden ? "hidden-item" : ""
+                                        }`}
+                                      >
+                                        <div className="settings-item-wrapper">
+                                          {editMode && (
+                                            <button
+                                              className="hide-button"
+                                              onClick={(e) => {
+                                                e.stopPropagation();
+                                                toggleVisibility(subKey, key);
+                                              }}
+                                              title={
+                                                subHidden
+                                                  ? "Show item"
+                                                  : "Hide item"
+                                              }
+                                            >
+                                              <span className="material-symbols-outlined">
+                                                {subHidden
+                                                  ? "visibility"
+                                                  : "visibility_off"}
                                               </span>
-                                            )}
+                                            </button>
+                                          )}
+                                          <div
+                                            onClick={onClick}
+                                            className={`settings-item sub-item ${
+                                              subHidden ? "hidden" : ""
+                                            }`}
+                                          >
+                                            <div className="item-icon">
+                                              <span className="material-symbols-outlined">
+                                                {subIcon}
+                                              </span>
+                                            </div>
+                                            <div className="item-text">
+                                              {editMode &&
+                                              editingLabel ===
+                                                `${key}.${subKey}` ? (
+                                                <input
+                                                  type="text"
+                                                  value={subLabel}
+                                                  onChange={(e) =>
+                                                    handleLabelEdit(
+                                                      subKey,
+                                                      key,
+                                                      e.target.value
+                                                    )
+                                                  }
+                                                  onBlur={finishEditingLabel}
+                                                  onKeyPress={(e) =>
+                                                    e.key === "Enter" &&
+                                                    finishEditingLabel()
+                                                  }
+                                                  className="label-edit-input"
+                                                  autoFocus
+                                                  onClick={(e) =>
+                                                    e.stopPropagation()
+                                                  }
+                                                />
+                                              ) : (
+                                                <span
+                                                  onClick={
+                                                    editMode
+                                                      ? (e) => {
+                                                          e.stopPropagation();
+                                                          startEditingLabel(
+                                                            subKey,
+                                                            key
+                                                          );
+                                                        }
+                                                      : undefined
+                                                  }
+                                                  className={
+                                                    editMode
+                                                      ? "editable-label"
+                                                      : ""
+                                                  }
+                                                >
+                                                  {subLabel}
+                                                </span>
+                                              )}
+                                            </div>
                                           </div>
                                         </div>
                                       </div>
-                                    </div>
-                                  )
+                                    );
+                                  }
                                 )}
                               </div>
                             )}
@@ -1334,7 +1492,77 @@ const SettingsSidebar = () => {
                     );
                   }
 
-                  // 4) regular clickable rows
+                  // 4) Language selector
+                  if (item.type === "language") {
+                    if (hidden && !editMode) return null;
+                    return (
+                      <div
+                        key={item.key}
+                        className={`settings-item-container ${
+                          hidden ? "hidden-item" : ""
+                        }`}
+                      >
+                        <div className="settings-item-wrapper">
+                          {editMode && (
+                            <button
+                              className="hide-button"
+                              onClick={(e) => {
+                                e.stopPropagation();
+                                toggleVisibility(item.key);
+                              }}
+                              title={hidden ? "Show item" : "Hide item"}
+                            >
+                              <span className="material-symbols-outlined">
+                                {hidden ? "visibility" : "visibility_off"}
+                              </span>
+                            </button>
+                          )}
+
+                          <div
+                            className={`settings-item ${hidden ? "hidden" : ""}`}
+                            style={{ justifyContent: "space-between" }}
+                          >
+                            <div
+                              style={{
+                                display: "flex",
+                                alignItems: "center",
+                                gap: "10px",
+                              }}
+                            >
+                              <div className="item-icon">
+                                <span className="material-symbols-outlined">
+                                  {item.icon}
+                                </span>
+                              </div>
+                              <div className="item-text">{label}</div>
+                            </div>
+                            <select
+                              value={language}
+                              onChange={(e) => changeLanguage(e.target.value)}
+                              style={{
+                                padding: "6px 12px",
+                                borderRadius: "6px",
+                                border: "1px solid #ddd",
+                                backgroundColor: "var(--pageBackground)",
+                                color: "var(--text1)",
+                                fontSize: "14px",
+                                cursor: "pointer",
+                                outline: "none",
+                              }}
+                            >
+                              {availableLanguages.map((lang) => (
+                                <option key={lang.code} value={lang.code}>
+                                  {lang.nativeName}
+                                </option>
+                              ))}
+                            </select>
+                          </div>
+                        </div>
+                      </div>
+                    );
+                  }
+
+                  // 5) regular clickable rows
                   if (hidden && !editMode) return null;
                   return (
                     <div
@@ -1511,7 +1739,8 @@ const SettingsSidebar = () => {
                 /* Space content specific styles */
                 .space-content-item {
                     position: relative;
-                    margin-bottom: 16px;
+                    margin-top: 10px;
+
                 }
                 
                 .space-content-hide {

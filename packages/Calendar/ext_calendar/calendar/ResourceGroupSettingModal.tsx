@@ -1,3 +1,5 @@
+const { useSideBarContext } = await import("app.hooks.sideBar");
+
 const { createContext, useContext, useRef, useState, useEffect } = os.appHooks;
 
 const GroupSettingsModal = ({
@@ -8,9 +10,10 @@ const GroupSettingsModal = ({
   onAddRoom,
   updateGroupName,
   onRemoveRoom,
-  groupRooms = []
+  groupRooms = [],
 }) => {
-  const [newRoomTitle, setNewRoomTitle] = useState('');
+  const { t } = useSideBarContext();
+  const [newRoomTitle, setNewRoomTitle] = useState("");
   const [groupName, setGroupName] = useState(groupValue);
   const [localRooms, setLocalRooms] = useState(groupRooms);
   const [showAllRooms, setShowAllRooms] = useState(false);
@@ -28,9 +31,9 @@ const GroupSettingsModal = ({
         group: groupValue,
       };
 
-      onAddRoom(newRoom);                         // Update FullCalendar
-      setLocalRooms(prev => [...prev, newRoom]);  // Update local state
-      setNewRoomTitle('');
+      onAddRoom(newRoom); // Update FullCalendar
+      setLocalRooms((prev) => [...prev, newRoom]); // Update local state
+      setNewRoomTitle("");
     }
   };
 
@@ -46,7 +49,7 @@ const GroupSettingsModal = ({
 
   const handleRemoveRoom = (roomId) => {
     onRemoveRoom(roomId); // remove from calendar
-    setLocalRooms(prev => prev.filter(r => r.id !== roomId)); // remove from UI
+    setLocalRooms((prev) => prev.filter((r) => r.id !== roomId)); // remove from UI
   };
 
   if (!open) return null;
@@ -55,150 +58,159 @@ const GroupSettingsModal = ({
   return (
     <div
       style={{
-        top: '20%',
-        left: '40%',
-        transform: 'translateX(-50%)',
-        position: 'absolute',
-        padding: '16px',
-        background: '#f9f9f9',
-        border: '1px solid #ddd',
-        borderRadius: '12px',
-        boxShadow: '0 4px 16px rgba(0,0,0,0.15)',
+        top: "20%",
+        left: "40%",
+        transform: "translateX(-50%)",
+        position: "absolute",
+        padding: "16px",
+        background: "#f9f9f9",
+        border: "1px solid #ddd",
+        borderRadius: "12px",
+        boxShadow: "0 4px 16px rgba(0,0,0,0.15)",
         zIndex: 1000,
-        width: '280px',
-        fontFamily: 'system-ui, sans-serif',
+        width: "280px",
+        fontFamily: "system-ui, sans-serif",
       }}
     >
-      <h3 style={{ margin: '0 0 12px', fontSize: '16px', color: '#333' }}>
-        Edit Group: <span style={{ color: '#555' }}>{groupValue}</span>
+      <h3 style={{ margin: "0 0 12px", fontSize: "16px", color: "#333" }}>
+        {t("editGroup")}: <span style={{ color: "#555" }}>{groupValue}</span>
       </h3>
 
-      <label style={{ fontSize: '13px', color: '#555' }}>Group Name</label>
+      <label style={{ fontSize: "13px", color: "#555" }}>
+        {t("groupName")}
+      </label>
       <input
         type="text"
         value={groupName}
         onChange={(e) => setGroupName(e.target.value)}
         style={{
-          width: '100%',
-          padding: '6px 8px',
-          margin: '6px 0 12px',
-          borderRadius: '6px',
-          border: '1px solid #ccc',
-          fontSize: '14px',
+          width: "100%",
+          padding: "6px 8px",
+          margin: "6px 0 12px",
+          borderRadius: "6px",
+          border: "1px solid #ccc",
+          fontSize: "14px",
         }}
       />
 
-      <label style={{ fontSize: '13px', color: '#555' }}>Add Room to Group</label>
+      <label style={{ fontSize: "13px", color: "#555" }}>
+        {t("addRoomToGroup")}
+      </label>
       <input
         type="text"
-        placeholder="Room title"
+        placeholder={t("roomTitle")}
         value={newRoomTitle}
         onChange={(e) => setNewRoomTitle(e.target.value)}
         style={{
-          width: '100%',
-          padding: '6px 8px',
-          margin: '6px 0 8px',
-          borderRadius: '6px',
-          border: '1px solid #ccc',
-          fontSize: '14px',
+          width: "100%",
+          padding: "6px 8px",
+          margin: "6px 0 8px",
+          borderRadius: "6px",
+          border: "1px solid #ccc",
+          fontSize: "14px",
         }}
       />
       <button
         onClick={handleAddRoom}
         style={{
-          width: '100%',
-          backgroundColor: '#007bff',
-          color: '#fff',
-          border: 'none',
-          borderRadius: '6px',
-          padding: '6px',
-          marginBottom: '8px',
-          cursor: 'pointer',
-          fontSize: '13px',
+          width: "100%",
+          backgroundColor: "#007bff",
+          color: "#fff",
+          border: "none",
+          borderRadius: "6px",
+          padding: "6px",
+          marginBottom: "8px",
+          cursor: "pointer",
+          fontSize: "13px",
         }}
       >
-        + Add Room
+        + {t("addRoom")}
       </button>
 
       <div>
-        <h4 style={{ margin: '8px 0 4px' }}>Rooms</h4>
-        <ul style={{ listStyle: 'none', padding: 0 }}>
-          {(showAllRooms ? localRooms : localRooms.slice(0, 3)).map(room => (
+        <h4 style={{ margin: "8px 0 4px" }}>{t("rooms")}</h4>
+        <ul style={{ listStyle: "none", padding: 0 }}>
+          {(showAllRooms ? localRooms : localRooms.slice(0, 3)).map((room) => (
             <li
               key={room.id}
               style={{
-                display: 'flex',
-                justifyContent: 'space-between',
-                marginBottom: '4px',
+                display: "flex",
+                justifyContent: "space-between",
+                marginBottom: "4px",
               }}
             >
               <span>{room.title}</span>
               <button
                 onClick={() => handleRemoveRoom(room.id)}
                 style={{
-                  backgroundColor: '#e74c3c',
-                  color: 'white',
-                  border: 'none',
-                  borderRadius: '4px',
-                  padding: '2px 6px',
-                  cursor: 'pointer',
-                  fontSize: '12px',
+                  backgroundColor: "#e74c3c",
+                  color: "white",
+                  border: "none",
+                  borderRadius: "4px",
+                  padding: "2px 6px",
+                  cursor: "pointer",
+                  fontSize: "12px",
                 }}
               >
-                Remove
+                {t("remove")}
               </button>
             </li>
           ))}
         </ul>
         {localRooms.length > 3 && (
           <button
-            onClick={() => setShowAllRooms(prev => !prev)}
+            onClick={() => setShowAllRooms((prev) => !prev)}
             style={{
-              marginTop: '4px',
-              backgroundColor: 'transparent',
-              color: '#007bff',
-              border: 'none',
-              cursor: 'pointer',
-              fontSize: '12px',
+              marginTop: "4px",
+              backgroundColor: "transparent",
+              color: "#007bff",
+              border: "none",
+              cursor: "pointer",
+              fontSize: "12px",
               padding: 0,
             }}
           >
-            {showAllRooms ? 'Show Less' : 'Show More'}
+            {showAllRooms ? t("showLess") : t("showMore")}
           </button>
         )}
       </div>
 
-
-      <div style={{ display: 'flex', justifyContent: 'space-between', marginTop: '16px' }}>
+      <div
+        style={{
+          display: "flex",
+          justifyContent: "space-between",
+          marginTop: "16px",
+        }}
+      >
         <button
           onClick={handleSave}
           style={{
-            flex: '1 1 48%',
-            backgroundColor: '#28a745',
-            color: '#fff',
-            border: 'none',
-            borderRadius: '6px',
-            padding: '6px',
-            cursor: 'pointer',
-            fontSize: '13px',
+            flex: "1 1 48%",
+            backgroundColor: "#28a745",
+            color: "#fff",
+            border: "none",
+            borderRadius: "6px",
+            padding: "6px",
+            cursor: "pointer",
+            fontSize: "13px",
           }}
         >
-          Save
+          {t("save")}
         </button>
         <button
           onClick={onClose}
           style={{
-            flex: '1 1 48%',
-            backgroundColor: '#6c757d',
-            color: '#fff',
-            border: 'none',
-            borderRadius: '6px',
-            padding: '6px',
-            cursor: 'pointer',
-            fontSize: '13px',
+            flex: "1 1 48%",
+            backgroundColor: "#6c757d",
+            color: "#fff",
+            border: "none",
+            borderRadius: "6px",
+            padding: "6px",
+            cursor: "pointer",
+            fontSize: "13px",
           }}
         >
-          Cancel
+          {t("cancel")}
         </button>
       </div>
     </div>

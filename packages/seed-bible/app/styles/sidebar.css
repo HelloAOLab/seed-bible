@@ -87,6 +87,7 @@
   height: 100vh;
   position: relative;
   background: var(--themeSideMenu);
+  margin-left: 9px;
   /* transition: width 0.3s ease; */
 }
 
@@ -100,7 +101,7 @@
   align-items: center;
   gap: 15px;
   justify-content: space-between;
-  color: var(--themeText1);
+  color: var(--text1);
   font-weight: 700;
 }
 
@@ -113,7 +114,7 @@
 }
 
 .sidebarLine {
-  margin-top: 25px;
+  margin-top: 10px;
   width: 100%;
   height: 1px;
   background-color: var(--gray2-color);
@@ -144,7 +145,7 @@
   padding: 5px;
   border-radius: 10px;
   margin-top: 25px;
-  color: var(--themeText1);
+  color: var(--text1);
 }
 
 .searchSection input {
@@ -158,7 +159,7 @@
   gap: 16px;
   margin-top: 15px;
   justify-content: space-between;
-  color: var(--themeText1);
+  color: var(--text1);
   font-weight: 700;
   margin-bottom: 27px;
   align-items: center;
@@ -189,7 +190,7 @@
 }
 
 .tab {
-  color: var(--themeText1);
+  color: var(--text1);
   display: flex;
   flex-direction: row;
   justify-content: space-between;
@@ -202,7 +203,7 @@
 
 .activeTab {
   background: white;
-  color: black;
+  color: var(--text1) !important;
   display: flex;
   flex-direction: row;
   justify-content: space-between;
@@ -371,7 +372,7 @@
 
 .icon-button {
   cursor: pointer;
-  color: var(--themeText1);
+  color: var(--text1);
 }
 
 .triangle-up {
@@ -397,14 +398,16 @@
   position: relative;
   width: 225px !important;
   height: fit-content;
+  /* max-height: 200px; */
   padding: 10px;
   background: #202020;
   display: flex;
   flex-direction: column;
   align-items: center;
-  justify-content: center;
   gap: 2px;
   border-radius: 15px;
+  /* overflow: auto; */
+  scrollbar-width: none;
 }
 
 .popupSettings .itemSettings {
