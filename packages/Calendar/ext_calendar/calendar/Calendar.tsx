@@ -785,6 +785,7 @@ const App = () => {
           center: "",
           right: "",
         },
+
         buttonText: {
           today: " ",
         },
@@ -824,9 +825,9 @@ const App = () => {
         },
 
         slotMinTime: "00:00:00",
-        slotMaxTime: "25:00:00",
+        slotMaxTime: "24:00:00",
         slotDuration: "00:30:00",
-        scrollTime: "07:00:00",
+        scrollTime: "09:00:00",
         initialView: "dayGridMonth",
         moreLinkClick: (arg) => {
           popoverOpenRef.current = true;
@@ -906,8 +907,8 @@ const App = () => {
         allDaySlot: true,
         allDayText: "All day",
         expandRows: true,
-        contentHeight: "auto",
-        height: "auto",
+        contentHeight: "450px",
+
         eventContent: function (arg) {
           console.log(popoverOpenRef.current, "sdsdsdkkkkjj");
 
@@ -1128,7 +1129,7 @@ const App = () => {
             return ["full-view"];
           }
         },
-        dayCellDidMount: (info) => {
+        /* dayCellDidMount: (info) => {
           const cellDateStr = info.date.toISOString().split("T")[0];
           const hasEvent = calendarApi.current.getEvents().some((ev) => {
             const evDateStr = new Date(ev.start).toISOString().split("T")[0];
@@ -1141,7 +1142,7 @@ const App = () => {
           if (hasEvent && isMultiMonth) {
             info.el.style.backgroundColor = "white"; // dark gray
           }
-        },
+        },*/
 
         editable: true,
         droppable: true,
@@ -1371,7 +1372,8 @@ const App = () => {
                 }
               }
             );
-          } else {
+          }
+          /* else {
             if (info.view.type !== "resourceTimeline") {
               const clickedDate = info.date;
               // JS Date
@@ -1412,7 +1414,7 @@ const App = () => {
               });
               instance.show();
             }
-          }
+          }*/
         },
 
         datesSet: (info) => {
@@ -1431,6 +1433,19 @@ const App = () => {
           const prevBtn = calendarRef.current.querySelector(".fc-prev-button");
           const nextBtn = calendarRef.current.querySelector(".fc-next-button");
           let select = document.getElementById("view-toggle-select");
+          const calendarap = info.view.calendar;
+
+          if (info.view.type === "multiMonthYear") {
+            const year = info.start.getFullYear();
+            calendarap.setOption("titleFormat", { year: "numeric" });
+
+            calendarap.setOption("title", year.toString());
+          } else {
+            calendarap.setOption("titleFormat", {
+              year: "numeric",
+              month: "long",
+            });
+          }
           if (info.view.type === "resourceTimelineDay") {
             if (todayBtn) todayBtn.style.display = "none";
             if (addButton) addButton.style.display = "none";
@@ -2173,7 +2188,7 @@ const App = () => {
     return () => observer.disconnect();
   }, []);
 
-  useEffect(() => {
+  /*useEffect(() => {
     const container = document.querySelector(".experience-container");
     const calendarElement = document.getElementById("calendar");
     const calendar = calendarApi.current;
@@ -2191,8 +2206,9 @@ const App = () => {
     };
 
     const observer = new ResizeObserver(() => {
+      if(calendarApi.current.view.type!=='multiMonthYear'){
       calendar.updateSize();
-      updateFontSize();
+      updateFontSize();}
     });
 
     observer.observe(container);
@@ -2206,7 +2222,7 @@ const App = () => {
       observer.disconnect();
       window.removeEventListener("resize", updateFontSize);
     };
-  }, []);
+  }, []);*/
   console.log(
     calendarRef.current,
     refCalendar.current,

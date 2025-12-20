@@ -87,7 +87,8 @@ function ThePage({
   }, [T]);
   const { inSession, role, config } = getUserSessionInfo(configBot.id);
   const [tabEntered, setTabEntered] = useState(false);
-  const { updateTab, tabs, setActiveTab, sharedTab } = useTabsContext();
+  const { updateTab, tabs, activeTab, setActiveTab, sharedTab } =
+    useTabsContext();
   const { isDragging, setIsDragging, Element, position } = useMouseMove();
   const { navFunctions, setNavFunctions, scrollToVerse } = useBibleContext();
   const [inHold, setInHold] = useState();
@@ -438,7 +439,7 @@ function ThePage({
   useEffect(() => {
     loadData();
     globalThis.CurrentTab = tab;
-  }, []);
+  }, [tab]);
 
   // GLOBAL GUARDS
   if (!globalThis.__remoteBookUpdate) globalThis.__remoteBookUpdate = false;
@@ -514,12 +515,16 @@ function ThePage({
         book: data?.book,
         chapter: data?.chapter,
       });
-
-      configBot.tags.book = data?.bookId;
-      configBot.tags.chapter = data?.chapter;
       os.syncConfigBotTagsToURL(["book", "chapter"]);
     }
   }, [data]);
+
+  useEffect(() => {
+    if (data && tab.id === activeTab) {
+      configBot.tags.book = data?.bookId;
+      configBot.tags.chapter = data?.chapter;
+    }
+  }, [activeTab, data, tab]);
 
   useEffect(() => {
     // Create the interval
@@ -653,18 +658,15 @@ function ThePage({
       const highestVerse = unifiedVerses[unifiedVerses.length - 1];
       const lowestVerse = unifiedVerses[0];
 
-      // Build selected text
-      const selectedTextFinal =
-        selection && !selection.isCollapsed
-          ? selection.toString()
-          : unifiedVerses
-              .map((v) => {
-                const verseObj = data?.content
-                  ?.flatMap((c) => c.verses)
-                  .find((x) => x.verseNumber === v);
-                return verseObj?.text || "";
-              })
-              .join(" ");
+      //  selected text from verse data (excludes headings)
+      const selectedTextFinal = unifiedVerses
+        .map((v) => {
+          const verseObj = data?.content
+            ?.flatMap((c) => c.verses)
+            .find((x) => x.verseNumber === v);
+          return verseObj?.text || "";
+        })
+        .join(" ");
 
       setSelectedText(selectedTextFinal);
       setLastSelectedVerse(highestVerse);
@@ -716,6 +718,7 @@ function ThePage({
         text: selectedTextFinal,
         book: data?.book,
         chapter: data?.chapter,
+        translation: data?.translation,
       });
     };
 
@@ -812,7 +815,6 @@ function ThePage({
         },
       });
       setTab(tab);
-      setData(bible.data);
     }
   }
 
@@ -1535,7 +1537,7 @@ function ThePage({
                       }
                     : {
                         position: "fixed",
-                        left: toolbarPos.x - 190,
+                        left: toolbarPos.x  -50,
                         top: toolbarPos.y,
                         zIndex: 10000,
                         cursor: dragToolbar ? "grabbing" : "grab",

@@ -1,12 +1,6 @@
 import puppeteer, { Browser, Page, Frame } from "puppeteer";
 import { packageAll } from "../../script/lib/package";
-import {
-  initPage,
-  loadInst,
-  addAux,
-  shout,
-  loadSeedBible,
-} from "../../script/lib/browser";
+import { loadSeedBible } from "../../script/lib/browser";
 
 let browser: Browser;
 
@@ -18,8 +12,6 @@ beforeAll(async () => {
   browser = await puppeteer.launch({
     args: ["--no-sandbox"],
   });
-
-  context = browser.defaultBrowserContext();
 });
 
 afterAll(async () => {
@@ -28,7 +20,13 @@ afterAll(async () => {
 
 function getSeedBibleFrame(page: Page): Frame {
   console.log("page", page);
-  return page.frames().find((f) => f.url().includes("secure-ao-content.org"));
+  const frame = page
+    .frames()
+    .find((f) => f.url().includes("secure-ao-content.org"));
+  if (!frame) {
+    throw new Error("Seed Bible frame not found");
+  }
+  return frame;
 }
 
 describe("load", () => {
@@ -97,7 +95,9 @@ describe("load", () => {
     expect(await bookTitle?.evaluate((el) => el.textContent)).toBe("Genesis 1");
 
     const v28 = await seedBibleFrame.locator("#v-28").waitHandle();
-    expect(await v28?.evaluate((el) => el.textContent)).toMatch(
+    const v28Text = await v28?.evaluate((el) => el.textContent);
+
+    expect(mergeWhitespace(v28Text)).toMatch(
       /And God blessed them, and God said unto them/
     );
   });
@@ -311,8 +311,14 @@ describe("collaborative", () => {
   });
 });
 
-function delay(time) {
+function delay(time: number) {
   return new Promise(function (resolve) {
     setTimeout(resolve, time);
   });
+}
+
+function mergeWhitespace(
+  str: string | null | undefined
+): string | null | undefined {
+  return str?.replace(/\s+/g, " ").trim();
 }

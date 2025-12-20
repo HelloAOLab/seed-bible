@@ -44,7 +44,7 @@
         background-color: var(--pageBackground);
         justify-content: flex-start !important;
         padding: 0px 0px;
-        height: 45px;
+        height: 58px;
     }
 
   .firstToolbarbutton {
@@ -75,6 +75,14 @@
         pointer-events: all;
     
   }
+  .rightClick button{
+    width: 40px !important;
+    height: 40px !important;
+  }
+  .leftClick button{
+    width: 40px !important;
+    height: 40px !important;
+  }
 }
 
 .toolbar-button {
@@ -84,7 +92,7 @@
   align-items: center;
   justify-content: center;
   width: 40px !important;
-  height: 45px !important;
+  height: 58px !important;
   border-radius: 50%;
   /* background-color: var(--pageBackground) !important; */
   cursor: pointer;

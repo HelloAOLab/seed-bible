@@ -26,11 +26,15 @@ jobs:
         run: |
           corepack enable
           pnpm install
-          
+
       - name: Lint
         continue-on-error: true
         run: |
           pnpm lint
+      - name: Check
+        continue-on-error: true
+        run: |
+          pnpm check
       - name: Test
         run: |
           pnpm test
@@ -40,5 +44,5 @@ jobs:
       - name: Upload AUXes
         uses: actions/upload-artifact@v4
         with:
-          path: 'dist/*.aux'
+          path: "dist/*.aux"
           if-no-files-found: error

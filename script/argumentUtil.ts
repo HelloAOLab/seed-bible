@@ -72,7 +72,7 @@ for (const arg of argvCache) {
   if (arg.startsWith(FLAG_PREFIX) && arg.length > FLAG_PREFIX.length) {
     const flag = arg.slice(FLAG_PREFIX.length);
     if (KnownFlagsSet.has(flag as KnownFlagsLong)) {
-      presentKnownFlags.add(flag);
+      presentKnownFlags.add(flag as KnownFlagsLong);
     }
   } else if (
     arg.startsWith(SHORT_FLAG_PREFIX) &&
@@ -80,7 +80,7 @@ for (const arg of argvCache) {
   ) {
     const shortFlag = arg.slice(SHORT_FLAG_PREFIX.length);
     if (KnownShortFlagsSet.has(shortFlag as KnownFlagsShort)) {
-      presentKnownFlags.add(shortFlag);
+      presentKnownFlags.add(shortFlag as KnownFlagsShort);
     }
   }
 }
@@ -92,6 +92,8 @@ for (const arg of argvCache) {
  */
 export function procHasFlag(flag: KnownFlags): boolean {
   const long = KnownFlagsLong[flag];
+
+  // @ts-expect-error -- TypeScript can't infer that one of these will be defined
   const short = KnownFlagsShort[flag];
   if (long === undefined && short === undefined) {
     return false;

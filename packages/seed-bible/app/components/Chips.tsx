@@ -1,8 +1,8 @@
 const { useState, useRef, useEffect } = os.appHooks;
 
-function SharePopup({ shareTitle, shareReference, popupTitle = "Share on" }) {
+function SharePopup({ shareTitle, shareReference, translation ="BSB",popupTitle = "Share" }) {
   const [copied, setCopied] = useState(false);
-  const [includeReference, setIncludeReference] = useState(false);
+  const [includeReference, setIncludeReference] = useState(true);
 
   // Build the verse reference from context if not provided
   const reference =
@@ -10,7 +10,7 @@ function SharePopup({ shareTitle, shareReference, popupTitle = "Share on" }) {
 
   // The text to share based on toggle
   const shareText = includeReference
-    ? `"${shareTitle}" - ${reference}`
+    ? `"${shareTitle}" - ${reference} (${translation})`
     : shareTitle || "";
 
   const platforms = [
@@ -198,6 +198,31 @@ function SharePopup({ shareTitle, shareReference, popupTitle = "Share on" }) {
 
           {/* Toggle Options */}
           <div style={{ display: "flex", gap: 16, marginBottom: 20 }}>
+          <label
+              style={{
+                display: "flex",
+                alignItems: "center",
+                gap: 8,
+                cursor: "pointer",
+              }}
+            >
+              <input
+                type="radio"
+                name="shareOption"
+                checked={includeReference}
+                onChange={() => setIncludeReference(true)}
+                style={{ accentColor: "#4A90D9", width: 16, height: 16 }}
+              />
+              <span
+                style={{
+                  fontSize: 14,
+                  color: "#4A90D9",
+                  fontWeight: includeReference ? 500 : 400,
+                }}
+              >
+                Verse text with reference
+              </span>
+            </label>
             <label
               style={{
                 display: "flex",
@@ -211,43 +236,19 @@ function SharePopup({ shareTitle, shareReference, popupTitle = "Share on" }) {
                 name="shareOption"
                 checked={!includeReference}
                 onChange={() => setIncludeReference(false)}
-                style={{ accentColor: "#4A90D9", width: 16, height: 16 }}
-              />
-              <span
-                style={{
-                  fontSize: 14,
-                  color: "#4A90D9",
-                  fontWeight: includeReference ? 400 : 500,
-                }}
-              >
-                Only verse text
-              </span>
-            </label>
-            <label
-              style={{
-                display: "flex",
-                alignItems: "center",
-                gap: 8,
-                cursor: "pointer",
-              }}
-            >
-              <input
-                type="radio"
-                name="shareOption"
-                checked={includeReference}
-                onChange={() => setIncludeReference(true)}
                 style={{ accentColor: "#666", width: 16, height: 16 }}
               />
               <span
                 style={{
                   fontSize: 14,
                   color: "#666",
-                  fontWeight: includeReference ? 500 : 400,
+                  fontWeight: includeReference ? 400 : 500,
                 }}
               >
-                Verse text with reference
+                Only verse text
               </span>
             </label>
+            
           </div>
 
           {/* Platform Grid */}

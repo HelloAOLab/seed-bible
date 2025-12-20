@@ -1,38 +1,41 @@
-import { execSync } from 'child_process';
-import { readdir, readFile } from 'fs/promises';
-import * as path from 'path';
-import type { BotsState } from '../../typings/AuxLibraryDefinitions';
+import { execSync } from "child_process";
+import { readdir, readFile } from "fs/promises";
+import * as path from "path";
+import type { BotsState } from "@casual-simulation/aux-common";
 
-export async function packageSingle(pkg: string, stdio: 'inherit' | 'ignore' = 'inherit') {
-    try {
-        console.log(`Packaging: ${pkg}`);
-        const packagePath = path.resolve('packages', pkg);
-        const distPath = path.resolve('dist', `${pkg}.aux`);
-        execSync(`casualos pack-aux --overwrite "${packagePath}" "${distPath}"`, { stdio });
-        console.log(`Wrote: ${distPath}`);
-        return true;
-    } catch (e) {
-        console.error(`Failed to package ${pkg}:`, e);
-        return false;
-    }
+export async function packageSingle(
+  pkg: string,
+  stdio: "inherit" | "ignore" = "inherit"
+) {
+  try {
+    console.log(`Packaging: ${pkg}`);
+    const packagePath = path.resolve("packages", pkg);
+    const distPath = path.resolve("dist", `${pkg}.aux`);
+    execSync(`casualos pack-aux --overwrite "${packagePath}" "${distPath}"`, {
+      stdio,
+    });
+    console.log(`Wrote: ${distPath}`);
+    return true;
+  } catch (e) {
+    console.error(`Failed to package ${pkg}:`, e);
+    return false;
+  }
 }
 
-export async function packageAll(stdio: 'inherit' | 'ignore' = 'inherit') {
-    const packages = await listPackages();
-    await Promise.all(
-        packages.map(pkg => packageSingle(pkg, stdio))
-    );
+export async function packageAll(stdio: "inherit" | "ignore" = "inherit") {
+  const packages = await listPackages();
+  await Promise.all(packages.map((pkg) => packageSingle(pkg, stdio)));
 }
 
 export async function readPackage(packageName: string) {
-    const packageAux = path.resolve('dist', `${packageName}.aux`);
-    const packageData = await readFile(packageAux, 'utf-8')
-    const aux = JSON.parse(packageData);
-    return aux;
+  const packageAux = path.resolve("dist", `${packageName}.aux`);
+  const packageData = await readFile(packageAux, "utf-8");
+  const aux = JSON.parse(packageData);
+  return aux;
 }
 
 export async function listPackages() {
-    return await readdir('packages');
+  return await readdir("packages");
 }
 
 /**
@@ -41,28 +44,31 @@ export async function listPackages() {
  * @param aux The original aux to clean up.
  */
 export function cleanupAux(aux: BotsState) {
-    const result = {};
+  const result: BotsState = {};
 
-    const ignoredTags = [
-        'creator',
-        'abIDOrigin',
-    ];
+  const ignoredTags = ["creator", "abIDOrigin"];
 
-    for (const id in aux) {
-        const bot = aux[id];
-        if (!['shared', 'local'].includes(bot.space) || bot.tags.aoIgnore) {
-            continue;
-        }
-        result[id] = {
-            id: bot.id,
-            space: bot.space,
-            tags: { ...bot.tags },
-        };
-
-        for (const tag of ignoredTags) {
-            delete result[id].tags[tag];
-        }
+  for (const id in aux) {
+    const bot = aux[id];
+    if (!bot) {
+      continue;
     }
+    if (
+      (bot.space && !["shared", "local"].includes(bot.space)) ||
+      bot.tags.aoIgnore
+    ) {
+      continue;
+    }
+    result[id] = {
+      id: bot.id,
+      space: bot.space,
+      tags: { ...bot.tags },
+    };
 
-    return result;
+    for (const tag of ignoredTags) {
+      delete result[id].tags[tag];
+    }
+  }
+
+  return result;
 }

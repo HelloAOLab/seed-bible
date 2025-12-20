@@ -43,7 +43,7 @@ const MenuOptions = {
       title: "Copy text",
       onClick: (items) => {
         let text = "";
-
+        os.log("COPY TEXT VERSES", items);
         const textItems = items.map((verse) => {
           return verse.text;
         });
@@ -107,7 +107,7 @@ const MenuOptions = {
               : `${book} ${chapter}`;
 
           openPopupSettings(
-            <SharePopup shareTitle={`${text}`} shareReference={reference} />,
+            <SharePopup shareTitle={`${text}`} shareReference={reference} translation={that.translation} />,
             null,
             true
           );
