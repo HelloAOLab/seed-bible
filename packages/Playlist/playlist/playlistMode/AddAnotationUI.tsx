@@ -26,6 +26,7 @@ const VideoPlayer = await thisBot.VideoSmallScreen();
 const AudioPlayer = await thisBot.AudioPlayer();
 const RenderHTMLContent = await thisBot.RenderHTMLContent();
 const TogglePlaylistHeight = await thisBot.TogglePlaylistHeight();
+const { useSideBarContext } = await import("app.hooks.sideBar");
 
 import { CustomAnnotationTextEditor } from "playlist.playlistMode.CustomAnnotationTextEditor";
 
@@ -488,6 +489,9 @@ const AddAnotationUI = ({
   editData = null,
   setTab,
 }) => {
+
+  const { t } = useSideBarContext();
+
   // Audio
   const [mediaURL, setMediaURL] = useState("");
   const [videoSrc, setVideoSrc] = useState(false);
@@ -556,7 +560,6 @@ const AddAnotationUI = ({
               },
               id: data.id,
             });
-            console.log("editDataDetails", editDataDetails);
           } else if (data.data) {
             setEditDataDetails({ ...data.data });
             const layers = data.data.additionalInfo?.layers?.filter(
@@ -568,14 +571,14 @@ const AddAnotationUI = ({
           } else {
             setDataFetching(false);
             ShowNotification({
-              message: `Failed to fetch annotations.`,
+              message: t('failedToFetchAnnotations'),
               severity: "error",
             });
           }
         } catch (e) {
-          console.error("Error fetching annotations:", e);
+          console.error(`${t('errorFetchingAnnotations')}:`, e);
           ShowNotification({
-            message: `Failed to fetch annotations.`,
+            message: t('failedToFetchAnnotations'),
             severity: "error",
           });
         } finally {
@@ -672,7 +675,7 @@ const AddAnotationUI = ({
 
     if (!!embededItem) {
       ShowNotification({
-        message: `Cannot Embed the Embedded item! Content: ${embededItem}. Please remove it before embeding!`,
+        message: t('cannotEmbedEmbeddedItem', { embededItem }),
         severity: "error",
       });
       return;
@@ -852,7 +855,7 @@ const AddAnotationUI = ({
         return;
       }
       ShowNotification({
-        message: `You cannot unlink attachments in annotation mode!`,
+        message: t('youCannotUnlinkAttachmentsInAnnotationMode'),
         severity: "error",
       });
       return;
@@ -964,7 +967,7 @@ const AddAnotationUI = ({
     // if (list.length < 1) {
     if (textHTML.trim().length < 1) {
       return ShowNotification({
-        message: `Cannot save empty annotation please use delete instead!`,
+        message: t('cannotSaveEmptyAnnotation'),
         severity: "error",
       });
     }
@@ -1020,7 +1023,6 @@ const AddAnotationUI = ({
         comment,
         editDataDetails.additionalInfo?.verse
       );
-      console.log("annotation", annotation);
       const userRecord = await getAnnotationRecord();
       promisesArray.push(
         saveAnnotation(userRecord, { ...annotation, id: isEditAddress })
@@ -1028,7 +1030,7 @@ const AddAnotationUI = ({
       await Promise.all(promisesArray);
       globalThis.SelectedItemIDForAttachments = null;
       ShowNotification({
-        message: `Annotations saved successfully!`,
+        message: t('annotationsSavedSuccessfully'),
         severity: "success",
       });
       setList([]);
@@ -1038,9 +1040,9 @@ const AddAnotationUI = ({
       if (setTab) setTab("discover");
     } catch (e) {
       setLoading(false);
-      console.error("Error updating annotations:", e);
+      console.error(`${t('errorUpdatingAnnotations')}:`, e);
       ShowNotification({
-        message: `Failed to update annotations.`,
+        message: t('failedToUpdateAnnotations'),
         severity: "error",
       });
     } finally {
@@ -1053,7 +1055,7 @@ const AddAnotationUI = ({
     // if (list.length < 1) {
     if (textHTML.trim().length < 1) {
       return ShowNotification({
-        message: "Cannot save empty annotations.",
+        message: t('cannotSaveEmptyAnnotations'),
         severity: "error",
       });
     }
@@ -1089,7 +1091,7 @@ const AddAnotationUI = ({
     if (singleMode) {
       if (textHTML.trim().length === 0) {
         return ShowNotification({
-          message: `Please embed something to save annotations!`,
+          message: t('pleaseEmbedSomethingToSaveAnnotations'),
           severity: "error",
         });
       }
@@ -1105,14 +1107,14 @@ const AddAnotationUI = ({
 
       if (somethingNotScripture) {
         return ShowNotification({
-          message: `Only Verses and Chapters are allowed for top-level annotation!`,
+          message: t('onlyVersesAndChaptersAreAllowedForTopLevelAnnotation'),
           severity: "error",
         });
       }
 
       if (somethingNotEmbedded) {
         return ShowNotification({
-          message: `Some of your scriptures are not embedded. Please embed or delete them!`,
+          message: t('someOfYourScripturesAreNotEmbedded'),
           severity: "error",
         });
       }
@@ -1181,7 +1183,7 @@ const AddAnotationUI = ({
       setLoading(false);
       globalThis.SelectedItemIDForAttachments = null;
       ShowNotification({
-        message: `Annotations saved successfully!`,
+        message: t('annotationsSavedSuccessfully'),
         severity: "success",
       });
       setList([]);
@@ -1189,9 +1191,9 @@ const AddAnotationUI = ({
       globalThis.PreviousHTML = null;
     } catch (e) {
       setLoading(false);
-      console.error("Error saving annotations:", e);
+      console.error(`${t('errorSavingAnnotations')}:`, e);
       ShowNotification({
-        message: `Failed to save annotations.`,
+        message: t('failedToSaveAnnotations'),
         severity: "error",
       });
     } finally {
@@ -1437,7 +1439,7 @@ const AddAnotationUI = ({
     if (dragOverSet.position === "Embed") {
       if (isEditAddress) {
         ShowNotification({
-          message: `You are in edit mode. Editing a anotation cannot embed items inside the annotation.`,
+          message: t('youAreInEditModeEditingANotationCannotEmbedItemsInsideTheAnnotation'),
           severity: "error",
         });
         return;
@@ -1448,7 +1450,7 @@ const AddAnotationUI = ({
         dragOverItem?.type === "heading"
       ) {
         ShowNotification({
-          message: `You cannot embed items into attachment item.`,
+          message: t('youCannotEmbedItemsIntoAttachmentItem'),
           severity: "error",
         });
         return;
@@ -1474,7 +1476,7 @@ const AddAnotationUI = ({
 
       if (!!dragItem.additionalInfo.layers?.length) {
         ShowNotification({
-          message: `Cannot Embed the Embedded item!. Please remove it before embeding!`,
+          message: t('cannotEmbedEmbeddedItem'),
           severity: "error",
         });
         return;
@@ -1531,10 +1533,9 @@ const AddAnotationUI = ({
             setLoseProgresss(false);
           }}
         >
-          <h2 style={{ fontSize: "1rem" }}>Embedded items will be lost.</h2>
+          <h2 style={{ fontSize: "1rem" }}>{t('embeddedItemsWillBeLost')}</h2>
           <p>
-            Switching to another mode will lose the embedded items. Do you want
-            to continue?
+           t('switchingToAnotherModeWillLoseTheEmbeddedItemsDoYouWantToContinue')
           </p>
           <ButtonsCover>
             <Button
@@ -1544,7 +1545,7 @@ const AddAnotationUI = ({
               }}
               variant="black"
             >
-              Confirm
+              {t('confirm')}
             </Button>
             <Button
               secondaryAlt
@@ -1552,7 +1553,7 @@ const AddAnotationUI = ({
                 setLoseProgresss(false);
               }}
             >
-              No
+              {t('no')}
             </Button>
           </ButtonsCover>
         </Modal>
@@ -1603,12 +1604,12 @@ const AddAnotationUI = ({
                   }}
                   for="playlistInclude"
                 >
-                  Annotation Mode
+                  {t('annotationMode')}
                 </label>
               </div>
               <Tooltip
                 forRight={true}
-                text="Annotation mode is the way to annotate the bible so you can see content while exploring other who have subscribed to you."
+                text={t('annotationModeTooltip')}
               >
                 <p
                   className="what-this center"
@@ -1670,12 +1671,12 @@ const AddAnotationUI = ({
                   }}
                   for="playlistInclude"
                 >
-                  Playlist Mode
+                  {t('playlistMode')}
                 </label>
               </div>
               <Tooltip
                 forRight={true}
-                text="Playlist mode is to create playlist and share with other or play them."
+                text={t('playlistModeTooltip')}
               >
                 <p
                   className="what-this center"
@@ -1737,10 +1738,10 @@ const AddAnotationUI = ({
                     }}
                     for="playlistInclude"
                   >
-                    Project Mode
+                    {t('projectMode')}
                   </label>
                 </div>
-                <Tooltip forRight={true} text="Project mode is awesome.">
+                <Tooltip forRight={true} text={t('projectModeTooltip')}>
                   <p
                     className="what-this center"
                     style={{ margin: "0 0 0 0.5rem" }}
@@ -1777,8 +1778,7 @@ const AddAnotationUI = ({
               <b style={{ color: "white" }}>Publish settings</b>
             </p>
             <span style={{ fontSize: "10px", color: "#c9c8c6" }}>
-              Your annotations will be available to everyone if public. If
-              private only you will have access.
+              {t('publishSettingsDesc')}
             </span>
             <div
               className="more-menu-items"
@@ -1878,11 +1878,11 @@ const AddAnotationUI = ({
                 <span class="material-symbols-outlined">
                   keyboard_backspace
                 </span>
-                <span>Back to Discover</span>
+                <span>{t('backToDiscover')}</span>
               </div>
             </div>
             <h4 style={{ margin: "8px 0" }}>
-              Editing Annotation For {editData.title}
+               {t('editingAnnotationFor')} {editData.title}
             </h4>
             {!!tags.length && (
               <div style={{ display: "flex" }}>
@@ -1893,7 +1893,7 @@ const AddAnotationUI = ({
                     fontWeight: "700",
                   }}
                 >
-                  Tags:
+                  {t('tags')}:
                 </p>
                 <div
                   className="align-center"
@@ -1941,8 +1941,8 @@ const AddAnotationUI = ({
               </div>
               <p>
                 {singleMode
-                  ? finalHistoryObject[0]?.content || "Annotations"
-                  : "Annotation Mode"}
+                  ? finalHistoryObject[0]?.content || t('annotations')
+                  : t('annotationMode')}
               </p>
             </div>
             <div className="align-center">
@@ -1958,7 +1958,7 @@ const AddAnotationUI = ({
                   if (setTab) setTab("discover");
                 }}
               >
-                Cancel
+                {t('cancel')}
               </div>
               <TogglePlaylistHeight />
               <div
@@ -1983,8 +1983,7 @@ const AddAnotationUI = ({
 
         {false && (
           <p style={{ margin: "0.25rem 0", fontWeight: "600" }}>
-            Note: Ranges of chapter will be skipped in saving annoation. Please
-            remove them if you have any.
+            {t('noteRangesOfChapterWillBeSkippedInSavingAnnotation')}
           </p>
         )}
 
@@ -2012,7 +2011,7 @@ const AddAnotationUI = ({
               >
                 delete_forever
               </span>
-              <span className="color-inherit">Delete</span>
+              <span className="color-inherit">{t('delete')}</span>
             </Button>
             {!!embedding &&
               !isEditAddress &&
@@ -2025,7 +2024,7 @@ const AddAnotationUI = ({
                   >
                     frame_source
                   </span>
-                  <span className="color-inherit">Embed</span>
+                  <span className="color-inherit">{t('embed')}</span>
                 </Button>
               )}
             <Button
@@ -2042,7 +2041,7 @@ const AddAnotationUI = ({
               >
                 close
               </span>
-              <span className="color-inherit">Cancel</span>
+              <span className="color-inherit">{t('cancel')}</span>
             </Button>
           </div>
         )}
@@ -2067,7 +2066,7 @@ const AddAnotationUI = ({
               >
                 delete_forever
               </span>
-              <span className="color-inherit">Delete</span>
+              <span className="color-inherit">{t('delete')}</span>
             </Button>
             {!singleMode && (
               <Button
@@ -2086,7 +2085,7 @@ const AddAnotationUI = ({
                 >
                   link_off
                 </span>
-                <span className="color-inherit">Remove</span>
+                <span className="color-inherit">{t('remove')}</span>
               </Button>
             )}
             <Button
@@ -2101,7 +2100,7 @@ const AddAnotationUI = ({
               >
                 close
               </span>
-              <span className="color-inherit">Cancel</span>
+              <span className="color-inherit">{t('cancel')}</span>
             </Button>
           </div>
         )}
@@ -2111,11 +2110,11 @@ const AddAnotationUI = ({
             style={{ gap: "1rem", margin: "0.5rem 0" }}
           >
             <LoaderSecondary />
-            <p>Fetching Annotation Data</p>
+            <p>{t('fetchingAnnotationData')}</p>
           </div>
         )}
         {finalHistoryObject.length === 0 && !dataFetching && (
-          <p style={{ margin: "1rem 0" }}>Add items to start annotating.</p>
+          <p style={{ margin: "1rem 0" }}>{t('addItemsToStartAnnotating')}</p>
         )}
         {finalHistoryObject.map((ele, index) =>
           ele.type === "attachment-link" || ele.type === "date" ? (
@@ -2214,7 +2213,7 @@ const AddAnotationUI = ({
                   onClick={(id) => {
                     if (isEditAddress) {
                       ShowNotification({
-                        message: `You are in edit mode. Editing a anotation cannot embed items inside the annotation.`,
+                        message: t('youAreInEditModeEditingANotationCannotEmbedItemsInsideTheAnnotation'),
                         severity: "error",
                       });
                       return;
@@ -2289,7 +2288,7 @@ const AddAnotationUI = ({
         <div style={{ padding: "1rem 0 " }}>
           <div className="add-playlist-actions">
             <Button onClick={onClickSave} secondary>
-              {loading ? "Saving" : "Save"}
+              {loading ? t('saving') : t('save')}
             </Button>
             {false && (
               <Button
@@ -2300,7 +2299,7 @@ const AddAnotationUI = ({
                 }}
                 secondaryAlt
               >
-                Close
+                {t('close')}
               </Button>
             )}
           </div>

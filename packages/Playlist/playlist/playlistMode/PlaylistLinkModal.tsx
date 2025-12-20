@@ -21,7 +21,7 @@ const idsMap = that.idsMap;
 
 const { Input, Modal, Button, ButtonsCover, Tooltip, Select } = Components;
 const { useState, useLayoutEffect } = os.appHooks;
-
+const { useSideBarContext } = await import("app.hooks.sideBar");
 const PlaylistRowItem = await thisBot.PlaylistRowItem();
 let playlistToLink = [];
 let initialName = "";
@@ -57,6 +57,7 @@ playlistToLink = CLONE_DATA(playlistToLink);
 const allPlaylistGroups = globalThis.PlaylistsGroups;
 
 const PlaylistLinkModal = () => {
+    const { t } = useSideBarContext();
     const [addList, setAddList] = useState(false);
 
     const [name, setName] = useState(initialName);
@@ -70,7 +71,7 @@ const PlaylistLinkModal = () => {
         if (currentData?.id === data.id) {
             this.CURRENT_ACTIVE_LINK_ITEM_FLOAT = null;
             thisBot.cursorReset();
-            return ShowNotification({ message: "Cannot Link with itself!", severity: "error" });
+            return ShowNotification({ message: t('cannotLinkWithItself'), severity: "error" });
         };
         if (isDelete) {
             setCollection(prev => {
@@ -94,7 +95,7 @@ const PlaylistLinkModal = () => {
                         if (old[firstI].list[secondIndex].links) {
                             const isPresent = old[firstI].list[secondIndex].links.findIndex(d => d.id === data.id) > -1;
                             if (isPresent) {
-                                ShowNotification({ message: "Already Linked with the Item!", severity: "error" });
+                                ShowNotification({ message: t('alreadyLinkedWithTheItem'), severity: "error" });
                             } else {
                                 old[firstI].list[secondIndex].links.push({
                                     ...data,
@@ -146,9 +147,9 @@ const PlaylistLinkModal = () => {
     }
 
     const saveCollections = () => {
-        if (!name) return ShowNotification({ message: "Please Enter a Name!", severity: "error" });
+        if (!name) return ShowNotification({ message: t('pleaseEnterAName'), severity: "error" });
         const namesPresent = Object.keys(globalThis.COLLECTIONS || {}).map(ele => globalThis.COLLECTIONS[ele].name).filter(n => n !== initialName);
-        if (namesPresent.findIndex(nam => nam.toLocaleLowerCase() === name.trim().toLocaleLowerCase()) > -1) return ShowNotification({ message: "Name Already Present!", severity: "error" });
+        if (namesPresent.findIndex(nam => nam.toLocaleLowerCase() === name.trim().toLocaleLowerCase()) > -1) return ShowNotification({ message: t('nameAlreadyPresent'), severity: "error" });
         const idNew = globalThis.EDIT_COLLECTION_ID || createUUID();
         if (globalThis.COLLECTIONS) {
             globalThis.COLLECTIONS = {
@@ -186,7 +187,7 @@ const PlaylistLinkModal = () => {
                         background: "white", ...ButtonStyle
                     }}
                         onClick={() => {
-                            if (that.id === coll.id) return ShowNotification({ message: "Cannot Delete Original Playlist!", severity: "error" });
+                            if (that.id === coll.id) return ShowNotification({ message: t('cannotDeleteOriginalPlaylist'), severity: "error" });
                             setCollection(prev => prev.filter(c => c.id !== coll.id));
                         }}
                     >
@@ -201,42 +202,42 @@ const PlaylistLinkModal = () => {
                     isDisabled={!name}
                     onClick={saveCollections}
                 >
-                    Save
+                    {t('save')}
                 </Button>
                 <Button onClick={() => setAddList(true)} secondary>
-                    {collection.length > 1 ? "Add Another Playlist" : "Add a Playlist"}
+                    {collection.length > 1 ? t('addAnotherPlaylist') : t('addAPlaylist')}
                 </Button>
                 <Button onClick={onClose} secondaryAlt>
-                    Close
+                    {t('close')}
                 </Button>
             </ButtonsCover>
         </Modal>
 
         {addList && <Modal showIcon={false} onClose={onCloseAddList}>
-            <h4>Add Another Playlist:</h4>
+            <h4>{t('addAnotherPlaylist')}:</h4>
             <div style={{ paddingTop: "4px" }} >
-                <Select secondary value={playbackListID} onChangeListener={(val) => { setPlaybackListId(val); setPlaylistId("") }} name="Select Playback List:" options={[{ disabled: true, value: "", label: "Select Parallel List" }, ...PLAYBACK_OPTIONS]} />
+                <Select secondary value={playbackListID} onChangeListener={(val) => { setPlaybackListId(val); setPlaylistId("") }} name={t('selectPlaybackList') + ":"} options={[{ disabled: true, value: "", label: t('selectParallelList') }, ...PLAYBACK_OPTIONS]} />
             </div>
             <div style={{ paddingTop: "4px" }} >
-                <Select secondary disabled={PLAYLIST_OPTIONS.length < 1} value={playlistId} onChangeListener={(val) => { setPlaylistId(val); }} name="Select Playlist:" options={[{ disabled: true, value: "", label: "Select Playlist List" }, ...PLAYLIST_OPTIONS]} />
+                <Select secondary disabled={PLAYLIST_OPTIONS.length < 1} value={playlistId} onChangeListener={(val) => { setPlaylistId(val); }} name={t('selectPlaylist') + ":"} options={[{ disabled: true, value: "", label: t('selectPlaylistList') }, ...PLAYLIST_OPTIONS]} />
             </div>
 
             <ButtonsCover>
                 <Button onClick={onCloseAddList} secondaryAlt>
-                    Close
+                    {t('close')}
                 </Button>
 
                 <Button
                     secondary
                     isDisabled={!playlistId}
                     onClick={() => {
-                        if (collection.findIndex((pl) => pl.id === playlistId) > -1) return ShowNotification({ message: "Playlist Already Present!", severity: "error" });
+                        if (collection.findIndex((pl) => pl.id === playlistId) > -1) return ShowNotification({ message: t('playlistAlreadyPresent'), severity: "error" });
                         const pl = globalThis[`${playbackListID}playlists`].find(({ id }) => id === playlistId);
                         setCollection(prev => [...prev, pl]);
                         onCloseAddList();
                     }}
                 >
-                    Add
+                    {t('add')}
                 </Button>
             </ButtonsCover>
         </Modal>}

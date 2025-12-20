@@ -12,7 +12,7 @@ const linkingMode = that.linkingMode;
 const pos = gridPortalBot.tags.pointerPixel;
 
 const { useState } = os.appHooks;
-
+const { useSideBarContext } = await import("app.hooks.sideBar");
 os.unregisterApp(name);
 os.registerApp(name);
 
@@ -27,6 +27,7 @@ const ButtonStyle = {
 
 
 const Overlay = () => {
+    const { t } = useSideBarContext();
     const [dataItems, setDataItems] = useState([...items]);
 
     const unLinkItem = (index) => {
@@ -47,7 +48,7 @@ const Overlay = () => {
             }}
             className="overlay linked-item-custom"
         >
-            <h4>Linked Items:</h4>
+            <h4>{t('linkedItems')}:</h4>
             {dataItems.map((data, index) => <div key={data.id} className={`history-item`}>
                 {false && <span class="material-symbols-outlined unfollow">
                     drag_indicator

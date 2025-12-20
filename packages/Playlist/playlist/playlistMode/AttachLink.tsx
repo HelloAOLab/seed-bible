@@ -2,6 +2,7 @@ const { useState, useLayoutEffect, useMemo, useRef } = os.appHooks;
 import { MiniTextEditor } from "app.components.smallEditor";
 const { Input, Modal, Button, ButtonsCover, Select, LoaderSecondary } =
   Components;
+const { useSideBarContext } = await import("app.hooks.sideBar");
 
 const RecordingUI = await thisBot.RecordVoice();
 const VideoRecordUI = await thisBot.VideoRecordUI();
@@ -11,20 +12,20 @@ const RECORDING_VALUE = "voice-recording";
 
 const EditorId = "attachfile";
 
-const OPTIONS = [
+const OPTIONS = (t)=>[
   // { value: "text", label: "Heading Text" },
   // { value: SEARCH_ADD_VALUE, label: "Search & Add Verse,Chapter" },
-  { value: "youtube", label: "YouTube" },
-  { value: "externalLink", label: "External Link" },
-  { value: "Video", label: "Video" },
-  { value: "iframe", label: "Iframe" },
+  { value: "youtube", label: t('youtube') },
+  { value: "externalLink", label: t('externalLink') },
+  { value: "Video", label: t('video') },
+  { value: "iframe", label: t('iframe') },
   // { value: RECORDING_VALUE, label: "Recording" },
   // { value: "aux", label: "AUX", disabled: true }
-];
+] ;
 
-const OPTIONS_TEXTTYPE = [
-  { value: "heading", label: "Heading" },
-  { value: "text", label: "Text" },
+const OPTIONS_TEXTTYPE = (t: any) => [
+  { value: "heading", label: t('heading') },
+  { value: "text", label: t('text') },
 ];
 
 const BIBLE_ICON =
@@ -96,6 +97,7 @@ function SubComponent({
   textType,
   setTextType,
 }) {
+  const { t } = useSideBarContext();
   const playlists = useMemo(
     () => globalThis[`${"default"}playlists`] || [],
     []
@@ -115,7 +117,7 @@ function SubComponent({
           <Input
             value={name}
             onChangeListener={setName}
-            placeholder="Tag Name"
+            placeholder={t('tagName')}
           />
         </div>
       );
@@ -164,7 +166,7 @@ function SubComponent({
                     fontSize: "14px",
                   }}
                 >
-                  Drop files here
+                  {t('dropFilesHere')}
                 </h3>
                 <p
                   style={{
@@ -173,7 +175,7 @@ function SubComponent({
                     fontSize: "12px",
                   }}
                 >
-                  Release to upload files
+                  {t('releaseToUploadFiles')}
                 </p>
               </div>
             </div>
@@ -207,7 +209,7 @@ function SubComponent({
                 style={{ marginBottom: "0" }}
                 value={name}
                 onChangeListener={setName}
-                placeholder="Type to add scripture (e.g. Gen 1, Rev 2:4)"
+                placeholder={t('typeToAddScripture')}
               />
             </div>
           </div>
@@ -224,7 +226,7 @@ function SubComponent({
                   await onAddFiles(files);
                 }}
               >
-                Import JSON
+                {t('importJSON')}
               </Button>
             </>
           )}
@@ -262,7 +264,7 @@ function SubComponent({
               className={`${recordingType === "video" ? "active" : ""}`}
             >
               <span class="material-symbols-outlined">videocam</span>
-              <p>Video</p>
+              <p>{t('video')}</p>
             </div>
           </div>
           {recordingType === "audio" ? (
@@ -280,7 +282,7 @@ function SubComponent({
           <Input
             value={name}
             onChangeListener={setName}
-            placeholder="(Optional) type to add a custom title"
+            placeholder={t('typeToAddCustomTitle')}
           />
         </div>
       );
@@ -295,8 +297,8 @@ function SubComponent({
               onChangeListener={(val) => {
                 setTextType(val);
               }}
-              name="Role:"
-              options={OPTIONS_TEXTTYPE}
+              name={`${t('role')}:`}
+              options={OPTIONS_TEXTTYPE(t)}
             />
           )}
           <MiniTextEditor
@@ -327,7 +329,7 @@ function SubComponent({
             style={{ width: "100%" }}
             value={name}
             onChangeListener={setName}
-            placeholder="(Optional) type to add a custom title"
+            placeholder={t('typeToAddCustomTitle')}
           />
           <div style={{ width: "100%", display: "flex", gap: "1rem" }}>
             <Select
@@ -338,14 +340,14 @@ function SubComponent({
                 setLinkState({ isValid: false, type: val });
                 setType(val);
               }}
-              name="Type:"
-              options={OPTIONS}
+              name={`${t('type')}:`}
+              options={OPTIONS(t)}
             />
             <Input
               style={{ marginBottom: "0", flexGrow: "1" }}
               value={link}
               onChangeListener={setLink}
-              placeholder="e.g. https://www.youtube.com/watch?v=ALsluAKBZ-c"
+              placeholder={`${t('exampleeg')} https://www.youtube.com/watch?v=ALsluAKBZ-czs3`}
             />
           </div>
         </div>
@@ -360,7 +362,7 @@ function SubComponent({
             onChangeListener={(val) => {
               setData(val);
             }}
-            name="Playlist:"
+            name={`${t('playlist')}:`}
             options={playlistListOptions}
           />
         </div>
@@ -377,7 +379,7 @@ function SubComponent({
               if (!file) {
                 setLoading(false);
                 return ShowNotification({
-                  message: "No File Uploaded!",
+                  message: t('noFileUploaded'),
                   severity: "error",
                 });
               }
@@ -426,7 +428,7 @@ function SubComponent({
 
                 if (failCount > 0) {
                   return ShowNotification({
-                    message: "Failed to upload some Files!",
+                    message: t('failedToUploadSomeFiles'),
                     severity: "error",
                   });
                 }
@@ -435,7 +437,7 @@ function SubComponent({
                 console.log(error);
                 setLoading(false);
                 ShowNotification({
-                  message: "File upload failed!",
+                  message: t('fileUploadFailed'),
                   severity: "error",
                 });
               }
@@ -455,13 +457,13 @@ function SubComponent({
               src="https://auth-aux-aobot-prod-filesbucket-141297942820.s3.amazonaws.com/aoBot/6c8e5fa8be9c6bd0786104e4819b401b4b345a7734a7ebffb5d5e606ee182b45.png"
               style={{ height: "46px" }}
             />
-            <p className="link">Drag drop or Click to browse</p>
-            <p className="info-type">Image, .pdf, doc, .AUX etc</p>
+            <p className="link">{t('dragDropOrClickToBrowse')}</p>
+            <p className="info-type">{t('infoType')}</p>
           </div>
         </div>
       );
     default:
-      return <p>Unkown Data Type</p>;
+      return <p>{t('unknownDataType')}</p>;
   }
 }
 
@@ -584,13 +586,13 @@ const AttachLink = ({
         }
       } catch (err) {
         failCount++;
-        console.log("UPLOAED JSON ERROR", err);
+        console.log(t('UPLOAEDJSONERROR'), err);
       }
     }
     setLoading(false);
     if (failCount > 0) {
       ShowNotification({
-        message: `${failCount} file(s) rejected for not being valid JSON Format.`,
+        message: `${t('fileRejectedForNotBeingValidJSON', { count: failCount })}`,
         severity: "error",
       });
     }
@@ -750,7 +752,7 @@ const AttachLink = ({
         selectedType !== "LINK"
       ) {
         return ShowNotification({
-          message: "Attachment Name missing!",
+          message: t('attachmentNameMissing'),
           severity: "error",
         });
       }
@@ -767,7 +769,7 @@ const AttachLink = ({
     if (selectedType === "RECORDING") {
       if (!data)
         return ShowNotification({
-          message: "Record Something to Save Recording!",
+          message: t('recordSomethingToSaveRecording'),
           severity: "error",
         });
       setData(null);
@@ -793,7 +795,7 @@ const AttachLink = ({
 
       if (!url) {
         return ShowNotification({
-          message: "Failed to upload File!",
+          message: t('failedToUpload'),
           severity: "error",
         });
       }
@@ -811,7 +813,7 @@ const AttachLink = ({
     if (selectedType === "FILE_UPLOAD") {
       if (!Array.isArray(data) || data?.length < 1) {
         return ShowNotification({
-          message: "No files uploaded!",
+          message: t('noFilesUploaded'),
           severity: "error",
         });
       } else {
@@ -828,7 +830,7 @@ const AttachLink = ({
     if (selectedType === "PLAYLIST") {
       if (!data)
         return ShowNotification({
-          message: "Select A Playlist to annotate!",
+          message: t('selectAPlaylistToAnnotate'),
           severity: "error",
         });
       const playlistList = playlists.find((ele) => ele.id === data);
@@ -843,7 +845,7 @@ const AttachLink = ({
       const results = validateUrl(link);
       if (!results.isValid) {
         return ShowNotification({
-          message: "Invalid Link format!",
+          message: t('invalidLinkFormat'),
           severity: "error",
         });
       } else {
@@ -1003,7 +1005,7 @@ const AttachLink = ({
                 onClick={() => {
                   if (editMode)
                     return ShowNotification({
-                      message: "Cannot change while being in edit mode!",
+                      message: t('cannotChangeWhileBeingInEditMode'),
                       severity: "error",
                     });
                   if (ele === "DATE" && !!onDateClick) {

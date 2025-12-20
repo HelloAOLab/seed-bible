@@ -27,5 +27,5 @@ if (authBot?.id) {
   );
   return res;
 } else {
-  throw new Error("User not logged in!");
+  throw new Error(t('userNotLoggedIn'));
 }
