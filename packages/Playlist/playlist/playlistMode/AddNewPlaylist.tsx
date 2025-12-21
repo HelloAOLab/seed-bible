@@ -3,7 +3,7 @@ const { useState, useLayoutEffect, useRef, useMemo } = os.appHooks;
 const { Input, Modal, Button, Chips, Checkbox, ButtonsCover, Tooltip, Select } =
   Components;
 
-const { useSideBarContext } = await import("app.hooks.sideBar");
+import { useSideBarContext } from "app.hooks.sideBar";
 
 globalThis.RECORD_STOREKEY =
   "vRK2.YW5ub3RhdGlvbnM=.TDVlSEZzRHdBWGw4UXloR2Fha3Zjdz09.subjectfull";

@@ -5,7 +5,7 @@ const Linking = thisBot.LinkingItems();
 const isMobile =
   (window?.innerWidth || gridPortalBot.tags.pixelWidth) <
   MOBILE_VIEWPORT_THRESHOLD;
-
+import { useSideBarContext } from "app.hooks.sideBar";
 const editAbleTypes = {
   youtube: true,
   iframe: true,
@@ -67,7 +67,7 @@ const AttachLinkItem = ({
   autoPlayToggle = null,
 }) => {
   const [editDateModal, setEditDateModal] = useState(false);
-
+  const { t } = useSideBarContext();
   const [date, setDate] = useState(
     FORMAT_YYYY_MM_DD(data.additionalInfo.date || new Date())
   );
@@ -104,10 +104,10 @@ const AttachLinkItem = ({
     <>
       {editDateModal && (
         <Modal
-          title="Change Date"
+          title={t('changeDate')}
           showIcon={false}
           onClose={() => setEditDateModal(false)}>
-          <h3>Edit Date</h3>
+          <h3>{t('editDate')}</h3>
           <input
             type="date"
             value={date}
@@ -126,10 +126,10 @@ const AttachLinkItem = ({
                 onDateSave();
                 setEditDateModal(false);
               }}>
-              Save
+              {t('save')}
             </Button>
             <Button secondaryAlt onClick={() => setEditDateModal(false)}>
-              Close
+              {t('close')}
             </Button>
           </ButtonsCover>
         </Modal>

@@ -1,4 +1,4 @@
-const { useSideBarContext } = await import("app.hooks.sideBar");
+import { useSideBarContext } from "app.hooks.sideBar";
 
 export const SelectionOptions = ({
   handleDoneClick,

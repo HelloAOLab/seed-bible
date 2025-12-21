@@ -7,7 +7,7 @@ const { useState, useLayoutEffect, useRef, useMemo } = os.appHooks;
 const { Input, Modal, Button, ButtonsCover, Checkbox, Tooltip, Select } =
   Components;
 
-const { useSideBarContext } = await import("app.hooks.sideBar");
+import { useSideBarContext } from "app.hooks.sideBar";
 
 const ChecklistGIf =
   "https://auth-aux-aobot-prod-filesbucket-141297942820.s3.amazonaws.com/aoBot/90e85308635064b3d0fdaa9c220b8547a9467a10affe3cf22f06ad6b26fbf0a1.gif";
@@ -483,13 +483,13 @@ const Playlist = ({
     const nameValue = (newName || name).trim();
     if (!nameValue)
       return ShowNotification({
-        message: "Playlist Name not found!",
+        message: t('playlistNameNotFound'),
         severity: "error",
       });
     const names = playLists.map((ele) => ele.name);
     if (names.includes(nameValue) && !isEdit.current) {
       ShowNotification({
-        message: "Playlist Name already present!",
+        message: t('playlistNameAlreadyPresent'),
         severity: "error",
       });
       return true;
@@ -630,7 +630,7 @@ const Playlist = ({
     oldListRef.current = JSON.parse(JSON.stringify(playList));
     if (loading) {
       return ShowNotification({
-        message: "Regenration in progress!",
+        message: t('regenrationInProgress'),
         severity: "error",
       });
     }
@@ -716,7 +716,7 @@ const Playlist = ({
 
     if (!!embededItem) {
       ShowNotification({
-        message: `Cannot Embed the Embedded item! Content: ${embededItem}. Please remove it before embeding!`,
+        message: t('cannotEmbedEmbeddedItem', { embededItem }),,
         severity: "error",
       });
       return;

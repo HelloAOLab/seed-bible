@@ -1,4 +1,5 @@
 const { useState, useLayoutEffect, useRef, useMemo, useCallback } = os.appHooks;
+import { useSideBarContext } from "app.hooks.sideBar";
 
 const videoGIF = 'https://auth-aux-aobot-prod-filesbucket-141297942820.s3.amazonaws.com/aoBot/a06426963e6f35751bdc3e76b49527f24cf646ff1ca48aaec66db6ee483f3f1c.gif';
 const screenGIF = 'https://auth-aux-aobot-prod-filesbucket-141297942820.s3.amazonaws.com/aoBot/4762072e89002b10128fc5fd2378aab528e60776159734a56ab048f3f337ed1d.gif';
@@ -17,6 +18,7 @@ const IconsRef = {
 }
 
 const VideoRecordUI = ({ data, setData }) => {
+    const { t } = useSideBarContext();
     const [recordingProps, setRecordingProps] = useState({
         audio: true,
         video: globalThis?.VideoRecordTab ? globalThis.VideoRecordTab !== 'screen' : true,
@@ -266,7 +268,7 @@ const VideoRecordUI = ({ data, setData }) => {
                 <div style={{ position: 'relative' }}>
                     {isRecording && isScreen && <div className="label-video">
                         <img src={isScreen ? screenGIF : videoGIF} alt='record' />
-                        <p>{isScreen ? "Your Screen is being recorded." : "Your Video is Being Recorded."}</p>
+                        <p>{isScreen ? t('yourScreenIsBeingRecorded') : t('yourVideoIsBeingRecorded')}</p>
                     </div>}
                     <video style={{ width: '100%' }} autoPlay muted={isStreaming} controls={isPlaying} ref={videoRef} playsInline poster={poster || `https://dummyimage.com/640x480/000/fff&text=${isScreen ? "Screen+Preview" : 'Camera+Preview'}`} />
                     {!isRecorded && <div className="controls-video">

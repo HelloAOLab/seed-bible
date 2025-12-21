@@ -1,5 +1,6 @@
 const { Button } = Components;
 const { useState, useLayoutEffect, useRef } = os.appHooks;
+import { useSideBarContext } from "app.hooks.sideBar";
 
 const name = "ShowScreenRecordingStopButton";
 const videoGIF =
@@ -11,6 +12,7 @@ globalThis.StopVideoRecording = false;
 const painterApp = getBot("system", "aiApps.painter");
 
 const ShowScreenRecordingStopButton = () => {
+  const { t } = useSideBarContext();
   const [hidden, setHidden] = useState(false);
   const [isPainting, setIsPainting] = useState(false);
   const [video, setVideo] = useState(!!that.video);
@@ -108,11 +110,11 @@ const ShowScreenRecordingStopButton = () => {
           }}
         >
           <span class="material-symbols-outlined">cancel</span>
-          <span>Stop Recording</span>
+          <span>{t('stopRecording')}</span>
         </div>
         {!video && (
           <Button onClick={toggleVideo} secondary>
-            {video ? "Turn Off" : "Turn On"} Video
+            {video ? t('turnOff') : t('turnOn')} {t('video')}
           </Button>
         )}
         <p

@@ -2,7 +2,7 @@ os.unregisterApp("playlist-cont-ui");
 os.registerApp("playlist-cont-ui");
 import { getAnnotationRecord, loadAnnotations } from "db.annotations.library";
 import { ProjectProvider } from "playlist.playlistMode.useProjectContext";
-const { useSideBarContext } = await import("app.hooks.sideBar");
+import { useSideBarContext } from "app.hooks.sideBar";
 const RenderIcon = await thisBot.RenderIcon();
 import { MenuIcon } from "app.components.icons";
 const { useState, useLayoutEffect, useMemo, useRef, useCallback } = os.appHooks;
