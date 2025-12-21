@@ -16,7 +16,7 @@ try {
 
 const { useState, useLayoutEffect, useRef, useMemo, useCallback } = os.appHooks;
 import { useProjectMenu } from "playlist.playlistMode.useProjectContext";
-const { useSideBarContext } = await import("app.hooks.sideBar");
+import { useSideBarContext } from "app.hooks.sideBar";
 const isMobile =
   (window?.innerWidth || gridPortalBot.tags.pixelWidth) <
   MOBILE_VIEWPORT_THRESHOLD;

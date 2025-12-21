@@ -12,7 +12,7 @@ const linkingMode = that.linkingMode;
 const pos = gridPortalBot.tags.pointerPixel;
 
 const { useState } = os.appHooks;
-const { useSideBarContext } = await import("app.hooks.sideBar");
+import { useSideBarContext } from "app.hooks.sideBar";
 os.unregisterApp(name);
 os.registerApp(name);
 

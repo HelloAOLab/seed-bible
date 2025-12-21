@@ -2,7 +2,7 @@ const { useState, useRef, useLayoutEffect } = os.appHooks;
 
 const { Input } = Components;
 
-const { useSideBarContext } = await import("app.hooks.sideBar");
+import { useSideBarContext } from "app.hooks.sideBar";
 
 const PlaylistCont = await thisBot.PlaylistContainer();
 const AnnotationList = await thisBot.AnnotationList();

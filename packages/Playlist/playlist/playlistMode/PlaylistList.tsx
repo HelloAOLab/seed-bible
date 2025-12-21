@@ -1,7 +1,7 @@
 const { useState, useLayoutEffect, useRef } = os.appHooks;
 const { Input } = Components;
 
-const { useSideBarContext } = await import("app.hooks.sideBar");
+import { useSideBarContext } from "app.hooks.sideBar";
 
 const PlaylistRowItem = await thisBot.PlaylistRowItem();
 

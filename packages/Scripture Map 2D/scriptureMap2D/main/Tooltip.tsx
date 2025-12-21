@@ -1,6 +1,6 @@
 import { useReadingHistoryContext } from "scriptureMap2D.main.ReadingHistoryContext";
 
-const { useSideBarContext } = await import("app.hooks.sideBar");
+import { useSideBarContext } from "app.hooks.sideBar";
 
 const { useRef, useState, useLayoutEffect, useMemo } = os.appHooks;
 

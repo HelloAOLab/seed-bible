@@ -10,7 +10,7 @@ import {
 import { useReadingHistoryContext } from "scriptureMap2D.main.ReadingHistoryContext";
 import { calculateReadingHistorySummary } from "db.annotations.library";
 
-const { useSideBarContext } = await import("app.hooks.sideBar");
+import { useSideBarContext } from "app.hooks.sideBar";
 
 const { useMemo, useState, useEffect, useCallback } = os.appHooks;
 const { memo } = os.appCompat;

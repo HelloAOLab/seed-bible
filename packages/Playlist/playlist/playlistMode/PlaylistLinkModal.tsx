@@ -21,7 +21,7 @@ const idsMap = that.idsMap;
 
 const { Input, Modal, Button, ButtonsCover, Tooltip, Select } = Components;
 const { useState, useLayoutEffect } = os.appHooks;
-const { useSideBarContext } = await import("app.hooks.sideBar");
+import { useSideBarContext } from "app.hooks.sideBar";
 const PlaylistRowItem = await thisBot.PlaylistRowItem();
 let playlistToLink = [];
 let initialName = "";

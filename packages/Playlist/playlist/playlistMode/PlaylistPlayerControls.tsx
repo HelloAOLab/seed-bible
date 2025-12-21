@@ -4,7 +4,7 @@ const VideoPlayer = await thisBot.VideoSmallScreen();
 const AudioPlayer = await thisBot.AudioPlayer();
 const AttachLink = await thisBot.AttachLink();
 const RenderHTMLContent = await thisBot.RenderHTMLContent();
-const { useSideBarContext } = await import("app.hooks.sideBar");
+import { useSideBarContext } from "app.hooks.sideBar";
 
 
 const EditPlaylist =

@@ -1,6 +1,6 @@
 const { Button } = Components;
 const { useState, useLayoutEffect, useRef } = os.appHooks;
-const { useSideBarContext } = await import("app.hooks.sideBar");
+import { useSideBarContext } from "app.hooks.sideBar";
 
 const name = "ShowScreenRecordingStopButton";
 const videoGIF =

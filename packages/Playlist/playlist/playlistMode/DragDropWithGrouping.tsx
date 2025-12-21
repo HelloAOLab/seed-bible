@@ -5,7 +5,7 @@ const AttachmentLinkItem = await thisBot.AttachmentLinkItem();
 const AttachLink = await thisBot.AttachLink();
 const Linking = await thisBot.LinkingItems();
 const RenderHTMLContent = await thisBot.RenderHTMLContent();
-const { useSideBarContext } = await import("app.hooks.sideBar");
+import { useSideBarContext } from "app.hooks.sideBar";
 const { Checkbox } = Components;
 
 const isMobile =

@@ -2,7 +2,7 @@ import { SelectionOptions } from "scriptureMap2D.main.SelectionOptions";
 import { ProjectStateSetterOption } from "scriptureMap2D.main.ProjectStateSetterOption";
 import { useScriptureMap2DContext } from "scriptureMap2D.main.ScriptureMap2DContext";
 
-const { useSideBarContext } = await import("app.hooks.sideBar");
+import { useSideBarContext } from "app.hooks.sideBar";
 
 const { useCallback } = os.appHooks;
 

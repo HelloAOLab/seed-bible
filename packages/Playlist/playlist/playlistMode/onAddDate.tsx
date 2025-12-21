@@ -5,7 +5,7 @@ const { Input, Modal, Button, ButtonsCover } = Components;
 const { onAttach } = that;
 
 const { useState } = os.appHooks;
-const { useSideBarContext } = await import("app.hooks.sideBar");
+import { useSideBarContext } from "app.hooks.sideBar";
 os.unregisterApp(appName);
 os.registerApp(appName);
 

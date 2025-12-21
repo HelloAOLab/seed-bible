@@ -1,7 +1,7 @@
 const { useState, useLayoutEffect, useRef, useMemo } = os.appHooks;
 const { Checkbox, LoaderSecondary, Modal, ButtonsCover, Button } = Components;
 
-const { useSideBarContext } = await import("app.hooks.sideBar");
+import { useSideBarContext } from "app.hooks.sideBar";
 
 const CircleProgress = await thisBot.DynamicCircle();
 const RenderIcon = await thisBot.RenderIcon();

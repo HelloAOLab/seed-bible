@@ -3,7 +3,7 @@ import { deleteAnnotation, getAnnotationRecord } from "db.annotations.library";
 
 const { useState, useRef } = os.appHooks;
 
-const { useSideBarContext } = await import("app.hooks.sideBar");
+import { useSideBarContext } from "app.hooks.sideBar";
 
 const ChevronDown =
   "https://auth-aux-aobot-prod-filesbucket-141297942820.s3.amazonaws.com/aoBot/d03c885823b300c141eed037466a2ad6ab59f9523e2ada5ac781f4f3e5e7e45f.svg";

@@ -6,7 +6,7 @@
 const { useState } = os.appHooks
 const { Modal, Button, ButtonsCover } = Components;
 import { MiniTextEditor } from 'app.components.smallEditor';
-const { useSideBarContext } = await import("app.hooks.sideBar");
+import { useSideBarContext } from "app.hooks.sideBar";
 const id = "default";
 
 const EditRichText = ({

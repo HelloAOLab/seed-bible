@@ -1,6 +1,6 @@
 import { useScriptureMap2DContext } from "scriptureMap2D.main.ScriptureMap2DContext";
 
-const { useSideBarContext } = await import("app.hooks.sideBar");
+import { useSideBarContext } from "app.hooks.sideBar";
 
 const { useState, useCallback, useMemo, useRef, useEffect } = os.appHooks;
 const { forwardRef } = os.appCompat;

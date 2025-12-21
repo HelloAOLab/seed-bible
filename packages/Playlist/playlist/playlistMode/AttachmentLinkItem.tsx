@@ -5,7 +5,7 @@ const Linking = thisBot.LinkingItems();
 const isMobile =
   (window?.innerWidth || gridPortalBot.tags.pixelWidth) <
   MOBILE_VIEWPORT_THRESHOLD;
-const { useSideBarContext } = await import("app.hooks.sideBar");
+import { useSideBarContext } from "app.hooks.sideBar";
 const editAbleTypes = {
   youtube: true,
   iframe: true,
