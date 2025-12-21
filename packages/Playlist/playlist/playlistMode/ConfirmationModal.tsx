@@ -1,7 +1,7 @@
 const { Input, Modal, Button, ButtonsCover } = Components;
-import { useSideBarContext } from "app.hooks.sideBar";
+
 const ConfirmationModal = ({ loading, title, para, children, onConfirm, onClose }) => {
-    const { t } = useSideBarContext();
+    
     return <Modal title={title} showIcon={false} onClose={() => onClose()}>
         <p style={{ textAlign: 'center', color: 'black' }}>{para}</p>
         {children}

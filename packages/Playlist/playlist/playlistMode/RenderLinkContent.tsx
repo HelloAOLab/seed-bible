@@ -4,7 +4,7 @@ if (globalThis.NagiationTimeout) {
   globalThis.NagiationTimeout = null;
 }
 
-import { useSideBarContext } from "app.hooks.sideBar";
+
 
 globalThis.RenderLinkTimer = setTimeout(async () => {
   const appName = "media-linked-playlist";
@@ -134,7 +134,7 @@ globalThis.RenderLinkTimer = setTimeout(async () => {
   os.registerApp(appName);
 
   const MediaLinkedPlaylist = () => {
-    const { t } = useSideBarContext();
+    
     return (
       <Modal
         showIcon={false}

@@ -1,7 +1,7 @@
 const { useState, useLayoutEffect, useRef, useMemo } = os.appHooks;
 const { Checkbox, LoaderSecondary, Modal, ButtonsCover, Button } = Components;
 
-import { useSideBarContext } from "app.hooks.sideBar";
+
 
 const CircleProgress = await thisBot.DynamicCircle();
 const RenderIcon = await thisBot.RenderIcon();
@@ -140,7 +140,7 @@ const PlaylistRowItem = ({
   isLayers,
   access,
 }) => {
-  const { t } = useSideBarContext();
+  
   const isCustomIcons = icon?.startsWith("https") || isCustomIcon;
   const [warningMessage, setWarningMsg] = useState(null);
   const [showMoreOptions, setShowMoreOptions] = useState(false);
@@ -447,12 +447,12 @@ const PlaylistRowItem = ({
     <>
       {!!warningMessage && (
         <Modal
-          title={t("editPlaylistTitle")}
+          title={globalThis.t("editPlaylistTitle")}
           showIcon={false}
           onClose={onCloseWarningPopup}
         >
-          <p>{t("editSharedPlaylistMsg")}</p>
-          <p>{t("makeACopy")}</p>
+          <p>{globalThis.t("editSharedPlaylistMsg")}</p>
+          <p>{globalThis.t("makeACopy")}</p>
           <ButtonsCover>
             <Button
               secondary
@@ -461,10 +461,10 @@ const PlaylistRowItem = ({
                 setWarningMsg(null);
               }}
             >
-              {t("yes")}
+              {globalThis.t("yes")}
             </Button>
             <Button secondaryAlt onClick={onCloseWarningPopup}>
-              {t("no")}
+              {globalThis.t("no")}
             </Button>
           </ButtonsCover>
         </Modal>
@@ -686,7 +686,7 @@ const PlaylistRowItem = ({
                     color: "#139981",
                   }}
                 >
-                  {t("nowPlaying")}
+                  {globalThis.t("nowPlaying")}
                 </span>
               </>
             )
@@ -715,7 +715,7 @@ const PlaylistRowItem = ({
             </p>
           )}
           {list?.length === 0 && (
-            <h4 style={{ margin: "8px 0" }}>{t("noItemsYet")}</h4>
+            <h4 style={{ margin: "8px 0" }}>{globalThis.t("noItemsYet")}</h4>
           )}
           {opendedList && (
             <DragDrop
@@ -795,7 +795,7 @@ const PlaylistRowItem = ({
                     setShowMoreOptions(false);
                   }}
                 >
-                  <p>{t("renamePlaylist")}</p>
+                  <p>{globalThis.t("renamePlaylist")}</p>
                 </div>
                 <div
                   className="more-menu-items"
@@ -827,7 +827,7 @@ const PlaylistRowItem = ({
                     setShowMoreOptions(false);
                   }}
                 >
-                  <p>{t("editPlaylist")}</p>
+                  <p>{globalThis.t("editPlaylist")}</p>
                 </div>
               </>
             )}
@@ -838,7 +838,7 @@ const PlaylistRowItem = ({
                 setShowMoreOptions(false);
               }}
             >
-              <p>{t("duplicatePlaylist")}</p>
+              <p>{globalThis.t("duplicatePlaylist")}</p>
             </div>
             <div
               className="more-menu-items"
@@ -847,10 +847,10 @@ const PlaylistRowItem = ({
                 setShowMoreOptions(false);
               }}
             >
-              <p>{t("downloadPlaylistJSON")}</p>
+              <p>{globalThis.t("downloadPlaylistJSON")}</p>
             </div>
             <div className="more-menu-items" onClick={copyClipBoard}>
-              <p>{t("sharePlaylist")}</p>
+              <p>{globalThis.t("sharePlaylist")}</p>
             </div>
             {!creatingPlaylist && !viewOnly && !isPlayingPLaylist && (
               <div
@@ -861,7 +861,7 @@ const PlaylistRowItem = ({
                   setShowMoreOptions(false);
                 }}
               >
-                <p>{t("delete")}</p>
+                <p>{globalThis.t("delete")}</p>
               </div>
             )}
             {!creatingPlaylist &&
@@ -874,7 +874,7 @@ const PlaylistRowItem = ({
                     exportNestedList();
                   }}
                 >
-                  <p>{t("exportOutside")}</p>
+                  <p>{globalThis.t("exportOutside")}</p>
                   <span
                     class="material-symbols-outlined unfollow"
                     style={{ ...ButtonStyle, fontSize: "22px" }}
@@ -902,7 +902,7 @@ const PlaylistRowItem = ({
                     });
                   }}
                 >
-                  <p>{t("mergePlaylist")}</p>
+                  <p>{globalThis.t("mergePlaylist")}</p>
                   <span
                     class="material-symbols-outlined unfollow"
                     style={{ ...ButtonStyle, fontSize: "22px" }}

@@ -1,6 +1,6 @@
 const { Button } = Components;
 const { useState, useLayoutEffect, useRef } = os.appHooks;
-import { useSideBarContext } from "app.hooks.sideBar";
+
 
 const name = "ShowScreenRecordingStopButton";
 const videoGIF =
@@ -12,7 +12,7 @@ globalThis.StopVideoRecording = false;
 const painterApp = getBot("system", "aiApps.painter");
 
 const ShowScreenRecordingStopButton = () => {
-  const { t } = useSideBarContext();
+  
   const [hidden, setHidden] = useState(false);
   const [isPainting, setIsPainting] = useState(false);
   const [video, setVideo] = useState(!!that.video);

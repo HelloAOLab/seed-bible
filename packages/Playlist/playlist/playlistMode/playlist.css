@@ -315,7 +315,6 @@ history-item:active {
   color: #000000;
   display: flex;
   align-items: center;
-  justify-content: center;
   cursor: pointer;
   font-family: "Satoshi", system-ui, sans-serif;
   font-weight: 700;

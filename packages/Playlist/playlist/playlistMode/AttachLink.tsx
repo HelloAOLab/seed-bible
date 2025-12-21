@@ -2,7 +2,7 @@ const { useState, useLayoutEffect, useMemo, useRef } = os.appHooks;
 import { MiniTextEditor } from "app.components.smallEditor";
 const { Input, Modal, Button, ButtonsCover, Select, LoaderSecondary } =
   Components;
-import { useSideBarContext } from "app.hooks.sideBar";
+
 
 const RecordingUI = await thisBot.RecordVoice();
 const VideoRecordUI = await thisBot.VideoRecordUI();
@@ -97,7 +97,6 @@ function SubComponent({
   textType,
   setTextType,
 }) {
-  const { t } = useSideBarContext();
   const playlists = useMemo(
     () => globalThis[`${"default"}playlists`] || [],
     []

@@ -12,7 +12,7 @@ const linkingMode = that.linkingMode;
 const pos = gridPortalBot.tags.pointerPixel;
 
 const { useState } = os.appHooks;
-import { useSideBarContext } from "app.hooks.sideBar";
+
 os.unregisterApp(name);
 os.registerApp(name);
 
@@ -27,7 +27,7 @@ const ButtonStyle = {
 
 
 const Overlay = () => {
-    const { t } = useSideBarContext();
+    
     const [dataItems, setDataItems] = useState([...items]);
 
     const unLinkItem = (index) => {
