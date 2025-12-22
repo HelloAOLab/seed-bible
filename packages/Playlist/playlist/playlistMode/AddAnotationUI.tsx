@@ -26,7 +26,6 @@ const VideoPlayer = await thisBot.VideoSmallScreen();
 const AudioPlayer = await thisBot.AudioPlayer();
 const RenderHTMLContent = await thisBot.RenderHTMLContent();
 const TogglePlaylistHeight = await thisBot.TogglePlaylistHeight();
-import { useSideBarContext } from "app.hooks.sideBar";
 
 import { CustomAnnotationTextEditor } from "playlist.playlistMode.CustomAnnotationTextEditor";
 
@@ -489,8 +488,6 @@ const AddAnotationUI = ({
   editData = null,
   setTab,
 }) => {
-
-  const { t } = useSideBarContext();
 
   // Audio
   const [mediaURL, setMediaURL] = useState("");

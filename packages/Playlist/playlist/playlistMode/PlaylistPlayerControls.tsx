@@ -4,7 +4,7 @@ const VideoPlayer = await thisBot.VideoSmallScreen();
 const AudioPlayer = await thisBot.AudioPlayer();
 const AttachLink = await thisBot.AttachLink();
 const RenderHTMLContent = await thisBot.RenderHTMLContent();
-import { useSideBarContext } from "app.hooks.sideBar";
+
 
 
 const EditPlaylist =
@@ -101,7 +101,7 @@ const getCurrentItem = (key, index, playlists, subIndex, isHint = false) => {
 };
 
 const PlayerControls = ({ parentId = "default" }) => {
-  const { t } = useSideBarContext();
+  
 
   const [showCurrent, setShowCurrent] = useState(false);
   const [queue, setQueue] = useState([]);

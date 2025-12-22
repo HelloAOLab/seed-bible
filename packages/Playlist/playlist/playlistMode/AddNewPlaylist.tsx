@@ -3,7 +3,6 @@ const { useState, useLayoutEffect, useRef, useMemo } = os.appHooks;
 const { Input, Modal, Button, Chips, Checkbox, ButtonsCover, Tooltip, Select } =
   Components;
 
-import { useSideBarContext } from "app.hooks.sideBar";
 
 globalThis.RECORD_STOREKEY =
   "vRK2.YW5ub3RhdGlvbnM=.TDVlSEZzRHdBWGw4UXloR2Fha3Zjdz09.subjectfull";
@@ -62,7 +61,6 @@ const AddNewPlaylist = ({
   setTags,
   isLayers,
 }) => {
-  const { t } = useSideBarContext();
   const IsPlaylistPlaying = globalThis.IsPlaylistPlaying;
 
   const listPlaylist = useMemo(() => {
@@ -240,10 +238,10 @@ const AddNewPlaylist = ({
             className="overlay linked-item-custom"
           >
             <p>
-              <b style={{ color: "white" }}>{t("publishSettings")}</b>
+              <b style={{ color: "white" }}>{globalThis.t("publishSettings")}</b>
             </p>
             <span style={{ fontSize: "10px", color: "#c9c8c6" }}>
-              {t("publishSettingsDesc")}
+              {globalThis.t("publishSettingsDesc")}
             </span>
             <div
               className="more-menu-items"
@@ -260,7 +258,7 @@ const AddNewPlaylist = ({
               >
                 lock
               </span>
-              <p>{t("privateAccess")}</p>
+              <p>{globalThis.t("privateAccess")}</p>
               <span
                 style={{ color: "white" }}
                 class="material-symbols-outlined"
@@ -282,7 +280,7 @@ const AddNewPlaylist = ({
               >
                 public
               </span>
-              <p>{t("publicAccess")}</p>
+              <p>{globalThis.t("publicAccess")}</p>
               <span
                 style={{ color: "white" }}
                 class="material-symbols-outlined"
@@ -299,17 +297,17 @@ const AddNewPlaylist = ({
       {informationModal && (
         <Modal
           showIcon={false}
-          title={t("howToCreateFromSheet")}
+          title={globalThis.t("howToCreateFromSheet")}
           onClose={() => setInformationModal(false)}
         >
           {isActiveSheetImport ? (
             <>
-              <p style={{ fontSize: "12px" }}>{t("sheetInstructions")}</p>
+              <p style={{ fontSize: "12px" }}>{globalThis.t("sheetInstructions")}</p>
               <br />
               <p style={{ fontSize: "12px" }}>
-                {t("abbreviationsInfo")}
+                {globalThis.t("abbreviationsInfo")}
                 <br />
-                {t("spellCorrectly")}
+                {globalThis.t("spellCorrectly")}
                 <br />
               </p>
 
@@ -318,28 +316,28 @@ const AddNewPlaylist = ({
                 target="_blank"
                 relrel="noreferrer"
               >
-                {t("seeSampleList")}
+                {globalThis.t("seeSampleList")}
                 <br />
               </a>
               <p style={{ fontSize: "12px" }}>
-                <b>{t("rememberPublic")}</b>
+                <b>{globalThis.t("rememberPublic")}</b>
               </p>
             </>
           ) : (
             <>
-              <p style={{ fontSize: "12px" }}>{t("jsonInstructions")}</p>
+              <p style={{ fontSize: "12px" }}>{globalThis.t("jsonInstructions")}</p>
               <br />
-              <p style={{ fontSize: "12px" }}>{t("jsonDownloadInfo")}</p>
+              <p style={{ fontSize: "12px" }}>{globalThis.t("jsonDownloadInfo")}</p>
               <a
                 href="https://auth-aux-aobot-prod-filesbucket-141297942820.s3.amazonaws.com/tedcasca/433b8ec62a5ecb249ca4dacdd4707b2186e598b4b74c1fb6e690c875bc48cf92.json"
                 target="_blank"
                 relrel="noreferrer"
               >
-                {t("seeSampleJSON")}
+                {globalThis.t("seeSampleJSON")}
                 <br />
               </a>
               <p style={{ fontSize: "12px" }}>
-                <b>{t("rememberJSONFormat")}</b>
+                <b>{globalThis.t("rememberJSONFormat")}</b>
               </p>
             </>
           )}
@@ -367,10 +365,10 @@ const AddNewPlaylist = ({
             <span>{editId ? t("backToDiscover") : t("backToCreate")}</span>
           </div>
         </div>
-        <h3>{t("enterDetailsBelow")}</h3>
+        <h3>{globalThis.t("enterDetailsBelow")}</h3>
 
         <p style={{ color: "#606060", margin: "8px 0" }}>
-          {t("addDetailsToSave")}
+          {globalThis.t("addDetailsToSave")}
         </p>
 
         {false && (
@@ -387,7 +385,7 @@ const AddNewPlaylist = ({
               onTabChange={handleImportTabChange}
             />
             <div className="flex-col">
-              <h4>{t("importHeader")}</h4>
+              <h4>{globalThis.t("importHeader")}</h4>
               <p
                 onClick={() => setInformationModal(true)}
                 className="align-center f-10 pointer what-this"
@@ -398,7 +396,7 @@ const AddNewPlaylist = ({
                 >
                   info
                 </span>{" "}
-                <p class="underline">{t("whatsThis")}</p>
+                <p class="underline">{globalThis.t("whatsThis")}</p>
               </p>
             </div>
 
@@ -407,7 +405,7 @@ const AddNewPlaylist = ({
                 <span class="material-symbols-outlined unfollow">
                   cloud_done
                 </span>
-                <span> {t("jsonDataUploaded")}</span>
+                <span> {globalThis.t("jsonDataUploaded")}</span>
               </p>
             ) : null}
 
@@ -463,7 +461,7 @@ const AddNewPlaylist = ({
 
         {false && (
           <>
-            <h3 style={{ marginTop: "0.75rem" }}>{t("chooseColor")}</h3>
+            <h3 style={{ marginTop: "0.75rem" }}>{globalThis.t("chooseColor")}</h3>
             <div
               style={{
                 display: "flex",
@@ -535,7 +533,7 @@ const AddNewPlaylist = ({
                 </span>
               </div>
             </div>
-            <h3>{t("chooseIcon")}</h3>
+            <h3>{globalThis.t("chooseIcon")}</h3>
             <div
               style={{
                 display: "flex",
@@ -765,7 +763,7 @@ const AddNewPlaylist = ({
             <Input
               value={name}
               onChangeListener={setName}
-              placeholder={t("playlistNamePlaceholder")}
+              placeholder={globalThis.t("playlistNamePlaceholder")}
             />
           </div>
         </div>
@@ -778,7 +776,7 @@ const AddNewPlaylist = ({
                 type="textarea"
                 value={description}
                 onChangeListener={setDescription}
-                placeholder={t("descriptionOptional")}
+                placeholder={globalThis.t("descriptionOptional")}
               />
             </div>
           </div>
@@ -797,17 +795,17 @@ const AddNewPlaylist = ({
                 setIsChecked(val);
               }}
             />
-            <p>{t("autoGenerateByDescription")}</p>
+            <p>{globalThis.t("autoGenerateByDescription")}</p>
           </div>
         )}
-        <h3>{t("tagsHeader")}</h3>
+        <h3>{globalThis.t("tagsHeader")}</h3>
         <div className="align-center" style={{ gap: "1rem" }}>
           <Input
             style={{ marginBottom: "0", flexGrow: "1" }}
             value={tagName}
             name="tagName"
             onChangeListener={setTagName}
-            placeholder={t("tagPlaceholder")}
+            placeholder={globalThis.t("tagPlaceholder")}
           />
           <Button
             onClick={() => {
@@ -849,7 +847,7 @@ const AddNewPlaylist = ({
             }}
             secondary
           >
-            {t("add")}
+            {globalThis.t("add")}
           </Button>
         </div>
         <div
@@ -943,7 +941,7 @@ const AddNewPlaylist = ({
             }}
             secondaryAlt
           >
-            {t("close")}
+            {globalThis.t("close")}
           </Button>
         </div>
         <div

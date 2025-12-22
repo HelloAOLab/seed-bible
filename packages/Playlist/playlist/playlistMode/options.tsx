@@ -64,7 +64,7 @@ const items = [
   {
     icon: <MenuIcon name="book" />,
     title: (item = {}) => {
-      const title = `${item?.book} ${item?.chapter}:${item?.verseNumber.join(", ")}`;
+      const title = `${item?.book} ${item?.chapter}:${item?.verseNumber?.join(", ")}`;
       if (thisBot.tags.bookmarks[title]) {
         return "Remove Bookmark";
       }

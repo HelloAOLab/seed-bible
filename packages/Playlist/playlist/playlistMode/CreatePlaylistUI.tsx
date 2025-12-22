@@ -6,7 +6,7 @@
 const { useState, useLayoutEffect, useRef, useMemo } = os.appHooks;
 const { Input, Modal, Button, ButtonsCover, Checkbox, Tooltip, Select } =
   Components;
-import { useSideBarContext } from "app.hooks.sideBar";
+
 
 const ChecklistGIf =
   "https://auth-aux-aobot-prod-filesbucket-141297942820.s3.amazonaws.com/aoBot/90e85308635064b3d0fdaa9c220b8547a9467a10affe3cf22f06ad6b26fbf0a1.gif";
@@ -122,7 +122,7 @@ const CreatePlaylistUI = ({
   playingPlaylist,
   editData,
 }) => {
-  const { t } = useSideBarContext();
+  
   const IsPlaylistPlaying = globalThis.IsPlaylistPlaying;
   const isloggedIN = authBot?.id;
 

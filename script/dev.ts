@@ -46,9 +46,9 @@ let currentInst: string | undefined;
 async function startPage() {
   page = await browser.newPage();
 
-  if (server && !server.context.page) {
-    server.context.page = page;
-  }
+  // if (server && !server.context.page) {
+  //   server.context.page = page;
+  // }
 
   if (aoBot) {
     await Promise.all(["ao.bot"].map((pkg) => packageSingle(pkg, "ignore")));

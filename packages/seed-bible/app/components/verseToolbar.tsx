@@ -22,6 +22,7 @@ export function VerseToolbar({
   const [customColors, setCustomColors] = useState(
     masks?.customColors ? masks.customColors : []
   );
+
   useEffect(() => {
     masks.customColors = customColors;
   }, [customColors]);
@@ -515,7 +516,7 @@ export function VerseToolbar({
                       {option.icon}
                     </div>
                     <span style={{ color: "var(--text1) !important" }}>
-                      {option.title}
+                      {typeof option.title === "function" ? option.title(clickedVersesContext) : option.title}
                     </span>
                   </div>
                 );
@@ -604,6 +605,7 @@ function getMenuActions(that, onClose) {
               if (el.onClick) el.onClick(that);
               SetInHold(null);
             },
+            title: el.title
           });
         });
       }

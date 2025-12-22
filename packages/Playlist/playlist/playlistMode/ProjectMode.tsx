@@ -16,7 +16,7 @@ try {
 
 const { useState, useLayoutEffect, useRef, useMemo, useCallback } = os.appHooks;
 import { useProjectMenu } from "playlist.playlistMode.useProjectContext";
-import { useSideBarContext } from "app.hooks.sideBar";
+
 const isMobile =
   (window?.innerWidth || gridPortalBot.tags.pixelWidth) <
   MOBILE_VIEWPORT_THRESHOLD;
@@ -58,7 +58,7 @@ const ProjectMode = ({
   onReset,
 }) => {
   const { menuState, setMenuValue } = useProjectMenu();
-  const { t } = useSideBarContext();
+  
   // const [showingAllChapters, setShowingAllChapters] = useState(true);
   const [showMoreOptions, setShowMoreOptions] = useState(false);
   const [publishAccess, setPublishAccess] = useState("public");

@@ -6,7 +6,7 @@
 const { useState } = os.appHooks
 const { Modal, Button, ButtonsCover } = Components;
 import { MiniTextEditor } from 'app.components.smallEditor';
-import { useSideBarContext } from "app.hooks.sideBar";
+
 const id = "default";
 
 const EditRichText = ({
@@ -15,7 +15,7 @@ const EditRichText = ({
     parentID,
     text
 }) => {
-    const { t } = useSideBarContext();
+    
     const [name, setName] = useState(text || "");
 
     const onSave = () => {

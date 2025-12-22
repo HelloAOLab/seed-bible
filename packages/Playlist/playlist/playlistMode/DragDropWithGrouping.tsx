@@ -5,7 +5,7 @@ const AttachmentLinkItem = await thisBot.AttachmentLinkItem();
 const AttachLink = await thisBot.AttachLink();
 const Linking = await thisBot.LinkingItems();
 const RenderHTMLContent = await thisBot.RenderHTMLContent();
-import { useSideBarContext } from "app.hooks.sideBar";
+
 const { Checkbox } = Components;
 
 const isMobile =
@@ -66,7 +66,7 @@ const DragDrop = ({
   description,
   isCustomIcon,
 }) => {
-  const { t } = useSideBarContext();
+  
   const [opendedList, setOpenedList] = useState("");
 
   const checklistEnabled = isPlayer || embedding;

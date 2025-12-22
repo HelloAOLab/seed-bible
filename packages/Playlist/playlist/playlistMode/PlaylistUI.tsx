@@ -2,7 +2,7 @@ os.unregisterApp("playlist-cont-ui");
 os.registerApp("playlist-cont-ui");
 import { getAnnotationRecord, loadAnnotations } from "db.annotations.library";
 import { ProjectProvider } from "playlist.playlistMode.useProjectContext";
-import { useSideBarContext } from "app.hooks.sideBar";
+
 const RenderIcon = await thisBot.RenderIcon();
 import { MenuIcon } from "app.components.icons";
 const { useState, useLayoutEffect, useMemo, useRef, useCallback } = os.appHooks;
@@ -89,7 +89,7 @@ const GetLabel = ({ value, currentOpenedBook, thisBot }) => {
 };
 
 const Playlist = () => {
-  const { t } = useSideBarContext();
+  
   const IsPlaylistPlaying = globalThis.IsPlaylistPlaying;
 
   const [createOptions, setCreateOptions] = useState(false);
@@ -618,7 +618,7 @@ const Playlist = () => {
       {!!playlistSharerName && (
         <Modal
           sxContainer={{ width: "460px" }}
-          title={t("welcomeToSeedBible")}
+          title={globalThis.t("welcomeToSeedBible")}
           showIcon={false}
           onClose={onCloseSharPlaylistModal}
         >
@@ -638,10 +638,10 @@ const Playlist = () => {
               {!!playlistSharerName ? (
                 <p>
                   {" "}
-                  <b>{playlistSharerName}</b> {t("sharedAPlaylist")}
+                  <b>{playlistSharerName}</b> {globalThis.t("sharedAPlaylist")}
                 </p>
               ) : (
-                <p>{t("hereIsYourSharedPlaylist")}</p>
+                <p>{globalThis.t("hereIsYourSharedPlaylist")}</p>
               )}
             </div>
             <div
@@ -690,7 +690,7 @@ const Playlist = () => {
                 globalThis.hasASharedPlaylist = false;
               }}
             >
-              {t("start")}
+              {globalThis.t("start")}
             </Button>
           </div>
         </Modal>
@@ -699,9 +699,9 @@ const Playlist = () => {
       {stopPlaylistModal && (
         <Modal showIcon={false} onClose={closeConfirmStopPlaylist}>
           <h2 style={{ fontSize: "1rem" }}>
-            {t("thisWillStopPlayingPlaylist")}
+            {globalThis.t("thisWillStopPlayingPlaylist")}
           </h2>
-          <p>{t("playlistCurrentlyPlayingConfirm")}</p>
+          <p>{globalThis.t("playlistCurrentlyPlayingConfirm")}</p>
           <ButtonsCover>
             <Button
               secondary
@@ -718,10 +718,10 @@ const Playlist = () => {
               }}
               variant="black"
             >
-              {t("confirm")}
+              {globalThis.t("confirm")}
             </Button>
             <Button secondaryAlt onClick={closeConfirmStopPlaylist}>
-              {t("no")}
+              {globalThis.t("no")}
             </Button>
           </ButtonsCover>
         </Modal>
@@ -760,7 +760,7 @@ const Playlist = () => {
                 <span
                   style={{ fontFamily: `"Satoshi", system-ui, sans-serif` }}
                 >
-                  {t("playlist")}
+                  {globalThis.t("playlist")}
                 </span>
               </div>
             </div>
@@ -788,7 +788,7 @@ const Playlist = () => {
                 <span
                   style={{ fontFamily: `"Satoshi", system-ui, sans-serif` }}
                 >
-                  {t("annotation")}
+                  {globalThis.t("annotation")}
                 </span>
               </div>
             </div>
@@ -832,14 +832,14 @@ const Playlist = () => {
             {openModal && (
               <Modal onClose={() => setOpenModal(false)}>
                 <h2 style={{ fontSize: "1rem" }}>
-                  {t("addAnotherParallelPlaylist")}
+                  {globalThis.t("addAnotherParallelPlaylist")}
                 </h2>
                 <ButtonsCover>
                   <Button onClick={() => onAddPlaylist()} varient="black">
-                    {t("yes")}
+                    {globalThis.t("yes")}
                   </Button>
                   <Button onClick={() => setOpenModal(false)}>
-                    {t("close")}
+                    {globalThis.t("close")}
                   </Button>
                 </ButtonsCover>
               </Modal>
@@ -941,7 +941,7 @@ const Playlist = () => {
                           >
                             add
                           </span>
-                          {t("create")}
+                          {globalThis.t("create")}
                         </Button>
                       </div>
                     )}

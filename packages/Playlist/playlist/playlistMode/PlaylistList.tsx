@@ -1,7 +1,7 @@
 const { useState, useLayoutEffect, useRef } = os.appHooks;
 const { Input } = Components;
 
-import { useSideBarContext } from "app.hooks.sideBar";
+
 
 const PlaylistRowItem = await thisBot.PlaylistRowItem();
 
@@ -19,7 +19,7 @@ const PlaylistList = ({
   parentId,
   isLayers,
 }) => {
-  const { t } = useSideBarContext();
+  
   const [draggedItemID, setDraggedItemID] = useState(null);
   const [opendedList, setOpenedList] = useState(false);
   const toBeSetItems = useRef(null);

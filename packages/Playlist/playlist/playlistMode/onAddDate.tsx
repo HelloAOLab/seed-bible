@@ -5,7 +5,7 @@ const { Input, Modal, Button, ButtonsCover } = Components;
 const { onAttach } = that;
 
 const { useState } = os.appHooks;
-import { useSideBarContext } from "app.hooks.sideBar";
+
 os.unregisterApp(appName);
 os.registerApp(appName);
 
@@ -14,7 +14,7 @@ const onClose = () => {
 }
 
 const AddDateModal = () => {
-    const { t } = useSideBarContext();
+    
     const [date, setDate] = useState(FORMAT_YYYY_MM_DD(new Date()));
 
     return <Modal title={t('addDate')} showIcon={false} onClose={() => onClose()}>

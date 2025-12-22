@@ -1,6 +1,6 @@
 const { Modal, Button, ButtonsCover, } = Components;
 const AttachLink = await thisBot.AttachLink();
-import { useSideBarContext } from "app.hooks.sideBar";
+
 const EditAttachment = ({
     id = "default",
     contentId,
@@ -11,7 +11,7 @@ const EditAttachment = ({
     mediaType,
     parentID,
     onClose }) => {
-    const { t } = useSideBarContext();
+    
 
     const attachLink = (title, link, linkState) => {
         const dataItem = {

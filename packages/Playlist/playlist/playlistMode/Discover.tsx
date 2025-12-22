@@ -2,7 +2,7 @@ const { useState, useRef, useLayoutEffect } = os.appHooks;
 
 const { Input } = Components;
 
-import { useSideBarContext } from "app.hooks.sideBar";
+
 
 const PlaylistCont = await thisBot.PlaylistContainer();
 const AnnotationList = await thisBot.AnnotationList();
@@ -37,7 +37,7 @@ const Discover = ({
   style,
   setOpenModal,
 }) => {
-  const { t } = useSideBarContext();
+  
   const IsPlaylistPlaying = globalThis.IsPlaylistPlaying;
 
   const [selectedChip, setSelectedChip] = useState({

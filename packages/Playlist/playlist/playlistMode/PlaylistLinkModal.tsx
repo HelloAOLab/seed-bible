@@ -21,7 +21,7 @@ const idsMap = that.idsMap;
 
 const { Input, Modal, Button, ButtonsCover, Tooltip, Select } = Components;
 const { useState, useLayoutEffect } = os.appHooks;
-import { useSideBarContext } from "app.hooks.sideBar";
+
 const PlaylistRowItem = await thisBot.PlaylistRowItem();
 let playlistToLink = [];
 let initialName = "";
@@ -57,7 +57,7 @@ playlistToLink = CLONE_DATA(playlistToLink);
 const allPlaylistGroups = globalThis.PlaylistsGroups;
 
 const PlaylistLinkModal = () => {
-    const { t } = useSideBarContext();
+    
     const [addList, setAddList] = useState(false);
 
     const [name, setName] = useState(initialName);

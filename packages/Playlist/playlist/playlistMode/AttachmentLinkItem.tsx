@@ -5,7 +5,6 @@ const Linking = thisBot.LinkingItems();
 const isMobile =
   (window?.innerWidth || gridPortalBot.tags.pixelWidth) <
   MOBILE_VIEWPORT_THRESHOLD;
-import { useSideBarContext } from "app.hooks.sideBar";
 const editAbleTypes = {
   youtube: true,
   iframe: true,
@@ -67,7 +66,6 @@ const AttachLinkItem = ({
   autoPlayToggle = null,
 }) => {
   const [editDateModal, setEditDateModal] = useState(false);
-  const { t } = useSideBarContext();
   const [date, setDate] = useState(
     FORMAT_YYYY_MM_DD(data.additionalInfo.date || new Date())
   );
