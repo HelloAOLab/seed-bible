@@ -1,3 +1,5 @@
+const { useSideBarContext } = await import("app.hooks.sideBar");
+
 //imports
 const { useRef, useState, useEffect, useCallback } = os.appHooks;
 const CustomModal = await thisBot.CustomModal();
@@ -180,6 +182,7 @@ const types = ["events", "reading", "content", "projects", "sources"];
 if (!globalThis.C_E) globalThis.C_E = [];
 
 const App = () => {
+  const { t } = useSideBarContext();
   //states
   const [readings, setReadings] = useState([]);
   const [readingsList, setReadingsList] = useState([]);
@@ -1028,15 +1031,15 @@ const App = () => {
     display:flex;
     margin-left:6px;
     align-items:stretch;  /* important */
-    background:#e6fcf5;
-    color:green;
+    background:#E1F3D8;
+    color:#67C23A;
     border-top-left-radius: 5px;
     border-bottom-left-radius: 5px;
    
     width:max-content;
     font-size:clamp(0.65rem, 0.8vw, 0.85rem);
   ">
-    <div style="width:3px;background:green;border-top-left-radius: 5px;
+    <div style="width:3px;background:#67C23A;border-top-left-radius: 5px;
     border-bottom-left-radius: 5px;"></div>
     <span style="padding:2px 4px;padding:2px 3px; overflow-wrap: break-word;">${title}</span>
   </div>
@@ -1072,15 +1075,15 @@ const App = () => {
     display:flex;
     margin-left:6px;
     align-items:stretch;  /* important */
-    background:#F0FAFF;
-    color:#00C8FF;
+    background:#D9ECFF;
+    color:#409EFF;
     border-top-left-radius: 5px;
     border-bottom-left-radius: 5px;
    
     width:max-content;
     font-size:clamp(0.65rem, 0.8vw, 0.85rem);
   ">
-    <div style="width:3px;background:#00C8FF;border-top-left-radius: 5px;
+    <div style="width:3px;background:#409EFF;border-top-left-radius: 5px;
     border-bottom-left-radius: 5px;"></div>
     <span style="padding:2px 4px;padding:2px 3px; overflow-wrap: break-word;">${title}</span>
   </div>
@@ -1478,6 +1481,7 @@ const App = () => {
                 backgroundColor: "white",
                 color: "black",
                 fontSize: "10px",
+                fontWeight:'700',
                 padding: "0",
                 border: "none",
                 marginRight: "10px",
@@ -1502,6 +1506,8 @@ const App = () => {
                 fontSize: "10px",
                 padding: "0",
                 border: "none",
+                fontWeight:'900',
+                
                 marginRight: "10px",
                 cursor:
                   info.view.type === "resourceTimelineDay"
@@ -1620,7 +1626,7 @@ const App = () => {
                   fontWeight: "400",
                   color: "#606266",
                   border: "1px solid #d3d3d3",
-                  borderRadius: "0",
+                  borderRadius: "3px",
 
                   cursor: "pointer",
                 });
@@ -2220,12 +2226,7 @@ const App = () => {
       window.removeEventListener("resize", updateFontSize);
     };
   }, []);*/
-  console.log(
-    calendarRef.current,
-    refCalendar.current,
-    "refsss",
-    containerWidth
-  );
+  
 
   return (
     <>
@@ -2261,6 +2262,8 @@ const App = () => {
             left: "0",
             right: "0",
             height: "1px",
+            borderRadius:'2px',
+      
             backgroundColor: "#ddd",
           }}
         ></div>
@@ -2342,6 +2345,25 @@ const App = () => {
             marginTop: hasTitle ? "" : "40px",
           }}
         >
+        {calendarApi.current && (
+  <div
+    style={{
+      height:
+        calendarApi.current.view.type !== "multiMonthYear"
+          ? "427px"
+          : "449px",
+      width: '1px',
+      zIndex:'999',
+      backgroundColor: "#ddd",
+      position: "absolute",
+      marginTop:
+        calendarApi.current.view.type !== "multiMonthYear"
+          ? "111px"
+          : "89px",
+    }}
+  />
+)}
+
           <div class="calendar-wrapper">
             {
               <div
@@ -2483,14 +2505,14 @@ const App = () => {
                   className={`calendar-addups-selection-button ${type.charAt(0)}-btn`}
                   onClick={() => handleSelectionClicking(type)}
                 >
-                  {type.charAt(0).toUpperCase() + type.slice(1)}
+                  {t(type + "Tab")}
                 </button>
               ))}
             </div>
 
             <div class="event-and-map">
               <span class="event-and-map_heading">
-                Events for {calendarTitle}
+                {t("eventsFor")} {calendarTitle}
               </span>
               <div class="event-and-map_selector">
                 <span
@@ -2501,7 +2523,7 @@ const App = () => {
                   }}
                   onClick={() => onEventsClick()}
                 >
-                  Events
+                  {t("eventsTab")}
                 </span>
                 <span
                   class="event-and-map_selector_item"
@@ -2511,7 +2533,7 @@ const App = () => {
                   }}
                   onClick={() => onMapCick()}
                 >
-                  Bible Map
+                  {t("bibleMap")}
                 </span>
               </div>
               {eventViewSelected && (
