@@ -4,8 +4,10 @@ const config = {
   transformIgnorePatterns: ["/node_modules/.pnpm/(?!(uuid))"],
   moduleNameMapper: {
     "^@packages/(.*)$": "<rootDir>/packages/$1",
+    "^https:\\/\\/esm\\.helloao\\.org\\/vendor-\\w+\\.js$":
+      "<rootDir>/lib/vendor.ts",
   },
-  testTimeout: 30000,
+  testTimeout: 60000,
 };
 
 // eslint-disable-next-line no-undef

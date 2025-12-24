@@ -167,7 +167,12 @@ async function SetUpApplication(applicationFunction, bot, toolbarConfig) {
 }
 
 async function SetUpApplicationWithoutApp(toolbarConfig, bot) {
-    const runFn = () => bot[toolbarConfig.run]();
+  os.log("Setting up application", toolbarConfig)
+    const runFn = (e) => {
+      os.log("Running toolbar action", toolbarConfig.run, e)
+      bot[toolbarConfig.run]({...e})
+    }
+
 
     const toolbarOption = {
         icon: !toolbarConfig?.iconUrl ? toolbarConfig.icon : toolbarConfig.iconUrl,

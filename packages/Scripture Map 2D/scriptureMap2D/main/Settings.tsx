@@ -1,4 +1,3 @@
-// import { UserPresenceSettings } from "scriptureMap2D.main.UserPresenceSettings"
 import { useScriptureMap2DContext } from "scriptureMap2D.main.ScriptureMap2DContext";
 import { ProjectFiltersSelector } from "scriptureMap2D.main.ProjectFiltersSelector";
 import { ProjectStateSetter } from "scriptureMap2D.main.ProjectStateSetter";
@@ -6,9 +5,11 @@ import { ReadingHistoryUserFiltersSelector } from "scriptureMap2D.main.ReadingHi
 import { ReadingHistoryTimeline } from "scriptureMap2D.main.ReadingHistoryTimeline";
 import { useReadingHistoryContext } from "scriptureMap2D.main.ReadingHistoryContext";
 
+import { useSideBarContext } from "app.hooks.sideBar";
+
 const { useState, useRef, useEffect, useMemo } = os.appHooks;
 
-const Settings_Icon =
+const SETTINGS_ICON =
   "https://auth-aux-aobot-prod-filesbucket-141297942820.s3.amazonaws.com/aoBot/5a87cdff4617c9047e44ec47ddd8a101aa317e2223d83dd40f615e3f9740f03a.svg";
 
 const Option = ({
@@ -41,9 +42,9 @@ const SettingsOptions = ({
   collapsed,
   setCollapsed,
 }) => {
+  const { t } = useSideBarContext();
   const {
     showingAllChapters,
-    setShowingAllChapters,
     showingBooksColors,
     setShowingBooksColors,
     isUserPresenceEnabled,
@@ -54,6 +55,7 @@ const SettingsOptions = ({
     ScriptureMap2DModes,
     showLabels,
     handleLabelsToggle,
+    handleShowAllChaptersToggle,
   } = useScriptureMap2DContext();
   const { usersAuthId, shouldShowReadingHistory } = useReadingHistoryContext();
 
@@ -101,7 +103,7 @@ const SettingsOptions = ({
       onClick={(e) => {
         e.stopPropagation();
       }}
-      className="settingsOptionsContainer"
+      className="settings-options-container"
     >
       {shouldShowReadingHistory && (
         <Option
@@ -109,28 +111,28 @@ const SettingsOptions = ({
           condition={collapsed}
           enabledIcon={"visibility_off"}
           disabledIcon={"visibility"}
-          enabledText={"Show"}
-          disabledText={"Hide"}
-          staticText={"timeline"}
+          enabledText={t("show")}
+          disabledText={t("hide")}
+          staticText={t("timeline")}
         />
       )}
       <Option
-        callback={() => setShowingAllChapters((prev) => !prev)}
+        callback={handleShowAllChaptersToggle}
         condition={showingAllChapters}
         enabledIcon={"visibility"}
         disabledIcon={"visibility_off"}
-        enabledText={"Close"}
-        disabledText={"Open"}
-        staticText={"books"}
+        enabledText={t("closeBooks")}
+        disabledText={t("openBooks")}
+        staticText={t("books")}
       />
       <Option
         callback={() => setShowingBooksColors((prev) => !prev)}
         condition={showingBooksColors}
         enabledIcon={"palette"}
         disabledIcon={"palette"}
-        enabledText={"Hide"}
-        disabledText={"Show"}
-        staticText={"books color"}
+        enabledText={t("hide")}
+        disabledText={t("show")}
+        staticText={t("booksColor")}
       />
       {shouldShowReadingHistoryOption && (
         <Option
@@ -138,9 +140,9 @@ const SettingsOptions = ({
           condition={isReadingHistoryEnabled}
           enabledIcon={"history"}
           disabledIcon={"history"}
-          enabledText={"Hide"}
-          disabledText={"Show"}
-          staticText={"reading history"}
+          enabledText={t("hide")}
+          disabledText={t("show")}
+          staticText={t("readingHistory")}
         />
       )}
       <Option
@@ -148,18 +150,18 @@ const SettingsOptions = ({
         condition={isUserPresenceEnabled}
         enabledIcon={"group_off"}
         disabledIcon={"group"}
-        enabledText={"Hide"}
-        disabledText={"Show"}
-        staticText={"user presence"}
+        enabledText={t("hide")}
+        disabledText={t("show")}
+        staticText={t("userPresence")}
       />
       <Option
         callback={handleLabelsToggle}
         condition={showLabels}
         enabledIcon={"label_off"}
         disabledIcon={"label"}
-        enabledText={"Hide"}
-        disabledText={"Show"}
-        staticText={"labels"}
+        enabledText={t("hide")}
+        disabledText={t("show")}
+        staticText={t("labelsText")}
       />
     </div>
   );
@@ -175,7 +177,9 @@ export const Settings = () => {
   const [showOptions, setShowOptions] = useState(false);
 
   return (
-    <div className={`mapSettings${collapsed ? " collapsed" : ""}`}>
+    <div
+      className={`scripture-map-2d-settings${collapsed ? " collapsed" : ""}`}
+    >
       <div
         className="settings-button"
         ref={settingsButtonRef}
@@ -183,7 +187,7 @@ export const Settings = () => {
           setShowOptions((prev) => !prev);
         }}
       >
-        <img src={Settings_Icon} alt="Settings_Icon" />
+        <img src={SETTINGS_ICON} alt="SETTINGS_ICON" />
         {showOptions && (
           <SettingsOptions
             setShowOptions={setShowOptions}
@@ -209,5 +213,3 @@ export const Settings = () => {
     </div>
   );
 };
-
-// {isUserPresenceEnabled && <UserPresenceSettings />}

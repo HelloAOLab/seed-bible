@@ -2,9 +2,11 @@ const { useLayoutEffect, useState, useMemo } = os.appHooks;
 const isMobile = (window?.innerWidth || gridPortalBot.tags.pixelWidth) < MOBILE_VIEWPORT_THRESHOLD;
 
 
+
 const UNBOOKMARK_ICON = 'https://auth-aux-aobot-prod-filesbucket-141297942820.s3.amazonaws.com/aoBot/71edcb41d7fbda4b963eb8b177f190341e7b11f0e150be7aad1a8f102f72e1c4.svg';
 
 const Bookmarks = () => {
+    
     const [bookmarks, setBookmarks] = useState({ ...thisBot.tags.bookmarks });
     useLayoutEffect(() => {
         globalThis.SetBookmarks = setBookmarks;
@@ -21,7 +23,8 @@ const Bookmarks = () => {
             delete oldBookmarks[content];
 
             const res = await thisBot.saveBookmarks({
-                bookmarks: oldBookmarks
+                bookmarks: oldBookmarks,
+                t
             });
 
             setTag(thisBot, "bookmarks", oldBookmarks);
@@ -45,8 +48,8 @@ const Bookmarks = () => {
             flexDirection: "column"
         }}
     >
-        <h3 style={{ margin: '1rem 0' }}>Bookmarks</h3>
-        {finalBookmarks.length === 0 && <p>Nothing Bookmarked.</p>}
+        <h3 style={{ margin: '1rem 0' }}>{t('bookmarks')}</h3>
+        {finalBookmarks.length === 0 && <p>{t('nothingBookmarked')}</p>}
         {finalBookmarks.map(data => <div
             key={`${data.id}-${data.readAlready}`}
             style={{ display: "flex", }}

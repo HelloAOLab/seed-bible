@@ -1,8 +1,12 @@
 import { FiltersSelectorOption } from "scriptureMap2D.main.FiltersSelectorOption";
 import { useReadingHistoryContext } from "scriptureMap2D.main.ReadingHistoryContext";
+
+import { useSideBarContext } from "app.hooks.sideBar";
+
 const { useMemo, useEffect } = os.appHooks;
 
 export const ReadingHistoryUserFiltersSelector = () => {
+  const { t } = useSideBarContext();
   const {
     handleReadingHistoryUserSelectorClick,
     readingHistoryUserFilters,
@@ -16,9 +20,9 @@ export const ReadingHistoryUserFiltersSelector = () => {
   }, [readingHistoryUserFilters]);
 
   return (
-    <div className="readingHistoryUserSelector">
+    <div className="reading-history-user-selector">
       <FiltersSelectorOption
-        content="All"
+        content={t("all")}
         onClick={() => {
           handleReadingHistoryUserSelectorClick("all");
         }}
@@ -51,9 +55,9 @@ export const ReadingHistoryUserFiltersSelector = () => {
                         ) ??
                         "pink"),
                 }}
-                className="filterOptionIcon"
+                className="filter-option-icon"
               ></div>,
-              userId === myAuthBotId ? "You" : "Guest",
+              userId === myAuthBotId ? t("you") : t("guest"),
             ]}
             onClick={() => {
               handleReadingHistoryUserSelectorClick(userId);

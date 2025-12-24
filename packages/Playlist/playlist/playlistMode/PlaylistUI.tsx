@@ -1,7 +1,8 @@
 os.unregisterApp("playlist-cont-ui");
 os.registerApp("playlist-cont-ui");
-import { getUserRecord, loadAnnotations } from "db.annotations.library";
+import { getAnnotationRecord, loadAnnotations } from "db.annotations.library";
 import { ProjectProvider } from "playlist.playlistMode.useProjectContext";
+
 const RenderIcon = await thisBot.RenderIcon();
 import { MenuIcon } from "app.components.icons";
 const { useState, useLayoutEffect, useMemo, useRef, useCallback } = os.appHooks;
@@ -54,10 +55,8 @@ const GetLabel = ({ value, currentOpenedBook, thisBot }) => {
   const [isMobile, setIsMobile] = useState(false);
 
   useLayoutEffect(() => {
-   
     // Go up 3 levels
-    const targetElement =
-      containerRef.current.parentElement?.parentElement;
+    const targetElement = containerRef.current.parentElement?.parentElement;
 
     if (!targetElement) {
       console.warn("GetLabel: Could not find 3rd parent");
@@ -66,7 +65,6 @@ const GetLabel = ({ value, currentOpenedBook, thisBot }) => {
 
     const observer = new ResizeObserver((entries) => {
       const width = entries[0].contentRect.width;
-      console.log("width", width);
       setIsMobile(width < 176);
     });
 
@@ -91,6 +89,7 @@ const GetLabel = ({ value, currentOpenedBook, thisBot }) => {
 };
 
 const Playlist = () => {
+  
   const IsPlaylistPlaying = globalThis.IsPlaylistPlaying;
 
   const [createOptions, setCreateOptions] = useState(false);
@@ -258,7 +257,7 @@ const Playlist = () => {
   const buttonConfigs = useMemo(
     () => [
       {
-        label: "Discover",
+        label: t("discover"),
         value: "discover",
         onClick: () => {
           setTab("discover");
@@ -266,7 +265,7 @@ const Playlist = () => {
         icon: "explore",
       },
       {
-        label: "Create",
+        label: t("create"),
         value: "create",
         onClick: () => {
           setTab("create");
@@ -284,7 +283,7 @@ const Playlist = () => {
       //     icon: "collections_bookmark",
       // }
     ],
-    [setTab, playingPlaylist]
+    [setTab, playingPlaylist, t]
   );
 
   //   <button onClick={() => {
@@ -339,7 +338,7 @@ const Playlist = () => {
         try {
           setFetchingAnnotation(true);
 
-          const userRecord = await getUserRecord();
+          const userRecord = await getAnnotationRecord();
 
           const annotations = await loadAnnotations(
             userRecord,
@@ -348,48 +347,74 @@ const Playlist = () => {
           );
           let allAnnotations = [];
 
-          console.log("annotations", annotations);
-
           annotations.forEach((ele) => {
-            const data = {
-              bookid: currentOpenedBook?.bookId,
-              chapter: currentOpenedBook?.chapter,
-            };
-            const innerele = ele?.data?.data;
+            if (ele.data.type === "comment" && ele.verseNumber) {
+              const booksDetails = globalThis.findNameRank(ele.bookId);
+              const anoItem = {
+                type: "heading",
+                content: ele.data.html,
+                additionalInfo: {
+                  verse: ele.verseNumber,
+                  chapter: ele.chapter,
+                  book: ele.bookId,
+                  bookRank: booksDetails.item,
+                },
+                id: ele.id,
+              };
 
-            if (!!innerele.additionalInfo && !!innerele.additionalInfo.layers) {
-              const tags = [...(ele.data.chronicle_tags || [])];
-              const layers = [...innerele.additionalInfo.layers];
-              if (innerele?.type === "chapter") {
-                data.heading = "Chapter";
-                data.data = [...layers];
-                data.tags = [...tags];
-                data.address = ele.id;
-              }
-              if (innerele?.type === "verse-grouped") {
-                const verses = [...innerele.additionalInfo.verse];
-                const length = verses.length;
-                data.heading = `Verse ${verses[0]}-${verses[length - 1]}`;
-                data.data = [...layers];
-                data.tags = [...tags];
-                data.address = ele.id;
-              }
+              const data = {
+                bookid: currentOpenedBook?.bookId,
+                chapter: currentOpenedBook?.chapter,
+              };
 
-              if (innerele?.type === "verse") {
-                data.heading = `Verse ${innerele.additionalInfo.verse}`;
-                data.data = [...layers];
-                data.tags = [...tags];
-                data.address = ele.id;
-              }
-            }
-
-            if (data.data) {
+              data.heading = `Verse ${ele.verseNumber}`;
+              data.data = [anoItem];
+              data.tags = [];
+              data.address = ele.id;
               allAnnotations.push(data);
+            } else if (ele.data.type !== "comment") {
+              const data = {
+                bookid: currentOpenedBook?.bookId,
+                chapter: currentOpenedBook?.chapter,
+              };
+              const innerele = ele?.data?.data;
+
+              if (innerele) {
+                if (
+                  !!innerele.additionalInfo &&
+                  !!innerele.additionalInfo.layers
+                ) {
+                  const tags = [...(ele.data.chronicle_tags || [])];
+                  const layers = [...innerele.additionalInfo.layers];
+                  if (innerele?.type === "chapter") {
+                    data.heading = "Chapter";
+                    data.data = [...layers];
+                    data.tags = [...tags];
+                    data.address = ele.id;
+                  }
+                  if (innerele?.type === "verse-grouped") {
+                    const verses = [...innerele.additionalInfo.verse];
+                    const length = verses.length;
+                    data.heading = `Verse ${verses[0]}-${verses[length - 1]}`;
+                    data.data = [...layers];
+                    data.tags = [...tags];
+                    data.address = ele.id;
+                  }
+
+                  if (innerele?.type === "verse") {
+                    data.heading = `Verse ${innerele.additionalInfo.verse}`;
+                    data.data = [...layers];
+                    data.tags = [...tags];
+                    data.address = ele.id;
+                  }
+                }
+                if (data.data) {
+                  allAnnotations.push(data);
+                }
+              }
             }
           });
-          console.log("allAnnotations", allAnnotations);
-
-          allAnnotations = allAnnotations.sort(sortFunc);
+          // allAnnotations = allAnnotations.sort(sortFunc);
           setFetchingAnnotation(false);
           setAnnotationData(allAnnotations);
         } catch (e) {
@@ -551,22 +576,22 @@ const Playlist = () => {
   };
 
   const gotoCreate = (isAnnotation = false) => {
-    if(globalThis[`${'default'}SetMode`]) {
-      if(isAnnotation) {
-        globalThis[`${'default'}SetMode`](PlaylistModeTypes.annotations);
+    if (globalThis[`${"default"}SetMode`]) {
+      if (isAnnotation) {
+        globalThis[`${"default"}SetMode`](PlaylistModeTypes.annotations);
       } else {
-        globalThis[`${'default'}SetMode`](PlaylistModeTypes.playlist);
+        globalThis[`${"default"}SetMode`](PlaylistModeTypes.playlist);
       }
     } else {
       globalThis.SetTab("create");
-      if(isAnnotation) {
+      if (isAnnotation) {
         globalThis[`${"default"}mode`] = PlaylistModeTypes.annotations;
       } else {
         globalThis[`${"default"}mode`] = PlaylistModeTypes.playlist;
       }
     }
     setCreateOptions(false);
-  }
+  };
 
   return (
     <>
@@ -593,7 +618,7 @@ const Playlist = () => {
       {!!playlistSharerName && (
         <Modal
           sxContainer={{ width: "460px" }}
-          title="Welcome to Seed Bible"
+          title={globalThis.t("welcomeToSeedBible")}
           showIcon={false}
           onClose={onCloseSharPlaylistModal}
         >
@@ -613,10 +638,10 @@ const Playlist = () => {
               {!!playlistSharerName ? (
                 <p>
                   {" "}
-                  <b>{playlistSharerName}</b> shared a playlist.
+                  <b>{playlistSharerName}</b> {globalThis.t("sharedAPlaylist")}
                 </p>
               ) : (
-                <p>Here is your shared playlist.</p>
+                <p>{globalThis.t("hereIsYourSharedPlaylist")}</p>
               )}
             </div>
             <div
@@ -665,7 +690,7 @@ const Playlist = () => {
                 globalThis.hasASharedPlaylist = false;
               }}
             >
-              Start
+              {globalThis.t("start")}
             </Button>
           </div>
         </Modal>
@@ -673,10 +698,10 @@ const Playlist = () => {
 
       {stopPlaylistModal && (
         <Modal showIcon={false} onClose={closeConfirmStopPlaylist}>
-          <h2 style={{ fontSize: "1rem" }}>This will stop playing playlist.</h2>
-          <p>
-            A playlist is currently playing. Do you want to stop it to continue?
-          </p>
+          <h2 style={{ fontSize: "1rem" }}>
+            {globalThis.t("thisWillStopPlayingPlaylist")}
+          </h2>
+          <p>{globalThis.t("playlistCurrentlyPlayingConfirm")}</p>
           <ButtonsCover>
             <Button
               secondary
@@ -693,86 +718,83 @@ const Playlist = () => {
               }}
               variant="black"
             >
-              Confirm
+              {globalThis.t("confirm")}
             </Button>
             <Button secondaryAlt onClick={closeConfirmStopPlaylist}>
-              No
+              {globalThis.t("no")}
             </Button>
           </ButtonsCover>
         </Modal>
       )}
 
-      {createOptions &&  
-            <>
-              <div className="backdrop" onClick={() => setCreateOptions(false)} />
-                <div
-                    onClick={() => setCreateOptions(false)}
-                    style={{
-                      ...showPlaylistPosition.current,
-                      width: "210px",
-                      maxHeight: "105px",
-                      left: "none",
-                      right: "-12rem",
-                      padding: "0.5rem",
-                      top: "3rem",
-                    }}
-                    className="overlay linked-item-custom"
-                  >
-                    <div
-                      className="more-menu-items"
-                      onClick={(e) => {
-                        e.stopPropagation()
-                        if (SplitAppPanel2) {
-                          globalThis.PendingAction = gotoCreate;
-                          globalThis.StopPlayingPlaylistModal(true);
-                          return;
-                        }
-                        gotoCreate();
-                      }}
-                     
-                    >
-                      <div
-                        className="align-center"
-                        style={{gap: '0.5rem'}}
-                      >
-                        <PlaylistIcon/>
-                        <span style={{fontFamily: `"Satoshi", system-ui, sans-serif`}}>
-                          Playlist
-                        </span>
-                      </div>
-                    </div>
-                    <div 
-                    className="more-menu-items"
-                      onClick={(e) => {
-                        // if not login show notification
-                        if (!authBot?.id) {
-                          return ShowNotification({
-                            message: "Please login to use this feature.",
-                            severity: "error",
-                          });
-                        }
-                        e.stopPropagation();
-                        if (SplitAppPanel2) {
-                          globalThis.PendingAction = () => gotoCreate(true);
-                          globalThis.StopPlayingPlaylistModal(true);
-                          return;
-                        }
-                        gotoCreate(true);
-                      }}
-                    
-                    >
-                      <div
-                          className="align-center"
-                          style={{gap: '0.5rem'}}
-                        >
-                          <AnnotationIcon/>
-                          <span style={{fontFamily: `"Satoshi", system-ui, sans-serif`}}>
-                            Annotation
-                        </span>
-                      </div>
-                    </div>
-                </div>
-                </>}
+      {createOptions && (
+        <>
+          <div className="backdrop" onClick={() => setCreateOptions(false)} />
+          <div
+            onClick={() => setCreateOptions(false)}
+            style={{
+              ...showPlaylistPosition.current,
+              width: "210px",
+              maxHeight: "105px",
+              left: "none",
+              right: "-12rem",
+              padding: "0.5rem",
+              top: "3rem",
+            }}
+            className="overlay linked-item-custom"
+          >
+            <div
+              className="more-menu-items"
+              onClick={(e) => {
+                e.stopPropagation();
+                if (SplitAppPanel2) {
+                  globalThis.PendingAction = gotoCreate;
+                  globalThis.StopPlayingPlaylistModal(true);
+                  return;
+                }
+                gotoCreate();
+              }}
+            >
+              <div className="align-center" style={{ gap: "0.5rem" }}>
+                <PlaylistIcon />
+                <span
+                  style={{ fontFamily: `"Satoshi", system-ui, sans-serif` }}
+                >
+                  {globalThis.t("playlist")}
+                </span>
+              </div>
+            </div>
+            <div
+              className="more-menu-items"
+              onClick={(e) => {
+                // if not login show notification
+                if (!authBot?.id) {
+                  return ShowNotification({
+                    message: t("pleaseLoginToUseFeature"),
+                    severity: "error",
+                  });
+                }
+                e.stopPropagation();
+                if (SplitAppPanel2) {
+                  globalThis.PendingAction = () => gotoCreate(true);
+                  globalThis.StopPlayingPlaylistModal(true);
+                  return;
+                }
+                gotoCreate(true);
+              }}
+            >
+              <div className="align-center" style={{ gap: "0.5rem" }}>
+                <AnnotationIcon />
+                <span
+                  style={{ fontFamily: `"Satoshi", system-ui, sans-serif` }}
+                >
+                  {globalThis.t("annotation")}
+                </span>
+              </div>
+            </div>
+          </div>
+        </>
+      )}
       <div
         style={{
           display: "flex",
@@ -810,17 +832,18 @@ const Playlist = () => {
             {openModal && (
               <Modal onClose={() => setOpenModal(false)}>
                 <h2 style={{ fontSize: "1rem" }}>
-                  Do you want to add another Parallel Playlist?
+                  {globalThis.t("addAnotherParallelPlaylist")}
                 </h2>
                 <ButtonsCover>
                   <Button onClick={() => onAddPlaylist()} varient="black">
-                    Yes
+                    {globalThis.t("yes")}
                   </Button>
-                  <Button onClick={() => setOpenModal(false)}>Close</Button>
+                  <Button onClick={() => setOpenModal(false)}>
+                    {globalThis.t("close")}
+                  </Button>
                 </ButtonsCover>
               </Modal>
             )}
-
 
             <div
               id={`sidebar-bar`}
@@ -840,133 +863,150 @@ const Playlist = () => {
                 }
               }}
             >
-              {(isLayers || !!editData.id) && <div>
-                <div
-                  className={`playlist-cont-actions`}
-                  style={{ padding: !editData.id ? "" : "12px" }}
-                >
-                  {editData.id && (
-                    <span
-                      class="material-symbols-outlined unfollow"
-                      style={{
-                        ...ButtonStyle,
-                        fontSize: "24px",
-                        padding: "0",
-                        border: "none",
-                      }}
-                      onClick={() => {
-                        globalThis[`setOpenAttachLink`](false);
-                        thisBot.resetEditingState({ id: editData.id });
-                      }}
-                    >
-                      arrow_back
-                    </span>
-                  )}
-                  {!editData.id && isLayers && (
-                    <div className="tabs-playlist-off" style={{ width: "100%", display: "flex", justifyContent: "space-between", alignItems: "center" }}>
-                      {[buttonConfigs[0]].map(({ label, onClick, value, icon }) => (
-                        <h4
+              {(isLayers || !!editData.id) && (
+                <div>
+                  <div
+                    className={`playlist-cont-actions`}
+                    style={{ padding: !editData.id ? "" : "12px" }}
+                  >
+                    {editData.id && (
+                      <span
+                        class="material-symbols-outlined unfollow"
+                        style={{
+                          ...ButtonStyle,
+                          fontSize: "24px",
+                          padding: "0",
+                          border: "none",
+                        }}
+                        onClick={() => {
+                          globalThis[`setOpenAttachLink`](false);
+                          thisBot.resetEditingState({ id: editData.id });
+                        }}
+                      >
+                        arrow_back
+                      </span>
+                    )}
+                    {!editData.id && isLayers && (
+                      <div
+                        className="tabs-playlist-off"
+                        style={{
+                          width: "100%",
+                          display: "flex",
+                          justifyContent: "space-between",
+                          alignItems: "center",
+                        }}
+                      >
+                        {[buttonConfigs[0]].map(
+                          ({ label, onClick, value, icon }) => (
+                            <h4
+                              onClick={() => {
+                                if (SplitAppPanel2) {
+                                  globalThis.PendingAction = onClick;
+                                  globalThis.StopPlayingPlaylistModal(true);
+                                  return;
+                                }
+                                onClick();
+                              }}
+                              style={{
+                                width: `${100 / buttonConfigs.length}%`,
+                              }}
+                              className={`tabs-playlist-item`}
+                            >
+                              <span
+                                className="material-symbols-outlined unfollow"
+                                style={{ fontSize: "20px" }}
+                              >
+                                {icon}
+                              </span>
+                              <span>
+                                {label}{" "}
+                                <GetLabel
+                                  value={value}
+                                  currentOpenedBook={currentOpenedBook}
+                                />
+                              </span>
+                            </h4>
+                          )
+                        )}
+                        <Button
                           onClick={() => {
-                            if (SplitAppPanel2) {
-                              globalThis.PendingAction = onClick;
-                              globalThis.StopPlayingPlaylistModal(true);
-                              return;
-                            }
-                            onClick();
+                            setCreateOptions(true);
                           }}
-                          style={{ width: `${100 / buttonConfigs.length}%` }}
-                          className={`tabs-playlist-item`}
+                          secondary
+                          exClass="create-button"
                         >
                           <span
-                            className="material-symbols-outlined unfollow"
-                            style={{ fontSize: "20px" }}
+                            style={{ color: "white" }}
+                            class="material-symbols-outlined"
                           >
-                            {icon}
+                            add
                           </span>
-                          <span>
-                            {label}{" "}
-                            <GetLabel
-                              value={value}
-                              currentOpenedBook={currentOpenedBook}
-                            />
-                          </span>
-                        </h4>
-                      ))}
-                       <Button
-                        onClick={() => {
-                          setCreateOptions(true);
-                        }}
-                        secondary
-                        exClass="create-button"
-                      >
-                        <span style={{ color: "white" }} class="material-symbols-outlined">
-                          add
-                        </span>
-                        Create
-                      </Button>
-                    </div>
-                  )}
-                  
-                  {editData.id && (
-                    <div
-                      className="align-center"
-                      style={{ marginLeft: "1rem" }}
-                    >
-                      <RenderIcon
-                        isAllowSet
-                        isCustomIcons={isCustomIcon}
-                        icon={editData.icon}
-                        list={[]}
-                      />
-                      <h4 style={{ marginLeft: "1rem", fontWeight: "500" }}>
-                        <b>{editData.name}</b>
-                        <p style={{ textAlign: "left" }}>
-                          {editData.description || "No description"}
-                        </p>
-                      </h4>
-                    </div>
-                  )}
-                  {false && !editData.id && (
-                    <span
-                      class="material-symbols-outlined unfollow"
-                      style={{
-                        ...ButtonStyle,
-                        fontSize: "24px",
-                        padding: "0",
-                        border: "none",
-                        marginLeft: "auto",
-                      }}
-                      onClick={() => {
-                        // setHide(p => !p);
-                        // globalThis.SetScreens(1);
-                        thisBot.CloseFloatingApp();
-                        DataManager.cancelCurrentPlayingSound();
-                        // globalThis.SetPlayingPlaylist && globalThis.SetPlayingPlaylist(false);
-                        globalThis[`defaultToggleGreyCheckPLayingPlaylist`] &&
-                          globalThis[`defaultToggleGreyCheckPLayingPlaylist`](
-                            null
-                          );
-                        globalThis.IsQueuePresent = false;
-                        // os.unregisterApp("playing-playlist");
+                          {globalThis.t("create")}
+                        </Button>
+                      </div>
+                    )}
 
-                        globalThis.IS_PLAYLIST_ACTIVE = false;
-                        globalThis.SET_SHOW_CHECK &&
-                          globalThis.SET_SHOW_CHECK(false);
-                        setSplitAppPanel2(null);
-                        globalThis.RemoveApplicationByID &&
-                          globalThis.RemoveApplicationByID(
-                            globalThis.PLAYLIST_PANEL_ID
-                          );
-                        globalThis.PLAYLIST_PANEL_ID = null;
-                        globalThis.makingPlaylist = false;
-                        return;
-                      }}
-                    >
-                      close
-                    </span>
-                  )}
+                    {editData.id && (
+                      <div
+                        className="align-center"
+                        style={{ marginLeft: "1rem" }}
+                      >
+                        <RenderIcon
+                          isAllowSet
+                          isCustomIcons={isCustomIcon}
+                          icon={editData.icon}
+                          list={[]}
+                        />
+                        <h4 style={{ marginLeft: "1rem", fontWeight: "500" }}>
+                          <b>{editData.name}</b>
+                          <p style={{ textAlign: "left" }}>
+                            {editData.description || t("noDescription")}
+                          </p>
+                        </h4>
+                      </div>
+                    )}
+                    {false && !editData.id && (
+                      <span
+                        class="material-symbols-outlined unfollow"
+                        style={{
+                          ...ButtonStyle,
+                          fontSize: "24px",
+                          padding: "0",
+                          border: "none",
+                          marginLeft: "auto",
+                        }}
+                        onClick={() => {
+                          // setHide(p => !p);
+                          // globalThis.SetScreens(1);
+                          thisBot.CloseFloatingApp();
+                          DataManager.cancelCurrentPlayingSound();
+                          // globalThis.SetPlayingPlaylist && globalThis.SetPlayingPlaylist(false);
+                          globalThis[`defaultToggleGreyCheckPLayingPlaylist`] &&
+                            globalThis[`defaultToggleGreyCheckPLayingPlaylist`](
+                              null
+                            );
+                          globalThis.IsQueuePresent = false;
+                          // os.unregisterApp("playing-playlist");
+
+                          globalThis.IS_PLAYLIST_ACTIVE = false;
+                          globalThis.SET_SHOW_CHECK &&
+                            globalThis.SET_SHOW_CHECK(false);
+                          setSplitAppPanel2(null);
+                          globalThis.RemoveApplicationByID &&
+                            globalThis.RemoveApplicationByID(
+                              globalThis.PLAYLIST_PANEL_ID
+                            );
+                          globalThis.PLAYLIST_PANEL_ID = null;
+                          globalThis.makingPlaylist = false;
+                          return;
+                        }}
+                      >
+                        close
+                      </span>
+                    )}
+                  </div>
                 </div>
-              </div>}
+              )}
               {isLayers ? (
                 <div
                   style={{

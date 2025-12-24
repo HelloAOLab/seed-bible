@@ -1,3 +1,5 @@
+const { useSideBarContext } = await import("app.hooks.sideBar");
+
 //imports
 const { useRef, useState, useEffect, useCallback } = os.appHooks;
 const CustomModal = await thisBot.CustomModal();
@@ -180,6 +182,7 @@ const types = ["events", "reading", "content", "projects", "sources"];
 if (!globalThis.C_E) globalThis.C_E = [];
 
 const App = () => {
+  const { t } = useSideBarContext();
   //states
   const [readings, setReadings] = useState([]);
   const [readingsList, setReadingsList] = useState([]);
@@ -250,16 +253,7 @@ const App = () => {
   const [resourceStartDate, setResourceStartDate] = useState();
   const [hiddenGroups, setHiddenGroups] = useState({});
   const [allGroups, setAllGroups] = useState([]);
-  const [popoverOpen, setPopoverOpen] = useState(false);
-
-  document.addEventListener("mousedown", (e) => {
-    const popover = document.querySelector(".fc-popover");
-
-    // TypeScript-safe check
-    if (e.target instanceof Node && !popover.contains(e.target)) {
-      setPopoverOpen(false);
-    }
-  });
+  const popoverOpenRef = useRef(false);
 
   //refs
   const readingsRef = useRef(null);
@@ -292,6 +286,46 @@ const App = () => {
       }
     }
   }, []);
+  useEffect(() => {
+    const observer = new MutationObserver(() => {
+      const popover = document.querySelector(".fc-popover");
+
+      // If popover is gone but ref says open → reset
+      if (!popover && popoverOpenRef.current) {
+        popoverOpenRef.current = false;
+        calendarRef.current?.getApi().rerenderEvents();
+      }
+    });
+
+    observer.observe(document.body, {
+      childList: true,
+      subtree: true,
+    });
+
+    return () => observer.disconnect();
+  }, []);
+
+  useEffect(() => {
+    const handleClickOutside = (e) => {
+      const popover = document.querySelector(".fc-popover");
+
+      if (!popover) return; // important
+
+      if (!popover.contains(e.target)) {
+        popoverOpenRef.current = false;
+
+        // 🔑 force FullCalendar to update
+        calendarRef.current?.getApi().rerenderEvents();
+      }
+    };
+
+    document.addEventListener("mousedown", handleClickOutside);
+
+    return () => {
+      document.removeEventListener("mousedown", handleClickOutside);
+    };
+  }, []);
+
   useEffect(() => {
     try {
       localStorage.setItem("allEvents", JSON.stringify(allEvents));
@@ -751,6 +785,7 @@ const App = () => {
           center: "",
           right: "",
         },
+
         buttonText: {
           today: " ",
         },
@@ -790,12 +825,12 @@ const App = () => {
         },
 
         slotMinTime: "00:00:00",
-        slotMaxTime: "25:00:00",
+        slotMaxTime: "24:00:00",
         slotDuration: "00:30:00",
-        scrollTime: "07:00:00",
+        scrollTime: "09:00:00",
         initialView: "dayGridMonth",
         moreLinkClick: (arg) => {
-          setPopoverOpen(true);
+          popoverOpenRef.current = true;
           return "popover";
         },
         resourceAreaHeaderContent: function () {
@@ -872,13 +907,14 @@ const App = () => {
         allDaySlot: true,
         allDayText: "All day",
         expandRows: true,
-        contentHeight: "auto",
-        height: "auto",
+        contentHeight: "450px",
+
         eventContent: function (arg) {
-          console.log(popoverOpen, "sdsdsd");
+          console.log(popoverOpenRef.current, "sdsdsdkkkkjj");
 
           setContainerWidth(calendarEle.offsetWidth);
           const isSchedule = arg.event.extendedProps.isResource === true;
+
           const eventType = arg.event.extendedProps.type;
           const container = document.querySelector(".experience-container");
           const isNarrow = container && container.offsetWidth < 500;
@@ -917,14 +953,15 @@ const App = () => {
           }
 
           // Compact mode (mobile, no popover)
-          if (isNarrow && !popoverOpen && !isMultiDay) {
+          if (isNarrow && !popoverOpenRef.current && !isMultiDay) {
             if (isSchedule) return { html: "" };
             if (eventType === "reading") return { html: makeDot("#20c997") };
             return { html: makeDot("#339af0") };
           }
 
           // Popover open — show full event
-          if (popoverOpen) {
+
+          if (popoverOpenRef.current) {
             return {
               html: `
           <div style="
@@ -945,7 +982,7 @@ const App = () => {
           }
 
           // Normal schedule
-          if (isSchedule) {
+          if (isSchedule && !popoverOpenRef.current) {
             if (!isMultiDay) {
               return {
                 html: `
@@ -986,7 +1023,7 @@ const App = () => {
           }
 
           // Reading events
-          if (eventType === "reading") {
+          if (eventType === "reading" && !popoverOpenRef.current) {
             if (!isMultiDay) {
               return {
                 html: `
@@ -994,15 +1031,15 @@ const App = () => {
     display:flex;
     margin-left:6px;
     align-items:stretch;  /* important */
-    background:#e6fcf5;
-    color:green;
+    background:#E1F3D8;
+    color:#67C23A;
     border-top-left-radius: 5px;
     border-bottom-left-radius: 5px;
    
     width:max-content;
     font-size:clamp(0.65rem, 0.8vw, 0.85rem);
   ">
-    <div style="width:3px;background:green;border-top-left-radius: 5px;
+    <div style="width:3px;background:#67C23A;border-top-left-radius: 5px;
     border-bottom-left-radius: 5px;"></div>
     <span style="padding:2px 4px;padding:2px 3px; overflow-wrap: break-word;">${title}</span>
   </div>
@@ -1030,30 +1067,29 @@ const App = () => {
           }
 
           // Default event style
-          if (!isMultiDay) {
-            console.log(isMultiDay,'sasasasaasasas');
+          if (!isMultiDay && !popoverOpenRef.current) {
+            console.log(isMultiDay, "sasasasaasasas");
             return {
               html: `
   <div style="
     display:flex;
     margin-left:6px;
     align-items:stretch;  /* important */
-    background:#F0FAFF;
-    color:#00C8FF;
+    background:#D9ECFF;
+    color:#409EFF;
     border-top-left-radius: 5px;
     border-bottom-left-radius: 5px;
    
     width:max-content;
     font-size:clamp(0.65rem, 0.8vw, 0.85rem);
   ">
-    <div style="width:3px;background:#00C8FF;border-top-left-radius: 5px;
+    <div style="width:3px;background:#409EFF;border-top-left-radius: 5px;
     border-bottom-left-radius: 5px;"></div>
     <span style="padding:2px 4px;padding:2px 3px; overflow-wrap: break-word;">${title}</span>
   </div>
 `,
             };
           } else {
-
             return {
               html: `
         <div style="
@@ -1087,13 +1123,13 @@ const App = () => {
 
           console.log(startDate, endDate, isMultiDay, "isMultiday");
 
-          if (width <= 500 && !isMultiDay) {
+          if (width <= 500 && !isMultiDay & !popoverOpenRef.current) {
             return ["dot-view"];
           } else {
             return ["full-view"];
           }
         },
-        dayCellDidMount: (info) => {
+        /* dayCellDidMount: (info) => {
           const cellDateStr = info.date.toISOString().split("T")[0];
           const hasEvent = calendarApi.current.getEvents().some((ev) => {
             const evDateStr = new Date(ev.start).toISOString().split("T")[0];
@@ -1106,7 +1142,7 @@ const App = () => {
           if (hasEvent && isMultiMonth) {
             info.el.style.backgroundColor = "white"; // dark gray
           }
-        },
+        },*/
 
         editable: true,
         droppable: true,
@@ -1170,21 +1206,20 @@ const App = () => {
                 recurVal,
                 isPlansTabActive,
               }) => {
-               
                 if (isPlansTabActive) return;
                 let newEvent;
                 console.log(start, end, "aada");
                 const days = getDayDifference(start, end);
                 if (recurVal.charAt(0) === "N") {
                   const isTimed = Boolean(startTime && endTime);
-                  console.log(isTimed,'isTimed');
+                  console.log(isTimed, "isTimed");
                   if (days === 0) {
                     newEvent = {
                       title: title ? title : "easter",
                       id: uuid(),
                       start: `${start}T${startTime || "09:00"}`,
-                      end: `${end}T${endTime||"19:00" }`,
-                      allDay: false ,
+                      end: `${end}T${endTime || "19:00"}`,
+                      allDay: false,
                       color: "white",
                       eventDisplay: "list-item",
                       theme: "simple-borderless",
@@ -1198,7 +1233,7 @@ const App = () => {
                         type: "events",
                       },
                     };
-                    console.log(newEvent,'newevent');
+                    console.log(newEvent, "newevent");
                     const now = stripTime(new Date());
                     const startDate = stripTime(new Date(newEvent.start));
                     setAllEvents((prev) => [...prev, newEvent]);
@@ -1337,7 +1372,8 @@ const App = () => {
                 }
               }
             );
-          } else {
+          }
+          /* else {
             if (info.view.type !== "resourceTimeline") {
               const clickedDate = info.date;
               // JS Date
@@ -1378,7 +1414,7 @@ const App = () => {
               });
               instance.show();
             }
-          }
+          }*/
         },
 
         datesSet: (info) => {
@@ -1397,6 +1433,19 @@ const App = () => {
           const prevBtn = calendarRef.current.querySelector(".fc-prev-button");
           const nextBtn = calendarRef.current.querySelector(".fc-next-button");
           let select = document.getElementById("view-toggle-select");
+          const calendarap = info.view.calendar;
+
+          if (info.view.type === "multiMonthYear") {
+            const year = info.start.getFullYear();
+            calendarap.setOption("titleFormat", { year: "numeric" });
+
+            calendarap.setOption("title", year.toString());
+          } else {
+            calendarap.setOption("titleFormat", {
+              year: "numeric",
+              month: "long",
+            });
+          }
           if (info.view.type === "resourceTimelineDay") {
             if (todayBtn) todayBtn.style.display = "none";
             if (addButton) addButton.style.display = "none";
@@ -1432,6 +1481,7 @@ const App = () => {
                 backgroundColor: "white",
                 color: "black",
                 fontSize: "10px",
+                fontWeight:'700',
                 padding: "0",
                 border: "none",
                 marginRight: "10px",
@@ -1456,6 +1506,8 @@ const App = () => {
                 fontSize: "10px",
                 padding: "0",
                 border: "none",
+                fontWeight:'900',
+                
                 marginRight: "10px",
                 cursor:
                   info.view.type === "resourceTimelineDay"
@@ -1574,7 +1626,7 @@ const App = () => {
                   fontWeight: "400",
                   color: "#606266",
                   border: "1px solid #d3d3d3",
-                  borderRadius: "0",
+                  borderRadius: "3px",
 
                   cursor: "pointer",
                 });
@@ -1859,7 +1911,6 @@ const App = () => {
                   startSubIndex: -1,
                   parentId: "default",
                   name: playlist.name || "Untitled Playlist",
-                 
                 });
               });
               document.body.appendChild(playButtonCon);
@@ -2140,7 +2191,7 @@ const App = () => {
     return () => observer.disconnect();
   }, []);
 
-  useEffect(() => {
+  /*useEffect(() => {
     const container = document.querySelector(".experience-container");
     const calendarElement = document.getElementById("calendar");
     const calendar = calendarApi.current;
@@ -2158,8 +2209,9 @@ const App = () => {
     };
 
     const observer = new ResizeObserver(() => {
+      if(calendarApi.current.view.type!=='multiMonthYear'){
       calendar.updateSize();
-      updateFontSize();
+      updateFontSize();}
     });
 
     observer.observe(container);
@@ -2173,13 +2225,8 @@ const App = () => {
       observer.disconnect();
       window.removeEventListener("resize", updateFontSize);
     };
-  }, []);
-  console.log(
-    calendarRef.current,
-    refCalendar.current,
-    "refsss",
-    containerWidth
-  );
+  }, []);*/
+  
 
   return (
     <>
@@ -2215,6 +2262,8 @@ const App = () => {
             left: "0",
             right: "0",
             height: "1px",
+            borderRadius:'2px',
+      
             backgroundColor: "#ddd",
           }}
         ></div>
@@ -2296,6 +2345,25 @@ const App = () => {
             marginTop: hasTitle ? "" : "40px",
           }}
         >
+        {calendarApi.current && (
+  <div
+    style={{
+      height:
+        calendarApi.current.view.type !== "multiMonthYear"
+          ? "427px"
+          : "449px",
+      width: '1px',
+      zIndex:'999',
+      backgroundColor: "#ddd",
+      position: "absolute",
+      marginTop:
+        calendarApi.current.view.type !== "multiMonthYear"
+          ? "111px"
+          : "89px",
+    }}
+  />
+)}
+
           <div class="calendar-wrapper">
             {
               <div
@@ -2437,14 +2505,14 @@ const App = () => {
                   className={`calendar-addups-selection-button ${type.charAt(0)}-btn`}
                   onClick={() => handleSelectionClicking(type)}
                 >
-                  {type.charAt(0).toUpperCase() + type.slice(1)}
+                  {t(type + "Tab")}
                 </button>
               ))}
             </div>
 
             <div class="event-and-map">
               <span class="event-and-map_heading">
-                Events for {calendarTitle}
+                {t("eventsFor")} {calendarTitle}
               </span>
               <div class="event-and-map_selector">
                 <span
@@ -2455,7 +2523,7 @@ const App = () => {
                   }}
                   onClick={() => onEventsClick()}
                 >
-                  Events
+                  {t("eventsTab")}
                 </span>
                 <span
                   class="event-and-map_selector_item"
@@ -2465,7 +2533,7 @@ const App = () => {
                   }}
                   onClick={() => onMapCick()}
                 >
-                  Bible Map
+                  {t("bibleMap")}
                 </span>
               </div>
               {eventViewSelected && (

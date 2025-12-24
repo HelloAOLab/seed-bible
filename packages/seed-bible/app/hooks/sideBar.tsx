@@ -1,11 +1,25 @@
-const { createContext, useContext, useState, useEffect, useLayoutEffect } =
-  os.appHooks;
+const {
+  createContext,
+  useContext,
+  useState,
+  useEffect,
+  useLayoutEffect,
+  useCallback,
+} = os.appHooks;
 import { getStyleOf } from "app.styles.styler";
 import {
   DualScreenIcon,
   ThreeScreenIcon,
   QuadScreenIcon,
 } from "app.components.icons";
+import {
+  initI18n,
+  t as translate,
+  changeLanguage as changeLang,
+  getCurrentLanguage,
+  isRTL,
+  availableLanguages,
+} from "app.hooks.i18n";
 const MyContext = createContext();
 
 export function SideBarProvider({ children }) {
@@ -24,6 +38,42 @@ export function SideBarProvider({ children }) {
   const [packageAddingOptions, setPackageAddingOptions] = useState([]);
   const [openOnMobile, setOpenOnMobile] = useState(false);
   const [isMobile, setIsMobile] = useState(false);
+
+  // i18n state
+  const [language, setLanguage] = useState(getCurrentLanguage());
+  const [i18nReady, setI18nReady] = useState(false);
+  const [langVersion, setLangVersion] = useState(0);
+
+  // Initialize i18n on mount
+  useEffect(() => {
+    initI18n().then(() => {
+      setLanguage(getCurrentLanguage());
+      setI18nReady(true);
+    });
+  }, []);
+
+  // Change language function
+  const changeLanguage = async (lng: string) => {
+    await changeLang(lng);
+    // Update document direction for RTL languages
+    const langConfig = availableLanguages.find((l) => l.code === lng);
+    document.documentElement.dir = langConfig?.rtl ? "rtl" : "ltr";
+    document.documentElement.lang = lng;
+    // Force re-render by updating state AFTER i18next has changed
+    setLanguage(lng);
+    setLangVersion((v) => v + 1);
+  };
+
+  // Translation function - wrapped in useCallback with language dependency for reactivity
+  const t = useCallback(
+    (key: string, options?: any) => translate(key, options),
+    [language]
+  );
+
+  // Expose globally
+  globalThis.t = t;
+  globalThis.changeLanguage = changeLanguage;
+  globalThis.availableLanguages = availableLanguages;
   useEffect(() => {
     const handleResize = () => {
       const check = window.innerWidth < 768;
@@ -165,6 +215,14 @@ export function SideBarProvider({ children }) {
         setOpenOnMobile,
         closePopupSettings,
         isMobile,
+        // i18n
+        t,
+        language,
+        langVersion,
+        changeLanguage,
+        i18nReady,
+        availableLanguages,
+        isRTL,
       }}
     >
       {children}

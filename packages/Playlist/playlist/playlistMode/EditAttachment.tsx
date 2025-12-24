@@ -11,7 +11,7 @@ const EditAttachment = ({
     mediaType,
     parentID,
     onClose }) => {
-
+    
 
     const attachLink = (title, link, linkState) => {
         const dataItem = {
@@ -24,11 +24,11 @@ const EditAttachment = ({
             type: linkState.type === "text" ? "heading" : "attachment-link",
         };
         globalThis[`${id}EditPlaylistData`](contentId, dataItem, parentID, true);
-        ShowNotification({ message: `Updated successfully!`, severity: "success" });
+        ShowNotification({ message: t('updatedSuccessfully'), severity: "success" });
         onClose();
     };
 
-    return <Modal title="Edit Attachment" showIcon={false} onClose={onClose}>
+    return <Modal title={t('editAttachment')} showIcon={false} onClose={onClose}>
         <AttachLink
             editMode
             sSelectedType={selectedType}
@@ -45,10 +45,10 @@ const EditAttachment = ({
                     globalThis.FireEditContent && globalThis.FireEditContent();
                 }}
             >
-                Update
+                {t('update')}
             </Button>
             <Button secondaryAlt onClick={onClose}>
-                Cancel
+                {t('close')}
             </Button>
         </ButtonsCover>
     </Modal>

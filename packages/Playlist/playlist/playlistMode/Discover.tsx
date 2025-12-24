@@ -2,9 +2,20 @@ const { useState, useRef, useLayoutEffect } = os.appHooks;
 
 const { Input } = Components;
 
+
+
 const PlaylistCont = await thisBot.PlaylistContainer();
 const AnnotationList = await thisBot.AnnotationList();
 const Bookmarks = await thisBot.Bookmarks();
+
+const itemKeys = [
+  "all",
+  "pinnedItems",
+  "shared",
+  "playlist",
+  "annotations",
+  "bookmarks",
+];
 
 const items = [
   "All",
@@ -26,6 +37,7 @@ const Discover = ({
   style,
   setOpenModal,
 }) => {
+  
   const IsPlaylistPlaying = globalThis.IsPlaylistPlaying;
 
   const [selectedChip, setSelectedChip] = useState({
@@ -123,7 +135,8 @@ const Discover = ({
         padding: "0 0.5rem",
         overflow: "auto",
         ...style,
-      }}>
+      }}
+    >
       {!editingPlaylist && false && (
         <div
           className="align-center"
@@ -132,7 +145,8 @@ const Discover = ({
             padding: "1rem 0",
             marginBottom: "1rem",
             borderBottom: "1px solid #CCCCCD",
-          }}>
+          }}
+        >
           <div className="content-type">
             <img
               alt="sources"
@@ -164,24 +178,28 @@ const Discover = ({
             <div
               onClick={() => selectSelectedChip(ele)}
               className={`chip-tag`}
-              style={{ display: "flex", alignItems: "center" }}>
+              style={{ display: "flex", alignItems: "center" }}
+            >
               <span>Chapter</span>
               <span class="material-symbols-outlined">keyboard_arrow_down</span>
             </div>
           )}
           <div
             className="align-center chips-tag-container"
-            style={{ flexGrow: "1", padding: "0.5rem 0" }}>
+            style={{ flexGrow: "1", padding: "0.5rem 0" }}
+          >
             <div
               className="align-center chips-tag-container"
               style={{ width: "100%" }}
-              ref={scrollRef}>
-              {items.map((ele) => {
+              ref={scrollRef}
+            >
+              {items.map((ele, index) => {
                 return (
                   <div
                     onClick={() => selectSelectedChip(ele)}
-                    className={`chip-tag ${selectedChip[ele] ? "active" : ""}`}>
-                    {ele}
+                    className={`chip-tag ${selectedChip[ele] ? "active" : ""}`}
+                  >
+                    {t(itemKeys[index])}
                   </div>
                 );
               })}
@@ -194,7 +212,8 @@ const Discover = ({
             {pos !== "right" && pos !== "noscroll" && (
               <div
                 className="chip-tag arrow right"
-                onClick={scrollRightByWidth}>
+                onClick={scrollRightByWidth}
+              >
                 <span class="material-symbols-outlined">chevron_forward</span>
               </div>
             )}

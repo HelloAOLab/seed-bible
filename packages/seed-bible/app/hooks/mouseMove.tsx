@@ -58,7 +58,48 @@ export function MouseMoveProvider({ children }) {
   globalThis.isAbleToRightClick = isAbleToRightClick;
 
   // create
-  globalThis.AddFloatingApp = (appConfig) => {
+    globalThis.AddFloatingApp = (appConfig) => {
+    // Handle "panel" mode - go directly to panel without creating floating window
+    if (appConfig.mode === "panel") {
+      const checkEmpty = PanelsApps.find((e) => !e.tabData);
+      const id = checkEmpty?.id 
+      os.log('RemoveApplicationByID',checkEmpty)
+      if (typeof AddApplication === "function" && typeof RemoveApplicationByID === "function") {
+        ReplaceApplication(id,{
+          id,
+          App: (
+            <PanelAppWrapper
+              onReturnToFloat={() => {
+                os.log(PanelsApps,id,'RemoveApplicationByID')
+                RemoveApplicationByID(id);
+                globalThis.AddFloatingApp({
+                  ...appConfig,
+                  id,
+                  mode: undefined, // Remove mode so it floats
+                });
+              }}
+              title={appConfig.title || "App"}
+              onClose={() => {
+                RemoveApplicationByID(id);
+                configBot.tags.gridPortal = null;
+                configBot.tags.miniGridPortal = null;
+                configBot.tags.mapPortal = null;
+                configBot.tags.miniMapPortal = null;
+                setCurrentCanvasApp(null);
+                shout("onFloatingAppRemoved", { appId: id });
+              }}
+            >
+              {appConfig.App}
+            </PanelAppWrapper>
+          ),
+        });
+        return id;
+      } else {
+        console.warn("Panel infrastructure not available, falling back to floating window");
+      }
+    }
+
+    // Original floating app logic continues here...
     const baseSize = appConfig.size || { width: 360, height: 240 };
 
     let initialSize = baseSize;
@@ -94,60 +135,7 @@ export function MouseMoveProvider({ children }) {
       type: appConfig?.type,
     };
 
-    // let hasMainCanvas =
-    //   configBot.tags.gridPortal ||
-    //   configBot.tags.miniGridPortal ||
-    //   configBot.tags.miniMapPortal ||
-    //   configBot.tags.mapPortal;
-
-    // console.log(hasMainCanvas, "hasMainCanvas")
-
-    // configBot.tags.mapPortal = null;
-    // configBot.tags.miniMapPortal = null;
-
-    // Remove previous apps with mainCanvas if this new one has mainCanvas
-    // if (hasMainCanvas) {
-    //   setFloatingApps((prev) => {
-    //     const appsToRemove = prev.filter((app) => {
-    //       try {
-    //         const appString = String(app.App);
-    //         return (
-    //           appString.includes("mainCanvas") ||
-    //           app.App?.props?.className?.includes("mainCanvas") ||
-    //           (app.App?.type === "div" &&
-    //             app.App?.props?.className?.includes("mainCanvas"))
-    //         );
-    //       } catch (e) {
-    //         return false;
-    //       }
-    //     });
-
-    //     appsToRemove.forEach((app) => {
-    //       shout("onFloatingAppRemoved", { appId: app.id });
-    //     });
-
-    //     return prev.filter((app) => !appsToRemove.includes(app));
-    //   });
-
-    //   // Also remove from hidden apps
-    //   setHiddenApps((prev) => {
-    //     return prev.filter((app) => {
-    //       try {
-    //         const appString = String(app.App);
-    //         return !(
-    //           appString.includes("mainCanvas") ||
-    //           app.App?.props?.className?.includes("mainCanvas") ||
-    //           (app.App?.type === "div" &&
-    //             app.App?.props?.className?.includes("mainCanvas"))
-    //         );
-    //       } catch (e) {
-    //         return true;
-    //       }
-    //     });
-    //   });
-    // }
-
-    // ensuring that only one canvas app remains
+    // ... rest of your existing canvas app logic ...
 
     if (
       currentCanvasApp &&
@@ -169,34 +157,6 @@ export function MouseMoveProvider({ children }) {
     }
 
     setFloatingApps((prev) => [...prev, { ...newApp }]);
-
-    // =======================================================================
-    //  NEW LOGIC:
-    //  After 0.3 seconds, detect if this app created a canvas portal.
-    //  If yes → mark it as masks.canvasApp and remove the previous one.
-    // =======================================================================
-    // setTimeout(() => {
-    //   const portalValue =
-    //     configBot.tags.gridPortal ||
-    //     configBot.tags.miniMapPortal ||
-    //     configBot.tags.mapPortal;
-
-    //   if (portalValue) {
-    //     // If another canvas-app already exists → remove it
-    //     if (masks.canvasApp && masks.canvasApp !== newApp.id) {
-    //       setFloatingApps((prev) => {
-    //         const removed = prev.find((app) => app.id === masks.canvasApp);
-    //         if (removed) {
-    //           shout("onFloatingAppRemoved", { appId: removed.id });
-    //         }
-    //         return prev.filter((app) => app.id !== masks.canvasApp);
-    //       });
-    //     }
-
-    //     // Register this app as the active canvas-app
-    //     masks.canvasApp = newApp.id;
-    //   }
-    // }, 300);
 
     return newApp.id;
   };
@@ -843,7 +803,7 @@ const FloatingAppContainer = ({
   let width = app.size.width;
   let height = app.size.height;
 
-  if (mobile) {
+  if (mobile && !app.isFullscreen) {
     const margin = 12;
     const vw = Math.max(
       document.documentElement?.clientWidth || 0,
@@ -864,14 +824,14 @@ const FloatingAppContainer = ({
   // sizes for layout: wrapper contains window (top) + toolbar (underneath)
   const wrapperStyle = {
     position: "fixed",
-    left: isMobileNow()?'0':`${posX}px`,
-    top: isMobileNow()?'0':`${posY}px`,
-    width: `${width}px`,
-    height: `${
+    left: (isMobileNow() || app.isFullscreen)?'0':`${posX}px`,
+    top: (isMobileNow() || app.isFullscreen)?'0':`${posY}px`,
+    width: (mobile && app.isFullscreen) ? '100vw' : `${width}px`,
+    height: (mobile && app.isFullscreen) ? '100vh' : `${
       (app.isMinimized ? 0 : height) +
-      (app.isDocked ? 0 : toolbarGap + toolbarH)
+      (app.isDocked || app.isFullscreen ? 0 : toolbarGap + toolbarH)
     }px`,
-    zIndex: 1000,
+    zIndex: app.isFullscreen ? 999999 : 1000,
     pointerEvents: "auto",
     transition: app.isDragging || app.isResizing ? "none" : "all 0.18s ease",
     cursor: app.isDragging ? "grabbing" : "default",
@@ -882,9 +842,9 @@ const FloatingAppContainer = ({
     position: "absolute",
     left: 0,
     top: 0,
-    width:isMobileNow()?'100vw': `${width}px`,
-    height: `${app.isMinimized ? 0 : height}px`,
-    borderRadius: `${radius}px`,
+    width: (isMobileNow() || app.isFullscreen)?'100vw': `${width}px`,
+    height: (mobile && app.isFullscreen) ? '100vh' : `${app.isMinimized ? 0 : height}px`,
+    borderRadius: app.isFullscreen ? 0 : `${radius}px`,
     boxShadow: `0 0 0 2px ${stroke}`,
     background: "rgba(17,17,17,0.75)",
     color: "#e5e7eb",
@@ -908,7 +868,7 @@ const FloatingAppContainer = ({
     borderRadius: 12,
     boxShadow: `0 0 0 2px ${stroke}`,
     background: "rgba(0, 0, 0, 0.65)",
-    display: app.isDocked ? "none" : "flex",
+    display: (app.isDocked || app.isFullscreen) ? "none" : "flex",
     alignItems: "center",
     justifyContent: "center",
     gap: 8,
@@ -1004,7 +964,7 @@ const FloatingAppContainer = ({
       >
         <div className="floating-app" style={windowStyle}>
           <div style={contentStyle}>{app.App}</div>
-          {!app.isDocked && !app.isMinimized && (
+          {!app.isDocked && !app.isMinimized && !app.isFullscreen && (
             <>
               <ResizeHandle
                 handle="nw"

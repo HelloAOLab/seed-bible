@@ -1,1 +1,0 @@
-globalThis.scriptureMap2DHistoryUpdate?.();

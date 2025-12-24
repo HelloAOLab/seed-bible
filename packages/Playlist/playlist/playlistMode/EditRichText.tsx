@@ -15,6 +15,7 @@ const EditRichText = ({
     parentID,
     text
 }) => {
+    
     const [name, setName] = useState(text || "");
 
     const onSave = () => {
@@ -22,7 +23,7 @@ const EditRichText = ({
         onClose();
     }
 
-    return <Modal title="Edit Text" showIcon={false} onClose={onClose}>
+    return <Modal title={t('editText')} showIcon={false} onClose={onClose}>
         <div className="input-conainter-type" >
             <MiniTextEditor
                 id='edit'
@@ -36,10 +37,10 @@ const EditRichText = ({
         </div>
         <ButtonsCover>
             <Button secondary onClick={() => { onSave(); }}>
-                Save
+                {t('save')}
             </Button>
             <Button secondaryAlt onClick={onClose}>
-                Close
+                {t('close')}
             </Button>
         </ButtonsCover>
     </Modal>

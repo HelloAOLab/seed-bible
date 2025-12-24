@@ -1,51 +1,29 @@
-const { recencyTimeSeconds, baseColor, userColor } = that;
+const now = new Date();
+const msPerDay = 1000 * 60 * 60 * 24;
+const defaultStep =
+  1 /
+  Math.floor(
+    (now - BibleVizUtils.Data.masks.readingHistoryRecencyThresholdTimeSeconds) /
+      msPerDay
+  );
 
-const sortedTimePeriods = (thisBot.vars.sortedTimePeriods ??=
-  BibleVizUtils.Data.masks.historyTimePeriodsInfo.toSorted(
-    (periodInfoA, periodInfoB) => {
-      return periodInfoA.GetTimePeriodInMs() - periodInfoB.GetTimePeriodInMs();
-    }
-  ));
-const greaterTimePeriodSeconds =
-  sortedTimePeriods[sortedTimePeriods.length - 1].GetTimePeriodInMs() / 1000;
-const actualRecencyTimeSeconds = Math.min(
-  recencyTimeSeconds,
-  greaterTimePeriodSeconds
+const { recencyTimeSeconds, baseColor, userColor, step = defaultStep } = that;
+
+const nowSeconds = Math.floor(now / 1000);
+const timeFrameSeconds =
+  nowSeconds -
+  BibleVizUtils.Data.masks.readingHistoryRecencyThresholdTimeSeconds;
+const elapsedRecencySeconds = Math.max(
+  recencyTimeSeconds -
+    BibleVizUtils.Data.masks.readingHistoryRecencyThresholdTimeSeconds,
+  0
 );
-let timePeriodLowerIndex = -1;
-let timePeriodUpperIndex = -1;
 
-for (let i = 0; i < sortedTimePeriods.length - 1; i++) {
-  const currTimePeriodSeconds = sortedTimePeriods[i].GetTimePeriodInMs() / 1000;
-  const nextTimePeriodSeconds =
-    sortedTimePeriods[i + 1].GetTimePeriodInMs() / 1000;
-  if (
-    actualRecencyTimeSeconds >= currTimePeriodSeconds &&
-    actualRecencyTimeSeconds <= nextTimePeriodSeconds
-  ) {
-    timePeriodLowerIndex = i;
-    timePeriodUpperIndex = i + 1;
-    break;
-  }
+let progress = Math.min(elapsedRecencySeconds / timeFrameSeconds, 1);
+
+if (step) {
+  progress = RoundToStep(Math.max(progress, step), step);
 }
-
-if (timePeriodUpperIndex === -1) {
-  return baseColor;
-}
-
-const lowerTimePeriod = sortedTimePeriods[timePeriodLowerIndex];
-const upperTimePeriod = sortedTimePeriods[timePeriodUpperIndex];
-
-const timeDiffSeconds =
-  (upperTimePeriod.GetTimePeriodInMs() - lowerTimePeriod.GetTimePeriodInMs()) /
-  1000;
-const valueDiff = upperTimePeriod.value - lowerTimePeriod.value;
-
-const clampedRecencyTimeSeconds =
-  actualRecencyTimeSeconds - lowerTimePeriod.GetTimePeriodInMs() / 1000;
-const clampedProgress = clampedRecencyTimeSeconds / timeDiffSeconds;
-const clampedValue = clampedProgress * valueDiff;
-const value = clampedValue + lowerTimePeriod.value;
 
 const baseColorRgb = BibleVizUtils.Functions.HexToRgb({ hexColor: baseColor });
 const userColorRgb = BibleVizUtils.Functions.HexToRgb({ hexColor: userColor });
@@ -56,9 +34,9 @@ const deltaColor = [
   userColorRgb[2] - baseColorRgb[2],
 ];
 const colorToAdd = [
-  deltaColor[0] * value,
-  deltaColor[1] * value,
-  deltaColor[2] * value,
+  deltaColor[0] * progress,
+  deltaColor[1] * progress,
+  deltaColor[2] * progress,
 ];
 const finalColor = ClampRGBColor([
   baseColorRgb[0] + colorToAdd[0],
@@ -76,4 +54,8 @@ function ClampRGBColor(colorToClamp) {
     Math.max(Math.min(Math.round(colorToClamp[2]), 255), 0),
   ];
   return colorClamped;
+}
+
+function RoundToStep(value, step = 0.25) {
+  return Math.round(value / step) * step;
 }

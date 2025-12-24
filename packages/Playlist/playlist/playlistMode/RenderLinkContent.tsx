@@ -4,12 +4,13 @@ if (globalThis.NagiationTimeout) {
   globalThis.NagiationTimeout = null;
 }
 
+
+
 globalThis.RenderLinkTimer = setTimeout(async () => {
   const appName = "media-linked-playlist";
 
   const PlaylistMedia = thisBot.playlistContentRenderer();
   const { Modal, Button, ButtonsCover } = Components;
-
   DataManager.cancelCurrentPlayingSound();
   if (globalThis.SetMediaURL && !that.skipEmbed) {
     globalThis.SetMediaURL(null);
@@ -133,6 +134,7 @@ globalThis.RenderLinkTimer = setTimeout(async () => {
   os.registerApp(appName);
 
   const MediaLinkedPlaylist = () => {
+    
     return (
       <Modal
         showIcon={false}
@@ -161,7 +163,7 @@ globalThis.RenderLinkTimer = setTimeout(async () => {
                   os.unregisterApp(appName);
                 }}
                 backgroundColor="black">
-                Previous
+                {t('previous')}
               </Button>
             ) : (
               <p />
@@ -174,7 +176,7 @@ globalThis.RenderLinkTimer = setTimeout(async () => {
                   os.unregisterApp(appName);
                 }}
                 backgroundColor="black">
-                Next
+                {t('next')}
               </Button>
             )}
           </ButtonsCover>

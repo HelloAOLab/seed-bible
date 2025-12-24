@@ -72,8 +72,6 @@ export const ReadingHistoryProvider = ({ children }) => {
   const {
     startOfWeekAYearAgoDate,
     weeksCount,
-    sortedTimePeriods,
-    greaterTimePeriodSeconds,
     SEC_PER_MINUTE,
     SEC_PER_HOUR,
     SEC_PER_DAY,
@@ -115,18 +113,6 @@ export const ReadingHistoryProvider = ({ children }) => {
     const weeksCount =
       Math.floor((startOfWeekDate - startOfWeekAYearAgoDate) / MS_PER_WEEK) + 1;
 
-    const sortedTimePeriods =
-      BibleVizUtils.Data.masks.historyTimePeriodsInfo.toSorted(
-        (periodInfoA, periodInfoB) => {
-          return (
-            periodInfoA.GetTimePeriodInMs() - periodInfoB.GetTimePeriodInMs()
-          );
-        }
-      );
-    const greaterTimePeriodSeconds =
-      sortedTimePeriods[sortedTimePeriods.length - 1].GetTimePeriodInMs() /
-      MS_PER_SECOND;
-
     const dayRangesMap = new Map();
     for (let week = 0; week < weeksCount; week++) {
       for (let day = 0; day < 7; day++) {
@@ -141,8 +127,6 @@ export const ReadingHistoryProvider = ({ children }) => {
     return {
       startOfWeekAYearAgoDate,
       weeksCount,
-      sortedTimePeriods,
-      greaterTimePeriodSeconds,
       MS_PER_SECOND,
       MS_PER_MINUTE,
       MS_PER_HOUR,
@@ -157,18 +141,26 @@ export const ReadingHistoryProvider = ({ children }) => {
   }, []);
 
   const tryUpdateReadingHistoryUsersFilters = useCallback(() => {
-    const newUsersIds = [];
+    const next = new Map(readingHistoryUserFilters);
+
+    let changed = false;
+
     usersAuthId.forEach((userId) => {
-      if (!readingHistoryUserFilters.has(userId)) {
-        newUsersIds.push(userId);
+      if (!next.has(userId)) {
+        next.set(userId, false);
+        changed = true;
       }
     });
-    if (newUsersIds.length > 0) {
-      const copy = new Map(readingHistoryUserFilters);
-      newUsersIds.forEach((userId) => {
-        copy.set(userId, false);
-      });
-      setReadingHistoryUserFilters(copy);
+
+    Array.from(next.keys()).forEach((key) => {
+      if (!usersAuthId.includes(key)) {
+        next.delete(key);
+        changed = true;
+      }
+    });
+
+    if (changed) {
+      setReadingHistoryUserFilters(next);
     }
   }, [readingHistoryUserFilters, usersAuthId]);
 
@@ -187,12 +179,13 @@ export const ReadingHistoryProvider = ({ children }) => {
 
     setSelectedUsersCount(selectedUsers.length);
 
-    let summary = calculateReadingHistorySummary([]);
+    let summary;
     const rangedEventsByBook = new Map();
     const eventsByDay = new Map();
     const dailySummaries = new Map();
 
     if (selectedUsers.length === 0) {
+      summary = calculateReadingHistorySummary([]);
       setYearlyReadingHistorySummary(summary);
       setRangedReadingEventsByBook(rangedEventsByBook);
       setReadingEventsByDay(eventsByDay);
@@ -225,7 +218,9 @@ export const ReadingHistoryProvider = ({ children }) => {
 
         for (let event of flattenedEvents) {
           let { start, end, chapter, bookId } = event;
-          if (start >= rangeStart && end <= rengeEnd) {
+          const duration = end - start;
+          if (duration < SEC_PER_MINUTE) continue;
+          if (start >= rangeStart && start <= rengeEnd) {
             if (bookId === "PSA") {
               const { bookId: dividedPsalmId, chapter: dividedPsalmChapter } =
                 BibleVizUtils.Functions.ConvertCompletePsalmsToDivided({
@@ -236,7 +231,7 @@ export const ReadingHistoryProvider = ({ children }) => {
                 bookId: dividedPsalmId,
                 chapter: dividedPsalmChapter,
               };
-              ({ start, end, chapter, bookId } = event);
+              bookId = dividedPsalmId;
             }
             if (!rangedEventsByBook.has(bookId)) {
               rangedEventsByBook.set(bookId, []);
@@ -339,8 +334,6 @@ export const ReadingHistoryProvider = ({ children }) => {
         handleReadingHistoryRangeSelectorClick,
         startOfWeekAYearAgoDate,
         weeksCount,
-        sortedTimePeriods,
-        greaterTimePeriodSeconds,
         SEC_PER_MINUTE,
         SEC_PER_HOUR,
         SEC_PER_DAY,

@@ -58,7 +58,7 @@ const ProjectMode = ({
   onReset,
 }) => {
   const { menuState, setMenuValue } = useProjectMenu();
-
+  
   // const [showingAllChapters, setShowingAllChapters] = useState(true);
   const [showMoreOptions, setShowMoreOptions] = useState(false);
   const [publishAccess, setPublishAccess] = useState("public");
@@ -341,12 +341,12 @@ const ProjectMode = ({
                   }}
                   for="playlistInclude"
                 >
-                  Annotation Mode
+                  {t('annotationMode')}
                 </label>
               </div>
               <Tooltip
                 forRight={true}
-                text="Annotation mode is the way to annotate the bible so you can see content while exploring other who have subscribed to you."
+                text={t('annotationModeInfo')}
               >
                 <p
                   className="what-this center"
@@ -384,12 +384,12 @@ const ProjectMode = ({
                   }}
                   for="playlistInclude"
                 >
-                  Playlist Mode
+                  {t('playlistMode')}
                 </label>
               </div>
               <Tooltip
                 forRight={true}
-                text="Playlist mode is to create playlist and share with other or play them."
+                text={t('playlistModeInfo')}
               >
                 <p
                   className="what-this center"
@@ -426,10 +426,10 @@ const ProjectMode = ({
                   }}
                   for="playlistInclude"
                 >
-                  Project Mode
+                  {t('projectMode')}
                 </label>
               </div>
-              <Tooltip forRight={true} text="Project mode is awesome.">
+              <Tooltip forRight={true} text={t('projectModeInfo')}>
                 <p
                   className="what-this center"
                   style={{ margin: "0 0 0 0.5rem" }}
@@ -462,10 +462,10 @@ const ProjectMode = ({
             className="overlay linked-item-custom"
           >
             <p>
-              <b style={{ color: "white" }}>View options</b>
+              <b style={{ color: "white" }}>{t('viewOptions')} </b>
             </p>
             <span style={{ fontSize: "10px", color: "#c9c8c6" }}>
-              Control the view of the content on the map
+              {t('viewOptionsInfo')}
             </span>
             {menuItems.map(({ icon, label, value }, i) => {
               return (

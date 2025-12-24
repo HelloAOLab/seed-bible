@@ -1,5 +1,7 @@
 import { useScriptureMap2DContext } from "scriptureMap2D.main.ScriptureMap2DContext";
 
+import { useSideBarContext } from "app.hooks.sideBar";
+
 const { useState, useCallback, useMemo, useRef, useEffect } = os.appHooks;
 const { forwardRef } = os.appCompat;
 
@@ -27,6 +29,7 @@ const ZoomLevelOption = ({ value, handleZoomLevelClick }) => {
 };
 
 const ZoomLevelSelector = ({ setShowOptions, toggleButtonRef }) => {
+  const { t } = useSideBarContext();
   const { setScaleFactor } = useScriptureMap2DContext();
   const containerRef = useRef(null);
 
@@ -73,9 +76,9 @@ const ZoomLevelSelector = ({ setShowOptions, toggleButtonRef }) => {
       onClick={(e) => {
         e.stopPropagation();
       }}
-      className="zoomLevelSelector"
+      className="zoom-level-selector"
     >
-      <span>Zoom level</span>
+      <span>{t("zoomLevel")}</span>
       <ZoomLevelOption
         value={1.5}
         handleZoomLevelClick={handleZoomLevelClick}
@@ -130,22 +133,13 @@ export const Controls = () => {
 
   const [showOptions, setShowOptions] = useState(false);
 
-  const {
-    handleZoomIn,
-    handleZoomOut /*handleLabelsToggle, handleShowAllChaptersToggle, showingAllChapters, handleContentHeatmapToggle*/,
-  } = useScriptureMap2DContext();
+  const { handleZoomIn, handleZoomOut } = useScriptureMap2DContext();
 
   const toggleButtonRef = useRef(null);
 
-  /*{<>
-        <button onClick={handleLabelsToggle}><span class="material-symbols-outlined">sell</span></button>
-        {false && <button onClick={handleShowAllChaptersToggle}><span class="material-symbols-outlined">{showingAllChapters ? "visibility_off" : "visibility"}</span></button>}
-        <button onClick={handleContentHeatmapToggle}><span class="material-symbols-outlined">description</span></button>
-    </>}*/
-
   return (
-    <div className="mapControls">
-      <div className="zoomContainer">
+    <div className="scripture-map-2d-controls">
+      <div className="zoom-container">
         <ZoomButton onClick={handleZoomOut}>
           <span className="material-symbols-outlined">remove</span>
         </ZoomButton>

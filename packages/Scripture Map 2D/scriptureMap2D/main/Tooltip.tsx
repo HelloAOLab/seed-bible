@@ -1,10 +1,13 @@
 import { useReadingHistoryContext } from "scriptureMap2D.main.ReadingHistoryContext";
 
+import { useSideBarContext } from "app.hooks.sideBar";
+
 const { useRef, useState, useLayoutEffect, useMemo } = os.appHooks;
 
 export const UserPresenceTooltipContent = ({ colors }) => {
+  const { t } = useSideBarContext();
   return (
-    <span className="userPresenceTooltipContent">
+    <span className="user-presence-tooltip-content">
       <div>
         {colors.slice(0, 3).map((color, index) => {
           return (
@@ -28,17 +31,18 @@ export const UserPresenceTooltipContent = ({ colors }) => {
           </div>
         )}
       </div>
-      <span>reading now</span>
+      <span>{t("readingNow")}</span>
     </span>
   );
 };
 
 export const ReadingHistoryTooltipContent = ({ userId, fixedContent }) => {
+  const { t } = useSideBarContext();
   const { myAuthBotId } = useReadingHistoryContext();
 
   const { userName, backgroundColor, color } = useMemo(() => {
     const isMe = userId === myAuthBotId;
-    const userName = isMe ? "You" : "Guest";
+    const userName = isMe ? t("you") : t("guest");
     const backgroundColor = isMe
       ? BibleVizUtils.Data.tags.myUserColor
       : (BibleVizUtils.Data.vars.userPresenceData?.[userId]?.user?.color ??
@@ -49,7 +53,7 @@ export const ReadingHistoryTooltipContent = ({ userId, fixedContent }) => {
     });
 
     return { userName, backgroundColor, color };
-  }, []);
+  }, [t]);
 
   return (
     <span className="readingHistoryTooltipContent">
@@ -59,10 +63,10 @@ export const ReadingHistoryTooltipContent = ({ userId, fixedContent }) => {
   );
 };
 
-export const Tooltip = ({ content, anchor }) => {
+export const Tooltip = ({ content, anchor, offsetY = 0 }) => {
   const ref = useRef(null);
   const [style, setStyle] = useState({
-    top: anchor.y,
+    top: anchor.y + offsetY,
     left: anchor.x,
     "--arrowLeft": "50%",
   });
@@ -82,6 +86,8 @@ export const Tooltip = ({ content, anchor }) => {
       newDirection = "down";
       newTop += anchor.height ?? 0;
     }
+
+    newTop += newDirection === "down" ? offsetY : -offsetY;
 
     let newLeft = anchor.x;
     const halfWidth = rect.width / 2;

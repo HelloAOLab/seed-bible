@@ -240,7 +240,10 @@ await(async function mainInstaller(that) {
 
   async function SetUpApplicationWithoutApp(toolbarConfig, bot) {
       os.log("Setting up application", toolbarConfig)
-    const runFn = () => bot[toolbarConfig.run]();
+    const runFn = (e) => {
+      os.log("Running toolbar action", toolbarConfig.run, e)
+      bot[toolbarConfig.run]({...e})
+    }
 
     const toolbarOption = {
       icon: !toolbarConfig?.iconUrl

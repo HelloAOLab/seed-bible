@@ -229,6 +229,7 @@ function generateHtmlFromContent(data) {
   const sectionsHtml = data?.content
     .map((section) => {
       const versesHtml = section.verses
+        .filter((verse) => verse.verseNumber != null && !verse.lineBreak)
         .map((verse) => {
           return `
         <span class="sectionText">
@@ -1475,7 +1476,7 @@ function AIPromptInput({ onAIPrompt }) {
         }}
       >
         <svg
-        className='coloredIcon'
+          className="coloredIcon"
           width="16"
           height="16"
           viewBox="0 0 16 16"

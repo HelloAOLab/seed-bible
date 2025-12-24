@@ -27,6 +27,7 @@ const ButtonStyle = {
 
 
 const Overlay = () => {
+    
     const [dataItems, setDataItems] = useState([...items]);
 
     const unLinkItem = (index) => {
@@ -47,7 +48,7 @@ const Overlay = () => {
             }}
             className="overlay linked-item-custom"
         >
-            <h4>Linked Items:</h4>
+            <h4>{t('linkedItems')}:</h4>
             {dataItems.map((data, index) => <div key={data.id} className={`history-item`}>
                 {false && <span class="material-symbols-outlined unfollow">
                     drag_indicator

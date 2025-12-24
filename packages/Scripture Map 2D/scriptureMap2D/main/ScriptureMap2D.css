@@ -1,15 +1,4 @@
-/* .mapWrapper
-{
-    width: 100%;
-    display: grid;
-    grid-template-rows: 60px 1fr;
-    grid-template-columns: 100%;
-    background-color: white;
-    pointer-events: all;
-    overflow: scroll;
-} */
-
-.mapWrapper {
+.scripture-map-2d-wrapper {
   width: 100%;
   display: grid;
   grid-template-columns: 100%;
@@ -24,17 +13,12 @@
   padding-top: 16px;
 }
 
-.mapWrapper > * {
+.scripture-map-2d-wrapper > * {
   padding-right: 24px;
   padding-left: 16px;
 }
 
-/* .mapWrapper.showingContent
-{
-    grid-template-rows: 60px 1fr auto;
-} */
-
-.mapSettings {
+.scripture-map-2d-settings {
   z-index: 10;
   top: 0;
   background-color: white;
@@ -61,7 +45,7 @@
   padding: 6px;
 }
 
-.settingsOptionsContainer {
+.settings-options-container {
   position: absolute;
   right: 0;
   top: calc(100% + 4px);
@@ -77,7 +61,7 @@
   min-height: 20px;
 }
 
-.settingsOptionsContainer > button {
+.settings-options-container > button {
   min-width: 100%;
   background-color: transparent;
   color: white;
@@ -94,15 +78,15 @@
   white-space: nowrap;
 }
 
-.settingsOptionsContainer > button > span {
+.settings-options-container > button > span {
   font-size: 20px;
 }
 
-.settingsOptionsContainer > button:hover {
+.settings-options-container > button:hover {
   background-color: #4e4e4e;
 }
 
-.projectStateSetter {
+.project-state-setter {
   width: 100%;
   padding: 4px;
   display: flex;
@@ -112,18 +96,18 @@
   gap: 12px;
 }
 
-.mapSettings.collapsed .projectStateSetter {
+.scripture-map-2d-settings.collapsed .project-state-setter {
   display: none;
 }
 
-.projectStateSetter > div:nth-of-type(1) {
+.project-state-setter > div:nth-of-type(1) {
   display: flex;
   justify-content: space-between;
   align-items: center;
   width: 100%;
 }
 
-.projectStateSetter > div:nth-of-type(2) {
+.project-state-setter > div:nth-of-type(2) {
   display: flex;
   justify-content: flex-start;
   align-items: center;
@@ -132,19 +116,19 @@
   width: 100%;
 }
 
-.projectStateSetter > div:nth-of-type(2) > span:nth-of-type(1) {
+.project-state-setter > div:nth-of-type(2) > span:nth-of-type(1) {
   font-family: system-ui;
   font-size: 16px;
 }
 
-.selectionModeToggle {
+.selection-mode-toggle {
   display: flex;
   justify-content: center;
   align-items: center;
   gap: 8px;
 }
 
-.selectionModeToggle > span:nth-of-type(1) {
+.selection-mode-toggle > span:nth-of-type(1) {
   background-color: white;
   border: solid 2px black;
   width: 16px;
@@ -156,28 +140,28 @@
   font-size: 16px;
 }
 
-.selectionModeToggle > span:nth-of-type(1).checked {
+.selection-mode-toggle > span:nth-of-type(1).checked {
   background-color: #d36433;
   border-color: #d36433;
   color: white;
 }
 
-.selectionModeToggle > span:nth-of-type(2) {
+.selection-mode-toggle > span:nth-of-type(2) {
   font-family: system-ui;
 }
 
-.selectionModeToggle > span:nth-of-type(3) {
+.selection-mode-toggle > span:nth-of-type(3) {
   font-size: 16px;
 }
 
-.selectionOptions {
+.selection-options {
   display: flex;
   justify-content: center;
   align-items: center;
   gap: 8px;
 }
 
-.selectionOptions > button {
+.selection-options > button {
   display: flex;
   justify-content: center;
   align-items: center;
@@ -187,15 +171,15 @@
   background-color: transparent;
 }
 
-.selectionOptions > button:nth-of-type(1) {
+.selection-options > button:nth-of-type(1) {
   color: #808080;
 }
 
-.selectionOptions > button:nth-of-type(2) {
+.selection-options > button:nth-of-type(2) {
   color: #d36433;
 }
 
-.selectionOptions > button > span {
+.selection-options > button > span {
   font-size: 16px;
 }
 
@@ -205,22 +189,17 @@
   background-color: #d2d2d2;
 }
 
-.mapWrapper .mapControls,
-.mapWrapper .userPresenceSettings {
+.scripture-map-2d-wrapper .scripture-map-2d-controls {
   width: 100%;
 }
 
-.userPresenceSettings > div {
-  padding: 8px;
-}
-
-.readingHistoryUserSelector {
+.reading-history-user-selector {
   grid-column: 1 / 2;
   grid-row: 1 / 2;
 }
 
-.projectFiltersSelector,
-.readingHistoryUserSelector {
+.project-filters-selector,
+.reading-history-user-selector {
   display: flex;
   justify-content: flex-start;
   align-items: center;
@@ -228,23 +207,23 @@
   flex-wrap: wrap;
 }
 
-.mapSettings.collapsed .projectFiltersSelector,
-.mapSettings.collapsed .readingHistoryUserSelector {
+.scripture-map-2d-settings.collapsed .project-filters-selector,
+.scripture-map-2d-settings.collapsed .reading-history-user-selector {
   display: none;
 }
 
-.readingHistoryTimelineContainer {
+.reading-history-timeline-container {
   width: 100%;
   padding: 8px;
   grid-column: 1 / 3;
   grid-row: 2 / 3;
 }
 
-.mapSettings.collapsed .readingHistoryTimelineContainer {
+.scripture-map-2d-settings.collapsed .reading-history-timeline-container {
   display: none;
 }
 
-.readingHistoryTimeline {
+.reading-history-timeline {
   width: 100%;
   display: grid;
   gap: 2px;
@@ -253,7 +232,7 @@
   scrollbar-width: thin !important;
 }
 
-.readingHistoryTimeline-item {
+.reading-history-timeline-item {
   width: var(--timelineItemSize);
   height: var(--timelineItemSize);
   background-color: #e3e3e3;
@@ -264,24 +243,24 @@
   cursor: pointer;
 }
 
-.readingHistoryTimeline-item.selected {
-  border-color: #497f77;
+.reading-history-timeline-item.selected {
+  border-color: #d36433;
 }
 
-.readingHistoryTimeline-label {
+.reading-history-timeline-label {
   font-family: system-ui;
   font-size: 12px;
 }
 
-.readingHistoryTimeline-label-month {
+.reading-history-timeline-label-month {
   margin-bottom: 4px;
 }
 
-.readingHistoryTimeline-label-day {
+.reading-history-timeline-label-day {
   margin-right: 4px;
 }
 
-.projectStateButton {
+.project-state-button {
   padding: 8px 12px;
   background-color: #f0f1f1;
   border: solid 2px #dedede;
@@ -294,119 +273,26 @@
   cursor: pointer;
 }
 
-.projectFiltersSelectorOption.selected,
-.projectStateSetterOption:hover {
+.project-filters-selector-option.selected,
+.project-state-setter-option:hover {
   background-color: #ffe3d7;
   border-color: #d36433;
 }
 
-.filterOptionIcon {
+.filter-option-icon {
   width: 16px;
   height: 16px;
   border-radius: 20px;
   border-width: 2px;
 }
 
-.usersSelector {
-  display: flex;
-  justify-content: flex-start;
-  align-items: center;
-  gap: 8px;
-}
-
-.userButton {
-  appearance: none;
-  background-color: transparent;
-  padding: 8px;
-  border: none;
-  display: grid;
-  grid-template-columns: 44px;
-  grid-template-rows: 44px auto;
-  gap: 8px;
-}
-
-.userButton span:nth-of-type(1) {
-  width: 100%;
-  height: 100%;
-  display: flex;
-  justify-content: center;
-  align-items: center;
-  background-color: #ffb2b2;
-  border-radius: 25px;
-  border: solid 2px #545454;
-  font-size: 20px;
-}
-
-.userButton span:nth-of-type(2) {
-  overflow: hidden;
-  text-overflow: ellipsis;
-  font-size: 10px;
-  white-space: nowrap;
-}
-
-.modesSelector,
-.contentVisualizationSelector {
-  display: flex;
-  justify-content: flex-start;
-  align-items: center;
-  gap: 8px;
-}
-
-.toggleButton {
-  appearance: none;
-  border: none;
-  padding: 4px 8px;
-  border-radius: 4px;
-  background-color: #a0a0a0;
-  color: white;
-  display: flex;
-  justify-content: center;
-  align-items: center;
-  gap: 4px;
-}
-
-.toggleButton.enabled {
-  background-color: #40bf40;
-  box-shadow: 0 0 4px 0 #40bf40;
-}
-
-.toggleButton span {
-  font-size: 14px;
-}
-
-.timeFrameSetter {
-  display: flex;
-  justify-content: space-evenly;
-  align-items: center;
-}
-
-.timeFrameSetter > div {
-  display: flex;
-  justify-content: center;
-  align-items: center;
-}
-
-.timeFrameSetter > div > .timeSetter {
-  appearance: none;
-  border: none;
-  width: 24px;
-  height: 24px;
-  display: flex;
-  justify-content: center;
-  align-items: center;
-  background-color: transparent;
-}
-.timeFrameSetter > div > .timeSetter span {
-  font-size: 14px;
-}
-
-.mapWrapper,
-.mapWrapper * {
+.scripture-map-2d-wrapper,
+.scripture-map-2d-wrapper * {
   box-sizing: border-box;
   scrollbar-width: none;
 }
 
-.mapWrapper .mapControls {
+.scripture-map-2d-wrapper .scripture-map-2d-controls {
   height: 60px;
   display: flex;
   justify-content: center;
@@ -415,7 +301,7 @@
   width: 100%;
 }
 
-.mapWrapper .mapControls .zoomContainer {
+.scripture-map-2d-wrapper .scripture-map-2d-controls .zoom-container {
   background-color: #f0f1f1;
   box-shadow: 0 0 6px 0 #0000002e;
   display: flex;
@@ -423,7 +309,7 @@
   padding: 4px;
 }
 
-.mapWrapper .mapControls .zoomContainer > button {
+.scripture-map-2d-wrapper .scripture-map-2d-controls .zoom-container > button {
   appearance: none;
   display: flex;
   justify-content: center;
@@ -435,36 +321,55 @@
   position: relative;
 }
 
-.mapWrapper .mapControls .zoomContainer > button.hovered {
+.scripture-map-2d-wrapper
+  .scripture-map-2d-controls
+  .zoom-container
+  > button.hovered {
   background-color: #d36433;
   color: white !important;
 }
 
-.mapWrapper .mapControls .zoomContainer > button:nth-of-type(1),
-.mapWrapper .mapControls .zoomContainer > button:nth-of-type(3) {
+.scripture-map-2d-wrapper
+  .scripture-map-2d-controls
+  .zoom-container
+  > button:nth-of-type(1),
+.scripture-map-2d-wrapper
+  .scripture-map-2d-controls
+  .zoom-container
+  > button:nth-of-type(3) {
   width: 32px;
 }
 
-.mapWrapper .mapControls .zoomContainer > button > span {
+.scripture-map-2d-wrapper
+  .scripture-map-2d-controls
+  .zoom-container
+  > button
+  > span {
   color: inherit;
 }
 
-.mapWrapper .mapControls .zoomContainer > button:nth-of-type(1) > span,
-.mapWrapper .mapControls .zoomContainer > button:nth-of-type(3) > span {
+.scripture-map-2d-wrapper
+  .scripture-map-2d-controls
+  .zoom-container
+  > button:nth-of-type(1)
+  > span,
+.scripture-map-2d-wrapper
+  .scripture-map-2d-controls
+  .zoom-container
+  > button:nth-of-type(3)
+  > span {
   font-size: 16px;
 }
 
-.mapWrapper .mapControls .zoomContainer > button:nth-of-type(2) > span {
+.scripture-map-2d-wrapper
+  .scripture-map-2d-controls
+  .zoom-container
+  > button:nth-of-type(2)
+  > span {
   text-box: auto;
 }
 
-/* .mapWrapper .mapControls .zoomContainer > button:hover 
-{
-    background-color: #D36433;
-    color: white;
-} */
-
-.zoomLevelSelector {
+.zoom-level-selector {
   position: absolute;
   left: 50%;
   transform: translateX(-50%);
@@ -479,20 +384,20 @@
   min-width: 148px;
 }
 
-.zoomLevelSelector > * {
+.zoom-level-selector > * {
   padding: 8px;
   width: 100%;
   color: white;
 }
 
-.zoomLevelSelector > span {
+.zoom-level-selector > span {
   font-size: 16px;
   font-weight: 600;
   text-align: start;
   /* margin-bottom: 8px; */
 }
 
-.zoomLevelSelector > button {
+.zoom-level-selector > button {
   display: flex;
   justify-content: space-between;
   align-items: center;
@@ -502,15 +407,15 @@
   font-size: 16px;
 }
 
-.zoomLevelSelector button:hover {
+.zoom-level-selector button:hover {
   background-color: #d364334d;
 }
 
-.zoomLevelSelector > button > span {
+.zoom-level-selector > button > span {
   color: inherit;
 }
 
-.zoomLevelSelector > button > span:nth-of-type(2) {
+.zoom-level-selector > button > span:nth-of-type(2) {
   border-radius: 25px;
   width: 16px;
   height: 16px;
@@ -518,7 +423,7 @@
   border: solid 5px #d36433;
 }
 
-.mapWrapper .mapContainer {
+.scripture-map-2d-wrapper .scripture-map-2d-container {
   display: flex;
   flex-direction: column;
   justify-content: flex-start;
@@ -528,29 +433,35 @@
   height: 100%;
   max-width: 100%;
   overflow: scroll;
-  gap: calc(8px * var(--scaleFactor));
+  gap: calc(8px * var(--scale-factor));
 }
 
-.mapWrapper .mapContainer .testamentContainer {
+.scripture-map-2d-wrapper .scripture-map-2d-container .testament-container {
   display: flex;
   flex-direction: column;
   justify-content: flex-start;
   align-items: flex-start;
-  gap: calc(16px * var(--scaleFactor));
+  gap: calc(16px * var(--scale-factor));
   width: 100%;
 }
 
-.mapWrapper .mapContainer .testamentContainer .testamentContent {
+.scripture-map-2d-wrapper
+  .scripture-map-2d-container
+  .testament-container
+  .testament-content {
   width: 100%;
   display: grid;
-  grid-template-columns: repeat(auto-fill, minmax(var(--bookWidth), 1fr));
-  grid-auto-columns: var(--bookWidth);
-  gap: calc(16px * var(--scaleFactor));
+  grid-template-columns: repeat(auto-fill, minmax(var(--book-width), 1fr));
+  grid-auto-columns: var(--book-width);
+  gap: calc(16px * var(--scale-factor));
   align-items: start;
   z-index: 0;
 }
 
-.mapWrapper .mapContainer .testamentContainer .mapBookContainer {
+.scripture-map-2d-wrapper
+  .scripture-map-2d-container
+  .testament-container
+  .book-container {
   display: flex;
   flex-direction: column;
   justify-content: flex-start;
@@ -559,110 +470,32 @@
   width: 100%;
 }
 
-.mapWrapper
-  .mapContainer
-  .testamentContainer
-  .mapBookContainer
-  .mapBook
-  .bookName,
-.mapWrapper
-  .mapContainer
-  .testamentContainer
-  .mapBookContainer
-  .sectionNameContainer {
-  width: 100%;
-  height: calc(80px * var(--scaleFactor));
-  display: flex;
-  justify-content: center;
-  align-items: center;
-  padding: calc(16px * var(--scaleFactor));
-  /* background-color: transparent; */
-}
-
-.mapWrapper
-  .mapContainer
-  .testamentContainer
-  .mapBookContainer
-  .sectionNameContainer {
-  border-radius: calc(16px * var(--scaleFactor)) calc(16px * var(--scaleFactor))
-    0 0;
-  margin-left: 0;
-  box-sizing: border-box;
-  border-top: solid calc(8px * var(--scaleFactor)) transparent;
-  border-right: solid calc(8px * var(--scaleFactor)) transparent;
-  border-left: solid calc(8px * var(--scaleFactor)) transparent;
-}
-
-.mapWrapper
-  .mapContainer
-  .testamentContainer
-  .mapBookContainer
-  .sectionNameContainer
-  span {
-  overflow: hidden;
-  text-overflow: ellipsis;
-  width: 100%;
-  text-box: auto;
-  font-size: calc(32px * var(--scaleFactor));
-  text-align: center;
-  white-space: nowrap;
-}
-
-.mapWrapper
-  .mapContainer
-  .testamentContainer
-  .mapBookContainer.collapsed
-  .sectionNameContainer {
-  border-bottom: solid calc(8px * var(--scaleFactor)) transparent;
-  border-radius: calc(16px * var(--scaleFactor));
-}
-
-.mapWrapper .mapContainer .testamentContainer .mapBookContainer.collapsed {
-  margin-right: calc(16px * var(--scaleFactor));
-}
-
-.mapWrapper .mapContainer .testamentContainer .mapBookContainer .bookCover {
+.scripture-map-2d-wrapper
+  .scripture-map-2d-container
+  .testament-container
+  .book-container
+  .book-cover {
   background: red;
   width: 100%;
-  border-radius: calc(8px * var(--scaleFactor));
+  border-radius: calc(8px * var(--scale-factor));
   border: solid 1px transparent;
   display: grid;
-  gap: var(--chapterGap);
+  gap: var(--chapter-gap);
   position: relative;
-  grid-template-columns: repeat(
-    var(--bookMaxAmountOfColumns),
-    var(--chapterWidth)
-  );
-  grid-template-rows: repeat(auto-fill, var(--chapterWidth));
+  grid-template-columns: repeat(var(--book-max-columns), var(--chapter-width));
+  grid-template-rows: repeat(auto-fill, var(--chapter-width));
   justify-content: center;
 }
 
-.mapWrapper
-  .mapContainer
-  .testamentContainer
-  .mapBookContainer
-  .bookCover.displayingContainer {
-  gap: calc(2px * var(--scaleFactor));
-  display: grid;
-  /* overflow: hidden; */
-}
-
-.mapWrapper
-  .mapContainer
-  .testamentContainer
-  .mapBookContainer
-  .bookCover.displayingContainer
-  > div:not(.presentUserPresenceIcon) {
-  width: 100%;
-  height: 100%;
-  border-radius: calc(4px * var(--scaleFactor));
-}
-
-.mapWrapper .mapContainer .testamentContainer .mapBookContainer .bookName {
+.scripture-map-2d-wrapper
+  .scripture-map-2d-container
+  .testament-container
+  .book-container
+  .book-name {
   cursor: pointer;
-  font-size: calc(32px * var(--scaleFactor));
-  height: calc(80px * var(--scaleFactor));
-  padding: calc(16px * var(--scaleFactor));
+  font-size: calc(32px * var(--scale-factor));
+  height: calc(80px * var(--scale-factor));
+  padding: calc(16px * var(--scale-factor));
   font-family: system-ui;
   width: 100%;
   display: flex;
@@ -670,43 +503,22 @@
   align-items: center;
 }
 
-.mapWrapper .mapContainer .testamentContainer .mapBookContainer .bookName span {
-  width: calc(40px * var(--scaleFactor));
-  height: calc(40px * var(--scaleFactor));
-  background-color: #e0e0e0;
-  border-radius: calc(32px * var(--scaleFactor));
-  color: white;
-  font-size: calc(32px * var(--scaleFactor));
-  display: flex;
-  justify-content: center;
-  align-items: center;
-}
-
-.mapWrapper
-  .mapContainer
-  .testamentContainer
-  .mapBookContainer
-  .bookName
-  span.checked {
-  background-color: #2ab80d;
-}
-
-.mapWrapper
-  .mapContainer
-  .testamentContainer
-  .mapBookContainer
-  .bookCover
+.scripture-map-2d-wrapper
+  .scripture-map-2d-container
+  .testament-container
+  .book-container
+  .book-cover
   .chapter {
   background: rgb(227, 227, 227);
   visibility: visible;
-  font-size: calc(12px * var(--scaleFactor));
-  width: var(--chapterWidth);
-  height: var(--chapterHeight);
+  font-size: calc(12px * var(--scale-factor));
+  width: var(--chapter-width);
+  height: var(--chapter-height);
   position: relative;
-  border-radius: calc(4px * var(--scaleFactor));
+  border-radius: calc(4px * var(--scale-factor));
   color: #4b4b4b;
   cursor: pointer;
-  border-width: calc(3px * var(--scaleFactor));
+  border-width: calc(3px * var(--scale-factor));
   font-family: system-ui;
   text-box: auto;
   vertical-align: middle;
@@ -722,28 +534,28 @@
   inherits: false;
 }
 
-.mapWrapper
-  .mapContainer
-  .testamentContainer
-  .mapBookContainer
-  .bookCover
-  .chapter.showUserPresence::before,
-.mapWrapper
-  .mapContainer
-  .testamentContainer
-  .mapBookContainer
-  .bookCover
-  .chapter.showUserPresence::after,
-.mapWrapper
-  .mapContainer
-  .testamentContainer
-  .mapBookContainer
-  .bookCover.showUserPresence::before,
-.mapWrapper
-  .mapContainer
-  .testamentContainer
-  .mapBookContainer
-  .bookCover.showUserPresence::after {
+.scripture-map-2d-wrapper
+  .scripture-map-2d-container
+  .testament-container
+  .book-container
+  .book-cover
+  .chapter.show-user-presence::before,
+.scripture-map-2d-wrapper
+  .scripture-map-2d-container
+  .testament-container
+  .book-container
+  .book-cover
+  .chapter.show-user-presence::after,
+.scripture-map-2d-wrapper
+  .scripture-map-2d-container
+  .testament-container
+  .book-container
+  .book-cover.show-user-presence::before,
+.scripture-map-2d-wrapper
+  .scripture-map-2d-container
+  .testament-container
+  .book-container
+  .book-cover.show-user-presence::after {
   content: "";
   position: absolute;
   height: 100%;
@@ -752,114 +564,54 @@
   left: 50%;
   translate: -50% -50%;
   z-index: -1;
-  animation: 4s spin linear infinite;
+  animation: 8s spin linear infinite;
 }
 
-.mapWrapper
-  .mapContainer
-  .testamentContainer
-  .mapBookContainer
-  .bookCover
-  .chapter.showUserPresence::before,
-.mapWrapper
-  .mapContainer
-  .testamentContainer
-  .mapBookContainer
-  .bookCover
-  .chapter.showUserPresence::after {
+.scripture-map-2d-wrapper
+  .scripture-map-2d-container
+  .testament-container
+  .book-container
+  .book-cover
+  .chapter.show-user-presence::before,
+.scripture-map-2d-wrapper
+  .scripture-map-2d-container
+  .testament-container
+  .book-container
+  .book-cover
+  .chapter.show-user-presence::after {
   background-image: conic-gradient(
     from var(--angle),
     var(--userPresenceColors)
   );
-  padding: calc(var(--scaleFactor) * 2px);
-  border-radius: calc(5px * var(--scaleFactor));
+  padding: calc(var(--scale-factor) * 2px);
+  border-radius: calc(5px * var(--scale-factor));
 }
 
-.mapWrapper
-  .mapContainer
-  .testamentContainer
-  .mapBookContainer
-  .bookCover.showUserPresence::before,
-.mapWrapper
-  .mapContainer
-  .testamentContainer
-  .mapBookContainer
-  .bookCover.showUserPresence::after {
+.scripture-map-2d-wrapper
+  .scripture-map-2d-container
+  .testament-container
+  .book-container
+  .book-cover.show-user-presence::before,
+.scripture-map-2d-wrapper
+  .scripture-map-2d-container
+  .testament-container
+  .book-container
+  .book-cover.show-user-presence::after {
   background-image: conic-gradient(
     from var(--angle),
     var(--bookUserPresenceColors)
   );
-  padding: calc(var(--scaleFactor) * 6px);
-  border-radius: calc(10px * var(--scaleFactor));
+  padding: calc(var(--scale-factor) * 6px);
+  border-radius: calc(10px * var(--scale-factor));
 }
 
-.mapWrapper
-  .mapContainer
-  .testamentContainer
-  .mapBookContainer
-  .bookCover
-  .chapter.showUserPresence::before,
-.mapWrapper
-  .mapContainer
-  .testamentContainer
-  .mapBookContainer
-  .bookCover::before {
+.scripture-map-2d-wrapper
+  .scripture-map-2d-container
+  .testament-container
+  .book-container
+  .book-cover.show-user-presence::before {
   filter: blur(0.2rem);
   opacity: 0.7;
-}
-
-@keyframes spin {
-  from {
-    --angle: 0deg;
-  }
-  to {
-    --angle: 360deg;
-  }
-}
-
-/* .mapWrapper .mapContainer .testamentContainer .mapBookContainer .bookCover .chapter .contentContainer,
-.mapWrapper .mapContainer .testamentContainer .mapBookContainer .bookCover .chapter > span:nth-of-type(1)
-{
-    width: 100%;
-    height: 100%;
-    position: absolute;
-    left: 0;
-    top: 0;
-    pointer-events: none;
-} */
-
-.mapWrapper
-  .mapContainer
-  .testamentContainer
-  .mapBookContainer
-  .bookCover
-  .chapter
-  .contentContainer {
-  gap: 1px;
-  display: grid;
-}
-
-/* .mapWrapper .mapContainer .testamentContainer .mapBookContainer .bookCover .chapter > span:nth-of-type(1)
-{
-    background-color: #ffffff4d;
-    font-family: system-ui;
-    text-box: auto;
-    display: flex;
-    justify-content: center;
-    align-items: center;
-} */
-
-.mapWrapper
-  .mapContainer
-  .testamentContainer
-  .mapBookContainer
-  .bookCover
-  .chapter
-  .contentContainer
-  div {
-  width: 100%;
-  height: 100%;
-  border-radius: calc(2px * var(--scaleFactor));
 }
 
 .toggle {
@@ -867,10 +619,10 @@
   display: flex;
   justify-content: space-between;
   align-items: center;
-  padding: calc(16px * var(--scaleFactor));
+  padding: calc(16px * var(--scale-factor));
   color: black;
-  border-radius: calc(8px * var(--scaleFactor));
-  border-bottom: solid calc(8px * var(--scaleFactor)) transparent;
+  border-radius: calc(8px * var(--scale-factor));
+  border-bottom: solid calc(8px * var(--scale-factor)) transparent;
   cursor: pointer;
 }
 
@@ -878,7 +630,7 @@
   text-align: center;
   vertical-align: middle;
   text-box: auto;
-  font-size: calc(32px * var(--scaleFactor));
+  font-size: calc(32px * var(--scale-factor));
 }
 
 .toggle > span:nth-of-type(1) {
@@ -887,100 +639,8 @@
   text-overflow: ellipsis;
 }
 
-.testamentToggle {
+.toggle-testament {
   background-color: #e4e4e4;
-}
-
-.sectionToggle {
-}
-
-.presentUserPresenceIcon {
-  display: flex;
-  justify-content: center;
-  align-items: center;
-  border-radius: 35px;
-}
-
-.presentUserPresenceIcon.presentUserPresenceIcon-book {
-  position: absolute;
-  top: calc(calc(32px * var(--scaleFactor)) / 2 * (-1));
-  height: calc(32px * var(--scaleFactor));
-  width: calc(32px * var(--scaleFactor));
-  border: solid calc(2px * var(--scaleFactor)) white;
-}
-
-.presentUserPresenceIcon.presentUserPresenceIcon-tooltip {
-  height: 20px;
-  width: 20px;
-  min-height: 20px;
-  min-width: 20px;
-}
-
-.presentUserPresenceIcon.presentUserPresenceIcon-book > span {
-  font-size: calc(12px * var(--scaleFactor));
-  font-family: sans-serif;
-}
-
-.presentUserPresenceIcon.presentUserPresenceIcon-tooltip > span {
-  font-size: 12px;
-  color: black;
-}
-
-.readingHistoryChapterNotificationContainer,
-.upcomingEventsChapterNotificationContainer,
-.presentUserPresenceDotContainer {
-  position: absolute;
-  display: flex;
-  flex-direction: row-reverse;
-  padding: calc(var(--scaleFactor) * 2px);
-  border-radius: calc(16px * var(--scaleFactor));
-  background-color: white;
-  gap: calc(1px * var(--scaleFactor));
-}
-
-.presentUserPresenceDotContainer {
-  top: calc(calc(8px * var(--scaleFactor)) / 2 * (-1));
-  right: calc(calc(8px * var(--scaleFactor)) / 2 * (-1));
-}
-
-.readingHistoryChapterNotificationContainer,
-.upcomingEventsChapterNotificationContainer {
-  bottom: calc(calc(14px * var(--scaleFactor)) / 2 * (-1));
-}
-
-.readingHistoryChapterNotificationContainer {
-  left: calc(calc(12px * var(--scaleFactor)) / 2 * (-1));
-}
-
-.upcomingEventsChapterNotificationContainer {
-  right: calc(calc(12px * var(--scaleFactor)) / 2 * (-1));
-}
-
-.readingHistoryChapterNotificationContainer > span:not(.tooltip),
-.upcomingEventsChapterNotificationContainer > span:not(.tooltip) {
-  height: calc(8px * var(--scaleFactor));
-  display: flex;
-  justify-content: center;
-  align-items: center;
-  font-size: calc(8px * var(--scaleFactor));
-}
-
-.readingHistoryChapterNotificationContainer > span.material-symbols-outlined,
-.upcomingEventsChapterNotificationContainer > span.material-symbols-outlined {
-  width: calc(8px * var(--scaleFactor));
-}
-
-.readingHistoryChapterNotificationContainer > span.notificationCount,
-.upcomingEventsChapterNotificationContainer > span.notificationCount {
-  /* padding: 0 calc(var(--scaleFactor) * 1px); */
-}
-
-.presentUserPresenceDot {
-  width: calc(8px * var(--scaleFactor));
-  height: calc(8px * var(--scaleFactor));
-  border-radius: 25px;
-  border: solid calc(calc(2px * var(--scaleFactor)) / 2) white;
-  pointer-events: none;
 }
 
 .tooltip {
@@ -1043,19 +703,19 @@
   text-overflow: ellipsis;
 }
 
-.tooltip .userPresenceTooltipContent {
+.tooltip .user-presence-tooltip-content {
   width: 100%;
   display: flex;
   justify-content: center;
   align-items: center;
 }
 
-.tooltip .userPresenceTooltipContent > div {
+.tooltip .user-presence-tooltip-content > div {
   display: flex;
   padding-left: 12px;
 }
 
-.tooltip .userPresenceTooltipContent > div > div {
+.tooltip .user-presence-tooltip-content > div > div {
   height: 24px;
   width: 24px;
   border-radius: 12px;
@@ -1063,7 +723,7 @@
   border: solid 3px black;
 }
 
-.tooltip .userPresenceTooltipContent > span {
+.tooltip .user-presence-tooltip-content > span {
   padding-bottom: 4px;
 }
 
@@ -1082,4 +742,13 @@
 
 .hidden {
   display: none !important;
+}
+
+@keyframes spin {
+  from {
+    --angle: 0deg;
+  }
+  to {
+    --angle: 360deg;
+  }
 }

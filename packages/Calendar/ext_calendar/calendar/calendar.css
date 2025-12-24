@@ -1,32 +1,23 @@
-
 calendar {
   font-size: 14px;
-  font-family: Satoshi;
+   font-family: "Inter", sans-serif;
   padding: 10px;
   width: 100%;
   background-color: white;
-              
-  overflow-y: auto;           
-  overflow-x: hidden;   
-       
+
+  overflow-y: auto;
+  overflow-x: hidden;
 }
-.calendar-wrapper{
- 
+.calendar-wrapper {
   overflow: auto;
 }
+.fc-prev-button .fc-icon,
+.fc-next-button .fc-icon {
+  font-weight: 900 !important;   /* increases thickness */
+  font-size: 16px;              /* optional: bigger arrow */
+}
 
-.fc-multimonth .hide-events,
-.fc-multimonth .fc-daygrid-day-events,
-.fc-multimonth .fc-daygrid-event-harness,
-.fc-multimonth .fc-daygrid-event,
-.fc-multimonth .fc-daygrid-dot-event,
-.fc-multimonth .fc-daygrid-more-link {
-  display: none !important;
-}
-.fc-multimonth .fc-day{
-  background-color: #eeeeee;
-  
-}
+
 .small-view .fc-daygrid-day-events {
   flex-direction: row;
   flex-wrap: wrap;
@@ -34,17 +25,13 @@ calendar {
   gap: 4px;
 }
 
-
-
-
-
 /* Only apply when in multiMonthYear view */
-.fc-multimonth-view .fc-multimonth-month {
+/*.fc-multimonth-view .fc-multimonth-month {
   padding: 2px !important;
   margin: 2px !important;
-}
+}*/
 
-.fc-multimonth-view .fc-daygrid-body-natural tr {
+/*.fc-multimonth-view .fc-daygrid-body-natural tr {
   height: 16px !important;
   max-height: 16px !important;
 }
@@ -60,6 +47,18 @@ calendar {
   font-size: 9px !important;
   padding: 4px 2px !important;
   margin: 0 !important;
+}*/
+.fc-multimonth .fc-day {
+  background-color: #eeeeee;
+}
+/* Show day numbers for disabled (prev/next month) dates */
+.fc-day-disabled .fc-daygrid-day-top {
+  visibility: visible !important;
+}
+
+.fc-day-disabled .fc-daygrid-day-number {
+  visibility: visible !important;
+  color: inherit !important;
 }
 
 .fc-multimonth-view .fc-daygrid-day-frame {
@@ -80,11 +79,12 @@ calendar {
 }
 
 /* Remove ONLY top + left + right borders from Sun & Mon header cells */
-.fc-scrollgrid{
+.fc-scrollgrid {
   border-top: none !important;
   border-left: none;
   border-right: none;
 }
+
 
 .fc-theme-standard .fc-scrollgrid-section-header th {
   border-left: none !important;
@@ -98,7 +98,7 @@ calendar {
 /* Remove left border of the first TH element */
 .fc .fc-scrollgrid-sync-table th:first-of-type {
   border-left: none !important;
-  border-right: none  !important;
+  border-right: none !important;
 }
 
 /* Remove right border of the last TH element */
@@ -107,12 +107,16 @@ calendar {
   border-left: none !important;
 }
 
-.fc-scrollgrid .fc-col-header {
-  border-left: none !important;
+
+/* Apply ONLY when td/th does NOT already have a border */
+.fc-scrollgrid-section-body td:not([style*="border-left"]),
+.fc-scrollgrid-section-body th:not([style*="border-left"]) {
+  border-left: 1px solid #ddd;
 }
-.fc-scrollgrid-section-body .fc-scrollgrid-sync-inner {
-  border-left: 1px solid #ddd !important; /* or your default color */
+.fc-scrollgrid {
+  border-left: 1px solid #ddd !important;
 }
+
 .fc-scrollgrid-section-header .fc-col-header,
 .fc-scrollgrid-section-header .fc-col-header-cell,
 .fc-scrollgrid-section-header .fc-scrollgrid-sync-inner {
@@ -127,113 +131,115 @@ calendar {
 .fc-theme-standard th {
   border-left: none !important;
 }
-.fc-header-toolbar{
+.fc-header-toolbar {
   margin-bottom: 30px;
-
 }
-.fc-view-harness{
+.fc-view-harness {
   margin-top: 12px;
 }
-.fc-day{
+.fc-day {
   font-weight: 400;
 }
 .fc-header-toolbar button {
   margin-right: 10px; /* Adjust the space as needed */
-  
 }
 .fc-header-toolbar button:not(:last-child) {
   margin-right: 10px;
 }
-.fc-multimonth .fc-event .fc-daygrid-day-events::after {
-  display: none !important;
+.fc .fc-day-today .fc-daygrid-day-frame{
+  background-color: #ECF5FF;
+  margin-left: 0;
 }
-.fc-multimonth-view .fc-daygrid-more-link{
+.fc .fc-daygrid-day-frame{
+  padding: 6px;
+ 
+}
+.fc .fc-multimonth .fc-daygrid-day-frame{
+  padding: 0;
+}
+
+.fc .fc-daygrid-day-top {
+    display: flex;
+    flex-direction: row;
+    
+}
+.fc .fc-daygrid-day-number{
+  
+  font-weight: 400;
+  font-family: "Inter", sans-serif;
+  
+  
+}
+.fc .fc-multimonth .fc-daygrid-day-number{
+  font-size: 8px;
+}
+
+.fc-multimonth-view .fc-daygrid-more-link {
   display: none;
-}
-/* Hide all event indicators and row-harness elements in multi-month view */
-.fc-multimonth-view .fc-daygrid-day-events,
-.fc-multimonth-view .fc-daygrid-event-harness,
-.fc-multimonth-view .fc-daygrid-day-events::before,
-.fc-multimonth-view .fc-daygrid-day-events::after {
-  display: none !important;
 }
 
 #view-toggle-select {
-    padding-top: 4px;
-    padding-bottom: 4px;
-    border-radius: 80px;
+  padding-top: 4px;
+  padding-bottom: 4px;
+  border-radius: 80px;
 }
 
 .user-event {
-  color: skyblue; 
- 
+  color: skyblue;
 }
 .hide-events {
   display: none !important;
 }
 
-/* Multi-day events as line */
 .event-line {
   display: block !important;
   height: 6px;
-  color:blue;
+  color: blue;
   width: auto;
-  overflow:visible;
-
+  overflow: visible;
 }
-.event-line .fc-event-title{
+.event-line .fc-event-title {
   display: none;
 }
-.dot-view .fc-event-title{
+.dot-view .fc-event-title {
   display: none;
 }
-
 
 /* Single-day full view (default styling) */
-.dot-view{
+.dot-view {
   display: inline-block;
   width: 7px;
-  
+
   height: 7px;
   border-radius: 50%;
 }
 
 /* Single-day dot view */
 
-
-
-
-
-
 .fc-toolbar-title {
-    font-size: 16px;
+  font-size: 16px;
 }
 
 .fc-events-container {
-    width: 100%;
-    background-color: white;
-    height: fit-content;
-    display: flex;
+  width: 100%;
+  background-color: white;
+  height: fit-content;
+  display: flex;
 
-    /* align-items: flex-end; */
-    border-radius: 5px;
-    
-    flex-direction: column;
+  /* align-items: flex-end; */
+  border-radius: 5px;
+
+  flex-direction: column;
 }
 
 .fc-events-container-1 {
-    
-    display: flex;
-    justify-content: space-between;
+  display: flex;
+  justify-content: space-between;
 }
-
 
 .add-btn {
-    /* Ensure it doesn't go beyond parent */
-    max-width: 95%;
-   
+  max-width: 95%;
 }
-
 
 .fc-prev-button {
   background-color: #007bff;
@@ -250,11 +256,10 @@ calendar {
   border: none;
 }
 
- .fc-daygrid-day-events{
+.fc-daygrid-day-events {
   display: flex;
   flex-direction: column;
 }
-
 
 /* Style the today button */
 .fc-today-button {
@@ -265,49 +270,41 @@ calendar {
 }
 
 #draggable-el {
-    display: flex;
-    flex-direction: column;
-    width: 100%;
-    height: fit-content;
-    gap: 5px;
-    margin: 10px 0px;
+  display: flex;
+  flex-direction: column;
+  width: 100%;
+  height: fit-content;
+  gap: 5px;
+  margin: 10px 0px;
 }
 
 .item-class {
-    background-color: #3a87ad;
-    padding: 10px 5px;
-    border-radius: 5px;
-    display: flex;
-    justify-content: space-between;
-    align-items: center;
-    color: white;
+  background-color: #3a87ad;
+  padding: 10px 5px;
+  border-radius: 5px;
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  color: white;
 }
 
 .fc-event-title-container {
-    display: flex;
-    flex-direction: column;
-    gap: 4px;
-
-
-
+  display: flex;
+  flex-direction: column;
+  gap: 4px;
 }
 
 .fc-event-title-container-1 {
-    display: flex;
-    justify-content: space-between;
-
+  display: flex;
+  justify-content: space-between;
 }
 
 .fc-event-title {
-
-
-    font-weight: bold;
+  font-weight: bold;
 }
 .google-modal {
   font-family: Satoshi;
-  background-color:#f4f7f8;
-
- 
+  background-color: #f4f7f8;
 
   border-radius: 20px;
 
@@ -319,40 +316,34 @@ calendar {
 }
 
 .gm-input {
-  
   font-size: 14px;
   border: none;
   outline: none;
   resize: none;
 }
-.gm-input.title-res{
+.gm-input.title-res {
   outline: none;
   background-color: #f4f7f8;
- 
-  font-size: 14px;
-  border-bottom:1px solid gray;
-  font-weight: bold;
-  
 
+  font-size: 14px;
+  border-bottom: 1px solid gray;
+  font-weight: bold;
 }
 .fc-daygrid-event .fc-event-title {
   white-space: normal !important;
   word-break: break-word !important;
 }
 
-
-
-
 .gm-input.title {
   outline: none;
   background-color: #f4f7f8;
   padding: 4px 10px;
   font-size: 25px;
-  border-bottom:1px solid gray;
+  border-bottom: 1px solid gray;
   font-weight: bold;
   margin-left: 26px;
 }
-.gm-input.title:focus{
+.gm-input.title:focus {
   border-bottom: 3px solid blue;
 }
 
@@ -376,60 +367,53 @@ calendar {
   background-color: #e0e0e0;
   color: black;
 }
-.tippy-box[data-theme~='custom-light'] {
+.tippy-box[data-theme~="custom-light"] {
   background: none;
   box-shadow: none;
   padding: 0;
   border-radius: 0;
 }
-.gm-event{
+.gm-event {
   display: flex;
   flex-direction: column;
-  gap:20px;
+  gap: 20px;
   margin-top: 10px;
 }
-.gm-input-date{
+.gm-input-date {
   display: flex;
-  gap:12px;
-  
-  
+  gap: 12px;
 }
-.gm-input-date-input{
+.gm-input-date-input {
   display: flex;
   align-items: center;
-  gap:6px;
+  gap: 6px;
   font-size: 12px;
   border-radius: 10px;
-  
-  
-  
 }
-.gm-input-date-input{
+.gm-input-date-input {
   padding: 2px 4px;
 }
-.gm-input-date-span{
-  color:black;
+.gm-input-date-span {
+  color: black;
   font-size: 12px;
   font-weight: 800;
 }
-.gm-input-svg{
+.gm-input-svg {
   display: flex;
   gap: 12px;
   align-items: center;
 }
-#repeatSelect{
-  
+#repeatSelect {
   padding: 2px 4px;
   border-radius: 10px;
 }
 
-.custom-modal{
- font-family: ;
-  background-color:#ededed;
+.custom-modal {
+  font-family:;
+  background-color: #ededed;
   border: 1px solid lightgray;
   position: fixed;
   z-index: 99999;
-
 
   border-radius: 20px;
 
@@ -438,9 +422,8 @@ calendar {
   display: none;
   flex-direction: column;
   gap: 10px;
-
 }
-.custom-modal-show{
+.custom-modal-show {
   display: flex;
 }
 .custom-modal-overlay {
@@ -449,7 +432,7 @@ calendar {
   left: 0;
   right: 0;
   bottom: 0;
-  background-color: rgba(0,0,0,0.5);
+  background-color: rgba(0, 0, 0, 0.5);
   display: none;
   align-items: center;
   justify-content: center;
@@ -459,36 +442,35 @@ calendar {
   display: flex;
 }
 
-.custom-modal-repeat-week{
+.custom-modal-repeat-week {
   display: flex;
-  gap:'5px';
+  gap: "5px";
 }
-.custom-modal-repeat{
-  display: flex ;
+.custom-modal-repeat {
+  display: flex;
   flex-direction: column;
   gap: 1px;
 }
-.custom-modal-date{
+.custom-modal-date {
   display: flex;
   align-items: center;
   gap: 10px;
   margin-top: 10px;
 }
 
-.custom-modal-date-start{
+.custom-modal-date-start {
   display: flex;
   flex-direction: column;
   gap: 3px;
 }
-.custom-modal-date-end{
+.custom-modal-date-end {
   display: flex;
   flex-direction: column;
   gap: 3px;
-
 }
 
-#custom-modal-event{
-    padding: 6px 5px;
+#custom-modal-event {
+  padding: 6px 5px;
   font-size: 8px;
   border: none;
   border-radius: 6px;
@@ -497,83 +479,67 @@ calendar {
   color: white;
 }
 
-.label{
+.label {
   font-size: medium;
   font-weight: 500;
 }
-.gm-modal-select{
+.gm-modal-select {
   display: flex;
   font-size: medium;
   font-weight: 700;
   color: darkgray;
   gap: 20px;
   margin-left: 26px;
-
-  
 }
-.gm-modal-select-1{
+.gm-modal-select-1 {
   padding: 3px 6px;
   border-radius: 10px;
 }
 
-.gm-modal-select-2{
+.gm-modal-select-2 {
   padding: 3px 6px;
   border-radius: 10px;
 }
-.gm-modal-select-3{
+.gm-modal-select-3 {
   padding: 3px 6px;
   border-radius: 10px;
 }
 
-
-
-.gm-modal-select-1:hover{
+.gm-modal-select-1:hover {
   background-color: lightgray;
-
-
 }
-.gm-modal-select-3:hover{
+.gm-modal-select-3:hover {
   background-color: lightgray;
-
-
 }
 
-.gm-modal-select-2:hover{
+.gm-modal-select-2:hover {
   background-color: lightgray;
-
-
 }
 
-.gm-modal-select-item-selected{
-    background-color: #d5e9f1;
-    font-weight: 900;
-    color: black;
-    
-
+.gm-modal-select-item-selected {
+  background-color: #d5e9f1;
+  font-weight: 900;
+  color: black;
 }
-.gm-modal-select-item-selected:hover{
+.gm-modal-select-item-selected:hover {
   background-color: #d5e9f1;
 }
-.gm-input-description{
- 
+.gm-input-description {
   padding: 4px 6px;
   background-color: #ece7e7;
   outline: none;
   border: 1px solid gray;
   border-radius: 6px;
-  
-  
 }
-.gm-input-link{
+.gm-input-link {
   background-color: #ece7e7;
   padding: 3px 4px;
   outline: none;
   border: 1px solid gray;
 }
 
-
-svg:hover{
-  cursor:pointer;
+svg:hover {
+  cursor: pointer;
 }
 
 .tippy-box[data-theme~="my-custom"] {
@@ -596,7 +562,7 @@ svg:hover{
   border-bottom-color: #f4f7f8 !important;
 }
 .tippy-box[data-theme~="custom"] {
-  background-color: #f8f8f7  !important;
+  background-color: #f8f8f7 !important;
   color: blue;
   width: 230px;
   border: none !important; /* remove default border */
@@ -607,7 +573,6 @@ svg:hover{
 
 /* Center content */
 
-
 /* Style the arrow if used */
 .tippy-box[data-theme~="custom"][data-placement^="top"] .tippy-arrow {
   border-top-color: #f4f7f8 !important;
@@ -616,8 +581,7 @@ svg:hover{
   border-bottom-color: #f4f7f8 !important;
 }
 .fc .fc-toolbar-title {
-  
-  color: '#303133';
+  color: "#303133";
   font-size: medium;
   font-weight: 400;
   transform: translateY(3px);
@@ -639,39 +603,29 @@ svg:hover{
   box-sizing: border-box;
 }
 
-
-.full-view{
-  
+.full-view {
   height: auto;
-  
-  display: block;
 
+  display: block;
 }
 /* Wide (full) mode */
-.fc-daygrid-event-harness{
+.fc-daygrid-event-harness {
   overflow-wrap: anywhere;
-
-
 }
 
-
-
-.readingPlan{
+.readingPlan {
   color: white;
   background-color: white;
-  
 }
-.schedule{
-  color:#f1c40f;
+.schedule {
+  color: #f1c40f;
   background-color: #f1c40f;
   border: 1px solid #f1c40f;
 }
 
 /* Make event container use flex layout */
 
-
 /* Ensure dots stay small and don't wrap text */
-
 
 /* Ensure dots stay small and don't wrap text */
 .icon-btn {
@@ -685,7 +639,7 @@ svg:hover{
 }
 
 .icon-btn::after {
-  content: '';
+  content: "";
   position: absolute;
   inset: 0;
   background-color: rgba(0, 0, 0, 0.1);
@@ -699,13 +653,15 @@ svg:hover{
 }
 .search-btn {
   padding: 8px 16px;
-  background-color: #007bff;       /* bright blue */
+  background-color: #007bff; /* bright blue */
   color: white;
   border: none;
   border-radius: 4px;
   cursor: pointer;
   font-size: 14px;
-  transition: background-color 0.2s, transform 0.1s;
+  transition:
+    background-color 0.2s,
+    transform 0.1s;
 }
 
 .search-btn:hover {
@@ -722,26 +678,24 @@ svg:hover{
   border-radius: 4px;
   font-size: 14px;
 }
-.calendar-addups{
+.calendar-addups {
   margin-top: 15px;
- 
-  font-family:Satoshi;
+
+  font-family: Satoshi;
 }
-.calendar-addups-selection{
+.calendar-addups-selection {
   max-width: 264px;
   height: 28px;
- 
-  background-color: #F2F2F2;
+
+  background-color: #f2f2f2;
   display: flex;
   border-radius: 4px;
-  
+
   align-items: center;
   justify-content: space-between;
- 
-  
 }
-.calendar-addups-selection-button{
-   display: flex;
+.calendar-addups-selection-button {
+  display: flex;
   align-items: center;
   justify-content: center;
   width: 46px;
@@ -752,28 +706,28 @@ svg:hover{
   border-radius: 4px;
   cursor: pointer;
 }
-.e-btn{
-  background-color: #D36433;
+.e-btn {
+  background-color: #d36433;
 }
-.event-and-map{
+.event-and-map {
   margin-top: 30px;
   display: flex;
   flex-direction: column;
-  gap: 15px; 
-  margin-bottom: 10px; 
+  gap: 15px;
+  margin-bottom: 10px;
 }
-.event-and-map_heading{
+.event-and-map_heading {
   font-size: 18px;
   font-weight: 700;
 }
-.event-and-map_selector{
+.event-and-map_selector {
   display: flex;
-  gap:15px;
+  gap: 15px;
   font-size: 14px;
   font-weight: 500;
   font-family: Satoshi;
 }
-.event-and-map_selector_item{
+.event-and-map_selector_item {
   padding: 4px 6px;
   border-radius: 4px;
   cursor: pointer;
@@ -782,29 +736,27 @@ svg:hover{
   margin-top: 20px;
   max-height: 200px;
   overflow-y: auto;
-
 }
 .event-box {
   position: relative;
   border: 1px solid #ccc;
- 
+
   display: flex;
   height: 83px;
   align-items: flex-start;
-  
+
   margin-bottom: 8px;
   border-radius: 4px;
 }
-.event-box_color{
+.event-box_color {
   height: 100%;
   display: inline-block;
   width: 8px;
-  
+
   border-top-left-radius: 4px;
   border-bottom-left-radius: 4px;
-
 }
-.event-box_time{
+.event-box_time {
   display: flex;
   flex-direction: column;
   gap: 3px;
@@ -812,50 +764,45 @@ svg:hover{
   font-weight: 500;
   margin-left: 10px;
   margin-top: 10px;
-  padding: 10px 8px ;
+  padding: 10px 8px;
   color: #545454;
 }
-.event-box_about{
+.event-box_about {
   display: flex;
   flex-direction: column;
   margin-left: 10px;
   justify-content: start;
   margin-top: 10px;
-
-
 }
-.event-box_about-heading{
+.event-box_about-heading {
   font-size: 14px;
   font-weight: 600;
-    text-transform: capitalize;
-
+  text-transform: capitalize;
 }
-.event-box_about-desc{
+.event-box_about-desc {
   font-size: 12px;
   font-weight: 400;
   text-transform: capitalize;
 }
-.event-box_icon{
+.event-box_icon {
   position: absolute;
   right: 2px;
   top: 2px;
   gap: 5px;
   display: flex;
-  
 }
-.fc-timegrid-slot-label-cushion{
+.fc-timegrid-slot-label-cushion {
   text-transform: uppercase;
-   word-spacing: 0.25em;
-   margin-right: 10px;
+  word-spacing: 0.25em;
+  margin-right: 10px;
 }
-.fc-datagrid-cell-frame{
+.fc-datagrid-cell-frame {
   padding: 0;
   text-align: start;
 }
-.fc-datagrid-cell-cushion{
+.fc-datagrid-cell-cushion {
   padding: 0;
   text-align: start;
-
 }
 .fc-datagrid-cell-main {
   text-align: left !important;
@@ -890,8 +837,7 @@ svg:hover{
   cursor: pointer;
   font-size: 13px;
 }
-.events-btn{
-  
+.events-btn {
   padding: 6px 5px;
   font-size: 10px;
   border: none;
@@ -899,5 +845,4 @@ svg:hover{
   cursor: pointer;
   background-color: #1a73e8;
   color: white;
-
 }

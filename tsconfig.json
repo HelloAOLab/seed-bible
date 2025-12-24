@@ -1,6 +1,6 @@
 {
   "compilerOptions": {
-    /* Base Options: */
+    "strict": true,
     "esModuleInterop": true,
     "skipLibCheck": true,
     "target": "es2024",
@@ -9,24 +9,3788 @@
     "moduleDetection": "force",
     "isolatedModules": true,
     "verbatimModuleSyntax": true,
-
     "jsx": "preserve",
-
-    /* Strictness */
-    // "strict": true,
     "noUncheckedIndexedAccess": true,
     "noImplicitOverride": true,
-    
-    /* If NOT transpiling with TypeScript: */
     "module": "preserve",
     "noEmit": true,
-
-    /* If your code runs in the DOM: */
     "lib": ["es2024", "dom", "dom.iterable"],
+    "paths": {
+      "@packages/*": ["./packages/*"],
+      "https://esm.helloao.org/vendor-3PZUL55I.js": ["./lib/vendor.ts"],
+      "aiApps.voiceAssistant.Audio": [
+        "./packages/Assistant/aiApps/voiceAssistant/Audio.tsx"
+      ],
+      "aiApps.voiceAssistant.ConnectionManager": [
+        "./packages/Assistant/aiApps/voiceAssistant/ConnectionManager.tsx"
+      ],
+      "aiApps.voiceAssistant.DraggableContainer": [
+        "./packages/Assistant/aiApps/voiceAssistant/DraggableContainer.tsx"
+      ],
+      "aiApps.voiceAssistant.getTools": [
+        "./packages/Assistant/aiApps/voiceAssistant/getTools.tsx"
+      ],
+      "aiApps.voiceAssistant.HandleEvents": [
+        "./packages/Assistant/aiApps/voiceAssistant/HandleEvents.tsx"
+      ],
+      "aiApps.voiceAssistant.HandleMessageLog": [
+        "./packages/Assistant/aiApps/voiceAssistant/HandleMessageLog.tsx"
+      ],
+      "aiApps.voiceAssistant.icons": [
+        "./packages/Assistant/aiApps/voiceAssistant/icons.tsx"
+      ],
+      "aiApps.voiceAssistant.ModeManager": [
+        "./packages/Assistant/aiApps/voiceAssistant/ModeManager.tsx"
+      ],
+      "aiApps.voiceAssistant.onDestroy": [
+        "./packages/Assistant/aiApps/voiceAssistant/onDestroy.tsx"
+      ],
+      "aiApps.voiceAssistant.onInstJoined": [
+        "./packages/Assistant/aiApps/voiceAssistant/onInstJoined.tsx"
+      ],
+      "aiApps.voiceAssistant.Status": [
+        "./packages/Assistant/aiApps/voiceAssistant/Status.tsx"
+      ],
+      "aiApps.voiceAssistant.StreamTextAI": [
+        "./packages/Assistant/aiApps/voiceAssistant/StreamTextAI.tsx"
+      ],
+      "aiApps.voiceAssistant.TextAI": [
+        "./packages/Assistant/aiApps/voiceAssistant/TextAI.tsx"
+      ],
+      "aiApps.voiceAssistant.TextAndAvatar": [
+        "./packages/Assistant/aiApps/voiceAssistant/TextAndAvatar.tsx"
+      ],
+      "aiApps.voiceAssistant.toggleVoiceAssistant": [
+        "./packages/Assistant/aiApps/voiceAssistant/toggleVoiceAssistant.tsx"
+      ],
+      "aiApps.voiceAssistant.UserSettings": [
+        "./packages/Assistant/aiApps/voiceAssistant/UserSettings.tsx"
+      ],
+      "aiApps.voiceAssistant.Utils": [
+        "./packages/Assistant/aiApps/voiceAssistant/Utils.tsx"
+      ],
+      "aiApps.voiceAssistant.VoiceAI": [
+        "./packages/Assistant/aiApps/voiceAssistant/VoiceAI.tsx"
+      ],
+      "aiApps.voiceAssistant.VoiceAssistant": [
+        "./packages/Assistant/aiApps/voiceAssistant/VoiceAssistant.tsx"
+      ],
+      "aiApps.voiceAssistant.VoiceAvatar": [
+        "./packages/Assistant/aiApps/voiceAssistant/VoiceAvatar.tsx"
+      ],
+      "ao.starter.app": ["./packages/ao.bot/ao/starter/app.tsx"],
+      "ao.starter.ChatView": ["./packages/ao.bot/ao/starter/ChatView.tsx"],
+      "ao.starter.init": ["./packages/ao.bot/ao/starter/init.tsx"],
+      "ao.starter.onEggHatch": ["./packages/ao.bot/ao/starter/onEggHatch.tsx"],
+      "ao.starter.onInstJoined": [
+        "./packages/ao.bot/ao/starter/onInstJoined.tsx"
+      ],
+      "ao.starter.tools": ["./packages/ao.bot/ao/starter/tools.tsx"],
+      "bibleStack.main.App": ["./packages/Bible Stack/bibleStack/main/App.tsx"],
+      "bibleStack.main.ArePiecesOnSameStack": [
+        "./packages/Bible Stack/bibleStack/main/ArePiecesOnSameStack.tsx"
+      ],
+      "bibleStack.main.BufferSounds": [
+        "./packages/Bible Stack/bibleStack/main/BufferSounds.tsx"
+      ],
+      "bibleStack.main.CheckChapterAvailabilityInBook": [
+        "./packages/Bible Stack/bibleStack/main/CheckChapterAvailabilityInBook.tsx"
+      ],
+      "bibleStack.main.CheckQueuedChapterAction": [
+        "./packages/Bible Stack/bibleStack/main/CheckQueuedChapterAction.tsx"
+      ],
+      "bibleStack.main.ClearExperience": [
+        "./packages/Bible Stack/bibleStack/main/ClearExperience.tsx"
+      ],
+      "bibleStack.main.ClearStacks": [
+        "./packages/Bible Stack/bibleStack/main/ClearStacks.tsx"
+      ],
+      "bibleStack.main.ClearUnhighlightDelay": [
+        "./packages/Bible Stack/bibleStack/main/ClearUnhighlightDelay.tsx"
+      ],
+      "bibleStack.main.ComputeSelectedBookLayout": [
+        "./packages/Bible Stack/bibleStack/main/ComputeSelectedBookLayout.tsx"
+      ],
+      "bibleStack.main.CreateBibleStructure": [
+        "./packages/Bible Stack/bibleStack/main/CreateBibleStructure.tsx"
+      ],
+      "bibleStack.main.CreateBook": [
+        "./packages/Bible Stack/bibleStack/main/CreateBook.tsx"
+      ],
+      "bibleStack.main.CreateChapter": [
+        "./packages/Bible Stack/bibleStack/main/CreateChapter.tsx"
+      ],
+      "bibleStack.main.CreateNewBible": [
+        "./packages/Bible Stack/bibleStack/main/CreateNewBible.tsx"
+      ],
+      "bibleStack.main.CreateSection": [
+        "./packages/Bible Stack/bibleStack/main/CreateSection.tsx"
+      ],
+      "bibleStack.main.CreateTestament": [
+        "./packages/Bible Stack/bibleStack/main/CreateTestament.tsx"
+      ],
+      "bibleStack.main.DeletePiece": [
+        "./packages/Bible Stack/bibleStack/main/DeletePiece.tsx"
+      ],
+      "bibleStack.main.DeselectBook": [
+        "./packages/Bible Stack/bibleStack/main/DeselectBook.tsx"
+      ],
+      "bibleStack.main.DeselectChapter": [
+        "./packages/Bible Stack/bibleStack/main/DeselectChapter.tsx"
+      ],
+      "bibleStack.main.DeselectCurrentSelectedBook": [
+        "./packages/Bible Stack/bibleStack/main/DeselectCurrentSelectedBook.tsx"
+      ],
+      "bibleStack.main.DeselectSection": [
+        "./packages/Bible Stack/bibleStack/main/DeselectSection.tsx"
+      ],
+      "bibleStack.main.DisplayApp": [
+        "./packages/Bible Stack/bibleStack/main/DisplayApp.tsx"
+      ],
+      "bibleStack.main.EjectChapter": [
+        "./packages/Bible Stack/bibleStack/main/EjectChapter.tsx"
+      ],
+      "bibleStack.main.EnqueueChapter": [
+        "./packages/Bible Stack/bibleStack/main/EnqueueChapter.tsx"
+      ],
+      "bibleStack.main.GetBibleDataById": [
+        "./packages/Bible Stack/bibleStack/main/GetBibleDataById.tsx"
+      ],
+      "bibleStack.main.GetChapterDataById": [
+        "./packages/Bible Stack/bibleStack/main/GetChapterDataById.tsx"
+      ],
+      "bibleStack.main.GetDataChainFromParentDataIds": [
+        "./packages/Bible Stack/bibleStack/main/GetDataChainFromParentDataIds.tsx"
+      ],
+      "bibleStack.main.GetFixedPsalmData": [
+        "./packages/Bible Stack/bibleStack/main/GetFixedPsalmData.tsx"
+      ],
+      "bibleStack.main.GetLastInteractedBookData": [
+        "./packages/Bible Stack/bibleStack/main/GetLastInteractedBookData.tsx"
+      ],
+      "bibleStack.main.GetLayoutForBooksGroup": [
+        "./packages/Bible Stack/bibleStack/main/GetLayoutForBooksGroup.tsx"
+      ],
+      "bibleStack.main.GetPieceData": [
+        "./packages/Bible Stack/bibleStack/main/GetPieceData.tsx"
+      ],
+      "bibleStack.main.GetPreviousExplodedViewSectionData": [
+        "./packages/Bible Stack/bibleStack/main/GetPreviousExplodedViewSectionData.tsx"
+      ],
+      "bibleStack.main.GetUnhighlightDelayInfo": [
+        "./packages/Bible Stack/bibleStack/main/GetUnhighlightDelayInfo.tsx"
+      ],
+      "bibleStack.main.HandleBookDataInStack": [
+        "./packages/Bible Stack/bibleStack/main/HandleBookDataInStack.tsx"
+      ],
+      "bibleStack.main.HandleBookInteraction": [
+        "./packages/Bible Stack/bibleStack/main/HandleBookInteraction.tsx"
+      ],
+      "bibleStack.main.HandleChapterInteraction": [
+        "./packages/Bible Stack/bibleStack/main/HandleChapterInteraction.tsx"
+      ],
+      "bibleStack.main.HandleChunkOfVersesInteraction": [
+        "./packages/Bible Stack/bibleStack/main/HandleChunkOfVersesInteraction.tsx"
+      ],
+      "bibleStack.main.HandleCoverClick": [
+        "./packages/Bible Stack/bibleStack/main/HandleCoverClick.tsx"
+      ],
+      "bibleStack.main.HandleSectionDataInStack": [
+        "./packages/Bible Stack/bibleStack/main/HandleSectionDataInStack.tsx"
+      ],
+      "bibleStack.main.HandleSectionInteraction": [
+        "./packages/Bible Stack/bibleStack/main/HandleSectionInteraction.tsx"
+      ],
+      "bibleStack.main.HandleSectionShadowInteraction": [
+        "./packages/Bible Stack/bibleStack/main/HandleSectionShadowInteraction.tsx"
+      ],
+      "bibleStack.main.HandleTestamentDataInStack": [
+        "./packages/Bible Stack/bibleStack/main/HandleTestamentDataInStack.tsx"
+      ],
+      "bibleStack.main.HandleTestamentInteraction": [
+        "./packages/Bible Stack/bibleStack/main/HandleTestamentInteraction.tsx"
+      ],
+      "bibleStack.main.HandleVerseInteraction": [
+        "./packages/Bible Stack/bibleStack/main/HandleVerseInteraction.tsx"
+      ],
+      "bibleStack.main.HasSectionEverBeenSelected": [
+        "./packages/Bible Stack/bibleStack/main/HasSectionEverBeenSelected.tsx"
+      ],
+      "bibleStack.main.HideObject": [
+        "./packages/Bible Stack/bibleStack/main/HideObject.tsx"
+      ],
+      "bibleStack.main.Initialize": [
+        "./packages/Bible Stack/bibleStack/main/Initialize.tsx"
+      ],
+      "bibleStack.main.IsBiblePieceHighlighted": [
+        "./packages/Bible Stack/bibleStack/main/IsBiblePieceHighlighted.tsx"
+      ],
+      "bibleStack.main.OnBibleVizUtilsInitialized": [
+        "./packages/Bible Stack/bibleStack/main/OnBibleVizUtilsInitialized.tsx"
+      ],
+      "bibleStack.main.onBotChanged": [
+        "./packages/Bible Stack/bibleStack/main/onBotChanged.tsx"
+      ],
+      "bibleStack.main.OnCameraRotationChanged": [
+        "./packages/Bible Stack/bibleStack/main/OnCameraRotationChanged.tsx"
+      ],
+      "bibleStack.main.OnColorLerperInitialized": [
+        "./packages/Bible Stack/bibleStack/main/OnColorLerperInitialized.tsx"
+      ],
+      "bibleStack.main.onDestroy": [
+        "./packages/Bible Stack/bibleStack/main/onDestroy.tsx"
+      ],
+      "bibleStack.main.onEggHatch": [
+        "./packages/Bible Stack/bibleStack/main/onEggHatch.tsx"
+      ],
+      "bibleStack.main.OnEnterHistoryMode": [
+        "./packages/Bible Stack/bibleStack/main/OnEnterHistoryMode.tsx"
+      ],
+      "bibleStack.main.OnExitHistoryMode": [
+        "./packages/Bible Stack/bibleStack/main/OnExitHistoryMode.tsx"
+      ],
+      "bibleStack.main.onFloatingAppRemoved": [
+        "./packages/Bible Stack/bibleStack/main/onFloatingAppRemoved.tsx"
+      ],
+      "bibleStack.main.onGridUp": [
+        "./packages/Bible Stack/bibleStack/main/onGridUp.tsx"
+      ],
+      "bibleStack.main.OnHistoryUpdated": [
+        "./packages/Bible Stack/bibleStack/main/OnHistoryUpdated.tsx"
+      ],
+      "bibleStack.main.OnInitialBibleOpenAnimationCompleted": [
+        "./packages/Bible Stack/bibleStack/main/OnInitialBibleOpenAnimationCompleted.tsx"
+      ],
+      "bibleStack.main.onInstJoined": [
+        "./packages/Bible Stack/bibleStack/main/onInstJoined.tsx"
+      ],
+      "bibleStack.main.OnNewBibleStackCreated": [
+        "./packages/Bible Stack/bibleStack/main/OnNewBibleStackCreated.tsx"
+      ],
+      "bibleStack.main.OnObjectPoolerInitialized": [
+        "./packages/Bible Stack/bibleStack/main/OnObjectPoolerInitialized.tsx"
+      ],
+      "bibleStack.main.OnPageClose": [
+        "./packages/Bible Stack/bibleStack/main/OnPageClose.tsx"
+      ],
+      "bibleStack.main.OnSectionShadowInteracted": [
+        "./packages/Bible Stack/bibleStack/main/OnSectionShadowInteracted.tsx"
+      ],
+      "bibleStack.main.OnShowDonationStackComplete": [
+        "./packages/Bible Stack/bibleStack/main/OnShowDonationStackComplete.tsx"
+      ],
+      "bibleStack.main.OnStackBibleClose": [
+        "./packages/Bible Stack/bibleStack/main/OnStackBibleClose.tsx"
+      ],
+      "bibleStack.main.OnStackBibleCloseComplete": [
+        "./packages/Bible Stack/bibleStack/main/OnStackBibleCloseComplete.tsx"
+      ],
+      "bibleStack.main.OnStackBibleCreationComplete": [
+        "./packages/Bible Stack/bibleStack/main/OnStackBibleCreationComplete.tsx"
+      ],
+      "bibleStack.main.OnStackBibleResetComplete": [
+        "./packages/Bible Stack/bibleStack/main/OnStackBibleResetComplete.tsx"
+      ],
+      "bibleStack.main.OnStackBookInteracted": [
+        "./packages/Bible Stack/bibleStack/main/OnStackBookInteracted.tsx"
+      ],
+      "bibleStack.main.OnStackBookSelectionComplete": [
+        "./packages/Bible Stack/bibleStack/main/OnStackBookSelectionComplete.tsx"
+      ],
+      "bibleStack.main.OnStackChapterInteracted": [
+        "./packages/Bible Stack/bibleStack/main/OnStackChapterInteracted.tsx"
+      ],
+      "bibleStack.main.OnStackChunkOfVersesInteracted": [
+        "./packages/Bible Stack/bibleStack/main/OnStackChunkOfVersesInteracted.tsx"
+      ],
+      "bibleStack.main.OnStackCoverClicked": [
+        "./packages/Bible Stack/bibleStack/main/OnStackCoverClicked.tsx"
+      ],
+      "bibleStack.main.OnStackPieceDrag": [
+        "./packages/Bible Stack/bibleStack/main/OnStackPieceDrag.tsx"
+      ],
+      "bibleStack.main.OnStackPieceDragging": [
+        "./packages/Bible Stack/bibleStack/main/OnStackPieceDragging.tsx"
+      ],
+      "bibleStack.main.OnStackPieceDrop": [
+        "./packages/Bible Stack/bibleStack/main/OnStackPieceDrop.tsx"
+      ],
+      "bibleStack.main.OnStackPiecePointerUp": [
+        "./packages/Bible Stack/bibleStack/main/OnStackPiecePointerUp.tsx"
+      ],
+      "bibleStack.main.OnStackPiecePulledOut": [
+        "./packages/Bible Stack/bibleStack/main/OnStackPiecePulledOut.tsx"
+      ],
+      "bibleStack.main.OnStackSectionInteracted": [
+        "./packages/Bible Stack/bibleStack/main/OnStackSectionInteracted.tsx"
+      ],
+      "bibleStack.main.OnStackSectionSelectionAnimationComplete": [
+        "./packages/Bible Stack/bibleStack/main/OnStackSectionSelectionAnimationComplete.tsx"
+      ],
+      "bibleStack.main.OnStackTestamentInteracted": [
+        "./packages/Bible Stack/bibleStack/main/OnStackTestamentInteracted.tsx"
+      ],
+      "bibleStack.main.OnStackTestamentSelected": [
+        "./packages/Bible Stack/bibleStack/main/OnStackTestamentSelected.tsx"
+      ],
+      "bibleStack.main.OnTabsContextChanged": [
+        "./packages/Bible Stack/bibleStack/main/OnTabsContextChanged.tsx"
+      ],
+      "bibleStack.main.OnTestamentSelectionAnimationComplete": [
+        "./packages/Bible Stack/bibleStack/main/OnTestamentSelectionAnimationComplete.tsx"
+      ],
+      "bibleStack.main.OnTourGuideBookHighlighted": [
+        "./packages/Bible Stack/bibleStack/main/OnTourGuideBookHighlighted.tsx"
+      ],
+      "bibleStack.main.OnTourGuideCameraFocusComplete": [
+        "./packages/Bible Stack/bibleStack/main/OnTourGuideCameraFocusComplete.tsx"
+      ],
+      "bibleStack.main.OnTourGuideComplete": [
+        "./packages/Bible Stack/bibleStack/main/OnTourGuideComplete.tsx"
+      ],
+      "bibleStack.main.OnVerseInteracted": [
+        "./packages/Bible Stack/bibleStack/main/OnVerseInteracted.tsx"
+      ],
+      "bibleStack.main.PickBook": [
+        "./packages/Bible Stack/bibleStack/main/PickBook.tsx"
+      ],
+      "bibleStack.main.PickChapter": [
+        "./packages/Bible Stack/bibleStack/main/PickChapter.tsx"
+      ],
+      "bibleStack.main.PickSection": [
+        "./packages/Bible Stack/bibleStack/main/PickSection.tsx"
+      ],
+      "bibleStack.main.PickTestament": [
+        "./packages/Bible Stack/bibleStack/main/PickTestament.tsx"
+      ],
+      "bibleStack.main.PlaySound": [
+        "./packages/Bible Stack/bibleStack/main/PlaySound.tsx"
+      ],
+      "bibleStack.main.PullOutPieceFromParent": [
+        "./packages/Bible Stack/bibleStack/main/PullOutPieceFromParent.tsx"
+      ],
+      "bibleStack.main.PushDataToSingleDataArray": [
+        "./packages/Bible Stack/bibleStack/main/PushDataToSingleDataArray.tsx"
+      ],
+      "bibleStack.main.RemovePieceFromHighlightedList": [
+        "./packages/Bible Stack/bibleStack/main/RemovePieceFromHighlightedList.tsx"
+      ],
+      "bibleStack.main.ResetBible": [
+        "./packages/Bible Stack/bibleStack/main/ResetBible.tsx"
+      ],
+      "bibleStack.main.ResetStackData": [
+        "./packages/Bible Stack/bibleStack/main/ResetStackData.tsx"
+      ],
+      "bibleStack.main.ResetToDefault": [
+        "./packages/Bible Stack/bibleStack/main/ResetToDefault.tsx"
+      ],
+      "bibleStack.main.SelectAllSections": [
+        "./packages/Bible Stack/bibleStack/main/SelectAllSections.tsx"
+      ],
+      "bibleStack.main.SelectBook": [
+        "./packages/Bible Stack/bibleStack/main/SelectBook.tsx"
+      ],
+      "bibleStack.main.SelectSection": [
+        "./packages/Bible Stack/bibleStack/main/SelectSection.tsx"
+      ],
+      "bibleStack.main.SelectTestament": [
+        "./packages/Bible Stack/bibleStack/main/SelectTestament.tsx"
+      ],
+      "bibleStack.main.SetAllSectionsAsRegularView": [
+        "./packages/Bible Stack/bibleStack/main/SetAllSectionsAsRegularView.tsx"
+      ],
+      "bibleStack.main.SetStackCreationActive": [
+        "./packages/Bible Stack/bibleStack/main/SetStackCreationActive.tsx"
+      ],
+      "bibleStack.main.SetUpBible": [
+        "./packages/Bible Stack/bibleStack/main/SetUpBible.tsx"
+      ],
+      "bibleStack.main.SetUpInitialBibleOpen": [
+        "./packages/Bible Stack/bibleStack/main/SetUpInitialBibleOpen.tsx"
+      ],
+      "bibleStack.main.ShowChaptersInBook": [
+        "./packages/Bible Stack/bibleStack/main/ShowChaptersInBook.tsx"
+      ],
+      "bibleStack.main.SpawnBibleAndPickTestament": [
+        "./packages/Bible Stack/bibleStack/main/SpawnBibleAndPickTestament.tsx"
+      ],
+      "bibleStack.main.SpawnBook": [
+        "./packages/Bible Stack/bibleStack/main/SpawnBook.tsx"
+      ],
+      "bibleStack.main.SpawnBookAndEjectChapter": [
+        "./packages/Bible Stack/bibleStack/main/SpawnBookAndEjectChapter.tsx"
+      ],
+      "bibleStack.main.SpawnBookAndPickChapter": [
+        "./packages/Bible Stack/bibleStack/main/SpawnBookAndPickChapter.tsx"
+      ],
+      "bibleStack.main.SpawnChapter": [
+        "./packages/Bible Stack/bibleStack/main/SpawnChapter.tsx"
+      ],
+      "bibleStack.main.SpawnPlatformerGameBible": [
+        "./packages/Bible Stack/bibleStack/main/SpawnPlatformerGameBible.tsx"
+      ],
+      "bibleStack.main.SpawnSection": [
+        "./packages/Bible Stack/bibleStack/main/SpawnSection.tsx"
+      ],
+      "bibleStack.main.SpawnSectionAndPickBook": [
+        "./packages/Bible Stack/bibleStack/main/SpawnSectionAndPickBook.tsx"
+      ],
+      "bibleStack.main.SpawnTestament": [
+        "./packages/Bible Stack/bibleStack/main/SpawnTestament.tsx"
+      ],
+      "bibleStack.main.SpawnTestamentAndPickSection": [
+        "./packages/Bible Stack/bibleStack/main/SpawnTestamentAndPickSection.tsx"
+      ],
+      "bibleStack.main.StopCurrentTourGuide": [
+        "./packages/Bible Stack/bibleStack/main/StopCurrentTourGuide.tsx"
+      ],
+      "bibleStack.main.ToggleStackViz": [
+        "./packages/Bible Stack/bibleStack/main/ToggleStackViz.tsx"
+      ],
+      "bibleStack.main.TryCreateNewBible": [
+        "./packages/Bible Stack/bibleStack/main/TryCreateNewBible.tsx"
+      ],
+      "bibleStack.main.TryDecreasePieceHighlight": [
+        "./packages/Bible Stack/bibleStack/main/TryDecreasePieceHighlight.tsx"
+      ],
+      "bibleStack.main.TryEjectChapter": [
+        "./packages/Bible Stack/bibleStack/main/TryEjectChapter.tsx"
+      ],
+      "bibleStack.main.TryHighlightChapter": [
+        "./packages/Bible Stack/bibleStack/main/TryHighlightChapter.tsx"
+      ],
+      "bibleStack.main.TryHighlightPiece": [
+        "./packages/Bible Stack/bibleStack/main/TryHighlightPiece.tsx"
+      ],
+      "bibleStack.main.TryIncreasePieceHighlight": [
+        "./packages/Bible Stack/bibleStack/main/TryIncreasePieceHighlight.tsx"
+      ],
+      "bibleStack.main.TryMakeTourGuideOnSection": [
+        "./packages/Bible Stack/bibleStack/main/TryMakeTourGuideOnSection.tsx"
+      ],
+      "bibleStack.main.TryPickBook": [
+        "./packages/Bible Stack/bibleStack/main/TryPickBook.tsx"
+      ],
+      "bibleStack.main.TryPickChapter": [
+        "./packages/Bible Stack/bibleStack/main/TryPickChapter.tsx"
+      ],
+      "bibleStack.main.TryPickSection": [
+        "./packages/Bible Stack/bibleStack/main/TryPickSection.tsx"
+      ],
+      "bibleStack.main.TryPickTestament": [
+        "./packages/Bible Stack/bibleStack/main/TryPickTestament.tsx"
+      ],
+      "bibleStack.main.TryRecenterStack": [
+        "./packages/Bible Stack/bibleStack/main/TryRecenterStack.tsx"
+      ],
+      "bibleStack.main.TrySelectChapter": [
+        "./packages/Bible Stack/bibleStack/main/TrySelectChapter.tsx"
+      ],
+      "bibleStack.main.TrySetPiecesRenderOrder": [
+        "./packages/Bible Stack/bibleStack/main/TrySetPiecesRenderOrder.tsx"
+      ],
+      "bibleStack.main.TrySetSectionAsExplodedView": [
+        "./packages/Bible Stack/bibleStack/main/TrySetSectionAsExplodedView.tsx"
+      ],
+      "bibleStack.main.TryStopStackVizToggle": [
+        "./packages/Bible Stack/bibleStack/main/TryStopStackVizToggle.tsx"
+      ],
+      "bibleStack.main.TryToggleStackViz": [
+        "./packages/Bible Stack/bibleStack/main/TryToggleStackViz.tsx"
+      ],
+      "bibleStack.main.TryUnhighlightPiece": [
+        "./packages/Bible Stack/bibleStack/main/TryUnhighlightPiece.tsx"
+      ],
+      "bibleStack.main.UnhighlightChapter": [
+        "./packages/Bible Stack/bibleStack/main/UnhighlightChapter.tsx"
+      ],
+      "bibleStack.main.UpdateBibleStack": [
+        "./packages/Bible Stack/bibleStack/main/UpdateBibleStack.tsx"
+      ],
+      "bibleStack.main.UpdateBookStack": [
+        "./packages/Bible Stack/bibleStack/main/UpdateBookStack.tsx"
+      ],
+      "bibleStack.main.UpdateHistoryModeElements": [
+        "./packages/Bible Stack/bibleStack/main/UpdateHistoryModeElements.tsx"
+      ],
+      "bibleStack.main.UpdateSectionStack": [
+        "./packages/Bible Stack/bibleStack/main/UpdateSectionStack.tsx"
+      ],
+      "bibleStack.main.UpdateStackPiecesActivityNotification": [
+        "./packages/Bible Stack/bibleStack/main/UpdateStackPiecesActivityNotification.tsx"
+      ],
+      "bibleStack.main.UpdateStackPiecesUsersColor": [
+        "./packages/Bible Stack/bibleStack/main/UpdateStackPiecesUsersColor.tsx"
+      ],
+      "bibleStack.main.UpdateStacks": [
+        "./packages/Bible Stack/bibleStack/main/UpdateStacks.tsx"
+      ],
+      "bibleStack.main.UpdateStackTabsVisualization": [
+        "./packages/Bible Stack/bibleStack/main/UpdateStackTabsVisualization.tsx"
+      ],
+      "bibleStack.main.UpdateTestamentStack": [
+        "./packages/Bible Stack/bibleStack/main/UpdateTestamentStack.tsx"
+      ],
+      "bibleStack.main.UserPresenceUpdate": [
+        "./packages/Bible Stack/bibleStack/main/UserPresenceUpdate.tsx"
+      ],
+      "bibleStack.prefabs.bibleTransformer.CloseBible": [
+        "./packages/Bible Stack/bibleStack/prefabs/bibleTransformer/CloseBible.tsx"
+      ],
+      "bibleStack.prefabs.bibleTransformer.DisplayDonationFillAnimation": [
+        "./packages/Bible Stack/bibleStack/prefabs/bibleTransformer/DisplayDonationFillAnimation.tsx"
+      ],
+      "bibleStack.prefabs.bibleTransformer.DisplayFloatAnimation": [
+        "./packages/Bible Stack/bibleStack/prefabs/bibleTransformer/DisplayFloatAnimation.tsx"
+      ],
+      "bibleStack.prefabs.bibleTransformer.DisplayInitialAwaitAnimation": [
+        "./packages/Bible Stack/bibleStack/prefabs/bibleTransformer/DisplayInitialAwaitAnimation.tsx"
+      ],
+      "bibleStack.prefabs.bibleTransformer.DisplayInitialBibleOpenAnimation": [
+        "./packages/Bible Stack/bibleStack/prefabs/bibleTransformer/DisplayInitialBibleOpenAnimation.tsx"
+      ],
+      "bibleStack.prefabs.bibleTransformer.DisplaySpinAnimation": [
+        "./packages/Bible Stack/bibleStack/prefabs/bibleTransformer/DisplaySpinAnimation.tsx"
+      ],
+      "bibleStack.prefabs.bibleTransformer.onBotChanged": [
+        "./packages/Bible Stack/bibleStack/prefabs/bibleTransformer/onBotChanged.tsx"
+      ],
+      "bibleStack.prefabs.bibleTransformer.OnLabelInteracted": [
+        "./packages/Bible Stack/bibleStack/prefabs/bibleTransformer/OnLabelInteracted.tsx"
+      ],
+      "bibleStack.prefabs.bibleTransformer.OnReleased": [
+        "./packages/Bible Stack/bibleStack/prefabs/bibleTransformer/OnReleased.tsx"
+      ],
+      "bibleStack.prefabs.bibleTransformer.OnSpawned": [
+        "./packages/Bible Stack/bibleStack/prefabs/bibleTransformer/OnSpawned.tsx"
+      ],
+      "bibleStack.prefabs.bibleTransformer.OpenBible": [
+        "./packages/Bible Stack/bibleStack/prefabs/bibleTransformer/OpenBible.tsx"
+      ],
+      "bibleStack.prefabs.bibleTransformer.OpenDonationStack": [
+        "./packages/Bible Stack/bibleStack/prefabs/bibleTransformer/OpenDonationStack.tsx"
+      ],
+      "bibleStack.prefabs.bibleTransformer.Reset": [
+        "./packages/Bible Stack/bibleStack/prefabs/bibleTransformer/Reset.tsx"
+      ],
+      "bibleStack.prefabs.bibleTransformer.ShowBibleInteractDialog": [
+        "./packages/Bible Stack/bibleStack/prefabs/bibleTransformer/ShowBibleInteractDialog.tsx"
+      ],
+      "bibleStack.prefabs.book.AnimateToDesiredPosition": [
+        "./packages/Bible Stack/bibleStack/prefabs/book/AnimateToDesiredPosition.tsx"
+      ],
+      "bibleStack.prefabs.book.ChangeColor": [
+        "./packages/Bible Stack/bibleStack/prefabs/book/ChangeColor.tsx"
+      ],
+      "bibleStack.prefabs.book.CreateShowBookModal": [
+        "./packages/Bible Stack/bibleStack/prefabs/book/CreateShowBookModal.tsx"
+      ],
+      "bibleStack.prefabs.book.DecreaseHighlight": [
+        "./packages/Bible Stack/bibleStack/prefabs/book/DecreaseHighlight.tsx"
+      ],
+      "bibleStack.prefabs.book.GetHighlightScales": [
+        "./packages/Bible Stack/bibleStack/prefabs/book/GetHighlightScales.tsx"
+      ],
+      "bibleStack.prefabs.book.HideChapters": [
+        "./packages/Bible Stack/bibleStack/prefabs/book/HideChapters.tsx"
+      ],
+      "bibleStack.prefabs.book.Highlight": [
+        "./packages/Bible Stack/bibleStack/prefabs/book/Highlight.tsx"
+      ],
+      "bibleStack.prefabs.book.IncreaseHighlight": [
+        "./packages/Bible Stack/bibleStack/prefabs/book/IncreaseHighlight.tsx"
+      ],
+      "bibleStack.prefabs.book.onBotChanged": [
+        "./packages/Bible Stack/bibleStack/prefabs/book/onBotChanged.tsx"
+      ],
+      "bibleStack.prefabs.book.OnCameraRotationChanged": [
+        "./packages/Bible Stack/bibleStack/prefabs/book/OnCameraRotationChanged.tsx"
+      ],
+      "bibleStack.prefabs.book.onClick": [
+        "./packages/Bible Stack/bibleStack/prefabs/book/onClick.tsx"
+      ],
+      "bibleStack.prefabs.book.onDrag": [
+        "./packages/Bible Stack/bibleStack/prefabs/book/onDrag.tsx"
+      ],
+      "bibleStack.prefabs.book.onDragging": [
+        "./packages/Bible Stack/bibleStack/prefabs/book/onDragging.tsx"
+      ],
+      "bibleStack.prefabs.book.onDrop": [
+        "./packages/Bible Stack/bibleStack/prefabs/book/onDrop.tsx"
+      ],
+      "bibleStack.prefabs.book.OnHighlightToolDisabled": [
+        "./packages/Bible Stack/bibleStack/prefabs/book/OnHighlightToolDisabled.tsx"
+      ],
+      "bibleStack.prefabs.book.OnHighlightToolEnabled": [
+        "./packages/Bible Stack/bibleStack/prefabs/book/OnHighlightToolEnabled.tsx"
+      ],
+      "bibleStack.prefabs.book.OnLabelInteracted": [
+        "./packages/Bible Stack/bibleStack/prefabs/book/OnLabelInteracted.tsx"
+      ],
+      "bibleStack.prefabs.book.onPointerEnter": [
+        "./packages/Bible Stack/bibleStack/prefabs/book/onPointerEnter.tsx"
+      ],
+      "bibleStack.prefabs.book.onPointerExit": [
+        "./packages/Bible Stack/bibleStack/prefabs/book/onPointerExit.tsx"
+      ],
+      "bibleStack.prefabs.book.onPointerUp": [
+        "./packages/Bible Stack/bibleStack/prefabs/book/onPointerUp.tsx"
+      ],
+      "bibleStack.prefabs.book.OnReleased": [
+        "./packages/Bible Stack/bibleStack/prefabs/book/OnReleased.tsx"
+      ],
+      "bibleStack.prefabs.book.OnSpawned": [
+        "./packages/Bible Stack/bibleStack/prefabs/book/OnSpawned.tsx"
+      ],
+      "bibleStack.prefabs.book.Rehighlight": [
+        "./packages/Bible Stack/bibleStack/prefabs/book/Rehighlight.tsx"
+      ],
+      "bibleStack.prefabs.book.ShiftFocus": [
+        "./packages/Bible Stack/bibleStack/prefabs/book/ShiftFocus.tsx"
+      ],
+      "bibleStack.prefabs.book.ShowSelectedBook": [
+        "./packages/Bible Stack/bibleStack/prefabs/book/ShowSelectedBook.tsx"
+      ],
+      "bibleStack.prefabs.book.StopHighlightTransition": [
+        "./packages/Bible Stack/bibleStack/prefabs/book/StopHighlightTransition.tsx"
+      ],
+      "bibleStack.prefabs.book.ToggleBookDrag": [
+        "./packages/Bible Stack/bibleStack/prefabs/book/ToggleBookDrag.tsx"
+      ],
+      "bibleStack.prefabs.book.TrySetChaptersPosition": [
+        "./packages/Bible Stack/bibleStack/prefabs/book/TrySetChaptersPosition.tsx"
+      ],
+      "bibleStack.prefabs.book.TrySetShape": [
+        "./packages/Bible Stack/bibleStack/prefabs/book/TrySetShape.tsx"
+      ],
+      "bibleStack.prefabs.book.TryToLerp": [
+        "./packages/Bible Stack/bibleStack/prefabs/book/TryToLerp.tsx"
+      ],
+      "bibleStack.prefabs.book.TryToUnlerp": [
+        "./packages/Bible Stack/bibleStack/prefabs/book/TryToUnlerp.tsx"
+      ],
+      "bibleStack.prefabs.book.Unhighlight": [
+        "./packages/Bible Stack/bibleStack/prefabs/book/Unhighlight.tsx"
+      ],
+      "bibleStack.prefabs.chapter.Deselect": [
+        "./packages/Bible Stack/bibleStack/prefabs/chapter/Deselect.tsx"
+      ],
+      "bibleStack.prefabs.chapter.GetChunksOfVerses": [
+        "./packages/Bible Stack/bibleStack/prefabs/chapter/GetChunksOfVerses.tsx"
+      ],
+      "bibleStack.prefabs.chapter.Highlight": [
+        "./packages/Bible Stack/bibleStack/prefabs/chapter/Highlight.tsx"
+      ],
+      "bibleStack.prefabs.chapter.onBotChanged": [
+        "./packages/Bible Stack/bibleStack/prefabs/chapter/onBotChanged.tsx"
+      ],
+      "bibleStack.prefabs.chapter.onClick": [
+        "./packages/Bible Stack/bibleStack/prefabs/chapter/onClick.tsx"
+      ],
+      "bibleStack.prefabs.chapter.onDrag": [
+        "./packages/Bible Stack/bibleStack/prefabs/chapter/onDrag.tsx"
+      ],
+      "bibleStack.prefabs.chapter.onDragging": [
+        "./packages/Bible Stack/bibleStack/prefabs/chapter/onDragging.tsx"
+      ],
+      "bibleStack.prefabs.chapter.onDrop": [
+        "./packages/Bible Stack/bibleStack/prefabs/chapter/onDrop.tsx"
+      ],
+      "bibleStack.prefabs.chapter.OnHighlightToolDisabled": [
+        "./packages/Bible Stack/bibleStack/prefabs/chapter/OnHighlightToolDisabled.tsx"
+      ],
+      "bibleStack.prefabs.chapter.OnHighlightToolEnabled": [
+        "./packages/Bible Stack/bibleStack/prefabs/chapter/OnHighlightToolEnabled.tsx"
+      ],
+      "bibleStack.prefabs.chapter.onPointerEnter": [
+        "./packages/Bible Stack/bibleStack/prefabs/chapter/onPointerEnter.tsx"
+      ],
+      "bibleStack.prefabs.chapter.onPointerExit": [
+        "./packages/Bible Stack/bibleStack/prefabs/chapter/onPointerExit.tsx"
+      ],
+      "bibleStack.prefabs.chapter.OnReleased": [
+        "./packages/Bible Stack/bibleStack/prefabs/chapter/OnReleased.tsx"
+      ],
+      "bibleStack.prefabs.chapter.OnSpawned": [
+        "./packages/Bible Stack/bibleStack/prefabs/chapter/OnSpawned.tsx"
+      ],
+      "bibleStack.prefabs.chapter.Select": [
+        "./packages/Bible Stack/bibleStack/prefabs/chapter/Select.tsx"
+      ],
+      "bibleStack.prefabs.chapter.StopChapterTransition": [
+        "./packages/Bible Stack/bibleStack/prefabs/chapter/StopChapterTransition.tsx"
+      ],
+      "bibleStack.prefabs.chapter.TrySetUsersColorPosition": [
+        "./packages/Bible Stack/bibleStack/prefabs/chapter/TrySetUsersColorPosition.tsx"
+      ],
+      "bibleStack.prefabs.chapter.Unhighlight": [
+        "./packages/Bible Stack/bibleStack/prefabs/chapter/Unhighlight.tsx"
+      ],
+      "bibleStack.prefabs.chunkOfVerses.Hide": [
+        "./packages/Bible Stack/bibleStack/prefabs/chunkOfVerses/Hide.tsx"
+      ],
+      "bibleStack.prefabs.chunkOfVerses.Highlight": [
+        "./packages/Bible Stack/bibleStack/prefabs/chunkOfVerses/Highlight.tsx"
+      ],
+      "bibleStack.prefabs.chunkOfVerses.onClick": [
+        "./packages/Bible Stack/bibleStack/prefabs/chunkOfVerses/onClick.tsx"
+      ],
+      "bibleStack.prefabs.chunkOfVerses.onDrag": [
+        "./packages/Bible Stack/bibleStack/prefabs/chunkOfVerses/onDrag.tsx"
+      ],
+      "bibleStack.prefabs.chunkOfVerses.onDrop": [
+        "./packages/Bible Stack/bibleStack/prefabs/chunkOfVerses/onDrop.tsx"
+      ],
+      "bibleStack.prefabs.chunkOfVerses.OnHighlightToolDisabled": [
+        "./packages/Bible Stack/bibleStack/prefabs/chunkOfVerses/OnHighlightToolDisabled.tsx"
+      ],
+      "bibleStack.prefabs.chunkOfVerses.OnHighlightToolEnabled": [
+        "./packages/Bible Stack/bibleStack/prefabs/chunkOfVerses/OnHighlightToolEnabled.tsx"
+      ],
+      "bibleStack.prefabs.chunkOfVerses.onPointerEnter": [
+        "./packages/Bible Stack/bibleStack/prefabs/chunkOfVerses/onPointerEnter.tsx"
+      ],
+      "bibleStack.prefabs.chunkOfVerses.onPointerExit": [
+        "./packages/Bible Stack/bibleStack/prefabs/chunkOfVerses/onPointerExit.tsx"
+      ],
+      "bibleStack.prefabs.chunkOfVerses.Select": [
+        "./packages/Bible Stack/bibleStack/prefabs/chunkOfVerses/Select.tsx"
+      ],
+      "bibleStack.prefabs.chunkOfVerses.Show": [
+        "./packages/Bible Stack/bibleStack/prefabs/chunkOfVerses/Show.tsx"
+      ],
+      "bibleStack.prefabs.chunkOfVerses.StopHighlightTransition": [
+        "./packages/Bible Stack/bibleStack/prefabs/chunkOfVerses/StopHighlightTransition.tsx"
+      ],
+      "bibleStack.prefabs.chunkOfVerses.Unhighlight": [
+        "./packages/Bible Stack/bibleStack/prefabs/chunkOfVerses/Unhighlight.tsx"
+      ],
+      "bibleStack.prefabs.cover.OnCameraRotationChanged": [
+        "./packages/Bible Stack/bibleStack/prefabs/cover/OnCameraRotationChanged.tsx"
+      ],
+      "bibleStack.prefabs.cover.onClick": [
+        "./packages/Bible Stack/bibleStack/prefabs/cover/onClick.tsx"
+      ],
+      "bibleStack.prefabs.cover.OnReleased": [
+        "./packages/Bible Stack/bibleStack/prefabs/cover/OnReleased.tsx"
+      ],
+      "bibleStack.prefabs.cover.OnSpawned": [
+        "./packages/Bible Stack/bibleStack/prefabs/cover/OnSpawned.tsx"
+      ],
+      "bibleStack.prefabs.cover.SetOpacity": [
+        "./packages/Bible Stack/bibleStack/prefabs/cover/SetOpacity.tsx"
+      ],
+      "bibleStack.prefabs.crossLine.onPointerDown": [
+        "./packages/Bible Stack/bibleStack/prefabs/crossLine/onPointerDown.tsx"
+      ],
+      "bibleStack.prefabs.crossLine.onPointerUp": [
+        "./packages/Bible Stack/bibleStack/prefabs/crossLine/onPointerUp.tsx"
+      ],
+      "bibleStack.prefabs.crossLine.OnReleased": [
+        "./packages/Bible Stack/bibleStack/prefabs/crossLine/OnReleased.tsx"
+      ],
+      "bibleStack.prefabs.crossLine.OnSpawned": [
+        "./packages/Bible Stack/bibleStack/prefabs/crossLine/OnSpawned.tsx"
+      ],
+      "bibleStack.prefabs.section.ChangeColor": [
+        "./packages/Bible Stack/bibleStack/prefabs/section/ChangeColor.tsx"
+      ],
+      "bibleStack.prefabs.section.Highlight": [
+        "./packages/Bible Stack/bibleStack/prefabs/section/Highlight.tsx"
+      ],
+      "bibleStack.prefabs.section.onBotChanged": [
+        "./packages/Bible Stack/bibleStack/prefabs/section/onBotChanged.tsx"
+      ],
+      "bibleStack.prefabs.section.OnCameraRotationChanged": [
+        "./packages/Bible Stack/bibleStack/prefabs/section/OnCameraRotationChanged.tsx"
+      ],
+      "bibleStack.prefabs.section.onClick": [
+        "./packages/Bible Stack/bibleStack/prefabs/section/onClick.tsx"
+      ],
+      "bibleStack.prefabs.section.onCreate": [
+        "./packages/Bible Stack/bibleStack/prefabs/section/onCreate.tsx"
+      ],
+      "bibleStack.prefabs.section.onDrag": [
+        "./packages/Bible Stack/bibleStack/prefabs/section/onDrag.tsx"
+      ],
+      "bibleStack.prefabs.section.onDragging": [
+        "./packages/Bible Stack/bibleStack/prefabs/section/onDragging.tsx"
+      ],
+      "bibleStack.prefabs.section.onDrop": [
+        "./packages/Bible Stack/bibleStack/prefabs/section/onDrop.tsx"
+      ],
+      "bibleStack.prefabs.section.OnHighlightToolDisabled": [
+        "./packages/Bible Stack/bibleStack/prefabs/section/OnHighlightToolDisabled.tsx"
+      ],
+      "bibleStack.prefabs.section.OnHighlightToolEnabled": [
+        "./packages/Bible Stack/bibleStack/prefabs/section/OnHighlightToolEnabled.tsx"
+      ],
+      "bibleStack.prefabs.section.OnLabelInteracted": [
+        "./packages/Bible Stack/bibleStack/prefabs/section/OnLabelInteracted.tsx"
+      ],
+      "bibleStack.prefabs.section.onPointerEnter": [
+        "./packages/Bible Stack/bibleStack/prefabs/section/onPointerEnter.tsx"
+      ],
+      "bibleStack.prefabs.section.onPointerExit": [
+        "./packages/Bible Stack/bibleStack/prefabs/section/onPointerExit.tsx"
+      ],
+      "bibleStack.prefabs.section.onPointerUp": [
+        "./packages/Bible Stack/bibleStack/prefabs/section/onPointerUp.tsx"
+      ],
+      "bibleStack.prefabs.section.OnReleased": [
+        "./packages/Bible Stack/bibleStack/prefabs/section/OnReleased.tsx"
+      ],
+      "bibleStack.prefabs.section.OnSpawned": [
+        "./packages/Bible Stack/bibleStack/prefabs/section/OnSpawned.tsx"
+      ],
+      "bibleStack.prefabs.section.Rehighlight": [
+        "./packages/Bible Stack/bibleStack/prefabs/section/Rehighlight.tsx"
+      ],
+      "bibleStack.prefabs.section.ReleaseCurrentInfoLabel": [
+        "./packages/Bible Stack/bibleStack/prefabs/section/ReleaseCurrentInfoLabel.tsx"
+      ],
+      "bibleStack.prefabs.section.ShiftFocus": [
+        "./packages/Bible Stack/bibleStack/prefabs/section/ShiftFocus.tsx"
+      ],
+      "bibleStack.prefabs.section.StopHighlightTransition": [
+        "./packages/Bible Stack/bibleStack/prefabs/section/StopHighlightTransition.tsx"
+      ],
+      "bibleStack.prefabs.section.ToggleBookDrag": [
+        "./packages/Bible Stack/bibleStack/prefabs/section/ToggleBookDrag.tsx"
+      ],
+      "bibleStack.prefabs.section.TryToLerp": [
+        "./packages/Bible Stack/bibleStack/prefabs/section/TryToLerp.tsx"
+      ],
+      "bibleStack.prefabs.section.TryToUnlerp": [
+        "./packages/Bible Stack/bibleStack/prefabs/section/TryToUnlerp.tsx"
+      ],
+      "bibleStack.prefabs.section.Unhighlight": [
+        "./packages/Bible Stack/bibleStack/prefabs/section/Unhighlight.tsx"
+      ],
+      "bibleStack.prefabs.sectionShadow.onBotChanged": [
+        "./packages/Bible Stack/bibleStack/prefabs/sectionShadow/onBotChanged.tsx"
+      ],
+      "bibleStack.prefabs.sectionShadow.OnLabelInteracted": [
+        "./packages/Bible Stack/bibleStack/prefabs/sectionShadow/OnLabelInteracted.tsx"
+      ],
+      "bibleStack.prefabs.sectionShadow.OnReleased": [
+        "./packages/Bible Stack/bibleStack/prefabs/sectionShadow/OnReleased.tsx"
+      ],
+      "bibleStack.prefabs.sectionShadow.OnSpawned": [
+        "./packages/Bible Stack/bibleStack/prefabs/sectionShadow/OnSpawned.tsx"
+      ],
+      "bibleStack.prefabs.shadow.OnReleased": [
+        "./packages/Bible Stack/bibleStack/prefabs/shadow/OnReleased.tsx"
+      ],
+      "bibleStack.prefabs.shadow.OnSpawned": [
+        "./packages/Bible Stack/bibleStack/prefabs/shadow/OnSpawned.tsx"
+      ],
+      "bibleStack.prefabs.testament.Highlight": [
+        "./packages/Bible Stack/bibleStack/prefabs/testament/Highlight.tsx"
+      ],
+      "bibleStack.prefabs.testament.onBotChanged": [
+        "./packages/Bible Stack/bibleStack/prefabs/testament/onBotChanged.tsx"
+      ],
+      "bibleStack.prefabs.testament.OnCameraRotationChanged": [
+        "./packages/Bible Stack/bibleStack/prefabs/testament/OnCameraRotationChanged.tsx"
+      ],
+      "bibleStack.prefabs.testament.onClick": [
+        "./packages/Bible Stack/bibleStack/prefabs/testament/onClick.tsx"
+      ],
+      "bibleStack.prefabs.testament.onDrag": [
+        "./packages/Bible Stack/bibleStack/prefabs/testament/onDrag.tsx"
+      ],
+      "bibleStack.prefabs.testament.onDragging": [
+        "./packages/Bible Stack/bibleStack/prefabs/testament/onDragging.tsx"
+      ],
+      "bibleStack.prefabs.testament.onDrop": [
+        "./packages/Bible Stack/bibleStack/prefabs/testament/onDrop.tsx"
+      ],
+      "bibleStack.prefabs.testament.OnHighlightToolDisabled": [
+        "./packages/Bible Stack/bibleStack/prefabs/testament/OnHighlightToolDisabled.tsx"
+      ],
+      "bibleStack.prefabs.testament.OnHighlightToolEnabled": [
+        "./packages/Bible Stack/bibleStack/prefabs/testament/OnHighlightToolEnabled.tsx"
+      ],
+      "bibleStack.prefabs.testament.OnLabelInteracted": [
+        "./packages/Bible Stack/bibleStack/prefabs/testament/OnLabelInteracted.tsx"
+      ],
+      "bibleStack.prefabs.testament.onPointerDown": [
+        "./packages/Bible Stack/bibleStack/prefabs/testament/onPointerDown.tsx"
+      ],
+      "bibleStack.prefabs.testament.onPointerEnter": [
+        "./packages/Bible Stack/bibleStack/prefabs/testament/onPointerEnter.tsx"
+      ],
+      "bibleStack.prefabs.testament.onPointerExit": [
+        "./packages/Bible Stack/bibleStack/prefabs/testament/onPointerExit.tsx"
+      ],
+      "bibleStack.prefabs.testament.onPointerUp": [
+        "./packages/Bible Stack/bibleStack/prefabs/testament/onPointerUp.tsx"
+      ],
+      "bibleStack.prefabs.testament.OnReleased": [
+        "./packages/Bible Stack/bibleStack/prefabs/testament/OnReleased.tsx"
+      ],
+      "bibleStack.prefabs.testament.OnSpawned": [
+        "./packages/Bible Stack/bibleStack/prefabs/testament/OnSpawned.tsx"
+      ],
+      "bibleStack.prefabs.testament.Rehighlight": [
+        "./packages/Bible Stack/bibleStack/prefabs/testament/Rehighlight.tsx"
+      ],
+      "bibleStack.prefabs.testament.ShiftFocus": [
+        "./packages/Bible Stack/bibleStack/prefabs/testament/ShiftFocus.tsx"
+      ],
+      "bibleStack.prefabs.testament.StopHighlightTransition": [
+        "./packages/Bible Stack/bibleStack/prefabs/testament/StopHighlightTransition.tsx"
+      ],
+      "bibleStack.prefabs.testament.ToggleBookDrag": [
+        "./packages/Bible Stack/bibleStack/prefabs/testament/ToggleBookDrag.tsx"
+      ],
+      "bibleStack.prefabs.testament.TryToLerp": [
+        "./packages/Bible Stack/bibleStack/prefabs/testament/TryToLerp.tsx"
+      ],
+      "bibleStack.prefabs.testament.TryToUnlerp": [
+        "./packages/Bible Stack/bibleStack/prefabs/testament/TryToUnlerp.tsx"
+      ],
+      "bibleStack.prefabs.testament.Unhighlight": [
+        "./packages/Bible Stack/bibleStack/prefabs/testament/Unhighlight.tsx"
+      ],
+      "bibleStack.prefabs.verse.Hide": [
+        "./packages/Bible Stack/bibleStack/prefabs/verse/Hide.tsx"
+      ],
+      "bibleStack.prefabs.verse.onClick": [
+        "./packages/Bible Stack/bibleStack/prefabs/verse/onClick.tsx"
+      ],
+      "bibleStack.prefabs.verse.OnHighlightToolDisabled": [
+        "./packages/Bible Stack/bibleStack/prefabs/verse/OnHighlightToolDisabled.tsx"
+      ],
+      "bibleStack.prefabs.verse.OnHighlightToolEnabled": [
+        "./packages/Bible Stack/bibleStack/prefabs/verse/OnHighlightToolEnabled.tsx"
+      ],
+      "bibleStack.prefabs.verse.OnReleased": [
+        "./packages/Bible Stack/bibleStack/prefabs/verse/OnReleased.tsx"
+      ],
+      "bibleVizUtils.classes.onCreate": [
+        "./packages/Bible Visualization Utils/bibleVizUtils/classes/onCreate.tsx"
+      ],
+      "bibleVizUtils.data.onCreate": [
+        "./packages/Bible Visualization Utils/bibleVizUtils/data/onCreate.tsx"
+      ],
+      "bibleVizUtils.functions.ApplyFunctionToElement": [
+        "./packages/Bible Visualization Utils/bibleVizUtils/functions/ApplyFunctionToElement.tsx"
+      ],
+      "bibleVizUtils.functions.CapitalizeFirstLetter": [
+        "./packages/Bible Visualization Utils/bibleVizUtils/functions/CapitalizeFirstLetter.tsx"
+      ],
+      "bibleVizUtils.functions.ClearHighlights": [
+        "./packages/Bible Visualization Utils/bibleVizUtils/functions/ClearHighlights.tsx"
+      ],
+      "bibleVizUtils.functions.ClosestNumber": [
+        "./packages/Bible Visualization Utils/bibleVizUtils/functions/ClosestNumber.tsx"
+      ],
+      "bibleVizUtils.functions.ConvertCompletePsalmsToDivided": [
+        "./packages/Bible Visualization Utils/bibleVizUtils/functions/ConvertCompletePsalmsToDivided.tsx"
+      ],
+      "bibleVizUtils.functions.ConvertDividedPsalmsToComplete": [
+        "./packages/Bible Visualization Utils/bibleVizUtils/functions/ConvertDividedPsalmsToComplete.tsx"
+      ],
+      "bibleVizUtils.functions.DistanceBetweenBotAndCamera": [
+        "./packages/Bible Visualization Utils/bibleVizUtils/functions/DistanceBetweenBotAndCamera.tsx"
+      ],
+      "bibleVizUtils.functions.EnterHistoryMode": [
+        "./packages/Bible Visualization Utils/bibleVizUtils/functions/EnterHistoryMode.tsx"
+      ],
+      "bibleVizUtils.functions.ExitHistoryMode": [
+        "./packages/Bible Visualization Utils/bibleVizUtils/functions/ExitHistoryMode.tsx"
+      ],
+      "bibleVizUtils.functions.FindPreviousValidGroupBookData": [
+        "./packages/Bible Visualization Utils/bibleVizUtils/functions/FindPreviousValidGroupBookData.tsx"
+      ],
+      "bibleVizUtils.functions.FormatNumberToUSDCurrency": [
+        "./packages/Bible Visualization Utils/bibleVizUtils/functions/FormatNumberToUSDCurrency.tsx"
+      ],
+      "bibleVizUtils.functions.GetActivityForPiece": [
+        "./packages/Bible Visualization Utils/bibleVizUtils/functions/GetActivityForPiece.tsx"
+      ],
+      "bibleVizUtils.functions.GetAmountOfChaptersInSection": [
+        "./packages/Bible Visualization Utils/bibleVizUtils/functions/GetAmountOfChaptersInSection.tsx"
+      ],
+      "bibleVizUtils.functions.GetAnimateTagFromObject": [
+        "./packages/Bible Visualization Utils/bibleVizUtils/functions/GetAnimateTagFromObject.tsx"
+      ],
+      "bibleVizUtils.functions.GetArrangementByIndex": [
+        "./packages/Bible Visualization Utils/bibleVizUtils/functions/GetArrangementByIndex.tsx"
+      ],
+      "bibleVizUtils.functions.GetArrangementIndexByName": [
+        "./packages/Bible Visualization Utils/bibleVizUtils/functions/GetArrangementIndexByName.tsx"
+      ],
+      "bibleVizUtils.functions.GetBiggerChapter": [
+        "./packages/Bible Visualization Utils/bibleVizUtils/functions/GetBiggerChapter.tsx"
+      ],
+      "bibleVizUtils.functions.GetBookInfoPathByName": [
+        "./packages/Bible Visualization Utils/bibleVizUtils/functions/GetBookInfoPathByName.tsx"
+      ],
+      "bibleVizUtils.functions.GetBooksNamesBySectionName": [
+        "./packages/Bible Visualization Utils/bibleVizUtils/functions/GetBooksNamesBySectionName.tsx"
+      ],
+      "bibleVizUtils.functions.GetBotScales": [
+        "./packages/Bible Visualization Utils/bibleVizUtils/functions/GetBotScales.tsx"
+      ],
+      "bibleVizUtils.functions.GetChildrenLevelColors": [
+        "./packages/Bible Visualization Utils/bibleVizUtils/functions/GetChildrenLevelColors.tsx"
+      ],
+      "bibleVizUtils.functions.GetCurrentArrangement": [
+        "./packages/Bible Visualization Utils/bibleVizUtils/functions/GetCurrentArrangement.tsx"
+      ],
+      "bibleVizUtils.functions.GetCurrentArrangementIndex": [
+        "./packages/Bible Visualization Utils/bibleVizUtils/functions/GetCurrentArrangementIndex.tsx"
+      ],
+      "bibleVizUtils.functions.GetCurrentArrangementName": [
+        "./packages/Bible Visualization Utils/bibleVizUtils/functions/GetCurrentArrangementName.tsx"
+      ],
+      "bibleVizUtils.functions.GetCurrentInfoLabelTransformer": [
+        "./packages/Bible Visualization Utils/bibleVizUtils/functions/GetCurrentInfoLabelTransformer.tsx"
+      ],
+      "bibleVizUtils.functions.GetCurrentLabelDateFormat": [
+        "./packages/Bible Visualization Utils/bibleVizUtils/functions/GetCurrentLabelDateFormat.tsx"
+      ],
+      "bibleVizUtils.functions.GetCurrentUsersColorForPiece": [
+        "./packages/Bible Visualization Utils/bibleVizUtils/functions/GetCurrentUsersColorForPiece.tsx"
+      ],
+      "bibleVizUtils.functions.GetCustomArrangementExplodedViewBooksPositions": [
+        "./packages/Bible Visualization Utils/bibleVizUtils/functions/GetCustomArrangementExplodedViewBooksPositions.tsx"
+      ],
+      "bibleVizUtils.functions.GetDarkerColor": [
+        "./packages/Bible Visualization Utils/bibleVizUtils/functions/GetDarkerColor.tsx"
+      ],
+      "bibleVizUtils.functions.GetDialogBotScaleY": [
+        "./packages/Bible Visualization Utils/bibleVizUtils/functions/GetDialogBotScaleY.tsx"
+      ],
+      "bibleVizUtils.functions.GetDirectionForNotification": [
+        "./packages/Bible Visualization Utils/bibleVizUtils/functions/GetDirectionForNotification.tsx"
+      ],
+      "bibleVizUtils.functions.GetFixedArrangementFromTemplate": [
+        "./packages/Bible Visualization Utils/bibleVizUtils/functions/GetFixedArrangementFromTemplate.tsx"
+      ],
+      "bibleVizUtils.functions.GetFixedPosition": [
+        "./packages/Bible Visualization Utils/bibleVizUtils/functions/GetFixedPosition.tsx"
+      ],
+      "bibleVizUtils.functions.GetFixedScales": [
+        "./packages/Bible Visualization Utils/bibleVizUtils/functions/GetFixedScales.tsx"
+      ],
+      "bibleVizUtils.functions.GetFocusOnPositionFromRotation": [
+        "./packages/Bible Visualization Utils/bibleVizUtils/functions/GetFocusOnPositionFromRotation.tsx"
+      ],
+      "bibleVizUtils.functions.GetGroupBookData": [
+        "./packages/Bible Visualization Utils/bibleVizUtils/functions/GetGroupBookData.tsx"
+      ],
+      "bibleVizUtils.functions.GetHistoryColor": [
+        "./packages/Bible Visualization Utils/bibleVizUtils/functions/GetHistoryColor.tsx"
+      ],
+      "bibleVizUtils.functions.GetHistoryColorByDeltaTime": [
+        "./packages/Bible Visualization Utils/bibleVizUtils/functions/GetHistoryColorByDeltaTime.tsx"
+      ],
+      "bibleVizUtils.functions.GetHistoryColorByRange": [
+        "./packages/Bible Visualization Utils/bibleVizUtils/functions/GetHistoryColorByRange.tsx"
+      ],
+      "bibleVizUtils.functions.GetHistoryColorByReadingTime": [
+        "./packages/Bible Visualization Utils/bibleVizUtils/functions/GetHistoryColorByReadingTime.tsx"
+      ],
+      "bibleVizUtils.functions.GetHistoryColorByRecency": [
+        "./packages/Bible Visualization Utils/bibleVizUtils/functions/GetHistoryColorByRecency.tsx"
+      ],
+      "bibleVizUtils.functions.GetHistoryColorConicGradient": [
+        "./packages/Bible Visualization Utils/bibleVizUtils/functions/GetHistoryColorConicGradient.tsx"
+      ],
+      "bibleVizUtils.functions.GetHistoryColorLinearGradient": [
+        "./packages/Bible Visualization Utils/bibleVizUtils/functions/GetHistoryColorLinearGradient.tsx"
+      ],
+      "bibleVizUtils.functions.GetHistoryEntries": [
+        "./packages/Bible Visualization Utils/bibleVizUtils/functions/GetHistoryEntries.tsx"
+      ],
+      "bibleVizUtils.functions.GetHistoryEntriesForElement": [
+        "./packages/Bible Visualization Utils/bibleVizUtils/functions/GetHistoryEntriesForElement.tsx"
+      ],
+      "bibleVizUtils.functions.GetLabelForPiece": [
+        "./packages/Bible Visualization Utils/bibleVizUtils/functions/GetLabelForPiece.tsx"
+      ],
+      "bibleVizUtils.functions.GetNumberOfChaptersByName": [
+        "./packages/Bible Visualization Utils/bibleVizUtils/functions/GetNumberOfChaptersByName.tsx"
+      ],
+      "bibleVizUtils.functions.GetRandomColor": [
+        "./packages/Bible Visualization Utils/bibleVizUtils/functions/GetRandomColor.tsx"
+      ],
+      "bibleVizUtils.functions.GetRandomElementFromArray": [
+        "./packages/Bible Visualization Utils/bibleVizUtils/functions/GetRandomElementFromArray.tsx"
+      ],
+      "bibleVizUtils.functions.GetRandomUnitVector": [
+        "./packages/Bible Visualization Utils/bibleVizUtils/functions/GetRandomUnitVector.tsx"
+      ],
+      "bibleVizUtils.functions.GetSectionInfoPathByName": [
+        "./packages/Bible Visualization Utils/bibleVizUtils/functions/GetSectionInfoPathByName.tsx"
+      ],
+      "bibleVizUtils.functions.GetSectionLevels": [
+        "./packages/Bible Visualization Utils/bibleVizUtils/functions/GetSectionLevels.tsx"
+      ],
+      "bibleVizUtils.functions.GetSectionNamesByTestamentName": [
+        "./packages/Bible Visualization Utils/bibleVizUtils/functions/GetSectionNamesByTestamentName.tsx"
+      ],
+      "bibleVizUtils.functions.GetSelectedBookData": [
+        "./packages/Bible Visualization Utils/bibleVizUtils/functions/GetSelectedBookData.tsx"
+      ],
+      "bibleVizUtils.functions.GetSetTagFromObject": [
+        "./packages/Bible Visualization Utils/bibleVizUtils/functions/GetSetTagFromObject.tsx"
+      ],
+      "bibleVizUtils.functions.GetTemplateFromArrangement": [
+        "./packages/Bible Visualization Utils/bibleVizUtils/functions/GetTemplateFromArrangement.tsx"
+      ],
+      "bibleVizUtils.functions.GetTestamentInfoPathByName": [
+        "./packages/Bible Visualization Utils/bibleVizUtils/functions/GetTestamentInfoPathByName.tsx"
+      ],
+      "bibleVizUtils.functions.GetTextColorBasedOnBackground": [
+        "./packages/Bible Visualization Utils/bibleVizUtils/functions/GetTextColorBasedOnBackground.tsx"
+      ],
+      "bibleVizUtils.functions.GetUserPresenceBorderGradientColors": [
+        "./packages/Bible Visualization Utils/bibleVizUtils/functions/GetUserPresenceBorderGradientColors.tsx"
+      ],
+      "bibleVizUtils.functions.GetUsersSelectionForPiece": [
+        "./packages/Bible Visualization Utils/bibleVizUtils/functions/GetUsersSelectionForPiece.tsx"
+      ],
+      "bibleVizUtils.functions.HexToRgb": [
+        "./packages/Bible Visualization Utils/bibleVizUtils/functions/HexToRgb.tsx"
+      ],
+      "bibleVizUtils.functions.HighlightBiblePiece": [
+        "./packages/Bible Visualization Utils/bibleVizUtils/functions/HighlightBiblePiece.tsx"
+      ],
+      "bibleVizUtils.functions.IsValueBetween": [
+        "./packages/Bible Visualization Utils/bibleVizUtils/functions/IsValueBetween.tsx"
+      ],
+      "bibleVizUtils.functions.MakePortalFree": [
+        "./packages/Bible Visualization Utils/bibleVizUtils/functions/MakePortalFree.tsx"
+      ],
+      "bibleVizUtils.functions.MakePortalRestrict": [
+        "./packages/Bible Visualization Utils/bibleVizUtils/functions/MakePortalRestrict.tsx"
+      ],
+      "bibleVizUtils.functions.onBookOrientationChanged": [
+        "./packages/Bible Visualization Utils/bibleVizUtils/functions/onBookOrientationChanged.tsx"
+      ],
+      "bibleVizUtils.functions.onCreate": [
+        "./packages/Bible Visualization Utils/bibleVizUtils/functions/onCreate.tsx"
+      ],
+      "bibleVizUtils.functions.ReleaseLabelTransformerFromPiece": [
+        "./packages/Bible Visualization Utils/bibleVizUtils/functions/ReleaseLabelTransformerFromPiece.tsx"
+      ],
+      "bibleVizUtils.functions.RgbToHex": [
+        "./packages/Bible Visualization Utils/bibleVizUtils/functions/RgbToHex.tsx"
+      ],
+      "bibleVizUtils.functions.RotateArray": [
+        "./packages/Bible Visualization Utils/bibleVizUtils/functions/RotateArray.tsx"
+      ],
+      "bibleVizUtils.functions.SetArrangementIndexByName": [
+        "./packages/Bible Visualization Utils/bibleVizUtils/functions/SetArrangementIndexByName.tsx"
+      ],
+      "bibleVizUtils.functions.SetLabelDateFormat": [
+        "./packages/Bible Visualization Utils/bibleVizUtils/functions/SetLabelDateFormat.tsx"
+      ],
+      "bibleVizUtils.functions.SetRenderOrder": [
+        "./packages/Bible Visualization Utils/bibleVizUtils/functions/SetRenderOrder.tsx"
+      ],
+      "bibleVizUtils.functions.SetUsersColorPositionOnPiece": [
+        "./packages/Bible Visualization Utils/bibleVizUtils/functions/SetUsersColorPositionOnPiece.tsx"
+      ],
+      "bibleVizUtils.functions.SubtractArrays": [
+        "./packages/Bible Visualization Utils/bibleVizUtils/functions/SubtractArrays.tsx"
+      ],
+      "bibleVizUtils.functions.TryHideActivityNotificationOnPiece": [
+        "./packages/Bible Visualization Utils/bibleVizUtils/functions/TryHideActivityNotificationOnPiece.tsx"
+      ],
+      "bibleVizUtils.functions.TryHideUsersColorOnPiece": [
+        "./packages/Bible Visualization Utils/bibleVizUtils/functions/TryHideUsersColorOnPiece.tsx"
+      ],
+      "bibleVizUtils.functions.TryUpdateNotificationDirection": [
+        "./packages/Bible Visualization Utils/bibleVizUtils/functions/TryUpdateNotificationDirection.tsx"
+      ],
+      "bibleVizUtils.functions.UpdateActivityNotificationOnPieces": [
+        "./packages/Bible Visualization Utils/bibleVizUtils/functions/UpdateActivityNotificationOnPieces.tsx"
+      ],
+      "bibleVizUtils.functions.UpdateFixedArrangementsInfo": [
+        "./packages/Bible Visualization Utils/bibleVizUtils/functions/UpdateFixedArrangementsInfo.tsx"
+      ],
+      "bibleVizUtils.functions.UpdateUsersColorOnPiece": [
+        "./packages/Bible Visualization Utils/bibleVizUtils/functions/UpdateUsersColorOnPiece.tsx"
+      ],
+      "bibleVizUtils.main.Initialize": [
+        "./packages/Bible Visualization Utils/bibleVizUtils/main/Initialize.tsx"
+      ],
+      "bibleVizUtils.main.OnBibleVizBotCreated": [
+        "./packages/Bible Visualization Utils/bibleVizUtils/main/OnBibleVizBotCreated.tsx"
+      ],
+      "bibleVizUtils.main.onCreate": [
+        "./packages/Bible Visualization Utils/bibleVizUtils/main/onCreate.tsx"
+      ],
+      "bibleVizUtils.main.onDestroy": [
+        "./packages/Bible Visualization Utils/bibleVizUtils/main/onDestroy.tsx"
+      ],
+      "bibleVizUtils.main.onEggHatch": [
+        "./packages/Bible Visualization Utils/bibleVizUtils/main/onEggHatch.tsx"
+      ],
+      "bibleVizUtils.main.onInstJoined": [
+        "./packages/Bible Visualization Utils/bibleVizUtils/main/onInstJoined.tsx"
+      ],
+      "bibleVizUtils.main.OnObjectPoolerInitialized": [
+        "./packages/Bible Visualization Utils/bibleVizUtils/main/OnObjectPoolerInitialized.tsx"
+      ],
+      "bibleVizUtils.main.OnOnlineUsersChanged": [
+        "./packages/Bible Visualization Utils/bibleVizUtils/main/OnOnlineUsersChanged.tsx"
+      ],
+      "bibleVizUtils.prefabs.activityNotification.OnReleased": [
+        "./packages/Bible Visualization Utils/bibleVizUtils/prefabs/activityNotification/OnReleased.tsx"
+      ],
+      "bibleVizUtils.prefabs.activityNotification.OnSpawned": [
+        "./packages/Bible Visualization Utils/bibleVizUtils/prefabs/activityNotification/OnSpawned.tsx"
+      ],
+      "bibleVizUtils.prefabs.activityNotification.SetPosition": [
+        "./packages/Bible Visualization Utils/bibleVizUtils/prefabs/activityNotification/SetPosition.tsx"
+      ],
+      "bibleVizUtils.prefabs.infoLabel.DisplayShakeAnimation": [
+        "./packages/Bible Visualization Utils/bibleVizUtils/prefabs/infoLabel/DisplayShakeAnimation.tsx"
+      ],
+      "bibleVizUtils.prefabs.infoLabel.onClick": [
+        "./packages/Bible Visualization Utils/bibleVizUtils/prefabs/infoLabel/onClick.tsx"
+      ],
+      "bibleVizUtils.prefabs.infoLabel.OnReleased": [
+        "./packages/Bible Visualization Utils/bibleVizUtils/prefabs/infoLabel/OnReleased.tsx"
+      ],
+      "bibleVizUtils.prefabs.infoLabel.OnSpawned": [
+        "./packages/Bible Visualization Utils/bibleVizUtils/prefabs/infoLabel/OnSpawned.tsx"
+      ],
+      "bibleVizUtils.prefabs.infoLabelDate.DisplayShakeAnimation": [
+        "./packages/Bible Visualization Utils/bibleVizUtils/prefabs/infoLabelDate/DisplayShakeAnimation.tsx"
+      ],
+      "bibleVizUtils.prefabs.infoLabelDate.OnReleased": [
+        "./packages/Bible Visualization Utils/bibleVizUtils/prefabs/infoLabelDate/OnReleased.tsx"
+      ],
+      "bibleVizUtils.prefabs.infoLabelDate.OnSpawned": [
+        "./packages/Bible Visualization Utils/bibleVizUtils/prefabs/infoLabelDate/OnSpawned.tsx"
+      ],
+      "bibleVizUtils.prefabs.infoLabelTail.DisplayShakeAnimation": [
+        "./packages/Bible Visualization Utils/bibleVizUtils/prefabs/infoLabelTail/DisplayShakeAnimation.tsx"
+      ],
+      "bibleVizUtils.prefabs.infoLabelTail.onClick": [
+        "./packages/Bible Visualization Utils/bibleVizUtils/prefabs/infoLabelTail/onClick.tsx"
+      ],
+      "bibleVizUtils.prefabs.infoLabelTail.OnReleased": [
+        "./packages/Bible Visualization Utils/bibleVizUtils/prefabs/infoLabelTail/OnReleased.tsx"
+      ],
+      "bibleVizUtils.prefabs.infoLabelTail.OnSpawned": [
+        "./packages/Bible Visualization Utils/bibleVizUtils/prefabs/infoLabelTail/OnSpawned.tsx"
+      ],
+      "bibleVizUtils.prefabs.infoLabelTransformer.GetLabelElements": [
+        "./packages/Bible Visualization Utils/bibleVizUtils/prefabs/infoLabelTransformer/GetLabelElements.tsx"
+      ],
+      "bibleVizUtils.prefabs.infoLabelTransformer.Hide": [
+        "./packages/Bible Visualization Utils/bibleVizUtils/prefabs/infoLabelTransformer/Hide.tsx"
+      ],
+      "bibleVizUtils.prefabs.infoLabelTransformer.OnReleased": [
+        "./packages/Bible Visualization Utils/bibleVizUtils/prefabs/infoLabelTransformer/OnReleased.tsx"
+      ],
+      "bibleVizUtils.prefabs.infoLabelTransformer.OnSpawned": [
+        "./packages/Bible Visualization Utils/bibleVizUtils/prefabs/infoLabelTransformer/OnSpawned.tsx"
+      ],
+      "bibleVizUtils.prefabs.infoLabelTransformer.SetPosition": [
+        "./packages/Bible Visualization Utils/bibleVizUtils/prefabs/infoLabelTransformer/SetPosition.tsx"
+      ],
+      "bibleVizUtils.prefabs.infoLabelTransformer.Show": [
+        "./packages/Bible Visualization Utils/bibleVizUtils/prefabs/infoLabelTransformer/Show.tsx"
+      ],
+      "bibleVizUtils.prefabs.infoLabelTransformer.StartShakeAnimation": [
+        "./packages/Bible Visualization Utils/bibleVizUtils/prefabs/infoLabelTransformer/StartShakeAnimation.tsx"
+      ],
+      "bibleVizUtils.prefabs.infoLabelTransformer.StopOpacityTransition": [
+        "./packages/Bible Visualization Utils/bibleVizUtils/prefabs/infoLabelTransformer/StopOpacityTransition.tsx"
+      ],
+      "bibleVizUtils.prefabs.infoLabelTransformer.StopShakeAnimation": [
+        "./packages/Bible Visualization Utils/bibleVizUtils/prefabs/infoLabelTransformer/StopShakeAnimation.tsx"
+      ],
+      "bibleVizUtils.prefabs.infoLabelTransformer.UserPresenceUpdate": [
+        "./packages/Bible Visualization Utils/bibleVizUtils/prefabs/infoLabelTransformer/UserPresenceUpdate.tsx"
+      ],
+      "bibleVizUtils.prefabs.userColor.DisplayShakeAnimation": [
+        "./packages/Bible Visualization Utils/bibleVizUtils/prefabs/userColor/DisplayShakeAnimation.tsx"
+      ],
+      "bibleVizUtils.prefabs.userColor.OnReleased": [
+        "./packages/Bible Visualization Utils/bibleVizUtils/prefabs/userColor/OnReleased.tsx"
+      ],
+      "bibleVizUtils.prefabs.userColor.OnSpawned": [
+        "./packages/Bible Visualization Utils/bibleVizUtils/prefabs/userColor/OnSpawned.tsx"
+      ],
+      "introduction.searchBar.handleGeoJsonSearch": [
+        "./packages/BookSelector/introduction/searchBar/handleGeoJsonSearch.tsx"
+      ],
+      "introduction.searchBar.initialize": [
+        "./packages/BookSelector/introduction/searchBar/initialize.tsx"
+      ],
+      "introduction.searchBar.onActiveTabChanged": [
+        "./packages/BookSelector/introduction/searchBar/onActiveTabChanged.tsx"
+      ],
+      "introduction.searchBar.onBookOrientationChanged": [
+        "./packages/BookSelector/introduction/searchBar/onBookOrientationChanged.tsx"
+      ],
+      "introduction.searchBar.onEggHatch": [
+        "./packages/BookSelector/introduction/searchBar/onEggHatch.tsx"
+      ],
+      "introduction.searchBar.onInstJoined": [
+        "./packages/BookSelector/introduction/searchBar/onInstJoined.tsx"
+      ],
+      "introduction.searchBar.OnOnlineUsersChanged": [
+        "./packages/BookSelector/introduction/searchBar/OnOnlineUsersChanged.tsx"
+      ],
+      "introduction.searchBar.SearchBar": [
+        "./packages/BookSelector/introduction/searchBar/SearchBar.tsx"
+      ],
+      "introduction.searchBar.ShowExperiences": [
+        "./packages/BookSelector/introduction/searchBar/ShowExperiences.tsx"
+      ],
+      "introduction.searchBar.togglePanel": [
+        "./packages/BookSelector/introduction/searchBar/togglePanel.tsx"
+      ],
+      "introduction.searchBar.userIcons": [
+        "./packages/BookSelector/introduction/searchBar/userIcons.tsx"
+      ],
+      "ext_calendar.calendar.Calendar": [
+        "./packages/Calendar/ext_calendar/calendar/Calendar.tsx"
+      ],
+      "ext_calendar.calendar.CalendarApp": [
+        "./packages/Calendar/ext_calendar/calendar/CalendarApp.tsx"
+      ],
+      "ext_calendar.calendar.CalendarContext": [
+        "./packages/Calendar/ext_calendar/calendar/CalendarContext.tsx"
+      ],
+      "ext_calendar.calendar.CalendarTitle": [
+        "./packages/Calendar/ext_calendar/calendar/CalendarTitle.tsx"
+      ],
+      "ext_calendar.calendar.CustomModal": [
+        "./packages/Calendar/ext_calendar/calendar/CustomModal.tsx"
+      ],
+      "ext_calendar.calendar.EditEvent": [
+        "./packages/Calendar/ext_calendar/calendar/EditEvent.tsx"
+      ],
+      "ext_calendar.calendar.EventView": [
+        "./packages/Calendar/ext_calendar/calendar/EventView.tsx"
+      ],
+      "ext_calendar.calendar.getHolidays": [
+        "./packages/Calendar/ext_calendar/calendar/getHolidays.tsx"
+      ],
+      "ext_calendar.calendar.GoToClanedar": [
+        "./packages/Calendar/ext_calendar/calendar/GoToClanedar.tsx"
+      ],
+      "ext_calendar.calendar.Menu": [
+        "./packages/Calendar/ext_calendar/calendar/Menu.tsx"
+      ],
+      "ext_calendar.calendar.onToolbarClick1": [
+        "./packages/Calendar/ext_calendar/calendar/onToolbarClick1.tsx"
+      ],
+      "ext_calendar.calendar.RepeatModal": [
+        "./packages/Calendar/ext_calendar/calendar/RepeatModal.tsx"
+      ],
+      "ext_calendar.calendar.ResourceEventModal": [
+        "./packages/Calendar/ext_calendar/calendar/ResourceEventModal.tsx"
+      ],
+      "ext_calendar.calendar.ResourceGroupSettingModal": [
+        "./packages/Calendar/ext_calendar/calendar/ResourceGroupSettingModal.tsx"
+      ],
+      "ext_calendar.calendar.ResourceHeaderModal": [
+        "./packages/Calendar/ext_calendar/calendar/ResourceHeaderModal.tsx"
+      ],
+      "ext_calendar.calendar.ResourceTitle": [
+        "./packages/Calendar/ext_calendar/calendar/ResourceTitle.tsx"
+      ],
+      "ext_calendar.calendar.Setting": [
+        "./packages/Calendar/ext_calendar/calendar/Setting.tsx"
+      ],
+      "ext_calendar.calendar.showEventPopup": [
+        "./packages/Calendar/ext_calendar/calendar/showEventPopup.tsx"
+      ],
+      "ext_calendar.calendar.ToggleCalendarAndResources": [
+        "./packages/Calendar/ext_calendar/calendar/ToggleCalendarAndResources.tsx"
+      ],
+      "managers.MapsManager.BookComponent": [
+        "./packages/Calendar/managers/MapsManager/BookComponent.tsx"
+      ],
+      "managers.MapsManager.ChapterComponent": [
+        "./packages/Calendar/managers/MapsManager/ChapterComponent.tsx"
+      ],
+      "managers.MapsManager.CreateMapBook": [
+        "./packages/Calendar/managers/MapsManager/CreateMapBook.tsx"
+      ],
+      "managers.MapsManager.CreateMapBookStructure": [
+        "./packages/Calendar/managers/MapsManager/CreateMapBookStructure.tsx"
+      ],
+      "managers.MapsManager.CreateMapChapter": [
+        "./packages/Calendar/managers/MapsManager/CreateMapChapter.tsx"
+      ],
+      "managers.MapsManager.CreateMapStructure": [
+        "./packages/Calendar/managers/MapsManager/CreateMapStructure.tsx"
+      ],
+      "managers.MapsManager.CreateNewMap": [
+        "./packages/Calendar/managers/MapsManager/CreateNewMap.tsx"
+      ],
+      "managers.MapsManager.DeleteElement": [
+        "./packages/Calendar/managers/MapsManager/DeleteElement.tsx"
+      ],
+      "managers.MapsManager.DeselectChapter": [
+        "./packages/Calendar/managers/MapsManager/DeselectChapter.tsx"
+      ],
+      "managers.MapsManager.GetBookIndexByName": [
+        "./packages/Calendar/managers/MapsManager/GetBookIndexByName.tsx"
+      ],
+      "managers.MapsManager.GetChapterDataById": [
+        "./packages/Calendar/managers/MapsManager/GetChapterDataById.tsx"
+      ],
+      "managers.MapsManager.GetCurrentArrangementIndex": [
+        "./packages/Calendar/managers/MapsManager/GetCurrentArrangementIndex.tsx"
+      ],
+      "managers.MapsManager.GetCurrentArrangementName": [
+        "./packages/Calendar/managers/MapsManager/GetCurrentArrangementName.tsx"
+      ],
+      "managers.MapsManager.GetDataChainFromParentDataIds": [
+        "./packages/Calendar/managers/MapsManager/GetDataChainFromParentDataIds.tsx"
+      ],
+      "managers.MapsManager.GetMapBookHeightByName": [
+        "./packages/Calendar/managers/MapsManager/GetMapBookHeightByName.tsx"
+      ],
+      "managers.MapsManager.GetMapBookStructureByChild": [
+        "./packages/Calendar/managers/MapsManager/GetMapBookStructureByChild.tsx"
+      ],
+      "managers.MapsManager.GetMapBookVerticalOffset": [
+        "./packages/Calendar/managers/MapsManager/GetMapBookVerticalOffset.tsx"
+      ],
+      "managers.MapsManager.GetMapDataById": [
+        "./packages/Calendar/managers/MapsManager/GetMapDataById.tsx"
+      ],
+      "managers.MapsManager.GetMapElementData": [
+        "./packages/Calendar/managers/MapsManager/GetMapElementData.tsx"
+      ],
+      "managers.MapsManager.GetMapPanel": [
+        "./packages/Calendar/managers/MapsManager/GetMapPanel.tsx"
+      ],
+      "managers.MapsManager.GetMapStructure": [
+        "./packages/Calendar/managers/MapsManager/GetMapStructure.tsx"
+      ],
+      "managers.MapsManager.HandleHistoryUpdate": [
+        "./packages/Calendar/managers/MapsManager/HandleHistoryUpdate.tsx"
+      ],
+      "managers.MapsManager.HandleMapBookDateLabelClicked": [
+        "./packages/Calendar/managers/MapsManager/HandleMapBookDateLabelClicked.tsx"
+      ],
+      "managers.MapsManager.HandleMapBookInteraction": [
+        "./packages/Calendar/managers/MapsManager/HandleMapBookInteraction.tsx"
+      ],
+      "managers.MapsManager.HandleMapBookLabelInteraction": [
+        "./packages/Calendar/managers/MapsManager/HandleMapBookLabelInteraction.tsx"
+      ],
+      "managers.MapsManager.HandleMapButtonClick": [
+        "./packages/Calendar/managers/MapsManager/HandleMapButtonClick.tsx"
+      ],
+      "managers.MapsManager.HandleMapChapterInteraction": [
+        "./packages/Calendar/managers/MapsManager/HandleMapChapterInteraction.tsx"
+      ],
+      "managers.MapsManager.HideCurrentMapBookDateLabelShown": [
+        "./packages/Calendar/managers/MapsManager/HideCurrentMapBookDateLabelShown.tsx"
+      ],
+      "managers.MapsManager.HideDatesOnMap": [
+        "./packages/Calendar/managers/MapsManager/HideDatesOnMap.tsx"
+      ],
+      "managers.MapsManager.HideLabelsOnMap": [
+        "./packages/Calendar/managers/MapsManager/HideLabelsOnMap.tsx"
+      ],
+      "managers.MapsManager.HidePlaylistOnMap": [
+        "./packages/Calendar/managers/MapsManager/HidePlaylistOnMap.tsx"
+      ],
+      "managers.MapsManager.HistoryUpdate": [
+        "./packages/Calendar/managers/MapsManager/HistoryUpdate.tsx"
+      ],
+      "managers.MapsManager.Initialize": [
+        "./packages/Calendar/managers/MapsManager/Initialize.tsx"
+      ],
+      "managers.MapsManager.MapContainerComponent": [
+        "./packages/Calendar/managers/MapsManager/MapContainerComponent.tsx"
+      ],
+      "managers.MapsManager.MapControlsComponent": [
+        "./packages/Calendar/managers/MapsManager/MapControlsComponent.tsx"
+      ],
+      "managers.MapsManager.MapPanelContext": [
+        "./packages/Calendar/managers/MapsManager/MapPanelContext.tsx"
+      ],
+      "managers.MapsManager.MapWrapperComponent": [
+        "./packages/Calendar/managers/MapsManager/MapWrapperComponent.tsx"
+      ],
+      "managers.MapsManager.onEggHatch": [
+        "./packages/Calendar/managers/MapsManager/onEggHatch.tsx"
+      ],
+      "managers.MapsManager.OnEnterHistoryMode": [
+        "./packages/Calendar/managers/MapsManager/OnEnterHistoryMode.tsx"
+      ],
+      "managers.MapsManager.OnExitHistoryMode": [
+        "./packages/Calendar/managers/MapsManager/OnExitHistoryMode.tsx"
+      ],
+      "managers.MapsManager.OnHidePlaylistOnMapComplete": [
+        "./packages/Calendar/managers/MapsManager/OnHidePlaylistOnMapComplete.tsx"
+      ],
+      "managers.MapsManager.OnHistoryUpdated": [
+        "./packages/Calendar/managers/MapsManager/OnHistoryUpdated.tsx"
+      ],
+      "managers.MapsManager.onInstJoined": [
+        "./packages/Calendar/managers/MapsManager/onInstJoined.tsx"
+      ],
+      "managers.MapsManager.onKeyDown": [
+        "./packages/Calendar/managers/MapsManager/onKeyDown.tsx"
+      ],
+      "managers.MapsManager.OnMapBookDateLabelClicked": [
+        "./packages/Calendar/managers/MapsManager/OnMapBookDateLabelClicked.tsx"
+      ],
+      "managers.MapsManager.OnMapBookInteracted": [
+        "./packages/Calendar/managers/MapsManager/OnMapBookInteracted.tsx"
+      ],
+      "managers.MapsManager.OnMapBookLabelInteracted": [
+        "./packages/Calendar/managers/MapsManager/OnMapBookLabelInteracted.tsx"
+      ],
+      "managers.MapsManager.OnMapButtonClicked": [
+        "./packages/Calendar/managers/MapsManager/OnMapButtonClicked.tsx"
+      ],
+      "managers.MapsManager.OnMapChapterInteracted": [
+        "./packages/Calendar/managers/MapsManager/OnMapChapterInteracted.tsx"
+      ],
+      "managers.MapsManager.OnMapCoverReleased": [
+        "./packages/Calendar/managers/MapsManager/OnMapCoverReleased.tsx"
+      ],
+      "managers.MapsManager.OnMapElementDrag": [
+        "./packages/Calendar/managers/MapsManager/OnMapElementDrag.tsx"
+      ],
+      "managers.MapsManager.OnMapPlaylistNavigationButtonClicked": [
+        "./packages/Calendar/managers/MapsManager/OnMapPlaylistNavigationButtonClicked.tsx"
+      ],
+      "managers.MapsManager.OnMapSettingsButtonClicked": [
+        "./packages/Calendar/managers/MapsManager/OnMapSettingsButtonClicked.tsx"
+      ],
+      "managers.MapsManager.OnPlaylistDisplayed": [
+        "./packages/Calendar/managers/MapsManager/OnPlaylistDisplayed.tsx"
+      ],
+      "managers.MapsManager.OnRespwnAllBooksOnMapComplete": [
+        "./packages/Calendar/managers/MapsManager/OnRespwnAllBooksOnMapComplete.tsx"
+      ],
+      "managers.MapsManager.OnSelectAllBooksOnMapComplete": [
+        "./packages/Calendar/managers/MapsManager/OnSelectAllBooksOnMapComplete.tsx"
+      ],
+      "managers.MapsManager.OnSelectMapBookComplete": [
+        "./packages/Calendar/managers/MapsManager/OnSelectMapBookComplete.tsx"
+      ],
+      "managers.MapsManager.OnShowPlaylistOnMapComplete": [
+        "./packages/Calendar/managers/MapsManager/OnShowPlaylistOnMapComplete.tsx"
+      ],
+      "managers.MapsManager.PullOutElementFromParent": [
+        "./packages/Calendar/managers/MapsManager/PullOutElementFromParent.tsx"
+      ],
+      "managers.MapsManager.RespawnAllBooksOnMap": [
+        "./packages/Calendar/managers/MapsManager/RespawnAllBooksOnMap.tsx"
+      ],
+      "managers.MapsManager.SelectAllBooksOnMap": [
+        "./packages/Calendar/managers/MapsManager/SelectAllBooksOnMap.tsx"
+      ],
+      "managers.MapsManager.SelectMapBook": [
+        "./packages/Calendar/managers/MapsManager/SelectMapBook.tsx"
+      ],
+      "managers.MapsManager.SetArrangementIndexByName": [
+        "./packages/Calendar/managers/MapsManager/SetArrangementIndexByName.tsx"
+      ],
+      "managers.MapsManager.SetMapDateFormat": [
+        "./packages/Calendar/managers/MapsManager/SetMapDateFormat.tsx"
+      ],
+      "managers.MapsManager.SetPlaylistSelectedEntryByIndex": [
+        "./packages/Calendar/managers/MapsManager/SetPlaylistSelectedEntryByIndex.tsx"
+      ],
+      "managers.MapsManager.SetUpMap": [
+        "./packages/Calendar/managers/MapsManager/SetUpMap.tsx"
+      ],
+      "managers.MapsManager.ShowDatesOnMap": [
+        "./packages/Calendar/managers/MapsManager/ShowDatesOnMap.tsx"
+      ],
+      "managers.MapsManager.ShowLabelsOnMap": [
+        "./packages/Calendar/managers/MapsManager/ShowLabelsOnMap.tsx"
+      ],
+      "managers.MapsManager.ShowPlaylistOnMap": [
+        "./packages/Calendar/managers/MapsManager/ShowPlaylistOnMap.tsx"
+      ],
+      "managers.MapsManager.ShowPlaylistPathOnMap": [
+        "./packages/Calendar/managers/MapsManager/ShowPlaylistPathOnMap.tsx"
+      ],
+      "managers.MapsManager.SpawnMapBook": [
+        "./packages/Calendar/managers/MapsManager/SpawnMapBook.tsx"
+      ],
+      "managers.MapsManager.TestamentContainerComponent": [
+        "./packages/Calendar/managers/MapsManager/TestamentContainerComponent.tsx"
+      ],
+      "managers.MapsManager.TestamentContentComponent": [
+        "./packages/Calendar/managers/MapsManager/TestamentContentComponent.tsx"
+      ],
+      "managers.MapsManager.TestamentContext": [
+        "./packages/Calendar/managers/MapsManager/TestamentContext.tsx"
+      ],
+      "managers.MapsManager.TestamentLineComponent": [
+        "./packages/Calendar/managers/MapsManager/TestamentLineComponent.tsx"
+      ],
+      "managers.MapsManager.ToggleSettingsOnMap": [
+        "./packages/Calendar/managers/MapsManager/ToggleSettingsOnMap.tsx"
+      ],
+      "managers.MapsManager.TryHidePlaylistPathOnMap": [
+        "./packages/Calendar/managers/MapsManager/TryHidePlaylistPathOnMap.tsx"
+      ],
+      "managers.MapsManager.TryHideUsersOnMapBook": [
+        "./packages/Calendar/managers/MapsManager/TryHideUsersOnMapBook.tsx"
+      ],
+      "managers.MapsManager.TryHighlightChapter": [
+        "./packages/Calendar/managers/MapsManager/TryHighlightChapter.tsx"
+      ],
+      "managers.MapsManager.TrySelectChapter": [
+        "./packages/Calendar/managers/MapsManager/TrySelectChapter.tsx"
+      ],
+      "managers.MapsManager.TrySetChapterSelectColorOnMap": [
+        "./packages/Calendar/managers/MapsManager/TrySetChapterSelectColorOnMap.tsx"
+      ],
+      "managers.MapsManager.TryShowDatesOnMap": [
+        "./packages/Calendar/managers/MapsManager/TryShowDatesOnMap.tsx"
+      ],
+      "managers.MapsManager.TryShowLabelsOnMap": [
+        "./packages/Calendar/managers/MapsManager/TryShowLabelsOnMap.tsx"
+      ],
+      "managers.MapsManager.TryShowPlaylistPathOnMap": [
+        "./packages/Calendar/managers/MapsManager/TryShowPlaylistPathOnMap.tsx"
+      ],
+      "managers.MapsManager.TryUnhighlightChapter": [
+        "./packages/Calendar/managers/MapsManager/TryUnhighlightChapter.tsx"
+      ],
+      "managers.MapsManager.UpdateHistoryModeElements": [
+        "./packages/Calendar/managers/MapsManager/UpdateHistoryModeElements.tsx"
+      ],
+      "managers.MapsManager.UpdateMapElementsUsersColor": [
+        "./packages/Calendar/managers/MapsManager/UpdateMapElementsUsersColor.tsx"
+      ],
+      "managers.MapsManager.UpdateMapElementsUsersNotification": [
+        "./packages/Calendar/managers/MapsManager/UpdateMapElementsUsersNotification.tsx"
+      ],
+      "managers.MapsManager.UserPresenceUpdate": [
+        "./packages/Calendar/managers/MapsManager/UserPresenceUpdate.tsx"
+      ],
+      "canvas.canvasApp.CanvasApp": [
+        "./packages/Canvas/canvas/canvasApp/CanvasApp.tsx"
+      ],
+      "canvas.canvasApp.toggleCanvas": [
+        "./packages/Canvas/canvas/canvasApp/toggleCanvas.tsx"
+      ],
+      "colorLerper.main.Initialize": [
+        "./packages/Color Lerper/colorLerper/main/Initialize.tsx"
+      ],
+      "colorLerper.main.LerpTag": [
+        "./packages/Color Lerper/colorLerper/main/LerpTag.tsx"
+      ],
+      "colorLerper.main.onCreate": [
+        "./packages/Color Lerper/colorLerper/main/onCreate.tsx"
+      ],
+      "colorLerper.main.onDestroy": [
+        "./packages/Color Lerper/colorLerper/main/onDestroy.tsx"
+      ],
+      "colorLerper.main.onEggHatch": [
+        "./packages/Color Lerper/colorLerper/main/onEggHatch.tsx"
+      ],
+      "colorLerper.main.onInstJoined": [
+        "./packages/Color Lerper/colorLerper/main/onInstJoined.tsx"
+      ],
+      "colorLerper.main.StopLerp": [
+        "./packages/Color Lerper/colorLerper/main/StopLerp.tsx"
+      ],
+      "ext_canvas.cursorFollow.createErase": [
+        "./packages/CursorFollow/ext_canvas/cursorFollow/createErase.tsx"
+      ],
+      "ext_canvas.cursorFollow.cursorFollow": [
+        "./packages/CursorFollow/ext_canvas/cursorFollow/cursorFollow.tsx"
+      ],
+      "ext_canvas.cursorFollow.initiliaze": [
+        "./packages/CursorFollow/ext_canvas/cursorFollow/initiliaze.tsx"
+      ],
+      "ext_canvas.cursorFollow.onCreate": [
+        "./packages/CursorFollow/ext_canvas/cursorFollow/onCreate.tsx"
+      ],
+      "ext_canvas.cursorFollow.onEggHatch": [
+        "./packages/CursorFollow/ext_canvas/cursorFollow/onEggHatch.tsx"
+      ],
+      "ext_canvas.cursorFollow.onInstJoined": [
+        "./packages/CursorFollow/ext_canvas/cursorFollow/onInstJoined.tsx"
+      ],
+      "ext_canvas.onGridClick": [
+        "./packages/CursorFollow/ext_canvas/onGridClick.tsx"
+      ],
+      "aiApps.painter.App": ["./packages/Draw/aiApps/painter/App.tsx"],
+      "aiApps.painter.closePainter": [
+        "./packages/Draw/aiApps/painter/closePainter.tsx"
+      ],
+      "aiApps.painter.DraggableContainer": [
+        "./packages/Draw/aiApps/painter/DraggableContainer.tsx"
+      ],
+      "aiApps.painter.onCreate": [
+        "./packages/Draw/aiApps/painter/onCreate.tsx"
+      ],
+      "aiApps.painter.onInstJoined": [
+        "./packages/Draw/aiApps/painter/onInstJoined.tsx"
+      ],
+      "aiApps.painter.openPainter": [
+        "./packages/Draw/aiApps/painter/openPainter.tsx"
+      ],
+      "aiApps.painter.togglePainter": [
+        "./packages/Draw/aiApps/painter/togglePainter.tsx"
+      ],
+      "ext_canvas.eraseTool.changeSize": [
+        "./packages/Eraser/ext_canvas/eraseTool/changeSize.tsx"
+      ],
+      "ext_canvas.eraseTool.createEraser": [
+        "./packages/Eraser/ext_canvas/eraseTool/createEraser.tsx"
+      ],
+      "ext_canvas.eraseTool.onClick": [
+        "./packages/Eraser/ext_canvas/eraseTool/onClick.tsx"
+      ],
+      "ext_canvas.eraseTool.onDrag": [
+        "./packages/Eraser/ext_canvas/eraseTool/onDrag.tsx"
+      ],
+      "ext_canvas.eraseTool.onDrop": [
+        "./packages/Eraser/ext_canvas/eraseTool/onDrop.tsx"
+      ],
+      "ext_canvas.eraseTool.onGridClick": [
+        "./packages/Eraser/ext_canvas/eraseTool/onGridClick.tsx"
+      ],
+      "ext_canvas.eraseTool.onInstJoined": [
+        "./packages/Eraser/ext_canvas/eraseTool/onInstJoined.tsx"
+      ],
+      "ext_canvas.eraseTool.pauseTrays": [
+        "./packages/Eraser/ext_canvas/eraseTool/pauseTrays.tsx"
+      ],
+      "ext_canvas.eraseTool.returnTrays": [
+        "./packages/Eraser/ext_canvas/eraseTool/returnTrays.tsx"
+      ],
+      "ext_canvas.eventTool.AquiferInterface": [
+        "./packages/Events/ext_canvas/eventTool/AquiferInterface.tsx"
+      ],
+      "ext_canvas.eventTool.createAnimationBots": [
+        "./packages/Events/ext_canvas/eventTool/createAnimationBots.tsx"
+      ],
+      "ext_canvas.eventTool.CreateAquiferPage": [
+        "./packages/Events/ext_canvas/eventTool/CreateAquiferPage.tsx"
+      ],
+      "ext_canvas.eventTool.createDataSlits": [
+        "./packages/Events/ext_canvas/eventTool/createDataSlits.tsx"
+      ],
+      "ext_canvas.eventTool.createEventBot": [
+        "./packages/Events/ext_canvas/eventTool/createEventBot.tsx"
+      ],
+      "ext_canvas.eventTool.createEventBots": [
+        "./packages/Events/ext_canvas/eventTool/createEventBots.tsx"
+      ],
+      "ext_canvas.eventTool.createNodes": [
+        "./packages/Events/ext_canvas/eventTool/createNodes.tsx"
+      ],
+      "ext_canvas.eventTool.createSlider": [
+        "./packages/Events/ext_canvas/eventTool/createSlider.tsx"
+      ],
+      "ext_canvas.eventTool.CreateTimeLine": [
+        "./packages/Events/ext_canvas/eventTool/CreateTimeLine.tsx"
+      ],
+      "ext_canvas.eventTool.eventApis": [
+        "./packages/Events/ext_canvas/eventTool/eventApis.tsx"
+      ],
+      "ext_canvas.eventTool.eventBotOnClick": [
+        "./packages/Events/ext_canvas/eventTool/eventBotOnClick.tsx"
+      ],
+      "ext_canvas.eventTool.eventBotSelectManager": [
+        "./packages/Events/ext_canvas/eventTool/eventBotSelectManager.tsx"
+      ],
+      "ext_canvas.eventTool.eventUtils": [
+        "./packages/Events/ext_canvas/eventTool/eventUtils.tsx"
+      ],
+      "ext_canvas.eventTool.getEventsInterface": [
+        "./packages/Events/ext_canvas/eventTool/getEventsInterface.tsx"
+      ],
+      "ext_canvas.eventTool.handleNodeSelect": [
+        "./packages/Events/ext_canvas/eventTool/handleNodeSelect.tsx"
+      ],
+      "ext_canvas.eventTool.initEventDemo": [
+        "./packages/Events/ext_canvas/eventTool/initEventDemo.tsx"
+      ],
+      "ext_canvas.eventTool.initInterface": [
+        "./packages/Events/ext_canvas/eventTool/initInterface.tsx"
+      ],
+      "ext_canvas.eventTool.onEggHatch": [
+        "./packages/Events/ext_canvas/eventTool/onEggHatch.tsx"
+      ],
+      "ext_canvas.eventTool.onInstJoined": [
+        "./packages/Events/ext_canvas/eventTool/onInstJoined.tsx"
+      ],
+      "ext_canvas.eventTool.PeopleEventsOnMap": [
+        "./packages/Events/ext_canvas/eventTool/PeopleEventsOnMap.tsx"
+      ],
+      "ext_canvas.eventTool.playAnimations": [
+        "./packages/Events/ext_canvas/eventTool/playAnimations.tsx"
+      ],
+      "ext_canvas.eventTool.removeEventBotId": [
+        "./packages/Events/ext_canvas/eventTool/removeEventBotId.tsx"
+      ],
+      "ext_canvas.eventTool.Repository": [
+        "./packages/Events/ext_canvas/eventTool/Repository.tsx"
+      ],
+      "ext_geoImporter.importer.closeMiniMapPortal": [
+        "./packages/GeoImporter/ext_geoImporter/importer/closeMiniMapPortal.tsx"
+      ],
+      "ext_geoImporter.importer.createCloseButton": [
+        "./packages/GeoImporter/ext_geoImporter/importer/createCloseButton.tsx"
+      ],
+      "ext_geoImporter.importer.fetchBookData": [
+        "./packages/GeoImporter/ext_geoImporter/importer/fetchBookData.tsx"
+      ],
+      "ext_geoImporter.importer.fetchSheetData": [
+        "./packages/GeoImporter/ext_geoImporter/importer/fetchSheetData.tsx"
+      ],
+      "ext_geoImporter.importer.fetchVerseOfTheDay": [
+        "./packages/GeoImporter/ext_geoImporter/importer/fetchVerseOfTheDay.tsx"
+      ],
+      "ext_geoImporter.importer.GeometryCollection": [
+        "./packages/GeoImporter/ext_geoImporter/importer/GeometryCollection.tsx"
+      ],
+      "ext_geoImporter.importer.getVerse": [
+        "./packages/GeoImporter/ext_geoImporter/importer/getVerse.tsx"
+      ],
+      "ext_geoImporter.importer.LineString": [
+        "./packages/GeoImporter/ext_geoImporter/importer/LineString.tsx"
+      ],
+      "ext_geoImporter.importer.loadMap": [
+        "./packages/GeoImporter/ext_geoImporter/importer/loadMap.tsx"
+      ],
+      "ext_geoImporter.importer.MultiLineString": [
+        "./packages/GeoImporter/ext_geoImporter/importer/MultiLineString.tsx"
+      ],
+      "ext_geoImporter.importer.onEggHatch": [
+        "./packages/GeoImporter/ext_geoImporter/importer/onEggHatch.tsx"
+      ],
+      "ext_geoImporter.importer.onFileUpload": [
+        "./packages/GeoImporter/ext_geoImporter/importer/onFileUpload.tsx"
+      ],
+      "ext_geoImporter.importer.onGridClick": [
+        "./packages/GeoImporter/ext_geoImporter/importer/onGridClick.tsx"
+      ],
+      "ext_geoImporter.importer.onInstJoined": [
+        "./packages/GeoImporter/ext_geoImporter/importer/onInstJoined.tsx"
+      ],
+      "ext_geoImporter.importer.onMaxLODEnter": [
+        "./packages/GeoImporter/ext_geoImporter/importer/onMaxLODEnter.tsx"
+      ],
+      "ext_geoImporter.importer.onMaxLODExit": [
+        "./packages/GeoImporter/ext_geoImporter/importer/onMaxLODExit.tsx"
+      ],
+      "ext_geoImporter.importer.onMInLODEnter": [
+        "./packages/GeoImporter/ext_geoImporter/importer/onMInLODEnter.tsx"
+      ],
+      "ext_geoImporter.importer.onMinLODExit": [
+        "./packages/GeoImporter/ext_geoImporter/importer/onMinLODExit.tsx"
+      ],
+      "ext_geoImporter.importer.Point": [
+        "./packages/GeoImporter/ext_geoImporter/importer/Point.tsx"
+      ],
+      "ext_geoImporter.importer.Polygon": [
+        "./packages/GeoImporter/ext_geoImporter/importer/Polygon.tsx"
+      ],
+      "ext_canvas.highlight_locations.onBookChanged": [
+        "./packages/Location/ext_canvas/highlight_locations/onBookChanged.tsx"
+      ],
+      "ext_canvas.highlight_locations.onDestroy": [
+        "./packages/Location/ext_canvas/highlight_locations/onDestroy.tsx"
+      ],
+      "ext_canvas.highlight_locations.onEggHatch": [
+        "./packages/Location/ext_canvas/highlight_locations/onEggHatch.tsx"
+      ],
+      "ext_canvas.highlight_locations.onFloatingAppRemoved": [
+        "./packages/Location/ext_canvas/highlight_locations/onFloatingAppRemoved.tsx"
+      ],
+      "ext_canvas.highlight_locations.options": [
+        "./packages/Location/ext_canvas/highlight_locations/options.tsx"
+      ],
+      "ext_canvas.mindMap.addPulseColor": [
+        "./packages/MindMap/ext_canvas/mindMap/addPulseColor.tsx"
+      ],
+      "ext_canvas.mindMap.createDataSlits": [
+        "./packages/MindMap/ext_canvas/mindMap/createDataSlits.tsx"
+      ],
+      "ext_canvas.mindMap.createEventBots": [
+        "./packages/MindMap/ext_canvas/mindMap/createEventBots.tsx"
+      ],
+      "ext_canvas.mindMap.createMindmap": [
+        "./packages/MindMap/ext_canvas/mindMap/createMindmap.tsx"
+      ],
+      "ext_canvas.mindMap.createMMBot": [
+        "./packages/MindMap/ext_canvas/mindMap/createMMBot.tsx"
+      ],
+      "ext_canvas.mindMap.createMMPointer": [
+        "./packages/MindMap/ext_canvas/mindMap/createMMPointer.tsx"
+      ],
+      "ext_canvas.mindMap.createSlider": [
+        "./packages/MindMap/ext_canvas/mindMap/createSlider.tsx"
+      ],
+      "ext_canvas.mindMap.createTextBar": [
+        "./packages/MindMap/ext_canvas/mindMap/createTextBar.tsx"
+      ],
+      "ext_canvas.mindMap.createTextBoxMenu": [
+        "./packages/MindMap/ext_canvas/mindMap/createTextBoxMenu.tsx"
+      ],
+      "ext_canvas.mindMap.createTLArrows": [
+        "./packages/MindMap/ext_canvas/mindMap/createTLArrows.tsx"
+      ],
+      "ext_canvas.mindMap.deleteOnClick": [
+        "./packages/MindMap/ext_canvas/mindMap/deleteOnClick.tsx"
+      ],
+      "ext_canvas.mindMap.eventBotOnClick": [
+        "./packages/MindMap/ext_canvas/mindMap/eventBotOnClick.tsx"
+      ],
+      "ext_canvas.mindMap.expandAndCollapseBots": [
+        "./packages/MindMap/ext_canvas/mindMap/expandAndCollapseBots.tsx"
+      ],
+      "ext_canvas.mindMap.expandOnClick": [
+        "./packages/MindMap/ext_canvas/mindMap/expandOnClick.tsx"
+      ],
+      "ext_canvas.mindMap.expandOnPointerEnter": [
+        "./packages/MindMap/ext_canvas/mindMap/expandOnPointerEnter.tsx"
+      ],
+      "ext_canvas.mindMap.expandOnPointerExit": [
+        "./packages/MindMap/ext_canvas/mindMap/expandOnPointerExit.tsx"
+      ],
+      "ext_canvas.mindMap.focus": [
+        "./packages/MindMap/ext_canvas/mindMap/focus.tsx"
+      ],
+      "ext_canvas.mindMap.handleEnlargement": [
+        "./packages/MindMap/ext_canvas/mindMap/handleEnlargement.tsx"
+      ],
+      "ext_canvas.mindMap.handleSearch": [
+        "./packages/MindMap/ext_canvas/mindMap/handleSearch.tsx"
+      ],
+      "ext_canvas.mindMap.handleWriting": [
+        "./packages/MindMap/ext_canvas/mindMap/handleWriting.tsx"
+      ],
+      "ext_canvas.mindMap.hideBot": [
+        "./packages/MindMap/ext_canvas/mindMap/hideBot.tsx"
+      ],
+      "ext_canvas.mindMap.linePulser": [
+        "./packages/MindMap/ext_canvas/mindMap/linePulser.tsx"
+      ],
+      "ext_canvas.mindMap.listBotOnClick": [
+        "./packages/MindMap/ext_canvas/mindMap/listBotOnClick.tsx"
+      ],
+      "ext_canvas.mindMap.makePresentationMode": [
+        "./packages/MindMap/ext_canvas/mindMap/makePresentationMode.tsx"
+      ],
+      "ext_canvas.mindMap.makeTextBox": [
+        "./packages/MindMap/ext_canvas/mindMap/makeTextBox.tsx"
+      ],
+      "ext_canvas.mindMap.menuOnClick": [
+        "./packages/MindMap/ext_canvas/mindMap/menuOnClick.tsx"
+      ],
+      "ext_canvas.mindMap.menuOnCreate": [
+        "./packages/MindMap/ext_canvas/mindMap/menuOnCreate.tsx"
+      ],
+      "ext_canvas.mindMap.menuRemoteOnClick": [
+        "./packages/MindMap/ext_canvas/mindMap/menuRemoteOnClick.tsx"
+      ],
+      "ext_canvas.mindMap.mmIndexOnClick": [
+        "./packages/MindMap/ext_canvas/mindMap/mmIndexOnClick.tsx"
+      ],
+      "ext_canvas.mindMap.mmIndexOnDragging": [
+        "./packages/MindMap/ext_canvas/mindMap/mmIndexOnDragging.tsx"
+      ],
+      "ext_canvas.mindMap.mmOnClick": [
+        "./packages/MindMap/ext_canvas/mindMap/mmOnClick.tsx"
+      ],
+      "ext_canvas.mindMap.mmOnCreate": [
+        "./packages/MindMap/ext_canvas/mindMap/mmOnCreate.tsx"
+      ],
+      "ext_canvas.mindMap.mmOnDelete": [
+        "./packages/MindMap/ext_canvas/mindMap/mmOnDelete.tsx"
+      ],
+      "ext_canvas.mindMap.mmOnDrag": [
+        "./packages/MindMap/ext_canvas/mindMap/mmOnDrag.tsx"
+      ],
+      "ext_canvas.mindMap.mmOnDragging": [
+        "./packages/MindMap/ext_canvas/mindMap/mmOnDragging.tsx"
+      ],
+      "ext_canvas.mindMap.mmOnDropEnter": [
+        "./packages/MindMap/ext_canvas/mindMap/mmOnDropEnter.tsx"
+      ],
+      "ext_canvas.mindMap.mmOnPointerD": [
+        "./packages/MindMap/ext_canvas/mindMap/mmOnPointerD.tsx"
+      ],
+      "ext_canvas.mindMap.mmOnPointerE": [
+        "./packages/MindMap/ext_canvas/mindMap/mmOnPointerE.tsx"
+      ],
+      "ext_canvas.mindMap.mmOnPointerEnter": [
+        "./packages/MindMap/ext_canvas/mindMap/mmOnPointerEnter.tsx"
+      ],
+      "ext_canvas.mindMap.mmOnPointerEntering": [
+        "./packages/MindMap/ext_canvas/mindMap/mmOnPointerEntering.tsx"
+      ],
+      "ext_canvas.mindMap.mmOnPointerExit": [
+        "./packages/MindMap/ext_canvas/mindMap/mmOnPointerExit.tsx"
+      ],
+      "ext_canvas.mindMap.mmOnPointerExiting": [
+        "./packages/MindMap/ext_canvas/mindMap/mmOnPointerExiting.tsx"
+      ],
+      "ext_canvas.mindMap.mmPointerOnClick": [
+        "./packages/MindMap/ext_canvas/mindMap/mmPointerOnClick.tsx"
+      ],
+      "ext_canvas.mindMap.mmPointerOnGridClick": [
+        "./packages/MindMap/ext_canvas/mindMap/mmPointerOnGridClick.tsx"
+      ],
+      "ext_canvas.mindMap.moveBots": [
+        "./packages/MindMap/ext_canvas/mindMap/moveBots.tsx"
+      ],
+      "ext_canvas.mindMap.moveDataSlits": [
+        "./packages/MindMap/ext_canvas/mindMap/moveDataSlits.tsx"
+      ],
+      "ext_canvas.mindMap.onBotChanged": [
+        "./packages/MindMap/ext_canvas/mindMap/onBotChanged.tsx"
+      ],
+      "ext_canvas.mindMap.onEggHatch": [
+        "./packages/MindMap/ext_canvas/mindMap/onEggHatch.tsx"
+      ],
+      "ext_canvas.mindMap.onGridClick": [
+        "./packages/MindMap/ext_canvas/mindMap/onGridClick.tsx"
+      ],
+      "ext_canvas.mindMap.onInstJoined": [
+        "./packages/MindMap/ext_canvas/mindMap/onInstJoined.tsx"
+      ],
+      "ext_canvas.mindMap.onInstLeave": [
+        "./packages/MindMap/ext_canvas/mindMap/onInstLeave.tsx"
+      ],
+      "ext_canvas.mindMap.onUMBotChanged": [
+        "./packages/MindMap/ext_canvas/mindMap/onUMBotChanged.tsx"
+      ],
+      "ext_canvas.mindMap.onUMGridClick": [
+        "./packages/MindMap/ext_canvas/mindMap/onUMGridClick.tsx"
+      ],
+      "ext_canvas.mindMap.onUMKeyDown": [
+        "./packages/MindMap/ext_canvas/mindMap/onUMKeyDown.tsx"
+      ],
+      "ext_canvas.mindMap.onUMKeyUp": [
+        "./packages/MindMap/ext_canvas/mindMap/onUMKeyUp.tsx"
+      ],
+      "ext_canvas.mindMap.phaseColor": [
+        "./packages/MindMap/ext_canvas/mindMap/phaseColor.tsx"
+      ],
+      "ext_canvas.mindMap.playButtonPointerEnter": [
+        "./packages/MindMap/ext_canvas/mindMap/playButtonPointerEnter.tsx"
+      ],
+      "ext_canvas.mindMap.playButtonPointerExit": [
+        "./packages/MindMap/ext_canvas/mindMap/playButtonPointerExit.tsx"
+      ],
+      "ext_canvas.mindMap.prePresentation": [
+        "./packages/MindMap/ext_canvas/mindMap/prePresentation.tsx"
+      ],
+      "ext_canvas.mindMap.remoteWrite": [
+        "./packages/MindMap/ext_canvas/mindMap/remoteWrite.tsx"
+      ],
+      "ext_canvas.mindMap.removeMenuButtons": [
+        "./packages/MindMap/ext_canvas/mindMap/removeMenuButtons.tsx"
+      ],
+      "ext_canvas.mindMap.removeTLTools": [
+        "./packages/MindMap/ext_canvas/mindMap/removeTLTools.tsx"
+      ],
+      "ext_canvas.mindMap.replaceText": [
+        "./packages/MindMap/ext_canvas/mindMap/replaceText.tsx"
+      ],
+      "ext_canvas.mindMap.selectPathOnClick": [
+        "./packages/MindMap/ext_canvas/mindMap/selectPathOnClick.tsx"
+      ],
+      "ext_canvas.mindMap.shareBot": [
+        "./packages/MindMap/ext_canvas/mindMap/shareBot.tsx"
+      ],
+      "ext_canvas.mindMap.shareOnClick": [
+        "./packages/MindMap/ext_canvas/mindMap/shareOnClick.tsx"
+      ],
+      "ext_canvas.mindMap.shareOnCreate": [
+        "./packages/MindMap/ext_canvas/mindMap/shareOnCreate.tsx"
+      ],
+      "ext_canvas.mindMap.showBotLists": [
+        "./packages/MindMap/ext_canvas/mindMap/showBotLists.tsx"
+      ],
+      "ext_canvas.mindMap.showBotOnClick": [
+        "./packages/MindMap/ext_canvas/mindMap/showBotOnClick.tsx"
+      ],
+      "ext_canvas.mindMap.showTipMenu": [
+        "./packages/MindMap/ext_canvas/mindMap/showTipMenu.tsx"
+      ],
+      "ext_canvas.mindMap.startPhaseColor": [
+        "./packages/MindMap/ext_canvas/mindMap/startPhaseColor.tsx"
+      ],
+      "ext_canvas.mindMap.startPresentation": [
+        "./packages/MindMap/ext_canvas/mindMap/startPresentation.tsx"
+      ],
+      "ext_canvas.mindMap.textBoxOnDrop": [
+        "./packages/MindMap/ext_canvas/mindMap/textBoxOnDrop.tsx"
+      ],
+      "ext_canvas.mindMap.UMCreateInitNode": [
+        "./packages/MindMap/ext_canvas/mindMap/UMCreateInitNode.tsx"
+      ],
+      "ext_canvas.mindMap.viewBot": [
+        "./packages/MindMap/ext_canvas/mindMap/viewBot.tsx"
+      ],
+      "objectPooler.main.AddObjectPools": [
+        "./packages/Object Pooler/objectPooler/main/AddObjectPools.tsx"
+      ],
+      "objectPooler.main.CreateNewObject": [
+        "./packages/Object Pooler/objectPooler/main/CreateNewObject.tsx"
+      ],
+      "objectPooler.main.GetObjectFromPool": [
+        "./packages/Object Pooler/objectPooler/main/GetObjectFromPool.tsx"
+      ],
+      "objectPooler.main.Initialize": [
+        "./packages/Object Pooler/objectPooler/main/Initialize.tsx"
+      ],
+      "objectPooler.main.onCreate": [
+        "./packages/Object Pooler/objectPooler/main/onCreate.tsx"
+      ],
+      "objectPooler.main.onDestroy": [
+        "./packages/Object Pooler/objectPooler/main/onDestroy.tsx"
+      ],
+      "objectPooler.main.onEggHatch": [
+        "./packages/Object Pooler/objectPooler/main/onEggHatch.tsx"
+      ],
+      "objectPooler.main.onInstJoined": [
+        "./packages/Object Pooler/objectPooler/main/onInstJoined.tsx"
+      ],
+      "objectPooler.main.ReleaseObject": [
+        "./packages/Object Pooler/objectPooler/main/ReleaseObject.tsx"
+      ],
+      "objectPooler.main.RemoveObjectPools": [
+        "./packages/Object Pooler/objectPooler/main/RemoveObjectPools.tsx"
+      ],
+      "playlist.playlistMode.AddAnotationUI": [
+        "./packages/Playlist/playlist/playlistMode/AddAnotationUI.tsx"
+      ],
+      "playlist.playlistMode.AddNewPlaylist": [
+        "./packages/Playlist/playlist/playlistMode/AddNewPlaylist.tsx"
+      ],
+      "playlist.playlistMode.AnnotationList": [
+        "./packages/Playlist/playlist/playlistMode/AnnotationList.tsx"
+      ],
+      "playlist.playlistMode.AttachLink": [
+        "./packages/Playlist/playlist/playlistMode/AttachLink.tsx"
+      ],
+      "playlist.playlistMode.AttachmentLinkItem": [
+        "./packages/Playlist/playlist/playlistMode/AttachmentLinkItem.tsx"
+      ],
+      "playlist.playlistMode.AudioPlayer": [
+        "./packages/Playlist/playlist/playlistMode/AudioPlayer.tsx"
+      ],
+      "playlist.playlistMode.Bookmarks": [
+        "./packages/Playlist/playlist/playlistMode/Bookmarks.tsx"
+      ],
+      "playlist.playlistMode.buildPlaylistFromAI": [
+        "./packages/Playlist/playlist/playlistMode/buildPlaylistFromAI.tsx"
+      ],
+      "playlist.playlistMode.checkAndGetlinkData": [
+        "./packages/Playlist/playlist/playlistMode/checkAndGetlinkData.tsx"
+      ],
+      "playlist.playlistMode.checkGreyOut": [
+        "./packages/Playlist/playlist/playlistMode/checkGreyOut.tsx"
+      ],
+      "playlist.playlistMode.checkIfNeedToSkip": [
+        "./packages/Playlist/playlist/playlistMode/checkIfNeedToSkip.tsx"
+      ],
+      "playlist.playlistMode.CloseFloatingApp": [
+        "./packages/Playlist/playlist/playlistMode/CloseFloatingApp.tsx"
+      ],
+      "playlist.playlistMode.CloseSelf": [
+        "./packages/Playlist/playlist/playlistMode/CloseSelf.tsx"
+      ],
+      "playlist.playlistMode.Collections": [
+        "./packages/Playlist/playlist/playlistMode/Collections.tsx"
+      ],
+      "playlist.playlistMode.ConfirmationModal": [
+        "./packages/Playlist/playlist/playlistMode/ConfirmationModal.tsx"
+      ],
+      "playlist.playlistMode.ControlButtons": [
+        "./packages/Playlist/playlist/playlistMode/ControlButtons.tsx"
+      ],
+      "playlist.playlistMode.ConvertDataType": [
+        "./packages/Playlist/playlist/playlistMode/ConvertDataType.tsx"
+      ],
+      "playlist.playlistMode.CreatePlaylistUI": [
+        "./packages/Playlist/playlist/playlistMode/CreatePlaylistUI.tsx"
+      ],
+      "playlist.playlistMode.cursorFollow": [
+        "./packages/Playlist/playlist/playlistMode/cursorFollow.tsx"
+      ],
+      "playlist.playlistMode.cursorReset": [
+        "./packages/Playlist/playlist/playlistMode/cursorReset.tsx"
+      ],
+      "playlist.playlistMode.CustomAnnotationTextEditor": [
+        "./packages/Playlist/playlist/playlistMode/CustomAnnotationTextEditor.tsx"
+      ],
+      "playlist.playlistMode.defineGlobal": [
+        "./packages/Playlist/playlist/playlistMode/defineGlobal.tsx"
+      ],
+      "playlist.playlistMode.Discover": [
+        "./packages/Playlist/playlist/playlistMode/Discover.tsx"
+      ],
+      "playlist.playlistMode.displayOverlay": [
+        "./packages/Playlist/playlist/playlistMode/displayOverlay.tsx"
+      ],
+      "playlist.playlistMode.DragableDiv": [
+        "./packages/Playlist/playlist/playlistMode/DragableDiv.tsx"
+      ],
+      "playlist.playlistMode.DragDropWithGrouping": [
+        "./packages/Playlist/playlist/playlistMode/DragDropWithGrouping.tsx"
+      ],
+      "playlist.playlistMode.DynamicCircle": [
+        "./packages/Playlist/playlist/playlistMode/DynamicCircle.tsx"
+      ],
+      "playlist.playlistMode.EditAttachment": [
+        "./packages/Playlist/playlist/playlistMode/EditAttachment.tsx"
+      ],
+      "playlist.playlistMode.EditRichText": [
+        "./packages/Playlist/playlist/playlistMode/EditRichText.tsx"
+      ],
+      "playlist.playlistMode.filterOutValidItemFromJSON": [
+        "./packages/Playlist/playlist/playlistMode/filterOutValidItemFromJSON.tsx"
+      ],
+      "playlist.playlistMode.findVerseByAI": [
+        "./packages/Playlist/playlist/playlistMode/findVerseByAI.tsx"
+      ],
+      "playlist.playlistMode.getAudioSeconds": [
+        "./packages/Playlist/playlist/playlistMode/getAudioSeconds.tsx"
+      ],
+      "playlist.playlistMode.getBookmarks": [
+        "./packages/Playlist/playlist/playlistMode/getBookmarks.tsx"
+      ],
+      "playlist.playlistMode.getPlaylists": [
+        "./packages/Playlist/playlist/playlistMode/getPlaylists.tsx"
+      ],
+      "playlist.playlistMode.getSheetDataAndFetch": [
+        "./packages/Playlist/playlist/playlistMode/getSheetDataAndFetch.tsx"
+      ],
+      "playlist.playlistMode.getSuggestedListItems": [
+        "./packages/Playlist/playlist/playlistMode/getSuggestedListItems.tsx"
+      ],
+      "playlist.playlistMode.groupVerse": [
+        "./packages/Playlist/playlist/playlistMode/groupVerse.tsx"
+      ],
+      "playlist.playlistMode.History": [
+        "./packages/Playlist/playlist/playlistMode/History.tsx"
+      ],
+      "playlist.playlistMode.LinkingItems": [
+        "./packages/Playlist/playlist/playlistMode/LinkingItems.tsx"
+      ],
+      "playlist.playlistMode.MergeModal": [
+        "./packages/Playlist/playlist/playlistMode/MergeModal.tsx"
+      ],
+      "playlist.playlistMode.navigationWithDataItem": [
+        "./packages/Playlist/playlist/playlistMode/navigationWithDataItem.tsx"
+      ],
+      "playlist.playlistMode.onAddDate": [
+        "./packages/Playlist/playlist/playlistMode/onAddDate.tsx"
+      ],
+      "playlist.playlistMode.onDownloadPlaylist": [
+        "./packages/Playlist/playlist/playlistMode/onDownloadPlaylist.tsx"
+      ],
+      "playlist.playlistMode.onDuplicatePlaylists": [
+        "./packages/Playlist/playlist/playlistMode/onDuplicatePlaylists.tsx"
+      ],
+      "playlist.playlistMode.OnEditPlaylistName": [
+        "./packages/Playlist/playlist/playlistMode/OnEditPlaylistName.tsx"
+      ],
+      "playlist.playlistMode.onEggHatch": [
+        "./packages/Playlist/playlist/playlistMode/onEggHatch.tsx"
+      ],
+      "playlist.playlistMode.onInstJoined": [
+        "./packages/Playlist/playlist/playlistMode/onInstJoined.tsx"
+      ],
+      "playlist.playlistMode.onKeyDown": [
+        "./packages/Playlist/playlist/playlistMode/onKeyDown.tsx"
+      ],
+      "playlist.playlistMode.onKeyUp": [
+        "./packages/Playlist/playlist/playlistMode/onKeyUp.tsx"
+      ],
+      "playlist.playlistMode.OnSearchHit": [
+        "./packages/Playlist/playlist/playlistMode/OnSearchHit.tsx"
+      ],
+      "playlist.playlistMode.onUnInstallPackage": [
+        "./packages/Playlist/playlist/playlistMode/onUnInstallPackage.tsx"
+      ],
+      "playlist.playlistMode.OpenSelf": [
+        "./packages/Playlist/playlist/playlistMode/OpenSelf.tsx"
+      ],
+      "playlist.playlistMode.options": [
+        "./packages/Playlist/playlist/playlistMode/options.tsx"
+      ],
+      "playlist.playlistMode.Overlay": [
+        "./packages/Playlist/playlist/playlistMode/Overlay.tsx"
+      ],
+      "playlist.playlistMode.PlayingLayersConversion": [
+        "./packages/Playlist/playlist/playlistMode/PlayingLayersConversion.tsx"
+      ],
+      "playlist.playlistMode.Playlist": [
+        "./packages/Playlist/playlist/playlistMode/Playlist.tsx"
+      ],
+      "playlist.playlistMode.PlaylistContainer": [
+        "./packages/Playlist/playlist/playlistMode/PlaylistContainer.tsx"
+      ],
+      "playlist.playlistMode.playlistContentRenderer": [
+        "./packages/Playlist/playlist/playlistMode/playlistContentRenderer.tsx"
+      ],
+      "playlist.playlistMode.PlaylistInfoItem": [
+        "./packages/Playlist/playlist/playlistMode/PlaylistInfoItem.tsx"
+      ],
+      "playlist.playlistMode.PlaylistLinkModal": [
+        "./packages/Playlist/playlist/playlistMode/PlaylistLinkModal.tsx"
+      ],
+      "playlist.playlistMode.PlaylistList": [
+        "./packages/Playlist/playlist/playlistMode/PlaylistList.tsx"
+      ],
+      "playlist.playlistMode.PlaylistPlayerControls": [
+        "./packages/Playlist/playlist/playlistMode/PlaylistPlayerControls.tsx"
+      ],
+      "playlist.playlistMode.Playlistplaying": [
+        "./packages/Playlist/playlist/playlistMode/Playlistplaying.tsx"
+      ],
+      "playlist.playlistMode.PlaylistRowItem": [
+        "./packages/Playlist/playlist/playlistMode/PlaylistRowItem.tsx"
+      ],
+      "playlist.playlistMode.PlaylistUI": [
+        "./packages/Playlist/playlist/playlistMode/PlaylistUI.tsx"
+      ],
+      "playlist.playlistMode.ProjectMode": [
+        "./packages/Playlist/playlist/playlistMode/ProjectMode.tsx"
+      ],
+      "playlist.playlistMode.RecordVoice": [
+        "./packages/Playlist/playlist/playlistMode/RecordVoice.tsx"
+      ],
+      "playlist.playlistMode.RegenratePlaylistWithNewCommand": [
+        "./packages/Playlist/playlist/playlistMode/RegenratePlaylistWithNewCommand.tsx"
+      ],
+      "playlist.playlistMode.remotePlaylistMetaDataUpdate": [
+        "./packages/Playlist/playlist/playlistMode/remotePlaylistMetaDataUpdate.tsx"
+      ],
+      "playlist.playlistMode.remotePlaylistPlayed": [
+        "./packages/Playlist/playlist/playlistMode/remotePlaylistPlayed.tsx"
+      ],
+      "playlist.playlistMode.remotePlaylistStopped": [
+        "./packages/Playlist/playlist/playlistMode/remotePlaylistStopped.tsx"
+      ],
+      "playlist.playlistMode.removeMessage": [
+        "./packages/Playlist/playlist/playlistMode/removeMessage.tsx"
+      ],
+      "playlist.playlistMode.RemoveScreenRecordingControls": [
+        "./packages/Playlist/playlist/playlistMode/RemoveScreenRecordingControls.tsx"
+      ],
+      "playlist.playlistMode.RenderHTMLContent": [
+        "./packages/Playlist/playlist/playlistMode/RenderHTMLContent.tsx"
+      ],
+      "playlist.playlistMode.RenderIcon": [
+        "./packages/Playlist/playlist/playlistMode/RenderIcon.tsx"
+      ],
+      "playlist.playlistMode.RenderLinkContent": [
+        "./packages/Playlist/playlist/playlistMode/RenderLinkContent.tsx"
+      ],
+      "playlist.playlistMode.resetEditingState": [
+        "./packages/Playlist/playlist/playlistMode/resetEditingState.tsx"
+      ],
+      "playlist.playlistMode.saveBookmarks": [
+        "./packages/Playlist/playlist/playlistMode/saveBookmarks.tsx"
+      ],
+      "playlist.playlistMode.savePlaylists": [
+        "./packages/Playlist/playlist/playlistMode/savePlaylists.tsx"
+      ],
+      "playlist.playlistMode.SetItemsPlayerPlaylist": [
+        "./packages/Playlist/playlist/playlistMode/SetItemsPlayerPlaylist.tsx"
+      ],
+      "playlist.playlistMode.showInfo": [
+        "./packages/Playlist/playlist/playlistMode/showInfo.tsx"
+      ],
+      "playlist.playlistMode.ShowPersonVideoOverlay": [
+        "./packages/Playlist/playlist/playlistMode/ShowPersonVideoOverlay.tsx"
+      ],
+      "playlist.playlistMode.ShowPlayingContentAnnotation": [
+        "./packages/Playlist/playlist/playlistMode/ShowPlayingContentAnnotation.tsx"
+      ],
+      "playlist.playlistMode.ShowScreenRecordingStopButton": [
+        "./packages/Playlist/playlist/playlistMode/ShowScreenRecordingStopButton.tsx"
+      ],
+      "playlist.playlistMode.startRecording": [
+        "./packages/Playlist/playlist/playlistMode/startRecording.tsx"
+      ],
+      "playlist.playlistMode.StopPlayingPlaylist": [
+        "./packages/Playlist/playlist/playlistMode/StopPlayingPlaylist.tsx"
+      ],
+      "playlist.playlistMode.Tabs": [
+        "./packages/Playlist/playlist/playlistMode/Tabs.tsx"
+      ],
+      "playlist.playlistMode.TogglePlaylistHeight": [
+        "./packages/Playlist/playlist/playlistMode/TogglePlaylistHeight.tsx"
+      ],
+      "playlist.playlistMode.tryAddDataToHistory": [
+        "./packages/Playlist/playlist/playlistMode/tryAddDataToHistory.tsx"
+      ],
+      "playlist.playlistMode.tryAddDataToPlaylist": [
+        "./packages/Playlist/playlist/playlistMode/tryAddDataToPlaylist.tsx"
+      ],
+      "playlist.playlistMode.tryAddPlaylistToPlaylists": [
+        "./packages/Playlist/playlist/playlistMode/tryAddPlaylistToPlaylists.tsx"
+      ],
+      "playlist.playlistMode.tryInitPlaylistMaker": [
+        "./packages/Playlist/playlist/playlistMode/tryInitPlaylistMaker.tsx"
+      ],
+      "playlist.playlistMode.updateInPlaylist": [
+        "./packages/Playlist/playlist/playlistMode/updateInPlaylist.tsx"
+      ],
+      "playlist.playlistMode.useDragRef": [
+        "./packages/Playlist/playlist/playlistMode/useDragRef.tsx"
+      ],
+      "playlist.playlistMode.useProjectContext": [
+        "./packages/Playlist/playlist/playlistMode/useProjectContext.tsx"
+      ],
+      "playlist.playlistMode.VideoPlayer": [
+        "./packages/Playlist/playlist/playlistMode/VideoPlayer.tsx"
+      ],
+      "playlist.playlistMode.VideoRecordUI": [
+        "./packages/Playlist/playlist/playlistMode/VideoRecordUI.tsx"
+      ],
+      "playlist.playlistMode.VideoSmallScreen": [
+        "./packages/Playlist/playlist/playlistMode/VideoSmallScreen.tsx"
+      ],
+      "storage.tempStorageBot.defineGlobals": [
+        "./packages/Playlist/storage/tempStorageBot/defineGlobals.tsx"
+      ],
+      "storage.tempStorageBot.historySaver": [
+        "./packages/Playlist/storage/tempStorageBot/historySaver.tsx"
+      ],
+      "storage.tempStorageBot.iconsSaver": [
+        "./packages/Playlist/storage/tempStorageBot/iconsSaver.tsx"
+      ],
+      "storage.tempStorageBot.onCreate": [
+        "./packages/Playlist/storage/tempStorageBot/onCreate.tsx"
+      ],
+      "storage.tempStorageBot.onEggHatch": [
+        "./packages/Playlist/storage/tempStorageBot/onEggHatch.tsx"
+      ],
+      "storage.tempStorageBot.onInstJoined": [
+        "./packages/Playlist/storage/tempStorageBot/onInstJoined.tsx"
+      ],
+      "storage.tempStorageBot.progressSaver": [
+        "./packages/Playlist/storage/tempStorageBot/progressSaver.tsx"
+      ],
+      "storage.tempStorageBot.savePlaylists": [
+        "./packages/Playlist/storage/tempStorageBot/savePlaylists.tsx"
+      ],
+      "storage.tempStorageBot.visitedExperinces": [
+        "./packages/Playlist/storage/tempStorageBot/visitedExperinces.tsx"
+      ],
+      "references.manager.GetReferences": [
+        "./packages/References/references/manager/GetReferences.tsx"
+      ],
+      "references.manager.NewReferenceApp": [
+        "./packages/References/references/manager/NewReferenceApp.tsx"
+      ],
+      "references.manager.NewReferenceModal": [
+        "./packages/References/references/manager/NewReferenceModal.tsx"
+      ],
+      "references.manager.onDestroy": [
+        "./packages/References/references/manager/onDestroy.tsx"
+      ],
+      "references.manager.ReferenceComponent": [
+        "./packages/References/references/manager/ReferenceComponent.tsx"
+      ],
+      "references.manager.ToggleReference": [
+        "./packages/References/references/manager/ToggleReference.tsx"
+      ],
+      "references.manager.toggleReferenceModal": [
+        "./packages/References/references/manager/toggleReferenceModal.tsx"
+      ],
+      "scriptureMap2D.main.Book": [
+        "./packages/Scripture Map 2D/scriptureMap2D/main/Book.tsx"
+      ],
+      "scriptureMap2D.main.Chapter": [
+        "./packages/Scripture Map 2D/scriptureMap2D/main/Chapter.tsx"
+      ],
+      "scriptureMap2D.main.Container": [
+        "./packages/Scripture Map 2D/scriptureMap2D/main/Container.tsx"
+      ],
+      "scriptureMap2D.main.Controls": [
+        "./packages/Scripture Map 2D/scriptureMap2D/main/Controls.tsx"
+      ],
+      "scriptureMap2D.main.CustomHooks": [
+        "./packages/Scripture Map 2D/scriptureMap2D/main/CustomHooks.tsx"
+      ],
+      "scriptureMap2D.main.FiltersSelectorOption": [
+        "./packages/Scripture Map 2D/scriptureMap2D/main/FiltersSelectorOption.tsx"
+      ],
+      "scriptureMap2D.main.GetScriptureMap2D": [
+        "./packages/Scripture Map 2D/scriptureMap2D/main/GetScriptureMap2D.tsx"
+      ],
+      "scriptureMap2D.main.Initialize": [
+        "./packages/Scripture Map 2D/scriptureMap2D/main/Initialize.tsx"
+      ],
+      "scriptureMap2D.main.onAnyBotsAdded": [
+        "./packages/Scripture Map 2D/scriptureMap2D/main/onAnyBotsAdded.tsx"
+      ],
+      "scriptureMap2D.main.OnBibleVizUtilsInitialized": [
+        "./packages/Scripture Map 2D/scriptureMap2D/main/OnBibleVizUtilsInitialized.tsx"
+      ],
+      "scriptureMap2D.main.onDestroy": [
+        "./packages/Scripture Map 2D/scriptureMap2D/main/onDestroy.tsx"
+      ],
+      "scriptureMap2D.main.onEggHatch": [
+        "./packages/Scripture Map 2D/scriptureMap2D/main/onEggHatch.tsx"
+      ],
+      "scriptureMap2D.main.onInstJoined": [
+        "./packages/Scripture Map 2D/scriptureMap2D/main/onInstJoined.tsx"
+      ],
+      "scriptureMap2D.main.ProjectFiltersSelector": [
+        "./packages/Scripture Map 2D/scriptureMap2D/main/ProjectFiltersSelector.tsx"
+      ],
+      "scriptureMap2D.main.ProjectStateSetter": [
+        "./packages/Scripture Map 2D/scriptureMap2D/main/ProjectStateSetter.tsx"
+      ],
+      "scriptureMap2D.main.ProjectStateSetterOption": [
+        "./packages/Scripture Map 2D/scriptureMap2D/main/ProjectStateSetterOption.tsx"
+      ],
+      "scriptureMap2D.main.ReadingHistoryContext": [
+        "./packages/Scripture Map 2D/scriptureMap2D/main/ReadingHistoryContext.tsx"
+      ],
+      "scriptureMap2D.main.ReadingHistoryTimeline": [
+        "./packages/Scripture Map 2D/scriptureMap2D/main/ReadingHistoryTimeline.tsx"
+      ],
+      "scriptureMap2D.main.ReadingHistoryUserFiltersSelector": [
+        "./packages/Scripture Map 2D/scriptureMap2D/main/ReadingHistoryUserFiltersSelector.tsx"
+      ],
+      "scriptureMap2D.main.ScriptureMap2D": [
+        "./packages/Scripture Map 2D/scriptureMap2D/main/ScriptureMap2D.tsx"
+      ],
+      "scriptureMap2D.main.ScriptureMap2DContext": [
+        "./packages/Scripture Map 2D/scriptureMap2D/main/ScriptureMap2DContext.tsx"
+      ],
+      "scriptureMap2D.main.SectionToggle": [
+        "./packages/Scripture Map 2D/scriptureMap2D/main/SectionToggle.tsx"
+      ],
+      "scriptureMap2D.main.SelectionOptions": [
+        "./packages/Scripture Map 2D/scriptureMap2D/main/SelectionOptions.tsx"
+      ],
+      "scriptureMap2D.main.Settings": [
+        "./packages/Scripture Map 2D/scriptureMap2D/main/Settings.tsx"
+      ],
+      "scriptureMap2D.main.TestamentContainer": [
+        "./packages/Scripture Map 2D/scriptureMap2D/main/TestamentContainer.tsx"
+      ],
+      "scriptureMap2D.main.TestamentContent": [
+        "./packages/Scripture Map 2D/scriptureMap2D/main/TestamentContent.tsx"
+      ],
+      "scriptureMap2D.main.TestamentContext": [
+        "./packages/Scripture Map 2D/scriptureMap2D/main/TestamentContext.tsx"
+      ],
+      "scriptureMap2D.main.TestamentToggle": [
+        "./packages/Scripture Map 2D/scriptureMap2D/main/TestamentToggle.tsx"
+      ],
+      "scriptureMap2D.main.TimeContext": [
+        "./packages/Scripture Map 2D/scriptureMap2D/main/TimeContext.tsx"
+      ],
+      "scriptureMap2D.main.Tooltip": [
+        "./packages/Scripture Map 2D/scriptureMap2D/main/Tooltip.tsx"
+      ],
+      "scriptureMap2D.main.UserPresenceUpdate": [
+        "./packages/Scripture Map 2D/scriptureMap2D/main/UserPresenceUpdate.tsx"
+      ],
+      "scriptureMap2D.main.Wrapper": [
+        "./packages/Scripture Map 2D/scriptureMap2D/main/Wrapper.tsx"
+      ],
+      "scriptureMap3D.main.App": [
+        "./packages/Scripture Map 3D/scriptureMap3D/main/App.tsx"
+      ],
+      "scriptureMap3D.main.ClearExperience": [
+        "./packages/Scripture Map 3D/scriptureMap3D/main/ClearExperience.tsx"
+      ],
+      "scriptureMap3D.main.ClearMaps": [
+        "./packages/Scripture Map 3D/scriptureMap3D/main/ClearMaps.tsx"
+      ],
+      "scriptureMap3D.main.CreateBook": [
+        "./packages/Scripture Map 3D/scriptureMap3D/main/CreateBook.tsx"
+      ],
+      "scriptureMap3D.main.CreateBookStructure": [
+        "./packages/Scripture Map 3D/scriptureMap3D/main/CreateBookStructure.tsx"
+      ],
+      "scriptureMap3D.main.CreateChapter": [
+        "./packages/Scripture Map 3D/scriptureMap3D/main/CreateChapter.tsx"
+      ],
+      "scriptureMap3D.main.CreateLayoutStructure": [
+        "./packages/Scripture Map 3D/scriptureMap3D/main/CreateLayoutStructure.tsx"
+      ],
+      "scriptureMap3D.main.CreateNewLayout": [
+        "./packages/Scripture Map 3D/scriptureMap3D/main/CreateNewLayout.tsx"
+      ],
+      "scriptureMap3D.main.DeletePiece": [
+        "./packages/Scripture Map 3D/scriptureMap3D/main/DeletePiece.tsx"
+      ],
+      "scriptureMap3D.main.DeselectChapter": [
+        "./packages/Scripture Map 3D/scriptureMap3D/main/DeselectChapter.tsx"
+      ],
+      "scriptureMap3D.main.DisplayApp": [
+        "./packages/Scripture Map 3D/scriptureMap3D/main/DisplayApp.tsx"
+      ],
+      "scriptureMap3D.main.GetBookHeightByName": [
+        "./packages/Scripture Map 3D/scriptureMap3D/main/GetBookHeightByName.tsx"
+      ],
+      "scriptureMap3D.main.GetBookStructureByChild": [
+        "./packages/Scripture Map 3D/scriptureMap3D/main/GetBookStructureByChild.tsx"
+      ],
+      "scriptureMap3D.main.GetChapterDataById": [
+        "./packages/Scripture Map 3D/scriptureMap3D/main/GetChapterDataById.tsx"
+      ],
+      "scriptureMap3D.main.GetDataChainFromParentDataIds": [
+        "./packages/Scripture Map 3D/scriptureMap3D/main/GetDataChainFromParentDataIds.tsx"
+      ],
+      "scriptureMap3D.main.GetLayoutDataById": [
+        "./packages/Scripture Map 3D/scriptureMap3D/main/GetLayoutDataById.tsx"
+      ],
+      "scriptureMap3D.main.GetLayoutStructure": [
+        "./packages/Scripture Map 3D/scriptureMap3D/main/GetLayoutStructure.tsx"
+      ],
+      "scriptureMap3D.main.GetPieceData": [
+        "./packages/Scripture Map 3D/scriptureMap3D/main/GetPieceData.tsx"
+      ],
+      "scriptureMap3D.main.HandleBookDateLabelClicked": [
+        "./packages/Scripture Map 3D/scriptureMap3D/main/HandleBookDateLabelClicked.tsx"
+      ],
+      "scriptureMap3D.main.HandleBookInteraction": [
+        "./packages/Scripture Map 3D/scriptureMap3D/main/HandleBookInteraction.tsx"
+      ],
+      "scriptureMap3D.main.HandleBookLabelInteraction": [
+        "./packages/Scripture Map 3D/scriptureMap3D/main/HandleBookLabelInteraction.tsx"
+      ],
+      "scriptureMap3D.main.HandleButtonClick": [
+        "./packages/Scripture Map 3D/scriptureMap3D/main/HandleButtonClick.tsx"
+      ],
+      "scriptureMap3D.main.HandleChapterInteraction": [
+        "./packages/Scripture Map 3D/scriptureMap3D/main/HandleChapterInteraction.tsx"
+      ],
+      "scriptureMap3D.main.HandleHistoryUpdate": [
+        "./packages/Scripture Map 3D/scriptureMap3D/main/HandleHistoryUpdate.tsx"
+      ],
+      "scriptureMap3D.main.HideCurrentBookDateLabelShown": [
+        "./packages/Scripture Map 3D/scriptureMap3D/main/HideCurrentBookDateLabelShown.tsx"
+      ],
+      "scriptureMap3D.main.HideDates": [
+        "./packages/Scripture Map 3D/scriptureMap3D/main/HideDates.tsx"
+      ],
+      "scriptureMap3D.main.HideLabels": [
+        "./packages/Scripture Map 3D/scriptureMap3D/main/HideLabels.tsx"
+      ],
+      "scriptureMap3D.main.HidePlaylist": [
+        "./packages/Scripture Map 3D/scriptureMap3D/main/HidePlaylist.tsx"
+      ],
+      "scriptureMap3D.main.HistoryUpdate": [
+        "./packages/Scripture Map 3D/scriptureMap3D/main/HistoryUpdate.tsx"
+      ],
+      "scriptureMap3D.main.Initialize": [
+        "./packages/Scripture Map 3D/scriptureMap3D/main/Initialize.tsx"
+      ],
+      "scriptureMap3D.main.OnBibleVizUtilsInitialized": [
+        "./packages/Scripture Map 3D/scriptureMap3D/main/OnBibleVizUtilsInitialized.tsx"
+      ],
+      "scriptureMap3D.main.onDestroy": [
+        "./packages/Scripture Map 3D/scriptureMap3D/main/onDestroy.tsx"
+      ],
+      "scriptureMap3D.main.onEggHatch": [
+        "./packages/Scripture Map 3D/scriptureMap3D/main/onEggHatch.tsx"
+      ],
+      "scriptureMap3D.main.OnEnterHistoryMode": [
+        "./packages/Scripture Map 3D/scriptureMap3D/main/OnEnterHistoryMode.tsx"
+      ],
+      "scriptureMap3D.main.OnExitHistoryMode": [
+        "./packages/Scripture Map 3D/scriptureMap3D/main/OnExitHistoryMode.tsx"
+      ],
+      "scriptureMap3D.main.onFloatingAppRemoved": [
+        "./packages/Scripture Map 3D/scriptureMap3D/main/onFloatingAppRemoved.tsx"
+      ],
+      "scriptureMap3D.main.OnHidePlaylistComplete": [
+        "./packages/Scripture Map 3D/scriptureMap3D/main/OnHidePlaylistComplete.tsx"
+      ],
+      "scriptureMap3D.main.OnHistoryUpdated": [
+        "./packages/Scripture Map 3D/scriptureMap3D/main/OnHistoryUpdated.tsx"
+      ],
+      "scriptureMap3D.main.onInstJoined": [
+        "./packages/Scripture Map 3D/scriptureMap3D/main/onInstJoined.tsx"
+      ],
+      "scriptureMap3D.main.onKeyDown": [
+        "./packages/Scripture Map 3D/scriptureMap3D/main/onKeyDown.tsx"
+      ],
+      "scriptureMap3D.main.OnLayoutBookDateLabelClicked": [
+        "./packages/Scripture Map 3D/scriptureMap3D/main/OnLayoutBookDateLabelClicked.tsx"
+      ],
+      "scriptureMap3D.main.OnLayoutBookInteracted": [
+        "./packages/Scripture Map 3D/scriptureMap3D/main/OnLayoutBookInteracted.tsx"
+      ],
+      "scriptureMap3D.main.OnLayoutBookLabelInteracted": [
+        "./packages/Scripture Map 3D/scriptureMap3D/main/OnLayoutBookLabelInteracted.tsx"
+      ],
+      "scriptureMap3D.main.OnLayoutButtonClicked": [
+        "./packages/Scripture Map 3D/scriptureMap3D/main/OnLayoutButtonClicked.tsx"
+      ],
+      "scriptureMap3D.main.OnLayoutChapterInteracted": [
+        "./packages/Scripture Map 3D/scriptureMap3D/main/OnLayoutChapterInteracted.tsx"
+      ],
+      "scriptureMap3D.main.OnLayoutCoverReleased": [
+        "./packages/Scripture Map 3D/scriptureMap3D/main/OnLayoutCoverReleased.tsx"
+      ],
+      "scriptureMap3D.main.OnLayoutPieceDrag": [
+        "./packages/Scripture Map 3D/scriptureMap3D/main/OnLayoutPieceDrag.tsx"
+      ],
+      "scriptureMap3D.main.OnLayoutPlaylistNavigationButtonClicked": [
+        "./packages/Scripture Map 3D/scriptureMap3D/main/OnLayoutPlaylistNavigationButtonClicked.tsx"
+      ],
+      "scriptureMap3D.main.OnLayoutSettingsButtonClicked": [
+        "./packages/Scripture Map 3D/scriptureMap3D/main/OnLayoutSettingsButtonClicked.tsx"
+      ],
+      "scriptureMap3D.main.OnObjectPoolerInitialized": [
+        "./packages/Scripture Map 3D/scriptureMap3D/main/OnObjectPoolerInitialized.tsx"
+      ],
+      "scriptureMap3D.main.OnPlaylistDisplayed": [
+        "./packages/Scripture Map 3D/scriptureMap3D/main/OnPlaylistDisplayed.tsx"
+      ],
+      "scriptureMap3D.main.OnRespawnAllBooksOnLayoutComplete": [
+        "./packages/Scripture Map 3D/scriptureMap3D/main/OnRespawnAllBooksOnLayoutComplete.tsx"
+      ],
+      "scriptureMap3D.main.OnScriptureMap3DChapterSelected": [
+        "./packages/Scripture Map 3D/scriptureMap3D/main/OnScriptureMap3DChapterSelected.tsx"
+      ],
+      "scriptureMap3D.main.OnSelectAllBooksOnLayoutComplete": [
+        "./packages/Scripture Map 3D/scriptureMap3D/main/OnSelectAllBooksOnLayoutComplete.tsx"
+      ],
+      "scriptureMap3D.main.OnSelectLayoutBookComplete": [
+        "./packages/Scripture Map 3D/scriptureMap3D/main/OnSelectLayoutBookComplete.tsx"
+      ],
+      "scriptureMap3D.main.OnShowPlaylistOnLayoutComplete": [
+        "./packages/Scripture Map 3D/scriptureMap3D/main/OnShowPlaylistOnLayoutComplete.tsx"
+      ],
+      "scriptureMap3D.main.OnTabsContextChanged": [
+        "./packages/Scripture Map 3D/scriptureMap3D/main/OnTabsContextChanged.tsx"
+      ],
+      "scriptureMap3D.main.PullOutPieceFromParent": [
+        "./packages/Scripture Map 3D/scriptureMap3D/main/PullOutPieceFromParent.tsx"
+      ],
+      "scriptureMap3D.main.RespawnAllBooks": [
+        "./packages/Scripture Map 3D/scriptureMap3D/main/RespawnAllBooks.tsx"
+      ],
+      "scriptureMap3D.main.SelectAllBooks": [
+        "./packages/Scripture Map 3D/scriptureMap3D/main/SelectAllBooks.tsx"
+      ],
+      "scriptureMap3D.main.SelectBook": [
+        "./packages/Scripture Map 3D/scriptureMap3D/main/SelectBook.tsx"
+      ],
+      "scriptureMap3D.main.SetDateFormat": [
+        "./packages/Scripture Map 3D/scriptureMap3D/main/SetDateFormat.tsx"
+      ],
+      "scriptureMap3D.main.SetPlaylistSelectedEntryByIndex": [
+        "./packages/Scripture Map 3D/scriptureMap3D/main/SetPlaylistSelectedEntryByIndex.tsx"
+      ],
+      "scriptureMap3D.main.SetUpLayout": [
+        "./packages/Scripture Map 3D/scriptureMap3D/main/SetUpLayout.tsx"
+      ],
+      "scriptureMap3D.main.ShowDates": [
+        "./packages/Scripture Map 3D/scriptureMap3D/main/ShowDates.tsx"
+      ],
+      "scriptureMap3D.main.ShowLabels": [
+        "./packages/Scripture Map 3D/scriptureMap3D/main/ShowLabels.tsx"
+      ],
+      "scriptureMap3D.main.ShowPlaylist": [
+        "./packages/Scripture Map 3D/scriptureMap3D/main/ShowPlaylist.tsx"
+      ],
+      "scriptureMap3D.main.ShowPlaylistPath": [
+        "./packages/Scripture Map 3D/scriptureMap3D/main/ShowPlaylistPath.tsx"
+      ],
+      "scriptureMap3D.main.SpawnBook": [
+        "./packages/Scripture Map 3D/scriptureMap3D/main/SpawnBook.tsx"
+      ],
+      "scriptureMap3D.main.ToggleSettings": [
+        "./packages/Scripture Map 3D/scriptureMap3D/main/ToggleSettings.tsx"
+      ],
+      "scriptureMap3D.main.TryHidePlaylistPath": [
+        "./packages/Scripture Map 3D/scriptureMap3D/main/TryHidePlaylistPath.tsx"
+      ],
+      "scriptureMap3D.main.TryHideUsersOnBook": [
+        "./packages/Scripture Map 3D/scriptureMap3D/main/TryHideUsersOnBook.tsx"
+      ],
+      "scriptureMap3D.main.TryHighlightChapter": [
+        "./packages/Scripture Map 3D/scriptureMap3D/main/TryHighlightChapter.tsx"
+      ],
+      "scriptureMap3D.main.TrySelectChapter": [
+        "./packages/Scripture Map 3D/scriptureMap3D/main/TrySelectChapter.tsx"
+      ],
+      "scriptureMap3D.main.TrySetChapterSelectColor": [
+        "./packages/Scripture Map 3D/scriptureMap3D/main/TrySetChapterSelectColor.tsx"
+      ],
+      "scriptureMap3D.main.TryShowDates": [
+        "./packages/Scripture Map 3D/scriptureMap3D/main/TryShowDates.tsx"
+      ],
+      "scriptureMap3D.main.TryShowLabels": [
+        "./packages/Scripture Map 3D/scriptureMap3D/main/TryShowLabels.tsx"
+      ],
+      "scriptureMap3D.main.TryShowPlaylistPath": [
+        "./packages/Scripture Map 3D/scriptureMap3D/main/TryShowPlaylistPath.tsx"
+      ],
+      "scriptureMap3D.main.TryUnhighlightChapter": [
+        "./packages/Scripture Map 3D/scriptureMap3D/main/TryUnhighlightChapter.tsx"
+      ],
+      "scriptureMap3D.main.UpdateHistoryModePieces": [
+        "./packages/Scripture Map 3D/scriptureMap3D/main/UpdateHistoryModePieces.tsx"
+      ],
+      "scriptureMap3D.main.UpdateLinks": [
+        "./packages/Scripture Map 3D/scriptureMap3D/main/UpdateLinks.tsx"
+      ],
+      "scriptureMap3D.main.UpdatePiecesUsersColor": [
+        "./packages/Scripture Map 3D/scriptureMap3D/main/UpdatePiecesUsersColor.tsx"
+      ],
+      "scriptureMap3D.main.UpdatePiecesUsersNotification": [
+        "./packages/Scripture Map 3D/scriptureMap3D/main/UpdatePiecesUsersNotification.tsx"
+      ],
+      "scriptureMap3D.main.UserPresenceUpdate": [
+        "./packages/Scripture Map 3D/scriptureMap3D/main/UserPresenceUpdate.tsx"
+      ],
+      "scriptureMap3D.prefabs.book.Highlight": [
+        "./packages/Scripture Map 3D/scriptureMap3D/prefabs/book/Highlight.tsx"
+      ],
+      "scriptureMap3D.prefabs.book.onBotChanged": [
+        "./packages/Scripture Map 3D/scriptureMap3D/prefabs/book/onBotChanged.tsx"
+      ],
+      "scriptureMap3D.prefabs.book.onClick": [
+        "./packages/Scripture Map 3D/scriptureMap3D/prefabs/book/onClick.tsx"
+      ],
+      "scriptureMap3D.prefabs.book.onDrag": [
+        "./packages/Scripture Map 3D/scriptureMap3D/prefabs/book/onDrag.tsx"
+      ],
+      "scriptureMap3D.prefabs.book.OnHighlightToolDisabled": [
+        "./packages/Scripture Map 3D/scriptureMap3D/prefabs/book/OnHighlightToolDisabled.tsx"
+      ],
+      "scriptureMap3D.prefabs.book.OnHighlightToolEnabled": [
+        "./packages/Scripture Map 3D/scriptureMap3D/prefabs/book/OnHighlightToolEnabled.tsx"
+      ],
+      "scriptureMap3D.prefabs.book.OnReleased": [
+        "./packages/Scripture Map 3D/scriptureMap3D/prefabs/book/OnReleased.tsx"
+      ],
+      "scriptureMap3D.prefabs.book.OnSpawned": [
+        "./packages/Scripture Map 3D/scriptureMap3D/prefabs/book/OnSpawned.tsx"
+      ],
+      "scriptureMap3D.prefabs.book.TryStopHighlight": [
+        "./packages/Scripture Map 3D/scriptureMap3D/prefabs/book/TryStopHighlight.tsx"
+      ],
+      "scriptureMap3D.prefabs.bookDateLabel.onClick": [
+        "./packages/Scripture Map 3D/scriptureMap3D/prefabs/bookDateLabel/onClick.tsx"
+      ],
+      "scriptureMap3D.prefabs.bookDateLabel.OnReleased": [
+        "./packages/Scripture Map 3D/scriptureMap3D/prefabs/bookDateLabel/OnReleased.tsx"
+      ],
+      "scriptureMap3D.prefabs.bookDateLabel.OnSpawned": [
+        "./packages/Scripture Map 3D/scriptureMap3D/prefabs/bookDateLabel/OnSpawned.tsx"
+      ],
+      "scriptureMap3D.prefabs.bookInfoCardBackground.OnReleased": [
+        "./packages/Scripture Map 3D/scriptureMap3D/prefabs/bookInfoCardBackground/OnReleased.tsx"
+      ],
+      "scriptureMap3D.prefabs.bookInfoCardBackground.OnSpawned": [
+        "./packages/Scripture Map 3D/scriptureMap3D/prefabs/bookInfoCardBackground/OnSpawned.tsx"
+      ],
+      "scriptureMap3D.prefabs.bookInfoCardContent.OnReleased": [
+        "./packages/Scripture Map 3D/scriptureMap3D/prefabs/bookInfoCardContent/OnReleased.tsx"
+      ],
+      "scriptureMap3D.prefabs.bookInfoCardContent.OnSpawned": [
+        "./packages/Scripture Map 3D/scriptureMap3D/prefabs/bookInfoCardContent/OnSpawned.tsx"
+      ],
+      "scriptureMap3D.prefabs.bookInfoCardTransformer.OnReleased": [
+        "./packages/Scripture Map 3D/scriptureMap3D/prefabs/bookInfoCardTransformer/OnReleased.tsx"
+      ],
+      "scriptureMap3D.prefabs.bookInfoCardTransformer.OnSpawned": [
+        "./packages/Scripture Map 3D/scriptureMap3D/prefabs/bookInfoCardTransformer/OnSpawned.tsx"
+      ],
+      "scriptureMap3D.prefabs.button.onClick": [
+        "./packages/Scripture Map 3D/scriptureMap3D/prefabs/button/onClick.tsx"
+      ],
+      "scriptureMap3D.prefabs.button.OnReleased": [
+        "./packages/Scripture Map 3D/scriptureMap3D/prefabs/button/OnReleased.tsx"
+      ],
+      "scriptureMap3D.prefabs.button.OnSpawned": [
+        "./packages/Scripture Map 3D/scriptureMap3D/prefabs/button/OnSpawned.tsx"
+      ],
+      "scriptureMap3D.prefabs.buttonIcon.OnReleased": [
+        "./packages/Scripture Map 3D/scriptureMap3D/prefabs/buttonIcon/OnReleased.tsx"
+      ],
+      "scriptureMap3D.prefabs.buttonIcon.OnSpawned": [
+        "./packages/Scripture Map 3D/scriptureMap3D/prefabs/buttonIcon/OnSpawned.tsx"
+      ],
+      "scriptureMap3D.prefabs.buttonLabel.OnReleased": [
+        "./packages/Scripture Map 3D/scriptureMap3D/prefabs/buttonLabel/OnReleased.tsx"
+      ],
+      "scriptureMap3D.prefabs.buttonLabel.OnSpawned": [
+        "./packages/Scripture Map 3D/scriptureMap3D/prefabs/buttonLabel/OnSpawned.tsx"
+      ],
+      "scriptureMap3D.prefabs.chapter.Deselect": [
+        "./packages/Scripture Map 3D/scriptureMap3D/prefabs/chapter/Deselect.tsx"
+      ],
+      "scriptureMap3D.prefabs.chapter.GetChunksOfVerses": [
+        "./packages/Scripture Map 3D/scriptureMap3D/prefabs/chapter/GetChunksOfVerses.tsx"
+      ],
+      "scriptureMap3D.prefabs.chapter.GetCurrentUsersColor": [
+        "./packages/Scripture Map 3D/scriptureMap3D/prefabs/chapter/GetCurrentUsersColor.tsx"
+      ],
+      "scriptureMap3D.prefabs.chapter.hideYears": [
+        "./packages/Scripture Map 3D/scriptureMap3D/prefabs/chapter/hideYears.tsx"
+      ],
+      "scriptureMap3D.prefabs.chapter.Highlight": [
+        "./packages/Scripture Map 3D/scriptureMap3D/prefabs/chapter/Highlight.tsx"
+      ],
+      "scriptureMap3D.prefabs.chapter.onBotChanged": [
+        "./packages/Scripture Map 3D/scriptureMap3D/prefabs/chapter/onBotChanged.tsx"
+      ],
+      "scriptureMap3D.prefabs.chapter.onClick": [
+        "./packages/Scripture Map 3D/scriptureMap3D/prefabs/chapter/onClick.tsx"
+      ],
+      "scriptureMap3D.prefabs.chapter.onDrag": [
+        "./packages/Scripture Map 3D/scriptureMap3D/prefabs/chapter/onDrag.tsx"
+      ],
+      "scriptureMap3D.prefabs.chapter.onDrop": [
+        "./packages/Scripture Map 3D/scriptureMap3D/prefabs/chapter/onDrop.tsx"
+      ],
+      "scriptureMap3D.prefabs.chapter.OnHighlightToolDisabled": [
+        "./packages/Scripture Map 3D/scriptureMap3D/prefabs/chapter/OnHighlightToolDisabled.tsx"
+      ],
+      "scriptureMap3D.prefabs.chapter.OnHighlightToolEnabled": [
+        "./packages/Scripture Map 3D/scriptureMap3D/prefabs/chapter/OnHighlightToolEnabled.tsx"
+      ],
+      "scriptureMap3D.prefabs.chapter.onPointerEnter": [
+        "./packages/Scripture Map 3D/scriptureMap3D/prefabs/chapter/onPointerEnter.tsx"
+      ],
+      "scriptureMap3D.prefabs.chapter.onPointerExit": [
+        "./packages/Scripture Map 3D/scriptureMap3D/prefabs/chapter/onPointerExit.tsx"
+      ],
+      "scriptureMap3D.prefabs.chapter.OnReleased": [
+        "./packages/Scripture Map 3D/scriptureMap3D/prefabs/chapter/OnReleased.tsx"
+      ],
+      "scriptureMap3D.prefabs.chapter.OnSpawned": [
+        "./packages/Scripture Map 3D/scriptureMap3D/prefabs/chapter/OnSpawned.tsx"
+      ],
+      "scriptureMap3D.prefabs.chapter.Select": [
+        "./packages/Scripture Map 3D/scriptureMap3D/prefabs/chapter/Select.tsx"
+      ],
+      "scriptureMap3D.prefabs.chapter.showYears": [
+        "./packages/Scripture Map 3D/scriptureMap3D/prefabs/chapter/showYears.tsx"
+      ],
+      "scriptureMap3D.prefabs.chapter.StopChapterTransition": [
+        "./packages/Scripture Map 3D/scriptureMap3D/prefabs/chapter/StopChapterTransition.tsx"
+      ],
+      "scriptureMap3D.prefabs.chapter.switchToOld": [
+        "./packages/Scripture Map 3D/scriptureMap3D/prefabs/chapter/switchToOld.tsx"
+      ],
+      "scriptureMap3D.prefabs.chapter.switchToYears": [
+        "./packages/Scripture Map 3D/scriptureMap3D/prefabs/chapter/switchToYears.tsx"
+      ],
+      "scriptureMap3D.prefabs.chapter.TrySetUsersColorPosition": [
+        "./packages/Scripture Map 3D/scriptureMap3D/prefabs/chapter/TrySetUsersColorPosition.tsx"
+      ],
+      "scriptureMap3D.prefabs.chapter.Unhighlight": [
+        "./packages/Scripture Map 3D/scriptureMap3D/prefabs/chapter/Unhighlight.tsx"
+      ],
+      "scriptureMap3D.prefabs.chapterPlaylistEntryItem.Highlight": [
+        "./packages/Scripture Map 3D/scriptureMap3D/prefabs/chapterPlaylistEntryItem/Highlight.tsx"
+      ],
+      "scriptureMap3D.prefabs.chapterPlaylistEntryItem.onClick": [
+        "./packages/Scripture Map 3D/scriptureMap3D/prefabs/chapterPlaylistEntryItem/onClick.tsx"
+      ],
+      "scriptureMap3D.prefabs.chapterPlaylistEntryItem.onPointerEnter": [
+        "./packages/Scripture Map 3D/scriptureMap3D/prefabs/chapterPlaylistEntryItem/onPointerEnter.tsx"
+      ],
+      "scriptureMap3D.prefabs.chapterPlaylistEntryItem.onPointerExit": [
+        "./packages/Scripture Map 3D/scriptureMap3D/prefabs/chapterPlaylistEntryItem/onPointerExit.tsx"
+      ],
+      "scriptureMap3D.prefabs.chapterPlaylistEntryItem.OnReleased": [
+        "./packages/Scripture Map 3D/scriptureMap3D/prefabs/chapterPlaylistEntryItem/OnReleased.tsx"
+      ],
+      "scriptureMap3D.prefabs.chapterPlaylistEntryItem.OnSpawned": [
+        "./packages/Scripture Map 3D/scriptureMap3D/prefabs/chapterPlaylistEntryItem/OnSpawned.tsx"
+      ],
+      "scriptureMap3D.prefabs.chapterPlaylistEntryItem.TryStopHighlight": [
+        "./packages/Scripture Map 3D/scriptureMap3D/prefabs/chapterPlaylistEntryItem/TryStopHighlight.tsx"
+      ],
+      "scriptureMap3D.prefabs.chapterPlaylistEntryItem.Unhighlight": [
+        "./packages/Scripture Map 3D/scriptureMap3D/prefabs/chapterPlaylistEntryItem/Unhighlight.tsx"
+      ],
+      "scriptureMap3D.prefabs.chapterPlaylistEntryItemNode.OnReleased": [
+        "./packages/Scripture Map 3D/scriptureMap3D/prefabs/chapterPlaylistEntryItemNode/OnReleased.tsx"
+      ],
+      "scriptureMap3D.prefabs.chapterPlaylistEntryItemNode.OnSpawned": [
+        "./packages/Scripture Map 3D/scriptureMap3D/prefabs/chapterPlaylistEntryItemNode/OnSpawned.tsx"
+      ],
+      "scriptureMap3D.prefabs.chapterView.onBuild": [
+        "./packages/Scripture Map 3D/scriptureMap3D/prefabs/chapterView/onBuild.tsx"
+      ],
+      "scriptureMap3D.prefabs.chunkOfVerses.Hide": [
+        "./packages/Scripture Map 3D/scriptureMap3D/prefabs/chunkOfVerses/Hide.tsx"
+      ],
+      "scriptureMap3D.prefabs.chunkOfVerses.Highlight": [
+        "./packages/Scripture Map 3D/scriptureMap3D/prefabs/chunkOfVerses/Highlight.tsx"
+      ],
+      "scriptureMap3D.prefabs.chunkOfVerses.onClick": [
+        "./packages/Scripture Map 3D/scriptureMap3D/prefabs/chunkOfVerses/onClick.tsx"
+      ],
+      "scriptureMap3D.prefabs.chunkOfVerses.onDrag": [
+        "./packages/Scripture Map 3D/scriptureMap3D/prefabs/chunkOfVerses/onDrag.tsx"
+      ],
+      "scriptureMap3D.prefabs.chunkOfVerses.onDrop": [
+        "./packages/Scripture Map 3D/scriptureMap3D/prefabs/chunkOfVerses/onDrop.tsx"
+      ],
+      "scriptureMap3D.prefabs.chunkOfVerses.OnHighlightToolDisabled": [
+        "./packages/Scripture Map 3D/scriptureMap3D/prefabs/chunkOfVerses/OnHighlightToolDisabled.tsx"
+      ],
+      "scriptureMap3D.prefabs.chunkOfVerses.OnHighlightToolEnabled": [
+        "./packages/Scripture Map 3D/scriptureMap3D/prefabs/chunkOfVerses/OnHighlightToolEnabled.tsx"
+      ],
+      "scriptureMap3D.prefabs.chunkOfVerses.onPointerEnter": [
+        "./packages/Scripture Map 3D/scriptureMap3D/prefabs/chunkOfVerses/onPointerEnter.tsx"
+      ],
+      "scriptureMap3D.prefabs.chunkOfVerses.onPointerExit": [
+        "./packages/Scripture Map 3D/scriptureMap3D/prefabs/chunkOfVerses/onPointerExit.tsx"
+      ],
+      "scriptureMap3D.prefabs.chunkOfVerses.Select": [
+        "./packages/Scripture Map 3D/scriptureMap3D/prefabs/chunkOfVerses/Select.tsx"
+      ],
+      "scriptureMap3D.prefabs.chunkOfVerses.Show": [
+        "./packages/Scripture Map 3D/scriptureMap3D/prefabs/chunkOfVerses/Show.tsx"
+      ],
+      "scriptureMap3D.prefabs.chunkOfVerses.StopHighlightTransition": [
+        "./packages/Scripture Map 3D/scriptureMap3D/prefabs/chunkOfVerses/StopHighlightTransition.tsx"
+      ],
+      "scriptureMap3D.prefabs.chunkOfVerses.Unhighlight": [
+        "./packages/Scripture Map 3D/scriptureMap3D/prefabs/chunkOfVerses/Unhighlight.tsx"
+      ],
+      "scriptureMap3D.prefabs.colorPickerBackground.OnReleased": [
+        "./packages/Scripture Map 3D/scriptureMap3D/prefabs/colorPickerBackground/OnReleased.tsx"
+      ],
+      "scriptureMap3D.prefabs.colorPickerBackground.OnSpawned": [
+        "./packages/Scripture Map 3D/scriptureMap3D/prefabs/colorPickerBackground/OnSpawned.tsx"
+      ],
+      "scriptureMap3D.prefabs.colorPickerContent.OnReleased": [
+        "./packages/Scripture Map 3D/scriptureMap3D/prefabs/colorPickerContent/OnReleased.tsx"
+      ],
+      "scriptureMap3D.prefabs.colorPickerContent.OnSpawned": [
+        "./packages/Scripture Map 3D/scriptureMap3D/prefabs/colorPickerContent/OnSpawned.tsx"
+      ],
+      "scriptureMap3D.prefabs.cover.AI_open_all_books": [
+        "./packages/Scripture Map 3D/scriptureMap3D/prefabs/cover/AI_open_all_books.tsx"
+      ],
+      "scriptureMap3D.prefabs.cover.AI_show_labels": [
+        "./packages/Scripture Map 3D/scriptureMap3D/prefabs/cover/AI_show_labels.tsx"
+      ],
+      "scriptureMap3D.prefabs.cover.OnReleased": [
+        "./packages/Scripture Map 3D/scriptureMap3D/prefabs/cover/OnReleased.tsx"
+      ],
+      "scriptureMap3D.prefabs.cover.OnSpawned": [
+        "./packages/Scripture Map 3D/scriptureMap3D/prefabs/cover/OnSpawned.tsx"
+      ],
+      "scriptureMap3D.prefabs.label.onClick": [
+        "./packages/Scripture Map 3D/scriptureMap3D/prefabs/label/onClick.tsx"
+      ],
+      "scriptureMap3D.prefabs.label.OnReleased": [
+        "./packages/Scripture Map 3D/scriptureMap3D/prefabs/label/OnReleased.tsx"
+      ],
+      "scriptureMap3D.prefabs.label.OnSpawned": [
+        "./packages/Scripture Map 3D/scriptureMap3D/prefabs/label/OnSpawned.tsx"
+      ],
+      "scriptureMap3D.prefabs.line.Highlight": [
+        "./packages/Scripture Map 3D/scriptureMap3D/prefabs/line/Highlight.tsx"
+      ],
+      "scriptureMap3D.prefabs.line.OnReleased": [
+        "./packages/Scripture Map 3D/scriptureMap3D/prefabs/line/OnReleased.tsx"
+      ],
+      "scriptureMap3D.prefabs.line.OnSpawned": [
+        "./packages/Scripture Map 3D/scriptureMap3D/prefabs/line/OnSpawned.tsx"
+      ],
+      "scriptureMap3D.prefabs.line.TryStopHighlight": [
+        "./packages/Scripture Map 3D/scriptureMap3D/prefabs/line/TryStopHighlight.tsx"
+      ],
+      "scriptureMap3D.prefabs.playlistNavigationButton.onClick": [
+        "./packages/Scripture Map 3D/scriptureMap3D/prefabs/playlistNavigationButton/onClick.tsx"
+      ],
+      "scriptureMap3D.prefabs.playlistNavigationButton.OnSpawned": [
+        "./packages/Scripture Map 3D/scriptureMap3D/prefabs/playlistNavigationButton/OnSpawned.tsx"
+      ],
+      "scriptureMap3D.prefabs.settingsButton.onClick": [
+        "./packages/Scripture Map 3D/scriptureMap3D/prefabs/settingsButton/onClick.tsx"
+      ],
+      "scriptureMap3D.prefabs.settingsButton.OnReleased": [
+        "./packages/Scripture Map 3D/scriptureMap3D/prefabs/settingsButton/OnReleased.tsx"
+      ],
+      "scriptureMap3D.prefabs.settingsButton.OnSpawned": [
+        "./packages/Scripture Map 3D/scriptureMap3D/prefabs/settingsButton/OnSpawned.tsx"
+      ],
+      "scriptureMap3D.prefabs.toggle.Activate": [
+        "./packages/Scripture Map 3D/scriptureMap3D/prefabs/toggle/Activate.tsx"
+      ],
+      "scriptureMap3D.prefabs.toggle.Deactivate": [
+        "./packages/Scripture Map 3D/scriptureMap3D/prefabs/toggle/Deactivate.tsx"
+      ],
+      "scriptureMap3D.prefabs.toggle.onClick": [
+        "./packages/Scripture Map 3D/scriptureMap3D/prefabs/toggle/onClick.tsx"
+      ],
+      "scriptureMap3D.prefabs.toggle.OnReleased": [
+        "./packages/Scripture Map 3D/scriptureMap3D/prefabs/toggle/OnReleased.tsx"
+      ],
+      "scriptureMap3D.prefabs.toggle.OnSpawned": [
+        "./packages/Scripture Map 3D/scriptureMap3D/prefabs/toggle/OnSpawned.tsx"
+      ],
+      "scriptureMap3D.prefabs.toggle.StopToggleAnimation": [
+        "./packages/Scripture Map 3D/scriptureMap3D/prefabs/toggle/StopToggleAnimation.tsx"
+      ],
+      "scriptureMap3D.prefabs.toggleBackground.OnReleased": [
+        "./packages/Scripture Map 3D/scriptureMap3D/prefabs/toggleBackground/OnReleased.tsx"
+      ],
+      "scriptureMap3D.prefabs.toggleBackground.OnSpawned": [
+        "./packages/Scripture Map 3D/scriptureMap3D/prefabs/toggleBackground/OnSpawned.tsx"
+      ],
+      "scriptureMap3D.prefabs.toggleHandle.OnReleased": [
+        "./packages/Scripture Map 3D/scriptureMap3D/prefabs/toggleHandle/OnReleased.tsx"
+      ],
+      "scriptureMap3D.prefabs.toggleHandle.OnSpawned": [
+        "./packages/Scripture Map 3D/scriptureMap3D/prefabs/toggleHandle/OnSpawned.tsx"
+      ],
+      "scriptureMap3D.prefabs.verse.Hide": [
+        "./packages/Scripture Map 3D/scriptureMap3D/prefabs/verse/Hide.tsx"
+      ],
+      "scriptureMap3D.prefabs.verse.onClick": [
+        "./packages/Scripture Map 3D/scriptureMap3D/prefabs/verse/onClick.tsx"
+      ],
+      "scriptureMap3D.prefabs.verse.OnHighlightToolDisabled": [
+        "./packages/Scripture Map 3D/scriptureMap3D/prefabs/verse/OnHighlightToolDisabled.tsx"
+      ],
+      "scriptureMap3D.prefabs.verse.OnHighlightToolEnabled": [
+        "./packages/Scripture Map 3D/scriptureMap3D/prefabs/verse/OnHighlightToolEnabled.tsx"
+      ],
+      "scriptureMap3D.prefabs.verse.OnReleased": [
+        "./packages/Scripture Map 3D/scriptureMap3D/prefabs/verse/OnReleased.tsx"
+      ],
+      "ab.shell.chronicler.chronicleSubscription_updateLookup": [
+        "./packages/seed-bible/ab/shell/chronicler/chronicleSubscription_updateLookup.tsx"
+      ],
+      "ab.shell.chronicler.chronicle_add": [
+        "./packages/seed-bible/ab/shell/chronicler/chronicle_add.tsx"
+      ],
+      "ab.shell.chronicler.chronicle_loadData": [
+        "./packages/seed-bible/ab/shell/chronicler/chronicle_loadData.tsx"
+      ],
+      "ab.shell.chronicler.chronicle_lookup": [
+        "./packages/seed-bible/ab/shell/chronicler/chronicle_lookup.tsx"
+      ],
+      "aiApps.painterStorage.onBotChanged": [
+        "./packages/seed-bible/aiApps/painterStorage/onBotChanged.tsx"
+      ],
+      "app.components.aiSettings": [
+        "./packages/seed-bible/app/components/aiSettings.tsx"
+      ],
+      "app.components.canvasAiSettings": [
+        "./packages/seed-bible/app/components/canvasAiSettings.tsx"
+      ],
+      "app.components.Chips": [
+        "./packages/seed-bible/app/components/Chips.tsx"
+      ],
+      "app.components.circleCounter ": [
+        "./packages/seed-bible/app/components/circleCounter .tsx"
+      ],
+      "app.components.commands": [
+        "./packages/seed-bible/app/components/commands.tsx"
+      ],
+      "app.components.createAccountSettings": [
+        "./packages/seed-bible/app/components/createAccountSettings.tsx"
+      ],
+      "app.components.editor": [
+        "./packages/seed-bible/app/components/editor.tsx"
+      ],
+      "app.components.editorSettings": [
+        "./packages/seed-bible/app/components/editorSettings.tsx"
+      ],
+      "app.components.extensions": [
+        "./packages/seed-bible/app/components/extensions.tsx"
+      ],
+      "app.components.global_functions": [
+        "./packages/seed-bible/app/components/global_functions.tsx"
+      ],
+      "app.components.icons": [
+        "./packages/seed-bible/app/components/icons.tsx"
+      ],
+      "app.components.images": [
+        "./packages/seed-bible/app/components/images.tsx"
+      ],
+      "app.components.layout": [
+        "./packages/seed-bible/app/components/layout.tsx"
+      ],
+      "app.components.menuTextSettings": [
+        "./packages/seed-bible/app/components/menuTextSettings.tsx"
+      ],
+      "app.components.notifications": [
+        "./packages/seed-bible/app/components/notifications.tsx"
+      ],
+      "app.components.nowBar": [
+        "./packages/seed-bible/app/components/nowBar.tsx"
+      ],
+      "app.components.onBookChanged": [
+        "./packages/seed-bible/app/components/onBookChanged.tsx"
+      ],
+      "app.components.onEggHatch": [
+        "./packages/seed-bible/app/components/onEggHatch.tsx"
+      ],
+      "app.components.onGridClick": [
+        "./packages/seed-bible/app/components/onGridClick.tsx"
+      ],
+      "app.components.onInstJoined": [
+        "./packages/seed-bible/app/components/onInstJoined.tsx"
+      ],
+      "app.components.onKeyDown": [
+        "./packages/seed-bible/app/components/onKeyDown.tsx"
+      ],
+      "app.components.onKeyUp": [
+        "./packages/seed-bible/app/components/onKeyUp.tsx"
+      ],
+      "app.components.onVeresRightClick": [
+        "./packages/seed-bible/app/components/onVeresRightClick.tsx"
+      ],
+      "app.components.onVerseClick": [
+        "./packages/seed-bible/app/components/onVerseClick.tsx"
+      ],
+      "app.components.phosphoricons": [
+        "./packages/seed-bible/app/components/phosphoricons.tsx"
+      ],
+      "app.components.profileCard": [
+        "./packages/seed-bible/app/components/profileCard.tsx"
+      ],
+      "app.components.PromtBarSettings": [
+        "./packages/seed-bible/app/components/PromtBarSettings.tsx"
+      ],
+      "app.components.remoteVerseClick": [
+        "./packages/seed-bible/app/components/remoteVerseClick.tsx"
+      ],
+      "app.components.renderToolbar": [
+        "./packages/seed-bible/app/components/renderToolbar.tsx"
+      ],
+      "app.components.ReSeed": [
+        "./packages/seed-bible/app/components/ReSeed.tsx"
+      ],
+      "app.components.screenSettingsOptions": [
+        "./packages/seed-bible/app/components/screenSettingsOptions.tsx"
+      ],
+      "app.components.settings": [
+        "./packages/seed-bible/app/components/settings.tsx"
+      ],
+      "app.components.shareModel": [
+        "./packages/seed-bible/app/components/shareModel.jsx"
+      ],
+      "app.components.sideBar": [
+        "./packages/seed-bible/app/components/sideBar.tsx"
+      ],
+      "app.components.smallEditor": [
+        "./packages/seed-bible/app/components/smallEditor.tsx"
+      ],
+      "app.components.spaceSettings": [
+        "./packages/seed-bible/app/components/spaceSettings.tsx"
+      ],
+      "app.components.surroundingDivs": [
+        "./packages/seed-bible/app/components/surroundingDivs.tsx"
+      ],
+      "app.components.tabSettings": [
+        "./packages/seed-bible/app/components/tabSettings.tsx"
+      ],
+      "app.components.textSettings": [
+        "./packages/seed-bible/app/components/textSettings.tsx"
+      ],
+      "app.components.themeSettings": [
+        "./packages/seed-bible/app/components/themeSettings.tsx"
+      ],
+      "app.components.thePage": [
+        "./packages/seed-bible/app/components/thePage.tsx"
+      ],
+      "app.components.toolbar": [
+        "./packages/seed-bible/app/components/toolbar.tsx"
+      ],
+      "app.components.toolbarSettings": [
+        "./packages/seed-bible/app/components/toolbarSettings.tsx"
+      ],
+      "app.components.types": [
+        "./packages/seed-bible/app/components/types.tsx"
+      ],
+      "app.components.uploadFile": [
+        "./packages/seed-bible/app/components/uploadFile.tsx"
+      ],
+      "app.components.uploadHandler": [
+        "./packages/seed-bible/app/components/uploadHandler.tsx"
+      ],
+      "app.components.userPresence": [
+        "./packages/seed-bible/app/components/userPresence.tsx"
+      ],
+      "app.components.verseToolbar": [
+        "./packages/seed-bible/app/components/verseToolbar.tsx"
+      ],
+      "app.emitter.onEggHatch": [
+        "./packages/seed-bible/app/emitter/onEggHatch.tsx"
+      ],
+      "app.emitter.onInstJoined": [
+        "./packages/seed-bible/app/emitter/onInstJoined.tsx"
+      ],
+      "app.emitter.onKeyDown": [
+        "./packages/seed-bible/app/emitter/onKeyDown.tsx"
+      ],
+      "app.emitter.onRemoteJoined": [
+        "./packages/seed-bible/app/emitter/onRemoteJoined.tsx"
+      ],
+      "app.emitter.onRemoteLeave": [
+        "./packages/seed-bible/app/emitter/onRemoteLeave.tsx"
+      ],
+      "app.emitter.start": ["./packages/seed-bible/app/emitter/start.tsx"],
+      "app.emitter.updateSharedData": [
+        "./packages/seed-bible/app/emitter/updateSharedData.tsx"
+      ],
+      "app.error.identify": ["./packages/seed-bible/app/error/identify.tsx"],
+      "app.error.init": ["./packages/seed-bible/app/error/init.tsx"],
+      "app.error.onEggHatch": [
+        "./packages/seed-bible/app/error/onEggHatch.tsx"
+      ],
+      "app.error.onError": ["./packages/seed-bible/app/error/onError.tsx"],
+      "app.error.onInstJoined": [
+        "./packages/seed-bible/app/error/onInstJoined.tsx"
+      ],
+      "app.hooks.bibleData": ["./packages/seed-bible/app/hooks/bibleData.tsx"],
+      "app.hooks.bibleDataManager": [
+        "./packages/seed-bible/app/hooks/bibleDataManager.tsx"
+      ],
+      "app.hooks.bibleVariables": [
+        "./packages/seed-bible/app/hooks/bibleVariables.tsx"
+      ],
+      "app.hooks.divSpliter": [
+        "./packages/seed-bible/app/hooks/divSpliter.tsx"
+      ],
+      "app.hooks.folders": ["./packages/seed-bible/app/hooks/folders.tsx"],
+      "app.hooks.i18n": ["./packages/seed-bible/app/hooks/i18n.tsx"],
+      "app.hooks.mouseFollow": [
+        "./packages/seed-bible/app/hooks/mouseFollow.tsx"
+      ],
+      "app.hooks.mouseMove": ["./packages/seed-bible/app/hooks/mouseMove.tsx"],
+      "app.hooks.remote": ["./packages/seed-bible/app/hooks/remote.tsx"],
+      "app.hooks.screenDevider": [
+        "./packages/seed-bible/app/hooks/screenDevider.tsx"
+      ],
+      "app.hooks.sideBar": ["./packages/seed-bible/app/hooks/sideBar.tsx"],
+      "app.hooks.tabs": ["./packages/seed-bible/app/hooks/tabs.tsx"],
+      "app.hooks.useHold": ["./packages/seed-bible/app/hooks/useHold.tsx"],
+      "app.main.canvasController": [
+        "./packages/seed-bible/app/main/canvasController.tsx"
+      ],
+      "app.main.dragOverlay": [
+        "./packages/seed-bible/app/main/dragOverlay.tsx"
+      ],
+      "app.main.init": ["./packages/seed-bible/app/main/init.tsx"],
+      "app.main.main": ["./packages/seed-bible/app/main/main.tsx"],
+      "app.main.onEggHatch": ["./packages/seed-bible/app/main/onEggHatch.tsx"],
+      "app.main.onGridClick": [
+        "./packages/seed-bible/app/main/onGridClick.tsx"
+      ],
+      "app.main.onInstJoined": [
+        "./packages/seed-bible/app/main/onInstJoined.tsx"
+      ],
+      "app.packager.addDependencies": [
+        "./packages/seed-bible/app/packager/addDependencies.tsx"
+      ],
+      "app.packager.addPackage": [
+        "./packages/seed-bible/app/packager/addPackage.tsx"
+      ],
+      "app.packager.checkIfPackageInstalled": [
+        "./packages/seed-bible/app/packager/checkIfPackageInstalled.tsx"
+      ],
+      "app.packager.checkTest": [
+        "./packages/seed-bible/app/packager/checkTest.tsx"
+      ],
+      "app.packager.checkUploadedFiles": [
+        "./packages/seed-bible/app/packager/checkUploadedFiles.tsx"
+      ],
+      "app.packager.dependencyManager": [
+        "./packages/seed-bible/app/packager/dependencyManager.tsx"
+      ],
+      "app.packager.dependencyUploadPanel": [
+        "./packages/seed-bible/app/packager/dependencyUploadPanel.tsx"
+      ],
+      "app.packager.detectPackagesFromLink": [
+        "./packages/seed-bible/app/packager/detectPackagesFromLink.tsx"
+      ],
+      "app.packager.exportPackageJson": [
+        "./packages/seed-bible/app/packager/exportPackageJson.tsx"
+      ],
+      "app.packager.forTestingOnly": [
+        "./packages/seed-bible/app/packager/forTestingOnly.tsx"
+      ],
+      "app.packager.getDependencies": [
+        "./packages/seed-bible/app/packager/getDependencies.tsx"
+      ],
+      "app.packager.getPackages": [
+        "./packages/seed-bible/app/packager/getPackages.tsx"
+      ],
+      "app.packager.InstallNamedPackage": [
+        "./packages/seed-bible/app/packager/InstallNamedPackage.tsx"
+      ],
+      "app.packager.installPackage": [
+        "./packages/seed-bible/app/packager/installPackage.tsx"
+      ],
+      "app.packager.main": ["./packages/seed-bible/app/packager/main.tsx"],
+      "app.packager.onEggHatch": [
+        "./packages/seed-bible/app/packager/onEggHatch.tsx"
+      ],
+      "app.packager.onInstJoined": [
+        "./packages/seed-bible/app/packager/onInstJoined.tsx"
+      ],
+      "app.packager.pushBots": [
+        "./packages/seed-bible/app/packager/pushBots.tsx"
+      ],
+      "app.packager.readPackageJson": [
+        "./packages/seed-bible/app/packager/readPackageJson.tsx"
+      ],
+      "app.packager.reInitPackage": [
+        "./packages/seed-bible/app/packager/reInitPackage.tsx"
+      ],
+      "app.packager.runAutoPackages": [
+        "./packages/seed-bible/app/packager/runAutoPackages.tsx"
+      ],
+      "app.packager.styles": ["./packages/seed-bible/app/packager/styles.tsx"],
+      "app.packager.uninstallPackage": [
+        "./packages/seed-bible/app/packager/uninstallPackage.tsx"
+      ],
+      "app.reciver.onEggHatch": [
+        "./packages/seed-bible/app/reciver/onEggHatch.tsx"
+      ],
+      "app.reciver.onInstJoined": [
+        "./packages/seed-bible/app/reciver/onInstJoined.tsx"
+      ],
+      "app.reciver.onPersonLeftRemote": [
+        "./packages/seed-bible/app/reciver/onPersonLeftRemote.tsx"
+      ],
+      "app.reciver.onRemoteData": [
+        "./packages/seed-bible/app/reciver/onRemoteData.tsx"
+      ],
+      "app.reciver.start": ["./packages/seed-bible/app/reciver/start.tsx"],
+      "app.reciver.updatedYourData": [
+        "./packages/seed-bible/app/reciver/updatedYourData.tsx"
+      ],
+      "app.sn_styles.styler": [
+        "./packages/seed-bible/app/sn_styles/styler.tsx"
+      ],
+      "app.styles.styler": ["./packages/seed-bible/app/styles/styler.tsx"],
+      "baseElements.formMenu.bookData": [
+        "./packages/seed-bible/baseElements/formMenu/bookData.tsx"
+      ],
+      "baseElements.formMenu.closeFormMenu": [
+        "./packages/seed-bible/baseElements/formMenu/closeFormMenu.tsx"
+      ],
+      "baseElements.formMenu.getApp": [
+        "./packages/seed-bible/baseElements/formMenu/getApp.tsx"
+      ],
+      "baseElements.formMenu.onGridClick": [
+        "./packages/seed-bible/baseElements/formMenu/onGridClick.tsx"
+      ],
+      "baseElements.formMenu.openFormMenu": [
+        "./packages/seed-bible/baseElements/formMenu/openFormMenu.tsx"
+      ],
+      "components.component.Button": [
+        "./packages/seed-bible/components/component/Button.tsx"
+      ],
+      "components.component.ButtonsCover": [
+        "./packages/seed-bible/components/component/ButtonsCover.tsx"
+      ],
+      "components.component.Checkbox": [
+        "./packages/seed-bible/components/component/Checkbox.tsx"
+      ],
+      "components.component.Chips": [
+        "./packages/seed-bible/components/component/Chips.tsx"
+      ],
+      "components.component.components": [
+        "./packages/seed-bible/components/component/components.tsx"
+      ],
+      "components.component.Confetti": [
+        "./packages/seed-bible/components/component/Confetti.tsx"
+      ],
+      "components.component.FloatingBanner": [
+        "./packages/seed-bible/components/component/FloatingBanner.tsx"
+      ],
+      "components.component.GlassButtons": [
+        "./packages/seed-bible/components/component/GlassButtons.tsx"
+      ],
+      "components.component.Highlighter": [
+        "./packages/seed-bible/components/component/Highlighter.tsx"
+      ],
+      "components.component.Icons": [
+        "./packages/seed-bible/components/component/Icons.tsx"
+      ],
+      "components.component.ImageWrapper": [
+        "./packages/seed-bible/components/component/ImageWrapper.tsx"
+      ],
+      "components.component.Input": [
+        "./packages/seed-bible/components/component/Input.tsx"
+      ],
+      "components.component.Loader": [
+        "./packages/seed-bible/components/component/Loader.tsx"
+      ],
+      "components.component.LoaderSecondary": [
+        "./packages/seed-bible/components/component/LoaderSecondary.tsx"
+      ],
+      "components.component.Modal": [
+        "./packages/seed-bible/components/component/Modal.tsx"
+      ],
+      "components.component.ModelStepper": [
+        "./packages/seed-bible/components/component/ModelStepper.tsx"
+      ],
+      "components.component.onEggHatch": [
+        "./packages/seed-bible/components/component/onEggHatch.tsx"
+      ],
+      "components.component.onGridClick": [
+        "./packages/seed-bible/components/component/onGridClick.tsx"
+      ],
+      "components.component.onInstJoined": [
+        "./packages/seed-bible/components/component/onInstJoined.tsx"
+      ],
+      "components.component.Select": [
+        "./packages/seed-bible/components/component/Select.tsx"
+      ],
+      "components.component.ShowNotification": [
+        "./packages/seed-bible/components/component/ShowNotification.tsx"
+      ],
+      "components.component.Tooltip": [
+        "./packages/seed-bible/components/component/Tooltip.tsx"
+      ],
+      "db.annotations.library": [
+        "./packages/seed-bible/db/annotations/library.tsx"
+      ],
+      "experience.dataManager.cancelCurrentPlayingSound": [
+        "./packages/seed-bible/experience/dataManager/cancelCurrentPlayingSound.tsx"
+      ],
+      "experience.dataManager.endVoiceRecord": [
+        "./packages/seed-bible/experience/dataManager/endVoiceRecord.tsx"
+      ],
+      "experience.dataManager.onEggHatch": [
+        "./packages/seed-bible/experience/dataManager/onEggHatch.tsx"
+      ],
+      "experience.dataManager.onInstJoined": [
+        "./packages/seed-bible/experience/dataManager/onInstJoined.tsx"
+      ],
+      "experience.dataManager.playSound": [
+        "./packages/seed-bible/experience/dataManager/playSound.tsx"
+      ],
+      "experience.dataManager.recordVoice": [
+        "./packages/seed-bible/experience/dataManager/recordVoice.tsx"
+      ],
+      "iframe.visible.onEggHatch": [
+        "./packages/seed-bible/iframe/visible/onEggHatch.tsx"
+      ],
+      "iframe.visible.onInstJoined": [
+        "./packages/seed-bible/iframe/visible/onInstJoined.tsx"
+      ],
+      "managers.importer.importAux": [
+        "./packages/seed-bible/managers/importer/importAux.tsx"
+      ],
+      "managers.importer.instateToolBarOptions": [
+        "./packages/seed-bible/managers/importer/instateToolBarOptions.tsx"
+      ],
+      "managers.importer.onAOInitialized": [
+        "./packages/seed-bible/managers/importer/onAOInitialized.tsx"
+      ],
+      "managers.importer.onEggHatch": [
+        "./packages/seed-bible/managers/importer/onEggHatch.tsx"
+      ],
+      "managers.importer.onInstJoined": [
+        "./packages/seed-bible/managers/importer/onInstJoined.tsx"
+      ],
+      "managers.importer.runImportedAux": [
+        "./packages/seed-bible/managers/importer/runImportedAux.tsx"
+      ],
+      "shortcuts.shortcut.onKeyDown": [
+        "./packages/seed-bible/shortcuts/shortcut/onKeyDown.tsx"
+      ],
+      "shortcuts.shortcut.onKeyUp": [
+        "./packages/seed-bible/shortcuts/shortcut/onKeyUp.tsx"
+      ],
+      "webhook.API.decrypt": ["./packages/seed-bible/webhook/API/decrypt.tsx"],
+      "webhook.API.defineGlobal": [
+        "./packages/seed-bible/webhook/API/defineGlobal.tsx"
+      ],
+      "webhook.API.encrypt": ["./packages/seed-bible/webhook/API/encrypt.tsx"],
+      "webhook.API.onEggHatch": [
+        "./packages/seed-bible/webhook/API/onEggHatch.tsx"
+      ],
+      "webhook.API.onInstJoined": [
+        "./packages/seed-bible/webhook/API/onInstJoined.tsx"
+      ],
+      "webhook.API.textToChars": [
+        "./packages/seed-bible/webhook/API/textToChars.tsx"
+      ],
+      "tabernacle.altar-of-sacrifice.onClick": [
+        "./packages/Tabernacle/tabernacle/altar-of-sacrifice/onClick.tsx"
+      ],
+      "tabernacle.ark-of-covenant.onClick": [
+        "./packages/Tabernacle/tabernacle/ark-of-covenant/onClick.tsx"
+      ],
+      "tabernacle.bars.onClick": [
+        "./packages/Tabernacle/tabernacle/bars/onClick.tsx"
+      ],
+      "tabernacle.bronze-laver.onClick": [
+        "./packages/Tabernacle/tabernacle/bronze-laver/onClick.tsx"
+      ],
+      "tabernacle.brown-curtain.onClick": [
+        "./packages/Tabernacle/tabernacle/brown-curtain/onClick.tsx"
+      ],
+      "tabernacle.front-curtain.onClick": [
+        "./packages/Tabernacle/tabernacle/front-curtain/onClick.tsx"
+      ],
+      "tabernacle.front-pillars.onClick": [
+        "./packages/Tabernacle/tabernacle/front-pillars/onClick.tsx"
+      ],
+      "tabernacle.grey-curtain.onClick": [
+        "./packages/Tabernacle/tabernacle/grey-curtain/onClick.tsx"
+      ],
+      "tabernacle.incense-altar.onClick": [
+        "./packages/Tabernacle/tabernacle/incense-altar/onClick.tsx"
+      ],
+      "tabernacle.inner-curtain.onClick": [
+        "./packages/Tabernacle/tabernacle/inner-curtain/onClick.tsx"
+      ],
+      "tabernacle.inner-pillars.onClick": [
+        "./packages/Tabernacle/tabernacle/inner-pillars/onClick.tsx"
+      ],
+      "tabernacle.manager.App": [
+        "./packages/Tabernacle/tabernacle/manager/App.tsx"
+      ],
+      "tabernacle.manager.ClearExperience": [
+        "./packages/Tabernacle/tabernacle/manager/ClearExperience.tsx"
+      ],
+      "tabernacle.manager.CreateHitboxes": [
+        "./packages/Tabernacle/tabernacle/manager/CreateHitboxes.tsx"
+      ],
+      "tabernacle.manager.DisplayApp": [
+        "./packages/Tabernacle/tabernacle/manager/DisplayApp.tsx"
+      ],
+      "tabernacle.manager.FixBotsPosition": [
+        "./packages/Tabernacle/tabernacle/manager/FixBotsPosition.tsx"
+      ],
+      "tabernacle.manager.GetFixedTitle": [
+        "./packages/Tabernacle/tabernacle/manager/GetFixedTitle.tsx"
+      ],
+      "tabernacle.manager.HandleTabernacleSectionInteraction": [
+        "./packages/Tabernacle/tabernacle/manager/HandleTabernacleSectionInteraction.tsx"
+      ],
+      "tabernacle.manager.HighlightBot": [
+        "./packages/Tabernacle/tabernacle/manager/HighlightBot.tsx"
+      ],
+      "tabernacle.manager.Initialize": [
+        "./packages/Tabernacle/tabernacle/manager/Initialize.tsx"
+      ],
+      "tabernacle.manager.onBookChanged": [
+        "./packages/Tabernacle/tabernacle/manager/onBookChanged.tsx"
+      ],
+      "tabernacle.manager.onDestroy": [
+        "./packages/Tabernacle/tabernacle/manager/onDestroy.tsx"
+      ],
+      "tabernacle.manager.onEggHatch": [
+        "./packages/Tabernacle/tabernacle/manager/onEggHatch.tsx"
+      ],
+      "tabernacle.manager.onFloatingAppRemoved": [
+        "./packages/Tabernacle/tabernacle/manager/onFloatingAppRemoved.tsx"
+      ],
+      "tabernacle.manager.onGridClick": [
+        "./packages/Tabernacle/tabernacle/manager/onGridClick.tsx"
+      ],
+      "tabernacle.manager.onGridUp": [
+        "./packages/Tabernacle/tabernacle/manager/onGridUp.tsx"
+      ],
+      "tabernacle.manager.onInstJoined": [
+        "./packages/Tabernacle/tabernacle/manager/onInstJoined.tsx"
+      ],
+      "tabernacle.manager.OnTabernacleItemClicked": [
+        "./packages/Tabernacle/tabernacle/manager/OnTabernacleItemClicked.tsx"
+      ],
+      "tabernacle.manager.OnTabernacleSectionClick": [
+        "./packages/Tabernacle/tabernacle/manager/OnTabernacleSectionClick.tsx"
+      ],
+      "tabernacle.manager.OnTabernacleSectionHover": [
+        "./packages/Tabernacle/tabernacle/manager/OnTabernacleSectionHover.tsx"
+      ],
+      "tabernacle.manager.onVerseClick": [
+        "./packages/Tabernacle/tabernacle/manager/onVerseClick.tsx"
+      ],
+      "tabernacle.manager.SetBotsVisibility": [
+        "./packages/Tabernacle/tabernacle/manager/SetBotsVisibility.tsx"
+      ],
+      "tabernacle.manager.StopFocus": [
+        "./packages/Tabernacle/tabernacle/manager/StopFocus.tsx"
+      ],
+      "tabernacle.manager.ToggleContextMenuForPiece": [
+        "./packages/Tabernacle/tabernacle/manager/ToggleContextMenuForPiece.tsx"
+      ],
+      "tabernacle.manager.TryHideCurrentPieceContextMenu": [
+        "./packages/Tabernacle/tabernacle/manager/TryHideCurrentPieceContextMenu.tsx"
+      ],
+      "tabernacle.manager.TryRecenter": [
+        "./packages/Tabernacle/tabernacle/manager/TryRecenter.tsx"
+      ],
+      "tabernacle.manager.TryUpdatePieceContextMenu": [
+        "./packages/Tabernacle/tabernacle/manager/TryUpdatePieceContextMenu.tsx"
+      ],
+      "tabernacle.manager.UpdateHighlightedWords": [
+        "./packages/Tabernacle/tabernacle/manager/UpdateHighlightedWords.tsx"
+      ],
+      "tabernacle.manager.UpdateTabernacleVisuals": [
+        "./packages/Tabernacle/tabernacle/manager/UpdateTabernacleVisuals.tsx"
+      ],
+      "tabernacle.manager.UpdateVerseOptions": [
+        "./packages/Tabernacle/tabernacle/manager/UpdateVerseOptions.tsx"
+      ],
+      "tabernacle.menorah.onClick": [
+        "./packages/Tabernacle/tabernacle/menorah/onClick.tsx"
+      ],
+      "tabernacle.purple-curtain.onClick": [
+        "./packages/Tabernacle/tabernacle/purple-curtain/onClick.tsx"
+      ],
+      "tabernacle.red-curtain.onClick": [
+        "./packages/Tabernacle/tabernacle/red-curtain/onClick.tsx"
+      ],
+      "tabernacle.rings.onClick": [
+        "./packages/Tabernacle/tabernacle/rings/onClick.tsx"
+      ],
+      "tabernacle.table-of-showbread.onClick": [
+        "./packages/Tabernacle/tabernacle/table-of-showbread/onClick.tsx"
+      ],
+      "tabernacle.walls.onClick": [
+        "./packages/Tabernacle/tabernacle/walls/onClick.tsx"
+      ]
+    },
+    "noImplicitAny": true,
+    "noImplicitThis": true,
+    "strictNullChecks": true,
+    "strictFunctionTypes": true,
+    "strictBindCallApply": true,
+    "strictPropertyInitialization": true,
+    "strictBuiltinIteratorReturn": true,
+    "alwaysStrict": true,
+    "useUnknownInCatchVariables": true,
+    "useDefineForClassFields": true,
+    "allowSyntheticDefaultImports": true,
+    "moduleResolution": "bundler",
+    "resolvePackageJsonExports": true,
+    "resolvePackageJsonImports": true,
+    "preserveConstEnums": true
   },
-  "include": [
-    "packages",
-    "typings",
-    "script"
-  ]
+  "include": ["packages", "typings", "script", "test"]
 }

@@ -5,6 +5,7 @@ const AttachmentLinkItem = await thisBot.AttachmentLinkItem();
 const AttachLink = await thisBot.AttachLink();
 const Linking = await thisBot.LinkingItems();
 const RenderHTMLContent = await thisBot.RenderHTMLContent();
+
 const { Checkbox } = Components;
 
 const isMobile =
@@ -65,6 +66,7 @@ const DragDrop = ({
   description,
   isCustomIcon,
 }) => {
+  
   const [opendedList, setOpenedList] = useState("");
 
   const checklistEnabled = isPlayer || embedding;
@@ -269,7 +271,7 @@ const DragDrop = ({
         dragOverItem?.type === "heading"
       ) {
         ShowNotification({
-          message: `You cannot embed items into attachment item.`,
+          message: t('youCannotEmbedItemsIntoAttachmentItem'),
           severity: "error",
         });
         return;
@@ -277,7 +279,7 @@ const DragDrop = ({
 
       if (!!dragItem.additionalInfo.layers?.length) {
         ShowNotification({
-          message: `Cannot Embed the Embedded item!. Please remove it before embeding!`,
+          message: t('cannotEmbedEmbeddedItem'),
           severity: "error",
         });
         return;
@@ -345,23 +347,23 @@ const DragDrop = ({
       {creatingPlaylist && Object.keys(datesRepeat).length > 0 && (
         <div className="mini-alert mini-alert-error">
           <span className="icon">🚨</span>
-          <p>Please fix Repeating Dates.</p>
+          <p>{t('pleaseFixRepeatingDates')}</p>
         </div>
       )}
       {creatingPlaylist && Object.keys(datesInWrongOrder).length > 0 && (
         <div className="mini-alert mini-alert-warning">
           <span className="icon">⚠️</span>
-          <p>Plese fix dates in wrong order.</p>
+          <p>{t('pleaseFixDatesInWrongOrder')}</p>
         </div>
       )}
 
       {list.length === 0 && (
         <div className="no-items-box">
-          <h4 style={{ margin: "8px 0" }}>Add items below.</h4>
+          <h4 style={{ margin: "8px 0" }}>{t('addItemsBelow')}</h4>
           {DEV_ENV && (
             <>
               <p className="or" />
-              <p onClick={onGenClick}>Click here to generate playlist</p>
+              <p onClick={onGenClick}>{t('clickHereToGeneratePlaylist')}</p>
             </>
           )}
         </div>

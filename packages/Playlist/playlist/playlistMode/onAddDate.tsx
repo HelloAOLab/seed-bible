@@ -14,11 +14,11 @@ const onClose = () => {
 }
 
 const AddDateModal = () => {
-
+    
     const [date, setDate] = useState(FORMAT_YYYY_MM_DD(new Date()));
 
-    return <Modal title="Insert Date" showIcon={false} onClose={() => onClose()}>
-        <h3>Add Date</h3>
+    return <Modal title={t('addDate')} showIcon={false} onClose={() => onClose()}>
+        <h3>{t('insertDate')}</h3>
         <input
             type="date"
             value={date}
@@ -32,10 +32,10 @@ const AddDateModal = () => {
         />
         <ButtonsCover>
             <Button secondary onClick={() => { onAttach(date); onClose(); }}>
-                Save
+                {t('save')}
             </Button>
             <Button secondaryAlt onClick={() => onClose()}>
-                Close
+                {t('close')}
             </Button>
         </ButtonsCover>
     </Modal>

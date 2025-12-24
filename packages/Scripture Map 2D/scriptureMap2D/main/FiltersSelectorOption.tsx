@@ -6,7 +6,7 @@ export const FiltersSelectorOption = ({
   return (
     <span
       onClick={onClick}
-      className={`projectStateButton projectFiltersSelectorOption${selected ? " selected" : ""}`}
+      className={`project-state-button project-filters-selector-option${selected ? " selected" : ""}`}
     >
       {content}
     </span>
