@@ -375,7 +375,7 @@ input:checked + .slider:not(#slider):before {
 
 .translation-option {
   display: flex;
-  justify-content: space-around;
+  justify-content: space-between;
   align-items: center;
   gap: 10px;
   margin-bottom: 5px;
@@ -426,7 +426,7 @@ input:checked + .slider:not(#slider):before {
 .translation-description {
   font-weight: normal;
   font-size: 14px;
-  width: 60%;
+  width: 100%;
   font-family: "DM Sans", sans-serif;
 }
 
@@ -724,7 +724,7 @@ input:checked + .slider:not(#slider):before {
   height: fit-content;
   gap: clamp(5px, 0.5vw, 20px);
   flex-wrap: wrap;
-  background-color: var(--secondaryButton);
+  background-color: color-mix(in srgb, var(--tabSelection) 50%, transparent);
   padding: 8px;
   border-radius: 5px;
 }
@@ -883,11 +883,11 @@ input:checked + .slider:not(#slider):before {
 }
 
 .sidebar-itm:hover {
-  background-color: var(--secondaryButton);
+  background-color: color-mix(in srgb, var(--tabSelection) 50%, transparent);
 }
 
 .sidebar-selected-itm {
-  background-color: var(--secondaryButton);
+  background-color: color-mix(in srgb, var(--tabSelection) 50%, transparent);
   color: var(--text1);
   font-weight: bold;
 }
