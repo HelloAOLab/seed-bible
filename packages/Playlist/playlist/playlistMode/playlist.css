@@ -22,7 +22,7 @@
   padding: 0;
   box-sizing: border-box;
   color: #5f5e5c;
-  font-family: "Satoshi", system-ui, sans-serif;
+  font-family: 'Satoshi';
 }
 
 .material-symbols-outlined {
@@ -316,7 +316,7 @@ history-item:active {
   display: flex;
   align-items: center;
   cursor: pointer;
-  font-family: "Satoshi", system-ui, sans-serif;
+  font-family: 'Satoshi';
   font-weight: 700;
   font-size: 14px;
   line-height: 24.3px;
@@ -519,19 +519,19 @@ div.history-item.current-date-disorder .playlist-item-type {
 }
 
 .playlist-item-type.bookmark .number-style {
-  font-family: "Satoshi", system-ui, sans-serif;
+  font-family: 'Satoshi';
   font-weight: 600;
   font-size: 15px;
 }
 
 .playlist-item-type.bookmark .verse-style {
-  font-family: "Satoshi", system-ui, sans-serif;
+  font-family: 'Satoshi';
   font-weight: 500;
   font-size: 12px;
 }
 
 .playlist-item-type.bookmark .time-style {
-  font-family: "Satoshi", system-ui, sans-serif;
+  font-family: 'Satoshi';
   font-weight: 400;
   font-style: Italic;
   font-size: 12px;
@@ -887,7 +887,7 @@ div.attachment-link.dropabble-Embed .playlist-item-type {
 }
 
 .what-this {
-  font-family: "Satoshi", system-ui, sans-serif;
+  font-family: 'Satoshi';
   font-weight: 500;
   font-size: 16px;
   line-height: 18.9px;
@@ -971,7 +971,7 @@ div.attachment-link.dropabble-Embed .playlist-item-type {
   height: 32px;
   border-radius: 24px;
   min-width: fit-content;
-  font-family: "Satoshi", system-ui, sans-serif;
+  font-family: 'Satoshi';
   font-weight: 500;
   font-size: 10px;
   cursor: pointer;
@@ -1014,7 +1014,7 @@ div.attachment-link.dropabble-Embed .playlist-item-type {
 }
 
 .content-type p {
-  font-family: "Satoshi", system-ui, sans-serif;
+  font-family: 'Satoshi';
   font-weight: 500;
   font-size: 14px;
   line-height: 100%;
@@ -1027,7 +1027,7 @@ div.attachment-link.dropabble-Embed .playlist-item-type {
 
 .annotation {
   padding: 20px;
-  border: 1px solid #cccccd;
+  /* border: 1px solid #cccccd; */
   border-radius: 8px;
   margin: 12px 0;
 }
@@ -1036,7 +1036,7 @@ div.attachment-link.dropabble-Embed .playlist-item-type {
   display: flex;
   align-items: center;
   justify-content: space-between;
-  font-family: "Satoshi", system-ui, sans-serif;
+  font-family: 'Satoshi';
   font-weight: 700;
   font-size: 16px;
   line-height: 100%;
@@ -1044,7 +1044,7 @@ div.attachment-link.dropabble-Embed .playlist-item-type {
 }
 
 .annotation-list-item {
-  font-family: "Satoshi", system-ui, sans-serif;
+  font-family: 'Satoshi';
   font-weight: 500;
   display: flex;
   justify-content: space-between;
@@ -1060,7 +1060,7 @@ div.attachment-link.dropabble-Embed .playlist-item-type {
 }
 
 .annotation .verse-annotation {
-  font-family: "Satoshi", system-ui, sans-serif;
+  font-family: 'Satoshi';
   font-weight: 700;
   font-size: 14px;
   line-height: 100%;

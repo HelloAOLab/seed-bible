@@ -264,6 +264,7 @@ const resources = {
 
       // Playlist.
       turnOff: "Turn Off",
+      advancedUI: "Advanced UI",
       turnOn: "Turn On",
       yourScreenIsBeingRecorded: "Your Screen is being recorded.",
       yourVideoIsBeingRecorded: "Your Video is Being Recorded.",
@@ -918,6 +919,7 @@ const resources = {
       noResults: "No se encontraron resultados",
 
       // Playlist.
+      advancedUI: "Interfaz avanzada",
       turnOff: "Apagar",
       turnOn: "Encender",
       yourScreenIsBeingRecorded: "تسجيل شاشتك يتم...",
@@ -1578,6 +1580,7 @@ const resources = {
       noResults: "لم يتم العثور على نتائج",
 
       // Playlist.
+      advancedUI: "واجهة متقدمة",
       turnOff: "إيقاف",
       turnOn: "تشغيل",
       yourScreenIsBeingRecorded: "تسجيل شاشتك يتم...",
@@ -2227,6 +2230,7 @@ const resources = {
 
       // Playlist.
       userNotLoggedIn: "उपयोगकर्ता लॉग इन नहीं है!",
+      advancedUI: "उन्नत UI",
       yourScreenIsBeingRecorded: "आपकी स्क्रीन रिकॉर्ड हो रही है...",
       yourVideoIsBeingRecorded: "आईटम जोड़ रहा है",
       viewOptions: "दृश्य विकल्प",

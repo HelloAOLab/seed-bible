@@ -1792,7 +1792,7 @@ const AddAnotationUI = ({
               >
                 lock
               </span>
-              <p>Private Access</p>
+              <p>{t('privateAccess')}</p>
               <span
                 style={{ color: "white" }}
                 class="material-symbols-outlined"
@@ -1814,7 +1814,7 @@ const AddAnotationUI = ({
               >
                 public
               </span>
-              <p>Public Access</p>
+              <p>{t('publicAccess')}</p>
               <span
                 style={{ color: "white" }}
                 class="material-symbols-outlined"
@@ -1825,7 +1825,7 @@ const AddAnotationUI = ({
               </span>
             </div>
 
-            <div
+            {false && <div
               className="more-menu-items"
               onClick={() => {
                 setSingleMode((p) => !p);
@@ -1837,7 +1837,7 @@ const AddAnotationUI = ({
               >
                 auto_awesome_motion
               </span>
-              <p>Advanced UI</p>
+              <p>{t('advancedUI')}</p>
               <span
                 style={{ color: "white" }}
                 class="material-symbols-outlined"
@@ -1846,7 +1846,7 @@ const AddAnotationUI = ({
                   ? "radio_button_checked"
                   : "radio_button_unchecked"}
               </span>
-            </div>
+            </div>}
           </div>
         </>
       )}
