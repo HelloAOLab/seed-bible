@@ -1,37 +1,48 @@
-const { useRef, useState } = os.appHooks;
+const { useRef, useState, useEffect } = os.appHooks;
 
 function formatDateTime(date) {
   if (!(date instanceof Date)) date = new Date(date);
   const year = date.getFullYear();
-  const month = String(date.getMonth() + 1).padStart(2, '0');
-  const day = String(date.getDate()).padStart(2, '0');
+  const month = String(date.getMonth() + 1).padStart(2, "0");
+  const day = String(date.getDate()).padStart(2, "0");
   const hours = date.getHours();
   const minutes = date.getMinutes();
   return {
     startDate: `${year}-${month}-${day}`,
-    startTime: hours === 0 && minutes === 0 ? '' : `${String(hours).padStart(2, '0')}:${String(minutes).padStart(2, '0')}`,
+    startTime:
+      hours === 0 && minutes === 0
+        ? ""
+        : `${String(hours).padStart(2, "0")}:${String(minutes).padStart(2, "0")}`,
   };
 }
 
 function formatEndDateTime(date) {
-  if (!(date instanceof Date)) return { date: '', time: '' };
+  if (!(date instanceof Date)) return { date: "", time: "" };
   const year = date.getFullYear();
-  const month = String(date.getMonth() + 1).padStart(2, '0');
-  const day = String(date.getDate()).padStart(2, '0');
+  const month = String(date.getMonth() + 1).padStart(2, "0");
+  const day = String(date.getDate()).padStart(2, "0");
   const hours = date.getHours();
   const minutes = date.getMinutes();
   return {
     date: `${year}-${month}-${day}`,
-    time: hours === 0 && minutes === 0 ? '' : `${String(hours).padStart(2, '0')}:${String(minutes).padStart(2, '0')}`,
+    time:
+      hours === 0 && minutes === 0
+        ? ""
+        : `${String(hours).padStart(2, "0")}:${String(minutes).padStart(2, "0")}`,
   };
 }
 
 const isFullCalendarEvent = (event) =>
-  typeof event.setStart === 'function' && typeof event.setProp === 'function';
+  typeof event.setStart === "function" && typeof event.setProp === "function";
 
-const EditEvent = ({ editingEvent, setEditEventOpen, calendarApi, setEventInView }) => {
+const EditEvent = ({
+  editingEvent,
+  setEditEventOpen,
+  calendarApi,
+  setEventInView,
+}) => {
   console.log(editingEvent);
-  
+
   const isFCEvent = isFullCalendarEvent(editingEvent);
   const fcEvent = isFCEvent
     ? editingEvent
@@ -41,74 +52,78 @@ const EditEvent = ({ editingEvent, setEditEventOpen, calendarApi, setEventInView
 
   const startRaw = fcEvent.start || new Date(editingEvent.start);
   const endRaw = fcEvent.end ?? null;
-  console.log(fcEvent,'fcevent');
+  console.log(fcEvent, "fcevent");
 
   const { startDate, startTime } = formatDateTime(startRaw);
-  const { date: endDateInitial, time: endTimeInitial } = formatEndDateTime(endRaw);
-
+  const { date: endDateInitial, time: endTimeInitial } =
+    formatEndDateTime(endRaw);
 
   const [eventTitle, setEventTitle] = useState(fcEvent.title);
   const [eventStartDate, setEventStartDate] = useState(startDate);
   const [eventStartTime, setEventStartTime] = useState(startTime);
   const [eventEndDate, setEventEndDate] = useState(endDateInitial || startDate);
   const [eventEndTime, setEventEndTime] = useState(endTimeInitial);
-  const [eventDescription, setEventDescription] = useState(fcEvent.extendedProps?.description || '');
-  const [eventLink, setEventLink] = useState(fcEvent.extendedProps?.link || '');
+  const [eventDescription, setEventDescription] = useState(
+    fcEvent.extendedProps?.description || ""
+  );
+  const [eventLink, setEventLink] = useState(fcEvent.extendedProps?.link || "");
 
   const handleCancel = () => setEditEventOpen(false);
 
   const handleEdit = () => {
-    const hasTime = eventStartTime !== '' && eventEndTime !== '';
-    const startStr = hasTime ? `${eventStartDate}T${eventStartTime}` : eventStartDate;
+    const hasTime = eventStartTime !== "" && eventEndTime !== "";
+    const startStr = hasTime
+      ? `${eventStartDate}T${eventStartTime}`
+      : eventStartDate;
     const endStr = eventEndDate
-      ? (hasTime ? `${eventEndDate}T${eventEndTime}` : eventEndDate)
-      : '';
+      ? hasTime
+        ? `${eventEndDate}T${eventEndTime}`
+        : eventEndDate
+      : "";
 
     const newStart = new Date(startStr);
     let newEnd = endStr ? new Date(endStr) : null;
-    console.log(newEnd,'endstr');
+    console.log(newEnd, "endstr");
 
-    if (isNaN(newStart.getTime())) return alert('Invalid start date/time');
-   
+    if (isNaN(newStart.getTime())) return alert("Invalid start date/time");
 
     const calendar = calendarApi?.current;
     if (!calendar) return;
-    
 
     const oldEvent = calendar.getEventById(editingEvent.id);
- if(!editingEvent._def?.resourceIds?.[0]){
-    if (oldEvent) {
-      console.log('editing')
-  oldEvent.setProp("title", eventTitle);
-  oldEvent.setStart(newStart);
-  oldEvent.setEnd(newEnd);
-  oldEvent.setAllDay(!hasTime);
+    const resourceIds = editingEvent?._def?.resourceIds || [];
+    if (resourceIds.length <= 0) {
+      if (oldEvent) {
+        oldEvent.setProp("title", eventTitle);
+        oldEvent.setStart(newStart);
+        oldEvent.setEnd(newEnd);
+        oldEvent.setAllDay(!hasTime);
 
-  oldEvent.setExtendedProp("description", eventDescription);
-  oldEvent.setExtendedProp("link", eventLink);
-};}
-    else{
-      calendar.addEvent({
-      id: editingEvent.id,
-      title: eventTitle,
-      start: newStart,
-      end: newEnd,
-      allDay: !hasTime,
-      resourceId:editingEvent._def.resourceIds?.[0],
+        oldEvent.setExtendedProp("description", eventDescription);
+        oldEvent.setExtendedProp("link", eventLink);
+      }
+    } else {
+      oldEvent.setProp("title", eventTitle);
+      oldEvent.setStart(newStart);
+      oldEvent.setEnd(newEnd);
+      oldEvent.setAllDay(!hasTime);
 
-      classNames: editingEvent.classNames || [],
-      extendedProps: {
-        ...editingEvent.extendedProps,
-        description: eventDescription,
-        link: eventLink,
-      },
-    });
+      // Resource (IMPORTANT)
+      if (resourceIds) {
+        oldEvent.setResources([resourceIds[0]]); // for resource calendar
+      }
 
+      // Class names
+      oldEvent.setProp("classNames", editingEvent.classNames || []);
+
+      // Extended props
+      oldEvent.setExtendedProp("description", eventDescription);
+      oldEvent.setExtendedProp("link", eventLink);
     }
-    const allEvents=calendarApi.current.getEvents();
+    const allEvents = calendarApi.current.getEvents();
 
-    setEventInView(prev =>
-      prev.map(ev =>
+    setEventInView((prev) =>
+      prev.map((ev) =>
         ev.id === editingEvent.id
           ? {
               ...ev,
@@ -127,17 +142,26 @@ const EditEvent = ({ editingEvent, setEditEventOpen, calendarApi, setEventInView
           : ev
       )
     );
-    calendarApi.current.removeAllEvents();
-    calendarApi.current.addEventSource(allEvents);
+
     setEditEventOpen(false);
   };
 
   return (
-    <div style={{
-      position: 'fixed', top: 0, left: 0, width: '100vw', height: '100vh',
-      backgroundColor: 'rgba(0,0,0,0.3)', backdropFilter: 'blur(5px)',
-      display: 'flex', justifyContent: 'center', alignItems: 'center', zIndex: 999
-    }}>
+    <div
+      style={{
+        position: "fixed",
+        top: 0,
+        left: 0,
+        width: "100vw",
+        height: "100vh",
+        backgroundColor: "rgba(0,0,0,0.3)",
+        backdropFilter: "blur(5px)",
+        display: "flex",
+        justifyContent: "center",
+        alignItems: "center",
+        zIndex: 999,
+      }}
+    >
       <div className="google-modal">
         <input
           value={eventTitle}
@@ -148,14 +172,30 @@ const EditEvent = ({ editingEvent, setEditEventOpen, calendarApi, setEventInView
         />
         <div className="gm-event">
           <div className="gm-input-date">
-            <input type="date" value={eventStartDate} onChange={(e) => setEventStartDate(e.target.value)} />
+            <input
+              type="date"
+              value={eventStartDate}
+              onChange={(e) => setEventStartDate(e.target.value)}
+            />
             <span className="gm-input-date-span">to</span>
-            <input type="date" value={eventEndDate||eventStartDate} onChange={(e) => setEventEndDate(e.target.value)} />
+            <input
+              type="date"
+              value={eventEndDate}
+              onChange={(e) => setEventEndDate(e.target.value)}
+            />
           </div>
-          <div style={{ display: 'flex', alignItems: 'center', gap: '10px' }}>
-            <input type="time" value={eventStartTime} onChange={(e) => setEventStartTime(e.target.value)} />
+          <div style={{ display: "flex", alignItems: "center", gap: "10px" }}>
+            <input
+              type="time"
+              value={eventStartTime}
+              onChange={(e) => setEventStartTime(e.target.value)}
+            />
             <span>to</span>
-            <input type="time" value={eventEndTime || eventStartTime} onChange={(e) => setEventEndTime(e.target.value)} />
+            <input
+              type="time"
+              value={eventEndTime}
+              onChange={(e) => setEventEndTime(e.target.value)}
+            />
           </div>
           <textarea
             className="gm-input-description"
@@ -173,8 +213,12 @@ const EditEvent = ({ editingEvent, setEditEventOpen, calendarApi, setEventInView
           />
         </div>
         <div className="gm-actions">
-          <button className="gm-button" onClick={handleEdit}>Save</button>
-          <button className="gm-button cancel" onClick={handleCancel}>Cancel</button>
+          <button className="gm-button" onClick={handleEdit}>
+            Save
+          </button>
+          <button className="gm-button cancel" onClick={handleCancel}>
+            Cancel
+          </button>
         </div>
       </div>
     </div>
