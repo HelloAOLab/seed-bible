@@ -107,11 +107,13 @@
 }
 
 .bookTitle {
-  font-size: 32px;
+  font-size: var(--scripture-bookHeading-size, 32px);
   margin-bottom: 60px;
   font-weight: 500;
-  font-family: var(--text-bookchapter-font);
-  color: var(--text-bookchapter-color);
+  font-family: var(
+    --scripture-bookHeading-font,
+    var(--text-bookchapter-font, "Newsreader", serif)
+  );
   font-weight: var(--text-bookchapter-weight);
   text-align: var(--text-bookchapter-alignment);
   text-decoration: var(--text-bookchapter-text-decoration);
@@ -119,15 +121,16 @@
   margin-bottom: var(--text-bookchapter-margin-bottom);
   margin-left: var(--text-bookchapter-margin-left);
   margin-right: var(--text-bookchapter-margin-right);
-  color: var(--pageTextColor);
+  color: var(--bookHeadingColor, var(--pageTextColor));
 }
 
 .sectionTitle {
-  color: var(--pageTextColor);
-  font-family: var(--text-heading-font);
-  /* color: var(--text-heading-color); */
-  color: var(--pageTextColor) !important;
-  font-size: 18px;
+  font-family: var(
+    --scripture-chapterHeading-font,
+    var(--text-heading-font, "Plus Jakarta Sans", sans-serif)
+  );
+  color: var(--chapterHeadingColor, var(--pageTextColor)) !important;
+  font-size: var(--scripture-chapterHeading-size, 18px);
   font-style: var(--text-heading-font-style);
   font-weight: var(--text-heading-weight);
   text-align: var(--text-heading-alignment);
@@ -139,14 +142,16 @@
 }
 
 .sectionText {
-  font-family: var(--text-verse-font);
-  color: var(--text-verse-color);
-  font-size: 20px;
+  font-family: var(
+    --scripture-verseText-font,
+    var(--text-verse-font, "Newsreader", serif)
+  );
+  color: var(--verseTextColor, var(--text-verse-color, var(--pageTextColor)));
+  font-size: var(--scripture-verseText-size, var(--text-verse-font-size, 20px));
   font-weight: var(--text-verse-weight);
   font-style: var(--text-verse-font-style);
   text-align: var(--text-verse-alignment);
   text-decoration: var(--text-verse-text-decoration);
-  font-size: var(--text-verse-font-size);
   line-height: calc(2 + var(--text-verse-line-height, 0));
 
   /* Additions ------> */
@@ -211,9 +216,13 @@
 }
 
 .sectionTextNumber {
-  color: #287f71;
-  font-family: "Plus Jakarta Sans", sans-serif;
-  font-size: 12px;
+  color: var(--verseNumberColor, #06b6d4);
+  font-family: var(
+    --scripture-verseNumber-font,
+    "Plus Jakarta Sans",
+    sans-serif
+  );
+  font-size: var(--scripture-verseNumber-size, 12px);
   font-weight: 500;
   line-height: 30px;
   font-style: normal;

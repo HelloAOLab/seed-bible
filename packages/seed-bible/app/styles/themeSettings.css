@@ -83,3 +83,42 @@
   font-weight: 500;
   line-height: normal;
 }
+
+/* Collapsible Section Styles */
+.collapsible-section {
+  width: 100%;
+}
+
+.collapsible-header {
+  user-select: none;
+}
+
+.collapsible-header:hover {
+  background-color: rgba(0, 0, 0, 0.02);
+}
+
+.collapsible-content {
+  animation: slideDown 0.2s ease-out;
+}
+
+@keyframes slideDown {
+  from {
+    opacity: 0;
+    transform: translateY(-8px);
+  }
+  to {
+    opacity: 1;
+    transform: translateY(0);
+  }
+}
+
+/* Main Color Picker Styles */
+.main-color-picker:hover {
+  transform: scale(1.02);
+  transition: transform 0.2s ease;
+}
+
+/* Compact Color Row Styles */
+.compact-color-row:hover {
+  background-color: rgba(0, 0, 0, 0.02);
+}

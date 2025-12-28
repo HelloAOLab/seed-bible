@@ -101,8 +101,10 @@
   align-items: center;
   gap: 15px;
   justify-content: space-between;
-  color: var(--text1);
+  color: var(--spaceNameText, var(--text1));
   font-weight: 700;
+  font-family: var(--sideMenu-spaceName-font, "Satoshi", sans-serif);
+  font-size: var(--sideMenu-spaceName-size, 14px);
 }
 
 .collapsedMenu {
@@ -152,6 +154,13 @@
   background: transparent;
   border: none;
   outline: none;
+  font-family: var(--input-title-font, "DM Sans", sans-serif);
+  font-size: var(--input-title-size, 14px);
+}
+
+.searchSection input::placeholder {
+  font-family: var(--input-placeholder-font, "DM Sans", sans-serif);
+  font-size: var(--input-placeholder-size, 14px);
 }
 
 .tabsContainer {
@@ -159,10 +168,12 @@
   gap: 16px;
   margin-top: 15px;
   justify-content: space-between;
-  color: var(--text1);
+  color: var(--spaceNameText, var(--text1));
   font-weight: 700;
   margin-bottom: 27px;
   align-items: center;
+  font-family: var(--sideMenu-spaceName-font, "Satoshi", sans-serif);
+  font-size: var(--sideMenu-spaceName-size, 14px);
 }
 
 .tabs {
@@ -190,7 +201,7 @@
 }
 
 .tab {
-  color: var(--text1);
+  color: var(--simpleTabText, var(--text1));
   display: flex;
   flex-direction: row;
   justify-content: space-between;
@@ -198,12 +209,14 @@
   cursor: pointer;
   user-select: none;
   padding: 10px;
+  font-family: var(--sideMenu-menuText-font, "Satoshi", sans-serif);
+  font-size: var(--sideMenu-menuText-size, 14px);
   /* -webkit-user-drag: element; */
 }
 
 .activeTab {
-  background: white;
-  color: var(--text1) !important;
+  background: var(--activeTabBackground, white);
+  color: var(--activeTabText, var(--text1)) !important;
   display: flex;
   flex-direction: row;
   justify-content: space-between;
@@ -218,6 +231,8 @@
   border-color: var(--tabSelection);
   border-style: solid;
   border-radius: 5px;
+  font-family: var(--sideMenu-menuText-font, "Satoshi", sans-serif);
+  font-size: var(--sideMenu-menuText-size, 14px);
   /* border-color: var(--tabSelection) !important;
     border: 1px solid !important;
     border-radius: 3px !important; */
@@ -255,8 +270,8 @@
   padding: 0;
   padding-top: 3px;
   background: transparent;
-  border: black 1px solid;
-  color: black;
+  border: var(--simpleTabText, black) 1px solid;
+  color: var(--simpleTabText, black);
 }
 
 .tabInfo {
@@ -274,9 +289,8 @@
 }
 
 .addIcon {
-  background-color: var(--primaryButton) !important;
-
-  color: var(--primaryButtonColor) !important;
+  background-color: var(--addButtonBackground, var(--primaryButton)) !important;
+  color: var(--addButtonIcon, var(--primaryButtonColor)) !important;
   border-radius: 5px;
   cursor: pointer;
 }
@@ -333,18 +347,21 @@
   /* background-color: var(--spaceSelection) !important; */
   background-color: color-mix(
     in srgb,
-    var(--spaceSelection) 50%,
+    var(--activeSpaceIndicator, var(--spaceSelection)) 50%,
     transparent
   ) !important;
-  border: var(--spaceSelection) 1px solid !important;
-  border-color: var(--spaceSelection);
+  border: var(--activeSpaceIndicator, var(--spaceSelection)) 1px solid !important;
+  border-color: var(--activeSpaceIndicator, var(--spaceSelection));
   /* color: var(--secondaryButtonColor) !important; */
 }
 
 .activeBg span {
   width: 8px;
   height: 8px;
-  background-color: var(--spaceSelection) !important;
+  background-color: var(
+    --activeSpaceIndicator,
+    var(--spaceSelection)
+  ) !important;
   border-radius: 2px;
   display: block;
 }
@@ -353,7 +370,7 @@
   cursor: pointer;
   width: 8px;
   height: 8px;
-  background-color: var(--gray2-color);
+  background-color: var(--inactiveSpaceIndicator, var(--gray2-color));
   border-radius: 2px;
   display: block;
 }
@@ -372,7 +389,8 @@
 
 .icon-button {
   cursor: pointer;
-  color: var(--text1);
+  color: var(--settingsIcon, var(--text1));
+  font-size: var(--sideMenu-icons-size, 24px);
 }
 
 .triangle-up {
