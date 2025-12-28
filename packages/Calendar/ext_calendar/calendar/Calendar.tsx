@@ -218,7 +218,7 @@ const App = () => {
           index === self.findIndex((e) => e.id === event.id)
       );
 
-      // (Optional) Clean up localStorage to remove duplicates permanently
+      //Clean up localStorage to remove duplicates permanently
       localStorage.setItem("allEvents", JSON.stringify(unique));
 
       return unique;
@@ -267,9 +267,7 @@ const App = () => {
 
   const { name, apiCalendar, setApiCalendar, refCalendar } = useCalendar();
 
-  console.log(globalThis[`defaultplaylists`], "redings");
-  console.log(globalThis["defaultplaylists"], "redingss");
-
+ 
   useEffect(() => {
     refCalendar.current = calendarRef.current;
   }, [calendarRef.current]);
@@ -373,7 +371,7 @@ const App = () => {
         document.head.appendChild(link);
       }
 
-      // Delay to ensure FullCalendar is rendered before calling tippy
+      
       setTimeout(() => {
         if (window.tippy) {
           window.tippy("[data-tippy-content]");
@@ -494,12 +492,12 @@ const App = () => {
       display: "inline-block",
     });
 
-    // Safer parsing: force day 15 to prevent timezone rollback
+    
     const text = titleEl.textContent.trim();
     let parsed;
 
     try {
-      parsed = new Date(`${text} 15, 12:00:00`); // e.g. "October 15, 2025"
+      parsed = new Date(`${text} 15, 12:00:00`); 
     } catch {
       parsed = new Date();
     }
@@ -794,7 +792,7 @@ const App = () => {
             click: () => {},
           },
           customToday: {
-            text: calendarEle.offsetWidth > 500 ? "Today" : "T", // default label; we’ll update it on resize
+            text: calendarEle.offsetWidth > 500 ? "Today" : "T",
             click: () => {
               calendarApi.current.today();
             },
@@ -910,7 +908,7 @@ const App = () => {
         contentHeight: "450px",
 
         eventContent: function (arg) {
-          console.log(popoverOpenRef.current, "sdsdsdkkkkjj");
+        
 
           setContainerWidth(calendarEle.offsetWidth);
           const isSchedule = arg.event.extendedProps.isResource === true;
@@ -1031,15 +1029,15 @@ const App = () => {
     display:flex;
     margin-left:6px;
     align-items:stretch;  /* important */
-    background:#e6fcf5;
-    color:green;
+    background:#E1F3D8;
+    color:#67C23A;
     border-top-left-radius: 5px;
     border-bottom-left-radius: 5px;
    
     width:max-content;
     font-size:clamp(0.65rem, 0.8vw, 0.85rem);
   ">
-    <div style="width:3px;background:green;border-top-left-radius: 5px;
+    <div style="width:3px;background:#67C23A;border-top-left-radius: 5px;
     border-bottom-left-radius: 5px;"></div>
     <span style="padding:2px 4px;padding:2px 3px; overflow-wrap: break-word;">${title}</span>
   </div>
@@ -1068,22 +1066,22 @@ const App = () => {
 
           // Default event style
           if (!isMultiDay && !popoverOpenRef.current) {
-            console.log(isMultiDay, "sasasasaasasas");
+           
             return {
               html: `
   <div style="
     display:flex;
     margin-left:6px;
     align-items:stretch;  /* important */
-    background:#F0FAFF;
-    color:#00C8FF;
+    background:#D9ECFF;
+    color:#409EFF;
     border-top-left-radius: 5px;
     border-bottom-left-radius: 5px;
    
     width:max-content;
     font-size:clamp(0.65rem, 0.8vw, 0.85rem);
   ">
-    <div style="width:3px;background:#00C8FF;border-top-left-radius: 5px;
+    <div style="width:3px;background:#409EFF;border-top-left-radius: 5px;
     border-bottom-left-radius: 5px;"></div>
     <span style="padding:2px 4px;padding:2px 3px; overflow-wrap: break-word;">${title}</span>
   </div>
@@ -1121,7 +1119,7 @@ const App = () => {
 
           const isMultiDay = startDate !== endDate;
 
-          console.log(startDate, endDate, isMultiDay, "isMultiday");
+         
 
           if (width <= 500 && !isMultiDay & !popoverOpenRef.current) {
             return ["dot-view"];
@@ -1152,7 +1150,7 @@ const App = () => {
         eventDisplay: "block", // No time text
 
         dateClick: async function (info) {
-          console.log(resourcesByDate, "jhjhjhjhjh");
+         
           if (info.jsEvent?.target.closest(".tippy-box")) return;
           const date = info.date;
           if (!calendarApi) {
@@ -1184,7 +1182,7 @@ const App = () => {
             info.view.type !== "multiMonthYear" &&
             info.view.type !== "resourceTimeline"
           ) {
-            console.log("no-multimonth");
+           
             showEventPopup(
               info,
               setPlaylistMode,
@@ -1208,11 +1206,11 @@ const App = () => {
               }) => {
                 if (isPlansTabActive) return;
                 let newEvent;
-                console.log(start, end, "aada");
+              
                 const days = getDayDifference(start, end);
                 if (recurVal.charAt(0) === "N") {
                   const isTimed = Boolean(startTime && endTime);
-                  console.log(isTimed, "isTimed");
+                 
                   if (days === 0) {
                     newEvent = {
                       title: title ? title : "easter",
@@ -1233,7 +1231,7 @@ const App = () => {
                         type: "events",
                       },
                     };
-                    console.log(newEvent, "newevent");
+                
                     const now = stripTime(new Date());
                     const startDate = stripTime(new Date(newEvent.start));
                     setAllEvents((prev) => [...prev, newEvent]);
@@ -1481,6 +1479,7 @@ const App = () => {
                 backgroundColor: "white",
                 color: "black",
                 fontSize: "10px",
+                fontWeight:'700',
                 padding: "0",
                 border: "none",
                 marginRight: "10px",
@@ -1505,6 +1504,8 @@ const App = () => {
                 fontSize: "10px",
                 padding: "0",
                 border: "none",
+                fontWeight:'900',
+                
                 marginRight: "10px",
                 cursor:
                   info.view.type === "resourceTimelineDay"
@@ -1551,7 +1552,7 @@ const App = () => {
 
             if (info.view.type.includes("resourceTimeline")) {
               activeToolbarHandler = onToolbarDateClick;
-              console.log("yeees");
+           
             } else {
               activeToolbarHandler = onToolbarDateClick1;
             }
@@ -1623,7 +1624,7 @@ const App = () => {
                   fontWeight: "400",
                   color: "#606266",
                   border: "1px solid #d3d3d3",
-                  borderRadius: "0",
+                  borderRadius: "3px",
 
                   cursor: "pointer",
                 });
@@ -1720,7 +1721,7 @@ const App = () => {
         eventDidMount: (info) => {
           let readingsLists = [];
           const { title, extendedProps, start, id } = info.event;
-          console.log(start, "jjjj");
+        
 
           const {
             type: eventType,
@@ -1746,7 +1747,7 @@ const App = () => {
 
           const wrapper = document.createElement("div");
 
-          // Options (Edit/Delete/Close)
+        
           const options = document.createElement("div");
           options.style.cssText = `
     display: flex;
@@ -1796,8 +1797,7 @@ const App = () => {
           options.appendChild(close);
 
           // Reading Plans Section
-          console.log(readingsRef.current);
-
+         
           readingsLists = globalThis["defaultplaylists"].filter(
             (item) => item.name === title
           );
@@ -1808,18 +1808,18 @@ const App = () => {
             (ele) => ele.id === playingPlaylist
           );
           let val;
-          console.log(readingsLists[0], "readinglists");
+       
           if (readingsLists.length > 0) {
             const readaingsToAdd = readingsLists[0].list.filter((item) => {
               if (item.type === "date") {
                 val = item.content;
               }
-              console.log(start, val);
+             
               if (isSameDate(start, val) & (item.type !== "date")) {
                 return item;
               }
             });
-            console.log(readaingsToAdd);
+           
             if (readingsLists && readingsLists.length > 0) {
               const plansSection = document.createElement("div");
 
@@ -1861,10 +1861,10 @@ const App = () => {
                   ul.appendChild(li);
                 }
               });
-              // Create the container div
+              
               const playButtonCon = document.createElement("div");
 
-              // Apply styling (optional)
+              
               playButtonCon.style.display = "flex";
               playButtonCon.style.alignItems = "center";
               playButtonCon.style.gap = "3px";
@@ -1878,7 +1878,7 @@ const App = () => {
               playButtonCon.style.width = "fit-content";
               playButtonCon.style.fontSize = "10px";
 
-              // Add SVG Play icon
+             
               playButtonCon.innerHTML = `
   <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" fill="currentColor">
     <polygon points="6,4 20,12 6,20"></polygon>
@@ -2063,10 +2063,10 @@ const App = () => {
             const existing = document.querySelector(".custom-wrapper");
             if (existing) existing.remove();
 
-            // Get event element position
+           
             const rect = info.el.getBoundingClientRect();
 
-            // Style your wrapper
+            
             Object.assign(wrapper.style, {
               position: "absolute",
               top: `${rect.bottom + window.scrollY + 8}px`,
@@ -2101,7 +2101,7 @@ const App = () => {
               }
             };
 
-            // 👇 Handle scroll anywhere in page (capture = true to catch nested scrolls)
+            
             const handleScroll = () => {
               closeWrapper();
             };
@@ -2146,7 +2146,7 @@ const App = () => {
     const newHeight = width * 0.5; // example ratio
     calendarElement.style.height = `${newHeight}px`;
   };
-  window.addEventListener("resize", resizeCalendar);
+ 
   useEffect(() => {
     resizeCalendar();
   }, []);
@@ -2223,12 +2223,7 @@ const App = () => {
       window.removeEventListener("resize", updateFontSize);
     };
   }, []);*/
-  console.log(
-    calendarRef.current,
-    refCalendar.current,
-    "refsss",
-    containerWidth
-  );
+  
 
   return (
     <>
@@ -2264,6 +2259,8 @@ const App = () => {
             left: "0",
             right: "0",
             height: "1px",
+            borderRadius:'2px',
+      
             backgroundColor: "#ddd",
           }}
         ></div>
@@ -2345,6 +2342,25 @@ const App = () => {
             marginTop: hasTitle ? "" : "40px",
           }}
         >
+        {calendarApi.current && (
+  <div
+    style={{
+      height:
+        calendarApi.current.view.type !== "multiMonthYear"
+          ? "427px"
+          : "449px",
+      width: '1px',
+      zIndex:'999',
+      backgroundColor: "#ddd",
+      position: "absolute",
+      marginTop:
+        calendarApi.current.view.type !== "multiMonthYear"
+          ? "111px"
+          : "89px",
+    }}
+  />
+)}
+
           <div class="calendar-wrapper">
             {
               <div
@@ -2551,7 +2567,7 @@ const App = () => {
               if (!calendar) return;
               setResourcesByDate((prev) => {
                 const updated = {};
-                console.log(resourceGroupNameRef.current, "asasa");
+             
 
                 Object.keys(prev).forEach((date) => {
                   updated[date] = prev[date].filter(
@@ -2562,7 +2578,7 @@ const App = () => {
 
                 return updated;
               });
-              console.log(resourceStartDate, "resourcedate");
+              
 
               function ymdLocal(dLike) {
                 const d = dLike instanceof Date ? dLike : new Date(dLike);

@@ -25,23 +25,176 @@ const COLOR_FIELDS = [
   { labelKey: "secondaryText", field: "text2" },
 ];
 
-// Keep text colors to style the labels (not shown as editable rows here)
+// ————————————————————————————————————————————————————————————
+// Advanced Settings Sections Configuration
+// ————————————————————————————————————————————————————————————
+const ADVANCED_SETTINGS_SECTIONS = {
+  containerBackgrounds: {
+    labelKey: "containerBackgrounds",
+    fields: [
+      { labelKey: "menuBackground", field: "menuBackground" },
+      { labelKey: "panelBackground", field: "panelBackground" },
+    ],
+  },
+  tab: {
+    labelKey: "tab",
+    fields: [
+      { labelKey: "tabSelection", field: "tabSelection" },
+      { labelKey: "activeTabBackground", field: "activeTabBackground" },
+      { labelKey: "activeTabText", field: "activeTabText" },
+      { labelKey: "simpleTabText", field: "simpleTabText" },
+    ],
+  },
+  buttons: {
+    labelKey: "buttons",
+    fields: [
+      { labelKey: "primaryButtonBg", field: "primaryButton" },
+      { labelKey: "primaryButtonText", field: "primaryButtonColor" },
+      { labelKey: "secondaryButtonBg", field: "secondaryButton" },
+      { labelKey: "buttonBorder", field: "buttonBorder" },
+    ],
+  },
+  scriptureText: {
+    labelKey: "scriptureText",
+    fields: [
+      { labelKey: "bookHeading", field: "bookHeadingColor" },
+      { labelKey: "chapterHeading", field: "chapterHeadingColor" },
+      { labelKey: "verseNumber", field: "verseNumberColor" },
+      { labelKey: "verseText", field: "verseTextColor" },
+      { labelKey: "pageBackground", field: "pageBackground" },
+    ],
+  },
+  sideMenu: {
+    labelKey: "sideMenu",
+    fields: [
+      { labelKey: "menuBackground", field: "menuBackground" },
+      { labelKey: "spaceNameText", field: "spaceNameText" },
+      { labelKey: "addButtonBackground", field: "addButtonBackground" },
+      { labelKey: "addButtonIcon", field: "addButtonIcon" },
+      { labelKey: "selectPanelIcon", field: "selectPanelIcon" },
+      { labelKey: "openCloseMenuIcon", field: "openCloseMenuIcon" },
+      { labelKey: "moreIcon", field: "moreIcon" },
+      { labelKey: "settingsIcon", field: "settingsIcon" },
+      { labelKey: "inactiveSpaceIndicator", field: "inactiveSpaceIndicator" },
+      { labelKey: "activeSpaceIndicator", field: "activeSpaceIndicator" },
+      { labelKey: "profileAvatar", field: "profileAvatar" },
+    ],
+  },
+  selectionUIToolbar: {
+    labelKey: "selectionUIToolbar",
+    fields: [
+      { labelKey: "toolbarBackground", field: "toolbarBackground" },
+      { labelKey: "iconsColor", field: "iconColor" },
+    ],
+  },
+  inputFields: {
+    labelKey: "inputFields",
+    fields: [
+      { labelKey: "inputBackground", field: "inputBackground" },
+      { labelKey: "inputBorder", field: "inputBorder" },
+      { labelKey: "inputText", field: "inputText" },
+      { labelKey: "inputPlaceholder", field: "inputPlaceholder" },
+    ],
+  },
+  branding: {
+    labelKey: "branding",
+    fields: [
+      { labelKey: "logoColor", field: "logoColor" },
+      { labelKey: "accentColor", field: "accentColor" },
+    ],
+  },
+};
+
+// Professional Modern Color Scheme
+// Primary #3B82F6, Primary Dark #2563EB, Secondary #8B5CF6
+// Accent/Tertiary #06B6D4, Background #F8FAFC, Surface #FFFFFF
+// Text Primary #0F172A, Text Secondary #64748B, Border #E2E8F0
 const defaultTheme = {
-  menuBackground: "#F0F1F1",
-  primaryButton: "#E6E6E6",
+  // Main colors
+  primaryColor: "#3B82F6",
+  secondaryColor: "#8B5CF6",
+  tertiaryColor: "#06B6D4",
+  // Container backgrounds
+  menuBackground: "#F8FAFC",
+  themeSideMenu: "#F8FAFC",
+  panelBackground: "#FFFFFF",
+  // Tab
+  tabSelection: "#3B82F6",
+  activeTabBackground: "#FFFFFF",
+  activeTabText: "#0F172A",
+  activeTabBorder: "#3B82F6",
+  activeTabFill: "#3B82F6",
+  simpleTabText: "#64748B",
+  inactiveTabText: "#64748B",
+  // Buttons
+  primaryButton: "#3B82F6",
+  primaryButtonColor: "#FFFFFF",
+  primaryButtonBorder: "#3B82F6",
+  primaryButtonFill: "#3B82F6",
+  secondaryButton: "#8B5CF6",
+  secondaryButtonColor: "#FFFFFF",
+  secondaryButtonBorder: "#8B5CF6",
+  secondaryButtonFill: "#8B5CF6",
+  tertiaryButtonColor: "#0F172A",
+  buttonBorder: "#E2E8F0",
+  // Scripture text
+  bookHeadingColor: "#0F172A",
+  chapterHeadingColor: "#0F172A",
+  verseNumberColor: "#06B6D4",
+  verseTextColor: "#0F172A",
   pageBackground: "#FFFFFF",
-  pageTextColor: "#000000",
-  primaryButtonColor: "#606060",
-  secondaryButton: "#4459F3",
-  secondaryButtonColor: "#4459F3",
-  buttonBorder: "#2b00ff",
-  tabSelection: "#4459F3",
-  spaceSelection: "#4459F3",
-  toolbarBackground: "#ffffff",
-  iconColor: "#000000",
-  text1: "#000000",
-  text2: "#000000",
-  showTabIcons: true, // Default to showing tab icons
+  pageTextColor: "#0F172A",
+  // Side menu
+  heading1Color: "#0F172A",
+  heading2Color: "#0F172A",
+  heading3Color: "#0F172A",
+  descriptionTextColor: "#64748B",
+  menuTextColor: "#0F172A",
+  breadcrumbsColor: "#64748B",
+  sectionBackground: "#3B82F6",
+  spaceNameColor: "#0F172A",
+  sideMenuIconsColor: "#0F172A",
+  selectedSpaceColor: "#3B82F6",
+  unselectedSpaceColor: "#E2E8F0",
+  spaceNameText: "#0F172A",
+  addButtonBackground: "#3B82F6",
+  addButtonIcon: "#FFFFFF",
+  selectPanelIcon: "#0F172A",
+  openCloseMenuIcon: "#0F172A",
+  moreIcon: "#64748B",
+  settingsIcon: "#64748B",
+  inactiveSpaceIndicator: "#E2E8F0",
+  activeSpaceIndicator: "#3B82F6",
+  profileAvatar: "#8B5CF6",
+  // Selection UI & toolbar
+  toolbarBorder: "#E2E8F0",
+  toolbarFill: "#FFFFFF",
+  toolbarIconsColor: "#0F172A",
+  selectionUIBorder: "#E2E8F0",
+  selectionUIFill: "#FFFFFF",
+  selectionIconsColor: "#0F172A",
+  toolbarBackground: "#FFFFFF",
+  iconColor: "#0F172A",
+  // Input fields
+  inputTitleColor: "#0F172A",
+  inputPlaceholderColor: "#64748B",
+  inputActiveBorder: "#3B82F6",
+  inputActiveFill: "#FFFFFF",
+  inputInactiveBorder: "#E2E8F0",
+  inputInactiveFill: "#FFFFFF",
+  inputBackground: "#FFFFFF",
+  inputBorder: "#E2E8F0",
+  inputText: "#0F172A",
+  inputPlaceholder: "#64748B",
+  // Branding
+  logoColor: "#0F172A",
+  accentColor: "#3B82F6",
+  // Space selection
+  spaceSelection: "#3B82F6",
+  // Text colors
+  text1: "#0F172A",
+  text2: "#64748B",
+  showTabIcons: true,
 };
 
 // ————————————————————————————————————————————————————————————
@@ -376,15 +529,3216 @@ const debouncedSolve = debounce((hex, callback) => {
   callback(getColorFilterCached(hex));
 }, 250);
 
+// ————————————————————————————————————————————————————————————
+// Collapsible Section Component
+// ————————————————————————————————————————————————————————————
+const CollapsibleSection = ({ title, isExpanded, onToggle, children }) => {
+  return (
+    <div className="collapsible-section">
+      <div
+        className="collapsible-header"
+        onClick={onToggle}
+        style={{
+          display: "flex",
+          justifyContent: "space-between",
+          alignItems: "center",
+          padding: "16px 0",
+          cursor: "pointer",
+          borderBottom: "1px solid #E1E3EA",
+        }}
+      >
+        <span
+          style={{
+            fontFamily: "Open Sans, sans-serif",
+            fontSize: 14,
+            fontWeight: 400,
+            color: "#000000",
+          }}
+        >
+          {title}
+        </span>
+        <svg
+          width="16"
+          height="16"
+          viewBox="0 0 16 16"
+          fill="none"
+          style={{
+            transform: isExpanded ? "rotate(180deg)" : "rotate(0deg)",
+            transition: "transform 0.2s ease",
+          }}
+        >
+          <path
+            d="M4 6L8 10L12 6"
+            stroke="#666666"
+            strokeWidth="1.5"
+            strokeLinecap="round"
+            strokeLinejoin="round"
+          />
+        </svg>
+      </div>
+      {isExpanded && (
+        <div
+          className="collapsible-content"
+          style={{
+            padding: "16px 0",
+            display: "flex",
+            flexDirection: "column",
+            gap: 16,
+          }}
+        >
+          {children}
+        </div>
+      )}
+    </div>
+  );
+};
+
+// ————————————————————————————————————————————————————————————
+// Main Color Picker with Label
+// ————————————————————————————————————————————————————————————
+const MainColorPicker = ({ label, sublabel, color, onChange }) => {
+  const inputRef = useRef(null);
+  return (
+    <div
+      style={{
+        display: "flex",
+        flexDirection: "column",
+        alignItems: "center",
+        gap: 8,
+      }}
+    >
+      <div
+        onClick={() => inputRef.current?.click()}
+        style={{
+          width: 56,
+          height: 56,
+          borderRadius: 8,
+          backgroundColor: color,
+          cursor: "pointer",
+          position: "relative",
+          border: "2px solid #E1E3EA",
+        }}
+      >
+        <input
+          ref={inputRef}
+          type="color"
+          value={color}
+          onChange={onChange}
+          style={{
+            opacity: 0,
+            position: "absolute",
+            inset: 0,
+            cursor: "pointer",
+          }}
+        />
+      </div>
+      <div style={{ textAlign: "center" }}>
+        <div
+          style={{
+            fontFamily: "Open Sans, sans-serif",
+            fontSize: 10,
+            color: "#666666",
+          }}
+        >
+          {color?.toUpperCase()}
+        </div>
+        <div
+          style={{
+            fontFamily: "Open Sans, sans-serif",
+            fontSize: 11,
+            color: "#999999",
+          }}
+        >
+          {sublabel}
+        </div>
+      </div>
+    </div>
+  );
+};
+
+// ————————————————————————————————————————————————————————————
+// Compact Color Row for sections
+// ————————————————————————————————————————————————————————————
+const CompactColorRow = ({ label, value, onChange }) => {
+  const inputRef = useRef(null);
+  return (
+    <div
+      style={{
+        display: "flex",
+        justifyContent: "space-between",
+        alignItems: "center",
+      }}
+    >
+      <span
+        style={{
+          fontFamily: "Open Sans, sans-serif",
+          fontSize: 13,
+          color: "#333333",
+        }}
+      >
+        {label}
+      </span>
+      <div
+        onClick={() => inputRef.current?.click()}
+        style={{
+          width: 24,
+          height: 24,
+          borderRadius: 4,
+          backgroundColor: value || "#CCCCCC",
+          cursor: "pointer",
+          position: "relative",
+          border: "1px solid #E1E3EA",
+        }}
+      >
+        <input
+          ref={inputRef}
+          type="color"
+          value={value || "#CCCCCC"}
+          onChange={onChange}
+          style={{
+            opacity: 0,
+            position: "absolute",
+            inset: 0,
+            cursor: "pointer",
+          }}
+        />
+      </div>
+    </div>
+  );
+};
+
+// ————————————————————————————————————————————————————————————
+// Small Color Picker (for inline use)
+// ————————————————————————————————————————————————————————————
+const SmallColorPicker = ({ value, onChange }) => {
+  const inputRef = useRef(null);
+  return (
+    <div
+      onClick={() => inputRef.current?.click()}
+      style={{
+        width: 24,
+        height: 24,
+        borderRadius: 4,
+        backgroundColor: value || "#CCCCCC",
+        cursor: "pointer",
+        position: "relative",
+        border: "1px solid #E1E3EA",
+      }}
+    >
+      <input
+        ref={inputRef}
+        type="color"
+        value={value || "#CCCCCC"}
+        onChange={onChange}
+        style={{
+          opacity: 0,
+          position: "absolute",
+          inset: 0,
+          cursor: "pointer",
+        }}
+      />
+    </div>
+  );
+};
+
+// ————————————————————————————————————————————————————————————
+// Font Options for dropdowns
+// ————————————————————————————————————————————————————————————
+const TAB_FONT_OPTIONS = [
+  { name: "DM Sans", value: "DM Sans, sans-serif" },
+  { name: "Open Sans", value: "Open Sans, sans-serif" },
+  { name: "Georgia", value: "Georgia, serif" },
+  { name: "Merriweather", value: "Merriweather, serif" },
+];
+
+const TAB_FONT_SIZES = ["10", "11", "12", "13", "14", "16", "18"];
+
+// ————————————————————————————————————————————————————————————
+// Tab Section Content Component
+// ————————————————————————————————————————————————————————————
+const TabSectionContent = ({
+  colors,
+  onColorChange,
+  tabSettings,
+  onTabSettingsChange,
+  showTabIcons,
+  onToggleTabIcons,
+  t,
+}) => {
+  const [activeTabFontOpen, setActiveTabFontOpen] = useState(false);
+  const [activeTabSizeOpen, setActiveTabSizeOpen] = useState(false);
+  const [inactiveTabFontOpen, setInactiveTabFontOpen] = useState(false);
+  const [inactiveTabSizeOpen, setInactiveTabSizeOpen] = useState(false);
+
+  const dropdownStyle = {
+    position: "relative",
+    display: "flex",
+    alignItems: "center",
+    justifyContent: "space-between",
+    padding: "8px 12px",
+    border: "1px solid #E1E3EA",
+    borderRadius: 4,
+    backgroundColor: "#FFFFFF",
+    cursor: "pointer",
+    fontSize: 13,
+    fontFamily: "Open Sans, sans-serif",
+    color: "#333333",
+  };
+
+  const dropdownMenuStyle = {
+    position: "absolute",
+    top: "100%",
+    left: 0,
+    right: 0,
+    backgroundColor: "#FFFFFF",
+    border: "1px solid #E1E3EA",
+    borderRadius: 4,
+    marginTop: 4,
+    zIndex: 100,
+    maxHeight: 150,
+    overflowY: "auto",
+    boxShadow: "0 4px 6px rgba(0,0,0,0.1)",
+  };
+
+  const dropdownItemStyle = {
+    padding: "8px 12px",
+    cursor: "pointer",
+    fontSize: 13,
+    fontFamily: "Open Sans, sans-serif",
+    borderBottom: "1px solid #F0F0F0",
+  };
+
+  return (
+    <div style={{ display: "flex", flexDirection: "column", gap: 16 }}>
+      <div>
+        <div
+          style={{
+            display: "flex",
+            justifyContent: "space-between",
+            alignItems: "center",
+            marginBottom: 8,
+          }}
+        >
+          <span
+            style={{
+              fontFamily: "Open Sans, sans-serif",
+              fontSize: 13,
+              color: "#333333",
+            }}
+          >
+            {t("activeTabContainer")}
+          </span>
+          <div style={{ display: "flex", alignItems: "center", gap: 8 }}>
+            <span
+              style={{
+                fontFamily: "Open Sans, sans-serif",
+                fontSize: 10,
+                color: "#999999",
+              }}
+            >
+              {t("border")}
+            </span>
+            <SmallColorPicker
+              value={colors.activeTabBorder || "#C4B5FD"}
+              onChange={(e) => onColorChange("activeTabBorder", e.target.value)}
+            />
+            <span
+              style={{
+                fontFamily: "Open Sans, sans-serif",
+                fontSize: 10,
+                color: "#999999",
+              }}
+            >
+              {t("fill")}
+            </span>
+            <SmallColorPicker
+              value={colors.activeTabFill || "#4459F3"}
+              onChange={(e) => onColorChange("activeTabFill", e.target.value)}
+            />
+          </div>
+        </div>
+      </div>
+
+      <div
+        style={{
+          display: "flex",
+          justifyContent: "space-between",
+          alignItems: "center",
+        }}
+      >
+        <span
+          style={{
+            fontFamily: "Open Sans, sans-serif",
+            fontSize: 13,
+            color: "#333333",
+          }}
+        >
+          {t("activeTabText")}
+        </span>
+        <SmallColorPicker
+          value={colors.activeTabText || "#333333"}
+          onChange={(e) => onColorChange("activeTabText", e.target.value)}
+        />
+      </div>
+
+      <div style={{ display: "flex", gap: 8 }}>
+        <div style={{ flex: 1, position: "relative" }}>
+          <div
+            style={dropdownStyle}
+            onClick={() => setActiveTabFontOpen(!activeTabFontOpen)}
+          >
+            <span>{tabSettings.activeTabFont || "DM Sans"}</span>
+            <svg width="12" height="12" viewBox="0 0 12 12" fill="none">
+              <path
+                d="M3 4.5L6 7.5L9 4.5"
+                stroke="#666666"
+                strokeWidth="1.5"
+                strokeLinecap="round"
+                strokeLinejoin="round"
+              />
+            </svg>
+          </div>
+          {activeTabFontOpen && (
+            <div style={dropdownMenuStyle}>
+              {TAB_FONT_OPTIONS.map((font) => (
+                <div
+                  key={font.value}
+                  style={{
+                    ...dropdownItemStyle,
+                    backgroundColor:
+                      tabSettings.activeTabFont === font.name
+                        ? "#F5F5F5"
+                        : "#FFFFFF",
+                  }}
+                  onClick={() => {
+                    onTabSettingsChange("activeTabFont", font.name);
+                    setActiveTabFontOpen(false);
+                  }}
+                >
+                  {font.name}
+                </div>
+              ))}
+            </div>
+          )}
+        </div>
+        <div style={{ width: 70, position: "relative" }}>
+          <div
+            style={dropdownStyle}
+            onClick={() => setActiveTabSizeOpen(!activeTabSizeOpen)}
+          >
+            <span>{tabSettings.activeTabSize || "12"}</span>
+            <svg width="12" height="12" viewBox="0 0 12 12" fill="none">
+              <path
+                d="M3 4.5L6 7.5L9 4.5"
+                stroke="#666666"
+                strokeWidth="1.5"
+                strokeLinecap="round"
+                strokeLinejoin="round"
+              />
+            </svg>
+          </div>
+          {activeTabSizeOpen && (
+            <div style={dropdownMenuStyle}>
+              {TAB_FONT_SIZES.map((size) => (
+                <div
+                  key={size}
+                  style={{
+                    ...dropdownItemStyle,
+                    backgroundColor:
+                      tabSettings.activeTabSize === size
+                        ? "#F5F5F5"
+                        : "#FFFFFF",
+                  }}
+                  onClick={() => {
+                    onTabSettingsChange("activeTabSize", size);
+                    setActiveTabSizeOpen(false);
+                  }}
+                >
+                  {size}
+                </div>
+              ))}
+            </div>
+          )}
+        </div>
+      </div>
+
+      <div
+        style={{
+          display: "flex",
+          justifyContent: "space-between",
+          alignItems: "center",
+        }}
+      >
+        <span
+          style={{
+            fontFamily: "Open Sans, sans-serif",
+            fontSize: 13,
+            color: "#333333",
+          }}
+        >
+          {t("inactiveTabText")}
+        </span>
+        <SmallColorPicker
+          value={colors.inactiveTabText || "#999999"}
+          onChange={(e) => onColorChange("inactiveTabText", e.target.value)}
+        />
+      </div>
+
+      <div style={{ display: "flex", gap: 8 }}>
+        <div style={{ flex: 1, position: "relative" }}>
+          <div
+            style={dropdownStyle}
+            onClick={() => setInactiveTabFontOpen(!inactiveTabFontOpen)}
+          >
+            <span>{tabSettings.inactiveTabFont || "DM Sans"}</span>
+            <svg width="12" height="12" viewBox="0 0 12 12" fill="none">
+              <path
+                d="M3 4.5L6 7.5L9 4.5"
+                stroke="#666666"
+                strokeWidth="1.5"
+                strokeLinecap="round"
+                strokeLinejoin="round"
+              />
+            </svg>
+          </div>
+          {inactiveTabFontOpen && (
+            <div style={dropdownMenuStyle}>
+              {TAB_FONT_OPTIONS.map((font) => (
+                <div
+                  key={font.value}
+                  style={{
+                    ...dropdownItemStyle,
+                    backgroundColor:
+                      tabSettings.inactiveTabFont === font.name
+                        ? "#F5F5F5"
+                        : "#FFFFFF",
+                  }}
+                  onClick={() => {
+                    onTabSettingsChange("inactiveTabFont", font.name);
+                    setInactiveTabFontOpen(false);
+                  }}
+                >
+                  {font.name}
+                </div>
+              ))}
+            </div>
+          )}
+        </div>
+        <div style={{ width: 70, position: "relative" }}>
+          <div
+            style={dropdownStyle}
+            onClick={() => setInactiveTabSizeOpen(!inactiveTabSizeOpen)}
+          >
+            <span>{tabSettings.inactiveTabSize || "12"}</span>
+            <svg width="12" height="12" viewBox="0 0 12 12" fill="none">
+              <path
+                d="M3 4.5L6 7.5L9 4.5"
+                stroke="#666666"
+                strokeWidth="1.5"
+                strokeLinecap="round"
+                strokeLinejoin="round"
+              />
+            </svg>
+          </div>
+          {inactiveTabSizeOpen && (
+            <div style={dropdownMenuStyle}>
+              {TAB_FONT_SIZES.map((size) => (
+                <div
+                  key={size}
+                  style={{
+                    ...dropdownItemStyle,
+                    backgroundColor:
+                      tabSettings.inactiveTabSize === size
+                        ? "#F5F5F5"
+                        : "#FFFFFF",
+                  }}
+                  onClick={() => {
+                    onTabSettingsChange("inactiveTabSize", size);
+                    setInactiveTabSizeOpen(false);
+                  }}
+                >
+                  {size}
+                </div>
+              ))}
+            </div>
+          )}
+        </div>
+      </div>
+
+      <div
+        style={{
+          display: "flex",
+          justifyContent: "space-between",
+          alignItems: "center",
+        }}
+      >
+        <span
+          style={{
+            fontFamily: "Open Sans, sans-serif",
+            fontSize: 13,
+            color: "#333333",
+          }}
+        >
+          {t("showTabIcon")}
+        </span>
+        <div
+          onClick={onToggleTabIcons}
+          style={{
+            width: 18,
+            height: 18,
+            border: "1px solid #E1E3EA",
+            borderRadius: 2,
+            backgroundColor: showTabIcons ? "#FFFFFF" : "#FFFFFF",
+            cursor: "pointer",
+            display: "flex",
+            alignItems: "center",
+            justifyContent: "center",
+          }}
+        >
+          {showTabIcons && (
+            <svg width="12" height="12" viewBox="0 0 12 12" fill="none">
+              <path
+                d="M10 3L4.5 8.5L2 6"
+                stroke="#333333"
+                strokeWidth="1.5"
+                strokeLinecap="round"
+                strokeLinejoin="round"
+              />
+            </svg>
+          )}
+        </div>
+      </div>
+    </div>
+  );
+};
+
+// ————————————————————————————————————————————————————————————
+// Disabled/Empty Color Picker (shows diagonal lines)
+// ————————————————————————————————————————————————————————————
+const DisabledColorPicker = () => {
+  return (
+    <div
+      style={{
+        width: 24,
+        height: 24,
+        borderRadius: 4,
+        backgroundColor: "#FFFFFF",
+        border: "1px solid #E1E3EA",
+        position: "relative",
+        overflow: "hidden",
+      }}
+    >
+      <svg
+        width="24"
+        height="24"
+        viewBox="0 0 24 24"
+        fill="none"
+        style={{ position: "absolute", top: 0, left: 0 }}
+      >
+        <line x1="0" y1="24" x2="24" y2="0" stroke="#E1E3EA" strokeWidth="1" />
+        <line x1="0" y1="12" x2="12" y2="0" stroke="#E1E3EA" strokeWidth="1" />
+        <line
+          x1="12"
+          y1="24"
+          x2="24"
+          y2="12"
+          stroke="#E1E3EA"
+          strokeWidth="1"
+        />
+      </svg>
+    </div>
+  );
+};
+
+// ————————————————————————————————————————————————————————————
+// Buttons Section Content Component
+// ————————————————————————————————————————————————————————————
+const ButtonsSectionContent = ({
+  colors,
+  onColorChange,
+  buttonSettings,
+  onButtonSettingsChange,
+  t,
+}) => {
+  const [primaryFontOpen, setPrimaryFontOpen] = useState(false);
+  const [primarySizeOpen, setPrimarySizeOpen] = useState(false);
+  const [secondaryFontOpen, setSecondaryFontOpen] = useState(false);
+  const [secondarySizeOpen, setSecondarySizeOpen] = useState(false);
+  const [tertiaryFontOpen, setTertiaryFontOpen] = useState(false);
+  const [tertiarySizeOpen, setTertiarySizeOpen] = useState(false);
+
+  const dropdownStyle = {
+    position: "relative",
+    display: "flex",
+    alignItems: "center",
+    justifyContent: "space-between",
+    padding: "8px 12px",
+    border: "1px solid #E1E3EA",
+    borderRadius: 4,
+    backgroundColor: "#FFFFFF",
+    cursor: "pointer",
+    fontSize: 13,
+    fontFamily: "Open Sans, sans-serif",
+    color: "#333333",
+  };
+
+  const dropdownMenuStyle = {
+    position: "absolute",
+    top: "100%",
+    left: 0,
+    right: 0,
+    backgroundColor: "#FFFFFF",
+    border: "1px solid #E1E3EA",
+    borderRadius: 4,
+    marginTop: 4,
+    zIndex: 100,
+    maxHeight: 150,
+    overflowY: "auto",
+    boxShadow: "0 4px 6px rgba(0,0,0,0.1)",
+  };
+
+  const dropdownItemStyle = {
+    padding: "8px 12px",
+    cursor: "pointer",
+    fontSize: 13,
+    fontFamily: "Open Sans, sans-serif",
+    borderBottom: "1px solid #F0F0F0",
+  };
+
+  return (
+    <div style={{ display: "flex", flexDirection: "column", gap: 16 }}>
+      <div>
+        <div
+          style={{
+            display: "flex",
+            justifyContent: "space-between",
+            alignItems: "center",
+          }}
+        >
+          <span
+            style={{
+              fontFamily: "Open Sans, sans-serif",
+              fontSize: 13,
+              color: "#333333",
+            }}
+          >
+            {t("primaryButton")}
+          </span>
+          <div style={{ display: "flex", alignItems: "center", gap: 8 }}>
+            <span
+              style={{
+                fontFamily: "Open Sans, sans-serif",
+                fontSize: 10,
+                color: "#999999",
+              }}
+            >
+              {t("border")}
+            </span>
+            <SmallColorPicker
+              value={colors.primaryButtonBorder || "#C4B5FD"}
+              onChange={(e) =>
+                onColorChange("primaryButtonBorder", e.target.value)
+              }
+            />
+            <span
+              style={{
+                fontFamily: "Open Sans, sans-serif",
+                fontSize: 10,
+                color: "#999999",
+              }}
+            >
+              {t("fill")}
+            </span>
+            <SmallColorPicker
+              value={colors.primaryButtonFill || "#4459F3"}
+              onChange={(e) =>
+                onColorChange("primaryButtonFill", e.target.value)
+              }
+            />
+          </div>
+        </div>
+      </div>
+
+      <div
+        style={{
+          display: "flex",
+          justifyContent: "space-between",
+          alignItems: "center",
+        }}
+      >
+        <span
+          style={{
+            fontFamily: "Open Sans, sans-serif",
+            fontSize: 13,
+            color: "#333333",
+          }}
+        >
+          {t("primaryButtonText")}
+        </span>
+        <SmallColorPicker
+          value={colors.primaryButtonColor || "#333333"}
+          onChange={(e) => onColorChange("primaryButtonColor", e.target.value)}
+        />
+      </div>
+
+      <div style={{ display: "flex", gap: 8 }}>
+        <div style={{ flex: 1, position: "relative" }}>
+          <div
+            style={dropdownStyle}
+            onClick={() => setPrimaryFontOpen(!primaryFontOpen)}
+          >
+            <span>{buttonSettings.primaryFont || "DM Sans"}</span>
+            <svg width="12" height="12" viewBox="0 0 12 12" fill="none">
+              <path
+                d="M3 4.5L6 7.5L9 4.5"
+                stroke="#666666"
+                strokeWidth="1.5"
+                strokeLinecap="round"
+                strokeLinejoin="round"
+              />
+            </svg>
+          </div>
+          {primaryFontOpen && (
+            <div style={dropdownMenuStyle}>
+              {TAB_FONT_OPTIONS.map((font) => (
+                <div
+                  key={font.value}
+                  style={{
+                    ...dropdownItemStyle,
+                    backgroundColor:
+                      buttonSettings.primaryFont === font.name
+                        ? "#F5F5F5"
+                        : "#FFFFFF",
+                  }}
+                  onClick={() => {
+                    onButtonSettingsChange("primaryFont", font.name);
+                    setPrimaryFontOpen(false);
+                  }}
+                >
+                  {font.name}
+                </div>
+              ))}
+            </div>
+          )}
+        </div>
+        <div style={{ width: 70, position: "relative" }}>
+          <div
+            style={dropdownStyle}
+            onClick={() => setPrimarySizeOpen(!primarySizeOpen)}
+          >
+            <span>{buttonSettings.primarySize || "12"}</span>
+            <svg width="12" height="12" viewBox="0 0 12 12" fill="none">
+              <path
+                d="M3 4.5L6 7.5L9 4.5"
+                stroke="#666666"
+                strokeWidth="1.5"
+                strokeLinecap="round"
+                strokeLinejoin="round"
+              />
+            </svg>
+          </div>
+          {primarySizeOpen && (
+            <div style={dropdownMenuStyle}>
+              {TAB_FONT_SIZES.map((size) => (
+                <div
+                  key={size}
+                  style={{
+                    ...dropdownItemStyle,
+                    backgroundColor:
+                      buttonSettings.primarySize === size
+                        ? "#F5F5F5"
+                        : "#FFFFFF",
+                  }}
+                  onClick={() => {
+                    onButtonSettingsChange("primarySize", size);
+                    setPrimarySizeOpen(false);
+                  }}
+                >
+                  {size}
+                </div>
+              ))}
+            </div>
+          )}
+        </div>
+      </div>
+
+      <div>
+        <div
+          style={{
+            display: "flex",
+            justifyContent: "space-between",
+            alignItems: "center",
+          }}
+        >
+          <span
+            style={{
+              fontFamily: "Open Sans, sans-serif",
+              fontSize: 13,
+              color: "#333333",
+            }}
+          >
+            {t("secondaryButton")}
+          </span>
+          <div style={{ display: "flex", alignItems: "center", gap: 8 }}>
+            <span
+              style={{
+                fontFamily: "Open Sans, sans-serif",
+                fontSize: 10,
+                color: "#999999",
+              }}
+            >
+              {t("border")}
+            </span>
+            <SmallColorPicker
+              value={colors.secondaryButtonBorder || "#C4B5FD"}
+              onChange={(e) =>
+                onColorChange("secondaryButtonBorder", e.target.value)
+              }
+            />
+            <span
+              style={{
+                fontFamily: "Open Sans, sans-serif",
+                fontSize: 10,
+                color: "#999999",
+              }}
+            >
+              {t("fill")}
+            </span>
+            <SmallColorPicker
+              value={colors.secondaryButtonFill || "#4459F3"}
+              onChange={(e) =>
+                onColorChange("secondaryButtonFill", e.target.value)
+              }
+            />
+          </div>
+        </div>
+      </div>
+
+      <div
+        style={{
+          display: "flex",
+          justifyContent: "space-between",
+          alignItems: "center",
+        }}
+      >
+        <span
+          style={{
+            fontFamily: "Open Sans, sans-serif",
+            fontSize: 13,
+            color: "#333333",
+          }}
+        >
+          {t("secondaryButtonText")}
+        </span>
+        <SmallColorPicker
+          value={colors.secondaryButtonColor || "#333333"}
+          onChange={(e) =>
+            onColorChange("secondaryButtonColor", e.target.value)
+          }
+        />
+      </div>
+
+      <div style={{ display: "flex", gap: 8 }}>
+        <div style={{ flex: 1, position: "relative" }}>
+          <div
+            style={dropdownStyle}
+            onClick={() => setSecondaryFontOpen(!secondaryFontOpen)}
+          >
+            <span>{buttonSettings.secondaryFont || "DM Sans"}</span>
+            <svg width="12" height="12" viewBox="0 0 12 12" fill="none">
+              <path
+                d="M3 4.5L6 7.5L9 4.5"
+                stroke="#666666"
+                strokeWidth="1.5"
+                strokeLinecap="round"
+                strokeLinejoin="round"
+              />
+            </svg>
+          </div>
+          {secondaryFontOpen && (
+            <div style={dropdownMenuStyle}>
+              {TAB_FONT_OPTIONS.map((font) => (
+                <div
+                  key={font.value}
+                  style={{
+                    ...dropdownItemStyle,
+                    backgroundColor:
+                      buttonSettings.secondaryFont === font.name
+                        ? "#F5F5F5"
+                        : "#FFFFFF",
+                  }}
+                  onClick={() => {
+                    onButtonSettingsChange("secondaryFont", font.name);
+                    setSecondaryFontOpen(false);
+                  }}
+                >
+                  {font.name}
+                </div>
+              ))}
+            </div>
+          )}
+        </div>
+        <div style={{ width: 70, position: "relative" }}>
+          <div
+            style={dropdownStyle}
+            onClick={() => setSecondarySizeOpen(!secondarySizeOpen)}
+          >
+            <span>{buttonSettings.secondarySize || "12"}</span>
+            <svg width="12" height="12" viewBox="0 0 12 12" fill="none">
+              <path
+                d="M3 4.5L6 7.5L9 4.5"
+                stroke="#666666"
+                strokeWidth="1.5"
+                strokeLinecap="round"
+                strokeLinejoin="round"
+              />
+            </svg>
+          </div>
+          {secondarySizeOpen && (
+            <div style={dropdownMenuStyle}>
+              {TAB_FONT_SIZES.map((size) => (
+                <div
+                  key={size}
+                  style={{
+                    ...dropdownItemStyle,
+                    backgroundColor:
+                      buttonSettings.secondarySize === size
+                        ? "#F5F5F5"
+                        : "#FFFFFF",
+                  }}
+                  onClick={() => {
+                    onButtonSettingsChange("secondarySize", size);
+                    setSecondarySizeOpen(false);
+                  }}
+                >
+                  {size}
+                </div>
+              ))}
+            </div>
+          )}
+        </div>
+      </div>
+
+      <div>
+        <div
+          style={{
+            display: "flex",
+            justifyContent: "space-between",
+            alignItems: "center",
+          }}
+        >
+          <span
+            style={{
+              fontFamily: "Open Sans, sans-serif",
+              fontSize: 13,
+              color: "#333333",
+            }}
+          >
+            {t("tertiaryButton")}
+          </span>
+          <div style={{ display: "flex", alignItems: "center", gap: 8 }}>
+            <span
+              style={{
+                fontFamily: "Open Sans, sans-serif",
+                fontSize: 10,
+                color: "#999999",
+              }}
+            >
+              {t("border")}
+            </span>
+            <DisabledColorPicker />
+            <span
+              style={{
+                fontFamily: "Open Sans, sans-serif",
+                fontSize: 10,
+                color: "#999999",
+              }}
+            >
+              {t("fill")}
+            </span>
+            <DisabledColorPicker />
+          </div>
+        </div>
+      </div>
+
+      <div
+        style={{
+          display: "flex",
+          justifyContent: "space-between",
+          alignItems: "center",
+        }}
+      >
+        <span
+          style={{
+            fontFamily: "Open Sans, sans-serif",
+            fontSize: 13,
+            color: "#333333",
+          }}
+        >
+          {t("secondaryButtonText")}
+        </span>
+        <SmallColorPicker
+          value={colors.tertiaryButtonColor || "#333333"}
+          onChange={(e) => onColorChange("tertiaryButtonColor", e.target.value)}
+        />
+      </div>
+
+      <div style={{ display: "flex", gap: 8 }}>
+        <div style={{ flex: 1, position: "relative" }}>
+          <div
+            style={dropdownStyle}
+            onClick={() => setTertiaryFontOpen(!tertiaryFontOpen)}
+          >
+            <span>{buttonSettings.tertiaryFont || "DM Sans"}</span>
+            <svg width="12" height="12" viewBox="0 0 12 12" fill="none">
+              <path
+                d="M3 4.5L6 7.5L9 4.5"
+                stroke="#666666"
+                strokeWidth="1.5"
+                strokeLinecap="round"
+                strokeLinejoin="round"
+              />
+            </svg>
+          </div>
+          {tertiaryFontOpen && (
+            <div style={dropdownMenuStyle}>
+              {TAB_FONT_OPTIONS.map((font) => (
+                <div
+                  key={font.value}
+                  style={{
+                    ...dropdownItemStyle,
+                    backgroundColor:
+                      buttonSettings.tertiaryFont === font.name
+                        ? "#F5F5F5"
+                        : "#FFFFFF",
+                  }}
+                  onClick={() => {
+                    onButtonSettingsChange("tertiaryFont", font.name);
+                    setTertiaryFontOpen(false);
+                  }}
+                >
+                  {font.name}
+                </div>
+              ))}
+            </div>
+          )}
+        </div>
+        <div style={{ width: 70, position: "relative" }}>
+          <div
+            style={dropdownStyle}
+            onClick={() => setTertiarySizeOpen(!tertiarySizeOpen)}
+          >
+            <span>{buttonSettings.tertiarySize || "12"}</span>
+            <svg width="12" height="12" viewBox="0 0 12 12" fill="none">
+              <path
+                d="M3 4.5L6 7.5L9 4.5"
+                stroke="#666666"
+                strokeWidth="1.5"
+                strokeLinecap="round"
+                strokeLinejoin="round"
+              />
+            </svg>
+          </div>
+          {tertiarySizeOpen && (
+            <div style={dropdownMenuStyle}>
+              {TAB_FONT_SIZES.map((size) => (
+                <div
+                  key={size}
+                  style={{
+                    ...dropdownItemStyle,
+                    backgroundColor:
+                      buttonSettings.tertiarySize === size
+                        ? "#F5F5F5"
+                        : "#FFFFFF",
+                  }}
+                  onClick={() => {
+                    onButtonSettingsChange("tertiarySize", size);
+                    setTertiarySizeOpen(false);
+                  }}
+                >
+                  {size}
+                </div>
+              ))}
+            </div>
+          )}
+        </div>
+      </div>
+    </div>
+  );
+};
+
+// ————————————————————————————————————————————————————————————
+// Scripture Text Section Content Component
+// ————————————————————————————————————————————————————————————
+const ScriptureTextSectionContent = ({
+  colors,
+  onColorChange,
+  scriptureSettings,
+  onScriptureSettingsChange,
+  showVerseNumbers,
+  onToggleVerseNumbers,
+  t,
+}) => {
+  const [bookHeadingFontOpen, setBookHeadingFontOpen] = useState(false);
+  const [bookHeadingSizeOpen, setBookHeadingSizeOpen] = useState(false);
+  const [chapterHeadingFontOpen, setChapterHeadingFontOpen] = useState(false);
+  const [chapterHeadingSizeOpen, setChapterHeadingSizeOpen] = useState(false);
+  const [verseTextFontOpen, setVerseTextFontOpen] = useState(false);
+  const [verseTextSizeOpen, setVerseTextSizeOpen] = useState(false);
+  const [verseNumberFontOpen, setVerseNumberFontOpen] = useState(false);
+  const [verseNumberSizeOpen, setVerseNumberSizeOpen] = useState(false);
+
+  const dropdownStyle = {
+    position: "relative",
+    display: "flex",
+    alignItems: "center",
+    justifyContent: "space-between",
+    padding: "8px 12px",
+    border: "1px solid #E1E3EA",
+    borderRadius: 4,
+    backgroundColor: "#FFFFFF",
+    cursor: "pointer",
+    fontSize: 13,
+    fontFamily: "Open Sans, sans-serif",
+    color: "#333333",
+  };
+
+  const dropdownMenuStyle = {
+    position: "absolute",
+    top: "100%",
+    left: 0,
+    right: 0,
+    backgroundColor: "#FFFFFF",
+    border: "1px solid #E1E3EA",
+    borderRadius: 4,
+    marginTop: 4,
+    zIndex: 100,
+    maxHeight: 150,
+    overflowY: "auto",
+    boxShadow: "0 4px 6px rgba(0,0,0,0.1)",
+  };
+
+  const dropdownItemStyle = {
+    padding: "8px 12px",
+    cursor: "pointer",
+    fontSize: 13,
+    fontFamily: "Open Sans, sans-serif",
+    borderBottom: "1px solid #F0F0F0",
+  };
+
+  return (
+    <div style={{ display: "flex", flexDirection: "column", gap: 16 }}>
+      <div
+        style={{
+          display: "flex",
+          justifyContent: "space-between",
+          alignItems: "center",
+        }}
+      >
+        <span
+          style={{
+            fontFamily: "Open Sans, sans-serif",
+            fontSize: 13,
+            color: "#333333",
+          }}
+        >
+          {t("bookHeading")}
+        </span>
+        <SmallColorPicker
+          value={colors.bookHeadingColor || "#333333"}
+          onChange={(e) => onColorChange("bookHeadingColor", e.target.value)}
+        />
+      </div>
+
+      <div style={{ display: "flex", gap: 8 }}>
+        <div style={{ flex: 1, position: "relative" }}>
+          <div
+            style={dropdownStyle}
+            onClick={() => setBookHeadingFontOpen(!bookHeadingFontOpen)}
+          >
+            <span>{scriptureSettings.bookHeadingFont || "DM Sans"}</span>
+            <svg width="12" height="12" viewBox="0 0 12 12" fill="none">
+              <path
+                d="M3 4.5L6 7.5L9 4.5"
+                stroke="#666666"
+                strokeWidth="1.5"
+                strokeLinecap="round"
+                strokeLinejoin="round"
+              />
+            </svg>
+          </div>
+          {bookHeadingFontOpen && (
+            <div style={dropdownMenuStyle}>
+              {TAB_FONT_OPTIONS.map((font) => (
+                <div
+                  key={font.value}
+                  style={{
+                    ...dropdownItemStyle,
+                    backgroundColor:
+                      scriptureSettings.bookHeadingFont === font.name
+                        ? "#F5F5F5"
+                        : "#FFFFFF",
+                  }}
+                  onClick={() => {
+                    onScriptureSettingsChange("bookHeadingFont", font.name);
+                    setBookHeadingFontOpen(false);
+                  }}
+                >
+                  {font.name}
+                </div>
+              ))}
+            </div>
+          )}
+        </div>
+        <div style={{ width: 70, position: "relative" }}>
+          <div
+            style={dropdownStyle}
+            onClick={() => setBookHeadingSizeOpen(!bookHeadingSizeOpen)}
+          >
+            <span>{scriptureSettings.bookHeadingSize || "12"}</span>
+            <svg width="12" height="12" viewBox="0 0 12 12" fill="none">
+              <path
+                d="M3 4.5L6 7.5L9 4.5"
+                stroke="#666666"
+                strokeWidth="1.5"
+                strokeLinecap="round"
+                strokeLinejoin="round"
+              />
+            </svg>
+          </div>
+          {bookHeadingSizeOpen && (
+            <div style={dropdownMenuStyle}>
+              {TAB_FONT_SIZES.map((size) => (
+                <div
+                  key={size}
+                  style={{
+                    ...dropdownItemStyle,
+                    backgroundColor:
+                      scriptureSettings.bookHeadingSize === size
+                        ? "#F5F5F5"
+                        : "#FFFFFF",
+                  }}
+                  onClick={() => {
+                    onScriptureSettingsChange("bookHeadingSize", size);
+                    setBookHeadingSizeOpen(false);
+                  }}
+                >
+                  {size}
+                </div>
+              ))}
+            </div>
+          )}
+        </div>
+      </div>
+
+      <div
+        style={{
+          display: "flex",
+          justifyContent: "space-between",
+          alignItems: "center",
+        }}
+      >
+        <span
+          style={{
+            fontFamily: "Open Sans, sans-serif",
+            fontSize: 13,
+            color: "#333333",
+          }}
+        >
+          {t("chapterHeading")}
+        </span>
+        <SmallColorPicker
+          value={colors.chapterHeadingColor || "#333333"}
+          onChange={(e) => onColorChange("chapterHeadingColor", e.target.value)}
+        />
+      </div>
+
+      <div style={{ display: "flex", gap: 8 }}>
+        <div style={{ flex: 1, position: "relative" }}>
+          <div
+            style={dropdownStyle}
+            onClick={() => setChapterHeadingFontOpen(!chapterHeadingFontOpen)}
+          >
+            <span>{scriptureSettings.chapterHeadingFont || "DM Sans"}</span>
+            <svg width="12" height="12" viewBox="0 0 12 12" fill="none">
+              <path
+                d="M3 4.5L6 7.5L9 4.5"
+                stroke="#666666"
+                strokeWidth="1.5"
+                strokeLinecap="round"
+                strokeLinejoin="round"
+              />
+            </svg>
+          </div>
+          {chapterHeadingFontOpen && (
+            <div style={dropdownMenuStyle}>
+              {TAB_FONT_OPTIONS.map((font) => (
+                <div
+                  key={font.value}
+                  style={{
+                    ...dropdownItemStyle,
+                    backgroundColor:
+                      scriptureSettings.chapterHeadingFont === font.name
+                        ? "#F5F5F5"
+                        : "#FFFFFF",
+                  }}
+                  onClick={() => {
+                    onScriptureSettingsChange("chapterHeadingFont", font.name);
+                    setChapterHeadingFontOpen(false);
+                  }}
+                >
+                  {font.name}
+                </div>
+              ))}
+            </div>
+          )}
+        </div>
+        <div style={{ width: 70, position: "relative" }}>
+          <div
+            style={dropdownStyle}
+            onClick={() => setChapterHeadingSizeOpen(!chapterHeadingSizeOpen)}
+          >
+            <span>{scriptureSettings.chapterHeadingSize || "12"}</span>
+            <svg width="12" height="12" viewBox="0 0 12 12" fill="none">
+              <path
+                d="M3 4.5L6 7.5L9 4.5"
+                stroke="#666666"
+                strokeWidth="1.5"
+                strokeLinecap="round"
+                strokeLinejoin="round"
+              />
+            </svg>
+          </div>
+          {chapterHeadingSizeOpen && (
+            <div style={dropdownMenuStyle}>
+              {TAB_FONT_SIZES.map((size) => (
+                <div
+                  key={size}
+                  style={{
+                    ...dropdownItemStyle,
+                    backgroundColor:
+                      scriptureSettings.chapterHeadingSize === size
+                        ? "#F5F5F5"
+                        : "#FFFFFF",
+                  }}
+                  onClick={() => {
+                    onScriptureSettingsChange("chapterHeadingSize", size);
+                    setChapterHeadingSizeOpen(false);
+                  }}
+                >
+                  {size}
+                </div>
+              ))}
+            </div>
+          )}
+        </div>
+      </div>
+
+      <div
+        style={{
+          display: "flex",
+          justifyContent: "space-between",
+          alignItems: "center",
+        }}
+      >
+        <span
+          style={{
+            fontFamily: "Open Sans, sans-serif",
+            fontSize: 13,
+            color: "#333333",
+          }}
+        >
+          {t("verseText")}
+        </span>
+        <SmallColorPicker
+          value={colors.verseTextColor || "#333333"}
+          onChange={(e) => onColorChange("verseTextColor", e.target.value)}
+        />
+      </div>
+
+      <div style={{ display: "flex", gap: 8 }}>
+        <div style={{ flex: 1, position: "relative" }}>
+          <div
+            style={dropdownStyle}
+            onClick={() => setVerseTextFontOpen(!verseTextFontOpen)}
+          >
+            <span>{scriptureSettings.verseTextFont || "DM Sans"}</span>
+            <svg width="12" height="12" viewBox="0 0 12 12" fill="none">
+              <path
+                d="M3 4.5L6 7.5L9 4.5"
+                stroke="#666666"
+                strokeWidth="1.5"
+                strokeLinecap="round"
+                strokeLinejoin="round"
+              />
+            </svg>
+          </div>
+          {verseTextFontOpen && (
+            <div style={dropdownMenuStyle}>
+              {TAB_FONT_OPTIONS.map((font) => (
+                <div
+                  key={font.value}
+                  style={{
+                    ...dropdownItemStyle,
+                    backgroundColor:
+                      scriptureSettings.verseTextFont === font.name
+                        ? "#F5F5F5"
+                        : "#FFFFFF",
+                  }}
+                  onClick={() => {
+                    onScriptureSettingsChange("verseTextFont", font.name);
+                    setVerseTextFontOpen(false);
+                  }}
+                >
+                  {font.name}
+                </div>
+              ))}
+            </div>
+          )}
+        </div>
+        <div style={{ width: 70, position: "relative" }}>
+          <div
+            style={dropdownStyle}
+            onClick={() => setVerseTextSizeOpen(!verseTextSizeOpen)}
+          >
+            <span>{scriptureSettings.verseTextSize || "12"}</span>
+            <svg width="12" height="12" viewBox="0 0 12 12" fill="none">
+              <path
+                d="M3 4.5L6 7.5L9 4.5"
+                stroke="#666666"
+                strokeWidth="1.5"
+                strokeLinecap="round"
+                strokeLinejoin="round"
+              />
+            </svg>
+          </div>
+          {verseTextSizeOpen && (
+            <div style={dropdownMenuStyle}>
+              {TAB_FONT_SIZES.map((size) => (
+                <div
+                  key={size}
+                  style={{
+                    ...dropdownItemStyle,
+                    backgroundColor:
+                      scriptureSettings.verseTextSize === size
+                        ? "#F5F5F5"
+                        : "#FFFFFF",
+                  }}
+                  onClick={() => {
+                    onScriptureSettingsChange("verseTextSize", size);
+                    setVerseTextSizeOpen(false);
+                  }}
+                >
+                  {size}
+                </div>
+              ))}
+            </div>
+          )}
+        </div>
+      </div>
+
+      <div
+        style={{
+          display: "flex",
+          justifyContent: "space-between",
+          alignItems: "center",
+        }}
+      >
+        <span
+          style={{
+            fontFamily: "Open Sans, sans-serif",
+            fontSize: 13,
+            color: "#333333",
+          }}
+        >
+          {t("verseNumber")}
+        </span>
+        <div style={{ display: "flex", alignItems: "center", gap: 8 }}>
+          <div
+            onClick={onToggleVerseNumbers}
+            style={{
+              width: 36,
+              height: 20,
+              backgroundColor: showVerseNumbers ? "#4459F3" : "#CCCCCC",
+              borderRadius: 10,
+              cursor: "pointer",
+              position: "relative",
+              transition: "background-color 0.3s ease",
+            }}
+          >
+            <div
+              style={{
+                width: 16,
+                height: 16,
+                backgroundColor: "#FFFFFF",
+                borderRadius: "50%",
+                position: "absolute",
+                top: 2,
+                left: showVerseNumbers ? 18 : 2,
+                transition: "left 0.3s ease",
+                boxShadow: "0 1px 3px rgba(0, 0, 0, 0.3)",
+              }}
+            />
+          </div>
+          <SmallColorPicker
+            value={colors.verseNumberColor || "#333333"}
+            onChange={(e) => onColorChange("verseNumberColor", e.target.value)}
+          />
+        </div>
+      </div>
+
+      <div style={{ display: "flex", gap: 8 }}>
+        <div style={{ flex: 1, position: "relative" }}>
+          <div
+            style={dropdownStyle}
+            onClick={() => setVerseNumberFontOpen(!verseNumberFontOpen)}
+          >
+            <span>{scriptureSettings.verseNumberFont || "DM Sans"}</span>
+            <svg width="12" height="12" viewBox="0 0 12 12" fill="none">
+              <path
+                d="M3 4.5L6 7.5L9 4.5"
+                stroke="#666666"
+                strokeWidth="1.5"
+                strokeLinecap="round"
+                strokeLinejoin="round"
+              />
+            </svg>
+          </div>
+          {verseNumberFontOpen && (
+            <div style={dropdownMenuStyle}>
+              {TAB_FONT_OPTIONS.map((font) => (
+                <div
+                  key={font.value}
+                  style={{
+                    ...dropdownItemStyle,
+                    backgroundColor:
+                      scriptureSettings.verseNumberFont === font.name
+                        ? "#F5F5F5"
+                        : "#FFFFFF",
+                  }}
+                  onClick={() => {
+                    onScriptureSettingsChange("verseNumberFont", font.name);
+                    setVerseNumberFontOpen(false);
+                  }}
+                >
+                  {font.name}
+                </div>
+              ))}
+            </div>
+          )}
+        </div>
+        <div style={{ width: 70, position: "relative" }}>
+          <div
+            style={dropdownStyle}
+            onClick={() => setVerseNumberSizeOpen(!verseNumberSizeOpen)}
+          >
+            <span>{scriptureSettings.verseNumberSize || "12"}</span>
+            <svg width="12" height="12" viewBox="0 0 12 12" fill="none">
+              <path
+                d="M3 4.5L6 7.5L9 4.5"
+                stroke="#666666"
+                strokeWidth="1.5"
+                strokeLinecap="round"
+                strokeLinejoin="round"
+              />
+            </svg>
+          </div>
+          {verseNumberSizeOpen && (
+            <div style={dropdownMenuStyle}>
+              {TAB_FONT_SIZES.map((size) => (
+                <div
+                  key={size}
+                  style={{
+                    ...dropdownItemStyle,
+                    backgroundColor:
+                      scriptureSettings.verseNumberSize === size
+                        ? "#F5F5F5"
+                        : "#FFFFFF",
+                  }}
+                  onClick={() => {
+                    onScriptureSettingsChange("verseNumberSize", size);
+                    setVerseNumberSizeOpen(false);
+                  }}
+                >
+                  {size}
+                </div>
+              ))}
+            </div>
+          )}
+        </div>
+      </div>
+    </div>
+  );
+};
+
+// ————————————————————————————————————————————————————————————
+// Side Menu Section Content
+// ————————————————————————————————————————————————————————————
+const SideMenuSectionContent = ({
+  colors,
+  onColorChange,
+  sideMenuSettings,
+  onSideMenuSettingsChange,
+  profileAvatarMode,
+  onToggleProfileAvatarMode,
+  t,
+}) => {
+  // Dropdown states for each row
+  const [heading1FontOpen, setHeading1FontOpen] = useState(false);
+  const [heading1SizeOpen, setHeading1SizeOpen] = useState(false);
+  const [heading2FontOpen, setHeading2FontOpen] = useState(false);
+  const [heading2SizeOpen, setHeading2SizeOpen] = useState(false);
+  const [heading3FontOpen, setHeading3FontOpen] = useState(false);
+  const [heading3SizeOpen, setHeading3SizeOpen] = useState(false);
+  const [descriptionFontOpen, setDescriptionFontOpen] = useState(false);
+  const [descriptionSizeOpen, setDescriptionSizeOpen] = useState(false);
+  const [menuTextFontOpen, setMenuTextFontOpen] = useState(false);
+  const [menuTextSizeOpen, setMenuTextSizeOpen] = useState(false);
+  const [breadcrumbsFontOpen, setBreadcrumbsFontOpen] = useState(false);
+  const [breadcrumbsSizeOpen, setBreadcrumbsSizeOpen] = useState(false);
+  const [spaceNameFontOpen, setSpaceNameFontOpen] = useState(false);
+  const [spaceNameSizeOpen, setSpaceNameSizeOpen] = useState(false);
+  const [iconsSizeOpen, setIconsSizeOpen] = useState(false);
+
+  const dropdownStyle = {
+    position: "relative",
+    display: "flex",
+    alignItems: "center",
+    justifyContent: "space-between",
+    padding: "8px 12px",
+    border: "1px solid #E1E3EA",
+    borderRadius: 4,
+    backgroundColor: "#FFFFFF",
+    cursor: "pointer",
+    fontSize: 13,
+    fontFamily: "Open Sans, sans-serif",
+    color: "#333333",
+  };
+
+  const dropdownMenuStyle = {
+    position: "absolute",
+    top: "100%",
+    left: 0,
+    right: 0,
+    backgroundColor: "#FFFFFF",
+    border: "1px solid #E1E3EA",
+    borderRadius: 4,
+    marginTop: 4,
+    zIndex: 100,
+    maxHeight: 150,
+    overflowY: "auto",
+    boxShadow: "0 4px 6px rgba(0,0,0,0.1)",
+  };
+
+  const dropdownItemStyle = {
+    padding: "8px 12px",
+    cursor: "pointer",
+    fontSize: 13,
+    fontFamily: "Open Sans, sans-serif",
+    borderBottom: "1px solid #F0F0F0",
+  };
+
+  // Reusable row with font dropdown, size dropdown, and color picker
+  const renderRowWithDropdowns = (
+    label,
+    colorField,
+    fontField,
+    sizeField,
+    fontOpen,
+    setFontOpen,
+    sizeOpen,
+    setSizeOpen
+  ) => (
+    <>
+      <div
+        style={{
+          display: "flex",
+          justifyContent: "space-between",
+          alignItems: "center",
+        }}
+      >
+        <span
+          style={{
+            fontFamily: "Open Sans, sans-serif",
+            fontSize: 13,
+            color: "#333333",
+          }}
+        >
+          {label}
+        </span>
+        <SmallColorPicker
+          value={colors[colorField] || "#333333"}
+          onChange={(e) => onColorChange(colorField, e.target.value)}
+        />
+      </div>
+      <div style={{ display: "flex", gap: 8 }}>
+        <div style={{ flex: 1, position: "relative" }}>
+          <div style={dropdownStyle} onClick={() => setFontOpen(!fontOpen)}>
+            <span>{sideMenuSettings[fontField] || "DM Sans"}</span>
+            <svg width="12" height="12" viewBox="0 0 12 12" fill="none">
+              <path
+                d="M3 4.5L6 7.5L9 4.5"
+                stroke="#666666"
+                strokeWidth="1.5"
+                strokeLinecap="round"
+                strokeLinejoin="round"
+              />
+            </svg>
+          </div>
+          {fontOpen && (
+            <div style={dropdownMenuStyle}>
+              {TAB_FONT_OPTIONS.map((font) => (
+                <div
+                  key={font.value}
+                  style={{
+                    ...dropdownItemStyle,
+                    backgroundColor:
+                      sideMenuSettings[fontField] === font.name
+                        ? "#F5F5F5"
+                        : "#FFFFFF",
+                  }}
+                  onClick={() => {
+                    onSideMenuSettingsChange(fontField, font.name);
+                    setFontOpen(false);
+                  }}
+                >
+                  {font.name}
+                </div>
+              ))}
+            </div>
+          )}
+        </div>
+        <div style={{ width: 70, position: "relative" }}>
+          <div style={dropdownStyle} onClick={() => setSizeOpen(!sizeOpen)}>
+            <span>{sideMenuSettings[sizeField] || "12"}</span>
+            <svg width="12" height="12" viewBox="0 0 12 12" fill="none">
+              <path
+                d="M3 4.5L6 7.5L9 4.5"
+                stroke="#666666"
+                strokeWidth="1.5"
+                strokeLinecap="round"
+                strokeLinejoin="round"
+              />
+            </svg>
+          </div>
+          {sizeOpen && (
+            <div style={dropdownMenuStyle}>
+              {TAB_FONT_SIZES.map((size) => (
+                <div
+                  key={size}
+                  style={{
+                    ...dropdownItemStyle,
+                    backgroundColor:
+                      sideMenuSettings[sizeField] === size
+                        ? "#F5F5F5"
+                        : "#FFFFFF",
+                  }}
+                  onClick={() => {
+                    onSideMenuSettingsChange(sizeField, size);
+                    setSizeOpen(false);
+                  }}
+                >
+                  {size}
+                </div>
+              ))}
+            </div>
+          )}
+        </div>
+      </div>
+    </>
+  );
+
+  return (
+    <div style={{ display: "flex", flexDirection: "column", gap: 16 }}>
+      {renderRowWithDropdowns(
+        t("heading1"),
+        "heading1Color",
+        "heading1Font",
+        "heading1Size",
+        heading1FontOpen,
+        setHeading1FontOpen,
+        heading1SizeOpen,
+        setHeading1SizeOpen
+      )}
+
+      {renderRowWithDropdowns(
+        t("heading2"),
+        "heading2Color",
+        "heading2Font",
+        "heading2Size",
+        heading2FontOpen,
+        setHeading2FontOpen,
+        heading2SizeOpen,
+        setHeading2SizeOpen
+      )}
+
+      {renderRowWithDropdowns(
+        t("heading3"),
+        "heading3Color",
+        "heading3Font",
+        "heading3Size",
+        heading3FontOpen,
+        setHeading3FontOpen,
+        heading3SizeOpen,
+        setHeading3SizeOpen
+      )}
+
+      {renderRowWithDropdowns(
+        t("descriptionText"),
+        "descriptionTextColor",
+        "descriptionTextFont",
+        "descriptionTextSize",
+        descriptionFontOpen,
+        setDescriptionFontOpen,
+        descriptionSizeOpen,
+        setDescriptionSizeOpen
+      )}
+
+      {renderRowWithDropdowns(
+        t("menuText"),
+        "menuTextColor",
+        "menuTextFont",
+        "menuTextSize",
+        menuTextFontOpen,
+        setMenuTextFontOpen,
+        menuTextSizeOpen,
+        setMenuTextSizeOpen
+      )}
+
+      {renderRowWithDropdowns(
+        t("breadcrumbs"),
+        "breadcrumbsColor",
+        "breadcrumbsFont",
+        "breadcrumbsSize",
+        breadcrumbsFontOpen,
+        setBreadcrumbsFontOpen,
+        breadcrumbsSizeOpen,
+        setBreadcrumbsSizeOpen
+      )}
+
+      <div
+        style={{
+          display: "flex",
+          justifyContent: "space-between",
+          alignItems: "center",
+        }}
+      >
+        <span
+          style={{
+            fontFamily: "Open Sans, sans-serif",
+            fontSize: 13,
+            color: "#333333",
+          }}
+        >
+          {t("sectionBackground")}
+        </span>
+        <SmallColorPicker
+          value={colors.sectionBackground || "#E65100"}
+          onChange={(e) => onColorChange("sectionBackground", e.target.value)}
+        />
+      </div>
+
+      {renderRowWithDropdowns(
+        t("spaceName"),
+        "spaceNameColor",
+        "spaceNameFont",
+        "spaceNameSize",
+        spaceNameFontOpen,
+        setSpaceNameFontOpen,
+        spaceNameSizeOpen,
+        setSpaceNameSizeOpen
+      )}
+
+      <div
+        style={{
+          display: "flex",
+          justifyContent: "space-between",
+          alignItems: "center",
+        }}
+      >
+        <span
+          style={{
+            fontFamily: "Open Sans, sans-serif",
+            fontSize: 13,
+            color: "#333333",
+          }}
+        >
+          {t("icons")}
+        </span>
+        <div style={{ display: "flex", alignItems: "center", gap: 8 }}>
+          <span
+            style={{
+              fontFamily: "Open Sans, sans-serif",
+              fontSize: 12,
+              color: "#666666",
+            }}
+          >
+            Size:
+          </span>
+          <div style={{ width: 60, position: "relative" }}>
+            <div
+              style={dropdownStyle}
+              onClick={() => setIconsSizeOpen(!iconsSizeOpen)}
+            >
+              <span>{sideMenuSettings.iconsSize || "12"}</span>
+              <svg width="12" height="12" viewBox="0 0 12 12" fill="none">
+                <path
+                  d="M3 4.5L6 7.5L9 4.5"
+                  stroke="#666666"
+                  strokeWidth="1.5"
+                  strokeLinecap="round"
+                  strokeLinejoin="round"
+                />
+              </svg>
+            </div>
+            {iconsSizeOpen && (
+              <div style={dropdownMenuStyle}>
+                {TAB_FONT_SIZES.map((size) => (
+                  <div
+                    key={size}
+                    style={{
+                      ...dropdownItemStyle,
+                      backgroundColor:
+                        sideMenuSettings.iconsSize === size
+                          ? "#F5F5F5"
+                          : "#FFFFFF",
+                    }}
+                    onClick={() => {
+                      onSideMenuSettingsChange("iconsSize", size);
+                      setIconsSizeOpen(false);
+                    }}
+                  >
+                    {size}
+                  </div>
+                ))}
+              </div>
+            )}
+          </div>
+          <SmallColorPicker
+            value={colors.sideMenuIconsColor || "#333333"}
+            onChange={(e) =>
+              onColorChange("sideMenuIconsColor", e.target.value)
+            }
+          />
+        </div>
+      </div>
+
+      <div
+        style={{
+          display: "flex",
+          justifyContent: "space-between",
+          alignItems: "center",
+        }}
+      >
+        <span
+          style={{
+            fontFamily: "Open Sans, sans-serif",
+            fontSize: 13,
+            color: "#333333",
+          }}
+        >
+          {t("selectedSpace")}
+        </span>
+        <SmallColorPicker
+          value={colors.selectedSpaceColor || "#E65100"}
+          onChange={(e) => onColorChange("selectedSpaceColor", e.target.value)}
+        />
+      </div>
+
+      <div
+        style={{
+          display: "flex",
+          justifyContent: "space-between",
+          alignItems: "center",
+        }}
+      >
+        <span
+          style={{
+            fontFamily: "Open Sans, sans-serif",
+            fontSize: 13,
+            color: "#333333",
+          }}
+        >
+          {t("unselectedSpace")}
+        </span>
+        <SmallColorPicker
+          value={colors.unselectedSpaceColor || "#CCCCCC"}
+          onChange={(e) =>
+            onColorChange("unselectedSpaceColor", e.target.value)
+          }
+        />
+      </div>
+
+      <div
+        style={{
+          display: "flex",
+          justifyContent: "space-between",
+          alignItems: "center",
+        }}
+      >
+        <span
+          style={{
+            fontFamily: "Open Sans, sans-serif",
+            fontSize: 13,
+            color: "#333333",
+          }}
+        >
+          {t("profileAvatar")}
+        </span>
+        <div style={{ display: "flex", alignItems: "center", gap: 4 }}>
+          <span
+            style={{
+              fontFamily: "Open Sans, sans-serif",
+              fontSize: 12,
+              color: profileAvatarMode === "picture" ? "#333333" : "#999999",
+            }}
+          >
+            Picture
+          </span>
+          <div
+            onClick={onToggleProfileAvatarMode}
+            style={{
+              width: 36,
+              height: 20,
+              backgroundColor:
+                profileAvatarMode === "icon" ? "#4459F3" : "#CCCCCC",
+              borderRadius: 10,
+              cursor: "pointer",
+              position: "relative",
+              transition: "background-color 0.3s ease",
+            }}
+          >
+            <div
+              style={{
+                width: 16,
+                height: 16,
+                backgroundColor: "#FFFFFF",
+                borderRadius: "50%",
+                position: "absolute",
+                top: 2,
+                left: profileAvatarMode === "icon" ? 18 : 2,
+                transition: "left 0.3s ease",
+                boxShadow: "0 1px 3px rgba(0, 0, 0, 0.3)",
+              }}
+            />
+          </div>
+          <span
+            style={{
+              fontFamily: "Open Sans, sans-serif",
+              fontSize: 12,
+              color: profileAvatarMode === "icon" ? "#333333" : "#999999",
+            }}
+          >
+            Icon
+          </span>
+        </div>
+      </div>
+    </div>
+  );
+};
+
+// ————————————————————————————————————————————————————————————
+// Selection UI & Toolbar Section Content
+// ————————————————————————————————————————————————————————————
+const SelectionUIToolbarSectionContent = ({
+  colors,
+  onColorChange,
+  selectionUISettings,
+  onSelectionUISettingsChange,
+  t,
+}) => {
+  const [toolbarIconsSizeOpen, setToolbarIconsSizeOpen] = useState(false);
+  const [selectionIconsSizeOpen, setSelectionIconsSizeOpen] = useState(false);
+
+  const dropdownStyle = {
+    position: "relative",
+    display: "flex",
+    alignItems: "center",
+    justifyContent: "space-between",
+    padding: "8px 12px",
+    border: "1px solid #E1E3EA",
+    borderRadius: 4,
+    backgroundColor: "#FFFFFF",
+    cursor: "pointer",
+    fontSize: 13,
+    fontFamily: "Open Sans, sans-serif",
+    color: "#333333",
+  };
+
+  const dropdownMenuStyle = {
+    position: "absolute",
+    top: "100%",
+    left: 0,
+    right: 0,
+    backgroundColor: "#FFFFFF",
+    border: "1px solid #E1E3EA",
+    borderRadius: 4,
+    marginTop: 4,
+    zIndex: 100,
+    maxHeight: 150,
+    overflowY: "auto",
+    boxShadow: "0 4px 6px rgba(0,0,0,0.1)",
+  };
+
+  const dropdownItemStyle = {
+    padding: "8px 12px",
+    cursor: "pointer",
+    fontSize: 13,
+    fontFamily: "Open Sans, sans-serif",
+    borderBottom: "1px solid #F0F0F0",
+  };
+
+  return (
+    <div style={{ display: "flex", flexDirection: "column", gap: 16 }}>
+      {/* Toolbar with Border/Fill */}
+      <div
+        style={{
+          display: "flex",
+          justifyContent: "space-between",
+          alignItems: "center",
+        }}
+      >
+        <span
+          style={{
+            fontFamily: "Open Sans, sans-serif",
+            fontSize: 13,
+            color: "#333333",
+          }}
+        >
+          {t("toolbar")}
+        </span>
+        <div style={{ display: "flex", alignItems: "center", gap: 12 }}>
+          <div
+            style={{
+              display: "flex",
+              flexDirection: "column",
+              alignItems: "center",
+              gap: 2,
+            }}
+          >
+            <span
+              style={{
+                fontFamily: "Open Sans, sans-serif",
+                fontSize: 10,
+                color: "#999999",
+              }}
+            >
+              Border
+            </span>
+            <SmallColorPicker
+              value={colors.toolbarBorder || "#E1E3EA"}
+              onChange={(e) => onColorChange("toolbarBorder", e.target.value)}
+            />
+          </div>
+          <div
+            style={{
+              display: "flex",
+              flexDirection: "column",
+              alignItems: "center",
+              gap: 2,
+            }}
+          >
+            <span
+              style={{
+                fontFamily: "Open Sans, sans-serif",
+                fontSize: 10,
+                color: "#999999",
+              }}
+            >
+              Fill
+            </span>
+            <SmallColorPicker
+              value={colors.toolbarFill || "#FFFFFF"}
+              onChange={(e) => onColorChange("toolbarFill", e.target.value)}
+            />
+          </div>
+        </div>
+      </div>
+
+      {/* Toolbar Icons - Size dropdown + color picker */}
+      <div
+        style={{
+          display: "flex",
+          justifyContent: "space-between",
+          alignItems: "center",
+        }}
+      >
+        <span
+          style={{
+            fontFamily: "Open Sans, sans-serif",
+            fontSize: 13,
+            color: "#333333",
+          }}
+        >
+          {t("toolbarIcons")}
+        </span>
+        <div style={{ display: "flex", alignItems: "center", gap: 8 }}>
+          <span
+            style={{
+              fontFamily: "Open Sans, sans-serif",
+              fontSize: 12,
+              color: "#666666",
+            }}
+          >
+            Size:
+          </span>
+          <div style={{ width: 60, position: "relative" }}>
+            <div
+              style={dropdownStyle}
+              onClick={() => setToolbarIconsSizeOpen(!toolbarIconsSizeOpen)}
+            >
+              <span>{selectionUISettings.toolbarIconsSize || "12"}</span>
+              <svg width="12" height="12" viewBox="0 0 12 12" fill="none">
+                <path
+                  d="M3 4.5L6 7.5L9 4.5"
+                  stroke="#666666"
+                  strokeWidth="1.5"
+                  strokeLinecap="round"
+                  strokeLinejoin="round"
+                />
+              </svg>
+            </div>
+            {toolbarIconsSizeOpen && (
+              <div style={dropdownMenuStyle}>
+                {TAB_FONT_SIZES.map((size) => (
+                  <div
+                    key={size}
+                    style={{
+                      ...dropdownItemStyle,
+                      backgroundColor:
+                        selectionUISettings.toolbarIconsSize === size
+                          ? "#F5F5F5"
+                          : "#FFFFFF",
+                    }}
+                    onClick={() => {
+                      onSelectionUISettingsChange("toolbarIconsSize", size);
+                      setToolbarIconsSizeOpen(false);
+                    }}
+                  >
+                    {size}
+                  </div>
+                ))}
+              </div>
+            )}
+          </div>
+          <SmallColorPicker
+            value={colors.toolbarIconsColor || "#333333"}
+            onChange={(e) => onColorChange("toolbarIconsColor", e.target.value)}
+          />
+        </div>
+      </div>
+
+      {/* Selection UI with Border/Fill */}
+      <div
+        style={{
+          display: "flex",
+          justifyContent: "space-between",
+          alignItems: "center",
+        }}
+      >
+        <span
+          style={{
+            fontFamily: "Open Sans, sans-serif",
+            fontSize: 13,
+            color: "#333333",
+          }}
+        >
+          {t("selectionUI")}
+        </span>
+        <div style={{ display: "flex", alignItems: "center", gap: 12 }}>
+          <div
+            style={{
+              display: "flex",
+              flexDirection: "column",
+              alignItems: "center",
+              gap: 2,
+            }}
+          >
+            <span
+              style={{
+                fontFamily: "Open Sans, sans-serif",
+                fontSize: 10,
+                color: "#999999",
+              }}
+            >
+              Border
+            </span>
+            <SmallColorPicker
+              value={colors.selectionUIBorder || "#E1E3EA"}
+              onChange={(e) =>
+                onColorChange("selectionUIBorder", e.target.value)
+              }
+            />
+          </div>
+          <div
+            style={{
+              display: "flex",
+              flexDirection: "column",
+              alignItems: "center",
+              gap: 2,
+            }}
+          >
+            <span
+              style={{
+                fontFamily: "Open Sans, sans-serif",
+                fontSize: 10,
+                color: "#999999",
+              }}
+            >
+              Fill
+            </span>
+            <SmallColorPicker
+              value={colors.selectionUIFill || "#FFFFFF"}
+              onChange={(e) => onColorChange("selectionUIFill", e.target.value)}
+            />
+          </div>
+        </div>
+      </div>
+
+      {/* Selection Icons - Size dropdown + color picker */}
+      <div
+        style={{
+          display: "flex",
+          justifyContent: "space-between",
+          alignItems: "center",
+        }}
+      >
+        <span
+          style={{
+            fontFamily: "Open Sans, sans-serif",
+            fontSize: 13,
+            color: "#333333",
+          }}
+        >
+          {t("selectionIcons")}
+        </span>
+        <div style={{ display: "flex", alignItems: "center", gap: 8 }}>
+          <span
+            style={{
+              fontFamily: "Open Sans, sans-serif",
+              fontSize: 12,
+              color: "#666666",
+            }}
+          >
+            Size:
+          </span>
+          <div style={{ width: 60, position: "relative" }}>
+            <div
+              style={dropdownStyle}
+              onClick={() => setSelectionIconsSizeOpen(!selectionIconsSizeOpen)}
+            >
+              <span>{selectionUISettings.selectionIconsSize || "12"}</span>
+              <svg width="12" height="12" viewBox="0 0 12 12" fill="none">
+                <path
+                  d="M3 4.5L6 7.5L9 4.5"
+                  stroke="#666666"
+                  strokeWidth="1.5"
+                  strokeLinecap="round"
+                  strokeLinejoin="round"
+                />
+              </svg>
+            </div>
+            {selectionIconsSizeOpen && (
+              <div style={dropdownMenuStyle}>
+                {TAB_FONT_SIZES.map((size) => (
+                  <div
+                    key={size}
+                    style={{
+                      ...dropdownItemStyle,
+                      backgroundColor:
+                        selectionUISettings.selectionIconsSize === size
+                          ? "#F5F5F5"
+                          : "#FFFFFF",
+                    }}
+                    onClick={() => {
+                      onSelectionUISettingsChange("selectionIconsSize", size);
+                      setSelectionIconsSizeOpen(false);
+                    }}
+                  >
+                    {size}
+                  </div>
+                ))}
+              </div>
+            )}
+          </div>
+          <SmallColorPicker
+            value={colors.selectionIconsColor || "#333333"}
+            onChange={(e) =>
+              onColorChange("selectionIconsColor", e.target.value)
+            }
+          />
+        </div>
+      </div>
+    </div>
+  );
+};
+
+// ————————————————————————————————————————————————————————————
+// Input Fields Section Content
+// ————————————————————————————————————————————————————————————
+const InputFieldsSectionContent = ({
+  colors,
+  onColorChange,
+  inputFieldsSettings,
+  onInputFieldsSettingsChange,
+  t,
+}) => {
+  const [titleFontOpen, setTitleFontOpen] = useState(false);
+  const [titleSizeOpen, setTitleSizeOpen] = useState(false);
+  const [placeholderFontOpen, setPlaceholderFontOpen] = useState(false);
+  const [placeholderSizeOpen, setPlaceholderSizeOpen] = useState(false);
+
+  const dropdownStyle = {
+    position: "relative",
+    display: "flex",
+    alignItems: "center",
+    justifyContent: "space-between",
+    padding: "8px 12px",
+    border: "1px solid #E1E3EA",
+    borderRadius: 4,
+    backgroundColor: "#FFFFFF",
+    cursor: "pointer",
+    fontSize: 13,
+    fontFamily: "Open Sans, sans-serif",
+    color: "#333333",
+  };
+
+  const dropdownMenuStyle = {
+    position: "absolute",
+    top: "100%",
+    left: 0,
+    right: 0,
+    backgroundColor: "#FFFFFF",
+    border: "1px solid #E1E3EA",
+    borderRadius: 4,
+    marginTop: 4,
+    zIndex: 100,
+    maxHeight: 150,
+    overflowY: "auto",
+    boxShadow: "0 4px 6px rgba(0,0,0,0.1)",
+  };
+
+  const dropdownItemStyle = {
+    padding: "8px 12px",
+    cursor: "pointer",
+    fontSize: 13,
+    fontFamily: "Open Sans, sans-serif",
+    borderBottom: "1px solid #F0F0F0",
+  };
+
+  return (
+    <div style={{ display: "flex", flexDirection: "column", gap: 16 }}>
+      {/* Title with color picker */}
+      <div
+        style={{
+          display: "flex",
+          justifyContent: "space-between",
+          alignItems: "center",
+        }}
+      >
+        <span
+          style={{
+            fontFamily: "Open Sans, sans-serif",
+            fontSize: 13,
+            color: "#333333",
+          }}
+        >
+          {t("title")}
+        </span>
+        <SmallColorPicker
+          value={colors.inputTitleColor || "#333333"}
+          onChange={(e) => onColorChange("inputTitleColor", e.target.value)}
+        />
+      </div>
+
+      {/* Title font and size dropdowns */}
+      <div style={{ display: "flex", gap: 8 }}>
+        <div style={{ flex: 1, position: "relative" }}>
+          <div
+            style={dropdownStyle}
+            onClick={() => setTitleFontOpen(!titleFontOpen)}
+          >
+            <span>{inputFieldsSettings.titleFont || "DM Sans"}</span>
+            <svg width="12" height="12" viewBox="0 0 12 12" fill="none">
+              <path
+                d="M3 4.5L6 7.5L9 4.5"
+                stroke="#666666"
+                strokeWidth="1.5"
+                strokeLinecap="round"
+                strokeLinejoin="round"
+              />
+            </svg>
+          </div>
+          {titleFontOpen && (
+            <div style={dropdownMenuStyle}>
+              {TAB_FONT_OPTIONS.map((font) => (
+                <div
+                  key={font.value}
+                  style={{
+                    ...dropdownItemStyle,
+                    backgroundColor:
+                      inputFieldsSettings.titleFont === font.name
+                        ? "#F5F5F5"
+                        : "#FFFFFF",
+                  }}
+                  onClick={() => {
+                    onInputFieldsSettingsChange("titleFont", font.name);
+                    setTitleFontOpen(false);
+                  }}
+                >
+                  {font.name}
+                </div>
+              ))}
+            </div>
+          )}
+        </div>
+        <div style={{ width: 70, position: "relative" }}>
+          <div
+            style={dropdownStyle}
+            onClick={() => setTitleSizeOpen(!titleSizeOpen)}
+          >
+            <span>{inputFieldsSettings.titleSize || "12"}</span>
+            <svg width="12" height="12" viewBox="0 0 12 12" fill="none">
+              <path
+                d="M3 4.5L6 7.5L9 4.5"
+                stroke="#666666"
+                strokeWidth="1.5"
+                strokeLinecap="round"
+                strokeLinejoin="round"
+              />
+            </svg>
+          </div>
+          {titleSizeOpen && (
+            <div style={dropdownMenuStyle}>
+              {TAB_FONT_SIZES.map((size) => (
+                <div
+                  key={size}
+                  style={{
+                    ...dropdownItemStyle,
+                    backgroundColor:
+                      inputFieldsSettings.titleSize === size
+                        ? "#F5F5F5"
+                        : "#FFFFFF",
+                  }}
+                  onClick={() => {
+                    onInputFieldsSettingsChange("titleSize", size);
+                    setTitleSizeOpen(false);
+                  }}
+                >
+                  {size}
+                </div>
+              ))}
+            </div>
+          )}
+        </div>
+      </div>
+
+      {/* Placeholder with color picker */}
+      <div
+        style={{
+          display: "flex",
+          justifyContent: "space-between",
+          alignItems: "center",
+        }}
+      >
+        <span
+          style={{
+            fontFamily: "Open Sans, sans-serif",
+            fontSize: 13,
+            color: "#333333",
+          }}
+        >
+          {t("placeholder")}
+        </span>
+        <SmallColorPicker
+          value={colors.inputPlaceholderColor || "#333333"}
+          onChange={(e) =>
+            onColorChange("inputPlaceholderColor", e.target.value)
+          }
+        />
+      </div>
+
+      {/* Placeholder font and size dropdowns */}
+      <div style={{ display: "flex", gap: 8 }}>
+        <div style={{ flex: 1, position: "relative" }}>
+          <div
+            style={dropdownStyle}
+            onClick={() => setPlaceholderFontOpen(!placeholderFontOpen)}
+          >
+            <span>{inputFieldsSettings.placeholderFont || "DM Sans"}</span>
+            <svg width="12" height="12" viewBox="0 0 12 12" fill="none">
+              <path
+                d="M3 4.5L6 7.5L9 4.5"
+                stroke="#666666"
+                strokeWidth="1.5"
+                strokeLinecap="round"
+                strokeLinejoin="round"
+              />
+            </svg>
+          </div>
+          {placeholderFontOpen && (
+            <div style={dropdownMenuStyle}>
+              {TAB_FONT_OPTIONS.map((font) => (
+                <div
+                  key={font.value}
+                  style={{
+                    ...dropdownItemStyle,
+                    backgroundColor:
+                      inputFieldsSettings.placeholderFont === font.name
+                        ? "#F5F5F5"
+                        : "#FFFFFF",
+                  }}
+                  onClick={() => {
+                    onInputFieldsSettingsChange("placeholderFont", font.name);
+                    setPlaceholderFontOpen(false);
+                  }}
+                >
+                  {font.name}
+                </div>
+              ))}
+            </div>
+          )}
+        </div>
+        <div style={{ width: 70, position: "relative" }}>
+          <div
+            style={dropdownStyle}
+            onClick={() => setPlaceholderSizeOpen(!placeholderSizeOpen)}
+          >
+            <span>{inputFieldsSettings.placeholderSize || "12"}</span>
+            <svg width="12" height="12" viewBox="0 0 12 12" fill="none">
+              <path
+                d="M3 4.5L6 7.5L9 4.5"
+                stroke="#666666"
+                strokeWidth="1.5"
+                strokeLinecap="round"
+                strokeLinejoin="round"
+              />
+            </svg>
+          </div>
+          {placeholderSizeOpen && (
+            <div style={dropdownMenuStyle}>
+              {TAB_FONT_SIZES.map((size) => (
+                <div
+                  key={size}
+                  style={{
+                    ...dropdownItemStyle,
+                    backgroundColor:
+                      inputFieldsSettings.placeholderSize === size
+                        ? "#F5F5F5"
+                        : "#FFFFFF",
+                  }}
+                  onClick={() => {
+                    onInputFieldsSettingsChange("placeholderSize", size);
+                    setPlaceholderSizeOpen(false);
+                  }}
+                >
+                  {size}
+                </div>
+              ))}
+            </div>
+          )}
+        </div>
+      </div>
+
+      {/* Active state with Border/Fill */}
+      <div
+        style={{
+          display: "flex",
+          justifyContent: "space-between",
+          alignItems: "center",
+        }}
+      >
+        <span
+          style={{
+            fontFamily: "Open Sans, sans-serif",
+            fontSize: 13,
+            color: "#333333",
+          }}
+        >
+          {t("activeState")}
+        </span>
+        <div style={{ display: "flex", alignItems: "center", gap: 12 }}>
+          <div
+            style={{
+              display: "flex",
+              flexDirection: "column",
+              alignItems: "center",
+              gap: 2,
+            }}
+          >
+            <span
+              style={{
+                fontFamily: "Open Sans, sans-serif",
+                fontSize: 10,
+                color: "#999999",
+              }}
+            >
+              Border
+            </span>
+            <SmallColorPicker
+              value={colors.inputActiveBorder || "#E1E3EA"}
+              onChange={(e) =>
+                onColorChange("inputActiveBorder", e.target.value)
+              }
+            />
+          </div>
+          <div
+            style={{
+              display: "flex",
+              flexDirection: "column",
+              alignItems: "center",
+              gap: 2,
+            }}
+          >
+            <span
+              style={{
+                fontFamily: "Open Sans, sans-serif",
+                fontSize: 10,
+                color: "#999999",
+              }}
+            >
+              Fill
+            </span>
+            <SmallColorPicker
+              value={colors.inputActiveFill || "#FFFFFF"}
+              onChange={(e) => onColorChange("inputActiveFill", e.target.value)}
+            />
+          </div>
+        </div>
+      </div>
+
+      {/* Inactive state with Border/Fill */}
+      <div
+        style={{
+          display: "flex",
+          justifyContent: "space-between",
+          alignItems: "center",
+        }}
+      >
+        <span
+          style={{
+            fontFamily: "Open Sans, sans-serif",
+            fontSize: 13,
+            color: "#333333",
+          }}
+        >
+          {t("inactiveState")}
+        </span>
+        <div style={{ display: "flex", alignItems: "center", gap: 12 }}>
+          <div
+            style={{
+              display: "flex",
+              flexDirection: "column",
+              alignItems: "center",
+              gap: 2,
+            }}
+          >
+            <span
+              style={{
+                fontFamily: "Open Sans, sans-serif",
+                fontSize: 10,
+                color: "#999999",
+              }}
+            >
+              Border
+            </span>
+            <SmallColorPicker
+              value={colors.inputInactiveBorder || "#E1E3EA"}
+              onChange={(e) =>
+                onColorChange("inputInactiveBorder", e.target.value)
+              }
+            />
+          </div>
+          <div
+            style={{
+              display: "flex",
+              flexDirection: "column",
+              alignItems: "center",
+              gap: 2,
+            }}
+          >
+            <span
+              style={{
+                fontFamily: "Open Sans, sans-serif",
+                fontSize: 10,
+                color: "#999999",
+              }}
+            >
+              Fill
+            </span>
+            <SmallColorPicker
+              value={colors.inputInactiveFill || "#FFFFFF"}
+              onChange={(e) =>
+                onColorChange("inputInactiveFill", e.target.value)
+              }
+            />
+          </div>
+        </div>
+      </div>
+    </div>
+  );
+};
+
+// ————————————————————————————————————————————————————————————
+// Branding Section Content
+// ————————————————————————————————————————————————————————————
+const BrandingSectionContent = ({
+  brandingSettings,
+  onBrandingSettingsChange,
+  t,
+}) => {
+  const [companySizeOpen, setCompanySizeOpen] = useState(false);
+
+  const dropdownStyle = {
+    position: "relative",
+    display: "flex",
+    alignItems: "center",
+    justifyContent: "space-between",
+    padding: "8px 12px",
+    border: "1px solid #E1E3EA",
+    borderRadius: 4,
+    backgroundColor: "#FFFFFF",
+    cursor: "pointer",
+    fontSize: 13,
+    fontFamily: "Open Sans, sans-serif",
+    color: "#333333",
+  };
+
+  const dropdownMenuStyle = {
+    position: "absolute",
+    top: "100%",
+    left: 0,
+    right: 0,
+    backgroundColor: "#FFFFFF",
+    border: "1px solid #E1E3EA",
+    borderRadius: 4,
+    marginTop: 4,
+    zIndex: 100,
+    maxHeight: 150,
+    overflowY: "auto",
+    boxShadow: "0 4px 6px rgba(0,0,0,0.1)",
+  };
+
+  const dropdownItemStyle = {
+    padding: "8px 12px",
+    cursor: "pointer",
+    fontSize: 13,
+    fontFamily: "Open Sans, sans-serif",
+    borderBottom: "1px solid #F0F0F0",
+  };
+
+  const inputStyle = {
+    flex: 1,
+    padding: "8px 12px",
+    border: "1px solid #E1E3EA",
+    borderRadius: 4,
+    backgroundColor: "#FFFFFF",
+    fontSize: 13,
+    fontFamily: "Open Sans, sans-serif",
+    color: "#333333",
+    outline: "none",
+  };
+
+  return (
+    <div style={{ display: "flex", flexDirection: "column", gap: 16 }}>
+      {/* Company name with toggle */}
+      <div
+        style={{
+          display: "flex",
+          justifyContent: "space-between",
+          alignItems: "center",
+        }}
+      >
+        <span
+          style={{
+            fontFamily: "Open Sans, sans-serif",
+            fontSize: 13,
+            color: "#333333",
+          }}
+        >
+          {t("companyName")}
+        </span>
+        <div
+          onClick={() =>
+            onBrandingSettingsChange(
+              "showCompanyName",
+              !brandingSettings.showCompanyName
+            )
+          }
+          style={{
+            width: 36,
+            height: 20,
+            backgroundColor: brandingSettings.showCompanyName
+              ? "#4459F3"
+              : "#CCCCCC",
+            borderRadius: 10,
+            cursor: "pointer",
+            position: "relative",
+            transition: "background-color 0.3s ease",
+          }}
+        >
+          <div
+            style={{
+              width: 16,
+              height: 16,
+              backgroundColor: "#FFFFFF",
+              borderRadius: "50%",
+              position: "absolute",
+              top: 2,
+              left: brandingSettings.showCompanyName ? 18 : 2,
+              transition: "left 0.3s ease",
+              boxShadow: "0 1px 3px rgba(0, 0, 0, 0.3)",
+            }}
+          />
+        </div>
+      </div>
+
+      {/* Company name input and size dropdown */}
+      <div style={{ display: "flex", gap: 8 }}>
+        <input
+          type="text"
+          value={brandingSettings.companyName || "AO Lab"}
+          onChange={(e) =>
+            onBrandingSettingsChange("companyName", e.target.value)
+          }
+          style={inputStyle}
+          placeholder="Company name"
+        />
+        <div style={{ width: 70, position: "relative" }}>
+          <div
+            style={dropdownStyle}
+            onClick={() => setCompanySizeOpen(!companySizeOpen)}
+          >
+            <span>{brandingSettings.companyNameSize || "12"}</span>
+            <svg width="12" height="12" viewBox="0 0 12 12" fill="none">
+              <path
+                d="M3 4.5L6 7.5L9 4.5"
+                stroke="#666666"
+                strokeWidth="1.5"
+                strokeLinecap="round"
+                strokeLinejoin="round"
+              />
+            </svg>
+          </div>
+          {companySizeOpen && (
+            <div style={dropdownMenuStyle}>
+              {TAB_FONT_SIZES.map((size) => (
+                <div
+                  key={size}
+                  style={{
+                    ...dropdownItemStyle,
+                    backgroundColor:
+                      brandingSettings.companyNameSize === size
+                        ? "#F5F5F5"
+                        : "#FFFFFF",
+                  }}
+                  onClick={() => {
+                    onBrandingSettingsChange("companyNameSize", size);
+                    setCompanySizeOpen(false);
+                  }}
+                >
+                  {size}
+                </div>
+              ))}
+            </div>
+          )}
+        </div>
+      </div>
+
+      {/* Logo with preview button */}
+      <div
+        style={{
+          display: "flex",
+          justifyContent: "space-between",
+          alignItems: "center",
+        }}
+      >
+        <span
+          style={{
+            fontFamily: "Open Sans, sans-serif",
+            fontSize: 13,
+            color: "#333333",
+          }}
+        >
+          {t("logo")}
+        </span>
+        <div
+          onClick={() => onBrandingSettingsChange("selectLogo", true)}
+          style={{
+            width: 48,
+            height: 32,
+            border: "1px solid #E1E3EA",
+            borderRadius: 4,
+            backgroundColor: "#FFFFFF",
+            display: "flex",
+            alignItems: "center",
+            justifyContent: "center",
+            cursor: "pointer",
+            overflow: "hidden",
+          }}
+        >
+          {brandingSettings.logoUrl ? (
+            <img
+              src={brandingSettings.logoUrl}
+              alt="Logo"
+              style={{
+                maxWidth: "100%",
+                maxHeight: "100%",
+                objectFit: "contain",
+              }}
+            />
+          ) : (
+            <svg width="32" height="16" viewBox="0 0 32 16" fill="none">
+              <rect x="0" y="2" width="8" height="12" rx="1" fill="#333333" />
+              <rect x="10" y="2" width="4" height="12" rx="1" fill="#333333" />
+              <rect x="16" y="2" width="4" height="12" rx="1" fill="#333333" />
+              <rect x="22" y="2" width="8" height="12" rx="1" fill="#333333" />
+              <text x="2" y="11" fontSize="6" fill="#FFFFFF" fontFamily="Arial">
+                SEED
+              </text>
+            </svg>
+          )}
+        </div>
+      </div>
+    </div>
+  );
+};
+
 const ThemeSettings = () => {
   const { updateSpace, activeSpace, currentSpace, tabsIcons, setTabsIcons } =
     useTabsContext();
   const { setSideBarMode, closePopupSettings, setThemeColors, themeColors, t } =
     useSideBarContext();
+  const { setShowVerses, showVerses } = useBibleContext();
 
   const [changesSaved, setChagesSaved] = useState(false);
   const [colorsMap, setColorsMap] = useState({});
-  const [originalColorsMap, setOriginalColorsMap] = useState({});
+  const [expandedSections, setExpandedSections] = useState({
+    advancedSettings: false,
+    containerBackgrounds: false,
+    tab: false,
+    buttons: false,
+    scriptureText: false,
+    sideMenu: false,
+    selectionUIToolbar: false,
+    inputFields: false,
+    branding: false,
+  });
+
+  // Tab settings state
+  const [tabSettings, setTabSettings] = useState({
+    activeTabFont: "DM Sans",
+    activeTabSize: "12",
+    inactiveTabFont: "DM Sans",
+    inactiveTabSize: "12",
+  });
+
+  const handleTabSettingsChange = (field, value) => {
+    setTabSettings((prev) => ({ ...prev, [field]: value }));
+    const updatedSettings = { ...tabSettings, [field]: value };
+    updateSpace(activeSpace, { tabSettings: updatedSettings });
+  };
+
+  // Button settings state
+  const [buttonSettings, setButtonSettings] = useState({
+    primaryFont: "DM Sans",
+    primarySize: "12",
+    secondaryFont: "DM Sans",
+    secondarySize: "12",
+    tertiaryFont: "DM Sans",
+    tertiarySize: "12",
+  });
+
+  const handleButtonSettingsChange = (field, value) => {
+    setButtonSettings((prev) => ({ ...prev, [field]: value }));
+    const updatedSettings = { ...buttonSettings, [field]: value };
+    updateSpace(activeSpace, { buttonSettings: updatedSettings });
+  };
+
+  // Scripture settings state
+  const [scriptureSettings, setScriptureSettings] = useState({
+    bookHeadingFont: "DM Sans",
+    bookHeadingSize: "12",
+    chapterHeadingFont: "DM Sans",
+    chapterHeadingSize: "12",
+    verseTextFont: "DM Sans",
+    verseTextSize: "12",
+    verseNumberFont: "DM Sans",
+    verseNumberSize: "12",
+  });
+
+  const handleScriptureSettingsChange = (field, value) => {
+    setScriptureSettings((prev) => ({ ...prev, [field]: value }));
+    const updatedSettings = { ...scriptureSettings, [field]: value };
+    updateSpace(activeSpace, { scriptureSettings: updatedSettings });
+  };
+
+  // Side menu settings state
+  const [sideMenuSettings, setSideMenuSettings] = useState({
+    heading1Font: "DM Sans",
+    heading1Size: "12",
+    heading2Font: "DM Sans",
+    heading2Size: "12",
+    heading3Font: "DM Sans",
+    heading3Size: "12",
+    descriptionTextFont: "DM Sans",
+    descriptionTextSize: "12",
+    menuTextFont: "DM Sans",
+    menuTextSize: "12",
+    breadcrumbsFont: "DM Sans",
+    breadcrumbsSize: "12",
+    spaceNameFont: "DM Sans",
+    spaceNameSize: "12",
+    iconsSize: "12",
+  });
+
+  const [profileAvatarMode, setProfileAvatarMode] = useState("icon");
+
+  const handleSideMenuSettingsChange = (field, value) => {
+    setSideMenuSettings((prev) => ({ ...prev, [field]: value }));
+    const updatedSettings = { ...sideMenuSettings, [field]: value };
+    updateSpace(activeSpace, { sideMenuSettings: updatedSettings });
+  };
+
+  // Selection UI & toolbar settings state
+  const [selectionUISettings, setSelectionUISettings] = useState({
+    toolbarIconsSize: "12",
+    selectionIconsSize: "12",
+  });
+
+  const handleSelectionUISettingsChange = (field, value) => {
+    setSelectionUISettings((prev) => ({ ...prev, [field]: value }));
+    const updatedSettings = { ...selectionUISettings, [field]: value };
+    updateSpace(activeSpace, { selectionUISettings: updatedSettings });
+  };
+
+  // Input fields settings state
+  const [inputFieldsSettings, setInputFieldsSettings] = useState({
+    titleFont: "DM Sans",
+    titleSize: "12",
+    placeholderFont: "DM Sans",
+    placeholderSize: "12",
+  });
+
+  const handleInputFieldsSettingsChange = (field, value) => {
+    setInputFieldsSettings((prev) => ({ ...prev, [field]: value }));
+    const updatedSettings = { ...inputFieldsSettings, [field]: value };
+    updateSpace(activeSpace, { inputFieldsSettings: updatedSettings });
+  };
+
+  // Branding settings state
+  const [brandingSettings, setBrandingSettings] = useState({
+    showCompanyName: true,
+    companyName: "AO Lab",
+    companyNameSize: "12",
+    logoUrl: "",
+  });
+
+  const handleBrandingSettingsChange = (field, value) => {
+    setBrandingSettings((prev) => ({ ...prev, [field]: value }));
+    const updatedSettings = { ...brandingSettings, [field]: value };
+    updateSpace(activeSpace, { brandingSettings: updatedSettings });
+  };
 
   // Initialize CurrentColors on mount
   useEffect(() => {
@@ -395,11 +3749,7 @@ const ThemeSettings = () => {
   const colors =
     colorsMap?.[activeSpace] || themeColors?.[activeSpace] || defaultTheme;
 
-  const labelColor = colors?.text1 || "#606060";
-  const handleColorChange = (field, e) => {
-    const newColor = e.target.value;
-    // setChagesSaved(false);
-
+  const handleColorChange = (field, newColor) => {
     if (field === "toolbarBackground") {
       globalThis.SetToolbarBackground?.(newColor);
     }
@@ -417,41 +3767,19 @@ const ThemeSettings = () => {
     });
   };
 
-  // ————————————————————————————————————————————————————————————
-  // Handle Tab Icons Toggle
-  // ————————————————————————————————————————————————————————————
-  const handleTabIconsToggle = () => {
-    setTabsIcons(!tabsIcons);
+  const handleMainColorChange = (field, e) => {
+    handleColorChange(field, e.target.value);
   };
 
-  // ————————————————————————————————————————————————————————————
-  // Apply Ready Theme
-  // ————————————————————————————————————————————————————————————
-  const applyReadyTheme = (themeColors) => {
-    setChagesSaved(false);
+  const applyMainColors = () => {
+    os.toast("Main colors applied");
+  };
 
-    // Apply toolbar background side-effect if needed
-    if (themeColors.toolbarBackground) {
-      globalThis.SetToolbarBackground?.(themeColors.toolbarBackground);
-    }
-    let filterMode;
-    console.log("computed filter for icon color", themeColors);
-    if (themeColors["iconColor"]) {
-      filterMode = getColorFilterCached(themeColors["iconColor"]);
-    }
-    // Update local map
-    setColorsMap((prev) => ({
+  const toggleSection = (sectionKey) => {
+    setExpandedSections((prev) => ({
       ...prev,
-      [activeSpace]: filterMode
-        ? { ...themeColors, "filter-mode": filterMode }
-        : themeColors,
+      [sectionKey]: !prev[sectionKey],
     }));
-
-    // Update sidebar theme state (immediate apply)
-    setThemeColors((prev) => ({ ...prev, [activeSpace]: themeColors }));
-
-    // Persist to the space
-    updateSpace(activeSpace, { themeColors });
   };
 
   // When switching spaces without saving, restore the last committed theme for that space
@@ -463,11 +3791,6 @@ const ThemeSettings = () => {
       }));
     }
   }, [activeSpace]);
-  // useEffect(() => {
-
-  //     applyReadyTheme(defaultTheme);
-
-  // }, []);
 
   return (
     <div className="themeSettings-container">
@@ -487,152 +3810,180 @@ const ThemeSettings = () => {
         >
           <MenuIcon name="arrow_back" />
         </div>
-        <div className="softText">{t("theme")}</div>
+        <div className="softText">{t("spaceSettings")}</div>
         <div className="softText">
           <MenuIcon name="chevron_right" />
         </div>
-        <div className="softText">{t("advancedSettings")}</div>
+        <div className="softText">{t("theme")}</div>
       </div>
 
-      <div className="routerTitle blackText">
-        <div className="blackText">
-          <ThemeIcon />
-        </div>
-        <div>
-          {currentSpace.name} {t("theme")}
-        </div>
-      </div>
-
-      <div style={{ height: 25 }} />
-
-      <div style={{ display: "flex", flexDirection: "column", gap: 34 }}>
-        {COLOR_FIELDS.map((cfg) => (
-          <ColorRow
-            key={cfg.field}
-            label={t(cfg.labelKey)}
-            field={cfg.field}
-            value={colors?.[cfg.field]}
-            labelColor={labelColor}
-            onChange={handleColorChange}
-          />
-        ))}
-      </div>
-
-      <div style={{ height: 15 }} />
-      <div className="sidebarLine" />
-      <div style={{ height: 15 }} />
-
-      <div
-        style={{
-          display: "flex",
-          justifyContent: "space-between",
-          alignItems: "center",
-          marginBottom: 34,
-        }}
+      <CollapsibleSection
+        title={t("advancedSettings")}
+        isExpanded={expandedSections.advancedSettings}
+        onToggle={() => toggleSection("advancedSettings")}
       >
-        <div
-          style={{
-            color: labelColor,
-            fontFamily: "Open Sans",
-            fontSize: 16,
-            fontStyle: "normal",
-            fontWeight: 600,
-            lineHeight: "normal",
-          }}
-        >
-          {t("showTabIcons")}
-        </div>
-        <div
-          onClick={handleTabIconsToggle}
-          style={{
-            width: 48,
-            height: 24,
-            backgroundColor: tabsIcons ? colors.tabSelection : "#CCCCCC",
-            borderRadius: 12,
-            cursor: "pointer",
-            position: "relative",
-            transition: "background-color 0.3s ease",
-          }}
-        >
+        <div style={{ marginBottom: 16 }}>
           <div
             style={{
-              width: 20,
-              height: 20,
-              backgroundColor: "#FFFFFF",
-              borderRadius: "50%",
-              position: "absolute",
-              top: 2,
-              left: tabsIcons ? 26 : 2,
-              transition: "left 0.3s ease",
-              boxShadow: "0 1px 3px rgba(0, 0, 0, 0.3)",
+              display: "flex",
+              justifyContent: "space-between",
+              alignItems: "center",
+              marginBottom: 16,
             }}
-          />
-        </div>
-      </div>
-
-      <div className="sidebarLine" />
-      {
-        null /*<div style={{ height: 15 }} />
-      <div className="readyThemes-section">
-        <div
-          className="themeText"
-          style={{
-            marginBottom: 15,
-            color: labelColor,
-          }}
-        >
-          Themes
-        </div>
-
-        <div className="readyThemes-list">
-          {READY_THEMES.map((theme, index) => (
-            <div
-              key={index}
-              className="readyTheme-item"
-              onClick={() => applyReadyTheme(theme.colors)}
+          >
+            <span
+              style={{
+                fontFamily: "Open Sans, sans-serif",
+                fontSize: 12,
+                color: "#666666",
+              }}
             >
-              <div className="readyTheme-preview">
-                <div
-                  className="theme-color-preview"
-                  style={{ backgroundColor: theme.colors.menuBackground }}
+              {t("selectMainColors")}
+            </span>
+            <span
+              onClick={applyMainColors}
+              style={{
+                fontFamily: "Open Sans, sans-serif",
+                fontSize: 12,
+                color: "#E65100",
+                cursor: "pointer",
+                display: "flex",
+                alignItems: "center",
+                gap: 4,
+              }}
+            >
+              <svg width="12" height="12" viewBox="0 0 12 12" fill="none">
+                <path
+                  d="M10 3L4.5 8.5L2 6"
+                  stroke="#E65100"
+                  strokeWidth="1.5"
+                  strokeLinecap="round"
+                  strokeLinejoin="round"
                 />
-                <div
-                  className="theme-color-preview"
-                  style={{ backgroundColor: theme.colors.primaryButton }}
-                />
-                <div
-                  className="theme-color-preview"
-                  style={{ backgroundColor: theme.colors.secondaryButton }}
-                />
-              </div>
-              <div className="readyTheme-name" style={{ color: labelColor }}>
-                {theme.name}
-              </div>
-            </div>
-          ))}
-        </div>
-      </div>
-      <div style={{ height: 15 }} />
-      <div className="sidebarLine" />
-      <div style={{ height: 15 }} />
-      */
-      }
+              </svg>
+              {t("apply")}
+            </span>
+          </div>
 
-      <button
-        onClick={() => {
-          os.toast("changes saved");
-          setChagesSaved(true);
-          // capture the latest committed theme as "CurrentColors"
-          globalThis.CurrentColors = themeColors?.[activeSpace] || colors;
-        }}
-        className="themeButton"
-      >
-        Save changes
-      </button>
+          <div
+            style={{
+              display: "flex",
+              justifyContent: "space-between",
+              gap: 16,
+            }}
+          >
+            <MainColorPicker
+              label={t("primary")}
+              sublabel={t("primary")}
+              color={colors.primaryColor || "#2723DC"}
+              onChange={(e) => handleMainColorChange("primaryColor", e)}
+            />
+            <MainColorPicker
+              label={t("secondary")}
+              sublabel={t("secondary")}
+              color={colors.secondaryColor || "#8423DC"}
+              onChange={(e) => handleMainColorChange("secondaryColor", e)}
+            />
+            <MainColorPicker
+              label={t("tertiary")}
+              sublabel={t("tertiary")}
+              color={colors.tertiaryColor || "#2378DC"}
+              onChange={(e) => handleMainColorChange("tertiaryColor", e)}
+            />
+          </div>
+        </div>
+      </CollapsibleSection>
+
+      {Object.entries(ADVANCED_SETTINGS_SECTIONS).map(([key, section]) => (
+        <CollapsibleSection
+          key={key}
+          title={t(section.labelKey)}
+          isExpanded={expandedSections[key as keyof typeof expandedSections]}
+          onToggle={() => toggleSection(key)}
+        >
+          {key === "tab" ? (
+            <TabSectionContent
+              colors={colors}
+              onColorChange={handleColorChange}
+              tabSettings={tabSettings}
+              onTabSettingsChange={handleTabSettingsChange}
+              showTabIcons={tabsIcons}
+              onToggleTabIcons={() => setTabsIcons(!tabsIcons)}
+              t={t}
+            />
+          ) : key === "buttons" ? (
+            <ButtonsSectionContent
+              colors={colors}
+              onColorChange={handleColorChange}
+              buttonSettings={buttonSettings}
+              onButtonSettingsChange={handleButtonSettingsChange}
+              t={t}
+            />
+          ) : key === "scriptureText" ? (
+            <ScriptureTextSectionContent
+              colors={colors}
+              onColorChange={handleColorChange}
+              scriptureSettings={scriptureSettings}
+              onScriptureSettingsChange={handleScriptureSettingsChange}
+              showVerseNumbers={showVerses[activeSpace]}
+              onToggleVerseNumbers={() =>
+                setShowVerses((prev) => ({
+                  ...prev,
+                  [activeSpace]: !prev[activeSpace],
+                }))
+              }
+              t={t}
+            />
+          ) : key === "sideMenu" ? (
+            <SideMenuSectionContent
+              colors={colors}
+              onColorChange={handleColorChange}
+              sideMenuSettings={sideMenuSettings}
+              onSideMenuSettingsChange={handleSideMenuSettingsChange}
+              profileAvatarMode={profileAvatarMode}
+              onToggleProfileAvatarMode={() =>
+                setProfileAvatarMode(
+                  profileAvatarMode === "picture" ? "icon" : "picture"
+                )
+              }
+              t={t}
+            />
+          ) : key === "selectionUIToolbar" ? (
+            <SelectionUIToolbarSectionContent
+              colors={colors}
+              onColorChange={handleColorChange}
+              selectionUISettings={selectionUISettings}
+              onSelectionUISettingsChange={handleSelectionUISettingsChange}
+              t={t}
+            />
+          ) : key === "inputFields" ? (
+            <InputFieldsSectionContent
+              colors={colors}
+              onColorChange={handleColorChange}
+              inputFieldsSettings={inputFieldsSettings}
+              onInputFieldsSettingsChange={handleInputFieldsSettingsChange}
+              t={t}
+            />
+          ) : key === "branding" ? (
+            <BrandingSectionContent
+              brandingSettings={brandingSettings}
+              onBrandingSettingsChange={handleBrandingSettingsChange}
+              t={t}
+            />
+          ) : (
+            section.fields.map((field) => (
+              <CompactColorRow
+                key={field.field}
+                label={t(field.labelKey)}
+                value={colors[field.field]}
+                onChange={(e) => handleColorChange(field.field, e.target.value)}
+              />
+            ))
+          )}
+        </CollapsibleSection>
+      ))}
 
       <div style={{ height: 20 }} />
-
-      <div style={{ height: "100px" }}></div>
 
       <style>{getStyleOf("themeSettings.css")}</style>
     </div>
@@ -1023,12 +4374,14 @@ const SettingsUI = () => {
   const [textConfig, setTextConfig] = useState(() => {
     // Try to load from saved space settings
     const savedConfig = currentSpace?.settings?.text?.data;
-    return savedConfig || {
-      heading: { ...defaultTextConfig.heading },
-      chapter: { ...defaultTextConfig.chapter },
-      verse: { ...defaultTextConfig.verse },
-      bookchapter: { ...defaultTextConfig.bookchapter },
-    };
+    return (
+      savedConfig || {
+        heading: { ...defaultTextConfig.heading },
+        chapter: { ...defaultTextConfig.chapter },
+        verse: { ...defaultTextConfig.verse },
+        bookchapter: { ...defaultTextConfig.bookchapter },
+      }
+    );
   });
 
   // Sync font size, font, and line height index when space changes
@@ -1038,7 +4391,8 @@ const SettingsUI = () => {
       setTextConfig(savedConfig);
 
       // Sync font size
-      const savedFontSize = savedConfig?.verse?.fontSize || savedConfig?.verse?.size;
+      const savedFontSize =
+        savedConfig?.verse?.fontSize || savedConfig?.verse?.size;
       if (savedFontSize) {
         const sizeIdx = FONT_SIZES.findIndex((s) => s.value === savedFontSize);
         if (sizeIdx !== -1) setSelectedFontSize(sizeIdx);
@@ -1090,7 +4444,8 @@ const SettingsUI = () => {
 
   const [lineHeightIndex, setLineHeightIndex] = useState(() => {
     // Load saved lineHeight from config, default to index 1 (value 0)
-    const savedLineHeight = currentSpace?.settings?.text?.data?.verse?.lineHeight;
+    const savedLineHeight =
+      currentSpace?.settings?.text?.data?.verse?.lineHeight;
     if (savedLineHeight !== undefined) {
       const idx = LINE_HEIGHTS.indexOf(savedLineHeight);
       return idx !== -1 ? idx : 1;

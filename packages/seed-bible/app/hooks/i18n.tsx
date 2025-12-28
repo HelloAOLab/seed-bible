@@ -92,7 +92,8 @@ const resources = {
       warmAmber: "Warm Amber",
 
       // Theme - Colors
-      menuBackground: "Menu Background",
+      menuBackground: "Menu background",
+      panelBackground: "Panel background",
       pageBackground: "Page Background",
       pageTextColor: "Page text color",
       iconsColor: "Icons color",
@@ -105,6 +106,88 @@ const resources = {
       toolbarBackground: "Toolbar background",
       primaryText: "Primary text",
       secondaryText: "Secondary text",
+
+      // Advanced Settings Sections
+      selectMainColors: "Select main colors",
+      containerBackgrounds: "Container Backgrounds",
+      tab: "Tab",
+      buttons: "Buttons",
+      scriptureText: "Scripture text",
+      sideMenu: "Side menu",
+      selectionUIToolbar: "Selection UI & toolbar",
+      inputFields: "Input fields",
+      branding: "Branding",
+      apply: "Apply",
+      primary: "Primary",
+      secondary: "Secondary",
+      tertiary: "Tertiary",
+
+      // Tab section
+      activeTabContainer: "Active tab container",
+      activeTabBackground: "Active tab background",
+      activeTabText: "Active tab text",
+      simpleTabText: "Simple tab text",
+      inactiveTabText: "Inactive tab text",
+      showTabIcon: "Show tab icon",
+      border: "Border",
+      fill: "Fill",
+
+      // Buttons section
+      primaryButton: "Primary button",
+      secondaryButton: "Secondary button",
+      tertiaryButton: "Tertiary button",
+      secondaryButtonText: "Secondary button text",
+
+      // Scripture text section
+      bookHeading: "Book heading",
+      chapterHeading: "Chapter heading",
+      verseNumber: "Verse number",
+      verseText: "Verse text",
+
+      // Side menu section
+      heading1: "Heading 1",
+      heading2: "Heading 2",
+      heading3: "Heading 3",
+      descriptionText: "Description text",
+      menuText: "Menu text",
+      breadcrumbs: "Breadcrumbs",
+      sectionBackground: "Section background",
+      spaceName: "Space Name",
+      icons: "Icons",
+      selectedSpace: "Selected Space",
+      unselectedSpace: "Unselected space",
+      spaceNameText: "Space name text",
+      addButtonBackground: "Add button background",
+      addButtonIcon: "Add button icon",
+      selectPanelIcon: "Select panel icon",
+      openCloseMenuIcon: "Open/close menu panel icon",
+      moreIcon: "More icon",
+      settingsIcon: "Settings icon",
+      inactiveSpaceIndicator: "Inactive space indicator/icon",
+      activeSpaceIndicator: "Active space icon/indicator",
+      profileAvatar: "Profile avatar",
+
+      // Selection UI & toolbar section
+      toolbar: "Toolbar",
+      toolbarIcons: "Toolbar Icons",
+      selectionUI: "Selection UI",
+      selectionIcons: "Selection Icons",
+
+      // Input fields section
+      title: "Title",
+      placeholder: "Placeholder",
+      activeState: "Active state",
+      inactiveState: "Inactive state",
+      inputBackground: "Input background",
+      inputBorder: "Input border",
+      inputText: "Input text",
+      inputPlaceholder: "Input placeholder",
+
+      // Branding section
+      companyName: "Company name",
+      logo: "Logo",
+      logoColor: "Logo color",
+      accentColor: "Accent color",
 
       // Theme - Options
       showTabIcons: "Show Tab Icons",
@@ -301,26 +384,37 @@ const resources = {
       changeDate: "Change Date",
       addItemsToStartAnnotating: "Add items to start annotating.",
       fetchingAnnotationData: "Fetching Annotation Data",
-      noteRangesOfChapterWillBeSkippedInSavingAnnotation: "Note: Ranges of chapter will be skipped in saving annoation. Please remove them if you have any.",
+      noteRangesOfChapterWillBeSkippedInSavingAnnotation:
+        "Note: Ranges of chapter will be skipped in saving annoation. Please remove them if you have any.",
       editingAnnotationFor: "Editing Annotation For",
       noFilesUploaded: "No files uploaded",
-      publishSettingsDesc: "Your annotations will be available to everyone if public. If private only you will have access.",
+      publishSettingsDesc:
+        "Your annotations will be available to everyone if public. If private only you will have access.",
       embeddedItemsWillBeLost: "Embedded items will be lost.",
-      switchingToAnotherModeWillLoseTheEmbeddedItemsDoYouWantToContinue: "Switching to another mode will lose the embedded items. Do you want to continue?",
-      youAreInEditModeEditingANotationCannotEmbedItemsInsideTheAnnotation: "You are in edit mode. Editing a anotation cannot embed items inside the annotation.",
-      pleaseEmbedSomethingToSaveAnnotations: "Please embed something to save annotations!",
-      onlyVersesAndChaptersAreAllowedForTopLevelAnnotation: "Only Verses and Chapters are allowed for top-level annotation!",
-      someOfYourScripturesAreNotEmbedded: "Some of your scriptures are not embedded. Please embed or delete them!",
+      switchingToAnotherModeWillLoseTheEmbeddedItemsDoYouWantToContinue:
+        "Switching to another mode will lose the embedded items. Do you want to continue?",
+      youAreInEditModeEditingANotationCannotEmbedItemsInsideTheAnnotation:
+        "You are in edit mode. Editing a anotation cannot embed items inside the annotation.",
+      pleaseEmbedSomethingToSaveAnnotations:
+        "Please embed something to save annotations!",
+      onlyVersesAndChaptersAreAllowedForTopLevelAnnotation:
+        "Only Verses and Chapters are allowed for top-level annotation!",
+      someOfYourScripturesAreNotEmbedded:
+        "Some of your scriptures are not embedded. Please embed or delete them!",
       failedToSaveAnnotations: "Failed to save annotations",
       annotationsSavedSuccessfully: "Annotations saved successfully",
       errorUpdatingAnnotations: "Error updating annotations",
       failedToUpdateAnnotations: "Failed to update annotations",
-      cannotSaveEmptyAnnotation: "Cannot save empty annotation please use delete instead!",
-      youCannotUnlinkAttachmentsInAnnotationMode: "You cannot unlink attachments in annotation mode!",
-      cannotEmbedEmbeddedItem: "Cannot Embed the Embedded item! Content: {{embededItem}}. Please remove it before embeding!",
+      cannotSaveEmptyAnnotation:
+        "Cannot save empty annotation please use delete instead!",
+      youCannotUnlinkAttachmentsInAnnotationMode:
+        "You cannot unlink attachments in annotation mode!",
+      cannotEmbedEmbeddedItem:
+        "Cannot Embed the Embedded item! Content: {{embededItem}}. Please remove it before embeding!",
       failedToFetchAnnotations: "Failed to fetch annotations.",
       errorFetchingAnnotations: "Error fetching annotations",
-      cannotChangeWhileBeingInEditMode: "Cannot change while being in edit mode!",
+      cannotChangeWhileBeingInEditMode:
+        "Cannot change while being in edit mode!",
       invalidLinkFormat: "Invalid Link format!",
       selectAPlaylistToAnnotate: "Select A Playlist to annotate",
       dragDropOrClickToBrowse: "Drag drop or Click to browse",
@@ -333,14 +427,15 @@ const resources = {
       failedToUpload: "Failed to upload File!",
       fileUploadFailed: "File upload failed!",
       noFileUploaded: "No File Uploaded!",
-      exampleeg:"e.g.",
+      exampleeg: "e.g.",
       heading: "Heading",
       type: "Type",
       text: "Text",
       role: "Role",
       typeToAddCustomTitle: "(Optional) type to add a custom title",
       importJSONTooltip: "Import JSON File",
-      fileRejectedForNotBeingValidJSON: "{{count}} file(s) rejected for not being valid JSON Format.",
+      fileRejectedForNotBeingValidJSON:
+        "{{count}} file(s) rejected for not being valid JSON Format.",
       video: "Video",
       youtube: "YouTube",
       externalLink: "External Link",
@@ -356,18 +451,25 @@ const resources = {
       clickHereToGeneratePlaylist: "Click here to generate playlist.",
       pleaseFixDatesInWrongOrder: "Plese fix dates in wrong order.",
       pleaseFixRepeatingDates: "Please fix Repeating Dates.",
-      cannotEmbedEmbeddedItem: "Cannot Embed the Embedded item!. Please remove it before embeding!",
-      youCannotEmbedItemsIntoAttachmentItem: "You cannot embed items into attachment item.",
-      pleaseAddSomeItemsToSavePlaylist: "Please Add Some Items to save Playlist!",
+      cannotEmbedEmbeddedItem:
+        "Cannot Embed the Embedded item!. Please remove it before embeding!",
+      youCannotEmbedItemsIntoAttachmentItem:
+        "You cannot embed items into attachment item.",
+      pleaseAddSomeItemsToSavePlaylist:
+        "Please Add Some Items to save Playlist!",
       systemPrompt: "System Prompt",
       prompt: "Prompt",
-      annotationModeTooltip: "Annotation mode is the way to annotate the bible so you can see content while exploring other who have subscribed to you.",
-      playlistModeTooltip: "Playlist mode is the way to create a playlist of the bible so you can see content while exploring other who have subscribed to you.",
+      annotationModeTooltip:
+        "Annotation mode is the way to annotate the bible so you can see content while exploring other who have subscribed to you.",
+      playlistModeTooltip:
+        "Playlist mode is the way to create a playlist of the bible so you can see content while exploring other who have subscribed to you.",
       draft: "Draft",
       copyItems: "Copy Items",
       projectModeTooltip: "Project mode is awesome.",
-      copyItemsInstructions: "Click & Hold any Playlist to add it to Current playlist.",
-      copyItemInstructions: "Click & Hold any Playlist item to add that item to the Current playlist.",
+      copyItemsInstructions:
+        "Click & Hold any Playlist to add it to Current playlist.",
+      copyItemInstructions:
+        "Click & Hold any Playlist item to add that item to the Current playlist.",
       embed: "Embed",
       remove: "Remove",
       mergeMode: "Merge Mode",
@@ -383,11 +485,13 @@ const resources = {
       generate: "Generate",
       layers: "layers",
       removeAndSave: " Remove & Save",
-      noEmbdedItemsMsg: "Some of your item are not embedded. Layers Should have all Embeded Items.",
+      noEmbdedItemsMsg:
+        "Some of your item are not embedded. Layers Should have all Embeded Items.",
       annotationMode: "Annotation Mode",
       playlistMode: "Playlist Mode",
       projectMode: "Project Mode",
-      playlistSettingsTooltip: "Change playlist options below to create new kinds of lists.",
+      playlistSettingsTooltip:
+        "Change playlist options below to create new kinds of lists.",
       pleaseLoginToUseMoreFeatures: "Please login to use more features.",
       playlist: "Playlist",
       playlists: "Playlists",
@@ -929,7 +1033,8 @@ const resources = {
       viewOptions: "Opciones de vista",
       userNotLoggedIn: "User not logged in!",
       cannotLinkWithItself: "No se puede vincular con sí mismo!",
-      onlyHostCanAddItemsToQueue: "Solo el host puede agregar elementos a la cola.",
+      onlyHostCanAddItemsToQueue:
+        "Solo el host puede agregar elementos a la cola.",
       comingSoon: "Próximamente!",
       alreadyLinkedWithTheItem: "Ya está vinculado con el elemento!",
       pleaseEnterAName: "Por favor ingrese un nombre!",
@@ -957,32 +1062,45 @@ const resources = {
       changeDate: "Cambiar fecha",
       addItemsToStartAnnotating: "Agregar elementos para empezar a anotar.",
       fetchingAnnotationData: "Obteniendo datos de anotación",
-      noteRangesOfChapterWillBeSkippedInSavingAnnotation: "Nota: Los rangos de capítulo se omitirán al guardar la anotación. Por favor, elimínalos si tiene alguno.",
+      noteRangesOfChapterWillBeSkippedInSavingAnnotation:
+        "Nota: Los rangos de capítulo se omitirán al guardar la anotación. Por favor, elimínalos si tiene alguno.",
       editingAnnotationFor: "Editando anotación para",
       noFilesUploaded: "No se subió ningún archivo!",
-      publishSettingsDesc: "Tus anotaciones estarán disponibles para todos si es pública. Si es privada, solo tú tendrás acceso.",
+      publishSettingsDesc:
+        "Tus anotaciones estarán disponibles para todos si es pública. Si es privada, solo tú tendrás acceso.",
       embeddedItemsWillBeLost: "Los elementos incrustados se perderán.",
-      switchingToAnotherModeWillLoseTheEmbeddedItemsDoYouWantToContinue: "Cambiar a otro modo perderá los elementos incrustados. ¿Deseas continuar?",
-      youAreInEditModeEditingANotationCannotEmbedItemsInsideTheAnnotation: "Estás en modo de edición. No se puede incrustar elementos dentro de la anotación.",
-      pleaseEmbedSomethingToSaveAnnotations: "Por favor incrusta algo para guardar anotaciones!",
-      onlyVersesAndChaptersAreAllowedForTopLevelAnnotation: "Solo Versos y Capítulos son permitidos para anotación de nivel superior!",
-      someOfYourScripturesAreNotEmbedded: "Algunas de tus escrituras no están incrustadas. Por favor incrusta o elimina ellas!",
+      switchingToAnotherModeWillLoseTheEmbeddedItemsDoYouWantToContinue:
+        "Cambiar a otro modo perderá los elementos incrustados. ¿Deseas continuar?",
+      youAreInEditModeEditingANotationCannotEmbedItemsInsideTheAnnotation:
+        "Estás en modo de edición. No se puede incrustar elementos dentro de la anotación.",
+      pleaseEmbedSomethingToSaveAnnotations:
+        "Por favor incrusta algo para guardar anotaciones!",
+      onlyVersesAndChaptersAreAllowedForTopLevelAnnotation:
+        "Solo Versos y Capítulos son permitidos para anotación de nivel superior!",
+      someOfYourScripturesAreNotEmbedded:
+        "Algunas de tus escrituras no están incrustadas. Por favor incrusta o elimina ellas!",
       failedToSaveAnnotations: "Error al guardar anotaciones",
       annotationsSavedSuccessfully: "Anotaciones guardadas exitosamente",
-      youCannotEmbedItemsIntoAttachmentItem: "No puedes incrustar elementos en un elemento de entretenimiento.",
+      youCannotEmbedItemsIntoAttachmentItem:
+        "No puedes incrustar elementos en un elemento de entretenimiento.",
       errorUpdatingAnnotations: "Error al actualizar anotaciones",
       failedToUpdateAnnotations: "Error al actualizar anotaciones",
-      cannotSaveEmptyAnnotation: "No se puede guardar la anotación vacía. Por favor, use eliminar en su lugar!",
-      youCannotUnlinkAttachmentsInAnnotationMode: "No puedes desvincular los archivos en modo de anotación!",
-      cannotEmbedEmbeddedItem: "No se puede incrustar el elemento incrustado!. Contenido: {{embededItem}}. Por favor elimínelo antes de incrustar!",
+      cannotSaveEmptyAnnotation:
+        "No se puede guardar la anotación vacía. Por favor, use eliminar en su lugar!",
+      youCannotUnlinkAttachmentsInAnnotationMode:
+        "No puedes desvincular los archivos en modo de anotación!",
+      cannotEmbedEmbeddedItem:
+        "No se puede incrustar el elemento incrustado!. Contenido: {{embededItem}}. Por favor elimínelo antes de incrustar!",
       failedToFetchAnnotations: "Error al obtener anotaciones.",
       errorFetchingAnnotations: "Error al obtener anotaciones",
-      cannotChangeWhileBeingInEditMode: "No se puede cambiar mientras está en modo de edición!",
+      cannotChangeWhileBeingInEditMode:
+        "No se puede cambiar mientras está en modo de edición!",
       invalidLinkFormat: "Formato de enlace inválido!",
       importJSON: "Importar JSON",
       selectAPlaylistToAnnotate: "Selecciona una lista para anotar",
       attachmentNameMissing: "Nombre de archivo faltante!",
-      recordSomethingToSaveRecording: "Registra algo para guardar la grabación!",
+      recordSomethingToSaveRecording:
+        "Registra algo para guardar la grabación!",
       UPLOAEDJSONERROR: "ERROR DE JSON CARGADO",
       infoType: "Imagen, .pdf, doc, .AUX etc",
       unknownDataType: "Tipo de datos desconocido",
@@ -991,13 +1109,14 @@ const resources = {
       fileUploadFailed: "Error al subir archivos!",
       heading: "Encabezado",
       noFileUploaded: "No se subió ningún archivo!",
-      exampleeg:"ej.",
+      exampleeg: "ej.",
       type: "Tipo",
       text: "Texto",
       role: "Rol",
       typeToAddCustomTitle: "(Opcional) escribe un título personalizado",
       importJSONTooltip: "Importar archivo JSON",
-      fileRejectedForNotBeingValidJSON: "{{count}} archivo(s) rechazado(s) por no ser un formato JSON válido.",
+      fileRejectedForNotBeingValidJSON:
+        "{{count}} archivo(s) rechazado(s) por no ser un formato JSON válido.",
       video: "Video",
       youtube: "YouTube",
       externalLink: "External Link",
@@ -1006,36 +1125,46 @@ const resources = {
       screen: "Pantalla",
       playlist: "Lista de reproducción",
       dropFilesHere: "Arrastra archivos aquí",
-      typeToAddScripture: "Escribe para agregar texto bíblico (ej. Gén 1, Ap 2:4)",
+      typeToAddScripture:
+        "Escribe para agregar texto bíblico (ej. Gén 1, Ap 2:4)",
       releaseToUploadFiles: "Libera para subir archivos",
       tagName: "Nombre de la etiqueta",
       addItemsBelow: "Agregar elementos abajo.",
       clickHereToGeneratePlaylist: "Haz clic aquí para generar lista.",
-      pleaseFixDatesInWrongOrder: "Por favor arregla las fechas en orden incorrecto.",
+      pleaseFixDatesInWrongOrder:
+        "Por favor arregla las fechas en orden incorrecto.",
       pleaseFixRepeatingDates: "Por favor arregla las fechas repetidas.",
-      cannotEmbedEmbeddedItem: "No se puede incrustar el elemento incrustado!. Por favor elimínelo antes de incrustar!",
-      youCannotEmbedItemsIntoAttachmentItem: "No puedes incrustar elementos en un elemento de entretenimiento.",
+      cannotEmbedEmbeddedItem:
+        "No se puede incrustar el elemento incrustado!. Por favor elimínelo antes de incrustar!",
+      youCannotEmbedItemsIntoAttachmentItem:
+        "No puedes incrustar elementos en un elemento de entretenimiento.",
       systemPrompt: "Indicación del sistema",
-      pleaseAddSomeItemsToSavePlaylist: "Por favor agrega algunos elementos para guardar la lista.",
+      pleaseAddSomeItemsToSavePlaylist:
+        "Por favor agrega algunos elementos para guardar la lista.",
       prompt: "Indicación",
       generationPrompt: "Indicación de generación:",
-      annotationModeTooltip: "El modo de anotación es la forma de anotar el bíblia para que puedas ver contenido mientras exploras otros que te han suscrito.",
-      playlistModeTooltip: "El modo de lista es la forma de crear una lista de reproducción del bíblia para que puedas ver contenido mientras exploras otros que te han suscrito.",
+      annotationModeTooltip:
+        "El modo de anotación es la forma de anotar el bíblia para que puedas ver contenido mientras exploras otros que te han suscrito.",
+      playlistModeTooltip:
+        "El modo de lista es la forma de crear una lista de reproducción del bíblia para que puedas ver contenido mientras exploras otros que te han suscrito.",
       draft: "Borrador",
       projectModeTooltip: "El modo de proyecto es increíble.",
       annotationMode: "Modo de anotación",
       playlistMode: "Modo de lista",
       projectMode: "Modo de proyecto",
       copyItems: "Copiar elementos",
-      copyItemsInstructions: "Mantén presionada cualquier lista para agregarla a la lista actual.",
-      copyItemInstructions: "Mantén presionado cualquier elemento para agregarlo a la lista actual.",
+      copyItemsInstructions:
+        "Mantén presionada cualquier lista para agregarla a la lista actual.",
+      copyItemInstructions:
+        "Mantén presionado cualquier elemento para agregarlo a la lista actual.",
       embed: "Incrustar",
       remove: "Eliminar",
       mergeMode: "Modo fusión",
       regenerationPrompt: "Indicación de regeneración:",
       describePlaylist: "Describe la lista que deseas crear.",
       describeSystemPrompt: "Describe tu indicación del sistema.",
-      systemPromptInfo: "Usa $text$ para usar tu indicación inicial como variable.",
+      systemPromptInfo:
+        "Usa $text$ para usar tu indicación inicial como variable.",
       addMedia: "Agregar medios",
       insertDate: "Insertar fecha",
       searchAndAdd: "Buscar y agregar",
@@ -1044,11 +1173,14 @@ const resources = {
       layers: "capas",
       removeAndSave: "Eliminar y guardar",
       noEmbeddedItemsFound: "No se encontraron elementos incrustados.",
-      noEmbeddedItemsMsg: "Algunos de tus elementos no están incrustados. Las capas deben tener todos los elementos incrustados.",
+      noEmbeddedItemsMsg:
+        "Algunos de tus elementos no están incrustados. Las capas deben tener todos los elementos incrustados.",
       untitled: "[Sin título]",
-       nothingBookmarked: "Nada marcado.",
-      playlistSettingsTooltip: "Cambia las opciones de la lista para crear nuevos tipos de listas.",
-      pleaseLoginToUseMoreFeatures: "Por favor inicia sesión para usar más funciones.",
+      nothingBookmarked: "Nada marcado.",
+      playlistSettingsTooltip:
+        "Cambia las opciones de la lista para crear nuevos tipos de listas.",
+      pleaseLoginToUseMoreFeatures:
+        "Por favor inicia sesión para usar más funciones.",
       playlists: "Listas de reproducción",
       sharedPlaylists: "Listas compartidas",
       editingPlaylists: "Editando listas",
@@ -1618,24 +1750,35 @@ const resources = {
       linkedItems: "عناصر مرتبطة",
       addItemsToStartAnnotating: "إضافة العناصر لبدء التعليقات التوضيحية.",
       fetchingAnnotationData: "إنتظار تحميل بيانات التعليقات التوضيحية",
-      noteRangesOfChapterWillBeSkippedInSavingAnnotation: "ملاحظة: سيتم تخطي النطاقات الخاصة بالفصول عند حفظ التعليقات التوضيحية. يرجى إزالتها إذا كان لديك أي.",
+      noteRangesOfChapterWillBeSkippedInSavingAnnotation:
+        "ملاحظة: سيتم تخطي النطاقات الخاصة بالفصول عند حفظ التعليقات التوضيحية. يرجى إزالتها إذا كان لديك أي.",
       editingAnnotationFor: "تحرير التعليقات التوضيحية ل",
       importJSON: "استيراد JSON",
-      publishSettingsDesc: "ستكون ملاحظاتك متاحة للجميع إذا كانت عامة. إذا كانت خاصة، ستتمكن أنت فقط من الوصول.",
+      publishSettingsDesc:
+        "ستكون ملاحظاتك متاحة للجميع إذا كانت عامة. إذا كانت خاصة، ستتمكن أنت فقط من الوصول.",
       embeddedItemsWillBeLost: "سيتم فقد العناصر المضمنة.",
-      switchingToAnotherModeWillLoseTheEmbeddedItemsDoYouWantToContinue: "تبديل إلى وضع آخر سيفقد العناصر المضمنة. هل تريد الاستمرار؟",
-      youCannotEmbedItemsIntoAttachmentItem: "لا يمكنك تضمين العناصر في عنصر الترفيه.",
-      youAreInEditModeEditingANotationCannotEmbedItemsInsideTheAnnotation: "أنت في وضع التحرير. لا يمكن تضمين العناصر داخل التعليقات التوضيحية.",
+      switchingToAnotherModeWillLoseTheEmbeddedItemsDoYouWantToContinue:
+        "تبديل إلى وضع آخر سيفقد العناصر المضمنة. هل تريد الاستمرار؟",
+      youCannotEmbedItemsIntoAttachmentItem:
+        "لا يمكنك تضمين العناصر في عنصر الترفيه.",
+      youAreInEditModeEditingANotationCannotEmbedItemsInsideTheAnnotation:
+        "أنت في وضع التحرير. لا يمكن تضمين العناصر داخل التعليقات التوضيحية.",
       failedToSaveAnnotations: "خطأ في حفظ التعليقات التوضيحية",
-      pleaseEmbedSomethingToSaveAnnotations: "يرجى تضمين شيء لحفظ التعليقات التوضيحية!",
-      onlyVersesAndChaptersAreAllowedForTopLevelAnnotation: "يسمح فقط بالأصول والفصول للتعليقات التوضيحية من المستوى العلوي!",
-      someOfYourScripturesAreNotEmbedded: "بعض الأصول الخاصة بك غير مضمنة. يرجى تضمينها أو حذفها!",
+      pleaseEmbedSomethingToSaveAnnotations:
+        "يرجى تضمين شيء لحفظ التعليقات التوضيحية!",
+      onlyVersesAndChaptersAreAllowedForTopLevelAnnotation:
+        "يسمح فقط بالأصول والفصول للتعليقات التوضيحية من المستوى العلوي!",
+      someOfYourScripturesAreNotEmbedded:
+        "بعض الأصول الخاصة بك غير مضمنة. يرجى تضمينها أو حذفها!",
       annotationsSavedSuccessfully: "تم حفظ التعليقات التوضيحية بنجاح",
       errorUpdatingAnnotations: "خطأ في تحديث التعليقات التوضيحية",
       failedToUpdateAnnotations: "خطأ في تحديث التعليقات التوضيحية",
-      cannotSaveEmptyAnnotation: "لا يمكن حفظ التعليقات التوضيحية الفارغة. يرجى استخدام الحذف بدلاً من ذلك!",
-      youCannotUnlinkAttachmentsInAnnotationMode: "لا يمكنك تفكيك المرفقات في وضع التعليقات التوضيحية!",
-      cannotEmbedEmbeddedItem: "لا يمكن تضمين عنصر مُضمَّن بالفعل! المحتوى: {{embededItem}}. يرجى إزالته قبل التضمين.",
+      cannotSaveEmptyAnnotation:
+        "لا يمكن حفظ التعليقات التوضيحية الفارغة. يرجى استخدام الحذف بدلاً من ذلك!",
+      youCannotUnlinkAttachmentsInAnnotationMode:
+        "لا يمكنك تفكيك المرفقات في وضع التعليقات التوضيحية!",
+      cannotEmbedEmbeddedItem:
+        "لا يمكن تضمين عنصر مُضمَّن بالفعل! المحتوى: {{embededItem}}. يرجى إزالته قبل التضمين.",
       failedToFetchAnnotations: "خطأ في الحصول على التعليقات التوضيحية.",
       errorFetchingAnnotations: "خطأ في الحصول على التعليقات التوضيحية",
       cannotChangeWhileBeingInEditMode: "لا يمكنك تغيير الوضع أثناء التحرير!",
@@ -1653,13 +1796,14 @@ const resources = {
       heading: "عنوان",
       noFileUploaded: "لم يتم تحميل أي ملف!",
       type: "نوع",
-      exampleeg:"مثال",
+      exampleeg: "مثال",
       text: "نص",
       role: "دور",
       importJSONTooltip: "استيراد ملف JSON",
       typeToAddCustomTitle: "(اختياري) اكتب اسماً مخصصاً",
       playlist: "قائمة التشغيل",
-      fileRejectedForNotBeingValidJSON: "{{count}} ملف(s) رفض(ت) لأنه(ه)ا ليس من التنسيق الصالح JSON.",
+      fileRejectedForNotBeingValidJSON:
+        "{{count}} ملف(s) رفض(ت) لأنه(ه)ا ليس من التنسيق الصالح JSON.",
       video: "فيديو",
       youtube: "يوتيوب",
       externalLink: "رابط خارجي",
@@ -1675,21 +1819,26 @@ const resources = {
       pleaseFixDatesInWrongOrder: "يرجى إصلاح التواريخ في الترتيب الخاطئ.",
       pleaseFixRepeatingDates: "يرجى إصلاح التواريخ المتكررة.",
       cannotEmbedEmbeddedItem: "لا يمكنك تضمين العناصر في عنصر الترفيه.",
-      youCannotEmbedItemsIntoAttachmentItem: "لا يمكنك تضمين العناصر في عنصر الترفيه.",
+      youCannotEmbedItemsIntoAttachmentItem:
+        "لا يمكنك تضمين العناصر في عنصر الترفيه.",
       prompt: "موجه",
       pleaseAddSomeItemsToSavePlaylist: "يرجى إضافة بعض العناصر لحفظ القائمة.",
       systemPrompt: "موجه النظام",
       generationPrompt: "موجه الإنشاء:",
-      annotationModeTooltip: "وضع التعليق هو الطريقة التي يتم بها تعليق الكتاب المقرأ لذلك يمكنك أن ترى المحتوى بينما تستكشف أشخاص آخرين الذين قد سجلوا عليك.",
-      playlistModeTooltip: "وضع القائمة هو الطريقة التي يتم بها إنشاء قائمة التشغيل من الكتاب المقرأ لذلك يمكنك أن ترى المحتوى بينما تستكشف أشخاص آخرين الذين قد سجلوا عليك.",
+      annotationModeTooltip:
+        "وضع التعليق هو الطريقة التي يتم بها تعليق الكتاب المقرأ لذلك يمكنك أن ترى المحتوى بينما تستكشف أشخاص آخرين الذين قد سجلوا عليك.",
+      playlistModeTooltip:
+        "وضع القائمة هو الطريقة التي يتم بها إنشاء قائمة التشغيل من الكتاب المقرأ لذلك يمكنك أن ترى المحتوى بينما تستكشف أشخاص آخرين الذين قد سجلوا عليك.",
       copyItems: "نسخ العناصر",
       draft: "رسم",
       annotationMode: "وضع التعليق",
       projectModeTooltip: "وضع المشروع مذهل.",
       playlistMode: "وضع القائمة",
       projectMode: "وضع المشروع",
-      copyItemsInstructions: "اضغط مع الاستمرار على أي قائمة لإضافتها إلى القائمة الحالية.",
-      copyItemInstructions: "اضغط مع الاستمرار على أي عنصر لإضافته إلى القائمة الحالية.",
+      copyItemsInstructions:
+        "اضغط مع الاستمرار على أي قائمة لإضافتها إلى القائمة الحالية.",
+      copyItemInstructions:
+        "اضغط مع الاستمرار على أي عنصر لإضافته إلى القائمة الحالية.",
       embed: "تضمين",
       remove: "إزالة",
       mergeMode: "وضع الدمج",
@@ -1705,11 +1854,13 @@ const resources = {
       layers: "طبقات",
       removeAndSave: "إزالة وحفظ",
       noEmbdedItemsFound: "لم يتم العثور على عناصر مضمنة.",
-      noEmbdedItemsMsg: "بعض عناصرك غير مضمنة. يجب أن تحتوي الطبقات على جميع العناصر المضمنة.",
+      noEmbdedItemsMsg:
+        "بعض عناصرك غير مضمنة. يجب أن تحتوي الطبقات على جميع العناصر المضمنة.",
       untitled: "[بدون عنوان]",
       nothingBookmarked: "لا توجد عناصر محفوظة.",
       playlistSettingsTooltip: "اختر خيارات القائمة التي تريد إنشاءها.",
-      pleaseLoginToUseMoreFeatures: "يرجى تسجيل الدخول لاستخدام الميزات الأخرى.",
+      pleaseLoginToUseMoreFeatures:
+        "يرجى تسجيل الدخول لاستخدام الميزات الأخرى.",
       playlists: "قوائم التشغيل",
       sharedPlaylists: "قوائم مشتركة",
       editingPlaylists: "تحرير القوائم",
@@ -2238,10 +2389,11 @@ const resources = {
       turnOff: "बंद करें",
       turnOn: "चालू करें",
       viewOptionsInfo: "दृश्य विकल्प को नियंत्रित करें",
-      onlyHostCanAddItemsToQueue: "केवल मूल आयताकार को आइटम्स को कूद में जोड़ सकता है।",
+      onlyHostCanAddItemsToQueue:
+        "केवल मूल आयताकार को आइटम्स को कूद में जोड़ सकता है।",
       comingSoon: "जल्द हो रहा है!",
       editDate: "तारीख संपादित कर रहा है",
-      cannotLinkWithItself: "आप स्वयं से जोड़ नहीं सकते!",  
+      cannotLinkWithItself: "आप स्वयं से जोड़ नहीं सकते!",
       alreadyLinkedWithTheItem: "आइटम से पहले जोड़ा गया है!",
       pleaseEnterAName: "कृपया एक नाम दर्ज करें!",
       nameAlreadyPresent: "नाम पहले से मौजूद है!",
@@ -2268,26 +2420,38 @@ const resources = {
       addItemsToStartAnnotating: "आइटम्स जोड़ें टिप्पणी शुरू करने के लिए।",
       fetchingAnnotationData: "टिप्पणी डेटा लोड हो रहा है",
       editingAnnotationFor: "टिप्पणी के लिए संपादन कर रहा है",
-      noteRangesOfChapterWillBeSkippedInSavingAnnotation: "माला: अध्याय के दायरे सहेजने में छोड़ दिए जाएंगे। कृपया अगर आपके पास कोई है तो उन्हें हटा दें।",
+      noteRangesOfChapterWillBeSkippedInSavingAnnotation:
+        "माला: अध्याय के दायरे सहेजने में छोड़ दिए जाएंगे। कृपया अगर आपके पास कोई है तो उन्हें हटा दें।",
       playlist: "प्लेलिस्ट",
-      publishSettingsDesc: "आपकी टिप्पणियां सार्वजनिक होने पर सभी के लिए उपलब्ध होंगी. यदि खास हो, तो केवल आप ही पहुंच प्राप्त कर सकते हैं.",
+      publishSettingsDesc:
+        "आपकी टिप्पणियां सार्वजनिक होने पर सभी के लिए उपलब्ध होंगी. यदि खास हो, तो केवल आप ही पहुंच प्राप्त कर सकते हैं.",
       failedToSaveAnnotations: "टिप्पणियां सहेजने में विफल!",
       embeddedItemsWillBeLost: "एम्बेड आइटम खो जाएंगे.",
-      switchingToAnotherModeWillLoseTheEmbeddedItemsDoYouWantToContinue: "अन्य मोड पर जाने से एम्बेड आइटम खो जाएंगे. क्या आप जारी रखना चाहते हैं?",
-      youCannotEmbedItemsIntoAttachmentItem: "आप आइटम्स को एट्चिमेंट आइटम में एम्बेड नहीं कर सकते।",
-      youAreInEditModeEditingANotationCannotEmbedItemsInsideTheAnnotation: "आप संपादन मोड में हैं. एट्चिमेंट आइटम में आइटम्स को एम्बेड नहीं किया जा सकता!",
-      pleaseEmbedSomethingToSaveAnnotations: "कृपया कुछ डालें टिप्पणियां सहेजने के लिए!",
-      onlyVersesAndChaptersAreAllowedForTopLevelAnnotation: "केवल अध्याय और अध्याय को टिप्पणी के शीर्ष स्तर के लिए अनुमति दी गई है!",
-      someOfYourScripturesAreNotEmbedded: "आपके अध्यायों में कुछ अध्याय अनुमति दी गई है अध्याय को टिप्पणी के शीर्ष स्तर के लिए अनुमति दी गई है!",
+      switchingToAnotherModeWillLoseTheEmbeddedItemsDoYouWantToContinue:
+        "अन्य मोड पर जाने से एम्बेड आइटम खो जाएंगे. क्या आप जारी रखना चाहते हैं?",
+      youCannotEmbedItemsIntoAttachmentItem:
+        "आप आइटम्स को एट्चिमेंट आइटम में एम्बेड नहीं कर सकते।",
+      youAreInEditModeEditingANotationCannotEmbedItemsInsideTheAnnotation:
+        "आप संपादन मोड में हैं. एट्चिमेंट आइटम में आइटम्स को एम्बेड नहीं किया जा सकता!",
+      pleaseEmbedSomethingToSaveAnnotations:
+        "कृपया कुछ डालें टिप्पणियां सहेजने के लिए!",
+      onlyVersesAndChaptersAreAllowedForTopLevelAnnotation:
+        "केवल अध्याय और अध्याय को टिप्पणी के शीर्ष स्तर के लिए अनुमति दी गई है!",
+      someOfYourScripturesAreNotEmbedded:
+        "आपके अध्यायों में कुछ अध्याय अनुमति दी गई है अध्याय को टिप्पणी के शीर्ष स्तर के लिए अनुमति दी गई है!",
       annotationsSavedSuccessfully: "टिप्पणियां सफलतापूर्वक सहेजी गईं",
       errorUpdatingAnnotations: "टिप्पणियां अपडेट करने में त्रुटि",
       failedToUpdateAnnotations: "टिप्पणियां अपडेट करने में विफल!",
-      cannotSaveEmptyAnnotation: "टिप्पणियां खाली नहीं बचा सकते. कृपया हटाने का उपयोग करें!",
-      youCannotUnlinkAttachmentsInAnnotationMode: "आप टिप्पणी मोड में टिप्पणियां अनलिंक नहीं कर सकते!",
-      cannotEmbedEmbeddedItem: "पहले से एम्बेड किए गए आइटम को एम्बेड नहीं किया जा सकता! सामग्री: {{embededItem}}। कृपया एम्बेड करने से पहले इसे हटा दें।",
+      cannotSaveEmptyAnnotation:
+        "टिप्पणियां खाली नहीं बचा सकते. कृपया हटाने का उपयोग करें!",
+      youCannotUnlinkAttachmentsInAnnotationMode:
+        "आप टिप्पणी मोड में टिप्पणियां अनलिंक नहीं कर सकते!",
+      cannotEmbedEmbeddedItem:
+        "पहले से एम्बेड किए गए आइटम को एम्बेड नहीं किया जा सकता! सामग्री: {{embededItem}}। कृपया एम्बेड करने से पहले इसे हटा दें।",
       failedToFetchAnnotations: "टिप्पणियां प्राप्त करने में विफल!",
       errorFetchingAnnotations: "टिप्पणियां प्राप्त करने में त्रुटि",
-      cannotChangeWhileBeingInEditMode: "आप संपादन मोड में होने पर बदल सकते नहीं!",
+      cannotChangeWhileBeingInEditMode:
+        "आप संपादन मोड में होने पर बदल सकते नहीं!",
       invalidLinkFormat: "अवैध लिंक प्रारूप!",
       UPLOAEDJSONERROR: "JSON अपलोड त्रुटि",
       selectAPlaylistToAnnotate: "एक प्लेलिस्ट को टिप्पणी करने के लिए चुनें",
@@ -2301,12 +2465,13 @@ const resources = {
       heading: "शीर्षक",
       failedToUpload: "फ़ाइल अपलोड करने में विफल!",
       noFileUploaded: "कोई फ़ाइल अपलोड नहीं की गई!",
-      exampleeg:"जैसे",
+      exampleeg: "जैसे",
       type: "प्रकार",
       text: "पाठ",
       role: "भूमिका",
       typeToAddCustomTitle: "(वैकल्पिक) एक अनुकूल शीर्षक जोड़ने के लिटाइप करें",
-      fileRejectedForNotBeingValidJSON: "{{count}} फ़ाइल(s) अस्वीकृत कर दिया गया क्योंकि यह एक सही JSON प्रारूप नहीं है।",
+      fileRejectedForNotBeingValidJSON:
+        "{{count}} फ़ाइल(s) अस्वीकृत कर दिया गया क्योंकि यह एक सही JSON प्रारूप नहीं है।",
       video: "वीडियो",
       youtube: "यूट्यूब",
       externalLink: "बाहरी लिंक",
@@ -2323,29 +2488,37 @@ const resources = {
       clickHereToGeneratePlaylist: "जनरेट प्लेलिस्ट के लिए यहां क्लिक करें।",
       pleaseFixDatesInWrongOrder: "कृपया तारीखें गलत क्रम में ठीक करें।",
       pleaseFixRepeatingDates: "कृपया दोहराए गए तारीखों को ठीक करें।",
-      cannotEmbedEmbeddedItem: "आप आइटम्स को एट्चिमेंट आइटम में एम्बेड नहीं कर सकते।",
-      youCannotEmbedItemsIntoAttachmentItem: "आप आइटम्स को एट्चिमेंट आइटम में एम्बेड नहीं कर सकते।",
+      cannotEmbedEmbeddedItem:
+        "आप आइटम्स को एट्चिमेंट आइटम में एम्बेड नहीं कर सकते।",
+      youCannotEmbedItemsIntoAttachmentItem:
+        "आप आइटम्स को एट्चिमेंट आइटम में एम्बेड नहीं कर सकते।",
       systemPrompt: "सिस्टम प्रॉम्प्ट",
-      pleaseAddSomeItemsToSavePlaylist: "कृपया कुछ आइटम जोड़ें प्लेलिस्ट बनाने के लिए!",
+      pleaseAddSomeItemsToSavePlaylist:
+        "कृपया कुछ आइटम जोड़ें प्लेलिस्ट बनाने के लिए!",
       prompt: "प्रॉम्प्ट",
       generationPrompt: "जनरेट प्रॉम्प्ट:",
-      annotationModeTooltip: "टिप्पणी मोड बायबल को टिप्पणी करने का तरीका है ताकि आप अन्य व्यक्तियों के सदस्यों के साथ सामग्री देख सकें।",
-      playlistModeTooltip: "प्लेलिस्ट मोड बायबल को प्लेलिस्ट बनाने का तरीका है ताकि आप अन्य व्यक्तियों के सदस्यों के सामग्री देख सकें।",
+      annotationModeTooltip:
+        "टिप्पणी मोड बायबल को टिप्पणी करने का तरीका है ताकि आप अन्य व्यक्तियों के सदस्यों के साथ सामग्री देख सकें।",
+      playlistModeTooltip:
+        "प्लेलिस्ट मोड बायबल को प्लेलिस्ट बनाने का तरीका है ताकि आप अन्य व्यक्तियों के सदस्यों के सामग्री देख सकें।",
       annotationMode: "टिप्पणी मोड",
       projectModeTooltip: "प्रोजेक्ट मोड अद्भुत है।",
       draft: "ड्राफ्ट",
       playlistMode: "प्लेलिस्ट मोड",
       projectMode: "प्रोजेक्ट मोड",
       copyItems: "आइटम्स कॉपी करें",
-      copyItemsInstructions: "वर्तमान प्लेलिस्ट में जोड़ने के लिए किसी भी प्लेलिस्ट को दबाए रखें।",
-      copyItemInstructions: "वर्तमान प्लेलिस्ट में जोड़ने के लिए किसी भी आइटम को दबाए रखें।",
+      copyItemsInstructions:
+        "वर्तमान प्लेलिस्ट में जोड़ने के लिए किसी भी प्लेलिस्ट को दबाए रखें।",
+      copyItemInstructions:
+        "वर्तमान प्लेलिस्ट में जोड़ने के लिए किसी भी आइटम को दबाए रखें।",
       embed: "एम्बेड करें",
       remove: "हटाएं",
       mergeMode: "मर्ज मोड",
       regenerationPrompt: "पुनर्जनन प्रॉम्प्ट:",
       describePlaylist: "आप जो प्लेलिस्ट बनाना चाहते हैं उसका वर्णन करें।",
       describeSystemPrompt: "अपना सिस्टम प्रॉम्प्ट वर्णित करें।",
-      systemPromptInfo: "अपने प्रारंभिक प्रॉम्प्ट को वेरिएबल के रूप में उपयोग करने के लिए $text$ का उपयोग करें।",
+      systemPromptInfo:
+        "अपने प्रारंभिक प्रॉम्प्ट को वेरिएबल के रूप में उपयोग करने के लिए $text$ का उपयोग करें।",
       addMedia: "मीडिया जोड़ें",
       insertDate: "तारीख डालें",
       searchAndAdd: "खोजें और जोड़ें",
@@ -2354,9 +2527,12 @@ const resources = {
       layers: "लेयर्स",
       removeAndSave: "हटाएं और सहेजें",
       noEmbdedItemsFound: "एम्बेडेड आइटम्स नहीं मिले",
-      noEmbdedItemsMsg: "आपके कुछ आइटम्स एम्बेडेड नहीं हैं। परतों में सभी एम्बेडेड आइटम्स होने चाहिए।",
-      playlistSettingsTooltip: "प्लेलिस्ट विकल्पों को नीचे बदलकर नए प्रकार की सूचियां बनाएं।",
-      pleaseLoginToUseMoreFeatures: "कृपया लॉगिन करें अधिक सुविधाओं का उपयोग करने के लिए।",
+      noEmbdedItemsMsg:
+        "आपके कुछ आइटम्स एम्बेडेड नहीं हैं। परतों में सभी एम्बेडेड आइटम्स होने चाहिए।",
+      playlistSettingsTooltip:
+        "प्लेलिस्ट विकल्पों को नीचे बदलकर नए प्रकार की सूचियां बनाएं।",
+      pleaseLoginToUseMoreFeatures:
+        "कृपया लॉगिन करें अधिक सुविधाओं का उपयोग करने के लिए।",
       playlists: "प्लेलिस्ट्स",
       untitled: "[शीर्षकहीन]",
       nothingBookmarked: "कुछ भी बुकमार्क नहीं किया गया।",

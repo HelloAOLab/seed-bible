@@ -207,12 +207,11 @@ describe("navigate", () => {
       .locator('div.toolbar-item-wrapper[title="Books"] > button')
       .click({});
     await page.locator(".sidebar-translation-selector").click();
-    await page.locator(".translation-language:nth-child(1)").click();
-    // i wanna click sidebar-translation-options 5th child which is a div
-    await page
-      .locator(".sidebar-translation-options > div:nth-child(5)")
-      .click();
-
+    await page.waitForSelector(".language-list");
+    await page.locator(".language-list > div:nth-child(1)").click();
+    await delay(100);
+    await page.locator(".language-list > div:nth-child(5)").click();
+    await delay(100);
     await page.locator(".translation-option:nth-child(1)").click();
 
     await delay(1000);

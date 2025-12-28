@@ -1,6 +1,6 @@
 calendar {
   font-size: 14px;
-  font-family: Satoshi;
+   font-family: "Inter", sans-serif;
   padding: 10px;
   width: 100%;
   background-color: white;
@@ -11,15 +11,12 @@ calendar {
 .calendar-wrapper {
   overflow: auto;
 }
+.fc-prev-button .fc-icon,
+.fc-next-button .fc-icon {
+  font-weight: 900 !important;   /* increases thickness */
+  font-size: 16px;              /* optional: bigger arrow */
+}
 
-/*.fc-multimonth .hide-events,
-.fc-multimonth .fc-daygrid-day-events,
-.fc-multimonth .fc-daygrid-event-harness,
-.fc-multimonth .fc-daygrid-event,
-.fc-multimonth .fc-daygrid-dot-event,
-.fc-multimonth .fc-daygrid-more-link {
-  display: none !important;
-}*/
 
 .small-view .fc-daygrid-day-events {
   flex-direction: row;
@@ -88,6 +85,7 @@ calendar {
   border-right: none;
 }
 
+
 .fc-theme-standard .fc-scrollgrid-section-header th {
   border-left: none !important;
   border-right: none !important;
@@ -109,12 +107,16 @@ calendar {
   border-left: none !important;
 }
 
-.fc-scrollgrid .fc-col-header {
-  border-left: none !important;
+
+/* Apply ONLY when td/th does NOT already have a border */
+.fc-scrollgrid-section-body td:not([style*="border-left"]),
+.fc-scrollgrid-section-body th:not([style*="border-left"]) {
+  border-left: 1px solid #ddd;
 }
-.fc-scrollgrid-section-body .fc-scrollgrid-sync-inner {
-  border-left: 1px solid #ddd !important; /* or your default color */
+.fc-scrollgrid {
+  border-left: 1px solid #ddd !important;
 }
+
 .fc-scrollgrid-section-header .fc-col-header,
 .fc-scrollgrid-section-header .fc-col-header-cell,
 .fc-scrollgrid-section-header .fc-scrollgrid-sync-inner {
@@ -143,6 +145,33 @@ calendar {
 }
 .fc-header-toolbar button:not(:last-child) {
   margin-right: 10px;
+}
+.fc .fc-day-today .fc-daygrid-day-frame{
+  background-color: #ECF5FF;
+  margin-left: 0;
+}
+.fc .fc-daygrid-day-frame{
+  padding: 6px;
+ 
+}
+.fc .fc-multimonth .fc-daygrid-day-frame{
+  padding: 0;
+}
+
+.fc .fc-daygrid-day-top {
+    display: flex;
+    flex-direction: row;
+    
+}
+.fc .fc-daygrid-day-number{
+  
+  font-weight: 400;
+  font-family: "Inter", sans-serif;
+  
+  
+}
+.fc .fc-multimonth .fc-daygrid-day-number{
+  font-size: 8px;
 }
 
 .fc-multimonth-view .fc-daygrid-more-link {

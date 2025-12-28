@@ -7,6 +7,7 @@ import {
   CoffeBeanIcon,
 } from "app.components.phosphoricons";
 
+import TranslationModal from "introduction.searchBar.TranslationModal";
 const {
   useState,
   useEffect,
@@ -86,6 +87,7 @@ const thePage = getBot("system", "app.components");
 
 const SearchBar = () => {
   const [query, setQuery] = useState("");
+  const [languageQuery, setLanguageQuery] = useState("");
   const inputRef = useRef(null);
   const [onlineUsers, setOnlineUsers] = useState(null);
   const [orientation, setOrientation] = useState(
@@ -246,9 +248,9 @@ const SearchBar = () => {
   }, [selectedTestament, booksData, query, handleNameMatch, orientation]);
 
   const filteredApiTranslations = useMemo(() => {
-    if (query !== "") {
+    if (languageQuery !== "") {
       let translations = {};
-      let lowercaseQuery = query.toLowerCase();
+      let lowercaseQuery = languageQuery.toLowerCase();
       Object.entries(apiTranslations)
         .slice(0, allowedTranslationLimit)
         .forEach(([key, value]) => {
@@ -294,7 +296,12 @@ const SearchBar = () => {
         })
         .slice(0, allowedTranslationLimit);
     }
-  }, [apiTranslations, query, allowedTranslationLimit, selectedTranslation]);
+  }, [
+    apiTranslations,
+    languageQuery,
+    allowedTranslationLimit,
+    selectedTranslation,
+  ]);
 
   const getUrlUpToKeyword = useCallback((link, keyword) => {
     try {
@@ -889,7 +896,7 @@ const SearchBar = () => {
   }, []);
 
   useEffect(() => {
-    setQuery("");
+    setLanguageQuery("");
   }, [selectingTranslation]);
 
   // Use State of Element
@@ -932,11 +939,7 @@ const SearchBar = () => {
               </span>
               <input
                 type="text"
-                placeholder={
-                  selectingTranslation
-                    ? "Search Translation..."
-                    : "Seach Book..."
-                }
+                placeholder="Seach Book..."
                 value={query}
                 ref={inputRef}
                 onInput={(e) => {
@@ -949,55 +952,33 @@ const SearchBar = () => {
                 }}
               />
             </div>
-            {!selectingTranslation && (
-              <div className="dropdown">
-                <select
-                  value={selectedTestament}
-                  onChange={(e) => setSelectedTestament(Number(e.target.value))}
-                  className="dropdown-select"
-                >
-                  <option value={2} className="dropdown-option">
-                    All Books
+            <div className="dropdown">
+              <select
+                value={selectedTestament}
+                onChange={(e) => setSelectedTestament(Number(e.target.value))}
+                className="dropdown-select"
+              >
+                <option value={2} className="dropdown-option">
+                  All Books
+                </option>
+                <option value={0} className="dropdown-option">
+                  {windowSize > 750 ? "Old Testament" : "OT"}
+                </option>
+                <option value={1} className="dropdown-option">
+                  {windowSize > 750 ? "New Testament" : "NT"}
+                </option>
+                {apocryphaAvailable && (
+                  <option value={3} className="dropdown-option">
+                    Apocrypha
                   </option>
-                  <option value={0} className="dropdown-option">
-                    {windowSize > 750 ? "Old Testament" : "OT"}
-                  </option>
-                  <option value={1} className="dropdown-option">
-                    {windowSize > 750 ? "New Testament" : "NT"}
-                  </option>
-                  {apocryphaAvailable && (
-                    <option value={3} className="dropdown-option">
-                      Apocrypha
-                    </option>
-                  )}
-                </select>
-              </div>
-            )}
-            {selectingTranslation && (
-              <div className="dropdown">
-                <select
-                  value={String(showAllLanguages)}
-                  onChange={(e) =>
-                    e.target.value === "true"
-                      ? setShowAllLanguages(true)
-                      : setShowAllLanguages(false)
-                  }
-                  className="dropdown-select"
-                >
-                  <option value="false" className="dropdown-option">
-                    {windowSize > 750 ? "Default Languages" : "Default"}
-                  </option>
-                  <option value="true" className="dropdown-option">
-                    {windowSize > 750 ? "All Languages" : "All"}
-                  </option>
-                </select>
-              </div>
-            )}
+                )}
+              </select>
+            </div>
           </div>
         </span>
       </div>
       <div class="sidebar-results starterAnimation">
-        {!selectingTranslation && showCheck && (
+        {showCheck && (
           <div
             style={{
               marginBottom: "8px",
@@ -1050,128 +1031,33 @@ const SearchBar = () => {
             </div>
           </div>
         )}
-        {booksData &&
-          selectedTestamentData &&
-          !selectingTranslation &&
-          selectedTranslation && (
-            <SideBarBooks
-              onlineUsers={onlineUsers}
-              showCheck={!selectingTranslation && showCheck}
-              dontOpen={dontOpen}
-              selectedTranslation={selectedTranslation}
-              selectedTestament={selectedTestament}
-              booksData={selectedTestamentData}
-              focusOnBook={focusOnBook}
-              sortBooksByTestament={sortBooksByTestament}
-              windowSize={windowSize}
-            />
-          )}
+        {booksData && selectedTestamentData && selectedTranslation && (
+          <SideBarBooks
+            onlineUsers={onlineUsers}
+            showCheck={showCheck}
+            dontOpen={dontOpen}
+            selectedTranslation={selectedTranslation}
+            selectedTestament={selectedTestament}
+            booksData={selectedTestamentData}
+            focusOnBook={focusOnBook}
+            sortBooksByTestament={sortBooksByTestament}
+            windowSize={windowSize}
+          />
+        )}
         {selectingTranslation && (
-          <div
-            class="sidebar-translation-options"
-            style={{ paddingBottom: showCustomTranslation ? "200px" : "36px" }}
-          >
-            {filteredApiTranslations &&
-              filteredApiTranslations?.length > 0 &&
-              filteredApiTranslations.map(([key, value]) => {
-                return (
-                  <NewTransOptions
-                    translationName={key}
-                    translations={value}
-                    selectedTranslation={selectedTranslation}
-                    setSelectedTranslation={setSelectedTranslation}
-                    setSelectingTranslation={setSelectingTranslation}
-                  />
-                );
-              })}
-            {allowedTranslationLimit < Object.entries(apiTranslations).length &&
-              filteredApiTranslations?.length > 49 && (
-                <span
-                  onClick={() =>
-                    setAllowedTranslationLimit(allowedTranslationLimit + 50)
-                  }
-                  style={{
-                    transition: "transform 0.3s",
-                    opacity: 0.8,
-                    width: "100%",
-                    display: "flex",
-                    justifyContent: "center",
-                    fontSize: "36px",
-                  }}
-                  class={`material-symbols-outlined`}
-                >
-                  expand_more
-                </span>
-              )}
-          </div>
+          <TranslationModal
+            filteredApiTranslations={filteredApiTranslations}
+            selectedTranslation={selectedTranslation}
+            setSelectedTranslation={setSelectedTranslation}
+            setSelectingTranslation={setSelectingTranslation}
+            languageQuery={languageQuery}
+            setLanguageQuery={setLanguageQuery}
+            handleTranslationAddition={handleTranslationAddition}
+            showCustomTranslation={showCustomTranslation}
+            setShowCustomTranslation={setShowCustomTranslation}
+          />
         )}
       </div>
-      {selectingTranslation && (
-        <div
-          class="sidebar-input-container custom-translation-container-main"
-          style={{ bottom: "10px" }}
-        >
-          <div
-            class="custom-translation-header"
-            onClick={() => {
-              setShowCustomTranslation(!showCustomTranslation);
-            }}
-          >
-            <span>Custom Translations</span>
-            <span
-              style={{
-                transition: "0.5s linear all",
-                transform: showCustomTranslation
-                  ? "rotateZ(45deg)"
-                  : "rotateZ(0deg)",
-                cursor: "pointer",
-              }}
-              class="material-symbols-outlined"
-            >
-              add
-            </span>
-          </div>
-          {showCustomTranslation && (
-            <CustomTranslation
-              handleTranslationAddition={handleTranslationAddition}
-            />
-          )}
-        </div>
-      )}
-      {false && (
-        <div
-          onClick={() => {
-            setOpenSearchBar(false);
-            setSearchBarFocused(true);
-            inputRef.current.focus();
-          }}
-          style={{ opacity: 0 }}
-          class={`${openSearchBar ? "open-searchbar starterAnimation" : query.length > 0 ? "open-sidebar-input-container starterAnimation" : "sidebar-input-container starterAnimation"}`}
-        >
-          <div class="box">
-            <input
-              type="text"
-              class="input"
-              value={query}
-              ref={inputRef}
-              onInput={(e) => {
-                setQuery(e.target.value);
-              }}
-              onKeyDown={(e) => {
-                if (e.key === "Enter" || e.keyCode === 13) {
-                  handleEnter();
-                }
-              }}
-              placeholder={selectingTranslation ? "Translation" : "Book name"}
-              onBlur={() => {
-                setOpenSearchBar(false);
-                setSearchBarFocused(false);
-              }}
-            />
-            <i class="material-symbols-outlined">search</i>
-          </div>
-        </div>
-      )}
     </>
   );
 };

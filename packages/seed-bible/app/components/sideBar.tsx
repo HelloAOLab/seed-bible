@@ -1283,6 +1283,7 @@ function SideBar() {
                     }
                   }}
                   className="material-symbols-outlined"
+                  style={{ color: "var(--openCloseMenuIcon, var(--text1))" }}
                 >
                   menu_open
                 </span>
@@ -1305,6 +1306,7 @@ function SideBar() {
                 <span
                   style={{
                     paddingTop: customScreens?.value >= 2 ? "3px" : "0px",
+                    color: "var(--selectPanelIcon, var(--text1))",
                   }}
                   onContextMenu={(e) => {
                     e.preventDefault();
@@ -1356,6 +1358,7 @@ function SideBar() {
                     openPopupSettings(MenuOptions);
                   }}
                   className="material-symbols-outlined PageOptionsButton"
+                  style={{ color: "var(--moreIcon, var(--text1))" }}
                 >
                   more_vert
                 </span>
@@ -1671,7 +1674,10 @@ export const SpaceUI = () => {
           {!collapsed ? (
             <>
               <span
-                style={{ cursor: "pointer" }}
+                style={{
+                  cursor: "pointer",
+                  color: "var(--settingsIcon, var(--text1))",
+                }}
                 onClick={() => setSideBarMode("settings")}
                 className="material-symbols-outlined"
               >
