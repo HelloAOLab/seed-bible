@@ -55,10 +55,6 @@ export function SideBarProvider({ children }) {
   // Change language function
   const changeLanguage = async (lng: string) => {
     await changeLang(lng);
-    // Update document direction for RTL languages
-    const langConfig = availableLanguages.find((l) => l.code === lng);
-    document.documentElement.dir = langConfig?.rtl ? "rtl" : "ltr";
-    document.documentElement.lang = lng;
     // Force re-render by updating state AFTER i18next has changed
     setLanguage(lng);
     setLangVersion((v) => v + 1);

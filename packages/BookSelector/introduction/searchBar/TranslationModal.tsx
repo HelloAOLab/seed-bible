@@ -1,20 +1,38 @@
 import { ShareIcon, TickIcon } from "introduction.searchBar.Icons";
+import type { TranslationInterface } from "introduction.searchBar.Interfaces";
+import { changeLanguage, getTranslations } from "app.hooks.i18n";
 
 const { useState, useEffect, useMemo } = os.appHooks;
 
 const ModalCSS = thisBot.tags["TranslationModal.css"];
 
-const TranslationModal = ({
-  languageQuery,
-  setLanguageQuery,
-  filteredApiTranslations,
-  selectedTranslation,
-  setSelectedTranslation,
-  setSelectingTranslation,
-  handleTranslationAddition,
-  showCustomTranslation,
-  setShowCustomTranslation,
+const TranslationModal = (props: {
+  languageQuery: string;
+  setLanguageQuery: (value: string) => void;
+  filteredApiTranslations: Array<[string, any]>;
+  selectedTranslation: TranslationInterface;
+  setSelectedTranslation: (translation: TranslationInterface) => void;
+  setSelectingTranslation: (value: boolean) => void;
+  handleTranslationAddition: (options: {
+    type: string;
+    value: string;
+    setInputValue: (value: string) => void;
+  }) => void;
+  showCustomTranslation: boolean;
+  setShowCustomTranslation: (value: boolean) => void;
 }) => {
+  const {
+    languageQuery,
+    setLanguageQuery,
+    filteredApiTranslations,
+    selectedTranslation,
+    setSelectedTranslation,
+    setSelectingTranslation,
+    handleTranslationAddition,
+    showCustomTranslation,
+    setShowCustomTranslation,
+  } = props;
+  const systemTranslation: { [key: string]: string } = getTranslations();
   const LanguageList = useMemo(() => {
     return (
       <div className="language-list">
@@ -52,7 +70,9 @@ const TranslationModal = ({
             </span>
             <input
               type="text"
-              placeholder="Seach Translation..."
+              placeholder={
+                systemTranslation["searchTranslation"] || "Search Translation"
+              }
               value={languageQuery}
               onChange={(e) => setLanguageQuery(e.target.value)}
             />
@@ -65,7 +85,10 @@ const TranslationModal = ({
                 setShowCustomTranslation(!showCustomTranslation);
               }}
             >
-              <span>Custom Translations</span>
+              <span>
+                {systemTranslation["customTranslations"] ||
+                  "Custom Translations"}
+              </span>
               <span
                 style={{
                   transition: "0.5s linear all",
@@ -91,18 +114,36 @@ const TranslationModal = ({
   );
 };
 
-const LanguageComponent = ({
-  language,
-  translationArray,
-  selectedTranslation,
-  setSelectedTranslation,
-  setSelectingTranslation,
-  filteredApiTranslations,
+const LanguageComponent = (props: {
+  language: string;
+  translationArray: any;
+  selectedTranslation: TranslationInterface;
+  setSelectedTranslation: (translation: TranslationInterface) => void;
+  setSelectingTranslation: (value: boolean) => void;
+  filteredApiTranslations: Array<[string, any]>;
 }) => {
+  const {
+    language,
+    translationArray,
+    selectedTranslation,
+    setSelectedTranslation,
+    setSelectingTranslation,
+    filteredApiTranslations,
+  } = props;
   const [show, setShow] = useState(false);
 
-  const shareTranslatation = async ({ translation }) => {
-    let translationUrl = `https://ao.bot/?pattern=${configBot.tags.pattern}&bios=local%20inst&translationId=${translation.id}`;
+  const translationMap: Record<string, string> = {
+    eng: "en",
+    spa: "es",
+    arb: "ar",
+    hin: "hi",
+  };
+
+  const shareTranslatation = async (props: {
+    translation: TranslationInterface;
+  }) => {
+    const { translation } = props;
+    const translationUrl = `https://ao.bot/?pattern=${configBot.tags.pattern}&bios=local%20inst&translationId=${translation.id}`;
     os.setClipboard(translationUrl);
     os.toast("Copied translation share code");
   };
@@ -146,7 +187,7 @@ const LanguageComponent = ({
       {show && (
         <>
           <div style={{ margin: "5px 5px" }}>
-            {Object.entries(translationArray).map(([key, value]) => {
+            {Object.entries(translationArray).map(([_key, value]) => {
               return (
                 <div
                   onClick={async () => {
@@ -158,6 +199,9 @@ const LanguageComponent = ({
                         .then((e) => {
                           let book0 = e.data.books[0];
                           ChangeTranslation(value.id, book0, value.origin);
+                          if (translationMap[value.language]) {
+                            changeLanguage(translationMap[value.language]);
+                          }
                         })
                         .catch((e) => {
                           console.log(e);
@@ -174,6 +218,9 @@ const LanguageComponent = ({
                             book0,
                             "https://bible.helloao.org"
                           );
+                          if (translationMap[value.language]) {
+                            changeLanguage(translationMap[value.language]);
+                          }
                         })
                         .catch((e) => {
                           console.log(e);
@@ -216,7 +263,14 @@ const LanguageComponent = ({
   );
 };
 
-const CustomTranslation = ({ handleTranslationAddition }) => {
+const CustomTranslation = (props: {
+  handleTranslationAddition: (options: {
+    type: string;
+    value: string;
+    setInputValue: (value: string) => void;
+  }) => void;
+}) => {
+  const { handleTranslationAddition } = props;
   const [currentMode, setCurrentMode] = useState("id");
   const [inputValue, setInputValue] = useState("");
 
