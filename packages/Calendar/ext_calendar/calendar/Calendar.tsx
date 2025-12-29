@@ -10,173 +10,30 @@ const ResourceHeaderModal = await thisBot.ResourceHeaderModal();
 const CalendarTitle = await thisBot.CalendarTitle();
 const EventView = await thisBot.EventView();
 const Menu = await thisBot.Menu();
+const { useDayGridResponsiveLayout, useTodayButtonResponsiveLabel } =
+  await thisBot.customHooks();
 const { Playlistplaying } = Playlist;
 const EditEvent = await thisBot.EditEvent();
 const ResourceTitle = await thisBot.ResourceTitle();
 const GoToCalendar = await thisBot.GoToClanedar();
 const showEventPopup = await thisBot.showEventPopup();
+const buildEventTooltipContent = await thisBot.buildEventTooltipContent();
+const {
+  getDayDifference,
+  stripTime,
+  getMaxColumnsFromContainer,
+  formatWeekdayDay,
+  openSelf,
+  parseDashedDateToValidDate,
+  dayNameToNumber,
+  updateCalendarHeader,
+  isSameDate,
+  dateOnly,
+  getDayHeaderFormat,
+} = await thisBot.calendarFunctions();
 import { useCalendar } from "ext_calendar.calendar.CalendarContext";
+
 //const MapPanel = await MapsManager?.GetMapPanel?.();
-function getDayDifference(startDateStr, endDateStr) {
-  const start = new Date(startDateStr);
-  const end = new Date(endDateStr);
-  start.setHours(0, 0, 0, 0);
-  end.setHours(0, 0, 0, 0);
-  const diffTime = end - start;
-  const diffDays = Math.floor(diffTime / (1000 * 60 * 60 * 24));
-  return diffDays;
-}
-
-function stripTime(date) {
-  return new Date(date.getFullYear(), date.getMonth(), date.getDate());
-}
-
-function updateTodayButtonLabel() {
-  const container = document.querySelector(".experience-container");
-  const todayBtn = document.querySelector(".fc-today-button");
-
-  if (!container || !todayBtn) return;
-
-  const width = container.offsetWidth;
-  const label = width < 550 ? "T" : "Today";
-
-  if (todayBtn.textContent !== label) {
-    todayBtn.textContent = label;
-  }
-}
-function dateOnly(d) {
-  return `${d.getFullYear()},${d.getMonth()},${d.getDate()}`;
-}
-
-function getDayHeaderFormat(width, viewType) {
-  if (viewType.startsWith("timeGridDay")) {
-    return { weekday: "long" };
-  }
-  if (viewType.startsWith("multiMonthYear")) {
-    return { weekday: "narrow" };
-  }
-
-  if (width < 400) {
-    return { weekday: "narrow" }; // S, M, T
-  } else if (width < 700) {
-    return { weekday: "short" }; // Sun, Mon, Tue
-  } else {
-    return { weekday: "long" }; // Sunday, Monday
-  }
-}
-function isSameDate(date1, date2) {
-  const d1 = new Date(date1);
-
-  let d2;
-  if (typeof date2 === "string") {
-    const clean = date2.replace(/\s+/g, "");
-
-    if (/[a-zA-Z]{3}-\d{1,2}-\d{4}/.test(clean)) {
-      const [monthStr, day, year] = clean.split("-");
-      const monthMap = {
-        Jan: 0,
-        Feb: 1,
-        Mar: 2,
-        Apr: 3,
-        May: 4,
-        Jun: 5,
-        Jul: 6,
-        Aug: 7,
-        Sep: 8,
-        Oct: 9,
-        Nov: 10,
-        Dec: 11,
-      };
-      d2 = new Date(year, monthMap[monthStr], parseInt(day));
-    }
-    // Try "DD-MM-YY" or "DD-MM-YYYY"
-    else if (/^\d{1,2}-\d{1,2}-\d{2,4}$/.test(clean)) {
-      const [day, month, year] = clean.split("-").map(Number);
-      d2 = new Date(year < 100 ? 2000 + year : year, month - 1, day);
-    } else {
-      // Fallback to Date parser
-      d2 = new Date(date2);
-    }
-  } else {
-    d2 = new Date(date2);
-  }
-
-  // Compare only date parts (ignore time)
-  return (
-    d1.getFullYear() === d2.getFullYear() &&
-    d1.getMonth() === d2.getMonth() &&
-    d1.getDate() === d2.getDate()
-  );
-}
-
-function updateCalendarHeader(calendar) {
-  const width = calendar.el.offsetWidth;
-  const viewType = calendar.view.type;
-  const format = getDayHeaderFormat(width, viewType);
-  calendar.setOption("dayHeaderFormat", format);
-}
-
-const dayNameToNumber = (dayName) => {
-  const days = {
-    Monday: 1,
-    Tuesday: 2,
-    Wednesday: 3,
-    Thursday: 4,
-    Friday: 5,
-    Saturday: 6,
-    Sunday: 7,
-  };
-  return days[dayName] || null;
-};
-
-function parseDashedDateToValidDate(dateStr) {
-  const parts = dateStr.split("-").map((p) => p.trim());
-  if (parts.length !== 3) return null;
-
-  const [month, day, year] = parts;
-  const formatted = `${month} ${day}, ${year}`;
-
-  const date = new Date(formatted);
-  return isNaN(date.getTime()) ? null : date;
-}
-
-const openSelf = async function () {
-  if (!globalThis.makingPlaylist) {
-    if (globalThis["Playlist_package"]) {
-      globalThis["Playlist_package"].onClick();
-    } else {
-      const PlayList = await Playlist.tryInitPlaylistMaker();
-      if (PlayList) {
-        const id = uuid();
-        globalThis.PLAYLIST_PANEL_ID = id;
-
-        AddApplication({
-          id,
-          App: <PlayList id={id} />,
-          to: "panel",
-          minWidth: "23rem",
-        });
-      }
-    }
-  }
-};
-const getMaxColumnsFromContainer = () => {
-  const container = document.querySelector(".experience-container");
-  const width = container?.clientWidth || 1200; // fallback
-
-  if (width <= 600) return 2;
-  if (width <= 1100) return 3;
-  return 4;
-};
-function formatWeekdayDay(date) {
-  return new Intl.DateTimeFormat("en-GB", {
-    weekday: "long",
-    day: "numeric",
-  }).format(date);
-}
-
-// Detect popover close (click outside)
-
 const types = ["events", "reading", "content", "projects", "sources"];
 
 if (!globalThis.C_E) globalThis.C_E = [];
@@ -189,14 +46,11 @@ const App = () => {
 
   const [modalOpen, setModalOpen] = useState(false);
   const [playListMode, setPlaylistMode] = useState(false);
-  const [isReady, setIsReady] = useState(false);
   const [editingEvent, setEditingEvent] = useState();
   const [editEventOpen, setEditEventOpen] = useState(false);
   const [calendarTitle, setCalendarTitle] = useState("");
   const [visibleCount, setVisibleCount] = useState(3);
   const [calendarView, setCalendarView] = useState("dayGridMonth");
-  const [containerWidth, setContainerWidth] = useState("");
-
   const [openSetting, setOpenSetting] = useState(false);
   const [openMap, setOpenMap] = useState(true);
   const [openCalendar, setOpenCalendar] = useState(true);
@@ -204,32 +58,10 @@ const App = () => {
   const [eventViewSelected, setEventViewSelected] = useState(true);
   const [mapViewSelected, setMapViewSelected] = useState(false);
   const [playlistsToAdd, setPlaylistsToAdd] = useState([]);
-
   const [hasTitle, setHasTitle] = useState(true);
-  const [allEvents, setAllEvents] = useState(() => {
-    try {
-      const saved = localStorage.getItem("allEvents");
-      if (!saved) return [];
-
-      const parsed = JSON.parse(saved);
-
-      const unique = parsed.filter(
-        (event, index, self) =>
-          index === self.findIndex((e) => e.id === event.id)
-      );
-
-      //Clean up localStorage to remove duplicates permanently
-      localStorage.setItem("allEvents", JSON.stringify(unique));
-
-      return unique;
-    } catch (error) {
-      console.error("Error parsing saved events:", error);
-      return [];
-    }
-  });
+  const [allEvents, setAllEvents] = useState([]);
   const [selectedTypes, setSelectedTypes] = useState(["events", "reading"]);
   const [isModalOpen, setIsModalOpen] = useState(false);
-
   const [isEventModalOpen, setIsEventModalOpen] = useState(false);
   const [currentResourceId, setCurrentResourceId] = useState("");
   const [groupModalOpen, setGroupModalOpen] = useState(false);
@@ -254,9 +86,8 @@ const App = () => {
   const [hiddenGroups, setHiddenGroups] = useState({});
   const [allGroups, setAllGroups] = useState([]);
   const popoverOpenRef = useRef(false);
-
   //refs
-  const readingsRef = useRef(null);
+
   const dropdownRef = useRef(null);
   const calendarRef = useRef(null);
   const calendarApi = useRef(null);
@@ -264,31 +95,13 @@ const App = () => {
   const resourcesRef = useRef(resourcesByDate);
   const resourceIdRef = useRef(currentResourceId);
   const resourceGroupNameRef = useRef(null);
+  const experienceConRef = useRef(null);
 
-  const { name, apiCalendar, setApiCalendar, refCalendar } = useCalendar();
+  useTodayButtonResponsiveLabel(experienceConRef);
 
- 
-  useEffect(() => {
-    refCalendar.current = calendarRef.current;
-  }, [calendarRef.current]);
-
-  useEffect(() => {
-    // Load from localStorage only once
-    const savedEvents = localStorage.getItem("allEvents");
-    if (savedEvents) {
-      try {
-        const parsed = JSON.parse(savedEvents);
-        setAllEvents(parsed);
-      } catch (error) {
-        console.error("Error loading events:", error);
-      }
-    }
-  }, []);
   useEffect(() => {
     const observer = new MutationObserver(() => {
       const popover = document.querySelector(".fc-popover");
-
-      // If popover is gone but ref says open → reset
       if (!popover && popoverOpenRef.current) {
         popoverOpenRef.current = false;
         calendarRef.current?.getApi().rerenderEvents();
@@ -306,38 +119,19 @@ const App = () => {
   useEffect(() => {
     const handleClickOutside = (e) => {
       const popover = document.querySelector(".fc-popover");
-
-      if (!popover) return; // important
-
+      if (!popover) return;
       if (!popover.contains(e.target)) {
         popoverOpenRef.current = false;
-
-        // 🔑 force FullCalendar to update
         calendarRef.current?.getApi().rerenderEvents();
       }
     };
-
     document.addEventListener("mousedown", handleClickOutside);
 
     return () => {
       document.removeEventListener("mousedown", handleClickOutside);
     };
   }, []);
-
-  useEffect(() => {
-    try {
-      localStorage.setItem("allEvents", JSON.stringify(allEvents));
-    } catch (error) {
-      console.error("Error saving events:", error);
-    }
-  }, [allEvents]);
-
   //useeffects
-
-  useEffect(() => {
-    readingsRef.current = readingsList;
-  }, [readingsList]);
-
   useEffect(() => {
     const loadScript = (src) =>
       new Promise((resolve, reject) => {
@@ -371,7 +165,6 @@ const App = () => {
         document.head.appendChild(link);
       }
 
-      
       setTimeout(() => {
         if (window.tippy) {
           window.tippy("[data-tippy-content]");
@@ -381,21 +174,6 @@ const App = () => {
 
     loadTippy();
   }, []);
-
-  useEffect(() => {
-    const allEventsStore = allEvents;
-    if (showSchedules !== true) {
-      const addEventsWithoutResource = allEventsStore.filter(
-        (prev) => prev.extendedProps.isResource !== true
-      );
-      calendarApi?.current?.removeAllEvents();
-      calendarApi?.current?.addEventSource(addEventsWithoutResource);
-    } else {
-      setAllEvents(allEventsStore);
-      calendarApi?.current?.removeAllEvents();
-      calendarApi?.current?.addEventSource(allEventsStore);
-    }
-  }, [showSchedules]);
 
   useEffect(() => {
     setReadings([...globalThis.C_E]);
@@ -409,11 +187,11 @@ const App = () => {
       globalThis["AddReadingPlans"] = null;
       globalThis["readings"] = null;
     };
-  });
+  }, []);
 
   useEffect(() => {
     applyFilterByReinit();
-  }, [selectedTypes, calendarView]);
+  }, [selectedTypes]);
 
   /*useEffect(() => {
     readings.forEach((evt) => {
@@ -447,30 +225,7 @@ const App = () => {
         setIsSchedule(false);
       }
     }
-  });
-
-  /*useEffect(() => {
-
-    if (!calendarApi.current) return;
-
-    const currentYear = new Date().getFullYear();
-    const endYear = currentYear + 10;
-    const holidays = getHolidaysForRange(currentYear, endYear);
-    console.log(holidays, "holidays");
-
-    // Remove existing holiday events directly
-    calendarApi.current.getEvents()
-      .filter(event => event.extendedProps?.isHoliday)
-      .forEach(event => event.remove());
-
-    if (showHolidays && holidays.length > 0) {
-      // Mark events as holidays
-      holidays.forEach(event => {
-        event.extendedProps = { ...(event.extendedProps || {}), isHoliday: true };
-      });
-      calendarApi.current.addEventSource(holidays);
-    }
-  }, [showHolidays]);*/
+  }, []);
 
   useEffect(() => {
     resourceGroupNameRef.current = resourceGroupName;
@@ -492,12 +247,11 @@ const App = () => {
       display: "inline-block",
     });
 
-    
     const text = titleEl.textContent.trim();
     let parsed;
 
     try {
-      parsed = new Date(`${text} 15, 12:00:00`); 
+      parsed = new Date(`${text} 15, 12:00:00`);
     } catch {
       parsed = new Date();
     }
@@ -748,13 +502,6 @@ const App = () => {
         ev.extendedProps.isResource !== true
     )
     .slice(0, visibleCount);
-  const containerEl = document.querySelector(".experience-container");
-  if (containerEl) {
-    const observer = new ResizeObserver(() => {
-      updateTodayButtonLabel();
-    });
-    observer.observe(containerEl);
-  }
   const applyFilterByReinit = () => {
     if (!calendarApi.current) return;
 
@@ -774,7 +521,6 @@ const App = () => {
     link.rel = "stylesheet";
     document.head.appendChild(link);
     if (calendarRef.current) {
-      setIsReady(true);
       const calendarEle = document.getElementById("calendar");
       calendarApi.current = new FullCalendar.Calendar(calendarRef.current, {
         schedulerLicenseKey: "CC-Attribution-NonCommercial-NoDerivatives",
@@ -906,16 +652,35 @@ const App = () => {
         allDayText: "All day",
         expandRows: true,
         contentHeight: "450px",
+        eventChange: function (info) {
+          const updated = info.event;
+
+          setAllEvents((prev) =>
+            prev.map((ev) =>
+              ev.id === updated.id
+                ? {
+                    ...ev,
+                    start: updated.start?.toISOString(),
+                    end: updated.end?.toISOString() || null,
+                    allDay: updated.allDay,
+                    extendedProps: {
+                      ...ev.extendedProps,
+                      ...updated.extendedProps,
+                    },
+                  }
+                : ev
+            )
+          );
+        },
 
         eventContent: function (arg) {
-        
-
-          setContainerWidth(calendarEle.offsetWidth);
           const isSchedule = arg.event.extendedProps.isResource === true;
 
           const eventType = arg.event.extendedProps.type;
-          const container = document.querySelector(".experience-container");
-          const isNarrow = container && container.offsetWidth < 500;
+
+          const isNarrow =
+            experienceConRef.current &&
+            experienceConRef.current?.offsetWidth < 500;
 
           const clockSvg = (color) => `
       <svg xmlns="http://www.w3.org/2000/svg" width="14" height="14"
@@ -1066,7 +831,6 @@ const App = () => {
 
           // Default event style
           if (!isMultiDay && !popoverOpenRef.current) {
-           
             return {
               html: `
   <div style="
@@ -1108,10 +872,7 @@ const App = () => {
           }
         },
         eventClassNames: function (arg) {
-          const width =
-            document.querySelector(".experience-container")?.offsetWidth || 0;
-          const popover = document.querySelector(".fc-popover");
-
+          const width = experienceConRef.current?.offsetWidth || 0;
           const start = new Date(arg.event.start);
           const end = new Date(arg.event.end || arg.event.start);
           const startDate = dateOnly(start);
@@ -1119,28 +880,12 @@ const App = () => {
 
           const isMultiDay = startDate !== endDate;
 
-         
-
-          if (width <= 500 && !isMultiDay & !popoverOpenRef.current) {
+          if (width <= 500 && !isMultiDay && !popoverOpenRef.current) {
             return ["dot-view"];
           } else {
             return ["full-view"];
           }
         },
-        /* dayCellDidMount: (info) => {
-          const cellDateStr = info.date.toISOString().split("T")[0];
-          const hasEvent = calendarApi.current.getEvents().some((ev) => {
-            const evDateStr = new Date(ev.start).toISOString().split("T")[0];
-            return evDateStr === cellDateStr;
-          });
-
-          // Only apply in multiMonthYear view
-          const isMultiMonth =
-            calendarApi.current?.view?.type === "multiMonthYear";
-          if (hasEvent && isMultiMonth) {
-            info.el.style.backgroundColor = "white"; // dark gray
-          }
-        },*/
 
         editable: true,
         droppable: true,
@@ -1150,7 +895,6 @@ const App = () => {
         eventDisplay: "block", // No time text
 
         dateClick: async function (info) {
-         
           if (info.jsEvent?.target.closest(".tippy-box")) return;
           const date = info.date;
           if (!calendarApi) {
@@ -1167,7 +911,7 @@ const App = () => {
               hour: "2-digit",
               minute: "2-digit",
             });
-            const container = document.querySelector(".experience-container");
+            const container = experienceConRef.current;
             const rect = container.getBoundingClientRect();
             const clickX = info.jsEvent.clientX - rect.left;
             const clickY = info.jsEvent.clientY - rect.top;
@@ -1182,7 +926,6 @@ const App = () => {
             info.view.type !== "multiMonthYear" &&
             info.view.type !== "resourceTimeline"
           ) {
-           
             showEventPopup(
               info,
               setPlaylistMode,
@@ -1206,11 +949,11 @@ const App = () => {
               }) => {
                 if (isPlansTabActive) return;
                 let newEvent;
-              
+
                 const days = getDayDifference(start, end);
                 if (recurVal.charAt(0) === "N") {
                   const isTimed = Boolean(startTime && endTime);
-                 
+
                   if (days === 0) {
                     newEvent = {
                       title: title ? title : "easter",
@@ -1231,13 +974,11 @@ const App = () => {
                         type: "events",
                       },
                     };
-                
+
                     const now = stripTime(new Date());
                     const startDate = stripTime(new Date(newEvent.start));
                     setAllEvents((prev) => [...prev, newEvent]);
-                    if (newEvent) {
-                      setSelectedTypes((prev) => ["events", ...prev]);
-                    }
+
                     if (startDate >= now) {
                       setEventInView((prev) => {
                         const combined = [...prev, newEvent];
@@ -1280,7 +1021,6 @@ const App = () => {
                     }
                     if (newEvent) {
                       setAllEvents((prev) => [...prev, newEvent]);
-                      setSelectedTypes((prev) => ["events", ...prev]);
                     }
                     calendarApi.current.addEvent(newEvent);
                   }
@@ -1322,9 +1062,6 @@ const App = () => {
                         return combined;
                       });
                     }
-                    if (newEvent) {
-                      setSelectedTypes((prev) => ["events", ...prev]);
-                    }
 
                     calendarApi.current.addEvent(newEvent);
                   } else {
@@ -1359,9 +1096,6 @@ const App = () => {
                           );
                           return combined;
                         });
-                      }
-                      if (newEvent) {
-                        setSelectedTypes((prev) => ["events", ...prev]);
                       }
 
                       calendarApi.current.addEvent(newEvent);
@@ -1416,8 +1150,6 @@ const App = () => {
         },
 
         datesSet: (info) => {
-          calendarApi.current.removeAllEvents();
-          calendarApi.current.addEventSource(allEvents);
           const startDate = new Date(info.startStr).toLocaleDateString("en-CA");
           const newResources = resourcesRef.current[startDate] || [];
           calendarApi.current.setOption("resources", newResources);
@@ -1479,7 +1211,7 @@ const App = () => {
                 backgroundColor: "white",
                 color: "black",
                 fontSize: "10px",
-                fontWeight:'700',
+                fontWeight: "700",
                 padding: "0",
                 border: "none",
                 marginRight: "10px",
@@ -1504,8 +1236,8 @@ const App = () => {
                 fontSize: "10px",
                 padding: "0",
                 border: "none",
-                fontWeight:'900',
-                
+                fontWeight: "900",
+
                 marginRight: "10px",
                 cursor:
                   info.view.type === "resourceTimelineDay"
@@ -1552,7 +1284,6 @@ const App = () => {
 
             if (info.view.type.includes("resourceTimeline")) {
               activeToolbarHandler = onToolbarDateClick;
-           
             } else {
               activeToolbarHandler = onToolbarDateClick1;
             }
@@ -1719,398 +1450,42 @@ const App = () => {
         },
 
         eventDidMount: (info) => {
-          let readingsLists = [];
-          const { title, extendedProps, start, id } = info.event;
-        
+          if (!window.tippy) return;
 
-          const {
-            type: eventType,
-            isResource,
-            description,
-            link,
-            readingPlans,
-          } = extendedProps;
+          tippy(info.el, {
+            trigger: "click",
 
-          const formattedDate = start
-            .toLocaleDateString("en-GB", {
-              day: "2-digit",
-              month: "short",
-              year: "numeric",
-            })
-            .replace(/ /g, "-");
+            interactive: true,
+            appendTo: () => document.body,
+            placement: "auto",
+            arrow: false,
+            theme: "transparent",
+            maxWidth: "none",
+            offset: [0, 8],
+            zIndex: 9999,
+            allowHTML: true,
+            content: "Loading...",
 
-          const formattedTime = start.toLocaleTimeString("en-US", {
-            hour: "2-digit",
-            minute: "2-digit",
-            hour12: true,
-          });
+            onShow(tip) {
+              // 🔥 ALWAYS fetch latest event by ID
+              const freshEvent = calendarApi.current?.getEventById(
+                info.event.id
+              );
 
-          const wrapper = document.createElement("div");
+              if (!freshEvent) return;
 
-        
-          const options = document.createElement("div");
-          options.style.cssText = `
-    display: flex;
-    gap: 3px;
-   
-    top: 2px;
-    transform: translate(90px,-10px);
-    right: 50px;
-  `;
-
-          // Delete button
-          const dlt = document.createElement("span");
-          dlt.innerHTML = `<svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" fill="currentColor" viewBox="0 0 20 20" class="icon-btn">
-    <path d="M6 2a1 1 0 0 0-1 1v1h10V3a1 1 0 1 0-2 0h-6a1 1 0 0 0-1-1zM5 6h10l-.603 9.04A2 2 0 0 1 12.405 17H7.595a2 2 0 0 1-1.992-1.96L5 6z"/>
-  </svg>`;
-          dlt.style.color = "gray";
-          dlt.addEventListener("click", () => {
-            wrapper.remove();
-            handleDelete(id);
-          });
-
-          // Edit button
-          const edit = document.createElement("span");
-          edit.innerHTML = `<svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 20 20" fill="currentColor" class="icon-btn">
-    <path d="M9.99992 6.66611L3.33325 13.3328V16.6661L6.66659 16.6661L13.3332 9.99944M9.99992 6.66611L12.3904 4.27557L12.3919 4.27415C12.7209 3.94508 12.8858 3.78026 13.0758 3.71852C13.2431 3.66414 13.4235 3.66414 13.5908 3.71852C13.7807 3.78021 13.9453 3.94485 14.2739 4.27345L15.7238 5.72328C16.0538 6.0533 16.2189 6.21838 16.2807 6.40865C16.3351 6.57602 16.335 6.75631 16.2807 6.92368C16.2189 7.11382 16.054 7.27865 15.7245 7.60819L15.7238 7.6089L13.3332 9.99944M9.99992 6.66611L13.3332 9.99944" stroke="#000" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/>
-  </svg>`;
-          edit.style.color = "gray";
-          edit.addEventListener("click", () => {
-            wrapper.remove();
-            const popover = document.querySelector(".fc-popover");
-            if (popover) {
-              popover.remove();
-            }
-            handleEditing(id, isResource);
-          });
-
-          // Close button
-          const close = document.createElement("span");
-          close.innerHTML = `<svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" fill="currentColor" viewBox="0 0 20 20" class="icon-btn">
-    <path fill-rule="evenodd" d="M4.293 4.293a1 1 0 0 1 1.414 0L10 8.586l4.293-4.293a1 1 0 1 1 1.414 1.414L11.414 10l4.293 4.293a1 1 0 0 1-1.414 1.414L10 11.414l-4.293 4.293a1 1 0 0 1-1.414-1.414L8.586 10 4.293 5.707a1 1 0 0 1 0-1.414z" clip-rule="evenodd"/>
-  </svg>`;
-          close.style.color = "gray";
-          close.addEventListener("click", () => wrapper.remove());
-
-          options.appendChild(dlt);
-          options.appendChild(edit);
-          options.appendChild(close);
-
-          // Reading Plans Section
-         
-          readingsLists = globalThis["defaultplaylists"].filter(
-            (item) => item.name === title
-          );
-
-          const parentId = "default";
-          const playingPlaylist = readingsLists[0]?.id;
-          const playlist = globalThis[`${parentId}playlists`].find(
-            (ele) => ele.id === playingPlaylist
-          );
-          let val;
-       
-          if (readingsLists.length > 0) {
-            const readaingsToAdd = readingsLists[0].list.filter((item) => {
-              if (item.type === "date") {
-                val = item.content;
-              }
-             
-              if (isSameDate(start, val) & (item.type !== "date")) {
-                return item;
-              }
-            });
-           
-            if (readingsLists && readingsLists.length > 0) {
-              const plansSection = document.createElement("div");
-
-              const heading = document.createElement("div");
-              heading.textContent = "📚 Reading Plans";
-              heading.style.cssText = `
-      font-weight: 500;
-      
-      color: #3c4043;
-    `;
-              plansSection.appendChild(heading);
-
-              const ul = document.createElement("ul");
-              ul.style.cssText =
-                "padding-left: 0; margin: 0; list-style: none;";
-
-              readaingsToAdd.forEach((plan) => {
-                if (plan.type !== "date") {
-                  const li = document.createElement("li");
-                  const button = document.createElement("button");
-                  button.textContent = plan.content;
-                  button.dataset.plan = plan;
-                  button.style.cssText = `
-        display: inline-block;
-        background-color: #e8f0fe;
-        color: #1967d2;
-        border: none;
-        padding: 6px 12px;
-        margin: 4px 0;
-        border-radius: 16px;
-        font-size: 13px;
-        font-weight: 500;
-        cursor: pointer;
-      `;
-                  button.addEventListener("click", () =>
-                    alert(`You clicked: ${plan}`)
-                  );
-                  li.appendChild(button);
-                  ul.appendChild(li);
-                }
-              });
-              
-              const playButtonCon = document.createElement("div");
-
-              
-              playButtonCon.style.display = "flex";
-              playButtonCon.style.alignItems = "center";
-              playButtonCon.style.gap = "3px";
-              playButtonCon.style.cursor = "pointer";
-              playButtonCon.style.padding = "2px 4px";
-              playButtonCon.style.borderRadius = "8px";
-              playButtonCon.style.background = "#1e88e5";
-              playButtonCon.style.color = "#fff";
-              playButtonCon.style.fontFamily = "sans-serif";
-              playButtonCon.style.fontWeight = "400";
-              playButtonCon.style.width = "fit-content";
-              playButtonCon.style.fontSize = "10px";
-
-             
-              playButtonCon.innerHTML = `
-  <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" fill="currentColor">
-    <polygon points="6,4 20,12 6,20"></polygon>
-  </svg>
-  <span>Play Playlist</span>
-`;
-              playButtonCon.addEventListener("mouseenter", () => {
-                playButtonCon.style.background = "#1565c0";
-              });
-              playButtonCon.addEventListener("mouseleave", () => {
-                playButtonCon.style.background = "#1e88e5";
-              });
-              playButtonCon.addEventListener("click", async () => {
-                wrapper.remove();
-                if (!playlist) {
-                  console.error("Playlist not found");
-                  return;
-                }
-
-                openSelf();
-                await os.sleep(100);
-                globalThis.IsQueuePresent = false;
-
-                Playlistplaying({
-                  playingPlaylist: playlist.id,
-                  startIndex: 1,
-                  startSubIndex: -1,
-                  parentId: "default",
-                  name: playlist.name || "Untitled Playlist",
-                });
-              });
-              document.body.appendChild(playButtonCon);
-              plansSection.appendChild(ul);
-              wrapper.style.position = "relative";
-              wrapper.style.padding = "12px";
-              wrapper.style.width = "190px";
-              plansSection.appendChild(playButtonCon);
-              wrapper.appendChild(options);
-              wrapper.appendChild(plansSection);
-            }
-          } else {
-            // Regular event section
-            wrapper.style.position = "relative";
-            wrapper.style.padding = "12px";
-            wrapper.style.width = "180px";
-            wrapper.appendChild(options);
-
-            const container = document.createElement("div");
-            container.style.cssText = `
-      display: flex;
-      flex-direction: column;
-      gap: 4px;
-    `;
-
-            const titleContainer = document.createElement("div");
-            titleContainer.style.display = "flex";
-            titleContainer.style.alignItems = "flex-start";
-            titleContainer.style.gap = "8px";
-            titleContainer.style.marginBottom = "12px";
-            const greenDot = document.createElement("div");
-            Object.assign(greenDot.style, {
-              width: "20px",
-              height: "20px",
-              borderRadius: "50%",
-              flex: "0 0 auto",
-              alignSelf: "flex-start",
-              backgroundColor: isResource ? "#f1c40f" : "#87ceeb",
-            });
-
-            const titleELC = document.createElement("div");
-            titleELC.style.cssText = `
-      display: flex;
-      flex-direction: column;
-      gap: 1px;
-    `;
-
-            const titleEl = document.createElement("div");
-            titleEl.textContent = title || "Untitled Event";
-            Object.assign(titleEl.style, {
-              fontSize: "16px",
-              fontWeight: "800",
-              color: "#000",
-            });
-
-            const date = document.createElement("p");
-            date.innerHTML = `<span>${formattedDate} (${formattedTime})</span>`;
-            date.style.cssText = `
-      font-size: 10px;
-      color: black;
-      margin-left: 4px;
-      transform: translateY(-10px);
-    `;
-
-            titleELC.appendChild(titleEl);
-            titleELC.appendChild(date);
-            titleContainer.appendChild(greenDot);
-            titleContainer.appendChild(titleELC);
-            container.appendChild(titleContainer);
-
-            // Description
-            if (description) {
-              const descSection = document.createElement("div");
-              descSection.style.marginBottom = "12px";
-              descSection.innerHTML = `
-        <div style="display:flex; align-items:center; gap:4px;">
-          <svg style="color: gray" xmlns="http://www.w3.org/2000/svg" width="24" height="24"
-               fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"
-               stroke-linejoin="round" class="feather feather-file-text">
-            <path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z" />
-            <polyline points="14 2 14 8 20 8" />
-            <line x1="16" y1="13" x2="8" y2="13" />
-            <line x1="16" y1="17" x2="8" y2="17" />
-            <line x1="10" y1="9" x2="8" y2="9" />
-          </svg>
-          <strong style="color:black">${description}</strong>
-        </div>
-      `;
-              container.appendChild(descSection);
-            }
-
-            // Link
-            if (link) {
-              const linkSection = document.createElement("div");
-              linkSection.style.display = "flex";
-              linkSection.style.alignItems = "center";
-
-              const linkIcon = document.createElement("span");
-              linkIcon.innerHTML = `<svg style="color:gray" xmlns="http://www.w3.org/2000/svg" width="24" height="24"
-          fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"
-          stroke-linejoin="round" class="feather feather-link">
-          <path d="M10 13a5 5 0 0 1 0-7l1-1a5 5 0 0 1 7 7l-1 1" />
-          <path d="M14 11a5 5 0 0 1 0 7l-1 1a5 5 0 0 1-7-7l1-1" />
-        </svg>`;
-              linkSection.appendChild(linkIcon);
-
-              const linkBtn = document.createElement("a");
-              linkBtn.href = link.startsWith("http") ? link : `https://${link}`;
-              linkBtn.target = "_blank";
-              linkBtn.textContent = "Click Here";
-              Object.assign(linkBtn.style, {
-                marginLeft: "4px",
-                color: "#1a73e8",
-                textDecoration: "none",
-                fontSize: "14px",
+              const freshContent = buildEventTooltipContent({
+                event: freshEvent, // ✅ always latest
+                calendarApi,
+                handleDelete,
+                handleEditing,
+                openSelf,
+                Playlistplaying,
+                isSameDate,
               });
 
-              linkSection.appendChild(linkBtn);
-              container.appendChild(linkSection);
-            }
-
-            // Resource button
-            if (
-              isResource &&
-              !calendarApi.current.view.type.includes("resourceTimeline")
-            ) {
-              const resourceButton = document.createElement("div");
-              resourceButton.textContent = "Go To Schedule";
-              Object.assign(resourceButton.style, {
-                padding: "1px 3px",
-                backgroundColor: "#87ceeb",
-                color: "white",
-                font: "8px",
-                width: "150px",
-                textAlign: "center",
-                borderRadius: "20px",
-                cursor: "pointer",
-              });
-              resourceButton.addEventListener("click", (e) => {
-                e.preventDefault();
-                wrapper.remove();
-                calendarApi.current.changeView("resourceTimeline");
-              });
-              container.appendChild(resourceButton);
-            }
-
-            wrapper.appendChild(container);
-          }
-          info.el.addEventListener("click", (e) => {
-            e.stopPropagation();
-
-            // Remove any existing wrapper before adding a new one
-            const existing = document.querySelector(".custom-wrapper");
-            if (existing) existing.remove();
-
-           
-            const rect = info.el.getBoundingClientRect();
-
-            
-            Object.assign(wrapper.style, {
-              position: "absolute",
-              top: `${rect.bottom + window.scrollY + 8}px`,
-              left: `${rect.left - 150 + window.scrollX}px`,
-              zIndex: 9999,
-              whiteSpace: "normal",
-              wordBreak: "break-word",
-              background: "#e7e7e7",
-              border: "1px solid #ccc",
-              boxShadow: "0 2px 6px rgba(0,0,0,0.15)",
-              borderRadius: "8px",
-              padding: "12px",
-            });
-
-            wrapper.classList.add("custom-wrapper");
-            document.body.appendChild(wrapper);
-
-            // 👇 Close function (for reuse)
-            const closeWrapper = () => {
-              wrapper.remove();
-              document.removeEventListener("mousedown", handleOutsideClick);
-              document.removeEventListener("scroll", handleScroll, true);
-            };
-
-            // 👇 Handle outside click
-            const handleOutsideClick = (event) => {
-              if (
-                !wrapper.contains(event.target) &&
-                !info.el.contains(event.target)
-              ) {
-                closeWrapper();
-              }
-            };
-
-            
-            const handleScroll = () => {
-              closeWrapper();
-            };
-
-            // Delay adding listeners so this same click doesn't trigger them
-            setTimeout(() => {
-              document.addEventListener("mousedown", handleOutsideClick);
-              document.addEventListener("scroll", handleScroll, true);
-            }, 0);
+              tip.setContent(freshContent);
+            },
           });
         },
       });
@@ -2118,16 +1493,6 @@ const App = () => {
       calendarApi.current.render();
       const observer = new ResizeObserver(() => {
         if (!calendarApi.current) return;
-
-        const newCols = getMaxColumnsFromContainer();
-        const currentView = calendarApi.current.view.type;
-
-        if (currentView === "multiMonthYear") {
-          calendarApi.current.setOption("multiMonthMaxColumns", newCols);
-          setTimeout(() => {
-            calendarApi.current.changeView("multiMonthYear");
-          }, 10);
-        }
       });
 
       observer.observe(container);
@@ -2140,90 +1505,17 @@ const App = () => {
   }, []);
 
   const resizeCalendar = () => {
-    const calendarElement = document.querySelector(".fc"); // or your ref
-    const width = calendarElement.offsetWidth;
+    const calendarElement = calendarRef.current; // or your ref
+    const width = calendarElement?.offsetWidth;
 
     const newHeight = width * 0.5; // example ratio
     calendarElement.style.height = `${newHeight}px`;
   };
- 
+
   useEffect(() => {
     resizeCalendar();
   }, []);
-
-  useEffect(() => {
-    const container = document.querySelector(".experience-container");
-    if (!container) return;
-
-    const observer = new ResizeObserver((entries) => {
-      for (let entry of entries) {
-        const width = entry.contentRect.width;
-
-        // Select all day grid events
-        const dayEvents = document.querySelectorAll(".fc-daygrid-day-events");
-        const moreBtn = document.querySelectorAll(".fc-more-link");
-
-        dayEvents.forEach((el) => {
-          if (width < 470) {
-            el.style.display = "flex";
-            el.style.gap = "";
-            el.style.flexDirection = "row";
-            el.style.flexWrap = "wrap";
-          } else {
-            el.style.display = "flex";
-            el.style.flexDirection = "column";
-          }
-        });
-        moreBtn.forEach((el) => {
-          el.style.display = "block";
-          el.style.marginTop = "10px";
-        });
-
-        // Refresh calendar layout if needed
-        calendarApi.current.updateSize();
-      }
-    });
-
-    observer.observe(container);
-    return () => observer.disconnect();
-  }, []);
-
-  /*useEffect(() => {
-    const container = document.querySelector(".experience-container");
-    const calendarElement = document.getElementById("calendar");
-    const calendar = calendarApi.current;
-
-    if (!container || !calendarElement || !calendar) return;
-
-    const updateFontSize = () => {
-      const width = calendarElement.offsetWidth;
-      const height = calendarElement.offsetHeight;
-
-      // Example: scale font size based on width, clamp between 12px and 24px
-      const newFontSize = Math.max(14, Math.min(20, width / 26));
-
-      calendarElement.style.fontSize = `${newFontSize}px`;
-    };
-
-    const observer = new ResizeObserver(() => {
-      if(calendarApi.current.view.type!=='multiMonthYear'){
-      calendar.updateSize();
-      updateFontSize();}
-    });
-
-    observer.observe(container);
-
-    window.addEventListener("resize", updateFontSize);
-
-    // Initial size update
-    updateFontSize();
-
-    return () => {
-      observer.disconnect();
-      window.removeEventListener("resize", updateFontSize);
-    };
-  }, []);*/
-  
+  useDayGridResponsiveLayout(experienceConRef, calendarApi);
 
   return (
     <>
@@ -2244,6 +1536,7 @@ const App = () => {
 
       <div
         class="experience-container"
+        ref={experienceConRef}
         style={{
           backgroundColor: "white",
           padding: "12px",
@@ -2255,12 +1548,12 @@ const App = () => {
         <div
           style={{
             position: "absolute",
-            top: "147px", // place at very top of container
+            top: hasTitle ? "147px" : "125px", // place at very top of container
             left: "0",
             right: "0",
             height: "1px",
-            borderRadius:'2px',
-      
+            borderRadius: "2px",
+
             backgroundColor: "#ddd",
           }}
         ></div>
@@ -2342,24 +1635,24 @@ const App = () => {
             marginTop: hasTitle ? "" : "40px",
           }}
         >
-        {calendarApi.current && (
-  <div
-    style={{
-      height:
-        calendarApi.current.view.type !== "multiMonthYear"
-          ? "427px"
-          : "449px",
-      width: '1px',
-      zIndex:'999',
-      backgroundColor: "#ddd",
-      position: "absolute",
-      marginTop:
-        calendarApi.current.view.type !== "multiMonthYear"
-          ? "111px"
-          : "89px",
-    }}
-  />
-)}
+          {calendarApi.current && (
+            <div
+              style={{
+                height:
+                  calendarApi.current.view.type !== "multiMonthYear"
+                    ? "427px"
+                    : "449px",
+                width: "1px",
+                zIndex: "999",
+                backgroundColor: "#ddd",
+                position: "absolute",
+                marginTop:
+                  calendarApi.current.view.type !== "multiMonthYear"
+                    ? "111px"
+                    : "89px",
+              }}
+            />
+          )}
 
           <div class="calendar-wrapper">
             {
@@ -2567,7 +1860,6 @@ const App = () => {
               if (!calendar) return;
               setResourcesByDate((prev) => {
                 const updated = {};
-             
 
                 Object.keys(prev).forEach((date) => {
                   updated[date] = prev[date].filter(
@@ -2578,7 +1870,6 @@ const App = () => {
 
                 return updated;
               });
-              
 
               function ymdLocal(dLike) {
                 const d = dLike instanceof Date ? dLike : new Date(dLike);

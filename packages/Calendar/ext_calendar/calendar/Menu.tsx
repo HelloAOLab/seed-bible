@@ -32,7 +32,6 @@ const Menu = ({
   useEffect(() => {
     const container = document.querySelector(".fc");
     const buttons = document.querySelectorAll(".collapsed-btn"); // use class instead of id
-    console.log(buttons);
 
     if (calendarView && container) {
       if (calendarView !== "resourceTimeline") {
@@ -152,7 +151,6 @@ const Menu = ({
 
               groups.forEach((group) => {
                 const label = group.innerText.trim();
-                console.log(label);
 
                 if (label === groupValue) {
                   const currentlyHidden = hiddenGroups[label] || false;
@@ -189,7 +187,6 @@ const Menu = ({
                         const rect = btn.getBoundingClientRect();
                         const top = rect.top + window.scrollY + 20;
                         const left = rect.left + window.scrollX - 200;
-                        console.log("Menu position:", { top, left });
 
                         setGroupMenu({
                           groupValue,

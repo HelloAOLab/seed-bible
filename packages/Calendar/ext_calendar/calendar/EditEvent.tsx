@@ -41,8 +41,6 @@ const EditEvent = ({
   calendarApi,
   setEventInView,
 }) => {
-  console.log(editingEvent);
-
   const isFCEvent = isFullCalendarEvent(editingEvent);
   const fcEvent = isFCEvent
     ? editingEvent
@@ -52,7 +50,6 @@ const EditEvent = ({
 
   const startRaw = fcEvent.start || new Date(editingEvent.start);
   const endRaw = fcEvent.end ?? null;
-  console.log(fcEvent, "fcevent");
 
   const { startDate, startTime } = formatDateTime(startRaw);
   const { date: endDateInitial, time: endTimeInitial } =

@@ -100,12 +100,11 @@ const ResourceEventModal = ({
     setCurrentResourceId("");
     setIsEventModalOpen(false);
   };
-  console.log(allEvents, "ppppppppppp");
+
   const handleEventFetch = () => {
     const selectedDate = dateInputRef.current?.value;
 
     if (!selectedDate) return;
-    console.log(allEvents);
 
     const events = allEvents.filter((event) => {
       const eventDate = event.start?.split("T")[0];
