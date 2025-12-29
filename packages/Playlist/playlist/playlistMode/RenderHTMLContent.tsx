@@ -13,7 +13,6 @@ const RenderHTMLContent = ({ htmlContent }) => {
       setShouldRender(true);
     } else {
       const height = containerRef.current?.offsetHeight || 0;
-      console.log(height,containerRef.current,htmlContent);
       if (height > 60 && !shouldRender) {
         setShouldRender(true);
       }

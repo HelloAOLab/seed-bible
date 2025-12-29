@@ -347,9 +347,8 @@ const Playlist = () => {
           );
           let allAnnotations:any = [];
           const verseIndexMap:any = {};
-
           annotations.forEach((ele) => {
-            if (ele.data.type === "comment" && ele.verseNumber) {
+            if (ele?.data.type === "comment" && ele.verseNumber) {
               const booksDetails = globalThis.findNameRank(ele.bookId);
               const anoItem = {
                 type: "heading",
@@ -360,7 +359,10 @@ const Playlist = () => {
                   book: ele.bookId,
                   bookRank: booksDetails.item,
                 },
+                address: ele.id,
                 id: ele.id,
+                createdAtMs: ele?.data?.createdAtMs || Date.now(),
+                updatedAtMs: ele?.data?.updatedAtMs || Date.now(),
               };
 
               const data = {
@@ -379,7 +381,7 @@ const Playlist = () => {
               }else {
                 allAnnotations[verseIndexMap[data.heading]].data.push(anoItem);
               }
-            } else if (ele.data.type !== "comment") {
+            } else if (ele?.data.type !== "comment") {
               const data = {
                 bookid: currentOpenedBook?.bookId,
                 chapter: currentOpenedBook?.chapter,
@@ -392,8 +394,8 @@ const Playlist = () => {
                   !!innerele.additionalInfo &&
                   !!innerele.additionalInfo.layers
                 ) {
-                  const tags = [...(ele.data.chronicle_tags || [])];
-                  const layers = [...innerele.additionalInfo.layers];
+                  const tags = [...(ele?.data.chronicle_tags || [])];
+                  const layers = [...innerele.additionalInfo.layers.map(layer => ({...layer, address: ele.id, createdAtMs: innerele.createdAtMs || Date.now(), updatedAtMs: innerele.updatedAtMs || Date.now()}))];
                   if (innerele?.type === "chapter") {
                     data.heading = "Chapter";
                     data.data = [...layers];
@@ -423,8 +425,8 @@ const Playlist = () => {
                       verseIndexMap[data.heading] = allAnnotations.length - 1;
                       allAnnotations.push(data);
                     }else {
-                      allAnnotations[verseIndexMap[data.heading]].data.push(...layers);
-                      allAnnotations[verseIndexMap[data.heading]].tags.push(...tags);
+                      allAnnotations[verseIndexMap[data.heading]]?.data.push(...layers);
+                      allAnnotations[verseIndexMap[data.heading]]?.tags.push(...tags);
                     }
                   }
                 }
@@ -432,7 +434,6 @@ const Playlist = () => {
             }
           });
           allAnnotations = allAnnotations.sort(sortFunc);
-          console.log("annotations",annotations,allAnnotations,verseIndexMap);
           setFetchingAnnotation(false);
           setAnnotationData(allAnnotations);
         } catch (e) {

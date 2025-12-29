@@ -26,23 +26,34 @@ const AnnotationList = ({
   setAnnotationData,
   annotationData,
 }) => {
-  const [deleteModal, setDeleteModal] = useState(false);
+  const [deleteModal, setDeleteModal] = useState({
+    address: false,
+    index: false,
+  });
   const [loading, setLoading] = useState(false);
   const [deleteOverlay, setDeleteOverlay] = useState(false);
 
-  const closeModal = () => setDeleteModal(false);
+  const closeModal = () => setDeleteModal({
+    address: false,
+    index: false,
+  });
   const closeOverlay = () => setDeleteOverlay(false);
 
   const position = useRef({});
 
-  const onDelete = async (address) => {
+  const onDelete = async (address,index) => {
     try {
       setLoading(true);
       const userRecord = await getAnnotationRecord();
       const res = await deleteAnnotation(userRecord, { id: address });
       if (res.success) {
         setAnnotationData((prev) => {
-          return prev.filter((ele) => ele.address !== address);
+          const newData = [...prev];
+          newData[index].data = newData[index].data.filter((ele) => ele.address !== address);
+          if(newData[index].data.length === 0) {
+            newData.splice(index, 1);
+          }
+          return newData;
         });
         closeModal();
         ShowNotification({
@@ -67,7 +78,7 @@ const AnnotationList = ({
 
   return (
     <>
-      {deleteModal && (
+      {deleteModal.address && (
         <ConfirmationModal
           loading={loading}
           title={globalThis.t("deleteAnnotation")}
@@ -75,7 +86,7 @@ const AnnotationList = ({
           onClose={() => {
             if (!loading) closeModal();
           }}
-          onConfirm={() => onDelete(deleteModal)}
+          onConfirm={() => onDelete(deleteModal.address,deleteModal.index)}
         />
       )}
 
@@ -91,10 +102,11 @@ const AnnotationList = ({
           <p style={{ marginTop: "12px" }}>{globalThis.t("noAnnotationsFound")}</p>
         ) : (
           <div className="annotation">
-            {annotationData.map((ele) => (
+            {annotationData.map((ele,index) => (
               <AnnotationHeading
                 key={ele.address}
                 address={ele.address}
+                index={index}
                 onDelete={onDelete}
                 heading={ele.heading}
                 tags={ele.tags}
@@ -129,6 +141,7 @@ const AnnotationHeading = ({
   setDeleteModal,
   onDelete,
   closeOverlay,
+  index,
   getPosition,
 }) => {
   const [isOpen, setIsOpen] = useState(true);
@@ -240,7 +253,10 @@ const AnnotationHeading = ({
                 },
                 {
                   click: () => {
-                    setDeleteModal(address);
+                    setDeleteModal({
+                      address: address,
+                      index: index,
+                    });
                     closeOverlay();
                   },
                   icon: "delete",
@@ -251,7 +267,15 @@ const AnnotationHeading = ({
           </>
         )}
       </div>
-      <AnnodataMapper onDelete={onDelete} data={data} address={address} currentOpenedBook={currentOpenedBook} chapter={chapter} heading={heading} />
+      <AnnodataMapper onDelete={
+        ()=>{
+          setDeleteModal({
+            address: address,
+            index: index,
+          });
+          closeOverlay();
+        }
+      } data={data} address={address} currentOpenedBook={currentOpenedBook} chapter={chapter} heading={heading} />
    
     </div>
   );
@@ -330,9 +354,9 @@ const AnnodataMapper = ({ data, address, currentOpenedBook, chapter, heading, on
             )}
           </div>
           <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginTop: '0.5rem' }}>
-        <div style={{ display: 'flex', flexDirection: 'row', gap: '0.5rem' }}>
-          <p>Name</p>
-          <p>Time</p>
+        <div style={{ display: 'flex', flexDirection: 'row', gap: '0.5rem',fontSize: '12px' }}>
+          <p>Updated At:</p>
+          <p style={{ textTransform: 'capitalize'}}>{FormatRelativeTime(contentData.updatedAtMs)}</p>
         </div>
         <div>
             <p 

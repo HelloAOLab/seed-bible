@@ -247,6 +247,7 @@ export async function deleteAnnotation(
     console.error("Error deleting annotation: ", result);
     throw new Error("Error deleting annotation");
   }
+  return result;
 }
 
 /**

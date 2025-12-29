@@ -546,6 +546,8 @@ const AddAnotationUI = ({
             setEditDataDetails({
               type: "heading",
               content: data.data.html,
+              createdAtMs: data.data.createdAtMs,
+              updatedAtMs: data.data.updatedAtMs,
               additionalInfo: {
                 verse: data.verseNumber,
                 chapter: data.chapterNumber,
