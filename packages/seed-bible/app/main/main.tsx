@@ -80,7 +80,7 @@ const Main = () => {
   const { screens, fullScreen, setFullScreen } = useBibleContext();
   const { collapsed, sidebarWidth, setSidebarWidth, themeColors } =
     useSideBarContext();
-  const { tabs, activeSpace, getAllTabsInSpace } = useTabsContext();
+  const { tabs, activeSpace, getAllTabsInSpace, spaces } = useTabsContext();
   const [started, setStarted] = useState(false);
 
   const {
@@ -319,40 +319,88 @@ const Main = () => {
   // };
 
   const defaultTheme = {
-    menuBackground: "#F0F1F1",
-    primaryButton: "#E6E6E6",
+    // Background colors (Background #F8FAFC, Surface #FFFFFF)
+    menuBackground: "#F8FAFC",
+    themeSideMenu: "#F8FAFC",
+    panelBackground: "#FFFFFF",
     pageBackground: "#FFFFFF",
-    pageTextColor: "#000000",
-    primaryButtonColor: "#606060",
-    secondaryButton: "#4459F3",
-    secondaryButtonColor: "#4459F3",
-    buttonBorder: "#2b00ff",
-    tabSelection: "#4459F3",
-    spaceSelection: "#4459F3",
-    toolbarBackground: "#ffffff",
-    iconColor: "#000000",
-    text1: "#000000",
-    text2: "#000000",
+    toolbarBackground: "#FFFFFF",
+    toolbarBorder: "#E2E8F0",
+    // Primary colors (Primary #3B82F6, Primary Dark #2563EB, Secondary #8B5CF6)
+    primaryButton: "#3B82F6",
+    primaryButtonColor: "#FFFFFF",
+    secondaryButton: "#8B5CF6",
+    secondaryButtonColor: "#FFFFFF",
+    buttonBorder: "#E2E8F0",
+    // Tab & Selection
+    tabSelection: "#3B82F6",
+    activeTabBackground: "#FFFFFF",
+    activeTabText: "#0F172A",
+    simpleTabText: "#64748B",
+    spaceSelection: "#3B82F6",
+    // Text colors (Text Primary #0F172A, Text Secondary #64748B)
+    pageTextColor: "#0F172A",
+    text1: "#0F172A",
+    text2: "#64748B",
+    iconColor: "#0F172A",
     "filter-mode": " none",
-    showTabIcons: true, // Default to showing tab icons
+    showTabIcons: true,
+    // Side menu specific
+    spaceNameText: "#0F172A",
+    addButtonBackground: "#3B82F6",
+    addButtonIcon: "#FFFFFF",
+    selectPanelIcon: "#0F172A",
+    openCloseMenuIcon: "#0F172A",
+    moreIcon: "#64748B",
+    settingsIcon: "#64748B",
+    inactiveSpaceIndicator: "#E2E8F0",
+    activeSpaceIndicator: "#3B82F6",
+    profileAvatar: "#8B5CF6",
+    // Scripture text (Accent/Tertiary #06B6D4 for verse numbers)
+    bookHeadingColor: "#0F172A",
+    chapterHeadingColor: "#0F172A",
+    verseNumberColor: "#06B6D4",
+    verseTextColor: "#0F172A",
   };
   const darkTheme = {
     menuBackground: "#2D2D2D",
+    themeSideMenu: "#2D2D2D",
+    panelBackground: "#1A1A1A",
     primaryButton: "#404040",
     primaryButtonColor: "#FFFFFF",
     secondaryButton: "#5A67D8",
     secondaryButtonColor: "#FFFFFF",
     buttonBorder: "#5A67D8",
     tabSelection: "#5A67D8",
+    activeTabBackground: "#404040",
+    activeTabText: "#FFFFFF",
+    simpleTabText: "#AAAAAA",
     spaceSelection: "#5A67D8",
     toolbarBackground: "#1A1A1A",
+    toolbarBorder: "#FFFFFF24",
     text1: "#FFFFFF",
-    text2: "#FFFFFF",
+    text2: "#AAAAAA",
     iconColor: "#FFFFFF",
     "filter-mode": "invert(100%)",
     pageBackground: "#121212",
     pageTextColor: "white",
     showTabIcons: true,
+    // Side menu specific
+    spaceNameText: "#FFFFFF",
+    addButtonBackground: "#404040",
+    addButtonIcon: "#5A67D8",
+    selectPanelIcon: "#FFFFFF",
+    openCloseMenuIcon: "#FFFFFF",
+    moreIcon: "#FFFFFF",
+    settingsIcon: "#AAAAAA",
+    inactiveSpaceIndicator: "#666666",
+    activeSpaceIndicator: "#5A67D8",
+    profileAvatar: "#5A67D8",
+    // Scripture text
+    bookHeadingColor: "#FFFFFF",
+    chapterHeadingColor: "#FFFFFF",
+    verseNumberColor: "#5A67D8",
+    verseTextColor: "#FFFFFF",
   };
   const isDark = false;
   // window.matchMedia("(prefers-color-scheme: dark)").matches;
@@ -369,8 +417,153 @@ const Main = () => {
       ([key, value]) => `--${key}: ${value};`
     );
 
-    return `:root {\n  ${vars.join("\n  ")}\n}`;
-  }, [themeColors, activeSpace]);
+    // Get current space settings for fonts
+    const currentSpace = spaces?.find((s) => s.id === activeSpace);
+    const scriptureSettings = currentSpace?.scriptureSettings || {};
+    const sideMenuSettings = currentSpace?.sideMenuSettings || {};
+    const inputFieldsSettings = currentSpace?.inputFieldsSettings || {};
+
+    // Scripture text font CSS variables
+    const fontVars = [];
+    if (scriptureSettings.bookHeadingFont) {
+      fontVars.push(
+        `--scripture-bookHeading-font: '${scriptureSettings.bookHeadingFont}', sans-serif`
+      );
+    }
+    if (scriptureSettings.bookHeadingSize) {
+      fontVars.push(
+        `--scripture-bookHeading-size: ${scriptureSettings.bookHeadingSize}px`
+      );
+    }
+    if (scriptureSettings.chapterHeadingFont) {
+      fontVars.push(
+        `--scripture-chapterHeading-font: '${scriptureSettings.chapterHeadingFont}', sans-serif`
+      );
+    }
+    if (scriptureSettings.chapterHeadingSize) {
+      fontVars.push(
+        `--scripture-chapterHeading-size: ${scriptureSettings.chapterHeadingSize}px`
+      );
+    }
+    if (scriptureSettings.verseTextFont) {
+      fontVars.push(
+        `--scripture-verseText-font: '${scriptureSettings.verseTextFont}', sans-serif`
+      );
+    }
+    if (scriptureSettings.verseTextSize) {
+      fontVars.push(
+        `--scripture-verseText-size: ${scriptureSettings.verseTextSize}px`
+      );
+    }
+    if (scriptureSettings.verseNumberFont) {
+      fontVars.push(
+        `--scripture-verseNumber-font: '${scriptureSettings.verseNumberFont}', sans-serif`
+      );
+    }
+    if (scriptureSettings.verseNumberSize) {
+      fontVars.push(
+        `--scripture-verseNumber-size: ${scriptureSettings.verseNumberSize}px`
+      );
+    }
+
+    // Side menu font CSS variables
+    if (sideMenuSettings.spaceNameFont) {
+      fontVars.push(
+        `--sideMenu-spaceName-font: '${sideMenuSettings.spaceNameFont}', sans-serif`
+      );
+    }
+    if (sideMenuSettings.spaceNameSize) {
+      fontVars.push(
+        `--sideMenu-spaceName-size: ${sideMenuSettings.spaceNameSize}px`
+      );
+    }
+    if (sideMenuSettings.menuTextFont) {
+      fontVars.push(
+        `--sideMenu-menuText-font: '${sideMenuSettings.menuTextFont}', sans-serif`
+      );
+    }
+    if (sideMenuSettings.menuTextSize) {
+      fontVars.push(
+        `--sideMenu-menuText-size: ${sideMenuSettings.menuTextSize}px`
+      );
+    }
+    if (sideMenuSettings.heading1Font) {
+      fontVars.push(
+        `--sideMenu-heading1-font: '${sideMenuSettings.heading1Font}', sans-serif`
+      );
+    }
+    if (sideMenuSettings.heading1Size) {
+      fontVars.push(
+        `--sideMenu-heading1-size: ${sideMenuSettings.heading1Size}px`
+      );
+    }
+    if (sideMenuSettings.heading2Font) {
+      fontVars.push(
+        `--sideMenu-heading2-font: '${sideMenuSettings.heading2Font}', sans-serif`
+      );
+    }
+    if (sideMenuSettings.heading2Size) {
+      fontVars.push(
+        `--sideMenu-heading2-size: ${sideMenuSettings.heading2Size}px`
+      );
+    }
+    if (sideMenuSettings.heading3Font) {
+      fontVars.push(
+        `--sideMenu-heading3-font: '${sideMenuSettings.heading3Font}', sans-serif`
+      );
+    }
+    if (sideMenuSettings.heading3Size) {
+      fontVars.push(
+        `--sideMenu-heading3-size: ${sideMenuSettings.heading3Size}px`
+      );
+    }
+    if (sideMenuSettings.descriptionTextFont) {
+      fontVars.push(
+        `--sideMenu-description-font: '${sideMenuSettings.descriptionTextFont}', sans-serif`
+      );
+    }
+    if (sideMenuSettings.descriptionTextSize) {
+      fontVars.push(
+        `--sideMenu-description-size: ${sideMenuSettings.descriptionTextSize}px`
+      );
+    }
+    if (sideMenuSettings.breadcrumbsFont) {
+      fontVars.push(
+        `--sideMenu-breadcrumbs-font: '${sideMenuSettings.breadcrumbsFont}', sans-serif`
+      );
+    }
+    if (sideMenuSettings.breadcrumbsSize) {
+      fontVars.push(
+        `--sideMenu-breadcrumbs-size: ${sideMenuSettings.breadcrumbsSize}px`
+      );
+    }
+    if (sideMenuSettings.iconsSize) {
+      fontVars.push(`--sideMenu-icons-size: ${sideMenuSettings.iconsSize}px`);
+    }
+
+    // Input fields font CSS variables
+    if (inputFieldsSettings.titleFont) {
+      fontVars.push(
+        `--input-title-font: '${inputFieldsSettings.titleFont}', sans-serif`
+      );
+    }
+    if (inputFieldsSettings.titleSize) {
+      fontVars.push(`--input-title-size: ${inputFieldsSettings.titleSize}px`);
+    }
+    if (inputFieldsSettings.placeholderFont) {
+      fontVars.push(
+        `--input-placeholder-font: '${inputFieldsSettings.placeholderFont}', sans-serif`
+      );
+    }
+    if (inputFieldsSettings.placeholderSize) {
+      fontVars.push(
+        `--input-placeholder-size: ${inputFieldsSettings.placeholderSize}px`
+      );
+    }
+
+    const allVars = [...vars, ...fontVars.map((v) => v + ";")];
+    return `:root {\n  ${allVars.join("\n  ")}\n}`;
+  }, [themeColors, activeSpace, spaces]);
 
   useEffect(() => {
     globalThis.ThemeCSS = ThemeCSS;

@@ -1,0 +1,1 @@
+globalThis.ShowCommandBox && globalThis.ShowCommandBox();

@@ -260,10 +260,17 @@
   background-color: #e8e8e8;
   border: none;
   border-radius: 8px;
-  font-size: 16px;
+  font-family: var(--input-title-font, "DM Sans", sans-serif);
+  font-size: var(--input-title-size, 16px);
   color: #333;
   outline: none;
   transition: background-color 0.2s;
+}
+
+.form-input::placeholder {
+  font-family: var(--input-placeholder-font, "DM Sans", sans-serif);
+  font-size: var(--input-placeholder-size, 16px);
+  color: #999;
 }
 
 .form-input:focus {

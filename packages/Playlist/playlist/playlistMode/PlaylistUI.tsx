@@ -345,10 +345,10 @@ const Playlist = () => {
             currentOpenedBook?.bookId,
             currentOpenedBook?.chapter
           );
-          let allAnnotations = [];
-
+          let allAnnotations:any = [];
+          const verseIndexMap:any = {};
           annotations.forEach((ele) => {
-            if (ele.data.type === "comment" && ele.verseNumber) {
+            if (ele?.data.type === "comment" && ele.verseNumber) {
               const booksDetails = globalThis.findNameRank(ele.bookId);
               const anoItem = {
                 type: "heading",
@@ -359,7 +359,10 @@ const Playlist = () => {
                   book: ele.bookId,
                   bookRank: booksDetails.item,
                 },
+                address: ele.id,
                 id: ele.id,
+                createdAtMs: ele?.data?.createdAtMs || Date.now(),
+                updatedAtMs: ele?.data?.updatedAtMs || Date.now(),
               };
 
               const data = {
@@ -369,10 +372,16 @@ const Playlist = () => {
 
               data.heading = `Verse ${ele.verseNumber}`;
               data.data = [anoItem];
+              data.verse = ele.verseNumber;
               data.tags = [];
               data.address = ele.id;
-              allAnnotations.push(data);
-            } else if (ele.data.type !== "comment") {
+              if(!verseIndexMap[data.heading]) {
+                verseIndexMap[data.heading] = allAnnotations.length - 1;
+                allAnnotations.push(data);
+              }else {
+                allAnnotations[verseIndexMap[data.heading]].data.push(anoItem);
+              }
+            } else if (ele?.data.type !== "comment") {
               const data = {
                 bookid: currentOpenedBook?.bookId,
                 chapter: currentOpenedBook?.chapter,
@@ -380,17 +389,19 @@ const Playlist = () => {
               const innerele = ele?.data?.data;
 
               if (innerele) {
+             
                 if (
                   !!innerele.additionalInfo &&
                   !!innerele.additionalInfo.layers
                 ) {
-                  const tags = [...(ele.data.chronicle_tags || [])];
-                  const layers = [...innerele.additionalInfo.layers];
+                  const tags = [...(ele?.data.chronicle_tags || [])];
+                  const layers = [...innerele.additionalInfo.layers.map(layer => ({...layer, address: ele.id, createdAtMs: innerele.createdAtMs || Date.now(), updatedAtMs: innerele.updatedAtMs || Date.now()}))];
                   if (innerele?.type === "chapter") {
                     data.heading = "Chapter";
                     data.data = [...layers];
                     data.tags = [...tags];
                     data.address = ele.id;
+                    data.verse = [0];
                   }
                   if (innerele?.type === "verse-grouped") {
                     const verses = [...innerele.additionalInfo.verse];
@@ -399,22 +410,30 @@ const Playlist = () => {
                     data.data = [...layers];
                     data.tags = [...tags];
                     data.address = ele.id;
+                    data.verse = verses[0];
                   }
 
                   if (innerele?.type === "verse") {
                     data.heading = `Verse ${innerele.additionalInfo.verse}`;
                     data.data = [...layers];
                     data.tags = [...tags];
+                    data.verse = innerele.additionalInfo.verse;
                     data.address = ele.id;
                   }
-                }
-                if (data.data) {
-                  allAnnotations.push(data);
+                  if (data.data) {
+                    if(!verseIndexMap[data.heading]) {
+                      verseIndexMap[data.heading] = allAnnotations.length - 1;
+                      allAnnotations.push(data);
+                    }else {
+                      allAnnotations[verseIndexMap[data.heading]]?.data.push(...layers);
+                      allAnnotations[verseIndexMap[data.heading]]?.tags.push(...tags);
+                    }
+                  }
                 }
               }
             }
           });
-          // allAnnotations = allAnnotations.sort(sortFunc);
+          allAnnotations = allAnnotations.sort(sortFunc);
           setFetchingAnnotation(false);
           setAnnotationData(allAnnotations);
         } catch (e) {

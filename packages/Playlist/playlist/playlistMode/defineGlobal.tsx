@@ -420,8 +420,6 @@ globalThis.appendImageToEditorHTML = function appendImageToEditorHTML(fileObject
 globalThis.uploadFilesReusable = async function uploadFilesReusable({files}) {
   const filesPromises: any[] = [];
 
-  console.log("files", files);
-  console.log("files", Object.values(files));
 
   files.forEach((file: any) => {
     filesPromises.push(
@@ -934,9 +932,16 @@ globalThis.IsVideoAttachment = isVideoAttachment;
 globalThis.IsVideoUrl = isVideoUrl;
 
 function formatRelativeTime(date) {
-  if (!date) return "";
+  let dateObj = date;
+  if (!dateObj) return "";
+  if (typeof dateObj === "number") {
+    dateObj = new Date(dateObj);
+  }
+  if (typeof dateObj === "string") {
+    dateObj = new Date(dateObj);
+  }
   const now = new Date();
-  const diffMs = now - date;
+  const diffMs = now - dateObj;
   const diffSec = Math.floor(diffMs / 1000);
   const diffMin = Math.floor(diffSec / 60);
   const diffHrs = Math.floor(diffMin / 60);
@@ -959,9 +964,9 @@ function formatRelativeTime(date) {
 
   // Same day (show "X hrs ago" if today)
   if (
-    date.getDate() === now.getDate() &&
-    date.getMonth() === now.getMonth() &&
-    date.getFullYear() === now.getFullYear()
+    dateObj.getDate() === now.getDate() &&
+    dateObj.getMonth() === now.getMonth() &&
+    dateObj.getFullYear() === now.getFullYear()
   ) {
     return `${diffHrs} hrs ago`;
   }
@@ -970,18 +975,18 @@ function formatRelativeTime(date) {
   const yesterday = new Date();
   yesterday.setDate(now.getDate() - 1);
   if (
-    date.getDate() === yesterday.getDate() &&
-    date.getMonth() === yesterday.getMonth() &&
-    date.getFullYear() === yesterday.getFullYear()
+    dateObj.getDate() === yesterday.getDate() &&
+    dateObj.getMonth() === yesterday.getMonth() &&
+    dateObj.getFullYear() === yesterday.getFullYear()
   ) {
-    return `yesterday ${date.toLocaleTimeString([], {
+    return `yesterday ${dateObj.toLocaleTimeString([], {
       hour: "numeric",
       minute: "2-digit",
     })}`;
   }
 
   // Older → show like "Sep/9 6:55 AM"
-  return date.toLocaleString("en-US", {
+  return dateObj.toLocaleString("en-US", {
     month: "short",
     day: "numeric",
     hour: "numeric",

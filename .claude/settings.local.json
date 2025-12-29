@@ -1,5 +1,5 @@
 {
   "permissions": {
-    "allow": ["Bash(cat:*)"]
+    "allow": ["Bash(cat:*)", "Bash(find:*)"]
   }
 }

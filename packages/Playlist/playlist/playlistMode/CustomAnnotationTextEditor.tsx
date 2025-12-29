@@ -60,6 +60,7 @@ const RECORDING_TYPES = {
 const DEFAULT_TOOLBAR_PRIORITY = [
   "mic",
   "video",
+  "slash",
   "bold",
   "italic",
   "underline",
@@ -88,6 +89,39 @@ const DEFAULT_TOOLBAR_PRIORITY = [
   "ai",
   "tune",
 ];
+
+const COMMAND_BOX_OPTIONS = [
+  {
+    icon: "https://auth-aux-aobot-prod-filesbucket-141297942820.s3.amazonaws.com/annotations/95176265a3a33a0077c8b11b493470df3393acfc3ff5411c8fe45976d96be46d.svg",
+    label: "Add Link",
+    onClick: () => {
+      console.log("Add Annotation");
+    },
+  },
+  {
+    icon: "https://auth-aux-aobot-prod-filesbucket-141297942820.s3.amazonaws.com/annotations/76dc5c6ea24d635c2a1f363dc5d3822a618a56ff3484f36795f2bf4ae99ae3c4.svg",
+    label: "Add Tags",
+    onClick: () => {
+      console.log("Add Tags");
+    },
+  },
+  {
+    icon: "https://auth-aux-aobot-prod-filesbucket-141297942820.s3.amazonaws.com/annotations/8b01074656e936022bbb1655a94e85ba3f9af15d2873d6bd16d01d07d66bdf8b.svg",
+    label: "Add File",
+    onClick: () => {
+      console.log("Add File");
+    },
+  },
+  {
+    icon: "https://auth-aux-aobot-prod-filesbucket-141297942820.s3.amazonaws.com/annotations/14c602cebbe4c6872c9fcf80015865c3b3f70391608bf58b92ad1cc8e068212c.svg",
+    label: "Add Playlist",
+    onClick: () => {
+      console.log("Add Playlist");
+    },
+  },
+];
+
+const COMMAND_ICON = "https://auth-aux-aobot-prod-filesbucket-141297942820.s3.amazonaws.com/annotations/ce7430bae3a8fd021160a12806b2b82a5999a463b2bff278a96f922963fe5cfc.svg";
 
 // ---- custom mark: lineHeight (same behavior as your app editor)
 const LineHeight = Mark.create({
@@ -413,9 +447,15 @@ export function CustomAnnotationTextEditor({
   const editorObjRef = useRef(null);
   const [loading, setLoading] = useState(false);
   const [recording, setRecording] = useState(globalThis.RecordingValue || null);
+  const [isCommandBox, setIsCommandBox] = useState(false);
+
+  const toggleCommandBox = () => {
+    setIsCommandBox((prev) => !prev);
+  };
 
   useEffect(() => {
     globalThis.RecordingValue = recording;
+    globalThis.ShowCommandBox = toggleCommandBox;
     globalThis.SetRecordingData = setData;
     globalThis.SetRecording = setRecording;
     return () => {
@@ -633,13 +673,18 @@ export function CustomAnnotationTextEditor({
 
     editorObjRef.current = editor;
 
-    if (onChange) {
-      editor.on("update", () => {
-        try {
+    editor.on("update", () => {
+      try {
+        // if the editor html ending with '/' then toggle the command box
+        if (editor.getHTML().endsWith('/</p>')) {
+          console.log("toggle command box", editor.getHTML());
+          toggleCommandBox();
+        }
+        if (onChange) {
           onChange(editor.getHTML(), editor.getJSON());
-        } catch {}
-      });
-    }
+        }
+      } catch {}
+    });
 
     globalThis[`${id}ClearEditorContent`] = () =>
       editor.commands.setContent("");
@@ -674,6 +719,9 @@ export function CustomAnnotationTextEditor({
     },
     mic: () =>  {
       shout("startRecording", RECORDING_TYPES.audio);
+    },
+    slash: () =>  {
+      shout("showCommandBox", RECORDING_TYPES.audio);
     },
     bold: () => chain("toggleBold"),
     italic: () => chain("toggleItalic"),
@@ -1015,7 +1063,23 @@ export function CustomAnnotationTextEditor({
 
 
   return (
+    <>
+    {isCommandBox && <div className="command-box-backdrop" onClick={toggleCommandBox} style={{ display: isCommandBox ? "block" : "none", position: "fixed", top: 0, left: 0, right: 0, bottom: 0, zIndex: 98, backdropFilter: "blur(2px)" }}></div>}
     <div ref={dragRef} className={`sre-root ${isVideo ? "sre-video-root" : ""} ${className || ""}`} style={{ ...style }}>
+      {isCommandBox && <div
+      className="relative-float command-box"
+      style={{
+       backgroundColor: "#F7F7F7",
+       backdropFilter: "none",
+      }}
+      >
+        {COMMAND_BOX_OPTIONS.map((option) => (
+          <div className="command-box-option" key={option.label}>
+            <img src={option.icon} alt={option.label} />
+            <p>{option.label}</p>
+          </div>
+        ))}
+      </div>}
       {(isMic || isVideo) && 
           <div
                   style={{
@@ -1061,19 +1125,7 @@ export function CustomAnnotationTextEditor({
       }
       {((dragState.isDragOver || loading) && !isMic && !isVideo) && (
             <div
-              style={{
-                position: "absolute",
-                top: 0,
-                left: 0,
-                right: 0,
-                bottom: 0,
-                backgroundColor: "rgba(0, 0, 0, 0.5)",
-                zIndex: 10000,
-                display: "flex",
-                alignItems: "center",
-                justifyContent: "center",
-                backdropFilter: "blur(2px)",
-              }}
+             className="relative-float"
             >
               <div
                 style={{
@@ -1246,6 +1298,7 @@ export function CustomAnnotationTextEditor({
         </div>
       )}
     </div>
+    </>
   );
 
   // -------------- build toolbar map (JSX per id) ---------------
@@ -1269,7 +1322,7 @@ export function CustomAnnotationTextEditor({
       onAddLink,
     } = ctx;
 
-    const iconBtn = (title, icon, onClick) => (
+    const iconBtn = (title, icon, onClick, url = '') => (
       <button
         className="sre-ib"
         onClick={(e) => {
@@ -1277,8 +1330,8 @@ export function CustomAnnotationTextEditor({
           onClick(e);
         }}
         title={title}
-      >
-        <span className="material-symbols-outlined">{icon}</span>
+        >
+         {url ? <img width={14} height={14} src={url} alt={title} /> : <span className="material-symbols-outlined">{icon}</span>}
       </button>
     );
 
@@ -1457,6 +1510,7 @@ export function CustomAnnotationTextEditor({
     return {
       mic: iconBtn("Mic", "mic", Cmds.mic),
       video: iconBtn("Video", "video_camera_back_add", Cmds.video),
+      slash: iconBtn("Command", null, Cmds.slash, COMMAND_ICON),
       bold: iconBtn("Bold", "format_bold", Cmds.bold),
       italic: iconBtn("Italic", "format_italic", Cmds.italic),
       underline: iconBtn("Underline", "format_underlined", Cmds.underline),
@@ -1730,6 +1784,55 @@ const SRE_STYLES = (minH) => `
 .sre-image {
   max-width: 100%;
   height: auto;
+}
+
+.relative-float {
+    position: absolute;
+    top: 0;
+    left: 0;
+    right: 0;
+    bottom: 0;
+    backgroundColor: rgba(0, 0, 0, 0.5);
+    zIndex: 10000;
+    display: flex;
+    alignItems: center;
+    justifyContent: center;
+    backdropFilter: blur(2px);
+}
+
+.command-box.relative-float {
+    background-color: rgb(247, 247, 247);
+    backdrop-filter: none;
+    display: flex;
+    flex-direction: column;
+    top: 4rem;
+    left: 2rem;
+    height: max-content;
+    width: 10rem;
+    z-index: 99;
+    padding: 10px;
+    border-radius: 10px;
+    box-shadow: 0px 1px 4px 0px #0000001A;
+}
+.command-box-option {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  padding: 10px;
+  font-family: DM Sans;
+  font-weight: 500;
+  font-style: Medium;
+  font-size: 12px;
+  leading-trim: NONE;
+  line-height: 100%;
+  letter-spacing: 0%;
+}
+
+
+.command-box-option img {
+  width: 16px;
+  cursor: pointer;
+  height: 16px;
 }
 
 `;

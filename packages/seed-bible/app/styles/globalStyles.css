@@ -1,3 +1,23 @@
-*{
-    
+* {
+}
+
+/* Global input field styles */
+input {
+  font-family: var(--input-title-font, "DM Sans", sans-serif);
+  font-size: var(--input-title-size, 14px);
+}
+
+input::placeholder {
+  font-family: var(--input-placeholder-font, "DM Sans", sans-serif);
+  font-size: var(--input-placeholder-size, 14px);
+}
+
+textarea {
+  font-family: var(--input-title-font, "DM Sans", sans-serif);
+  font-size: var(--input-title-size, 14px);
+}
+
+textarea::placeholder {
+  font-family: var(--input-placeholder-font, "DM Sans", sans-serif);
+  font-size: var(--input-placeholder-size, 14px);
 }
