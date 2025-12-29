@@ -8,6 +8,7 @@ import {
 } from "app.components.phosphoricons";
 
 import TranslationModal from "introduction.searchBar.TranslationModal";
+import { getTranslations, getTranslatedNumber } from "app.hooks.i18n";
 import type {
   BookInterface,
   TranslationInterface,
@@ -22,43 +23,8 @@ const {
   useLayoutEffect,
 } = os.appHooks;
 
-// const PsalmsData = [
-//   {
-//     commonName: "1 Psalms",
-//     startingBook: 0,
-//     endingBook: 40,
-//     firstChapterApiLink: "/api/BSB/PSA/1.json",
-//     lastChapterApiLink: "/api/BSB/PSA/41.json",
-//   },
-//   {
-//     commonName: "2 Psalms",
-//     startingBook: 41,
-//     endingBook: 71,
-//     firstChapterApiLink: "/api/BSB/PSA/42.json",
-//     lastChapterApiLink: "/api/BSB/PSA/72.json",
-//   },
-//   {
-//     commonName: "3 Psalms",
-//     startingBook: 72,
-//     endingBook: 88,
-//     firstChapterApiLink: "/api/BSB/PSA/73.json",
-//     lastChapterApiLink: "/api/BSB/PSA/89.json",
-//   },
-//   {
-//     commonName: "4 Psalms",
-//     startingBook: 89,
-//     endingBook: 105,
-//     firstChapterApiLink: "/api/BSB/PSA/90.json",
-//     lastChapterApiLink: "/api/BSB/PSA/106.json",
-//   },
-//   {
-//     commonName: "5 Psalms",
-//     startingBook: 106,
-//     endingBook: 149,
-//     firstChapterApiLink: "/api/BSB/PSA/107.json",
-//     lastChapterApiLink: "/api/BSB/PSA/150.json",
-//   },
-// ];
+// Provide a fallback JSX.IntrinsicElements declaration so TSX compiles
+// even when React types are not available in the environment.
 
 const PsalmsData: BookInterface[] = [
   {
@@ -143,6 +109,7 @@ const SearchBar = () => {
   const [query, setQuery] = useState("");
   const [languageQuery, setLanguageQuery] = useState("");
   const inputRef = useRef(null);
+  const systemTranslation: { [key: string]: string } = getTranslations();
   const [onlineUsers, setOnlineUsers] = useState(null);
   const [orientation, setOrientation] = useState(
     masks?.orientation || "traditional"
@@ -153,7 +120,6 @@ const SearchBar = () => {
   );
   const [selectedTestament, setSelectedTestament] = useState(2);
   const [apocryphaAvailable, setApocryphaAvailable] = useState(false);
-  const [openSearchBar, setOpenSearchBar] = useState(false);
 
   const [defaultTranslations, setDefaultTranslations] = useState(
     thePage.masks?.defaultTranslations || [
@@ -192,7 +158,8 @@ const SearchBar = () => {
   const [windowSize, setWindowSize] = useState(window.innerWidth);
 
   const handleNameMatch = useCallback(
-    ({ query, bookData }: { query: string; bookData: BookInterface }) => {
+    (props: { query: string; bookData: BookInterface }) => {
+      const { query, bookData } = props;
       let lowercaseQuery = query?.toLowerCase() || "";
       const commonName = bookData.commonName?.toLowerCase() || "";
       const bookId = bookData.id?.toLowerCase() || "";
@@ -222,13 +189,7 @@ const SearchBar = () => {
   );
 
   const sortBooksByTestament = useCallback(
-    (
-      books: BookInterface[]
-    ): {
-      OTBooks: BookInterface[];
-      NTBooks: BookInterface[];
-      ApocryphaBooks: BookInterface[];
-    } => {
+    (books: BookInterface[]) => {
       let OTBooks: BookInterface[] = [];
       const NTBooks: BookInterface[] = [];
       const ApocryphaBooks: BookInterface[] = [];
@@ -384,11 +345,7 @@ const SearchBar = () => {
     }
   }, []);
 
-  const handleTranslationAddition = async ({
-    type,
-    value,
-    setInputValue = () => {},
-  }: {
+  const handleTranslationAddition = async (props: {
     type: string;
     value: string;
     setInputValue?: (s: string) => void;
@@ -396,6 +353,7 @@ const SearchBar = () => {
     const available_translations_req = await web.get(
       "https://bible.helloao.org/api/available_translations.json"
     );
+    const { type, value, setInputValue } = props;
     if (type === "id") {
       const trValue: { pass: boolean; value: TranslationInterface | null } = {
         pass: false,
@@ -654,71 +612,61 @@ const SearchBar = () => {
   };
 
   const focusOnBook = useCallback(
-    ({ bookName, chapterNo }) => {
-      setOpenSidebar(false);
+    (props: { chapterNo?: number }) => {
+      const { chapterNo } = props;
+      (globalThis as any).setOpenSidebar(false);
       setQuery("");
-      let chapter, queryArr;
+      let chapter: number | null = null,
+        queryArr: string[] = [];
       if (chapterNo) {
         chapter = chapterNo;
       } else {
         queryArr = [...query.split(" ")];
-        if (parseInt(queryArr[queryArr.length - 1])) {
-          chapter = parseInt(queryArr[queryArr.length - 1]);
+        const lastPart = queryArr[queryArr.length - 1] ?? "";
+        const parsed = parseInt(lastPart, 10);
+        if (!isNaN(parsed)) {
+          chapter = parsed;
         }
       }
-      shout("closeMiniMapPortal");
-      // whisper(thisBot, "focusOnBook", { bookname: bookName, chapter: chapter ? chapter : 0 });
-      setTimeout(() => {
-        globalThis.Open(
-          selectedTestamentData[0].id,
-          chapter || 1,
-          selectedTestamentData[0].translationId
-        );
-        // Manage.open({
-        //     id: selectedTestamentData[0].id,
-        //     translationId: selectedTestamentData[0].translationId,
-        //     numberOfChapters: selectedTestamentData[0].numberOfChapters,
-        //     bookName,
-        //     chapterNo: chapter ? chapter : 1
-        // })
-      }, 500);
+      globalThis.Open(
+        selectedTestamentData[0].id,
+        chapter || 1,
+        selectedTestamentData[0].translationId
+      );
     },
     [query]
   );
 
   const handleEnter = useCallback(() => {
-    if (
-      (selectedTestamentData.length === 1 && !query?.toLowerCase()) ||
-      "".includes("psalm")
-    ) {
-      focusOnBook({ bookName: selectedTestamentData[0].commonName });
-    } else {
-      if (query?.toLowerCase() || "".includes("psalm")) {
-        if (query.split(" ").length > 1) {
-          const queryArr = query.split(" ");
-          const chapterNo = parseInt(queryArr[queryArr.length - 1]);
-          if (!isNaN(chapterNo)) {
-            let bookName;
-            for (let i = 0; i < PsalmsData.length; i++) {
-              if (chapterNo <= PsalmsData[i].lastChapterNumber) {
-                bookName = PsalmsData[i].commonName;
-                break;
-              }
+    if (query?.toLowerCase() || "".includes("psalm")) {
+      if (query.split(" ").length > 1) {
+        const queryArr: string[] = query.split(" ");
+        const lastPart = queryArr[queryArr.length - 1] ?? "";
+        const chapterNo = parseInt(lastPart, 10);
+        if (!isNaN(chapterNo)) {
+          let bookName;
+          for (const psalmBook of PsalmsData) {
+            if (chapterNo <= psalmBook.lastChapterNumber) {
+              bookName = psalmBook.commonName;
+              break;
             }
-            if (bookName) {
-              focusOnBook({ bookName: bookName, chapterNo: chapterNo });
-            } else {
-              os.toast("That chapter doesn't exist!!!");
-            }
+          }
+          if (bookName) {
+            focusOnBook({ chapterNo: chapterNo });
           } else {
-            os.toast("Please check the chapter no.!!!");
+            os.toast("That chapter doesn't exist!!!");
           }
         } else {
-          focusOnBook({ bookName: "1 Psalms", chapterNo: 1 });
+          os.toast("Please check the chapter no.!!!");
         }
       } else {
-        setQuery(selectedTestamentData[0].commonName);
+        focusOnBook({ chapterNo: 1 });
       }
+    } else if (
+      Array.isArray(selectedTestamentData) &&
+      selectedTestamentData.length > 0
+    ) {
+      setQuery(selectedTestamentData[0]?.commonName ?? "");
     }
   }, [selectedTestamentData, query, focusOnBook]);
 
@@ -769,7 +717,7 @@ const SearchBar = () => {
         selectedTranslation.languageEnglishName?.toLowerCase() || ""
       ]
     ) {
-      let translations = { ...apiTranslations };
+      const translations = { ...apiTranslations };
       translations[
         selectedTranslation.languageEnglishName?.toLowerCase() || ""
       ] = {
@@ -797,33 +745,35 @@ const SearchBar = () => {
   }, [selectedTranslation, apiTranslations, defaultTranslations]);
 
   useEffect(() => {
-    let allTranslations = null;
+    let allTranslations = [];
     if (!thePage.masks?.allTranslations) {
       web
         .get("https://bible.helloao.org/api/available_translations.json")
         .then((request) => {
           if (request.status === 200) {
             allTranslations = request.data.translations;
-            allTranslations = allTranslations.map((item) => {
-              return {
-                ...item,
-                languageEnglishName:
-                  item?.languageEnglishName || item.englishName,
-              };
-            });
+            allTranslations = allTranslations.map(
+              (item: TranslationInterface) => {
+                return {
+                  ...item,
+                  languageEnglishName:
+                    item?.languageEnglishName || item.englishName,
+                };
+              }
+            );
             setTagMask(
               thePage,
               "allTranslations",
               request.data.translations,
               "local"
             );
-            let translations = { ...apiTranslations };
+            const translations = { ...apiTranslations };
 
-            allTranslations.map((translation) => {
-              let englishName =
+            allTranslations.map((translation: TranslationInterface) => {
+              const englishName =
                 translation.languageEnglishName?.toLowerCase() || "";
               if (showAllLanguages) {
-                let shortName = translation.shortName?.toLowerCase() || "";
+                const shortName = translation.shortName?.toLowerCase() || "";
                 if (translations[englishName]) {
                   if (!translations[englishName][shortName]) {
                     translations[englishName][shortName] = translation;
@@ -839,7 +789,7 @@ const SearchBar = () => {
                     delete translations[englishName];
                   }
                 } else {
-                  let shortName = translation.shortName?.toLowerCase() || "";
+                  const shortName = translation.shortName?.toLowerCase() || "";
                   if (!translations[englishName]) {
                     translations[englishName] = {
                       [shortName]: translation,
@@ -869,13 +819,14 @@ const SearchBar = () => {
     } else {
       allTranslations = thePage.masks.allTranslations;
     }
-    let translations = { ...apiTranslations };
+    const translations = { ...apiTranslations };
 
     if (allTranslations) {
-      allTranslations.map((translation) => {
-        let englishName = translation.languageEnglishName?.toLowerCase() || "";
+      allTranslations.map((translation: TranslationInterface) => {
+        const englishName =
+          translation.languageEnglishName?.toLowerCase() || "";
         if (showAllLanguages) {
-          let shortName = translation.shortName?.toLowerCase() || "";
+          const shortName = translation.shortName?.toLowerCase() || "";
           if (translations[englishName]) {
             if (!translations[englishName][shortName]) {
               translations[englishName][shortName] = translation;
@@ -891,7 +842,7 @@ const SearchBar = () => {
               delete translations[englishName];
             }
           } else {
-            let shortName = translation.shortName?.toLowerCase() || "";
+            const shortName = translation.shortName?.toLowerCase() || "";
             if (!translations[englishName]) {
               translations[englishName] = {
                 [shortName]: translation,
@@ -912,44 +863,6 @@ const SearchBar = () => {
       setApiTranslations(translations);
     }
   }, [showAllLanguages, defaultTranslations]);
-
-  useEffect(() => {
-    if (
-      (selectedTestament,
-      setQuery,
-      query,
-      openSearchBar,
-      setOpenSearchBar,
-      handleEnter !== undefined || selectedTestament,
-      setQuery,
-      query,
-      openSearchBar,
-      setOpenSearchBar,
-      handleEnter !== null)
-    ) {
-      globalThis.selectedTestament = selectedTestament;
-      // globalThis.setQuery = setQuery;
-      globalThis.query = query;
-      globalThis.openSearchBar = openSearchBar;
-      globalThis.setOpenSearchBar = setOpenSearchBar;
-      globalThis.handleEnter = handleEnter;
-    }
-    return () => {
-      globalThis.selectedTestament = null;
-      // globalThis.setQuery = null;
-      globalThis.query = null;
-      globalThis.openSearchBar = null;
-      globalThis.setOpenSearchBar = null;
-      globalThis.handleEnter = null;
-    };
-  }, [
-    selectedTestament,
-    setQuery,
-    query,
-    openSearchBar,
-    setOpenSearchBar,
-    handleEnter,
-  ]);
 
   useEffect(() => {
     const handleResize = () => {
@@ -1008,7 +921,9 @@ const SearchBar = () => {
               </span>
               <input
                 type="text"
-                placeholder="Seach Book..."
+                placeholder={
+                  systemTranslation["searchBook"] || "Search Book..."
+                }
                 value={query}
                 ref={inputRef}
                 onInput={(e) => {
@@ -1028,17 +943,21 @@ const SearchBar = () => {
                 className="dropdown-select"
               >
                 <option value={2} className="dropdown-option">
-                  All Books
+                  {systemTranslation["allBooks"] || "All Books"}
                 </option>
                 <option value={0} className="dropdown-option">
-                  {windowSize > 750 ? "Old Testament" : "OT"}
+                  {windowSize > 750
+                    ? systemTranslation["oldTestament"] || "Old Testament"
+                    : systemTranslation["oldTestamentShort"] || "OT"}
                 </option>
                 <option value={1} className="dropdown-option">
-                  {windowSize > 750 ? "New Testament" : "NT"}
+                  {windowSize > 750
+                    ? systemTranslation["newTestament"] || "New Testament"
+                    : systemTranslation["newTestamentShort"] || "NT"}
                 </option>
                 {apocryphaAvailable && (
                   <option value={3} className="dropdown-option">
-                    Apocrypha
+                    {systemTranslation["apocrypha"] || "Apocrypha"}
                   </option>
                 )}
               </select>
@@ -1095,7 +1014,11 @@ const SearchBar = () => {
                 }}
                 for="playlistInclude"
               >
-                Include in {showCheck === 1 ? "Queue" : "Playlist"}.
+                Include in{" "}
+                {showCheck === 1
+                  ? systemTranslation["queue"] || "Queue"
+                  : systemTranslation["playlist"] || "Playlist"}
+                .
               </label>
             </div>
           </div>
@@ -1108,9 +1031,9 @@ const SearchBar = () => {
             selectedTranslation={selectedTranslation}
             selectedTestament={selectedTestament}
             booksData={selectedTestamentData}
-            focusOnBook={focusOnBook}
             sortBooksByTestament={sortBooksByTestament}
             windowSize={windowSize}
+            systemTranslation={systemTranslation}
           />
         )}
         {selectingTranslation && (
@@ -1131,17 +1054,32 @@ const SearchBar = () => {
   );
 };
 
-const SideBarBooks = ({
-  booksData,
-  focusOnBook,
-  selectedTestament,
-  selectedTranslation,
-  dontOpen,
-  showCheck,
-  onlineUsers,
-  sortBooksByTestament,
-  windowSize,
+const SideBarBooks = (props: {
+  booksData: BookInterface[];
+  selectedTestament: number;
+  selectedTranslation: TranslationInterface;
+  dontOpen: any;
+  showCheck: any;
+  onlineUsers: any;
+  sortBooksByTestament: (books: BookInterface[]) => {
+    OTBooks: BookInterface[];
+    NTBooks: BookInterface[];
+    ApocryphaBooks: BookInterface[];
+  };
+  windowSize: number;
+  systemTranslation: { [key: string]: string };
 }) => {
+  const {
+    booksData,
+    selectedTestament,
+    selectedTranslation,
+    dontOpen,
+    showCheck,
+    onlineUsers,
+    sortBooksByTestament,
+    windowSize,
+    systemTranslation,
+  } = props;
   const [lastBookClicked, setLastBookClicked] = useState(-1);
   const [bookData, setBookData] = useState(null);
   const [chT, setChT] = useState(0);
@@ -1149,7 +1087,7 @@ const SideBarBooks = ({
   const refsArray = useRef([]);
 
   // Function to update the array of refs
-  const updateRefsArray = useCallback((index, ref) => {
+  const updateRefsArray = useCallback((index: number, ref: any) => {
     refsArray.current[index] = ref;
     globalThis.BooksRefSearchBar = refsArray;
   }, []);
@@ -1160,7 +1098,7 @@ const SideBarBooks = ({
   }, [selectedTestament]);
 
   useLayoutEffect(() => {
-    if (booksData.length === 1) {
+    if (booksData.length === 1 && booksData[0]) {
       setLastBookClicked(0);
       setBookData(booksData[0]);
       if (booksData[0].order > 39) {
@@ -1189,7 +1127,8 @@ const SideBarBooks = ({
   };
 
   const handleClick = useCallback(
-    ({ index, book, cht = 0 }) => {
+    (props: { index: number; book: BookInterface; cht: number }) => {
+      const { index, book, cht = 0 } = props;
       if (bookData?.id === book.id) {
         setBookData(null);
         setChT(0);
@@ -1203,26 +1142,29 @@ const SideBarBooks = ({
     [chT, bookData, lastBookClicked]
   );
 
-  const calcChapterPos = (index, separator) => {
+  const calcChapterPos = useCallback((index: number, separator: number) => {
     return Math.floor(index / separator) * separator + separator - 1;
-  };
+  }, []);
 
-  const ghostArray = (booksArray, allowedRows) => {
-    if (allowedRows === 1) return booksArray;
-    const booksLength = booksArray.length;
-    const additionalElements =
-      allowedRows -
-      (booksLength % allowedRows === 0
-        ? allowedRows
-        : booksLength % allowedRows);
-    const tempBooksArray = [...booksArray];
-    for (let i = 0; i < additionalElements; i++) {
-      tempBooksArray.push({ ghost: true });
-    }
-    return [...tempBooksArray];
-  };
+  const ghostArray = useCallback(
+    (booksArray: BookInterface[], allowedRows: number) => {
+      if (allowedRows === 1) return booksArray;
+      const booksLength = booksArray.length;
+      const additionalElements =
+        allowedRows -
+        (booksLength % allowedRows === 0
+          ? allowedRows
+          : booksLength % allowedRows);
+      const tempBooksArray = [...booksArray];
+      for (let i = 0; i < additionalElements; i++) {
+        tempBooksArray.push({ ghost: true });
+      }
+      return [...tempBooksArray];
+    },
+    []
+  );
 
-  const getBookName = useCallback((book, onlineUsers) => {
+  const getBookName = useCallback((book: BookInterface, onlineUsers: any) => {
     const users = onlineUsers
       ? Object.entries(onlineUsers || {}).filter(
           ([, v]) => v?.bookId === book.id
@@ -1230,34 +1172,18 @@ const SideBarBooks = ({
       : [];
     let bookName = "";
     if (book?.commonName?.length > 7 && users.length > 0) {
-      const name = book.id.toLowerCase();
-      if (isNaN(Number(name[0]))) {
+      const name: string = (book.id || "").toLowerCase();
+      if (isNaN(Number(name.charAt(0)))) {
         bookName = name;
       } else {
-        bookName = `${name[0]} ${name[1].toUpperCase()}${name.slice(2)}`;
+        const firstChar = name.charAt(0);
+        const secondChar = name.charAt(1);
+        bookName = `${firstChar} ${secondChar ? secondChar.toUpperCase() : ""}${name.slice(2)}`;
       }
     } else {
       bookName = book.commonName;
     }
     return bookName;
-  }, []);
-
-  const rearrangeBooks = useCallback((books, rows) => {
-    const cols = Math.ceil(books.length / rows);
-    const rearrangedBooksMatrix = [];
-    let index = 0;
-    for (let j = 0; j < rows; j++) {
-      for (let i = 0; i < cols; i++) {
-        if (!rearrangedBooksMatrix[i]) rearrangedBooksMatrix[i] = [];
-        rearrangedBooksMatrix[i][j] = books[index];
-        index += 1;
-      }
-    }
-    const rearrangeBooks = [];
-    for (let row of rearrangedBooksMatrix) {
-      rearrangeBooks.push(...row);
-    }
-    return rearrangeBooks;
   }, []);
 
   const RenderBooksByTestament = useMemo(() => {
@@ -1293,7 +1219,9 @@ const SideBarBooks = ({
               width: `${allowedRows === 5 ? 60 : allowedRows === 3 ? 66.66 : 100}%`,
             }}
           >
-            <span class="testament-title">Old Testament</span>
+            <span class="testament-title">
+              {systemTranslation["oldTestament"] || "Old Testament"}
+            </span>
             <div class="books-item">
               {OTBooks.map((book, index) => {
                 return (
@@ -1348,7 +1276,6 @@ const SideBarBooks = ({
                           onlineUsers={onlineUsers}
                           refsObject={refsObject}
                           bookData={bookData}
-                          focusOnBook={focusOnBook}
                           setLastBookClicked={setLastBookClicked}
                           dontOpen={dontOpen}
                           setBookData={setBookData}
@@ -1368,7 +1295,9 @@ const SideBarBooks = ({
               width: `${allowedRows === 5 ? 40 : allowedRows === 3 ? 33.33 : 100}%`,
             }}
           >
-            <span class="testament-title">New Testament</span>
+            <span class="testament-title">
+              {systemTranslation["newTestament"] || "New Testament"}
+            </span>
             <div class="books-item">
               {NTBooks.map((book, index) => {
                 return (
@@ -1428,7 +1357,6 @@ const SideBarBooks = ({
                           onlineUsers={onlineUsers}
                           refsObject={refsObject}
                           bookData={bookData}
-                          focusOnBook={focusOnBook}
                           setLastBookClicked={setLastBookClicked}
                           dontOpen={dontOpen}
                           setBookData={setBookData}
@@ -1452,7 +1380,9 @@ const SideBarBooks = ({
           style={showCheck ? { paddingTop: "40px" } : {}}
         >
           <div class="testament-container">
-            <span class="testament-title">New Testament</span>
+            <span class="testament-title">
+              {systemTranslation["newTestament"] || "New Testament"}
+            </span>
             <div class="books-item">
               {booksWithGhost.map((book, index) => {
                 return (
@@ -1506,7 +1436,6 @@ const SideBarBooks = ({
                           onlineUsers={onlineUsers}
                           refsObject={refsObject}
                           bookData={bookData}
-                          focusOnBook={focusOnBook}
                           setLastBookClicked={setLastBookClicked}
                           dontOpen={dontOpen}
                           setBookData={setBookData}
@@ -1530,7 +1459,9 @@ const SideBarBooks = ({
           style={showCheck ? { paddingTop: "40px" } : {}}
         >
           <div class="testament-container">
-            <span class="testament-title">Old Testament</span>
+            <span class="testament-title">
+              {systemTranslation["oldTestament"] || "Old Testament"}
+            </span>
             <div class="books-item">
               {booksWithGhost.map((book, index) => {
                 return (
@@ -1584,7 +1515,6 @@ const SideBarBooks = ({
                           onlineUsers={onlineUsers}
                           refsObject={refsObject}
                           bookData={bookData}
-                          focusOnBook={focusOnBook}
                           setLastBookClicked={setLastBookClicked}
                           dontOpen={dontOpen}
                           setBookData={setBookData}
@@ -1611,7 +1541,9 @@ const SideBarBooks = ({
           style={showCheck ? { paddingTop: "40px" } : {}}
         >
           <div class="testament-container">
-            <span class="testament-title">Apocrypha</span>
+            <span class="testament-title">
+              {systemTranslation["apocrypha"] || "Apocrypha"}
+            </span>
             <div class="books-item">
               {booksWithGhost.map((book, index) => {
                 return (
@@ -1665,7 +1597,6 @@ const SideBarBooks = ({
                           onlineUsers={onlineUsers}
                           refsObject={refsObject}
                           bookData={bookData}
-                          focusOnBook={focusOnBook}
                           setLastBookClicked={setLastBookClicked}
                           dontOpen={dontOpen}
                           setBookData={setBookData}
@@ -1695,18 +1626,33 @@ const SideBarBooks = ({
   return <>{RenderBooksByTestament}</>;
 };
 
-const SideBarChapters = ({
-  bookData,
-  dontOpen,
-  setLastBookClicked,
-  setBookData,
-  refsObject,
-  selectedTranslation,
-  onlineUsers,
+const SideBarChapters = (props: {
+  bookData: BookInterface;
+  dontOpen: any;
+  setLastBookClicked: (num: number) => void;
+  setBookData: any;
+  refsObject: any;
+  selectedTranslation: TranslationInterface;
+  onlineUsers: any;
 }) => {
+  const {
+    bookData,
+    dontOpen,
+    setLastBookClicked,
+    setBookData,
+    refsObject,
+    selectedTranslation,
+    onlineUsers,
+  } = props;
   const [highLightedButtonsID, setHighlightedButtonID] = useState({});
 
-  const handleChapterClick = ({ bookName, chapterNo, bookData, ...data }) => {
+  const handleChapterClick = (props: {
+    bookName: string;
+    chapterNo: number;
+    bookData: BookInterface;
+    [key: string]: any;
+  }) => {
+    const { bookName, chapterNo, bookData, ...data } = props;
     if (globalThis?.findNameRank) {
       const booksDetails = globalThis.findNameRank(bookName);
       const dataItem = {
@@ -1849,7 +1795,8 @@ const SideBarChapters = ({
       setCurrentExperience(0);
     }
   };
-  const psalmsPartName = ({ index }) => {
+  const psalmsPartName = (props: { index: number }) => {
+    const { index } = props;
     if (index <= 40) {
       return "1 Psalms";
     } else if (index <= 71) {
@@ -1865,17 +1812,105 @@ const SideBarChapters = ({
   const [currentPsalms, setCurrentPsalms] = useState("1 Psalms");
 
   const renderChapters = useMemo(() => {
-    let renderJSX = [];
-    if (bookData.startingBook || bookData.startingBook === 0) {
-      for (let i = bookData.startingBook; i < bookData.endingBook + 1; i++) {
+    const renderJSX = [];
+    if (bookData.commonName === "Psalms") {
+      for (let i = 0; i < bookData.numberOfChapters; i++) {
+        if (i === 0) {
+          renderJSX.push(
+            <button
+              style={{ width: "100%" }}
+              onCLick={() => {
+                setCurrentPsalms(
+                  currentPsalms === "1 Psalms" ? "" : "1 Psalms"
+                );
+              }}
+              class={`psalms-btn ${currentPsalms === "1 Psalms" ? "sidebar-selected-itm" : ""}`}
+            >
+              <span style={{ width: "100%" }} class="">
+                1 Psalms
+              </span>
+            </button>
+          );
+        } else if (i === 41) {
+          renderJSX.push(
+            <button
+              style={{ width: "100%" }}
+              onCLick={() => {
+                setCurrentPsalms(
+                  currentPsalms === "2 Psalms" ? "" : "2 Psalms"
+                );
+              }}
+              class={`psalms-btn ${currentPsalms === "2 Psalms" ? "sidebar-selected-itm" : ""}`}
+            >
+              <span style={{ width: "100%" }} class="">
+                2 Psalms
+              </span>
+            </button>
+          );
+        } else if (i === 72) {
+          renderJSX.push(
+            <button
+              style={{ width: "100%" }}
+              onCLick={() => {
+                setCurrentPsalms(
+                  currentPsalms === "3 Psalms" ? "" : "3 Psalms"
+                );
+              }}
+              class={`psalms-btn ${currentPsalms === "3 Psalms" ? "sidebar-selected-itm" : ""}`}
+            >
+              <span style={{ width: "100%" }} class="">
+                3 Psalms
+              </span>
+            </button>
+          );
+        } else if (i === 89) {
+          renderJSX.push(
+            <button
+              style={{ width: "100%" }}
+              onCLick={() => {
+                setCurrentPsalms(
+                  currentPsalms === "4 Psalms" ? "" : "4 Psalms"
+                );
+              }}
+              class={`psalms-btn ${currentPsalms === "4 Psalms" ? "sidebar-selected-itm" : ""}`}
+            >
+              <span style={{ width: "100%" }} class="">
+                4 Psalms
+              </span>
+            </button>
+          );
+        } else if (i === 106) {
+          renderJSX.push(
+            <button
+              style={{ width: "100%" }}
+              onCLick={() => {
+                setCurrentPsalms(
+                  currentPsalms === "5 Psalms" ? "" : "5 Psalms"
+                );
+              }}
+              class={`psalms-btn ${currentPsalms === "5 Psalms" ? "sidebar-selected-itm" : ""}`}
+            >
+              <span style={{ width: "100%" }} class="">
+                5 Psalms
+              </span>
+            </button>
+          );
+        }
         renderJSX.push(
-          <div
+          <button
+            style={{
+              display:
+                currentPsalms === psalmsPartName({ index: i })
+                  ? "flex"
+                  : "none",
+            }}
+            class={`chapter-btn`}
             onCLick={() =>
               handleChapterClick({
                 id: bookData.id,
                 translationId: bookData.translationId,
                 numberOfChapters: bookData.numberOfChapters,
-                bookName: bookData.commonName,
+                bookName: psalmsPartName({ index: i }),
                 chapterNo: i + 1,
                 bookData,
               })
@@ -1891,156 +1926,38 @@ const SideBarChapters = ({
                 chapter={i + 1}
               />
             </span>
-          </div>
+          </button>
         );
       }
     } else {
-      if (bookData.commonName === "Psalms") {
-        for (let i = 0; i < bookData.numberOfChapters; i++) {
-          if (i === 0) {
-            renderJSX.push(
-              <button
-                style={{ width: "100%" }}
-                onCLick={() => {
-                  setCurrentPsalms(
-                    currentPsalms === "1 Psalms" ? "" : "1 Psalms"
-                  );
-                }}
-                class={`psalms-btn ${currentPsalms === "1 Psalms" ? "sidebar-selected-itm" : ""}`}
-              >
-                <span style={{ width: "100%" }} class="">
-                  1 Psalms
-                </span>
-              </button>
-            );
-          } else if (i === 41) {
-            renderJSX.push(
-              <button
-                style={{ width: "100%" }}
-                onCLick={() => {
-                  setCurrentPsalms(
-                    currentPsalms === "2 Psalms" ? "" : "2 Psalms"
-                  );
-                }}
-                class={`psalms-btn ${currentPsalms === "2 Psalms" ? "sidebar-selected-itm" : ""}`}
-              >
-                <span style={{ width: "100%" }} class="">
-                  2 Psalms
-                </span>
-              </button>
-            );
-          } else if (i === 72) {
-            renderJSX.push(
-              <button
-                style={{ width: "100%" }}
-                onCLick={() => {
-                  setCurrentPsalms(
-                    currentPsalms === "3 Psalms" ? "" : "3 Psalms"
-                  );
-                }}
-                class={`psalms-btn ${currentPsalms === "3 Psalms" ? "sidebar-selected-itm" : ""}`}
-              >
-                <span style={{ width: "100%" }} class="">
-                  3 Psalms
-                </span>
-              </button>
-            );
-          } else if (i === 89) {
-            renderJSX.push(
-              <button
-                style={{ width: "100%" }}
-                onCLick={() => {
-                  setCurrentPsalms(
-                    currentPsalms === "4 Psalms" ? "" : "4 Psalms"
-                  );
-                }}
-                class={`psalms-btn ${currentPsalms === "4 Psalms" ? "sidebar-selected-itm" : ""}`}
-              >
-                <span style={{ width: "100%" }} class="">
-                  4 Psalms
-                </span>
-              </button>
-            );
-          } else if (i === 106) {
-            renderJSX.push(
-              <button
-                style={{ width: "100%" }}
-                onCLick={() => {
-                  setCurrentPsalms(
-                    currentPsalms === "5 Psalms" ? "" : "5 Psalms"
-                  );
-                }}
-                class={`psalms-btn ${currentPsalms === "5 Psalms" ? "sidebar-selected-itm" : ""}`}
-              >
-                <span style={{ width: "100%" }} class="">
-                  5 Psalms
-                </span>
-              </button>
-            );
-          }
-          renderJSX.push(
-            <button
-              style={{
-                display:
-                  currentPsalms === psalmsPartName({ index: i })
-                    ? "flex"
-                    : "none",
-              }}
-              class={`chapter-btn`}
-              onCLick={() =>
-                handleChapterClick({
-                  id: bookData.id,
-                  translationId: bookData.translationId,
-                  numberOfChapters: bookData.numberOfChapters,
-                  bookName: psalmsPartName({ index: i }),
-                  chapterNo: i + 1,
-                  bookData,
-                })
-              }
+      for (let i = 0; i < bookData.numberOfChapters; i++) {
+        renderJSX.push(
+          <button
+            ref={refsObject[i]}
+            class={`chapter-btn ${i === bookData.numberOfChapters - 1 ? "lastOne" : ""}`}
+            onCLick={() =>
+              handleChapterClick({
+                id: bookData.id,
+                translationId: bookData.translationId,
+                numberOfChapters: bookData.numberOfChapters,
+                bookName: bookData.commonName,
+                chapterNo: i + 1,
+                bookData,
+              })
+            }
+          >
+            <span
+              className={`sidebar-chapter-itm ${highLightedButtonsID[i + 1] ? "highlight" : "un-highlight"}`}
             >
-              <span
-                className={`sidebar-chapter-itm ${highLightedButtonsID[i + 1] ? "highlight" : "un-highlight"}`}
-              >
-                {i + 1}
-                <CircleCounter
-                  data={onlineUsers}
-                  book={bookData.id}
-                  chapter={i + 1}
-                />
-              </span>
-            </button>
-          );
-        }
-      } else {
-        for (let i = 0; i < bookData.numberOfChapters; i++) {
-          renderJSX.push(
-            <button
-              ref={refsObject[i]}
-              class={`chapter-btn ${i === bookData.numberOfChapters - 1 ? "lastOne" : ""}`}
-              onCLick={() =>
-                handleChapterClick({
-                  id: bookData.id,
-                  translationId: bookData.translationId,
-                  numberOfChapters: bookData.numberOfChapters,
-                  bookName: bookData.commonName,
-                  chapterNo: i + 1,
-                  bookData,
-                })
-              }
-            >
-              <span
-                className={`sidebar-chapter-itm ${highLightedButtonsID[i + 1] ? "highlight" : "un-highlight"}`}
-              >
-                {i + 1}
-                <CircleCounter
-                  data={onlineUsers}
-                  book={bookData.id}
-                  chapter={i + 1}
-                />
-              </span>
-            </button>
-          );
-        }
+              {getTranslatedNumber(i + 1)}
+              <CircleCounter
+                data={onlineUsers}
+                book={bookData.id}
+                chapter={i + 1}
+              />
+            </span>
+          </button>
+        );
       }
     }
     return renderJSX;
@@ -2055,7 +1972,12 @@ const SideBarChapters = ({
   );
 };
 
-const CircleCounter = ({ data, book, chapter }) => {
+const CircleCounter = (props: {
+  data: any;
+  book: string;
+  chapter?: number;
+}) => {
+  const { data, book, chapter } = props;
   if (!data) return null;
 
   const [isModalOpen, setIsModalOpen] = useState(false);
@@ -2107,10 +2029,9 @@ const CircleCounter = ({ data, book, chapter }) => {
   ];
 
   // Helper to get user's visual style
-  const getUserVisual = (userId, value, index) => {
+  const getUserVisual = (value: any) => {
     try {
       const visual = globalThis?.GetOrSetVisualInTags(value[0]);
-      console.log(visual, value, "testviz sidebar");
       if (visual) {
         const IconComponent = icons[visual.iconIndex];
         const color = colors[visual.colorIndex];
@@ -2146,7 +2067,7 @@ const CircleCounter = ({ data, book, chapter }) => {
         }}
       >
         {entries.slice(0, visibleCount).map(([id, value], index) => {
-          const { IconComponent, color } = getUserVisual(id, value, index);
+          const { IconComponent, color } = getUserVisual(value);
           return (
             <div
               key={id}
