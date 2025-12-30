@@ -1,6 +1,6 @@
 calendar {
   font-size: 14px;
-   font-family: "Inter", sans-serif;
+  font-family: "Inter", sans-serif;
   padding: 10px;
   width: 100%;
   background-color: white;
@@ -13,16 +13,37 @@ calendar {
 }
 .fc-prev-button .fc-icon,
 .fc-next-button .fc-icon {
-  font-weight: 900 !important;   /* increases thickness */
-  font-size: 16px;              /* optional: bigger arrow */
+  font-weight: 900 !important; /* increases thickness */
+  font-size: 16px; /* optional: bigger arrow */
 }
-
 
 .small-view .fc-daygrid-day-events {
   flex-direction: row;
   flex-wrap: wrap;
 
   gap: 4px;
+}
+.tippy-box {
+  border: none !important;
+}
+.tippy-box[data-theme~="light-border"] {
+  border: none !important;
+}
+/* Completely flat tooltip */
+.tippy-box {
+  border: none !important;
+  box-shadow: none !important;
+  outline: none !important;
+  background: transparent !important;
+}
+
+/* Remove arrow completely (extra safety) */
+.tippy-arrow {
+  display: none !important;
+}
+.tippy-box *,
+.tippy-content * {
+  outline: none !important;
 }
 
 /* Only apply when in multiMonthYear view */
@@ -85,7 +106,6 @@ calendar {
   border-right: none;
 }
 
-
 .fc-theme-standard .fc-scrollgrid-section-header th {
   border-left: none !important;
   border-right: none !important;
@@ -106,7 +126,6 @@ calendar {
   border-right: none !important;
   border-left: none !important;
 }
-
 
 /* Apply ONLY when td/th does NOT already have a border */
 .fc-scrollgrid-section-body td:not([style*="border-left"]),
@@ -146,38 +165,38 @@ calendar {
 .fc-header-toolbar button:not(:last-child) {
   margin-right: 10px;
 }
-.fc .fc-day-today .fc-daygrid-day-frame{
-  background-color: #ECF5FF;
+.fc .fc-day-today .fc-daygrid-day-frame {
+  background-color: #ecf5ff;
   margin-left: 0;
 }
-.fc .fc-daygrid-day-frame{
+.fc .fc-daygrid-day-frame {
   padding: 6px;
- 
 }
-.fc .fc-multimonth .fc-daygrid-day-frame{
+.fc .fc-multimonth .fc-daygrid-day-frame {
   padding: 0;
 }
 
 .fc .fc-daygrid-day-top {
-    display: flex;
-    flex-direction: row;
-    
+  display: flex;
+  flex-direction: row;
 }
-.fc .fc-daygrid-day-number{
-  
+.fc .fc-daygrid-day-number {
   font-weight: 400;
   font-family: "Inter", sans-serif;
-  
-  
 }
-.fc .fc-multimonth .fc-daygrid-day-number{
+.fc .fc-multimonth .fc-daygrid-day-number {
   font-size: 8px;
 }
 
-.fc-multimonth-view .fc-daygrid-more-link {
+.fc .fc-multimonth .fc-daygrid-more-link {
   display: none;
 }
-
+.fc .fc-multimonth .fc-daygrid-day-events {
+  display: none;
+}
+.fc .fc-daygrid-more-link {
+  font-size: 8px;
+}
 #view-toggle-select {
   padding-top: 4px;
   padding-bottom: 4px;

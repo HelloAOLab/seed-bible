@@ -48,7 +48,7 @@ const CustomModal = ({ setModalOpen, addReadingPlans, calendarApi }) => {
   }, [eventCreated, selectedOption]);
   useEffect(() => {
     setEventCreated(false);
-  });
+  }, []);
   const onCloseModal = () => {
     setModalOpen((prev) => !prev);
   };
@@ -276,7 +276,6 @@ const CustomModal = ({ setModalOpen, addReadingPlans, calendarApi }) => {
     </div>
   );
 
-  console.log(showCustomRepeat, ";;lklk");
   const renderReadingPlans = () => (
     <div style={{ paddingLeft: "30px" }}>
       <h2
