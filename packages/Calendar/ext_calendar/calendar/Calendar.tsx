@@ -18,6 +18,12 @@ const ResourceTitle = await thisBot.ResourceTitle();
 const GoToCalendar = await thisBot.GoToClanedar();
 const showEventPopup = await thisBot.showEventPopup();
 const buildEventTooltipContent = await thisBot.buildEventTooltipContent();
+const handleDatesSet = await thisBot.handleDateSet();
+const handleDateClick = await thisBot.handleDateClick();
+const handleEventContent = await thisBot.handleEventContent();
+const { onToolbarDateClick, onToolbarDateClick1 } =
+  await thisBot.onToolbarClick1();
+const addReadingPlans = await thisBot.addReadingPlans();
 const {
   getDayDifference,
   stripTime,
@@ -32,18 +38,13 @@ const {
   getDayHeaderFormat,
 } = await thisBot.calendarFunctions();
 import { useCalendar } from "ext_calendar.calendar.CalendarContext";
-
-//const MapPanel = await MapsManager?.GetMapPanel?.();
 const types = ["events", "reading", "content", "projects", "sources"];
-
 if (!globalThis.C_E) globalThis.C_E = [];
-
 const App = () => {
   const { t } = useSideBarContext();
   //states
   const [readings, setReadings] = useState([]);
   const [readingsList, setReadingsList] = useState([]);
-
   const [modalOpen, setModalOpen] = useState(false);
   const [playListMode, setPlaylistMode] = useState(false);
   const [editingEvent, setEditingEvent] = useState();
@@ -87,15 +88,22 @@ const App = () => {
   const [allGroups, setAllGroups] = useState([]);
   const popoverOpenRef = useRef(false);
   //refs
-
   const dropdownRef = useRef(null);
   const calendarRef = useRef(null);
   const calendarApi = useRef(null);
-  let activeToolbarHandler = null;
+  const activeToolbarHandlerRef = useRef(null);
   const resourcesRef = useRef(resourcesByDate);
   const resourceIdRef = useRef(currentResourceId);
   const resourceGroupNameRef = useRef(null);
   const experienceConRef = useRef(null);
+  const customDaysRef = useRef(null);
+  const toolbarClickHandler = (e) => {
+    if (calendarApi?.current.view.type.includes("resourceTimeline")) {
+      onToolbarDateClick(e, calendarApi);
+    } else {
+      onToolbarDateClick1(e, calendarApi);
+    }
+  };
 
   useTodayButtonResponsiveLabel(experienceConRef);
 
@@ -193,23 +201,6 @@ const App = () => {
     applyFilterByReinit();
   }, [selectedTypes]);
 
-  /*useEffect(() => {
-    readings.forEach((evt) => {
-      const existing = calendarApi.current.getEventById(evt.id);
-      if (!existing) {
-        calendarApi.current.addEvent(evt);
-      }
-    });
-    return () => {
-      // Optional cleanup if readings change or component unmounts
-      readings.forEach((evt) => {
-        const existing = calendarApi.current.getEventById(evt.id);
-        if (existing) {
-          existing.remove();
-        }
-      });
-    };
-  }, [readings]);*/
   useEffect(() => {
     resourcesRef.current = resourcesByDate;
   }, [resourcesByDate]);
@@ -232,132 +223,6 @@ const App = () => {
   }, [resourceGroupName]);
 
   //handles
-  function onToolbarDateClick1(e) {
-    const titleEl = e.target.closest(".fc-toolbar-title");
-    if (!titleEl) return;
-
-    const calendar = calendarApi.current;
-    if (!calendar) return;
-
-    Object.assign(titleEl.style, {
-      color: "#303133",
-      fontSize: "medium",
-      fontWeight: "400",
-      transform: "translateY(3px)",
-      display: "inline-block",
-    });
-
-    const text = titleEl.textContent.trim();
-    let parsed;
-
-    try {
-      parsed = new Date(`${text} 15, 12:00:00`);
-    } catch {
-      parsed = new Date();
-    }
-
-    const iso = isNaN(parsed)
-      ? new Date().toISOString().slice(0, 10)
-      : parsed.toISOString().slice(0, 10);
-
-    const input = document.createElement("input");
-    input.type = "date";
-    input.value = iso;
-    input.style.minWidth = `${titleEl.offsetWidth}px`;
-    input.style.fontSize = window.getComputedStyle(titleEl).fontSize;
-    input.style.padding = "2px";
-
-    const currentDate = calendar.getDate();
-    titleEl.replaceWith(input);
-    input.focus();
-
-    const finish = () => {
-      if (input.value) {
-        calendar.gotoDate(input.value);
-      } else {
-        calendar.gotoDate(currentDate);
-      }
-      input.replaceWith(titleEl);
-    };
-
-    input.addEventListener("blur", finish, { once: true });
-    input.addEventListener(
-      "keydown",
-      (ke) => ke.key === "Enter" && input.blur(),
-      { once: true }
-    );
-  }
-  function onToolbarDateClick(e) {
-    const titleEl = e.target.closest(".fc-toolbar-title");
-    if (!titleEl) return;
-
-    const calendar = calendarApi.current;
-
-    const existing = document.querySelector(".custom-range-container");
-    if (existing) {
-      existing.replaceWith(titleEl); // restore title if still mounted
-      return; // stop creating multiple
-    }
-
-    const originalTitle = titleEl.textContent;
-
-    // create container
-    const container = document.createElement("div");
-    container.className = "custom-range-container";
-    container.style.display = "flex";
-    container.style.gap = "6px";
-    container.style.alignItems = "center";
-
-    // start input
-    const startInput = document.createElement("input");
-    startInput.type = "date";
-    startInput.value = calendar.view.currentStart.toLocaleDateString("en-CA");
-
-    // end input
-    const endInput = document.createElement("input");
-    endInput.type = "date";
-    endInput.value = calendar.view.currentEnd.toLocaleDateString("en-CA");
-
-    // ok button
-    const okBtn = document.createElement("button");
-    okBtn.textContent = "OK";
-    okBtn.style.padding = "2px 6px";
-    okBtn.style.cursor = "pointer";
-
-    // replace title with container
-    titleEl.replaceWith(container);
-    container.appendChild(startInput);
-    container.appendChild(endInput);
-    container.appendChild(okBtn);
-
-    const finish = () => {
-      if (startInput.value && endInput.value) {
-        calendar.gotoDate(startInput.value);
-        calendar.setOption("visibleRange", {
-          start: startInput.value,
-          end: endInput.value,
-        });
-      } else {
-        titleEl.textContent = originalTitle;
-      }
-      container.replaceWith(titleEl);
-    };
-
-    okBtn.addEventListener("click", finish);
-
-    // escape key cancels
-    const handleKey = (ke) => {
-      if (ke.key === "Escape") {
-        container.replaceWith(titleEl);
-        titleEl.textContent = originalTitle;
-      }
-    };
-
-    startInput.addEventListener("keydown", handleKey);
-    endInput.addEventListener("keydown", handleKey);
-
-    startInput.focus();
-  }
 
   const handleToggleSetting = () => setOpenSetting((prev) => !prev);
   const handleSelectionClicking = (type) => {
@@ -390,99 +255,18 @@ const App = () => {
     setEditEventOpen(true);
   };
 
-  const addReadingPlans = (selected) => {
-    const playLists = selected.reduce(
-      (acc, item) => acc.concat({ list: item.list, playList: item.name }),
-      []
-    );
-    setReadingsList((prev) => [...prev, ...playLists]);
-
-    let start;
-    if (playLists[0]?.list[0]?.type !== "date") {
-      start = new Date();
-    }
-    const newEvents = [];
-
-    playLists.forEach((item) => {
-      const playList = item.playList;
-      let list = [];
-
-      item.list.forEach((itm) => {
-        if (itm.type === "date") {
-          list = [];
-          start = parseDashedDateToValidDate(itm.content);
-        } else {
-          const value = itm.content.replace(/Genesis/g, "GEN");
-
-          list.push(value);
-          const eventDate = start;
-
-          const eventTitle = playList;
-
-          const isDuplicate = newEvents.some(
-            (e) =>
-              e.title === eventTitle &&
-              new Date(e.start).toDateString() === eventDate.toDateString()
-          );
-
-          if (!isDuplicate) {
-            newEvents.push({
-              title: eventTitle,
-
-              start: eventDate,
-
-              id: uuid(),
-              isReadingPlan: true,
-              classNames: ["readingPlan"],
-              color: "white",
-              extendedProps: {
-                startTime: "",
-                endTime: "",
-                isReapeating: false,
-                type: "reading",
-              },
-
-              allDay: true,
-              source: "reading",
-
-              description: `Reading from playlist: ${playList}`,
-            });
-          }
-        }
-      });
+  const handleAddReadingPlans = (selected) => {
+    addReadingPlans({
+      selected,
+      readings,
+      setReadingsList,
+      setEventInView,
+      setAllEvents,
+      setSelectedTypes,
+      setReadings,
+      parseDashedDateToValidDate,
     });
-
-    if (newEvents.length > 0) {
-      globalThis.C_E.push(...newEvents);
-      const list = [];
-
-      newEvents.forEach((item) => {
-        const isDuplicate = readings.some(
-          (e) =>
-            e.title === item.title &&
-            new Date(e.start).toDateString() ===
-              new Date(item.start).toDateString()
-        );
-
-        if (!isDuplicate) {
-          list.push(item);
-        }
-      });
-      setEventInView((prev) => {
-        const combined = [...prev, ...list];
-
-        combined.sort((a, b) => new Date(a.start) - new Date(b.start));
-        return combined;
-      });
-      setAllEvents((prev) => [...prev, ...list]);
-      setSelectedTypes((prev) => ["reading", ...prev]);
-
-      setReadings((prev) => [...list, ...prev]);
-    } else {
-      return;
-    }
   };
-
   function onRangeChange(viewStart, viewEnd) {
     if (calendarApi.current !== null) {
       const allEvents = calendarApi.current.getEvents();
@@ -673,204 +457,13 @@ const App = () => {
           );
         },
 
-        eventContent: function (arg) {
-          const isSchedule = arg.event.extendedProps.isResource === true;
-
-          const eventType = arg.event.extendedProps.type;
-
-          const isNarrow =
-            experienceConRef.current &&
-            experienceConRef.current?.offsetWidth < 500;
-
-          const clockSvg = (color) => `
-      <svg xmlns="http://www.w3.org/2000/svg" width="14" height="14"
-        viewBox="0 0 24 24" fill="none" stroke="${color}"
-        stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
-        <circle cx="12" cy="12" r="10"></circle>
-        <line x1="12" y1="12" x2="12" y2="7"></line>
-        <line x1="12" y1="12" x2="16" y2="14"></line>
-      </svg>
-    `;
-
-          const makeDot = (color, withClock = false) => `
-      <div style="display:flex;align-items:center;justify-content:center;gap:0.2em;width:100%;">
-        <div style="width:8px;height:8px;border-radius:50%;background:${color};flex-shrink:0;"></div>
-        ${withClock ? clockSvg(color) : ""}
-      </div>
-    `;
-          const start = new Date(arg.event.start);
-          const end = new Date(arg.event.end || arg.event.start);
-
-          const startDate = dateOnly(start);
-          const endDate = dateOnly(end);
-
-          const isMultiDay = startDate !== endDate;
-          let title;
-          if (arg.event.title.length > 6) {
-            const titleEl = arg.event.title.includes(" ")
-              ? arg.event.title.split(" ")[0]
-              : arg.event.title.slice(0, 6);
-            title = `${titleEl}...`;
-          } else {
-            title = arg.event.title;
-          }
-
-          // Compact mode (mobile, no popover)
-          if (isNarrow && !popoverOpenRef.current && !isMultiDay) {
-            if (isSchedule) return { html: "" };
-            if (eventType === "reading") return { html: makeDot("#20c997") };
-            return { html: makeDot("#339af0") };
-          }
-
-          // Popover open — show full event
-
-          if (popoverOpenRef.current) {
-            return {
-              html: `
-          <div style="
-            display:flex;align-items:center;
-            background:#e7f5ff;
-            color:#1c3d5a;
-            border:1px solid #74c0fc;
-            border-radius:0.5em;
-            padding:0.3em 0.5em;
-            font-size:clamp(0.65rem, 0.8vw, 0.85rem);
-            max-width:100%;
-            overflow:hidden;
-            text-overflow:ellipsis;">
-            <span>${title}</span>
-          </div>
-        `,
-            };
-          }
-
-          // Normal schedule
-          if (isSchedule && !popoverOpenRef.current) {
-            if (!isMultiDay) {
-              return {
-                html: `
-          <div style="
-            display:flex;align-items:center;
-            background:#e6fcf5;
-            color:#0b7285;
-            border:1px solid #63e6be;
-            border-radius:0.5em;
-            padding:0.3em 0.5em;
-            font-size:clamp(0.65rem, 0.8vw, 0.85rem);
-            max-width:100%;
-            overflow:hidden;text-overflow:ellipsis;">
-            <span>${title}</span>
-          </div>
-        `,
-              };
-            } else {
-              return {
-                html: `
-        <div style="
-          display:flex;align-items:center;gap:0.4em;
-          background:#fdfdea;
-          color:#2d3436;
-          border:1px solid #a5d8ff;
-          border-radius:0.5em;
-          padding:0.3em 0.5em;
-          font-size:clamp(0.65rem, 0.8vw, 0.85rem);
-          max-width:100%;
-          overflow:hidden;
-          text-overflow:ellipsis;">
-          ${clockSvg("#f1c40f")}
-          <span>${arg.event.title}</span>
-        </div>
-      `,
-              };
-            }
-          }
-
-          // Reading events
-          if (eventType === "reading" && !popoverOpenRef.current) {
-            if (!isMultiDay) {
-              return {
-                html: `
-  <div style="
-    display:flex;
-    margin-left:6px;
-    align-items:stretch;  /* important */
-    background:#E1F3D8;
-    color:#67C23A;
-    border-top-left-radius: 5px;
-    border-bottom-left-radius: 5px;
-   
-    width:max-content;
-    font-size:clamp(0.65rem, 0.8vw, 0.85rem);
-  ">
-    <div style="width:3px;background:#67C23A;border-top-left-radius: 5px;
-    border-bottom-left-radius: 5px;"></div>
-    <span style="padding:2px 4px;padding:2px 3px; overflow-wrap: break-word;">${title}</span>
-  </div>
-`,
-              };
-            } else {
-              return {
-                html: `
-        <div style="
-          display:flex;align-items:center;
-          background:#e6fcf5;
-          color:#0b7285;
-          border:1px solid #63e6be;
-          border-radius:0.5em;
-          padding:0.3em 0.5em;
-          font-size:clamp(0.65rem, 0.8vw, 0.85rem);
-          max-width:100%;
-          overflow:hidden;
-          text-overflow:ellipsis;">
-          <span>${arg.event.title}</span>
-        </div>
-      `,
-              };
-            }
-          }
-
-          // Default event style
-          if (!isMultiDay && !popoverOpenRef.current) {
-            return {
-              html: `
-  <div style="
-    display:flex;
-    margin-left:6px;
-    align-items:stretch;  /* important */
-    background:#D9ECFF;
-    color:#409EFF;
-    border-top-left-radius: 5px;
-    border-bottom-left-radius: 5px;
-   
-    width:max-content;
-    font-size:clamp(0.65rem, 0.8vw, 0.85rem);
-  ">
-    <div style="width:3px;background:#409EFF;border-top-left-radius: 5px;
-    border-bottom-left-radius: 5px;"></div>
-    <span style="padding:2px 4px;padding:2px 3px; overflow-wrap: break-word;">${title}</span>
-  </div>
-`,
-            };
-          } else {
-            return {
-              html: `
-        <div style="
-          display:flex;align-items:center;
-          background:#e6fcf5;
-          color:#0b7285;
-          border:1px solid #63e6be;
-          border-radius:0.5em;
-          padding:0.3em 0.5em;
-          font-size:clamp(0.65rem, 0.8vw, 0.85rem);
-          max-width:100%;
-          overflow:hidden;
-          text-overflow:ellipsis;">
-          <span>${arg.event.title}</span>
-        </div>
-      `,
-            };
-          }
-        },
+        eventContent: (arg) =>
+          handleEventContent({
+            arg,
+            experienceConRef,
+            popoverOpenRef,
+            dateOnly,
+          }),
         eventClassNames: function (arg) {
           const width = experienceConRef.current?.offsetWidth || 0;
           const start = new Date(arg.event.start);
@@ -894,560 +487,53 @@ const App = () => {
         displayEventTime: false,
         eventDisplay: "block", // No time text
 
-        dateClick: async function (info) {
-          if (info.jsEvent?.target.closest(".tippy-box")) return;
-          const date = info.date;
-          if (!calendarApi) {
-            return;
-          }
-          if (info.view.type === "resourceTimeline") {
-            const timeStr = date.toLocaleTimeString("en-GB", {
-              hour: "2-digit",
-              minute: "2-digit",
-            });
-            const endTime = new Date(date);
-            endTime.setHours(endTime.getHours() + 1);
-            const endStr = endTime.toLocaleTimeString("en-GB", {
-              hour: "2-digit",
-              minute: "2-digit",
-            });
-            const container = experienceConRef.current;
-            const rect = container.getBoundingClientRect();
-            const clickX = info.jsEvent.clientX - rect.left;
-            const clickY = info.jsEvent.clientY - rect.top;
-            setIsEventModalOpen(true);
-            setResourceDate(date.toISOString().split("T")[0]);
-            setCurrentResourceId(info?.resource.id || null);
-            setResorceTime(timeStr);
-            setResourceETime(endStr);
-            setModalPosition({ x: clickX, y: clickY });
-          }
-          if (
-            info.view.type !== "multiMonthYear" &&
-            info.view.type !== "resourceTimeline"
-          ) {
-            showEventPopup(
-              info,
-              setPlaylistMode,
-              setScheduleTitle,
-              setScheduleDescription,
-              addReadingPlans,
-              playlistsToAdd,
-              setPlaylistsToAdd,
-              calendarApi,
-              setCalendarView,
-              ({
-                title,
-                description,
-                link,
-                start,
-                end,
-                startTime,
-                endTime,
-                recurVal,
-                isPlansTabActive,
-              }) => {
-                if (isPlansTabActive) return;
-                let newEvent;
+        dateClick: (info) =>
+          handleDateClick({
+            info,
+            calendarApi,
+            experienceConRef,
 
-                const days = getDayDifference(start, end);
-                if (recurVal.charAt(0) === "N") {
-                  const isTimed = Boolean(startTime && endTime);
+            setIsEventModalOpen,
+            setResourceDate,
+            setCurrentResourceId,
+            setResorceTime,
+            setResourceETime,
+            setModalPosition,
 
-                  if (days === 0) {
-                    newEvent = {
-                      title: title ? title : "easter",
-                      id: uuid(),
-                      start: `${start}T${startTime || "09:00"}`,
-                      end: `${end}T${endTime || "19:00"}`,
-                      allDay: false,
-                      color: "white",
-                      eventDisplay: "list-item",
-                      theme: "simple-borderless",
-                      classNames: ["user-event"],
-                      extendedProps: {
-                        description,
-                        link,
-                        startTime,
-                        endTime,
-                        isReapeating: false,
-                        type: "events",
-                      },
-                    };
+            setPlaylistMode,
+            setScheduleTitle,
+            setScheduleDescription,
+            handleAddReadingPlans,
+            playlistsToAdd,
+            setPlaylistsToAdd,
+            setCalendarView,
 
-                    const now = stripTime(new Date());
-                    const startDate = stripTime(new Date(newEvent.start));
-                    setAllEvents((prev) => [...prev, newEvent]);
+            setAllEvents,
+            setEventInView,
 
-                    if (startDate >= now) {
-                      setEventInView((prev) => {
-                        const combined = [...prev, newEvent];
-                        combined.sort(
-                          (a, b) => new Date(a.start) - new Date(b.start)
-                        );
-                        return combined;
-                      });
-                    }
-                    calendarApi.current.addEvent(newEvent);
-                  } else {
-                    newEvent = {
-                      title: title ? title : "easter",
-                      id: uuid(),
-                      start: isTimed ? `${start}T${startTime}:00` : start,
-                      end: isTimed ? `${end}T${endTime}:00` : end,
-                      allDay: isTimed ? false : true,
-                      color: "white",
-                      theme: "simple-borderless",
-                      classNames: ["user-event"],
-                      extendedProps: {
-                        description,
-                        link,
-                        startTime,
-                        endTime,
-                        isReapeating: false,
-                        type: "events",
-                      },
-                    };
-                    const now = stripTime(new Date());
-                    const startDate = stripTime(new Date(newEvent.start));
-                    if (startDate >= now) {
-                      setEventInView((prev) => {
-                        const combined = [...prev, newEvent];
-                        combined.sort(
-                          (a, b) => new Date(a.start) - new Date(b.start)
-                        );
-                        return combined;
-                      });
-                    }
-                    if (newEvent) {
-                      setAllEvents((prev) => [...prev, newEvent]);
-                    }
-                    calendarApi.current.addEvent(newEvent);
-                  }
-                } else {
-                  if (recurVal.charAt(0) === "R") {
-                    const isTimed = startTime && endTime;
-                    const words = recurVal.split(" ");
-                    const thirdWord = words[2];
-                    const day = dayNameToNumber(thirdWord);
-                    newEvent = {
-                      title: title ? title : "easter",
-                      id: uuid(),
-                      start: isTimed ? `${start}T${startTime}:00` : start,
-                      end: isTimed ? `${end}T${endTime}:00` : end,
-                      daysOfWeek: [day],
-                      allDay: isTimed ? false : true,
-                      color: "white",
-                      theme: "simple-borderless",
-                      classNames: ["user-event"],
-                      extendedProps: {
-                        description,
-                        link,
-                        startTime,
-                        endTime,
-                        isReapeating: true,
-                        type: "events",
-                      },
-                    };
-                    const now = stripTime(new Date());
-                    const startDate = stripTime(new Date(newEvent.start));
-                    setAllEvents((prev) => [...prev, newEvent]);
+            showEventPopup,
+            stripTime,
+            getDayDifference,
+            dayNameToNumber,
+            customDaysRef,
+            uuid,
+          }),
 
-                    if (startDate >= now) {
-                      setEventInView((prev) => {
-                        const combined = [...prev, newEvent];
-                        combined.sort(
-                          (a, b) => new Date(a.start) - new Date(b.start)
-                        );
-                        return combined;
-                      });
-                    }
-
-                    calendarApi.current.addEvent(newEvent);
-                  } else {
-                    if (recurVal.charAt(0) === "c") {
-                      newEvent = {
-                        title: title ? title : "easter",
-                        id: uuid(),
-                        daysOfWeek: customDaysRef.current, // Monday and Wednesday
-                        start: start,
-
-                        end: end,
-                        color: "white",
-                        allDay: true,
-                        theme: "simple-borderless",
-                        classNames: ["user-event"],
-                        extendedProps: {
-                          description,
-                          link,
-                          isReapeating: true,
-                          type: "events",
-                        },
-                      };
-                      const now = stripTime(new Date());
-                      const startDate = stripTime(new Date(newEvent.start));
-                      setAllEvents((prev) => [...prev, newEvent]);
-
-                      if (startDate >= now) {
-                        setEventInView((prev) => {
-                          const combined = [...prev, newEvent];
-                          combined.sort(
-                            (a, b) => new Date(a.start) - new Date(b.start)
-                          );
-                          return combined;
-                        });
-                      }
-
-                      calendarApi.current.addEvent(newEvent);
-                    }
-                  }
-                }
-              }
-            );
-          }
-          /* else {
-            if (info.view.type !== "resourceTimeline") {
-              const clickedDate = info.date;
-              // JS Date
-
-              const isoStr = info.dateStr; // "YYYY-MM-DD"
-              const weekdayDay = formatWeekdayDay(clickedDate);
-
-              const events = calendarApi.current.getEvents();
-              const matched = events.filter((ev) => {
-                const clickedDateLocal = info.date.toLocaleDateString("en-CA");
-                const eventDateLocal = ev.start.toLocaleDateString("en-CA");
-                return clickedDateLocal === eventDateLocal;
-              });
-              console.log(matched, "kjkjkj");
-              const eventTitle =
-                matched.length > 0
-                  ? matched.map((ev) => ev.title).join(", ")
-                  : "No Event";
-
-              const referenceEl = info.dayEl;
-              const html = createMiniModalContent(weekdayDay, eventTitle);
-
-              // 4️⃣ Initialize & show tippy
-              const instance = tippy(referenceEl, {
-                content: html,
-                allowHTML: true,
-                theme: "my-custom",
-                arrow: true,
-                interactive: true,
-                placement: "auto",
-                delay: [100, 0],
-                duration: [300, 200],
-                maxWidth: 300,
-                hideOnClick: true,
-                trigger: "manual",
-                appendTo: () => document.body,
-                zIndex: 9999,
-              });
-              instance.show();
-            }
-          }*/
-        },
-
-        datesSet: (info) => {
-          const startDate = new Date(info.startStr).toLocaleDateString("en-CA");
-          const newResources = resourcesRef.current[startDate] || [];
-          calendarApi.current.setOption("resources", newResources);
-          updateCalendarHeader(calendarApi.current);
-          const { start, end } = info;
-          setCalendarTitle(info.view.title);
-          setCalendarView(calendarApi.current.view.type);
-          const todayBtn =
-            calendarRef.current.querySelector(".fc-today-button");
-          const addButton = document.getElementById("add-event-button");
-          const prevBtn = calendarRef.current.querySelector(".fc-prev-button");
-          const nextBtn = calendarRef.current.querySelector(".fc-next-button");
-          let select = document.getElementById("view-toggle-select");
-          const calendarap = info.view.calendar;
-
-          if (info.view.type === "multiMonthYear") {
-            const year = info.start.getFullYear();
-            calendarap.setOption("titleFormat", { year: "numeric" });
-
-            calendarap.setOption("title", year.toString());
-          } else {
-            calendarap.setOption("titleFormat", {
-              year: "numeric",
-              month: "long",
-            });
-          }
-          if (info.view.type === "resourceTimelineDay") {
-            if (todayBtn) todayBtn.style.display = "none";
-            if (addButton) addButton.style.display = "none";
-            if (select) select.style.display = "none";
-
-            if (prevBtn) {
-              prevBtn.onclick = (e) => e.preventDefault();
-              prevBtn.style.pointerEvents = "none";
-            }
-            if (nextBtn) {
-              nextBtn.onclick = (e) => e.preventDefault();
-              nextBtn.style.pointerEvents = "none";
-            }
-          } else {
-            calendarApi.current.setOption("validRange", null);
-
-            if (addButton) addButton.style.display = "inline-block";
-            if (select) select.style.display = "inline-block";
-
-            if (prevBtn) prevBtn.style.pointerEvents = "auto";
-            if (nextBtn) nextBtn.style.pointerEvents = "auto";
-          }
-
-          const events = onRangeChange(start, end);
-          const sortedEvents = events.sort(
-            (a, b) => new Date(a.start) - new Date(b.start)
-          );
-          setEventInView(sortedEvents);
-
-          const styleButtons = () => {
-            if (prevBtn) {
-              Object.assign(prevBtn.style, {
-                backgroundColor: "white",
-                color: "black",
-                fontSize: "10px",
-                fontWeight: "700",
-                padding: "0",
-                border: "none",
-                marginRight: "10px",
-
-                alignSelf: "center",
-                cursor:
-                  info.view.type === "resourceTimelineDay"
-                    ? "not-allowed"
-                    : "pointer",
-                opacity: info.view.type === "resourceTimelineDay" ? "0.5" : "1",
-              });
-              prevBtn.onfocus = prevBtn.onmousedown = () => {
-                prevBtn.style.outline = "none";
-                prevBtn.style.boxShadow = "none";
-              };
-            }
-
-            if (nextBtn) {
-              Object.assign(nextBtn.style, {
-                backgroundColor: "white",
-                color: "black",
-                fontSize: "10px",
-                padding: "0",
-                border: "none",
-                fontWeight: "900",
-
-                marginRight: "10px",
-                cursor:
-                  info.view.type === "resourceTimelineDay"
-                    ? "not-allowed"
-                    : "pointer",
-                opacity: info.view.type === "resourceTimelineDay" ? "0.5" : "1",
-              });
-              nextBtn.onfocus = nextBtn.onmousedown = () => {
-                nextBtn.style.outline = "none";
-                nextBtn.style.boxShadow = "none";
-              };
-            }
-
-            if (todayBtn) {
-              if (info.view.type.includes("resourceTimeline")) {
-                todayBtn.style.display = "none";
-              } else {
-                todayBtn.style.display = "inline-block";
-                Object.assign(todayBtn.style, {
-                  backgroundColor: "white",
-                  textTransform: "capitalize",
-                  color: "#606266",
-                  fontWeight: "300",
-                  fontSize: "15px",
-                  marginRight: "10px",
-                  border: "1px solid #d3d3d3",
-                  padding: "4px 16px",
-                  cursor: "pointer",
-                });
-                todayBtn.onfocus = todayBtn.onmousedown = () => {
-                  todayBtn.style.outline = "none";
-                  todayBtn.style.boxShadow = "none";
-                };
-              }
-            }
-          };
-
-          const toolbar = calendarRef.current.querySelector(".fc-toolbar");
-
-          if (toolbar) {
-            if (activeToolbarHandler) {
-              toolbar.removeEventListener("click", activeToolbarHandler);
-            }
-
-            if (info.view.type.includes("resourceTimeline")) {
-              activeToolbarHandler = onToolbarDateClick;
-            } else {
-              activeToolbarHandler = onToolbarDateClick1;
-            }
-
-            toolbar.addEventListener("click", activeToolbarHandler);
-          }
-
-          const rightHeaderEl = calendarRef.current.querySelector(
-            ".fc-header-toolbar .fc-toolbar-chunk:last-child"
-          );
-
-          if (rightHeaderEl) {
-            Object.assign(rightHeaderEl.style, {
-              display: "flex",
-              alignItems: "center",
-              justifyContent: "flex-end",
-            });
-
-            let addButton = document.getElementById("add-event-button");
-            if (info.view.type.includes("resourceTimeline")) {
-              addButton.style.display = "none";
-            } else {
-              if (!addButton) {
-                addButton = document.createElement("button");
-                addButton.id = "add-event-button";
-                addButton.innerHTML = `
-                
-          
-          <svg width="16" height="16" viewBox="0 0 20 20" fill="none"
-               xmlns="http://www.w3.org/2000/svg" style="margin-right: 6px;">
-            <path d="M9.95441 4.16602V15.8327" stroke="white" stroke-width="2"
-                  stroke-linecap="round" stroke-linejoin="round"/>
-            <path d="M4.12109 10H15.738" stroke="white" stroke-width="2"
-                  stroke-linecap="round" stroke-linejoin="round"/>
-          </svg>
-          <span>Add Event</span> `;
-                Object.assign(addButton.style, {
-                  display: "block",
-
-                  backgroundColor: "#D36433",
-                  color: "white",
-                  fontSize: "14px",
-                  transform: "translateX(10px)",
-                  fontFamily: "Satoshi",
-                  fontWeight: "400",
-                  width: "100%",
-                  border: "none",
-                  borderRadius: "4px",
-                  padding: "5px 7px",
-                  cursor: "pointer",
-                });
-
-                addButton.addEventListener("click", () => setModalOpen(true));
-              }
-              rightHeaderEl.appendChild(addButton);
-            }
-
-            if (info.view.type.includes("resourceTimeline")) {
-              select.style.display = "none";
-            } else {
-              if (!select) {
-                select = document.createElement("select");
-                select.id = "view-toggle-select";
-                Object.assign(select.style, {
-                  padding: "5px 7px",
-                  fontSize: "14px",
-                  fontFamily: "Satoshi",
-
-                  fontWeight: "400",
-                  color: "#606266",
-                  border: "1px solid #d3d3d3",
-                  borderRadius: "3px",
-
-                  cursor: "pointer",
-                });
-
-                select.addEventListener("change", (e) => {
-                  const v = e.target.value;
-                  if (v) calendarApi.current.changeView(v);
-                });
-              }
-
-              rightHeaderEl.insertBefore(
-                select,
-                document.getElementById("add-event-button")
-              );
-            }
-
-            select.innerHTML = `
-        <option value="timeGridDay">Day</option>
-        <option value="timeGridWeek">Weekly</option>
-        <option value="dayGridMonth">Monthly</option>
-        <option value="multiMonthYear">Year</option>
-      `;
-
-            if ([...select.options].some((o) => o.value === info.view.type)) {
-              select.value = info.view.type;
-            } else {
-              select.selectedIndex = 0;
-            }
-          }
-
-          styleButtons();
-
-          const applyResponsiveToCalendarWidth = () => {
-            const calendarEl = calendarRef.current;
-            if (!calendarEl) return;
-
-            const width = calendarEl.offsetWidth;
-
-            const todayBtn = calendarEl.querySelector(".fc-today-button");
-            if (todayBtn && !info.view.type.includes("resourceTimeline")) {
-              todayBtn.textContent = width < 500 ? "T" : "Today";
-            }
-
-            const viewSelect = document.getElementById("view-toggle-select");
-            if (viewSelect) {
-              const d = viewSelect.querySelector('option[value="timeGridDay"]');
-              const w = viewSelect.querySelector(
-                'option[value="timeGridWeek"]'
-              );
-              const m = viewSelect.querySelector(
-                'option[value="dayGridMonth"]'
-              );
-              const y = viewSelect.querySelector(
-                'option[value="multiMonthYear"]'
-              );
-              if (d) d.text = width < 550 ? "D" : "Daily";
-              if (w) w.text = width < 550 ? "W" : "Weekly";
-              if (m) m.text = width < 550 ? "M" : "Monthly";
-              if (y) y.text = width < 550 ? "Y" : "Yearly";
-            }
-
-            const addBtn = document.getElementById("add-event-button");
-            if (addBtn && !info.view.type.includes("resourceTimeline")) {
-              addBtn.innerHTML = `
-             
-        <svg width="16" height="16" viewBox="0 0 20 20" fill="none"
-             xmlns="http://www.w3.org/2000/svg">
-          <path d="M9.95441 4.16602V15.8327" stroke="white" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/>
-          <path d="M4.12109 10H15.738" stroke="white" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/>
-        </svg>
-      `;
-              if (width >= 550) {
-                const span = document.createElement("span");
-                span.innerText = "Add Event";
-                span.style.marginLeft = "4px";
-                span.style.display = "inline-block"; // important!
-                span.style.transform = "translateY(-2px)";
-
-                addBtn.appendChild(span);
-              }
-            }
-          };
-
-          applyResponsiveToCalendarWidth();
-
-          if (!calendarRef.current._resizeObserverAttached) {
-            const ro = new ResizeObserver(applyResponsiveToCalendarWidth);
-            ro.observe(calendarRef.current);
-            calendarRef.current._resizeObserverAttached = true;
-            calendarRef.current._resizeObserver = ro;
-          }
-        },
+        datesSet: (info) =>
+          handleDatesSet({
+            info,
+            calendarApi,
+            calendarRef,
+            resourcesRef,
+            onRangeChange,
+            setEventInView,
+            setCalendarTitle,
+            setCalendarView,
+            updateCalendarHeader,
+            toolbarClickHandler,
+            setModalOpen,
+            activeToolbarHandlerRef,
+          }),
 
         eventDidMount: (info) => {
           if (!window.tippy) return;
@@ -1467,7 +553,6 @@ const App = () => {
             content: "Loading...",
 
             onShow(tip) {
-              // 🔥 ALWAYS fetch latest event by ID
               const freshEvent = calendarApi.current?.getEventById(
                 info.event.id
               );
@@ -1475,7 +560,7 @@ const App = () => {
               if (!freshEvent) return;
 
               const freshContent = buildEventTooltipContent({
-                event: freshEvent, // ✅ always latest
+                event: freshEvent,
                 calendarApi,
                 handleDelete,
                 handleEditing,
@@ -1503,20 +588,7 @@ const App = () => {
       resizeObserver.observe(calendarEle);
     }
   }, []);
-
-  const resizeCalendar = () => {
-    const calendarElement = calendarRef.current; // or your ref
-    const width = calendarElement?.offsetWidth;
-
-    const newHeight = width * 0.5; // example ratio
-    calendarElement.style.height = `${newHeight}px`;
-  };
-
-  useEffect(() => {
-    resizeCalendar();
-  }, []);
   useDayGridResponsiveLayout(experienceConRef, calendarApi);
-
   return (
     <>
       <script src="https://cdnjs.cloudflare.com/ajax/libs/ical.js/1.4.0/ical.min.js"></script>
@@ -1915,7 +987,7 @@ const App = () => {
         {modalOpen ? (
           <CustomModal
             setModalOpen={setModalOpen}
-            addReadingPlans={addReadingPlans}
+            handleAddReadingPlans={handleAddReadingPlans}
             calendarApi={calendarApi}
           />
         ) : (
@@ -1934,5 +1006,4 @@ const App = () => {
     </>
   );
 };
-
 return App;

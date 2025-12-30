@@ -37,7 +37,7 @@ function showEventPopup(
   setPlaylistMode,
   setScheduleTitle,
   setScheduleDescription,
-  addReadingPlans,
+  handleAddReadingPlans,
   setPlaylistsToAdd,
   playlistsToAdd,
   calendarApi,
@@ -306,23 +306,19 @@ function showEventPopup(
     title.style.color = "black";
 
     if (playListsFiltered.length <= 0) {
-      
-     
       modalEvent.appendChild(title);
 
-    
       const saveBtn = popup.querySelector(".gm-button-save");
       saveBtn.textContent = "Create New";
-       saveBtn.addEventListener("click", async () => {
+      saveBtn.addEventListener("click", async () => {
         console.log("111");
         instance.hide();
         modalOverlay.remove();
 
         openSelf();
-        globalThis.currentActiveItem='create';
+        globalThis.currentActiveItem = "create";
         await os.sleep(100);
       });
-     
     } else {
       const list = document.createElement("ul");
       list.style.listStyle = "none";
@@ -475,22 +471,22 @@ function showEventPopup(
   eventTab.onclick = () => {
     setPlaylistMode((prev) => !prev);
     eventTab.classList.add("gm-modal-select-item-selected");
-    if(plansTab){
-    plansTab.classList.remove("gm-modal-select-item-selected");}
+    if (plansTab) {
+      plansTab.classList.remove("gm-modal-select-item-selected");
+    }
     scheduleTab.classList.remove("gm-modal-select-item-selected");
     renderEventFields();
   };
-  if(plansTab){
+  if (plansTab) {
+    plansTab.onclick = () => {
+      setPlaylistMode((prev) => !prev);
+      plansTab.classList.add("gm-modal-select-item-selected");
+      eventTab.classList.remove("gm-modal-select-item-selected");
+      scheduleTab.classList.remove("gm-modal-select-item-selected");
 
-  plansTab.onclick = () => {
-    setPlaylistMode((prev) => !prev);
-    plansTab.classList.add("gm-modal-select-item-selected");
-    eventTab.classList.remove("gm-modal-select-item-selected");
-    scheduleTab.classList.remove("gm-modal-select-item-selected");
-
-    renderReadingPlans();
-  };
-}
+      renderReadingPlans();
+    };
+  }
 
   const instance = tippy(document.body, {
     getReferenceClientRect: () => info.dayEl.getBoundingClientRect(),
@@ -540,7 +536,9 @@ function showEventPopup(
     addSchedule();
     scheduleTab.classList.add("gm-modal-select-item-selected");
     eventTab.classList.remove("gm-modal-select-item-selected");
-    if(plansTab){plansTab.classList.remove("gm-modal-select-item-selected");}
+    if (plansTab) {
+      plansTab.classList.remove("gm-modal-select-item-selected");
+    }
     const btn = popup.querySelector(".gm-button-save"); // Added dot for class selector
     if (btn) {
       btn.textContent = "Create"; // Use textContent instead of .text
@@ -612,22 +610,23 @@ function showEventPopup(
       const end = popup.querySelector("#end-date")?.value || date;
       const startTime = popup.querySelector(".gm-input-start_time")?.value;
       const endTime = popup.querySelector(".gm-input-end_time")?.value;
-      console.log(end,'end')
+      console.log(end, "end");
 
       const recurVal =
         popup.querySelector("#repeatSelect")?.value || "No Repeat";
-        let isPlansTabActive;
-        if(plansTab){
-       isPlansTabActive = plansTab.classList.contains(
-        "gm-modal-select-item-selected"
-      );}
+      let isPlansTabActive;
+      if (plansTab) {
+        isPlansTabActive = plansTab.classList.contains(
+          "gm-modal-select-item-selected"
+        );
+      }
       console.log(isPlansTabActive, "sass");
 
       if (isPlansTabActive) {
         console.log(playListsFiltered, "playlistsfiltered");
         const selected = playListsFiltered.filter((p) => checked[p.id]);
 
-        addReadingPlans(selected);
+        handleAddReadingPlans(selected);
       }
 
       onSubmit({
