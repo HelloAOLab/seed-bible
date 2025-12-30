@@ -9,7 +9,7 @@
 
 .modal {
   width: 375px;
-  background: #fff;
+  background: var(--background);
   border-radius: 8px;
   box-shadow: 0 10px 30px rgba(0, 0, 0, 0.15);
   padding: 10px 10px 45px 10px;
@@ -86,7 +86,7 @@
   left: 0;
   bottom: 0;
   height: fit-content;
-  background-color: #fff;
+  background-color: var(--background);
   border-bottom-right-radius: 10px;
   border-bottom-left-radius: 10px;
 }
