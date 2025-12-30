@@ -88,7 +88,8 @@ const EditEvent = ({
     if (!calendar) return;
 
     const oldEvent = calendar.getEventById(editingEvent.id);
-    const resourceIds = editingEvent?._def?.resourceIds || [];
+    const resourceIds = fcEvent?._def?.resourceIds ?? [];
+    const resourceId = resourceIds.length > 0 ? resourceIds[0] : null;
     if (resourceIds.length <= 0) {
       if (oldEvent) {
         oldEvent.setProp("title", eventTitle);
@@ -107,7 +108,7 @@ const EditEvent = ({
 
       // Resource (IMPORTANT)
       if (resourceIds) {
-        oldEvent.setResources([resourceIds[0]]); // for resource calendar
+        oldEvent.setResources([resourceId]); // for resource calendar
       }
 
       // Class names

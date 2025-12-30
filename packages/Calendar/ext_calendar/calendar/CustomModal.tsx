@@ -5,7 +5,7 @@ const { useState, useEffect, useRef } = os.appHooks;
 const CustomRepeatModal = await thisBot.RepeatModal();
 import { useCalendar } from "ext_calendar.calendar.CalendarContext";
 
-const CustomModal = ({ setModalOpen, addReadingPlans, calendarApi }) => {
+const CustomModal = ({ setModalOpen, handleAddReadingPlans, calendarApi }) => {
   const { t } = useSideBarContext();
   const [mode, setMode] = useState("event"); // 'event' or 'readingPlans'
 
@@ -331,7 +331,7 @@ const CustomModal = ({ setModalOpen, addReadingPlans, calendarApi }) => {
   const handleSave = () => {
     const selected = playListsFiltered.filter((p) => checked[p.id]);
     if (selected) {
-      addReadingPlans(selected);
+      handleAddReadingPlans(selected);
     }
 
     setEventCreated((prev) => !prev);
