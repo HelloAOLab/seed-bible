@@ -1,5 +1,5 @@
 const { useEffect, useState, useRef, useMemo } = os.appHooks;
-const { Button } = Components;
+const { Button, Input } = Components;
 const RecordingUI = await thisBot.RecordVoice();
 const VideoRecordUI = await thisBot.VideoRecordUI();
 
@@ -28,6 +28,7 @@ import { useDragRef } from "playlist.playlistMode.useDragRef";
 const RECORDING_TYPES = {
   audio: "audio/webm",
   video: "video/mp4",
+  link: "link",
 }
 
 /**
@@ -95,28 +96,39 @@ const COMMAND_BOX_OPTIONS = [
     icon: "https://auth-aux-aobot-prod-filesbucket-141297942820.s3.amazonaws.com/annotations/95176265a3a33a0077c8b11b493470df3393acfc3ff5411c8fe45976d96be46d.svg",
     label: "Add Link",
     onClick: () => {
-      console.log("Add Annotation");
+      shout("startRecording", RECORDING_TYPES.link);
     },
   },
   {
     icon: "https://auth-aux-aobot-prod-filesbucket-141297942820.s3.amazonaws.com/annotations/76dc5c6ea24d635c2a1f363dc5d3822a618a56ff3484f36795f2bf4ae99ae3c4.svg",
     label: "Add Tags",
     onClick: () => {
-      console.log("Add Tags");
+      // Notify coming soon
+      ShowNotification({
+        message: "Coming soon!",
+        severity: "info",
+      });
     },
   },
   {
     icon: "https://auth-aux-aobot-prod-filesbucket-141297942820.s3.amazonaws.com/annotations/8b01074656e936022bbb1655a94e85ba3f9af15d2873d6bd16d01d07d66bdf8b.svg",
     label: "Add File",
-    onClick: () => {
-      console.log("Add File");
+    onClick: async () => {
+      const files = await os.showUploadFiles();
+      console.log("files", files);
+      console.log("shout", thisBot.onHandleDropFiles);
+      shout("onHandleDropFiles", {files});
     },
   },
   {
     icon: "https://auth-aux-aobot-prod-filesbucket-141297942820.s3.amazonaws.com/annotations/14c602cebbe4c6872c9fcf80015865c3b3f70391608bf58b92ad1cc8e068212c.svg",
     label: "Add Playlist",
     onClick: () => {
-      console.log("Add Playlist");
+      // Notify coming soon
+      ShowNotification({
+        message: "Coming soon!",
+        severity: "info",
+      });
     },
   },
 ];
@@ -447,11 +459,15 @@ export function CustomAnnotationTextEditor({
   const editorObjRef = useRef(null);
   const [loading, setLoading] = useState(false);
   const [recording, setRecording] = useState(globalThis.RecordingValue || null);
+  const [name, setName] = useState("");
+  const [link, setLink] = useState("");
   const [isCommandBox, setIsCommandBox] = useState(false);
 
   const toggleCommandBox = () => {
     setIsCommandBox((prev) => !prev);
   };
+
+  globalThis.ToggleCommandBox = toggleCommandBox;
 
   useEffect(() => {
     globalThis.RecordingValue = recording;
@@ -486,6 +502,8 @@ export function CustomAnnotationTextEditor({
 
     setLoading(false);
   };
+
+  globalThis.HandleUploadFiles = handleDropFiles;
 
   const { dragRef, dragState } = useDragRef({ onUploadFiles: handleDropFiles });
 
@@ -542,6 +560,10 @@ export function CustomAnnotationTextEditor({
       delete window.SimpleEditorToolbar?.[_instanceId];
     };
   }, [priority]);
+
+  const onAddExternalLink = (data) => {
+    console.log("data", data);
+  }
 
   // ---- init editor
   useEffect(() => {
@@ -1006,10 +1028,32 @@ export function CustomAnnotationTextEditor({
 
   const isMic = useMemo(() => recording === RECORDING_TYPES.audio, [recording]);
   const isVideo = useMemo(() => recording === RECORDING_TYPES.video, [recording]);
+  const isLink = useMemo(() => recording === RECORDING_TYPES.link, [recording]);
 
   const [data, setData] = useState(null);
 
   const onSaveAndAdd = async () => {
+
+    if(isLink) {
+
+      if(!link.trim()) return ShowNotification({
+        message: "Please enter a link to save!",
+        severity: "error",
+      });
+
+      const embedHTML = generateEmbedFromUrl(link.trim(), name.trim());
+      console.log("embedHTML", embedHTML, link, name);
+      if(embedHTML === null) return ShowNotification({
+        message: "Invalid link!",
+        severity: "error",
+      });
+      editorObjRef.current.chain().focus().insertContent(embedHTML).run();
+      setLink("");
+      setName("");
+      setRecording(null);
+      return;
+    }
+
     if(!data) return ShowNotification({
       message: "Please record something to save!",
       severity: "error",
@@ -1074,13 +1118,13 @@ export function CustomAnnotationTextEditor({
       }}
       >
         {COMMAND_BOX_OPTIONS.map((option) => (
-          <div className="command-box-option" key={option.label}>
+          <div className="command-box-option" key={option.label} onClick={option.onClick}>
             <img src={option.icon} alt={option.label} />
             <p>{option.label}</p>
           </div>
         ))}
       </div>}
-      {(isMic || isVideo) && 
+      {(isMic || isLink || isVideo) && 
           <div
                   style={{
                     position: "absolute",
@@ -1102,7 +1146,38 @@ export function CustomAnnotationTextEditor({
                     padding: "1rem 0",
                   }}
                 >
-                {isVideo ? <VideoRecordUI data={data} setData={setData} /> : <RecordingUI data={data} setData={setData} />}
+                {isLink
+                 ? 
+                 <div
+                 className="input-conainter-type"
+                 style={{
+                   padding: "1px 0",
+                   display: "flex",
+                   flexDirection: "column",
+                   alignItems: "center",
+                 }}
+               >
+                 <Input
+                   style={{ width: "100%" }}
+                   value={name}
+                   onChangeListener={setName}
+                   placeholder={t('typeToAddCustomTitle')}
+                 />
+                 <div style={{ width: "100%", display: "flex", gap: "1rem" }}>
+                   <Input
+                     style={{ marginBottom: "0", flexGrow: "1" }}
+                     value={link}
+                     onChangeListener={setLink}
+                     placeholder={`${t('exampleeg')} https://www.youtube.com/watch?v=ALsluAKBZ-czs3`}
+                   />
+                 </div>
+               </div>
+                :
+                isVideo ?
+                 <VideoRecordUI data={data} setData={setData} />
+                  :
+                   <RecordingUI data={data} setData={setData} />
+                }
 
                <div style={{ display: "flex", gap: "10px" }}>
                   <Button
@@ -1126,9 +1201,14 @@ export function CustomAnnotationTextEditor({
       {((dragState.isDragOver || loading) && !isMic && !isVideo) && (
             <div
              className="relative-float"
+             style={{
+              top: "3rem",
+             }}
             >
               <div
                 style={{
+                  display: "grid",
+                  width: "100%",
                   backgroundColor: "white",
                   padding: "4px",
                   borderRadius: "12px",
@@ -1819,6 +1899,7 @@ const SRE_STYLES = (minH) => `
   align-items: center;
   gap: 10px;
   padding: 10px;
+  cursor: pointer;
   font-family: DM Sans;
   font-weight: 500;
   font-style: Medium;

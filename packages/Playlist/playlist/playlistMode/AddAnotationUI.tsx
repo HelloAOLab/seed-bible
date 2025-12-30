@@ -1036,6 +1036,7 @@ const AddAnotationUI = ({
       setSelectedAnnotation(null);
       setLoading(false);
       globalThis.PreviousHTML = null;
+      setTextHTML(null);
       if (setTab) setTab("discover");
     } catch (e) {
       setLoading(false);
@@ -1188,6 +1189,8 @@ const AddAnotationUI = ({
       setList([]);
       setSelectedAnnotation(null);
       globalThis.PreviousHTML = null;
+      setTextHTML(null);
+      
     } catch (e) {
       setLoading(false);
       console.error(`${t('errorSavingAnnotations')}:`, e);
@@ -1953,6 +1956,8 @@ const AddAnotationUI = ({
                 }}
                 onClick={(e) => {
                   setList([]);
+                  globalThis.PreviousHTML = null;
+                  setTextHTML(null);
                   globalThis[`${id}currentPlaylist`] = [];
                   if (setTab) setTab("discover");
                 }}

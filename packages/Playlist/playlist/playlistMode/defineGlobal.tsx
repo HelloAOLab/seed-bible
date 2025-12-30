@@ -333,7 +333,7 @@ globalThis.validateImage = (url) => {
 };
 
 
-globalThis.generateEmbedFromUrl = (url: string) => {
+globalThis.generateEmbedFromUrl = (url: string, name: string = "") => {
   if (!url) return null;
 
   const result = validateUrl(url); // your global function
@@ -342,7 +342,7 @@ globalThis.generateEmbedFromUrl = (url: string) => {
     const imageResult = validateImage(url);
     if (imageResult.isValid) {
       return `
-        <img src="${url}" alt="${url}" />
+        <img src="${url}" alt="${name}" />
       `;
     }
     return null;
@@ -356,7 +356,7 @@ globalThis.generateEmbedFromUrl = (url: string) => {
           src="${globalThis.CONSTANTS.YT_PREFIX}/${videoId}"
           style="max-width: 100%;"
           height="auto"
-          title={content}
+          title="${name}"
           allow="accelerometer;encrypted-media;gyroscope;"
         ></iframe>`;
   }
@@ -366,6 +366,7 @@ globalThis.generateEmbedFromUrl = (url: string) => {
     return `
       <video 
         src="${url}" 
+        title="${name}"
         controls 
         height="100%"
         style="max-width: 100%;"
@@ -382,7 +383,7 @@ globalThis.generateEmbedFromUrl = (url: string) => {
         rel="noopener noreferrer"
         style="color: blue; text-decoration: underline; cursor: pointer;"
       >
-        ${url}
+        ${name || url}
       </a>
     `;
   }
