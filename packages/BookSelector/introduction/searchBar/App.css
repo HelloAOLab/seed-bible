@@ -42,6 +42,7 @@
   height: 100%;
   background-color: var(--text1);
   margin-right: -1px;
+  opacity: 0.3;
 }
 
 .dropdown-select {
@@ -54,7 +55,7 @@
 
   border: 1px solid #ccc;
   border-radius: 6px;
-  background: var(--primaryButton)
+  background: var(--menuBackground)
     url("data:image/svg+xml;utf8,<svg fill='gray' height='20' viewBox='0 0 24 24' width='20' xmlns='http://www.w3.org/2000/svg'><path d='M7 10l5 5 5-5z'/></svg>")
     no-repeat right 10px center;
   background-size: 16px;
@@ -66,12 +67,12 @@
     box-shadow 0.2s;
   margin-right: 5px;
   font-family: Satoshi;
-  color: var(--text1);
+  color: var(--text3);
 }
 
 .dropdown-option {
-  background: var(--primaryButton);
-  color: var(--text1);
+  background: var(--menuBackground);
+  color: var(--text3);
   padding: 8px 12px;
   font-weight: bold;
 }
@@ -85,12 +86,12 @@
   align-items: center;
   border: 1px solid #ccc;
   border-radius: 6px;
-  background: var(--primaryButton);
+  background: var(--menuBackground);
   padding: 6px 10px;
-  width: 100%;
+  width: 76%;
   height: 34px;
   overflow: hidden;
-  color: var(--text1);
+  color: var(--text3);
 }
 
 .search-icon {
@@ -354,7 +355,7 @@ input:checked + .slider:not(#slider):before {
 
 .sidebar-translation-selector {
   display: flex;
-  background: var(--primaryButton);
+  background: var(--menuBackground);
   padding: 0px 5px;
   height: 32px;
   justify-content: space-between;
@@ -362,7 +363,7 @@ input:checked + .slider:not(#slider):before {
   width: 100px;
   border-radius: 5px;
   border: 1px solid #ccc;
-  color: var(--text1);
+  color: var(--text3);
 }
 
 .sidebar-translation-options {
@@ -659,17 +660,18 @@ input:checked + .slider:not(#slider):before {
   width: 40px;
   aspect-ratio: 1 / 1;
   display: flex;
-  background-color: rgba(1, 87, 155, 0.2);
+  background-color: color-mix(in srgb, var(--tabSelection) 50%, transparent);
   justify-content: center;
   align-items: center;
   border-radius: 5px;
-  color: var(--text1);
+  color: var(--activeTabText, var(--text1)) !important;
   transition: all 0.3s;
   position: relative;
 }
 
 .chapter-btn:hover {
-  background-color: rgba(1, 87, 155, 0.5);
+  background-color: var(--primaryBase);
+  color: var(--activeTabText, var(--text1)) !important;
 }
 
 .searchbar-container:hover {
@@ -717,14 +719,14 @@ input:checked + .slider:not(#slider):before {
 
 .show-sidebar-chapter {
   display: grid;
-  grid-template-columns: repeat(auto-fit, 38px);
+  grid-template-columns: repeat(auto-fit, 42px);
   justify-content: space-between;
   /* display: flex; */
   width: 100%;
   height: fit-content;
   gap: clamp(5px, 0.5vw, 20px);
   flex-wrap: wrap;
-  background-color: color-mix(in srgb, var(--tabSelection) 50%, transparent);
+  background-color: var(--menuBackground) !important;
   padding: 8px;
   border-radius: 5px;
 }
@@ -792,9 +794,9 @@ input:checked + .slider:not(#slider):before {
 }
 
 .sidebar {
-  width: 830px;
-  background-color: var(--toolbarBackground) !important;
-  color: var(--text1) !important;
+  width: 1100px;
+  background-color: var(--pageBackground) !important;
+  color: var(--text3) !important;
   display: flex;
   padding: 10px;
   transition: all 0.5s;
@@ -814,7 +816,7 @@ input:checked + .slider:not(#slider):before {
 
 .testament-selection {
   margin-bottom: 10px;
-  /* background: var(--menuBackground) !important; */
+  /* background: var(--pageBackground) !important !important; */
   padding: 10px 0px;
   border-radius: 5px;
 }
@@ -835,7 +837,7 @@ input:checked + .slider:not(#slider):before {
   animation-iteration-count: 1;
   animation-fill-mode: forwards;
   /* border: 1px solid black; */
-  /* background-color: var(--menuBackground) !important; */
+  /* background-color: var(--pageBackground) !important !important; */
   padding-left: 5px;
   cursor: pointer;
   flex-direction: column;
@@ -861,9 +863,9 @@ input:checked + .slider:not(#slider):before {
 
 .sidebar-itm {
   height: 40px;
-  width: 148px;
+  width: 200px;
   display: flex;
-  background-color: var(--primaryButton);
+  background-color: var(--pageBackground);
   justify-content: space-between;
   align-items: center;
   border-radius: 5px;
@@ -872,23 +874,24 @@ input:checked + .slider:not(#slider):before {
   font-size: 14px;
   padding: 10px;
   font-family: "Satoshi", system-ui, sans-serif;
-  color: var(--text1);
+  color: var(--text3);
 }
 
 .sidebar-ghost-itm {
   height: 40px;
-  width: 148px;
+  width: 200px;
   user-select: none;
   opacity: 0;
 }
 
 .sidebar-itm:hover {
-  background-color: color-mix(in srgb, var(--tabSelection) 50%, transparent);
+  background-color: var(--menuBackground);
+  color: var(--text3);
 }
 
 .sidebar-selected-itm {
-  background-color: color-mix(in srgb, var(--tabSelection) 50%, transparent);
-  color: var(--text1);
+  background-color: var(--menuBackground);
+  color: var(--text3);
   font-weight: bold;
 }
 
@@ -945,7 +948,7 @@ input:checked + .slider:not(#slider):before {
 .open-sideBar {
   opacity: 1;
   height: 80dvh;
-  bottom: 78px;
+  bottom: 100px;
   box-shadow: rgba(0, 0, 0, 0.24) 0px 3px 8px;
 }
 
@@ -1142,11 +1145,11 @@ input:checked + .slider:not(#slider):before {
 
 @media only screen and (max-width: 1200px) {
   .sidebar {
-    width: 490px;
+    width: 650px;
   }
 
   .show-sidebar-chapter {
-    grid-template-columns: repeat(auto-fit, 36px);
+    grid-template-columns: repeat(auto-fit, 40px);
   }
 
   .separator {
@@ -1157,7 +1160,7 @@ input:checked + .slider:not(#slider):before {
   }
 
   .searchbar {
-    width: 45%;
+    width: 58%;
   }
 }
 

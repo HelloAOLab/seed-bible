@@ -909,7 +909,7 @@ const SearchBar = () => {
                 {selectedTranslation.shortName}
               </span>
               <span
-                style={{ transition: "transform 0.3s", opacity: 0.3 }}
+                style={{ transition: "transform 0.3s" }}
                 class={`material-symbols-outlined ${selectingTranslation ? "upside-down" : ""}`}
               >
                 expand_more
@@ -1248,7 +1248,7 @@ const SideBarBooks = (props: {
                           <CircleCounter data={onlineUsers} book={book.id} />
                         </span>
                         <span
-                          style={{ transition: "transform 0.3s", opacity: 0.3 }}
+                          style={{ transition: "transform 0.3s" }}
                           class={`material-symbols-outlined ${index === lastBookClicked && bookData?.id === book.id ? "upside-down" : ""}`}
                         >
                           expand_more
@@ -1323,7 +1323,7 @@ const SideBarBooks = (props: {
                           <CircleCounter data={onlineUsers} book={book.id} />
                         </span>
                         <span
-                          style={{ transition: "transform 0.3s", opacity: 0.3 }}
+                          style={{ transition: "transform 0.3s" }}
                           class={`material-symbols-outlined ${index === lastBookClicked && bookData?.id === book.id ? "upside-down" : ""}`}
                         >
                           expand_more
@@ -1408,7 +1408,7 @@ const SideBarBooks = (props: {
                           <CircleCounter data={onlineUsers} book={book.id} />
                         </span>
                         <span
-                          style={{ transition: "transform 0.3s", opacity: 0.3 }}
+                          style={{ transition: "transform 0.3s" }}
                           class={`material-symbols-outlined ${index === lastBookClicked && bookData?.id === book.id ? "upside-down" : ""}`}
                         >
                           expand_more
@@ -1487,7 +1487,7 @@ const SideBarBooks = (props: {
                           <CircleCounter data={onlineUsers} book={book.id} />
                         </span>
                         <span
-                          style={{ transition: "transform 0.3s", opacity: 0.3 }}
+                          style={{ transition: "transform 0.3s" }}
                           class={`material-symbols-outlined ${index === lastBookClicked && bookData?.id === book.id ? "upside-down" : ""}`}
                         >
                           expand_more
@@ -1569,7 +1569,7 @@ const SideBarBooks = (props: {
                           <CircleCounter data={onlineUsers} book={book.id} />
                         </span>
                         <span
-                          style={{ transition: "transform 0.3s", opacity: 0.3 }}
+                          style={{ transition: "transform 0.3s" }}
                           class={`material-symbols-outlined ${index === lastBookClicked && bookData?.id === book.id ? "upside-down" : ""}`}
                         >
                           expand_more

@@ -170,15 +170,13 @@ const LanguageComponent = (props: {
         className="item"
         onClick={() => setShow(!show)}
         style={{
-          backgroundColor: show
-            ? "color-mix(in srgb, var(--tabSelection) 50%, transparent)"
-            : "",
+          backgroundColor: show ? "var(--surface)" : "var(--background)",
           marginBottom: show ? "0px" : "10px",
         }}
       >
         <span style={{ textTransform: "capitalize" }}>{language}</span>
         <span
-          style={{ transition: "transform 0.3s", opacity: 0.3 }}
+          style={{ transition: "transform 0.3s" }}
           class={`material-symbols-outlined ${show ? "upside-down" : ""}`}
         >
           expand_more
@@ -230,8 +228,8 @@ const LanguageComponent = (props: {
                   style={{
                     background:
                       selectedTranslation.id === value.id
-                        ? "color-mix(in srgb, var(--tabSelection) 50%, transparent)"
-                        : "",
+                        ? "var(--surface)"
+                        : "var(--background)",
                   }}
                   class="translation-option"
                 >
