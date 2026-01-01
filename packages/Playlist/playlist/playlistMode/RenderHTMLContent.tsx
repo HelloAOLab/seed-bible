@@ -144,6 +144,7 @@ const RenderHTMLContent = ({ htmlContent }) => {
           textTransform: "none",
           transition: "all 0.2s linear",
           paddingRight: "1.25rem",
+          paddingBottom: "0.25rem",
         }}
         dangerouslySetInnerHTML={{ __html: htmlContent }}
       />
@@ -162,7 +163,7 @@ const RenderHTMLContent = ({ htmlContent }) => {
             setOpen(!open);
           }}
         >
-          {open ? "Show Less" : "Show more"}
+          {open ? "Show less" : "Show more"}
         </span>
       )}
     </div>
