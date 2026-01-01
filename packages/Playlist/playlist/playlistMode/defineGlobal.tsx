@@ -1009,3 +1009,27 @@ const PlaylistIcon = ({invert = false}) => {
 
 globalThis.AnnotationIcon = AnnotationIcon;
 globalThis.PlaylistIcon = PlaylistIcon;
+
+
+const getVerseSummaryHeading = (verses: number[]) => {
+  const ranges = [];
+  let start = verses[0];
+  let end = verses[0];
+
+  if(verses.length > 1) {
+    for (let i = 1; i < verses.length; i++) {
+      if (verses[i] === end + 1) {
+        end = verses[i];
+      } else {
+        ranges.push(start === end ? `${start}` : `${start}-${end}`);
+        start = end = verses[i];
+      }
+    }
+    ranges.push(start === end ? `${start}` : `${start}-${end}`);
+  }else {
+    ranges.push(verses[0]);
+  }
+  return ranges;
+}
+
+globalThis.GetVerseSummaryHeading = getVerseSummaryHeading;

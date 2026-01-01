@@ -355,7 +355,10 @@ const AnnodataMapper = ({ data, address, currentOpenedBook, chapter, heading, on
           </div>
           <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginTop: '0.5rem' }}>
         <div style={{ display: 'flex', flexDirection: 'row', gap: '0.5rem',fontSize: '12px' }}>
-          <p>Updated At:</p>
+           <div style={{ display: 'flex', flexDirection: 'row', gap: '0.5rem', alignItems: 'center' }}>
+            <img style={{ width: '16px', height: '16px', borderRadius: '50%' }} src={contentData.createdByProfilePicture} alt="profile" />
+            <p>{contentData.createdByName}</p>
+           </div>
           <p style={{ textTransform: 'capitalize'}}>{FormatRelativeTime(contentData.updatedAtMs)}</p>
         </div>
         <div>

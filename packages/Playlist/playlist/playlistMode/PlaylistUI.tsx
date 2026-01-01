@@ -28,25 +28,52 @@ if (bibleVizUtils) {
 // <PlaylistInfoItem />
 
 const sortFunc = (a, b) => {
-  const getOrder = (heading) => {
-    if (heading?.startsWith("Chapter")) return { order: 0, num: 0 };
-    const match = heading.match(/Verse (\d+)(?:-(\d+))?/);
-    if (match) {
-      const num = parseInt(match[1], 10);
-      return { order: 1, num: num };
+  const parseHeading = (heading = "") => {
+    // 1️⃣ Chapter always first
+    if (heading.startsWith("Chapter")) {
+      return { group: 0, start: 0, length: heading.length };
     }
-    return { order: 2, num: 0 }; // fallback for unexpected headings
+
+    // 2️⃣ Verse logic
+    const match = heading.match(/Verse\s*(\d+)/);
+    if (match) {
+      return {
+        group: 1,
+        start: Number(match[1]), // starting verse
+        length: heading.length,
+      };
+    }
+
+    // 3️⃣ Everything else
+    return {
+      group: 2,
+      start: Infinity,
+      length: heading.length,
+    };
   };
 
-  const aOrder = getOrder(a.heading);
-  const bOrder = getOrder(b.heading);
+  const A = parseHeading(a.heading);
+  const B = parseHeading(b.heading);
 
-  if (aOrder.order !== bOrder.order) {
-    return aOrder.order - bOrder.order;
+  // Group order: Chapter → Verse → Others
+  if (A.group !== B.group) {
+    return A.group - B.group;
   }
 
-  return aOrder.num - bOrder.num;
+  // Verse number comparison
+  if (A.start !== B.start) {
+    return A.start - B.start;
+  }
+
+  // Length comparison (shorter first)
+  if (A.length !== B.length) {
+    return B.length - A.length;
+  }
+
+  // Final fallback
+  return a.heading.localeCompare(b.heading);
 };
+
 
 const LowerCaseBookMapping = thisBot.tags.LowerCaseBookMapping;
 
@@ -345,16 +372,17 @@ const Playlist = () => {
             currentOpenedBook?.bookId,
             currentOpenedBook?.chapter
           );
+
           let allAnnotations:any = [];
           const verseIndexMap:any = {};
           annotations.forEach((ele) => {
-            if (ele?.data.type === "comment" && ele.verseNumber) {
+            if (ele?.data.type === "comment" && (ele.verseNumber || ele.verseNumbers)) {
               const booksDetails = globalThis.findNameRank(ele.bookId);
               const anoItem = {
                 type: "heading",
                 content: ele.data.html,
                 additionalInfo: {
-                  verse: ele.verseNumber,
+                  verse: ele.verseNumber || ele.verseNumbers,
                   chapter: ele.chapter,
                   book: ele.bookId,
                   bookRank: booksDetails.item,
@@ -363,20 +391,25 @@ const Playlist = () => {
                 id: ele.id,
                 createdAtMs: ele?.data?.createdAtMs || Date.now(),
                 updatedAtMs: ele?.data?.updatedAtMs || Date.now(),
+                createdBy: ele?.data?.userId,
+                createdByName: ele?.data?.userName,
+                createdByProfilePicture: ele?.data?.userProfilePicture,
               };
+              
+              const verseSummaryHeading = globalThis.GetVerseSummaryHeading(ele.verseNumber ? [ele.verseNumber] : ele.verseNumbers);
 
               const data = {
                 bookid: currentOpenedBook?.bookId,
                 chapter: currentOpenedBook?.chapter,
               };
 
-              data.heading = `Verse ${ele.verseNumber}`;
+              data.heading = `Verse ${verseSummaryHeading.join(", ")}`;
               data.data = [anoItem];
-              data.verse = ele.verseNumber;
+              data.verse = ele.verseNumber || ele.verseNumbers;
               data.tags = [];
               data.address = ele.id;
               if(!verseIndexMap[data.heading]) {
-                verseIndexMap[data.heading] = allAnnotations.length - 1;
+                // verseIndexMap[data.heading] = allAnnotations.length - 1;
                 allAnnotations.push(data);
               }else {
                 allAnnotations[verseIndexMap[data.heading]].data.push(anoItem);
@@ -527,7 +560,7 @@ const Playlist = () => {
         let currentProfileName = "Guest";
         const authBot = await os.requestAuthBotInBackground();
         if (authBot?.id) {
-          const data = await os.getData(tags.key, authBot.id);
+          const data = await os.getData(thisBot.tags.keyFetchAccountData, authBot.id);
           if (data.success) {
             const payload = data.data;
             currentProfileName = payload.profileName || "Guest";
