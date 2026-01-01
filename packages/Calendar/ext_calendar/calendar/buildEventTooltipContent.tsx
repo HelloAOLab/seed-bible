@@ -1,3 +1,10 @@
+const removeEventFromLocalStorage = (eventId) => {
+  const stored = JSON.parse(localStorage.getItem("allEvents")) || [];
+
+  const updated = stored.filter((e) => e.id !== eventId);
+
+  localStorage.setItem("allEvents", JSON.stringify(updated));
+};
 function buildEventTooltipContent({
   event,
   calendarApi,
@@ -56,6 +63,7 @@ function buildEventTooltipContent({
   dlt.style.color = "gray";
   dlt.onclick = () => {
     handleDelete(id);
+    removeEventFromLocalStorage(id);
     wrapper.remove();
   };
   /* ---------- EDIT ---------- */
@@ -268,7 +276,10 @@ function buildEventTooltipContent({
       border-radius:20px;
       cursor:pointer;
     `;
-    btn.onclick = () => calendarApi.current.changeView("resourceTimeline");
+    btn.onclick = () => {
+      wrapper.remove();
+      calendarApi.current.changeView("resourceTimeline");
+    };
     wrapper.appendChild(btn);
   }
 
