@@ -6,8 +6,6 @@ const RenderHTMLContent = ({ htmlContent }) => {
   const [open, setOpen] = useState(false);
   const containerRef = useRef(null);
 
-  console.log(htmlContent,"HTML CONTE")
-
   useLayoutEffect(() => {
     // If html content contains image, video , iframe, audio, etc. then set shouldRender to true
     const hasMedia = htmlContent.includes("img") || htmlContent.includes("video") || htmlContent.includes("iframe") || htmlContent.includes("audio");

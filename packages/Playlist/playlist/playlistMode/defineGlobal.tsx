@@ -1033,3 +1033,5 @@ const getVerseSummaryHeading = (verses: number[]) => {
 }
 
 globalThis.GetVerseSummaryHeading = getVerseSummaryHeading;
+
+thisBot.getLabel();

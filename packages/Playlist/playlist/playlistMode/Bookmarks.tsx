@@ -61,7 +61,16 @@ const Bookmarks = () => {
                 className={`playlist-item-type bookmark no-left-padding playlist-item-${data.type}`}
                 style={{ display: 'flex', alignItems: 'center' }}
             >
-                <p className="number-style" style={{ width: '90px' }}>{data.content}</p>
+                <p className="number-style" style={{ width: '90px' }}>
+                    <GetLabel
+                      value='discover'
+                      currentOpenedBook={{
+                        book: data.content
+                      }}
+                      // Basically forcing it
+                      widthCompare={1000}
+                    />
+                </p>
                 <p className="verse-style" style={{ flexGrow: 1 }}>
                     - {data.additionalInfo.data?.text?.substr(0, 27)}{data.additionalInfo.data?.text?.length > 27 ? "..." : ""}
                 </p>

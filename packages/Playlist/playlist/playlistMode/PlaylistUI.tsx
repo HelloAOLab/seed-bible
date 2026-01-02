@@ -74,47 +74,6 @@ const sortFunc = (a, b) => {
   return a.heading.localeCompare(b.heading);
 };
 
-
-const LowerCaseBookMapping = thisBot.tags.LowerCaseBookMapping;
-
-const GetLabel = ({ value, currentOpenedBook, thisBot }) => {
-  const containerRef = useRef(null);
-  const [isMobile, setIsMobile] = useState(false);
-
-  useLayoutEffect(() => {
-    // Go up 3 levels
-    const targetElement = containerRef.current.parentElement?.parentElement;
-
-    if (!targetElement) {
-      console.warn("GetLabel: Could not find 3rd parent");
-      return;
-    }
-
-    const observer = new ResizeObserver((entries) => {
-      const width = entries[0].contentRect.width;
-      setIsMobile(width < 176);
-    });
-
-    observer.observe(targetElement);
-
-    return () => observer.disconnect();
-  }, []);
-
-  return (
-    <span ref={containerRef}>
-      {value === "discover"
-        ? `${
-            !isMobile
-              ? currentOpenedBook?.book
-              : LowerCaseBookMapping[
-                  currentOpenedBook?.book?.toLocaleLowerCase()
-                ]
-          } - ${currentOpenedBook?.chapter} `
-        : ""}
-    </span>
-  );
-};
-
 const Playlist = () => {
   
   const IsPlaylistPlaying = globalThis.IsPlaylistPlaying;
