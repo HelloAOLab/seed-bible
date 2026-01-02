@@ -16,7 +16,7 @@ import { useSideBarContext } from "app.hooks.sideBar";
 import { useTabsContext } from "app.hooks.tabs";
 import { ToolbarSettings } from "app.components.toolbarSettings";
 import { SpaceUI } from "app.components.sideBar";
-import { ThemeSettings,SettingsUI } from "app.components.themeSettings";
+import { ThemeSettings, SettingsUI } from "app.components.themeSettings";
 import { AiSettings } from "app.components.aiSettings";
 import { TabSettings } from "app.components.tabSettings";
 import { CanvasAiSettings } from "app.components.canvasAiSettings";
@@ -28,6 +28,7 @@ import { useBibleContext } from "app.hooks.bibleVariables";
 import { PanelSettingsDialog } from "app.components.screenSettingsOptions";
 import { EditorToolbarSettings } from "app.components.editorSettings";
 import { NowBar } from "app.components.nowBar";
+import { SelectionUISettings } from "app.components.selectionUISettings";
 
 shout("initialize");
 globalThis.PanelTabsMap = {}; // { panelId: tabObject }
@@ -100,7 +101,7 @@ const Layout = ({ children }) => {
           <CanvasAiSettings />
         ) : sidebarMode === "themeSettings" ? (
           <SettingsUI />
-        )  : sidebarMode === "advancedThemeSettings" ? (
+        ) : sidebarMode === "advancedThemeSettings" ? (
           <ThemeSettings />
         ) : sidebarMode === "aiSettings" ? (
           <AiSettings />
@@ -114,14 +115,15 @@ const Layout = ({ children }) => {
           <Extensions />
         ) : sidebarMode === "createAccountSettings" ? (
           <CreateAccountSettings />
+        ) : sidebarMode === "selectionUISettings" ? (
+          <SelectionUISettings />
         ) : null}
       </div>
       {/* handling mobile ui*/ null}
       {(sidebarMode === "default" ||
         sidebarMode === "settings" ||
-        sidebarMode === "themeSettings") &&
-        <SpaceUI />}
-        
+        sidebarMode === "themeSettings") && <SpaceUI />}
+
       {globalThis.IsMobileNow() && sidebarMode === "default" && <SpaceUI />}
       {showScreenPanelOption && (
         <PanelSettingsDialog

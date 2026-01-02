@@ -87,8 +87,15 @@ function ThePage({
   }, [T]);
   const { inSession, role, config } = getUserSessionInfo(configBot.id);
   const [tabEntered, setTabEntered] = useState(false);
-  const { updateTab, tabs, activeTab, setActiveTab, sharedTab } =
-    useTabsContext();
+  const {
+    updateTab,
+    tabs,
+    activeTab,
+    setActiveTab,
+    sharedTab,
+    activeSpace,
+    spaces,
+  } = useTabsContext();
   const { isDragging, setIsDragging, Element, position } = useMouseMove();
   const { navFunctions, setNavFunctions, scrollToVerse } = useBibleContext();
   const [inHold, setInHold] = useState();
@@ -1682,6 +1689,8 @@ function ThePage({
                   highlighted={highlighted}
                   clickedVersesContext={clickedVersesContext}
                   onColorSelect={handleColorSelect}
+                  activeSpace={activeSpace}
+                  spaces={spaces}
                   onClose={() => {
                     setClickedVerses([]);
                     setTimeout(() => {

@@ -172,6 +172,13 @@ const resources = {
       toolbarIcons: "Toolbar Icons",
       selectionUI: "Selection UI",
       selectionIcons: "Selection Icons",
+      selectionUIDescription: "Selection UI menu for your page...",
+      showSelectedItems: "Show selected verses",
+      showHighlightColors: "Show highlight UI",
+      showIconText: "Show Icon text",
+      copyVerse: "Copy verse",
+      onlyVerseText: "Only verse text",
+      verseTextWithReference: "Verse text with reference",
 
       // Input fields section
       title: "Title",

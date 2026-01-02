@@ -597,6 +597,34 @@ export const ThemeIcon = (props) => (
     />
   </svg>
 );
+export const SelectionUIIcon = (props) => (
+  <svg
+    width={24}
+    height={24}
+    viewBox="0 0 24 24"
+    fill="none"
+    className="coloredIcon"
+    xmlns="http://www.w3.org/2000/svg"
+    {...props}
+  >
+    <rect
+      x="3"
+      y="3"
+      width="18"
+      height="18"
+      rx="2"
+      stroke="#727272"
+      strokeWidth="2"
+    />
+    <path
+      d="M7 12L10 15L17 8"
+      stroke="#727272"
+      strokeWidth="2"
+      strokeLinecap="round"
+      strokeLinejoin="round"
+    />
+  </svg>
+);
 const MenuIcon = ({ name, size = 24, invert = false }) => {
   // Check if `name` looks like an image URL
   const isImage =
