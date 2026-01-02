@@ -1100,6 +1100,7 @@ function ThePage({
         to: "panel",
       });
     }
+    globalThis.LastClickedPanelUpdate = panelId;
   }
 
   function Update(tab) {

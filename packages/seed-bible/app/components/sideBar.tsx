@@ -464,7 +464,7 @@ function Tab({
       console.log("canvas replacing");
       setActiveTab(el.id);
       const id = uuid();
-      ReplaceApplication(checkEmpty.id, {
+      ReplaceApplication(LastClickedPanelUpdate || checkEmpty.id, {
         id: id,
         App: <ThePageWithEditor tab={el} panelId={id} preferTab={true} />,
         to: "panel",
@@ -526,9 +526,9 @@ function Tab({
       globalThis?.activeCanvasId === activeTab
     );
     setActiveTab(el.id);
-    if (globalThis[`UpdateTabWidthId${el?.id}`])
-      globalThis[`UpdateTabWidthId${el?.id}`](el);
-    globalThis.UpdateTab(el);
+    // if (globalThis[`UpdateTabWidthId${el?.id}`])
+    //   globalThis[`UpdateTabWidthId${el?.id}`](el);
+    // globalThis.UpdateTab(el);
   };
   const circles = onlineUsers
     ? Object.fromEntries(
