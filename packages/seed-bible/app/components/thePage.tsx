@@ -198,6 +198,7 @@ function ThePage({
             const defaultTranslation = newTranslations[0];
             newTranslations = newTranslations.map((trans) => {
               return {
+                name: trans.name,
                 languageEnglishName: trans.languageEnglishName,
                 id: trans.id,
                 listOfBooksApiLink: `${url.origin}${trans.listOfBooksApiLink}`,
@@ -213,6 +214,7 @@ function ThePage({
               }
             }
             const translation = {
+              name: defaultTranslation.name,
               languageEnglishName: defaultTranslation.languageEnglishName,
               id: defaultTranslation.id,
               listOfBooksApiLink: `${url.origin}${defaultTranslation.listOfBooksApiLink}`,
@@ -1537,7 +1539,7 @@ function ThePage({
                       }
                     : {
                         position: "fixed",
-                        left: toolbarPos.x  -50,
+                        left: toolbarPos.x - 50,
                         top: toolbarPos.y,
                         zIndex: 10000,
                         cursor: dragToolbar ? "grabbing" : "grab",

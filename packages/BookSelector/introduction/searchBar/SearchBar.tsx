@@ -144,8 +144,13 @@ const SearchBar = () => {
     }
   );
 
-  const [showAllLanguages, setShowAllLanguages] = useState(false);
-  const allowedTranslationLimit: number = 50;
+  const [showAllLanguages, setShowAllLanguages] = useState(
+    thePage.masks?.showAllLanguages || false
+  );
+  const [showIncompleteTranslations, setShowIncompleteTranslations] = useState(
+    thePage.masks?.showIncompleteTranslations || false
+  );
+  const [allowedTranslationLimit, setAllowedTranslationLimit] = useState(50);
   const [selectedTranslation, setSelectedTranslation] = useState(
     thePage.masks?.selectedTranslation || {
       languageEnglishName: "English",
@@ -270,62 +275,6 @@ const SearchBar = () => {
       }
     }
   }, [selectedTestament, booksData, query, handleNameMatch, orientation]);
-
-  const filteredApiTranslations = useMemo(() => {
-    if (languageQuery !== "") {
-      const translations: { [key: string]: Record<string, object> } = {};
-      const lowercaseQuery = languageQuery.toLowerCase();
-      Object.entries(apiTranslations)
-        .slice(0, allowedTranslationLimit)
-        .forEach(([key, value]) => {
-          if (key.includes(lowercaseQuery)) {
-            translations[key] = translations[key]
-              ? { ...translations[key], ...(value as Record<string, object>) }
-              : { ...(value as Record<string, object>) };
-          } else if (
-            Object.keys(apiTranslations[key]).filter((translationKey) =>
-              translationKey.includes(lowercaseQuery)
-            ).length > 0
-          ) {
-            const values: Record<string, object> = {};
-            Object.entries(apiTranslations[key]).forEach(
-              ([subKey, subValue]) => {
-                if (subKey.includes(lowercaseQuery)) {
-                  values[subKey] = apiTranslations[key][subKey];
-                }
-              }
-            );
-            translations[key] = translations[key]
-              ? { ...translations[key], ...values }
-              : { ...values };
-          }
-        });
-      return Object.entries(translations)
-        .sort(([a, avalue], [b, bvalue]) => {
-          if (a === selectedTranslation.languageEnglishName.toLowerCase())
-            return -1;
-          if (b === selectedTranslation.languageEnglishName.toLowerCase())
-            return 1;
-          return a.localeCompare(b);
-        })
-        .slice(0, allowedTranslationLimit);
-    } else {
-      return Object.entries(apiTranslations)
-        .sort(([a, avalue], [b, bvalue]) => {
-          if (a === selectedTranslation.languageEnglishName.toLowerCase())
-            return -1;
-          if (b === selectedTranslation.languageEnglishName.toLowerCase())
-            return 1;
-          return a.localeCompare(b);
-        })
-        .slice(0, allowedTranslationLimit);
-    }
-  }, [
-    apiTranslations,
-    languageQuery,
-    allowedTranslationLimit,
-    selectedTranslation,
-  ]);
 
   const getUrlUpToKeyword = useCallback((link: string, keyword: string) => {
     try {
@@ -499,6 +448,7 @@ const SearchBar = () => {
                   const languageEnglishName =
                     translation.languageEnglishName.toLowerCase();
                   const controlledTranslation = {
+                    name: translation.name,
                     languageEnglishName: languageEnglishName,
                     id: translation.id,
                     listOfBooksApiLink: `${url.origin}${translation.listOfBooksApiLink}`,
@@ -534,6 +484,7 @@ const SearchBar = () => {
                 if (data?.translation && data?.books) {
                   const translation = data.translation;
                   const controlledTranslation = {
+                    name: translation.name,
                     languageEnglishName:
                       translation.languageEnglishName.toLowerCase(),
                     id: translation.id,
@@ -713,34 +664,30 @@ const SearchBar = () => {
 
   useEffect(() => {
     if (
-      !apiTranslations[
-        selectedTranslation.languageEnglishName?.toLowerCase() || ""
-      ]
+      !defaultTranslations.includes(
+        selectedTranslation.languageEnglishName.toLowerCase()
+      )
     ) {
-      const translations = { ...apiTranslations };
-      translations[
-        selectedTranslation.languageEnglishName?.toLowerCase() || ""
-      ] = {
-        [selectedTranslation.shortName?.toLowerCase() || ""]:
-          selectedTranslation,
-      };
-      setTagMask(thePage, "apiTranslations", translations, "local");
       setTagMask(
         thePage,
         "defaultTranslations",
         [
           ...defaultTranslations,
-          selectedTranslation.languageEnglishName?.toLowerCase() || "",
+          selectedTranslation.languageEnglishName.toLowerCase(),
         ],
         "local"
       );
-      setApiTranslations(translations);
       setDefaultTranslations([
         ...defaultTranslations,
-        selectedTranslation.languageEnglishName?.toLowerCase() || "",
+        selectedTranslation.languageEnglishName.toLowerCase(),
       ]);
     }
     setTagMask(thePage, "selectedTranslation", selectedTranslation, "local");
+    console.log(
+      selectedTranslation,
+      "defaultTranslations updated",
+      !apiTranslations[selectedTranslation.languageEnglishName.toLowerCase()]
+    );
     fetchBookdata();
   }, [selectedTranslation, apiTranslations, defaultTranslations]);
 
@@ -772,37 +719,16 @@ const SearchBar = () => {
             allTranslations.map((translation: TranslationInterface) => {
               const englishName =
                 translation.languageEnglishName?.toLowerCase() || "";
-              if (showAllLanguages) {
-                const shortName = translation.shortName?.toLowerCase() || "";
-                if (translations[englishName]) {
-                  if (!translations[englishName][shortName]) {
-                    translations[englishName][shortName] = translation;
-                  }
-                } else {
-                  translations[englishName] = {
-                    [shortName]: translation,
-                  };
+              // if (showAllLanguages) {
+              const shortName = translation.shortName?.toLowerCase() || "";
+              if (translations[englishName]) {
+                if (!translations[englishName][shortName]) {
+                  translations[englishName][shortName] = translation;
                 }
               } else {
-                if (!defaultTranslations.includes(englishName)) {
-                  if (translations[englishName]) {
-                    delete translations[englishName];
-                  }
-                } else {
-                  const shortName = translation.shortName?.toLowerCase() || "";
-                  if (!translations[englishName]) {
-                    translations[englishName] = {
-                      [shortName]: translation,
-                    };
-                  } else {
-                    if (!translations[englishName][shortName]) {
-                      translations[englishName] = {
-                        ...translations[englishName],
-                        [shortName]: translation,
-                      };
-                    }
-                  }
-                }
+                translations[englishName] = {
+                  [shortName]: translation,
+                };
               }
             });
             setTagMask(thePage, "apiTranslations", translations, "local");
@@ -825,44 +751,22 @@ const SearchBar = () => {
       allTranslations.map((translation: TranslationInterface) => {
         const englishName =
           translation.languageEnglishName?.toLowerCase() || "";
-        if (showAllLanguages) {
-          const shortName = translation.shortName?.toLowerCase() || "";
-          if (translations[englishName]) {
-            if (!translations[englishName][shortName]) {
-              translations[englishName][shortName] = translation;
-            }
-          } else {
-            translations[englishName] = {
-              [shortName]: translation,
-            };
+        const shortName = translation.shortName?.toLowerCase() || "";
+        if (translations[englishName]) {
+          if (!translations[englishName][shortName]) {
+            translations[englishName][shortName] = translation;
           }
         } else {
-          if (!defaultTranslations.includes(englishName)) {
-            if (translations[englishName]) {
-              delete translations[englishName];
-            }
-          } else {
-            const shortName = translation.shortName?.toLowerCase() || "";
-            if (!translations[englishName]) {
-              translations[englishName] = {
-                [shortName]: translation,
-              };
-            } else {
-              if (!translations[englishName][shortName]) {
-                translations[englishName] = {
-                  ...translations[englishName],
-                  [shortName]: translation,
-                };
-              }
-            }
-          }
+          translations[englishName] = {
+            [shortName]: translation,
+          };
         }
       });
       setTagMask(thePage, "apiTranslations", translations, "local");
       setTagMask(thePage, "defaultTranslations", defaultTranslations, "local");
       setApiTranslations(translations);
     }
-  }, [showAllLanguages, defaultTranslations]);
+  }, [defaultTranslations]);
 
   useEffect(() => {
     const handleResize = () => {
@@ -892,6 +796,16 @@ const SearchBar = () => {
   const dontOpen = dontopn && showCheck;
   globalThis.SetBooksOnlineUsers = setOnlineUsers;
 
+  useEffect(() => {
+    setTagMask(thePage, "showAllLanguages", showAllLanguages, "local");
+    setTagMask(
+      thePage,
+      "showIncompleteTranslations",
+      showIncompleteTranslations,
+      "local"
+    );
+  }, [showAllLanguages, showIncompleteTranslations]);
+
   return (
     <>
       <div class="testament-selection starterAnimation">
@@ -902,7 +816,6 @@ const SearchBar = () => {
               onClick={() => {
                 setSelectingTranslation(!selectingTranslation);
                 setQuery("");
-                setShowAllLanguages(false);
               }}
             >
               <span class="sidebar-selected-title">
@@ -1038,7 +951,6 @@ const SearchBar = () => {
         )}
         {selectingTranslation && (
           <TranslationModal
-            filteredApiTranslations={filteredApiTranslations}
             selectedTranslation={selectedTranslation}
             setSelectedTranslation={setSelectedTranslation}
             setSelectingTranslation={setSelectingTranslation}
@@ -1047,6 +959,14 @@ const SearchBar = () => {
             handleTranslationAddition={handleTranslationAddition}
             showCustomTranslation={showCustomTranslation}
             setShowCustomTranslation={setShowCustomTranslation}
+            showIncompleteTranslations={showIncompleteTranslations}
+            setShowIncompleteTranslations={setShowIncompleteTranslations}
+            showAllLanguages={showAllLanguages}
+            setShowAllLanguages={setShowAllLanguages}
+            allowedTranslationLimit={allowedTranslationLimit}
+            setAllowedTranslationLimit={setAllowedTranslationLimit}
+            apiTranslations={apiTranslations}
+            defaultTranslations={defaultTranslations}
           />
         )}
       </div>

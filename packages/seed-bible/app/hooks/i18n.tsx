@@ -3034,17 +3034,17 @@ const numberTranslations: Record<string, string[]> = {
 export function getTranslatedNumber(num: number): string {
   const lang = getCurrentLanguage();
   const numStringArr = String(num).split("");
-  if (numberTranslations[lang]) {
-    return numStringArr
-      .map((digit) => {
-        if (digit >= "0" && digit <= "9") {
-          return numberTranslations[lang][parseInt(digit, 10)];
-        }
-        return digit;
-      })
-      .join("");
-  }
-  return num.toString();
+  const digitsForLang = numberTranslations[lang] ?? numberTranslations["en"];
+  return numStringArr
+    .map((digit) => {
+      if (digit >= "0" && digit <= "9") {
+        const idx = parseInt(digit, 10);
+        const translated = digitsForLang?.[idx];
+        return translated ?? digit;
+      }
+      return digit;
+    })
+    .join("");
 }
 
 export { resources };

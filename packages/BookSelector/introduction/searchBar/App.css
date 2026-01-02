@@ -38,11 +38,11 @@
 }
 
 .separator {
-  width: 2px;
+  width: 1px;
   height: 100%;
   background-color: var(--text1);
   margin-right: -1px;
-  opacity: 0.3;
+  opacity: 0.1;
 }
 
 .dropdown-select {
@@ -414,7 +414,6 @@ input:checked + .slider:not(#slider):before {
 
 .sidebar-selected-title {
   display: flex;
-  justify-content: center;
   align-items: center;
   height: 24px;
   /* overflow: hidden; */
@@ -422,6 +421,8 @@ input:checked + .slider:not(#slider):before {
   text-overflow: ellipsis;
   white-space: nowrap;
   font-family: Satoshi;
+  width: 75px;
+  overflow: hidden;
 }
 
 .translation-description {
