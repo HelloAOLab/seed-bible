@@ -1,10 +1,12 @@
 const { Button } = Components;
-const { useState, useLayoutEffect, useRef, useEffect } = os.appHooks;
+const { useState, useMemo, useLayoutEffect, useRef, useEffect } = os.appHooks;
 
 const RenderHTMLContent = ({ htmlContent }) => {
   const [shouldRender, setShouldRender] = useState(false);
   const [open, setOpen] = useState(false);
   const containerRef = useRef(null);
+
+  console.log(htmlContent,"HTML CONTE")
 
   useLayoutEffect(() => {
     // If html content contains image, video , iframe, audio, etc. then set shouldRender to true
@@ -133,6 +135,11 @@ const RenderHTMLContent = ({ htmlContent }) => {
     };
   }, [htmlContent, shouldRender, open]);
 
+  const breakHTMLCONTENT = useMemo(()=>{
+    const content = htmlContent.replaceAll(`<p style="text-align: left;"></p>`,`<br style="text-align: left;"></br>`)
+    return content;
+  },[htmlContent])
+
 
   return (
     <div>
@@ -146,7 +153,7 @@ const RenderHTMLContent = ({ htmlContent }) => {
           paddingRight: "1.25rem",
           paddingBottom: "0.25rem",
         }}
-        dangerouslySetInnerHTML={{ __html: htmlContent }}
+        dangerouslySetInnerHTML={{ __html: breakHTMLCONTENT }}
       />
 
       {shouldRender && (
