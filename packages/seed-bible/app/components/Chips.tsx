@@ -1,6 +1,11 @@
 const { useState, useRef, useEffect } = os.appHooks;
 
-function SharePopup({ shareTitle, shareReference, translation ="BSB",popupTitle = "Share" }) {
+function SharePopup({
+  shareTitle,
+  shareReference,
+  translation = "BSB",
+  popupTitle = "Share",
+}) {
   const [copied, setCopied] = useState(false);
   const [includeReference, setIncludeReference] = useState(true);
 
@@ -14,39 +19,30 @@ function SharePopup({ shareTitle, shareReference, translation ="BSB",popupTitle 
     : shareTitle || "";
 
   const platforms = [
-    {
-      name: "Discord",
-      icon: "https://cdn.prod.website-files.com/6257adef93867e50d84d30e2/636e0a6a49cf127bf92de1e2_icon_clyde_blurple_RGB.png",
-      share: () => {
-        os.setClipboard(shareText);
-        window.open("https://discord.com/channels/@me", "_blank");
-      },
-    },
+    // {
+    //   name: "Discord",
+    //   icon: "https://cdn.prod.website-files.com/6257adef93867e50d84d30e2/636e0a6a49cf127bf92de1e2_icon_clyde_blurple_RGB.png",
+    //   share: () => {
+    //     os.setClipboard(shareText);
+    //     window.open("https://discord.com/channels/@me", "_blank");
+    //   },
+    // },
     {
       name: "Telegram",
       icon: "https://upload.wikimedia.org/wikipedia/commons/thumb/8/82/Telegram_logo.svg/512px-Telegram_logo.svg.png",
-      share: () =>
-        window.open(
-          `https://t.me/share/url?text=${encodeURIComponent(shareText)}`,
-          "_blank"
-        ),
+      share: () => window.open(`tg://msg?text=${shareText}`, "_blank"),
     },
     {
       name: "Whatsapp",
       icon: "https://upload.wikimedia.org/wikipedia/commons/thumb/6/6b/WhatsApp.svg/512px-WhatsApp.svg.png",
-      share: () =>
-        window.open(
-          `https://wa.me/?text=${encodeURIComponent(shareText)}`,
-          "_blank"
-        ),
+      share: () => os.openURL(`https://wa.me/?text=${shareText}`),
     },
     {
       name: "Facebook",
       icon: "https://upload.wikimedia.org/wikipedia/commons/thumb/0/05/Facebook_Logo_%282019%29.png/600px-Facebook_Logo_%282019%29.png",
       share: () =>
-        window.open(
-          `https://www.facebook.com/sharer/sharer.php?quote=${encodeURIComponent(shareText)}`,
-          "_blank"
+        os.openURL(
+          `https://www.facebook.com/sharer.php?u=https://ao.bot/?inst=${os.getCurrentInst()}&book=${configBot.tags.book}&chapter=${configBot.tags.chapter}`
         ),
     },
     {
@@ -63,42 +59,46 @@ function SharePopup({ shareTitle, shareReference, translation ="BSB",popupTitle 
       icon: "https://upload.wikimedia.org/wikipedia/commons/thumb/c/ca/LinkedIn_logo_initials.png/600px-LinkedIn_logo_initials.png",
       share: () =>
         window.open(
-          `https://www.linkedin.com/sharing/share-offsite/?summary=${encodeURIComponent(shareText)}`,
+          `https://www.linkedin.com/shareArticle?text=${shareText}`,
           "_blank"
         ),
     },
-    {
-      name: "Reddit",
-      icon: "https://pngdownload.io/wp-content/uploads/2023/12/Reddit-Logo-emblem-of-the-online-platform-transparent-png-image-jpg.webp",
-      share: () =>
-        window.open(
-          `https://reddit.com/submit?title=${encodeURIComponent(shareText)}`,
-          "_blank"
-        ),
-    },
-    {
-      name: "Instagram",
-      icon: "https://upload.wikimedia.org/wikipedia/commons/thumb/e/e7/Instagram_logo_2016.svg/512px-Instagram_logo_2016.svg.png",
-      share: () => {
-        os.setClipboard(shareText);
-        window.open("https://instagram.com", "_blank");
-      },
-    },
-    {
-      name: "Text",
-      svg: (
-        <svg
-          viewBox="0 0 24 24"
-          fill="currentColor"
-          style={{ width: 28, height: 28, color: "#4A90D9" }}
-        >
-          <path d="M20 2H4c-1.1 0-2 .9-2 2v18l4-4h14c1.1 0 2-.9 2-2V4c0-1.1-.9-2-2-2zm0 14H6l-2 2V4h16v12z" />
-        </svg>
-      ),
-      share: () => {
-        window.location.href = `sms:?body=${encodeURIComponent(shareText)}`;
-      },
-    },
+    // {
+    //   name: "Reddit",
+    //   icon: "https://pngdownload.io/wp-content/uploads/2023/12/Reddit-Logo-emblem-of-the-online-platform-transparent-png-image-jpg.webp",
+    //   share: () =>
+    //     window.open(
+    //       `https://reddit.com/submit?title=${encodeURIComponent(shareText)}`,
+    //       "_blank"
+    //     ),
+    // },
+    // {
+    //   name: "Instagram",
+    //   icon: "https://upload.wikimedia.org/wikipedia/commons/thumb/e/e7/Instagram_logo_2016.svg/512px-Instagram_logo_2016.svg.png",
+    //   share: () => {
+    //     os.setClipboard(shareText);
+    //     window.open("https://instagram.com", "_blank");
+    //   },
+    // },
+    ...(globalThis.IsMobileNow()
+      ? [
+          {
+            name: "Text",
+            svg: (
+              <svg
+                viewBox="0 0 24 24"
+                fill="currentColor"
+                style={{ width: 28, height: 28, color: "#4A90D9" }}
+              >
+                <path d="M20 2H4c-1.1 0-2 .9-2 2v18l4-4h14c1.1 0 2-.9 2-2V4c0-1.1-.9-2-2-2zm0 14H6l-2 2V4h16v12z" />
+              </svg>
+            ),
+            share: () => {
+              window.location.href = `sms:?body=${encodeURIComponent(shareText)}`;
+            },
+          },
+        ]
+      : []),
     {
       name: "Copy",
       svg: (
@@ -198,7 +198,7 @@ function SharePopup({ shareTitle, shareReference, translation ="BSB",popupTitle 
 
           {/* Toggle Options */}
           <div style={{ display: "flex", gap: 16, marginBottom: 20 }}>
-          <label
+            <label
               style={{
                 display: "flex",
                 alignItems: "center",
@@ -248,7 +248,6 @@ function SharePopup({ shareTitle, shareReference, translation ="BSB",popupTitle 
                 Only verse text
               </span>
             </label>
-            
           </div>
 
           {/* Platform Grid */}
