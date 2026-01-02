@@ -210,7 +210,7 @@ describe("navigate", () => {
     await page.waitForSelector(".language-list");
     await page.locator(".language-list > div:nth-child(1)").click();
     await delay(100);
-    await page.locator(".language-list > div:nth-child(5)").click();
+    await page.locator(".language-list > div:nth-child(4)").click();
     await delay(100);
     await page.locator(".translation-option:nth-child(1)").click();
 

@@ -19,6 +19,14 @@
   left: 15px;
 }
 
+.translationSettingsModal {
+  left: 395px;
+  top: 65px;
+  width: 260px;
+  z-index: 1000;
+  padding: 10px;
+}
+
 .emptyCircle {
   display: inline-block;
   border: 1px solid black;
@@ -99,6 +107,12 @@
     height: calc(100% - 65px);
     border-radius: 0;
     box-shadow: none;
+  }
+
+  .translationSettingsModal {
+    top: 100px;
+    padding: 0px 10px;
+    height: calc(100% - 100px);
   }
 
   .language-list {

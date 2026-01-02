@@ -9,7 +9,6 @@ const ModalCSS = thisBot.tags["TranslationModal.css"];
 const TranslationModal = (props: {
   languageQuery: string;
   setLanguageQuery: (value: string) => void;
-  filteredApiTranslations: Array<[string, any]>;
   selectedTranslation: TranslationInterface;
   setSelectedTranslation: (translation: TranslationInterface) => void;
   setSelectingTranslation: (value: boolean) => void;
@@ -20,19 +19,150 @@ const TranslationModal = (props: {
   }) => void;
   showCustomTranslation: boolean;
   setShowCustomTranslation: (value: boolean) => void;
+  showIncompleteTranslations: boolean;
+  setShowIncompleteTranslations: (value: boolean) => void;
+  showAllLanguages: boolean;
+  setShowAllLanguages: (value: boolean) => void;
+  allowedTranslationLimit: number;
+  setAllowedTranslationLimit: (value: number) => void;
+  apiTranslations: Record<string, TranslationInterface>;
+  defaultTranslations: Array<string>;
 }) => {
   const {
     languageQuery,
     setLanguageQuery,
-    filteredApiTranslations,
     selectedTranslation,
     setSelectedTranslation,
     setSelectingTranslation,
     handleTranslationAddition,
     showCustomTranslation,
     setShowCustomTranslation,
+    showIncompleteTranslations,
+    setShowIncompleteTranslations,
+    showAllLanguages,
+    setShowAllLanguages,
+    allowedTranslationLimit,
+    setAllowedTranslationLimit,
+    apiTranslations,
+    defaultTranslations,
   } = props;
   const systemTranslation: { [key: string]: string } = getTranslations();
+  const [showTranslationSettings, setShowTranslationSettings] = useState(false);
+  const filteredApiTranslations = useMemo(() => {
+    if (languageQuery !== "") {
+      const translations: {
+        [key: string]: Record<string, TranslationInterface>;
+      } = {};
+      const tempApiTranslations: {
+        [key: string]: Record<string, TranslationInterface>;
+      } = { ...JSON.parse(JSON.stringify(apiTranslations)) };
+      const lowercaseQuery = languageQuery.toLowerCase();
+      Object.entries(tempApiTranslations).forEach(([key, value]) => {
+        if (key.includes(lowercaseQuery)) {
+          translations[key] = translations[key]
+            ? {
+                ...translations[key],
+                ...(value as Record<string, TranslationInterface>),
+              }
+            : { ...(value as Record<string, TranslationInterface>) };
+        } else {
+          const group = tempApiTranslations[key] || {};
+          if (
+            Object.keys(group).filter((translationKey) =>
+              translationKey.includes(lowercaseQuery)
+            ).length > 0
+          ) {
+            const values: Record<string, TranslationInterface> = {};
+            Object.entries(group).forEach(([subKey, subValue]) => {
+              if (subKey.includes(lowercaseQuery) && subValue) {
+                values[subKey] = subValue as TranslationInterface;
+              }
+            });
+            if (Object.keys(values).length > 0) {
+              translations[key] = translations[key]
+                ? { ...translations[key], ...values }
+                : { ...values };
+            }
+          }
+        }
+      });
+
+      if (!showIncompleteTranslations) {
+        Object.entries(translations).forEach(([key, value]) => {
+          for (const subKey in value) {
+            const translation = value[subKey] as TranslationInterface;
+            if (
+              translation.numberOfBooks < 66 &&
+              translation.id !== selectedTranslation.id
+            ) {
+              delete value[subKey];
+            }
+          }
+          if (Object.keys(value).length === 0) {
+            delete translations[key];
+          }
+        });
+      }
+      return Object.entries(translations)
+        .slice(0, allowedTranslationLimit)
+        .sort(([a, avalue], [b, bvalue]) => {
+          if (a === selectedTranslation.languageEnglishName.toLowerCase())
+            return -1;
+          if (b === selectedTranslation.languageEnglishName.toLowerCase())
+            return 1;
+          return a.localeCompare(b);
+        });
+    } else {
+      const translations: {
+        [key: string]: Record<string, TranslationInterface>;
+      } = {
+        ...JSON.parse(JSON.stringify(apiTranslations)),
+      };
+
+      if (!showAllLanguages) {
+        Object.entries(translations).forEach(([englishName, value]) => {
+          if (!defaultTranslations.includes(englishName)) {
+            delete translations[englishName];
+          }
+        });
+      }
+
+      if (!showIncompleteTranslations) {
+        Object.entries(translations).forEach(([key, value]) => {
+          for (const subKey in value) {
+            const translation = value[subKey] as TranslationInterface;
+            if (
+              translation.numberOfBooks < 66 &&
+              translation.id !== selectedTranslation.id
+            ) {
+              delete value[subKey];
+            }
+          }
+          if (Object.keys(value).length === 0) {
+            delete translations[key];
+          }
+        });
+      }
+
+      return Object.entries(translations)
+        .sort(([a, avalue], [b, bvalue]) => {
+          if (a === selectedTranslation.languageEnglishName.toLowerCase())
+            return -1;
+          if (b === selectedTranslation.languageEnglishName.toLowerCase())
+            return 1;
+          return a.localeCompare(b);
+        })
+        .slice(0, allowedTranslationLimit);
+    }
+  }, [
+    apiTranslations,
+    languageQuery,
+    allowedTranslationLimit,
+    selectedTranslation,
+    showIncompleteTranslations,
+    showAllLanguages,
+    defaultTranslations,
+  ]);
   const LanguageList = useMemo(() => {
     return (
       <div className="language-list">
@@ -48,6 +178,24 @@ const TranslationModal = (props: {
             />
           );
         })}
+        {showAllLanguages &&
+          allowedTranslationLimit < Object.entries(apiTranslations).length &&
+          Object.entries(filteredApiTranslations).length >= 50 && (
+            <div
+              className="item"
+              onClick={() => {
+                setAllowedTranslationLimit(allowedTranslationLimit + 50);
+              }}
+              style={{ justifyContent: "center" }}
+            >
+              <span
+                style={{ transition: "transform 0.3s" }}
+                class={`material-symbols-outlined ${false ? "upside-down" : ""}`}
+              >
+                expand_more
+              </span>
+            </div>
+          )}
       </div>
     );
   }, [filteredApiTranslations, selectedTranslation]);
@@ -58,24 +206,45 @@ const TranslationModal = (props: {
         className="modal-overlay"
         onClick={() => {
           setSelectingTranslation(false);
+          setShowTranslationSettings(false);
         }}
       >
-        <div className="modal" onClick={(e) => e.stopPropagation()}>
+        <div
+          className="modal"
+          onClick={(e) => {
+            e.stopPropagation();
+            setShowTranslationSettings(false);
+          }}
+        >
           <div
-            className="searchbar"
-            style={{ marginBottom: "5px", width: "100%", height: "30px" }}
+            class="sidebar-book-selector"
+            style={{ marginBottom: "5px", height: "30px" }}
           >
-            <span className="search-icon material-symbols-outlined">
-              Search
+            <div
+              className="searchbar"
+              style={{ width: "100%", height: "30px" }}
+            >
+              <span className="search-icon material-symbols-outlined">
+                Search
+              </span>
+              <input
+                type="text"
+                placeholder={
+                  systemTranslation["searchTranslation"] || "Search Translation"
+                }
+                value={languageQuery}
+                onChange={(e) => setLanguageQuery(e.target.value)}
+              />
+            </div>
+            <span
+              onClick={(e) => {
+                e.stopPropagation();
+                setShowTranslationSettings(!showTranslationSettings);
+              }}
+              class="material-symbols-outlined"
+            >
+              settings
             </span>
-            <input
-              type="text"
-              placeholder={
-                systemTranslation["searchTranslation"] || "Search Translation"
-              }
-              value={languageQuery}
-              onChange={(e) => setLanguageQuery(e.target.value)}
-            />
           </div>
           {LanguageList}
           <div className="footer">
@@ -110,17 +279,25 @@ const TranslationModal = (props: {
           </div>
         </div>
       </div>
+      {showTranslationSettings && (
+        <TranslationSettings
+          showIncompleteTranslations={showIncompleteTranslations}
+          setShowIncompleteTranslations={setShowIncompleteTranslations}
+          showAllLanguages={showAllLanguages}
+          setShowAllLanguages={setShowAllLanguages}
+        />
+      )}
     </>
   );
 };
 
 const LanguageComponent = (props: {
   language: string;
-  translationArray: any;
+  translationArray: Array<TranslationInterface>;
   selectedTranslation: TranslationInterface;
   setSelectedTranslation: (translation: TranslationInterface) => void;
   setSelectingTranslation: (value: boolean) => void;
-  filteredApiTranslations: Array<[string, any]>;
+  filteredApiTranslations: Array<[string, TranslationInterface[]]>;
 }) => {
   const {
     language,
@@ -148,6 +325,17 @@ const LanguageComponent = (props: {
     os.toast("Copied translation share code");
   };
 
+  const sortedTranslations = useMemo(() => {
+    if (!show) {
+      return [];
+    }
+    return Object.values(translationArray).sort((a, b) => {
+      if (a.id === selectedTranslation.id) return -1;
+      if (b.id === selectedTranslation.id) return 1;
+      return a.name.localeCompare(b.name);
+    });
+  }, [translationArray, selectedTranslation, show]);
+
   useEffect(() => {
     if (
       selectedTranslation.languageEnglishName.toLowerCase() ===
@@ -170,7 +358,9 @@ const LanguageComponent = (props: {
         className="item"
         onClick={() => setShow(!show)}
         style={{
-          backgroundColor: show ? "var(--surface)" : "var(--background)",
+          backgroundColor: show
+            ? "color-mix(in srgb, var(--tabSelection) 50%, transparent)"
+            : "var(--background)",
           marginBottom: show ? "0px" : "10px",
         }}
       >
@@ -185,7 +375,7 @@ const LanguageComponent = (props: {
       {show && (
         <>
           <div style={{ margin: "5px 5px" }}>
-            {Object.entries(translationArray).map(([_key, value]) => {
+            {sortedTranslations.map((value) => {
               return (
                 <div
                   onClick={async () => {
@@ -228,7 +418,7 @@ const LanguageComponent = (props: {
                   style={{
                     background:
                       selectedTranslation.id === value.id
-                        ? "var(--surface)"
+                        ? "color-mix(in srgb, var(--tabSelection) 50%, transparent)"
                         : "var(--background)",
                   }}
                   class="translation-option"
@@ -321,6 +511,56 @@ const CustomTranslation = (props: {
             Import
           </button>
         </div>
+      </div>
+    </div>
+  );
+};
+
+const TranslationSettings = (props: {
+  showIncompleteTranslations: boolean;
+  setShowIncompleteTranslations: (value: boolean) => void;
+  showAllLanguages: boolean;
+  setShowAllLanguages: (value: boolean) => void;
+}) => {
+  const {
+    showIncompleteTranslations,
+    setShowIncompleteTranslations,
+    showAllLanguages,
+    setShowAllLanguages,
+  } = props;
+  return (
+    <div className="modal translationSettingsModal">
+      <div
+        class="translation-option"
+        onClick={() => {
+          setShowAllLanguages((prev) => !prev);
+        }}
+      >
+        <span class="translation-title">
+          <span class="translation-description">Show All Translations</span>
+          {showAllLanguages ? (
+            <TickIcon height={15} width={15} />
+          ) : (
+            <span class="emptyCircle"></span>
+          )}
+        </span>
+      </div>
+      <div
+        class="translation-option"
+        onClick={() => {
+          setShowIncompleteTranslations((prev) => !prev);
+        }}
+      >
+        <span class="translation-title">
+          <span class="translation-description">
+            Show Incomplete Translations
+          </span>
+          {showIncompleteTranslations ? (
+            <TickIcon height={15} width={15} />
+          ) : (
+            <span class="emptyCircle"></span>
+          )}
+        </span>
       </div>
     </div>
   );
