@@ -92,7 +92,7 @@ const resources = {
       warmAmber: "Warm Amber",
 
       // Theme - Colors
-      menuBackground: "Menu background",
+      panelBackground: "Menu background",
       panelBackground: "Panel background",
       pageBackground: "Page Background",
       pageTextColor: "Page text color",
@@ -868,7 +868,7 @@ const resources = {
       warmAmber: "Ámbar cálido",
 
       // Theme - Colors
-      menuBackground: "Fondo del menú",
+      panelBackground: "Fondo del menú",
       pageBackground: "Fondo de página",
       pageTextColor: "Color de texto",
       iconsColor: "Color de iconos",
@@ -1572,7 +1572,7 @@ const resources = {
       warmAmber: "عنبر دافئ",
 
       // Theme - Colors
-      menuBackground: "خلفية القائمة",
+      panelBackground: "خلفية القائمة",
       pageBackground: "خلفية الصفحة",
       pageTextColor: "لون نص الصفحة",
       iconsColor: "لون الأيقونات",
@@ -2255,7 +2255,7 @@ const resources = {
       warmAmber: "गर्म एम्बर",
 
       // Theme - Colors
-      menuBackground: "मेनू पृष्ठभूमि",
+      panelBackground: "मेनू पृष्ठभूमि",
       pageBackground: "पृष्ठ पृष्ठभूमि",
       pageTextColor: "पृष्ठ टेक्स्ट रंग",
       iconsColor: "आइकन रंग",

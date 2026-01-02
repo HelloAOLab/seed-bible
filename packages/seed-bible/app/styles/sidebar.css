@@ -4,7 +4,7 @@
   /* height: 100dvh; */
   position: relative;
   /* transition: width 0.3s ease; */
-  background-color: var(--themeSideMenu);
+  /* background-color: transparent; */
   font-family: "Satoshi", sans-serif;
 }
 
@@ -86,7 +86,7 @@
   width: 60px;
   height: 100vh;
   position: relative;
-  background: var(--themeSideMenu);
+  background: transparent;
   margin-left: 9px;
   /* transition: width 0.3s ease; */
 }
@@ -201,7 +201,7 @@
 }
 
 .tab {
-  color: var(--simpleTabText, var(--text1));
+  color: var(--inactiveTabText);
   display: flex;
   flex-direction: row;
   justify-content: space-between;
@@ -209,33 +209,28 @@
   cursor: pointer;
   user-select: none;
   padding: 10px;
-  font-family: var(--sideMenu-menuText-font, "Satoshi", sans-serif);
-  font-size: var(--sideMenu-menuText-size, 14px);
+  font-family: var(--inactiveTabFont);
+  font-size: var(--inactiveTabSize, 14px);
   /* -webkit-user-drag: element; */
 }
 
 .activeTab {
-  background: var(--activeTabBackground, white);
-  color: var(--activeTabText, var(--text1)) !important;
+  color: var(--activeTabText) !important;
   display: flex;
   flex-direction: row;
   justify-content: space-between;
   align-items: center;
   cursor: pointer;
   user-select: none;
-
   padding-bottom: 3px;
   padding: 10px;
-  background-color: color-mix(in srgb, var(--tabSelection) 50%, transparent);
   border-width: 1.5px;
-  border-color: var(--tabSelection);
+  background: var(--activeTabFill) !important;
+  border-color: var(--activeTabBorder) !important;
   border-style: solid;
   border-radius: 5px;
-  font-family: var(--sideMenu-menuText-font, "Satoshi", sans-serif);
-  font-size: var(--sideMenu-menuText-size, 14px);
-  /* border-color: var(--tabSelection) !important;
-    border: 1px solid !important;
-    border-radius: 3px !important; */
+  font-family: var(--activeTabFont);
+  font-size: var(--activeTabSize, 14px);
 }
 
 .activeTabCollapsed {
@@ -304,7 +299,7 @@
   gap: 10px;
   justify-content: space-around;
   width: 280px !important;
-  background: var(--menuBackground) !important;
+  background: var(--panelBackground, --panelBackground) !important;
   align-items: center;
   height: 70px;
 }
@@ -318,7 +313,7 @@
   gap: 15px;
   width: 100%;
   align-items: center;
-  background: var(--themeSideMenu);
+  background: transparent;
 }
 
 .dot {
@@ -347,21 +342,18 @@
   /* background-color: var(--spaceSelection) !important; */
   background-color: color-mix(
     in srgb,
-    var(--activeSpaceIndicator, var(--spaceSelection)) 50%,
+    var(--selectedSpaceColor) 50%,
     transparent
   ) !important;
-  border: var(--activeSpaceIndicator, var(--spaceSelection)) 1px solid !important;
-  border-color: var(--activeSpaceIndicator, var(--spaceSelection));
+  border: var(--selectedSpaceColor) 1px solid !important;
+  border-color: var(--selectedSpaceColor);
   /* color: var(--secondaryButtonColor) !important; */
 }
 
 .activeBg span {
   width: 8px;
   height: 8px;
-  background-color: var(
-    --activeSpaceIndicator,
-    var(--spaceSelection)
-  ) !important;
+  background-color: var(--selectedSpaceColor) !important;
   border-radius: 2px;
   display: block;
 }
@@ -370,7 +362,7 @@
   cursor: pointer;
   width: 8px;
   height: 8px;
-  background-color: var(--inactiveSpaceIndicator, var(--gray2-color));
+  background-color: var(--unselectedSpaceColor) !important;
   border-radius: 2px;
   display: block;
 }

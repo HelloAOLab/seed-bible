@@ -1537,7 +1537,7 @@ function ThePage({
                       }
                     : {
                         position: "fixed",
-                        left: toolbarPos.x  -50,
+                        left: toolbarPos.x - 50,
                         top: toolbarPos.y,
                         zIndex: 10000,
                         cursor: dragToolbar ? "grabbing" : "grab",
@@ -2227,7 +2227,7 @@ function Section({
                         highlighted?.[verse.verseNumber].chapter === chapter) ||
                       commandHighlight.includes(verse.verseNumber)
                         ? wordHighlightsTC
-                        : "var(--pageTextColor) !important",
+                        : "",
                     transition: "background-color 0.2s ease, border 0.2s ease",
                     "border-radius":
                       highlighted?.[verse.verseNumber] || isClicked

@@ -9,7 +9,7 @@ import { useBibleContext } from "app.hooks.bibleVariables";
 // Fields shown in the screenshot, rendered dynamically below
 // ————————————————————————————————————————————————————————————
 const COLOR_FIELDS = [
-  { labelKey: "menuBackground", field: "menuBackground" },
+  { labelKey: "panelBackground", field: "panelBackground" },
   { labelKey: "pageBackground", field: "pageBackground" },
   { labelKey: "pageTextColor", field: "pageTextColor" },
   { labelKey: "iconsColor", field: "iconColor" },
@@ -32,7 +32,7 @@ const ADVANCED_SETTINGS_SECTIONS = {
   containerBackgrounds: {
     labelKey: "containerBackgrounds",
     fields: [
-      { labelKey: "menuBackground", field: "menuBackground" },
+      { labelKey: "panelBackground", field: "panelBackground" },
       { labelKey: "panelBackground", field: "panelBackground" },
     ],
   },
@@ -67,7 +67,7 @@ const ADVANCED_SETTINGS_SECTIONS = {
   sideMenu: {
     labelKey: "sideMenu",
     fields: [
-      { labelKey: "menuBackground", field: "menuBackground" },
+      { labelKey: "panelBackground", field: "panelBackground" },
       { labelKey: "spaceNameText", field: "spaceNameText" },
       { labelKey: "addButtonBackground", field: "addButtonBackground" },
       { labelKey: "addButtonIcon", field: "addButtonIcon" },
@@ -115,15 +115,15 @@ const defaultTheme = {
   secondaryColor: "#8B5CF6",
   tertiaryColor: "#06B6D4",
   // Container backgrounds
-  menuBackground: "#F8FAFC",
+  // panelBackground: "#F8FAFC",
   themeSideMenu: "#F8FAFC",
-  panelBackground: "#FFFFFF",
+  panelBackground: "#f3f1f1",
   // Tab
   tabSelection: "#3B82F6",
   activeTabBackground: "#FFFFFF",
   activeTabText: "#0F172A",
   activeTabBorder: "#3B82F6",
-  activeTabFill: "#3B82F6",
+  activeTabFill: "#2b74e994",
   simpleTabText: "#64748B",
   inactiveTabText: "#64748B",
   // Buttons
@@ -157,8 +157,8 @@ const defaultTheme = {
   selectedSpaceColor: "#3B82F6",
   unselectedSpaceColor: "#E2E8F0",
   spaceNameText: "#0F172A",
-  addButtonBackground: "#3B82F6",
-  addButtonIcon: "#FFFFFF",
+  addButtonBackground: "transparent",
+  addButtonIcon: "gray",
   selectPanelIcon: "#0F172A",
   openCloseMenuIcon: "#0F172A",
   moreIcon: "#64748B",
@@ -232,23 +232,92 @@ const READY_THEMES = [
   {
     name: "Dark Mode",
     colors: {
-      menuBackground: "#2D2D2D",
+      // Main colors
+      primaryColor: "#5A67D8",
+      secondaryColor: "#A78BFA",
+      tertiaryColor: "#34D399",
+      // Container backgrounds
+      themeSideMenu: "#2D2D2D",
+      panelBackground: "#1A1A1A",
+      // Tab
+      tabSelection: "#5A67D8",
+      activeTabBackground: "#404040",
+      activeTabText: "#FFFFFF",
+      activeTabBorder: "#5A67D8",
+      activeTabFill: "#5A67D894",
+      simpleTabText: "#AAAAAA",
+      inactiveTabText: "#AAAAAA",
+      // Buttons
       primaryButton: "#404040",
       primaryButtonColor: "#FFFFFF",
+      primaryButtonBorder: "#5A67D8",
+      primaryButtonFill: "#5A67D8",
       secondaryButton: "#5A67D8",
       secondaryButtonColor: "#FFFFFF",
+      secondaryButtonBorder: "#5A67D8",
+      secondaryButtonFill: "#5A67D8",
+      tertiaryButtonColor: "#FFFFFF",
       buttonBorder: "#5A67D8",
-      tabSelection: "#5A67D8",
-      spaceSelection: "#5A67D8",
+      // Scripture text
+      bookHeadingColor: "#FFFFFF",
+      chapterHeadingColor: "#FFFFFF",
+      verseNumberColor: "#5A67D8",
+      verseTextColor: "#FFFFFF",
+      pageBackground: "#121212",
+      pageTextColor: "#FFFFFF",
+      // Side menu
+      heading1Color: "#FFFFFF",
+      heading2Color: "#FFFFFF",
+      heading3Color: "#FFFFFF",
+      descriptionTextColor: "#AAAAAA",
+      menuTextColor: "#FFFFFF",
+      breadcrumbsColor: "#AAAAAA",
+      sectionBackground: "#5A67D8",
+      spaceNameColor: "#FFFFFF",
+      sideMenuIconsColor: "#FFFFFF",
+      selectedSpaceColor: "#5A67D8",
+      unselectedSpaceColor: "#666666",
+      spaceNameText: "#FFFFFF",
+      addButtonBackground: "#404040",
+      addButtonIcon: "#5A67D8",
+      selectPanelIcon: "#FFFFFF",
+      openCloseMenuIcon: "#FFFFFF",
+      moreIcon: "#AAAAAA",
+      settingsIcon: "#AAAAAA",
+      inactiveSpaceIndicator: "#666666",
+      activeSpaceIndicator: "#5A67D8",
+      profileAvatar: "#5A67D8",
+      // Selection UI & toolbar
+      toolbarBorder: "#FFFFFF24",
+      toolbarFill: "#2D2D2D",
+      toolbarIconsColor: "#FFFFFF",
+      selectionUIBorder: "#FFFFFF24",
+      selectionUIFill: "#2D2D2D",
+      selectionIconsColor: "#FFFFFF",
       toolbarBackground: "#1A1A1A",
-      text1: "#FFFFFF",
-      text2: "#FFFFFF",
       iconColor: "#FFFFFF",
       "filter-mode": "invert(100%)",
-      pageBackground: "#121212",
-      pageTextColor: "white",
+      // Input fields
+      inputTitleColor: "#FFFFFF",
+      inputPlaceholderColor: "#AAAAAA",
+      inputActiveBorder: "#5A67D8",
+      inputActiveFill: "#2D2D2D",
+      inputInactiveBorder: "#666666",
+      inputInactiveFill: "#2D2D2D",
+      inputBackground: "#2D2D2D",
+      inputBorder: "#666666",
+      inputText: "#FFFFFF",
+      inputPlaceholder: "#AAAAAA",
+      // Branding
+      logoColor: "#FFFFFF",
+      accentColor: "#5A67D8",
+      // Space selection
+      spaceSelection: "#5A67D8",
+      // Text colors
+      text1: "#FFFFFF",
+      text2: "#AAAAAA",
       showTabIcons: true,
-
+      // Semantic colors
       primaryLight: "#93C5FD",
       onPrimaryLight: "#3B82F6",
       primaryBase: "#60A5FA",
@@ -277,7 +346,7 @@ const READY_THEMES = [
   {
     name: "Purple Serenity",
     colors: {
-      menuBackground: "#9C27B0",
+      panelBackground: "#9C27B0",
       toolbarBackground: "#E1BEE7",
       text1: "#4A148C",
       text2: "#7B1FA2",
@@ -287,7 +356,7 @@ const READY_THEMES = [
   // {
   //   name: 'Gray Classic',
   //   colors: {
-  //     menuBackground: '#535353',
+  //     panelBackground: '#535353',
   //     toolbarBackground: '#E0E0E0',
   //     text1: '#212121',
   //     text2: '#424242'
@@ -296,7 +365,7 @@ const READY_THEMES = [
   {
     name: "Green Nature",
     colors: {
-      menuBackground: "#80B027",
+      panelBackground: "#80B027",
       toolbarBackground: "#DCEDC8",
       text1: "#33691E",
       text2: "#689F38",
@@ -305,7 +374,7 @@ const READY_THEMES = [
   {
     name: "Ocean Blue",
     colors: {
-      menuBackground: "#1976D2",
+      panelBackground: "#1976D2",
       toolbarBackground: "#BBDEFB",
       text1: "#0D47A1",
       text2: "#1565C0",
@@ -314,7 +383,7 @@ const READY_THEMES = [
   {
     name: "Warm Amber",
     colors: {
-      menuBackground: "#F57C00",
+      panelBackground: "#F57C00",
       toolbarBackground: "#FFE0B2",
       text1: "#E65100",
       text2: "#EF6C00",
@@ -2631,6 +2700,50 @@ const SideMenuSectionContent = ({
             color: "#333333",
           }}
         >
+          {t("addButtonBackground")}
+        </span>
+        <SmallColorPicker
+          value={colors.addButtonBackground || "#3B82F6"}
+          onChange={(e) => onColorChange("addButtonBackground", e.target.value)}
+        />
+      </div>
+
+      <div
+        style={{
+          display: "flex",
+          justifyContent: "space-between",
+          alignItems: "center",
+        }}
+      >
+        <span
+          style={{
+            fontFamily: "Open Sans, sans-serif",
+            fontSize: 13,
+            color: "#333333",
+          }}
+        >
+          {t("addButtonIcon")}
+        </span>
+        <SmallColorPicker
+          value={colors.addButtonIcon || "#FFFFFF"}
+          onChange={(e) => onColorChange("addButtonIcon", e.target.value)}
+        />
+      </div>
+
+      <div
+        style={{
+          display: "flex",
+          justifyContent: "space-between",
+          alignItems: "center",
+        }}
+      >
+        <span
+          style={{
+            fontFamily: "Open Sans, sans-serif",
+            fontSize: 13,
+            color: "#333333",
+          }}
+        >
           {t("profileAvatar")}
         </span>
         <div style={{ display: "flex", alignItems: "center", gap: 4 }}>
@@ -3806,7 +3919,7 @@ const ThemeSettings = () => {
       const updatedColors = {
         ...colors,
         [field]: newColor,
-        ["filter-mode"]: filter,
+        // ["filter-mode"]: filter,
       };
 
       setColorsMap((prev) => ({ ...prev, [activeSpace]: updatedColors }));
@@ -3845,12 +3958,12 @@ const ThemeSettings = () => {
       <div className="routerOptions">
         <div
           onClick={() => {
-            if (!changesSaved) {
-              setThemeColors((prev) => ({
-                ...prev,
-                [activeSpace]: globalThis.CurrentColors,
-              }));
-            }
+            // if (!changesSaved) {
+            //   setThemeColors((prev) => ({
+            //     ...prev,
+            //     [activeSpace]: globalThis.CurrentColors,
+            //   }));
+            // }
             setSideBarMode("themeSettings");
           }}
           style={{ cursor: "pointer" }}
@@ -4969,11 +5082,11 @@ const SettingsUI = () => {
               style={cardStyle(selectedTheme === index)}
               onClick={() => handleThemeSelect(index)}
             >
-              <div style={cardSidebarStyle(theme.colors.menuBackground)}>
-                <div style={cardBadgeStyle(theme.colors.menuBackground)}></div>
+              <div style={cardSidebarStyle(theme.colors.panelBackground)}>
+                <div style={cardBadgeStyle(theme.colors.panelBackground)}></div>
                 <div style={cardLabelStyle}></div>
               </div>
-              <div style={cardIconStyle(theme.colors.menuBackground)}></div>
+              <div style={cardIconStyle(theme.colors.panelBackground)}></div>
               <div style={{ marginTop: "14px" }}>
                 <div style={{ ...cardLineStyle, width: "53px" }}></div>
                 <div
@@ -4993,7 +5106,7 @@ const SettingsUI = () => {
                   right: "13px",
                   width: "22px",
                   height: "5px",
-                  backgroundColor: theme.colors.menuBackground,
+                  backgroundColor: theme.colors.panelBackground,
                   opacity: 0.1,
                   borderRadius: "1px",
                 }}

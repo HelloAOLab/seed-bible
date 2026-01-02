@@ -223,15 +223,7 @@ const EditorToolbarSettings = () => {
         <div>{t("customizeToolbar")}</div>
       </div>
 
-      <div
-        style={{
-          fontSize: "14px",
-          color: "var(--text1) !important",
-          marginBottom: "30px",
-        }}
-      >
-        {t("editorToolbarOrder")}
-      </div>
+      <div className="mediumText">{t("editorToolbarOrder")}</div>
 
       <div
         style={{
@@ -292,16 +284,7 @@ const EditorToolbarSettings = () => {
           borderRadius: "8px",
         }}
       >
-        <div
-          style={{
-            fontSize: "16px",
-            fontWeight: "600",
-            marginBottom: "15px",
-            color: "var(--text1) !important",
-          }}
-        >
-          {t("editorToolbarOrder")}
-        </div>
+        <div className="mediumText">{t("editorToolbarOrder")}</div>
 
         <div
           style={{

@@ -27,6 +27,7 @@
   bottom: 18px;
   z-index: 99;
   border: 1px solid var(--toolbarBorder, #00000024);
+  height: 50px;
 }
 
 @media (min-width: 768px) {
