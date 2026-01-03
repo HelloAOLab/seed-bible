@@ -15,7 +15,8 @@ function buildEventTooltipContent({
   isSameDate,
 }) {
   const { title, start, id, extendedProps } = event;
-  const { type, isResource, description, link } = extendedProps || {};
+  const { type, isResource, description, link, isReapeating } =
+    extendedProps || {};
 
   /* ================= WRAPPER ================= */
   const wrapper = document.createElement("div");
@@ -233,16 +234,26 @@ function buildEventTooltipContent({
   wrapper.appendChild(titleEl);
 
   const dateEl = document.createElement("div");
-  dateEl.textContent =
-    start.toLocaleDateString("en-GB", {
-      day: "2-digit",
-      month: "short",
-      year: "numeric",
-    }) +
-    " (" +
-    start.toLocaleTimeString("en-US", { hour: "2-digit", minute: "2-digit" }) +
-    ")";
-  dateEl.style.cssText = "font-size:10px;margin-bottom:6px";
+  if (!isReapeating) {
+    dateEl.textContent =
+      start.toLocaleDateString("en-GB", {
+        day: "2-digit",
+        month: "short",
+        year: "numeric",
+      }) +
+      " (" +
+      start.toLocaleTimeString("en-US", {
+        hour: "2-digit",
+        minute: "2-digit",
+      }) +
+      ")";
+    dateEl.style.cssText = "font-size:10px;margin-bottom:6px";
+  } else {
+    dateEl.textContent = "Repeating Event";
+    dateEl.style.color = "black";
+    dateEl.style.fontSize = "8px";
+  }
+
   wrapper.appendChild(dateEl);
 
   if (description) {

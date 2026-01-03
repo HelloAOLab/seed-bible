@@ -32,10 +32,17 @@ function handleDatesSet({
 
     calendarap.setOption("title", year.toString());
   } else {
-    calendarap.setOption("titleFormat", {
-      year: "numeric",
-      month: "long",
-    });
+    if (info.view.type === "timeGridWeek") {
+      calendarap.setOption("titleFormat", {
+        year: "numeric",
+        month: "short",
+      });
+    } else {
+      calendarap.setOption("titleFormat", {
+        year: "numeric",
+        month: "long",
+      });
+    }
   }
   if (info.view.type === "resourceTimelineDay") {
     if (todayBtn) todayBtn.style.display = "none";

@@ -64,6 +64,7 @@ const App = () => {
   const [mapViewSelected, setMapViewSelected] = useState(false);
   const [playlistsToAdd, setPlaylistsToAdd] = useState([]);
   const [hasTitle, setHasTitle] = useState(true);
+
   const [allEvents, setAllEvents] = useState(() => {
     try {
       const saved = localStorage.getItem("allEvents");
@@ -120,7 +121,7 @@ const App = () => {
   const resourceIdRef = useRef(currentResourceId);
   const resourceGroupNameRef = useRef(null);
   const experienceConRef = useRef(null);
-  const customDaysRef = useRef(null);
+  const customDaysRef = useRef([]);
   const toolbarClickHandler = (e) => {
     if (calendarApi?.current.view.type.includes("resourceTimeline")) {
       onToolbarDateClick(e, calendarApi);
@@ -149,6 +150,7 @@ const App = () => {
       console.error("Error saving events:", error);
     }
   }, [allEvents]);
+
   useEffect(() => {
     const allEventsStore = allEvents;
     if (showSchedules !== true) {
@@ -599,6 +601,21 @@ const App = () => {
     calendarApi.current.removeAllEvents();
     calendarApi.current.addEventSource(allEvents);
   }, []);
+  const viewType = calendarApi.current?.view?.type;
+  let height;
+  let marginTop;
+
+  if (viewType === "multiMonthYear") {
+    height = "449px";
+    marginTop = "89px";
+  } else if (viewType === "resourceTimeline") {
+    height = "454px";
+    marginTop = "71px";
+  } else {
+    height = "427px";
+    marginTop = "111px";
+  }
+
   useDayGridResponsiveLayout(experienceConRef, calendarApi);
   return (
     <>
@@ -721,18 +738,12 @@ const App = () => {
           {calendarApi.current && (
             <div
               style={{
-                height:
-                  calendarApi.current.view.type !== "multiMonthYear"
-                    ? "427px"
-                    : "449px",
+                height,
                 width: "1px",
                 zIndex: "999",
                 backgroundColor: "#ddd",
                 position: "absolute",
-                marginTop:
-                  calendarApi.current.view.type !== "multiMonthYear"
-                    ? "111px"
-                    : "89px",
+                marginTop,
               }}
             />
           )}

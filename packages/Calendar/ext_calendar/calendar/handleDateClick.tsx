@@ -97,6 +97,7 @@ async function handleDateClick({
       recurVal,
       isPlansTabActive,
     }) => {
+      console.log(recurVal, "recurVal");
       if (isPlansTabActive) return;
 
       let newEvent;
@@ -148,8 +149,7 @@ async function handleDateClick({
           };
         }
       } else if (recurVal.charAt(0) === "R") {
-
-      /* ========== WEEKLY RECURRING ========== */
+        /* ========== WEEKLY RECURRING ========== */
         const isTimed = startTime && endTime;
         const day = dayNameToNumber(recurVal.split(" ")[2]);
 
@@ -172,9 +172,9 @@ async function handleDateClick({
             type: "events",
           },
         };
+        console.log(newEvent, "newEvent");
       } else if (recurVal.charAt(0) === "c") {
-
-      /* ========== CUSTOM DAYS ========== */
+        /* ========== CUSTOM DAYS ========== */
         newEvent = {
           title: title || "easter",
           id: uuid(),
