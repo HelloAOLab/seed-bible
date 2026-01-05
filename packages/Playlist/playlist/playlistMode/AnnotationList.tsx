@@ -180,10 +180,7 @@ const AnnotationHeading = ({
             ))}
           </div>
         ) : (
-          <div
-            style={{ margin: "0.5rem 0", flexGrow: "1" }}
-            className="align-center"
-          ></div>
+          null
         )}
         {false && <div>
           <p
@@ -285,7 +282,7 @@ const AnnodataMapper = ({ data, address, currentOpenedBook, chapter, heading, on
   return (
     <>
       {data.map((contentData, index) => (
-        <div key={contentData.id} style={{ paddingLeft: "0.5rem" }}>
+        <div key={contentData.id}>
           <div style={{ margin: "0.5rem 0" }}>
             {contentData.type === "attachment-link" ||
             contentData.type === "date" ? (
@@ -353,39 +350,42 @@ const AnnodataMapper = ({ data, address, currentOpenedBook, chapter, heading, on
               </div>
             )}
           </div>
-          <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginTop: '0.5rem' }}>
-        <div style={{ display: 'flex', flexDirection: 'row', gap: '0.5rem',fontSize: '12px' }}>
-          <p>Updated At:</p>
-          <p style={{ textTransform: 'capitalize'}}>{FormatRelativeTime(contentData.updatedAtMs)}</p>
-        </div>
-        <div>
-            <p 
-            onClick={() => {
-              onDelete(address);
-            }}
-            style={{ cursor: 'pointer', color: '#00000099' }}
-            className="material-symbols-outlined">
-              delete
-            </p>
-            <p
-            onClick={() => {
-              globalThis.SetEditAnnoData({
-                address: address,
-                prefixAddress: `${authBot?.id}.${currentOpenedBook?.bookId}.${currentOpenedBook?.chapter}`,
-                title: `${currentOpenedBook?.book} ${
-                  heading === "Chapter"
-                    ? `${globalThis.t("chapter")} ${chapter}`
-                    : heading
-                  }`,
-              });
-              globalThis.SetTab("create");
-            }}
-            style={{ cursor: 'pointer', color: '#00000099' }}
-            className="material-symbols-outlined">
-              edit
-            </p>
-          </div>
-        </div>
+          <div style={{ display: 'flex', marginBottom: '1rem', justifyContent: 'space-between', alignItems: 'center', marginTop: '0.5rem' }}>
+            <div style={{ display: 'flex', flexDirection: 'row', gap: '0.5rem',fontSize: '12px' }}>
+              <div style={{ display: 'flex', flexDirection: 'row', gap: '0.5rem', alignItems: 'center' }}>
+                <img style={{ width: '16px', height: '16px', borderRadius: '50%' }} src={contentData.createdByProfilePicture} alt="profile" />
+                <p>{contentData.createdByName}</p>
+              </div>
+              <span style={{ fontSize: '12px', color: '#00000099' }}>|</span>
+              <p style={{ textTransform: 'capitalize'}}>{FormatRelativeTime(contentData.updatedAtMs)}</p>
+            </div>
+            <div style={{ display: 'flex', flexDirection: 'row', gap: '0.5rem', alignItems: 'center' }}>
+                <img
+                src="https://auth-aux-aobot-prod-filesbucket-141297942820.s3.amazonaws.com/annotations/badbe8b10d39a043fbf49a7d7749e4fc311c34c1c8c562ab60ee052e470f5451.svg"
+                onClick={() => {
+                  onDelete(address);
+                }}
+                style={{ cursor: 'pointer' }}
+                />
+              <span style={{ fontSize: '12px', color: '#00000099' }}>|</span>
+              <img
+                src="https://auth-aux-aobot-prod-filesbucket-141297942820.s3.amazonaws.com/annotations/86e70522cf977646771dfcffbafda114f8d4a7dbf39923d6791a66b8a25c2a56.svg"
+                onClick={() => {
+                  globalThis.SetEditAnnoData({
+                    address: address,
+                    prefixAddress: `${authBot?.id}.${currentOpenedBook?.bookId}.${currentOpenedBook?.chapter}`,
+                    title: `${currentOpenedBook?.book} ${
+                      heading === "Chapter"
+                        ? `${globalThis.t("chapter")} ${chapter}`
+                        : heading
+                      }`,
+                  });
+                  globalThis.SetTab("create");
+                }}
+                style={{ cursor: 'pointer' }}
+                />
+              </div>
+            </div>
         </div>
       ))}
     </>

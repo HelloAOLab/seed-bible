@@ -52,6 +52,15 @@ export const COMMENT_SCHEMA = z.object({
 
   // The Time in miliseconds that the comment was last updated
   updatedAtMs: z.nullable(z.optional(z.number())),
+
+  // user profile picture
+  userProfilePicture: z.nullable(z.optional(z.string())),
+
+  // user name
+  userName: z.nullable(z.optional(z.string())),
+
+  // user id
+  userId: z.nullable(z.optional(z.string())),
 });
 
 export const ANNOTATION_DATA_SCHEMA = z.discriminatedUnion("type", [
@@ -66,6 +75,7 @@ export const ANNOTATION_SCHEMA = z.object({
   endVerseNumber: z.nullable(z.optional(z.number())),
   data: ANNOTATION_DATA_SCHEMA,
   order: z.nullable(z.optional(z.number())),
+  verseNumbers: z.nullable(z.optional(z.array(z.number()))),
 });
 
 /**
@@ -129,10 +139,14 @@ export function createAnnotation(
   verseNumber: number
 ): Annotation {
   data = COMMENT_SCHEMA.parse(data);
+  let keyName = 'verseNumber';
+  if(Array.isArray(verseNumber)) {
+    keyName = 'verseNumbers';
+  }
   return {
     id: uuid(),
     bookId,
-    verseNumber,
+    [keyName]: verseNumber,
     chapterNumber,
     data,
   };

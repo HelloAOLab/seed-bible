@@ -1026,10 +1026,10 @@ div.attachment-link.dropabble-Embed .playlist-item-type {
 }
 
 .annotation {
-  padding: 20px;
+  padding: 0 10px;
   /* border: 1px solid #cccccd; */
   border-radius: 8px;
-  margin: 12px 0;
+  margin: 1rem 0;
 }
 
 .annotation .heading {
