@@ -406,17 +406,15 @@
 
 .popupSettings {
   position: relative;
-  width: 225px !important;
+  width: 192px !important;
   height: fit-content;
-  /* max-height: 200px; */
   padding: 10px;
   background: #202020;
   display: flex;
   flex-direction: column;
   align-items: center;
   gap: 2px;
-  border-radius: 15px;
-  /* overflow: auto; */
+  border-radius: 10px;
   scrollbar-width: none;
 }
 

@@ -13,6 +13,8 @@ import {
   Panel4,
   Panel3Row,
   Panel4Row,
+  StartSessionIcon,
+  JoinSession,
 } from "app.components.icons";
 import { useBibleContext } from "app.hooks.bibleVariables";
 import { useSideBarContext } from "app.hooks.sideBar";
@@ -1041,7 +1043,7 @@ function SideBar({ panelsNumber }) {
     items: [
       {
         disabled: false,
-        icon: <MenuIcon name="screen_record" />,
+        icon: <StartSessionIcon />,
         title: t("startSession"),
         onClick: () => {
           // os.log(globalThis?.StartSession,globalThis)
@@ -1050,7 +1052,8 @@ function SideBar({ panelsNumber }) {
       },
       {
         disabled: false,
-        icon: <MenuIcon name="logout" />,
+        // icon:<JoinSession/>,
+        icon: <MenuIcon name="person_add" />,
         title: t("inviteToSession"),
         onClick: async () => {
           const { QRCodeComponent } = thisBot.Chips();
@@ -1060,31 +1063,52 @@ function SideBar({ panelsNumber }) {
       },
       {
         disabled: false,
-        icon: <MenuIcon name="content_copy" />,
+        icon: <JoinSession />,
         title: t("joinAnotherSession"),
         onClick: async () => {
-          const id = await os.showInput("", {
-            title: t("enterUrl"),
-          });
-          if (id) os.goToURL(id);
+          const { JoinSessionComponent } = thisBot.Chips();
+          const translations = {
+            joinSession: t("joinSession"),
+            enterSessionCode: t("enterSessionCode"),
+            sessionCodePlaceholder: t("sessionCodePlaceholder"),
+            join: t("join"),
+          };
+          ShowModal(
+            <JoinSessionComponent
+              onJoin={(code) => os.goToURL(code)}
+              translations={translations}
+            />
+          );
         },
       },
+      {
+        disabled: false,
+        icon: <MenuIcon name="groups" />,
+        title: globalThis.IsPrivateMode?.() ? t("goPublic") : t("goPrivate"),
+        onClick: async () => {
+          if (globalThis.TogglePrivateMode) {
+            await globalThis.TogglePrivateMode();
+          }
+        },
+      },
+
       { type: "line" },
       {
         disabled: false,
-        icon: <MenuIcon name="fullscreen" />,
+        // icon: <MenuIcon name={showSearch ? "visibility_off" : "visibility"} />,
+        icon: <MenuIcon name="search" />,
+        title: showSearch ? t("hideSearch") : t("showSearch"),
+        onClick: toggleSearchVisibility,
+      },
+      {
+        disabled: false,
+        icon: <MenuIcon name="crop_free" />,
         title: t("fullScreen"),
         onClick: () => {
           setFullScreen(true);
         },
       },
-      { type: "line" },
-      {
-        disabled: false,
-        icon: <MenuIcon name={showSearch ? "visibility_off" : "visibility"} />,
-        title: showSearch ? t("hideSearch") : t("showSearch"),
-        onClick: toggleSearchVisibility,
-      },
+      // { type: "line" },
       // {
       //     disabled: false,
       //     icon: <MenuIcon name={editMode ? "edit_off" : "edit"} />,

@@ -458,4 +458,155 @@ const QRCodeComponent = ({ url = "https://example.com/session/12345" }) => {
   );
 };
 
-return { SharePopup, QRCodeComponent };
+const JoinSessionComponent = ({ onJoin, translations = {} }) => {
+  const [sessionCode, setSessionCode] = useState("");
+
+  const t = {
+    joinSession: translations.joinSession || "Join Session",
+    enterSessionCode:
+      translations.enterSessionCode || "Enter session code to join new session",
+    sessionCodePlaceholder:
+      translations.sessionCodePlaceholder || "Enter Session code",
+    join: translations.join || "Join",
+  };
+
+  const handleJoin = () => {
+    if (sessionCode.trim()) {
+      onJoin(sessionCode.trim());
+      CloseModal();
+    }
+  };
+
+  const handleKeyPress = (e) => {
+    if (e.key === "Enter") {
+      handleJoin();
+    }
+  };
+
+  return (
+    <div
+      onClick={() => CloseModal()}
+      style={{
+        position: "fixed",
+        inset: 0,
+        background: "rgba(0,0,0,0.5)",
+        display: "flex",
+        alignItems: "center",
+        justifyContent: "center",
+        zIndex: 1000,
+      }}
+    >
+      <div
+        onClick={(e) => e.stopPropagation()}
+        style={{
+          background: "#fff",
+          borderRadius: 16,
+          padding: "40px 32px",
+          maxWidth: 400,
+          width: "90%",
+          boxShadow: "0 20px 60px rgba(0, 0, 0, 0.3)",
+        }}
+      >
+        {/* Logo */}
+        <div
+          style={{
+            display: "flex",
+            flexDirection: "column",
+            alignItems: "center",
+            marginBottom: 24,
+          }}
+        >
+          <img
+            src="https://res.cloudinary.com/dfbtwwa8p/image/upload/v1755365776/717a8527988cca7e0bdc9449ec68581a8400b977_vqc7mx.png"
+            style={{
+              width: "60px",
+              height: "63px",
+              objectFit: "cover",
+              objectPosition: "center",
+            }}
+            alt="Seed Bible"
+          />
+          <span
+            style={{
+              fontSize: 12,
+              fontWeight: 500,
+              letterSpacing: 3,
+              color: "#333",
+              marginTop: 4,
+            }}
+          >
+            BIBLE
+          </span>
+        </div>
+
+        {/* Title */}
+        <h2
+          style={{
+            textAlign: "center",
+            color: "#333",
+            marginTop: 0,
+            marginBottom: 8,
+            fontSize: 22,
+            fontWeight: 600,
+          }}
+        >
+          {t.joinSession}
+        </h2>
+
+        {/* Description */}
+        <p
+          style={{
+            textAlign: "center",
+            color: "#666",
+            marginTop: 0,
+            marginBottom: 24,
+            fontSize: 14,
+          }}
+        >
+          {t.enterSessionCode}
+        </p>
+
+        {/* Input Field */}
+        <input
+          type="text"
+          value={sessionCode}
+          onChange={(e) => setSessionCode(e.target.value)}
+          onKeyPress={handleKeyPress}
+          placeholder={t.sessionCodePlaceholder}
+          style={{
+            width: "100%",
+            padding: "14px 16px",
+            fontSize: 14,
+            border: "1px solid #e0e0e0",
+            borderRadius: 8,
+            backgroundColor: "#f5f5f5",
+            outline: "none",
+            boxSizing: "border-box",
+            marginBottom: 16,
+          }}
+        />
+
+        {/* Join Button */}
+        <button
+          onClick={handleJoin}
+          style={{
+            width: "100%",
+            padding: "14px",
+            background: "#c97f4e",
+            color: "white",
+            border: "none",
+            borderRadius: 8,
+            fontSize: 16,
+            fontWeight: 600,
+            cursor: "pointer",
+            transition: "all 0.2s ease",
+          }}
+        >
+          {t.join}
+        </button>
+      </div>
+    </div>
+  );
+};
+
+return { SharePopup, QRCodeComponent, JoinSessionComponent };

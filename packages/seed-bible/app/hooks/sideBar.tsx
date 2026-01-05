@@ -259,7 +259,7 @@ export function PopupSettings({ items, type, disabled, sidebarContext }) {
               return (
                 <div
                   style={{
-                    width: "100%",
+                    width: "90%",
                     height: "1px",
                     backgroundColor: "#cdcccc3b",
                   }}

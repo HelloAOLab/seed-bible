@@ -299,7 +299,13 @@ const resources = {
       // Sessions
       startSession: "Start session",
       inviteToSession: "Invite to session",
-      joinAnotherSession: "Join another session",
+      joinAnotherSession: "Join a session",
+      goPrivate: "Go private",
+      goPublic: "Go public",
+      joinSession: "Join Session",
+      enterSessionCode: "Enter session code to join new session",
+      sessionCodePlaceholder: "Enter Session code",
+      join: "Join",
 
       // Help
       reportBug: "Report a bug",
@@ -993,6 +999,13 @@ const resources = {
       startSession: "Iniciar sesión",
       inviteToSession: "Invitar a sesión",
       joinAnotherSession: "Unirse a otra sesión",
+      goPrivate: "Ir a privado",
+      goPublic: "Ir a público",
+      joinSession: "Unirse a sesión",
+      enterSessionCode:
+        "Ingrese el código de sesión para unirse a una nueva sesión",
+      sessionCodePlaceholder: "Ingrese el código de sesión",
+      join: "Unirse",
 
       // Help
       reportBug: "Reportar error",
@@ -1697,6 +1710,12 @@ const resources = {
       startSession: "بدء الجلسة",
       inviteToSession: "دعوة للجلسة",
       joinAnotherSession: "الانضمام لجلسة أخرى",
+      goPrivate: "الذهاب للخاص",
+      goPublic: "الذهاب للعام",
+      joinSession: "الانضمام للجلسة",
+      enterSessionCode: "أدخل رمز الجلسة للانضمام إلى جلسة جديدة",
+      sessionCodePlaceholder: "أدخل رمز الجلسة",
+      join: "انضمام",
 
       // Help
       reportBug: "الإبلاغ عن خطأ",
@@ -2380,6 +2399,12 @@ const resources = {
       startSession: "सत्र शुरू करें",
       inviteToSession: "सत्र में आमंत्रित करें",
       joinAnotherSession: "दूसरे सत्र में शामिल हों",
+      goPrivate: "निजी में जाएं",
+      goPublic: "सार्वजनिक में जाएं",
+      joinSession: "सत्र में शामिल हों",
+      enterSessionCode: "नए सत्र में शामिल होने के लिए सत्र कोड दर्ज करें",
+      sessionCodePlaceholder: "सत्र कोड दर्ज करें",
+      join: "शामिल हों",
 
       // Help
       reportBug: "बग रिपोर्ट करें",
