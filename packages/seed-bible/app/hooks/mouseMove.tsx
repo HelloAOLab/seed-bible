@@ -28,7 +28,7 @@ function computeMobilePlacement95() {
   const width = Math.round(vw * 1);
   const height = Math.round(vh - vh * 0.7);
 
-  const x = 0
+  const x = 0;
   const y = 0; // stick to top; change if you want centered: Math.round((vh - height) / 2)
 
   return { size: { width, height }, position: { x, y } };
@@ -58,19 +58,26 @@ export function MouseMoveProvider({ children }) {
   globalThis.isAbleToRightClick = isAbleToRightClick;
 
   // create
-    globalThis.AddFloatingApp = (appConfig) => {
+  globalThis.AddFloatingApp = (appConfig) => {
     // Handle "panel" mode - go directly to panel without creating floating window
     if (appConfig.mode === "panel") {
       const checkEmpty = PanelsApps.find((e) => !e.tabData);
-      const id = checkEmpty?.id 
-      os.log('RemoveApplicationByID',checkEmpty)
-      if (typeof AddApplication === "function" && typeof RemoveApplicationByID === "function") {
-        ReplaceApplication(id,{
+      const id = globalThis.LastClickedPanelUpdate || checkEmpty?.id;
+      os.log(
+        "RemoveApplicationByID",
+        checkEmpty,
+        globalThis.LastClickedPanelUpdate
+      );
+      if (
+        typeof AddApplication === "function" &&
+        typeof RemoveApplicationByID === "function"
+      ) {
+        ReplaceApplication(id, {
           id,
           App: (
             <PanelAppWrapper
               onReturnToFloat={() => {
-                os.log(PanelsApps,id,'RemoveApplicationByID')
+                os.log(PanelsApps, id, "RemoveApplicationByID");
                 RemoveApplicationByID(id);
                 globalThis.AddFloatingApp({
                   ...appConfig,
@@ -95,7 +102,9 @@ export function MouseMoveProvider({ children }) {
         });
         return id;
       } else {
-        console.warn("Panel infrastructure not available, falling back to floating window");
+        console.warn(
+          "Panel infrastructure not available, falling back to floating window"
+        );
       }
     }
 
@@ -824,13 +833,16 @@ const FloatingAppContainer = ({
   // sizes for layout: wrapper contains window (top) + toolbar (underneath)
   const wrapperStyle = {
     position: "fixed",
-    left: (isMobileNow() || app.isFullscreen)?'0':`${posX}px`,
-    top: (isMobileNow() || app.isFullscreen)?'0':`${posY}px`,
-    width: (mobile && app.isFullscreen) ? '100vw' : `${width}px`,
-    height: (mobile && app.isFullscreen) ? '100vh' : `${
-      (app.isMinimized ? 0 : height) +
-      (app.isDocked || app.isFullscreen ? 0 : toolbarGap + toolbarH)
-    }px`,
+    left: isMobileNow() || app.isFullscreen ? "0" : `${posX}px`,
+    top: isMobileNow() || app.isFullscreen ? "0" : `${posY}px`,
+    width: mobile && app.isFullscreen ? "100vw" : `${width}px`,
+    height:
+      mobile && app.isFullscreen
+        ? "100vh"
+        : `${
+            (app.isMinimized ? 0 : height) +
+            (app.isDocked || app.isFullscreen ? 0 : toolbarGap + toolbarH)
+          }px`,
     zIndex: app.isFullscreen ? 999999 : 1000,
     pointerEvents: "auto",
     transition: app.isDragging || app.isResizing ? "none" : "all 0.18s ease",
@@ -842,8 +854,11 @@ const FloatingAppContainer = ({
     position: "absolute",
     left: 0,
     top: 0,
-    width: (isMobileNow() || app.isFullscreen)?'100vw': `${width}px`,
-    height: (mobile && app.isFullscreen) ? '100vh' : `${app.isMinimized ? 0 : height}px`,
+    width: isMobileNow() || app.isFullscreen ? "100vw" : `${width}px`,
+    height:
+      mobile && app.isFullscreen
+        ? "100vh"
+        : `${app.isMinimized ? 0 : height}px`,
     borderRadius: app.isFullscreen ? 0 : `${radius}px`,
     boxShadow: `0 0 0 2px ${stroke}`,
     background: "rgba(17,17,17,0.75)",
@@ -868,7 +883,7 @@ const FloatingAppContainer = ({
     borderRadius: 12,
     boxShadow: `0 0 0 2px ${stroke}`,
     background: "rgba(0, 0, 0, 0.65)",
-    display: (app.isDocked || app.isFullscreen) ? "none" : "flex",
+    display: app.isDocked || app.isFullscreen ? "none" : "flex",
     alignItems: "center",
     justifyContent: "center",
     gap: 8,
