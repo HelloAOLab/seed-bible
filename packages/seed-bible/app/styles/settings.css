@@ -160,6 +160,7 @@
   transition: background-color 0.2s;
   color: var(--text1);
   gap: 7px;
+  width: 100%;
 }
 
 .settings-item:hover {

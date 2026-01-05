@@ -1705,7 +1705,7 @@ export const SpaceUI = () => {
                 onClick={() => setSideBarMode("settings")}
                 className="material-symbols-outlined"
               >
-                settings
+                <img src="https://res.cloudinary.com/dfbtwwa8p/image/upload/v1767580434/download_dnzcpk.png" />
               </span>
               <SettingsProfile />
               <UserProfile />
