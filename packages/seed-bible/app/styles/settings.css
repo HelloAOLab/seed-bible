@@ -164,6 +164,7 @@
 
 .settings-item:hover {
   background-color: #00000024;
+  width: 100%;
 }
 
 .item-icon {
