@@ -1642,7 +1642,7 @@ function ThePage({
               position: "relative",
             }}
           >
-            <PageToolbar panelId={panelId} />
+            <PageToolbar tab={tab} panelId={panelId} />
           </div>
           <div style={{ height: "160px" }}></div>
 
@@ -1768,7 +1768,11 @@ function ThePage({
                   position: "relative",
                 }}
               >
-                <PageToolbar path="showInStarterToolbar" />
+                <PageToolbar
+                  panelId={panelId}
+                  tab={tab}
+                  path="showInStarterToolbar"
+                />
               </div>
             </div>
           </div>
@@ -1778,7 +1782,7 @@ function ThePage({
   );
 }
 
-function PageToolbar({ panelId, path = "showInPageToolbar" }) {
+function PageToolbar({ panelId, tab, path = "showInPageToolbar" }) {
   const { tools } = useBibleContext();
 
   const visibleTools = tools.filter((tool) => tool[path]);
@@ -1796,7 +1800,7 @@ function PageToolbar({ panelId, path = "showInPageToolbar" }) {
           onClick={(e) => {
             globalThis.LastClickedPanelUpdate = panelId;
             setTimeout(() => {
-              tool.onClick({ mode: "panel" });
+              tool.onClick({ mode: !tab ? "panel" : "" });
             }, 5);
           }}
           className="tool-preview-page"
