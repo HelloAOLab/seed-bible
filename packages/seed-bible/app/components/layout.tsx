@@ -33,7 +33,7 @@ import { SelectionUISettings } from "app.components.selectionUISettings";
 shout("initialize");
 globalThis.PanelTabsMap = {}; // { panelId: tabObject }
 
-const Layout = ({ children }) => {
+const Layout = ({ children, panelsNumber }) => {
   // using this to recored the mouse position always
   // u can use the position anywhere if needed (i will need it for tabs dragging)
   // const { spaces, activeSpace } = useTabsContext()
@@ -87,7 +87,9 @@ const Layout = ({ children }) => {
         spaces.find((e) => e.id === activeSpace)?.settings?.text?.root ||
         exportTextConfigToCSS(defaultTextConfig)
       }`}</style>
-      {sidebarMode === "default" ? <SideBar /> : null}
+      {sidebarMode === "default" ? (
+        <SideBar panelsNumber={panelsNumber} />
+      ) : null}
       <div className={`floatsidebar ${openOnMobile ? "open" : ""}`}>
         {sidebarMode === "settings" ? (
           <SettingsSidebar />

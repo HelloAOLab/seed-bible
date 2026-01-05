@@ -586,7 +586,7 @@ const Main = () => {
       />
       <style>{ThemeCSS}</style>
       <DragDropOverlay />
-      <Layout>
+      <Layout panelsNumber={containerProps.apps.length}>
         <SplitApp {...containerProps} panalMode={false} />
       </Layout>
     </MouseMoveProvider>

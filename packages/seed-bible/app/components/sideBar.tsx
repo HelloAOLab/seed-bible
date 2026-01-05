@@ -748,7 +748,7 @@ function Folder({ folder, onlineUsers, collapsed }) {
   );
 }
 
-function SideBar() {
+function SideBar({ panelsNumber }) {
   const {
     tabs,
     folders,
@@ -1343,13 +1343,13 @@ function SideBar() {
                   }}
                   onMouseLeave={() => clearTimeout(globalThis._holdTimeout)}
                 >
-                  {customScreens?.value <= 1 ? (
+                  {panelsNumber <= 1 ? (
                     <SingleScreenIcon />
-                  ) : customScreens?.value === 2 ? (
+                  ) : panelsNumber === 2 ? (
                     <DualScreenIcon />
-                  ) : customScreens?.value === 3 ? (
+                  ) : panelsNumber === 3 ? (
                     <ThreeScreenIcon />
-                  ) : customScreens?.value === 4 ? (
+                  ) : panelsNumber === 4 ? (
                     <QuadScreenIcon />
                   ) : null}
                 </span>
