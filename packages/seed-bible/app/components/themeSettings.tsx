@@ -895,7 +895,7 @@ const TabSectionContent = ({
     padding: "8px 12px",
     border: "1px solid #E1E3EA",
     borderRadius: 4,
-    backgroundColor: "#FFFFFF",
+    backgroundColor: "var(--panelBackground) !important",
     cursor: "pointer",
     fontSize: 13,
     fontFamily: "Open Sans, sans-serif",
@@ -907,7 +907,7 @@ const TabSectionContent = ({
     top: "100%",
     left: 0,
     right: 0,
-    backgroundColor: "#FFFFFF",
+    backgroundColor: "var(--panelBackground) !important",
     border: "1px solid #E1E3EA",
     borderRadius: 4,
     marginTop: 4,
@@ -4737,7 +4737,7 @@ const SettingsUI = () => {
 
   const dropdownStyle = {
     width: "100%",
-    backgroundColor: "white",
+    backgroundColor: "var(--panelBackground) !important",
     border: "1px solid #E1E3EA",
     borderRadius: "4px",
     padding: "12px 16px",
@@ -4751,12 +4751,12 @@ const SettingsUI = () => {
 
   const dropdownTextStyle = {
     fontSize: "13px",
-    color: "black",
+    color: "var(--heading1Color)",
   };
 
   const dropdownSubtextStyle = {
     fontSize: "10px",
-    color: "rgba(0,0,0,0.5)",
+    color: "var(--heading1Color)",
     marginTop: "2px",
   };
 
@@ -4765,7 +4765,7 @@ const SettingsUI = () => {
     top: "100%",
     left: 0,
     right: 0,
-    backgroundColor: "white",
+    backgroundColor: "var(--panelBackground) !important",
     border: "1px solid #E1E3EA",
     borderRadius: "4px",
     marginTop: "4px",
@@ -4793,7 +4793,7 @@ const SettingsUI = () => {
 
   const toggleLabelStyle = {
     fontSize: "11px",
-    color: "var(--text2)",
+    color: "var(--heading1Color)",
   };
 
   const toggleStyle = (isOn) => ({
@@ -4875,7 +4875,7 @@ const SettingsUI = () => {
             style={{
               width: "80px",
               height: "43px",
-              backgroundColor: "white",
+              backgroundColor: "var(--panelBackground) !important",
               border: "1px solid #E1E3EA",
               borderRadius: "4px",
               display: "flex",
@@ -4901,7 +4901,7 @@ const SettingsUI = () => {
             style={{
               width: "80px",
               height: "43px",
-              backgroundColor: "white",
+              backgroundColor: "var(--panelBackground) !important",
               border: "1px solid #E1E3EA",
               borderRadius: "4px",
               display: "flex",
@@ -4933,7 +4933,7 @@ const SettingsUI = () => {
             style={{
               width: "80px",
               height: "43px",
-              backgroundColor: "white",
+              backgroundColor: "var(--panelBackground) !important",
               border: "1px solid #E1E3EA",
               borderRadius: "4px",
               display: "flex",
