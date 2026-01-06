@@ -603,7 +603,7 @@ const Root = () => {
         rel="stylesheet"
       />
       <link
-        href="https://api.fontshare.com/v2/css?f[]=satoshi@400&display=swap"
+        href="https://api.fontshare.com/v2/css?f[]=satoshi@100,200,300,400,500,600,700,800,900&display=swap"
         rel="stylesheet"
       />
       <script src="https://cdn.jsdelivr.net/npm/fullcalendar@6.1.17/index.global.min.js"></script>

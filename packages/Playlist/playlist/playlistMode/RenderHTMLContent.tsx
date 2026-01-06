@@ -142,14 +142,17 @@ const RenderHTMLContent = ({ htmlContent }) => {
   return (
     <div>
       <div
+        className="render-html-content"
         ref={containerRef}
         style={{
           overflow: "hidden",
           height: shouldRender ? (open ? "auto" : "60px") : "auto",
           textTransform: "none",
           transition: "all 0.2s linear",
-          paddingRight: "1.25rem",
           paddingBottom: "0.25rem",
+          display: 'flex',
+          flexDirection: 'column',
+          alignItems: 'flex-start',
         }}
         dangerouslySetInnerHTML={{ __html: breakHTMLCONTENT }}
       />
