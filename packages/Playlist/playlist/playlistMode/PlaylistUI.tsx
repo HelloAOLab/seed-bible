@@ -362,7 +362,7 @@ const Playlist = () => {
                 chapter: currentOpenedBook?.chapter,
               };
 
-              data.heading = `Verse ${verseSummaryHeading.join(", ")}`;
+              data.heading = `${currentOpenedBook.book} ${currentOpenedBook.chapter}:${verseSummaryHeading.join(`, `)}`;
               data.data = [anoItem];
               data.verse = ele.verseNumber || ele.verseNumbers;
               data.tags = [];

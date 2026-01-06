@@ -152,10 +152,10 @@ const AnnotationHeading = ({
   };
 
   return (
-    <div style={{ height: isOpen ? 'max-content' : '2rem', overflow: 'hidden', transition: 'all 0.3s ease-in-out' }}>
-      <div className="align-center" style={{ margin: "0.5rem 0", gap: '0.5rem', display: 'flex', alignItems: 'center' }}>
-        <p className="verse-annotation">{heading}</p>
-        <img onClick={handleToggle} style={{ cursor: 'pointer', transition: 'transform 0.3s ease-in-out', marginLeft: 'auto', transform: isOpen ? 'rotate(180deg)' : 'rotate(0deg)' }} alt=">" src={ChevronDown2} />
+    <div className="annotation-item-container" style={{ height: isOpen ? 'max-content' : '2rem', overflow: 'hidden', transition: 'all 0.3s ease-in-out' }}>
+      <div className="align-center" style={{ margin: "0.5rem 0", gap: '1rem', display: 'flex', width: 'max-content', alignItems: 'center' }}>
+        <p className="verse-annotation" style={{ textTransform: 'uppercase' }}>{heading}</p>
+        <img onClick={handleToggle} style={{ cursor: 'pointer', transition: 'transform 0.3s ease-in-out', marginLeft: 'auto', transform: !isOpen ? 'rotate(180deg)' : 'rotate(0deg)' }} alt=">" src={ChevronDown2} />
       </div>
       <div className="align-center">
         {tags?.length > 0 ? (
@@ -279,6 +279,9 @@ const AnnotationHeading = ({
 };
 
 const AnnodataMapper = ({ data, address, currentOpenedBook, chapter, heading, onDelete }) => {
+  const isMobile =
+  (window?.innerWidth || gridPortalBot.tags.pixelWidth) <
+  MOBILE_VIEWPORT_THRESHOLD;
   return (
     <>
       {data.map((contentData, index) => (
@@ -340,8 +343,8 @@ const AnnodataMapper = ({ data, address, currentOpenedBook, chapter, heading, on
                 style={{
                   pointer: contentData.type !== "heading" ? "cursor" : "",
                 }}
-                className={`annotation-list-item ${
-                  contentData.type === "heading" ? "heading" : "scriptures"
+                className={`annotation-list-item annotation-list-item-type-comment ${
+                  contentData.type === "heading" ? "" : "scriptures"
                 }`}
               >
                 <div>
@@ -350,26 +353,30 @@ const AnnodataMapper = ({ data, address, currentOpenedBook, chapter, heading, on
               </div>
             )}
           </div>
-          <div style={{ display: 'flex', marginBottom: '1rem', justifyContent: 'space-between', alignItems: 'center', marginTop: '0.5rem' }}>
-            <div style={{ display: 'flex', flexDirection: 'row', gap: '0.5rem',fontSize: '12px' }}>
+          <div style={{ display: 'flex', marginBottom: '1.5rem', justifyContent: 'space-between', alignItems: 'center', marginTop: '0.5rem' }}>
+            <div style={{ display: 'flex', flexDirection: 'row', gap: '0.5rem',fontSize: '12px', fontWeight: '500' }}>
               <div style={{ display: 'flex', flexDirection: 'row', gap: '0.5rem', alignItems: 'center' }}>
                 <img style={{ width: '16px', height: '16px', borderRadius: '50%' }} src={contentData.createdByProfilePicture} alt="profile" />
-                <p>{contentData.createdByName}</p>
+                <p>
+                  <i>{contentData.createdByName}</i>
+                </p>
               </div>
               <span style={{ fontSize: '12px', color: '#00000099' }}>|</span>
-              <p style={{ textTransform: 'capitalize'}}>{FormatRelativeTime(contentData.updatedAtMs)}</p>
+              <p style={{ textTransform: 'capitalize'}}>
+                <i>{FormatRelativeTime(contentData.updatedAtMs)}</i>
+              </p>
             </div>
-            <div style={{ display: 'flex', flexDirection: 'row', gap: '0.5rem', alignItems: 'center' }}>
+            <div className={`actions-buttons-annotation ${isMobile ? 'isMobile' : ''}`} style={{ display: 'flex', flexDirection: 'row', gap: '0.5rem', alignItems: 'center' }}>
                 <img
-                src="https://auth-aux-aobot-prod-filesbucket-141297942820.s3.amazonaws.com/annotations/badbe8b10d39a043fbf49a7d7749e4fc311c34c1c8c562ab60ee052e470f5451.svg"
-                onClick={() => {
-                  onDelete(address);
-                }}
-                style={{ cursor: 'pointer' }}
+                  src="https://auth-aux-aobot-prod-filesbucket-141297942820.s3.amazonaws.com/annotations/86e70522cf977646771dfcffbafda114f8d4a7dbf39923d6791a66b8a25c2a56.svg"
+                  onClick={() => {
+                    onDelete(address);
+                  }}
+                  style={{ cursor: 'pointer' }}
                 />
               <span style={{ fontSize: '12px', color: '#00000099' }}>|</span>
               <img
-                src="https://auth-aux-aobot-prod-filesbucket-141297942820.s3.amazonaws.com/annotations/86e70522cf977646771dfcffbafda114f8d4a7dbf39923d6791a66b8a25c2a56.svg"
+                src="https://auth-aux-aobot-prod-filesbucket-141297942820.s3.amazonaws.com/annotations/badbe8b10d39a043fbf49a7d7749e4fc311c34c1c8c562ab60ee052e470f5451.svg"
                 onClick={() => {
                   globalThis.SetEditAnnoData({
                     address: address,
