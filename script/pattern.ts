@@ -131,6 +131,7 @@ program
     execSync(`casualos pack-aux --overwrite "${packagePath}" "${filePath}"`, {
       stdio: "inherit",
     });
+    execSync(`casualos minify-aux "${filePath}"`, { stdio: "inherit" });
     const aux = await readFile(filePath, "utf-8");
     const auxJson = JSON.parse(aux);
     await uploadPattern(
@@ -195,6 +196,7 @@ program
     execSync(`casualos pack-aux --overwrite "${packagePath}" "${filePath}"`, {
       stdio: "inherit",
     });
+    execSync(`casualos minify-aux "${filePath}"`, { stdio: "inherit" });
     const aux = await readFile(filePath, "utf-8");
     const auxJson: StoredAuxVersion1 = JSON.parse(aux);
 
