@@ -9,7 +9,7 @@
 
 .modal {
   width: 375px;
-  background: #fff;
+  background: var(--background);
   border-radius: 8px;
   box-shadow: 0 10px 30px rgba(0, 0, 0, 0.15);
   padding: 10px 10px 45px 10px;
@@ -19,9 +19,27 @@
   left: 15px;
 }
 
+.translationSettingsModal {
+  left: 185px;
+  top: 100px;
+  width: 200px;
+  z-index: 1000;
+  padding: 5px;
+  border-radius: 5px;
+}
+
+.settingsIcon {
+  height: 30px;
+  width: 30px;
+  background: var(--panelBackground);
+  border-radius: 5px;
+  padding: 2px;
+  cursor: pointer;
+}
+
 .emptyCircle {
   display: inline-block;
-  border: 1px solid black;
+  border: 2px solid transparent;
   height: 15px;
   width: 15px;
   border-radius: 50%;
@@ -48,6 +66,7 @@
   height: 300px;
   overflow-y: auto;
   scrollbar-width: none;
+  font-family: "Satoshi";
 }
 
 .item {
@@ -86,7 +105,7 @@
   left: 0;
   bottom: 0;
   height: fit-content;
-  background-color: #fff;
+  background-color: var(--background);
   border-bottom-right-radius: 10px;
   border-bottom-left-radius: 10px;
 }
@@ -95,10 +114,21 @@
   .modal {
     width: 100%;
     left: 0;
-    top: 55px;
-    height: calc(100% - 65px);
+    top: 50px;
+    height: calc(100% - 60px);
     border-radius: 0;
     box-shadow: none;
+  }
+
+  .translationSettingsModal {
+    top: 100px;
+    padding: 0px 10px;
+    height: fit-content;
+    width: 200px;
+    left: auto;
+    right: 10px;
+    box-shadow: 0 10px 30px rgba(0, 0, 0, 0.15);
+    border-radius: 5px;
   }
 
   .language-list {

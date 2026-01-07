@@ -1,6 +1,11 @@
 const { useState, useRef, useEffect } = os.appHooks;
 
-function SharePopup({ shareTitle, shareReference, translation ="BSB",popupTitle = "Share" }) {
+function SharePopup({
+  shareTitle,
+  shareReference,
+  translation = "BSB",
+  popupTitle = "Share",
+}) {
   const [copied, setCopied] = useState(false);
   const [includeReference, setIncludeReference] = useState(true);
 
@@ -14,39 +19,30 @@ function SharePopup({ shareTitle, shareReference, translation ="BSB",popupTitle 
     : shareTitle || "";
 
   const platforms = [
-    {
-      name: "Discord",
-      icon: "https://cdn.prod.website-files.com/6257adef93867e50d84d30e2/636e0a6a49cf127bf92de1e2_icon_clyde_blurple_RGB.png",
-      share: () => {
-        os.setClipboard(shareText);
-        window.open("https://discord.com/channels/@me", "_blank");
-      },
-    },
+    // {
+    //   name: "Discord",
+    //   icon: "https://cdn.prod.website-files.com/6257adef93867e50d84d30e2/636e0a6a49cf127bf92de1e2_icon_clyde_blurple_RGB.png",
+    //   share: () => {
+    //     os.setClipboard(shareText);
+    //     window.open("https://discord.com/channels/@me", "_blank");
+    //   },
+    // },
     {
       name: "Telegram",
       icon: "https://upload.wikimedia.org/wikipedia/commons/thumb/8/82/Telegram_logo.svg/512px-Telegram_logo.svg.png",
-      share: () =>
-        window.open(
-          `https://t.me/share/url?text=${encodeURIComponent(shareText)}`,
-          "_blank"
-        ),
+      share: () => window.open(`tg://msg?text=${shareText}`, "_blank"),
     },
     {
       name: "Whatsapp",
       icon: "https://upload.wikimedia.org/wikipedia/commons/thumb/6/6b/WhatsApp.svg/512px-WhatsApp.svg.png",
-      share: () =>
-        window.open(
-          `https://wa.me/?text=${encodeURIComponent(shareText)}`,
-          "_blank"
-        ),
+      share: () => os.openURL(`https://wa.me/?text=${shareText}`),
     },
     {
       name: "Facebook",
       icon: "https://upload.wikimedia.org/wikipedia/commons/thumb/0/05/Facebook_Logo_%282019%29.png/600px-Facebook_Logo_%282019%29.png",
       share: () =>
-        window.open(
-          `https://www.facebook.com/sharer/sharer.php?quote=${encodeURIComponent(shareText)}`,
-          "_blank"
+        os.openURL(
+          `https://www.facebook.com/sharer.php?u=https://ao.bot/?inst=${os.getCurrentInst()}&book=${configBot.tags.book}&chapter=${configBot.tags.chapter}`
         ),
     },
     {
@@ -63,42 +59,46 @@ function SharePopup({ shareTitle, shareReference, translation ="BSB",popupTitle 
       icon: "https://upload.wikimedia.org/wikipedia/commons/thumb/c/ca/LinkedIn_logo_initials.png/600px-LinkedIn_logo_initials.png",
       share: () =>
         window.open(
-          `https://www.linkedin.com/sharing/share-offsite/?summary=${encodeURIComponent(shareText)}`,
+          `https://www.linkedin.com/shareArticle?text=${shareText}`,
           "_blank"
         ),
     },
-    {
-      name: "Reddit",
-      icon: "https://pngdownload.io/wp-content/uploads/2023/12/Reddit-Logo-emblem-of-the-online-platform-transparent-png-image-jpg.webp",
-      share: () =>
-        window.open(
-          `https://reddit.com/submit?title=${encodeURIComponent(shareText)}`,
-          "_blank"
-        ),
-    },
-    {
-      name: "Instagram",
-      icon: "https://upload.wikimedia.org/wikipedia/commons/thumb/e/e7/Instagram_logo_2016.svg/512px-Instagram_logo_2016.svg.png",
-      share: () => {
-        os.setClipboard(shareText);
-        window.open("https://instagram.com", "_blank");
-      },
-    },
-    {
-      name: "Text",
-      svg: (
-        <svg
-          viewBox="0 0 24 24"
-          fill="currentColor"
-          style={{ width: 28, height: 28, color: "#4A90D9" }}
-        >
-          <path d="M20 2H4c-1.1 0-2 .9-2 2v18l4-4h14c1.1 0 2-.9 2-2V4c0-1.1-.9-2-2-2zm0 14H6l-2 2V4h16v12z" />
-        </svg>
-      ),
-      share: () => {
-        window.location.href = `sms:?body=${encodeURIComponent(shareText)}`;
-      },
-    },
+    // {
+    //   name: "Reddit",
+    //   icon: "https://pngdownload.io/wp-content/uploads/2023/12/Reddit-Logo-emblem-of-the-online-platform-transparent-png-image-jpg.webp",
+    //   share: () =>
+    //     window.open(
+    //       `https://reddit.com/submit?title=${encodeURIComponent(shareText)}`,
+    //       "_blank"
+    //     ),
+    // },
+    // {
+    //   name: "Instagram",
+    //   icon: "https://upload.wikimedia.org/wikipedia/commons/thumb/e/e7/Instagram_logo_2016.svg/512px-Instagram_logo_2016.svg.png",
+    //   share: () => {
+    //     os.setClipboard(shareText);
+    //     window.open("https://instagram.com", "_blank");
+    //   },
+    // },
+    ...(globalThis.IsMobileNow()
+      ? [
+          {
+            name: "Text",
+            svg: (
+              <svg
+                viewBox="0 0 24 24"
+                fill="currentColor"
+                style={{ width: 28, height: 28, color: "#4A90D9" }}
+              >
+                <path d="M20 2H4c-1.1 0-2 .9-2 2v18l4-4h14c1.1 0 2-.9 2-2V4c0-1.1-.9-2-2-2zm0 14H6l-2 2V4h16v12z" />
+              </svg>
+            ),
+            share: () => {
+              window.location.href = `sms:?body=${encodeURIComponent(shareText)}`;
+            },
+          },
+        ]
+      : []),
     {
       name: "Copy",
       svg: (
@@ -198,7 +198,7 @@ function SharePopup({ shareTitle, shareReference, translation ="BSB",popupTitle 
 
           {/* Toggle Options */}
           <div style={{ display: "flex", gap: 16, marginBottom: 20 }}>
-          <label
+            <label
               style={{
                 display: "flex",
                 alignItems: "center",
@@ -248,7 +248,6 @@ function SharePopup({ shareTitle, shareReference, translation ="BSB",popupTitle 
                 Only verse text
               </span>
             </label>
-            
           </div>
 
           {/* Platform Grid */}
@@ -459,4 +458,157 @@ const QRCodeComponent = ({ url = "https://example.com/session/12345" }) => {
   );
 };
 
-return { SharePopup, QRCodeComponent };
+const JoinSessionComponent = ({ onJoin, translations = {} }) => {
+  const [sessionCode, setSessionCode] = useState("");
+
+  const t = {
+    joinSession: translations.joinSession || "Join Session",
+    enterSessionCode:
+      translations.enterSessionCode || "Enter session code to join new session",
+    sessionCodePlaceholder:
+      translations.sessionCodePlaceholder || "Enter Session code",
+    join: translations.join || "Join",
+  };
+
+  const handleJoin = () => {
+    if (sessionCode.trim()) {
+      onJoin(sessionCode.trim());
+      CloseModal();
+    }
+  };
+
+  const handleKeyPress = (e) => {
+    if (e.key === "Enter") {
+      handleJoin();
+    }
+  };
+
+  return (
+    <div
+      onClick={() => CloseModal()}
+      style={{
+        position: "fixed",
+        inset: 0,
+        background: "rgba(0,0,0,0.5)",
+        display: "flex",
+        alignItems: "center",
+        justifyContent: "center",
+        zIndex: 1000,
+      }}
+    >
+      <div
+        onClick={(e) => e.stopPropagation()}
+        style={{
+          background: "#fff",
+          borderRadius: 12,
+          padding: "32px 24px",
+          maxWidth: 543,
+          width: "90%",
+          maxHeight: 373,
+          boxShadow: "rgba(0, 0, 0, 0.15) 0px 10px 40px",
+          height: "30%",
+        }}
+      >
+        {/* Logo */}
+        <div
+          style={{
+            display: "flex",
+            justifyContent: "center",
+            marginBottom: 48,
+          }}
+        >
+          <img
+            src="https://res.cloudinary.com/dfbtwwa8p/image/upload/v1767786038/Seed_Bible_-_All_Logos_2025-04_dd6je1.png"
+            style={{
+              height: "42px",
+              objectFit: "contain",
+            }}
+            alt="Seed Bible"
+          />
+        </div>
+
+        {/* Title */}
+        <h2
+          style={{
+            textAlign: "center",
+            color: "#000",
+            marginTop: 0,
+            marginBottom: 8,
+            fontSize: 22,
+            fontWeight: 600,
+            position: "relative",
+            fontFamily: "Satoshi",
+          }}
+        >
+          {t.joinSession}
+        </h2>
+
+        {/* Description */}
+        <p
+          style={{
+            marginTop: 0,
+            marginBottom: 40,
+            fontSize: 16,
+            lineHeight: 1.4,
+            position: "relative",
+            fontFamily: "'DM Sans'",
+            color: "#585858",
+            textAlign: "center",
+          }}
+        >
+          {t.enterSessionCode}
+        </p>
+
+        {/* Input Field */}
+        <input
+          type="text"
+          value={sessionCode}
+          onChange={(e) => setSessionCode(e.target.value)}
+          onKeyPress={handleKeyPress}
+          placeholder={t.sessionCodePlaceholder}
+          style={{
+            width: "100%",
+            padding: "12px 16px",
+            fontSize: 14,
+            border: "none",
+            borderRadius: 4,
+            backgroundColor: "#dbdbdb",
+            outline: "none",
+            boxSizing: "border-box",
+            marginBottom: 16,
+            color: "rgb(127, 64, 64)",
+            height: 48,
+            position: "relative",
+          }}
+        />
+
+        {/* Join Button */}
+        <button
+          onClick={handleJoin}
+          style={{
+            width: "100%",
+            cursor: "pointer",
+            padding: 12,
+            background: "#d36433",
+            color: "white",
+            border: "1px solid #d36433",
+            borderRadius: 4,
+            fontSize: 15,
+            fontWeight: 500,
+            cursor: "pointer",
+            transition: "background 0.2s",
+            height: 48,
+            position: "relative",
+            boxSizing: "border-box",
+          }}
+          // onMouseOver={(e) => (e.currentTarget.style.background = "#b87a50")}
+          // onMouseOut={(e) => (e.currentTarget.style.background = "#c9885c")}
+        >
+          {t.join}
+        </button>
+      </div>
+    </div>
+  );
+};
+
+return { SharePopup, QRCodeComponent, JoinSessionComponent };

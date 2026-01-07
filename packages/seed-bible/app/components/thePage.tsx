@@ -87,8 +87,15 @@ function ThePage({
   }, [T]);
   const { inSession, role, config } = getUserSessionInfo(configBot.id);
   const [tabEntered, setTabEntered] = useState(false);
-  const { updateTab, tabs, activeTab, setActiveTab, sharedTab } =
-    useTabsContext();
+  const {
+    updateTab,
+    tabs,
+    activeTab,
+    setActiveTab,
+    sharedTab,
+    activeSpace,
+    spaces,
+  } = useTabsContext();
   const { isDragging, setIsDragging, Element, position } = useMouseMove();
   const { navFunctions, setNavFunctions, scrollToVerse } = useBibleContext();
   const [inHold, setInHold] = useState();
@@ -198,6 +205,7 @@ function ThePage({
             const defaultTranslation = newTranslations[0];
             newTranslations = newTranslations.map((trans) => {
               return {
+                name: trans.name,
                 languageEnglishName: trans.languageEnglishName,
                 id: trans.id,
                 listOfBooksApiLink: `${url.origin}${trans.listOfBooksApiLink}`,
@@ -213,6 +221,7 @@ function ThePage({
               }
             }
             const translation = {
+              name: defaultTranslation.name,
               languageEnglishName: defaultTranslation.languageEnglishName,
               id: defaultTranslation.id,
               listOfBooksApiLink: `${url.origin}${defaultTranslation.listOfBooksApiLink}`,
@@ -437,8 +446,134 @@ function ThePage({
   }, []);
 
   useEffect(() => {
-    loadData();
+    let cancelled = false;
+
+    async function loadDataSafe() {
+      if (!tab) return;
+      const bible = new BibleDataManager({
+        tabId: tab?.id,
+        translation: tab.data.translation,
+        bookId: tab.data.bookId,
+        chapter: tab.data.chapter,
+      });
+      setBible(bible);
+
+      console.log("bible data: ", bible);
+
+      await bible.fetch();
+
+      if (cancelled) return; // Don't update state if navigation changed
+
+      globalThis.BookId = bible.bookId;
+
+      const { data, loading, error } = bible.getState();
+      console.log(data, tab, "the data loaded");
+
+      globalThis.refreshScrollers && globalThis.refreshScrollers();
+      const { firstBookData, bookTranslationId, baseUrl, books } =
+        await loadTranslationFromUrl();
+
+      if (cancelled) return; // Check again after async operation
+
+      if (!configBot.tags.defaultChecked) {
+        if (firstBookData && bookTranslationId && baseUrl) {
+          await bible.changeTranslation(
+            bookTranslationId,
+            firstBookData,
+            baseUrl
+          );
+        }
+        if (cancelled) return;
+
+        if (books) {
+          if (configBot.tags?.book && books && books?.length > 0) {
+            let bookData;
+            books.forEach((book) => {
+              if (book.id.toLowerCase() === configBot.tags.book.toLowerCase()) {
+                bookData = book;
+              }
+            });
+            if (bookData) {
+              let chapterNo;
+              if (Number(configBot.tags.chapter) < bookData.numberOfChapters)
+                chapterNo = configBot.tags.chapter;
+              const chapterUrl = chapterNo
+                ? bookData.firstChapterApiLink.replace(
+                    "1.json",
+                    `${chapterNo}.json`
+                  )
+                : bookData.firstChapterApiLink.replace(
+                    "1.json",
+                    `${tab.data.chapter}.json`
+                  );
+              await bible.open(
+                bookData.id,
+                configBot.tags.chapter || 1,
+                bookTranslationId,
+                chapterUrl
+              );
+            }
+          } else if (configBot.tags?.chapter && books?.length > 0) {
+            let bookData;
+            books.forEach((book) => {
+              if (book.id.toLowerCase() === tab.data.bookId.toLowerCase()) {
+                bookData = book;
+              }
+            });
+            let chapterNo;
+            if (Number(configBot.tags.chapter) < bookData.numberOfChapters)
+              chapterNo = configBot.tags.chapter;
+            const chapterUrl = chapterNo
+              ? bookData.firstChapterApiLink.replace(
+                  "1.json",
+                  `${chapterNo}.json`
+                )
+              : bookData.firstChapterApiLink.replace(
+                  "1.json",
+                  `${tab.data.chapter}.json`
+                );
+            await bible.open(
+              bookData.id,
+              configBot.tags.chapter || 1,
+              bookTranslationId,
+              chapterUrl
+            );
+          }
+        } else {
+          if (configBot.tags?.book) {
+            await bible.open(
+              configBot.tags?.book,
+              configBot.tags?.chapter || tab.data.chapter
+            );
+          } else if (configBot.tags?.chapter) {
+            await bible.open(tab.data.book, configBot.tags?.chapter);
+          }
+        }
+        configBot.tags.defaultChecked = true;
+      } else {
+        if (masks?.allTranslations) {
+          for (const translation of masks.allTranslations) {
+            if (translation.id === tab.data.translation) {
+              setTagMask(thisBot, "selectedTranslation", translation, "local");
+              break;
+            }
+          }
+        }
+      }
+
+      if (cancelled) return; // Final check before setting data
+
+      setData(bible.data);
+      SetShowToolbar(true);
+      whisper(getBot("system", "introduction.searchBar"), "initialize");
+    }
+
+    loadDataSafe();
     globalThis.CurrentTab = tab;
+
+    return () => {
+      cancelled = true; // Cancel on cleanup
+    };
   }, [tab]);
 
   // GLOBAL GUARDS
@@ -974,6 +1109,7 @@ function ThePage({
         to: "panel",
       });
     }
+    globalThis.LastClickedPanelUpdate = panelId;
   }
 
   function Update(tab) {
@@ -1506,7 +1642,7 @@ function ThePage({
               position: "relative",
             }}
           >
-            <PageToolbar />
+            <PageToolbar tab={tab} panelId={panelId} />
           </div>
           <div style={{ height: "160px" }}></div>
 
@@ -1537,7 +1673,7 @@ function ThePage({
                       }
                     : {
                         position: "fixed",
-                        left: toolbarPos.x  -50,
+                        left: toolbarPos.x - 50,
                         top: toolbarPos.y,
                         zIndex: 10000,
                         cursor: dragToolbar ? "grabbing" : "grab",
@@ -1555,6 +1691,8 @@ function ThePage({
                   highlighted={highlighted}
                   clickedVersesContext={clickedVersesContext}
                   onColorSelect={handleColorSelect}
+                  activeSpace={activeSpace}
+                  spaces={spaces}
                   onClose={() => {
                     setClickedVerses([]);
                     setTimeout(() => {
@@ -1630,7 +1768,11 @@ function ThePage({
                   position: "relative",
                 }}
               >
-                <PageToolbar path="showInStarterToolbar" />
+                <PageToolbar
+                  panelId={panelId}
+                  tab={tab}
+                  path="showInStarterToolbar"
+                />
               </div>
             </div>
           </div>
@@ -1640,18 +1782,26 @@ function ThePage({
   );
 }
 
-function PageToolbar({ path = "showInPageToolbar" }) {
+function PageToolbar({ panelId, tab, path = "showInPageToolbar" }) {
   const { tools } = useBibleContext();
 
   const visibleTools = tools.filter((tool) => tool[path]);
   if (visibleTools.length === 0) return null;
 
   return (
-    <div className="thePageToolbar">
+    <div
+      onClick={() => {
+        globalThis.LastClickedPanelUpdate = panelId;
+      }}
+      className="thePageToolbar"
+    >
       {visibleTools.map((tool) => (
         <div
           onClick={(e) => {
-            tool.onClick({ mode: "panel" });
+            globalThis.LastClickedPanelUpdate = panelId;
+            setTimeout(() => {
+              tool.onClick({ mode: !tab ? "panel" : "" });
+            }, 5);
           }}
           className="tool-preview-page"
           key={tool.label}
@@ -2227,7 +2377,7 @@ function Section({
                         highlighted?.[verse.verseNumber].chapter === chapter) ||
                       commandHighlight.includes(verse.verseNumber)
                         ? wordHighlightsTC
-                        : "var(--pageTextColor) !important",
+                        : "",
                     transition: "background-color 0.2s ease, border 0.2s ease",
                     "border-radius":
                       highlighted?.[verse.verseNumber] || isClicked

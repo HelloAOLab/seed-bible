@@ -96,6 +96,7 @@ function SubComponent({
   type,
   textType,
   setTextType,
+  showChangeOptions = true
 }) {
   const playlists = useMemo(
     () => globalThis[`${"default"}playlists`] || [],
@@ -520,6 +521,7 @@ const AttachLink = ({
   onDateClick,
   isTags = false,
   isPlaylist = false,
+  showSaveButton = true
 }) => {
   const isloggedIN = authBot?.id;
 

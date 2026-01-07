@@ -6,11 +6,10 @@ const CalendarTitle = ({ setScheduleTitle, scheduleTitle, isSchedule }) => {
   const [label, setLabel] = useState(() => {
     return localStorage.getItem("label") || t("initialTitle");
   });
-  console.log(scheduleTitle, "sasasasa");
   const schTitle = scheduleTitle.toUpperCase();
-  useEffect(() => {
+  /*useEffect(() => {
     localStorage.setItem("label", label);
-  }, [label]);
+  }, [label]);*/
   const handleClick = async () => {
     const labelVal = await os.showInput("", { title: t("typeCalendarName") });
     if (labelVal) {

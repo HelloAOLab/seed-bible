@@ -285,6 +285,7 @@ export async function upload(
   execSync(`casualos pack-aux --overwrite "${packagePath}" "${filePath}"`, {
     stdio: "ignore",
   });
+  execSync(`casualos minify-aux "${filePath}"`, { stdio: "ignore" });
 
   const aux = await readFile(filePath, "utf-8");
   const auxJson = JSON.parse(aux);

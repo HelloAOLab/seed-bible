@@ -92,7 +92,7 @@ const resources = {
       warmAmber: "Warm Amber",
 
       // Theme - Colors
-      menuBackground: "Menu background",
+      panelBackground: "Menu background",
       panelBackground: "Panel background",
       pageBackground: "Page Background",
       pageTextColor: "Page text color",
@@ -172,6 +172,13 @@ const resources = {
       toolbarIcons: "Toolbar Icons",
       selectionUI: "Selection UI",
       selectionIcons: "Selection Icons",
+      selectionUIDescription: "Selection UI menu for your page...",
+      showSelectedItems: "Show selected verses",
+      showHighlightColors: "Show highlight UI",
+      showIconText: "Show Icon text",
+      copyVerse: "Copy verse",
+      onlyVerseText: "Only verse text",
+      verseTextWithReference: "Verse text with reference",
 
       // Input fields section
       title: "Title",
@@ -292,7 +299,13 @@ const resources = {
       // Sessions
       startSession: "Start session",
       inviteToSession: "Invite to session",
-      joinAnotherSession: "Join another session",
+      joinAnotherSession: "Join a session",
+      goPrivate: "Go private",
+      goPublic: "Go public",
+      joinSession: "Join Session",
+      enterSessionCode: "Enter session code to join new session",
+      sessionCodePlaceholder: "Enter Session code",
+      join: "Join",
 
       // Help
       reportBug: "Report a bug",
@@ -768,6 +781,21 @@ const resources = {
       openCalendar: "Open Calendar",
       openMap: "Open Map",
       openBoth: "Open Both",
+
+      // BookSelector
+      searchBook: "Search book...",
+      searchTranslation: "Search translations...",
+      oldTestament: "Old Testament",
+      newTestament: "New Testament",
+      oldTestamentShort: "OT",
+      newTestamentShort: "NT",
+      apocrypha: "Apocrypha",
+      allBooks: "All Books",
+      customTranslations: "Custom Translations",
+      fromId: "from ID",
+      fromUrl: "from URL",
+      enterId: "Enter ID",
+      Queue: "Queue",
     },
   },
   es: {
@@ -853,7 +881,7 @@ const resources = {
       warmAmber: "Ámbar cálido",
 
       // Theme - Colors
-      menuBackground: "Fondo del menú",
+      panelBackground: "Fondo del menú",
       pageBackground: "Fondo de página",
       pageTextColor: "Color de texto",
       iconsColor: "Color de iconos",
@@ -971,6 +999,13 @@ const resources = {
       startSession: "Iniciar sesión",
       inviteToSession: "Invitar a sesión",
       joinAnotherSession: "Unirse a otra sesión",
+      goPrivate: "Ir a privado",
+      goPublic: "Ir a público",
+      joinSession: "Unirse a sesión",
+      enterSessionCode:
+        "Ingrese el código de sesión para unirse a una nueva sesión",
+      sessionCodePlaceholder: "Ingrese el código de sesión",
+      join: "Unirse",
 
       // Help
       reportBug: "Reportar error",
@@ -1457,6 +1492,21 @@ const resources = {
       openCalendar: "Abrir calendario",
       openMap: "Abrir mapa",
       openBoth: "Abrir ambos",
+
+      // BookSelector
+      searchBook: "Buscar libro...",
+      searchTranslation: "Buscar traducciones...",
+      oldTestament: "Antiguo Testamento",
+      newTestament: "Nuevo Testamento",
+      oldTestamentShort: "AT",
+      newTestamentShort: "NT",
+      apocrypha: "Apocrypha",
+      allBooks: "Todos los libros",
+      customTranslations: "Traducciones personalizadas",
+      fromId: "desde ID",
+      fromUrl: "desde URL",
+      enterId: "Ingresar ID",
+      Queue: "Cola",
     },
   },
   ar: {
@@ -1542,7 +1592,7 @@ const resources = {
       warmAmber: "عنبر دافئ",
 
       // Theme - Colors
-      menuBackground: "خلفية القائمة",
+      panelBackground: "خلفية القائمة",
       pageBackground: "خلفية الصفحة",
       pageTextColor: "لون نص الصفحة",
       iconsColor: "لون الأيقونات",
@@ -1660,6 +1710,12 @@ const resources = {
       startSession: "بدء الجلسة",
       inviteToSession: "دعوة للجلسة",
       joinAnotherSession: "الانضمام لجلسة أخرى",
+      goPrivate: "الذهاب للخاص",
+      goPublic: "الذهاب للعام",
+      joinSession: "الانضمام للجلسة",
+      enterSessionCode: "أدخل رمز الجلسة للانضمام إلى جلسة جديدة",
+      sessionCodePlaceholder: "أدخل رمز الجلسة",
+      join: "انضمام",
 
       // Help
       reportBug: "الإبلاغ عن خطأ",
@@ -2125,6 +2181,21 @@ const resources = {
       openCalendar: "فتح التقويم",
       openMap: "فتح الخريطة",
       openBoth: "فتح كليهما",
+
+      // BookSelector
+      searchBook: "بحث عن كتاب...",
+      searchTranslation: "بحث عن ترجمة...",
+      oldTestament: "العهد القديم",
+      newTestament: "العهد الجديد",
+      oldTestamentShort: "العهد القديم",
+      newTestamentShort: "العهد الجديد",
+      apocrypha: "الأبوكريفا",
+      allBooks: "جميع الكتب",
+      customTranslations: "ترجمات مخصصة",
+      fromId: "من ID",
+      fromUrl: "من URL",
+      enterId: "أدخل ID",
+      Queue: "الطابور",
     },
   },
   hi: {
@@ -2210,7 +2281,7 @@ const resources = {
       warmAmber: "गर्म एम्बर",
 
       // Theme - Colors
-      menuBackground: "मेनू पृष्ठभूमि",
+      panelBackground: "मेनू पृष्ठभूमि",
       pageBackground: "पृष्ठ पृष्ठभूमि",
       pageTextColor: "पृष्ठ टेक्स्ट रंग",
       iconsColor: "आइकन रंग",
@@ -2328,6 +2399,12 @@ const resources = {
       startSession: "सत्र शुरू करें",
       inviteToSession: "सत्र में आमंत्रित करें",
       joinAnotherSession: "दूसरे सत्र में शामिल हों",
+      goPrivate: "निजी में जाएं",
+      goPublic: "सार्वजनिक में जाएं",
+      joinSession: "सत्र में शामिल हों",
+      enterSessionCode: "नए सत्र में शामिल होने के लिए सत्र कोड दर्ज करें",
+      sessionCodePlaceholder: "सत्र कोड दर्ज करें",
+      join: "शामिल हों",
 
       // Help
       reportBug: "बग रिपोर्ट करें",
@@ -2807,6 +2884,20 @@ const resources = {
       openCalendar: "कैलेंडर खोलें",
       openMap: "मानचित्र खोलें",
       openBoth: "दोनों खोलें",
+
+      searchBook: "पुस्तक खोजें...",
+      searchTranslation: "अनुवाद खोजें...",
+      oldTestament: "पुराना नियम",
+      newTestament: "नया नियम",
+      oldTestamentShort: "पु.नि",
+      newTestamentShort: "न.नि",
+      apocrypha: "अपोक्रिफल",
+      allBooks: "सभी पुस्तकें",
+      customTranslations: "अनुवाद में कस्टमाइज़ करें",
+      fromId: "ID से",
+      fromUrl: "URL से",
+      enterId: "ID दर्ज करें",
+      Queue: "क्यू",
     },
   },
 };
@@ -2931,6 +3022,11 @@ export function t(key: string, options?: any): string {
 export function changeLanguage(lng: string): Promise<void> {
   if (i18nInstance) {
     localStorage.setItem("i18nextLng", lng);
+    // Update document direction for RTL languages
+    const langConfig = availableLanguages.find((l) => l.code === lng);
+    document.documentElement.dir = langConfig?.rtl ? "rtl" : "ltr";
+    document.documentElement.lang = lng;
+    shout("onLanguageChanged", { lng });
     return i18nInstance.changeLanguage(lng);
   }
   return Promise.resolve();
@@ -2958,6 +3054,29 @@ export function getTranslations(): Record<string, string> {
     resources[lang as keyof typeof resources]?.translation ||
     resources.en.translation
   );
+}
+
+const numberTranslations: Record<string, string[]> = {
+  hi: ["०", "१", "२", "३", "४", "५", "६", "७", "८", "९"],
+  ar: ["٠", "١", "٢", "٣", "٤", "٥", "٦", "٧", "٨", "٩"],
+  en: ["0", "1", "2", "3", "4", "5", "6", "7", "8", "9"],
+  es: ["0", "1", "2", "3", "4", "5", "6", "7", "8", "9"],
+};
+
+export function getTranslatedNumber(num: number): string {
+  const lang = getCurrentLanguage();
+  const numStringArr = String(num).split("");
+  const digitsForLang = numberTranslations[lang] ?? numberTranslations["en"];
+  return numStringArr
+    .map((digit) => {
+      if (digit >= "0" && digit <= "9") {
+        const idx = parseInt(digit, 10);
+        const translated = digitsForLang?.[idx];
+        return translated ?? digit;
+      }
+      return digit;
+    })
+    .join("");
 }
 
 export { resources };

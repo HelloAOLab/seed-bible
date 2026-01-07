@@ -13,6 +13,10 @@ import {
   Panel4,
   Panel3Row,
   Panel4Row,
+  StartSessionIcon,
+  JoinSession,
+  TheNewSettingsIcon,
+  GoPrivateIcon,
 } from "app.components.icons";
 import { useBibleContext } from "app.hooks.bibleVariables";
 import { useSideBarContext } from "app.hooks.sideBar";
@@ -464,7 +468,7 @@ function Tab({
       console.log("canvas replacing");
       setActiveTab(el.id);
       const id = uuid();
-      ReplaceApplication(checkEmpty.id, {
+      ReplaceApplication(LastClickedPanelUpdate || checkEmpty.id, {
         id: id,
         App: <ThePageWithEditor tab={el} panelId={id} preferTab={true} />,
         to: "panel",
@@ -526,9 +530,9 @@ function Tab({
       globalThis?.activeCanvasId === activeTab
     );
     setActiveTab(el.id);
-    if (globalThis[`UpdateTabWidthId${el?.id}`])
-      globalThis[`UpdateTabWidthId${el?.id}`](el);
-    globalThis.UpdateTab(el);
+    // if (globalThis[`UpdateTabWidthId${el?.id}`])
+    //   globalThis[`UpdateTabWidthId${el?.id}`](el);
+    // globalThis.UpdateTab(el);
   };
   const circles = onlineUsers
     ? Object.fromEntries(
@@ -748,7 +752,7 @@ function Folder({ folder, onlineUsers, collapsed }) {
   );
 }
 
-function SideBar() {
+function SideBar({ panelsNumber }) {
   const {
     tabs,
     folders,
@@ -1035,13 +1039,24 @@ function SideBar() {
       </div>
     );
   };
-
+  const TransparentSvg = (props) => (
+    <svg
+      width={24}
+      height={24}
+      viewBox="0 0 24 24"
+      fill="none"
+      xmlns="http://www.w3.org/2000/svg"
+      {...props}
+    >
+      <rect width={24} height={24} fill="transparent" />
+    </svg>
+  );
   const MenuOptions = {
     type: "normal",
     items: [
       {
         disabled: false,
-        icon: <MenuIcon name="screen_record" />,
+        icon: <GoPrivateIcon />,
         title: t("startSession"),
         onClick: () => {
           // os.log(globalThis?.StartSession,globalThis)
@@ -1050,7 +1065,8 @@ function SideBar() {
       },
       {
         disabled: false,
-        icon: <MenuIcon name="logout" />,
+        // icon:<JoinSession/>,
+        icon: <TransparentSvg />,
         title: t("inviteToSession"),
         onClick: async () => {
           const { QRCodeComponent } = thisBot.Chips();
@@ -1060,31 +1076,52 @@ function SideBar() {
       },
       {
         disabled: false,
-        icon: <MenuIcon name="content_copy" />,
+        icon: <TransparentSvg />,
         title: t("joinAnotherSession"),
         onClick: async () => {
-          const id = await os.showInput("", {
-            title: t("enterUrl"),
-          });
-          if (id) os.goToURL(id);
+          const { JoinSessionComponent } = thisBot.Chips();
+          const translations = {
+            joinSession: t("joinSession"),
+            enterSessionCode: t("enterSessionCode"),
+            sessionCodePlaceholder: t("sessionCodePlaceholder"),
+            join: t("join"),
+          };
+          ShowModal(
+            <JoinSessionComponent
+              onJoin={(code) => os.goToURL(code)}
+              translations={translations}
+            />
+          );
         },
       },
+      {
+        disabled: false,
+        icon: <TransparentSvg />,
+        title: globalThis.IsPrivateMode?.() ? t("goPublic") : t("goPrivate"),
+        onClick: async () => {
+          if (globalThis.TogglePrivateMode) {
+            await globalThis.TogglePrivateMode();
+          }
+        },
+      },
+
       { type: "line" },
       {
         disabled: false,
-        icon: <MenuIcon name="fullscreen" />,
+        // icon: <MenuIcon name={showSearch ? "visibility_off" : "visibility"} />,
+        icon: <MenuIcon name="search" />,
+        title: showSearch ? t("hideSearch") : t("showSearch"),
+        onClick: toggleSearchVisibility,
+      },
+      {
+        disabled: false,
+        icon: <MenuIcon name="crop_free" />,
         title: t("fullScreen"),
         onClick: () => {
           setFullScreen(true);
         },
       },
-      { type: "line" },
-      {
-        disabled: false,
-        icon: <MenuIcon name={showSearch ? "visibility_off" : "visibility"} />,
-        title: showSearch ? t("hideSearch") : t("showSearch"),
-        onClick: toggleSearchVisibility,
-      },
+      // { type: "line" },
       // {
       //     disabled: false,
       //     icon: <MenuIcon name={editMode ? "edit_off" : "edit"} />,
@@ -1343,13 +1380,13 @@ function SideBar() {
                   }}
                   onMouseLeave={() => clearTimeout(globalThis._holdTimeout)}
                 >
-                  {customScreens?.value <= 1 ? (
+                  {panelsNumber <= 1 ? (
                     <SingleScreenIcon />
-                  ) : customScreens?.value === 2 ? (
+                  ) : panelsNumber === 2 ? (
                     <DualScreenIcon />
-                  ) : customScreens?.value === 3 ? (
+                  ) : panelsNumber === 3 ? (
                     <ThreeScreenIcon />
-                  ) : customScreens?.value === 4 ? (
+                  ) : panelsNumber === 4 ? (
                     <QuadScreenIcon />
                   ) : null}
                 </span>
@@ -1681,7 +1718,7 @@ export const SpaceUI = () => {
                 onClick={() => setSideBarMode("settings")}
                 className="material-symbols-outlined"
               >
-                settings
+                <TheNewSettingsIcon />
               </span>
               <SettingsProfile />
               <UserProfile />
