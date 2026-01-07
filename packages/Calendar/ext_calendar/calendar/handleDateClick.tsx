@@ -2,15 +2,12 @@ async function handleDateClick({
   info,
   calendarApi,
   experienceConRef,
-
-  // state setters
   setIsEventModalOpen,
   setResourceDate,
   setCurrentResourceId,
   setResorceTime,
   setResourceETime,
   setModalPosition,
-
   setPlaylistMode,
   setScheduleTitle,
   setScheduleDescription,
@@ -18,17 +15,23 @@ async function handleDateClick({
   playlistsToAdd,
   setPlaylistsToAdd,
   setCalendarView,
-
+  setCustomDays,
   setAllEvents,
   setEventInView,
-
-  // helpers / refs
   showEventPopup,
   stripTime,
   getDayDifference,
   dayNameToNumber,
   customDaysRef,
   uuid,
+  setRepeat,
+  setShowCustomRepeat,
+  setSelectedDays,
+  selectedDays,
+  selectedDaysRef,
+  customRepeatRef,
+  selectedOption,
+  setSelectedOption,
 }) {
   // ⛔ ignore clicks inside tippy
   if (info.jsEvent?.target.closest(".tippy-box")) return;
@@ -82,10 +85,15 @@ async function handleDateClick({
     setScheduleTitle,
     setScheduleDescription,
     handleAddReadingPlans,
-    playlistsToAdd,
-    setPlaylistsToAdd,
     calendarApi,
     setCalendarView,
+    setCustomDays,
+    setRepeat,
+    setShowCustomRepeat,
+    setSelectedDays,
+    customRepeatRef,
+    setSelectedOption,
+    selectedOption,
     ({
       title,
       description,
@@ -97,6 +105,7 @@ async function handleDateClick({
       recurVal,
       isPlansTabActive,
     }) => {
+      console.log(selectedDaysRef.current, "selectedDaysref");
       console.log(recurVal, "recurVal");
       if (isPlansTabActive) return;
 
@@ -178,7 +187,7 @@ async function handleDateClick({
         newEvent = {
           title: title || "easter",
           id: uuid(),
-          daysOfWeek: customDaysRef.current,
+          daysOfWeek: selectedDaysRef.current,
           start,
           end,
           allDay: true,

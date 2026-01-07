@@ -22,6 +22,7 @@ const handleDatesSet = await thisBot.handleDateSet();
 const handleDateClick = await thisBot.handleDateClick();
 const handleEventContent = await thisBot.handleEventContent();
 const handleResourceHeader = await thisBot.handleResourceHeader();
+const CustomRepeatModal = await thisBot.RepeatModal();
 const { onToolbarDateClick, onToolbarDateClick1 } =
   await thisBot.onToolbarClick1();
 const addReadingPlans = await thisBot.addReadingPlans();
@@ -64,6 +65,10 @@ const App = () => {
   const [mapViewSelected, setMapViewSelected] = useState(false);
   const [playlistsToAdd, setPlaylistsToAdd] = useState([]);
   const [hasTitle, setHasTitle] = useState(true);
+  const [repeat, setRepeat] = useState("No Repeat");
+  const [showCustomRepeat, setShowCustomRepeat] = useState(false);
+  const [selectedDays, setSelectedDays] = useState([]);
+  const [selectedOption, setSelectedOption] = useState("No Repeat");
 
   const [allEvents, setAllEvents] = useState(() => {
     try {
@@ -111,8 +116,10 @@ const App = () => {
   const [resourceStartDate, setResourceStartDate] = useState();
   const [hiddenGroups, setHiddenGroups] = useState({});
   const [allGroups, setAllGroups] = useState([]);
+  const [customDays, setCustomDays] = useState([]);
   const popoverOpenRef = useRef(false);
   //refs
+  const customRepeatRef = useRef(null);
   const dropdownRef = useRef(null);
   const calendarRef = useRef(null);
   const calendarApi = useRef(null);
@@ -122,13 +129,11 @@ const App = () => {
   const resourceGroupNameRef = useRef(null);
   const experienceConRef = useRef(null);
   const customDaysRef = useRef([]);
-  const toolbarClickHandler = (e) => {
-    if (calendarApi?.current.view.type.includes("resourceTimeline")) {
-      onToolbarDateClick(e, calendarApi);
-    } else {
-      onToolbarDateClick1(e, calendarApi);
-    }
-  };
+  const selectedDaysRef = useRef([]);
+
+  useEffect(() => {
+    selectedDaysRef.current = selectedDays;
+  }, [selectedDays]);
 
   useTodayButtonResponsiveLabel(experienceConRef);
   useEffect(() => {
@@ -291,6 +296,13 @@ const App = () => {
   }, [resourceGroupName]);
 
   //handles
+  const toolbarClickHandler = (e) => {
+    if (calendarApi?.current.view.type.includes("resourceTimeline")) {
+      onToolbarDateClick(e, calendarApi);
+    } else {
+      onToolbarDateClick1(e, calendarApi);
+    }
+  };
 
   const handleToggleSetting = () => setOpenSetting((prev) => !prev);
   const handleSelectionClicking = (type) => {
@@ -525,6 +537,14 @@ const App = () => {
             dayNameToNumber,
             customDaysRef,
             uuid,
+            setRepeat,
+            setShowCustomRepeat,
+            setSelectedDays,
+            selectedDays,
+            selectedDaysRef,
+            customRepeatRef,
+            selectedOption,
+            setSelectedOption,
           }),
 
         datesSet: (info) =>
@@ -541,6 +561,7 @@ const App = () => {
             toolbarClickHandler,
             setModalOpen,
             activeToolbarHandlerRef,
+            setCustomDays,
           }),
 
         eventDidMount: (info) => {
@@ -606,14 +627,14 @@ const App = () => {
   let marginTop;
 
   if (viewType === "multiMonthYear") {
-    height = "449px";
-    marginTop = "89px";
+    height = "450px";
+    marginTop = "86px";
   } else if (viewType === "resourceTimeline") {
     height = "454px";
     marginTop = "71px";
   } else {
     height = "427px";
-    marginTop = "111px";
+    marginTop = "108px";
   }
 
   useDayGridResponsiveLayout(experienceConRef, calendarApi);
@@ -1008,12 +1029,31 @@ const App = () => {
 
         {modalOpen ? (
           <CustomModal
+            setSelectedDays={setSelectedDays}
+            selectedDays={selectedDays}
+            customRepeatRef={customRepeatRef}
             setModalOpen={setModalOpen}
             handleAddReadingPlans={handleAddReadingPlans}
             calendarApi={calendarApi}
+            setRepeat={setRepeat}
+            showCustomRepeat={showCustomRepeat}
+            setShowCustomRepeat={setShowCustomRepeat}
           />
         ) : (
           ""
+        )}
+        {showCustomRepeat && (
+          <div ref={customRepeatRef}>
+            <CustomRepeatModal
+              selectedDays={selectedDays}
+              setSelectedDays={setSelectedDays}
+              initialDate={new Date().toISOString().split("T")[0]}
+              onClose={() => setShowCustomRepeat(false)}
+              onSave={(days) => {
+                setRepeat(`Custom (${days.join(", ")})`);
+              }}
+            />
+          </div>
         )}
         {editEventOpen && (
           <EditEvent
