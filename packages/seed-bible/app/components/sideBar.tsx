@@ -16,6 +16,7 @@ import {
   StartSessionIcon,
   JoinSession,
   TheNewSettingsIcon,
+  GoPrivateIcon,
 } from "app.components.icons";
 import { useBibleContext } from "app.hooks.bibleVariables";
 import { useSideBarContext } from "app.hooks.sideBar";
@@ -1038,13 +1039,24 @@ function SideBar({ panelsNumber }) {
       </div>
     );
   };
-
+  const TransparentSvg = (props) => (
+    <svg
+      width={24}
+      height={24}
+      viewBox="0 0 24 24"
+      fill="none"
+      xmlns="http://www.w3.org/2000/svg"
+      {...props}
+    >
+      <rect width={24} height={24} fill="transparent" />
+    </svg>
+  );
   const MenuOptions = {
     type: "normal",
     items: [
       {
         disabled: false,
-        icon: <StartSessionIcon />,
+        icon: <GoPrivateIcon />,
         title: t("startSession"),
         onClick: () => {
           // os.log(globalThis?.StartSession,globalThis)
@@ -1054,7 +1066,7 @@ function SideBar({ panelsNumber }) {
       {
         disabled: false,
         // icon:<JoinSession/>,
-        icon: <MenuIcon name="person_add" />,
+        icon: <TransparentSvg />,
         title: t("inviteToSession"),
         onClick: async () => {
           const { QRCodeComponent } = thisBot.Chips();
@@ -1064,7 +1076,7 @@ function SideBar({ panelsNumber }) {
       },
       {
         disabled: false,
-        icon: <JoinSession />,
+        icon: <TransparentSvg />,
         title: t("joinAnotherSession"),
         onClick: async () => {
           const { JoinSessionComponent } = thisBot.Chips();
@@ -1084,7 +1096,7 @@ function SideBar({ panelsNumber }) {
       },
       {
         disabled: false,
-        icon: <MenuIcon name="groups" />,
+        icon: <TransparentSvg />,
         title: globalThis.IsPrivateMode?.() ? t("goPublic") : t("goPrivate"),
         onClick: async () => {
           if (globalThis.TogglePrivateMode) {

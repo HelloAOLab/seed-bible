@@ -500,54 +500,44 @@ const JoinSessionComponent = ({ onJoin, translations = {} }) => {
         onClick={(e) => e.stopPropagation()}
         style={{
           background: "#fff",
-          borderRadius: 16,
-          padding: "40px 32px",
-          maxWidth: 400,
+          borderRadius: 12,
+          padding: "32px 24px",
+          maxWidth: 543,
           width: "90%",
-          boxShadow: "0 20px 60px rgba(0, 0, 0, 0.3)",
+          maxHeight: 373,
+          boxShadow: "rgba(0, 0, 0, 0.15) 0px 10px 40px",
+          height: "30%",
         }}
       >
         {/* Logo */}
         <div
           style={{
             display: "flex",
-            flexDirection: "column",
-            alignItems: "center",
-            marginBottom: 24,
+            justifyContent: "center",
+            marginBottom: 48,
           }}
         >
           <img
-            src="https://res.cloudinary.com/dfbtwwa8p/image/upload/v1755365776/717a8527988cca7e0bdc9449ec68581a8400b977_vqc7mx.png"
+            src="https://res.cloudinary.com/dfbtwwa8p/image/upload/v1767786038/Seed_Bible_-_All_Logos_2025-04_dd6je1.png"
             style={{
-              width: "60px",
-              height: "63px",
-              objectFit: "cover",
-              objectPosition: "center",
+              height: "42px",
+              objectFit: "contain",
             }}
             alt="Seed Bible"
           />
-          <span
-            style={{
-              fontSize: 12,
-              fontWeight: 500,
-              letterSpacing: 3,
-              color: "#333",
-              marginTop: 4,
-            }}
-          >
-            BIBLE
-          </span>
         </div>
 
         {/* Title */}
         <h2
           style={{
             textAlign: "center",
-            color: "#333",
+            color: "#000",
             marginTop: 0,
             marginBottom: 8,
             fontSize: 22,
             fontWeight: 600,
+            position: "relative",
+            fontFamily: "Satoshi",
           }}
         >
           {t.joinSession}
@@ -556,11 +546,14 @@ const JoinSessionComponent = ({ onJoin, translations = {} }) => {
         {/* Description */}
         <p
           style={{
-            textAlign: "center",
-            color: "#666",
             marginTop: 0,
-            marginBottom: 24,
-            fontSize: 14,
+            marginBottom: 40,
+            fontSize: 16,
+            lineHeight: 1.4,
+            position: "relative",
+            fontFamily: "'DM Sans'",
+            color: "#585858",
+            textAlign: "center",
           }}
         >
           {t.enterSessionCode}
@@ -575,14 +568,17 @@ const JoinSessionComponent = ({ onJoin, translations = {} }) => {
           placeholder={t.sessionCodePlaceholder}
           style={{
             width: "100%",
-            padding: "14px 16px",
+            padding: "12px 16px",
             fontSize: 14,
-            border: "1px solid #e0e0e0",
-            borderRadius: 8,
-            backgroundColor: "#f5f5f5",
+            border: "none",
+            borderRadius: 4,
+            backgroundColor: "#dbdbdb",
             outline: "none",
             boxSizing: "border-box",
             marginBottom: 16,
+            color: "rgb(127, 64, 64)",
+            height: 48,
+            position: "relative",
           }}
         />
 
@@ -591,16 +587,22 @@ const JoinSessionComponent = ({ onJoin, translations = {} }) => {
           onClick={handleJoin}
           style={{
             width: "100%",
-            padding: "14px",
-            background: "#c97f4e",
-            color: "white",
-            border: "none",
-            borderRadius: 8,
-            fontSize: 16,
-            fontWeight: 600,
             cursor: "pointer",
-            transition: "all 0.2s ease",
+            padding: 12,
+            background: "#d36433",
+            color: "white",
+            border: "1px solid #d36433",
+            borderRadius: 4,
+            fontSize: 15,
+            fontWeight: 500,
+            cursor: "pointer",
+            transition: "background 0.2s",
+            height: 48,
+            position: "relative",
+            boxSizing: "border-box",
           }}
+          // onMouseOver={(e) => (e.currentTarget.style.background = "#b87a50")}
+          // onMouseOut={(e) => (e.currentTarget.style.background = "#c9885c")}
         >
           {t.join}
         </button>
