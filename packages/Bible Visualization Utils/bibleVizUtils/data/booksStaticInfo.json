@@ -14,35 +14,35 @@
         "numberOfChapters":1
     },
     "3 John": {
-        "abbreviation": "3JN",
+        "abbreviation": "3 JN",
         "author": "John",
         "chaptersInfo":[{"amountOfVerses":14,"number":1}],
         "relativeDateRange": {"min": 85, "max": 95},
         "numberOfChapters":1
     },
     "2 John": {
-        "abbreviation": "2JN",
+        "abbreviation": "2 JN",
         "author": "John",
         "chaptersInfo":[{"amountOfVerses":13,"number":1}],
         "relativeDateRange": {"min": 85, "max": 95},
         "numberOfChapters":1
     },
     "1 John": {
-        "abbreviation": "1JN",
+        "abbreviation": "1 JN",
         "author": "John",
         "chaptersInfo":[{"amountOfVerses":10,"number":1},{"amountOfVerses":29,"number":2},{"amountOfVerses":24,"number":3},{"amountOfVerses":21,"number":4},{"amountOfVerses":21,"number":5}],
         "relativeDateRange": {"min": 85, "max": 95},
         "numberOfChapters":5
     },
     "2 Peter": {
-        "abbreviation": "2PE",
+        "abbreviation": "2 PE",
         "author": "Peter",
         "chaptersInfo":[{"amountOfVerses":21,"number":1},{"amountOfVerses":22,"number":2},{"amountOfVerses":18,"number":3}],
         "relativeDateRange": {"min": 65, "max": 68},
         "numberOfChapters":3
     },
     "1 Peter": {
-        "abbreviation": "1PE",
+        "abbreviation": "1 PE",
         "author": "Peter",
         "chaptersInfo":[{"amountOfVerses":25,"number":1},{"amountOfVerses":25,"number":2},{"amountOfVerses":22,"number":3},{"amountOfVerses":19,"number":4},{"amountOfVerses":14,"number":5}],
         "relativeDateRange": {"min": 60, "max": 65},
@@ -77,28 +77,28 @@
         "numberOfChapters":3
     },
     "2 Timothy": {
-        "abbreviation": "2TI",
+        "abbreviation": "2 TI",
         "author": "Paul",
         "chaptersInfo":[{"amountOfVerses":18,"number":1},{"amountOfVerses":26,"number":2},{"amountOfVerses":17,"number":3},{"amountOfVerses":22,"number":4}],
         "relativeDateRange": {"min": 66, "max": 67},
         "numberOfChapters":4
     },
     "1 Timothy": {
-        "abbreviation": "1TI",
+        "abbreviation": "1 TI",
         "author": "Paul",
         "chaptersInfo":[{"amountOfVerses":20,"number":1},{"amountOfVerses":15,"number":2},{"amountOfVerses":16,"number":3},{"amountOfVerses":16,"number":4},{"amountOfVerses":25,"number":5},{"amountOfVerses":21,"number":6}],
         "relativeDateRange": {"min": 62, "max": 66},
         "numberOfChapters":6
     },
     "2 Thessalonians": {
-        "abbreviation": "2TH",
+        "abbreviation": "2 TH",
         "author": "Paul",
         "chaptersInfo":[{"amountOfVerses":12,"number":1},{"amountOfVerses":17,"number":2},{"amountOfVerses":18,"number":3}],
         "relativeDateRange": {"min": 49, "max": 51},
         "numberOfChapters":3
     },
     "1 Thessalonians": {
-        "abbreviation": "1TH",
+        "abbreviation": "1 TH",
         "author": "Paul",
         "chaptersInfo":[{"amountOfVerses":10,"number":1},{"amountOfVerses":20,"number":2},{"amountOfVerses":13,"number":3},{"amountOfVerses":18,"number":4},{"amountOfVerses":28,"number":5}],
         "relativeDateRange": {"min": 49, "max": 51},
@@ -133,14 +133,14 @@
         "numberOfChapters":6
     },
     "2 Corinthians": {
-        "abbreviation": "2CO",
+        "abbreviation": "2 CO",
         "author": "Paul",
         "chaptersInfo":[{"amountOfVerses":24,"number":1},{"amountOfVerses":17,"number":2},{"amountOfVerses":18,"number":3},{"amountOfVerses":18,"number":4},{"amountOfVerses":21,"number":5},{"amountOfVerses":18,"number":6},{"amountOfVerses":16,"number":7},{"amountOfVerses":24,"number":8},{"amountOfVerses":15,"number":9},{"amountOfVerses":18,"number":10},{"amountOfVerses":33,"number":11},{"amountOfVerses":21,"number":12},{"amountOfVerses":14,"number":13}],
         "relativeDateRange": {"min": 55, "max": 56},
         "numberOfChapters":13
     },
     "1 Corinthians": {
-        "abbreviation": "1CO",
+        "abbreviation": "1 CO",
         "author": "Paul",
         "chaptersInfo":[{"amountOfVerses":31,"number":1},{"amountOfVerses":16,"number":2},{"amountOfVerses":23,"number":3},{"amountOfVerses":21,"number":4},{"amountOfVerses":13,"number":5},{"amountOfVerses":20,"number":6},{"amountOfVerses":40,"number":7},{"amountOfVerses":13,"number":8},{"amountOfVerses":27,"number":9},{"amountOfVerses":33,"number":10},{"amountOfVerses":34,"number":11},{"amountOfVerses":31,"number":12},{"amountOfVerses":13,"number":13},{"amountOfVerses":40,"number":14},{"amountOfVerses":58,"number":15},{"amountOfVerses":24,"number":16}],
         "relativeDateRange": {"min": 55, "max": 55},
@@ -329,7 +329,7 @@
         "numberOfChapters":31
     },
     "5 Psalms": {
-        "abbreviation": "5PS",
+        "abbreviation": "5 PS",
         "author": "David",
         "chaptersInfo":[{"amountOfVerses":42,"number":1},{"amountOfVerses":13,"number":2},{"amountOfVerses":31,"number":3},{"amountOfVerses":7,"number":4},{"amountOfVerses":9,"number":5},{"amountOfVerses":9,"number":6},{"amountOfVerses":8,"number":7},{"amountOfVerses":7,"number":8},{"amountOfVerses":17,"number":9},{"amountOfVerses":18,"number":10},{"amountOfVerses":1,"number":11},{"amountOfVerses":28,"number":12},{"amountOfVerses":175,"number":13},{"amountOfVerses":7,"number":14},{"amountOfVerses":8,"number":15},{"amountOfVerses":9,"number":16},{"amountOfVerses":4,"number":17},{"amountOfVerses":8,"number":18},{"amountOfVerses":5,"number":19},{"amountOfVerses":6,"number":20},{"amountOfVerses":5,"number":21},{"amountOfVerses":6,"number":22},{"amountOfVerses":8,"number":23},{"amountOfVerses":8,"number":24},{"amountOfVerses":3,"number":25},{"amountOfVerses":18,"number":26},{"amountOfVerses":3,"number":27},{"amountOfVerses":3,"number":28},{"amountOfVerses":20,"number":29},{"amountOfVerses":25,"number":30},{"amountOfVerses":8,"number":31},{"amountOfVerses":8,"number":32},{"amountOfVerses":24,"number":33},{"amountOfVerses":13,"number":34},{"amountOfVerses":10,"number":35},{"amountOfVerses":7,"number":36},{"amountOfVerses":12,"number":37},{"amountOfVerses":15,"number":38},{"amountOfVerses":21,"number":39},{"amountOfVerses":9,"number":40},{"amountOfVerses":19,"number":41},{"amountOfVerses":13,"number":42},{"amountOfVerses":8,"number":43},{"amountOfVerses":5,"number":44}],
         "relativeDateRange": {"min": -1500, "max": -450},
@@ -337,7 +337,7 @@
         "startingIndex":106
     },
     "4 Psalms": {
-        "abbreviation": "4PS",
+        "abbreviation": "4 PS",
         "author": "David",
         "chaptersInfo":[{"amountOfVerses":17,"number":1},{"amountOfVerses":15,"number":2},{"amountOfVerses":15,"number":3},{"amountOfVerses":4,"number":4},{"amountOfVerses":22,"number":5},{"amountOfVerses":10,"number":6},{"amountOfVerses":12,"number":7},{"amountOfVerses":11,"number":8},{"amountOfVerses":9,"number":9},{"amountOfVerses":8,"number":10},{"amountOfVerses":5,"number":11},{"amountOfVerses":8,"number":12},{"amountOfVerses":28,"number":13},{"amountOfVerses":22,"number":14},{"amountOfVerses":34,"number":15},{"amountOfVerses":44,"number":16},{"amountOfVerses":47,"number":17}],
         "relativeDateRange": {"min": -1500, "max": -450},
@@ -345,7 +345,7 @@
         "startingIndex":89
     },
     "3 Psalms": {
-        "abbreviation": "3PS",
+        "abbreviation": "3 PS",
         "author": "David",
         "chaptersInfo":[{"amountOfVerses":28,"number":1},{"amountOfVerses":23,"number":2},{"amountOfVerses":10,"number":3},{"amountOfVerses":12,"number":4},{"amountOfVerses":20,"number":5},{"amountOfVerses":72,"number":6},{"amountOfVerses":13,"number":7},{"amountOfVerses":19,"number":8},{"amountOfVerses":16,"number":9},{"amountOfVerses":8,"number":10},{"amountOfVerses":18,"number":11},{"amountOfVerses":12,"number":12},{"amountOfVerses":13,"number":13},{"amountOfVerses":17,"number":14},{"amountOfVerses":7,"number":15},{"amountOfVerses":18,"number":16},{"amountOfVerses":52,"number":17}],
         "relativeDateRange": {"min": -1500, "max": -450},
@@ -353,7 +353,7 @@
         "startingIndex":72
     },
     "2 Psalms": {
-        "abbreviation": "2PS",
+        "abbreviation": "2 PS",
         "author": "David",
         "chaptersInfo":[{"amountOfVerses":11,"number":1},{"amountOfVerses":4,"number":2},{"amountOfVerses":26,"number":3},{"amountOfVerses":17,"number":4},{"amountOfVerses":11,"number":5},{"amountOfVerses":9,"number":6},{"amountOfVerses":14,"number":7},{"amountOfVerses":20,"number":8},{"amountOfVerses":23,"number":9},{"amountOfVerses":19,"number":10},{"amountOfVerses":9,"number":11},{"amountOfVerses":6,"number":12},{"amountOfVerses":7,"number":13},{"amountOfVerses":23,"number":14},{"amountOfVerses":13,"number":15},{"amountOfVerses":11,"number":16},{"amountOfVerses":11,"number":17},{"amountOfVerses":17,"number":18},{"amountOfVerses":12,"number":19},{"amountOfVerses":8,"number":20},{"amountOfVerses":12,"number":21},{"amountOfVerses":11,"number":22},{"amountOfVerses":10,"number":23},{"amountOfVerses":13,"number":24},{"amountOfVerses":20,"number":25},{"amountOfVerses":7,"number":26},{"amountOfVerses":35,"number":27},{"amountOfVerses":36,"number":28},{"amountOfVerses":5,"number":29},{"amountOfVerses":23,"number":30},{"amountOfVerses":20,"number":31}],
         "relativeDateRange": {"min": -1500, "max": -450},
@@ -361,7 +361,7 @@
         "startingIndex":41
     },
     "1 Psalms": {
-        "abbreviation": "1PS",
+        "abbreviation": "1 PS",
         "author": "David",
         "chaptersInfo":[{"amountOfVerses":6,"number":1},{"amountOfVerses":12,"number":2},{"amountOfVerses":8,"number":3},{"amountOfVerses":8,"number":4},{"amountOfVerses":12,"number":5},{"amountOfVerses":10,"number":6},{"amountOfVerses":17,"number":7},{"amountOfVerses":9,"number":8},{"amountOfVerses":20,"number":9},{"amountOfVerses":17,"number":10},{"amountOfVerses":7,"number":11},{"amountOfVerses":8,"number":12},{"amountOfVerses":6,"number":13},{"amountOfVerses":7,"number":14},{"amountOfVerses":5,"number":15},{"amountOfVerses":11,"number":16},{"amountOfVerses":15,"number":17},{"amountOfVerses":50,"number":18},{"amountOfVerses":14,"number":19},{"amountOfVerses":9,"number":20},{"amountOfVerses":13,"number":21},{"amountOfVerses":31,"number":22},{"amountOfVerses":6,"number":23},{"amountOfVerses":10,"number":24},{"amountOfVerses":22,"number":25},{"amountOfVerses":12,"number":26},{"amountOfVerses":14,"number":27},{"amountOfVerses":9,"number":28},{"amountOfVerses":11,"number":29},{"amountOfVerses":12,"number":30},{"amountOfVerses":24,"number":31},{"amountOfVerses":11,"number":32},{"amountOfVerses":21,"number":33},{"amountOfVerses":22,"number":34},{"amountOfVerses":28,"number":35},{"amountOfVerses":12,"number":36},{"amountOfVerses":40,"number":37},{"amountOfVerses":22,"number":38},{"amountOfVerses":13,"number":39},{"amountOfVerses":17,"number":40},{"amountOfVerses":13,"number":41}],
         "relativeDateRange": {"min": -1500, "max": -450},
@@ -397,42 +397,42 @@
         "numberOfChapters":10
     },
     "2 Chronicles": {
-        "abbreviation": "2CH",
+        "abbreviation": "2 CH",
         "author": "Ezra",
         "chaptersInfo":[{"amountOfVerses":17,"number":1},{"amountOfVerses":18,"number":2},{"amountOfVerses":17,"number":3},{"amountOfVerses":22,"number":4},{"amountOfVerses":14,"number":5},{"amountOfVerses":42,"number":6},{"amountOfVerses":22,"number":7},{"amountOfVerses":18,"number":8},{"amountOfVerses":31,"number":9},{"amountOfVerses":19,"number":10},{"amountOfVerses":23,"number":11},{"amountOfVerses":16,"number":12},{"amountOfVerses":22,"number":13},{"amountOfVerses":15,"number":14},{"amountOfVerses":19,"number":15},{"amountOfVerses":14,"number":16},{"amountOfVerses":19,"number":17},{"amountOfVerses":34,"number":18},{"amountOfVerses":11,"number":19},{"amountOfVerses":37,"number":20},{"amountOfVerses":20,"number":21},{"amountOfVerses":12,"number":22},{"amountOfVerses":21,"number":23},{"amountOfVerses":27,"number":24},{"amountOfVerses":28,"number":25},{"amountOfVerses":23,"number":26},{"amountOfVerses":9,"number":27},{"amountOfVerses":27,"number":28},{"amountOfVerses":36,"number":29},{"amountOfVerses":27,"number":30},{"amountOfVerses":21,"number":31},{"amountOfVerses":33,"number":32},{"amountOfVerses":25,"number":33},{"amountOfVerses":33,"number":34},{"amountOfVerses":27,"number":35},{"amountOfVerses":23,"number":36}],
         "relativeDateRange": {"min": -450, "max": -425},
         "numberOfChapters":36
     },
     "1 Chronicles": {
-        "abbreviation": "1CH",
+        "abbreviation": "1 CH",
         "author": "Ezra",
         "chaptersInfo":[{"amountOfVerses":54,"number":1},{"amountOfVerses":55,"number":2},{"amountOfVerses":24,"number":3},{"amountOfVerses":43,"number":4},{"amountOfVerses":26,"number":5},{"amountOfVerses":81,"number":6},{"amountOfVerses":40,"number":7},{"amountOfVerses":40,"number":8},{"amountOfVerses":44,"number":9},{"amountOfVerses":14,"number":10},{"amountOfVerses":47,"number":11},{"amountOfVerses":40,"number":12},{"amountOfVerses":14,"number":13},{"amountOfVerses":17,"number":14},{"amountOfVerses":29,"number":15},{"amountOfVerses":43,"number":16},{"amountOfVerses":27,"number":17},{"amountOfVerses":17,"number":18},{"amountOfVerses":19,"number":19},{"amountOfVerses":8,"number":20},{"amountOfVerses":30,"number":21},{"amountOfVerses":19,"number":22},{"amountOfVerses":32,"number":23},{"amountOfVerses":31,"number":24},{"amountOfVerses":31,"number":25},{"amountOfVerses":32,"number":26},{"amountOfVerses":34,"number":27},{"amountOfVerses":21,"number":28},{"amountOfVerses":30,"number":29}],
         "relativeDateRange": {"min": -450, "max": -425},
         "numberOfChapters":29
     },
     "2 Kings": {
-        "abbreviation": "2KI",
+        "abbreviation": "2 KI",
         "author": "Jeremiah",
         "chaptersInfo":[{"amountOfVerses":18,"number":1},{"amountOfVerses":25,"number":2},{"amountOfVerses":27,"number":3},{"amountOfVerses":44,"number":4},{"amountOfVerses":27,"number":5},{"amountOfVerses":33,"number":6},{"amountOfVerses":20,"number":7},{"amountOfVerses":29,"number":8},{"amountOfVerses":37,"number":9},{"amountOfVerses":36,"number":10},{"amountOfVerses":21,"number":11},{"amountOfVerses":21,"number":12},{"amountOfVerses":25,"number":13},{"amountOfVerses":29,"number":14},{"amountOfVerses":38,"number":15},{"amountOfVerses":20,"number":16},{"amountOfVerses":41,"number":17},{"amountOfVerses":37,"number":18},{"amountOfVerses":37,"number":19},{"amountOfVerses":21,"number":20},{"amountOfVerses":26,"number":21},{"amountOfVerses":20,"number":22},{"amountOfVerses":37,"number":23},{"amountOfVerses":20,"number":24},{"amountOfVerses":30,"number":25}],
         "relativeDateRange": {"min": -560, "max": -538},
         "numberOfChapters":25
     },
     "1 Kings": {
-        "abbreviation": "1KI",
+        "abbreviation": "1 KI",
         "author": "Jeremiah",
         "chaptersInfo":[{"amountOfVerses":53,"number":1},{"amountOfVerses":46,"number":2},{"amountOfVerses":28,"number":3},{"amountOfVerses":34,"number":4},{"amountOfVerses":18,"number":5},{"amountOfVerses":38,"number":6},{"amountOfVerses":51,"number":7},{"amountOfVerses":66,"number":8},{"amountOfVerses":28,"number":9},{"amountOfVerses":29,"number":10},{"amountOfVerses":43,"number":11},{"amountOfVerses":33,"number":12},{"amountOfVerses":34,"number":13},{"amountOfVerses":31,"number":14},{"amountOfVerses":34,"number":15},{"amountOfVerses":34,"number":16},{"amountOfVerses":24,"number":17},{"amountOfVerses":46,"number":18},{"amountOfVerses":21,"number":19},{"amountOfVerses":43,"number":20},{"amountOfVerses":29,"number":21},{"amountOfVerses":53,"number":22}],
         "relativeDateRange": {"min": -560, "max": -538},
         "numberOfChapters":22
     },
     "2 Samuel": {
-        "abbreviation": "2SA",
+        "abbreviation": "2 SA",
         "author": "Samuel",
         "chaptersInfo":[{"amountOfVerses":27,"number":1},{"amountOfVerses":32,"number":2},{"amountOfVerses":39,"number":3},{"amountOfVerses":12,"number":4},{"amountOfVerses":25,"number":5},{"amountOfVerses":23,"number":6},{"amountOfVerses":29,"number":7},{"amountOfVerses":18,"number":8},{"amountOfVerses":13,"number":9},{"amountOfVerses":19,"number":10},{"amountOfVerses":27,"number":11},{"amountOfVerses":31,"number":12},{"amountOfVerses":39,"number":13},{"amountOfVerses":33,"number":14},{"amountOfVerses":37,"number":15},{"amountOfVerses":23,"number":16},{"amountOfVerses":29,"number":17},{"amountOfVerses":33,"number":18},{"amountOfVerses":43,"number":19},{"amountOfVerses":26,"number":20},{"amountOfVerses":22,"number":21},{"amountOfVerses":51,"number":22},{"amountOfVerses":39,"number":23},{"amountOfVerses":25,"number":24}],
         "relativeDateRange": {"min": -930, "max": -722},
         "numberOfChapters":24
     },
     "1 Samuel": {
-        "abbreviation": "1SA",
+        "abbreviation": "1 SA",
         "author": "Samuel",
         "chaptersInfo":[{"amountOfVerses":28,"number":1},{"amountOfVerses":36,"number":2},{"amountOfVerses":21,"number":3},{"amountOfVerses":22,"number":4},{"amountOfVerses":12,"number":5},{"amountOfVerses":21,"number":6},{"amountOfVerses":17,"number":7},{"amountOfVerses":22,"number":8},{"amountOfVerses":27,"number":9},{"amountOfVerses":27,"number":10},{"amountOfVerses":15,"number":11},{"amountOfVerses":25,"number":12},{"amountOfVerses":23,"number":13},{"amountOfVerses":52,"number":14},{"amountOfVerses":35,"number":15},{"amountOfVerses":23,"number":16},{"amountOfVerses":58,"number":17},{"amountOfVerses":30,"number":18},{"amountOfVerses":24,"number":19},{"amountOfVerses":42,"number":20},{"amountOfVerses":15,"number":21},{"amountOfVerses":23,"number":22},{"amountOfVerses":29,"number":23},{"amountOfVerses":22,"number":24},{"amountOfVerses":44,"number":25},{"amountOfVerses":25,"number":26},{"amountOfVerses":12,"number":27},{"amountOfVerses":25,"number":28},{"amountOfVerses":11,"number":29},{"amountOfVerses":31,"number":30},{"amountOfVerses":13,"number":31}],
         "relativeDateRange": {"min": -930, "max": -722},

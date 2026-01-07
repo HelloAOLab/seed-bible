@@ -38,11 +38,11 @@
 }
 
 .separator {
-  width: 2px;
+  width: 1px;
   height: 100%;
   background-color: var(--text1);
   margin-right: -1px;
-  opacity: 0.3;
+  opacity: 0.1;
 }
 
 .dropdown-select {
@@ -55,7 +55,7 @@
 
   border: 1px solid #ccc;
   border-radius: 6px;
-  background: var(--menuBackground)
+  background: var(--panelBackground)
     url("data:image/svg+xml;utf8,<svg fill='gray' height='20' viewBox='0 0 24 24' width='20' xmlns='http://www.w3.org/2000/svg'><path d='M7 10l5 5 5-5z'/></svg>")
     no-repeat right 10px center;
   background-size: 16px;
@@ -71,7 +71,7 @@
 }
 
 .dropdown-option {
-  background: var(--menuBackground);
+  background: var(--panelBackground);
   color: var(--text3);
   padding: 8px 12px;
   font-weight: bold;
@@ -86,7 +86,7 @@
   align-items: center;
   border: 1px solid #ccc;
   border-radius: 6px;
-  background: var(--menuBackground);
+  background: var(--panelBackground);
   padding: 6px 10px;
   width: 76%;
   height: 34px;
@@ -355,7 +355,7 @@ input:checked + .slider:not(#slider):before {
 
 .sidebar-translation-selector {
   display: flex;
-  background: var(--menuBackground);
+  background: var(--panelBackground);
   padding: 0px 5px;
   height: 32px;
   justify-content: space-between;
@@ -414,7 +414,6 @@ input:checked + .slider:not(#slider):before {
 
 .sidebar-selected-title {
   display: flex;
-  justify-content: center;
   align-items: center;
   height: 24px;
   /* overflow: hidden; */
@@ -422,6 +421,8 @@ input:checked + .slider:not(#slider):before {
   text-overflow: ellipsis;
   white-space: nowrap;
   font-family: Satoshi;
+  width: 75px;
+  overflow: hidden;
 }
 
 .translation-description {
@@ -726,7 +727,7 @@ input:checked + .slider:not(#slider):before {
   height: fit-content;
   gap: clamp(5px, 0.5vw, 20px);
   flex-wrap: wrap;
-  background-color: var(--menuBackground) !important;
+  background-color: var(--panelBackground, --panelBackground) !important;
   padding: 8px;
   border-radius: 5px;
 }
@@ -885,12 +886,12 @@ input:checked + .slider:not(#slider):before {
 }
 
 .sidebar-itm:hover {
-  background-color: var(--menuBackground);
+  background-color: var(--panelBackground);
   color: var(--text3);
 }
 
 .sidebar-selected-itm {
-  background-color: var(--menuBackground);
+  background-color: var(--panelBackground);
   color: var(--text3);
   font-weight: bold;
 }

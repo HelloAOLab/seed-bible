@@ -92,7 +92,7 @@ const resources = {
       warmAmber: "Warm Amber",
 
       // Theme - Colors
-      menuBackground: "Menu background",
+      panelBackground: "Menu background",
       panelBackground: "Panel background",
       pageBackground: "Page Background",
       pageTextColor: "Page text color",
@@ -172,6 +172,13 @@ const resources = {
       toolbarIcons: "Toolbar Icons",
       selectionUI: "Selection UI",
       selectionIcons: "Selection Icons",
+      selectionUIDescription: "Selection UI menu for your page...",
+      showSelectedItems: "Show selected verses",
+      showHighlightColors: "Show highlight UI",
+      showIconText: "Show Icon text",
+      copyVerse: "Copy verse",
+      onlyVerseText: "Only verse text",
+      verseTextWithReference: "Verse text with reference",
 
       // Input fields section
       title: "Title",
@@ -292,7 +299,13 @@ const resources = {
       // Sessions
       startSession: "Start session",
       inviteToSession: "Invite to session",
-      joinAnotherSession: "Join another session",
+      joinAnotherSession: "Join a session",
+      goPrivate: "Go private",
+      goPublic: "Go public",
+      joinSession: "Join Session",
+      enterSessionCode: "Enter session code to join new session",
+      sessionCodePlaceholder: "Enter Session code",
+      join: "Join",
 
       // Help
       reportBug: "Report a bug",
@@ -868,7 +881,7 @@ const resources = {
       warmAmber: "Ámbar cálido",
 
       // Theme - Colors
-      menuBackground: "Fondo del menú",
+      panelBackground: "Fondo del menú",
       pageBackground: "Fondo de página",
       pageTextColor: "Color de texto",
       iconsColor: "Color de iconos",
@@ -986,6 +999,13 @@ const resources = {
       startSession: "Iniciar sesión",
       inviteToSession: "Invitar a sesión",
       joinAnotherSession: "Unirse a otra sesión",
+      goPrivate: "Ir a privado",
+      goPublic: "Ir a público",
+      joinSession: "Unirse a sesión",
+      enterSessionCode:
+        "Ingrese el código de sesión para unirse a una nueva sesión",
+      sessionCodePlaceholder: "Ingrese el código de sesión",
+      join: "Unirse",
 
       // Help
       reportBug: "Reportar error",
@@ -1572,7 +1592,7 @@ const resources = {
       warmAmber: "عنبر دافئ",
 
       // Theme - Colors
-      menuBackground: "خلفية القائمة",
+      panelBackground: "خلفية القائمة",
       pageBackground: "خلفية الصفحة",
       pageTextColor: "لون نص الصفحة",
       iconsColor: "لون الأيقونات",
@@ -1690,6 +1710,12 @@ const resources = {
       startSession: "بدء الجلسة",
       inviteToSession: "دعوة للجلسة",
       joinAnotherSession: "الانضمام لجلسة أخرى",
+      goPrivate: "الذهاب للخاص",
+      goPublic: "الذهاب للعام",
+      joinSession: "الانضمام للجلسة",
+      enterSessionCode: "أدخل رمز الجلسة للانضمام إلى جلسة جديدة",
+      sessionCodePlaceholder: "أدخل رمز الجلسة",
+      join: "انضمام",
 
       // Help
       reportBug: "الإبلاغ عن خطأ",
@@ -2255,7 +2281,7 @@ const resources = {
       warmAmber: "गर्म एम्बर",
 
       // Theme - Colors
-      menuBackground: "मेनू पृष्ठभूमि",
+      panelBackground: "मेनू पृष्ठभूमि",
       pageBackground: "पृष्ठ पृष्ठभूमि",
       pageTextColor: "पृष्ठ टेक्स्ट रंग",
       iconsColor: "आइकन रंग",
@@ -2373,6 +2399,12 @@ const resources = {
       startSession: "सत्र शुरू करें",
       inviteToSession: "सत्र में आमंत्रित करें",
       joinAnotherSession: "दूसरे सत्र में शामिल हों",
+      goPrivate: "निजी में जाएं",
+      goPublic: "सार्वजनिक में जाएं",
+      joinSession: "सत्र में शामिल हों",
+      enterSessionCode: "नए सत्र में शामिल होने के लिए सत्र कोड दर्ज करें",
+      sessionCodePlaceholder: "सत्र कोड दर्ज करें",
+      join: "शामिल हों",
 
       // Help
       reportBug: "बग रिपोर्ट करें",
@@ -3034,17 +3066,17 @@ const numberTranslations: Record<string, string[]> = {
 export function getTranslatedNumber(num: number): string {
   const lang = getCurrentLanguage();
   const numStringArr = String(num).split("");
-  if (numberTranslations[lang]) {
-    return numStringArr
-      .map((digit) => {
-        if (digit >= "0" && digit <= "9") {
-          return numberTranslations[lang][parseInt(digit, 10)];
-        }
-        return digit;
-      })
-      .join("");
-  }
-  return num.toString();
+  const digitsForLang = numberTranslations[lang] ?? numberTranslations["en"];
+  return numStringArr
+    .map((digit) => {
+      if (digit >= "0" && digit <= "9") {
+        const idx = parseInt(digit, 10);
+        const translated = digitsForLang?.[idx];
+        return translated ?? digit;
+      }
+      return digit;
+    })
+    .join("");
 }
 
 export { resources };

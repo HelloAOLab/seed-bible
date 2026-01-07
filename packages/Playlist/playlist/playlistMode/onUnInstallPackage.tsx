@@ -8,8 +8,7 @@ globalThis[`${parentId}ToggleGreyCheckPLayingPlaylist`] && globalThis[`${parentI
 globalThis.IsQueuePresent = false;
 // os.unregisterApp("playing-playlist");
 globalThis.IS_PLAYLIST_ACTIVE = false;
-globalThis.SetSplitAppPanel2(null);
-globalThis.StopPlayingPlaylistModal(false);
+globalThis.StopPlayingPlaylistModal && globalThis.StopPlayingPlaylistModal(false);
 if (globalThis.RemoveNowBarApp) {
     globalThis.RemoveNowBarApp('player-playlist-bar');
 }

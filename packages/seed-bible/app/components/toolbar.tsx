@@ -199,7 +199,7 @@ export function Toolbar() {
                       {tool.isImg ? (
                         <img
                           src={tool.icon}
-                          style={{ width: "22px" }}
+                          style={{ width: "25px" }}
                           alt={tool.label}
                         />
                       ) : (

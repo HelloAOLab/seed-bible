@@ -1,3 +1,5 @@
-import { packageAll } from './lib/package.js';
+import { minifyAll } from "./lib/minify.js";
+import { packageAll } from "./lib/package.js";
 
-packageAll();
+await packageAll();
+await minifyAll();

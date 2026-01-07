@@ -10,7 +10,6 @@ const items = [
       selectedItem.verseNumber?.forEach((vNumber) => {
         const id = createUUID();
         const booksDetails = globalThis.findNameRank(selectedItem.book);
-        console.log("booksDetails", booksDetails);
         const dataItemTemp = {
           type: "verse",
           content: `${selectedItem.book} ${selectedItem.chapter}:${vNumber}`,

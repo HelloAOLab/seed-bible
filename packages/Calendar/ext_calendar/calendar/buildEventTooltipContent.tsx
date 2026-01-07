@@ -1,3 +1,10 @@
+const removeEventFromLocalStorage = (eventId) => {
+  const stored = JSON.parse(localStorage.getItem("allEvents")) || [];
+
+  const updated = stored.filter((e) => e.id !== eventId);
+
+  localStorage.setItem("allEvents", JSON.stringify(updated));
+};
 function buildEventTooltipContent({
   event,
   calendarApi,
@@ -8,7 +15,8 @@ function buildEventTooltipContent({
   isSameDate,
 }) {
   const { title, start, id, extendedProps } = event;
-  const { type, isResource, description, link } = extendedProps || {};
+  const { type, isResource, description, link, isReapeating } =
+    extendedProps || {};
 
   /* ================= WRAPPER ================= */
   const wrapper = document.createElement("div");
@@ -56,6 +64,7 @@ function buildEventTooltipContent({
   dlt.style.color = "gray";
   dlt.onclick = () => {
     handleDelete(id);
+    removeEventFromLocalStorage(id);
     wrapper.remove();
   };
   /* ---------- EDIT ---------- */
@@ -225,16 +234,26 @@ function buildEventTooltipContent({
   wrapper.appendChild(titleEl);
 
   const dateEl = document.createElement("div");
-  dateEl.textContent =
-    start.toLocaleDateString("en-GB", {
-      day: "2-digit",
-      month: "short",
-      year: "numeric",
-    }) +
-    " (" +
-    start.toLocaleTimeString("en-US", { hour: "2-digit", minute: "2-digit" }) +
-    ")";
-  dateEl.style.cssText = "font-size:10px;margin-bottom:6px";
+  if (!isReapeating) {
+    dateEl.textContent =
+      start.toLocaleDateString("en-GB", {
+        day: "2-digit",
+        month: "short",
+        year: "numeric",
+      }) +
+      " (" +
+      start.toLocaleTimeString("en-US", {
+        hour: "2-digit",
+        minute: "2-digit",
+      }) +
+      ")";
+    dateEl.style.cssText = "font-size:10px;margin-bottom:6px";
+  } else {
+    dateEl.textContent = "Repeating Event";
+    dateEl.style.color = "black";
+    dateEl.style.fontSize = "8px";
+  }
+
   wrapper.appendChild(dateEl);
 
   if (description) {
@@ -268,7 +287,10 @@ function buildEventTooltipContent({
       border-radius:20px;
       cursor:pointer;
     `;
-    btn.onclick = () => calendarApi.current.changeView("resourceTimeline");
+    btn.onclick = () => {
+      wrapper.remove();
+      calendarApi.current.changeView("resourceTimeline");
+    };
     wrapper.appendChild(btn);
   }
 

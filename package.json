@@ -52,7 +52,7 @@
     "@types/node": "^24.5.2",
     "axios": "^1.12.2",
     "babel-jest": "^30.1.2",
-    "casualos": "^3.7.0",
+    "casualos": "^3.10.2",
     "commander": "^14.0.1",
     "conf": "^15.0.2",
     "esbuild": "^0.25.10",

@@ -597,6 +597,34 @@ export const ThemeIcon = (props) => (
     />
   </svg>
 );
+export const SelectionUIIcon = (props) => (
+  <svg
+    width={24}
+    height={24}
+    viewBox="0 0 24 24"
+    fill="none"
+    className="coloredIcon"
+    xmlns="http://www.w3.org/2000/svg"
+    {...props}
+  >
+    <rect
+      x="3"
+      y="3"
+      width="18"
+      height="18"
+      rx="2"
+      stroke="#727272"
+      strokeWidth="2"
+    />
+    <path
+      d="M7 12L10 15L17 8"
+      stroke="#727272"
+      strokeWidth="2"
+      strokeLinecap="round"
+      strokeLinejoin="round"
+    />
+  </svg>
+);
 const MenuIcon = ({ name, size = 24, invert = false }) => {
   // Check if `name` looks like an image URL
   const isImage =
@@ -622,7 +650,51 @@ const MenuIcon = ({ name, size = 24, invert = false }) => {
     </span>
   );
 };
-
+export const StartSessionIcon = (props) => (
+  <svg
+    width={20}
+    height={20}
+    viewBox="0 0 20 20"
+    fill="none"
+    xmlns="http://www.w3.org/2000/svg"
+    {...props}
+  >
+    <path
+      d="M7.50008 4.16797C10.7217 4.16797 13.3334 6.77964 13.3334 10.0013C13.3334 13.223 10.7217 15.8346 7.50008 15.8346C4.27842 15.8346 1.66675 13.223 1.66675 10.0013C1.66675 6.77964 4.27842 4.16797 7.50008 4.16797ZM13.3334 4.22819C16.1602 4.63262 18.3334 7.06263 18.3334 10.0013C18.3334 12.94 16.1602 15.3691 13.3334 15.7736V14.0841C15.2352 13.6981 16.6667 12.0171 16.6667 10.0013C16.6667 7.98548 15.2353 6.30368 13.3334 5.91764V4.22819Z"
+      fill="white"
+    />
+  </svg>
+);
+export const JoinSession = (props) => (
+  <svg
+    width={20}
+    height={20}
+    viewBox="0 0 20 20"
+    fill="none"
+    xmlns="http://www.w3.org/2000/svg"
+    {...props}
+  >
+    <g clipPath="url(#clip0_4878_806)">
+      <path
+        d="M16.25 16.25H3.75V3.75H10V2.5H3.75C3.41858 2.50033 3.10083 2.63213 2.86648 2.86648C2.63213 3.10083 2.50033 3.41858 2.5 3.75V16.25C2.50033 16.5814 2.63213 16.8992 2.86648 17.1335C3.10083 17.3679 3.41858 17.4997 3.75 17.5H16.25C16.5814 17.4997 16.8992 17.3679 17.1335 17.1335C17.3679 16.8992 17.4997 16.5814 17.5 16.25V10H16.25V16.25Z"
+        fill="white"
+      />
+      <path
+        d="M16.25 16.25H3.75V3.75H10V2.5H3.75C3.41858 2.50033 3.10083 2.63213 2.86648 2.86648C2.63213 3.10083 2.50033 3.41858 2.5 3.75V16.25C2.50033 16.5814 2.63213 16.8992 2.86648 17.1335C3.10083 17.3679 3.41858 17.4997 3.75 17.5H16.25C16.5814 17.4997 16.8992 17.3679 17.1335 17.1335C17.3679 16.8992 17.4997 16.5814 17.5 16.25V10H16.25V16.25Z"
+        fill="white"
+      />
+      <path
+        d="M16.25 3.75V1.25H15V3.75H12.5V5H15V7.5H16.25V5H18.75V3.75H16.25Z"
+        fill="white"
+      />
+    </g>
+    <defs>
+      <clipPath id="clip0_4878_806">
+        <rect width={20} height={20} fill="white" />
+      </clipPath>
+    </defs>
+  </svg>
+);
 const T = (props) => (
   <svg
     xmlns="http://www.w3.org/2000/svg"

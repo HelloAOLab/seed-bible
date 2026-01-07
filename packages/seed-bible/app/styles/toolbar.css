@@ -27,6 +27,7 @@
   bottom: 18px;
   z-index: 99;
   border: 1px solid var(--toolbarBorder, #00000024);
+  height: 50px;
 }
 
 @media (min-width: 768px) {
@@ -44,14 +45,17 @@
     background-color: var(--pageBackground);
     justify-content: flex-start !important;
     padding: 0px 0px;
-    height: 58px;
+    height: 54px;
   }
-
+  .toolbar-button {
+    width: 44px;
+    height: 44px;
+  }
   .firstToolbarbutton {
     height: 100% !important;
     background-color: #dfdede !important;
     border-radius: 0px !important;
-    width: 50px !important;
+    width: 54px !important;
   }
 
   .leftClick {
@@ -120,8 +124,8 @@
   display: flex;
   align-items: center;
   justify-content: center;
-  width: 40px;
-  height: 40px;
+  width: 44px !important;
+  height: 55px !important;
   border-radius: 50%;
   border: none;
   background-color: transparent;

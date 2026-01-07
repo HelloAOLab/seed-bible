@@ -113,7 +113,13 @@ export function SideBarProvider({ children }) {
     const pointerX = mousePosition.x;
     const pointerY = mousePosition.y;
 
-    const adjustedPosition = adjustPositionWithinScreen(pointerX, pointerY);
+    // Get item count from props to determine if we should adjust position
+    const itemCount = props?.items?.length ?? 0;
+    const adjustedPosition = adjustPositionWithinScreen(
+      pointerX,
+      pointerY,
+      itemCount
+    );
     setPosition(adjustedPosition);
 
     setTimeout(() => {
@@ -125,11 +131,19 @@ export function SideBarProvider({ children }) {
     }, 100);
   }
 
-  function adjustPositionWithinScreen(x, y) {
-    const popupWidth = 250;
-    const popupHeight = 230;
-    const margin = 10;
+  function adjustPositionWithinScreen(x, y, itemCount = 0) {
     const offset = 10;
+
+    // If only 1 item, skip adjustment and just apply offset
+    if (itemCount === 1) {
+      return { x: x + offset, y: y + offset };
+    }
+
+    const popupWidth = 250;
+    // Calculate height based on item count (approx 40px per item + padding)
+    const popupHeight =
+      itemCount > 0 ? Math.min(itemCount * 40 + 20, 230) : 230;
+    const margin = 10;
 
     let adjustedX = x + offset;
     let adjustedY = y + offset;
@@ -166,9 +180,11 @@ export function SideBarProvider({ children }) {
   globalThis.closePopupSettings = closePopupSettings;
   useEffect(() => {
     if (popupSettings) {
+      const itemCount = (popupSettings as any)?.items?.length ?? 0;
       const adjustedPosition = adjustPositionWithinScreen(
         position.x,
-        position.y
+        position.y,
+        itemCount
       );
       setPosition(adjustedPosition);
     }
@@ -259,7 +275,7 @@ export function PopupSettings({ items, type, disabled, sidebarContext }) {
               return (
                 <div
                   style={{
-                    width: "100%",
+                    width: "90%",
                     height: "1px",
                     backgroundColor: "#cdcccc3b",
                   }}

@@ -319,36 +319,55 @@ const Main = () => {
   // };
 
   const defaultTheme = {
-    // Background colors (Background #F8FAFC, Surface #FFFFFF)
-    menuBackground: "#F8FAFC",
+    // Main colors
+    primaryColor: "#3B82F6",
+    secondaryColor: "#8B5CF6",
+    tertiaryColor: "#06B6D4",
+    // Container backgrounds
+    // panelBackground: "#F8FAFC",
     themeSideMenu: "#F8FAFC",
-    panelBackground: "#FFFFFF",
-    pageBackground: "#FFFFFF",
-    toolbarBackground: "#FFFFFF",
-    toolbarBorder: "#E2E8F0",
-    // Primary colors (Primary #3B82F6, Primary Dark #2563EB, Secondary #8B5CF6)
-    primaryButton: "#3B82F6",
-    primaryButtonColor: "#FFFFFF",
-    secondaryButton: "#8B5CF6",
-    secondaryButtonColor: "#FFFFFF",
-    buttonBorder: "#E2E8F0",
-    // Tab & Selection
+    panelBackground: "#f3f1f1",
+    // Tab
     tabSelection: "#3B82F6",
     activeTabBackground: "#FFFFFF",
     activeTabText: "#0F172A",
+    activeTabBorder: "#3B82F6",
+    activeTabFill: "#2b74e994",
     simpleTabText: "#64748B",
-    spaceSelection: "#3B82F6",
-    // Text colors (Text Primary #0F172A, Text Secondary #64748B)
+    inactiveTabText: "#64748B",
+    // Buttons
+    primaryButton: "#3B82F6",
+    primaryButtonColor: "#FFFFFF",
+    primaryButtonBorder: "#3B82F6",
+    primaryButtonFill: "#3B82F6",
+    secondaryButton: "#8B5CF6",
+    secondaryButtonColor: "#FFFFFF",
+    secondaryButtonBorder: "#8B5CF6",
+    secondaryButtonFill: "#8B5CF6",
+    tertiaryButtonColor: "#0F172A",
+    buttonBorder: "#E2E8F0",
+    // Scripture text
+    bookHeadingColor: "#0F172A",
+    chapterHeadingColor: "#0F172A",
+    verseNumberColor: "#06B6D4",
+    verseTextColor: "#0F172A",
+    pageBackground: "#FFFFFF",
     pageTextColor: "#0F172A",
-    text1: "#0F172A",
-    text2: "#64748B",
-    iconColor: "#0F172A",
-    "filter-mode": " none",
-    showTabIcons: true,
-    // Side menu specific
+    // Side menu
+    heading1Color: "#0F172A",
+    heading2Color: "#0F172A",
+    heading3Color: "#0F172A",
+    descriptionTextColor: "#64748B",
+    menuTextColor: "#0F172A",
+    breadcrumbsColor: "#64748B",
+    sectionBackground: "#3B82F6",
+    spaceNameColor: "#0F172A",
+    sideMenuIconsColor: "#0F172A",
+    selectedSpaceColor: "#3B82F6",
+    unselectedSpaceColor: "#E2E8F0",
     spaceNameText: "#0F172A",
-    addButtonBackground: "#3B82F6",
-    addButtonIcon: "#FFFFFF",
+    addButtonBackground: "transparent",
+    addButtonIcon: "gray",
     selectPanelIcon: "#0F172A",
     openCloseMenuIcon: "#0F172A",
     moreIcon: "#64748B",
@@ -356,11 +375,35 @@ const Main = () => {
     inactiveSpaceIndicator: "#E2E8F0",
     activeSpaceIndicator: "#3B82F6",
     profileAvatar: "#8B5CF6",
-    // Scripture text (Accent/Tertiary #06B6D4 for verse numbers)
-    bookHeadingColor: "#0F172A",
-    chapterHeadingColor: "#0F172A",
-    verseNumberColor: "#06B6D4",
-    verseTextColor: "#0F172A",
+    // Selection UI & toolbar
+    toolbarBorder: "#E2E8F0",
+    toolbarFill: "#FFFFFF",
+    toolbarIconsColor: "#0F172A",
+    selectionUIBorder: "#E2E8F0",
+    selectionUIFill: "#FFFFFF",
+    selectionIconsColor: "#0F172A",
+    toolbarBackground: "#FFFFFF",
+    iconColor: "#0F172A",
+    // Input fields
+    inputTitleColor: "#0F172A",
+    inputPlaceholderColor: "#64748B",
+    inputActiveBorder: "#3B82F6",
+    inputActiveFill: "#FFFFFF",
+    inputInactiveBorder: "#E2E8F0",
+    inputInactiveFill: "#FFFFFF",
+    inputBackground: "#FFFFFF",
+    inputBorder: "#E2E8F0",
+    inputText: "#0F172A",
+    inputPlaceholder: "#64748B",
+    // Branding
+    logoColor: "#0F172A",
+    accentColor: "#3B82F6",
+    // Space selection
+    spaceSelection: "#3B82F6",
+    // Text colors
+    text1: "#0F172A",
+    text2: "#64748B",
+    showTabIcons: true,
 
     primaryLight: "#dbeafe",
     onPrimaryLight: "#233C85",
@@ -387,7 +430,7 @@ const Main = () => {
     text3: "#111827",
   };
   const darkTheme = {
-    menuBackground: "#2D2D2D",
+    panelBackground: "#2D2D2D",
     themeSideMenu: "#2D2D2D",
     panelBackground: "#1A1A1A",
     primaryButton: "#404040",
@@ -471,145 +514,60 @@ const Main = () => {
     const sideMenuSettings = currentSpace?.sideMenuSettings || {};
     const inputFieldsSettings = currentSpace?.inputFieldsSettings || {};
 
-    // Scripture text font CSS variables
-    const fontVars = [];
-    if (scriptureSettings.bookHeadingFont) {
-      fontVars.push(
-        `--scripture-bookHeading-font: '${scriptureSettings.bookHeadingFont}', sans-serif`
-      );
-    }
-    if (scriptureSettings.bookHeadingSize) {
-      fontVars.push(
-        `--scripture-bookHeading-size: ${scriptureSettings.bookHeadingSize}px`
-      );
-    }
-    if (scriptureSettings.chapterHeadingFont) {
-      fontVars.push(
-        `--scripture-chapterHeading-font: '${scriptureSettings.chapterHeadingFont}', sans-serif`
-      );
-    }
-    if (scriptureSettings.chapterHeadingSize) {
-      fontVars.push(
-        `--scripture-chapterHeading-size: ${scriptureSettings.chapterHeadingSize}px`
-      );
-    }
-    if (scriptureSettings.verseTextFont) {
-      fontVars.push(
-        `--scripture-verseText-font: '${scriptureSettings.verseTextFont}', sans-serif`
-      );
-    }
-    if (scriptureSettings.verseTextSize) {
-      fontVars.push(
-        `--scripture-verseText-size: ${scriptureSettings.verseTextSize}px`
-      );
-    }
-    if (scriptureSettings.verseNumberFont) {
-      fontVars.push(
-        `--scripture-verseNumber-font: '${scriptureSettings.verseNumberFont}', sans-serif`
-      );
-    }
-    if (scriptureSettings.verseNumberSize) {
-      fontVars.push(
-        `--scripture-verseNumber-size: ${scriptureSettings.verseNumberSize}px`
-      );
-    }
+    // Helper to generate CSS variables from settings
+    const generateFontVars = (
+      settings: Record<string, unknown>,
+      prefix: string,
+      keyMap: Record<string, string>
+    ) =>
+      Object.entries(keyMap)
+        .filter(([key]) => settings[key])
+        .map(([key, cssName]) => {
+          const value = settings[key];
+          const isFont = key.toLowerCase().includes("font");
+          return isFont
+            ? `--${prefix}-${cssName}: '${value}', sans-serif;`
+            : `--${prefix}-${cssName}: ${value}px;`;
+        });
 
-    // Side menu font CSS variables
-    if (sideMenuSettings.spaceNameFont) {
-      fontVars.push(
-        `--sideMenu-spaceName-font: '${sideMenuSettings.spaceNameFont}', sans-serif`
-      );
-    }
-    if (sideMenuSettings.spaceNameSize) {
-      fontVars.push(
-        `--sideMenu-spaceName-size: ${sideMenuSettings.spaceNameSize}px`
-      );
-    }
-    if (sideMenuSettings.menuTextFont) {
-      fontVars.push(
-        `--sideMenu-menuText-font: '${sideMenuSettings.menuTextFont}', sans-serif`
-      );
-    }
-    if (sideMenuSettings.menuTextSize) {
-      fontVars.push(
-        `--sideMenu-menuText-size: ${sideMenuSettings.menuTextSize}px`
-      );
-    }
-    if (sideMenuSettings.heading1Font) {
-      fontVars.push(
-        `--sideMenu-heading1-font: '${sideMenuSettings.heading1Font}', sans-serif`
-      );
-    }
-    if (sideMenuSettings.heading1Size) {
-      fontVars.push(
-        `--sideMenu-heading1-size: ${sideMenuSettings.heading1Size}px`
-      );
-    }
-    if (sideMenuSettings.heading2Font) {
-      fontVars.push(
-        `--sideMenu-heading2-font: '${sideMenuSettings.heading2Font}', sans-serif`
-      );
-    }
-    if (sideMenuSettings.heading2Size) {
-      fontVars.push(
-        `--sideMenu-heading2-size: ${sideMenuSettings.heading2Size}px`
-      );
-    }
-    if (sideMenuSettings.heading3Font) {
-      fontVars.push(
-        `--sideMenu-heading3-font: '${sideMenuSettings.heading3Font}', sans-serif`
-      );
-    }
-    if (sideMenuSettings.heading3Size) {
-      fontVars.push(
-        `--sideMenu-heading3-size: ${sideMenuSettings.heading3Size}px`
-      );
-    }
-    if (sideMenuSettings.descriptionTextFont) {
-      fontVars.push(
-        `--sideMenu-description-font: '${sideMenuSettings.descriptionTextFont}', sans-serif`
-      );
-    }
-    if (sideMenuSettings.descriptionTextSize) {
-      fontVars.push(
-        `--sideMenu-description-size: ${sideMenuSettings.descriptionTextSize}px`
-      );
-    }
-    if (sideMenuSettings.breadcrumbsFont) {
-      fontVars.push(
-        `--sideMenu-breadcrumbs-font: '${sideMenuSettings.breadcrumbsFont}', sans-serif`
-      );
-    }
-    if (sideMenuSettings.breadcrumbsSize) {
-      fontVars.push(
-        `--sideMenu-breadcrumbs-size: ${sideMenuSettings.breadcrumbsSize}px`
-      );
-    }
-    if (sideMenuSettings.iconsSize) {
-      fontVars.push(`--sideMenu-icons-size: ${sideMenuSettings.iconsSize}px`);
-    }
+    const fontVars = [
+      ...generateFontVars(scriptureSettings, "scripture", {
+        bookHeadingFont: "bookHeading-font",
+        bookHeadingSize: "bookHeading-size",
+        chapterHeadingFont: "chapterHeading-font",
+        chapterHeadingSize: "chapterHeading-size",
+        verseTextFont: "verseText-font",
+        verseTextSize: "verseText-size",
+        verseNumberFont: "verseNumber-font",
+        verseNumberSize: "verseNumber-size",
+      }),
+      ...generateFontVars(sideMenuSettings, "sideMenu", {
+        spaceNameFont: "spaceName-font",
+        spaceNameSize: "spaceName-size",
+        menuTextFont: "menuText-font",
+        menuTextSize: "menuText-size",
+        heading1Font: "heading1-font",
+        heading1Size: "heading1-size",
+        heading2Font: "heading2-font",
+        heading2Size: "heading2-size",
+        heading3Font: "heading3-font",
+        heading3Size: "heading3-size",
+        descriptionTextFont: "description-font",
+        descriptionTextSize: "description-size",
+        breadcrumbsFont: "breadcrumbs-font",
+        breadcrumbsSize: "breadcrumbs-size",
+        iconsSize: "icons-size",
+      }),
+      ...generateFontVars(inputFieldsSettings, "input", {
+        titleFont: "title-font",
+        titleSize: "title-size",
+        placeholderFont: "placeholder-font",
+        placeholderSize: "placeholder-size",
+      }),
+    ];
 
-    // Input fields font CSS variables
-    if (inputFieldsSettings.titleFont) {
-      fontVars.push(
-        `--input-title-font: '${inputFieldsSettings.titleFont}', sans-serif`
-      );
-    }
-    if (inputFieldsSettings.titleSize) {
-      fontVars.push(`--input-title-size: ${inputFieldsSettings.titleSize}px`);
-    }
-    if (inputFieldsSettings.placeholderFont) {
-      fontVars.push(
-        `--input-placeholder-font: '${inputFieldsSettings.placeholderFont}', sans-serif`
-      );
-    }
-    if (inputFieldsSettings.placeholderSize) {
-      fontVars.push(
-        `--input-placeholder-size: ${inputFieldsSettings.placeholderSize}px`
-      );
-    }
-
-    const allVars = [...vars, ...fontVars.map((v) => v + ";")];
+    const allVars = [...vars, ...fontVars];
+    os.log(allVars, "all theme vars");
     return `:root {\n  ${allVars.join("\n  ")}\n}`;
   }, [themeColors, activeSpace, spaces]);
 
@@ -628,7 +586,7 @@ const Main = () => {
       />
       <style>{ThemeCSS}</style>
       <DragDropOverlay />
-      <Layout>
+      <Layout panelsNumber={containerProps.apps.length}>
         <SplitApp {...containerProps} panalMode={false} />
       </Layout>
     </MouseMoveProvider>
@@ -645,7 +603,7 @@ const Root = () => {
         rel="stylesheet"
       />
       <link
-        href="https://api.fontshare.com/v2/css?f[]=satoshi@400&display=swap"
+        href="https://api.fontshare.com/v2/css?f[]=satoshi@100,200,300,400,500,600,700,800,900&display=swap"
         rel="stylesheet"
       />
       <script src="https://cdn.jsdelivr.net/npm/fullcalendar@6.1.17/index.global.min.js"></script>
