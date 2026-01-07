@@ -144,12 +144,6 @@ const SearchBar = () => {
     }
   );
 
-  const [showAllLanguages, setShowAllLanguages] = useState(
-    thePage.masks?.showAllLanguages || false
-  );
-  const [showIncompleteTranslations, setShowIncompleteTranslations] = useState(
-    thePage.masks?.showIncompleteTranslations || false
-  );
   const [allowedTranslationLimit, setAllowedTranslationLimit] = useState(50);
   const [selectedTranslation, setSelectedTranslation] = useState(
     thePage.masks?.selectedTranslation || {
@@ -796,38 +790,30 @@ const SearchBar = () => {
   const dontOpen = dontopn && showCheck;
   globalThis.SetBooksOnlineUsers = setOnlineUsers;
 
-  useEffect(() => {
-    setTagMask(thePage, "showAllLanguages", showAllLanguages, "local");
-    setTagMask(
-      thePage,
-      "showIncompleteTranslations",
-      showIncompleteTranslations,
-      "local"
-    );
-  }, [showAllLanguages, showIncompleteTranslations]);
-
   return (
     <>
       <div class="testament-selection starterAnimation">
         <span class="sidebar-select">
           <div class="sidebar-book-selector">
-            <div
-              class="sidebar-translation-selector"
-              onClick={() => {
-                setSelectingTranslation(!selectingTranslation);
-                setQuery("");
-              }}
-            >
-              <span class="sidebar-selected-title">
-                {selectedTranslation.shortName}
-              </span>
-              <span
-                style={{ transition: "transform 0.3s" }}
-                class={`material-symbols-outlined ${selectingTranslation ? "upside-down" : ""}`}
+            {windowSize > 768 && (
+              <div
+                class="sidebar-translation-selector"
+                onClick={() => {
+                  setSelectingTranslation(!selectingTranslation);
+                  setQuery("");
+                }}
               >
-                expand_more
-              </span>
-            </div>
+                <span class="sidebar-selected-title">
+                  {selectedTranslation.shortName}
+                </span>
+                <span
+                  style={{ transition: "transform 0.3s" }}
+                  class={`material-symbols-outlined ${selectingTranslation ? "upside-down" : ""}`}
+                >
+                  expand_more
+                </span>
+              </div>
+            )}
             <div className="searchbar">
               <span className="search-icon material-symbols-outlined">
                 Search
@@ -849,6 +835,25 @@ const SearchBar = () => {
                 }}
               />
             </div>
+            {windowSize <= 768 && (
+              <div
+                class="sidebar-translation-selector"
+                onClick={() => {
+                  setSelectingTranslation(!selectingTranslation);
+                  setQuery("");
+                }}
+              >
+                <span class="sidebar-selected-title">
+                  {selectedTranslation.shortName}
+                </span>
+                <span
+                  style={{ transition: "transform 0.3s" }}
+                  class={`material-symbols-outlined ${selectingTranslation ? "upside-down" : ""}`}
+                >
+                  expand_more
+                </span>
+              </div>
+            )}
             <div className="dropdown">
               <select
                 value={selectedTestament}
@@ -959,10 +964,6 @@ const SearchBar = () => {
             handleTranslationAddition={handleTranslationAddition}
             showCustomTranslation={showCustomTranslation}
             setShowCustomTranslation={setShowCustomTranslation}
-            showIncompleteTranslations={showIncompleteTranslations}
-            setShowIncompleteTranslations={setShowIncompleteTranslations}
-            showAllLanguages={showAllLanguages}
-            setShowAllLanguages={setShowAllLanguages}
             allowedTranslationLimit={allowedTranslationLimit}
             setAllowedTranslationLimit={setAllowedTranslationLimit}
             apiTranslations={apiTranslations}
@@ -1187,7 +1188,8 @@ const SideBarBooks = (props: {
                         class={`sidebar-chapters show-sidebar-chapter`}
                         style={{
                           justifyContent:
-                            bookData.numberOfChapters < 3 * OTChapterSeparator
+                            windowSize < 768 ||
+                            bookData.numberOfChapters < 4 * OTChapterSeparator
                               ? "flex-start"
                               : "space-between",
                         }}
@@ -1262,7 +1264,8 @@ const SideBarBooks = (props: {
                         class={`sidebar-chapters show-sidebar-chapter`}
                         style={{
                           justifyContent:
-                            bookData.numberOfChapters < 3 * NTChapterSeparator
+                            windowSize < 768 ||
+                            bookData.numberOfChapters < 4 * NTChapterSeparator
                               ? "flex-start"
                               : "space-between",
                         }}
@@ -1270,8 +1273,8 @@ const SideBarBooks = (props: {
                         <style>
                           {allowedRows === 3 &&
                             `
-                                                .show-sidebar-chapter{width: calc(100% - 5px);}
-                                            `}
+                                .show-sidebar-chapter{width: calc(100% - 5px);}
+                            `}
                         </style>
                         <SideBarChapters
                           onlineUsers={onlineUsers}
@@ -1347,7 +1350,8 @@ const SideBarBooks = (props: {
                         class={`sidebar-chapters show-sidebar-chapter`}
                         style={{
                           justifyContent:
-                            bookData.numberOfChapters < 3 * allowedRows
+                            windowSize < 768 ||
+                            bookData.numberOfChapters < 4 * allowedRows
                               ? "flex-start"
                               : "space-between",
                         }}
@@ -1426,7 +1430,8 @@ const SideBarBooks = (props: {
                         class={`sidebar-chapters show-sidebar-chapter`}
                         style={{
                           justifyContent:
-                            bookData.numberOfChapters < 3 * allowedRows
+                            windowSize < 768 ||
+                            bookData.numberOfChapters < 4 * allowedRows
                               ? "flex-start"
                               : "space-between",
                         }}
@@ -1508,7 +1513,8 @@ const SideBarBooks = (props: {
                         class={`sidebar-chapters show-sidebar-chapter`}
                         style={{
                           justifyContent:
-                            bookData.numberOfChapters < 3 * allowedRows
+                            windowSize < 768 ||
+                            bookData.numberOfChapters < 4 * allowedRows
                               ? "flex-start"
                               : "space-between",
                         }}

@@ -210,7 +210,7 @@ describe("navigate", () => {
     await page.waitForSelector(".language-list");
     await page.locator(".language-list > div:nth-child(1)").click();
     await delay(100);
-    await page.locator(".language-list > div:nth-child(4)").click();
+    await page.locator(".language-list > div:nth-child(2)").click();
     await delay(100);
     await page.locator(".translation-option:nth-child(1)").click();
 
@@ -220,9 +220,7 @@ describe("navigate", () => {
       .locator("div.bookTitle")
       .waitHandle();
     await delay(1000);
-    expect(await bookTitle?.evaluate((el) => el.textContent)).toBe(
-      "उत्पत्ति 1"
-    );
+    expect(await bookTitle?.evaluate((el) => el.textContent)).toBe("Madiu 1");
   });
 
   test("check bible nav enter", async () => {
