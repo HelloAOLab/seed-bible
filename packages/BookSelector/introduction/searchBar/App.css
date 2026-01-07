@@ -53,7 +53,7 @@
   padding: 8px 26px 8px 12px;
   font-size: 14px;
 
-  border: 1px solid #ccc;
+  border: none;
   border-radius: 6px;
   background: var(--panelBackground)
     url("data:image/svg+xml;utf8,<svg fill='gray' height='20' viewBox='0 0 24 24' width='20' xmlns='http://www.w3.org/2000/svg'><path d='M7 10l5 5 5-5z'/></svg>")
@@ -62,11 +62,12 @@
 
   cursor: pointer;
   outline: none;
+  outline-width: 0px;
   transition:
     border-color 0.2s,
     box-shadow 0.2s;
   margin-right: 5px;
-  font-family: Satoshi;
+  font-family: "Satoshi";
   color: var(--text3);
 }
 
@@ -74,21 +75,16 @@
   background: var(--panelBackground);
   color: var(--text3);
   padding: 8px 12px;
-  font-weight: bold;
-}
-
-.dropdown-option:hover {
-  /* background: #f1f1f1; */
+  cursor: pointer;
 }
 
 .searchbar {
   display: flex;
   align-items: center;
-  border: 1px solid #ccc;
   border-radius: 6px;
   background: var(--panelBackground);
   padding: 6px 10px;
-  width: 76%;
+  width: 80%;
   height: 34px;
   overflow: hidden;
   color: var(--text3);
@@ -216,9 +212,12 @@ input:checked + .slider:not(#slider):before {
   height: fit-content;
   width: 100%;
   padding: 0px 10px;
-  font-size: 18px;
+  font-size: 16px;
   justify-content: space-between;
   margin-top: 5px;
+  font-weight: normal;
+  color: var(--primaryColor);
+  font-family: "Satoshi";
 }
 
 .custom-translation-container-main {
@@ -236,6 +235,7 @@ input:checked + .slider:not(#slider):before {
   flex-direction: column;
   padding: 10px;
   gap: 10px;
+  font-family: "Satoshi";
 }
 
 .custom-tr-api {
@@ -284,10 +284,12 @@ input:checked + .slider:not(#slider):before {
 
 .selectionsection {
   display: flex;
-  font-size: 18px;
+  font-size: 16px;
   justify-content: flex-start;
   align-items: center;
   gap: 10px;
+  color: var(--primaryColor);
+  font-weight: normal;
 }
 
 .about-us-title-conatiner {
@@ -362,7 +364,6 @@ input:checked + .slider:not(#slider):before {
   align-items: center;
   width: 100px;
   border-radius: 5px;
-  border: 1px solid #ccc;
   color: var(--text3);
 }
 
@@ -385,10 +386,6 @@ input:checked + .slider:not(#slider):before {
   border-radius: 5px;
   cursor: pointer;
   /* width: 300px; */
-}
-
-.translation-option:hover {
-  background: #b3e5fc;
 }
 
 .translation-language {
@@ -420,16 +417,17 @@ input:checked + .slider:not(#slider):before {
   font-size: 18px;
   text-overflow: ellipsis;
   white-space: nowrap;
-  font-family: Satoshi;
+  font-family: "Satoshi";
   width: 75px;
   overflow: hidden;
+  font-weight: normal;
 }
 
 .translation-description {
   font-weight: normal;
   font-size: 14px;
   width: 100%;
-  font-family: "DM Sans", sans-serif;
+  font-family: "Satoshi";
 }
 
 .experience-container {
@@ -668,6 +666,7 @@ input:checked + .slider:not(#slider):before {
   color: var(--activeTabText, var(--text1)) !important;
   transition: all 0.3s;
   position: relative;
+  font-size: 16px;
 }
 
 .chapter-btn:hover {
@@ -720,14 +719,14 @@ input:checked + .slider:not(#slider):before {
 
 .show-sidebar-chapter {
   display: grid;
-  grid-template-columns: repeat(auto-fit, 42px);
+  grid-template-columns: repeat(auto-fit, 40px);
   justify-content: space-between;
-  /* display: flex; */
   width: 100%;
   height: fit-content;
-  gap: clamp(5px, 0.5vw, 20px);
+  gap: 10px;
+  row-gap: 13px;
   flex-wrap: wrap;
-  background-color: var(--panelBackground, --panelBackground) !important;
+  background-color: var(--panelBackground) !important;
   padding: 8px;
   border-radius: 5px;
 }
@@ -893,13 +892,6 @@ input:checked + .slider:not(#slider):before {
 .sidebar-selected-itm {
   background-color: var(--panelBackground);
   color: var(--text3);
-  font-weight: bold;
-}
-
-.sidebar-itm.sidebar-selected-itm:hover {
-  /* background-color: #ceeaf7;
-  color: #044d87; */
-  font-weight: bold;
 }
 
 .sidebar-itm.blinker {
@@ -949,7 +941,7 @@ input:checked + .slider:not(#slider):before {
 .open-sideBar {
   opacity: 1;
   height: 80dvh;
-  bottom: 100px;
+  bottom: 80px;
   box-shadow: rgba(0, 0, 0, 0.24) 0px 3px 8px;
 }
 
@@ -1150,7 +1142,7 @@ input:checked + .slider:not(#slider):before {
   }
 
   .show-sidebar-chapter {
-    grid-template-columns: repeat(auto-fit, 40px);
+    grid-template-columns: repeat(auto-fit, 38px);
   }
 
   .separator {
@@ -1161,7 +1153,7 @@ input:checked + .slider:not(#slider):before {
   }
 
   .searchbar {
-    width: 58%;
+    width: 60%;
   }
 }
 
@@ -1173,19 +1165,22 @@ input:checked + .slider:not(#slider):before {
 
   .searchbar {
     width: 80%;
-    margin-right: 5px;
+  }
+
+  .sidebar-translation-selector {
+    width: 75px;
   }
 
   .testament-selection {
     padding: 10px 0px;
   }
 
-  .mainSettings {
-    padding: 0 !important;
+  .sidebar-selected-title {
+    font-size: 16px;
   }
 
-  .show-sidebar-chapter {
-    gap: 8.5px;
+  .mainSettings {
+    padding: 0 !important;
   }
 
   .show-close-icon {
@@ -1278,12 +1273,10 @@ input:checked + .slider:not(#slider):before {
 
   .dropdown-select {
     width: 100px;
-    font-weight: bold;
   }
 
   .dropdown-option {
     width: 100px;
-    font-weight: bold;
   }
 
   .testament-title {
@@ -1388,11 +1381,17 @@ input:checked + .slider:not(#slider):before {
   }
 
   .chapter-btn {
-    width: 60px;
+    width: calc(20% - 10px);
   }
 
   .show-sidebar-chapter {
-    grid-template-columns: repeat(auto-fit, 60px);
+    display: flex;
+    flex-direction: row;
+    flex-wrap: wrap;
+    column-gap: 12px;
+    row-gap: 13px;
+    height: fit-content;
+    justify-content: flex-start;
   }
 
   .psalms-btn {
@@ -1415,7 +1414,6 @@ input:checked + .slider:not(#slider):before {
   .sidebar-selected-itm-win {
     border-bottom-left-radius: 0;
     border-bottom-right-radius: 0;
-    font-weight: bold;
   }
 
   .experiences .experience_btn {
