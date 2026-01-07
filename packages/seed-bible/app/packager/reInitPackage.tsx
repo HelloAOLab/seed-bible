@@ -56,7 +56,6 @@ async function SetUpApplication(applicationFunction, bot, toolbarConfig) {
     const panelKey = `${label?.toUpperCase()?.replace(/\s/g, "_")}_PANEL_ID`;
     console.log("working", pkgName, panelKey);
     const onClick = async () => {
-      os.log("Toolbar app clicked", label);
       if (globalThis.makingApp === label) {
         globalThis.CurrentPanelAvailable = null;
         RemoveApplicationByID(globalThis[panelKey]);
@@ -69,13 +68,8 @@ async function SetUpApplication(applicationFunction, bot, toolbarConfig) {
       const id = uuid();
       globalThis[panelKey] = id;
       globalThis.makingApp = label;
-      os.log(
-        "WE ARE ADDING APPLICATION",
-        globalThis.LastClickedPanelUpdate,
-        id
-      );
-      if (globalThis.LastClickedPanelUpdate) {
-        ReplaceApplication(globalThis.LastClickedPanelUpdate, {
+      if (globalThis.CurrentPanelAvailable) {
+        ReplaceApplication(globalThis.CurrentPanelAvailable, {
           id,
           App: <InitializedApp id={id} />,
           to: "panel",

@@ -102,8 +102,6 @@ await (async function mainInstaller(that) {
       const panelKey = `${label?.toUpperCase()?.replace(/\s/g, "_")}_PANEL_ID`;
 
       const onClick = async () => {
-        os.log("Toolbar app clicked", label);
-
         if (globalThis.makingApp === label) {
           RemoveApplicationByID(globalThis[panelKey]);
           globalThis[panelKey] = null;
@@ -115,13 +113,9 @@ await (async function mainInstaller(that) {
         const id = uuid();
         globalThis[panelKey] = id;
         globalThis.makingApp = label;
-        os.log(
-          "WE ARE ADDING APPLICATION",
-          globalThis.LastClickedPanelUpdate,
-          id
-        );
-        if (globalThis.LastClickedPanelUpdate) {
-          ReplaceApplication(globalThis.LastClickedPanelUpdate, {
+
+        if (globalThis.CurrentPanelAvailable) {
+          ReplaceApplication(globalThis.CurrentPanelAvailable, {
             id,
             App: <InitializedApp id={id} />,
             to: "panel",

@@ -15,6 +15,7 @@ import {
   Panel4Row,
   StartSessionIcon,
   JoinSession,
+  TheNewSettingsIcon,
 } from "app.components.icons";
 import { useBibleContext } from "app.hooks.bibleVariables";
 import { useSideBarContext } from "app.hooks.sideBar";
@@ -1705,7 +1706,7 @@ export const SpaceUI = () => {
                 onClick={() => setSideBarMode("settings")}
                 className="material-symbols-outlined"
               >
-                <img src="https://res.cloudinary.com/dfbtwwa8p/image/upload/v1767580434/download_dnzcpk.png" />
+                <TheNewSettingsIcon />
               </span>
               <SettingsProfile />
               <UserProfile />

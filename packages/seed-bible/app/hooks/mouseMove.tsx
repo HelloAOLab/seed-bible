@@ -62,7 +62,7 @@ export function MouseMoveProvider({ children }) {
     // Handle "panel" mode - go directly to panel without creating floating window
     if (appConfig.mode === "panel") {
       const checkEmpty = PanelsApps.find((e) => !e.tabData);
-      const id = globalThis.LastClickedPanelUpdate || checkEmpty?.id;
+      const id = checkEmpty?.id;
       os.log(
         "RemoveApplicationByID",
         checkEmpty,
