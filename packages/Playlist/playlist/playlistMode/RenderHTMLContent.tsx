@@ -1,5 +1,5 @@
 const { Button } = Components;
-const { useState, useLayoutEffect, useRef, useEffect } = os.appHooks;
+const { useState, useMemo, useLayoutEffect, useRef, useEffect } = os.appHooks;
 
 const RenderHTMLContent = ({ htmlContent }) => {
   const [shouldRender, setShouldRender] = useState(false);
@@ -133,19 +133,28 @@ const RenderHTMLContent = ({ htmlContent }) => {
     };
   }, [htmlContent, shouldRender, open]);
 
+  const breakHTMLCONTENT = useMemo(()=>{
+    const content = htmlContent.replaceAll(`<p style="text-align: left;"></p>`,`<br style="text-align: left;"></br>`)
+    return content;
+  },[htmlContent])
+
 
   return (
     <div>
       <div
+        className="render-html-content"
         ref={containerRef}
         style={{
           overflow: "hidden",
           height: shouldRender ? (open ? "auto" : "60px") : "auto",
           textTransform: "none",
           transition: "all 0.2s linear",
-          paddingRight: "1.25rem",
+          paddingBottom: "0.25rem",
+          display: 'flex',
+          flexDirection: 'column',
+          alignItems: 'flex-start',
         }}
-        dangerouslySetInnerHTML={{ __html: htmlContent }}
+        dangerouslySetInnerHTML={{ __html: breakHTMLCONTENT }}
       />
 
       {shouldRender && (
@@ -162,7 +171,7 @@ const RenderHTMLContent = ({ htmlContent }) => {
             setOpen(!open);
           }}
         >
-          {open ? "Show Less" : "Show more"}
+          {open ? "Show less" : "Show more"}
         </span>
       )}
     </div>

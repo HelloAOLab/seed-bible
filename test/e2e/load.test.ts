@@ -1,6 +1,7 @@
 import puppeteer, { Browser, Page, Frame } from "puppeteer";
 import { packageAll } from "../../script/lib/package";
 import { loadSeedBible } from "../../script/lib/browser";
+import { minifyAll } from "../../script/lib/minify";
 
 let browser: Browser;
 
@@ -8,6 +9,7 @@ console.log = jest.fn();
 
 beforeAll(async () => {
   await packageAll("ignore");
+  await minifyAll("ignore");
 
   browser = await puppeteer.launch({
     args: ["--no-sandbox"],

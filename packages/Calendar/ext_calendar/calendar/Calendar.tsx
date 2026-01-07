@@ -21,9 +21,11 @@ const buildEventTooltipContent = await thisBot.buildEventTooltipContent();
 const handleDatesSet = await thisBot.handleDateSet();
 const handleDateClick = await thisBot.handleDateClick();
 const handleEventContent = await thisBot.handleEventContent();
+const handleResourceHeader = await thisBot.handleResourceHeader();
 const { onToolbarDateClick, onToolbarDateClick1 } =
   await thisBot.onToolbarClick1();
 const addReadingPlans = await thisBot.addReadingPlans();
+const handleResourceLabel = await thisBot.handleResourceLabel();
 const {
   getDayDifference,
   stripTime,
@@ -36,7 +38,9 @@ const {
   isSameDate,
   dateOnly,
   getDayHeaderFormat,
+  loadEventsFromLocalStorage,
 } = await thisBot.calendarFunctions();
+
 import { useCalendar } from "ext_calendar.calendar.CalendarContext";
 const types = ["events", "reading", "content", "projects", "sources"];
 if (!globalThis.C_E) globalThis.C_E = [];
@@ -60,7 +64,28 @@ const App = () => {
   const [mapViewSelected, setMapViewSelected] = useState(false);
   const [playlistsToAdd, setPlaylistsToAdd] = useState([]);
   const [hasTitle, setHasTitle] = useState(true);
-  const [allEvents, setAllEvents] = useState([]);
+
+  const [allEvents, setAllEvents] = useState(() => {
+    try {
+      const saved = localStorage.getItem("allEvents");
+      if (!saved) return [];
+
+      const parsed = JSON.parse(saved);
+
+      const unique = parsed.filter(
+        (event, index, self) =>
+          index === self.findIndex((e) => e.id === event.id)
+      );
+
+      // (Optional) Clean up localStorage to remove duplicates permanently
+      localStorage.setItem("allEvents", JSON.stringify(unique));
+
+      return unique;
+    } catch (error) {
+      console.error("Error parsing saved events:", error);
+      return [];
+    }
+  });
   const [selectedTypes, setSelectedTypes] = useState(["events", "reading"]);
   const [isModalOpen, setIsModalOpen] = useState(false);
   const [isEventModalOpen, setIsEventModalOpen] = useState(false);
@@ -96,7 +121,7 @@ const App = () => {
   const resourceIdRef = useRef(currentResourceId);
   const resourceGroupNameRef = useRef(null);
   const experienceConRef = useRef(null);
-  const customDaysRef = useRef(null);
+  const customDaysRef = useRef([]);
   const toolbarClickHandler = (e) => {
     if (calendarApi?.current.view.type.includes("resourceTimeline")) {
       onToolbarDateClick(e, calendarApi);
@@ -106,6 +131,40 @@ const App = () => {
   };
 
   useTodayButtonResponsiveLabel(experienceConRef);
+  useEffect(() => {
+    // Load from localStorage only once
+    const savedEvents = localStorage.getItem("allEvents");
+    if (savedEvents) {
+      try {
+        const parsed = JSON.parse(savedEvents);
+        setAllEvents(parsed);
+      } catch (error) {
+        console.error("Error loading events:", error);
+      }
+    }
+  }, []);
+  useEffect(() => {
+    try {
+      localStorage.setItem("allEvents", JSON.stringify(allEvents));
+    } catch (error) {
+      console.error("Error saving events:", error);
+    }
+  }, [allEvents]);
+
+  useEffect(() => {
+    const allEventsStore = allEvents;
+    if (showSchedules !== true) {
+      const addEventsWithoutResource = allEventsStore.filter(
+        (prev) => prev.extendedProps.isResource !== true
+      );
+      calendarApi?.current?.removeAllEvents();
+      calendarApi?.current?.addEventSource(addEventsWithoutResource);
+    } else {
+      setAllEvents(allEventsStore);
+      calendarApi?.current?.removeAllEvents();
+      calendarApi?.current?.addEventSource(allEventsStore);
+    }
+  }, [showSchedules]);
 
   useEffect(() => {
     const observer = new MutationObserver(() => {
@@ -116,13 +175,22 @@ const App = () => {
       }
     });
 
-    observer.observe(document.body, {
+    observer.observe(calendarRef.current, {
       childList: true,
       subtree: true,
     });
 
     return () => observer.disconnect();
   }, []);
+  useEffect(() => {
+    if (calendarApi.current !== null) {
+      if (calendarApi.current.view.type === "resourceTimeline") {
+        setIsSchedule(true);
+      } else {
+        setIsSchedule(false);
+      }
+    }
+  });
 
   useEffect(() => {
     const handleClickOutside = (e) => {
@@ -216,7 +284,7 @@ const App = () => {
         setIsSchedule(false);
       }
     }
-  }, []);
+  }, [calendarView]);
 
   useEffect(() => {
     resourceGroupNameRef.current = resourceGroupName;
@@ -361,74 +429,14 @@ const App = () => {
           popoverOpenRef.current = true;
           return "popover";
         },
-        resourceAreaHeaderContent: function () {
-          const wrapper = document.createElement("div");
-          wrapper.style.display = "flex";
-          wrapper.style.justifyContent = "space-between";
-          wrapper.style.alignItems = "center";
-
-          const label = document.createElement("span");
-          label.textContent = "Schedule";
-
-          const addButton = document.createElement("button");
-          addButton.textContent = "+";
-          addButton.style.marginLeft = "8px";
-          addButton.style.fontSize = "8px";
-          addButton.style.paddin = "0 0";
-
-          addButton.title = "Add New Group";
-          addButton.style.cursor = "pointer";
-
-          addButton.onclick = () => {
-            setIsModalOpen(true);
-          };
-
-          wrapper.appendChild(label);
-          wrapper.appendChild(addButton);
-          return { domNodes: [wrapper] };
-        },
+        resourceAreaHeaderContent: handleResourceHeader({ setIsModalOpen }),
         resourceGroupLabelContent: function (arg) {
-          setResourceStartDate(arg.view.currentStart);
-          setResourceGroupName(arg.groupValue);
-          return (
-            <div
-              style={{
-                display: "flex",
-                alignItems: "center",
-                justifyContent: "space-between",
-              }}
-            >
-              <span>{arg.groupValue}</span>
-              <button
-                ref={(el) => {
-                  if (el) el.dataset.groupValue = arg.groupValue;
-                }}
-                style={{
-                  background: "none",
-                  border: "none",
-                  cursor: "pointer",
-                  padding: "4px",
-                }}
-                onClick={(e) => {
-                  e.stopPropagation();
-                  const rect = e.currentTarget.getBoundingClientRect();
-                  setGroupMenu({
-                    groupValue: arg.groupValue,
-                    position: {
-                      top: rect.top + window.scrollY + 20,
-                      left: rect.left + window.scrollX,
-                    },
-                  });
-                }}
-              >
-                <svg width="16" height="16" viewBox="0 0 24 24" fill="gray">
-                  <circle cx="12" cy="5" r="2" />
-                  <circle cx="12" cy="12" r="2" />
-                  <circle cx="12" cy="19" r="2" />
-                </svg>
-              </button>
-            </div>
-          );
+          return handleResourceLabel({
+            arg,
+            setResourceStartDate,
+            setResourceGroupName,
+            setGroupMenu,
+          });
         },
         resourceGroupField: isResourceGroupHiding ? undefined : "group",
 
@@ -588,6 +596,26 @@ const App = () => {
       resizeObserver.observe(calendarEle);
     }
   }, []);
+  useEffect(() => {
+    if (!calendarApi.current) return;
+    calendarApi.current.removeAllEvents();
+    calendarApi.current.addEventSource(allEvents);
+  }, []);
+  const viewType = calendarApi.current?.view?.type;
+  let height;
+  let marginTop;
+
+  if (viewType === "multiMonthYear") {
+    height = "449px";
+    marginTop = "89px";
+  } else if (viewType === "resourceTimeline") {
+    height = "454px";
+    marginTop = "71px";
+  } else {
+    height = "427px";
+    marginTop = "111px";
+  }
+
   useDayGridResponsiveLayout(experienceConRef, calendarApi);
   return (
     <>
@@ -710,18 +738,12 @@ const App = () => {
           {calendarApi.current && (
             <div
               style={{
-                height:
-                  calendarApi.current.view.type !== "multiMonthYear"
-                    ? "427px"
-                    : "449px",
+                height,
                 width: "1px",
                 zIndex: "999",
                 backgroundColor: "#ddd",
                 position: "absolute",
-                marginTop:
-                  calendarApi.current.view.type !== "multiMonthYear"
-                    ? "111px"
-                    : "89px",
+                marginTop,
               }}
             />
           )}

@@ -142,6 +142,14 @@ function formatWeekdayDay(date) {
     day: "numeric",
   }).format(date);
 }
+function loadEventsFromLocalStorage(calendarApi) {
+  if (!calendarApi.current) return;
+
+  const events = JSON.parse(localStorage.getItem("allEvents")) || [];
+
+  calendarApi.current.removeAllEvents();
+  calendarApi.current.addEventSource(events);
+}
 return {
   getDayDifference,
   stripTime,
@@ -154,4 +162,5 @@ return {
   isSameDate,
   dateOnly,
   getDayHeaderFormat,
+  loadEventsFromLocalStorage,
 };

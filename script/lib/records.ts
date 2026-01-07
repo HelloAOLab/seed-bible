@@ -105,7 +105,7 @@ export async function uploadFile(
       method: method.toLowerCase(),
       url: url,
       headers: headers,
-      data: data,
+      data: encodedData,
     });
 
     if (uploadResult.status < 200 || uploadResult.status >= 300) {

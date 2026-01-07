@@ -256,7 +256,7 @@ function showEventPopup(
         </label>
         <select id="repeatSelect">
           <option value="No Repeat">No Repeat</option>
-          <option id="repeatDayOption">Repeat on ${dayName}</option>
+          <option id="repeatDayOption" value="Repeat on ${dayName}">Repeat on ${dayName}</option>
           <option value="custom">Custom</option>
         </select>
       </div>

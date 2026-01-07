@@ -548,6 +548,9 @@ const AddAnotationUI = ({
               content: data.data.html,
               createdAtMs: data.data.createdAtMs,
               updatedAtMs: data.data.updatedAtMs,
+              userId: data.data.userId,
+              userName: data.data.userName,
+              userProfilePicture: data.data.userProfilePicture,
               additionalInfo: {
                 verse: data.verseNumber,
                 chapter: data.chapterNumber,
@@ -997,6 +1000,9 @@ const AddAnotationUI = ({
 
         createdAtMs: editDataDetails.createdAtMs ?? Date.now(),
         updatedAtMs: Date.now(),
+        userId: editDataDetails.userId,
+        userName: editDataDetails.userName,
+        userProfilePicture: editDataDetails.userProfilePicture,
 
         // book:
         //   editDataDetails.additionalInfo.chapterData?.id ||
@@ -1127,6 +1133,43 @@ const AddAnotationUI = ({
       const userRecord = await getAnnotationRecord();
       const singleRangeTrack = {};
 
+      const data:any = await os.getData(thisBot.tags.keyFetchAccountData, authBot.id);
+
+      const verseNumbers = [];
+
+      const comment = {
+        type: "comment",
+        html: textHTML,
+        createdAtMs: Date.now(),
+        updatedAtMs: Date.now(),
+        userProfilePicture: data.data.photoLink,
+        userName: data.data.profileName,
+        userId: authBot.id,
+        // book:
+        //   ele.additionalInfo.chapterData?.id ||
+        //   ele.additionalInfo.chapterData?.bookId ||
+        //   ele.additionalInfo?.data?.id ||
+        //   ele.additionalInfo?.data?.bookId,
+        // chapter: ele.additionalInfo.chapter,
+        // translation: "",
+        // chronicle_tags: [
+        //   ...(singleMode ? tags : ele.additionalInfo.tags || []),
+        // ],
+        // data: {
+        //   ...ele,
+        //   additionalInfo: {
+        //     ...ele.additionalInfo,
+        //     layers: [
+        //       scripture
+        //       // ...(singleMode ? embedItems : ele.additionalInfo.layers),
+        //     ],
+        //   },
+        // },
+      };
+
+      let book = "";
+      let chapter = "";
+
       currentList.forEach((ele) => {
         if (
           ele.type !== "chapter-range" &&
@@ -1136,60 +1179,40 @@ const AddAnotationUI = ({
           if (singleMode) {
             singleRangeTrack[ele.additionalInfo.verse] = true;
           }
-          const book =
+          book =
             ele.additionalInfo?.chapterData?.id ||
             ele.additionalInfo?.chapterData?.bookId ||
             ele.additionalInfo?.data?.id ||
             ele.additionalInfo?.data?.bookId;
-          const chapter = ele.additionalInfo.chapter;
-          const comment = {
-            type: "comment",
-            html: textHTML,
-            createdAtMs: Date.now(),
-            updatedAtMs: Date.now(),
-            // book:
-            //   ele.additionalInfo.chapterData?.id ||
-            //   ele.additionalInfo.chapterData?.bookId ||
-            //   ele.additionalInfo?.data?.id ||
-            //   ele.additionalInfo?.data?.bookId,
-            // chapter: ele.additionalInfo.chapter,
-            // translation: "",
-            // chronicle_tags: [
-            //   ...(singleMode ? tags : ele.additionalInfo.tags || []),
-            // ],
-            // data: {
-            //   ...ele,
-            //   additionalInfo: {
-            //     ...ele.additionalInfo,
-            //     layers: [
-            //       scripture
-            //       // ...(singleMode ? embedItems : ele.additionalInfo.layers),
-            //     ],
-            //   },
-            // },
-          };
-          const annotation = createAnnotation(
-            book,
-            chapter,
-            comment,
-            ele.additionalInfo.verse
-          );
-          promisesArray.push(saveAnnotation(userRecord, annotation));
+          chapter = ele.additionalInfo.chapter;
+          
+          verseNumbers.push(ele.additionalInfo.verse);
         }
       });
 
-      await Promise.all(promisesArray);
+      if(book && chapter && verseNumbers.length > 0) {
+        const annotation = createAnnotation(
+          book,
+          chapter,
+          comment,
+          verseNumbers.length > 1 ? verseNumbers : verseNumbers[0]
+        );
 
-      setLoading(false);
-      globalThis.SelectedItemIDForAttachments = null;
-      ShowNotification({
-        message: t('annotationsSavedSuccessfully'),
-        severity: "success",
-      });
-      setList([]);
-      setSelectedAnnotation(null);
-      globalThis.PreviousHTML = null;
-      setTextHTML(null);
+        promisesArray.push(saveAnnotation(userRecord, annotation));
+  
+        await Promise.all(promisesArray);
+  
+        setLoading(false);
+        globalThis.SelectedItemIDForAttachments = null;
+        ShowNotification({
+          message: t('annotationsSavedSuccessfully'),
+          severity: "success",
+        });
+        setList([]);
+        setSelectedAnnotation(null);
+        globalThis.PreviousHTML = null;
+        setTextHTML(null);
+      }
       
     } catch (e) {
       setLoading(false);
@@ -1272,19 +1295,7 @@ const AddAnotationUI = ({
     const verses = listFinal
       .map((ele) => ele.additionalInfo.verse)
       .sort((a, b) => a - b);
-    const ranges = [];
-    let start = verses[0];
-    let end = verses[0];
-
-    for (let i = 1; i < verses.length; i++) {
-      if (verses[i] === end + 1) {
-        end = verses[i];
-      } else {
-        ranges.push(start === end ? `${start}` : `${start}-${end}`);
-        start = end = verses[i];
-      }
-    }
-    ranges.push(start === end ? `${start}` : `${start}-${end}`);
+    const ranges = globalThis.GetVerseSummaryHeading(verses);
 
     item.content = `${item.content.split(":")[0]}:${ranges.join(", ")}`;
 

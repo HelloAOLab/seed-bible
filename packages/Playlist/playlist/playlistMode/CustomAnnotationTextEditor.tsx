@@ -1108,7 +1108,7 @@ export function CustomAnnotationTextEditor({
 
   return (
     <>
-    {isCommandBox && <div className="command-box-backdrop" onClick={toggleCommandBox} style={{ display: isCommandBox ? "block" : "none", position: "fixed", top: 0, left: 0, right: 0, bottom: 0, zIndex: 98, backdropFilter: "blur(2px)" }}></div>}
+    {isCommandBox && <div className="command-box-backdrop" onClick={toggleCommandBox} style={{ display: isCommandBox ? "block" : "none", position: "fixed", top: 0, left: 0, right: 0, bottom: 0, zIndex: 98 }}></div>}
     <div ref={dragRef} className={`sre-root ${isVideo ? "sre-video-root" : ""} ${className || ""}`} style={{ ...style }}>
       {isCommandBox && <div
       className="relative-float command-box"
