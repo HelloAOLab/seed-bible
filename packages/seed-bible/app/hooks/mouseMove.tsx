@@ -62,7 +62,7 @@ export function MouseMoveProvider({ children }) {
     // Handle "panel" mode - go directly to panel without creating floating window
     if (appConfig.mode === "panel") {
       const checkEmpty = PanelsApps.find((e) => !e.tabData);
-      const id = checkEmpty?.id;
+      const id = globalThis.LastClickedPanelUpdate || checkEmpty?.id;
       os.log(
         "RemoveApplicationByID",
         checkEmpty,
@@ -602,11 +602,16 @@ const FloatingAppContainer = ({
   setHiddenApps,
   setCurrentCanvasApp,
 }) => {
-  const [userHaveVR, setUserHaveVR] = useState(true);
+  // Default to false - only show VR button if WebXR is actually supported
+  const [userHaveVR, setUserHaveVR] = useState(false);
   const checkVR = async () => {
-    if (app?.hasMainCanvas) {
+    // Check WebXR support regardless of hasMainCanvas
+    // This ensures VR button only shows on actual XR devices
+    try {
       const support = await os.vrSupported();
       setUserHaveVR(support);
+    } catch {
+      setUserHaveVR(false);
     }
   };
   useEffect(() => {
@@ -622,7 +627,7 @@ const FloatingAppContainer = ({
   const [toolbarVisible, setToolbarVisible] = useState(true);
   const [forceVisable, setForceVisable] = useState(false);
   const [isHoveringToolbar, setIsHoveringToolbar] = useState(false);
-  const hideDelayMs = 3000; // 3s after user stops interacting
+  const hideDelayMs = 5000; // 5s after user stops interacting
   const wrapRef = useRef(null);
   const hideTimerRef = useRef(null);
 
@@ -986,8 +991,10 @@ const FloatingAppContainer = ({
         }}
         onMouseLeave={() => {
           if (!mobile && !forceVisable) {
+            // Use a short delay to allow mouse to move to toolbar buttons
+            // The toolbar's onMouseEnter will clear this timer if triggered
             (hideTimerRef as any).current = setTimeout(
-              () => setToolbarVisible(false),
+              () => !isHoveringToolbar && setToolbarVisible(false),
               hideDelayMs
             );
           }
@@ -1053,6 +1060,7 @@ const FloatingAppContainer = ({
             onMouseLeave={() => {
               setIsHoveringToolbar(false);
               if (!mobile && !forceVisable) {
+                // Use a longer delay when leaving toolbar to give user time to click
                 (hideTimerRef as any).current = setTimeout(
                   () => setToolbarVisible(false),
                   hideDelayMs
