@@ -6,6 +6,7 @@ import {
   ShareIcon,
   LocationIcon,
 } from "app.components.icons";
+import { getStyleOf } from "app.styles.styler";
 
 export function VerseToolbar({
   clickedVersesContext,
@@ -747,12 +748,7 @@ function getMenuActions(that, onClose, activeSpace, spaces) {
         </span>
       ),
       onClick: () => {
-        const subMenuItems = {
-          type: "normal",
-          items: [],
-        };
-        subMenuItems.items.push(...itemsHolder);
-        openPopupSettings(subMenuItems);
+        openPopupSettings(<SubOptions items={itemsHolder} />, null, true);
       },
     });
   }
@@ -780,3 +776,45 @@ function getMenuActions(that, onClose, activeSpace, spaces) {
     type,
   }));
 }
+
+const SubOptions = ({ items }) => {
+  return (
+    <div
+      className={`popupSettings`}
+      style={{ maxHeight: "275px", overflowY: "auto", scrollbarWidth: "none" }}
+    >
+      {items.map((item) => {
+        if (item.active === false) return;
+        if (item?.type === "line")
+          return (
+            <div
+              style={{
+                width: "100%",
+                height: "1px",
+                backgroundColor: "#cdcccc3b",
+              }}
+            ></div>
+          );
+        else
+          return (
+            <div
+              onClick={() => {
+                item.onClick();
+              }}
+              className={`itemSettings`}
+              style={{
+                cursor: item?.disabled ? "not-allowed" : "pointer",
+                color: item?.disabled ? "#929292" : "",
+              }}
+            >
+              <div>{item.icon}</div>
+              <div>
+                {typeof item.title === "function" ? item.title() : item.title}
+              </div>
+            </div>
+          );
+      })}
+      <style>{getStyleOf("sidebar.css")}</style>
+    </div>
+  );
+};
