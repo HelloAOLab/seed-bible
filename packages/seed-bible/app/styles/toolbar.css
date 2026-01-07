@@ -102,7 +102,7 @@
 }
 
 .toolbar-button:hover {
-  background-color: var(--pageBackground) !important;
+  /* background-color: var(--pageBackground) !important; */
 }
 
 .toolbar-button:focus {
@@ -136,7 +136,7 @@
 }
 
 .toolbar-button:hover {
-  background-color: #f0f0f0;
+  /* background-color: #f0f0f0; */
 }
 
 /* 👇 Empty space where item was */
