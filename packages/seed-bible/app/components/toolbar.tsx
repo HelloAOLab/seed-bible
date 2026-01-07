@@ -9,6 +9,12 @@ import { useTabsContext } from "app.hooks.tabs";
 
 // Simple, single-toolbar component (no edit layer). Main logic unchanged.
 export function Toolbar() {
+  const [mounted, setMounted] = useState(false);
+
+  useEffect(() => {
+    setMounted(true);
+  }, []);
+
   const {
     navFunctions,
     setScreens,
@@ -129,7 +135,7 @@ export function Toolbar() {
         <SurroundingDivs action={handleMouseLeaveContainer}>
           <div
             onMouseUp={handleMouseUp}
-            className="toolbar-1 boundElements"
+            className={`toolbar-1 boundElements ${mounted ? "mounted" : ""}`}
             style={{
               border: sidebarMode?.includes("toolbarSettings")
                 ? "2px solid #4459F3"
