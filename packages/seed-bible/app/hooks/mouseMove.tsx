@@ -627,7 +627,7 @@ const FloatingAppContainer = ({
   const [toolbarVisible, setToolbarVisible] = useState(true);
   const [forceVisable, setForceVisable] = useState(false);
   const [isHoveringToolbar, setIsHoveringToolbar] = useState(false);
-  const hideDelayMs = 5000; // 5s after user stops interacting
+  const hideDelayMs = 1500; // 5s after user stops interacting
   const wrapRef = useRef(null);
   const hideTimerRef = useRef(null);
 
@@ -648,10 +648,10 @@ const FloatingAppContainer = ({
     if (hideTimerRef.current) clearTimeout(hideTimerRef.current);
     // Don't start hide timer if hovering toolbar
     if (!isHoveringToolbar) {
-      hideTimerRef.current = setTimeout(
-        () => !forceVisable && !isHoveringToolbar && setToolbarVisible(false),
-        hideDelayMs
-      );
+      // hideTimerRef.current = setTimeout(
+      //   () => !forceVisable && !isHoveringToolbar && setToolbarVisible(false),
+      //   hideDelayMs
+      // );
     }
   };
 
@@ -715,10 +715,10 @@ const FloatingAppContainer = ({
       setToolbarVisible(true);
       if (hideTimerRef.current) clearTimeout(hideTimerRef.current);
     } else {
-      hideTimerRef.current = setTimeout(
-        () => setToolbarVisible(false),
-        hideDelayMs
-      );
+      // hideTimerRef.current = setTimeout(
+      //   () => setToolbarVisible(false),
+      //   hideDelayMs
+      // );
     }
     return () => {
       if (hideTimerRef.current) clearTimeout(hideTimerRef.current);
@@ -991,12 +991,17 @@ const FloatingAppContainer = ({
         }}
         onMouseLeave={() => {
           if (!mobile && !forceVisable) {
-            // Use a short delay to allow mouse to move to toolbar buttons
+            // Use a short delay to allow mouse to move to toolbar
             // The toolbar's onMouseEnter will clear this timer if triggered
-            (hideTimerRef as any).current = setTimeout(
-              () => !isHoveringToolbar && setToolbarVisible(false),
-              hideDelayMs
-            );
+            (hideTimerRef as any).current = setTimeout(() => {
+              // Re-check isHoveringToolbar at execution time, not capture time
+              setIsHoveringToolbar((currentlyHovering) => {
+                if (!currentlyHovering) {
+                  // setToolbarVisible(false);
+                }
+                return currentlyHovering;
+              });
+            }, 150); // Short delay to allow mouse to reach toolbar
           }
         }}
         ref={wrapRef}
@@ -1055,10 +1060,11 @@ const FloatingAppContainer = ({
             onMouseEnter={() => {
               setIsHoveringToolbar(true);
               setToolbarVisible(true);
-              if (hideTimerRef.current) clearTimeout(hideTimerRef.current);
+              // if (hideTimerRef.current) clearTimeout(hideTimerRef.current);
             }}
             onMouseLeave={() => {
               setIsHoveringToolbar(false);
+              // setToolbarVisible(false);
               if (!mobile && !forceVisable) {
                 // Use a longer delay when leaving toolbar to give user time to click
                 (hideTimerRef as any).current = setTimeout(

@@ -114,7 +114,7 @@ const defaultTheme = {
   tertiaryColor: "#CD853F",
   // Container backgrounds
   themeSideMenu: "#FFFFFF",
-  panelBackground: "#FFFFFF",
+  panelBackground: "#F8FAFC",
   // Tab
   tabSelection: "#E07B4C",
   activeTabBackground: "#FADDD1",
