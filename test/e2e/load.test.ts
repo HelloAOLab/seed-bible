@@ -222,7 +222,9 @@ describe("navigate", () => {
       .locator("div.bookTitle")
       .waitHandle();
     await delay(1000);
-    expect(await bookTitle?.evaluate((el) => el.textContent)).toBe("Madiu 1");
+    expect(await bookTitle?.evaluate((el) => el.textContent)).toBe(
+      "1 Mose (Gyenesis) 1"
+    );
   });
 
   test("check bible nav enter", async () => {

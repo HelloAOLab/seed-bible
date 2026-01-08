@@ -47,7 +47,7 @@ const TranslationModal = (props: {
   } = props;
   const systemTranslation: { [key: string]: string } = getTranslations();
   const [showAllLanguages, setShowAllLanguages] = useState(
-    thisBot.masks?.showAllLanguages || "all"
+    thisBot.masks?.showAllLanguages || "complete"
   );
   const [showTranslationSettings, setShowTranslationSettings] = useState(false);
   const filteredApiTranslations = useMemo(() => {
@@ -105,12 +105,13 @@ const TranslationModal = (props: {
         ...JSON.parse(JSON.stringify(apiTranslations)),
       };
 
-      if (showAllLanguages === "incomplete") {
+      if (showAllLanguages === "complete") {
         Object.entries(translations).forEach(([key, value]) => {
           for (const subKey in value) {
             const translation = value[subKey] as TranslationInterface;
             if (
-              translation.numberOfBooks >= 66 &&
+              !translation?.origin &&
+              translation.numberOfBooks < 66 &&
               translation.id !== selectedTranslation.id
             ) {
               delete value[subKey];
@@ -511,14 +512,43 @@ const CustomTranslation = (props: {
 };
 
 const TranslationSettings = (props: {
-  showAllLanguages: "all" | "incomplete" | "popular";
-  setShowAllLanguages: (value: "all" | "incomplete" | "popular") => void;
+  showAllLanguages: "complete" | "all" | "popular";
+  setShowAllLanguages: (value: "complete" | "all" | "popular") => void;
   setShowTranslationSettings: (value: boolean) => void;
 }) => {
   const { showAllLanguages, setShowAllLanguages, setShowTranslationSettings } =
     props;
   return (
     <div className="modal translationSettingsModal">
+      <div
+        class="translation-option"
+        onClick={() => {
+          setShowAllLanguages(() => {
+            setShowTranslationSettings(false);
+            return "complete";
+          });
+        }}
+      >
+        <span
+          class="translation-title"
+          style={{
+            color:
+              showAllLanguages === "complete"
+                ? "var(--primaryColor)"
+                : "var(--text3)",
+          }}
+        >
+          {showAllLanguages === "complete" ? (
+            <SelectedIcon height={17} width={17} />
+          ) : (
+            <span
+              class="emptyCircle"
+              style={{ border: "1px solid #ccc" }}
+            ></span>
+          )}
+          <span class="translation-description">Complete languages</span>
+        </span>
+      </div>
       <div
         class="translation-option"
         onClick={() => {
@@ -546,35 +576,6 @@ const TranslationSettings = (props: {
             ></span>
           )}
           <span class="translation-description">All languages</span>
-        </span>
-      </div>
-      <div
-        class="translation-option"
-        onClick={() => {
-          setShowAllLanguages(() => {
-            setShowTranslationSettings(false);
-            return "incomplete";
-          });
-        }}
-      >
-        <span
-          class="translation-title"
-          style={{
-            color:
-              showAllLanguages === "incomplete"
-                ? "var(--primaryColor)"
-                : "var(--text3)",
-          }}
-        >
-          {showAllLanguages === "incomplete" ? (
-            <SelectedIcon height={17} width={17} />
-          ) : (
-            <span
-              class="emptyCircle"
-              style={{ border: "1px solid #ccc" }}
-            ></span>
-          )}
-          <span class="translation-description">Incomplete languages</span>
         </span>
       </div>
       <div

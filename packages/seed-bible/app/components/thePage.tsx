@@ -205,6 +205,7 @@ function ThePage({
             const defaultTranslation = newTranslations[0];
             newTranslations = newTranslations.map((trans) => {
               return {
+                ...trans,
                 name: trans.name,
                 languageEnglishName: trans.languageEnglishName,
                 id: trans.id,
@@ -213,7 +214,14 @@ function ThePage({
                 shortName: trans.shortName,
               };
             });
-            allTranslations = [...allTranslations, ...newTranslations];
+            setTagMask(
+              thisBot,
+              "newTranslations",
+              masks?.newTranslations
+                ? [...masks.newTranslations, ...newTranslations]
+                : newTranslations,
+              "local"
+            );
             for (const translation of newTranslations) {
               const englishName = translation.languageEnglishName.toLowerCase();
               if (!defaultTranslations.includes(englishName)) {
@@ -250,6 +258,9 @@ function ThePage({
             firstChapterApiLink = book0.firstChapterApiLink;
           }
         }
+        if (masks?.newTranslations) {
+          allTranslations = [...allTranslations, ...masks.newTranslations];
+        }
         allTranslations.forEach((translation) => {
           const englishName =
             translation?.languageEnglishName?.toLowerCase() ||
@@ -273,7 +284,6 @@ function ThePage({
           defaultTranslations,
           "local"
         );
-        console.log(defaultTranslations, translations, "trans");
       }
     } else {
       return {};
