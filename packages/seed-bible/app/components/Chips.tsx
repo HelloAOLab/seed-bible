@@ -389,6 +389,7 @@ const QRCodeComponent = ({ url = "https://example.com/session/12345" }) => {
             marginBottom: "30px",
             fontSize: "24px",
             fontWeight: "600",
+            fontFamily: "Satoshi",
           }}
         >
           Session QR Code
@@ -449,6 +450,10 @@ const QRCodeComponent = ({ url = "https://example.com/session/12345" }) => {
             transition: "all 0.3s ease",
             transform: copied ? "scale(0.98)" : "scale(1)",
             boxShadow: copied ? "none" : "0 4px 12px rgba(102, 126, 234, 0.4)",
+            fontFamily: "Satoshi",
+                        background: "#d36433",
+            color: "white",
+
           }}
         >
           {copied ? "✓ Copied!" : "Copy Session Link"}
@@ -506,7 +511,7 @@ const JoinSessionComponent = ({ onJoin, translations = {} }) => {
           width: "90%",
           maxHeight: 373,
           boxShadow: "rgba(0, 0, 0, 0.15) 0px 10px 40px",
-          height: "30%",
+          height: 373,
         }}
       >
         {/* Logo */}

@@ -1056,7 +1056,7 @@ function SideBar({ panelsNumber }) {
     items: [
       {
         disabled: false,
-        icon: <GoPrivateIcon />,
+        icon: <StartSessionIcon />,
         title: t("startSession"),
         onClick: () => {
           // os.log(globalThis?.StartSession,globalThis)
@@ -1065,8 +1065,8 @@ function SideBar({ panelsNumber }) {
       },
       {
         disabled: false,
-        // icon:<JoinSession/>,
-        icon: <TransparentSvg />,
+        icon:<MenuIcon name="person_add" />,
+        // icon: <TransparentSvg />,
         title: t("inviteToSession"),
         onClick: async () => {
           const { QRCodeComponent } = thisBot.Chips();
@@ -1076,7 +1076,7 @@ function SideBar({ panelsNumber }) {
       },
       {
         disabled: false,
-        icon: <TransparentSvg />,
+        icon: <JoinSession />,
         title: t("joinAnotherSession"),
         onClick: async () => {
           const { JoinSessionComponent } = thisBot.Chips();
@@ -1096,7 +1096,7 @@ function SideBar({ panelsNumber }) {
       },
       {
         disabled: false,
-        icon: <TransparentSvg />,
+        icon: <GoPrivateIcon />,
         title: globalThis.IsPrivateMode?.() ? t("goPublic") : t("goPrivate"),
         onClick: async () => {
           if (globalThis.TogglePrivateMode) {
