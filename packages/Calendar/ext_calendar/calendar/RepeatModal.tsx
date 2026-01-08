@@ -19,8 +19,14 @@ const RepeatModal = ({
 
   const handleSave = () => {
     onSave?.(selectedDays);
+
     onClose?.();
   };
+  useEffect(() => {
+    setSelectedDays([]);
+  }, []);
+
+  console.log(selectedDays, "selectedDays");
 
   return (
     <div
@@ -30,7 +36,9 @@ const RepeatModal = ({
         left: 0,
         right: 0,
         bottom: 0,
-        backgroundColor: "rgba(0,0,0,0.5)",
+
+        backgroundColor: "rgba(0, 0, 0, 0.4)", // 👈 dim background
+
         display: "flex",
         alignItems: "center",
         justifyContent: "center",

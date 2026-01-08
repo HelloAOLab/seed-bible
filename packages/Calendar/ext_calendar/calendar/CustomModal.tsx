@@ -12,6 +12,14 @@ const CustomModal = ({
   setCalendarView,
   setScheduleTitle,
   setScheduleDescription,
+  setRepeat,
+
+  setShowCustomRepeat,
+  setSelectedDays,
+  selectedDays,
+  customRepeatRef,
+  selectedOption,
+  setSelectedOption,
 }) => {
   const { t } = useSideBarContext();
   const [mode, setMode] = useState("event"); // 'event' or 'readingPlans'
@@ -24,13 +32,11 @@ const CustomModal = ({
   const [eventLink, setEventLink] = useState("");
   const [eventStartTime, setEventStartTime] = useState("");
   const [eventEndTime, setEventEndTime] = useState("");
-  const [selectedDays, setSelectedDays] = useState([]);
-  const [selectedOption, setSelectedOption] = useState("No Repeat");
-  const [repeat, setRepeat] = useState("No Repeat");
 
   const [checked, setChecked] = useState({});
-
-  const [showCustomRepeat, setShowCustomRepeat] = useState(false);
+  useEffect(() => {
+    setSelectedOption("no-repeat");
+  }, []);
 
   const handleEvent = () => {
     console.log(eventStartDate, eventEndDate);
@@ -66,7 +72,6 @@ const CustomModal = ({
   };
 
   const modalRef = useRef(null);
-  const customRepeatRef = useRef(null); // NEW
   let plays = globalThis["defaultplaylists"];
 
   const playListsFiltered = plays.filter((item) => item.readingPlanEnabled);
@@ -563,21 +568,6 @@ const CustomModal = ({
           </button>
         </div>
       </div>
-      {showCustomRepeat && (
-        <div ref={customRepeatRef}>
-          <CustomRepeatModal
-            selectedDays={selectedDays}
-            setSelectedDays={setSelectedDays}
-            initialDate={
-              eventStartDate || new Date().toISOString().split("T")[0]
-            }
-            onClose={() => setShowCustomRepeat(false)}
-            onSave={(days) => {
-              setRepeat(`Custom (${days.join(", ")})`);
-            }}
-          />
-        </div>
-      )}
     </div>
   );
 };

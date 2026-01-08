@@ -124,12 +124,13 @@ function handleDatesSet({
           backgroundColor: "white",
           textTransform: "capitalize",
           color: "#606266",
-          fontWeight: "300",
-          fontSize: "15px",
+          fontWeight: "500",
+          fontSize: "12px",
           marginRight: "10px",
           border: "1px solid #d3d3d3",
           padding: "4px 16px",
           cursor: "pointer",
+          fontFamily: '"Inter", sans-serif',
         });
         todayBtn.onfocus = todayBtn.onmousedown = () => {
           todayBtn.style.outline = "none";
@@ -142,6 +143,11 @@ function handleDatesSet({
   const toolbar = calendarRef.current.querySelector(".fc-toolbar");
 
   if (toolbar) {
+    toolbar.style.fontFamily = '"Inter", sans-serif';
+    toolbar.style.fontSize = "medium";
+    toolbar.style.color = "#303133";
+    toolbar.style.fontWeight = "400";
+
     if (activeToolbarHandlerRef.current) {
       toolbar.removeEventListener("click", activeToolbarHandlerRef.current);
     }
@@ -190,10 +196,10 @@ function handleDatesSet({
 
           backgroundColor: "#D36433",
           color: "white",
-          fontSize: "14px",
+          fontSize: "12px",
           transform: "translateX(10px)",
-          fontFamily: "Satoshi",
-          fontWeight: "400",
+          fontFamily: '"Inter",sans-serif',
+          fontWeight: "500",
           width: "100%",
           border: "none",
           borderRadius: "4px",
@@ -214,14 +220,12 @@ function handleDatesSet({
         select.id = "view-toggle-select";
         Object.assign(select.style, {
           padding: "5px 7px",
-          fontSize: "14px",
-          fontFamily: "Satoshi",
-
-          fontWeight: "400",
+          fontSize: "12px",
+          fontFamily: '"Inter", sans-serif',
+          fontWeight: "500",
           color: "#606266",
           border: "1px solid #d3d3d3",
           borderRadius: "3px",
-
           cursor: "pointer",
         });
 

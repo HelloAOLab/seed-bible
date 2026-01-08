@@ -38,10 +38,17 @@ function showEventPopup(
   setScheduleTitle,
   setScheduleDescription,
   handleAddReadingPlans,
-  setPlaylistsToAdd,
-  playlistsToAdd,
   calendarApi,
   setCalendarView,
+
+  setCustomDays,
+  setRepeat,
+  setShowCustomRepeat,
+  setSelectedDays,
+  customRepeatRef,
+  setSelectedOption,
+  selectedOption,
+  calendarRef,
   onSubmit
 ) {
   let playListsFiltered = [];
@@ -111,72 +118,6 @@ function showEventPopup(
   const eventTab = popup.querySelector(".gm-modal-select-1");
   const plansTab = popup.querySelector(".gm-modal-select-2");
   const scheduleTab = popup.querySelector(".gm-modal-select-3");
-
-  const modalOverlay = document.createElement("div");
-  modalOverlay.className = "custom-modal-overlay";
-  modalOverlay.innerHTML = `
-    <div class="custom-modal">
-      <h1>Custom recurrence</h1>
-      <div class='custom-modal-repeat'>
-        <h4>Repeat on</h4>
-        <div class="custom-modal-repeat-week">
-          <label><input type="checkbox" value="1" /> M</label>
-          <label><input type="checkbox" value="2" /> T</label>
-          <label><input type="checkbox" value="3" /> W</label>
-          <label><input type="checkbox" value="4" /> T</label>
-          <label><input type="checkbox" value="5" /> F</label>
-          <label><input type="checkbox" value="6" /> S</label>
-          <label><input type="checkbox" value="7" /> S</label>
-        </div>
-      </div>
-      <div class="custom-modal-date">
-        <div class='custom-modal-date-start'>
-          <label class="label">Start date</label>
-          <input id="start-date" value="${dateStr}" type='date'/>
-        </div>
-        <div class='custom-modal-date-end'>
-          <label class="label">End date</label>
-          <input id="end-date" value="${dateStr}" type='date'/>
-        </div>
-      </div>
-      <div class="custom-modal-actions" style="margin-top: 12px; text-align: right;">
-        <button id="custom-modal-save">Save</button>
-        <button id="custom-modal-cancel">Cancel</button>
-      </div>
-    </div>
-  `;
-  document.body.appendChild(modalOverlay);
-
-  const customModal = modalOverlay.querySelector(".custom-modal");
-
-  modalOverlay.addEventListener("pointerdown", (e) => e.stopPropagation());
-  modalOverlay.addEventListener("mousedown", (e) => e.stopPropagation());
-  customModal.addEventListener("mousedown", (e) => e.stopPropagation());
-  customModal.addEventListener("click", (e) => e.stopPropagation());
-
-  modalOverlay
-    .querySelector("#custom-modal-cancel")
-    .addEventListener("click", () => {
-      modalOverlay.classList.remove("custom-modal-overlay-show");
-      customModal.classList.remove("custom-modal-show");
-    });
-
-  modalOverlay
-    .querySelector("#custom-modal-save")
-    .addEventListener("click", () => {
-      const selected = Array.from(
-        modalOverlay.querySelectorAll("input[type=checkbox]:checked")
-      ).map((cb) => Number(cb.value));
-
-      setCustomDays((prev) => [...prev, ...selected]); // This assumes setCustomDays is available in your scope
-      modalOverlay.classList.remove("custom-modal-overlay-show");
-      customModal.classList.remove("custom-modal-show");
-    });
-  document.querySelectorAll('input[type="date"]').forEach((input) => {
-    input.addEventListener("click", () => {
-      input.showPicker?.(); // Only works in Chromium-based browsers
-    });
-  });
 
   function renderEventFields() {
     modalEvent.innerHTML = `
@@ -285,13 +226,23 @@ function showEventPopup(
       </div>   
       </div>
     `;
-    popup.querySelector("#repeatSelect")?.addEventListener("change", (e) => {
-      if (e.target.value === "custom") {
-        customModal?.classList.add("custom-modal-show");
-        modalOverlay?.classList.add("custom-modal-overlay-show");
+    const repeatSelect = popup.querySelector("#repeatSelect");
+
+    repeatSelect.value = selectedOption || "No Repeat";
+
+    repeatSelect.onchange = (e) => {
+      const val = e.target.value;
+      setSelectedOption(val);
+
+      if (val === "custom") {
+        setShowCustomRepeat?.(true);
+      } else {
+        setShowCustomRepeat?.(false);
+        setRepeat?.(val);
       }
-    });
+    };
   }
+
   function renderReadingPlans() {
     modalEvent.innerHTML = "";
     const title = document.createElement("h2");
@@ -313,7 +264,6 @@ function showEventPopup(
       saveBtn.addEventListener("click", async () => {
         console.log("111");
         instance.hide();
-        modalOverlay.remove();
 
         openSelf();
         globalThis.currentActiveItem = "create";
@@ -431,23 +381,7 @@ function showEventPopup(
   </div>
 </div>
 
-      <div class="gm-input-svg">
-        <label for="repeatSelect">
-          <svg style="color:gray" xmlns="http://www.w3.org/2000/svg" width="24" height="24"
-            fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"
-            stroke-linejoin="round" class="feather feather-repeat">
-            <polyline points="17 1 21 5 17 9" />
-            <path d="M3 11V9a4 4 0 0 1 4-4h14" />
-            <polyline points="7 23 3 19 7 15" />
-            <path d="M21 13v2a4 4 0 0 1-4 4H3" />
-          </svg>
-        </label>
-        <select id="repeatSelect">
-          <option value="No Repeat">No Repeat</option>
-          <option id="repeatDayOption">Repeat on ${dayName}</option>
-          <option value="custom">Custom</option>
-        </select>
-      </div>
+     
 
       <div class="gm-input-svg">
         <svg style="color: gray" xmlns="http://www.w3.org/2000/svg" width="24" height="24"
@@ -487,7 +421,7 @@ function showEventPopup(
       renderReadingPlans();
     };
   }
-
+  const contentEl = document.querySelector(".content");
   const instance = tippy(document.body, {
     getReferenceClientRect: () => info.dayEl.getBoundingClientRect(),
     content: popup,
@@ -497,7 +431,8 @@ function showEventPopup(
     placement: "auto",
     hideOnClick: false,
     theme: "custom-light",
-    appendTo: document.body,
+    appendTo: contentEl,
+    zIndex: 10000,
   });
 
   instance.show();
@@ -547,10 +482,10 @@ function showEventPopup(
 
   function handleClickOutside(e) {
     const isClickInsidePopup = popup.contains(e.target);
-    const isClickInsideCustomModal = modalOverlay.contains(e.target);
-    if (!isClickInsidePopup && !isClickInsideCustomModal) {
+
+    if (!isClickInsidePopup && !customRepeatRef.current) {
       instance.hide();
-      modalOverlay.remove();
+
       document.removeEventListener("mousedown", handleClickOutside);
     }
   }
@@ -560,7 +495,6 @@ function showEventPopup(
   popup.querySelector("#popup-cancel-btn")?.addEventListener("click", () => {
     instance.destroy();
     instance.hide();
-    modalOverlay.remove();
   });
 
   // Save button
@@ -600,7 +534,6 @@ function showEventPopup(
 
       calendarApi.current.gotoDate(start);
       instance.hide();
-      modalOverlay.remove();
     } else {
       const title = popup.querySelector("#popup-title")?.value || "Untitled";
       const description =
@@ -614,6 +547,7 @@ function showEventPopup(
 
       const recurVal =
         popup.querySelector("#repeatSelect")?.value || "No Repeat";
+      console.log("11111111", recurVal);
       let isPlansTabActive;
       if (plansTab) {
         isPlansTabActive = plansTab.classList.contains(
@@ -641,7 +575,6 @@ function showEventPopup(
         isPlansTabActive,
       });
       instance.hide();
-      modalOverlay.remove();
     }
   });
 }
