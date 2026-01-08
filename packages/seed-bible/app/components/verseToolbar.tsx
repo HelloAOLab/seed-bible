@@ -212,6 +212,7 @@ export function VerseToolbar({
     cursor: "pointer",
     "pointer-events": "none",
     position: "absolute",
+    opacity: 0,
   };
 
   const closeButtonStyle = {
