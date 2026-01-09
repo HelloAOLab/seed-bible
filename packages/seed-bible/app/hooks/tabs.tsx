@@ -174,6 +174,31 @@ export function TabsProvider({ children }) {
     shout("onTabDelete", { tabId });
     // Remove deleted tab from selectedTabs to keep "Select All" checkbox in sync
     setSelectedTabs((prev) => prev.filter((id) => id !== tabId));
+
+    // If the deleted tab is the active tab, select the next tab (or previous if last)
+    if (activeTab === tabId) {
+      const currentSpace = spaces.find((space) => space.id === activeSpace);
+      if (currentSpace) {
+        const allTabs = currentSpace.tabs;
+        const tabIndex = allTabs.findIndex((tab) => tab.id === tabId);
+        if (tabIndex !== -1 && allTabs.length > 1) {
+          // If it's the last tab in the list, select the previous one; otherwise select the next one
+          const nextIndex = tabIndex === allTabs.length - 1 ? tabIndex - 1 : tabIndex + 1;
+          const nextTab = allTabs[nextIndex];
+          if (nextTab) {
+            setActiveTab(nextTab.id);
+            // Also update the display content for the new active tab
+            if (globalThis.UpdateTab) {
+              globalThis.UpdateTab(nextTab);
+            }
+          }
+        } else if (allTabs.length <= 1) {
+          // No more tabs left, clear active tab
+          setActiveTab(null);
+        }
+      }
+    }
+
     setSpaces((prevSpaces) =>
       prevSpaces.map((space) => {
         if (space.id !== activeSpace) return space;
