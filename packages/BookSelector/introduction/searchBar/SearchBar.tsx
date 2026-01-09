@@ -438,10 +438,12 @@ const SearchBar = () => {
                 const translations: TranslationInterface[] = data.translations;
                 const tempApiTranslations = { ...apiTranslations };
                 let defaultTranslation;
+                const controlledTranslations = [];
                 for (const translation of translations) {
                   const languageEnglishName =
                     translation.languageEnglishName.toLowerCase();
                   const controlledTranslation = {
+                    ...translation,
                     name: translation.name,
                     languageEnglishName: languageEnglishName,
                     id: translation.id,
@@ -449,7 +451,8 @@ const SearchBar = () => {
                     origin: url.origin,
                     shortName: translation.shortName,
                   };
-                  if (i === 0) {
+                  controlledTranslations.push(controlledTranslation);
+                  if (!defaultTranslation) {
                     defaultTranslation = controlledTranslation;
                   }
                   tempApiTranslations[languageEnglishName] =
@@ -470,6 +473,14 @@ const SearchBar = () => {
                     ]);
                   }
                 }
+                setTagMask(
+                  thePage,
+                  "newTranslations",
+                  masks?.newTranslations
+                    ? [...masks.newTranslations, ...controlledTranslations]
+                    : controlledTranslations,
+                  "local"
+                );
                 setSelectedTranslation(defaultTranslation);
                 setApiTranslations(tempApiTranslations);
                 setShowCustomTranslation(false);
