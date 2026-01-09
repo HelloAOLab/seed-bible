@@ -1,4 +1,4 @@
-import { BibleDataManager } from "app.hooks.bibleDataManager";
+import { BibleDataManager, getCachedBibleData } from "app.hooks.bibleDataManager";
 import { getStyleOf } from "app.styles.styler";
 const {
   useEffect,
@@ -463,7 +463,17 @@ function ThePage({
     let cancelled = false;
 
     async function loadDataSafe() {
-      if (!tab) return;
+      if (!tab) {
+        return;
+      }
+
+      // Immediately set cached data BEFORE creating BibleDataManager to prevent flash
+      const cachedData = getCachedBibleData(tab.data.translation, tab.data.bookId, tab.data.chapter);
+      console.log("cached data check:", cachedData?.content?.length, tab.data.translation, tab.data.bookId, tab.data.chapter);
+      if (cachedData?.content?.length > 0) {
+        setData(cachedData);
+      }
+
       const bible = new BibleDataManager({
         tabId: tab?.id,
         translation: tab.data.translation,
@@ -1588,7 +1598,7 @@ function ThePage({
         }
          `}
       </style>
-      {data && tab && !tabEntered ? (
+      {tab && !tabEntered ? (
         <>
           <div
             onClick={(e) => {
