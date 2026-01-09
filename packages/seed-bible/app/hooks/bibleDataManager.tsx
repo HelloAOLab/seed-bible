@@ -80,7 +80,9 @@ export class BibleDataManager {
     this.baseUrl = baseUrl;
 
     // Try to get cached data by content key (translation:bookId:chapter)
-    this.data = getCachedBibleData(translation, bookId, chapter) || { content: [] };
+    this.data = getCachedBibleData(translation, bookId, chapter) || {
+      content: [],
+    };
     this.footnotes = null;
     this.loading = false;
     this.error = null;
@@ -154,7 +156,7 @@ export class BibleDataManager {
         : `${forcedBaseUrl || this.baseUrl}/api/${
             forcedTranslation || this.translation
           }/${this.bookId}/${this.chapter}.json`;
-      console.log(url, customUrl, "firstChapterApiLink");
+      // console.log(url, customUrl, "firstChapterApiLink");
 
       const response = await web.get(url);
       const json = response;

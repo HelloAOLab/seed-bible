@@ -688,11 +688,11 @@ const SearchBar = () => {
       ]);
     }
     setTagMask(thePage, "selectedTranslation", selectedTranslation, "local");
-    console.log(
-      selectedTranslation,
-      "defaultTranslations updated",
-      !apiTranslations[selectedTranslation.languageEnglishName.toLowerCase()]
-    );
+    // console.log(
+    //   selectedTranslation,
+    //   "defaultTranslations updated",
+    //   !apiTranslations[selectedTranslation.languageEnglishName.toLowerCase()]
+    // );
     fetchBookdata();
   }, [selectedTranslation, apiTranslations, defaultTranslations]);
 
