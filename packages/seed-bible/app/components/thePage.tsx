@@ -2450,56 +2450,35 @@ function Section({
                         </span>
                       ) : null;
 
-                      // If verseContent is a string, split and wrap first word with verse number
+                      // Keep verse number with first word using nowrap span
+                      // Only wrap the verse number + first word together
                       if (typeof verseContent === "string") {
-                        const firstSpaceIndex = verseContent.indexOf(" ");
-                        if (firstSpaceIndex > 0) {
-                          const firstWord = verseContent.slice(
-                            0,
-                            firstSpaceIndex
-                          );
-                          const restOfText =
-                            verseContent.slice(firstSpaceIndex);
+                        const firstSpaceIdx = verseContent.indexOf(" ");
+                        if (firstSpaceIdx > 0) {
+                          const firstWord = verseContent.slice(0, firstSpaceIdx);
+                          const restText = verseContent.slice(firstSpaceIdx);
                           return (
                             <>
-                              <span className="verse-number-anchor">
-                                {verseNumberElement} {firstWord}
+                              <span style={{ whiteSpace: "nowrap" }}>
+                                {verseNumberElement}{firstWord}
                               </span>
-                              {restOfText}
+                              {restText}
                             </>
                           );
                         }
-                        return (
-                          <span className="verse-number-anchor">
-                            {verseNumberElement} {verseContent}
-                          </span>
-                        );
-                      }
-
-                      // If verseContent is an array (JSX elements), wrap first element with verse number
-                      if (
-                        Array.isArray(verseContent) &&
-                        verseContent.length > 0
-                      ) {
-                        const firstElement = verseContent[0];
-                        const restElements = verseContent.slice(1);
+                        // Single word verse
                         return (
                           <>
-                            <span className="verse-number-anchor">
-                              {verseNumberElement} {firstElement}
-                            </span>
-                            {restElements}
+                            {verseNumberElement}{verseContent}
                           </>
                         );
                       }
 
-                      // Fallback: just render verse number and content
+                      // For JSX array content, just render inline without nowrap wrapper
+                      // The text will flow naturally
                       return (
                         <>
-                          <span className="verse-number-anchor">
-                            {verseNumberElement}
-                          </span>
-                          {verseContent}
+                          {verseNumberElement}{verseContent}
                         </>
                       );
                     })()
