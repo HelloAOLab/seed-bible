@@ -68,19 +68,23 @@ function ThePage({
   setEnableEditor,
   setData,
   data,
+  deleteTab,
+  setDeleteTab,
 }) {
   const [tab, setTab] = useState(T);
   const [commandHighlight, setCommandHighlight] = useState([]);
   const [direction, setDirection] = useState(null);
   const commandsRef = useRef(null);
   const [userMovedToolbar, setUserMovedToolbar] = useState();
-  useEffect(() => {
-    os.addBotListener(thisBot, "onTabDelete", (data) => {
-      if (data.tabId === tab?.id) {
+ 
+  useEffect(()=>{
+    if(deleteTab){
+      if (deleteTab.tabId === tab?.id) {
         setTab(null);
       }
-    });
-  }, []);
+      setDeleteTab(false)
+    }
+  },[deleteTab])
   useEffect(() => {
     if (!T) globalThis.CurrentPanelAvailable = panelId;
     else globalThis.CurrentPanelAvailable = null;
@@ -2591,7 +2595,15 @@ export const ThePageWithEditor = ({ tab, setPanalApp, panelId }) => {
   const [enableEditor, setEnableEditor] = useState(false);
   useEffect(() => {}, [enableEditor]);
   const [data, setData] = useState();
+  const [deleteTab,setDeleteTab] = useState(false);
   if (tab) globalThis[`SetEnableEditorOf${tab?.id}`] = setEnableEditor;
+     useEffect(() => {
+    os.addBotListener(thisBot, "onTabDelete", (data) => {
+      os.log("tab delete event received in thePage", data, panelId, activeTab);
+      setEnableEditor(false)
+      setDeleteTab(data)
+    });
+  }, []);
   return (
     <>
       <TextEditor
@@ -2602,10 +2614,13 @@ export const ThePageWithEditor = ({ tab, setPanalApp, panelId }) => {
           <ThePage
             data={data}
             setData={setData}
+            enableEditor={enableEditor}
             setEnableEditor={setEnableEditor}
             tab={activeTab}
             panelId={panelId}
             setPanalApp={setPanalApp}
+            deleteTab={deleteTab}
+            setDeleteTab={setDeleteTab}
           />
         }
         tab={activeTab}
