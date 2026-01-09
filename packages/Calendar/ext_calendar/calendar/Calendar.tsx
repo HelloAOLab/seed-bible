@@ -295,7 +295,6 @@ const App = () => {
     resourceGroupNameRef.current = resourceGroupName;
   }, [resourceGroupName]);
 
-  //handles
   const toolbarClickHandler = (e) => {
     if (calendarApi?.current.view.type.includes("resourceTimeline")) {
       onToolbarDateClick(e, calendarApi);
@@ -545,6 +544,7 @@ const App = () => {
             customRepeatRef,
             selectedOption,
             setSelectedOption,
+            calendarRef,
           }),
 
         datesSet: (info) =>
@@ -1038,6 +1038,8 @@ const App = () => {
             setRepeat={setRepeat}
             showCustomRepeat={showCustomRepeat}
             setShowCustomRepeat={setShowCustomRepeat}
+            selectedOption={selectedOption}
+            setSelectedOption={setSelectedOption}
           />
         ) : (
           ""

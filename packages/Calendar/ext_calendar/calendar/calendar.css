@@ -471,6 +471,16 @@
 .custom-modal-overlay-show {
   display: flex;
 }
+.custom-repeat-open .tippy-box {
+  pointer-events: none !important;
+  filter: blur(2px) brightness(0.55);
+  opacity: 0.5;
+}
+.fc,
+.fc-view,
+.fc-scroller {
+  overflow: visible !important;
+}
 
 .custom-modal-repeat-week {
   display: flex;

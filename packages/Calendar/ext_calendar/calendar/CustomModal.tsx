@@ -18,6 +18,8 @@ const CustomModal = ({
   setSelectedDays,
   selectedDays,
   customRepeatRef,
+  selectedOption,
+  setSelectedOption,
 }) => {
   const { t } = useSideBarContext();
   const [mode, setMode] = useState("event"); // 'event' or 'readingPlans'
@@ -32,6 +34,9 @@ const CustomModal = ({
   const [eventEndTime, setEventEndTime] = useState("");
 
   const [checked, setChecked] = useState({});
+  useEffect(() => {
+    setSelectedOption("no-repeat");
+  }, []);
 
   const handleEvent = () => {
     console.log(eventStartDate, eventEndDate);
