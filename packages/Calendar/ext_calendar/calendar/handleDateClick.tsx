@@ -32,6 +32,8 @@ async function handleDateClick({
   customRepeatRef,
   selectedOption,
   setSelectedOption,
+
+  calendarRef,
 }) {
   // ⛔ ignore clicks inside tippy
   if (info.jsEvent?.target.closest(".tippy-box")) return;
@@ -94,6 +96,9 @@ async function handleDateClick({
     customRepeatRef,
     setSelectedOption,
     selectedOption,
+
+    calendarRef,
+
     ({
       title,
       description,
