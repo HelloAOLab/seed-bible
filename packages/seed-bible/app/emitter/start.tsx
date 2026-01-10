@@ -3,9 +3,10 @@ await thisBot.onRemoteJoined();
 // Navigation lock to prevent rapid fire and loops
 if (!globalThis.__emitLock) globalThis.__emitLock = {};
 if (!globalThis.__lastEmitTime) globalThis.__lastEmitTime = {};
+if (!globalThis.__lastEmitData) globalThis.__lastEmitData = {};
 if (!globalThis.__navCooldownUntil) globalThis.__navCooldownUntil = 0;
-const EMIT_DEBOUNCE_MS = 300;
-const NAV_COOLDOWN_MS = 800; // Cooldown after receiving remote nav before we can emit
+const EMIT_DEBOUNCE_MS = 150; // Short debounce - just prevents double-clicks
+const NAV_COOLDOWN_MS = 600; // Cooldown after receiving remote nav
 
 async function emitData(functionName, data) {
   const remoteId = getID(configBot);
@@ -31,7 +32,17 @@ async function emitData(functionName, data) {
     return;
   }
 
-  // Debounce rapid emissions of same event type
+  // For book events: skip if same destination as last emit (dedup)
+  if (functionName === "book") {
+    const lastData = globalThis.__lastEmitData["book"];
+    if (lastData && lastData.bookId === data?.bookId && lastData.chapter === data?.chapter) {
+      os.log("emitData: skipping duplicate book emit - same destination");
+      return;
+    }
+    globalThis.__lastEmitData["book"] = { bookId: data?.bookId, chapter: data?.chapter };
+  }
+
+  // Debounce rapid emissions of same event type (short - just prevents accidental double-clicks)
   const lastTime = globalThis.__lastEmitTime[functionName] || 0;
   if (now - lastTime < EMIT_DEBOUNCE_MS) {
     os.log("emitData: debouncing", functionName);

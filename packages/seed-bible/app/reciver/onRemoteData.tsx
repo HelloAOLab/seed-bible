@@ -130,7 +130,7 @@ switch (name) {
 
     // Set cooldown - prevent local user from emitting nav for a short period
     // This prevents conflicts when "Everyone can navigate" is enabled
-    globalThis.__navCooldownUntil = now + 800;
+    globalThis.__navCooldownUntil = now + 600;
 
     // Also mark any pending data as from remote (prevents cache emit)
     if (globalThis.isCachedDataRef) {

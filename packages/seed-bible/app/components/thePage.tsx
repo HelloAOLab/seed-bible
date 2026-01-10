@@ -603,16 +603,12 @@ function ThePage({
   if (!globalThis.__remoteBookUpdate) globalThis.__remoteBookUpdate = false;
   if (!globalThis.__lastBookEmit) globalThis.__lastBookEmit = 0;
   if (!globalThis.__lastEmittedBook) globalThis.__lastEmittedBook = { bookId: null, chapter: null };
-  if (!globalThis.__pendingNavigation) globalThis.__pendingNavigation = null;
-  const BOOK_EMIT_DEBOUNCE = 400; // ms - increased for better dedup
 
   // Track if current data update is from cache (should not emit)
   const isCachedDataRef = useRef(false);
 
   // SAFELY EMIT BOOK WITHOUT LOOPS OR SPAM
   function safeEmitBook(payload) {
-    const now = Date.now();
-
     // 1) Skip if this data came from cache preload (not user navigation)
     if (isCachedDataRef.current) {
       isCachedDataRef.current = false;
@@ -625,24 +621,17 @@ function ThePage({
       return;
     }
 
-    // 3) Skip if same book+chapter as last emit (prevents cached data re-emit)
+    // 3) Skip if same book+chapter as last emit (prevents re-emit of same location)
     const lastEmit = globalThis.__lastEmittedBook;
     if (lastEmit.bookId === payload?.bookId && lastEmit.chapter === payload?.chapter) {
       return;
     }
 
-    // 4) Prevent spam when navigating fast
-    if (now - globalThis.__lastBookEmit < BOOK_EMIT_DEBOUNCE) {
-      // Store pending navigation to emit after debounce
-      globalThis.__pendingNavigation = payload;
-      return;
-    }
-
-    globalThis.__lastBookEmit = now;
+    // Update tracking (no debounce blocking - let EmitData handle that)
+    globalThis.__lastBookEmit = Date.now();
     globalThis.__lastEmittedBook = { bookId: payload?.bookId, chapter: payload?.chapter };
-    globalThis.__pendingNavigation = null;
 
-    // 5) Finally emit
+    // Emit - EmitData has its own debounce and cooldown checks
     EmitData("book", payload);
   }
 
@@ -2642,7 +2631,14 @@ export const ThePageWithEditor = ({ tab, setPanalApp, panelId }) => {
   const activeTab = panelId ? globalThis.PanelTabsMap[panelId] || tab : tab;
   const [enableEditor, setEnableEditor] = useState(false);
   useEffect(() => {}, [enableEditor]);
-  const [data, setData] = useState();
+  const [data, setData] = useState(() => {
+    // Initialize with cached data to prevent flash when switching tabs
+    const tabData = activeTab?.data || tab?.data;
+    if (tabData?.translation && tabData?.bookId && tabData?.chapter) {
+      return getCachedBibleData(tabData.translation, tabData.bookId, tabData.chapter) || null;
+    }
+    return null;
+  });
   const [deleteTab,setDeleteTab] = useState(false);
   if (tab) globalThis[`SetEnableEditorOf${tab?.id}`] = setEnableEditor;
      useEffect(() => {
