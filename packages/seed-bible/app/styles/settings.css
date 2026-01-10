@@ -7,7 +7,7 @@
   flex-direction: column;
   font-family: "Satoshi", system-ui, sans-serif;
   border-left: 1px solid #e0e0e0;
-  background-color: var(--themeSideMenu) !important;
+  background-color: transparent !important;
 }
 .disabled {
   color: #929292 !important;
@@ -29,7 +29,7 @@
   font-size: 18px;
   font-weight: 600;
   margin: 0;
-  color: var(--text1);
+  color: #374151;
 }
 
 .close-button {
@@ -60,7 +60,7 @@
   font-size: 14px;
   cursor: pointer;
   font-weight: 500;
-  color: var(--text1);
+  color: #374151;
   transition: all 0.2s ease;
 }
 
@@ -143,6 +143,9 @@
   font-weight: 400;
   letter-spacing: 0;
   line-height: normal;
+  color: var(--descriptionTextColor) !important;
+  font-family: var(--descriptionTextFont), system-ui, sans-serif;
+  font-size: var(--descriptionTextSize);
 }
 
 .settings-list {
@@ -157,10 +160,12 @@
   transition: background-color 0.2s;
   color: var(--text1);
   gap: 7px;
+  width: 100%;
 }
 
 .settings-item:hover {
   background-color: #00000024;
+  width: 100%;
 }
 
 .item-icon {
@@ -219,6 +224,9 @@
   line-height: normal;
   padding: 0 10px;
   margin-bottom: 15px;
+  color: var(--descriptionTextColor) !important;
+  font-family: var(--descriptionTextFont), system-ui, sans-serif;
+  font-size: var(--descriptionTextSize);
 }
 
 .activeAccount {

@@ -19,6 +19,7 @@ import {
   BibleIcon,
   NewSettingsIcon,
   ExtensionsIcon,
+  SelectionUIIcon,
 } from "app.components.icons";
 
 const SettingsSidebar = () => {
@@ -114,6 +115,13 @@ const SettingsSidebar = () => {
       style: "",
       expandable: false,
       onClick: () => setSideBarMode("extensions"),
+    },
+    {
+      key: "selectionUI",
+      labelKey: "selectionUI",
+      icon: <SelectionUIIcon />,
+      expandable: false,
+      onClick: () => setSideBarMode("selectionUISettings"),
     },
     {
       key: "bibleDefaults",

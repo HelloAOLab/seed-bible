@@ -252,11 +252,11 @@ const Main = () => {
     setApps(newApps); // ✅ Update all at once
     setTimeout(() => {
       if (tabs.length === 1 && savedScreens === 1) {
-        // console.log('testing update now working', tabs[0])
+        // globalThis.UpdateTab(tabs[0]);
         globalThis.UpdateTab(tabs[0]);
       }
       globalThis.AppStartedSuccessfully = true;
-    }, 10);
+    }, 0);
     globalThis.SpaceScreens[activeSpace] = savedScreens;
   }, [activeSpace]);
 
@@ -319,51 +319,117 @@ const Main = () => {
   // };
 
   const defaultTheme = {
-    // Background colors (Background #F8FAFC, Surface #FFFFFF)
-    menuBackground: "#F8FAFC",
-    themeSideMenu: "#F8FAFC",
-    panelBackground: "#FFFFFF",
-    pageBackground: "#FFFFFF",
-    toolbarBackground: "#FFFFFF",
-    toolbarBorder: "#E2E8F0",
-    // Primary colors (Primary #3B82F6, Primary Dark #2563EB, Secondary #8B5CF6)
-    primaryButton: "#3B82F6",
+    // Main colors
+    primaryColor: "#E07B4C",
+    secondaryColor: "#D2691E",
+    tertiaryColor: "#CD853F",
+    // Container backgrounds
+    themeSideMenu: "#FFFFFF",
+    panelBackground: "#F8FAFC",
+    // Tab
+    tabSelection: "#E07B4C",
+    activeTabBackground: "#FADDD1",
+    activeTabText: "#E07B4C",
+    activeTabBorder: "#E07B4C",
+    activeTabFill: "#FADDD1",
+    simpleTabText: "#333333",
+    inactiveTabText: "#333333",
+    // Buttons
+    primaryButton: "#E07B4C",
     primaryButtonColor: "#FFFFFF",
-    secondaryButton: "#8B5CF6",
+    primaryButtonBorder: "#E07B4C",
+    primaryButtonFill: "#E07B4C",
+    secondaryButton: "#D2691E",
     secondaryButtonColor: "#FFFFFF",
-    buttonBorder: "#E2E8F0",
-    // Tab & Selection
-    tabSelection: "#3B82F6",
-    activeTabBackground: "#FFFFFF",
-    activeTabText: "#0F172A",
-    simpleTabText: "#64748B",
-    spaceSelection: "#3B82F6",
-    // Text colors (Text Primary #0F172A, Text Secondary #64748B)
-    pageTextColor: "#0F172A",
-    text1: "#0F172A",
-    text2: "#64748B",
-    iconColor: "#0F172A",
-    "filter-mode": " none",
-    showTabIcons: true,
-    // Side menu specific
-    spaceNameText: "#0F172A",
-    addButtonBackground: "#3B82F6",
+    secondaryButtonBorder: "#D2691E",
+    secondaryButtonFill: "#D2691E",
+    tertiaryButtonColor: "#333333",
+    buttonBorder: "#E1E3EA",
+    // Scripture text
+    bookHeadingColor: "#333333",
+    chapterHeadingColor: "#333333",
+    verseNumberColor: "#E07B4C",
+    verseTextColor: "#333333",
+    pageBackground: "#FFFFFF",
+    pageTextColor: "#333333",
+    // Side menu
+    heading1Color: "#333333",
+    heading2Color: "#333333",
+    heading3Color: "#333333",
+    descriptionTextColor: "#666666",
+    menuTextColor: "#333333",
+    breadcrumbsColor: "#666666",
+    sectionBackground: "#E07B4C",
+    spaceNameColor: "#333333",
+    sideMenuIconsColor: "#333333",
+    selectedSpaceColor: "#E07B4C",
+    unselectedSpaceColor: "#E1E3EA",
+    spaceNameText: "#333333",
+    addButtonBackground: "#E07B4C",
     addButtonIcon: "#FFFFFF",
-    selectPanelIcon: "#0F172A",
-    openCloseMenuIcon: "#0F172A",
-    moreIcon: "#64748B",
-    settingsIcon: "#64748B",
-    inactiveSpaceIndicator: "#E2E8F0",
-    activeSpaceIndicator: "#3B82F6",
-    profileAvatar: "#8B5CF6",
-    // Scripture text (Accent/Tertiary #06B6D4 for verse numbers)
-    bookHeadingColor: "#0F172A",
-    chapterHeadingColor: "#0F172A",
-    verseNumberColor: "#06B6D4",
-    verseTextColor: "#0F172A",
+    selectPanelIcon: "#333333",
+    openCloseMenuIcon: "#333333",
+    moreIcon: "#666666",
+    settingsIcon: "#666666",
+    inactiveSpaceIndicator: "#E1E3EA",
+    activeSpaceIndicator: "#E07B4C",
+    profileAvatar: "#E07B4C",
+    // Selection UI & toolbar
+    toolbarBorder: "#E1E3EA",
+    toolbarFill: "#FFFFFF",
+    toolbarIconsColor: "#333333",
+    selectionUIBorder: "#E1E3EA",
+    selectionUIFill: "#FFFFFF",
+    selectionIconsColor: "#333333",
+    toolbarBackground: "#FFFFFF",
+    iconColor: "#333333",
+    // Input fields
+    inputTitleColor: "#333333",
+    inputPlaceholderColor: "#999999",
+    inputActiveBorder: "#E07B4C",
+    inputActiveFill: "#FFFFFF",
+    inputInactiveBorder: "#E1E3EA",
+    inputInactiveFill: "#FFFFFF",
+    inputBackground: "#FFFFFF",
+    inputBorder: "#E1E3EA",
+    inputText: "#333333",
+    inputPlaceholder: "#999999",
+    // Branding
+    logoColor: "#333333",
+    accentColor: "#E07B4C",
+    // Space selection
+    spaceSelection: "#E07B4C",
+    // Text colors
+    text1: "#333333",
+    text2: "#666666",
+    showTabIcons: true,
+
+    primaryLight: "#FADDD1",
+    onPrimaryLight: "#8B4513",
+    primaryBase: "#E07B4C",
+    onPrimaryBase: "#FFFFFF",
+    primaryDark: "#C65D2D",
+    onPrimaryDark: "#FFFFFF",
+    secondaryLight: "#FFE4C4",
+    onSecondaryLight: "#8B4513",
+    secondaryBase: "#D2691E",
+    onSecondaryBase: "#FFFFFF",
+    secondaryDark: "#A0522D",
+    onSecondaryDark: "#FFFFFF",
+    tertiaryLight: "#FFEFD5",
+    onTertiaryLight: "#8B4513",
+    tertiaryBase: "#CD853F",
+    onTertiaryBase: "#FFFFFF",
+    tertiaryDark: "#A0522D",
+    onTertiaryDark: "#FFFFFF",
+    background: "#FFFFFF",
+    onBackground: "#333333",
+    surface: "#FAFAFA",
+    onSurface: "#333333",
+    text3: "#333333",
   };
   const darkTheme = {
-    menuBackground: "#2D2D2D",
+    panelBackground: "#2D2D2D",
     themeSideMenu: "#2D2D2D",
     panelBackground: "#1A1A1A",
     primaryButton: "#404040",
@@ -401,6 +467,30 @@ const Main = () => {
     chapterHeadingColor: "#FFFFFF",
     verseNumberColor: "#5A67D8",
     verseTextColor: "#FFFFFF",
+
+    primaryLight: "#93C5FD",
+    onPrimaryLight: "#3B82F6",
+    primaryBase: "#60A5FA",
+    onPrimaryBase: "#111827",
+    primaryDark: "#3B82F6",
+    onPrimaryDark: "#FFFFFF",
+    secondaryLight: "#C4B5FD",
+    onSecondaryLight: "#8B5CF6",
+    secondaryBase: "#A78BFA",
+    onSecondaryBase: "#111827",
+    secondaryDark: "#8B5CF6",
+    onSecondaryDark: "#FFFFFF",
+    tertiaryLight: "#6EE7B7",
+    onTertiaryLight: "#10B981",
+    tertiaryBase: "#34D399",
+    onTertiaryBase: "#111827",
+    tertiaryDark: "#FFFFFF",
+    onTertiaryDark: "#10B981",
+    background: "#0F172A",
+    onBackground: "#FFFFFF",
+    surface: "#1E293B",
+    onSurface: "#FFFFFF",
+    text3: "#F1F5F9",
   };
   const isDark = false;
   // window.matchMedia("(prefers-color-scheme: dark)").matches;
@@ -423,145 +513,60 @@ const Main = () => {
     const sideMenuSettings = currentSpace?.sideMenuSettings || {};
     const inputFieldsSettings = currentSpace?.inputFieldsSettings || {};
 
-    // Scripture text font CSS variables
-    const fontVars = [];
-    if (scriptureSettings.bookHeadingFont) {
-      fontVars.push(
-        `--scripture-bookHeading-font: '${scriptureSettings.bookHeadingFont}', sans-serif`
-      );
-    }
-    if (scriptureSettings.bookHeadingSize) {
-      fontVars.push(
-        `--scripture-bookHeading-size: ${scriptureSettings.bookHeadingSize}px`
-      );
-    }
-    if (scriptureSettings.chapterHeadingFont) {
-      fontVars.push(
-        `--scripture-chapterHeading-font: '${scriptureSettings.chapterHeadingFont}', sans-serif`
-      );
-    }
-    if (scriptureSettings.chapterHeadingSize) {
-      fontVars.push(
-        `--scripture-chapterHeading-size: ${scriptureSettings.chapterHeadingSize}px`
-      );
-    }
-    if (scriptureSettings.verseTextFont) {
-      fontVars.push(
-        `--scripture-verseText-font: '${scriptureSettings.verseTextFont}', sans-serif`
-      );
-    }
-    if (scriptureSettings.verseTextSize) {
-      fontVars.push(
-        `--scripture-verseText-size: ${scriptureSettings.verseTextSize}px`
-      );
-    }
-    if (scriptureSettings.verseNumberFont) {
-      fontVars.push(
-        `--scripture-verseNumber-font: '${scriptureSettings.verseNumberFont}', sans-serif`
-      );
-    }
-    if (scriptureSettings.verseNumberSize) {
-      fontVars.push(
-        `--scripture-verseNumber-size: ${scriptureSettings.verseNumberSize}px`
-      );
-    }
+    // Helper to generate CSS variables from settings
+    const generateFontVars = (
+      settings: Record<string, unknown>,
+      prefix: string,
+      keyMap: Record<string, string>
+    ) =>
+      Object.entries(keyMap)
+        .filter(([key]) => settings[key])
+        .map(([key, cssName]) => {
+          const value = settings[key];
+          const isFont = key.toLowerCase().includes("font");
+          return isFont
+            ? `--${prefix}-${cssName}: '${value}', sans-serif;`
+            : `--${prefix}-${cssName}: ${value}px;`;
+        });
 
-    // Side menu font CSS variables
-    if (sideMenuSettings.spaceNameFont) {
-      fontVars.push(
-        `--sideMenu-spaceName-font: '${sideMenuSettings.spaceNameFont}', sans-serif`
-      );
-    }
-    if (sideMenuSettings.spaceNameSize) {
-      fontVars.push(
-        `--sideMenu-spaceName-size: ${sideMenuSettings.spaceNameSize}px`
-      );
-    }
-    if (sideMenuSettings.menuTextFont) {
-      fontVars.push(
-        `--sideMenu-menuText-font: '${sideMenuSettings.menuTextFont}', sans-serif`
-      );
-    }
-    if (sideMenuSettings.menuTextSize) {
-      fontVars.push(
-        `--sideMenu-menuText-size: ${sideMenuSettings.menuTextSize}px`
-      );
-    }
-    if (sideMenuSettings.heading1Font) {
-      fontVars.push(
-        `--sideMenu-heading1-font: '${sideMenuSettings.heading1Font}', sans-serif`
-      );
-    }
-    if (sideMenuSettings.heading1Size) {
-      fontVars.push(
-        `--sideMenu-heading1-size: ${sideMenuSettings.heading1Size}px`
-      );
-    }
-    if (sideMenuSettings.heading2Font) {
-      fontVars.push(
-        `--sideMenu-heading2-font: '${sideMenuSettings.heading2Font}', sans-serif`
-      );
-    }
-    if (sideMenuSettings.heading2Size) {
-      fontVars.push(
-        `--sideMenu-heading2-size: ${sideMenuSettings.heading2Size}px`
-      );
-    }
-    if (sideMenuSettings.heading3Font) {
-      fontVars.push(
-        `--sideMenu-heading3-font: '${sideMenuSettings.heading3Font}', sans-serif`
-      );
-    }
-    if (sideMenuSettings.heading3Size) {
-      fontVars.push(
-        `--sideMenu-heading3-size: ${sideMenuSettings.heading3Size}px`
-      );
-    }
-    if (sideMenuSettings.descriptionTextFont) {
-      fontVars.push(
-        `--sideMenu-description-font: '${sideMenuSettings.descriptionTextFont}', sans-serif`
-      );
-    }
-    if (sideMenuSettings.descriptionTextSize) {
-      fontVars.push(
-        `--sideMenu-description-size: ${sideMenuSettings.descriptionTextSize}px`
-      );
-    }
-    if (sideMenuSettings.breadcrumbsFont) {
-      fontVars.push(
-        `--sideMenu-breadcrumbs-font: '${sideMenuSettings.breadcrumbsFont}', sans-serif`
-      );
-    }
-    if (sideMenuSettings.breadcrumbsSize) {
-      fontVars.push(
-        `--sideMenu-breadcrumbs-size: ${sideMenuSettings.breadcrumbsSize}px`
-      );
-    }
-    if (sideMenuSettings.iconsSize) {
-      fontVars.push(`--sideMenu-icons-size: ${sideMenuSettings.iconsSize}px`);
-    }
+    const fontVars = [
+      ...generateFontVars(scriptureSettings, "scripture", {
+        bookHeadingFont: "bookHeading-font",
+        bookHeadingSize: "bookHeading-size",
+        chapterHeadingFont: "chapterHeading-font",
+        chapterHeadingSize: "chapterHeading-size",
+        verseTextFont: "verseText-font",
+        verseTextSize: "verseText-size",
+        verseNumberFont: "verseNumber-font",
+        verseNumberSize: "verseNumber-size",
+      }),
+      ...generateFontVars(sideMenuSettings, "sideMenu", {
+        spaceNameFont: "spaceName-font",
+        spaceNameSize: "spaceName-size",
+        menuTextFont: "menuText-font",
+        menuTextSize: "menuText-size",
+        heading1Font: "heading1-font",
+        heading1Size: "heading1-size",
+        heading2Font: "heading2-font",
+        heading2Size: "heading2-size",
+        heading3Font: "heading3-font",
+        heading3Size: "heading3-size",
+        descriptionTextFont: "description-font",
+        descriptionTextSize: "description-size",
+        breadcrumbsFont: "breadcrumbs-font",
+        breadcrumbsSize: "breadcrumbs-size",
+        iconsSize: "icons-size",
+      }),
+      ...generateFontVars(inputFieldsSettings, "input", {
+        titleFont: "title-font",
+        titleSize: "title-size",
+        placeholderFont: "placeholder-font",
+        placeholderSize: "placeholder-size",
+      }),
+    ];
 
-    // Input fields font CSS variables
-    if (inputFieldsSettings.titleFont) {
-      fontVars.push(
-        `--input-title-font: '${inputFieldsSettings.titleFont}', sans-serif`
-      );
-    }
-    if (inputFieldsSettings.titleSize) {
-      fontVars.push(`--input-title-size: ${inputFieldsSettings.titleSize}px`);
-    }
-    if (inputFieldsSettings.placeholderFont) {
-      fontVars.push(
-        `--input-placeholder-font: '${inputFieldsSettings.placeholderFont}', sans-serif`
-      );
-    }
-    if (inputFieldsSettings.placeholderSize) {
-      fontVars.push(
-        `--input-placeholder-size: ${inputFieldsSettings.placeholderSize}px`
-      );
-    }
-
-    const allVars = [...vars, ...fontVars.map((v) => v + ";")];
+    const allVars = [...vars, ...fontVars];
+    // os.log(allVars, "all theme vars");
     return `:root {\n  ${allVars.join("\n  ")}\n}`;
   }, [themeColors, activeSpace, spaces]);
 
@@ -580,7 +585,7 @@ const Main = () => {
       />
       <style>{ThemeCSS}</style>
       <DragDropOverlay />
-      <Layout>
+      <Layout panelsNumber={containerProps.apps.length}>
         <SplitApp {...containerProps} panalMode={false} />
       </Layout>
     </MouseMoveProvider>

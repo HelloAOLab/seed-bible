@@ -1,28 +1,55 @@
-calendar {
-  font-size: 14px;
-   font-family: "Inter", sans-serif;
-  padding: 10px;
-  width: 100%;
-  background-color: white;
-
-  overflow-y: auto;
-  overflow-x: hidden;
-}
 .calendar-wrapper {
   overflow: auto;
 }
 .fc-prev-button .fc-icon,
 .fc-next-button .fc-icon {
-  font-weight: 900 !important;   /* increases thickness */
-  font-size: 16px;              /* optional: bigger arrow */
+  font-weight: 900 !important; /* increases thickness */
+  font-size: 16px; /* optional: bigger arrow */
 }
-
+.experience-container {
+  font-family: "Inter", sans-serif;
+}
+.fc {
+  font-family: "Inter", sans-serif;
+}
 
 .small-view .fc-daygrid-day-events {
   flex-direction: row;
   flex-wrap: wrap;
 
   gap: 4px;
+}
+
+.tippy-box[data-theme~="light-border"] {
+  border: none !important;
+  z-index: 10 !important;
+}
+[data-tippy-root] {
+  z-index: 1000 !important;
+}
+/* Completely flat tooltip */
+.tippy-box {
+  border: none !important;
+  box-shadow: none !important;
+  outline: none !important;
+  background: transparent !important;
+  position: relative;
+  z-index: 99;
+}
+.tippy-root {
+  z-index: 100 !important;
+}
+#tippy-1 {
+  z-index: 100;
+}
+
+/* Remove arrow completely (extra safety) */
+.tippy-arrow {
+  display: none !important;
+}
+.tippy-box *,
+.tippy-content * {
+  outline: none !important;
 }
 
 /* Only apply when in multiMonthYear view */
@@ -85,7 +112,6 @@ calendar {
   border-right: none;
 }
 
-
 .fc-theme-standard .fc-scrollgrid-section-header th {
   border-left: none !important;
   border-right: none !important;
@@ -100,13 +126,17 @@ calendar {
   border-left: none !important;
   border-right: none !important;
 }
+.fc-col-header-cell-cushion {
+  font-family: "Inter", sans-serif;
+  color: #303133;
+  font-size: 15px;
+}
 
 /* Remove right border of the last TH element */
 .fc .fc-scrollgrid-sync-table th:last-of-type {
   border-right: none !important;
   border-left: none !important;
 }
-
 
 /* Apply ONLY when td/th does NOT already have a border */
 .fc-scrollgrid-section-body td:not([style*="border-left"]),
@@ -146,38 +176,38 @@ calendar {
 .fc-header-toolbar button:not(:last-child) {
   margin-right: 10px;
 }
-.fc .fc-day-today .fc-daygrid-day-frame{
-  background-color: #ECF5FF;
+.fc .fc-day-today .fc-daygrid-day-frame {
+  background-color: #ecf5ff;
   margin-left: 0;
 }
-.fc .fc-daygrid-day-frame{
+.fc .fc-daygrid-day-frame {
   padding: 6px;
- 
 }
-.fc .fc-multimonth .fc-daygrid-day-frame{
+.fc .fc-multimonth .fc-daygrid-day-frame {
   padding: 0;
 }
 
 .fc .fc-daygrid-day-top {
-    display: flex;
-    flex-direction: row;
-    
+  display: flex;
+  flex-direction: row;
 }
-.fc .fc-daygrid-day-number{
-  
+.fc .fc-daygrid-day-number {
   font-weight: 400;
   font-family: "Inter", sans-serif;
-  
-  
 }
-.fc .fc-multimonth .fc-daygrid-day-number{
+.fc .fc-multimonth .fc-daygrid-day-number {
   font-size: 8px;
 }
 
-.fc-multimonth-view .fc-daygrid-more-link {
+.fc .fc-multimonth .fc-daygrid-more-link {
   display: none;
 }
-
+.fc .fc-multimonth .fc-daygrid-day-events {
+  display: none;
+}
+.fc .fc-daygrid-more-link {
+  font-size: 8px;
+}
 #view-toggle-select {
   padding-top: 4px;
   padding-bottom: 4px;
@@ -441,6 +471,16 @@ calendar {
 .custom-modal-overlay-show {
   display: flex;
 }
+.custom-repeat-open .tippy-box {
+  pointer-events: none !important;
+  filter: blur(2px) brightness(0.55);
+  opacity: 0.5;
+}
+.fc,
+.fc-view,
+.fc-scroller {
+  overflow: visible !important;
+}
 
 .custom-modal-repeat-week {
   display: flex;
@@ -681,7 +721,7 @@ svg:hover {
 .calendar-addups {
   margin-top: 15px;
 
-  font-family: Satoshi;
+  font-family: "Inter", sans-serif;
 }
 .calendar-addups-selection {
   max-width: 264px;

@@ -1,4 +1,7 @@
-import { BibleDataManager } from "app.hooks.bibleDataManager";
+import {
+  BibleDataManager,
+  getCachedBibleData,
+} from "app.hooks.bibleDataManager";
 import { getStyleOf } from "app.styles.styler";
 const {
   useEffect,
@@ -68,27 +71,39 @@ function ThePage({
   setEnableEditor,
   setData,
   data,
+  deleteTab,
+  setDeleteTab,
 }) {
   const [tab, setTab] = useState(T);
   const [commandHighlight, setCommandHighlight] = useState([]);
   const [direction, setDirection] = useState(null);
   const commandsRef = useRef(null);
   const [userMovedToolbar, setUserMovedToolbar] = useState();
+
   useEffect(() => {
-    os.addBotListener(thisBot, "onTabDelete", (data) => {
-      if (data.tabId === tab?.id) {
+    if (deleteTab) {
+      if (deleteTab?.tabId === tab?.id) {
         setTab(null);
+        setData(null);
       }
-    });
-  }, []);
+      setDeleteTab(false);
+    }
+  }, [deleteTab]);
   useEffect(() => {
     if (!T) globalThis.CurrentPanelAvailable = panelId;
     else globalThis.CurrentPanelAvailable = null;
   }, [T]);
   const { inSession, role, config } = getUserSessionInfo(configBot.id);
   const [tabEntered, setTabEntered] = useState(false);
-  const { updateTab, tabs, activeTab, setActiveTab, sharedTab } =
-    useTabsContext();
+  const {
+    updateTab,
+    tabs,
+    activeTab,
+    setActiveTab,
+    sharedTab,
+    activeSpace,
+    spaces,
+  } = useTabsContext();
   const { isDragging, setIsDragging, Element, position } = useMouseMove();
   const { navFunctions, setNavFunctions, scrollToVerse } = useBibleContext();
   const [inHold, setInHold] = useState();
@@ -198,6 +213,8 @@ function ThePage({
             const defaultTranslation = newTranslations[0];
             newTranslations = newTranslations.map((trans) => {
               return {
+                ...trans,
+                name: trans.name,
                 languageEnglishName: trans.languageEnglishName,
                 id: trans.id,
                 listOfBooksApiLink: `${url.origin}${trans.listOfBooksApiLink}`,
@@ -205,7 +222,14 @@ function ThePage({
                 shortName: trans.shortName,
               };
             });
-            allTranslations = [...allTranslations, ...newTranslations];
+            setTagMask(
+              thisBot,
+              "newTranslations",
+              masks?.newTranslations
+                ? [...masks.newTranslations, ...newTranslations]
+                : newTranslations,
+              "local"
+            );
             for (const translation of newTranslations) {
               const englishName = translation.languageEnglishName.toLowerCase();
               if (!defaultTranslations.includes(englishName)) {
@@ -213,6 +237,7 @@ function ThePage({
               }
             }
             const translation = {
+              name: defaultTranslation.name,
               languageEnglishName: defaultTranslation.languageEnglishName,
               id: defaultTranslation.id,
               listOfBooksApiLink: `${url.origin}${defaultTranslation.listOfBooksApiLink}`,
@@ -241,6 +266,9 @@ function ThePage({
             firstChapterApiLink = book0.firstChapterApiLink;
           }
         }
+        if (masks?.newTranslations) {
+          allTranslations = [...allTranslations, ...masks.newTranslations];
+        }
         allTranslations.forEach((translation) => {
           const englishName =
             translation?.languageEnglishName?.toLowerCase() ||
@@ -264,7 +292,6 @@ function ThePage({
           defaultTranslations,
           "local"
         );
-        console.log(defaultTranslations, translations, "trans");
       }
     } else {
       return {};
@@ -437,8 +464,154 @@ function ThePage({
   }, []);
 
   useEffect(() => {
-    loadData();
+    let cancelled = false;
+
+    async function loadDataSafe() {
+      if (!tab) {
+        return;
+      }
+
+      // Immediately set cached data BEFORE creating BibleDataManager to prevent flash
+      const cachedData = getCachedBibleData(
+        tab.data.translation,
+        tab.data.bookId,
+        tab.data.chapter
+      );
+      console.log(
+        "cached data check:",
+        cachedData?.content?.length,
+        tab.data.translation,
+        tab.data.bookId,
+        tab.data.chapter
+      );
+      if (cachedData?.content?.length > 0) {
+        setData(cachedData);
+      }
+
+      const bible = new BibleDataManager({
+        tabId: tab?.id,
+        translation: tab.data.translation,
+        bookId: tab.data.bookId,
+        chapter: tab.data.chapter,
+      });
+      setBible(bible);
+
+      console.log("bible data: ", bible);
+
+      await bible.fetch();
+
+      if (cancelled) return; // Don't update state if navigation changed
+
+      globalThis.BookId = bible.bookId;
+
+      const { data, loading, error } = bible.getState();
+      console.log(data, tab, "the data loaded");
+
+      globalThis.refreshScrollers && globalThis.refreshScrollers();
+      const { firstBookData, bookTranslationId, baseUrl, books } =
+        await loadTranslationFromUrl();
+
+      if (cancelled) return; // Check again after async operation
+
+      if (!configBot.tags.defaultChecked) {
+        if (firstBookData && bookTranslationId && baseUrl) {
+          await bible.changeTranslation(
+            bookTranslationId,
+            firstBookData,
+            baseUrl
+          );
+        }
+        if (cancelled) return;
+
+        if (books) {
+          if (configBot.tags?.book && books && books?.length > 0) {
+            let bookData;
+            books.forEach((book) => {
+              if (book.id.toLowerCase() === configBot.tags.book.toLowerCase()) {
+                bookData = book;
+              }
+            });
+            if (bookData) {
+              let chapterNo;
+              if (Number(configBot.tags.chapter) < bookData.numberOfChapters)
+                chapterNo = configBot.tags.chapter;
+              const chapterUrl = chapterNo
+                ? bookData.firstChapterApiLink.replace(
+                    "1.json",
+                    `${chapterNo}.json`
+                  )
+                : bookData.firstChapterApiLink.replace(
+                    "1.json",
+                    `${tab.data.chapter}.json`
+                  );
+              await bible.open(
+                bookData.id,
+                configBot.tags.chapter || 1,
+                bookTranslationId,
+                chapterUrl
+              );
+            }
+          } else if (configBot.tags?.chapter && books?.length > 0) {
+            let bookData;
+            books.forEach((book) => {
+              if (book.id.toLowerCase() === tab.data.bookId.toLowerCase()) {
+                bookData = book;
+              }
+            });
+            let chapterNo;
+            if (Number(configBot.tags.chapter) < bookData.numberOfChapters)
+              chapterNo = configBot.tags.chapter;
+            const chapterUrl = chapterNo
+              ? bookData.firstChapterApiLink.replace(
+                  "1.json",
+                  `${chapterNo}.json`
+                )
+              : bookData.firstChapterApiLink.replace(
+                  "1.json",
+                  `${tab.data.chapter}.json`
+                );
+            await bible.open(
+              bookData.id,
+              configBot.tags.chapter || 1,
+              bookTranslationId,
+              chapterUrl
+            );
+          }
+        } else {
+          if (configBot.tags?.book) {
+            await bible.open(
+              configBot.tags?.book,
+              configBot.tags?.chapter || tab.data.chapter
+            );
+          } else if (configBot.tags?.chapter) {
+            await bible.open(tab.data.book, configBot.tags?.chapter);
+          }
+        }
+        configBot.tags.defaultChecked = true;
+      } else {
+        if (masks?.allTranslations) {
+          for (const translation of masks.allTranslations) {
+            if (translation.id === tab.data.translation) {
+              setTagMask(thisBot, "selectedTranslation", translation, "local");
+              break;
+            }
+          }
+        }
+      }
+
+      if (cancelled) return; // Final check before setting data
+
+      setData(bible.data);
+      SetShowToolbar(true);
+      whisper(getBot("system", "introduction.searchBar"), "initialize");
+    }
+
+    loadDataSafe();
     globalThis.CurrentTab = tab;
+
+    return () => {
+      cancelled = true; // Cancel on cleanup
+    };
   }, [tab]);
 
   // GLOBAL GUARDS
@@ -477,7 +650,7 @@ function ThePage({
         config &&
         !config?.sharedTab &&
         role === "host" &&
-        masks["sharedTab"] !== tab.id
+        masks["sharedTab"] !== tab?.id
       ) {
         updateTab(tab?.id, data);
         updateTab(masks["sharedTab"], data);
@@ -499,7 +672,7 @@ function ThePage({
       } else {
         setDirection(null);
       }
-      if (masks["sharedTab"] === tab.id) EmitData("book", { ...data });
+      if (masks["sharedTab"] === tab?.id) EmitData("book", { ...data });
       // const emitter = getBot("system", "app.emitter");
       // sendRemoteData(emitter.masks.otherRemotes, "updateSharingData", {
       //   id: tab?.id,
@@ -520,7 +693,7 @@ function ThePage({
   }, [data]);
 
   useEffect(() => {
-    if (data && tab.id === activeTab) {
+    if (data && tab?.id === activeTab) {
       configBot.tags.book = data?.bookId;
       configBot.tags.chapter = data?.chapter;
     }
@@ -974,6 +1147,7 @@ function ThePage({
         to: "panel",
       });
     }
+    globalThis.LastClickedPanelUpdate = panelId;
   }
 
   function Update(tab) {
@@ -1079,7 +1253,7 @@ function ThePage({
     setCommandHighlight([]);
 
     if (!globalThis.tabHighlights) globalThis.tabHighlights = {};
-    if (tab?.id) globalThis.tabHighlights[tab.id] = {};
+    if (tab?.id) globalThis.tabHighlights[tab?.id] = {};
 
     shout("onAllVerseHighlightsCleared", {
       tabId: tab?.id,
@@ -1438,7 +1612,7 @@ function ThePage({
         }
          `}
       </style>
-      {data && tab && !tabEntered ? (
+      {tab && !tabEntered ? (
         <>
           <div
             onClick={(e) => {
@@ -1506,7 +1680,7 @@ function ThePage({
               position: "relative",
             }}
           >
-            <PageToolbar />
+            <PageToolbar tab={tab} panelId={panelId} />
           </div>
           <div style={{ height: "160px" }}></div>
 
@@ -1537,7 +1711,7 @@ function ThePage({
                       }
                     : {
                         position: "fixed",
-                        left: toolbarPos.x  -50,
+                        left: toolbarPos.x - 50,
                         top: toolbarPos.y,
                         zIndex: 10000,
                         cursor: dragToolbar ? "grabbing" : "grab",
@@ -1555,6 +1729,8 @@ function ThePage({
                   highlighted={highlighted}
                   clickedVersesContext={clickedVersesContext}
                   onColorSelect={handleColorSelect}
+                  activeSpace={activeSpace}
+                  spaces={spaces}
                   onClose={() => {
                     setClickedVerses([]);
                     setTimeout(() => {
@@ -1630,7 +1806,11 @@ function ThePage({
                   position: "relative",
                 }}
               >
-                <PageToolbar path="showInStarterToolbar" />
+                <PageToolbar
+                  panelId={panelId}
+                  tab={tab}
+                  path="showInStarterToolbar"
+                />
               </div>
             </div>
           </div>
@@ -1640,18 +1820,26 @@ function ThePage({
   );
 }
 
-function PageToolbar({ path = "showInPageToolbar" }) {
+function PageToolbar({ panelId, tab, path = "showInPageToolbar" }) {
   const { tools } = useBibleContext();
 
   const visibleTools = tools.filter((tool) => tool[path]);
   if (visibleTools.length === 0) return null;
 
   return (
-    <div className="thePageToolbar">
+    <div
+      onClick={() => {
+        globalThis.LastClickedPanelUpdate = panelId;
+      }}
+      className="thePageToolbar"
+    >
       {visibleTools.map((tool) => (
         <div
           onClick={(e) => {
-            tool.onClick({ mode: "panel" });
+            globalThis.LastClickedPanelUpdate = panelId;
+            setTimeout(() => {
+              tool.onClick({ mode: !tab ? "panel" : "" });
+            }, 5);
           }}
           className="tool-preview-page"
           key={tool.label}
@@ -2227,7 +2415,7 @@ function Section({
                         highlighted?.[verse.verseNumber].chapter === chapter) ||
                       commandHighlight.includes(verse.verseNumber)
                         ? wordHighlightsTC
-                        : "var(--pageTextColor) !important",
+                        : "",
                     transition: "background-color 0.2s ease, border 0.2s ease",
                     "border-radius":
                       highlighted?.[verse.verseNumber] || isClicked
@@ -2290,55 +2478,40 @@ function Section({
                         </span>
                       ) : null;
 
-                      // If verseContent is a string, split and wrap first word with verse number
+                      // Keep verse number with first word using nowrap span
+                      // Only wrap the verse number + first word together
                       if (typeof verseContent === "string") {
-                        const firstSpaceIndex = verseContent.indexOf(" ");
-                        if (firstSpaceIndex > 0) {
+                        const firstSpaceIdx = verseContent.indexOf(" ");
+                        if (firstSpaceIdx > 0) {
                           const firstWord = verseContent.slice(
                             0,
-                            firstSpaceIndex
+                            firstSpaceIdx
                           );
-                          const restOfText =
-                            verseContent.slice(firstSpaceIndex);
+                          const restText = verseContent.slice(firstSpaceIdx);
                           return (
                             <>
-                              <span className="verse-number-anchor">
-                                {verseNumberElement} {firstWord}
+                              <span style={{ whiteSpace: "nowrap" }}>
+                                {verseNumberElement}
+                                {firstWord}
                               </span>
-                              {restOfText}
+                              {restText}
                             </>
                           );
                         }
-                        return (
-                          <span className="verse-number-anchor">
-                            {verseNumberElement} {verseContent}
-                          </span>
-                        );
-                      }
-
-                      // If verseContent is an array (JSX elements), wrap first element with verse number
-                      if (
-                        Array.isArray(verseContent) &&
-                        verseContent.length > 0
-                      ) {
-                        const firstElement = verseContent[0];
-                        const restElements = verseContent.slice(1);
+                        // Single word verse
                         return (
                           <>
-                            <span className="verse-number-anchor">
-                              {verseNumberElement} {firstElement}
-                            </span>
-                            {restElements}
+                            {verseNumberElement}
+                            {verseContent}
                           </>
                         );
                       }
 
-                      // Fallback: just render verse number and content
+                      // For JSX array content, just render inline without nowrap wrapper
+                      // The text will flow naturally
                       return (
                         <>
-                          <span className="verse-number-anchor">
-                            {verseNumberElement}
-                          </span>
+                          {verseNumberElement}
                           {verseContent}
                         </>
                       );
@@ -2451,8 +2624,22 @@ export const ThePageWithEditor = ({ tab, setPanalApp, panelId }) => {
   const activeTab = panelId ? globalThis.PanelTabsMap[panelId] || tab : tab;
   const [enableEditor, setEnableEditor] = useState(false);
   useEffect(() => {}, [enableEditor]);
-  const [data, setData] = useState();
+  const [data, setData] = useState(() =>
+    getCachedBibleData(
+      tab?.data?.translation,
+      tab?.data?.bookId,
+      tab?.data?.chapter
+    )
+  );
+  const [deleteTab, setDeleteTab] = useState(false);
   if (tab) globalThis[`SetEnableEditorOf${tab?.id}`] = setEnableEditor;
+  useEffect(() => {
+    os.addBotListener(thisBot, "onTabDelete", (data) => {
+      os.log("tab delete event received in thePage", data, panelId, activeTab);
+      setEnableEditor(false);
+      setDeleteTab(data);
+    });
+  }, []);
   return (
     <>
       <TextEditor
@@ -2463,10 +2650,13 @@ export const ThePageWithEditor = ({ tab, setPanalApp, panelId }) => {
           <ThePage
             data={data}
             setData={setData}
+            enableEditor={enableEditor}
             setEnableEditor={setEnableEditor}
             tab={activeTab}
             panelId={panelId}
             setPanalApp={setPanalApp}
+            deleteTab={deleteTab}
+            setDeleteTab={setDeleteTab}
           />
         }
         tab={activeTab}

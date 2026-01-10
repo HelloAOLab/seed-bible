@@ -9,7 +9,7 @@ async function waitForGlobals(required = [], delay = 250) {
 }
 
 // === Begin of your code ===
-await(async function mainInstaller(that) {
+await (async function mainInstaller(that) {
   // --- pre-check at start ---
   await waitForGlobals([
     "AddTool",
@@ -89,7 +89,7 @@ await(async function mainInstaller(that) {
   }
 
   async function SetUpApplication(applicationFunction, bot, toolbarConfig) {
-    os.log("Setting up application", toolbarConfig)
+    os.log("Setting up application", toolbarConfig);
     function generateAppItem({
       icon,
       iconUrl,
@@ -170,9 +170,9 @@ await(async function mainInstaller(that) {
         label,
         hasToggle: true,
         active:
-        typeof toolbarConfig?.active === "boolean"
-          ? toolbarConfig.active
-          : true,
+          typeof toolbarConfig?.active === "boolean"
+            ? toolbarConfig.active
+            : true,
         onHold,
         pkgName: name,
         onClick,
@@ -231,7 +231,7 @@ await(async function mainInstaller(that) {
       showInStarterToolbar: toolbarConfig.showInStarterToolbar,
     });
 
-    console.log("WE ARE ADDING TOOL?",toolbarOption);
+    console.log("WE ARE ADDING TOOL?", toolbarOption);
 
     if (globalThis.AddTool) globalThis.AddTool(toolbarOption);
 
@@ -239,11 +239,11 @@ await(async function mainInstaller(that) {
   }
 
   async function SetUpApplicationWithoutApp(toolbarConfig, bot) {
-      os.log("Setting up application", toolbarConfig)
+    os.log("Setting up application", toolbarConfig);
     const runFn = (e) => {
-      os.log("Running toolbar action", toolbarConfig.run, e)
-      bot[toolbarConfig.run]({...e})
-    }
+      os.log("Running toolbar action", toolbarConfig.run, e);
+      bot[toolbarConfig.run]({ ...e });
+    };
 
     const toolbarOption = {
       icon: !toolbarConfig?.iconUrl

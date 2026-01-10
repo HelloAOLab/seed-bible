@@ -10,6 +10,7 @@ import type {
   RemoteActions,
   StoredAux,
 } from "@casual-simulation/aux-common";
+import { existsSync } from "node:fs";
 
 declare global {
   interface Window {
@@ -185,7 +186,20 @@ export async function waitForPackage(page: Page, name: string) {
  */
 export async function registerPackage(page: Page, name: string) {
   const extensionFilePath = path.resolve("packages", name, "extension.json");
-  const extensionData = JSON.parse(await readFile(extensionFilePath, "utf-8"));
+  if (!existsSync(extensionFilePath)) {
+    throw new Error(
+      `Package extension file not found: ${extensionFilePath}\nMake sure the package exists and has an extension.json file.`
+    );
+  }
+
+  let extensionData;
+  try {
+    extensionData = JSON.parse(await readFile(extensionFilePath, "utf-8"));
+  } catch (err) {
+    throw new Error(
+      `Failed to parse extension.json for package ${name}: ${err}`
+    );
+  }
 
   await execScript(
     page,

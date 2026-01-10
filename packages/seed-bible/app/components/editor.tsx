@@ -1703,7 +1703,7 @@ const styles = `
 #tiptapEditor{ padding:0px; }
 .tiptapToolbar {
   width: 100%;
-  background-color: var(--themeSideMenu);
+  background-color: transparent;
   display: flex;
   align-items: center;
   justify-content: flex-start;

@@ -1,6 +1,7 @@
 import puppeteer, { Browser, Page, Frame } from "puppeteer";
 import { packageAll } from "../../script/lib/package";
 import { loadSeedBible } from "../../script/lib/browser";
+import { minifyAll } from "../../script/lib/minify";
 
 let browser: Browser;
 
@@ -8,6 +9,7 @@ console.log = jest.fn();
 
 beforeAll(async () => {
   await packageAll("ignore");
+  await minifyAll("ignore");
 
   browser = await puppeteer.launch({
     args: ["--no-sandbox"],
@@ -210,7 +212,7 @@ describe("navigate", () => {
     await page.waitForSelector(".language-list");
     await page.locator(".language-list > div:nth-child(1)").click();
     await delay(100);
-    await page.locator(".language-list > div:nth-child(5)").click();
+    await page.locator(".language-list > div:nth-child(2)").click();
     await delay(100);
     await page.locator(".translation-option:nth-child(1)").click();
 
@@ -221,7 +223,7 @@ describe("navigate", () => {
       .waitHandle();
     await delay(1000);
     expect(await bookTitle?.evaluate((el) => el.textContent)).toBe(
-      "उत्पत्ति 1"
+      "1 Mose (Gyenesis) 1"
     );
   });
 

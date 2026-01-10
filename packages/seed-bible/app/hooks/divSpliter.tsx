@@ -139,20 +139,16 @@ export const useDivSpliter = ({
     }
   };
 
-  const addApplication = (newApp) => {
-    // TODO: Replace with a better alternative
-    // const clone = cloneElement(newApp.App, { prop: "test" });
-    // os.log(newApp.to, apps, "cloned");
-    if (newApp.to === "panel") {
-      if (apps.length > 2) {
-        setApps([apps[0], apps[1], newApp]);
-      } else {
-        setApps((prev) => [...prev, newApp]);
+  const addApplication = useCallback((newApp) => {
+    setApps((prevApps) => {
+      // For panel targets with 3+ apps, replace the third panel
+      if (newApp.to === "panel" && prevApps.length > 2) {
+        return [prevApps[0], prevApps[1], newApp];
       }
-    } else {
-      setApps((prevApps) => [...prevApps, newApp]);
-    }
-  };
+      // Otherwise append the new app
+      return [...prevApps, newApp];
+    });
+  }, []);
 
   const resetApps = () => {
     setApps([]);

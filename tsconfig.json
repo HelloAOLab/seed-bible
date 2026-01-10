@@ -1356,6 +1356,12 @@
       "introduction.searchBar.userIcons": [
         "./packages/BookSelector/introduction/searchBar/userIcons.tsx"
       ],
+      "introduction.searchBar.TranslationModal": [
+        "./packages/BookSelector/introduction/searchBar/TranslationModal.tsx"
+      ],
+      "introduction.searchBar.Interfaces": [
+        "./packages/BookSelector/introduction/searchBar/Interfaces.tsx"
+      ],
       "ext_calendar.calendar.Calendar": [
         "./packages/Calendar/ext_calendar/calendar/Calendar.tsx"
       ],

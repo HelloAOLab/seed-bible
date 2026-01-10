@@ -176,6 +176,9 @@ export function UserPresence({ collapsed = false }) {
   const [hasInteracted, setHasInteracted] = useState(false);
   const [notifications, setNotifications] = useState([]);
   const [, update] = useState();
+  const [isPrivateMode, setIsPrivateMode] = useState(
+    tags.isPrivateMode || false
+  );
   const {
     addTab,
     updateTab,
@@ -271,11 +274,14 @@ export function UserPresence({ collapsed = false }) {
     // - All hosts
     // - Yourself (if host or following)
     // - Anyone in a session
+    // - Exclude private users
+    const privateUsers = tags.privateUsers || [];
     const visible = mapped.filter(
       (u) =>
-        u.isCurrentHost ||
-        (u.inSession && u.hostId) ||
-        (u.isSelf && (isHost || following))
+        !privateUsers.includes(u.remoteId) &&
+        (u.isCurrentHost ||
+          (u.inSession && u.hostId) ||
+          (u.isSelf && (isHost || following)))
     );
 
     // Sort: hosts first, then others
@@ -429,6 +435,27 @@ export function UserPresence({ collapsed = false }) {
           setTimeout(() => {
             setNotifications((prev) => prev.filter((n) => n.id !== notifId));
           }, 15000);
+        } else if (name === "userWentPrivate") {
+          const { userId } = that.that || {};
+          if (!userId) return;
+          // Track private users so we don't show them
+          if (!tags.privateUsers) tags.privateUsers = [];
+          if (!tags.privateUsers.includes(userId)) {
+            tags.privateUsers = [...tags.privateUsers, userId];
+          }
+          // Remove user from visible users list
+          setUsers((prev) => prev.filter((u) => u.remoteId !== userId));
+          os.log?.(`[PrivateMode] User ${userId} went private`);
+        } else if (name === "userWentPublic") {
+          const { userId } = that.that || {};
+          if (!userId) return;
+          // Remove from private users list
+          if (tags.privateUsers) {
+            tags.privateUsers = tags.privateUsers.filter((id) => id !== userId);
+          }
+          // Refresh to show user again
+          refreshOthers();
+          os.log?.(`[PrivateMode] User ${userId} went public`);
         }
       };
 
@@ -651,6 +678,42 @@ export function UserPresence({ collapsed = false }) {
       followerId: selfId,
     });
   };
+
+  const togglePrivateMode = async () => {
+    const newPrivateMode = !isPrivateMode;
+    setIsPrivateMode(newPrivateMode);
+    tags.isPrivateMode = newPrivateMode;
+
+    const remotes = (await os.remotes()) || [];
+    const others = remotes.filter((id) => id !== selfId);
+
+    if (newPrivateMode) {
+      // Going private: notify others that this user is going offline/invisible
+      if (others.length > 0) {
+        sendRemoteData(others, "userWentPrivate", { userId: selfId });
+      }
+      // If hosting a session, end it
+      if (isHost) {
+        stopSession();
+      }
+      // If following someone, unfollow
+      if (following) {
+        unfollowHost();
+      }
+    } else {
+      // Coming back online: notify others that this user is visible again
+      if (others.length > 0) {
+        sendRemoteData(others, "userWentPublic", { userId: selfId });
+      }
+    }
+
+    os.log?.(
+      `[PrivateMode] User ${selfId} is now ${newPrivateMode ? "private" : "public"}`
+    );
+  };
+
+  globalThis.TogglePrivateMode = togglePrivateMode;
+  globalThis.IsPrivateMode = () => isPrivateMode;
 
   const followHost = (hostId) => {
     if (!sessions[hostId]) return;

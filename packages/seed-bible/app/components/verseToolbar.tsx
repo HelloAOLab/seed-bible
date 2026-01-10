@@ -6,6 +6,7 @@ import {
   ShareIcon,
   LocationIcon,
 } from "app.components.icons";
+import { getStyleOf } from "app.styles.styler";
 
 export function VerseToolbar({
   clickedVersesContext,
@@ -17,7 +18,37 @@ export function VerseToolbar({
   onColorSelect,
   highlighted,
   onClose,
+  activeSpace,
+  spaces,
 }) {
+  // Get Selection UI settings - first try globalThis, then fall back to saved space data
+  const getSelectionSettings = () => {
+    // First check globalThis (set by SelectionUISettings component when user changes settings)
+    if (globalThis.selectionUIBehavior?.[activeSpace]) {
+      return globalThis.selectionUIBehavior[activeSpace];
+    }
+    // Fall back to saved space data
+    const currentSpace = spaces?.find((s) => s.id === activeSpace);
+    if (currentSpace?.selectionUIBehavior) {
+      // Also populate globalThis for future use
+      if (!globalThis.selectionUIBehavior) {
+        globalThis.selectionUIBehavior = {};
+      }
+      globalThis.selectionUIBehavior[activeSpace] =
+        currentSpace.selectionUIBehavior;
+      return currentSpace.selectionUIBehavior;
+    }
+    // Default settings
+    return {
+      showSelectedItems: true,
+      showHighlightColors: true,
+      showIconText: true,
+      copyVerseMode: "withReference",
+    };
+  };
+
+  const selectionSettings = getSelectionSettings();
+
   const [selectedColor, setSelectedColor] = useState("#FDE047");
   const [customColors, setCustomColors] = useState(
     masks?.customColors ? masks.customColors : []
@@ -181,6 +212,7 @@ export function VerseToolbar({
     cursor: "pointer",
     "pointer-events": "none",
     position: "absolute",
+    opacity: 0,
   };
 
   const closeButtonStyle = {
@@ -250,12 +282,14 @@ export function VerseToolbar({
   };
 
   const menuOptions = useMemo(() => {
-    return getMenuActions(clickedVersesContext, onClose) || [];
-  }, [clickedVersesContext]);
+    return (
+      getMenuActions(clickedVersesContext, onClose, activeSpace, spaces) || []
+    );
+  }, [clickedVersesContext, activeSpace, spaces]);
 
   return (
     <>
-      {globalThis.IsMobileNow() && (
+      {globalThis.IsMobileNow() && selectionSettings.showSelectedItems && (
         <>
           <div className="verse-ref">
             <img src="https://res.cloudinary.com/dfbtwwa8p/image/upload/v1764875876/Rectangle_11_yzpmpm.svg" />
@@ -358,142 +392,146 @@ export function VerseToolbar({
             e.stopPropagation();
           }}
         >
-          {!globalThis.IsMobileNow() && (
+          {!globalThis.IsMobileNow() && selectionSettings.showSelectedItems && (
             <span className="verse-ref" style={verseRefStyle}>
               {getVerseReference()}
             </span>
           )}
 
-          {!globalThis.IsMobileNow() && (
+          {!globalThis.IsMobileNow() && selectionSettings.showSelectedItems && (
             <div className="divider-vertical" style={dividerStyle}></div>
           )}
 
-          <div
-            onMouseDown={(e) => e.stopPropagation()}
-            className="color-buttons"
-            style={colorButtonsStyle}
-          >
-            {allHighlighted ? (
-              <>
-                <button
-                  className="clear-button"
-                  style={{
-                    ...plusButtonStyle,
-                    width: "auto",
-                    padding: "8px 16px",
-                    borderRadius: "6px",
-                    fontSize: "13px",
-                    fontWeight: "500",
-                    color: "#dc2626",
-                    border: "2px solid #dc2626",
-                    backgroundColor: "#fff",
-                  }}
-                  onMouseEnter={(e) => {
-                    e.currentTarget.style.backgroundColor = "#fee2e2";
-                    e.currentTarget.style.transform = "scale(1.05)";
-                  }}
-                  onMouseLeave={(e) => {
-                    e.currentTarget.style.backgroundColor = "#fff";
-                    e.currentTarget.style.transform = "scale(1)";
-                  }}
-                  onClick={handleClearHighlights}
-                >
-                  Clear Selected
-                </button>
-                <button
-                  className="clear-all-button"
-                  style={{
-                    ...plusButtonStyle,
-                    width: "auto",
-                    padding: "8px 16px",
-                    borderRadius: "6px",
-                    fontSize: "13px",
-                    fontWeight: "500",
-                    color: "#991b1b",
-                    border: "2px solid #991b1b",
-                    backgroundColor: "#fff",
-                  }}
-                  onMouseEnter={(e) => {
-                    e.currentTarget.style.backgroundColor = "#fecaca";
-                    e.currentTarget.style.transform = "scale(1.05)";
-                  }}
-                  onMouseLeave={(e) => {
-                    e.currentTarget.style.backgroundColor = "#fff";
-                    e.currentTarget.style.transform = "scale(1)";
-                  }}
-                  onClick={handleClearAll}
-                >
-                  Clear All
-                </button>
-              </>
-            ) : (
-              <>
-                {defaultColors.map((color) => (
+          {selectionSettings.showHighlightColors && (
+            <div
+              onMouseDown={(e) => e.stopPropagation()}
+              className="color-buttons"
+              style={colorButtonsStyle}
+            >
+              {allHighlighted ? (
+                <>
                   <button
-                    key={color}
-                    className="color-circle"
-                    style={circleButtonStyle(color)}
-                    onMouseEnter={(e) =>
-                      (e.currentTarget.style.transform = "scale(1.1)")
-                    }
-                    onMouseLeave={(e) =>
-                      (e.currentTarget.style.transform = "scale(1)")
-                    }
-                    onClick={() => handleColorClick(color)}
-                    aria-label={`Highlight with ${color}`}
-                  />
-                ))}
-
-                {customColors.map((color) => (
-                  <button
-                    key={color}
-                    className="color-circle"
-                    style={circleButtonStyle(color)}
-                    onMouseEnter={(e) =>
-                      (e.currentTarget.style.transform = "scale(1.1)")
-                    }
-                    onMouseLeave={(e) =>
-                      (e.currentTarget.style.transform = "scale(1)")
-                    }
-                    onClick={() => handleColorClick(color)}
-                    aria-label={`Highlight with ${color}`}
-                  />
-                ))}
-
-                <div ref={colorPickerRef}>
-                  <button
-                    className="plus-button"
-                    style={plusButtonStyle}
-                    onMouseEnter={(e) =>
-                      (e.currentTarget.style.transform = "scale(1.1)")
-                    }
-                    onMouseLeave={(e) =>
-                      (e.currentTarget.style.transform = "scale(1)")
-                    }
-                    onClick={handlePlusClick}
-                    aria-label="Add color"
+                    className="clear-button"
+                    style={{
+                      ...plusButtonStyle,
+                      width: "auto",
+                      padding: "8px 16px",
+                      borderRadius: "6px",
+                      fontSize: "13px",
+                      fontWeight: "500",
+                      color: "#dc2626",
+                      border: "2px solid #dc2626",
+                      backgroundColor: "#fff",
+                    }}
+                    onMouseEnter={(e) => {
+                      e.currentTarget.style.backgroundColor = "#fee2e2";
+                      e.currentTarget.style.transform = "scale(1.05)";
+                    }}
+                    onMouseLeave={(e) => {
+                      e.currentTarget.style.backgroundColor = "#fff";
+                      e.currentTarget.style.transform = "scale(1)";
+                    }}
+                    onClick={handleClearHighlights}
                   >
-                    <img
-                      style={{ width: "38px", "-webkit-user-drag": "none" }}
-                      src={
-                        "https://res.cloudinary.com/dfbtwwa8p/image/upload/v1761753902/329cd5727522c1b0f09580e4c7b13964cb2b1a87_fvmcdy.png"
-                      }
-                    />
+                    Clear Selected
                   </button>
+                  <button
+                    className="clear-all-button"
+                    style={{
+                      ...plusButtonStyle,
+                      width: "auto",
+                      padding: "8px 16px",
+                      borderRadius: "6px",
+                      fontSize: "13px",
+                      fontWeight: "500",
+                      color: "#991b1b",
+                      border: "2px solid #991b1b",
+                      backgroundColor: "#fff",
+                    }}
+                    onMouseEnter={(e) => {
+                      e.currentTarget.style.backgroundColor = "#fecaca";
+                      e.currentTarget.style.transform = "scale(1.05)";
+                    }}
+                    onMouseLeave={(e) => {
+                      e.currentTarget.style.backgroundColor = "#fff";
+                      e.currentTarget.style.transform = "scale(1)";
+                    }}
+                    onClick={handleClearAll}
+                  >
+                    Clear All
+                  </button>
+                </>
+              ) : (
+                <>
+                  {defaultColors.map((color) => (
+                    <button
+                      key={color}
+                      className="color-circle"
+                      style={circleButtonStyle(color)}
+                      onMouseEnter={(e) =>
+                        (e.currentTarget.style.transform = "scale(1.1)")
+                      }
+                      onMouseLeave={(e) =>
+                        (e.currentTarget.style.transform = "scale(1)")
+                      }
+                      onClick={() => handleColorClick(color)}
+                      aria-label={`Highlight with ${color}`}
+                    />
+                  ))}
 
-                  <input
-                    ref={colorInputRef}
-                    type="color"
-                    value={tempColor}
-                    onChange={handleColorChange}
-                    style={colorInputStyle}
-                  />
-                </div>
-              </>
-            )}
-          </div>
+                  {customColors.map((color) => (
+                    <button
+                      key={color}
+                      className="color-circle"
+                      style={circleButtonStyle(color)}
+                      onMouseEnter={(e) =>
+                        (e.currentTarget.style.transform = "scale(1.1)")
+                      }
+                      onMouseLeave={(e) =>
+                        (e.currentTarget.style.transform = "scale(1)")
+                      }
+                      onClick={() => handleColorClick(color)}
+                      aria-label={`Highlight with ${color}`}
+                    />
+                  ))}
 
-          <div className="divider-vertical" style={dividerStyle}></div>
+                  <div ref={colorPickerRef}>
+                    <button
+                      className="plus-button"
+                      style={plusButtonStyle}
+                      onMouseEnter={(e) =>
+                        (e.currentTarget.style.transform = "scale(1.1)")
+                      }
+                      onMouseLeave={(e) =>
+                        (e.currentTarget.style.transform = "scale(1)")
+                      }
+                      onClick={handlePlusClick}
+                      aria-label="Add color"
+                    >
+                      <img
+                        style={{ width: "38px", "-webkit-user-drag": "none" }}
+                        src={
+                          "https://res.cloudinary.com/dfbtwwa8p/image/upload/v1761753902/329cd5727522c1b0f09580e4c7b13964cb2b1a87_fvmcdy.png"
+                        }
+                      />
+                    </button>
+
+                    <input
+                      ref={colorInputRef}
+                      type="color"
+                      value={tempColor}
+                      onChange={handleColorChange}
+                      style={colorInputStyle}
+                    />
+                  </div>
+                </>
+              )}
+            </div>
+          )}
+
+          {selectionSettings.showHighlightColors && (
+            <div className="divider-vertical" style={dividerStyle}></div>
+          )}
 
           <div
             onMouseDown={(e) => e.stopPropagation()}
@@ -515,9 +553,13 @@ export function VerseToolbar({
                     >
                       {option.icon}
                     </div>
-                    <span style={{ color: "var(--text1) !important" }}>
-                      {typeof option.title === "function" ? option.title(clickedVersesContext) : option.title}
-                    </span>
+                    {selectionSettings.showIconText && (
+                      <span style={{ color: "var(--text1) !important" }}>
+                        {typeof option.title === "function"
+                          ? option.title(clickedVersesContext)
+                          : option.title}
+                      </span>
+                    )}
                   </div>
                 );
               }
@@ -529,16 +571,56 @@ export function VerseToolbar({
   );
 }
 
-function getMenuActions(that, onClose) {
+function getMenuActions(that, onClose, activeSpace, spaces) {
   os.log("GET MENU ACTIONS VERSE TOOLBAR", that);
   const { SharePopup } = thisBot.Chips();
+
+  // Get copy mode setting - first try globalThis, then fall back to saved space data
+  const getSettings = () => {
+    if (globalThis.selectionUIBehavior?.[activeSpace]) {
+      return globalThis.selectionUIBehavior[activeSpace];
+    }
+    const currentSpace = spaces?.find((s) => s.id === activeSpace);
+    if (currentSpace?.selectionUIBehavior) {
+      return currentSpace.selectionUIBehavior;
+    }
+    return { copyVerseMode: "withReference" };
+  };
+  const selectionSettings = getSettings();
+
+  // Build verse reference for copy with reference
+  const buildReference = () => {
+    const verseNumbers = that.verseNumber || [];
+    const sorted = [...verseNumbers].sort((a, b) => a - b);
+    const groups = [];
+    if (sorted.length > 0) {
+      let start = sorted[0];
+      let end = sorted[0];
+      for (let i = 1; i < sorted.length; i++) {
+        if (sorted[i] === end + 1) {
+          end = sorted[i];
+        } else {
+          groups.push(start === end ? `${start}` : `${start}-${end}`);
+          start = sorted[i];
+          end = sorted[i];
+        }
+      }
+      groups.push(start === end ? `${start}` : `${start}-${end}`);
+    }
+    return `${that.book} ${that.chapter}:${groups.join(",")}`;
+  };
+
   const MenuOptions = {
     type: "normal",
     items: [
       {
         icon: <CopyIcon height="24" width="24" />,
         onClick: () => {
-          os.setClipboard(that.text);
+          const textToCopy =
+            selectionSettings.copyVerseMode === "withReference"
+              ? `${that.text}\n— ${buildReference()}`
+              : that.text;
+          os.setClipboard(textToCopy);
           SetInHold(null);
           onClose();
         },
@@ -605,7 +687,7 @@ function getMenuActions(that, onClose) {
               if (el.onClick) el.onClick(that);
               SetInHold(null);
             },
-            title: el.title
+            title: el.title,
           });
         });
       }
@@ -667,12 +749,7 @@ function getMenuActions(that, onClose) {
         </span>
       ),
       onClick: () => {
-        const subMenuItems = {
-          type: "normal",
-          items: [],
-        };
-        subMenuItems.items.push(...itemsHolder);
-        openPopupSettings(subMenuItems);
+        openPopupSettings(<SubOptions items={itemsHolder} />, null, true);
       },
     });
   }
@@ -700,3 +777,45 @@ function getMenuActions(that, onClose) {
     type,
   }));
 }
+
+const SubOptions = ({ items }) => {
+  return (
+    <div
+      className={`popupSettings`}
+      style={{ maxHeight: "275px", overflowY: "auto", scrollbarWidth: "none" }}
+    >
+      {items.map((item) => {
+        if (item.active === false) return;
+        if (item?.type === "line")
+          return (
+            <div
+              style={{
+                width: "100%",
+                height: "1px",
+                backgroundColor: "#cdcccc3b",
+              }}
+            ></div>
+          );
+        else
+          return (
+            <div
+              onClick={() => {
+                item.onClick();
+              }}
+              className={`itemSettings`}
+              style={{
+                cursor: item?.disabled ? "not-allowed" : "pointer",
+                color: item?.disabled ? "#929292" : "",
+              }}
+            >
+              <div>{item.icon}</div>
+              <div>
+                {typeof item.title === "function" ? item.title() : item.title}
+              </div>
+            </div>
+          );
+      })}
+      <style>{getStyleOf("sidebar.css")}</style>
+    </div>
+  );
+};
