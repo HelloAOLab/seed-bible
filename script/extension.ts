@@ -20,8 +20,13 @@ program
 
 program
   .command("generate")
-  .description("Generates a new extension.json file in the packages folder.")
-  .argument("<packageName>", "The name of the package.")
+  .description(
+    "Generates a new extension.json file in the specified package folder."
+  )
+  .argument(
+    "<packageName>",
+    "The name of the package to generate the extension json for."
+  )
   .argument("<author>", "The author of the extension.")
   .action(async (packageName, author) => {
     generateExtension(packageName, author);
