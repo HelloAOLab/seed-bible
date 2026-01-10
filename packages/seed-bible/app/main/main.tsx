@@ -252,11 +252,11 @@ const Main = () => {
     setApps(newApps); // ✅ Update all at once
     setTimeout(() => {
       if (tabs.length === 1 && savedScreens === 1) {
-        // console.log('testing update now working', tabs[0])
+        // globalThis.UpdateTab(tabs[0]);
         globalThis.UpdateTab(tabs[0]);
       }
       globalThis.AppStartedSuccessfully = true;
-    }, 10);
+    }, 0);
     globalThis.SpaceScreens[activeSpace] = savedScreens;
   }, [activeSpace]);
 

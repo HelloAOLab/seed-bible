@@ -532,7 +532,8 @@ function Tab({
     setActiveTab(el.id);
     // if (globalThis[`UpdateTabWidthId${el?.id}`])
     //   globalThis[`UpdateTabWidthId${el?.id}`](el);
-    // globalThis.UpdateTab(el);
+
+    globalThis.UpdateTab(el);
   };
   const circles = onlineUsers
     ? Object.fromEntries(

@@ -641,11 +641,11 @@ export function TabsProvider({ children }) {
     };
   }, [activeTab]);
   useEffect(() => {
-    os.log("checking active space for shared tab", tabs, activeSpace);
-    setTimeout(() => {
-      setActiveTab(tabs[0].id);
-      globalThis.UpdateTab(tabs[0]);
-    }, 400);
+    // os.log("checking active space for shared tab", tabs, activeSpace);
+    // setTimeout(() => {
+    //   setActiveTab(tabs[0].id);
+    //   globalThis.UpdateTab(tabs[0]);
+    // }, 0);
   }, [activeSpace]);
 
   useEffect(() => {
