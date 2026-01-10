@@ -1844,7 +1844,7 @@ const SideBarChapters = (props: {
             class={`chapter-btn`}
             onCLick={() =>
               handleChapterClick({
-                id: bookData.id,
+                id: bookData?.id,
                 translationId: bookData.translationId,
                 numberOfChapters: bookData.numberOfChapters,
                 bookName: psalmsPartName({ index: i }),
@@ -1874,7 +1874,7 @@ const SideBarChapters = (props: {
             class={`chapter-btn ${i === bookData.numberOfChapters - 1 ? "lastOne" : ""}`}
             onCLick={() =>
               handleChapterClick({
-                id: bookData.id,
+                id: bookData?.id,
                 translationId: bookData.translationId,
                 numberOfChapters: bookData.numberOfChapters,
                 bookName: bookData.commonName,

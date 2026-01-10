@@ -82,8 +82,9 @@ function ThePage({
 
   useEffect(() => {
     if (deleteTab) {
-      if (deleteTab.tabId === tab?.id) {
+      if (deleteTab?.tabId === tab?.id) {
         setTab(null);
+        setData(null);
       }
       setDeleteTab(false);
     }
@@ -649,7 +650,7 @@ function ThePage({
         config &&
         !config?.sharedTab &&
         role === "host" &&
-        masks["sharedTab"] !== tab.id
+        masks["sharedTab"] !== tab?.id
       ) {
         updateTab(tab?.id, data);
         updateTab(masks["sharedTab"], data);
@@ -671,7 +672,7 @@ function ThePage({
       } else {
         setDirection(null);
       }
-      if (masks["sharedTab"] === tab.id) EmitData("book", { ...data });
+      if (masks["sharedTab"] === tab?.id) EmitData("book", { ...data });
       // const emitter = getBot("system", "app.emitter");
       // sendRemoteData(emitter.masks.otherRemotes, "updateSharingData", {
       //   id: tab?.id,
@@ -692,7 +693,7 @@ function ThePage({
   }, [data]);
 
   useEffect(() => {
-    if (data && tab.id === activeTab) {
+    if (data && tab?.id === activeTab) {
       configBot.tags.book = data?.bookId;
       configBot.tags.chapter = data?.chapter;
     }
@@ -1252,7 +1253,7 @@ function ThePage({
     setCommandHighlight([]);
 
     if (!globalThis.tabHighlights) globalThis.tabHighlights = {};
-    if (tab?.id) globalThis.tabHighlights[tab.id] = {};
+    if (tab?.id) globalThis.tabHighlights[tab?.id] = {};
 
     shout("onAllVerseHighlightsCleared", {
       tabId: tab?.id,
