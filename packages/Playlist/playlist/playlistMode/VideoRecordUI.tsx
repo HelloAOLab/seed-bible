@@ -93,6 +93,8 @@ const VideoRecordUI = ({ data, setData }) => {
         setIsPlaying(false);
     };
 
+    globalThis.HandleStopPlayVideo = handleStopPlay;
+
     const handleReRecord = async () => {
         videoRef.current.pause();
         setPoster(null);
@@ -254,7 +256,7 @@ const VideoRecordUI = ({ data, setData }) => {
                     onClick={() => {
                         onClick();
                     }}
-                    style={{ width: `${100 / buttonConfigs.length}%`, fontSize: '12px', fontWeight: '400' }}
+                    style={{ justifyContent: 'center', width: `${100 / buttonConfigs.length}%`, fontSize: '12px', fontWeight: '400' }}
                     className={`tabs-playlist-item ${value === tab ? 'active' : ''}`} >
                     <img style={{ height: '20px' }} src={IconsRef[`${value}${value === tab ? '_active' : ''}`]} />
                     <span class="hide-at-400">

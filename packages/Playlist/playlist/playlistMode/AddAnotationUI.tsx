@@ -1302,6 +1302,8 @@ const AddAnotationUI = ({
     return [item];
   }, [list, singleMode]);
 
+  // console.log("finalHistoryObject", finalHistoryObject, list);
+
   const [draggedItemID, setDraggedItemID] = useState(null);
   const [draggedParent, setDraggedItemParent] = useState(null);
 

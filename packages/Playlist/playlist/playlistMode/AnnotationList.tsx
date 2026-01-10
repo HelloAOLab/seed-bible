@@ -355,13 +355,18 @@ const AnnodataMapper = ({ data, address, currentOpenedBook, chapter, heading, on
           </div>
           <div style={{ display: 'flex', marginBottom: '1.5rem', justifyContent: 'space-between', alignItems: 'center', marginTop: '0.5rem' }}>
             <div style={{ display: 'flex', flexDirection: 'row', gap: '0.5rem',fontSize: '12px', fontWeight: '500' }}>
+             {(contentData.createdByName || contentData.createdByProfilePicture) ? (
+              <>
               <div style={{ display: 'flex', flexDirection: 'row', gap: '0.5rem', alignItems: 'center' }}>
-                <img style={{ width: '16px', height: '16px', borderRadius: '50%' }} src={contentData.createdByProfilePicture} alt="profile" />
-                <p>
+                {contentData.createdByProfilePicture ?
+                  <img style={{ width: '16px', height: '16px', borderRadius: '50%' }} src={contentData.createdByProfilePicture} alt="profile" />
+                : null}
+                {contentData.createdByName ? <p>
                   <i>{contentData.createdByName}</i>
-                </p>
+                </p> : null}
               </div>
               <span style={{ fontSize: '12px', color: '#00000099' }}>|</span>
+            </>) : null}
               <p style={{ textTransform: 'capitalize'}}>
                 <i>{FormatRelativeTime(contentData.updatedAtMs)}</i>
               </p>

@@ -64,6 +64,8 @@ const RecordingVoiceUI = ({ data, setData }) => {
         DataManager.cancelCurrentPlayingSound();
     }
 
+    globalThis.HandleStopPlayVoice = handleStop;
+
     const handlePlay = async () => {
         await DataManager.playSound({ data });
         setPlayCount(0);
