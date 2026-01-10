@@ -2338,8 +2338,7 @@ function Section({
         <div className="sectionCover">
           {verses.map((verse) => {
             if (verse.lineBreak) {
-              // <p class="verseLineBreak"></p>;
-              return;
+              return <p class="verseLineBreak"></p>;
             }
 
             const [c, setC] = useState(false);
