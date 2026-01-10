@@ -1,7 +1,4 @@
-import {
-  BibleDataManager,
-  getCachedBibleData,
-} from "app.hooks.bibleDataManager";
+import { BibleDataManager, getCachedBibleData } from "app.hooks.bibleDataManager";
 import { getStyleOf } from "app.styles.styler";
 const {
   useEffect,
@@ -79,16 +76,15 @@ function ThePage({
   const [direction, setDirection] = useState(null);
   const commandsRef = useRef(null);
   const [userMovedToolbar, setUserMovedToolbar] = useState();
-
-  useEffect(() => {
-    if (deleteTab) {
-      if (deleteTab?.tabId === tab?.id) {
+ 
+  useEffect(()=>{
+    if(deleteTab){
+      if (deleteTab.tabId === tab?.id) {
         setTab(null);
-        setData(null);
       }
-      setDeleteTab(false);
+      setDeleteTab(false)
     }
-  }, [deleteTab]);
+  },[deleteTab])
   useEffect(() => {
     if (!T) globalThis.CurrentPanelAvailable = panelId;
     else globalThis.CurrentPanelAvailable = null;
@@ -435,12 +431,9 @@ function ThePage({
   }, []);
   useEffect(() => {
     const onBookChange = (data) => {
-      // os.log("updated shared tab", "not approved");
-      // if (!globalThis.CurrentTab?.sharedTab) {
-      //   updateTab(masks["sharedTab"], data);
-      //   return;
-      // }
       console.log("remoteBookChange", data);
+      // Set flag to prevent re-emitting this navigation
+      globalThis.__remoteBookUpdate = true;
       globalThis.Open?.(data.bookId, data.chapter);
     };
 
@@ -472,19 +465,11 @@ function ThePage({
       }
 
       // Immediately set cached data BEFORE creating BibleDataManager to prevent flash
-      const cachedData = getCachedBibleData(
-        tab.data.translation,
-        tab.data.bookId,
-        tab.data.chapter
-      );
-      console.log(
-        "cached data check:",
-        cachedData?.content?.length,
-        tab.data.translation,
-        tab.data.bookId,
-        tab.data.chapter
-      );
+      // Mark as cached so we don't emit this to other users
+      const cachedData = getCachedBibleData(tab.data.translation, tab.data.bookId, tab.data.chapter);
+      console.log("cached data check:", cachedData?.content?.length, tab.data.translation, tab.data.bookId, tab.data.chapter);
       if (cachedData?.content?.length > 0) {
+        isCachedDataRef.current = true; // Mark as cache - don't emit
         setData(cachedData);
       }
 
@@ -617,32 +602,52 @@ function ThePage({
   // GLOBAL GUARDS
   if (!globalThis.__remoteBookUpdate) globalThis.__remoteBookUpdate = false;
   if (!globalThis.__lastBookEmit) globalThis.__lastBookEmit = 0;
-  const BOOK_EMIT_DEBOUNCE = 250; // ms
+  if (!globalThis.__lastEmittedBook) globalThis.__lastEmittedBook = { bookId: null, chapter: null };
+  if (!globalThis.__pendingNavigation) globalThis.__pendingNavigation = null;
+  const BOOK_EMIT_DEBOUNCE = 400; // ms - increased for better dedup
+
+  // Track if current data update is from cache (should not emit)
+  const isCachedDataRef = useRef(false);
 
   // SAFELY EMIT BOOK WITHOUT LOOPS OR SPAM
   function safeEmitBook(payload) {
     const now = Date.now();
 
-    // 1) Prevent loop from remote → local → remote
+    // 1) Skip if this data came from cache preload (not user navigation)
+    if (isCachedDataRef.current) {
+      isCachedDataRef.current = false;
+      return;
+    }
+
+    // 2) Prevent loop from remote → local → remote
     if (globalThis.__remoteBookUpdate) {
       globalThis.__remoteBookUpdate = false;
       return;
     }
 
-    // 2) Prevent spam when navigating fast
+    // 3) Skip if same book+chapter as last emit (prevents cached data re-emit)
+    const lastEmit = globalThis.__lastEmittedBook;
+    if (lastEmit.bookId === payload?.bookId && lastEmit.chapter === payload?.chapter) {
+      return;
+    }
+
+    // 4) Prevent spam when navigating fast
     if (now - globalThis.__lastBookEmit < BOOK_EMIT_DEBOUNCE) {
+      // Store pending navigation to emit after debounce
+      globalThis.__pendingNavigation = payload;
       return;
     }
 
     globalThis.__lastBookEmit = now;
+    globalThis.__lastEmittedBook = { bookId: payload?.bookId, chapter: payload?.chapter };
+    globalThis.__pendingNavigation = null;
 
-    // 3) Finally emit
+    // 5) Finally emit
     EmitData("book", payload);
   }
 
   useEffect(() => {
     if (data) {
-      //  EmitData("book", { ...data });
       hanldNavFunctions();
       SetShowCommands(false);
       updateTab(tab?.id, data);
@@ -650,12 +655,19 @@ function ThePage({
         config &&
         !config?.sharedTab &&
         role === "host" &&
-        masks["sharedTab"] !== tab?.id
+        masks["sharedTab"] !== tab.id
       ) {
-        updateTab(tab?.id, data);
         updateTab(masks["sharedTab"], data);
+         safeEmitBook({ ...data });
       }
-      if (role === "host") EmitData("book", { ...data });
+
+      // Use safeEmitBook to prevent loops - only emit if we're host or it's shared tab
+      if (role === "host") {
+        safeEmitBook({ ...data });
+      } else if (masks["sharedTab"] === tab.id) {
+        safeEmitBook({ ...data });
+      }
+
       if (panelId && tab) {
         os.log("recoreded", panelId, {
           ...tab,
@@ -672,16 +684,8 @@ function ThePage({
       } else {
         setDirection(null);
       }
-      if (masks["sharedTab"] === tab?.id) EmitData("book", { ...data });
-      // const emitter = getBot("system", "app.emitter");
-      // sendRemoteData(emitter.masks.otherRemotes, "updateSharingData", {
-      //   id: tab?.id,
-      //   bookId: data?.bookId,
-      //   book: data?.book,
-      //   chapter: data?.chapter,
-      // });
-      const emitter = getBot("system", "app.emitter");
 
+      const emitter = getBot("system", "app.emitter");
       sendRemoteData(emitter.masks.otherRemotes, "updateSharingData", {
         id: tab?.id,
         bookId: data?.bookId,
@@ -693,7 +697,7 @@ function ThePage({
   }, [data]);
 
   useEffect(() => {
-    if (data && tab?.id === activeTab) {
+    if (data && tab.id === activeTab) {
       configBot.tags.book = data?.bookId;
       configBot.tags.chapter = data?.chapter;
     }
@@ -933,7 +937,15 @@ function ThePage({
   }
 
   async function openNextChapter() {
+    // Check if navigation is locked (fast clicking prevention)
+    const now = Date.now();
+    if (globalThis.__navLock && now - globalThis.__navLock < 300) {
+      return;
+    }
+    globalThis.__navLock = now;
+
     await bible.openNext();
+    isCachedDataRef.current = false; // This is real navigation, allow emit
     setData(bible.data);
 
     globalThis.GlobalChapter = bible.data.chapter - 1;
@@ -952,7 +964,15 @@ function ThePage({
   }
 
   async function openPrevChapter() {
+    // Check if navigation is locked (fast clicking prevention)
+    const now = Date.now();
+    if (globalThis.__navLock && now - globalThis.__navLock < 300) {
+      return;
+    }
+    globalThis.__navLock = now;
+
     await bible.openPrevious();
+    isCachedDataRef.current = false; // This is real navigation, allow emit
     setData(bible.data);
 
     globalThis.GlobalChapter = bible.data.chapter - 1;
@@ -973,6 +993,10 @@ function ThePage({
   async function open(bookId, chapter, translation = null, chapterUrl = null) {
     try {
       await bible.open(bookId, chapter, (translation = null), chapterUrl);
+      // Only mark as NOT cached if this wasn't triggered by remote
+      if (!globalThis.__remoteBookUpdate) {
+        isCachedDataRef.current = false; // Real navigation, allow emit
+      }
       setData(bible.data);
     } catch {
       const tab = globalThis.AddTab({
@@ -1253,7 +1277,7 @@ function ThePage({
     setCommandHighlight([]);
 
     if (!globalThis.tabHighlights) globalThis.tabHighlights = {};
-    if (tab?.id) globalThis.tabHighlights[tab?.id] = {};
+    if (tab?.id) globalThis.tabHighlights[tab.id] = {};
 
     shout("onAllVerseHighlightsCleared", {
       tabId: tab?.id,
@@ -2483,16 +2507,12 @@ function Section({
                       if (typeof verseContent === "string") {
                         const firstSpaceIdx = verseContent.indexOf(" ");
                         if (firstSpaceIdx > 0) {
-                          const firstWord = verseContent.slice(
-                            0,
-                            firstSpaceIdx
-                          );
+                          const firstWord = verseContent.slice(0, firstSpaceIdx);
                           const restText = verseContent.slice(firstSpaceIdx);
                           return (
                             <>
                               <span style={{ whiteSpace: "nowrap" }}>
-                                {verseNumberElement}
-                                {firstWord}
+                                {verseNumberElement}{firstWord}
                               </span>
                               {restText}
                             </>
@@ -2501,8 +2521,7 @@ function Section({
                         // Single word verse
                         return (
                           <>
-                            {verseNumberElement}
-                            {verseContent}
+                            {verseNumberElement}{verseContent}
                           </>
                         );
                       }
@@ -2511,8 +2530,7 @@ function Section({
                       // The text will flow naturally
                       return (
                         <>
-                          {verseNumberElement}
-                          {verseContent}
+                          {verseNumberElement}{verseContent}
                         </>
                       );
                     })()
@@ -2624,20 +2642,14 @@ export const ThePageWithEditor = ({ tab, setPanalApp, panelId }) => {
   const activeTab = panelId ? globalThis.PanelTabsMap[panelId] || tab : tab;
   const [enableEditor, setEnableEditor] = useState(false);
   useEffect(() => {}, [enableEditor]);
-  const [data, setData] = useState(() =>
-    getCachedBibleData(
-      tab?.data?.translation,
-      tab?.data?.bookId,
-      tab?.data?.chapter
-    )
-  );
-  const [deleteTab, setDeleteTab] = useState(false);
+  const [data, setData] = useState();
+  const [deleteTab,setDeleteTab] = useState(false);
   if (tab) globalThis[`SetEnableEditorOf${tab?.id}`] = setEnableEditor;
-  useEffect(() => {
+     useEffect(() => {
     os.addBotListener(thisBot, "onTabDelete", (data) => {
       os.log("tab delete event received in thePage", data, panelId, activeTab);
-      setEnableEditor(false);
-      setDeleteTab(data);
+      setEnableEditor(false)
+      setDeleteTab(data)
     });
   }, []);
   return (
