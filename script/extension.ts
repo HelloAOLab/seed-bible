@@ -1,6 +1,7 @@
 import { program } from "commander";
 import { rmdir, writeFile } from "node:fs/promises";
 import {
+  generateExtension,
   downloadAndSave,
   listExtensions,
   uploadAll,
@@ -16,6 +17,18 @@ program
   .name("extension")
   .description("Commands for working with SeedBible extensions.")
   .version("0.1.0");
+
+program
+  .command("generate")
+  .description("Generates a new extension.json file in the packages folder.")
+  .argument("<packageName>", "The name of the package.")
+  .argument("<author>", "The author of the extension.")
+  .action(async (packageName, author) => {
+    generateExtension(packageName, author);
+    console.log(
+      `Generated new extension.json for package ${packageName} by author ${author}.`
+    );
+  });
 
 program
   .command("list")
