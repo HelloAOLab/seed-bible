@@ -252,11 +252,11 @@ const Main = () => {
     setApps(newApps); // ✅ Update all at once
     setTimeout(() => {
       if (tabs.length === 1 && savedScreens === 1) {
-        // console.log('testing update now working', tabs[0])
+        // globalThis.UpdateTab(tabs[0]);
         globalThis.UpdateTab(tabs[0]);
       }
       globalThis.AppStartedSuccessfully = true;
-    }, 10);
+    }, 0);
     globalThis.SpaceScreens[activeSpace] = savedScreens;
   }, [activeSpace]);
 
@@ -319,115 +319,115 @@ const Main = () => {
   // };
 
   const defaultTheme = {
-  // Main colors
-  primaryColor: "#E07B4C",
-  secondaryColor: "#D2691E",
-  tertiaryColor: "#CD853F",
-  // Container backgrounds
-  themeSideMenu: "#FFFFFF",
-  panelBackground: "#F8FAFC",
-  // Tab
-  tabSelection: "#E07B4C",
-  activeTabBackground: "#FADDD1",
-  activeTabText: "#E07B4C",
-  activeTabBorder: "#E07B4C",
-  activeTabFill: "#FADDD1",
-  simpleTabText: "#333333",
-  inactiveTabText: "#333333",
-  // Buttons
-  primaryButton: "#E07B4C",
-  primaryButtonColor: "#FFFFFF",
-  primaryButtonBorder: "#E07B4C",
-  primaryButtonFill: "#E07B4C",
-  secondaryButton: "#D2691E",
-  secondaryButtonColor: "#FFFFFF",
-  secondaryButtonBorder: "#D2691E",
-  secondaryButtonFill: "#D2691E",
-  tertiaryButtonColor: "#333333",
-  buttonBorder: "#E1E3EA",
-  // Scripture text
-  bookHeadingColor: "#333333",
-  chapterHeadingColor: "#333333",
-  verseNumberColor: "#E07B4C",
-  verseTextColor: "#333333",
-  pageBackground: "#FFFFFF",
-  pageTextColor: "#333333",
-  // Side menu
-  heading1Color: "#333333",
-  heading2Color: "#333333",
-  heading3Color: "#333333",
-  descriptionTextColor: "#666666",
-  menuTextColor: "#333333",
-  breadcrumbsColor: "#666666",
-  sectionBackground: "#E07B4C",
-  spaceNameColor: "#333333",
-  sideMenuIconsColor: "#333333",
-  selectedSpaceColor: "#E07B4C",
-  unselectedSpaceColor: "#E1E3EA",
-  spaceNameText: "#333333",
-  addButtonBackground: "#E07B4C",
-  addButtonIcon: "#FFFFFF",
-  selectPanelIcon: "#333333",
-  openCloseMenuIcon: "#333333",
-  moreIcon: "#666666",
-  settingsIcon: "#666666",
-  inactiveSpaceIndicator: "#E1E3EA",
-  activeSpaceIndicator: "#E07B4C",
-  profileAvatar: "#E07B4C",
-  // Selection UI & toolbar
-  toolbarBorder: "#E1E3EA",
-  toolbarFill: "#FFFFFF",
-  toolbarIconsColor: "#333333",
-  selectionUIBorder: "#E1E3EA",
-  selectionUIFill: "#FFFFFF",
-  selectionIconsColor: "#333333",
-  toolbarBackground: "#FFFFFF",
-  iconColor: "#333333",
-  // Input fields
-  inputTitleColor: "#333333",
-  inputPlaceholderColor: "#999999",
-  inputActiveBorder: "#E07B4C",
-  inputActiveFill: "#FFFFFF",
-  inputInactiveBorder: "#E1E3EA",
-  inputInactiveFill: "#FFFFFF",
-  inputBackground: "#FFFFFF",
-  inputBorder: "#E1E3EA",
-  inputText: "#333333",
-  inputPlaceholder: "#999999",
-  // Branding
-  logoColor: "#333333",
-  accentColor: "#E07B4C",
-  // Space selection
-  spaceSelection: "#E07B4C",
-  // Text colors
-  text1: "#333333",
-  text2: "#666666",
-  showTabIcons: true,
+    // Main colors
+    primaryColor: "#E07B4C",
+    secondaryColor: "#D2691E",
+    tertiaryColor: "#CD853F",
+    // Container backgrounds
+    themeSideMenu: "#FFFFFF",
+    panelBackground: "#F8FAFC",
+    // Tab
+    tabSelection: "#E07B4C",
+    activeTabBackground: "#FADDD1",
+    activeTabText: "#E07B4C",
+    activeTabBorder: "#E07B4C",
+    activeTabFill: "#FADDD1",
+    simpleTabText: "#333333",
+    inactiveTabText: "#333333",
+    // Buttons
+    primaryButton: "#E07B4C",
+    primaryButtonColor: "#FFFFFF",
+    primaryButtonBorder: "#E07B4C",
+    primaryButtonFill: "#E07B4C",
+    secondaryButton: "#D2691E",
+    secondaryButtonColor: "#FFFFFF",
+    secondaryButtonBorder: "#D2691E",
+    secondaryButtonFill: "#D2691E",
+    tertiaryButtonColor: "#333333",
+    buttonBorder: "#E1E3EA",
+    // Scripture text
+    bookHeadingColor: "#333333",
+    chapterHeadingColor: "#333333",
+    verseNumberColor: "#E07B4C",
+    verseTextColor: "#333333",
+    pageBackground: "#FFFFFF",
+    pageTextColor: "#333333",
+    // Side menu
+    heading1Color: "#333333",
+    heading2Color: "#333333",
+    heading3Color: "#333333",
+    descriptionTextColor: "#666666",
+    menuTextColor: "#333333",
+    breadcrumbsColor: "#666666",
+    sectionBackground: "#E07B4C",
+    spaceNameColor: "#333333",
+    sideMenuIconsColor: "#333333",
+    selectedSpaceColor: "#E07B4C",
+    unselectedSpaceColor: "#E1E3EA",
+    spaceNameText: "#333333",
+    addButtonBackground: "#E07B4C",
+    addButtonIcon: "#FFFFFF",
+    selectPanelIcon: "#333333",
+    openCloseMenuIcon: "#333333",
+    moreIcon: "#666666",
+    settingsIcon: "#666666",
+    inactiveSpaceIndicator: "#E1E3EA",
+    activeSpaceIndicator: "#E07B4C",
+    profileAvatar: "#E07B4C",
+    // Selection UI & toolbar
+    toolbarBorder: "#E1E3EA",
+    toolbarFill: "#FFFFFF",
+    toolbarIconsColor: "#333333",
+    selectionUIBorder: "#E1E3EA",
+    selectionUIFill: "#FFFFFF",
+    selectionIconsColor: "#333333",
+    toolbarBackground: "#FFFFFF",
+    iconColor: "#333333",
+    // Input fields
+    inputTitleColor: "#333333",
+    inputPlaceholderColor: "#999999",
+    inputActiveBorder: "#E07B4C",
+    inputActiveFill: "#FFFFFF",
+    inputInactiveBorder: "#E1E3EA",
+    inputInactiveFill: "#FFFFFF",
+    inputBackground: "#FFFFFF",
+    inputBorder: "#E1E3EA",
+    inputText: "#333333",
+    inputPlaceholder: "#999999",
+    // Branding
+    logoColor: "#333333",
+    accentColor: "#E07B4C",
+    // Space selection
+    spaceSelection: "#E07B4C",
+    // Text colors
+    text1: "#333333",
+    text2: "#666666",
+    showTabIcons: true,
 
-  primaryLight: "#FADDD1",
-  onPrimaryLight: "#8B4513",
-  primaryBase: "#E07B4C",
-  onPrimaryBase: "#FFFFFF",
-  primaryDark: "#C65D2D",
-  onPrimaryDark: "#FFFFFF",
-  secondaryLight: "#FFE4C4",
-  onSecondaryLight: "#8B4513",
-  secondaryBase: "#D2691E",
-  onSecondaryBase: "#FFFFFF",
-  secondaryDark: "#A0522D",
-  onSecondaryDark: "#FFFFFF",
-  tertiaryLight: "#FFEFD5",
-  onTertiaryLight: "#8B4513",
-  tertiaryBase: "#CD853F",
-  onTertiaryBase: "#FFFFFF",
-  tertiaryDark: "#A0522D",
-  onTertiaryDark: "#FFFFFF",
-  background: "#FFFFFF",
-  onBackground: "#333333",
-  surface: "#FAFAFA",
-  onSurface: "#333333",
-  text3: "#333333",
-};
+    primaryLight: "#FADDD1",
+    onPrimaryLight: "#8B4513",
+    primaryBase: "#E07B4C",
+    onPrimaryBase: "#FFFFFF",
+    primaryDark: "#C65D2D",
+    onPrimaryDark: "#FFFFFF",
+    secondaryLight: "#FFE4C4",
+    onSecondaryLight: "#8B4513",
+    secondaryBase: "#D2691E",
+    onSecondaryBase: "#FFFFFF",
+    secondaryDark: "#A0522D",
+    onSecondaryDark: "#FFFFFF",
+    tertiaryLight: "#FFEFD5",
+    onTertiaryLight: "#8B4513",
+    tertiaryBase: "#CD853F",
+    onTertiaryBase: "#FFFFFF",
+    tertiaryDark: "#A0522D",
+    onTertiaryDark: "#FFFFFF",
+    background: "#FFFFFF",
+    onBackground: "#333333",
+    surface: "#FAFAFA",
+    onSurface: "#333333",
+    text3: "#333333",
+  };
   const darkTheme = {
     panelBackground: "#2D2D2D",
     themeSideMenu: "#2D2D2D",
@@ -566,7 +566,7 @@ const Main = () => {
     ];
 
     const allVars = [...vars, ...fontVars];
-    os.log(allVars, "all theme vars");
+    // os.log(allVars, "all theme vars");
     return `:root {\n  ${allVars.join("\n  ")}\n}`;
   }, [themeColors, activeSpace, spaces]);
 

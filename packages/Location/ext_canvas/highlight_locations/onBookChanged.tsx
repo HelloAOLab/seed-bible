@@ -105,10 +105,10 @@ for (const key of Object.keys(locationOptionsConfig)) {
   }
   const uniqueOptions = [...new Set(options)];
   globalThis.VerseContextMenuOptions[key] = uniqueOptions;
-  console.log(
-    globalThis.VerseContextMenuOptions[key],
-    "globalThis.VerseContextMenuOptions[key]"
-  );
+  // console.log(
+  //   globalThis.VerseContextMenuOptions[key],
+  //   "globalThis.VerseContextMenuOptions[key]"
+  // );
 }
 
 HighlightWords({

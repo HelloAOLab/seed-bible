@@ -465,7 +465,7 @@ function Tab({
     const checkEmpty = PanelsApps.find((e) => !e.tabData);
     console.log(checkEmpty, PanelsApps);
     if (el.data.type === "book" && checkEmpty) {
-      console.log("canvas replacing");
+      // console.log("canvas replacing");
       setActiveTab(el.id);
       const id = uuid();
       ReplaceApplication(LastClickedPanelUpdate || checkEmpty.id, {
@@ -532,7 +532,8 @@ function Tab({
     setActiveTab(el.id);
     // if (globalThis[`UpdateTabWidthId${el?.id}`])
     //   globalThis[`UpdateTabWidthId${el?.id}`](el);
-    // globalThis.UpdateTab(el);
+
+    globalThis.UpdateTab(el);
   };
   const circles = onlineUsers
     ? Object.fromEntries(
@@ -1065,7 +1066,7 @@ function SideBar({ panelsNumber }) {
       },
       {
         disabled: false,
-        icon:<MenuIcon name="person_add" />,
+        icon: <MenuIcon name="person_add" />,
         // icon: <TransparentSvg />,
         title: t("inviteToSession"),
         onClick: async () => {

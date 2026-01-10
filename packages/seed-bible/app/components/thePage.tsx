@@ -1,4 +1,7 @@
-import { BibleDataManager } from "app.hooks.bibleDataManager";
+import {
+  BibleDataManager,
+  getCachedBibleData,
+} from "app.hooks.bibleDataManager";
 import { getStyleOf } from "app.styles.styler";
 const {
   useEffect,
@@ -76,15 +79,15 @@ function ThePage({
   const [direction, setDirection] = useState(null);
   const commandsRef = useRef(null);
   const [userMovedToolbar, setUserMovedToolbar] = useState();
- 
-  useEffect(()=>{
-    if(deleteTab){
+
+  useEffect(() => {
+    if (deleteTab) {
       if (deleteTab.tabId === tab?.id) {
         setTab(null);
       }
-      setDeleteTab(false)
+      setDeleteTab(false);
     }
-  },[deleteTab])
+  }, [deleteTab]);
   useEffect(() => {
     if (!T) globalThis.CurrentPanelAvailable = panelId;
     else globalThis.CurrentPanelAvailable = null;
@@ -463,7 +466,27 @@ function ThePage({
     let cancelled = false;
 
     async function loadDataSafe() {
-      if (!tab) return;
+      if (!tab) {
+        return;
+      }
+
+      // Immediately set cached data BEFORE creating BibleDataManager to prevent flash
+      const cachedData = getCachedBibleData(
+        tab.data.translation,
+        tab.data.bookId,
+        tab.data.chapter
+      );
+      console.log(
+        "cached data check:",
+        cachedData?.content?.length,
+        tab.data.translation,
+        tab.data.bookId,
+        tab.data.chapter
+      );
+      if (cachedData?.content?.length > 0) {
+        setData(cachedData);
+      }
+
       const bible = new BibleDataManager({
         tabId: tab?.id,
         translation: tab.data.translation,
@@ -1588,7 +1611,7 @@ function ThePage({
         }
          `}
       </style>
-      {data && tab && !tabEntered ? (
+      {tab && !tabEntered ? (
         <>
           <div
             onClick={(e) => {
@@ -2459,12 +2482,16 @@ function Section({
                       if (typeof verseContent === "string") {
                         const firstSpaceIdx = verseContent.indexOf(" ");
                         if (firstSpaceIdx > 0) {
-                          const firstWord = verseContent.slice(0, firstSpaceIdx);
+                          const firstWord = verseContent.slice(
+                            0,
+                            firstSpaceIdx
+                          );
                           const restText = verseContent.slice(firstSpaceIdx);
                           return (
                             <>
                               <span style={{ whiteSpace: "nowrap" }}>
-                                {verseNumberElement}{firstWord}
+                                {verseNumberElement}
+                                {firstWord}
                               </span>
                               {restText}
                             </>
@@ -2473,7 +2500,8 @@ function Section({
                         // Single word verse
                         return (
                           <>
-                            {verseNumberElement}{verseContent}
+                            {verseNumberElement}
+                            {verseContent}
                           </>
                         );
                       }
@@ -2482,7 +2510,8 @@ function Section({
                       // The text will flow naturally
                       return (
                         <>
-                          {verseNumberElement}{verseContent}
+                          {verseNumberElement}
+                          {verseContent}
                         </>
                       );
                     })()
@@ -2594,14 +2623,20 @@ export const ThePageWithEditor = ({ tab, setPanalApp, panelId }) => {
   const activeTab = panelId ? globalThis.PanelTabsMap[panelId] || tab : tab;
   const [enableEditor, setEnableEditor] = useState(false);
   useEffect(() => {}, [enableEditor]);
-  const [data, setData] = useState();
-  const [deleteTab,setDeleteTab] = useState(false);
+  const [data, setData] = useState(() =>
+    getCachedBibleData(
+      tab?.data?.translation,
+      tab?.data?.bookId,
+      tab?.data?.chapter
+    )
+  );
+  const [deleteTab, setDeleteTab] = useState(false);
   if (tab) globalThis[`SetEnableEditorOf${tab?.id}`] = setEnableEditor;
-     useEffect(() => {
+  useEffect(() => {
     os.addBotListener(thisBot, "onTabDelete", (data) => {
       os.log("tab delete event received in thePage", data, panelId, activeTab);
-      setEnableEditor(false)
-      setDeleteTab(data)
+      setEnableEditor(false);
+      setDeleteTab(data);
     });
   }, []);
   return (

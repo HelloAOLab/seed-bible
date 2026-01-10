@@ -1,12 +1,28 @@
 import { saveUserReadingHistory } from "db.annotations.library";
-const bibleTabDataCache = new Map();
+const bibleDataCache = new Map();
 
+// Cache key based on content (translation:bookId:chapter)
+export function getCacheKey(translation, bookId, chapter) {
+  return `${translation}:${bookId}:${chapter}`;
+}
+
+export function getCachedBibleData(translation, bookId, chapter) {
+  const key = getCacheKey(translation, bookId, chapter);
+  return bibleDataCache.get(key);
+}
+
+export function setCachedBibleData(translation, bookId, chapter, data) {
+  const key = getCacheKey(translation, bookId, chapter);
+  bibleDataCache.set(key, data);
+}
+
+// Keep old functions for backwards compatibility
 export function getCachedTabData(tabId) {
-  return bibleTabDataCache.get(tabId);
+  return null; // Deprecated - use getCachedBibleData instead
 }
 
 export function setCachedTabData(tabId, data) {
-  bibleTabDataCache.set(tabId, data);
+  // Deprecated - cache is now set automatically via setCachedBibleData
 }
 
 function parseContent(content) {
@@ -63,7 +79,10 @@ export class BibleDataManager {
     this.chapter = chapter;
     this.baseUrl = baseUrl;
 
-    this.data = getCachedTabData(tabId) || { content: [] };
+    // Try to get cached data by content key (translation:bookId:chapter)
+    this.data = getCachedBibleData(translation, bookId, chapter) || {
+      content: [],
+    };
     this.footnotes = null;
     this.loading = false;
     this.error = null;
@@ -137,7 +156,7 @@ export class BibleDataManager {
         : `${forcedBaseUrl || this.baseUrl}/api/${
             forcedTranslation || this.translation
           }/${this.bookId}/${this.chapter}.json`;
-      console.log(url, customUrl, "firstChapterApiLink");
+      // console.log(url, customUrl, "firstChapterApiLink");
 
       const response = await web.get(url);
       const json = response;
@@ -162,9 +181,13 @@ export class BibleDataManager {
 
         this.footnotes = json?.data?.chapter?.footnotes || null;
 
-        if (this.tabId) {
-          setCachedTabData(this.tabId, this.data);
-        }
+        // Cache by content key (translation:bookId:chapter)
+        setCachedBibleData(
+          this.data.translation,
+          this.data.bookId,
+          this.data.chapter,
+          this.data
+        );
 
         // schedule the "open ≥ 1 min" record
         this._scheduleMaskRecord();

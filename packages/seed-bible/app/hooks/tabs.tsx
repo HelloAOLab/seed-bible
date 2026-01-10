@@ -183,7 +183,8 @@ export function TabsProvider({ children }) {
         const tabIndex = allTabs.findIndex((tab) => tab.id === tabId);
         if (tabIndex !== -1 && allTabs.length > 1) {
           // If it's the last tab in the list, select the previous one; otherwise select the next one
-          const nextIndex = tabIndex === allTabs.length - 1 ? tabIndex - 1 : tabIndex + 1;
+          const nextIndex =
+            tabIndex === allTabs.length - 1 ? tabIndex - 1 : tabIndex + 1;
           const nextTab = allTabs[nextIndex];
           if (nextTab) {
             setActiveTab(nextTab.id);
@@ -628,7 +629,7 @@ export function TabsProvider({ children }) {
   };
 
   useEffect(() => {
-    os.log(spaces, "spaces updated");
+    // os.log(spaces, "spaces updated");
   }, [spaces]);
 
   useEffect(() => {
@@ -640,11 +641,11 @@ export function TabsProvider({ children }) {
     };
   }, [activeTab]);
   useEffect(() => {
-    os.log("checking active space for shared tab", tabs, activeSpace);
-    setTimeout(() => {
-      setActiveTab(tabs[0].id);
-      globalThis.UpdateTab(tabs[0]);
-    }, 400);
+    // os.log("checking active space for shared tab", tabs, activeSpace);
+    // setTimeout(() => {
+    //   setActiveTab(tabs[0].id);
+    //   globalThis.UpdateTab(tabs[0]);
+    // }, 0);
   }, [activeSpace]);
 
   useEffect(() => {
