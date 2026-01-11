@@ -790,6 +790,11 @@ div.attachment-link.dropabble-Embed .playlist-item-type {
   flex-direction: column;
 }
 
+.add-playlist-actions.row {
+  flex-direction: row;
+  justify-content: space-between;
+}
+
 .add-playlist-actions > *.custom-button {
   width: 100%;
   max-width: 100%;

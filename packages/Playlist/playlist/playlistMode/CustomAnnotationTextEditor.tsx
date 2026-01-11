@@ -133,9 +133,6 @@ const COMMAND_BOX_OPTIONS = [
 
 const COMMAND_ICON = "https://auth-aux-aobot-prod-filesbucket-141297942820.s3.amazonaws.com/annotations/ce7430bae3a8fd021160a12806b2b82a5999a463b2bff278a96f922963fe5cfc.svg";
 
-const PREVIEW_ICON_INACTIVE = "https://auth-aux-aobot-prod-filesbucket-141297942820.s3.amazonaws.com/annotations/44477ec7745087324d85dea8db8262965b6bca4a37ffc821ba96f2cda0cb9508.svg";
-const PREVIEW_ICON_ACTIVE = "https://auth-aux-aobot-prod-filesbucket-141297942820.s3.amazonaws.com/annotations/91e2ac485f7c94052bd9fc6d6029762bd9e4f4f818d133eb9ff8f6206fedefcd.svg";
-
 // ---- custom mark: lineHeight (same behavior as your app editor)
 const LineHeight = Mark.create({
   name: "lineHeight",
@@ -434,6 +431,8 @@ export function CustomAnnotationTextEditor({
   showMoreOptions = true,
   headingControls = false,
   id = "editor",
+  showPreview,
+  setShowPreview,
 }) {
   // ----- ids & storage
   const _instanceId = useRef(
@@ -469,6 +468,19 @@ export function CustomAnnotationTextEditor({
   };
 
   globalThis.ToggleCommandBox = toggleCommandBox;
+
+  const togglePreview = () => {
+    setShowPreview((v) => {
+      if(!v && editorObjRef.current) {
+        editorObjRef.current.commands.setContent(canonicalHTMLRef.current);
+      }else {
+        editorObjRef.current.commands.setContent(fakeEscapeMediaTags(editorObjRef.current.getHTML()));
+      }
+      return !v;
+    });
+  }
+
+  globalThis.TogglePreview = togglePreview;
 
   useEffect(() => {
     globalThis.RecordingValue = recording;
@@ -536,18 +548,6 @@ export function CustomAnnotationTextEditor({
   const [visibleIds, setVisibleIds] = useState([]);
   const [overflowIds, setOverflowIds] = useState([]);
   const [showOverflow, setShowOverflow] = useState(false);
-  const [showPreview, setShowPreview] = useState(false);
-
-  const togglePreview = () => {
-    setShowPreview((v) => {
-      if(!v && editorObjRef.current) {
-        editorObjRef.current.commands.setContent(canonicalHTMLRef.current);
-      }else {
-        editorObjRef.current.commands.setContent(fakeEscapeMediaTags(editorObjRef.current.getHTML(), showPreview));
-      }
-      return !v
-    });
-  }
 
   // tuning modal
   const [showTuning, setShowTuning] = useState(false);
@@ -932,8 +932,7 @@ export function CustomAnnotationTextEditor({
     if (!toolbarEl || !measurerEl) return;
 
     const ids = orderedIds();
-    // 35 for preview button
-    const toolbarWidth = toolbarEl.clientWidth - 35;
+    const toolbarWidth = toolbarEl.clientWidth;
     const overflowBtnWidth = 44;
     const paddingSafety = 8;
     const available = Math.max(
@@ -947,7 +946,7 @@ export function CustomAnnotationTextEditor({
     for (const id of ids) {
       const el = itemsRef.current[id];
       if (!el) continue;
-      const w = el.offsetWidth + 12;
+      const w = el.offsetWidth + 14;
       if (used + w <= available && (!headingControls || vis.length < 3)) {
         vis.push(id);
         used += w;
@@ -1343,13 +1342,6 @@ export function CustomAnnotationTextEditor({
             </button>
           </div>
         )}
-            <button
-              className={`sre-preview-btn ${showPreview ? "active" : ""}`}
-              onClick={() => togglePreview()}
-              title="Preview"
-            >
-              <img src={showPreview ? PREVIEW_ICON_ACTIVE : PREVIEW_ICON_INACTIVE} alt="Preview" />
-            </button>
       </div>
 
       {showOverflow && (

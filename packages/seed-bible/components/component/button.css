@@ -43,6 +43,18 @@
     justify-content: center;
 }
 
+.custom-button.secondaryAlt.outline {
+    border: 1px solid #D36433 !important;
+    background-color: transparent !important;
+    color: #D36433 !important;
+}
+
+.custom-button.secondaryAlt.secondaryAltAlt.outline {
+    border: 1px solid rgba(0, 0, 0, 0.6)important;
+    background-color: transparent !important;
+    color: rgba(0, 0, 0, 0.6) !important;
+}
+
 .custom-button.secondaryAlt.secondaryAltAlt {
     background-color: #E6E6E6;
     color: #000;

@@ -359,6 +359,7 @@ const resources = {
       noResults: "No results found",
 
       // Playlist.
+      preview: "Preview",
       turnOff: "Turn Off",
       advancedUI: "Advanced UI",
       turnOn: "Turn On",
@@ -593,7 +594,6 @@ const resources = {
       showVersionHistory: "Show version History",
       editAnnotations: "Edit annotations",
       deleteAnnotations: "Delete annotations",
-
       // AddNewPlaylist
       createManually: "Create Manually",
       importTab: "Import",
@@ -1058,6 +1058,7 @@ const resources = {
       noResults: "No se encontraron resultados",
 
       // Playlist.
+      preview: "Vista previa",
       advancedUI: "Interfaz avanzada",
       turnOff: "Apagar",
       turnOn: "Encender",
@@ -1768,6 +1769,7 @@ const resources = {
       noResults: "لم يتم العثور على نتائج",
 
       // Playlist.
+      preview: "معاينة",
       advancedUI: "واجهة متقدمة",
       turnOff: "إيقاف",
       turnOn: "تشغيل",
@@ -2457,6 +2459,7 @@ const resources = {
       noResults: "कोई परिणाम नहीं मिला",
 
       // Playlist.
+      preview: "पूर्वावलोकन",
       userNotLoggedIn: "उपयोगकर्ता लॉग इन नहीं है!",
       advancedUI: "उन्नत UI",
       yourScreenIsBeingRecorded: "आपकी स्क्रीन रिकॉर्ड हो रही है...",
