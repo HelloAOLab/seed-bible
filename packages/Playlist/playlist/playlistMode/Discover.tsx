@@ -205,7 +205,9 @@ const Discover = ({
               })}
             </div>
             {pos !== "left" && pos !== "noscroll" && (
-              <div className="chip-tag arrow left" onClick={scrollLeftByWidth}>
+              <div className="chip-tag arrow left" 
+                onClick={scrollLeftByWidth}
+              >
                 <span class="material-symbols-outlined">chevron_backward</span>
               </div>
             )}

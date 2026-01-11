@@ -1040,10 +1040,12 @@ div.attachment-link.dropabble-Embed .playlist-item-type {
 
 .chip-tag.arrow.right {
   right: 0;
+  padding: 0 !important;
 }
 
 .chip-tag.arrow.left {
   left: 0;
+  padding: 0 !important;
 }
 
 .chips-tag-container .chip-tag.active {
