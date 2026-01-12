@@ -63,6 +63,59 @@ export interface ExtensionMeta {
 }
 
 /**
+ * Generates a new extension.json in the specified packages folder.
+ * @param pckgName The name of the package.
+ * @param author The author of the extension.
+ */
+export function generateExtension(pckgName: string, author: string) {
+  const extensionPath = path.resolve("packages", pckgName);
+  if (!existsSync(extensionPath)) {
+    throw new Error(`Package folder: "${pckgName}" does not exist.`);
+  }
+  const extensionFilePath = path.resolve(extensionPath, "extension.json");
+  if (existsSync(extensionFilePath)) {
+    throw new Error(
+      `Extension "${pckgName}" with extension.json already exists.`
+    );
+  }
+  const extensionData: ExtensionMeta = {
+    author,
+    configEditor: {
+      app: "",
+      author,
+      contextMenuConfig: {
+        optionsIsOn: "<Context Menu Options Is On>",
+      },
+      tabConfig: {
+        title: "<Tab Title>",
+      },
+      toolbarConfig: {
+        label: "<Toolbar Label>",
+        icon: "icon.png",
+        hasToggle: "false",
+      },
+    },
+    createdAt: new Date().toISOString(),
+    dependencies: [],
+    description: `Extension ${pckgName} description.`,
+    id: Date.now(),
+    license: "MIT",
+    linkedDependencies: [],
+    name: pckgName,
+    otherBots: [],
+    recordFile: undefined,
+    source: undefined,
+    status: "active",
+    type: "package",
+    updatedAt: new Date().toISOString(),
+    userAuth: "",
+    version: "0.0.1",
+  };
+
+  writeFile(extensionPath, JSON.stringify(extensionData, null, 2), "utf-8");
+}
+
+/**
  * Downloads the AUX for the given extension from the records server.
  * @param name The name of the extension to download.
  */
