@@ -919,7 +919,7 @@ const Playlist = () => {
                                 onClick();
                               }}
                               style={{
-                                width: `${100 / buttonConfigs.length}%`,
+                                width: `${75}%`,
                               }}
                               className={`tabs-playlist-item`}
                             >
@@ -932,6 +932,7 @@ const Playlist = () => {
                               <span>
                                 {label}{" "}
                                 <GetLabel
+                                  widthCompare={264}
                                   value={value}
                                   currentOpenedBook={currentOpenedBook}
                                 />

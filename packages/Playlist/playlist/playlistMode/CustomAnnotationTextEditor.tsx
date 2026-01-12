@@ -115,8 +115,6 @@ const COMMAND_BOX_OPTIONS = [
     label: "Add File",
     onClick: async () => {
       const files = await os.showUploadFiles();
-      console.log("files", files);
-      console.log("shout", thisBot.onHandleDropFiles);
       shout("onHandleDropFiles", {files});
     },
   },
@@ -417,7 +415,6 @@ const Audio = Node.create({
   },
 });
 
-
 export function CustomAnnotationTextEditor({
   instanceId,
   className,
@@ -434,6 +431,8 @@ export function CustomAnnotationTextEditor({
   showMoreOptions = true,
   headingControls = false,
   id = "editor",
+  showPreview,
+  setShowPreview,
 }) {
   // ----- ids & storage
   const _instanceId = useRef(
@@ -457,6 +456,7 @@ export function CustomAnnotationTextEditor({
   // ----- editor dom & state
   const editorRef = useRef(null);
   const editorObjRef = useRef(null);
+  const canonicalHTMLRef = useRef("");
   const [loading, setLoading] = useState(false);
   const [recording, setRecording] = useState(globalThis.RecordingValue || null);
   const [name, setName] = useState("");
@@ -468,6 +468,19 @@ export function CustomAnnotationTextEditor({
   };
 
   globalThis.ToggleCommandBox = toggleCommandBox;
+
+  const togglePreview = () => {
+    setShowPreview((v) => {
+      if(!v && editorObjRef.current) {
+        editorObjRef.current.commands.setContent(canonicalHTMLRef.current);
+      }else {
+        editorObjRef.current.commands.setContent(fakeEscapeMediaTags(editorObjRef.current.getHTML()));
+      }
+      return !v;
+    });
+  }
+
+  globalThis.TogglePreview = togglePreview;
 
   useEffect(() => {
     globalThis.RecordingValue = recording;
@@ -490,7 +503,7 @@ export function CustomAnnotationTextEditor({
 
     data.forEach((file) => {
       const htmlSuffix = appendImageToEditorHTML(file);
-      html += htmlSuffix;
+      html += fakeEscapeMediaTags(htmlSuffix, showPreview);
     });
 
     if (html) {
@@ -570,10 +583,10 @@ export function CustomAnnotationTextEditor({
     if (!editorRef.current) return;
 
     const contentHTML = (() => {
-      if (typeof initialHTML === "string") return initialHTML;
+      if (typeof initialHTML === "string") return fakeEscapeMediaTags(initialHTML, showPreview);
       if (typeof initialText === "string")
         return `<p>${escapeHTML(initialText)}</p>`;
-      return placeholderHTML;
+      return fakeEscapeMediaTags(placeholderHTML, showPreview);
     })();
 
     const editor = new Editor({
@@ -609,11 +622,11 @@ export function CustomAnnotationTextEditor({
         handleDOMEvents: {
           // Block keyboard and menu copy/cut
           copy: (_view, event) => {
-            event.preventDefault();
+            // event.preventDefault();
             return true;
           },
           cut: (_view, event) => {
-            event.preventDefault();
+            // event.preventDefault();
             return true;
           },
           // (Optional) stop dragging out selections / drags
@@ -656,11 +669,11 @@ export function CustomAnnotationTextEditor({
 
             data.forEach((file) => {
               const htmlSuffix = appendImageToEditorHTML(file);
-              html += htmlSuffix;
+              html += fakeEscapeMediaTags(htmlSuffix, showPreview);
             });
 
             if (plainText) {
-              const embedHTML = generateEmbedFromUrl(plainText.trim());
+              const embedHTML = fakeEscapeMediaTags(generateEmbedFromUrl(plainText.trim()), showPreview);
 
               if (embedHTML) {
                 setTimeout(() => {
@@ -699,11 +712,14 @@ export function CustomAnnotationTextEditor({
       try {
         // if the editor html ending with '/' then toggle the command box
         if (editor.getHTML().endsWith('/</p>')) {
-          console.log("toggle command box", editor.getHTML());
           toggleCommandBox();
         }
+        const html = fakeUnescapeMediaTags(editor.getHTML());
+        canonicalHTMLRef.current = html;
+        // console.log("canonicalHTMLRef.current", canonicalHTMLRef.current);
+        // console.log("editor.getHTML()", editor.getHTML());
         if (onChange) {
-          onChange(editor.getHTML(), editor.getJSON());
+          onChange(html, editor.getJSON());
         }
       } catch {}
     });
@@ -930,7 +946,7 @@ export function CustomAnnotationTextEditor({
     for (const id of ids) {
       const el = itemsRef.current[id];
       if (!el) continue;
-      const w = el.offsetWidth + 12;
+      const w = el.offsetWidth + 14;
       if (used + w <= available && (!headingControls || vis.length < 3)) {
         vis.push(id);
         used += w;
@@ -1033,6 +1049,7 @@ export function CustomAnnotationTextEditor({
   const [data, setData] = useState(null);
 
   const onSaveAndAdd = async () => {
+    
 
     if(isLink) {
 
@@ -1041,8 +1058,9 @@ export function CustomAnnotationTextEditor({
         severity: "error",
       });
 
-      const embedHTML = generateEmbedFromUrl(link.trim(), name.trim());
-      console.log("embedHTML", embedHTML, link, name);
+      const originalHTML = generateEmbedFromUrl(link.trim(), name.trim());
+      const embedHTML = fakeEscapeMediaTags(originalHTML, showPreview);
+  
       if(embedHTML === null) return ShowNotification({
         message: "Invalid link!",
         severity: "error",
@@ -1053,6 +1071,18 @@ export function CustomAnnotationTextEditor({
       setRecording(null);
       return;
     }
+
+    if(recording === RECORDING_TYPES.audio && !data) {
+      globalThis.HandleStopPlayVoice();
+      return;
+    }
+
+    if(recording === RECORDING_TYPES.video && !data) {
+      globalThis.HandleStopPlayVideo();
+      return;
+    }
+
+    await os.sleep(100);
 
     if(!data) return ShowNotification({
       message: "Please record something to save!",
@@ -1099,7 +1129,8 @@ export function CustomAnnotationTextEditor({
         </audio>
         `;
       }
-      editorObjRef.current.chain().focus().insertContent(htmlToInsert).run();
+
+      editorObjRef.current.chain().focus().insertContent(fakeEscapeMediaTags(htmlToInsert, showPreview)).run();
       setRecording(null);
       setData(null);
     }
@@ -1142,7 +1173,7 @@ export function CustomAnnotationTextEditor({
                     justifyContent: "center",
                     backdropFilter: "blur(2px)",
                     minHeight: "max-content",
-                    height: "100%",
+                    height: "calc(100% + 90px)",
                     padding: "1rem 0",
                   }}
                 >
@@ -1216,6 +1247,7 @@ export function CustomAnnotationTextEditor({
                   textAlign: "center",
                   minWidth: "280px",
                   boxShadow: "0 10px 30px rgba(0,0,0,0.3)",
+                  zIndex: 99999
                 }}
               >
              {loading ? 
@@ -1753,6 +1785,18 @@ const SRE_STYLES = (minH) => `
 .sre-video-root {
   min-height: 500px;
 }
+
+.sre-preview-btn {
+  border: none;
+  outline: none;
+  cursor: pointer;
+  background: transparent;
+  border-bottom: 2px solid transparent;
+}
+.sre-preview-btn.active {
+  border-bottom: 2px solid #D36433;
+}
+
 .sre-editor {
   min-height: ${minH}px;
   outline: none;
@@ -1922,12 +1966,90 @@ const SRE_STYLES = (minH) => `
 function clamp(n, a, b) {
   return Math.max(a, Math.min(b, n));
 }
+
 function escapeHTML(s) {
   return s.replace(
     /[&<>"]/g,
     (c) => ({ "&": "&amp;", "<": "&lt;", ">": "&gt;", '"': "&quot;" })[c]
   );
 }
+
+const MEDIA_OPEN_TAG_REGEX =
+  /<(img|video|audio|iframe)\b[\s\S]*?>/gi;
+
+const MEDIA_CLOSE_TAG_REGEX =
+  /<\/(video|audio|iframe)\s*>/gi;
+
+  function fakeEscapeMediaTags(html = "", showPreview = false) {
+    if (showPreview) return html;
+  
+    return html
+      // escape opening media tags
+      .replace(MEDIA_OPEN_TAG_REGEX, (tag) =>
+        tag.replace(/</g, "‹").replace(/>/g, "›")
+      )
+      // escape closing media tags
+      .replace(MEDIA_CLOSE_TAG_REGEX, (tag) =>
+        tag.replace(/</g, "‹").replace(/>/g, "›")
+      );
+  }
+
+  
+const P_BLOCK_REGEX = /<p\b[^>]*>([\s\S]*?)<\/p>/gi;
+
+// matches:
+// ‹img ... /›
+// ‹video ... ›‹/video›
+// ‹audio ... ›‹/audio›
+// ‹iframe ... ›‹/iframe›
+const FAKE_MEDIA_BLOCK_REGEX =
+  /‹(img|video|audio|iframe)\b([\s\S]*?)\/?›(?:\s*‹\/\1›)?/gi;
+
+
+  function fakeUnescapeMediaTags(html) {
+    return html.replace(P_BLOCK_REGEX, (fullP, inner) => {
+      const media = [];
+      let match;
+  
+      // extract ALL fake media blocks in order
+      while ((match = FAKE_MEDIA_BLOCK_REGEX.exec(inner)) !== null) {
+        const [, tag, attrs] = match;
+  
+        if (tag === "img") {
+          media.push(`<img${attrs} />`);
+        } else {
+          media.push(`<${tag}${attrs}></${tag}>`);
+        }
+      }
+  
+      // remove media blocks from paragraph
+      const leftoverText = inner
+        .replace(FAKE_MEDIA_BLOCK_REGEX, "")
+        .trim();
+  
+      // CASE 1: paragraph contains ONLY media → unwrap
+      if (media.length && leftoverText === "") {
+        return media.join("\n");
+      }
+  
+      // CASE 2: mixed content → split safely
+      if (media.length) {
+        return (
+          media.join("\n") +
+          (leftoverText
+            ? `\n<p>${leftoverText}</p>`
+            : "")
+        );
+      }
+  
+      // CASE 3: normal paragraph
+      return fullP;
+    });
+  }
+  
+
+  
+
 function triggerDownload(blob, filename) {
   const url = URL.createObjectURL(blob);
   const a = document.createElement("a");

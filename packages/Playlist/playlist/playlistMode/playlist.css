@@ -60,7 +60,7 @@
   margin: 0;
   padding: 0;
   box-sizing: border-box;
-  font-family: initial;
+  font-family: 'Satoshi';
   color: initial;
   font-weight: initial;
   display: initial;
@@ -790,6 +790,11 @@ div.attachment-link.dropabble-Embed .playlist-item-type {
   flex-direction: column;
 }
 
+.add-playlist-actions.row {
+  flex-direction: row;
+  justify-content: space-between;
+}
+
 .add-playlist-actions > *.custom-button {
   width: 100%;
   max-width: 100%;
@@ -1040,10 +1045,12 @@ div.attachment-link.dropabble-Embed .playlist-item-type {
 
 .chip-tag.arrow.right {
   right: 0;
+  padding: 0 !important;
 }
 
 .chip-tag.arrow.left {
   left: 0;
+  padding: 0 !important;
 }
 
 .chips-tag-container .chip-tag.active {
