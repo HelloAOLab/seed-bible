@@ -65,8 +65,8 @@
 
   .leftClick {
     position: absolute !important;
-    left: 13px;
-    bottom: 60px;
+    left: 16px;
+    bottom: 68px;
     background: #f0f1f1;
     border-radius: 100%;
     display: block !important;
@@ -75,20 +75,20 @@
 
   .rightClick {
     position: absolute !important;
-    right: 13px;
-    bottom: 60px;
+    right: 16px;
+    bottom: 68px;
     background: #f0f1f1;
     border-radius: 100%;
     display: block !important;
     pointer-events: all;
   }
   .rightClick button {
-    width: 40px !important;
-    height: 40px !important;
+    width: 48px !important;
+    height: 48px !important;
   }
   .leftClick button {
-    width: 40px !important;
-    height: 40px !important;
+    width: 48px !important;
+    height: 48px !important;
   }
 }
 
