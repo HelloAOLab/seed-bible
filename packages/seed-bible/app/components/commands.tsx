@@ -205,15 +205,16 @@ const ConfigurableFunctionCommands = ({ contextData, clickedVerses }) => {
       }
     },
 
-    explainVerse: async (data) => {
-      const prompt = `Provide a comprehensive explanation of ${data.text}: "${data.verse}". Include theological, historical, and practical insights.`;
+    explainVerse: async (data, query) => {
+      const prompt = query
+        ? `Regarding ${data.text}: "${data.verse}", please explain: ${query}. Format your response clearly with ### for main headings and ** for key terms.`
+        : `Provide a comprehensive explanation of ${data.text}: "${data.verse}". Include theological, historical, and practical insights. Format your response clearly with ### for main headings and ** for key terms.`;
       try {
         const response = await ai.chat(prompt, {
           preferredModel: "gpt-4o",
           stream: false,
-          response_format: { type: "json" },
         });
-        return `Explanation of ${data.text}:\n\n${response?.content || response}`;
+        return response?.content || response;
       } catch (error) {
         return `AI Explanation Error: ${error.message}`;
       }
@@ -710,14 +711,9 @@ const ConfigurableFunctionCommands = ({ contextData, clickedVerses }) => {
               if (config.requiresQuery && !userQuery) {
                 response =
                   "Please provide a question after the command.\n\nExample: /ask What does this verse mean?";
-              } else if (config.requiresQuery && userQuery) {
-                // For /ask command, pass the question directly to askQuestion
-                response = await fn(contextData, userQuery);
               } else if (config.acceptsQuery && userQuery) {
-                const fallbackFn = functionLibrary.customQuery;
-                response = fallbackFn
-                  ? await fallbackFn(contextData, userQuery)
-                  : "Function for handling queries not found.";
+                // Pass the query directly to the function (e.g., /explain, /ask)
+                response = await fn(contextData, userQuery);
               } else {
                 response = await fn(contextData);
               }
