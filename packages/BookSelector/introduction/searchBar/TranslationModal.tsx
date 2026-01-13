@@ -302,7 +302,17 @@ const LanguageComponent = (props: {
     translation: TranslationInterface;
   }) => {
     const { translation } = props;
-    const translationUrl = `https://ao.bot/?pattern=${configBot.tags.pattern}&bios=local%20inst&translationId=${translation.id}`;
+    console.log(translation, "translation");
+    let translationUrl = "";
+    if (translation?.origin) {
+      const translationOrigin = `${translation.listOfBooksApiLink}`.replace(
+        `${translation.id}/books.json`,
+        "available_translations.json"
+      );
+      translationUrl = `https://ao.bot/?pattern=${configBot.tags.pattern || "SeedBible"}&bios=local%20inst&translation=${translationOrigin}`;
+    } else {
+      translationUrl = `https://ao.bot/?pattern=${configBot.tags.pattern || "SeedBible"}&bios=local%20inst&translation=${translation.id}`;
+    }
     os.setClipboard(translationUrl);
     os.toast("Copied translation share code");
   };
