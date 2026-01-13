@@ -1,7 +1,4 @@
-import {
-  BibleDataManager,
-  getCachedBibleData,
-} from "app.hooks.bibleDataManager";
+import { BibleDataManager } from "app.hooks.bibleDataManager";
 import { getStyleOf } from "app.styles.styler";
 const {
   useEffect,
@@ -434,9 +431,12 @@ function ThePage({
   }, []);
   useEffect(() => {
     const onBookChange = (data) => {
+      // os.log("updated shared tab", "not approved");
+      // if (!globalThis.CurrentTab?.sharedTab) {
+      //   updateTab(masks["sharedTab"], data);
+      //   return;
+      // }
       console.log("remoteBookChange", data);
-      // Set flag to prevent re-emitting this navigation
-      globalThis.__remoteBookUpdate = true;
       globalThis.Open?.(data.bookId, data.chapter);
     };
 
@@ -463,29 +463,7 @@ function ThePage({
     let cancelled = false;
 
     async function loadDataSafe() {
-      if (!tab) {
-        return;
-      }
-
-      // Immediately set cached data BEFORE creating BibleDataManager to prevent flash
-      // Mark as cached so we don't emit this to other users
-      const cachedData = getCachedBibleData(
-        tab.data.translation,
-        tab.data.bookId,
-        tab.data.chapter
-      );
-      console.log(
-        "cached data check:",
-        cachedData?.content?.length,
-        tab.data.translation,
-        tab.data.bookId,
-        tab.data.chapter
-      );
-      if (cachedData?.content?.length > 0) {
-        isCachedDataRef.current = true; // Mark as cache - don't emit
-        setData(cachedData);
-      }
-
+      if (!tab) return;
       const bible = new BibleDataManager({
         tabId: tab?.id,
         translation: tab.data.translation,
@@ -615,48 +593,32 @@ function ThePage({
   // GLOBAL GUARDS
   if (!globalThis.__remoteBookUpdate) globalThis.__remoteBookUpdate = false;
   if (!globalThis.__lastBookEmit) globalThis.__lastBookEmit = 0;
-  if (!globalThis.__lastEmittedBook)
-    globalThis.__lastEmittedBook = { bookId: null, chapter: null };
-
-  // Track if current data update is from cache (should not emit)
-  const isCachedDataRef = useRef(false);
+  const BOOK_EMIT_DEBOUNCE = 250; // ms
 
   // SAFELY EMIT BOOK WITHOUT LOOPS OR SPAM
   function safeEmitBook(payload) {
-    // 1) Skip if this data came from cache preload (not user navigation)
-    if (isCachedDataRef.current) {
-      isCachedDataRef.current = false;
-      return;
-    }
+    const now = Date.now();
 
-    // 2) Prevent loop from remote → local → remote
+    // 1) Prevent loop from remote → local → remote
     if (globalThis.__remoteBookUpdate) {
       globalThis.__remoteBookUpdate = false;
       return;
     }
 
-    // 3) Skip if same book+chapter as last emit (prevents re-emit of same location)
-    const lastEmit = globalThis.__lastEmittedBook;
-    if (
-      lastEmit.bookId === payload?.bookId &&
-      lastEmit.chapter === payload?.chapter
-    ) {
+    // 2) Prevent spam when navigating fast
+    if (now - globalThis.__lastBookEmit < BOOK_EMIT_DEBOUNCE) {
       return;
     }
 
-    // Update tracking (no debounce blocking - let EmitData handle that)
-    globalThis.__lastBookEmit = Date.now();
-    globalThis.__lastEmittedBook = {
-      bookId: payload?.bookId,
-      chapter: payload?.chapter,
-    };
+    globalThis.__lastBookEmit = now;
 
-    // Emit - EmitData has its own debounce and cooldown checks
+    // 3) Finally emit
     EmitData("book", payload);
   }
 
   useEffect(() => {
     if (data) {
+      //  EmitData("book", { ...data });
       hanldNavFunctions();
       SetShowCommands(false);
       updateTab(tab?.id, data);
@@ -666,17 +628,10 @@ function ThePage({
         role === "host" &&
         masks["sharedTab"] !== tab.id
       ) {
+        updateTab(tab?.id, data);
         updateTab(masks["sharedTab"], data);
-        safeEmitBook({ ...data });
       }
-
-      // Use safeEmitBook to prevent loops - only emit if we're host or it's shared tab
-      if (role === "host") {
-        safeEmitBook({ ...data });
-      } else if (masks["sharedTab"] === tab.id) {
-        safeEmitBook({ ...data });
-      }
-
+      if (role === "host") EmitData("book", { ...data });
       if (panelId && tab) {
         os.log("recoreded", panelId, {
           ...tab,
@@ -693,8 +648,16 @@ function ThePage({
       } else {
         setDirection(null);
       }
-
+      if (masks["sharedTab"] === tab.id) EmitData("book", { ...data });
+      // const emitter = getBot("system", "app.emitter");
+      // sendRemoteData(emitter.masks.otherRemotes, "updateSharingData", {
+      //   id: tab?.id,
+      //   bookId: data?.bookId,
+      //   book: data?.book,
+      //   chapter: data?.chapter,
+      // });
       const emitter = getBot("system", "app.emitter");
+
       sendRemoteData(emitter.masks.otherRemotes, "updateSharingData", {
         id: tab?.id,
         bookId: data?.bookId,
@@ -946,15 +909,7 @@ function ThePage({
   }
 
   async function openNextChapter() {
-    // Check if navigation is locked (fast clicking prevention)
-    const now = Date.now();
-    if (globalThis.__navLock && now - globalThis.__navLock < 300) {
-      return;
-    }
-    globalThis.__navLock = now;
-
     await bible.openNext();
-    isCachedDataRef.current = false; // This is real navigation, allow emit
     setData(bible.data);
 
     globalThis.GlobalChapter = bible.data.chapter - 1;
@@ -973,15 +928,7 @@ function ThePage({
   }
 
   async function openPrevChapter() {
-    // Check if navigation is locked (fast clicking prevention)
-    const now = Date.now();
-    if (globalThis.__navLock && now - globalThis.__navLock < 300) {
-      return;
-    }
-    globalThis.__navLock = now;
-
     await bible.openPrevious();
-    isCachedDataRef.current = false; // This is real navigation, allow emit
     setData(bible.data);
 
     globalThis.GlobalChapter = bible.data.chapter - 1;
@@ -1002,10 +949,6 @@ function ThePage({
   async function open(bookId, chapter, translation = null, chapterUrl = null) {
     try {
       await bible.open(bookId, chapter, (translation = null), chapterUrl);
-      // Only mark as NOT cached if this wasn't triggered by remote
-      if (!globalThis.__remoteBookUpdate) {
-        isCachedDataRef.current = false; // Real navigation, allow emit
-      }
       setData(bible.data);
     } catch {
       const tab = globalThis.AddTab({
@@ -1645,7 +1588,7 @@ function ThePage({
         }
          `}
       </style>
-      {tab && !tabEntered ? (
+      {data && tab && !tabEntered ? (
         <>
           <div
             onClick={(e) => {
@@ -1654,9 +1597,7 @@ function ThePage({
             }}
             style={{ "pointer-events": isDragging ? "none" : null }}
             className="bookTitle"
-          >
-            {data?.book && data?.chapter ? `${data.book} ${data.chapter}` : ""}
-          </div>
+          >{`${data?.book} ${data?.chapter}`}</div>
           {data &&
             data.content.map((e) => {
               return (
@@ -2360,7 +2301,8 @@ function Section({
         <div className="sectionCover">
           {verses.map((verse) => {
             if (verse.lineBreak) {
-              return <p class="verseLineBreak"></p>;
+              // <p class="verseLineBreak"></p>;
+              return;
             }
 
             const [c, setC] = useState(false);
@@ -2658,20 +2600,7 @@ export const ThePageWithEditor = ({ tab, setPanalApp, panelId }) => {
   const activeTab = panelId ? globalThis.PanelTabsMap[panelId] || tab : tab;
   const [enableEditor, setEnableEditor] = useState(false);
   useEffect(() => {}, [enableEditor]);
-  const [data, setData] = useState(() => {
-    // Initialize with cached data to prevent flash when switching tabs
-    const tabData = activeTab?.data || tab?.data;
-    if (tabData?.translation && tabData?.bookId && tabData?.chapter) {
-      return (
-        getCachedBibleData(
-          tabData.translation,
-          tabData.bookId,
-          tabData.chapter
-        ) || null
-      );
-    }
-    return null;
-  });
+  const [data, setData] = useState();
   const [deleteTab, setDeleteTab] = useState(false);
   if (tab) globalThis[`SetEnableEditorOf${tab?.id}`] = setEnableEditor;
   useEffect(() => {

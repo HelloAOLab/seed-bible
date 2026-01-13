@@ -47,13 +47,6 @@ describe("load", () => {
     await loadSeedBible(page);
     seedBibleFrame = getSeedBibleFrame(page);
 
-    await seedBibleFrame.waitForFunction(
-      () => {
-        const el = document.querySelector("div.bookTitle");
-        return el && el.textContent === "Genesis 1";
-      },
-      { timeout: 10000 }
-    );
     const bookTitle = await seedBibleFrame
       .locator("div.bookTitle")
       .waitHandle();
@@ -65,13 +58,6 @@ describe("load", () => {
     seedBibleFrame = getSeedBibleFrame(page);
 
     // Wait for the book title to ensure the content has loaded
-    await seedBibleFrame.waitForFunction(
-      () => {
-        const el = document.querySelector("div.bookTitle");
-        return el && el.textContent === "Genesis 1";
-      },
-      { timeout: 10000 }
-    );
     const bookTitle = await seedBibleFrame
       .locator("div.bookTitle")
       .waitHandle();
@@ -93,13 +79,6 @@ describe("load", () => {
     });
     seedBibleFrame = getSeedBibleFrame(page);
 
-    await seedBibleFrame.waitForFunction(
-      () => {
-        const el = document.querySelector("div.bookTitle");
-        return el && el.textContent === "Matthew 5";
-      },
-      { timeout: 10000 }
-    );
     const bookTitle = await seedBibleFrame
       .locator("div.bookTitle")
       .waitHandle();
@@ -112,13 +91,6 @@ describe("load", () => {
     });
     seedBibleFrame = getSeedBibleFrame(page);
 
-    await seedBibleFrame.waitForFunction(
-      () => {
-        const el = document.querySelector("div.bookTitle");
-        return el && el.textContent === "Genesis 1";
-      },
-      { timeout: 10000 }
-    );
     const bookTitle = await seedBibleFrame
       .locator("div.bookTitle")
       .waitHandle();
