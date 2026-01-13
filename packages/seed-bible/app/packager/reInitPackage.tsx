@@ -56,9 +56,11 @@ async function SetUpApplication(applicationFunction, bot, toolbarConfig) {
     const panelKey = `${label?.toUpperCase()?.replace(/\s/g, "_")}_PANEL_ID`;
     console.log("working", pkgName, panelKey);
     const onClick = async () => {
+      const checkEmpty = PanelsApps.find((e) => e.panelKey === panelKey);
+      console.log("checkEmpty", PanelsApps, checkEmpty);
       if (globalThis.makingApp === label) {
         globalThis.CurrentPanelAvailable = null;
-        RemoveApplicationByID(globalThis[panelKey]);
+        RemoveApplicationByID(checkEmpty?.id || globalThis[panelKey]);
         globalThis[panelKey] = null;
         globalThis.makingApp = null;
         return;
@@ -69,11 +71,12 @@ async function SetUpApplication(applicationFunction, bot, toolbarConfig) {
       globalThis[panelKey] = id;
       globalThis.makingApp = label;
       if (globalThis.CurrentPanelAvailable) {
-        ReplaceApplication(globalThis.CurrentPanelAvailable, {
+        ReplaceApplication(checkEmpty?.id || globalThis.CurrentPanelAvailable, {
           id,
           App: <InitializedApp id={id} />,
           to: "panel",
           minWidth: "23rem",
+          panelKey,
         });
         return;
       }
@@ -82,6 +85,7 @@ async function SetUpApplication(applicationFunction, bot, toolbarConfig) {
         App: <InitializedApp id={id} />,
         to: "panel",
         minWidth: "23rem",
+        panelKey,
       });
     };
 
