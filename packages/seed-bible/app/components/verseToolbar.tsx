@@ -57,16 +57,17 @@ export function VerseToolbar({
   useEffect(() => {
     masks.customColors = customColors;
   }, [customColors]);
-  const [tempColor, setTempColor] = useState(null);
+  const [tempColor, setTempColor] = useState("#FDE047");
+  const [isPickingColor, setIsPickingColor] = useState(false);
   const colorInputRef = useRef(null);
   const colorPickerRef = useRef(null);
 
   useEffect(() => {
     const handleClickOutside = (event) => {
-      if (tempColor) {
+      if (isPickingColor) {
         handleColorClick(tempColor);
         setSelectedColor(tempColor);
-        setTempColor(null);
+        setIsPickingColor(false);
       }
     };
 
@@ -74,7 +75,7 @@ export function VerseToolbar({
     return () => {
       document.removeEventListener("mousedown", handleClickOutside);
     };
-  }, [tempColor, customColors]);
+  }, [isPickingColor, tempColor, customColors]);
 
   const getVerseReference = () => {
     if (clickedVerses.length === 0) return "";
@@ -257,6 +258,7 @@ export function VerseToolbar({
 
   const handlePlusClick = () => {
     setTempColor(selectedColor);
+    setIsPickingColor(true);
     colorInputRef.current?.click();
   };
 
