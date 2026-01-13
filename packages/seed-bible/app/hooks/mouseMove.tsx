@@ -1097,7 +1097,7 @@ const FloatingAppContainer = ({
                 className="control-button view-only-laptop"
               >
                 <span
-                  className="material-symbols-outlined"
+                  className="material-symbols-outlined whiteColored"
                   style={{ fontSize: 20, color: "#fff !important" }}
                 >
                   view_in_ar
@@ -1111,7 +1111,7 @@ const FloatingAppContainer = ({
               className="control-button view-only-laptop"
             >
               <span
-                className="material-symbols-outlined"
+                className="material-symbols-outlined whiteColored"
                 style={{ fontSize: 20, color: "#fff !important" }}
               >
                 rectangle
@@ -1125,7 +1125,7 @@ const FloatingAppContainer = ({
               className="control-button view-only-laptop"
             >
               <span
-                className="material-symbols-outlined"
+                className="material-symbols-outlined whiteColored"
                 style={{ fontSize: 25, color: "#fff !important" }}
               >
                 rectangle
@@ -1139,7 +1139,7 @@ const FloatingAppContainer = ({
               className="control-button"
             >
               <span
-                className="material-symbols-outlined"
+                className="material-symbols-outlined whiteColored"
                 style={{ fontSize: 25, color: "#fff !important" }}
               >
                 fullscreen
@@ -1153,7 +1153,7 @@ const FloatingAppContainer = ({
               style={pillBtn}
             >
               <span
-                className="material-symbols-outlined"
+                className="material-symbols-outlined whiteColored"
                 style={{ fontSize: 25, color: "#fff !important" }}
               >
                 chevron_right
@@ -1167,7 +1167,7 @@ const FloatingAppContainer = ({
               style={pillBtn}
             >
               <span
-                className="material-symbols-outlined"
+                className="material-symbols-outlined whiteColored"
                 style={{ fontSize: 25, color: "#fff !important" }}
               >
                 dock_to_left
@@ -1197,7 +1197,7 @@ const FloatingAppContainer = ({
               style={{ ...pillBtn, outlineColor: "rgba(255,80,80,.9)" }}
             >
               <span
-                className="material-symbols-outlined"
+                className="material-symbols-outlined whiteColored"
                 style={{ fontSize: 25 }}
               >
                 close
