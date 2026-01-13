@@ -1098,7 +1098,7 @@ const FloatingAppContainer = ({
               >
                 <span
                   className="material-symbols-outlined"
-                  style={{ fontSize: 20, color: "#fff" }}
+                  style={{ fontSize: 20, color: "#fff !important" }}
                 >
                   view_in_ar
                 </span>
@@ -1112,7 +1112,7 @@ const FloatingAppContainer = ({
             >
               <span
                 className="material-symbols-outlined"
-                style={{ fontSize: 20, color: "#fff" }}
+                style={{ fontSize: 20, color: "#fff !important" }}
               >
                 rectangle
               </span>
@@ -1198,7 +1198,7 @@ const FloatingAppContainer = ({
             >
               <span
                 className="material-symbols-outlined"
-                style={{ fontSize: 25, color: "#fff !important" }}
+                style={{ fontSize: 25 }}
               >
                 close
               </span>
