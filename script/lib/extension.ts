@@ -112,7 +112,7 @@ export function generateExtension(pckgName: string, author: string) {
     version: "0.0.1",
   };
 
-  writeFile(extensionPath, JSON.stringify(extensionData, null, 2), "utf-8");
+  writeFile(extensionFilePath, JSON.stringify(extensionData, null, 2), "utf-8");
 }
 
 /**
