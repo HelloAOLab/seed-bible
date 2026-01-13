@@ -437,8 +437,8 @@ const SearchBar = () => {
               if (value.includes("/available_translations.json")) {
                 const translations: TranslationInterface[] = data.translations;
                 const tempApiTranslations = { ...apiTranslations };
-                let defaultTranslation;
-                const controlledTranslations = [];
+                let defaultTranslation: TranslationInterface | undefined;
+                const controlledTranslations: TranslationInterface[] = [];
                 for (const translation of translations) {
                   const languageEnglishName =
                     translation.languageEnglishName.toLowerCase();
@@ -484,11 +484,30 @@ const SearchBar = () => {
                 setSelectedTranslation(defaultTranslation);
                 setApiTranslations(tempApiTranslations);
                 setShowCustomTranslation(false);
+                if (defaultTranslation) {
+                  web
+                    .get(`${defaultTranslation.listOfBooksApiLink}`)
+                    .then((e) => {
+                      const book0 = e.data.books[0];
+                      ChangeTranslation(
+                        defaultTranslation.id,
+                        book0,
+                        defaultTranslation.origin
+                      );
+                      setBooksData([...e.data.books]);
+                      setSelectingTranslation(false);
+                      setOpenSidebar(false);
+                    })
+                    .catch((e) => {
+                      console.log(e);
+                    });
+                }
                 os.log("All Translations Added");
               } else {
                 if (data?.translation && data?.books) {
                   const translation = data.translation;
                   const controlledTranslation = {
+                    ...translation,
                     name: translation.name,
                     languageEnglishName:
                       translation.languageEnglishName.toLowerCase(),
@@ -508,9 +527,12 @@ const SearchBar = () => {
                     os.toast(`Translation Already Exists!`);
                     ChangeTranslation(
                       controlledTranslation.id,
-                      book0,
+                      data.books[0],
                       controlledTranslation.origin
                     );
+                    setBooksData([...data.books[0]]);
+                    setSelectingTranslation(false);
+                    setOpenSidebar(false);
                   } else {
                     const translations = { ...apiTranslations };
 
@@ -547,9 +569,12 @@ const SearchBar = () => {
                     }
                     ChangeTranslation(
                       controlledTranslation.id,
-                      book0,
+                      data.books[0],
                       controlledTranslation.origin
                     );
+                    setBooksData([...data.books[0]]);
+                    setSelectingTranslation(false);
+                    setOpenSidebar(false);
                     os.toast(`Translation ${value} added!`);
                   }
                 } else {

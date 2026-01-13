@@ -663,7 +663,7 @@ input:checked + .slider:not(#slider):before {
   justify-content: center;
   align-items: center;
   border-radius: 5px;
-  color: var(--activeTabText, var(--text1)) !important;
+  color: var(--text1) !important;
   transition: all 0.3s;
   position: relative;
   font-size: 16px;
@@ -671,7 +671,7 @@ input:checked + .slider:not(#slider):before {
 
 .chapter-btn:hover {
   background-color: var(--primaryBase);
-  color: var(--activeTabText, var(--text1)) !important;
+  color: var(--text1) !important;
 }
 
 .searchbar-container:hover {
