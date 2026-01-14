@@ -137,6 +137,7 @@ const Discover = ({
         overflow: "auto",
         ...style,
       }}
+      id="discover-container"
     >
       {!editingPlaylist && false && (
         <div

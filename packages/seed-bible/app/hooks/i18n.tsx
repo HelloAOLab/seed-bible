@@ -360,6 +360,7 @@ const resources = {
 
       // Playlist.
       from: "From",
+      reset_filters: "Reset Filters",
       to: "To",
       preview: "Preview",
       search_verses: "Search verses",
@@ -1074,6 +1075,7 @@ const resources = {
 
       // Playlist.
       preview: "Vista previa",
+      reset_filters: "Restablecer filtros",
       from: "Desde",
       to: "Hasta",
       search_verses: "Buscar versículos",
@@ -1800,6 +1802,7 @@ const resources = {
 
       // Playlist.
       anytime: "كيفية أي وقت",
+      reset_filters: "إعادة تعيين التصفيات",
       from: "من",
       to: "إلى",
       search_verses: "بحث الآيات",
@@ -2506,6 +2509,7 @@ const resources = {
       // Playlist.
       preview: "पूर्वावलोकन",
       anytime: "किसी भी समय",
+      reset_filters: "फ़िल्टर रीसेट करें",
       from: "से",
       to: "तक",
       search_sources: "स्रोत खोजें",

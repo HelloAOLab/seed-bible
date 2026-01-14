@@ -1,6 +1,6 @@
 const { LoaderSecondary } = Components;
 import { deleteAnnotation, getAnnotationRecord } from "db.annotations.library";
-const { useMemo }  = os.appHooks;
+const { useMemo, useEffect}  = os.appHooks;
 
 const { useState, useRef, useLayoutEffect } = os.appHooks;
 
@@ -71,6 +71,24 @@ const AnnotationList = ({
   const [filters, setFilters] = useState({...initialFilters});
   const [showFilters, setShowFilters] = useState(false);
 
+
+  useEffect(() => {
+    const discoverContainer = document.getElementById("discover-container");
+    // Set overflow to hidden when filters are shown and reset it when filters are hidden
+    if (discoverContainer) {
+      if(showFilters) {
+        discoverContainer.style.overflow = "hidden";
+      } else {
+        discoverContainer.style.overflow = "auto";
+      }
+    }
+    return () => {
+      if(discoverContainer) {
+        discoverContainer.style.overflow = "auto";
+      }
+    };
+  }, [showFilters]);
+
   const onChangeFilters = (key:string, value:string) => {
     setFilters((prev) => {
       const oldFilters = { ...prev };
@@ -101,7 +119,14 @@ const AnnotationList = ({
           oldFilters[key] = null;
         }
       } else {
-        return {...initialFilters};
+        return {
+          sources: {},
+          tags: {},
+          verse: {},
+          fromDate: null,
+          toDate: null,
+          dateOption: "any",
+        };
       }
       return oldFilters;
     });

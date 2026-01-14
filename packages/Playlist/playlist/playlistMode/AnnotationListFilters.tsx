@@ -126,8 +126,8 @@ const AnnotationListFilters = ({
             />
             <div className="line-filter-container"></div>
 
-            <div style={{ display: "flex", justifyContent: "center" }}>
-                <Button secondaryAlt onClick={() => onClearFilters()}>Reset Filters</Button>
+            <div style={{ display: "flex", justifyContent: "center", marginBottom: "0.5rem" }}>
+                <Button secondaryAlt onClick={() => onClearFilters()}>{t('reset_filters')}</Button>
             </div>
         </div>
     </>
@@ -184,6 +184,9 @@ const SearchAndAdd = ({
                 placeholder={placeholder}
                 onFocus={() => {
                     setShowSelectBox(true);
+                }}
+                style={{
+                    marginBottom: "0",
                 }}
             />
             <div className="selected-sources-container">
