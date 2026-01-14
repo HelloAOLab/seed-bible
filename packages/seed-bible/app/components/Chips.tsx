@@ -37,14 +37,14 @@ function SharePopup({
       icon: "https://upload.wikimedia.org/wikipedia/commons/thumb/6/6b/WhatsApp.svg/512px-WhatsApp.svg.png",
       share: () => os.openURL(`https://wa.me/?text=${shareText}`),
     },
-    {
-      name: "Facebook",
-      icon: "https://upload.wikimedia.org/wikipedia/commons/thumb/0/05/Facebook_Logo_%282019%29.png/600px-Facebook_Logo_%282019%29.png",
-      share: () =>
-        os.openURL(
-          `https://www.facebook.com/sharer.php?u=https://ao.bot/?inst=${os.getCurrentInst()}&book=${configBot.tags.book}&chapter=${configBot.tags.chapter}`
-        ),
-    },
+    // {
+    //   name: "Facebook",
+    //   icon: "https://upload.wikimedia.org/wikipedia/commons/thumb/0/05/Facebook_Logo_%282019%29.png/600px-Facebook_Logo_%282019%29.png",
+    //   share: () =>
+    //     os.openURL(
+    //       `https://www.facebook.com/sharer.php?u=https://ao.bot/?inst=${os.getCurrentInst()}&book=${configBot.tags.book}&chapter=${configBot.tags.chapter}`
+    //     ),
+    // },
     {
       name: "X",
       icon: "https://upload.wikimedia.org/wikipedia/commons/thumb/5/5a/X_icon_2.svg/512px-X_icon_2.svg.png",

@@ -51,22 +51,17 @@
     justify-content: flex-start !important;
     padding: 0px 0px;
     height: 54px;
-  }
-  .toolbar-button {
-    width: 44px;
-    height: 44px;
+    gap: 4px;
   }
   .firstToolbarbutton {
-    height: 100% !important;
     background-color: #dfdede !important;
     border-radius: 0px !important;
-    width: 54px !important;
   }
 
   .leftClick {
     position: absolute !important;
-    left: 13px;
-    bottom: 60px;
+    left: 16px;
+    bottom: 68px;
     background: #f0f1f1;
     border-radius: 100%;
     display: block !important;
@@ -75,35 +70,19 @@
 
   .rightClick {
     position: absolute !important;
-    right: 13px;
-    bottom: 60px;
+    right: 16px;
+    bottom: 68px;
     background: #f0f1f1;
     border-radius: 100%;
     display: block !important;
     pointer-events: all;
   }
-  .rightClick button {
-    width: 40px !important;
-    height: 40px !important;
-  }
+  .rightClick button,
   .leftClick button {
-    width: 40px !important;
-    height: 40px !important;
+    width: 48px !important;
+    height: 48px !important;
+    box-shadow: 1px 4px 2px -1px rgba(0, 0, 0, 0.3);
   }
-}
-
-.toolbar-button {
-  outline: none !important;
-  border: none !important;
-  display: flex;
-  align-items: center;
-  justify-content: center;
-  width: 40px !important;
-  height: 58px !important;
-  border-radius: 50%;
-  /* background-color: var(--pageBackground) !important; */
-  cursor: pointer;
-  transition: background-color 0.2s ease;
 }
 
 .toolbar-button:hover {
@@ -121,16 +100,18 @@
 }
 
 .toolbar-item-wrapper {
+  flex: 0 0 44px;
+  height: 100%;
   position: relative;
   transition: transform 0.25s ease;
 }
 
 .toolbar-button {
+  outline: none;
+  border: none;
   display: flex;
   align-items: center;
   justify-content: center;
-  width: 44px !important;
-  height: 55px !important;
   border-radius: 50%;
   border: none;
   background-color: transparent;
@@ -138,6 +119,9 @@
   transition:
     background-color 0.2s ease,
     transform 0.25s ease;
+  width: 100%;
+  height: 100%;
+  padding: 0;
 }
 
 .toolbar-button:hover {

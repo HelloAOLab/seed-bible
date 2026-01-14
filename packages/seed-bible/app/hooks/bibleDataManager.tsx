@@ -103,10 +103,35 @@ export class BibleDataManager {
   }
 
   _scheduleMaskRecord() {
-    if (thisBot.masks.readingHistoryInterval)
+    // Clear any existing reading history interval first
+    if (thisBot.masks.readingHistoryInterval) {
       clearInterval(thisBot.masks.readingHistoryInterval);
+      thisBot.masks.readingHistoryInterval = null;
+    }
+
+    // Debounce: don't start new interval if we just started one
+    const now = Date.now();
+    if (globalThis.__lastHistorySchedule && now - globalThis.__lastHistorySchedule < 2000) {
+      return;
+    }
+    globalThis.__lastHistorySchedule = now;
+
+    // Capture current values at schedule time (not `this` which can change)
+    const scheduledBookId = this.bookId;
+    const scheduledChapter = this.chapter;
+
+    // Validate before scheduling
+    if (!scheduledBookId || !scheduledChapter) {
+      console.log("_scheduleMaskRecord: skipping - invalid bookId or chapter");
+      return;
+    }
+
+    // Use captured values directly in the interval, not `this`
     const readingHistoryInterval = setInterval(() => {
-      saveUserReadingHistory(this.bookId, this.chapter);
+      // Double-check values are still valid
+      if (scheduledBookId && scheduledChapter) {
+        saveUserReadingHistory(scheduledBookId, scheduledChapter);
+      }
     }, 5000); // every 5 seconds
     setTagMask(thisBot, "readingHistoryInterval", readingHistoryInterval);
 
@@ -120,14 +145,16 @@ export class BibleDataManager {
 
     this._viewingStart = Date.now();
     const keyAtScheduleTime = this._getKey();
+    const tabIdCapture = this.tabId;
+    const translationCapture = this.translation;
 
     this._viewingTimer = setTimeout(() => {
       if (keyAtScheduleTime === this._getKey()) {
         if (this._lastRecordedKey !== keyAtScheduleTime) {
-          masks[this.tabId].push({
-            bookId: this.bookId,
-            chapter: this.chapter,
-            translation: this.translation,
+          masks[tabIdCapture].push({
+            bookId: scheduledBookId,
+            chapter: scheduledChapter,
+            translation: translationCapture,
             recordedAt: new Date().toISOString(),
             secondsOpen: Math.round((Date.now() - this._viewingStart) / 1000),
           });

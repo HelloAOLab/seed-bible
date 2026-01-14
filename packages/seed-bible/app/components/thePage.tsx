@@ -1,7 +1,4 @@
-import {
-  BibleDataManager,
-  getCachedBibleData,
-} from "app.hooks.bibleDataManager";
+import { BibleDataManager } from "app.hooks.bibleDataManager";
 import { getStyleOf } from "app.styles.styler";
 const {
   useEffect,
@@ -82,9 +79,8 @@ function ThePage({
 
   useEffect(() => {
     if (deleteTab) {
-      if (deleteTab?.tabId === tab?.id) {
+      if (deleteTab.tabId === tab?.id) {
         setTab(null);
-        setData(null);
       }
       setDeleteTab(false);
     }
@@ -467,27 +463,7 @@ function ThePage({
     let cancelled = false;
 
     async function loadDataSafe() {
-      if (!tab) {
-        return;
-      }
-
-      // Immediately set cached data BEFORE creating BibleDataManager to prevent flash
-      const cachedData = getCachedBibleData(
-        tab.data.translation,
-        tab.data.bookId,
-        tab.data.chapter
-      );
-      console.log(
-        "cached data check:",
-        cachedData?.content?.length,
-        tab.data.translation,
-        tab.data.bookId,
-        tab.data.chapter
-      );
-      if (cachedData?.content?.length > 0) {
-        setData(cachedData);
-      }
-
+      if (!tab) return;
       const bible = new BibleDataManager({
         tabId: tab?.id,
         translation: tab.data.translation,
@@ -650,7 +626,7 @@ function ThePage({
         config &&
         !config?.sharedTab &&
         role === "host" &&
-        masks["sharedTab"] !== tab?.id
+        masks["sharedTab"] !== tab.id
       ) {
         updateTab(tab?.id, data);
         updateTab(masks["sharedTab"], data);
@@ -672,7 +648,7 @@ function ThePage({
       } else {
         setDirection(null);
       }
-      if (masks["sharedTab"] === tab?.id) EmitData("book", { ...data });
+      if (masks["sharedTab"] === tab.id) EmitData("book", { ...data });
       // const emitter = getBot("system", "app.emitter");
       // sendRemoteData(emitter.masks.otherRemotes, "updateSharingData", {
       //   id: tab?.id,
@@ -693,7 +669,7 @@ function ThePage({
   }, [data]);
 
   useEffect(() => {
-    if (data && tab?.id === activeTab) {
+    if (data && tab.id === activeTab) {
       configBot.tags.book = data?.bookId;
       configBot.tags.chapter = data?.chapter;
     }
@@ -1253,7 +1229,7 @@ function ThePage({
     setCommandHighlight([]);
 
     if (!globalThis.tabHighlights) globalThis.tabHighlights = {};
-    if (tab?.id) globalThis.tabHighlights[tab?.id] = {};
+    if (tab?.id) globalThis.tabHighlights[tab.id] = {};
 
     shout("onAllVerseHighlightsCleared", {
       tabId: tab?.id,
@@ -1612,7 +1588,7 @@ function ThePage({
         }
          `}
       </style>
-      {tab && !tabEntered ? (
+      {data && tab && !tabEntered ? (
         <>
           <div
             onClick={(e) => {
@@ -2624,13 +2600,7 @@ export const ThePageWithEditor = ({ tab, setPanalApp, panelId }) => {
   const activeTab = panelId ? globalThis.PanelTabsMap[panelId] || tab : tab;
   const [enableEditor, setEnableEditor] = useState(false);
   useEffect(() => {}, [enableEditor]);
-  const [data, setData] = useState(() =>
-    getCachedBibleData(
-      tab?.data?.translation,
-      tab?.data?.bookId,
-      tab?.data?.chapter
-    )
-  );
+  const [data, setData] = useState();
   const [deleteTab, setDeleteTab] = useState(false);
   if (tab) globalThis[`SetEnableEditorOf${tab?.id}`] = setEnableEditor;
   useEffect(() => {

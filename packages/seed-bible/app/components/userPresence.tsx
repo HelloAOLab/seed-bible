@@ -1164,7 +1164,7 @@ function ScriptureNavigationSettings({ config, onChange, onStop }) {
       />
 
       <SettingRow
-        label="Shared Tab"
+        label="Shared Tab Only"
         isOn={state.sharedTab}
         onToggle={() => toggle("sharedTab")}
       />

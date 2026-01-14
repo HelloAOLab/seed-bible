@@ -32,7 +32,7 @@ interface TranslationInterface {
   totalNumberOfVerses: number;
   languageName: string;
   languageEnglishName: string;
-  origin?: boolean;
+  origin?: string;
 }
 
 export type { BookInterface, TranslationInterface };

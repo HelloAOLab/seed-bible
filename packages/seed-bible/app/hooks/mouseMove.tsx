@@ -627,7 +627,9 @@ const FloatingAppContainer = ({
   const [toolbarVisible, setToolbarVisible] = useState(true);
   const [forceVisable, setForceVisable] = useState(false);
   const [isHoveringToolbar, setIsHoveringToolbar] = useState(false);
-  const hideDelayMs = 1500; // 5s after user stops interacting
+  const isHoveringToolbarRef = useRef(false); // ref for reliable timing checks
+  const isHoveringWrapperRef = useRef(false); // track wrapper hover state
+  const hideDelayMs = 1500; // delay after user stops interacting
   const wrapRef = useRef(null);
   const hideTimerRef = useRef(null);
 
@@ -986,22 +988,25 @@ const FloatingAppContainer = ({
         style={wrapperStyle}
         onMouseDown={handleMouseDown}
         onMouseEnter={() => {
+          isHoveringWrapperRef.current = true;
           setToolbarVisible(true);
           if (hideTimerRef.current) clearTimeout(hideTimerRef.current);
         }}
         onMouseLeave={() => {
+          isHoveringWrapperRef.current = false;
           if (!mobile && !forceVisable) {
-            // Use a short delay to allow mouse to move to toolbar
-            // The toolbar's onMouseEnter will clear this timer if triggered
+            // Clear any existing timer first
+            if (hideTimerRef.current) clearTimeout(hideTimerRef.current);
+            // Use hideDelayMs to give user time before hiding
             (hideTimerRef as any).current = setTimeout(() => {
-              // Re-check isHoveringToolbar at execution time, not capture time
-              setIsHoveringToolbar((currentlyHovering) => {
-                if (!currentlyHovering) {
-                  // setToolbarVisible(false);
-                }
-                return currentlyHovering;
-              });
-            }, 150); // Short delay to allow mouse to reach toolbar
+              // Only hide if not hovering wrapper or toolbar
+              if (
+                !isHoveringWrapperRef.current &&
+                !isHoveringToolbarRef.current
+              ) {
+                setToolbarVisible(false);
+              }
+            }, hideDelayMs);
           }
         }}
         ref={wrapRef}
@@ -1058,19 +1063,27 @@ const FloatingAppContainer = ({
           <div
             style={toolbarStyle}
             onMouseEnter={() => {
+              isHoveringToolbarRef.current = true;
               setIsHoveringToolbar(true);
               setToolbarVisible(true);
-              // if (hideTimerRef.current) clearTimeout(hideTimerRef.current);
+              if (hideTimerRef.current) clearTimeout(hideTimerRef.current);
             }}
             onMouseLeave={() => {
+              isHoveringToolbarRef.current = false;
               setIsHoveringToolbar(false);
-              // setToolbarVisible(false);
               if (!mobile && !forceVisable) {
-                // Use a longer delay when leaving toolbar to give user time to click
-                (hideTimerRef as any).current = setTimeout(
-                  () => setToolbarVisible(false),
-                  hideDelayMs
-                );
+                // Clear any existing timer first
+                if (hideTimerRef.current) clearTimeout(hideTimerRef.current);
+                // Use hideDelayMs when leaving toolbar
+                (hideTimerRef as any).current = setTimeout(() => {
+                  // Only hide if not hovering wrapper or toolbar
+                  if (
+                    !isHoveringWrapperRef.current &&
+                    !isHoveringToolbarRef.current
+                  ) {
+                    setToolbarVisible(false);
+                  }
+                }, hideDelayMs);
               }
             }}
           >
@@ -1084,8 +1097,8 @@ const FloatingAppContainer = ({
                 className="control-button view-only-laptop"
               >
                 <span
-                  className="material-symbols-outlined"
-                  style={{ fontSize: 20 }}
+                  className="material-symbols-outlined whiteColored"
+                  style={{ fontSize: 20, color: "#fff !important" }}
                 >
                   view_in_ar
                 </span>
@@ -1098,8 +1111,8 @@ const FloatingAppContainer = ({
               className="control-button view-only-laptop"
             >
               <span
-                className="material-symbols-outlined"
-                style={{ fontSize: 20 }}
+                className="material-symbols-outlined whiteColored"
+                style={{ fontSize: 20, color: "#fff !important" }}
               >
                 rectangle
               </span>
@@ -1112,8 +1125,8 @@ const FloatingAppContainer = ({
               className="control-button view-only-laptop"
             >
               <span
-                className="material-symbols-outlined"
-                style={{ fontSize: 25 }}
+                className="material-symbols-outlined whiteColored"
+                style={{ fontSize: 25, color: "#fff !important" }}
               >
                 rectangle
               </span>
@@ -1126,8 +1139,8 @@ const FloatingAppContainer = ({
               className="control-button"
             >
               <span
-                className="material-symbols-outlined"
-                style={{ fontSize: 25 }}
+                className="material-symbols-outlined whiteColored"
+                style={{ fontSize: 25, color: "#fff !important" }}
               >
                 fullscreen
               </span>
@@ -1140,8 +1153,8 @@ const FloatingAppContainer = ({
               style={pillBtn}
             >
               <span
-                className="material-symbols-outlined"
-                style={{ fontSize: 25 }}
+                className="material-symbols-outlined whiteColored"
+                style={{ fontSize: 25, color: "#fff !important" }}
               >
                 chevron_right
               </span>
@@ -1154,8 +1167,8 @@ const FloatingAppContainer = ({
               style={pillBtn}
             >
               <span
-                className="material-symbols-outlined"
-                style={{ fontSize: 25 }}
+                className="material-symbols-outlined whiteColored"
+                style={{ fontSize: 25, color: "#fff !important" }}
               >
                 dock_to_left
               </span>
@@ -1184,7 +1197,7 @@ const FloatingAppContainer = ({
               style={{ ...pillBtn, outlineColor: "rgba(255,80,80,.9)" }}
             >
               <span
-                className="material-symbols-outlined"
+                className="material-symbols-outlined whiteColored"
                 style={{ fontSize: 25 }}
               >
                 close
