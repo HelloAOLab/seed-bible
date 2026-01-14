@@ -36,6 +36,7 @@ const Discover = ({
   annotationData,
   style,
   setOpenModal,
+  annotationSources,
 }) => {
   
   const IsPlaylistPlaying = globalThis.IsPlaylistPlaying;
@@ -241,6 +242,7 @@ const Discover = ({
       !renamingPlaylist &&
       (isAll || selectedChip["Annotations"]) ? (
         <AnnotationList
+          annotationSources={annotationSources}
           setAnnotationData={setAnnotationData}
           currentOpenedBook={currentOpenedBook}
           fetchingAnnotation={fetchingAnnotation}

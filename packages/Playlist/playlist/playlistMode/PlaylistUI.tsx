@@ -93,6 +93,7 @@ const Playlist = () => {
   const [showVideoOverlay, setShowVideoOverlay] = useState(false);
 
   const [annoationData, setAnnotationData] = useState([]);
+  const annotationSourcesRef = useRef([]);
   const [fetchingAnnotation, setFetchingAnnotation] = useState(false);
   const [currentOpenedBook, setCurrentOpenedBook] = useState({
     ...(globalThis.CurrentBookData || {}),
@@ -326,6 +327,10 @@ const Playlist = () => {
 
           const userRecord = await getAnnotationRecord();
 
+          const annotationSources:any = [];
+
+          const sourcesMap = {};
+
           const annotations = await loadAnnotations(
             userRecord,
             currentOpenedBook?.bookId,
@@ -335,6 +340,15 @@ const Playlist = () => {
           let allAnnotations:any = [];
           const verseIndexMap:any = {};
           annotations.forEach((ele) => {
+            if(!sourcesMap[ele.data.userId]) {
+              annotationSources.push({
+                label: ele.data.userName,
+                value: ele.data.userId,
+                profilePicture: ele.data.userProfilePicture,
+              });
+              sourcesMap[ele.data.userId] = true;
+            }
+            
             if (ele?.data.type === "comment" && (ele.verseNumber || ele.verseNumbers)) {
               const booksDetails = globalThis.findNameRank(ele.bookId);
               const anoItem = {
@@ -428,6 +442,7 @@ const Playlist = () => {
           allAnnotations = allAnnotations.sort(sortFunc);
           setFetchingAnnotation(false);
           setAnnotationData(allAnnotations);
+          annotationSourcesRef.current = annotationSources;
         } catch (e) {
           console.log(e);
           setFetchingAnnotation(false);
@@ -1041,6 +1056,7 @@ const Playlist = () => {
                     style={{ height: `100%` }}
                     setOpenModal={setOpenModal}
                     playingPlaylist={playingPlaylist}
+                    annotationSources={annotationSourcesRef.current}
                   />
                 </div>
               ) : (

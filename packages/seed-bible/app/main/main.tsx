@@ -134,6 +134,7 @@ const Main = () => {
       "https://cdn.jsdelivr.net/npm/@fullcalendar/icalendar@6.1.17/index.global.min.js",
       "https://cdnjs.cloudflare.com/ajax/libs/ical.js/1.4.0/ical.min.js",
       "https://cdn.jsdelivr.net/npm/fullcalendar-scheduler@6.1.18/index.global.min.js",
+      "https://cdn.jsdelivr.net/npm/flatpickr",
     ];
 
     function loadScriptsSequentially(index = 0, callback) {

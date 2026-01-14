@@ -590,7 +590,7 @@ const COPY_OBJECT = (value, seen = new Map()) => {
 
 globalThis.CLONE_DATA = COPY_OBJECT;
 
-globalThis.FORMAT_DATE = function formatDate(dateInput, format = "DEFAULT") {
+globalThis.FORMAT_DATE = function formatDate(dateInput, format = "DEFAULT", inputFormat="YYYY-MM-DD") {
   const monthsFull = [
     "January", "February", "March", "April", "May", "June",
     "July", "August", "September", "October", "November", "December"
@@ -601,7 +601,11 @@ globalThis.FORMAT_DATE = function formatDate(dateInput, format = "DEFAULT") {
   ];
 
   // Ensure the input is a valid date string in the format YYYY-MM-DD
-  const [yearr, monthh, dayy] = dateInput.split('-').map(ele => Number(ele));
+  let [yearr, monthh, dayy] = dateInput.split('-').map(ele => Number(ele));
+
+  if (inputFormat === "MM-DD-YYYY") {
+    [monthh, dayy, yearr] = dateInput.split('-').map(ele => Number(ele));
+   }
   // const utcTimestamp = Date.UTC(yearr, monthh - 1, dayy); // Month is 0-based
   // const date = new Date(utcTimestamp);
   if (isNaN(dayy)) {
@@ -636,6 +640,7 @@ globalThis.FORMAT_DATE = function formatDate(dateInput, format = "DEFAULT") {
     "MMM DD": `${monthShort} ${day}`, // Ex: Jan 15
     "DD MMM": `${day} ${monthShort}`  // Ex: 15 Jan
   };
+
 
   return formats[format] || formats["DEFAULT"];
 };
