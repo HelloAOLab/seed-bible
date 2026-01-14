@@ -359,6 +359,8 @@ const resources = {
       noResults: "No results found",
 
       // Playlist.
+      from: "From",
+      to: "To",
       preview: "Preview",
       search_verses: "Search verses",
       search_sources: "Search sources",
@@ -1072,6 +1074,8 @@ const resources = {
 
       // Playlist.
       preview: "Vista previa",
+      from: "Desde",
+      to: "Hasta",
       search_verses: "Buscar versículos",
       search_sources: "Buscar fuentes",
       selectDateRange: "Seleccionar rango de fechas",
@@ -1796,6 +1800,8 @@ const resources = {
 
       // Playlist.
       anytime: "كيفية أي وقت",
+      from: "من",
+      to: "إلى",
       search_verses: "بحث الآيات",
       yesterday: "اليوم السابق",
       search_sources: "بحث المصادر",
@@ -2500,6 +2506,8 @@ const resources = {
       // Playlist.
       preview: "पूर्वावलोकन",
       anytime: "किसी भी समय",
+      from: "से",
+      to: "तक",
       search_sources: "स्रोत खोजें",
       search_verses: "अध्याय खोजें",
       yesterday: "कल",

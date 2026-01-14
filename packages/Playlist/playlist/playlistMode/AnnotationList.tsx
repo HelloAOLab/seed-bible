@@ -23,6 +23,32 @@ const AnnotationListFilters = await thisBot.AnnotationListFilters();
 
 const FilterIcon = "https://auth-aux-aobot-prod-filesbucket-141297942820.s3.amazonaws.com/annotations/b643c8bdb01906312ff5302bb029c1b8c35cd7a9a0a1f8f22e1358ccf675794e.svg";
 
+function getTime(dateTimeStr:string) {
+  if (!dateTimeStr) return null;
+
+  // Split date and time
+  const [datePart, timePart] = dateTimeStr.split("T");
+  if (!datePart || !timePart) return null;
+
+  const [month, day, year] = datePart.split("/").map(Number);
+  if (!day || !month || !year) return null;
+
+  // Remove 'Z' and split time
+  const [hour, minute, second] = timePart
+    .replace("Z", "")
+    .split(":")
+    .map(Number);
+
+  return Date.UTC(
+    year,
+    month - 1,
+    day,
+    hour || 0,
+    minute || 0,
+    second || 0
+  );
+}
+
 
 const initialFilters:any = {
   sources: {},
@@ -89,10 +115,10 @@ const AnnotationList = ({
         isMatch = filters.sources[ele.data[0].createdBy];
       }
       if(Object.keys(filters.tags).length > 0) {
-        isMatch = ele.tags.some((tag) => filters.tags[tag]);
+        isMatch = isMatch && (ele.tags.some((tag) => filters.tags[tag]));
       }
       if(Object.keys(filters.verse).length > 0) {
-        isMatch = Array.isArray(ele.verse) ? ele.verse.some((verse) => filters.verse[verse]) : filters.verse[ele.verse];
+        isMatch = isMatch && (Array.isArray(ele.verse) ? ele.verse.some((verse) => filters.verse[verse]) : filters.verse[ele.verse]);
       }
 
       let fromDate = "";
@@ -116,11 +142,12 @@ const AnnotationList = ({
         fromDate = filters.fromDate || '';
         toDate = filters.toDate || '';
       }
+     
       if(fromDate) {
-        isMatch = ele.data[0].updatedAtMs >= new Date(fromDate).getTime();
+        isMatch = isMatch && (ele.data[0].updatedAtMs >= getTime(`${fromDate}T00:00:00Z`));
       }
       if(toDate) {
-        isMatch = ele.data[0].updatedAtMs <= new Date(`${toDate}T23:59:59Z`).getTime();
+        isMatch = isMatch && (ele.data[0].updatedAtMs <= getTime(`${toDate}T23:59:59Z`));
       }
       return isMatch;
     });

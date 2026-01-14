@@ -84,7 +84,7 @@ const AnnotationListFilters = ({
                                 onChangeFilters("fromDate", e.target.value);
                             }}
                         />
-                        <p className="date-label">From</p>
+                        <AnnotationFilterHeadings title={t('from')} onClearFilters={onClearFilters} keyFilter="fromDate" />
                         <p className="place-holder-date">{filters.fromDate ? FORMAT_DATE(filters.fromDate.replaceAll("/","-"), "MM/DD/YYYY", "MM-DD-YYYY") : "MM/DD/YYYY"}</p>
                     </div>
                     <div className="date">
@@ -97,7 +97,7 @@ const AnnotationListFilters = ({
                             className="hidden-date"
                             placeholder="MM/DD/YYYY"
                         />
-                        <p className="date-label">To</p>
+                        <AnnotationFilterHeadings title={t('to')} onClearFilters={onClearFilters} keyFilter="toDate" />
                         <p className="place-holder-date">{filters.toDate ? FORMAT_DATE(filters.toDate.replaceAll("/","-"), "MM/DD/YYYY", "MM-DD-YYYY") : "MM/DD/YYYY"}</p>
                     </div>
                 </div>}
@@ -232,7 +232,7 @@ const AnnotationFilterHeadings = ({title, icon, onClearFilters, keyFilter}) => {
     return (
         <div className="annotation-filter-heading">
             <div style={{ display: "flex", alignItems: "center", gap: "0.5rem" }}>
-                <img src={icon} alt={title} />
+               {icon && <img src={icon} alt={title} />}
                 <p className="annotation-filter-heading-title">{title}</p>
             </div>
             <p onClick={() => onClearFilters(keyFilter)} className="annotation-filter-heading-clear">Clear</p>
