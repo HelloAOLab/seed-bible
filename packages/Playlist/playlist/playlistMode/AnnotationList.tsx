@@ -1,5 +1,6 @@
 const { LoaderSecondary } = Components;
 import { deleteAnnotation, getAnnotationRecord } from "db.annotations.library";
+const { useMemo, useEffect}  = os.appHooks;
 
 const { useState, useRef, useLayoutEffect } = os.appHooks;
 
@@ -18,6 +19,45 @@ const AttachmentLinkItem = await thisBot.AttachmentLinkItem();
 const ConfirmationModal = await thisBot.ConfirmationModal();
 const RenderHTMLContent = await thisBot.RenderHTMLContent();
 const Overlay = await thisBot.Overlay();
+const AnnotationListFilters = await thisBot.AnnotationListFilters();
+
+const FilterIcon = "https://auth-aux-aobot-prod-filesbucket-141297942820.s3.amazonaws.com/annotations/b643c8bdb01906312ff5302bb029c1b8c35cd7a9a0a1f8f22e1358ccf675794e.svg";
+
+function getTime(dateTimeStr:string) {
+  if (!dateTimeStr) return null;
+
+  // Split date and time
+  const [datePart, timePart] = dateTimeStr.split("T");
+  if (!datePart || !timePart) return null;
+
+  const [month, day, year] = datePart.split("/").map(Number);
+  if (!day || !month || !year) return null;
+
+  // Remove 'Z' and split time
+  const [hour, minute, second] = timePart
+    .replace("Z", "")
+    .split(":")
+    .map(Number);
+
+  return Date.UTC(
+    year,
+    month - 1,
+    day,
+    hour || 0,
+    minute || 0,
+    second || 0
+  );
+}
+
+
+const initialFilters:any = {
+  sources: {},
+  tags: {},
+  verse: {},
+  fromDate: null,
+  toDate: null,
+  dateOption: "any",
+};
 
 const AnnotationList = ({
   currentOpenedBook,
@@ -25,11 +65,124 @@ const AnnotationList = ({
   fetchingAnnotation,
   setAnnotationData,
   annotationData,
+  annotationSources,
 }) => {
+
+  const [filters, setFilters] = useState({...initialFilters});
+  const [showFilters, setShowFilters] = useState(false);
+
+
+  useEffect(() => {
+    const discoverContainer = document.getElementById("discover-container");
+    // Set overflow to hidden when filters are shown and reset it when filters are hidden
+    if (discoverContainer) {
+      if(showFilters) {
+        discoverContainer.style.overflow = "hidden";
+      } else {
+        discoverContainer.style.overflow = "auto";
+      }
+    }
+    return () => {
+      if(discoverContainer) {
+        discoverContainer.style.overflow = "auto";
+      }
+    };
+  }, [showFilters]);
+
+  const onChangeFilters = (key:string, value:string) => {
+    setFilters((prev) => {
+      const oldFilters = { ...prev };
+      if(key === "sources" || key === "tags" || key === "verse") {
+        if(oldFilters[key][value]) {
+          delete oldFilters[key][value];
+        } else {
+          oldFilters[key][value] = true;
+        }
+      }else if(key === "fromDate" || key === "toDate" || key === "dateOption") {
+        oldFilters[key] = value;
+      }
+      return oldFilters;
+    });
+  };
+
+  const onClearFilters = (key?:string) => {
+    setFilters((prev:any) => {
+      const oldFilters:any = { ...prev };
+      if(key) {
+        if(key === "sources" || key === "tags" || key === "verse") {
+          oldFilters[key] = {};
+        } else if(key === "dateOption") {
+          oldFilters[key] = "any";
+          oldFilters.fromDate = null;
+          oldFilters.toDate = null;
+        } else {
+          oldFilters[key] = null;
+        }
+      } else {
+        return {
+          sources: {},
+          tags: {},
+          verse: {},
+          fromDate: null,
+          toDate: null,
+          dateOption: "any",
+        };
+      }
+      return oldFilters;
+    });
+  };
+
+
+  const filteredAnnotationData = useMemo(() => {
+    return annotationData.filter((ele) => {
+      let isMatch = true;
+      if(Object.keys(filters.sources).length > 0) {
+        isMatch = filters.sources[ele.data[0].createdBy];
+      }
+      if(Object.keys(filters.tags).length > 0) {
+        isMatch = isMatch && (ele.tags.some((tag) => filters.tags[tag]));
+      }
+      if(Object.keys(filters.verse).length > 0) {
+        isMatch = isMatch && (Array.isArray(ele.verse) ? ele.verse.some((verse) => filters.verse[verse]) : filters.verse[ele.verse]);
+      }
+
+      let fromDate = "";
+      let toDate = "";
+      if(filters.dateOption === "any") {
+        fromDate = "";
+        toDate = "";
+      } else if(filters.dateOption === "yesterday") {
+        fromDate = new Date(new Date().setDate(new Date().getDate() - 1)).toISOString();
+        toDate = new Date().toISOString();
+      } else if(filters.dateOption === "last_week") {
+        fromDate = new Date(new Date().setDate(new Date().getDate() - 7)).toISOString();
+        toDate = new Date().toISOString();
+      } else if(filters.dateOption === "last_month") {
+        fromDate = new Date(new Date().setMonth(new Date().getMonth() - 1)).toISOString();
+        toDate = new Date().toISOString();
+      } else if(filters.dateOption === "last_year") {
+        fromDate = new Date(new Date().setFullYear(new Date().getFullYear() - 1)).toISOString();
+        toDate = new Date().toISOString();
+      } else if(filters.dateOption === "custom") {
+        fromDate = filters.fromDate || '';
+        toDate = filters.toDate || '';
+      }
+     
+      if(fromDate) {
+        isMatch = isMatch && (ele.data[0].updatedAtMs >= getTime(`${fromDate}T00:00:00Z`));
+      }
+      if(toDate) {
+        isMatch = isMatch && (ele.data[0].updatedAtMs <= getTime(`${toDate}T23:59:59Z`));
+      }
+      return isMatch;
+    });
+  }, [annotationData, filters]);
+
   const [deleteModal, setDeleteModal] = useState({
     address: false,
     index: false,
   });
+
   const [loading, setLoading] = useState(false);
   const [deleteOverlay, setDeleteOverlay] = useState(false);
 
@@ -78,6 +231,7 @@ const AnnotationList = ({
 
   return (
     <>
+      <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/flatpickr/dist/flatpickr.min.css" />
       {deleteModal.address && (
         <ConfirmationModal
           loading={loading}
@@ -97,12 +251,25 @@ const AnnotationList = ({
           <p>{globalThis.t("fetchingAnnotations")}</p>
         </div>
       )}
+     
       {!fetchingAnnotation ? (
-        annotationData.length === 0 ? (
-          <p style={{ marginTop: "12px" }}>{globalThis.t("noAnnotationsFound")}</p>
-        ) : (
-          <div className="annotation">
-            {annotationData.map((ele,index) => (
+        <>
+          {filteredAnnotationData.length === 0 && <p style={{ marginTop: "12px" }}>{globalThis.t("noAnnotationsFound")}</p>}
+          <div className="annotation" style={{ position: 'relative' }}>
+            <div className="filter-icon-container" style={{top: filteredAnnotationData.length > 0 ? '0.5rem' : '-2.1rem'}} onClick={() => setShowFilters(true)}>
+              <img style={{ width: '16px', height: '16px' }} src={FilterIcon} alt="filter" />
+            </div>
+            { showFilters && 
+             <AnnotationListFilters 
+                onChangeFilters={onChangeFilters}
+                onClearFilters={onClearFilters}
+                currentOpenedBook={currentOpenedBook}
+                filters={filters}
+                handleClose={() => setShowFilters(false)}
+                annotationSources={annotationSources}
+              />
+            }
+            {filteredAnnotationData.map((ele,index) => (
               <AnnotationHeading
                 key={ele.address}
                 address={ele.address}
@@ -117,11 +284,12 @@ const AnnotationList = ({
                 setDeleteOverlay={setDeleteOverlay}
                 position={position}
                 setDeleteModal={setDeleteModal}
+                setShowFilters={setShowFilters}
                 closeOverlay={closeOverlay}
               />
             ))}
           </div>
-        )
+          </>
       ) : null}
     </>
   );
@@ -153,9 +321,11 @@ const AnnotationHeading = ({
 
   return (
     <div className="annotation-item-container" style={{ height: isOpen ? 'max-content' : '2rem', overflow: 'hidden', transition: 'all 0.3s ease-in-out' }}>
-      <div className="align-center" style={{ margin: "0.5rem 0", gap: '1rem', display: 'flex', width: 'max-content', alignItems: 'center' }}>
-        <p className="verse-annotation" style={{ textTransform: 'uppercase' }}>{heading}</p>
-        <img onClick={handleToggle} style={{ cursor: 'pointer', transition: 'transform 0.3s ease-in-out', marginLeft: 'auto', transform: !isOpen ? 'rotate(180deg)' : 'rotate(0deg)' }} alt=">" src={ChevronDown2} />
+      <div className="align-center" style={{ margin: "0.5rem 0", gap: '1rem', display: 'flex', width: '100%', alignItems: 'center' }}>
+        <div style={{ display: 'flex', flexDirection: 'row', gap: '0.5rem', alignItems: 'center' }}>
+          <p className="verse-annotation" style={{ textTransform: 'uppercase' }}>{heading}</p>
+          <img onClick={handleToggle} style={{ cursor: 'pointer', transition: 'transform 0.3s ease-in-out', marginLeft: 'auto', transform: !isOpen ? 'rotate(180deg)' : 'rotate(0deg)' }} alt=">" src={ChevronDown2} />
+        </div>   
       </div>
       <div className="align-center">
         {tags?.length > 0 ? (

@@ -1313,3 +1313,11 @@ div.attachment-link.dropabble-Embed .playlist-item-type {
   max-width: 100%;
   height: auto;
 }
+
+.filter-icon-container {
+  cursor: pointer;
+  display: grid;
+  place-items: center;
+  right: 1rem;
+  position: absolute;
+}
