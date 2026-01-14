@@ -111,6 +111,37 @@
       "20": ["bronze-laver"],
       "21": ["bronze-laver"]
     },
+    "31": {
+      "7": ["tabernacle", "ark-of-covenant"],
+      "8": [
+        "table-of-showbread",
+        "ark-of-covenant",
+        "menorah",
+        "incense-altar"
+      ],
+      "9": ["altar-of-sacrifice", "bronze-laver"]
+    },
+    "35": {
+      "11": [
+        "tabernacle",
+        "brown-curtain",
+        "red-curtain",
+        "grey-curtain",
+        "purple-curtain",
+        "front-pillars",
+        "inner-pillars",
+        "rings",
+        "bars",
+        "walls"
+      ],
+      "12": ["ark-of-covenant", "inner-curtain"],
+      "13": ["table-of-showbread"],
+      "14": ["menorah"],
+      "15": ["incense-altar", "front-curtain"],
+      "16": ["altar-of-sacrifice", "bronze-laver"],
+      "17": ["fence"],
+      "18": ["fence"]
+    },
     "36": {
       "8": ["brown-curtain", "red-curtain", "grey-curtain", "purple-curtain"],
       "9": ["brown-curtain", "red-curtain", "grey-curtain", "purple-curtain"],
