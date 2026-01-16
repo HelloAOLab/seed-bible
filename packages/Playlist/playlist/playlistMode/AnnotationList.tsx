@@ -66,6 +66,7 @@ const AnnotationList = ({
   setAnnotationData,
   annotationData,
   annotationSources,
+  tagsSources,
 }) => {
 
   const [filters, setFilters] = useState({...initialFilters});
@@ -140,7 +141,7 @@ const AnnotationList = ({
         isMatch = filters.sources[ele.data[0].createdBy];
       }
       if(Object.keys(filters.tags).length > 0) {
-        isMatch = isMatch && (ele.tags.some((tag) => filters.tags[tag]));
+        isMatch = isMatch && (ele.data[0].tags?.some((tag) => filters.tags[tag]));
       }
       if(Object.keys(filters.verse).length > 0) {
         isMatch = isMatch && (Array.isArray(ele.verse) ? ele.verse.some((verse) => filters.verse[verse]) : filters.verse[ele.verse]);
@@ -267,6 +268,7 @@ const AnnotationList = ({
                 filters={filters}
                 handleClose={() => setShowFilters(false)}
                 annotationSources={annotationSources}
+                tagsSources={tagsSources}
               />
             }
             {filteredAnnotationData.map((ele,index) => (

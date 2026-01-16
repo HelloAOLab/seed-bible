@@ -99,17 +99,17 @@ const COMMAND_BOX_OPTIONS = [
       shout("startRecording", RECORDING_TYPES.link);
     },
   },
-  {
-    icon: "https://auth-aux-aobot-prod-filesbucket-141297942820.s3.amazonaws.com/annotations/76dc5c6ea24d635c2a1f363dc5d3822a618a56ff3484f36795f2bf4ae99ae3c4.svg",
-    label: "Add Tags",
-    onClick: () => {
-      // Notify coming soon
-      ShowNotification({
-        message: "Coming soon!",
-        severity: "info",
-      });
-    },
-  },
+  // {
+  //   icon: "https://auth-aux-aobot-prod-filesbucket-141297942820.s3.amazonaws.com/annotations/76dc5c6ea24d635c2a1f363dc5d3822a618a56ff3484f36795f2bf4ae99ae3c4.svg",
+  //   label: "Add Tags",
+  //   onClick: () => {
+  //     // Notify coming soon
+  //     ShowNotification({
+  //       message: "Coming soon!",
+  //       severity: "info",
+  //     });
+  //   },
+  // },
   {
     icon: "https://auth-aux-aobot-prod-filesbucket-141297942820.s3.amazonaws.com/annotations/8b01074656e936022bbb1655a94e85ba3f9af15d2873d6bd16d01d07d66bdf8b.svg",
     label: "Add File",
@@ -143,6 +143,11 @@ const LineHeight = Mark.create({
         parseHTML: (el) => el.style.lineHeight || null,
         renderHTML: (attrs) =>
           attrs.lineHeight ? { style: `line-height: ${attrs.lineHeight}` } : {},
+      },
+      id: {
+        default: null,
+        parseHTML: (el) => el.getAttribute("id"),
+        renderHTML: (attrs) => (attrs.id ? { id: attrs.id } : {}),
       },
     };
   },
@@ -578,6 +583,8 @@ export function CustomAnnotationTextEditor({
     console.log("data", data);
   }
 
+  const typingDeboncingTimeout = useRef(null);
+
   // ---- init editor
   useEffect(() => {
     if (!editorRef.current) return;
@@ -620,21 +627,32 @@ export function CustomAnnotationTextEditor({
       ],
       editorProps: {
         handleDOMEvents: {
+          keyup: () => {
+            if (typingDeboncingTimeout.current) {
+              clearTimeout(typingDeboncingTimeout.current);
+            }
+            typingDeboncingTimeout.current = setTimeout(() => {
+              const editorHTML = editor.getHTML();
+              const html = ColorizeParagraphs(editorHTML);
+              editorObjRef.current.commands.setContent(html);
+            }, 1000);
+            return true;
+          },
           // Block keyboard and menu copy/cut
-          copy: (_view, event) => {
+          copy: () => {
             // event.preventDefault();
             return true;
           },
-          cut: (_view, event) => {
+          cut: () => {
             // event.preventDefault();
             return true;
           },
           // (Optional) stop dragging out selections / drags
-          dragstart: (_view, event) => {
+          dragstart: (_, event) => {
             event.preventDefault();
             return true;
           },
-          paste: async (view, event) => {
+          paste: async (_, event) => {
             const items = event?.clipboardData?.items;
 
               // 🔴 STOP DEFAULT PASTE IMMEDIATELY
@@ -698,7 +716,7 @@ export function CustomAnnotationTextEditor({
               return true;
             }
           },
-          drop: async (view, event) => {
+          drop: async () => {
             return true;
           },
         },
@@ -711,13 +729,13 @@ export function CustomAnnotationTextEditor({
     editor.on("update", () => {
       try {
         // if the editor html ending with '/' then toggle the command box
-        if (editor.getHTML().endsWith('/</p>')) {
+        const editorHTML = editor.getHTML();
+        if (editorHTML.endsWith('/</p>')) {
           toggleCommandBox();
         }
-        const html = fakeUnescapeMediaTags(editor.getHTML());
+        const html = fakeUnescapeMediaTags(editorHTML);
         canonicalHTMLRef.current = html;
-        // console.log("canonicalHTMLRef.current", canonicalHTMLRef.current);
-        // console.log("editor.getHTML()", editor.getHTML());
+     
         if (onChange) {
           onChange(html, editor.getJSON());
         }

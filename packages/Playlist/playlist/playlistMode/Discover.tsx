@@ -37,6 +37,7 @@ const Discover = ({
   style,
   setOpenModal,
   annotationSources,
+  tagsSources,
 }) => {
   
   const IsPlaylistPlaying = globalThis.IsPlaylistPlaying;
@@ -245,6 +246,7 @@ const Discover = ({
         <AnnotationList
           annotationSources={annotationSources}
           setAnnotationData={setAnnotationData}
+          tagsSources={tagsSources}
           currentOpenedBook={currentOpenedBook}
           fetchingAnnotation={fetchingAnnotation}
           chapter={chapter}

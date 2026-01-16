@@ -979,6 +979,7 @@ const AddAnotationUI = ({
       });
     }
     try {
+      await os.sleep(1000);
       setLoading(true);
       const promisesArray = [];
 
@@ -999,6 +1000,9 @@ const AddAnotationUI = ({
         editDataDetails.additionalInfo?.data?.bookId;
       const chapter = editDataDetails?.additionalInfo?.chapter;
 
+      const hashtags = globalThis.ExtractHashtagsFromHTML(textHTML);
+
+
       const comment = {
         type: "comment",
         html: textHTML,
@@ -1008,6 +1012,7 @@ const AddAnotationUI = ({
         userId: editDataDetails.userId,
         userName: editDataDetails.userName,
         userProfilePicture: editDataDetails.userProfilePicture,
+        tags: hashtags,
 
         // book:
         //   editDataDetails.additionalInfo.chapterData?.id ||
@@ -1133,6 +1138,8 @@ const AddAnotationUI = ({
 
     setLoading(true);
 
+    await os.sleep(1000);
+
     try {
       const promisesArray = [];
       const userRecord = await getAnnotationRecord();
@@ -1142,6 +1149,8 @@ const AddAnotationUI = ({
 
       const verseNumbers = [];
 
+      const hashtags = globalThis.ExtractHashtagsFromHTML(textHTML);
+
       const comment = {
         type: "comment",
         html: textHTML,
@@ -1150,26 +1159,7 @@ const AddAnotationUI = ({
         userProfilePicture: data.data.photoLink,
         userName: data.data.profileName,
         userId: authBot.id,
-        // book:
-        //   ele.additionalInfo.chapterData?.id ||
-        //   ele.additionalInfo.chapterData?.bookId ||
-        //   ele.additionalInfo?.data?.id ||
-        //   ele.additionalInfo?.data?.bookId,
-        // chapter: ele.additionalInfo.chapter,
-        // translation: "",
-        // chronicle_tags: [
-        //   ...(singleMode ? tags : ele.additionalInfo.tags || []),
-        // ],
-        // data: {
-        //   ...ele,
-        //   additionalInfo: {
-        //     ...ele.additionalInfo,
-        //     layers: [
-        //       scripture
-        //       // ...(singleMode ? embedItems : ele.additionalInfo.layers),
-        //     ],
-        //   },
-        // },
+        tags: hashtags,
       };
 
       let book = "";

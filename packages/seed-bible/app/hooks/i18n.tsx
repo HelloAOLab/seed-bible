@@ -360,6 +360,7 @@ const resources = {
 
       // Playlist.
       from: "From",
+      search_tags: "Search tags",
       reset_filters: "Reset Filters",
       to: "To",
       preview: "Preview",
@@ -1075,6 +1076,7 @@ const resources = {
 
       // Playlist.
       preview: "Vista previa",
+      search_tags: "Buscar etiquetas",
       reset_filters: "Restablecer filtros",
       from: "Desde",
       to: "Hasta",
@@ -1803,6 +1805,7 @@ const resources = {
       // Playlist.
       anytime: "كيفية أي وقت",
       reset_filters: "إعادة تعيين التصفيات",
+      search_tags: "بحث العلامات",
       from: "من",
       to: "إلى",
       search_verses: "بحث الآيات",
@@ -2514,6 +2517,7 @@ const resources = {
       to: "तक",
       search_sources: "स्रोत खोजें",
       search_verses: "अध्याय खोजें",
+      search_tags: "टैग खोजें",
       yesterday: "कल",
       last_week: "पिछले सप्ताह",
       last_month: "पिछले महीने",

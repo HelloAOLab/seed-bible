@@ -94,6 +94,7 @@ const Playlist = () => {
 
   const [annoationData, setAnnotationData] = useState([]);
   const annotationSourcesRef = useRef([]);
+  const tagsSourcesRef = useRef([]);
   const [fetchingAnnotation, setFetchingAnnotation] = useState(false);
   const [currentOpenedBook, setCurrentOpenedBook] = useState({
     ...(globalThis.CurrentBookData || {}),
@@ -331,6 +332,10 @@ const Playlist = () => {
 
           const sourcesMap = {};
 
+          const tagsSources:any = [];
+
+          const tagsMap = {};
+
           const annotations = await loadAnnotations(
             userRecord,
             currentOpenedBook?.bookId,
@@ -348,9 +353,19 @@ const Playlist = () => {
               });
               sourcesMap[ele.data.userId] = true;
             }
-            
+            ele?.data?.tags?.forEach(tag => {
+              if(!tagsMap[tag]) {
+                tagsMap[tag] = true;
+                tagsSources.push({
+                  label: tag,
+                  value: tag,
+                });
+              }
+            });
             if (ele?.data.type === "comment" && (ele.verseNumber || ele.verseNumbers)) {
               const booksDetails = globalThis.findNameRank(ele.bookId);
+
+
               const anoItem = {
                 type: "heading",
                 content: ele.data.html,
@@ -364,6 +379,7 @@ const Playlist = () => {
                 id: ele.id,
                 createdAtMs: ele?.data?.createdAtMs || Date.now(),
                 updatedAtMs: ele?.data?.updatedAtMs || Date.now(),
+                tags: ele?.data?.tags || [],
                 createdBy: ele?.data?.userId,
                 createdByName: ele?.data?.userName,
                 createdByProfilePicture: ele?.data?.userProfilePicture,
@@ -401,7 +417,7 @@ const Playlist = () => {
                   !!innerele.additionalInfo.layers
                 ) {
                   const tags = [...(ele?.data.chronicle_tags || [])];
-                  const layers = [...innerele.additionalInfo.layers.map(layer => ({...layer, address: ele.id, createdAtMs: innerele.createdAtMs || Date.now(), updatedAtMs: innerele.updatedAtMs || Date.now()}))];
+                  const layers = [...innerele.additionalInfo.layers.map(layer => ({...layer, address: ele.id, createdAtMs: innerele.createdAtMs || Date.now() , updatedAtMs: innerele.updatedAtMs || Date.now()}))];
                   if (innerele?.type === "chapter") {
                     data.heading = "Chapter";
                     data.data = [...layers];
@@ -443,6 +459,7 @@ const Playlist = () => {
           setFetchingAnnotation(false);
           setAnnotationData(allAnnotations);
           annotationSourcesRef.current = annotationSources;
+          tagsSourcesRef.current = tagsSources;
         } catch (e) {
           console.log(e);
           setFetchingAnnotation(false);
@@ -1057,6 +1074,7 @@ const Playlist = () => {
                     setOpenModal={setOpenModal}
                     playingPlaylist={playingPlaylist}
                     annotationSources={annotationSourcesRef.current}
+                    tagsSources={tagsSourcesRef.current}
                   />
                 </div>
               ) : (
