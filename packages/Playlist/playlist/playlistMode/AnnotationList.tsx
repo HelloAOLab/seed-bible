@@ -2,7 +2,7 @@ const { LoaderSecondary } = Components;
 import { deleteAnnotation, getAnnotationRecord } from "db.annotations.library";
 const { useMemo, useEffect}  = os.appHooks;
 
-const { useState, useRef, useLayoutEffect } = os.appHooks;
+const { useState, useRef } = os.appHooks;
 
 const ChevronDown =
   "https://auth-aux-aobot-prod-filesbucket-141297942820.s3.amazonaws.com/aoBot/d03c885823b300c141eed037466a2ad6ab59f9523e2ada5ac781f4f3e5e7e45f.svg";

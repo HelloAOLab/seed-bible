@@ -2,6 +2,7 @@ const { useEffect, useState, useRef, useMemo } = os.appHooks;
 const { Button, Input } = Components;
 const RecordingUI = await thisBot.RecordVoice();
 const VideoRecordUI = await thisBot.VideoRecordUI();
+import { ColorizeParagraphs } from "playlist.playlistMode.AutoTag";
 
 import {
   Editor,

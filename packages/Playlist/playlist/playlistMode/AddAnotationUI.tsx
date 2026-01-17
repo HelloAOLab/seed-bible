@@ -31,6 +31,7 @@ const PREVIEW_ICON_INACTIVE = "https://auth-aux-aobot-prod-filesbucket-141297942
 const PREVIEW_ICON_ACTIVE = "https://auth-aux-aobot-prod-filesbucket-141297942820.s3.amazonaws.com/annotations/c9313a31249a980b996ccabd27c6aaf0d0cc4037944f425370ff8b3500644b30.svg";
 
 import { CustomAnnotationTextEditor } from "playlist.playlistMode.CustomAnnotationTextEditor";
+import { extractHashtagsFromHTML } from "playlist.playlistMode.AutoTag";
 
 const DEV_ENV =
   configBot.tags.pattern === "SeedBibleDev" || !configBot.tags.pattern;
@@ -1000,7 +1001,7 @@ const AddAnotationUI = ({
         editDataDetails.additionalInfo?.data?.bookId;
       const chapter = editDataDetails?.additionalInfo?.chapter;
 
-      const hashtags = globalThis.ExtractHashtagsFromHTML(textHTML);
+      const hashtags = extractHashtagsFromHTML(textHTML);
 
 
       const comment = {
@@ -1149,7 +1150,7 @@ const AddAnotationUI = ({
 
       const verseNumbers = [];
 
-      const hashtags = globalThis.ExtractHashtagsFromHTML(textHTML);
+      const hashtags = extractHashtagsFromHTML(textHTML);
 
       const comment = {
         type: "comment",
