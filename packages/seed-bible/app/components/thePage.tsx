@@ -136,7 +136,7 @@ function ThePage({
       configBot.tags.translation ||
       tab.data.translation;
     let baseUrl = "https://bible.helloao.org";
-    let bookId = "GEN";
+    let bookId = tab.data.bookId || "GEN";
     let bookTranslationId = tab.data.translation;
     let firstBookData;
     let firstChapterApiLink;
@@ -290,7 +290,14 @@ function ThePage({
         );
       }
     } else {
-      return {};
+      return {
+        baseUrl,
+        bookId,
+        bookTranslationId,
+        firstChapterApiLink,
+        firstBookData,
+        books,
+      };
     }
     return {
       baseUrl,
@@ -302,117 +309,6 @@ function ThePage({
     };
   };
 
-  async function loadData() {
-    if (!tab) return;
-    const bible = new BibleDataManager({
-      tabId: tab?.id,
-      translation: tab.data.translation,
-      bookId: tab.data.bookId,
-      chapter: tab.data.chapter,
-    });
-    setBible(bible);
-
-    console.log("bible data: ", bible);
-
-    await bible.fetch();
-
-    globalThis.BookId = bible.bookId;
-
-    const { data, loading, error } = bible.getState();
-    console.log(data, tab, "the data loaded");
-
-    globalThis.refreshScrollers && globalThis.refreshScrollers();
-    const { firstBookData, bookTranslationId, baseUrl, books } =
-      await loadTranslationFromUrl();
-
-    if (!configBot.tags.defaultChecked) {
-      if (firstBookData && bookTranslationId && baseUrl) {
-        await bible.changeTranslation(
-          bookTranslationId,
-          firstBookData,
-          baseUrl
-        );
-      }
-      if (books) {
-        if (configBot.tags?.book && books && books?.length > 0) {
-          let bookData;
-          books.forEach((book) => {
-            if (book.id.toLowerCase() === configBot.tags.book.toLowerCase()) {
-              bookData = book;
-            }
-          });
-          if (bookData) {
-            let chapterNo;
-            if (Number(configBot.tags.chapter) < bookData.numberOfChapters)
-              chapterNo = configBot.tags.chapter;
-            const chapterUrl = chapterNo
-              ? bookData.firstChapterApiLink.replace(
-                  "1.json",
-                  `${chapterNo}.json`
-                )
-              : bookData.firstChapterApiLink.replace(
-                  "1.json",
-                  `${tab.data.chapter}.json`
-                );
-            await bible.open(
-              bookData.id,
-              configBot.tags.chapter || 1,
-              bookTranslationId,
-              chapterUrl
-            );
-          }
-        } else if (configBot.tags?.chapter && books?.length > 0) {
-          let bookData;
-          books.forEach((book) => {
-            if (book.id.toLowerCase() === tab.data.bookId.toLowerCase()) {
-              bookData = book;
-            }
-          });
-          let chapterNo;
-          if (Number(configBot.tags.chapter) < bookData.numberOfChapters)
-            chapterNo = configBot.tags.chapter;
-          const chapterUrl = chapterNo
-            ? bookData.firstChapterApiLink.replace(
-                "1.json",
-                `${chapterNo}.json`
-              )
-            : bookData.firstChapterApiLink.replace(
-                "1.json",
-                `${tab.data.chapter}.json`
-              );
-          await bible.open(
-            bookData.id,
-            configBot.tags.chapter || 1,
-            bookTranslationId,
-            chapterUrl
-          );
-        }
-      } else {
-        if (configBot.tags?.book) {
-          await bible.open(
-            configBot.tags?.book,
-            configBot.tags?.chapter || tab.data.chapter
-          );
-        } else if (configBot.tags?.chapter) {
-          await bible.open(tab.data.book, configBot.tags?.chapter);
-        }
-      }
-      configBot.tags.defaultChecked = true;
-    } else {
-      if (masks?.allTranslations) {
-        for (const translation of masks.allTranslations) {
-          if (translation.id === tab.data.translation) {
-            setTagMask(thisBot, "selectedTranslation", translation, "local");
-            break;
-          }
-        }
-      }
-    }
-
-    setData(bible.data);
-    SetShowToolbar(true);
-    whisper(getBot("system", "introduction.searchBar"), "initialize");
-  }
   useEffect(() => {
     const onKey = (e) => {
       if (e.key === "Escape") {
@@ -464,11 +360,14 @@ function ThePage({
 
     async function loadDataSafe() {
       if (!tab) return;
+      const { firstBookData, bookTranslationId, baseUrl, books } =
+        await loadTranslationFromUrl();
       const bible = new BibleDataManager({
         tabId: tab?.id,
         translation: tab.data.translation,
         bookId: tab.data.bookId,
         chapter: tab.data.chapter,
+        baseUrl: tab.data?.baseUrl || "https://bible.helloao.org",
       });
       setBible(bible);
 
@@ -484,8 +383,6 @@ function ThePage({
       console.log(data, tab, "the data loaded");
 
       globalThis.refreshScrollers && globalThis.refreshScrollers();
-      const { firstBookData, bookTranslationId, baseUrl, books } =
-        await loadTranslationFromUrl();
 
       if (cancelled) return; // Check again after async operation
 
@@ -582,7 +479,9 @@ function ThePage({
       whisper(getBot("system", "introduction.searchBar"), "initialize");
     }
 
-    loadDataSafe();
+    if (!bible || (bible && bible?.tabId && bible.tabId !== tab.id)) {
+      loadDataSafe();
+    }
     globalThis.CurrentTab = tab;
 
     return () => {
