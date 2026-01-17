@@ -111,7 +111,10 @@ export class BibleDataManager {
 
     // Debounce: don't start new interval if we just started one
     const now = Date.now();
-    if (globalThis.__lastHistorySchedule && now - globalThis.__lastHistorySchedule < 2000) {
+    if (
+      globalThis.__lastHistorySchedule &&
+      now - globalThis.__lastHistorySchedule < 2000
+    ) {
       return;
     }
     globalThis.__lastHistorySchedule = now;
@@ -183,7 +186,7 @@ export class BibleDataManager {
         : `${forcedBaseUrl || this.baseUrl}/api/${
             forcedTranslation || this.translation
           }/${this.bookId}/${this.chapter}.json`;
-      // console.log(url, customUrl, "firstChapterApiLink");
+      console.log(url, customUrl, "firstChapterApiLink");
 
       const response = await web.get(url);
       const json = response;
@@ -204,6 +207,7 @@ export class BibleDataManager {
             json?.data?.previousChapterApiLink || json?.previousChapterApiLink,
           numberOfChapters:
             json?.data?.book?.numberOfChapters || json?.numberOfChapters,
+          baseUrl: forcedBaseUrl || this.baseUrl,
         };
 
         this.footnotes = json?.data?.chapter?.footnotes || null;
@@ -245,8 +249,16 @@ export class BibleDataManager {
         /^\/api\/([^/]+)\/([^/]+)\/(\d+)\.json$/
       );
 
+      const codexMatch = this.data.nextChapter.match(
+        /([^/]+)\/api\/([^/]+)\/([^/]+)\/(\d+)\.json$/
+      );
+
       if (match) {
         const [, , bookId, chapter] = match;
+        this.bookId = bookId;
+        this.chapter = Number(chapter);
+      } else if (codexMatch) {
+        const [, , , bookId, chapter] = codexMatch;
         this.bookId = bookId;
         this.chapter = Number(chapter);
       }
@@ -261,8 +273,16 @@ export class BibleDataManager {
         /^\/api\/([^/]+)\/([^/]+)\/(\d+)\.json$/
       );
 
+      const codexMatch = this.data.prevChapter.match(
+        /([^/]+)\/api\/([^/]+)\/([^/]+)\/(\d+)\.json$/
+      );
+
       if (match) {
         const [, , bookId, chapter] = match;
+        this.bookId = bookId;
+        this.chapter = Number(chapter);
+      } else if (codexMatch) {
+        const [, , , bookId, chapter] = codexMatch;
         this.bookId = bookId;
         this.chapter = Number(chapter);
       }
