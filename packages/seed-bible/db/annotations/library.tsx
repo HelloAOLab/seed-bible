@@ -61,6 +61,9 @@ export const COMMENT_SCHEMA = z.object({
 
   // user id
   userId: z.nullable(z.optional(z.string())),
+
+  // tags
+  tags: z.nullable(z.optional(z.array(z.string()))),
 });
 
 export const ANNOTATION_DATA_SCHEMA = z.discriminatedUnion("type", [

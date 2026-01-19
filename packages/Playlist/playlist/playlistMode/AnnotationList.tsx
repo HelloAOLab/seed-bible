@@ -2,7 +2,7 @@ const { LoaderSecondary } = Components;
 import { deleteAnnotation, getAnnotationRecord } from "db.annotations.library";
 const { useMemo, useEffect}  = os.appHooks;
 
-const { useState, useRef, useLayoutEffect } = os.appHooks;
+const { useState, useRef } = os.appHooks;
 
 const ChevronDown =
   "https://auth-aux-aobot-prod-filesbucket-141297942820.s3.amazonaws.com/aoBot/d03c885823b300c141eed037466a2ad6ab59f9523e2ada5ac781f4f3e5e7e45f.svg";
@@ -66,6 +66,7 @@ const AnnotationList = ({
   setAnnotationData,
   annotationData,
   annotationSources,
+  tagsSources,
 }) => {
 
   const [filters, setFilters] = useState({...initialFilters});
@@ -140,7 +141,7 @@ const AnnotationList = ({
         isMatch = filters.sources[ele.data[0].createdBy];
       }
       if(Object.keys(filters.tags).length > 0) {
-        isMatch = isMatch && (ele.tags.some((tag) => filters.tags[tag]));
+        isMatch = isMatch && (ele.data[0].tags?.some((tag) => filters.tags[tag]));
       }
       if(Object.keys(filters.verse).length > 0) {
         isMatch = isMatch && (Array.isArray(ele.verse) ? ele.verse.some((verse) => filters.verse[verse]) : filters.verse[ele.verse]);
@@ -267,6 +268,7 @@ const AnnotationList = ({
                 filters={filters}
                 handleClose={() => setShowFilters(false)}
                 annotationSources={annotationSources}
+                tagsSources={tagsSources}
               />
             }
             {filteredAnnotationData.map((ele,index) => (

@@ -2,6 +2,7 @@ const { useEffect, useState, useRef, useMemo } = os.appHooks;
 const { Button, Input } = Components;
 const RecordingUI = await thisBot.RecordVoice();
 const VideoRecordUI = await thisBot.VideoRecordUI();
+import { ColorizeParagraphs, uncolorizeHashtags} from "playlist.playlistMode.AutoTag";
 
 import {
   Editor,
@@ -99,17 +100,17 @@ const COMMAND_BOX_OPTIONS = [
       shout("startRecording", RECORDING_TYPES.link);
     },
   },
-  {
-    icon: "https://auth-aux-aobot-prod-filesbucket-141297942820.s3.amazonaws.com/annotations/76dc5c6ea24d635c2a1f363dc5d3822a618a56ff3484f36795f2bf4ae99ae3c4.svg",
-    label: "Add Tags",
-    onClick: () => {
-      // Notify coming soon
-      ShowNotification({
-        message: "Coming soon!",
-        severity: "info",
-      });
-    },
-  },
+  // {
+  //   icon: "https://auth-aux-aobot-prod-filesbucket-141297942820.s3.amazonaws.com/annotations/76dc5c6ea24d635c2a1f363dc5d3822a618a56ff3484f36795f2bf4ae99ae3c4.svg",
+  //   label: "Add Tags",
+  //   onClick: () => {
+  //     // Notify coming soon
+  //     ShowNotification({
+  //       message: "Coming soon!",
+  //       severity: "info",
+  //     });
+  //   },
+  // },
   {
     icon: "https://auth-aux-aobot-prod-filesbucket-141297942820.s3.amazonaws.com/annotations/8b01074656e936022bbb1655a94e85ba3f9af15d2873d6bd16d01d07d66bdf8b.svg",
     label: "Add File",
@@ -144,6 +145,11 @@ const LineHeight = Mark.create({
         renderHTML: (attrs) =>
           attrs.lineHeight ? { style: `line-height: ${attrs.lineHeight}` } : {},
       },
+      id: {
+        default: null,
+        parseHTML: (el) => el.getAttribute("id"),
+        renderHTML: (attrs) => (attrs.id ? { id: attrs.id } : {}),
+      },
     };
   },
   parseHTML() {
@@ -151,6 +157,54 @@ const LineHeight = Mark.create({
   },
   renderHTML({ HTMLAttributes }) {
     return ["span", HTMLAttributes, 0];
+  },
+});
+
+
+export const CustomSpan = Node.create({
+  name: "customSpan",
+
+  group: "inline",
+  inline: true,
+  content: "inline*",  // ✅ allow text inside
+  atom: false,         // ✅ important (or remove this line)
+
+  addAttributes() {
+    return {
+      id: { default: null },
+      style: { default: null },
+    };
+  },
+
+  parseHTML() {
+    return [{ tag: "span" }];
+  },
+
+  renderHTML({ HTMLAttributes }) {
+    const { id, style } = HTMLAttributes;
+
+    return [
+      "span",
+      {
+        ...(id ? { id } : {}),
+        ...(style ? { style } : {}),
+      },
+      0, // ✅ keeps the inner text
+    ];
+  },
+
+  addNodeView() {
+    return ({ node }) => {
+      const el = document.createElement("span");
+
+      if (node.attrs.id) el.setAttribute("id", node.attrs.id);
+      if (node.attrs.style) el.setAttribute("style", node.attrs.style);
+
+      return {
+        dom: el,
+        contentDOM: el, // ✅ text goes inside span
+      };
+    };
   },
 });
 
@@ -472,9 +526,9 @@ export function CustomAnnotationTextEditor({
   const togglePreview = () => {
     setShowPreview((v) => {
       if(!v && editorObjRef.current) {
-        editorObjRef.current.commands.setContent(canonicalHTMLRef.current);
+        editorObjRef.current.commands.setContent(ColorizeParagraphs(canonicalHTMLRef.current));
       }else {
-        editorObjRef.current.commands.setContent(fakeEscapeMediaTags(editorObjRef.current.getHTML()));
+        editorObjRef.current.commands.setContent(fakeEscapeMediaTags(uncolorizeHashtags(editorObjRef.current.getHTML())));
       }
       return !v;
     });
@@ -578,6 +632,8 @@ export function CustomAnnotationTextEditor({
     console.log("data", data);
   }
 
+  const typingDeboncingTimeout = useRef(null);
+
   // ---- init editor
   useEffect(() => {
     if (!editorRef.current) return;
@@ -617,24 +673,29 @@ export function CustomAnnotationTextEditor({
         Audio,
         CustomImage.configure({ inline: false, allowBase64: true }),
         Link.configure({ openOnClick: true, linkOnPaste: true }),
+        CustomSpan
       ],
       editorProps: {
         handleDOMEvents: {
+          keyup: () => {
+            setIsCommandBox(false);
+            return true;
+          },
           // Block keyboard and menu copy/cut
-          copy: (_view, event) => {
+          copy: () => {
             // event.preventDefault();
             return true;
           },
-          cut: (_view, event) => {
+          cut: () => {
             // event.preventDefault();
             return true;
           },
           // (Optional) stop dragging out selections / drags
-          dragstart: (_view, event) => {
+          dragstart: (_, event) => {
             event.preventDefault();
             return true;
           },
-          paste: async (view, event) => {
+          paste: async (_, event) => {
             const items = event?.clipboardData?.items;
 
               // 🔴 STOP DEFAULT PASTE IMMEDIATELY
@@ -698,7 +759,7 @@ export function CustomAnnotationTextEditor({
               return true;
             }
           },
-          drop: async (view, event) => {
+          drop: async () => {
             return true;
           },
         },
@@ -711,13 +772,13 @@ export function CustomAnnotationTextEditor({
     editor.on("update", () => {
       try {
         // if the editor html ending with '/' then toggle the command box
-        if (editor.getHTML().endsWith('/</p>')) {
+        const editorHTML = editor.getHTML();
+        if (editorHTML.endsWith('/</p>')) {
           toggleCommandBox();
         }
-        const html = fakeUnescapeMediaTags(editor.getHTML());
+        const html = fakeUnescapeMediaTags(ColorizeParagraphs(editorHTML));
         canonicalHTMLRef.current = html;
-        // console.log("canonicalHTMLRef.current", canonicalHTMLRef.current);
-        // console.log("editor.getHTML()", editor.getHTML());
+     
         if (onChange) {
           onChange(html, editor.getJSON());
         }
@@ -1362,7 +1423,7 @@ export function CustomAnnotationTextEditor({
         ref={editorRef}
         className="sre-editor"
       />
-
+      <p className="sre-hashtag-hint">You can add tags by typing # followed by the hashtag. For example, #love #faith #hope.</p>
       {showTuning && (
         <div className="sre-tune-backdrop" onClick={() => setShowTuning(false)}>
           <div className="sre-tune-modal" onClick={(e) => e.stopPropagation()}>
@@ -1784,6 +1845,15 @@ const SRE_STYLES = (minH) => `
 .sre-root { width: 100%; position: relative; }
 .sre-video-root {
   min-height: 500px;
+}
+
+.sre-hashtag-hint {
+    font-size: 14px;
+    background: #ededed;
+    padding: 8px 6px;
+    border-radius: 8px;
+    margin: 8px 0;
+    color: #570000;
 }
 
 .sre-preview-btn {

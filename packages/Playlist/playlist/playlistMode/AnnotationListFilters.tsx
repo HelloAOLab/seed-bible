@@ -20,6 +20,7 @@ const AnnotationListFilters = ({
     onClearFilters,
     filters,
     annotationSources,
+    tagsSources,
     currentOpenedBook,
     handleClose
 }) => {
@@ -125,7 +126,17 @@ const AnnotationListFilters = ({
                 placeholder={t('search_verses')}
             />
             <div className="line-filter-container"></div>
-
+            <AnnotationFilterHeadings title={t('tags')} icon={TagsIcon} onClearFilters={onClearFilters} keyFilter="tags" />
+            <SearchAndAdd
+                onChangeFilters={onChangeFilters}
+                onClearFilters={onClearFilters}
+                filters={filters}
+                sources={tagsSources}
+                selectedSources={filters.tags}
+                keySources="tags"
+                placeholder={t('search_tags')}
+            />
+            <div className="line-filter-container"></div>
             <div style={{ display: "flex", justifyContent: "center", marginBottom: "0.5rem" }}>
                 <Button secondaryAlt onClick={() => onClearFilters()}>{t('reset_filters')}</Button>
             </div>
@@ -150,7 +161,7 @@ const SearchAndAdd = ({
 
     const sourcesMap = useMemo(() => {
         const map:any = {};
-        sources.forEach((source:any) => {
+        sources?.forEach((source:any) => {
             map[source.value] = {
                 name: source.label,
                 profilePicture: source.profilePicture,

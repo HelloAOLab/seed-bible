@@ -31,6 +31,7 @@ const PREVIEW_ICON_INACTIVE = "https://auth-aux-aobot-prod-filesbucket-141297942
 const PREVIEW_ICON_ACTIVE = "https://auth-aux-aobot-prod-filesbucket-141297942820.s3.amazonaws.com/annotations/c9313a31249a980b996ccabd27c6aaf0d0cc4037944f425370ff8b3500644b30.svg";
 
 import { CustomAnnotationTextEditor } from "playlist.playlistMode.CustomAnnotationTextEditor";
+import { extractHashtagsFromHTML } from "playlist.playlistMode.AutoTag";
 
 const DEV_ENV =
   configBot.tags.pattern === "SeedBibleDev" || !configBot.tags.pattern;
@@ -999,15 +1000,17 @@ const AddAnotationUI = ({
         editDataDetails.additionalInfo?.data?.bookId;
       const chapter = editDataDetails?.additionalInfo?.chapter;
 
+      const hashtags = extractHashtagsFromHTML(textHTML);
+
       const comment = {
         type: "comment",
         html: textHTML,
-
         createdAtMs: editDataDetails.createdAtMs ?? Date.now(),
         updatedAtMs: Date.now(),
         userId: editDataDetails.userId,
         userName: editDataDetails.userName,
         userProfilePicture: editDataDetails.userProfilePicture,
+        tags: hashtags,
 
         // book:
         //   editDataDetails.additionalInfo.chapterData?.id ||
@@ -1142,6 +1145,8 @@ const AddAnotationUI = ({
 
       const verseNumbers = [];
 
+      const hashtags = extractHashtagsFromHTML(textHTML);
+
       const comment = {
         type: "comment",
         html: textHTML,
@@ -1150,26 +1155,7 @@ const AddAnotationUI = ({
         userProfilePicture: data.data.photoLink,
         userName: data.data.profileName,
         userId: authBot.id,
-        // book:
-        //   ele.additionalInfo.chapterData?.id ||
-        //   ele.additionalInfo.chapterData?.bookId ||
-        //   ele.additionalInfo?.data?.id ||
-        //   ele.additionalInfo?.data?.bookId,
-        // chapter: ele.additionalInfo.chapter,
-        // translation: "",
-        // chronicle_tags: [
-        //   ...(singleMode ? tags : ele.additionalInfo.tags || []),
-        // ],
-        // data: {
-        //   ...ele,
-        //   additionalInfo: {
-        //     ...ele.additionalInfo,
-        //     layers: [
-        //       scripture
-        //       // ...(singleMode ? embedItems : ele.additionalInfo.layers),
-        //     ],
-        //   },
-        // },
+        tags: hashtags,
       };
 
       let book = "";
