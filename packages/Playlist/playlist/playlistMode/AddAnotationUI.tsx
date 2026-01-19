@@ -980,7 +980,6 @@ const AddAnotationUI = ({
       });
     }
     try {
-      await os.sleep(1000);
       setLoading(true);
       const promisesArray = [];
 
@@ -1003,11 +1002,9 @@ const AddAnotationUI = ({
 
       const hashtags = extractHashtagsFromHTML(textHTML);
 
-
       const comment = {
         type: "comment",
         html: textHTML,
-
         createdAtMs: editDataDetails.createdAtMs ?? Date.now(),
         updatedAtMs: Date.now(),
         userId: editDataDetails.userId,
@@ -1138,8 +1135,6 @@ const AddAnotationUI = ({
     }
 
     setLoading(true);
-
-    await os.sleep(1000);
 
     try {
       const promisesArray = [];
