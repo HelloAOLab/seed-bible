@@ -1597,6 +1597,7 @@ function ThePage({
               >
                 <VerseToolbar
                   clickedVerses={clickedVerses}
+                  showVerseToolbar={showVerseToolbar}
                   toggleVerseHighlight={toggleVerseHighlight}
                   book={data?.book}
                   setClickedVerses={setClickedVerses}

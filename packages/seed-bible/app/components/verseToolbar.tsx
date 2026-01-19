@@ -19,6 +19,7 @@ export function VerseToolbar({
   highlighted,
   onClose,
   activeSpace,
+  showVerseToolbar,
   spaces,
 }) {
   // Get Selection UI settings - first try globalThis, then fall back to saved space data
@@ -291,6 +292,12 @@ export function VerseToolbar({
 
   return (
     <>
+      <style>{`
+        .toolbar-1.mounted{
+          pointer-events:${globalThis.IsMobileNow() && showVerseToolbar ? "none !important" : ""}
+        }
+        
+        `}</style>
       {globalThis.IsMobileNow() && selectionSettings.showSelectedItems && (
         <>
           <div className="verse-ref">
