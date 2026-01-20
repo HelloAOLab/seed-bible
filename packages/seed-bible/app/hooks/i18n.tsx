@@ -359,7 +359,13 @@ const resources = {
       noResults: "No results found",
 
       // Playlist.
+      bookmarkUpdatedSuccessfully: "Bookmark Updated successfully.",
+      failedToUpdateBookmark: "Failed to update bookmark. Please try again.",
       from: "From",
+      annotate: "Annotate",
+      addToQueue: "Add to queue",
+      bookmark: "Bookmark",
+      unbookmark: "Unbookmark",
       search_tags: "Search tags",
       reset_filters: "Reset Filters",
       to: "To",
@@ -1076,7 +1082,13 @@ const resources = {
 
       // Playlist.
       preview: "Vista previa",
+      bookmarkUpdatedSuccessfully: "Marcado actualizado exitosamente.",
+      failedToUpdateBookmark: "Error al actualizar el marcado. Por favor, inténtalo de nuevo.",
       search_tags: "Buscar etiquetas",
+      annotate: "Anotar",
+      addToQueue: "Agregar a cola",
+      bookmark: "Marcar",
+      unbookmark: "Desmarcar",
       reset_filters: "Restablecer filtros",
       from: "Desde",
       to: "Hasta",
@@ -1803,7 +1815,13 @@ const resources = {
       noResults: "لم يتم العثور على نتائج",
 
       // Playlist.
+      bookmarkUpdatedSuccessfully: "تم تحديث التصفيح بنجاح.",
+      failedToUpdateBookmark: "خطأ في تحديث التصفيح. يرجى المحاولة مرة أخرى.",
       anytime: "كيفية أي وقت",
+      annotate: "تعليق",
+      addToQueue: "إضافة إلى المكان",
+      bookmark: "تصفيح",
+      unbookmark: "إزالة التصفيح",
       reset_filters: "إعادة تعيين التصفيات",
       search_tags: "بحث العلامات",
       from: "من",
@@ -2511,6 +2529,12 @@ const resources = {
 
       // Playlist.
       preview: "पूर्वावलोकन",
+      annotate: "टिप्पणी",
+      bookmarkUpdatedSuccessfully: "टिप्पणी सफलतापूर्वक अपडेट की गई है।",
+      failedToUpdateBookmark: "टिप्पणी अपडेट करने में विफल। कृपया पुनः कोशिश करें।",
+      addToQueue: "कूद में जोड़ें",
+      bookmark: "टिप्पणी",
+      unbookmark: "टिप्पणी",
       anytime: "किसी भी समय",
       reset_filters: "फ़िल्टर रीसेट करें",
       from: "से",

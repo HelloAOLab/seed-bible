@@ -6,6 +6,12 @@
     "opsz" 24;
 }
 
+  
+#hashtag {
+  color: var(--primaryColor) !important;
+}
+
+
 .playlist-cont-parent,
  .playlist-cont-parent *,
  .playlist-cont-parent::after,

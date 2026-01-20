@@ -3,6 +3,7 @@ const { Button, Input } = Components;
 const RecordingUI = await thisBot.RecordVoice();
 const VideoRecordUI = await thisBot.VideoRecordUI();
 import { ColorizeParagraphs, uncolorizeHashtags} from "playlist.playlistMode.AutoTag";
+import { SelectionOptions } from "playlist.playlistMode.SelectionOptions";
 
 import {
   Editor,
@@ -97,6 +98,7 @@ const COMMAND_BOX_OPTIONS = [
     icon: "https://auth-aux-aobot-prod-filesbucket-141297942820.s3.amazonaws.com/annotations/95176265a3a33a0077c8b11b493470df3393acfc3ff5411c8fe45976d96be46d.svg",
     label: "Add Link",
     onClick: () => {
+      globalThis.ThruCommandBox = true;
       shout("startRecording", RECORDING_TYPES.link);
     },
   },
@@ -116,13 +118,14 @@ const COMMAND_BOX_OPTIONS = [
     label: "Add File",
     onClick: async () => {
       const files = await os.showUploadFiles();
-      shout("onHandleDropFiles", {files});
+      shout("onHandleDropFiles", {files, thruCommandBox: true});
     },
   },
   {
     icon: "https://auth-aux-aobot-prod-filesbucket-141297942820.s3.amazonaws.com/annotations/14c602cebbe4c6872c9fcf80015865c3b3f70391608bf58b92ad1cc8e068212c.svg",
     label: "Add Playlist",
     onClick: () => {
+      globalThis.ThruCommandBox = true;
       // Notify coming soon
       ShowNotification({
         message: "Coming soon!",
@@ -469,6 +472,9 @@ const Audio = Node.create({
   },
 });
 
+
+
+
 export function CustomAnnotationTextEditor({
   instanceId,
   className,
@@ -517,6 +523,33 @@ export function CustomAnnotationTextEditor({
   const [link, setLink] = useState("");
   const [isCommandBox, setIsCommandBox] = useState(false);
 
+  const [isTagSuggestionsOpen, setIsTagSuggestionsOpen] = useState(false);
+
+  const TAG_OPTIONS = useMemo(() => [
+    ...(globalThis?.UsedTags || []).map((tag) => ({
+      key: tag.label,
+      label: tag.label,
+    })),
+  ], [globalThis?.UsedTags]);
+
+  const onClickTags = (tag:any) => {
+    const tagHTML = `<span id=${showPreview?"hashtag":""}>${tag.label}</span><br/>`;
+    if(!editorObjRef.current) return;
+    const { from } = editorObjRef.current.state.selection;
+    // Replace the last typed "#" with "#tag"
+    editorObjRef.current
+      .chain()
+      .focus()
+      .insertContentAt({ from: from - 1, to: from }, `${tagHTML} `)
+      .run();
+
+    setIsTagSuggestionsOpen(false);
+  }
+
+  const toggleTagSuggestions = () => {
+    setIsTagSuggestionsOpen((prev) => !prev);
+  }
+
   const toggleCommandBox = () => {
     setIsCommandBox((prev) => !prev);
   };
@@ -563,6 +596,12 @@ export function CustomAnnotationTextEditor({
     if (html) {
       setTimeout(() => {
         if (!editorObjRef.current) return;
+        if(globalThis.ThruCommandBox) {
+          globalThis.ThruCommandBox = false;
+          const { from } = editorObjRef.current.state.selection;
+          editorObjRef.current.chain().focus().insertContentAt({ from: from - 1, to: from }, html).run();
+          return;
+        }
         editorObjRef.current.chain().focus().insertContent(html).run();
       }, 50);
     }
@@ -677,8 +716,20 @@ export function CustomAnnotationTextEditor({
       ],
       editorProps: {
         handleDOMEvents: {
-          keyup: () => {
+          keyup: (_, event:any) => {
+            if (event.key === "Shift") {
+              return true;
+            }
+            if(event.key === '/') {
+              toggleCommandBox();
+              return;
+            }
             setIsCommandBox(false);
+            if(event.key === '#' && TAG_OPTIONS.length > 0) {
+              toggleTagSuggestions();
+              return;
+            }
+            setIsTagSuggestionsOpen(false);
             return true;
           },
           // Block keyboard and menu copy/cut
@@ -773,9 +824,7 @@ export function CustomAnnotationTextEditor({
       try {
         // if the editor html ending with '/' then toggle the command box
         const editorHTML = editor.getHTML();
-        if (editorHTML.endsWith('/</p>')) {
-          toggleCommandBox();
-        }
+      
         const html = fakeUnescapeMediaTags(ColorizeParagraphs(editorHTML));
         canonicalHTMLRef.current = html;
      
@@ -1122,11 +1171,21 @@ export function CustomAnnotationTextEditor({
       const originalHTML = generateEmbedFromUrl(link.trim(), name.trim());
       const embedHTML = fakeEscapeMediaTags(originalHTML, showPreview);
   
-      if(embedHTML === null) return ShowNotification({
-        message: "Invalid link!",
-        severity: "error",
-      });
-      editorObjRef.current.chain().focus().insertContent(embedHTML).run();
+      if(embedHTML === null) {
+        globalThis.ThruCommandBox = false;
+        
+        return ShowNotification({
+          message: "Invalid link!",
+          severity: "error",
+        });
+      }
+      if(globalThis.ThruCommandBox) {
+        globalThis.ThruCommandBox = false;
+        const { from } = editorObjRef.current.state.selection;
+        editorObjRef.current.chain().focus().insertContentAt({ from: from - 1, to: from }, embedHTML).run();
+      } else {
+        editorObjRef.current.chain().focus().insertContent(embedHTML).run();
+      }
       setLink("");
       setName("");
       setRecording(null);
@@ -1169,6 +1228,7 @@ export function CustomAnnotationTextEditor({
       setLoading(false);
 
       if (!url) {
+        globalThis.ThruCommandBox = false;
         return ShowNotification({
           message: "Failed to upload File!",
           severity: "error",
@@ -1191,7 +1251,16 @@ export function CustomAnnotationTextEditor({
         `;
       }
 
-      editorObjRef.current.chain().focus().insertContent(fakeEscapeMediaTags(htmlToInsert, showPreview)).run();
+      htmlToInsert = fakeEscapeMediaTags(htmlToInsert, showPreview);
+
+      if(globalThis.ThruCommandBox) {
+        globalThis.ThruCommandBox = false;
+        const { from } = editorObjRef.current.state.selection;
+        editorObjRef.current.chain().focus().insertContentAt({ from: from - 1, to: from }, htmlToInsert).run();
+      } else {
+        editorObjRef.current.chain().focus().insertContent(htmlToInsert).run();
+      }
+
       setRecording(null);
       setData(null);
     }
@@ -1216,6 +1285,10 @@ export function CustomAnnotationTextEditor({
           </div>
         ))}
       </div>}
+
+    {isTagSuggestionsOpen && <SelectionOptions handleClose={() => setIsTagSuggestionsOpen(false)} options={TAG_OPTIONS} onClickOption={onClickTags} />}
+
+
       {(isMic || isLink || isVideo) && 
           <div
                   style={{
@@ -1423,7 +1496,7 @@ export function CustomAnnotationTextEditor({
         ref={editorRef}
         className="sre-editor"
       />
-      <p className="sre-hashtag-hint">You can add tags by typing # followed by the hashtag. For example, #love #faith #hope.</p>
+      { false && <p className="sre-hashtag-hint">You can add tags by typing # followed by the hashtag. For example, #love #faith #hope.</p> }
       {showTuning && (
         <div className="sre-tune-backdrop" onClick={() => setShowTuning(false)}>
           <div className="sre-tune-modal" onClick={(e) => e.stopPropagation()}>
@@ -1846,7 +1919,6 @@ const SRE_STYLES = (minH) => `
 .sre-video-root {
   min-height: 500px;
 }
-
 .sre-hashtag-hint {
     font-size: 14px;
     background: #ededed;

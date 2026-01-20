@@ -60,7 +60,7 @@ function autoTagHTML(html) {
       const span = doc.createElement("span");
       span.textContent = tag;
       span.id = "hashtag";
-      span.style.color = randomColor();
+      // span.style.color = randomColor();
 
       fragment.appendChild(span);
 
@@ -74,12 +74,6 @@ function autoTagHTML(html) {
 
   return doc.body.innerHTML;
 }
-
-
-  
-  function randomColor() {
-    return `hsl(${Math.random() * 360}, 70%, 55%)`;
-  }
   
 function extractHashtagsFromHTML(html: string) {
   const hashtagRegex = /#[\w]+/g;
