@@ -141,13 +141,13 @@ const SettingsSidebar = () => {
       expandable: false,
       onClick: () => setSideBarMode("extensions"),
     },
-    {
+    /*{
       key: "selectionUI",
       labelKey: "selectionUI",
       icon: <SelectionUIIcon />,
       expandable: false,
       onClick: () => setSideBarMode("selectionUISettings"),
-    },
+    },*/
     {
       key: "bibleDefaults",
       labelKey: "bibleDefaults",
@@ -299,6 +299,13 @@ const SettingsSidebar = () => {
           icon: `instant_mix`,
           onClick: () => setSideBarMode("editorToolbarSettings"),
         },
+        {
+          key: "selectionUI",
+          labelKey: "selectionUI",
+          icon: <SelectionUIIcon />,
+          expandable: false,
+          onClick: () => setSideBarMode("selectionUISettings"),
+        },
         // {
         //   key: "text",
         //   label: "Text",
@@ -317,6 +324,7 @@ const SettingsSidebar = () => {
           icon: "description",
           onClick: () => setSideBarMode("tabSettings"),
         },
+
         // {
         //   key: "mentuText",
         //   label: "Menu text",
@@ -1452,7 +1460,10 @@ const SettingsSidebar = () => {
                         {/* Subscribed Users List */}
                         {loadingSubs ? (
                           <div
-                            style={{ justifyContent: "center", padding: "20px" }}
+                            style={{
+                              justifyContent: "center",
+                              padding: "20px",
+                            }}
                             className="activeAccount"
                           >
                             <div className="softText">Loading...</div>
@@ -1478,7 +1489,8 @@ const SettingsSidebar = () => {
                                   marginBottom: "6px",
                                   borderRadius: "8px",
                                   backgroundColor: "var(--pageBackground)",
-                                  opacity: unsubscribingId === user.id ? 0.5 : 1,
+                                  opacity:
+                                    unsubscribingId === user.id ? 0.5 : 1,
                                 }}
                               >
                                 <div
@@ -1526,7 +1538,10 @@ const SettingsSidebar = () => {
                                     background: "transparent",
                                     border: "1px solid #e0e0e0",
                                     borderRadius: "6px",
-                                    cursor: unsubscribingId === user.id ? "wait" : "pointer",
+                                    cursor:
+                                      unsubscribingId === user.id
+                                        ? "wait"
+                                        : "pointer",
                                     padding: "4px 8px",
                                     display: "flex",
                                     alignItems: "center",
@@ -1538,7 +1553,9 @@ const SettingsSidebar = () => {
                                     className="material-symbols-outlined"
                                     style={{ fontSize: "16px", color: "#666" }}
                                   >
-                                    {unsubscribingId === user.id ? "hourglass_empty" : "person_remove"}
+                                    {unsubscribingId === user.id
+                                      ? "hourglass_empty"
+                                      : "person_remove"}
                                   </span>
                                 </button>
                               </div>
@@ -1622,12 +1639,15 @@ const SettingsSidebar = () => {
                                     borderRadius: "8px",
                                     padding: "8px 12px",
                                     cursor: subscribing ? "wait" : "pointer",
-                                    opacity: subscribing || !searchFor ? 0.6 : 1,
+                                    opacity:
+                                      subscribing || !searchFor ? 0.6 : 1,
                                   }}
                                   className="create-profile-btn"
                                 >
                                   <span className="material-symbols-outlined">
-                                    {subscribing ? "hourglass_empty" : "person_add"}
+                                    {subscribing
+                                      ? "hourglass_empty"
+                                      : "person_add"}
                                   </span>
                                 </button>
                               </div>

@@ -172,7 +172,8 @@ const resources = {
       toolbarIcons: "Toolbar Icons",
       selectionUI: "Selection UI",
       selectionIcons: "Selection Icons",
-      selectionUIDescription: "Selection UI menu for your page...",
+      selectionUIDescription:
+        "Edit options that appear when selecting scripture text...",
       showSelectedItems: "Show selected verses",
       showHighlightColors: "Show highlight UI",
       showIconText: "Show Icon text",
