@@ -34,7 +34,16 @@ function hashString(str) {
   return h >>> 0;
 }
 
-function computeVisual(remoteId) {
+function computeVisual(remoteId, availableColorIndices?: number[], availableIconIndices?: number[]) {
+  // If available indices are provided, pick from those
+  if (availableColorIndices && availableIconIndices) {
+    const h = hashString(String(remoteId));
+    const iconIndex = availableIconIndices[h % availableIconIndices.length];
+    const colorIndex = availableColorIndices[Math.floor(h / availableIconIndices.length) % availableColorIndices.length];
+    return { iconIndex, colorIndex };
+  }
+
+  // Fallback to old behavior
   const h = hashString(String(remoteId));
   const iconIndex = h % icons.length;
   const colorIndex = Math.floor(h / icons.length) % colors.length;
