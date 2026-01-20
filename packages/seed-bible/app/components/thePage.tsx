@@ -556,7 +556,7 @@ function ThePage({
       //   chapter: data?.chapter,
       // });
       const emitter = getBot("system", "app.emitter");
-
+      os.log("emitter updateSharingData", emitter);
       sendRemoteData(emitter.masks.otherRemotes, "updateSharingData", {
         id: tab?.id,
         bookId: data?.bookId,
@@ -574,23 +574,23 @@ function ThePage({
     }
   }, [activeTab, data, tab]);
 
-  useEffect(() => {
-    // Create the interval
-    const interval = setInterval(() => {
-      if (data) {
-        const emitter = getBot("system", "app.emitter");
+  // useEffect(() => {
+  //   // Create the interval
+  //   const interval = setInterval(() => {
+  //     if (data) {
+  //       const emitter = getBot("system", "app.emitter");
 
-        sendRemoteData(emitter.masks.otherRemotes, "updateSharingData", {
-          id: tab?.id,
-          bookId: data?.bookId,
-          book: data?.book,
-          chapter: data?.chapter,
-        });
-      }
-    }, 1000);
-    globalThis.CurrentTab = tab;
-    return () => clearInterval(interval);
-  }, [data]);
+  //       sendRemoteData(emitter.masks.otherRemotes, "updateSharingData", {
+  //         id: tab?.id,
+  //         bookId: data?.bookId,
+  //         book: data?.book,
+  //         chapter: data?.chapter,
+  //       });
+  //     }
+  //   }, 1000);
+  //   globalThis.CurrentTab = tab;
+  //   return () => clearInterval(interval);
+  // }, [data]);
 
   useEffect(() => {
     const handleBeforeUnload = (e) => {

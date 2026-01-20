@@ -343,9 +343,9 @@ function Tab({
   const { openPopupSettings, closePopupSettings, userURL, t } =
     useSideBarContext();
   const { setCanvasMode, setMapMode } = useBibleContext();
-  // useEffect(() => {
-  //   // console.log(onlineUsers, "onlineUsers var");
-  // }, [onlineUsers]);
+  useEffect(() => {
+    console.log(onlineUsers, "onlineUsers var");
+  }, [onlineUsers]);
   const {
     removeTab,
     multiSelectMode,
@@ -538,11 +538,14 @@ function Tab({
   const circles = onlineUsers
     ? Object.fromEntries(
         Object.entries(onlineUsers).filter(
-          ([, v]) =>
-            v?.bookId === el?.data?.bookId && v?.chapter === el?.data?.chapter
+          ([k, v]) => {
+            console.log('Filtering user:', k, 'v:', v, 'el.data:', el?.data);
+            return v?.bookId === el?.data?.bookId && v?.chapter === el?.data?.chapter;
+          }
         )
       )
     : {};
+  // console.log('circles result:', circles, 'for tab:', el?.data?.book, el?.data?.chapter);
   const notJoinedSharedTab = sharedTab && activeTab !== el.id;
   const info =
     el.sharedTab && globalThis?.GetOrSetVisualInTags(tags.hostIdForOnlineTab);
