@@ -4,7 +4,7 @@ const items = [
   {
     icon: <MenuIcon name="file_export" />,
     title: () =>
-      !globalThis.IsPlaylistPlaying ? "Add annotation" : "Add to queue",
+      !globalThis.IsPlaylistPlaying ? t("annotate") : t("addToQueue"),
     onClick: (selectedItem) => {
       const dataTempItems = [];
       selectedItem.verseNumber?.forEach((vNumber) => {
@@ -29,7 +29,7 @@ const items = [
       if (!globalThis.IsPlaylistPlaying) {
         if (!authBot?.id) {
           return ShowNotification({
-            message: "Login to user this feature",
+            message: t("pleaseLoginToUseFeature"),
             severity: "error",
           });
         }
@@ -65,14 +65,14 @@ const items = [
     title: (item = {}) => {
       const title = `${item?.book} ${item?.chapter}:${item?.verseNumber?.join(", ")}`;
       if (thisBot.tags.bookmarks[title]) {
-        return "Remove Bookmark";
+        return t("unbookmark");
       }
-      return "Add bookmark";
+      return t("bookmark");
     },
     onClick: async (selectedItem) => {
       if (!authBot?.id) {
         return ShowNotification({
-          message: "Login to user this feature",
+          message: t("pleaseLoginToUseFeature"),
           severity: "error",
         });
       }
@@ -111,8 +111,8 @@ const items = [
           oldBookmarks[title] = {
             ...dataItemTemp,
           };
-          msg = `Bookmark Updated successfully.`;
-          errorMsg = "Failed to update bookmark. Please try again.";
+          msg = t("bookmarkUpdatedSuccessfully");
+          errorMsg = t("failedToUpdateBookmark");
         }
       });
 

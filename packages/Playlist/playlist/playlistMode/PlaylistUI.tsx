@@ -460,6 +460,7 @@ const Playlist = () => {
           setAnnotationData(allAnnotations);
           annotationSourcesRef.current = annotationSources;
           tagsSourcesRef.current = tagsSources;
+          globalThis.UsedTags = [...tagsSources];
         } catch (e) {
           console.log(e);
           setFetchingAnnotation(false);
