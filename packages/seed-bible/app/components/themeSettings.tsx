@@ -33,7 +33,7 @@ const ADVANCED_SETTINGS_SECTIONS = {
     labelKey: "containerBackgrounds",
     fields: [
       { labelKey: "panelBackground", field: "panelBackground" },
-      { labelKey: "panelBackground", field: "panelBackground" },
+      { labelKey: "pageBackground", field: "pageBackground" },
     ],
   },
   tab: {
