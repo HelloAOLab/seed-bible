@@ -48,6 +48,7 @@ function showEventPopup(
   customRepeatRef,
   setSelectedOption,
   selectedOption,
+  calendarRef,
   onSubmit
 ) {
   let playListsFiltered = [];
@@ -420,7 +421,7 @@ function showEventPopup(
       renderReadingPlans();
     };
   }
-
+  const contentEl = document.querySelector(".content");
   const instance = tippy(document.body, {
     getReferenceClientRect: () => info.dayEl.getBoundingClientRect(),
     content: popup,
@@ -430,8 +431,8 @@ function showEventPopup(
     placement: "auto",
     hideOnClick: false,
     theme: "custom-light",
-    appendTo: document.body,
-    zIndex: 100,
+    appendTo: contentEl,
+    zIndex: 10000,
   });
 
   instance.show();

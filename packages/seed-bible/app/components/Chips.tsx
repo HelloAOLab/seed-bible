@@ -37,14 +37,14 @@ function SharePopup({
       icon: "https://upload.wikimedia.org/wikipedia/commons/thumb/6/6b/WhatsApp.svg/512px-WhatsApp.svg.png",
       share: () => os.openURL(`https://wa.me/?text=${shareText}`),
     },
-    {
-      name: "Facebook",
-      icon: "https://upload.wikimedia.org/wikipedia/commons/thumb/0/05/Facebook_Logo_%282019%29.png/600px-Facebook_Logo_%282019%29.png",
-      share: () =>
-        os.openURL(
-          `https://www.facebook.com/sharer.php?u=https://ao.bot/?inst=${os.getCurrentInst()}&book=${configBot.tags.book}&chapter=${configBot.tags.chapter}`
-        ),
-    },
+    // {
+    //   name: "Facebook",
+    //   icon: "https://upload.wikimedia.org/wikipedia/commons/thumb/0/05/Facebook_Logo_%282019%29.png/600px-Facebook_Logo_%282019%29.png",
+    //   share: () =>
+    //     os.openURL(
+    //       `https://www.facebook.com/sharer.php?u=https://ao.bot/?inst=${os.getCurrentInst()}&book=${configBot.tags.book}&chapter=${configBot.tags.chapter}`
+    //     ),
+    // },
     {
       name: "X",
       icon: "https://upload.wikimedia.org/wikipedia/commons/thumb/5/5a/X_icon_2.svg/512px-X_icon_2.svg.png",
@@ -389,6 +389,7 @@ const QRCodeComponent = ({ url = "https://example.com/session/12345" }) => {
             marginBottom: "30px",
             fontSize: "24px",
             fontWeight: "600",
+            fontFamily: "Satoshi",
           }}
         >
           Session QR Code
@@ -449,6 +450,10 @@ const QRCodeComponent = ({ url = "https://example.com/session/12345" }) => {
             transition: "all 0.3s ease",
             transform: copied ? "scale(0.98)" : "scale(1)",
             boxShadow: copied ? "none" : "0 4px 12px rgba(102, 126, 234, 0.4)",
+            fontFamily: "Satoshi",
+                        background: "#d36433",
+            color: "white",
+
           }}
         >
           {copied ? "✓ Copied!" : "Copy Session Link"}
@@ -506,7 +511,7 @@ const JoinSessionComponent = ({ onJoin, translations = {} }) => {
           width: "90%",
           maxHeight: 373,
           boxShadow: "rgba(0, 0, 0, 0.15) 0px 10px 40px",
-          height: "30%",
+          height: 373,
         }}
       >
         {/* Logo */}

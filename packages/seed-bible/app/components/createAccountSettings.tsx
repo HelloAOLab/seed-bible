@@ -150,6 +150,12 @@ const CreateAccountSettings = () => {
             onClick={async () => {
               const authBot = await os.requestAuthBot();
               if (authBot?.id) {
+                if (!tags.usersAuthIds) {
+                  tags.usersAuthIds = [];
+                }
+                if (!tags.usersAuthIds.includes(authBot.id)) {
+                  tags.usersAuthIds.push(authBot.id);
+                }
                 setIsSignedIn(true);
                 setUid(authBot.id);
                 init();

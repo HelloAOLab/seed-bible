@@ -1,8 +1,6 @@
 html,
 body {
   position: fixed !important;
-  left: -10px !important;
-  top: -10px !important;
   font-optical-sizing: auto;
 }
 
@@ -214,7 +212,9 @@ svg path {
   margin-top: 0;
   margin-bottom: 35px;
 }
-
+.whiteColored {
+  color: #ffffff !important;
+}
 .blackText {
   color: var(--text1) !important;
   font-family: "Satoshi", system-ui, sans-serif;

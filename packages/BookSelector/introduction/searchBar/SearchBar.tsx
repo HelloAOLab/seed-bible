@@ -437,11 +437,13 @@ const SearchBar = () => {
               if (value.includes("/available_translations.json")) {
                 const translations: TranslationInterface[] = data.translations;
                 const tempApiTranslations = { ...apiTranslations };
-                let defaultTranslation;
+                let defaultTranslation: TranslationInterface | undefined;
+                const controlledTranslations: TranslationInterface[] = [];
                 for (const translation of translations) {
                   const languageEnglishName =
                     translation.languageEnglishName.toLowerCase();
                   const controlledTranslation = {
+                    ...translation,
                     name: translation.name,
                     languageEnglishName: languageEnglishName,
                     id: translation.id,
@@ -449,7 +451,8 @@ const SearchBar = () => {
                     origin: url.origin,
                     shortName: translation.shortName,
                   };
-                  if (i === 0) {
+                  controlledTranslations.push(controlledTranslation);
+                  if (!defaultTranslation) {
                     defaultTranslation = controlledTranslation;
                   }
                   tempApiTranslations[languageEnglishName] =
@@ -470,14 +473,41 @@ const SearchBar = () => {
                     ]);
                   }
                 }
+                setTagMask(
+                  thePage,
+                  "newTranslations",
+                  masks?.newTranslations
+                    ? [...masks.newTranslations, ...controlledTranslations]
+                    : controlledTranslations,
+                  "local"
+                );
                 setSelectedTranslation(defaultTranslation);
                 setApiTranslations(tempApiTranslations);
                 setShowCustomTranslation(false);
+                if (defaultTranslation) {
+                  web
+                    .get(`${defaultTranslation.listOfBooksApiLink}`)
+                    .then((e) => {
+                      const book0 = e.data.books[0];
+                      ChangeTranslation(
+                        defaultTranslation.id,
+                        book0,
+                        defaultTranslation.origin
+                      );
+                      setBooksData([...e.data.books]);
+                      setSelectingTranslation(false);
+                      setOpenSidebar(false);
+                    })
+                    .catch((e) => {
+                      console.log(e);
+                    });
+                }
                 os.log("All Translations Added");
               } else {
                 if (data?.translation && data?.books) {
                   const translation = data.translation;
                   const controlledTranslation = {
+                    ...translation,
                     name: translation.name,
                     languageEnglishName:
                       translation.languageEnglishName.toLowerCase(),
@@ -497,9 +527,12 @@ const SearchBar = () => {
                     os.toast(`Translation Already Exists!`);
                     ChangeTranslation(
                       controlledTranslation.id,
-                      book0,
+                      data.books[0],
                       controlledTranslation.origin
                     );
+                    setBooksData([...data.books[0]]);
+                    setSelectingTranslation(false);
+                    setOpenSidebar(false);
                   } else {
                     const translations = { ...apiTranslations };
 
@@ -536,9 +569,12 @@ const SearchBar = () => {
                     }
                     ChangeTranslation(
                       controlledTranslation.id,
-                      book0,
+                      data.books[0],
                       controlledTranslation.origin
                     );
+                    setBooksData([...data.books[0]]);
+                    setSelectingTranslation(false);
+                    setOpenSidebar(false);
                     os.toast(`Translation ${value} added!`);
                   }
                 } else {
@@ -677,11 +713,11 @@ const SearchBar = () => {
       ]);
     }
     setTagMask(thePage, "selectedTranslation", selectedTranslation, "local");
-    console.log(
-      selectedTranslation,
-      "defaultTranslations updated",
-      !apiTranslations[selectedTranslation.languageEnglishName.toLowerCase()]
-    );
+    // console.log(
+    //   selectedTranslation,
+    //   "defaultTranslations updated",
+    //   !apiTranslations[selectedTranslation.languageEnglishName.toLowerCase()]
+    // );
     fetchBookdata();
   }, [selectedTranslation, apiTranslations, defaultTranslations]);
 
@@ -1833,7 +1869,7 @@ const SideBarChapters = (props: {
             class={`chapter-btn`}
             onCLick={() =>
               handleChapterClick({
-                id: bookData.id,
+                id: bookData?.id,
                 translationId: bookData.translationId,
                 numberOfChapters: bookData.numberOfChapters,
                 bookName: psalmsPartName({ index: i }),
@@ -1863,7 +1899,7 @@ const SideBarChapters = (props: {
             class={`chapter-btn ${i === bookData.numberOfChapters - 1 ? "lastOne" : ""}`}
             onCLick={() =>
               handleChapterClick({
-                id: bookData.id,
+                id: bookData?.id,
                 translationId: bookData.translationId,
                 numberOfChapters: bookData.numberOfChapters,
                 bookName: bookData.commonName,

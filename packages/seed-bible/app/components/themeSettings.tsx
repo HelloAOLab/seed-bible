@@ -105,120 +105,117 @@ const ADVANCED_SETTINGS_SECTIONS = {
   },
 };
 
-// Professional Modern Color Scheme
-// Primary #3B82F6, Primary Dark #2563EB, Secondary #8B5CF6
-// Accent/Tertiary #06B6D4, Background #F8FAFC, Surface #FFFFFF
-// Text Primary #0F172A, Text Secondary #64748B, Border #E2E8F0
+// Default Theme - Warm Orange/Amber accent
+// Based on the design mockup with orange accent colors
 const defaultTheme = {
   // Main colors
-  primaryColor: "#3B82F6",
-  secondaryColor: "#8B5CF6",
-  tertiaryColor: "#06B6D4",
+  primaryColor: "#E07B4C",
+  secondaryColor: "#D2691E",
+  tertiaryColor: "#CD853F",
   // Container backgrounds
-  // panelBackground: "#F8FAFC",
-  themeSideMenu: "#F8FAFC",
-  panelBackground: "#f3f1f1",
+  themeSideMenu: "#FFFFFF",
+  panelBackground: "#F8FAFC",
   // Tab
-  tabSelection: "#3B82F6",
-  activeTabBackground: "#FFFFFF",
-  activeTabText: "#0F172A",
-  activeTabBorder: "#3B82F6",
-  activeTabFill: "#2b74e994",
-  simpleTabText: "#64748B",
-  inactiveTabText: "#64748B",
+  tabSelection: "#E07B4C",
+  activeTabBackground: "#FADDD1",
+  activeTabText: "#E07B4C",
+  activeTabBorder: "#E07B4C",
+  activeTabFill: "#FADDD1",
+  simpleTabText: "#333333",
+  inactiveTabText: "#333333",
   // Buttons
-  primaryButton: "#3B82F6",
+  primaryButton: "#E07B4C",
   primaryButtonColor: "#FFFFFF",
-  primaryButtonBorder: "#3B82F6",
-  primaryButtonFill: "#3B82F6",
-  secondaryButton: "#8B5CF6",
+  primaryButtonBorder: "#E07B4C",
+  primaryButtonFill: "#E07B4C",
+  secondaryButton: "#D2691E",
   secondaryButtonColor: "#FFFFFF",
-  secondaryButtonBorder: "#8B5CF6",
-  secondaryButtonFill: "#8B5CF6",
-  tertiaryButtonColor: "#0F172A",
-  buttonBorder: "#E2E8F0",
+  secondaryButtonBorder: "#D2691E",
+  secondaryButtonFill: "#D2691E",
+  tertiaryButtonColor: "#333333",
+  buttonBorder: "#E1E3EA",
   // Scripture text
-  bookHeadingColor: "#0F172A",
-  chapterHeadingColor: "#0F172A",
-  verseNumberColor: "#06B6D4",
-  verseTextColor: "#0F172A",
+  bookHeadingColor: "#333333",
+  chapterHeadingColor: "#333333",
+  verseNumberColor: "#E07B4C",
+  verseTextColor: "#333333",
   pageBackground: "#FFFFFF",
-  pageTextColor: "#0F172A",
+  pageTextColor: "#333333",
   // Side menu
-  heading1Color: "#0F172A",
-  heading2Color: "#0F172A",
-  heading3Color: "#0F172A",
-  descriptionTextColor: "#64748B",
-  menuTextColor: "#0F172A",
-  breadcrumbsColor: "#64748B",
-  sectionBackground: "#3B82F6",
-  spaceNameColor: "#0F172A",
-  sideMenuIconsColor: "#0F172A",
-  selectedSpaceColor: "#3B82F6",
-  unselectedSpaceColor: "#E2E8F0",
-  spaceNameText: "#0F172A",
-  addButtonBackground: "transparent",
-  addButtonIcon: "gray",
-  selectPanelIcon: "#0F172A",
-  openCloseMenuIcon: "#0F172A",
-  moreIcon: "#64748B",
-  settingsIcon: "#64748B",
-  inactiveSpaceIndicator: "#E2E8F0",
-  activeSpaceIndicator: "#3B82F6",
-  profileAvatar: "#8B5CF6",
+  heading1Color: "#333333",
+  heading2Color: "#333333",
+  heading3Color: "#333333",
+  descriptionTextColor: "#666666",
+  menuTextColor: "#333333",
+  breadcrumbsColor: "#666666",
+  sectionBackground: "#E07B4C",
+  spaceNameColor: "#333333",
+  sideMenuIconsColor: "#333333",
+  selectedSpaceColor: "#E07B4C",
+  unselectedSpaceColor: "#E1E3EA",
+  spaceNameText: "#333333",
+  addButtonBackground: "#E07B4C",
+  addButtonIcon: "#FFFFFF",
+  selectPanelIcon: "#333333",
+  openCloseMenuIcon: "#333333",
+  moreIcon: "#666666",
+  settingsIcon: "#666666",
+  inactiveSpaceIndicator: "#E1E3EA",
+  activeSpaceIndicator: "#E07B4C",
+  profileAvatar: "#E07B4C",
   // Selection UI & toolbar
-  toolbarBorder: "#E2E8F0",
+  toolbarBorder: "#E1E3EA",
   toolbarFill: "#FFFFFF",
-  toolbarIconsColor: "#0F172A",
-  selectionUIBorder: "#E2E8F0",
+  toolbarIconsColor: "#333333",
+  selectionUIBorder: "#E1E3EA",
   selectionUIFill: "#FFFFFF",
-  selectionIconsColor: "#0F172A",
+  selectionIconsColor: "#333333",
   toolbarBackground: "#FFFFFF",
-  iconColor: "#0F172A",
+  iconColor: "#333333",
   // Input fields
-  inputTitleColor: "#0F172A",
-  inputPlaceholderColor: "#64748B",
-  inputActiveBorder: "#3B82F6",
+  inputTitleColor: "#333333",
+  inputPlaceholderColor: "#999999",
+  inputActiveBorder: "#E07B4C",
   inputActiveFill: "#FFFFFF",
-  inputInactiveBorder: "#E2E8F0",
+  inputInactiveBorder: "#E1E3EA",
   inputInactiveFill: "#FFFFFF",
   inputBackground: "#FFFFFF",
-  inputBorder: "#E2E8F0",
-  inputText: "#0F172A",
-  inputPlaceholder: "#64748B",
+  inputBorder: "#E1E3EA",
+  inputText: "#333333",
+  inputPlaceholder: "#999999",
   // Branding
-  logoColor: "#0F172A",
-  accentColor: "#3B82F6",
+  logoColor: "#333333",
+  accentColor: "#E07B4C",
   // Space selection
-  spaceSelection: "#3B82F6",
+  spaceSelection: "#E07B4C",
   // Text colors
-  text1: "#0F172A",
-  text2: "#64748B",
+  text1: "#333333",
+  text2: "#666666",
   showTabIcons: true,
 
-  primaryLight: "#dbeafe",
-  onPrimaryLight: "#233C85",
-  primaryBase: "#2563EB",
+  primaryLight: "#FADDD1",
+  onPrimaryLight: "#8B4513",
+  primaryBase: "#E07B4C",
   onPrimaryBase: "#FFFFFF",
-  primaryDark: "#1E40AF",
+  primaryDark: "#C65D2D",
   onPrimaryDark: "#FFFFFF",
-  secondaryLight: "#EDE9FE",
-  onSecondaryLight: "#6D28D9",
-  secondaryBase: "#7C3AED",
+  secondaryLight: "#FFE4C4",
+  onSecondaryLight: "#8B4513",
+  secondaryBase: "#D2691E",
   onSecondaryBase: "#FFFFFF",
-  secondaryDark: "#6D28D9",
+  secondaryDark: "#A0522D",
   onSecondaryDark: "#FFFFFF",
-  tertiaryLight: "#D1FAE5",
-  onTertiaryLight: "#233C85",
-  tertiaryBase: "#059669",
+  tertiaryLight: "#FFEFD5",
+  onTertiaryLight: "#8B4513",
+  tertiaryBase: "#CD853F",
   onTertiaryBase: "#FFFFFF",
-  tertiaryDark: "#047857",
+  tertiaryDark: "#A0522D",
   onTertiaryDark: "#FFFFFF",
   background: "#FFFFFF",
-  onBackground: "#233C85",
-  surface: "#F9FAFB",
-  onSurface: "#000000",
-  text3: "#111827",
+  onBackground: "#333333",
+  surface: "#FAFAFA",
+  onSurface: "#333333",
+  text3: "#333333",
 };
 
 // ————————————————————————————————————————————————————————————
@@ -1075,7 +1072,9 @@ const CollapsibleSection = ({ title, isExpanded, onToggle, children }) => {
             fontFamily: "Open Sans, sans-serif",
             fontSize: 14,
             fontWeight: 400,
-            color: "#000000",
+            // color: "#000000"
+            color:"var(--heading1Color)",
+            
           }}
         >
           {title}
@@ -1196,7 +1195,8 @@ const CompactColorRow = ({ label, value, onChange }) => {
         style={{
           fontFamily: "Open Sans, sans-serif",
           fontSize: 13,
-          color: "#333333",
+         
+          color:'var(--heading2Color)',
         }}
       >
         {label}
@@ -1305,7 +1305,7 @@ const TabSectionContent = ({
     cursor: "pointer",
     fontSize: 13,
     fontFamily: "Open Sans, sans-serif",
-    color: "#333333",
+    // color: "var(--heading2Color)",
   };
 
   const dropdownMenuStyle = {
@@ -1329,6 +1329,7 @@ const TabSectionContent = ({
     fontSize: 13,
     fontFamily: "Open Sans, sans-serif",
     borderBottom: "1px solid #F0F0F0",
+    color: "var(--panelBackground)",
   };
 
   return (
@@ -1346,7 +1347,7 @@ const TabSectionContent = ({
             style={{
               fontFamily: "Open Sans, sans-serif",
               fontSize: 13,
-              color: "#333333",
+              color: "var(--heading2Color)",
             }}
           >
             {t("activeTabContainer")}
@@ -1393,7 +1394,7 @@ const TabSectionContent = ({
           style={{
             fontFamily: "Open Sans, sans-serif",
             fontSize: 13,
-            color: "#333333",
+            color: "var(--heading2Color)",
           }}
         >
           {t("activeTabText")}
@@ -1496,7 +1497,7 @@ const TabSectionContent = ({
           style={{
             fontFamily: "Open Sans, sans-serif",
             fontSize: 13,
-            color: "#333333",
+            color: "var(--heading2Color)",
           }}
         >
           {t("inactiveTabText")}
@@ -1599,7 +1600,7 @@ const TabSectionContent = ({
           style={{
             fontFamily: "Open Sans, sans-serif",
             fontSize: 13,
-            color: "#333333",
+            color: "var(--heading2Color)",
           }}
         >
           {t("showTabIcon")}
@@ -1702,7 +1703,7 @@ const ButtonsSectionContent = ({
     cursor: "pointer",
     fontSize: 13,
     fontFamily: "Open Sans, sans-serif",
-    color: "#333333",
+    // color: "var(--heading2Color)",
   };
 
   const dropdownMenuStyle = {
@@ -1726,6 +1727,7 @@ const ButtonsSectionContent = ({
     fontSize: 13,
     fontFamily: "Open Sans, sans-serif",
     borderBottom: "1px solid #F0F0F0",
+    color: "var(--panelBackground)",
   };
 
   return (
@@ -1742,7 +1744,7 @@ const ButtonsSectionContent = ({
             style={{
               fontFamily: "Open Sans, sans-serif",
               fontSize: 13,
-              color: "#333333",
+              color: "var(--heading2Color)",
             }}
           >
             {t("primaryButton")}
@@ -1793,7 +1795,7 @@ const ButtonsSectionContent = ({
           style={{
             fontFamily: "Open Sans, sans-serif",
             fontSize: 13,
-            color: "#333333",
+            color: "var(--heading2Color)",
           }}
         >
           {t("primaryButtonText")}
@@ -1897,7 +1899,7 @@ const ButtonsSectionContent = ({
             style={{
               fontFamily: "Open Sans, sans-serif",
               fontSize: 13,
-              color: "#333333",
+              color: "var(--heading2Color)",
             }}
           >
             {t("secondaryButton")}
@@ -1948,7 +1950,7 @@ const ButtonsSectionContent = ({
           style={{
             fontFamily: "Open Sans, sans-serif",
             fontSize: 13,
-            color: "#333333",
+            color: "var(--heading2Color)",
           }}
         >
           {t("secondaryButtonText")}
@@ -2054,7 +2056,7 @@ const ButtonsSectionContent = ({
             style={{
               fontFamily: "Open Sans, sans-serif",
               fontSize: 13,
-              color: "#333333",
+              color: "var(--heading2Color)",
             }}
           >
             {t("tertiaryButton")}
@@ -2095,7 +2097,7 @@ const ButtonsSectionContent = ({
           style={{
             fontFamily: "Open Sans, sans-serif",
             fontSize: 13,
-            color: "#333333",
+            color: "var(--heading2Color)",
           }}
         >
           {t("secondaryButtonText")}
@@ -2223,7 +2225,7 @@ const ScriptureTextSectionContent = ({
     cursor: "pointer",
     fontSize: 13,
     fontFamily: "Open Sans, sans-serif",
-    color: "#333333",
+    // color: "var(--heading2Color)",
   };
 
   const dropdownMenuStyle = {
@@ -2247,6 +2249,7 @@ const ScriptureTextSectionContent = ({
     fontSize: 13,
     fontFamily: "Open Sans, sans-serif",
     borderBottom: "1px solid #F0F0F0",
+    color: "var(--panelBackground)",
   };
 
   return (
@@ -2262,7 +2265,7 @@ const ScriptureTextSectionContent = ({
           style={{
             fontFamily: "Open Sans, sans-serif",
             fontSize: 13,
-            color: "#333333",
+            color: "var(--heading2Color)",
           }}
         >
           {t("bookHeading")}
@@ -2365,7 +2368,7 @@ const ScriptureTextSectionContent = ({
           style={{
             fontFamily: "Open Sans, sans-serif",
             fontSize: 13,
-            color: "#333333",
+            color: "var(--heading2Color)",
           }}
         >
           {t("chapterHeading")}
@@ -2468,7 +2471,7 @@ const ScriptureTextSectionContent = ({
           style={{
             fontFamily: "Open Sans, sans-serif",
             fontSize: 13,
-            color: "#333333",
+            color: "var(--heading2Color)",
           }}
         >
           {t("verseText")}
@@ -2571,7 +2574,7 @@ const ScriptureTextSectionContent = ({
           style={{
             fontFamily: "Open Sans, sans-serif",
             fontSize: 13,
-            color: "#333333",
+            color: "var(--heading2Color)",
           }}
         >
           {t("verseNumber")}
@@ -2735,7 +2738,7 @@ const SideMenuSectionContent = ({
     cursor: "pointer",
     fontSize: 13,
     fontFamily: "Open Sans, sans-serif",
-    color: "#333333",
+    // color: "var(--heading2Color)",
   };
 
   const dropdownMenuStyle = {
@@ -2759,6 +2762,7 @@ const SideMenuSectionContent = ({
     fontSize: 13,
     fontFamily: "Open Sans, sans-serif",
     borderBottom: "1px solid #F0F0F0",
+    color: "var(--panelBackground)",
   };
 
   // Reusable row with font dropdown, size dropdown, and color picker
@@ -2784,7 +2788,7 @@ const SideMenuSectionContent = ({
           style={{
             fontFamily: "Open Sans, sans-serif",
             fontSize: 13,
-            color: "#333333",
+            color: "var(--heading2Color)",
           }}
         >
           {label}
@@ -2950,7 +2954,7 @@ const SideMenuSectionContent = ({
           style={{
             fontFamily: "Open Sans, sans-serif",
             fontSize: 13,
-            color: "#333333",
+            color: "var(--heading2Color)",
           }}
         >
           {t("sectionBackground")}
@@ -2983,7 +2987,7 @@ const SideMenuSectionContent = ({
           style={{
             fontFamily: "Open Sans, sans-serif",
             fontSize: 13,
-            color: "#333333",
+            color: "var(--heading2Color)",
           }}
         >
           {t("icons")}
@@ -3057,7 +3061,7 @@ const SideMenuSectionContent = ({
           style={{
             fontFamily: "Open Sans, sans-serif",
             fontSize: 13,
-            color: "#333333",
+            color: "var(--heading2Color)",
           }}
         >
           {t("selectedSpace")}
@@ -3079,7 +3083,7 @@ const SideMenuSectionContent = ({
           style={{
             fontFamily: "Open Sans, sans-serif",
             fontSize: 13,
-            color: "#333333",
+            color: "var(--heading2Color)",
           }}
         >
           {t("unselectedSpace")}
@@ -3103,7 +3107,7 @@ const SideMenuSectionContent = ({
           style={{
             fontFamily: "Open Sans, sans-serif",
             fontSize: 13,
-            color: "#333333",
+            color: "var(--heading2Color)",
           }}
         >
           {t("addButtonBackground")}
@@ -3125,7 +3129,7 @@ const SideMenuSectionContent = ({
           style={{
             fontFamily: "Open Sans, sans-serif",
             fontSize: 13,
-            color: "#333333",
+            color: "var(--heading2Color)",
           }}
         >
           {t("addButtonIcon")}
@@ -3147,7 +3151,7 @@ const SideMenuSectionContent = ({
           style={{
             fontFamily: "Open Sans, sans-serif",
             fontSize: 13,
-            color: "#333333",
+            color: "var(--heading2Color)",
           }}
         >
           {t("profileAvatar")}
@@ -3229,7 +3233,7 @@ const SelectionUIToolbarSectionContent = ({
     cursor: "pointer",
     fontSize: 13,
     fontFamily: "Open Sans, sans-serif",
-    color: "#333333",
+    // color: "var(--heading2Color)",
   };
 
   const dropdownMenuStyle = {
@@ -3253,6 +3257,7 @@ const SelectionUIToolbarSectionContent = ({
     fontSize: 13,
     fontFamily: "Open Sans, sans-serif",
     borderBottom: "1px solid #F0F0F0",
+    color: "var(--panelBackground)",
   };
 
   return (
@@ -3269,7 +3274,7 @@ const SelectionUIToolbarSectionContent = ({
           style={{
             fontFamily: "Open Sans, sans-serif",
             fontSize: 13,
-            color: "#333333",
+            color: "var(--heading2Color)",
           }}
         >
           {t("toolbar")}
@@ -3334,7 +3339,7 @@ const SelectionUIToolbarSectionContent = ({
           style={{
             fontFamily: "Open Sans, sans-serif",
             fontSize: 13,
-            color: "#333333",
+            color: "var(--heading2Color)",
           }}
         >
           {t("toolbarIcons")}
@@ -3407,7 +3412,7 @@ const SelectionUIToolbarSectionContent = ({
           style={{
             fontFamily: "Open Sans, sans-serif",
             fontSize: 13,
-            color: "#333333",
+            color: "var(--heading2Color)",
           }}
         >
           {t("selectionUI")}
@@ -3474,7 +3479,7 @@ const SelectionUIToolbarSectionContent = ({
           style={{
             fontFamily: "Open Sans, sans-serif",
             fontSize: 13,
-            color: "#333333",
+            color: "var(--heading2Color)",
           }}
         >
           {t("selectionIcons")}
@@ -3567,7 +3572,7 @@ const InputFieldsSectionContent = ({
     cursor: "pointer",
     fontSize: 13,
     fontFamily: "Open Sans, sans-serif",
-    color: "#333333",
+    // color: "var(--heading2Color)",
   };
 
   const dropdownMenuStyle = {
@@ -3591,6 +3596,7 @@ const InputFieldsSectionContent = ({
     fontSize: 13,
     fontFamily: "Open Sans, sans-serif",
     borderBottom: "1px solid #F0F0F0",
+    color: "var(--panelBackground)",
   };
 
   return (
@@ -3607,7 +3613,7 @@ const InputFieldsSectionContent = ({
           style={{
             fontFamily: "Open Sans, sans-serif",
             fontSize: 13,
-            color: "#333333",
+            color: "var(--heading2Color)",
           }}
         >
           {t("title")}
@@ -3712,7 +3718,7 @@ const InputFieldsSectionContent = ({
           style={{
             fontFamily: "Open Sans, sans-serif",
             fontSize: 13,
-            color: "#333333",
+            color: "var(--heading2Color)",
           }}
         >
           {t("placeholder")}
@@ -3819,7 +3825,7 @@ const InputFieldsSectionContent = ({
           style={{
             fontFamily: "Open Sans, sans-serif",
             fontSize: 13,
-            color: "#333333",
+            color: "var(--heading2Color)",
           }}
         >
           {t("activeState")}
@@ -3886,7 +3892,7 @@ const InputFieldsSectionContent = ({
           style={{
             fontFamily: "Open Sans, sans-serif",
             fontSize: 13,
-            color: "#333333",
+            color: "var(--heading2Color)",
           }}
         >
           {t("inactiveState")}
@@ -3968,7 +3974,7 @@ const BrandingSectionContent = ({
     cursor: "pointer",
     fontSize: 13,
     fontFamily: "Open Sans, sans-serif",
-    color: "#333333",
+    // color: "var(--heading2Color)",
   };
 
   const dropdownMenuStyle = {
@@ -3992,6 +3998,7 @@ const BrandingSectionContent = ({
     fontSize: 13,
     fontFamily: "Open Sans, sans-serif",
     borderBottom: "1px solid #F0F0F0",
+    color: "var(--panelBackground)",
   };
 
   const inputStyle = {
@@ -4002,7 +4009,7 @@ const BrandingSectionContent = ({
     backgroundColor: "#FFFFFF",
     fontSize: 13,
     fontFamily: "Open Sans, sans-serif",
-    color: "#333333",
+    color: "var(--heading2Color)",
     outline: "none",
   };
 
@@ -4020,7 +4027,7 @@ const BrandingSectionContent = ({
           style={{
             fontFamily: "Open Sans, sans-serif",
             fontSize: 13,
-            color: "#333333",
+            color: "var(--heading2Color)",
           }}
         >
           {t("companyName")}
@@ -4124,7 +4131,7 @@ const BrandingSectionContent = ({
           style={{
             fontFamily: "Open Sans, sans-serif",
             fontSize: 13,
-            color: "#333333",
+            color: "var(--heading2Color)",
           }}
         >
           {t("logo")}
@@ -5129,7 +5136,7 @@ const SettingsUI = () => {
   const cardLabelStyle = {
     width: "8px",
     height: "1px",
-    backgroundColor: "#333333",
+    backgroundColor: "var(--heading2Color)",
     borderRadius: "0.5px",
     margin: "4px 0 0 3px",
   };
@@ -5292,7 +5299,7 @@ const SettingsUI = () => {
             onClick={handleDecreaseFontSize}
           >
             <svg
-              style={{ filter: "none" }}
+              style={{ filter: "none",stroke:"var(--heading1Color)" }}
               width="12"
               height="12"
               viewBox="0 0 12 12"
@@ -5318,7 +5325,7 @@ const SettingsUI = () => {
             onClick={handleIncreaseFontSize}
           >
             <svg
-              style={{ filter: "none" }}
+              style={{ filter: "none",stroke:"var(--heading1Color)" }}
               width="20"
               height="20"
               viewBox="0 0 20 20"
@@ -5351,7 +5358,7 @@ const SettingsUI = () => {
             onClick={handleCycleLineHeight}
           >
             <svg
-              style={{ filter: "none" }}
+              style={{ filter: "none",stroke:"var(--heading1Color)" }}
               width="18"
               height="18"
               viewBox="0 0 18 18"

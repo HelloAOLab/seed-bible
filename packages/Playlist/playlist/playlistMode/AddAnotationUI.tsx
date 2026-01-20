@@ -27,7 +27,11 @@ const AudioPlayer = await thisBot.AudioPlayer();
 const RenderHTMLContent = await thisBot.RenderHTMLContent();
 const TogglePlaylistHeight = await thisBot.TogglePlaylistHeight();
 
+const PREVIEW_ICON_INACTIVE = "https://auth-aux-aobot-prod-filesbucket-141297942820.s3.amazonaws.com/annotations/ab00f4b4a4332fd7ed0bc367cb1bb4997b885c19f422bfbcebaccffc926ce350.svg";
+const PREVIEW_ICON_ACTIVE = "https://auth-aux-aobot-prod-filesbucket-141297942820.s3.amazonaws.com/annotations/c9313a31249a980b996ccabd27c6aaf0d0cc4037944f425370ff8b3500644b30.svg";
+
 import { CustomAnnotationTextEditor } from "playlist.playlistMode.CustomAnnotationTextEditor";
+import { extractHashtagsFromHTML } from "playlist.playlistMode.AutoTag";
 
 const DEV_ENV =
   configBot.tags.pattern === "SeedBibleDev" || !configBot.tags.pattern;
@@ -505,6 +509,8 @@ const AddAnotationUI = ({
   // Edit Mode
   const [isEditAddress, setIsEditAddress] = useState(editData?.address);
   const [editDataDetails, setEditDataDetails] = useState({});
+
+  const [showPreview, setShowPreview] = useState(false);
 
   globalThis.SetVideoSrc = setVideoSrc;
   globalThis.SetMediaURL = setMediaURL;
@@ -994,15 +1000,17 @@ const AddAnotationUI = ({
         editDataDetails.additionalInfo?.data?.bookId;
       const chapter = editDataDetails?.additionalInfo?.chapter;
 
+      const hashtags = extractHashtagsFromHTML(textHTML);
+
       const comment = {
         type: "comment",
         html: textHTML,
-
         createdAtMs: editDataDetails.createdAtMs ?? Date.now(),
         updatedAtMs: Date.now(),
         userId: editDataDetails.userId,
         userName: editDataDetails.userName,
         userProfilePicture: editDataDetails.userProfilePicture,
+        tags: hashtags,
 
         // book:
         //   editDataDetails.additionalInfo.chapterData?.id ||
@@ -1137,6 +1145,8 @@ const AddAnotationUI = ({
 
       const verseNumbers = [];
 
+      const hashtags = extractHashtagsFromHTML(textHTML);
+
       const comment = {
         type: "comment",
         html: textHTML,
@@ -1145,26 +1155,7 @@ const AddAnotationUI = ({
         userProfilePicture: data.data.photoLink,
         userName: data.data.profileName,
         userId: authBot.id,
-        // book:
-        //   ele.additionalInfo.chapterData?.id ||
-        //   ele.additionalInfo.chapterData?.bookId ||
-        //   ele.additionalInfo?.data?.id ||
-        //   ele.additionalInfo?.data?.bookId,
-        // chapter: ele.additionalInfo.chapter,
-        // translation: "",
-        // chronicle_tags: [
-        //   ...(singleMode ? tags : ele.additionalInfo.tags || []),
-        // ],
-        // data: {
-        //   ...ele,
-        //   additionalInfo: {
-        //     ...ele.additionalInfo,
-        //     layers: [
-        //       scripture
-        //       // ...(singleMode ? embedItems : ele.additionalInfo.layers),
-        //     ],
-        //   },
-        // },
+        tags: hashtags,
       };
 
       let book = "";
@@ -1301,6 +1292,8 @@ const AddAnotationUI = ({
 
     return [item];
   }, [list, singleMode]);
+
+  // console.log("finalHistoryObject", finalHistoryObject, list);
 
   const [draggedItemID, setDraggedItemID] = useState(null);
   const [draggedParent, setDraggedItemParent] = useState(null);
@@ -2265,8 +2258,10 @@ const AddAnotationUI = ({
                 !dataFetching &&
                 selectedAnnotation === ele.id &&
                 !embedding && (
-                  <div style={{ padding: "1rem" }}>
+                  <div style={{ padding: "1rem 1rem 0 1rem" }}>
                     <CustomAnnotationTextEditor
+                      showPreview={showPreview}
+                      setShowPreview={setShowPreview}
                       initialHTML={textHTML}
                       onChange={(html) => {
                         setTextHTML(html);
@@ -2300,9 +2295,35 @@ const AddAnotationUI = ({
         )}
         {!!mediaURL && <AudioPlayer close mediaURL={mediaURL} />}
 
-        <div style={{ padding: "1rem 0 " }}>
-          <div className="add-playlist-actions">
-            <Button onClick={onClickSave} secondary>
+        <div style={{ padding: "0 0.25rem" }}>
+          <div className="add-playlist-actions row">
+            <Button
+                style={{
+                  width: 'max-content',
+                  display: 'flex',
+                  alignItems: 'center',
+                  gap: '0.5rem',
+                  padding: '0 0.5rem'
+                }}
+                secondaryAlt={!showPreview}
+                secondary={showPreview}
+                isOutline
+                onClick={() => {
+                  if(globalThis.TogglePreview) {
+                    globalThis.TogglePreview();
+                  }
+                }}
+              >
+                <img src={showPreview ? PREVIEW_ICON_ACTIVE : PREVIEW_ICON_INACTIVE} alt="Preview" />
+                <span style={{ color: 'inherit'}}>{t('preview')}</span>
+            </Button>
+            <Button 
+              style={{
+                width: 'max-content'
+              }}
+              onClick={onClickSave} 
+              secondary
+            >
               {loading ? t('saving') : t('save')}
             </Button>
             {false && (

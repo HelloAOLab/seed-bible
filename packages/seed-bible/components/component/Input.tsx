@@ -1,6 +1,6 @@
 const { useCallback, useState } = os.appHooks;
 
-const Input = ({ value, class:C, icon = null, onChangeListener, sxInput = {}, style, placeholder, errorMessage = "", type = "text", regex = /^.*$/ }) => {
+const Input = ({ value, class:C, icon = null, onChangeListener, sxInput = {}, style, placeholder, errorMessage = "", type = "text", regex = /^.*$/, onFocus = () => {}, onBlur = () => {} }) => {
 
     const [error, setError] = useState(false);
 
@@ -42,6 +42,8 @@ const Input = ({ value, class:C, icon = null, onChangeListener, sxInput = {}, st
                 />
                 :
                 <input
+                    onFocus={onFocus}
+                    onBlur={onBlur}
                     style={{ paddingLeft: icon ? "2rem" : "" }}
                     value={value} onChange={handleChange}
                     type={type}

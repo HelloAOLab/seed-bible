@@ -1,6 +1,6 @@
 const LoaderSecondary = thisBot.LoaderSecondary();
 
-const Button = ({ children, loading, onClick, isDisabled, secondaryAlt, small,exClass="", secondary = false, color = "", backgroundColor = "", style = {}, varient = "" }) => {
+const Button = ({ children, loading, onClick, isOutline = false, isDisabled, secondaryAlt, small,exClass="", secondary = false, color = "", backgroundColor = "", style = {}, varient = "" }) => {
     return <>
         <style>{thisBot.tags["button.css"]}</style>
         <button
@@ -10,7 +10,7 @@ const Button = ({ children, loading, onClick, isDisabled, secondaryAlt, small,ex
                 shout("playSound", { soundName: "DialogClick" });
                 onClick(e);
             }}
-            className={`custom-button ${exClass} ${small ? 'small' : ''} ${secondaryAlt ? "secondaryAlt secondaryAltAlt" : ""}  ${secondary ? 'secondaryAlt' : ""} ${varient}`}
+            className={`custom-button ${exClass} ${small ? 'small' : ''} ${secondaryAlt ? "secondaryAlt secondaryAltAlt" : ""}  ${secondary ? 'secondaryAlt' : ""} ${varient} ${isOutline ? 'outline' : ''}`}
             style={{
                 color,
                 backgroundColor,

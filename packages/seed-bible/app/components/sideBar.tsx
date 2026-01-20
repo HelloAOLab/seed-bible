@@ -465,7 +465,7 @@ function Tab({
     const checkEmpty = PanelsApps.find((e) => !e.tabData);
     console.log(checkEmpty, PanelsApps);
     if (el.data.type === "book" && checkEmpty) {
-      console.log("canvas replacing");
+      // console.log("canvas replacing");
       setActiveTab(el.id);
       const id = uuid();
       ReplaceApplication(LastClickedPanelUpdate || checkEmpty.id, {
@@ -532,7 +532,8 @@ function Tab({
     setActiveTab(el.id);
     // if (globalThis[`UpdateTabWidthId${el?.id}`])
     //   globalThis[`UpdateTabWidthId${el?.id}`](el);
-    // globalThis.UpdateTab(el);
+
+    globalThis.UpdateTab(el);
   };
   const circles = onlineUsers
     ? Object.fromEntries(
@@ -1056,7 +1057,7 @@ function SideBar({ panelsNumber }) {
     items: [
       {
         disabled: false,
-        icon: <GoPrivateIcon />,
+        icon: <StartSessionIcon />,
         title: t("startSession"),
         onClick: () => {
           // os.log(globalThis?.StartSession,globalThis)
@@ -1065,8 +1066,8 @@ function SideBar({ panelsNumber }) {
       },
       {
         disabled: false,
-        // icon:<JoinSession/>,
-        icon: <TransparentSvg />,
+        icon: <MenuIcon name="person_add" />,
+        // icon: <TransparentSvg />,
         title: t("inviteToSession"),
         onClick: async () => {
           const { QRCodeComponent } = thisBot.Chips();
@@ -1076,7 +1077,7 @@ function SideBar({ panelsNumber }) {
       },
       {
         disabled: false,
-        icon: <TransparentSvg />,
+        icon: <JoinSession />,
         title: t("joinAnotherSession"),
         onClick: async () => {
           const { JoinSessionComponent } = thisBot.Chips();
@@ -1096,7 +1097,7 @@ function SideBar({ panelsNumber }) {
       },
       {
         disabled: false,
-        icon: <TransparentSvg />,
+        icon: <GoPrivateIcon />,
         title: globalThis.IsPrivateMode?.() ? t("goPublic") : t("goPrivate"),
         onClick: async () => {
           if (globalThis.TogglePrivateMode) {

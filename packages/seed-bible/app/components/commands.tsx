@@ -1,5 +1,46 @@
 const { useState, useRef, useEffect } = os.appHooks;
 
+// New Testament books for detecting which analysis to use
+const NT_BOOKS = [
+  "Matthew",
+  "Mark",
+  "Luke",
+  "John",
+  "Acts",
+  "Romans",
+  "1 Corinthians",
+  "2 Corinthians",
+  "Galatians",
+  "Ephesians",
+  "Philippians",
+  "Colossians",
+  "1 Thessalonians",
+  "2 Thessalonians",
+  "1 Timothy",
+  "2 Timothy",
+  "Titus",
+  "Philemon",
+  "Hebrews",
+  "James",
+  "1 Peter",
+  "2 Peter",
+  "1 John",
+  "2 John",
+  "3 John",
+  "Jude",
+  "Revelation",
+];
+
+const isNewTestament = (bookName) => {
+  if (!bookName) return false;
+  const normalizedBook = bookName.trim();
+  return NT_BOOKS.some(
+    (ntBook) =>
+      normalizedBook.toLowerCase() === ntBook.toLowerCase() ||
+      normalizedBook.toLowerCase().includes(ntBook.toLowerCase())
+  );
+};
+
 const ConfigurableFunctionCommands = ({ contextData, clickedVerses }) => {
   const [commandInput, setCommandInput] = useState("");
   const [showSuggestions, setShowSuggestions] = useState(false);
@@ -148,30 +189,32 @@ const ConfigurableFunctionCommands = ({ contextData, clickedVerses }) => {
       }
     },
 
-    // AI Analysis functions
-    analyzeHebrew: async (data) => {
-      const prompt = `Provide a detailed Hebrew linguistic analysis of ${data.text}: "${data.verse}". Include original Hebrew words, their meanings, grammatical structures, and theological significance.`;
+    // AI Analysis functions - context-aware (Greek for NT, Hebrew for OT)
+    analyzeOriginalLanguage: async (data) => {
+      const isNT = isNewTestament(data.book);
+      const language = isNT ? "Greek" : "Hebrew";
+      const prompt = `Provide a detailed ${language} linguistic analysis of ${data.text}: "${data.verse}". Include original ${language} words, their meanings, grammatical structures, and theological significance. Format the response with clear headings using ### for main sections and ** for key terms.`;
       try {
         const response = await ai.chat(prompt, {
           preferredModel: "gpt-4o",
           stream: false,
-          response_format: { type: "json" },
         });
-        return `Hebrew Analysis for ${data.text}:\n\n${response?.content || response}`;
+        return `### ${language} Analysis\n\n${response?.content || response}`;
       } catch (error) {
         return `AI Analysis Error: ${error.message}`;
       }
     },
 
-    explainVerse: async (data) => {
-      const prompt = `Provide a comprehensive explanation of ${data.text}: "${data.verse}". Include theological, historical, and practical insights.`;
+    explainVerse: async (data, query) => {
+      const prompt = query
+        ? `Regarding ${data.text}: "${data.verse}", please explain: ${query}. Format your response clearly with ### for main headings and ** for key terms.`
+        : `Provide a comprehensive explanation of ${data.text}: "${data.verse}". Include theological, historical, and practical insights. Format your response clearly with ### for main headings and ** for key terms.`;
       try {
         const response = await ai.chat(prompt, {
           preferredModel: "gpt-4o",
           stream: false,
-          response_format: { type: "json" },
         });
-        return `Explanation of ${data.text}:\n\n${response?.content || response}`;
+        return response?.content || response;
       } catch (error) {
         return `AI Explanation Error: ${error.message}`;
       }
@@ -350,16 +393,29 @@ const ConfigurableFunctionCommands = ({ contextData, clickedVerses }) => {
     },
 
     customQuery: async (data, query) => {
-      const prompt = `Regarding ${data.text}: "${data.verse}", please answer this question: ${query}`;
+      const prompt = `Regarding ${data.text}: "${data.verse}", please answer this question: ${query}. Format your response clearly with ### for main headings and ** for emphasis on key terms.`;
       try {
         const response = await ai.chat(prompt, {
           preferredModel: "gpt-4o",
           stream: false,
-          response_format: { type: "json" },
         });
-        return `Custom Analysis for ${data.text}:\n\n${response?.content || response}`;
+        return response?.content || response;
       } catch (error) {
         return `AI Query Error: ${error.message}`;
+      }
+    },
+
+    // Ask - direct question to AI about the verse
+    askQuestion: async (data, question) => {
+      const prompt = `Answer this question about ${data.text}: "${data.verse}"\n\nQuestion: ${question}\n\nProvide a clear, well-structured answer. Use ### for main headings and ** for key terms.`;
+      try {
+        const response = await ai.chat(prompt, {
+          preferredModel: "gpt-4o",
+          stream: false,
+        });
+        return response?.content || response;
+      } catch (error) {
+        return `AI Error: ${error.message}`;
       }
     },
   };
@@ -395,10 +451,12 @@ const ConfigurableFunctionCommands = ({ contextData, clickedVerses }) => {
             },
           ],
     },
-    "/hebrew": {
-      description: "Hebrew analysis",
+    "/original": {
+      description: isNewTestament(contextData?.book)
+        ? "Greek analysis"
+        : "Hebrew analysis",
       hasOptions: false,
-      executeFunction: "analyzeHebrew",
+      executeFunction: "analyzeOriginalLanguage",
     },
     "/explain": {
       description: "Explain this passage",
@@ -460,6 +518,13 @@ const ConfigurableFunctionCommands = ({ contextData, clickedVerses }) => {
       description: "Study questions",
       hasOptions: false,
       executeFunction: "studyQuestions",
+    },
+    "/ask": {
+      description: "Ask a question",
+      hasOptions: false,
+      executeFunction: "askQuestion",
+      acceptsQuery: true,
+      requiresQuery: true,
     },
   };
 
@@ -569,12 +634,18 @@ const ConfigurableFunctionCommands = ({ contextData, clickedVerses }) => {
       setCurrentOptions(cfg.options);
       setShowOptions(true);
       setShowSuggestions(false);
+    } else if (cfg.acceptsQuery || cfg.requiresQuery) {
+      // Commands that accept/require query should wait for user input
+      setCommandInput(cmd + " ");
+      setShowSuggestions(false);
+      setShowOptions(false);
     } else {
-      const next = cmd; // no trailing space so it executes cleanly
+      // Commands without query support execute immediately
+      const next = cmd;
       setCommandInput(next);
       setShowSuggestions(false);
       setShowOptions(false);
-      executeCommand(next); // <-- run now
+      executeCommand(next);
     }
     inputRef.current?.focus();
   };
@@ -636,11 +707,13 @@ const ConfigurableFunctionCommands = ({ contextData, clickedVerses }) => {
           const fn = functionLibrary[fnName];
           if (fn) {
             try {
-              if (config.acceptsQuery && userQuery) {
-                const fallbackFn = functionLibrary.customQuery;
-                response = fallbackFn
-                  ? await fallbackFn(contextData, userQuery)
-                  : "Function for handling queries not found.";
+              // Handle commands that require a query (like /ask)
+              if (config.requiresQuery && !userQuery) {
+                response =
+                  "Please provide a question after the command.\n\nExample: /ask What does this verse mean?";
+              } else if (config.acceptsQuery && userQuery) {
+                // Pass the query directly to the function (e.g., /explain, /ask)
+                response = await fn(contextData, userQuery);
               } else {
                 response = await fn(contextData);
               }
@@ -1083,8 +1156,19 @@ const BiblePassageDisplay = ({ content }) => {
   if (!content) return null;
 
   const processContent = (text) => {
+    // Pre-process to fix common AI formatting issues
+    const cleanedText = text
+      // Merge numbered items split across lines: "1.\n**Title**\n: description" -> "1. **Title**: description"
+      .replace(/(\d+)\.\s*\n+\s*\*\*([^*]+)\*\*\s*\n+\s*:/g, "$1. **$2**:")
+      // Merge numbered items with title on next line: "1.\n**Title**" -> "1. **Title**"
+      .replace(/(\d+)\.\s*\n+\s*\*\*([^*]+)\*\*/g, "$1. **$2**")
+      // Remove standalone numbers on their own line followed by content
+      .replace(/^(\d+)\.\s*$/gm, "")
+      // Clean up extra newlines
+      .replace(/\n{3,}/g, "\n\n");
+
     // Split into paragraphs and clean up more aggressively
-    const paragraphs = text
+    const paragraphs = cleanedText
       .split("\n\n")
       .map((p) => p.trim())
       .filter((p) => p.length > 0);
@@ -1164,8 +1248,30 @@ const BiblePassageDisplay = ({ content }) => {
       );
     }
 
-    // Numbered lists (1. 2. etc.)
-    const numberedMatch = line.match(/^(\d+)\.\s(.+)/);
+    // Numbered lists with bold title and description (1. **Title**: description)
+    const numberedWithTitleMatch = line.match(
+      /^(\d+)\.\s*\*\*([^*]+)\*\*\s*:?\s*(.*)/
+    );
+    if (numberedWithTitleMatch) {
+      return (
+        <div key={key} className="numbered-point-with-title">
+          <span className="number">{numberedWithTitleMatch[1]}.</span>
+          <div className="numbered-content">
+            <strong className="numbered-title">
+              {numberedWithTitleMatch[2]}
+            </strong>
+            {numberedWithTitleMatch[3] && (
+              <span className="numbered-description">
+                : {numberedWithTitleMatch[3]}
+              </span>
+            )}
+          </div>
+        </div>
+      );
+    }
+
+    // Simple numbered lists (1. 2. etc.)
+    const numberedMatch = line.match(/^(\d+)\.\s+(.+)/);
     if (numberedMatch) {
       return (
         <div key={key} className="numbered-point">
@@ -1174,6 +1280,15 @@ const BiblePassageDisplay = ({ content }) => {
             {processInlineFormatting(numberedMatch[2])}
           </span>
         </div>
+      );
+    }
+
+    // Skip standalone colons at start of line (remnant from AI formatting)
+    if (line.startsWith(": ")) {
+      return (
+        <p key={key} className="regular-text">
+          {processInlineFormatting(line.slice(2))}
+        </p>
       );
     }
 
@@ -1237,7 +1352,7 @@ const BiblePassageDisplay = ({ content }) => {
 
         /* Paragraph container */
         .paragraph-block {
-          margin-bottom: 0rem;
+          margin-bottom: -1.5rem;
         }
         .paragraph-block:last-child {
           margin-bottom: 0;
@@ -1308,18 +1423,44 @@ const BiblePassageDisplay = ({ content }) => {
         .numbered-point {
           display: flex;
           align-items: flex-start;
-          margin: 0rem 0;
+          margin: 0.4rem 0;
           padding-left: 0.1rem;
         }
         .number {
           color: #e67e22;
           font-weight: 600;
-          margin-right: 0rem;
+          margin-right: 0.5rem;
           flex-shrink: 0;
-          min-width: 1rem;
+          min-width: 1.2rem;
         }
         .numbered-text {
           flex: 1;
+        }
+
+        /* Numbered lists with title */
+        .numbered-point-with-title {
+          display: flex;
+          align-items: flex-start;
+          margin: 0.8rem 0;
+          padding-left: 0.1rem;
+        }
+        .numbered-point-with-title .number {
+          color: #e67e22;
+          font-weight: 600;
+          margin-right: 0.5rem;
+          flex-shrink: 0;
+          min-width: 1.2rem;
+        }
+        .numbered-content {
+          flex: 1;
+        }
+        .numbered-title {
+          color: #2c3e50;
+          font-weight: 600;
+          font-size: 1.02em;
+        }
+        .numbered-description {
+          color: #34495e;
         }
 
         /* Regular text */

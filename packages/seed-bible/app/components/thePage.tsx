@@ -68,19 +68,23 @@ function ThePage({
   setEnableEditor,
   setData,
   data,
+  deleteTab,
+  setDeleteTab,
 }) {
   const [tab, setTab] = useState(T);
   const [commandHighlight, setCommandHighlight] = useState([]);
   const [direction, setDirection] = useState(null);
   const commandsRef = useRef(null);
   const [userMovedToolbar, setUserMovedToolbar] = useState();
+
   useEffect(() => {
-    os.addBotListener(thisBot, "onTabDelete", (data) => {
-      if (data.tabId === tab?.id) {
+    if (deleteTab) {
+      if (deleteTab.tabId === tab?.id) {
         setTab(null);
       }
-    });
-  }, []);
+      setDeleteTab(false);
+    }
+  }, [deleteTab]);
   useEffect(() => {
     if (!T) globalThis.CurrentPanelAvailable = panelId;
     else globalThis.CurrentPanelAvailable = null;
@@ -132,7 +136,7 @@ function ThePage({
       configBot.tags.translation ||
       tab.data.translation;
     let baseUrl = "https://bible.helloao.org";
-    let bookId = "GEN";
+    let bookId = tab.data.bookId || "GEN";
     let bookTranslationId = tab.data.translation;
     let firstBookData;
     let firstChapterApiLink;
@@ -205,6 +209,7 @@ function ThePage({
             const defaultTranslation = newTranslations[0];
             newTranslations = newTranslations.map((trans) => {
               return {
+                ...trans,
                 name: trans.name,
                 languageEnglishName: trans.languageEnglishName,
                 id: trans.id,
@@ -213,7 +218,14 @@ function ThePage({
                 shortName: trans.shortName,
               };
             });
-            allTranslations = [...allTranslations, ...newTranslations];
+            setTagMask(
+              thisBot,
+              "newTranslations",
+              masks?.newTranslations
+                ? [...masks.newTranslations, ...newTranslations]
+                : newTranslations,
+              "local"
+            );
             for (const translation of newTranslations) {
               const englishName = translation.languageEnglishName.toLowerCase();
               if (!defaultTranslations.includes(englishName)) {
@@ -250,6 +262,9 @@ function ThePage({
             firstChapterApiLink = book0.firstChapterApiLink;
           }
         }
+        if (masks?.newTranslations) {
+          allTranslations = [...allTranslations, ...masks.newTranslations];
+        }
         allTranslations.forEach((translation) => {
           const englishName =
             translation?.languageEnglishName?.toLowerCase() ||
@@ -273,10 +288,16 @@ function ThePage({
           defaultTranslations,
           "local"
         );
-        console.log(defaultTranslations, translations, "trans");
       }
     } else {
-      return {};
+      return {
+        baseUrl,
+        bookId,
+        bookTranslationId,
+        firstChapterApiLink,
+        firstBookData,
+        books,
+      };
     }
     return {
       baseUrl,
@@ -288,117 +309,6 @@ function ThePage({
     };
   };
 
-  async function loadData() {
-    if (!tab) return;
-    const bible = new BibleDataManager({
-      tabId: tab?.id,
-      translation: tab.data.translation,
-      bookId: tab.data.bookId,
-      chapter: tab.data.chapter,
-    });
-    setBible(bible);
-
-    console.log("bible data: ", bible);
-
-    await bible.fetch();
-
-    globalThis.BookId = bible.bookId;
-
-    const { data, loading, error } = bible.getState();
-    console.log(data, tab, "the data loaded");
-
-    globalThis.refreshScrollers && globalThis.refreshScrollers();
-    const { firstBookData, bookTranslationId, baseUrl, books } =
-      await loadTranslationFromUrl();
-
-    if (!configBot.tags.defaultChecked) {
-      if (firstBookData && bookTranslationId && baseUrl) {
-        await bible.changeTranslation(
-          bookTranslationId,
-          firstBookData,
-          baseUrl
-        );
-      }
-      if (books) {
-        if (configBot.tags?.book && books && books?.length > 0) {
-          let bookData;
-          books.forEach((book) => {
-            if (book.id.toLowerCase() === configBot.tags.book.toLowerCase()) {
-              bookData = book;
-            }
-          });
-          if (bookData) {
-            let chapterNo;
-            if (Number(configBot.tags.chapter) < bookData.numberOfChapters)
-              chapterNo = configBot.tags.chapter;
-            const chapterUrl = chapterNo
-              ? bookData.firstChapterApiLink.replace(
-                  "1.json",
-                  `${chapterNo}.json`
-                )
-              : bookData.firstChapterApiLink.replace(
-                  "1.json",
-                  `${tab.data.chapter}.json`
-                );
-            await bible.open(
-              bookData.id,
-              configBot.tags.chapter || 1,
-              bookTranslationId,
-              chapterUrl
-            );
-          }
-        } else if (configBot.tags?.chapter && books?.length > 0) {
-          let bookData;
-          books.forEach((book) => {
-            if (book.id.toLowerCase() === tab.data.bookId.toLowerCase()) {
-              bookData = book;
-            }
-          });
-          let chapterNo;
-          if (Number(configBot.tags.chapter) < bookData.numberOfChapters)
-            chapterNo = configBot.tags.chapter;
-          const chapterUrl = chapterNo
-            ? bookData.firstChapterApiLink.replace(
-                "1.json",
-                `${chapterNo}.json`
-              )
-            : bookData.firstChapterApiLink.replace(
-                "1.json",
-                `${tab.data.chapter}.json`
-              );
-          await bible.open(
-            bookData.id,
-            configBot.tags.chapter || 1,
-            bookTranslationId,
-            chapterUrl
-          );
-        }
-      } else {
-        if (configBot.tags?.book) {
-          await bible.open(
-            configBot.tags?.book,
-            configBot.tags?.chapter || tab.data.chapter
-          );
-        } else if (configBot.tags?.chapter) {
-          await bible.open(tab.data.book, configBot.tags?.chapter);
-        }
-      }
-      configBot.tags.defaultChecked = true;
-    } else {
-      if (masks?.allTranslations) {
-        for (const translation of masks.allTranslations) {
-          if (translation.id === tab.data.translation) {
-            setTagMask(thisBot, "selectedTranslation", translation, "local");
-            break;
-          }
-        }
-      }
-    }
-
-    setData(bible.data);
-    SetShowToolbar(true);
-    whisper(getBot("system", "introduction.searchBar"), "initialize");
-  }
   useEffect(() => {
     const onKey = (e) => {
       if (e.key === "Escape") {
@@ -450,11 +360,14 @@ function ThePage({
 
     async function loadDataSafe() {
       if (!tab) return;
+      const { firstBookData, bookTranslationId, baseUrl, books } =
+        await loadTranslationFromUrl();
       const bible = new BibleDataManager({
         tabId: tab?.id,
         translation: tab.data.translation,
         bookId: tab.data.bookId,
         chapter: tab.data.chapter,
+        baseUrl: tab.data?.baseUrl || "https://bible.helloao.org",
       });
       setBible(bible);
 
@@ -470,8 +383,6 @@ function ThePage({
       console.log(data, tab, "the data loaded");
 
       globalThis.refreshScrollers && globalThis.refreshScrollers();
-      const { firstBookData, bookTranslationId, baseUrl, books } =
-        await loadTranslationFromUrl();
 
       if (cancelled) return; // Check again after async operation
 
@@ -568,7 +479,9 @@ function ThePage({
       whisper(getBot("system", "introduction.searchBar"), "initialize");
     }
 
-    loadDataSafe();
+    if (!bible || (bible && bible?.tabId && bible.tabId !== tab.id)) {
+      loadDataSafe();
+    }
     globalThis.CurrentTab = tab;
 
     return () => {
@@ -1684,6 +1597,7 @@ function ThePage({
               >
                 <VerseToolbar
                   clickedVerses={clickedVerses}
+                  showVerseToolbar={showVerseToolbar}
                   toggleVerseHighlight={toggleVerseHighlight}
                   book={data?.book}
                   setClickedVerses={setClickedVerses}
@@ -2440,55 +2354,40 @@ function Section({
                         </span>
                       ) : null;
 
-                      // If verseContent is a string, split and wrap first word with verse number
+                      // Keep verse number with first word using nowrap span
+                      // Only wrap the verse number + first word together
                       if (typeof verseContent === "string") {
-                        const firstSpaceIndex = verseContent.indexOf(" ");
-                        if (firstSpaceIndex > 0) {
+                        const firstSpaceIdx = verseContent.indexOf(" ");
+                        if (firstSpaceIdx > 0) {
                           const firstWord = verseContent.slice(
                             0,
-                            firstSpaceIndex
+                            firstSpaceIdx
                           );
-                          const restOfText =
-                            verseContent.slice(firstSpaceIndex);
+                          const restText = verseContent.slice(firstSpaceIdx);
                           return (
                             <>
-                              <span className="verse-number-anchor">
-                                {verseNumberElement} {firstWord}
+                              <span style={{ whiteSpace: "nowrap" }}>
+                                {verseNumberElement}
+                                {firstWord}
                               </span>
-                              {restOfText}
+                              {restText}
                             </>
                           );
                         }
-                        return (
-                          <span className="verse-number-anchor">
-                            {verseNumberElement} {verseContent}
-                          </span>
-                        );
-                      }
-
-                      // If verseContent is an array (JSX elements), wrap first element with verse number
-                      if (
-                        Array.isArray(verseContent) &&
-                        verseContent.length > 0
-                      ) {
-                        const firstElement = verseContent[0];
-                        const restElements = verseContent.slice(1);
+                        // Single word verse
                         return (
                           <>
-                            <span className="verse-number-anchor">
-                              {verseNumberElement} {firstElement}
-                            </span>
-                            {restElements}
+                            {verseNumberElement}
+                            {verseContent}
                           </>
                         );
                       }
 
-                      // Fallback: just render verse number and content
+                      // For JSX array content, just render inline without nowrap wrapper
+                      // The text will flow naturally
                       return (
                         <>
-                          <span className="verse-number-anchor">
-                            {verseNumberElement}
-                          </span>
+                          {verseNumberElement}
                           {verseContent}
                         </>
                       );
@@ -2602,7 +2501,15 @@ export const ThePageWithEditor = ({ tab, setPanalApp, panelId }) => {
   const [enableEditor, setEnableEditor] = useState(false);
   useEffect(() => {}, [enableEditor]);
   const [data, setData] = useState();
+  const [deleteTab, setDeleteTab] = useState(false);
   if (tab) globalThis[`SetEnableEditorOf${tab?.id}`] = setEnableEditor;
+  useEffect(() => {
+    os.addBotListener(thisBot, "onTabDelete", (data) => {
+      os.log("tab delete event received in thePage", data, panelId, activeTab);
+      setEnableEditor(false);
+      setDeleteTab(data);
+    });
+  }, []);
   return (
     <>
       <TextEditor
@@ -2613,10 +2520,13 @@ export const ThePageWithEditor = ({ tab, setPanalApp, panelId }) => {
           <ThePage
             data={data}
             setData={setData}
+            enableEditor={enableEditor}
             setEnableEditor={setEnableEditor}
             tab={activeTab}
             panelId={panelId}
             setPanalApp={setPanalApp}
+            deleteTab={deleteTab}
+            setDeleteTab={setDeleteTab}
           />
         }
         tab={activeTab}

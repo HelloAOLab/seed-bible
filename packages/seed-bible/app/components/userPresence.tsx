@@ -1164,13 +1164,13 @@ function ScriptureNavigationSettings({ config, onChange, onStop }) {
       />
 
       <SettingRow
-        label="Shared Tab"
+        label={state.sharedTab ? "Shared Tab Only" : "All Tabs"}
         isOn={state.sharedTab}
         onToggle={() => toggle("sharedTab")}
       />
 
       <SettingRow
-        label="Auto Scroll"
+        label={state.autoScroll ? "Auto Scroll On" : "Auto Scroll Off"}
         isOn={state.autoScroll}
         onToggle={() => toggle("autoScroll")}
       />

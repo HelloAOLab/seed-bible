@@ -2,6 +2,8 @@ const { useEffect, useState, useRef, useMemo } = os.appHooks;
 const { Button, Input } = Components;
 const RecordingUI = await thisBot.RecordVoice();
 const VideoRecordUI = await thisBot.VideoRecordUI();
+import { ColorizeParagraphs, uncolorizeHashtags} from "playlist.playlistMode.AutoTag";
+import { SelectionOptions } from "playlist.playlistMode.SelectionOptions";
 
 import {
   Editor,
@@ -96,34 +98,34 @@ const COMMAND_BOX_OPTIONS = [
     icon: "https://auth-aux-aobot-prod-filesbucket-141297942820.s3.amazonaws.com/annotations/95176265a3a33a0077c8b11b493470df3393acfc3ff5411c8fe45976d96be46d.svg",
     label: "Add Link",
     onClick: () => {
+      globalThis.ThruCommandBox = true;
       shout("startRecording", RECORDING_TYPES.link);
     },
   },
-  {
-    icon: "https://auth-aux-aobot-prod-filesbucket-141297942820.s3.amazonaws.com/annotations/76dc5c6ea24d635c2a1f363dc5d3822a618a56ff3484f36795f2bf4ae99ae3c4.svg",
-    label: "Add Tags",
-    onClick: () => {
-      // Notify coming soon
-      ShowNotification({
-        message: "Coming soon!",
-        severity: "info",
-      });
-    },
-  },
+  // {
+  //   icon: "https://auth-aux-aobot-prod-filesbucket-141297942820.s3.amazonaws.com/annotations/76dc5c6ea24d635c2a1f363dc5d3822a618a56ff3484f36795f2bf4ae99ae3c4.svg",
+  //   label: "Add Tags",
+  //   onClick: () => {
+  //     // Notify coming soon
+  //     ShowNotification({
+  //       message: "Coming soon!",
+  //       severity: "info",
+  //     });
+  //   },
+  // },
   {
     icon: "https://auth-aux-aobot-prod-filesbucket-141297942820.s3.amazonaws.com/annotations/8b01074656e936022bbb1655a94e85ba3f9af15d2873d6bd16d01d07d66bdf8b.svg",
     label: "Add File",
     onClick: async () => {
       const files = await os.showUploadFiles();
-      console.log("files", files);
-      console.log("shout", thisBot.onHandleDropFiles);
-      shout("onHandleDropFiles", {files});
+      shout("onHandleDropFiles", {files, thruCommandBox: true});
     },
   },
   {
     icon: "https://auth-aux-aobot-prod-filesbucket-141297942820.s3.amazonaws.com/annotations/14c602cebbe4c6872c9fcf80015865c3b3f70391608bf58b92ad1cc8e068212c.svg",
     label: "Add Playlist",
     onClick: () => {
+      globalThis.ThruCommandBox = true;
       // Notify coming soon
       ShowNotification({
         message: "Coming soon!",
@@ -146,6 +148,11 @@ const LineHeight = Mark.create({
         renderHTML: (attrs) =>
           attrs.lineHeight ? { style: `line-height: ${attrs.lineHeight}` } : {},
       },
+      id: {
+        default: null,
+        parseHTML: (el) => el.getAttribute("id"),
+        renderHTML: (attrs) => (attrs.id ? { id: attrs.id } : {}),
+      },
     };
   },
   parseHTML() {
@@ -153,6 +160,54 @@ const LineHeight = Mark.create({
   },
   renderHTML({ HTMLAttributes }) {
     return ["span", HTMLAttributes, 0];
+  },
+});
+
+
+export const CustomSpan = Node.create({
+  name: "customSpan",
+
+  group: "inline",
+  inline: true,
+  content: "inline*",  // ✅ allow text inside
+  atom: false,         // ✅ important (or remove this line)
+
+  addAttributes() {
+    return {
+      id: { default: null },
+      style: { default: null },
+    };
+  },
+
+  parseHTML() {
+    return [{ tag: "span" }];
+  },
+
+  renderHTML({ HTMLAttributes }) {
+    const { id, style } = HTMLAttributes;
+
+    return [
+      "span",
+      {
+        ...(id ? { id } : {}),
+        ...(style ? { style } : {}),
+      },
+      0, // ✅ keeps the inner text
+    ];
+  },
+
+  addNodeView() {
+    return ({ node }) => {
+      const el = document.createElement("span");
+
+      if (node.attrs.id) el.setAttribute("id", node.attrs.id);
+      if (node.attrs.style) el.setAttribute("style", node.attrs.style);
+
+      return {
+        dom: el,
+        contentDOM: el, // ✅ text goes inside span
+      };
+    };
   },
 });
 
@@ -418,6 +473,8 @@ const Audio = Node.create({
 });
 
 
+
+
 export function CustomAnnotationTextEditor({
   instanceId,
   className,
@@ -434,6 +491,8 @@ export function CustomAnnotationTextEditor({
   showMoreOptions = true,
   headingControls = false,
   id = "editor",
+  showPreview,
+  setShowPreview,
 }) {
   // ----- ids & storage
   const _instanceId = useRef(
@@ -457,17 +516,58 @@ export function CustomAnnotationTextEditor({
   // ----- editor dom & state
   const editorRef = useRef(null);
   const editorObjRef = useRef(null);
+  const canonicalHTMLRef = useRef("");
   const [loading, setLoading] = useState(false);
   const [recording, setRecording] = useState(globalThis.RecordingValue || null);
   const [name, setName] = useState("");
   const [link, setLink] = useState("");
   const [isCommandBox, setIsCommandBox] = useState(false);
 
+  const [isTagSuggestionsOpen, setIsTagSuggestionsOpen] = useState(false);
+
+  const TAG_OPTIONS = useMemo(() => [
+    ...(globalThis?.UsedTags || []).map((tag) => ({
+      key: tag.label,
+      label: tag.label,
+    })),
+  ], [globalThis?.UsedTags]);
+
+  const onClickTags = (tag:any) => {
+    const tagHTML = `<span id=${showPreview?"hashtag":""}>${tag.label}</span><br/>`;
+    if(!editorObjRef.current) return;
+    const { from } = editorObjRef.current.state.selection;
+    // Replace the last typed "#" with "#tag"
+    editorObjRef.current
+      .chain()
+      .focus()
+      .insertContentAt({ from: from - 1, to: from }, `${tagHTML} `)
+      .run();
+
+    setIsTagSuggestionsOpen(false);
+  }
+
+  const toggleTagSuggestions = () => {
+    setIsTagSuggestionsOpen((prev) => !prev);
+  }
+
   const toggleCommandBox = () => {
     setIsCommandBox((prev) => !prev);
   };
 
   globalThis.ToggleCommandBox = toggleCommandBox;
+
+  const togglePreview = () => {
+    setShowPreview((v) => {
+      if(!v && editorObjRef.current) {
+        editorObjRef.current.commands.setContent(ColorizeParagraphs(canonicalHTMLRef.current));
+      }else {
+        editorObjRef.current.commands.setContent(fakeEscapeMediaTags(uncolorizeHashtags(editorObjRef.current.getHTML())));
+      }
+      return !v;
+    });
+  }
+
+  globalThis.TogglePreview = togglePreview;
 
   useEffect(() => {
     globalThis.RecordingValue = recording;
@@ -490,12 +590,18 @@ export function CustomAnnotationTextEditor({
 
     data.forEach((file) => {
       const htmlSuffix = appendImageToEditorHTML(file);
-      html += htmlSuffix;
+      html += fakeEscapeMediaTags(htmlSuffix, showPreview);
     });
 
     if (html) {
       setTimeout(() => {
         if (!editorObjRef.current) return;
+        if(globalThis.ThruCommandBox) {
+          globalThis.ThruCommandBox = false;
+          const { from } = editorObjRef.current.state.selection;
+          editorObjRef.current.chain().focus().insertContentAt({ from: from - 1, to: from }, html).run();
+          return;
+        }
         editorObjRef.current.chain().focus().insertContent(html).run();
       }, 50);
     }
@@ -565,15 +671,17 @@ export function CustomAnnotationTextEditor({
     console.log("data", data);
   }
 
+  const typingDeboncingTimeout = useRef(null);
+
   // ---- init editor
   useEffect(() => {
     if (!editorRef.current) return;
 
     const contentHTML = (() => {
-      if (typeof initialHTML === "string") return initialHTML;
+      if (typeof initialHTML === "string") return fakeEscapeMediaTags(initialHTML, showPreview);
       if (typeof initialText === "string")
         return `<p>${escapeHTML(initialText)}</p>`;
-      return placeholderHTML;
+      return fakeEscapeMediaTags(placeholderHTML, showPreview);
     })();
 
     const editor = new Editor({
@@ -604,24 +712,41 @@ export function CustomAnnotationTextEditor({
         Audio,
         CustomImage.configure({ inline: false, allowBase64: true }),
         Link.configure({ openOnClick: true, linkOnPaste: true }),
+        CustomSpan
       ],
       editorProps: {
         handleDOMEvents: {
-          // Block keyboard and menu copy/cut
-          copy: (_view, event) => {
-            event.preventDefault();
+          keyup: (_, event:any) => {
+            if (event.key === "Shift") {
+              return true;
+            }
+            if(event.key === '/') {
+              toggleCommandBox();
+              return;
+            }
+            setIsCommandBox(false);
+            if(event.key === '#' && TAG_OPTIONS.length > 0) {
+              toggleTagSuggestions();
+              return;
+            }
+            setIsTagSuggestionsOpen(false);
             return true;
           },
-          cut: (_view, event) => {
-            event.preventDefault();
+          // Block keyboard and menu copy/cut
+          copy: () => {
+            // event.preventDefault();
+            return true;
+          },
+          cut: () => {
+            // event.preventDefault();
             return true;
           },
           // (Optional) stop dragging out selections / drags
-          dragstart: (_view, event) => {
+          dragstart: (_, event) => {
             event.preventDefault();
             return true;
           },
-          paste: async (view, event) => {
+          paste: async (_, event) => {
             const items = event?.clipboardData?.items;
 
               // 🔴 STOP DEFAULT PASTE IMMEDIATELY
@@ -656,11 +781,11 @@ export function CustomAnnotationTextEditor({
 
             data.forEach((file) => {
               const htmlSuffix = appendImageToEditorHTML(file);
-              html += htmlSuffix;
+              html += fakeEscapeMediaTags(htmlSuffix, showPreview);
             });
 
             if (plainText) {
-              const embedHTML = generateEmbedFromUrl(plainText.trim());
+              const embedHTML = fakeEscapeMediaTags(generateEmbedFromUrl(plainText.trim()), showPreview);
 
               if (embedHTML) {
                 setTimeout(() => {
@@ -685,7 +810,7 @@ export function CustomAnnotationTextEditor({
               return true;
             }
           },
-          drop: async (view, event) => {
+          drop: async () => {
             return true;
           },
         },
@@ -698,12 +823,13 @@ export function CustomAnnotationTextEditor({
     editor.on("update", () => {
       try {
         // if the editor html ending with '/' then toggle the command box
-        if (editor.getHTML().endsWith('/</p>')) {
-          console.log("toggle command box", editor.getHTML());
-          toggleCommandBox();
-        }
+        const editorHTML = editor.getHTML();
+      
+        const html = fakeUnescapeMediaTags(ColorizeParagraphs(editorHTML));
+        canonicalHTMLRef.current = html;
+     
         if (onChange) {
-          onChange(editor.getHTML(), editor.getJSON());
+          onChange(html, editor.getJSON());
         }
       } catch {}
     });
@@ -930,7 +1056,7 @@ export function CustomAnnotationTextEditor({
     for (const id of ids) {
       const el = itemsRef.current[id];
       if (!el) continue;
-      const w = el.offsetWidth + 12;
+      const w = el.offsetWidth + 14;
       if (used + w <= available && (!headingControls || vis.length < 3)) {
         vis.push(id);
         used += w;
@@ -1033,6 +1159,7 @@ export function CustomAnnotationTextEditor({
   const [data, setData] = useState(null);
 
   const onSaveAndAdd = async () => {
+    
 
     if(isLink) {
 
@@ -1041,18 +1168,41 @@ export function CustomAnnotationTextEditor({
         severity: "error",
       });
 
-      const embedHTML = generateEmbedFromUrl(link.trim(), name.trim());
-      console.log("embedHTML", embedHTML, link, name);
-      if(embedHTML === null) return ShowNotification({
-        message: "Invalid link!",
-        severity: "error",
-      });
-      editorObjRef.current.chain().focus().insertContent(embedHTML).run();
+      const originalHTML = generateEmbedFromUrl(link.trim(), name.trim());
+      const embedHTML = fakeEscapeMediaTags(originalHTML, showPreview);
+  
+      if(embedHTML === null) {
+        globalThis.ThruCommandBox = false;
+        
+        return ShowNotification({
+          message: "Invalid link!",
+          severity: "error",
+        });
+      }
+      if(globalThis.ThruCommandBox) {
+        globalThis.ThruCommandBox = false;
+        const { from } = editorObjRef.current.state.selection;
+        editorObjRef.current.chain().focus().insertContentAt({ from: from - 1, to: from }, embedHTML).run();
+      } else {
+        editorObjRef.current.chain().focus().insertContent(embedHTML).run();
+      }
       setLink("");
       setName("");
       setRecording(null);
       return;
     }
+
+    if(recording === RECORDING_TYPES.audio && !data) {
+      globalThis.HandleStopPlayVoice();
+      return;
+    }
+
+    if(recording === RECORDING_TYPES.video && !data) {
+      globalThis.HandleStopPlayVideo();
+      return;
+    }
+
+    await os.sleep(100);
 
     if(!data) return ShowNotification({
       message: "Please record something to save!",
@@ -1078,6 +1228,7 @@ export function CustomAnnotationTextEditor({
       setLoading(false);
 
       if (!url) {
+        globalThis.ThruCommandBox = false;
         return ShowNotification({
           message: "Failed to upload File!",
           severity: "error",
@@ -1099,7 +1250,17 @@ export function CustomAnnotationTextEditor({
         </audio>
         `;
       }
-      editorObjRef.current.chain().focus().insertContent(htmlToInsert).run();
+
+      htmlToInsert = fakeEscapeMediaTags(htmlToInsert, showPreview);
+
+      if(globalThis.ThruCommandBox) {
+        globalThis.ThruCommandBox = false;
+        const { from } = editorObjRef.current.state.selection;
+        editorObjRef.current.chain().focus().insertContentAt({ from: from - 1, to: from }, htmlToInsert).run();
+      } else {
+        editorObjRef.current.chain().focus().insertContent(htmlToInsert).run();
+      }
+
       setRecording(null);
       setData(null);
     }
@@ -1124,6 +1285,10 @@ export function CustomAnnotationTextEditor({
           </div>
         ))}
       </div>}
+
+    {isTagSuggestionsOpen && <SelectionOptions handleClose={() => setIsTagSuggestionsOpen(false)} options={TAG_OPTIONS} onClickOption={onClickTags} />}
+
+
       {(isMic || isLink || isVideo) && 
           <div
                   style={{
@@ -1142,7 +1307,7 @@ export function CustomAnnotationTextEditor({
                     justifyContent: "center",
                     backdropFilter: "blur(2px)",
                     minHeight: "max-content",
-                    height: "100%",
+                    height: "calc(100% + 90px)",
                     padding: "1rem 0",
                   }}
                 >
@@ -1216,6 +1381,7 @@ export function CustomAnnotationTextEditor({
                   textAlign: "center",
                   minWidth: "280px",
                   boxShadow: "0 10px 30px rgba(0,0,0,0.3)",
+                  zIndex: 99999
                 }}
               >
              {loading ? 
@@ -1330,7 +1496,7 @@ export function CustomAnnotationTextEditor({
         ref={editorRef}
         className="sre-editor"
       />
-
+      { false && <p className="sre-hashtag-hint">You can add tags by typing # followed by the hashtag. For example, #love #faith #hope.</p> }
       {showTuning && (
         <div className="sre-tune-backdrop" onClick={() => setShowTuning(false)}>
           <div className="sre-tune-modal" onClick={(e) => e.stopPropagation()}>
@@ -1753,6 +1919,26 @@ const SRE_STYLES = (minH) => `
 .sre-video-root {
   min-height: 500px;
 }
+.sre-hashtag-hint {
+    font-size: 14px;
+    background: #ededed;
+    padding: 8px 6px;
+    border-radius: 8px;
+    margin: 8px 0;
+    color: #570000;
+}
+
+.sre-preview-btn {
+  border: none;
+  outline: none;
+  cursor: pointer;
+  background: transparent;
+  border-bottom: 2px solid transparent;
+}
+.sre-preview-btn.active {
+  border-bottom: 2px solid #D36433;
+}
+
 .sre-editor {
   min-height: ${minH}px;
   outline: none;
@@ -1922,12 +2108,90 @@ const SRE_STYLES = (minH) => `
 function clamp(n, a, b) {
   return Math.max(a, Math.min(b, n));
 }
+
 function escapeHTML(s) {
   return s.replace(
     /[&<>"]/g,
     (c) => ({ "&": "&amp;", "<": "&lt;", ">": "&gt;", '"': "&quot;" })[c]
   );
 }
+
+const MEDIA_OPEN_TAG_REGEX =
+  /<(img|video|audio|iframe)\b[\s\S]*?>/gi;
+
+const MEDIA_CLOSE_TAG_REGEX =
+  /<\/(video|audio|iframe)\s*>/gi;
+
+  function fakeEscapeMediaTags(html = "", showPreview = false) {
+    if (showPreview) return html;
+  
+    return html
+      // escape opening media tags
+      .replace(MEDIA_OPEN_TAG_REGEX, (tag) =>
+        tag.replace(/</g, "‹").replace(/>/g, "›")
+      )
+      // escape closing media tags
+      .replace(MEDIA_CLOSE_TAG_REGEX, (tag) =>
+        tag.replace(/</g, "‹").replace(/>/g, "›")
+      );
+  }
+
+  
+const P_BLOCK_REGEX = /<p\b[^>]*>([\s\S]*?)<\/p>/gi;
+
+// matches:
+// ‹img ... /›
+// ‹video ... ›‹/video›
+// ‹audio ... ›‹/audio›
+// ‹iframe ... ›‹/iframe›
+const FAKE_MEDIA_BLOCK_REGEX =
+  /‹(img|video|audio|iframe)\b([\s\S]*?)\/?›(?:\s*‹\/\1›)?/gi;
+
+
+  function fakeUnescapeMediaTags(html) {
+    return html.replace(P_BLOCK_REGEX, (fullP, inner) => {
+      const media = [];
+      let match;
+  
+      // extract ALL fake media blocks in order
+      while ((match = FAKE_MEDIA_BLOCK_REGEX.exec(inner)) !== null) {
+        const [, tag, attrs] = match;
+  
+        if (tag === "img") {
+          media.push(`<img${attrs} />`);
+        } else {
+          media.push(`<${tag}${attrs}></${tag}>`);
+        }
+      }
+  
+      // remove media blocks from paragraph
+      const leftoverText = inner
+        .replace(FAKE_MEDIA_BLOCK_REGEX, "")
+        .trim();
+  
+      // CASE 1: paragraph contains ONLY media → unwrap
+      if (media.length && leftoverText === "") {
+        return media.join("\n");
+      }
+  
+      // CASE 2: mixed content → split safely
+      if (media.length) {
+        return (
+          media.join("\n") +
+          (leftoverText
+            ? `\n<p>${leftoverText}</p>`
+            : "")
+        );
+      }
+  
+      // CASE 3: normal paragraph
+      return fullP;
+    });
+  }
+  
+
+  
+
 function triggerDownload(blob, filename) {
   const url = URL.createObjectURL(blob);
   const a = document.createElement("a");

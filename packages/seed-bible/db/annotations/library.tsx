@@ -61,6 +61,9 @@ export const COMMENT_SCHEMA = z.object({
 
   // user id
   userId: z.nullable(z.optional(z.string())),
+
+  // tags
+  tags: z.nullable(z.optional(z.array(z.string()))),
 });
 
 export const ANNOTATION_DATA_SCHEMA = z.discriminatedUnion("type", [
@@ -139,9 +142,9 @@ export function createAnnotation(
   verseNumber: number
 ): Annotation {
   data = COMMENT_SCHEMA.parse(data);
-  let keyName = 'verseNumber';
-  if(Array.isArray(verseNumber)) {
-    keyName = 'verseNumbers';
+  let keyName = "verseNumber";
+  if (Array.isArray(verseNumber)) {
+    keyName = "verseNumbers";
   }
   return {
     id: uuid(),
@@ -906,6 +909,307 @@ function updateSummaryTotals(summary: ReadingHistorySummary) {
       summary.totalBooksRead += 1;
     }
     summary.totalChaptersRead += user.uniqueChaptersRead;
+  }
+}
+
+// User Subscriptions
+// =======
+
+/**
+ * Represents a subscribed user with their details.
+ */
+export interface SubscribedUser {
+  id: string;
+  name?: string;
+  photoLink?: string;
+}
+
+/**
+ * Adds users to the current user's subscription list.
+ * This appends new users to the existing subscriptions without removing previous ones.
+ * Also adds the current user to each target user's subscribers list.
+ * @param users The array of users to subscribe to (with id, name, and photoLink).
+ * @returns A promise that resolves when the subscription is saved, or null if the user is not logged in.
+ */
+export async function subscribeToUsers(
+  users: SubscribedUser[]
+): Promise<void | null> {
+  const recordName = await getUserRecord(true);
+
+  if (!recordName) {
+    return null;
+  }
+
+  // Get existing subscriptions and merge with new ones
+  const existingUsers = await getUserSubscriptionsWithDetails(recordName);
+  const existingIds = new Set(existingUsers.map((u) => u.id));
+  const newUsers = users.filter((u) => !existingIds.has(u.id));
+  const mergedUsers = [...existingUsers, ...newUsers];
+
+  // Save my subscriptions
+  await saveUserSubscriptions(recordName, mergedUsers);
+
+  // Get current user's profile data to add to target users' subscribers list
+  const myProfileResult = await os.getData(recordName, recordName);
+  const myProfile = {
+    id: recordName,
+    name: myProfileResult.success ? myProfileResult.data?.name : undefined,
+    photoLink: myProfileResult.success ? myProfileResult.data?.photoLink : undefined,
+  };
+
+  // Add myself to each new user's subscribers list
+  for (const user of newUsers) {
+    try {
+      await addSubscriberToUser(user.id, myProfile);
+    } catch (e) {
+      console.error(`Error adding subscriber to user ${user.id}:`, e);
+    }
+  }
+}
+
+/**
+ * Adds a subscriber to a user's subscribers list.
+ * @param targetUserId The user ID to add the subscriber to.
+ * @param subscriber The subscriber to add.
+ */
+async function addSubscriberToUser(
+  targetUserId: string,
+  subscriber: SubscribedUser
+): Promise<void> {
+  const existingSubscribers = await getSubscribersOfUser(targetUserId);
+  const alreadyExists = existingSubscribers.some((s) => s.id === subscriber.id);
+
+  if (!alreadyExists) {
+    const updatedSubscribers = [...existingSubscribers, subscriber];
+    await saveSubscribers(targetUserId, updatedSubscribers);
+  }
+}
+
+/**
+ * Removes a subscriber from a user's subscribers list.
+ * @param targetUserId The user ID to remove the subscriber from.
+ * @param subscriberId The subscriber ID to remove.
+ */
+async function removeSubscriberFromUser(
+  targetUserId: string,
+  subscriberId: string
+): Promise<void> {
+  const existingSubscribers = await getSubscribersOfUser(targetUserId);
+  const updatedSubscribers = existingSubscribers.filter((s) => s.id !== subscriberId);
+  await saveSubscribers(targetUserId, updatedSubscribers);
+}
+
+/**
+ * Saves the subscribers list for a user.
+ * @param recordName The user's record name.
+ * @param subscribers The list of subscribers.
+ */
+async function saveSubscribers(
+  recordName: string,
+  subscribers: SubscribedUser[]
+): Promise<void> {
+  const result = await os.recordData(
+    recordName,
+    "user_subscribers",
+    { subscribers },
+    {
+      marker: "publicRead:subscribers",
+    }
+  );
+
+  if (result.success === false) {
+    console.error("Error saving subscribers: ", result);
+  }
+}
+
+/**
+ * Gets the subscribers of a specific user.
+ * @param recordName The user's record name.
+ * @returns Array of subscribers.
+ */
+async function getSubscribersOfUser(
+  recordName: string
+): Promise<SubscribedUser[]> {
+  const result = await os.getData(recordName, "user_subscribers");
+
+  if (result.success === false) {
+    if (result.errorCode === "data_not_found") {
+      return [];
+    }
+    console.error("Error getting subscribers: ", result);
+    return [];
+  }
+
+  const data = result.data as { subscribers?: SubscribedUser[] };
+  return data.subscribers || [];
+}
+
+/**
+ * Gets all users who are subscribed to the current user.
+ * @returns Array of subscribers, or null if not logged in.
+ */
+export async function getMySubscribers(): Promise<SubscribedUser[] | null> {
+  const recordName = await getUserRecord(false);
+
+  if (!recordName) {
+    return null;
+  }
+
+  return getSubscribersOfUser(recordName);
+}
+
+/**
+ * Removes users from the current user's subscription list.
+ * Also removes the current user from each target user's subscribers list.
+ * @param userIds The array of user IDs to unsubscribe from.
+ * @returns A promise that resolves when the subscription is saved, or null if the user is not logged in.
+ */
+export async function unsubscribeFromUsers(
+  userIds: string[]
+): Promise<void | null> {
+  const recordName = await getUserRecord(true);
+
+  if (!recordName) {
+    return null;
+  }
+
+  const existingUsers = await getUserSubscriptionsWithDetails(recordName);
+  const filteredUsers = existingUsers.filter((u) => !userIds.includes(u.id));
+
+  // Save my updated subscriptions
+  await saveUserSubscriptions(recordName, filteredUsers);
+
+  // Remove myself from each user's subscribers list
+  for (const userId of userIds) {
+    try {
+      await removeSubscriberFromUser(userId, recordName);
+    } catch (e) {
+      console.error(`Error removing subscriber from user ${userId}:`, e);
+    }
+  }
+}
+
+/**
+ * Replaces the current user's entire subscription list.
+ * Warning: This will remove all existing subscriptions and replace them with the new list.
+ * @param users The array of users to set as subscriptions.
+ * @returns A promise that resolves when the subscription is saved, or null if the user is not logged in.
+ */
+export async function setSubscribedUsers(
+  users: SubscribedUser[]
+): Promise<void | null> {
+  const recordName = await getUserRecord(true);
+
+  if (!recordName) {
+    return null;
+  }
+
+  return saveUserSubscriptions(recordName, users);
+}
+
+/**
+ * Saves user subscriptions to a record.
+ * @param recordName The name of the record (typically the main user's authBot.id).
+ * @param users The array of subscribed users with their details.
+ * @param marker The marker to use for the subscription data. Defaults to `publicRead`.
+ */
+export async function saveUserSubscriptions(
+  recordName: string,
+  users: SubscribedUser[],
+  marker: string = "publicRead"
+): Promise<void> {
+  const result = await os.recordData(
+    recordName,
+    "user_subscriptions",
+    { users },
+    {
+      marker: `${marker}:subscriptions`,
+    }
+  );
+
+  if (result.success === false) {
+    console.error("Error saving user subscriptions: ", result);
+    throw new Error(`Error saving user subscriptions: ${result.errorCode}`);
+  }
+}
+
+/**
+ * Gets the list of subscribed users with their details for the current user.
+ * @returns A promise that resolves to an array of subscribed users, or null if the user is not logged in.
+ */
+export async function getSubscribedUsers(): Promise<SubscribedUser[] | null> {
+  const recordName = await getUserRecord(false);
+
+  if (!recordName) {
+    return null;
+  }
+
+  return getUserSubscriptionsWithDetails(recordName);
+}
+
+/**
+ * Gets the list of subscribed users with their details from a record.
+ * @param recordName The name of the record to get subscriptions from.
+ * @returns A promise that resolves to an array of subscribed users.
+ */
+export async function getUserSubscriptionsWithDetails(
+  recordName: string
+): Promise<SubscribedUser[]> {
+  const result = await os.getData(recordName, "user_subscriptions");
+
+  if (result.success === false) {
+    if (result.errorCode === "data_not_found") {
+      return [];
+    }
+    console.error("Error getting user subscriptions: ", result);
+    return [];
+  }
+
+  // Support both old format (userIds array) and new format (users array)
+  const data = result.data as { users?: SubscribedUser[]; userIds?: string[] };
+  if (data.users) {
+    return data.users;
+  }
+  // Backward compatibility: convert old userIds format to new format
+  if (data.userIds) {
+    return data.userIds.map((id) => ({ id }));
+  }
+  return [];
+}
+
+/**
+ * Gets the list of user IDs that a record is subscribed to.
+ * @param recordName The name of the record to get subscriptions from.
+ * @returns A promise that resolves to an array of user IDs.
+ * @deprecated Use getUserSubscriptionsWithDetails instead for full user details.
+ */
+export async function getUserSubscriptions(
+  recordName: string
+): Promise<string[]> {
+  const users = await getUserSubscriptionsWithDetails(recordName);
+  return users.map((u) => u.id);
+}
+
+/**
+ * Checks if a specific user is subscribed to the current user.
+ * @param userId The user ID to check.
+ * @returns A promise that resolves to true if the user is subscribed, false otherwise, or null if not logged in.
+ */
+export async function isUserSubscribedToMe(
+  userId: string
+): Promise<boolean | null> {
+  const currentUserRecord = await getUserRecord(false);
+
+  if (!currentUserRecord) {
+    return null;
+  }
+
+  try {
+    const userSubs = await getUserSubscriptionsWithDetails(userId);
+    return userSubs.some((sub) => sub.id === currentUserRecord);
+  } catch (e) {
+    console.error(`Error checking if user ${userId} is subscribed:`, e);
+    return false;
   }
 }
 

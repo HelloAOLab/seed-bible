@@ -36,6 +36,8 @@ const Discover = ({
   annotationData,
   style,
   setOpenModal,
+  annotationSources,
+  tagsSources,
 }) => {
   
   const IsPlaylistPlaying = globalThis.IsPlaylistPlaying;
@@ -136,6 +138,7 @@ const Discover = ({
         overflow: "auto",
         ...style,
       }}
+      id="discover-container"
     >
       {!editingPlaylist && false && (
         <div
@@ -205,7 +208,9 @@ const Discover = ({
               })}
             </div>
             {pos !== "left" && pos !== "noscroll" && (
-              <div className="chip-tag arrow left" onClick={scrollLeftByWidth}>
+              <div className="chip-tag arrow left" 
+                onClick={scrollLeftByWidth}
+              >
                 <span class="material-symbols-outlined">chevron_backward</span>
               </div>
             )}
@@ -239,7 +244,9 @@ const Discover = ({
       !renamingPlaylist &&
       (isAll || selectedChip["Annotations"]) ? (
         <AnnotationList
+          annotationSources={annotationSources}
           setAnnotationData={setAnnotationData}
+          tagsSources={tagsSources}
           currentOpenedBook={currentOpenedBook}
           fetchingAnnotation={fetchingAnnotation}
           chapter={chapter}

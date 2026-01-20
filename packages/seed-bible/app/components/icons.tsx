@@ -649,26 +649,23 @@ export const SelectionUIIcon = (props) => (
     height={24}
     viewBox="0 0 24 24"
     fill="none"
-    className="coloredIcon"
     xmlns="http://www.w3.org/2000/svg"
     {...props}
   >
+    {/* Dashed selection box */}
     <rect
       x="3"
       y="3"
-      width="18"
-      height="18"
+      width="14"
+      height="14"
       rx="2"
-      stroke="#727272"
+      stroke="black"
       strokeWidth="2"
+      strokeDasharray="3 3"
     />
-    <path
-      d="M7 12L10 15L17 8"
-      stroke="#727272"
-      strokeWidth="2"
-      strokeLinecap="round"
-      strokeLinejoin="round"
-    />
+
+    {/* Solid selection cursor */}
+    <path d="M11 12L21 16L15 17L17 22Z" fill="black" />
   </svg>
 );
 const MenuIcon = ({ name, size = 24, invert = false }) => {

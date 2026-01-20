@@ -266,7 +266,7 @@ const isValidChapter =
 if (thisBot.vars.currentBook && isValidChapter) {
   const shouldShow =
     thisBot.vars.currentBook === "Exodus" &&
-    ((thisBot.vars.currentChapter >= 25 && thisBot.vars.currentChapter <= 30) ||
+    ((thisBot.vars.currentChapter >= 25 && thisBot.vars.currentChapter <= 31) ||
       (thisBot.vars.currentChapter >= 35 && thisBot.vars.currentChapter <= 40));
   return thisBot.SetBotsVisibility({
     data: keysFirstAppearance.map((info, index) => {

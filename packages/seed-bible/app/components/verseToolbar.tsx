@@ -19,6 +19,7 @@ export function VerseToolbar({
   highlighted,
   onClose,
   activeSpace,
+  showVerseToolbar,
   spaces,
 }) {
   // Get Selection UI settings - first try globalThis, then fall back to saved space data
@@ -57,16 +58,17 @@ export function VerseToolbar({
   useEffect(() => {
     masks.customColors = customColors;
   }, [customColors]);
-  const [tempColor, setTempColor] = useState(null);
+  const [tempColor, setTempColor] = useState("#FDE047");
+  const [isPickingColor, setIsPickingColor] = useState(false);
   const colorInputRef = useRef(null);
   const colorPickerRef = useRef(null);
 
   useEffect(() => {
     const handleClickOutside = (event) => {
-      if (tempColor) {
+      if (isPickingColor) {
         handleColorClick(tempColor);
         setSelectedColor(tempColor);
-        setTempColor(null);
+        setIsPickingColor(false);
       }
     };
 
@@ -74,7 +76,7 @@ export function VerseToolbar({
     return () => {
       document.removeEventListener("mousedown", handleClickOutside);
     };
-  }, [tempColor, customColors]);
+  }, [isPickingColor, tempColor, customColors]);
 
   const getVerseReference = () => {
     if (clickedVerses.length === 0) return "";
@@ -212,6 +214,7 @@ export function VerseToolbar({
     cursor: "pointer",
     "pointer-events": "none",
     position: "absolute",
+    opacity: 0,
   };
 
   const closeButtonStyle = {
@@ -256,6 +259,7 @@ export function VerseToolbar({
 
   const handlePlusClick = () => {
     setTempColor(selectedColor);
+    setIsPickingColor(true);
     colorInputRef.current?.click();
   };
 
@@ -288,6 +292,12 @@ export function VerseToolbar({
 
   return (
     <>
+      <style>{`
+        .toolbar-1.mounted{
+          pointer-events:${globalThis.IsMobileNow() && showVerseToolbar ? "none !important" : ""}
+        }
+        
+        `}</style>
       {globalThis.IsMobileNow() && selectionSettings.showSelectedItems && (
         <>
           <div className="verse-ref">
