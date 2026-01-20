@@ -320,6 +320,7 @@ const Main = () => {
   // };
 
   const defaultTheme = {
+    firstToolbarbutton:'#dfdede',
     // Main colors
     primaryColor: "#E07B4C",
     secondaryColor: "#D2691E",
@@ -431,6 +432,7 @@ const Main = () => {
     "secondary-filter-mode": "invert(100%)",
   };
   const darkTheme = {
+    firstToolbarbutton:'#5C5C5C',
     panelBackground: "#2D2D2D",
     themeSideMenu: "#2D2D2D",
     panelBackground: "#1A1A1A",

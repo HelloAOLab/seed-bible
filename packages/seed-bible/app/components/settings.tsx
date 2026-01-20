@@ -170,7 +170,7 @@ const SettingsSidebar = () => {
                   flexDirection: "column",
                   padding: "5px",
                   borderRadius: "5px",
-                  backgroundColor: "var(--pageBackground)",
+                  // backgroundColor: "var(--pageBackground)",
                   pointerEvents: "auto",
                   color: "var(--text1)",
                 }}
@@ -1419,14 +1419,7 @@ const SettingsSidebar = () => {
                         )}
 
                         <div className="activeAccount" style={{ gap: "8px" }}>
-                          <img
-                            style={{
-                              borderRadius: "50%",
-                              height: "20px",
-                              width: "20px",
-                            }}
-                            src="https://res.cloudinary.com/dfbtwwa8p/image/upload/v1751169026/517d2d9057397c32ea562a20df4640807915b4df_udws5p.png"
-                          />
+                         <MenuIcon name={'bookmark_check'}/>
                           <div className="softText">
                             {editMode && editingLabel === item.key ? (
                               <input
@@ -1488,7 +1481,7 @@ const SettingsSidebar = () => {
                                   padding: "8px 12px",
                                   marginBottom: "6px",
                                   borderRadius: "8px",
-                                  backgroundColor: "var(--pageBackground)",
+                                  // backgroundColor: "var(--pageBackground)",
                                   opacity:
                                     unsubscribingId === user.id ? 0.5 : 1,
                                 }}
