@@ -4,14 +4,14 @@ import {
   LeafIcon,
   CatIcon,
   DogIcon,
-  CoffeBeanIcon,
+  CoffeBeanIcon
 } from "app.components.phosphoricons";
 
 import TranslationModal from "introduction.searchBar.TranslationModal";
 import { getTranslations, getTranslatedNumber } from "app.hooks.i18n";
 import type {
   BookInterface,
-  TranslationInterface,
+  TranslationInterface
 } from "introduction.searchBar.Interfaces";
 const {
   useState,
