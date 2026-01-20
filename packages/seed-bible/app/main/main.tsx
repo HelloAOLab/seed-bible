@@ -320,6 +320,7 @@ const Main = () => {
   // };
 
   const defaultTheme = {
+    firstToolbarbutton:'#dfdede',
     // Main colors
     primaryColor: "#E07B4C",
     secondaryColor: "#D2691E",
@@ -430,6 +431,7 @@ const Main = () => {
     text3: "#333333",
   };
   const darkTheme = {
+    firstToolbarbutton:'#5C5C5C',
     panelBackground: "#2D2D2D",
     themeSideMenu: "#2D2D2D",
     panelBackground: "#1A1A1A",

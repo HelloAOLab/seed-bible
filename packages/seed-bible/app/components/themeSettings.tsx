@@ -109,6 +109,7 @@ const ADVANCED_SETTINGS_SECTIONS = {
 // Based on the design mockup with orange accent colors
 const defaultTheme = {
   // Main colors
+  firstToolbarbutton:'#dfdede',
   primaryColor: "#E07B4C",
   secondaryColor: "#D2691E",
   tertiaryColor: "#CD853F",
@@ -229,6 +230,9 @@ const READY_THEMES = [
   {
     name: "Dark Mode",
     colors: {
+  firstToolbarbutton:'#5C5C5C',
+
+
       // Main colors
       primaryColor: "#5A67D8",
       secondaryColor: "#A78BFA",
@@ -343,6 +347,7 @@ const READY_THEMES = [
   {
     name: "Purple Serenity",
     colors: {
+      firstToolbarbutton:'#dfdede',
       // Main colors
       primaryColor: "#7C3AED",
       secondaryColor: "#A78BFA",
@@ -456,6 +461,7 @@ const READY_THEMES = [
   {
     name: "Green Nature",
     colors: {
+      firstToolbarbutton:'#dfdede',
       // Main colors
       primaryColor: "#059669",
       secondaryColor: "#10B981",
@@ -569,6 +575,7 @@ const READY_THEMES = [
   {
     name: "Ocean Blue",
     colors: {
+      firstToolbarbutton:'#dfdede',
       // Main colors
       primaryColor: "#0284C7",
       secondaryColor: "#0EA5E9",
@@ -682,6 +689,7 @@ const READY_THEMES = [
   {
     name: "Warm Amber",
     colors: {
+      firstToolbarbutton:'#dfdede',
       // Main colors
       primaryColor: "#D97706",
       secondaryColor: "#F59E0B",
