@@ -6,6 +6,7 @@ import { useMouseMove } from "app.hooks.mouseMove";
 import SurroundingDivs from "app.components.surroundingDivs";
 import { useBibleContext } from "app.hooks.bibleVariables";
 import { useTabsContext } from "app.hooks.tabs";
+import { BurgerMenuIcon } from "app.components.icons";
 
 // Simple, single-toolbar component (no edit layer). Main logic unchanged.
 export function Toolbar() {
@@ -158,8 +159,12 @@ export function Toolbar() {
               }}
               className="toolbar-item-wrapper mobile-only"
             >
-              <button className={`toolbar-button firstToolbarbutton`}>
-                <span className="material-symbols-outlined">menu</span>
+              <button
+                className={`toolbar-button firstToolbarbutton`}
+                title="Open menu"
+                aria-label="Open menu"
+              >
+                <BurgerMenuIcon size={24} color="var(--text1)" />
               </button>
             </div>
             {tools?.map((tool, index) =>
