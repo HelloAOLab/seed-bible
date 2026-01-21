@@ -350,7 +350,7 @@ const Main = () => {
     // Scripture text
     bookHeadingColor: "#333333",
     chapterHeadingColor: "#333333",
-    verseNumberColor: "#E07B4C",
+    verseNumberColor: "#000000",
     verseTextColor: "#333333",
     pageBackground: "#FFFFFF",
     pageTextColor: "#333333",
@@ -463,7 +463,7 @@ const Main = () => {
       // Scripture text
       bookHeadingColor: "#FFFFFF",
       chapterHeadingColor: "#FFFFFF",
-      verseNumberColor: "#5A67D8",
+      verseNumberColor: "#FFFFFF",
       verseTextColor: "#FFFFFF",
       pageBackground: "#121212",
       pageTextColor: "#FFFFFF",
