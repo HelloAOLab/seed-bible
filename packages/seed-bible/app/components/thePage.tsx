@@ -205,6 +205,7 @@ function ThePage({
               configBot.tags.translationId = null;
               configBot.tags.translation = null;
               const translationData = await loadTranslationFromUrl();
+              os.toast("No translations found from url!");
               return {
                 ...translationData,
               };
@@ -382,8 +383,13 @@ function ThePage({
 
       globalThis.BookId = bible.bookId;
 
-      const { data, loading, error, footnotes: bibleFootnotes } = bible.getState();
-      console.log(data, tab,bibleFootnotes, "the data loaded");
+      const {
+        data,
+        loading,
+        error,
+        footnotes: bibleFootnotes,
+      } = bible.getState();
+      console.log(data, tab, bibleFootnotes, "the data loaded");
       setFootnotes(bibleFootnotes);
 
       globalThis.refreshScrollers && globalThis.refreshScrollers();
@@ -1778,7 +1784,8 @@ function ThePage({
               >
                 <div className="footnote-modal-header">
                   <h3>
-                    {activeFootnote.book} {activeFootnote.chapter}:{activeFootnote.verse}
+                    {activeFootnote.book} {activeFootnote.chapter}:
+                    {activeFootnote.verse}
                   </h3>
                   <button
                     className="footnote-modal-close"
@@ -1794,13 +1801,14 @@ function ThePage({
                   {activeFootnote.footnotes.map((footnote, idx) => {
                     if (!footnote) return null;
 
-                    const footnoteText = footnote.text || footnote.note || footnote.content || '';
+                    const footnoteText =
+                      footnote.text || footnote.note || footnote.content || "";
                     if (!footnoteText) return null;
 
                     return (
                       <div key={idx} className="footnote-item">
                         <span className="footnote-number">
-                          {footnote.caller || (idx + 1)}
+                          {footnote.caller || idx + 1}
                         </span>
                         <span className="footnote-text">{footnoteText}</span>
                       </div>
@@ -2277,21 +2285,21 @@ function Section({
     // If footnotes exist, they usually have a 'noteId' or marker in the original text
     verseFootnotes.forEach((footnote, idx) => {
       const marker = footnote.marker || footnote.noteId;
-      if (marker && typeof processedText === 'string') {
-        const markerRegex = new RegExp(`\\[${marker}\\]|${marker}`, 'g');
+      if (marker && typeof processedText === "string") {
+        const markerRegex = new RegExp(`\\[${marker}\\]|${marker}`, "g");
         const matches = [...processedText.matchAll(markerRegex)];
 
-        matches.forEach(match => {
+        matches.forEach((match) => {
           if (match.index > lastIndex) {
             parts.push({
-              type: 'text',
-              content: processedText.slice(lastIndex, match.index)
+              type: "text",
+              content: processedText.slice(lastIndex, match.index),
             });
           }
           parts.push({
-            type: 'footnote',
+            type: "footnote",
             marker: idx + 1,
-            content: footnote.text || footnote.note || ''
+            content: footnote.text || footnote.note || "",
           });
           lastIndex = match.index + match[0].length;
         });
@@ -2300,8 +2308,8 @@ function Section({
 
     if (lastIndex < processedText.length) {
       parts.push({
-        type: 'text',
-        content: processedText.slice(lastIndex)
+        type: "text",
+        content: processedText.slice(lastIndex),
       });
     }
 
@@ -2534,24 +2542,38 @@ function Section({
                   }}
                   style={{
                     "background-color":
-                      highlighted?.[`${book}-${chapter}-${verse.verseNumber}`] ||
-                      commandHighlight.includes(verse.verseNumber)
-                        ? highlighted?.[`${book}-${chapter}-${verse.verseNumber}`]?.color
+                      highlighted?.[
+                        `${book}-${chapter}-${verse.verseNumber}`
+                      ] || commandHighlight.includes(verse.verseNumber)
+                        ? highlighted?.[
+                            `${book}-${chapter}-${verse.verseNumber}`
+                          ]?.color
                         : "transparent",
                     color:
-                      highlighted?.[`${book}-${chapter}-${verse.verseNumber}`] ||
-                      commandHighlight.includes(verse.verseNumber)
+                      highlighted?.[
+                        `${book}-${chapter}-${verse.verseNumber}`
+                      ] || commandHighlight.includes(verse.verseNumber)
                         ? wordHighlightsTC
                         : "",
                     transition: "background-color 0.2s ease, border 0.2s ease",
                     "border-radius":
-                      highlighted?.[`${book}-${chapter}-${verse.verseNumber}`] || isClicked
+                      highlighted?.[
+                        `${book}-${chapter}-${verse.verseNumber}`
+                      ] || isClicked
                         ? "3px"
                         : "0",
                     padding:
-                      highlighted?.[`${book}-${chapter}-${verse.verseNumber}`] || isClicked ? "" : "0",
+                      highlighted?.[
+                        `${book}-${chapter}-${verse.verseNumber}`
+                      ] || isClicked
+                        ? ""
+                        : "0",
                     margin:
-                      highlighted?.[`${book}-${chapter}-${verse.verseNumber}`] || isClicked ? "" : "0",
+                      highlighted?.[
+                        `${book}-${chapter}-${verse.verseNumber}`
+                      ] || isClicked
+                        ? ""
+                        : "0",
                     "text-decoration":
                       inHold === verse.verseNumber || isTextDecorUnderline
                         ? "underline"
@@ -2567,7 +2589,9 @@ function Section({
                       ? "highlighted"
                       : ""
                   } ${
-                    highlighted?.[`${book}-${chapter}-${verse.verseNumber}`] ? "verse-highlighted" : ""
+                    highlighted?.[`${book}-${chapter}-${verse.verseNumber}`]
+                      ? "verse-highlighted"
+                      : ""
                   } ${isClicked ? "verse-clicked" : ""}`}
                 >
                   {!c ? (
@@ -2623,8 +2647,13 @@ function Section({
                               </span>
                               {restText}
                               {(() => {
-                                const verseFootnotes = getVerseFootnotes(verse.verseNumber);
-                                if (verseFootnotes && verseFootnotes.length > 0) {
+                                const verseFootnotes = getVerseFootnotes(
+                                  verse.verseNumber
+                                );
+                                if (
+                                  verseFootnotes &&
+                                  verseFootnotes.length > 0
+                                ) {
                                   return (
                                     <span
                                       className="footnote-icon"
@@ -2634,15 +2663,15 @@ function Section({
                                           verse: verse.verseNumber,
                                           footnotes: verseFootnotes,
                                           book,
-                                          chapter
+                                          chapter,
                                         });
                                         setShowFootnoteModal(true);
                                       }}
                                       title="View footnotes"
                                     >
                                       <span class="material-symbols-outlined">
-info
-</span>
+                                        info
+                                      </span>
                                     </span>
                                   );
                                 }
@@ -2657,7 +2686,9 @@ info
                             {verseNumberElement}
                             {verseContent}
                             {(() => {
-                              const verseFootnotes = getVerseFootnotes(verse.verseNumber);
+                              const verseFootnotes = getVerseFootnotes(
+                                verse.verseNumber
+                              );
                               if (verseFootnotes && verseFootnotes.length > 0) {
                                 return (
                                   <span
@@ -2668,15 +2699,15 @@ info
                                         verse: verse.verseNumber,
                                         footnotes: verseFootnotes,
                                         book,
-                                        chapter
+                                        chapter,
                                       });
                                       setShowFootnoteModal(true);
                                     }}
                                     title="View footnotes"
                                   >
                                     <span class="material-symbols-outlined">
-info
-</span>
+                                      info
+                                    </span>
                                   </span>
                                 );
                               }
@@ -2693,7 +2724,9 @@ info
                           {verseNumberElement}
                           {verseContent}
                           {(() => {
-                            const verseFootnotes = getVerseFootnotes(verse.verseNumber);
+                            const verseFootnotes = getVerseFootnotes(
+                              verse.verseNumber
+                            );
                             if (verseFootnotes && verseFootnotes.length > 0) {
                               return (
                                 <span
@@ -2704,15 +2737,15 @@ info
                                       verse: verse.verseNumber,
                                       footnotes: verseFootnotes,
                                       book,
-                                      chapter
+                                      chapter,
                                     });
                                     setShowFootnoteModal(true);
                                   }}
                                   title="View footnotes"
                                 >
                                   <span class="material-symbols-outlined">
-info
-</span>
+                                    info
+                                  </span>
                                 </span>
                               );
                             }

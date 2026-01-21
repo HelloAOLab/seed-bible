@@ -4,14 +4,14 @@ import {
   LeafIcon,
   CatIcon,
   DogIcon,
-  CoffeBeanIcon
+  CoffeBeanIcon,
 } from "app.components.phosphoricons";
 
 import TranslationModal from "introduction.searchBar.TranslationModal";
 import { getTranslations, getTranslatedNumber } from "app.hooks.i18n";
 import type {
   BookInterface,
-  TranslationInterface
+  TranslationInterface,
 } from "introduction.searchBar.Interfaces";
 const {
   useState,
@@ -436,6 +436,10 @@ const SearchBar = () => {
               const data = e.data;
               if (value.includes("/available_translations.json")) {
                 const translations: TranslationInterface[] = data.translations;
+                if (translations.length === 0) {
+                  os.toast("No translations found from url!");
+                  return;
+                }
                 const tempApiTranslations = { ...apiTranslations };
                 let defaultTranslation: TranslationInterface | undefined;
                 const controlledTranslations: TranslationInterface[] = [];
@@ -2045,14 +2049,21 @@ const CircleCounter = (props: {
                 setIsModalOpen(true);
               }}
             >
-                {getBot('system','app.components').masks[`${value[0]}-photo`] ? (
-            <img
-                    style={{
-                "border-radius":"50%",
-                width:'16px'
-              }}
-              src={getBot('system','app.components').masks[`${value[0]}-photo`]}
-            />):<IconComponent style={{ width: "12px", height: "12px" }} />}
+              {getBot("system", "app.components").masks[`${value[0]}-photo`] ? (
+                <img
+                  style={{
+                    "border-radius": "50%",
+                    width: "16px",
+                  }}
+                  src={
+                    getBot("system", "app.components").masks[
+                      `${value[0]}-photo`
+                    ]
+                  }
+                />
+              ) : (
+                <IconComponent style={{ width: "12px", height: "12px" }} />
+              )}
             </div>
           );
         })}
@@ -2189,14 +2200,23 @@ const CircleCounter = (props: {
                         flexShrink: 0,
                       }}
                     >
-                      {getBot('system','app.components').masks[`${id}-photo`] ? (
-            <img
-              style={{
-                "border-radius":"50%",
-                width:'16px'
-              }}
-              src={getBot('system','app.components').masks[`${id}-photo`]}
-            />):<Icon style={{ width: "18px", height: "18px" }} />}
+                      {getBot("system", "app.components").masks[
+                        `${id}-photo`
+                      ] ? (
+                        <img
+                          style={{
+                            "border-radius": "50%",
+                            width: "16px",
+                          }}
+                          src={
+                            getBot("system", "app.components").masks[
+                              `${id}-photo`
+                            ]
+                          }
+                        />
+                      ) : (
+                        <Icon style={{ width: "18px", height: "18px" }} />
+                      )}
                     </div>
                     <div style={{ flex: 1 }}>
                       <div
