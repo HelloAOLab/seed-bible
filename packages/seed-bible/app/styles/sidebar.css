@@ -178,8 +178,10 @@
 
 .tabs {
   /* margin-left: 10px; */
-  height: 100%;
-  overflow: scroll;
+  flex: 1;
+  overflow-y: auto;
+  overflow-x: hidden;
+  max-height: calc(100vh - 200px);
 }
 
 .material-symbols-outlined.addIconCollapsed {
