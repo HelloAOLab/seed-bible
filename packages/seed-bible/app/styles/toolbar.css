@@ -10,6 +10,7 @@
 }
 
 .toolbar-1 {
+  direction: ltr;
   display: flex;
   align-items: center;
   justify-content: space-between;

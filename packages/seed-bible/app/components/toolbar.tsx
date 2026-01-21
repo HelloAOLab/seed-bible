@@ -93,10 +93,22 @@ export function Toolbar() {
     setDraggedIndex(null);
   }
 
+  // Detect if current translation is RTL (Arabic)
+  const [isRTL, setIsRTL] = useState(false);
+
   // Sync tools with active tab type (keeps main logic)
   useEffect(() => {
     if (!activeTab || !tabs) return;
     const activeTabObj = tabs.find((t) => t.id === activeTab);
+
+    // Check if translation is Arabic/RTL
+    const translation = activeTabObj?.data?.translation;
+    if (translation === "ARBNAV" || translation === "arb_vdv") {
+      setIsRTL(true);
+    } else {
+      setIsRTL(false);
+    }
+
     if (activeTabObj?.data?.type === "canvas") {
       setActiveTools([...canvasTools]);
     } else {
@@ -145,7 +157,7 @@ export function Toolbar() {
           >
             <div className="toolbar-item-wrapper leftClick">
               <button
-                onClick={() => navFunctions?.openPrevChapter()}
+                onClick={() => isRTL ? navFunctions?.openNextChapter() : navFunctions?.openPrevChapter()}
                 className="toolbar-button"
               >
                 <span className="material-symbols-outlined">chevron_left</span>
@@ -226,7 +238,7 @@ export function Toolbar() {
 
             <div className="toolbar-item-wrapper rightClick">
               <button
-                onClick={() => navFunctions?.openNextChapter()}
+                onClick={() => isRTL ? navFunctions?.openPrevChapter() : navFunctions?.openNextChapter()}
                 className="toolbar-button"
               >
                 <span className="material-symbols-outlined">chevron_right</span>
