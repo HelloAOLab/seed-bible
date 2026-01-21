@@ -122,11 +122,23 @@ const Discover = ({
         [val]: !prev[val],
       }));
     } else {
-      setSelectedChip((prev) => ({
-        ...prev,
-        [val]: !prev[val],
-        All: false,
-      }));
+      setSelectedChip((prev) => {
+        const newSelectedChip:any = { ...prev };
+
+        if (newSelectedChip[val]) {
+          delete newSelectedChip[val];
+        } else {
+          newSelectedChip[val] = true;
+        }
+
+        if (Object.keys(newSelectedChip).length === 0 || (Object.keys(newSelectedChip)[0] === "All") && Object.keys(newSelectedChip).length === 1) {
+          newSelectedChip.All = true;
+        } else {
+          delete newSelectedChip.All;
+        }
+
+        return newSelectedChip;
+      });
     }
   };
 
@@ -219,7 +231,7 @@ const Discover = ({
                 className="chip-tag arrow right"
                 onClick={scrollRightByWidth}
               >
-                <span class="material-symbols-outlined">chevron_forward</span>
+                <span class="material-symbols-outlined color-inverted">chevron_forward</span>
               </div>
             )}
           </div>

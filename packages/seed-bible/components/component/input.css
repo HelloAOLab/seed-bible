@@ -13,7 +13,8 @@
   border-radius: 6px;
   transition: border-color 0.3s ease-in-out;
   /* background-color: #E6E6E6; */
-  color: #606060;
+  color: var(--pageTextColor);
+  background-color: var(--pageBackground);
 }
 
 .input-field.textarea {

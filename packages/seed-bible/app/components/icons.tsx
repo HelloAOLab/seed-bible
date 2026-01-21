@@ -671,7 +671,7 @@ export const SelectionUIIcon = (props) => (
     />
   </svg>
 );
-const MenuIcon = ({ name, size = 24, invert = false }) => {
+const MenuIcon = ({ name, size = 24, invert = false, className = "" }) => {
   // Check if `name` looks like an image URL
   const isImage =
     typeof name === "string" && name.match(/\.(png|jpg|jpeg|svg|gif|webp)$/i);
@@ -689,7 +689,7 @@ const MenuIcon = ({ name, size = 24, invert = false }) => {
   };
 
   return isImage ? (
-    <img src={name} alt="icon" style={imageStyle} />
+    <img src={name} alt="icon" style={imageStyle} className={className} />
   ) : (
     <span className="material-symbols-outlined" style={iconStyle}>
       {name}

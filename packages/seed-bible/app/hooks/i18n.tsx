@@ -1999,8 +1999,7 @@ const resources = {
       regenerate: "إعادة الإنشاء",
       playlistSettings: "إعدادات القائمة",
       publishSettings: "إعدادات النشر",
-      publishSettingsDesc:
-        "ستكون ملاحظاتك متاحة للجميع إذا كانت عامة. إذا كانت خاصة، ستتمكن أنت فقط من الوصول.",
+      
       privateAccess: "وصول خاص",
       publicAccess: "وصول عام",
       checklist: "قائمة تحقق",
@@ -2017,25 +2016,6 @@ const resources = {
       notEmbeddedItemsFound: "تم العثور على عناصر غير مضمنة",
       notEmbeddedItemsMsg:
         "بعض عناصرك غير مضمنة. يجب أن تحتوي الطبقات على جميع العناصر المضمنة.",
-      removeAndSave: "إزالة وحفظ",
-      copyItems: "نسخ العناصر",
-      copyItemsInstructions:
-        "اضغط مع الاستمرار على أي قائمة لإضافتها إلى القائمة الحالية.",
-      copyItemInstructions:
-        "اضغط مع الاستمرار على أي عنصر لإضافته إلى القائمة الحالية.",
-      embed: "تضمين",
-      remove: "إزالة",
-      mergeMode: "وضع الدمج",
-      regenerationPrompt: "موجه إعادة الإنشاء:",
-      describePlaylist: "صف القائمة التي تريد إنشاءها.",
-      describeSystemPrompt: "صف موجه النظام الخاص بك.",
-      systemPromptInfo: "استخدم $text$ لاستخدام موجهك الأولي كمتغير.",
-      addMedia: "إضافة وسائط",
-      insertDate: "إدراج تاريخ",
-      searchAndAdd: "بحث وإضافة",
-      typeToSearch: "اكتب للبحث",
-      generate: "إنشاء",
-      layers: "طبقات",
 
       // PlaylistUI
       discover: "اكتشف",
@@ -2047,7 +2027,6 @@ const resources = {
       thisWillStopPlayingPlaylist: "سيؤدي هذا إلى إيقاف تشغيل القائمة.",
       playlistCurrentlyPlayingConfirm:
         "يتم تشغيل قائمة حالياً. هل تريد إيقافها للمتابعة؟",
-      confirm: "تأكيد",
       annotation: "تعليق توضيحي",
       pleaseLoginToUseFeature: "يرجى تسجيل الدخول لاستخدام هذه الميزة.",
       addAnotherParallelPlaylist: "هل تريد إضافة قائمة موازية أخرى؟",
