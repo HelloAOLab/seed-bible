@@ -67,6 +67,7 @@
     border-radius: 100%;
     display: block !important;
     pointer-events: all;
+            height: 48px !important;
   }
 
   .rightClick {
@@ -77,6 +78,7 @@
     border-radius: 100%;
     display: block !important;
     pointer-events: all;
+            height: 48px !important;
   }
   .rightClick button,
   .leftClick button {
