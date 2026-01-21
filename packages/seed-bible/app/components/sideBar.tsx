@@ -1913,6 +1913,7 @@ export const UserProfile = ({ collapsed }) => {
     if (data.success) {
       const payload = data.data;
       setUserData(payload);
+         setTagMask(thisBot,`${configBot.id}-photo`,payload?.photoLink,'shared');
       globalThis.SetGlobalProfilePic(payload?.photoLink);
     }
   };
