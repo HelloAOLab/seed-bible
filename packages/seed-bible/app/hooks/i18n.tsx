@@ -173,7 +173,7 @@ const resources = {
       selectionUI: "Selection UI",
       selectionIcons: "Selection Icons",
       selectionUIDescription:
-        "Edit options that appear when selecting scripture text...",
+        "Edit options that appear when selecting scripture.",
       showSelectedItems: "Show selected verses",
       showHighlightColors: "Show highlight UI",
       showIconText: "Show Icon text",
