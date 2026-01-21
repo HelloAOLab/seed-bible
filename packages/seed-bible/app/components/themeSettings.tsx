@@ -4360,7 +4360,57 @@ const ThemeSettings = () => {
   };
 
   const applyMainColors = () => {
-    os.toast("Main colors applied");
+    const primary = colors.primaryColor || "#FFFFFF";
+    const secondary = colors.secondaryColor || "#D36433";
+    const tertiary = colors.tertiaryColor || "#F98564";
+
+    // Create updated colors object with cascaded values
+    const updatedColors = {
+      ...colors,
+      // Primary color (Solid) - backgrounds and surfaces
+      panelBackground: primary,
+      toolbarBackground: primary,
+      pageBackground: primary,
+      themeSideMenu: primary,
+      background: primary,
+      surface: primary,
+      inputBackground: primary,
+      toolbarFill: primary,
+      selectionUIFill: primary,
+      inputActiveFill: primary,
+      inputInactiveFill: primary,
+
+      // Secondary color (Solid) - buttons, borders, accents, selected states
+      primaryButton: secondary,
+      primaryButtonBorder: secondary,
+      primaryButtonFill: secondary,
+      secondaryButton: secondary,
+      secondaryButtonBorder: secondary,
+      secondaryButtonFill: secondary,
+      verseNumberColor: secondary,
+      addButtonBackground: secondary,
+      activeSpaceIndicator: secondary,
+      profileAvatar: secondary,
+      accentColor: secondary,
+      spaceSelection: secondary,
+      selectedSpaceColor: secondary,
+      sectionBackground: secondary,
+      activeTabBorder: secondary,
+      activeTabText: secondary,
+      inputActiveBorder: secondary,
+      buttonBorder: secondary,
+
+      // Tertiary color (Honey) - tab backgrounds, tool selections, tints
+      activeTabBackground: tertiary,
+      activeTabFill: tertiary,
+      tabSelection: tertiary,
+    };
+
+    setColorsMap((prev: any) => ({ ...prev, [activeSpace]: updatedColors }));
+    setThemeColors((prev: any) => ({ ...prev, [activeSpace]: updatedColors }));
+    updateSpace(activeSpace, { themeColors: updatedColors });
+
+    os.toast("Main colors applied to all elements");
   };
 
   const toggleSection = (sectionKey) => {
