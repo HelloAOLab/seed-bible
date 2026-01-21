@@ -127,6 +127,9 @@ function ThePage({
   const [wordHighlightsBC, setWordHighlightsBC] = useState("#ffeb3b");
 
   const [bible, setBible] = useState();
+  const [footnotes, setFootnotes] = useState(null);
+  const [showFootnoteModal, setShowFootnoteModal] = useState(false);
+  const [activeFootnote, setActiveFootnote] = useState(null);
   if (tab) globalThis[`SetEnableEditorOf${tab?.id}`] = setEnableEditor;
 
   const loadTranslationFromUrl = async () => {
@@ -379,8 +382,9 @@ function ThePage({
 
       globalThis.BookId = bible.bookId;
 
-      const { data, loading, error } = bible.getState();
-      console.log(data, tab, "the data loaded");
+      const { data, loading, error, footnotes: bibleFootnotes } = bible.getState();
+      console.log(data, tab,bibleFootnotes, "the data loaded");
+      setFootnotes(bibleFootnotes);
 
       globalThis.refreshScrollers && globalThis.refreshScrollers();
 
@@ -810,6 +814,7 @@ function ThePage({
   async function openNextChapter() {
     await bible.openNext();
     setData(bible.data);
+    setFootnotes(bible.footnotes);
 
     globalThis.GlobalChapter = bible.data.chapter - 1;
 
@@ -829,6 +834,7 @@ function ThePage({
   async function openPrevChapter() {
     await bible.openPrevious();
     setData(bible.data);
+    setFootnotes(bible.footnotes);
 
     globalThis.GlobalChapter = bible.data.chapter - 1;
 
@@ -849,6 +855,7 @@ function ThePage({
     try {
       await bible.open(bookId, chapter, (translation = null), chapterUrl);
       setData(bible.data);
+      setFootnotes(bible.footnotes);
     } catch {
       const tab = globalThis.AddTab({
         id: uuid(),
@@ -869,6 +876,7 @@ function ThePage({
   async function changeTranslation(id, bookData, forcedBaseUrl) {
     await bible.changeTranslation(id, bookData, forcedBaseUrl);
     setData(bible.data);
+    setFootnotes(bible.footnotes);
   }
 
   const highlightWords = useCallback(
@@ -1521,7 +1529,104 @@ function ThePage({
 
         .verse-clicked {
           border-bottom: 2px dashed #4459F3 !important;
-         
+
+        }
+
+        .footnote-icon {
+          display: inline-block;
+          margin-left: 4px;
+          font-size: 0.85em;
+          color: #4459F3;
+          cursor: pointer;
+          user-select: none;
+          vertical-align: middle;
+        }
+
+        .footnote-icon:hover {
+          color: #2030C0;
+          transform: scale(1.1);
+        }
+
+        .footnote-modal-overlay {
+          position: fixed;
+          top: 0;
+          left: 0;
+          right: 0;
+          bottom: 0;
+          background: rgba(0, 0, 0, 0.5);
+          display: flex;
+          align-items: center;
+          justify-content: center;
+          z-index: 10001;
+          padding: 20px;
+        }
+
+        .footnote-modal {
+          background: white;
+          border-radius: 12px;
+          max-width: 600px;
+          width: 90%;
+          max-height: 80vh;
+          overflow: hidden;
+          box-shadow: 0 10px 40px rgba(0, 0, 0, 0.3);
+          display: flex;
+          flex-direction: column;
+        }
+
+        .footnote-modal-header {
+          padding: 20px;
+          border-bottom: 1px solid #e0e0e0;
+          display: flex;
+          justify-content: space-between;
+          align-items: center;
+        }
+
+        .footnote-modal-header h3 {
+          margin: 0;
+          font-size: 1.2em;
+          color: #333;
+        }
+
+        .footnote-modal-close {
+          background: none;
+          border: none;
+          font-size: 1.5em;
+          cursor: pointer;
+          color: #666;
+          padding: 0;
+          width: 30px;
+          height: 30px;
+          display: flex;
+          align-items: center;
+          justify-content: center;
+          border-radius: 4px;
+        }
+
+        .footnote-modal-close:hover {
+          background: #f0f0f0;
+          color: #333;
+        }
+
+        .footnote-modal-content {
+          padding: 20px;
+          overflow-y: auto;
+        }
+
+        .footnote-item {
+          margin-bottom: 16px;
+          line-height: 1.6;
+        }
+
+        .footnote-number {
+          font-weight: 600;
+          color: #4459F3;
+          margin-right: 8px;
+          font-size: 0.95em;
+        }
+
+        .footnote-text {
+          color: #444;
+          font-size: 0.95em;
         }
          `}
       </style>
@@ -1570,6 +1675,9 @@ function ThePage({
                       handleVerseClick={handleVerseClick}
                       setClickedVerses={setClickedVerses}
                       setShowVerseToolbar={setShowVerseToolbar}
+                      footnotes={footnotes}
+                      setActiveFootnote={setActiveFootnote}
+                      setShowFootnoteModal={setShowFootnoteModal}
                     />
                   </div>
                 </>
@@ -1654,6 +1762,54 @@ function ThePage({
                 />
               </div>
             )}
+
+          {/* Footnote Modal */}
+          {showFootnoteModal && activeFootnote && (
+            <div
+              className="footnote-modal-overlay"
+              onClick={() => {
+                setShowFootnoteModal(false);
+                setActiveFootnote(null);
+              }}
+            >
+              <div
+                className="footnote-modal"
+                onClick={(e) => e.stopPropagation()}
+              >
+                <div className="footnote-modal-header">
+                  <h3>
+                    {activeFootnote.book} {activeFootnote.chapter}:{activeFootnote.verse}
+                  </h3>
+                  <button
+                    className="footnote-modal-close"
+                    onClick={() => {
+                      setShowFootnoteModal(false);
+                      setActiveFootnote(null);
+                    }}
+                  >
+                    ✕
+                  </button>
+                </div>
+                <div className="footnote-modal-content">
+                  {activeFootnote.footnotes.map((footnote, idx) => {
+                    if (!footnote) return null;
+
+                    const footnoteText = footnote.text || footnote.note || footnote.content || '';
+                    if (!footnoteText) return null;
+
+                    return (
+                      <div key={idx} className="footnote-item">
+                        <span className="footnote-number">
+                          {footnote.caller || (idx + 1)}
+                        </span>
+                        <span className="footnote-text">{footnoteText}</span>
+                      </div>
+                    );
+                  })}
+                </div>
+              </div>
+            </div>
+          )}
         </>
       ) : (
         <>
@@ -1934,6 +2090,9 @@ function Section({
   handleVerseClick,
   setClickedVerses,
   setShowVerseToolbar,
+  footnotes,
+  setActiveFootnote,
+  setShowFootnoteModal,
 }) {
   const selectAllHeadingVerses = useCallback(() => {
     const verseNumbers = verses.map((v) => v.verseNumber);
@@ -2094,11 +2253,69 @@ function Section({
     };
   };
 
+  const getVerseFootnotes = (verseNumber) => {
+    if (!footnotes || !Array.isArray(footnotes)) return [];
+
+    // Filter footnotes that match this verse number
+    return footnotes.filter(
+      (footnote) => footnote?.reference?.verse === verseNumber
+    );
+  };
+
+  const parseTextWithFootnotes = (text, verseNumber) => {
+    const verseFootnotes = getVerseFootnotes(verseNumber);
+    if (!verseFootnotes || verseFootnotes.length === 0) {
+      return text;
+    }
+
+    // Parse text and insert footnote markers where needed
+    // The footnote format from API typically includes markers in the text
+    let processedText = text;
+    const parts = [];
+    let lastIndex = 0;
+
+    // If footnotes exist, they usually have a 'noteId' or marker in the original text
+    verseFootnotes.forEach((footnote, idx) => {
+      const marker = footnote.marker || footnote.noteId;
+      if (marker && typeof processedText === 'string') {
+        const markerRegex = new RegExp(`\\[${marker}\\]|${marker}`, 'g');
+        const matches = [...processedText.matchAll(markerRegex)];
+
+        matches.forEach(match => {
+          if (match.index > lastIndex) {
+            parts.push({
+              type: 'text',
+              content: processedText.slice(lastIndex, match.index)
+            });
+          }
+          parts.push({
+            type: 'footnote',
+            marker: idx + 1,
+            content: footnote.text || footnote.note || ''
+          });
+          lastIndex = match.index + match[0].length;
+        });
+      }
+    });
+
+    if (lastIndex < processedText.length) {
+      parts.push({
+        type: 'text',
+        content: processedText.slice(lastIndex)
+      });
+    }
+
+    return parts.length > 0 ? parts : text;
+  };
+
   const renderVerseText = (verse) => {
     const verseKey = `${book}-${chapter}-${verse.verseNumber}`;
     const hasWordHighlights =
       wordHighlights[verseKey] &&
       Object.keys(wordHighlights[verseKey]).length > 0;
+
+    const verseFootnotes = getVerseFootnotes(verse.verseNumber);
+    const hasFootnotes = verseFootnotes && verseFootnotes.length > 0;
 
     if (globalThis.studyNotesPresent) {
       return (chunksMap[verse.verseNumber] || []).map((part, i) => {
@@ -2405,6 +2622,30 @@ function Section({
                                 {firstWord}
                               </span>
                               {restText}
+                              {(() => {
+                                const verseFootnotes = getVerseFootnotes(verse.verseNumber);
+                                if (verseFootnotes && verseFootnotes.length > 0) {
+                                  return (
+                                    <span
+                                      className="footnote-icon"
+                                      onClick={(e) => {
+                                        e.stopPropagation();
+                                        setActiveFootnote({
+                                          verse: verse.verseNumber,
+                                          footnotes: verseFootnotes,
+                                          book,
+                                          chapter
+                                        });
+                                        setShowFootnoteModal(true);
+                                      }}
+                                      title="View footnotes"
+                                    >
+                                      ⓘ
+                                    </span>
+                                  );
+                                }
+                                return null;
+                              })()}
                             </>
                           );
                         }
@@ -2413,6 +2654,30 @@ function Section({
                           <>
                             {verseNumberElement}
                             {verseContent}
+                            {(() => {
+                              const verseFootnotes = getVerseFootnotes(verse.verseNumber);
+                              if (verseFootnotes && verseFootnotes.length > 0) {
+                                return (
+                                  <span
+                                    className="footnote-icon"
+                                    onClick={(e) => {
+                                      e.stopPropagation();
+                                      setActiveFootnote({
+                                        verse: verse.verseNumber,
+                                        footnotes: verseFootnotes,
+                                        book,
+                                        chapter
+                                      });
+                                      setShowFootnoteModal(true);
+                                    }}
+                                    title="View footnotes"
+                                  >
+                                    ⓘ
+                                  </span>
+                                );
+                              }
+                              return null;
+                            })()}
                           </>
                         );
                       }
@@ -2423,6 +2688,30 @@ function Section({
                         <>
                           {verseNumberElement}
                           {verseContent}
+                          {(() => {
+                            const verseFootnotes = getVerseFootnotes(verse.verseNumber);
+                            if (verseFootnotes && verseFootnotes.length > 0) {
+                              return (
+                                <span
+                                  className="footnote-icon"
+                                  onClick={(e) => {
+                                    e.stopPropagation();
+                                    setActiveFootnote({
+                                      verse: verse.verseNumber,
+                                      footnotes: verseFootnotes,
+                                      book,
+                                      chapter
+                                    });
+                                    setShowFootnoteModal(true);
+                                  }}
+                                  title="View footnotes"
+                                >
+                                  ⓘ
+                                </span>
+                              );
+                            }
+                            return null;
+                          })()}
                         </>
                       );
                     })()
