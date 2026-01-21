@@ -1900,7 +1900,7 @@ export const UserProfile = ({ collapsed }) => {
     "#10B981",
     "#F59E0B",
   ];
-  const { colorIndex, iconIndex } = GetOrSetVisualInTags(configBot.id);
+  const { colorIndex, iconIndex } = GetOrSetVisualInTags(configBot.id,userData);
   const Icon = icons[iconIndex];
   return (
     <div

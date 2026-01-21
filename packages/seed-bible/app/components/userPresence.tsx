@@ -34,15 +34,7 @@ function hashString(str) {
   return h >>> 0;
 }
 
-function computeVisual(remoteId, availableColorIndices?: number[], availableIconIndices?: number[]) {
-  // If available indices are provided, pick from those
-  if (availableColorIndices && availableIconIndices) {
-    const h = hashString(String(remoteId));
-    const iconIndex = availableIconIndices[h % availableIconIndices.length];
-    const colorIndex = availableColorIndices[Math.floor(h / availableIconIndices.length) % availableColorIndices.length];
-    return { iconIndex, colorIndex };
-  }
-
+function computeVisual(remoteId) {
   // Fallback to old behavior
   const h = hashString(String(remoteId));
   const iconIndex = h % icons.length;
@@ -50,7 +42,7 @@ function computeVisual(remoteId, availableColorIndices?: number[], availableIcon
   return { iconIndex, colorIndex };
 }
 
-function getOrSetVisualInTags(remoteId) {
+function getOrSetVisualInTags(remoteId,userData) {
   try {
     if (typeof tags !== "undefined") {
       if (!tags.userPresenceData) tags.userPresenceData = {};
@@ -90,7 +82,21 @@ function getOrSetVisualInTags(remoteId) {
         tags.userPresenceData.usedIndices.colors.push(visual.colorIndex);
         tags.userPresenceData.usedIndices.icons.push(visual.iconIndex);
 
-        tags.userPresenceData.visuals[remoteId] = visual;
+        // Store visual data with photoLink
+        tags.userPresenceData.visuals[remoteId] = {
+          ...visual,
+          photoLink: userData?.photoLink || null
+        };
+      } else {
+        // Update photoLink if userData is provided and has changed
+        if (userData?.photoLink && tags.userPresenceData.visuals[remoteId].photoLink !== userData.photoLink) {
+          tags.userPresenceData.visuals[remoteId].photoLink = userData.photoLink;
+        }
+        // If no photoLink exists but userData wasn't provided, try to fetch it
+        if (!tags.userPresenceData.visuals[remoteId].photoLink && !userData) {
+          // Trigger async fetch (don't wait for it)
+          fetchAndUpdateUserData(remoteId).catch(() => {});
+        }
       }
 
       const data = tags.userPresenceData.visuals[remoteId];
@@ -98,15 +104,35 @@ function getOrSetVisualInTags(remoteId) {
         ...data,
         color: colors[data.colorIndex],
         Icon: icons[data.iconIndex],
+        photoLink: data.photoLink || null,
       };
     }
   } catch (_) {
-    return { color: null, Icon: null };
+    return { color: null, Icon: null, photoLink: null };
   }
   return computeVisual(remoteId);
 }
 
 globalThis.GetOrSetVisualInTags = getOrSetVisualInTags;
+
+// Function to fetch and update user data including photoLink
+async function fetchAndUpdateUserData(userId) {
+  try {
+    if (!tags.key) return;
+    const data = await os.getData(tags.key, userId);
+    if (data.success && data.data?.photoLink) {
+      // Update the visual data with the photoLink
+      if (tags.userPresenceData?.visuals?.[userId]) {
+        tags.userPresenceData.visuals[userId].photoLink = data.data.photoLink;
+      } else {
+        // If visual data doesn't exist yet, create it with userData
+        getOrSetVisualInTags(userId, data.data);
+      }
+    }
+  } catch (err) {
+    os.log?.("fetchAndUpdateUserData failed:", err);
+  }
+}
 
 async function getSelfIdSafe() {
   try {
@@ -262,9 +288,14 @@ export function UserPresence({ collapsed = false }) {
       (session.followers || []).forEach((id) => allIds.add(id));
     });
 
+    // Fetch user data for all users to get their photoLinks
+    Array.from(allIds).forEach((userId) => {
+      fetchAndUpdateUserData(userId);
+    });
+
     // ✅ Build user list with session info
     const mapped = Array.from(allIds).map((userId) => {
-      const { iconIndex, colorIndex } = getOrSetVisualInTags(userId);
+      const { iconIndex, colorIndex } = getOrSetVisualInTags(userId, null);
       const info = getUserSessionInfo(userId);
       return {
         remoteId: userId,
@@ -873,6 +904,8 @@ export function UserPresence({ collapsed = false }) {
               visibleUsers.map(({ remoteId, iconIndex, colorIndex }, index) => {
                 const Icon = icons[iconIndex];
                 const ringColor = colors[colorIndex];
+                const visualData = getOrSetVisualInTags(remoteId, null);
+                const photoLink = visualData?.photoLink;
                 const canActOn =
                   isHost && sessions[selfId]?.followers?.includes(remoteId);
                 const isRemoteAHost = !!sessions[remoteId];
@@ -916,7 +949,7 @@ export function UserPresence({ collapsed = false }) {
                         height: 30,
                         borderRadius: "50%",
                         border: `2px solid ${ringColor}`,
-                        padding: 2,
+                        padding: photoLink ? 0 : 2,
                         display: "flex",
                         alignItems: "center",
                         justifyContent: "center",
@@ -925,7 +958,20 @@ export function UserPresence({ collapsed = false }) {
                         opacity: menuItems.length ? 1 : 0.6,
                       }}
                     >
-                      <Icon width={15} height={15} />
+                      {photoLink ? (
+                        <img
+                          src={photoLink}
+                          alt="User"
+                          style={{
+                            width: "100%",
+                            height: "100%",
+                            borderRadius: "50%",
+                            objectFit: "cover",
+                          }}
+                        />
+                      ) : (
+                        <Icon width={15} height={15} />
+                      )}
                     </div>
                     {Object.values(sessions).some((s) =>
                       s.coHosts?.includes(remoteId)
@@ -1076,7 +1122,8 @@ export function UserPresence({ collapsed = false }) {
 }
 
 function FollowerPanel({ hostId, onUnfollow }) {
-  const { iconIndex, colorIndex } = getOrSetVisualInTags(hostId);
+  const visualData = getOrSetVisualInTags(hostId, null);
+  const { iconIndex, colorIndex, photoLink } = visualData;
   const Icon = icons[iconIndex];
   const color = colors[colorIndex];
   return (
@@ -1107,9 +1154,24 @@ function FollowerPanel({ hostId, onUnfollow }) {
             display: "flex",
             alignItems: "center",
             justifyContent: "center",
+            overflow: "hidden",
+            padding: photoLink ? 0 : undefined,
           }}
         >
-          <Icon fill="white" width={14} height={14} />
+          {photoLink ? (
+            <img
+              src={photoLink}
+              alt="Host"
+              style={{
+                width: "100%",
+                height: "100%",
+                borderRadius: "50%",
+                objectFit: "cover",
+              }}
+            />
+          ) : (
+            <Icon fill="white" width={14} height={14} />
+          )}
         </div>
         <div>
           <p style={{ color: "#999", fontSize: 12, marginTop: 4 }}>
@@ -1280,7 +1342,8 @@ function SettingRow({ label, isOn, onToggle }) {
 }
 
 function InviteNotification({ inviterId, onAccept, onDismiss }) {
-  const { iconIndex, colorIndex } = getOrSetVisualInTags(inviterId);
+  const visualData = getOrSetVisualInTags(inviterId, null);
+  const { iconIndex, colorIndex, photoLink } = visualData;
   const Icon = icons[iconIndex];
   const color = colors[colorIndex];
   const [timeLeft, setTimeLeft] = useState(15);
@@ -1350,9 +1413,24 @@ function InviteNotification({ inviterId, onAccept, onDismiss }) {
             alignItems: "center",
             justifyContent: "center",
             flexShrink: 0,
+            overflow: "hidden",
+            padding: photoLink ? 0 : undefined,
           }}
         >
-          <Icon fill="white" width={20} height={20} />
+          {photoLink ? (
+            <img
+              src={photoLink}
+              alt="Inviter"
+              style={{
+                width: "100%",
+                height: "100%",
+                borderRadius: "50%",
+                objectFit: "cover",
+              }}
+            />
+          ) : (
+            <Icon fill="white" width={20} height={20} />
+          )}
         </div>
         <div style={{ flex: 1 }}>
           <p style={{ fontSize: 14, fontWeight: 600, marginBottom: 4 }}>
@@ -1408,7 +1486,8 @@ function InviteNotification({ inviterId, onAccept, onDismiss }) {
 }
 
 function SessionNotification({ hostId, onJoin, onDismiss }) {
-  const { iconIndex, colorIndex } = getOrSetVisualInTags(hostId);
+  const visualData = getOrSetVisualInTags(hostId, null);
+  const { iconIndex, colorIndex, photoLink } = visualData;
   const Icon = icons[iconIndex];
   const color = colors[colorIndex];
   const [timeLeft, setTimeLeft] = useState(10);
@@ -1493,9 +1572,24 @@ function SessionNotification({ hostId, onJoin, onDismiss }) {
             alignItems: "center",
             justifyContent: "center",
             flexShrink: 0,
+            overflow: "hidden",
+            padding: photoLink ? 0 : undefined,
           }}
         >
-          <Icon fill="white" width={20} height={20} />
+          {photoLink ? (
+            <img
+              src={photoLink}
+              alt="Host"
+              style={{
+                width: "100%",
+                height: "100%",
+                borderRadius: "50%",
+                objectFit: "cover",
+              }}
+            />
+          ) : (
+            <Icon fill="white" width={20} height={20} />
+          )}
         </div>
         <div style={{ flex: 1 }}>
           <p style={{ fontSize: 14, fontWeight: 600, marginBottom: 4 }}>
