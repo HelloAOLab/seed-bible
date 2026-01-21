@@ -499,6 +499,7 @@ export function VerseToolbar({
                           alignItems: "center",
                           justifyContent: "center",
                           fontSize: "16px",
+                          lineHeight: 1,
                           color: "#666",
                         }}
                         onClick={(e) => {
