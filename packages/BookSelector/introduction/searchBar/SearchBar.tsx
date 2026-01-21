@@ -2045,7 +2045,10 @@ const CircleCounter = (props: {
                 setIsModalOpen(true);
               }}
             >
-              <IconComponent style={{ width: "12px", height: "12px" }} />
+                {getBot('system','app.components').masks[`${id}-photo`] ? (
+            <img
+              src={getBot('system','app.components').masks[`${id}-photo`]}
+            />):<IconComponent style={{ width: "12px", height: "12px" }} />}
             </div>
           );
         })}
@@ -2182,7 +2185,10 @@ const CircleCounter = (props: {
                         flexShrink: 0,
                       }}
                     >
-                      <Icon style={{ width: "18px", height: "18px" }} />
+                      {getBot('system','app.components').masks[`${id}-photo`] ? (
+            <img
+              src={getBot('system','app.components').masks[`${id}-photo`]}
+            />):<Icon style={{ width: "18px", height: "18px" }} />}
                     </div>
                     <div style={{ flex: 1 }}>
                       <div
