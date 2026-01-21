@@ -147,7 +147,7 @@ function PanelSettingsDialog({ onClose }) {
                     marginBottom: '12px',
                     fontSize: '14px',
                     fontWeight: '500',
-                    color: 'var(--text1)'
+                    color: 'var(--descriptionTextColor)'
                 }}>
                     {layout.name}
                 </div>
@@ -241,7 +241,8 @@ function PanelSettingsDialog({ onClose }) {
                                 borderRadius: '4px',
                                 display: 'flex',
                                 alignItems: 'center',
-                                justifyContent: 'center'
+                                justifyContent: 'center',
+                                color:'var(--text1)'
                             }}>
                             X
                         </button>
