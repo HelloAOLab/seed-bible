@@ -405,7 +405,7 @@ const Main = () => {
     text1: "#333333",
     text2: "#666666",
     showTabIcons: true,
-
+    "filter-mode": "invert(0)",
     primaryLight: "#FADDD1",
     onPrimaryLight: "#8B4513",
     primaryBase: "#E07B4C",

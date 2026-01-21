@@ -216,6 +216,7 @@ const defaultTheme = {
   onBackground: "#333333",
   surface: "#FAFAFA",
   onSurface: "#333333",
+  "filter-mode": "invert(0)",
   text3: "#333333",
 };
 
@@ -240,6 +241,7 @@ const READY_THEMES = [
       // Container backgrounds
       themeSideMenu: "#2D2D2D",
       panelBackground: "#1A1A1A",
+      
       // Tab
       tabSelection: "#5A67D8",
       activeTabBackground: "#404040",
@@ -348,6 +350,7 @@ const READY_THEMES = [
     name: "Purple Serenity",
     colors: {
       firstToolbarbutton:'#dfdede',
+      "filter-mode": "invert(0)",
       // Main colors
       primaryColor: "#7C3AED",
       secondaryColor: "#A78BFA",
@@ -462,6 +465,7 @@ const READY_THEMES = [
     name: "Green Nature",
     colors: {
       firstToolbarbutton:'#dfdede',
+      "filter-mode": "invert(0)",
       // Main colors
       primaryColor: "#059669",
       secondaryColor: "#10B981",
@@ -576,6 +580,7 @@ const READY_THEMES = [
     name: "Ocean Blue",
     colors: {
       firstToolbarbutton:'#dfdede',
+      "filter-mode": "invert(0)",
       // Main colors
       primaryColor: "#0284C7",
       secondaryColor: "#0EA5E9",
@@ -690,6 +695,7 @@ const READY_THEMES = [
     name: "Warm Amber",
     colors: {
       firstToolbarbutton:'#dfdede',
+      "filter-mode": "invert(0)",
       // Main colors
       primaryColor: "#D97706",
       secondaryColor: "#F59E0B",
