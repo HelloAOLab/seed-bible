@@ -258,7 +258,7 @@ const AnnotationList = ({
           {filteredAnnotationData.length === 0 && <p style={{ marginTop: "12px" }}>{globalThis.t("noAnnotationsFound")}</p>}
           <div className="annotation" style={{ position: 'relative' }}>
             <div className="filter-icon-container" style={{top: filteredAnnotationData.length > 0 ? '0.5rem' : '-2.1rem'}} onClick={() => setShowFilters(true)}>
-              <img style={{ width: '16px', height: '16px' }} src={FilterIcon} alt="filter" />
+              <img className="img-icon" style={{ width: '16px', height: '16px' }} src={FilterIcon} alt="filter" />
             </div>
             { showFilters && 
              <AnnotationListFilters 
@@ -335,7 +335,7 @@ const AnnotationHeading = ({
             style={{ margin: "0.5rem 0", flexGrow: "1" }}
             className="align-center"
           >
-            <img src={TagsIcon} alt="Tags" />
+            <img src={TagsIcon} alt="Tags" className="img-icon" />
             {tags.map((tag, index) => (
               <div
                 key={index}
@@ -545,6 +545,7 @@ const AnnodataMapper = ({ data, address, currentOpenedBook, chapter, heading, on
             </div>
             <div className={`actions-buttons-annotation ${isMobile ? 'isMobile' : ''}`} style={{ display: 'flex', flexDirection: 'row', gap: '0.5rem', alignItems: 'center' }}>
                 <img
+                  className="img-icon"
                   src="https://auth-aux-aobot-prod-filesbucket-141297942820.s3.amazonaws.com/annotations/86e70522cf977646771dfcffbafda114f8d4a7dbf39923d6791a66b8a25c2a56.svg"
                   onClick={() => {
                     onDelete(address);
@@ -553,6 +554,7 @@ const AnnodataMapper = ({ data, address, currentOpenedBook, chapter, heading, on
                 />
               <span style={{ fontSize: '12px', color: '#00000099' }}>|</span>
               <img
+                className="img-icon"
                 src="https://auth-aux-aobot-prod-filesbucket-141297942820.s3.amazonaws.com/annotations/badbe8b10d39a043fbf49a7d7749e4fc311c34c1c8c562ab60ee052e470f5451.svg"
                 onClick={() => {
                   globalThis.SetEditAnnoData({

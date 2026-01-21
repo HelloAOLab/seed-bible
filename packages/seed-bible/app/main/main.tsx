@@ -428,6 +428,7 @@ const Main = () => {
     surface: "#FAFAFA",
     onSurface: "#333333",
     text3: "#333333",
+    "secondary-filter-mode": "invert(100%)",
   };
   const darkTheme = {
     panelBackground: "#2D2D2D",
@@ -449,6 +450,7 @@ const Main = () => {
     text2: "#AAAAAA",
     iconColor: "#FFFFFF",
     "filter-mode": "invert(100%)",
+    "secondary-filter-mode": "invert(0%)",
     pageBackground: "#121212",
     pageTextColor: "white",
     showTabIcons: true,

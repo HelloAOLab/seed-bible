@@ -1052,7 +1052,7 @@ const CreatePlaylistUI = ({
               >
                 <div className="align-center">
                   <span
-                    style={{ fontSize: "20px", color: "white" }}
+                    style={{ fontSize: "20px" }}
                     class="material-symbols-outlined"
                   >
                     draft
@@ -1062,7 +1062,6 @@ const CreatePlaylistUI = ({
                       fontSize: "12px",
                       fontWeight: "600",
                       marginLeft: "4px",
-                      color: "white",
                     }}
                     for="playlistInclude"
                   >
@@ -1096,7 +1095,7 @@ const CreatePlaylistUI = ({
             >
               <div className="align-center">
                 <span
-                  style={{ fontSize: "20px", color: "white" }}
+                  style={{ fontSize: "20px" }}
                   class="material-symbols-outlined"
                 >
                   playlist_play
@@ -1106,7 +1105,6 @@ const CreatePlaylistUI = ({
                     fontSize: "12px",
                     fontWeight: "600",
                     marginLeft: "4px",
-                    color: "white",
                   }}
                   for="playlistInclude"
                 >
@@ -1140,7 +1138,7 @@ const CreatePlaylistUI = ({
               >
                 <div className="align-center">
                   <span
-                    style={{ fontSize: "20px", color: "white" }}
+                    style={{ fontSize: "20px" }}
                     class="material-symbols-outlined"
                   >
                     team_dashboard
@@ -1150,7 +1148,6 @@ const CreatePlaylistUI = ({
                       fontSize: "12px",
                       fontWeight: "600",
                       marginLeft: "4px",
-                      color: "white",
                     }}
                     for="playlistInclude"
                   >
@@ -1192,7 +1189,7 @@ const CreatePlaylistUI = ({
             className="overlay linked-item-custom"
           >
             <p>
-              <b style={{ color: "white" }}>{t('publishSettings')}</b>
+              <b >{t('publishSettings')}</b>
             </p>
             <span style={{ fontSize: "10px", color: "#c9c8c6" }}>
               {t('publishSettingsDesc')}
@@ -1204,17 +1201,16 @@ const CreatePlaylistUI = ({
               }}
               style={{
                 borderTop: "1px solid #3E3E3E",
+                borderRadius: "0px",
               }}
             >
               <span
-                style={{ color: "white" }}
                 class="material-symbols-outlined"
               >
                 lock
               </span>
               <p>{t('privateAccess')}</p>
               <span
-                style={{ color: "white" }}
                 class="material-symbols-outlined"
               >
                 {publishAccess === "private"
@@ -1229,14 +1225,12 @@ const CreatePlaylistUI = ({
               }}
             >
               <span
-                style={{ color: "white" }}
                 class="material-symbols-outlined"
               >
                 public
               </span>
               <p>{t('publicAccess')}</p>
               <span
-                style={{ color: "white" }}
                 class="material-symbols-outlined"
               >
                 {publishAccess === "public"
@@ -1245,7 +1239,7 @@ const CreatePlaylistUI = ({
               </span>
             </div>
             <p>
-              <b style={{ color: "white", marginTop: "10px" }}>
+              <b style={{ marginTop: "10px" }}>
                 {t('playlistSettings')}
               </b>
             </p>
@@ -1264,14 +1258,14 @@ const CreatePlaylistUI = ({
               >
                 {checklist ? (
                   <span
-                    style={{ fontSize: "20px", color: "white" }}
+                    style={{ fontSize: "20px"}}
                     class="material-symbols-outlined unfollow"
                   >
                     check_box
                   </span>
                 ) : (
                   <span
-                    style={{ fontSize: "20px", color: "white" }}
+                    style={{ fontSize: "20px"}}
                     class="material-symbols-outlined unfollow"
                   >
                     check_box_outline_blank
@@ -1282,7 +1276,6 @@ const CreatePlaylistUI = ({
                     fontSize: "12px",
                     fontWeight: "600",
                     marginLeft: "4px",
-                    color: "white",
                   }}
                   for="playlistInclude"
                 >
@@ -1324,14 +1317,14 @@ const CreatePlaylistUI = ({
               >
                 {readingPlan ? (
                   <span
-                    style={{ fontSize: "20px", color: "white" }}
+                    style={{ fontSize: "20px" }}
                     class="material-symbols-outlined unfollow"
                   >
                     check_box
                   </span>
                 ) : (
                   <span
-                    style={{ fontSize: "20px", color: "white" }}
+                    style={{ fontSize: "20px" }}
                     class="material-symbols-outlined unfollow"
                   >
                     check_box_outline_blank
@@ -1342,7 +1335,6 @@ const CreatePlaylistUI = ({
                     fontSize: "12px",
                     fontWeight: "600",
                     marginLeft: "4px",
-                    color: "white",
                   }}
                   for="playlistInclude"
                 >
@@ -1398,7 +1390,7 @@ const CreatePlaylistUI = ({
                   // setShowPlaylistSettings(true);
                 }}
               >
-                <PlaylistIcon invert={true} />
+                <PlaylistIcon />
               </div>
               <div
                 onClick={() => {
@@ -1444,7 +1436,7 @@ const CreatePlaylistUI = ({
                   setShowMoreOptions(true);
                 }}
               >
-                <img src={Settings_Icon} alt="Settings_Icon" />
+                <img className="img-icon" src={Settings_Icon} alt="Settings_Icon" />
               </div>
             </div>
           </div>
