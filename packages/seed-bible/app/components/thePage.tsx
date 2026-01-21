@@ -1145,8 +1145,6 @@ function ThePage({
 
   const toggleVerseHighlight = useCallback(
     (verseNumbers, color, scroll, fadeIn, skipIt) => {
-      // if (!skipIt)
-      //   return
       if (!tab?.id) return;
 
       const verseId = `v-${
@@ -1168,17 +1166,26 @@ function ThePage({
 
       setHighlighted((prev) => {
         const newHighlighted = { ...prev };
-        const allHighlighted = numbers.every((vn) => newHighlighted[vn]);
         const groupId = Date.now();
 
+        const allHighlighted = numbers.every((vn) => {
+          const key = `${data?.book}-${data?.chapter}-${vn}`;
+          return newHighlighted[key];
+        });
+
         if (allHighlighted) {
-          numbers.forEach((vn) => delete newHighlighted[vn]);
+          numbers.forEach((vn) => {
+            const key = `${data?.book}-${data?.chapter}-${vn}`;
+            delete newHighlighted[key];
+          });
         } else {
           numbers.forEach((vn) => {
-            newHighlighted[vn] = {
+            const key = `${data?.book}-${data?.chapter}-${vn}`;
+            newHighlighted[key] = {
               timestamp: groupId,
               book: data?.book,
               chapter: data?.chapter,
+              verseNumber: vn,
               group: groupId,
               color: color || wordHighlightsBC,
             };
@@ -1208,7 +1215,10 @@ function ThePage({
             setTimeout(() => {
               setHighlighted((prevFade) => {
                 const faded = { ...prevFade };
-                numbers.forEach((vn) => delete faded[vn]);
+                numbers.forEach((vn) => {
+                  const key = `${data?.book}-${data?.chapter}-${vn}`;
+                  delete faded[key];
+                });
 
                 const fadedMaskHighlights = {
                   ...masks?.tabHighlights,
@@ -1230,7 +1240,7 @@ function ThePage({
         return newHighlighted;
       });
     },
-    [tab?.id, data, data?.book, data?.chapter]
+    [tab?.id, data, data?.book, data?.chapter, wordHighlightsBC]
   );
 
   const highlightVerse = useCallback(
@@ -1259,10 +1269,12 @@ function ThePage({
         const groupId = Date.now();
 
         numbers.forEach((vn) => {
-          newHighlighted[vn] = {
+          const key = `${data?.book}-${data?.chapter}-${vn}`;
+          newHighlighted[key] = {
             timestamp: groupId,
             book: data?.book,
             chapter: data?.chapter,
+            verseNumber: vn,
             group: groupId,
             color: color || wordHighlightsBC,
           };
@@ -1277,7 +1289,7 @@ function ThePage({
         return newHighlighted;
       });
     },
-    [tab?.id, data, data?.book, data?.chapter]
+    [tab?.id, data, data?.book, data?.chapter, wordHighlightsBC]
   );
 
   const unHighlightVerse = useCallback(
@@ -1303,11 +1315,15 @@ function ThePage({
       setHighlighted((prev) => {
         const newHighlighted = { ...prev };
 
-        const allHighlighted = numbers.every((vn) => newHighlighted[vn]);
+        const allHighlighted = numbers.every((vn) => {
+          const key = `${data?.book}-${data?.chapter}-${vn}`;
+          return newHighlighted[key];
+        });
 
         if (allHighlighted) {
           numbers.forEach((vn) => {
-            delete newHighlighted[vn];
+            const key = `${data?.book}-${data?.chapter}-${vn}`;
+            delete newHighlighted[key];
           });
         }
 
@@ -1375,12 +1391,20 @@ function ThePage({
     (verseNumber, verseElement) => {
       const ele = document.getElementById(`v-${verseNumber}`);
       const rect = ele.getBoundingClientRect();
-      // Only auto-position if the user has NOT moved the toolbar manually
+
       if (!userMovedToolbar) {
         setToolbarPos({
           x: rect.left + rect.width / 2,
           y: rect.bottom - 150,
         });
+      }
+
+      const highlightKey = `${data?.book}-${data?.chapter}-${verseNumber}`;
+      const isHighlightedInCurrentChapter = !!highlighted?.[highlightKey];
+
+      if (isHighlightedInCurrentChapter) {
+        toggleVerseHighlight(verseNumber);
+        return;
       }
 
       setClickedVerses((prev) => {
@@ -1422,7 +1446,7 @@ function ThePage({
         return newClicked;
       });
     },
-    [data, highlighted, showVerseToolbar, userMovedToolbar]
+    [data, highlighted, showVerseToolbar, userMovedToolbar, toggleVerseHighlight]
   );
 
   // NEW: Handle color selection from toolbar
@@ -2281,47 +2305,44 @@ function Section({
                     }
                     handleVerseClick(verse.verseNumber);
                     SetShowCommands(false);
+                    const highlightKey = `${book}-${chapter}-${verse.verseNumber}`;
                     os.log({
                       verseNumber: verse.verseNumber,
                       text: verse.text,
                       chapter,
                       book,
-                      highlighted: highlighted?.[verse.verseNumber],
+                      highlighted: highlighted?.[highlightKey],
                     });
                     const verseClickData = {
                       verseNumber: verse.verseNumber,
                       text: verse.text,
                       chapter,
                       book,
-                      highlighted: highlighted?.[verse.verseNumber],
+                      highlighted: highlighted?.[highlightKey],
                     };
                     EmitData("onVerseClick", verseClickData);
                     shout("onVerseClick", verseClickData);
                   }}
                   style={{
                     "background-color":
-                      (highlighted?.[verse.verseNumber] &&
-                        highlighted?.[verse.verseNumber].book === book &&
-                        highlighted?.[verse.verseNumber].chapter === chapter) ||
+                      highlighted?.[`${book}-${chapter}-${verse.verseNumber}`] ||
                       commandHighlight.includes(verse.verseNumber)
-                        ? highlighted?.[verse.verseNumber]?.color
+                        ? highlighted?.[`${book}-${chapter}-${verse.verseNumber}`]?.color
                         : "transparent",
                     color:
-                      (highlighted?.[verse.verseNumber] &&
-                        highlighted?.[verse.verseNumber].book === book &&
-                        highlighted?.[verse.verseNumber].chapter === chapter) ||
+                      highlighted?.[`${book}-${chapter}-${verse.verseNumber}`] ||
                       commandHighlight.includes(verse.verseNumber)
                         ? wordHighlightsTC
                         : "",
                     transition: "background-color 0.2s ease, border 0.2s ease",
                     "border-radius":
-                      highlighted?.[verse.verseNumber] || isClicked
+                      highlighted?.[`${book}-${chapter}-${verse.verseNumber}`] || isClicked
                         ? "3px"
                         : "0",
                     padding:
-                      highlighted?.[verse.verseNumber] || isClicked ? "" : "0",
+                      highlighted?.[`${book}-${chapter}-${verse.verseNumber}`] || isClicked ? "" : "0",
                     margin:
-                      highlighted?.[verse.verseNumber] || isClicked ? "" : "0",
+                      highlighted?.[`${book}-${chapter}-${verse.verseNumber}`] || isClicked ? "" : "0",
                     "text-decoration":
                       inHold === verse.verseNumber || isTextDecorUnderline
                         ? "underline"
@@ -2337,7 +2358,7 @@ function Section({
                       ? "highlighted"
                       : ""
                   } ${
-                    highlighted?.[verse.verseNumber] ? "verse-highlighted" : ""
+                    highlighted?.[`${book}-${chapter}-${verse.verseNumber}`] ? "verse-highlighted" : ""
                   } ${isClicked ? "verse-clicked" : ""}`}
                 >
                   {!c ? (
