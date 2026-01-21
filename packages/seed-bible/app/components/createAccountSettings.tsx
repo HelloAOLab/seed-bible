@@ -33,6 +33,7 @@ const CreateAccountSettings = () => {
     if (data.success) {
       const payload = data.data;
       setImg(payload.photoLink);
+      setTagMask(thisBot,`${configBot.id}-photo`,payload.photoLink,'shared');
       setProfileName(payload.profileName);
       setDescription(payload.description);
     }
