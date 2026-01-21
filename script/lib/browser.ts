@@ -205,7 +205,8 @@ export async function registerPackage(page: Page, name: string) {
     page,
     `
         const packager = getBot('system', 'app.packager');
-        setTagMask(packager, '${name}-data', ${JSON.stringify(extensionData)}, 'local');
+        packager.tags.installSpace = 'shared';
+        setTagMask(packager, '${name}-data', ${JSON.stringify(extensionData)}, 'shared');
     `
   );
 
@@ -367,7 +368,7 @@ export async function loadSeedBible(
     page,
     `
         const packager = getBot('system', 'app.packager');
-        setTagMask(packager, 'installedPackages', ${JSON.stringify(installedPackages)}, 'local');
+        setTagMask(packager, 'installedPackages', ${JSON.stringify(installedPackages)}, 'shared');
     `
   );
 
