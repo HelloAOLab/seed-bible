@@ -1274,7 +1274,7 @@ function ScriptureNavigationSettings({ config, onChange, onStop }) {
               }}
             >
               {d === 4 ? (
-                <span className="material-symbols-outlined">all_inclusive</span>
+                <span style={{color:'white !important'}} className="material-symbols-outlined">all_inclusive</span>
               ) : (
                 `${d} sec`
               )}
