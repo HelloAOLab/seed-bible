@@ -781,7 +781,9 @@ function SideBar({ panelsNumber }) {
   globalThis.AddTab = addTab;
   const { screens, setScreens, fullScreen, setFullScreen, ReSeed, setReSeed } =
     useBibleContext();
+    // globalThis.setScreens = setScreens
   const [customScreens, setCustomScreens] = useState({ value: 1 });
+  globalThis.setCustomScreens =setCustomScreens 
   const [onlineUsers, setOnlineUsers] = useState(false);
   globalThis.SetOnlineUsers = setOnlineUsers;
   const [showSearch, setShowSearch] = useState(false); // New state for search visibility
