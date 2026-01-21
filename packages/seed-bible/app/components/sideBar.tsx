@@ -119,9 +119,13 @@ const CircleCounter = ({ data, book, chapter }) => {
                 border: `1px solid ${color}`,
               }}
             >
-               {masks[`${id}-photo`] ? (
+               {masks[`${value[0]}-photo`] ? (
             <img
-              src={masks[`${id}-photo`]}
+              style={{
+                "border-radius":"50%",
+                width:'16px'
+              }}
+              src={masks[`${value[0]}-photo`]}
             />):<IconComponent style={{ width: "12px", height: "12px" }} />}
             </div>
           );
@@ -256,9 +260,13 @@ const CircleCounter = ({ data, book, chapter }) => {
                         flexShrink: 0,
                       }}
                     >
-                       {masks[`${id}-photo`] ? (
-            <img
-              src={masks[`${id}-photo`]}
+                       {masks[`${value[0]}-photo`] ? (
+                    <img
+                      style={{
+                        "border-radius":"50%",
+                        width:'16px'
+                      }}
+              src={masks[`${value[0]}-photo`]}
             />):<Icon style={{ width: "18px", height: "18px" }} />}
                     </div>
                     <div style={{ flex: 1 }}>
