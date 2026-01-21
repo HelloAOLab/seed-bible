@@ -539,7 +539,7 @@ function Tab({
     ? Object.fromEntries(
         Object.entries(onlineUsers).filter(
           ([k, v]) => {
-            console.log('Filtering user:', k, 'v:', v, 'el.data:', el?.data);
+            // console.log('Filtering user:', k, 'v:', v, 'el.data:', el?.data);
             return v?.bookId === el?.data?.bookId && v?.chapter === el?.data?.chapter;
           }
         )
