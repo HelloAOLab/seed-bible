@@ -132,6 +132,13 @@ export function Toolbar() {
   useEffect(() => {
     const handleContextMenu = (e) => e.preventDefault();
     window.addEventListener("contextmenu", handleContextMenu);
+    os.addBotListener(configBot, 'onBotChanged', (that) => {
+    if (that.tags.includes('book')) {
+        globalThis.Open(configBot.tags.book,configBot.tags.chapter)
+      } else if(that.tags.includes('chapter')) {
+      globalThis.Open(configBot.tags.book,configBot.tags.chapter)
+    }
+});
     return () => window.removeEventListener("contextmenu", handleContextMenu);
   }, []);
 
