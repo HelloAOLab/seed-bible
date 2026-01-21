@@ -1,10 +1,21 @@
 
-const { useState } = os.appHooks
+const { useState, useMemo } = os.appHooks
 import { useBibleContext } from 'app.hooks.bibleVariables'
 function PanelSettingsDialog({ onClose }) {
     const { panelMode, screens, setScreens } = useBibleContext();
     const openPanelCount = screens.value || 1
-    const [selectedLayout, setSelectedLayout] = useState(0);
+    const isCurrentlyRow = screens.row || false;
+
+    // Determine initial layout index based on current row state
+    const initialLayoutIndex = useMemo(() => {
+        // For 3 or 4 panels, if currently in row mode, select the row layout (index 1)
+        if ((openPanelCount === 3 || openPanelCount === 4) && isCurrentlyRow) {
+            return 1;
+        }
+        return 0;
+    }, [openPanelCount, isCurrentlyRow]);
+
+    const [selectedLayout, setSelectedLayout] = useState(initialLayoutIndex);
 
     const nextPanelNumber = openPanelCount ;
 
@@ -124,7 +135,7 @@ function PanelSettingsDialog({ onClose }) {
                 style={{
                     cursor: 'pointer',
                     padding: '16px',
-                    border: selectedLayout === index ? '2px solid #d97144' : '2px solid #e5e7eb',
+                    border: selectedLayout === index ? '2px solid var(--selectedSpaceColor)' : '2px solid #e5e7eb',
                     borderRadius: '8px',
                     backgroundColor: 'white',
                     transition: 'border-color 0.2s',
@@ -136,7 +147,7 @@ function PanelSettingsDialog({ onClose }) {
                     marginBottom: '12px',
                     fontSize: '14px',
                     fontWeight: '500',
-                    color: '#333'
+                    color: 'var(--text1)'
                 }}>
                     {layout.name}
                 </div>
@@ -156,13 +167,13 @@ function PanelSettingsDialog({ onClose }) {
                                 setSelectedPanel(panel.id);
                             }}
                             style={{
-                                backgroundColor: selectedPanel === panel.id ? '#d97144' : '#f4c2c2',
+                                backgroundColor: selectedPanel === panel.id ? 'var(--selectedSpaceColor)' : 'color-mix(in srgb,var(--selectedSpaceColor) 50%,transparent) ',
                                 borderRadius: '4px',
                                 display: 'flex',
                                 alignItems: 'center',
                                 justifyContent: 'center',
                                 fontSize: '12px',
-                                color: selectedPanel === panel.id ? 'white' : '#d97144',
+                                color: selectedPanel === panel.id ? 'white' : 'var(--text1)',
                                 fontWeight: selectedPanel === panel.id ? '500' : 'normal',
                                 cursor: 'pointer',
                                 ...panel.style
@@ -198,7 +209,7 @@ function PanelSettingsDialog({ onClose }) {
                 <div
                     onClick={(e) => e.stopPropagation()}
                     style={{
-                        backgroundColor: 'white',
+                        backgroundColor: 'var(--pageBackground) !important',
                         borderRadius: '12px',
                         width: 'auto',
                         maxWidth: '90vw',
@@ -215,7 +226,7 @@ function PanelSettingsDialog({ onClose }) {
                         <h2 style={{
                             fontSize: '18px',
                             fontWeight: '600',
-                            color: '#333',
+                            color: 'var(--text1) !important',
                             margin: 0
                         }}>
                             New panel settings
@@ -238,7 +249,7 @@ function PanelSettingsDialog({ onClose }) {
 
                     <p style={{
                         fontSize: '14px',
-                        color: '#666',
+                        color: 'var(--descriptionTextColor) !important',
                         textAlign: 'center',
                         marginBottom: '32px',
                         lineHeight: '1.4'
@@ -282,7 +293,7 @@ function PanelSettingsDialog({ onClose }) {
                                 padding: '12px 32px',
                                 border: 'none',
                                 borderRadius: '6px',
-                                backgroundColor: '#d97144',
+                                backgroundColor: 'var(--selectedSpaceColor)',
                                 color: 'white',
                                 fontSize: '14px',
                                 fontWeight: '500',
