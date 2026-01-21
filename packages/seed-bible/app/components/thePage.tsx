@@ -1562,7 +1562,7 @@ function ThePage({
         }
 
         .footnote-modal {
-          background: white;
+          background: var(--pageBackground);
           border-radius: 12px;
           max-width: 600px;
           width: 90%;
@@ -1584,7 +1584,7 @@ function ThePage({
         .footnote-modal-header h3 {
           margin: 0;
           font-size: 1.2em;
-          color: #333;
+          color: var(--text1);
         }
 
         .footnote-modal-close {
@@ -1592,7 +1592,7 @@ function ThePage({
           border: none;
           font-size: 1.5em;
           cursor: pointer;
-          color: #666;
+          color: var(--text1);
           padding: 0;
           width: 30px;
           height: 30px;
@@ -1604,7 +1604,7 @@ function ThePage({
 
         .footnote-modal-close:hover {
           background: #f0f0f0;
-          color: #333;
+          color: var(--text1);
         }
 
         .footnote-modal-content {
@@ -1619,13 +1619,13 @@ function ThePage({
 
         .footnote-number {
           font-weight: 600;
-          color: #4459F3;
+          color: var(--spaceSelection);
           margin-right: 8px;
           font-size: 0.95em;
         }
 
         .footnote-text {
-          color: #444;
+          color: var(--text1);
           font-size: 0.95em;
         }
          `}
@@ -2640,7 +2640,9 @@ function Section({
                                       }}
                                       title="View footnotes"
                                     >
-                                      ⓘ
+                                      <span class="material-symbols-outlined">
+info
+</span>
                                     </span>
                                   );
                                 }
@@ -2672,7 +2674,9 @@ function Section({
                                     }}
                                     title="View footnotes"
                                   >
-                                    ⓘ
+                                    <span class="material-symbols-outlined">
+info
+</span>
                                   </span>
                                 );
                               }
@@ -2706,7 +2710,9 @@ function Section({
                                   }}
                                   title="View footnotes"
                                 >
-                                  ⓘ
+                                  <span class="material-symbols-outlined">
+info
+</span>
                                 </span>
                               );
                             }

@@ -315,9 +315,9 @@ export function VerseToolbar({
         `}</style>
       {globalThis.IsMobileNow() && selectionSettings.showSelectedItems && (
         <>
-          <div className="verse-ref">
+          {null/*<div className="verse-ref">
             <img src="https://res.cloudinary.com/dfbtwwa8p/image/upload/v1764875876/Rectangle_11_yzpmpm.svg" />
-          </div>
+          </div>*/}
           <span className="verse-ref" style={{...verseRefStyle,padding:'1px 16px'}}>
             {getVerseReference()}
           </span>
