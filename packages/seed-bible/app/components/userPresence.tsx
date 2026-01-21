@@ -826,6 +826,8 @@ export function UserPresence({ collapsed = false }) {
   const hostId = existingHosts[0];
   const info = getOrSetVisualInTags(hostId);
   // if (getStatusText() !== "Start session" || notifications.length > 0)
+  if(!isPrivateMode)
+
   return (
     <>
       <div
