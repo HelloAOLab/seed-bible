@@ -978,8 +978,7 @@ function ThePage({
     globalThis.RemoveWordHighlight = removeWordHighlight;
     globalThis.ClearAllWordHighlights = clearAllWordHighlights;
     shout("onBookChanged", { ...data, tabId: tab?.id });
-    clearAllVerseHighlights();
-    // os.log("clearAllVerseHighlights", clearAllVerseHighlights);
+    setCommandHighlight([]);
     if (data && JSON.stringify(tab?.data) !== JSON.stringify(data)) {
       setTab((prev) => ({ ...prev, data }));
     }
@@ -1105,15 +1104,13 @@ function ThePage({
   const [highlightOnce, setHighlightOnce] = useState(false);
 
   useEffect(() => {
-    if (!globalThis.tabHighlights) {
-      globalThis.tabHighlights = {};
-    }
-    if (tab?.id && !globalThis.tabHighlights[tab?.id]) {
-      globalThis.tabHighlights[tab?.id] = {};
-    }
+    if (tab?.id) {
+      if (!masks?.tabHighlights) {
+        setTagMask(thisBot, "tabHighlights", {}, "local");
+      }
 
-    if (tab?.id && globalThis.tabHighlights[tab?.id]) {
-      setHighlighted(globalThis.tabHighlights[tab?.id]);
+      const savedHighlights = masks?.tabHighlights?.[tab.id] || {};
+      setHighlighted(savedHighlights);
     }
 
     globalThis.SetHighlighted = setHighlighted;
@@ -1121,14 +1118,23 @@ function ThePage({
     return () => {
       globalThis.SetHighlighted = null;
     };
-  }, [tab?.id, highlighted]);
+  }, [tab?.id]);
+
+  useEffect(() => {
+    if (tab?.id && data?.book && data?.chapter) {
+      const savedHighlights = masks?.tabHighlights?.[tab.id] || {};
+      setHighlighted(savedHighlights);
+    }
+  }, [tab?.id, data?.book, data?.chapter]);
 
   const clearAllVerseHighlights = useCallback(() => {
     setHighlighted({});
     setCommandHighlight([]);
 
-    if (!globalThis.tabHighlights) globalThis.tabHighlights = {};
-    if (tab?.id) globalThis.tabHighlights[tab.id] = {};
+    if (tab?.id) {
+      const updatedMaskHighlights = { ...masks?.tabHighlights, [tab.id]: {} };
+      setTagMask(thisBot, "tabHighlights", updatedMaskHighlights, "local");
+    }
 
     shout("onAllVerseHighlightsCleared", {
       tabId: tab?.id,
@@ -1179,8 +1185,11 @@ function ThePage({
           });
         }
 
-        if (!globalThis.tabHighlights) globalThis.tabHighlights = {};
-        globalThis.tabHighlights[tab?.id] = newHighlighted;
+        const updatedMaskHighlights = {
+          ...masks?.tabHighlights,
+          [tab.id]: newHighlighted,
+        };
+        setTagMask(thisBot, "tabHighlights", updatedMaskHighlights, "local");
 
         if (
           fadeIn ||
@@ -1190,9 +1199,9 @@ function ThePage({
           if (tags?.sessions?.[configBot.id]?.config.highlightDuration)
             fadeIn = tags?.sessions?.[configBot.id]?.config.highlightDuration;
           if (fadeIn === 4) {
-            duration = 0; // Never remove highlight
+            duration = 0;
           } else if (typeof fadeIn === "number") {
-            duration = fadeIn * 1000; // Convert seconds to ms
+            duration = fadeIn * 1000;
           }
 
           if (duration > 0) {
@@ -1200,7 +1209,18 @@ function ThePage({
               setHighlighted((prevFade) => {
                 const faded = { ...prevFade };
                 numbers.forEach((vn) => delete faded[vn]);
-                globalThis.tabHighlights[tab?.id] = faded;
+
+                const fadedMaskHighlights = {
+                  ...masks?.tabHighlights,
+                  [tab.id]: faded,
+                };
+                setTagMask(
+                  thisBot,
+                  "tabHighlights",
+                  fadedMaskHighlights,
+                  "local"
+                );
+
                 return faded;
               });
             }, duration);
@@ -1216,7 +1236,6 @@ function ThePage({
   const highlightVerse = useCallback(
     (verseNumbers, color, scroll = true) => {
       if (!tab?.id) return;
-      // EmitData("highlight", { verseNumbers, color });
 
       const verseId = `v-${
         Array.isArray(verseNumbers)
@@ -1249,8 +1268,11 @@ function ThePage({
           };
         });
 
-        if (!globalThis.tabHighlights) globalThis.tabHighlights = {};
-        globalThis.tabHighlights[tab?.id] = newHighlighted;
+        const updatedMaskHighlights = {
+          ...masks?.tabHighlights,
+          [tab.id]: newHighlighted,
+        };
+        setTagMask(thisBot, "tabHighlights", updatedMaskHighlights, "local");
 
         return newHighlighted;
       });
@@ -1261,7 +1283,6 @@ function ThePage({
   const unHighlightVerse = useCallback(
     (verseNumbers) => {
       if (!tab?.id) return;
-      EmitData("highlight", { verseNumbers });
 
       const verseId = `v-${
         typeof verseNumbers === "object"
@@ -1290,10 +1311,11 @@ function ThePage({
           });
         }
 
-        if (!globalThis.tabHighlights) {
-          globalThis.tabHighlights = {};
-        }
-        globalThis.tabHighlights[tab?.id] = newHighlighted;
+        const updatedMaskHighlights = {
+          ...masks?.tabHighlights,
+          [tab.id]: newHighlighted,
+        };
+        setTagMask(thisBot, "tabHighlights", updatedMaskHighlights, "local");
 
         return newHighlighted;
       });
