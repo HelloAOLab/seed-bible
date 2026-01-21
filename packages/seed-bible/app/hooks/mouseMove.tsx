@@ -7,7 +7,7 @@ const { createContext, useContext, useState, useEffect, useRef } = os.appHooks;
 
 const MyContext = createContext();
 
-const MOBILE_QUERY = "(max-width: 768px)";
+const MOBILE_QUERY = "(max-width: 480px)";
 const isMobileNow = () =>
   (typeof window !== "undefined" &&
     window.matchMedia?.(MOBILE_QUERY)?.matches) ||
