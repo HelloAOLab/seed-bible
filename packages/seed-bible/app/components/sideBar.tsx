@@ -119,7 +119,10 @@ const CircleCounter = ({ data, book, chapter }) => {
                 border: `1px solid ${color}`,
               }}
             >
-              <IconComponent style={{ width: "12px", height: "12px" }} />
+               {masks[`${id}-photo`] ? (
+            <img
+              src={masks[`${id}-photo`]}
+            />):<IconComponent style={{ width: "12px", height: "12px" }} />}
             </div>
           );
         })}
@@ -253,7 +256,10 @@ const CircleCounter = ({ data, book, chapter }) => {
                         flexShrink: 0,
                       }}
                     >
-                      <Icon style={{ width: "18px", height: "18px" }} />
+                       {masks[`${id}-photo`] ? (
+            <img
+              src={masks[`${id}-photo`]}
+            />):<Icon style={{ width: "18px", height: "18px" }} />}
                     </div>
                     <div style={{ flex: 1 }}>
                       <div
