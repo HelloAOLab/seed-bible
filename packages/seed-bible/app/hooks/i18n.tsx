@@ -178,7 +178,7 @@ const resources = {
       showHighlightColors: "Show highlight UI",
       showIconText: "Show Icon text",
       copyVerse: "Copy verse",
-      onlyVerseText: "Only verse text",
+      onlyVerseText: "Verse text only",
       verseTextWithReference: "Verse text with reference",
 
       // Input fields section
