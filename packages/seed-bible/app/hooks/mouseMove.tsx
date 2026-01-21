@@ -7,7 +7,7 @@ const { createContext, useContext, useState, useEffect, useRef } = os.appHooks;
 
 const MyContext = createContext();
 
-const MOBILE_QUERY = "(max-width: 768px)";
+const MOBILE_QUERY = "(max-width: 480px)";
 const isMobileNow = () =>
   (typeof window !== "undefined" &&
     window.matchMedia?.(MOBILE_QUERY)?.matches) ||
@@ -581,8 +581,8 @@ export function MouseMoveProvider({ children }) {
       )}
       <div
         style={{
-          width: "100%",
-          height: "100%",
+          width: "100dvw",
+          height: "100dvh",
           pointerEvents: isAbleToRightClick ? "none" : "",
         }}
       >

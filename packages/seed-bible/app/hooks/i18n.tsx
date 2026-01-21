@@ -172,12 +172,13 @@ const resources = {
       toolbarIcons: "Toolbar Icons",
       selectionUI: "Selection UI",
       selectionIcons: "Selection Icons",
-      selectionUIDescription: "Selection UI menu for your page...",
+      selectionUIDescription:
+        "Edit options that appear when selecting scripture.",
       showSelectedItems: "Show selected verses",
       showHighlightColors: "Show highlight UI",
       showIconText: "Show Icon text",
       copyVerse: "Copy verse",
-      onlyVerseText: "Only verse text",
+      onlyVerseText: "Verse text only",
       verseTextWithReference: "Verse text with reference",
 
       // Input fields section

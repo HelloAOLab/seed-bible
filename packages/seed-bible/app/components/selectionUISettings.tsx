@@ -200,7 +200,7 @@ const SelectionUISettings = () => {
       {/* Title with icon */}
       <div style={titleContainerStyle}>
         <SelectionUIIcon />
-        <span style={titleStyle}>{t("selectionUI")}</span>
+        <span>{t("selectionUI")}</span>
       </div>
 
       {/* Description */}

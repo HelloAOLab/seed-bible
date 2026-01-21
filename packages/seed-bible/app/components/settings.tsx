@@ -21,7 +21,11 @@ import {
   ExtensionsIcon,
   SelectionUIIcon,
 } from "app.components.icons";
-
+import {
+  getSubscribedUsers,
+  subscribeToUsers,
+  unsubscribeFromUsers,
+} from "db.annotations.library";
 const SettingsSidebar = () => {
   const { t, changeLanguage, availableLanguages, language } =
     useSideBarContext();
@@ -50,7 +54,28 @@ const SettingsSidebar = () => {
     canvasSettings: false,
     mapSettings: false,
   });
+  const [subscribedUsers, setSubscribedUsers] = useState([]);
+  const [loadingSubs, setLoadingSubs] = useState(false);
+  const [subscribing, setSubscribing] = useState(false);
+  const [unsubscribingId, setUnsubscribingId] = useState(null);
 
+  const getSubs = async () => {
+    setLoadingSubs(true);
+    const subs = await getSubscribedUsers();
+    os.log(subs, "subs");
+    setSubscribedUsers(subs || []);
+    setLoadingSubs(false);
+  };
+  useEffect(() => {
+    getSubs();
+  }, []);
+
+  const handleUnsubscribe = async (userId) => {
+    setUnsubscribingId(userId);
+    await unsubscribeFromUsers([userId]);
+    await getSubs();
+    setUnsubscribingId(null);
+  };
   // New state for edit mode and settings customization
   const [editMode, setEditMode] = useState(false);
   const { ReSeed, setReSeed } = useBibleContext();
@@ -116,13 +141,13 @@ const SettingsSidebar = () => {
       expandable: false,
       onClick: () => setSideBarMode("extensions"),
     },
-    {
+    /*{
       key: "selectionUI",
       labelKey: "selectionUI",
       icon: <SelectionUIIcon />,
       expandable: false,
       onClick: () => setSideBarMode("selectionUISettings"),
-    },
+    },*/
     {
       key: "bibleDefaults",
       labelKey: "bibleDefaults",
@@ -145,7 +170,7 @@ const SettingsSidebar = () => {
                   flexDirection: "column",
                   padding: "5px",
                   borderRadius: "5px",
-                  backgroundColor: "var(--pageBackground)",
+                  // backgroundColor: "var(--pageBackground)",
                   pointerEvents: "auto",
                   color: "var(--text1)",
                 }}
@@ -274,6 +299,13 @@ const SettingsSidebar = () => {
           icon: `instant_mix`,
           onClick: () => setSideBarMode("editorToolbarSettings"),
         },
+        {
+          key: "selectionUI",
+          labelKey: "selectionUI",
+          icon: <SelectionUIIcon />,
+          expandable: false,
+          onClick: () => setSideBarMode("selectionUISettings"),
+        },
         // {
         //   key: "text",
         //   label: "Text",
@@ -292,6 +324,7 @@ const SettingsSidebar = () => {
           icon: "description",
           onClick: () => setSideBarMode("tabSettings"),
         },
+
         // {
         //   key: "mentuText",
         //   label: "Menu text",
@@ -646,7 +679,7 @@ const SettingsSidebar = () => {
   }, [spaceName]);
   const [userData, setUserData] = useState(null);
   const [subscribe, setSubscribe] = useState(false);
-  const [searchFor, setSearchFor] = useState();
+  const [searchFor, setSearchFor] = useState("");
   const [searchResult, setSearchResult] = useState();
   async function search() {
     const data = await os.getData(tags.key, searchFor);
@@ -1386,14 +1419,7 @@ const SettingsSidebar = () => {
                         )}
 
                         <div className="activeAccount" style={{ gap: "8px" }}>
-                          <img
-                            style={{
-                              borderRadius: "50%",
-                              height: "20px",
-                              width: "20px",
-                            }}
-                            src="https://res.cloudinary.com/dfbtwwa8p/image/upload/v1751169026/517d2d9057397c32ea562a20df4640807915b4df_udws5p.png"
-                          />
+                         <MenuIcon name={'bookmark_check'}/>
                           <div className="softText">
                             {editMode && editingLabel === item.key ? (
                               <input
@@ -1424,19 +1450,127 @@ const SettingsSidebar = () => {
                           </div>
                         </div>
 
-                        <div
-                          style={{ justifyContent: "center" }}
-                          className="activeAccount"
-                        >
-                          <div className="softText">
-                            {userData
-                              ? "You haven't subscribed to an account yet."
-                              : "You haven't subscribed to an account yet."}
+                        {/* Subscribed Users List */}
+                        {loadingSubs ? (
+                          <div
+                            style={{
+                              justifyContent: "center",
+                              padding: "20px",
+                            }}
+                            className="activeAccount"
+                          >
+                            <div className="softText">Loading...</div>
                           </div>
-                        </div>
+                        ) : subscribedUsers.length > 0 ? (
+                          <div style={{ width: "100%" }}>
+                            <div
+                              className="softText"
+                              style={{
+                                marginBottom: "8px",
+                                textAlign: "center",
+                              }}
+                            >
+                              {`You have ${subscribedUsers.length} subscription${subscribedUsers.length > 1 ? "s" : ""}`}
+                            </div>
+                            {subscribedUsers.map((user) => (
+                              <div
+                                key={user.id}
+                                className="activeAccount"
+                                style={{
+                                  justifyContent: "space-between",
+                                  padding: "8px 12px",
+                                  marginBottom: "6px",
+                                  borderRadius: "8px",
+                                  // backgroundColor: "var(--pageBackground)",
+                                  opacity:
+                                    unsubscribingId === user.id ? 0.5 : 1,
+                                }}
+                              >
+                                <div
+                                  style={{
+                                    display: "flex",
+                                    alignItems: "center",
+                                    gap: "10px",
+                                  }}
+                                >
+                                  {user.photoLink ? (
+                                    <img
+                                      style={{
+                                        borderRadius: "50%",
+                                        height: "32px",
+                                        width: "32px",
+                                        objectFit: "cover",
+                                      }}
+                                      src={user.photoLink}
+                                      title={user.name || "User"}
+                                    />
+                                  ) : (
+                                    <UserAvatar />
+                                  )}
+                                  <div>
+                                    <div
+                                      style={{
+                                        fontWeight: "500",
+                                        fontSize: "14px",
+                                      }}
+                                    >
+                                      {user.name || "Unknown User"}
+                                    </div>
+                                    <div
+                                      className="softText"
+                                      style={{ fontSize: "11px" }}
+                                    >
+                                      {user.id.slice(0, 16)}...
+                                    </div>
+                                  </div>
+                                </div>
+                                <button
+                                  onClick={() => handleUnsubscribe(user.id)}
+                                  disabled={unsubscribingId === user.id}
+                                  style={{
+                                    background: "transparent",
+                                    border: "1px solid #e0e0e0",
+                                    borderRadius: "6px",
+                                    cursor:
+                                      unsubscribingId === user.id
+                                        ? "wait"
+                                        : "pointer",
+                                    padding: "4px 8px",
+                                    display: "flex",
+                                    alignItems: "center",
+                                    gap: "4px",
+                                  }}
+                                  title="Unsubscribe"
+                                >
+                                  <span
+                                    className="material-symbols-outlined"
+                                    style={{ fontSize: "16px", color: "#666" }}
+                                  >
+                                    {unsubscribingId === user.id
+                                      ? "hourglass_empty"
+                                      : "person_remove"}
+                                  </span>
+                                </button>
+                              </div>
+                            ))}
+                          </div>
+                        ) : (
+                          <div
+                            style={{ justifyContent: "center" }}
+                            className="activeAccount"
+                          >
+                            <div className="softText">
+                              You haven't subscribed to anyone yet.
+                            </div>
+                          </div>
+                        )}
 
+                        {/* Subscribe Form */}
                         <div
-                          style={{ justifyContent: "center" }}
+                          style={{
+                            justifyContent: "center",
+                            marginTop: "12px",
+                          }}
                           className="activeAccount"
                         >
                           {!subscribe ? (
@@ -1444,55 +1578,72 @@ const SettingsSidebar = () => {
                               onClick={() => setSubscribe(true)}
                               className="create-profile-btn"
                             >
-                              Subscribe
+                              + Add Subscription
                             </button>
                           ) : (
-                            <div style={{ position: "" }}>
+                            <div style={{ width: "100%" }}>
                               <div
-                                style={{ marginBottom: "3px" }}
+                                style={{ marginBottom: "8px" }}
                                 className="blackText"
                               >
-                                Enter UID
+                                Enter User ID
                               </div>
                               <div
                                 style={{
                                   display: "flex",
                                   alignItems: "center",
-                                  justifyContent: "center",
-                                  flexDirection: "row",
-                                  gap: "20px",
+                                  gap: "10px",
                                 }}
                               >
                                 <input
-                                  style={{ height: "25px" }}
-                                  placeholder="e.g 34234nh23432bs243bf"
+                                  style={{ height: "32px", flex: 1 }}
+                                  placeholder="Enter user ID..."
                                   className="selectInput"
+                                  value={searchFor}
+                                  disabled={subscribing}
                                   onChange={(e) => setSearchFor(e.target.value)}
                                 />
                                 <button
-                                  onClick={() => search()}
-                                  style={{ borderRadius: "8px" }}
+                                  disabled={subscribing || !searchFor}
+                                  onClick={async () => {
+                                    if (searchFor) {
+                                      setSubscribing(true);
+                                      // Fetch user details before subscribing
+                                      const userDataResult = await os.getData(
+                                        tags.key,
+                                        searchFor
+                                      );
+                                      const userData = userDataResult.success
+                                        ? userDataResult.data
+                                        : null;
+                                      const userDetails = {
+                                        id: searchFor,
+                                        name: userData?.name,
+                                        photoLink: userData?.photoLink,
+                                      };
+                                      await subscribeToUsers([userDetails]);
+                                      setSearchFor("");
+                                      setSubscribe(false);
+                                      setSubscribing(false);
+                                      getSubs();
+                                    }
+                                  }}
+                                  style={{
+                                    borderRadius: "8px",
+                                    padding: "8px 12px",
+                                    cursor: subscribing ? "wait" : "pointer",
+                                    opacity:
+                                      subscribing || !searchFor ? 0.6 : 1,
+                                  }}
                                   className="create-profile-btn"
                                 >
                                   <span className="material-symbols-outlined">
-                                    person_add
+                                    {subscribing
+                                      ? "hourglass_empty"
+                                      : "person_add"}
                                   </span>
                                 </button>
                               </div>
-
-                              {searchResult && (
-                                <div
-                                  className="profileCard"
-                                  style={{
-                                    position: "absolute",
-                                    left: "300px",
-                                    top: "35%",
-                                  }}
-                                >
-                                  <ProfileCard {...searchResult} />
-                                </div>
-                              )}
-                              <div style={{ height: "20px" }} />
                             </div>
                           )}
                         </div>

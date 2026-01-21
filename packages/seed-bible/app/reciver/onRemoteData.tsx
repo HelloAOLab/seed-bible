@@ -1,5 +1,14 @@
 /* global os, thisBot, configBot, getBot, shout, sendRemoteData */
 
+
+// shout("updatedYourData", { user: that.remoteId, tab: { ...(that.that || {}) } });
+ // ========= SHARED (GLOBAL) META =========
+  if(that.name==="updateSharingData") {
+    os.log("Handling updateSharingData for", that.remoteId);
+    shout("updatedYourData", { user: that.remoteId, tab: { ...(that.that || {}) } });
+    return;
+  }
+
 // ---- small in-memory guards to prevent loops / storms
 const lastSeenBySender = new Map(); // key: `${senderId}:${name}` -> timestamp(ms)
 const lastAppliedEvent = new Map(); // key: eventName -> timestamp(ms)
@@ -269,10 +278,10 @@ switch (name) {
   }
 
   // ========= SHARED (GLOBAL) META =========
-  case "updateSharingData": {
-    shout("updatedYourData", { user: remoteId, tab: { ...(payload || {}) } });
-    return;
-  }
+  // case "updateSharingData": {
+  //   shout("updatedYourData", { user: remoteId, tab: { ...(payload || {}) } });
+  //   return;
+  // }
 
   case "personLeftTheChat": {
     shout("onPersonLeftRemote", {

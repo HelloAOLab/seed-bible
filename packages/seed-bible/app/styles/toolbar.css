@@ -10,6 +10,7 @@
 }
 
 .toolbar-1 {
+  direction: ltr;
   display: flex;
   align-items: center;
   justify-content: space-between;
@@ -54,7 +55,7 @@
     gap: 4px;
   }
   .firstToolbarbutton {
-    background-color: #dfdede !important;
+    background-color: var(--firstToolbarbutton) !important;
     border-radius: 0px !important;
   }
 
@@ -62,7 +63,7 @@
     position: absolute !important;
     left: 16px;
     bottom: 68px;
-    background: #f0f1f1;
+    background: var(--pageBackground) !important;
     border-radius: 100%;
     display: block !important;
     pointer-events: all;
@@ -72,7 +73,7 @@
     position: absolute !important;
     right: 16px;
     bottom: 68px;
-    background: #f0f1f1;
+    background: var(--pageBackground) !important;
     border-radius: 100%;
     display: block !important;
     pointer-events: all;
