@@ -429,11 +429,10 @@ const Main = () => {
     surface: "#FAFAFA",
     onSurface: "#333333",
     text3: "#333333",
+    "secondary-filter-mode": "invert(100%)",
   };
   const darkTheme = {
-  firstToolbarbutton:'#5C5C5C',
-
-
+      firstToolbarbutton:'#5C5C5C',
       // Main colors
       primaryColor: "#5A67D8",
       secondaryColor: "#A78BFA",

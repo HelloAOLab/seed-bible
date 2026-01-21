@@ -153,6 +153,7 @@ const RenderHTMLContent = ({ htmlContent }) => {
           display: 'flex',
           flexDirection: 'column',
           alignItems: 'flex-start',
+          backgroundColor: "white",
         }}
         dangerouslySetInnerHTML={{ __html: breakHTMLCONTENT }}
       />
@@ -163,7 +164,7 @@ const RenderHTMLContent = ({ htmlContent }) => {
             textAlign: "center",
             cursor: "pointer",
             fontSize: "12px",
-            color: "#D36433",
+            color: "var(--primaryButtonFill)",
             marginTop: "0.25rem",
           }}
           onClick={(e) => {

@@ -1596,7 +1596,7 @@ const AddAnotationUI = ({
             >
               <div className="align-center">
                 <span
-                  style={{ fontSize: "20px", color: "white" }}
+                  style={{ fontSize: "20px" }}
                   class="material-symbols-outlined"
                 >
                   draft
@@ -1606,7 +1606,6 @@ const AddAnotationUI = ({
                     fontSize: "12px",
                     fontWeight: "600",
                     marginLeft: "4px",
-                    color: "white",
                   }}
                   for="playlistInclude"
                 >
@@ -1663,7 +1662,7 @@ const AddAnotationUI = ({
             >
               <div className="align-center">
                 <span
-                  style={{ fontSize: "20px", color: "white" }}
+                  style={{ fontSize: "20px",  }}
                   class="material-symbols-outlined"
                 >
                   playlist_play
@@ -1673,7 +1672,6 @@ const AddAnotationUI = ({
                     fontSize: "12px",
                     fontWeight: "600",
                     marginLeft: "4px",
-                    color: "white",
                   }}
                   for="playlistInclude"
                 >
@@ -1730,7 +1728,7 @@ const AddAnotationUI = ({
               >
                 <div className="align-center">
                   <span
-                    style={{ fontSize: "20px", color: "white" }}
+                    style={{ fontSize: "20px", }}
                     class="material-symbols-outlined"
                   >
                     team_dashboard
@@ -1740,7 +1738,6 @@ const AddAnotationUI = ({
                       fontSize: "12px",
                       fontWeight: "600",
                       marginLeft: "4px",
-                      color: "white",
                     }}
                     for="playlistInclude"
                   >
@@ -1781,7 +1778,7 @@ const AddAnotationUI = ({
             className="overlay linked-item-custom"
           >
             <p>
-              <b style={{ color: "white" }}>Publish settings</b>
+              <b>{t('publishSettings')}</b>
             </p>
             <span style={{ fontSize: "10px", color: "#c9c8c6" }}>
               {t('publishSettingsDesc')}
@@ -1796,14 +1793,12 @@ const AddAnotationUI = ({
               }}
             >
               <span
-                style={{ color: "white" }}
                 class="material-symbols-outlined"
               >
                 lock
               </span>
               <p>{t('privateAccess')}</p>
               <span
-                style={{ color: "white" }}
                 class="material-symbols-outlined"
               >
                 {publishAccess === "private"
@@ -1818,14 +1813,12 @@ const AddAnotationUI = ({
               }}
             >
               <span
-                style={{ color: "white" }}
                 class="material-symbols-outlined"
               >
                 public
               </span>
               <p>{t('publicAccess')}</p>
               <span
-                style={{ color: "white" }}
                 class="material-symbols-outlined"
               >
                 {publishAccess === "public"
@@ -1841,14 +1834,12 @@ const AddAnotationUI = ({
               }}
             >
               <span
-                style={{ color: "white" }}
                 class="material-symbols-outlined"
               >
                 auto_awesome_motion
               </span>
               <p>{t('advancedUI')}</p>
               <span
-                style={{ color: "white" }}
                 class="material-symbols-outlined"
               >
                 {!singleMode
@@ -1943,7 +1934,7 @@ const AddAnotationUI = ({
                   // setShowPlaylistSettings(true);
                 }}
               >
-                <AnnotationIcon invert={true} />
+                <AnnotationIcon />
               </div>
               <p>
                 {singleMode
@@ -1983,7 +1974,7 @@ const AddAnotationUI = ({
                   setShowMoreOptions(true);
                 }}
               >
-                <img src={Settings_Icon} alt="Settings_Icon" />
+                <img className="img-icon" src={Settings_Icon} alt="Settings_Icon" />
               </div>
             </div>
           </div>
@@ -2281,6 +2272,8 @@ const AddAnotationUI = ({
           !draggedItemID &&
           !embedding && (
             <CustomAnnotationTextEditor
+              showPreview={showPreview}
+              setShowPreview={setShowPreview}
               massAdd={onMassAdd}
               initialHTML={textHTML}
               onChange={(html) => {
@@ -2314,7 +2307,7 @@ const AddAnotationUI = ({
                   }
                 }}
               >
-                <img src={showPreview ? PREVIEW_ICON_ACTIVE : PREVIEW_ICON_INACTIVE} alt="Preview" />
+                <img className="img-icon" src={showPreview ? PREVIEW_ICON_ACTIVE : PREVIEW_ICON_INACTIVE} alt="Preview" />
                 <span style={{ color: 'inherit'}}>{t('preview')}</span>
             </Button>
             <Button 

@@ -11,6 +11,7 @@
 .select-box.secondary select {
     border: 2px solid #ced4da;
     border-radius: 6px;
+    background-color: var(--pageBackground);
     padding: 12px 0;
 }
 

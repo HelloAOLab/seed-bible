@@ -20,7 +20,7 @@
     z-index: 10001;
     border-radius: 0.625rem;
     transform: translateX(-100%);
-    background-color: #202020;
+    background-color: var(--pageBackground);
     overflow: visible;
 }
 
