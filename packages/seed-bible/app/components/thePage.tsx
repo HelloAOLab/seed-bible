@@ -1399,14 +1399,6 @@ function ThePage({
         });
       }
 
-      const highlightKey = `${data?.book}-${data?.chapter}-${verseNumber}`;
-      const isHighlightedInCurrentChapter = !!highlighted?.[highlightKey];
-
-      if (isHighlightedInCurrentChapter) {
-        toggleVerseHighlight(verseNumber);
-        return;
-      }
-
       setClickedVerses((prev) => {
         const isAlreadyClicked = prev.includes(verseNumber);
 
@@ -1446,7 +1438,7 @@ function ThePage({
         return newClicked;
       });
     },
-    [data, highlighted, showVerseToolbar, userMovedToolbar, toggleVerseHighlight]
+    [data, highlighted, showVerseToolbar, userMovedToolbar]
   );
 
   // NEW: Handle color selection from toolbar
