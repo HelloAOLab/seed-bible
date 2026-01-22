@@ -1,4 +1,4 @@
-import App from "app.main.app";
+import { App } from "app.main.app";
 
 /**
  * A collection of link/script's providing expected resources from external sources.

@@ -27,54 +27,6 @@ globalThis.OpenPrevChapter = () => {};
 globalThis.SpaceLayouts = {}; // To store layout per space
 globalThis.SpaceScreens = {}; // Already used for screen count
 globalThis.CheckToolbarOverflow = () => {};
-
-const TestingApp = ({ myProp }) => {
-  const divRef = useRef(null);
-  const [css, setCss] = useState();
-  // console.log(myProp, 'myProp')
-  function runTest() {
-    //     globalThis?.SetCanvasPosition?.(`
-    //                  #app-game-container, .main-content {
-    //     position:absolute !important;
-    //     left:0 !important;
-    //     top:0 !important;
-    //     width:600px !important;
-    //     height:600px !important;
-    //     z-index:999999;
-    //  }
-    //             `)
-    if (divRef.current) {
-      // const rect = divRef.current.getBoundingClientRect();
-      // console.log("Left:", rect.left);
-      // console.log("Top:", rect.top);
-      // console.log("Width:", rect.width);
-      // console.log("Height:", rect.height);
-      // console.log(rect, 'rect')
-      // configBot.tags.gridPortal = 'test'
-      // globalThis.SetCanvasPositions({ left: rect.left, top: rect.top, width: rect.width, height: rect.height, })
-      // globalThis.setHW({ width: `${rect.width}px !important`, height: `${rect.height}px !important` })
-      // globalThis.setTL({ left: `${rect.left}px !important`, top: `${rect.top}px !important` })
-    }
-  }
-
-  return (
-    <div style={{ width: "100%", height: "100%" }}>
-      <style></style>
-      <div
-        ref={divRef}
-        id="#mainCanvas"
-        class="mainCanvas"
-        onClick={runTest}
-        style={{
-          width: "100%",
-          height: "100%",
-          border: "1px solid black",
-          overflow: "auto",
-        }}
-      ></div>
-    </div>
-  );
-};
 const Main = () => {
   if (configBot.tags.extensions) return <PackageManager />;
   const { screens, fullScreen, setFullScreen } = useBibleContext();
@@ -320,7 +272,7 @@ const Main = () => {
   // };
 
   const defaultTheme = {
-    firstToolbarbutton:'#dfdede',
+    firstToolbarbutton: "#dfdede",
     // Main colors
     primaryColor: "#E07B4C",
     secondaryColor: "#D2691E",
@@ -432,119 +384,118 @@ const Main = () => {
     "secondary-filter-mode": "invert(100%)",
   };
   const darkTheme = {
-  firstToolbarbutton:'#5C5C5C',
+    firstToolbarbutton: "#5C5C5C",
 
-
-      // Main colors
-      primaryColor: "#5A67D8",
-      secondaryColor: "#A78BFA",
-      tertiaryColor: "#34D399",
-      // Container backgrounds
-      themeSideMenu: "#2D2D2D",
-      panelBackground: "#1A1A1A",
-      // Tab
-      tabSelection: "#5A67D8",
-      activeTabBackground: "#404040",
-      activeTabText: "#FFFFFF",
-      activeTabBorder: "#5A67D8",
-      activeTabFill: "#5A67D894",
-      simpleTabText: "#AAAAAA",
-      inactiveTabText: "#AAAAAA",
-      // Buttons
-      primaryButton: "#404040",
-      primaryButtonColor: "#FFFFFF",
-      primaryButtonBorder: "#5A67D8",
-      primaryButtonFill: "#5A67D8",
-      secondaryButton: "#5A67D8",
-      secondaryButtonColor: "#FFFFFF",
-      secondaryButtonBorder: "#5A67D8",
-      secondaryButtonFill: "#5A67D8",
-      tertiaryButtonColor: "#FFFFFF",
-      buttonBorder: "#5A67D8",
-      // Scripture text
-      bookHeadingColor: "#FFFFFF",
-      chapterHeadingColor: "#FFFFFF",
-      verseNumberColor: "#FFFFFF",
-      verseTextColor: "#FFFFFF",
-      pageBackground: "#121212",
-      pageTextColor: "#FFFFFF",
-      // Side menu
-      heading1Color: "#FFFFFF",
-      heading2Color: "#FFFFFF",
-      heading3Color: "#FFFFFF",
-      descriptionTextColor: "#AAAAAA",
-      menuTextColor: "#FFFFFF",
-      breadcrumbsColor: "#AAAAAA",
-      sectionBackground: "#5A67D8",
-      spaceNameColor: "#FFFFFF",
-      sideMenuIconsColor: "#FFFFFF",
-      selectedSpaceColor: "#5A67D8",
-      unselectedSpaceColor: "#666666",
-      spaceNameText: "#FFFFFF",
-      addButtonBackground: "#404040",
-      addButtonIcon: "#5A67D8",
-      selectPanelIcon: "#FFFFFF",
-      openCloseMenuIcon: "#FFFFFF",
-      moreIcon: "#AAAAAA",
-      settingsIcon: "#AAAAAA",
-      inactiveSpaceIndicator: "#666666",
-      activeSpaceIndicator: "#5A67D8",
-      profileAvatar: "#5A67D8",
-      // Selection UI & toolbar
-      toolbarBorder: "#FFFFFF24",
-      toolbarFill: "#2D2D2D",
-      toolbarIconsColor: "#FFFFFF",
-      selectionUIBorder: "#FFFFFF24",
-      selectionUIFill: "#2D2D2D",
-      selectionIconsColor: "#FFFFFF",
-      toolbarBackground: "#1A1A1A",
-      iconColor: "#FFFFFF",
-      "filter-mode": "invert(100%)",
-      // Input fields
-      inputTitleColor: "#FFFFFF",
-      inputPlaceholderColor: "#AAAAAA",
-      inputActiveBorder: "#5A67D8",
-      inputActiveFill: "#2D2D2D",
-      inputInactiveBorder: "#666666",
-      inputInactiveFill: "#2D2D2D",
-      inputBackground: "#2D2D2D",
-      inputBorder: "#666666",
-      inputText: "#FFFFFF",
-      inputPlaceholder: "#AAAAAA",
-      // Branding
-      logoColor: "#FFFFFF",
-      accentColor: "#5A67D8",
-      // Space selection
-      spaceSelection: "#5A67D8",
-      // Text colors
-      text1: "#FFFFFF",
-      text2: "#AAAAAA",
-      showTabIcons: true,
-      // Semantic colors
-      primaryLight: "#93C5FD",
-      onPrimaryLight: "#3B82F6",
-      primaryBase: "#60A5FA",
-      onPrimaryBase: "#111827",
-      primaryDark: "#3B82F6",
-      onPrimaryDark: "#FFFFFF",
-      secondaryLight: "#C4B5FD",
-      onSecondaryLight: "#8B5CF6",
-      secondaryBase: "#A78BFA",
-      onSecondaryBase: "#111827",
-      secondaryDark: "#8B5CF6",
-      onSecondaryDark: "#FFFFFF",
-      tertiaryLight: "#6EE7B7",
-      onTertiaryLight: "#10B981",
-      tertiaryBase: "#34D399",
-      onTertiaryBase: "#111827",
-      tertiaryDark: "#FFFFFF",
-      onTertiaryDark: "#10B981",
-      background: "#0F172A",
-      onBackground: "#FFFFFF",
-      surface: "#1E293B",
-      onSurface: "#FFFFFF",
-      text3: "#F1F5F9",
-    }
+    // Main colors
+    primaryColor: "#5A67D8",
+    secondaryColor: "#A78BFA",
+    tertiaryColor: "#34D399",
+    // Container backgrounds
+    themeSideMenu: "#2D2D2D",
+    panelBackground: "#1A1A1A",
+    // Tab
+    tabSelection: "#5A67D8",
+    activeTabBackground: "#404040",
+    activeTabText: "#FFFFFF",
+    activeTabBorder: "#5A67D8",
+    activeTabFill: "#5A67D894",
+    simpleTabText: "#AAAAAA",
+    inactiveTabText: "#AAAAAA",
+    // Buttons
+    primaryButton: "#404040",
+    primaryButtonColor: "#FFFFFF",
+    primaryButtonBorder: "#5A67D8",
+    primaryButtonFill: "#5A67D8",
+    secondaryButton: "#5A67D8",
+    secondaryButtonColor: "#FFFFFF",
+    secondaryButtonBorder: "#5A67D8",
+    secondaryButtonFill: "#5A67D8",
+    tertiaryButtonColor: "#FFFFFF",
+    buttonBorder: "#5A67D8",
+    // Scripture text
+    bookHeadingColor: "#FFFFFF",
+    chapterHeadingColor: "#FFFFFF",
+    verseNumberColor: "#FFFFFF",
+    verseTextColor: "#FFFFFF",
+    pageBackground: "#121212",
+    pageTextColor: "#FFFFFF",
+    // Side menu
+    heading1Color: "#FFFFFF",
+    heading2Color: "#FFFFFF",
+    heading3Color: "#FFFFFF",
+    descriptionTextColor: "#AAAAAA",
+    menuTextColor: "#FFFFFF",
+    breadcrumbsColor: "#AAAAAA",
+    sectionBackground: "#5A67D8",
+    spaceNameColor: "#FFFFFF",
+    sideMenuIconsColor: "#FFFFFF",
+    selectedSpaceColor: "#5A67D8",
+    unselectedSpaceColor: "#666666",
+    spaceNameText: "#FFFFFF",
+    addButtonBackground: "#404040",
+    addButtonIcon: "#5A67D8",
+    selectPanelIcon: "#FFFFFF",
+    openCloseMenuIcon: "#FFFFFF",
+    moreIcon: "#AAAAAA",
+    settingsIcon: "#AAAAAA",
+    inactiveSpaceIndicator: "#666666",
+    activeSpaceIndicator: "#5A67D8",
+    profileAvatar: "#5A67D8",
+    // Selection UI & toolbar
+    toolbarBorder: "#FFFFFF24",
+    toolbarFill: "#2D2D2D",
+    toolbarIconsColor: "#FFFFFF",
+    selectionUIBorder: "#FFFFFF24",
+    selectionUIFill: "#2D2D2D",
+    selectionIconsColor: "#FFFFFF",
+    toolbarBackground: "#1A1A1A",
+    iconColor: "#FFFFFF",
+    "filter-mode": "invert(100%)",
+    // Input fields
+    inputTitleColor: "#FFFFFF",
+    inputPlaceholderColor: "#AAAAAA",
+    inputActiveBorder: "#5A67D8",
+    inputActiveFill: "#2D2D2D",
+    inputInactiveBorder: "#666666",
+    inputInactiveFill: "#2D2D2D",
+    inputBackground: "#2D2D2D",
+    inputBorder: "#666666",
+    inputText: "#FFFFFF",
+    inputPlaceholder: "#AAAAAA",
+    // Branding
+    logoColor: "#FFFFFF",
+    accentColor: "#5A67D8",
+    // Space selection
+    spaceSelection: "#5A67D8",
+    // Text colors
+    text1: "#FFFFFF",
+    text2: "#AAAAAA",
+    showTabIcons: true,
+    // Semantic colors
+    primaryLight: "#93C5FD",
+    onPrimaryLight: "#3B82F6",
+    primaryBase: "#60A5FA",
+    onPrimaryBase: "#111827",
+    primaryDark: "#3B82F6",
+    onPrimaryDark: "#FFFFFF",
+    secondaryLight: "#C4B5FD",
+    onSecondaryLight: "#8B5CF6",
+    secondaryBase: "#A78BFA",
+    onSecondaryBase: "#111827",
+    secondaryDark: "#8B5CF6",
+    onSecondaryDark: "#FFFFFF",
+    tertiaryLight: "#6EE7B7",
+    onTertiaryLight: "#10B981",
+    tertiaryBase: "#34D399",
+    onTertiaryBase: "#111827",
+    tertiaryDark: "#FFFFFF",
+    onTertiaryDark: "#10B981",
+    background: "#0F172A",
+    onBackground: "#FFFFFF",
+    surface: "#1E293B",
+    onSurface: "#FFFFFF",
+    text3: "#F1F5F9",
+  };
   const isDark = window.matchMedia("(prefers-color-scheme: dark)").matches;
 
   let theme = isDark ? darkTheme : defaultTheme;
@@ -644,43 +595,18 @@ const Main = () => {
   );
 };
 
-const Root = () => {
+/**
+ * This a temporary intermediary component to ease the refactor.
+ * It is just the main (non-link/script) content which used to be included in the root component.
+ */
+export const AppContent = () => {
   return (
-    <>
-      <link rel="preconnect" href="https://fonts.googleapis.com" />
-      <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
-      <link
-        href="https://fonts.googleapis.com/css2?family=DM+Sans:ital,opsz,wght@0,9..40,100..1000;1,9..40,100..1000&family=Newsreader:ital,opsz,wght@0,6..72,200..800;1,6..72,200..800&family=Plus+Jakarta+Sans:ital,wght@0,200..800;1,200..800&display=swap"
-        rel="stylesheet"
-      />
-      <link
-        href="https://api.fontshare.com/v2/css?f[]=satoshi@100,200,300,400,500,600,700,800,900&display=swap"
-        rel="stylesheet"
-      />
-      <script src="https://cdn.jsdelivr.net/npm/fullcalendar@6.1.17/index.global.min.js"></script>
-      <script src="https://cdn.jsdelivr.net/npm/fullcalendar/timegrid@6.1.17/index.global.min.js"></script>
-      <script src="https://cdn.jsdelivr.net/npm/fullcalendar/interaction@6.1.17/index.global.min.js"></script>
-      <link
-        rel="stylesheet"
-        href="https://cdn.jsdelivr.net/npm/@fullcalendar/core@6.1.17/main.min.css"
-      />
-      <link
-        rel="stylesheet"
-        href="https://cdn.jsdelivr.net/npm/@fullcalendar/daygrid@6.1.17/main.min.css"
-      />
-      <BibleVariablesProvider>
-        <TabsProvider>
-          <SideBarProvider>
-            <Main />
-          </SideBarProvider>
-        </TabsProvider>
-      </BibleVariablesProvider>
-    </>
+    <BibleVariablesProvider>
+      <TabsProvider>
+        <SideBarProvider>
+          <Main />
+        </SideBarProvider>
+      </TabsProvider>
+    </BibleVariablesProvider>
   );
 };
-if (configBot.tags.systemPortal) return;
-configBot.tags.gridPortal = null;
-render(<Root />, document.body);
-document.body.style.overscrollBehaviorX = "none";
-
-// os.compileApp('main', <Root />)
