@@ -11,6 +11,18 @@
   color: var(--primaryColor) !important;
 }
 
+.img-icon {
+  filter: var(--filter-mode);
+}
+
+.img-icon-secondary {
+  filter: var(--secondary-filter-mode);
+}
+
+.material-symbols-outlined.color-inverted {
+  color: var(--primaryButtonFill) !important;
+}
+
 
 .playlist-cont-parent,
  .playlist-cont-parent *,
@@ -27,7 +39,7 @@
   margin: 0;
   padding: 0;
   box-sizing: border-box;
-  color: #5f5e5c;
+  color: var(--verseTextColor, var(--text-verse-color, var(--pageTextColor)));
   font-family: 'Satoshi';
 }
 
@@ -45,6 +57,12 @@
 .actions-buttons-annotation.isMobile {
   opacity: 1;
   visibility: visible;
+}
+
+.annotation-list-item-type-comment { 
+  background: white;
+  padding: 4px;
+  border-radius: 4px;
 }
 
 .annotation-list-item.annotation-list-item-type-comment  .render-html-content{
@@ -175,7 +193,7 @@ history-item:active {
 
 .playlist {
   border: 1px solid #e2e2e2;
-  background-color: #fff;
+  background-color: var(--pageBackground);
   border-radius: 0.625rem;
   min-height: 5.2rem;
   display: flex;
@@ -557,7 +575,7 @@ div.history-item.current-date-disorder .playlist-item-type {
   min-height: 2rem;
   padding: 0.25rem 0.5rem;
   padding-left: 2.5rem;
-  background-color: #fff;
+  background-color: var(--pageBackground);
   border: 1px solid #aca5a5;
   font-weight: 600;
   margin: 0 0rem 0 0.5rem;
@@ -567,7 +585,7 @@ div.history-item.current-date-disorder .playlist-item-type {
 
 .playlist-item-type.bookmark {
   border: none;
-  background-color: #f4f5f5;
+  background-color: var(--panelBackground);
   border-radius: 4px;
 }
 
@@ -812,8 +830,8 @@ div.attachment-link.dropabble-Embed .playlist-item-type {
   /* position: absolute; */
   /* bottom: 59px; */
   /* /* left: 0px;  */
-  background: white;
-  border: 1px solid #d36433;
+  background: var(--pageBackground);
+  border: 1px solid var(--primaryColor);
   border-radius: 10px;
 }
 
@@ -895,7 +913,7 @@ div.attachment-link.dropabble-Embed .playlist-item-type {
 }
 
 .select_item_type.active {
-  background-color: #d36433;
+  background-color: var(--primaryColor);
 }
 
 .container-render {
@@ -1001,7 +1019,6 @@ div.attachment-link.dropabble-Embed .playlist-item-type {
   gap: 0.5rem;
   border-radius: 0.25rem;
   cursor: pointer;
-  color: #000000;
 }
 
 .back-button {
@@ -1020,12 +1037,13 @@ div.attachment-link.dropabble-Embed .playlist-item-type {
   position: sticky;
   left: 0;
   top: 0;
-  background: white;
+  background: var(--pageBackground);
 }
 
 .chips-tag-container .chip-tag {
-  background-color: #f2f2f2;
-  border: 1px solid #d4d4d4;
+  background-color: var(--primaryButtonColor);
+  color: var(--primaryButtonFill);
+  border: 1px solid var(--primaryButtonBorder);
   height: 32px;
   border-radius: 24px;
   min-width: fit-content;
@@ -1060,8 +1078,8 @@ div.attachment-link.dropabble-Embed .playlist-item-type {
 }
 
 .chips-tag-container .chip-tag.active {
-  background-color: #d364334d;
-  border: 1px solid #d36433;
+  background-color: var(--primaryButtonColor);
+  border: 1px solid var(--primaryButtonBorder);
 }
 
 .content-type {
@@ -1238,7 +1256,6 @@ div.attachment-link.dropabble-Embed .playlist-item-type {
 
 .no-items-box h4 {
   font-size: 14px;
-  color: #00000060;
 }
 
 .no-items-box {
@@ -1263,13 +1280,13 @@ div.attachment-link.dropabble-Embed .playlist-item-type {
   transform: translate(-50%, -50%);
   z-index: 3;
   padding: 0 0.5rem;
-  background-color: white;
+  background-color: var(--pageBackground);
 }
 
 .or::after {
   height: 1px;
   content: "";
-  background-color: #00000060;
+  background-color: var(--pageBackground);
   width: 190px;
   top: 50%;
   position: absolute;
@@ -1280,7 +1297,7 @@ div.attachment-link.dropabble-Embed .playlist-item-type {
 
 .no-items-box p {
   font-size: 14px;
-  color: #d36433;
+  color: var(--primaryColor);
   cursor: pointer;
   font-weight: 400;
   text-decoration: underline;

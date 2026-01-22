@@ -6,6 +6,7 @@ import { useMouseMove } from "app.hooks.mouseMove";
 import SurroundingDivs from "app.components.surroundingDivs";
 import { useBibleContext } from "app.hooks.bibleVariables";
 import { useTabsContext } from "app.hooks.tabs";
+import { BurgerMenuIcon } from "app.components.icons";
 
 // Simple, single-toolbar component (no edit layer). Main logic unchanged.
 export function Toolbar() {
@@ -92,10 +93,22 @@ export function Toolbar() {
     setDraggedIndex(null);
   }
 
+  // Detect if current translation is RTL (Arabic)
+  const [isRTL, setIsRTL] = useState(false);
+
   // Sync tools with active tab type (keeps main logic)
   useEffect(() => {
     if (!activeTab || !tabs) return;
     const activeTabObj = tabs.find((t) => t.id === activeTab);
+
+    // Check if translation is Arabic/RTL
+    const translation = activeTabObj?.data?.translation;
+    if (translation === "ARBNAV" || translation === "arb_vdv") {
+      setIsRTL(true);
+    } else {
+      setIsRTL(false);
+    }
+
     if (activeTabObj?.data?.type === "canvas") {
       setActiveTools([...canvasTools]);
     } else {
@@ -119,6 +132,13 @@ export function Toolbar() {
   useEffect(() => {
     const handleContextMenu = (e) => e.preventDefault();
     window.addEventListener("contextmenu", handleContextMenu);
+    os.addBotListener(configBot, 'onBotChanged', (that) => {
+    if (that.tags.includes('book')) {
+        globalThis.Open(configBot.tags.book,configBot.tags.chapter)
+      } else if(that.tags.includes('chapter')) {
+      globalThis.Open(configBot.tags.book,configBot.tags.chapter)
+    }
+});
     return () => window.removeEventListener("contextmenu", handleContextMenu);
   }, []);
 
@@ -144,7 +164,7 @@ export function Toolbar() {
           >
             <div className="toolbar-item-wrapper leftClick">
               <button
-                onClick={() => navFunctions?.openPrevChapter()}
+                onClick={() => isRTL ? navFunctions?.openNextChapter() : navFunctions?.openPrevChapter()}
                 className="toolbar-button"
               >
                 <span className="material-symbols-outlined">chevron_left</span>
@@ -158,8 +178,12 @@ export function Toolbar() {
               }}
               className="toolbar-item-wrapper mobile-only"
             >
-              <button className={`toolbar-button firstToolbarbutton`}>
-                <span className="material-symbols-outlined">menu</span>
+              <button
+                className={`toolbar-button firstToolbarbutton`}
+                title="Open menu"
+                aria-label="Open menu"
+              >
+                <BurgerMenuIcon size={24} color="var(--text1)" />
               </button>
             </div>
             {tools?.map((tool, index) =>
@@ -221,7 +245,7 @@ export function Toolbar() {
 
             <div className="toolbar-item-wrapper rightClick">
               <button
-                onClick={() => navFunctions?.openNextChapter()}
+                onClick={() => isRTL ? navFunctions?.openPrevChapter() : navFunctions?.openNextChapter()}
                 className="toolbar-button"
               >
                 <span className="material-symbols-outlined">chevron_right</span>

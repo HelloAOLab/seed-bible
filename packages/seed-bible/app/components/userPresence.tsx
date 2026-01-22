@@ -907,7 +907,7 @@ export function UserPresence({ collapsed = false }) {
                         height: 30,
                         borderRadius: "50%",
                         border: `2px solid ${ringColor}`,
-                        padding: 2,
+                        padding: masks[`${remoteId}-photo`]?0:2,
                         display: "flex",
                         alignItems: "center",
                         justifyContent: "center",
@@ -916,7 +916,7 @@ export function UserPresence({ collapsed = false }) {
                         opacity: menuItems.length ? 1 : 0.6,
                       }}
                     >
-                      <Icon width={15} height={15} />
+                      {masks[`${remoteId}-photo`]?<img src={masks[`${remoteId}-photo`]}/>:<Icon width={15} height={15} />}
                     </div>
                     {Object.values(sessions).some((s) =>
                       s.coHosts?.includes(remoteId)
@@ -1100,7 +1100,13 @@ function FollowerPanel({ hostId, onUnfollow }) {
             justifyContent: "center",
           }}
         >
-          <Icon fill="white" width={14} height={14} />
+          {masks[`${hostId}-photo`] ? (
+            <img
+              src={masks[`${hostId}-photo`]}
+            />
+          ) : (
+            <Icon fill="white" width={14} height={14} />
+          )}
         </div>
         <div>
           <p style={{ color: "#999", fontSize: 12, marginTop: 4 }}>
@@ -1343,7 +1349,14 @@ function InviteNotification({ inviterId, onAccept, onDismiss }) {
             flexShrink: 0,
           }}
         >
-          <Icon fill="white" width={20} height={20} />
+         {masks[`${inviterId}-photo`] ? (
+            <img
+              src={masks[`${inviterId}-photo`]}
+            
+            />
+          ) : (
+            <Icon fill="white" width={20} height={20} />
+          )}
         </div>
         <div style={{ flex: 1 }}>
           <p style={{ fontSize: 14, fontWeight: 600, marginBottom: 4 }}>
@@ -1486,7 +1499,13 @@ function SessionNotification({ hostId, onJoin, onDismiss }) {
             flexShrink: 0,
           }}
         >
-          <Icon fill="white" width={20} height={20} />
+          {masks[`${hostId}-photo`] ? (
+            <img
+              src={masks[`${hostId}-photo`]}
+            />
+          ) : (
+            <Icon fill="white" width={20} height={20} />
+          )}
         </div>
         <div style={{ flex: 1 }}>
           <p style={{ fontSize: 14, fontWeight: 600, marginBottom: 4 }}>

@@ -96,6 +96,7 @@ function SettingsPanel({
                 style={{
                   width: "18px",
                   objectPosition: "center",
+                  filter: "var(--filter-mode)",
                 }}
               />
             ) : (

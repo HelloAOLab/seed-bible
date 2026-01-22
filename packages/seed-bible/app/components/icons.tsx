@@ -56,6 +56,13 @@ export function SeedBibleIcon() {
     />
   );
 }
+
+export const BurgerMenuIcon = ({ size = 24, color = "currentColor", ...props }) => (
+     <span class="material-symbols-outlined">
+menu
+</span>
+);
+
 export const GoPrivateIcon = (props) => (
   <svg
     width={24}
@@ -668,7 +675,7 @@ export const SelectionUIIcon = (props) => (
     <path d="M11 12L21 16L15 17L17 22Z" fill="black" />
   </svg>
 );
-const MenuIcon = ({ name, size = 24, invert = false }) => {
+const MenuIcon = ({ name, size = 24, invert = false, className = "" }) => {
   // Check if `name` looks like an image URL
   const isImage =
     typeof name === "string" && name.match(/\.(png|jpg|jpeg|svg|gif|webp)$/i);
@@ -686,7 +693,7 @@ const MenuIcon = ({ name, size = 24, invert = false }) => {
   };
 
   return isImage ? (
-    <img src={name} alt="icon" style={imageStyle} />
+    <img src={name} alt="icon" style={imageStyle} className={className} />
   ) : (
     <span className="material-symbols-outlined" style={iconStyle}>
       {name}

@@ -1,21 +1,45 @@
 
-const { useState } = os.appHooks
+const { useState, useMemo } = os.appHooks
 import { useBibleContext } from 'app.hooks.bibleVariables'
 function PanelSettingsDialog({ onClose }) {
-    const { panelMode, screens } = useBibleContext();
+    const { panelMode, screens, setScreens } = useBibleContext();
     const openPanelCount = screens.value || 1
-    const [selectedLayout, setSelectedLayout] = useState(0);
+    const isCurrentlyRow = screens.row || false;
 
-    const nextPanelNumber = openPanelCount + 1;
+    // Determine initial layout index based on current row state
+    const initialLayoutIndex = useMemo(() => {
+        // For 3 or 4 panels, if currently in row mode, select the row layout (index 1)
+        if ((openPanelCount === 3 || openPanelCount === 4) && isCurrentlyRow) {
+            return 1;
+        }
+        return 0;
+    }, [openPanelCount, isCurrentlyRow]);
+
+    const [selectedLayout, setSelectedLayout] = useState(initialLayoutIndex);
+
+    const nextPanelNumber = openPanelCount ;
 
     const generateLayouts = (currentPanels, nextPanel) => {
         const layouts = [];
+
+        if (nextPanel === 1) {
+            layouts.push({
+                name: 'Layout 1',
+                grid: '1fr',
+                rows: '1fr',
+                isRow: false,
+                panels: [
+                    { id: 1, isExisting: true }
+                ]
+            });
+        }
 
         if (nextPanel === 2) {
             layouts.push({
                 name: 'Layout 1',
                 grid: '1fr 1fr',
                 rows: '1fr',
+                isRow: false,
                 panels: [
                     { id: 1, isExisting: true },
                     { id: 2, isNew: true }
@@ -25,9 +49,10 @@ function PanelSettingsDialog({ onClose }) {
 
         if (nextPanel === 3) {
             layouts.push({
-                name: 'Layout 1',
+                name: '3 Panels',
                 grid: '2fr 1fr',
                 rows: '1fr 1fr',
+                isRow: false,
                 panels: [
                     { id: 1, style: { gridRow: '1 / 3' }, isExisting: true },
                     { id: 2, style: {}, isExisting: true },
@@ -36,9 +61,10 @@ function PanelSettingsDialog({ onClose }) {
             });
 
             layouts.push({
-                name: 'Layout 2',
+                name: '3 in Row',
                 grid: '1fr 1fr 1fr',
                 rows: '1fr',
+                isRow: true,
                 panels: [
                     { id: 1, isExisting: true },
                     { id: 2, isExisting: true },
@@ -49,9 +75,10 @@ function PanelSettingsDialog({ onClose }) {
 
         if (nextPanel === 4) {
             layouts.push({
-                name: 'Layout 1',
+                name: '4 Panels',
                 grid: '1fr 1fr',
                 rows: '1fr 1fr',
+                isRow: false,
                 panels: [
                     { id: 1, isExisting: true },
                     { id: 2, isExisting: true },
@@ -61,9 +88,10 @@ function PanelSettingsDialog({ onClose }) {
             });
 
             layouts.push({
-                name: 'Layout 2',
+                name: '4 in Row',
                 grid: '1fr 1fr 1fr 1fr',
                 rows: '1fr',
+                isRow: true,
                 panels: [
                     { id: 1, isExisting: true },
                     { id: 2, isExisting: true },
@@ -82,6 +110,23 @@ function PanelSettingsDialog({ onClose }) {
         .find(p => p.isNew);
     const [selectedPanel, setSelectedPanel] = useState(defaultNewPanel?.id || null);
 
+    const handleConfirm = () => {
+        const selectedLayoutData = layouts[selectedLayout];
+        if (!selectedLayoutData) return;
+
+        const panelCount = nextPanelNumber;
+
+        if (selectedLayoutData.isRow) {
+            globalThis.setCustomScreens({ value: panelCount, row: true });
+            setScreens({ value: panelCount, row: true });
+        } else {
+            globalThis.setCustomScreens({ value: panelCount });
+            setScreens({ value: panelCount });
+        }
+
+        onClose();
+    };
+
     const renderLayout = (layout, index) => {
         return (
             <div
@@ -90,7 +135,7 @@ function PanelSettingsDialog({ onClose }) {
                 style={{
                     cursor: 'pointer',
                     padding: '16px',
-                    border: selectedLayout === index ? '2px solid #d97144' : '2px solid #e5e7eb',
+                    border: selectedLayout === index ? '2px solid var(--selectedSpaceColor)' : '2px solid #e5e7eb',
                     borderRadius: '8px',
                     backgroundColor: 'white',
                     transition: 'border-color 0.2s',
@@ -102,7 +147,7 @@ function PanelSettingsDialog({ onClose }) {
                     marginBottom: '12px',
                     fontSize: '14px',
                     fontWeight: '500',
-                    color: '#333'
+                    color: 'var(--descriptionTextColor)'
                 }}>
                     {layout.name}
                 </div>
@@ -122,13 +167,13 @@ function PanelSettingsDialog({ onClose }) {
                                 setSelectedPanel(panel.id);
                             }}
                             style={{
-                                backgroundColor: selectedPanel === panel.id ? '#d97144' : '#f4c2c2',
+                                backgroundColor: selectedPanel === panel.id ? 'var(--selectedSpaceColor)' : 'color-mix(in srgb,var(--selectedSpaceColor) 50%,transparent) ',
                                 borderRadius: '4px',
                                 display: 'flex',
                                 alignItems: 'center',
                                 justifyContent: 'center',
                                 fontSize: '12px',
-                                color: selectedPanel === panel.id ? 'white' : '#d97144',
+                                color: selectedPanel === panel.id ? 'white' : 'var(--text1)',
                                 fontWeight: selectedPanel === panel.id ? '500' : 'normal',
                                 cursor: 'pointer',
                                 ...panel.style
@@ -164,7 +209,7 @@ function PanelSettingsDialog({ onClose }) {
                 <div
                     onClick={(e) => e.stopPropagation()}
                     style={{
-                        backgroundColor: 'white',
+                        backgroundColor: 'var(--pageBackground) !important',
                         borderRadius: '12px',
                         width: 'auto',
                         maxWidth: '90vw',
@@ -181,7 +226,7 @@ function PanelSettingsDialog({ onClose }) {
                         <h2 style={{
                             fontSize: '18px',
                             fontWeight: '600',
-                            color: '#333',
+                            color: 'var(--text1) !important',
                             margin: 0
                         }}>
                             New panel settings
@@ -196,7 +241,8 @@ function PanelSettingsDialog({ onClose }) {
                                 borderRadius: '4px',
                                 display: 'flex',
                                 alignItems: 'center',
-                                justifyContent: 'center'
+                                justifyContent: 'center',
+                                color:'var(--text1)'
                             }}>
                             X
                         </button>
@@ -204,7 +250,7 @@ function PanelSettingsDialog({ onClose }) {
 
                     <p style={{
                         fontSize: '14px',
-                        color: '#666',
+                        color: 'var(--descriptionTextColor) !important',
                         textAlign: 'center',
                         marginBottom: '32px',
                         lineHeight: '1.4'
@@ -242,17 +288,19 @@ function PanelSettingsDialog({ onClose }) {
                             }}>
                             Cancel
                         </button>
-                        <button style={{
-                            padding: '12px 32px',
-                            border: 'none',
-                            borderRadius: '6px',
-                            backgroundColor: '#d97144',
-                            color: 'white',
-                            fontSize: '14px',
-                            fontWeight: '500',
-                            cursor: 'pointer',
-                            transition: 'background-color 0.2s'
-                        }}>
+                        <button
+                            onClick={handleConfirm}
+                            style={{
+                                padding: '12px 32px',
+                                border: 'none',
+                                borderRadius: '6px',
+                                backgroundColor: 'var(--selectedSpaceColor)',
+                                color: 'white',
+                                fontSize: '14px',
+                                fontWeight: '500',
+                                cursor: 'pointer',
+                                transition: 'background-color 0.2s'
+                            }}>
                             Confirm
                         </button>
                     </div>

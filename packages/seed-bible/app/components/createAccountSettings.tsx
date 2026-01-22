@@ -33,6 +33,7 @@ const CreateAccountSettings = () => {
     if (data.success) {
       const payload = data.data;
       setImg(payload.photoLink);
+      setTagMask(thisBot,`${configBot.id}-photo`,payload.photoLink,'shared');
       setProfileName(payload.profileName);
       setDescription(payload.description);
     }
@@ -174,90 +175,92 @@ const CreateAccountSettings = () => {
           </button>
         </div>
       )}
-      <div
-        style={{
-          display: "flex",
-          "align-items": "center",
-          "justify-content": "center",
-          width: "100%",
-          gap: "25px",
-        }}
-      >
-        <img
-          style={{
-            "border-radius": "50%",
-            height: "50px",
-            width: "50px",
-            border: "1px solid #4459F3",
-          }}
-          src={img}
-        />
-        <button
-          onClick={() => uploadImage()}
-          style={{
-            background: "#4459F31A",
-            border: "1px solid #4459F3",
-            width: "100px",
-            height: "30px",
-            color: "#4459F3",
-          }}
-        >
-          Add picture
-        </button>
-      </div>
-      <div style={{ height: "20px" }}></div>
-      <div className="blackText">Profile name</div>
-      <div style={{ height: "10px" }}></div>
-      <input
-        style={{ height: "25px" }}
-        placeholder="e.g Craig family"
-        className="selectInput"
-        value={profileName}
-        onChange={(e) => setProfileName(e.target.value)}
-      />
-      <p style={{ "font-size": "10px", color: "#5F5E5C" }}>
-        You can change this later
-      </p>
-      <div style={{ height: "20px" }}></div>
-      <div className="blackText">
-        Description{" "}
-        <span style={{ "font-size": "10px", color: "#5F5E5C" }}>
-          (Optional)
-        </span>
-      </div>
-      <div style={{ height: "10px" }}></div>
-      <textarea
-        style={{ height: "50px" }}
-        placeholder="Enter your profile description..."
-        className="selectInput"
-        value={description}
-        onChange={(e) => setDescription(e.target.value)}
-      ></textarea>
-      <div style={{ height: "20px" }}></div>
-      <div className="blackText">
-        {isSignedIn ? "Your ID is:" : "Your ID will be:"}
-      </div>
-      <div style={{ height: "10px" }}></div>
-      <input
-        style={{ height: "25px" }}
-        value={uid}
-        className="selectInput"
-        readOnly
-      />
-      <div style={{ height: "20px" }}></div>
-      <button
-        onClick={saveProfileData}
-        style={{
-          background: "#4459F3",
-          color: "white",
-          border: "none",
-          padding: "10px 20px",
-          borderRadius: "6px",
-          cursor: "pointer",
-        }}
-      >
-        Save Profile
-      </button>
+      {isSignedIn && (
+        <>
+          <div
+            style={{
+              display: "flex",
+              "align-items": "center",
+              "justify-content": "center",
+              width: "100%",
+              gap: "25px",
+            }}
+          >
+            <img
+              style={{
+                "border-radius": "50%",
+                height: "50px",
+                width: "50px",
+                border: "1px solid #4459F3",
+              }}
+              src={img}
+            />
+            <button
+              onClick={() => uploadImage()}
+              style={{
+                background: "#4459F31A",
+                border: "1px solid #4459F3",
+                width: "100px",
+                height: "30px",
+                color: "#4459F3",
+              }}
+            >
+              Add picture
+            </button>
+          </div>
+          <div style={{ height: "20px" }}></div>
+          <div className="blackText">Profile name</div>
+          <div style={{ height: "10px" }}></div>
+          <input
+            style={{ height: "25px" }}
+            placeholder="e.g Craig family"
+            className="selectInput"
+            value={profileName}
+            onChange={(e) => setProfileName(e.target.value)}
+          />
+          <p style={{ "font-size": "10px", color: "#5F5E5C" }}>
+            You can change this later
+          </p>
+          <div style={{ height: "20px" }}></div>
+          <div className="blackText">
+            Description{" "}
+            <span style={{ "font-size": "10px", color: "#5F5E5C" }}>
+              (Optional)
+            </span>
+          </div>
+          <div style={{ height: "10px" }}></div>
+          <textarea
+            style={{ height: "50px" }}
+            placeholder="Enter your profile description..."
+            className="selectInput"
+            value={description}
+            onChange={(e) => setDescription(e.target.value)}
+          ></textarea>
+          <div style={{ height: "20px" }}></div>
+          <div className="blackText">Your ID is:</div>
+          <div style={{ height: "10px" }}></div>
+          <input
+            style={{ height: "25px" }}
+            value={uid}
+            className="selectInput"
+            readOnly
+          />
+          <div style={{ height: "20px" }}></div>
+          <button
+            onClick={saveProfileData}
+            style={{
+              background: "#4459F3",
+              color: "white",
+              border: "none",
+              padding: "10px 20px",
+              borderRadius: "6px",
+              cursor: "pointer",
+            }}
+          >
+            Save Profile
+          </button>
+        </>
+      )}
       <style>{getStyleOf("createAccountSettings.css")}</style>
     </div>
   );

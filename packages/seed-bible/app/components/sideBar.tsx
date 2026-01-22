@@ -17,6 +17,7 @@ import {
   JoinSession,
   TheNewSettingsIcon,
   GoPrivateIcon,
+  BurgerMenuIcon,
 } from "app.components.icons";
 import { useBibleContext } from "app.hooks.bibleVariables";
 import { useSideBarContext } from "app.hooks.sideBar";
@@ -118,7 +119,14 @@ const CircleCounter = ({ data, book, chapter }) => {
                 border: `1px solid ${color}`,
               }}
             >
-              <IconComponent style={{ width: "12px", height: "12px" }} />
+               {masks[`${value[0]}-photo`] ? (
+            <img
+              style={{
+                "border-radius":"50%",
+                width:'16px'
+              }}
+              src={masks[`${value[0]}-photo`]}
+            />):<IconComponent style={{ width: "12px", height: "12px" }} />}
             </div>
           );
         })}
@@ -252,7 +260,14 @@ const CircleCounter = ({ data, book, chapter }) => {
                         flexShrink: 0,
                       }}
                     >
-                      <Icon style={{ width: "18px", height: "18px" }} />
+                       {masks[`${value[0]}-photo`] ? (
+                    <img
+                      style={{
+                        "border-radius":"50%",
+                        width:'16px'
+                      }}
+              src={masks[`${value[0]}-photo`]}
+            />):<Icon style={{ width: "18px", height: "18px" }} />}
                     </div>
                     <div style={{ flex: 1 }}>
                       <div
@@ -343,9 +358,9 @@ function Tab({
   const { openPopupSettings, closePopupSettings, userURL, t } =
     useSideBarContext();
   const { setCanvasMode, setMapMode } = useBibleContext();
-  // useEffect(() => {
-  //   // console.log(onlineUsers, "onlineUsers var");
-  // }, [onlineUsers]);
+  useEffect(() => {
+    console.log(onlineUsers, "onlineUsers var");
+  }, [onlineUsers]);
   const {
     removeTab,
     multiSelectMode,
@@ -538,11 +553,14 @@ function Tab({
   const circles = onlineUsers
     ? Object.fromEntries(
         Object.entries(onlineUsers).filter(
-          ([, v]) =>
-            v?.bookId === el?.data?.bookId && v?.chapter === el?.data?.chapter
+          ([k, v]) => {
+            // console.log('Filtering user:', k, 'v:', v, 'el.data:', el?.data);
+            return v?.bookId === el?.data?.bookId && v?.chapter === el?.data?.chapter;
+          }
         )
       )
     : {};
+  // console.log('circles result:', circles, 'for tab:', el?.data?.book, el?.data?.chapter);
   const notJoinedSharedTab = sharedTab && activeTab !== el.id;
   const info =
     el.sharedTab && globalThis?.GetOrSetVisualInTags(tags.hostIdForOnlineTab);
@@ -777,7 +795,9 @@ function SideBar({ panelsNumber }) {
   globalThis.AddTab = addTab;
   const { screens, setScreens, fullScreen, setFullScreen, ReSeed, setReSeed } =
     useBibleContext();
+    // globalThis.setScreens = setScreens
   const [customScreens, setCustomScreens] = useState({ value: 1 });
+  globalThis.setCustomScreens =setCustomScreens 
   const [onlineUsers, setOnlineUsers] = useState(false);
   globalThis.SetOnlineUsers = setOnlineUsers;
   const [showSearch, setShowSearch] = useState(false); // New state for search visibility
@@ -854,11 +874,18 @@ function SideBar({ panelsNumber }) {
   const sidebarRef = useRef();
 
   const handleMouseDown = (e) => {
+    // Disable resize on mobile to prevent sticking issues
+    if (isMobile) return;
     isResizing.current = true;
   };
 
   const handleMouseMove = (e) => {
     if (!isResizing.current) return;
+    // Disable resize on mobile to prevent sticking issues
+    if (isMobile) {
+      isResizing.current = false;
+      return;
+    }
     const newWidth = Math.max(40, Math.min(e.clientX, 300));
     if (newWidth <= 140) {
       setCollapsed(true);
@@ -867,6 +894,7 @@ function SideBar({ panelsNumber }) {
     }
     if (newWidth < 55) {
       setSidebarWidth(0);
+      isResizing.current = false;
       return;
     }
     setSidebarWidth(newWidth);
@@ -879,25 +907,42 @@ function SideBar({ panelsNumber }) {
   };
 
   useEffect(() => {
-    window.addEventListener("mousemove", handleMouseMove);
-    window.addEventListener("mouseup", handleMouseUp);
+    const handleMove = (e: MouseEvent | TouchEvent) => handleMouseMove(e);
+    const handleUp = () => handleMouseUp();
+
+    window.addEventListener("mousemove", handleMove as EventListener);
+    window.addEventListener("mouseup", handleUp);
+    window.addEventListener("touchmove", handleMove as EventListener);
+    window.addEventListener("touchend", handleUp);
+
     return () => {
-      window.removeEventListener("mousemove", handleMouseMove);
-      window.removeEventListener("mouseup", handleMouseUp);
+      window.removeEventListener("mousemove", handleMove as EventListener);
+      window.removeEventListener("mouseup", handleUp);
+      window.removeEventListener("touchmove", handleMove as EventListener);
+      window.removeEventListener("touchend", handleUp);
     };
-  }, []);
+  }, [isMobile, collapsed]);
 
   useEffect(() => {
     const handleResize = () => {
       const check = window.innerWidth < 768;
       setIsMobile(check);
-      if (!check) {
-        setSidebarWidth(280);
+      if (check) {
+        // On mobile, reset to closed state when switching from desktop
+        if (sidebarWidth > 0 && sidebarWidth !== 300) {
+          setSidebarWidth(0);
+        }
+      } else {
+        // On desktop, ensure sidebar is visible
+        if (sidebarWidth === 0 || sidebarWidth === 300) {
+          setSidebarWidth(280);
+          setCollapsed(false);
+        }
       }
     };
     window.addEventListener("resize", handleResize);
     return () => window.removeEventListener("resize", handleResize);
-  }, []);
+  }, [sidebarWidth]);
 
   function handleMouseEnter() {
     if (!isDragging) return;
@@ -1228,9 +1273,10 @@ function SideBar({ panelsNumber }) {
             left: "10px",
             top: "20px",
             zIndex: 99999,
+            cursor: "pointer",
           }}
         >
-          <span className="material-symbols-outlined">menu</span>
+          <BurgerMenuIcon size={24} color="var(--text1)" />
         </div>
       )}
       {
@@ -1246,9 +1292,10 @@ function SideBar({ panelsNumber }) {
             left: "10px",
             top: "40px",
             zIndex: 99999,
+            cursor: "pointer",
           }}
         >
-          <span className="material-symbols-outlined">menu</span>
+          <BurgerMenuIcon size={24} color="var(--text1)" />
         </div>
       )} */
       }
@@ -1586,15 +1633,15 @@ function SideBar({ panelsNumber }) {
               cursor: "pointer",
             }}
           >
-            <span
-              onclick={() => {
+            <div
+              onClick={() => {
                 setSidebarWidth(280);
                 setCollapsed(false);
               }}
-              class="material-symbols-outlined"
+              style={{ cursor: "pointer" }}
             >
-              menu
-            </span>
+              <BurgerMenuIcon size={24} color="var(--text1)" />
+            </div>
             {!configBot.tags.staticInst && <UserPresence collapsed={true} />}
             <div
               style={{
@@ -1880,6 +1927,7 @@ export const UserProfile = ({ collapsed }) => {
     if (data.success) {
       const payload = data.data;
       setUserData(payload);
+         setTagMask(thisBot,`${configBot.id}-photo`,payload?.photoLink,'shared');
       globalThis.SetGlobalProfilePic(payload?.photoLink);
     }
   };
@@ -1897,7 +1945,7 @@ export const UserProfile = ({ collapsed }) => {
     "#10B981",
     "#F59E0B",
   ];
-  const { colorIndex, iconIndex } = GetOrSetVisualInTags(configBot.id);
+  const { colorIndex, iconIndex } = GetOrSetVisualInTags(configBot.id,userData);
   const Icon = icons[iconIndex];
   return (
     <div

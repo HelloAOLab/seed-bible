@@ -65,7 +65,23 @@ export function VerseToolbar({
 
   useEffect(() => {
     const handleClickOutside = (event) => {
-      if (isPickingColor) {
+      if (isPickingColor && colorPickerRef.current && !colorPickerRef.current.contains(event.target)) {
+        // Add color to customColors array, max 3
+        setCustomColors((prev) => {
+          // Check if color already exists
+          if (prev.includes(tempColor)) {
+            return prev;
+          }
+
+          // If less than 3, add it at the beginning
+          if (prev.length < 3) {
+            return [tempColor, ...prev];
+          }
+
+          // If 3 or more, remove last and add new one at the beginning
+          return [tempColor, ...prev.slice(0, -1)];
+        });
+
         handleColorClick(tempColor);
         setSelectedColor(tempColor);
         setIsPickingColor(false);
@@ -76,7 +92,7 @@ export function VerseToolbar({
     return () => {
       document.removeEventListener("mousedown", handleClickOutside);
     };
-  }, [isPickingColor, tempColor, customColors]);
+  }, [isPickingColor, tempColor]);
 
   const getVerseReference = () => {
     if (clickedVerses.length === 0) return "";
@@ -165,7 +181,7 @@ export function VerseToolbar({
   });
 
   const plusButtonStyle = {
-    width: "32px",
+    width: "44px",
     height: "32px",
     borderRadius: "50%",
     backgroundColor: "#fff",
@@ -235,7 +251,10 @@ export function VerseToolbar({
 
   const defaultColors = [color, "#FDE047"];
 
-  const allHighlighted = clickedVerses.some((num) => highlighted[num]);
+  const allHighlighted = clickedVerses.some((num) => {
+    const key = `${book}-${chapter}-${num}`;
+    return highlighted[key];
+  });
 
   const handleColorClick = (color) => {
     onColorSelect(color);
@@ -251,10 +270,22 @@ export function VerseToolbar({
   };
 
   const handleClearAll = () => {
-    Object.keys(highlighted).forEach((key) => {
-      toggleVerseHighlight(Number(key));
-      setClickedVerses([]);
+    // Extract verse numbers from composite keys (e.g., "Genesis-1-3" -> 3)
+    const verseNumbers = Object.keys(highlighted).map((key) => {
+      const parts = key.split('-');
+      return Number(parts[parts.length - 1]);
+    }).filter(num => !isNaN(num));
+
+    // Clear all highlights
+    verseNumbers.forEach((verseNum) => {
+      if (globalThis.UnHighlightVerse) {
+        globalThis.UnHighlightVerse(verseNum);
+      }
     });
+
+    // Close toolbar
+    setClickedVerses([]);
+    onClose();
   };
 
   const handlePlusClick = () => {
@@ -266,22 +297,6 @@ export function VerseToolbar({
   const handleColorChange = (e) => {
     const newColor = e.target.value;
     setTempColor(newColor);
-
-    // Add color to customColors array, max 3
-    setCustomColors((prev) => {
-      // Check if color already exists
-      if (prev.includes(newColor)) {
-        return prev;
-      }
-
-      // If less than 3, just add it
-      if (prev.length < 3) {
-        return [...prev, newColor];
-      }
-
-      // If 3 or more, remove first and add new one at the end
-      return [...prev.slice(1), newColor];
-    });
   };
 
   const menuOptions = useMemo(() => {
@@ -300,10 +315,10 @@ export function VerseToolbar({
         `}</style>
       {globalThis.IsMobileNow() && selectionSettings.showSelectedItems && (
         <>
-          <div className="verse-ref">
+          {null/*<div className="verse-ref">
             <img src="https://res.cloudinary.com/dfbtwwa8p/image/upload/v1764875876/Rectangle_11_yzpmpm.svg" />
-          </div>
-          <span className="verse-ref" style={verseRefStyle}>
+          </div>*/}
+          <span className="verse-ref" style={{...verseRefStyle,padding:'1px 16px'}}>
             {getVerseReference()}
           </span>
         </>
@@ -472,7 +487,50 @@ export function VerseToolbar({
                 </>
               ) : (
                 <>
-                  {defaultColors.map((color) => (
+                  {isPickingColor && (
+                    <>
+                      <button
+                        key="cancel-color"
+                        className="color-circle"
+                        style={{
+                          ...circleButtonStyle("#fff"),
+                          border: "2px solid #999",
+                          display: "flex",
+                          alignItems: "center",
+                          justifyContent: "center",
+                          fontSize: "16px",
+                          lineHeight: 1,
+                          color: "#666",
+                        }}
+                        onClick={(e) => {
+                          e.stopPropagation();
+                          setIsPickingColor(false);
+                          setTempColor(selectedColor);
+                        }}
+                        onMouseEnter={(e) =>
+                          (e.currentTarget.style.transform = "scale(1.1)")
+                        }
+                        onMouseLeave={(e) =>
+                          (e.currentTarget.style.transform = "scale(1)")
+                        }
+                        aria-label="Cancel color selection"
+                      >
+                        ✕
+                      </button>
+                      <button
+                        key="temp-preview"
+                        className="color-circle"
+                        style={{
+                          ...circleButtonStyle(tempColor),
+                          border: "3px solid #666",
+                          boxShadow: "0 0 8px rgba(0,0,0,0.3)"
+                        }}
+                        aria-label={`Preview color ${tempColor}`}
+                      />
+                    </>
+                  )}
+
+                  {customColors.map((color) => (
                     <button
                       key={color}
                       className="color-circle"
@@ -488,7 +546,7 @@ export function VerseToolbar({
                     />
                   ))}
 
-                  {customColors.map((color) => (
+                  {defaultColors.map((color) => (
                     <button
                       key={color}
                       className="color-circle"
@@ -518,7 +576,7 @@ export function VerseToolbar({
                       aria-label="Add color"
                     >
                       <img
-                        style={{ width: "38px", "-webkit-user-drag": "none" }}
+                        style={{ width: "44px", "-webkit-user-drag": "none" }}
                         src={
                           "https://res.cloudinary.com/dfbtwwa8p/image/upload/v1761753902/329cd5727522c1b0f09580e4c7b13964cb2b1a87_fvmcdy.png"
                         }

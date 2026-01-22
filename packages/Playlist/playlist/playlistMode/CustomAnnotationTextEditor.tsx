@@ -678,10 +678,11 @@ export function CustomAnnotationTextEditor({
     if (!editorRef.current) return;
 
     const contentHTML = (() => {
-      if (typeof initialHTML === "string") return fakeEscapeMediaTags(initialHTML, showPreview);
+      canonicalHTMLRef.current = initialHTML;
+      if (typeof initialHTML === "string") return fakeEscapeMediaTags(uncolorizeHashtags(initialHTML), showPreview);
       if (typeof initialText === "string")
         return `<p>${escapeHTML(initialText)}</p>`;
-      return fakeEscapeMediaTags(placeholderHTML, showPreview);
+      return fakeEscapeMediaTags(uncolorizeHashtags(placeholderHTML), showPreview);
     })();
 
     const editor = new Editor({
@@ -1948,6 +1949,10 @@ const SRE_STYLES = (minH) => `
   border: 1px solid #e6e6e6;
   border-top: none;
   border-radius: 0 0 8px 8px;
+}
+
+.sre-editor * {
+  color: initial !important;
 }
   .sre-loading-spinner {
     width: 20px;

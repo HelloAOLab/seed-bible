@@ -197,13 +197,14 @@ function SharePopup({
           </div>
 
           {/* Toggle Options */}
-          <div style={{ display: "flex", gap: 16, marginBottom: 20 }}>
+          <div style={{ display: "flex", gap: 16, marginBottom: 20, flexWrap: "nowrap" }}>
             <label
               style={{
                 display: "flex",
                 alignItems: "center",
                 gap: 8,
                 cursor: "pointer",
+                flex: "0 0 auto",
               }}
             >
               <input
@@ -211,13 +212,14 @@ function SharePopup({
                 name="shareOption"
                 checked={includeReference}
                 onChange={() => setIncludeReference(true)}
-                style={{ accentColor: "#4A90D9", width: 16, height: 16 }}
+                style={{ accentColor: "#4A90D9", width: 16, height: 16, flexShrink: 0 }}
               />
               <span
                 style={{
                   fontSize: 14,
                   color: "#4A90D9",
                   fontWeight: includeReference ? 500 : 400,
+                  whiteSpace: "nowrap",
                 }}
               >
                 Verse text with reference
@@ -229,6 +231,7 @@ function SharePopup({
                 alignItems: "center",
                 gap: 8,
                 cursor: "pointer",
+                flex: "0 0 auto",
               }}
             >
               <input
@@ -236,16 +239,17 @@ function SharePopup({
                 name="shareOption"
                 checked={!includeReference}
                 onChange={() => setIncludeReference(false)}
-                style={{ accentColor: "#666", width: 16, height: 16 }}
+                style={{ accentColor: "#666", width: 16, height: 16, flexShrink: 0 }}
               />
               <span
                 style={{
                   fontSize: 14,
                   color: "#666",
                   fontWeight: includeReference ? 400 : 500,
+                  whiteSpace: "nowrap",
                 }}
               >
-                Only verse text
+                Verse text only
               </span>
             </label>
           </div>

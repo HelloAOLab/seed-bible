@@ -33,7 +33,7 @@ const ADVANCED_SETTINGS_SECTIONS = {
     labelKey: "containerBackgrounds",
     fields: [
       { labelKey: "panelBackground", field: "panelBackground" },
-      { labelKey: "panelBackground", field: "panelBackground" },
+      { labelKey: "pageBackground", field: "pageBackground" },
     ],
   },
   tab: {
@@ -109,6 +109,7 @@ const ADVANCED_SETTINGS_SECTIONS = {
 // Based on the design mockup with orange accent colors
 const defaultTheme = {
   // Main colors
+  firstToolbarbutton:'#dfdede',
   primaryColor: "#E07B4C",
   secondaryColor: "#D2691E",
   tertiaryColor: "#CD853F",
@@ -137,7 +138,7 @@ const defaultTheme = {
   // Scripture text
   bookHeadingColor: "#333333",
   chapterHeadingColor: "#333333",
-  verseNumberColor: "#E07B4C",
+  verseNumberColor: "#000000",
   verseTextColor: "#333333",
   pageBackground: "#FFFFFF",
   pageTextColor: "#333333",
@@ -215,7 +216,10 @@ const defaultTheme = {
   onBackground: "#333333",
   surface: "#FAFAFA",
   onSurface: "#333333",
+  "filter-mode": "invert(0)",
   text3: "#333333",
+
+  "secondary-filter-mode": "invert(100%)",
 };
 
 // ————————————————————————————————————————————————————————————
@@ -229,6 +233,9 @@ const READY_THEMES = [
   {
     name: "Dark Mode",
     colors: {
+  firstToolbarbutton:'#5C5C5C',
+
+
       // Main colors
       primaryColor: "#5A67D8",
       secondaryColor: "#A78BFA",
@@ -236,6 +243,7 @@ const READY_THEMES = [
       // Container backgrounds
       themeSideMenu: "#2D2D2D",
       panelBackground: "#1A1A1A",
+      
       // Tab
       tabSelection: "#5A67D8",
       activeTabBackground: "#404040",
@@ -258,7 +266,7 @@ const READY_THEMES = [
       // Scripture text
       bookHeadingColor: "#FFFFFF",
       chapterHeadingColor: "#FFFFFF",
-      verseNumberColor: "#5A67D8",
+      verseNumberColor: "#FFFFFF",
       verseTextColor: "#FFFFFF",
       pageBackground: "#121212",
       pageTextColor: "#FFFFFF",
@@ -294,6 +302,7 @@ const READY_THEMES = [
       toolbarBackground: "#1A1A1A",
       iconColor: "#FFFFFF",
       "filter-mode": "invert(100%)",
+      "secondary-filter-mode": "invert(0%)",
       // Input fields
       inputTitleColor: "#FFFFFF",
       inputPlaceholderColor: "#AAAAAA",
@@ -343,6 +352,8 @@ const READY_THEMES = [
   {
     name: "Purple Serenity",
     colors: {
+      firstToolbarbutton:'#dfdede',
+      "filter-mode": "invert(0)",
       // Main colors
       primaryColor: "#7C3AED",
       secondaryColor: "#A78BFA",
@@ -456,6 +467,8 @@ const READY_THEMES = [
   {
     name: "Green Nature",
     colors: {
+      firstToolbarbutton:'#dfdede',
+      "filter-mode": "invert(0)",
       // Main colors
       primaryColor: "#059669",
       secondaryColor: "#10B981",
@@ -569,6 +582,8 @@ const READY_THEMES = [
   {
     name: "Ocean Blue",
     colors: {
+      firstToolbarbutton:'#dfdede',
+      "filter-mode": "invert(0)",
       // Main colors
       primaryColor: "#0284C7",
       secondaryColor: "#0EA5E9",
@@ -682,6 +697,8 @@ const READY_THEMES = [
   {
     name: "Warm Amber",
     colors: {
+      firstToolbarbutton:'#dfdede',
+      "filter-mode": "invert(0)",
       // Main colors
       primaryColor: "#D97706",
       secondaryColor: "#F59E0B",
@@ -4346,7 +4363,57 @@ const ThemeSettings = () => {
   };
 
   const applyMainColors = () => {
-    os.toast("Main colors applied");
+    const primary = colors.primaryColor || "#FFFFFF";
+    const secondary = colors.secondaryColor || "#D36433";
+    const tertiary = colors.tertiaryColor || "#F98564";
+
+    // Create updated colors object with cascaded values
+    const updatedColors = {
+      ...colors,
+      // Primary color (Solid) - backgrounds and surfaces
+      panelBackground: primary,
+      toolbarBackground: primary,
+      pageBackground: primary,
+      themeSideMenu: primary,
+      background: primary,
+      surface: primary,
+      inputBackground: primary,
+      toolbarFill: primary,
+      selectionUIFill: primary,
+      inputActiveFill: primary,
+      inputInactiveFill: primary,
+
+      // Secondary color (Solid) - buttons, borders, accents, selected states
+      primaryButton: secondary,
+      primaryButtonBorder: secondary,
+      primaryButtonFill: secondary,
+      secondaryButton: secondary,
+      secondaryButtonBorder: secondary,
+      secondaryButtonFill: secondary,
+      verseNumberColor: secondary,
+      addButtonBackground: secondary,
+      activeSpaceIndicator: secondary,
+      profileAvatar: secondary,
+      accentColor: secondary,
+      spaceSelection: secondary,
+      selectedSpaceColor: secondary,
+      sectionBackground: secondary,
+      activeTabBorder: secondary,
+      activeTabText: secondary,
+      inputActiveBorder: secondary,
+      buttonBorder: secondary,
+
+      // Tertiary color (Honey) - tab backgrounds, tool selections, tints
+      activeTabBackground: tertiary,
+      activeTabFill: tertiary,
+      tabSelection: tertiary,
+    };
+
+    setColorsMap((prev: any) => ({ ...prev, [activeSpace]: updatedColors }));
+    setThemeColors((prev: any) => ({ ...prev, [activeSpace]: updatedColors }));
+    updateSpace(activeSpace, { themeColors: updatedColors });
+
+    os.toast("Main colors applied to all elements");
   };
 
   const toggleSection = (sectionKey) => {
