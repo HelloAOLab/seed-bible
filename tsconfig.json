@@ -3385,8 +3385,12 @@
       "aiApps.painterStorage.onBotChanged": [
         "./packages/seed-bible/aiApps/painterStorage/onBotChanged.tsx"
       ],
-      "app.bridge.casualOSHookProvider": [
-        "./packages/seed-bible/app/bridge/casualOSHookProvider.tsx"
+      "app.bridge.adapters.casualOSHookProvider": [
+        "./packages/seed-bible/app/bridge/adapters/casualOSHookProvider.tsx"
+      ],
+      "app.bridge.bridge": ["./packages/seed-bible/app/bridge/bridge.tsx"],
+      "app.bridge.hookProvider": [
+        "./packages/seed-bible/app/bridge/hookProvider.tsx"
       ],
       "app.components.Chips": [
         "./packages/seed-bible/app/components/Chips.tsx"
@@ -3535,6 +3539,12 @@
       "app.components.verseToolbar": [
         "./packages/seed-bible/app/components/verseToolbar.tsx"
       ],
+      "app.contract.environment": [
+        "./packages/seed-bible/app/contract/environment.tsx"
+      ],
+      "app.contract.factory": [
+        "./packages/seed-bible/app/contract/factory.tsx"
+      ],
       "app.contract.hooks": ["./packages/seed-bible/app/contract/hooks.tsx"],
       "app.contract.provider": [
         "./packages/seed-bible/app/contract/provider.tsx"
@@ -3610,6 +3620,7 @@
       "app.main.rootContext": [
         "./packages/seed-bible/app/main/rootContext.tsx"
       ],
+      "app.main.tempFluff": ["./packages/seed-bible/app/main/tempFluff.tsx"],
       "app.packager.InstallNamedPackage": [
         "./packages/seed-bible/app/packager/InstallNamedPackage.tsx"
       ],
@@ -3695,7 +3706,9 @@
         "./packages/seed-bible/app/sn_styles/styler.tsx"
       ],
       "app.styles.styler": ["./packages/seed-bible/app/styles/styler.tsx"],
-      "app.util.validator": ["./packages/seed-bible/app/util/validator.tsx"],
+      "app.util.validations": [
+        "./packages/seed-bible/app/util/validations.tsx"
+      ],
       "baseElements.formMenu.bookData": [
         "./packages/seed-bible/baseElements/formMenu/bookData.tsx"
       ],

@@ -1,6 +1,5 @@
-await os.unregisterApp("main");
-os.registerApp("main", thisBot);
-const { useEffect, useState, useRef, render, useMemo } = os.appHooks;
+import { hookProvider } from "app.bridge.bridge";
+const { useEffect, useState, useRef, render, useMemo } = hookProvider;
 
 import { BibleVariablesProvider } from "app.hooks.bibleVariables";
 import { TabsProvider } from "app.hooks.tabs";
@@ -27,6 +26,7 @@ globalThis.OpenPrevChapter = () => {};
 globalThis.SpaceLayouts = {}; // To store layout per space
 globalThis.SpaceScreens = {}; // Already used for screen count
 globalThis.CheckToolbarOverflow = () => {};
+
 const Main = () => {
   if (configBot.tags.extensions) return <PackageManager />;
   const { screens, fullScreen, setFullScreen } = useBibleContext();
@@ -75,33 +75,6 @@ const Main = () => {
   }, []);
   useEffect(() => {
     // Load styles
-
-    // Load scripts sequentially
-    const scripts = [
-      "https://cdn.jsdelivr.net/npm/@fullcalendar/core@6.1.17/index.global.min.js",
-      "https://cdn.jsdelivr.net/npm/@fullcalendar/daygrid@6.1.17/index.global.min.js",
-      "https://cdn.jsdelivr.net/npm/@fullcalendar/timegrid@6.1.17/index.global.min.js",
-      "https://cdn.jsdelivr.net/npm/@fullcalendar/interaction@6.1.17/index.global.min.js",
-      "https://cdn.jsdelivr.net/npm/@fullcalendar/resource-timegrid@6.1.17/index.global.min.js",
-      "https://cdn.jsdelivr.net/npm/@fullcalendar/icalendar@6.1.17/index.global.min.js",
-      "https://cdnjs.cloudflare.com/ajax/libs/ical.js/1.4.0/ical.min.js",
-      "https://cdn.jsdelivr.net/npm/fullcalendar-scheduler@6.1.18/index.global.min.js",
-      "https://cdn.jsdelivr.net/npm/flatpickr",
-    ];
-
-    function loadScriptsSequentially(index = 0, callback) {
-      if (index >= scripts.length) return callback();
-
-      const script = document.createElement("script");
-      script.src = scripts[index];
-      script.onload = () => loadScriptsSequentially(index + 1, callback);
-      script.onerror = () => console.error("Failed to load", scripts[index]);
-      document.body.appendChild(script);
-    }
-
-    loadScriptsSequentially(0, () => {
-      console.log("FullCalendar scripts loaded");
-    });
   }, []);
   useEffect(() => {
     if (!started) return;
