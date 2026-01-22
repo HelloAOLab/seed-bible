@@ -3,7 +3,7 @@
     display: grid;
     height: 3rem;
     place-items: center;
-    background-color: #D36433;
+    background-color: var(--primaryColor);
     border-radius: 0.5rem;
     margin: 0;
     font-size: 24px;
@@ -22,7 +22,7 @@
     width: 90%;
     height: 50px;
     margin: 0.5rem 0;
-    background-color: #e0e0e0;
+    background-color: var(--panelBackground);
     padding: 8px;
     /* Light gray background */
     position: relative;
@@ -149,7 +149,7 @@
 }
 
 .icon:hover {
-    color: #ff4081;
+    color: var(--primaryColor);
 }
 
 .label-video {

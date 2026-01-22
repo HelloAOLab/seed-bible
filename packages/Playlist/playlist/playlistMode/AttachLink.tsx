@@ -248,7 +248,7 @@ function SubComponent({
               }}
               className={`${recordingType === "audio" ? "active" : ""}`}
             >
-              <span class="material-symbols-outlined">mic</span>
+              <span class={`material-symbols-outlined ${recordingType !== "audio" &&  "img-icon"}`}>mic</span>
               <p>Audio</p>
             </div>
             <div
@@ -263,7 +263,7 @@ function SubComponent({
               }}
               className={`${recordingType === "video" ? "active" : ""}`}
             >
-              <span class="material-symbols-outlined">videocam</span>
+              <span class={`material-symbols-outlined ${recordingType !== "video" &&  "img-icon"}`}>videocam</span>
               <p>{t('video')}</p>
             </div>
           </div>
