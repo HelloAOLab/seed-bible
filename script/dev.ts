@@ -15,6 +15,7 @@ import {
   loadSeedBible,
   DEFAULT_EXTENSIONS,
   loadAoBot,
+  initPage,
 } from "./lib/browser.js";
 import { rmdir, writeFile } from "node:fs/promises";
 import path from "node:path";
@@ -27,9 +28,10 @@ import type {
   StoredAux,
   StoredAuxVersion1,
 } from "@casual-simulation/aux-common";
+import prompts from "prompts";
 
 const extraExtensions = process.argv.slice(2).filter((a) => !a.startsWith("-"));
-const collaborative = procHasFlag(KnownFlags.Collaborative);
+const defaultCollaborative = procHasFlag(KnownFlags.Collaborative);
 const aoBot = procHasFlag(KnownFlags.AoBot);
 const startWithDevtools = procHasFlag(KnownFlags.DevTools);
 
@@ -39,63 +41,52 @@ const browser = await puppeteer.launch({
   devtools: startWithDevtools,
 });
 
-let page: Page;
-const extraPages: Page[] = [];
-let currentInst: string | undefined;
+let lastInst: string;
 
-async function startPage() {
-  page = await browser.newPage();
-
-  // if (server && !server.context.page) {
-  //   server.context.page = page;
-  // }
+async function loadPage(
+  page: Page | null | undefined,
+  inst?: string,
+  collaborative = defaultCollaborative
+) {
+  if (!page) {
+    page = await browser.newPage();
+  }
 
   if (aoBot) {
     await Promise.all(["ao.bot"].map((pkg) => packageSingle(pkg, "ignore")));
-    currentInst = await loadAoBot(page);
+    await loadAoBot(page, inst);
   } else {
-    const allPackages = [
-      ...new Set([...DEFAULT_EXTENSIONS, ...extraExtensions]),
-    ];
-
-    await Promise.all(allPackages.map((pkg) => packageSingle(pkg, "ignore")));
-    currentInst = await loadSeedBible(
-      page,
-      extraExtensions,
-      undefined,
-      collaborative
-    );
-
-    const newTabPromises: Promise<void>[] = [];
-
-    for (let i = 0; i < extraPages.length; i++) {
-      const p = extraPages[i];
-
-      if (!p) {
-        continue;
-      }
-
-      newTabPromises.push(
-        p
-          .close()
-          .then(() => browser.newPage())
-          .then(async (p) => {
-            extraPages[i] = p;
-            await loadInst(p, currentInst!, collaborative);
-          })
-      );
-    }
-
-    await Promise.all(newTabPromises);
+    await uploadPackagesToPage(page, inst, collaborative);
   }
 }
 
-await startPage();
+async function uploadPackagesToPage(
+  page: Page,
+  inst?: string,
+  collaborative = defaultCollaborative
+) {
+  const allPackages = [...new Set([...DEFAULT_EXTENSIONS, ...extraExtensions])];
+
+  await Promise.all(allPackages.map((pkg) => packageSingle(pkg, "ignore")));
+  lastInst = await loadSeedBible(page, extraExtensions, inst, collaborative);
+
+  const newTabPromises: Promise<void>[] = [];
+
+  await Promise.all(newTabPromises);
+}
+
+const initialPages = await browser.pages();
+const firstPage = initialPages[0];
+await loadPage(firstPage);
 
 process.on("exit", async () => {
   if (browser.connected) {
     await browser.close();
   }
+});
+
+process.on("SIGINT", () => {
+  process.exit(0);
 });
 
 browser.on("disconnected", () => {
@@ -112,11 +103,32 @@ server.context.loadInst = loadInst;
 server.context.readPackage = readPackage;
 server.context.listPackages = listPackages;
 
+async function selectPage(): Promise<Page> {
+  const pages = await browser.pages();
+
+  if (pages.length === 1) {
+    return pages[0]!;
+  }
+
+  const response = await prompts({
+    type: "select",
+    name: "page",
+    message: "Select a page:",
+    choices: pages.map((p, i) => ({
+      title: `Page ${i + 1} - ${p.url()}`,
+      value: p,
+    })),
+  });
+
+  return response.page;
+}
+
 server.defineCommand("system", {
   help: "Open the system portal",
   action: async (name) => {
     server.clearBufferedCommand();
 
+    const page = await selectPage();
     const sim = await getPrimarySim(page);
     try {
       await sim.evaluate(async (s, name) => {
@@ -137,25 +149,54 @@ server.defineCommand("system", {
 server.defineCommand("newTab", {
   help: "Open a new tab",
   action: async (inst: string | undefined | null) => {
-    server.clearBufferedCommand();
-
     if (!inst) {
-      inst = currentInst!;
+      inst = await new Promise<string | undefined>((resolve) => {
+        server.question(
+          `Instance ID (leave blank for last used): `,
+          (answer) => {
+            resolve(answer || undefined);
+          }
+        );
+      });
     }
 
-    const newPage = await browser.newPage();
-    extraPages.push(newPage);
-    await loadInst(newPage, inst, collaborative);
+    if (!inst) {
+      inst = lastInst!;
+    }
 
-    server.displayPrompt();
+    const isCollaborative = await new Promise<boolean>((resolve) => {
+      server.question(
+        `Load in collaborative mode? (y/n, default n): `,
+        (answer) => {
+          resolve(answer.toLowerCase().startsWith("y"));
+        }
+      );
+    });
+
+    const uploadPackages = await new Promise<boolean>((resolve) => {
+      server.question(
+        `Upload packages to the new tab? (y/n, default y): `,
+        (answer) => {
+          resolve(answer.toLowerCase().startsWith("n") ? false : true);
+        }
+      );
+    });
+
+    // server.
+    const newPage = await browser.newPage();
+    if (uploadPackages) {
+      await uploadPackagesToPage(newPage, inst, isCollaborative);
+    } else {
+      await initPage(newPage);
+      await loadInst(newPage, inst, isCollaborative);
+    }
   },
 });
 
 server.defineCommand("save", {
   help: "Save the current state back to the repository",
   action: async (packageName: string) => {
-    server.clearBufferedCommand();
-
+    const page = await selectPage();
     const sim = await getPrimarySim(page);
     try {
       const state = cleanupAux(
@@ -282,11 +323,18 @@ server.defineCommand("save", {
 server.defineCommand("reload", {
   help: "Reload the page with changes from disk",
   action: async () => {
-    if (page) {
-      await page.close();
-    }
-    await startPage();
-    server.displayPrompt();
+    const page = await selectPage();
+    await loadPage(page);
+  },
+});
+
+server.defineCommand("upload", {
+  help: "Upload all the packages to the current tab",
+  action: async () => {
+    const page = await selectPage();
+
+    // find visible page
+    console.log("target: ", page.url());
   },
 });
 
@@ -316,6 +364,7 @@ server.defineCommand("download", {
   action: async () => {
     server.clearBufferedCommand();
 
+    const page = await selectPage();
     await shout(page, "onChat", null, {
       message: ".download",
     });
@@ -328,7 +377,7 @@ server.defineCommand("chat", {
   help: "Send a chat message",
   action: async (message: string) => {
     server.clearBufferedCommand();
-
+    const page = await selectPage();
     await shout(page, "onChat", null, {
       message,
     });
@@ -341,7 +390,7 @@ Object.defineProperty(server.context, "run", {
   configurable: false,
   writable: false,
   enumerable: false,
-  value: (script: string) => {
+  value: (page: Page, script: string) => {
     server.clearBufferedCommand();
     const result = execScript(page, script);
     server.displayPrompt();
@@ -353,7 +402,7 @@ Object.defineProperty(server.context, "shout", {
   configurable: false,
   writable: false,
   enumerable: false,
-  value: (name: string, arg: unknown) => {
+  value: (page: Page, name: string, arg: unknown) => {
     server.clearBufferedCommand();
     const result = shout(page, name, undefined, arg);
     server.displayPrompt();

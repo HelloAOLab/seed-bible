@@ -285,7 +285,7 @@ await (async function mainInstaller(that) {
           const check = getBot("system", bot.tags.system);
           if (!check)
             create(bot, {
-              space: "local",
+              space: tags.installSpace ?? "local",
               forPackage: NameHolder,
               packageName: depName,
             });
@@ -329,7 +329,7 @@ await (async function mainInstaller(that) {
   }
 
   os.log("installing package", name, data);
-  setTagMask(thisBot, `${name}-data`, data, "local");
+  setTagMask(thisBot, `${name}-data`, data, tags.installSpace ?? "local");
 
   // Load record/source
   const read = await web.get(data.recordFile?.url || data.source);
@@ -338,7 +338,7 @@ await (async function mainInstaller(that) {
   // Push secondary bots first (await if async)
   for (let i = 1; i < bots.length; i++) {
     const b = create(bots[i], {
-      space: "local",
+      space: tags.installSpace ?? "local",
       forPackage: NameHolder,
       packageName: name,
     });
@@ -347,7 +347,7 @@ await (async function mainInstaller(that) {
 
   // Push the primary (first) bot
   const bot = create(bots[0], {
-    space: "local",
+    space: tags.installSpace ?? "local",
     forPackage: NameHolder,
     packageName: name,
   });
@@ -402,13 +402,18 @@ await (async function mainInstaller(that) {
 
   // Ensure installedPackages tag is updated (FIX: use masks not tags)
   if (!masks.installedPackages) {
-    setTagMask(thisBot, "installedPackages", [name], "local");
+    setTagMask(
+      thisBot,
+      "installedPackages",
+      [name],
+      tags.installSpace ?? "local"
+    );
   } else if (!masks.installedPackages.includes(name)) {
     setTagMask(
       thisBot,
       "installedPackages",
       [...masks.installedPackages, name],
-      "local"
+      tags.installSpace ?? "local"
     );
   }
 
