@@ -218,7 +218,6 @@ const defaultTheme = {
   onSurface: "#333333",
   "filter-mode": "invert(0)",
   text3: "#333333",
-
   "secondary-filter-mode": "invert(100%)",
 };
 
@@ -354,6 +353,7 @@ const READY_THEMES = [
     colors: {
       firstToolbarbutton:'#dfdede',
       "filter-mode": "invert(0)",
+      "secondary-filter-mode": "invert(0%)",
       // Main colors
       primaryColor: "#7C3AED",
       secondaryColor: "#A78BFA",
@@ -469,6 +469,7 @@ const READY_THEMES = [
     colors: {
       firstToolbarbutton:'#dfdede',
       "filter-mode": "invert(0)",
+      "secondary-filter-mode": "invert(100%)",
       // Main colors
       primaryColor: "#059669",
       secondaryColor: "#10B981",
@@ -584,6 +585,7 @@ const READY_THEMES = [
     colors: {
       firstToolbarbutton:'#dfdede',
       "filter-mode": "invert(0)",
+      "secondary-filter-mode": "invert(100%)",
       // Main colors
       primaryColor: "#0284C7",
       secondaryColor: "#0EA5E9",
@@ -699,6 +701,7 @@ const READY_THEMES = [
     colors: {
       firstToolbarbutton:'#dfdede',
       "filter-mode": "invert(0)",
+      "secondary-filter-mode": "invert(100%)",
       // Main colors
       primaryColor: "#D97706",
       secondaryColor: "#F59E0B",

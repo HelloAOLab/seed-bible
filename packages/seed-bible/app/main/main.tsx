@@ -498,6 +498,7 @@ const Main = () => {
       toolbarBackground: "#1A1A1A",
       iconColor: "#FFFFFF",
       "filter-mode": "invert(100%)",
+      "secondary-filter-mode": "invert(0%)",
       // Input fields
       inputTitleColor: "#FFFFFF",
       inputPlaceholderColor: "#AAAAAA",

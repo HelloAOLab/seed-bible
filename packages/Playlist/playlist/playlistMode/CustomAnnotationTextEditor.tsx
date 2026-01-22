@@ -1275,13 +1275,13 @@ export function CustomAnnotationTextEditor({
       {isCommandBox && <div
       className="relative-float command-box"
       style={{
-       backgroundColor: "#F7F7F7",
+       backgroundColor: "var(--pageBackground)",
        backdropFilter: "none",
       }}
       >
         {COMMAND_BOX_OPTIONS.map((option) => (
           <div className="command-box-option" key={option.label} onClick={option.onClick}>
-            <img src={option.icon} alt={option.label} />
+            <img className="img-icon" src={option.icon} alt={option.label} />
             <p>{option.label}</p>
           </div>
         ))}
@@ -1298,7 +1298,7 @@ export function CustomAnnotationTextEditor({
                     left: '-4%',
                     right: 0,
                     bottom: 0,
-                    backgroundColor: "white",
+                    backgroundColor: "var(--pageBackground)",
                     zIndex: 10000,
                     display: "flex",
                     flexDirection: "column",

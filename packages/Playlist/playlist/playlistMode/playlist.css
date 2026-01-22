@@ -16,7 +16,7 @@
 }
 
 .img-icon-secondary {
-  filter: var(--secondary-filter-mode);
+  filter: var(--secondary-filter-mode) !important;
 }
 
 .material-symbols-outlined.color-inverted {
@@ -401,11 +401,11 @@ history-item:active {
 }
 
 .tabs-playlist-item.active {
-  border-bottom: 1px solid #d36433;
+  border-bottom: 1px solid var(--primaryColor);
 }
 
 .tabs-playlist-item.active * {
-  color: #d36433;
+  color: var(--primaryColor);
 }
 
 .info-item-playlist {
@@ -874,7 +874,7 @@ div.attachment-link.dropabble-Embed .playlist-item-type {
 }
 
 .FILE_UPLOAD div .link {
-  color: #d36433;
+  color: var(--primaryColor);
   cursor: pointer;
   margin: 0.5rem 0;
 }
@@ -1183,12 +1183,12 @@ div.attachment-link.dropabble-Embed .playlist-item-type {
 }
 
 .switch-tabs > div.active {
-  background-color: #fff;
-  color: #d36433 !important;
+  background-color: var(--pageBackground);
+  color: var(--primaryColor) !important;
 }
 
 .switch-tabs > div.active p {
-  color: #d36433 !important;
+  color: var(--primaryColor) !important;
 }
 
 .welcome-box {
