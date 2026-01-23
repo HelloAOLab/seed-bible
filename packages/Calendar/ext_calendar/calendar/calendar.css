@@ -8,6 +8,12 @@
 }
 .experience-container {
   font-family: "Inter", sans-serif;
+  background: var(--pageBackground);
+  color: var(--pageTextColor);
+  padding: 12px;
+  position: relative;
+  min-height: 100%;
+  height: min-content;
 }
 .fc {
   font-family: "Inter", sans-serif;
@@ -76,8 +82,9 @@
   margin: 0 !important;
 }*/
 .fc-multimonth .fc-day {
-  background-color: #eeeeee;
+  color: black;
 }
+
 /* Show day numbers for disabled (prev/next month) dates */
 .fc-day-disabled .fc-daygrid-day-top {
   visibility: visible !important;
@@ -128,7 +135,6 @@
 }
 .fc-col-header-cell-cushion {
   font-family: "Inter", sans-serif;
-  color: #303133;
   font-size: 15px;
 }
 
@@ -177,7 +183,7 @@
   margin-right: 10px;
 }
 .fc .fc-day-today .fc-daygrid-day-frame {
-  background-color: #ecf5ff;
+  background-color: #b0adad;
   margin-left: 0;
 }
 .fc .fc-daygrid-day-frame {
@@ -215,19 +221,12 @@
 }
 
 .user-event {
-  color: skyblue;
+  color: black;
 }
 .hide-events {
   display: none !important;
 }
 
-.event-line {
-  display: block !important;
-  height: 6px;
-  color: blue;
-  width: auto;
-  overflow: visible;
-}
 .event-line .fc-event-title {
   display: none;
 }
@@ -239,20 +238,32 @@
 .dot-view {
   display: inline-block;
   width: 7px;
+  color: black;
+  background-color: black;
 
   height: 7px;
   border-radius: 50%;
+}
+.fc-event-main {
+  color: var(--pageBackground);
 }
 
 /* Single-day dot view */
 
 .fc-toolbar-title {
   font-size: 16px;
+  color: var(--pageTextColor);
+}
+.fc-event {
+  color: black;
+}
+.fc-daygrid-event-harness {
+  color: black;
 }
 
 .fc-events-container {
   width: 100%;
-  background-color: white;
+
   height: fit-content;
   display: flex;
 
@@ -269,21 +280,6 @@
 
 .add-btn {
   max-width: 95%;
-}
-
-.fc-prev-button {
-  background-color: #007bff;
-  color: white;
-  border-radius: 4px;
-  border: none;
-}
-
-/* Style the next button */
-.fc-next-button {
-  background-color: #28a745;
-  color: white;
-  border-radius: 4px;
-  border: none;
 }
 
 .fc-daygrid-day-events {
@@ -334,7 +330,8 @@
 }
 .google-modal {
   font-family: Satoshi;
-  background-color: #f4f7f8;
+  background: var(--pageTextColor);
+  color: var(--pageBackground);
 
   border-radius: 20px;
 
@@ -643,11 +640,6 @@ svg:hover {
   box-sizing: border-box;
 }
 
-.full-view {
-  height: auto;
-
-  display: block;
-}
 /* Wide (full) mode */
 .fc-daygrid-event-harness {
   overflow-wrap: anywhere;
@@ -727,7 +719,6 @@ svg:hover {
   max-width: 264px;
   height: 28px;
 
-  background-color: #f2f2f2;
   display: flex;
   border-radius: 4px;
 

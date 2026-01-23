@@ -53,9 +53,9 @@ const Setting = ({
         top: "100%",
         alignItems: "start",
         right: "0",
-        fontSize: "15px",
-        backgroundColor: "black",
-        color: "white",
+        fontSize: "12px",
+        backgroundColor: "var(--pageTextColor)",
+        color: "var(--pageBackground)",
         border: "1px solid #ccc",
         borderRadius: "6px",
         boxShadow: "0px 4px 8px rgba(0,0,0,0.5)",
@@ -64,7 +64,6 @@ const Setting = ({
         flexDirection: "column",
         gap: "10px",
         padding: "15px 4px",
-
         width: "130px",
       }}
     >
@@ -72,15 +71,15 @@ const Setting = ({
         onClick={handleTitle}
         style={{ width: "100%", borderRadius: "6px", padding: "2px 2px" }}
         onMouseEnter={(e) => {
-          e.target.style.backgroundColor = "#f0f0f0";
-          e.target.style.color = "black";
+          e.target.style.backgroundColor = "var(--pageBackground)";
+          e.target.style.color = "var(--pageTextColor)";
           e.target.style.cursor = "pointer";
           const svg = e.currentTarget.querySelector("svg");
           if (svg) svg.style.stroke = "black";
         }}
         onMouseLeave={(e) => {
-          e.target.style.backgroundColor = "transparent";
-          e.target.style.color = "white";
+          e.target.style.backgroundColor = "var(--pageTextColor)";
+          e.target.style.color = "var(--pageBackground)";
           const svg = e.currentTarget.querySelector("svg");
           if (svg) svg.style.stroke = "white";
         }}
@@ -110,15 +109,15 @@ const Setting = ({
           onClick={() => setShowSchedules((prev) => !prev)}
           style={{ width: "100%", borderRadius: "6px", padding: "2px 2px" }}
           onMouseEnter={(e) => {
-            e.target.style.backgroundColor = "#f0f0f0";
-            e.target.style.color = "black";
+            e.target.style.backgroundColor = "var(--pageBackground)";
+            e.target.style.color = "var(--pageTextColor)";
             e.target.style.cursor = "pointer";
             const svg = e.currentTarget.querySelector("svg");
             if (svg) svg.style.stroke = "black";
           }}
           onMouseLeave={(e) => {
-            e.target.style.backgroundColor = "transparent";
-            e.target.style.color = "white";
+            e.target.style.backgroundColor = "var(--pageTextColor)";
+            e.target.style.color = "var(--pageBackground)";
             const svg = e.currentTarget.querySelector("svg");
             if (svg) svg.style.stroke = "white";
           }}
@@ -150,15 +149,15 @@ const Setting = ({
         onClick={handleHolidays}
         style={{ width: "100%", borderRadius: "6px", padding: "2px 2px" }}
         onMouseEnter={(e) => {
-          e.target.style.backgroundColor = "#f0f0f0";
-          e.target.style.color = "black";
+          e.target.style.backgroundColor = "var(--pageBackground)";
+          e.target.style.color = "var(--pageTextColor)";
           e.target.style.cursor = "pointer";
           const svg = e.currentTarget.querySelector("svg");
           if (svg) svg.style.stroke = "black";
         }}
         onMouseLeave={(e) => {
-          e.target.style.backgroundColor = "transparent";
-          e.target.style.color = "white";
+          e.target.style.backgroundColor = "var(--pageTextColor)";
+          e.target.style.color = "var(--pageBackground)";
           const svg = e.currentTarget.querySelector("svg");
           if (svg) svg.style.stroke = "white";
         }}
@@ -186,15 +185,15 @@ const Setting = ({
         style={{ width: "100%", borderRadius: "6px", padding: "2px 2px" }}
         onClick={handleOpenCalendar}
         onMouseEnter={(e) => {
-          e.target.style.backgroundColor = "#f0f0f0";
-          e.target.style.color = "black";
+          e.target.style.backgroundColor = "var(--pageBackground)";
+          e.target.style.color = "var(--pageTextColor)";
           e.target.style.cursor = "pointer";
           const svg = e.currentTarget.querySelector("svg");
           if (svg) svg.style.stroke = "black";
         }}
         onMouseLeave={(e) => {
-          e.target.style.backgroundColor = "transparent";
-          e.target.style.color = "white";
+          e.target.style.backgroundColor = "var(--pageTextColor)";
+          e.target.style.color = "var(--pageBackground)";
           const svg = e.currentTarget.querySelector("svg");
           if (svg) svg.style.stroke = "white";
         }}
@@ -224,15 +223,15 @@ const Setting = ({
         onClick={handleOpenMap}
         style={{ width: "100%", borderRadius: "6px", padding: "2px 2px" }}
         onMouseEnter={(e) => {
-          e.target.style.backgroundColor = "#f0f0f0";
-          e.target.style.color = "black";
+          e.target.style.backgroundColor = "var(--pageBackground)";
+          e.target.style.color = "var(--pageTextColor)";
           e.target.style.cursor = "pointer";
           const svg = e.currentTarget.querySelector("svg");
           if (svg) svg.style.stroke = "black";
         }}
         onMouseLeave={(e) => {
-          e.target.style.backgroundColor = "transparent";
-          e.target.style.color = "white";
+          e.target.style.backgroundColor = "var(--pageTextColor)";
+          e.target.style.color = "var(--pageBackground)";
           const svg = e.currentTarget.querySelector("svg");
           if (svg) svg.style.stroke = "white";
         }}
@@ -261,15 +260,15 @@ const Setting = ({
         onClick={handleOpenBoth}
         style={{ width: "100%", borderRadius: "6px", padding: "2px 2px" }}
         onMouseEnter={(e) => {
-          e.target.style.backgroundColor = "#f0f0f0";
-          e.target.style.color = "black";
+          e.target.style.backgroundColor = "var(--pageBackground)";
+          e.target.style.color = "var(--pageTextColor)";
           e.target.style.cursor = "pointer";
           const svg = e.currentTarget.querySelector("svg");
           if (svg) svg.style.stroke = "black";
         }}
         onMouseLeave={(e) => {
-          e.target.style.backgroundColor = "transparent";
-          e.target.style.color = "white";
+          e.target.style.backgroundColor = "var(--pageTextColor)";
+          e.target.style.color = "var(--pageBackground)";
           const svg = e.currentTarget.querySelector("svg");
           if (svg) svg.style.stroke = "white";
         }}
