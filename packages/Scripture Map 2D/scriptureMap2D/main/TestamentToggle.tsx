@@ -1,5 +1,5 @@
 import { useTestamentContext } from "scriptureMap2D.main.TestamentContext";
-// const { useMemo, useCallback, useState } = os.appHooks;
+const { useMemo } = os.appHooks;
 
 export const TestamentToggle = ({ toggleshowContent, showingContent }) => {
   const { testament } = useTestamentContext();
@@ -12,10 +12,18 @@ export const TestamentToggle = ({ toggleshowContent, showingContent }) => {
   //     return GetTextColorBasedOnBackground(fixedTestamentColor)
   // }, [])
 
+  const booksCount = useMemo(() => {
+    const count = testament.sections.reduce((acc, section) => {
+      return acc + section.books.length;
+    }, 0);
+    return count;
+  }, [testament]);
+
   return (
     <div className="toggle toggle-testament" onClick={toggleshowContent}>
-      <span>{testament.name}</span>
-      <span className="material-symbols-outlined">
+      <span className="toggle-title">{testament.name}</span>
+      <span className="toggle-description">{`${booksCount} books`}</span>
+      <span className="material-symbols-outlined toggle-arrow">
         {showingContent ? "keyboard_arrow_up" : "keyboard_arrow_down"}
       </span>
     </div>
