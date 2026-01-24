@@ -42,7 +42,6 @@ export const Book = memo(
       onBookNameClickAndHold,
       onBookNameClickAndHoldDependencies,
       chapterGap,
-      chapterPadding,
       chapterHeight,
       BASE_BACKGROUND_COLOR,
       showingBooksColors,
@@ -95,15 +94,13 @@ export const Book = memo(
           BibleVizUtils.Data.tags.BibleLayoutMeasurements.Book2DMaxColumns
       );
       const height =
-        amountOfRows * chapterHeight +
-        chapterPadding * 2 +
-        chapterGap * (amountOfRows - 1);
+        amountOfRows * chapterHeight + chapterGap * (amountOfRows - 1);
       return height;
-    }, [scaleFactor, chapterGap, chapterPadding, chapterHeight]);
+    }, [scaleFactor, chapterGap, chapterHeight]);
 
     const bookCoverHeight = useMemo(() => {
       return `${getBookHeight()}px`;
-    }, [scaleFactor, getBookHeight, chapterGap, chapterPadding, chapterHeight]);
+    }, [scaleFactor, getBookHeight, chapterGap, chapterHeight]);
 
     const checked = useMemo(() => {
       return selection?.[testament.name]?.[sectionName]?.[book]?.every(
@@ -568,8 +565,8 @@ export const Book = memo(
           if (!showChapters) setShowChapters(true);
         }}
       >
-        <span
-          className="book-name"
+        <div
+          className="book-header"
           onPointerDown={(e) => {
             e.stopPropagation();
             onHoldStart(e);
@@ -582,8 +579,9 @@ export const Book = memo(
             e.stopPropagation();
           }}
         >
-          {bookId}
-        </span>
+          <span className="book-id">{bookId}</span>
+          <span className="book-name">{book}</span>
+        </div>
         <div
           className={`book-cover${showChapters ? " invisible" : isUserPresenceEnabled && bookBorderGradientColors ? " show-user-presence" : ""}`}
           onPointerEnter={(e) =>
