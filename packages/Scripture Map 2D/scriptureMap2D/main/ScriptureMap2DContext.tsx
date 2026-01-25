@@ -199,7 +199,7 @@ const MAX_SCALE_FACTOR = 1.5;
 const SCALE_FACTOR_STEP = 0.05;
 
 const MAX_CHAPTER_HEAT_COUNT = 5;
-const BASE_BACKGROUND_COLOR = "#E3E3E3";
+const BASE_BACKGROUND_COLOR = "var(--whitegray-color)";
 
 export const ScriptureMap2DProvider = ({
   children,
@@ -232,12 +232,12 @@ export const ScriptureMap2DProvider = ({
   const projectStateStyle = useMemo(() => {
     return {
       [ProjectChapterState.None]: {
-        backgroundColor: "rgb(227, 227, 227)",
-        borderColor: "rgb(227, 227, 227)",
+        backgroundColor: "var(--whitegray-color)",
+        borderColor: "var(--whitegray-color)",
         borderStyle: "solid",
       },
       [ProjectChapterState.Assigned]: {
-        backgroundColor: "rgb(227, 227, 227)",
+        backgroundColor: "var(--whitegray-color)",
         borderColor: "grey",
         borderStyle: "dashed",
       },
@@ -279,22 +279,20 @@ export const ScriptureMap2DProvider = ({
     ])
   );
 
-  const { bookWidth, chapterGap, chapterWidth, chapterHeight, chapterPadding } =
-    useMemo(() => {
-      const bookWidth = scaleFactor * 150;
-      const chapterGap = scaleFactor * 5;
-      const chapterPadding = scaleFactor * 5;
-      const chapterWidth = scaleFactor * 24;
-      const chapterHeight = scaleFactor * 24;
+  const { bookWidth, chapterGap, chapterWidth, chapterHeight } = useMemo(() => {
+    const bookWidth = scaleFactor * 150;
+    const chapterGap = scaleFactor * 3;
+    // const chapterPadding = scaleFactor * 5;
+    const chapterWidth = scaleFactor * 32;
+    const chapterHeight = scaleFactor * 32;
 
-      return {
-        bookWidth,
-        chapterGap,
-        chapterWidth,
-        chapterHeight,
-        chapterPadding,
-      };
-    }, [scaleFactor]);
+    return {
+      bookWidth,
+      chapterGap,
+      chapterWidth,
+      chapterHeight,
+    };
+  }, [scaleFactor]);
 
   const handleZoomIn = useCallback(() => {
     if (scaleFactor < MAX_SCALE_FACTOR) {
@@ -374,7 +372,6 @@ export const ScriptureMap2DProvider = ({
         userPresence,
         bookWidth,
         chapterGap,
-        chapterPadding,
         chapterWidth,
         chapterHeight,
         handleProjectFilterOptionClick,
