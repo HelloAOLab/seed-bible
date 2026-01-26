@@ -1,5 +1,4 @@
-import { hookProvider } from "app.bridge.bridge";
-const { useEffect, useState, useRef, render, useMemo } = hookProvider;
+const { useEffect, useState, useRef, render, useMemo } = os.appHooks;
 
 import { BibleVariablesProvider } from "app.hooks.bibleVariables";
 import { TabsProvider } from "app.hooks.tabs";
