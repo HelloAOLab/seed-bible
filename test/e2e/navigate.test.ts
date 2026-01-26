@@ -179,6 +179,52 @@ describe("navigate", () => {
     await delay(1500);
     expect(await bookTitle?.evaluate((el) => el.textContent)).toBe("Genesis 2");
 
-    page.goBack();
+    await page.goBack();
+
+    await delay(1000);
+
+    expect(await bookTitle?.evaluate((el) => el.textContent)).toBe("Genesis 1");
+  });
+
+  test("forward button should go to the next chapter after going back", async () => {
+    await seedBibleFrame.waitForSelector(
+      "div.toolbar-item-wrapper.rightClick > button",
+      { visible: true }
+    );
+    await delay(1000);
+    await seedBibleFrame
+      .locator("div.toolbar-item-wrapper.rightClick > button")
+      .click();
+
+    const bookTitle = await seedBibleFrame
+      .locator("div.bookTitle")
+      .waitHandle();
+    await delay(1500);
+    expect(await bookTitle?.evaluate((el) => el.textContent)).toBe("Genesis 2");
+
+    await page.goBack();
+    await page.goForward();
+
+    await delay(1000);
+
+    expect(await bookTitle?.evaluate((el) => el.textContent)).toBe("Genesis 2");
+  });
+
+  test("back button should close the book selector", async () => {
+    await seedBibleFrame.waitForSelector(
+      'div.toolbar-item-wrapper[title="Books"] > button',
+      { visible: true }
+    );
+    await delay(1000);
+    await seedBibleFrame
+      .locator('div.toolbar-item-wrapper[title="Books"] > button')
+      .click({});
+
+    await delay(1000);
+    await page.goBack();
+    await delay(1000);
+
+    const sideBar = await page.locator(".html-container div.sidebar").wait();
+    expect(sideBar.classList.contains("close-sideBar")).toBe(true);
   });
 });
