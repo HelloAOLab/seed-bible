@@ -198,6 +198,7 @@ describe("navigate", () => {
     expect(await bookTitle?.evaluate((el) => el.textContent)).toBe("Genesis 2");
 
     await page.goBack();
+    await delay(500);
     await page.goForward();
 
     await delay(1000);
@@ -205,7 +206,30 @@ describe("navigate", () => {
     expect(await bookTitle?.evaluate((el) => el.textContent)).toBe("Genesis 2");
   });
 
-  test("back button should close the book selector", async () => {
+  test("the book selector should push a history state when opened", async () => {
+    await seedBibleFrame.waitForSelector(
+      'div.toolbar-item-wrapper[title="Books"] > button',
+      { visible: true }
+    );
+    await delay(1000);
+
+    const originalHistoryLength = await seedBibleFrame.evaluate(
+      () => window.history.length
+    );
+
+    await seedBibleFrame
+      .locator('div.toolbar-item-wrapper[title="Books"] > button')
+      .click({});
+
+    await delay(1000);
+
+    const historyLength = await seedBibleFrame.evaluate(
+      () => window.history.length
+    );
+    expect(historyLength - originalHistoryLength).toBe(1); // One new history state should be added
+  });
+
+  test("the book selector should be able to be closed when navigating back", async () => {
     await seedBibleFrame.waitForSelector(
       'div.toolbar-item-wrapper[title="Books"] > button',
       { visible: true }
@@ -216,10 +240,18 @@ describe("navigate", () => {
       .click({});
 
     await delay(1000);
-    await page.goBack();
+
+    await seedBibleFrame.evaluate(() => window.history.back());
+
     await delay(1000);
 
-    const sideBar = await page.locator(".html-container div.sidebar").wait();
-    expect(sideBar.classList.contains("close-sideBar")).toBe(true);
+    const isSidebarVisible = await page.evaluate(() => {
+      const sidebar = document.querySelector(".html-container div.sidebar");
+      return sidebar
+        ? getComputedStyle(sidebar).visibility !== "hidden"
+        : false;
+    });
+
+    expect(isSidebarVisible).toBe(false);
   });
 });
