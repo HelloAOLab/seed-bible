@@ -4,8 +4,9 @@
   "description": "The source code behind the Seed Bible.",
   "type": "module",
   "scripts": {
+    "pretest": "tsx script/pretest.ts",
     "test": "jest",
-    "test:watch": "jest --watchAll",
+    "test:watch": "pnpm pretest && jest --watchAll",
     "dev": "tsx script/dev.ts",
     "package": "tsx script/package.ts",
     "extension": "tsx script/extension.ts",
