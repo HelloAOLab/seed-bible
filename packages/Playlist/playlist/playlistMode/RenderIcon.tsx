@@ -1,6 +1,6 @@
 const { useMemo, useState, useLayoutEffect } = os.appHooks;
 
-const RenderIcon = ({ isCustomIcons, big = false, isAllowSet = false, icon, list = [], onDelete }) => {
+const RenderIcon = ({ isCustomIcons, big = false, small = false, isAllowSet = false, icon, list = [], onDelete }) => {
     const [mylist, setMylist] = useState(list);
 
     const firstItemID = useMemo(() => {
@@ -20,8 +20,7 @@ const RenderIcon = ({ isCustomIcons, big = false, isAllowSet = false, icon, list
     }, [isAllowSet]);
 
     return (
-        <div className={`playlist-details-icon ${big ? " big" : ""}`} style={{ position: 'relative', backgroundColor: 'rgb(217, 217, 217)' }
-        }>
+        <div className={`playlist-details-icon ${big ? " big" : ""} ${small ? " small" : ""} `} style={{ position: 'relative', backgroundColor: 'var(--themeSideMenu)' }}>
             {
                 isCustomIcons ?
                     <img src={icon} style={{ width: '24px' }

@@ -154,7 +154,7 @@ div.flaoting-attach-link  .add-new-playlist{
     top: 0;
     left: 0;
     flex-grow: 1;
-    background-color: #F7F7F5;
+    background-color: var(--pageBackground);
     width: calc(100%);
     overflow: auto;
     /* transform: translate(0); */
@@ -178,7 +178,7 @@ div.flaoting-attach-link  .add-new-playlist{
     display: flex !important;
     z-index: 1;
     align-items: center;
-    background-color: #F7F7F5;
+    background-color: var(--pageBackground);
     justify-content: space-between;
     border-bottom: 1px solid #E1E3EA;
     position: sticky;

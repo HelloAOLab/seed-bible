@@ -1,4 +1,6 @@
-const SelectionOptions = ( { handleClose, options, onClickOption } ) => {
+const RenderIcon = await thisBot.RenderIcon();
+
+const SelectionOptions = ( { handleClose, options, isPlaylist = false, onClickOption } ) => {
 
     const onClick = (option:any) => {
         if(onClickOption) {
@@ -15,10 +17,22 @@ const SelectionOptions = ( { handleClose, options, onClickOption } ) => {
         <div className="backdrop" onClick={handleClose} />
         <div className="selection-contianer">
             {options.map((option) => (
+                isPlaylist 
+                
+                ? 
+
+                <div className="selection-option" onClick={() => onClick(option)}>
+                    <RenderIcon isCustomIcons={false} small icon="subscriptions" list={option.metaData.list} />
+                    <p className="selection-option-label">{option.label}</p>
+                </div>
+                
+                :
+
                 <div onClick={() => onClick(option)}  className="selection-option" key={option.key}>
                      {option.label}
                 </div>
             ))}
+            {options.length === 0 && <p className="selection-option-label">No options found</p>}
         </div>
        </>
     )

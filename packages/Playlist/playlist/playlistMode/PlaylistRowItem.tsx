@@ -634,6 +634,7 @@ const PlaylistRowItem = ({
                   position: "absolute",
                   right: "0%",
                   transform: `translate(0%, -50%)`,
+                  backgroundColor: "var(--themeSideMenu)",
                 }}
                 class="material-symbols-outlined unfollow"
                 onClick={() => {
