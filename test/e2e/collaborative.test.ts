@@ -39,7 +39,7 @@ describe("collaborative", () => {
     await browser2?.close();
   });
 
-  test("test user presense", async () => {
+  test("test session next chapter", async () => {
     const uuid = Math.random().toString(36).substring(2, 15);
 
     await loadSeedBible(page1, undefined, uuid, true);
@@ -72,12 +72,24 @@ describe("collaborative", () => {
 
     await seedBibleFrame2.locator("button.join-session-button").click();
 
-    await delay(500);
+    await delay(3000);
 
-    const userPresenceItems2 = await seedBibleFrame2.$$(".user-presence-item");
-    expect(userPresenceItems2.length).toBe(2);
-    await delay(5000);
-    const userPresenceItems1 = await seedBibleFrame1.$$(".user-presence-item");
-    expect(userPresenceItems1.length).toBe(2);
+    // Go to next chapter on first session
+    await seedBibleFrame1.waitForSelector(
+      "div.toolbar-item-wrapper.rightClick > button",
+      { visible: true }
+    );
+    await delay(1000);
+    await seedBibleFrame1
+      .locator("div.toolbar-item-wrapper.rightClick > button")
+      .click();
+
+    await delay(2000);
+
+    // Should be on Genesis 2 in second session now
+    const bookTitle = await seedBibleFrame2
+      .locator("div.bookTitle")
+      .waitHandle();
+    expect(await bookTitle?.evaluate((el) => el.textContent)).toBe("Genesis 2");
   });
 });
