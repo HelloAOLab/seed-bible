@@ -277,19 +277,27 @@ await (async function mainInstaller(that) {
       } else if (type === "dependency") {
         os.log("installing dependency", depName);
         const data = await FindExtensionData(depName);
-        const read = await web.get(data.recordFile?.url || data.source);
 
-        const bots = GetBotsFromData(read.data);
-        bots.forEach((bot) => {
-          // console.log('check dep bot', bot)
-          const check = getBot("system", bot.tags.system);
-          if (!check)
-            create(bot, {
-              space: tags.installSpace ?? "local",
-              forPackage: NameHolder,
-              packageName: depName,
-            });
-        });
+        if (data.casualOsPackage) {
+          await os.installPackage(
+            data.casualOsPackage.recordName,
+            data.casualOsPackage.address
+          );
+        } else {
+          const read = await web.get(data.recordFile?.url || data.source);
+
+          const bots = GetBotsFromData(read.data);
+          bots.forEach((bot) => {
+            // console.log('check dep bot', bot)
+            const check = getBot("system", bot.tags.system);
+            if (!check)
+              create(bot, {
+                space: tags.installSpace ?? "local",
+                forPackage: NameHolder,
+                packageName: depName,
+              });
+          });
+        }
       }
     }
     await os.sleep(100);
@@ -331,26 +339,36 @@ await (async function mainInstaller(that) {
   os.log("installing package", name, data);
   setTagMask(thisBot, `${name}-data`, data, tags.installSpace ?? "local");
 
-  // Load record/source
-  const read = await web.get(data.recordFile?.url || data.source);
-  const bots = GetBotsFromData(read.data);
+  let bot: Bot;
+  if (data.casualOsPackage) {
+    await os.installPackage(
+      data.casualOsPackage.recordName,
+      data.casualOsPackage.address
+    );
+    bot = getBot("system", data.mainBotTag);
+  } else {
+    // Load record/source
+    const read = await web.get(data.recordFile?.url || data.source);
+    const bots = GetBotsFromData(read.data);
 
-  // Push secondary bots first (await if async)
-  for (let i = 1; i < bots.length; i++) {
-    const b = create(bots[i], {
+    // Push secondary bots first (await if async)
+    for (let i = 1; i < bots.length; i++) {
+      const b = create(bots[i], {
+        space: tags.installSpace ?? "local",
+        forPackage: NameHolder,
+        packageName: name,
+      });
+      // await thisBot.pushBots({ name, bot: b });
+    }
+
+    // Push the primary (first) bot
+    bot = create(bots[0], {
       space: tags.installSpace ?? "local",
       forPackage: NameHolder,
       packageName: name,
     });
-    // await thisBot.pushBots({ name, bot: b });
   }
 
-  // Push the primary (first) bot
-  const bot = create(bots[0], {
-    space: tags.installSpace ?? "local",
-    forPackage: NameHolder,
-    packageName: name,
-  });
   await thisBot.pushBots({ name, bot, first: true });
 
   // Give lifecycle hooks a chance to run (await sleeps!)

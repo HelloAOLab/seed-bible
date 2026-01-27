@@ -4,3 +4,9 @@ declare module "./AuxLibraryDefinitions" {
     [key: string]: any;
   }
 }
+
+declare global {
+  interface Bot {
+    [key: string]: any;
+  }
+}
