@@ -2561,6 +2561,9 @@
       "scriptureMap2D.main.Book": [
         "./packages/Scripture Map 2D/scriptureMap2D/main/Book.tsx"
       ],
+      "scriptureMap2D.main.BooksContainer": [
+        "./packages/Scripture Map 2D/scriptureMap2D/main/BooksContainer.tsx"
+      ],
       "scriptureMap2D.main.Chapter": [
         "./packages/Scripture Map 2D/scriptureMap2D/main/Chapter.tsx"
       ],
@@ -3385,13 +3388,6 @@
       "aiApps.painterStorage.onBotChanged": [
         "./packages/seed-bible/aiApps/painterStorage/onBotChanged.tsx"
       ],
-      "app.bridge.adapters.casualOSHookProvider": [
-        "./packages/seed-bible/app/bridge/adapters/casualOSHookProvider.tsx"
-      ],
-      "app.bridge.bridge": ["./packages/seed-bible/app/bridge/bridge.tsx"],
-      "app.bridge.hookProvider": [
-        "./packages/seed-bible/app/bridge/hookProvider.tsx"
-      ],
       "app.components.Chips": [
         "./packages/seed-bible/app/components/Chips.tsx"
       ],
@@ -3621,6 +3617,9 @@
         "./packages/seed-bible/app/main/rootContext.tsx"
       ],
       "app.main.tempFluff": ["./packages/seed-bible/app/main/tempFluff.tsx"],
+      "app.main.themeObjects": [
+        "./packages/seed-bible/app/main/themeObjects.tsx"
+      ],
       "app.packager.InstallNamedPackage": [
         "./packages/seed-bible/app/packager/InstallNamedPackage.tsx"
       ],
