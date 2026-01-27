@@ -21,6 +21,11 @@
   z-index: 1000;
 }
 
+.modal-container h3,
+.modal-container .material-symbols-outlined {
+  color: var(--pageTextColor);
+}
+
 .modal-container .img {
   background: var(--pageBackground);
   position: absolute;

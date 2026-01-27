@@ -3,7 +3,6 @@ import { MiniTextEditor } from "app.components.smallEditor";
 const { Input, Modal, Button, ButtonsCover, Select, LoaderSecondary } =
   Components;
 
-
 const RecordingUI = await thisBot.RecordVoice();
 const VideoRecordUI = await thisBot.VideoRecordUI();
 
@@ -12,20 +11,20 @@ const RECORDING_VALUE = "voice-recording";
 
 const EditorId = "attachfile";
 
-const OPTIONS = (t)=>[
+const OPTIONS = (t) => [
   // { value: "text", label: "Heading Text" },
   // { value: SEARCH_ADD_VALUE, label: "Search & Add Verse,Chapter" },
-  { value: "youtube", label: t('youtube') },
-  { value: "externalLink", label: t('externalLink') },
-  { value: "Video", label: t('video') },
-  { value: "iframe", label: t('iframe') },
+  { value: "youtube", label: t("youtube") },
+  { value: "externalLink", label: t("externalLink") },
+  { value: "Video", label: t("video") },
+  { value: "iframe", label: t("iframe") },
   // { value: RECORDING_VALUE, label: "Recording" },
   // { value: "aux", label: "AUX", disabled: true }
-] ;
+];
 
 const OPTIONS_TEXTTYPE = (t: any) => [
-  { value: "heading", label: t('heading') },
-  { value: "text", label: t('text') },
+  { value: "heading", label: t("heading") },
+  { value: "text", label: t("text") },
 ];
 
 const BIBLE_ICON =
@@ -96,7 +95,7 @@ function SubComponent({
   type,
   textType,
   setTextType,
-  showChangeOptions = true
+  showChangeOptions = true,
 }) {
   const playlists = useMemo(
     () => globalThis[`${"default"}playlists`] || [],
@@ -117,7 +116,7 @@ function SubComponent({
           <Input
             value={name}
             onChangeListener={setName}
-            placeholder={t('tagName')}
+            placeholder={t("tagName")}
           />
         </div>
       );
@@ -166,7 +165,7 @@ function SubComponent({
                     fontSize: "14px",
                   }}
                 >
-                  {t('dropFilesHere')}
+                  {t("dropFilesHere")}
                 </h3>
                 <p
                   style={{
@@ -175,7 +174,7 @@ function SubComponent({
                     fontSize: "12px",
                   }}
                 >
-                  {t('releaseToUploadFiles')}
+                  {t("releaseToUploadFiles")}
                 </p>
               </div>
             </div>
@@ -209,7 +208,7 @@ function SubComponent({
                 style={{ marginBottom: "0" }}
                 value={name}
                 onChangeListener={setName}
-                placeholder={t('typeToAddScripture')}
+                placeholder={t("typeToAddScripture")}
               />
             </div>
           </div>
@@ -226,7 +225,7 @@ function SubComponent({
                   await onAddFiles(files);
                 }}
               >
-                {t('importJSON')}
+                {t("importJSON")}
               </Button>
             </>
           )}
@@ -248,7 +247,11 @@ function SubComponent({
               }}
               className={`${recordingType === "audio" ? "active" : ""}`}
             >
-              <span class="material-symbols-outlined">mic</span>
+              <span
+                class={`material-symbols-outlined ${recordingType !== "audio" && "img-icon"}`}
+              >
+                mic
+              </span>
               <p>Audio</p>
             </div>
             <div
@@ -263,8 +266,12 @@ function SubComponent({
               }}
               className={`${recordingType === "video" ? "active" : ""}`}
             >
-              <span class="material-symbols-outlined">videocam</span>
-              <p>{t('video')}</p>
+              <span
+                class={`material-symbols-outlined ${recordingType !== "video" && "img-icon"}`}
+              >
+                videocam
+              </span>
+              <p>{t("video")}</p>
             </div>
           </div>
           {recordingType === "audio" ? (
@@ -282,7 +289,7 @@ function SubComponent({
           <Input
             value={name}
             onChangeListener={setName}
-            placeholder={t('typeToAddCustomTitle')}
+            placeholder={t("typeToAddCustomTitle")}
           />
         </div>
       );
@@ -297,7 +304,7 @@ function SubComponent({
               onChangeListener={(val) => {
                 setTextType(val);
               }}
-              name={`${t('role')}:`}
+              name={`${t("role")}:`}
               options={OPTIONS_TEXTTYPE(t)}
             />
           )}
@@ -329,7 +336,7 @@ function SubComponent({
             style={{ width: "100%" }}
             value={name}
             onChangeListener={setName}
-            placeholder={t('typeToAddCustomTitle')}
+            placeholder={t("typeToAddCustomTitle")}
           />
           <div style={{ width: "100%", display: "flex", gap: "1rem" }}>
             <Select
@@ -340,14 +347,14 @@ function SubComponent({
                 setLinkState({ isValid: false, type: val });
                 setType(val);
               }}
-              name={`${t('type')}:`}
+              name={`${t("type")}:`}
               options={OPTIONS(t)}
             />
             <Input
               style={{ marginBottom: "0", flexGrow: "1" }}
               value={link}
               onChangeListener={setLink}
-              placeholder={`${t('exampleeg')} https://www.youtube.com/watch?v=ALsluAKBZ-czs3`}
+              placeholder={`${t("exampleeg")} https://www.youtube.com/watch?v=ALsluAKBZ-czs3`}
             />
           </div>
         </div>
@@ -362,7 +369,7 @@ function SubComponent({
             onChangeListener={(val) => {
               setData(val);
             }}
-            name={`${t('playlist')}:`}
+            name={`${t("playlist")}:`}
             options={playlistListOptions}
           />
         </div>
@@ -379,7 +386,7 @@ function SubComponent({
               if (!file) {
                 setLoading(false);
                 return ShowNotification({
-                  message: t('noFileUploaded'),
+                  message: t("noFileUploaded"),
                   severity: "error",
                 });
               }
@@ -428,7 +435,7 @@ function SubComponent({
 
                 if (failCount > 0) {
                   return ShowNotification({
-                    message: t('failedToUploadSomeFiles'),
+                    message: t("failedToUploadSomeFiles"),
                     severity: "error",
                   });
                 }
@@ -437,7 +444,7 @@ function SubComponent({
                 console.log(error);
                 setLoading(false);
                 ShowNotification({
-                  message: t('fileUploadFailed'),
+                  message: t("fileUploadFailed"),
                   severity: "error",
                 });
               }
@@ -457,13 +464,13 @@ function SubComponent({
               src="https://auth-aux-aobot-prod-filesbucket-141297942820.s3.amazonaws.com/aoBot/6c8e5fa8be9c6bd0786104e4819b401b4b345a7734a7ebffb5d5e606ee182b45.png"
               style={{ height: "46px" }}
             />
-            <p className="link">{t('dragDropOrClickToBrowse')}</p>
-            <p className="info-type">{t('infoType')}</p>
+            <p className="link">{t("dragDropOrClickToBrowse")}</p>
+            <p className="info-type">{t("infoType")}</p>
           </div>
         </div>
       );
     default:
-      return <p>{t('unknownDataType')}</p>;
+      return <p>{t("unknownDataType")}</p>;
   }
 }
 
@@ -521,7 +528,7 @@ const AttachLink = ({
   onDateClick,
   isTags = false,
   isPlaylist = false,
-  showSaveButton = true
+  showSaveButton = true,
 }) => {
   const isloggedIN = authBot?.id;
 
@@ -587,13 +594,13 @@ const AttachLink = ({
         }
       } catch (err) {
         failCount++;
-        console.log(t('UPLOAEDJSONERROR'), err);
+        console.log(t("UPLOAEDJSONERROR"), err);
       }
     }
     setLoading(false);
     if (failCount > 0) {
       ShowNotification({
-        message: `${t('fileRejectedForNotBeingValidJSON', { count: failCount })}`,
+        message: `${t("fileRejectedForNotBeingValidJSON", { count: failCount })}`,
         severity: "error",
       });
     }
@@ -753,7 +760,7 @@ const AttachLink = ({
         selectedType !== "LINK"
       ) {
         return ShowNotification({
-          message: t('attachmentNameMissing'),
+          message: t("attachmentNameMissing"),
           severity: "error",
         });
       }
@@ -770,7 +777,7 @@ const AttachLink = ({
     if (selectedType === "RECORDING") {
       if (!data)
         return ShowNotification({
-          message: t('recordSomethingToSaveRecording'),
+          message: t("recordSomethingToSaveRecording"),
           severity: "error",
         });
       setData(null);
@@ -796,7 +803,7 @@ const AttachLink = ({
 
       if (!url) {
         return ShowNotification({
-          message: t('failedToUpload'),
+          message: t("failedToUpload"),
           severity: "error",
         });
       }
@@ -814,7 +821,7 @@ const AttachLink = ({
     if (selectedType === "FILE_UPLOAD") {
       if (!Array.isArray(data) || data?.length < 1) {
         return ShowNotification({
-          message: t('noFilesUploaded'),
+          message: t("noFilesUploaded"),
           severity: "error",
         });
       } else {
@@ -831,7 +838,7 @@ const AttachLink = ({
     if (selectedType === "PLAYLIST") {
       if (!data)
         return ShowNotification({
-          message: t('selectAPlaylistToAnnotate'),
+          message: t("selectAPlaylistToAnnotate"),
           severity: "error",
         });
       const playlistList = playlists.find((ele) => ele.id === data);
@@ -846,7 +853,7 @@ const AttachLink = ({
       const results = validateUrl(link);
       if (!results.isValid) {
         return ShowNotification({
-          message: t('invalidLinkFormat'),
+          message: t("invalidLinkFormat"),
           severity: "error",
         });
       } else {
@@ -1006,7 +1013,7 @@ const AttachLink = ({
                 onClick={() => {
                   if (editMode)
                     return ShowNotification({
-                      message: t('cannotChangeWhileBeingInEditMode'),
+                      message: t("cannotChangeWhileBeingInEditMode"),
                       severity: "error",
                     });
                   if (ele === "DATE" && !!onDateClick) {

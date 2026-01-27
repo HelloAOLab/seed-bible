@@ -109,7 +109,7 @@ const ADVANCED_SETTINGS_SECTIONS = {
 // Based on the design mockup with orange accent colors
 const defaultTheme = {
   // Main colors
-  firstToolbarbutton:'#dfdede',
+  firstToolbarbutton: "#dfdede",
   primaryColor: "#E07B4C",
   secondaryColor: "#D2691E",
   tertiaryColor: "#CD853F",
@@ -218,7 +218,6 @@ const defaultTheme = {
   onSurface: "#333333",
   "filter-mode": "invert(0)",
   text3: "#333333",
-
   "secondary-filter-mode": "invert(100%)",
 };
 
@@ -233,8 +232,7 @@ const READY_THEMES = [
   {
     name: "Dark Mode",
     colors: {
-  firstToolbarbutton:'#5C5C5C',
-
+      firstToolbarbutton: "#5C5C5C",
 
       // Main colors
       primaryColor: "#5A67D8",
@@ -243,7 +241,7 @@ const READY_THEMES = [
       // Container backgrounds
       themeSideMenu: "#2D2D2D",
       panelBackground: "#1A1A1A",
-      
+
       // Tab
       tabSelection: "#5A67D8",
       activeTabBackground: "#404040",
@@ -352,8 +350,9 @@ const READY_THEMES = [
   {
     name: "Purple Serenity",
     colors: {
-      firstToolbarbutton:'#dfdede',
+      firstToolbarbutton: "#dfdede",
       "filter-mode": "invert(0)",
+      "secondary-filter-mode": "invert(0%)",
       // Main colors
       primaryColor: "#7C3AED",
       secondaryColor: "#A78BFA",
@@ -467,8 +466,9 @@ const READY_THEMES = [
   {
     name: "Green Nature",
     colors: {
-      firstToolbarbutton:'#dfdede',
+      firstToolbarbutton: "#dfdede",
       "filter-mode": "invert(0)",
+      "secondary-filter-mode": "invert(100%)",
       // Main colors
       primaryColor: "#059669",
       secondaryColor: "#10B981",
@@ -582,8 +582,9 @@ const READY_THEMES = [
   {
     name: "Ocean Blue",
     colors: {
-      firstToolbarbutton:'#dfdede',
+      firstToolbarbutton: "#dfdede",
       "filter-mode": "invert(0)",
+      "secondary-filter-mode": "invert(100%)",
       // Main colors
       primaryColor: "#0284C7",
       secondaryColor: "#0EA5E9",
@@ -697,8 +698,9 @@ const READY_THEMES = [
   {
     name: "Warm Amber",
     colors: {
-      firstToolbarbutton:'#dfdede',
+      firstToolbarbutton: "#dfdede",
       "filter-mode": "invert(0)",
+      "secondary-filter-mode": "invert(100%)",
       // Main colors
       primaryColor: "#D97706",
       secondaryColor: "#F59E0B",
@@ -1090,8 +1092,7 @@ const CollapsibleSection = ({ title, isExpanded, onToggle, children }) => {
             fontSize: 14,
             fontWeight: 400,
             // color: "#000000"
-            color:"var(--heading1Color)",
-            
+            color: "var(--heading1Color)",
           }}
         >
           {title}
@@ -1212,8 +1213,8 @@ const CompactColorRow = ({ label, value, onChange }) => {
         style={{
           fontFamily: "Open Sans, sans-serif",
           fontSize: 13,
-         
-          color:'var(--heading2Color)',
+
+          color: "var(--heading2Color)",
         }}
       >
         {label}
@@ -5366,7 +5367,7 @@ const SettingsUI = () => {
             onClick={handleDecreaseFontSize}
           >
             <svg
-              style={{ filter: "none",stroke:"var(--heading1Color)" }}
+              style={{ filter: "none", stroke: "var(--heading1Color)" }}
               width="12"
               height="12"
               viewBox="0 0 12 12"
@@ -5392,7 +5393,7 @@ const SettingsUI = () => {
             onClick={handleIncreaseFontSize}
           >
             <svg
-              style={{ filter: "none",stroke:"var(--heading1Color)" }}
+              style={{ filter: "none", stroke: "var(--heading1Color)" }}
               width="20"
               height="20"
               viewBox="0 0 20 20"
@@ -5425,7 +5426,7 @@ const SettingsUI = () => {
             onClick={handleCycleLineHeight}
           >
             <svg
-              style={{ filter: "none",stroke:"var(--heading1Color)" }}
+              style={{ filter: "none", stroke: "var(--heading1Color)" }}
               width="18"
               height="18"
               viewBox="0 0 18 18"

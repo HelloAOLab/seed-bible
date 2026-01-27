@@ -2,7 +2,10 @@ const { useEffect, useState, useRef, useMemo } = os.appHooks;
 const { Button, Input } = Components;
 const RecordingUI = await thisBot.RecordVoice();
 const VideoRecordUI = await thisBot.VideoRecordUI();
-import { ColorizeParagraphs, uncolorizeHashtags} from "playlist.playlistMode.AutoTag";
+import {
+  ColorizeParagraphs,
+  uncolorizeHashtags,
+} from "playlist.playlistMode.AutoTag";
 import { SelectionOptions } from "playlist.playlistMode.SelectionOptions";
 
 import {
@@ -23,7 +26,7 @@ import {
   ListItem,
   Mark,
   Extension,
-  Plugin
+  Plugin,
 } from "https://esm.helloao.org/vendor-RPNXNWQB.js";
 import { useDragRef } from "playlist.playlistMode.useDragRef";
 
@@ -31,7 +34,7 @@ const RECORDING_TYPES = {
   audio: "audio/webm",
   video: "video/mp4",
   link: "link",
-}
+};
 
 /**
  * -----------------------------------------------------------
@@ -118,7 +121,7 @@ const COMMAND_BOX_OPTIONS = [
     label: "Add File",
     onClick: async () => {
       const files = await os.showUploadFiles();
-      shout("onHandleDropFiles", {files, thruCommandBox: true});
+      shout("onHandleDropFiles", { files, thruCommandBox: true });
     },
   },
   {
@@ -135,7 +138,8 @@ const COMMAND_BOX_OPTIONS = [
   },
 ];
 
-const COMMAND_ICON = "https://auth-aux-aobot-prod-filesbucket-141297942820.s3.amazonaws.com/annotations/ce7430bae3a8fd021160a12806b2b82a5999a463b2bff278a96f922963fe5cfc.svg";
+const COMMAND_ICON =
+  "https://auth-aux-aobot-prod-filesbucket-141297942820.s3.amazonaws.com/annotations/ce7430bae3a8fd021160a12806b2b82a5999a463b2bff278a96f922963fe5cfc.svg";
 
 // ---- custom mark: lineHeight (same behavior as your app editor)
 const LineHeight = Mark.create({
@@ -163,14 +167,13 @@ const LineHeight = Mark.create({
   },
 });
 
-
 export const CustomSpan = Node.create({
   name: "customSpan",
 
   group: "inline",
   inline: true,
-  content: "inline*",  // ✅ allow text inside
-  atom: false,         // ✅ important (or remove this line)
+  content: "inline*", // ✅ allow text inside
+  atom: false, // ✅ important (or remove this line)
 
   addAttributes() {
     return {
@@ -211,8 +214,6 @@ export const CustomSpan = Node.create({
   },
 });
 
-
-
 export const Video = Node.create({
   name: "video",
 
@@ -236,10 +237,13 @@ export const Video = Node.create({
   },
 
   renderHTML({ HTMLAttributes }) {
-    return ["video", {
-      ...HTMLAttributes,
-      controls: true,
-    }];
+    return [
+      "video",
+      {
+        ...HTMLAttributes,
+        controls: true,
+      },
+    ];
   },
 
   addNodeView() {
@@ -255,10 +259,10 @@ export const Video = Node.create({
 
       // ⭐ Add REAL JS event listener
       el.addEventListener("click", (e) => {
-          e.preventDefault();
-          e.stopPropagation();
-          if(!node.attrs.src) return;
-          thisBot.VideoPlayer({
+        e.preventDefault();
+        e.stopPropagation();
+        if (!node.attrs.src) return;
+        thisBot.VideoPlayer({
           src: node.attrs.src,
         });
       });
@@ -274,7 +278,7 @@ export const Iframe = Node.create({
   name: "iframe",
 
   group: "block",
-  atom: true,   // behaves as a single unit
+  atom: true, // behaves as a single unit
   selectable: true,
 
   addAttributes() {
@@ -292,7 +296,8 @@ export const Iframe = Node.create({
         default: "0",
       },
       allow: {
-        default: "accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture",
+        default:
+          "accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture",
       },
       allowfullscreen: {
         default: true,
@@ -312,10 +317,13 @@ export const Iframe = Node.create({
   },
 
   renderHTML({ HTMLAttributes }) {
-    return ["iframe", {
-      ...HTMLAttributes,
-      allowfullscreen: "true",
-    }];
+    return [
+      "iframe",
+      {
+        ...HTMLAttributes,
+        allowfullscreen: "true",
+      },
+    ];
   },
 
   addNodeView() {
@@ -347,8 +355,8 @@ export const Iframe = Node.create({
         if (!node.attrs.src) return;
 
         const linkDetails = validateUrl(node.attrs.src);
-        
-        if(linkDetails.isValid && linkDetails.type === "youtube") {
+
+        if (linkDetails.isValid && linkDetails.type === "youtube") {
           thisBot.VideoPlayer({
             src: node.attrs.src,
             isYoutube: true,
@@ -357,16 +365,16 @@ export const Iframe = Node.create({
           return;
         }
 
-        if(linkDetails.isValid && linkDetails.type === "video") {
+        if (linkDetails.isValid && linkDetails.type === "video") {
           thisBot.VideoPlayer({
             src: node.attrs.src,
           });
           return;
         }
 
-        if(linkDetails.isValid && linkDetails.type === "externalLink") {
-         os.openURL(node.attrs.src);
-         return;
+        if (linkDetails.isValid && linkDetails.type === "externalLink") {
+          os.openURL(node.attrs.src);
+          return;
         }
       });
 
@@ -380,7 +388,6 @@ export const Iframe = Node.create({
   },
 });
 
-
 const CustomImage = Image.extend({
   addAttributes() {
     return {
@@ -388,8 +395,8 @@ const CustomImage = Image.extend({
 
       class: {
         default: null,
-        parseHTML: element => element.getAttribute("class"),
-        renderHTML: attributes => {
+        parseHTML: (element) => element.getAttribute("class"),
+        renderHTML: (attributes) => {
           if (!attributes.class) {
             return {};
           }
@@ -403,7 +410,6 @@ const CustomImage = Image.extend({
   },
 });
 
-
 const Audio = Node.create({
   name: "audio",
 
@@ -416,42 +422,40 @@ const Audio = Node.create({
     return {
       src: {
         default: null,
-        parseHTML: el => el.getAttribute("src"),
+        parseHTML: (el) => el.getAttribute("src"),
       },
       controls: {
         default: true,
-        parseHTML: el => el.hasAttribute("controls"),
-        renderHTML: attrs => (attrs.controls ? { controls: "true" } : {}),
+        parseHTML: (el) => el.hasAttribute("controls"),
+        renderHTML: (attrs) => (attrs.controls ? { controls: "true" } : {}),
       },
       preload: {
         default: "metadata",
-        parseHTML: el => el.getAttribute("preload") || "metadata",
+        parseHTML: (el) => el.getAttribute("preload") || "metadata",
       },
       loop: {
         default: false,
-        parseHTML: el => el.hasAttribute("loop"),
-        renderHTML: attrs => (attrs.loop ? { loop: "true" } : {}),
+        parseHTML: (el) => el.hasAttribute("loop"),
+        renderHTML: (attrs) => (attrs.loop ? { loop: "true" } : {}),
       },
       muted: {
         default: false,
-        parseHTML: el => el.hasAttribute("muted"),
-        renderHTML: attrs => (attrs.muted ? { muted: "true" } : {}),
+        parseHTML: (el) => el.hasAttribute("muted"),
+        renderHTML: (attrs) => (attrs.muted ? { muted: "true" } : {}),
       },
       class: {
         default: null,
-        parseHTML: el => el.getAttribute("class"),
+        parseHTML: (el) => el.getAttribute("class"),
       },
       style: {
         default: null,
-        parseHTML: el => el.getAttribute("style"),
+        parseHTML: (el) => el.getAttribute("style"),
       },
     };
   },
 
   parseHTML() {
-    return [
-      { tag: "audio" },
-    ];
+    return [{ tag: "audio" }];
   },
 
   renderHTML({ HTMLAttributes }) {
@@ -464,16 +468,13 @@ const Audio = Node.create({
     };
 
     // Remove null entries (ProseMirror tolerates null)
-    Object.keys(attrs).forEach(k => {
+    Object.keys(attrs).forEach((k) => {
       if (attrs[k] === null || attrs[k] === undefined) delete attrs[k];
     });
 
     return ["audio", attrs];
   },
 });
-
-
-
 
 export function CustomAnnotationTextEditor({
   instanceId,
@@ -525,16 +526,19 @@ export function CustomAnnotationTextEditor({
 
   const [isTagSuggestionsOpen, setIsTagSuggestionsOpen] = useState(false);
 
-  const TAG_OPTIONS = useMemo(() => [
-    ...(globalThis?.UsedTags || []).map((tag) => ({
-      key: tag.label,
-      label: tag.label,
-    })),
-  ], [globalThis?.UsedTags]);
+  const TAG_OPTIONS = useMemo(
+    () => [
+      ...(globalThis?.UsedTags || []).map((tag) => ({
+        key: tag.label,
+        label: tag.label,
+      })),
+    ],
+    [globalThis?.UsedTags]
+  );
 
-  const onClickTags = (tag:any) => {
-    const tagHTML = `<span id=${showPreview?"hashtag":""}>${tag.label}</span><br/>`;
-    if(!editorObjRef.current) return;
+  const onClickTags = (tag: any) => {
+    const tagHTML = `<span id=${showPreview ? "hashtag" : ""}>${tag.label}</span><br/>`;
+    if (!editorObjRef.current) return;
     const { from } = editorObjRef.current.state.selection;
     // Replace the last typed "#" with "#tag"
     editorObjRef.current
@@ -544,11 +548,11 @@ export function CustomAnnotationTextEditor({
       .run();
 
     setIsTagSuggestionsOpen(false);
-  }
+  };
 
   const toggleTagSuggestions = () => {
     setIsTagSuggestionsOpen((prev) => !prev);
-  }
+  };
 
   const toggleCommandBox = () => {
     setIsCommandBox((prev) => !prev);
@@ -558,14 +562,20 @@ export function CustomAnnotationTextEditor({
 
   const togglePreview = () => {
     setShowPreview((v) => {
-      if(!v && editorObjRef.current) {
-        editorObjRef.current.commands.setContent(ColorizeParagraphs(canonicalHTMLRef.current));
-      }else {
-        editorObjRef.current.commands.setContent(fakeEscapeMediaTags(uncolorizeHashtags(editorObjRef.current.getHTML())));
+      if (!v && editorObjRef.current) {
+        editorObjRef.current.commands.setContent(
+          ColorizeParagraphs(canonicalHTMLRef.current)
+        );
+      } else {
+        editorObjRef.current.commands.setContent(
+          fakeEscapeMediaTags(
+            uncolorizeHashtags(editorObjRef.current.getHTML())
+          )
+        );
       }
       return !v;
     });
-  }
+  };
 
   globalThis.TogglePreview = togglePreview;
 
@@ -581,11 +591,9 @@ export function CustomAnnotationTextEditor({
   }, [recording]);
 
   const handleDropFiles = async (files) => {
-    if(loading) return;
+    if (loading) return;
     setLoading(true);
-    const data = await uploadFilesReusable(
-      files
-    );
+    const data = await uploadFilesReusable(files);
     let html = "";
 
     data.forEach((file) => {
@@ -596,10 +604,14 @@ export function CustomAnnotationTextEditor({
     if (html) {
       setTimeout(() => {
         if (!editorObjRef.current) return;
-        if(globalThis.ThruCommandBox) {
+        if (globalThis.ThruCommandBox) {
           globalThis.ThruCommandBox = false;
           const { from } = editorObjRef.current.state.selection;
-          editorObjRef.current.chain().focus().insertContentAt({ from: from - 1, to: from }, html).run();
+          editorObjRef.current
+            .chain()
+            .focus()
+            .insertContentAt({ from: from - 1, to: from }, html)
+            .run();
           return;
         }
         editorObjRef.current.chain().focus().insertContent(html).run();
@@ -669,7 +681,7 @@ export function CustomAnnotationTextEditor({
 
   const onAddExternalLink = (data) => {
     console.log("data", data);
-  }
+  };
 
   const typingDeboncingTimeout = useRef(null);
 
@@ -679,10 +691,17 @@ export function CustomAnnotationTextEditor({
 
     const contentHTML = (() => {
       canonicalHTMLRef.current = initialHTML;
-      if (typeof initialHTML === "string") return fakeEscapeMediaTags(uncolorizeHashtags(initialHTML), showPreview);
+      if (typeof initialHTML === "string")
+        return fakeEscapeMediaTags(
+          uncolorizeHashtags(initialHTML),
+          showPreview
+        );
       if (typeof initialText === "string")
         return `<p>${escapeHTML(initialText)}</p>`;
-      return fakeEscapeMediaTags(uncolorizeHashtags(placeholderHTML), showPreview);
+      return fakeEscapeMediaTags(
+        uncolorizeHashtags(placeholderHTML),
+        showPreview
+      );
     })();
 
     const editor = new Editor({
@@ -713,20 +732,20 @@ export function CustomAnnotationTextEditor({
         Audio,
         CustomImage.configure({ inline: false, allowBase64: true }),
         Link.configure({ openOnClick: true, linkOnPaste: true }),
-        CustomSpan
+        CustomSpan,
       ],
       editorProps: {
         handleDOMEvents: {
-          keyup: (_, event:any) => {
+          keyup: (_, event: any) => {
             if (event.key === "Shift") {
               return true;
             }
-            if(event.key === '/') {
+            if (event.key === "/") {
               toggleCommandBox();
               return;
             }
             setIsCommandBox(false);
-            if(event.key === '#' && TAG_OPTIONS.length > 0) {
+            if (event.key === "#" && TAG_OPTIONS.length > 0) {
               toggleTagSuggestions();
               return;
             }
@@ -750,7 +769,7 @@ export function CustomAnnotationTextEditor({
           paste: async (_, event) => {
             const items = event?.clipboardData?.items;
 
-              // 🔴 STOP DEFAULT PASTE IMMEDIATELY
+            // 🔴 STOP DEFAULT PASTE IMMEDIATELY
             event.preventDefault();
             event.stopPropagation();
 
@@ -758,7 +777,7 @@ export function CustomAnnotationTextEditor({
             const htmlText = event.clipboardData.getData("text/html");
 
             // const pastedText = [];
-            if (!items || !(items.length)) return false;
+            if (!items || !items.length) return false;
             const files = [];
             for (let i = 0; i < items.length; i++) {
               const item = items[i];
@@ -786,12 +805,15 @@ export function CustomAnnotationTextEditor({
             });
 
             if (plainText) {
-              const embedHTML = fakeEscapeMediaTags(generateEmbedFromUrl(plainText.trim()), showPreview);
+              const embedHTML = fakeEscapeMediaTags(
+                generateEmbedFromUrl(plainText.trim()),
+                showPreview
+              );
 
               if (embedHTML) {
                 setTimeout(() => {
                   editor.chain().focus().insertContent(embedHTML).run();
-                }, 50); 
+                }, 50);
               } else if (htmlText) {
                 setTimeout(() => {
                   editor.chain().focus().insertContent(htmlText).run();
@@ -825,10 +847,10 @@ export function CustomAnnotationTextEditor({
       try {
         // if the editor html ending with '/' then toggle the command box
         const editorHTML = editor.getHTML();
-      
+
         const html = fakeUnescapeMediaTags(ColorizeParagraphs(editorHTML));
         canonicalHTMLRef.current = html;
-     
+
         if (onChange) {
           onChange(html, editor.getJSON());
         }
@@ -866,10 +888,10 @@ export function CustomAnnotationTextEditor({
     video: () => {
       shout("startRecording", RECORDING_TYPES.video);
     },
-    mic: () =>  {
+    mic: () => {
       shout("startRecording", RECORDING_TYPES.audio);
     },
-    slash: () =>  {
+    slash: () => {
       shout("showCommandBox", RECORDING_TYPES.audio);
     },
     bold: () => chain("toggleBold"),
@@ -1017,7 +1039,7 @@ export function CustomAnnotationTextEditor({
   const onPickImage = () => fileImgInput.current?.click();
   const onImageSelected = (e) => {
     handleDropFiles({
-      files: Array.from(e.target.files)
+      files: Array.from(e.target.files),
     });
   };
 
@@ -1154,36 +1176,41 @@ export function CustomAnnotationTextEditor({
   }, [padY, padX]);
 
   const isMic = useMemo(() => recording === RECORDING_TYPES.audio, [recording]);
-  const isVideo = useMemo(() => recording === RECORDING_TYPES.video, [recording]);
+  const isVideo = useMemo(
+    () => recording === RECORDING_TYPES.video,
+    [recording]
+  );
   const isLink = useMemo(() => recording === RECORDING_TYPES.link, [recording]);
 
   const [data, setData] = useState(null);
 
   const onSaveAndAdd = async () => {
-    
-
-    if(isLink) {
-
-      if(!link.trim()) return ShowNotification({
-        message: "Please enter a link to save!",
-        severity: "error",
-      });
+    if (isLink) {
+      if (!link.trim())
+        return ShowNotification({
+          message: "Please enter a link to save!",
+          severity: "error",
+        });
 
       const originalHTML = generateEmbedFromUrl(link.trim(), name.trim());
       const embedHTML = fakeEscapeMediaTags(originalHTML, showPreview);
-  
-      if(embedHTML === null) {
+
+      if (embedHTML === null) {
         globalThis.ThruCommandBox = false;
-        
+
         return ShowNotification({
           message: "Invalid link!",
           severity: "error",
         });
       }
-      if(globalThis.ThruCommandBox) {
+      if (globalThis.ThruCommandBox) {
         globalThis.ThruCommandBox = false;
         const { from } = editorObjRef.current.state.selection;
-        editorObjRef.current.chain().focus().insertContentAt({ from: from - 1, to: from }, embedHTML).run();
+        editorObjRef.current
+          .chain()
+          .focus()
+          .insertContentAt({ from: from - 1, to: from }, embedHTML)
+          .run();
       } else {
         editorObjRef.current.chain().focus().insertContent(embedHTML).run();
       }
@@ -1193,26 +1220,31 @@ export function CustomAnnotationTextEditor({
       return;
     }
 
-    if(recording === RECORDING_TYPES.audio && !data) {
+    if (recording === RECORDING_TYPES.audio && !data) {
       globalThis.HandleStopPlayVoice();
       return;
     }
 
-    if(recording === RECORDING_TYPES.video && !data) {
+    if (recording === RECORDING_TYPES.video && !data) {
       globalThis.HandleStopPlayVideo();
       return;
     }
 
     await os.sleep(100);
 
-    if(!data) return ShowNotification({
-      message: "Please record something to save!",
-      severity: "error",
-    });
-    
-    const finalData = recording === RECORDING_TYPES.audio ? globalThis.ORIGINAL_DATA : data;
+    if (!data)
+      return ShowNotification({
+        message: "Please record something to save!",
+        severity: "error",
+      });
 
-    if (recording === RECORDING_TYPES.audio || recording === RECORDING_TYPES.video) {
+    const finalData =
+      recording === RECORDING_TYPES.audio ? globalThis.ORIGINAL_DATA : data;
+
+    if (
+      recording === RECORDING_TYPES.audio ||
+      recording === RECORDING_TYPES.video
+    ) {
       setLoading(true);
 
       const fileSave = await os.recordFile(
@@ -1254,10 +1286,14 @@ export function CustomAnnotationTextEditor({
 
       htmlToInsert = fakeEscapeMediaTags(htmlToInsert, showPreview);
 
-      if(globalThis.ThruCommandBox) {
+      if (globalThis.ThruCommandBox) {
         globalThis.ThruCommandBox = false;
         const { from } = editorObjRef.current.state.selection;
-        editorObjRef.current.chain().focus().insertContentAt({ from: from - 1, to: from }, htmlToInsert).run();
+        editorObjRef.current
+          .chain()
+          .focus()
+          .insertContentAt({ from: from - 1, to: from }, htmlToInsert)
+          .run();
       } else {
         editorObjRef.current.chain().focus().insertContent(htmlToInsert).run();
       }
@@ -1265,136 +1301,171 @@ export function CustomAnnotationTextEditor({
       setRecording(null);
       setData(null);
     }
-  }
-
+  };
 
   return (
     <>
-    {isCommandBox && <div className="command-box-backdrop" onClick={toggleCommandBox} style={{ display: isCommandBox ? "block" : "none", position: "fixed", top: 0, left: 0, right: 0, bottom: 0, zIndex: 98 }}></div>}
-    <div ref={dragRef} className={`sre-root ${isVideo ? "sre-video-root" : ""} ${className || ""}`} style={{ ...style }}>
-      {isCommandBox && <div
-      className="relative-float command-box"
-      style={{
-       backgroundColor: "#F7F7F7",
-       backdropFilter: "none",
-      }}
+      {isCommandBox && (
+        <div
+          className="command-box-backdrop"
+          onClick={toggleCommandBox}
+          style={{
+            display: isCommandBox ? "block" : "none",
+            position: "fixed",
+            top: 0,
+            left: 0,
+            right: 0,
+            bottom: 0,
+            zIndex: 98,
+          }}
+        ></div>
+      )}
+      <div
+        ref={dragRef}
+        className={`sre-root ${isVideo ? "sre-video-root" : ""} ${className || ""}`}
+        style={{ ...style }}
       >
-        {COMMAND_BOX_OPTIONS.map((option) => (
-          <div className="command-box-option" key={option.label} onClick={option.onClick}>
-            <img src={option.icon} alt={option.label} />
-            <p>{option.label}</p>
-          </div>
-        ))}
-      </div>}
-
-    {isTagSuggestionsOpen && <SelectionOptions handleClose={() => setIsTagSuggestionsOpen(false)} options={TAG_OPTIONS} onClickOption={onClickTags} />}
-
-
-      {(isMic || isLink || isVideo) && 
+        {isCommandBox && (
           <div
-                  style={{
-                    position: "absolute",
-                    top: 0,
-                    left: '-4%',
-                    right: 0,
-                    bottom: 0,
-                    backgroundColor: "white",
-                    zIndex: 10000,
-                    display: "flex",
-                    flexDirection: "column",
-                    gap: "10px",
-                    width: '107%',
-                    alignItems: "center",
-                    justifyContent: "center",
-                    backdropFilter: "blur(2px)",
-                    minHeight: "max-content",
-                    height: "calc(100% + 90px)",
-                    padding: "1rem 0",
-                  }}
-                >
-                {isLink
-                 ? 
-                 <div
-                 className="input-conainter-type"
-                 style={{
-                   padding: "1px 0",
-                   display: "flex",
-                   flexDirection: "column",
-                   alignItems: "center",
-                 }}
-               >
-                 <Input
-                   style={{ width: "100%" }}
-                   value={name}
-                   onChangeListener={setName}
-                   placeholder={t('typeToAddCustomTitle')}
-                 />
-                 <div style={{ width: "100%", display: "flex", gap: "1rem" }}>
-                   <Input
-                     style={{ marginBottom: "0", flexGrow: "1" }}
-                     value={link}
-                     onChangeListener={setLink}
-                     placeholder={`${t('exampleeg')} https://www.youtube.com/watch?v=ALsluAKBZ-czs3`}
-                   />
-                 </div>
-               </div>
-                :
-                isVideo ?
-                 <VideoRecordUI data={data} setData={setData} />
-                  :
-                   <RecordingUI data={data} setData={setData} />
-                }
-
-               <div style={{ display: "flex", gap: "10px" }}>
-                  <Button
-                    onClick={onSaveAndAdd}
-                    secondary
-                    loading={loading}
-                  >
-                    Save & Add
-                  </Button>
-                  <Button
-                    onClick={() => {
-                      setRecording(null);
-                    }}
-                    secondaryAlt
-                  >
-                    Cancel
-                  </Button>
-            </div>
-          </div>
-      }
-      {((dragState.isDragOver || loading) && !isMic && !isVideo) && (
-            <div
-             className="relative-float"
-             style={{
-              top: "3rem",
-             }}
-            >
+            className="relative-float command-box"
+            style={{
+              backgroundColor: "var(--pageBackground)",
+              backdropFilter: "none",
+            }}
+          >
+            {COMMAND_BOX_OPTIONS.map((option) => (
               <div
+                className="command-box-option"
+                key={option.label}
+                onClick={option.onClick}
+              >
+                <img
+                  className="img-icon"
+                  src={option.icon}
+                  alt={option.label}
+                />
+                <p>{option.label}</p>
+              </div>
+            ))}
+          </div>
+        )}
+
+        {isTagSuggestionsOpen && (
+          <SelectionOptions
+            handleClose={() => setIsTagSuggestionsOpen(false)}
+            options={TAG_OPTIONS}
+            onClickOption={onClickTags}
+          />
+        )}
+
+        {(isMic || isLink || isVideo) && (
+          <div
+            style={{
+              position: "absolute",
+              top: 0,
+              left: "-4%",
+              right: 0,
+              bottom: 0,
+              backgroundColor: "var(--pageBackground)",
+              zIndex: 10000,
+              display: "flex",
+              flexDirection: "column",
+              gap: "10px",
+              width: "107%",
+              alignItems: "center",
+              justifyContent: "center",
+              backdropFilter: "blur(2px)",
+              minHeight: "max-content",
+              height: "calc(100% + 90px)",
+              padding: "1rem 0",
+            }}
+          >
+            {isLink ? (
+              <div
+                className="input-conainter-type"
                 style={{
-                  display: "grid",
-                  width: "100%",
-                  backgroundColor: "white",
-                  padding: "4px",
-                  borderRadius: "12px",
-                  border: "3px dashed #4459F3",
-                  textAlign: "center",
-                  minWidth: "280px",
-                  boxShadow: "0 10px 30px rgba(0,0,0,0.3)",
-                  zIndex: 99999
+                  padding: "1px 0",
+                  display: "flex",
+                  flexDirection: "column",
+                  alignItems: "center",
                 }}
               >
-             {loading ? 
-              <div style={{color: '#333' ,display: 'flex', flexDirection: 'column', alignItems: 'center', justifyContent: 'center', gap: '10px'}}>
-                  <div className="sre-loading-spinner" ></div>
+                <Input
+                  style={{ width: "100%" }}
+                  value={name}
+                  onChangeListener={setName}
+                  placeholder={t("typeToAddCustomTitle")}
+                />
+                <div style={{ width: "100%", display: "flex", gap: "1rem" }}>
+                  <Input
+                    style={{ marginBottom: "0", flexGrow: "1" }}
+                    value={link}
+                    onChangeListener={setLink}
+                    placeholder={`${t("exampleeg")} https://www.youtube.com/watch?v=ALsluAKBZ-czs3`}
+                  />
+                </div>
+              </div>
+            ) : isVideo ? (
+              <VideoRecordUI data={data} setData={setData} />
+            ) : (
+              <RecordingUI data={data} setData={setData} />
+            )}
+
+            <div style={{ display: "flex", gap: "10px" }}>
+              <Button onClick={onSaveAndAdd} secondary loading={loading}>
+                Save & Add
+              </Button>
+              <Button
+                onClick={() => {
+                  setRecording(null);
+                }}
+                secondaryAlt
+              >
+                Cancel
+              </Button>
+            </div>
+          </div>
+        )}
+        {(dragState.isDragOver || loading) && !isMic && !isVideo && (
+          <div
+            className="relative-float"
+            style={{
+              top: "3rem",
+            }}
+          >
+            <div
+              style={{
+                display: "grid",
+                width: "100%",
+                backgroundColor: "white",
+                padding: "4px",
+                borderRadius: "12px",
+                border: "3px dashed #4459F3",
+                textAlign: "center",
+                minWidth: "280px",
+                boxShadow: "0 10px 30px rgba(0,0,0,0.3)",
+                zIndex: 99999,
+              }}
+            >
+              {loading ? (
+                <div
+                  style={{
+                    color: "#333",
+                    display: "flex",
+                    flexDirection: "column",
+                    alignItems: "center",
+                    justifyContent: "center",
+                    gap: "10px",
+                  }}
+                >
+                  <div className="sre-loading-spinner"></div>
                   <p>Uploading files...</p>
                   <p>Please wait while we upload the files...</p>
                   <p>This may take a few seconds...</p>
                   <p>Thank you for your patience...</p>
-              </div>
-             : 
-              <div>
+                </div>
+              ) : (
+                <div>
                   <div
                     style={{
                       fontSize: "1rem",
@@ -1422,129 +1493,140 @@ export function CustomAnnotationTextEditor({
                     Release to upload files
                   </p>
                 </div>
-              }
-              </div>
+              )}
             </div>
-          )}
-      <link
-        rel="stylesheet"
-        href="https://fonts.googleapis.com/css2?family=Material+Symbols+Outlined:opsz,wght,FILL,GRAD@20..48,100..700,0..1,-50..200"
-      />
-      <style>{SRE_STYLES(minHeight)}</style>
+          </div>
+        )}
+        <link
+          rel="stylesheet"
+          href="https://fonts.googleapis.com/css2?family=Material+Symbols+Outlined:opsz,wght,FILL,GRAD@20..48,100..700,0..1,-50..200"
+        />
+        <style>{SRE_STYLES(minHeight)}</style>
 
-      <input
-        ref={fileImgInput}
-        type="file"
-        accept="image/*"
-        style={{ display: "none" }}
-        onChange={onImageSelected}
-      />
-      <input
-        ref={fileJsonInput}
-        type="file"
-        accept="application/json"
-        style={{ display: "none" }}
-        onChange={onJSONSelected}
-      />
+        <input
+          ref={fileImgInput}
+          type="file"
+          accept="image/*"
+          style={{ display: "none" }}
+          onChange={onImageSelected}
+        />
+        <input
+          ref={fileJsonInput}
+          type="file"
+          accept="application/json"
+          style={{ display: "none" }}
+          onChange={onJSONSelected}
+        />
 
-      <div className="sre-toolbar" ref={toolbarRef}>
-        <div className="sre-measurer" ref={measurerRef}>
-          {orderedIds().map((id) => (
-            <div
-              key={`m-${id}`}
-              ref={(el) => (itemsRef.current[id] = el)}
-              className="sre-item-measurer"
-            >
+        <div className="sre-toolbar" ref={toolbarRef}>
+          <div className="sre-measurer" ref={measurerRef}>
+            {orderedIds().map((id) => (
+              <div
+                key={`m-${id}`}
+                ref={(el) => (itemsRef.current[id] = el)}
+                className="sre-item-measurer"
+              >
+                {toolbarMap[id]}
+              </div>
+            ))}
+          </div>
+
+          {visibleIds.map((id) => (
+            <div key={`v-${id}`} className="sre-item">
               {toolbarMap[id]}
             </div>
           ))}
+
+          {showMoreOptions && (
+            <div className="sre-item">
+              <button
+                className="sre-overflow-btn"
+                onClick={() => setShowOverflow((v) => !v)}
+                title="More"
+              >
+                <span className="material-symbols-outlined">more_vert</span>
+              </button>
+            </div>
+          )}
         </div>
 
-        {visibleIds.map((id) => (
-          <div key={`v-${id}`} className="sre-item">
-            {toolbarMap[id]}
+        {showOverflow && (
+          <div className="sre-overflow-tray">
+            {overflowIds.length === 0 && (
+              <div className="sre-overflow-empty">No more items</div>
+            )}
+            {overflowIds.map((id) => (
+              <div key={`o-${id}`} className="sre-overflow-item">
+                {toolbarMap[id]}
+              </div>
+            ))}
           </div>
-        ))}
+        )}
 
-        {showMoreOptions && (
-          <div className="sre-item">
-            <button
-              className="sre-overflow-btn"
-              onClick={() => setShowOverflow((v) => !v)}
-              title="More"
+        <div
+          id={`sre-editor-${_instanceId}`}
+          ref={editorRef}
+          className="sre-editor"
+        />
+        {false && (
+          <p className="sre-hashtag-hint">
+            You can add tags by typing # followed by the hashtag. For example,
+            #love #faith #hope.
+          </p>
+        )}
+        {showTuning && (
+          <div
+            className="sre-tune-backdrop"
+            onClick={() => setShowTuning(false)}
+          >
+            <div
+              className="sre-tune-modal"
+              onClick={(e) => e.stopPropagation()}
             >
-              <span className="material-symbols-outlined">more_vert</span>
-            </button>
+              <div className="sre-tune-header">
+                <div>Customize toolbar order</div>
+                <button
+                  className="sre-tune-close"
+                  onClick={() => setShowTuning(false)}
+                >
+                  <span className="material-symbols-outlined">close</span>
+                </button>
+              </div>
+              <div className="sre-tune-body">
+                {draftOrder.map((id, idx) => (
+                  <div key={`dr-${id}`} className="sre-tune-row">
+                    <div className="sre-tune-id">{id}</div>
+                    <div className="sre-tune-arrows">
+                      <button onClick={() => moveDraft(idx, -1)} title="Up">
+                        <span className="material-symbols-outlined">
+                          keyboard_arrow_up
+                        </span>
+                      </button>
+                      <button onClick={() => moveDraft(idx, 1)} title="Down">
+                        <span className="material-symbols-outlined">
+                          keyboard_arrow_down
+                        </span>
+                      </button>
+                    </div>
+                  </div>
+                ))}
+              </div>
+              <div className="sre-tune-footer">
+                <button
+                  className="sre-btn-secondary"
+                  onClick={() => setDraftOrder(defaultPriority)}
+                >
+                  Reset
+                </button>
+                <div style={{ flex: 1 }} />
+                <button className="sre-btn-primary" onClick={saveDraft}>
+                  Save
+                </button>
+              </div>
+            </div>
           </div>
         )}
       </div>
-
-      {showOverflow && (
-        <div className="sre-overflow-tray">
-          {overflowIds.length === 0 && (
-            <div className="sre-overflow-empty">No more items</div>
-          )}
-          {overflowIds.map((id) => (
-            <div key={`o-${id}`} className="sre-overflow-item">
-              {toolbarMap[id]}
-            </div>
-          ))}
-        </div>
-      )}
-
-      <div
-        id={`sre-editor-${_instanceId}`}
-        ref={editorRef}
-        className="sre-editor"
-      />
-      { false && <p className="sre-hashtag-hint">You can add tags by typing # followed by the hashtag. For example, #love #faith #hope.</p> }
-      {showTuning && (
-        <div className="sre-tune-backdrop" onClick={() => setShowTuning(false)}>
-          <div className="sre-tune-modal" onClick={(e) => e.stopPropagation()}>
-            <div className="sre-tune-header">
-              <div>Customize toolbar order</div>
-              <button
-                className="sre-tune-close"
-                onClick={() => setShowTuning(false)}
-              >
-                <span className="material-symbols-outlined">close</span>
-              </button>
-            </div>
-            <div className="sre-tune-body">
-              {draftOrder.map((id, idx) => (
-                <div key={`dr-${id}`} className="sre-tune-row">
-                  <div className="sre-tune-id">{id}</div>
-                  <div className="sre-tune-arrows">
-                    <button onClick={() => moveDraft(idx, -1)} title="Up">
-                      <span className="material-symbols-outlined">
-                        keyboard_arrow_up
-                      </span>
-                    </button>
-                    <button onClick={() => moveDraft(idx, 1)} title="Down">
-                      <span className="material-symbols-outlined">
-                        keyboard_arrow_down
-                      </span>
-                    </button>
-                  </div>
-                </div>
-              ))}
-            </div>
-            <div className="sre-tune-footer">
-              <button
-                className="sre-btn-secondary"
-                onClick={() => setDraftOrder(defaultPriority)}
-              >
-                Reset
-              </button>
-              <div style={{ flex: 1 }} />
-              <button className="sre-btn-primary" onClick={saveDraft}>
-                Save
-              </button>
-            </div>
-          </div>
-        </div>
-      )}
-    </div>
     </>
   );
 
@@ -1569,7 +1651,7 @@ export function CustomAnnotationTextEditor({
       onAddLink,
     } = ctx;
 
-    const iconBtn = (title, icon, onClick, url = '') => (
+    const iconBtn = (title, icon, onClick, url = "") => (
       <button
         className="sre-ib"
         onClick={(e) => {
@@ -1577,8 +1659,12 @@ export function CustomAnnotationTextEditor({
           onClick(e);
         }}
         title={title}
-        >
-         {url ? <img width={14} height={14} src={url} alt={title} /> : <span className="material-symbols-outlined">{icon}</span>}
+      >
+        {url ? (
+          <img width={14} height={14} src={url} alt={title} />
+        ) : (
+          <span className="material-symbols-outlined">{icon}</span>
+        )}
       </button>
     );
 
@@ -1634,7 +1720,7 @@ export function CustomAnnotationTextEditor({
 
     const alignDrop = (
       <div className="sre-drop">
-        <button 
+        <button
           className="sre-ib"
           onClick={(e) => {
             e.preventDefault();
@@ -2121,16 +2207,15 @@ function escapeHTML(s) {
   );
 }
 
-const MEDIA_OPEN_TAG_REGEX =
-  /<(img|video|audio|iframe)\b[\s\S]*?>/gi;
+const MEDIA_OPEN_TAG_REGEX = /<(img|video|audio|iframe)\b[\s\S]*?>/gi;
 
-const MEDIA_CLOSE_TAG_REGEX =
-  /<\/(video|audio|iframe)\s*>/gi;
+const MEDIA_CLOSE_TAG_REGEX = /<\/(video|audio|iframe)\s*>/gi;
 
-  function fakeEscapeMediaTags(html = "", showPreview = false) {
-    if (showPreview) return html;
-  
-    return html
+function fakeEscapeMediaTags(html = "", showPreview = false) {
+  if (showPreview) return html;
+
+  return (
+    html
       // escape opening media tags
       .replace(MEDIA_OPEN_TAG_REGEX, (tag) =>
         tag.replace(/</g, "‹").replace(/>/g, "›")
@@ -2138,10 +2223,10 @@ const MEDIA_CLOSE_TAG_REGEX =
       // escape closing media tags
       .replace(MEDIA_CLOSE_TAG_REGEX, (tag) =>
         tag.replace(/</g, "‹").replace(/>/g, "›")
-      );
-  }
+      )
+  );
+}
 
-  
 const P_BLOCK_REGEX = /<p\b[^>]*>([\s\S]*?)<\/p>/gi;
 
 // matches:
@@ -2152,50 +2237,41 @@ const P_BLOCK_REGEX = /<p\b[^>]*>([\s\S]*?)<\/p>/gi;
 const FAKE_MEDIA_BLOCK_REGEX =
   /‹(img|video|audio|iframe)\b([\s\S]*?)\/?›(?:\s*‹\/\1›)?/gi;
 
+function fakeUnescapeMediaTags(html) {
+  return html.replace(P_BLOCK_REGEX, (fullP, inner) => {
+    const media = [];
+    let match;
 
-  function fakeUnescapeMediaTags(html) {
-    return html.replace(P_BLOCK_REGEX, (fullP, inner) => {
-      const media = [];
-      let match;
-  
-      // extract ALL fake media blocks in order
-      while ((match = FAKE_MEDIA_BLOCK_REGEX.exec(inner)) !== null) {
-        const [, tag, attrs] = match;
-  
-        if (tag === "img") {
-          media.push(`<img${attrs} />`);
-        } else {
-          media.push(`<${tag}${attrs}></${tag}>`);
-        }
-      }
-  
-      // remove media blocks from paragraph
-      const leftoverText = inner
-        .replace(FAKE_MEDIA_BLOCK_REGEX, "")
-        .trim();
-  
-      // CASE 1: paragraph contains ONLY media → unwrap
-      if (media.length && leftoverText === "") {
-        return media.join("\n");
-      }
-  
-      // CASE 2: mixed content → split safely
-      if (media.length) {
-        return (
-          media.join("\n") +
-          (leftoverText
-            ? `\n<p>${leftoverText}</p>`
-            : "")
-        );
-      }
-  
-      // CASE 3: normal paragraph
-      return fullP;
-    });
-  }
-  
+    // extract ALL fake media blocks in order
+    while ((match = FAKE_MEDIA_BLOCK_REGEX.exec(inner)) !== null) {
+      const [, tag, attrs] = match;
 
-  
+      if (tag === "img") {
+        media.push(`<img${attrs} />`);
+      } else {
+        media.push(`<${tag}${attrs}></${tag}>`);
+      }
+    }
+
+    // remove media blocks from paragraph
+    const leftoverText = inner.replace(FAKE_MEDIA_BLOCK_REGEX, "").trim();
+
+    // CASE 1: paragraph contains ONLY media → unwrap
+    if (media.length && leftoverText === "") {
+      return media.join("\n");
+    }
+
+    // CASE 2: mixed content → split safely
+    if (media.length) {
+      return (
+        media.join("\n") + (leftoverText ? `\n<p>${leftoverText}</p>` : "")
+      );
+    }
+
+    // CASE 3: normal paragraph
+    return fullP;
+  });
+}
 
 function triggerDownload(blob, filename) {
   const url = URL.createObjectURL(blob);

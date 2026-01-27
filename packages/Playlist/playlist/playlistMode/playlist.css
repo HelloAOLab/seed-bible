@@ -6,7 +6,6 @@
     "opsz" 24;
 }
 
-  
 #hashtag {
   color: var(--primaryColor) !important;
 }
@@ -16,31 +15,30 @@
 }
 
 .img-icon-secondary {
-  filter: var(--secondary-filter-mode);
+  filter: var(--secondary-filter-mode) !important;
 }
 
 .material-symbols-outlined.color-inverted {
   color: var(--primaryButtonFill) !important;
 }
 
-
 .playlist-cont-parent,
- .playlist-cont-parent *,
- .playlist-cont-parent::after,
- .playlist-cont-parent *::after,
- .playlist-cont-parent::before,
- .playlist-cont-parent *::before,
- .reset-css,
- .reset-css *,
- .reset-css::after,
- .reset-css *::after,
- .reset-css::before,
- .reset-css *::before {
+.playlist-cont-parent *,
+.playlist-cont-parent::after,
+.playlist-cont-parent *::after,
+.playlist-cont-parent::before,
+.playlist-cont-parent *::before,
+.reset-css,
+.reset-css *,
+.reset-css::after,
+.reset-css *::after,
+.reset-css::before,
+.reset-css *::before {
   margin: 0;
   padding: 0;
   box-sizing: border-box;
   color: var(--verseTextColor, var(--text-verse-color, var(--pageTextColor)));
-  font-family: 'Satoshi';
+  font-family: "Satoshi";
 }
 
 .actions-buttons-annotation {
@@ -59,13 +57,13 @@
   visibility: visible;
 }
 
-.annotation-list-item-type-comment { 
+.annotation-list-item-type-comment {
   background: white;
   padding: 4px;
   border-radius: 4px;
 }
 
-.annotation-list-item.annotation-list-item-type-comment  .render-html-content{
+.annotation-list-item.annotation-list-item-type-comment .render-html-content {
   margin: 0;
   padding: 0;
   box-sizing: border-box;
@@ -80,11 +78,11 @@
   letter-spacing: initial;
 }
 
-.annotation-list-item.annotation-list-item-type-comment  .render-html-content * {
+.annotation-list-item.annotation-list-item-type-comment .render-html-content * {
   margin: 0;
   padding: 0;
   box-sizing: border-box;
-  font-family: 'Satoshi';
+  font-family: "Satoshi";
   color: initial;
   font-weight: initial;
   display: initial;
@@ -107,8 +105,7 @@
 
 /* Track */
 ::-webkit-scrollbar-track {
-  box-shadow: inset 0 0 2px rgb(219,
-   210, 210);
+  box-shadow: inset 0 0 2px rgb(219, 210, 210);
   border-radius: 2px;
 }
 
@@ -387,7 +384,7 @@ history-item:active {
   display: flex;
   align-items: center;
   cursor: pointer;
-  font-family: 'Satoshi';
+  font-family: "Satoshi";
   font-weight: 700;
   font-size: 14px;
   line-height: 24.3px;
@@ -401,11 +398,11 @@ history-item:active {
 }
 
 .tabs-playlist-item.active {
-  border-bottom: 1px solid #d36433;
+  border-bottom: 1px solid var(--primaryColor);
 }
 
 .tabs-playlist-item.active * {
-  color: #d36433;
+  color: var(--primaryColor);
 }
 
 .info-item-playlist {
@@ -590,19 +587,19 @@ div.history-item.current-date-disorder .playlist-item-type {
 }
 
 .playlist-item-type.bookmark .number-style {
-  font-family: 'Satoshi';
+  font-family: "Satoshi";
   font-weight: 600;
   font-size: 15px;
 }
 
 .playlist-item-type.bookmark .verse-style {
-  font-family: 'Satoshi';
+  font-family: "Satoshi";
   font-weight: 500;
   font-size: 12px;
 }
 
 .playlist-item-type.bookmark .time-style {
-  font-family: 'Satoshi';
+  font-family: "Satoshi";
   font-weight: 400;
   font-style: Italic;
   font-size: 12px;
@@ -874,7 +871,7 @@ div.attachment-link.dropabble-Embed .playlist-item-type {
 }
 
 .FILE_UPLOAD div .link {
-  color: #d36433;
+  color: var(--primaryColor);
   cursor: pointer;
   margin: 0.5rem 0;
 }
@@ -963,7 +960,7 @@ div.attachment-link.dropabble-Embed .playlist-item-type {
 }
 
 .what-this {
-  font-family: 'Satoshi';
+  font-family: "Satoshi";
   font-weight: 500;
   font-size: 16px;
   line-height: 18.9px;
@@ -1047,7 +1044,7 @@ div.attachment-link.dropabble-Embed .playlist-item-type {
   height: 32px;
   border-radius: 24px;
   min-width: fit-content;
-  font-family: 'Satoshi';
+  font-family: "Satoshi";
   font-weight: 500;
   font-size: 10px;
   cursor: pointer;
@@ -1092,7 +1089,7 @@ div.attachment-link.dropabble-Embed .playlist-item-type {
 }
 
 .content-type p {
-  font-family: 'Satoshi';
+  font-family: "Satoshi";
   font-weight: 500;
   font-size: 14px;
   line-height: 100%;
@@ -1114,7 +1111,7 @@ div.attachment-link.dropabble-Embed .playlist-item-type {
   display: flex;
   align-items: center;
   justify-content: space-between;
-  font-family: 'Satoshi';
+  font-family: "Satoshi";
   font-weight: 700;
   font-size: 16px;
   line-height: 100%;
@@ -1122,7 +1119,7 @@ div.attachment-link.dropabble-Embed .playlist-item-type {
 }
 
 .annotation-list-item {
-  font-family: 'Satoshi';
+  font-family: "Satoshi";
   font-weight: 500;
   display: flex;
   justify-content: space-between;
@@ -1138,7 +1135,7 @@ div.attachment-link.dropabble-Embed .playlist-item-type {
 }
 
 .annotation .verse-annotation {
-  font-family: 'Satoshi';
+  font-family: "Satoshi";
   font-weight: 700;
   font-size: 14px;
   line-height: 100%;
@@ -1183,12 +1180,12 @@ div.attachment-link.dropabble-Embed .playlist-item-type {
 }
 
 .switch-tabs > div.active {
-  background-color: #fff;
-  color: #d36433 !important;
+  background-color: var(--pageBackground);
+  color: var(--primaryColor) !important;
 }
 
 .switch-tabs > div.active p {
-  color: #d36433 !important;
+  color: var(--primaryColor) !important;
 }
 
 .welcome-box {
