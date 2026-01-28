@@ -281,8 +281,9 @@ export async function uploadExtensionAux(
     uploadCommand += ` --key "${sessionKey}"`;
   }
 
+  console.log("Uploading extension with command:\n", uploadCommand);
+
   const output = execSync(uploadCommand.trim(), {
-    stdio: "inherit",
     encoding: "utf-8",
   });
 
