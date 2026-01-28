@@ -282,7 +282,7 @@ export async function uploadExtensionAux(
   }
 
   const output = execSync(uploadCommand.trim(), {
-    stdio: "ignore",
+    stdio: "inherit",
     encoding: "utf-8",
   });
 
