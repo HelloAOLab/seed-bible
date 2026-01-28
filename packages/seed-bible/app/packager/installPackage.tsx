@@ -281,7 +281,8 @@ await (async function mainInstaller(that) {
         if (data.casualOsPackage) {
           await os.installPackage(
             data.casualOsPackage.recordName,
-            data.casualOsPackage.address
+            data.casualOsPackage.address,
+            data.casualOsPackage.key
           );
         } else {
           const read = await web.get(data.recordFile?.url || data.source);
@@ -343,7 +344,8 @@ await (async function mainInstaller(that) {
   if (data.casualOsPackage) {
     await os.installPackage(
       data.casualOsPackage.recordName,
-      data.casualOsPackage.address
+      data.casualOsPackage.address,
+      data.casualOsPackage.key
     );
     bot = getBot("system", data.mainBotTag);
   } else {
