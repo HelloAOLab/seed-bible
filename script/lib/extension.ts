@@ -5,6 +5,14 @@ import { uploadFile } from "./records";
 import { existsSync } from "node:fs";
 import { execSync } from "node:child_process";
 import type { StoredAux } from "@casual-simulation/aux-common";
+import type {
+  PackageRecordVersionKey,
+  PackageRecordVersionKeySpecifier,
+} from "@casual-simulation/aux-records";
+import type {
+  RecordPackageVersionResult,
+  RecordPackageVersionSuccess,
+} from "../../typings/AuxLibraryDefinitions";
 
 const downloadRecordName = "testingPublickKey";
 const uploadRecordName = "seedBibleExtensions";
@@ -53,6 +61,11 @@ export interface ExtensionMeta {
     sha256Hash: string;
     success: boolean;
     url: string;
+  };
+  casualOsPackage?: {
+    recordName: string;
+    address: string;
+    key?: string | PackageRecordVersionKeySpecifier;
   };
   source?: string;
   status: "active";
@@ -250,28 +263,47 @@ export async function downloadAndSave(name: string, fileName?: string) {
  */
 export async function uploadExtensionAux(
   meta: ExtensionMeta,
-  aux: StoredAux,
+  filePath: string,
   sessionKey: string,
   recordKey: string | null | undefined,
   saveMeta: boolean
 ) {
-  const { fileUrl, sha256Hash } = await uploadFile(
-    recordKey ?? uploadRecordName,
-    aux,
-    sessionKey,
-    ["publicRead"]
-  );
-  console.log("Extension File URL:", fileUrl);
+  // const { fileUrl, sha256Hash } = await uploadFile(
+  //   recordKey ?? uploadRecordName,
+  //   aux,
+  //   sessionKey,
+  //   ["publicRead"]
+  // );
+  // console.log("Extension File URL:", fileUrl);
+
+  let uploadCommand = `casualos upload-package --raw --record "${recordKey ?? uploadRecordName}" --address "${meta.name}" --file "${filePath}" --markers "publicRead" --entitlements "data:personal file:personal" --version "minor"`;
+  if (sessionKey) {
+    uploadCommand += ` --key "${sessionKey}"`;
+  }
+
+  const output = execSync(uploadCommand.trim(), {
+    stdio: "ignore",
+    encoding: "utf-8",
+  });
+
+  const result: RecordPackageVersionSuccess & { key: PackageRecordVersionKey } =
+    JSON.parse(output);
+
+  meta.casualOsPackage = {
+    recordName: result.recordName,
+    address: result.address,
+    key: result.key,
+  };
 
   const client = createRecordsClient("https://api.ao.bot");
   client.sessionKey = sessionKey;
 
-  meta.recordFile = {
-    sha256Hash,
-    success: true,
-    url: fileUrl,
-  };
-  meta.source = fileUrl;
+  // meta.recordFile = {
+  //   sha256Hash,
+  //   success: true,
+  //   url: fileUrl,
+  // };
+  // meta.source = fileUrl;
   meta.updatedAt = new Date().toISOString();
 
   if (saveMeta) {
@@ -302,7 +334,6 @@ export async function uploadExtensionAux(
   console.log("Successfully recorded extension:", meta.name);
 
   return {
-    fileUrl: fileUrl,
     meta,
     name: meta.name,
   };
@@ -340,12 +371,9 @@ export async function upload(
   });
   execSync(`casualos minify-aux "${filePath}"`, { stdio: "ignore" });
 
-  const aux = await readFile(filePath, "utf-8");
-  const auxJson = JSON.parse(aux);
-
   return await uploadExtensionAux(
     extensionData,
-    auxJson,
+    filePath,
     options.sessionKey,
     options.recordKey,
     options.saveMeta ?? true
@@ -370,7 +398,6 @@ export async function uploadAll(options: {
   }
 
   const extensionData: {
-    fileUrl: string;
     meta: ExtensionMeta;
     name: string;
   }[] = [];
