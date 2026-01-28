@@ -74,9 +74,7 @@ const Main = () => {
   useEffect(() => {
     setStarted(true);
   }, []);
-  useEffect(() => {
-    // Load styles
-  }, []);
+
   useEffect(() => {
     if (!started) return;
 
@@ -113,6 +111,7 @@ const Main = () => {
 
     globalThis.SpaceScreens[activeSpace] = screens.value;
   }, [screens]);
+
   globalThis.LocateCanvas = () => {
     const nodes = document.querySelectorAll(".mainCanvas");
     const el = nodes[nodes.length - 1]; // last match
@@ -190,32 +189,17 @@ const Main = () => {
   const [isMobile, setIsMobile] = useState(window.innerWidth < 768);
   // const resize = () => {
   // }
-  function handleResize() {
-    setIsMobile(window.innerWidth < 768);
-    const mob = window.innerWidth < 768;
-    setTimeout(() => {
-      updateContainerSize(
-        globalThis.window?.innerWidth - (!fullScreen && !mob && sidebarWidth),
-        globalThis.window?.innerHeight * 0.98
-      );
-    }, 0);
-  }
+
   useEffect(() => {
-    handleResize();
-    globalThis.window?.addEventListener("resize", handleResize);
+    const onResize = () =>
+      handleResize(setIsMobile, updateContainerSize, fullScreen, sidebarWidth);
+    onResize();
+    window?.addEventListener("resize", onResize);
     return () => {
-      globalThis.window?.removeEventListener("resize", handleResize);
+      window?.removeEventListener("resize", onResize);
     };
   }, [collapsed, fullScreen, sidebarWidth]);
-  // useEffect(() => {
-  //     const interval = setInterval(() => {
-  //         resize()
-  //     }, 100);
-  //     return () => clearInterval(interval);
-  // }, [collapsed]);
-  useEffect(() => {
-    // os.log(themeColors, 'theme colors')
-  }, [themeColors]);
+
   useEffect(() => {
     const handleContextMenu = (e) => {
       e.preventDefault(); // Disable right-click
@@ -230,20 +214,7 @@ const Main = () => {
   const lenght = Object.keys(themeColors || {}).length;
   useEffect(() => {
     CheckToolbarOverflow();
-    // os.log('resize', CheckToolbarOverflow)
   }, [containerProps.leftWidth, containerProps.topHeight]);
-  // const buildThemeCSS = (themeColors, activeSpace, defaultTheme) => {
-  //   const colors = {
-  //     ...defaultTheme, // start with defaults
-  //     ...(themeColors?.[activeSpace] || {}), // overwrite with current themeColors
-  //   };
-
-  //   const vars = Object.entries(colors).map(
-  //     ([key, value]) => `--${key}: ${value};`
-  //   );
-
-  //   return `:root {\n  ${vars.join("\n  ")}\n}`;
-  // };
 
   const isDark = window.matchMedia("(prefers-color-scheme: dark)").matches;
 
@@ -359,3 +330,70 @@ export const AppContent = () => {
     </BibleVariablesProvider>
   );
 };
+
+/**
+ * Calculates whether or not the window width is of a "mobile" size.
+ * @param mobileMaxWidth The maximum width to still be considered as mobile.
+ * @param w The window object to reference innerWidth from.
+ */
+function calculateWindowIsMobile(
+  mobileMaxWidth: number,
+  w: Window = window
+): boolean {
+  return w.innerWidth <= mobileMaxWidth;
+}
+
+/**
+ * We need to figure out what "Container" and "sidebar" are.
+ * Nominal refactor needed.
+ */
+function refactorme_calculateContainerSize(
+  isFullScreen: boolean,
+  isMobile: boolean,
+  sidebarWidth: number
+) {
+  const width: number =
+    innerWidth - (!isFullScreen && !isMobile ? sidebarWidth : 0);
+  const height: number = innerHeight * 0.98;
+  return { width, height };
+}
+
+/**
+ * This should probably be changed in the future.
+ * Currently it serves to call hooks with their parameters.
+ * It's used to centralize a resize effect for the main component.
+ */
+function callMainHooksOnResize(
+  setIsMobileHook: (_: boolean) => any,
+  isMobile: boolean,
+  updateContainerSizeHook: (w: number, h: number) => any,
+  width: number,
+  height: number
+) {
+  setIsMobileHook(isMobile);
+  setTimeout(() => updateContainerSizeHook(width, height), 0);
+}
+
+/**
+ * A process designed to handle resize on main component.
+ */
+function handleResize(
+  setIsMobileHook: (_: boolean) => any,
+  updateContainerSizeHook: (w: number, height: number) => any,
+  isFullScreen: boolean,
+  sidebarWidth: number
+) {
+  const isMobile = calculateWindowIsMobile(767);
+  const { width, height } = refactorme_calculateContainerSize(
+    isFullScreen,
+    isMobile,
+    sidebarWidth
+  );
+  callMainHooksOnResize(
+    setIsMobileHook,
+    isMobile,
+    updateContainerSizeHook,
+    width,
+    height
+  );
+}
