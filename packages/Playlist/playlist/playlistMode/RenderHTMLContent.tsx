@@ -69,6 +69,73 @@ const RenderHTMLContent = ({ htmlContent }) => {
       });
     };
 
+    const handlePlayCircleClick = (e) => {
+      e.preventDefault();
+      e.stopPropagation();
+      const id = e.target.getAttribute("id");
+      if(!id) return;
+
+
+      if(globalThis.LoadingOldPlaylist) {
+        return ShowNotification({
+          message: t("pleaseWaitOldPlaylistIsLoading"),
+          severity: "error",
+        });
+      }
+
+      ShowNotification({
+        message: t("loadingPlaylistPleaseWait"),
+        severity: "success",
+      });
+      
+      globalThis.LoadingOldPlaylist = true;
+
+      web
+      .hook({
+        url: `https://theographic-bible-api.netlify.app/api/playlist/getPlaylist?uid=${id}`,
+        method: "GET",
+      })
+      .then(async (dbRes) => {
+        globalThis.LoadingOldPlaylist = false;
+        // console.log(dbRes, "dbRes");
+        const playlistDataRes = dbRes?.data?.data?.query;
+        // console.log("playlistDataRes", API, !playlistDataRes, playlistDataRes);
+        if (!playlistDataRes) return;
+        // API.decrypt()
+        const playlistDecoded = playlistDataRes;
+        // console.log("playlistDecoded", playlistDecoded);
+        const playlistData = JSON.parse(`${playlistDecoded}`);
+
+        if (typeof playlistData === "object") {
+          console.log(playlistData, "playlistData object");
+          
+          thisBot.Playlistplaying({
+            playingPlaylist: playlistData.id,
+            startIndex: 0,
+            startSubIndex: -1,
+            parentId: "default",
+            name: playlistData.content,
+            list: [...playlistData.additionalInfo.list],
+          });
+
+          // const toutour = getBot('system', 'main.totourTool')
+          // globalThis.hasASharedPlaylist = playlistData.id;
+          // globalThis.shareProfileName = playlistData.shareProfileName;
+          // globalThis.shareProfilePic = playlistData.shareProfilePic;
+        }
+        // console.log(playlistsPresent);
+      })
+      .catch((err) => {
+
+        globalThis.LoadingOldPlaylist = false;
+        console.log(err);
+        ShowNotification({
+          message: t("unableToCopyPlaylist"),
+          severity: "error",
+        });
+      });
+    };
+
     // Function to handle iframe overlay clicks
     const handleIframeOverlayClick = (e) => {
       e.preventDefault();
@@ -109,8 +176,14 @@ const RenderHTMLContent = ({ htmlContent }) => {
 
     // Add click listeners to all video elements
     const videos = containerRef.current.querySelectorAll("video");
-    videos.forEach((video) => {
+    videos.forEach((video:any) => {
       video.addEventListener("click", handleVideoClick);
+    });
+
+    // Add click listeners to all span tags with id="${id}" className="material-symbols-outlined sre-play-circle sre-play-circle-${id}"
+    const playCircleSpans = containerRef.current.querySelectorAll("span.sre-play-circle");
+    playCircleSpans.forEach((span:any) => {
+      span.addEventListener("click", handlePlayCircleClick);
     });
 
     // Add click listeners to all iframe overlays (using event delegation)
@@ -124,8 +197,11 @@ const RenderHTMLContent = ({ htmlContent }) => {
     // Cleanup function
     return () => {
       clearTimeout(timeoutId);
-      videos.forEach((video) => {
+      videos.forEach((video:any) => {
         video.removeEventListener("click", handleVideoClick);
+      });
+      playCircleSpans.forEach((span:any) => {
+        span.removeEventListener("click", handlePlayCircleClick);
       });
       if (containerRef.current) {
         containerRef.current.removeEventListener("click", handleContainerClick);

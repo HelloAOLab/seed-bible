@@ -138,7 +138,7 @@ if (sharedPlaylist) {
       .catch((err) => {
         console.log(err);
         ShowNotification({
-          message: "Unable to copy playlist. Please try again!",
+          message: t("unableToCopyPlaylist"),
           severity: "error",
         });
       });

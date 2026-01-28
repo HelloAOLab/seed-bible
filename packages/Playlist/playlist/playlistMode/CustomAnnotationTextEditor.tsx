@@ -60,6 +60,9 @@ const RECORDING_TYPES = {
  *   window.SimpleEditorToolbar[instanceId].resetPriorities()
  */
 
+const defaultProfile =
+  "https://auth-aux-aobot-prod-filesbucket-141297942820.s3.amazonaws.com/aoBot/5ae46570b2daba6e99c5b71de2cf41cfd9dfaf46e04c9eb9344146955ddb9a31.svg";
+
 const DEFAULT_TOOLBAR_PRIORITY = [
   "mic",
   "video",
@@ -614,11 +617,87 @@ export function CustomAnnotationTextEditor({
     setIsTagSuggestionsOpen(false);
   }
 
-  const onClickPlaylist = (playlist:any)=>{
+
+  const [savingPlaylist, setSavingPlaylist] = useState(false);
+
+  const createPlaylistLink = async (playlist:any) => {
+    globalThis.LatestPlaylistID = null;
+
+    setSavingPlaylist(true);
+    let shareProfileName = "Guest";
+    let shareProfilePic = defaultProfile;
+    const authBot = await os.requestAuthBotInBackground();
+    if (authBot?.id) {
+      const data = await os.getData(thisBot.tags.keyFetchAccountData, authBot.id);
+      if (data.success) {
+        const payload = data.data;
+        shareProfileName = payload.profileName || "Guest";
+        shareProfilePic = payload.photoLink || defaultProfile;
+      }
+    }
+
+    const playlistObj = {
+      ...playlist,
+      shareProfileName,
+      shareProfilePic,
+      sharerID: authBot?.id || "N/A",
+    };
+
+    const sanitizedItem = sanitizeObject(playlistObj);
+    // console.log(sanitizedItem, "sanitizedItem");
+    const stringItems = JSON.stringify(sanitizedItem, null, 2);
+
+    await web
+      .hook({
+        url: `https://theographic-bible-api.netlify.app/api/playlist/postPlaylist`,
+        method: "POST",
+        headers: {
+          "Content-Type": "application/json",
+        },
+        data: {
+          query: stringItems,
+        },
+      })
+      .then((dbRes) => {
+        globalThis.LatestPlaylistID = dbRes.data.data.uid;
+        setSavingPlaylist(false);
+      })
+      .catch(() => {
+        globalThis.LatestPlaylistID = null;
+        ShowNotification({
+          message: t("unableToCopy"),
+          severity: "error",
+        });
+        setSavingPlaylist(false);
+      });
+  };
+
+  const onClickPlaylist = async (playlist:any)=>{
     const playlistFind = PLAYLIST_OPTIONS.find((playlistItr:any) => playlistItr.key === playlist.key);
+    if(!globalThis.PlaylistReferLinks) {
+      globalThis.PlaylistReferLinks = {};
+    }
+
+    let refId = "mnygw3zd5fl34ep71lohp4";
+
+    if(!globalThis.PlaylistReferLinks) {
+      globalThis.PlaylistReferLinks = {};
+    }
+
+    if(!globalThis.PlaylistReferLinks[playlistFind.key]) {
+      await createPlaylistLink(playlistFind.metaData);
+      if(globalThis.LatestPlaylistID){
+        globalThis.PlaylistReferLinks[playlistFind.key] = globalThis.LatestPlaylistID;
+        refId = globalThis.LatestPlaylistID;
+      }
+    }else {
+      refId = globalThis.PlaylistReferLinks[playlistFind.key];
+    }
+
+    if(!refId) return;
     if(!playlistFind) return;
     const playlistID = PlaylistID(playlistFind.metaData.list);
-    const playlistHTML = `<span id="${playlist.key}">< [${playlistID}] -----|---- [${playlist.label}]/> </span>`;
+    const playlistHTML = `<span id="${refId}">< [${playlistID}] -----|---- [${playlist.label}]/> </span>`;
     if(!editorObjRef.current) return;
 
     const { from } = editorObjRef.current.state.selection;
@@ -928,7 +1007,8 @@ export function CustomAnnotationTextEditor({
         canonicalHTMLRef.current = html;
      
         if (onChange) {
-          onChange(html, editor.getJSON());
+          console.log("html", html, html.replace(/\bclass(name)?\s*=/gi, "class="));
+          onChange(html.replace(/\bclass(name)?\s*=/gi, "class="), editor.getJSON());
         }
       } catch {}
     });
@@ -1386,7 +1466,7 @@ export function CustomAnnotationTextEditor({
       </div>}
 
     {isTagSuggestionsOpen && <SelectionOptions handleClose={() => setIsTagSuggestionsOpen(false)} options={TAG_OPTIONS} onClickOption={onClickTags} />}
-    {isPlaylistSuggestionOpen && <SelectionOptions isPlaylist handleClose={() => setIsPlaylistSuggestionOpen(false)} options={PLAYLIST_OPTIONS} onClickOption={onClickPlaylist} />}
+    {isPlaylistSuggestionOpen && <SelectionOptions loading={savingPlaylist} isPlaylist handleClose={() => setIsPlaylistSuggestionOpen(false)} options={PLAYLIST_OPTIONS} onClickOption={onClickPlaylist} />}
 
 
       {(isMic || isLink || isVideo) && 
@@ -2210,7 +2290,6 @@ const SRE_STYLES = (minH) => `
   display: flex;
   align-items: center;
   gap: 10px;
-  padding: 10px;
   border: 1px solid #e2e2e2;
   background-color: var(--pageBackground);
   width: max-content;
@@ -2245,6 +2324,11 @@ span.playlist-label-sre {
 
 .sre-ib-inverse {
     filter: var(--filter-mode);
+}
+
+.sre-play-circle {
+  color: var(--primaryColor) !important;
+  font-size: 1.5rem;
 }
   
 
@@ -2335,6 +2419,7 @@ function replaceSelectionMarkers(html) {
     >
       <span className="playlist-icon-sre">${icon}</span>
       <span className="playlist-label-sre">${label}</span>
+      <span id="${id}" className="material-symbols-outlined sre-play-circle sre-play-circle-${id}">play_circle</span> 
     </div>
   </div>
   `.trim();

@@ -1,6 +1,7 @@
 const RenderIcon = await thisBot.RenderIcon();
+const { LoaderSecondary } = Components;
 
-const SelectionOptions = ( { handleClose, options, isPlaylist = false, onClickOption } ) => {
+const SelectionOptions = ( { handleClose, options, isPlaylist = false, onClickOption, loading = false } ) => {
 
     const onClick = (option:any) => {
         if(onClickOption) {
@@ -16,7 +17,7 @@ const SelectionOptions = ( { handleClose, options, isPlaylist = false, onClickOp
         <style>{`${thisBot.tags['SelectionOptions.css']}`}</style>
         <div className="backdrop" onClick={handleClose} />
         <div className="selection-contianer">
-            {options.map((option) => (
+            {loading ? <div className="selection-option-loading"><LoaderSecondary /></div> : options.map((option) => (
                 isPlaylist 
                 
                 ? 
