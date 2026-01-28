@@ -276,7 +276,7 @@ export async function uploadExtensionAux(
   // );
   // console.log("Extension File URL:", fileUrl);
 
-  let uploadCommand = `casualos upload-package --raw --record "${recordKey ?? uploadRecordName}" --address "${meta.name}" --file "${filePath}" --markers "publicRead" --entitlements "data:personal file:personal" --version "minor"`;
+  let uploadCommand = `casualos --endpoint "${"https://api.ao.bot"}" upload-package --raw --record "${recordKey ?? uploadRecordName}" --address "${meta.name}" --file "${filePath}" --markers "publicRead" --entitlements "data:personal file:personal" --version "minor"`;
   if (sessionKey) {
     uploadCommand += ` --key "${sessionKey}"`;
   }
