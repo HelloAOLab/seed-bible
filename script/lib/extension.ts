@@ -286,6 +286,8 @@ export async function uploadExtensionAux(
     encoding: "utf-8",
   });
 
+  console.log("Upload Output:", output);
+
   const result: RecordPackageVersionSuccess & { key: PackageRecordVersionKey } =
     JSON.parse(output);
 
