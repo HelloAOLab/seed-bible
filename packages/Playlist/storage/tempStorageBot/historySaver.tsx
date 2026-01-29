@@ -83,65 +83,57 @@ const sharedPlaylist = configBot.tags.Playlist;
 
 if (sharedPlaylist) {
   try {
-    web
-      .hook({
-        url: `https://theographic-bible-api.netlify.app/api/playlist/getPlaylist?uid=${sharedPlaylist}`,
-        method: "GET",
-      })
-      .then(async (dbRes) => {
-        // console.log(dbRes, "dbRes");
-        const playlistDataRes = dbRes?.data?.data?.query;
-        // console.log("playlistDataRes", API, !playlistDataRes, playlistDataRes);
-        if (!playlistDataRes) return;
-        // API.decrypt()
-        const playlistDecoded = playlistDataRes;
-        // console.log("playlistDecoded", playlistDecoded);
-        const playlistData = JSON.parse(`${playlistDecoded}`);
 
-        setTag(configBot, "Playlist", null);
 
+    const [authBotId, playlistId] = sharedPlaylist.split(globalThis.RECORD_SEPARATOR);
+    if(!!authBotId && !!playlistId) {
+
+      const res = await os.getData(authBotId, playlistId);
+
+      if (res.success) {
+        const playlistData = res.data;
         const index = playlistsPresent.findIndex(
           (ele) => ele.id === playlistData?.id
         );
-
+ 
         const isPlaylistDuplicate = index > -1;
-
+ 
         if (typeof playlistData === "object") {
           // const toutour = getBot('system', 'main.totourTool')
           globalThis.hasASharedPlaylist = playlistData.id;
           globalThis.shareProfileName = playlistData.shareProfileName;
           globalThis.shareProfilePic = playlistData.shareProfilePic;
-
+ 
           if (globalThis["Playlist_package"]) {
             globalThis["Playlist_package"].onClick();
           }
           // setTagMask(toutour, "showingStep", false);
           // setTagMask(toutour, "access", false);
           // setTagMask(toutour, "isBookClicked", true);
-
+ 
           globalThis.clickWait = false;
           globalThis.isModalRegistered = false;
           globalThis.isBlackFadeRegistered = false;
           globalThis.demoInteractionWait = false;
-
+ 
           if (playlistData.icons)
             globalThis.PREDEFINED_ICONS = playlistData.icons;
-
+ 
           if (isPlaylistDuplicate) {
             playlistsPresent[index] = playlistData;
           } else {
             playlistsPresent.push(playlistData);
           }
         }
-        // console.log(playlistsPresent);
-      })
-      .catch((err) => {
+      } else {
         console.log(err);
         ShowNotification({
           message: t("unableToCopyPlaylist"),
           severity: "error",
         });
-      });
+      }
+    }
+    setTag(configBot, "Playlist", null);
   } catch (err) {
     console.log("ERROR PARSING THE SHARED PLAYLIST", err);
   }

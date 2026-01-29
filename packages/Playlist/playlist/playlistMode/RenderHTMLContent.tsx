@@ -69,11 +69,13 @@ const RenderHTMLContent = ({ htmlContent }) => {
       });
     };
 
-    const handlePlayCircleClick = (e) => {
+    const handlePlayCircleClick = async (e) => {
       e.preventDefault();
       e.stopPropagation();
       const id = e.target.getAttribute("id");
       if(!id) return;
+      const [authBotId, playlistId] = id.split(globalThis.RECORD_SEPARATOR);
+      if(!authBotId || !playlistId) return;
 
 
       if(globalThis.LoadingOldPlaylist) {
@@ -90,50 +92,26 @@ const RenderHTMLContent = ({ htmlContent }) => {
       
       globalThis.LoadingOldPlaylist = true;
 
-      web
-      .hook({
-        url: `https://theographic-bible-api.netlify.app/api/playlist/getPlaylist?uid=${id}`,
-        method: "GET",
-      })
-      .then(async (dbRes) => {
-        globalThis.LoadingOldPlaylist = false;
-        // console.log(dbRes, "dbRes");
-        const playlistDataRes = dbRes?.data?.data?.query;
-        // console.log("playlistDataRes", API, !playlistDataRes, playlistDataRes);
-        if (!playlistDataRes) return;
-        // API.decrypt()
-        const playlistDecoded = playlistDataRes;
-        // console.log("playlistDecoded", playlistDecoded);
-        const playlistData = JSON.parse(`${playlistDecoded}`);
+      const res = await os.getData(authBotId, playlistId);
 
-        if (typeof playlistData === "object") {
-          console.log(playlistData, "playlistData object");
-          
-          thisBot.Playlistplaying({
-            playingPlaylist: playlistData.id,
-            startIndex: 0,
-            startSubIndex: -1,
-            parentId: "default",
-            name: playlistData.content,
-            list: [...playlistData.additionalInfo.list],
-          });
+      if (res.success) {
+        const playlistData = res.data;
+        thisBot.Playlistplaying({
+          playingPlaylist: playlistData.id,
+          startIndex: 0,
+          startSubIndex: -1,
+          parentId: "default",
+          name: playlistData.name,
+          list: [...playlistData.list],
+        });
 
-          // const toutour = getBot('system', 'main.totourTool')
-          // globalThis.hasASharedPlaylist = playlistData.id;
-          // globalThis.shareProfileName = playlistData.shareProfileName;
-          // globalThis.shareProfilePic = playlistData.shareProfilePic;
-        }
-        // console.log(playlistsPresent);
-      })
-      .catch((err) => {
-
-        globalThis.LoadingOldPlaylist = false;
-        console.log(err);
+      } else {
         ShowNotification({
           message: t("unableToCopyPlaylist"),
           severity: "error",
         });
-      });
+      }
+      globalThis.LoadingOldPlaylist = false;
     };
 
     // Function to handle iframe overlay clicks

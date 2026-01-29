@@ -1067,3 +1067,5 @@ function sanitizeObject(obj) {
 
 
 globalThis.sanitizeObject = sanitizeObject;
+
+globalThis.RECORD_SEPARATOR = "^_^";

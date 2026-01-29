@@ -643,33 +643,28 @@ export function CustomAnnotationTextEditor({
       sharerID: authBot?.id || "N/A",
     };
 
-    const sanitizedItem = sanitizeObject(playlistObj);
-    // console.log(sanitizedItem, "sanitizedItem");
-    const stringItems = JSON.stringify(sanitizedItem, null, 2);
+    const id = globalThis.createUUID();
 
-    await web
-      .hook({
-        url: `https://theographic-bible-api.netlify.app/api/playlist/postPlaylist`,
-        method: "POST",
-        headers: {
-          "Content-Type": "application/json",
-        },
-        data: {
-          query: stringItems,
-        },
-      })
-      .then((dbRes) => {
-        globalThis.LatestPlaylistID = dbRes.data.data.uid;
-        setSavingPlaylist(false);
-      })
-      .catch(() => {
-        globalThis.LatestPlaylistID = null;
-        ShowNotification({
-          message: t("unableToCopy"),
-          severity: "error",
-        });
-        setSavingPlaylist(false);
+    const result = await os.recordData(authBot.id, `${playlistObj.id}-${id}`, playlistObj, {
+      marker: "publicRead",
+    });
+
+    const recordShareKey = `${authBot.id}^_^${playlistObj.id}-${id}`;
+
+    if(result.success) {
+       globalThis.LatestPlaylistID = recordShareKey;
+      setSavingPlaylist(false);
+    }else {
+      globalThis.LatestPlaylistID = null;
+      ShowNotification({
+        message: t("unableToCopy"),
+        severity: "error",
       });
+      setSavingPlaylist(false);
+    }
+    
+    setLoading(false);
+    return recordShareKey;
   };
 
   const onClickPlaylist = async (playlist:any)=>{
@@ -678,7 +673,7 @@ export function CustomAnnotationTextEditor({
       globalThis.PlaylistReferLinks = {};
     }
 
-    let refId = "mnygw3zd5fl34ep71lohp4";
+    let refId = "";
 
     if(!globalThis.PlaylistReferLinks) {
       globalThis.PlaylistReferLinks = {};
@@ -1007,7 +1002,6 @@ export function CustomAnnotationTextEditor({
         canonicalHTMLRef.current = html;
      
         if (onChange) {
-          console.log("html", html, html.replace(/\bclass(name)?\s*=/gi, "class="));
           onChange(html.replace(/\bclass(name)?\s*=/gi, "class="), editor.getJSON());
         }
       } catch {}

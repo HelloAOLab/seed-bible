@@ -313,35 +313,29 @@ const PlaylistRowItem = ({
     const key = configBot.tags.pattern ? "pattern" : "ab";
     // const encryptedText = API.encrypt()(stringItems);
 
-    web
-      .hook({
-        url: `https://theographic-bible-api.netlify.app/api/playlist/postPlaylist`,
-        method: "POST",
-        headers: {
-          "Content-Type": "application/json",
-        },
-        data: {
-          query: stringItems,
-        },
-      })
-      .then((dbRes) => {
-        const shareURL = `https://ao.bot/?${key}=${deployBot}&Playlist=${dbRes.data.data.uid}&noGridPortal=true`;
-        os.setClipboard(shareURL);
-        setShowMoreOptions(false);
-        setCopyURL(shareURL);
-        ShowNotification({
-          message: t("shareURLCopied"),
-          severity: "success",
-        });
-        setLoading(false);
-      })
-      .catch(() => {
-        ShowNotification({
-          message: t("unableToCopy"),
-          severity: "error",
-        });
-        setLoading(false);
+    const result = await os.recordData(authBot.id, playlistObj.id, playlistObj, {
+      marker: "publicRead",
+    });
+
+    const recordShareKey = `${authBot.id}^_^${playlistObj.id}`;
+
+    if(result.success) {
+      const shareURL = `https://ao.bot/?${key}=${deployBot}&Playlist=${recordShareKey}&noGridPortal=true`;
+      os.setClipboard(shareURL);
+      setShowMoreOptions(false);
+      setCopyURL(shareURL);
+      ShowNotification({
+        message: t("shareURLCopied"),
+        severity: "success",
       });
+    }else {
+      ShowNotification({
+        message: t("unableToCopy"),
+        severity: "error",
+      });
+    }
+    setLoading(false);
+
   };
 
   const openMergeModal = ({ id }) => {
