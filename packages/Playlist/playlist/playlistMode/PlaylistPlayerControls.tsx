@@ -790,7 +790,7 @@ const PlayerControls = ({ parentId = "default" }) => {
             fontWeight: "600",
             width: "calc(100%)",
             // borderTop: "1px solid #DADADA",
-            backgroundColor: "#F7F7F5",
+            backgroundColor: "var(--pageBackground)",
             height: "auto",
           }}
           className="flaoting-attach-link"
@@ -805,7 +805,7 @@ const PlayerControls = ({ parentId = "default" }) => {
       ) : (
         <div
           style={{
-            background: "white",
+            background: "var(--pageBackground)",
             display: "flex",
             flexDirection: "column",
             height: "100%",
@@ -866,6 +866,7 @@ const PlayerControls = ({ parentId = "default" }) => {
                   // marginBottom: "0.5rem",
                   fontFamily: "DM Sans",
                   height: "12px",
+                  color: "var(--pageTextColor)",
                 }}
               >
                 {showCurrent
@@ -881,8 +882,9 @@ const PlayerControls = ({ parentId = "default" }) => {
                     width: "1.5rem",
                     display: "grid",
                     placeItems: "center",
-                    backgroundColor: "#D3643329",
+                    backgroundColor: "var(--activeTabFill)",
                     borderRadius: "0.25rem",
+                    color: "var(--pageTextColor)",
                   }}
                 >
                   <span
@@ -909,6 +911,7 @@ const PlayerControls = ({ parentId = "default" }) => {
                           alignItems: "center",
                           fontFamily: "DM Sans",
                           margin: "0",
+                          color: "var(--pageTextColor)",
                         }}
                       >
                         {nextItemName?.content
@@ -940,9 +943,9 @@ const PlayerControls = ({ parentId = "default" }) => {
                         style={{
                           fontSize: "12px",
                           fontWeight: "400",
-                          color: "#0000001",
                           margin: "0",
                           textTransform: "capitalize",
+                          color: "var(--pageTextColor)",
                         }}
                       >
                         {nextItemName?.type}
@@ -964,6 +967,7 @@ const PlayerControls = ({ parentId = "default" }) => {
                           alignItems: "center",
                           fontFamily: "DM Sans",
                           margin: "0",
+                          color: "var(--pageTextColor)",
                         }}
                       >
                         {currentItem?.content
@@ -996,7 +1000,7 @@ const PlayerControls = ({ parentId = "default" }) => {
                         style={{
                           fontSize: "12px",
                           fontWeight: "400",
-                          color: "#0000001",
+                          color: "var(--pageTextColor)",
                           margin: "0",
                           textTransform: "capitalize",
                         }}
@@ -1013,9 +1017,9 @@ const PlayerControls = ({ parentId = "default" }) => {
                 style={{
                   margin: "0",
                   width: "24px",
-                  backgroundColor: "#D364334D",
+                  backgroundColor: "var(--themeSideMenu)",
                   height: "24px",
-                  border: "1px solid #D36433",
+                  border: "1px solid var(--primaryColor)",
                 }}
                 className="playlist-action small"
                 onClick={() => {
@@ -1029,7 +1033,7 @@ const PlayerControls = ({ parentId = "default" }) => {
               >
                 <img
                   src="https://auth-aux-aobot-prod-filesbucket-141297942820.s3.amazonaws.com/aoBot/fe3ea1784fbed6a33fb06bc8885bca18211293462adcb06311db83f1450589b8.svg"
-                  class="material-symbols-outlined unfollow"
+                  class="material-symbols-outlined unfollow img-icon"
                   style={{
                     margin: "0",
                     width: "12px",
@@ -1054,8 +1058,8 @@ const PlayerControls = ({ parentId = "default" }) => {
                   height: "26px",
                   padding: "0",
                   borderRadius: "6px",
-                  border: "0px solid #D36433",
-                  backgroundColor: "#E6E6E6",
+                  border: "0px solid var(--primaryColor)",
+                  backgroundColor: "var(--activeTabFill)",
                 }}
                 className="playlist-action small"
               >
@@ -1107,7 +1111,7 @@ const PlayerControls = ({ parentId = "default" }) => {
                 margin: "0",
                 minWidth: "auto",
                 backgroundColor: "transparent",
-                border: "0px solid #D36433",
+                border: "0px solid var(--primaryColor)",
                 boxShadow: "none",
                 padding: "8px",
                 cursor: !prevItemName?.content ? "not-allowed" : "",
@@ -1157,7 +1161,7 @@ const PlayerControls = ({ parentId = "default" }) => {
                 style={{
                   margin: "0",
                   fontSize: "14px",
-                  backgroundColor: "#D36433",
+                  backgroundColor: "var(--primaryColor)",
                 }}
                 class="material-symbols-outlined unfollow"
               >
@@ -1170,7 +1174,7 @@ const PlayerControls = ({ parentId = "default" }) => {
                 margin: "0",
                 minWidth: "auto",
                 backgroundColor: "transparent",
-                border: "0px solid #D36433",
+                border: "0px solid var(--primaryColor)",
                 boxShadow: "none",
                 color: "#000",
                 padding: "8px",

@@ -361,6 +361,9 @@ const resources = {
 
       // Playlist.
       bookmarkUpdatedSuccessfully: "Bookmark Updated successfully.",
+      unableToCopyPlaylist: "Unable to copy playlist. Please try again!",
+      pleaseWaitOldPlaylistIsLoading: "Please wait old playlist is loading...",
+      loadingPlaylistPleaseWait: "Loading playlist please wait...",
       failedToUpdateBookmark: "Failed to update bookmark. Please try again.",
       from: "From",
       annotate: "Annotate",
@@ -1083,6 +1086,9 @@ const resources = {
 
       // Playlist.
       preview: "Vista previa",
+      unableToCopyPlaylist: "No se puede copiar la lista. Por favor, inténtalo de nuevo!",
+      pleaseWaitOldPlaylistIsLoading: "Por favor, espere mientras se carga la lista.",
+      loadingPlaylistPleaseWait: "Por favor, espere mientras se carga la lista.",
       bookmarkUpdatedSuccessfully: "Marcado actualizado exitosamente.",
       failedToUpdateBookmark: "Error al actualizar el marcado. Por favor, inténtalo de nuevo.",
       search_tags: "Buscar etiquetas",
@@ -1817,6 +1823,9 @@ const resources = {
 
       // Playlist.
       bookmarkUpdatedSuccessfully: "تم تحديث التصفيح بنجاح.",
+      unableToCopyPlaylist: "لا يمكنك إنشاء قائمة. يرجى المحاولة مرة أخرى!",
+      pleaseWaitOldPlaylistIsLoading: "يرجى الإنتظار أثناء تحميل القائمة القديمة.",
+      loadingPlaylistPleaseWait: "يرجى الإنتظار أثناء تحميل القائمة.",
       failedToUpdateBookmark: "خطأ في تحديث التصفيح. يرجى المحاولة مرة أخرى.",
       anytime: "كيفية أي وقت",
       annotate: "تعليق",
@@ -2509,6 +2518,9 @@ const resources = {
 
       // Playlist.
       preview: "पूर्वावलोकन",
+      unableToCopyPlaylist: "नहीं जोड़ सकता है। कृपया पुनः कोशिश करें!",
+      pleaseWaitOldPlaylistIsLoading: "पुनः लोड हो रहा है कृपया इंतजार करें...",
+      loadingPlaylistPleaseWait: "लोड हो रहा है कृपया इंतजार करें...",
       annotate: "टिप्पणी",
       bookmarkUpdatedSuccessfully: "टिप्पणी सफलतापूर्वक अपडेट की गई है।",
       failedToUpdateBookmark: "टिप्पणी अपडेट करने में विफल। कृपया पुनः कोशिश करें।",

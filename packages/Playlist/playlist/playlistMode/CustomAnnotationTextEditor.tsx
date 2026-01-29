@@ -60,6 +60,9 @@ const RECORDING_TYPES = {
  *   window.SimpleEditorToolbar[instanceId].resetPriorities()
  */
 
+const defaultProfile =
+  "https://auth-aux-aobot-prod-filesbucket-141297942820.s3.amazonaws.com/aoBot/5ae46570b2daba6e99c5b71de2cf41cfd9dfaf46e04c9eb9344146955ddb9a31.svg";
+
 const DEFAULT_TOOLBAR_PRIORITY = [
   "mic",
   "video",
@@ -127,10 +130,7 @@ const COMMAND_BOX_OPTIONS = [
     onClick: () => {
       globalThis.ThruCommandBox = true;
       // Notify coming soon
-      ShowNotification({
-        message: "Coming soon!",
-        severity: "info",
-      });
+      shout("togglePlaylistSuggestions");
     },
   },
 ];
@@ -176,6 +176,7 @@ export const CustomSpan = Node.create({
     return {
       id: { default: null },
       style: { default: null },
+      className: { default: null },
     };
   },
 
@@ -184,13 +185,14 @@ export const CustomSpan = Node.create({
   },
 
   renderHTML({ HTMLAttributes }) {
-    const { id, style } = HTMLAttributes;
+    const { id, style, className } = HTMLAttributes;
 
     return [
       "span",
       {
         ...(id ? { id } : {}),
         ...(style ? { style } : {}),
+        ...(className ? { className } : {}),
       },
       0, // ✅ keeps the inner text
     ];
@@ -201,6 +203,58 @@ export const CustomSpan = Node.create({
       const el = document.createElement("span");
 
       if (node.attrs.id) el.setAttribute("id", node.attrs.id);
+      if (node.attrs.style) el.setAttribute("style", node.attrs.style);
+      if (node.attrs.className) el.setAttribute("class", node.attrs.className);
+      return {
+        dom: el,
+        contentDOM: el, // ✅ text goes inside span
+      };
+    };
+  },
+});
+
+
+
+export const CustomDiv = Node.create({
+  name: "customDiv",
+
+  group: "inline",
+  inline: true,
+  content: "inline*",  // ✅ allow text inside
+  atom: false,         // ✅ important (or remove this line)
+
+  addAttributes() {
+    return {
+      id: { default: null },
+      style: { default: null },
+      className: { default: null },
+    };
+  },
+
+  parseHTML() {
+    return [{ tag: "div" }];
+  },
+
+  renderHTML({ HTMLAttributes }) {
+    const { id, style, className } = HTMLAttributes;
+
+    return [
+      "div",
+      {
+        ...(id ? { id } : {}),
+        ...(style ? { style } : {}),
+        ...(className ? { className } : {}),
+      },
+      0, // ✅ keeps the inner text
+    ];
+  },
+
+  addNodeView() {
+    return ({ node }) => {
+      const el = document.createElement("div");
+
+      if (node.attrs.id) el.setAttribute("id", node.attrs.id);
+      if (node.attrs.className) el.setAttribute("class", node.attrs.className);
       if (node.attrs.style) el.setAttribute("style", node.attrs.style);
 
       return {
@@ -472,7 +526,15 @@ const Audio = Node.create({
   },
 });
 
-
+const PlaylistID = (list:any) => {
+  let name = "🎶";
+  const firstItem = list.find(ele => globalThis.ValidTypes[ele?.type]);
+  if (firstItem) {
+    const lowerCase = firstItem?.additionalInfo?.book?.toLocaleLowerCase();
+    name = firstItem.additionalInfo.data.bookId || firstItem.additionalInfo.data.id || firstItem.additionalInfo.data.bookId || firstItem.additionalInfo.chapterData.id || firstItem.additionalInfo.chapterData.bookId || thisBot.tags.LowerCaseBookMapping[lowerCase];
+  }
+  return name;
+}
 
 
 export function CustomAnnotationTextEditor({
@@ -524,6 +586,7 @@ export function CustomAnnotationTextEditor({
   const [isCommandBox, setIsCommandBox] = useState(false);
 
   const [isTagSuggestionsOpen, setIsTagSuggestionsOpen] = useState(false);
+  const [isPlaylistSuggestionOpen, setIsPlaylistSuggestionOpen] = useState(false);
 
   const TAG_OPTIONS = useMemo(() => [
     ...(globalThis?.UsedTags || []).map((tag) => ({
@@ -532,6 +595,14 @@ export function CustomAnnotationTextEditor({
     })),
   ], [globalThis?.UsedTags]);
 
+  const PLAYLIST_OPTIONS = useMemo(() => [
+    ...( globalThis?.[`defaultplaylists`]  || []).map((playlist:any) => ({
+      key: playlist.id,
+      label: playlist.name,
+      metaData: playlist,
+    })),
+  ], []);
+  
   const onClickTags = (tag:any) => {
     const tagHTML = `<span id=${showPreview?"hashtag":""}>${tag.label}</span><br/>`;
     if(!editorObjRef.current) return;
@@ -546,9 +617,108 @@ export function CustomAnnotationTextEditor({
     setIsTagSuggestionsOpen(false);
   }
 
+
+  const [savingPlaylist, setSavingPlaylist] = useState(false);
+
+  const createPlaylistLink = async (playlist:any) => {
+    globalThis.LatestPlaylistID = null;
+
+    setSavingPlaylist(true);
+    let shareProfileName = "Guest";
+    let shareProfilePic = defaultProfile;
+    const authBot = await os.requestAuthBotInBackground();
+    if (authBot?.id) {
+      const data = await os.getData(thisBot.tags.keyFetchAccountData, authBot.id);
+      if (data.success) {
+        const payload = data.data;
+        shareProfileName = payload.profileName || "Guest";
+        shareProfilePic = payload.photoLink || defaultProfile;
+      }
+    }
+
+    const playlistObj = {
+      ...playlist,
+      shareProfileName,
+      shareProfilePic,
+      sharerID: authBot?.id || "N/A",
+    };
+
+    const id = globalThis.createUUID();
+
+    const result = await os.recordData(authBot.id, `${playlistObj.id}-${id}`, playlistObj, {
+      marker: "publicRead",
+    });
+
+    const recordShareKey = `${authBot.id}^_^${playlistObj.id}-${id}`;
+
+    if(result.success) {
+       globalThis.LatestPlaylistID = recordShareKey;
+      setSavingPlaylist(false);
+    }else {
+      globalThis.LatestPlaylistID = null;
+      ShowNotification({
+        message: t("unableToCopy"),
+        severity: "error",
+      });
+      setSavingPlaylist(false);
+    }
+    
+    setLoading(false);
+    return recordShareKey;
+  };
+
+  const onClickPlaylist = async (playlist:any)=>{
+    const playlistFind = PLAYLIST_OPTIONS.find((playlistItr:any) => playlistItr.key === playlist.key);
+    if(!globalThis.PlaylistReferLinks) {
+      globalThis.PlaylistReferLinks = {};
+    }
+
+    let refId = "";
+
+    if(!globalThis.PlaylistReferLinks) {
+      globalThis.PlaylistReferLinks = {};
+    }
+
+    if(!globalThis.PlaylistReferLinks[playlistFind.key]) {
+      await createPlaylistLink(playlistFind.metaData);
+      if(globalThis.LatestPlaylistID){
+        globalThis.PlaylistReferLinks[playlistFind.key] = globalThis.LatestPlaylistID;
+        refId = globalThis.LatestPlaylistID;
+      }
+    }else {
+      refId = globalThis.PlaylistReferLinks[playlistFind.key];
+    }
+
+    if(!refId) return;
+    if(!playlistFind) return;
+    const playlistID = PlaylistID(playlistFind.metaData.list);
+    const playlistHTML = `<span id="${refId}">< [${playlistID}] -----|---- [${playlist.label}]/> </span>`;
+    if(!editorObjRef.current) return;
+
+    const { from } = editorObjRef.current.state.selection;
+    
+    if(globalThis.ThruCommandBox) {
+      editorObjRef.current.chain().focus().insertContentAt({ from: from - 1, to: from }, playlistHTML).run();
+    } else {
+      editorObjRef.current.chain().focus().insertContent(playlistHTML).run();
+    }
+
+    globalThis.ThruCommandBox = false;
+    
+    setIsPlaylistSuggestionOpen(false);
+  }
+
+  
   const toggleTagSuggestions = () => {
     setIsTagSuggestionsOpen((prev) => !prev);
   }
+
+  const togglePlaylistSuggestions = () => {
+    setIsCommandBox(false);
+    setIsPlaylistSuggestionOpen((prev) => !prev);
+  }
+
+  globalThis.TogglePlaylistSuggestions = togglePlaylistSuggestions;
 
   const toggleCommandBox = () => {
     setIsCommandBox((prev) => !prev);
@@ -713,7 +883,8 @@ export function CustomAnnotationTextEditor({
         Audio,
         CustomImage.configure({ inline: false, allowBase64: true }),
         Link.configure({ openOnClick: true, linkOnPaste: true }),
-        CustomSpan
+        CustomSpan,
+        CustomDiv
       ],
       editorProps: {
         handleDOMEvents: {
@@ -726,6 +897,7 @@ export function CustomAnnotationTextEditor({
               return;
             }
             setIsCommandBox(false);
+            setIsPlaylistSuggestionOpen(false);
             if(event.key === '#' && TAG_OPTIONS.length > 0) {
               toggleTagSuggestions();
               return;
@@ -830,7 +1002,7 @@ export function CustomAnnotationTextEditor({
         canonicalHTMLRef.current = html;
      
         if (onChange) {
-          onChange(html, editor.getJSON());
+          onChange(html.replace(/\bclass(name)?\s*=/gi, "class="), editor.getJSON());
         }
       } catch {}
     });
@@ -1288,6 +1460,7 @@ export function CustomAnnotationTextEditor({
       </div>}
 
     {isTagSuggestionsOpen && <SelectionOptions handleClose={() => setIsTagSuggestionsOpen(false)} options={TAG_OPTIONS} onClickOption={onClickTags} />}
+    {isPlaylistSuggestionOpen && <SelectionOptions loading={savingPlaylist} isPlaylist dontCloseOnClick handleClose={() => setIsPlaylistSuggestionOpen(false)} options={PLAYLIST_OPTIONS} onClickOption={onClickPlaylist} />}
 
 
       {(isMic || isLink || isVideo) && 
@@ -1569,9 +1742,9 @@ export function CustomAnnotationTextEditor({
       onAddLink,
     } = ctx;
 
-    const iconBtn = (title, icon, onClick, url = '') => (
+    const iconBtn = (title, icon, onClick, url = '', isInverse = false) => (
       <button
-        className="sre-ib"
+        className={`sre-ib ${isInverse ? 'sre-ib-inverse' : ''}`}
         onClick={(e) => {
           e.preventDefault();
           onClick(e);
@@ -1757,7 +1930,7 @@ export function CustomAnnotationTextEditor({
     return {
       mic: iconBtn("Mic", "mic", Cmds.mic),
       video: iconBtn("Video", "video_camera_back_add", Cmds.video),
-      slash: iconBtn("Command", null, Cmds.slash, COMMAND_ICON),
+      slash: iconBtn("Command", null, Cmds.slash, COMMAND_ICON, true),
       bold: iconBtn("Bold", "format_bold", Cmds.bold),
       italic: iconBtn("Italic", "format_italic", Cmds.italic),
       underline: iconBtn("Underline", "format_underlined", Cmds.underline),
@@ -2107,6 +2280,52 @@ const SRE_STYLES = (minH) => `
   height: 16px;
 }
 
+.playlist-wrapper-sre {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  border: 1px solid #e2e2e2;
+  background-color: var(--pageBackground);
+  width: max-content;
+  border-radius: 1rem;
+}  
+
+.playlist-container-sre {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  padding: 10px;
+}
+
+span.playlist-icon-sre {
+  padding: 0.5rem;
+  border-radius: 0.5rem;
+  background-color: var(--themeSideMenu);
+  color: var(--pageTextColor) !important;
+  font-size: 12px;
+  text-transform: uppercase;
+}
+
+span.playlist-label-sre {
+  font-family: DM Sans;
+  font-weight: 500;
+  font-style: Medium;
+  font-size: 12px;
+  line-height: 100%;
+  letter-spacing: 0%;
+  color: var(--pageTextColor) !important;
+}
+
+.sre-ib-inverse {
+    filter: var(--filter-mode);
+}
+
+.sre-play-circle {
+  color: var(--primaryColor) !important;
+  font-size: 1.5rem;
+}
+  
+
 `;
 
 // ---------------- utils ----------------
@@ -2127,8 +2346,32 @@ const MEDIA_OPEN_TAG_REGEX =
 const MEDIA_CLOSE_TAG_REGEX =
   /<\/(video|audio|iframe)\s*>/gi;
 
-  function fakeEscapeMediaTags(html = "", showPreview = false) {
+  const PLAYLIST_BLOCK_REGEX =
+  /<div\s+(?:class|classname)="playlist-wrapper-sre"[^>]*>\s*<div[^>]*id="([^"]+)"[^>]*(?:class|classname)="playlist-container-sre"[^>]*>[\s\S]*?<span[^>]*(?:class|classname)="playlist-icon-sre"[^>]*>\s*([^<]+)\s*<\/span>[\s\S]*?<span[^>]*(?:class|classname)="playlist-label-sre"[^>]*>\s*([^<]+)\s*<\/span>[\s\S]*?<\/div>\s*<\/div>/gi;
+
+function escapePlaylistBlocks(html) {
+    return html.replace(
+      PLAYLIST_BLOCK_REGEX,
+      (_, id, icon, label) => {
+        return `
+  <p>
+    <span id="${id}">
+      &lt; [${icon}] -----|---- [${label}]/&gt;
+    </span>
+  </p>
+  `.trim();
+      }
+    );
+  }
+  
+  
+  
+
+function fakeEscapeMediaTags(html = "", showPreview = false) {
     if (showPreview) return html;
+    html = escapePlaylistBlocks(html);
+
+    console.log("FAKE ESCAPE MEDIA TAGS", html);
   
     return html
       // escape opening media tags
@@ -2139,7 +2382,7 @@ const MEDIA_CLOSE_TAG_REGEX =
       .replace(MEDIA_CLOSE_TAG_REGEX, (tag) =>
         tag.replace(/</g, "‹").replace(/>/g, "›")
       );
-  }
+}
 
   
 const P_BLOCK_REGEX = /<p\b[^>]*>([\s\S]*?)<\/p>/gi;
@@ -2152,49 +2395,68 @@ const P_BLOCK_REGEX = /<p\b[^>]*>([\s\S]*?)<\/p>/gi;
 const FAKE_MEDIA_BLOCK_REGEX =
   /‹(img|video|audio|iframe)\b([\s\S]*?)\/?›(?:\s*‹\/\1›)?/gi;
 
+const SELECTION_MARKER_REGEX =
+  /<p[^>]*>\s*<span[^>]*id="([^"]+)"[^>]*>\s*&lt;\s*\[(\w+)\][\s-]*\|\s*[\s-]*\[(\w+)\]\s*\/&gt;\s*<\/span>[\s\S]*?<\/p>/gi;
+
+
+function replaceSelectionMarkers(html) {
+    return html.replace(
+      SELECTION_MARKER_REGEX,
+      (_, id, icon, label) => {
+        return `
+  <div className="playlist-wrapper-sre">
+    <div
+      id="${id}"
+      className="playlist-container-sre"
+      data-icon="${icon}"
+      data-label="${label}"
+    >
+      <span className="playlist-icon-sre">${icon}</span>
+      <span className="playlist-label-sre">${label}</span>
+      <span id="${id}" className="material-symbols-outlined sre-play-circle sre-play-circle-${id}">play_circle</span> 
+    </div>
+  </div>
+  `.trim();
+      }
+    );
+  }
+  
+
 
   function fakeUnescapeMediaTags(html) {
+    html = replaceSelectionMarkers(html);
+  
     return html.replace(P_BLOCK_REGEX, (fullP, inner) => {
       const media = [];
       let match;
   
-      // extract ALL fake media blocks in order
       while ((match = FAKE_MEDIA_BLOCK_REGEX.exec(inner)) !== null) {
         const [, tag, attrs] = match;
-  
-        if (tag === "img") {
-          media.push(`<img${attrs} />`);
-        } else {
-          media.push(`<${tag}${attrs}></${tag}>`);
-        }
+        media.push(
+          tag === "img"
+            ? `<img${attrs} />`
+            : `<${tag}${attrs}></${tag}>`
+        );
       }
   
-      // remove media blocks from paragraph
       const leftoverText = inner
         .replace(FAKE_MEDIA_BLOCK_REGEX, "")
         .trim();
   
-      // CASE 1: paragraph contains ONLY media → unwrap
       if (media.length && leftoverText === "") {
         return media.join("\n");
       }
   
-      // CASE 2: mixed content → split safely
       if (media.length) {
         return (
           media.join("\n") +
-          (leftoverText
-            ? `\n<p>${leftoverText}</p>`
-            : "")
+          (leftoverText ? `\n<p>${leftoverText}</p>` : "")
         );
       }
   
-      // CASE 3: normal paragraph
       return fullP;
     });
   }
-  
-
   
 
 function triggerDownload(blob, filename) {
