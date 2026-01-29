@@ -1,6 +1,6 @@
 import { useIsMobile } from "scriptureMap2D.main.CustomHooks";
 import { useTabsContext } from "app.hooks.tabs";
-
+import { useSideBarContext } from "app.hooks.sideBar";
 const { createContext, useState, useContext, useCallback, useMemo } =
   os.appHooks;
 
@@ -199,7 +199,6 @@ const MAX_SCALE_FACTOR = 1.5;
 const SCALE_FACTOR_STEP = 0.05;
 
 const MAX_CHAPTER_HEAT_COUNT = 5;
-const BASE_BACKGROUND_COLOR = "var(--whitegray-color)";
 
 export const ScriptureMap2DProvider = ({
   children,
@@ -214,6 +213,15 @@ export const ScriptureMap2DProvider = ({
     initialShowingAllChapters = false,
     initialShowLabels = true,
   } = parentContext;
+  const { themeColors } = useSideBarContext();
+
+  const BASE_BACKGROUND_COLOR = useMemo(() => {
+    return themeColors?.["1"]?.firstToolbarbutton ?? "#dfdede";
+  }, [themeColors]);
+  // const myUserColor = useMemo(() => {
+  //   const {color} = globalThis?.GetOrSetVisualInTags(configBot.id);
+  //   return color;
+  // }, [])
 
   const isMobile = useIsMobile(768);
   const { tabs, activeTab: activeTabId } = useTabsContext();

@@ -3,9 +3,16 @@ import {
   getReadingHistoryEvents,
   flat,
   calculateReadingHistorySummary,
+  getSubscribedUsers,
+  subscribeToUsers,
+  unsubscribeFromUsers,
+  getUserSubscriptionsWithDetails,
+  isUserSubscribedToMe,
+  SubscribedUser,
 } from "db.annotations.library";
 import { useTabsContext } from "app.hooks.tabs";
 import { useScriptureMap2DContext } from "scriptureMap2D.main.ScriptureMap2DContext";
+import type { Bot } from "@casual-simulation/aux-common";
 
 const { createContext, useContext, useState, useMemo, useEffect, useCallback } =
   os.appHooks;
@@ -40,20 +47,22 @@ export const ReadingHistoryProvider = ({ children }) => {
   const [selectedUsersCount, setSelectedUsersCount] = useState(0);
   const [readingEventsByDay, setReadingEventsByDay] = useState(null);
 
-  const trySetMyAuthBotId = useCallback(() => {
+  const handleUserLoggedIn = useCallback(() => {
     if (!myAuthBotId) {
-      os.requestAuthBotInBackground().then((authBot) => {
-        const filtersCopy = new Map(readingHistoryUserFilters);
+      setMyAuthBotId(authBot.id);
+      setReadingHistoryUserFilters((prevFilters) => {
+        const filtersCopy = new Map(prevFilters);
         filtersCopy.set(authBot.id, true);
-        setMyAuthBotId(authBot.id);
-        setReadingHistoryUserFilters(filtersCopy);
+        return filtersCopy;
       });
     }
-  }, [readingHistoryUserFilters, myAuthBotId]);
+  }, [myAuthBotId]);
 
-  const handleUserLoggedIn = useCallback(() => {
-    trySetMyAuthBotId();
-  }, [trySetMyAuthBotId]);
+  const trySetMyAuthBotId = useCallback(() => {
+    if (authBot) {
+      handleUserLoggedIn();
+    }
+  }, [readingHistoryUserFilters, myAuthBotId]);
 
   useEffect(() => {
     globalThis.ScriptureMapHandleUserLoggedIn = handleUserLoggedIn;
@@ -63,10 +72,21 @@ export const ReadingHistoryProvider = ({ children }) => {
     return () => {
       globalThis.ScriptureMapHandleUserLoggedIn = null;
     };
-  }, []);
+  }, [handleUserLoggedIn, trySetMyAuthBotId]);
 
   useEffect(() => {
-    if (myAuthBotId) setUsersAuthId((prev) => [...prev, myAuthBotId]);
+    if (myAuthBotId) {
+      getSubscribedUsers().then((subscribedUsers: SubscribedUser[] | null) => {
+        if (subscribedUsers) {
+          const allAuthBotIds: string[] = [myAuthBotId];
+          subscribedUsers?.forEach((subscribedUser) => {
+            const { id } = subscribedUser;
+            allAuthBotIds.push(id);
+          });
+          setUsersAuthId(allAuthBotIds);
+        }
+      });
+    }
   }, [myAuthBotId]);
 
   const {

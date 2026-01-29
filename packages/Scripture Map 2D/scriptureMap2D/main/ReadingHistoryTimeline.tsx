@@ -4,14 +4,31 @@ import {
 } from "scriptureMap2D.main.Tooltip";
 import { useTimeContext } from "scriptureMap2D.main.TimeContext";
 import { useReadingHistoryContext } from "scriptureMap2D.main.ReadingHistoryContext";
-import { useScriptureMap2DContext } from "scriptureMap2D.main.ScriptureMap2DContext";
 
 import { useSideBarContext } from "app.hooks.sideBar";
+import { readingHistoryColorStore } from "bibleVizUtils.services.ReadingHistoryColorStore";
 
 const { useState, useCallback, useMemo, useEffect, useRef } = os.appHooks;
 const { memo } = os.appCompat;
 
 const step = 0.25;
+
+const ReadingHistoryTooltipHeader = memo(
+  ({ monthName, dayOfTheMonth, year, minutesCount }) => {
+    const { t } = useSideBarContext();
+    return (
+      <>
+        <span
+          className={"tooltip-reading-history-title"}
+        >{`${monthName} ${dayOfTheMonth}, ${year}`}</span>
+        <span
+          className={"tooltip-reading-history-count"}
+        >{`${minutesCount} Minutes of reading`}</span>
+        <span className={"tooltip-divider"}></span>
+      </>
+    );
+  }
+);
 
 const Label = memo(({ gridRow, gridColumn, children, isDay }) => {
   const style = useMemo(() => {
@@ -70,7 +87,9 @@ const Item = memo(
         onPointerEnter={(e) =>
           setContainerRect(e.currentTarget.getBoundingClientRect())
         }
-        onPointerLeave={() => setContainerRect(null)}
+        onPointerLeave={() => {
+          setContainerRect(null);
+        }}
         style={style}
         className={`reading-history-timeline-item${selected ? " selected" : ""}`}
         onClick={() => {
@@ -86,7 +105,8 @@ const Item = memo(
 );
 
 export const ReadingHistoryTimeline = () => {
-  const { t } = useSideBarContext();
+  const { t, themeColors } = useSideBarContext();
+
   const {
     readingHistoryRangeSeconds,
     handleReadingHistoryRangeSelectorClick,
@@ -100,39 +120,8 @@ export const ReadingHistoryTimeline = () => {
     myAuthBotId,
   } = useReadingHistoryContext();
 
-  const { BASE_BACKGROUND_COLOR } = useScriptureMap2DContext();
+  const timelineRef = useRef(null);
 
-  useEffect(() => {
-    console.log(`[Debug] ReadingHistoryTimeline`, {
-      readingHistoryRangeSeconds,
-      handleReadingHistoryRangeSelectorClick,
-      startOfWeekAYearAgoDate,
-      weeksCount,
-      SEC_PER_HOUR,
-      SEC_PER_MINUTE,
-      dayRangesMap,
-      dailyReadingHistorySummaries,
-      selectedUsersCount,
-      myAuthBotId,
-      BASE_BACKGROUND_COLOR,
-    });
-  }, [
-    readingHistoryRangeSeconds,
-    handleReadingHistoryRangeSelectorClick,
-    startOfWeekAYearAgoDate,
-    weeksCount,
-    SEC_PER_HOUR,
-    SEC_PER_MINUTE,
-    dayRangesMap,
-    dailyReadingHistorySummaries,
-    selectedUsersCount,
-    myAuthBotId,
-    BASE_BACKGROUND_COLOR,
-  ]);
-
-  const stepColors = useMemo(() => {
-    return [BASE_BACKGROUND_COLOR, "#BFBFBF", "#969696", "#6E6E6E", "#454545"];
-  }, [BASE_BACKGROUND_COLOR]);
   const { tick } = useTimeContext();
 
   const prevItemsColorMapRef = useRef(new Map());
@@ -163,28 +152,23 @@ export const ReadingHistoryTimeline = () => {
         const prevColor = prevItemsColorMapRef.current.get(key);
 
         if (summary && summary.totalTimeSpentReading > SEC_PER_MINUTE) {
-          const firstUserId = Object.keys(summary.users)[0];
-          const firstUserColor =
-            firstUserId === myAuthBotId
-              ? BibleVizUtils.Data.tags.myUserColor
-              : (BibleVizUtils.Data.vars.userPresenceData?.[firstUserId]?.user
-                  ?.color ??
-                thisBot.vars.FakeReadingHistoryUsersColorMap?.get(
-                  firstUserId
-                ) ??
-                "pink");
-          const userColor = selectedUsersCount === 1 ? firstUserColor : null;
+          const usersKeys = Object.keys(summary.users);
+          let userColor: string;
+          if (selectedUsersCount === 1) {
+            userColor = readingHistoryColorStore.getUserColor(usersKeys[0]);
+          } else {
+            userColor = themeColors?.["1"]?.primaryColor ?? "#D2691E"; // Hardcoded primary color. Must be accesible in the future
+          }
           color = BibleVizUtils.Functions.GetHistoryColorByReadingTime({
-            baseColor: stepColors[0],
+            baseColor: themeColors?.["1"]?.firstToolbarbutton ?? "#dfdede", // Hardcoded firstToolbarbutton. Must be accesible in the future
             userColor,
             step,
             readingTimeSeconds: summary.totalTimeSpentReading,
             fullColorTimeSeconds,
           });
-        } else color = stepColors[0];
+        }
 
-        if (!shouldReassign && (!prevColor || prevColor !== color))
-          shouldReassign = true;
+        if (!shouldReassign && prevColor !== color) shouldReassign = true;
 
         colorMap.set(key, color);
       }
@@ -202,6 +186,7 @@ export const ReadingHistoryTimeline = () => {
     dailyReadingHistorySummaries,
     selectedUsersCount,
     myAuthBotId,
+    themeColors,
   ]);
 
   const items = useMemo(() => {
@@ -224,6 +209,32 @@ export const ReadingHistoryTimeline = () => {
     );
 
     for (let week = 0; week < weeksCount; week++) {
+      const lastDayIndex = week === weeksCount - 1 ? now.getDay() : 6;
+      const labelDate = new Date(startOfWeekAYearAgoDate);
+      labelDate.setDate(labelDate.getDate() + week * 7 + lastDayIndex);
+      const labelDateInfo = GetPastDateInfo(labelDate.getTime());
+      const uniqueMonthKey = `${labelDateInfo.month}-${labelDateInfo.year}`;
+
+      if (!monthsSet.has(uniqueMonthKey)) {
+        monthsSet.add(uniqueMonthKey);
+
+        const monthLabelGridColumn = `${week + 2} / ${week + 4}`;
+        const fixedName = BibleVizUtils.Functions.CapitalizeFirstLetter(
+          labelDateInfo.monthName
+        );
+
+        items.push(
+          <Label
+            key={`label-${uniqueMonthKey}`}
+            gridRow={monthLabelGridRow}
+            gridColumn={monthLabelGridColumn}
+            isDay={false}
+          >
+            {fixedName}
+          </Label>
+        );
+      }
+
       for (let day = 0; day < 7; day++) {
         if (week === weeksCount - 1 && day > now.getDay()) break;
 
@@ -238,17 +249,26 @@ export const ReadingHistoryTimeline = () => {
         const {
           weekday,
           day: dayOfTheMonth,
-          month,
           monthName,
           year,
         } = GetPastDateInfo(time);
+
         const timeSpent = daySummary?.totalTimeSpentReading ?? 0;
         const isTimeSpentNoticeable = timeSpent > SEC_PER_MINUTE; // more than 1 minute
+        const timeSpentMinutes = Math.max(
+          1,
+          Math.floor(timeSpent / SEC_PER_MINUTE)
+        );
+
         const tooltipContent = [
-          isToday
-            ? t("today")
-            : `${weekday} ${monthName} ${dayOfTheMonth}, ${year}`,
+          <ReadingHistoryTooltipHeader
+            monthName={monthName}
+            dayOfTheMonth={dayOfTheMonth}
+            year={year}
+            minutesCount={timeSpentMinutes}
+          />,
         ];
+
         if (isTimeSpentNoticeable) {
           const userTimes = [];
           for (const userId in daySummary.users) {
@@ -269,25 +289,11 @@ export const ReadingHistoryTimeline = () => {
           for (const userId of topUsers) {
             const userSummary = daySummary.users[userId];
             const { totalTimeSpentReading: userTimeSpentSeconds } = userSummary;
-            let fixedContent;
-            if (userTimeSpentSeconds > SEC_PER_HOUR) {
-              const hoursCount = Math.floor(
-                userTimeSpentSeconds / SEC_PER_HOUR
-              );
-              fixedContent =
-                hoursCount > 1
-                  ? t("spentHours", { count: hoursCount })
-                  : t("spentHour", { count: hoursCount });
-            } else {
-              const minutesCount = Math.max(
-                1,
-                Math.floor(userTimeSpentSeconds / SEC_PER_MINUTE)
-              );
-              fixedContent =
-                minutesCount > 1
-                  ? t("spentMinutes", { count: minutesCount })
-                  : t("spentMinute", { count: minutesCount });
-            }
+            const minutesCount = Math.max(
+              1,
+              Math.floor(userTimeSpentSeconds / SEC_PER_MINUTE)
+            );
+            const fixedContent = `(${minutesCount} Min)`;
             tooltipContent.push(
               <ReadingHistoryTooltipContent
                 userId={userId}
@@ -326,26 +332,11 @@ export const ReadingHistoryTimeline = () => {
             tooltipContent.push(extraActivityContent);
           }
         }
-        const backgroundColor = itemsColorMap?.get?.(key) ?? stepColors[0];
+
+        const backgroundColor = itemsColorMap?.get?.(key);
 
         const itemGridRow = `${day + 2} / ${day + 3}`;
         const itemGridColumn = `${week + 2} / ${week + 3}`;
-
-        if (!monthsSet.has(month)) {
-          monthsSet.add(month);
-          const monthLabelGridColumn = `${week + 2} / ${week + 4}`;
-          const fixedName =
-            BibleVizUtils.Functions.CapitalizeFirstLetter(monthName);
-          items.push(
-            <Label
-              gridRow={monthLabelGridRow}
-              gridColumn={monthLabelGridColumn}
-              isDay={false}
-            >
-              {fixedName}
-            </Label>
-          );
-        }
 
         items.push(
           <Item
@@ -381,11 +372,34 @@ export const ReadingHistoryTimeline = () => {
         block: "center", // scroll so it's centered in the viewport
       });
     }
+
+    const el = timelineRef.current;
+
+    if (!el) return;
+
+    const handleWheel = (e) => {
+      if (e.deltaY === 0) return;
+
+      const isScrollable = el.scrollWidth > el.clientWidth;
+
+      if (isScrollable) {
+        e.preventDefault();
+        el.scrollLeft += e.deltaY;
+      }
+    };
+
+    el.addEventListener("wheel", handleWheel, { passive: false });
+
+    return () => {
+      el.removeEventListener("wheel", handleWheel);
+    };
   }, []);
 
   return (
     <div className="reading-history-timeline-container">
-      <div className="reading-history-timeline">{items}</div>
+      <div ref={timelineRef} className="reading-history-timeline">
+        {items}
+      </div>
     </div>
   );
 };

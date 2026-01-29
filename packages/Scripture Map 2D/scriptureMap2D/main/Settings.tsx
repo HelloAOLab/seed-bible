@@ -63,7 +63,13 @@ const SettingsOptions = ({
 
   const shouldShowReadingHistoryOption = useMemo(() => {
     return mode === ScriptureMap2DModes.Viewer && usersAuthId?.length > 0;
-  }, []);
+  }, [mode, usersAuthId]);
+
+  useEffect(() => {
+    console.log(`[Debug] Settings SettingsOptions usersAuthId`, {
+      usersAuthId,
+    });
+  }, [usersAuthId]);
 
   useEffect(() => {
     const handleClickOutside = (e) => {
@@ -121,8 +127,8 @@ const SettingsOptions = ({
         condition={showingAllChapters}
         enabledIcon={"visibility"}
         disabledIcon={"visibility_off"}
-        enabledText={t("closeBooks")}
-        disabledText={t("openBooks")}
+        enabledText={t("close")}
+        disabledText={t("open")}
         staticText={t("books")}
       />
       <Option
@@ -187,7 +193,7 @@ export const Settings = () => {
           setShowOptions((prev) => !prev);
         }}
       >
-        <img src={SETTINGS_ICON} alt="SETTINGS_ICON" />
+        <img src={SETTINGS_ICON} alt="SETTINGS_ICON" className="coloredIcon" />
         {showOptions && (
           <SettingsOptions
             setShowOptions={setShowOptions}
