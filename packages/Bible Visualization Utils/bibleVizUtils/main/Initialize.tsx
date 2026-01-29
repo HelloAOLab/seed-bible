@@ -35,6 +35,28 @@ if (
 )
   return;
 
+console.log(`[Debug] Initialize`, { authBot });
+
+setTagMask(thisBot, "initialized", true);
+
+globalThis.BibleVizUtils = {
+  Classes: bibleVizClasses,
+  Data: bibleVizData,
+  Functions: bibleVizFunctions,
+  Services: bibleVizServices,
+  Main: thisBot,
+};
+
+if (authBot) {
+  try {
+    const { handleUserLoggedInDebouncer } =
+      await import("bibleVizUtils.services.HandleUserLoggedInDebouncer");
+    handleUserLoggedInDebouncer.execute({ authBot });
+  } catch (error) {
+    console.error(error);
+  }
+}
+
 try {
   ({ PoolData } = await import("objectPooler.main.PoolData"));
   ({ CustomTag } = await import("objectPooler.main.CustomTag"));
@@ -86,8 +108,6 @@ globalThis.StackData = StackData;
 globalThis.TourGuideData = TourGuideData;
 globalThis.UnhighlightDelayInfo = UnhighlightDelayInfo;
 
-setTagMask(thisBot, "initialized", true);
-
 // const shoutName = 'OnCameraRotationChanged';
 // const gridBotOnBotChanged = gridPortalBot.tags.onBotChanged;
 // if(!gridBotOnBotChanged?.includes?.(shoutName))
@@ -107,12 +127,6 @@ setTagMask(thisBot, "initialized", true);
 //     setTag(gridPortalBot, "onBotChanged", finalBotChanged);
 // }
 
-globalThis.BibleVizUtils = {
-  Classes: bibleVizClasses,
-  Data: bibleVizData,
-  Functions: bibleVizFunctions,
-  Services: bibleVizServices,
-};
 const { HistoryTimePeriodInfo } =
   await import("bibleVizUtils.classes.HistoryTimePeriodInfo");
 
