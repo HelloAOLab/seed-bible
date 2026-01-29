@@ -280,7 +280,7 @@ export async function uploadExtensionAux(
   if (sessionKey) {
     globalOpts += ` --session-key "${sessionKey}"`;
   }
-  const uploadCommand = `casualos ${globalOpts} upload-package --raw --record "${recordKey ?? uploadRecordName}" --address "${meta.name}" --key "minor" --file "${filePath}" --markers "publicRead" --entitlements "data:personal file:personal"`;
+  const uploadCommand = `casualos ${globalOpts} upload-package --record "${recordKey ?? uploadRecordName}" --address "${meta.name}" --key "minor" --file "${filePath}" --markers "publicRead" --entitlements "data:personal file:personal"`;
 
   console.log("Uploading extension with command:\n", uploadCommand);
 
