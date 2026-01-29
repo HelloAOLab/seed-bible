@@ -2,5 +2,13 @@ import { TryInitializeReadingHistoryColorStore } from "bibleVizUtils.functions.T
 
 const { authBot } = that;
 
-shout("onAuthBotAdded");
-TryInitializeReadingHistoryColorStore(authBot);
+console.log(`[Debug] HandleUserLoggedIn`, { authBot });
+
+if (!BibleVizUtils.Main.masks.hasUserLoggedInBeenHandled) {
+  console.log(
+    `[Debug] HandleUserLoggedIn !BibleVizUtils.Main.masks.hasUserLoggedInBeenHandled`
+  );
+  BibleVizUtils.Main.masks.hasUserLoggedInBeenHandled = true;
+  shout("onAuthBotAdded");
+  TryInitializeReadingHistoryColorStore(authBot);
+}

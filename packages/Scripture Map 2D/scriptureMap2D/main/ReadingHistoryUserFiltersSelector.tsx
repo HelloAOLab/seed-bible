@@ -5,7 +5,7 @@ import { readingHistoryColorStore } from "bibleVizUtils.services.ReadingHistoryC
 
 import { useSideBarContext } from "app.hooks.sideBar";
 
-const { useMemo, useEffect } = os.appHooks;
+const { useMemo } = os.appHooks;
 
 export const ReadingHistoryUserFiltersSelector = () => {
   const { t } = useSideBarContext();

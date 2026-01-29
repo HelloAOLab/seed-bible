@@ -1,8 +1,9 @@
 const { bots } = that;
 
+console.log(`[Debug] onAnyBotsAdded`, { authBot });
 if (
   authBot &&
-  bots.some((bot) => {
+  bots.some((bot: any) => {
     return bot.id === authBot.id;
   })
 ) {
