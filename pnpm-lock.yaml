@@ -123,8 +123,8 @@ importers:
         specifier: ^30.1.2
         version: 30.2.0(@babel/core@7.28.6)
       casualos:
-        specifier: ^4.0.1
-        version: 4.0.1(@babel/runtime@7.28.6)(ws@8.19.0)
+        specifier: ^4.0.2
+        version: 4.0.2(@babel/runtime@7.28.6)(ws@8.19.0)
       commander:
         specifier: ^14.0.1
         version: 14.0.2
@@ -2454,8 +2454,8 @@ packages:
   caniuse-lite@1.0.30001766:
     resolution: {integrity: sha512-4C0lfJ0/YPjJQHagaE9x2Elb69CIqEPZeG0anQt9SIvIoOH4a4uaRl73IavyO+0qZh6MDLH//DrXThEYKHkmYA==}
 
-  casualos@4.0.1:
-    resolution: {integrity: sha512-2TG2bmdIXK+y7ZeO1LvRkl9raxuCPr9RuyQlUaPlfRcvaoLofm9lnwUe7zBsc59Z62c9flRo/XddYOSx/Dl5cQ==}
+  casualos@4.0.2:
+    resolution: {integrity: sha512-8wM+lJFgAT+9Doa5AdwyxTyN/37zOkIdj0FPSYNP3yEwCz/+jlFnV9jCgVWks3In8QQevtdrg440RF/PaKnXCw==}
     hasBin: true
 
   chalk@4.1.2:
@@ -6872,7 +6872,7 @@ snapshots:
 
   caniuse-lite@1.0.30001766: {}
 
-  casualos@4.0.1(@babel/runtime@7.28.6)(ws@8.19.0):
+  casualos@4.0.2(@babel/runtime@7.28.6)(ws@8.19.0):
     dependencies:
       '@casual-simulation/aux-common': 4.0.1
       '@casual-simulation/aux-records': 4.0.1(@babel/runtime@7.28.6)(ws@8.19.0)
