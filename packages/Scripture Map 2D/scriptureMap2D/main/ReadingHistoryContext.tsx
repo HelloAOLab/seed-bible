@@ -39,6 +39,12 @@ export const ReadingHistoryProvider = ({ children }) => {
   const [usersAuthId, setUsersAuthId] = useState([]);
   const [yearlyReadingHistorySummary, setYearlyReadingHistorySummary] =
     useState(null);
+  useEffect(() => {
+    console.log(
+      `[Debug] ReadingHistoryContext useEffect for yearlyReadingHistorySummary`,
+      { yearlyReadingHistorySummary }
+    );
+  }, [yearlyReadingHistorySummary]);
   const [rangedReadingEventsByBook, setRangedReadingEventsByBook] = useState(
     new Map()
   );
