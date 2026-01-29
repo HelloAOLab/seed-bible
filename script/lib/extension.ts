@@ -276,10 +276,11 @@ export async function uploadExtensionAux(
   // );
   // console.log("Extension File URL:", fileUrl);
 
-  let uploadCommand = `casualos --endpoint "${"https://api.ao.bot"}" upload-package --raw --record "${recordKey ?? uploadRecordName}" --address "${meta.name}" --file "${filePath}" --markers "publicRead" --entitlements "data:personal file:personal" -v "minor"`;
+  let globalOpts = `--endpoint "${"https://api.ao.bot"}" --origin "${"https://auth.ao.bot"}"`;
   if (sessionKey) {
-    uploadCommand += ` --key "${sessionKey}"`;
+    globalOpts += ` --session-key "${sessionKey}"`;
   }
+  const uploadCommand = `casualos ${globalOpts} upload-package --raw --record "${recordKey ?? uploadRecordName}" --address "${meta.name}" --key "minor" --file "${filePath}" --markers "publicRead" --entitlements "data:personal file:personal"`;
 
   console.log("Uploading extension with command:\n", uploadCommand);
 
