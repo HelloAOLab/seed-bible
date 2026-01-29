@@ -1460,7 +1460,7 @@ export function CustomAnnotationTextEditor({
       </div>}
 
     {isTagSuggestionsOpen && <SelectionOptions handleClose={() => setIsTagSuggestionsOpen(false)} options={TAG_OPTIONS} onClickOption={onClickTags} />}
-    {isPlaylistSuggestionOpen && <SelectionOptions loading={savingPlaylist} isPlaylist handleClose={() => setIsPlaylistSuggestionOpen(false)} options={PLAYLIST_OPTIONS} onClickOption={onClickPlaylist} />}
+    {isPlaylistSuggestionOpen && <SelectionOptions loading={savingPlaylist} isPlaylist dontCloseOnClick handleClose={() => setIsPlaylistSuggestionOpen(false)} options={PLAYLIST_OPTIONS} onClickOption={onClickPlaylist} />}
 
 
       {(isMic || isLink || isVideo) && 

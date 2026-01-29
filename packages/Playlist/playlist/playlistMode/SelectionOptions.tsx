@@ -1,7 +1,7 @@
 const RenderIcon = await thisBot.RenderIcon();
 const { LoaderSecondary } = Components;
 
-const SelectionOptions = ( { handleClose, options, isPlaylist = false, onClickOption, loading = false } ) => {
+const SelectionOptions = ( { handleClose, options, dontCloseOnClick = false, isPlaylist = false, onClickOption, loading = false } ) => {
 
     const onClick = (option:any) => {
         if(onClickOption) {
@@ -9,7 +9,9 @@ const SelectionOptions = ( { handleClose, options, isPlaylist = false, onClickOp
         } else if(option.onClick) {
             option.onClick(option);
         }
-        handleClose();
+        if(!dontCloseOnClick) {
+            handleClose();
+        }
     }
     
     return (

@@ -12,6 +12,7 @@
     flex-direction: column;
     max-height: 200px;
     overflow: auto;
+    border-radius: 0.5rem;
   }
   
   .selection-option {
@@ -38,4 +39,8 @@
     font-size: 12px;
     line-height: 100%;
     letter-spacing: 0%;
+  }
+
+  .selection-option-loading {
+    padding: 0.5rem;
   }
