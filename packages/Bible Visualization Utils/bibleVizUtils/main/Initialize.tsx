@@ -21,6 +21,7 @@ let UnhighlightDelayInfo;
 const bibleVizClasses = getBot(byTag("system", "bibleVizUtils.classes"));
 const bibleVizData = getBot(byTag("system", "bibleVizUtils.data"));
 const bibleVizFunctions = getBot(byTag("system", "bibleVizUtils.functions"));
+const bibleVizServices = getBot(byTag("system", "bibleVizUtils.services"));
 
 if (
   configBot.tags.systemPortal ||
@@ -29,6 +30,7 @@ if (
   !bibleVizClasses ||
   !bibleVizData ||
   !bibleVizFunctions ||
+  !bibleVizServices ||
   !globalThis.ObjectPooler
 )
   return;
@@ -38,39 +40,30 @@ try {
   ({ CustomTag } = await import("objectPooler.main.CustomTag"));
   ({ PieceInfo } = await import("bibleVizUtils.classes.PieceInfo"));
   ({ StackBibleData } = await import("bibleVizUtils.classes.StackBibleData"));
-  ({ StackTestamentData } = await import(
-    "bibleVizUtils.classes.StackTestamentData"
-  ));
-  ({ StackSectionData } = await import(
-    "bibleVizUtils.classes.StackSectionData"
-  ));
-  ({ StackSectionBookData } = await import(
-    "bibleVizUtils.classes.StackSectionBookData"
-  ));
+  ({ StackTestamentData } =
+    await import("bibleVizUtils.classes.StackTestamentData"));
+  ({ StackSectionData } =
+    await import("bibleVizUtils.classes.StackSectionData"));
+  ({ StackSectionBookData } =
+    await import("bibleVizUtils.classes.StackSectionBookData"));
   ({ StackBookData } = await import("bibleVizUtils.classes.StackBookData"));
-  ({ StackChapterData } = await import(
-    "bibleVizUtils.classes.StackChapterData"
-  ));
-  ({ LayoutChapterData } = await import(
-    "bibleVizUtils.classes.LayoutChapterData"
-  ));
-  ({ AnimateTagObject } = await import(
-    "bibleVizUtils.classes.AnimateTagObject"
-  ));
+  ({ StackChapterData } =
+    await import("bibleVizUtils.classes.StackChapterData"));
+  ({ LayoutChapterData } =
+    await import("bibleVizUtils.classes.LayoutChapterData"));
+  ({ AnimateTagObject } =
+    await import("bibleVizUtils.classes.AnimateTagObject"));
   ({ LayoutBibleData } = await import("bibleVizUtils.classes.LayoutBibleData"));
   ({ LayoutBookData } = await import("bibleVizUtils.classes.LayoutBookData"));
-  ({ LayoutBookStructure } = await import(
-    "bibleVizUtils.classes.LayoutBookStructure"
-  ));
+  ({ LayoutBookStructure } =
+    await import("bibleVizUtils.classes.LayoutBookStructure"));
   ({ ParentDataIds } = await import("bibleVizUtils.classes.ParentDataIds"));
-  ({ QueuedChapterData } = await import(
-    "bibleVizUtils.classes.QueuedChapterData"
-  ));
+  ({ QueuedChapterData } =
+    await import("bibleVizUtils.classes.QueuedChapterData"));
   ({ StackData } = await import("bibleVizUtils.classes.StackData"));
   ({ TourGuideData } = await import("bibleVizUtils.classes.TourGuideData"));
-  ({ UnhighlightDelayInfo } = await import(
-    "bibleVizUtils.classes.UnhighlightDelayInfo"
-  ));
+  ({ UnhighlightDelayInfo } =
+    await import("bibleVizUtils.classes.UnhighlightDelayInfo"));
 } catch (err) {
   console.warn("Module not found:", err);
 }
@@ -118,10 +111,10 @@ globalThis.BibleVizUtils = {
   Classes: bibleVizClasses,
   Data: bibleVizData,
   Functions: bibleVizFunctions,
+  Services: bibleVizServices,
 };
-const { HistoryTimePeriodInfo } = await import(
-  "bibleVizUtils.classes.HistoryTimePeriodInfo"
-);
+const { HistoryTimePeriodInfo } =
+  await import("bibleVizUtils.classes.HistoryTimePeriodInfo");
 
 // const historyTimePeriodsInfo = [
 //   new HistoryTimePeriodInfo({ value: 1, isNowTimePeriod: true }),
