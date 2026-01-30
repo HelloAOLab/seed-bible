@@ -1,0 +1,14 @@
+diff --git a/dist/cli.js b/dist/cli.js
+index f258a56c27a79ef403a43d3c0b38bc61cfd0caf3..3e042a1685438468aa0c03f64f16ea94c4e82ade 100644
+--- a/dist/cli.js
++++ b/dist/cli.js
+@@ -221622,8 +221622,8 @@ program2.command("upload-package").option(
+           console.log(
+             "No existing package found. Starting at version 0.0.0"
+           );
+-          key = { major: 0, minor: 0, patch: 0, tag: null };
+         }
++        key = { major: 0, minor: 0, patch: 0, tag: null };
+       }
+     } else {
+       if (!raw) {

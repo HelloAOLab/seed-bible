@@ -77,7 +77,8 @@
       "puppeteer"
     ],
     "patchedDependencies": {
-      "@casual-simulation/fast-json-stable-stringify": "patches/@casual-simulation__fast-json-stable-stringify.patch"
+      "@casual-simulation/fast-json-stable-stringify": "patches/@casual-simulation__fast-json-stable-stringify.patch",
+      "casualos": "patches/casualos.patch"
     }
   },
   "dependencies": {
