@@ -1229,7 +1229,7 @@ export function CustomAnnotationTextEditor({
     for (const id of ids) {
       const el = itemsRef.current[id];
       if (!el) continue;
-      const w = el.offsetWidth + 14;
+      const w = el.offsetWidth + 10;
       if (used + w <= available && (!headingControls || vis.length < 3)) {
         vis.push(id);
         used += w;
@@ -1742,9 +1742,9 @@ export function CustomAnnotationTextEditor({
       onAddLink,
     } = ctx;
 
-    const iconBtn = (title, icon, onClick, url = '', isInverse = false) => (
+    const iconBtn = (title, icon, onClick, url = '', isInverse = false, marginNegative = false) => (
       <button
-        className={`sre-ib ${isInverse ? 'sre-ib-inverse' : ''}`}
+        className={`sre-ib ${isInverse ? 'sre-ib-inverse' : ''} ${marginNegative ? 'margin-negative-sre' : ''}`}
         onClick={(e) => {
           e.preventDefault();
           onClick(e);
@@ -1930,7 +1930,7 @@ export function CustomAnnotationTextEditor({
     return {
       mic: iconBtn("Mic", "mic", Cmds.mic),
       video: iconBtn("Video", "video_camera_back_add", Cmds.video),
-      slash: iconBtn("Command", null, Cmds.slash, COMMAND_ICON, true),
+      slash: iconBtn("Command", null, Cmds.slash, COMMAND_ICON, true, true),
       bold: iconBtn("Bold", "format_bold", Cmds.bold),
       italic: iconBtn("Italic", "format_italic", Cmds.italic),
       underline: iconBtn("Underline", "format_underlined", Cmds.underline),
@@ -2318,6 +2318,10 @@ span.playlist-label-sre {
 
 .sre-ib-inverse {
     filter: var(--filter-mode);
+}
+
+.margin-negative-sre {
+  margin-top: -7px;
 }
 
 .sre-play-circle {

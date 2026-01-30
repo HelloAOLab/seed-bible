@@ -118,9 +118,9 @@ const Discover = ({
 
   const selectSelectedChip = (val) => {
     if (val === "All") {
-      setSelectedChip((prev) => ({
-        [val]: !prev[val],
-      }));
+      setSelectedChip({
+        All: true,
+      });
     } else {
       setSelectedChip((prev) => {
         const newSelectedChip:any = { ...prev };
