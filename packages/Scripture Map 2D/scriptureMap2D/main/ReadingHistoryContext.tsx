@@ -4,15 +4,10 @@ import {
   flat,
   calculateReadingHistorySummary,
   getSubscribedUsers,
-  subscribeToUsers,
-  unsubscribeFromUsers,
-  getUserSubscriptionsWithDetails,
-  isUserSubscribedToMe,
-  SubscribedUser,
 } from "db.annotations.library";
+import type { SubscribedUser } from "db.annotations.library";
 import { useTabsContext } from "app.hooks.tabs";
 import { useScriptureMap2DContext } from "scriptureMap2D.main.ScriptureMap2DContext";
-import type { Bot } from "@casual-simulation/aux-common";
 
 const { createContext, useContext, useState, useMemo, useEffect, useCallback } =
   os.appHooks;
