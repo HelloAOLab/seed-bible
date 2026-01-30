@@ -213,6 +213,8 @@ export const ReadingHistoryProvider = ({ children }) => {
     );
     const nowInSeconds = Math.floor(Date.now() / 1000);
 
+    console.log(`[Debug] ReadingHistoryContext useEffect`, { selectedUsers });
+
     const allEventPromises = selectedUsers.map((recordName) =>
       getReadingHistoryEvents(
         recordName,
@@ -220,6 +222,10 @@ export const ReadingHistoryProvider = ({ children }) => {
         nowInSeconds
       )
     );
+
+    console.log(`[Debug] ReadingHistoryContext useEffect`, {
+      allEventPromises,
+    });
 
     const dayKeys = Array.from(dayRangesMap.keys());
     const {
@@ -229,6 +235,7 @@ export const ReadingHistoryProvider = ({ children }) => {
 
     Promise.all(allEventPromises)
       .then((allEvents) => {
+        console.log(`[Debug] ReadingHistoryContext useEffect`, { allEvents });
         const flattenedEvents = Array.from(flat(allEvents));
 
         for (let event of flattenedEvents) {
@@ -287,19 +294,6 @@ export const ReadingHistoryProvider = ({ children }) => {
         );
       });
   }, [tick, activeTab, readingHistoryUserFilters, readingHistoryRangeSeconds]);
-
-  useEffect(() => {
-    console.log(
-      `[Debug] ReadingHistoryContext useEffect for readingHistoryUserFilters`,
-      { readingHistoryUserFilters }
-    );
-  }, [readingHistoryUserFilters]);
-  useEffect(() => {
-    console.log(
-      `[Debug] ReadingHistoryContext useEffect for yearlyReadingHistorySummary`,
-      { yearlyReadingHistorySummary }
-    );
-  }, [yearlyReadingHistorySummary]);
 
   const handleReadingHistoryUserSelectorClick = useCallback(
     (key) => {
