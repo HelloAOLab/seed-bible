@@ -7,6 +7,8 @@ os.hideLoadingScreen();
 globalThis.MOBILE_VIEWPORT_THRESHOLD = 600;
 globalThis.makingPlaylist = false;
 
+globalThis.LoadedPlaylistAnnotations = {};
+
 const storageBot = getBot("system", 'storage.tempStorageBot');
 if (storageBot) {
   storageBot.defineGlobals();
