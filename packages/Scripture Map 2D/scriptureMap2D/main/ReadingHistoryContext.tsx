@@ -190,6 +190,7 @@ export const ReadingHistoryProvider = ({ children }) => {
   }, [usersAuthId]);
 
   useEffect(() => {
+    return;
     const selectedUsers = [];
 
     for (const [userId, selected] of readingHistoryUserFilters) {
@@ -205,7 +206,7 @@ export const ReadingHistoryProvider = ({ children }) => {
     const eventsByDay = new Map();
     const dailySummaries = new Map();
 
-    if (selectedUsers.length === 0 || true) {
+    if (selectedUsers.length === 0) {
       summary = calculateReadingHistorySummary([]);
       setYearlyReadingHistorySummary(summary);
       setRangedReadingEventsByBook(rangedEventsByBook);
