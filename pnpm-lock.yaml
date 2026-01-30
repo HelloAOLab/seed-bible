@@ -9,7 +9,7 @@ patchedDependencies:
     hash: a37823e251d7d3ba40f212da3583baff724ac2bdaa83c3412dff9e0e5ec113ef
     path: patches/@casual-simulation__fast-json-stable-stringify.patch
   casualos:
-    hash: 33c761bd5ce2ef5bbeb622c85805905c2e83a98a817c8a88702421ae1aeb0b21
+    hash: 35a47541b186df0ecd8d9995ce748635455c2339306c43e40574f4f185431b2d
     path: patches/casualos.patch
 
 importers:
@@ -127,7 +127,7 @@ importers:
         version: 30.2.0(@babel/core@7.28.6)
       casualos:
         specifier: ^4.0.4
-        version: 4.0.4(patch_hash=33c761bd5ce2ef5bbeb622c85805905c2e83a98a817c8a88702421ae1aeb0b21)(@babel/runtime@7.28.6)(ws@8.19.0)
+        version: 4.0.4(patch_hash=35a47541b186df0ecd8d9995ce748635455c2339306c43e40574f4f185431b2d)(@babel/runtime@7.28.6)(ws@8.19.0)
       commander:
         specifier: ^14.0.1
         version: 14.0.2
@@ -6875,7 +6875,7 @@ snapshots:
 
   caniuse-lite@1.0.30001766: {}
 
-  casualos@4.0.4(patch_hash=33c761bd5ce2ef5bbeb622c85805905c2e83a98a817c8a88702421ae1aeb0b21)(@babel/runtime@7.28.6)(ws@8.19.0):
+  casualos@4.0.4(patch_hash=35a47541b186df0ecd8d9995ce748635455c2339306c43e40574f4f185431b2d)(@babel/runtime@7.28.6)(ws@8.19.0):
     dependencies:
       '@casual-simulation/aux-common': 4.0.1
       '@casual-simulation/aux-records': 4.0.1(@babel/runtime@7.28.6)(ws@8.19.0)

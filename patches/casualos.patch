@@ -1,7 +1,24 @@
 diff --git a/dist/cli.js b/dist/cli.js
-index f258a56c27a79ef403a43d3c0b38bc61cfd0caf3..3e042a1685438468aa0c03f64f16ea94c4e82ade 100644
+index f258a56c27a79ef403a43d3c0b38bc61cfd0caf3..0c000366a87d2d21ec2d857a19bb675e9ff037f4 100644
 --- a/dist/cli.js
 +++ b/dist/cli.js
+@@ -221151,14 +221151,14 @@ async function uploadFile(result, data2, hash2, axiosOptions = {}) {
+     data: data2
+   });
+   if (uploadResult.status >= 200 && uploadResult.status < 300) {
+-    console.log("[RecordsManager] File recorded!");
++    // console.log("[RecordsManager] File recorded!");
+     return {
+       success: true,
+       url: url3,
+       sha256Hash: hash2
+     };
+   } else {
+-    console.error("[RecordsManager] File upload failed!", uploadResult);
++    // console.error("[RecordsManager] File upload failed!", uploadResult);
+     return {
+       success: false,
+       errorCode: "upload_failed",
 @@ -221622,8 +221622,8 @@ program2.command("upload-package").option(
            console.log(
              "No existing package found. Starting at version 0.0.0"
