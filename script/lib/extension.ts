@@ -266,7 +266,8 @@ export async function uploadExtensionAux(
   filePath: string,
   sessionKey: string,
   recordKey: string | null | undefined,
-  saveMeta: boolean
+  saveMeta: boolean,
+  prefix: string
 ) {
   // const { fileUrl, sha256Hash } = await uploadFile(
   //   recordKey ?? uploadRecordName,
@@ -280,7 +281,7 @@ export async function uploadExtensionAux(
   if (sessionKey) {
     globalOpts += ` --session-key "${sessionKey}"`;
   }
-  const uploadCommand = `casualos ${globalOpts} upload-package --raw --record "${uploadRecordName}" --address "${meta.name}" --key "minor" --file "${filePath}" --markers "publicRead" --entitlements "data:personal file:personal"`;
+  const uploadCommand = `casualos ${globalOpts} upload-package --raw --record "${uploadRecordName}" --address "${prefix}${meta.name}" --key "minor" --file "${filePath}" --markers "publicRead" --entitlements "data:personal file:personal"`;
 
   console.log("Uploading extension with command:\n", uploadCommand);
 
@@ -350,7 +351,12 @@ export async function uploadExtensionAux(
  */
 export async function upload(
   name: string,
-  options: { sessionKey?: string; recordKey?: string; saveMeta?: boolean }
+  options: {
+    sessionKey?: string;
+    recordKey?: string;
+    saveMeta?: boolean;
+    prefix?: string;
+  }
 ) {
   if (!options.sessionKey) {
     throw new Error(
@@ -380,7 +386,8 @@ export async function upload(
     filePath,
     options.sessionKey,
     options.recordKey,
-    options.saveMeta ?? true
+    options.saveMeta ?? true,
+    options.prefix ?? ""
   );
 }
 
@@ -392,6 +399,7 @@ export async function uploadAll(options: {
   sessionKey?: string;
   recordKey?: string;
   saveMeta?: boolean;
+  prefix?: string;
 }) {
   const list = await readdir("packages");
   const extensions: string[] = [];

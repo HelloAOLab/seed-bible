@@ -186,6 +186,7 @@ program
     const extensions = await uploadAll({
       ...options,
       recordKey: options.extRecordKey ?? options.recordKey,
+      prefix: `${options.pattern}-`,
     });
     const availablePackages = extensions.map((e) => e.meta);
 
