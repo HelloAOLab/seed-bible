@@ -1,3 +1,5 @@
+import type { DeviceTheme } from "app.contract.theme";
+
 export const defaultTheme = {
   firstToolbarbutton: "#dfdede",
   // Main colors
@@ -223,3 +225,19 @@ export const darkTheme = {
   onSurface: "#FFFFFF",
   text3: "#F1F5F9",
 };
+
+/**
+ * Gets the prefered color scheme from the browser.
+ */
+export function getPreferedColorScheme(): DeviceTheme {
+  return window.matchMedia("(prefers-color-scheme: dark)").matches
+    ? "dark"
+    : "light";
+}
+
+/**
+ * Get's the requested theme object.
+ */
+export function getThemeObject(theme: DeviceTheme) {
+  return theme == "dark" ? darkTheme : defaultTheme;
+}

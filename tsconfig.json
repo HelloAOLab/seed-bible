@@ -3545,6 +3545,13 @@
       "app.contract.provider": [
         "./packages/seed-bible/app/contract/provider.tsx"
       ],
+      "app.contract.theme": ["./packages/seed-bible/app/contract/theme.tsx"],
+      "app.controller.MainController": [
+        "./packages/seed-bible/app/controller/MainController.tsx"
+      ],
+      "app.controller.controllerBuilder": [
+        "./packages/seed-bible/app/controller/controllerBuilder.tsx"
+      ],
       "app.emitter.onEggHatch": [
         "./packages/seed-bible/app/emitter/onEggHatch.tsx"
       ],
@@ -3600,9 +3607,11 @@
       "app.main.canvasController": [
         "./packages/seed-bible/app/main/canvasController.tsx"
       ],
+      "app.main.cssUtil": ["./packages/seed-bible/app/main/cssUtil.tsx"],
       "app.main.dragOverlay": [
         "./packages/seed-bible/app/main/dragOverlay.tsx"
       ],
+      "app.main.events": ["./packages/seed-bible/app/main/events.tsx"],
       "app.main.init": ["./packages/seed-bible/app/main/init.tsx"],
       "app.main.main": ["./packages/seed-bible/app/main/main.tsx"],
       "app.main.onEggHatch": ["./packages/seed-bible/app/main/onEggHatch.tsx"],
@@ -3617,9 +3626,7 @@
         "./packages/seed-bible/app/main/rootContext.tsx"
       ],
       "app.main.tempFluff": ["./packages/seed-bible/app/main/tempFluff.tsx"],
-      "app.main.themeObjects": [
-        "./packages/seed-bible/app/main/themeObjects.tsx"
-      ],
+      "app.main.themeUtils": ["./packages/seed-bible/app/main/themeUtils.tsx"],
       "app.packager.InstallNamedPackage": [
         "./packages/seed-bible/app/packager/InstallNamedPackage.tsx"
       ],
