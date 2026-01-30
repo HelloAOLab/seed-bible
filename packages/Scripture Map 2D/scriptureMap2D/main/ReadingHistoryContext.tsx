@@ -294,6 +294,12 @@ export const ReadingHistoryProvider = ({ children }) => {
       { readingHistoryUserFilters }
     );
   }, [readingHistoryUserFilters]);
+  useEffect(() => {
+    console.log(
+      `[Debug] ReadingHistoryContext useEffect for yearlyReadingHistorySummary`,
+      { yearlyReadingHistorySummary }
+    );
+  }, [yearlyReadingHistorySummary]);
 
   const handleReadingHistoryUserSelectorClick = useCallback(
     (key) => {
