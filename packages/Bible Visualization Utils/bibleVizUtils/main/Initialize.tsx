@@ -35,8 +35,6 @@ if (
 )
   return;
 
-console.log(`[Debug] Initialize`, { authBot });
-
 setTagMask(thisBot, "initialized", true);
 
 globalThis.BibleVizUtils = {

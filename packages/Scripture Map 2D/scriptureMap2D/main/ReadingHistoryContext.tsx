@@ -205,7 +205,7 @@ export const ReadingHistoryProvider = ({ children }) => {
     const eventsByDay = new Map();
     const dailySummaries = new Map();
 
-    if (selectedUsers.length === 0) {
+    if (selectedUsers.length === 0 || true) {
       summary = calculateReadingHistorySummary([]);
       setYearlyReadingHistorySummary(summary);
       setRangedReadingEventsByBook(rangedEventsByBook);
