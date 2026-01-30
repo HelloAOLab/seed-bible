@@ -34,12 +34,6 @@ export const ReadingHistoryProvider = ({ children }) => {
   const [usersAuthId, setUsersAuthId] = useState([]);
   const [yearlyReadingHistorySummary, setYearlyReadingHistorySummary] =
     useState(null);
-  useEffect(() => {
-    console.log(
-      `[Debug] ReadingHistoryContext useEffect for yearlyReadingHistorySummary`,
-      { yearlyReadingHistorySummary }
-    );
-  }, [yearlyReadingHistorySummary]);
   const [rangedReadingEventsByBook, setRangedReadingEventsByBook] = useState(
     new Map()
   );
@@ -190,7 +184,6 @@ export const ReadingHistoryProvider = ({ children }) => {
   }, [usersAuthId]);
 
   useEffect(() => {
-    return;
     const selectedUsers = [];
 
     for (const [userId, selected] of readingHistoryUserFilters) {
@@ -294,6 +287,13 @@ export const ReadingHistoryProvider = ({ children }) => {
         );
       });
   }, [tick, activeTab, readingHistoryUserFilters, readingHistoryRangeSeconds]);
+
+  useEffect(() => {
+    console.log(
+      `[Debug] ReadingHistoryContext useEffect for readingHistoryUserFilters`,
+      { readingHistoryUserFilters }
+    );
+  }, [readingHistoryUserFilters]);
 
   const handleReadingHistoryUserSelectorClick = useCallback(
     (key) => {
