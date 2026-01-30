@@ -1,6 +1,5 @@
 import { FiltersSelectorOption } from "scriptureMap2D.main.FiltersSelectorOption";
 import { useReadingHistoryContext } from "scriptureMap2D.main.ReadingHistoryContext";
-import { useScriptureMap2DContext } from "scriptureMap2D.main.ScriptureMap2DContext";
 import { readingHistoryColorStore } from "bibleVizUtils.services.ReadingHistoryColorStore";
 
 import { useSideBarContext } from "app.hooks.sideBar";
