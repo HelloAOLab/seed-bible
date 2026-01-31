@@ -211,7 +211,8 @@ export const ScriptureMap2DProvider = ({
     initialScaleFactor = 1,
     initialIsReadingHistoryEnabled = false,
     initialShowingAllChapters = false,
-    initialShowLabels = true,
+    initialShowTestamentLabels = true,
+    initialShowSectionLabels = true,
   } = parentContext;
   const { themeColors } = useSideBarContext();
 
@@ -272,7 +273,12 @@ export const ScriptureMap2DProvider = ({
     initialShowingAllChapters
   );
   const [showingBooksColors, setShowingBooksColors] = useState(true);
-  const [showLabels, setShowLabels] = useState(initialShowLabels);
+  const [showTestamentLabels, setShowTestamentLabels] = useState(
+    initialShowTestamentLabels
+  );
+  const [showSectionLabels, setShowSectionLabels] = useState(
+    initialShowSectionLabels
+  );
   const [isUserPresenceEnabled, setIsUserPresenceEnabled] = useState(false);
   const [isReadingHistoryEnabled, setIsReadingHistoryEnabled] = useState(
     initialIsReadingHistoryEnabled
@@ -322,8 +328,12 @@ export const ScriptureMap2DProvider = ({
     }
   }, [scaleFactor]);
 
-  const handleLabelsToggle = useCallback(() => {
-    setShowLabels((prev) => !prev);
+  const handleTestamentLabelsToggle = useCallback(() => {
+    setShowTestamentLabels((prev) => !prev);
+  }, []);
+
+  const handleSectionLabelsToggle = useCallback(() => {
+    setShowSectionLabels((prev) => !prev);
   }, []);
 
   const handleShowAllChaptersToggle = useCallback(() => {
@@ -363,8 +373,10 @@ export const ScriptureMap2DProvider = ({
         setScaleFactor,
         handleZoomIn,
         handleZoomOut,
-        showLabels,
-        handleLabelsToggle,
+        showTestamentLabels,
+        showSectionLabels,
+        handleTestamentLabelsToggle,
+        handleSectionLabelsToggle,
         handleShowAllChaptersToggle,
         arrangementIndex,
         arrangement,

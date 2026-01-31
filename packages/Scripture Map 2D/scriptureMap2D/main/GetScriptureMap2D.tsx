@@ -10,7 +10,7 @@ const onBookNameClickAndHoldDependencies = [];
 
 const { useCallback } = os.appHooks;
 
-const App = () => {
+const App = ({ id }) => {
   const handleChapterClick = useCallback((_, key) => {
     const { bookName, chapterIndex } = key;
 
@@ -46,9 +46,11 @@ const App = () => {
           onBookNameClickAndHold,
           onBookNameClickAndHoldDependencies,
           initialShowingAllChapters: true,
-          initialShowLabels: true,
+          initialShowTestamentLabels: true,
+          initialShowSectionLabels: false,
           initialScaleFactor: 0.6,
           initialIsReadingHistoryEnabled: false,
+          appId: id,
         }}
       />
     </div>

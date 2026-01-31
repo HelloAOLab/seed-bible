@@ -22,7 +22,7 @@ export const TestamentContent = memo(({ hidden }) => {
   const {
     arrangementIndex,
     scaleFactor,
-    showLabels,
+    showSectionLabels,
     bookWidth,
     isUserPresenceEnabled,
     activeTab,
@@ -168,7 +168,7 @@ export const TestamentContent = memo(({ hidden }) => {
       const sectionKey = `${testamentIndex}-${testament.name}-${sectionIndex}-${section.name}`;
       const levelColorsKey = `${testamentIndex} ${sectionIndex}`;
       const showingContent = sectionsShown.get(sectionKey);
-      if (showLabels) {
+      if (showSectionLabels) {
         elements.push(
           <SectionToggle
             key={`${arrangementIndex}-${testament.name}-${section.name}`}
@@ -289,7 +289,7 @@ export const TestamentContent = memo(({ hidden }) => {
     filteredSections,
     sectionLevelColorMap,
     sectionsShown,
-    showLabels,
+    showSectionLabels,
     rangedReadingEventsByBook,
     isUserPresenceEnabled,
     activeTab,

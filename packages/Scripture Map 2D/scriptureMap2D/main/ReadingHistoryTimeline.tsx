@@ -16,15 +16,23 @@ const step = 0.25;
 const ReadingHistoryTooltipHeader = memo(
   ({ monthName, dayOfTheMonth, year, minutesCount }) => {
     const { t } = useSideBarContext();
+    const showMinutesCount = useMemo(() => {
+      return minutesCount > 0;
+    }, [minutesCount]);
+
     return (
       <>
         <span
           className={"tooltip-reading-history-title"}
         >{`${monthName} ${dayOfTheMonth}, ${year}`}</span>
-        <span
-          className={"tooltip-reading-history-count"}
-        >{`${minutesCount} Minutes of reading`}</span>
-        <span className={"tooltip-divider"}></span>
+        {showMinutesCount ? (
+          <>
+            <span
+              className={"tooltip-reading-history-count"}
+            >{`${minutesCount} Minutes of reading`}</span>
+            <span className={"horizontal-divider"}></span>
+          </>
+        ) : null}
       </>
     );
   }
@@ -255,10 +263,7 @@ export const ReadingHistoryTimeline = () => {
 
         const timeSpent = daySummary?.totalTimeSpentReading ?? 0;
         const isTimeSpentNoticeable = timeSpent > SEC_PER_MINUTE; // more than 1 minute
-        const timeSpentMinutes = Math.max(
-          1,
-          Math.floor(timeSpent / SEC_PER_MINUTE)
-        );
+        const timeSpentMinutes = Math.floor(timeSpent / SEC_PER_MINUTE);
 
         const tooltipContent = [
           <ReadingHistoryTooltipHeader
