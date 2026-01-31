@@ -20,7 +20,7 @@ const RenderIcon = ({ isCustomIcons, big = false, small = false, isAllowSet = fa
     }, [isAllowSet]);
 
     return (
-        <div className={`playlist-details-icon ${big ? " big" : ""} ${small ? " small" : ""} `} style={{ position: 'relative', backgroundColor: 'var(--themeSideMenu)' }}>
+        <div className={`playlist-details-icon ${big ? " big" : ""} ${small ? " small" : ""} `} style={{ position: 'relative', backgroundColor: 'var(--panelBackground)' }}>
             {
                 isCustomIcons ?
                     <img src={icon} style={{ width: '24px' }
