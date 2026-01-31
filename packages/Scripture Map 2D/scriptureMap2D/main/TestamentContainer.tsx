@@ -7,7 +7,7 @@ const { useState, useCallback } = os.appHooks;
 const { memo } = os.appCompat;
 
 export const TestamentContainer = memo(({ testament, testamentIndex }) => {
-  const { showLabels } = useScriptureMap2DContext();
+  const { showTestamentLabels } = useScriptureMap2DContext();
   const [showContent, setShowContent] = useState(true);
 
   const toggleshowContent = useCallback(() => {
@@ -17,7 +17,7 @@ export const TestamentContainer = memo(({ testament, testamentIndex }) => {
   return (
     <TestamentContext.Provider value={{ testament, testamentIndex }}>
       <div className="testament-container">
-        {showLabels && (
+        {showTestamentLabels && (
           <TestamentToggle
             key={`toggle-${testament.name}`}
             toggleshowContent={toggleshowContent}

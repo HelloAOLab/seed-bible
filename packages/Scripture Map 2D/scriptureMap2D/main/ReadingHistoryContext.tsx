@@ -213,8 +213,6 @@ export const ReadingHistoryProvider = ({ children }) => {
     );
     const nowInSeconds = Math.floor(Date.now() / 1000);
 
-    console.log(`[Debug] ReadingHistoryContext useEffect`, { selectedUsers });
-
     const allEventPromises = selectedUsers.map((recordName) =>
       getReadingHistoryEvents(
         recordName,
@@ -222,10 +220,6 @@ export const ReadingHistoryProvider = ({ children }) => {
         nowInSeconds
       )
     );
-
-    console.log(`[Debug] ReadingHistoryContext useEffect`, {
-      allEventPromises,
-    });
 
     const dayKeys = Array.from(dayRangesMap.keys());
     const {
