@@ -1056,6 +1056,11 @@ export function MiniTextEditor({
 
 // ---------------- styles ----------------
 const SRE_STYLES = (minH) => `
+
+.tiptap.ProseMirror * {
+  color: initial !important;
+}
+
 .sre-root { width: 100%; }
 .sre-editor {
   min-height: ${minH}px;
