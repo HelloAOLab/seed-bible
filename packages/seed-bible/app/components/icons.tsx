@@ -117,7 +117,7 @@ export const ApologistIcon = (noFilter = false) => {
       fill="none"
       viewBox="0 0 24 24"
       stroke-width="1.5"
-      stroke="currentColor"
+      stroke="#000"
       class="size-6"
     >
       <path
@@ -675,7 +675,7 @@ export const SelectionUIIcon = (props) => (
     <path d="M11 12L21 16L15 17L17 22Z" fill="black" />
   </svg>
 );
-const MenuIcon = ({ name, size = 24, invert = false, className = "" }) => {
+const MenuIcon = ({ name, size = 24, invert = false, className = "", style = {} }) => {
   // Check if `name` looks like an image URL
   const isImage =
     typeof name === "string" && name.match(/\.(png|jpg|jpeg|svg|gif|webp)$/i);
@@ -690,6 +690,7 @@ const MenuIcon = ({ name, size = 24, invert = false, className = "" }) => {
   const iconStyle = {
     fontSize: isImage ? 16 : size,
     filter: invert ? "invert(1)" : undefined,
+    ...style,
   };
 
   return isImage ? (
