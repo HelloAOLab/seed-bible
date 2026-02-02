@@ -114,12 +114,6 @@ const SettingsOptions = ({
   }, [mode, usersAuthId]);
 
   useEffect(() => {
-    console.log(`[Debug] Settings SettingsOptions usersAuthId`, {
-      usersAuthId,
-    });
-  }, [usersAuthId]);
-
-  useEffect(() => {
     const handleClickOutside = (e) => {
       if (
         containerRef.current &&
