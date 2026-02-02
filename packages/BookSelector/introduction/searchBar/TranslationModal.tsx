@@ -222,6 +222,7 @@ const TranslationModal = (props: {
                 }
                 value={languageQuery}
                 onChange={(e) => setLanguageQuery(e.target.value)}
+                id="translation-search-input"
               />
             </div>
             <span
