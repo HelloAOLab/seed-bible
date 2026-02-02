@@ -1154,8 +1154,8 @@ const AddAnotationUI = ({
         html: textHTML,
         createdAtMs: Date.now(),
         updatedAtMs: Date.now(),
-        userProfilePicture: data.data.photoLink,
-        userName: data.data.profileName,
+        userProfilePicture: data.data?.photoLink,
+        userName: data.data?.profileName,
         userId: authBot.id,
         tags: hashtags,
       };
