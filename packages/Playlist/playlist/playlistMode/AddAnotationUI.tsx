@@ -1771,7 +1771,7 @@ const AddAnotationUI = ({
               ...showMorePosition.current,
               left: "none",
               right: "4rem",
-              width: "200px",
+              width: "240px",
               padding: "1rem",
               top: "5rem",
             }}
@@ -1787,9 +1787,6 @@ const AddAnotationUI = ({
               className="more-menu-items"
               onClick={() => {
                 setPublishAccess("private");
-              }}
-              style={{
-                borderTop: "1px solid #3E3E3E",
               }}
             >
               <span

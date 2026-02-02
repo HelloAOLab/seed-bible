@@ -1136,8 +1136,9 @@ div.attachment-link.dropabble-Embed .playlist-item-type {
 }
 
 .chips-tag-container .chip-tag.active {
-  background-color: var(--primaryButtonColor);
-  border: 1px solid var(--primaryButtonBorder);
+  background-color: var(--primaryColor);
+  border: 1px solid var(--pageTextColor);
+  color: var(--pageTextColor);
 }
 
 .content-type {

@@ -92,7 +92,17 @@ const RenderHTMLContent = ({ htmlContent }) => {
       
       globalThis.LoadingOldPlaylist = true;
 
-      const res = await os.getData(authBotId, playlistId);
+      let res = null;
+
+      if (globalThis.LoadedPlaylistAnnotations[playlistId]) {
+        res = {
+          success: true,
+          data: globalThis.LoadedPlaylistAnnotations[playlistId],
+        }
+      } else {
+        res = await os.getData(authBotId, playlistId);
+        globalThis.LoadedPlaylistAnnotations[playlistId] = {...res.data};
+      }
 
       if (res.success) {
         const playlistData = res.data;
@@ -104,7 +114,6 @@ const RenderHTMLContent = ({ htmlContent }) => {
           name: playlistData.name,
           list: [...playlistData.list],
         });
-
       } else {
         ShowNotification({
           message: t("unableToCopyPlaylist"),
@@ -161,6 +170,10 @@ const RenderHTMLContent = ({ htmlContent }) => {
     // Add click listeners to all span tags with id="${id}" className="material-symbols-outlined sre-play-circle sre-play-circle-${id}"
     const playCircleSpans = containerRef.current.querySelectorAll("span.sre-play-circle");
     playCircleSpans.forEach((span:any) => {
+      const id = span.getAttribute("id");
+      thisBot.FetchAnnotationContentInBg({
+        playlistId: id,
+      });
       span.addEventListener("click", handlePlayCircleClick);
     });
 
