@@ -55,7 +55,38 @@ const Legend = () => {
 };
 
 const YearSelector = () => {
-  return <span className={"year-selector"}>Year: 2026</span>;
+  const { selectedTimelineKey, timelineRangesMap, setSelectedTimelineKey } =
+    useReadingHistoryContext();
+
+  const [showOptions, setShowOptions] = useState(false);
+
+  return (
+    <div className={"year-selector"}>
+      <div
+        className={"year-selector-label"}
+        onClick={() => setShowOptions((prev) => !prev)}
+      >
+        <span>{`Year: ${selectedTimelineKey}`}</span>
+        <span className="material-symbols-outlined">keyboard_arrow_down</span>
+      </div>
+      {showOptions && (
+        <div className={"year-selector-options"}>
+          {Array.from(timelineRangesMap.keys()).map((key: number) => {
+            return (
+              <span
+                className={"year-selector-option"}
+                onClick={() => {
+                  setSelectedTimelineKey(key);
+                }}
+              >
+                {key}
+              </span>
+            );
+          })}
+        </div>
+      )}
+    </div>
+  );
 };
 
 const Option = ({
