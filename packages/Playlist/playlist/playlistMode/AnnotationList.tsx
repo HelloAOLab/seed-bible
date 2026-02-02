@@ -221,6 +221,8 @@ const AnnotationList = ({
         });
       }
       setLoading(false);
+      delete globalThis.AnnotationsData[`${currentOpenedBook?.bookId}-${chapter}`];
+      thisBot.fetchAnnotationsData({...globalThis.CurrentBookData});
     } catch (err) {
       ShowNotification({
         message: t("failedToDeleteAnnotation"),

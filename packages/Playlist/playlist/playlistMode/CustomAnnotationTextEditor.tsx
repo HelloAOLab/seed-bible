@@ -2375,8 +2375,6 @@ function fakeEscapeMediaTags(html = "", showPreview = false) {
     if (showPreview) return html;
     html = escapePlaylistBlocks(html);
 
-    console.log("FAKE ESCAPE MEDIA TAGS", html);
-  
     return html
       // escape opening media tags
       .replace(MEDIA_OPEN_TAG_REGEX, (tag) =>

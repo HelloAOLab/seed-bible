@@ -94,6 +94,8 @@
   border: 1px solid #e1e3ea;
   justify-content: space-between;
   position: relative;
+  border-top-left-radius: 12px;
+  border-top-right-radius: 12px;
 }
 
 .modal-header h3 {

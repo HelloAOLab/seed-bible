@@ -9,6 +9,10 @@ if(!globalThis.AnnotationsData) {
     globalThis.AnnotationsData = {};
 }
 
+if(!authBot?.id) {
+    return { success: false, data: null };
+}
+
 // If last fetch was less than 15 minutes ago, return the cached data
 if(globalThis.AnnotationsData[`${that?.bookId}-${chapter}`]) {
     if(new Date().getTime() - globalThis.AnnotationsData[`${that?.bookId}-${chapter}`].time < 15 * 60 * 1000) {

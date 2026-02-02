@@ -176,7 +176,7 @@ export function getAnnotationMarker(
 export async function getAnnotationRecord(forceLogin?: boolean) {
   const injectedRecordKey = configBot.tags.annotationRecordKey;
   if (injectedRecordKey) {
-    return injectedRecordKey;
+    return injectedRecordKey.replace(".subjectless", "");
   }
   return await getUserRecord(forceLogin);
 }
