@@ -93,8 +93,6 @@ const YearSelector = () => {
 const Option = ({
   callback,
   condition,
-  enabledIcon,
-  disabledIcon,
   enabledText,
   disabledText,
   staticText,
@@ -106,9 +104,6 @@ const Option = ({
         callback();
       }}
     >
-      <span className="material-symbols-outlined">
-        {condition ? enabledIcon : disabledIcon}
-      </span>
       {`${condition ? enabledText : disabledText} ${staticText}`}
     </button>
   );
@@ -190,6 +185,8 @@ const SettingsOptions = ({
       }}
       className="settings-options-container"
     >
+      <span>View options</span>
+      <span>Control the view of the content on the map</span>
       {shouldShowReadingHistory && (
         <Option
           callback={() => setCollapsed((prev) => !prev)}
@@ -213,17 +210,13 @@ const SettingsOptions = ({
           })
         }
         condition={timelineRangeMethod}
-        enabledIcon={"visibility_off"}
-        disabledIcon={"visibility"}
         enabledText={t("Toggle")}
         disabledText={t("Toggle")}
-        staticText={`${t("timeline")} ${t("type")}`}
+        staticText={t("type of timeline")}
       />
       <Option
         callback={handleShowAllChaptersToggle}
         condition={showingAllChapters}
-        enabledIcon={"visibility"}
-        disabledIcon={"visibility_off"}
         enabledText={t("close")}
         disabledText={t("open")}
         staticText={t("books")}
@@ -231,37 +224,29 @@ const SettingsOptions = ({
       <Option
         callback={() => setShowingBooksColors((prev) => !prev)}
         condition={showingBooksColors}
-        enabledIcon={"palette"}
-        disabledIcon={"palette"}
         enabledText={t("hide")}
         disabledText={t("show")}
-        staticText={t("booksColor")}
+        staticText={t("books color")}
       />
       {shouldShowReadingHistoryOption && (
         <Option
           callback={() => setIsReadingHistoryEnabled((prev) => !prev)}
           condition={isReadingHistoryEnabled}
-          enabledIcon={"history"}
-          disabledIcon={"history"}
           enabledText={t("hide")}
           disabledText={t("show")}
-          staticText={t("readingHistory")}
+          staticText={t("reading history")}
         />
       )}
       <Option
         callback={() => setIsUserPresenceEnabled((prev) => !prev)}
         condition={isUserPresenceEnabled}
-        enabledIcon={"group_off"}
-        disabledIcon={"group"}
         enabledText={t("hide")}
         disabledText={t("show")}
-        staticText={t("userPresence")}
+        staticText={t("user presence")}
       />
       <Option
         callback={handleSectionLabelsToggle}
         condition={showSectionLabels}
-        enabledIcon={"label_off"}
-        disabledIcon={"label"}
         enabledText={t("hide")}
         disabledText={t("show")}
         staticText={t("section labels")}
@@ -269,8 +254,6 @@ const SettingsOptions = ({
       <Option
         callback={handleTestamentLabelsToggle}
         condition={showTestamentLabels}
-        enabledIcon={"label_off"}
-        disabledIcon={"label"}
         enabledText={t("hide")}
         disabledText={t("show")}
         staticText={t("testament labels")}

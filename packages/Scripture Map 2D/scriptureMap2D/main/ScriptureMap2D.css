@@ -94,33 +94,47 @@
   position: absolute;
   right: 0;
   top: calc(100% + 4px);
-  background-color: #202020;
-  padding: 8px;
+  background-color: var(--iconColor);
+  color: var(--background);
+  padding: 12px;
   gap: 4px;
   border-radius: 8px;
   display: flex;
   flex-direction: column;
   justify-content: flex-start;
   align-items: flex-start;
-  min-width: 148px;
+  min-width: 208px;
   min-height: 20px;
+}
+
+.settings-options-container > span:nth-of-type(1) {
+  font-size: 16px;
+  font-weight: 500;
+  padding: 4px 8px 0;
+}
+
+.settings-options-container > span:nth-of-type(2) {
+  font-size: 12px;
+  font-weight: 100;
+  padding: 0 8px 8px;
 }
 
 .settings-options-container > button {
   min-width: 100%;
   background-color: transparent;
-  color: white;
+  color: var(--background);
   appearance: none;
   border: none;
   cursor: pointer;
   text-align: start;
-  padding: 4px 8px;
   border-radius: 4px;
   display: flex;
   justify-content: flex-start;
   align-items: center;
   gap: 8px;
   white-space: nowrap;
+  font-weight: 400;
+  padding: 4px 8px;
 }
 
 .settings-options-container > button > span {
@@ -128,7 +142,7 @@
 }
 
 .settings-options-container > button:hover {
-  background-color: #4e4e4e;
+  background-color: var(--gray-color);
 }
 
 .scripture-map-2d-settings > .settings-footer {
@@ -685,28 +699,10 @@
   inherits: false;
 }
 
-.scripture-map-2d-wrapper
-  .scripture-map-2d-container
-  .testament-container
-  .book-container
-  .book-cover
-  .chapter.show-user-presence::before,
-.scripture-map-2d-wrapper
-  .scripture-map-2d-container
-  .testament-container
-  .book-container
-  .book-cover
-  .chapter.show-user-presence::after,
-.scripture-map-2d-wrapper
-  .scripture-map-2d-container
-  .testament-container
-  .book-container
-  .book-cover.show-user-presence::before,
-.scripture-map-2d-wrapper
-  .scripture-map-2d-container
-  .testament-container
-  .book-container
-  .book-cover.show-user-presence::after {
+.book-container .book-cover .chapter.show-user-presence::before,
+.book-container .book-cover .chapter.show-user-presence::after,
+.book-container .book-cover.show-user-presence::before,
+.book-container .book-cover.show-user-presence::after {
   content: "";
   position: absolute;
   height: 100%;
@@ -718,18 +714,8 @@
   animation: 8s spin linear infinite;
 }
 
-.scripture-map-2d-wrapper
-  .scripture-map-2d-container
-  .testament-container
-  .book-container
-  .book-cover
-  .chapter.show-user-presence::before,
-.scripture-map-2d-wrapper
-  .scripture-map-2d-container
-  .testament-container
-  .book-container
-  .book-cover
-  .chapter.show-user-presence::after {
+.book-container .book-cover .chapter.show-user-presence::before,
+.book-container .book-cover .chapter.show-user-presence::after {
   background-image: conic-gradient(
     from var(--angle),
     var(--userPresenceColors)
@@ -738,16 +724,8 @@
   border-radius: calc(5px * var(--scale-factor));
 }
 
-.scripture-map-2d-wrapper
-  .scripture-map-2d-container
-  .testament-container
-  .book-container
-  .book-cover.show-user-presence::before,
-.scripture-map-2d-wrapper
-  .scripture-map-2d-container
-  .testament-container
-  .book-container
-  .book-cover.show-user-presence::after {
+.book-container .book-cover.show-user-presence::before,
+.book-container .book-cover.show-user-presence::after {
   background-image: conic-gradient(
     from var(--angle),
     var(--bookUserPresenceColors)
@@ -756,11 +734,7 @@
   border-radius: calc(10px * var(--scale-factor));
 }
 
-.scripture-map-2d-wrapper
-  .scripture-map-2d-container
-  .testament-container
-  .book-container
-  .book-cover.show-user-presence::before {
+.book-container .book-cover.show-user-presence::before {
   filter: blur(0.2rem);
   opacity: 0.7;
 }
