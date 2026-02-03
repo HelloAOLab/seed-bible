@@ -180,7 +180,7 @@ describe("bookSelector tests", () => {
     await page.locator(".custom-tr-in").fill(customUrl);
     await delay(200);
     await page.locator(".import-btn").click();
-    await delay(3000);
+    await delay(4000);
     const bookTitle = await seedBibleFrame
       .locator("div.bookTitle")
       .waitHandle();
@@ -207,7 +207,7 @@ describe("bookSelector tests", () => {
 
     await page.locator(".translationSettingsModal > div:nth-child(3)").click();
 
-    await delay(500);
+    await delay(1000);
 
     const translationItems = await page.$$(".language-list .item");
 
