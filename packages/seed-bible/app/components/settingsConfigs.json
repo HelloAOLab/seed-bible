@@ -1,0 +1,123 @@
+{
+  "presets": {
+    "minimal": {
+      "useTabs": false,
+      "appSettings": {
+        "removeSpaces": true
+      },
+      "onlineUsers": {
+        "enabled": true,
+        "anonymous": true
+      },
+      "sections": {
+        "accountHeader": {
+          "enabled": true,
+          "showDivider": false,
+          "items": {
+            "generalHeader": { "enabled": true, "labelKey": "generalSettings" },
+            "generalDesc": { "enabled": true, "labelKey": "manageAccountDesc" },
+            "yourAccount": { "enabled": true }
+          }
+        },
+        "accountOptions": {
+          "enabled": true,
+          "showDivider": false,
+          "items": {
+            "theme": { "enabled": true },
+            "notifications": { "enabled": true }
+          }
+        },
+        "preferences": {
+          "enabled": true,
+          "showDivider": false,
+          "items": {
+            "language": { "enabled": true }
+          }
+        }
+      }
+    },
+    "full": {
+      "useTabs": true,
+      "tabs": {
+        "space": {
+          "enabled": true,
+          "labelKey": "spaceSettings",
+          "sections": {
+            "spaceContent": {
+              "enabled": true,
+              "showDivider": false,
+              "items": {
+                "spaceIcon": { "enabled": true },
+                "spaceDescription": { "enabled": true }
+              }
+            },
+            "mainSettings": {
+              "enabled": true,
+              "showDivider": false,
+              "items": {
+                "theme": { "enabled": true },
+                "Extensions": { "enabled": true },
+                "bibleDefaults": { "enabled": true },
+                "pageSettings": { "enabled": true }
+              }
+            },
+            "spaceActions": {
+              "enabled": true,
+              "showDivider": true,
+              "items": {
+                "LoadSpace": { "enabled": true },
+                "Share": { "enabled": true }
+              }
+            }
+          }
+        },
+        "general": {
+          "enabled": true,
+          "labelKey": "generalSettings",
+          "sections": {
+            "accountHeader": {
+              "enabled": true,
+              "showDivider": false,
+              "items": {
+                "generalHeader": {
+                  "enabled": true,
+                  "labelKey": "generalSettings"
+                },
+                "generalDesc": {
+                  "enabled": true,
+                  "labelKey": "manageAccountDesc"
+                },
+                "yourAccount": { "enabled": true }
+              }
+            },
+            "accountOptions": {
+              "enabled": true,
+              "showDivider": false,
+              "items": {
+                "accountSettings": { "enabled": true },
+                "billing": { "enabled": true },
+                "permissions": { "enabled": true },
+                "notifications": { "enabled": true }
+              }
+            },
+            "subscriptionsSection": {
+              "enabled": true,
+              "showDivider": true,
+              "items": {
+                "subscriptions": { "enabled": true }
+              }
+            },
+            "preferences": {
+              "enabled": true,
+              "showDivider": true,
+              "items": {
+                "language": { "enabled": true },
+                "reseedToggle": { "enabled": true }
+              }
+            }
+          }
+        }
+      }
+    }
+  }
+}

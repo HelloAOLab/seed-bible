@@ -224,7 +224,7 @@ const defaultTheme = {
 // ————————————————————————————————————————————————————————————
 // Ready Themes Collection
 // ————————————————————————————————————————————————————————————
-const READY_THEMES = [
+export const READY_THEMES = [
   {
     name: "Default",
     colors: defaultTheme,

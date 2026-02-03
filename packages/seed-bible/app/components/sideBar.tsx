@@ -119,14 +119,17 @@ const CircleCounter = ({ data, book, chapter }) => {
                 border: `1px solid ${color}`,
               }}
             >
-               {masks[`${value[0]}-photo`] ? (
-            <img
-              style={{
-                "border-radius":"50%",
-                width:'16px'
-              }}
-              src={masks[`${value[0]}-photo`]}
-            />):<IconComponent style={{ width: "12px", height: "12px" }} />}
+              {masks[`${value[0]}-photo`] ? (
+                <img
+                  style={{
+                    "border-radius": "50%",
+                    width: "16px",
+                  }}
+                  src={masks[`${value[0]}-photo`]}
+                />
+              ) : (
+                <IconComponent style={{ width: "12px", height: "12px" }} />
+              )}
             </div>
           );
         })}
@@ -260,14 +263,17 @@ const CircleCounter = ({ data, book, chapter }) => {
                         flexShrink: 0,
                       }}
                     >
-                       {masks[`${value[0]}-photo`] ? (
-                    <img
-                      style={{
-                        "border-radius":"50%",
-                        width:'16px'
-                      }}
-              src={masks[`${value[0]}-photo`]}
-            />):<Icon style={{ width: "18px", height: "18px" }} />}
+                      {masks[`${value[0]}-photo`] ? (
+                        <img
+                          style={{
+                            "border-radius": "50%",
+                            width: "16px",
+                          }}
+                          src={masks[`${value[0]}-photo`]}
+                        />
+                      ) : (
+                        <Icon style={{ width: "18px", height: "18px" }} />
+                      )}
                     </div>
                     <div style={{ flex: 1 }}>
                       <div
@@ -552,12 +558,12 @@ function Tab({
   };
   const circles = onlineUsers
     ? Object.fromEntries(
-        Object.entries(onlineUsers).filter(
-          ([k, v]) => {
-            // console.log('Filtering user:', k, 'v:', v, 'el.data:', el?.data);
-            return v?.bookId === el?.data?.bookId && v?.chapter === el?.data?.chapter;
-          }
-        )
+        Object.entries(onlineUsers).filter(([k, v]) => {
+          // console.log('Filtering user:', k, 'v:', v, 'el.data:', el?.data);
+          return (
+            v?.bookId === el?.data?.bookId && v?.chapter === el?.data?.chapter
+          );
+        })
       )
     : {};
   // console.log('circles result:', circles, 'for tab:', el?.data?.book, el?.data?.chapter);
@@ -795,9 +801,9 @@ function SideBar({ panelsNumber }) {
   globalThis.AddTab = addTab;
   const { screens, setScreens, fullScreen, setFullScreen, ReSeed, setReSeed } =
     useBibleContext();
-    // globalThis.setScreens = setScreens
+  // globalThis.setScreens = setScreens
   const [customScreens, setCustomScreens] = useState({ value: 1 });
-  globalThis.setCustomScreens =setCustomScreens 
+  globalThis.setCustomScreens = setCustomScreens;
   const [onlineUsers, setOnlineUsers] = useState(false);
   globalThis.SetOnlineUsers = setOnlineUsers;
   const [showSearch, setShowSearch] = useState(false); // New state for search visibility
@@ -1883,36 +1889,40 @@ export const SettingsProfile = () => {
       setActiveSpace(spaceId);
     }
   };
+  const removeSpaces =
+    tags?.settingsConfigs?.presets?.[configBot?.tags?.settingsPreset || "full"]
+      ?.appSettings?.removeSpaces;
 
   return (
     <div className="dot">
-      {spaces.map((space) => {
-        return (
-          <SurroundingDivs>
-            <div
-              onClick={() => handleMouseDown(space.id)}
-              // onMouseUp={() => handleMouseUp(space.id)}
-              // onMouseLeave={() => clearTimeout(holdTimeout.current)}
-              onContextMenu={(e) => {
-                handleMouseDown(space.id);
-                handleRightClick(space.id);
-              }}
-              className={space.id === activeSpace ? "activeBg" : "bg"}
-            >
-              {!space?.icon ? (
-                <span></span>
-              ) : (
-                <div
-                  className="material-symbols-outlined"
-                  style={{ scale: "0.6", cursor: "pointer" }}
-                >
-                  {space.icon}
-                </div>
-              )}
-            </div>
-          </SurroundingDivs>
-        );
-      })}
+      {!removeSpaces &&
+        spaces.map((space) => {
+          return (
+            <SurroundingDivs>
+              <div
+                onClick={() => handleMouseDown(space.id)}
+                // onMouseUp={() => handleMouseUp(space.id)}
+                // onMouseLeave={() => clearTimeout(holdTimeout.current)}
+                onContextMenu={(e) => {
+                  handleMouseDown(space.id);
+                  handleRightClick(space.id);
+                }}
+                className={space.id === activeSpace ? "activeBg" : "bg"}
+              >
+                {!space?.icon ? (
+                  <span></span>
+                ) : (
+                  <div
+                    className="material-symbols-outlined"
+                    style={{ scale: "0.6", cursor: "pointer" }}
+                  >
+                    {space.icon}
+                  </div>
+                )}
+              </div>
+            </SurroundingDivs>
+          );
+        })}
     </div>
   );
 };
@@ -1927,7 +1937,12 @@ export const UserProfile = ({ collapsed }) => {
     if (data.success) {
       const payload = data.data;
       setUserData(payload);
-         setTagMask(thisBot,`${configBot.id}-photo`,payload?.photoLink,'shared');
+      setTagMask(
+        thisBot,
+        `${configBot.id}-photo`,
+        payload?.photoLink,
+        "shared"
+      );
       globalThis.SetGlobalProfilePic(payload?.photoLink);
     }
   };
@@ -1945,7 +1960,10 @@ export const UserProfile = ({ collapsed }) => {
     "#10B981",
     "#F59E0B",
   ];
-  const { colorIndex, iconIndex } = GetOrSetVisualInTags(configBot.id,userData);
+  const { colorIndex, iconIndex } = GetOrSetVisualInTags(
+    configBot.id,
+    userData
+  );
   const Icon = icons[iconIndex];
   return (
     <div
