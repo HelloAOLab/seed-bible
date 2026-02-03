@@ -909,7 +909,7 @@ export function SpaceSettingsForm() {
                 placeholder="Enter space name"
                 style={styles.input}
                 onFocus={(e) => {
-                  e.target.style.borderColor = "#4285f4";
+                  e.target.style.borderColor = "var(--spaceSelection)";
                   e.target.style.boxShadow =
                     "0 0 0 2px rgba(66, 133, 244, 0.1)";
                 }}
@@ -1014,7 +1014,7 @@ export const SpaceSelector = ({ updateSpace, activeSpace, spaces }) => {
             }}
             onMouseOver={(e) => {
               if (selectedIcon !== index) {
-                e.target.style.borderColor = "#4285f4";
+                e.target.style.borderColor = "var(--spaceSelection)";
               }
             }}
             onMouseOut={(e) => {
@@ -1146,7 +1146,7 @@ const styles = {
     boxSizing: "border-box",
   },
   inputFocus: {
-    borderColor: "#4285f4",
+    borderColor: "var(--spaceSelection)",
     boxShadow: "0 0 0 2px rgba(66, 133, 244, 0.1)",
   },
   iconGrid: {
@@ -1170,11 +1170,11 @@ const styles = {
     background: "white",
   },
   iconOptionSelected: {
-    borderColor: "#4285f4",
+    borderColor: "var(--spaceSelection)",
     background: "#e8f0fe",
   },
   iconOptionHover: {
-    borderColor: "#4285f4",
+    borderColor: "var(--spaceSelection)",
   },
   icon: {
     fontSize: "18px",
@@ -1182,7 +1182,7 @@ const styles = {
   },
   iconSelected: {
     fontSize: "18px",
-    color: "#4285f4",
+    color: "var(--spaceSelection)",
   },
   saveBtn: {
     width: "100%",

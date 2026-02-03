@@ -206,7 +206,7 @@ const SettingsSidebar = () => {
                       backgroundColor:
                         selectedOrientation === "tanak"
                           ? "var(--secondaryButton)"
-                          : "var(--primaryButton)",
+                          : "gray",
                       borderRadius: "50%",
                       display: "flex",
                       justifyContent: "center",
@@ -260,7 +260,7 @@ const SettingsSidebar = () => {
                       backgroundColor:
                         selectedOrientation === "traditional"
                           ? "var(--secondaryButton)"
-                          : "var(--primaryButton)",
+                          : "gray",
                       borderRadius: "50%",
                       display: "flex",
                       justifyContent: "center",

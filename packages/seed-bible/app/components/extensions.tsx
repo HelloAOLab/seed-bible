@@ -23,7 +23,11 @@ const ToggleSwitch = ({ isOn, onToggle, disabled = false }) => {
     display: "inline-block",
     width: "44px",
     height: "24px",
-    backgroundColor: isOn ? "#4285f4" : disabled ? "#e0e0e0" : "#9e9e9e",
+    backgroundColor: isOn
+      ? "var(--spaceSelection)"
+      : disabled
+        ? "#e0e0e0"
+        : "#9e9e9e",
     borderRadius: "12px",
     cursor: disabled ? "default" : "pointer",
     transition: "background-color 0.2s ease",

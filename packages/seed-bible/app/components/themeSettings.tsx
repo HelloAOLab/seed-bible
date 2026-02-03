@@ -4199,6 +4199,7 @@ const BrandingSectionContent = ({
     </div>
   );
 };
+const isDark = window.matchMedia("(prefers-color-scheme: dark)").matches;
 
 const ThemeSettings = () => {
   const { updateSpace, activeSpace, currentSpace, tabsIcons, setTabsIcons } =
@@ -4338,7 +4339,9 @@ const ThemeSettings = () => {
 
   // Initialize CurrentColors on mount
   useEffect(() => {
-    globalThis.CurrentColors = themeColors?.[`${activeSpace}`] || defaultTheme;
+    globalThis.CurrentColors = isDark
+      ? READY_THEMES[1]?.colors
+      : themeColors?.[`${activeSpace}`] || defaultTheme;
   }, []);
 
   // Resolve the working colors: local edits -> sidebar state -> default
@@ -4901,7 +4904,7 @@ export const defaultTextConfig = {
 const SettingsUI = () => {
   const [showCapturedText, setShowCapturedText] = useState(true);
   const [showVersusText, setShowVersusText] = useState(true);
-  const [selectedTheme, setSelectedTheme] = useState(0);
+  const [selectedTheme, setSelectedTheme] = useState(isDark ? 1 : 0);
   const [selectedFont, setSelectedFont] = useState(0);
   const [selectedFontSize, setSelectedFontSize] = useState(1);
   const [showFontDropdown, setShowFontDropdown] = useState(false);
@@ -5012,7 +5015,7 @@ const SettingsUI = () => {
   }, [activeSpace]);
   useEffect(() => {
     if (!masks.firstTimeLoad) {
-      applyReadyTheme(defaultTheme);
+      applyReadyTheme(isDark ? READY_THEMES[1]?.colors : defaultTheme);
       masks.firstTimeLoad = true;
     }
   }, []);

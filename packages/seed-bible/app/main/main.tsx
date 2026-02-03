@@ -546,8 +546,7 @@ const Main = () => {
   };
   const isDark = window.matchMedia("(prefers-color-scheme: dark)").matches;
 
-  let theme = defaultTheme;
-  // isDark ? darkTheme : defaultTheme;
+  let theme = isDark ? darkTheme : defaultTheme;
 
   const ThemeCSS = useMemo(() => {
     const colors = {
