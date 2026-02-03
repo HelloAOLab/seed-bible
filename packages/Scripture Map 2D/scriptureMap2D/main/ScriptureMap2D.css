@@ -712,6 +712,7 @@
   translate: -50% -50%;
   z-index: -1;
   animation: 8s spin linear infinite;
+  box-sizing: content-box;
 }
 
 .book-container .book-cover .chapter.show-user-presence::before,
