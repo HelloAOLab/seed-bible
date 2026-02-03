@@ -132,13 +132,13 @@ export function Toolbar() {
   useEffect(() => {
     const handleContextMenu = (e) => e.preventDefault();
     window.addEventListener("contextmenu", handleContextMenu);
-    os.addBotListener(configBot, 'onBotChanged', (that) => {
-    if (that.tags.includes('book')) {
-        globalThis.Open(configBot.tags.book,configBot.tags.chapter)
-      } else if(that.tags.includes('chapter')) {
-      globalThis.Open(configBot.tags.book,configBot.tags.chapter)
-    }
-});
+    os.addBotListener(configBot, "onBotChanged", (that) => {
+      if (that.tags.includes("book")) {
+        globalThis.Open(configBot.tags.book, configBot.tags.chapter);
+      } else if (that.tags.includes("chapter")) {
+        globalThis.Open(configBot.tags.book, configBot.tags.chapter);
+      }
+    });
     return () => window.removeEventListener("contextmenu", handleContextMenu);
   }, []);
 
@@ -158,13 +158,17 @@ export function Toolbar() {
             className={`toolbar-1 boundElements ${mounted ? "mounted" : ""}`}
             style={{
               border: sidebarMode?.includes("toolbarSettings")
-                ? "2px solid #4459F3"
+                ? "2px solid var(--spaceSelection)"
                 : null,
             }}
           >
             <div className="toolbar-item-wrapper leftClick">
               <button
-                onClick={() => isRTL ? navFunctions?.openNextChapter() : navFunctions?.openPrevChapter()}
+                onClick={() =>
+                  isRTL
+                    ? navFunctions?.openNextChapter()
+                    : navFunctions?.openPrevChapter()
+                }
                 className="toolbar-button"
               >
                 <span className="material-symbols-outlined">chevron_left</span>
@@ -245,7 +249,11 @@ export function Toolbar() {
 
             <div className="toolbar-item-wrapper rightClick">
               <button
-                onClick={() => isRTL ? navFunctions?.openPrevChapter() : navFunctions?.openNextChapter()}
+                onClick={() =>
+                  isRTL
+                    ? navFunctions?.openPrevChapter()
+                    : navFunctions?.openNextChapter()
+                }
                 className="toolbar-button"
               >
                 <span className="material-symbols-outlined">chevron_right</span>
@@ -261,7 +269,7 @@ export function Toolbar() {
                 }
                 
                 .toolbar-button.edit-active {
-                    background-color: #4459F3;
+                    background-color: var(--spaceSelection);
                     color: white;
                 }
                 
@@ -373,7 +381,7 @@ export function Toolbar() {
                     }
 
                 .tool-edit-item:hover {
-                    border-color: #4459F3;
+                    border-color: var(--spaceSelection);
                     box-shadow: 0 4px 12px rgba(68, 89, 243, 0.1);
                 }
                 
@@ -439,7 +447,7 @@ export function Toolbar() {
                 
                 .text-input:focus {
                     outline: none;
-                    border-color: #4459F3;
+                    border-color: var(--spaceSelection);
                     box-shadow: 0 0 0 3px rgba(68, 89, 243, 0.1);
                 }
                 
@@ -493,7 +501,7 @@ export function Toolbar() {
                 }
                 
                 .modified-indicator {
-                    color: #4459F3;
+                    color: var(--spaceSelection);
                     font-weight: 600;
                 }
                 
@@ -531,7 +539,7 @@ export function Toolbar() {
                 }
                 
                 .apply-btn {
-                    background: #4459F3;
+                    background: var(--spaceSelection);
                     color: white;
                 }
                 

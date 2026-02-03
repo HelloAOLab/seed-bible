@@ -1536,7 +1536,7 @@ function ThePage({
         }
 
         .verse-clicked {
-          border-bottom: 2px dashed #4459F3 !important;
+          border-bottom: 2px dashed var(--spaceSelection) !important;
 
         }
 
@@ -1544,7 +1544,7 @@ function ThePage({
           display: inline-block;
           margin-left: 4px;
           font-size: 0.85em;
-          color: #4459F3;
+          color: var(--spaceSelection);
           cursor: pointer;
           user-select: none;
           vertical-align: middle;
@@ -2202,7 +2202,7 @@ function Section({
 
   const editTextStyle = {
     "border-radius": "6px",
-    border: "2px solid #4459F3",
+    border: "2px solid var(--spaceSelection)",
     background: "rgba(68, 89, 243, 0.10)",
     padding: "8px",
     position: "relative",
@@ -2584,7 +2584,9 @@ function Section({
                       inHold === verse.verseNumber || isTextDecorUnderline
                         ? "dotted"
                         : "",
-                    borderBottom: isClicked ? "2px dashed #4459F3" : "none",
+                    borderBottom: isClicked
+                      ? "2px dashed var(--spaceSelection)"
+                      : "none",
                   }}
                   className={`sectionText ${
                     verse?.verseNumber.toString() === activeVerse.toString()

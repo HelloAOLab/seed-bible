@@ -170,7 +170,7 @@ const CreateAccountSettings = () => {
               }
             }}
             style={{
-              background: "#4459F3",
+              background: "var(--spaceSelection)",
               color: "white",
               border: "none",
               padding: "8px 16px",
@@ -198,18 +198,18 @@ const CreateAccountSettings = () => {
                 "border-radius": "50%",
                 height: "50px",
                 width: "50px",
-                border: "1px solid #4459F3",
+                border: "1px solid var(--spaceSelection)",
               }}
               src={img}
             />
             <button
               onClick={() => uploadImage()}
               style={{
-                background: "#4459F31A",
-                border: "1px solid #4459F3",
+                background: "var(--spaceSelection)1A",
+                border: "1px solid var(--spaceSelection)",
                 width: "100px",
                 height: "30px",
-                color: "#4459F3",
+                color: "var(--spaceSelection)",
               }}
             >
               Add picture
@@ -260,7 +260,7 @@ const CreateAccountSettings = () => {
           <button
             onClick={saveProfileData}
             style={{
-              background: "#4459F3",
+              background: "var(--spaceSelection)",
               color: "white",
               border: "none",
               padding: "10px 20px",

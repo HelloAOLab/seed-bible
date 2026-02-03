@@ -1,202 +1,226 @@
-import { getStyleOf } from 'app.styles.styler';
+import { getStyleOf } from "app.styles.styler";
 const { useEffect, useState, useRef } = os.appHooks;
 
-import { useSideBarContext } from 'app.hooks.sideBar';
-import { useMouseMove } from 'app.hooks.mouseMove';
-import SurroundingDivs from 'app.components.surroundingDivs';
-import { useBibleContext } from 'app.hooks.bibleVariables';
-import { useTabsContext } from 'app.hooks.tabs';
+import { useSideBarContext } from "app.hooks.sideBar";
+import { useMouseMove } from "app.hooks.mouseMove";
+import SurroundingDivs from "app.components.surroundingDivs";
+import { useBibleContext } from "app.hooks.bibleVariables";
+import { useTabsContext } from "app.hooks.tabs";
 
 // Simple, single-toolbar component (no edit layer). Main logic unchanged.
 export function Toolbar() {
-    const {
-        navFunctions,
-        setScreens,
-        tools,
-        canvasTools,
-        mapTools,
-        mapMode,
-        setTools,
-        setCanvasTools,
-        setMapTools
-    } = useBibleContext();
+  const {
+    navFunctions,
+    setScreens,
+    tools,
+    canvasTools,
+    mapTools,
+    mapMode,
+    setTools,
+    setCanvasTools,
+    setMapTools,
+  } = useBibleContext();
 
-    const { sidebarMode, openOnMobile } = useSideBarContext();
-    const { setIsDragging, isDragging, setElement } = useMouseMove();
-    const { activeSpace, updateToolsForSpace, getToolsForActiveSpace, activeTab, tabs } = useTabsContext();
-    const [toolbarBackground, setToolbarBackground] = useState('white');
+  const { sidebarMode, openOnMobile } = useSideBarContext();
+  const { setIsDragging, isDragging, setElement } = useMouseMove();
+  const {
+    activeSpace,
+    updateToolsForSpace,
+    getToolsForActiveSpace,
+    activeTab,
+    tabs,
+  } = useTabsContext();
+  const [toolbarBackground, setToolbarBackground] = useState("white");
 
-    useEffect(() => {
-        globalThis.SetToolbarBackground = setToolbarBackground;
+  useEffect(() => {
+    globalThis.SetToolbarBackground = setToolbarBackground;
 
-        // ✅ Only initialize if undefined
-        if (globalThis.toolbarChanges === undefined) {
-            globalThis.toolbarChanges = {};
-        }
-
-        return () => {
-            globalThis.SetToolbarBackground = null;
-        }
-    }, []);
-    // === keep original default-toolbar logic ===
-    const [showToolbar, setShowToolbar] = useState(true);
-    useEffect(() => {
-        setShowToolbar(!openOnMobile);
-    }, [openOnMobile]);
-
-    const TabTools = getToolsForActiveSpace();
-    const setActiveTools = (newTools) => updateToolsForSpace(activeSpace, newTools);
-
-    const [oldList, setOldList] = useState(null);
-    const [draggedIndex, setDraggedIndex] = useState(null);
-    const holdTimeoutRef = useRef(null);
-    const hasHeldRef = useRef(false);
-
-    useEffect(() => {
-        globalThis.SetScreens = setScreens;
-    }, [setScreens]);
-
-    useEffect(() => () => clearTimeout(holdTimeoutRef.current), []);
-
-    function handleMouseEnter(targetIndex) {
-        if (!isDragging || draggedIndex === null) return;
-        if (targetIndex === draggedIndex) return;
-
-        const reordered = [...TabTools];
-        const [movedItem] = reordered.splice(draggedIndex, 1);
-        reordered.splice(targetIndex, 0, movedItem);
-
-        setActiveTools(reordered);
-        setDraggedIndex(targetIndex);
+    // ✅ Only initialize if undefined
+    if (globalThis.toolbarChanges === undefined) {
+      globalThis.toolbarChanges = {};
     }
 
-    function handleMouseLeaveContainer() {
-        if (isDragging) {
-            setIsDragging(false);
-            setActiveTools(oldList);
-            setDraggedIndex(null);
-        }
+    return () => {
+      globalThis.SetToolbarBackground = null;
+    };
+  }, []);
+  // === keep original default-toolbar logic ===
+  const [showToolbar, setShowToolbar] = useState(true);
+  useEffect(() => {
+    setShowToolbar(!openOnMobile);
+  }, [openOnMobile]);
+
+  const TabTools = getToolsForActiveSpace();
+  const setActiveTools = (newTools) =>
+    updateToolsForSpace(activeSpace, newTools);
+
+  const [oldList, setOldList] = useState(null);
+  const [draggedIndex, setDraggedIndex] = useState(null);
+  const holdTimeoutRef = useRef(null);
+  const hasHeldRef = useRef(false);
+
+  useEffect(() => {
+    globalThis.SetScreens = setScreens;
+  }, [setScreens]);
+
+  useEffect(() => () => clearTimeout(holdTimeoutRef.current), []);
+
+  function handleMouseEnter(targetIndex) {
+    if (!isDragging || draggedIndex === null) return;
+    if (targetIndex === draggedIndex) return;
+
+    const reordered = [...TabTools];
+    const [movedItem] = reordered.splice(draggedIndex, 1);
+    reordered.splice(targetIndex, 0, movedItem);
+
+    setActiveTools(reordered);
+    setDraggedIndex(targetIndex);
+  }
+
+  function handleMouseLeaveContainer() {
+    if (isDragging) {
+      setIsDragging(false);
+      setActiveTools(oldList);
+      setDraggedIndex(null);
     }
+  }
 
-    function handleMouseUp() {
-        if (!isDragging) return;
-        setIsDragging(false);
-        setElement(null);
-        setDraggedIndex(null);
+  function handleMouseUp() {
+    if (!isDragging) return;
+    setIsDragging(false);
+    setElement(null);
+    setDraggedIndex(null);
+  }
+
+  // Sync tools with active tab type (keeps main logic)
+  useEffect(() => {
+    if (!activeTab || !tabs) return;
+    const activeTabObj = tabs.find((t) => t.id === activeTab);
+    if (activeTabObj?.data?.type === "canvas") {
+      setActiveTools([...canvasTools]);
+    } else {
+      setActiveTools([...tools]);
     }
+  }, [activeTab, tabs, canvasTools, tools]);
 
-    // Sync tools with active tab type (keeps main logic)
-    useEffect(() => {
-        if (!activeTab || !tabs) return;
-        const activeTabObj = tabs.find((t) => t.id === activeTab);
-        if (activeTabObj?.data?.type === 'canvas') {
-            setActiveTools([...canvasTools]);
-        } else {
-            setActiveTools([...tools]);
-        }
-    }, [activeTab, tabs, canvasTools, tools]);
+  // expose setters globally (kept behavior)
+  useEffect(() => {
+    globalThis.SetTools = setTools;
+    globalThis.SetCanvasTools = setCanvasTools;
+    globalThis.SetMapTools = setMapTools;
+    return () => {
+      globalThis.SetTools = null;
+      globalThis.SetCanvasTools = null;
+      globalThis.SetMapTools = null;
+    };
+  }, [setTools, setCanvasTools, setMapTools]);
 
-    // expose setters globally (kept behavior)
-    useEffect(() => {
-        globalThis.SetTools = setTools;
-        globalThis.SetCanvasTools = setCanvasTools;
-        globalThis.SetMapTools = setMapTools;
-        return () => {
-            globalThis.SetTools = null;
-            globalThis.SetCanvasTools = null;
-            globalThis.SetMapTools = null;
-        };
-    }, [setTools, setCanvasTools, setMapTools]);
+  // Disable context menu like before
+  useEffect(() => {
+    const handleContextMenu = (e) => e.preventDefault();
+    window.addEventListener("contextmenu", handleContextMenu);
+    return () => window.removeEventListener("contextmenu", handleContextMenu);
+  }, []);
 
-    // Disable context menu like before
-    useEffect(() => {
-        const handleContextMenu = (e) => e.preventDefault();
-        window.addEventListener('contextmenu', handleContextMenu);
-        return () => window.removeEventListener('contextmenu', handleContextMenu);
-    }, []);
+  if (!showToolbar) return <></>;
 
-    if (!showToolbar) return <></>;
+  return (
+    <>
+      <link
+        rel="stylesheet"
+        href="https://fonts.googleapis.com/css2?family=Material+Symbols+Outlined:opsz,wght,FILL,GRAD@20..48,100..700,0..1,-50..200"
+      />
 
-    return (
-        <>
-            <link
-                rel="stylesheet"
-                href="https://fonts.googleapis.com/css2?family=Material+Symbols+Outlined:opsz,wght,FILL,GRAD@20..48,100..700,0..1,-50..200"
-            />
-
-            <div className="toolbar-container-1 boundElements">
-                <SurroundingDivs action={handleMouseLeaveContainer}>
-                    <div
-                        onMouseUp={handleMouseUp}
-                        className="toolbar-1 boundElements"
-                        style={{ border: sidebarMode?.includes('toolbarSettings') ? '2px solid #4459F3' : null }}
-                    >
-                        <div className="toolbar-item-wrapper leftClick">
-                            <button onClick={() => navFunctions?.openPrevChapter()} className="toolbar-button">
-                                <span className="material-symbols-outlined">chevron_left</span>
-                            </button>
-                        </div>
-
-                        {tools?.map((tool, index) =>
-                            tool?.active === false ? null : (
-                                <div
-                                    key={`${tool.icon || 'tool'}-${index}`}
-                                    className="toolbar-item-wrapper"
-                                    onMouseEnter={() => handleMouseEnter(index)}
-                                    title={tool.label}
-                                >
-                                    {index === draggedIndex ? (
-                                        <div className={`toolbar-button placeholder`}></div>
-                                    ) : (
-                                        <button
-                                            className={`toolbar-button ${index === 0 ? 'firstToolbarbutton' : ''}`}
-                                            onMouseDown={() => {
-                                                hasHeldRef.current = false;
-                                                holdTimeoutRef.current = setTimeout(() => {
-                                                    if (tool?.onRightClick) tool.onRightClick();
-                                                    else if (tool?.onHold) tool.onHold();
-                                                    hasHeldRef.current = true;
-                                                }, 600);
-                                            }}
-                                            onMouseUp={(e) => {
-                                                e.stopPropagation();
-                                                clearTimeout(holdTimeoutRef.current);
-                                                if (!hasHeldRef.current && tool?.onClick) tool.onClick();
-                                                if (isDragging) {
-                                                    setIsDragging(false);
-                                                    setElement(null);
-                                                    setDraggedIndex(null);
-                                                }
-                                            }}
-                                            onMouseLeave={() => clearTimeout(holdTimeoutRef.current)}
-                                        >
-                                            {tool.isImg ? (
-                                                <img src={tool.icon} style={{ width: '22px' }} alt={tool.label} />
-                                            ) : (
-                                                <span className="material-symbols-outlined">{tool.icon}</span>
-                                            )}
-                                        </button>
-                                    )}
-                                </div>
-                            )
-                        )}
-
-                        <div className="toolbar-item-wrapper rightClick">
-                            <button onClick={() => navFunctions?.openNextChapter()} className="toolbar-button">
-                                <span className="material-symbols-outlined">chevron_right</span>
-                            </button>
-                        </div>
-                    </div>
-                </SurroundingDivs>
-                <style>{getStyleOf('toolbar.css')}</style>
+      <div className="toolbar-container-1 boundElements">
+        <SurroundingDivs action={handleMouseLeaveContainer}>
+          <div
+            onMouseUp={handleMouseUp}
+            className="toolbar-1 boundElements"
+            style={{
+              border: sidebarMode?.includes("toolbarSettings")
+                ? "2px solid var(--spaceSelection)"
+                : null,
+            }}
+          >
+            <div className="toolbar-item-wrapper leftClick">
+              <button
+                onClick={() => navFunctions?.openPrevChapter()}
+                className="toolbar-button"
+              >
+                <span className="material-symbols-outlined">chevron_left</span>
+              </button>
             </div>
-            <style>{`
+
+            {tools?.map((tool, index) =>
+              tool?.active === false ? null : (
+                <div
+                  key={`${tool.icon || "tool"}-${index}`}
+                  className="toolbar-item-wrapper"
+                  onMouseEnter={() => handleMouseEnter(index)}
+                  title={tool.label}
+                >
+                  {index === draggedIndex ? (
+                    <div className={`toolbar-button placeholder`}></div>
+                  ) : (
+                    <button
+                      className={`toolbar-button ${index === 0 ? "firstToolbarbutton" : ""}`}
+                      onMouseDown={() => {
+                        hasHeldRef.current = false;
+                        holdTimeoutRef.current = setTimeout(() => {
+                          if (tool?.onRightClick) tool.onRightClick();
+                          else if (tool?.onHold) tool.onHold();
+                          hasHeldRef.current = true;
+                        }, 600);
+                      }}
+                      onMouseUp={(e) => {
+                        e.stopPropagation();
+                        clearTimeout(holdTimeoutRef.current);
+                        if (!hasHeldRef.current && tool?.onClick)
+                          tool.onClick();
+                        if (isDragging) {
+                          setIsDragging(false);
+                          setElement(null);
+                          setDraggedIndex(null);
+                        }
+                      }}
+                      onMouseLeave={() => clearTimeout(holdTimeoutRef.current)}
+                    >
+                      {tool.isImg ? (
+                        <img
+                          src={tool.icon}
+                          style={{ width: "22px" }}
+                          alt={tool.label}
+                        />
+                      ) : (
+                        <span className="material-symbols-outlined">
+                          {tool.icon}
+                        </span>
+                      )}
+                    </button>
+                  )}
+                </div>
+              )
+            )}
+
+            <div className="toolbar-item-wrapper rightClick">
+              <button
+                onClick={() => navFunctions?.openNextChapter()}
+                className="toolbar-button"
+              >
+                <span className="material-symbols-outlined">chevron_right</span>
+              </button>
+            </div>
+          </div>
+        </SurroundingDivs>
+        <style>{getStyleOf("toolbar.css")}</style>
+      </div>
+      <style>{`
                 .toolbar-edit-toggle {
                     margin-left: auto;
                 }
                 
                 .toolbar-button.edit-active {
-                    background-color: #4459F3;
+                    background-color: var(--spaceSelection);
                     color: white;
                 }
                 
@@ -308,7 +332,7 @@ export function Toolbar() {
                     }
 
                 .tool-edit-item:hover {
-                    border-color: #4459F3;
+                    border-color: var(--spaceSelection);
                     box-shadow: 0 4px 12px rgba(68, 89, 243, 0.1);
                 }
                 
@@ -362,7 +386,7 @@ export function Toolbar() {
                 
                 .text-input:focus {
                     outline: none;
-                    border-color: #4459F3;
+                    border-color: var(--spaceSelection);
                     box-shadow: 0 0 0 3px rgba(68, 89, 243, 0.1);
                 }
                 
@@ -416,7 +440,7 @@ export function Toolbar() {
                 }
                 
                 .modified-indicator {
-                    color: #4459F3;
+                    color: var(--spaceSelection);
                     font-weight: 600;
                 }
                 
@@ -454,7 +478,7 @@ export function Toolbar() {
                 }
                 
                 .apply-btn {
-                    background: #4459F3;
+                    background: var(--spaceSelection);
                     color: white;
                 }
                 
@@ -463,7 +487,6 @@ export function Toolbar() {
                     box-shadow: 0 4px 12px rgba(68, 89, 243, 0.3);
                 }
             `}</style>
-        </>
-    );
+    </>
+  );
 }
-

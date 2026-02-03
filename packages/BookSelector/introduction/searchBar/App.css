@@ -271,7 +271,7 @@ input:checked + .slider:not(#slider):before {
   width: 70px;
   height: 30px;
   border-radius: 5px;
-  background-color: #4459f3;
+  background-color: var(--spaceSelection);
   color: white;
   border: none;
 }

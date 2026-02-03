@@ -1047,11 +1047,11 @@ export const SpaceSelector = ({ updateSpace, activeSpace, spaces }) => {
       </div>
       <style>{`
         .activeBg {
-    background: #4459F3;
+    background: var(--spaceSelection);
     border-radius: 3px;
     width: 20px;
     height: 20px;
-    border: 1px solid #4459F3;
+    border: 1px solid var(--spaceSelection);
     display: flex;
     justify-content: center;
     align-items: center;
@@ -1061,7 +1061,7 @@ export const SpaceSelector = ({ updateSpace, activeSpace, spaces }) => {
 .activeBg span {
     width: 8px;
     height: 8px;
-    background-color: #4459F3;
+    background-color: var(--spaceSelection);
     border-radius: 2px;
     display: block;
 }

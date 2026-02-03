@@ -1233,7 +1233,7 @@ const SettingsSidebar = () => {
                               borderRadius: "50%",
                               height: "40px",
                               width: "40px",
-                              border: "1px solid #4459F3",
+                              border: "1px solid var(--spaceSelection)",
                             }}
                             src={userData.photoLink}
                           />
@@ -1419,7 +1419,7 @@ const SettingsSidebar = () => {
                         )}
 
                         <div className="activeAccount" style={{ gap: "8px" }}>
-                         <MenuIcon name={'bookmark_check'}/>
+                          <MenuIcon name={"bookmark_check"} />
                           <div className="softText">
                             {editMode && editingLabel === item.key ? (
                               <input
@@ -1825,9 +1825,9 @@ const SettingsSidebar = () => {
                 }
                 
                 .edit-mode-button.active {
-                    background: #4459F3;
+                    background: var(--spaceSelection);
                     color: white;
-                    border-color: #4459F3;
+                    border-color: var(--spaceSelection);
                 }
                 
                 .settings-item-container {
@@ -1871,7 +1871,7 @@ const SettingsSidebar = () => {
                 
                 .label-edit-input {
                     background: white;
-                    border: 1px solid #4459F3;
+                    border: 1px solid var(--spaceSelection);
                     border-radius: 3px;
                     padding: 2px 6px;
                     font-size: inherit;
@@ -1925,7 +1925,7 @@ const SettingsSidebar = () => {
                 .space-description-edit {
                     width: 100%;
                     padding: 8px;
-                    border: 1px solid #4459F3;
+                    border: 1px solid var(--spaceSelection);
                     border-radius: 6px;
                     font-family: inherit;
                     font-size: inherit;
