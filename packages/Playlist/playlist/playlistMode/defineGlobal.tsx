@@ -53,6 +53,10 @@ globalThis.Playlist = thisBot;
 
 const bookmarks = await thisBot.getBookmarks();
 
+globalThis.AnnotationsData = {};
+
+thisBot.fetchAnnotationsData({...globalThis.CurrentBookData});
+
 let recored = getBot("system", 'main.Recorder')
 
 function getBooksDataForMenu(booksLink = false) {

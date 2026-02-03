@@ -567,6 +567,8 @@ function ThePage({
       // });
       const emitter = getBot("system", "app.emitter");
       os.log("emitter updateSharingData", emitter);
+      globalThis.CurrentBookData = data;
+      shout("bookDataUpdated", data);
       sendRemoteData(emitter.masks.otherRemotes, "updateSharingData", {
         id: tab?.id,
         bookId: data?.bookId,

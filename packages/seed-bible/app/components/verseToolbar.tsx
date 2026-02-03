@@ -123,7 +123,6 @@ export function VerseToolbar({
     transform: "translateX(-50%)",
     fontFamily:
       '-apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif',
-    backgroundColor: "#fff",
     borderRadius: "12px",
     boxShadow: "0 4px 20px rgba(0, 0, 0, 0.15)",
     padding: "6px 10px",
@@ -134,6 +133,7 @@ export function VerseToolbar({
     display: "flex",
     flexDirection: "column",
     alignItems: "center",
+    background: "var(--panelBackground)"
   };
 
   const headerStyle = {
@@ -145,12 +145,12 @@ export function VerseToolbar({
   const verseRefStyle = {
     fontSize: "14px",
     fontWeight: "600",
-    color: "#000",
     letterSpacing: "0.5px",
     textTransform: "uppercase",
-    backgroundColor: "#fff",
     padding: "8px 16px",
     borderRadius: "8px",
+    color: "var(--text1)",
+    backgroundColor: "var(--panelBackground)",
     // border: "1px solid #e5e5e5",
     // boxShadow: "0 2px 8px rgba(0, 0, 0, 0.1)",
     width: "fit-content",
@@ -184,8 +184,8 @@ export function VerseToolbar({
     width: "44px",
     height: "32px",
     borderRadius: "50%",
-    backgroundColor: "#fff",
-    border: "2px solid white",
+    backgroundColor: "var(--panelBackground)",
+    border: "2px solid var(--pageBackground)",
     display: "flex",
     alignItems: "center",
     justifyContent: "center",
@@ -339,17 +339,17 @@ export function VerseToolbar({
           
           @media (max-width: 480px) {
                 .verse-toolbar {
-        position: fixed !important;
-        bottom: 0 !important;
-        left: 0 !important;
-        transform: none !important;
-        width: 100% !important;
-        max-width: 100% !important;
-        border-radius: 0 !important;
-        padding: 3px 16px !important;
-        height: 52px;
-         background: var(--pageBackground) !important; 
-    }
+                    position: fixed !important;
+                    bottom: 0 !important;
+                    left: 0 !important;
+                    transform: none !important;
+                    width: 100% !important;
+                    max-width: 100% !important;
+                    border-radius: 0 !important;
+                    padding: 3px 16px !important;
+                    height: 52px;
+                    background: var(--panelBackground) !important; 
+                }
                     
             .header-ref {
               flex-direction: row !important;
