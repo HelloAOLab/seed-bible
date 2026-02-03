@@ -8,7 +8,8 @@ console.log = jest.fn();
 
 beforeAll(async () => {
   browser = await puppeteer.launch({
-    args: ["--no-sandbox"],
+    args: ["--no-sandbox", "--disable-setuid-sandbox"],
+    headless: false,
   });
 });
 
@@ -124,31 +125,39 @@ describe("bookSelector tests", () => {
       'div.toolbar-item-wrapper[title="Books"] > button',
       { visible: true }
     );
-    await delay(100);
+    await delay(200);
     await seedBibleFrame
       .locator('div.toolbar-item-wrapper[title="Books"] > button')
       .click({});
     await delay(500);
     await page.locator(".dropdown-select").click();
-    await delay(100);
+    await delay(200);
     await page.select(".dropdown-select", "0");
-    await delay(100);
+    await delay(200);
     const bookItemsOT = await page.$$(".sidebar-itm");
     for (let i = 0; i < bookItemsOT.length; i++) {
       const item = bookItemsOT[i];
-      const bookName = await item.$eval("span", (el) => el.textContent);
-      expect(bookName.trim()).toBe(OTBooks[i]);
+      if (item) {
+        const bookName = await item.$eval("span", (el) => el.textContent);
+        expect(bookName.trim()).toBe(OTBooks[i]);
+      } else {
+        throw new Error("Book item not found");
+      }
     }
     expect(bookItemsOT.length).toBe(OTBooks.length);
     await page.locator(".dropdown-select").click();
-    await delay(100);
+    await delay(200);
     await page.select(".dropdown-select", "1");
-    await delay(100);
+    await delay(200);
     const bookItemsNT = await page.$$(".sidebar-itm");
     for (let i = 0; i < bookItemsNT.length; i++) {
       const item = bookItemsNT[i];
-      const bookName = await item.$eval("span", (el) => el.textContent);
-      expect(bookName.trim()).toBe(NTBooks[i]);
+      if (item) {
+        const bookName = await item.$eval("span", (el) => el.textContent);
+        expect(bookName.trim()).toBe(NTBooks[i]);
+      } else {
+        throw new Error("Book item not found");
+      }
     }
     expect(bookItemsNT.length).toBe(NTBooks.length);
   });
@@ -170,9 +179,9 @@ describe("bookSelector tests", () => {
     const customUrl =
       "https://ao-bible-api-public-uploads.s3.amazonaws.com/b792638ce8c1e09877b63951500d2dfe70cc1333305723e4a9d808dc757771cc/api/available_translations.json";
     await page.locator(".custom-tr-in").fill(customUrl);
-    await delay(100);
+    await delay(200);
     await page.locator(".import-btn").click();
-    await delay(2000);
+    await delay(3000);
     const bookTitle = await seedBibleFrame
       .locator("div.bookTitle")
       .waitHandle();
@@ -195,7 +204,7 @@ describe("bookSelector tests", () => {
     await page.locator(".sidebar-translation-selector").click();
 
     await page.locator(".settingsIcon").click();
-    await delay(100);
+    await delay(200);
 
     await page.locator(".translationSettingsModal > div:nth-child(3)").click();
 
@@ -214,6 +223,9 @@ describe("bookSelector tests", () => {
 
     for (let i = 0; i < translationItems.length; i++) {
       const item = translationItems[i];
+      if (!item) {
+        throw new Error("Translation item not found");
+      }
       const translationName = await item.$eval("span", (el) => el.textContent);
       expect(translationName?.toLowerCase()).toBe(popularTranslations[i]);
     }
