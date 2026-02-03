@@ -171,6 +171,8 @@ const App = () => {
     }
   }, [showSchedules]);
 
+  console.log(globalThis?.ThemeCSS, "themecss");
+
   useEffect(() => {
     const observer = new MutationObserver(() => {
       const popover = document.querySelector(".fc-popover");
@@ -655,29 +657,23 @@ const App = () => {
         href="https://fonts.googleapis.com/css2?family=Material+Symbols+Outlined:opsz,wght,FILL,GRAD@24,400,0,0"
       />
 
-      <div
-        class="experience-container"
-        ref={experienceConRef}
-        style={{
-          backgroundColor: "white",
-          padding: "12px",
-          position: "relative",
-          minHeight: "100%",
-          height: "min-content",
-        }}
-      >
-        <div
-          style={{
-            position: "absolute",
-            top: hasTitle ? "147px" : "125px", // place at very top of container
-            left: "0",
-            right: "0",
-            height: "1px",
-            borderRadius: "2px",
+      <div class="experience-container" ref={experienceConRef}>
+        {calendarView !== "multiMonthYear" ? (
+          <div
+            style={{
+              position: "absolute",
+              top: hasTitle ? "147px" : "125px",
+              left: "0",
+              right: "0",
+              height: "1px",
+              borderRadius: "2px",
 
-            backgroundColor: "#ddd",
-          }}
-        ></div>
+              backgroundColor: "#ddd",
+            }}
+          ></div>
+        ) : (
+          <div></div>
+        )}
         <div
           style={{
             position: "absolute",
