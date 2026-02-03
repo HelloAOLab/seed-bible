@@ -55,7 +55,7 @@ const Label = memo(({ gridRow, gridColumn, children, isDay }) => {
 
 const Item = memo(
   ({
-    backgroundColor,
+    background,
     gridRow,
     gridColumn,
     tooltipContent,
@@ -69,8 +69,8 @@ const Item = memo(
     }, [range, readingHistoryRangeSeconds]);
 
     const style = useMemo(() => {
-      return { backgroundColor, gridRow, gridColumn };
-    }, [backgroundColor, gridRow, gridColumn]);
+      return { background, gridRow, gridColumn };
+    }, [background, gridRow, gridColumn]);
 
     const [containerRect, setContainerRect] = useState(null);
 
@@ -116,16 +116,17 @@ export const ReadingHistoryTimeline = () => {
   const { t, themeColors } = useSideBarContext();
 
   const {
+    startDateStartOfWeek,
     readingHistoryRangeSeconds,
     handleReadingHistoryRangeSelectorClick,
-    startOfWeekAYearAgoDate,
     weeksCount,
     SEC_PER_HOUR,
     SEC_PER_MINUTE,
     dayRangesMap,
     dailyReadingHistorySummaries,
-    selectedUsersCount,
     myAuthBotId,
+    timelineRange,
+    yearlyReadingHistorySummary,
   } = useReadingHistoryContext();
 
   const timelineRef = useRef(null);
@@ -142,16 +143,19 @@ export const ReadingHistoryTimeline = () => {
   );
 
   const itemsColorMap = useMemo(() => {
-    const now = new Date();
     const colorMap = new Map();
+    const yearlySummaryUsersCount = Object.keys(
+      yearlyReadingHistorySummary.users
+    ).length;
 
     if (!dailyReadingHistorySummaries) return colorMap;
 
     let shouldReassign = false;
-    const fullColorTimeSeconds = selectedUsersCount * SEC_PER_HOUR; // 1 hour per selected user
+    const fullColorTimeSeconds = yearlySummaryUsersCount * SEC_PER_HOUR; // 1 hour per selected user
     for (let week = 0; week < weeksCount; week++) {
       for (let day = 0; day < 7; day++) {
-        if (week === weeksCount - 1 && day > now.getDay()) break;
+        if (week === weeksCount - 1 && day > timelineRange.endDate.getDay())
+          break;
 
         const key = `${week}-${day}`;
 
@@ -161,19 +165,37 @@ export const ReadingHistoryTimeline = () => {
 
         if (summary && summary.totalTimeSpentReading > SEC_PER_MINUTE) {
           const usersKeys = Object.keys(summary.users);
-          let userColor: string;
-          if (selectedUsersCount === 1) {
-            userColor = readingHistoryColorStore.getUserColor(usersKeys[0]);
+          if (usersKeys.length > 3) {
+            const userColor = themeColors?.["1"]?.primaryColor ?? "#D2691E"; // Hardcoded primary color. Must be accesible in the future
+            color = BibleVizUtils.Functions.GetHistoryColorByReadingTime({
+              baseColor: themeColors?.["1"]?.firstToolbarbutton ?? "#dfdede", // Hardcoded firstToolbarbutton. Must be accesible in the future
+              userColor,
+              step,
+              readingTimeSeconds: summary.totalTimeSpentReading,
+              fullColorTimeSeconds,
+            });
           } else {
-            userColor = themeColors?.["1"]?.primaryColor ?? "#D2691E"; // Hardcoded primary color. Must be accesible in the future
+            const usersColors = [];
+            const fixedValue = 1 / usersKeys.length;
+            for (let i = 0; i < usersKeys.length; i++) {
+              const userKey = usersKeys[i];
+              let userColor = readingHistoryColorStore.getUserColor(userKey);
+              userColor = BibleVizUtils.Functions.GetHistoryColorByReadingTime({
+                baseColor: themeColors?.["1"]?.firstToolbarbutton ?? "#dfdede", // Hardcoded firstToolbarbutton. Must be accesible in the future
+                userColor,
+                step,
+                readingTimeSeconds:
+                  summary.users[userKey].totalTimeSpentReading,
+                fullColorTimeSeconds: SEC_PER_HOUR,
+              });
+              usersColors.push({ color: userColor, value: fixedValue });
+            }
+
+            color =
+              BibleVizUtils.Functions.GetHistoryColorLinearGradient(
+                usersColors
+              );
           }
-          color = BibleVizUtils.Functions.GetHistoryColorByReadingTime({
-            baseColor: themeColors?.["1"]?.firstToolbarbutton ?? "#dfdede", // Hardcoded firstToolbarbutton. Must be accesible in the future
-            userColor,
-            step,
-            readingTimeSeconds: summary.totalTimeSpentReading,
-            fullColorTimeSeconds,
-          });
         }
 
         if (!shouldReassign && prevColor !== color) shouldReassign = true;
@@ -189,16 +211,14 @@ export const ReadingHistoryTimeline = () => {
 
     return prevItemsColorMapRef.current;
   }, [
-    startOfWeekAYearAgoDate,
     tick,
     dailyReadingHistorySummaries,
-    selectedUsersCount,
+    yearlyReadingHistorySummary,
     myAuthBotId,
     themeColors,
   ]);
 
   const items = useMemo(() => {
-    const now = new Date();
     const items = [];
     const monthsSet = new Set();
     const monthLabelGridRow = `1 / 2`;
@@ -217,8 +237,9 @@ export const ReadingHistoryTimeline = () => {
     );
 
     for (let week = 0; week < weeksCount; week++) {
-      const lastDayIndex = week === weeksCount - 1 ? now.getDay() : 6;
-      const labelDate = new Date(startOfWeekAYearAgoDate);
+      const lastDayIndex =
+        week === weeksCount - 1 ? timelineRange.endDate.getDay() : 6;
+      const labelDate = new Date(startDateStartOfWeek.getTime());
       labelDate.setDate(labelDate.getDate() + week * 7 + lastDayIndex);
       const labelDateInfo = GetPastDateInfo(labelDate.getTime());
       const uniqueMonthKey = `${labelDateInfo.month}-${labelDateInfo.year}`;
@@ -244,22 +265,17 @@ export const ReadingHistoryTimeline = () => {
       }
 
       for (let day = 0; day < 7; day++) {
-        if (week === weeksCount - 1 && day > now.getDay()) break;
+        if (week === weeksCount - 1 && day > timelineRange.endDate.getDay())
+          break;
 
         const key = `${week}-${day}`;
-        const dayDate = new Date(startOfWeekAYearAgoDate);
+        const dayDate = new Date(startDateStartOfWeek);
         dayDate.setDate(dayDate.getDate() + week * 7 + day);
         const time = dayDate.getTime();
         const range = dayRangesMap.get(key);
-        const isToday = week === weeksCount - 1 && day === now.getDay();
         const daySummary = dailyReadingHistorySummaries?.get?.(key);
 
-        const {
-          weekday,
-          day: dayOfTheMonth,
-          monthName,
-          year,
-        } = GetPastDateInfo(time);
+        const { day: dayOfTheMonth, monthName, year } = GetPastDateInfo(time);
 
         const timeSpent = daySummary?.totalTimeSpentReading ?? 0;
         const isTimeSpentNoticeable = timeSpent > SEC_PER_MINUTE; // more than 1 minute
@@ -338,7 +354,7 @@ export const ReadingHistoryTimeline = () => {
           }
         }
 
-        const backgroundColor = itemsColorMap?.get?.(key);
+        const background = itemsColorMap?.get?.(key);
 
         const itemGridRow = `${day + 2} / ${day + 3}`;
         const itemGridColumn = `${week + 2} / ${week + 3}`;
@@ -346,8 +362,8 @@ export const ReadingHistoryTimeline = () => {
         items.push(
           <Item
             id={key}
-            key={key}
-            backgroundColor={backgroundColor}
+            key={`${week}-${day}-${dayOfTheMonth}-${monthName}-${year}`}
+            background={background}
             gridRow={itemGridRow}
             gridColumn={itemGridColumn}
             tooltipContent={tooltipContent}
@@ -360,12 +376,7 @@ export const ReadingHistoryTimeline = () => {
     }
 
     return items;
-  }, [
-    startOfWeekAYearAgoDate,
-    itemsColorMap,
-    readingHistoryRangeSeconds,
-    dailyReadingHistorySummaries,
-  ]);
+  }, [itemsColorMap, readingHistoryRangeSeconds, dailyReadingHistorySummaries]);
 
   useEffect(() => {
     const lastKey = Array.from(dayRangesMap.keys()).pop();

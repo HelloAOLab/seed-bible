@@ -74,9 +74,10 @@ const YearSelector = () => {
           {Array.from(timelineRangesMap.keys()).map((key: number) => {
             return (
               <span
-                className={"year-selector-option"}
+                className={`year-selector-option${selectedTimelineKey === key ? " selected" : ""}`}
                 onClick={() => {
                   setSelectedTimelineKey(key);
+                  setShowOptions(false);
                 }}
               >
                 {key}
@@ -136,7 +137,12 @@ const SettingsOptions = ({
     handleSectionLabelsToggle,
     handleShowAllChaptersToggle,
   } = useScriptureMap2DContext();
-  const { usersAuthId, shouldShowReadingHistory } = useReadingHistoryContext();
+  const {
+    usersAuthId,
+    shouldShowReadingHistory,
+    timelineRangeMethod,
+    setTimelineRangeMethod,
+  } = useReadingHistoryContext();
 
   const containerRef = useRef(null);
 
@@ -195,6 +201,24 @@ const SettingsOptions = ({
           staticText={t("timeline")}
         />
       )}
+      <Option
+        callback={() =>
+          setTimelineRangeMethod((prev: string) => {
+            switch (prev) {
+              case "rolling":
+                return "calendar";
+              case "calendar":
+                return "rolling";
+            }
+          })
+        }
+        condition={timelineRangeMethod}
+        enabledIcon={"visibility_off"}
+        disabledIcon={"visibility"}
+        enabledText={t("Toggle")}
+        disabledText={t("Toggle")}
+        staticText={`${t("timeline")} ${t("type")}`}
+      />
       <Option
         callback={handleShowAllChaptersToggle}
         condition={showingAllChapters}
@@ -367,8 +391,10 @@ export const Settings = () => {
 
       {shouldShowReadingHistory && !collapsed && (
         <>
-          <Legend />
-          <YearSelector />
+          <div className={"settings-footer"}>
+            <Legend />
+            <YearSelector />
+          </div>
           <span className={"horizontal-divider"}></span>
         </>
       )}
