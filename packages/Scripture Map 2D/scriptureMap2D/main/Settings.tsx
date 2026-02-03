@@ -55,14 +55,44 @@ const Legend = () => {
 };
 
 const YearSelector = () => {
-  return <span className={"year-selector"}>Year: 2026</span>;
+  const { selectedTimelineKey, timelineRangesMap, setSelectedTimelineKey } =
+    useReadingHistoryContext();
+
+  const [showOptions, setShowOptions] = useState(false);
+
+  return (
+    <div className={"year-selector"}>
+      <div
+        className={"year-selector-label"}
+        onClick={() => setShowOptions((prev) => !prev)}
+      >
+        <span>{`Year: ${selectedTimelineKey}`}</span>
+        <span className="material-symbols-outlined">keyboard_arrow_down</span>
+      </div>
+      {showOptions && (
+        <div className={"year-selector-options"}>
+          {Array.from(timelineRangesMap.keys()).map((key: number) => {
+            return (
+              <span
+                className={`year-selector-option${selectedTimelineKey === key ? " selected" : ""}`}
+                onClick={() => {
+                  setSelectedTimelineKey(key);
+                  setShowOptions(false);
+                }}
+              >
+                {key}
+              </span>
+            );
+          })}
+        </div>
+      )}
+    </div>
+  );
 };
 
 const Option = ({
   callback,
   condition,
-  enabledIcon,
-  disabledIcon,
   enabledText,
   disabledText,
   staticText,
@@ -74,9 +104,6 @@ const Option = ({
         callback();
       }}
     >
-      <span className="material-symbols-outlined">
-        {condition ? enabledIcon : disabledIcon}
-      </span>
       {`${condition ? enabledText : disabledText} ${staticText}`}
     </button>
   );
@@ -105,19 +132,18 @@ const SettingsOptions = ({
     handleSectionLabelsToggle,
     handleShowAllChaptersToggle,
   } = useScriptureMap2DContext();
-  const { usersAuthId, shouldShowReadingHistory } = useReadingHistoryContext();
+  const {
+    usersAuthId,
+    shouldShowReadingHistory,
+    timelineRangeMethod,
+    setTimelineRangeMethod,
+  } = useReadingHistoryContext();
 
   const containerRef = useRef(null);
 
   const shouldShowReadingHistoryOption = useMemo(() => {
     return mode === ScriptureMap2DModes.Viewer && usersAuthId?.length > 0;
   }, [mode, usersAuthId]);
-
-  useEffect(() => {
-    console.log(`[Debug] Settings SettingsOptions usersAuthId`, {
-      usersAuthId,
-    });
-  }, [usersAuthId]);
 
   useEffect(() => {
     const handleClickOutside = (e) => {
@@ -159,6 +185,8 @@ const SettingsOptions = ({
       }}
       className="settings-options-container"
     >
+      <span>View options</span>
+      <span>Control the view of the content on the map</span>
       {shouldShowReadingHistory && (
         <Option
           callback={() => setCollapsed((prev) => !prev)}
@@ -171,10 +199,24 @@ const SettingsOptions = ({
         />
       )}
       <Option
+        callback={() =>
+          setTimelineRangeMethod((prev: string) => {
+            switch (prev) {
+              case "rolling":
+                return "calendar";
+              case "calendar":
+                return "rolling";
+            }
+          })
+        }
+        condition={timelineRangeMethod}
+        enabledText={t("Toggle")}
+        disabledText={t("Toggle")}
+        staticText={t("type of timeline")}
+      />
+      <Option
         callback={handleShowAllChaptersToggle}
         condition={showingAllChapters}
-        enabledIcon={"visibility"}
-        disabledIcon={"visibility_off"}
         enabledText={t("close")}
         disabledText={t("open")}
         staticText={t("books")}
@@ -182,37 +224,29 @@ const SettingsOptions = ({
       <Option
         callback={() => setShowingBooksColors((prev) => !prev)}
         condition={showingBooksColors}
-        enabledIcon={"palette"}
-        disabledIcon={"palette"}
         enabledText={t("hide")}
         disabledText={t("show")}
-        staticText={t("booksColor")}
+        staticText={t("books color")}
       />
       {shouldShowReadingHistoryOption && (
         <Option
           callback={() => setIsReadingHistoryEnabled((prev) => !prev)}
           condition={isReadingHistoryEnabled}
-          enabledIcon={"history"}
-          disabledIcon={"history"}
           enabledText={t("hide")}
           disabledText={t("show")}
-          staticText={t("readingHistory")}
+          staticText={t("reading history")}
         />
       )}
       <Option
         callback={() => setIsUserPresenceEnabled((prev) => !prev)}
         condition={isUserPresenceEnabled}
-        enabledIcon={"group_off"}
-        disabledIcon={"group"}
         enabledText={t("hide")}
         disabledText={t("show")}
-        staticText={t("userPresence")}
+        staticText={t("user presence")}
       />
       <Option
         callback={handleSectionLabelsToggle}
         condition={showSectionLabels}
-        enabledIcon={"label_off"}
-        disabledIcon={"label"}
         enabledText={t("hide")}
         disabledText={t("show")}
         staticText={t("section labels")}
@@ -220,8 +254,6 @@ const SettingsOptions = ({
       <Option
         callback={handleTestamentLabelsToggle}
         condition={showTestamentLabels}
-        enabledIcon={"label_off"}
-        disabledIcon={"label"}
         enabledText={t("hide")}
         disabledText={t("show")}
         staticText={t("testament labels")}
@@ -342,8 +374,10 @@ export const Settings = () => {
 
       {shouldShowReadingHistory && !collapsed && (
         <>
-          <Legend />
-          <YearSelector />
+          <div className={"settings-footer"}>
+            <Legend />
+            <YearSelector />
+          </div>
           <span className={"horizontal-divider"}></span>
         </>
       )}

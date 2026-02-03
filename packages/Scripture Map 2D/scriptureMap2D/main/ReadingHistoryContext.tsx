@@ -14,6 +14,15 @@ const { createContext, useContext, useState, useMemo, useEffect, useCallback } =
 
 const ReadingHistoryContext = createContext();
 
+interface Range {
+  startDate: Date;
+  endDate: Date;
+}
+
+type TimelineRangeMethod = "rolling" | "calendar";
+
+const initialTimelineRangeKey = new Date().getFullYear();
+
 export const ReadingHistoryProvider = ({ children }) => {
   const {
     mode,
@@ -24,6 +33,74 @@ export const ReadingHistoryProvider = ({ children }) => {
 
   const { activeTab } = useTabsContext();
   const { tick } = useTimeContext();
+
+  const [timelineRangeMethod, setTimelineRangeMethod] =
+    useState<TimelineRangeMethod>("rolling");
+
+  const timelineRangesMap = useMemo<Map<number, Range>>(() => {
+    const rangesMap = new Map<number, Range>();
+
+    const nowDate = new Date();
+    const endOfToday = new Date(nowDate);
+    endOfToday.setHours(23, 59, 59, 999);
+
+    for (let year = nowDate.getFullYear(); year > 2022; year--) {
+      let startDate: Date;
+      let endDate: Date;
+      switch (timelineRangeMethod) {
+        case "rolling":
+          {
+            endDate = new Date(nowDate);
+            endDate.setFullYear(year);
+            endDate.setHours(23, 59, 59, 999);
+
+            startDate = new Date(nowDate);
+            startDate.setFullYear(year - 1);
+            startDate.setHours(0, 0, 0, 0);
+          }
+          break;
+        case "calendar":
+          {
+            startDate = new Date(year, 0, 1, 0, 0, 0); // Jan 1st (00:00:00)
+            endDate = new Date(year, 11, 31, 23, 59, 59); // Dec 31st (23:59:59)
+            if (endDate.getTime() > endOfToday.getTime()) {
+              endDate = new Date(endOfToday);
+            }
+          }
+          break;
+      }
+      if (startDate && endDate) {
+        rangesMap.set(year, {
+          startDate,
+          endDate,
+        });
+      }
+    }
+
+    return rangesMap;
+  }, [timelineRangeMethod]);
+
+  const [selectedTimelineKey, setSelectedTimelineKey] = useState<number>(
+    initialTimelineRangeKey
+  );
+  const timelineRange = useMemo<Range>(() => {
+    let range = timelineRangesMap.get(selectedTimelineKey);
+    if (!range) {
+      const now = new Date();
+      // const endOfToday = new Date(now);
+      // endOfToday.setHours(23, 59, 59, 999);
+      // const startOfAYearAgo = new Date(now);
+      // startOfAYearAgo.setFullYear(now.getFullYear() - 1);
+      // startOfAYearAgo.setHours(0, 0, 0, 0);
+      // const startTimeSeconds = startOfAYearAgo.getTime() / 1000;
+      // const endTimeSeconds = endOfToday.getTime() / 1000;
+      range = {
+        startDate: now,
+        endDate: now,
+      };
+    }
+    return range;
+  }, [timelineRangesMap, selectedTimelineKey]);
 
   const [readingHistoryRangeSeconds, setReadingHistoryRangeSeconds] =
     useState(null);
@@ -85,7 +162,8 @@ export const ReadingHistoryProvider = ({ children }) => {
   }, [myAuthBotId]);
 
   const {
-    startOfWeekAYearAgoDate,
+    startDateStartOfWeek,
+    endDateStartOfWeek,
     weeksCount,
     SEC_PER_MINUTE,
     SEC_PER_HOUR,
@@ -98,21 +176,15 @@ export const ReadingHistoryProvider = ({ children }) => {
     MS_PER_WEEK,
     dayRangesMap,
   } = useMemo(() => {
-    const now = new Date();
-
-    const getStartOfWeek = (date) => {
+    const getStartOfWeek = (date: Date) => {
       const tempDate = new Date(date);
       tempDate.setDate(tempDate.getDate() - tempDate.getDay());
       tempDate.setHours(0, 0, 0, 0);
       return tempDate;
     };
 
-    const startOfWeekDate = getStartOfWeek(now);
-
-    const aYearAgoDate = new Date(now);
-    aYearAgoDate.setFullYear(now.getFullYear() - 1);
-
-    const startOfWeekAYearAgoDate = getStartOfWeek(aYearAgoDate);
+    const startDateStartOfWeek = getStartOfWeek(timelineRange.startDate);
+    const endDateStartOfWeek = getStartOfWeek(timelineRange.endDate);
 
     const SEC_PER_MINUTE = 60;
     const SEC_PER_HOUR = SEC_PER_MINUTE * 60;
@@ -126,13 +198,17 @@ export const ReadingHistoryProvider = ({ children }) => {
     const MS_PER_WEEK = MS_PER_SECOND * SEC_PER_WEEK;
 
     const weeksCount =
-      Math.floor((startOfWeekDate - startOfWeekAYearAgoDate) / MS_PER_WEEK) + 1;
+      Math.floor(
+        (endDateStartOfWeek.getTime() - startDateStartOfWeek.getTime()) /
+          MS_PER_WEEK
+      ) + 1;
 
     const dayRangesMap = new Map();
     for (let week = 0; week < weeksCount; week++) {
       for (let day = 0; day < 7; day++) {
-        if (week === weeksCount - 1 && day > now.getDay()) break;
-        const dayDate = new Date(startOfWeekAYearAgoDate);
+        if (week === weeksCount - 1 && day > timelineRange.endDate.getDay())
+          break;
+        const dayDate = new Date(startDateStartOfWeek);
         dayDate.setDate(dayDate.getDate() + week * 7 + day);
         const { start, end } = GetDayRangeSeconds(dayDate.getTime());
         dayRangesMap.set(`${week}-${day}`, { start, end });
@@ -140,7 +216,8 @@ export const ReadingHistoryProvider = ({ children }) => {
     }
 
     return {
-      startOfWeekAYearAgoDate,
+      startDateStartOfWeek,
+      endDateStartOfWeek,
       weeksCount,
       MS_PER_SECOND,
       MS_PER_MINUTE,
@@ -153,7 +230,7 @@ export const ReadingHistoryProvider = ({ children }) => {
       SEC_PER_WEEK,
       dayRangesMap,
     };
-  }, []);
+  }, [timelineRange]);
 
   const tryUpdateReadingHistoryUsersFilters = useCallback(() => {
     const next = new Map(readingHistoryUserFilters);
@@ -208,35 +285,32 @@ export const ReadingHistoryProvider = ({ children }) => {
       return;
     }
 
-    const startOfWeekAYearAgoSeconds = Math.floor(
-      startOfWeekAYearAgoDate.getTime() / 1000
-    );
-    const nowInSeconds = Math.floor(Date.now() / 1000);
+    const startDateStartOfWeekSeconds = startDateStartOfWeek.getTime() / 1000;
+    const endSeconds = timelineRange.endDate.getTime() / 1000;
 
     const allEventPromises = selectedUsers.map((recordName) =>
       getReadingHistoryEvents(
         recordName,
-        startOfWeekAYearAgoSeconds,
-        nowInSeconds
+        startDateStartOfWeekSeconds,
+        endSeconds
       )
     );
 
     const dayKeys = Array.from(dayRangesMap.keys());
     const {
-      start: rangeStart = startOfWeekAYearAgoSeconds,
-      end: rengeEnd = nowInSeconds,
+      start: rangeStart = startDateStartOfWeekSeconds,
+      end: rangeEnd = endSeconds,
     } = readingHistoryRangeSeconds ?? {};
 
     Promise.all(allEventPromises)
       .then((allEvents) => {
-        console.log(`[Debug] ReadingHistoryContext useEffect`, { allEvents });
         const flattenedEvents = Array.from(flat(allEvents));
 
         for (let event of flattenedEvents) {
           let { start, end, chapter, bookId } = event;
           const duration = end - start;
           if (duration < SEC_PER_MINUTE) continue;
-          if (start >= rangeStart && start <= rengeEnd) {
+          if (start >= rangeStart && start <= rangeEnd) {
             if (bookId === "PSA") {
               const { bookId: dividedPsalmId, chapter: dividedPsalmChapter } =
                 BibleVizUtils.Functions.ConvertCompletePsalmsToDivided({
@@ -256,7 +330,7 @@ export const ReadingHistoryProvider = ({ children }) => {
           }
 
           const dayIndex = Math.floor(
-            (start - startOfWeekAYearAgoSeconds) / SEC_PER_DAY
+            (start - startDateStartOfWeekSeconds) / SEC_PER_DAY
           );
 
           if (dayIndex >= 0 && dayIndex < dayKeys.length) {
@@ -287,7 +361,14 @@ export const ReadingHistoryProvider = ({ children }) => {
           error
         );
       });
-  }, [tick, activeTab, readingHistoryUserFilters, readingHistoryRangeSeconds]);
+  }, [
+    tick,
+    activeTab,
+    readingHistoryUserFilters,
+    readingHistoryRangeSeconds,
+    timelineRange,
+    startDateStartOfWeek,
+  ]);
 
   const handleReadingHistoryUserSelectorClick = useCallback(
     (key) => {
@@ -348,7 +429,6 @@ export const ReadingHistoryProvider = ({ children }) => {
         handleReadingHistoryUserSelectorClick,
         readingHistoryRangeSeconds,
         handleReadingHistoryRangeSelectorClick,
-        startOfWeekAYearAgoDate,
         weeksCount,
         SEC_PER_MINUTE,
         SEC_PER_HOUR,
@@ -363,6 +443,14 @@ export const ReadingHistoryProvider = ({ children }) => {
         selectedUsersCount,
         usersAuthId,
         shouldShowReadingHistory,
+        timelineRange,
+        timelineRangesMap,
+        startDateStartOfWeek,
+        endDateStartOfWeek,
+        selectedTimelineKey,
+        setSelectedTimelineKey,
+        timelineRangeMethod,
+        setTimelineRangeMethod,
       }}
     >
       {children}
