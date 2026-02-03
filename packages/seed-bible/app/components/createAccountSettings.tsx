@@ -16,7 +16,7 @@ const { useState, useEffect } = os.appHooks;
 // await os.eraseData(tags.key, authBot.id)
 const CreateAccountSettings = () => {
   const { sidebarMode, setSideBarMode } = useSideBarContext();
-  const [img, setImg] = useState();
+  const [img, setImg] = useState<string | undefined>();
   const [profileName, setProfileName] = useState("");
   const [description, setDescription] = useState("");
   const [uid, setUid] = useState(authBot?.id);
@@ -33,7 +33,7 @@ const CreateAccountSettings = () => {
     if (data.success) {
       const payload = data.data;
       setImg(payload.photoLink);
-      setTagMask(thisBot,`${configBot.id}-photo`,payload.photoLink,'shared');
+      setTagMask(thisBot, `${configBot.id}-photo`, payload.photoLink, "shared");
       setProfileName(payload.profileName);
       setDescription(payload.description);
     }
@@ -72,13 +72,13 @@ const CreateAccountSettings = () => {
       }
     } else {
       os.log(result);
-      const img = result.existingFileUrl;
+      const img = (result as any).existingFileUrl;
       const data = await os.getData(tags.key, authBot.id);
       await os.recordData(authBot.id, authBot.id, {
-        ...data.data,
+        ...(data as any).data,
         photoLink: img,
       });
-      setImg(result.existingFileUrl);
+      setImg((result as any).existingFileUrl);
     }
   }
   async function saveProfileData() {
@@ -115,10 +115,17 @@ const CreateAccountSettings = () => {
           <div
             style={{ cursor: "pointer" }}
             onClick={() => {
-              if (globalThis.AccountSettingsEnteredFrom === "settings") {
+              if (
+                (globalThis as any).AccountSettingsEnteredFrom === "settings"
+              ) {
                 setSideBarMode("settings");
-                setTimeout(() => globalThis.SetActiveSettingsTab("general"), 0);
-              } else if (globalThis.AccountSettingsEnteredFrom === "default") {
+                setTimeout(
+                  () => (globalThis as any).SetActiveSettingsTab("general"),
+                  0
+                );
+              } else if (
+                (globalThis as any).AccountSettingsEnteredFrom === "default"
+              ) {
                 setSideBarMode("default");
               }
             }}
@@ -216,7 +223,9 @@ const CreateAccountSettings = () => {
             placeholder="e.g Craig family"
             className="selectInput"
             value={profileName}
-            onChange={(e) => setProfileName(e.target.value)}
+            onChange={(e) =>
+              setProfileName((e.target as HTMLInputElement).value)
+            }
           />
           <p style={{ "font-size": "10px", color: "#5F5E5C" }}>
             You can change this later
@@ -234,7 +243,9 @@ const CreateAccountSettings = () => {
             placeholder="Enter your profile description..."
             className="selectInput"
             value={description}
-            onChange={(e) => setDescription(e.target.value)}
+            onChange={(e) =>
+              setDescription((e.target as HTMLTextAreaElement).value)
+            }
           ></textarea>
           <div style={{ height: "20px" }}></div>
           <div className="blackText">Your ID is:</div>

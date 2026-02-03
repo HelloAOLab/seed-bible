@@ -5,7 +5,8 @@ function SharePopup({
   shareReference,
   translation = "BSB",
   popupTitle = "Share",
-}) {
+  closePopupSettings,
+}: any) {
   const [copied, setCopied] = useState(false);
   const [includeReference, setIncludeReference] = useState(true);
 
@@ -80,7 +81,7 @@ function SharePopup({
     //     window.open("https://instagram.com", "_blank");
     //   },
     // },
-    ...(globalThis.IsMobileNow()
+    ...((globalThis as any).IsMobileNow()
       ? [
           {
             name: "Text",
@@ -197,7 +198,14 @@ function SharePopup({
           </div>
 
           {/* Toggle Options */}
-          <div style={{ display: "flex", gap: 16, marginBottom: 20, flexWrap: "nowrap" }}>
+          <div
+            style={{
+              display: "flex",
+              gap: 16,
+              marginBottom: 20,
+              flexWrap: "nowrap",
+            }}
+          >
             <label
               style={{
                 display: "flex",
@@ -212,7 +220,12 @@ function SharePopup({
                 name="shareOption"
                 checked={includeReference}
                 onChange={() => setIncludeReference(true)}
-                style={{ accentColor: "#4A90D9", width: 16, height: 16, flexShrink: 0 }}
+                style={{
+                  accentColor: "#4A90D9",
+                  width: 16,
+                  height: 16,
+                  flexShrink: 0,
+                }}
               />
               <span
                 style={{
@@ -239,7 +252,12 @@ function SharePopup({
                 name="shareOption"
                 checked={!includeReference}
                 onChange={() => setIncludeReference(false)}
-                style={{ accentColor: "#666", width: 16, height: 16, flexShrink: 0 }}
+                style={{
+                  accentColor: "#666",
+                  width: 16,
+                  height: 16,
+                  flexShrink: 0,
+                }}
               />
               <span
                 style={{
@@ -325,7 +343,7 @@ const QRCodeComponent = ({ url = "https://example.com/session/12345" }) => {
   // Load QRCode library dynamically from CDN
   useEffect(() => {
     const loadScript = async () => {
-      if (!window.QRCode) {
+      if (!(window as any).QRCode) {
         const script = document.createElement("script");
         script.src =
           "https://cdnjs.cloudflare.com/ajax/libs/qrcodejs/1.0.0/qrcode.min.js";
@@ -338,15 +356,15 @@ const QRCodeComponent = ({ url = "https://example.com/session/12345" }) => {
     };
 
     const generateQR = () => {
-      if (qrRef.current && window.QRCode) {
-        qrRef.current.innerHTML = "";
-        new window.QRCode(qrRef.current, {
+      if (qrRef.current && (window as any).QRCode) {
+        (qrRef.current as HTMLElement).innerHTML = "";
+        new (window as any).QRCode(qrRef.current, {
           text: url,
           width: 200,
           height: 200,
           colorDark: "#000000",
           colorLight: "#ffffff",
-          correctLevel: window.QRCode.CorrectLevel.H,
+          correctLevel: (window as any).QRCode.CorrectLevel.H,
         });
       }
     };
@@ -356,10 +374,9 @@ const QRCodeComponent = ({ url = "https://example.com/session/12345" }) => {
 
   const handleCopy = async () => {
     try {
-      // await navigator.clipboard.writeText(url);
-      // setCopied(true);
-      // setTimeout(() => setCopied(false), 2000);
-      setCopied(url);
+      await navigator.clipboard.writeText(url);
+      setCopied(true);
+      setTimeout(() => setCopied(false), 2000);
     } catch (err) {
       console.error("Failed to copy:", err);
     }
@@ -455,9 +472,8 @@ const QRCodeComponent = ({ url = "https://example.com/session/12345" }) => {
             transform: copied ? "scale(0.98)" : "scale(1)",
             boxShadow: copied ? "none" : "0 4px 12px rgba(102, 126, 234, 0.4)",
             fontFamily: "Satoshi",
-                        background: "#d36433",
+            background: "#d36433",
             color: "white",
-
           }}
         >
           {copied ? "✓ Copied!" : "Copy Session Link"}
@@ -467,7 +483,11 @@ const QRCodeComponent = ({ url = "https://example.com/session/12345" }) => {
   );
 };
 
-const JoinSessionComponent = ({ onJoin, translations = {} }) => {
+const JoinSessionComponent = ({
+  onJoin,
+  translations = {},
+  CloseModal,
+}: any) => {
   const [sessionCode, setSessionCode] = useState("");
 
   const t = {
@@ -572,7 +592,7 @@ const JoinSessionComponent = ({ onJoin, translations = {} }) => {
         <input
           type="text"
           value={sessionCode}
-          onChange={(e) => setSessionCode(e.target.value)}
+          onChange={(e) => setSessionCode((e.target as HTMLInputElement).value)}
           onKeyPress={handleKeyPress}
           placeholder={t.sessionCodePlaceholder}
           style={{
@@ -604,7 +624,6 @@ const JoinSessionComponent = ({ onJoin, translations = {} }) => {
             borderRadius: 4,
             fontSize: 15,
             fontWeight: 500,
-            cursor: "pointer",
             transition: "background 0.2s",
             height: 48,
             position: "relative",

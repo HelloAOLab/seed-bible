@@ -3,18 +3,18 @@ import { MenuIcon, ToolbarIcon } from "app.components.icons";
 import { useTabsContext } from "app.hooks.tabs";
 import { useSideBarContext } from "app.hooks.sideBar";
 import { useBibleContext } from "app.hooks.bibleVariables";
-globalThis.setPriorities = () => {};
+(globalThis as any).setPriorities = () => {};
 const EditorToolbarSettings = () => {
   const { updateSpace, activeSpace, spaces } = useTabsContext();
   const { sidebarMode, setSideBarMode, closePopupSettings, t } =
     useSideBarContext();
   const { tools, setTools } = useBibleContext();
 
-  const [priorities, setPriorities] = useState([]);
+  const [priorities, setPriorities] = useState<string[]>([]);
   useEffect(() => {
-    globalThis.DEFAULT_TOOLBAR_PRIORITY = priorities;
+    (globalThis as any).DEFAULT_TOOLBAR_PRIORITY = priorities;
     if (priorities.length > 0)
-      globalThis.EditorToolbar.setPriorities(priorities);
+      (globalThis as any).EditorToolbar.setPriorities(priorities);
   }, [priorities]);
   const [draggedIndex, setDraggedIndex] = useState(null);
   const [loading, setLoading] = useState(false);
@@ -73,8 +73,13 @@ const EditorToolbarSettings = () => {
   // Load current priorities on mount
   useEffect(() => {
     try {
-      if (globalThis.EditorToolbar && globalThis.EditorToolbar.getPriorities) {
-        const currentPriorities = globalThis.EditorToolbar.getPriorities();
+      if (
+        (globalThis as any).EditorToolbar &&
+        (globalThis as any).EditorToolbar.getPriorities
+      ) {
+        const currentPriorities = (
+          globalThis as any
+        ).EditorToolbar.getPriorities();
         setPriorities(currentPriorities);
       } else {
         // Fallback to default order
@@ -142,8 +147,11 @@ const EditorToolbarSettings = () => {
   const savePriorities = async () => {
     try {
       setLoading(true);
-      if (globalThis.EditorToolbar && globalThis.EditorToolbar.setPriorities) {
-        globalThis.EditorToolbar.setPriorities(priorities);
+      if (
+        (globalThis as any).EditorToolbar &&
+        (globalThis as any).EditorToolbar.setPriorities
+      ) {
+        (globalThis as any).EditorToolbar.setPriorities(priorities);
       }
       setLoading(false);
       // Show success message or feedback here if needed
@@ -157,8 +165,11 @@ const EditorToolbarSettings = () => {
   const resetToDefault = () => {
     const defaultPriorities = defaultItems.map((item) => item.id);
     setPriorities(defaultPriorities);
-    if (globalThis.EditorToolbar && globalThis.EditorToolbar.resetPriorities) {
-      globalThis.EditorToolbar.resetPriorities();
+    if (
+      (globalThis as any).EditorToolbar &&
+      (globalThis as any).EditorToolbar.resetPriorities
+    ) {
+      (globalThis as any).EditorToolbar.resetPriorities();
     }
   };
 
@@ -318,13 +329,16 @@ const EditorToolbarSettings = () => {
                       : "0 1px 3px rgba(0,0,0,0.1)",
                 }}
                 onMouseEnter={(e) => {
-                  e.target.style.transform = "translateY(-1px)";
-                  e.target.style.boxShadow = "0 4px 12px rgba(0,0,0,0.15)";
+                  (e.target as HTMLElement).style.transform =
+                    "translateY(-1px)";
+                  (e.target as HTMLElement).style.boxShadow =
+                    "0 4px 12px rgba(0,0,0,0.15)";
                 }}
                 onMouseLeave={(e) => {
                   if (draggedIndex !== index) {
-                    e.target.style.transform = "translateY(0)";
-                    e.target.style.boxShadow = "0 1px 3px rgba(0,0,0,0.1)";
+                    (e.target as HTMLElement).style.transform = "translateY(0)";
+                    (e.target as HTMLElement).style.boxShadow =
+                      "0 1px 3px rgba(0,0,0,0.1)";
                   }
                 }}
               >
