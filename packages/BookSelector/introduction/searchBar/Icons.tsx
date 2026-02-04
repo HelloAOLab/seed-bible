@@ -1,4 +1,6 @@
-export const ShareIcon = (props) => {
+import type { IconProps } from "introduction.searchBar.Interfaces";
+
+export const ShareIcon = (props: IconProps) => {
   return (
     <svg
       width="11"
@@ -16,7 +18,7 @@ export const ShareIcon = (props) => {
   );
 };
 
-export const TickIcon = (props) => {
+export const TickIcon = (props: IconProps) => {
   return (
     <svg
       width="10"
@@ -34,7 +36,7 @@ export const TickIcon = (props) => {
   );
 };
 
-export const SettingsIcon = (props) => {
+export const SettingsIcon = (props: IconProps) => {
   return (
     <svg
       width="26"
@@ -102,7 +104,7 @@ export const SettingsIcon = (props) => {
   );
 };
 
-export const SelectedIcon = (props) => {
+export const SelectedIcon = (props: IconProps) => {
   return (
     <svg
       width="14"
@@ -120,7 +122,7 @@ export const SelectedIcon = (props) => {
   );
 };
 
-export const AddIcon = (props) => {
+export const AddIcon = (props: IconProps) => {
   return (
     <svg
       width="14"

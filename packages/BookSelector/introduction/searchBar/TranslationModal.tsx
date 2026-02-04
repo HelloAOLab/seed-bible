@@ -276,11 +276,13 @@ const TranslationModal = (props: {
 
 const LanguageComponent = (props: {
   language: string;
-  translationArray: Array<TranslationInterface>;
+  translationArray: Record<string, TranslationInterface>;
   selectedTranslation: TranslationInterface;
   setSelectedTranslation: (translation: TranslationInterface) => void;
   setSelectingTranslation: (value: boolean) => void;
-  filteredApiTranslations: Array<[string, TranslationInterface[]]>;
+  filteredApiTranslations: Array<
+    [string, Record<string, TranslationInterface>]
+  >;
 }) => {
   const {
     language,
