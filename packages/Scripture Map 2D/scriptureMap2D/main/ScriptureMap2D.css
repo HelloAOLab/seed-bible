@@ -640,6 +640,8 @@
   grid-template-columns: repeat(var(--book-max-columns), var(--chapter-width));
   grid-template-rows: repeat(auto-fill, var(--chapter-width));
   justify-content: center;
+  align-items: center;
+  justify-items: center;
 }
 
 .book-container .book-header {
@@ -691,6 +693,17 @@
   display: flex;
   justify-content: center;
   align-items: center;
+  --userPresenceBorderPadding: calc(var(--scale-factor) * 2px);
+}
+
+.scripture-map-2d-wrapper
+  .scripture-map-2d-container
+  .testament-container
+  .book-container
+  .book-cover
+  .chapter.show-user-presence {
+  width: calc(var(--chapter-width) - var(--userPresenceBorderPadding));
+  height: calc(var(--chapter-width) - var(--userPresenceBorderPadding));
 }
 
 @property --angle {
@@ -721,8 +734,8 @@
     from var(--angle),
     var(--userPresenceColors)
   );
-  padding: calc(var(--scale-factor) * 2px);
-  border-radius: calc(5px * var(--scale-factor));
+  padding: var(--userPresenceBorderPadding);
+  border-radius: calc(3px * var(--scale-factor));
 }
 
 .book-container .book-cover.show-user-presence::before,
