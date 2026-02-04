@@ -492,10 +492,9 @@ const SearchBar = () => {
                   web
                     .get(`${defaultTranslation.listOfBooksApiLink}`)
                     .then((e) => {
-                      const book0 = e.data.books[0];
                       ChangeTranslation(
                         defaultTranslation.id,
-                        book0,
+                        e.data.books,
                         defaultTranslation.origin
                       );
                       setBooksData([...e.data.books]);
@@ -531,7 +530,7 @@ const SearchBar = () => {
                     os.toast(`Translation Already Exists!`);
                     ChangeTranslation(
                       controlledTranslation.id,
-                      data.books[0],
+                      data.books,
                       controlledTranslation.origin
                     );
                     setBooksData([...data.books[0]]);
@@ -573,7 +572,7 @@ const SearchBar = () => {
                     }
                     ChangeTranslation(
                       controlledTranslation.id,
-                      data.books[0],
+                      data.books,
                       controlledTranslation.origin
                     );
                     setBooksData([...data.books[0]]);
@@ -660,11 +659,10 @@ const SearchBar = () => {
       web
         .get(`${selectedTranslation.listOfBooksApiLink}`)
         .then((e) => {
-          let book0 = e.data.books[0];
           !thePage.masks?.translationInitiated &&
             ChangeTranslation(
               selectedTranslation.id,
-              book0,
+              e.data.books,
               selectedTranslation.origin
             );
           // ChangeTranslation(selectedTranslation.id, book0, selectedTranslation.origin);
@@ -679,11 +677,10 @@ const SearchBar = () => {
           `https://bible.helloao.org/api/${selectedTranslation.id}/books.json`
         )
         .then((e) => {
-          let book0 = e.data.books[0];
           !thePage.masks?.translationInitiated &&
             ChangeTranslation(
               selectedTranslation.id,
-              book0,
+              e.data.books,
               "https://bible.helloao.org"
             );
           // ChangeTranslation(selectedTranslation.id, book0, "https://bible.helloao.org");
