@@ -1086,6 +1086,9 @@ const resources = {
 
       // Playlist.
       preview: "Vista previa",
+      link: "Enlace",
+      file: "Archivo",
+      playlist: "Lista de reproducción",
       unableToCopyPlaylist: "No se puede copiar la lista. Por favor, inténtalo de nuevo!",
       pleaseWaitOldPlaylistIsLoading: "Por favor, espere mientras se carga la lista.",
       loadingPlaylistPleaseWait: "Por favor, espere mientras se carga la lista.",
@@ -1822,6 +1825,9 @@ const resources = {
       noResults: "لم يتم العثور على نتائج",
 
       // Playlist.
+      link: "رابط",
+      file: "ملف",
+      playlist: "قائمة التشغيل",
       bookmarkUpdatedSuccessfully: "تم تحديث التصفيح بنجاح.",
       unableToCopyPlaylist: "لا يمكنك إنشاء قائمة. يرجى المحاولة مرة أخرى!",
       pleaseWaitOldPlaylistIsLoading: "يرجى الإنتظار أثناء تحميل القائمة القديمة.",
@@ -2518,6 +2524,9 @@ const resources = {
 
       // Playlist.
       preview: "पूर्वावलोकन",
+      link: "लिंक",
+      file: "फ़ाइल",
+      playlist: "प्लेलिस्ट",
       unableToCopyPlaylist: "नहीं जोड़ सकता है। कृपया पुनः कोशिश करें!",
       pleaseWaitOldPlaylistIsLoading: "पुनः लोड हो रहा है कृपया इंतजार करें...",
       loadingPlaylistPleaseWait: "लोड हो रहा है कृपया इंतजार करें...",

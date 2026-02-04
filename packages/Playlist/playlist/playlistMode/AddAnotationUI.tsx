@@ -493,6 +493,8 @@ const AddAnotationUI = ({
   setTab,
 }) => {
 
+  globalThis[`FirstAnnnotationItem`] = list[0];
+
   // Audio
   const [mediaURL, setMediaURL] = useState("");
   const [videoSrc, setVideoSrc] = useState(false);
@@ -534,6 +536,7 @@ const AddAnotationUI = ({
 
   useLayoutEffect(() => {
     globalThis.SetSelectedAnnotations = setSelectedAnnotation;
+    globalThis.AddAnotationUI = true;
     if (editData?.address) {
       (async () => {
         setDataFetching(true);
@@ -607,6 +610,7 @@ const AddAnotationUI = ({
       }
       setIsEditAddress(false);
       globalThis.SetEditAnnoData?.(null);
+      globalThis.AddAnotationUI = false;
     };
   }, []);
 
@@ -1257,20 +1261,34 @@ const AddAnotationUI = ({
   const finalHistoryObject = useMemo(() => {
     if (!singleMode || editData?.address) return list;
 
-    const trackVerse = {};
+    const trackVerse: Record<string, boolean> = {};
 
-    const listFinal = list
-      .filter((ele) => {
-        const verse = ele.additionalInfo.verse;
-        if (trackVerse[verse]) return false;
-        trackVerse[verse] = true;
-        return (
-          ele.type === "verse" ||
-          ele.type === "verse-range" ||
-          ele.type === "verse-grouped"
-        );
-      })
-      .sort((a, b) => a.additionalInfo.verse > b.additionalInfo.verse);
+    const listItems: any[] = [];
+
+    list.forEach((ele: any) => {
+      const verse = ele.additionalInfo.verse;
+      if (trackVerse[verse]) return false;
+      trackVerse[verse] = true;
+      if( ele.type === "verse" || ele.type === "verse-range" || ele.type === "verse-grouped"){
+          if(ele.type === "verse-grouped"){
+            ele.additionalInfo.verse.forEach((vNumber: number) => {
+              if(trackVerse[vNumber]) return false;
+              trackVerse[vNumber] = true;
+              listItems.push({
+                ...ele,
+                additionalInfo: {
+                  ...ele.additionalInfo,
+                  verse: vNumber,
+                },
+              });
+            });
+          } else {
+            listItems.push(ele);
+          }
+      }
+    });
+
+    const listFinal = listItems.sort((a: any, b: any) => a.additionalInfo.verse > b.additionalInfo.verse);
 
     if (listFinal.length < 1) {
       setSelectedAnnotation(null);
@@ -1947,6 +1965,21 @@ const AddAnotationUI = ({
               </p>
             </div>
             <div className="align-center">
+             {list.length > 0 && <div
+                className="publish-setting"
+                style={{
+                  fontSize: "12px",
+                  marginRight: "0.5rem",
+                }}
+                onClick={(e) => {
+                  console.log("undo");
+                 
+                }}
+              >
+                <span class="material-symbols-outlined">
+                  undo
+                </span>
+              </div>}
               <div
                 className="publish-setting"
                 style={{

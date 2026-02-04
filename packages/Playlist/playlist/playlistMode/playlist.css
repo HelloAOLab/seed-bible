@@ -1077,6 +1077,8 @@ div.attachment-link.dropabble-Embed .playlist-item-type {
   gap: 0.5rem;
   border-radius: 0.25rem;
   cursor: pointer;
+  min-width: 30px;
+  height: 30px;
 }
 
 .back-button {
