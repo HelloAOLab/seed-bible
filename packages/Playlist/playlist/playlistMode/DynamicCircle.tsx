@@ -10,7 +10,7 @@ const CircleProgress = ({ id = "default", progress = "50" }) => {
                         width: 2rem;
                         height: 2rem;
                         border-radius: 50%;
-                        background: conic-gradient(var(--primaryColor) calc(var(--progress-${id}) * 1%), #F0F1F1 0);
+                        background: conic-gradient(var(--secondaryColor) calc(var(--progress-${id}) * 1%), #F0F1F1 0);
                         display: flex;
                         align-items: center;
                         justify-content: center;

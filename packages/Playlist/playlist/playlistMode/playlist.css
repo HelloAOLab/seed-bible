@@ -8,7 +8,7 @@
 
   
 #hashtag {
-  color: var(--primaryColor) !important;
+  color: var(--secondaryColor) !important;
 }
 
 
@@ -56,7 +56,7 @@ span.playlist-label-sre {
 }
 
 .sre-play-circle {
-  color: var(--primaryColor) !important;
+  color: var(--secondaryColor) !important;
   cursor: pointer;
   font-size: 1.5rem;
 }
@@ -292,8 +292,8 @@ history-item:active {
   align-items: center;
   border-radius: 4px;
   background-color: var(--activeTabFill);
-  border: 1px solid var(--primaryColor);
-  color: var(--primaryColor);
+  border: 1px solid var(--secondaryColor);
+  color: var(--secondaryColor);
   padding: 4px 4.2rem 4px 10px;
   font-size: 14px;
   /* margin: 8px 0; */
@@ -456,11 +456,11 @@ history-item:active {
 }
 
 .tabs-playlist-item.active {
-  border-bottom: 1px solid var(--primaryColor);
+  border-bottom: 1px solid var(--secondaryColor);
 }
 
 .tabs-playlist-item.active * {
-  color: var(--primaryColor);
+  color: var(--secondaryColor);
 }
 
 .info-item-playlist {
@@ -889,7 +889,7 @@ div.attachment-link.dropabble-Embed .playlist-item-type {
   /* bottom: 59px; */
   /* /* left: 0px;  */
   background: var(--pageBackground);
-  border: 1px solid var(--primaryColor);
+  border: 1px solid var(--secondaryColor);
   border-radius: 10px;
 }
 
@@ -932,7 +932,7 @@ div.attachment-link.dropabble-Embed .playlist-item-type {
 }
 
 .FILE_UPLOAD div .link {
-  color: var(--primaryColor);
+  color: var(--secondaryColor);
   cursor: pointer;
   margin: 0.5rem 0;
 }
@@ -971,7 +971,7 @@ div.attachment-link.dropabble-Embed .playlist-item-type {
 }
 
 .select_item_type.active {
-  background-color: var(--primaryColor);
+  background-color: var(--secondaryColor);
 }
 
 .container-render {
@@ -1138,7 +1138,7 @@ div.attachment-link.dropabble-Embed .playlist-item-type {
 }
 
 .chips-tag-container .chip-tag.active {
-  background-color: var(--primaryColor);
+  background-color: var(--secondaryColor);
   border: 1px solid var(--pageTextColor);
   color: var(--pageTextColor);
 }
@@ -1245,11 +1245,11 @@ div.attachment-link.dropabble-Embed .playlist-item-type {
 
 .switch-tabs > div.active {
   background-color: var(--pageBackground);
-  color: var(--primaryColor) !important;
+  color: var(--secondaryColor) !important;
 }
 
 .switch-tabs > div.active p {
-  color: var(--primaryColor) !important;
+  color: var(--secondaryColor) !important;
 }
 
 .welcome-box {
@@ -1358,7 +1358,7 @@ div.attachment-link.dropabble-Embed .playlist-item-type {
 
 .no-items-box p {
   font-size: 14px;
-  color: var(--primaryColor);
+  color: var(--secondaryColor);
   cursor: pointer;
   font-weight: 400;
   text-decoration: underline;

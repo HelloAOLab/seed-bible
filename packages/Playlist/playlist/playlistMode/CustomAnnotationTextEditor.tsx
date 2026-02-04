@@ -2453,7 +2453,7 @@ span.playlist-label-sre {
 }
 
 .sre-play-circle {
-  color: var(--primaryColor) !important;
+  color: var(--secondaryColor) !important;
   font-size: 1.5rem;
 }
   

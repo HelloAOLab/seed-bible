@@ -1019,7 +1019,7 @@ const PlayerControls = ({ parentId = "default" }) => {
                   width: "24px",
                   backgroundColor: "var(--themeSideMenu)",
                   height: "24px",
-                  border: "1px solid var(--primaryColor)",
+                  border: "1px solid var(--secondaryColor)",
                 }}
                 className="playlist-action small"
                 onClick={() => {
@@ -1058,7 +1058,7 @@ const PlayerControls = ({ parentId = "default" }) => {
                   height: "26px",
                   padding: "0",
                   borderRadius: "6px",
-                  border: "0px solid var(--primaryColor)",
+                  border: "0px solid var(--secondaryColor)",
                   backgroundColor: "var(--activeTabFill)",
                 }}
                 className="playlist-action small"
@@ -1111,7 +1111,7 @@ const PlayerControls = ({ parentId = "default" }) => {
                 margin: "0",
                 minWidth: "auto",
                 backgroundColor: "transparent",
-                border: "0px solid var(--primaryColor)",
+                border: "0px solid var(--secondaryColor)",
                 boxShadow: "none",
                 padding: "8px",
                 cursor: !prevItemName?.content ? "not-allowed" : "",
@@ -1161,7 +1161,7 @@ const PlayerControls = ({ parentId = "default" }) => {
                 style={{
                   margin: "0",
                   fontSize: "14px",
-                  backgroundColor: "var(--primaryColor)",
+                  backgroundColor: "var(--secondaryColor)",
                 }}
                 class="material-symbols-outlined unfollow"
               >
@@ -1174,7 +1174,7 @@ const PlayerControls = ({ parentId = "default" }) => {
                 margin: "0",
                 minWidth: "auto",
                 backgroundColor: "transparent",
-                border: "0px solid var(--primaryColor)",
+                border: "0px solid var(--secondaryColor)",
                 boxShadow: "none",
                 color: "#000",
                 padding: "8px",
