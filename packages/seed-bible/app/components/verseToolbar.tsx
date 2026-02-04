@@ -65,7 +65,11 @@ export function VerseToolbar({
 
   useEffect(() => {
     const handleClickOutside = (event) => {
-      if (isPickingColor && colorPickerRef.current && !colorPickerRef.current.contains(event.target)) {
+      if (
+        isPickingColor &&
+        colorPickerRef.current &&
+        !colorPickerRef.current.contains(event.target)
+      ) {
         // Add color to customColors array, max 3
         setCustomColors((prev) => {
           // Check if color already exists
@@ -133,7 +137,7 @@ export function VerseToolbar({
     display: "flex",
     flexDirection: "column",
     alignItems: "center",
-    background: "var(--panelBackground)"
+    background: "var(--panelBackground)",
   };
 
   const headerStyle = {
@@ -184,8 +188,8 @@ export function VerseToolbar({
     width: "44px",
     height: "32px",
     borderRadius: "50%",
-    backgroundColor: "var(--panelBackground)",
-    border: "2px solid var(--pageBackground)",
+    backgroundColor: "transparent",
+    border: "2px solid transparent",
     display: "flex",
     alignItems: "center",
     justifyContent: "center",
@@ -271,10 +275,12 @@ export function VerseToolbar({
 
   const handleClearAll = () => {
     // Extract verse numbers from composite keys (e.g., "Genesis-1-3" -> 3)
-    const verseNumbers = Object.keys(highlighted).map((key) => {
-      const parts = key.split('-');
-      return Number(parts[parts.length - 1]);
-    }).filter(num => !isNaN(num));
+    const verseNumbers = Object.keys(highlighted)
+      .map((key) => {
+        const parts = key.split("-");
+        return Number(parts[parts.length - 1]);
+      })
+      .filter((num) => !isNaN(num));
 
     // Clear all highlights
     verseNumbers.forEach((verseNum) => {
@@ -315,10 +321,15 @@ export function VerseToolbar({
         `}</style>
       {globalThis.IsMobileNow() && selectionSettings.showSelectedItems && (
         <>
-          {null/*<div className="verse-ref">
+          {
+            null /*<div className="verse-ref">
             <img src="https://res.cloudinary.com/dfbtwwa8p/image/upload/v1764875876/Rectangle_11_yzpmpm.svg" />
-          </div>*/}
-          <span className="verse-ref" style={{...verseRefStyle,padding:'1px 16px'}}>
+          </div>*/
+          }
+          <span
+            className="verse-ref"
+            style={{ ...verseRefStyle, padding: "1px 16px" }}
+          >
             {getVerseReference()}
           </span>
         </>
@@ -523,7 +534,7 @@ export function VerseToolbar({
                         style={{
                           ...circleButtonStyle(tempColor),
                           border: "3px solid #666",
-                          boxShadow: "0 0 8px rgba(0,0,0,0.3)"
+                          boxShadow: "0 0 8px rgba(0,0,0,0.3)",
                         }}
                         aria-label={`Preview color ${tempColor}`}
                       />

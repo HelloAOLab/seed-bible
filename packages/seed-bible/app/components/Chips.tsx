@@ -6,7 +6,7 @@ function SharePopup({
   translation = "BSB",
   popupTitle = "Share",
   closePopupSettings,
-}: any) {
+}) {
   const [copied, setCopied] = useState(false);
   const [includeReference, setIncludeReference] = useState(true);
 
@@ -81,7 +81,7 @@ function SharePopup({
     //     window.open("https://instagram.com", "_blank");
     //   },
     // },
-    ...((globalThis as any).IsMobileNow()
+    ...(globalThis.IsMobileNow()
       ? [
           {
             name: "Text",
@@ -161,7 +161,6 @@ function SharePopup({
             boxShadow: "0 10px 40px rgba(0,0,0,0.2)",
           }}
         >
-          {/* Header */}
           <div
             style={{
               display: "flex",
@@ -197,7 +196,6 @@ function SharePopup({
             </button>
           </div>
 
-          {/* Toggle Options */}
           <div
             style={{
               display: "flex",
@@ -272,7 +270,6 @@ function SharePopup({
             </label>
           </div>
 
-          {/* Platform Grid */}
           <div
             style={{
               display: "grid",
@@ -343,7 +340,7 @@ const QRCodeComponent = ({ url = "https://example.com/session/12345" }) => {
   // Load QRCode library dynamically from CDN
   useEffect(() => {
     const loadScript = async () => {
-      if (!(window as any).QRCode) {
+      if (!window.QRCode) {
         const script = document.createElement("script");
         script.src =
           "https://cdnjs.cloudflare.com/ajax/libs/qrcodejs/1.0.0/qrcode.min.js";
@@ -356,15 +353,15 @@ const QRCodeComponent = ({ url = "https://example.com/session/12345" }) => {
     };
 
     const generateQR = () => {
-      if (qrRef.current && (window as any).QRCode) {
-        (qrRef.current as HTMLElement).innerHTML = "";
-        new (window as any).QRCode(qrRef.current, {
+      if (qrRef.current && window.QRCode) {
+        qrRef.current.innerHTML = "";
+        new window.QRCode(qrRef.current, {
           text: url,
           width: 200,
           height: 200,
           colorDark: "#000000",
           colorLight: "#ffffff",
-          correctLevel: (window as any).QRCode.CorrectLevel.H,
+          correctLevel: window.QRCode.CorrectLevel.H,
         });
       }
     };
@@ -483,11 +480,7 @@ const QRCodeComponent = ({ url = "https://example.com/session/12345" }) => {
   );
 };
 
-const JoinSessionComponent = ({
-  onJoin,
-  translations = {},
-  CloseModal,
-}: any) => {
+const JoinSessionComponent = ({ onJoin, translations = {}, CloseModal }) => {
   const [sessionCode, setSessionCode] = useState("");
 
   const t = {
@@ -538,7 +531,6 @@ const JoinSessionComponent = ({
           height: 373,
         }}
       >
-        {/* Logo */}
         <div
           style={{
             display: "flex",
@@ -556,7 +548,6 @@ const JoinSessionComponent = ({
           />
         </div>
 
-        {/* Title */}
         <h2
           style={{
             textAlign: "center",
@@ -572,7 +563,6 @@ const JoinSessionComponent = ({
           {t.joinSession}
         </h2>
 
-        {/* Description */}
         <p
           style={{
             marginTop: 0,
@@ -588,11 +578,10 @@ const JoinSessionComponent = ({
           {t.enterSessionCode}
         </p>
 
-        {/* Input Field */}
         <input
           type="text"
           value={sessionCode}
-          onChange={(e) => setSessionCode((e.target as HTMLInputElement).value)}
+          onChange={(e) => setSessionCode(e.target.value)}
           onKeyPress={handleKeyPress}
           placeholder={t.sessionCodePlaceholder}
           style={{
@@ -611,7 +600,6 @@ const JoinSessionComponent = ({
           }}
         />
 
-        {/* Join Button */}
         <button
           onClick={handleJoin}
           style={{
