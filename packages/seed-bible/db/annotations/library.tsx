@@ -954,13 +954,21 @@ export async function subscribeToUsers(
   const myProfile = {
     id: recordName,
     name: myProfileResult.success ? myProfileResult.data?.name : undefined,
-    photoLink: myProfileResult.success ? myProfileResult.data?.photoLink : undefined,
+    photoLink: myProfileResult.success
+      ? myProfileResult.data?.photoLink
+      : undefined,
   };
 
   // Add myself to each new user's subscribers list
   for (const user of newUsers) {
     try {
       await addSubscriberToUser(user.id, myProfile);
+      // Notify that user subscribed
+      shout("userSubscribed", {
+        subscriber: myProfile,
+        subscribedTo: user,
+        configId: configBot.id,
+      });
     } catch (e) {
       console.error(`Error adding subscriber to user ${user.id}:`, e);
     }
@@ -995,7 +1003,9 @@ async function removeSubscriberFromUser(
   subscriberId: string
 ): Promise<void> {
   const existingSubscribers = await getSubscribersOfUser(targetUserId);
-  const updatedSubscribers = existingSubscribers.filter((s) => s.id !== subscriberId);
+  const updatedSubscribers = existingSubscribers.filter(
+    (s) => s.id !== subscriberId
+  );
   await saveSubscribers(targetUserId, updatedSubscribers);
 }
 
@@ -1083,6 +1093,12 @@ export async function unsubscribeFromUsers(
   for (const userId of userIds) {
     try {
       await removeSubscriberFromUser(userId, recordName);
+      // Notify that user unsubscribed
+      shout("userUnsubscribed", {
+        unsubscriberId: recordName,
+        unsubscribedFromId: userId,
+        configId: configBot.id,
+      });
     } catch (e) {
       console.error(`Error removing subscriber from user ${userId}:`, e);
     }
