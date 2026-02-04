@@ -12,6 +12,7 @@ interface BookInterface {
   lastChapterNumber: number;
   lastChapterApiLink: string;
   totalNumberOfVerses?: number;
+  ghost?: boolean;
 }
 
 interface TranslationInterface {
@@ -35,4 +36,10 @@ interface TranslationInterface {
   origin?: string;
 }
 
-export type { BookInterface, TranslationInterface };
+interface IconProps {
+  width?: string;
+  height?: string;
+  fill?: string;
+}
+
+export type { BookInterface, TranslationInterface, IconProps };

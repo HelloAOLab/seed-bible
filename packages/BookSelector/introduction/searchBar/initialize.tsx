@@ -5,9 +5,6 @@ await os.unregisterApp("searchBar");
 await os.registerApp("searchBar", thisBot);
 const css = thisBot.tags["App.css"];
 const { useState, useEffect } = os.appHooks;
-if (typeof introductionSearchBar === "undefined") {
-  globalThis.introductionSearchBar = thisBot;
-}
 
 if (!masks.index) masks.index = 0;
 
@@ -76,12 +73,12 @@ const App = () => {
         >
           <style>
             {`
-                      :root {
-                        --mobileWidth: ${currentExperience === 3 ? "100%" : "200px"};
-                        }
-                    `}
+              :root {
+                --mobileWidth: ${currentExperience === 3 ? "100%" : "200px"};
+                }
+            `}
           </style>
-          <SearchBar />
+          <SearchBar openSidebar={openSidebar} />
         </div>
       </>
     </>
