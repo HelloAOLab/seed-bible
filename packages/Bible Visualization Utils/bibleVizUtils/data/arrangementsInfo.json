@@ -6,7 +6,7 @@
         "name": "New Testament",
         "sections": [
           {
-            "name": "Prophecy",
+            "name": "Apocalypse",
             "color": "#B1B2FF",
             "books": [{ "commonName": "Revelation" }]
           },
@@ -401,7 +401,7 @@
         "name": "New Testament",
         "sections": [
           {
-            "name": "Prophecy",
+            "name": "Apocalypse",
             "color": "#B1B2FF",
             "books": [
               {
@@ -1637,7 +1637,7 @@
         "name": "New Testament",
         "sections": [
           {
-            "name": "Prophecy",
+            "name": "Apocalypse",
             "color": "#B1B2FF",
             "books": [
               {

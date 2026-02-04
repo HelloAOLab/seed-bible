@@ -2,7 +2,7 @@ import { useScriptureMap2DContext } from "scriptureMap2D.main.ScriptureMap2DCont
 import { Tooltip } from "scriptureMap2D.main.Tooltip";
 import { useTestamentContext } from "scriptureMap2D.main.TestamentContext";
 import { useClickAndHold } from "scriptureMap2D.main.CustomHooks";
-const { useState, useCallback, useMemo } = os.appHooks;
+const { useState, useMemo } = os.appHooks;
 const { memo } = os.appCompat;
 
 export const Chapter = memo(
@@ -79,10 +79,10 @@ export const Chapter = memo(
             project.structure[testament.name][sectionName][bookName][index]
           ));
 
-      let background = `rgb(${baseColorRgb[0]}, ${baseColorRgb[1]}, ${baseColorRgb[2]})`;
-      let borderStyle = "solid";
-      let borderColor = `rgb(${baseColorRgb[0]}, ${baseColorRgb[1]}, ${baseColorRgb[2]})`;
-      let color = "black";
+      let background; // = `rgb(${baseColorRgb[0]}, ${baseColorRgb[1]}, ${baseColorRgb[2]})`;
+      let borderStyle; // = "solid";
+      let borderColor; // = `rgb(${baseColorRgb[0]}, ${baseColorRgb[1]}, ${baseColorRgb[2]})`;
+      let color; // = "var(--bookHeadingColor)";
 
       switch (mode) {
         case ScriptureMap2DModes.Project:

@@ -205,6 +205,7 @@ function ThePage({
               configBot.tags.translationId = null;
               configBot.tags.translation = null;
               const translationData = await loadTranslationFromUrl();
+              os.toast("No translations found from url!");
               return {
                 ...translationData,
               };
@@ -382,8 +383,13 @@ function ThePage({
 
       globalThis.BookId = bible.bookId;
 
-      const { data, loading, error, footnotes: bibleFootnotes } = bible.getState();
-      console.log(data, tab,bibleFootnotes, "the data loaded");
+      const {
+        data,
+        loading,
+        error,
+        footnotes: bibleFootnotes,
+      } = bible.getState();
+      console.log(data, tab, bibleFootnotes, "the data loaded");
       setFootnotes(bibleFootnotes);
 
       globalThis.refreshScrollers && globalThis.refreshScrollers();
@@ -1530,7 +1536,7 @@ function ThePage({
         }
 
         .verse-clicked {
-          border-bottom: 2px dashed #4459F3 !important;
+          border-bottom: 2px dashed var(--spaceSelection) !important;
 
         }
 
@@ -1538,7 +1544,7 @@ function ThePage({
           display: inline-block;
           margin-left: 4px;
           font-size: 0.85em;
-          color: #4459F3;
+          color: var(--spaceSelection);
           cursor: pointer;
           user-select: none;
           vertical-align: middle;
@@ -1564,7 +1570,7 @@ function ThePage({
         }
 
         .footnote-modal {
-          background: white;
+          background: var(--pageBackground);
           border-radius: 12px;
           max-width: 600px;
           width: 90%;
@@ -1586,7 +1592,7 @@ function ThePage({
         .footnote-modal-header h3 {
           margin: 0;
           font-size: 1.2em;
-          color: #333;
+          color: var(--text1);
         }
 
         .footnote-modal-close {
@@ -1594,7 +1600,7 @@ function ThePage({
           border: none;
           font-size: 1.5em;
           cursor: pointer;
-          color: #666;
+          color: var(--text1);
           padding: 0;
           width: 30px;
           height: 30px;
@@ -1606,7 +1612,7 @@ function ThePage({
 
         .footnote-modal-close:hover {
           background: #f0f0f0;
-          color: #333;
+          color: var(--text1);
         }
 
         .footnote-modal-content {
@@ -1621,13 +1627,13 @@ function ThePage({
 
         .footnote-number {
           font-weight: 600;
-          color: #4459F3;
+          color: var(--spaceSelection);
           margin-right: 8px;
           font-size: 0.95em;
         }
 
         .footnote-text {
-          color: #444;
+          color: var(--text1);
           font-size: 0.95em;
         }
          `}
@@ -1780,7 +1786,8 @@ function ThePage({
               >
                 <div className="footnote-modal-header">
                   <h3>
-                    {activeFootnote.book} {activeFootnote.chapter}:{activeFootnote.verse}
+                    {activeFootnote.book} {activeFootnote.chapter}:
+                    {activeFootnote.verse}
                   </h3>
                   <button
                     className="footnote-modal-close"
@@ -1796,13 +1803,14 @@ function ThePage({
                   {activeFootnote.footnotes.map((footnote, idx) => {
                     if (!footnote) return null;
 
-                    const footnoteText = footnote.text || footnote.note || footnote.content || '';
+                    const footnoteText =
+                      footnote.text || footnote.note || footnote.content || "";
                     if (!footnoteText) return null;
 
                     return (
                       <div key={idx} className="footnote-item">
                         <span className="footnote-number">
-                          {footnote.caller || (idx + 1)}
+                          {footnote.caller || idx + 1}
                         </span>
                         <span className="footnote-text">{footnoteText}</span>
                       </div>
@@ -2194,7 +2202,7 @@ function Section({
 
   const editTextStyle = {
     "border-radius": "6px",
-    border: "2px solid #4459F3",
+    border: "2px solid var(--spaceSelection)",
     background: "rgba(68, 89, 243, 0.10)",
     padding: "8px",
     position: "relative",
@@ -2279,21 +2287,21 @@ function Section({
     // If footnotes exist, they usually have a 'noteId' or marker in the original text
     verseFootnotes.forEach((footnote, idx) => {
       const marker = footnote.marker || footnote.noteId;
-      if (marker && typeof processedText === 'string') {
-        const markerRegex = new RegExp(`\\[${marker}\\]|${marker}`, 'g');
+      if (marker && typeof processedText === "string") {
+        const markerRegex = new RegExp(`\\[${marker}\\]|${marker}`, "g");
         const matches = [...processedText.matchAll(markerRegex)];
 
-        matches.forEach(match => {
+        matches.forEach((match) => {
           if (match.index > lastIndex) {
             parts.push({
-              type: 'text',
-              content: processedText.slice(lastIndex, match.index)
+              type: "text",
+              content: processedText.slice(lastIndex, match.index),
             });
           }
           parts.push({
-            type: 'footnote',
+            type: "footnote",
             marker: idx + 1,
-            content: footnote.text || footnote.note || ''
+            content: footnote.text || footnote.note || "",
           });
           lastIndex = match.index + match[0].length;
         });
@@ -2302,8 +2310,8 @@ function Section({
 
     if (lastIndex < processedText.length) {
       parts.push({
-        type: 'text',
-        content: processedText.slice(lastIndex)
+        type: "text",
+        content: processedText.slice(lastIndex),
       });
     }
 
@@ -2536,24 +2544,38 @@ function Section({
                   }}
                   style={{
                     "background-color":
-                      highlighted?.[`${book}-${chapter}-${verse.verseNumber}`] ||
-                      commandHighlight.includes(verse.verseNumber)
-                        ? highlighted?.[`${book}-${chapter}-${verse.verseNumber}`]?.color
+                      highlighted?.[
+                        `${book}-${chapter}-${verse.verseNumber}`
+                      ] || commandHighlight.includes(verse.verseNumber)
+                        ? highlighted?.[
+                            `${book}-${chapter}-${verse.verseNumber}`
+                          ]?.color
                         : "transparent",
                     color:
-                      highlighted?.[`${book}-${chapter}-${verse.verseNumber}`] ||
-                      commandHighlight.includes(verse.verseNumber)
+                      highlighted?.[
+                        `${book}-${chapter}-${verse.verseNumber}`
+                      ] || commandHighlight.includes(verse.verseNumber)
                         ? wordHighlightsTC
                         : "",
                     transition: "background-color 0.2s ease, border 0.2s ease",
                     "border-radius":
-                      highlighted?.[`${book}-${chapter}-${verse.verseNumber}`] || isClicked
+                      highlighted?.[
+                        `${book}-${chapter}-${verse.verseNumber}`
+                      ] || isClicked
                         ? "3px"
                         : "0",
                     padding:
-                      highlighted?.[`${book}-${chapter}-${verse.verseNumber}`] || isClicked ? "" : "0",
+                      highlighted?.[
+                        `${book}-${chapter}-${verse.verseNumber}`
+                      ] || isClicked
+                        ? ""
+                        : "0",
                     margin:
-                      highlighted?.[`${book}-${chapter}-${verse.verseNumber}`] || isClicked ? "" : "0",
+                      highlighted?.[
+                        `${book}-${chapter}-${verse.verseNumber}`
+                      ] || isClicked
+                        ? ""
+                        : "0",
                     "text-decoration":
                       inHold === verse.verseNumber || isTextDecorUnderline
                         ? "underline"
@@ -2562,14 +2584,18 @@ function Section({
                       inHold === verse.verseNumber || isTextDecorUnderline
                         ? "dotted"
                         : "",
-                    borderBottom: isClicked ? "2px dashed #4459F3" : "none",
+                    borderBottom: isClicked
+                      ? "2px dashed var(--spaceSelection)"
+                      : "none",
                   }}
                   className={`sectionText ${
                     verse?.verseNumber.toString() === activeVerse.toString()
                       ? "highlighted"
                       : ""
                   } ${
-                    highlighted?.[`${book}-${chapter}-${verse.verseNumber}`] ? "verse-highlighted" : ""
+                    highlighted?.[`${book}-${chapter}-${verse.verseNumber}`]
+                      ? "verse-highlighted"
+                      : ""
                   } ${isClicked ? "verse-clicked" : ""}`}
                 >
                   {!c ? (
@@ -2625,8 +2651,13 @@ function Section({
                               </span>
                               {restText}
                               {(() => {
-                                const verseFootnotes = getVerseFootnotes(verse.verseNumber);
-                                if (verseFootnotes && verseFootnotes.length > 0) {
+                                const verseFootnotes = getVerseFootnotes(
+                                  verse.verseNumber
+                                );
+                                if (
+                                  verseFootnotes &&
+                                  verseFootnotes.length > 0
+                                ) {
                                   return (
                                     <span
                                       className="footnote-icon"
@@ -2636,13 +2667,15 @@ function Section({
                                           verse: verse.verseNumber,
                                           footnotes: verseFootnotes,
                                           book,
-                                          chapter
+                                          chapter,
                                         });
                                         setShowFootnoteModal(true);
                                       }}
                                       title="View footnotes"
                                     >
-                                      ⓘ
+                                      <span class="material-symbols-outlined">
+                                        info
+                                      </span>
                                     </span>
                                   );
                                 }
@@ -2657,7 +2690,9 @@ function Section({
                             {verseNumberElement}
                             {verseContent}
                             {(() => {
-                              const verseFootnotes = getVerseFootnotes(verse.verseNumber);
+                              const verseFootnotes = getVerseFootnotes(
+                                verse.verseNumber
+                              );
                               if (verseFootnotes && verseFootnotes.length > 0) {
                                 return (
                                   <span
@@ -2668,13 +2703,15 @@ function Section({
                                         verse: verse.verseNumber,
                                         footnotes: verseFootnotes,
                                         book,
-                                        chapter
+                                        chapter,
                                       });
                                       setShowFootnoteModal(true);
                                     }}
                                     title="View footnotes"
                                   >
-                                    ⓘ
+                                    <span class="material-symbols-outlined">
+                                      info
+                                    </span>
                                   </span>
                                 );
                               }
@@ -2691,7 +2728,9 @@ function Section({
                           {verseNumberElement}
                           {verseContent}
                           {(() => {
-                            const verseFootnotes = getVerseFootnotes(verse.verseNumber);
+                            const verseFootnotes = getVerseFootnotes(
+                              verse.verseNumber
+                            );
                             if (verseFootnotes && verseFootnotes.length > 0) {
                               return (
                                 <span
@@ -2702,13 +2741,15 @@ function Section({
                                       verse: verse.verseNumber,
                                       footnotes: verseFootnotes,
                                       book,
-                                      chapter
+                                      chapter,
                                     });
                                     setShowFootnoteModal(true);
                                   }}
                                   title="View footnotes"
                                 >
-                                  ⓘ
+                                  <span class="material-symbols-outlined">
+                                    info
+                                  </span>
                                 </span>
                               );
                             }

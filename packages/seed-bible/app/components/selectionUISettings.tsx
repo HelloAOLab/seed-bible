@@ -116,7 +116,7 @@ const SelectionUISettings = () => {
   const toggleStyle = (isOn) => ({
     width: "44px",
     height: "24px",
-    backgroundColor: isOn ? "#4459F3" : "#CCCCCD",
+    backgroundColor: isOn ? "var(--spaceSelection)" : "#CCCCCD",
     borderRadius: "12px",
     position: "relative",
     cursor: "pointer",
@@ -160,8 +160,10 @@ const SelectionUISettings = () => {
     width: "18px",
     height: "18px",
     borderRadius: "50%",
-    border: isSelected ? "2px solid #4459F3" : "2px solid #CCCCCD",
-    backgroundColor: isSelected ? "#4459F3" : "transparent",
+    border: isSelected
+      ? "2px solid var(--spaceSelection)"
+      : "2px solid #CCCCCD",
+    backgroundColor: isSelected ? "var(--spaceSelection)" : "transparent",
     display: "flex",
     alignItems: "center",
     justifyContent: "center",
@@ -200,7 +202,7 @@ const SelectionUISettings = () => {
       {/* Title with icon */}
       <div style={titleContainerStyle}>
         <SelectionUIIcon />
-        <span>{t("selectionUI")}</span>
+        <span style={{ color: "var(--text1)" }}>{t("selectionUI")}</span>
       </div>
 
       {/* Description */}

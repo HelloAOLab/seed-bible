@@ -67,6 +67,7 @@
     border-radius: 100%;
     display: block !important;
     pointer-events: all;
+            height: 48px !important;
   }
 
   .rightClick {
@@ -77,13 +78,14 @@
     border-radius: 100%;
     display: block !important;
     pointer-events: all;
+            height: 48px !important;
   }
   .rightClick button,
   .leftClick button {
-    width: 48px !important;
-    height: 48px !important;
-    box-shadow: 1px 4px 2px -1px rgba(0, 0, 0, 0.3);
-  }
+        width: 48px !important;
+        height: 48px !important;
+        border: 1px solid #333333;
+    }
 }
 
 .toolbar-button:hover {

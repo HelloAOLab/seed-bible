@@ -315,10 +315,10 @@ export function VerseToolbar({
         `}</style>
       {globalThis.IsMobileNow() && selectionSettings.showSelectedItems && (
         <>
-          <div className="verse-ref">
+          {null/*<div className="verse-ref">
             <img src="https://res.cloudinary.com/dfbtwwa8p/image/upload/v1764875876/Rectangle_11_yzpmpm.svg" />
-          </div>
-          <span className="verse-ref" style={verseRefStyle}>
+          </div>*/}
+          <span className="verse-ref" style={{...verseRefStyle,padding:'1px 16px'}}>
             {getVerseReference()}
           </span>
         </>
@@ -488,16 +488,46 @@ export function VerseToolbar({
               ) : (
                 <>
                   {isPickingColor && (
-                    <button
-                      key="temp-preview"
-                      className="color-circle"
-                      style={{
-                        ...circleButtonStyle(tempColor),
-                        border: "3px solid #666",
-                        boxShadow: "0 0 8px rgba(0,0,0,0.3)"
-                      }}
-                      aria-label={`Preview color ${tempColor}`}
-                    />
+                    <>
+                      <button
+                        key="cancel-color"
+                        className="color-circle"
+                        style={{
+                          ...circleButtonStyle("#fff"),
+                          border: "2px solid #999",
+                          display: "flex",
+                          alignItems: "center",
+                          justifyContent: "center",
+                          fontSize: "16px",
+                          lineHeight: 1,
+                          color: "#666",
+                        }}
+                        onClick={(e) => {
+                          e.stopPropagation();
+                          setIsPickingColor(false);
+                          setTempColor(selectedColor);
+                        }}
+                        onMouseEnter={(e) =>
+                          (e.currentTarget.style.transform = "scale(1.1)")
+                        }
+                        onMouseLeave={(e) =>
+                          (e.currentTarget.style.transform = "scale(1)")
+                        }
+                        aria-label="Cancel color selection"
+                      >
+                        ✕
+                      </button>
+                      <button
+                        key="temp-preview"
+                        className="color-circle"
+                        style={{
+                          ...circleButtonStyle(tempColor),
+                          border: "3px solid #666",
+                          boxShadow: "0 0 8px rgba(0,0,0,0.3)"
+                        }}
+                        aria-label={`Preview color ${tempColor}`}
+                      />
+                    </>
                   )}
 
                   {customColors.map((color) => (

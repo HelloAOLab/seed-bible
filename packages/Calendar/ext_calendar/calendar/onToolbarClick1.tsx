@@ -6,7 +6,6 @@ function onToolbarDateClick1(e, calendarApi) {
   if (!calendar) return;
 
   Object.assign(titleEl.style, {
-    color: "#303133",
     fontSize: "medium",
     fontWeight: "400",
     transform: "translateY(3px)",
@@ -30,6 +29,8 @@ function onToolbarDateClick1(e, calendarApi) {
   const input = document.createElement("input");
   input.type = "date";
   input.value = iso;
+  input.style.backgroundColor = "var(--pageBackground)";
+  input.style.color = "var(--pageTextColor)";
   input.style.minWidth = `${titleEl.offsetWidth}px`;
   input.style.fontSize = window.getComputedStyle(titleEl).fontSize;
   input.style.padding = "2px";

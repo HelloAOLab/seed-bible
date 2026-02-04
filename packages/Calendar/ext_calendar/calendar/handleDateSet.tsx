@@ -76,8 +76,8 @@ function handleDatesSet({
   const styleButtons = () => {
     if (prevBtn) {
       Object.assign(prevBtn.style, {
-        backgroundColor: "white",
-        color: "black",
+        backgroundColor: "var(--pageBackground)",
+        color: "var(--pageTextColor)",
         fontSize: "10px",
         fontWeight: "700",
         padding: "0",
@@ -97,8 +97,8 @@ function handleDatesSet({
 
     if (nextBtn) {
       Object.assign(nextBtn.style, {
-        backgroundColor: "white",
-        color: "black",
+        backgroundColor: "var(--pageBackground)",
+        color: "var(--pageTextColor)",
         fontSize: "10px",
         padding: "0",
         border: "none",
@@ -121,9 +121,9 @@ function handleDatesSet({
       } else {
         todayBtn.style.display = "inline-block";
         Object.assign(todayBtn.style, {
-          backgroundColor: "white",
+          backgroundColor: "var(--pageBackground)",
           textTransform: "capitalize",
-          color: "#606266",
+          color: "var(--pageTextColor)",
           fontWeight: "500",
           fontSize: "12px",
           marginRight: "10px",
@@ -145,7 +145,6 @@ function handleDatesSet({
   if (toolbar) {
     toolbar.style.fontFamily = '"Inter", sans-serif';
     toolbar.style.fontSize = "medium";
-    toolbar.style.color = "#303133";
     toolbar.style.fontWeight = "400";
 
     if (activeToolbarHandlerRef.current) {
@@ -223,7 +222,8 @@ function handleDatesSet({
           fontSize: "12px",
           fontFamily: '"Inter", sans-serif',
           fontWeight: "500",
-          color: "#606266",
+          backgroundColor: "var(--pageBackground)",
+          color: "var(--pageTextColor)",
           border: "1px solid #d3d3d3",
           borderRadius: "3px",
           cursor: "pointer",

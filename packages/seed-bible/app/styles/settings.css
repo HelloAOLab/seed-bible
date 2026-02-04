@@ -6,7 +6,7 @@
   display: flex;
   flex-direction: column;
   font-family: "Satoshi", system-ui, sans-serif;
-  border-left: 1px solid #e0e0e0;
+  /* border-left: 1px solid #e0e0e0; */
   background-color: transparent !important;
 }
 .disabled {
@@ -239,7 +239,7 @@
 }
 
 .create-profile-btn {
-  background-color: #4459f3;
+  background-color: var(--spaceSelection);
   color: white;
   border: none;
   /* border-radius: 8px; */
@@ -255,7 +255,7 @@
 }
 
 .create-profile-btn:hover {
-  background-color: #4459f3;
+  background-color: var(--spaceSelection);
 }
 
 .create-profile-btn:active {

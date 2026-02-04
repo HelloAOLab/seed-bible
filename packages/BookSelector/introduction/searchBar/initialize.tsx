@@ -26,6 +26,22 @@ const App = () => {
     }
   }, [openSidebar]);
 
+  useEffect(() => {
+    if (openSidebar) {
+      window.history.pushState({ modalOpen: true }, "");
+
+      const handlePopState = () => {
+        setOpenSidebar(false);
+      };
+
+      window.addEventListener("popstate", handlePopState);
+
+      return () => {
+        window.removeEventListener("popstate", handlePopState);
+      };
+    }
+  }, [openSidebar]);
+
   return (
     <>
       <style>{globalThis?.ThemeCSS ? globalThis.ThemeCSS : ""}</style>

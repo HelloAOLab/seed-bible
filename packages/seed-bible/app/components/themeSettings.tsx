@@ -109,10 +109,10 @@ const ADVANCED_SETTINGS_SECTIONS = {
 // Based on the design mockup with orange accent colors
 const defaultTheme = {
   // Main colors
-  firstToolbarbutton:'#dfdede',
-  primaryColor: "#E07B4C",
-  secondaryColor: "#D2691E",
-  tertiaryColor: "#CD853F",
+  firstToolbarbutton: "#dfdede",
+  primaryColor: "#FFFFFF",
+  secondaryColor: "#E07B4C",
+  tertiaryColor: "#FADDD1",
   // Container backgrounds
   themeSideMenu: "#FFFFFF",
   panelBackground: "#F8FAFC",
@@ -224,7 +224,7 @@ const defaultTheme = {
 // ————————————————————————————————————————————————————————————
 // Ready Themes Collection
 // ————————————————————————————————————————————————————————————
-const READY_THEMES = [
+export const READY_THEMES = [
   {
     name: "Default",
     colors: defaultTheme,
@@ -232,17 +232,16 @@ const READY_THEMES = [
   {
     name: "Dark Mode",
     colors: {
-  firstToolbarbutton:'#5C5C5C',
-
+      firstToolbarbutton: "#5C5C5C",
 
       // Main colors
-      primaryColor: "#5A67D8",
-      secondaryColor: "#A78BFA",
-      tertiaryColor: "#34D399",
+      primaryColor: "#1A1A1A",
+      secondaryColor: "#5A67D8",
+      tertiaryColor: "#404040",
       // Container backgrounds
       themeSideMenu: "#2D2D2D",
       panelBackground: "#1A1A1A",
-      
+
       // Tab
       tabSelection: "#5A67D8",
       activeTabBackground: "#404040",
@@ -351,13 +350,13 @@ const READY_THEMES = [
   {
     name: "Purple Serenity",
     colors: {
-      firstToolbarbutton:'#dfdede',
+      firstToolbarbutton: "#dfdede",
       "filter-mode": "invert(0)",
       "secondary-filter-mode": "invert(0%)",
       // Main colors
-      primaryColor: "#7C3AED",
-      secondaryColor: "#A78BFA",
-      tertiaryColor: "#C4B5FD",
+      primaryColor: "#FFFFFF",
+      secondaryColor: "#7C3AED",
+      tertiaryColor: "#EDE9FE",
       // Container backgrounds
       themeSideMenu: "#F5F3FF",
       panelBackground: "#EDE9FE",
@@ -467,13 +466,13 @@ const READY_THEMES = [
   {
     name: "Green Nature",
     colors: {
-      firstToolbarbutton:'#dfdede',
+      firstToolbarbutton: "#dfdede",
       "filter-mode": "invert(0)",
       "secondary-filter-mode": "invert(100%)",
       // Main colors
-      primaryColor: "#059669",
-      secondaryColor: "#10B981",
-      tertiaryColor: "#34D399",
+      primaryColor: "#FFFFFF",
+      secondaryColor: "#059669",
+      tertiaryColor: "#D1FAE5",
       // Container backgrounds
       themeSideMenu: "#ECFDF5",
       panelBackground: "#D1FAE5",
@@ -583,13 +582,13 @@ const READY_THEMES = [
   {
     name: "Ocean Blue",
     colors: {
-      firstToolbarbutton:'#dfdede',
+      firstToolbarbutton: "#dfdede",
       "filter-mode": "invert(0)",
       "secondary-filter-mode": "invert(100%)",
       // Main colors
-      primaryColor: "#0284C7",
-      secondaryColor: "#0EA5E9",
-      tertiaryColor: "#38BDF8",
+      primaryColor: "#FFFFFF",
+      secondaryColor: "#0284C7",
+      tertiaryColor: "#E0F2FE",
       // Container backgrounds
       themeSideMenu: "#F0F9FF",
       panelBackground: "#E0F2FE",
@@ -699,13 +698,13 @@ const READY_THEMES = [
   {
     name: "Warm Amber",
     colors: {
-      firstToolbarbutton:'#dfdede',
+      firstToolbarbutton: "#dfdede",
       "filter-mode": "invert(0)",
       "secondary-filter-mode": "invert(100%)",
       // Main colors
-      primaryColor: "#D97706",
-      secondaryColor: "#F59E0B",
-      tertiaryColor: "#FBBF24",
+      primaryColor: "#FFFFFF",
+      secondaryColor: "#D97706",
+      tertiaryColor: "#FEF3C7",
       // Container backgrounds
       themeSideMenu: "#FFFBEB",
       panelBackground: "#FEF3C7",
@@ -1093,8 +1092,7 @@ const CollapsibleSection = ({ title, isExpanded, onToggle, children }) => {
             fontSize: 14,
             fontWeight: 400,
             // color: "#000000"
-            color:"var(--heading1Color)",
-            
+            color: "var(--heading1Color)",
           }}
         >
           {title}
@@ -1215,8 +1213,8 @@ const CompactColorRow = ({ label, value, onChange }) => {
         style={{
           fontFamily: "Open Sans, sans-serif",
           fontSize: 13,
-         
-          color:'var(--heading2Color)',
+
+          color: "var(--heading2Color)",
         }}
       >
         {label}
@@ -1396,7 +1394,7 @@ const TabSectionContent = ({
               {t("fill")}
             </span>
             <SmallColorPicker
-              value={colors.activeTabFill || "#4459F3"}
+              value={colors.activeTabFill || "var(--spaceSelection)"}
               onChange={(e) => onColorChange("activeTabFill", e.target.value)}
             />
           </div>
@@ -1795,7 +1793,7 @@ const ButtonsSectionContent = ({
               {t("fill")}
             </span>
             <SmallColorPicker
-              value={colors.primaryButtonFill || "#4459F3"}
+              value={colors.primaryButtonFill || "var(--spaceSelection)"}
               onChange={(e) =>
                 onColorChange("primaryButtonFill", e.target.value)
               }
@@ -1950,7 +1948,7 @@ const ButtonsSectionContent = ({
               {t("fill")}
             </span>
             <SmallColorPicker
-              value={colors.secondaryButtonFill || "#4459F3"}
+              value={colors.secondaryButtonFill || "var(--spaceSelection)"}
               onChange={(e) =>
                 onColorChange("secondaryButtonFill", e.target.value)
               }
@@ -2605,7 +2603,9 @@ const ScriptureTextSectionContent = ({
             style={{
               width: 36,
               height: 20,
-              backgroundColor: showVerseNumbers ? "#4459F3" : "#CCCCCC",
+              backgroundColor: showVerseNumbers
+                ? "var(--spaceSelection)"
+                : "#CCCCCC",
               borderRadius: 10,
               cursor: "pointer",
               position: "relative",
@@ -3192,7 +3192,9 @@ const SideMenuSectionContent = ({
               width: 36,
               height: 20,
               backgroundColor:
-                profileAvatarMode === "icon" ? "#4459F3" : "#CCCCCC",
+                profileAvatarMode === "icon"
+                  ? "var(--spaceSelection)"
+                  : "#CCCCCC",
               borderRadius: 10,
               cursor: "pointer",
               position: "relative",
@@ -4063,7 +4065,7 @@ const BrandingSectionContent = ({
             width: 36,
             height: 20,
             backgroundColor: brandingSettings.showCompanyName
-              ? "#4459F3"
+              ? "var(--spaceSelection)"
               : "#CCCCCC",
             borderRadius: 10,
             cursor: "pointer",
@@ -4197,6 +4199,7 @@ const BrandingSectionContent = ({
     </div>
   );
 };
+const isDark = window.matchMedia("(prefers-color-scheme: dark)").matches;
 
 const ThemeSettings = () => {
   const { updateSpace, activeSpace, currentSpace, tabsIcons, setTabsIcons } =
@@ -4336,7 +4339,9 @@ const ThemeSettings = () => {
 
   // Initialize CurrentColors on mount
   useEffect(() => {
-    globalThis.CurrentColors = themeColors?.[`${activeSpace}`] || defaultTheme;
+    globalThis.CurrentColors = isDark
+      ? READY_THEMES[1]?.colors
+      : themeColors?.[`${activeSpace}`] || defaultTheme;
   }, []);
 
   // Resolve the working colors: local edits -> sidebar state -> default
@@ -4366,9 +4371,9 @@ const ThemeSettings = () => {
   };
 
   const applyMainColors = () => {
-    const primary = colors.primaryColor || "#FFFFFF";
-    const secondary = colors.secondaryColor || "#D36433";
-    const tertiary = colors.tertiaryColor || "#F98564";
+    const primary = colors.primaryColor || defaultTheme.primaryColor;
+    const secondary = colors.secondaryColor || defaultTheme.secondaryColor;
+    const tertiary = colors.tertiaryColor || defaultTheme.tertiaryColor;
 
     // Create updated colors object with cascaded values
     const updatedColors = {
@@ -4489,7 +4494,7 @@ const ThemeSettings = () => {
               style={{
                 fontFamily: "Open Sans, sans-serif",
                 fontSize: 12,
-                color: "#E65100",
+                color: "var(--spaceSelection)",
                 cursor: "pointer",
                 display: "flex",
                 alignItems: "center",
@@ -4499,7 +4504,7 @@ const ThemeSettings = () => {
               <svg width="12" height="12" viewBox="0 0 12 12" fill="none">
                 <path
                   d="M10 3L4.5 8.5L2 6"
-                  stroke="#E65100"
+                  stroke="var(--spaceSelection)"
                   strokeWidth="1.5"
                   strokeLinecap="round"
                   strokeLinejoin="round"
@@ -4519,19 +4524,19 @@ const ThemeSettings = () => {
             <MainColorPicker
               label={t("primary")}
               sublabel={t("primary")}
-              color={colors.primaryColor || "#2723DC"}
+              color={colors.primaryColor || defaultTheme.primaryColor}
               onChange={(e) => handleMainColorChange("primaryColor", e)}
             />
             <MainColorPicker
               label={t("secondary")}
               sublabel={t("secondary")}
-              color={colors.secondaryColor || "#8423DC"}
+              color={colors.secondaryColor || defaultTheme.secondaryColor}
               onChange={(e) => handleMainColorChange("secondaryColor", e)}
             />
             <MainColorPicker
               label={t("tertiary")}
               sublabel={t("tertiary")}
-              color={colors.tertiaryColor || "#2378DC"}
+              color={colors.tertiaryColor || defaultTheme.tertiaryColor}
               onChange={(e) => handleMainColorChange("tertiaryColor", e)}
             />
           </div>
@@ -4899,7 +4904,7 @@ export const defaultTextConfig = {
 const SettingsUI = () => {
   const [showCapturedText, setShowCapturedText] = useState(true);
   const [showVersusText, setShowVersusText] = useState(true);
-  const [selectedTheme, setSelectedTheme] = useState(0);
+  const [selectedTheme, setSelectedTheme] = useState(isDark ? 1 : 0);
   const [selectedFont, setSelectedFont] = useState(0);
   const [selectedFontSize, setSelectedFontSize] = useState(1);
   const [showFontDropdown, setShowFontDropdown] = useState(false);
@@ -5010,7 +5015,7 @@ const SettingsUI = () => {
   }, [activeSpace]);
   useEffect(() => {
     if (!masks.firstTimeLoad) {
-      applyReadyTheme(defaultTheme);
+      applyReadyTheme(isDark ? READY_THEMES[1]?.colors : defaultTheme);
       masks.firstTimeLoad = true;
     }
   }, []);
@@ -5165,7 +5170,9 @@ const SettingsUI = () => {
     width: "98px",
     height: "89px",
     backgroundColor: "white",
-    border: isSelected ? "2px solid #4459F3" : "1px solid #E1E3EA",
+    border: isSelected
+      ? "2px solid var(--spaceSelection)"
+      : "1px solid #E1E3EA",
     borderRadius: "4px",
     overflow: "hidden",
     position: "relative",
@@ -5282,7 +5289,7 @@ const SettingsUI = () => {
   const toggleStyle = (isOn) => ({
     width: "32px",
     height: "16px",
-    backgroundColor: isOn ? "#4459F3" : "#CCCCCD",
+    backgroundColor: isOn ? "var(--spaceSelection)" : "#CCCCCD",
     borderRadius: "8px",
     position: "relative",
     cursor: "pointer",
@@ -5309,7 +5316,7 @@ const SettingsUI = () => {
   const buttonStyle = {
     width: "100%",
     padding: "12px",
-    backgroundColor: "#4459F3",
+    backgroundColor: "var(--spaceSelection)",
     color: "white",
     border: "none",
     borderRadius: "4px",
@@ -5369,7 +5376,7 @@ const SettingsUI = () => {
             onClick={handleDecreaseFontSize}
           >
             <svg
-              style={{ filter: "none",stroke:"var(--heading1Color)" }}
+              style={{ filter: "none", stroke: "var(--heading1Color)" }}
               width="12"
               height="12"
               viewBox="0 0 12 12"
@@ -5395,7 +5402,7 @@ const SettingsUI = () => {
             onClick={handleIncreaseFontSize}
           >
             <svg
-              style={{ filter: "none",stroke:"var(--heading1Color)" }}
+              style={{ filter: "none", stroke: "var(--heading1Color)" }}
               width="20"
               height="20"
               viewBox="0 0 20 20"
@@ -5428,7 +5435,7 @@ const SettingsUI = () => {
             onClick={handleCycleLineHeight}
           >
             <svg
-              style={{ filter: "none",stroke:"var(--heading1Color)" }}
+              style={{ filter: "none", stroke: "var(--heading1Color)" }}
               width="18"
               height="18"
               viewBox="0 0 18 18"
@@ -5603,7 +5610,7 @@ const SettingsUI = () => {
                     right: "8px",
                     width: "20px",
                     height: "20px",
-                    backgroundColor: "#4459F3",
+                    backgroundColor: "var(--spaceSelection)",
                     borderRadius: "50%",
                     display: "flex",
                     justifyContent: "center",
@@ -5690,7 +5697,7 @@ const SettingsUI = () => {
                     right: "8px",
                     width: "20px",
                     height: "20px",
-                    backgroundColor: "#4459F3",
+                    backgroundColor: "var(--spaceSelection)",
                     borderRadius: "50%",
                     display: "flex",
                     justifyContent: "center",

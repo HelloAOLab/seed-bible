@@ -23,7 +23,11 @@ const ToggleSwitch = ({ isOn, onToggle, disabled = false }) => {
     display: "inline-block",
     width: "44px",
     height: "24px",
-    backgroundColor: isOn ? "#4285f4" : disabled ? "#e0e0e0" : "#9e9e9e",
+    backgroundColor: isOn
+      ? "var(--spaceSelection)"
+      : disabled
+        ? "#e0e0e0"
+        : "#9e9e9e",
     borderRadius: "12px",
     cursor: disabled ? "default" : "pointer",
     transition: "background-color 0.2s ease",
@@ -96,6 +100,7 @@ function SettingsPanel({
                 style={{
                   width: "18px",
                   objectPosition: "center",
+                  filter: "var(--filter-mode)",
                 }}
               />
             ) : (
@@ -111,12 +116,12 @@ function SettingsPanel({
                 isOn={buttonEnabled}
                 onToggle={() => {
                   setbuttonEnabled(!buttonEnabled);
-                  globalThis.ToggleToolActive(name, "stop");
+                  (globalThis as any).ToggleToolActive(name, "stop");
                 }}
               />
             )}
             <span
-              onClick={() => openPopupSettings(OPTIONS)}
+              onClick={() => (openPopupSettings as any)(OPTIONS)}
               className="material-symbols-outlined"
               style={iconStyle}
             >
@@ -124,9 +129,8 @@ function SettingsPanel({
             </span>
             {installed && (
               <span
-                onCLick={() => setExpand((prev) => !prev)}
+                onClick={() => setExpand((prev) => !prev)}
                 className="material-symbols-outlined"
-                style={{ cursor: "pointer" }}
                 style={iconStyle}
               >
                 {expand ? "expand_less" : "expand_more"}
@@ -145,9 +149,12 @@ function SettingsPanel({
                 <span>{t("showInToolbar")}</span>
               </div>
               <ToggleSwitch
-                isOn={globalThis.IsToolActive && globalThis.IsToolActive(name)}
+                isOn={
+                  (globalThis as any).IsToolActive &&
+                  (globalThis as any).IsToolActive(name)
+                }
                 onToggle={() => {
-                  globalThis.ToggleToolActive(name);
+                  (globalThis as any).ToggleToolActive(name);
                   setShowInToolbar(!showInToolbar);
                 }}
                 disabled={!buttonEnabled}
@@ -165,11 +172,11 @@ function SettingsPanel({
               </div>
               <ToggleSwitch
                 isOn={
-                  globalThis.IsToolSraterToolbar &&
-                  globalThis.IsToolSraterToolbar(name)
+                  (globalThis as any).IsToolSraterToolbar &&
+                  (globalThis as any).IsToolSraterToolbar(name)
                 }
                 onToggle={() => {
-                  globalThis.ToToggleShowInStarterToolbar(name);
+                  (globalThis as any).ToToggleShowInStarterToolbar(name);
                   setShowInPanel(!showInPanel);
                 }}
                 disabled={!buttonEnabled}
@@ -185,11 +192,11 @@ function SettingsPanel({
               </div>
               <ToggleSwitch
                 isOn={
-                  globalThis.IsToolInPageToolbar &&
-                  globalThis.IsToolInPageToolbar(name)
+                  (globalThis as any).IsToolInPageToolbar &&
+                  (globalThis as any).IsToolInPageToolbar(name)
                 }
                 onToggle={() => {
-                  globalThis.ToToggleShowInPageToolbar(name);
+                  (globalThis as any).ToToggleShowInPageToolbar(name);
                   setShowBelowPage(!showBelowPage);
                 }}
                 disabled={!buttonEnabled}
@@ -247,7 +254,7 @@ const Extensions = () => {
       <div className="mediumText">{t("extensionSettingsDesc")}</div>
       <div style={{ overflow: "scroll" }} className="extensions-tools">
         {packages &&
-          [...packages].map((item) => {
+          [...packages].map((item: any) => {
             let data;
             let address;
             if ("data" in item && "address" in item) {

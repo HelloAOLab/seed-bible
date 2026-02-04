@@ -1,6 +1,7 @@
 import { useReadingHistoryContext } from "scriptureMap2D.main.ReadingHistoryContext";
-
+import { useScriptureMap2DContext } from "scriptureMap2D.main.ScriptureMap2DContext";
 import { useSideBarContext } from "app.hooks.sideBar";
+import { readingHistoryColorStore } from "bibleVizUtils.services.ReadingHistoryColorStore";
 
 const { useRef, useState, useLayoutEffect, useMemo } = os.appHooks;
 
@@ -40,24 +41,18 @@ export const ReadingHistoryTooltipContent = ({ userId, fixedContent }) => {
   const { t } = useSideBarContext();
   const { myAuthBotId } = useReadingHistoryContext();
 
-  const { userName, backgroundColor, color } = useMemo(() => {
+  const { userName, backgroundColor } = useMemo(() => {
     const isMe = userId === myAuthBotId;
     const userName = isMe ? t("you") : t("guest");
-    const backgroundColor = isMe
-      ? BibleVizUtils.Data.tags.myUserColor
-      : (BibleVizUtils.Data.vars.userPresenceData?.[userId]?.user?.color ??
-        thisBot.vars.FakeReadingHistoryUsersColorMap?.get(userId) ??
-        "pink");
-    const color = BibleVizUtils.Functions.GetTextColorBasedOnBackground({
-      backgroundColor,
-    });
+    const backgroundColor = readingHistoryColorStore.getUserColor(userId);
 
-    return { userName, backgroundColor, color };
+    return { userName, backgroundColor };
   }, [t]);
 
   return (
-    <span className="readingHistoryTooltipContent">
-      <span style={{ backgroundColor, color }}>{userName}</span>
+    <span className="tooltip-reading-history-content">
+      <span style={{ backgroundColor }}></span>
+      <span>{userName}</span>
       <span>{fixedContent}</span>
     </span>
   );

@@ -20,7 +20,7 @@
   appearance: none;
   width: 16px;
   height: 16px;
-  border: 2px solid #4459f3;
+  border: 2px solid var(--spaceSelection);
   /* orange border */
   border-radius: 4px;
   background-color: white;
@@ -33,9 +33,9 @@
 }
 
 .customCheckbox:checked {
-  background-color: #4459f3;
+  background-color: var(--spaceSelection);
   /* orange fill */
-  border-color: #4459f3;
+  border-color: var(--spaceSelection);
 }
 
 .customCheckbox:checked::after {
@@ -333,11 +333,11 @@
 }
 
 .activeBg {
-  /* background: #4459F34D; */
+  /* background: var(--spaceSelection)4D; */
   border-radius: 3px;
   width: 20px;
   height: 20px;
-  /* border: 1px solid #4459F3; */
+  /* border: 1px solid var(--spaceSelection); */
   display: flex;
   justify-content: center;
   align-items: center;

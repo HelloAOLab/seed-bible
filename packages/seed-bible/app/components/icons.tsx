@@ -57,11 +57,11 @@ export function SeedBibleIcon() {
   );
 }
 
-export const BurgerMenuIcon = ({ size = 24, color = "currentColor", ...props }) => (
-     <span class="material-symbols-outlined">
-menu
-</span>
-);
+export const BurgerMenuIcon = ({
+  size = 24,
+  color = "currentColor",
+  ...props
+}) => <span class="material-symbols-outlined">menu</span>;
 
 export const GoPrivateIcon = (props) => (
   <svg
@@ -1111,4 +1111,5 @@ export {
   CopyIcon,
   ShareIcon,
   LocationIcon,
+  Playlist,
 };

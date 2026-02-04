@@ -1,20 +1,14 @@
-const { useState, useEffect } = os.appHooks;
+const { useState, useEffect, createContext, useContext } = os.appHooks;
 import { getStyleOf } from "app.styles.styler";
-import { SpaceIcon } from "app.components.images";
-import { ProfileCard } from "app.components.profileCard";
 import { useSideBarContext } from "app.hooks.sideBar";
+import { useTabsContext } from "app.hooks.tabs";
+import { useBibleContext } from "app.hooks.bibleVariables";
+import { useHoldAction } from "app.hooks.useHold";
 import {
   Space,
   LoadSpace,
-  ToolbarIcon,
   UserAvatar,
   MenuIcon,
-} from "app.components.icons";
-import { useTabsContext } from "app.hooks.tabs";
-import { useBibleContext } from "app.hooks.bibleVariables";
-import { SpaceSettingsForm, SpaceSelector } from "app.components.spaceSettings";
-import { useHoldAction } from "app.hooks.useHold";
-import {
   ThemeIcon,
   BibleIcon,
   NewSettingsIcon,
@@ -22,709 +16,579 @@ import {
   SelectionUIIcon,
 } from "app.components.icons";
 import {
+  TreeIcon,
+  LogIcon,
+  LeafIcon,
+  CatIcon,
+  DogIcon,
+  CoffeBeanIcon,
+} from "app.components.phosphoricons";
+import { SpaceSelector } from "app.components.spaceSettings";
+import {
   getSubscribedUsers,
   subscribeToUsers,
   unsubscribeFromUsers,
 } from "db.annotations.library";
-const SettingsSidebar = () => {
-  const { t, changeLanguage, availableLanguages, language } =
-    useSideBarContext();
-  const [activeTab, setActiveTab] = useState("space");
-  globalThis.SetActiveSettingsTab = setActiveTab;
-  const { sidebarMode, setSideBarMode } = useSideBarContext();
+
+// ═══════════════════════════════════════════════════════════════════════════════
+// SETTINGS CONTEXT - Shared state for all setting components
+// ═══════════════════════════════════════════════════════════════════════════════
+const SettingsContext = createContext(null);
+
+export const useSettingsContext = () => {
+  const ctx = useContext(SettingsContext);
+  if (!ctx)
+    throw new Error("useSettingsContext must be used within SettingsProvider");
+  return ctx;
+};
+
+// ═══════════════════════════════════════════════════════════════════════════════
+// SETTING ITEM WRAPPER - Common wrapper for all setting items
+// ═══════════════════════════════════════════════════════════════════════════════
+const SettingItemWrapper = ({
+  itemKey,
+  parentKey,
+  children,
+  className = "",
+}) => {
+  const { editMode, visibility, toggleVisibility } = useSettingsContext();
+  const fullKey = parentKey ? `${parentKey}.${itemKey}` : itemKey;
+  const isHidden = visibility[fullKey] === false;
+
+  if (isHidden && !editMode) return null;
+
+  return (
+    <div
+      className={`settings-item-container ${isHidden ? "hidden-item" : ""} ${className}`}
+    >
+      <div className="settings-item-wrapper">
+        {editMode && (
+          <button
+            className="hide-button"
+            onClick={(e) => {
+              e.stopPropagation();
+              toggleVisibility(fullKey);
+            }}
+            title={isHidden ? "Show item" : "Hide item"}
+          >
+            <span className="material-symbols-outlined">
+              {isHidden ? "visibility" : "visibility_off"}
+            </span>
+          </button>
+        )}
+        {children}
+      </div>
+    </div>
+  );
+};
+
+// ═══════════════════════════════════════════════════════════════════════════════
+// INDIVIDUAL SETTING COMPONENTS
+// ═══════════════════════════════════════════════════════════════════════════════
+
+// ---------- Basic Clickable Row ----------
+export const SettingRow = ({
+  itemKey,
+  labelKey,
+  icon,
+  onClick,
+  style = "",
+  parentKey,
+}) => {
   const {
-    openPopupSettings,
-    closePopupSettings,
-    setUserURL,
-    customIcon,
-    setCustomIcon,
-  } = useSideBarContext();
+    t,
+    editMode,
+    labels,
+    editingLabel,
+    startEditingLabel,
+    finishEditingLabel,
+    handleLabelEdit,
+  } = useSettingsContext();
+  const fullKey = parentKey ? `${parentKey}.${itemKey}` : itemKey;
+  const label = labels[fullKey] || t(labelKey);
+
+  return (
+    <SettingItemWrapper itemKey={itemKey} parentKey={parentKey}>
+      <div onClick={onClick} className={`settings-item ${style}`}>
+        <div className="item-icon">
+          {typeof icon === "string" ? (
+            <span className="material-symbols-outlined">{icon}</span>
+          ) : (
+            icon
+          )}
+        </div>
+        <div className={`item-text ${style === "disabled" ? "disabled" : ""}`}>
+          {editMode && editingLabel === fullKey ? (
+            <input
+              type="text"
+              value={label}
+              onChange={(e) => handleLabelEdit(fullKey, e.target.value)}
+              onBlur={finishEditingLabel}
+              onKeyPress={(e) => e.key === "Enter" && finishEditingLabel()}
+              className="label-edit-input"
+              autoFocus
+              onClick={(e) => e.stopPropagation()}
+            />
+          ) : (
+            <span
+              onClick={
+                editMode
+                  ? (e) => {
+                      e.stopPropagation();
+                      startEditingLabel(fullKey);
+                    }
+                  : undefined
+              }
+              className={editMode ? "editable-label" : ""}
+            >
+              {label}
+            </span>
+          )}
+        </div>
+      </div>
+    </SettingItemWrapper>
+  );
+};
+
+// ---------- Expandable Section ----------
+export const SettingExpandable = ({
+  itemKey,
+  labelKey,
+  icon,
+  children,
+  parentKey,
+}) => {
   const {
-    updateSpace,
-    activeSpace,
-    spaces,
-    downloadSpaceAsJSON,
-    replaceActiveSpaceWithJSON,
-  } = useTabsContext();
-  const CurrentSpace = spaces.find((e) => e.id === activeSpace);
-  const [expandedSections, setExpandedSections] = useState({
-    layers: false,
-    bibleDefaults: false,
-    pageSettings: false,
-    canvasSettings: false,
-    mapSettings: false,
-  });
-  const [subscribedUsers, setSubscribedUsers] = useState([]);
-  const [loadingSubs, setLoadingSubs] = useState(false);
-  const [subscribing, setSubscribing] = useState(false);
-  const [unsubscribingId, setUnsubscribingId] = useState(null);
+    t,
+    editMode,
+    labels,
+    editingLabel,
+    startEditingLabel,
+    finishEditingLabel,
+    handleLabelEdit,
+    expandedSections,
+    toggleSection,
+  } = useSettingsContext();
+  const fullKey = parentKey ? `${parentKey}.${itemKey}` : itemKey;
+  const label = labels[fullKey] || t(labelKey);
+  const isExpanded = expandedSections[itemKey];
 
-  const getSubs = async () => {
-    setLoadingSubs(true);
-    const subs = await getSubscribedUsers();
-    os.log(subs, "subs");
-    setSubscribedUsers(subs || []);
-    setLoadingSubs(false);
-  };
-  useEffect(() => {
-    getSubs();
-  }, []);
+  return (
+    <SettingItemWrapper itemKey={itemKey} parentKey={parentKey}>
+      <div className="expandable-container" style={{ width: "100%" }}>
+        <div className="settings-item" onClick={() => toggleSection(itemKey)}>
+          <div className="item-icon">
+            {typeof icon === "string" ? (
+              <span className="material-symbols-outlined">{icon}</span>
+            ) : (
+              icon
+            )}
+          </div>
+          <div className="item-text">
+            {editMode && editingLabel === fullKey ? (
+              <input
+                type="text"
+                value={label}
+                onChange={(e) => handleLabelEdit(fullKey, e.target.value)}
+                onBlur={finishEditingLabel}
+                onKeyPress={(e) => e.key === "Enter" && finishEditingLabel()}
+                className="label-edit-input"
+                autoFocus
+                onClick={(e) => e.stopPropagation()}
+              />
+            ) : (
+              <span
+                onClick={
+                  editMode
+                    ? (e) => {
+                        e.stopPropagation();
+                        startEditingLabel(fullKey);
+                      }
+                    : undefined
+                }
+                className={editMode ? "editable-label" : ""}
+              >
+                {label}
+              </span>
+            )}
+          </div>
+          <div className="item-chevron">
+            <span className="material-symbols-outlined">
+              {isExpanded ? "expand_less" : "expand_more"}
+            </span>
+          </div>
+        </div>
+        {isExpanded && <div className="sub-settings-list">{children}</div>}
+      </div>
+    </SettingItemWrapper>
+  );
+};
 
-  const handleUnsubscribe = async (userId) => {
-    setUnsubscribingId(userId);
-    await unsubscribeFromUsers([userId]);
-    await getSubs();
-    setUnsubscribingId(null);
-  };
-  // New state for edit mode and settings customization
-  const [editMode, setEditMode] = useState(false);
-  const { ReSeed, setReSeed } = useBibleContext();
-  useEffect(() => {
-    setEditMode(ReSeed);
-  }, [ReSeed]);
+// ---------- Divider ----------
+export const SettingDivider = () => (
+  <div className="settings-divider">
+    <div className="sidebarLine"></div>
+  </div>
+);
 
-  // Visibility + label state reused for Space + General
-  const [settingsVisibility, setSettingsVisibility] = useState({});
-  const [settingsLabels, setSettingsLabels] = useState({});
-  const [editingLabel, setEditingLabel] = useState(null);
+// ---------- Header ----------
+export const SettingHeader = ({ itemKey, labelKey }) => {
+  const {
+    t,
+    editMode,
+    labels,
+    editingLabel,
+    startEditingLabel,
+    finishEditingLabel,
+    handleLabelEdit,
+    visibility,
+    toggleVisibility,
+  } = useSettingsContext();
+  const label = labels[itemKey] || t(labelKey);
+  const isHidden = visibility[itemKey] === false;
 
-  // Space content state
-  const [spaceContentVisibility, setSpaceContentVisibility] = useState({});
-  const [spaceContentLabels, setSpaceContentLabels] = useState({});
-  const [spaceDescription, setSpaceDescription] = useState(
-    "Settings for your space. Customise toolbar, theme and add extensions."
+  if (isHidden && !editMode) return null;
+
+  return (
+    <div
+      className={`space-details ${isHidden ? "hidden-item" : ""}`}
+      style={{ position: "relative" }}
+    >
+      {editMode && (
+        <button
+          className="hide-button"
+          onClick={() => toggleVisibility(itemKey)}
+        >
+          <span className="material-symbols-outlined">
+            {isHidden ? "visibility" : "visibility_off"}
+          </span>
+        </button>
+      )}
+      <div className="space-name">
+        {editMode && editingLabel === itemKey ? (
+          <input
+            type="text"
+            value={label}
+            onChange={(e) => handleLabelEdit(itemKey, e.target.value)}
+            onBlur={finishEditingLabel}
+            onKeyPress={(e) => e.key === "Enter" && finishEditingLabel()}
+            className="label-edit-input"
+            autoFocus
+          />
+        ) : (
+          <span
+            onClick={editMode ? () => startEditingLabel(itemKey) : undefined}
+            className={editMode ? "editable-label" : ""}
+          >
+            {label}
+          </span>
+        )}
+      </div>
+    </div>
+  );
+};
+
+// ---------- Description ----------
+export const SettingDescription = ({ itemKey, labelKey }) => {
+  const {
+    t,
+    editMode,
+    labels,
+    editingLabel,
+    startEditingLabel,
+    finishEditingLabel,
+    handleLabelEdit,
+    visibility,
+    toggleVisibility,
+  } = useSettingsContext();
+  const label = labels[itemKey] || t(labelKey);
+  const isHidden = visibility[itemKey] === false;
+
+  if (isHidden && !editMode) return null;
+
+  return (
+    <div
+      className={`space-description ${isHidden ? "hidden-item" : ""}`}
+      style={{ position: "relative" }}
+    >
+      {editMode && (
+        <button
+          className="hide-button"
+          onClick={() => toggleVisibility(itemKey)}
+        >
+          <span className="material-symbols-outlined">
+            {isHidden ? "visibility" : "visibility_off"}
+          </span>
+        </button>
+      )}
+      {editMode && editingLabel === itemKey ? (
+        <textarea
+          value={label}
+          onChange={(e) => handleLabelEdit(itemKey, e.target.value)}
+          onBlur={finishEditingLabel}
+          className="space-description-edit"
+          autoFocus
+          rows="2"
+        />
+      ) : (
+        <div
+          onClick={editMode ? () => startEditingLabel(itemKey) : undefined}
+          className={editMode ? "editable-text" : ""}
+        >
+          {label}
+        </div>
+      )}
+    </div>
+  );
+};
+
+// ---------- Theme Setting ----------
+export const ThemeSetting = ({
+  itemKey = "theme",
+  labelKey = "themeAndText",
+}) => {
+  const { setSideBarMode } = useSideBarContext();
+  return (
+    <SettingRow
+      itemKey={itemKey}
+      labelKey={labelKey}
+      icon={<ThemeIcon />}
+      onClick={() => setSideBarMode("themeSettings")}
+    />
+  );
+};
+
+// ---------- Extensions Setting ----------
+export const ExtensionsSetting = ({
+  itemKey = "Extensions",
+  labelKey = "configureExtensions",
+}) => {
+  const { setSideBarMode } = useSideBarContext();
+  return (
+    <SettingRow
+      itemKey={itemKey}
+      labelKey={labelKey}
+      icon={<ExtensionsIcon />}
+      onClick={() => setSideBarMode("extensions")}
+    />
+  );
+};
+
+// ---------- Bible Defaults ----------
+export const BibleDefaultsSetting = ({
+  itemKey = "bibleDefaults",
+  labelKey = "bibleDefaults",
+}) => {
+  return (
+    <SettingExpandable
+      itemKey={itemKey}
+      labelKey={labelKey}
+      icon={<BibleIcon />}
+    >
+      <BookOrderSetting />
+    </SettingExpandable>
+  );
+};
+
+const BookOrderSetting = () => {
+  const [selectedOrientation, setSelectedOrientation] = useState(
+    tags?.bookOrientation || "traditional"
   );
 
-  // Initialize globalThis.changes if it doesn't exist
-  if (!globalThis.changes) {
-    globalThis.changes = {
-      settingsVisibility: {},
-      settingsLabels: {},
-      spaceContentVisibility: {},
-      spaceContentLabels: {},
-    };
-  }
-
-  // Space content configuration - store keys, translate in JSX
-  const spaceContentConfig = [
-    { key: "spaceIcon", labelKey: "spaceIcon", type: "component" },
-    { key: "spaceName", labelKey: "spaceName", type: "component" },
+  const options = [
     {
-      key: "spaceDescription",
-      labelKey: "spaceDescription",
-      type: "text",
-      contentKey: "spaceSettingsDescription",
+      value: "tanak",
+      title: "TaNak order",
+      desc: "The original, unified, three-part ordering of the Hebrew Bible",
+    },
+    {
+      value: "traditional",
+      title: "Traditional order",
+      desc: "The ordering found in most modern Christian Bibles",
     },
   ];
 
-  // SPACE tab base config - store labelKey, translate in JSX
-  const baseSettingsConfig = [
+  return (
+    <div
+      onContextMenu={(e) => e.stopPropagation()}
+      style={{
+        display: "flex",
+        flexDirection: "column",
+        padding: "5px",
+        color: "var(--text1)",
+      }}
+    >
+      {options.map((opt, i) => (
+        <div key={opt.value}>
+          {i > 0 && <div className="settings-divider"></div>}
+          <div
+            className="settings-item-container"
+            style={{ display: "flex", alignItems: "center" }}
+            onPointerDown={(e) => {
+              e.stopPropagation();
+              e.preventDefault();
+              setSelectedOrientation(opt.value);
+              setTagMask(thisBot, "bookOrientation", opt.value, "local");
+              shout("onBookOrientationChanged", { orientation: opt.value });
+            }}
+          >
+            <div style={{ width: "90%", fontSize: "14px" }}>
+              <b>
+                <span>{opt.title}</span>
+              </b>
+              <p>{opt.desc}</p>
+            </div>
+            <div
+              style={{
+                width: "15px",
+                height: "15px",
+                backgroundColor:
+                  selectedOrientation === opt.value
+                    ? "var(--secondaryButton)"
+                    : "gray",
+                borderRadius: "50%",
+                display: "flex",
+                justifyContent: "center",
+                alignItems: "center",
+              }}
+            >
+              <svg width="10" height="10" viewBox="0 0 12 12" fill="none">
+                <path
+                  d="M10 3L4.5 8.5L2 6"
+                  stroke="white"
+                  strokeWidth="2"
+                  strokeLinecap="round"
+                  strokeLinejoin="round"
+                />
+              </svg>
+            </div>
+          </div>
+        </div>
+      ))}
+    </div>
+  );
+};
+
+// ---------- Advanced Settings ----------
+export const AdvancedSettingsSetting = ({
+  itemKey = "pageSettings",
+  labelKey = "advancedSettings",
+}) => {
+  const { setSideBarMode } = useSideBarContext();
+
+  const subItems = [
     {
-      key: "theme",
-      labelKey: "themeAndText",
-      icon: <ThemeIcon />,
-      expandable: false,
-      onClick: () => setSideBarMode("themeSettings"),
+      key: "instant_mix",
+      labelKey: "editor",
+      icon: "instant_mix",
+      onClick: () => setSideBarMode("editorToolbarSettings"),
     },
-    // {
-    //   key: "layers",
-    //   label: "Layers",
-    //   icon: "layers",
-    //   style: "disabled",
-    //   expandable: true,
-    // },
     {
-      key: "Extensions",
-      labelKey: "configureExtensions",
-      icon: <ExtensionsIcon />,
-      style: "",
-      expandable: false,
-      onClick: () => setSideBarMode("extensions"),
-    },
-    /*{
       key: "selectionUI",
       labelKey: "selectionUI",
       icon: <SelectionUIIcon />,
-      expandable: false,
       onClick: () => setSideBarMode("selectionUISettings"),
-    },*/
-    {
-      key: "bibleDefaults",
-      labelKey: "bibleDefaults",
-      style: false,
-      icon: <BibleIcon />,
-      expandable: true,
-      subItems: [
-        {
-          key: "BookOrder",
-          labelKey: "bookOrder",
-          App: () => {
-            const [selectedOrientation, setSelectedOrientation] = useState(
-              tags?.bookOrientation || "traditional"
-            );
-            return (
-              <div
-                onContextMenu={(e) => e.stopPropagation()}
-                style={{
-                  display: "flex",
-                  flexDirection: "column",
-                  padding: "5px",
-                  borderRadius: "5px",
-                  // backgroundColor: "var(--pageBackground)",
-                  pointerEvents: "auto",
-                  color: "var(--text1)",
-                }}
-              >
-                <div
-                  className={`settings-item-container`}
-                  style={{
-                    display: "flex",
-                    flexDirection: "row",
-                    alignItems: "center",
-                  }}
-                  onPointerDown={(e) => {
-                    e.stopPropagation();
-                    e.preventDefault();
-                    setSelectedOrientation("tanak");
-                    setTagMask(thisBot, "bookOrientation", "tanak", "local");
-                    shout("onBookOrientationChanged", { orientation: "tanak" });
-                  }}
-                >
-                  <div style={{ width: "90%", fontSize: "14px" }}>
-                    <b>
-                      <span>TaNak order</span>
-                    </b>
-                    <p>
-                      The original, unified, three-part ordering of the Hebrew
-                      Bible (or Old Testament)
-                    </p>
-                  </div>
-                  <div
-                    style={{
-                      width: "15px",
-                      height: "15px",
-                      backgroundColor:
-                        selectedOrientation === "tanak"
-                          ? "var(--secondaryButton)"
-                          : "var(--primaryButton)",
-                      borderRadius: "50%",
-                      display: "flex",
-                      justifyContent: "center",
-                      alignItems: "center",
-                    }}
-                  >
-                    <svg width="10" height="10" viewBox="0 0 12 12" fill="none">
-                      <path
-                        d="M10 3L4.5 8.5L2 6"
-                        stroke="white"
-                        strokeWidth="2"
-                        strokeLinecap="round"
-                        strokeLinejoin="round"
-                      />
-                    </svg>
-                  </div>
-                </div>
-                <div className="settings-divider"></div>
-                <div
-                  className={`settings-item-container`}
-                  style={{
-                    display: "flex",
-                    flexDirection: "row",
-                    alignItems: "center",
-                  }}
-                  onPointerDown={(e) => {
-                    e.preventDefault();
-                    e.stopPropagation();
-                    setSelectedOrientation("traditional");
-                    setTagMask(
-                      thisBot,
-                      "bookOrientation",
-                      "traditional",
-                      "local"
-                    );
-                    shout("onBookOrientationChanged", {
-                      orientation: "traditional",
-                    });
-                  }}
-                >
-                  <div style={{ width: "90%", fontSize: "14px" }}>
-                    <b>
-                      <span>Traditional order</span>
-                    </b>
-                    <p>The ordering found in most modern Christian Bibles</p>
-                  </div>
-                  <div
-                    style={{
-                      width: "15px",
-                      height: "15px",
-                      backgroundColor:
-                        selectedOrientation === "traditional"
-                          ? "var(--secondaryButton)"
-                          : "var(--primaryButton)",
-                      borderRadius: "50%",
-                      display: "flex",
-                      justifyContent: "center",
-                      alignItems: "center",
-                    }}
-                  >
-                    <svg width="10" height="10" viewBox="0 0 12 12" fill="none">
-                      <path
-                        d="M10 3L4.5 8.5L2 6"
-                        stroke="white"
-                        strokeWidth="2"
-                        strokeLinecap="round"
-                        strokeLinejoin="round"
-                      />
-                    </svg>
-                  </div>
-                </div>
-              </div>
-            );
-          },
-          type: "app",
-        },
-      ],
     },
-    // { key: "divider1", type: "divider" },
     {
-      key: "pageSettings",
-      labelKey: "advancedSettings",
-      icon: <NewSettingsIcon />,
-      expandable: true,
-      subItems: [
-        // { key: 'toolbar', label: 'Toolbar', icon: `construction`, onClick: () => setSideBarMode('toolbarSettings-Page') },
-        {
-          key: "instant_mix",
-          labelKey: "editor",
-          icon: `instant_mix`,
-          onClick: () => setSideBarMode("editorToolbarSettings"),
-        },
-        {
-          key: "selectionUI",
-          labelKey: "selectionUI",
-          icon: <SelectionUIIcon />,
-          expandable: false,
-          onClick: () => setSideBarMode("selectionUISettings"),
-        },
-        // {
-        //   key: "text",
-        //   label: "Text",
-        //   icon: "text_fields",
-        //   onClick: () => setSideBarMode("textSettings"),
-        // },
-        {
-          key: "ai",
-          labelKey: "ai",
-          icon: "smart_toy",
-          onClick: () => setSideBarMode("aiSettings"),
-        },
-        {
-          key: "tab",
-          labelKey: "tab",
-          icon: "description",
-          onClick: () => setSideBarMode("tabSettings"),
-        },
+      key: "ai",
+      labelKey: "ai",
+      icon: "smart_toy",
+      onClick: () => setSideBarMode("aiSettings"),
+    },
+    {
+      key: "tab",
+      labelKey: "tab",
+      icon: "description",
+      onClick: () => setSideBarMode("tabSettings"),
+    },
+  ];
 
-        // {
-        //   key: "mentuText",
-        //   label: "Menu text",
-        //   icon: "text_fields",
-        //   onClick: () => setSideBarMode("menuTextSettings"),
-        // },
-      ],
-    },
-    // { key: "divider2", type: "divider" },
-    // {
-    //   key: "canvasSettings",
-    //   label: "Canvas Settings",
-    //   icon: "dashboard_customize",
-    //   expandable: true,
-    //   subItems: [
-    //   //  {
-    //     //  key: "toolbar",
-    //     //  label: "Toolbar",
-    //     //  icon: `construction`,
-    //   //    onClick: () => setSideBarMode("toolbarSettings-Canvas"),
-    //   //  },
-    //     {
-    //       key: "tab",
-    //       label: "Tab",
-    //       icon: "description",
-    //       onClick: () => setSideBarMode("tabSettings"),
-    //     },
-    //     {
-    //       key: "text",
-    //       label: "Promt Bar",
-    //       icon: "text_fields",
-    //       onClick: () => setSideBarMode("promtSettings"),
-    //     },
-    //     {
-    //       key: "ai",
-    //       label: "AI",
-    //       icon: "smart_toy",
-    //       onClick: () => setSideBarMode("canvasAiSettings"),
-    //     },
-    //   ],
-    // },
-    // { key: 'divider2b', type: 'divider' },
-    // {
-    //     key: 'mapSettings', label: 'Map Settings', icon: 'map', expandable: true, subItems: [
-    //         { key: 'toolbar', label: 'Toolbar', icon: `construction`, onClick: () => setSideBarMode('toolbarSettings-Canvas') },
-    //         { key: 'tab', label: 'Tab', icon: 'description', onClick: () => setSideBarMode('tabSettings') },
-    //         { key: 'ai', label: 'AI', icon: 'smart_toy', onClick: () => setSideBarMode('canvasAiSettings') },
-    //     ]
-    // },
-    { key: "divider3", type: "divider" },
-    {
-      key: "LoadSpace",
-      labelKey: "loadNewSpace",
-      icon: <LoadSpace />,
-      expandable: false,
-      onClick: async () => {
+  return (
+    <SettingExpandable
+      itemKey={itemKey}
+      labelKey={labelKey}
+      icon={<NewSettingsIcon />}
+    >
+      {subItems.map((sub) => (
+        <SettingRow
+          key={sub.key}
+          itemKey={sub.key}
+          labelKey={sub.labelKey}
+          icon={sub.icon}
+          onClick={sub.onClick}
+          parentKey={itemKey}
+        />
+      ))}
+    </SettingExpandable>
+  );
+};
+
+// ---------- Load Space ----------
+export const LoadSpaceSetting = ({
+  itemKey = "LoadSpace",
+  labelKey = "loadNewSpace",
+}) => {
+  const { spaces, activeSpace, replaceActiveSpaceWithJSON } = useTabsContext();
+  const CurrentSpace = spaces.find((e) => e.id === activeSpace);
+
+  return (
+    <SettingRow
+      itemKey={itemKey}
+      labelKey={labelKey}
+      icon={<LoadSpace />}
+      onClick={async () => {
         const files = await os.showUploadFiles();
-        if (files.length !== 0) {
-          const file = files[0];
-          replaceActiveSpaceWithJSON(file, CurrentSpace.id);
-        }
-      },
-    },
-    // {
-    //   key: "DownloadSpace",
-    //   label: "Download space",
-    //   icon: "download",
-    //   expandable: false,
-    //   onClick: () => {
-    //     downloadSpaceAsJSON(CurrentSpace.id);
-    //   },
-    // },
-    { key: "Share", labelKey: "share", icon: "share", expandable: false },
-  ];
+        if (files.length !== 0)
+          replaceActiveSpaceWithJSON(files[0], CurrentSpace.id);
+      }}
+    />
+  );
+};
 
-  // GENERAL tab config - store labelKey, translate in JSX
-  const generalSettingsConfig = [
-    // Move account section to the top as the first item
-    { key: "generalHeader", type: "header", labelKey: "generalSettings" },
-    {
-      key: "generalDesc",
-      type: "desc",
-      labelKey: "manageAccountDesc",
-    },
-    {
-      key: "yourAccount",
-      type: "account",
-      labelKey: "yourAccount",
-    },
+// ---------- Share Setting ----------
+export const ShareSetting = ({ itemKey = "Share", labelKey = "share" }) => {
+  return (
+    <SettingRow
+      itemKey={itemKey}
+      labelKey={labelKey}
+      icon="share"
+      onClick={() => {}}
+    />
+  );
+};
 
-    // { key: 'dividerG1', type: 'divider' },
-
-    // Account row
-    {
-      key: "accountSettings",
-      labelKey: "accountSettings",
-      icon: "manage_accounts",
-      onClick: () => {
-        globalThis.AccountSettingsEnteredFrom = "settings";
-        setSideBarMode("createAccountSettings");
-      },
-    },
-
-    // Disabled rows
-    {
-      key: "billing",
-      labelKey: "billingServices",
-      icon: "rule_settings",
-      style: "disabled",
-    },
-    {
-      key: "permissions",
-      labelKey: "permissions",
-      icon: "action_key",
-      style: "disabled",
-    },
-    {
-      key: "notifications",
-      labelKey: "notifications",
-      icon: "notification_settings",
-      style: "disabled",
-    },
-
-    // { key: 'dividerG2', type: 'divider' },
-
-    // Subscriptions "section"
-    {
-      key: "subscriptions",
-      type: "section",
-      labelKey: "subscriptions", // header text; content rendered below
-    },
-
-    // { key: 'dividerG3', type: 'divider' },
-
-    // Language selector
-    {
-      key: "language",
-      labelKey: "language",
-      icon: "language",
-      type: "language",
-    },
-
-    // ReSeed toggle item
-    {
-      key: "reseedToggle",
-      labelKey: ReSeed ? "exit" : "propagate",
-      icon: "face",
-      onClick: () => setReSeed((prev) => !prev),
-    },
-  ];
-
-  // Load saved changes from globalThis and initialize visibility and labels
-  useEffect(() => {
-    const savedVisibility = globalThis.changes.settingsVisibility || {};
-    const savedLabels = globalThis.changes.settingsLabels || {};
-    const savedSpaceVisibility =
-      globalThis.changes.spaceContentVisibility || {};
-    const savedSpaceLabels = globalThis.changes.spaceContentLabels || {};
-
-    const initialVisibility = {};
-    const initialLabels = {};
-
-    const initializeSettings = (items, parentKey = "") => {
-      items.forEach((item) => {
-        if (item.type !== "divider") {
-          const fullKey = parentKey ? `${parentKey}.${item.key}` : item.key;
-          // Use saved visibility or default to true
-          initialVisibility[fullKey] =
-            savedVisibility[fullKey] !== undefined
-              ? savedVisibility[fullKey]
-              : true;
-          // Use saved label if exists (don't set default - we'll translate in render)
-          if (savedLabels[fullKey]) {
-            initialLabels[fullKey] = savedLabels[fullKey];
-          }
-          if (item.subItems) {
-            initializeSettings(item.subItems, item.key);
-          }
-        }
-      });
-    };
-
-    // Initialize space content visibility and labels
-    const initializeSpaceContent = () => {
-      const spaceVisibility = {};
-      const spaceLabels = {};
-
-      spaceContentConfig.forEach((item) => {
-        spaceVisibility[item.key] =
-          savedSpaceVisibility[item.key] !== undefined
-            ? savedSpaceVisibility[item.key]
-            : true;
-        // Use saved label if exists (don't set default - we'll translate in render)
-        if (savedSpaceLabels[item.key]) {
-          spaceLabels[item.key] = savedSpaceLabels[item.key];
-        }
-      });
-
-      setSpaceContentVisibility(spaceVisibility);
-      setSpaceContentLabels(spaceLabels);
-    };
-
-    // Include BOTH Space and General configs in initialization
-    initializeSettings(baseSettingsConfig);
-    initializeSettings(generalSettingsConfig);
-    initializeSpaceContent();
-
-    setSettingsVisibility(initialVisibility);
-    setSettingsLabels(initialLabels);
-  }, []); // run once
-
-  // Generate SPACE settings config with custom labels and visibility
-  const settingsConfig = baseSettingsConfig
-    .map((item) => {
-      if (item.type === "divider") return item;
-
-      const isVisible = settingsVisibility[item.key] !== false;
-      if (!isVisible && !editMode) return null;
-
-      // Use saved label if exists, otherwise translate the labelKey
-      const customLabel =
-        settingsLabels[item.key] || (item.labelKey ? t(item.labelKey) : "");
-
-      return {
-        ...item,
-        label: customLabel,
-        hidden: !isVisible,
-        subItems: item.subItems
-          ?.map((subItem) => {
-            const subKey = `${item.key}.${subItem.key}`;
-            const subVisible = settingsVisibility[subKey] !== false;
-            if (!subVisible && !editMode) return null;
-
-            return {
-              ...subItem,
-              label:
-                settingsLabels[subKey] ||
-                (subItem.labelKey ? t(subItem.labelKey) : ""),
-              hidden: !subVisible,
-            };
-          })
-          .filter(Boolean),
-      };
-    })
-    .filter(Boolean);
-
-  // Generate GENERAL settings config with the same behavior
-  const generalConfig = generalSettingsConfig
-    .map((item) => {
-      if (item.type === "divider") return item;
-
-      const isVisible = settingsVisibility[item.key] !== false;
-      if (!isVisible && !editMode) return null;
-
-      // Use saved label if exists, otherwise translate the labelKey
-      const computedLabel =
-        settingsLabels[item.key] || (item.labelKey ? t(item.labelKey) : "");
-      return {
-        ...item,
-        label: computedLabel,
-        hidden: !isVisible,
-      };
-    })
-    .filter(Boolean);
-
-  const toggleSection = (section) => {
-    setExpandedSections((prev) => ({ ...prev, [section]: !prev[section] }));
-  };
-
-  const toggleVisibility = (key, parentKey = "") => {
-    const fullKey = parentKey ? `${parentKey}.${key}` : key;
-    const newVisibility = {
-      ...settingsVisibility,
-      [fullKey]: !settingsVisibility[fullKey],
-    };
-
-    setSettingsVisibility(newVisibility);
-
-    // Save to globalThis.changes
-    globalThis.changes.settingsVisibility = newVisibility;
-  };
-
-  const handleLabelEdit = (key, parentKey = "", newLabel) => {
-    const fullKey = parentKey ? `${parentKey}.${key}` : key;
-    const newLabels = {
-      ...settingsLabels,
-      [fullKey]: newLabel,
-    };
-
-    setSettingsLabels(newLabels);
-
-    // Save to globalThis.changes
-    globalThis.changes.settingsLabels = newLabels;
-  };
-
-  const startEditingLabel = (key, parentKey = "") => {
-    const fullKey = parentKey ? `${parentKey}.${key}` : key;
-    setEditingLabel(fullKey);
-  };
-
-  const finishEditingLabel = () => {
-    setEditingLabel(null);
-  };
-
-  const toggleSpaceContentVisibility = (key) => {
-    const newVisibility = {
-      ...spaceContentVisibility,
-      [key]: !spaceContentVisibility[key],
-    };
-
-    setSpaceContentVisibility(newVisibility);
-    globalThis.changes.spaceContentVisibility = newVisibility;
-  };
-
-  const handleSpaceContentLabelEdit = (key, newLabel) => {
-    const newLabels = {
-      ...spaceContentLabels,
-      [key]: newLabel,
-    };
-
-    setSpaceContentLabels(newLabels);
-    globalThis.changes.spaceContentLabels = newLabels;
-  };
-
-  const handleSpaceDescriptionEdit = (newDescription) => {
-    setSpaceDescription(newDescription);
-    if (!globalThis.changes.spaceContentData) {
-      globalThis.changes.spaceContentData = {};
-    }
-    globalThis.changes.spaceContentData.spaceDescription = newDescription;
-  };
-
-  // Load space description from saved data
-  useEffect(() => {
-    const savedDescription =
-      globalThis.changes.spaceContentData?.spaceDescription;
-    if (savedDescription) {
-      setSpaceDescription(savedDescription);
-    }
-  }, []);
-
+// ---------- Space Icon & Name ----------
+export const SpaceIconSetting = ({ itemKey = "spaceIcon" }) => {
+  const {
+    editMode,
+    visibility,
+    toggleVisibility,
+    openPopupSettings,
+    customIcon,
+    setCustomIcon,
+  } = useSettingsContext();
+  const { spaces, activeSpace, updateSpace } = useTabsContext();
+  const CurrentSpace = spaces.find((e) => e.id === activeSpace);
   const [editSpaceName, setEditSpaceName] = useState(false);
-  const [spaceName, setSpaceName] = useState(false);
+  const [spaceName, setSpaceName] = useState(CurrentSpace?.name || "");
+
+  const { eventHandlers, shouldSuppressClick } = useHoldAction(async () => {
+    const url = await os.showInput(null, { placeholder: "Enter Url" });
+    // setUserURL(url);
+  }, 1000);
+
   useEffect(() => {
-    if (CurrentSpace) {
-      setSpaceName(CurrentSpace.name);
-    }
+    if (CurrentSpace) setSpaceName(CurrentSpace.name);
   }, [activeSpace]);
   useEffect(() => {
     updateSpace(activeSpace, { name: spaceName });
-    console.log("updating name", spaceName);
   }, [spaceName]);
-  const [userData, setUserData] = useState(null);
-  const [subscribe, setSubscribe] = useState(false);
-  const [searchFor, setSearchFor] = useState("");
-  const [searchResult, setSearchResult] = useState();
-  async function search() {
-    const data = await os.getData(tags.key, searchFor);
-    os.log(data, "the dt");
-    if (data.success) setSearchResult(data.data);
-  }
-  useEffect(() => {
-    if (searchFor) {
-      // search()
-    }
-  }, [searchFor]);
-  const getUserData = async () => {
-    if (!authBot?.id) return;
 
-    const data = await os.getData(tags.key, authBot.id);
-    if (data.success) {
-      const payload = data.data;
-      setUserData(payload);
-      globalThis.SetGlobalProfilePic(payload?.photoLink);
-    }
-  };
-  useEffect(() => {
-    getUserData();
-  }, []);
-  const { eventHandlers, shouldSuppressClick } = useHoldAction(async () => {
-    const url = await os.showInput(null, {
-      placeholder: "Enter Url",
-    });
-    setUserURL(url);
-  }, 1000);
-  // put this above your component or inside it before render
-  const chunkByDividers = (list) => {
-    const sections = [];
-    let current = { divider: null, items: [] };
-    for (const item of list) {
-      if (item?.type === "divider") {
-        sections.push(current);
-        current = { divider: item, items: [] }; // the divider belongs to the NEXT section
-      } else {
-        if (item != null) current.items.push(item);
-      }
-    }
-    sections.push(current);
-    return sections;
-  };
+  const isHidden = visibility[itemKey] === false;
+  const isNameHidden = visibility["spaceName"] === false;
+
+  if (isHidden && !editMode) return null;
+
   const SpaceIconOptions = {
     type: "normal",
     items: [
@@ -741,1211 +605,1062 @@ const SettingsSidebar = () => {
         icon: <MenuIcon name="add_link" />,
         title: "Add link",
         onClick: async () => {
-          const link = await os.showInput(null, {
-            title: "Add link",
-          });
-          os.log(link, "link");
-          if (link)
-            setCustomIcon((prev) => ({
-              ...prev,
-              link,
-            }));
+          const link = await os.showInput(null, { title: "Add link" });
+          if (link) setCustomIcon((prev) => ({ ...prev, link }));
         },
       },
       {
         disabled: !customIcon,
         icon: <MenuIcon name="hide_image" />,
         title: "Remove icon",
-        onClick: async () => {
-          setCustomIcon(null);
-        },
+        onClick: () => setCustomIcon(null),
       },
     ],
   };
-  const settingsSections = chunkByDividers(settingsConfig);
-  const generalSections = chunkByDividers(generalConfig);
 
   return (
-    <div onClick={() => setSearchResult(null)} className="settings-sidebar">
-      <div className="settings-header">
-        <h2>{t("settings")}</h2>
-        <div style={{ display: "flex", alignItems: "center", gap: "8px" }}>
-          {editMode && (
-            <button
-              onClick={() => setReSeed(false)}
-              className={`edit-mode-button ${editMode ? "active" : ""}`}
-              title="Toggle edit mode"
-            >
-              <span className="material-symbols-outlined">
-                {editMode ? "check" : "edit"}
-              </span>
-            </button>
-          )}
-          <button
-            onClick={() => setSideBarMode("default")}
-            className="close-button"
-          >
-            <span className="material-symbols-outlined">close</span>
-          </button>
-        </div>
-      </div>
-
-      <div className="settings-tabs">
+    <div className={`space-content-item ${isHidden ? "hidden-item" : ""}`}>
+      {editMode && (
         <button
-          className={`tab-button ${activeTab === "space" ? "active" : ""}`}
-          onClick={() => setActiveTab("space")}
+          className="hide-button space-content-hide"
+          onClick={() => toggleVisibility(itemKey)}
         >
-          {t("spaceSettings")}
+          <span className="material-symbols-outlined">
+            {isHidden ? "visibility" : "visibility_off"}
+          </span>
         </button>
-        <button
-          className={`tab-button ${activeTab === "general" ? "active" : ""}`}
-          onClick={() => setActiveTab("general")}
+      )}
+      <div className="space-details">
+        <div
+          {...eventHandlers}
+          onClick={(e) => {
+            if (shouldSuppressClick()) return;
+            openPopupSettings(
+              <SpaceSelector
+                activeSpace={activeSpace}
+                spaces={spaces}
+                updateSpace={updateSpace}
+              />,
+              null,
+              true
+            );
+          }}
+          className="space-icon material-symbols-outlined"
         >
-          {t("generalSettings")}
-        </button>
-      </div>
-
-      {activeTab === "space" ? (
-        <div className="settings-content">
-          {spaceContentVisibility.spaceIcon !== false && (
-            <div
-              className={`space-content-item ${
-                spaceContentVisibility.spaceIcon === false ? "hidden-item" : ""
-              }`}
-            >
-              {editMode && (
-                <button
-                  className="hide-button space-content-hide"
-                  onClick={() => toggleSpaceContentVisibility("spaceIcon")}
-                  title="Hide space icon"
-                >
-                  <span className="material-symbols-outlined">
-                    {spaceContentVisibility.spaceIcon === false
-                      ? "visibility"
-                      : "visibility_off"}
-                  </span>
-                </button>
-              )}
-              <div className="space-details">
-                <div
-                  {...eventHandlers}
-                  onClick={(e) => {
-                    if (shouldSuppressClick()) return;
-
-                    openPopupSettings(
-                      <SpaceSelector
-                        activeSpace={activeSpace}
-                        spaces={spaces}
-                        updateSpace={updateSpace}
-                      />,
-                      null,
-                      true
-                    );
-                  }}
-                  className="space-icon material-symbols-outlined"
-                >
-                  <div style={{ "pointer-events": "none" }}>
-                    {CurrentSpace?.icon || (
-                      <div class="activeBg">
-                        <span></span>
-                      </div>
-                    )}
-                  </div>
-                </div>
-                {spaceContentVisibility.spaceName !== false && (
-                  <div
-                    onContextMenu={(e) => {
-                      openPopupSettings(SpaceIconOptions);
-                    }}
-                    className="space-name-container"
-                  >
-                    {editMode && (
-                      <button
-                        className="hide-button space-name-hide"
-                        onClick={() =>
-                          toggleSpaceContentVisibility("spaceName")
-                        }
-                        title="Hide space name"
-                      >
-                        <span className="material-symbols-outlined">
-                          {spaceContentVisibility.spaceName === false
-                            ? "visibility"
-                            : "visibility_off"}
-                        </span>
-                      </button>
-                    )}
-                    {customIcon ? (
-                      <div className="space-name">{customIcon.icon}</div>
-                    ) : !editSpaceName ? (
-                      <div
-                        onClick={() => setEditSpaceName(true)}
-                        className="space-name"
-                      >
-                        {CurrentSpace.name}
-                      </div>
-                    ) : (
-                      <input
-                        onBlur={() => setEditSpaceName(false)}
-                        style={{ height: "35px", width: "220px" }}
-                        id="input"
-                        value={spaceName}
-                        onChange={(e) => {
-                          e.target.value !== "" && setSpaceName(e.target.value);
-                        }}
-                        className="input-field number selectInput"
-                      />
-                    )}
-                  </div>
-                )}
+          <div style={{ pointerEvents: "none" }}>
+            {CurrentSpace?.icon || (
+              <div className="activeBg">
+                <span></span>
               </div>
-            </div>
-          )}
-
-          {spaceContentVisibility.spaceDescription !== false && (
-            <div
-              className={`space-content-item ${
-                spaceContentVisibility.spaceDescription === false
-                  ? "hidden-item"
-                  : ""
-              }`}
-            >
-              {editMode && (
-                <button
-                  className="hide-button space-content-hide"
-                  onClick={() =>
-                    toggleSpaceContentVisibility("spaceDescription")
-                  }
-                  title="Hide space description"
-                >
-                  <span className="material-symbols-outlined">
-                    {spaceContentVisibility.spaceDescription === false
-                      ? "visibility"
-                      : "visibility_off"}
-                  </span>
-                </button>
-              )}
-              <div className="space-description">
-                {editMode && editingLabel === "spaceDescription" ? (
-                  <textarea
-                    value={spaceDescription}
-                    onChange={(e) => handleSpaceDescriptionEdit(e.target.value)}
-                    onBlur={finishEditingLabel}
-                    className="space-description-edit"
-                    autoFocus
-                    rows="3"
-                  />
-                ) : (
-                  <div
-                    onClick={
-                      editMode
-                        ? () => setEditingLabel("spaceDescription")
-                        : undefined
-                    }
-                    className={editMode ? "editable-text" : ""}
-                  >
-                    {spaceDescription}
-                  </div>
-                )}
-              </div>
-            </div>
-          )}
-
-          <div className="settings-list">
-            {settingsSections.map(({ divider, items }) => {
-              // when NOT in editMode, items already exclude hidden ones, so empty means "all hidden"
-              const hasContent = editMode ? items.length > 0 : items.length > 0;
-              if (!hasContent) return null; // hide the whole section including its divider
-
-              return (
-                <div
-                  key={
-                    (divider && divider.key) ||
-                    items.map((i) => i.key).join("_")
-                  }
-                >
-                  {divider && (
-                    <div className="settings-divider">
-                      <div className="sidebarLine"></div>
-                    </div>
-                  )}
-                  {items.map(
-                    ({
-                      key,
-                      label,
-                      icon,
-                      expandable,
-                      subItems,
-                      type,
-                      onClick,
-                      style,
-                      hidden,
-                    }) =>
-                      type === "divider" ? null : (
-                        <div
-                          key={key}
-                          className={`settings-item-container ${
-                            hidden ? "hidden-item" : ""
-                          }`}
-                        >
-                          <div className="settings-item-wrapper">
-                            {editMode && (
-                              <button
-                                className="hide-button"
-                                onClick={(e) => {
-                                  e.stopPropagation();
-                                  toggleVisibility(key);
-                                }}
-                                title={hidden ? "Show item" : "Hide item"}
-                              >
-                                <span className="material-symbols-outlined">
-                                  {hidden ? "visibility" : "visibility_off"}
-                                </span>
-                              </button>
-                            )}
-                            <div
-                              className={`settings-item ${style} ${
-                                hidden ? "hidden" : ""
-                              }`}
-                              onClick={
-                                expandable ? () => toggleSection(key) : onClick
-                              }
-                            >
-                              <div className="item-icon">
-                                <span className="material-symbols-outlined">
-                                  {icon}
-                                </span>
-                              </div>
-                              <div className="item-text">
-                                {editMode && editingLabel === key ? (
-                                  <input
-                                    type="text"
-                                    value={label}
-                                    onChange={(e) =>
-                                      handleLabelEdit(key, "", e.target.value)
-                                    }
-                                    onBlur={finishEditingLabel}
-                                    onKeyPress={(e) =>
-                                      e.key === "Enter" && finishEditingLabel()
-                                    }
-                                    className="label-edit-input"
-                                    autoFocus
-                                    onClick={(e) => e.stopPropagation()}
-                                  />
-                                ) : (
-                                  <span
-                                    onClick={
-                                      editMode
-                                        ? (e) => {
-                                            e.stopPropagation();
-                                            startEditingLabel(key);
-                                          }
-                                        : undefined
-                                    }
-                                    className={editMode ? "editable-label" : ""}
-                                  >
-                                    {label}
-                                  </span>
-                                )}
-                              </div>
-                              {expandable && (
-                                <div className="item-chevron">
-                                  <span className="material-symbols-outlined">
-                                    {expandedSections[key]
-                                      ? "expand_less"
-                                      : "expand_more"}
-                                  </span>
-                                </div>
-                              )}
-                            </div>
-                          </div>
-
-                          {expandable &&
-                            expandedSections[key] &&
-                            subItems?.length > 0 && (
-                              <div className="sub-settings-list">
-                                {subItems.map(
-                                  ({
-                                    key: subKey,
-                                    label: subLabel,
-                                    icon: subIcon,
-                                    onClick,
-                                    hidden: subHidden,
-                                    type: subType,
-                                    App,
-                                  }) => {
-                                    if (subType === "app") {
-                                      return <App />;
-                                    }
-                                    return (
-                                      <div
-                                        key={subKey}
-                                        className={`settings-item-container ${
-                                          subHidden ? "hidden-item" : ""
-                                        }`}
-                                      >
-                                        <div className="settings-item-wrapper">
-                                          {editMode && (
-                                            <button
-                                              className="hide-button"
-                                              onClick={(e) => {
-                                                e.stopPropagation();
-                                                toggleVisibility(subKey, key);
-                                              }}
-                                              title={
-                                                subHidden
-                                                  ? "Show item"
-                                                  : "Hide item"
-                                              }
-                                            >
-                                              <span className="material-symbols-outlined">
-                                                {subHidden
-                                                  ? "visibility"
-                                                  : "visibility_off"}
-                                              </span>
-                                            </button>
-                                          )}
-                                          <div
-                                            onClick={onClick}
-                                            className={`settings-item sub-item ${
-                                              subHidden ? "hidden" : ""
-                                            }`}
-                                          >
-                                            <div className="item-icon">
-                                              <span className="material-symbols-outlined">
-                                                {subIcon}
-                                              </span>
-                                            </div>
-                                            <div className="item-text">
-                                              {editMode &&
-                                              editingLabel ===
-                                                `${key}.${subKey}` ? (
-                                                <input
-                                                  type="text"
-                                                  value={subLabel}
-                                                  onChange={(e) =>
-                                                    handleLabelEdit(
-                                                      subKey,
-                                                      key,
-                                                      e.target.value
-                                                    )
-                                                  }
-                                                  onBlur={finishEditingLabel}
-                                                  onKeyPress={(e) =>
-                                                    e.key === "Enter" &&
-                                                    finishEditingLabel()
-                                                  }
-                                                  className="label-edit-input"
-                                                  autoFocus
-                                                  onClick={(e) =>
-                                                    e.stopPropagation()
-                                                  }
-                                                />
-                                              ) : (
-                                                <span
-                                                  onClick={
-                                                    editMode
-                                                      ? (e) => {
-                                                          e.stopPropagation();
-                                                          startEditingLabel(
-                                                            subKey,
-                                                            key
-                                                          );
-                                                        }
-                                                      : undefined
-                                                  }
-                                                  className={
-                                                    editMode
-                                                      ? "editable-label"
-                                                      : ""
-                                                  }
-                                                >
-                                                  {subLabel}
-                                                </span>
-                                              )}
-                                            </div>
-                                          </div>
-                                        </div>
-                                      </div>
-                                    );
-                                  }
-                                )}
-                              </div>
-                            )}
-                        </div>
-                      )
-                  )}
-                </div>
-              );
-            })}
+            )}
           </div>
         </div>
-      ) : activeTab === "general" ? (
-        <div className="settings-content">
-          {generalSections.map(({ divider, items }) => {
-            // hide the entire section (and its top divider) if every item is hidden when not in edit mode
-            const hasVisibleItem = editMode
-              ? items.length > 0
-              : items.some((i) => !i.hidden);
-            if (!hasVisibleItem) return null;
-
-            return (
-              <div
-                key={
-                  (divider && divider.key) || items.map((i) => i.key).join("_")
-                }
+        {(isNameHidden === false || editMode) && (
+          <div
+            onContextMenu={(e) => openPopupSettings(SpaceIconOptions)}
+            className="space-name-container"
+          >
+            {editMode && (
+              <button
+                className="hide-button space-name-hide"
+                onClick={() => toggleVisibility("spaceName")}
               >
-                {divider && (
-                  <div className="settings-divider">
-                    <div className="sidebarLine"></div>
-                  </div>
-                )}
-
-                {items.map((item) => {
-                  // normalize helpers
-                  const hidden = !!item.hidden;
-                  const label = item.label;
-
-                  // Handle the "Your account" section at the top
-                  if (item.type === "account") {
-                    if (hidden && !editMode) return null;
-                    return (
-                      <div
-                        key={item.key}
-                        className={`activeAccount ${
-                          hidden ? "hidden-item" : ""
-                        }`}
-                        style={{ position: "relative" }}
-                      >
-                        {editMode && (
-                          <button
-                            className="hide-button"
-                            onClick={() => toggleVisibility(item.key)}
-                            title={hidden ? "Show account" : "Hide account"}
-                          >
-                            <span className="material-symbols-outlined">
-                              {hidden ? "visibility" : "visibility_off"}
-                            </span>
-                          </button>
-                        )}
-                        {userData && userData?.photoLink ? (
-                          <img
-                            style={{
-                              borderRadius: "50%",
-                              height: "40px",
-                              width: "40px",
-                              border: "1px solid #4459F3",
-                            }}
-                            src={userData.photoLink}
-                          />
-                        ) : (
-                          <UserAvatar />
-                        )}
-                        <div className="softText">
-                          {editMode && editingLabel === item.key ? (
-                            <input
-                              type="text"
-                              value={label}
-                              onChange={(e) =>
-                                handleLabelEdit(item.key, "", e.target.value)
-                              }
-                              onBlur={finishEditingLabel}
-                              onKeyPress={(e) =>
-                                e.key === "Enter" && finishEditingLabel()
-                              }
-                              className="label-edit-input"
-                              autoFocus
-                            />
-                          ) : (
-                            <span
-                              onClick={
-                                editMode
-                                  ? () => startEditingLabel(item.key)
-                                  : undefined
-                              }
-                              className={editMode ? "editable-label" : ""}
-                            >
-                              {label}
-                            </span>
-                          )}
-                        </div>
-
-                        {!userData && (
-                          <div
-                            style={{ justifyContent: "center" }}
-                            className="activeAccount"
-                          >
-                            <button
-                              onClick={() => {
-                                globalThis.AccountSettingsEnteredFrom =
-                                  "settings";
-                                setSideBarMode("createAccountSettings");
-                              }}
-                              className="create-profile-btn"
-                            >
-                              {userData
-                                ? "Open account settings"
-                                : " + Create profile"}
-                            </button>
-                          </div>
-                        )}
-                      </div>
-                    );
-                  }
-
-                  // 1) headers
-                  if (item.type === "header") {
-                    if (hidden && !editMode) return null;
-                    return (
-                      <div
-                        key={item.key}
-                        className={`space-details ${
-                          hidden ? "hidden-item" : ""
-                        }`}
-                        style={{ position: "relative" }}
-                      >
-                        {editMode && (
-                          <button
-                            className="hide-button"
-                            onClick={() => toggleVisibility(item.key)}
-                            title={hidden ? "Show section" : "Hide section"}
-                          >
-                            <span className="material-symbols-outlined">
-                              {hidden ? "visibility" : "visibility_off"}
-                            </span>
-                          </button>
-                        )}
-                        <div className="space-name">
-                          {editMode && editingLabel === item.key ? (
-                            <input
-                              type="text"
-                              value={label}
-                              onChange={(e) =>
-                                handleLabelEdit(item.key, "", e.target.value)
-                              }
-                              onBlur={finishEditingLabel}
-                              onKeyPress={(e) =>
-                                e.key === "Enter" && finishEditingLabel()
-                              }
-                              className="label-edit-input"
-                              autoFocus
-                            />
-                          ) : (
-                            <span
-                              onClick={
-                                editMode
-                                  ? () => startEditingLabel(item.key)
-                                  : undefined
-                              }
-                              className={editMode ? "editable-label" : ""}
-                            >
-                              {label}
-                            </span>
-                          )}
-                        </div>
-                      </div>
-                    );
-                  }
-
-                  // 2) descriptions
-                  if (item.type === "desc") {
-                    if (hidden && !editMode) return null;
-                    return (
-                      <div
-                        key={item.key}
-                        className={`space-description ${
-                          hidden ? "hidden-item" : ""
-                        }`}
-                        style={{ position: "relative" }}
-                      >
-                        {editMode && (
-                          <button
-                            className="hide-button"
-                            onClick={() => toggleVisibility(item.key)}
-                            title={hidden ? "Show text" : "Hide text"}
-                          >
-                            <span className="material-symbols-outlined">
-                              {hidden ? "visibility" : "visibility_off"}
-                            </span>
-                          </button>
-                        )}
-                        {editMode && editingLabel === item.key ? (
-                          <textarea
-                            value={label}
-                            onChange={(e) =>
-                              handleLabelEdit(item.key, "", e.target.value)
-                            }
-                            onBlur={finishEditingLabel}
-                            className="space-description-edit"
-                            autoFocus
-                            rows="2"
-                          />
-                        ) : (
-                          <div
-                            onClick={
-                              editMode
-                                ? () => startEditingLabel(item.key)
-                                : undefined
-                            }
-                            className={editMode ? "editable-text" : ""}
-                          >
-                            {label}
-                          </div>
-                        )}
-                      </div>
-                    );
-                  }
-
-                  // 3) sections (Subscriptions block)
-                  if (item.type === "section" && item.key === "subscriptions") {
-                    if (hidden && !editMode) return null;
-                    return (
-                      <div
-                        key={item.key}
-                        className={`general-section ${
-                          hidden ? "hidden-item" : ""
-                        }`}
-                        style={{ position: "relative" }}
-                      >
-                        {editMode && (
-                          <button
-                            className="hide-button"
-                            onClick={() => toggleVisibility(item.key)}
-                            title={hidden ? "Show section" : "Hide section"}
-                          >
-                            <span className="material-symbols-outlined">
-                              {hidden ? "visibility" : "visibility_off"}
-                            </span>
-                          </button>
-                        )}
-
-                        <div className="activeAccount" style={{ gap: "8px" }}>
-                         <MenuIcon name={'bookmark_check'}/>
-                          <div className="softText">
-                            {editMode && editingLabel === item.key ? (
-                              <input
-                                type="text"
-                                value={label}
-                                onChange={(e) =>
-                                  handleLabelEdit(item.key, "", e.target.value)
-                                }
-                                onBlur={finishEditingLabel}
-                                onKeyPress={(e) =>
-                                  e.key === "Enter" && finishEditingLabel()
-                                }
-                                className="label-edit-input"
-                                autoFocus
-                              />
-                            ) : (
-                              <span
-                                onClick={
-                                  editMode
-                                    ? () => startEditingLabel(item.key)
-                                    : undefined
-                                }
-                                className={editMode ? "editable-label" : ""}
-                              >
-                                {label}
-                              </span>
-                            )}
-                          </div>
-                        </div>
-
-                        {/* Subscribed Users List */}
-                        {loadingSubs ? (
-                          <div
-                            style={{
-                              justifyContent: "center",
-                              padding: "20px",
-                            }}
-                            className="activeAccount"
-                          >
-                            <div className="softText">Loading...</div>
-                          </div>
-                        ) : subscribedUsers.length > 0 ? (
-                          <div style={{ width: "100%" }}>
-                            <div
-                              className="softText"
-                              style={{
-                                marginBottom: "8px",
-                                textAlign: "center",
-                              }}
-                            >
-                              {`You have ${subscribedUsers.length} subscription${subscribedUsers.length > 1 ? "s" : ""}`}
-                            </div>
-                            {subscribedUsers.map((user) => (
-                              <div
-                                key={user.id}
-                                className="activeAccount"
-                                style={{
-                                  justifyContent: "space-between",
-                                  padding: "8px 12px",
-                                  marginBottom: "6px",
-                                  borderRadius: "8px",
-                                  // backgroundColor: "var(--pageBackground)",
-                                  opacity:
-                                    unsubscribingId === user.id ? 0.5 : 1,
-                                }}
-                              >
-                                <div
-                                  style={{
-                                    display: "flex",
-                                    alignItems: "center",
-                                    gap: "10px",
-                                  }}
-                                >
-                                  {user.photoLink ? (
-                                    <img
-                                      style={{
-                                        borderRadius: "50%",
-                                        height: "32px",
-                                        width: "32px",
-                                        objectFit: "cover",
-                                      }}
-                                      src={user.photoLink}
-                                      title={user.name || "User"}
-                                    />
-                                  ) : (
-                                    <UserAvatar />
-                                  )}
-                                  <div>
-                                    <div
-                                      style={{
-                                        fontWeight: "500",
-                                        fontSize: "14px",
-                                      }}
-                                    >
-                                      {user.name || "Unknown User"}
-                                    </div>
-                                    <div
-                                      className="softText"
-                                      style={{ fontSize: "11px" }}
-                                    >
-                                      {user.id.slice(0, 16)}...
-                                    </div>
-                                  </div>
-                                </div>
-                                <button
-                                  onClick={() => handleUnsubscribe(user.id)}
-                                  disabled={unsubscribingId === user.id}
-                                  style={{
-                                    background: "transparent",
-                                    border: "1px solid #e0e0e0",
-                                    borderRadius: "6px",
-                                    cursor:
-                                      unsubscribingId === user.id
-                                        ? "wait"
-                                        : "pointer",
-                                    padding: "4px 8px",
-                                    display: "flex",
-                                    alignItems: "center",
-                                    gap: "4px",
-                                  }}
-                                  title="Unsubscribe"
-                                >
-                                  <span
-                                    className="material-symbols-outlined"
-                                    style={{ fontSize: "16px", color: "#666" }}
-                                  >
-                                    {unsubscribingId === user.id
-                                      ? "hourglass_empty"
-                                      : "person_remove"}
-                                  </span>
-                                </button>
-                              </div>
-                            ))}
-                          </div>
-                        ) : (
-                          <div
-                            style={{ justifyContent: "center" }}
-                            className="activeAccount"
-                          >
-                            <div className="softText">
-                              You haven't subscribed to anyone yet.
-                            </div>
-                          </div>
-                        )}
-
-                        {/* Subscribe Form */}
-                        <div
-                          style={{
-                            justifyContent: "center",
-                            marginTop: "12px",
-                          }}
-                          className="activeAccount"
-                        >
-                          {!subscribe ? (
-                            <button
-                              onClick={() => setSubscribe(true)}
-                              className="create-profile-btn"
-                            >
-                              + Add Subscription
-                            </button>
-                          ) : (
-                            <div style={{ width: "100%" }}>
-                              <div
-                                style={{ marginBottom: "8px" }}
-                                className="blackText"
-                              >
-                                Enter User ID
-                              </div>
-                              <div
-                                style={{
-                                  display: "flex",
-                                  alignItems: "center",
-                                  gap: "10px",
-                                }}
-                              >
-                                <input
-                                  style={{ height: "32px", flex: 1 }}
-                                  placeholder="Enter user ID..."
-                                  className="selectInput"
-                                  value={searchFor}
-                                  disabled={subscribing}
-                                  onChange={(e) => setSearchFor(e.target.value)}
-                                />
-                                <button
-                                  disabled={subscribing || !searchFor}
-                                  onClick={async () => {
-                                    if (searchFor) {
-                                      setSubscribing(true);
-                                      // Fetch user details before subscribing
-                                      const userDataResult = await os.getData(
-                                        tags.key,
-                                        searchFor
-                                      );
-                                      const userData = userDataResult.success
-                                        ? userDataResult.data
-                                        : null;
-                                      const userDetails = {
-                                        id: searchFor,
-                                        name: userData?.name,
-                                        photoLink: userData?.photoLink,
-                                      };
-                                      await subscribeToUsers([userDetails]);
-                                      setSearchFor("");
-                                      setSubscribe(false);
-                                      setSubscribing(false);
-                                      getSubs();
-                                    }
-                                  }}
-                                  style={{
-                                    borderRadius: "8px",
-                                    padding: "8px 12px",
-                                    cursor: subscribing ? "wait" : "pointer",
-                                    opacity:
-                                      subscribing || !searchFor ? 0.6 : 1,
-                                  }}
-                                  className="create-profile-btn"
-                                >
-                                  <span className="material-symbols-outlined">
-                                    {subscribing
-                                      ? "hourglass_empty"
-                                      : "person_add"}
-                                  </span>
-                                </button>
-                              </div>
-                            </div>
-                          )}
-                        </div>
-                      </div>
-                    );
-                  }
-
-                  // 4) Language selector
-                  if (item.type === "language") {
-                    if (hidden && !editMode) return null;
-                    return (
-                      <div
-                        key={item.key}
-                        className={`settings-item-container ${
-                          hidden ? "hidden-item" : ""
-                        }`}
-                      >
-                        <div className="settings-item-wrapper">
-                          {editMode && (
-                            <button
-                              className="hide-button"
-                              onClick={(e) => {
-                                e.stopPropagation();
-                                toggleVisibility(item.key);
-                              }}
-                              title={hidden ? "Show item" : "Hide item"}
-                            >
-                              <span className="material-symbols-outlined">
-                                {hidden ? "visibility" : "visibility_off"}
-                              </span>
-                            </button>
-                          )}
-
-                          <div
-                            className={`settings-item ${hidden ? "hidden" : ""}`}
-                            style={{ justifyContent: "space-between" }}
-                          >
-                            <div
-                              style={{
-                                display: "flex",
-                                alignItems: "center",
-                                gap: "10px",
-                              }}
-                            >
-                              <div className="item-icon">
-                                <span className="material-symbols-outlined">
-                                  {item.icon}
-                                </span>
-                              </div>
-                              <div className="item-text">{label}</div>
-                            </div>
-                            <select
-                              value={language}
-                              onChange={(e) => changeLanguage(e.target.value)}
-                              style={{
-                                padding: "6px 12px",
-                                borderRadius: "6px",
-                                border: "1px solid #ddd",
-                                backgroundColor: "var(--pageBackground)",
-                                color: "var(--text1)",
-                                fontSize: "14px",
-                                cursor: "pointer",
-                                outline: "none",
-                              }}
-                            >
-                              {availableLanguages.map((lang) => (
-                                <option key={lang.code} value={lang.code}>
-                                  {lang.nativeName}
-                                </option>
-                              ))}
-                            </select>
-                          </div>
-                        </div>
-                      </div>
-                    );
-                  }
-
-                  // 5) regular clickable rows
-                  if (hidden && !editMode) return null;
-                  return (
-                    <div
-                      key={item.key}
-                      className={`settings-item-container ${
-                        hidden ? "hidden-item" : ""
-                      }`}
-                    >
-                      <div className="settings-item-wrapper">
-                        {editMode && (
-                          <button
-                            className="hide-button"
-                            onClick={(e) => {
-                              e.stopPropagation();
-                              toggleVisibility(item.key);
-                            }}
-                            title={hidden ? "Show item" : "Hide item"}
-                          >
-                            <span className="material-symbols-outlined">
-                              {hidden ? "visibility" : "visibility_off"}
-                            </span>
-                          </button>
-                        )}
-
-                        <div
-                          onClick={item.onClick}
-                          className={`settings-item ${item.style || ""} ${
-                            hidden ? "hidden" : ""
-                          }`}
-                        >
-                          <div className="item-icon">
-                            <span className="material-symbols-outlined">
-                              {item.icon}
-                            </span>
-                          </div>
-                          <div
-                            className={`item-text ${
-                              item.style === "disabled" ? "disabled" : ""
-                            }`}
-                          >
-                            {editMode && editingLabel === item.key ? (
-                              <input
-                                type="text"
-                                value={label}
-                                onChange={(e) =>
-                                  handleLabelEdit(item.key, "", e.target.value)
-                                }
-                                onBlur={finishEditingLabel}
-                                onKeyPress={(e) =>
-                                  e.key === "Enter" && finishEditingLabel()
-                                }
-                                className="label-edit-input"
-                                autoFocus
-                                onClick={(e) => e.stopPropagation()}
-                              />
-                            ) : (
-                              <span
-                                onClick={
-                                  editMode
-                                    ? (e) => {
-                                        e.stopPropagation();
-                                        startEditingLabel(item.key);
-                                      }
-                                    : undefined
-                                }
-                                className={editMode ? "editable-label" : ""}
-                              >
-                                {label}
-                              </span>
-                            )}
-                          </div>
-                        </div>
-                      </div>
-                    </div>
-                  );
-                })}
+                <span className="material-symbols-outlined">
+                  {isNameHidden ? "visibility" : "visibility_off"}
+                </span>
+              </button>
+            )}
+            {customIcon ? (
+              <div className="space-name">{customIcon.icon}</div>
+            ) : !editSpaceName ? (
+              <div
+                onClick={() => setEditSpaceName(true)}
+                className="space-name"
+              >
+                {CurrentSpace?.name}
               </div>
-            );
-          })}
-
-          <div style={{ height: "80px" }}></div>
-        </div>
-      ) : null}
-      <style>{`
-                ${getStyleOf("settings.css")}
-                
-                /* Additional styles for edit mode */
-                .edit-mode-button {
-                    background: transparent;
-                    border: 1px solid #ddd;
-                    border-radius: 4px;
-                    padding: 4px 8px;
-                    cursor: pointer;
-                    display: flex;
-                    align-items: center;
-                    transition: all 0.2s;
+            ) : (
+              <input
+                onBlur={() => setEditSpaceName(false)}
+                style={{ height: "35px", width: "220px" }}
+                value={spaceName}
+                onChange={(e) =>
+                  e.target.value !== "" && setSpaceName(e.target.value)
                 }
-                
-                .edit-mode-button:hover {
-                    background: #f5f5f5;
-                }
-                
-                .edit-mode-button.active {
-                    background: #4459F3;
-                    color: white;
-                    border-color: #4459F3;
-                }
-                
-                .settings-item-container {
-                    position: relative;
-                }
-                
-                .settings-item-wrapper {
-                    display: flex;
-                    align-items: center;
-                    position: relative;
-                }
-                
-                .hide-button {
-                    position: absolute;
-                    right: 8px;
-                    top: 50%;
-                    transform: translateY(-50%);
-                    background: transparent;
-                    border: none;
-                    cursor: pointer;
-                    padding: 2px;
-                    border-radius: 3px;
-                    z-index: 10;
-                    opacity: 0.6;
-                    transition: opacity 0.2s;
-                    scale:0.8;
-                }
-                
-                .hide-button:hover {
-                    opacity: 1;
-                    background: #f0f0f0;
-                }
-                
-                .hidden-item {
-                    opacity: 0.5;
-                }
-                
-                .hidden-item .settings-item {
-                    background: rgba(255, 0, 0, 0.05);
-                }
-                
-                .label-edit-input {
-                    background: white;
-                    border: 1px solid #4459F3;
-                    border-radius: 3px;
-                    padding: 2px 6px;
-                    font-size: inherit;
-                    font-family: inherit;
-                    width: 100%;
-                    min-width: 120px;
-                }
-                
-                .editable-label {
-                    cursor: pointer;
-                    padding: 2px;
-                    border-radius: 3px;
-                    transition: background 0.2s;
-                }
-                
-                .editable-label:hover {
-                    background: rgba(68, 89, 243, 0.1);
-                }
-                
-                .sub-settings-list .settings-item-wrapper {
-                    padding-left: 20px;
-                }
-                
-                /* Space content specific styles */
-                .space-content-item {
-                    position: relative;
-                    margin-top: 10px;
-
-                }
-                
-                .space-content-hide {
-                    position: absolute;
-                    top: 8px;
-                    right: 8px;
-                    z-index: 10;
-                }
-                
-                .space-name-container {
-                     position: relative;
-                    display: inline-block;
-                    margin-top: -15px;
-                    margin-left: -17px;
-                }
-                
-                .space-name-hide {
-                    position: absolute;
-                    top: -8px;
-                    right: -24px;
-                }
-                
-                .space-description-edit {
-                    width: 100%;
-                    padding: 8px;
-                    border: 1px solid #4459F3;
-                    border-radius: 6px;
-                    font-family: inherit;
-                    font-size: inherit;
-                    line-height: 1.4;
-                    resize: vertical;
-                }
-                
-                .editable-text {
-                    cursor: pointer;
-                    padding: 4px;
-                    border-radius: 4px;
-                    transition: background 0.2s;
-                }
-                
-                .editable-text:hover {
-                    background: rgba(68, 89, 243, 0.1);
-                }
-            `}</style>
+                className="input-field number selectInput"
+              />
+            )}
+          </div>
+        )}
+      </div>
     </div>
   );
 };
 
+// ---------- Space Description ----------
+export const SpaceDescriptionSetting = ({ itemKey = "spaceDescription" }) => {
+  const {
+    editMode,
+    visibility,
+    toggleVisibility,
+    editingLabel,
+    startEditingLabel,
+    finishEditingLabel,
+  } = useSettingsContext();
+  const [description, setDescription] = useState(
+    "Settings for your space. Customise toolbar, theme and add extensions."
+  );
+  const isHidden = visibility[itemKey] === false;
+
+  if (isHidden && !editMode) return null;
+
+  return (
+    <div className={`space-content-item ${isHidden ? "hidden-item" : ""}`}>
+      {editMode && (
+        <button
+          className="hide-button space-content-hide"
+          onClick={() => toggleVisibility(itemKey)}
+        >
+          <span className="material-symbols-outlined">
+            {isHidden ? "visibility" : "visibility_off"}
+          </span>
+        </button>
+      )}
+      <div className="space-description">
+        {editMode && editingLabel === itemKey ? (
+          <textarea
+            value={description}
+            onChange={(e) => setDescription(e.target.value)}
+            onBlur={finishEditingLabel}
+            className="space-description-edit"
+            autoFocus
+            rows="3"
+          />
+        ) : (
+          <div
+            onClick={editMode ? () => startEditingLabel(itemKey) : undefined}
+            className={editMode ? "editable-text" : ""}
+          >
+            {description}
+          </div>
+        )}
+      </div>
+    </div>
+  );
+};
+
+// ---------- Account Section ----------
+export const AccountSetting = ({
+  itemKey = "yourAccount",
+  labelKey = "yourAccount",
+}) => {
+  const {
+    t,
+    editMode,
+    labels,
+    editingLabel,
+    startEditingLabel,
+    finishEditingLabel,
+    handleLabelEdit,
+    visibility,
+    toggleVisibility,
+  } = useSettingsContext();
+  const { setSideBarMode } = useSideBarContext();
+  const [userData, setUserData] = useState(null);
+  const label = labels[itemKey] || t(labelKey);
+  const isHidden = visibility[itemKey] === false;
+
+  const icons = [TreeIcon, LogIcon, LeafIcon, CatIcon, DogIcon, CoffeBeanIcon];
+  const colors = [
+    "#34D399",
+    "#60A5FA",
+    "#F472B6",
+    "#FBBF24",
+    "#A78BFA",
+    "#F87171",
+    "#10B981",
+    "#F59E0B",
+  ];
+
+  useEffect(() => {
+    const getUserData = async () => {
+      if (!authBot?.id) return;
+      const data = await os.getData(tags.key, authBot.id);
+      if (data.success) {
+        setUserData(data.data);
+        globalThis.SetGlobalProfilePic(data.data?.photoLink);
+      }
+    };
+    getUserData();
+  }, []);
+
+  if (isHidden && !editMode) return null;
+
+  const isAnonymous =
+    tags?.settingsConfigs?.presets?.[configBot?.tags?.settingsPreset || "full"]
+      ?.onlineUsers?.anonymous;
+  let colorIndex = 0;
+  let iconIndex = 0;
+
+  if (isAnonymous && (globalThis as any).GetOrSetVisualInTags) {
+    const visual = (globalThis as any).GetOrSetVisualInTags(
+      configBot.id,
+      userData
+    );
+    colorIndex = visual.colorIndex;
+    iconIndex = visual.iconIndex;
+  }
+
+  const Icon = icons[iconIndex];
+
+  return (
+    <div
+      className={`activeAccount ${isHidden ? "hidden-item" : ""}`}
+      style={{ position: "relative" }}
+    >
+      {editMode && (
+        <button
+          className="hide-button"
+          onClick={() => toggleVisibility(itemKey)}
+        >
+          <span className="material-symbols-outlined">
+            {isHidden ? "visibility" : "visibility_off"}
+          </span>
+        </button>
+      )}
+      {isAnonymous ? (
+        <div
+          style={{
+            width: 40,
+            height: 40,
+            borderRadius: "50%",
+            border: `2px solid ${colors[colorIndex]}`,
+            padding: 2,
+            display: "flex",
+            alignItems: "center",
+            justifyContent: "center",
+            overflow: "hidden",
+            backgroundColor: "white",
+          }}
+        >
+          {userData?.photoLink ? (
+            <img
+              style={{
+                borderRadius: "50%",
+                width: "36px",
+                height: "36px",
+                objectFit: "cover",
+              }}
+              src={userData.photoLink}
+            />
+          ) : (
+            <Icon width={20} height={20} />
+          )}
+        </div>
+      ) : userData?.photoLink ? (
+        <img
+          style={{
+            borderRadius: "50%",
+            height: "40px",
+            width: "40px",
+            border: "1px solid var(--spaceSelection)",
+          }}
+          src={userData.photoLink}
+        />
+      ) : (
+        <UserAvatar />
+      )}
+      <div className="softText">
+        {isAnonymous ? (
+          <div>
+            <div
+              style={{
+                fontWeight: "600",
+                fontSize: "14px",
+                marginBottom: "2px",
+              }}
+            >
+              Anonymous
+            </div>
+            <div style={{ fontSize: "12px", color: "#9ca3af" }}>
+              ID:{configBot.id.slice(0, 12)}
+            </div>
+          </div>
+        ) : editMode && editingLabel === itemKey ? (
+          <input
+            type="text"
+            value={label}
+            onChange={(e) =>
+              handleLabelEdit(itemKey, (e.target as HTMLInputElement).value)
+            }
+            onBlur={finishEditingLabel}
+            onKeyPress={(e) => e.key === "Enter" && finishEditingLabel()}
+            className="label-edit-input"
+            autoFocus
+          />
+        ) : (
+          <span
+            onClick={editMode ? () => startEditingLabel(itemKey) : undefined}
+            className={editMode ? "editable-label" : ""}
+          >
+            {label}
+          </span>
+        )}
+      </div>
+      {!isAnonymous && !userData && (
+        <div style={{ justifyContent: "center" }} className="activeAccount">
+          <button
+            onClick={() => {
+              globalThis.AccountSettingsEnteredFrom = "settings";
+              setSideBarMode("createAccountSettings");
+            }}
+            className="create-profile-btn"
+          >
+            {userData ? "Open account settings" : " + Create profile"}
+          </button>
+        </div>
+      )}
+    </div>
+  );
+};
+
+// ---------- Account Settings Row ----------
+export const AccountSettingsSetting = ({
+  itemKey = "accountSettings",
+  labelKey = "accountSettings",
+}) => {
+  const { setSideBarMode } = useSideBarContext();
+  return (
+    <SettingRow
+      itemKey={itemKey}
+      labelKey={labelKey}
+      icon="manage_accounts"
+      onClick={() => {
+        globalThis.AccountSettingsEnteredFrom = "settings";
+        setSideBarMode("createAccountSettings");
+      }}
+    />
+  );
+};
+
+// ---------- Billing ----------
+export const BillingSetting = ({
+  itemKey = "billing",
+  labelKey = "billingServices",
+}) => {
+  return (
+    <SettingRow
+      itemKey={itemKey}
+      labelKey={labelKey}
+      icon="rule_settings"
+      style="disabled"
+    />
+  );
+};
+
+// ---------- Permissions ----------
+export const PermissionsSetting = ({
+  itemKey = "permissions",
+  labelKey = "permissions",
+}) => {
+  return (
+    <SettingRow
+      itemKey={itemKey}
+      labelKey={labelKey}
+      icon="action_key"
+      style="disabled"
+    />
+  );
+};
+
+// ---------- Notifications ----------
+export const NotificationsSetting = ({
+  itemKey = "notifications",
+  labelKey = "notifications",
+}) => {
+  return (
+    <SettingRow
+      itemKey={itemKey}
+      labelKey={labelKey}
+      icon="notification_settings"
+      style="disabled"
+    />
+  );
+};
+
+// ---------- Subscriptions Section ----------
+export const SubscriptionsSetting = ({
+  itemKey = "subscriptions",
+  labelKey = "subscriptions",
+}) => {
+  const {
+    t,
+    editMode,
+    labels,
+    editingLabel,
+    startEditingLabel,
+    finishEditingLabel,
+    handleLabelEdit,
+    visibility,
+    toggleVisibility,
+  } = useSettingsContext();
+  const [subscribedUsers, setSubscribedUsers] = useState([]);
+  const [loadingSubs, setLoadingSubs] = useState(false);
+  const [subscribing, setSubscribing] = useState(false);
+  const [unsubscribingId, setUnsubscribingId] = useState(null);
+  const [subscribe, setSubscribe] = useState(false);
+  const [searchFor, setSearchFor] = useState("");
+  const label = labels[itemKey] || t(labelKey);
+  const isHidden = visibility[itemKey] === false;
+
+  const getSubs = async () => {
+    setLoadingSubs(true);
+    const subs = await getSubscribedUsers();
+    setSubscribedUsers(subs || []);
+    setLoadingSubs(false);
+  };
+
+  useEffect(() => {
+    getSubs();
+  }, []);
+
+  const handleUnsubscribe = async (userId) => {
+    setUnsubscribingId(userId);
+    await unsubscribeFromUsers([userId]);
+    await getSubs();
+    setUnsubscribingId(null);
+  };
+
+  if (isHidden && !editMode) return null;
+
+  return (
+    <div
+      className={`general-section ${isHidden ? "hidden-item" : ""}`}
+      style={{ position: "relative" }}
+    >
+      {editMode && (
+        <button
+          className="hide-button"
+          onClick={() => toggleVisibility(itemKey)}
+        >
+          <span className="material-symbols-outlined">
+            {isHidden ? "visibility" : "visibility_off"}
+          </span>
+        </button>
+      )}
+      <div className="activeAccount" style={{ gap: "8px" }}>
+        <MenuIcon name="bookmark_check" />
+        <div className="softText">
+          {editMode && editingLabel === itemKey ? (
+            <input
+              type="text"
+              value={label}
+              onChange={(e) => handleLabelEdit(itemKey, e.target.value)}
+              onBlur={finishEditingLabel}
+              onKeyPress={(e) => e.key === "Enter" && finishEditingLabel()}
+              className="label-edit-input"
+              autoFocus
+            />
+          ) : (
+            <span
+              onClick={editMode ? () => startEditingLabel(itemKey) : undefined}
+              className={editMode ? "editable-label" : ""}
+            >
+              {label}
+            </span>
+          )}
+        </div>
+      </div>
+
+      {loadingSubs ? (
+        <div
+          style={{ justifyContent: "center", padding: "20px" }}
+          className="activeAccount"
+        >
+          <div className="softText">Loading...</div>
+        </div>
+      ) : subscribedUsers.length > 0 ? (
+        <div style={{ width: "100%" }}>
+          <div
+            className="softText"
+            style={{ marginBottom: "8px", textAlign: "center" }}
+          >
+            {`You have ${subscribedUsers.length} subscription${subscribedUsers.length > 1 ? "s" : ""}`}
+          </div>
+          {subscribedUsers.map((user) => (
+            <div
+              key={user.id}
+              className="activeAccount"
+              style={{
+                justifyContent: "space-between",
+                padding: "8px 12px",
+                marginBottom: "6px",
+                borderRadius: "8px",
+                opacity: unsubscribingId === user.id ? 0.5 : 1,
+              }}
+            >
+              <div
+                style={{ display: "flex", alignItems: "center", gap: "10px" }}
+              >
+                {user.photoLink ? (
+                  <img
+                    style={{
+                      borderRadius: "50%",
+                      height: "32px",
+                      width: "32px",
+                      objectFit: "cover",
+                    }}
+                    src={user.photoLink}
+                  />
+                ) : (
+                  <UserAvatar />
+                )}
+                <div>
+                  <div style={{ fontWeight: "500", fontSize: "14px" }}>
+                    {user.name || "Unknown User"}
+                  </div>
+                  <div className="softText" style={{ fontSize: "11px" }}>
+                    {user.id.slice(0, 16)}...
+                  </div>
+                </div>
+              </div>
+              <button
+                onClick={() => handleUnsubscribe(user.id)}
+                disabled={unsubscribingId === user.id}
+                style={{
+                  background: "transparent",
+                  border: "1px solid #e0e0e0",
+                  borderRadius: "6px",
+                  cursor: unsubscribingId === user.id ? "wait" : "pointer",
+                  padding: "4px 8px",
+                  display: "flex",
+                  alignItems: "center",
+                  gap: "4px",
+                }}
+              >
+                <span
+                  className="material-symbols-outlined"
+                  style={{ fontSize: "16px", color: "#666" }}
+                >
+                  {unsubscribingId === user.id
+                    ? "hourglass_empty"
+                    : "person_remove"}
+                </span>
+              </button>
+            </div>
+          ))}
+        </div>
+      ) : (
+        <div style={{ justifyContent: "center" }} className="activeAccount">
+          <div className="softText">You haven't subscribed to anyone yet.</div>
+        </div>
+      )}
+
+      <div
+        style={{ justifyContent: "center", marginTop: "12px" }}
+        className="activeAccount"
+      >
+        {!subscribe ? (
+          <button
+            onClick={() => setSubscribe(true)}
+            className="create-profile-btn"
+          >
+            + Add Subscription
+          </button>
+        ) : (
+          <div style={{ width: "100%" }}>
+            <div style={{ marginBottom: "8px" }} className="blackText">
+              Enter User ID
+            </div>
+            <div style={{ display: "flex", alignItems: "center", gap: "10px" }}>
+              <input
+                style={{ height: "32px", flex: 1 }}
+                placeholder="Enter user ID..."
+                className="selectInput"
+                value={searchFor}
+                disabled={subscribing}
+                onChange={(e) => setSearchFor(e.target.value)}
+              />
+              <button
+                disabled={subscribing || !searchFor}
+                onClick={async () => {
+                  if (searchFor) {
+                    setSubscribing(true);
+                    const userDataResult = await os.getData(
+                      tags.key,
+                      searchFor
+                    );
+                    const userData = userDataResult.success
+                      ? userDataResult.data
+                      : null;
+                    await subscribeToUsers([
+                      {
+                        id: searchFor,
+                        name: userData?.name,
+                        photoLink: userData?.photoLink,
+                      },
+                    ]);
+                    setSearchFor("");
+                    setSubscribe(false);
+                    setSubscribing(false);
+                    getSubs();
+                  }
+                }}
+                style={{
+                  borderRadius: "8px",
+                  padding: "8px 12px",
+                  cursor: subscribing ? "wait" : "pointer",
+                  opacity: subscribing || !searchFor ? 0.6 : 1,
+                }}
+                className="create-profile-btn"
+              >
+                <span className="material-symbols-outlined">
+                  {subscribing ? "hourglass_empty" : "person_add"}
+                </span>
+              </button>
+            </div>
+          </div>
+        )}
+      </div>
+    </div>
+  );
+};
+
+// ---------- Language Selector ----------
+export const LanguageSetting = ({
+  itemKey = "language",
+  labelKey = "language",
+}) => {
+  const {
+    t,
+    editMode,
+    labels,
+    visibility,
+    toggleVisibility,
+    availableLanguages,
+    language,
+    changeLanguage,
+  } = useSettingsContext();
+  const label = labels[itemKey] || t(labelKey);
+  const isHidden = visibility[itemKey] === false;
+
+  if (isHidden && !editMode) return null;
+
+  return (
+    <SettingItemWrapper itemKey={itemKey}>
+      <div
+        className="settings-item"
+        style={{ justifyContent: "space-between" }}
+      >
+        <div style={{ display: "flex", alignItems: "center", gap: "10px" }}>
+          <div className="item-icon">
+            <span className="material-symbols-outlined">language</span>
+          </div>
+          <div className="item-text">{label}</div>
+        </div>
+        <select
+          value={language}
+          onChange={(e) => changeLanguage(e.target.value)}
+          style={{
+            padding: "6px 12px",
+            borderRadius: "6px",
+            border: "1px solid #ddd",
+            backgroundColor: "var(--pageBackground)",
+            color: "var(--text1)",
+            fontSize: "14px",
+            cursor: "pointer",
+            outline: "none",
+          }}
+        >
+          {availableLanguages.map((lang) => (
+            <option key={lang.code} value={lang.code}>
+              {lang.nativeName}
+            </option>
+          ))}
+        </select>
+      </div>
+    </SettingItemWrapper>
+  );
+};
+
+// ---------- ReSeed Toggle ----------
+export const ReSeedToggleSetting = ({ itemKey = "reseedToggle" }) => {
+  const { t } = useSettingsContext();
+  const { ReSeed, setReSeed } = useBibleContext();
+  return (
+    <SettingRow
+      itemKey={itemKey}
+      labelKey={ReSeed ? "exit" : "propagate"}
+      icon="face"
+      onClick={() => setReSeed((prev) => !prev)}
+    />
+  );
+};
+
+// ═══════════════════════════════════════════════════════════════════════════════
+// COMPONENT REGISTRY - Maps config keys to actual components
+// ═══════════════════════════════════════════════════════════════════════════════
+const COMPONENT_REGISTRY = {
+  // Space tab components
+  spaceIcon: SpaceIconSetting,
+  spaceName: () => null, // Handled within SpaceIconSetting
+  spaceDescription: SpaceDescriptionSetting,
+  theme: ThemeSetting,
+  Extensions: ExtensionsSetting,
+  bibleDefaults: BibleDefaultsSetting,
+  pageSettings: AdvancedSettingsSetting,
+  LoadSpace: LoadSpaceSetting,
+  Share: ShareSetting,
+  divider: SettingDivider,
+
+  // General tab components
+  generalHeader: SettingHeader,
+  generalDesc: SettingDescription,
+  yourAccount: AccountSetting,
+  accountSettings: AccountSettingsSetting,
+  billing: BillingSetting,
+  permissions: PermissionsSetting,
+  notifications: NotificationsSetting,
+  subscriptions: SubscriptionsSetting,
+  language: LanguageSetting,
+  reseedToggle: ReSeedToggleSetting,
+};
+
+// ═══════════════════════════════════════════════════════════════════════════════
+// CONFIG-DRIVEN RENDERER
+// ═══════════════════════════════════════════════════════════════════════════════
+const renderFromConfig = (config) => {
+  const elements = [];
+
+  Object.entries(config.tabs).forEach(([tabKey, tabConfig]) => {
+    if (!tabConfig.enabled) return;
+
+    Object.entries(tabConfig.sections || {}).forEach(
+      ([sectionKey, sectionConfig]) => {
+        if (!sectionConfig.enabled) return;
+
+        Object.entries(sectionConfig.items || {}).forEach(
+          ([itemKey, itemConfig]) => {
+            if (!itemConfig.enabled) return;
+
+            const Component = COMPONENT_REGISTRY[itemKey];
+            if (Component) {
+              elements.push({
+                tabKey,
+                sectionKey,
+                itemKey,
+                Component,
+                config: itemConfig,
+              });
+            }
+          }
+        );
+      }
+    );
+  });
+
+  return elements;
+};
+
+// ═══════════════════════════════════════════════════════════════════════════════
+// MAIN SETTINGS SIDEBAR COMPONENT
+// ═══════════════════════════════════════════════════════════════════════════════
+const SettingsSidebar = ({ config }) => {
+  const {
+    t,
+    changeLanguage,
+    availableLanguages,
+    language,
+    setSideBarMode,
+    openPopupSettings,
+    closePopupSettings,
+    setUserURL,
+    customIcon,
+    setCustomIcon,
+  } = useSideBarContext();
+  const { ReSeed, setReSeed } = useBibleContext();
+
+  const useTabs = config.useTabs !== false; // Default to true for backwards compatibility
+  const [activeTab, setActiveTab] = useState(
+    useTabs
+      ? Object.keys(config.tabs || {}).find((k) => config.tabs[k].enabled) ||
+          "space"
+      : null
+  );
+  globalThis.SetActiveSettingsTab = setActiveTab;
+
+  const [editMode, setEditMode] = useState(false);
+  const [visibility, setVisibility] = useState({});
+  const [labels, setLabels] = useState({});
+  const [editingLabel, setEditingLabel] = useState(null);
+  const [expandedSections, setExpandedSections] = useState({});
+
+  useEffect(() => {
+    setEditMode(ReSeed);
+  }, [ReSeed]);
+
+  // Initialize visibility from config
+  useEffect(() => {
+    const saved = globalThis.changes?.settingsVisibility || {};
+    const initial = {};
+
+    if (useTabs && config.tabs) {
+      Object.entries(config.tabs).forEach(([tabKey, tabConfig]) => {
+        Object.entries(tabConfig.sections || {}).forEach(
+          ([sectionKey, sectionConfig]) => {
+            Object.entries(sectionConfig.items || {}).forEach(
+              ([itemKey, itemConfig]) => {
+                initial[itemKey] =
+                  saved[itemKey] !== undefined
+                    ? saved[itemKey]
+                    : itemConfig.enabled;
+              }
+            );
+          }
+        );
+      });
+    } else if (config.sections) {
+      Object.entries(config.sections).forEach(([sectionKey, sectionConfig]) => {
+        Object.entries(sectionConfig.items || {}).forEach(
+          ([itemKey, itemConfig]) => {
+            initial[itemKey] =
+              saved[itemKey] !== undefined
+                ? saved[itemKey]
+                : itemConfig.enabled;
+          }
+        );
+      });
+    }
+
+    setVisibility(initial);
+  }, [config, useTabs]);
+
+  const toggleVisibility = (key) => {
+    const newVis = { ...visibility, [key]: !visibility[key] };
+    setVisibility(newVis);
+    if (!globalThis.changes) globalThis.changes = {};
+    globalThis.changes.settingsVisibility = newVis;
+  };
+
+  const handleLabelEdit = (key, value) => {
+    const newLabels = { ...labels, [key]: value };
+    setLabels(newLabels);
+    if (!globalThis.changes) globalThis.changes = {};
+    globalThis.changes.settingsLabels = newLabels;
+  };
+
+  const toggleSection = (key) =>
+    setExpandedSections((prev) => ({ ...prev, [key]: !prev[key] }));
+
+  const contextValue = {
+    t,
+    editMode,
+    visibility,
+    toggleVisibility,
+    labels,
+    handleLabelEdit,
+    editingLabel,
+    startEditingLabel: setEditingLabel,
+    finishEditingLabel: () => setEditingLabel(null),
+    expandedSections,
+    toggleSection,
+    availableLanguages,
+    language,
+    changeLanguage,
+    openPopupSettings,
+    closePopupSettings,
+    customIcon,
+    setCustomIcon,
+    setSideBarMode,
+  };
+
+  // Get enabled tabs (only if using tabs)
+  const enabledTabs =
+    useTabs && config.tabs
+      ? Object.entries(config.tabs).filter(([_, tc]) => tc.enabled)
+      : [];
+
+  // Render items for current tab or direct sections
+  const renderContent = () => {
+    let sectionsToRender = {};
+
+    if (useTabs && config.tabs) {
+      // Tab-based rendering
+      const tabConfig = config.tabs[activeTab];
+      if (!tabConfig?.enabled) return null;
+      sectionsToRender = tabConfig.sections || {};
+    } else {
+      // Direct rendering without tabs
+      sectionsToRender = config.sections || {};
+    }
+
+    const elements = [];
+    Object.entries(sectionsToRender).forEach(
+      ([sectionKey, sectionConfig], sIdx) => {
+        if (!sectionConfig.enabled) return;
+
+        // Add divider between sections (except first)
+        if (sIdx > 0 && sectionConfig.showDivider !== false) {
+          elements.push(<SettingDivider key={`divider-${sectionKey}`} />);
+        }
+
+        Object.entries(sectionConfig.items || {}).forEach(
+          ([itemKey, itemConfig]) => {
+            if (!itemConfig.enabled && !editMode) return;
+
+            const Component = COMPONENT_REGISTRY[itemKey];
+            if (Component) {
+              elements.push(
+                <Component
+                  key={itemKey}
+                  itemKey={itemKey}
+                  labelKey={itemConfig.labelKey || itemKey}
+                  {...itemConfig}
+                />
+              );
+            }
+          }
+        );
+      }
+    );
+
+    return elements;
+  };
+
+  return (
+    <SettingsContext.Provider value={contextValue}>
+      <div className="settings-sidebar">
+        <div className="settings-header">
+          <h2>{t("settings")}</h2>
+          <div style={{ display: "flex", alignItems: "center", gap: "8px" }}>
+            {editMode && (
+              <button
+                onClick={() => setReSeed(false)}
+                className={`edit-mode-button active`}
+              >
+                <span className="material-symbols-outlined">check</span>
+              </button>
+            )}
+            <button
+              onClick={() => setSideBarMode("default")}
+              className="close-button"
+            >
+              <span className="material-symbols-outlined">close</span>
+            </button>
+          </div>
+        </div>
+
+        {useTabs && (
+          <div className="settings-tabs">
+            {enabledTabs.map(([tabKey, tabConfig]) => (
+              <button
+                key={tabKey}
+                className={`tab-button ${activeTab === tabKey ? "active" : ""}`}
+                onClick={() => setActiveTab(tabKey)}
+              >
+                {t(tabConfig.labelKey)}
+              </button>
+            ))}
+          </div>
+        )}
+
+        <div className="settings-content">
+          {renderContent()}
+          <div style={{ height: "80px" }}></div>
+        </div>
+
+        <style>{`${getStyleOf("settings.css")}
+          .edit-mode-button { background: transparent; border: 1px solid #ddd; border-radius: 4px; padding: 4px 8px; cursor: pointer; display: flex; align-items: center; transition: all 0.2s; }
+          .edit-mode-button:hover { background: #f5f5f5; }
+          .edit-mode-button.active { background: var(--spaceSelection); color: white; border-color: var(--spaceSelection); }
+          .settings-item-container { position: relative; }
+          .settings-item-wrapper { display: flex; align-items: center; position: relative; width: 100%; }
+          .hide-button { position: absolute; right: 8px; top: 50%; transform: translateY(-50%); background: transparent; border: none; cursor: pointer; padding: 2px; border-radius: 3px; z-index: 10; opacity: 0.6; transition: opacity 0.2s; scale: 0.8; }
+          .hide-button:hover { opacity: 1; background: #f0f0f0; }
+          .hidden-item { opacity: 0.5; }
+          .hidden-item .settings-item { background: rgba(255, 0, 0, 0.05); }
+          .label-edit-input { background: white; border: 1px solid var(--spaceSelection); border-radius: 3px; padding: 2px 6px; font-size: inherit; font-family: inherit; width: 100%; min-width: 120px; }
+          .editable-label { cursor: pointer; padding: 2px; border-radius: 3px; transition: background 0.2s; }
+          .editable-label:hover { background: rgba(68, 89, 243, 0.1); }
+          .sub-settings-list .settings-item-wrapper { padding-left: 20px; }
+          .space-content-item { position: relative; margin-top: 10px; }
+          .space-content-hide { position: absolute; top: 8px; right: 8px; z-index: 10; }
+          .space-name-container { position: relative; display: inline-block; margin-top: -15px; margin-left: -17px; }
+          .space-name-hide { position: absolute; top: -8px; right: -24px; }
+          .space-description-edit { width: 100%; padding: 8px; border: 1px solid var(--spaceSelection); border-radius: 6px; font-family: inherit; font-size: inherit; line-height: 1.4; resize: vertical; }
+          .editable-text { cursor: pointer; padding: 4px; border-radius: 4px; transition: background 0.2s; }
+          .editable-text:hover { background: rgba(68, 89, 243, 0.1); }
+          .expandable-container { display: flex; flex-direction: column; }
+        `}</style>
+      </div>
+    </SettingsContext.Provider>
+  );
+};
+
 export default SettingsSidebar;
+
+// ═══════════════════════════════════════════════════════════════════════════════
+// EXAMPLE USAGE WITH CONFIG
+// ═══════════════════════════════════════════════════════════════════════════════
+/*
+import settingsSidebar from './settingsSidebar';
+
+const myConfig = {
+  tabs: {
+    space: {
+      enabled: true,
+      labelKey: "spaceSettings",
+      sections: {
+        spaceContent: {
+          enabled: true,
+          showDivider: false,
+          items: {
+            spaceIcon: { enabled: true },
+            spaceDescription: { enabled: true },
+          }
+        },
+        mainSettings: {
+          enabled: true,
+          items: {
+            theme: { enabled: true },
+            Extensions: { enabled: true },
+            bibleDefaults: { enabled: false }, // Disabled
+            pageSettings: { enabled: true },
+          }
+        },
+      }
+    },
+    general: {
+      enabled: true,
+      labelKey: "generalSettings",
+      sections: {
+        account: {
+          enabled: true,
+          showDivider: false,
+          items: {
+            yourAccount: { enabled: true },
+            accountSettings: { enabled: true },
+          }
+        },
+      }
+    },
+    // Add a new custom tab!
+    myCustomTab: {
+      enabled: true,
+      labelKey: "myCustomSettings",
+      sections: {
+        custom: {
+          enabled: true,
+          items: {
+            theme: { enabled: true }, // Reuse existing components!
+            language: { enabled: true },
+          }
+        }
+      }
+    }
+  }
+};
+
+// Usage:
+<settingsSidebar config={myConfig} />
+*/

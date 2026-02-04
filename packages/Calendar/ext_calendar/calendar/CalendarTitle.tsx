@@ -17,7 +17,7 @@ const CalendarTitle = ({ setScheduleTitle, scheduleTitle, isSchedule }) => {
     }
   };
   return (
-    <div style={{ textAlign: "center", backgroundColor: "white" }}>
+    <div style={{ textAlign: "center" }}>
       <div
         style={{
           fontFamily: "Satoshi",
