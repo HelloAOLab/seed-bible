@@ -89,7 +89,7 @@ const SharePopup = ({
     //     window.open("https://instagram.com", "_blank");
     //   },
     // },
-    ...((globalThis as any).IsMobileNow()
+    ...(globalThis.IsMobileNow()
       ? [
           {
             name: "Text",
@@ -169,7 +169,6 @@ const SharePopup = ({
             boxShadow: "0 10px 40px rgba(0,0,0,0.2)",
           }}
         >
-          {/* Header */}
           <div
             style={{
               display: "flex",
@@ -205,7 +204,6 @@ const SharePopup = ({
             </button>
           </div>
 
-          {/* Toggle Options */}
           <div
             style={{
               display: "flex",
@@ -280,7 +278,6 @@ const SharePopup = ({
             </label>
           </div>
 
-          {/* Platform Grid */}
           <div
             style={{
               display: "grid",
@@ -351,7 +348,7 @@ const QRCodeComponent = ({ url = "https://example.com/session/12345" }) => {
   // Load QRCode library dynamically from CDN
   useEffect(() => {
     const loadScript = async () => {
-      if (!(window as any).QRCode) {
+      if (!window.QRCode) {
         const script = document.createElement("script");
         script.src =
           "https://cdnjs.cloudflare.com/ajax/libs/qrcodejs/1.0.0/qrcode.min.js";
@@ -364,15 +361,15 @@ const QRCodeComponent = ({ url = "https://example.com/session/12345" }) => {
     };
 
     const generateQR = () => {
-      if (qrRef.current && (window as any).QRCode) {
-        (qrRef.current as HTMLElement).innerHTML = "";
-        new (window as any).QRCode(qrRef.current, {
+      if (qrRef.current && window.QRCode) {
+        qrRef.current.innerHTML = "";
+        new window.QRCode(qrRef.current, {
           text: url,
           width: 200,
           height: 200,
           colorDark: "#000000",
           colorLight: "#ffffff",
-          correctLevel: (window as any).QRCode.CorrectLevel.H,
+          correctLevel: window.QRCode.CorrectLevel.H,
         });
       }
     };
@@ -548,7 +545,6 @@ const JoinSessionComponent = ({ onJoin, translations = {}, CloseModal }) => {
           height: 373,
         }}
       >
-        {/* Logo */}
         <div
           style={{
             display: "flex",
@@ -566,7 +562,6 @@ const JoinSessionComponent = ({ onJoin, translations = {}, CloseModal }) => {
           />
         </div>
 
-        {/* Title */}
         <h2
           style={{
             textAlign: "center",
@@ -582,7 +577,6 @@ const JoinSessionComponent = ({ onJoin, translations = {}, CloseModal }) => {
           {t.joinSession}
         </h2>
 
-        {/* Description */}
         <p
           style={{
             marginTop: 0,
@@ -598,11 +592,10 @@ const JoinSessionComponent = ({ onJoin, translations = {}, CloseModal }) => {
           {t.enterSessionCode}
         </p>
 
-        {/* Input Field */}
         <input
           type="text"
           value={sessionCode}
-          onChange={(e) => setSessionCode((e.target as HTMLInputElement).value)}
+          onChange={(e) => setSessionCode(e.target.value)}
           onKeyPress={handleKeyPress}
           placeholder={t.sessionCodePlaceholder}
           style={{
@@ -621,7 +614,6 @@ const JoinSessionComponent = ({ onJoin, translations = {}, CloseModal }) => {
           }}
         />
 
-        {/* Join Button */}
         <button
           onClick={handleJoin}
           style={{

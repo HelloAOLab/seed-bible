@@ -291,18 +291,30 @@ export class BibleDataManager {
     }
   }
 
-  async changeTranslation(newTranslation, bookData, forcedBaseUrl) {
-    console.log("changeTranslation tra");
+  async changeTranslation(newTranslation, booksData, forcedBaseUrl) {
+    console.log(
+      newTranslation,
+      booksData,
+      forcedBaseUrl,
+      this.getState(),
+      "changeTranslation"
+    );
     this.translation = newTranslation;
-    this.bookId = bookData?.id || "GEN";
-    if (forcedBaseUrl) {
+    const bookData =
+      booksData.find((book) => book.id === this.bookId) || booksData[0];
+    if (this.bookId !== bookData.id) {
+      this.bookId = bookData.id;
       this.chapter = 1;
     }
+    // this.bookId = bookData?.id || "GEN";
+    // if (forcedBaseUrl) {
+    //   this.chapter = 1;
+    // }
     this.baseUrl = forcedBaseUrl || this.baseUrl;
     await this.fetch(
       bookData
-        ? bookData.firstChapterApiLink
-        : `/api/${newTranslation}/${bookData?.id || "GEN"}/1.json`,
+        ? bookData.firstChapterApiLink.replace("1.json", `${this.chapter}.json`)
+        : `/api/${newTranslation}/${this.bookId}/${this.chapter}.json`,
       newTranslation,
       forcedBaseUrl
     );

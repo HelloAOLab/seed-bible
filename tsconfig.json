@@ -1362,6 +1362,9 @@
       "introduction.searchBar.Interfaces": [
         "./packages/BookSelector/introduction/searchBar/Interfaces.tsx"
       ],
+      "introduction.searchBar.Icons": [
+        "./packages/BookSelector/introduction/searchBar/Icons.tsx"
+      ],
       "ext_calendar.calendar.Calendar": [
         "./packages/Calendar/ext_calendar/calendar/Calendar.tsx"
       ],

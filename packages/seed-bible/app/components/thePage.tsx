@@ -397,12 +397,8 @@ function ThePage({
       if (cancelled) return; // Check again after async operation
 
       if (!configBot.tags.defaultChecked) {
-        if (firstBookData && bookTranslationId && baseUrl) {
-          await bible.changeTranslation(
-            bookTranslationId,
-            firstBookData,
-            baseUrl
-          );
+        if (books && bookTranslationId && baseUrl) {
+          await bible.changeTranslation(bookTranslationId, books, baseUrl);
         }
         if (cancelled) return;
 
@@ -881,8 +877,8 @@ function ThePage({
     }
   }
 
-  async function changeTranslation(id, bookData, forcedBaseUrl) {
-    await bible.changeTranslation(id, bookData, forcedBaseUrl);
+  async function changeTranslation(id, booksData, forcedBaseUrl) {
+    await bible.changeTranslation(id, booksData, forcedBaseUrl);
     setData(bible.data);
     setFootnotes(bible.footnotes);
   }

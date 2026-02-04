@@ -276,11 +276,13 @@ const TranslationModal = (props: {
 
 const LanguageComponent = (props: {
   language: string;
-  translationArray: Array<TranslationInterface>;
+  translationArray: Record<string, TranslationInterface>;
   selectedTranslation: TranslationInterface;
   setSelectedTranslation: (translation: TranslationInterface) => void;
   setSelectingTranslation: (value: boolean) => void;
-  filteredApiTranslations: Array<[string, TranslationInterface[]]>;
+  filteredApiTranslations: Array<
+    [string, Record<string, TranslationInterface>]
+  >;
 }) => {
   const {
     language,
@@ -382,8 +384,11 @@ const LanguageComponent = (props: {
                       web
                         .get(`${value.listOfBooksApiLink}`)
                         .then((e) => {
-                          let book0 = e.data.books[0];
-                          ChangeTranslation(value.id, book0, value.origin);
+                          ChangeTranslation(
+                            value.id,
+                            e.data.books,
+                            value.origin
+                          );
                           if (translationMap[value.language]) {
                             changeLanguage(translationMap[value.language]);
                           }
@@ -397,10 +402,9 @@ const LanguageComponent = (props: {
                           `https://bible.helloao.org/api/${value.id}/books.json`
                         )
                         .then((e) => {
-                          let book0 = e.data.books[0];
                           ChangeTranslation(
                             value.id,
-                            book0,
+                            e.data.books,
                             "https://bible.helloao.org"
                           );
                           if (translationMap[value.language]) {

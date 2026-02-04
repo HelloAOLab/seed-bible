@@ -637,11 +637,9 @@ const HandleEvents = async ({ dc, data }) => {
         `https://bible.helloao.org/api/${translation}/books.json`
       );
       let translationData = { ...translationReq.data };
-      let book0 = translationData.books[0];
-      console.log(translationData, book0);
       ChangeTranslation(
         translationData.translation.id,
-        book0,
+        translationData.books,
         "https://bible.helloao.org"
       );
       dc.send(
