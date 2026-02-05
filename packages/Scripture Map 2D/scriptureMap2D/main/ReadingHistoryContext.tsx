@@ -18,8 +18,15 @@ interface Range {
   startDate: Date;
   endDate: Date;
 }
+interface UserData {
+  profileName?: string;
+  photoLink?: string;
+  id: string;
+}
 
 type TimelineRangeMethod = "rolling" | "calendar";
+
+const timelineMinYear = 2023;
 
 const initialTimelineRangeKey = new Date().getFullYear();
 
@@ -44,7 +51,7 @@ export const ReadingHistoryProvider = ({ children }) => {
     const endOfToday = new Date(nowDate);
     endOfToday.setHours(23, 59, 59, 999);
 
-    for (let year = nowDate.getFullYear(); year > 2022; year--) {
+    for (let year = nowDate.getFullYear(); year > timelineMinYear; year--) {
       let startDate: Date;
       let endDate: Date;
       switch (timelineRangeMethod) {
@@ -63,9 +70,9 @@ export const ReadingHistoryProvider = ({ children }) => {
           {
             startDate = new Date(year, 0, 1, 0, 0, 0); // Jan 1st (00:00:00)
             endDate = new Date(year, 11, 31, 23, 59, 59); // Dec 31st (23:59:59)
-            if (endDate.getTime() > endOfToday.getTime()) {
-              endDate = new Date(endOfToday);
-            }
+            // if (endDate.getTime() > endOfToday.getTime()) {
+            //   endDate = new Date(endOfToday);
+            // }
           }
           break;
       }
@@ -107,8 +114,10 @@ export const ReadingHistoryProvider = ({ children }) => {
   const [readingHistoryUserFilters, setReadingHistoryUserFilters] = useState(
     new Map()
   );
-  const [myAuthBotId, setMyAuthBotId] = useState(null);
-  const [usersAuthId, setUsersAuthId] = useState([]);
+  const [myAuthBotId, setMyAuthBotId] = useState<string | null>(null);
+  const [usersDataMap, setUsersDataMap] = useState<Map<string, UserData>>(
+    new Map()
+  );
   const [yearlyReadingHistorySummary, setYearlyReadingHistorySummary] =
     useState(null);
   const [rangedReadingEventsByBook, setRangedReadingEventsByBook] = useState(
@@ -147,18 +156,60 @@ export const ReadingHistoryProvider = ({ children }) => {
   }, [handleUserLoggedIn, trySetMyAuthBotId]);
 
   useEffect(() => {
-    if (myAuthBotId) {
-      getSubscribedUsers().then((subscribedUsers: SubscribedUser[] | null) => {
-        if (subscribedUsers) {
-          const allAuthBotIds: string[] = [myAuthBotId];
-          subscribedUsers?.forEach((subscribedUser) => {
-            const { id } = subscribedUser;
-            allAuthBotIds.push(id);
-          });
-          setUsersAuthId(allAuthBotIds);
+    if (!myAuthBotId) return;
+
+    let isMounted = true;
+
+    const fetchUserData = async () => {
+      try {
+        const componentsBot = getBot(byTag("system", "app.components"));
+        const subscribedUsers = await getSubscribedUsers();
+
+        if (!subscribedUsers) return;
+
+        const allAuthBotIds = [
+          myAuthBotId,
+          ...subscribedUsers.map((user) => user.id),
+        ];
+
+        const dataPromises = allAuthBotIds.map(async (id) => {
+          const firstResult = await os.getData(id, id);
+          if (firstResult.success) return { ...firstResult.data, id };
+
+          const secondResult = await os.getData(componentsBot.tags.key, id);
+          if (secondResult.success) return { ...secondResult.data, id };
+
+          return undefined;
+        });
+
+        let rawUsersData = await Promise.all(dataPromises);
+        rawUsersData = rawUsersData.filter(Boolean);
+        const newUsersData: Map<string, UserData> = new Map(
+          rawUsersData.map((data) => {
+            return [
+              data.id,
+              {
+                profileName: data.profileName,
+                photoLink: data.photoLink,
+              },
+            ];
+          })
+        );
+
+        if (isMounted) {
+          console.log(`[Debug] ReadingHistoryContext`, { newUsersData });
+          setUsersDataMap(newUsersData);
         }
-      });
-    }
+      } catch (error) {
+        console.error("Error fetching user data:", error);
+      }
+    };
+
+    fetchUserData();
+
+    return () => {
+      isMounted = false;
+    };
   }, [myAuthBotId]);
 
   const {
@@ -236,8 +287,9 @@ export const ReadingHistoryProvider = ({ children }) => {
     const next = new Map(readingHistoryUserFilters);
 
     let changed = false;
+    const usersAuthIds = Array.from(usersDataMap.keys());
 
-    usersAuthId.forEach((userId) => {
+    usersAuthIds.forEach((userId) => {
       if (!next.has(userId)) {
         next.set(userId, false);
         changed = true;
@@ -245,7 +297,7 @@ export const ReadingHistoryProvider = ({ children }) => {
     });
 
     Array.from(next.keys()).forEach((key) => {
-      if (!usersAuthId.includes(key)) {
+      if (!usersAuthIds.some((userId) => userId === key)) {
         next.delete(key);
         changed = true;
       }
@@ -254,11 +306,11 @@ export const ReadingHistoryProvider = ({ children }) => {
     if (changed) {
       setReadingHistoryUserFilters(next);
     }
-  }, [readingHistoryUserFilters, usersAuthId]);
+  }, [readingHistoryUserFilters, usersDataMap]);
 
   useEffect(() => {
     tryUpdateReadingHistoryUsersFilters();
-  }, [usersAuthId]);
+  }, [usersDataMap]);
 
   useEffect(() => {
     const selectedUsers = [];
@@ -407,9 +459,9 @@ export const ReadingHistoryProvider = ({ children }) => {
     return (
       mode === ScriptureMap2DModes.Viewer &&
       isReadingHistoryEnabled &&
-      usersAuthId?.length > 0
+      usersDataMap.size > 0
     );
-  }, [mode, isReadingHistoryEnabled, usersAuthId, ScriptureMap2DModes]);
+  }, [mode, isReadingHistoryEnabled, usersDataMap, ScriptureMap2DModes]);
 
   useEffect(() => {
     if (shouldShowReadingHistory) {
@@ -441,7 +493,7 @@ export const ReadingHistoryProvider = ({ children }) => {
         MS_PER_WEEK,
         dayRangesMap,
         selectedUsersCount,
-        usersAuthId,
+        usersDataMap,
         shouldShowReadingHistory,
         timelineRange,
         timelineRangesMap,

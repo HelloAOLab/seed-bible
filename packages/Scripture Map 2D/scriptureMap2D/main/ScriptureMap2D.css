@@ -382,9 +382,19 @@
   cursor: pointer;
 }
 
+.reading-history-timeline-item.upcoming,
 .reading-history-timeline-item.selected {
-  border-color: #d36433;
   border-width: 2px;
+}
+
+.reading-history-timeline-item.upcoming {
+  background: var(--background);
+  border-color: var(--firstToolbarbutton);
+  border-style: dashed;
+}
+
+.reading-history-timeline-item.selected {
+  border-color: var(--secondaryColor);
 }
 
 .reading-history-timeline-label {
@@ -420,7 +430,7 @@
 .project-filters-selector-option.selected,
 .project-state-setter-option:hover {
   background-color: var(--primaryLight);
-  border-color: var(--primaryColor);
+  border-color: var(--secondaryColor);
 }
 
 .filter-option-icon {
@@ -566,7 +576,7 @@
   width: 16px;
   height: 16px;
   background-color: transparent;
-  border: solid 5px var(--primaryColor);
+  border: solid 5px var(--secondaryColor);
 }
 
 .scripture-map-2d-wrapper .scripture-map-2d-container {
@@ -800,7 +810,7 @@
 .toggle-testament {
   background-color: var(--pageBackground);
   box-shadow: 0 0 6px 0px #0000001a;
-  border-bottom: solid calc(3px * var(--scale-factor)) var(--primaryColor);
+  border-bottom: solid calc(3px * var(--scale-factor)) var(--secondaryColor);
   display: grid;
   grid-template-columns: 1fr auto;
   grid-template-rows: auto auto;

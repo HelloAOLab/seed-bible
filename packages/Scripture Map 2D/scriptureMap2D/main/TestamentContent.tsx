@@ -179,7 +179,7 @@ export const TestamentContent = memo(({ hidden }) => {
             style={{
               backgroundColor: `${filteredSections[sectionIndex].color}80`,
               borderColor: showingContent
-                ? "var(--primaryColor)"
+                ? "var(--secondaryColor)"
                 : "transparent",
             }}
           />
