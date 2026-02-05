@@ -324,7 +324,7 @@
   flex-direction: row;
   align-items: center;
   justify-content: space-between;
-  /* width: 50px; */
+  min-width: 60px;
   gap: 0px;
 }
 

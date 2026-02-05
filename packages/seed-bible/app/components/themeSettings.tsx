@@ -5741,12 +5741,14 @@ const SettingsUI = () => {
           )
         )}
       </div>
-      <button
-        style={buttonStyle}
-        onClick={() => setSideBarMode("advancedThemeSettings")}
-      >
-        {t("advancedSettings")}
-      </button>
+      {configBot.tags.settingsPreset !== "minimal" && (
+        <button
+          style={buttonStyle}
+          onClick={() => setSideBarMode("advancedThemeSettings")}
+        >
+          {t("advancedSettings")}
+        </button>
+      )}
       <div style={separatorStyle}></div>
     </div>
   );
