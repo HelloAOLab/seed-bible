@@ -34,6 +34,12 @@ export function BibleVariablesProvider({ children }) {
     "2": true,
     "3": true,
   });
+  const [showFootnotes, setShowFootnotes] = useState({
+    "1": true,
+    "2": true,
+    "3": true,
+  });
+
   const [ReSeed, setReSeed] = useState();
   useEffect(() => {
     globalThis.ToolbarReSeedMode?.(ReSeed);
@@ -488,6 +494,8 @@ export function BibleVariablesProvider({ children }) {
         setShowHeading,
         showVerses,
         setShowVerses,
+        showFootnotes,
+        setShowFootnotes,
       }}
     >
       {children}

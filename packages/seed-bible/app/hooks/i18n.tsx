@@ -201,6 +201,7 @@ const resources = {
       showTabIcons: "Show Tab Icons",
       showChapterHeadings: "Show chapter headings",
       showVerseNumbers: "Show verses numbers",
+      showFootnotes: "Show footnotes",
       font: "Font",
 
       // Text Settings
@@ -926,6 +927,7 @@ const resources = {
       showTabIcons: "Mostrar iconos de pestaña",
       showChapterHeadings: "Mostrar títulos de capítulos",
       showVerseNumbers: "Mostrar números de versículos",
+      showFootnotes: "Mostrar notas al pie",
       font: "Fuente",
 
       // Text Settings
@@ -1089,11 +1091,15 @@ const resources = {
       link: "Enlace",
       file: "Archivo",
       playlist: "Lista de reproducción",
-      unableToCopyPlaylist: "No se puede copiar la lista. Por favor, inténtalo de nuevo!",
-      pleaseWaitOldPlaylistIsLoading: "Por favor, espere mientras se carga la lista.",
-      loadingPlaylistPleaseWait: "Por favor, espere mientras se carga la lista.",
+      unableToCopyPlaylist:
+        "No se puede copiar la lista. Por favor, inténtalo de nuevo!",
+      pleaseWaitOldPlaylistIsLoading:
+        "Por favor, espere mientras se carga la lista.",
+      loadingPlaylistPleaseWait:
+        "Por favor, espere mientras se carga la lista.",
       bookmarkUpdatedSuccessfully: "Marcado actualizado exitosamente.",
-      failedToUpdateBookmark: "Error al actualizar el marcado. Por favor, inténtalo de nuevo.",
+      failedToUpdateBookmark:
+        "Error al actualizar el marcado. Por favor, inténtalo de nuevo.",
       search_tags: "Buscar etiquetas",
       annotate: "Anotar",
       addToQueue: "Agregar a cola",
@@ -1667,6 +1673,7 @@ const resources = {
       showTabIcons: "إظهار أيقونات التبويب",
       showChapterHeadings: "إظهار عناوين الفصول",
       showVerseNumbers: "إظهار أرقام الآيات",
+      showFootnotes: "إظهار الحواشي",
       font: "الخط",
 
       // Text Settings
@@ -1830,7 +1837,8 @@ const resources = {
       playlist: "قائمة التشغيل",
       bookmarkUpdatedSuccessfully: "تم تحديث التصفيح بنجاح.",
       unableToCopyPlaylist: "لا يمكنك إنشاء قائمة. يرجى المحاولة مرة أخرى!",
-      pleaseWaitOldPlaylistIsLoading: "يرجى الإنتظار أثناء تحميل القائمة القديمة.",
+      pleaseWaitOldPlaylistIsLoading:
+        "يرجى الإنتظار أثناء تحميل القائمة القديمة.",
       loadingPlaylistPleaseWait: "يرجى الإنتظار أثناء تحميل القائمة.",
       failedToUpdateBookmark: "خطأ في تحديث التصفيح. يرجى المحاولة مرة أخرى.",
       anytime: "كيفية أي وقت",
@@ -2015,7 +2023,7 @@ const resources = {
       regenerate: "إعادة الإنشاء",
       playlistSettings: "إعدادات القائمة",
       publishSettings: "إعدادات النشر",
-      
+
       privateAccess: "وصول خاص",
       publicAccess: "وصول عام",
       checklist: "قائمة تحقق",
@@ -2365,6 +2373,7 @@ const resources = {
       showTabIcons: "टैब आइकन दिखाएं",
       showChapterHeadings: "अध्याय शीर्षक दिखाएं",
       showVerseNumbers: "आयत संख्या दिखाएं",
+      showFootnotes: "फ़ुटनोट दिखाएं",
       font: "फ़ॉन्ट",
 
       // Text Settings
@@ -2532,7 +2541,8 @@ const resources = {
       loadingPlaylistPleaseWait: "लोड हो रहा है कृपया इंतजार करें...",
       annotate: "टिप्पणी",
       bookmarkUpdatedSuccessfully: "टिप्पणी सफलतापूर्वक अपडेट की गई है।",
-      failedToUpdateBookmark: "टिप्पणी अपडेट करने में विफल। कृपया पुनः कोशिश करें।",
+      failedToUpdateBookmark:
+        "टिप्पणी अपडेट करने में विफल। कृपया पुनः कोशिश करें।",
       addToQueue: "कूद में जोड़ें",
       bookmark: "टिप्पणी",
       unbookmark: "टिप्पणी",

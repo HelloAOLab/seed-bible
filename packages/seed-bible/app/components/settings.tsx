@@ -1514,7 +1514,9 @@ const SettingsSidebar = ({ config }) => {
                 <Component
                   key={itemKey}
                   itemKey={itemKey}
-                  labelKey={itemConfig.labelKey || itemKey}
+                  {...(itemConfig.labelKey && {
+                    labelKey: itemConfig.labelKey,
+                  })}
                   {...itemConfig}
                 />
               );

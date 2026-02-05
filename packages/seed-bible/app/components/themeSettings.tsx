@@ -4909,8 +4909,14 @@ const SettingsUI = () => {
   const [selectedFontSize, setSelectedFontSize] = useState(1);
   const [showFontDropdown, setShowFontDropdown] = useState(false);
   const [showFontSizeMenu, setShowFontSizeMenu] = useState(false);
-  const { setShowHeading, setShowVerses, showHeading, showVerses } =
-    useBibleContext();
+  const {
+    setShowHeading,
+    setShowVerses,
+    showHeading,
+    showVerses,
+    showFootnotes,
+    setShowFootnotes,
+  } = useBibleContext();
   const handleSurpriseMe = () => {
     const randomCombo =
       SURPRISE_COMBINATIONS[
@@ -5557,6 +5563,22 @@ const SettingsUI = () => {
           }
         >
           <div style={toggleCircleStyle(showVerses[activeSpace])}></div>
+        </div>
+      </div>
+
+      <div style={toggleRowStyle}>
+        <div style={toggleLabelStyle}>{t("showFootnotes")}</div>
+
+        <div
+          style={toggleStyle(showFootnotes[activeSpace])}
+          onClick={() =>
+            setShowFootnotes((prev) => ({
+              ...prev,
+              [activeSpace]: !prev[activeSpace],
+            }))
+          }
+        >
+          <div style={toggleCircleStyle(showFootnotes[activeSpace])}></div>
         </div>
       </div>
 

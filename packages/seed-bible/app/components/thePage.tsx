@@ -2430,7 +2430,7 @@ function Section({
       return verse.text;
     }
   };
-  const { showHeading, showVerses } = useBibleContext();
+  const { showHeading, showVerses, showFootnotes } = useBibleContext();
   const { activeSpace } = useTabsContext();
   return (
     <div>
@@ -2651,6 +2651,7 @@ function Section({
                                   verse.verseNumber
                                 );
                                 if (
+                                  showFootnotes[activeSpace] &&
                                   verseFootnotes &&
                                   verseFootnotes.length > 0
                                 ) {
@@ -2689,7 +2690,11 @@ function Section({
                               const verseFootnotes = getVerseFootnotes(
                                 verse.verseNumber
                               );
-                              if (verseFootnotes && verseFootnotes.length > 0) {
+                              if (
+                                showFootnotes[activeSpace] &&
+                                verseFootnotes &&
+                                verseFootnotes.length > 0
+                              ) {
                                 return (
                                   <span
                                     className="footnote-icon"
@@ -2727,7 +2732,11 @@ function Section({
                             const verseFootnotes = getVerseFootnotes(
                               verse.verseNumber
                             );
-                            if (verseFootnotes && verseFootnotes.length > 0) {
+                            if (
+                              showFootnotes[activeSpace] &&
+                              verseFootnotes &&
+                              verseFootnotes.length > 0
+                            ) {
                               return (
                                 <span
                                   className="footnote-icon"
