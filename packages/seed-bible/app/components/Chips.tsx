@@ -1,12 +1,20 @@
 const { useState, useRef, useEffect } = os.appHooks;
 
-function SharePopup({
+interface SharePopupProps {
+  shareTitle: string;
+  shareReference: string;
+  translation: string;
+  popupTitle: string;
+  closePopupSettings: () => void;
+}
+
+const SharePopup = ({
   shareTitle,
   shareReference,
   translation = "BSB",
   popupTitle = "Share",
   closePopupSettings,
-}) {
+}) => {
   const [copied, setCopied] = useState(false);
   const [includeReference, setIncludeReference] = useState(true);
 
@@ -331,7 +339,7 @@ function SharePopup({
       `}</style>
     </>
   );
-}
+};
 
 const QRCodeComponent = ({ url = "https://example.com/session/12345" }) => {
   const [copied, setCopied] = useState(false);
@@ -479,6 +487,12 @@ const QRCodeComponent = ({ url = "https://example.com/session/12345" }) => {
     </div>
   );
 };
+
+interface JoinSessionComponentProps {
+  onJoin: (code: string) => void;
+  translations: any;
+  CloseModal: () => void;
+}
 
 const JoinSessionComponent = ({ onJoin, translations = {}, CloseModal }) => {
   const [sessionCode, setSessionCode] = useState("");

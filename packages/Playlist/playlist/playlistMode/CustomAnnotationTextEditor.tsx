@@ -102,7 +102,7 @@ const DEFAULT_TOOLBAR_PRIORITY = [
 const COMMAND_BOX_OPTIONS = [
   {
     icon: "https://auth-aux-aobot-prod-filesbucket-141297942820.s3.amazonaws.com/annotations/95176265a3a33a0077c8b11b493470df3393acfc3ff5411c8fe45976d96be46d.svg",
-    label: "Add Link",
+    label: "Link",
     onClick: () => {
       globalThis.ThruCommandBox = true;
       shout("startRecording", RECORDING_TYPES.link);
@@ -121,7 +121,7 @@ const COMMAND_BOX_OPTIONS = [
   // },
   {
     icon: "https://auth-aux-aobot-prod-filesbucket-141297942820.s3.amazonaws.com/annotations/8b01074656e936022bbb1655a94e85ba3f9af15d2873d6bd16d01d07d66bdf8b.svg",
-    label: "Add File",
+    label: "File",
     onClick: async () => {
       const files = await os.showUploadFiles();
       shout("onHandleDropFiles", { files, thruCommandBox: true });
@@ -129,7 +129,7 @@ const COMMAND_BOX_OPTIONS = [
   },
   {
     icon: "https://auth-aux-aobot-prod-filesbucket-141297942820.s3.amazonaws.com/annotations/14c602cebbe4c6872c9fcf80015865c3b3f70391608bf58b92ad1cc8e068212c.svg",
-    label: "Add Playlist",
+    label: "Playlist",
     onClick: () => {
       globalThis.ThruCommandBox = true;
       // Notify coming soon
@@ -2453,7 +2453,7 @@ span.playlist-label-sre {
 }
 
 .sre-play-circle {
-  color: var(--primaryColor) !important;
+  color: var(--secondaryColor) !important;
   font-size: 1.5rem;
 }
   
