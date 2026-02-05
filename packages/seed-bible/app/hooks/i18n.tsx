@@ -224,6 +224,7 @@ const resources = {
       // Toolbar
       tools: "Tools",
       fullScreen: "Full screen",
+      keepDeviceAwaken: "Keep device awaken",
       splitScreen: "Split Screen",
       showSearch: "Show Search",
       hideSearch: "Hide Search",
@@ -950,6 +951,7 @@ const resources = {
       // Toolbar
       tools: "Herramientas",
       fullScreen: "Pantalla completa",
+      keepDeviceAwaken: "Mantener dispositivo activo",
       splitScreen: "Pantalla dividida",
       showSearch: "Mostrar búsqueda",
       hideSearch: "Ocultar búsqueda",
@@ -1696,6 +1698,7 @@ const resources = {
       // Toolbar
       tools: "الأدوات",
       fullScreen: "ملء الشاشة",
+      keepDeviceAwaken: "إبقاء الجهاز نشطًا",
       splitScreen: "تقسيم الشاشة",
       showSearch: "إظهار البحث",
       hideSearch: "إخفاء البحث",
@@ -2396,6 +2399,7 @@ const resources = {
       // Toolbar
       tools: "उपकरण",
       fullScreen: "पूर्ण स्क्रीन",
+      keepDeviceAwaken: "डिवाइस को जगाए रखें",
       splitScreen: "स्क्रीन विभाजित करें",
       showSearch: "खोज दिखाएं",
       hideSearch: "खोज छुपाएं",
