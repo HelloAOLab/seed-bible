@@ -55,22 +55,17 @@ const Label = memo(({ gridRow, gridColumn, children, isDay }) => {
 
 const Item = memo(
   ({
-    background,
-    gridRow,
-    gridColumn,
+    style,
     tooltipContent,
     handleItemClick,
     range,
     readingHistoryRangeSeconds,
     id,
+    isUpcoming,
   }) => {
     const selected = useMemo(() => {
       return range === readingHistoryRangeSeconds;
     }, [range, readingHistoryRangeSeconds]);
-
-    const style = useMemo(() => {
-      return { background, gridRow, gridColumn };
-    }, [background, gridRow, gridColumn]);
 
     const [containerRect, setContainerRect] = useState(null);
 
@@ -99,7 +94,7 @@ const Item = memo(
           setContainerRect(null);
         }}
         style={style}
-        className={`reading-history-timeline-item${selected ? " selected" : ""}`}
+        className={`reading-history-timeline-item${selected ? " selected" : ""}${isUpcoming ? " upcoming" : ""}`}
         onClick={() => {
           handleItemClick(selected ? null : range);
         }}
@@ -165,37 +160,22 @@ export const ReadingHistoryTimeline = () => {
 
         if (summary && summary.totalTimeSpentReading > SEC_PER_MINUTE) {
           const usersKeys = Object.keys(summary.users);
-          if (usersKeys.length > 3) {
-            const userColor = themeColors?.["1"]?.primaryColor ?? "#D2691E"; // Hardcoded primary color. Must be accesible in the future
-            color = BibleVizUtils.Functions.GetHistoryColorByReadingTime({
-              baseColor: themeColors?.["1"]?.firstToolbarbutton ?? "#dfdede", // Hardcoded firstToolbarbutton. Must be accesible in the future
-              userColor,
-              step,
-              readingTimeSeconds: summary.totalTimeSpentReading,
-              fullColorTimeSeconds,
-            });
+          const colorData = {
+            baseColor: themeColors?.["1"]?.firstToolbarbutton ?? "#dfdede", // Hardcoded firstToolbarbutton. Must be accesible in the future
+            step,
+            readingTimeSeconds: summary.totalTimeSpentReading,
+            fullColorTimeSeconds,
+          };
+          if (usersKeys.length > 1) {
+            colorData.userColor =
+              themeColors?.["1"]?.secondaryColor ?? "#D2691E"; // Hardcoded primary color. Must be accesible in the future
           } else {
-            const usersColors = [];
-            const fixedValue = 1 / usersKeys.length;
-            for (let i = 0; i < usersKeys.length; i++) {
-              const userKey = usersKeys[i];
-              let userColor = readingHistoryColorStore.getUserColor(userKey);
-              userColor = BibleVizUtils.Functions.GetHistoryColorByReadingTime({
-                baseColor: themeColors?.["1"]?.firstToolbarbutton ?? "#dfdede", // Hardcoded firstToolbarbutton. Must be accesible in the future
-                userColor,
-                step,
-                readingTimeSeconds:
-                  summary.users[userKey].totalTimeSpentReading,
-                fullColorTimeSeconds: SEC_PER_HOUR,
-              });
-              usersColors.push({ color: userColor, value: fixedValue });
-            }
-
-            color =
-              BibleVizUtils.Functions.GetHistoryColorLinearGradient(
-                usersColors
-              );
+            const userKey = usersKeys[0];
+            colorData.userColor =
+              readingHistoryColorStore.getUserColor(userKey);
           }
+          color =
+            BibleVizUtils.Functions.GetHistoryColorByReadingTime(colorData);
         }
 
         if (!shouldReassign && prevColor !== color) shouldReassign = true;
@@ -223,6 +203,7 @@ export const ReadingHistoryTimeline = () => {
     const monthsSet = new Set();
     const monthLabelGridRow = `1 / 2`;
     const dayLabelGridColumn = `1 / 2`;
+    const todayDate = new Date();
 
     items.push(
       <Label gridRow={`3 / 4`} gridColumn={dayLabelGridColumn} isDay={true}>
@@ -354,22 +335,25 @@ export const ReadingHistoryTimeline = () => {
           }
         }
 
-        const background = itemsColorMap?.get?.(key);
-
         const itemGridRow = `${day + 2} / ${day + 3}`;
         const itemGridColumn = `${week + 2} / ${week + 3}`;
+        const style = {
+          gridRow: itemGridRow,
+          gridColumn: itemGridColumn,
+          background: itemsColorMap?.get?.(key),
+        };
+        const isUpcoming = time > todayDate.getTime();
 
         items.push(
           <Item
             id={key}
             key={`${week}-${day}-${dayOfTheMonth}-${monthName}-${year}`}
-            background={background}
-            gridRow={itemGridRow}
-            gridColumn={itemGridColumn}
             tooltipContent={tooltipContent}
             range={range}
             handleItemClick={handleItemClick}
             readingHistoryRangeSeconds={readingHistoryRangeSeconds}
+            style={style}
+            isUpcoming={isUpcoming}
           />
         );
       }
