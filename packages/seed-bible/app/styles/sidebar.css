@@ -324,7 +324,7 @@
   flex-direction: row;
   align-items: center;
   justify-content: space-between;
-  /* width: 50px; */
+  min-width: 60px;
   gap: 0px;
 }
 
@@ -409,7 +409,7 @@
 
 .popupSettings {
   position: relative;
-  width: 192px !important;
+  width: 215px !important;
   height: fit-content;
   padding: 10px;
   background: #202020;

@@ -1,4 +1,7 @@
-import { BibleDataManager } from "app.hooks.bibleDataManager";
+import {
+  BibleDataManager,
+  getCachedBibleData,
+} from "app.hooks.bibleDataManager";
 import { getStyleOf } from "app.styles.styler";
 const {
   useEffect,
@@ -861,19 +864,19 @@ function ThePage({
       setData(bible.data);
       setFootnotes(bible.footnotes);
     } catch {
-      const tab = globalThis.AddTab({
-        id: uuid(),
-        taken: false,
-        data: {
-          use: "thePage",
-          type: "book",
-          book: bookId,
-          bookId: bookId,
-          chapter: chapter,
-          translation: translation || "BSB",
-        },
-      });
-      setTab(tab);
+      // const tab = globalThis.AddTab({
+      //   id: uuid(),
+      //   taken: false,
+      //   data: {
+      //     use: "thePage",
+      //     type: "book",
+      //     book: bookId,
+      //     bookId: bookId,
+      //     chapter: chapter,
+      //     translation: translation || "BSB",
+      //   },
+      // });
+      // setTab(tab);
     }
   }
 
@@ -1495,6 +1498,7 @@ function ThePage({
   }, [showVerseToolbar]);
   const [dragToolbar, setDragToolbar] = useState(false);
   const [toolbarPos, setToolbarPos] = useState({ x: 200, y: 200 }); // initial position
+  const { showHeading } = useBibleContext();
   useEffect(() => {
     if (!dragToolbar) return;
     setToolbarPos({
@@ -1532,18 +1536,25 @@ function ThePage({
         }
 
         .verse-clicked {
-          border-bottom: 2px dashed var(--spaceSelection) !important;
+          border-bottom: 2px dashed var(--tertiaryColor) !important;
 
         }
 
         .footnote-icon {
-          display: inline-block;
+          display: inline-flex;
+          align-items: center;
           margin-left: 4px;
-          font-size: 0.85em;
+          font-size: inherit;
           color: var(--spaceSelection);
           cursor: pointer;
           user-select: none;
-          vertical-align: middle;
+          vertical-align: baseline;
+          position: relative;
+          top: 0.1em;
+        }
+
+        .footnote-icon .material-symbols-outlined {
+          font-size: 0.85em;
         }
 
         .footnote-icon:hover {
@@ -1644,6 +1655,7 @@ function ThePage({
             style={{ "pointer-events": isDragging ? "none" : null }}
             className="bookTitle"
           >{`${data?.book} ${data?.chapter}`}</div>
+          {showHeading[activeSpace] && <div style={{ height: "1rem" }}></div>}
           {data &&
             data.content.map((e) => {
               return (
@@ -1687,7 +1699,7 @@ function ThePage({
                 </>
               );
             })}
-          <div style={{ height: "40px" }}></div>
+          <div style={{ height: "120px" }}></div>
           <div
             style={{
               margin: "auto",
@@ -1782,8 +1794,7 @@ function ThePage({
               >
                 <div className="footnote-modal-header">
                   <h3>
-                    {activeFootnote.book} {activeFootnote.chapter}:
-                    {activeFootnote.verse}
+                    {`${activeFootnote.book} ${activeFootnote.chapter}:${activeFootnote.verse}`}
                   </h3>
                   <button
                     className="footnote-modal-close"
@@ -2430,11 +2441,11 @@ function Section({
       return verse.text;
     }
   };
-  const { showHeading, showVerses } = useBibleContext();
+  const { showHeading, showVerses, showFootnotes } = useBibleContext();
   const { activeSpace } = useTabsContext();
   return (
     <div>
-      {showHeading[activeSpace] && (
+      {showHeading[activeSpace] ? (
         <div
           className="sectionTitle"
           {...eventHandlers}
@@ -2446,6 +2457,8 @@ function Section({
         >
           {heading}
         </div>
+      ) : (
+        <div style={{ height: "1em" }} />
       )}
 
       {hebrew_subtitle && <div className="sectionTitle">{hebrew_subtitle}</div>}
@@ -2651,6 +2664,7 @@ function Section({
                                   verse.verseNumber
                                 );
                                 if (
+                                  showFootnotes[activeSpace] &&
                                   verseFootnotes &&
                                   verseFootnotes.length > 0
                                 ) {
@@ -2689,7 +2703,11 @@ function Section({
                               const verseFootnotes = getVerseFootnotes(
                                 verse.verseNumber
                               );
-                              if (verseFootnotes && verseFootnotes.length > 0) {
+                              if (
+                                showFootnotes[activeSpace] &&
+                                verseFootnotes &&
+                                verseFootnotes.length > 0
+                              ) {
                                 return (
                                   <span
                                     className="footnote-icon"
@@ -2727,7 +2745,11 @@ function Section({
                             const verseFootnotes = getVerseFootnotes(
                               verse.verseNumber
                             );
-                            if (verseFootnotes && verseFootnotes.length > 0) {
+                            if (
+                              showFootnotes[activeSpace] &&
+                              verseFootnotes &&
+                              verseFootnotes.length > 0
+                            ) {
                               return (
                                 <span
                                   className="footnote-icon"
@@ -2862,7 +2884,13 @@ export const ThePageWithEditor = ({ tab, setPanalApp, panelId }) => {
   const activeTab = panelId ? globalThis.PanelTabsMap[panelId] || tab : tab;
   const [enableEditor, setEnableEditor] = useState(false);
   useEffect(() => {}, [enableEditor]);
-  const [data, setData] = useState();
+  const [data, setData] = useState(() =>
+    getCachedBibleData(
+      tab?.data?.translation,
+      tab?.data?.bookId,
+      tab?.data?.chapter
+    )
+  );
   const [deleteTab, setDeleteTab] = useState(false);
   if (tab) globalThis[`SetEnableEditorOf${tab?.id}`] = setEnableEditor;
   useEffect(() => {

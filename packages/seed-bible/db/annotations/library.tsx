@@ -960,6 +960,12 @@ export async function subscribeToUsers(
   for (const user of newUsers) {
     try {
       await addSubscriberToUser(user.id, myProfile);
+      // Notify that user subscribed
+      shout("userSubscribed", {
+        subscriber: myProfile,
+        subscribedTo: user,
+        configId: configBot.id,
+      });
     } catch (e) {
       console.error(`Error adding subscriber to user ${user.id}:`, e);
     }
@@ -1084,6 +1090,12 @@ export async function unsubscribeFromUsers(
   for (const userId of userIds) {
     try {
       await removeSubscriberFromUser(userId, recordName);
+      // Notify that user unsubscribed
+      shout("userUnsubscribed", {
+        unsubscriberId: recordName,
+        unsubscribedFromId: userId,
+        configId: configBot.id,
+      });
     } catch (e) {
       console.error(`Error removing subscriber from user ${userId}:`, e);
     }
