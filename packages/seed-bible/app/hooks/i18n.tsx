@@ -823,6 +823,9 @@ const resources = {
       fromUrl: "from URL",
       enterId: "Enter ID",
       Queue: "Queue",
+      noTranslationsFound:
+        "No results found. Would you like to expand your search to include partial and incomplete languages as well?",
+      showAllTranslations: "Show all translations",
     },
   },
   es: {
@@ -1089,11 +1092,15 @@ const resources = {
       link: "Enlace",
       file: "Archivo",
       playlist: "Lista de reproducción",
-      unableToCopyPlaylist: "No se puede copiar la lista. Por favor, inténtalo de nuevo!",
-      pleaseWaitOldPlaylistIsLoading: "Por favor, espere mientras se carga la lista.",
-      loadingPlaylistPleaseWait: "Por favor, espere mientras se carga la lista.",
+      unableToCopyPlaylist:
+        "No se puede copiar la lista. Por favor, inténtalo de nuevo!",
+      pleaseWaitOldPlaylistIsLoading:
+        "Por favor, espere mientras se carga la lista.",
+      loadingPlaylistPleaseWait:
+        "Por favor, espere mientras se carga la lista.",
       bookmarkUpdatedSuccessfully: "Marcado actualizado exitosamente.",
-      failedToUpdateBookmark: "Error al actualizar el marcado. Por favor, inténtalo de nuevo.",
+      failedToUpdateBookmark:
+        "Error al actualizar el marcado. Por favor, inténtalo de nuevo.",
       search_tags: "Buscar etiquetas",
       annotate: "Anotar",
       addToQueue: "Agregar a cola",
@@ -1564,6 +1571,9 @@ const resources = {
       fromUrl: "desde URL",
       enterId: "Ingresar ID",
       Queue: "Cola",
+      noTranslationsFound:
+        "No se encontraron resultados. ¿Le gustaría ampliar su búsqueda para incluir idiomas parciales e incompletos también?",
+      showAllTranslations: "Mostrar todas las traducciones",
     },
   },
   ar: {
@@ -1830,7 +1840,8 @@ const resources = {
       playlist: "قائمة التشغيل",
       bookmarkUpdatedSuccessfully: "تم تحديث التصفيح بنجاح.",
       unableToCopyPlaylist: "لا يمكنك إنشاء قائمة. يرجى المحاولة مرة أخرى!",
-      pleaseWaitOldPlaylistIsLoading: "يرجى الإنتظار أثناء تحميل القائمة القديمة.",
+      pleaseWaitOldPlaylistIsLoading:
+        "يرجى الإنتظار أثناء تحميل القائمة القديمة.",
       loadingPlaylistPleaseWait: "يرجى الإنتظار أثناء تحميل القائمة.",
       failedToUpdateBookmark: "خطأ في تحديث التصفيح. يرجى المحاولة مرة أخرى.",
       anytime: "كيفية أي وقت",
@@ -2015,7 +2026,7 @@ const resources = {
       regenerate: "إعادة الإنشاء",
       playlistSettings: "إعدادات القائمة",
       publishSettings: "إعدادات النشر",
-      
+
       privateAccess: "وصول خاص",
       publicAccess: "وصول عام",
       checklist: "قائمة تحقق",
@@ -2262,6 +2273,9 @@ const resources = {
       fromUrl: "من URL",
       enterId: "أدخل ID",
       Queue: "الطابور",
+      noTranslationsFound:
+        "لم يتم العثور على نتائج. هل ترغب في توسيع نطاق بحثك ليشمل اللغات الجزئية وغير المكتملة أيضًا؟",
+      showAllTranslations: "عرض جميع الترجمات",
     },
   },
   hi: {
@@ -2532,7 +2546,8 @@ const resources = {
       loadingPlaylistPleaseWait: "लोड हो रहा है कृपया इंतजार करें...",
       annotate: "टिप्पणी",
       bookmarkUpdatedSuccessfully: "टिप्पणी सफलतापूर्वक अपडेट की गई है।",
-      failedToUpdateBookmark: "टिप्पणी अपडेट करने में विफल। कृपया पुनः कोशिश करें।",
+      failedToUpdateBookmark:
+        "टिप्पणी अपडेट करने में विफल। कृपया पुनः कोशिश करें।",
       addToQueue: "कूद में जोड़ें",
       bookmark: "टिप्पणी",
       unbookmark: "टिप्पणी",
@@ -2981,6 +2996,7 @@ const resources = {
       openMap: "मानचित्र खोलें",
       openBoth: "दोनों खोलें",
 
+      // BookSelector
       searchBook: "पुस्तक खोजें...",
       searchTranslation: "अनुवाद खोजें...",
       oldTestament: "पुराना नियम",
@@ -2994,6 +3010,9 @@ const resources = {
       fromUrl: "URL से",
       enterId: "ID दर्ज करें",
       Queue: "क्यू",
+      noTranslationsFound:
+        "कोई परिणाम नहीं मिला। क्या आप अपनी खोज का दायरा बढ़ाकर आंशिक और अपूर्ण भाषाओं को भी शामिल करना चाहेंगे?",
+      showAllTranslations: "सभी अनुवाद दिखाएं",
     },
   },
 };
