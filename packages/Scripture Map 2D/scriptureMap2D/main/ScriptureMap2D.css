@@ -382,9 +382,19 @@
   cursor: pointer;
 }
 
+.reading-history-timeline-item.upcoming,
 .reading-history-timeline-item.selected {
-  border-color: #d36433;
   border-width: 2px;
+}
+
+.reading-history-timeline-item.upcoming {
+  background: var(--background);
+  border-color: var(--firstToolbarbutton);
+  border-style: dashed;
+}
+
+.reading-history-timeline-item.selected {
+  border-color: var(--secondaryColor);
 }
 
 .reading-history-timeline-label {
@@ -420,7 +430,7 @@
 .project-filters-selector-option.selected,
 .project-state-setter-option:hover {
   background-color: var(--primaryLight);
-  border-color: var(--primaryColor);
+  border-color: var(--secondaryColor);
 }
 
 .filter-option-icon {
@@ -566,7 +576,7 @@
   width: 16px;
   height: 16px;
   background-color: transparent;
-  border: solid 5px var(--primaryColor);
+  border: solid 5px var(--secondaryColor);
 }
 
 .scripture-map-2d-wrapper .scripture-map-2d-container {
@@ -640,6 +650,8 @@
   grid-template-columns: repeat(var(--book-max-columns), var(--chapter-width));
   grid-template-rows: repeat(auto-fill, var(--chapter-width));
   justify-content: center;
+  align-items: center;
+  justify-items: center;
 }
 
 .book-container .book-header {
@@ -691,6 +703,17 @@
   display: flex;
   justify-content: center;
   align-items: center;
+  --userPresenceBorderPadding: calc(var(--scale-factor) * 2px);
+}
+
+.scripture-map-2d-wrapper
+  .scripture-map-2d-container
+  .testament-container
+  .book-container
+  .book-cover
+  .chapter.show-user-presence {
+  width: calc(var(--chapter-width) - var(--userPresenceBorderPadding));
+  height: calc(var(--chapter-width) - var(--userPresenceBorderPadding));
 }
 
 @property --angle {
@@ -721,8 +744,8 @@
     from var(--angle),
     var(--userPresenceColors)
   );
-  padding: calc(var(--scale-factor) * 2px);
-  border-radius: calc(5px * var(--scale-factor));
+  padding: var(--userPresenceBorderPadding);
+  border-radius: calc(3px * var(--scale-factor));
 }
 
 .book-container .book-cover.show-user-presence::before,
@@ -787,7 +810,7 @@
 .toggle-testament {
   background-color: var(--pageBackground);
   box-shadow: 0 0 6px 0px #0000001a;
-  border-bottom: solid calc(3px * var(--scale-factor)) var(--primaryColor);
+  border-bottom: solid calc(3px * var(--scale-factor)) var(--secondaryColor);
   display: grid;
   grid-template-columns: 1fr auto;
   grid-template-rows: auto auto;

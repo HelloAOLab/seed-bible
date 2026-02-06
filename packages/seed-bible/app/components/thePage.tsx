@@ -1495,6 +1495,7 @@ function ThePage({
   }, [showVerseToolbar]);
   const [dragToolbar, setDragToolbar] = useState(false);
   const [toolbarPos, setToolbarPos] = useState({ x: 200, y: 200 }); // initial position
+  const { showHeading } = useBibleContext();
   useEffect(() => {
     if (!dragToolbar) return;
     setToolbarPos({
@@ -1537,13 +1538,20 @@ function ThePage({
         }
 
         .footnote-icon {
-          display: inline-block;
+          display: inline-flex;
+          align-items: center;
           margin-left: 4px;
-          font-size: 0.85em;
+          font-size: inherit;
           color: var(--spaceSelection);
           cursor: pointer;
           user-select: none;
-          vertical-align: middle;
+          vertical-align: baseline;
+          position: relative;
+          top: 0.1em;
+        }
+
+        .footnote-icon .material-symbols-outlined {
+          font-size: 0.85em;
         }
 
         .footnote-icon:hover {
@@ -1644,6 +1652,7 @@ function ThePage({
             style={{ "pointer-events": isDragging ? "none" : null }}
             className="bookTitle"
           >{`${data?.book} ${data?.chapter}`}</div>
+          {showHeading[activeSpace] && <div style={{ height: "1rem" }}></div>}
           {data &&
             data.content.map((e) => {
               return (
@@ -1687,7 +1696,7 @@ function ThePage({
                 </>
               );
             })}
-          <div style={{ height: "40px" }}></div>
+          <div style={{ height: "120px" }}></div>
           <div
             style={{
               margin: "auto",
@@ -1782,8 +1791,7 @@ function ThePage({
               >
                 <div className="footnote-modal-header">
                   <h3>
-                    {activeFootnote.book} {activeFootnote.chapter}:
-                    {activeFootnote.verse}
+                    {`${activeFootnote.book} ${activeFootnote.chapter}:${activeFootnote.verse}`}
                   </h3>
                   <button
                     className="footnote-modal-close"
@@ -2430,11 +2438,11 @@ function Section({
       return verse.text;
     }
   };
-  const { showHeading, showVerses } = useBibleContext();
+  const { showHeading, showVerses, showFootnotes } = useBibleContext();
   const { activeSpace } = useTabsContext();
   return (
     <div>
-      {showHeading[activeSpace] && (
+      {showHeading[activeSpace] ? (
         <div
           className="sectionTitle"
           {...eventHandlers}
@@ -2446,6 +2454,8 @@ function Section({
         >
           {heading}
         </div>
+      ) : (
+        <div style={{ height: "1em" }} />
       )}
 
       {hebrew_subtitle && <div className="sectionTitle">{hebrew_subtitle}</div>}
@@ -2651,6 +2661,7 @@ function Section({
                                   verse.verseNumber
                                 );
                                 if (
+                                  showFootnotes[activeSpace] &&
                                   verseFootnotes &&
                                   verseFootnotes.length > 0
                                 ) {
@@ -2689,7 +2700,11 @@ function Section({
                               const verseFootnotes = getVerseFootnotes(
                                 verse.verseNumber
                               );
-                              if (verseFootnotes && verseFootnotes.length > 0) {
+                              if (
+                                showFootnotes[activeSpace] &&
+                                verseFootnotes &&
+                                verseFootnotes.length > 0
+                              ) {
                                 return (
                                   <span
                                     className="footnote-icon"
@@ -2727,7 +2742,11 @@ function Section({
                             const verseFootnotes = getVerseFootnotes(
                               verse.verseNumber
                             );
-                            if (verseFootnotes && verseFootnotes.length > 0) {
+                            if (
+                              showFootnotes[activeSpace] &&
+                              verseFootnotes &&
+                              verseFootnotes.length > 0
+                            ) {
                               return (
                                 <span
                                   className="footnote-icon"

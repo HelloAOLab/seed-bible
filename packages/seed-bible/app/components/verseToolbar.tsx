@@ -392,13 +392,7 @@ export function VerseToolbar({
               margin-left: 10px !important;
             }
             
-            .color-circle, .plus-button, 
-            .clear-button, .clear-all-button {
-              width: 24px !important;
-              height: 24px !important;
-              font-size: 11px !important;
-              padding: 6px 12px !important;
-            }
+           
             .clear-button, .clear-all-button {
               width: 100px !important;
               }

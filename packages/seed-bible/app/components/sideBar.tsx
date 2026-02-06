@@ -808,6 +808,7 @@ function SideBar({ panelsNumber }) {
   globalThis.SetOnlineUsers = setOnlineUsers;
   const [showSearch, setShowSearch] = useState(false); // New state for search visibility
   const [editMode, setEditMode] = useState(false); // New state for edit mode
+  const [keepAwake, setKeepAwake] = useState(false); // New state for keep device awaken
   useEffect(() => {
     setEditMode(ReSeed);
   }, [ReSeed]);
@@ -994,6 +995,27 @@ function SideBar({ panelsNumber }) {
     }
   };
 
+  // Toggle keep device awaken function
+  const toggleKeepAwake = async () => {
+    if (keepAwake) {
+      // Release the wake lock
+      try {
+        await os.disableWakeLock();
+        setKeepAwake(false);
+      } catch (err: any) {
+        os.toast("Could not disable keep awake: " + err?.message);
+      }
+    } else {
+      // Request a wake lock
+      try {
+        await os.requestWakeLock();
+        setKeepAwake(true);
+      } catch (err: any) {
+        os.toast("Could not enable keep awake: " + err?.message);
+      }
+    }
+  };
+
   const ScreenOptions = ({ setCustomScreens }) => {
     return (
       <div
@@ -1173,6 +1195,13 @@ function SideBar({ panelsNumber }) {
           setFullScreen(true);
         },
       },
+      {
+        disabled: false,
+        icon: <MenuIcon name="brightness_high" />,
+        title: t("keepDeviceAwaken"),
+        toggle: keepAwake,
+        onClick: toggleKeepAwake,
+      },
       // { type: "line" },
       // {
       //     disabled: false,
@@ -1183,10 +1212,12 @@ function SideBar({ panelsNumber }) {
       // { disabled: true, icon: <MenuIcon name="extension" />, title: 'Extensions', onClick: () => { } },
       { type: "line" },
       {
-        disabled: true,
+        disabled: false,
         icon: <MenuIcon name="bug_report" />,
         title: t("reportBug"),
-        onClick: () => {},
+        onClick: () => {
+          os.openURL("https://forms.gle/mhtqbQd6VPW8ZDh2A");
+        },
       },
       {
         disabled: true,

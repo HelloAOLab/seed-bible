@@ -292,14 +292,49 @@ export function PopupSettings({ items, type, disabled, sidebarContext }) {
                   style={{
                     cursor: item?.disabled ? "not-allowed" : "pointer",
                     color: item?.disabled ? "#929292" : "",
+                    justifyContent:
+                      item.toggle !== undefined ? "space-between" : undefined,
                   }}
                 >
-                  <div>{item.icon}</div>
-                  <div>
-                    {typeof item.title === "function"
-                      ? item.title()
-                      : item.title}
+                  <div
+                    style={{
+                      display: "flex",
+                      alignItems: "center",
+                      gap: "10px",
+                    }}
+                  >
+                    <div>{item.icon}</div>
+                    <div>
+                      {typeof item.title === "function"
+                        ? item.title()
+                        : item.title}
+                    </div>
                   </div>
+                  {item.toggle !== undefined && (
+                    <div
+                      style={{
+                        width: "36px",
+                        height: "20px",
+                        borderRadius: "10px",
+                        backgroundColor: item.toggle ? "#FF6B35" : "#555",
+                        position: "relative",
+                        transition: "background-color 0.2s",
+                      }}
+                    >
+                      <div
+                        style={{
+                          width: "16px",
+                          height: "16px",
+                          borderRadius: "50%",
+                          backgroundColor: "white",
+                          position: "absolute",
+                          top: "2px",
+                          left: item.toggle ? "18px" : "2px",
+                          transition: "left 0.2s",
+                        }}
+                      />
+                    </div>
+                  )}
                 </div>
               );
           })}
