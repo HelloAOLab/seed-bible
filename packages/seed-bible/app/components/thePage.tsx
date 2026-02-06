@@ -1495,6 +1495,7 @@ function ThePage({
   }, [showVerseToolbar]);
   const [dragToolbar, setDragToolbar] = useState(false);
   const [toolbarPos, setToolbarPos] = useState({ x: 200, y: 200 }); // initial position
+  const { showHeading } = useBibleContext();
   useEffect(() => {
     if (!dragToolbar) return;
     setToolbarPos({
@@ -1537,13 +1538,20 @@ function ThePage({
         }
 
         .footnote-icon {
-          display: inline-block;
+          display: inline-flex;
+          align-items: center;
           margin-left: 4px;
-          font-size: 0.85em;
+          font-size: inherit;
           color: var(--spaceSelection);
           cursor: pointer;
           user-select: none;
-          vertical-align: middle;
+          vertical-align: baseline;
+          position: relative;
+          top: 0.1em;
+        }
+
+        .footnote-icon .material-symbols-outlined {
+          font-size: 0.85em;
         }
 
         .footnote-icon:hover {
@@ -1644,6 +1652,7 @@ function ThePage({
             style={{ "pointer-events": isDragging ? "none" : null }}
             className="bookTitle"
           >{`${data?.book} ${data?.chapter}`}</div>
+          {showHeading[activeSpace] && <div style={{ height: "1rem" }}></div>}
           {data &&
             data.content.map((e) => {
               return (
@@ -2434,7 +2443,7 @@ function Section({
   const { activeSpace } = useTabsContext();
   return (
     <div>
-      {showHeading[activeSpace] && (
+      {showHeading[activeSpace] ? (
         <div
           className="sectionTitle"
           {...eventHandlers}
@@ -2446,6 +2455,8 @@ function Section({
         >
           {heading}
         </div>
+      ) : (
+        <div style={{ height: "1em" }} />
       )}
 
       {hebrew_subtitle && <div className="sectionTitle">{hebrew_subtitle}</div>}
