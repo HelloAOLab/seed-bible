@@ -1791,8 +1791,7 @@ function ThePage({
               >
                 <div className="footnote-modal-header">
                   <h3>
-                    {activeFootnote.book} {activeFootnote.chapter}:
-                    {activeFootnote.verse}
+                    {`${activeFootnote.book} ${activeFootnote.chapter}:${activeFootnote.verse}`}
                   </h3>
                   <button
                     className="footnote-modal-close"
