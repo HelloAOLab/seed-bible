@@ -21,6 +21,15 @@ const CreateAccountSettings = () => {
   const [description, setDescription] = useState("");
   const [uid, setUid] = useState(authBot?.id);
   const [isSignedIn, setIsSignedIn] = useState(false);
+  useEffect(() => {
+    if (!authBot.id) {
+      setIsSignedIn(false);
+      setUid("");
+      setProfileName("");
+      setDescription("");
+      setImg(undefined);
+    }
+  }, [authBot]);
   async function init() {
     const authBot = await os.requestAuthBotInBackground();
     if (!authBot?.id) {
@@ -277,6 +286,39 @@ const CreateAccountSettings = () => {
             }}
           >
             Save Profile
+          </button>
+          <div style={{ height: "20px" }}></div>
+          <button
+            onClick={async () => {
+              if (authBot) {
+                destroy(authBot);
+              }
+              setIsSignedIn(false);
+              setUid("");
+              setProfileName("");
+              setDescription("");
+              setImg(undefined);
+              os.toast("Signed out successfully");
+            }}
+            style={{
+              background: "white",
+              color: "#DC3545",
+              border: "2px solid #DC3545",
+              padding: "10px 20px",
+              borderRadius: "6px",
+              cursor: "pointer",
+              width: "100%",
+              display: "flex",
+              alignItems: "center",
+              justifyContent: "center",
+              gap: "8px",
+            }}
+          >
+            <span style={{ fontSize: "16px" }}>
+              {" "}
+              <MenuIcon name={"logout"} />{" "}
+            </span>{" "}
+            Sign out
           </button>
         </>
       )}
