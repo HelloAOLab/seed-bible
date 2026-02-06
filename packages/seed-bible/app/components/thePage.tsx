@@ -1696,7 +1696,7 @@ function ThePage({
                 </>
               );
             })}
-          <div style={{ height: "40px" }}></div>
+          <div style={{ height: "120px" }}></div>
           <div
             style={{
               margin: "auto",
