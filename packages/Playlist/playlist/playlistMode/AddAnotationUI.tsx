@@ -37,8 +37,6 @@ import { extractHashtagsFromHTML } from "playlist.playlistMode.AutoTag";
 const DEV_ENV =
   configBot.tags.pattern === "SeedBibleDev" || !configBot.tags.pattern;
 
-const AnnotationIcon = G.AnnotationIcon;
-
 const AnnotationInnerDiv = ({
   data,
   onRemoveTag,
@@ -606,6 +604,8 @@ const AddAnotationUI = ({
       G.AddAnotationUI = false;
     };
   }, []);
+
+  G.AnnotationUISingleMode = singleMode;
 
   useLayoutEffect(() => {
     G.SelectedItemIDForAttachments = selectedAnnotation;
@@ -1191,9 +1191,6 @@ const AddAnotationUI = ({
           verseNumbers.length > 1 ? verseNumbers : verseNumbers[0] || 0
         );
 
-        console.log("annotation", annotation);
-        console.log("userRecord", userRecord);
-
         promisesArray.push(saveAnnotation(userRecord, annotation));
 
         await Promise.all(promisesArray);
@@ -1531,6 +1528,10 @@ const AddAnotationUI = ({
   const showMorePosition = useRef(getPosition());
 
   const showPlaylistPosition = useRef(getPosition());
+
+  const AnnotationIconI = useMemo(() => {
+    return G.AnnotationIcon;
+  }, []);
 
   useLayoutEffect(() => {
     if (!singleMode) {
@@ -1951,7 +1952,7 @@ const AddAnotationUI = ({
                   // setShowPlaylistSettings(true);
                 }}
               >
-                <AnnotationIcon />
+                <AnnotationIconI />
               </div>
               <p>
                 {singleMode
@@ -1969,7 +1970,11 @@ const AddAnotationUI = ({
                   }}
                   onClick={(e) => {
                     e.preventDefault();
-                    console.log(list);
+                    setList((prev: any[]) => {
+                      const old = [...prev];
+                      old.pop();
+                      return old;
+                    });
                   }}
                 >
                   <span class="material-symbols-outlined">undo</span>
