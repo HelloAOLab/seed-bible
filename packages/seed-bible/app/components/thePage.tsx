@@ -1536,7 +1536,7 @@ function ThePage({
         }
 
         .verse-clicked {
-          border-bottom: 2px dashed var(--spaceSelection) !important;
+          border-bottom: 2px dashed var(--tertiaryColor) !important;
 
         }
 
