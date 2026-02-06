@@ -15,11 +15,11 @@ const SETTINGS_ICON =
 const Legend = () => {
   const { themeColors } = useSideBarContext();
 
-  const { primaryColor, baseColor } = useMemo(() => {
-    const primaryColor = themeColors?.["1"]?.primaryColor ?? "#D2691E";
+  const { secondaryColor, baseColor } = useMemo(() => {
+    const secondaryColor = themeColors?.["1"]?.secondaryColor ?? "#D2691E";
     const baseColor = themeColors?.["1"]?.firstToolbarbutton ?? "#dfdede";
 
-    return { primaryColor, baseColor };
+    return { secondaryColor, baseColor };
   }, [themeColors]);
 
   const squares = useMemo(() => {
@@ -33,7 +33,7 @@ const Legend = () => {
       else {
         backgroundColor = BibleVizUtils.Functions.GetHistoryColorByReadingTime({
           baseColor,
-          userColor: primaryColor,
+          userColor: secondaryColor,
           step,
           readingTimeSeconds: i * step,
           fullColorTimeSeconds: 1,
@@ -43,7 +43,7 @@ const Legend = () => {
     }
 
     return squares;
-  }, [primaryColor, baseColor]);
+  }, [secondaryColor, baseColor]);
 
   return (
     <div className={"legend"}>
@@ -55,14 +55,49 @@ const Legend = () => {
 };
 
 const YearSelector = () => {
+  const optionsRef = useRef(null);
+  const labelRef = useRef(null);
   const { selectedTimelineKey, timelineRangesMap, setSelectedTimelineKey } =
     useReadingHistoryContext();
 
   const [showOptions, setShowOptions] = useState(false);
 
+  useEffect(() => {
+    const handleClickOutside = (e) => {
+      if (
+        optionsRef.current &&
+        !optionsRef.current.contains(e.target) &&
+        labelRef.current &&
+        !labelRef.current.contains(e.target)
+      ) {
+        setShowOptions(false);
+      }
+    };
+
+    const handleFocusOutside = (e) => {
+      if (
+        optionsRef.current &&
+        !optionsRef.current.contains(e.target) &&
+        labelRef.current &&
+        !labelRef.current.contains(e.target)
+      ) {
+        setShowOptions(false);
+      }
+    };
+
+    document.addEventListener("mousedown", handleClickOutside);
+    document.addEventListener("focusin", handleFocusOutside);
+
+    return () => {
+      document.removeEventListener("mousedown", handleClickOutside);
+      document.removeEventListener("focusin", handleFocusOutside);
+    };
+  }, [setShowOptions]);
+
   return (
     <div className={"year-selector"}>
       <div
+        ref={labelRef}
         className={"year-selector-label"}
         onClick={() => setShowOptions((prev) => !prev)}
       >
@@ -70,7 +105,7 @@ const YearSelector = () => {
         <span className="material-symbols-outlined">keyboard_arrow_down</span>
       </div>
       {showOptions && (
-        <div className={"year-selector-options"}>
+        <div ref={optionsRef} className={"year-selector-options"}>
           {Array.from(timelineRangesMap.keys()).map((key: number) => {
             return (
               <span
@@ -133,7 +168,7 @@ const SettingsOptions = ({
     handleShowAllChaptersToggle,
   } = useScriptureMap2DContext();
   const {
-    usersAuthId,
+    usersDataMap,
     shouldShowReadingHistory,
     timelineRangeMethod,
     setTimelineRangeMethod,
@@ -142,8 +177,8 @@ const SettingsOptions = ({
   const containerRef = useRef(null);
 
   const shouldShowReadingHistoryOption = useMemo(() => {
-    return mode === ScriptureMap2DModes.Viewer && usersAuthId?.length > 0;
-  }, [mode, usersAuthId]);
+    return mode === ScriptureMap2DModes.Viewer && usersDataMap.size > 0;
+  }, [mode, usersDataMap]);
 
   useEffect(() => {
     const handleClickOutside = (e) => {
