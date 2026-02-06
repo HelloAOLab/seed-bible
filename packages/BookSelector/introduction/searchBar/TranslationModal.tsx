@@ -589,7 +589,7 @@ const TranslationSettings = (props: {
           style={{
             color:
               showAllLanguages === "all"
-                ? "var(--primaryColor)"
+                ? "var(--secondaryColor)"
                 : "var(--text3)",
           }}
         >
@@ -618,7 +618,7 @@ const TranslationSettings = (props: {
           style={{
             color:
               showAllLanguages === "popular"
-                ? "var(--primaryColor)"
+                ? "var(--secondaryColor)"
                 : "var(--text3)",
           }}
         >
