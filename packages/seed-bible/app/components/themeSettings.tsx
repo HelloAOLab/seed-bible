@@ -103,6 +103,10 @@ const ADVANCED_SETTINGS_SECTIONS = {
       { labelKey: "accentColor", field: "accentColor" },
     ],
   },
+  bibleArrangements: {
+    labelKey: "bibleArrangements",
+    fields: [],
+  },
 };
 
 // Default Theme - Warm Orange/Amber accent
@@ -193,6 +197,45 @@ const defaultTheme = {
   text1: "#333333",
   text2: "#666666",
   showTabIcons: true,
+
+  // Bible arrangements - TaNaK order
+  torahBorder: "#E1E3EA",
+  torahFill: "#E07B4C",
+  torahFont: "DM Sans",
+  torahSize: "12",
+  neviimBorder: "#E1E3EA",
+  neviimFill: "#9CB32C",
+  neviimFont: "DM Sans",
+  neviimSize: "12",
+  ketuvimBorder: "#E1E3EA",
+  ketuvimFill: "#00BCD4",
+  ketuvimFont: "DM Sans",
+  ketuvimSize: "12",
+  bookTextColor: "#4A4A4A",
+  bookTextFont: "DM Sans",
+  bookTextSize: "12",
+  chapterTextColor: "#4A4A4A",
+  chapterTextFont: "DM Sans",
+  chapterTextSize: "12",
+  chapterColorBorder: "#E1E3EA",
+  chapterColorFill: "#E1E3EA",
+  // Bible arrangements - Traditional order
+  pentateuchBorder: "#E1E3EA",
+  pentateuchFill: "#E07B4C",
+  pentateuchFont: "DM Sans",
+  pentateuchSize: "12",
+  historicalBorder: "#E1E3EA",
+  historicalFill: "#4CAF50",
+  historicalFont: "DM Sans",
+  historicalSize: "12",
+  poeticBorder: "#E1E3EA",
+  poeticFill: "#9C27B0",
+  poeticFont: "DM Sans",
+  poeticSize: "12",
+  propheticBorder: "#E1E3EA",
+  propheticFill: "#FF9800",
+  propheticFont: "DM Sans",
+  propheticSize: "12",
 
   primaryLight: "#FADDD1",
   onPrimaryLight: "#8B4513",
@@ -345,6 +388,44 @@ export const READY_THEMES = [
       surface: "#1E293B",
       onSurface: "#FFFFFF",
       text3: "#F1F5F9",
+      // Bible arrangements - TaNaK order
+      torahBorder: "#666666",
+      torahFill: "#E07B4C",
+      torahFont: "DM Sans",
+      torahSize: "12",
+      neviimBorder: "#666666",
+      neviimFill: "#9CB32C",
+      neviimFont: "DM Sans",
+      neviimSize: "12",
+      ketuvimBorder: "#666666",
+      ketuvimFill: "#00BCD4",
+      ketuvimFont: "DM Sans",
+      ketuvimSize: "12",
+      bookTextColor: "#FFFFFF",
+      bookTextFont: "DM Sans",
+      bookTextSize: "12",
+      chapterTextColor: "#FFFFFF",
+      chapterTextFont: "DM Sans",
+      chapterTextSize: "12",
+      chapterColorBorder: "#666666",
+      chapterColorFill: "#666666",
+      // Bible arrangements - Traditional order
+      pentateuchBorder: "#666666",
+      pentateuchFill: "#E07B4C",
+      pentateuchFont: "DM Sans",
+      pentateuchSize: "12",
+      historicalBorder: "#666666",
+      historicalFill: "#4CAF50",
+      historicalFont: "DM Sans",
+      historicalSize: "12",
+      poeticBorder: "#666666",
+      poeticFill: "#9C27B0",
+      poeticFont: "DM Sans",
+      poeticSize: "12",
+      propheticBorder: "#666666",
+      propheticFill: "#FF9800",
+      propheticFont: "DM Sans",
+      propheticSize: "12",
     },
   },
   {
@@ -461,6 +542,44 @@ export const READY_THEMES = [
       surface: "#F5F3FF",
       onSurface: "#1F2937",
       text3: "#374151",
+      // Bible arrangements - TaNaK order
+      torahBorder: "#DDD6FE",
+      torahFill: "#7C3AED",
+      torahFont: "DM Sans",
+      torahSize: "12",
+      neviimBorder: "#DDD6FE",
+      neviimFill: "#A78BFA",
+      neviimFont: "DM Sans",
+      neviimSize: "12",
+      ketuvimBorder: "#DDD6FE",
+      ketuvimFill: "#8B5CF6",
+      ketuvimFont: "DM Sans",
+      ketuvimSize: "12",
+      bookTextColor: "#4C1D95",
+      bookTextFont: "DM Sans",
+      bookTextSize: "12",
+      chapterTextColor: "#4C1D95",
+      chapterTextFont: "DM Sans",
+      chapterTextSize: "12",
+      chapterColorBorder: "#DDD6FE",
+      chapterColorFill: "#DDD6FE",
+      // Bible arrangements - Traditional order
+      pentateuchBorder: "#DDD6FE",
+      pentateuchFill: "#7C3AED",
+      pentateuchFont: "DM Sans",
+      pentateuchSize: "12",
+      historicalBorder: "#DDD6FE",
+      historicalFill: "#A78BFA",
+      historicalFont: "DM Sans",
+      historicalSize: "12",
+      poeticBorder: "#DDD6FE",
+      poeticFill: "#8B5CF6",
+      poeticFont: "DM Sans",
+      poeticSize: "12",
+      propheticBorder: "#DDD6FE",
+      propheticFill: "#6D28D9",
+      propheticFont: "DM Sans",
+      propheticSize: "12",
     },
   },
   {
@@ -577,6 +696,44 @@ export const READY_THEMES = [
       surface: "#ECFDF5",
       onSurface: "#1F2937",
       text3: "#374151",
+      // Bible arrangements - TaNaK order
+      torahBorder: "#A7F3D0",
+      torahFill: "#059669",
+      torahFont: "DM Sans",
+      torahSize: "12",
+      neviimBorder: "#A7F3D0",
+      neviimFill: "#10B981",
+      neviimFont: "DM Sans",
+      neviimSize: "12",
+      ketuvimBorder: "#A7F3D0",
+      ketuvimFill: "#34D399",
+      ketuvimFont: "DM Sans",
+      ketuvimSize: "12",
+      bookTextColor: "#064E3B",
+      bookTextFont: "DM Sans",
+      bookTextSize: "12",
+      chapterTextColor: "#064E3B",
+      chapterTextFont: "DM Sans",
+      chapterTextSize: "12",
+      chapterColorBorder: "#A7F3D0",
+      chapterColorFill: "#A7F3D0",
+      // Bible arrangements - Traditional order
+      pentateuchBorder: "#A7F3D0",
+      pentateuchFill: "#059669",
+      pentateuchFont: "DM Sans",
+      pentateuchSize: "12",
+      historicalBorder: "#A7F3D0",
+      historicalFill: "#10B981",
+      historicalFont: "DM Sans",
+      historicalSize: "12",
+      poeticBorder: "#A7F3D0",
+      poeticFill: "#34D399",
+      poeticFont: "DM Sans",
+      poeticSize: "12",
+      propheticBorder: "#A7F3D0",
+      propheticFill: "#047857",
+      propheticFont: "DM Sans",
+      propheticSize: "12",
     },
   },
   {
@@ -693,6 +850,44 @@ export const READY_THEMES = [
       surface: "#F0F9FF",
       onSurface: "#1F2937",
       text3: "#374151",
+      // Bible arrangements - TaNaK order
+      torahBorder: "#BAE6FD",
+      torahFill: "#0284C7",
+      torahFont: "DM Sans",
+      torahSize: "12",
+      neviimBorder: "#BAE6FD",
+      neviimFill: "#0EA5E9",
+      neviimFont: "DM Sans",
+      neviimSize: "12",
+      ketuvimBorder: "#BAE6FD",
+      ketuvimFill: "#38BDF8",
+      ketuvimFont: "DM Sans",
+      ketuvimSize: "12",
+      bookTextColor: "#0C4A6E",
+      bookTextFont: "DM Sans",
+      bookTextSize: "12",
+      chapterTextColor: "#0C4A6E",
+      chapterTextFont: "DM Sans",
+      chapterTextSize: "12",
+      chapterColorBorder: "#BAE6FD",
+      chapterColorFill: "#BAE6FD",
+      // Bible arrangements - Traditional order
+      pentateuchBorder: "#BAE6FD",
+      pentateuchFill: "#0284C7",
+      pentateuchFont: "DM Sans",
+      pentateuchSize: "12",
+      historicalBorder: "#BAE6FD",
+      historicalFill: "#0EA5E9",
+      historicalFont: "DM Sans",
+      historicalSize: "12",
+      poeticBorder: "#BAE6FD",
+      poeticFill: "#38BDF8",
+      poeticFont: "DM Sans",
+      poeticSize: "12",
+      propheticBorder: "#BAE6FD",
+      propheticFill: "#075985",
+      propheticFont: "DM Sans",
+      propheticSize: "12",
     },
   },
   {
@@ -809,6 +1004,44 @@ export const READY_THEMES = [
       surface: "#FFFBEB",
       onSurface: "#1F2937",
       text3: "#374151",
+      // Bible arrangements - TaNaK order
+      torahBorder: "#FDE68A",
+      torahFill: "#D97706",
+      torahFont: "DM Sans",
+      torahSize: "12",
+      neviimBorder: "#FDE68A",
+      neviimFill: "#F59E0B",
+      neviimFont: "DM Sans",
+      neviimSize: "12",
+      ketuvimBorder: "#FDE68A",
+      ketuvimFill: "#FBBF24",
+      ketuvimFont: "DM Sans",
+      ketuvimSize: "12",
+      bookTextColor: "#78350F",
+      bookTextFont: "DM Sans",
+      bookTextSize: "12",
+      chapterTextColor: "#78350F",
+      chapterTextFont: "DM Sans",
+      chapterTextSize: "12",
+      chapterColorBorder: "#FDE68A",
+      chapterColorFill: "#FDE68A",
+      // Bible arrangements - Traditional order
+      pentateuchBorder: "#FDE68A",
+      pentateuchFill: "#D97706",
+      pentateuchFont: "DM Sans",
+      pentateuchSize: "12",
+      historicalBorder: "#FDE68A",
+      historicalFill: "#F59E0B",
+      historicalFont: "DM Sans",
+      historicalSize: "12",
+      poeticBorder: "#FDE68A",
+      poeticFill: "#FBBF24",
+      poeticFont: "DM Sans",
+      poeticSize: "12",
+      propheticBorder: "#FDE68A",
+      propheticFill: "#92400E",
+      propheticFont: "DM Sans",
+      propheticSize: "12",
     },
   },
 ];
@@ -1286,10 +1519,11 @@ const SmallColorPicker = ({ value, onChange }) => {
 // Font Options for dropdowns
 // ————————————————————————————————————————————————————————————
 const TAB_FONT_OPTIONS = [
+  { name: "Newsreader", value: "Newsreader, serif" },
   { name: "DM Sans", value: "DM Sans, sans-serif" },
-  { name: "Open Sans", value: "Open Sans, sans-serif" },
+  { name: "Plus Jakarta Sans", value: "Plus Jakarta Sans, sans-serif" },
+  { name: "Satoshi", value: "Satoshi, sans-serif" },
   { name: "Georgia", value: "Georgia, serif" },
-  { name: "Merriweather", value: "Merriweather, serif" },
 ];
 
 const TAB_FONT_SIZES = ["10", "11", "12", "13", "14", "16", "18"];
@@ -1429,7 +1663,7 @@ const TabSectionContent = ({
             style={dropdownStyle}
             onClick={() => setActiveTabFontOpen(!activeTabFontOpen)}
           >
-            <span>{tabSettings.activeTabFont || "DM Sans"}</span>
+            <span>{tabSettings.activeTabFont || "Newsreader"}</span>
             <svg width="12" height="12" viewBox="0 0 12 12" fill="none">
               <path
                 d="M3 4.5L6 7.5L9 4.5"
@@ -1532,7 +1766,7 @@ const TabSectionContent = ({
             style={dropdownStyle}
             onClick={() => setInactiveTabFontOpen(!inactiveTabFontOpen)}
           >
-            <span>{tabSettings.inactiveTabFont || "DM Sans"}</span>
+            <span>{tabSettings.inactiveTabFont || "Newsreader"}</span>
             <svg width="12" height="12" viewBox="0 0 12 12" fill="none">
               <path
                 d="M3 4.5L6 7.5L9 4.5"
@@ -1830,7 +2064,7 @@ const ButtonsSectionContent = ({
             style={dropdownStyle}
             onClick={() => setPrimaryFontOpen(!primaryFontOpen)}
           >
-            <span>{buttonSettings.primaryFont || "DM Sans"}</span>
+            <span>{buttonSettings.primaryFont || "Newsreader"}</span>
             <svg width="12" height="12" viewBox="0 0 12 12" fill="none">
               <path
                 d="M3 4.5L6 7.5L9 4.5"
@@ -1987,7 +2221,7 @@ const ButtonsSectionContent = ({
             style={dropdownStyle}
             onClick={() => setSecondaryFontOpen(!secondaryFontOpen)}
           >
-            <span>{buttonSettings.secondaryFont || "DM Sans"}</span>
+            <span>{buttonSettings.secondaryFont || "Newsreader"}</span>
             <svg width="12" height="12" viewBox="0 0 12 12" fill="none">
               <path
                 d="M3 4.5L6 7.5L9 4.5"
@@ -2132,7 +2366,7 @@ const ButtonsSectionContent = ({
             style={dropdownStyle}
             onClick={() => setTertiaryFontOpen(!tertiaryFontOpen)}
           >
-            <span>{buttonSettings.tertiaryFont || "DM Sans"}</span>
+            <span>{buttonSettings.tertiaryFont || "Newsreader"}</span>
             <svg width="12" height="12" viewBox="0 0 12 12" fill="none">
               <path
                 d="M3 4.5L6 7.5L9 4.5"
@@ -2300,7 +2534,7 @@ const ScriptureTextSectionContent = ({
             style={dropdownStyle}
             onClick={() => setBookHeadingFontOpen(!bookHeadingFontOpen)}
           >
-            <span>{scriptureSettings.bookHeadingFont || "DM Sans"}</span>
+            <span>{scriptureSettings.bookHeadingFont || "Newsreader"}</span>
             <svg width="12" height="12" viewBox="0 0 12 12" fill="none">
               <path
                 d="M3 4.5L6 7.5L9 4.5"
@@ -2403,7 +2637,7 @@ const ScriptureTextSectionContent = ({
             style={dropdownStyle}
             onClick={() => setChapterHeadingFontOpen(!chapterHeadingFontOpen)}
           >
-            <span>{scriptureSettings.chapterHeadingFont || "DM Sans"}</span>
+            <span>{scriptureSettings.chapterHeadingFont || "Newsreader"}</span>
             <svg width="12" height="12" viewBox="0 0 12 12" fill="none">
               <path
                 d="M3 4.5L6 7.5L9 4.5"
@@ -2506,7 +2740,7 @@ const ScriptureTextSectionContent = ({
             style={dropdownStyle}
             onClick={() => setVerseTextFontOpen(!verseTextFontOpen)}
           >
-            <span>{scriptureSettings.verseTextFont || "DM Sans"}</span>
+            <span>{scriptureSettings.verseTextFont || "Newsreader"}</span>
             <svg width="12" height="12" viewBox="0 0 12 12" fill="none">
               <path
                 d="M3 4.5L6 7.5L9 4.5"
@@ -2639,7 +2873,7 @@ const ScriptureTextSectionContent = ({
             style={dropdownStyle}
             onClick={() => setVerseNumberFontOpen(!verseNumberFontOpen)}
           >
-            <span>{scriptureSettings.verseNumberFont || "DM Sans"}</span>
+            <span>{scriptureSettings.verseNumberFont || "Newsreader"}</span>
             <svg width="12" height="12" viewBox="0 0 12 12" fill="none">
               <path
                 d="M3 4.5L6 7.5L9 4.5"
@@ -2821,7 +3055,7 @@ const SideMenuSectionContent = ({
       <div style={{ display: "flex", gap: 8 }}>
         <div style={{ flex: 1, position: "relative" }}>
           <div style={dropdownStyle} onClick={() => setFontOpen(!fontOpen)}>
-            <span>{sideMenuSettings[fontField] || "DM Sans"}</span>
+            <span>{sideMenuSettings[fontField] || "Newsreader"}</span>
             <svg width="12" height="12" viewBox="0 0 12 12" fill="none">
               <path
                 d="M3 4.5L6 7.5L9 4.5"
@@ -3653,7 +3887,7 @@ const InputFieldsSectionContent = ({
             style={dropdownStyle}
             onClick={() => setTitleFontOpen(!titleFontOpen)}
           >
-            <span>{inputFieldsSettings.titleFont || "DM Sans"}</span>
+            <span>{inputFieldsSettings.titleFont || "Newsreader"}</span>
             <svg width="12" height="12" viewBox="0 0 12 12" fill="none">
               <path
                 d="M3 4.5L6 7.5L9 4.5"
@@ -3760,7 +3994,7 @@ const InputFieldsSectionContent = ({
             style={dropdownStyle}
             onClick={() => setPlaceholderFontOpen(!placeholderFontOpen)}
           >
-            <span>{inputFieldsSettings.placeholderFont || "DM Sans"}</span>
+            <span>{inputFieldsSettings.placeholderFont || "Newsreader"}</span>
             <svg width="12" height="12" viewBox="0 0 12 12" fill="none">
               <path
                 d="M3 4.5L6 7.5L9 4.5"
@@ -4199,6 +4433,579 @@ const BrandingSectionContent = ({
     </div>
   );
 };
+
+// ————————————————————————————————————————————————————————————
+// Bible Arrangements Section Content
+// ————————————————————————————————————————————————————————————
+const BibleArrangementsSectionContent = ({
+  colors,
+  onColorChange,
+  bibleArrangementSettings,
+  onBibleArrangementSettingsChange,
+  expandedSections,
+  onToggleSection,
+  t,
+}) => {
+  // Dropdown open states for TaNaK order
+  const [torahFontOpen, setTorahFontOpen] = useState(false);
+  const [torahSizeOpen, setTorahSizeOpen] = useState(false);
+  const [neviimFontOpen, setNeviimFontOpen] = useState(false);
+  const [neviimSizeOpen, setNeviimSizeOpen] = useState(false);
+  const [ketuvimFontOpen, setKetuvimFontOpen] = useState(false);
+  const [ketuvimSizeOpen, setKetuvimSizeOpen] = useState(false);
+  const [bookTextFontOpen, setBookTextFontOpen] = useState(false);
+  const [bookTextSizeOpen, setBookTextSizeOpen] = useState(false);
+  const [chapterTextFontOpen, setChapterTextFontOpen] = useState(false);
+  const [chapterTextSizeOpen, setChapterTextSizeOpen] = useState(false);
+  // Dropdown open states for Traditional order
+  const [pentateuchFontOpen, setPentateuchFontOpen] = useState(false);
+  const [pentateuchSizeOpen, setPentateuchSizeOpen] = useState(false);
+  const [historicalFontOpen, setHistoricalFontOpen] = useState(false);
+  const [historicalSizeOpen, setHistoricalSizeOpen] = useState(false);
+  const [poeticFontOpen, setPoeticFontOpen] = useState(false);
+  const [poeticSizeOpen, setPoeticSizeOpen] = useState(false);
+  const [propheticFontOpen, setPropheticFontOpen] = useState(false);
+  const [propheticSizeOpen, setPropheticSizeOpen] = useState(false);
+
+  const dropdownStyle = {
+    position: "relative" as const,
+    display: "flex",
+    alignItems: "center",
+    justifyContent: "space-between",
+    padding: "8px 12px",
+    border: "1px solid #E1E3EA",
+    borderRadius: 4,
+    backgroundColor: "#FFFFFF",
+    cursor: "pointer",
+    fontSize: 13,
+    fontFamily: "Open Sans, sans-serif",
+  };
+
+  const dropdownMenuStyle = {
+    position: "absolute" as const,
+    top: "100%",
+    left: 0,
+    right: 0,
+    backgroundColor: "#FFFFFF",
+    border: "1px solid #E1E3EA",
+    borderRadius: 4,
+    marginTop: 4,
+    zIndex: 100,
+    maxHeight: 150,
+    overflowY: "auto" as const,
+    boxShadow: "0 4px 6px rgba(0,0,0,0.1)",
+  };
+
+  const dropdownItemStyle = {
+    padding: "8px 12px",
+    cursor: "pointer",
+    fontSize: 13,
+    fontFamily: "Open Sans, sans-serif",
+    borderBottom: "1px solid #F0F0F0",
+    color: "#333333",
+  };
+
+  const subSectionHeaderStyle = {
+    display: "flex",
+    justifyContent: "space-between",
+    alignItems: "center",
+    padding: "12px 0",
+    cursor: "pointer",
+    borderBottom: "1px solid #E1E3EA",
+  };
+
+  const renderCategoryRow = (
+    label: string,
+    borderField: string,
+    fillField: string,
+    fontField: string,
+    sizeField: string,
+    fontOpen: boolean,
+    setFontOpen: (v: boolean) => void,
+    sizeOpen: boolean,
+    setSizeOpen: (v: boolean) => void
+  ) => (
+    <div style={{ marginBottom: 16 }}>
+      <div
+        style={{
+          display: "flex",
+          justifyContent: "space-between",
+          alignItems: "center",
+          marginBottom: 8,
+        }}
+      >
+        <span
+          style={{
+            fontFamily: "Open Sans, sans-serif",
+            fontSize: 13,
+            color: "var(--heading2Color)",
+          }}
+        >
+          {label}
+        </span>
+        <div style={{ display: "flex", alignItems: "center", gap: 8 }}>
+          <span
+            style={{
+              fontFamily: "Open Sans, sans-serif",
+              fontSize: 10,
+              color: "#999999",
+            }}
+          >
+            {t("border")}
+          </span>
+          <SmallColorPicker
+            value={colors[borderField] || "#E1E3EA"}
+            onChange={(e) => onColorChange(borderField, e.target.value)}
+          />
+          <span
+            style={{
+              fontFamily: "Open Sans, sans-serif",
+              fontSize: 10,
+              color: "#999999",
+            }}
+          >
+            {t("fill")}
+          </span>
+          <SmallColorPicker
+            value={colors[fillField] || "#E07B4C"}
+            onChange={(e) => onColorChange(fillField, e.target.value)}
+          />
+        </div>
+      </div>
+      <div style={{ display: "flex", gap: 8 }}>
+        <div style={{ flex: 1, position: "relative" }}>
+          <div style={dropdownStyle} onClick={() => setFontOpen(!fontOpen)}>
+            <span>{bibleArrangementSettings[fontField] || "DM Sans"}</span>
+            <svg width="12" height="12" viewBox="0 0 12 12" fill="none">
+              <path
+                d="M3 4.5L6 7.5L9 4.5"
+                stroke="#666666"
+                strokeWidth="1.5"
+                strokeLinecap="round"
+                strokeLinejoin="round"
+              />
+            </svg>
+          </div>
+          {fontOpen && (
+            <div style={dropdownMenuStyle}>
+              {TAB_FONT_OPTIONS.map((font) => (
+                <div
+                  key={font.value}
+                  style={{
+                    ...dropdownItemStyle,
+                    backgroundColor:
+                      bibleArrangementSettings[fontField] === font.name
+                        ? "#F5F5F5"
+                        : "#FFFFFF",
+                  }}
+                  onClick={() => {
+                    onBibleArrangementSettingsChange(fontField, font.name);
+                    setFontOpen(false);
+                  }}
+                >
+                  {font.name}
+                </div>
+              ))}
+            </div>
+          )}
+        </div>
+        <div style={{ width: 70, position: "relative" }}>
+          <div style={dropdownStyle} onClick={() => setSizeOpen(!sizeOpen)}>
+            <span>{bibleArrangementSettings[sizeField] || "12"}</span>
+            <svg width="12" height="12" viewBox="0 0 12 12" fill="none">
+              <path
+                d="M3 4.5L6 7.5L9 4.5"
+                stroke="#666666"
+                strokeWidth="1.5"
+                strokeLinecap="round"
+                strokeLinejoin="round"
+              />
+            </svg>
+          </div>
+          {sizeOpen && (
+            <div style={dropdownMenuStyle}>
+              {TAB_FONT_SIZES.map((size) => (
+                <div
+                  key={size}
+                  style={{
+                    ...dropdownItemStyle,
+                    backgroundColor:
+                      bibleArrangementSettings[sizeField] === size
+                        ? "#F5F5F5"
+                        : "#FFFFFF",
+                  }}
+                  onClick={() => {
+                    onBibleArrangementSettingsChange(sizeField, size);
+                    setSizeOpen(false);
+                  }}
+                >
+                  {size}
+                </div>
+              ))}
+            </div>
+          )}
+        </div>
+      </div>
+    </div>
+  );
+
+  const renderTextRow = (
+    label: string,
+    colorField: string,
+    fontField: string,
+    sizeField: string,
+    fontOpen: boolean,
+    setFontOpen: (v: boolean) => void,
+    sizeOpen: boolean,
+    setSizeOpen: (v: boolean) => void
+  ) => (
+    <div style={{ marginBottom: 16 }}>
+      <div
+        style={{
+          display: "flex",
+          justifyContent: "space-between",
+          alignItems: "center",
+          marginBottom: 8,
+        }}
+      >
+        <span
+          style={{
+            fontFamily: "Open Sans, sans-serif",
+            fontSize: 13,
+            color: "var(--heading2Color)",
+          }}
+        >
+          {label}
+        </span>
+        <SmallColorPicker
+          value={colors[colorField] || "#4A4A4A"}
+          onChange={(e) => onColorChange(colorField, e.target.value)}
+        />
+      </div>
+      <div style={{ display: "flex", gap: 8 }}>
+        <div style={{ flex: 1, position: "relative" }}>
+          <div style={dropdownStyle} onClick={() => setFontOpen(!fontOpen)}>
+            <span>{bibleArrangementSettings[fontField] || "DM Sans"}</span>
+            <svg width="12" height="12" viewBox="0 0 12 12" fill="none">
+              <path
+                d="M3 4.5L6 7.5L9 4.5"
+                stroke="#666666"
+                strokeWidth="1.5"
+                strokeLinecap="round"
+                strokeLinejoin="round"
+              />
+            </svg>
+          </div>
+          {fontOpen && (
+            <div style={dropdownMenuStyle}>
+              {TAB_FONT_OPTIONS.map((font) => (
+                <div
+                  key={font.value}
+                  style={{
+                    ...dropdownItemStyle,
+                    backgroundColor:
+                      bibleArrangementSettings[fontField] === font.name
+                        ? "#F5F5F5"
+                        : "#FFFFFF",
+                  }}
+                  onClick={() => {
+                    onBibleArrangementSettingsChange(fontField, font.name);
+                    setFontOpen(false);
+                  }}
+                >
+                  {font.name}
+                </div>
+              ))}
+            </div>
+          )}
+        </div>
+        <div style={{ width: 70, position: "relative" }}>
+          <div style={dropdownStyle} onClick={() => setSizeOpen(!sizeOpen)}>
+            <span>{bibleArrangementSettings[sizeField] || "12"}</span>
+            <svg width="12" height="12" viewBox="0 0 12 12" fill="none">
+              <path
+                d="M3 4.5L6 7.5L9 4.5"
+                stroke="#666666"
+                strokeWidth="1.5"
+                strokeLinecap="round"
+                strokeLinejoin="round"
+              />
+            </svg>
+          </div>
+          {sizeOpen && (
+            <div style={dropdownMenuStyle}>
+              {TAB_FONT_SIZES.map((size) => (
+                <div
+                  key={size}
+                  style={{
+                    ...dropdownItemStyle,
+                    backgroundColor:
+                      bibleArrangementSettings[sizeField] === size
+                        ? "#F5F5F5"
+                        : "#FFFFFF",
+                  }}
+                  onClick={() => {
+                    onBibleArrangementSettingsChange(sizeField, size);
+                    setSizeOpen(false);
+                  }}
+                >
+                  {size}
+                </div>
+              ))}
+            </div>
+          )}
+        </div>
+      </div>
+    </div>
+  );
+
+  const renderChapterColorRow = (
+    label: string,
+    borderField: string,
+    fillField: string
+  ) => (
+    <div style={{ marginBottom: 16 }}>
+      <div
+        style={{
+          display: "flex",
+          justifyContent: "space-between",
+          alignItems: "center",
+        }}
+      >
+        <span
+          style={{
+            fontFamily: "Open Sans, sans-serif",
+            fontSize: 13,
+            color: "var(--heading2Color)",
+          }}
+        >
+          {label}
+        </span>
+        <div style={{ display: "flex", alignItems: "center", gap: 8 }}>
+          <span
+            style={{
+              fontFamily: "Open Sans, sans-serif",
+              fontSize: 10,
+              color: "#999999",
+            }}
+          >
+            {t("border")}
+          </span>
+          <SmallColorPicker
+            value={colors[borderField] || "#E1E3EA"}
+            onChange={(e) => onColorChange(borderField, e.target.value)}
+          />
+          <span
+            style={{
+              fontFamily: "Open Sans, sans-serif",
+              fontSize: 10,
+              color: "#999999",
+            }}
+          >
+            {t("fill")}
+          </span>
+          <SmallColorPicker
+            value={colors[fillField] || "#E1E3EA"}
+            onChange={(e) => onColorChange(fillField, e.target.value)}
+          />
+        </div>
+      </div>
+    </div>
+  );
+
+  return (
+    <div style={{ display: "flex", flexDirection: "column" }}>
+      {/* TaNaK Order Subsection */}
+      <div>
+        <div
+          style={subSectionHeaderStyle}
+          onClick={() => onToggleSection("tanakOrder")}
+        >
+          <span
+            style={{
+              fontFamily: "Open Sans, sans-serif",
+              fontSize: 14,
+              fontWeight: 400,
+              color: "var(--heading1Color)",
+            }}
+          >
+            {t("tanakOrder") || "TaNaK order"}
+          </span>
+          <svg
+            width="16"
+            height="16"
+            viewBox="0 0 16 16"
+            fill="none"
+            style={{
+              transform: expandedSections.tanakOrder
+                ? "rotate(180deg)"
+                : "rotate(0deg)",
+              transition: "transform 0.2s ease",
+            }}
+          >
+            <path
+              d="M4 6L8 10L12 6"
+              stroke="#666666"
+              strokeWidth="1.5"
+              strokeLinecap="round"
+              strokeLinejoin="round"
+            />
+          </svg>
+        </div>
+        {expandedSections.tanakOrder && (
+          <div style={{ padding: "16px 0" }}>
+            {renderCategoryRow(
+              t("lawTorah") || "Law (Torah)",
+              "torahBorder",
+              "torahFill",
+              "torahFont",
+              "torahSize",
+              torahFontOpen,
+              setTorahFontOpen,
+              torahSizeOpen,
+              setTorahSizeOpen
+            )}
+            {renderCategoryRow(
+              t("prophetsNeviim") || "Prophets (Nevi'im)",
+              "neviimBorder",
+              "neviimFill",
+              "neviimFont",
+              "neviimSize",
+              neviimFontOpen,
+              setNeviimFontOpen,
+              neviimSizeOpen,
+              setNeviimSizeOpen
+            )}
+            {renderCategoryRow(
+              t("writingsKetuvim") || "Writings (Ketuvim)",
+              "ketuvimBorder",
+              "ketuvimFill",
+              "ketuvimFont",
+              "ketuvimSize",
+              ketuvimFontOpen,
+              setKetuvimFontOpen,
+              ketuvimSizeOpen,
+              setKetuvimSizeOpen
+            )}
+            {renderTextRow(
+              t("bookText") || "Book Text",
+              "bookTextColor",
+              "bookTextFont",
+              "bookTextSize",
+              bookTextFontOpen,
+              setBookTextFontOpen,
+              bookTextSizeOpen,
+              setBookTextSizeOpen
+            )}
+            {renderTextRow(
+              t("chapterText") || "Chapter Text",
+              "chapterTextColor",
+              "chapterTextFont",
+              "chapterTextSize",
+              chapterTextFontOpen,
+              setChapterTextFontOpen,
+              chapterTextSizeOpen,
+              setChapterTextSizeOpen
+            )}
+            {renderChapterColorRow(
+              t("chapterColor") || "Chapter Color",
+              "chapterColorBorder",
+              "chapterColorFill"
+            )}
+          </div>
+        )}
+      </div>
+
+      {/* Traditional Order Subsection */}
+      <div>
+        <div
+          style={subSectionHeaderStyle}
+          onClick={() => onToggleSection("traditionalOrder")}
+        >
+          <span
+            style={{
+              fontFamily: "Open Sans, sans-serif",
+              fontSize: 14,
+              fontWeight: 400,
+              color: "var(--heading1Color)",
+            }}
+          >
+            {t("traditionalOrder") || "Traditional order"}
+          </span>
+          <svg
+            width="16"
+            height="16"
+            viewBox="0 0 16 16"
+            fill="none"
+            style={{
+              transform: expandedSections.traditionalOrder
+                ? "rotate(180deg)"
+                : "rotate(0deg)",
+              transition: "transform 0.2s ease",
+            }}
+          >
+            <path
+              d="M4 6L8 10L12 6"
+              stroke="#666666"
+              strokeWidth="1.5"
+              strokeLinecap="round"
+              strokeLinejoin="round"
+            />
+          </svg>
+        </div>
+        {expandedSections.traditionalOrder && (
+          <div style={{ padding: "16px 0" }}>
+            {renderCategoryRow(
+              t("pentateuch") || "Pentateuch",
+              "pentateuchBorder",
+              "pentateuchFill",
+              "pentateuchFont",
+              "pentateuchSize",
+              pentateuchFontOpen,
+              setPentateuchFontOpen,
+              pentateuchSizeOpen,
+              setPentateuchSizeOpen
+            )}
+            {renderCategoryRow(
+              t("historical") || "Historical",
+              "historicalBorder",
+              "historicalFill",
+              "historicalFont",
+              "historicalSize",
+              historicalFontOpen,
+              setHistoricalFontOpen,
+              historicalSizeOpen,
+              setHistoricalSizeOpen
+            )}
+            {renderCategoryRow(
+              t("poetic") || "Poetic",
+              "poeticBorder",
+              "poeticFill",
+              "poeticFont",
+              "poeticSize",
+              poeticFontOpen,
+              setPoeticFontOpen,
+              poeticSizeOpen,
+              setPoeticSizeOpen
+            )}
+            {renderCategoryRow(
+              t("prophetic") || "Prophetic",
+              "propheticBorder",
+              "propheticFill",
+              "propheticFont",
+              "propheticSize",
+              propheticFontOpen,
+              setPropheticFontOpen,
+              propheticSizeOpen,
+              setPropheticSizeOpen
+            )}
+          </div>
+        )}
+      </div>
+    </div>
+  );
+};
+
 const isDark = window.matchMedia("(prefers-color-scheme: dark)").matches;
 
 const ThemeSettings = () => {
@@ -4220,13 +5027,16 @@ const ThemeSettings = () => {
     selectionUIToolbar: false,
     inputFields: false,
     branding: false,
+    bibleArrangements: false,
+    tanakOrder: false,
+    traditionalOrder: false,
   });
 
   // Tab settings state
   const [tabSettings, setTabSettings] = useState({
-    activeTabFont: "DM Sans",
+    activeTabFont: "Newsreader",
     activeTabSize: "12",
-    inactiveTabFont: "DM Sans",
+    inactiveTabFont: "Newsreader",
     inactiveTabSize: "12",
   });
 
@@ -4238,11 +5048,11 @@ const ThemeSettings = () => {
 
   // Button settings state
   const [buttonSettings, setButtonSettings] = useState({
-    primaryFont: "DM Sans",
+    primaryFont: "Newsreader",
     primarySize: "12",
-    secondaryFont: "DM Sans",
+    secondaryFont: "Newsreader",
     secondarySize: "12",
-    tertiaryFont: "DM Sans",
+    tertiaryFont: "Newsreader",
     tertiarySize: "12",
   });
 
@@ -4254,13 +5064,13 @@ const ThemeSettings = () => {
 
   // Scripture settings state
   const [scriptureSettings, setScriptureSettings] = useState({
-    bookHeadingFont: "DM Sans",
+    bookHeadingFont: "Newsreader",
     bookHeadingSize: "12",
-    chapterHeadingFont: "DM Sans",
+    chapterHeadingFont: "Newsreader",
     chapterHeadingSize: "12",
-    verseTextFont: "DM Sans",
+    verseTextFont: "Newsreader",
     verseTextSize: "12",
-    verseNumberFont: "DM Sans",
+    verseNumberFont: "Newsreader",
     verseNumberSize: "12",
   });
 
@@ -4272,19 +5082,19 @@ const ThemeSettings = () => {
 
   // Side menu settings state
   const [sideMenuSettings, setSideMenuSettings] = useState({
-    heading1Font: "DM Sans",
+    heading1Font: "Newsreader",
     heading1Size: "12",
-    heading2Font: "DM Sans",
+    heading2Font: "Newsreader",
     heading2Size: "12",
-    heading3Font: "DM Sans",
+    heading3Font: "Newsreader",
     heading3Size: "12",
-    descriptionTextFont: "DM Sans",
+    descriptionTextFont: "Newsreader",
     descriptionTextSize: "12",
-    menuTextFont: "DM Sans",
+    menuTextFont: "Newsreader",
     menuTextSize: "12",
-    breadcrumbsFont: "DM Sans",
+    breadcrumbsFont: "Newsreader",
     breadcrumbsSize: "12",
-    spaceNameFont: "DM Sans",
+    spaceNameFont: "Newsreader",
     spaceNameSize: "12",
     iconsSize: "12",
   });
@@ -4311,9 +5121,9 @@ const ThemeSettings = () => {
 
   // Input fields settings state
   const [inputFieldsSettings, setInputFieldsSettings] = useState({
-    titleFont: "DM Sans",
+    titleFont: "Newsreader",
     titleSize: "12",
-    placeholderFont: "DM Sans",
+    placeholderFont: "Newsreader",
     placeholderSize: "12",
   });
 
@@ -4335,6 +5145,39 @@ const ThemeSettings = () => {
     setBrandingSettings((prev) => ({ ...prev, [field]: value }));
     const updatedSettings = { ...brandingSettings, [field]: value };
     updateSpace(activeSpace, { brandingSettings: updatedSettings });
+  };
+
+  // Bible arrangement settings state
+  const [bibleArrangementSettings, setBibleArrangementSettings] = useState({
+    // TaNaK order
+    torahFont: "DM Sans",
+    torahSize: "12",
+    neviimFont: "DM Sans",
+    neviimSize: "12",
+    ketuvimFont: "DM Sans",
+    ketuvimSize: "12",
+    bookTextFont: "DM Sans",
+    bookTextSize: "12",
+    chapterTextFont: "DM Sans",
+    chapterTextSize: "12",
+    // Traditional order
+    pentateuchFont: "DM Sans",
+    pentateuchSize: "12",
+    historicalFont: "DM Sans",
+    historicalSize: "12",
+    poeticFont: "DM Sans",
+    poeticSize: "12",
+    propheticFont: "DM Sans",
+    propheticSize: "12",
+  });
+
+  const handleBibleArrangementSettingsChange = (
+    field: string,
+    value: string
+  ) => {
+    setBibleArrangementSettings((prev) => ({ ...prev, [field]: value }));
+    const updatedSettings = { ...bibleArrangementSettings, [field]: value };
+    updateSpace(activeSpace, { bibleArrangementSettings: updatedSettings });
   };
 
   // Initialize CurrentColors on mount
@@ -4424,7 +5267,7 @@ const ThemeSettings = () => {
     os.toast("Main colors applied to all elements");
   };
 
-  const toggleSection = (sectionKey) => {
+  const toggleSection = (sectionKey: keyof typeof expandedSections) => {
     setExpandedSections((prev) => ({
       ...prev,
       [sectionKey]: !prev[sectionKey],
@@ -4548,7 +5391,7 @@ const ThemeSettings = () => {
           key={key}
           title={t(section.labelKey)}
           isExpanded={expandedSections[key as keyof typeof expandedSections]}
-          onToggle={() => toggleSection(key)}
+          onToggle={() => toggleSection(key as keyof typeof expandedSections)}
         >
           {key === "tab" ? (
             <TabSectionContent
@@ -4617,6 +5460,18 @@ const ThemeSettings = () => {
             <BrandingSectionContent
               brandingSettings={brandingSettings}
               onBrandingSettingsChange={handleBrandingSettingsChange}
+              t={t}
+            />
+          ) : key === "bibleArrangements" ? (
+            <BibleArrangementsSectionContent
+              colors={colors}
+              onColorChange={handleColorChange}
+              bibleArrangementSettings={bibleArrangementSettings}
+              onBibleArrangementSettingsChange={
+                handleBibleArrangementSettingsChange
+              }
+              expandedSections={expandedSections}
+              onToggleSection={toggleSection}
               t={t}
             />
           ) : (
@@ -4712,9 +5567,11 @@ const ColorRow = ({ label, field, value, labelColor, onChange }) => {
 };
 
 const FONT_OPTIONS = [
+  { name: "Newsreader", value: "Newsreader, serif" },
   { name: "DM Sans", value: "DM Sans, sans-serif" },
+  { name: "Plus Jakarta Sans", value: "Plus Jakarta Sans, sans-serif" },
+  { name: "Satoshi", value: "Satoshi, sans-serif" },
   { name: "Georgia", value: "Georgia, serif" },
-  { name: "Merriweather", value: "Merriweather, serif" },
 ];
 
 const LINE_HEIGHTS = [-1, 0, 1];
@@ -4730,12 +5587,12 @@ const FONT_SIZES = [
 
 const SURPRISE_COMBINATIONS = [
   {
-    font: "Georgia, serif",
+    font: "Newsreader, serif",
     fontSize: "16px",
     theme: 0,
   },
   {
-    font: "Merriweather, serif",
+    font: "Plus Jakarta Sans, sans-serif",
     fontSize: "18px",
     theme: 2,
   },
@@ -4750,12 +5607,12 @@ const SURPRISE_COMBINATIONS = [
     theme: 4,
   },
   {
-    font: "Merriweather, serif",
+    font: "Satoshi, sans-serif",
     fontSize: "16px",
     theme: 1,
   },
   {
-    font: "DM Sans, sans-serif",
+    font: "Newsreader, serif",
     fontSize: "20px",
     theme: 2,
   },
@@ -5152,7 +6009,7 @@ const SettingsUI = () => {
     height: "100%",
     // minHeight: '100vh',
     // backgroundColor: '#F0F1F1',
-    fontFamily: "DM Sans, system-ui, -apple-system, sans-serif",
+    fontFamily: "Newsreader, system-ui, -apple-system, sans-serif",
     padding: "20px",
     overflow: "scroll",
     position: "relative",

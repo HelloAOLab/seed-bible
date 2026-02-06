@@ -1212,10 +1212,12 @@ function SideBar({ panelsNumber }) {
       // { disabled: true, icon: <MenuIcon name="extension" />, title: 'Extensions', onClick: () => { } },
       { type: "line" },
       {
-        disabled: true,
+        disabled: false,
         icon: <MenuIcon name="bug_report" />,
         title: t("reportBug"),
-        onClick: () => {},
+        onClick: () => {
+          os.openURL("https://forms.gle/mhtqbQd6VPW8ZDh2A");
+        },
       },
       {
         disabled: true,
@@ -1997,8 +1999,32 @@ export const UserProfile = ({ collapsed }) => {
   return (
     <div
       onClick={() => {
-        globalThis.AccountSettingsEnteredFrom = "default";
-        setSideBarMode("createAccountSettings");
+        if (!authBot?.id) {
+          globalThis.AccountSettingsEnteredFrom = "default";
+          setSideBarMode("createAccountSettings");
+        } else {
+          openPopupSettings({
+            type: "normal",
+            items: [
+              {
+                icon: <MenuIcon name="account_circle" />,
+                title: "View profile",
+                onClick: () => {
+                  globalThis.AccountSettingsEnteredFrom = "default";
+                  setSideBarMode("createAccountSettings");
+                },
+              },
+              {
+                icon: <MenuIcon name="logout" />,
+                title: "Sign out",
+                onClick: () => {
+                  destroy(authBot);
+                  setUserData(null);
+                },
+              },
+            ],
+          });
+        }
       }}
       style={{ background: userData?.photoLink && "transparent" }}
       className="userProfile"
