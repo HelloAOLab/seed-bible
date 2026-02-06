@@ -5,6 +5,7 @@ import {
   SelectedIcon,
   AddIcon,
   PercentageCircle,
+  MinusIcon,
 } from "introduction.searchBar.Icons";
 import type { TranslationInterface } from "introduction.searchBar.Interfaces";
 import { changeLanguage, getTranslations } from "app.hooks.i18n";
@@ -159,6 +160,7 @@ const TranslationModal = (props: {
               setSelectedTranslation={setSelectedTranslation}
               setSelectingTranslation={setSelectingTranslation}
               filteredApiTranslations={filteredApiTranslations}
+              showAllLanguages={showAllLanguages}
             />
           );
         })}
@@ -182,7 +184,7 @@ const TranslationModal = (props: {
           )}
       </div>
     );
-  }, [filteredApiTranslations, selectedTranslation]);
+  }, [filteredApiTranslations, selectedTranslation, showAllLanguages]);
 
   useEffect(() => {
     setTagMask(thisBot, "showAllLanguages", showAllLanguages, "local");
@@ -252,7 +254,11 @@ const TranslationModal = (props: {
                   cursor: "pointer",
                 }}
               >
-                <AddIcon height={16} width={16} />
+                {!showCustomTranslation ? (
+                  <AddIcon height={20} width={20} />
+                ) : (
+                  <MinusIcon height={20} width={20} />
+                )}
               </span>
             </div>
             {showCustomTranslation && (
@@ -283,6 +289,7 @@ const LanguageComponent = (props: {
   filteredApiTranslations: Array<
     [string, Record<string, TranslationInterface>]
   >;
+  showAllLanguages: "all" | "completed" | "popular";
 }) => {
   const {
     language,
@@ -291,6 +298,7 @@ const LanguageComponent = (props: {
     setSelectedTranslation,
     setSelectingTranslation,
     filteredApiTranslations,
+    showAllLanguages,
   } = props;
   const [show, setShow] = useState(false);
 
@@ -427,13 +435,16 @@ const LanguageComponent = (props: {
                   <span class="translation-title">
                     {selectedTranslation.id === value.id ? (
                       <TickIcon height={15} width={15} />
-                    ) : (
+                    ) : showAllLanguages === "all" ||
+                      showAllLanguages === "popular" ? (
                       <span
                         class="emptyCircle"
                         style={{
-                          background: `linear-gradient(white, white) padding-box, conic-gradient(from -${rotation}deg, var(--primaryColor) ${completionPercentage}%, #eee 0) border-box`,
+                          background: `linear-gradient(white, white) padding-box, conic-gradient(from -${rotation}deg, var(--secondaryColor) ${completionPercentage}%, #eee 0) border-box`,
                         }}
                       ></span>
+                    ) : (
+                      <span class="emptyCircle"></span>
                     )}
                     <span class="translation-description">{`${value.name} (${value.shortName})`}</span>
                   </span>
@@ -549,7 +560,7 @@ const TranslationSettings = (props: {
           style={{
             color:
               showAllLanguages === "complete"
-                ? "var(--primaryColor)"
+                ? "var(--secondaryColor)"
                 : "var(--text3)",
           }}
         >
