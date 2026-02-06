@@ -1212,10 +1212,12 @@ function SideBar({ panelsNumber }) {
       // { disabled: true, icon: <MenuIcon name="extension" />, title: 'Extensions', onClick: () => { } },
       { type: "line" },
       {
-        disabled: true,
+        disabled: false,
         icon: <MenuIcon name="bug_report" />,
         title: t("reportBug"),
-        onClick: () => {},
+        onClick: () => {
+          os.openURL("https://forms.gle/mhtqbQd6VPW8ZDh2A");
+        },
       },
       {
         disabled: true,
