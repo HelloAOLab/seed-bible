@@ -660,5 +660,7 @@
   "fromUrl": "depuis l'URL",
   "enterId": "Saisir l'ID",
   "Queue": "File d'attente",
-  "file": "Fichier"
+  "file": "Fichier",
+  "noLanguageResultsFound": "Aucun résultat trouvé. Souhaitez-vous étendre votre recherche pour inclure également les langues partielles et incomplètes ?",
+  "showAllLanguages": "Afficher toutes les langues"
 }

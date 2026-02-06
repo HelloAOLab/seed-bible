@@ -660,5 +660,7 @@
   "fromUrl": "da URL",
   "enterId": "Inserir ID",
   "Queue": "Fila",
-  "file": "Arquivo"
+  "file": "Arquivo",
+  "noLanguageResultsFound": "Nenhum resultado encontrado. Deseja expandir sua busca para incluir também idiomas parciais e incompletos?",
+  "showAllLanguages": "Mostrar todos os idiomas"
 }

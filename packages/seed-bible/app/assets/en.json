@@ -660,5 +660,7 @@
   "fromUrl": "from URL",
   "enterId": "Enter ID",
   "Queue": "Queue",
-  "file": "File"
+  "file": "File",
+  "noLanguageResultsFound": "No results found. Would you like to expand your search to include partial and incomplete languages as well?",
+  "showAllLanguages": "Show all languages"
 }

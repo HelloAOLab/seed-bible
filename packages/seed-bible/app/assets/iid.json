@@ -125,5 +125,7 @@
   "yes": "Ya",
   "no": "Tidak",
   "all": "Semua",
-  "file": "File"
+  "file": "File",
+  "noLanguageResultsFound": "Tidak ada hasil yang ditemukan. Apakah Anda ingin memperluas pencarian Anda untuk menyertakan bahasa yang sebagian atau tidak lengkap juga?",
+  "showAllLanguages": "Tampilkan semua bahasa"
 }

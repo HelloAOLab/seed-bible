@@ -660,5 +660,7 @@
   "companyName": "Nombre de la empresa",
   "logo": "Logo",
   "logoColor": "Color del logo",
-  "accentColor": "Color de acento"
+  "accentColor": "Color de acento",
+  "noLanguageResultsFound": "No se encontraron resultados. ¿Desea ampliar su búsqueda para incluir idiomas parciales e incompletos también?",
+  "showAllLanguages": "Mostrar todos los idiomas"
 }

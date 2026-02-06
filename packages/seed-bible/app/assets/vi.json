@@ -125,5 +125,7 @@
   "yes": "Có",
   "no": "Không",
   "all": "Tất cả",
-  "file": "Tệp"
+  "file": "Tệp",
+  "noLanguageResultsFound": "Không tìm thấy kết quả nào. Bạn có muốn mở rộng phạm vi tìm kiếm để bao gồm cả các ngôn ngữ chưa hoàn chỉnh và thiếu thông tin không?",
+  "showAllLanguages": "Hiển thị tất cả các ngôn ngữ"
 }

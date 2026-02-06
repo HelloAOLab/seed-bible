@@ -660,5 +660,7 @@
   "fromUrl": "URLから",
   "enterId": "IDを入力",
   "Queue": "キュー",
-  "file": "ファイル"
+  "file": "ファイル",
+  "noLanguageResultsFound": "結果が見つかりませんでした。部分的または不完全な言語も検索範囲に含めますか？",
+  "showAllLanguages": "すべての言語を表示"
 }

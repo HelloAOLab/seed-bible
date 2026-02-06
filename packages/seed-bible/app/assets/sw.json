@@ -125,5 +125,7 @@
   "yes": "Ndiyo",
   "no": "Hapana",
   "all": "Zote",
-  "file": "Faili"
+  "file": "Faili",
+  "noLanguageResultsFound": "Hakuna matokeo yaliyopatikana. Je, ungependa kupanua utafutaji wako ili kujumuisha lugha zisizo kamili na zisizo kamili?",
+  "showAllLanguages": "Onyesha lugha zote"
 }

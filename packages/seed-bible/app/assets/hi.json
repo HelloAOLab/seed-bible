@@ -662,5 +662,7 @@
   "logo": "लोगो",
   "logoColor": "लोगो रंग",
   "accentColor": "एक्सेंट रंग",
-  "fileUploadFailed": "फ़ाइल अपलोड विफल!"
+  "fileUploadFailed": "फ़ाइल अपलोड विफल!",
+  "noLanguageResultsFound": "कोई परिणाम नहीं मिला। क्या आप अपनी खोज को आंशिक और अधूरी भाषाओं को भी शामिल करने के लिए विस्तारित करना चाहते हैं?",
+  "showAllLanguages": "सभी भाषाएं दिखाएं"
 }
