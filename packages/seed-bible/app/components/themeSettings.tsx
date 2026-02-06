@@ -1286,10 +1286,11 @@ const SmallColorPicker = ({ value, onChange }) => {
 // Font Options for dropdowns
 // ————————————————————————————————————————————————————————————
 const TAB_FONT_OPTIONS = [
+  { name: "Newsreader", value: "Newsreader, serif" },
   { name: "DM Sans", value: "DM Sans, sans-serif" },
-  { name: "Open Sans", value: "Open Sans, sans-serif" },
+  { name: "Plus Jakarta Sans", value: "Plus Jakarta Sans, sans-serif" },
+  { name: "Satoshi", value: "Satoshi, sans-serif" },
   { name: "Georgia", value: "Georgia, serif" },
-  { name: "Merriweather", value: "Merriweather, serif" },
 ];
 
 const TAB_FONT_SIZES = ["10", "11", "12", "13", "14", "16", "18"];
@@ -1429,7 +1430,7 @@ const TabSectionContent = ({
             style={dropdownStyle}
             onClick={() => setActiveTabFontOpen(!activeTabFontOpen)}
           >
-            <span>{tabSettings.activeTabFont || "DM Sans"}</span>
+            <span>{tabSettings.activeTabFont || "Newsreader"}</span>
             <svg width="12" height="12" viewBox="0 0 12 12" fill="none">
               <path
                 d="M3 4.5L6 7.5L9 4.5"
@@ -1532,7 +1533,7 @@ const TabSectionContent = ({
             style={dropdownStyle}
             onClick={() => setInactiveTabFontOpen(!inactiveTabFontOpen)}
           >
-            <span>{tabSettings.inactiveTabFont || "DM Sans"}</span>
+            <span>{tabSettings.inactiveTabFont || "Newsreader"}</span>
             <svg width="12" height="12" viewBox="0 0 12 12" fill="none">
               <path
                 d="M3 4.5L6 7.5L9 4.5"
@@ -1830,7 +1831,7 @@ const ButtonsSectionContent = ({
             style={dropdownStyle}
             onClick={() => setPrimaryFontOpen(!primaryFontOpen)}
           >
-            <span>{buttonSettings.primaryFont || "DM Sans"}</span>
+            <span>{buttonSettings.primaryFont || "Newsreader"}</span>
             <svg width="12" height="12" viewBox="0 0 12 12" fill="none">
               <path
                 d="M3 4.5L6 7.5L9 4.5"
@@ -1987,7 +1988,7 @@ const ButtonsSectionContent = ({
             style={dropdownStyle}
             onClick={() => setSecondaryFontOpen(!secondaryFontOpen)}
           >
-            <span>{buttonSettings.secondaryFont || "DM Sans"}</span>
+            <span>{buttonSettings.secondaryFont || "Newsreader"}</span>
             <svg width="12" height="12" viewBox="0 0 12 12" fill="none">
               <path
                 d="M3 4.5L6 7.5L9 4.5"
@@ -2132,7 +2133,7 @@ const ButtonsSectionContent = ({
             style={dropdownStyle}
             onClick={() => setTertiaryFontOpen(!tertiaryFontOpen)}
           >
-            <span>{buttonSettings.tertiaryFont || "DM Sans"}</span>
+            <span>{buttonSettings.tertiaryFont || "Newsreader"}</span>
             <svg width="12" height="12" viewBox="0 0 12 12" fill="none">
               <path
                 d="M3 4.5L6 7.5L9 4.5"
@@ -2300,7 +2301,7 @@ const ScriptureTextSectionContent = ({
             style={dropdownStyle}
             onClick={() => setBookHeadingFontOpen(!bookHeadingFontOpen)}
           >
-            <span>{scriptureSettings.bookHeadingFont || "DM Sans"}</span>
+            <span>{scriptureSettings.bookHeadingFont || "Newsreader"}</span>
             <svg width="12" height="12" viewBox="0 0 12 12" fill="none">
               <path
                 d="M3 4.5L6 7.5L9 4.5"
@@ -2403,7 +2404,7 @@ const ScriptureTextSectionContent = ({
             style={dropdownStyle}
             onClick={() => setChapterHeadingFontOpen(!chapterHeadingFontOpen)}
           >
-            <span>{scriptureSettings.chapterHeadingFont || "DM Sans"}</span>
+            <span>{scriptureSettings.chapterHeadingFont || "Newsreader"}</span>
             <svg width="12" height="12" viewBox="0 0 12 12" fill="none">
               <path
                 d="M3 4.5L6 7.5L9 4.5"
@@ -2506,7 +2507,7 @@ const ScriptureTextSectionContent = ({
             style={dropdownStyle}
             onClick={() => setVerseTextFontOpen(!verseTextFontOpen)}
           >
-            <span>{scriptureSettings.verseTextFont || "DM Sans"}</span>
+            <span>{scriptureSettings.verseTextFont || "Newsreader"}</span>
             <svg width="12" height="12" viewBox="0 0 12 12" fill="none">
               <path
                 d="M3 4.5L6 7.5L9 4.5"
@@ -2639,7 +2640,7 @@ const ScriptureTextSectionContent = ({
             style={dropdownStyle}
             onClick={() => setVerseNumberFontOpen(!verseNumberFontOpen)}
           >
-            <span>{scriptureSettings.verseNumberFont || "DM Sans"}</span>
+            <span>{scriptureSettings.verseNumberFont || "Newsreader"}</span>
             <svg width="12" height="12" viewBox="0 0 12 12" fill="none">
               <path
                 d="M3 4.5L6 7.5L9 4.5"
@@ -2821,7 +2822,7 @@ const SideMenuSectionContent = ({
       <div style={{ display: "flex", gap: 8 }}>
         <div style={{ flex: 1, position: "relative" }}>
           <div style={dropdownStyle} onClick={() => setFontOpen(!fontOpen)}>
-            <span>{sideMenuSettings[fontField] || "DM Sans"}</span>
+            <span>{sideMenuSettings[fontField] || "Newsreader"}</span>
             <svg width="12" height="12" viewBox="0 0 12 12" fill="none">
               <path
                 d="M3 4.5L6 7.5L9 4.5"
@@ -3653,7 +3654,7 @@ const InputFieldsSectionContent = ({
             style={dropdownStyle}
             onClick={() => setTitleFontOpen(!titleFontOpen)}
           >
-            <span>{inputFieldsSettings.titleFont || "DM Sans"}</span>
+            <span>{inputFieldsSettings.titleFont || "Newsreader"}</span>
             <svg width="12" height="12" viewBox="0 0 12 12" fill="none">
               <path
                 d="M3 4.5L6 7.5L9 4.5"
@@ -3760,7 +3761,7 @@ const InputFieldsSectionContent = ({
             style={dropdownStyle}
             onClick={() => setPlaceholderFontOpen(!placeholderFontOpen)}
           >
-            <span>{inputFieldsSettings.placeholderFont || "DM Sans"}</span>
+            <span>{inputFieldsSettings.placeholderFont || "Newsreader"}</span>
             <svg width="12" height="12" viewBox="0 0 12 12" fill="none">
               <path
                 d="M3 4.5L6 7.5L9 4.5"
@@ -4224,9 +4225,9 @@ const ThemeSettings = () => {
 
   // Tab settings state
   const [tabSettings, setTabSettings] = useState({
-    activeTabFont: "DM Sans",
+    activeTabFont: "Newsreader",
     activeTabSize: "12",
-    inactiveTabFont: "DM Sans",
+    inactiveTabFont: "Newsreader",
     inactiveTabSize: "12",
   });
 
@@ -4238,11 +4239,11 @@ const ThemeSettings = () => {
 
   // Button settings state
   const [buttonSettings, setButtonSettings] = useState({
-    primaryFont: "DM Sans",
+    primaryFont: "Newsreader",
     primarySize: "12",
-    secondaryFont: "DM Sans",
+    secondaryFont: "Newsreader",
     secondarySize: "12",
-    tertiaryFont: "DM Sans",
+    tertiaryFont: "Newsreader",
     tertiarySize: "12",
   });
 
@@ -4254,13 +4255,13 @@ const ThemeSettings = () => {
 
   // Scripture settings state
   const [scriptureSettings, setScriptureSettings] = useState({
-    bookHeadingFont: "DM Sans",
+    bookHeadingFont: "Newsreader",
     bookHeadingSize: "12",
-    chapterHeadingFont: "DM Sans",
+    chapterHeadingFont: "Newsreader",
     chapterHeadingSize: "12",
-    verseTextFont: "DM Sans",
+    verseTextFont: "Newsreader",
     verseTextSize: "12",
-    verseNumberFont: "DM Sans",
+    verseNumberFont: "Newsreader",
     verseNumberSize: "12",
   });
 
@@ -4272,19 +4273,19 @@ const ThemeSettings = () => {
 
   // Side menu settings state
   const [sideMenuSettings, setSideMenuSettings] = useState({
-    heading1Font: "DM Sans",
+    heading1Font: "Newsreader",
     heading1Size: "12",
-    heading2Font: "DM Sans",
+    heading2Font: "Newsreader",
     heading2Size: "12",
-    heading3Font: "DM Sans",
+    heading3Font: "Newsreader",
     heading3Size: "12",
-    descriptionTextFont: "DM Sans",
+    descriptionTextFont: "Newsreader",
     descriptionTextSize: "12",
-    menuTextFont: "DM Sans",
+    menuTextFont: "Newsreader",
     menuTextSize: "12",
-    breadcrumbsFont: "DM Sans",
+    breadcrumbsFont: "Newsreader",
     breadcrumbsSize: "12",
-    spaceNameFont: "DM Sans",
+    spaceNameFont: "Newsreader",
     spaceNameSize: "12",
     iconsSize: "12",
   });
@@ -4311,9 +4312,9 @@ const ThemeSettings = () => {
 
   // Input fields settings state
   const [inputFieldsSettings, setInputFieldsSettings] = useState({
-    titleFont: "DM Sans",
+    titleFont: "Newsreader",
     titleSize: "12",
-    placeholderFont: "DM Sans",
+    placeholderFont: "Newsreader",
     placeholderSize: "12",
   });
 
@@ -4712,9 +4713,11 @@ const ColorRow = ({ label, field, value, labelColor, onChange }) => {
 };
 
 const FONT_OPTIONS = [
+  { name: "Newsreader", value: "Newsreader, serif" },
   { name: "DM Sans", value: "DM Sans, sans-serif" },
+  { name: "Plus Jakarta Sans", value: "Plus Jakarta Sans, sans-serif" },
+  { name: "Satoshi", value: "Satoshi, sans-serif" },
   { name: "Georgia", value: "Georgia, serif" },
-  { name: "Merriweather", value: "Merriweather, serif" },
 ];
 
 const LINE_HEIGHTS = [-1, 0, 1];
@@ -4730,12 +4733,12 @@ const FONT_SIZES = [
 
 const SURPRISE_COMBINATIONS = [
   {
-    font: "Georgia, serif",
+    font: "Newsreader, serif",
     fontSize: "16px",
     theme: 0,
   },
   {
-    font: "Merriweather, serif",
+    font: "Plus Jakarta Sans, sans-serif",
     fontSize: "18px",
     theme: 2,
   },
@@ -4750,12 +4753,12 @@ const SURPRISE_COMBINATIONS = [
     theme: 4,
   },
   {
-    font: "Merriweather, serif",
+    font: "Satoshi, sans-serif",
     fontSize: "16px",
     theme: 1,
   },
   {
-    font: "DM Sans, sans-serif",
+    font: "Newsreader, serif",
     fontSize: "20px",
     theme: 2,
   },
@@ -4909,8 +4912,14 @@ const SettingsUI = () => {
   const [selectedFontSize, setSelectedFontSize] = useState(1);
   const [showFontDropdown, setShowFontDropdown] = useState(false);
   const [showFontSizeMenu, setShowFontSizeMenu] = useState(false);
-  const { setShowHeading, setShowVerses, showHeading, showVerses } =
-    useBibleContext();
+  const {
+    setShowHeading,
+    setShowVerses,
+    showHeading,
+    showVerses,
+    showFootnotes,
+    setShowFootnotes,
+  } = useBibleContext();
   const handleSurpriseMe = () => {
     const randomCombo =
       SURPRISE_COMBINATIONS[
@@ -5146,7 +5155,7 @@ const SettingsUI = () => {
     height: "100%",
     // minHeight: '100vh',
     // backgroundColor: '#F0F1F1',
-    fontFamily: "DM Sans, system-ui, -apple-system, sans-serif",
+    fontFamily: "Newsreader, system-ui, -apple-system, sans-serif",
     padding: "20px",
     overflow: "scroll",
     position: "relative",
@@ -5560,6 +5569,22 @@ const SettingsUI = () => {
         </div>
       </div>
 
+      <div style={toggleRowStyle}>
+        <div style={toggleLabelStyle}>{t("showFootnotes")}</div>
+
+        <div
+          style={toggleStyle(showFootnotes[activeSpace])}
+          onClick={() =>
+            setShowFootnotes((prev) => ({
+              ...prev,
+              [activeSpace]: !prev[activeSpace],
+            }))
+          }
+        >
+          <div style={toggleCircleStyle(showFootnotes[activeSpace])}></div>
+        </div>
+      </div>
+
       <div style={separatorStyle}></div>
 
       <div style={sectionTitleStyle}>{t("themes")}</div>
@@ -5719,12 +5744,14 @@ const SettingsUI = () => {
           )
         )}
       </div>
-      <button
-        style={buttonStyle}
-        onClick={() => setSideBarMode("advancedThemeSettings")}
-      >
-        {t("advancedSettings")}
-      </button>
+      {configBot.tags.settingsPreset !== "minimal" && (
+        <button
+          style={buttonStyle}
+          onClick={() => setSideBarMode("advancedThemeSettings")}
+        >
+          {t("advancedSettings")}
+        </button>
+      )}
       <div style={separatorStyle}></div>
     </div>
   );

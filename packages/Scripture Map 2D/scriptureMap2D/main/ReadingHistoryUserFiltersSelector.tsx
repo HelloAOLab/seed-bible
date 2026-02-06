@@ -12,6 +12,7 @@ export const ReadingHistoryUserFiltersSelector = () => {
     handleReadingHistoryUserSelectorClick,
     readingHistoryUserFilters,
     myAuthBotId,
+    usersDataMap,
   } = useReadingHistoryContext();
 
   const allSelected = useMemo(() => {
@@ -31,6 +32,13 @@ export const ReadingHistoryUserFiltersSelector = () => {
       />
 
       {Array.from(readingHistoryUserFilters).map(([userId, selected]) => {
+        const { profileName } = usersDataMap.get(userId);
+        const fixedName: string =
+          userId === myAuthBotId
+            ? t("you")
+            : profileName?.length > 0
+              ? profileName
+              : t("Unknown User");
         return (
           <FiltersSelectorOption
             content={[
@@ -43,7 +51,7 @@ export const ReadingHistoryUserFiltersSelector = () => {
                 }}
                 className="filter-option-icon"
               ></div>,
-              userId === myAuthBotId ? t("you") : t("guest"),
+              fixedName,
             ]}
             onClick={() => {
               handleReadingHistoryUserSelectorClick(userId);
