@@ -123,9 +123,6 @@ export async function saveFileAnnotationData(
   }
 
   return result.url;
-  return {
-    url: result.url,
-  };
 }
 
 /**
@@ -139,7 +136,7 @@ export function createAnnotation(
   bookId: string,
   chapterNumber: number,
   data: AnnotationData,
-  verseNumber: number
+  verseNumber: number | number[]
 ): Annotation {
   data = COMMENT_SCHEMA.parse(data);
   let keyName = "verseNumber";
@@ -954,7 +951,9 @@ export async function subscribeToUsers(
   const myProfile = {
     id: recordName,
     name: myProfileResult.success ? myProfileResult.data?.name : undefined,
-    photoLink: myProfileResult.success ? myProfileResult.data?.photoLink : undefined,
+    photoLink: myProfileResult.success
+      ? myProfileResult.data?.photoLink
+      : undefined,
   };
 
   // Add myself to each new user's subscribers list
@@ -995,7 +994,9 @@ async function removeSubscriberFromUser(
   subscriberId: string
 ): Promise<void> {
   const existingSubscribers = await getSubscribersOfUser(targetUserId);
-  const updatedSubscribers = existingSubscribers.filter((s) => s.id !== subscriberId);
+  const updatedSubscribers = existingSubscribers.filter(
+    (s) => s.id !== subscriberId
+  );
   await saveSubscribers(targetUserId, updatedSubscribers);
 }
 
