@@ -1,4 +1,7 @@
-import { BibleDataManager } from "app.hooks.bibleDataManager";
+import {
+  BibleDataManager,
+  getCachedBibleData,
+} from "app.hooks.bibleDataManager";
 import { getStyleOf } from "app.styles.styler";
 const {
   useEffect,
@@ -861,19 +864,19 @@ function ThePage({
       setData(bible.data);
       setFootnotes(bible.footnotes);
     } catch {
-      const tab = globalThis.AddTab({
-        id: uuid(),
-        taken: false,
-        data: {
-          use: "thePage",
-          type: "book",
-          book: bookId,
-          bookId: bookId,
-          chapter: chapter,
-          translation: translation || "BSB",
-        },
-      });
-      setTab(tab);
+      // const tab = globalThis.AddTab({
+      //   id: uuid(),
+      //   taken: false,
+      //   data: {
+      //     use: "thePage",
+      //     type: "book",
+      //     book: bookId,
+      //     bookId: bookId,
+      //     chapter: chapter,
+      //     translation: translation || "BSB",
+      //   },
+      // });
+      // setTab(tab);
     }
   }
 
@@ -2881,7 +2884,13 @@ export const ThePageWithEditor = ({ tab, setPanalApp, panelId }) => {
   const activeTab = panelId ? globalThis.PanelTabsMap[panelId] || tab : tab;
   const [enableEditor, setEnableEditor] = useState(false);
   useEffect(() => {}, [enableEditor]);
-  const [data, setData] = useState();
+  const [data, setData] = useState(() =>
+    getCachedBibleData(
+      tab?.data?.translation,
+      tab?.data?.bookId,
+      tab?.data?.chapter
+    )
+  );
   const [deleteTab, setDeleteTab] = useState(false);
   if (tab) globalThis[`SetEnableEditorOf${tab?.id}`] = setEnableEditor;
   useEffect(() => {
