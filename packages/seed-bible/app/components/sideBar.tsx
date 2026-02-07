@@ -1164,6 +1164,7 @@ function SideBar({ panelsNumber }) {
             <JoinSessionComponent
               onJoin={(code) => os.goToURL(code)}
               translations={translations}
+              CloseModal={() => globalThis.CloseModal()}
             />
           );
         },
