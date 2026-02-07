@@ -6219,7 +6219,7 @@ const SettingsUI = () => {
             <ThemeIcon />
           </div>
           <div>
-            {currentSpace.name} {t("theme")}
+            {t("theme")} & {t("text")}
           </div>
         </div>
         <div style={{ display: "flex", gap: "7px", marginBottom: "30px" }}>
@@ -6382,7 +6382,13 @@ const SettingsUI = () => {
       </div>
 
       <div style={toggleRowStyle}>
-        <div style={toggleLabelStyle}>{t("showChapterHeadings")}</div>
+        <div style={toggleLabelStyle}>
+          {t(
+            showHeading[activeSpace]
+              ? "hideChapterHeadings"
+              : "showChapterHeadings"
+          )}
+        </div>
 
         <div
           style={toggleStyle(showHeading[activeSpace])}
@@ -6398,7 +6404,9 @@ const SettingsUI = () => {
       </div>
 
       <div style={toggleRowStyle}>
-        <div style={toggleLabelStyle}>{t("showVerseNumbers")}</div>
+        <div style={toggleLabelStyle}>
+          {t(showVerses[activeSpace] ? "hideVerseNumbers" : "showVerseNumbers")}
+        </div>
 
         <div
           style={toggleStyle(showVerses[activeSpace])}
@@ -6414,7 +6422,9 @@ const SettingsUI = () => {
       </div>
 
       <div style={toggleRowStyle}>
-        <div style={toggleLabelStyle}>{t("showFootnotes")}</div>
+        <div style={toggleLabelStyle}>
+          {t(showFootnotes[activeSpace] ? "hideFootnotes" : "showFootnotes")}
+        </div>
 
         <div
           style={toggleStyle(showFootnotes[activeSpace])}
