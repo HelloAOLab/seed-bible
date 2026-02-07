@@ -372,6 +372,9 @@
       "bibleStack.main.PushDataToSingleDataArray": [
         "./packages/Bible Stack/bibleStack/main/PushDataToSingleDataArray.tsx"
       ],
+      "bibleStack.main.QueuedChapterData": [
+        "./packages/Bible Stack/bibleStack/main/QueuedChapterData.tsm"
+      ],
       "bibleStack.main.RemovePieceFromHighlightedList": [
         "./packages/Bible Stack/bibleStack/main/RemovePieceFromHighlightedList.tsx"
       ],
@@ -503,6 +506,9 @@
       ],
       "bibleStack.main.UnhighlightChapter": [
         "./packages/Bible Stack/bibleStack/main/UnhighlightChapter.tsx"
+      ],
+      "bibleStack.main.UnhighlightDelayInfo": [
+        "./packages/Bible Stack/bibleStack/main/UnhighlightDelayInfo.tsm"
       ],
       "bibleStack.main.UpdateBibleStack": [
         "./packages/Bible Stack/bibleStack/main/UpdateBibleStack.tsx"
@@ -1311,6 +1317,12 @@
       "bibleVizUtils.main.OnOnlineUsersChanged": [
         "./packages/Bible Visualization Utils/bibleVizUtils/main/OnOnlineUsersChanged.tsx"
       ],
+      "bibleVizUtils.main.userSubscribed": [
+        "./packages/Bible Visualization Utils/bibleVizUtils/main/userSubscribed.tsx"
+      ],
+      "bibleVizUtils.main.userUnsubscribed": [
+        "./packages/Bible Visualization Utils/bibleVizUtils/main/userUnsubscribed.tsx"
+      ],
       "bibleVizUtils.prefabs.activityNotification.OnReleased": [
         "./packages/Bible Visualization Utils/bibleVizUtils/prefabs/activityNotification/OnReleased.tsx"
       ],
@@ -1626,11 +1638,23 @@
       "managers.MapsManager.Initialize": [
         "./packages/Calendar/managers/MapsManager/Initialize.tsx"
       ],
+      "managers.MapsManager.MapBookData": [
+        "./packages/Calendar/managers/MapsManager/MapBookData.tsm"
+      ],
+      "managers.MapsManager.MapBookStructure": [
+        "./packages/Calendar/managers/MapsManager/MapBookStructure.tsm"
+      ],
+      "managers.MapsManager.MapChapterData": [
+        "./packages/Calendar/managers/MapsManager/MapChapterData.tsm"
+      ],
       "managers.MapsManager.MapContainerComponent": [
         "./packages/Calendar/managers/MapsManager/MapContainerComponent.tsx"
       ],
       "managers.MapsManager.MapControlsComponent": [
         "./packages/Calendar/managers/MapsManager/MapControlsComponent.tsx"
+      ],
+      "managers.MapsManager.MapData": [
+        "./packages/Calendar/managers/MapsManager/MapData.tsm"
       ],
       "managers.MapsManager.MapPanelContext": [
         "./packages/Calendar/managers/MapsManager/MapPanelContext.tsx"
@@ -1799,6 +1823,12 @@
       ],
       "canvas.canvasApp.toggleCanvas": [
         "./packages/Canvas/canvas/canvasApp/toggleCanvas.tsx"
+      ],
+      "colorLerper.main.ColorLerpData": [
+        "./packages/Color Lerper/colorLerper/main/ColorLerpData.tsm"
+      ],
+      "colorLerper.main.ColorLerpsArray": [
+        "./packages/Color Lerper/colorLerper/main/ColorLerpsArray.tsm"
       ],
       "colorLerper.main.Initialize": [
         "./packages/Color Lerper/colorLerper/main/Initialize.tsx"
@@ -2263,6 +2293,9 @@
       "objectPooler.main.CreateNewObject": [
         "./packages/Object Pooler/objectPooler/main/CreateNewObject.tsx"
       ],
+      "objectPooler.main.CustomTag": [
+        "./packages/Object Pooler/objectPooler/main/CustomTag.tsm"
+      ],
       "objectPooler.main.GetObjectFromPool": [
         "./packages/Object Pooler/objectPooler/main/GetObjectFromPool.tsx"
       ],
@@ -2280,6 +2313,12 @@
       ],
       "objectPooler.main.onInstJoined": [
         "./packages/Object Pooler/objectPooler/main/onInstJoined.tsx"
+      ],
+      "objectPooler.main.Pool": [
+        "./packages/Object Pooler/objectPooler/main/Pool.tsm"
+      ],
+      "objectPooler.main.PoolData": [
+        "./packages/Object Pooler/objectPooler/main/PoolData.tsm"
       ],
       "objectPooler.main.ReleaseObject": [
         "./packages/Object Pooler/objectPooler/main/ReleaseObject.tsx"
