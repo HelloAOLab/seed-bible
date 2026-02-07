@@ -21,11 +21,11 @@ const AiSettings = () => {
   const { sidebarMode, setSideBarMode, closePopupSettings } =
     useSideBarContext();
   const { tools, setTools } = useBibleContext();
-  const [switcher, setSwitcher] = useState(1);
+  const [switcher, setSwitcher] = useState<number | null>(1);
   const [chatPrompt, setChatPrompt] = useState("");
   const [chatResponse, setChatResponse] = useState("");
   const [imagePrompt, setImagePrompt] = useState("");
-  const [imageResult, setImageResult] = useState(null);
+  const [imageResult, setImageResult] = useState<string | null>(null);
   const [loading, setLoading] = useState(false);
 
   console.log("tools in ai settings", tools);
@@ -47,11 +47,11 @@ const AiSettings = () => {
       const result = await ai.generateImage({
         prompt: imagePrompt,
       });
-      setImageResult(result.images[0].url);
+      setImageResult(result.images?.[0]?.url ?? null);
       setLoading(false);
     } catch (error) {
       setLoading(false);
-      
+
       console.error("Error generating image:", error);
     }
   };
@@ -108,7 +108,9 @@ const AiSettings = () => {
             style={{ height: "150px", width: "100%" }}
             className="selectInput"
             value={chatPrompt}
-            onChange={(e) => setChatPrompt(e.target.value)}
+            onChange={(e) =>
+              setChatPrompt((e.target as HTMLTextAreaElement).value)
+            }
           ></textarea>
           <button
             onClick={handleChatSubmit}
@@ -155,7 +157,9 @@ const AiSettings = () => {
             style={{ height: "150px", width: "100%" }}
             className="selectInput"
             value={imagePrompt}
-            onChange={(e) => setImagePrompt(e.target.value)}
+            onChange={(e) =>
+              setImagePrompt((e.target as HTMLTextAreaElement).value)
+            }
           ></textarea>
           <button
             onClick={handleImageSubmit}
@@ -207,9 +211,14 @@ const AiSettings = () => {
           <textarea
             style={{ height: "150px", width: "100%" }}
             className="selectInput"
-            value={masks?.editorAIPostive || ""}
+            value={(masks as any)?.editorAIPostive || ""}
             onChange={(e) =>
-              setTagMask(thisBot, "editorAIPostive", e.target.value, "local")
+              (setTagMask as any)(
+                thisBot as any,
+                "editorAIPostive",
+                (e.target as HTMLTextAreaElement).value,
+                "local"
+              )
             }
           ></textarea>
           <div className="blackText">Negative prompt</div>
@@ -217,9 +226,14 @@ const AiSettings = () => {
           <textarea
             style={{ height: "150px", width: "100%" }}
             className="selectInput"
-            value={masks?.editorAINegative || ""}
+            value={(masks as any)?.editorAINegative || ""}
             onChange={(e) =>
-              setTagMask(thisBot, "editorAINegative", e.target.value, "local")
+              (setTagMask as any)(
+                thisBot as any,
+                "editorAINegative",
+                (e.target as HTMLTextAreaElement).value,
+                "local"
+              )
             }
           ></textarea>
         </>

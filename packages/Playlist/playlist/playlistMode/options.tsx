@@ -35,7 +35,20 @@ const items = [
         }
         globalThis.SetTab("create");
         globalThis[`${"default"}mode`] = PlaylistModeTypes.annotations;
-        if (globalThis.SetSelectedAnnotations) {
+
+        let isAnnotationGoingToAdd = globalThis.AddAnotationUI;
+        if (isAnnotationGoingToAdd) {
+          isAnnotationGoingToAdd = dataTempItems[0].additionalInfo.chapter === globalThis[`FirstAnnnotationItem`].additionalInfo.chapter;
+          if (!isAnnotationGoingToAdd) {
+            ShowNotification({
+              message: "You can only annotate the same chapter at a time. In current mode.",
+              severity: "error",
+            });
+            return;
+          }
+        };
+
+        if (isAnnotationGoingToAdd && globalThis.SetSelectedAnnotations) {
           globalThis.SetSelectedAnnotations(dataTempItems[0].id);
         } else {
           globalThis.SelectedItemIDForAttachments = dataTempItems[0].id;

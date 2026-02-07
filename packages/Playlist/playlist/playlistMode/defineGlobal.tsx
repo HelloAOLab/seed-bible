@@ -7,6 +7,8 @@ os.hideLoadingScreen();
 globalThis.MOBILE_VIEWPORT_THRESHOLD = 600;
 globalThis.makingPlaylist = false;
 
+globalThis.LoadedPlaylistAnnotations = {};
+
 const storageBot = getBot("system", 'storage.tempStorageBot');
 if (storageBot) {
   storageBot.defineGlobals();
@@ -50,6 +52,10 @@ globalThis.CheckMultiFuntionHold = () => globalThis?.KEY_HOLD?.['shift'] || glob
 globalThis.Playlist = thisBot;
 
 const bookmarks = await thisBot.getBookmarks();
+
+globalThis.AnnotationsData = {};
+
+thisBot.fetchAnnotationsData({...globalThis.CurrentBookData});
 
 let recored = getBot("system", 'main.Recorder')
 
@@ -1040,3 +1046,32 @@ const getVerseSummaryHeading = (verses: number[]) => {
 globalThis.GetVerseSummaryHeading = getVerseSummaryHeading;
 
 thisBot.getLabel();
+
+
+function sanitizeString(str) {
+  // console.log("SANITIZE DONE", str);
+  // Remove control characters (U+0000 to U+001F, excluding \t, \n, \r)
+  if (typeof str === "string") {
+    return str.replace(/[\u0000-\u001F\u007F-\u009F]/g, "");
+  }
+  return str;
+}
+
+function sanitizeObject(obj) {
+  if (typeof obj === "string") {
+    return sanitizeString(obj);
+  } else if (Array.isArray(obj)) {
+    return obj.map(sanitizeObject);
+  } else if (obj && typeof obj === "object") {
+    return Object.keys(obj).reduce((acc, key) => {
+      acc[key] = sanitizeObject(obj[key]);
+      return acc;
+    }, {});
+  }
+  return obj; // Return other types (numbers, booleans, etc.) unchanged
+}
+
+
+globalThis.sanitizeObject = sanitizeObject;
+
+globalThis.RECORD_SEPARATOR = "^_^";

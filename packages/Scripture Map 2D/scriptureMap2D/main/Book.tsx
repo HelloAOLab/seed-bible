@@ -11,6 +11,7 @@ import { useReadingHistoryContext } from "scriptureMap2D.main.ReadingHistoryCont
 import { calculateReadingHistorySummary } from "db.annotations.library";
 
 import { useSideBarContext } from "app.hooks.sideBar";
+import { readingHistoryColorStore } from "bibleVizUtils.services.ReadingHistoryColorStore";
 
 const { useMemo, useState, useEffect, useCallback } = os.appHooks;
 const { memo } = os.appCompat;
@@ -42,7 +43,6 @@ export const Book = memo(
       onBookNameClickAndHold,
       onBookNameClickAndHoldDependencies,
       chapterGap,
-      chapterPadding,
       chapterHeight,
       BASE_BACKGROUND_COLOR,
       showingBooksColors,
@@ -95,15 +95,13 @@ export const Book = memo(
           BibleVizUtils.Data.tags.BibleLayoutMeasurements.Book2DMaxColumns
       );
       const height =
-        amountOfRows * chapterHeight +
-        chapterPadding * 2 +
-        chapterGap * (amountOfRows - 1);
+        amountOfRows * chapterHeight + chapterGap * (amountOfRows - 1);
       return height;
-    }, [scaleFactor, chapterGap, chapterPadding, chapterHeight]);
+    }, [scaleFactor, chapterGap, chapterHeight]);
 
     const bookCoverHeight = useMemo(() => {
       return `${getBookHeight()}px`;
-    }, [scaleFactor, getBookHeight, chapterGap, chapterPadding, chapterHeight]);
+    }, [scaleFactor, getBookHeight, chapterGap, chapterHeight]);
 
     const checked = useMemo(() => {
       return selection?.[testament.name]?.[sectionName]?.[book]?.every(
@@ -153,13 +151,7 @@ export const Book = memo(
             users[userId];
           let color;
           const baseColor = BASE_BACKGROUND_COLOR;
-          const userColor =
-            userId === myAuthBotId
-              ? BibleVizUtils.Data.tags.myUserColor
-              : (BibleVizUtils.Data.vars.userPresenceData?.[userId]?.user
-                  ?.color ??
-                thisBot.vars.FakeReadingHistoryUsersColorMap?.get(userId) ??
-                "pink");
+          const userColor = readingHistoryColorStore.getUserColor(userId);
           const isTimeSpentNoticeable = userReadingTimeSeconds > SEC_PER_MINUTE; // more than a minute
 
           if (isTimeSpentNoticeable) {
@@ -266,17 +258,13 @@ export const Book = memo(
             colors.push({ color, value });
           }
         }
-        if (colors.length === 0) {
-          fixedBackground = BASE_BACKGROUND_COLOR;
-        } else {
+        if (colors.length > 0) {
           fixedBackground =
             BibleVizUtils.Functions.GetHistoryColorLinearGradient(colors);
         }
       } else {
         if (showingBooksColors) {
           fixedBackground = bookCoverBackgroundColor;
-        } else {
-          fixedBackground = BASE_BACKGROUND_COLOR;
         }
       }
 
@@ -302,6 +290,7 @@ export const Book = memo(
       isReadingHistoryEnabled,
       readingHistoryRangeSeconds,
       showingBooksColors,
+      BASE_BACKGROUND_COLOR,
     ]);
 
     const chapterReadingHistorySummaryMap = useMemo(() => {
@@ -351,8 +340,8 @@ export const Book = memo(
         let chapter = index + 1;
 
         const chapterSummary = chapterReadingHistorySummaryMap.get(chapter);
-        let historyBackground = null;
-        let historyColor = null;
+        let historyBackground;
+        let historyColor;
         const tooltipContent = [];
         const colors = [];
 
@@ -362,13 +351,7 @@ export const Book = memo(
               chapterSummary;
             for (const userId in users) {
               let color;
-              const userColor =
-                userId === myAuthBotId
-                  ? BibleVizUtils.Data.tags.myUserColor
-                  : (BibleVizUtils.Data.vars.userPresenceData?.[userId]?.user
-                      ?.color ??
-                    thisBot.vars.FakeReadingHistoryUsersColorMap?.get(userId) ??
-                    "pink");
+              const userColor = readingHistoryColorStore.getUserColor(userId);
               const { totalTimeSpentReading: userReadingTimeSeconds } =
                 users[userId];
 
@@ -490,18 +473,14 @@ export const Book = memo(
             }
           }
 
-          if (colors.length > 1) {
+          if (colors.length > 0) {
             historyBackground =
               BibleVizUtils.Functions.GetHistoryColorLinearGradient(colors);
-          } else {
-            if (colors.length === 0) {
-              colors.push({ color: BASE_BACKGROUND_COLOR, value: 1 });
-            }
-            historyBackground = colors[0].color;
+            historyColor =
+              BibleVizUtils.Functions.GetTextColorBasedOnBackground({
+                backgroundColor: colors,
+              });
           }
-          historyColor = BibleVizUtils.Functions.GetTextColorBasedOnBackground({
-            backgroundColor: colors,
-          });
         }
 
         if (isPsalms) {
@@ -558,6 +537,7 @@ export const Book = memo(
       usersInfo,
       userPresence,
       showChapters,
+      BASE_BACKGROUND_COLOR,
     ]);
 
     return (
@@ -568,8 +548,8 @@ export const Book = memo(
           if (!showChapters) setShowChapters(true);
         }}
       >
-        <span
-          className="book-name"
+        <div
+          className="book-header"
           onPointerDown={(e) => {
             e.stopPropagation();
             onHoldStart(e);
@@ -582,8 +562,8 @@ export const Book = memo(
             e.stopPropagation();
           }}
         >
-          {bookId}
-        </span>
+          <span className="book-id">{scaleFactor > 0.5 ? book : bookId}</span>
+        </div>
         <div
           className={`book-cover${showChapters ? " invisible" : isUserPresenceEnabled && bookBorderGradientColors ? " show-user-presence" : ""}`}
           onPointerEnter={(e) =>
@@ -592,7 +572,7 @@ export const Book = memo(
           onPointerLeave={() => setContainerRect(null)}
           style={{
             "--bookUserPresenceColors": bookBorderGradientColors,
-            height: bookCoverHeight,
+            minHeight: bookCoverHeight,
             background: fixedBackground,
           }}
         >

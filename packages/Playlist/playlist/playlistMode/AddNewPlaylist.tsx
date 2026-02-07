@@ -248,9 +248,6 @@ const AddNewPlaylist = ({
               onClick={() => {
                 setPublishAccess("private");
               }}
-              style={{
-                borderTop: "1px solid #3E3E3E",
-              }}
             >
               <span
                 style={{ color: "white" }}

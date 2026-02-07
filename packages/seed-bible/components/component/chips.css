@@ -1,9 +1,9 @@
 .chip {
     display: inline-flex;
     align-items: center;
-    background-color: #f0d6c8;
+    background-color: var(--activeTabFill);
     /* soft peachy background */
-    color: #2c2c2c;
+    color: var(--activeTabText);
     /* dark text for contrast */
     font-size: 16px;
     font-family: 'Satoshi', system-ui, sans-serif;

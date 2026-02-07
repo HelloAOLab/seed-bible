@@ -3,6 +3,20 @@ if (globalThis.makingPlaylist) {
 
     const dataItem = that.dataItem;
     const combineLast = that.combineLast;
+
+    if(globalThis.AddAnotationUI && globalThis[`FirstAnnnotationItem`]?.additionalInfo) {
+        if(dataItem.additionalInfo.chapter != globalThis[`FirstAnnnotationItem`].additionalInfo.chapter) {
+            ShowNotification({
+                message: "You can only annotate the same chapter at a time. In current mode.",
+                severity: "error",
+            });
+            return;
+        }
+    }
+
+    console.log("dataItem", dataItem);
+
+
     if (!dataItem.content) return;
     if (dataItem.content.startsWith("Psalm")) {
         const secondHalf = dataItem.content.split(" ")[1];

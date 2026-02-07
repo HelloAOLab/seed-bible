@@ -1,4 +1,6 @@
-export const ShareIcon = (props) => {
+import type { IconProps } from "introduction.searchBar.Interfaces";
+
+export const ShareIcon = (props: IconProps) => {
   return (
     <svg
       width="11"
@@ -16,7 +18,7 @@ export const ShareIcon = (props) => {
   );
 };
 
-export const TickIcon = (props) => {
+export const TickIcon = (props: IconProps) => {
   return (
     <svg
       width="10"
@@ -34,7 +36,7 @@ export const TickIcon = (props) => {
   );
 };
 
-export const SettingsIcon = (props) => {
+export const SettingsIcon = (props: IconProps) => {
   return (
     <svg
       width="26"
@@ -47,43 +49,43 @@ export const SettingsIcon = (props) => {
       <g clip-path="url(#clip0_5131_17531)">
         <path
           d="M5.28613 13H11.0718"
-          stroke="black"
+          stroke="var(--text1)"
           stroke-linecap="round"
           stroke-linejoin="round"
         />
         <path
           d="M5.28613 19.0664H16.8576"
-          stroke="black"
+          stroke="var(--text1)"
           stroke-linecap="round"
           stroke-linejoin="round"
         />
         <path
           d="M14.9287 13H20.7144"
-          stroke="black"
+          stroke="var(--text1)"
           stroke-linecap="round"
           stroke-linejoin="round"
         />
         <path
           d="M20.715 6.93359H9.14355"
-          stroke="black"
+          stroke="var(--text1)"
           stroke-linecap="round"
           stroke-linejoin="round"
         />
         <path
           d="M5.28613 6.93248C5.28613 8.16676 5.98042 8.86105 7.2147 8.86105C8.44899 8.86105 9.14328 8.16676 9.14328 6.93248C9.14328 5.69819 8.44899 5.00391 7.2147 5.00391C5.98042 5.00391 5.28613 5.69819 5.28613 6.93248Z"
-          stroke="black"
+          stroke="var(--text1)"
           stroke-linecap="round"
           stroke-linejoin="round"
         />
         <path
           d="M16.8574 19.0653C16.8574 20.2996 17.5517 20.9939 18.786 20.9939C20.0203 20.9939 20.7146 20.2997 20.7146 19.0654C20.7146 17.831 20.0203 17.1367 18.786 17.1367C17.5517 17.1367 16.8574 17.831 16.8574 19.0653Z"
-          stroke="black"
+          stroke="var(--text1)"
           stroke-linecap="round"
           stroke-linejoin="round"
         />
         <path
           d="M11.1016 12.9989C11.1016 14.2332 11.7958 14.9275 13.0301 14.9275C14.2644 14.9275 14.9587 14.2332 14.9587 12.9989C14.9587 11.7646 14.2644 11.0703 13.0301 11.0703C11.7958 11.0703 11.1016 11.7646 11.1016 12.9989Z"
-          stroke="black"
+          stroke="var(--text1)"
           stroke-linecap="round"
           stroke-linejoin="round"
         />
@@ -102,7 +104,7 @@ export const SettingsIcon = (props) => {
   );
 };
 
-export const SelectedIcon = (props) => {
+export const SelectedIcon = (props: IconProps) => {
   return (
     <svg
       width="14"
@@ -120,7 +122,7 @@ export const SelectedIcon = (props) => {
   );
 };
 
-export const AddIcon = (props) => {
+export const AddIcon = (props: IconProps) => {
   return (
     <svg
       width="14"

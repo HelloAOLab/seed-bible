@@ -16,11 +16,20 @@ const { useState, useEffect } = os.appHooks;
 // await os.eraseData(tags.key, authBot.id)
 const CreateAccountSettings = () => {
   const { sidebarMode, setSideBarMode } = useSideBarContext();
-  const [img, setImg] = useState();
+  const [img, setImg] = useState<string | undefined>();
   const [profileName, setProfileName] = useState("");
   const [description, setDescription] = useState("");
   const [uid, setUid] = useState(authBot?.id);
   const [isSignedIn, setIsSignedIn] = useState(false);
+  useEffect(() => {
+    if (!authBot.id) {
+      setIsSignedIn(false);
+      setUid("");
+      setProfileName("");
+      setDescription("");
+      setImg(undefined);
+    }
+  }, [authBot]);
   async function init() {
     const authBot = await os.requestAuthBotInBackground();
     if (!authBot?.id) {
@@ -33,7 +42,7 @@ const CreateAccountSettings = () => {
     if (data.success) {
       const payload = data.data;
       setImg(payload.photoLink);
-      setTagMask(thisBot,`${configBot.id}-photo`,payload.photoLink,'shared');
+      setTagMask(thisBot, `${configBot.id}-photo`, payload.photoLink, "shared");
       setProfileName(payload.profileName);
       setDescription(payload.description);
     }
@@ -72,13 +81,13 @@ const CreateAccountSettings = () => {
       }
     } else {
       os.log(result);
-      const img = result.existingFileUrl;
+      const img = (result as any).existingFileUrl;
       const data = await os.getData(tags.key, authBot.id);
       await os.recordData(authBot.id, authBot.id, {
-        ...data.data,
+        ...(data as any).data,
         photoLink: img,
       });
-      setImg(result.existingFileUrl);
+      setImg((result as any).existingFileUrl);
     }
   }
   async function saveProfileData() {
@@ -115,10 +124,17 @@ const CreateAccountSettings = () => {
           <div
             style={{ cursor: "pointer" }}
             onClick={() => {
-              if (globalThis.AccountSettingsEnteredFrom === "settings") {
+              if (
+                (globalThis as any).AccountSettingsEnteredFrom === "settings"
+              ) {
                 setSideBarMode("settings");
-                setTimeout(() => globalThis.SetActiveSettingsTab("general"), 0);
-              } else if (globalThis.AccountSettingsEnteredFrom === "default") {
+                setTimeout(
+                  () => (globalThis as any).SetActiveSettingsTab("general"),
+                  0
+                );
+              } else if (
+                (globalThis as any).AccountSettingsEnteredFrom === "default"
+              ) {
                 setSideBarMode("default");
               }
             }}
@@ -150,20 +166,28 @@ const CreateAccountSettings = () => {
           <button
             onClick={async () => {
               const authBot = await os.requestAuthBot();
+              if (!tags.usersAuthIds) {
+                tags.usersAuthIds = [];
+              }
+              const authId = authBot?.id || null;
+              const existingEntry = tags.usersAuthIds.find(
+                (entry: { authId: string | null; configId: string }) =>
+                  entry.configId === configBot.id
+              );
+              if (!existingEntry) {
+                tags.usersAuthIds.push({ authId, configId: configBot.id });
+              } else if (existingEntry.authId !== authId && authId !== null) {
+                existingEntry.authId = authId;
+              }
               if (authBot?.id) {
-                if (!tags.usersAuthIds) {
-                  tags.usersAuthIds = [];
-                }
-                if (!tags.usersAuthIds.includes(authBot.id)) {
-                  tags.usersAuthIds.push(authBot.id);
-                }
+                shout("userLogin", { authId, configId: configBot.id });
                 setIsSignedIn(true);
                 setUid(authBot.id);
                 init();
               }
             }}
             style={{
-              background: "#4459F3",
+              background: "var(--spaceSelection)",
               color: "white",
               border: "none",
               padding: "8px 16px",
@@ -191,18 +215,18 @@ const CreateAccountSettings = () => {
                 "border-radius": "50%",
                 height: "50px",
                 width: "50px",
-                border: "1px solid #4459F3",
+                border: "1px solid var(--spaceSelection)",
               }}
               src={img}
             />
             <button
               onClick={() => uploadImage()}
               style={{
-                background: "#4459F31A",
-                border: "1px solid #4459F3",
+                background: "var(--spaceSelection)1A",
+                border: "1px solid var(--spaceSelection)",
                 width: "100px",
                 height: "30px",
-                color: "#4459F3",
+                color: "var(--spaceSelection)",
               }}
             >
               Add picture
@@ -216,7 +240,9 @@ const CreateAccountSettings = () => {
             placeholder="e.g Craig family"
             className="selectInput"
             value={profileName}
-            onChange={(e) => setProfileName(e.target.value)}
+            onChange={(e) =>
+              setProfileName((e.target as HTMLInputElement).value)
+            }
           />
           <p style={{ "font-size": "10px", color: "#5F5E5C" }}>
             You can change this later
@@ -234,7 +260,9 @@ const CreateAccountSettings = () => {
             placeholder="Enter your profile description..."
             className="selectInput"
             value={description}
-            onChange={(e) => setDescription(e.target.value)}
+            onChange={(e) =>
+              setDescription((e.target as HTMLTextAreaElement).value)
+            }
           ></textarea>
           <div style={{ height: "20px" }}></div>
           <div className="blackText">Your ID is:</div>
@@ -249,7 +277,7 @@ const CreateAccountSettings = () => {
           <button
             onClick={saveProfileData}
             style={{
-              background: "#4459F3",
+              background: "var(--spaceSelection)",
               color: "white",
               border: "none",
               padding: "10px 20px",
@@ -258,6 +286,39 @@ const CreateAccountSettings = () => {
             }}
           >
             Save Profile
+          </button>
+          <div style={{ height: "20px" }}></div>
+          <button
+            onClick={async () => {
+              if (authBot) {
+                destroy(authBot);
+              }
+              setIsSignedIn(false);
+              setUid("");
+              setProfileName("");
+              setDescription("");
+              setImg(undefined);
+              os.toast("Signed out successfully");
+            }}
+            style={{
+              background: "white",
+              color: "#DC3545",
+              border: "2px solid #DC3545",
+              padding: "10px 20px",
+              borderRadius: "6px",
+              cursor: "pointer",
+              width: "100%",
+              display: "flex",
+              alignItems: "center",
+              justifyContent: "center",
+              gap: "8px",
+            }}
+          >
+            <span style={{ fontSize: "16px" }}>
+              {" "}
+              <MenuIcon name={"logout"} />{" "}
+            </span>{" "}
+            Sign out
           </button>
         </>
       )}

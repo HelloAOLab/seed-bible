@@ -258,7 +258,7 @@ const VideoRecordUI = ({ data, setData }) => {
                     }}
                     style={{ justifyContent: 'center', width: `${100 / buttonConfigs.length}%`, fontSize: '12px', fontWeight: '400' }}
                     className={`tabs-playlist-item ${value === tab ? 'active' : ''}`} >
-                    <img style={{ height: '20px' }} src={IconsRef[`${value}${value === tab ? '_active' : ''}`]} />
+                    <img className='img-icon' style={{ height: '20px' }} src={IconsRef[`${value}${value === tab ? '_active' : ''}`]} />
                     <span class="hide-at-400">
                         {label}
                     </span>
@@ -282,18 +282,18 @@ const VideoRecordUI = ({ data, setData }) => {
                                         audio: !prev.audio
                                     }))}
                                 >
-                                    <img src={IconsRef[recordingProps.audio ? 'mic' : 'mic_off']} alt="mic" style={{ height: '32px' }} />
+                                    <img src={IconsRef[recordingProps.audio ? 'mic' : 'mic_off']} className="img-icon" alt="mic" style={{ height: '32px' }} />
                                 </p>
                                 <p className="pointer" onClick={handleRecord}>
 
-                                    <img src={IconsRef.start_recording} alt="mic" style={{ height: '32px' }} />
+                                    <img src={IconsRef.start_recording} className="img-icon" alt="mic" style={{ height: '32px' }} />
 
                                 </p>
                             </>
                         )}
                         {isRecording && (
                             <p className="pointer" onClick={handleStop}>
-                                <img src={IconsRef.stop_recording} alt="mic" style={{ height: '32px' }} />
+                                <img src={IconsRef.stop_recording} className="img-icon" alt="mic" style={{ height: '32px' }} />
                             </p>
                         )}
                     </div>}
@@ -302,7 +302,7 @@ const VideoRecordUI = ({ data, setData }) => {
                 isRecording && isScreen &&
                 <div className="controls">
                     <p className="pointer" onClick={handleStop}>
-                        <img src={IconsRef.stop_recording} alt="mic" style={{ height: '32px' }} />
+                        <img src={IconsRef.stop_recording} className="img-icon" alt="mic" style={{ height: '32px' }} />
                     </p>
                 </div>
             }

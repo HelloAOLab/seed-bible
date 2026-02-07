@@ -4,9 +4,8 @@ import { getAnnotationRecord, loadAnnotations } from "db.annotations.library";
 import { ProjectProvider } from "playlist.playlistMode.useProjectContext";
 
 const RenderIcon = await thisBot.RenderIcon();
-import { MenuIcon } from "app.components.icons";
 const { useState, useLayoutEffect, useMemo, useRef, useCallback } = os.appHooks;
-const { Input, Modal, Button, ButtonsCover, Tooltip } = Components;
+const {  Modal, Button, ButtonsCover } = Components;
 
 const ShowPersonVideoOverlay = await thisBot.ShowPersonVideoOverlay();
 
@@ -326,8 +325,6 @@ const Playlist = () => {
         try {
           setFetchingAnnotation(true);
 
-          const userRecord = await getAnnotationRecord();
-
           const annotationSources:any = [];
 
           const sourcesMap = {};
@@ -336,11 +333,16 @@ const Playlist = () => {
 
           const tagsMap = {};
 
-          const annotations = await loadAnnotations(
-            userRecord,
-            currentOpenedBook?.bookId,
-            currentOpenedBook?.chapter
-          );
+          let annotations = "";
+
+          if(globalThis.AnnotationsData[`${currentOpenedBook?.bookId}-${currentOpenedBook?.chapter}`]) {
+            annotations = globalThis.AnnotationsData[`${currentOpenedBook?.bookId}-${currentOpenedBook?.chapter}`].data;
+            thisBot.fetchAnnotationsData({...currentOpenedBook});
+            thisBot.fetchAnnotationsData({...currentOpenedBook, prev: true});
+            thisBot.fetchAnnotationsData({...currentOpenedBook, next: true});
+          } else {
+            annotations = await thisBot.fetchAnnotationsData({...currentOpenedBook});
+          }
 
           let allAnnotations:any = [];
           const verseIndexMap:any = {};

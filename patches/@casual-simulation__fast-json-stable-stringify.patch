@@ -1,14 +1,14 @@
 diff --git a/package.json b/package.json
-index ae9d36f58a73493235aef53d74af22115d54bdb0..543e3f606ad3be1f7d00d0384ba09e005184936b 100644
+index c89269f0b70b972d9be8b9663cb30a3b7f201cce..e879298d3764ae159f6a31e2574235821a21dd18 100644
 --- a/package.json
 +++ b/package.json
 @@ -4,7 +4,8 @@
-     "description": "deterministic `JSON.stringify()` - a faster version of substack's json-stable-strigify without jsonify",
-     "main": "index.js",
-     "types": "index.d.ts",
--    "module": "index",
-+    "type": "module",
-+    "module": "index.js",
-     "scripts": {
-         "eslint": "eslint index.js test",
-         "test-spec": "tape test/*.js",
+   "description": "deterministic `JSON.stringify()` - a faster version of substack's json-stable-strigify without jsonify",
+   "main": "index.js",
+   "types": "index.d.ts",
+-  "module": "index",
++  "type": "module",
++  "module": "index.js",
+   "repository": {
+     "type": "git",
+     "url": "git@github.com:casual-simulation/casualos.git"

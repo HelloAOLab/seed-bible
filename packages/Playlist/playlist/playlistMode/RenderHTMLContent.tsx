@@ -69,6 +69,60 @@ const RenderHTMLContent = ({ htmlContent }) => {
       });
     };
 
+    const handlePlayCircleClick = async (e) => {
+      e.preventDefault();
+      e.stopPropagation();
+      const id = e.target.getAttribute("id");
+      if(!id) return;
+      const [authBotId, playlistId] = id.split(globalThis.RECORD_SEPARATOR);
+      if(!authBotId || !playlistId) return;
+
+
+      if(globalThis.LoadingOldPlaylist) {
+        return ShowNotification({
+          message: t("pleaseWaitOldPlaylistIsLoading"),
+          severity: "error",
+        });
+      }
+
+      ShowNotification({
+        message: t("loadingPlaylistPleaseWait"),
+        severity: "success",
+      });
+      
+      globalThis.LoadingOldPlaylist = true;
+
+      let res = null;
+
+      if (globalThis.LoadedPlaylistAnnotations[playlistId]) {
+        res = {
+          success: true,
+          data: globalThis.LoadedPlaylistAnnotations[playlistId],
+        }
+      } else {
+        res = await os.getData(authBotId, playlistId);
+        globalThis.LoadedPlaylistAnnotations[playlistId] = {...res.data};
+      }
+
+      if (res.success) {
+        const playlistData = res.data;
+        thisBot.Playlistplaying({
+          playingPlaylist: playlistData.id,
+          startIndex: 0,
+          startSubIndex: -1,
+          parentId: "default",
+          name: playlistData.name,
+          list: [...playlistData.list],
+        });
+      } else {
+        ShowNotification({
+          message: t("unableToCopyPlaylist"),
+          severity: "error",
+        });
+      }
+      globalThis.LoadingOldPlaylist = false;
+    };
+
     // Function to handle iframe overlay clicks
     const handleIframeOverlayClick = (e) => {
       e.preventDefault();
@@ -109,8 +163,18 @@ const RenderHTMLContent = ({ htmlContent }) => {
 
     // Add click listeners to all video elements
     const videos = containerRef.current.querySelectorAll("video");
-    videos.forEach((video) => {
+    videos.forEach((video:any) => {
       video.addEventListener("click", handleVideoClick);
+    });
+
+    // Add click listeners to all span tags with id="${id}" className="material-symbols-outlined sre-play-circle sre-play-circle-${id}"
+    const playCircleSpans = containerRef.current.querySelectorAll("span.sre-play-circle");
+    playCircleSpans.forEach((span:any) => {
+      const id = span.getAttribute("id");
+      thisBot.FetchAnnotationContentInBg({
+        playlistId: id,
+      });
+      span.addEventListener("click", handlePlayCircleClick);
     });
 
     // Add click listeners to all iframe overlays (using event delegation)
@@ -124,8 +188,11 @@ const RenderHTMLContent = ({ htmlContent }) => {
     // Cleanup function
     return () => {
       clearTimeout(timeoutId);
-      videos.forEach((video) => {
+      videos.forEach((video:any) => {
         video.removeEventListener("click", handleVideoClick);
+      });
+      playCircleSpans.forEach((span:any) => {
+        span.removeEventListener("click", handlePlayCircleClick);
       });
       if (containerRef.current) {
         containerRef.current.removeEventListener("click", handleContainerClick);

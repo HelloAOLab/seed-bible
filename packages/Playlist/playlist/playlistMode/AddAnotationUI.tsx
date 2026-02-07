@@ -493,6 +493,8 @@ const AddAnotationUI = ({
   setTab,
 }) => {
 
+  globalThis[`FirstAnnnotationItem`] = list[0];
+
   // Audio
   const [mediaURL, setMediaURL] = useState("");
   const [videoSrc, setVideoSrc] = useState(false);
@@ -534,6 +536,7 @@ const AddAnotationUI = ({
 
   useLayoutEffect(() => {
     globalThis.SetSelectedAnnotations = setSelectedAnnotation;
+    globalThis.AddAnotationUI = true;
     if (editData?.address) {
       (async () => {
         setDataFetching(true);
@@ -607,6 +610,7 @@ const AddAnotationUI = ({
       }
       setIsEditAddress(false);
       globalThis.SetEditAnnoData?.(null);
+      globalThis.AddAnotationUI = false;
     };
   }, []);
 
@@ -973,7 +977,7 @@ const AddAnotationUI = ({
 
   const onEditSave = async () => {
     // if (list.length < 1) {
-    if (textHTML.trim().length < 1) {
+    if (textHTML?.trim().length < 1) {
       return ShowNotification({
         message: t('cannotSaveEmptyAnnotation'),
         severity: "error",
@@ -1052,6 +1056,8 @@ const AddAnotationUI = ({
       globalThis.PreviousHTML = null;
       setTextHTML(null);
       if (setTab) setTab("discover");
+      delete globalThis.AnnotationsData[`${book}-${chapter}`];
+      thisBot.fetchAnnotationsData({...globalThis.CurrentBookData});
     } catch (e) {
       setLoading(false);
       console.error(`${t('errorUpdatingAnnotations')}:`, e);
@@ -1067,7 +1073,7 @@ const AddAnotationUI = ({
   const onClickSave = async () => {
     if (loading) return;
     // if (list.length < 1) {
-    if (textHTML.trim().length < 1) {
+    if (textHTML?.trim().length < 1) {
       return ShowNotification({
         message: t('cannotSaveEmptyAnnotations'),
         severity: "error",
@@ -1103,7 +1109,7 @@ const AddAnotationUI = ({
     let somethingNotScripture = false;
     let somethingNotEmbedded = false;
     if (singleMode) {
-      if (textHTML.trim().length === 0) {
+      if (textHTML?.trim().length === 0) {
         return ShowNotification({
           message: t('pleaseEmbedSomethingToSaveAnnotations'),
           severity: "error",
@@ -1152,8 +1158,8 @@ const AddAnotationUI = ({
         html: textHTML,
         createdAtMs: Date.now(),
         updatedAtMs: Date.now(),
-        userProfilePicture: data.data.photoLink,
-        userName: data.data.profileName,
+        userProfilePicture: data.data?.photoLink,
+        userName: data.data?.profileName,
         userId: authBot.id,
         tags: hashtags,
       };
@@ -1189,6 +1195,9 @@ const AddAnotationUI = ({
           verseNumbers.length > 1 ? verseNumbers : verseNumbers[0]
         );
 
+        console.log("annotation", annotation);
+        console.log("userRecord", userRecord);
+
         promisesArray.push(saveAnnotation(userRecord, annotation));
   
         await Promise.all(promisesArray);
@@ -1202,6 +1211,8 @@ const AddAnotationUI = ({
         setList([]);
         setSelectedAnnotation(null);
         globalThis.PreviousHTML = null;
+        delete globalThis.AnnotationsData[`${book}-${chapter}`];
+        thisBot.fetchAnnotationsData({...globalThis.CurrentBookData});
         setTextHTML(null);
       }
       
@@ -1250,20 +1261,34 @@ const AddAnotationUI = ({
   const finalHistoryObject = useMemo(() => {
     if (!singleMode || editData?.address) return list;
 
-    const trackVerse = {};
+    const trackVerse: Record<string, boolean> = {};
 
-    const listFinal = list
-      .filter((ele) => {
-        const verse = ele.additionalInfo.verse;
-        if (trackVerse[verse]) return false;
-        trackVerse[verse] = true;
-        return (
-          ele.type === "verse" ||
-          ele.type === "verse-range" ||
-          ele.type === "verse-grouped"
-        );
-      })
-      .sort((a, b) => a.additionalInfo.verse > b.additionalInfo.verse);
+    const listItems: any[] = [];
+
+    list.forEach((ele: any) => {
+      const verse = ele.additionalInfo.verse;
+      if (trackVerse[verse]) return false;
+      trackVerse[verse] = true;
+      if( ele.type === "verse" || ele.type === "verse-range" || ele.type === "verse-grouped"){
+          if(ele.type === "verse-grouped"){
+            ele.additionalInfo.verse.forEach((vNumber: number) => {
+              if(trackVerse[vNumber]) return false;
+              trackVerse[vNumber] = true;
+              listItems.push({
+                ...ele,
+                additionalInfo: {
+                  ...ele.additionalInfo,
+                  verse: vNumber,
+                },
+              });
+            });
+          } else {
+            listItems.push(ele);
+          }
+      }
+    });
+
+    const listFinal = listItems.sort((a: any, b: any) => a.additionalInfo.verse > b.additionalInfo.verse);
 
     if (listFinal.length < 1) {
       setSelectedAnnotation(null);
@@ -1771,7 +1796,7 @@ const AddAnotationUI = ({
               ...showMorePosition.current,
               left: "none",
               right: "4rem",
-              width: "200px",
+              width: "240px",
               padding: "1rem",
               top: "5rem",
             }}
@@ -1787,9 +1812,6 @@ const AddAnotationUI = ({
               className="more-menu-items"
               onClick={() => {
                 setPublishAccess("private");
-              }}
-              style={{
-                borderTop: "1px solid #3E3E3E",
               }}
             >
               <span
@@ -1943,6 +1965,21 @@ const AddAnotationUI = ({
               </p>
             </div>
             <div className="align-center">
+             {list.length > 0 && <div
+                className="publish-setting"
+                style={{
+                  fontSize: "12px",
+                  marginRight: "0.5rem",
+                }}
+                onClick={(e) => {
+                  console.log("undo");
+                 
+                }}
+              >
+                <span class="material-symbols-outlined">
+                  undo
+                </span>
+              </div>}
               <div
                 className="publish-setting"
                 style={{

@@ -75,13 +75,15 @@ const ConfigurableFunctionCommands = ({ contextData, clickedVerses }) => {
     return `${contextData.book} ${contextData.chapter}:${groups.join(",")}`;
   };
   // Function library - developers can define their own functions
-  const functionLibrary = {
+  const functionLibrary: any = {
     getSupportedLanguages: async () => {
       try {
-        const res = await os.web.get("https://libretranslate.de/languages");
+        const res = await (os as any).web.get(
+          "https://libretranslate.de/languages"
+        );
         return res.data;
       } catch (err) {
-        return `Error fetching languages: ${err.message}`;
+        return `Error fetching languages: ${(err as Error).message}`;
       }
     },
 
@@ -132,7 +134,7 @@ const ConfigurableFunctionCommands = ({ contextData, clickedVerses }) => {
       };
 
       try {
-        const res = await os.web.post(
+        const res = await (os as any).web.post(
           "https://libretranslate.de/translate",
           payload,
           {
@@ -142,7 +144,7 @@ const ConfigurableFunctionCommands = ({ contextData, clickedVerses }) => {
 
         return `${langCode.toUpperCase()} Translation (${data.text}):\n\n${res.data.translatedText}`;
       } catch (err) {
-        return `Translation error: ${err.message}`;
+        return `Translation error: ${(err as Error).message}`;
       }
     },
 
@@ -157,7 +159,7 @@ const ConfigurableFunctionCommands = ({ contextData, clickedVerses }) => {
         });
         return `Hindi Translation (${data.text}):\n\n${response?.content || response}`;
       } catch (error) {
-        return `AI Translation Error: ${error.message}`;
+        return `AI Translation Error: ${(error as Error).message}`;
       }
     },
 
@@ -171,7 +173,7 @@ const ConfigurableFunctionCommands = ({ contextData, clickedVerses }) => {
         });
         return `Arabic Translation (${data.text}):\n\n${response?.content || response}`;
       } catch (error) {
-        return `AI Translation Error: ${error.message}`;
+        return `AI Translation Error: ${(error as Error).message}`;
       }
     },
 
@@ -185,7 +187,7 @@ const ConfigurableFunctionCommands = ({ contextData, clickedVerses }) => {
         });
         return `Spanish Translation (${data.text}):\n\n${response?.content || response}`;
       } catch (error) {
-        return `AI Translation Error: ${error.message}`;
+        return `AI Translation Error: ${(error as Error).message}`;
       }
     },
 
@@ -201,7 +203,7 @@ const ConfigurableFunctionCommands = ({ contextData, clickedVerses }) => {
         });
         return `### ${language} Analysis\n\n${response?.content || response}`;
       } catch (error) {
-        return `AI Analysis Error: ${error.message}`;
+        return `AI Analysis Error: ${(error as Error).message}`;
       }
     },
 
@@ -216,7 +218,7 @@ const ConfigurableFunctionCommands = ({ contextData, clickedVerses }) => {
         });
         return response?.content || response;
       } catch (error) {
-        return `AI Explanation Error: ${error.message}`;
+        return `AI Explanation Error: ${(error as Error).message}`;
       }
     },
 
@@ -230,7 +232,7 @@ const ConfigurableFunctionCommands = ({ contextData, clickedVerses }) => {
         });
         return `Historical Context for ${data.text}:\n\n${response?.content || response}`;
       } catch (error) {
-        return `AI Context Error: ${error.message}`;
+        return `AI Context Error: ${(error as Error).message}`;
       }
     },
 
@@ -245,7 +247,7 @@ const ConfigurableFunctionCommands = ({ contextData, clickedVerses }) => {
         });
         return `Augustine-style Commentary on ${data.text}:\n\n${response?.content || response}`;
       } catch (error) {
-        return `AI Commentary Error: ${error.message}`;
+        return `AI Commentary Error: ${(error as Error).message}`;
       }
     },
 
@@ -259,7 +261,7 @@ const ConfigurableFunctionCommands = ({ contextData, clickedVerses }) => {
         });
         return `Calvin-style Commentary on ${data.text}:\n\n${response?.content || response}`;
       } catch (error) {
-        return `AI Commentary Error: ${error.message}`;
+        return `AI Commentary Error: ${(error as Error).message}`;
       }
     },
 
@@ -273,7 +275,7 @@ const ConfigurableFunctionCommands = ({ contextData, clickedVerses }) => {
         });
         return `Modern Commentary on ${data.text}:\n\n${response?.content || response}`;
       } catch (error) {
-        return `AI Commentary Error: ${error.message}`;
+        return `AI Commentary Error: ${(error as Error).message}`;
       }
     },
 
@@ -288,7 +290,7 @@ const ConfigurableFunctionCommands = ({ contextData, clickedVerses }) => {
         });
         return `Biblical Parallel:\n\n${response?.content || response}`;
       } catch (error) {
-        return `AI Parallel Error: ${error.message}`;
+        return `AI Parallel Error: ${(error as Error).message}`;
       }
     },
 
@@ -302,7 +304,7 @@ const ConfigurableFunctionCommands = ({ contextData, clickedVerses }) => {
         });
         return `Biblical Parallel - 2 Corinthians 4:6:\n\n${response?.content || response}`;
       } catch (error) {
-        return `AI Parallel Error: ${error.message}`;
+        return `AI Parallel Error: ${(error as Error).message}`;
       }
     },
 
@@ -316,7 +318,7 @@ const ConfigurableFunctionCommands = ({ contextData, clickedVerses }) => {
         });
         return `All Biblical Parallels for ${data.text}:\n\n${response?.content || response}`;
       } catch (error) {
-        return `AI Parallels Error: ${error.message}`;
+        return `AI Parallels Error: ${(error as Error).message}`;
       }
     },
 
@@ -331,7 +333,7 @@ const ConfigurableFunctionCommands = ({ contextData, clickedVerses }) => {
         });
         return `Theological Implications of ${data.text}:\n\n${response?.content || response}`;
       } catch (error) {
-        return `AI Theology Error: ${error.message}`;
+        return `AI Theology Error: ${(error as Error).message}`;
       }
     },
 
@@ -345,7 +347,7 @@ const ConfigurableFunctionCommands = ({ contextData, clickedVerses }) => {
         });
         return `Literary Analysis of ${data.text}:\n\n${response?.content || response}`;
       } catch (error) {
-        return `AI Literary Error: ${error.message}`;
+        return `AI Literary Error: ${(error as Error).message}`;
       }
     },
 
@@ -360,7 +362,7 @@ const ConfigurableFunctionCommands = ({ contextData, clickedVerses }) => {
         });
         return `Devotional Thoughts on ${data.text}:\n\n${response?.content || response}`;
       } catch (error) {
-        return `AI Devotional Error: ${error.message}`;
+        return `AI Devotional Error: ${(error as Error).message}`;
       }
     },
 
@@ -374,7 +376,7 @@ const ConfigurableFunctionCommands = ({ contextData, clickedVerses }) => {
         });
         return `Sermon Outline for ${data.text}:\n\n${response?.content || response}`;
       } catch (error) {
-        return `AI Sermon Error: ${error.message}`;
+        return `AI Sermon Error: ${(error as Error).message}`;
       }
     },
 
@@ -388,7 +390,7 @@ const ConfigurableFunctionCommands = ({ contextData, clickedVerses }) => {
         });
         return `Study Questions for ${data.text}:\n\n${response?.content || response}`;
       } catch (error) {
-        return `AI Study Error: ${error.message}`;
+        return `AI Study Error: ${(error as Error).message}`;
       }
     },
 
@@ -401,7 +403,7 @@ const ConfigurableFunctionCommands = ({ contextData, clickedVerses }) => {
         });
         return response?.content || response;
       } catch (error) {
-        return `AI Query Error: ${error.message}`;
+        return `AI Query Error: ${(error as Error).message}`;
       }
     },
 
@@ -415,13 +417,13 @@ const ConfigurableFunctionCommands = ({ contextData, clickedVerses }) => {
         });
         return response?.content || response;
       } catch (error) {
-        return `AI Error: ${error.message}`;
+        return `AI Error: ${(error as Error).message}`;
       }
     },
   };
 
   // Dynamic command configuration - developers define which functions to use
-  const commandConfig = {
+  const commandConfig: any = {
     "/explore": {
       description: "Explore available commands",
       hasOptions: false,
@@ -718,7 +720,7 @@ const ConfigurableFunctionCommands = ({ contextData, clickedVerses }) => {
                 response = await fn(contextData);
               }
             } catch (err) {
-              response = `Error executing function: ${err.message}`;
+              response = `Error executing function: ${(err as Error).message}`;
             }
           }
         }
@@ -1011,10 +1013,12 @@ const ConfigurableFunctionCommands = ({ contextData, clickedVerses }) => {
                       fontWeight: "400",
                     }}
                     onMouseEnter={(e) => {
-                      e.target.style.backgroundColor = "#e0e0e0";
+                      (e.target as HTMLElement).style.backgroundColor =
+                        "#e0e0e0";
                     }}
                     onMouseLeave={(e) => {
-                      e.target.style.backgroundColor = "#f0f0f0";
+                      (e.target as HTMLElement).style.backgroundColor =
+                        "#f0f0f0";
                     }}
                   >
                     {action.label}
@@ -1088,12 +1092,16 @@ const ConfigurableFunctionCommands = ({ contextData, clickedVerses }) => {
                           gap: "8px",
                         }}
                         onMouseEnter={(e) => {
-                          e.target.style.backgroundColor = "#f8f8f8";
-                          e.target.style.borderColor = "#d0d0d0";
+                          (e.target as HTMLElement).style.backgroundColor =
+                            "#f8f8f8";
+                          (e.target as HTMLElement).style.borderColor =
+                            "#d0d0d0";
                         }}
                         onMouseLeave={(e) => {
-                          e.target.style.backgroundColor = "transparent";
-                          e.target.style.borderColor = "#e0e0e0";
+                          (e.target as HTMLElement).style.backgroundColor =
+                            "transparent";
+                          (e.target as HTMLElement).style.borderColor =
+                            "#e0e0e0";
                         }}
                       >
                         <span
