@@ -130,9 +130,9 @@ describe("bookSelector tests", () => {
       .click({});
     await delay(500);
     await page.locator(".dropdown-select").click();
-    await delay(200);
+    await delay(400);
     await page.select(".dropdown-select", "0");
-    await delay(200);
+    await delay(400);
     const bookItemsOT = await page.$$(".sidebar-itm");
     for (let i = 0; i < bookItemsOT.length; i++) {
       const item = bookItemsOT[i];
@@ -145,9 +145,9 @@ describe("bookSelector tests", () => {
     }
     expect(bookItemsOT.length).toBe(OTBooks.length);
     await page.locator(".dropdown-select").click();
-    await delay(200);
+    await delay(400);
     await page.select(".dropdown-select", "1");
-    await delay(200);
+    await delay(400);
     const bookItemsNT = await page.$$(".sidebar-itm");
     for (let i = 0; i < bookItemsNT.length; i++) {
       const item = bookItemsNT[i];
@@ -203,11 +203,11 @@ describe("bookSelector tests", () => {
     await page.locator(".sidebar-translation-selector").click();
 
     await page.locator(".settingsIcon").click();
-    await delay(200);
+    await delay(400);
 
     await page.locator(".translationSettingsModal > div:nth-child(3)").click();
 
-    await delay(1000);
+    await delay(1500);
 
     const translationItems = await page.$$(".language-list .item");
 
