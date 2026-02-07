@@ -125,5 +125,17 @@
   "yes": "Có",
   "no": "Không",
   "all": "Tất cả",
-  "file": "Tệp"
+  "file": "Tệp",
+  "tanakOrder": "Thứ tự TaNaK",
+  "traditionalOrder": "Thứ tự truyền thống",
+  "lawTorah": "Luật pháp (Torah)",
+  "prophetsNeviim": "Tiên tri (Nevi'im)",
+  "writingsKetuvim": "Văn thư (Ketuvim)",
+  "bookText": "Văn bản sách",
+  "chapterText": "Văn bản chương",
+  "chapterColor": "Màu chương",
+  "pentateuch": "Ngũ Kinh",
+  "historical": "Lịch sử",
+  "poetic": "Thơ ca",
+  "prophetic": "Tiên tri"
 }

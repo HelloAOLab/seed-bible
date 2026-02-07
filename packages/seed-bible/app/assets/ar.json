@@ -660,5 +660,17 @@
   "companyName": "اسم الشركة",
   "logo": "الشعار",
   "logoColor": "لون الشعار",
-  "accentColor": "لون التمييز"
+  "accentColor": "لون التمييز",
+  "tanakOrder": "ترتيب التناخ",
+  "traditionalOrder": "الترتيب التقليدي",
+  "lawTorah": "الشريعة (التوراة)",
+  "prophetsNeviim": "الأنبياء (نفيئيم)",
+  "writingsKetuvim": "الكتابات (كتوفيم)",
+  "bookText": "نص السفر",
+  "chapterText": "نص الإصحاح",
+  "chapterColor": "لون الإصحاح",
+  "pentateuch": "أسفار موسى الخمسة",
+  "historical": "تاريخي",
+  "poetic": "شعري",
+  "prophetic": "نبوي"
 }

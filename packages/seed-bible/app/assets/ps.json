@@ -125,5 +125,17 @@
   "yes": "هو",
   "no": "نه",
   "all": "ټول",
-  "file": "فایل"
+  "file": "فایل",
+  "tanakOrder": "د تناخ ترتیب",
+  "traditionalOrder": "دودیزه ترتیب",
+  "lawTorah": "شریعت (تورات)",
+  "prophetsNeviim": "پیغمبران (نویئیم)",
+  "writingsKetuvim": "لیکنې (کتوویم)",
+  "bookText": "د کتاب متن",
+  "chapterText": "د باب متن",
+  "chapterColor": "د باب رنګ",
+  "pentateuch": "د موسی پنځه کتابونه",
+  "historical": "تاریخي",
+  "poetic": "شعري",
+  "prophetic": "نبوي"
 }

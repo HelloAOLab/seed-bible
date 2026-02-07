@@ -125,5 +125,17 @@
   "yes": "Ya",
   "no": "Tidak",
   "all": "Semua",
-  "file": "File"
+  "file": "File",
+  "tanakOrder": "Urutan TaNaK",
+  "traditionalOrder": "Urutan tradisional",
+  "lawTorah": "Hukum (Taurat)",
+  "prophetsNeviim": "Nabi-nabi (Nevi'im)",
+  "writingsKetuvim": "Tulisan (Ketuvim)",
+  "bookText": "Teks kitab",
+  "chapterText": "Teks pasal",
+  "chapterColor": "Warna pasal",
+  "pentateuch": "Pentateukh",
+  "historical": "Sejarah",
+  "poetic": "Puisi",
+  "prophetic": "Nubuat"
 }

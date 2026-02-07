@@ -125,5 +125,17 @@
   "yes": "ھەئە",
   "no": "ياق",
   "all": "ھەممىسى",
-  "file": "ھۆججەت"
+  "file": "ھۆججەت",
+  "tanakOrder": "تاناخ تەرتىبى",
+  "traditionalOrder": "ئەنئەنىۋى تەرتىپ",
+  "lawTorah": "شەرىئەت (تەۋرات)",
+  "prophetsNeviim": "پەيغەمبەرلەر (نەۋىئىم)",
+  "writingsKetuvim": "يازمىلار (كېتۇۋىم)",
+  "bookText": "كىتاب تېكىستى",
+  "chapterText": "باب تېكىستى",
+  "chapterColor": "باب رەڭگى",
+  "pentateuch": "مۇسانىڭ بەش كىتابى",
+  "historical": "تارىخىي",
+  "poetic": "شېئىرىي",
+  "prophetic": "پەيغەمبەرلىك"
 }

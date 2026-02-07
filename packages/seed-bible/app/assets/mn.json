@@ -125,5 +125,17 @@
   "yes": "Тийм",
   "no": "Үгүй",
   "all": "Бүгд",
-  "file": "Файл"
+  "file": "Файл",
+  "tanakOrder": "ТаНаХ дараалал",
+  "traditionalOrder": "Уламжлалт дараалал",
+  "lawTorah": "Хууль (Тора)",
+  "prophetsNeviim": "Эш үзүүлэгчид (Невиим)",
+  "writingsKetuvim": "Бичвэрүүд (Ктувим)",
+  "bookText": "Номын текст",
+  "chapterText": "Бүлгийн текст",
+  "chapterColor": "Бүлгийн өнгө",
+  "pentateuch": "Мосегийн таван ном",
+  "historical": "Түүхэн",
+  "poetic": "Шүлгийн",
+  "prophetic": "Эш үзүүлэгчийн"
 }
