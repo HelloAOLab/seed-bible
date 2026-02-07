@@ -907,7 +907,7 @@ export function UserPresence({ collapsed = false }) {
                         height: 30,
                         borderRadius: "50%",
                         border: `2px solid ${ringColor}`,
-                        padding: masks[`${remoteId}-photo`]?0:2,
+                        padding: masks[`${remoteId}-photo`] ? 0 : 2,
                         display: "flex",
                         alignItems: "center",
                         justifyContent: "center",
@@ -916,7 +916,11 @@ export function UserPresence({ collapsed = false }) {
                         opacity: menuItems.length ? 1 : 0.6,
                       }}
                     >
-                      {masks[`${remoteId}-photo`]?<img src={masks[`${remoteId}-photo`]}/>:<Icon width={15} height={15} />}
+                      {masks[`${remoteId}-photo`] ? (
+                        <img src={masks[`${remoteId}-photo`]} />
+                      ) : (
+                        <Icon width={15} height={15} />
+                      )}
                     </div>
                     {Object.values(sessions).some((s) =>
                       s.coHosts?.includes(remoteId)
@@ -1101,9 +1105,7 @@ function FollowerPanel({ hostId, onUnfollow }) {
           }}
         >
           {masks[`${hostId}-photo`] ? (
-            <img
-              src={masks[`${hostId}-photo`]}
-            />
+            <img src={masks[`${hostId}-photo`]} />
           ) : (
             <Icon fill="white" width={14} height={14} />
           )}
@@ -1349,10 +1351,10 @@ function InviteNotification({ inviterId, onAccept, onDismiss }) {
             flexShrink: 0,
           }}
         >
-         {masks[`${inviterId}-photo`] ? (
+          {masks[`${inviterId}-photo`] ? (
             <img
+              style={{ borderRadius: "50%" }}
               src={masks[`${inviterId}-photo`]}
-            
             />
           ) : (
             <Icon fill="white" width={20} height={20} />
@@ -1501,6 +1503,7 @@ function SessionNotification({ hostId, onJoin, onDismiss }) {
         >
           {masks[`${hostId}-photo`] ? (
             <img
+              style={{ borderRadius: "50%" }}
               src={masks[`${hostId}-photo`]}
             />
           ) : (
