@@ -9,7 +9,12 @@ class ReadingHistoryColorStore
 
     addUserColor(user: string, color: string): void
     {
-        this.#UserColorMap.set(user, color);
+        if(!this.#UserColorMap.has(user)) this.#UserColorMap.set(user, color);
+    }
+
+    removeUserColor(user: string) : boolean
+    {
+        return this.#UserColorMap.delete(user)
     }
 
     getUserColor(user: string): string | undefined
@@ -20,6 +25,11 @@ class ReadingHistoryColorStore
     listUsers(): MapIterator<string>
     {
         return this.#UserColorMap.keys();
+    }
+
+    updateUserColor(user: string, color: string): void 
+    {
+        if(this.#UserColorMap.has(user)) this.#UserColorMap.set(user, color);
     }
 }
 
