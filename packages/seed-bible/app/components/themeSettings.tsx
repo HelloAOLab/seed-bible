@@ -5181,11 +5181,11 @@ const ThemeSettings = () => {
   };
 
   // Initialize CurrentColors on mount
-  useEffect(() => {
-    globalThis.CurrentColors = isDark
-      ? READY_THEMES[1]?.colors
-      : themeColors?.[`${activeSpace}`] || defaultTheme;
-  }, []);
+  // useEffect(() => {
+  //   globalThis.CurrentColors = isDark
+  //     ? READY_THEMES[1]?.colors
+  //     : themeColors?.[`${activeSpace}`] || defaultTheme;
+  // }, []);
 
   // Resolve the working colors: local edits -> sidebar state -> default
   const colors =
