@@ -5929,7 +5929,7 @@ const SettingsUI = () => {
     setSelectedTheme(index);
     applyReadyTheme(READY_THEMES[index].colors);
     setChagesSaved(true);
-    globalThis.CurrentColors = themeColors?.[activeSpace] || colors;
+    globalThis.CurrentColors = READY_THEMES[index]?.colors || colors;
   };
 
   const applyVerseFont = (fontFamily) => {
