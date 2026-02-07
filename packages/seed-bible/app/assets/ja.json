@@ -661,6 +661,6 @@
   "enterId": "IDを入力",
   "Queue": "キュー",
   "file": "ファイル",
-  "noLanguageResultsFound": "結果が見つかりませんでした。部分的または不完全な言語も検索範囲に含めますか？",
+  "noLanguageResultsFound": "結果が見つかりませんでした。部分的に入力された言語も含め、検索範囲を拡張しますか？",
   "showAllLanguages": "すべての言語を表示"
 }

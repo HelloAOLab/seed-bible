@@ -126,6 +126,6 @@
   "no": "아니요",
   "all": "전체",
   "file": "파일",
-  "noLanguageResultsFound": "검색 결과가 없습니다. 부분적이거나 불완전한 언어도 포함하여 검색 범위를 확장하시겠습니까?",
+  "noLanguageResultsFound": "검색 결과가 없습니다. 부분적으로 완성된 언어도 포함하여 검색 범위를 넓히시겠습니까?",
   "showAllLanguages": "모든 언어 표시"
 }

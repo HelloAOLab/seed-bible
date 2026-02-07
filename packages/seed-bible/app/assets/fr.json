@@ -661,6 +661,6 @@
   "enterId": "Saisir l'ID",
   "Queue": "File d'attente",
   "file": "Fichier",
-  "noLanguageResultsFound": "Aucun résultat trouvé. Souhaitez-vous étendre votre recherche pour inclure également les langues partielles et incomplètes ?",
+  "noLanguageResultsFound": "Aucun résultat trouvé. Souhaitez-vous élargir votre recherche aux langues partiellement complètes?",
   "showAllLanguages": "Afficher toutes les langues"
 }

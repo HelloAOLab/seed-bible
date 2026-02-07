@@ -661,6 +661,6 @@
   "enterId": "Enter ID",
   "Queue": "Queue",
   "file": "File",
-  "noLanguageResultsFound": "No results found. Would you like to expand your search to include partial and incomplete languages as well?",
+  "noLanguageResultsFound": "No results found. Would you like to expand your search to include partially complete languages as well?",
   "showAllLanguages": "Show all languages"
 }

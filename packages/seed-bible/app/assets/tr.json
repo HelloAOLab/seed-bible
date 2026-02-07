@@ -126,6 +126,6 @@
   "no": "Hayır",
   "all": "Tümü",
   "file": "Dosya",
-  "noLanguageResultsFound": "Hiçbir sonuç bulunamadı. Aramanıza kısmi ve eksik dilleri de dahil etmek ister misiniz?",
+  "noLanguageResultsFound": "Hiçbir sonuç bulunamadı. Arama kriterlerinizi kısmen tamamlanmış dilleri de içerecek şekilde genişletmek ister misiniz?",
   "showAllLanguages": "Tüm dilleri göster"
 }

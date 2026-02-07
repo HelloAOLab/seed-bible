@@ -661,6 +661,6 @@
   "logo": "Logo",
   "logoColor": "Color del logo",
   "accentColor": "Color de acento",
-  "noLanguageResultsFound": "No se encontraron resultados. ¿Desea ampliar su búsqueda para incluir idiomas parciales e incompletos también?",
+  "noLanguageResultsFound": "No se encontraron resultados. ¿Desea ampliar su búsqueda para incluir idiomas parcialmente completos?",
   "showAllLanguages": "Mostrar todos los idiomas"
 }
