@@ -660,5 +660,17 @@
   "fromUrl": "URLから",
   "enterId": "IDを入力",
   "Queue": "キュー",
-  "file": "ファイル"
+  "file": "ファイル",
+  "tanakOrder": "タナハ順",
+  "traditionalOrder": "伝統的な順序",
+  "lawTorah": "律法（トーラー）",
+  "prophetsNeviim": "預言者（ネヴィーイーム）",
+  "writingsKetuvim": "諸書（ケトゥヴィーム）",
+  "bookText": "書名テキスト",
+  "chapterText": "章テキスト",
+  "chapterColor": "章の色",
+  "pentateuch": "モーセ五書",
+  "historical": "歴史書",
+  "poetic": "詩歌書",
+  "prophetic": "預言書"
 }

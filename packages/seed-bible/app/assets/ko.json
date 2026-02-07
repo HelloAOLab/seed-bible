@@ -125,5 +125,17 @@
   "yes": "예",
   "no": "아니요",
   "all": "전체",
-  "file": "파일"
+  "file": "파일",
+  "tanakOrder": "타나크 순서",
+  "traditionalOrder": "전통적 순서",
+  "lawTorah": "율법 (토라)",
+  "prophetsNeviim": "선지서 (느비임)",
+  "writingsKetuvim": "성문서 (케투빔)",
+  "bookText": "책 텍스트",
+  "chapterText": "장 텍스트",
+  "chapterColor": "장 색상",
+  "pentateuch": "모세오경",
+  "historical": "역사서",
+  "poetic": "시가서",
+  "prophetic": "예언서"
 }

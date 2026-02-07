@@ -660,5 +660,17 @@
   "fromUrl": "da URL",
   "enterId": "Inserir ID",
   "Queue": "Fila",
-  "file": "Arquivo"
+  "file": "Arquivo",
+  "tanakOrder": "Ordem TaNaK",
+  "traditionalOrder": "Ordem tradicional",
+  "lawTorah": "Lei (Torá)",
+  "prophetsNeviim": "Profetas (Nevi'im)",
+  "writingsKetuvim": "Escritos (Ketuvim)",
+  "bookText": "Texto do livro",
+  "chapterText": "Texto do capítulo",
+  "chapterColor": "Cor do capítulo",
+  "pentateuch": "Pentateuco",
+  "historical": "Histórico",
+  "poetic": "Poético",
+  "prophetic": "Profético"
 }

@@ -660,5 +660,17 @@
   "companyName": "Nombre de la empresa",
   "logo": "Logo",
   "logoColor": "Color del logo",
-  "accentColor": "Color de acento"
+  "accentColor": "Color de acento",
+  "tanakOrder": "Orden TaNaK",
+  "traditionalOrder": "Orden tradicional",
+  "lawTorah": "Ley (Torá)",
+  "prophetsNeviim": "Profetas (Nevi'im)",
+  "writingsKetuvim": "Escritos (Ketuvim)",
+  "bookText": "Texto del libro",
+  "chapterText": "Texto del capítulo",
+  "chapterColor": "Color del capítulo",
+  "pentateuch": "Pentateuco",
+  "historical": "Histórico",
+  "poetic": "Poético",
+  "prophetic": "Profético"
 }

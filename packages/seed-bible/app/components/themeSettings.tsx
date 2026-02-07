@@ -96,16 +96,16 @@ const ADVANCED_SETTINGS_SECTIONS = {
       { labelKey: "inputPlaceholder", field: "inputPlaceholder" },
     ],
   },
+  bibleArrangements: {
+    labelKey: "Bible Arrangements",
+    fields: [],
+  },
   branding: {
     labelKey: "branding",
     fields: [
       { labelKey: "logoColor", field: "logoColor" },
       { labelKey: "accentColor", field: "accentColor" },
     ],
-  },
-  bibleArrangements: {
-    labelKey: "bibleArrangements",
-    fields: [],
   },
 };
 

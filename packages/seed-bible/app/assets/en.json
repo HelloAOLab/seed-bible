@@ -660,5 +660,17 @@
   "fromUrl": "from URL",
   "enterId": "Enter ID",
   "Queue": "Queue",
-  "file": "File"
+  "file": "File",
+  "tanakOrder": "TaNaK order",
+  "traditionalOrder": "Traditional order",
+  "lawTorah": "Law (Torah)",
+  "prophetsNeviim": "Prophets (Nevi'im)",
+  "writingsKetuvim": "Writings (Ketuvim)",
+  "bookText": "Book Text",
+  "chapterText": "Chapter Text",
+  "chapterColor": "Chapter Color",
+  "pentateuch": "Pentateuch",
+  "historical": "Historical",
+  "poetic": "Poetic",
+  "prophetic": "Prophetic"
 }

@@ -125,5 +125,17 @@
   "yes": "হ্যাঁ",
   "no": "না",
   "all": "সব",
-  "file": "ফাইল"
+  "file": "ফাইল",
+  "tanakOrder": "তানাখ ক্রম",
+  "traditionalOrder": "ঐতিহ্যবাহী ক্রম",
+  "lawTorah": "বিধান (তোরাহ)",
+  "prophetsNeviim": "ভাববাদীগণ (নেভীঈম)",
+  "writingsKetuvim": "লেখনী (কেতুভীম)",
+  "bookText": "পুস্তক পাঠ্য",
+  "chapterText": "অধ্যায় পাঠ্য",
+  "chapterColor": "অধ্যায় রঙ",
+  "pentateuch": "মোশির পঞ্চপুস্তক",
+  "historical": "ঐতিহাসিক",
+  "poetic": "কাব্যিক",
+  "prophetic": "ভাববাণীমূলক"
 }

@@ -125,5 +125,17 @@
   "yes": "हो",
   "no": "होइन",
   "all": "सबै",
-  "file": "फाइल"
+  "file": "फाइल",
+  "tanakOrder": "तनख क्रम",
+  "traditionalOrder": "परम्परागत क्रम",
+  "lawTorah": "व्यवस्था (तोराह)",
+  "prophetsNeviim": "अगमवक्ताहरू (नेभीईम)",
+  "writingsKetuvim": "लेखनहरू (केतुभीम)",
+  "bookText": "पुस्तक पाठ",
+  "chapterText": "अध्याय पाठ",
+  "chapterColor": "अध्याय रङ",
+  "pentateuch": "मोशाका पाँच पुस्तकहरू",
+  "historical": "ऐतिहासिक",
+  "poetic": "काव्यात्मक",
+  "prophetic": "भविष्यवाणी"
 }
