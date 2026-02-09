@@ -534,6 +534,7 @@ export function UserPresence({ collapsed = false }) {
           bookId: "GEN",
           chapter: 1,
           translation: "BSB",
+          shortName: "BSB",
         },
       });
     masks["sharedTab"] = globalThis.CurrentTab.id;

@@ -124,6 +124,7 @@ const ReferenceApp = ({ reference }) => {
         bookId: reference.book,
         chapter: reference.chapter,
         translation: "BSB",
+        shortName: "BSB",
       },
     };
     AddTab({

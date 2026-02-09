@@ -208,6 +208,7 @@ export class BibleDataManager {
           numberOfChapters:
             json?.data?.book?.numberOfChapters || json?.numberOfChapters,
           baseUrl: forcedBaseUrl || this.baseUrl,
+          shortName: json?.data?.translation?.shortName || "",
         };
 
         this.footnotes = json?.data?.chapter?.footnotes || null;
