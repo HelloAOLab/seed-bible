@@ -90,6 +90,30 @@ const TranslationModal = (props: {
         }
       });
 
+      if (showAllLanguages === "complete") {
+        Object.entries(translations).forEach(([key, value]) => {
+          for (const subKey in value) {
+            const translation = value[subKey] as TranslationInterface;
+            if (
+              !translation?.origin &&
+              translation.numberOfBooks < 66 &&
+              translation.id !== selectedTranslation.id
+            ) {
+              delete value[subKey];
+            }
+          }
+          if (Object.keys(value).length === 0) {
+            delete translations[key];
+          }
+        });
+      } else if (showAllLanguages === "popular") {
+        Object.entries(translations).forEach(([englishName]) => {
+          if (!defaultTranslations.includes(englishName)) {
+            delete translations[englishName];
+          }
+        });
+      }
+
       return Object.entries(translations)
         .slice(0, allowedTranslationLimit)
         .sort(([a], [b]) => {
@@ -149,6 +173,54 @@ const TranslationModal = (props: {
     defaultTranslations,
   ]);
   const LanguageList = useMemo(() => {
+    if (
+      filteredApiTranslations.length === 0 &&
+      (showAllLanguages === "complete" || showAllLanguages === "popular")
+    ) {
+      return (
+        <div
+          className="language-list"
+          style={{
+            display: "flex",
+            flexDirection: "column",
+            alignItems: "center",
+            gap: "10px",
+            textAlign: "center",
+          }}
+        >
+          <span>
+            {systemTranslation["noLanguageResultsFound"] ||
+              "No results found. Would you like to expand your search to include partial and incomplete languages as well?"}
+          </span>
+          <button
+            onClick={() => {
+              setShowAllLanguages("all");
+            }}
+            style={{
+              display: "flex",
+              background: "var(--secondaryColor)",
+              padding: "5px",
+              borderRadius: "5px",
+              border: "none",
+              outline: "none",
+              color: "var(--text1)",
+              width: "max-content",
+            }}
+          >
+            {systemTranslation["showAllLanguages"] || "Show all languages"}
+          </button>
+        </div>
+      );
+    } else if (
+      filteredApiTranslations.length === 0 &&
+      showAllLanguages === "all"
+    ) {
+      return (
+        <div className="language-list">
+          <span>No results found.</span>
+        </div>
+      );
+    }
     return (
       <div className="language-list">
         {filteredApiTranslations.map(([language, value]) => {
@@ -176,7 +248,7 @@ const TranslationModal = (props: {
             >
               <span
                 style={{ transition: "transform 0.3s" }}
-                class={`material-symbols-outlined ${false ? "upside-down" : ""}`}
+                className={`material-symbols-outlined ${false ? "upside-down" : ""}`}
               >
                 expand_more
               </span>
