@@ -661,6 +661,8 @@
   "enterId": "输入 ID",
   "Queue": "队列",
   "file": "文件",
+  "noLanguageResultsFound": "未找到结果。您是否希望扩大搜索范围，将部分语言也纳入搜索范围？",
+  "showAllLanguages": "显示所有语言"
   "tanakOrder": "塔纳赫顺序",
   "traditionalOrder": "传统顺序",
   "lawTorah": "律法（妥拉）",

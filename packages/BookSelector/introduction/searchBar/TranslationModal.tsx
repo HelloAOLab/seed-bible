@@ -5,9 +5,10 @@ import {
   SelectedIcon,
   AddIcon,
   PercentageCircle,
+  MinusIcon,
 } from "introduction.searchBar.Icons";
 import type { TranslationInterface } from "introduction.searchBar.Interfaces";
-import { changeLanguage, getTranslations } from "app.hooks.i18n";
+import { getTranslations } from "app.hooks.i18n";
 
 const { useState, useEffect, useMemo } = os.appHooks;
 
@@ -89,6 +90,30 @@ const TranslationModal = (props: {
         }
       });
 
+      if (showAllLanguages === "complete") {
+        Object.entries(translations).forEach(([key, value]) => {
+          for (const subKey in value) {
+            const translation = value[subKey] as TranslationInterface;
+            if (
+              !translation?.origin &&
+              translation.numberOfBooks < 66 &&
+              translation.id !== selectedTranslation.id
+            ) {
+              delete value[subKey];
+            }
+          }
+          if (Object.keys(value).length === 0) {
+            delete translations[key];
+          }
+        });
+      } else if (showAllLanguages === "popular") {
+        Object.entries(translations).forEach(([englishName]) => {
+          if (!defaultTranslations.includes(englishName)) {
+            delete translations[englishName];
+          }
+        });
+      }
+
       return Object.entries(translations)
         .slice(0, allowedTranslationLimit)
         .sort(([a], [b]) => {
@@ -148,6 +173,54 @@ const TranslationModal = (props: {
     defaultTranslations,
   ]);
   const LanguageList = useMemo(() => {
+    if (
+      filteredApiTranslations.length === 0 &&
+      (showAllLanguages === "complete" || showAllLanguages === "popular")
+    ) {
+      return (
+        <div
+          className="language-list"
+          style={{
+            display: "flex",
+            flexDirection: "column",
+            alignItems: "center",
+            gap: "10px",
+            textAlign: "center",
+          }}
+        >
+          <span>
+            {systemTranslation["noLanguageResultsFound"] ||
+              "No results found. Would you like to expand your search to include partial and incomplete languages as well?"}
+          </span>
+          <button
+            onClick={() => {
+              setShowAllLanguages("all");
+            }}
+            style={{
+              display: "flex",
+              background: "var(--secondaryColor)",
+              padding: "5px",
+              borderRadius: "5px",
+              border: "none",
+              outline: "none",
+              color: "var(--text1)",
+              width: "max-content",
+            }}
+          >
+            {systemTranslation["showAllLanguages"] || "Show all languages"}
+          </button>
+        </div>
+      );
+    } else if (
+      filteredApiTranslations.length === 0 &&
+      showAllLanguages === "all"
+    ) {
+      return (
+        <div className="language-list">
+          <span>No results found.</span>
+        </div>
+      );
+    }
     return (
       <div className="language-list">
         {filteredApiTranslations.map(([language, value]) => {
@@ -159,6 +232,7 @@ const TranslationModal = (props: {
               setSelectedTranslation={setSelectedTranslation}
               setSelectingTranslation={setSelectingTranslation}
               filteredApiTranslations={filteredApiTranslations}
+              showAllLanguages={showAllLanguages}
             />
           );
         })}
@@ -174,7 +248,7 @@ const TranslationModal = (props: {
             >
               <span
                 style={{ transition: "transform 0.3s" }}
-                class={`material-symbols-outlined ${false ? "upside-down" : ""}`}
+                className={`material-symbols-outlined ${false ? "upside-down" : ""}`}
               >
                 expand_more
               </span>
@@ -182,7 +256,7 @@ const TranslationModal = (props: {
           )}
       </div>
     );
-  }, [filteredApiTranslations, selectedTranslation]);
+  }, [filteredApiTranslations, selectedTranslation, showAllLanguages]);
 
   useEffect(() => {
     setTagMask(thisBot, "showAllLanguages", showAllLanguages, "local");
@@ -252,7 +326,11 @@ const TranslationModal = (props: {
                   cursor: "pointer",
                 }}
               >
-                <AddIcon height={16} width={16} />
+                {!showCustomTranslation ? (
+                  <AddIcon height={20} width={20} />
+                ) : (
+                  <MinusIcon height={20} width={20} />
+                )}
               </span>
             </div>
             {showCustomTranslation && (
@@ -283,6 +361,7 @@ const LanguageComponent = (props: {
   filteredApiTranslations: Array<
     [string, Record<string, TranslationInterface>]
   >;
+  showAllLanguages: "all" | "completed" | "popular";
 }) => {
   const {
     language,
@@ -291,6 +370,7 @@ const LanguageComponent = (props: {
     setSelectedTranslation,
     setSelectingTranslation,
     filteredApiTranslations,
+    showAllLanguages,
   } = props;
   const [show, setShow] = useState(false);
 
@@ -389,9 +469,9 @@ const LanguageComponent = (props: {
                             e.data.books,
                             value.origin
                           );
-                          if (translationMap[value.language]) {
-                            changeLanguage(translationMap[value.language]);
-                          }
+                          // if (translationMap[value.language]) {
+                          //   changeLanguage(translationMap[value.language]);
+                          // }
                         })
                         .catch((e) => {
                           console.log(e);
@@ -407,9 +487,9 @@ const LanguageComponent = (props: {
                             e.data.books,
                             "https://bible.helloao.org"
                           );
-                          if (translationMap[value.language]) {
-                            changeLanguage(translationMap[value.language]);
-                          }
+                          // if (translationMap[value.language]) {
+                          //   changeLanguage(translationMap[value.language]);
+                          // }
                         })
                         .catch((e) => {
                           console.log(e);
@@ -427,13 +507,16 @@ const LanguageComponent = (props: {
                   <span class="translation-title">
                     {selectedTranslation.id === value.id ? (
                       <TickIcon height={15} width={15} />
-                    ) : (
+                    ) : showAllLanguages === "all" ||
+                      showAllLanguages === "popular" ? (
                       <span
                         class="emptyCircle"
                         style={{
-                          background: `linear-gradient(white, white) padding-box, conic-gradient(from -${rotation}deg, var(--primaryColor) ${completionPercentage}%, #eee 0) border-box`,
+                          background: `linear-gradient(white, white) padding-box, conic-gradient(from -${rotation}deg, var(--secondaryColor) ${completionPercentage}%, #eee 0) border-box`,
                         }}
                       ></span>
+                    ) : (
+                      <span class="emptyCircle"></span>
                     )}
                     <span class="translation-description">{`${value.name} (${value.shortName})`}</span>
                   </span>
@@ -549,7 +632,7 @@ const TranslationSettings = (props: {
           style={{
             color:
               showAllLanguages === "complete"
-                ? "var(--primaryColor)"
+                ? "var(--secondaryColor)"
                 : "var(--text3)",
           }}
         >
@@ -578,7 +661,7 @@ const TranslationSettings = (props: {
           style={{
             color:
               showAllLanguages === "all"
-                ? "var(--primaryColor)"
+                ? "var(--secondaryColor)"
                 : "var(--text3)",
           }}
         >
@@ -607,7 +690,7 @@ const TranslationSettings = (props: {
           style={{
             color:
               showAllLanguages === "popular"
-                ? "var(--primaryColor)"
+                ? "var(--secondaryColor)"
                 : "var(--text3)",
           }}
         >

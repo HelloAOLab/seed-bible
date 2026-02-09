@@ -126,6 +126,8 @@
   "no": "Tidak",
   "all": "Semua",
   "file": "File",
+  "noLanguageResultsFound": "Tidak ada hasil yang ditemukan. Apakah Anda ingin memperluas pencarian Anda untuk menyertakan bahasa yang belum lengkap juga?",
+  "showAllLanguages": "Tampilkan semua bahasa"
   "tanakOrder": "Urutan TaNaK",
   "traditionalOrder": "Urutan tradisional",
   "lawTorah": "Hukum (Taurat)",
