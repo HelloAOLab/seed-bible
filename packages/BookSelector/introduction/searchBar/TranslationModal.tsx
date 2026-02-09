@@ -8,7 +8,7 @@ import {
   MinusIcon,
 } from "introduction.searchBar.Icons";
 import type { TranslationInterface } from "introduction.searchBar.Interfaces";
-import { changeLanguage, getTranslations } from "app.hooks.i18n";
+import { getTranslations } from "app.hooks.i18n";
 
 const { useState, useEffect, useMemo } = os.appHooks;
 
@@ -397,9 +397,9 @@ const LanguageComponent = (props: {
                             e.data.books,
                             value.origin
                           );
-                          if (translationMap[value.language]) {
-                            changeLanguage(translationMap[value.language]);
-                          }
+                          // if (translationMap[value.language]) {
+                          //   changeLanguage(translationMap[value.language]);
+                          // }
                         })
                         .catch((e) => {
                           console.log(e);
@@ -415,9 +415,9 @@ const LanguageComponent = (props: {
                             e.data.books,
                             "https://bible.helloao.org"
                           );
-                          if (translationMap[value.language]) {
-                            changeLanguage(translationMap[value.language]);
-                          }
+                          // if (translationMap[value.language]) {
+                          //   changeLanguage(translationMap[value.language]);
+                          // }
                         })
                         .catch((e) => {
                           console.log(e);
