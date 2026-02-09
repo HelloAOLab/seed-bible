@@ -35,9 +35,7 @@ describe("load", () => {
     const bookTitle = await seedBibleFrame
       .locator("div.bookTitle")
       .waitHandle();
-    expect(await bookTitle?.evaluate((el) => el.textContent)).toBe(
-      "Genesis 1  / BSB"
-    );
+    expect(await bookTitle?.evaluate((el) => el.textContent)).toBe("Genesis 1  / BSB");
   });
 
   test("should add the book ID and chapter number to the URL", async () => {
@@ -48,9 +46,7 @@ describe("load", () => {
     const bookTitle = await seedBibleFrame
       .locator("div.bookTitle")
       .waitHandle();
-    expect(await bookTitle?.evaluate((el) => el.textContent)).toBe(
-      "Genesis 1  / BSB"
-    );
+    expect(await bookTitle?.evaluate((el) => el.textContent)).toBe("Genesis 1  / BSB");
 
     await delay(1000); // Wait a moment to ensure URL is updated
 
@@ -71,9 +67,7 @@ describe("load", () => {
     const bookTitle = await seedBibleFrame
       .locator("div.bookTitle")
       .waitHandle();
-    expect(await bookTitle?.evaluate((el) => el.textContent)).toBe(
-      "Matthew 5  / KJAV"
-    );
+    expect(await bookTitle?.evaluate((el) => el.textContent)).toBe("Matthew 5  / KJAV");
   });
 
   test("load translationId", async () => {
@@ -85,9 +79,7 @@ describe("load", () => {
     const bookTitle = await seedBibleFrame
       .locator("div.bookTitle")
       .waitHandle();
-    expect(await bookTitle?.evaluate((el) => el.textContent)).toBe(
-      "Genesis 1  / KJAV"
-    );
+    expect(await bookTitle?.evaluate((el) => el.textContent)).toBe("Genesis 1  / KJAV");
 
     const v28 = await seedBibleFrame.locator("#v-28").waitHandle();
     const v28Text = await v28?.evaluate((el) => el.textContent);

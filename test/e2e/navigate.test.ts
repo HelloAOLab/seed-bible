@@ -43,9 +43,7 @@ describe("navigate", () => {
       .locator("div.bookTitle")
       .waitHandle();
     await delay(1500);
-    expect(await bookTitle?.evaluate((el) => el.textContent)).toBe(
-      "Genesis 2  / BSB"
-    );
+    expect(await bookTitle?.evaluate((el) => el.textContent)).toBe("Genesis 2  / BSB");
   });
 
   test("previous chapter", async () => {
@@ -64,17 +62,13 @@ describe("navigate", () => {
       .locator("div.bookTitle")
       .waitHandle();
     await delay(1000);
-    expect(await bookTitle?.evaluate((el) => el.textContent)).toBe(
-      "Isaiah 53  / BSB"
-    );
+    expect(await bookTitle?.evaluate((el) => el.textContent)).toBe("Isaiah 53  / BSB");
 
     await seedBibleFrame
       .locator("div.toolbar-item-wrapper.leftClick > button")
       .click();
     await delay(1000);
-    expect(await bookTitle?.evaluate((el) => el.textContent)).toBe(
-      "Isaiah 52  / BSB"
-    );
+    expect(await bookTitle?.evaluate((el) => el.textContent)).toBe("Isaiah 52  / BSB");
   });
 
   // Should work but doesn't because of the login screens
@@ -94,9 +88,7 @@ describe("navigate", () => {
       .locator("div.bookTitle")
       .waitHandle();
     await delay(1000);
-    expect(await bookTitle?.evaluate((el) => el.textContent)).toBe(
-      "Isaiah 53  / BSB"
-    );
+    expect(await bookTitle?.evaluate((el) => el.textContent)).toBe("Isaiah 53  / BSB");
   });
 
   test("search book", async () => {
@@ -115,9 +107,7 @@ describe("navigate", () => {
       .locator("div.bookTitle")
       .waitHandle();
     await delay(1000);
-    expect(await bookTitle?.evaluate((el) => el.textContent)).toBe(
-      "Hosea 3  / BSB"
-    );
+    expect(await bookTitle?.evaluate((el) => el.textContent)).toBe("Hosea 3  / BSB");
   });
 
   test("change translation", async () => {
@@ -143,9 +133,7 @@ describe("navigate", () => {
       .locator("div.bookTitle")
       .waitHandle();
     await delay(1000);
-    expect(await bookTitle?.evaluate((el) => el.textContent)).toBe(
-      "1 Mose (Gyenesis) 1  / AKA"
-    );
+    expect(await bookTitle?.evaluate((el) => el.textContent)).toBe("1 Mose (Gyenesis) 1  / AKA");
   });
 
   test("check bible nav enter", async () => {
@@ -163,9 +151,7 @@ describe("navigate", () => {
       .locator("div.bookTitle")
       .waitHandle();
     await delay(2000);
-    expect(await bookTitle?.evaluate((el) => el.textContent)).toBe(
-      "Revelation 3  / BSB"
-    );
+    expect(await bookTitle?.evaluate((el) => el.textContent)).toBe("Revelation 3  / BSB");
   });
 
   test("back button should go to the previous chapter", async () => {
@@ -182,17 +168,13 @@ describe("navigate", () => {
       .locator("div.bookTitle")
       .waitHandle();
     await delay(1500);
-    expect(await bookTitle?.evaluate((el) => el.textContent)).toBe(
-      "Genesis 2  / BSB"
-    );
+    expect(await bookTitle?.evaluate((el) => el.textContent)).toBe("Genesis 2  / BSB");
 
     await page.goBack();
 
     await delay(1000);
 
-    expect(await bookTitle?.evaluate((el) => el.textContent)).toBe(
-      "Genesis 1  / BSB"
-    );
+    expect(await bookTitle?.evaluate((el) => el.textContent)).toBe("Genesis 1  / BSB");
   });
 
   test("forward button should go to the next chapter after going back", async () => {
@@ -209,9 +191,7 @@ describe("navigate", () => {
       .locator("div.bookTitle")
       .waitHandle();
     await delay(1500);
-    expect(await bookTitle?.evaluate((el) => el.textContent)).toBe(
-      "Genesis 2  / BSB"
-    );
+    expect(await bookTitle?.evaluate((el) => el.textContent)).toBe("Genesis 2  / BSB");
 
     await page.goBack();
     await delay(500);
@@ -219,9 +199,7 @@ describe("navigate", () => {
 
     await delay(1000);
 
-    expect(await bookTitle?.evaluate((el) => el.textContent)).toBe(
-      "Genesis 2  / BSB"
-    );
+    expect(await bookTitle?.evaluate((el) => el.textContent)).toBe("Genesis 2  / BSB");
   });
 
   test("the book selector should push a history state when opened", async () => {
