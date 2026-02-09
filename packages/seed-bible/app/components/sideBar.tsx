@@ -1164,6 +1164,7 @@ function SideBar({ panelsNumber }) {
             <JoinSessionComponent
               onJoin={(code) => os.goToURL(code)}
               translations={translations}
+              CloseModal={() => globalThis.CloseModal()}
             />
           );
         },
@@ -1999,8 +2000,32 @@ export const UserProfile = ({ collapsed }) => {
   return (
     <div
       onClick={() => {
-        globalThis.AccountSettingsEnteredFrom = "default";
-        setSideBarMode("createAccountSettings");
+        if (!authBot?.id) {
+          globalThis.AccountSettingsEnteredFrom = "default";
+          setSideBarMode("createAccountSettings");
+        } else {
+          openPopupSettings({
+            type: "normal",
+            items: [
+              {
+                icon: <MenuIcon name="account_circle" />,
+                title: "View profile",
+                onClick: () => {
+                  globalThis.AccountSettingsEnteredFrom = "default";
+                  setSideBarMode("createAccountSettings");
+                },
+              },
+              {
+                icon: <MenuIcon name="logout" />,
+                title: "Sign out",
+                onClick: () => {
+                  destroy(authBot);
+                  setUserData(null);
+                },
+              },
+            ],
+          });
+        }
       }}
       style={{ background: userData?.photoLink && "transparent" }}
       className="userProfile"

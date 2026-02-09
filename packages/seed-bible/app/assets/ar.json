@@ -663,4 +663,16 @@
   "accentColor": "لون التمييز",
   "noLanguageResultsFound": "لم يتم العثور على نتائج. هل ترغب في توسيع نطاق بحثك ليشمل اللغات غير المكتملة أيضاً؟",
   "showAllLanguages": "إظهار جميع اللغات"
+  "tanakOrder": "ترتيب التناخ",
+  "traditionalOrder": "الترتيب التقليدي",
+  "lawTorah": "الشريعة (التوراة)",
+  "prophetsNeviim": "الأنبياء (نفيئيم)",
+  "writingsKetuvim": "الكتابات (كتوفيم)",
+  "bookText": "نص السفر",
+  "chapterText": "نص الإصحاح",
+  "chapterColor": "لون الإصحاح",
+  "pentateuch": "أسفار موسى الخمسة",
+  "historical": "تاريخي",
+  "poetic": "شعري",
+  "prophetic": "نبوي"
 }

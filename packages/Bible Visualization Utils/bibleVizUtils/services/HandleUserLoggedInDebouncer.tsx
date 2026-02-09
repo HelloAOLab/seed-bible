@@ -1,0 +1,8 @@
+import { DebouncerService } from "bibleVizUtils.services.DebouncerService";
+
+const handleUserLoggedInDebouncer = new DebouncerService(
+  globalThis.BibleVizUtils.Functions.HandleUserLoggedIn,
+  500
+);
+
+export { handleUserLoggedInDebouncer };

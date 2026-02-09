@@ -1,0 +1,32 @@
+class ReadingHistoryColorStore {
+  #UserColorMap: Map<string, string>;
+
+  constructor() {
+    this.#UserColorMap = new Map();
+  }
+
+  addUserColor(user: string, color: string): void {
+    if (!this.#UserColorMap.has(user)) this.#UserColorMap.set(user, color);
+  }
+
+  removeUserColor(user: string): boolean {
+    return this.#UserColorMap.delete(user);
+  }
+
+  getUserColor(user: string): string | undefined {
+    return this.#UserColorMap.get(user);
+  }
+
+  listUsers(): MapIterator<string> {
+    return this.#UserColorMap.keys();
+  }
+
+  updateUserColor(user: string, color: string): void {
+    if (this.#UserColorMap.has(user)) this.#UserColorMap.set(user, color);
+  }
+}
+
+const readingHistoryColorStore: ReadingHistoryColorStore =
+  new ReadingHistoryColorStore();
+
+export { readingHistoryColorStore };

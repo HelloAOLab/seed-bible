@@ -145,72 +145,89 @@ export const ReadingHistoryProvider = ({ children }) => {
     }
   }, [readingHistoryUserFilters, myAuthBotId]);
 
+  const fetchUsersDataMap = useCallback(async () => {
+    if (!myAuthBotId) return null;
+
+    try {
+      const componentsBot = getBot(byTag("system", "app.components"));
+      const subscribedUsers = await getSubscribedUsers();
+
+      if (!subscribedUsers) return null;
+
+      const allAuthBotIds = [
+        myAuthBotId,
+        ...subscribedUsers.map((user) => user.id),
+      ];
+
+      const dataPromises = allAuthBotIds.map(async (id) => {
+        const firstResult = await os.getData(id, id);
+        if (firstResult.success) return { ...firstResult.data, id };
+
+        const secondResult = await os.getData(componentsBot.tags.key, id);
+        if (secondResult.success) return { ...secondResult.data, id };
+
+        return undefined;
+      });
+
+      let rawUsersData = await Promise.all(dataPromises);
+      rawUsersData = rawUsersData.filter(Boolean);
+
+      const newUsersData: Map<string, UserData> = new Map(
+        rawUsersData.map((data) => {
+          return [
+            data.id,
+            {
+              profileName: data.profileName,
+              photoLink: data.photoLink,
+            },
+          ];
+        })
+      );
+
+      return newUsersData;
+    } catch (error) {
+      console.error("Error fetching user data:", error);
+      return null;
+    }
+  }, [myAuthBotId]);
+
+  const refreshUsersDataMap = useCallback(async () => {
+    const dataMap = await fetchUsersDataMap();
+
+    if (dataMap) {
+      setUsersDataMap(dataMap);
+    }
+  }, [fetchUsersDataMap]);
+
   useEffect(() => {
     globalThis.ScriptureMapHandleUserLoggedIn = handleUserLoggedIn;
+    globalThis.ScriptureMapHandleSubscriptionsChanged = refreshUsersDataMap;
 
     trySetMyAuthBotId();
 
     return () => {
       globalThis.ScriptureMapHandleUserLoggedIn = null;
+      globalThis.ScriptureMapHandleSubscriptionsChanged = null;
     };
   }, [handleUserLoggedIn, trySetMyAuthBotId]);
 
   useEffect(() => {
-    if (!myAuthBotId) return;
-
     let isMounted = true;
 
-    const fetchUserData = async () => {
-      try {
-        const componentsBot = getBot(byTag("system", "app.components"));
-        const subscribedUsers = await getSubscribedUsers();
+    const initUsersDataMap = async () => {
+      const dataMap = await fetchUsersDataMap();
 
-        if (!subscribedUsers) return;
-
-        const allAuthBotIds = [
-          myAuthBotId,
-          ...subscribedUsers.map((user) => user.id),
-        ];
-
-        const dataPromises = allAuthBotIds.map(async (id) => {
-          const firstResult = await os.getData(id, id);
-          if (firstResult.success) return { ...firstResult.data, id };
-
-          const secondResult = await os.getData(componentsBot.tags.key, id);
-          if (secondResult.success) return { ...secondResult.data, id };
-
-          return undefined;
-        });
-
-        let rawUsersData = await Promise.all(dataPromises);
-        rawUsersData = rawUsersData.filter(Boolean);
-        const newUsersData: Map<string, UserData> = new Map(
-          rawUsersData.map((data) => {
-            return [
-              data.id,
-              {
-                profileName: data.profileName,
-                photoLink: data.photoLink,
-              },
-            ];
-          })
-        );
-
-        if (isMounted) {
-          console.log(`[Debug] ReadingHistoryContext`, { newUsersData });
-          setUsersDataMap(newUsersData);
-        }
-      } catch (error) {
-        console.error("Error fetching user data:", error);
+      if (isMounted && dataMap) {
+        setUsersDataMap(dataMap);
       }
     };
 
-    fetchUserData();
+    initUsersDataMap();
 
     return () => {
       isMounted = false;
     };
-  }, [myAuthBotId]);
+  }, [fetchUsersDataMap]);
 
   const {
     startDateStartOfWeek,
@@ -310,6 +327,17 @@ export const ReadingHistoryProvider = ({ children }) => {
 
   useEffect(() => {
     tryUpdateReadingHistoryUsersFilters();
+
+    // const requestPersmissions = async () => {
+    //   const authIds = Array.from(usersDataMap.keys());
+    //   for(const authId of authIds)
+    //   {
+    //     const result = await os.grantInstAdminPermission(authId);
+    //     console.log(`[Debug] ReadingHistoryContext useEffect for usersDataMap`, {result, authId, usersDataMap});
+    //   }
+    // }
+
+    // requestPersmissions();
   }, [usersDataMap]);
 
   useEffect(() => {

@@ -663,4 +663,16 @@
   "file": "Файл",
   "noLanguageResultsFound": "Результаты не найдены. Хотите расширить поиск, включив в него также частично заполненные языки?",
   "showAllLanguages": "Показать все языки"
+  "tanakOrder": "Порядок ТаНаХ",
+  "traditionalOrder": "Традиционный порядок",
+  "lawTorah": "Закон (Тора)",
+  "prophetsNeviim": "Пророки (Невиим)",
+  "writingsKetuvim": "Писания (Ктувим)",
+  "bookText": "Текст книги",
+  "chapterText": "Текст главы",
+  "chapterColor": "Цвет главы",
+  "pentateuch": "Пятикнижие",
+  "historical": "Исторические",
+  "poetic": "Поэтические",
+  "prophetic": "Пророческие"
 }

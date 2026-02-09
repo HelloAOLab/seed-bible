@@ -19,8 +19,19 @@ const CreateAccountSettings = () => {
   const [img, setImg] = useState<string | undefined>();
   const [profileName, setProfileName] = useState("");
   const [description, setDescription] = useState("");
+  const [location, setLocation] = useState("");
   const [uid, setUid] = useState(authBot?.id);
   const [isSignedIn, setIsSignedIn] = useState(false);
+  useEffect(() => {
+    if (!authBot.id) {
+      setIsSignedIn(false);
+      setUid("");
+      setProfileName("");
+      setDescription("");
+      setLocation("");
+      setImg(undefined);
+    }
+  }, [authBot]);
   async function init() {
     const authBot = await os.requestAuthBotInBackground();
     if (!authBot?.id) {
@@ -36,6 +47,7 @@ const CreateAccountSettings = () => {
       setTagMask(thisBot, `${configBot.id}-photo`, payload.photoLink, "shared");
       setProfileName(payload.profileName);
       setDescription(payload.description);
+      setLocation(payload.location || "");
     }
   }
   useEffect(() => {
@@ -92,6 +104,7 @@ const CreateAccountSettings = () => {
     const payload = {
       profileName,
       description,
+      location,
     };
     const data = await os.getData(tags.key, authBot.id);
     const existingData = data.success ? data.data : {};
@@ -110,173 +123,169 @@ const CreateAccountSettings = () => {
 
   return (
     <div className="createAccount-settings">
-      <div>
-        <div className="routerOptions">
-          <div
-            style={{ cursor: "pointer" }}
-            onClick={() => {
-              if (
-                (globalThis as any).AccountSettingsEnteredFrom === "settings"
-              ) {
-                setSideBarMode("settings");
-                setTimeout(
-                  () => (globalThis as any).SetActiveSettingsTab("general"),
-                  0
-                );
-              } else if (
-                (globalThis as any).AccountSettingsEnteredFrom === "default"
-              ) {
-                setSideBarMode("default");
-              }
-            }}
-            className="blackText"
-          >
-            <MenuIcon name="arrow_back" />
-          </div>
-          <div className="softText">Create new profile</div>
-        </div>
-      </div>
-      <div style={{ "margin-top": "-10px" }} className="routerTitle blackText">
-        <div>Create profile</div>
-      </div>
-
-      <div className="mediumText">Add a new profile to your account</div>
-      {!isSignedIn && (
+      {/* Header */}
+      <div className="profile-header">
+        <h2 className="profile-title">Profile</h2>
         <div
-          style={{
-            background: "#FFF3CD",
-            border: "1px solid #FFECB5",
-            borderRadius: "6px",
-            padding: "15px",
-            marginBottom: "15px",
+          className="profile-close-btn"
+          onClick={() => {
+            if ((globalThis as any).AccountSettingsEnteredFrom === "settings") {
+              setSideBarMode("settings");
+              setTimeout(
+                () => (globalThis as any).SetActiveSettingsTab("general"),
+                0
+              );
+            } else if (
+              (globalThis as any).AccountSettingsEnteredFrom === "default"
+            ) {
+              setSideBarMode("default");
+            }
           }}
         >
-          <div style={{ color: "#856404", marginBottom: "10px" }}>
+          <MenuIcon name="close" />
+        </div>
+      </div>
+      <p className="subtitle">Manage your profile information here</p>
+
+      {!isSignedIn && (
+        <div className="sign-in-prompt">
+          <div className="sign-in-prompt-text">
             Please sign in to create or edit your profile
           </div>
           <button
             onClick={async () => {
-              const authBot = await os.requestAuthBot();
-              if (!tags.usersAuthIds) {
-                tags.usersAuthIds = [];
-              }
-              const authId = authBot?.id || null;
-              const existingEntry = tags.usersAuthIds.find(
-                (entry: { authId: string | null; configId: string }) =>
-                  entry.configId === configBot.id
-              );
-              if (!existingEntry) {
-                tags.usersAuthIds.push({ authId, configId: configBot.id });
-              } else if (existingEntry.authId !== authId && authId !== null) {
-                existingEntry.authId = authId;
-              }
-              if (authBot?.id) {
-                shout("userLogin", { authId, configId: configBot.id });
-                setIsSignedIn(true);
-                setUid(authBot.id);
-                init();
+              try {
+                const authBot = await os.requestAuthBot();
+                if (!tags.usersAuthIds) {
+                  tags.usersAuthIds = [];
+                }
+                const authId = authBot?.id || null;
+                const existingEntry = tags.usersAuthIds.find(
+                  (entry: { authId: string | null; configId: string }) =>
+                    entry.configId === configBot.id
+                );
+                if (!existingEntry) {
+                  tags.usersAuthIds.push({ authId, configId: configBot.id });
+                } else if (existingEntry.authId !== authId && authId !== null) {
+                  existingEntry.authId = authId;
+                }
+                if (authBot?.id) {
+                  shout("userLogin", { authId, configId: configBot.id });
+                  setIsSignedIn(true);
+                  setUid(authBot.id);
+                  init();
+                }
+              } catch (e) {
+                os.toast("Sign in failed: " + (e as Error).message);
               }
             }}
-            style={{
-              background: "var(--spaceSelection)",
-              color: "white",
-              border: "none",
-              padding: "8px 16px",
-              borderRadius: "6px",
-              cursor: "pointer",
-            }}
+            className="save-btn"
           >
             Sign In
           </button>
         </div>
       )}
+
       {isSignedIn && (
         <>
-          <div
-            style={{
-              display: "flex",
-              "align-items": "center",
-              "justify-content": "center",
-              width: "100%",
-              gap: "25px",
-            }}
-          >
-            <img
-              style={{
-                "border-radius": "50%",
-                height: "50px",
-                width: "50px",
-                border: "1px solid var(--spaceSelection)",
-              }}
-              src={img}
-            />
-            <button
-              onClick={() => uploadImage()}
-              style={{
-                background: "var(--spaceSelection)1A",
-                border: "1px solid var(--spaceSelection)",
-                width: "100px",
-                height: "30px",
-                color: "var(--spaceSelection)",
-              }}
-            >
-              Add picture
+          {/* Profile photo */}
+          <div className="profile-photo-section">
+            <div className="profile-photo">{img && <img src={img} />}</div>
+            <button className="add-photo-btn" onClick={() => uploadImage()}>
+              Update picture
             </button>
           </div>
-          <div style={{ height: "20px" }}></div>
-          <div className="blackText">Profile name</div>
-          <div style={{ height: "10px" }}></div>
-          <input
-            style={{ height: "25px" }}
-            placeholder="e.g Craig family"
-            className="selectInput"
-            value={profileName}
-            onChange={(e) =>
-              setProfileName((e.target as HTMLInputElement).value)
-            }
-          />
-          <p style={{ "font-size": "10px", color: "#5F5E5C" }}>
-            You can change this later
-          </p>
-          <div style={{ height: "20px" }}></div>
-          <div className="blackText">
-            Description{" "}
-            <span style={{ "font-size": "10px", color: "#5F5E5C" }}>
-              (Optional)
-            </span>
+
+          {/* Profile name */}
+          <div className="form-group">
+            <label className="form-label">Profile name</label>
+            <input
+              className="form-input"
+              placeholder="e.g Craig family"
+              value={profileName}
+              onChange={(e) =>
+                setProfileName((e.target as HTMLInputElement).value)
+              }
+            />
+            <p className="helper-text">You can change this later</p>
           </div>
-          <div style={{ height: "10px" }}></div>
-          <textarea
-            style={{ height: "50px" }}
-            placeholder="Enter your profile description..."
-            className="selectInput"
-            value={description}
-            onChange={(e) =>
-              setDescription((e.target as HTMLTextAreaElement).value)
-            }
-          ></textarea>
-          <div style={{ height: "20px" }}></div>
-          <div className="blackText">Your ID is:</div>
-          <div style={{ height: "10px" }}></div>
-          <input
-            style={{ height: "25px" }}
-            value={uid}
-            className="selectInput"
-            readOnly
-          />
-          <div style={{ height: "20px" }}></div>
+
+          {/* Description */}
+          <div className="form-group">
+            <label className="form-label">
+              Description <span className="optional-label">(Optional)</span>
+            </label>
+            <textarea
+              className="form-input profile-textarea"
+              placeholder="Enter your profile description..."
+              value={description}
+              onChange={(e) =>
+                setDescription((e.target as HTMLTextAreaElement).value)
+              }
+            ></textarea>
+          </div>
+
+          {/* Location */}
+          <div className="form-group">
+            <label className="form-label">
+              Location <span className="optional-label">(Optional)</span>
+            </label>
+            <input
+              className="form-input"
+              placeholder="e.g Austin,TX"
+              value={location}
+              onChange={(e) =>
+                setLocation((e.target as HTMLInputElement).value)
+              }
+            />
+          </div>
+
+          {/* UID */}
+          <div className="uid-section">
+            <div className="uid-label">Your UID will be:</div>
+            <div className="uid-display">
+              <span className="uid-text">{uid}</span>
+              <span
+                className="copy-icon"
+                onClick={() => {
+                  os.setClipboard(uid);
+                  os.toast("UID copied!");
+                }}
+              >
+                <MenuIcon
+                  style={{ color: "black !important" }}
+                  name="content_copy"
+                />
+              </span>
+            </div>
+          </div>
+
+          {/* Save button */}
+          <button className="save-btn" onClick={saveProfileData}>
+            Save changes
+          </button>
+
+          {/* Divider */}
+          <div className="profile-divider"></div>
+
+          {/* Sign out */}
           <button
-            onClick={saveProfileData}
-            style={{
-              background: "var(--spaceSelection)",
-              color: "white",
-              border: "none",
-              padding: "10px 20px",
-              borderRadius: "6px",
-              cursor: "pointer",
+            className="sign-out-btn"
+            onClick={async () => {
+              if (authBot) {
+                destroy(authBot);
+              }
+              setIsSignedIn(false);
+              setUid("");
+              setProfileName("");
+              setDescription("");
+              setLocation("");
+              setImg(undefined);
+              os.toast("Signed out successfully");
             }}
           >
-            Save Profile
+            <MenuIcon style={{ color: "#B90303 !important" }} name="logout" />
+            <span>Sign out</span>
           </button>
         </>
       )}

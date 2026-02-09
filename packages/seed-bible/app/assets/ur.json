@@ -128,4 +128,16 @@
   "file": "فائل",
   "noLanguageResultsFound": "کوئی نتیجہ نہیں ملا۔ کیا آپ جزوی طور پر مکمل زبانوں کو بھی شامل کرنے کے لیے اپنی تلاش کو بڑھانا چاہیں گے؟",
   "showAllLanguages": "تمام زبانیں دکھائیں"
+  "tanakOrder": "تنخ ترتیب",
+  "traditionalOrder": "روایتی ترتیب",
+  "lawTorah": "شریعت (تورات)",
+  "prophetsNeviim": "انبیاء (نویئیم)",
+  "writingsKetuvim": "تحریریں (کتوویم)",
+  "bookText": "کتاب کا متن",
+  "chapterText": "باب کا متن",
+  "chapterColor": "باب کا رنگ",
+  "pentateuch": "توریت کی پانچ کتابیں",
+  "historical": "تاریخی",
+  "poetic": "شاعرانہ",
+  "prophetic": "نبوی"
 }

@@ -5,9 +5,10 @@ import {
   SelectedIcon,
   AddIcon,
   PercentageCircle,
+  MinusIcon,
 } from "introduction.searchBar.Icons";
 import type { TranslationInterface } from "introduction.searchBar.Interfaces";
-import { changeLanguage, getTranslations } from "app.hooks.i18n";
+import { getTranslations } from "app.hooks.i18n";
 
 const { useState, useEffect, useMemo } = os.appHooks;
 
@@ -231,6 +232,7 @@ const TranslationModal = (props: {
               setSelectedTranslation={setSelectedTranslation}
               setSelectingTranslation={setSelectingTranslation}
               filteredApiTranslations={filteredApiTranslations}
+              showAllLanguages={showAllLanguages}
             />
           );
         })}
@@ -324,7 +326,11 @@ const TranslationModal = (props: {
                   cursor: "pointer",
                 }}
               >
-                <AddIcon height={16} width={16} />
+                {!showCustomTranslation ? (
+                  <AddIcon height={20} width={20} />
+                ) : (
+                  <MinusIcon height={20} width={20} />
+                )}
               </span>
             </div>
             {showCustomTranslation && (
@@ -355,6 +361,7 @@ const LanguageComponent = (props: {
   filteredApiTranslations: Array<
     [string, Record<string, TranslationInterface>]
   >;
+  showAllLanguages: "all" | "completed" | "popular";
 }) => {
   const {
     language,
@@ -363,6 +370,7 @@ const LanguageComponent = (props: {
     setSelectedTranslation,
     setSelectingTranslation,
     filteredApiTranslations,
+    showAllLanguages,
   } = props;
   const [show, setShow] = useState(false);
 
@@ -461,9 +469,9 @@ const LanguageComponent = (props: {
                             e.data.books,
                             value.origin
                           );
-                          if (translationMap[value.language]) {
-                            changeLanguage(translationMap[value.language]);
-                          }
+                          // if (translationMap[value.language]) {
+                          //   changeLanguage(translationMap[value.language]);
+                          // }
                         })
                         .catch((e) => {
                           console.log(e);
@@ -479,9 +487,9 @@ const LanguageComponent = (props: {
                             e.data.books,
                             "https://bible.helloao.org"
                           );
-                          if (translationMap[value.language]) {
-                            changeLanguage(translationMap[value.language]);
-                          }
+                          // if (translationMap[value.language]) {
+                          //   changeLanguage(translationMap[value.language]);
+                          // }
                         })
                         .catch((e) => {
                           console.log(e);
@@ -499,13 +507,16 @@ const LanguageComponent = (props: {
                   <span class="translation-title">
                     {selectedTranslation.id === value.id ? (
                       <TickIcon height={15} width={15} />
-                    ) : (
+                    ) : showAllLanguages === "all" ||
+                      showAllLanguages === "popular" ? (
                       <span
                         class="emptyCircle"
                         style={{
-                          background: `linear-gradient(white, white) padding-box, conic-gradient(from -${rotation}deg, var(--primaryColor) ${completionPercentage}%, #eee 0) border-box`,
+                          background: `linear-gradient(white, white) padding-box, conic-gradient(from -${rotation}deg, var(--secondaryColor) ${completionPercentage}%, #eee 0) border-box`,
                         }}
                       ></span>
+                    ) : (
+                      <span class="emptyCircle"></span>
                     )}
                     <span class="translation-description">{`${value.name} (${value.shortName})`}</span>
                   </span>
@@ -621,7 +632,7 @@ const TranslationSettings = (props: {
           style={{
             color:
               showAllLanguages === "complete"
-                ? "var(--primaryColor)"
+                ? "var(--secondaryColor)"
                 : "var(--text3)",
           }}
         >
@@ -650,7 +661,7 @@ const TranslationSettings = (props: {
           style={{
             color:
               showAllLanguages === "all"
-                ? "var(--primaryColor)"
+                ? "var(--secondaryColor)"
                 : "var(--text3)",
           }}
         >
@@ -679,7 +690,7 @@ const TranslationSettings = (props: {
           style={{
             color:
               showAllLanguages === "popular"
-                ? "var(--primaryColor)"
+                ? "var(--secondaryColor)"
                 : "var(--text3)",
           }}
         >
