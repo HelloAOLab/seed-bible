@@ -1,0 +1,42 @@
+import { StackPieceData } from "bibleVizUtils.classes.StackPieceData";
+import { StackSectionData } from "bibleVizUtils.classes.StackSectionData";
+import { StackSectionBookData } from "bibleVizUtils.classes.StackSectionBookData";
+
+export class StackTestamentData extends StackPieceData {
+  constructor({
+    childrenData = [],
+    id,
+    piece,
+    pieceInfo,
+    parentDataIds,
+    isSplitIntoSections = false,
+    isInsideBible = true,
+    creationInfo,
+    isActive,
+  }) {
+    super({
+      childrenData,
+      id,
+      piece,
+      pieceInfo,
+      parentDataIds,
+      isInsideBible,
+      isActive,
+      creationInfo,
+    });
+    this.isSplitIntoSections = isSplitIntoSections;
+  }
+
+  AddChild(newChild) {
+    if (
+      newChild instanceof StackSectionData ||
+      newChild instanceof StackSectionBookData
+    ) {
+      super.AddChild(newChild);
+    } else {
+      console.error(
+        "The object must be an instance of StackSectionData or StackSectionBookData"
+      );
+    }
+  }
+}
