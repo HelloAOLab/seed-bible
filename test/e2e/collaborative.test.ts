@@ -2,7 +2,8 @@ import puppeteer, { Browser, Page } from "puppeteer";
 // import { packageAll } from "../../script/lib/package";
 import { loadSeedBible } from "../../script/lib/browser";
 // import { minifyAll } from "../../script/lib/minify";
-import { delay, getSeedBibleFrame } from "./utils";
+import { delay, getSeedBibleFrame, mergeWhitespace } from "./utils";
+import { merge } from "@casual-simulation/aux-common";
 
 let browser: Browser;
 
@@ -90,6 +91,8 @@ describe("collaborative", () => {
     const bookTitle = await seedBibleFrame2
       .locator("div.bookTitle")
       .waitHandle();
-    expect(await bookTitle?.evaluate((el) => el.textContent)).toBe("Genesis 2");
+    expect(
+      mergeWhitespace(await bookTitle?.evaluate((el) => el.textContent))
+    ).toBe("Genesis 2 / BSB");
   });
 });
