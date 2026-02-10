@@ -12,7 +12,7 @@ const defaultPaths = {
   "https://esm.helloao.org/vendor-3PZUL55I.js": ["./lib/vendor.ts"],
 };
 
-const moduleFileTypes = [".ts", ".tsx", ".js", ".jsx", ".mjs", ".cjs"];
+const moduleFileTypes = [".ts", ".tsx", ".js", ".jsx", ".mjs", ".cjs", ".tsm"];
 
 async function updateModulePaths() {
   const tsconfig = getTsconfig();

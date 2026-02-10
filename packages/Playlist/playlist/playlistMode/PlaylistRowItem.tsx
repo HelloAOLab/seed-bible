@@ -1,8 +1,6 @@
 const { useState, useLayoutEffect, useRef, useMemo } = os.appHooks;
 const { Checkbox, LoaderSecondary, Modal, ButtonsCover, Button } = Components;
 
-
-
 const CircleProgress = await thisBot.DynamicCircle();
 const RenderIcon = await thisBot.RenderIcon();
 
@@ -117,7 +115,6 @@ const PlaylistRowItem = ({
   isLayers,
   access,
 }) => {
-  
   const isCustomIcons = icon?.startsWith("https") || isCustomIcon;
   const [warningMessage, setWarningMsg] = useState(null);
   const [showMoreOptions, setShowMoreOptions] = useState(false);
@@ -277,7 +274,10 @@ const PlaylistRowItem = ({
     let shareProfilePic = defaultProfile;
     const authBot = await os.requestAuthBotInBackground();
     if (authBot?.id) {
-      const data = await os.getData(thisBot.tags.keyFetchAccountData, authBot.id);
+      const data = await os.getData(
+        thisBot.tags.keyFetchAccountData,
+        authBot.id
+      );
       if (data.success) {
         const payload = data.data;
         shareProfileName = payload.profileName || "Guest";
@@ -313,13 +313,18 @@ const PlaylistRowItem = ({
     const key = configBot.tags.pattern ? "pattern" : "ab";
     // const encryptedText = API.encrypt()(stringItems);
 
-    const result = await os.recordData(authBot.id, playlistObj.id, playlistObj, {
-      marker: "publicRead",
-    });
+    const result = await os.recordData(
+      authBot.id,
+      playlistObj.id,
+      playlistObj,
+      {
+        marker: "publicRead",
+      }
+    );
 
     const recordShareKey = `${authBot.id}^_^${playlistObj.id}`;
 
-    if(result.success) {
+    if (result.success) {
       const shareURL = `https://ao.bot/?${key}=${deployBot}&Playlist=${recordShareKey}&noGridPortal=true`;
       os.setClipboard(shareURL);
       setShowMoreOptions(false);
@@ -328,14 +333,13 @@ const PlaylistRowItem = ({
         message: t("shareURLCopied"),
         severity: "success",
       });
-    }else {
+    } else {
       ShowNotification({
         message: t("unableToCopy"),
         severity: "error",
       });
     }
     setLoading(false);
-
   };
 
   const openMergeModal = ({ id }) => {
@@ -736,7 +740,7 @@ const PlaylistRowItem = ({
               setShowMoreOptions(false);
             }}
             style={{
-              ...getPosition(),
+              ...(getPosition ? getPosition() : { x: 0, y: 0 }),
               width: "200px",
             }}
             className="overlay linked-item-custom"

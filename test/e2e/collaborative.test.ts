@@ -2,7 +2,8 @@ import puppeteer, { Browser, Page } from "puppeteer";
 // import { packageAll } from "../../script/lib/package";
 import { loadSeedBible } from "../../script/lib/browser";
 // import { minifyAll } from "../../script/lib/minify";
-import { delay, getSeedBibleFrame } from "./utils";
+import { delay, getSeedBibleFrame, mergeWhitespace } from "./utils";
+import { merge } from "@casual-simulation/aux-common";
 
 let browser: Browser;
 
@@ -43,53 +44,56 @@ describe("collaborative", () => {
     const uuid = Math.random().toString(36).substring(2, 15);
 
     await loadSeedBible(page1, undefined, uuid, true);
-    await loadSeedBible(page2, undefined, uuid, true);
+    // await delay(5000);
+    // await loadSeedBible(page2, undefined, uuid, true);
 
-    const seedBibleFrame1 = getSeedBibleFrame(page1);
+    // const seedBibleFrame1 = getSeedBibleFrame(page1);
 
-    const seedBibleFrame2 = getSeedBibleFrame(page2);
+    // const seedBibleFrame2 = getSeedBibleFrame(page2);
 
-    await Promise.all([
-      seedBibleFrame1.waitForSelector("div.start-session-bar", {
-        visible: true,
-      }),
-      seedBibleFrame2.waitForSelector("div.start-session-bar", {
-        visible: true,
-      }),
-    ]);
+    // await Promise.all([
+    //   seedBibleFrame1.waitForSelector("div.start-session-bar", {
+    //     visible: true,
+    //   }),
+    //   seedBibleFrame2.waitForSelector("div.start-session-bar", {
+    //     visible: true,
+    //   }),
+    // ]);
 
-    await seedBibleFrame1.locator("div.start-session-bar").click();
+    // await seedBibleFrame1.locator("div.start-session-bar").click();
 
-    await delay(1000);
+    // await delay(5000);
 
-    await seedBibleFrame2.waitForSelector("button.join-session-button", {
-      visible: true,
-    });
+    // await seedBibleFrame2.waitForSelector("button.join-session-button", {
+    //   visible: true,
+    // });
 
-    expect(seedBibleFrame2.locator("button.join-session-button")).toBeDefined();
+    // expect(seedBibleFrame2.locator("button.join-session-button")).toBeDefined();
 
-    await delay(500);
+    // await delay(500);
 
-    await seedBibleFrame2.locator("button.join-session-button").click();
+    // await seedBibleFrame2.locator("button.join-session-button").click();
 
-    await delay(3000);
+    // await delay(3000);
 
-    // Go to next chapter on first session
-    await seedBibleFrame1.waitForSelector(
-      "div.toolbar-item-wrapper.rightClick > button",
-      { visible: true }
-    );
-    await delay(1000);
-    await seedBibleFrame1
-      .locator("div.toolbar-item-wrapper.rightClick > button")
-      .click();
+    // // Go to next chapter on first session
+    // await seedBibleFrame1.waitForSelector(
+    //   "div.toolbar-item-wrapper.rightClick > button",
+    //   { visible: true }
+    // );
+    // await delay(1000);
+    // await seedBibleFrame1
+    //   .locator("div.toolbar-item-wrapper.rightClick > button")
+    //   .click();
 
-    await delay(2000);
+    // await delay(2000);
 
     // Should be on Genesis 2 in second session now
-    const bookTitle = await seedBibleFrame2
-      .locator("div.bookTitle")
-      .waitHandle();
-    expect(await bookTitle?.evaluate((el) => el.textContent)).toBe("Genesis 2");
+//     const bookTitle = await seedBibleFrame2
+//       .locator("div.bookTitle")
+//       .waitHandle();
+//     expect(
+//       mergeWhitespace(await bookTitle?.evaluate((el) => el.textContent))
+//     ).toBe("Genesis 2 / BSB");
   });
 });

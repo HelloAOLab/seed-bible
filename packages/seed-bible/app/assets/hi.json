@@ -662,5 +662,19 @@
   "logo": "लोगो",
   "logoColor": "लोगो रंग",
   "accentColor": "एक्सेंट रंग",
-  "fileUploadFailed": "फ़ाइल अपलोड विफल!"
+  "fileUploadFailed": "फ़ाइल अपलोड विफल!",
+  "noLanguageResultsFound": "कोई परिणाम नहीं मिला। क्या आप अपनी खोज का दायरा बढ़ाकर आंशिक रूप से पूर्ण भाषाओं को भी शामिल करना चाहेंगे?",
+  "showAllLanguages": "सभी भाषाएं दिखाएं"
+  "tanakOrder": "तनख क्रम",
+  "traditionalOrder": "पारंपरिक क्रम",
+  "lawTorah": "व्यवस्था (तोराह)",
+  "prophetsNeviim": "भविष्यवक्ता (नवीईम)",
+  "writingsKetuvim": "लेखन (केतुवीम)",
+  "bookText": "पुस्तक पाठ",
+  "chapterText": "अध्याय पाठ",
+  "chapterColor": "अध्याय रंग",
+  "pentateuch": "पंचग्रन्थ",
+  "historical": "ऐतिहासिक",
+  "poetic": "काव्यात्मक",
+  "prophetic": "भविष्यवाणी"
 }

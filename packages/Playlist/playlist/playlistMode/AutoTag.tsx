@@ -7,7 +7,7 @@ function autoTagHTML(html) {
 
   // ✅ 1) Fix WRONG existing hashtag spans like:
   // <span id="hashtag">#tagname i am her boy</span>
-  doc.querySelectorAll("span#hashtag").forEach((el) => {
+  doc.querySelectorAll("span#hashtag").forEach((el: any) => {
     const text = el.textContent || "";
 
     // ✅ allow hyphens in the hashtag
@@ -15,9 +15,9 @@ function autoTagHTML(html) {
     if (!match) return;
 
     const hashtag = match[1];
-    let rest = match[2];
+    let rest: string | undefined = match[2];
 
-    if (!rest.trim()) {
+    if (!rest?.trim()) {
       el.textContent = hashtag;
       return;
     }
@@ -35,12 +35,16 @@ function autoTagHTML(html) {
   });
 
   // ✅ 2) Tag new hashtags in text nodes (skip existing hashtag span)
-  const walker = document.createTreeWalker(doc.body, NodeFilter.SHOW_TEXT, null);
+  const walker = document.createTreeWalker(
+    doc.body,
+    NodeFilter.SHOW_TEXT,
+    null
+  );
 
   const textNodes = [];
   while (walker.nextNode()) textNodes.push(walker.currentNode);
 
-  textNodes.forEach((textNode) => {
+  textNodes.forEach((textNode: any) => {
     if (textNode.parentElement?.id === "hashtag") return;
 
     const text = textNode.nodeValue || "";
@@ -74,7 +78,7 @@ function autoTagHTML(html) {
 
   return doc.body.innerHTML;
 }
-  
+
 function extractHashtagsFromHTML(html: string) {
   const hashtagRegex = /#[\w]+/g;
 
@@ -143,4 +147,8 @@ function uncolorizeHashtags(html: string) {
   return doc.body.innerHTML;
 }
 
-export { extractHashtagsFromHTML, autoTagHTML as ColorizeParagraphs , uncolorizeHashtags };
+export {
+  extractHashtagsFromHTML,
+  autoTagHTML as ColorizeParagraphs,
+  uncolorizeHashtags,
+};

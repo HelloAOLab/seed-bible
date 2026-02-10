@@ -46,7 +46,9 @@ describe("codex tests", () => {
       .locator("div.bookTitle")
       .waitHandle();
     await delay(1000);
-    expect(await bookTitle?.evaluate((el) => el.textContent)).toBe("Genesis 1");
+    expect(
+      mergeWhitespace(await bookTitle?.evaluate((el) => el.textContent))
+    ).toBe("Genesis 1 / BSB");
   });
 
   test("check loaded translation", async () => {
@@ -57,7 +59,9 @@ describe("codex tests", () => {
     const bookTitle = await seedBibleFrame
       .locator("div.bookTitle")
       .waitHandle();
-    expect(await bookTitle?.evaluate((el) => el.textContent)).toBe("Genesis 1");
+    expect(
+      mergeWhitespace(await bookTitle?.evaluate((el) => el.textContent))
+    ).toBe("Genesis 1 / su1");
 
     const v1 = await seedBibleFrame.locator("#v-1").waitHandle();
     const v1Text = await v1?.evaluate((el) => el.textContent);
@@ -74,7 +78,9 @@ describe("codex tests", () => {
     const bookTitle = await seedBibleFrame
       .locator("div.bookTitle")
       .waitHandle();
-    expect(await bookTitle?.evaluate((el) => el.textContent)).toBe("Genesis 1");
+    expect(
+      mergeWhitespace(await bookTitle?.evaluate((el) => el.textContent))
+    ).toBe("Genesis 1 / su1");
 
     const v1 = await seedBibleFrame.locator("#v-1").waitHandle();
     const v1Text = await v1?.evaluate((el) => el.textContent);
@@ -97,9 +103,9 @@ describe("codex tests", () => {
     const bookTitle2 = await seedBibleFrame
       .locator("div.bookTitle")
       .waitHandle();
-    expect(await bookTitle2?.evaluate((el) => el.textContent)).toBe(
-      "Genesis 1"
-    );
+    expect(
+      mergeWhitespace(await bookTitle2?.evaluate((el) => el.textContent))
+    ).toBe("Genesis 1 / su2");
     const v1_2 = await seedBibleFrame.locator("#v-1").waitHandle();
     const v1Text2 = await v1_2?.evaluate((el) => el.textContent);
     expect(mergeWhitespace(v1Text2)).toMatch(
@@ -129,9 +135,9 @@ describe("codex tests", () => {
     const bookTitle3 = await seedBibleFrame
       .locator("div.bookTitle")
       .waitHandle();
-    expect(await bookTitle3?.evaluate((el) => el.textContent)).toBe(
-      "Genesis 1"
-    );
+    expect(
+      mergeWhitespace(await bookTitle3?.evaluate((el) => el.textContent))
+    ).toBe("Genesis 1 / su1");
 
     const v1_3 = await seedBibleFrame.locator("#v-1").waitHandle();
     const v1Text3 = await v1_3?.evaluate((el) => el.textContent);

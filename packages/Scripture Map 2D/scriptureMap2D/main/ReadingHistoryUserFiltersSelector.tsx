@@ -32,33 +32,37 @@ export const ReadingHistoryUserFiltersSelector = () => {
       />
 
       {Array.from(readingHistoryUserFilters).map(([userId, selected]) => {
-        const { profileName } = usersDataMap.get(userId);
-        const fixedName: string =
-          userId === myAuthBotId
-            ? t("you")
-            : profileName?.length > 0
-              ? profileName
-              : t("Unknown User");
-        return (
-          <FiltersSelectorOption
-            content={[
-              <div
-                style={{
-                  backgroundColor:
-                    readingHistoryColorStore.getUserColor(userId),
-                  borderStyle: "solid",
-                  borderColor: readingHistoryColorStore.getUserColor(userId),
-                }}
-                className="filter-option-icon"
-              ></div>,
-              fixedName,
-            ]}
-            onClick={() => {
-              handleReadingHistoryUserSelectorClick(userId);
-            }}
-            selected={selected}
-          />
-        );
+        const userData = usersDataMap.get(userId);
+        if (userData) {
+          const { profileName } = userData;
+          const fixedName: string =
+            userId === myAuthBotId
+              ? t("you")
+              : profileName?.length > 0
+                ? profileName
+                : t("Unknown User");
+          return (
+            <FiltersSelectorOption
+              content={[
+                <div
+                  style={{
+                    backgroundColor:
+                      readingHistoryColorStore.getUserColor(userId),
+                    borderStyle: "solid",
+                    borderColor: readingHistoryColorStore.getUserColor(userId),
+                  }}
+                  className="filter-option-icon"
+                ></div>,
+                fixedName,
+              ]}
+              onClick={() => {
+                handleReadingHistoryUserSelectorClick(userId);
+              }}
+              selected={selected}
+            />
+          );
+        }
+        return null;
       })}
     </div>
   );

@@ -125,5 +125,19 @@
   "yes": "بله",
   "no": "خیر",
   "all": "همه",
-  "file": "فایل"
+  "file": "فایل",
+  "noLanguageResultsFound": "نتیجه‌ای یافت نشد. آیا مایلید جستجوی خود را گسترش دهید تا زبان‌های تا حدی کامل را نیز شامل شود؟",
+  "showAllLanguages": "نمایش همه زبان‌ها"
+  "tanakOrder": "ترتیب تَنَخ",
+  "traditionalOrder": "ترتیب سنتی",
+  "lawTorah": "شریعت (تورات)",
+  "prophetsNeviim": "انبیا (نِویئیم)",
+  "writingsKetuvim": "نوشته‌ها (کِتوویم)",
+  "bookText": "متن کتاب",
+  "chapterText": "متن باب",
+  "chapterColor": "رنگ باب",
+  "pentateuch": "پنج‌گانه موسی",
+  "historical": "تاریخی",
+  "poetic": "شعری",
+  "prophetic": "نبوی"
 }

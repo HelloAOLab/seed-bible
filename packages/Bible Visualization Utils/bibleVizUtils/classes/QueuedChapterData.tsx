@@ -1,0 +1,15 @@
+export class QueuedChapterData {
+  constructor({
+    bookData = null,
+    chapterNumber = null,
+    chapterData,
+    stackBibleId,
+    action,
+  }) {
+    this.bookData = bookData;
+    this.chapterNumber = chapterNumber;
+    this.stackBibleId = stackBibleId;
+    this.action = action;
+    this.chapterData = chapterData;
+  }
+}

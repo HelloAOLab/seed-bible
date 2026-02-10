@@ -37,8 +37,8 @@ interface TranslationInterface {
 }
 
 interface IconProps {
-  width?: string;
-  height?: string;
+  width?: number | string;
+  height?: number | string;
   fill?: string;
 }
 

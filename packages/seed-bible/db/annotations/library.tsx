@@ -123,9 +123,6 @@ export async function saveFileAnnotationData(
   }
 
   return result.url;
-  return {
-    url: result.url,
-  };
 }
 
 /**
@@ -139,7 +136,7 @@ export function createAnnotation(
   bookId: string,
   chapterNumber: number,
   data: AnnotationData,
-  verseNumber: number
+  verseNumber: number | number[]
 ): Annotation {
   data = COMMENT_SCHEMA.parse(data);
   let keyName = "verseNumber";

@@ -1,9 +1,22 @@
-declare const that: any;
-declare const authBot: Bot;
-declare const configBot: Bot;
-declare const gridPortalBot: Bot;
-declare const mapPortalBot: Bot;
-declare const miniMapPortalBot: Bot;
+declare global {
+  // Add index signature to allow any property on globalThis
+  interface GlobalThis {
+    [key: string]: any;
+  }
 
-// declare global {
-// }
+  // Your other specific globals (optional, for better intellisense)
+  const that: any;
+  const authBot: Bot;
+  const configBot: Bot;
+  const gridPortalBot: Bot;
+  const mapPortalBot: Bot;
+  const miniMapPortalBot: Bot;
+  const t: (key: string, options?: { [key: string]: any }) => string;
+  const ShowNotification: (options: {
+    message: string;
+    severity: "error" | "warning" | "info" | "success";
+  }) => void;
+  const getPosition: () => { x: number; y: number };
+}
+
+export const G = globalThis as unknown as Record<string, any>;

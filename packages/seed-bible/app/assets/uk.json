@@ -125,5 +125,19 @@
   "yes": "Так",
   "no": "Ні",
   "all": "Усі",
-  "file": "Файл"
+  "file": "Файл",
+  "noLanguageResultsFound": "Не знайдено результатів. Бажаєте розширити пошук, включивши також частково повні мови?",
+  "showAllLanguages": "Показати всі мови"
+  "tanakOrder": "Порядок ТаНаХ",
+  "traditionalOrder": "Традиційний порядок",
+  "lawTorah": "Закон (Тора)",
+  "prophetsNeviim": "Пророки (Невіїм)",
+  "writingsKetuvim": "Писання (Ктувім)",
+  "bookText": "Текст книги",
+  "chapterText": "Текст розділу",
+  "chapterColor": "Колір розділу",
+  "pentateuch": "П'ятикнижжя",
+  "historical": "Історичні",
+  "poetic": "Поетичні",
+  "prophetic": "Пророчі"
 }
