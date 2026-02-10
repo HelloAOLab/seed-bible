@@ -469,6 +469,7 @@ const LanguageComponent = (props: {
                             e.data.books,
                             value.origin
                           );
+                          setOpenSidebar(false);
                           // if (translationMap[value.language]) {
                           //   changeLanguage(translationMap[value.language]);
                           // }
@@ -487,6 +488,7 @@ const LanguageComponent = (props: {
                             e.data.books,
                             "https://bible.helloao.org"
                           );
+                          setOpenSidebar(false);
                           // if (translationMap[value.language]) {
                           //   changeLanguage(translationMap[value.language]);
                           // }
