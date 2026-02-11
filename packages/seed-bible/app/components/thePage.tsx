@@ -1649,8 +1649,15 @@ function ThePage({
         <>
           <div
             onClick={(e) => {
-              setOpenSidebar((prev) => !prev);
-              setCurrentExperience(0);
+              if (globalThis.setOpenSidebar && globalThis.openSidebar) {
+                globalThis.setOpenSidebar(false);
+                globalThis.selectBookSelectorBook &&
+                  globalThis.selectBookSelectorBook(null);
+              } else {
+                globalThis.setOpenSidebar && globalThis.setOpenSidebar(true);
+                globalThis.selectBookSelectorBook &&
+                  globalThis.selectBookSelectorBook(data.bookId);
+              }
             }}
             style={{ "pointer-events": isDragging ? "none" : null }}
             className="bookTitle"
@@ -1660,6 +1667,22 @@ function ThePage({
               style={{
                 fontSize: "24px",
                 color: "color-mix(in srgb, var(--text1), transparent 40%)",
+              }}
+              onClick={(e) => {
+                e.stopPropagation();
+                if (globalThis.setOpenSidebar && globalThis.openSidebar) {
+                  globalThis.setOpenSidebar(false);
+                  globalThis.setSelectingTranslation &&
+                    globalThis.setSelectingTranslation(false);
+                  globalThis.selectBookSelectorBook &&
+                    globalThis.selectBookSelectorBook(null);
+                } else {
+                  globalThis.setOpenSidebar(true);
+                  globalThis.setSelectingTranslation &&
+                    globalThis.setSelectingTranslation(true);
+                  globalThis.selectBookSelectorBook &&
+                    globalThis.selectBookSelectorBook(data.bookId);
+                }
               }}
             >{` / ${data?.shortName}`}</span>
           </div>
