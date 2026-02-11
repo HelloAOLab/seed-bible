@@ -992,6 +992,7 @@ const SearchBar = (props: { openSidebar: boolean }) => {
             dontOpen={dontOpen}
             selectedTranslation={selectedTranslation}
             selectedTestament={selectedTestament}
+            setSelectedTestament={setSelectedTestament}
             booksData={selectedTestamentData}
             sortBooksByTestament={sortBooksByTestament}
             windowSize={windowSize}
@@ -1022,6 +1023,7 @@ const SearchBar = (props: { openSidebar: boolean }) => {
 const SideBarBooks = (props: {
   booksData: BookInterface[];
   selectedTestament: number;
+  setSelectedTestament: (n: number) => void;
   selectedTranslation: TranslationInterface;
   dontOpen: any;
   showCheck: any;
@@ -1038,6 +1040,7 @@ const SideBarBooks = (props: {
     booksData,
     selectedTestament,
     selectedTranslation,
+    setSelectedTestament,
     dontOpen,
     showCheck,
     onlineUsers,
@@ -1048,11 +1051,13 @@ const SideBarBooks = (props: {
   const [lastBookClicked, setLastBookClicked] = useState(-1);
   const [bookData, setBookData] = useState<BookInterface | null>(null);
   const [chT, setChT] = useState(0);
+  const [localSelectedTestament, setLocalSelectedTestament] =
+    useState(selectedTestament);
 
   useEffect(() => {
     setLastBookClicked(-1);
     setBookData(null);
-  }, [selectedTestament]);
+  }, [localSelectedTestament]);
 
   useLayoutEffect(() => {
     if (booksData.length === 1 && booksData[0]) {
@@ -1144,6 +1149,23 @@ const SideBarBooks = (props: {
     return bookName;
   }, []);
 
+  useEffect(() => {
+    const sortedBooks = sortBooksByTestament(booksData);
+    const OTBooks = sortedBooks.OTBooks;
+    const NTBooks = sortedBooks.NTBooks;
+    if (selectedTestament === 2) {
+      if (OTBooks.length > 0 && NTBooks.length === 0) {
+        setLocalSelectedTestament(0);
+      } else if (NTBooks.length > 0 && OTBooks.length === 0) {
+        setLocalSelectedTestament(1);
+      } else {
+        setLocalSelectedTestament(selectedTestament);
+      }
+    } else {
+      setLocalSelectedTestament(selectedTestament);
+    }
+  }, [selectedTestament, booksData]);
+
   const RenderBooksByTestament = useMemo(() => {
     let allowedRows = 5;
 
@@ -1157,7 +1179,7 @@ const SideBarBooks = (props: {
 
     const sortedBooks = sortBooksByTestament(booksData);
 
-    if (selectedTestament === 2) {
+    if (localSelectedTestament === 2) {
       const OTChapterSeparator =
         allowedRows === 1 ? 1 : allowedRows === 3 ? 2 : 3;
       const OTChapterPos = calcChapterPos(lastBookClicked, OTChapterSeparator);
@@ -1319,7 +1341,7 @@ const SideBarBooks = (props: {
           </div>
         </div>
       );
-    } else if (selectedTestament === 1) {
+    } else if (localSelectedTestament === 1) {
       const chapterPos = calcChapterPos(lastBookClicked, allowedRows);
       const booksWithGhost = ghostArray(sortedBooks.NTBooks, allowedRows);
       return (
@@ -1393,7 +1415,7 @@ const SideBarBooks = (props: {
           </div>
         </div>
       );
-    } else if (selectedTestament === 0) {
+    } else if (localSelectedTestament === 0) {
       const chapterPos = calcChapterPos(lastBookClicked, allowedRows);
       const booksWithGhost = ghostArray(sortedBooks.OTBooks, allowedRows);
       return (
@@ -1467,7 +1489,7 @@ const SideBarBooks = (props: {
           </div>
         </div>
       );
-    } else if (selectedTestament === 3) {
+    } else if (localSelectedTestament === 3) {
       const chapterPos = calcChapterPos(lastBookClicked, allowedRows);
       const booksWithGhost = ghostArray(
         sortedBooks.ApocryphaBooks,
@@ -1550,7 +1572,7 @@ const SideBarBooks = (props: {
     lastBookClicked,
     bookData,
     dontOpen,
-    selectedTestament,
+    localSelectedTestament,
     windowSize,
     chT,
     onlineUsers,
