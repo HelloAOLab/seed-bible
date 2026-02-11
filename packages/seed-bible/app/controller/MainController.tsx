@@ -23,7 +23,15 @@ export class MainController implements MainControllerMethods {
    * TODO: Update Effect<any,any> to properly map to key method contract args / return.
    */
   private _links: Map<MainControllerMethod, Effect<any, any>> = new Map();
-  constructor() {}
+  constructor() {
+    refactorme_setGlobals(
+      this.addApplication.bind(this),
+      this.removeApplication.bind(this),
+      this.removeApplicationById.bind(this),
+      this.replaceApplication.bind(this),
+      this.updateApplication.bind(this)
+    );
+  }
   /**
    * TODO: Implement spread args with proper type mapping.
    */
@@ -58,8 +66,16 @@ export class MainController implements MainControllerMethods {
   }
 }
 
-// globalThis.AddApplication = addApplication;
-// globalThis.RemoveApplication = removeApplication;
-// globalThis.RemoveApplicationByID = removeApplicationByID;
-// globalThis.ReplaceApplication = replaceApplication;
-// globalThis.UpdateApplication = updateApplication;
+function refactorme_setGlobals(
+  addApplication: any,
+  removeApplication: any,
+  removeApplicationByID: any,
+  replaceApplication: any,
+  updateApplication: any
+) {
+  globalThis.AddApplication = addApplication;
+  globalThis.RemoveApplication = removeApplication;
+  globalThis.RemoveApplicationByID = removeApplicationByID;
+  globalThis.ReplaceApplication = replaceApplication;
+  globalThis.UpdateApplication = updateApplication;
+}
