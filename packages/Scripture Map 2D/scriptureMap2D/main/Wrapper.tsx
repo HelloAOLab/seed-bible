@@ -5,7 +5,6 @@ import { Controls } from "scriptureMap2D.main.Controls";
 
 export const Wrapper = () => {
   const {
-    showLabels,
     bookWidth,
     chapterGap,
     chapterWidth,
@@ -16,7 +15,7 @@ export const Wrapper = () => {
 
   return (
     <div
-      className={`scripture-map-2d-wrapper${showLabels ? " showingLabels" : ""}`}
+      className="scripture-map-2d-wrapper"
       style={{
         "--scale-factor": scaleFactor,
         "--book-width": `${bookWidth}px`,

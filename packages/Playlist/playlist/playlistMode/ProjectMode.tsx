@@ -475,9 +475,6 @@ const ProjectMode = ({
                     onClick={() => {
                       setMenuValue(!menuState[value], value);
                     }}
-                    style={{
-                      borderTop: "1px solid #3E3E3E",
-                    }}
                   >
                     <img style={{ height: "18px" }} src={icon} />
                     <p style={{ fontWeight: "400" }}>{label}</p>

@@ -1,11 +1,20 @@
 const { useState, useRef, useEffect } = os.appHooks;
 
-function SharePopup({
+interface SharePopupProps {
+  shareTitle: string;
+  shareReference: string;
+  translation: string;
+  popupTitle: string;
+  closePopupSettings: () => void;
+}
+
+const SharePopup = ({
   shareTitle,
   shareReference,
   translation = "BSB",
   popupTitle = "Share",
-}) {
+  closePopupSettings,
+}) => {
   const [copied, setCopied] = useState(false);
   const [includeReference, setIncludeReference] = useState(true);
 
@@ -160,7 +169,6 @@ function SharePopup({
             boxShadow: "0 10px 40px rgba(0,0,0,0.2)",
           }}
         >
-          {/* Header */}
           <div
             style={{
               display: "flex",
@@ -196,8 +204,14 @@ function SharePopup({
             </button>
           </div>
 
-          {/* Toggle Options */}
-          <div style={{ display: "flex", gap: 16, marginBottom: 20, flexWrap: "nowrap" }}>
+          <div
+            style={{
+              display: "flex",
+              gap: 16,
+              marginBottom: 20,
+              flexWrap: "nowrap",
+            }}
+          >
             <label
               style={{
                 display: "flex",
@@ -212,7 +226,12 @@ function SharePopup({
                 name="shareOption"
                 checked={includeReference}
                 onChange={() => setIncludeReference(true)}
-                style={{ accentColor: "#4A90D9", width: 16, height: 16, flexShrink: 0 }}
+                style={{
+                  accentColor: "#4A90D9",
+                  width: 16,
+                  height: 16,
+                  flexShrink: 0,
+                }}
               />
               <span
                 style={{
@@ -239,7 +258,12 @@ function SharePopup({
                 name="shareOption"
                 checked={!includeReference}
                 onChange={() => setIncludeReference(false)}
-                style={{ accentColor: "#666", width: 16, height: 16, flexShrink: 0 }}
+                style={{
+                  accentColor: "#666",
+                  width: 16,
+                  height: 16,
+                  flexShrink: 0,
+                }}
               />
               <span
                 style={{
@@ -254,7 +278,6 @@ function SharePopup({
             </label>
           </div>
 
-          {/* Platform Grid */}
           <div
             style={{
               display: "grid",
@@ -316,7 +339,7 @@ function SharePopup({
       `}</style>
     </>
   );
-}
+};
 
 const QRCodeComponent = ({ url = "https://example.com/session/12345" }) => {
   const [copied, setCopied] = useState(false);
@@ -356,10 +379,10 @@ const QRCodeComponent = ({ url = "https://example.com/session/12345" }) => {
 
   const handleCopy = async () => {
     try {
+      os.setClipboard(url);
       // await navigator.clipboard.writeText(url);
-      // setCopied(true);
-      // setTimeout(() => setCopied(false), 2000);
-      setCopied(url);
+      setCopied(true);
+      setTimeout(() => setCopied(false), 2000);
     } catch (err) {
       console.error("Failed to copy:", err);
     }
@@ -401,7 +424,7 @@ const QRCodeComponent = ({ url = "https://example.com/session/12345" }) => {
 
         <div
           style={{
-            background: "#f8f9fa",
+            // background: "#f8f9fa",
             borderRadius: "12px",
             padding: "20px",
             marginBottom: "24px",
@@ -455,9 +478,8 @@ const QRCodeComponent = ({ url = "https://example.com/session/12345" }) => {
             transform: copied ? "scale(0.98)" : "scale(1)",
             boxShadow: copied ? "none" : "0 4px 12px rgba(102, 126, 234, 0.4)",
             fontFamily: "Satoshi",
-                        background: "#d36433",
+            background: "#d36433",
             color: "white",
-
           }}
         >
           {copied ? "✓ Copied!" : "Copy Session Link"}
@@ -467,7 +489,13 @@ const QRCodeComponent = ({ url = "https://example.com/session/12345" }) => {
   );
 };
 
-const JoinSessionComponent = ({ onJoin, translations = {} }) => {
+interface JoinSessionComponentProps {
+  onJoin: (code: string) => void;
+  translations: any;
+  CloseModal: () => void;
+}
+
+const JoinSessionComponent = ({ onJoin, translations = {}, CloseModal }) => {
   const [sessionCode, setSessionCode] = useState("");
 
   const t = {
@@ -518,7 +546,6 @@ const JoinSessionComponent = ({ onJoin, translations = {} }) => {
           height: 373,
         }}
       >
-        {/* Logo */}
         <div
           style={{
             display: "flex",
@@ -536,7 +563,6 @@ const JoinSessionComponent = ({ onJoin, translations = {} }) => {
           />
         </div>
 
-        {/* Title */}
         <h2
           style={{
             textAlign: "center",
@@ -552,7 +578,6 @@ const JoinSessionComponent = ({ onJoin, translations = {} }) => {
           {t.joinSession}
         </h2>
 
-        {/* Description */}
         <p
           style={{
             marginTop: 0,
@@ -568,7 +593,6 @@ const JoinSessionComponent = ({ onJoin, translations = {} }) => {
           {t.enterSessionCode}
         </p>
 
-        {/* Input Field */}
         <input
           type="text"
           value={sessionCode}
@@ -591,7 +615,6 @@ const JoinSessionComponent = ({ onJoin, translations = {} }) => {
           }}
         />
 
-        {/* Join Button */}
         <button
           onClick={handleJoin}
           style={{
@@ -604,7 +627,6 @@ const JoinSessionComponent = ({ onJoin, translations = {} }) => {
             borderRadius: 4,
             fontSize: 15,
             fontWeight: 500,
-            cursor: "pointer",
             transition: "background 0.2s",
             height: 48,
             position: "relative",

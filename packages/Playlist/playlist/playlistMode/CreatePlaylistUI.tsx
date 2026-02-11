@@ -1199,10 +1199,6 @@ const CreatePlaylistUI = ({
               onClick={() => {
                 setPublishAccess("private");
               }}
-              style={{
-                borderTop: "1px solid #3E3E3E",
-                borderRadius: "0px",
-              }}
             >
               <span
                 class="material-symbols-outlined"

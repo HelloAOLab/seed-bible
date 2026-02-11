@@ -1,6 +1,6 @@
 import { useIsMobile } from "scriptureMap2D.main.CustomHooks";
 import { useTabsContext } from "app.hooks.tabs";
-
+import { useSideBarContext } from "app.hooks.sideBar";
 const { createContext, useState, useContext, useCallback, useMemo } =
   os.appHooks;
 
@@ -199,7 +199,6 @@ const MAX_SCALE_FACTOR = 1.5;
 const SCALE_FACTOR_STEP = 0.05;
 
 const MAX_CHAPTER_HEAT_COUNT = 5;
-const BASE_BACKGROUND_COLOR = "var(--whitegray-color)";
 
 export const ScriptureMap2DProvider = ({
   children,
@@ -212,8 +211,18 @@ export const ScriptureMap2DProvider = ({
     initialScaleFactor = 1,
     initialIsReadingHistoryEnabled = false,
     initialShowingAllChapters = false,
-    initialShowLabels = true,
+    initialShowTestamentLabels = true,
+    initialShowSectionLabels = true,
   } = parentContext;
+  const { themeColors } = useSideBarContext();
+
+  const BASE_BACKGROUND_COLOR = useMemo(() => {
+    return themeColors?.["1"]?.firstToolbarbutton ?? "#dfdede";
+  }, [themeColors]);
+  // const myUserColor = useMemo(() => {
+  //   const {color} = globalThis?.GetOrSetVisualInTags(configBot.id);
+  //   return color;
+  // }, [])
 
   const isMobile = useIsMobile(768);
   const { tabs, activeTab: activeTabId } = useTabsContext();
@@ -264,7 +273,12 @@ export const ScriptureMap2DProvider = ({
     initialShowingAllChapters
   );
   const [showingBooksColors, setShowingBooksColors] = useState(true);
-  const [showLabels, setShowLabels] = useState(initialShowLabels);
+  const [showTestamentLabels, setShowTestamentLabels] = useState(
+    initialShowTestamentLabels
+  );
+  const [showSectionLabels, setShowSectionLabels] = useState(
+    initialShowSectionLabels
+  );
   const [isUserPresenceEnabled, setIsUserPresenceEnabled] = useState(false);
   const [isReadingHistoryEnabled, setIsReadingHistoryEnabled] = useState(
     initialIsReadingHistoryEnabled
@@ -314,8 +328,12 @@ export const ScriptureMap2DProvider = ({
     }
   }, [scaleFactor]);
 
-  const handleLabelsToggle = useCallback(() => {
-    setShowLabels((prev) => !prev);
+  const handleTestamentLabelsToggle = useCallback(() => {
+    setShowTestamentLabels((prev) => !prev);
+  }, []);
+
+  const handleSectionLabelsToggle = useCallback(() => {
+    setShowSectionLabels((prev) => !prev);
   }, []);
 
   const handleShowAllChaptersToggle = useCallback(() => {
@@ -355,8 +373,10 @@ export const ScriptureMap2DProvider = ({
         setScaleFactor,
         handleZoomIn,
         handleZoomOut,
-        showLabels,
-        handleLabelsToggle,
+        showTestamentLabels,
+        showSectionLabels,
+        handleTestamentLabelsToggle,
+        handleSectionLabelsToggle,
         handleShowAllChaptersToggle,
         arrangementIndex,
         arrangement,

@@ -4,9 +4,8 @@ import { getAnnotationRecord, loadAnnotations } from "db.annotations.library";
 import { ProjectProvider } from "playlist.playlistMode.useProjectContext";
 
 const RenderIcon = await thisBot.RenderIcon();
-import { MenuIcon } from "app.components.icons";
 const { useState, useLayoutEffect, useMemo, useRef, useCallback } = os.appHooks;
-const { Input, Modal, Button, ButtonsCover, Tooltip } = Components;
+const { Modal, Button, ButtonsCover } = Components;
 
 const ShowPersonVideoOverlay = await thisBot.ShowPersonVideoOverlay();
 
@@ -75,11 +74,12 @@ const sortFunc = (a, b) => {
 };
 
 const Playlist = () => {
-  
   const IsPlaylistPlaying = globalThis.IsPlaylistPlaying;
 
   const [createOptions, setCreateOptions] = useState(false);
-  const showPlaylistPosition = useRef(getPosition());
+  const showPlaylistPosition = useRef(
+    getPosition ? getPosition() : { x: 0, y: 0 }
+  );
 
   const [editAnnoData, setEditAnnoData] = useState({
     address: "",
@@ -326,26 +326,38 @@ const Playlist = () => {
         try {
           setFetchingAnnotation(true);
 
-          const userRecord = await getAnnotationRecord();
-
-          const annotationSources:any = [];
+          const annotationSources: any = [];
 
           const sourcesMap = {};
 
-          const tagsSources:any = [];
+          const tagsSources: any = [];
 
           const tagsMap = {};
 
-          const annotations = await loadAnnotations(
-            userRecord,
-            currentOpenedBook?.bookId,
-            currentOpenedBook?.chapter
-          );
+          let annotations = "";
 
-          let allAnnotations:any = [];
-          const verseIndexMap:any = {};
+          if (
+            globalThis.AnnotationsData[
+              `${currentOpenedBook?.bookId}-${currentOpenedBook?.chapter}`
+            ]
+          ) {
+            annotations =
+              globalThis.AnnotationsData[
+                `${currentOpenedBook?.bookId}-${currentOpenedBook?.chapter}`
+              ].data;
+            thisBot.fetchAnnotationsData({ ...currentOpenedBook });
+            thisBot.fetchAnnotationsData({ ...currentOpenedBook, prev: true });
+            thisBot.fetchAnnotationsData({ ...currentOpenedBook, next: true });
+          } else {
+            annotations = await thisBot.fetchAnnotationsData({
+              ...currentOpenedBook,
+            });
+          }
+
+          let allAnnotations: any = [];
+          const verseIndexMap: any = {};
           annotations.forEach((ele) => {
-            if(!sourcesMap[ele.data.userId]) {
+            if (!sourcesMap[ele.data.userId]) {
               annotationSources.push({
                 label: ele.data.userName,
                 value: ele.data.userId,
@@ -353,8 +365,8 @@ const Playlist = () => {
               });
               sourcesMap[ele.data.userId] = true;
             }
-            ele?.data?.tags?.forEach(tag => {
-              if(!tagsMap[tag]) {
+            ele?.data?.tags?.forEach((tag) => {
+              if (!tagsMap[tag]) {
                 tagsMap[tag] = true;
                 tagsSources.push({
                   label: tag,
@@ -362,9 +374,11 @@ const Playlist = () => {
                 });
               }
             });
-            if (ele?.data.type === "comment" && (ele.verseNumber || ele.verseNumbers)) {
+            if (
+              ele?.data.type === "comment" &&
+              (ele.verseNumber || ele.verseNumbers)
+            ) {
               const booksDetails = globalThis.findNameRank(ele.bookId);
-
 
               const anoItem = {
                 type: "heading",
@@ -384,8 +398,10 @@ const Playlist = () => {
                 createdByName: ele?.data?.userName,
                 createdByProfilePicture: ele?.data?.userProfilePicture,
               };
-              
-              const verseSummaryHeading = globalThis.GetVerseSummaryHeading(ele.verseNumber ? [ele.verseNumber] : ele.verseNumbers);
+
+              const verseSummaryHeading = globalThis.GetVerseSummaryHeading(
+                ele.verseNumber ? [ele.verseNumber] : ele.verseNumbers
+              );
 
               const data = {
                 bookid: currentOpenedBook?.bookId,
@@ -397,10 +413,10 @@ const Playlist = () => {
               data.verse = ele.verseNumber || ele.verseNumbers;
               data.tags = [];
               data.address = ele.id;
-              if(!verseIndexMap[data.heading]) {
+              if (!verseIndexMap[data.heading]) {
                 // verseIndexMap[data.heading] = allAnnotations.length - 1;
                 allAnnotations.push(data);
-              }else {
+              } else {
                 allAnnotations[verseIndexMap[data.heading]].data.push(anoItem);
               }
             } else if (ele?.data.type !== "comment") {
@@ -411,13 +427,19 @@ const Playlist = () => {
               const innerele = ele?.data?.data;
 
               if (innerele) {
-             
                 if (
                   !!innerele.additionalInfo &&
                   !!innerele.additionalInfo.layers
                 ) {
                   const tags = [...(ele?.data.chronicle_tags || [])];
-                  const layers = [...innerele.additionalInfo.layers.map(layer => ({...layer, address: ele.id, createdAtMs: innerele.createdAtMs || Date.now() , updatedAtMs: innerele.updatedAtMs || Date.now()}))];
+                  const layers = [
+                    ...innerele.additionalInfo.layers.map((layer) => ({
+                      ...layer,
+                      address: ele.id,
+                      createdAtMs: innerele.createdAtMs || Date.now(),
+                      updatedAtMs: innerele.updatedAtMs || Date.now(),
+                    })),
+                  ];
                   if (innerele?.type === "chapter") {
                     data.heading = "Chapter";
                     data.data = [...layers];
@@ -443,12 +465,16 @@ const Playlist = () => {
                     data.address = ele.id;
                   }
                   if (data.data) {
-                    if(!verseIndexMap[data.heading]) {
+                    if (!verseIndexMap[data.heading]) {
                       verseIndexMap[data.heading] = allAnnotations.length - 1;
                       allAnnotations.push(data);
-                    }else {
-                      allAnnotations[verseIndexMap[data.heading]]?.data.push(...layers);
-                      allAnnotations[verseIndexMap[data.heading]]?.tags.push(...tags);
+                    } else {
+                      allAnnotations[verseIndexMap[data.heading]]?.data.push(
+                        ...layers
+                      );
+                      allAnnotations[verseIndexMap[data.heading]]?.tags.push(
+                        ...tags
+                      );
                     }
                   }
                 }
@@ -552,7 +578,10 @@ const Playlist = () => {
         let currentProfileName = "Guest";
         const authBot = await os.requestAuthBotInBackground();
         if (authBot?.id) {
-          const data = await os.getData(thisBot.tags.keyFetchAccountData, authBot.id);
+          const data = await os.getData(
+            thisBot.tags.keyFetchAccountData,
+            authBot.id
+          );
           if (data.success) {
             const payload = data.data;
             currentProfileName = payload.profileName || "Guest";

@@ -12,6 +12,7 @@ if (!globalThis.WAS_PREV_AUTH && isCurrAuth) {
   if (playlistRes?.length) {
     playlistsToSave = [...playlistRes];
   }
+  thisBot.fetchAnnotationsData({...globalThis.CurrentBookData});
   globalThis.SetAuthSwtich?.((p) => !p);
 }
 

@@ -65,7 +65,11 @@ export function VerseToolbar({
 
   useEffect(() => {
     const handleClickOutside = (event) => {
-      if (isPickingColor && colorPickerRef.current && !colorPickerRef.current.contains(event.target)) {
+      if (
+        isPickingColor &&
+        colorPickerRef.current &&
+        !colorPickerRef.current.contains(event.target)
+      ) {
         // Add color to customColors array, max 3
         setCustomColors((prev) => {
           // Check if color already exists
@@ -123,7 +127,6 @@ export function VerseToolbar({
     transform: "translateX(-50%)",
     fontFamily:
       '-apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif',
-    backgroundColor: "#fff",
     borderRadius: "12px",
     boxShadow: "0 4px 20px rgba(0, 0, 0, 0.15)",
     padding: "6px 10px",
@@ -134,6 +137,7 @@ export function VerseToolbar({
     display: "flex",
     flexDirection: "column",
     alignItems: "center",
+    background: "var(--panelBackground)",
   };
 
   const headerStyle = {
@@ -145,12 +149,12 @@ export function VerseToolbar({
   const verseRefStyle = {
     fontSize: "14px",
     fontWeight: "600",
-    color: "#000",
     letterSpacing: "0.5px",
     textTransform: "uppercase",
-    backgroundColor: "#fff",
     padding: "8px 16px",
     borderRadius: "8px",
+    color: "var(--text1)",
+    backgroundColor: "var(--panelBackground)",
     // border: "1px solid #e5e5e5",
     // boxShadow: "0 2px 8px rgba(0, 0, 0, 0.1)",
     width: "fit-content",
@@ -184,8 +188,8 @@ export function VerseToolbar({
     width: "44px",
     height: "32px",
     borderRadius: "50%",
-    backgroundColor: "#fff",
-    border: "2px solid white",
+    backgroundColor: "transparent",
+    border: "2px solid transparent",
     display: "flex",
     alignItems: "center",
     justifyContent: "center",
@@ -271,10 +275,12 @@ export function VerseToolbar({
 
   const handleClearAll = () => {
     // Extract verse numbers from composite keys (e.g., "Genesis-1-3" -> 3)
-    const verseNumbers = Object.keys(highlighted).map((key) => {
-      const parts = key.split('-');
-      return Number(parts[parts.length - 1]);
-    }).filter(num => !isNaN(num));
+    const verseNumbers = Object.keys(highlighted)
+      .map((key) => {
+        const parts = key.split("-");
+        return Number(parts[parts.length - 1]);
+      })
+      .filter((num) => !isNaN(num));
 
     // Clear all highlights
     verseNumbers.forEach((verseNum) => {
@@ -315,10 +321,15 @@ export function VerseToolbar({
         `}</style>
       {globalThis.IsMobileNow() && selectionSettings.showSelectedItems && (
         <>
-          {null/*<div className="verse-ref">
+          {
+            null /*<div className="verse-ref">
             <img src="https://res.cloudinary.com/dfbtwwa8p/image/upload/v1764875876/Rectangle_11_yzpmpm.svg" />
-          </div>*/}
-          <span className="verse-ref" style={{...verseRefStyle,padding:'1px 16px'}}>
+          </div>*/
+          }
+          <span
+            className="verse-ref"
+            style={{ ...verseRefStyle, padding: "1px 16px" }}
+          >
             {getVerseReference()}
           </span>
         </>
@@ -339,17 +350,17 @@ export function VerseToolbar({
           
           @media (max-width: 480px) {
                 .verse-toolbar {
-        position: fixed !important;
-        bottom: 0 !important;
-        left: 0 !important;
-        transform: none !important;
-        width: 100% !important;
-        max-width: 100% !important;
-        border-radius: 0 !important;
-        padding: 3px 16px !important;
-        height: 52px;
-         background: var(--pageBackground) !important; 
-    }
+                    position: fixed !important;
+                    bottom: 0 !important;
+                    left: 0 !important;
+                    transform: none !important;
+                    width: 100% !important;
+                    max-width: 100% !important;
+                    border-radius: 0 !important;
+                    padding: 3px 16px !important;
+                    height: 52px;
+                    background: var(--panelBackground) !important; 
+                }
                     
             .header-ref {
               flex-direction: row !important;
@@ -381,13 +392,7 @@ export function VerseToolbar({
               margin-left: 10px !important;
             }
             
-            .color-circle, .plus-button, 
-            .clear-button, .clear-all-button {
-              width: 24px !important;
-              height: 24px !important;
-              font-size: 11px !important;
-              padding: 6px 12px !important;
-            }
+           
             .clear-button, .clear-all-button {
               width: 100px !important;
               }
@@ -523,7 +528,7 @@ export function VerseToolbar({
                         style={{
                           ...circleButtonStyle(tempColor),
                           border: "3px solid #666",
-                          boxShadow: "0 0 8px rgba(0,0,0,0.3)"
+                          boxShadow: "0 0 8px rgba(0,0,0,0.3)",
                         }}
                         aria-label={`Preview color ${tempColor}`}
                       />

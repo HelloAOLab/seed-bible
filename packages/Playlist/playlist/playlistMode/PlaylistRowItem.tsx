@@ -1,8 +1,6 @@
 const { useState, useLayoutEffect, useRef, useMemo } = os.appHooks;
 const { Checkbox, LoaderSecondary, Modal, ButtonsCover, Button } = Components;
 
-
-
 const CircleProgress = await thisBot.DynamicCircle();
 const RenderIcon = await thisBot.RenderIcon();
 
@@ -69,29 +67,6 @@ const startEditingPlaylist = (
   globalThis[`${parentId}setPublishAccess`](access);
 };
 
-function sanitizeString(str) {
-  // console.log("SANITIZE DONE", str);
-  // Remove control characters (U+0000 to U+001F, excluding \t, \n, \r)
-  if (typeof str === "string") {
-    return str.replace(/[\u0000-\u001F\u007F-\u009F]/g, "");
-  }
-  return str;
-}
-
-function sanitizeObject(obj) {
-  if (typeof obj === "string") {
-    return sanitizeString(obj);
-  } else if (Array.isArray(obj)) {
-    return obj.map(sanitizeObject);
-  } else if (obj && typeof obj === "object") {
-    return Object.keys(obj).reduce((acc, key) => {
-      acc[key] = sanitizeObject(obj[key]);
-      return acc;
-    }, {});
-  }
-  return obj; // Return other types (numbers, booleans, etc.) unchanged
-}
-
 const defaultProfile =
   "https://auth-aux-aobot-prod-filesbucket-141297942820.s3.amazonaws.com/aoBot/5ae46570b2daba6e99c5b71de2cf41cfd9dfaf46e04c9eb9344146955ddb9a31.svg";
 
@@ -140,7 +115,6 @@ const PlaylistRowItem = ({
   isLayers,
   access,
 }) => {
-  
   const isCustomIcons = icon?.startsWith("https") || isCustomIcon;
   const [warningMessage, setWarningMsg] = useState(null);
   const [showMoreOptions, setShowMoreOptions] = useState(false);
@@ -300,7 +274,10 @@ const PlaylistRowItem = ({
     let shareProfilePic = defaultProfile;
     const authBot = await os.requestAuthBotInBackground();
     if (authBot?.id) {
-      const data = await os.getData(thisBot.tags.keyFetchAccountData, authBot.id);
+      const data = await os.getData(
+        thisBot.tags.keyFetchAccountData,
+        authBot.id
+      );
       if (data.success) {
         const payload = data.data;
         shareProfileName = payload.profileName || "Guest";
@@ -336,35 +313,33 @@ const PlaylistRowItem = ({
     const key = configBot.tags.pattern ? "pattern" : "ab";
     // const encryptedText = API.encrypt()(stringItems);
 
-    web
-      .hook({
-        url: `https://theographic-bible-api.netlify.app/api/playlist/postPlaylist`,
-        method: "POST",
-        headers: {
-          "Content-Type": "application/json",
-        },
-        data: {
-          query: stringItems,
-        },
-      })
-      .then((dbRes) => {
-        const shareURL = `https://ao.bot/?${key}=${deployBot}&Playlist=${dbRes.data.data.uid}&noGridPortal=true`;
-        os.setClipboard(shareURL);
-        setShowMoreOptions(false);
-        setCopyURL(shareURL);
-        ShowNotification({
-          message: t("shareURLCopied"),
-          severity: "success",
-        });
-        setLoading(false);
-      })
-      .catch(() => {
-        ShowNotification({
-          message: t("unableToCopy"),
-          severity: "error",
-        });
-        setLoading(false);
+    const result = await os.recordData(
+      authBot.id,
+      playlistObj.id,
+      playlistObj,
+      {
+        marker: "publicRead",
+      }
+    );
+
+    const recordShareKey = `${authBot.id}^_^${playlistObj.id}`;
+
+    if (result.success) {
+      const shareURL = `https://ao.bot/?${key}=${deployBot}&Playlist=${recordShareKey}&noGridPortal=true`;
+      os.setClipboard(shareURL);
+      setShowMoreOptions(false);
+      setCopyURL(shareURL);
+      ShowNotification({
+        message: t("shareURLCopied"),
+        severity: "success",
       });
+    } else {
+      ShowNotification({
+        message: t("unableToCopy"),
+        severity: "error",
+      });
+    }
+    setLoading(false);
   };
 
   const openMergeModal = ({ id }) => {
@@ -634,6 +609,7 @@ const PlaylistRowItem = ({
                   position: "absolute",
                   right: "0%",
                   transform: `translate(0%, -50%)`,
+                  backgroundColor: "var(--themeSideMenu)",
                 }}
                 class="material-symbols-outlined unfollow"
                 onClick={() => {
@@ -764,7 +740,7 @@ const PlaylistRowItem = ({
               setShowMoreOptions(false);
             }}
             style={{
-              ...getPosition(),
+              ...(getPosition ? getPosition() : { x: 0, y: 0 }),
               width: "200px",
             }}
             className="overlay linked-item-custom"

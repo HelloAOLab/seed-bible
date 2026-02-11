@@ -144,7 +144,7 @@ function SubComponent({
                   backgroundColor: "white",
                   padding: "4px",
                   borderRadius: "12px",
-                  border: "3px dashed #4459F3",
+                  border: "3px dashed var(--spaceSelection)",
                   textAlign: "center",
                   minWidth: "280px",
                   boxShadow: "0 10px 30px rgba(0,0,0,0.3)",
@@ -153,7 +153,7 @@ function SubComponent({
                 <div
                   style={{
                     fontSize: "1rem",
-                    color: "#4459F3",
+                    color: "var(--spaceSelection)",
                   }}
                 >
                   📁

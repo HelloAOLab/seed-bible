@@ -16,6 +16,7 @@ import { DragDropOverlay } from "app.main.dragOverlay";
 import { MainController } from "app.controller.MainController";
 import { calcThemeCSS } from "app.main.cssUtil";
 
+import { READY_THEMES } from "app.components.themeSettings";
 globalThis.AppStartedSuccessfully = false;
 
 //this for defining nav functions globaly

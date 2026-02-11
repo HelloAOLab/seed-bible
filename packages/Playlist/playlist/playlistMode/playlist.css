@@ -7,7 +7,57 @@
 }
 
 #hashtag {
-  color: var(--primaryColor) !important;
+  color: var(--secondaryColor) !important;
+}
+
+
+
+/* Playlist Related Styles */
+
+.playlist-wrapper-sre {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  border: 1px solid #e2e2e2;
+  background-color: var(--pageBackground);
+  width: max-content;
+  border-radius: 1rem;
+}  
+
+.playlist-container-sre {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  padding: 10px !important;
+}
+
+span.playlist-icon-sre {
+  padding: 0.5rem;
+  border-radius: 0.5rem;
+  background-color: var(--themeSideMenu);
+  color: var(--pageTextColor) !important;
+  font-size: 12px;
+  text-transform: uppercase;
+}
+
+span.playlist-label-sre {
+  font-family: DM Sans;
+  font-weight: 500;
+  font-style: Medium;
+  font-size: 12px;
+  line-height: 100%;
+  letter-spacing: 0%;
+  color: var(--pageTextColor) !important;
+}
+
+.sre-ib-inverse {
+    filter: var(--filter-mode);
+}
+
+.sre-play-circle {
+  color: var(--secondaryColor) !important;
+  cursor: pointer;
+  font-size: 1.5rem;
 }
 
 .img-icon {
@@ -78,7 +128,7 @@
   letter-spacing: initial;
 }
 
-.annotation-list-item.annotation-list-item-type-comment .render-html-content * {
+.annotation-list-item.annotation-list-item-type-comment  .render-html-content *:not(.playlist-wrapper-sre , .playlist-wrapper-sre *) {
   margin: 0;
   padding: 0;
   box-sizing: border-box;
@@ -207,6 +257,11 @@ history-item:active {
   place-items: center;
 }
 
+.playlist-details-icon.small {
+  height: 2.5rem;
+  min-width: 2.5rem;
+}
+
 .playlist-details-icon.big {
   height: 4.5rem;
   min-width: 4.5rem;
@@ -233,9 +288,9 @@ history-item:active {
   display: flex;
   align-items: center;
   border-radius: 4px;
-  background-color: #d3643329;
-  border: 1px solid #d36433;
-  color: #d36433;
+  background-color: var(--activeTabFill);
+  border: 1px solid var(--secondaryColor);
+  color: var(--secondaryColor);
   padding: 4px 4.2rem 4px 10px;
   font-size: 14px;
   /* margin: 8px 0; */
@@ -398,11 +453,11 @@ history-item:active {
 }
 
 .tabs-playlist-item.active {
-  border-bottom: 1px solid var(--primaryColor);
+  border-bottom: 1px solid var(--secondaryColor);
 }
 
 .tabs-playlist-item.active * {
-  color: var(--primaryColor);
+  color: var(--secondaryColor);
 }
 
 .info-item-playlist {
@@ -503,6 +558,7 @@ div.history-item.greyed-out .playlist-item-type,
 div.attachment-link.greyed-out .playlist-item-type {
   background-color: #e3e3e2;
   border: 1px solid #afafaf;
+  color: black !important;
 }
 
 div.history-item.embedding-on .playlist-item-type,
@@ -510,6 +566,7 @@ div.attachment-link.embedding-on .playlist-item-type {
   background-color: #2979ff !important;
   color: black !important;
   border: 1px solid #448aff !important;
+  color: black !important;
 }
 
 div.history-item.current-playing-item,
@@ -521,6 +578,7 @@ div.history-item.current-playing-item .playlist-item-type,
 div.attachment-link.current-playing-item .playlist-item-type {
   background-color: #dcf0ec;
   border: 1px solid #139981;
+  color: black !important;
 }
 
 .mini-alert {
@@ -828,7 +886,7 @@ div.attachment-link.dropabble-Embed .playlist-item-type {
   /* bottom: 59px; */
   /* /* left: 0px;  */
   background: var(--pageBackground);
-  border: 1px solid var(--primaryColor);
+  border: 1px solid var(--secondaryColor);
   border-radius: 10px;
 }
 
@@ -871,7 +929,7 @@ div.attachment-link.dropabble-Embed .playlist-item-type {
 }
 
 .FILE_UPLOAD div .link {
-  color: var(--primaryColor);
+  color: var(--secondaryColor);
   cursor: pointer;
   margin: 0.5rem 0;
 }
@@ -910,7 +968,7 @@ div.attachment-link.dropabble-Embed .playlist-item-type {
 }
 
 .select_item_type.active {
-  background-color: var(--primaryColor);
+  background-color: var(--secondaryColor);
 }
 
 .container-render {
@@ -1016,6 +1074,8 @@ div.attachment-link.dropabble-Embed .playlist-item-type {
   gap: 0.5rem;
   border-radius: 0.25rem;
   cursor: pointer;
+  min-width: 30px;
+  height: 30px;
 }
 
 .back-button {
@@ -1075,8 +1135,9 @@ div.attachment-link.dropabble-Embed .playlist-item-type {
 }
 
 .chips-tag-container .chip-tag.active {
-  background-color: var(--primaryButtonColor);
-  border: 1px solid var(--primaryButtonBorder);
+  background-color: var(--secondaryColor);
+  border: 1px solid var(--pageTextColor);
+  color: var(--pageTextColor);
 }
 
 .content-type {
@@ -1181,11 +1242,11 @@ div.attachment-link.dropabble-Embed .playlist-item-type {
 
 .switch-tabs > div.active {
   background-color: var(--pageBackground);
-  color: var(--primaryColor) !important;
+  color: var(--secondaryColor) !important;
 }
 
 .switch-tabs > div.active p {
-  color: var(--primaryColor) !important;
+  color: var(--secondaryColor) !important;
 }
 
 .welcome-box {
@@ -1294,7 +1355,7 @@ div.attachment-link.dropabble-Embed .playlist-item-type {
 
 .no-items-box p {
   font-size: 14px;
-  color: var(--primaryColor);
+  color: var(--secondaryColor);
   cursor: pointer;
   font-weight: 400;
   text-decoration: underline;

@@ -79,10 +79,10 @@ export const Chapter = memo(
             project.structure[testament.name][sectionName][bookName][index]
           ));
 
-      let background = `rgb(${baseColorRgb[0]}, ${baseColorRgb[1]}, ${baseColorRgb[2]})`;
-      let borderStyle = "solid";
-      let borderColor = `rgb(${baseColorRgb[0]}, ${baseColorRgb[1]}, ${baseColorRgb[2]})`;
-      let color = "var(--bookHeadingColor)";
+      let background; // = `rgb(${baseColorRgb[0]}, ${baseColorRgb[1]}, ${baseColorRgb[2]})`;
+      let borderStyle; // = "solid";
+      let borderColor; // = `rgb(${baseColorRgb[0]}, ${baseColorRgb[1]}, ${baseColorRgb[2]})`;
+      let color; // = "var(--bookHeadingColor)";
 
       switch (mode) {
         case ScriptureMap2DModes.Project:

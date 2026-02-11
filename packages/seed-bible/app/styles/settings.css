@@ -239,7 +239,7 @@
 }
 
 .create-profile-btn {
-  background-color: #4459f3;
+  background-color: var(--spaceSelection);
   color: white;
   border: none;
   /* border-radius: 8px; */
@@ -255,7 +255,7 @@
 }
 
 .create-profile-btn:hover {
-  background-color: #4459f3;
+  background-color: var(--spaceSelection);
 }
 
 .create-profile-btn:active {

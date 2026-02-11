@@ -152,7 +152,7 @@
   font-style: var(--text-verse-font-style);
   text-align: var(--text-verse-alignment);
   text-decoration: var(--text-verse-text-decoration);
-  line-height: calc(2 + var(--text-verse-line-height, 0));
+  line-height: var(--text-verse-line-height, 2);
 
   /* Additions ------> */
   /* set up a transparent border to animate */
@@ -222,12 +222,12 @@
     "Plus Jakarta Sans",
     sans-serif
   );
-  font-size: var(--scripture-verseNumber-size, 12px);
+  font-size: var(--scripture-verseNumber-size, 0.6em);
   font-weight: 500;
-  line-height: 30px;
+  line-height: inherit;
   font-style: normal;
   position: relative;
-  top: -0.6em;
+  top: -0.4em;
   white-space: nowrap;
 }
 
@@ -258,7 +258,7 @@
 
 .editVerseTitle {
   border-radius: 6px 6px 0px 0px;
-  background: #4459f3;
+  background: var(--spaceSelection);
   width: fit-content;
   padding: 10px 30px;
   color: white;

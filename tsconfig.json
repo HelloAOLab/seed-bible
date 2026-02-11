@@ -346,6 +346,9 @@
       "bibleStack.main.PushDataToSingleDataArray": [
         "./packages/Bible Stack/bibleStack/main/PushDataToSingleDataArray.tsx"
       ],
+      "bibleStack.main.QueuedChapterData": [
+        "./packages/Bible Stack/bibleStack/main/QueuedChapterData.tsm"
+      ],
       "bibleStack.main.RemovePieceFromHighlightedList": [
         "./packages/Bible Stack/bibleStack/main/RemovePieceFromHighlightedList.tsx"
       ],
@@ -477,6 +480,9 @@
       ],
       "bibleStack.main.UnhighlightChapter": [
         "./packages/Bible Stack/bibleStack/main/UnhighlightChapter.tsx"
+      ],
+      "bibleStack.main.UnhighlightDelayInfo": [
+        "./packages/Bible Stack/bibleStack/main/UnhighlightDelayInfo.tsm"
       ],
       "bibleStack.main.UpdateBibleStack": [
         "./packages/Bible Stack/bibleStack/main/UpdateBibleStack.tsx"
@@ -958,11 +964,68 @@
       "bibleStack.prefabs.verse.OnReleased": [
         "./packages/Bible Stack/bibleStack/prefabs/verse/OnReleased.tsx"
       ],
-      "bibleStack.prefabs.verse.onClick": [
-        "./packages/Bible Stack/bibleStack/prefabs/verse/onClick.tsx"
+      "bibleVizUtils.classes.AnimateTagObject": [
+        "./packages/Bible Visualization Utils/bibleVizUtils/classes/AnimateTagObject.tsx"
+      ],
+      "bibleVizUtils.classes.HighlightInfo": [
+        "./packages/Bible Visualization Utils/bibleVizUtils/classes/HighlightInfo.tsx"
+      ],
+      "bibleVizUtils.classes.HistoryTimePeriodInfo": [
+        "./packages/Bible Visualization Utils/bibleVizUtils/classes/HistoryTimePeriodInfo.tsx"
+      ],
+      "bibleVizUtils.classes.LayoutBibleData": [
+        "./packages/Bible Visualization Utils/bibleVizUtils/classes/LayoutBibleData.tsx"
+      ],
+      "bibleVizUtils.classes.LayoutBookData": [
+        "./packages/Bible Visualization Utils/bibleVizUtils/classes/LayoutBookData.tsx"
+      ],
+      "bibleVizUtils.classes.LayoutBookStructure": [
+        "./packages/Bible Visualization Utils/bibleVizUtils/classes/LayoutBookStructure.tsx"
+      ],
+      "bibleVizUtils.classes.LayoutChapterData": [
+        "./packages/Bible Visualization Utils/bibleVizUtils/classes/LayoutChapterData.tsx"
       ],
       "bibleVizUtils.classes.onCreate": [
         "./packages/Bible Visualization Utils/bibleVizUtils/classes/onCreate.tsx"
+      ],
+      "bibleVizUtils.classes.ParentDataIds": [
+        "./packages/Bible Visualization Utils/bibleVizUtils/classes/ParentDataIds.tsx"
+      ],
+      "bibleVizUtils.classes.PieceInfo": [
+        "./packages/Bible Visualization Utils/bibleVizUtils/classes/PieceInfo.tsx"
+      ],
+      "bibleVizUtils.classes.QueuedChapterData": [
+        "./packages/Bible Visualization Utils/bibleVizUtils/classes/QueuedChapterData.tsx"
+      ],
+      "bibleVizUtils.classes.StackBibleData": [
+        "./packages/Bible Visualization Utils/bibleVizUtils/classes/StackBibleData.tsx"
+      ],
+      "bibleVizUtils.classes.StackBookData": [
+        "./packages/Bible Visualization Utils/bibleVizUtils/classes/StackBookData.tsx"
+      ],
+      "bibleVizUtils.classes.StackChapterData": [
+        "./packages/Bible Visualization Utils/bibleVizUtils/classes/StackChapterData.tsx"
+      ],
+      "bibleVizUtils.classes.StackData": [
+        "./packages/Bible Visualization Utils/bibleVizUtils/classes/StackData.tsx"
+      ],
+      "bibleVizUtils.classes.StackPieceData": [
+        "./packages/Bible Visualization Utils/bibleVizUtils/classes/StackPieceData.tsx"
+      ],
+      "bibleVizUtils.classes.StackSectionBookData": [
+        "./packages/Bible Visualization Utils/bibleVizUtils/classes/StackSectionBookData.tsx"
+      ],
+      "bibleVizUtils.classes.StackSectionData": [
+        "./packages/Bible Visualization Utils/bibleVizUtils/classes/StackSectionData.tsx"
+      ],
+      "bibleVizUtils.classes.StackTestamentData": [
+        "./packages/Bible Visualization Utils/bibleVizUtils/classes/StackTestamentData.tsx"
+      ],
+      "bibleVizUtils.classes.TourGuideData": [
+        "./packages/Bible Visualization Utils/bibleVizUtils/classes/TourGuideData.tsx"
+      ],
+      "bibleVizUtils.classes.UnhighlightDelayInfo": [
+        "./packages/Bible Visualization Utils/bibleVizUtils/classes/UnhighlightDelayInfo.tsx"
       ],
       "bibleVizUtils.data.onCreate": [
         "./packages/Bible Visualization Utils/bibleVizUtils/data/onCreate.tsx"
@@ -1147,6 +1210,9 @@
       "bibleVizUtils.functions.GetUsersSelectionForPiece": [
         "./packages/Bible Visualization Utils/bibleVizUtils/functions/GetUsersSelectionForPiece.tsx"
       ],
+      "bibleVizUtils.functions.HandleUserLoggedIn": [
+        "./packages/Bible Visualization Utils/bibleVizUtils/functions/HandleUserLoggedIn.tsx"
+      ],
       "bibleVizUtils.functions.HexToRgb": [
         "./packages/Bible Visualization Utils/bibleVizUtils/functions/HexToRgb.tsx"
       ],
@@ -1192,6 +1258,9 @@
       "bibleVizUtils.functions.TryHideUsersColorOnPiece": [
         "./packages/Bible Visualization Utils/bibleVizUtils/functions/TryHideUsersColorOnPiece.tsx"
       ],
+      "bibleVizUtils.functions.TryInitializeReadingHistoryColorStore": [
+        "./packages/Bible Visualization Utils/bibleVizUtils/functions/TryInitializeReadingHistoryColorStore.tsx"
+      ],
       "bibleVizUtils.functions.TryUpdateNotificationDirection": [
         "./packages/Bible Visualization Utils/bibleVizUtils/functions/TryUpdateNotificationDirection.tsx"
       ],
@@ -1213,6 +1282,9 @@
       "bibleVizUtils.main.Initialize": [
         "./packages/Bible Visualization Utils/bibleVizUtils/main/Initialize.tsx"
       ],
+      "bibleVizUtils.main.onAnyBotsAdded": [
+        "./packages/Bible Visualization Utils/bibleVizUtils/main/onAnyBotsAdded.tsx"
+      ],
       "bibleVizUtils.main.OnBibleVizBotCreated": [
         "./packages/Bible Visualization Utils/bibleVizUtils/main/OnBibleVizBotCreated.tsx"
       ],
@@ -1233,6 +1305,18 @@
       ],
       "bibleVizUtils.main.onInstJoined": [
         "./packages/Bible Visualization Utils/bibleVizUtils/main/onInstJoined.tsx"
+      ],
+      "bibleVizUtils.main.OnObjectPoolerInitialized": [
+        "./packages/Bible Visualization Utils/bibleVizUtils/main/OnObjectPoolerInitialized.tsx"
+      ],
+      "bibleVizUtils.main.OnOnlineUsersChanged": [
+        "./packages/Bible Visualization Utils/bibleVizUtils/main/OnOnlineUsersChanged.tsx"
+      ],
+      "bibleVizUtils.main.userSubscribed": [
+        "./packages/Bible Visualization Utils/bibleVizUtils/main/userSubscribed.tsx"
+      ],
+      "bibleVizUtils.main.userUnsubscribed": [
+        "./packages/Bible Visualization Utils/bibleVizUtils/main/userUnsubscribed.tsx"
       ],
       "bibleVizUtils.prefabs.activityNotification.OnReleased": [
         "./packages/Bible Visualization Utils/bibleVizUtils/prefabs/activityNotification/OnReleased.tsx"
@@ -1315,26 +1399,29 @@
       "bibleVizUtils.prefabs.userColor.OnSpawned": [
         "./packages/Bible Visualization Utils/bibleVizUtils/prefabs/userColor/OnSpawned.tsx"
       ],
-      "introduction.searchBar.Icons": [
-        "./packages/BookSelector/introduction/searchBar/Icons.tsx"
+      "bibleVizUtils.services.DebouncerService": [
+        "./packages/Bible Visualization Utils/bibleVizUtils/services/DebouncerService.tsx"
       ],
-      "introduction.searchBar.Interfaces": [
-        "./packages/BookSelector/introduction/searchBar/Interfaces.tsx"
+      "bibleVizUtils.services.HandleUserLoggedInDebouncer": [
+        "./packages/Bible Visualization Utils/bibleVizUtils/services/HandleUserLoggedInDebouncer.tsx"
       ],
-      "introduction.searchBar.OnOnlineUsersChanged": [
-        "./packages/BookSelector/introduction/searchBar/OnOnlineUsersChanged.tsx"
+      "bibleVizUtils.services.onCreate": [
+        "./packages/Bible Visualization Utils/bibleVizUtils/services/onCreate.tsx"
       ],
-      "introduction.searchBar.SearchBar": [
-        "./packages/BookSelector/introduction/searchBar/SearchBar.tsx"
-      ],
-      "introduction.searchBar.TranslationModal": [
-        "./packages/BookSelector/introduction/searchBar/TranslationModal.tsx"
+      "bibleVizUtils.services.ReadingHistoryColorStore": [
+        "./packages/Bible Visualization Utils/bibleVizUtils/services/ReadingHistoryColorStore.tsx"
       ],
       "introduction.searchBar.handleGeoJsonSearch": [
         "./packages/BookSelector/introduction/searchBar/handleGeoJsonSearch.tsx"
       ],
+      "introduction.searchBar.Icons": [
+        "./packages/BookSelector/introduction/searchBar/Icons.tsx"
+      ],
       "introduction.searchBar.initialize": [
         "./packages/BookSelector/introduction/searchBar/initialize.tsx"
+      ],
+      "introduction.searchBar.Interfaces": [
+        "./packages/BookSelector/introduction/searchBar/Interfaces.tsx"
       ],
       "introduction.searchBar.onActiveTabChanged": [
         "./packages/BookSelector/introduction/searchBar/onActiveTabChanged.tsx"
@@ -1351,8 +1438,23 @@
       "introduction.searchBar.onLanguageChanged": [
         "./packages/BookSelector/introduction/searchBar/onLanguageChanged.tsx"
       ],
+      "introduction.searchBar.OnOnlineUsersChanged": [
+        "./packages/BookSelector/introduction/searchBar/OnOnlineUsersChanged.tsx"
+      ],
+      "introduction.searchBar.SearchBar": [
+        "./packages/BookSelector/introduction/searchBar/SearchBar.tsx"
+      ],
       "introduction.searchBar.togglePanel": [
         "./packages/BookSelector/introduction/searchBar/togglePanel.tsx"
+      ],
+      "introduction.searchBar.TranslationModal": [
+        "./packages/BookSelector/introduction/searchBar/TranslationModal.tsx"
+      ],
+      "ext_calendar.calendar.addReadingPlans": [
+        "./packages/Calendar/ext_calendar/calendar/addReadingPlans.tsx"
+      ],
+      "ext_calendar.calendar.buildEventTooltipContent": [
+        "./packages/Calendar/ext_calendar/calendar/buildEventTooltipContent.tsx"
       ],
       "ext_calendar.calendar.Calendar": [
         "./packages/Calendar/ext_calendar/calendar/Calendar.tsx"
@@ -1363,8 +1465,14 @@
       "ext_calendar.calendar.CalendarContext": [
         "./packages/Calendar/ext_calendar/calendar/CalendarContext.tsx"
       ],
+      "ext_calendar.calendar.calendarFunctions": [
+        "./packages/Calendar/ext_calendar/calendar/calendarFunctions.tsx"
+      ],
       "ext_calendar.calendar.CalendarTitle": [
         "./packages/Calendar/ext_calendar/calendar/CalendarTitle.tsx"
+      ],
+      "ext_calendar.calendar.customHooks": [
+        "./packages/Calendar/ext_calendar/calendar/customHooks.tsx"
       ],
       "ext_calendar.calendar.CustomModal": [
         "./packages/Calendar/ext_calendar/calendar/CustomModal.tsx"
@@ -1377,6 +1485,21 @@
       ],
       "ext_calendar.calendar.GoToClanedar": [
         "./packages/Calendar/ext_calendar/calendar/GoToClanedar.tsx"
+      ],
+      "ext_calendar.calendar.handleDateClick": [
+        "./packages/Calendar/ext_calendar/calendar/handleDateClick.tsx"
+      ],
+      "ext_calendar.calendar.handleDateSet": [
+        "./packages/Calendar/ext_calendar/calendar/handleDateSet.tsx"
+      ],
+      "ext_calendar.calendar.handleEventContent": [
+        "./packages/Calendar/ext_calendar/calendar/handleEventContent.tsx"
+      ],
+      "ext_calendar.calendar.handleResourceHeader": [
+        "./packages/Calendar/ext_calendar/calendar/handleResourceHeader.tsx"
+      ],
+      "ext_calendar.calendar.handleResourceLabel": [
+        "./packages/Calendar/ext_calendar/calendar/handleResourceLabel.tsx"
       ],
       "ext_calendar.calendar.Menu": [
         "./packages/Calendar/ext_calendar/calendar/Menu.tsx"
@@ -1537,11 +1660,23 @@
       "managers.MapsManager.Initialize": [
         "./packages/Calendar/managers/MapsManager/Initialize.tsx"
       ],
+      "managers.MapsManager.MapBookData": [
+        "./packages/Calendar/managers/MapsManager/MapBookData.tsm"
+      ],
+      "managers.MapsManager.MapBookStructure": [
+        "./packages/Calendar/managers/MapsManager/MapBookStructure.tsm"
+      ],
+      "managers.MapsManager.MapChapterData": [
+        "./packages/Calendar/managers/MapsManager/MapChapterData.tsm"
+      ],
       "managers.MapsManager.MapContainerComponent": [
         "./packages/Calendar/managers/MapsManager/MapContainerComponent.tsx"
       ],
       "managers.MapsManager.MapControlsComponent": [
         "./packages/Calendar/managers/MapsManager/MapControlsComponent.tsx"
+      ],
+      "managers.MapsManager.MapData": [
+        "./packages/Calendar/managers/MapsManager/MapData.tsm"
       ],
       "managers.MapsManager.MapPanelContext": [
         "./packages/Calendar/managers/MapsManager/MapPanelContext.tsx"
@@ -1710,6 +1845,12 @@
       ],
       "canvas.canvasApp.toggleCanvas": [
         "./packages/Canvas/canvas/canvasApp/toggleCanvas.tsx"
+      ],
+      "colorLerper.main.ColorLerpData": [
+        "./packages/Color Lerper/colorLerper/main/ColorLerpData.tsm"
+      ],
+      "colorLerper.main.ColorLerpsArray": [
+        "./packages/Color Lerper/colorLerper/main/ColorLerpsArray.tsm"
       ],
       "colorLerper.main.Initialize": [
         "./packages/Color Lerper/colorLerper/main/Initialize.tsx"
@@ -2174,6 +2315,9 @@
       "objectPooler.main.CreateNewObject": [
         "./packages/Object Pooler/objectPooler/main/CreateNewObject.tsx"
       ],
+      "objectPooler.main.CustomTag": [
+        "./packages/Object Pooler/objectPooler/main/CustomTag.tsm"
+      ],
       "objectPooler.main.GetObjectFromPool": [
         "./packages/Object Pooler/objectPooler/main/GetObjectFromPool.tsx"
       ],
@@ -2198,6 +2342,18 @@
       "objectPooler.main.onInstJoined": [
         "./packages/Object Pooler/objectPooler/main/onInstJoined.tsx"
       ],
+      "objectPooler.main.Pool": [
+        "./packages/Object Pooler/objectPooler/main/Pool.tsm"
+      ],
+      "objectPooler.main.PoolData": [
+        "./packages/Object Pooler/objectPooler/main/PoolData.tsm"
+      ],
+      "objectPooler.main.ReleaseObject": [
+        "./packages/Object Pooler/objectPooler/main/ReleaseObject.tsx"
+      ],
+      "objectPooler.main.RemoveObjectPools": [
+        "./packages/Object Pooler/objectPooler/main/RemoveObjectPools.tsx"
+      ],
       "playlist.playlistMode.AddAnotationUI": [
         "./packages/Playlist/playlist/playlistMode/AddAnotationUI.tsx"
       ],
@@ -2221,6 +2377,9 @@
       ],
       "playlist.playlistMode.AutoTag": [
         "./packages/Playlist/playlist/playlistMode/AutoTag.tsx"
+      ],
+      "playlist.playlistMode.bookDataUpdated": [
+        "./packages/Playlist/playlist/playlistMode/bookDataUpdated.tsx"
       ],
       "playlist.playlistMode.Bookmarks": [
         "./packages/Playlist/playlist/playlistMode/Bookmarks.tsx"
@@ -2267,6 +2426,39 @@
       "playlist.playlistMode.EditRichText": [
         "./packages/Playlist/playlist/playlistMode/EditRichText.tsx"
       ],
+      "playlist.playlistMode.FetchAnnotationContentInBg": [
+        "./packages/Playlist/playlist/playlistMode/FetchAnnotationContentInBg.tsx"
+      ],
+      "playlist.playlistMode.fetchAnnotationsData": [
+        "./packages/Playlist/playlist/playlistMode/fetchAnnotationsData.tsx"
+      ],
+      "playlist.playlistMode.filterOutValidItemFromJSON": [
+        "./packages/Playlist/playlist/playlistMode/filterOutValidItemFromJSON.tsx"
+      ],
+      "playlist.playlistMode.findVerseByAI": [
+        "./packages/Playlist/playlist/playlistMode/findVerseByAI.tsx"
+      ],
+      "playlist.playlistMode.getAudioSeconds": [
+        "./packages/Playlist/playlist/playlistMode/getAudioSeconds.tsx"
+      ],
+      "playlist.playlistMode.getBookmarks": [
+        "./packages/Playlist/playlist/playlistMode/getBookmarks.tsx"
+      ],
+      "playlist.playlistMode.getLabel": [
+        "./packages/Playlist/playlist/playlistMode/getLabel.tsx"
+      ],
+      "playlist.playlistMode.getPlaylists": [
+        "./packages/Playlist/playlist/playlistMode/getPlaylists.tsx"
+      ],
+      "playlist.playlistMode.getSheetDataAndFetch": [
+        "./packages/Playlist/playlist/playlistMode/getSheetDataAndFetch.tsx"
+      ],
+      "playlist.playlistMode.getSuggestedListItems": [
+        "./packages/Playlist/playlist/playlistMode/getSuggestedListItems.tsx"
+      ],
+      "playlist.playlistMode.groupVerse": [
+        "./packages/Playlist/playlist/playlistMode/groupVerse.tsx"
+      ],
       "playlist.playlistMode.History": [
         "./packages/Playlist/playlist/playlistMode/History.tsx"
       ],
@@ -2278,6 +2470,21 @@
       ],
       "playlist.playlistMode.OnEditPlaylistName": [
         "./packages/Playlist/playlist/playlistMode/OnEditPlaylistName.tsx"
+      ],
+      "playlist.playlistMode.onEggHatch": [
+        "./packages/Playlist/playlist/playlistMode/onEggHatch.tsx"
+      ],
+      "playlist.playlistMode.onHandleDropFiles": [
+        "./packages/Playlist/playlist/playlistMode/onHandleDropFiles.tsx"
+      ],
+      "playlist.playlistMode.onInstJoined": [
+        "./packages/Playlist/playlist/playlistMode/onInstJoined.tsx"
+      ],
+      "playlist.playlistMode.onKeyDown": [
+        "./packages/Playlist/playlist/playlistMode/onKeyDown.tsx"
+      ],
+      "playlist.playlistMode.onKeyUp": [
+        "./packages/Playlist/playlist/playlistMode/onKeyUp.tsx"
       ],
       "playlist.playlistMode.OnSearchHit": [
         "./packages/Playlist/playlist/playlistMode/OnSearchHit.tsx"
@@ -2339,11 +2546,26 @@
       "playlist.playlistMode.RenderLinkContent": [
         "./packages/Playlist/playlist/playlistMode/RenderLinkContent.tsx"
       ],
+      "playlist.playlistMode.resetEditingState": [
+        "./packages/Playlist/playlist/playlistMode/resetEditingState.tsx"
+      ],
+      "playlist.playlistMode.saveBookmarks": [
+        "./packages/Playlist/playlist/playlistMode/saveBookmarks.tsx"
+      ],
+      "playlist.playlistMode.savePlaylists": [
+        "./packages/Playlist/playlist/playlistMode/savePlaylists.tsx"
+      ],
       "playlist.playlistMode.SelectionOptions": [
         "./packages/Playlist/playlist/playlistMode/SelectionOptions.tsx"
       ],
       "playlist.playlistMode.SetItemsPlayerPlaylist": [
         "./packages/Playlist/playlist/playlistMode/SetItemsPlayerPlaylist.tsx"
+      ],
+      "playlist.playlistMode.showCommandBox": [
+        "./packages/Playlist/playlist/playlistMode/showCommandBox.tsx"
+      ],
+      "playlist.playlistMode.showInfo": [
+        "./packages/Playlist/playlist/playlistMode/showInfo.tsx"
       ],
       "playlist.playlistMode.ShowPersonVideoOverlay": [
         "./packages/Playlist/playlist/playlistMode/ShowPersonVideoOverlay.tsx"
@@ -2363,131 +2585,8 @@
       "playlist.playlistMode.TogglePlaylistHeight": [
         "./packages/Playlist/playlist/playlistMode/TogglePlaylistHeight.tsx"
       ],
-      "playlist.playlistMode.VideoPlayer": [
-        "./packages/Playlist/playlist/playlistMode/VideoPlayer.tsx"
-      ],
-      "playlist.playlistMode.VideoRecordUI": [
-        "./packages/Playlist/playlist/playlistMode/VideoRecordUI.tsx"
-      ],
-      "playlist.playlistMode.VideoSmallScreen": [
-        "./packages/Playlist/playlist/playlistMode/VideoSmallScreen.tsx"
-      ],
-      "playlist.playlistMode.buildPlaylistFromAI": [
-        "./packages/Playlist/playlist/playlistMode/buildPlaylistFromAI.tsx"
-      ],
-      "playlist.playlistMode.checkAndGetlinkData": [
-        "./packages/Playlist/playlist/playlistMode/checkAndGetlinkData.tsx"
-      ],
-      "playlist.playlistMode.checkGreyOut": [
-        "./packages/Playlist/playlist/playlistMode/checkGreyOut.tsx"
-      ],
-      "playlist.playlistMode.checkIfNeedToSkip": [
-        "./packages/Playlist/playlist/playlistMode/checkIfNeedToSkip.tsx"
-      ],
-      "playlist.playlistMode.cursorFollow": [
-        "./packages/Playlist/playlist/playlistMode/cursorFollow.tsx"
-      ],
-      "playlist.playlistMode.cursorReset": [
-        "./packages/Playlist/playlist/playlistMode/cursorReset.tsx"
-      ],
-      "playlist.playlistMode.defineGlobal": [
-        "./packages/Playlist/playlist/playlistMode/defineGlobal.tsx"
-      ],
-      "playlist.playlistMode.displayOverlay": [
-        "./packages/Playlist/playlist/playlistMode/displayOverlay.tsx"
-      ],
-      "playlist.playlistMode.filterOutValidItemFromJSON": [
-        "./packages/Playlist/playlist/playlistMode/filterOutValidItemFromJSON.tsx"
-      ],
-      "playlist.playlistMode.findVerseByAI": [
-        "./packages/Playlist/playlist/playlistMode/findVerseByAI.tsx"
-      ],
-      "playlist.playlistMode.getAudioSeconds": [
-        "./packages/Playlist/playlist/playlistMode/getAudioSeconds.tsx"
-      ],
-      "playlist.playlistMode.getBookmarks": [
-        "./packages/Playlist/playlist/playlistMode/getBookmarks.tsx"
-      ],
-      "playlist.playlistMode.getLabel": [
-        "./packages/Playlist/playlist/playlistMode/getLabel.tsx"
-      ],
-      "playlist.playlistMode.getPlaylists": [
-        "./packages/Playlist/playlist/playlistMode/getPlaylists.tsx"
-      ],
-      "playlist.playlistMode.getSheetDataAndFetch": [
-        "./packages/Playlist/playlist/playlistMode/getSheetDataAndFetch.tsx"
-      ],
-      "playlist.playlistMode.getSuggestedListItems": [
-        "./packages/Playlist/playlist/playlistMode/getSuggestedListItems.tsx"
-      ],
-      "playlist.playlistMode.groupVerse": [
-        "./packages/Playlist/playlist/playlistMode/groupVerse.tsx"
-      ],
-      "playlist.playlistMode.navigationWithDataItem": [
-        "./packages/Playlist/playlist/playlistMode/navigationWithDataItem.tsx"
-      ],
-      "playlist.playlistMode.onAddDate": [
-        "./packages/Playlist/playlist/playlistMode/onAddDate.tsx"
-      ],
-      "playlist.playlistMode.onDownloadPlaylist": [
-        "./packages/Playlist/playlist/playlistMode/onDownloadPlaylist.tsx"
-      ],
-      "playlist.playlistMode.onDuplicatePlaylists": [
-        "./packages/Playlist/playlist/playlistMode/onDuplicatePlaylists.tsx"
-      ],
-      "playlist.playlistMode.onEggHatch": [
-        "./packages/Playlist/playlist/playlistMode/onEggHatch.tsx"
-      ],
-      "playlist.playlistMode.onHandleDropFiles": [
-        "./packages/Playlist/playlist/playlistMode/onHandleDropFiles.tsx"
-      ],
-      "playlist.playlistMode.onInstJoined": [
-        "./packages/Playlist/playlist/playlistMode/onInstJoined.tsx"
-      ],
-      "playlist.playlistMode.onKeyDown": [
-        "./packages/Playlist/playlist/playlistMode/onKeyDown.tsx"
-      ],
-      "playlist.playlistMode.onKeyUp": [
-        "./packages/Playlist/playlist/playlistMode/onKeyUp.tsx"
-      ],
-      "playlist.playlistMode.onUnInstallPackage": [
-        "./packages/Playlist/playlist/playlistMode/onUnInstallPackage.tsx"
-      ],
-      "playlist.playlistMode.options": [
-        "./packages/Playlist/playlist/playlistMode/options.tsx"
-      ],
-      "playlist.playlistMode.playlistContentRenderer": [
-        "./packages/Playlist/playlist/playlistMode/playlistContentRenderer.tsx"
-      ],
-      "playlist.playlistMode.remotePlaylistMetaDataUpdate": [
-        "./packages/Playlist/playlist/playlistMode/remotePlaylistMetaDataUpdate.tsx"
-      ],
-      "playlist.playlistMode.remotePlaylistPlayed": [
-        "./packages/Playlist/playlist/playlistMode/remotePlaylistPlayed.tsx"
-      ],
-      "playlist.playlistMode.remotePlaylistStopped": [
-        "./packages/Playlist/playlist/playlistMode/remotePlaylistStopped.tsx"
-      ],
-      "playlist.playlistMode.removeMessage": [
-        "./packages/Playlist/playlist/playlistMode/removeMessage.tsx"
-      ],
-      "playlist.playlistMode.resetEditingState": [
-        "./packages/Playlist/playlist/playlistMode/resetEditingState.tsx"
-      ],
-      "playlist.playlistMode.saveBookmarks": [
-        "./packages/Playlist/playlist/playlistMode/saveBookmarks.tsx"
-      ],
-      "playlist.playlistMode.savePlaylists": [
-        "./packages/Playlist/playlist/playlistMode/savePlaylists.tsx"
-      ],
-      "playlist.playlistMode.showCommandBox": [
-        "./packages/Playlist/playlist/playlistMode/showCommandBox.tsx"
-      ],
-      "playlist.playlistMode.showInfo": [
-        "./packages/Playlist/playlist/playlistMode/showInfo.tsx"
-      ],
-      "playlist.playlistMode.startRecording": [
-        "./packages/Playlist/playlist/playlistMode/startRecording.tsx"
+      "playlist.playlistMode.togglePlaylistSuggestions": [
+        "./packages/Playlist/playlist/playlistMode/togglePlaylistSuggestions.tsx"
       ],
       "playlist.playlistMode.tryAddDataToHistory": [
         "./packages/Playlist/playlist/playlistMode/tryAddDataToHistory.tsx"
@@ -2584,6 +2683,9 @@
       ],
       "scriptureMap2D.main.Initialize": [
         "./packages/Scripture Map 2D/scriptureMap2D/main/Initialize.tsx"
+      ],
+      "scriptureMap2D.main.onAuthBotAdded": [
+        "./packages/Scripture Map 2D/scriptureMap2D/main/onAuthBotAdded.tsx"
       ],
       "scriptureMap2D.main.OnBibleVizUtilsInitialized": [
         "./packages/Scripture Map 2D/scriptureMap2D/main/OnBibleVizUtilsInitialized.tsx"
