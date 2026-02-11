@@ -56,7 +56,7 @@
               "showDivider": false,
               "items": {
                 "theme": { "enabled": true },
-                "Extensions": { "enabled": true },
+                "extensions": { "enabled": true },
                 "bibleDefaults": { "enabled": true },
                 "pageSettings": { "enabled": true }
               }
@@ -65,8 +65,8 @@
               "enabled": true,
               "showDivider": true,
               "items": {
-                "LoadSpace": { "enabled": true },
-                "Share": { "enabled": true }
+                "loadSpace": { "enabled": true },
+                "share": { "enabled": true }
               }
             }
           }
