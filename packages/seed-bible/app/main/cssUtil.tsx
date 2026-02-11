@@ -115,14 +115,23 @@ function getAllVars(
 ) {
   return currentSpace
     ? [
-        ...existingVars,
-        ...refactorme_getNicheFontVars(
-          currentSpace?.scriptureSettings || {},
-          currentSpace?.sideMenuSettings || {},
-          currentSpace?.inputFieldsSettings || {}
-        ),
-      ]
+      ...existingVars,
+      ...refactorme_getNicheFontVars(
+        currentSpace?.scriptureSettings || {},
+        currentSpace?.sideMenuSettings || {},
+        currentSpace?.inputFieldsSettings || {}
+      ),
+    ]
     : existingVars;
+}
+
+/**
+ * This function needs to be reworked, see getThemeCSSColors TODO.
+ */
+function refactorme_getCurrentTheme() {
+  return configBot.tags?.theme == "ligonier"
+    ? "ligonier"
+    : getPreferedColorScheme();
 }
 
 /**
@@ -130,14 +139,14 @@ function getAllVars(
  * TODO: Setup store and refactor.
  */
 function getThemeCSSColors(themeColorOverride: Record<string, any> | null) {
-  const theme = getThemeObject(getPreferedColorScheme());
+  const theme = getThemeObject(refactorme_getCurrentTheme());
 
   return themeColorOverride === null
     ? theme
     : {
-        ...theme, // start with defaults
-        ...themeColorOverride, // overwrite with current themeColors
-      };
+      ...theme, // start with defaults
+      ...themeColorOverride, // overwrite with current themeColors
+    };
 }
 
 export function calcThemeCSS(

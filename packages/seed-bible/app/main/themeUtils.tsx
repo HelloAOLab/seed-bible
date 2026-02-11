@@ -1,4 +1,4 @@
-import type { DeviceTheme } from "app.contract.theme";
+import type { ColorScheme, DeviceTheme } from "app.contract.theme";
 
 export const defaultTheme = {
   firstToolbarbutton: "#dfdede",
@@ -343,7 +343,7 @@ export const LigonierTheme = {
 /**
  * Gets the prefered color scheme from the browser.
  */
-export function getPreferedColorScheme(): DeviceTheme {
+export function getPreferedColorScheme(): ColorScheme {
   return window.matchMedia("(prefers-color-scheme: dark)").matches
     ? "dark"
     : "light";
@@ -353,5 +353,13 @@ export function getPreferedColorScheme(): DeviceTheme {
  * Get's the requested theme object.
  */
 export function getThemeObject(theme: DeviceTheme) {
-  return theme == "dark" ? darkTheme : defaultTheme;
+  switch (theme) {
+    case "light":
+      return defaultTheme;
+    case "dark":
+      return darkTheme;
+    case "ligonier":
+      return LigonierTheme;
+  }
+  return defaultTheme;
 }
