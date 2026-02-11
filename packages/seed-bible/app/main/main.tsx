@@ -27,7 +27,12 @@ globalThis.SpaceLayouts = {}; // To store layout per space
 globalThis.SpaceScreens = {}; // Already used for screen count
 globalThis.CheckToolbarOverflow = () => {};
 
-export const MainContent = ({ controller }: { controller: MainController }) => {
+/**
+ * TODO: Once casual supports it, the prop tsx types should be added back in.
+ */
+export const MainContent = (
+  { controller } /*: { controller: MainController }*/
+) => {
   if (configBot.tags.extensions) return <PackageManager />;
   const { screens, fullScreen, setFullScreen } = useBibleContext();
   const { collapsed, sidebarWidth, setSidebarWidth, themeColors } =
