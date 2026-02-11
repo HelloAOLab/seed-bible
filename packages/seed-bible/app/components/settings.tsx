@@ -360,7 +360,7 @@ export const ThemeSetting = ({
 
 // ---------- Extensions Setting ----------
 export const ExtensionsSetting = ({
-  itemKey = "Extensions",
+  itemKey = "extensions",
   labelKey = "configureExtensions",
 }) => {
   const { setSideBarMode } = useSideBarContext();
@@ -525,7 +525,7 @@ export const AdvancedSettingsSetting = ({
 
 // ---------- Load Space ----------
 export const LoadSpaceSetting = ({
-  itemKey = "LoadSpace",
+  itemKey = "loadSpace",
   labelKey = "loadNewSpace",
 }) => {
   const { spaces, activeSpace, replaceActiveSpaceWithJSON } = useTabsContext();
@@ -546,7 +546,7 @@ export const LoadSpaceSetting = ({
 };
 
 // ---------- Share Setting ----------
-export const ShareSetting = ({ itemKey = "Share", labelKey = "share" }) => {
+export const ShareSetting = ({ itemKey = "share", labelKey = "share" }) => {
   return (
     <SettingRow
       itemKey={itemKey}
@@ -1306,11 +1306,11 @@ const COMPONENT_REGISTRY = {
   spaceName: () => null, // Handled within SpaceIconSetting
   spaceDescription: SpaceDescriptionSetting,
   theme: ThemeSetting,
-  Extensions: ExtensionsSetting,
+  extensions: ExtensionsSetting,
   bibleDefaults: BibleDefaultsSetting,
   pageSettings: AdvancedSettingsSetting,
-  LoadSpace: LoadSpaceSetting,
-  Share: ShareSetting,
+  loadSpace: LoadSpaceSetting,
+  share: ShareSetting,
   divider: SettingDivider,
 
   // General tab components
@@ -1625,7 +1625,7 @@ const myConfig = {
           enabled: true,
           items: {
             theme: { enabled: true },
-            Extensions: { enabled: true },
+            extensions: { enabled: true },
             bibleDefaults: { enabled: false }, // Disabled
             pageSettings: { enabled: true },
           }
