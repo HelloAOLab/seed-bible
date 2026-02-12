@@ -19,16 +19,24 @@ for (let j = 0; j < coordinates.length; j++) {
   elem[tags.targetDim + "X"] = coordinate[0];
   elem[tags.targetDim + "Y"] = coordinate[1];
   const elemBot = create(elem);
-  accumulatedLines.push(elemBot);
+  if (Array.isArray(elemBot)) {
+    accumulatedLines.push(...elemBot);
+  } else {
+    accumulatedLines.push(elemBot);
+  }
 }
 
 for (let i = 0; i < accumulatedLines.length; i++) {
   if (i + 1 != accumulatedLines.length) {
     const vertex = accumulatedLines[i];
     const targetVert = accumulatedLines[i + 1];
-    if (vertex.tags.geo_json_id == targetVert.tags.geo_json_id) {
+    if (
+      vertex &&
+      targetVert &&
+      vertex.tags.geo_json_id == targetVert.tags.geo_json_id
+    ) {
       vertex.tags.lineTo = targetVert.tags.id;
-      if (vertex && masks.initGame) {
+      if (vertex) {
         setTagMask(vertex, "labelOpacity", 0, "tempLocal");
         setTagMask(vertex, "lineTo", [], "tempLocal");
       }
