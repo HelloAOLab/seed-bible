@@ -1654,7 +1654,15 @@ function ThePage({
             }}
             style={{ "pointer-events": isDragging ? "none" : null }}
             className="bookTitle"
-          >{`${data?.book} ${data?.chapter}`}</div>
+          >
+            {`${data?.book} ${data?.chapter}`}{" "}
+            <span
+              style={{
+                fontSize: "24px",
+                color: "color-mix(in srgb, var(--text1), transparent 40%)",
+              }}
+            >{` / ${data?.shortName}`}</span>
+          </div>
           {showHeading[activeSpace] && <div style={{ height: "1rem" }}></div>}
           {data &&
             data.content.map((e) => {
