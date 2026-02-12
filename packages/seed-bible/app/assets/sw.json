@@ -126,5 +126,19 @@
   "no": "Hapana",
   "all": "Zote",
   "file": "Faili",
-  "headingsAndMediaCannotBeEmbedded": "Masharti na media hainaweza kuweka!"
+  "headingsAndMediaCannotBeEmbedded": "Masharti na media hainaweza kuweka!",
+  "noLanguageResultsFound": "Kute imiphumela letfolakele. Ungatsandza yini kwandisa luphenyo lwakho kute lufake netilwimi letiphelele kancane?",
+  "showAllLanguages": "Onyesha lugha zote",
+  "tanakOrder": "Mpangilio wa TaNaK",
+  "traditionalOrder": "Mpangilio wa jadi",
+  "lawTorah": "Sheria (Torati)",
+  "prophetsNeviim": "Manabii (Neviim)",
+  "writingsKetuvim": "Maandishi (Ketuvim)",
+  "bookText": "Maandishi ya kitabu",
+  "chapterText": "Maandishi ya sura",
+  "chapterColor": "Rangi ya sura",
+  "pentateuch": "Vitabu vitano vya Musa",
+  "historical": "Historia",
+  "poetic": "Mashairi",
+  "prophetic": "Unabii"
 }

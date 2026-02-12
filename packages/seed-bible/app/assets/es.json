@@ -661,5 +661,19 @@
   "logo": "Logo",
   "logoColor": "Color del logo",
   "accentColor": "Color de acento",
-  "headingsAndMediaCannotBeEmbedded": "Títulos y medios no pueden ser incrustados!"
+  "headingsAndMediaCannotBeEmbedded": "Títulos y medios no pueden ser incrustados!",
+  "noLanguageResultsFound": "No se encontraron resultados. ¿Desea ampliar su búsqueda para incluir idiomas parcialmente completos?",
+  "showAllLanguages": "Mostrar todos los idiomas",
+  "tanakOrder": "Orden TaNaK",
+  "traditionalOrder": "Orden tradicional",
+  "lawTorah": "Ley (Torá)",
+  "prophetsNeviim": "Profetas (Nevi'im)",
+  "writingsKetuvim": "Escritos (Ketuvim)",
+  "bookText": "Texto del libro",
+  "chapterText": "Texto del capítulo",
+  "chapterColor": "Color del capítulo",
+  "pentateuch": "Pentateuco",
+  "historical": "Histórico",
+  "poetic": "Poético",
+  "prophetic": "Profético"
 }

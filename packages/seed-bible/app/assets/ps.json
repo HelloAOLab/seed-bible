@@ -126,5 +126,19 @@
   "no": "نه",
   "all": "ټول",
   "file": "فایل",
-  "headingsAndMediaCannotBeEmbedded": "سرچینې یا میډیا پریشانی کولی شي!"
+  "headingsAndMediaCannotBeEmbedded": "سرچینې یا میډیا پریشانی کولی شي!",
+  "noLanguageResultsFound": "هیڅ پایله ونه موندل شوه. ایا تاسو غواړئ خپل لټون پراخ کړئ ترڅو جزوي بشپړې ژبې هم پکې شاملې کړئ؟",
+  "showAllLanguages": "ټولې ژبې وښایئ",
+  "tanakOrder": "د تناخ ترتیب",
+  "traditionalOrder": "دودیزه ترتیب",
+  "lawTorah": "شریعت (تورات)",
+  "prophetsNeviim": "پیغمبران (نویئیم)",
+  "writingsKetuvim": "لیکنې (کتوویم)",
+  "bookText": "د کتاب متن",
+  "chapterText": "د باب متن",
+  "chapterColor": "د باب رنګ",
+  "pentateuch": "د موسی پنځه کتابونه",
+  "historical": "تاریخي",
+  "poetic": "شعري",
+  "prophetic": "نبوي"
 }

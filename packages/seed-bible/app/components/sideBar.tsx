@@ -645,6 +645,14 @@ function Tab({
                   : el?.data?.book
                     ? `${el?.data?.book} - ${el?.data?.chapter}`
                     : el?.data?.title}
+              {el?.data?.shortName && (
+                <span
+                  style={{
+                    fontSize: "14px",
+                    color: "color-mix(in srgb, var(--text1), transparent 40%)",
+                  }}
+                >{` · ${el?.data?.shortName}`}</span>
+              )}
             </span>
             <CircleCounter
               data={Object.entries(circles)}
@@ -1144,7 +1152,7 @@ function SideBar({ panelsNumber }) {
         title: t("inviteToSession"),
         onClick: async () => {
           const { QRCodeComponent } = thisBot.Chips();
-          const url = `https://ao.bot/?pattern=SeedBibleDev&inst=${uuid()}&hosted=${configBot.id}`;
+          const url = `https://ao.bot/?inst=${os.getCurrentInst()}`;
           ShowModal(<QRCodeComponent url={url} />);
         },
       },
@@ -1164,6 +1172,7 @@ function SideBar({ panelsNumber }) {
             <JoinSessionComponent
               onJoin={(code) => os.goToURL(code)}
               translations={translations}
+              CloseModal={() => globalThis.CloseModal()}
             />
           );
         },
@@ -1246,6 +1255,7 @@ function SideBar({ panelsNumber }) {
                 bookId: "GEN",
                 chapter: 1,
                 translation: "BSB",
+                shortName: "BSB",
               },
             });
             closePopupSettings();
@@ -1544,6 +1554,7 @@ function SideBar({ panelsNumber }) {
                           bookId: "GEN",
                           chapter: 1,
                           translation: "BSB",
+                          shortName: "BSB",
                         },
                       });
                     }
@@ -1741,6 +1752,7 @@ function SideBar({ panelsNumber }) {
                       bookId: "GEN",
                       chapter: 1,
                       translation: "BSB",
+                      shortName: "BSB",
                     },
                   });
                 }

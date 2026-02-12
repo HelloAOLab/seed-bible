@@ -126,5 +126,19 @@
   "no": "ياق",
   "all": "ھەممىسى",
   "file": "ھۆججەت",
-  "headingsAndMediaCannotBeEmbedded": "ماۋزۇ ۋە مۇلازىمەتلەر يوقۇلىنىشى بولمايدۇ!"
+  "headingsAndMediaCannotBeEmbedded": "ماۋزۇ ۋە مۇلازىمەتلەر يوقۇلىنىشى بولمايدۇ!",
+  "noLanguageResultsFound": "ھېچقانداق نەتىجە تېپىلمىدى. ئىزدەش دائىرىڭىزنى قىسمەن تولۇق تىللارنىمۇ ئۆز ئىچىگە ئېلىشنى خالامسىز؟",
+  "showAllLanguages": "بارلىق تىللارنى كۆرسىتىش",
+  "tanakOrder": "تاناخ تەرتىبى",
+  "traditionalOrder": "ئەنئەنىۋى تەرتىپ",
+  "lawTorah": "شەرىئەت (تەۋرات)",
+  "prophetsNeviim": "پەيغەمبەرلەر (نەۋىئىم)",
+  "writingsKetuvim": "يازمىلار (كېتۇۋىم)",
+  "bookText": "كىتاب تېكىستى",
+  "chapterText": "باب تېكىستى",
+  "chapterColor": "باب رەڭگى",
+  "pentateuch": "مۇسانىڭ بەش كىتابى",
+  "historical": "تارىخىي",
+  "poetic": "شېئىرىي",
+  "prophetic": "پەيغەمبەرلىك"
 }

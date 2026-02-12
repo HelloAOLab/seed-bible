@@ -1684,6 +1684,7 @@ const SideBarChapters = (props: {
                 bookId: data.id,
                 chapter: chapterNo,
                 translation: data.translationId,
+                shortName: data?.shortName || "",
               },
             };
             globalThis.AddTab(tab);

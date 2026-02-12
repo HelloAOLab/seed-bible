@@ -126,5 +126,19 @@
   "no": "Hayır",
   "all": "Tümü",
   "file": "Dosya",
-  "headingsAndMediaCannotBeEmbedded": "Başlıklar ve medya içeriği gömülemez!"
+  "headingsAndMediaCannotBeEmbedded": "Başlıklar ve medya içeriği gömülemez!",
+  "noLanguageResultsFound": "Hiçbir sonuç bulunamadı. Arama kriterlerinizi kısmen tamamlanmış dilleri de içerecek şekilde genişletmek ister misiniz?",
+  "showAllLanguages": "Tüm dilleri göster",
+  "tanakOrder": "TaNaK sırası",
+  "traditionalOrder": "Geleneksel sıra",
+  "lawTorah": "Yasa (Tevrat)",
+  "prophetsNeviim": "Peygamberler (Neviim)",
+  "writingsKetuvim": "Yazılar (Ketuvim)",
+  "bookText": "Kitap metni",
+  "chapterText": "Bölüm metni",
+  "chapterColor": "Bölüm rengi",
+  "pentateuch": "Tevrat'ın Beş Kitabı",
+  "historical": "Tarihî",
+  "poetic": "Şiirsel",
+  "prophetic": "Peygamberlik"
 }

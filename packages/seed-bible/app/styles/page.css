@@ -152,7 +152,7 @@
   font-style: var(--text-verse-font-style);
   text-align: var(--text-verse-alignment);
   text-decoration: var(--text-verse-text-decoration);
-  line-height: calc(2 + var(--text-verse-line-height, 0));
+  line-height: var(--text-verse-line-height, 2);
 
   /* Additions ------> */
   /* set up a transparent border to animate */
@@ -229,6 +229,10 @@
   position: relative;
   top: -0.4em;
   white-space: nowrap;
+}
+
+.verse-highlighted .sectionTextNumber {
+  color: inherit;
 }
 
 .verse-number-anchor {

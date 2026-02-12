@@ -1,0 +1,6 @@
+export class UnhighlightDelayInfo {
+  constructor({ piece, timeoutId }) {
+    this.piece = piece;
+    this.timeoutId = timeoutId;
+  }
+}

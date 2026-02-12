@@ -96,16 +96,16 @@ const ADVANCED_SETTINGS_SECTIONS = {
       { labelKey: "inputPlaceholder", field: "inputPlaceholder" },
     ],
   },
+  bibleArrangements: {
+    labelKey: "Bible Arrangements",
+    fields: [],
+  },
   branding: {
     labelKey: "branding",
     fields: [
       { labelKey: "logoColor", field: "logoColor" },
       { labelKey: "accentColor", field: "accentColor" },
     ],
-  },
-  bibleArrangements: {
-    labelKey: "bibleArrangements",
-    fields: [],
   },
 };
 
@@ -5181,11 +5181,11 @@ const ThemeSettings = () => {
   };
 
   // Initialize CurrentColors on mount
-  useEffect(() => {
-    globalThis.CurrentColors = isDark
-      ? READY_THEMES[1]?.colors
-      : themeColors?.[`${activeSpace}`] || defaultTheme;
-  }, []);
+  // useEffect(() => {
+  //   globalThis.CurrentColors = isDark
+  //     ? READY_THEMES[1]?.colors
+  //     : themeColors?.[`${activeSpace}`] || defaultTheme;
+  // }, []);
 
   // Resolve the working colors: local edits -> sidebar state -> default
   const colors =
@@ -5574,15 +5574,13 @@ const FONT_OPTIONS = [
   { name: "Georgia", value: "Georgia, serif" },
 ];
 
-const LINE_HEIGHTS = [-1, 0, 1];
+const LINE_HEIGHTS = [1.5, 2, 2.5];
 
 const FONT_SIZES = [
   { label: "Small", value: "14" },
   { label: "Medium", value: "16" },
   { label: "Large", value: "18" },
   { label: "Extra Large", value: "20" },
-  { label: "Extra Large", value: "24" },
-  { label: "Extra Large", value: "28" },
 ];
 
 const SURPRISE_COMBINATIONS = [
@@ -5747,9 +5745,10 @@ export const defaultTextConfig = {
     font: `'Newsreader', serif`,
     weight: "400",
     color: "black",
-    "font-size": "20",
+    fontSize: "20",
     marginVertical: "30",
     marginHorizontal: "27",
+    lineHeight: 2,
     styles: {
       bold: false,
       italic: false,
@@ -5763,7 +5762,7 @@ const SettingsUI = () => {
   const [showVersusText, setShowVersusText] = useState(true);
   const [selectedTheme, setSelectedTheme] = useState(isDark ? 1 : 0);
   const [selectedFont, setSelectedFont] = useState(0);
-  const [selectedFontSize, setSelectedFontSize] = useState(1);
+  const [selectedFontSize, setSelectedFontSize] = useState(3);
   const [showFontDropdown, setShowFontDropdown] = useState(false);
   const [showFontSizeMenu, setShowFontSizeMenu] = useState(false);
   const {
@@ -5930,7 +5929,7 @@ const SettingsUI = () => {
     setSelectedTheme(index);
     applyReadyTheme(READY_THEMES[index].colors);
     setChagesSaved(true);
-    globalThis.CurrentColors = themeColors?.[activeSpace] || colors;
+    globalThis.CurrentColors = READY_THEMES[index]?.colors || colors;
   };
 
   const applyVerseFont = (fontFamily) => {
@@ -5955,7 +5954,7 @@ const SettingsUI = () => {
   };
 
   const [lineHeightIndex, setLineHeightIndex] = useState(() => {
-    // Load saved lineHeight from config, default to index 1 (value 0)
+    // Load saved lineHeight from config, default to index 1 (value 2)
     const savedLineHeight =
       currentSpace?.settings?.text?.data?.verse?.lineHeight;
     if (savedLineHeight !== undefined) {
@@ -6220,7 +6219,7 @@ const SettingsUI = () => {
             <ThemeIcon />
           </div>
           <div>
-            {currentSpace.name} {t("theme")}
+            {t("theme")} & {t("text")}
           </div>
         </div>
         <div style={{ display: "flex", gap: "7px", marginBottom: "30px" }}>
@@ -6293,7 +6292,6 @@ const SettingsUI = () => {
               justifyContent: "center",
               alignItems: "center",
               cursor: "pointer",
-              position: "relative",
             }}
             onClick={handleCycleLineHeight}
           >
@@ -6305,16 +6303,8 @@ const SettingsUI = () => {
               fill="none"
             >
               {(() => {
-                const level = LINE_HEIGHTS[lineHeightIndex]; // -1, 0, +1
-
-                // base gap is 4.5 inside the 18px box
-                const baseGap = 4.5;
-
-                // each level adjusts the gap slightly
-                const gap = baseGap + level * 2;
-
+                const gap = 3.5 + lineHeightIndex * 1.5;
                 const startY = 3;
-
                 return (
                   <>
                     <rect
@@ -6392,7 +6382,13 @@ const SettingsUI = () => {
       </div>
 
       <div style={toggleRowStyle}>
-        <div style={toggleLabelStyle}>{t("showChapterHeadings")}</div>
+        <div style={toggleLabelStyle}>
+          {t(
+            showHeading[activeSpace]
+              ? "hideChapterHeadings"
+              : "showChapterHeadings"
+          )}
+        </div>
 
         <div
           style={toggleStyle(showHeading[activeSpace])}
@@ -6408,7 +6404,9 @@ const SettingsUI = () => {
       </div>
 
       <div style={toggleRowStyle}>
-        <div style={toggleLabelStyle}>{t("showVerseNumbers")}</div>
+        <div style={toggleLabelStyle}>
+          {t(showVerses[activeSpace] ? "hideVerseNumbers" : "showVerseNumbers")}
+        </div>
 
         <div
           style={toggleStyle(showVerses[activeSpace])}
@@ -6424,7 +6422,9 @@ const SettingsUI = () => {
       </div>
 
       <div style={toggleRowStyle}>
-        <div style={toggleLabelStyle}>{t("showFootnotes")}</div>
+        <div style={toggleLabelStyle}>
+          {t(showFootnotes[activeSpace] ? "hideFootnotes" : "showFootnotes")}
+        </div>
 
         <div
           style={toggleStyle(showFootnotes[activeSpace])}

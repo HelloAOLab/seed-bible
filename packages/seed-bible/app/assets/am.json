@@ -126,5 +126,19 @@
   "no": "አይ",
   "all": "ሁሉም",
   "file": "ፋይል",
-  "headingsAndMediaCannotBeEmbedded": "የሚያስደምር መስሪያዎች & ማዘጋጃዎች አይተዳደሩም!"
+  "headingsAndMediaCannotBeEmbedded": "የሚያስደምር መስሪያዎች & ማዘጋጃዎች አይተዳደሩም!",
+  "noLanguageResultsFound": "ምንም ውጤቶች አልተገኙም። በከፊል የተሟሉ ቋንቋዎችንም ለማካተት ፍለጋህን ማስፋት ትፈልጋለህ?",
+  "showAllLanguages": "ሁሉንም ቋንቋዎች አሳይ",
+  "tanakOrder": "የተናክ ቅደም ተከተል",
+  "traditionalOrder": "ባህላዊ ቅደም ተከተል",
+  "lawTorah": "ሕግ (ቶራህ)",
+  "prophetsNeviim": "ነቢያት (ነቪኢም)",
+  "writingsKetuvim": "ጽሑፎች (ከቱቪም)",
+  "bookText": "የመጽሐፍ ጽሑፍ",
+  "chapterText": "የምዕራፍ ጽሑፍ",
+  "chapterColor": "የምዕራፍ ቀለም",
+  "pentateuch": "ኦሪት",
+  "historical": "ታሪካዊ",
+  "poetic": "ግጥማዊ",
+  "prophetic": "ትንቢታዊ"
 }

@@ -661,5 +661,19 @@
   "enterId": "IDを入力",
   "Queue": "キュー",
   "file": "ファイル",
-  "headingsAndMediaCannotBeEmbedded": "見出しとメディアは埋め込めません！"
+  "headingsAndMediaCannotBeEmbedded": "見出しとメディアは埋め込めません！",
+  "noLanguageResultsFound": "結果が見つかりませんでした。部分的に入力された言語も含め、検索範囲を拡張しますか？",
+  "showAllLanguages": "すべての言語を表示",
+  "tanakOrder": "タナハ順",
+  "traditionalOrder": "伝統的な順序",
+  "lawTorah": "律法（トーラー）",
+  "prophetsNeviim": "預言者（ネヴィーイーム）",
+  "writingsKetuvim": "諸書（ケトゥヴィーム）",
+  "bookText": "書名テキスト",
+  "chapterText": "章テキスト",
+  "chapterColor": "章の色",
+  "pentateuch": "モーセ五書",
+  "historical": "歴史書",
+  "poetic": "詩歌書",
+  "prophetic": "預言書"
 }

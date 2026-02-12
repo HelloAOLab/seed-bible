@@ -126,5 +126,19 @@
   "no": "Үгүй",
   "all": "Бүгд",
   "file": "Файл",
-  "headingsAndMediaCannotBeEmbedded": "Гарчиг болон медиа ашиглаж чадахгүй!"
+  "headingsAndMediaCannotBeEmbedded": "Гарчиг болон медиа ашиглаж чадахгүй!",
+  "noLanguageResultsFound": "Илэрц олдсонгүй. Та хайлтаа өргөтгөж, хэсэгчилсэн бүрэн хэлийг оруулахыг хүсч байна уу?",
+  "showAllLanguages": "Бүх хэлийг харуулах",
+  "tanakOrder": "ТаНаХ дараалал",
+  "traditionalOrder": "Уламжлалт дараалал",
+  "lawTorah": "Хууль (Тора)",
+  "prophetsNeviim": "Эш үзүүлэгчид (Невиим)",
+  "writingsKetuvim": "Бичвэрүүд (Ктувим)",
+  "bookText": "Номын текст",
+  "chapterText": "Бүлгийн текст",
+  "chapterColor": "Бүлгийн өнгө",
+  "pentateuch": "Мосегийн таван ном",
+  "historical": "Түүхэн",
+  "poetic": "Шүлгийн",
+  "prophetic": "Эш үзүүлэгчийн"
 }

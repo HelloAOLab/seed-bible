@@ -126,5 +126,19 @@
   "no": "ኣይኮነን",
   "all": "ኩሉ",
   "file": "ፋይል",
-  "headingsAndMediaCannotBeEmbedded": "መስሪያዎች & ማዘጋጃዎች አይተዳደሩም!"
+  "headingsAndMediaCannotBeEmbedded": "መስሪያዎች & ማዘጋጃዎች አይተዳደሩም!",
+  "noLanguageResultsFound": "ውጽኢት ኣይተረኽበን። ምድላይካ ኣስፊሕካ ብኸፊል ምሉእ ቋንቋታት እውን ከተጠቓልል ትደሊ ዲኻ?",
+  "showAllLanguages": "ኩሎም ቋንቋታት ኣርእዩ",
+  "tanakOrder": "ተርታ ተናኽ",
+  "traditionalOrder": "ባህላዊ ተርታ",
+  "lawTorah": "ሕጊ (ቶራህ)",
+  "prophetsNeviim": "ነብያት (ነቪኢም)",
+  "writingsKetuvim": "ጽሑፋት (ከቱቪም)",
+  "bookText": "ጽሑፍ መጽሓፍ",
+  "chapterText": "ጽሑፍ ምዕራፍ",
+  "chapterColor": "ሕብሪ ምዕራፍ",
+  "pentateuch": "ሓሙሽተ መጻሕፍቲ ሙሴ",
+  "historical": "ታሪኻዊ",
+  "poetic": "ግጥማዊ",
+  "prophetic": "ትንቢታዊ"
 }

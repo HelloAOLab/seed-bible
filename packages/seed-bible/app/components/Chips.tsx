@@ -379,7 +379,8 @@ const QRCodeComponent = ({ url = "https://example.com/session/12345" }) => {
 
   const handleCopy = async () => {
     try {
-      await navigator.clipboard.writeText(url);
+      os.setClipboard(url);
+      // await navigator.clipboard.writeText(url);
       setCopied(true);
       setTimeout(() => setCopied(false), 2000);
     } catch (err) {
@@ -423,7 +424,7 @@ const QRCodeComponent = ({ url = "https://example.com/session/12345" }) => {
 
         <div
           style={{
-            background: "#f8f9fa",
+            // background: "#f8f9fa",
             borderRadius: "12px",
             padding: "20px",
             marginBottom: "24px",
