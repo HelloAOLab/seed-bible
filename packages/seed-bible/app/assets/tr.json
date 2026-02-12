@@ -125,5 +125,6 @@
   "yes": "Evet",
   "no": "Hayır",
   "all": "Tümü",
-  "file": "Dosya"
+  "file": "Dosya",
+  "headingsAndMediaCannotBeEmbedded": "Başlıklar ve medya içeriği gömülemez!"
 }

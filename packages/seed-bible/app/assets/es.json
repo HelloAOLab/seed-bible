@@ -660,5 +660,6 @@
   "companyName": "Nombre de la empresa",
   "logo": "Logo",
   "logoColor": "Color del logo",
-  "accentColor": "Color de acento"
+  "accentColor": "Color de acento",
+  "headingsAndMediaCannotBeEmbedded": "Títulos y medios no pueden ser incrustados!"
 }

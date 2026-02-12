@@ -125,5 +125,6 @@
   "yes": "አዎ",
   "no": "አይ",
   "all": "ሁሉም",
-  "file": "ፋይል"
+  "file": "ፋይል",
+  "headingsAndMediaCannotBeEmbedded": "የሚያስደምር መስሪያዎች & ማዘጋጃዎች አይተዳደሩም!"
 }

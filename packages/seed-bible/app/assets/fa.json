@@ -125,5 +125,6 @@
   "yes": "بله",
   "no": "خیر",
   "all": "همه",
-  "file": "فایل"
+  "file": "فایل",
+  "headingsAndMediaCannotBeEmbedded": "عناوین و رسانه ها قابل انتقال نیستند!"
 }

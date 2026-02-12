@@ -660,5 +660,6 @@
   "companyName": "اسم الشركة",
   "logo": "الشعار",
   "logoColor": "لون الشعار",
-  "accentColor": "لون التمييز"
+  "accentColor": "لون التمييز",
+  "headingsAndMediaCannotBeEmbedded": "العناوين والوسائط لا يمكن تضمينها!"
 }

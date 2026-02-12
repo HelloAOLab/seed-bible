@@ -125,5 +125,6 @@
   "yes": "हो",
   "no": "होइन",
   "all": "सबै",
-  "file": "फाइल"
+  "file": "फाइल",
+  "headingsAndMediaCannotBeEmbedded": "शीर्षक र मीडिया इम्बेड गर्न सकिदैन!"
 }

@@ -125,5 +125,6 @@
   "yes": "ہاں",
   "no": "نہیں",
   "all": "سب",
-  "file": "فائل"
+  "file": "فائل",
+  "headingsAndMediaCannotBeEmbedded": "عناوین اور میڈیا آنڈر ہوسکتے ہیں!"
 }

@@ -125,5 +125,6 @@
   "yes": "Ndiyo",
   "no": "Hapana",
   "all": "Zote",
-  "file": "Faili"
+  "file": "Faili",
+  "headingsAndMediaCannotBeEmbedded": "Masharti na media hainaweza kuweka!"
 }

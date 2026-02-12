@@ -125,5 +125,6 @@
   "yes": "هو",
   "no": "نه",
   "all": "ټول",
-  "file": "فایل"
+  "file": "فایل",
+  "headingsAndMediaCannotBeEmbedded": "سرچینې یا میډیا پریشانی کولی شي!"
 }

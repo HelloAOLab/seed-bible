@@ -660,5 +660,6 @@
   "fromUrl": "da URL",
   "enterId": "Inserir ID",
   "Queue": "Fila",
-  "file": "Arquivo"
+  "file": "Arquivo",
+  "headingsAndMediaCannotBeEmbedded": "Titulos e media nao podem ser incorporados!"
 }

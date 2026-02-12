@@ -662,5 +662,6 @@
   "logo": "लोगो",
   "logoColor": "लोगो रंग",
   "accentColor": "एक्सेंट रंग",
-  "fileUploadFailed": "फ़ाइल अपलोड विफल!"
+  "fileUploadFailed": "फ़ाइल अपलोड विफल!",
+  "headingsAndMediaCannotBeEmbedded": "शीर्षक और मीडिया इम्बेड नहीं कर सकते!"
 }

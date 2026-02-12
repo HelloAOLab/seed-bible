@@ -660,5 +660,6 @@
   "fromUrl": "从 URL",
   "enterId": "输入 ID",
   "Queue": "队列",
-  "file": "文件"
+  "file": "文件",
+  "headingsAndMediaCannotBeEmbedded": "标题和媒体无法嵌入！"
 }

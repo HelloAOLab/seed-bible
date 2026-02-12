@@ -125,5 +125,6 @@
   "yes": "예",
   "no": "아니요",
   "all": "전체",
-  "file": "파일"
+  "file": "파일",
+  "headingsAndMediaCannotBeEmbedded": "제목과 미디어는 삽입할 수 없습니다!"
 }

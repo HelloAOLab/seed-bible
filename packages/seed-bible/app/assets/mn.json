@@ -125,5 +125,6 @@
   "yes": "Тийм",
   "no": "Үгүй",
   "all": "Бүгд",
-  "file": "Файл"
+  "file": "Файл",
+  "headingsAndMediaCannotBeEmbedded": "Гарчиг болон медиа ашиглаж чадахгүй!"
 }

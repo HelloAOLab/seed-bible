@@ -125,5 +125,6 @@
   "yes": "হ্যাঁ",
   "no": "না",
   "all": "সব",
-  "file": "ফাইল"
+  "file": "ফাইল",
+  "headingsAndMediaCannotBeEmbedded": "হেডিংস & মিডিয়া অন্তর্ভুক্ত করা যাবে না!"
 }

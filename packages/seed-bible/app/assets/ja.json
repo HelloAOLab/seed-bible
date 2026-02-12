@@ -660,5 +660,6 @@
   "fromUrl": "URLから",
   "enterId": "IDを入力",
   "Queue": "キュー",
-  "file": "ファイル"
+  "file": "ファイル",
+  "headingsAndMediaCannotBeEmbedded": "見出しとメディアは埋め込めません！"
 }

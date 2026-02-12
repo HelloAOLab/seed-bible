@@ -125,5 +125,6 @@
   "yes": "እወ",
   "no": "ኣይኮነን",
   "all": "ኩሉ",
-  "file": "ፋይል"
+  "file": "ፋይል",
+  "headingsAndMediaCannotBeEmbedded": "መስሪያዎች & ማዘጋጃዎች አይተዳደሩም!"
 }

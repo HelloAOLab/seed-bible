@@ -660,5 +660,6 @@
   "fromUrl": "depuis l'URL",
   "enterId": "Saisir l'ID",
   "Queue": "File d'attente",
-  "file": "Fichier"
+  "file": "Fichier",
+  "headingsAndMediaCannotBeEmbedded": "Les titres et les médias ne peuvent pas être intégrés!"
 }

@@ -125,5 +125,6 @@
   "yes": "Có",
   "no": "Không",
   "all": "Tất cả",
-  "file": "Tệp"
+  "file": "Tệp",
+  "headingsAndMediaCannotBeEmbedded": "Tiêu đề và media không thể được nhúng!"
 }

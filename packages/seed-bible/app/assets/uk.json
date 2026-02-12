@@ -125,5 +125,6 @@
   "yes": "Так",
   "no": "Ні",
   "all": "Усі",
-  "file": "Файл"
+  "file": "Файл",
+  "headingsAndMediaCannotBeEmbedded": "Заголовки та медіа не можуть бути вставлені!"
 }

@@ -660,5 +660,6 @@
   "fromUrl": "по URL",
   "enterId": "Введите ID",
   "Queue": "Очередь",
-  "file": "Файл"
+  "file": "Файл",
+  "headingsAndMediaCannotBeEmbedded": "Заголовки и медиа не могут быть встроены!"
 }

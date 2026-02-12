@@ -125,5 +125,6 @@
   "yes": "Ya",
   "no": "Tidak",
   "all": "Semua",
-  "file": "File"
+  "file": "File",
+  "headingsAndMediaCannotBeEmbedded": "Headings & Media cannot be embeded!"
 }
