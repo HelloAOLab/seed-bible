@@ -267,7 +267,6 @@ export const TestamentContent = memo(({ hidden }) => {
             <Book
               isPsalms={isPsalms}
               key={`book-${arrangementIndex}-${testament.name}-${section.name}-${bookInfo.commonName}`}
-              bookInfo={bookInfo}
               book={book}
               bookId={bookId}
               bookCoverBackgroundColor={color}

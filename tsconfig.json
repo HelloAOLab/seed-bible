@@ -1038,6 +1038,9 @@
       "bibleVizUtils.classes.UnhighlightDelayInfo": [
         "./packages/Bible Visualization Utils/bibleVizUtils/classes/UnhighlightDelayInfo.tsx"
       ],
+      "bibleVizUtils.data.BibleVizDataRepository": [
+        "./packages/Bible Visualization Utils/bibleVizUtils/data/BibleVizDataRepository.tsx"
+      ],
       "bibleVizUtils.data.onCreate": [
         "./packages/Bible Visualization Utils/bibleVizUtils/data/onCreate.tsx"
       ],
@@ -2716,6 +2719,9 @@
       "scriptureMap2D.main.CustomHooks": [
         "./packages/Scripture Map 2D/scriptureMap2D/main/CustomHooks.tsx"
       ],
+      "scriptureMap2D.main.enums": [
+        "./packages/Scripture Map 2D/scriptureMap2D/main/enums.tsx"
+      ],
       "scriptureMap2D.main.FiltersSelectorOption": [
         "./packages/Scripture Map 2D/scriptureMap2D/main/FiltersSelectorOption.tsx"
       ],
@@ -2724,6 +2730,9 @@
       ],
       "scriptureMap2D.main.Initialize": [
         "./packages/Scripture Map 2D/scriptureMap2D/main/Initialize.tsx"
+      ],
+      "scriptureMap2D.main.interfaces": [
+        "./packages/Scripture Map 2D/scriptureMap2D/main/interfaces.tsx"
       ],
       "scriptureMap2D.main.onAuthBotAdded": [
         "./packages/Scripture Map 2D/scriptureMap2D/main/onAuthBotAdded.tsx"
@@ -2790,6 +2799,9 @@
       ],
       "scriptureMap2D.main.Tooltip": [
         "./packages/Scripture Map 2D/scriptureMap2D/main/Tooltip.tsx"
+      ],
+      "scriptureMap2D.main.types": [
+        "./packages/Scripture Map 2D/scriptureMap2D/main/types.tsx"
       ],
       "scriptureMap2D.main.UserPresenceUpdate": [
         "./packages/Scripture Map 2D/scriptureMap2D/main/UserPresenceUpdate.tsx"

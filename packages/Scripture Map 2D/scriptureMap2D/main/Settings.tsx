@@ -4,6 +4,7 @@ import { ProjectStateSetter } from "scriptureMap2D.main.ProjectStateSetter";
 import { ReadingHistoryUserFiltersSelector } from "scriptureMap2D.main.ReadingHistoryUserFiltersSelector";
 import { ReadingHistoryTimeline } from "scriptureMap2D.main.ReadingHistoryTimeline";
 import { useReadingHistoryContext } from "scriptureMap2D.main.ReadingHistoryContext";
+import { ScriptureMap2DModes } from "scriptureMap2D.main.enums";
 
 import { useSideBarContext } from "app.hooks.sideBar";
 
@@ -160,7 +161,6 @@ const SettingsOptions = ({
     isReadingHistoryEnabled,
     setIsReadingHistoryEnabled,
     mode,
-    ScriptureMap2DModes,
     showTestamentLabels,
     handleTestamentLabelsToggle,
     showSectionLabels,
@@ -298,7 +298,7 @@ const SettingsOptions = ({
 };
 
 export const Settings = () => {
-  const { mode, ScriptureMap2DModes, project, isInSelectionMode, appId } =
+  const { mode, project, isInSelectionMode, appId } =
     useScriptureMap2DContext();
   const { shouldShowReadingHistory } = useReadingHistoryContext();
 

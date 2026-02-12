@@ -2,11 +2,14 @@ import { TestamentToggle } from "scriptureMap2D.main.TestamentToggle";
 import { TestamentContent } from "scriptureMap2D.main.TestamentContent";
 import { TestamentContext } from "scriptureMap2D.main.TestamentContext";
 import { useScriptureMap2DContext } from "scriptureMap2D.main.ScriptureMap2DContext";
+import type { TestamentContextType } from "scriptureMap2D.main.interfaces";
 
 const { useState, useCallback } = os.appHooks;
 const { memo } = os.appCompat;
 
-export const TestamentContainer = memo(({ testament, testamentIndex }) => {
+export const TestamentContainer = memo<
+  (props: TestamentContextType) => React.JSX.Element
+>(({ testament, testamentIndex }) => {
   const { showTestamentLabels } = useScriptureMap2DContext();
   const [showContent, setShowContent] = useState(true);
 
