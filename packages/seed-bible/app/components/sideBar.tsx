@@ -18,6 +18,7 @@ import {
   TheNewSettingsIcon,
   GoPrivateIcon,
   BurgerMenuIcon,
+  ClientLogo,
 } from "app.components.icons";
 import { useBibleContext } from "app.hooks.bibleVariables";
 import { useSideBarContext } from "app.hooks.sideBar";
@@ -1300,6 +1301,18 @@ function SideBar({ panelsNumber }) {
 
   const { moveMultipleTabs } = useTabsContext();
   const holdTimeout = useRef({ time: null, clicked: null });
+  const clientSite =
+    tags?.settingsConfigs?.presets?.[configBot?.tags?.settingsPreset || "full"]
+      ?.clientBranding?.clientSite;
+  const handleOpenClientSite = () => {
+    window.open(clientSite);
+  };
+  const clientLogo =
+    tags?.settingsConfigs?.presets?.[configBot?.tags?.settingsPreset || "full"]
+      ?.clientBranding?.logo;
+  const isSiteOfClient =
+    tags?.settingsConfigs?.presets?.[configBot?.tags?.settingsPreset || "full"]
+      ?.clientBranding?.enabled;
 
   return (
     <>
@@ -1419,6 +1432,7 @@ function SideBar({ panelsNumber }) {
                 >
                   menu_open
                 </span>
+
                 <div>
                   {customIcon ? (
                     <span
@@ -1433,6 +1447,14 @@ function SideBar({ panelsNumber }) {
                     <span></span>
                   )}
                 </div>
+
+                {isSiteOfClient && (
+                  <ClientLogo
+                    handleOpenClientSite={handleOpenClientSite}
+                    url={clientLogo}
+                    alt={"logo"}
+                  />
+                )}
               </div>
               <div className="canvasOptions">
                 <span
@@ -1681,6 +1703,14 @@ function SideBar({ panelsNumber }) {
               cursor: "pointer",
             }}
           >
+            {isSiteOfClient && (
+              <ClientLogo
+                handleOpenClientSite={handleOpenClientSite}
+                url={clientLogo}
+                alt={"logo"}
+              />
+            )}
+            <div className="sidebarLine"></div>
             <div
               onClick={() => {
                 setSidebarWidth(280);

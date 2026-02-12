@@ -5,6 +5,13 @@
       "appSettings": {
         "removeSpaces": true
       },
+      "clientBranding": {
+        "enabled": true,
+        "logo": "https://res.cloudinary.com/dpudrufae/image/upload/v1769365905/1e5a02da12f8dcd18f8c91d66970dced3990bf11_j3ejbt.png",
+        "clientSite": "https://www.kenboa.org/",
+        "theme": "reflection-theme"
+      },
+
       "onlineUsers": {
         "enabled": true,
         "anonymous": true

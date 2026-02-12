@@ -335,6 +335,23 @@ const SingleScreenIcon = (props) => (
     </g>
   </svg>
 );
+export const ClientLogo = ({ handleOpenClientSite, url, alt }) => {
+  return (
+    <img
+      onClick={handleOpenClientSite}
+      alt={alt}
+      src={url}
+      style={{
+        width: "36px",
+        height: "36px",
+        backgroundColor: "white",
+        borderRadius: "50%",
+        overflow: "hidden",
+        cursor: "pointer",
+      }}
+    />
+  );
+};
 
 export const Panel1 = () => {
   return (
@@ -675,7 +692,13 @@ export const SelectionUIIcon = (props) => (
     <path d="M11 12L21 16L15 17L17 22Z" fill="black" />
   </svg>
 );
-const MenuIcon = ({ name, size = 24, invert = false, className = "", style = {} }) => {
+const MenuIcon = ({
+  name,
+  size = 24,
+  invert = false,
+  className = "",
+  style = {},
+}) => {
   // Check if `name` looks like an image URL
   const isImage =
     typeof name === "string" && name.match(/\.(png|jpg|jpeg|svg|gif|webp)$/i);

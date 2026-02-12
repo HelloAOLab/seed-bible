@@ -111,6 +111,9 @@ const ADVANCED_SETTINGS_SECTIONS = {
 
 // Default Theme - Warm Orange/Amber accent
 // Based on the design mockup with orange accent colors
+const hasMinimalTheme =
+  tags?.settingsConfigs?.presets?.[configBot?.tags?.settingsPreset || "full"]
+    ?.clientBranding?.theme;
 const defaultTheme = {
   // Main colors
   firstToolbarbutton: "#dfdede",
@@ -263,6 +266,20 @@ const defaultTheme = {
   text3: "#333333",
   "secondary-filter-mode": "invert(100%)",
 };
+const minimalTheme = {
+  ...defaultTheme,
+
+  // Override only what you want
+  secondaryColor: "#4B2E83",
+  primaryButton: "#4B2E83",
+  primaryButtonBorder: "#4B2E83",
+
+  tabSelection: "#4B2E83",
+  activeTabText: "#4B2E83",
+  activeTabBorder: "#E07B4C",
+
+  panelBackground: "#F3F0FA",
+};
 
 // ————————————————————————————————————————————————————————————
 // Ready Themes Collection
@@ -270,8 +287,9 @@ const defaultTheme = {
 export const READY_THEMES = [
   {
     name: "Default",
-    colors: defaultTheme,
+    colors: hasMinimalTheme ? minimalTheme : defaultTheme,
   },
+
   {
     name: "Dark Mode",
     colors: {
