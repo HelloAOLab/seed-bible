@@ -661,6 +661,7 @@
   "logo": "الشعار",
   "logoColor": "لون الشعار",
   "accentColor": "لون التمييز",
+  "headingsAndMediaCannotBeEmbedded": "العناوين والوسائط لا يمكن تضمينها!",
   "noLanguageResultsFound": "لم يتم العثور على نتائج. هل ترغب في توسيع نطاق بحثك ليشمل اللغات غير المكتملة أيضاً؟",
   "showAllLanguages": "إظهار جميع اللغات",
   "tanakOrder": "ترتيب التناخ",
