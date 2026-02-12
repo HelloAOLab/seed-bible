@@ -590,7 +590,13 @@ export function CustomAnnotationTextEditor({
   const [recording, setRecording] = useState(globalThis.RecordingValue || null);
   const [name, setName] = useState("");
   const [link, setLink] = useState("");
+  const [commandBoxFilter, setCommandBoxFilter] = useState("");
   const [isCommandBox, setIsCommandBox] = useState(false);
+
+  globalThis.SetCommandBoxFilter = setCommandBoxFilter;
+  globalThis.ISCommandBox = isCommandBox;
+
+  console.log("commandBoxFilter", commandBoxFilter);
 
   const [isTagSuggestionsOpen, setIsTagSuggestionsOpen] = useState(false);
   const [isPlaylistSuggestionOpen, setIsPlaylistSuggestionOpen] =
@@ -934,11 +940,36 @@ export function CustomAnnotationTextEditor({
             if (event.key === "Shift") {
               return true;
             }
+
+            globalThis.LASTKEY_COMMAND_BOX = event.key;
+            if (globalThis.ISCommandBox) {
+              globalThis.SetCommandBoxFilter((prev) => {
+                const value = `${prev || ""}`;
+                if (event.key === "Backspace") {
+                  if (globalThis.LASTKEY_COMMAND_BOX === "Backspace") {
+                    toggleCommandBox();
+                    return "";
+                  }
+                  if (value.length === 0) {
+                    toggleCommandBox();
+                    return "";
+                  }
+                  return value.slice(0, -1);
+                }
+                return `${value}${event.key}`;
+              });
+
+              if (event.key.trim() === "" || event.key.trim() === "Enter") {
+                globalThis.SetCommandBoxFilter("");
+                setIsCommandBox(false);
+              }
+              return;
+            }
             if (event.key === "/") {
               toggleCommandBox();
               return;
             }
-            setIsCommandBox(false);
+            // setIsCommandBox(false);
             setIsPlaylistSuggestionOpen(false);
             if (event.key === "#" && TAG_OPTIONS.length > 0) {
               toggleTagSuggestions();
@@ -1501,6 +1532,12 @@ export function CustomAnnotationTextEditor({
     }
   };
 
+  const filteredCommandBoxOptions = useMemo(() => {
+    return COMMAND_BOX_OPTIONS.filter((option) =>
+      option.label.toLowerCase().includes(commandBoxFilter.toLowerCase())
+    );
+  }, [commandBoxFilter]);
+
   return (
     <>
       {isCommandBox && (
@@ -1531,7 +1568,12 @@ export function CustomAnnotationTextEditor({
               backdropFilter: "none",
             }}
           >
-            {COMMAND_BOX_OPTIONS.map((option) => (
+            {filteredCommandBoxOptions.length === 0 && (
+              <div className="command-box-option">
+                <p>No options found</p>
+              </div>
+            )}
+            {filteredCommandBoxOptions.map((option) => (
               <div
                 className="command-box-option"
                 key={option.label}

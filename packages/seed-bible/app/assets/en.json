@@ -367,6 +367,7 @@
   "youCannotUnlinkAttachmentsInAnnotationMode": "You cannot unlink attachments in annotation mode!",
   "cannotEmbedEmbeddedItem": "Cannot Embed the Embedded item! Content: {{embededItem}}. Please remove it before embeding!",
   "failedToFetchAnnotations": "Failed to fetch annotations.",
+  "headingsAndMediaCannotBeEmbedded": "Headings & Media cannot be embeded!",
   "errorFetchingAnnotations": "Error fetching annotations",
   "cannotChangeWhileBeingInEditMode": "Cannot change while being in edit mode!",
   "invalidLinkFormat": "Invalid Link format!",
