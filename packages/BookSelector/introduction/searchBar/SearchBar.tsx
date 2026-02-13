@@ -235,15 +235,16 @@ const SearchBar = (props: { openSidebar: boolean }) => {
         } else {
           setApocryphaAvailable(false);
         }
-        if (selectedTestament === 0) {
-          return OTBooks;
-        } else if (selectedTestament === 1) {
-          return NTBooks;
-        } else if (selectedTestament === 2) {
-          return [...OTBooks, ...NTBooks];
-        } else {
-          return ApocryphaBooks;
-        }
+        return [...OTBooks, ...NTBooks, ...ApocryphaBooks];
+        // if (selectedTestament === 0) {
+        //   return OTBooks;
+        // } else if (selectedTestament === 1) {
+        //   return NTBooks;
+        // } else if (selectedTestament === 2) {
+        //   return [...OTBooks, ...NTBooks];
+        // } else {
+        //   return ApocryphaBooks;
+        // }
       } else {
         return [];
       }
@@ -1003,6 +1004,7 @@ const SearchBar = (props: { openSidebar: boolean }) => {
             sortBooksByTestament={sortBooksByTestament}
             windowSize={windowSize}
             systemTranslation={systemTranslation}
+            query={query}
           />
         )}
         {selectingTranslation && (
@@ -1041,6 +1043,7 @@ const SideBarBooks = (props: {
   };
   windowSize: number;
   systemTranslation: { [key: string]: string };
+  query: string;
 }) => {
   const {
     booksData,
@@ -1053,17 +1056,13 @@ const SideBarBooks = (props: {
     sortBooksByTestament,
     windowSize,
     systemTranslation,
+    query,
   } = props;
   const [lastBookClicked, setLastBookClicked] = useState(-1);
   const [bookData, setBookData] = useState<BookInterface | null>(null);
   const [chT, setChT] = useState(0);
   const [localSelectedTestament, setLocalSelectedTestament] =
     useState(selectedTestament);
-
-  useEffect(() => {
-    setLastBookClicked(-1);
-    setBookData(null);
-  }, [localSelectedTestament]);
 
   useLayoutEffect(() => {
     if (booksData.length === 1 && booksData[0]) {
@@ -1178,18 +1177,20 @@ const SideBarBooks = (props: {
     const sortedBooks = sortBooksByTestament(booksData);
     const OTBooks = sortedBooks.OTBooks;
     const NTBooks = sortedBooks.NTBooks;
-    if (selectedTestament === 2) {
+    if (selectedTestament === 2 || query.length > 0) {
       if (OTBooks.length > 0 && NTBooks.length === 0) {
         setLocalSelectedTestament(0);
       } else if (NTBooks.length > 0 && OTBooks.length === 0) {
         setLocalSelectedTestament(1);
+      } else if (query.length > 0) {
+        setLocalSelectedTestament(2);
       } else {
         setLocalSelectedTestament(selectedTestament);
       }
     } else {
       setLocalSelectedTestament(selectedTestament);
     }
-  }, [selectedTestament, booksData]);
+  }, [selectedTestament, booksData, query]);
 
   const RenderBooksByTestament = useMemo(() => {
     let allowedRows = 5;
