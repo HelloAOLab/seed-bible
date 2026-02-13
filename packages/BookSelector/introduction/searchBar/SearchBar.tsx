@@ -833,6 +833,12 @@ const SearchBar = (props: { openSidebar: boolean }) => {
 
   const dontOpen = dontopn && showCheck;
   globalThis.SetBooksOnlineUsers = setOnlineUsers;
+  globalThis.setSelectingTranslation = setSelectingTranslation;
+
+  useEffect(() => {
+    globalThis.setSelectingTranslation = setSelectingTranslation;
+    globalThis.selectingTranslation = selectingTranslation;
+  }, [selectingTranslation]);
 
   return (
     <>
@@ -1149,6 +1155,25 @@ const SideBarBooks = (props: {
     return bookName;
   }, []);
 
+  const selectBookSelectorBook = useCallback(
+    (bookId) => {
+      if (!bookId) {
+        setBookData(null);
+        setLastBookClicked(-1);
+        setChT(0);
+        return;
+      }
+      const book = booksData.find((b) => b.id === bookId);
+      if (book) {
+        handleClick({
+          index: booksData.indexOf(book),
+          book,
+          cht: book.order > 39 ? 1 : 0,
+        });
+      }
+    },
+    [booksData, handleClick]
+  );
   useEffect(() => {
     const sortedBooks = sortBooksByTestament(booksData);
     const OTBooks = sortedBooks.OTBooks;
@@ -1577,6 +1602,13 @@ const SideBarBooks = (props: {
     chT,
     onlineUsers,
   ]);
+
+  useEffect(() => {
+    globalThis.selectBookSelectorBook = selectBookSelectorBook;
+    return () => {
+      globalThis.selectBookSelectorBook = null;
+    };
+  }, [selectBookSelectorBook]);
 
   return <>{RenderBooksByTestament}</>;
 };
