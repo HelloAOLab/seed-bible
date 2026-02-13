@@ -27,6 +27,7 @@ import type {
 import {
   ScriptureMap2DModes,
   TimelineRangeMethod,
+  type TimelineRangeMethodType,
 } from "scriptureMap2D.main.enums";
 
 const { createContext, useContext, useState, useMemo, useEffect, useCallback } =
@@ -50,7 +51,7 @@ export const ReadingHistoryProvider: (
   const { tick } = useTimeContext();
 
   const [timelineRangeMethod, setTimelineRangeMethod] =
-    useState<TimelineRangeMethod>(TimelineRangeMethod.Rolling);
+    useState<TimelineRangeMethodType>(TimelineRangeMethod.Rolling);
 
   const timelineRangesMap = useMemo<TimelineRangesMap>(() => {
     const rangesMap = new Map<number, DateRange>();

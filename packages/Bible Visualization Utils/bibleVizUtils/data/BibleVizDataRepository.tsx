@@ -101,6 +101,10 @@ class BibleVizDataRepository {
     const measurements = this.getBibleLayoutMeasurements();
     return measurements[measurement];
   }
+
+  static getReadingHistoryRecencyThresholdTimeSeconds(): number {
+    return thisBot.masks.readingHistoryRecencyThresholdTimeSeconds;
+  }
 }
 
 export { BibleVizDataRepository };

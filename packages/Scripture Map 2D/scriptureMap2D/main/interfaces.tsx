@@ -28,6 +28,7 @@ import type {
   ReadingHistorySummary,
   ReadingEvent,
 } from "db.annotations.library";
+import type { StateUpdater } from "../../../../typings/AuxLibraryDefinitions";
 
 export interface AppProps {
   id: string;
@@ -42,7 +43,11 @@ export interface ScriptureMap2DConfig {
     checked: boolean
   ) => void;
   onChapterClickDependencies: unknown[];
-  onChapterClickAndHold: () => void;
+  onChapterClickAndHold: (
+    event: PointerEvent,
+    key: ChapterKey,
+    checked: boolean
+  ) => void;
   onBookNameClickAndHold: (
     showChapters: boolean,
     key: BookKey,
@@ -83,7 +88,7 @@ export interface ScriptureMap2DProviderProps {
 export interface ScriptureMap2DContextType extends ScriptureMap2DConfig {
   scaleFactor: number;
   MIN_SCALE_FACTOR: number;
-  setScaleFactor: (value: number) => void;
+  setScaleFactor: StateUpdater<number>;
   handleZoomIn: () => void;
   handleZoomOut: () => void;
   showTestamentLabels: boolean;
@@ -94,11 +99,11 @@ export interface ScriptureMap2DContextType extends ScriptureMap2DConfig {
   arrangementIndex: number;
   arrangement: ArrangementInfo;
   showingAllChapters: boolean;
-  setShowingAllChapters: (value: boolean) => void;
+  setShowingAllChapters: StateUpdater<boolean>;
   isUserPresenceEnabled: boolean;
-  setIsUserPresenceEnabled: (value: boolean) => void;
+  setIsUserPresenceEnabled: StateUpdater<boolean>;
   isReadingHistoryEnabled: boolean;
-  setIsReadingHistoryEnabled: (value: boolean) => void;
+  setIsReadingHistoryEnabled: StateUpdater<boolean>;
   content: Map<string, ScriptureMap2DContentValue>;
   MAX_CHAPTER_HEAT_COUNT: number;
   usersInfo: {
@@ -129,14 +134,14 @@ export interface ScriptureMap2DContextType extends ScriptureMap2DConfig {
   };
   projectFilters: ProjectFilters;
   projectStateStyle: ProjectStateStyle;
-  BASE_BACKGROUND_COLOR: React.CSSProperties["color"];
+  BASE_BACKGROUND_COLOR: string;
   isMobile: boolean;
   showingBooksColors: boolean;
-  setShowingBooksColors: (value: boolean) => void;
+  setShowingBooksColors: StateUpdater<boolean>;
   activeTabId: string;
 
-  tabs: any;
-  activeTab: any;
+  tabs: unknown;
+  activeTab: unknown;
 }
 
 export interface TestamentContextType {
@@ -185,9 +190,9 @@ export interface ReadingHistoryContextType {
   startDateStartOfWeek: Date;
   endDateStartOfWeek: Date;
   selectedTimelineKey: number;
-  setSelectedTimelineKey: (key: number) => void;
+  setSelectedTimelineKey: StateUpdater<number>;
   timelineRangeMethod: TimelineRangeMethodType;
-  setTimelineRangeMethod: (value: TimelineRangeMethodType) => void;
+  setTimelineRangeMethod: StateUpdater<TimelineRangeMethodType>;
 }
 
 export interface BookProps {
@@ -201,4 +206,15 @@ export interface BookProps {
   bookBorderGradientColors: string | undefined;
   bookUserPresence: BookUserPresence;
   bookUserPresenceColors: string[];
+}
+
+export interface ChapterProps {
+  index: number;
+  bookName: string;
+  sectionName: string;
+  historyBackground: React.CSSProperties["color"];
+  historyColor: React.CSSProperties["color"];
+  tooltipContent: React.ReactNode[];
+  chapter: number;
+  borderGradientColors: React.CSSProperties["background"];
 }

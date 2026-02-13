@@ -3,6 +3,7 @@ import type {
   ReadingEvent,
   ReadingHistorySummary,
 } from "db.annotations.library";
+import type { BookProps, ChapterProps } from "scriptureMap2D.main.interfaces";
 
 export type ChapterKey = {
   testamentName: string;
@@ -74,3 +75,22 @@ export type ScriptureMap2DContentValue = {
     };
   };
 };
+
+export type BookType = (args: BookProps) => React.JSX.Element;
+
+export type TooltipType = (params: {
+  content: React.ReactNode[];
+  anchor: TooltipAnchor;
+  offsetY?: number;
+}) => React.JSX.Element;
+
+export type ReadingHistoryTooltipContentType = (params: {
+  userId: string;
+  fixedContent: React.ReactNode;
+}) => React.JSX.Element;
+
+export type UserPresenceTooltipContentType = (params: {
+  colors: React.CSSProperties["backgroundColor"][];
+}) => React.JSX.Element;
+
+export type ChapterType = (args: ChapterProps) => React.JSX.Element;

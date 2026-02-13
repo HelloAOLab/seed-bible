@@ -4,7 +4,11 @@ import { ProjectStateSetter } from "scriptureMap2D.main.ProjectStateSetter";
 import { ReadingHistoryUserFiltersSelector } from "scriptureMap2D.main.ReadingHistoryUserFiltersSelector";
 import { ReadingHistoryTimeline } from "scriptureMap2D.main.ReadingHistoryTimeline";
 import { useReadingHistoryContext } from "scriptureMap2D.main.ReadingHistoryContext";
-import { ScriptureMap2DModes } from "scriptureMap2D.main.enums";
+import {
+  ScriptureMap2DModes,
+  TimelineRangeMethod,
+  type TimelineRangeMethodType,
+} from "scriptureMap2D.main.enums";
 
 import { useSideBarContext } from "app.hooks.sideBar";
 
@@ -235,12 +239,12 @@ const SettingsOptions = ({
       )}
       <Option
         callback={() =>
-          setTimelineRangeMethod((prev: string) => {
+          setTimelineRangeMethod((prev) => {
             switch (prev) {
-              case "rolling":
-                return "calendar";
-              case "calendar":
-                return "rolling";
+              case TimelineRangeMethod.Rolling:
+                return TimelineRangeMethod.Calendar;
+              case TimelineRangeMethod.Calendar:
+                return TimelineRangeMethod.Rolling;
             }
           })
         }

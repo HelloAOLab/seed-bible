@@ -3,10 +3,11 @@ import { Tooltip } from "scriptureMap2D.main.Tooltip";
 import { useTestamentContext } from "scriptureMap2D.main.TestamentContext";
 import { useClickAndHold } from "scriptureMap2D.main.CustomHooks";
 import { ScriptureMap2DModes } from "scriptureMap2D.main.enums";
+import type { ChapterType } from "scriptureMap2D.main.types";
 const { useState, useMemo } = os.appHooks;
 const { memo } = os.appCompat;
 
-export const Chapter = memo(
+export const Chapter = memo<ChapterType>(
   ({
     index,
     bookName,
@@ -68,9 +69,6 @@ export const Chapter = memo(
     });
 
     const { background, borderStyle, borderColor, color } = useMemo(() => {
-      const baseColorRgb = BibleVizUtils.Functions.HexToRgb({
-        hexColor: baseColor,
-      });
       const projectChapterState =
         project?.structure[testament.name]?.[sectionName]?.[bookName]?.[index];
       const hasProjectContent =
@@ -79,10 +77,10 @@ export const Chapter = memo(
         (isInSelectionMode ||
           (projectChapterState && projectFilters.get(projectChapterState)));
 
-      let background; // = `rgb(${baseColorRgb[0]}, ${baseColorRgb[1]}, ${baseColorRgb[2]})`;
-      let borderStyle; // = "solid";
-      let borderColor; // = `rgb(${baseColorRgb[0]}, ${baseColorRgb[1]}, ${baseColorRgb[2]})`;
-      let color; // = "var(--bookHeadingColor)";
+      let background;
+      let borderStyle;
+      let borderColor;
+      let color;
 
       switch (mode) {
         case ScriptureMap2DModes.Project:

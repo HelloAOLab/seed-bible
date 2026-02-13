@@ -17,13 +17,23 @@ import { useSideBarContext } from "app.hooks.sideBar";
 import { readingHistoryColorStore } from "bibleVizUtils.services.ReadingHistoryColorStore";
 import { BibleVizDataRepository } from "bibleVizUtils.data.BibleVizDataRepository";
 import type { BookStaticInfo } from "bibleVizUtils.data.BibleVizDataRepository";
-import type { Range, TooltipAnchor } from "scriptureMap2D.main.types";
-import type { BookProps } from "scriptureMap2D.main.interfaces";
+import type { Range, TooltipAnchor, BookType } from "scriptureMap2D.main.types";
+import {
+  ConvertDividedPsalmsToComplete,
+  GetHistoryColorByReadingTime,
+  GetHistoryColorByRecency,
+  GetHistoryColorLinearGradient,
+  GetTextColorBasedOnBackground,
+  IsValueBetween,
+  GetUserPresenceBorderGradientColors,
+  type HexString,
+  type WeightedColor,
+} from "bibleVizUtils.functions.index";
 
 const { useMemo, useState, useEffect } = os.appHooks;
 const { memo } = os.appCompat;
 
-export const Book = memo<(args: BookProps) => React.JSX.Element>(
+export const Book = memo<BookType>(
   ({
     book,
     bookId,
@@ -161,8 +171,7 @@ export const Book = memo<(args: BookProps) => React.JSX.Element>(
         readingSummary.totalTimeSpentReading > SEC_PER_MINUTE
       ) {
         const { users, totalTimeSpentReading } = readingSummary;
-        const colors: { color: React.CSSProperties["color"]; value: number }[] =
-          [];
+        const colors: WeightedColor[] = [];
         for (const userId in users) {
           const userSummary = users[userId];
           let userReadingTimeSeconds: number | undefined;
@@ -170,7 +179,7 @@ export const Book = memo<(args: BookProps) => React.JSX.Element>(
           if (userSummary) {
             ({ totalTimeSpentReading: userReadingTimeSeconds, books } =
               userSummary);
-            let color: React.CSSProperties["color"];
+            let color: HexString | undefined = undefined;
             const baseColor = BASE_BACKGROUND_COLOR;
             const userColor = readingHistoryColorStore.getUserColor(userId);
             const isTimeSpentNoticeable =
@@ -178,7 +187,7 @@ export const Book = memo<(args: BookProps) => React.JSX.Element>(
 
             if (isTimeSpentNoticeable) {
               if (readingHistoryRangeSeconds) {
-                color = BibleVizUtils.Functions.GetHistoryColorByReadingTime({
+                color = GetHistoryColorByReadingTime({
                   baseColor,
                   userColor,
                   readingTimeSeconds: userReadingTimeSeconds,
@@ -226,8 +235,7 @@ export const Book = memo<(args: BookProps) => React.JSX.Element>(
                         const recencySeconds = nowSeconds - end;
                         const isRecentEnough =
                           end >=
-                          BibleVizUtils.Data.masks
-                            .readingHistoryRecencyThresholdTimeSeconds;
+                          BibleVizDataRepository.getReadingHistoryRecencyThresholdTimeSeconds();
                         const isNotTooRecent = recencySeconds >= SEC_PER_MINUTE;
                         if (
                           isEventTimeSpentNoticeable &&
@@ -244,7 +252,7 @@ export const Book = memo<(args: BookProps) => React.JSX.Element>(
                 if (lastEntry) {
                   const { end } = lastEntry;
                   const recencySeconds = nowSeconds - end;
-                  color = BibleVizUtils.Functions.GetHistoryColorByRecency({
+                  color = GetHistoryColorByRecency({
                     recencyTimeSeconds: end,
                     baseColor,
                     userColor,
@@ -289,8 +297,7 @@ export const Book = memo<(args: BookProps) => React.JSX.Element>(
           }
         }
         if (colors.length > 0) {
-          fixedBackground =
-            BibleVizUtils.Functions.GetHistoryColorLinearGradient(colors);
+          fixedBackground = GetHistoryColorLinearGradient(colors);
         }
       } else {
         if (showingBooksColors) {
@@ -330,7 +337,7 @@ export const Book = memo<(args: BookProps) => React.JSX.Element>(
       const nowSeconds = Math.floor(now / 1000);
       const effectiveRange: Range = readingHistoryRangeSeconds ?? {
         start:
-          BibleVizUtils.Data.masks.readingHistoryRecencyThresholdTimeSeconds,
+          BibleVizDataRepository.getReadingHistoryRecencyThresholdTimeSeconds(),
         end: nowSeconds,
       };
       const chapterEntriesMap: Map<number, ReadingEvent[]> = new Map();
@@ -338,7 +345,7 @@ export const Book = memo<(args: BookProps) => React.JSX.Element>(
       for (const readingEvent of readingEvents) {
         const { chapter, start } = readingEvent;
         if (
-          BibleVizUtils.Functions.IsValueBetween({
+          IsValueBetween({
             value: start,
             min: effectiveRange.start,
             max: effectiveRange.end,
@@ -375,15 +382,14 @@ export const Book = memo<(args: BookProps) => React.JSX.Element>(
         let historyBackground: React.CSSProperties["color"];
         let historyColor: React.CSSProperties["color"];
         const tooltipContent: React.ReactNode[] = [];
-        const colors: { color: React.CSSProperties["color"]; value: number }[] =
-          [];
+        const colors: WeightedColor[] = [];
 
         if (isReadingHistoryEnabled) {
           if (chapterSummary) {
             const { users, totalTimeSpentReading: chapterReadingTimeSeconds } =
               chapterSummary;
             for (const userId in users) {
-              let color: React.CSSProperties["color"];
+              let color: HexString | undefined = undefined;
               const userColor = readingHistoryColorStore.getUserColor(userId);
               const userSummary = users[userId];
               if (userSummary) {
@@ -395,13 +401,12 @@ export const Book = memo<(args: BookProps) => React.JSX.Element>(
 
                 if (isTimeSpentNoticeable) {
                   if (readingHistoryRangeSeconds) {
-                    color =
-                      BibleVizUtils.Functions.GetHistoryColorByReadingTime({
-                        baseColor,
-                        userColor,
-                        readingTimeSeconds: userReadingTimeSeconds,
-                        step: 0.25,
-                      });
+                    color = GetHistoryColorByReadingTime({
+                      baseColor,
+                      userColor,
+                      readingTimeSeconds: userReadingTimeSeconds,
+                      step: 0.25,
+                    });
 
                     let fixedContent: string | undefined;
                     if (userReadingTimeSeconds >= SEC_PER_HOUR) {
@@ -449,8 +454,7 @@ export const Book = memo<(args: BookProps) => React.JSX.Element>(
                             const currRecencySeconds = nowSeconds - event.end;
                             const isRecentEnough =
                               event.end >=
-                              BibleVizUtils.Data.masks
-                                .readingHistoryRecencyThresholdTimeSeconds;
+                              BibleVizDataRepository.getReadingHistoryRecencyThresholdTimeSeconds();
                             const isNotTooRecent =
                               currRecencySeconds >= SEC_PER_MINUTE;
 
@@ -468,7 +472,7 @@ export const Book = memo<(args: BookProps) => React.JSX.Element>(
                       }
                     }
                     if (lastValidEvent) {
-                      color = BibleVizUtils.Functions.GetHistoryColorByRecency({
+                      color = GetHistoryColorByRecency({
                         recencyTimeSeconds: lastValidEvent.end,
                         baseColor,
                         userColor,
@@ -518,26 +522,22 @@ export const Book = memo<(args: BookProps) => React.JSX.Element>(
           }
 
           if (colors.length > 0) {
-            historyBackground =
-              BibleVizUtils.Functions.GetHistoryColorLinearGradient(colors);
-            historyColor =
-              BibleVizUtils.Functions.GetTextColorBasedOnBackground({
-                backgroundColor: colors,
-              });
+            historyBackground = GetHistoryColorLinearGradient(colors);
+            historyColor = GetTextColorBasedOnBackground({
+              backgroundColor: colors,
+            });
           }
         }
 
         if (isPsalms) {
-          ({ chapter } = BibleVizUtils.Functions.ConvertDividedPsalmsToComplete(
-            {
-              book,
-              chapter,
-            }
-          ));
+          ({ chapter } = ConvertDividedPsalmsToComplete({
+            book,
+            chapter,
+          }));
         }
 
-        const userPresenceColors: React.CSSProperties["color"][] = [];
-        let borderGradientColors: React.CSSProperties["color"];
+        const userPresenceColors: HexString[] = [];
+        let borderGradientColors: React.CSSProperties["background"];
         if (isUserPresenceEnabled) {
           for (const user in bookUserPresence) {
             const userPresenceItem = bookUserPresence[user];
@@ -550,11 +550,10 @@ export const Book = memo<(args: BookProps) => React.JSX.Element>(
             }
           }
           if (userPresenceColors.length > 0) {
-            borderGradientColors =
-              BibleVizUtils.Functions.GetUserPresenceBorderGradientColors({
-                colors: userPresenceColors,
-                diffuse: 15,
-              });
+            borderGradientColors = GetUserPresenceBorderGradientColors({
+              colors: userPresenceColors,
+              diffuse: 15,
+            });
             tooltipContent.unshift(
               <UserPresenceTooltipContent colors={userPresenceColors} />
             );
