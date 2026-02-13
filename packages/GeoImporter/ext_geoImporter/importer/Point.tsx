@@ -10,9 +10,4 @@ elem.geo_json_id = id;
 elem[tags.targetDim] = true;
 elem[tags.targetDim + "X"] = coordinates[0];
 elem[tags.targetDim + "Y"] = coordinates[1];
-const elemBot = create(elem);
-
-if (elemBot) {
-  setTagMask(elemBot, "labelOpacity", 0, "tempLocal");
-  setTagMask(elemBot, "lineTo", [], "tempLocal");
-}
+create(elem);

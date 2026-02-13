@@ -40,8 +40,6 @@ for (let i = 0; i < accumulatedBodies.length; i++) {
       const targetVert = vertices[(j + 1) % vertices.length];
       if (vertex && targetVert) {
         vertex.tags.lineTo = targetVert.tags.id;
-        setTagMask(vertex, "labelOpacity", 0, "tempLocal");
-        setTagMask(vertex, "lineTo", [], "tempLocal");
       }
     }
   }

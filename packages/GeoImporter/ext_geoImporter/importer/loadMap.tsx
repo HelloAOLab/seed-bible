@@ -1,55 +1,11 @@
+import { opentypeJs } from "https://esm.helloao.org/painter-vendor-IGDNTFOW.js";
+import type { GeoJSON, Feature } from "https://esm.run/@types/geojson";
 import type { Bot } from "../../../../typings/AuxLibraryDefinitions";
 import focusOnWithCatch from "ext_geoImporter.importer.focusOnWithCatch";
 
 const file = that.file;
 
-function getRandomNumber(min: number, max: number) {
-  return Math.floor(Math.random() * (max - min + 1)) + min;
-}
-
-const earthAnimation = async (props: { x: number; y: number }) => {
-  const { x, y } = props;
-  const outZoom = 50000000;
-  const cooridnates: number[] = [
-    x - getRandomNumber(1, 2),
-    y - getRandomNumber(1, 2),
-    outZoom * 0.07,
-  ];
-  const coordinateElement = create({
-    space: "tempLocal",
-    [tags.targetDim]: true,
-    [tags.targetDim + "X"]: cooridnates[0],
-    [tags.targetDim + "Y"]: cooridnates[1],
-  });
-
-  if (Array.isArray(coordinateElement) && coordinateElement[0]) {
-    await focusOnWithCatch({
-      bot: coordinateElement[0],
-      options: {
-        zoom: cooridnates[2],
-        duration: 2,
-        rotation: {
-          x: Math.PI * 0,
-          y: Math.PI * 0,
-        },
-      },
-    });
-  } else if (coordinateElement) {
-    await focusOnWithCatch({
-      bot: coordinateElement,
-      options: {
-        zoom: cooridnates[2],
-        duration: 2,
-        rotation: {
-          x: Math.PI * 0,
-          y: Math.PI * 0,
-        },
-      },
-    });
-  }
-};
-
-let geoObj;
+let geoObj: GeoJSON;
 try {
   if (typeof file === "object") {
     geoObj = file;
@@ -58,16 +14,16 @@ try {
   }
 } catch (e) {
   os.log("geoJSONImporter - Object is not JSON serializable. Details: \n", e);
-  let enc = new TextDecoder("utf-8");
-  let parsedString = enc.decode(file);
+  const enc = new TextDecoder("utf-8");
+  const parsedString = enc.decode(file);
   geoObj = JSON.parse(parsedString);
 }
 
-miniMapPortalBot.tags.mapPortalBasemap = GlobalBaseMap;
+miniMapPortalBot.tags.mapPortalBasemap = thisBot.tags.GlobalBaseMap;
 miniMapPortalBot.tags.mapPortalKind = "plane";
 miniMapPortalBot.tags.mapPortalGridKind = "plane";
 
-mapPortalBot.tags.mapPortalBasemap = GlobalBaseMap;
+mapPortalBot.tags.mapPortalBasemap = thisBot.tags.GlobalBaseMap;
 mapPortalBot.tags.mapPortalKind = "plane";
 mapPortalBot.tags.mapPortalGridKind = "plane";
 if (!configBot.tags.miniMapPortal) {
@@ -89,15 +45,6 @@ if (!configBot.tags.miniMapPortal) {
   miniMapPortalBot.tags.miniPortalResizable = false;
 
   configBot.tags.mapPortal = tags.targetDim;
-  // if (!that.loadGame) {
-  //     whisper(thisBot, "createCloseButton")
-  // }
-  // setBackBtnStatck([...backBtnStack, {
-  //     action: () => {
-  //         configBot.tags.miniMapPortal = null;
-  //     },
-  //     type: "location"
-  // }])
 }
 
 os.log("geoObj: ", geoObj);
@@ -114,13 +61,13 @@ if (geoObj.type == "FeatureCollection") {
   return;
 }
 
-async function parseFeatureCollection(geoObj) {
+async function parseFeatureCollection(geoObj: GeoJSON) {
   // Parse features
   if (geoObj.features != null) {
-    let features = geoObj.features;
+    const features = geoObj.features;
     if (features.length > 0) {
       for (let i = 0; i < features.length; i++) {
-        let feature = features[i];
+        const feature = features[i];
         parseFeature(feature, i);
       }
     } else {
@@ -132,51 +79,41 @@ async function parseFeatureCollection(geoObj) {
 
   // Parsing Labels
   if (geoObj.metadata != null) {
-    let meta = geoObj.metadata;
-    let label = meta.name;
+    const meta = geoObj.metadata;
+    const label = meta.name;
 
     if (geoObj.bbox != null) {
-      let currElements = getBots(byTag("uid", label));
+      const currElements = getBots(byTag("uid", label));
       if (currElements.length > 0) {
         destroy(currElements);
       }
-      let bbox = geoObj.bbox;
+      const bbox = geoObj.bbox;
       os.log("bbox: ", bbox);
-      let dx = angularDifference(bbox[0], bbox[2]);
-      let dy = angularDifference(bbox[1], bbox[3]);
-      let dh = Math.sqrt(dx * dx + dy * dy);
-      let xPos = bbox[2] + dx * 0.5;
-      let yPos = bbox[3] + dy * 0.5;
+      const dx = angularDifference(bbox[0], bbox[2]);
+      const dy = angularDifference(bbox[1], bbox[3]);
+      const dh = Math.sqrt(dx * dx + dy * dy);
+      const xPos = bbox[2] + dx * 0.5;
+      const yPos = bbox[3] + dy * 0.5;
 
-      let zoomValue2 = mapRange(dh, 0.0, 1.0, 0.0, 500000);
-      let elem = await createLabelElement({
+      const zoomValue2 = mapRange(dh, 0.0, 1.0, 0.0, 500000);
+      const elem = await createLabelElement({
         label: label,
         labelSize: dh * 5000.0,
         xPos: parseFloat(xPos) + 0.000002 * dh * 500.0,
         yPos: parseFloat(yPos),
         zPos: 20,
-        scaleZ: 0.1,
-        labelColor: "white",
         zoom: 0,
       });
-      if (that?.loadGame) {
-        setPositionData({
-          x: xPos,
-          y: yPos,
-          placeIds: [elem.tags.id],
-          zoomValue2: zoomValue2,
-        });
-        await earthAnimation({ x: xPos, y: yPos });
-      } else {
-        setTagMask(thisBot, "focusing", true, "tempLocal");
+      setTagMask(thisBot, "focusing", true, "tempLocal");
+      if (!Array.isArray(elem)) {
         forceFocus({ focusBot: elem, zoom: zoomValue2 });
       }
     }
   }
 }
 
-async function parseFeature(feature, i = 0, showName = false) {
-  let type = feature.type;
+async function parseFeature(feature: Feature, i = 0, showName = false) {
+  const type = feature.type;
   if (type != null) {
     if (type == "Feature") {
       if (feature.geometry != null) {
@@ -189,33 +126,20 @@ async function parseFeature(feature, i = 0, showName = false) {
               ")"
           );
           if (showName) {
-            let currElements = getBots(byTag("uid", feature.properties.id));
+            const currElements = getBots(byTag("uid", feature.properties.id));
             if (currElements.length > 0) {
               destroy(currElements);
             }
-            let elem = await createLabelElement({
+            const elem = await createLabelElement({
               label: feature.properties.id,
               labelSize: 700,
               xPos: parseFloat(feature.geometry.coordinates[1]) + 0.000002 * 50,
               yPos: parseFloat(feature.geometry.coordinates[0]),
               zPos: 10,
-              scaleZ: 0,
-              labelColor: "white",
               zoom: 50000,
             });
-            if (that?.loadGame) {
-              setPositionData({
-                x: feature.geometry.coordinates[1],
-                y: feature.geometry.coordinates[0],
-                placeIds: [elem.tags.id],
-                zoomValue: 50000,
-              });
-              await earthAnimation({
-                x: feature.geometry.coordinates[1],
-                y: feature.geometry.coordinates[0],
-              });
-            } else {
-              setTagMask(thisBot, "focusing", true, "tempLocal");
+            setTagMask(thisBot, "focusing", true, "tempLocal");
+            if (!Array.isArray(elem)) {
               forceFocus({ focusBot: elem, zoom: 70000 });
             }
           }
@@ -243,19 +167,30 @@ async function parseFeature(feature, i = 0, showName = false) {
   }
 }
 
-function angularDifference(targetA, sourceA) {
+function angularDifference(targetA: number, sourceA: number) {
   targetA %= 360;
   sourceA %= 360;
   return ((targetA - sourceA + 180) % 360) - 180;
 }
 
-function mapRange(value, low1, high1, low2, high2) {
+function mapRange(
+  value: number,
+  low1: number,
+  high1: number,
+  low2: number,
+  high2: number
+) {
   return low2 + ((high2 - low2) * (value - low1)) / (high1 - low1);
 }
 
-async function forceFocus({ focusBot, zoom, trying = false }) {
+async function forceFocus(props: {
+  focusBot: Bot;
+  zoom: number;
+  trying?: boolean;
+}) {
+  const { focusBot, zoom, trying = false } = props;
   if (thisBot.masks.focusing && !trying) {
-    let checkInterval = setInterval(() => {
+    const checkInterval = setInterval(() => {
       if (thisBot.masks.focusing) {
         forceFocus({ focusBot, zoom, trying: true });
       } else {
@@ -264,13 +199,7 @@ async function forceFocus({ focusBot, zoom, trying = false }) {
     }, 1500);
   }
 
-  console.log(zoom, "zoom");
-  // await os.focusOn(focusBot, {
-  //     zoom: zoom,
-  //     duration: 1
-  // })
-  console.log("focusing on map 1", typeof globalThis?.focusOnWithCatch);
-  await globalThis?.focusOnWithCatch({
+  await focusOnWithCatch({
     bot: focusBot,
     options: {
       zoom: zoom,
@@ -278,15 +207,11 @@ async function forceFocus({ focusBot, zoom, trying = false }) {
     },
   });
   setTagMask(thisBot, "focusing", false, "tempLocal");
-  // if (setModalOpacity) {
-  //     await os.sleep(5000)
-  //     setModalOpacity(1);
-  // }
 }
 
-function generateSVGURLFromText(label, fontSize = 400) {
+function generateSVGURLFromText(label: string, fontSize = 400) {
   return new Promise((resolve, reject) => {
-    OpentypeJs.load(tags.font, function (err, font) {
+    opentypeJs.load(tags.font, function (err: any, font: any) {
       if (err) {
         reject(err);
         return;
@@ -295,8 +220,8 @@ function generateSVGURLFromText(label, fontSize = 400) {
       const svgPath = path.toPathData();
       const bbox = path.getBoundingBox();
 
-      let svgWidth = 5000;
-      let svgHeight = 2500;
+      const svgWidth = 5000;
+      const svgHeight = 2500;
       const dx = (svgWidth - (bbox.x2 - bbox.x1)) / 2 - bbox.x1;
       const dy = (svgHeight - (bbox.y2 - bbox.y1)) / 2 - bbox.y1;
 
@@ -306,7 +231,7 @@ function generateSVGURLFromText(label, fontSize = 400) {
             </svg>`;
       const blob = new Blob([newSvg], { type: "image/svg+xml" });
       blob.arrayBuffer().then((arrayBuffer) => {
-        let url = bytes.toBase64Url(
+        const url = bytes.toBase64Url(
           new Uint8Array(arrayBuffer),
           "image/svg+xml"
         );
@@ -316,29 +241,30 @@ function generateSVGURLFromText(label, fontSize = 400) {
   });
 }
 
-async function createLabelElement({
-  label,
-  labelSize,
-  xPos,
-  yPos,
-  zPos,
-  labelFontAddress,
-  zoom,
+async function createLabelElement(props: {
+  label: string;
+  labelSize: number;
+  xPos: number;
+  yPos: number;
+  zPos: number;
+  labelFontAddress?: string;
+  zoom: number;
 }) {
-  let url = await generateSVGURLFromText(label);
-  let elem = create({
+  const { label, labelSize, xPos, yPos, zPos, labelFontAddress, zoom } = props;
+  const url = await generateSVGURLFromText(label);
+  const elem = create({
     form: "sprite",
     pointable: false,
     orientationMode: "billboard",
     geo_json_element: true,
     geo_json_label: true,
     [tags.targetDim]: true,
-    [tags.targetDim + "X"]: parseFloat(xPos),
-    [tags.targetDim + "Y"]: parseFloat(yPos),
+    [tags.targetDim + "X"]: parseFloat(String(xPos)),
+    [tags.targetDim + "Y"]: parseFloat(String(yPos)),
     [tags.targetDim + "Z"]: zPos,
     space: "tempLocal",
     scaleZ: 1.1,
-    labelFontAddress,
+    labelFontAddress: labelFontAddress,
     zoom,
     formAddress: url,
     scale: labelSize,

@@ -36,10 +36,6 @@ for (let i = 0; i < accumulatedLines.length; i++) {
       vertex.tags.geo_json_id == targetVert.tags.geo_json_id
     ) {
       vertex.tags.lineTo = targetVert.tags.id;
-      if (vertex) {
-        setTagMask(vertex, "labelOpacity", 0, "tempLocal");
-        setTagMask(vertex, "lineTo", [], "tempLocal");
-      }
     }
   } else {
     break;
