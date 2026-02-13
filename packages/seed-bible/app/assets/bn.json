@@ -126,8 +126,9 @@
   "no": "না",
   "all": "সব",
   "file": "ফাইল",
+  "headingsAndMediaCannotBeEmbedded": "হেডিংস & মিডিয়া অন্তর্ভুক্ত করা যাবে না!",
   "noLanguageResultsFound": "কোন ফলাফল পাওয়া যায়নি। আপনি কি আপনার অনুসন্ধানকে আংশিকভাবে সম্পূর্ণ ভাষাও অন্তর্ভুক্ত করতে চান?",
-  "showAllLanguages": "সব ভাষা দেখান"
+  "showAllLanguages": "সব ভাষা দেখান",
   "tanakOrder": "তানাখ ক্রম",
   "traditionalOrder": "ঐতিহ্যবাহী ক্রম",
   "lawTorah": "বিধান (তোরাহ)",

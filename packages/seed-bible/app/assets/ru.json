@@ -661,8 +661,9 @@
   "enterId": "Введите ID",
   "Queue": "Очередь",
   "file": "Файл",
+  "headingsAndMediaCannotBeEmbedded": "Заголовки и медиа не могут быть встроены!",
   "noLanguageResultsFound": "Результаты не найдены. Хотите расширить поиск, включив в него также частично заполненные языки?",
-  "showAllLanguages": "Показать все языки"
+  "showAllLanguages": "Показать все языки",
   "tanakOrder": "Порядок ТаНаХ",
   "traditionalOrder": "Традиционный порядок",
   "lawTorah": "Закон (Тора)",

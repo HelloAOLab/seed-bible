@@ -367,6 +367,7 @@
   "youCannotUnlinkAttachmentsInAnnotationMode": "You cannot unlink attachments in annotation mode!",
   "cannotEmbedEmbeddedItem": "Cannot Embed the Embedded item! Content: {{embededItem}}. Please remove it before embeding!",
   "failedToFetchAnnotations": "Failed to fetch annotations.",
+  "headingsAndMediaCannotBeEmbedded": "Headings & Media cannot be embeded!",
   "errorFetchingAnnotations": "Error fetching annotations",
   "cannotChangeWhileBeingInEditMode": "Cannot change while being in edit mode!",
   "invalidLinkFormat": "Invalid Link format!",
@@ -665,7 +666,7 @@
   "Queue": "Queue",
   "file": "File",
   "noLanguageResultsFound": "No results found. Would you like to expand your search to include partially complete languages as well?",
-  "showAllLanguages": "Show all languages"
+  "showAllLanguages": "Show all languages",
   "tanakOrder": "TaNaK order",
   "traditionalOrder": "Traditional order",
   "lawTorah": "Law (Torah)",

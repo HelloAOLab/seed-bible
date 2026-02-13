@@ -126,8 +126,9 @@
   "no": "Hapana",
   "all": "Zote",
   "file": "Faili",
+  "headingsAndMediaCannotBeEmbedded": "Masharti na media hainaweza kuweka!",
   "noLanguageResultsFound": "Kute imiphumela letfolakele. Ungatsandza yini kwandisa luphenyo lwakho kute lufake netilwimi letiphelele kancane?",
-  "showAllLanguages": "Onyesha lugha zote"
+  "showAllLanguages": "Onyesha lugha zote",
   "tanakOrder": "Mpangilio wa TaNaK",
   "traditionalOrder": "Mpangilio wa jadi",
   "lawTorah": "Sheria (Torati)",

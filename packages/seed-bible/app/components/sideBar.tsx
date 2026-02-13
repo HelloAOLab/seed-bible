@@ -1152,7 +1152,7 @@ function SideBar({ panelsNumber }) {
         title: t("inviteToSession"),
         onClick: async () => {
           const { QRCodeComponent } = thisBot.Chips();
-          const url = `https://ao.bot/?pattern=SeedBibleDev&inst=${uuid()}&hosted=${configBot.id}`;
+          const url = `https://ao.bot/?inst=${os.getCurrentInst()}`;
           ShowModal(<QRCodeComponent url={url} />);
         },
       },

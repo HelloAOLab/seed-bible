@@ -663,8 +663,9 @@
   "logoColor": "लोगो रंग",
   "accentColor": "एक्सेंट रंग",
   "fileUploadFailed": "फ़ाइल अपलोड विफल!",
+  "headingsAndMediaCannotBeEmbedded": "शीर्षक और मीडिया इम्बेड नहीं कर सकते!",
   "noLanguageResultsFound": "कोई परिणाम नहीं मिला। क्या आप अपनी खोज का दायरा बढ़ाकर आंशिक रूप से पूर्ण भाषाओं को भी शामिल करना चाहेंगे?",
-  "showAllLanguages": "सभी भाषाएं दिखाएं"
+  "showAllLanguages": "सभी भाषाएं दिखाएं",
   "tanakOrder": "तनख क्रम",
   "traditionalOrder": "पारंपरिक क्रम",
   "lawTorah": "व्यवस्था (तोराह)",
