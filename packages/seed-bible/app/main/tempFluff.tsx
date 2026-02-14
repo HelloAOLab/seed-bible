@@ -42,7 +42,7 @@ function localStorageFluff() {
   if (typeof getBot !== "function" || typeof create !== "function") return;
   const localStorage = getBot("system", "app.localStorage");
   if (!localStorage)
-    create({
+    return create({
       system: "app.localStorage",
       space: "local",
     });
@@ -100,5 +100,5 @@ export async function allTheInitFluff() {
 
   await os.sleep(500);
 
-  shout("runAutoPackages");
+  return await shout("runAutoPackages");
 }
