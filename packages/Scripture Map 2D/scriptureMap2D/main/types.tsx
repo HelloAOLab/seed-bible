@@ -7,7 +7,17 @@ import type {
   TestamentContentProps,
   BookProps,
   ChapterProps,
+  SectionToggleProps,
+  BooksContainerProps,
+  TestamentContextType,
+  TestamentToggleProps,
+  SettingsOptionProps,
+  SettingsOptionsProps,
+  ZoomLevelOptionProps,
+  ZoomLevelSelectorProps,
+  ZoomButtonProps,
 } from "scriptureMap2D.main.interfaces";
+import type { MutableRef } from "../../../../typings/AuxLibraryDefinitions";
 
 export type ChapterKey = {
   testamentName: string;
@@ -80,8 +90,24 @@ export type ScriptureMap2DContentValue = {
   };
 };
 
+export type TestamentContainerType = (
+  props: TestamentContextType
+) => React.JSX.Element;
+
+export type TestamentToggleType = (
+  props: TestamentToggleProps
+) => React.JSX.Element;
+
 export type TestamentContentType = (
   params: TestamentContentProps
+) => React.JSX.Element;
+
+export type SectionToggleType = (
+  params: SectionToggleProps
+) => React.JSX.Element;
+
+export type BooksContainerType = (
+  params: BooksContainerProps
 ) => React.JSX.Element;
 
 export type BookType = (args: BookProps) => React.JSX.Element;
@@ -102,3 +128,26 @@ export type UserPresenceTooltipContentType = (params: {
 }) => React.JSX.Element;
 
 export type ChapterType = (args: ChapterProps) => React.JSX.Element;
+
+export type ToggleShowSectionType = (sectionKey: string) => void;
+
+export type SettingsOptionsType = (
+  params: SettingsOptionsProps
+) => React.JSX.Element;
+
+export type SettingsOptionType = (
+  params: SettingsOptionProps
+) => React.JSX.Element;
+
+export type ZoomLevelOptionType = (
+  params: ZoomLevelOptionProps
+) => React.JSX.Element;
+
+export type ZoomLevelSelectorType = (
+  params: ZoomLevelSelectorProps
+) => React.JSX.Element;
+
+export type ZoomButtonType = (
+  params: ZoomButtonProps,
+  ref: MutableRef<HTMLButtonElement | null>
+) => React.JSX.Element;

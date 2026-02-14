@@ -13,6 +13,7 @@ import type {
   BookUserPresence,
   Range,
   TestamentContentType,
+  ToggleShowSectionType,
 } from "scriptureMap2D.main.types";
 import {
   BibleVizDataRepository,
@@ -161,7 +162,7 @@ export const TestamentContent = memo<TestamentContentType>(({ hidden }) => {
     });
   }, [filteredSections]);
 
-  const toggleShowSection = useCallback<(sectionKey: string) => void>(
+  const toggleShowSection = useCallback<ToggleShowSectionType>(
     (sectionKey) => {
       const copy = new Map(sectionsShown);
       copy.set(sectionKey, !copy.get(sectionKey));

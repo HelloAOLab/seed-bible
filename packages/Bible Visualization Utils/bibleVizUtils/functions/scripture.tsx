@@ -1,4 +1,7 @@
-import { BibleVizDataRepository } from "bibleVizUtils.data.BibleVizDataRepository";
+import {
+  BibleVizDataRepository,
+  type BookStaticInfo,
+} from "bibleVizUtils.data.BibleVizDataRepository";
 import {
   RgbToHex,
   type RGB,
@@ -10,6 +13,11 @@ type CompletePsalm = {
   book: "Psamls";
   bookId: "PSA";
 };
+type DividedPsalm = {
+  chapter: number;
+  book: string;
+  bookId: string;
+};
 type ConvertDividedPsalmsToCompleteType = (params: {
   book: string;
   chapter: number;
@@ -19,6 +27,9 @@ type GetChildrenLevelColorsType = (params: {
   colorRange: number;
   levelsLength: number;
 }) => HexString[];
+type ConvertCompletePsalmsToDividedType = (params: {
+  chapter: number;
+}) => DividedPsalm;
 
 export const ConvertDividedPsalmsToComplete: ConvertDividedPsalmsToCompleteType =
   ({ book, chapter }) => {
@@ -35,6 +46,47 @@ export const ConvertDividedPsalmsToComplete: ConvertDividedPsalmsToCompleteType 
     throw new Error(
       "Divided psalm info not found at ConvertDividedPsalmsToComplete"
     );
+  };
+
+export const ConvertCompletePsalmsToDivided: ConvertCompletePsalmsToDividedType =
+  ({ chapter }) => {
+    const dividedPsalmsNames = [
+      "1 Psalms",
+      "2 Psalms",
+      "3 Psalms",
+      "4 Psalms",
+      "5 Psalms",
+    ];
+
+    const dividedPaslmsInfo: [string, BookStaticInfo | undefined][] =
+      dividedPsalmsNames.map((name) => {
+        return [name, BibleVizDataRepository.getBookStaticInfo(name)];
+      });
+
+    const psalmInfo: [string, BookStaticInfo] | undefined =
+      dividedPaslmsInfo.find(([, info]) => {
+        if (info) {
+          const { startingIndex } = info;
+          if (startingIndex !== undefined) {
+            return (
+              startingIndex + 1 <= chapter &&
+              chapter <= startingIndex + info.numberOfChapters
+            );
+          }
+        }
+        return false;
+      }) as [string, BookStaticInfo] | undefined;
+
+    if (psalmInfo) {
+      const [name, info] = psalmInfo;
+      return {
+        book: name,
+        bookId: info.abbreviation,
+        chapter: chapter - (info?.startingIndex ?? 0),
+      };
+    }
+
+    throw new Error("Psalm info not found at ConvertCompletePsalmsToDivided");
   };
 
 export const GetChildrenLevelColors: GetChildrenLevelColorsType = ({

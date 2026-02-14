@@ -29,6 +29,8 @@ import {
   TimelineRangeMethod,
   type TimelineRangeMethodType,
 } from "scriptureMap2D.main.enums";
+import { ConvertCompletePsalmsToDivided } from "bibleVizUtils.functions.scripture";
+import { GetDayRangeSeconds } from "bibleVizUtils.functions.index";
 
 const { createContext, useContext, useState, useMemo, useEffect, useCallback } =
   os.appHooks;
@@ -399,7 +401,7 @@ export const ReadingHistoryProvider: (
           if (start >= rangeStart && start <= rangeEnd) {
             if (bookId === "PSA") {
               const { bookId: dividedPsalmId, chapter: dividedPsalmChapter } =
-                BibleVizUtils.Functions.ConvertCompletePsalmsToDivided({
+                ConvertCompletePsalmsToDivided({
                   chapter,
                 });
               event = {
@@ -561,18 +563,3 @@ export const useReadingHistoryContext: () => ReadingHistoryContextType = () => {
 
   return context as ReadingHistoryContextType;
 };
-
-function GetDayRangeSeconds(timestamp) {
-  const date = new Date(timestamp);
-
-  const start = new Date(date);
-  start.setHours(0, 0, 0, 0);
-
-  const end = new Date(date);
-  end.setHours(23, 59, 59, 999);
-
-  return {
-    start: Math.floor(start.getTime() / 1000),
-    end: Math.floor(end.getTime() / 1000),
-  };
-}

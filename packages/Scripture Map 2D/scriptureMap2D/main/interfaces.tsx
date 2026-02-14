@@ -19,16 +19,21 @@ import type {
   TimelineRangesMap,
   BookUserPresence,
   ScriptureMap2DContentValue,
+  ToggleShowSectionType,
 } from "scriptureMap2D.main.types";
 import type {
   ArrangementInfo,
   TestamentInfo,
+  SectionInfo,
 } from "bibleVizUtils.data.BibleVizDataRepository";
 import type {
   ReadingHistorySummary,
   ReadingEvent,
 } from "db.annotations.library";
-import type { StateUpdater } from "../../../../typings/AuxLibraryDefinitions";
+import type {
+  MutableRef,
+  StateUpdater,
+} from "../../../../typings/AuxLibraryDefinitions";
 
 export interface AppProps {
   id: string;
@@ -141,7 +146,12 @@ export interface ScriptureMap2DContextType extends ScriptureMap2DConfig {
   activeTabId: string;
 
   tabs: unknown;
-  activeTab: unknown;
+  activeTab: {
+    data: {
+      bookId: string;
+      chapter: number;
+    };
+  };
 }
 
 export interface TestamentContextType {
@@ -199,6 +209,23 @@ export interface TestamentContentProps {
   hidden: boolean;
 }
 
+export interface TestamentToggleProps {
+  toggleshowContent: () => void;
+  showingContent: boolean;
+}
+
+export interface SectionToggleProps {
+  toggleShowSection: ToggleShowSectionType;
+  showingContent: boolean | undefined;
+  section: SectionInfo;
+  style: React.CSSProperties;
+  sectionKey: string;
+}
+
+export interface BooksContainerProps {
+  children: React.ReactNode;
+}
+
 export interface BookProps {
   book: string;
   bookId: string;
@@ -221,4 +248,36 @@ export interface ChapterProps {
   tooltipContent: React.ReactNode[];
   chapter: number;
   borderGradientColors: React.CSSProperties["background"];
+}
+
+export interface SettingsOptionsProps {
+  setShowOptions: StateUpdater<boolean>;
+  settingsButtonRef: MutableRef<HTMLDivElement | null>;
+  collapsed: boolean;
+  setCollapsed: StateUpdater<boolean>;
+}
+
+export interface SettingsOptionProps {
+  callback: () => void;
+  condition: boolean;
+  enabledIcon?: string;
+  disabledIcon?: string;
+  enabledText: string;
+  disabledText: string;
+  staticText: string;
+}
+
+export interface ZoomLevelOptionProps {
+  value: number;
+  handleZoomLevelClick: (value: number) => void;
+}
+
+export interface ZoomLevelSelectorProps {
+  setShowOptions: StateUpdater<boolean>;
+  toggleButtonRef: MutableRef<HTMLButtonElement | null>;
+}
+
+export interface ZoomButtonProps {
+  onClick: () => void;
+  children: React.ReactNode;
 }

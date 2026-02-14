@@ -1287,6 +1287,9 @@
       "bibleVizUtils.functions.SubtractArrays": [
         "./packages/Bible Visualization Utils/bibleVizUtils/functions/SubtractArrays.tsx"
       ],
+      "bibleVizUtils.functions.time": [
+        "./packages/Bible Visualization Utils/bibleVizUtils/functions/time.tsx"
+      ],
       "bibleVizUtils.functions.TryHideActivityNotificationOnPiece": [
         "./packages/Bible Visualization Utils/bibleVizUtils/functions/TryHideActivityNotificationOnPiece.tsx"
       ],
