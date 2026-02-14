@@ -1,5 +1,7 @@
 export type RGB = [number, number, number];
+
 type HexWithHash = `#${string}`;
+
 export type HexString = HexWithHash | string;
 
 export type WeightedColor = { color: HexString; value?: number };

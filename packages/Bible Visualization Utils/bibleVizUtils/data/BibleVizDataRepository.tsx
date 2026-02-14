@@ -57,6 +57,7 @@ interface BookInfo {
     y: number;
   };
   group?: number;
+  customColor?: string;
 }
 
 interface SectionInfo {

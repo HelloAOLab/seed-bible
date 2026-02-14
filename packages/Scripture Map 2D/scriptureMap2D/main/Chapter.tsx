@@ -33,7 +33,6 @@ export const Chapter = memo<ChapterType>(
       onChapterClickDependencies,
       onChapterClickAndHold,
       isInSelectionMode,
-      BASE_BACKGROUND_COLOR: baseColor,
       scaleFactor,
     } = useScriptureMap2DContext();
 

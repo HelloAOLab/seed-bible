@@ -3,7 +3,11 @@ import type {
   ReadingEvent,
   ReadingHistorySummary,
 } from "db.annotations.library";
-import type { BookProps, ChapterProps } from "scriptureMap2D.main.interfaces";
+import type {
+  TestamentContentProps,
+  BookProps,
+  ChapterProps,
+} from "scriptureMap2D.main.interfaces";
 
 export type ChapterKey = {
   testamentName: string;
@@ -75,6 +79,10 @@ export type ScriptureMap2DContentValue = {
     };
   };
 };
+
+export type TestamentContentType = (
+  params: TestamentContentProps
+) => React.JSX.Element;
 
 export type BookType = (args: BookProps) => React.JSX.Element;
 

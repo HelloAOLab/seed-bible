@@ -3,7 +3,7 @@ import { type HexString } from "bibleVizUtils.functions.colors";
 type GetUserPresenceBorderGradientColorsType = (params: {
   colors: HexString[];
   diffuse?: number;
-}) => React.CSSProperties["color"];
+}) => React.CSSProperties["backgroundImage"];
 
 export const GetUserPresenceBorderGradientColors: GetUserPresenceBorderGradientColorsType =
   ({ colors, diffuse = 0 }) => {

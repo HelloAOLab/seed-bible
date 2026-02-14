@@ -195,6 +195,10 @@ export interface ReadingHistoryContextType {
   setTimelineRangeMethod: StateUpdater<TimelineRangeMethodType>;
 }
 
+export interface TestamentContentProps {
+  hidden: boolean;
+}
+
 export interface BookProps {
   book: string;
   bookId: string;
@@ -203,7 +207,7 @@ export interface BookProps {
   readingEvents: ReadingEvent[];
   readingSummary: ReadingHistorySummary;
   isPsalms: boolean;
-  bookBorderGradientColors: string | undefined;
+  bookBorderGradientColors: React.CSSProperties["backgroundImage"];
   bookUserPresence: BookUserPresence;
   bookUserPresenceColors: string[];
 }
