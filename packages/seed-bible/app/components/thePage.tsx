@@ -498,6 +498,15 @@ function ThePage({
     };
   }, [tab]);
 
+  useEffect(() => {
+    globalThis.PanelTabsMap = {
+      ...globalThis.PanelTabsMap,
+      [panelId]: {
+        ...tab,
+      },
+    };
+  }, [tab, panelId]);
+
   // GLOBAL GUARDS
   if (!globalThis.__remoteBookUpdate) globalThis.__remoteBookUpdate = false;
   if (!globalThis.__lastBookEmit) globalThis.__lastBookEmit = 0;
@@ -2913,15 +2922,24 @@ export const ThePageWithEditor = ({ tab, setPanalApp, panelId }) => {
   }, []);
 
   const activeTab = panelId ? globalThis.PanelTabsMap[panelId] || tab : tab;
+  console.log("active tab in the page", panelId, activeTab);
   const [enableEditor, setEnableEditor] = useState(false);
   useEffect(() => {}, [enableEditor]);
-  const [data, setData] = useState(() =>
-    getCachedBibleData(
-      tab?.data?.translation,
-      tab?.data?.bookId,
-      tab?.data?.chapter
-    )
-  );
+  const [data, setData] = useState(() => {
+    if (activeTab) {
+      return getCachedBibleData(
+        activeTab?.data?.translation,
+        activeTab?.data?.bookId,
+        activeTab?.data?.chapter
+      );
+    } else {
+      return getCachedBibleData(
+        tab?.data?.translation,
+        tab?.data?.bookId,
+        tab?.data?.chapter
+      );
+    }
+  });
   const [deleteTab, setDeleteTab] = useState(false);
   if (tab) globalThis[`SetEnableEditorOf${tab?.id}`] = setEnableEditor;
   useEffect(() => {
