@@ -89,11 +89,11 @@ describe("collaborative", () => {
     // await delay(2000);
 
     // Should be on Genesis 2 in second session now
-//     const bookTitle = await seedBibleFrame2
-//       .locator("div.bookTitle")
-//       .waitHandle();
-//     expect(
-//       mergeWhitespace(await bookTitle?.evaluate((el) => el.textContent))
-//     ).toBe("Genesis 2 / BSB");
+    //     const bookTitle = await seedBibleFrame2
+    //       .locator("div.bookTitle")
+    //       .waitHandle();
+    //     expect(
+    //       mergeWhitespace(await bookTitle?.evaluate((el) => el.textContent))
+    //     ).toBe("Genesis 2 / BSB");
   });
 });

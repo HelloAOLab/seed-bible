@@ -126,6 +126,7 @@
   "no": "አይ",
   "all": "ሁሉም",
   "file": "ፋይል",
+  "headingsAndMediaCannotBeEmbedded": "የሚያስደምር መስሪያዎች & ማዘጋጃዎች አይተዳደሩም!",
   "noLanguageResultsFound": "ምንም ውጤቶች አልተገኙም። በከፊል የተሟሉ ቋንቋዎችንም ለማካተት ፍለጋህን ማስፋት ትፈልጋለህ?",
   "showAllLanguages": "ሁሉንም ቋንቋዎች አሳይ",
   "tanakOrder": "የተናክ ቅደም ተከተል",

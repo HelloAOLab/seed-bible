@@ -661,6 +661,7 @@
   "enterId": "Saisir l'ID",
   "Queue": "File d'attente",
   "file": "Fichier",
+  "headingsAndMediaCannotBeEmbedded": "Les titres et les médias ne peuvent pas être intégrés!",
   "noLanguageResultsFound": "Aucun résultat trouvé. Souhaitez-vous élargir votre recherche aux langues partiellement complètes?",
   "showAllLanguages": "Afficher toutes les langues",
   "tanakOrder": "Ordre TaNaK",
