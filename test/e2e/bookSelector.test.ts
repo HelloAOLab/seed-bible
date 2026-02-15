@@ -129,10 +129,10 @@ describe("bookSelector tests", () => {
       .locator('div.toolbar-item-wrapper[title="Books"] > button')
       .click({});
     await delay(100);
-    await page.waitForSelector(".dropdown-select", { visible: true });
-    await page.locator(".dropdown-select").click();
+    await page.waitForSelector(".dropdown .dropdown-select", { visible: true });
+    await page.locator(".dropdown .dropdown-select").click();
     await delay(200);
-    await page.select(".dropdown-select", "0");
+    await page.select(".dropdown .dropdown-select", "0");
     await delay(100);
     await page.waitForSelector(".sidebar-itm", { visible: true });
     const bookItemsOT = await page.$$(".sidebar-itm");
@@ -146,10 +146,10 @@ describe("bookSelector tests", () => {
       }
     }
     expect(bookItemsOT.length).toBe(OTBooks.length);
-    await page.waitForSelector(".dropdown-select", { visible: true });
-    await page.locator(".dropdown-select").click();
+    await page.waitForSelector(".dropdown .dropdown-select", { visible: true });
+    await page.locator(".dropdown .dropdown-select").click();
     await delay(200);
-    await page.select(".dropdown-select", "1");
+    await page.select(".dropdown .dropdown-select", "1");
     await delay(100);
     await page.waitForSelector(".sidebar-itm", { visible: true });
     const bookItemsNT = await page.$$(".sidebar-itm");
