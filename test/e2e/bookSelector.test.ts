@@ -129,26 +129,27 @@ describe("bookSelector tests", () => {
       .locator('div.toolbar-item-wrapper[title="Books"] > button')
       .click({});
 
-    // Wait for sidebar to open and dropdown to be visible
+    await page.waitForSelector("open-sideBar", {
+      visible: true,
+      timeout: 5000,
+    });
+
     await page.waitForSelector(".dropdown .dropdown-select", {
       visible: true,
       timeout: 5000,
     });
     await delay(300);
 
-    // Select Old Testament
     await page.locator(".dropdown .dropdown-select").click();
     await delay(200);
     await page.select(".dropdown .dropdown-select", "0");
 
-    // Wait for books to render and re-query to ensure fresh DOM state
     await delay(500);
     await page.waitForSelector(".sidebar-itm", {
       visible: true,
       timeout: 5000,
     });
 
-    // Wait for rendering to complete
     await page.waitForFunction(
       (expectedCount) => {
         const items = document.querySelectorAll(".sidebar-itm");
@@ -170,7 +171,6 @@ describe("bookSelector tests", () => {
     }
     expect(bookItemsOT.length).toBe(OTBooks.length);
 
-    // Select New Testament
     await page.waitForSelector(".dropdown .dropdown-select", {
       visible: true,
       timeout: 5000,
@@ -179,14 +179,12 @@ describe("bookSelector tests", () => {
     await delay(200);
     await page.select(".dropdown .dropdown-select", "1");
 
-    // Wait for books to render and re-query to ensure fresh DOM state
     await delay(500);
     await page.waitForSelector(".sidebar-itm", {
       visible: true,
       timeout: 5000,
     });
 
-    // Wait for rendering to complete
     await page.waitForFunction(
       (expectedCount) => {
         const items = document.querySelectorAll(".sidebar-itm");
