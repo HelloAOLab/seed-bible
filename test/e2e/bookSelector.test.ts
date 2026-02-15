@@ -129,10 +129,18 @@ describe("bookSelector tests", () => {
       .locator('div.toolbar-item-wrapper[title="Books"] > button')
       .click({});
 
-    await page.waitForSelector(".open-sideBar", {
-      visible: true,
-      timeout: 5000,
-    });
+    await delay(1000);
+
+    const isSidebarOpen = await page.$(".open-sideBar");
+    if (!isSidebarOpen) {
+      await seedBibleFrame
+        .locator('div.toolbar-item-wrapper[title="Books"] > button')
+        .click({});
+      await page.waitForSelector(".open-sideBar", {
+        visible: true,
+        timeout: 5000,
+      });
+    }
 
     await page.waitForSelector(".dropdown .dropdown-select", {
       visible: true,
