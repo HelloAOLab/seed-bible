@@ -129,7 +129,7 @@ describe("bookSelector tests", () => {
       .locator('div.toolbar-item-wrapper[title="Books"] > button')
       .click({});
 
-    await page.waitForSelector("open-sideBar", {
+    await page.waitForSelector(".open-sideBar", {
       visible: true,
       timeout: 5000,
     });
