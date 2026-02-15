@@ -70,6 +70,7 @@ export function SideBarProvider({ children }) {
   globalThis.t = t;
   globalThis.changeLanguage = changeLanguage;
   globalThis.availableLanguages = availableLanguages;
+
   useEffect(() => {
     const handleResize = () => {
       const check = window.innerWidth < 768;
@@ -194,7 +195,12 @@ export function SideBarProvider({ children }) {
     if (popupSettings || popupComponent) {
       runPopUpSettings({
         ...popupSettings,
-        sidebarContext: { closePopupSettings, position, popupComponent },
+        sidebarContext: {
+          closePopupSettings,
+          position,
+          popupComponent,
+          themeColors,
+        },
       });
     } else {
       os.unregisterApp("PopupSettings");
@@ -244,6 +250,7 @@ export function SideBarProvider({ children }) {
 
 export function PopupSettings({ items, type, disabled, sidebarContext }) {
   const [external, setextrnal] = useState(false);
+  const colors = sidebarContext.themeColors;
   return (
     <div
       onClick={sidebarContext.closePopupSettings}
@@ -266,11 +273,19 @@ export function PopupSettings({ items, type, disabled, sidebarContext }) {
         rel="stylesheet"
       />
       {sidebarContext.popupComponent || (
-        <div className={`popupSettings ${disabled ? "disabled" : null}`}>
+        <div
+          className={`popupSettings  ${disabled ? "disabled" : null}`}
+          style={{
+            background: colors ? colors[1].primaryColor : "#ffffff",
+            border: `1px solid ${colors?.text1 ?? "#1A1A1A"}`,
+          }}
+        >
           {external && <div className=" externalPopupSettings">{external}</div>}
           {null /*<div className="triangle-up"></div>*/}
           {items.map((item) => {
             if (item.active === false) return;
+            const primary = colors ? colors[1]?.text1 : "#1A1A1A";
+
             if (item?.type === "line")
               return (
                 <div
@@ -288,13 +303,19 @@ export function PopupSettings({ items, type, disabled, sidebarContext }) {
                     item.onClick();
                     if (item.external) setextrnal(item.external);
                   }}
-                  className={`itemSettings`}
+                  className={`itemSettings `}
                   style={{
                     cursor: item?.disabled ? "not-allowed" : "pointer",
                     color: item?.disabled ? "#929292" : "",
                     justifyContent:
                       item.toggle !== undefined ? "space-between" : undefined,
                   }}
+                  onMouseEnter={(e) =>
+                    (e.currentTarget.style.backgroundColor = primary + "40")
+                  }
+                  onMouseLeave={(e) =>
+                    (e.currentTarget.style.backgroundColor = "")
+                  }
                 >
                   <div
                     style={{
@@ -303,8 +324,19 @@ export function PopupSettings({ items, type, disabled, sidebarContext }) {
                       gap: "10px",
                     }}
                   >
-                    <div>{item.icon}</div>
-                    <div>
+                    <div
+                      style={{
+                        color: colors ? colors[1].text1 : "#1A1A1A",
+                      }}
+                    >
+                      {item.icon}
+                    </div>
+                    <div
+                      className="font-bold"
+                      style={{
+                        color: colors ? colors[1].text1 : "#1A1A1A",
+                      }}
+                    >
                       {typeof item.title === "function"
                         ? item.title()
                         : item.title}

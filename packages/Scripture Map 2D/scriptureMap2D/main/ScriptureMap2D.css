@@ -94,17 +94,24 @@
   position: absolute;
   right: 0;
   top: calc(100% + 4px);
-  background-color: var(--iconColor);
-  color: var(--background);
+  background-color: var(--primaryColor);
+  color: var(--text1);
   padding: 12px;
-  gap: 4px;
   border-radius: 8px;
+  gap: 4px;
+  border: 1px solid #1a1a1a;
   display: flex;
   flex-direction: column;
   justify-content: flex-start;
   align-items: flex-start;
   min-width: 208px;
   min-height: 20px;
+}
+.scripture-title {
+  color: var(--text1);
+}
+.option-button {
+  color: var(--text1);
 }
 
 .settings-options-container > span:nth-of-type(1) {
@@ -122,7 +129,7 @@
 .settings-options-container > button {
   min-width: 100%;
   background-color: transparent;
-  color: var(--background);
+  color: var(--text1);
   appearance: none;
   border: none;
   cursor: pointer;
@@ -142,7 +149,8 @@
 }
 
 .settings-options-container > button:hover {
-  background-color: var(--gray-color);
+  background-color: var(--text1);
+  color: var(--primaryColor);
 }
 
 .scripture-map-2d-settings > .settings-footer {
@@ -955,6 +963,7 @@
   from {
     --angle: 0deg;
   }
+
   to {
     --angle: 360deg;
   }

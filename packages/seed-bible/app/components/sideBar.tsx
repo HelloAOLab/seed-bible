@@ -1133,6 +1133,7 @@ function SideBar({ panelsNumber }) {
       <rect width={24} height={24} fill="transparent" />
     </svg>
   );
+
   const MenuOptions = {
     type: "normal",
     items: [

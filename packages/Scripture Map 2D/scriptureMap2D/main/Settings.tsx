@@ -138,6 +138,7 @@ const Option = ({
         e.stopPropagation();
         callback();
       }}
+      className="option-button"
     >
       {`${condition ? enabledText : disabledText} ${staticText}`}
     </button>
@@ -310,12 +311,13 @@ export const Settings = () => {
     <div
       className={`scripture-map-2d-settings${!shouldShowReadingHistory || collapsed ? " collapsed" : ""}`}
     >
-      <div className={"settings-title"}>
+      <div className={"settings-title scripture-title"}>
         <svg
           width="20"
           height="20"
           viewBox="0 0 20 20"
           fill="none"
+          stroke="currentColor"
           xmlns="http://www.w3.org/2000/svg"
         >
           <g clip-path="url(#clip0_5496_10795)">
@@ -362,7 +364,7 @@ export const Settings = () => {
           </defs>
         </svg>
 
-        <span>Scripture map</span>
+        <span className="scripture-title">Scripture map</span>
       </div>
 
       <div
