@@ -128,13 +128,36 @@ describe("bookSelector tests", () => {
     await seedBibleFrame
       .locator('div.toolbar-item-wrapper[title="Books"] > button')
       .click({});
-    await delay(700);
-    await page.waitForSelector(".dropdown .dropdown-select", { visible: true });
+
+    // Wait for sidebar to open and dropdown to be visible
+    await page.waitForSelector(".dropdown .dropdown-select", {
+      visible: true,
+      timeout: 5000,
+    });
+    await delay(300);
+
+    // Select Old Testament
     await page.locator(".dropdown .dropdown-select").click();
     await delay(200);
     await page.select(".dropdown .dropdown-select", "0");
-    await delay(100);
-    await page.waitForSelector(".sidebar-itm", { visible: true });
+
+    // Wait for books to render and re-query to ensure fresh DOM state
+    await delay(500);
+    await page.waitForSelector(".sidebar-itm", {
+      visible: true,
+      timeout: 5000,
+    });
+
+    // Wait for rendering to complete
+    await page.waitForFunction(
+      (expectedCount) => {
+        const items = document.querySelectorAll(".sidebar-itm");
+        return items.length === expectedCount;
+      },
+      { timeout: 5000 },
+      OTBooks.length
+    );
+
     const bookItemsOT = await page.$$(".sidebar-itm");
     for (let i = 0; i < bookItemsOT.length; i++) {
       const item = bookItemsOT[i];
@@ -146,12 +169,33 @@ describe("bookSelector tests", () => {
       }
     }
     expect(bookItemsOT.length).toBe(OTBooks.length);
-    await page.waitForSelector(".dropdown .dropdown-select", { visible: true });
+
+    // Select New Testament
+    await page.waitForSelector(".dropdown .dropdown-select", {
+      visible: true,
+      timeout: 5000,
+    });
     await page.locator(".dropdown .dropdown-select").click();
     await delay(200);
     await page.select(".dropdown .dropdown-select", "1");
-    await delay(100);
-    await page.waitForSelector(".sidebar-itm", { visible: true });
+
+    // Wait for books to render and re-query to ensure fresh DOM state
+    await delay(500);
+    await page.waitForSelector(".sidebar-itm", {
+      visible: true,
+      timeout: 5000,
+    });
+
+    // Wait for rendering to complete
+    await page.waitForFunction(
+      (expectedCount) => {
+        const items = document.querySelectorAll(".sidebar-itm");
+        return items.length === expectedCount;
+      },
+      { timeout: 5000 },
+      NTBooks.length
+    );
+
     const bookItemsNT = await page.$$(".sidebar-itm");
     for (let i = 0; i < bookItemsNT.length; i++) {
       const item = bookItemsNT[i];
