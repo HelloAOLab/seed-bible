@@ -128,7 +128,7 @@ describe("bookSelector tests", () => {
     await seedBibleFrame
       .locator('div.toolbar-item-wrapper[title="Books"] > button')
       .click({});
-    await delay(100);
+    await delay(700);
     await page.waitForSelector(".dropdown .dropdown-select", { visible: true });
     await page.locator(".dropdown .dropdown-select").click();
     await delay(200);
