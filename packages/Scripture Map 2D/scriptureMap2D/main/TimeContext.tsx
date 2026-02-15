@@ -1,9 +1,16 @@
+import type {
+  TimeProviderProps,
+  TimeContextType,
+} from "scriptureMap2D.main.interfaces";
+
 const { createContext, useContext, useState, useEffect } = os.appHooks;
 
-const TimeContext = createContext();
+const TimeContext = createContext<TimeContextType | undefined>(undefined);
 
-export const TimeProvider = ({ children }) => {
-  const [tick, setTick] = useState(Date.now());
+export const TimeProvider: (args: TimeProviderProps) => React.JSX.Element = ({
+  children,
+}) => {
+  const [tick, setTick] = useState<number>(Date.now());
 
   useEffect(() => {
     const interval = setInterval(() => {
@@ -17,6 +24,12 @@ export const TimeProvider = ({ children }) => {
   );
 };
 
-export const useTimeContext = () => {
-  return useContext(TimeContext);
+export const useTimeContext: () => TimeContextType = () => {
+  const context = useContext(TimeContext);
+
+  if (!context) {
+    throw new Error("useTimeContext must be used within a TimeContext");
+  }
+
+  return context as TimeContextType;
 };

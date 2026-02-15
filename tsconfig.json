@@ -1038,6 +1038,9 @@
       "bibleVizUtils.classes.UnhighlightDelayInfo": [
         "./packages/Bible Visualization Utils/bibleVizUtils/classes/UnhighlightDelayInfo.tsx"
       ],
+      "bibleVizUtils.data.BibleVizDataRepository": [
+        "./packages/Bible Visualization Utils/bibleVizUtils/data/BibleVizDataRepository.tsx"
+      ],
       "bibleVizUtils.data.onCreate": [
         "./packages/Bible Visualization Utils/bibleVizUtils/data/onCreate.tsx"
       ],
@@ -1052,6 +1055,9 @@
       ],
       "bibleVizUtils.functions.ClosestNumber": [
         "./packages/Bible Visualization Utils/bibleVizUtils/functions/ClosestNumber.tsx"
+      ],
+      "bibleVizUtils.functions.colors": [
+        "./packages/Bible Visualization Utils/bibleVizUtils/functions/colors.tsx"
       ],
       "bibleVizUtils.functions.ConvertCompletePsalmsToDivided": [
         "./packages/Bible Visualization Utils/bibleVizUtils/functions/ConvertCompletePsalmsToDivided.tsx"
@@ -1230,6 +1236,9 @@
       "bibleVizUtils.functions.HighlightBiblePiece": [
         "./packages/Bible Visualization Utils/bibleVizUtils/functions/HighlightBiblePiece.tsx"
       ],
+      "bibleVizUtils.functions.index": [
+        "./packages/Bible Visualization Utils/bibleVizUtils/functions/index.tsx"
+      ],
       "bibleVizUtils.functions.IsValueBetween": [
         "./packages/Bible Visualization Utils/bibleVizUtils/functions/IsValueBetween.tsx"
       ],
@@ -1239,11 +1248,17 @@
       "bibleVizUtils.functions.MakePortalRestrict": [
         "./packages/Bible Visualization Utils/bibleVizUtils/functions/MakePortalRestrict.tsx"
       ],
+      "bibleVizUtils.functions.math": [
+        "./packages/Bible Visualization Utils/bibleVizUtils/functions/math.tsx"
+      ],
       "bibleVizUtils.functions.onBookOrientationChanged": [
         "./packages/Bible Visualization Utils/bibleVizUtils/functions/onBookOrientationChanged.tsx"
       ],
       "bibleVizUtils.functions.onCreate": [
         "./packages/Bible Visualization Utils/bibleVizUtils/functions/onCreate.tsx"
+      ],
+      "bibleVizUtils.functions.readingHistory": [
+        "./packages/Bible Visualization Utils/bibleVizUtils/functions/readingHistory.tsx"
       ],
       "bibleVizUtils.functions.ReleaseLabelTransformerFromPiece": [
         "./packages/Bible Visualization Utils/bibleVizUtils/functions/ReleaseLabelTransformerFromPiece.tsx"
@@ -1253,6 +1268,9 @@
       ],
       "bibleVizUtils.functions.RotateArray": [
         "./packages/Bible Visualization Utils/bibleVizUtils/functions/RotateArray.tsx"
+      ],
+      "bibleVizUtils.functions.scripture": [
+        "./packages/Bible Visualization Utils/bibleVizUtils/functions/scripture.tsx"
       ],
       "bibleVizUtils.functions.SetArrangementIndexByName": [
         "./packages/Bible Visualization Utils/bibleVizUtils/functions/SetArrangementIndexByName.tsx"
@@ -1268,6 +1286,9 @@
       ],
       "bibleVizUtils.functions.SubtractArrays": [
         "./packages/Bible Visualization Utils/bibleVizUtils/functions/SubtractArrays.tsx"
+      ],
+      "bibleVizUtils.functions.time": [
+        "./packages/Bible Visualization Utils/bibleVizUtils/functions/time.tsx"
       ],
       "bibleVizUtils.functions.TryHideActivityNotificationOnPiece": [
         "./packages/Bible Visualization Utils/bibleVizUtils/functions/TryHideActivityNotificationOnPiece.tsx"
@@ -1289,6 +1310,9 @@
       ],
       "bibleVizUtils.functions.UpdateUsersColorOnPiece": [
         "./packages/Bible Visualization Utils/bibleVizUtils/functions/UpdateUsersColorOnPiece.tsx"
+      ],
+      "bibleVizUtils.functions.userPresence": [
+        "./packages/Bible Visualization Utils/bibleVizUtils/functions/userPresence.tsx"
       ],
       "bibleVizUtils.main.Initialize": [
         "./packages/Bible Visualization Utils/bibleVizUtils/main/Initialize.tsx"
@@ -2716,6 +2740,9 @@
       "scriptureMap2D.main.CustomHooks": [
         "./packages/Scripture Map 2D/scriptureMap2D/main/CustomHooks.tsx"
       ],
+      "scriptureMap2D.main.enums": [
+        "./packages/Scripture Map 2D/scriptureMap2D/main/enums.tsx"
+      ],
       "scriptureMap2D.main.FiltersSelectorOption": [
         "./packages/Scripture Map 2D/scriptureMap2D/main/FiltersSelectorOption.tsx"
       ],
@@ -2724,6 +2751,9 @@
       ],
       "scriptureMap2D.main.Initialize": [
         "./packages/Scripture Map 2D/scriptureMap2D/main/Initialize.tsx"
+      ],
+      "scriptureMap2D.main.interfaces": [
+        "./packages/Scripture Map 2D/scriptureMap2D/main/interfaces.tsx"
       ],
       "scriptureMap2D.main.onAuthBotAdded": [
         "./packages/Scripture Map 2D/scriptureMap2D/main/onAuthBotAdded.tsx"
@@ -2790,6 +2820,9 @@
       ],
       "scriptureMap2D.main.Tooltip": [
         "./packages/Scripture Map 2D/scriptureMap2D/main/Tooltip.tsx"
+      ],
+      "scriptureMap2D.main.types": [
+        "./packages/Scripture Map 2D/scriptureMap2D/main/types.tsx"
       ],
       "scriptureMap2D.main.UserPresenceUpdate": [
         "./packages/Scripture Map 2D/scriptureMap2D/main/UserPresenceUpdate.tsx"
