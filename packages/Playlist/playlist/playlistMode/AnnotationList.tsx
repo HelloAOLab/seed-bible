@@ -455,13 +455,13 @@ const AnnotationHeading = ({
                   click: () => {},
                   icon: "history",
                   disabled: true,
-                  label: globalThis.t("showVersionHistory"),
+                  label: t("showVersionHistory"),
                 },
                 {
                   disabled: true,
                   click: () => {},
                   icon: "download",
-                  label: globalThis.t("download"),
+                  label: t("download"),
                   noBorderBottom: true,
                 },
                 {

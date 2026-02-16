@@ -1154,6 +1154,14 @@ div.attachment-link.dropabble-Embed .playlist-item-type {
   z-index: 100;
 }
 
+.flatpickr-calendar.animate.open {
+  background-color: var(--pageBackground);
+}
+
+.flatpickr-calendar.animate.open * {
+  color: var(--pageTextColor);
+}
+
 .content-type {
   padding: 10px;
   cursor: pointer;

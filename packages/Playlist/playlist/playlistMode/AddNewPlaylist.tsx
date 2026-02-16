@@ -934,7 +934,7 @@ const AddNewPlaylist = ({
             }}
             secondaryAlt
           >
-            {globalThis.t("close")}
+            {t("close")}
           </Button>
         </div>
         <div

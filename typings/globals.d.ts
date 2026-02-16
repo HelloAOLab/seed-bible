@@ -19,6 +19,9 @@ declare global {
   const getPosition: () => { x: number; y: number };
   const FormatRelativeTime: (dateTime: number) => string;
   const setPlaylistLocale: (playLists: any[], id: string) => void;
+  const setPlaylistsLocale: (playLists: any[]) => void;
+  const setCollectionsLocale: (collections: any[]) => void;
+  const PlaylistModeTypes: Record<string, string>;
 }
 
 export const G = globalThis as unknown as Record<string, any>;

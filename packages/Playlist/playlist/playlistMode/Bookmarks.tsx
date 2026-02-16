@@ -82,8 +82,8 @@ const Bookmarks = () => {
               />
             </p>
             <p className="verse-style" style={{ flexGrow: 1 }}>
-              - {data.additionalInfo.data?.text?.substr(0, 22)}
-              {data.additionalInfo.data?.text?.length > 22 ? "..." : ""}
+              - {data.additionalInfo.data?.text?.substr(0, 18)}
+              {data.additionalInfo.data?.text?.length > 18 ? "..." : ""}
             </p>
             <p
               className="time-style"

@@ -1034,7 +1034,7 @@ const PlayerControls = ({ parentId = "default" }) => {
                   class="material-symbols-outlined unfollow img-icon"
                   style={{
                     margin: "0",
-                    width: "16px",
+                    minWidth: "10px",
                   }}
                 />
 
