@@ -4,8 +4,9 @@
 // number -> Index of chpater / verse / book
 
 const { useState, useLayoutEffect, useRef, useMemo } = os.appHooks;
+const G = globalThis as any;
 const { Input, Modal, Button, ButtonsCover, Checkbox, Tooltip, Select } =
-  Components;
+  G.Components;
 
 const ChecklistGIf =
   "https://auth-aux-aobot-prod-filesbucket-141297942820.s3.amazonaws.com/aoBot/90e85308635064b3d0fdaa9c220b8547a9467a10affe3cf22f06ad6b26fbf0a1.gif";
@@ -19,30 +20,30 @@ const TogglePlaylistHeight = await thisBot.TogglePlaylistHeight();
 
 // const AttachmentLinkItem = thisBot.AttachmentLinkItem();
 
-globalThis.DEFAULT_UPLOAD_ICON =
+G.DEFAULT_UPLOAD_ICON =
   "https://auth-aux-aobot-prod-filesbucket-141297942820.s3.amazonaws.com/aoBot/67bba604a31cc7e116124f92179d8fe06317fcf70a3c62f071dff529362ebc25.png";
 
 const startCreatingPlaylist = (name, playlist = [], id) => {
-  globalThis.HISTORYExploreMode = false;
-  globalThis[`${id}creatingPlaylistName`] = name;
-  globalThis[`${id}creatingPlaylist`] = true;
+  G.HISTORYExploreMode = false;
+  G[`${id}creatingPlaylistName`] = name;
+  G[`${id}creatingPlaylist`] = true;
   // thisBot.showInfo(`Playlist Mode`);
-  globalThis[`${id}SetCreatingPlaylist`](true, playlist);
+  G[`${id}SetCreatingPlaylist`](true, playlist);
 };
 
 const backToCreatePlaylist = (name, playlist = [], id) => {
-  globalThis.HISTORYExploreMode = false;
-  globalThis[`${id}creatingPlaylistName`] = name;
-  globalThis[`${id}creatingPlaylist`] = false;
-  globalThis[`${id}SetCreatingPlaylist`](false, playlist);
+  G.HISTORYExploreMode = false;
+  G[`${id}creatingPlaylistName`] = name;
+  G[`${id}creatingPlaylist`] = false;
+  G[`${id}SetCreatingPlaylist`](false, playlist);
 };
 
-const handleSheetUrl = async (link) => {
+const handleSheetUrl = async (link: string) => {
   const response = await thisBot.getSheetDataAndFetch({ link });
   return response;
 };
 
-function getSortedDateFormats(selectedValue) {
+function getSortedDateFormats(selectedValue: string) {
   const DATE_FORMAT_OPTIONS = [
     { label: "DD MMM", value: "DD MMM" }, // Ex: 15 Jan
     { label: "MM-DD-YYYY", value: "MM-DD-YYYY" },
@@ -77,7 +78,7 @@ const PROMPT_OPTIONS = [
   { label: "System Prompt", value: "system-prompt" },
 ];
 
-const AI_OPTIONS = [
+const AI_OPTIONS: { value: string; label: string }[] = [
   // { value: "openai/gpt/5-mini", label: "OpenAI GPT-5 Mini" },
   { value: "openai/gpt/4o-mini", label: "OpenAI GPT-4o Mini" },
   { value: "openai/gpt/o1-mini", label: "OpenAI GPT-o1 Mini" },
@@ -120,11 +121,11 @@ const Playlist = ({
   const [mediaURL, setMediaURL] = useState("");
   const [videoSrc, setVideoSrc] = useState(false);
   const [currentItem, setCurrentItem] = useState({});
-  const [selectedAI, setSelectedAI] = useState(AI_OPTIONS[0].value);
+  const [selectedAI, setSelectedAI] = useState(AI_OPTIONS[0]?.value || "");
 
-  globalThis.SetVideoSrc = setVideoSrc;
-  globalThis.SetMediaURL = setMediaURL;
-  globalThis.SetCurrentItem = setCurrentItem;
+  G.SetVideoSrc = setVideoSrc;
+  G.SetMediaURL = setMediaURL;
+  G.SetCurrentItem = setCurrentItem;
 
   const [showPlaylistSettings, setShowPlaylistSettings] = useState(false);
   const [showMoreOptions, setShowMoreOptions] = useState(false);
@@ -142,9 +143,9 @@ const Playlist = ({
   const [embedding, setEmbedding] = useState(null);
 
   useLayoutEffect(() => {
-    globalThis[`SetChecklistEnabled`] = setChecklistEnabled;
+    G[`SetChecklistEnabled`] = setChecklistEnabled;
     return () => {
-      globalThis[`SetChecklistEnabled`] = null;
+      G[`SetChecklistEnabled`] = null;
     };
   }, [checklistEnabled]);
 
@@ -163,9 +164,7 @@ const Playlist = ({
   const [layersWarning, setLayersWarning] = useState(false);
 
   const [openAttachLink, setOpenAttachLink] = useState(false);
-  const [attachment, setAttachment] = useState(
-    globalThis[`${id}Attachments`] || null
-  );
+  const [attachment, setAttachment] = useState(G[`${id}Attachments`] || null);
   const [openModal, setOpenModal] = useState(false);
   const [mergeMode, setMergeMode] = useState(false);
   const [renderAgain, setRenderAgain] = useState(0);
@@ -176,16 +175,14 @@ const Playlist = ({
 
   const [currentPromptText, setCurrentPromptText] = useState("prompt");
 
-  const [systemPrompt, setSystemPrompt] = useState(
-    globalThis.SYSTEM_PROMPT || ""
-  );
+  const [systemPrompt, setSystemPrompt] = useState(G.SYSTEM_PROMPT || "");
 
   const isEdit = useRef(false);
   const [openModalName, setOpenModalName] = useState(false);
 
-  const toggleOpenModalName = (val) => {
+  const toggleOpenModalName = (val: boolean) => {
     setOpenModalName(val);
-    if (globalThis.SetRenamingPlaylist) globalThis.SetRenamingPlaylist(val);
+    if (G.SetRenamingPlaylist) G.SetRenamingPlaylist(val);
   };
 
   const [autoGenerateOn, setAutoGenerateOn] = useState(false);
@@ -193,9 +190,7 @@ const Playlist = ({
 
   const [loading, setLoading] = useState(false);
 
-  const [name, setName] = useState(
-    globalThis[`${id}creatingPlaylistName`] || ""
-  );
+  const [name, setName] = useState(G[`${id}creatingPlaylistName`] || "");
   const [link, setLink] = useState("");
 
   // Features
@@ -232,36 +227,32 @@ const Playlist = ({
     }, 10);
   };
 
-  const [playLists, setPlayLists] = useState(
-    globalThis[`${id}playlists`] || []
-  );
-  const [selectedPlaylist, setSelectedPlaylist] = useState({});
+  const [playLists, setPlayLists] = useState(G[`${id}playlists`] || []);
+  const [selectedPlaylist, setSelectedPlaylist] = useState<any>({});
 
-  const toggleSelectedPlaylist = (id, parentID) => {
-    setSelectedPlaylist((prev) => {
-      const old = { ...prev };
+  const toggleSelectedPlaylist = (id: string, parentID: string) => {
+    setSelectedPlaylist((prev: any) => {
+      const old: Record<string, boolean | string> = { ...prev };
       old[id] = old[id] ? false : parentID || true;
       return old;
     });
   };
 
-  const [playList, setPlaylist] = useState(
-    globalThis[`${id}currentPlaylist`] || []
-  );
+  const [playList, setPlaylist] = useState(G[`${id}currentPlaylist`] || []);
 
   const editPlaylistData = (
-    idRec,
-    newValueContent,
+    idRec: string,
+    newValueContent: Record<string, any>,
     parentId = null,
     fullData = false
   ) => {
-    setPlaylist((prev) => {
+    setPlaylist((prev: any[]) => {
       const old = [...prev];
       if (parentId) {
         const parentIdx = old.findIndex((e) => e.id === parentId);
         if (parentIdx > -1) {
           const idx = old[parentIdx].additionalInfo.layers.findIndex(
-            (e) => e.id === idRec
+            (e: any) => e.id === idRec
           );
           if (idx > -1) {
             if (fullData) {
@@ -290,20 +281,24 @@ const Playlist = ({
     });
   };
 
-  const addDataToPlaylist = (data, isBulk = false, combineLast = false) => {
+  const addDataToPlaylist = (
+    data: any[],
+    isBulk = false,
+    combineLast = false
+  ) => {
     if (isBulk) {
-      setPlaylist((prev) => {
+      setPlaylist((prev: any[]) => {
         const old = [...prev, ...data];
         return old;
       });
       return;
     }
 
-    setPlaylist((prev) => {
+    setPlaylist((prev: any[]) => {
       const old = [...prev];
       if (combineLast) old.pop();
       const lastData = old[old.length - 1];
-      const isSame = objectComparator(data, lastData, ["content"]);
+      const isSame = G.objectComparator(data, lastData, ["content"]);
       if (!isSame) {
         old.push(data);
       } else {
@@ -317,7 +312,7 @@ const Playlist = ({
     const allItems = thisBot.getSuggestedListItems({ searchText });
 
     setSearchText("");
-    setPlaylist((prev) => {
+    setPlaylist((prev: any[]) => {
       const old = [...prev, ...allItems];
       return old;
     });
@@ -330,17 +325,17 @@ const Playlist = ({
     setChecklist(false);
   };
 
-  const addPlaylist = (data, id = false, subId = null) => {
-    setPlayLists((p) => {
+  const addPlaylist = (data: any, id = false, subId: string | null = null) => {
+    setPlayLists((p: any[]) => {
       const old = [...p];
-      globalThis.AlreadySet = true;
+      G.AlreadySet = true;
       if (id) {
         if (subId) {
-          const subIndex = globalThis[`${id}playlists`].findIndex(
-            (pl) => pl.id === subId
+          const subIndex = G[`${id}playlists`].findIndex(
+            (pl: any) => pl.id === subId
           );
-          const index = globalThis[`${id}playlists`][subIndex].list.findIndex(
-            (pl) => pl.id === id
+          const index = G[`${id}playlists`][subIndex].list.findIndex(
+            (pl: any) => pl.id === id
           );
           if (data.list.length === 0 && !old[subIndex].list[index].attachment) {
             old[subIndex].list[index].splice(index, 1);
@@ -356,19 +351,22 @@ const Playlist = ({
           }
         }
       } else {
-        globalThis[`${"default"}playlists`] = old;
+        G[`${"default"}playlists`] = old;
         if (data.list.length === 0) return old;
         old.push(data);
       }
-      globalThis[`${"default"}playlists`] = old;
+      G[`${"default"}playlists`] = old;
       return old;
     });
   };
 
-  const deleteDataFromPlaylist = (index, pId) => {
-    setPlaylist((prev) => {
+  const deleteDataFromPlaylist = (
+    index: number | number[],
+    pId: string | null = null
+  ) => {
+    setPlaylist((prev: any[]) => {
       const isBulk = Array.isArray(index);
-      const idMaps = {};
+      const idMaps: Record<string, boolean> = {};
       let old = [...prev];
       if (pId) {
         const indexParent = old.findIndex((ele) => ele.id === pId);
@@ -388,13 +386,13 @@ const Playlist = ({
   };
 
   const deleteDateData = () => {
-    setPlaylist((prev) => {
+    setPlaylist((prev: any[]) => {
       let old = [...prev.filter((ele) => ele.type !== "date")];
       return old;
     });
   };
 
-  const SetCreatingPlaylist = (value, list = []) => {
+  const SetCreatingPlaylist = (value: boolean, list: any[] = []) => {
     const anyDate = list.findIndex((ele) => ele.type === "date") > -1;
     if (anyDate) {
       setReadingPlan(true);
@@ -406,10 +404,10 @@ const Playlist = ({
   };
 
   useLayoutEffect(() => {
-    globalThis.IS_PLAYLIST_ACTIVE = creatingPlaylist;
-    globalThis.SET_SHOW_CHECK && globalThis.SET_SHOW_CHECK(creatingPlaylist);
+    G.IS_PLAYLIST_ACTIVE = creatingPlaylist;
+    G.SET_SHOW_CHECK && G.SET_SHOW_CHECK(creatingPlaylist);
     return () => {
-      globalThis.SET_SHOW_CHECK && globalThis.SET_SHOW_CHECK(false);
+      G.SET_SHOW_CHECK && G.SET_SHOW_CHECK(false);
     };
   }, [creatingPlaylist]);
 
@@ -426,63 +424,63 @@ const Playlist = ({
   // }
 
   useLayoutEffect(() => {
-    globalThis[`${id}AddDataToPlaylist`] = addDataToPlaylist;
-    globalThis[`${id}EditPlaylistData`] = editPlaylistData;
-    globalThis[`${id}ResetPlaylist`] = resetPlayist;
-    globalThis[`${id}SetCreatingPlaylist`] = SetCreatingPlaylist;
-    globalThis[`${id}SetPlaylistName`] = setName;
-    globalThis[`${id}AddPlaylist`] = addPlaylist;
-    globalThis[`${id}creatingPlaylistName`] = name;
-    globalThis[`${id}currentPlaylist`] = playList;
-    if (globalThis.SetRenderMylist) globalThis.SetRenderMylist(playList);
-    if (!globalThis.AlreadySet) globalThis[`${id}playlists`] = playLists;
-    globalThis.AlreadySet = false;
-    globalThis[`${id}Attachments`] = attachment;
-    globalThis[`${id}SetAttachments`] = setAttachment;
-    globalThis[`${id}SetPlaylists`] = setPlayLists;
-    globalThis[`${id}SetChecklist`] = setChecklist;
-    globalThis[`${id}SetReadingPlan`] = setReadingPlan;
-    globalThis[`${id}SetCurrentFormat`] = setCurrentFormat;
-    globalThis[`${id}setCustomColor`] = setCustomColor;
-    globalThis[`${id}setCustomIcon`] = setCustomIcon;
-    globalThis[`${id}setSelectedColor`] = setSelectedColor;
-    globalThis[`${id}setSelectedIcon`] = setSelectedIcon;
-    globalThis[`${id}setDescription`] = setDescription;
-    globalThis[`${id}setPublishAccess`] = setPublishAccess;
-    globalThis[`setRenderAgain`] = setRenderAgain;
+    G[`${id}AddDataToPlaylist`] = addDataToPlaylist;
+    G[`${id}EditPlaylistData`] = editPlaylistData;
+    G[`${id}ResetPlaylist`] = resetPlayist;
+    G[`${id}SetCreatingPlaylist`] = SetCreatingPlaylist;
+    G[`${id}SetPlaylistName`] = setName;
+    G[`${id}AddPlaylist`] = addPlaylist;
+    G[`${id}creatingPlaylistName`] = name;
+    G[`${id}currentPlaylist`] = playList;
+    if (G.SetRenderMylist) G.SetRenderMylist(playList);
+    if (!G.AlreadySet) G[`${id}playlists`] = playLists;
+    G.AlreadySet = false;
+    G[`${id}Attachments`] = attachment;
+    G[`${id}SetAttachments`] = setAttachment;
+    G[`${id}SetPlaylists`] = setPlayLists;
+    G[`${id}SetChecklist`] = setChecklist;
+    G[`${id}SetReadingPlan`] = setReadingPlan;
+    G[`${id}SetCurrentFormat`] = setCurrentFormat;
+    G[`${id}setCustomColor`] = setCustomColor;
+    G[`${id}setCustomIcon`] = setCustomIcon;
+    G[`${id}setSelectedColor`] = setSelectedColor;
+    G[`${id}setSelectedIcon`] = setSelectedIcon;
+    G[`${id}setDescription`] = setDescription;
+    G[`${id}setPublishAccess`] = setPublishAccess;
+    G[`setRenderAgain`] = setRenderAgain;
     setPlaylistLocale(playLists, id);
-    globalThis[`setOpenAttachLink`] = setOpenAttachLink;
-    globalThis[`SetEditModal`] = setEditModal;
-    globalThis[`SetSelectPlaylist`] = setSelectPlaylist;
-    globalThis[`${id}SetSelectedTags`] = setTags;
-    globalThis[`${id}SetLayers`] = setLayers;
+    G[`setOpenAttachLink`] = setOpenAttachLink;
+    G[`SetEditModal`] = setEditModal;
+    G[`SetSelectPlaylist`] = setSelectPlaylist;
+    G[`${id}SetSelectedTags`] = setTags;
+    G[`${id}SetLayers`] = setLayers;
     return () => {
-      globalThis[`${id}SetPlaylistName`] = null;
-      globalThis[`${id}AddDataToPlaylist`] = null;
-      globalThis[`${id}AddPlaylist`] = null;
-      globalThis[`${id}SetChecklist`] = null;
-      globalThis[`${id}SetPlaylists`] = null;
-      globalThis[`${id}setPublishAccess`] = null;
-      globalThis[`${id}setCustomColor`] = null;
-      globalThis[`${id}setCustomIcon`] = null;
-      globalThis[`${id}setSelectedColor`] = null;
-      globalThis[`setOpenAttachLink`] = null;
-      globalThis[`${id}setSelectedIcon`] = null;
-      globalThis[`${id}setDescription`] = null;
-      globalThis[`${id}SetCurrentFormat`] = null;
-      globalThis[`${id}SetReadingPlan`] = null;
-      globalThis[`SetSelectPlaylist`] = null;
+      G[`${id}SetPlaylistName`] = null;
+      G[`${id}AddDataToPlaylist`] = null;
+      G[`${id}AddPlaylist`] = null;
+      G[`${id}SetChecklist`] = null;
+      G[`${id}SetPlaylists`] = null;
+      G[`${id}setPublishAccess`] = null;
+      G[`${id}setCustomColor`] = null;
+      G[`${id}setCustomIcon`] = null;
+      G[`${id}setSelectedColor`] = null;
+      G[`setOpenAttachLink`] = null;
+      G[`${id}setSelectedIcon`] = null;
+      G[`${id}setDescription`] = null;
+      G[`${id}SetCurrentFormat`] = null;
+      G[`${id}SetReadingPlan`] = null;
+      G[`SetSelectPlaylist`] = null;
     };
   }, [playList, name, playLists, attachment]);
 
-  const checkNameDuplicate = (newName) => {
+  const checkNameDuplicate = (newName: string) => {
     const nameValue = (newName || name).trim();
     if (!nameValue)
       return ShowNotification({
         message: t("playlistNameNotFound"),
         severity: "error",
       });
-    const names = playLists.map((ele) => ele.name);
+    const names = playLists.map((ele: any) => ele.name);
     if (names.includes(nameValue) && !isEdit.current) {
       ShowNotification({
         message: t("playlistNameAlreadyPresent"),
@@ -493,7 +491,7 @@ const Playlist = ({
     return false;
   };
 
-  const attachLink = (title, link, linkState) => {
+  const attachLink = (title: string, link: string, linkState: any) => {
     const dataItem = {
       content: title,
       additionalInfo: {
@@ -502,14 +500,14 @@ const Playlist = ({
       },
       type: linkState.type === "text" ? "heading" : "attachment-link",
     };
-    if (!!itemSelected) {
-      setPlaylist((old) => {
+    if (itemSelected) {
+      setPlaylist((old: any[]) => {
         const prev = [...old];
         const index = prev.findIndex((ele) => ele.id === itemSelected);
         const targetVerse = prev[index];
         targetVerse.additionalInfo.layers = [
           {
-            id: createUUID(),
+            id: G.createUUID(),
             content: title,
             additionalInfo: {
               link,
@@ -523,7 +521,7 @@ const Playlist = ({
         return prev;
       });
       setTimeout(() => {
-        globalThis[`${itemSelected}OpenToggle`](true);
+        G[`${itemSelected}OpenToggle`](true);
       }, 300);
     } else {
       thisBot.tryAddDataToPlaylist({
@@ -533,9 +531,9 @@ const Playlist = ({
     setOpenAttachLink(false);
   };
 
-  const massAdd = (items) => {
-    if (!!itemSelected) {
-      setPlaylist((old) => {
+  const massAdd = (items: any[]) => {
+    if (itemSelected) {
+      setPlaylist((old: any[]) => {
         const prev = [...old];
         const index = prev.findIndex((ele) => ele.id === itemSelected);
         const targetVerse = prev[index];
@@ -547,7 +545,7 @@ const Playlist = ({
         return prev;
       });
       setTimeout(() => {
-        globalThis[`${itemSelected}OpenToggle`](true);
+        G[`${itemSelected}OpenToggle`](true);
       }, 300);
     } else {
       items.forEach((item) => {
@@ -559,22 +557,28 @@ const Playlist = ({
     setOpenAttachLink(false);
   };
 
-  const attachDate = () => {
-    thisBot.onAddDate({
-      onAttach: (date) => {
-        setReadingPlan(true);
-        thisBot.tryAddDataToPlaylist({
-          dataItem: {
-            content: FORMAT_DATE(date || new Date()),
-            additionalInfo: {
-              date: FORMAT_YYYY_MM_DD(date || new Date()),
-            },
-            type: "date",
-          },
-        });
-        setOpenAttachLink(false);
+  const attachDate = (date: string = "") => {
+    // thisBot.onAddDate({
+    // onAttach: (date) => {
+    setReadingPlan(true);
+    thisBot.tryAddDataToPlaylist({
+      dataItem: {
+        content: G.FORMAT_DATE(
+          date.replaceAll("/", "-") || new Date(),
+          "DEFAULT",
+          "MM-DD-YYYY"
+        ),
+        additionalInfo: {
+          date: G.FORMAT_YYYY_MM_DD(
+            new Date(`${date.replaceAll("/", "-")} 12:00:00`) || new Date()
+          ),
+        },
+        type: "date",
       },
     });
+    // setOpenAttachLink(false);
+    // },
+    // });
   };
 
   useLayoutEffect(() => {
@@ -590,7 +594,7 @@ const Playlist = ({
   ]);
 
   const onBulkDelete = () => {
-    setPlayLists((prev) => {
+    setPlayLists((prev: any[]) => {
       let old = [...prev];
       old = old.filter((prev) => !selectedPlaylist[prev.id]);
       return old;
@@ -599,13 +603,13 @@ const Playlist = ({
   };
 
   const onBulkJsonDownload = () => {
-    const listToDownload = [];
+    const listToDownload: any[] = [];
     playLists.forEach(({ list, id: playlistID }) => {
-      if (!!selectedPlaylist[playlistID]) {
-        list.forEach((ele) => {
+      if (selectedPlaylist[playlistID]) {
+        list.forEach((ele: any) => {
           listToDownload.push({
             ...ele,
-            id: createUUID(),
+            id: G.createUUID(),
           });
         });
       }
@@ -1519,9 +1523,9 @@ const Playlist = ({
             {!regenrateUI && !itemSelected && (
               <AttachLink
                 isDate
-                onDateClick={() => {
+                onDateClick={(date: string = "") => {
                   setRegenrateUI(false);
-                  attachDate();
+                  attachDate(date);
                 }}
                 massAdd={massAdd}
                 attachLink={attachLink}

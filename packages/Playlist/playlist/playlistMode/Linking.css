@@ -1,41 +1,42 @@
 .linked-item-custom {
-    border: 1px solid black;
-    border-radius: 4px;
-    box-shadow: 2px 4px 8px rgba(0, 0, 0, 0.4);
+  border: 1px solid black;
+  border-radius: 4px;
+  box-shadow: 2px 4px 8px rgba(0, 0, 0, 0.4);
 }
 
 .overlay-ref {
-    position: relative;
+  position: relative;
 }
 
 .overlay {
-    visibility: visible;
-    opacity: 1;
-    transition: all 0.2s linear;
-    width: 340px;
-    padding: 12px;
-    max-height: 270px;
-    /* overflow: auto; */
-    position: absolute;
-    z-index: 10001;
-    border-radius: 0.625rem;
-    transform: translateX(-100%);
-    background-color: var(--pageBackground);
-    overflow: visible;
+  visibility: visible;
+  opacity: 1;
+  transition: all 0.2s linear;
+  width: 340px;
+  padding: 12px;
+  max-height: 270px;
+  /* overflow: auto; */
+  position: absolute;
+  z-index: 10001;
+  border-radius: 0.625rem;
+  transform: translateX(-100%);
+  /* background-color: var(--pageBackground); */
+  background-color: #202020;
+  overflow: visible;
 }
 
-
 .more-menu-items:not(:last-of-type, .noBorderBottom) {
-    /* border-bottom: 1px solid #3E3E3E; */
+  /* border-bottom: 1px solid #3E3E3E; */
 }
 
 .more-menu-items:hover {
-    background-color: #4b4b4b;
+  /* background-color: var(--panelBackground); */
+  background-color: #4b4b4b;
 }
 
 .link-tag {
-    width: 24px;
-    height: 24px;
-    border-radius: 50%;
-    font-size: 12px;
+  width: 24px;
+  height: 24px;
+  border-radius: 50%;
+  font-size: 12px;
 }

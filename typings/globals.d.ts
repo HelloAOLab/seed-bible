@@ -17,6 +17,8 @@ declare global {
     severity: "error" | "warning" | "info" | "success";
   }) => void;
   const getPosition: () => { x: number; y: number };
+  const FormatRelativeTime: (dateTime: number) => string;
+  const setPlaylistLocale: (playLists: any[], id: string) => void;
 }
 
 export const G = globalThis as unknown as Record<string, any>;

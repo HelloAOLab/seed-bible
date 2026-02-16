@@ -776,6 +776,9 @@ const Playlist = () => {
           </h2>
           <p>{globalThis.t("playlistCurrentlyPlayingConfirm")}</p>
           <ButtonsCover>
+            <Button secondaryAlt onClick={closeConfirmStopPlaylist}>
+              {globalThis.t("no")}
+            </Button>
             <Button
               secondary
               onClick={() => {
@@ -792,9 +795,6 @@ const Playlist = () => {
               variant="black"
             >
               {globalThis.t("confirm")}
-            </Button>
-            <Button secondaryAlt onClick={closeConfirmStopPlaylist}>
-              {globalThis.t("no")}
             </Button>
           </ButtonsCover>
         </Modal>

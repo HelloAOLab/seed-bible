@@ -1,16 +1,18 @@
-const { useState, useLayoutEffect } = os.appHooks;
+const { useState, useRef, useLayoutEffect } = os.appHooks;
 // check_circle
-const { Input, Modal, Button, ButtonsCover, Checkbox } = Components;
+const G = globalThis as any;
+const { Input, Modal, Button, ButtonsCover, Checkbox } = G.Components;
 const Linking = thisBot.LinkingItems();
 const isMobile =
   (window?.innerWidth || gridPortalBot.tags.pixelWidth) <
-  MOBILE_VIEWPORT_THRESHOLD;
+  G.MOBILE_VIEWPORT_THRESHOLD;
 const editAbleTypes = {
   youtube: true,
   iframe: true,
   video: true,
   Video: true,
   externalLink: true,
+  date: true,
 };
 
 const AutoplayIcons = {
@@ -66,19 +68,36 @@ const AttachLinkItem = ({
   autoPlayToggle = null,
 }) => {
   const [editDateModal, setEditDateModal] = useState(false);
+  const datePickerRef = useRef<any>(null);
   const [date, setDate] = useState(
-    FORMAT_YYYY_MM_DD(data.additionalInfo.date || new Date())
+    G.FORMAT_YYYY_MM_DD(data.additionalInfo.date || new Date())
   );
-  const onDateSave = () => {
-    setList((prev) => {
+
+  useLayoutEffect(() => {
+    if (datePickerRef.current) {
+      (window as any).flatpickr(datePickerRef.current, {
+        dateFormat: "m/d/Y",
+        allowInput: false,
+      });
+    }
+  }, []);
+
+  const onDateSave = (date: string) => {
+    setList((prev: any[]) => {
       const old = [...prev];
       const index = old.findIndex((ele) => ele.id === data.id);
       if (index > -1) {
         old[index] = {
           ...old[index],
-          content: FORMAT_DATE(date),
+          content: G.FORMAT_DATE(
+            date.replaceAll("/", "-"),
+            "DEFAULT",
+            "MM-DD-YYYY"
+          ),
           additionalInfo: {
-            date: FORMAT_YYYY_MM_DD(date),
+            date: G.FORMAT_YYYY_MM_DD(
+              new Date(`${date.replaceAll("/", "-")} 12:00:00`)
+            ),
           },
         };
       }
@@ -100,12 +119,17 @@ const AttachLinkItem = ({
 
   return (
     <>
+      <link
+        rel="stylesheet"
+        href="https://cdn.jsdelivr.net/npm/flatpickr/dist/flatpickr.min.css"
+      />
       {editDateModal && (
         <Modal
-          title={t('changeDate')}
+          title={t("changeDate")}
           showIcon={false}
-          onClose={() => setEditDateModal(false)}>
-          <h3>{t('editDate')}</h3>
+          onClose={() => setEditDateModal(false)}
+        >
+          <h3>{t("editDate")}</h3>
           <input
             type="date"
             value={date}
@@ -123,11 +147,12 @@ const AttachLinkItem = ({
               onClick={() => {
                 onDateSave();
                 setEditDateModal(false);
-              }}>
-              {t('save')}
+              }}
+            >
+              {t("save")}
             </Button>
             <Button secondaryAlt onClick={() => setEditDateModal(false)}>
-              {t('close')}
+              {t("close")}
             </Button>
           </ButtonsCover>
         </Modal>
@@ -200,7 +225,8 @@ const AttachLinkItem = ({
           handleDragStart(index, pId);
         }}
         onDragOver={(e) => handleDragOver(index, originalIndex, null, e)}
-        onDragEnd={handleDragEnd}>
+        onDragEnd={handleDragEnd}
+      >
         <input
           style={{
             opacity: "0",
@@ -264,7 +290,8 @@ const AttachLinkItem = ({
                     setEditDateModal(true);
                   }
                 }}
-                class="material-symbols-outlined unfollow drag-item-icon">
+                class="material-symbols-outlined unfollow drag-item-icon"
+              >
                 playlist_play
               </span>
             ) : data.additionalInfo.type === "voice-recording" ? (
@@ -285,11 +312,25 @@ const AttachLinkItem = ({
             ) : (
               <span
                 onClick={() => {
-                  if (data.type === "date" && creatingPlaylist && !viewOnly) {
-                    setEditDateModal(true);
-                  }
+                  // if (data.type === "date" && creatingPlaylist && !viewOnly) {
+                  //   setEditDateModal(true);
+                  // }
                 }}
-                class="material-symbols-outlined unfollow drag-item-icon">
+                style={{ position: "relative" }}
+                class="material-symbols-outlined unfollow drag-item-icon"
+              >
+                <input
+                  ref={datePickerRef}
+                  type="date"
+                  onChange={(e: any) => {
+                    if (!e.target.value) {
+                      return;
+                    }
+                    onDateSave(e?.target?.value || "");
+                  }}
+                  className="hidden-date"
+                  placeholder="MM/DD/YYYY"
+                />
                 {data.type === "date" ? "calendar_month" : "media_link"}
               </span>
             )
@@ -386,11 +427,12 @@ const AttachLinkItem = ({
             data.type === "heading"
               ? "no-left-padding"
               : data.type !== "date" && checklistEnabled && !viewOnly
-              ? "checklistEnabled"
-              : ""
+                ? "checklistEnabled"
+                : ""
           } playlist-item-type playlist-item-verse ${
             toggle === data.id && "current-playing-item"
-          }`}>
+          }`}
+        >
           {data.type === "date"
             ? FORMAT_DATE(data?.additionalInfo.date, currentFormat)
             : data?.content.substr(0, 25)}{" "}
@@ -402,7 +444,8 @@ const AttachLinkItem = ({
               style={{ marginLeft: "10px" }}
               target="_blank"
               rel="noreferrer"
-              href={data.additionalInfo?.link}>
+              href={data.additionalInfo?.link}
+            >
               🔗
             </a>
           )}
@@ -432,7 +475,8 @@ const AttachLinkItem = ({
                 document.body.appendChild(link);
                 link.click();
                 link.remove();
-              }}>
+              }}
+            >
               <span class="material-symbols-outlined">download</span>
             </p>
           )}
@@ -454,7 +498,8 @@ const AttachLinkItem = ({
                 data.autoPlay && !playingPlaylist ? "active" : ""
               } without-right-margin ${`${
                 (isMobile || playingPlaylist) && "visible"
-              }`}`}>
+              }`}`}
+            >
               <img
                 src={
                   data.autoPlay && !playingPlaylist
@@ -465,7 +510,7 @@ const AttachLinkItem = ({
               />
             </p>
           )}
-          {editAbleTypes[data.additionalInfo.type] &&
+          {editAbleTypes[data.additionalInfo.type || data.type] &&
             creatingPlaylist &&
             !viewOnly && (
               <p
@@ -474,6 +519,10 @@ const AttachLinkItem = ({
                 }`}`}
                 onClick={(e) => {
                   e.stopPropagation();
+                  if (data.type === "date") {
+                    datePickerRef.current.click();
+                    return;
+                  }
                   globalThis.SetEditAttachmentItem({
                     id: data.id,
                     parentId: pId,
@@ -483,7 +532,8 @@ const AttachLinkItem = ({
                     link: data.additionalInfo.link,
                     mediaType: data.additionalInfo.type,
                   });
-                }}>
+                }}
+              >
                 <span class="material-symbols-outlined unfollow delete-icon">
                   edit
                 </span>
@@ -504,7 +554,8 @@ const AttachLinkItem = ({
                   if (onDisembed) {
                     onDisembed();
                   }
-                }}>
+                }}
+              >
                 <span class="material-symbols-outlined unfollow delete-icon">
                   link_off
                 </span>
@@ -518,7 +569,8 @@ const AttachLinkItem = ({
               onClick={(e) => {
                 e.stopPropagation();
                 deleteFromList(index, pId, data.id);
-              }}>
+              }}
+            >
               <span class="material-symbols-outlined unfollow delete-icon">
                 delete
               </span>
