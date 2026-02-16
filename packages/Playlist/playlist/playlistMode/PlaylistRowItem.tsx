@@ -422,12 +422,12 @@ const PlaylistRowItem = ({
     <>
       {!!warningMessage && (
         <Modal
-          title={globalThis.t("editPlaylistTitle")}
+          title={t("editPlaylistTitle")}
           showIcon={false}
           onClose={onCloseWarningPopup}
         >
-          <p>{globalThis.t("editSharedPlaylistMsg")}</p>
-          <p>{globalThis.t("makeACopy")}</p>
+          <p>{t("editSharedPlaylistMsg")}</p>
+          <p>{t("makeACopy")}</p>
           <ButtonsCover>
             <Button
               secondary
@@ -436,10 +436,10 @@ const PlaylistRowItem = ({
                 setWarningMsg(null);
               }}
             >
-              {globalThis.t("yes")}
+              {t("yes")}
             </Button>
             <Button secondaryAlt onClick={onCloseWarningPopup}>
-              {globalThis.t("no")}
+              {t("no")}
             </Button>
           </ButtonsCover>
         </Modal>
@@ -662,7 +662,7 @@ const PlaylistRowItem = ({
                     color: "#139981",
                   }}
                 >
-                  {globalThis.t("nowPlaying")}
+                  {t("nowPlaying")}
                 </span>
               </>
             )
@@ -691,7 +691,7 @@ const PlaylistRowItem = ({
             </p>
           )}
           {list?.length === 0 && (
-            <h4 style={{ margin: "8px 0" }}>{globalThis.t("noItemsYet")}</h4>
+            <h4 style={{ margin: "8px 0" }}>{t("noItemsYet")}</h4>
           )}
           {opendedList && (
             <DragDrop
@@ -771,7 +771,7 @@ const PlaylistRowItem = ({
                     setShowMoreOptions(false);
                   }}
                 >
-                  <p>{globalThis.t("renamePlaylist")}</p>
+                  <p>{t("renamePlaylist")}</p>
                 </div>
                 <div
                   className="more-menu-items"
@@ -803,7 +803,7 @@ const PlaylistRowItem = ({
                     setShowMoreOptions(false);
                   }}
                 >
-                  <p>{globalThis.t("editPlaylist")}</p>
+                  <p>{t("editPlaylist")}</p>
                 </div>
               </>
             )}
@@ -814,7 +814,7 @@ const PlaylistRowItem = ({
                 setShowMoreOptions(false);
               }}
             >
-              <p>{globalThis.t("duplicatePlaylist")}</p>
+              <p>{t("duplicatePlaylist")}</p>
             </div>
             <div
               className="more-menu-items"
@@ -823,10 +823,10 @@ const PlaylistRowItem = ({
                 setShowMoreOptions(false);
               }}
             >
-              <p>{globalThis.t("downloadPlaylistJSON")}</p>
+              <p>{t("downloadPlaylistJSON")}</p>
             </div>
             <div className="more-menu-items" onClick={copyClipBoard}>
-              <p>{globalThis.t("sharePlaylist")}</p>
+              <p>{t("sharePlaylist")}</p>
             </div>
             {!creatingPlaylist && !viewOnly && !isPlayingPLaylist && (
               <div
@@ -837,7 +837,7 @@ const PlaylistRowItem = ({
                   setShowMoreOptions(false);
                 }}
               >
-                <p>{globalThis.t("delete")}</p>
+                <p>{t("delete")}</p>
               </div>
             )}
             {!creatingPlaylist &&
@@ -850,7 +850,7 @@ const PlaylistRowItem = ({
                     exportNestedList();
                   }}
                 >
-                  <p>{globalThis.t("exportOutside")}</p>
+                  <p>{t("exportOutside")}</p>
                   <span
                     class="material-symbols-outlined unfollow"
                     style={{ ...ButtonStyle, fontSize: "22px" }}
@@ -878,7 +878,7 @@ const PlaylistRowItem = ({
                     });
                   }}
                 >
-                  <p>{globalThis.t("mergePlaylist")}</p>
+                  <p>{t("mergePlaylist")}</p>
                   <span
                     class="material-symbols-outlined unfollow"
                     style={{ ...ButtonStyle, fontSize: "22px" }}

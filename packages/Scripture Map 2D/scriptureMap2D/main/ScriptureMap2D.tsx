@@ -1,25 +1,19 @@
+import { TimeProvider } from "scriptureMap2D.main.TimeContext";
 import { ScriptureMap2DProvider } from "scriptureMap2D.main.ScriptureMap2DContext";
 import { Wrapper } from "scriptureMap2D.main.Wrapper";
-import { TimeProvider } from "scriptureMap2D.main.TimeContext";
 import { ReadingHistoryProvider } from "scriptureMap2D.main.ReadingHistoryContext";
+import { ScriptureMap2DModes } from "scriptureMap2D.main.enums";
+import type { ScriptureMap2DConfig } from "scriptureMap2D.main.interfaces";
 const { memo } = os.appCompat;
 
-export const ScriptureMap2DModes = Object.freeze({
-  Viewer: "Viewer",
-  Checkbox: "Checkbox",
-  Project: "Project",
-});
+type ScriptureMap2DProps = {
+  config: ScriptureMap2DConfig;
+};
 
-export const ProjectChapterState = Object.freeze({
-  None: "None",
-  Assigned: "Assigned",
-  InProgress: "InProgress",
-  NeedsReview: "NeedsReview",
-  Completed: "Completed",
-});
-
-export const ScriptureMap2D = memo(({ parentContext }) => {
-  const { mode, project } = parentContext;
+export const ScriptureMap2D = memo<
+  (args: ScriptureMap2DProps) => React.JSX.Element | null
+>(({ config }) => {
+  const { mode, project } = config;
 
   if (mode === ScriptureMap2DModes.Project && !project) return null;
 
@@ -27,11 +21,7 @@ export const ScriptureMap2D = memo(({ parentContext }) => {
     <>
       <style>{thisBot.tags["ScriptureMap2D.css"]}</style>
       <TimeProvider>
-        <ScriptureMap2DProvider
-          parentContext={parentContext}
-          ScriptureMap2DModes={ScriptureMap2DModes}
-          ProjectChapterState={ProjectChapterState}
-        >
+        <ScriptureMap2DProvider config={config}>
           <ReadingHistoryProvider>
             <Wrapper />
           </ReadingHistoryProvider>

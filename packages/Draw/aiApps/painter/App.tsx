@@ -1,71 +1,74 @@
 import DraggableContainer from "aiApps.painter.DraggableContainer";
+import type { Stroke } from "aiApps.painter.interfaces";
 
 const style = tags["App.css"];
 
-const { useState, useEffect, useRef, render, useCallback } = os.appHooks;
+const { useState, useEffect, useRef } = os.appHooks;
 
 // let painterStorageApp = bot.CreatePainterStorage();
+const availableColor = [
+  "#000000",
+  "#FF5252",
+  "#7C4DFF",
+  "#448AFF",
+  "#18FFFF",
+  "#69F0AE",
+  "#FFFF00",
+  "#FFAB40",
+];
 
 const App = () => {
-  const canvasRef = useRef(null);
-  const ctxRef = useRef(null);
+  const canvasRef = useRef<HTMLCanvasElement>(null);
+  const ctxRef = useRef<CanvasRenderingContext2D | null>(null);
   const [drawingEnabled, setDrawingEnabled] = useState(masks.drawingEnable);
   const [currentColor, setCurrentColor] = useState(masks.currentColor);
-  const [availableColor, setAvailableColor] = useState([
-    "#000000",
-    "#FF5252",
-    "#7C4DFF",
-    "#448AFF",
-    "#18FFFF",
-    "#69F0AE",
-    "#FFFF00",
-    "#FFAB40",
-  ]);
   const [brushSize, setBrushSize] = useState(5);
   const isDrawing = useRef(false);
   const lastPosition = useRef({ x: 0, y: 0 });
-  const lastUserInputTO = useRef(null);
-  const [customText, setCustomText] = useState(null);
-  const [drawingData, setDrawingData] = useState([]);
+  const [drawingData, setDrawingData] = useState<Stroke[]>([]);
   const isSyncing = useRef(false);
-  const currentStroke = useRef(null);
+  const currentStroke = useRef<Stroke | null>(null);
 
-  const saveDrawingDebounced = useCallback((newDrawingData) => {
-    // setTagMask(
-    //   painterStorageApp,
-    //   "drawingData",
-    //   JSON.stringify(newDrawingData),
-    //   "shared"
-    // );
-  }, []);
+  // const saveDrawingDebounced = useCallback((newDrawingData) => {
+  //   // setTagMask(
+  //   //   painterStorageApp,
+  //   //   "drawingData",
+  //   //   JSON.stringify(newDrawingData),
+  //   //   "shared"
+  //   // );
+  // }, []);
 
   useEffect(() => {
     const initializeCanvas = async () => {
-      const canvas = canvasRef.current;
+      if (!canvasRef.current) return;
+      const canvas: HTMLCanvasElement = canvasRef.current;
       const dpr = window.devicePixelRatio || 2;
-      canvas.width = window.innerWidth * dpr;
-      canvas.height = window.innerHeight * dpr;
-      const ctx = await canvas.getContext("2d");
-      ctx.lineCap = "round";
-      ctx.lineJoin = "round";
-      ctx.globalAlpha = 1;
-      ctx.scale(dpr, dpr);
-      ctxRef.current = ctx;
+      if (canvas) {
+        canvas.width = window.innerWidth * dpr;
+        canvas.height = window.innerHeight * dpr;
+        const ctx = canvas.getContext("2d");
+        if (!ctx) return;
+        ctx.lineCap = "round";
+        ctx.lineJoin = "round";
+        ctx.globalAlpha = 1;
+        ctx.scale(dpr, dpr);
+        ctxRef.current = ctx;
 
-      // Load existing drawing data
-      const savedData = getBot("system", "aiApps.painterStorage").masks
-        .drawingData;
-      if (savedData) {
-        const parsedData = JSON.parse(savedData);
-        setDrawingData(parsedData);
-        redrawCanvas(parsedData);
+        // Load existing drawing data
+        const savedData = getBot("system", "aiApps.painterStorage").masks
+          .drawingData;
+        if (savedData) {
+          const parsedData = JSON.parse(savedData);
+          setDrawingData(parsedData);
+          redrawCanvas(parsedData);
+        }
       }
     };
 
     initializeCanvas();
 
     // Listen for storage events from other tabs
-    const handleStorageChange = (e) => {
+    const handleStorageChange = (e: StorageEvent) => {
       if (e.newValue) {
         console.log("syncing");
         isSyncing.current = true;
@@ -87,7 +90,7 @@ const App = () => {
     // window.addEventListener('storage', handleStorageChange);
 
     const resizeCanvas = () => {
-      if (!ctxRef.current) return;
+      if (!ctxRef.current || !canvasRef.current) return;
       const canvas = canvasRef.current;
       const ctx = ctxRef.current;
       const imageData = ctx.getImageData(0, 0, canvas.width, canvas.height);
@@ -103,12 +106,12 @@ const App = () => {
     return () => {
       // window.removeEventListener('storage', handleStorageChange);
       window.removeEventListener("resize", resizeCanvas);
-      saveDrawingDebounced.cancel();
+      // saveDrawingDebounced.cancel();
       globalThis.HandleStorageChange = null;
     };
   }, []);
 
-  const mergeDrawingData = (currentData, newData) => {
+  const mergeDrawingData = (currentData: Stroke[], newData: Stroke[]) => {
     const allStrokes = [...currentData, ...newData];
 
     // Remove duplicates by ID (using timestamp + points hash)
@@ -122,12 +125,12 @@ const App = () => {
 
     // Convert back to array and sort by timestamp
     return Array.from(uniqueStrokes.values()).sort(
-      (a, b) => a.timestamp - b.timestamp
+      (a: Stroke, b: Stroke) => a.timestamp - b.timestamp
     );
   };
 
-  const redrawCanvas = (data) => {
-    if (!ctxRef.current) return;
+  const redrawCanvas = (data: Stroke[]) => {
+    if (!ctxRef.current || !canvasRef.current) return;
 
     const ctx = ctxRef.current;
     const canvas = canvasRef.current;
@@ -139,23 +142,28 @@ const App = () => {
     data.forEach((stroke) => {
       if (stroke.points.length < 2) return;
 
-      ctx.beginPath();
-      ctx.moveTo(stroke.points[0].x, stroke.points[0].y);
+      if (stroke.points[0]) {
+        ctx.beginPath();
+        ctx.moveTo(stroke.points[0].x, stroke.points[0].y);
 
-      for (let i = 1; i < stroke.points.length; i++) {
-        ctx.lineTo(stroke.points[i].x, stroke.points[i].y);
+        for (let i = 1; i < stroke.points.length; i++) {
+          const point = stroke.points[i];
+          if (point) {
+            ctx.lineTo(point.x, point.y);
+          }
+        }
+
+        ctx.strokeStyle = stroke.color;
+        ctx.lineWidth = stroke.size;
+        ctx.stroke();
       }
-
-      ctx.strokeStyle = stroke.color;
-      ctx.lineWidth = stroke.size;
-      ctx.stroke();
     });
   };
 
-  const saveDrawing = (strokeData) => {
+  const saveDrawing = (strokeData: Stroke) => {
     if (isSyncing.current) return;
 
-    let timestamp = Date.now();
+    const timestamp = Date.now();
 
     const strokeWithTimestamp = {
       ...strokeData,
@@ -166,7 +174,7 @@ const App = () => {
 
     setDrawingData(newDrawingData);
 
-    saveDrawingDebounced(newDrawingData);
+    // saveDrawingDebounced(newDrawingData);
 
     setTimeout(() => {
       const savedData = getBot("system", "aiApps.painterStorage").masks
@@ -174,17 +182,19 @@ const App = () => {
       if (savedData) {
         const parsedData = JSON.parse(savedData);
         const newData = [
-          ...parsedData.filter((item) => item.timestamp > Date.now() - 5000),
+          ...parsedData.filter(
+            (item: Stroke) => item.timestamp > Date.now() - 5000
+          ),
         ];
         setDrawingData(newData);
         redrawCanvas(newData);
-        saveDrawingDebounced(newData);
+        // saveDrawingDebounced(newData);
       }
     }, 5500);
   };
 
-  const startDrawing = (e) => {
-    if (!drawingEnabled) return;
+  const startDrawing = (e: MouseEvent) => {
+    if (!drawingEnabled || !canvasRef.current) return;
 
     isDrawing.current = true;
     const canvas = canvasRef.current;
@@ -204,8 +214,14 @@ const App = () => {
     };
   };
 
-  const draw = (e) => {
-    if (!isDrawing.current || !drawingEnabled || !ctxRef.current) return;
+  const draw = (e: MouseEvent) => {
+    if (
+      !isDrawing.current ||
+      !drawingEnabled ||
+      !ctxRef.current ||
+      !canvasRef.current
+    )
+      return;
 
     const canvas = canvasRef.current;
     const ctx = ctxRef.current;
@@ -244,55 +260,60 @@ const App = () => {
     isDrawing.current = false;
   };
 
-  const clearCanvas = () => {
-    if (!ctxRef.current) return;
-    const canvas = canvasRef.current;
-    const ctx = ctxRef.current;
-    ctx.clearRect(0, 0, canvas.width, canvas.height);
+  // const clearCanvas = () => {
+  //   if (!ctxRef.current || !canvasRef.current) return;
+  //   const canvas = canvasRef.current;
+  //   const ctx = ctxRef.current;
+  //   ctx.clearRect(0, 0, canvas.width, canvas.height);
 
-    // Clear stored data and notify other tabs
-    const emptyData = [];
-    setDrawingData(emptyData);
-    // setTagMask(
-    //   painterStorageApp,
-    //   "drawingData",
-    //   JSON.stringify(emptyData),
-    //   "shared"
-    // );
-  };
+  //   // Clear stored data and notify other tabs
+  //   const emptyData = [];
+  //   setDrawingData(emptyData);
+  //   // setTagMask(
+  //   //   painterStorageApp,
+  //   //   "drawingData",
+  //   //   JSON.stringify(emptyData),
+  //   //   "shared"
+  //   // );
+  // };
 
-  const toggleDrawing = () => {
-    setDrawingEnabled(!drawingEnabled);
-  };
+  // const toggleDrawing = () => {
+  //   setDrawingEnabled(!drawingEnabled);
+  // };
 
-  const handleTouchStart = (e) => {
-    if (!drawingEnabled) return;
-
-    const touch = e.touches[0];
-    const mouseEvent = new MouseEvent("mousedown", {
-      clientX: touch.clientX,
-      clientY: touch.clientY,
-    });
-    canvasRef.current.dispatchEvent(mouseEvent);
-  };
-
-  const handleTouchMove = (e) => {
-    if (!drawingEnabled) return;
+  const handleTouchStart = (e: TouchEvent) => {
+    if (!drawingEnabled || !canvasRef.current) return;
 
     const touch = e.touches[0];
-    const mouseEvent = new MouseEvent("mousemove", {
-      clientX: touch.clientX,
-      clientY: touch.clientY,
-    });
-    canvasRef.current.dispatchEvent(mouseEvent);
+    if (touch) {
+      const mouseEvent = new MouseEvent("mousedown", {
+        clientX: touch.clientX,
+        clientY: touch.clientY,
+      });
+      canvasRef.current.dispatchEvent(mouseEvent);
+    }
+  };
+
+  const handleTouchMove = (e: TouchEvent) => {
+    if (!drawingEnabled || !canvasRef.current) return;
+
+    const touch = e.touches[0];
+    if (touch) {
+      const mouseEvent = new MouseEvent("mousemove", {
+        clientX: touch.clientX,
+        clientY: touch.clientY,
+      });
+      canvasRef.current.dispatchEvent(mouseEvent);
+    }
   };
 
   const handleTouchEnd = () => {
+    if (!canvasRef.current) return;
     const mouseEvent = new MouseEvent("mouseup");
     canvasRef.current.dispatchEvent(mouseEvent);
   };
 
-  const handleColorChange = (color) => {
+  const handleColorChange = (color: string) => {
     if (color === currentColor) {
       setDrawingEnabled(false);
       setCurrentColor(null);
@@ -306,14 +327,14 @@ const App = () => {
     }
   };
 
-  const [value, setValue] = useState(masks.brushSize);
-  const sliderRef = useRef(null);
+  const [value, setValue] = useState(masks.brushSize || brushSize);
+  const sliderRef = useRef<HTMLDivElement | null>(null);
 
   const handleInput = (e) => {
     setValue(parseInt(e.target.value));
   };
 
-  const handleTrackClick = (e) => {
+  const handleTrackClick = (e: MouseEvent) => {
     if (!sliderRef.current) return;
 
     const track = sliderRef.current;

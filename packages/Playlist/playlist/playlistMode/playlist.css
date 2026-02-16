@@ -10,8 +10,6 @@
   color: var(--secondaryColor) !important;
 }
 
-
-
 /* Playlist Related Styles */
 
 .playlist-wrapper-sre {
@@ -22,7 +20,7 @@
   background-color: var(--pageBackground);
   width: max-content;
   border-radius: 1rem;
-}  
+}
 
 .playlist-container-sre {
   display: flex;
@@ -51,7 +49,7 @@ span.playlist-label-sre {
 }
 
 .sre-ib-inverse {
-    filter: var(--filter-mode);
+  filter: var(--filter-mode);
 }
 
 .sre-play-circle {
@@ -128,7 +126,9 @@ span.playlist-label-sre {
   letter-spacing: initial;
 }
 
-.annotation-list-item.annotation-list-item-type-comment  .render-html-content *:not(.playlist-wrapper-sre , .playlist-wrapper-sre *) {
+.annotation-list-item.annotation-list-item-type-comment
+  .render-html-content
+  *:not(.playlist-wrapper-sre, .playlist-wrapper-sre *) {
   margin: 0;
   padding: 0;
   box-sizing: border-box;
@@ -1136,7 +1136,29 @@ div.attachment-link.dropabble-Embed .playlist-item-type {
 
 .chips-tag-container .chip-tag.active {
   background-color: var(--secondaryColor);
-  border: 1px solid var(--pageTextColor);
+  border: 1px solid var(--buttonBorder);
+  color: var(--pageTextColor);
+}
+
+.date-picker-container {
+  position: relative;
+}
+
+.hidden-date {
+  position: absolute;
+  top: 0;
+  left: 0;
+  width: 100%;
+  height: 100%;
+  opacity: 0;
+  z-index: 100;
+}
+
+.flatpickr-calendar.animate.open {
+  background-color: var(--pageBackground);
+}
+
+.flatpickr-calendar.animate.open * {
   color: var(--pageTextColor);
 }
 

@@ -2,6 +2,7 @@ import { Container } from "scriptureMap2D.main.Container";
 import { Settings } from "scriptureMap2D.main.Settings";
 import { useScriptureMap2DContext } from "scriptureMap2D.main.ScriptureMap2DContext";
 import { Controls } from "scriptureMap2D.main.Controls";
+import { BibleVizDataRepository } from "bibleVizUtils.data.BibleVizDataRepository";
 
 export const Wrapper = () => {
   const {
@@ -22,8 +23,9 @@ export const Wrapper = () => {
         "--chapter-gap": `${chapterGap}px`,
         "--chapter-width": `${chapterWidth}px`,
         "--chapter-height": `${chapterHeight}px`,
-        "--book-max-columns":
-          BibleVizUtils.Data.tags.BibleLayoutMeasurements.Book2DMaxColumns,
+        "--book-max-columns": BibleVizDataRepository.getBibleLayoutMeasurement(
+          "Book2DMaxColumns"
+        ) as number,
         paddingBottom: isMobile ? "40px" : "16px",
       }}
     >

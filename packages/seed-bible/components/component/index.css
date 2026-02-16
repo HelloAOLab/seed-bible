@@ -119,5 +119,6 @@
 
 .modal-inner-cont {
   padding: 28px 20px;
-  color: black;
+  color: var(--pageTextColor);
+  background-color: var(--panelBackground);
 }

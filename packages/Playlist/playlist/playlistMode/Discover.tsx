@@ -2,15 +2,13 @@ const { useState, useRef, useLayoutEffect } = os.appHooks;
 
 const { Input } = Components;
 
-
-
 const PlaylistCont = await thisBot.PlaylistContainer();
 const AnnotationList = await thisBot.AnnotationList();
 const Bookmarks = await thisBot.Bookmarks();
 
 const itemKeys = [
   "all",
-  "pinnedItems",
+  // "pinnedItems",
   "shared",
   "playlist",
   "annotations",
@@ -19,7 +17,7 @@ const itemKeys = [
 
 const items = [
   "All",
-  "Pinned Items",
+  // "Pinned Items",
   "Shared",
   "Playlist",
   "Annotations",
@@ -39,7 +37,6 @@ const Discover = ({
   annotationSources,
   tagsSources,
 }) => {
-  
   const IsPlaylistPlaying = globalThis.IsPlaylistPlaying;
 
   const [selectedChip, setSelectedChip] = useState({
@@ -123,7 +120,7 @@ const Discover = ({
       });
     } else {
       setSelectedChip((prev) => {
-        const newSelectedChip:any = { ...prev };
+        const newSelectedChip: any = { ...prev };
 
         if (newSelectedChip[val]) {
           delete newSelectedChip[val];
@@ -131,7 +128,11 @@ const Discover = ({
           newSelectedChip[val] = true;
         }
 
-        if (Object.keys(newSelectedChip).length === 0 || (Object.keys(newSelectedChip)[0] === "All") && Object.keys(newSelectedChip).length === 1) {
+        if (
+          Object.keys(newSelectedChip).length === 0 ||
+          (Object.keys(newSelectedChip)[0] === "All" &&
+            Object.keys(newSelectedChip).length === 1)
+        ) {
           newSelectedChip.All = true;
         } else {
           delete newSelectedChip.All;
@@ -220,9 +221,7 @@ const Discover = ({
               })}
             </div>
             {pos !== "left" && pos !== "noscroll" && (
-              <div className="chip-tag arrow left" 
-                onClick={scrollLeftByWidth}
-              >
+              <div className="chip-tag arrow left" onClick={scrollLeftByWidth}>
                 <span class="material-symbols-outlined">chevron_backward</span>
               </div>
             )}
@@ -231,7 +230,9 @@ const Discover = ({
                 className="chip-tag arrow right"
                 onClick={scrollRightByWidth}
               >
-                <span class="material-symbols-outlined color-inverted">chevron_forward</span>
+                <span class="material-symbols-outlined color-inverted">
+                  chevron_forward
+                </span>
               </div>
             )}
           </div>

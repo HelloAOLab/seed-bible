@@ -1,10 +1,10 @@
 const { render } = os.appHooks;
 import App from "aiApps.painter.App";
 
-let prevPainter = document.getElementById("painter-container");
+const prevPainter = document.getElementById("painter-container");
 
 if (!prevPainter) {
-  let painterDiv = document.createElement("div");
+  const painterDiv = document.createElement("div");
 
   painterDiv.id = "painter-container";
 
@@ -12,5 +12,8 @@ if (!prevPainter) {
 
   document.body.appendChild(painterDiv);
 
-  render(<App />, document.getElementById("painter-container"));
+  const container = document.getElementById("painter-container");
+  if (container) {
+    render(<App />, container);
+  }
 }

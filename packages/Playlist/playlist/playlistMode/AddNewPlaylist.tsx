@@ -1,10 +1,10 @@
 const { useState, useLayoutEffect, useRef, useMemo } = os.appHooks;
+const G = globalThis as any;
 
 const { Input, Modal, Button, Chips, Checkbox, ButtonsCover, Tooltip, Select } =
-  Components;
+  G.Components;
 
-
-globalThis.RECORD_STOREKEY =
+G.RECORD_STOREKEY =
   "vRK2.YW5ub3RhdGlvbnM=.TDVlSEZzRHdBWGw4UXloR2Fha3Zjdz09.subjectfull";
 
 const predefinedColors = [
@@ -66,8 +66,8 @@ const AddNewPlaylist = ({
   const listPlaylist = useMemo(() => {
     if (renameScreen) {
       return (
-        globalThis[`${id}playlists`].find((ele) => ele.id === editId)?.list ||
-        []
+        G[`${id}playlists`].find((ele: { id: string }) => ele.id === editId)
+          ?.list || []
       );
     }
     return list;
@@ -89,16 +89,14 @@ const AddNewPlaylist = ({
   const [isChecked, setIsChecked] = useState(false);
 
   const [predefinedIcons, setPredefinedIcons] = useState(
-    globalThis.PREDEFINED_ICONS
-      ? [...globalThis.PREDEFINED_ICONS]
-      : [...predefinedIconsOptions]
+    G.PREDEFINED_ICONS ? [...G.PREDEFINED_ICONS] : [...predefinedIconsOptions]
   );
 
-  const handleTabChange = (tab) => {
+  const handleTabChange = (tab: string) => {
     setActiveTab(tab);
   };
 
-  const handleImportTabChange = (tab) => {
+  const handleImportTabChange = (tab: string) => {
     setUploadedFileData([]);
     setImportTab(tab);
   };
@@ -215,11 +213,11 @@ const AddNewPlaylist = ({
   };
 
   useLayoutEffect(() => {
-    globalThis.PREDEFINED_ICONS = predefinedIcons;
-    globalThis.setPredefinedIcons = setPredefinedIcons;
-    savePlaylistProgress();
+    G.PREDEFINED_ICONS = predefinedIcons;
+    G.setPredefinedIcons = setPredefinedIcons;
+    G.savePlaylistProgress();
     return () => {
-      globalThis.setPredefinedIcons = true;
+      G.setPredefinedIcons = true;
     };
   }, [predefinedIcons]);
 
@@ -238,10 +236,10 @@ const AddNewPlaylist = ({
             className="overlay linked-item-custom"
           >
             <p>
-              <b style={{ color: "white" }}>{globalThis.t("publishSettings")}</b>
+              <b style={{ color: "white" }}>{t("publishSettings")}</b>
             </p>
             <span style={{ fontSize: "10px", color: "#c9c8c6" }}>
-              {globalThis.t("publishSettingsDesc")}
+              {t("publishSettingsDesc")}
             </span>
             <div
               className="more-menu-items"
@@ -255,7 +253,7 @@ const AddNewPlaylist = ({
               >
                 lock
               </span>
-              <p>{globalThis.t("privateAccess")}</p>
+              <p>{t("privateAccess")}</p>
               <span
                 style={{ color: "white" }}
                 class="material-symbols-outlined"
@@ -277,7 +275,7 @@ const AddNewPlaylist = ({
               >
                 public
               </span>
-              <p>{globalThis.t("publicAccess")}</p>
+              <p>{t("publicAccess")}</p>
               <span
                 style={{ color: "white" }}
                 class="material-symbols-outlined"
@@ -294,47 +292,47 @@ const AddNewPlaylist = ({
       {informationModal && (
         <Modal
           showIcon={false}
-          title={globalThis.t("howToCreateFromSheet")}
+          title={t("howToCreateFromSheet")}
           onClose={() => setInformationModal(false)}
         >
           {isActiveSheetImport ? (
             <>
-              <p style={{ fontSize: "12px" }}>{globalThis.t("sheetInstructions")}</p>
+              <p style={{ fontSize: "12px" }}>{t("sheetInstructions")}</p>
               <br />
               <p style={{ fontSize: "12px" }}>
-                {globalThis.t("abbreviationsInfo")}
+                {t("abbreviationsInfo")}
                 <br />
-                {globalThis.t("spellCorrectly")}
+                {t("spellCorrectly")}
                 <br />
               </p>
 
               <a
                 href="https://docs.google.com/spreadsheets/d/1VlBdswNKkxpkZ4y-s6eDG-3k3HHXCHJRPtvPMPGlPxw/edit?gid=0#gid=0"
                 target="_blank"
-                relrel="noreferrer"
+                rel="noreferrer"
               >
-                {globalThis.t("seeSampleList")}
+                {t("seeSampleList")}
                 <br />
               </a>
               <p style={{ fontSize: "12px" }}>
-                <b>{globalThis.t("rememberPublic")}</b>
+                <b>{t("rememberPublic")}</b>
               </p>
             </>
           ) : (
             <>
-              <p style={{ fontSize: "12px" }}>{globalThis.t("jsonInstructions")}</p>
+              <p style={{ fontSize: "12px" }}>{t("jsonInstructions")}</p>
               <br />
-              <p style={{ fontSize: "12px" }}>{globalThis.t("jsonDownloadInfo")}</p>
+              <p style={{ fontSize: "12px" }}>{t("jsonDownloadInfo")}</p>
               <a
                 href="https://auth-aux-aobot-prod-filesbucket-141297942820.s3.amazonaws.com/tedcasca/433b8ec62a5ecb249ca4dacdd4707b2186e598b4b74c1fb6e690c875bc48cf92.json"
                 target="_blank"
-                relrel="noreferrer"
+                rel="noreferrer"
               >
-                {globalThis.t("seeSampleJSON")}
+                {t("seeSampleJSON")}
                 <br />
               </a>
               <p style={{ fontSize: "12px" }}>
-                <b>{globalThis.t("rememberJSONFormat")}</b>
+                <b>{t("rememberJSONFormat")}</b>
               </p>
             </>
           )}
@@ -362,10 +360,10 @@ const AddNewPlaylist = ({
             <span>{editId ? t("backToDiscover") : t("backToCreate")}</span>
           </div>
         </div>
-        <h3>{globalThis.t("enterDetailsBelow")}</h3>
+        <h3>{t("enterDetailsBelow")}</h3>
 
         <p style={{ color: "#606060", margin: "8px 0" }}>
-          {globalThis.t("addDetailsToSave")}
+          {t("addDetailsToSave")}
         </p>
 
         {false && (
@@ -382,7 +380,7 @@ const AddNewPlaylist = ({
               onTabChange={handleImportTabChange}
             />
             <div className="flex-col">
-              <h4>{globalThis.t("importHeader")}</h4>
+              <h4>{t("importHeader")}</h4>
               <p
                 onClick={() => setInformationModal(true)}
                 className="align-center f-10 pointer what-this"
@@ -393,7 +391,7 @@ const AddNewPlaylist = ({
                 >
                   info
                 </span>{" "}
-                <p class="underline">{globalThis.t("whatsThis")}</p>
+                <p class="underline">{t("whatsThis")}</p>
               </p>
             </div>
 
@@ -402,13 +400,13 @@ const AddNewPlaylist = ({
                 <span class="material-symbols-outlined unfollow">
                   cloud_done
                 </span>
-                <span> {globalThis.t("jsonDataUploaded")}</span>
+                <span> {t("jsonDataUploaded")}</span>
               </p>
             ) : null}
 
             {isActiveSheetImport ? (
               <Input
-                style={{ marginBottom: "0", marginBottom: "0.75rem" }}
+                style={{ marginBottom: "0.75rem" }}
                 value={link}
                 onChangeListener={setLink}
                 placeholder="e.g. https://docs.google.com/spreadsheets/abc"
@@ -418,7 +416,8 @@ const AddNewPlaylist = ({
                 style={{ marginBottom: "0.5rem" }}
                 onClick={async () => {
                   const files = await os.showUploadFiles();
-                  const file = files[0];
+                  const file: any = files[0];
+
                   try {
                     if (file.mimeType === "application/json") {
                       const playlistImportedData = await JSON.parse(file.data);
@@ -458,7 +457,7 @@ const AddNewPlaylist = ({
 
         {false && (
           <>
-            <h3 style={{ marginTop: "0.75rem" }}>{globalThis.t("chooseColor")}</h3>
+            <h3 style={{ marginTop: "0.75rem" }}>{t("chooseColor")}</h3>
             <div
               style={{
                 display: "flex",
@@ -510,7 +509,7 @@ const AddNewPlaylist = ({
                 onClick={() => setSelectedColor(customColor)}
               >
                 <input
-                  onChange={(e) => {
+                  onChange={(e: any) => {
                     setCustomColor(e.target.value);
                     setSelectedColor(e.target.value);
                   }}
@@ -530,7 +529,7 @@ const AddNewPlaylist = ({
                 </span>
               </div>
             </div>
-            <h3>{globalThis.t("chooseIcon")}</h3>
+            <h3>{t("chooseIcon")}</h3>
             <div
               style={{
                 display: "flex",
@@ -610,14 +609,13 @@ const AddNewPlaylist = ({
                       });
                     }
 
-                    const fileSave = await os.recordFile(
-                      globalThis.RECORD_STOREKEY,
+                    const fileSave: any = await os.recordFile(
+                      G.RECORD_STOREKEY,
                       file.data,
                       {
                         name: file.name,
                       }
                     );
-
                     const url = fileSave.url || fileSave?.existingFileUrl;
 
                     if (!url) {
@@ -634,8 +632,7 @@ const AddNewPlaylist = ({
                     setSelectedIcon(url);
                   }}
                   value=""
-                  multiple="false"
-                  type="image/*"
+                  multiple={false}
                   type="file"
                   style={{
                     position: "absolute",
@@ -694,8 +691,8 @@ const AddNewPlaylist = ({
                     });
                   }
 
-                  const fileSave = await os.recordFile(
-                    globalThis.RECORD_STOREKEY,
+                  const fileSave: any = await os.recordFile(
+                    G.RECORD_STOREKEY,
                     file.data,
                     {
                       name: file.name,
@@ -718,8 +715,7 @@ const AddNewPlaylist = ({
                   setSelectedIcon(url);
                 }}
                 value=""
-                multiple="false"
-                type="image/*"
+                multiple={false}
                 type="file"
                 style={{
                   position: "absolute",
@@ -760,7 +756,7 @@ const AddNewPlaylist = ({
             <Input
               value={name}
               onChangeListener={setName}
-              placeholder={globalThis.t("playlistNamePlaceholder")}
+              placeholder={t("playlistNamePlaceholder")}
             />
           </div>
         </div>
@@ -773,7 +769,7 @@ const AddNewPlaylist = ({
                 type="textarea"
                 value={description}
                 onChangeListener={setDescription}
-                placeholder={globalThis.t("descriptionOptional")}
+                placeholder={t("descriptionOptional")}
               />
             </div>
           </div>
@@ -788,21 +784,21 @@ const AddNewPlaylist = ({
               }}
               checked={isChecked}
               small
-              onClick={(val) => {
+              onClick={(val: boolean) => {
                 setIsChecked(val);
               }}
             />
-            <p>{globalThis.t("autoGenerateByDescription")}</p>
+            <p>{t("autoGenerateByDescription")}</p>
           </div>
         )}
-        <h3>{globalThis.t("tagsHeader")}</h3>
+        <h3>{t("tagsHeader")}</h3>
         <div className="align-center" style={{ gap: "1rem" }}>
           <Input
             style={{ marginBottom: "0", flexGrow: "1" }}
             value={tagName}
             name="tagName"
             onChangeListener={setTagName}
-            placeholder={globalThis.t("tagPlaceholder")}
+            placeholder={t("tagPlaceholder")}
           />
           <Button
             onClick={() => {
@@ -827,7 +823,7 @@ const AddNewPlaylist = ({
                   severity: "error",
                 });
               }
-              setTags((prev) => {
+              setTags((prev: string[]) => {
                 const old = [...prev];
                 const index = old.findIndex((ele) => ele === nameFinal);
                 if (index > -1) {
@@ -844,19 +840,19 @@ const AddNewPlaylist = ({
             }}
             secondary
           >
-            {globalThis.t("add")}
+            {t("add")}
           </Button>
         </div>
         <div
           className="align-center"
           style={{ flexWrap: "wrap", margin: "0.5rem 0", gap: "0.5rem" }}
         >
-          {selectedTags.map((ele, index) => (
+          {selectedTags.map((ele: string, index: number) => (
             <Chips
               label={ele}
               key={index}
               onDelete={() => {
-                setTags((prev) => {
+                setTags((prev: string[]) => {
                   const old = [...prev];
                   old.splice(index, 1);
                   return old;
@@ -892,7 +888,7 @@ const AddNewPlaylist = ({
                   });
                 }
               }
-              const checkNameDuplicate = (newName) => {
+              const checkNameDuplicate = (newName: string) => {
                 const nameValue = (newName || name).trim();
                 if (!nameValue)
                   return ShowNotification({
@@ -900,8 +896,8 @@ const AddNewPlaylist = ({
                     severity: "error",
                   });
 
-                const names = (globalThis[`${id}playlists`] || []).map(
-                  (ele) => {
+                const names = (G[`${id}playlists`] || []).map(
+                  (ele: { id: string; name: string }) => {
                     if (ele.id === editId && !!editId) return null;
                     return ele.name;
                   }
@@ -938,7 +934,7 @@ const AddNewPlaylist = ({
             }}
             secondaryAlt
           >
-            {globalThis.t("close")}
+            {t("close")}
           </Button>
         </div>
         <div

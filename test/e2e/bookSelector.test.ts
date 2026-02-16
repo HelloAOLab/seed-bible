@@ -128,11 +128,45 @@ describe("bookSelector tests", () => {
     await seedBibleFrame
       .locator('div.toolbar-item-wrapper[title="Books"] > button')
       .click({});
+
+    await delay(1000);
+
+    const isSidebarOpen = await page.$(".open-sideBar");
+    if (!isSidebarOpen) {
+      await seedBibleFrame
+        .locator('div.toolbar-item-wrapper[title="Books"] > button')
+        .click({});
+      await page.waitForSelector(".open-sideBar", {
+        visible: true,
+        timeout: 5000,
+      });
+    }
+
+    await page.waitForSelector(".dropdown .dropdown-select", {
+      visible: true,
+      timeout: 5000,
+    });
+    await delay(300);
+
+    await page.locator(".dropdown .dropdown-select").click();
+    await delay(200);
+    await page.select(".dropdown .dropdown-select", "0");
+
     await delay(500);
-    await page.locator(".dropdown-select").click();
-    await delay(400);
-    await page.select(".dropdown-select", "0");
-    await delay(400);
+    await page.waitForSelector(".sidebar-itm", {
+      visible: true,
+      timeout: 5000,
+    });
+
+    await page.waitForFunction(
+      (expectedCount) => {
+        const items = document.querySelectorAll(".sidebar-itm");
+        return items.length === expectedCount;
+      },
+      { timeout: 5000 },
+      OTBooks.length
+    );
+
     const bookItemsOT = await page.$$(".sidebar-itm");
     for (let i = 0; i < bookItemsOT.length; i++) {
       const item = bookItemsOT[i];
@@ -144,10 +178,30 @@ describe("bookSelector tests", () => {
       }
     }
     expect(bookItemsOT.length).toBe(OTBooks.length);
-    await page.locator(".dropdown-select").click();
-    await delay(400);
-    await page.select(".dropdown-select", "1");
-    await delay(400);
+
+    await page.waitForSelector(".dropdown .dropdown-select", {
+      visible: true,
+      timeout: 5000,
+    });
+    await page.locator(".dropdown .dropdown-select").click();
+    await delay(200);
+    await page.select(".dropdown .dropdown-select", "1");
+
+    await delay(500);
+    await page.waitForSelector(".sidebar-itm", {
+      visible: true,
+      timeout: 5000,
+    });
+
+    await page.waitForFunction(
+      (expectedCount) => {
+        const items = document.querySelectorAll(".sidebar-itm");
+        return items.length === expectedCount;
+      },
+      { timeout: 5000 },
+      NTBooks.length
+    );
+
     const bookItemsNT = await page.$$(".sidebar-itm");
     for (let i = 0; i < bookItemsNT.length; i++) {
       const item = bookItemsNT[i];
@@ -202,17 +256,20 @@ describe("bookSelector tests", () => {
     await seedBibleFrame
       .locator('div.toolbar-item-wrapper[title="Books"] > button')
       .click({});
+    await page.waitForSelector(".sidebar-translation-selector", {
+      visible: true,
+    });
     await page.locator(".sidebar-translation-selector").click();
-
+    await page.waitForSelector(".settingsIcon", { visible: true });
     await page.locator(".settingsIcon").click();
-    await delay(400);
-
+    await delay(100);
+    await page.waitForSelector(".translationSettingsModal > div:nth-child(3)", {
+      visible: true,
+    });
     await page.locator(".translationSettingsModal > div:nth-child(3)").click();
-
     await delay(1500);
-
+    await page.waitForSelector(".language-list .item", { visible: true });
     const translationItems = await page.$$(".language-list .item");
-
     const popularTranslations = [
       "english",
       "ancient greek",
@@ -221,7 +278,6 @@ describe("bookSelector tests", () => {
       "hindi",
       "spanish",
     ];
-
     for (let i = 0; i < translationItems.length; i++) {
       const item = translationItems[i];
       if (!item) {
