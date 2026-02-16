@@ -1915,6 +1915,9 @@
       "aiApps.painter.togglePainter": [
         "./packages/Draw/aiApps/painter/togglePainter.tsx"
       ],
+      "aiApps.painter.interfaces": [
+        "./packages/Draw/aiApps/painter/interfaces.tsx"
+      ],
       "ext_canvas.eraseTool.changeSize": [
         "./packages/Eraser/ext_canvas/eraseTool/changeSize.tsx"
       ],
@@ -2013,6 +2016,12 @@
       ],
       "ext_geoImporter.importer.closeMiniMapPortal": [
         "./packages/GeoImporter/ext_geoImporter/importer/closeMiniMapPortal.tsx"
+      ],
+      "ext_geoImporter.importer.interfaces": [
+        "./packages/GeoImporter/ext_geoImporter/importer/interfaces.tsx"
+      ],
+      "ext_geoImporter.importer.focusOnWithCatch": [
+        "./packages/GeoImporter/ext_geoImporter/importer/focusOnWithCatch.tsx"
       ],
       "ext_geoImporter.importer.createCloseButton": [
         "./packages/GeoImporter/ext_geoImporter/importer/createCloseButton.tsx"
