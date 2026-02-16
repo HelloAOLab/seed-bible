@@ -1,1 +1,0 @@
-// os.log(await thisBot.fetchVerseOfTheDay())

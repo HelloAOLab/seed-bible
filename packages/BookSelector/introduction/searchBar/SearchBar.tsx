@@ -235,15 +235,16 @@ const SearchBar = (props: { openSidebar: boolean }) => {
         } else {
           setApocryphaAvailable(false);
         }
-        if (selectedTestament === 0) {
-          return OTBooks;
-        } else if (selectedTestament === 1) {
-          return NTBooks;
-        } else if (selectedTestament === 2) {
-          return [...OTBooks, ...NTBooks];
-        } else {
-          return ApocryphaBooks;
-        }
+        return [...OTBooks, ...NTBooks, ...ApocryphaBooks];
+        // if (selectedTestament === 0) {
+        //   return OTBooks;
+        // } else if (selectedTestament === 1) {
+        //   return NTBooks;
+        // } else if (selectedTestament === 2) {
+        //   return [...OTBooks, ...NTBooks];
+        // } else {
+        //   return ApocryphaBooks;
+        // }
       } else {
         return [];
       }
@@ -833,6 +834,12 @@ const SearchBar = (props: { openSidebar: boolean }) => {
 
   const dontOpen = dontopn && showCheck;
   globalThis.SetBooksOnlineUsers = setOnlineUsers;
+  globalThis.setSelectingTranslation = setSelectingTranslation;
+
+  useEffect(() => {
+    globalThis.setSelectingTranslation = setSelectingTranslation;
+    globalThis.selectingTranslation = selectingTranslation;
+  }, [selectingTranslation]);
 
   return (
     <>
@@ -992,10 +999,12 @@ const SearchBar = (props: { openSidebar: boolean }) => {
             dontOpen={dontOpen}
             selectedTranslation={selectedTranslation}
             selectedTestament={selectedTestament}
+            setSelectedTestament={setSelectedTestament}
             booksData={selectedTestamentData}
             sortBooksByTestament={sortBooksByTestament}
             windowSize={windowSize}
             systemTranslation={systemTranslation}
+            query={query}
           />
         )}
         {selectingTranslation && (
@@ -1022,6 +1031,7 @@ const SearchBar = (props: { openSidebar: boolean }) => {
 const SideBarBooks = (props: {
   booksData: BookInterface[];
   selectedTestament: number;
+  setSelectedTestament: (n: number) => void;
   selectedTranslation: TranslationInterface;
   dontOpen: any;
   showCheck: any;
@@ -1033,26 +1043,26 @@ const SideBarBooks = (props: {
   };
   windowSize: number;
   systemTranslation: { [key: string]: string };
+  query: string;
 }) => {
   const {
     booksData,
     selectedTestament,
     selectedTranslation,
+    setSelectedTestament,
     dontOpen,
     showCheck,
     onlineUsers,
     sortBooksByTestament,
     windowSize,
     systemTranslation,
+    query,
   } = props;
   const [lastBookClicked, setLastBookClicked] = useState(-1);
   const [bookData, setBookData] = useState<BookInterface | null>(null);
   const [chT, setChT] = useState(0);
-
-  useEffect(() => {
-    setLastBookClicked(-1);
-    setBookData(null);
-  }, [selectedTestament]);
+  const [localSelectedTestament, setLocalSelectedTestament] =
+    useState(selectedTestament);
 
   useLayoutEffect(() => {
     if (booksData.length === 1 && booksData[0]) {
@@ -1144,6 +1154,44 @@ const SideBarBooks = (props: {
     return bookName;
   }, []);
 
+  const selectBookSelectorBook = useCallback(
+    (bookId) => {
+      if (!bookId) {
+        setBookData(null);
+        setLastBookClicked(-1);
+        setChT(0);
+        return;
+      }
+      const book = booksData.find((b) => b.id === bookId);
+      if (book) {
+        handleClick({
+          index: booksData.indexOf(book),
+          book,
+          cht: book.order > 39 ? 1 : 0,
+        });
+      }
+    },
+    [booksData, handleClick]
+  );
+  useEffect(() => {
+    const sortedBooks = sortBooksByTestament(booksData);
+    const OTBooks = sortedBooks.OTBooks;
+    const NTBooks = sortedBooks.NTBooks;
+    if (selectedTestament === 2 || query.length > 0) {
+      if (OTBooks.length > 0 && NTBooks.length === 0) {
+        setLocalSelectedTestament(0);
+      } else if (NTBooks.length > 0 && OTBooks.length === 0) {
+        setLocalSelectedTestament(1);
+      } else if (query.length > 0) {
+        setLocalSelectedTestament(2);
+      } else {
+        setLocalSelectedTestament(selectedTestament);
+      }
+    } else {
+      setLocalSelectedTestament(selectedTestament);
+    }
+  }, [selectedTestament, booksData, query]);
+
   const RenderBooksByTestament = useMemo(() => {
     let allowedRows = 5;
 
@@ -1157,7 +1205,7 @@ const SideBarBooks = (props: {
 
     const sortedBooks = sortBooksByTestament(booksData);
 
-    if (selectedTestament === 2) {
+    if (localSelectedTestament === 2) {
       const OTChapterSeparator =
         allowedRows === 1 ? 1 : allowedRows === 3 ? 2 : 3;
       const OTChapterPos = calcChapterPos(lastBookClicked, OTChapterSeparator);
@@ -1319,7 +1367,7 @@ const SideBarBooks = (props: {
           </div>
         </div>
       );
-    } else if (selectedTestament === 1) {
+    } else if (localSelectedTestament === 1) {
       const chapterPos = calcChapterPos(lastBookClicked, allowedRows);
       const booksWithGhost = ghostArray(sortedBooks.NTBooks, allowedRows);
       return (
@@ -1393,7 +1441,7 @@ const SideBarBooks = (props: {
           </div>
         </div>
       );
-    } else if (selectedTestament === 0) {
+    } else if (localSelectedTestament === 0) {
       const chapterPos = calcChapterPos(lastBookClicked, allowedRows);
       const booksWithGhost = ghostArray(sortedBooks.OTBooks, allowedRows);
       return (
@@ -1467,7 +1515,7 @@ const SideBarBooks = (props: {
           </div>
         </div>
       );
-    } else if (selectedTestament === 3) {
+    } else if (localSelectedTestament === 3) {
       const chapterPos = calcChapterPos(lastBookClicked, allowedRows);
       const booksWithGhost = ghostArray(
         sortedBooks.ApocryphaBooks,
@@ -1550,11 +1598,18 @@ const SideBarBooks = (props: {
     lastBookClicked,
     bookData,
     dontOpen,
-    selectedTestament,
+    localSelectedTestament,
     windowSize,
     chT,
     onlineUsers,
   ]);
+
+  useEffect(() => {
+    globalThis.selectBookSelectorBook = selectBookSelectorBook;
+    return () => {
+      globalThis.selectBookSelectorBook = null;
+    };
+  }, [selectBookSelectorBook]);
 
   return <>{RenderBooksByTestament}</>;
 };

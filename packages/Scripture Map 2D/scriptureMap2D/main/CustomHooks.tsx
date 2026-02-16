@@ -21,31 +21,43 @@ export const useResizeObserver = (ref) => {
   return size;
 };
 
-export const useClickAndHold = ({
+interface UseClickAndHoldProps {
+  holdTime?: number;
+  holdCompleteCallback: (event: PointerEvent) => void;
+  holdCancelCallback: (event: PointerEvent) => void;
+  dependencies?: any[];
+}
+
+export const useClickAndHold: (args: UseClickAndHoldProps) => {
+  onHoldStart: (e: PointerEvent) => void;
+  onHoldEnd: (e: PointerEvent) => void;
+} = ({
   holdTime = 1,
   holdCompleteCallback,
   holdCancelCallback,
   dependencies = [],
 }) => {
-  const timeoutRef = useRef(null);
+  const timeoutRef = useRef<ReturnType<typeof setTimeout> | undefined>(
+    undefined
+  );
 
   const clear = useCallback(() => {
     clearTimeout(timeoutRef.current);
-    timeoutRef.current = null;
+    timeoutRef.current = undefined;
   }, []);
 
-  const onHoldComplete = useCallback((e) => {
+  const onHoldComplete = useCallback((e: PointerEvent) => {
     holdCompleteCallback(e);
     clear();
   }, dependencies);
 
-  const onHoldStart = useCallback((e) => {
+  const onHoldStart = useCallback((e: PointerEvent) => {
     timeoutRef.current = setTimeout(() => {
       onHoldComplete(e);
     }, holdTime);
   }, dependencies);
 
-  const onHoldEnd = useCallback((e) => {
+  const onHoldEnd = useCallback((e: PointerEvent) => {
     if (timeoutRef.current) {
       holdCancelCallback?.(e);
       clear();
