@@ -873,19 +873,22 @@ function ThePage({
       setData(bible.data);
       setFootnotes(bible.footnotes);
     } catch {
-      // const tab = globalThis.AddTab({
-      //   id: uuid(),
-      //   taken: false,
-      //   data: {
-      //     use: "thePage",
-      //     type: "book",
-      //     book: bookId,
-      //     bookId: bookId,
-      //     chapter: chapter,
-      //     translation: translation || "BSB",
-      //   },
-      // });
-      // setTab(tab);
+      if (tab) return;
+      const newTab = globalThis.AddTab({
+        id: uuid(),
+        taken: false,
+        data: {
+          use: "thePage",
+          type: "book",
+          book: bookId,
+          bookId: bookId,
+          chapter: chapter,
+          translation: translation || "BSB",
+        },
+      });
+      setTab(newTab);
+      console.log("newTab created for open error", newTab);
+      return;
     }
   }
 
@@ -1009,6 +1012,7 @@ function ThePage({
   }, [data]);
 
   function hanldNavFunctions() {
+    console.log("hanldNavFunctions", { tab, sharedTab, setActiveTab, panelId });
     if (tab && tab?.id && !sharedTab) setActiveTab(tab?.id);
     setNavFunctions({
       openNextChapter,
