@@ -21,7 +21,8 @@
   z-index: 1000;
 }
 
-.modal-container h3, .modal-container .material-symbols-outlined {
+.modal-container h3,
+.modal-container .material-symbols-outlined {
   color: var(--pageTextColor);
 }
 
@@ -118,5 +119,6 @@
 
 .modal-inner-cont {
   padding: 28px 20px;
-  color: black;
+  color: var(--pageTextColor);
+  background-color: var(--panelBackground);
 }
