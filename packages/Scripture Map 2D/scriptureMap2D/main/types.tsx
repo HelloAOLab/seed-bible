@@ -16,6 +16,12 @@ import type {
   ZoomLevelOptionProps,
   ZoomLevelSelectorProps,
   ZoomButtonProps,
+  FiltersSelectorOptionProps,
+  ProjectStateSetterOptionProps,
+  ReadingHistoryTooltipHeaderProps,
+  ReadingHistoryLabelProps,
+  ReadingHistoryItemProps,
+  SelectionOptionsProps,
 } from "scriptureMap2D.main.interfaces";
 import type { MutableRef } from "../../../../typings/AuxLibraryDefinitions";
 
@@ -150,4 +156,28 @@ export type ZoomLevelSelectorType = (
 export type ZoomButtonType = (
   params: ZoomButtonProps,
   ref: MutableRef<HTMLButtonElement | null>
+) => React.JSX.Element;
+
+export type FiltersSelectorOptionType = (
+  params: FiltersSelectorOptionProps
+) => React.JSX.Element;
+
+export type ProjectStateSetterOptionType = (
+  params: ProjectStateSetterOptionProps
+) => React.JSX.Element;
+
+export type ReadingHistoryTooltipHeaderType = (
+  params: ReadingHistoryTooltipHeaderProps
+) => React.JSX.Element;
+
+export type ReadingHistoryLabelType = (
+  params: ReadingHistoryLabelProps
+) => React.JSX.Element;
+
+export type ReadingHistoryItemType = (
+  params: ReadingHistoryItemProps
+) => React.JSX.Element;
+
+export type SelectionOptionsType = (
+  params: SelectionOptionsProps
 ) => React.JSX.Element;

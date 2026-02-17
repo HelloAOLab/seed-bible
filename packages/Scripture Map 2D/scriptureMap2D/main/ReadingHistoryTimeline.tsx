@@ -4,16 +4,30 @@ import {
 } from "scriptureMap2D.main.Tooltip";
 import { useTimeContext } from "scriptureMap2D.main.TimeContext";
 import { useReadingHistoryContext } from "scriptureMap2D.main.ReadingHistoryContext";
-
 import { useSideBarContext } from "app.hooks.sideBar";
 import { readingHistoryColorStore } from "bibleVizUtils.services.ReadingHistoryColorStore";
+import type {
+  ReadingHistoryTooltipHeaderType,
+  ReadingHistoryLabelType,
+  ReadingHistoryItemType,
+  TooltipAnchor,
+  Range,
+} from "scriptureMap2D.main.types";
+import {
+  GetHistoryColorByReadingTime,
+  CapitalizeFirstLetter,
+  GetPastDateInfo,
+  type HexString,
+} from "bibleVizUtils.functions.index";
 
 const { useState, useCallback, useMemo, useEffect, useRef } = os.appHooks;
 const { memo } = os.appCompat;
 
 const step = 0.25;
 
-const ReadingHistoryTooltipHeader = memo(
+type ItemsColorMap = Map<string, React.CSSProperties["color"]>;
+
+const ReadingHistoryTooltipHeader = memo<ReadingHistoryTooltipHeaderType>(
   ({ monthName, dayOfTheMonth, year, minutesCount }) => {
     const { t } = useSideBarContext();
     const showMinutesCount = useMemo(() => {
@@ -38,22 +52,24 @@ const ReadingHistoryTooltipHeader = memo(
   }
 );
 
-const Label = memo(({ gridRow, gridColumn, children, isDay }) => {
-  const style = useMemo(() => {
-    return { gridRow, gridColumn };
-  }, [gridRow, gridColumn]);
+const Label = memo<ReadingHistoryLabelType>(
+  ({ gridRow, gridColumn, children, isDay }) => {
+    const style = useMemo<React.CSSProperties>(() => {
+      return { gridRow, gridColumn };
+    }, [gridRow, gridColumn]);
 
-  return (
-    <div
-      style={style}
-      className={`reading-history-timeline-label reading-history-timeline-label-${isDay ? "day" : "month"}`}
-    >
-      {children}
-    </div>
-  );
-});
+    return (
+      <div
+        style={style}
+        className={`reading-history-timeline-label reading-history-timeline-label-${isDay ? "day" : "month"}`}
+      >
+        {children}
+      </div>
+    );
+  }
+);
 
-const Item = memo(
+const Item = memo<ReadingHistoryItemType>(
   ({
     style,
     tooltipContent,
@@ -67,9 +83,11 @@ const Item = memo(
       return range === readingHistoryRangeSeconds;
     }, [range, readingHistoryRangeSeconds]);
 
-    const [containerRect, setContainerRect] = useState(null);
+    const [containerRect, setContainerRect] = useState<DOMRect | null>(null);
 
-    const { tooltipAnchor } = useMemo(() => {
+    const { tooltipAnchor } = useMemo<{
+      tooltipAnchor: TooltipAnchor | undefined;
+    }>(() => {
       let tooltipAnchor;
 
       if (containerRect) {
@@ -99,7 +117,7 @@ const Item = memo(
           handleItemClick(selected ? null : range);
         }}
       >
-        {containerRect && (
+        {containerRect && tooltipAnchor && (
           <Tooltip anchor={tooltipAnchor} content={tooltipContent} />
         )}
       </div>
@@ -124,26 +142,27 @@ export const ReadingHistoryTimeline = () => {
     yearlyReadingHistorySummary,
   } = useReadingHistoryContext();
 
-  const timelineRef = useRef(null);
+  const timelineRef = useRef<HTMLDivElement>(null);
 
   const { tick } = useTimeContext();
 
-  const prevItemsColorMapRef = useRef(new Map());
+  const prevItemsColorMapRef = useRef<ItemsColorMap>(new Map());
 
-  const handleItemClick = useCallback(
+  const handleItemClick = useCallback<(range: Range | null) => void>(
     (range) => {
       handleReadingHistoryRangeSelectorClick(range);
     },
     [handleReadingHistoryRangeSelectorClick]
   );
 
-  const itemsColorMap = useMemo(() => {
-    const colorMap = new Map();
+  const itemsColorMap = useMemo<ItemsColorMap>(() => {
+    const colorMap: ItemsColorMap = new Map();
+    if (!dailyReadingHistorySummaries || !yearlyReadingHistorySummary)
+      return colorMap;
+
     const yearlySummaryUsersCount = Object.keys(
       yearlyReadingHistorySummary.users
     ).length;
-
-    if (!dailyReadingHistorySummaries) return colorMap;
 
     let shouldReassign = false;
     const fullColorTimeSeconds = yearlySummaryUsersCount * SEC_PER_HOUR; // 1 hour per selected user
@@ -154,13 +173,19 @@ export const ReadingHistoryTimeline = () => {
 
         const key = `${week}-${day}`;
 
-        const summary = dailyReadingHistorySummaries?.get?.(key);
-        let color;
+        const summary = dailyReadingHistorySummaries.get(key);
+        let color: React.CSSProperties["color"] | undefined;
         const prevColor = prevItemsColorMapRef.current.get(key);
 
         if (summary && summary.totalTimeSpentReading > SEC_PER_MINUTE) {
           const usersKeys = Object.keys(summary.users);
-          const colorData = {
+          const colorData: {
+            baseColor: HexString;
+            step: number;
+            readingTimeSeconds: number;
+            fullColorTimeSeconds: number;
+            userColor?: HexString;
+          } = {
             baseColor: themeColors?.["1"]?.firstToolbarbutton ?? "#dfdede", // Hardcoded firstToolbarbutton. Must be accesible in the future
             step,
             readingTimeSeconds: summary.totalTimeSpentReading,
@@ -170,12 +195,11 @@ export const ReadingHistoryTimeline = () => {
             colorData.userColor =
               themeColors?.["1"]?.secondaryColor ?? "#D2691E"; // Hardcoded primary color. Must be accesible in the future
           } else {
-            const userKey = usersKeys[0];
+            const userKey = usersKeys[0] as string;
             colorData.userColor =
               readingHistoryColorStore.getUserColor(userKey);
           }
-          color =
-            BibleVizUtils.Functions.GetHistoryColorByReadingTime(colorData);
+          color = GetHistoryColorByReadingTime(colorData);
         }
 
         if (!shouldReassign && prevColor !== color) shouldReassign = true;
@@ -229,9 +253,7 @@ export const ReadingHistoryTimeline = () => {
         monthsSet.add(uniqueMonthKey);
 
         const monthLabelGridColumn = `${week + 2} / ${week + 4}`;
-        const fixedName = BibleVizUtils.Functions.CapitalizeFirstLetter(
-          labelDateInfo.monthName
-        );
+        const fixedName = CapitalizeFirstLetter(labelDateInfo.monthName);
 
         items.push(
           <Label
@@ -254,29 +276,36 @@ export const ReadingHistoryTimeline = () => {
         dayDate.setDate(dayDate.getDate() + week * 7 + day);
         const time = dayDate.getTime();
         const range = dayRangesMap.get(key);
-        const daySummary = dailyReadingHistorySummaries?.get?.(key);
 
         const { day: dayOfTheMonth, monthName, year } = GetPastDateInfo(time);
+        const daySummary = dailyReadingHistorySummaries?.get?.(key);
 
-        const timeSpent = daySummary?.totalTimeSpentReading ?? 0;
-        const isTimeSpentNoticeable = timeSpent > SEC_PER_MINUTE; // more than 1 minute
-        const timeSpentMinutes = Math.floor(timeSpent / SEC_PER_MINUTE);
+        const tooltipContent: React.ReactNode[] = [];
+        let timeSpentMinutes = 0;
 
-        const tooltipContent = [
+        if (daySummary) {
+          const timeSpent = daySummary.totalTimeSpentReading ?? 0;
+          timeSpentMinutes = Math.floor(timeSpent / SEC_PER_MINUTE);
+        }
+
+        tooltipContent.push(
           <ReadingHistoryTooltipHeader
             monthName={monthName}
             dayOfTheMonth={dayOfTheMonth}
             year={year}
             minutesCount={timeSpentMinutes}
-          />,
-        ];
+          />
+        );
+        const isTimeSpentNoticeable = timeSpentMinutes > 1; // more than 1 minute
 
-        if (isTimeSpentNoticeable) {
-          const userTimes = [];
+        if (daySummary && isTimeSpentNoticeable) {
+          const userTimes: [string, number][] = [];
           for (const userId in daySummary.users) {
-            const userTimeSpentSeconds =
-              daySummary.users[userId].totalTimeSpentReading;
-            userTimes.push([userId, userTimeSpentSeconds]);
+            const userSummary = daySummary.users[userId];
+            if (userSummary) {
+              const userTimeSpentSeconds = userSummary.totalTimeSpentReading;
+              userTimes.push([userId, userTimeSpentSeconds]);
+            }
           }
           const sortedUsers = userTimes
             .toSorted(([, timeSpentA], [, timeSpentB]) => {
@@ -290,29 +319,35 @@ export const ReadingHistoryTimeline = () => {
 
           for (const userId of topUsers) {
             const userSummary = daySummary.users[userId];
-            const { totalTimeSpentReading: userTimeSpentSeconds } = userSummary;
-            const minutesCount = Math.max(
-              1,
-              Math.floor(userTimeSpentSeconds / SEC_PER_MINUTE)
-            );
-            const fixedContent = `(${minutesCount} Min)`;
-            tooltipContent.push(
-              <ReadingHistoryTooltipContent
-                userId={userId}
-                fixedContent={fixedContent}
-              />
-            );
+            if (userSummary) {
+              const { totalTimeSpentReading: userTimeSpentSeconds } =
+                userSummary;
+              const minutesCount = Math.max(
+                1,
+                Math.floor(userTimeSpentSeconds / SEC_PER_MINUTE)
+              );
+              const fixedContent = `(${minutesCount} Min)`;
+              tooltipContent.push(
+                <ReadingHistoryTooltipContent
+                  userId={userId}
+                  fixedContent={fixedContent}
+                />
+              );
+            }
           }
           if (extraUsers.length > 0) {
             const extraTimeSpentSeconds = Math.max(
               extraUsers.reduce((curr, userId) => {
-                const userTimeSpentSeconds =
-                  daySummary.users[userId].totalTimeSpentReading;
-                return curr + userTimeSpentSeconds;
+                const userSummary = daySummary.users[userId];
+                let amount = 0;
+                if (userSummary) {
+                  amount = userSummary.totalTimeSpentReading;
+                }
+                return curr + amount;
               }, 0),
               1
             );
-            let extraActivityContent;
+            let extraActivityContent: string | undefined;
             if (extraTimeSpentSeconds > SEC_PER_HOUR) {
               const hoursCount = Math.floor(
                 extraTimeSpentSeconds / SEC_PER_HOUR
@@ -344,18 +379,20 @@ export const ReadingHistoryTimeline = () => {
         };
         const isUpcoming = time > todayDate.getTime();
 
-        items.push(
-          <Item
-            id={key}
-            key={`${week}-${day}-${dayOfTheMonth}-${monthName}-${year}`}
-            tooltipContent={tooltipContent}
-            range={range}
-            handleItemClick={handleItemClick}
-            readingHistoryRangeSeconds={readingHistoryRangeSeconds}
-            style={style}
-            isUpcoming={isUpcoming}
-          />
-        );
+        if (range) {
+          items.push(
+            <Item
+              id={key}
+              key={`${week}-${day}-${dayOfTheMonth}-${monthName}-${year}`}
+              tooltipContent={tooltipContent}
+              range={range}
+              handleItemClick={handleItemClick}
+              readingHistoryRangeSeconds={readingHistoryRangeSeconds}
+              style={style}
+              isUpcoming={isUpcoming}
+            />
+          );
+        }
       }
     }
 
@@ -364,20 +401,21 @@ export const ReadingHistoryTimeline = () => {
 
   useEffect(() => {
     const lastKey = Array.from(dayRangesMap.keys()).pop();
-    const element = document.getElementById(lastKey);
+    if (lastKey) {
+      const element = document.getElementById(lastKey);
 
-    if (element) {
-      element.scrollIntoView({
-        behavior: "smooth", // smooth scrolling animation
-        block: "center", // scroll so it's centered in the viewport
-      });
+      if (element) {
+        element.scrollIntoView({
+          behavior: "smooth", // smooth scrolling animation
+          block: "center", // scroll so it's centered in the viewport
+        });
+      }
     }
-
     const el = timelineRef.current;
 
     if (!el) return;
 
-    const handleWheel = (e) => {
+    const handleWheel: (event: WheelEvent) => void = (e) => {
       if (e.deltaY === 0) return;
 
       const isScrollable = el.scrollWidth > el.clientWidth;
@@ -403,24 +441,3 @@ export const ReadingHistoryTimeline = () => {
     </div>
   );
 };
-
-function GetPastDateInfo(time) {
-  const date = new Date(time);
-
-  const weekdays = [
-    "Sunday",
-    "Monday",
-    "Tuesday",
-    "Wednesday",
-    "Thursday",
-    "Friday",
-    "Saturday",
-  ];
-  const weekday = weekdays[date.getDay()];
-  const day = date.getDate();
-  const month = date.getMonth() + 1;
-  const year = date.getFullYear();
-  const monthName = date.toLocaleString("en-US", { month: "short" });
-
-  return { weekday, day, month, monthName, year };
-}

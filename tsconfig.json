@@ -1284,6 +1284,9 @@
       "bibleVizUtils.functions.SetUsersColorPositionOnPiece": [
         "./packages/Bible Visualization Utils/bibleVizUtils/functions/SetUsersColorPositionOnPiece.tsx"
       ],
+      "bibleVizUtils.functions.string": [
+        "./packages/Bible Visualization Utils/bibleVizUtils/functions/string.tsx"
+      ],
       "bibleVizUtils.functions.SubtractArrays": [
         "./packages/Bible Visualization Utils/bibleVizUtils/functions/SubtractArrays.tsx"
       ],
@@ -1903,6 +1906,9 @@
       "aiApps.painter.DraggableContainer": [
         "./packages/Draw/aiApps/painter/DraggableContainer.tsx"
       ],
+      "aiApps.painter.interfaces": [
+        "./packages/Draw/aiApps/painter/interfaces.tsx"
+      ],
       "aiApps.painter.onCreate": [
         "./packages/Draw/aiApps/painter/onCreate.tsx"
       ],
@@ -1915,9 +1921,7 @@
       "aiApps.painter.togglePainter": [
         "./packages/Draw/aiApps/painter/togglePainter.tsx"
       ],
-      "aiApps.painter.interfaces": [
-        "./packages/Draw/aiApps/painter/interfaces.tsx"
-      ],
+      "aiApps.painter.utils": ["./packages/Draw/aiApps/painter/utils.tsx"],
       "ext_canvas.eraseTool.changeSize": [
         "./packages/Eraser/ext_canvas/eraseTool/changeSize.tsx"
       ],
@@ -2017,29 +2021,17 @@
       "ext_geoImporter.importer.closeMiniMapPortal": [
         "./packages/GeoImporter/ext_geoImporter/importer/closeMiniMapPortal.tsx"
       ],
-      "ext_geoImporter.importer.interfaces": [
-        "./packages/GeoImporter/ext_geoImporter/importer/interfaces.tsx"
+      "ext_geoImporter.importer.createCloseButton": [
+        "./packages/GeoImporter/ext_geoImporter/importer/createCloseButton.tsx"
       ],
       "ext_geoImporter.importer.focusOnWithCatch": [
         "./packages/GeoImporter/ext_geoImporter/importer/focusOnWithCatch.tsx"
       ],
-      "ext_geoImporter.importer.createCloseButton": [
-        "./packages/GeoImporter/ext_geoImporter/importer/createCloseButton.tsx"
-      ],
-      "ext_geoImporter.importer.fetchBookData": [
-        "./packages/GeoImporter/ext_geoImporter/importer/fetchBookData.tsx"
-      ],
-      "ext_geoImporter.importer.fetchSheetData": [
-        "./packages/GeoImporter/ext_geoImporter/importer/fetchSheetData.tsx"
-      ],
-      "ext_geoImporter.importer.fetchVerseOfTheDay": [
-        "./packages/GeoImporter/ext_geoImporter/importer/fetchVerseOfTheDay.tsx"
-      ],
       "ext_geoImporter.importer.GeometryCollection": [
         "./packages/GeoImporter/ext_geoImporter/importer/GeometryCollection.tsx"
       ],
-      "ext_geoImporter.importer.getVerse": [
-        "./packages/GeoImporter/ext_geoImporter/importer/getVerse.tsx"
+      "ext_geoImporter.importer.interfaces": [
+        "./packages/GeoImporter/ext_geoImporter/importer/interfaces.tsx"
       ],
       "ext_geoImporter.importer.LineString": [
         "./packages/GeoImporter/ext_geoImporter/importer/LineString.tsx"
@@ -2056,23 +2048,8 @@
       "ext_geoImporter.importer.onFileUpload": [
         "./packages/GeoImporter/ext_geoImporter/importer/onFileUpload.tsx"
       ],
-      "ext_geoImporter.importer.onGridClick": [
-        "./packages/GeoImporter/ext_geoImporter/importer/onGridClick.tsx"
-      ],
       "ext_geoImporter.importer.onInstJoined": [
         "./packages/GeoImporter/ext_geoImporter/importer/onInstJoined.tsx"
-      ],
-      "ext_geoImporter.importer.onMaxLODEnter": [
-        "./packages/GeoImporter/ext_geoImporter/importer/onMaxLODEnter.tsx"
-      ],
-      "ext_geoImporter.importer.onMaxLODExit": [
-        "./packages/GeoImporter/ext_geoImporter/importer/onMaxLODExit.tsx"
-      ],
-      "ext_geoImporter.importer.onMInLODEnter": [
-        "./packages/GeoImporter/ext_geoImporter/importer/onMInLODEnter.tsx"
-      ],
-      "ext_geoImporter.importer.onMinLODExit": [
-        "./packages/GeoImporter/ext_geoImporter/importer/onMinLODExit.tsx"
       ],
       "ext_geoImporter.importer.Point": [
         "./packages/GeoImporter/ext_geoImporter/importer/Point.tsx"
@@ -2752,6 +2729,9 @@
       "scriptureMap2D.main.enums": [
         "./packages/Scripture Map 2D/scriptureMap2D/main/enums.tsx"
       ],
+      "scriptureMap2D.main.eventManager": [
+        "./packages/Scripture Map 2D/scriptureMap2D/main/eventManager.tsx"
+      ],
       "scriptureMap2D.main.FiltersSelectorOption": [
         "./packages/Scripture Map 2D/scriptureMap2D/main/FiltersSelectorOption.tsx"
       ],
@@ -2769,9 +2749,6 @@
       ],
       "scriptureMap2D.main.OnBibleVizUtilsInitialized": [
         "./packages/Scripture Map 2D/scriptureMap2D/main/OnBibleVizUtilsInitialized.tsx"
-      ],
-      "scriptureMap2D.main.onDestroy": [
-        "./packages/Scripture Map 2D/scriptureMap2D/main/onDestroy.tsx"
       ],
       "scriptureMap2D.main.onEggHatch": [
         "./packages/Scripture Map 2D/scriptureMap2D/main/onEggHatch.tsx"
@@ -2835,6 +2812,12 @@
       ],
       "scriptureMap2D.main.UserPresenceUpdate": [
         "./packages/Scripture Map 2D/scriptureMap2D/main/UserPresenceUpdate.tsx"
+      ],
+      "scriptureMap2D.main.userSubscribed": [
+        "./packages/Scripture Map 2D/scriptureMap2D/main/userSubscribed.tsx"
+      ],
+      "scriptureMap2D.main.userUnsubscribed": [
+        "./packages/Scripture Map 2D/scriptureMap2D/main/userUnsubscribed.tsx"
       ],
       "scriptureMap2D.main.Wrapper": [
         "./packages/Scripture Map 2D/scriptureMap2D/main/Wrapper.tsx"

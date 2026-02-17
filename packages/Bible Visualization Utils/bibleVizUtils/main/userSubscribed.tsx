@@ -20,4 +20,3 @@ if (userData) {
 }
 
 readingHistoryColorStore.addUserColor(authId, color);
-globalThis.ScriptureMapHandleSubscriptionsChanged?.();

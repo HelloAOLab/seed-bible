@@ -1,7 +1,10 @@
 import { useIsMobile } from "scriptureMap2D.main.CustomHooks";
 import { useTabsContext } from "app.hooks.tabs";
 import { useSideBarContext } from "app.hooks.sideBar";
-import { ProjectChapterState } from "scriptureMap2D.main.enums";
+import {
+  ProjectChapterState,
+  type ProjectChapterStateType,
+} from "scriptureMap2D.main.enums";
 import type {
   ScriptureMap2DProviderProps,
   ScriptureMap2DContextType,
@@ -11,7 +14,10 @@ import type {
   ProjectFilters,
   ScriptureMap2DContentValue,
 } from "scriptureMap2D.main.types";
-import type { ArrangementInfo } from "bibleVizUtils.data.BibleVizDataRepository";
+import {
+  BibleVizDataRepository,
+  type ArrangementInfo,
+} from "bibleVizUtils.data.BibleVizDataRepository";
 const { createContext, useState, useContext, useCallback, useMemo } =
   os.appHooks;
 
@@ -220,7 +226,7 @@ export const ScriptureMap2DProvider: (
   args: ScriptureMap2DProviderProps
 ) => React.JSX.Element = ({ children, config }) => {
   const {
-    arrangementIndex = BibleVizUtils.Functions.GetCurrentArrangementIndex() as number,
+    arrangementIndex = BibleVizDataRepository.getCurrentArrangementIndex(),
     initialScaleFactor = 1,
     initialIsReadingHistoryEnabled = false,
     initialShowingAllChapters = false,
@@ -242,7 +248,7 @@ export const ScriptureMap2DProvider: (
   }, [tabs, activeTabId]);
 
   const arrangement = useMemo<ArrangementInfo>(() => {
-    return BibleVizUtils.Functions.GetArrangementByIndex({
+    return BibleVizDataRepository.getArrangementByIndex({
       index: arrangementIndex,
     });
   }, [arrangementIndex]);
@@ -355,7 +361,7 @@ export const ScriptureMap2DProvider: (
   }, []);
 
   const handleProjectFilterOptionClick = useCallback<
-    (key: "all" | ProjectChapterState) => void
+    (key: "all" | ProjectChapterStateType) => void
   >(
     (key) => {
       const copy = new Map(projectFilters);
