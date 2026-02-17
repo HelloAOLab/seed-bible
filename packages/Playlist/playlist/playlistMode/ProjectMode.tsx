@@ -342,7 +342,6 @@ const ProjectMode = ({
                     fontSize: "12px",
                     fontWeight: "600",
                     marginLeft: "4px",
-                    color: "white",
                   }}
                   for="playlistInclude"
                 >
@@ -382,7 +381,6 @@ const ProjectMode = ({
                     fontSize: "12px",
                     fontWeight: "600",
                     marginLeft: "4px",
-                    color: "white",
                   }}
                   for="playlistInclude"
                 >
@@ -421,7 +419,6 @@ const ProjectMode = ({
                     fontSize: "12px",
                     fontWeight: "600",
                     marginLeft: "4px",
-                    color: "white",
                   }}
                   for="playlistInclude"
                 >
@@ -461,11 +458,9 @@ const ProjectMode = ({
             className="overlay linked-item-custom"
           >
             <p>
-              <b style={{ color: "white" }}>{t("viewOptions")} </b>
+              <b>{t("viewOptions")} </b>
             </p>
-            <span style={{ fontSize: "10px", color: "#c9c8c6" }}>
-              {t("viewOptionsInfo")}
-            </span>
+            <span style={{ fontSize: "10px" }}>{t("viewOptionsInfo")}</span>
             {menuItems.map(({ icon, label, value }, i) => {
               return (
                 <>
