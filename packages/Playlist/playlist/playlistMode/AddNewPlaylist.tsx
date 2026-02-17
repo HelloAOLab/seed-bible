@@ -27,41 +27,42 @@ const predefinedIconsOptions = [
 const Tabs = await thisBot.Tabs();
 const RenderIcon = await thisBot.RenderIcon();
 
-const AddNewPlaylist = ({
-  id,
-  editId,
-  list,
-  parentId,
-  link,
-  setLink,
-  setOpenModalName,
-  checkNameDuplicate,
-  onCreatePlaylist,
-  loading,
-  setLoading,
-  handleSheetUrl,
-  name,
-  setName,
-  customColor,
-  setCustomColor,
-  selectedColor,
-  publishAccess,
-  setPublishAccess,
-  setSelectedColor,
-  selectedIcon,
-  setSelectedIcon,
-  description,
-  setDescription,
-  customIcon,
-  setCustomIcon,
-  isTempEdit,
-  onClickBackToDiscover,
-  selectedTags,
-  renameScreen,
-  setTags,
-  isLayers,
-}) => {
-  const IsPlaylistPlaying = globalThis.IsPlaylistPlaying;
+const AddNewPlaylist = (props: any) => {
+  const {
+    id,
+    editId,
+    list,
+    parentId,
+    link,
+    setLink,
+    setOpenModalName,
+    checkNameDuplicate,
+    onCreatePlaylist,
+    loading,
+    setLoading,
+    handleSheetUrl,
+    name,
+    setName,
+    customColor,
+    setCustomColor,
+    selectedColor,
+    publishAccess,
+    setPublishAccess,
+    setSelectedColor,
+    selectedIcon,
+    setSelectedIcon,
+    description,
+    setDescription,
+    customIcon,
+    setCustomIcon,
+    isTempEdit,
+    onClickBackToDiscover,
+    selectedTags,
+    renameScreen,
+    setTags,
+    isLayers,
+  } = props;
+  const IsPlaylistPlaying = G.IsPlaylistPlaying;
 
   const listPlaylist = useMemo(() => {
     if (renameScreen) {
@@ -236,11 +237,9 @@ const AddNewPlaylist = ({
             className="overlay linked-item-custom"
           >
             <p>
-              <b style={{ color: "white" }}>{t("publishSettings")}</b>
+              <b>{t("publishSettings")}</b>
             </p>
-            <span style={{ fontSize: "10px", color: "#c9c8c6" }}>
-              {t("publishSettingsDesc")}
-            </span>
+            <span style={{ fontSize: "10px" }}>{t("publishSettingsDesc")}</span>
             <div
               className="more-menu-items"
               onClick={() => {

@@ -3554,6 +3554,23 @@
       "app.components.verseToolbar": [
         "./packages/seed-bible/app/components/verseToolbar.tsx"
       ],
+      "app.contract.environment": [
+        "./packages/seed-bible/app/contract/environment.tsx"
+      ],
+      "app.contract.factory": [
+        "./packages/seed-bible/app/contract/factory.tsx"
+      ],
+      "app.contract.hooks": ["./packages/seed-bible/app/contract/hooks.tsx"],
+      "app.contract.provider": [
+        "./packages/seed-bible/app/contract/provider.tsx"
+      ],
+      "app.contract.theme": ["./packages/seed-bible/app/contract/theme.tsx"],
+      "app.controller.controllerBuilder": [
+        "./packages/seed-bible/app/controller/controllerBuilder.tsx"
+      ],
+      "app.controller.MainController": [
+        "./packages/seed-bible/app/controller/MainController.tsx"
+      ],
       "app.emitter.onEggHatch": [
         "./packages/seed-bible/app/emitter/onEggHatch.tsx"
       ],
@@ -3605,9 +3622,11 @@
       "app.hooks.sideBar": ["./packages/seed-bible/app/hooks/sideBar.tsx"],
       "app.hooks.tabs": ["./packages/seed-bible/app/hooks/tabs.tsx"],
       "app.hooks.useHold": ["./packages/seed-bible/app/hooks/useHold.tsx"],
+      "app.main.app": ["./packages/seed-bible/app/main/app.tsx"],
       "app.main.canvasController": [
         "./packages/seed-bible/app/main/canvasController.tsx"
       ],
+      "app.main.cssUtil": ["./packages/seed-bible/app/main/cssUtil.tsx"],
       "app.main.dragOverlay": [
         "./packages/seed-bible/app/main/dragOverlay.tsx"
       ],
@@ -3620,6 +3639,12 @@
       "app.main.onInstJoined": [
         "./packages/seed-bible/app/main/onInstJoined.tsx"
       ],
+      "app.main.root": ["./packages/seed-bible/app/main/root.tsx"],
+      "app.main.rootContext": [
+        "./packages/seed-bible/app/main/rootContext.tsx"
+      ],
+      "app.main.tempFluff": ["./packages/seed-bible/app/main/tempFluff.tsx"],
+      "app.main.themeUtils": ["./packages/seed-bible/app/main/themeUtils.tsx"],
       "app.packager.addDependencies": [
         "./packages/seed-bible/app/packager/addDependencies.tsx"
       ],
@@ -3705,6 +3730,9 @@
         "./packages/seed-bible/app/sn_styles/styler.tsx"
       ],
       "app.styles.styler": ["./packages/seed-bible/app/styles/styler.tsx"],
+      "app.util.validations": [
+        "./packages/seed-bible/app/util/validations.tsx"
+      ],
       "baseElements.formMenu.bookData": [
         "./packages/seed-bible/baseElements/formMenu/bookData.tsx"
       ],
@@ -3837,6 +3865,8 @@
       "shortcuts.shortcut.onKeyUp": [
         "./packages/seed-bible/shortcuts/shortcut/onKeyUp.tsx"
       ],
+      "store.MemoryStore": ["./packages/seed-bible/store/MemoryStore.tsx"],
+      "store.StoreContract": ["./packages/seed-bible/store/StoreContract.tsx"],
       "webhook.API.decrypt": ["./packages/seed-bible/webhook/API/decrypt.tsx"],
       "webhook.API.defineGlobal": [
         "./packages/seed-bible/webhook/API/defineGlobal.tsx"

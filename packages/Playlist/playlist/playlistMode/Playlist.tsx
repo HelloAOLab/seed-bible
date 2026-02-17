@@ -911,18 +911,16 @@ const Playlist = ({
               ...showMorePosition.current,
               left: "none",
               right: "4rem",
-              width: "200px",
+              width: "206px",
               padding: "1rem",
               top: "5rem",
             }}
             className="overlay linked-item-custom"
           >
             <p>
-              <b style={{ color: "white" }}>{t("publishSettings")}</b>
+              <b>{t("publishSettings")}</b>
             </p>
-            <span style={{ fontSize: "10px", color: "#c9c8c6" }}>
-              {t("publishSettingsDesc")}
-            </span>
+            <span style={{ fontSize: "10px" }}>{t("publishSettingsDesc")}</span>
             <div
               className="more-menu-items"
               onClick={() => {
@@ -1004,7 +1002,7 @@ const Playlist = ({
           <div
             style={{
               ...showPlaylistPosition.current,
-              width: "200px",
+              width: "206px",
               padding: "1rem",
             }}
             className="overlay linked-item-custom"
@@ -1042,7 +1040,6 @@ const Playlist = ({
                     fontSize: "12px",
                     fontWeight: "600",
                     marginLeft: "4px",
-                    color: "white",
                   }}
                   for="playlistInclude"
                 >
@@ -1101,7 +1098,6 @@ const Playlist = ({
                     fontSize: "12px",
                     fontWeight: "600",
                     marginLeft: "4px",
-                    color: "white",
                   }}
                   for="playlistInclude"
                 >
