@@ -28,8 +28,8 @@
 .playlist-cont-actions .playlist-cont-button {
   height: 100px;
   width: 30px;
-  background-color: black;
-  color: white;
+  background-color: var(--pageBackground);
+  color: var(--verseTextColor, var(--text-verse-color, var(--pageTextColor)));
   padding: 0px;
   display: grid;
   place-items: center;
@@ -91,8 +91,7 @@
 
 .more-menu-items,
 .more-menu-items p {
-  /* color: var(--verseTextColor, var(--text-verse-color, var(--pageTextColor))); */
-  color: white !important;
+  color: var(--verseTextColor, var(--text-verse-color, var(--pageTextColor)));
 }
 
 .more-menu-items.inactive * {
@@ -100,7 +99,7 @@
 }
 
 .more-menu-items.active {
-  background-color: white;
+  background-color: var(--pageBackground);
 }
 
 .more-menu-items.inactive {

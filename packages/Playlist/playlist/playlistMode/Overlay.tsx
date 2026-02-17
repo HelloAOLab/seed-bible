@@ -13,7 +13,7 @@ const Overlay = ({
         onClick={() => onClose()}
         style={{
           ...position,
-          width: "200px",
+          width: "206px",
           padding: "1rem",
           ...styles,
           ...positionOverRide,

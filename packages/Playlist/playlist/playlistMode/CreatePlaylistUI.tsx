@@ -1186,9 +1186,7 @@ const CreatePlaylistUI = ({
             <p>
               <b>{t("publishSettings")}</b>
             </p>
-            <span style={{ fontSize: "10px", color: "#c9c8c6" }}>
-              {t("publishSettingsDesc")}
-            </span>
+            <span style={{ fontSize: "10px" }}>{t("publishSettingsDesc")}</span>
             <div
               className="more-menu-items"
               onClick={() => {
@@ -1220,7 +1218,7 @@ const CreatePlaylistUI = ({
             <p>
               <b style={{ marginTop: "10px" }}>{t("playlistSettings")}</b>
             </p>
-            <span style={{ fontSize: "10px", color: "#c9c8c6" }}>
+            <span style={{ fontSize: "10px" }}>
               {t("playlistSettingsTooltip")}
             </span>
             <div

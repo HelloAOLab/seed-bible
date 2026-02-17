@@ -236,11 +236,9 @@ const AddNewPlaylist = ({
             className="overlay linked-item-custom"
           >
             <p>
-              <b style={{ color: "white" }}>{t("publishSettings")}</b>
+              <b>{t("publishSettings")}</b>
             </p>
-            <span style={{ fontSize: "10px", color: "#c9c8c6" }}>
-              {t("publishSettingsDesc")}
-            </span>
+            <span style={{ fontSize: "10px" }}>{t("publishSettingsDesc")}</span>
             <div
               className="more-menu-items"
               onClick={() => {
