@@ -11,7 +11,8 @@
   width: 375px;
   background: var(--background);
   border-radius: 8px;
-  box-shadow: 0 10px 30px rgba(0, 0, 0, 0.15);
+  box-shadow: 0 10px 30px
+    color-mix(in srgb, var(--tabSelection) 15%, transparent);
   padding: 10px 10px 45px 10px;
   z-index: 2;
   position: absolute;
@@ -26,6 +27,16 @@
   z-index: 1000;
   padding: 5px;
   border-radius: 5px;
+}
+
+.translationInfoModal {
+  position: absolute;
+  width: 400px;
+  z-index: 1000;
+  padding: 5px;
+  border-radius: 5px;
+  word-wrap: break-word;
+  overflow-wrap: break-word;
 }
 
 .settingsIcon {
@@ -127,8 +138,17 @@
     width: 200px;
     left: auto;
     right: 10px;
-    box-shadow: 0 10px 30px rgba(0, 0, 0, 0.15);
+    box-shadow: 0 5px 10px
+      color-mix(in srgb, var(--tabSelection) 15%, transparent);
     border-radius: 5px;
+  }
+
+  .translationInfoModal {
+    width: 250px;
+    height: fit-content;
+    border-radius: 5px;
+    box-shadow: 0 5px 10px
+      color-mix(in srgb, var(--tabSelection) 15%, transparent);
   }
 
   .language-list {

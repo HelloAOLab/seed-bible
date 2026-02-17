@@ -1021,6 +1021,7 @@ const SearchBar = (props: { openSidebar: boolean }) => {
             setAllowedTranslationLimit={setAllowedTranslationLimit}
             apiTranslations={apiTranslations}
             defaultTranslations={defaultTranslations}
+            windowSize={windowSize}
           />
         )}
       </div>
