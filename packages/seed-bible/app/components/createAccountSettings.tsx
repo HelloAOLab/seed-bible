@@ -22,6 +22,7 @@ const CreateAccountSettings = () => {
   const [location, setLocation] = useState("");
   const [uid, setUid] = useState(authBot?.id);
   const [isSignedIn, setIsSignedIn] = useState(false);
+
   useEffect(() => {
     if (!authBot.id) {
       setIsSignedIn(false);
@@ -53,6 +54,11 @@ const CreateAccountSettings = () => {
   useEffect(() => {
     init();
   }, []);
+
+  globalThis.SetIsSignedIn = setIsSignedIn;
+  globalThis.SetUid = setUid;
+  globalThis.Init = init;
+
   async function uploadImage() {
     const authBot = await os.requestAuthBot();
     if (!authBot?.id) {

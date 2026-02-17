@@ -213,6 +213,7 @@ const CreatePlaylistUI = ({
   const [name, setName] = useState(
     globalThis[`${id}creatingPlaylistName`] || ""
   );
+
   const [link, setLink] = useState("");
 
   const [mode, setMode] = useState(
@@ -1042,10 +1043,12 @@ const CreatePlaylistUI = ({
                 className="more-menu-items"
                 onClick={() => {
                   if (!authBot?.id) {
-                    return ShowNotification({
+                    ShowNotification({
                       message: t("pleaseLoginToUseFeature"),
                       severity: "error",
                     });
+                    shout("tryUserLogin");
+                    return;
                   }
                   setMode(PlaylistModeTypes.annotations);
                   setShowPlaylistSettings(false);
@@ -1346,6 +1349,7 @@ const CreatePlaylistUI = ({
                       message: t("pleaseLoginToUseMoreFeatures"),
                       severity: "error",
                     });
+                    shout("tryUserLogin");
                     return;
                   }
                   const rect = e.currentTarget.getBoundingClientRect();
