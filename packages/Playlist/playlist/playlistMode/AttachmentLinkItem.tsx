@@ -6,7 +6,7 @@ const Linking = thisBot.LinkingItems();
 const isMobile =
   (window?.innerWidth || gridPortalBot.tags.pixelWidth) <
   G.MOBILE_VIEWPORT_THRESHOLD;
-const editAbleTypes = {
+const editAbleTypes: any = {
   youtube: true,
   iframe: true,
   video: true,
@@ -21,52 +21,53 @@ const AutoplayIcons = {
   TRUE: "https://auth-aux-aobot-prod-filesbucket-141297942820.s3.amazonaws.com/aoBot/9721a3a303021e8c4b84b6c3e939718a5a7ab773d84fd305351bf3f5081fbeca.svg",
 };
 
-const AttachLinkItem = ({
-  clickPass,
-  activeItemID,
-  playlistId,
-  setRef,
-  oldItemsMap,
-  dragOverSet,
-  playlistName,
-  linkingMode,
-  viewOnly,
-  checklistEnabled,
-  checkListData,
-  data,
-  editDataFromPlaylist,
-  creatingPlaylist,
-  toggle,
-  onClickItem,
-  handleDragStart,
-  handleDragOver,
-  handleDragEnd,
-  deleteFromList,
-  originalIndex,
-  index,
-  playListSubIndex,
-  onClick,
-  setList,
-  activeItemList,
-  currentDateActive,
-  originalList,
-  datesRepeat,
-  datesInWrongOrder,
-  currentFormat,
-  isSomethingEmbededChecked,
-  draggable = true,
-  layers,
-  onDisembed,
-  playingPlaylist = false,
-  justPlay = false,
-  embedding,
-  pId,
-  onClickCheckbox,
-  checked,
-  isPlaylistNestedSupported = false,
-  isPlaylistNestedPlayAble = false,
-  autoPlayToggle = null,
-}) => {
+const AttachLinkItem = (props: any) => {
+  const {
+    clickPass,
+    activeItemID,
+    playlistId,
+    setRef,
+    oldItemsMap,
+    dragOverSet,
+    playlistName,
+    linkingMode,
+    viewOnly,
+    checklistEnabled,
+    checkListData,
+    data,
+    editDataFromPlaylist,
+    creatingPlaylist,
+    toggle,
+    onClickItem,
+    handleDragStart,
+    handleDragOver,
+    handleDragEnd,
+    deleteFromList,
+    originalIndex,
+    index,
+    playListSubIndex,
+    onClick,
+    setList,
+    activeItemList,
+    currentDateActive,
+    originalList,
+    datesRepeat,
+    datesInWrongOrder,
+    currentFormat,
+    isSomethingEmbededChecked,
+    draggable = true,
+    layers,
+    onDisembed,
+    playingPlaylist = false,
+    justPlay = false,
+    embedding,
+    pId,
+    onClickCheckbox,
+    checked,
+    isPlaylistNestedSupported = false,
+    isPlaylistNestedPlayAble = false,
+    autoPlayToggle = null,
+  } = props;
   const [editDateModal, setEditDateModal] = useState(false);
   const datePickerRef = useRef<any>(null);
   const [date, setDate] = useState(
@@ -82,7 +83,7 @@ const AttachLinkItem = ({
     }
   }, []);
 
-  const onDateSave = (date: string) => {
+  const onDateSave = (date?: string) => {
     setList((prev: any[]) => {
       const old = [...prev];
       const index = old.findIndex((ele) => ele.id === data.id);
@@ -90,13 +91,13 @@ const AttachLinkItem = ({
         old[index] = {
           ...old[index],
           content: G.FORMAT_DATE(
-            date.replaceAll("/", "-"),
+            date?.replaceAll("/", "-") || "",
             "DEFAULT",
             "MM-DD-YYYY"
           ),
           additionalInfo: {
             date: G.FORMAT_YYYY_MM_DD(
-              new Date(`${date.replaceAll("/", "-")} 12:00:00`)
+              new Date(`${date?.replaceAll("/", "-") || ""} 12:00:00`)
             ),
           },
         };
@@ -109,7 +110,7 @@ const AttachLinkItem = ({
     return null;
   }
 
-  const isVideoItem = globalThis.IsVideoAttachment(data);
+  const isVideoItem = G.IsVideoAttachment(data);
 
   const toggleAutoPlay = () => {
     if (autoPlayToggle) autoPlayToggle(originalIndex, pId, data.id);
@@ -133,7 +134,7 @@ const AttachLinkItem = ({
           <input
             type="date"
             value={date}
-            onChange={(e) => setDate(e.target.value)}
+            onChange={(e: any) => setDate(e.target.value)}
             style={{
               margin: "10px 0",
               padding: "8px",
@@ -201,25 +202,25 @@ const AttachLinkItem = ({
               return;
             }
           }
-          globalThis.ADDING_TOPLAYLIST_TIMEOUT = setTimeout(() => {
-            globalThis.ADDING_TOPLAYLIST_TIMEOUT = null;
+          G.ADDING_TOPLAYLIST_TIMEOUT = setTimeout(() => {
+            G.ADDING_TOPLAYLIST_TIMEOUT = null;
             onClickItem({ dataItem: data });
           }, 1000);
         }}
         onPointerUp={() => {
-          if (globalThis.ADDING_TOPLAYLIST_TIMEOUT) {
-            clearInterval(globalThis.ADDING_TOPLAYLIST_TIMEOUT);
-            globalThis.ADDING_TOPLAYLIST_TIMEOUT = null;
+          if (G.ADDING_TOPLAYLIST_TIMEOUT) {
+            clearInterval(G.ADDING_TOPLAYLIST_TIMEOUT);
+            G.ADDING_TOPLAYLIST_TIMEOUT = null;
           }
         }}
         // onMouseDown={(e) => e.stopPropagation()} // block parent drag
         onMouseLeave={() => {
-          if (globalThis.ADDING_TOPLAYLIST_TIMEOUT)
-            clearInterval(globalThis.ADDING_TOPLAYLIST_TIMEOUT);
+          if (G.ADDING_TOPLAYLIST_TIMEOUT)
+            clearInterval(G.ADDING_TOPLAYLIST_TIMEOUT);
         }}
         onTouchEnd={() => {
-          if (globalThis.ADDING_TOPLAYLIST_TIMEOUT)
-            clearInterval(globalThis.ADDING_TOPLAYLIST_TIMEOUT);
+          if (G.ADDING_TOPLAYLIST_TIMEOUT)
+            clearInterval(G.ADDING_TOPLAYLIST_TIMEOUT);
         }}
         onDragStart={() => {
           handleDragStart(index, pId);
@@ -258,25 +259,27 @@ const AttachLinkItem = ({
                   return;
                 }
 
-                const isShiftHold = globalThis?.KEY_HOLD?.["shift"];
+                const isShiftHold = G?.KEY_HOLD?.["shift"];
 
                 if (isShiftHold && !onDisembed) {
-                  let upperLimit = Math.max(index, globalThis.LAST_CLICK_ID);
-                  let lowerLimit = Math.min(index, globalThis.LAST_CLICK_ID);
+                  let upperLimit = Math.max(index, G.LAST_CLICK_ID);
+                  let lowerLimit = Math.min(index, G.LAST_CLICK_ID);
                   const idsFilter = originalList
-                    .filter(
-                      ({ id }, indexInner) =>
+                    .filter((ele: { id: string }, indexInner: number) => {
+                      const { id } = ele;
+                      return (
                         indexInner <= upperLimit &&
                         indexInner >= lowerLimit &&
-                        indexInner !== globalThis.LAST_CLICK_ID &&
+                        indexInner !== G.LAST_CLICK_ID &&
                         id !== embedding
-                    )
-                    .map((ele) => ele.id);
+                      );
+                    })
+                    .map((ele: { id: string }) => ele.id);
                   editDataFromPlaylist(idsFilter, false);
-                  globalThis.LAST_CLICK_ID = index;
+                  G.LAST_CLICK_ID = index;
                   return;
                 } else {
-                  globalThis.LAST_CLICK_ID = index;
+                  G.LAST_CLICK_ID = index;
                 }
                 editDataFromPlaylist(data.id, false);
               }}
@@ -296,17 +299,17 @@ const AttachLinkItem = ({
               </span>
             ) : data.additionalInfo.type === "voice-recording" ? (
               <img
-                src={getFileIconByMimeType("audio/")}
+                src={G.getFileIconByMimeType("audio/")}
                 style={{ width: "18px" }}
               />
             ) : data.additionalInfo.type === "video-recording" ? (
               <img
-                src={getFileIconByMimeType("video/")}
+                src={G.getFileIconByMimeType("video/")}
                 style={{ width: "18px" }}
               />
             ) : data.additionalInfo.type === "file" ? (
               <img
-                src={getFileIconByMimeType(data.additionalInfo.mimeType)}
+                src={G.getFileIconByMimeType(data.additionalInfo.mimeType)}
                 style={{ width: "18px" }}
               />
             ) : (
@@ -340,9 +343,9 @@ const AttachLinkItem = ({
           onClick={() => {
             if (data.type === "date") return;
 
-            if (!!onClick) {
-              clearInterval(globalThis.ADDING_TOPLAYLIST_TIMEOUT);
-              globalThis.ADDING_TOPLAYLIST_TIMEOUT = null;
+            if (onClick) {
+              clearInterval(G.ADDING_TOPLAYLIST_TIMEOUT);
+              G.ADDING_TOPLAYLIST_TIMEOUT = null;
               // thisBot.RenderLinkContent(data);
               onClick({ dataItem: data, index: originalIndex });
               if (checklistEnabled) {
@@ -360,12 +363,12 @@ const AttachLinkItem = ({
               // globalThis.SetCurreIndexPlaylist && globalThis.SetCurreIndexPlaylist(index, playListSubIndex);
               return;
             }
-            if (globalThis.SetCurrentItem) {
-              globalThis.SetCurrentItem({ ...data });
+            if (G.SetCurrentItem) {
+              G.SetCurrentItem({ ...data });
             }
 
-            if (globalThis.SetVideoSrc) {
-              globalThis.SetVideoSrc(null);
+            if (G.SetVideoSrc) {
+              G.SetVideoSrc(null);
               if (
                 data.additionalInfo.type === "video-recording" ||
                 data.additionalInfo.type === "Video" ||
@@ -386,13 +389,13 @@ const AttachLinkItem = ({
 
             if (data.additionalInfo.type === "externalLink") {
               // thisBot.RenderLinkContent({ ...data });
-              if (globalThis.OpenRefTimeout) {
-                clearTimeout(globalThis.OpenRefTimeout);
-                globalThis.OpenRefTimeout = null;
+              if (G.OpenRefTimeout) {
+                clearTimeout(G.OpenRefTimeout);
+                G.OpenRefTimeout = null;
               }
-              globalThis.OpenRefTimeout = setTimeout(() => {
+              G.OpenRefTimeout = setTimeout(() => {
                 const link = data.additionalInfo.link;
-                const isVideo = globalThis.IsVideoAttachment(data);
+                const isVideo = G.IsVideoAttachment(data);
                 if (isVideo) {
                   thisBot.CloseFloatingApp();
                   thisBot.VideoPlayer({
@@ -410,10 +413,10 @@ const AttachLinkItem = ({
               return;
             }
 
-            if (globalThis.SetMediaURL) {
-              globalThis.SetMediaURL(null);
+            if (G.SetMediaURL) {
+              G.SetMediaURL(null);
               if (data.additionalInfo.type === "voice-recording") {
-                globalThis.SetMediaURL(data.additionalInfo.link);
+                G.SetMediaURL(data.additionalInfo.link);
                 return;
               }
             }
@@ -434,7 +437,7 @@ const AttachLinkItem = ({
           }`}
         >
           {data.type === "date"
-            ? FORMAT_DATE(data?.additionalInfo.date, currentFormat)
+            ? G.FORMAT_DATE(data?.additionalInfo.date, currentFormat)
             : data?.content.substr(0, 25)}{" "}
           {`${data?.content.length > 25 ? "..." : ""}`}
         </p>
@@ -523,7 +526,7 @@ const AttachLinkItem = ({
                     datePickerRef.current.click();
                     return;
                   }
-                  globalThis.SetEditAttachmentItem({
+                  G.SetEditAttachmentItem({
                     id: data.id,
                     parentId: pId,
                     selectedType: "LINK",

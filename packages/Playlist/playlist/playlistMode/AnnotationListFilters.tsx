@@ -20,15 +20,16 @@ const DATE_OPTIONS = [
   { label: t("custom_date_range"), value: "custom" },
 ];
 
-const AnnotationListFilters = ({
-  onChangeFilters,
-  onClearFilters,
-  filters,
-  annotationSources,
-  tagsSources,
-  currentOpenedBook,
-  handleClose,
-}) => {
+const AnnotationListFilters = (props: any) => {
+  const {
+    onChangeFilters,
+    onClearFilters,
+    filters,
+    annotationSources,
+    tagsSources,
+    currentOpenedBook,
+    handleClose,
+  } = props;
   const refInput = useRef(null);
   const refInputto = useRef(null);
 
@@ -94,7 +95,7 @@ const AnnotationListFilters = ({
                   type="date"
                   className="hidden-date"
                   placeholder="MM/DD/YYYY"
-                  onChange={(e) => {
+                  onChange={(e: any) => {
                     onChangeFilters("fromDate", e?.target?.value || "");
                   }}
                 />
@@ -117,7 +118,7 @@ const AnnotationListFilters = ({
                 <input
                   ref={refInputto}
                   type="date"
-                  onChange={(e) => {
+                  onChange={(e: any) => {
                     onChangeFilters("toDate", e?.target?.value || "");
                   }}
                   className="hidden-date"
@@ -204,14 +205,15 @@ const AnnotationListFilters = ({
   );
 };
 
-const SearchAndAdd = ({
-  onChangeFilters,
-  onClearFilters,
-  sources,
-  selectedSources,
-  placeholder = t("typeToSearch"),
-  keySources = "sources",
-}) => {
+const SearchAndAdd = (props: any) => {
+  const {
+    onChangeFilters,
+    onClearFilters,
+    sources,
+    selectedSources,
+    placeholder = t("typeToSearch"),
+    keySources = "sources",
+  } = props;
   const containerRef = useRef<any>(null);
   const [sourcesSearch, setSourcesSearch] = useState("");
 
@@ -318,12 +320,8 @@ const SearchAndAdd = ({
   );
 };
 
-const AnnotationFilterHeadings = ({
-  title,
-  icon,
-  onClearFilters,
-  keyFilter,
-}) => {
+const AnnotationFilterHeadings = (props: any) => {
+  const { title, icon, onClearFilters, keyFilter } = props;
   return (
     <div className="annotation-filter-heading">
       <div style={{ display: "flex", alignItems: "center", gap: "0.5rem" }}>

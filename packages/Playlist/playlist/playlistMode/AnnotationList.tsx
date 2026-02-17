@@ -54,15 +54,16 @@ const initialFilters: any = {
   dateOption: "any",
 };
 
-const AnnotationList = ({
-  currentOpenedBook,
-  chapter,
-  fetchingAnnotation,
-  setAnnotationData,
-  annotationData,
-  annotationSources,
-  tagsSources,
-}) => {
+const AnnotationList = (props: any) => {
+  const {
+    currentOpenedBook,
+    chapter,
+    fetchingAnnotation,
+    setAnnotationData,
+    annotationData,
+    annotationSources,
+    tagsSources,
+  } = props;
   const [filters, setFilters] = useState({ ...initialFilters });
   const [showFilters, setShowFilters] = useState(false);
 
@@ -330,24 +331,25 @@ const AnnotationList = ({
   );
 };
 
-const AnnotationHeading = ({
-  address,
-  heading,
-  tags,
-  data,
-  currentOpenedBook,
-  chapter,
-  authBot,
-  deleteOverlay,
-  setDeleteOverlay,
-  position,
-  setDeleteModal,
-  onDelete,
-  closeOverlay,
-  index,
-  getPosition,
-  setShowFilters,
-}) => {
+const AnnotationHeading = (props: any) => {
+  const {
+    address,
+    heading,
+    tags,
+    data,
+    currentOpenedBook,
+    chapter,
+    authBot,
+    deleteOverlay,
+    setDeleteOverlay,
+    position,
+    setDeleteModal,
+    onDelete,
+    closeOverlay,
+    index,
+    getPosition,
+    setShowFilters,
+  } = props;
   const [isOpen, setIsOpen] = useState(true);
 
   const handleToggle = () => {
@@ -407,7 +409,7 @@ const AnnotationHeading = ({
             className="align-center"
           >
             <img src={TagsIcon} alt="Tags" className="img-icon" />
-            {tags.map((tag, index) => (
+            {tags.map((tag: string, index: number) => (
               <div
                 key={index}
                 style={{ marginLeft: "0.5rem" }}
@@ -521,14 +523,9 @@ const AnnotationHeading = ({
   );
 };
 
-const AnnodataMapper = ({
-  data,
-  address,
-  currentOpenedBook,
-  chapter,
-  heading,
-  onDelete,
-}) => {
+const AnnodataMapper = (props: any) => {
+  const { data, address, currentOpenedBook, chapter, heading, onDelete } =
+    props;
   const isMobile =
     (window?.innerWidth || gridPortalBot.tags.pixelWidth) <
     G.MOBILE_VIEWPORT_THRESHOLD;

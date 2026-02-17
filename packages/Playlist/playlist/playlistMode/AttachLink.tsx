@@ -77,32 +77,33 @@ const imageAssets: any = {
 //     }}
 // />
 
-function SubComponent({
-  editMode,
-  onAddFiles,
-  dragState,
-  recordingType,
-  setRecordingType,
-  name,
-  link,
-  setLinkState,
-  setLink,
-  setName,
-  mediaType,
-  setLoading,
-  setType,
-  data,
-  setData,
-  type,
-  textType,
-  setTextType,
-  showChangeOptions = true,
-}) {
+function SubComponent(props: any) {
+  const {
+    editMode,
+    onAddFiles,
+    dragState,
+    recordingType,
+    setRecordingType,
+    name,
+    link,
+    setLinkState,
+    setLink,
+    setName,
+    mediaType,
+    setLoading,
+    setType,
+    data,
+    setData,
+    type,
+    textType,
+    setTextType,
+    showChangeOptions = true,
+  } = props;
   const playlists = useMemo(() => G[`${"default"}playlists`] || [], []);
   const playlistListOptions = useMemo(
     () => [
       { label: "Select Playlist", value: "" },
-      ...playlists.map((ele) => ({ label: ele.name, value: ele.id })),
+      ...playlists.map((ele: any) => ({ label: ele.name, value: ele.id })),
     ],
     []
   );
@@ -512,25 +513,26 @@ const toPlainFile = (file: any) => ({
   lastModified: file.lastModified,
 });
 
-const AttachLink = ({
-  sSelectedType,
-  sName,
-  sData,
-  sLink,
-  sMediaType,
-  editMode,
-  canRecord = true,
-  onClose,
-  canClose,
-  onAddTags,
-  massAdd,
-  attachLink,
-  isDate = false,
-  onDateClick,
-  isTags = false,
-  isPlaylist = false,
-  showSaveButton = true,
-}) => {
+const AttachLink = (props: any) => {
+  const {
+    sSelectedType,
+    sName,
+    sData,
+    sLink,
+    sMediaType,
+    editMode,
+    canRecord = true,
+    onClose,
+    canClose,
+    onAddTags,
+    massAdd,
+    attachLink,
+    isDate = false,
+    onDateClick,
+    isTags = false,
+    isPlaylist = false,
+    showSaveButton = true,
+  } = props;
   const isloggedIN = authBot?.id;
   const datePickerRef = useRef<any>(null);
 
