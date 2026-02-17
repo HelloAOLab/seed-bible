@@ -214,7 +214,11 @@ export const MainContent = (
   }, [containerProps.leftWidth, containerProps.topHeight]);
 
   const ThemeCSS = useMemo(
-    () => calcThemeCSS(themeColors?.[activeSpace] ?? {}, getActiveSpace(spaces, activeSpace)),
+    () =>
+      calcThemeCSS(
+        themeColors?.[activeSpace] ?? {},
+        getActiveSpace(spaces, activeSpace)
+      ),
     [themeColors, activeSpace, spaces]
   );
 

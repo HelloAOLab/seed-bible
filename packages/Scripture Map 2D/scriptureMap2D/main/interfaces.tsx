@@ -30,10 +30,7 @@ import type {
   ReadingHistorySummary,
   ReadingEvent,
 } from "db.annotations.library";
-import type {
-  MutableRef,
-  StateUpdater,
-} from "../../../../typings/AuxLibraryDefinitions";
+import type { StateUpdater } from "../../../../typings/AuxLibraryDefinitions";
 
 export interface AppProps {
   id: string;
@@ -83,6 +80,10 @@ export interface ScriptureMap2DConfig {
       };
     };
   };
+  onSelectionModeCheckboxClick?: () => void;
+  onSelectionModeDoneButtonClick?: () => void;
+  onStateSetterOptionClick?: (state: ProjectChapterStateType) => void;
+  onSelectionModeClearSelectionButtonClick?: () => void;
 }
 
 export interface ScriptureMap2DProviderProps {
@@ -252,7 +253,7 @@ export interface ChapterProps {
 
 export interface SettingsOptionsProps {
   setShowOptions: StateUpdater<boolean>;
-  settingsButtonRef: MutableRef<HTMLDivElement | null>;
+  settingsButtonRef: React.Ref<HTMLDivElement | null>;
   collapsed: boolean;
   setCollapsed: StateUpdater<boolean>;
 }
@@ -274,10 +275,50 @@ export interface ZoomLevelOptionProps {
 
 export interface ZoomLevelSelectorProps {
   setShowOptions: StateUpdater<boolean>;
-  toggleButtonRef: MutableRef<HTMLButtonElement | null>;
+  toggleButtonRef: React.Ref<HTMLButtonElement | null>;
 }
 
 export interface ZoomButtonProps {
   onClick: () => void;
   children: React.ReactNode;
+}
+
+export interface FiltersSelectorOptionProps {
+  content: React.ReactNode;
+  onClick: (event: MouseEvent) => void;
+  selected?: boolean;
+}
+
+export interface ProjectStateSetterOptionProps {
+  content: React.ReactNode | React.ReactNode[];
+  onClick: (event: MouseEvent) => void;
+}
+
+export interface ReadingHistoryTooltipHeaderProps {
+  monthName: string;
+  dayOfTheMonth: number;
+  year: number;
+  minutesCount: number;
+}
+
+export interface ReadingHistoryLabelProps {
+  gridRow: React.CSSProperties["gridRow"];
+  gridColumn: React.CSSProperties["gridColumn"];
+  children: React.ReactNode | React.ReactNode[];
+  isDay: boolean;
+}
+
+export interface ReadingHistoryItemProps {
+  style: React.CSSProperties;
+  tooltipContent: React.ReactNode[];
+  handleItemClick: (range: Range | null) => void;
+  range: Range;
+  readingHistoryRangeSeconds: Range | null;
+  id: string;
+  isUpcoming: boolean;
+}
+
+export interface SelectionOptionsProps {
+  handleClearSelectionClick: () => void;
+  handleDoneClick: () => void;
 }

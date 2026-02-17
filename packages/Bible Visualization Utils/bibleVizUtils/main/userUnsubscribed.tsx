@@ -3,4 +3,3 @@ import { readingHistoryColorStore } from "bibleVizUtils.services.ReadingHistoryC
 const { unsubscribedFromId } = that;
 
 readingHistoryColorStore.removeUserColor(unsubscribedFromId);
-globalThis.ScriptureMapHandleSubscriptionsChanged?.();

@@ -31,6 +31,7 @@ import {
 } from "scriptureMap2D.main.enums";
 import { ConvertCompletePsalmsToDivided } from "bibleVizUtils.functions.scripture";
 import { GetDayRangeSeconds } from "bibleVizUtils.functions.index";
+import { eventSystem, Events } from "scriptureMap2D.main.eventManager";
 
 const { createContext, useContext, useState, useMemo, useEffect, useCallback } =
   os.appHooks;
@@ -167,28 +168,24 @@ export const ReadingHistoryProvider: (
         ...subscribedUsers.map((user) => user.id),
       ];
 
-      const dataPromises = allAuthBotIds.map(async (id) => {
-        const firstResult = await os.getData(id, id);
-        if (firstResult.success) return { ...firstResult.data, id };
+      const dataPromises: Promise<UserData>[] = allAuthBotIds.map(
+        async (id) => {
+          const firstResult = await os.getData(id, id);
+          if (firstResult.success) return { ...firstResult.data, id };
 
-        const secondResult = await os.getData(componentsBot.tags.key, id);
-        if (secondResult.success) return { ...secondResult.data, id };
+          const secondResult = await os.getData(componentsBot.tags.key, id);
+          if (secondResult.success) return { ...secondResult.data, id };
 
-        return undefined;
-      });
+          return undefined;
+        }
+      );
 
       let rawUsersData = await Promise.all(dataPromises);
       rawUsersData = rawUsersData.filter(Boolean);
 
       const newUsersData: Map<string, UserData> = new Map(
         rawUsersData.map((data) => {
-          return [
-            data.id,
-            {
-              profileName: data.profileName,
-              photoLink: data.photoLink,
-            },
-          ];
+          return [data.id, data];
         })
       );
 
@@ -208,14 +205,20 @@ export const ReadingHistoryProvider: (
   }, [fetchUsersDataMap]);
 
   useEffect(() => {
-    globalThis.ScriptureMapHandleUserLoggedIn = handleUserLoggedIn;
-    globalThis.ScriptureMapHandleSubscriptionsChanged = refreshUsersDataMap;
+    const unsubscribeUserLoggedIn = eventSystem.subscribe(
+      Events.UserLoggedIn,
+      handleUserLoggedIn
+    );
+    const unsubscribeSubscriptionsChanged = eventSystem.subscribe(
+      Events.SubscriptionsChanged,
+      refreshUsersDataMap
+    );
 
     trySetMyAuthBotId();
 
     return () => {
-      globalThis.ScriptureMapHandleUserLoggedIn = null;
-      globalThis.ScriptureMapHandleSubscriptionsChanged = null;
+      unsubscribeUserLoggedIn();
+      unsubscribeSubscriptionsChanged();
     };
   }, [handleUserLoggedIn, trySetMyAuthBotId]);
 

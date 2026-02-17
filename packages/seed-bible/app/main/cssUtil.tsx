@@ -115,13 +115,13 @@ function getAllVars(
 ) {
   return currentSpace
     ? [
-      ...existingVars,
-      ...refactorme_getNicheFontVars(
-        currentSpace?.scriptureSettings || {},
-        currentSpace?.sideMenuSettings || {},
-        currentSpace?.inputFieldsSettings || {}
-      ),
-    ]
+        ...existingVars,
+        ...refactorme_getNicheFontVars(
+          currentSpace?.scriptureSettings || {},
+          currentSpace?.sideMenuSettings || {},
+          currentSpace?.inputFieldsSettings || {}
+        ),
+      ]
     : existingVars;
 }
 
@@ -144,9 +144,9 @@ function getThemeCSSColors(themeColorOverride: Record<string, any> | null) {
   return themeColorOverride === null
     ? theme
     : {
-      ...theme, // start with defaults
-      ...themeColorOverride, // overwrite with current themeColors
-    };
+        ...theme, // start with defaults
+        ...themeColorOverride, // overwrite with current themeColors
+      };
 }
 
 export function calcThemeCSS(

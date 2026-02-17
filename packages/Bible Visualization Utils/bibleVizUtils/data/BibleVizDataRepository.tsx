@@ -106,6 +106,17 @@ class BibleVizDataRepository {
   static getReadingHistoryRecencyThresholdTimeSeconds(): number {
     return thisBot.masks.readingHistoryRecencyThresholdTimeSeconds;
   }
+
+  // Arrangement index
+
+  static getCurrentArrangementIndex(): number {
+    return thisBot.vars.arrangementIndex;
+  }
+
+  static getArrangementByIndex: (params: { index: number }) => ArrangementInfo =
+    ({ index }) => {
+      return thisBot.vars.fixedArrangementsInfo[index];
+    };
 }
 
 export { BibleVizDataRepository };
