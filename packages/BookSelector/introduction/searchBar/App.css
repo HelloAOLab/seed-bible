@@ -950,7 +950,8 @@ input:checked + .slider:not(#slider):before {
   opacity: 1;
   height: 80dvh;
   bottom: 80px;
-  box-shadow: rgba(0, 0, 0, 0.24) 0px 3px 8px;
+  box-shadow: color-mix(in srgb, var(--tabSelection) 20%, transparent) 0px 3px
+    8px;
 }
 
 .close-sideBar {

@@ -31,7 +31,8 @@
 
 .translationInfoModal {
   position: absolute;
-  width: 400px;
+  width: fit-content;
+  max-width: 400px;
   z-index: 1000;
   padding: 5px;
   border-radius: 5px;
