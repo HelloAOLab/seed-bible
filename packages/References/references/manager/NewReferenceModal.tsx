@@ -1,11 +1,20 @@
 const { useState, useEffect, useCallback } = os.appHooks;
 const styles = tags["Reference.css"];
 import { ThePageWithEditor } from "app.components.thePage";
+import type {
+  ReferencesInterface,
+  ReferenceInterface,
+} from "references.manager.interfaces";
 
-const ReferenceModal = ({ reference }) => {
-  const [referenceArray, setReferenceArray] = useState([]);
+const ReferenceModal = (props: { reference: ReferencesInterface }) => {
+  const { reference } = props;
+  const [referenceArray, setReferenceArray] = useState<ReferenceInterface[]>(
+    []
+  );
   const [rdLoading, setRdLoading] = useState(true);
-  const [referenceData, setReferenceData] = useState({});
+  const [referenceData, setReferenceData] = useState<{
+    [key: string]: { content: string; references?: ReferenceInterface[] };
+  }>({});
   const [showMore, setShowMore] = useState(false);
 
   const populateReferenceData = useCallback(async () => {
@@ -32,7 +41,9 @@ const ReferenceModal = ({ reference }) => {
 
       const referenceReqs = await Promise.all(referenceDataPromises);
 
-      const tempReferenceData = {};
+      const tempReferenceData: {
+        [key: string]: { content: string; references?: ReferenceInterface[] };
+      } = {};
 
       referenceReqs.forEach((res, index) => {
         if (res.status !== 200) {
@@ -40,32 +51,34 @@ const ReferenceModal = ({ reference }) => {
         }
         const contentArray = [...res.data.chapter.content];
         let content = "";
-        const reference = referenceArray[index];
-        const referenceKey = `${reference.book}.${reference.chapter}.${reference.verse}`;
-        const start = reference.verse;
-        const end = reference?.endVerse || reference.verse;
-        if (start <= end) {
-          for (let i = start; i <= end; i++) {
-            for (let j = 0; j < contentArray.length; j++) {
-              if (contentArray[j]?.number == i) {
-                const contentString = contentArray[j].content
-                  .map((data) => {
-                    if (typeof data === "string") {
-                      return data;
-                    } else if (data?.text) {
-                      return data.text;
-                    } else {
-                      return "";
-                    }
-                  })
-                  .join(" ");
-                content += `${contentString} `;
-                break;
+        if (referenceArray[index]) {
+          const reference: ReferenceInterface = referenceArray[index];
+          const referenceKey = `${reference.book}.${reference.chapter}.${reference.verse}`;
+          const start = reference.verse;
+          const end = reference?.endVerse || reference.verse;
+          if (start <= end) {
+            for (let i = start; i <= end; i++) {
+              for (let j = 0; j < contentArray.length; j++) {
+                if (contentArray[j]?.number == i) {
+                  const contentString = contentArray[j].content
+                    .map((data: any) => {
+                      if (typeof data === "string") {
+                        return data;
+                      } else if (data?.text) {
+                        return data.text;
+                      } else {
+                        return "";
+                      }
+                    })
+                    .join(" ");
+                  content += `${contentString} `;
+                  break;
+                }
               }
             }
           }
+          tempReferenceData[referenceKey] = { content };
         }
-        tempReferenceData[referenceKey] = { content };
       });
       setReferenceData({ ...tempReferenceData });
     }
@@ -73,7 +86,8 @@ const ReferenceModal = ({ reference }) => {
     setRdLoading(false);
   }, [referenceArray]);
 
-  const openChapter = async ({ reference }) => {
+  const openChapter = async (props: { reference: ReferenceInterface }) => {
+    const { reference } = props;
     const el = {
       id: uuid(),
       taken: false,
@@ -112,7 +126,11 @@ const ReferenceModal = ({ reference }) => {
     }
   };
 
-  const handleTitleContext = async ({ e, reference }) => {
+  const handleTitleContext = async (props: {
+    e: Event;
+    reference: ReferenceInterface;
+  }) => {
+    const { e, reference } = props;
     e.stopPropagation();
     e.preventDefault();
     openChapter({ reference: reference });
@@ -124,9 +142,12 @@ const ReferenceModal = ({ reference }) => {
   }, [referenceArray]);
 
   useEffect(() => {
-    setReferenceArray(
-      showMore ? reference.references : reference.references.slice(0, 3)
-    );
+    if (!reference) return;
+    if (showMore) {
+      setReferenceArray(reference.references);
+    } else {
+      setReferenceArray(reference.references.slice(0, 3));
+    }
   }, [reference, showMore]);
 
   return (
@@ -139,7 +160,8 @@ const ReferenceModal = ({ reference }) => {
         style={{
           height: "400px",
           width: "250px",
-          boxShadow: "rgba(99, 99, 99, 0.2) 0px 2px 8px 0px",
+          boxShadow:
+            "color-mix(in srgb, var(--tabSelection) 20%, transparent) 0px 2px 8px 0px",
         }}
       >
         <div class="heading">
@@ -165,6 +187,7 @@ const ReferenceModal = ({ reference }) => {
         </div>
 
         {referenceArray.map((childReference) => {
+          if (!childReference) return null;
           return (
             <div class="reference-components">
               <span
@@ -183,7 +206,7 @@ const ReferenceModal = ({ reference }) => {
                       {
                         referenceData[
                           `${childReference.book}.${childReference.chapter}.${childReference.verse}`
-                        ].content
+                        ]?.content
                       }
                     </span>
                   </div>

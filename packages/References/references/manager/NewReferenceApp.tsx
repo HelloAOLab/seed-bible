@@ -1,12 +1,22 @@
-const { useState, useEffect, useCallback } = os.appHooks;
-const styles = tags["Reference.css"];
 import ReferenceComponent from "references.manager.ReferenceComponent";
 import { ThePageWithEditor } from "app.components.thePage";
+import type {
+  ReferencesInterface,
+  ReferenceInterface,
+} from "references.manager.interfaces";
+import { GetReferences } from "references.manager.GetReferences";
 
-const ReferenceApp = ({ reference }) => {
-  const [currentReference, setCurrentReference] = useState(null);
+const { useState, useEffect, useCallback } = os.appHooks;
+const styles = tags["Reference.css"];
+
+const ReferenceApp = (props: { reference: ReferencesInterface }) => {
+  const { reference } = props;
+  const [currentReference, setCurrentReference] =
+    useState<ReferencesInterface>(reference);
   const [rdLoading, setRdLoading] = useState(true);
-  const [referenceData, setReferenceData] = useState({});
+  const [referenceData, setReferenceData] = useState<{
+    [key: string]: { content: string; references?: ReferenceInterface[] };
+  }>({});
 
   const populateReferenceData = useCallback(async () => {
     setRdLoading(true);
@@ -23,7 +33,7 @@ const ReferenceApp = ({ reference }) => {
       setReferenceData({
         ...referenceBot.masks.referenceDataObject[referenceArrayKey],
       });
-    } else {
+    } else if (currentReference) {
       console.log("retriveing from web");
       const referenceDataPromises = currentReference.references.map(
         (reference) => {
@@ -35,9 +45,11 @@ const ReferenceApp = ({ reference }) => {
 
       const referenceReqs = await Promise.all(referenceDataPromises);
 
-      const tempReferenceData = {};
+      const tempReferenceData: {
+        [key: string]: { content: string; references?: ReferenceInterface[] };
+      } = {};
 
-      const subReferences = [];
+      const subReferences: Promise<ReferencesInterface>[] = [];
 
       referenceReqs.forEach((res, index) => {
         if (res.status !== 200) {
@@ -45,53 +57,64 @@ const ReferenceApp = ({ reference }) => {
         }
         const contentArray = [...res.data.chapter.content];
         let content = "";
-        const reference = currentReference.references[index];
-        const referenceKey = `${reference.book}.${reference.chapter}.${reference.verse}`;
-        const start = reference.verse;
-        const end = reference?.endVerse || reference.verse;
-        if (start <= end) {
-          for (let i = start; i <= end; i++) {
-            for (let j = 0; j < contentArray.length; j++) {
-              if (contentArray[j]?.number == i) {
-                const contentString = contentArray[j].content
-                  .map((data) => {
-                    if (typeof data === "string") {
-                      return data;
-                    } else if (data?.text) {
-                      return data.text;
-                    } else {
-                      return "";
-                    }
-                  })
-                  .join(" ");
-                content += `${contentString} `;
-                break;
+        if (currentReference.references[index]) {
+          const reference: ReferenceInterface =
+            currentReference.references[index];
+          const referenceKey = `${reference.book}.${reference.chapter}.${reference.verse}`;
+          const start = reference.verse;
+          const end = reference?.endVerse || reference.verse;
+          if (start <= end) {
+            for (let i = start; i <= end; i++) {
+              for (let j = 0; j < contentArray.length; j++) {
+                if (contentArray[j]?.number == i) {
+                  const contentString = contentArray[j].content
+                    .map((data: any) => {
+                      if (typeof data === "string") {
+                        return data;
+                      } else if (data?.text) {
+                        return data.text;
+                      } else {
+                        return "";
+                      }
+                    })
+                    .join(" ");
+                  content += `${contentString} `;
+                  break;
+                }
               }
             }
           }
+          tempReferenceData[referenceKey] = {
+            content: content || "",
+            references: [],
+          };
+          subReferences.push(
+            GetReferences({
+              bookId: reference.book,
+              chapter: reference.chapter,
+              verse: reference.verse,
+            })
+          );
         }
-        tempReferenceData[referenceKey] = { content };
-        subReferences.push(
-          thisBot.GetReferences({
-            bookId: reference.book,
-            chapter: reference.chapter,
-            verse: reference.verse,
-          })
-        );
       });
 
       const subReferencesRes = await Promise.all(subReferences);
 
       subReferencesRes.forEach((res, index) => {
-        const reference = currentReference.references[index];
-        const referenceKey = `${reference.book}.${reference.chapter}.${reference.verse}`;
-        if (!res) {
-          return;
+        if (currentReference.references[index]) {
+          const reference: ReferenceInterface =
+            currentReference.references[index];
+          const referenceKey = `${reference.book}.${reference.chapter}.${reference.verse}`;
+          if (!res) {
+            return;
+          }
+          if (tempReferenceData[referenceKey]) {
+            tempReferenceData[referenceKey] = {
+              content: tempReferenceData[referenceKey].content || "",
+              references: [...res.references.slice(0, 5)],
+            };
+          }
         }
-        tempReferenceData[referenceKey] = {
-          ...tempReferenceData[referenceKey],
-          references: [...res.references.slice(0, 5)],
-        };
       });
       setReferenceData({ ...tempReferenceData });
     }
@@ -99,8 +122,9 @@ const ReferenceApp = ({ reference }) => {
     setRdLoading(false);
   }, [currentReference]);
 
-  const updateReferences = async ({ reference }) => {
-    const newReference = await thisBot.GetReferences({
+  const updateReferences = async (props: { reference: ReferenceInterface }) => {
+    const { reference } = props;
+    const newReference = await GetReferences({
       bookId: reference.book,
       chapter: reference.chapter,
       verse: reference.verse,
@@ -108,12 +132,17 @@ const ReferenceApp = ({ reference }) => {
     setCurrentReference(newReference);
   };
 
-  const handleRedirect = useCallback(async ({ reference }) => {
-    updateReferences({ reference });
-    openChapter({ reference });
-  }, []);
+  const handleRedirect = useCallback(
+    async (props: { reference: ReferenceInterface }) => {
+      const { reference } = props;
+      updateReferences({ reference });
+      openChapter({ reference });
+    },
+    []
+  );
 
-  const openChapter = async ({ reference }) => {
+  const openChapter = async (props: { reference: ReferenceInterface }) => {
+    const { reference } = props;
     const el = {
       id: uuid(),
       taken: false,
@@ -152,7 +181,8 @@ const ReferenceApp = ({ reference }) => {
     }
   };
 
-  const showVerse = async ({ reference }) => {
+  const showVerse = async (props: { reference: ReferenceInterface }) => {
+    const { reference } = props;
     closePopupSettings();
     await os.sleep(100);
     openPopupSettings(
@@ -166,20 +196,14 @@ const ReferenceApp = ({ reference }) => {
   };
 
   useEffect(() => {
+    globalThis.SetCurrentReference = setCurrentReference;
     if (currentReference) {
       populateReferenceData();
       globalThis.currentReferenceKey = `${currentReference.book}.${currentReference.chapter}.${currentReference.verse}`;
     }
-  }, [currentReference]);
-
-  useEffect(() => {
-    setCurrentReference(reference);
-  }, [reference]);
-
-  useEffect(() => {
-    globalThis.SetCurrentReference = setCurrentReference;
     return () => {
       globalThis.SetCurrentReference = null;
+      globalThis.currentReferenceKey = null;
     };
   }, [currentReference]);
 
@@ -204,12 +228,14 @@ const ReferenceApp = ({ reference }) => {
                 return;
               }
             }}
+            style={{ cursor: "pointer" }}
             class="material-symbols-outlined"
           >
             close
           </span>
         </div>
         {currentReference?.references.map((childReference) => {
+          if (!childReference) return null;
           return (
             <div class="reference-components">
               <span
@@ -226,7 +252,7 @@ const ReferenceApp = ({ reference }) => {
                       {
                         referenceData[
                           `${childReference.book}.${childReference.chapter}.${childReference.verse}`
-                        ].content
+                        ]?.content
                       }
                     </span>
                     {referenceData[

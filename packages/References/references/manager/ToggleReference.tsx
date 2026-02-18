@@ -1,7 +1,8 @@
 import ReferenceApp from "references.manager.NewReferenceApp";
+import { GetReferences } from "references.manager.GetReferences";
 const { book, chapter, verse } = that;
 
-const reference = await thisBot.GetReferences({
+const reference = await GetReferences({
   bookId: tags.NameToId[book],
   chapter,
   verse,
@@ -20,7 +21,7 @@ globalThis.currentReference = `${tags.NameToId[book]}.${chapter}.${verse}`;
 
 const panelKey = `reference_PANEL_ID`;
 
-if (globalThis.makingApp === "reference") {
+if (globalThis?.makingApp === "reference") {
   RemoveApplicationByID(globalThis[panelKey]);
   globalThis[panelKey] = null;
   globalThis.makingApp = null;
@@ -34,7 +35,7 @@ const id = uuid();
 globalThis[panelKey] = id;
 globalThis.makingApp = "reference";
 
-if (globalThis.CurrentPanelAvailable) {
+if (globalThis?.CurrentPanelAvailable) {
   ReplaceApplication(globalThis.CurrentPanelAvailable, {
     id,
     App: <InitializedApp reference={reference} />,

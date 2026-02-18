@@ -1,8 +1,9 @@
 import ReferenceModal from "references.manager.NewReferenceModal";
+import { GetReferences } from "references.manager.GetReferences";
 const { book, chapter, verse } = that;
 
 const getReference = async () => {
-  const references = await thisBot.GetReferences({
+  const references = await GetReferences({
     bookId: tags.NameToId[book],
     chapter,
     verse,
@@ -11,6 +12,15 @@ const getReference = async () => {
 };
 
 const reference = await getReference();
-closePopupSettings();
-await os.sleep(100);
-openPopupSettings(<ReferenceModal reference={reference} />, null, true);
+if (globalThis?.closePopupSettings) {
+  globalThis.closePopupSettings();
+}
+
+if (globalThis?.openPopupSettings) {
+  await os.sleep(100);
+  globalThis.openPopupSettings(
+    <ReferenceModal reference={reference} />,
+    null,
+    true
+  );
+}
