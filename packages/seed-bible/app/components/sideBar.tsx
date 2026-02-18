@@ -1140,26 +1140,28 @@ function SideBar({ panelsNumber }) {
   const MenuOptions = {
     type: "normal",
     items: [
-      {
-        disabled: false,
-        icon: <StartSessionIcon />,
-        title: t("startSession"),
-        onClick: () => {
-          // os.log(globalThis?.StartSession,globalThis)
-          HandleSharedTabClick();
+      ...(!configBot.tags.staticInst ? [
+        {
+          disabled: false,
+          icon: <StartSessionIcon />,
+          title: t("startSession"),
+          onClick: () => {
+            // os.log(globalThis?.StartSession,globalThis)
+            HandleSharedTabClick();
+          },
         },
-      },
-      {
-        disabled: false,
-        icon: <MenuIcon name="person_add" />,
-        // icon: <TransparentSvg />,
-        title: t("inviteToSession"),
-        onClick: async () => {
-          const { QRCodeComponent } = thisBot.Chips();
-          const url = `https://ao.bot/?inst=${os.getCurrentInst()}`;
-          ShowModal(<QRCodeComponent url={url} />);
+        {
+          disabled: false,
+          icon: <MenuIcon name="person_add" />,
+          // icon: <TransparentSvg />,
+          title: t("inviteToSession"),
+          onClick: async () => {
+            const { QRCodeComponent } = thisBot.Chips();
+            const url = `https://ao.bot/?inst=${os.getCurrentInst()}`;
+            ShowModal(<QRCodeComponent url={url} />);
+          },
         },
-      },
+      ] : []),
       {
         disabled: false,
         icon: <JoinSession />,
@@ -1181,16 +1183,18 @@ function SideBar({ panelsNumber }) {
           );
         },
       },
-      {
-        disabled: false,
-        icon: <GoPrivateIcon />,
-        title: globalThis.IsPrivateMode?.() ? t("goPublic") : t("goPrivate"),
-        onClick: async () => {
-          if (globalThis.TogglePrivateMode) {
-            await globalThis.TogglePrivateMode();
-          }
+      ...(!configBot.tags.staticInst ? [
+        {
+          disabled: false,
+          icon: <GoPrivateIcon />,
+          title: globalThis.IsPrivateMode?.() ? t("goPublic") : t("goPrivate"),
+          onClick: async () => {
+            if (globalThis.TogglePrivateMode) {
+              await globalThis.TogglePrivateMode();
+            }
+          },
         },
-      },
+      ] : []),
 
       { type: "line" },
       {
