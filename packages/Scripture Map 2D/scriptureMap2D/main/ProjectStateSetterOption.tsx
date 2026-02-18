@@ -1,4 +1,9 @@
-export const ProjectStateSetterOption = ({ content, onClick }) => {
+import type { ProjectStateSetterOptionType } from "scriptureMap2D.main.types";
+
+export const ProjectStateSetterOption: ProjectStateSetterOptionType = ({
+  content,
+  onClick,
+}) => {
   return (
     <span
       onClick={onClick}

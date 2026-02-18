@@ -38,7 +38,7 @@ export const ReadingHistoryUserFiltersSelector = () => {
           const fixedName: string =
             userId === myAuthBotId
               ? t("you")
-              : profileName?.length > 0
+              : (profileName?.length ?? 0) > 0
                 ? profileName
                 : t("Unknown User");
           return (

@@ -1,6 +1,7 @@
 import { useSideBarContext } from "app.hooks.sideBar";
+import type { SelectionOptionsType } from "scriptureMap2D.main.types";
 
-export const SelectionOptions = ({
+export const SelectionOptions: SelectionOptionsType = ({
   handleDoneClick,
   handleClearSelectionClick,
 }) => {

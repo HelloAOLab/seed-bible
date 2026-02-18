@@ -29,7 +29,8 @@ if (G.AnnotationsData[`${that?.bookId}-${chapter}`]) {
   }
 }
 
-const userRecord = await getAnnotationRecord();
+const userRecord: any = await getAnnotationRecord();
+
 let annotations: any[] = [];
 try {
   annotations =

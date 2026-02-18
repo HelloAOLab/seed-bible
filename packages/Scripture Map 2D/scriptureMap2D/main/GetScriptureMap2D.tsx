@@ -4,6 +4,8 @@ import type {
   AppProps,
   ScriptureMap2DConfig,
 } from "scriptureMap2D.main.interfaces";
+import { BibleVizDataRepository } from "bibleVizUtils.data.BibleVizDataRepository";
+import { ConvertDividedPsalmsToComplete } from "bibleVizUtils.functions.index";
 
 const onChapterClickDependencies: unknown[] = [];
 const onChapterClickAndHold = () => {};
@@ -18,17 +20,20 @@ const App: (args: AppProps) => React.JSX.Element = ({ id }) => {
   >((_, key) => {
     const { bookName, chapterIndex } = key;
 
-    let bookId = BibleVizUtils.Data.tags.booksStaticInfo[bookName].abbreviation;
-    let chapter = chapterIndex + 1;
+    const bookInfo = BibleVizDataRepository.getBookStaticInfo(bookName);
+    if (bookInfo) {
+      let { abbreviation: bookId } = bookInfo;
+      let chapter = chapterIndex + 1;
 
-    if (bookName.includes("Psalms")) {
-      ({ chapter } = BibleVizUtils.Functions.ConvertDividedPsalmsToComplete({
-        book: bookName,
-        chapter,
-      }));
-      bookId = "PSA";
+      if (bookName.includes("Psalms")) {
+        ({ chapter } = ConvertDividedPsalmsToComplete({
+          book: bookName,
+          chapter,
+        }));
+        bookId = "PSA";
+      }
+      globalThis.Open(bookId, chapter);
     }
-    globalThis.Open(bookId, chapter);
   }, []);
 
   return (
