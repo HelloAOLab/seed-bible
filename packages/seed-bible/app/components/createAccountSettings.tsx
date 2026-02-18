@@ -177,6 +177,7 @@ const CreateAccountSettings = () => {
                 }
                 if (authBot?.id) {
                   shout("userLogin", { authId, configId: configBot.id });
+                  shout("historySaver", { force: true });
                   setIsSignedIn(true);
                   setUid(authBot.id);
                   init();
