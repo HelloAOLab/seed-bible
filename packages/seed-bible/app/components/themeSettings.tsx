@@ -5006,7 +5006,8 @@ const BibleArrangementsSectionContent = ({
   );
 };
 
-const isDark = window.matchMedia("(prefers-color-scheme: dark)").matches;
+const isDark =false
+//  window.matchMedia("(prefers-color-scheme: dark)").matches;
 
 const ThemeSettings = () => {
   const { updateSpace, activeSpace, currentSpace, tabsIcons, setTabsIcons } =
@@ -5867,20 +5868,22 @@ const SettingsUI = () => {
   };
 
   // When switching spaces without saving, restore the last committed theme for that space
-  useEffect(() => {
-    if (!changesSaved) {
-      setThemeColors((prev) => ({
-        ...prev,
-        [activeSpace]: globalThis.CurrentColors,
-      }));
-    }
-  }, [activeSpace]);
-  useEffect(() => {
-    if (!masks.firstTimeLoad) {
-      applyReadyTheme(isDark ? READY_THEMES[1]?.colors : defaultTheme);
-      masks.firstTimeLoad = true;
-    }
-  }, []);
+  // useEffect(() => {
+  //   if (!changesSaved) {
+  //     setThemeColors((prev) => ({
+  //       ...prev,
+  //       [activeSpace]: globalThis.CurrentColors,
+  //     }));
+  //   }
+  // }, [activeSpace]);
+  const presetConfig =
+    tags?.settingsConfigs?.presets?.[configBot?.tags?.settingsPreset];
+  const displayThemes: typeof READY_THEMES =
+    presetConfig?.availableThemes?.length > 0
+      ? presetConfig.availableThemes
+      : READY_THEMES;
+
+  // Removed: this effect was overwriting the user's saved theme on every mount
 
   const [textConfig, setTextConfig] = useState(() => {
     // Try to load from saved space settings
@@ -5927,9 +5930,9 @@ const SettingsUI = () => {
 
   const handleThemeSelect = (index) => {
     setSelectedTheme(index);
-    applyReadyTheme(READY_THEMES[index].colors);
+    applyReadyTheme(displayThemes[index]?.colors);
     setChagesSaved(true);
-    globalThis.CurrentColors = READY_THEMES[index]?.colors || colors;
+    globalThis.CurrentColors = displayThemes[index]?.colors || colors;
   };
 
   const applyVerseFont = (fontFamily) => {
@@ -6444,7 +6447,7 @@ const SettingsUI = () => {
       <div style={sectionTitleStyle}>{t("themes")}</div>
 
       <div style={cardContainerStyle}>
-        {READY_THEMES.map((theme, index) =>
+        {displayThemes.map((theme, index) =>
           index !== 1 ? (
             <div
               key={index}

@@ -129,9 +129,11 @@ function getAllVars(
  * This function needs to be reworked, see getThemeCSSColors TODO.
  */
 function refactorme_getCurrentTheme() {
-  return configBot.tags?.theme == "ligonier"
-    ? "ligonier"
-    : getPreferedColorScheme();
+  const theme = configBot.tags?.theme;
+  if (theme == "ligonier") return "ligonier";
+  if (theme == "ligonier2") return "ligonier2";
+  // : getPreferedColorScheme();
+  return "light";
 }
 
 /**

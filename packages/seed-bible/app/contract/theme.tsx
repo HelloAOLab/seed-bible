@@ -1,4 +1,4 @@
-export type DeviceThemes = "ligonier";
+export type DeviceThemes = "ligonier" | "ligonier2";
 
 export type ColorScheme = "light" | "dark";
 

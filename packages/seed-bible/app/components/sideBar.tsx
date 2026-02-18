@@ -18,6 +18,7 @@ import {
   TheNewSettingsIcon,
   GoPrivateIcon,
   BurgerMenuIcon,
+  ClientLogo,
 } from "app.components.icons";
 import { useBibleContext } from "app.hooks.bibleVariables";
 import { useSideBarContext } from "app.hooks.sideBar";
@@ -806,6 +807,9 @@ function SideBar({ panelsNumber }) {
     setSelectedTabs,
     sharedTab,
   } = useTabsContext();
+  const hidePanels =
+    tags?.settingsConfigs?.presets?.[configBot?.tags?.settingsPreset || "full"]
+      ?.appSettings?.disablePanels;
   globalThis.AddTab = addTab;
   const { screens, setScreens, fullScreen, setFullScreen, ReSeed, setReSeed } =
     useBibleContext();
@@ -1300,7 +1304,20 @@ function SideBar({ panelsNumber }) {
 
   const { moveMultipleTabs } = useTabsContext();
   const holdTimeout = useRef({ time: null, clicked: null });
-
+const activePreset = configBot?.tags?.settingsPreset || "full";
+  const clientSite =
+    tags?.settingsConfigs?.presets?.[activePreset]?.clientBranding?.clientSite;
+  const clientName =
+    tags?.settingsConfigs?.presets?.[activePreset]?.clientBranding?.clientName;
+  const clientLogo =
+    tags?.settingsConfigs?.presets?.[activePreset]?.clientBranding?.clientLogo;
+  const isSiteOfClient =
+    tags?.settingsConfigs?.presets?.[activePreset]?.clientBranding?.enabled;
+  const handleOpenClientSite = () => {
+    if (clientSite) {
+      window.open(clientSite);
+    }
+  };
   return (
     <>
       {isResizing.current && (
@@ -1433,12 +1450,20 @@ function SideBar({ panelsNumber }) {
                     <span></span>
                   )}
                 </div>
+                {isSiteOfClient && (
+                  <ClientLogo
+                    handleOpenClientSite={handleOpenClientSite}
+                    url={clientLogo}
+                    alt={clientName}
+                  />
+                )}
               </div>
               <div className="canvasOptions">
                 <span
                   style={{
                     paddingTop: customScreens?.value >= 2 ? "3px" : "0px",
                     color: "var(--selectPanelIcon, var(--text1))",
+                    display: hidePanels ? "none" : "",
                   }}
                   onContextMenu={(e) => {
                     e.preventDefault();
