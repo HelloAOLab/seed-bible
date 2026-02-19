@@ -14,7 +14,7 @@ import {
   type ReadingHistorySummary,
 } from "db.annotations.library";
 import { useSideBarContext } from "app.hooks.sideBar";
-import { readingHistoryColorStore } from "bibleVizUtils.services.ReadingHistoryColorStore";
+import { userColorStore } from "bibleVizUtils.services.UserColorStore";
 import { BibleVizDataRepository } from "bibleVizUtils.data.BibleVizDataRepository";
 import type { BookStaticInfo } from "bibleVizUtils.data.BibleVizDataRepository";
 import type { Range, TooltipAnchor, BookType } from "scriptureMap2D.main.types";
@@ -54,7 +54,7 @@ export const Book = memo<BookType>(
       isReadingHistoryEnabled,
       content,
       userPresence,
-      usersInfo,
+      usersColors,
       selection,
       onBookNameClickAndHold,
       onBookNameClickAndHoldDependencies,
@@ -181,7 +181,7 @@ export const Book = memo<BookType>(
               userSummary);
             let color: HexString | undefined = undefined;
             const baseColor = BASE_BACKGROUND_COLOR;
-            const userColor = readingHistoryColorStore.getUserColor(userId);
+            const userColor = userColorStore.getUserColor({ authId: userId });
             const isTimeSpentNoticeable =
               userReadingTimeSeconds > SEC_PER_MINUTE; // more than a minute
 
@@ -321,7 +321,6 @@ export const Book = memo<BookType>(
       chaptersCount,
       content,
       bookCoverBackgroundColor,
-      usersInfo,
       showChapters,
       readingSummary,
       isReadingHistoryEnabled,
@@ -390,7 +389,7 @@ export const Book = memo<BookType>(
               chapterSummary;
             for (const userId in users) {
               let color: HexString | undefined = undefined;
-              const userColor = readingHistoryColorStore.getUserColor(userId);
+              const userColor = userColorStore.getUserColor({ authId: userId });
               const userSummary = users[userId];
               if (userSummary) {
                 const { totalTimeSpentReading: userReadingTimeSeconds } =
@@ -580,8 +579,8 @@ export const Book = memo<BookType>(
       chapterReadingHistorySummaryMap,
       readingHistoryRangeSeconds,
       activeTab,
-      usersInfo,
       userPresence,
+      usersColors,
       showChapters,
       BASE_BACKGROUND_COLOR,
     ]);

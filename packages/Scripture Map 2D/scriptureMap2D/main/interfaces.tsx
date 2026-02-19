@@ -20,6 +20,7 @@ import type {
   BookUserPresence,
   ScriptureMap2DContentValue,
   ToggleShowSectionType,
+  UserPresence,
 } from "scriptureMap2D.main.types";
 import type {
   ArrangementInfo,
@@ -31,6 +32,7 @@ import type {
   ReadingEvent,
 } from "db.annotations.library";
 import type { StateUpdater } from "../../../../typings/AuxLibraryDefinitions";
+import { type UserData } from "bibleVizUtils.services.UserColorStore";
 
 export interface AppProps {
   id: string;
@@ -112,18 +114,6 @@ export interface ScriptureMap2DContextType extends ScriptureMap2DConfig {
   setIsReadingHistoryEnabled: StateUpdater<boolean>;
   content: Map<string, ScriptureMap2DContentValue>;
   MAX_CHAPTER_HEAT_COUNT: number;
-  usersInfo: {
-    [user: string]: {
-      color?: string;
-      borderColor: string;
-    };
-  };
-  userPresence: {
-    [user: string]: {
-      bookId: string;
-      chapter: number;
-    };
-  };
   bookWidth: number;
   chapterGap: number;
   chapterWidth: number;
@@ -145,6 +135,8 @@ export interface ScriptureMap2DContextType extends ScriptureMap2DConfig {
   showingBooksColors: boolean;
   setShowingBooksColors: StateUpdater<boolean>;
   activeTabId: string;
+  usersColors: UserData[];
+  userPresence: UserPresence;
 
   tabs: unknown;
   activeTab: {

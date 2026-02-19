@@ -5,3 +5,4 @@ export * from "bibleVizUtils.functions.scripture";
 export * from "bibleVizUtils.functions.userPresence";
 export * from "bibleVizUtils.functions.time";
 export * from "bibleVizUtils.functions.string";
+export * from "bibleVizUtils.functions.users";

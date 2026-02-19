@@ -8,7 +8,7 @@ import {
   calculateReadingHistorySummary,
   type ReadingEvent,
 } from "db.annotations.library";
-import { readingHistoryColorStore } from "bibleVizUtils.services.ReadingHistoryColorStore";
+import { userColorStore } from "bibleVizUtils.services.UserColorStore";
 import type {
   BookUserPresence,
   Range,
@@ -43,14 +43,13 @@ export const TestamentContent = memo<TestamentContentType>(({ hidden }) => {
     showSectionLabels,
     isUserPresenceEnabled,
     activeTab,
-    usersInfo,
+    usersColors,
     userPresence,
   } = useScriptureMap2DContext();
   const {
     rangedReadingEventsByBook,
     readingHistoryRangeSeconds,
     SEC_PER_MINUTE,
-    myAuthBotId,
   } = useReadingHistoryContext();
   const { testament, testamentIndex } = useTestamentContext();
 
@@ -238,47 +237,29 @@ export const TestamentContent = memo<TestamentContentType>(({ hidden }) => {
 
               let borderGradientColors: React.CSSProperties["backgroundImage"];
               if (isUserPresenceEnabled) {
-                if (
-                  myAuthBotId &&
-                  (activeTab.data.bookId === bookId ||
-                    (activeTab.data.bookId === "PSA" &&
+                userPresence.forEach((data, userId) => {
+                  const {
+                    chapter: userPresenceChapter,
+                    bookId: userPresenceBookId,
+                  } = data;
+                  if (
+                    userPresenceBookId === bookId ||
+                    (userPresenceBookId === "PSA" &&
                       isPsalms &&
                       psalmChaptersLimits &&
-                      activeTab.data.chapter >= psalmChaptersLimits.start &&
-                      activeTab.data.chapter <= psalmChaptersLimits.end))
-                ) {
-                  const userPresenceColor =
-                    readingHistoryColorStore.getUserColor(myAuthBotId) ??
-                    "#000000";
-                  bookUserPresence["me"] = {
-                    chapter: activeTab.data.chapter,
-                    borderColor: userPresenceColor,
-                  };
-                  userPresenceColors.push(userPresenceColor);
-                }
-                for (const user in usersInfo) {
-                  const userInfo = usersInfo[user];
-                  const userPresenceInfo = userPresence[user];
-                  if (userInfo && userPresenceInfo) {
-                    const { bookId: userBookId, chapter: userChapter } =
-                      userPresenceInfo;
-                    const { borderColor: userBorderColor } = userInfo;
-                    if (
-                      bookId === userBookId ||
-                      (userBookId === "PSA" &&
-                        isPsalms &&
-                        psalmChaptersLimits &&
-                        userChapter >= psalmChaptersLimits.start &&
-                        userChapter <= psalmChaptersLimits.end)
-                    ) {
-                      bookUserPresence[user] = {
-                        chapter: userChapter,
-                        borderColor: userBorderColor,
-                      };
-                      userPresenceColors.push(userBorderColor);
-                    }
+                      userPresenceChapter >= psalmChaptersLimits.start &&
+                      userPresenceChapter <= psalmChaptersLimits.end)
+                  ) {
+                    const userPresenceColor =
+                      userColorStore.getUserColor({ configId: userId }) ??
+                      "#000000";
+                    bookUserPresence[userId] = {
+                      chapter: userPresenceChapter,
+                      borderColor: userPresenceColor,
+                    };
+                    userPresenceColors.push(userPresenceColor);
                   }
-                }
+                });
                 if (userPresenceColors.length > 0)
                   borderGradientColors = GetUserPresenceBorderGradientColors({
                     colors: userPresenceColors,
@@ -323,7 +304,7 @@ export const TestamentContent = memo<TestamentContentType>(({ hidden }) => {
     rangedReadingEventsByBook,
     isUserPresenceEnabled,
     activeTab,
-    usersInfo,
+    usersColors,
     userPresence,
   ]);
 

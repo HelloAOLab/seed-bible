@@ -1,6 +1,6 @@
 import { useReadingHistoryContext } from "scriptureMap2D.main.ReadingHistoryContext";
 import { useSideBarContext } from "app.hooks.sideBar";
-import { readingHistoryColorStore } from "bibleVizUtils.services.ReadingHistoryColorStore";
+import { userColorStore } from "bibleVizUtils.services.UserColorStore";
 import type {
   UserPresenceTooltipContentType,
   ReadingHistoryTooltipContentType,
@@ -53,7 +53,7 @@ export const ReadingHistoryTooltipContent: ReadingHistoryTooltipContentType = ({
   const { userName, backgroundColor } = useMemo(() => {
     const isMe = userId === myAuthBotId;
     const userName = isMe ? t("you") : t("guest");
-    const backgroundColor = readingHistoryColorStore.getUserColor(userId);
+    const backgroundColor = userColorStore.getUserColor({ authId: userId });
 
     return { userName, backgroundColor };
   }, [t]);
