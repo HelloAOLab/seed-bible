@@ -1,4 +1,5 @@
 import { getAnnotationRecord, loadAnnotations } from "db.annotations.library";
+const G = globalThis as any;
 
 const isPrev = that?.prev;
 const isNext = that?.next;
@@ -9,25 +10,27 @@ const chapter = isPrev
     ? that?.chapter + 1
     : that?.chapter;
 
-if (!globalThis.AnnotationsData) {
-  globalThis.AnnotationsData = {};
-}
-
-const userRecord = await getAnnotationRecord();
-
-if (!userRecord) {
-  return { success: false, data: null };
+if (!G.AnnotationsData) {
+  G.AnnotationsData = {};
 }
 
 // If last fetch was less than 15 minutes ago, return the cached data
-if (globalThis.AnnotationsData[`${that?.bookId}-${chapter}`]) {
+if (G.AnnotationsData[`${that?.bookId}-${chapter}`]) {
   if (
     new Date().getTime() -
-      globalThis.AnnotationsData[`${that?.bookId}-${chapter}`].time <
+      G.AnnotationsData[`${that?.bookId}-${chapter}`].time <
     15 * 60 * 1000
   ) {
-    return globalThis.AnnotationsData[`${that?.bookId}-${chapter}`].data;
+    return G.AnnotationsData[`${that?.bookId}-${chapter}`].data;
   }
+}
+
+const userRecord: any = await getAnnotationRecord();
+
+if (!userRecord) {
+  G.AnnotationsData = {};
+  G.SetAnnotationData?.([]);
+  return { success: false, data: null };
 }
 
 let annotations: any[] = [];
@@ -38,9 +41,18 @@ try {
   annotations = [];
 }
 
-globalThis.AnnotationsData[`${that?.bookId}-${chapter}`] = {
+G.AnnotationsData[`${that?.bookId}-${chapter}`] = {
   time: new Date().getTime(),
   data: annotations,
 };
+
+if (G.SetAnnotationData && that?.chapter === chapter) {
+  let { allAnnotations } = thisBot.convertAnnotationsToReadableFormat({
+    annotations,
+    currentOpenedBook: G.CurrentBookData,
+  });
+  allAnnotations = allAnnotations.sort(G.AnnotationSortFunction);
+  G.SetAnnotationData([...allAnnotations]);
+}
 
 return annotations;

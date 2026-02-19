@@ -1123,3 +1123,52 @@ function sanitizeObject(obj) {
 globalThis.sanitizeObject = sanitizeObject;
 
 globalThis.RECORD_SEPARATOR = "^_^";
+
+const sortFunc = (a: any, b: any) => {
+  const parseHeading = (heading = "") => {
+    // 1️⃣ Chapter always first
+    if (heading.startsWith("Chapter")) {
+      return { group: 0, start: 0, length: heading.length };
+    }
+
+    // 2️⃣ Verse logic
+    const match = heading.match(/Verse\s*(\d+)/);
+    if (match) {
+      return {
+        group: 1,
+        start: Number(match[1]), // starting verse
+        length: heading.length,
+      };
+    }
+
+    // 3️⃣ Everything else
+    return {
+      group: 2,
+      start: Infinity,
+      length: heading.length,
+    };
+  };
+
+  const A = parseHeading(a.heading);
+  const B = parseHeading(b.heading);
+
+  // Group order: Chapter → Verse → Others
+  if (A.group !== B.group) {
+    return A.group - B.group;
+  }
+
+  // Verse number comparison
+  if (A.start !== B.start) {
+    return A.start - B.start;
+  }
+
+  // Length comparison (shorter first)
+  if (A.length !== B.length) {
+    return B.length - A.length;
+  }
+
+  // Final fallback
+  return a.heading.localeCompare(b.heading);
+};
+
+globalThis.AnnotationSortFunction = sortFunc;

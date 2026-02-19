@@ -31,13 +31,6 @@ const startCreatingPlaylist = (name, playlist = [], id) => {
   G[`${id}SetCreatingPlaylist`](true, playlist);
 };
 
-const backToCreatePlaylist = (name, playlist = [], id) => {
-  G.HISTORYExploreMode = false;
-  G[`${id}creatingPlaylistName`] = name;
-  G[`${id}creatingPlaylist`] = false;
-  G[`${id}SetCreatingPlaylist`](false, playlist);
-};
-
 const handleSheetUrl = async (link: string) => {
   const response = await thisBot.getSheetDataAndFetch({ link });
   return response;
@@ -1917,7 +1910,10 @@ const Playlist = ({
             list={playList}
             setLink={setLink}
             selectedTags={selectedTags}
-            onClickBackToDiscover={() => toggleOpenModalName(false)}
+            onClickBackToDiscover={() => {
+              toggleOpenModalName(false);
+              G[`${id}creatingPlaylistName`] = "";
+            }}
             setTags={setTags}
             customIcon={customIcon}
             setCustomIcon={setCustomIcon}

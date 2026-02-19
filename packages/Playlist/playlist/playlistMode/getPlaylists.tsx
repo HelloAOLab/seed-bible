@@ -1,11 +1,20 @@
-let apiResults = [];
+let apiResults: any = [];
 
-let initialList = [];
+let initialList: any[] = [];
+
+const G = globalThis as any;
 
 let id = "default";
 
 if (that?.initialList) {
   initialList = [...that.initialList];
+}
+
+const initialPlaylistsIds: Record<string, string> = {};
+if (that?.initialList) {
+  that.initialList.forEach((ele: any) => {
+    initialPlaylistsIds[ele.id] = ele.id;
+  });
 }
 
 if (that?.id) {
@@ -16,16 +25,18 @@ try {
   if (!authBot?.id) {
     return [];
   }
-  globalThis.WAS_PREV_AUTH = true;
+  G.WAS_PREV_AUTH = true;
   apiResults = await os.getData(authBot.id, "playlists");
   if (apiResults.data) {
-    const playlists = [...(apiResults.data.playlists || [])];
+    const playlists = [...(apiResults.data.playlists || [])].filter(
+      (ele: any) => !initialPlaylistsIds[ele.id]
+    );
     apiResults = [...initialList, ...playlists];
     setTag(thisBot, "defaultplaylistList", apiResults);
-    if(globalThis[`${id}SetPlaylists`]) {
-        globalThis[`${id}SetPlaylists`](apiResults);
+    if (G[`${id}SetPlaylists`]) {
+      G[`${id}SetPlaylists`](apiResults);
     }
-    globalThis.setPlaylistLocale(apiResults, true);
+    G.setPlaylistLocale(apiResults, true);
     return apiResults;
   }
   return [];
