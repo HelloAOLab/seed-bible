@@ -797,8 +797,9 @@ export const AccountSetting = ({
   if (isHidden && !editMode) return null;
 
   const isAnonymous =
-    tags?.settingsConfigs?.presets?.[configBot?.tags?.settingsPreset || "full"]
-      ?.onlineUsers?.anonymous;
+    tags?.settingsConfigs?.presets?.[
+      configBot?.tags?.settingsPreset || thisBot.tags.settingsPreset || "full"
+    ]?.onlineUsers?.anonymous;
   let colorIndex = 0;
   let iconIndex = 0;
 
