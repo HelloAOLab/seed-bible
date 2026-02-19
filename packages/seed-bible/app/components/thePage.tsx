@@ -218,7 +218,8 @@ function ThePage({
               return {
                 ...trans,
                 name: trans.name,
-                languageEnglishName: trans.languageEnglishName,
+                languageEnglishName:
+                  trans.languageEnglishName || "Unspecified Language",
                 id: trans.id,
                 listOfBooksApiLink: `${url.origin}${trans.listOfBooksApiLink}`,
                 origin: url.origin,

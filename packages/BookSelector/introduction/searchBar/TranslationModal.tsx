@@ -227,7 +227,13 @@ const TranslationModal = (props: {
       );
     }
     return (
-      <div className="language-list">
+      <div
+        className="language-list"
+        onScroll={() => {
+          setShowTranslationInfo(null);
+          setShowTranslationSettings(false);
+        }}
+      >
         {filteredApiTranslations.map(([language, value]) => {
           return (
             <LanguageComponent
@@ -559,41 +565,41 @@ const LanguageComponent = (props: {
                       <span class="emptyCircle"></span>
                     )}
                     <span class="translation-description">{`${value.name} (${value.shortName})`}</span>
-                    <span
-                      style={{ display: "flex" }}
-                      onClick={(e: MouseEvent) => {
-                        e.stopPropagation();
-                        console.log(
-                          showTranslationInfo,
-                          value,
-                          "showTranslationInfo"
-                        );
-                        if (showTranslationInfo) {
-                          if (showTranslationInfo.translation.id === value.id) {
-                            setShowTranslationInfo(null);
-                            return;
-                          } else {
-                            setShowTranslationInfo({
-                              translation: value,
-                              position: { x: e.clientX, y: e.clientY },
-                            });
-                            return;
-                          }
-                        }
-                        setShowTranslationInfo({
-                          translation: value,
-                          position: { x: e.clientX, y: e.clientY },
-                        });
-                      }}
-                      title="Information about this translation"
-                    >
+                    {value?.licenseNotice && (
                       <span
-                        style={{ fontSize: "18px" }}
-                        class="material-symbols-outlined"
+                        style={{ display: "flex" }}
+                        onClick={(e: MouseEvent) => {
+                          e.stopPropagation();
+                          console.log(value, "showTranslationInfo");
+                          if (showTranslationInfo) {
+                            if (
+                              showTranslationInfo.translation.id === value.id
+                            ) {
+                              setShowTranslationInfo(null);
+                              return;
+                            } else {
+                              setShowTranslationInfo({
+                                translation: value,
+                                position: { x: e.clientX, y: e.clientY },
+                              });
+                              return;
+                            }
+                          }
+                          setShowTranslationInfo({
+                            translation: value,
+                            position: { x: e.clientX, y: e.clientY },
+                          });
+                        }}
+                        title="Information about this translation"
                       >
-                        info
+                        <span
+                          style={{ fontSize: "18px" }}
+                          class="material-symbols-outlined"
+                        >
+                          info
+                        </span>
                       </span>
-                    </span>
+                    )}
                   </span>
                   <button
                     onClick={(e) => {
@@ -790,6 +796,28 @@ const TranslationInfo = (props: {
   windowSize: number;
 }) => {
   const { translation, position, windowSize } = props;
+  const [textArray, setTextArray] = useState<string[]>([]);
+
+  useEffect(() => {
+    if (translation.licenseNotice) {
+      const regex = /(https?:\/\/[^\s]+|\n)/g;
+      const urlRegex = /(https?:\/\/[^\s]+)/g;
+      const parts = translation.licenseNotice.split(regex);
+      const formattedParts = [];
+      for (const part of parts) {
+        if (part !== "\n" && part.trim() !== "") {
+          if (urlRegex.test(part)) {
+            formattedParts.push(
+              `<a href="${part}" target="_blank" style="color: var(--secondaryColor)">${part}</a>`
+            );
+          } else {
+            formattedParts.push(part);
+          }
+        }
+      }
+      setTextArray(formattedParts);
+    }
+  }, [translation]);
   return (
     <div
       style={
@@ -805,16 +833,13 @@ const TranslationInfo = (props: {
       }
       className="modal translationInfoModal"
     >
-      <p>This is just a simple translation info modal.</p>
-      {translation.licenseUrl && (
-        <a
-          href={translation.licenseUrl}
-          target="_blank"
-          rel="noopener noreferrer"
-        >
-          {translation.licenseUrl}
-        </a>
-      )}
+      {textArray.map((part, index) => (
+        <span
+          style={{ display: "block" }}
+          key={index}
+          dangerouslySetInnerHTML={{ __html: part }}
+        ></span>
+      ))}
     </div>
   );
 };
