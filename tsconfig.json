@@ -3656,7 +3656,6 @@
         "./packages/seed-bible/app/main/rootContext.tsx"
       ],
       "app.main.tempFluff": ["./packages/seed-bible/app/main/tempFluff.tsx"],
-      "app.main.themeUtils": ["./packages/seed-bible/app/main/themeUtils.tsx"],
       "app.packager.addDependencies": [
         "./packages/seed-bible/app/packager/addDependencies.tsx"
       ],

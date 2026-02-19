@@ -1050,7 +1050,6 @@ const presetConfig =
   tags?.settingsConfigs?.presets?.[
     configBot?.tags?.settingsPreset || thisBot.tags.settingsPreset || "full"
   ];
-
 const presetThemes: typeof defaultThemes =
   presetConfig?.availableThemes?.length > 0
     ? presetConfig.availableThemes
@@ -1062,8 +1061,7 @@ if (presetThemes.length === 0) {
   );
 }
 
-const defaultTheme = presetThemes[0]?.colors ?? builtinDefaultTheme;
-
+export const defaultTheme = presetThemes[0]?.colors ?? builtinDefaultTheme;
 export const READY_THEMES = presetThemes;
 
 // ----------- DEBOUNCE (no CDN needed) -----------
