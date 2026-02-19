@@ -36,8 +36,6 @@ if (authBot?.id) {
   return res;
 } else {
   G.SetBookmarks?.({});
-  G.AnnotationsData = {};
-  G.SetAnnotationData?.([]);
   G[`defaultSetPlaylists`]?.([]);
   setTag(thisBot, "defaultplaylistList", []);
   G.setPlaylistLocale([], true);

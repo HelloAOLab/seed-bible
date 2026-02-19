@@ -14,10 +14,6 @@ if (!G.AnnotationsData) {
   G.AnnotationsData = {};
 }
 
-if (!authBot?.id) {
-  return { success: false, data: null };
-}
-
 // If last fetch was less than 15 minutes ago, return the cached data
 if (G.AnnotationsData[`${that?.bookId}-${chapter}`]) {
   if (
@@ -30,6 +26,12 @@ if (G.AnnotationsData[`${that?.bookId}-${chapter}`]) {
 }
 
 const userRecord: any = await getAnnotationRecord();
+
+if (!userRecord) {
+  G.AnnotationsData = {};
+  G.SetAnnotationData?.([]);
+  return { success: false, data: null };
+}
 
 let annotations: any[] = [];
 try {
