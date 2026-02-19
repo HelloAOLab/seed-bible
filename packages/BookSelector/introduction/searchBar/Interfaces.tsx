@@ -34,6 +34,7 @@ interface TranslationInterface {
   languageName: string;
   languageEnglishName: string;
   origin?: string;
+  licenseNotice?: string;
 }
 
 interface IconProps {

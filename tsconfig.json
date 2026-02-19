@@ -2702,6 +2702,9 @@
       "references.manager.GetReferences": [
         "./packages/References/references/manager/GetReferences.tsx"
       ],
+      "references.manager.interfaces": [
+        "./packages/References/references/manager/interfaces.tsx"
+      ],
       "references.manager.NewReferenceApp": [
         "./packages/References/references/manager/NewReferenceApp.tsx"
       ],
