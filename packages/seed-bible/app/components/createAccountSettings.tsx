@@ -33,12 +33,14 @@ const CreateAccountSettings = () => {
       setImg(undefined);
     }
   }, [authBot]);
+
   async function init() {
     const authBot = await os.requestAuthBotInBackground();
     if (!authBot?.id) {
       setIsSignedIn(false);
       return;
     }
+    shout("historySaver", { force: true });
     setIsSignedIn(true);
     setUid(authBot.id);
     const data = await os.getData(tags.key, authBot.id);
@@ -177,7 +179,6 @@ const CreateAccountSettings = () => {
                 }
                 if (authBot?.id) {
                   shout("userLogin", { authId, configId: configBot.id });
-                  shout("historySaver", { force: true });
                   setIsSignedIn(true);
                   setUid(authBot.id);
                   init();

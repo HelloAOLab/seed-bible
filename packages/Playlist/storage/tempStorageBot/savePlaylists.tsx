@@ -36,9 +36,12 @@ if (authBot?.id) {
   return res;
 } else {
   G.SetBookmarks?.({});
-  G[`defaultSetPlaylists`]?.([]);
   setTag(thisBot, "defaultplaylistList", []);
-  G.setPlaylistLocale([], true);
+  const oldPlaylistList = getTag(thisBot, "defaultplaylistList");
+  if (oldPlaylistList.length) {
+    G[`defaultSetPlaylists`]?.([]);
+    G.setPlaylistLocale([], true);
+  }
   setTag(thisBot, "bookmarks", {});
   throw new Error("User not logged in!");
 }
