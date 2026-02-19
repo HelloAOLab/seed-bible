@@ -8,6 +8,6 @@ thisBot.vars.postChapterReadEvent ??= debounce((that) => {
     bookId: that.bookId,
     chapter: that.chapter,
   });
-}, 500);
+}, 5000);
 
 thisBot.vars.postChapterReadEvent(that);
