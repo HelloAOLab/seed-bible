@@ -111,7 +111,7 @@ const ADVANCED_SETTINGS_SECTIONS = {
 
 // Default Theme - Warm Orange/Amber accent
 // Based on the design mockup with orange accent colors
-const defaultTheme = {
+const builtinDefaultTheme = {
   // Main colors
   firstToolbarbutton: "#dfdede",
   primaryColor: "#FFFFFF",
@@ -267,10 +267,10 @@ const defaultTheme = {
 // ————————————————————————————————————————————————————————————
 // Ready Themes Collection
 // ————————————————————————————————————————————————————————————
-export const READY_THEMES = [
+const defaultThemes = [
   {
     name: "Default",
-    colors: defaultTheme,
+    colors: builtinDefaultTheme,
   },
   {
     name: "Dark Mode",
@@ -1045,6 +1045,26 @@ export const READY_THEMES = [
     },
   },
 ];
+
+const presetConfig =
+  tags?.settingsConfigs?.presets?.[
+    configBot?.tags?.settingsPreset || thisBot.tags.settingsPreset || "full"
+  ];
+
+const presetThemes: typeof defaultThemes =
+  presetConfig?.availableThemes?.length > 0
+    ? presetConfig.availableThemes
+    : defaultThemes;
+
+if (presetThemes.length === 0) {
+  console.error(
+    "No themes available in preset configuration. Falling back to default themes."
+  );
+}
+
+const defaultTheme = presetThemes[0]?.colors ?? builtinDefaultTheme;
+
+export const READY_THEMES = presetThemes;
 
 // ----------- DEBOUNCE (no CDN needed) -----------
 function debounce(fn, delay = 250) {
@@ -5879,14 +5899,6 @@ const SettingsUI = () => {
   //     }));
   //   }
   // }, [activeSpace]);
-  const presetConfig =
-    tags?.settingsConfigs?.presets?.[
-      configBot?.tags?.settingsPreset || thisBot.tags.settingsPreset || "full"
-    ];
-  const displayThemes: typeof READY_THEMES =
-    presetConfig?.availableThemes?.length > 0
-      ? presetConfig.availableThemes
-      : READY_THEMES;
 
   // Removed: this effect was overwriting the user's saved theme on every mount
 
@@ -5935,9 +5947,9 @@ const SettingsUI = () => {
 
   const handleThemeSelect = (index) => {
     setSelectedTheme(index);
-    applyReadyTheme(displayThemes[index]?.colors);
+    applyReadyTheme(presetThemes[index]?.colors);
     setChagesSaved(true);
-    globalThis.CurrentColors = displayThemes[index]?.colors || colors;
+    globalThis.CurrentColors = presetThemes[index]?.colors || colors;
   };
 
   const applyVerseFont = (fontFamily) => {
@@ -6452,7 +6464,7 @@ const SettingsUI = () => {
       <div style={sectionTitleStyle}>{t("themes")}</div>
 
       <div style={cardContainerStyle}>
-        {displayThemes.map((theme, index) =>
+        {presetThemes.map((theme, index) =>
           index !== 1 ? (
             <div
               key={index}
