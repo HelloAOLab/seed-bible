@@ -13,49 +13,23 @@ import type {
   ProjectStateStyle,
   ProjectFilters,
   ScriptureMap2DContentValue,
+  UserPresence,
 } from "scriptureMap2D.main.types";
 import {
   BibleVizDataRepository,
   type ArrangementInfo,
 } from "bibleVizUtils.data.BibleVizDataRepository";
-const { createContext, useState, useContext, useCallback, useMemo } =
+import {
+  userColorStore,
+  type UserData,
+} from "bibleVizUtils.services.UserColorStore";
+import { bibleVizUtilsEventManager } from "bibleVizUtils.services.EventManager";
+const { createContext, useState, useContext, useCallback, useMemo, useEffect } =
   os.appHooks;
 
 const ScriptureMap2DContext = createContext<
   ScriptureMap2DContextType | undefined
 >(undefined);
-
-const usersInfo = {
-  Craig: {
-    color: "#ffb0d8",
-    borderColor: "#ff62b2",
-  },
-  Sujan: {
-    color: "#d3a3ff",
-    borderColor: "#8a2be2",
-  },
-  Mazen: {
-    color: "#bcf3f5",
-    borderColor: "#34d0d5",
-  },
-  Amir: {
-    color: "#DCDCDC",
-    borderColor: "#a8a8a8",
-  },
-  Kushagra: {
-    color: "#90eae6",
-    borderColor: "#2caca6",
-  },
-  Guest_1: {
-    borderColor: "#20ca58ff",
-  },
-  Guest_2: {
-    borderColor: "#b6ca20ff",
-  },
-  Guest_3: {
-    borderColor: "#ca2020ff",
-  },
-};
 
 const content: ScriptureMap2DContextType["content"] = new Map<
   string,
@@ -172,41 +146,6 @@ const content: ScriptureMap2DContextType["content"] = new Map<
   ],
 ]);
 
-const userPresence = {
-  Sujan: {
-    bookId: "GEN",
-    chapter: 1,
-  },
-  Amir: {
-    bookId: "GEN",
-    chapter: 2,
-  },
-  Craig: {
-    bookId: "GEN",
-    chapter: 5,
-  },
-  Kushagra: {
-    bookId: "EXO",
-    chapter: 1,
-  },
-  Mazen: {
-    bookId: "EXO",
-    chapter: 1,
-  },
-  Guest_1: {
-    bookId: "EXO",
-    chapter: 4,
-  },
-  Guest_2: {
-    bookId: "EXO",
-    chapter: 4,
-  },
-  Guest_3: {
-    bookId: "EXO",
-    chapter: 4,
-  },
-};
-
 const upcomingEvents = {
   Gabriel: [{ book: "Genesis", chapter: 1, remainingDays: 2 }],
   Craig: [{ book: "Genesis", chapter: 2, remainingDays: 4 }],
@@ -235,6 +174,11 @@ export const ScriptureMap2DProvider: (
   } = config;
   const { themeColors } = useSideBarContext();
 
+  const [usersColors, setUsersColors] = useState<UserData[]>(() =>
+    userColorStore.listUsers()
+  );
+  const [onlineUsers, setOnlineUsers] = useState<UserPresence>(new Map());
+
   const BASE_BACKGROUND_COLOR = useMemo<string>(() => {
     return themeColors?.["1"]?.firstToolbarbutton ?? "#dfdede";
   }, [themeColors]);
@@ -246,6 +190,26 @@ export const ScriptureMap2DProvider: (
       return tab.id === activeTabId;
     });
   }, [tabs, activeTabId]);
+
+  const userPresence = useMemo<UserPresence>(() => {
+    const { bookId, book, chapter } = activeTab.data;
+    const newUserPresence: UserPresence = new Map();
+
+    newUserPresence.set(configBot.id, { bookId, book, chapter });
+    onlineUsers.forEach((data, userId) => {
+      newUserPresence.set(userId, data);
+    });
+
+    return newUserPresence;
+  }, [onlineUsers, activeTab]);
+
+  useEffect(() => {
+    console.log(`[Debug] ScriptureMap2DContext`, { usersColors });
+  }, [usersColors]);
+
+  useEffect(() => {
+    console.log(`[Debug] ScriptureMap2DContext`, { userPresence });
+  }, [userPresence]);
 
   const arrangement = useMemo<ArrangementInfo>(() => {
     return BibleVizDataRepository.getArrangementByIndex({
@@ -386,6 +350,35 @@ export const ScriptureMap2DProvider: (
     [projectFilters]
   );
 
+  const updateUserColors = useCallback<() => void>(() => {
+    setUsersColors(userColorStore.listUsers());
+  }, []);
+
+  const updateOnlineUsers = useCallback<(onlineUsers: UserPresence) => void>(
+    (data) => {
+      setOnlineUsers(data);
+    },
+    []
+  );
+
+  useEffect(() => {
+    const updateUserColorsUnsubscribe = bibleVizUtilsEventManager.subscribe(
+      "UserColorStoreChanged",
+      updateUserColors
+    );
+    const updateOnlineUsersUnsubscribe = bibleVizUtilsEventManager.subscribe(
+      "OnlineUsersChanged",
+      updateOnlineUsers
+    );
+
+    updateUserColors();
+
+    return () => {
+      updateUserColorsUnsubscribe();
+      updateOnlineUsersUnsubscribe();
+    };
+  }, []);
+
   const value = useMemo<ScriptureMap2DContextType>(() => {
     const value: ScriptureMap2DContextType = {
       ...config,
@@ -409,8 +402,6 @@ export const ScriptureMap2DProvider: (
       setIsReadingHistoryEnabled,
       content,
       MAX_CHAPTER_HEAT_COUNT,
-      usersInfo,
-      userPresence,
       bookWidth,
       chapterGap,
       chapterWidth,
@@ -426,6 +417,8 @@ export const ScriptureMap2DProvider: (
       tabs,
       activeTabId,
       activeTab,
+      usersColors,
+      userPresence,
     };
     return value;
   }, [
@@ -450,8 +443,6 @@ export const ScriptureMap2DProvider: (
     setIsReadingHistoryEnabled,
     content,
     MAX_CHAPTER_HEAT_COUNT,
-    usersInfo,
-    userPresence,
     bookWidth,
     chapterGap,
     chapterWidth,
@@ -467,6 +458,8 @@ export const ScriptureMap2DProvider: (
     tabs,
     activeTabId,
     activeTab,
+    usersColors,
+    userPresence,
   ]);
 
   return (

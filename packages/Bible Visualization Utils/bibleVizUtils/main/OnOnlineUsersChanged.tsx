@@ -1,35 +1,22 @@
-const {onlineUsers} = that;
+import { updateUserColorStoreDebouncer } from "bibleVizUtils.services.UpdateUserColorStoreDebouncer";
+import { bibleVizUtilsEventManager } from "bibleVizUtils.services.EventManager";
 
-if(!onlineUsers) return;
+const { onlineUsers } = that;
 
-const usersIds = Object.keys(onlineUsers);
+if (!onlineUsers) return;
+const fixedOnlineUsers = new Map();
 
-const colorMap = new Map(usersIds.map((userId) => {
-    const currColor = BibleVizUtils.Data.vars.userPresenceData?.[userId]?.user?.color;
-    return [
-        userId,
-        currColor ?? BibleVizUtils.Functions.GetRandomColor()
-    ] 
-}))
+for (const key in onlineUsers) {
+  if (key === "info") continue;
 
-BibleVizUtils.Data.vars.userPresenceData = {}
+  const { book, bookId, chapter } = onlineUsers[key];
 
-usersIds.forEach((userId) => {
-    const { book, bookId, chapter, id } = onlineUsers[userId];
-    BibleVizUtils.Data.vars.userPresenceData[userId] = { 
-        user: {
-            name: "Unknown",
-            color: colorMap.get(userId)
-        },
-        tab: {
-            data: {
-                book,
-                bookId,
-                chapter,
-            },
-            id
-        }
-    }
-});
+  fixedOnlineUsers.set(key, {
+    book,
+    bookId,
+    chapter,
+  });
+}
 
-shout("UserPresenceUpdate");
+updateUserColorStoreDebouncer.execute();
+bibleVizUtilsEventManager.emit("OnlineUsersChanged", fixedOnlineUsers);

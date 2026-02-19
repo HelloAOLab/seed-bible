@@ -1299,9 +1299,6 @@
       "bibleVizUtils.functions.TryHideUsersColorOnPiece": [
         "./packages/Bible Visualization Utils/bibleVizUtils/functions/TryHideUsersColorOnPiece.tsx"
       ],
-      "bibleVizUtils.functions.TryInitializeReadingHistoryColorStore": [
-        "./packages/Bible Visualization Utils/bibleVizUtils/functions/TryInitializeReadingHistoryColorStore.tsx"
-      ],
       "bibleVizUtils.functions.TryUpdateNotificationDirection": [
         "./packages/Bible Visualization Utils/bibleVizUtils/functions/TryUpdateNotificationDirection.tsx"
       ],
@@ -1316,6 +1313,9 @@
       ],
       "bibleVizUtils.functions.userPresence": [
         "./packages/Bible Visualization Utils/bibleVizUtils/functions/userPresence.tsx"
+      ],
+      "bibleVizUtils.functions.users": [
+        "./packages/Bible Visualization Utils/bibleVizUtils/functions/users.tsx"
       ],
       "bibleVizUtils.main.Initialize": [
         "./packages/Bible Visualization Utils/bibleVizUtils/main/Initialize.tsx"
@@ -1335,6 +1335,9 @@
       "bibleVizUtils.main.onEggHatch": [
         "./packages/Bible Visualization Utils/bibleVizUtils/main/onEggHatch.tsx"
       ],
+      "bibleVizUtils.main.onGetOrSetVisualInTagsDefined": [
+        "./packages/Bible Visualization Utils/bibleVizUtils/main/onGetOrSetVisualInTagsDefined.tsx"
+      ],
       "bibleVizUtils.main.onInstJoined": [
         "./packages/Bible Visualization Utils/bibleVizUtils/main/onInstJoined.tsx"
       ],
@@ -1343,6 +1346,9 @@
       ],
       "bibleVizUtils.main.OnOnlineUsersChanged": [
         "./packages/Bible Visualization Utils/bibleVizUtils/main/OnOnlineUsersChanged.tsx"
+      ],
+      "bibleVizUtils.main.userLogin": [
+        "./packages/Bible Visualization Utils/bibleVizUtils/main/userLogin.tsx"
       ],
       "bibleVizUtils.main.userSubscribed": [
         "./packages/Bible Visualization Utils/bibleVizUtils/main/userSubscribed.tsx"
@@ -1434,14 +1440,20 @@
       "bibleVizUtils.services.DebouncerService": [
         "./packages/Bible Visualization Utils/bibleVizUtils/services/DebouncerService.tsx"
       ],
+      "bibleVizUtils.services.EventManager": [
+        "./packages/Bible Visualization Utils/bibleVizUtils/services/EventManager.tsx"
+      ],
       "bibleVizUtils.services.HandleUserLoggedInDebouncer": [
         "./packages/Bible Visualization Utils/bibleVizUtils/services/HandleUserLoggedInDebouncer.tsx"
       ],
       "bibleVizUtils.services.onCreate": [
         "./packages/Bible Visualization Utils/bibleVizUtils/services/onCreate.tsx"
       ],
-      "bibleVizUtils.services.ReadingHistoryColorStore": [
-        "./packages/Bible Visualization Utils/bibleVizUtils/services/ReadingHistoryColorStore.tsx"
+      "bibleVizUtils.services.UpdateUserColorStoreDebouncer": [
+        "./packages/Bible Visualization Utils/bibleVizUtils/services/UpdateUserColorStoreDebouncer.tsx"
+      ],
+      "bibleVizUtils.services.UserColorStore": [
+        "./packages/Bible Visualization Utils/bibleVizUtils/services/UserColorStore.tsx"
       ],
       "introduction.searchBar.handleGeoJsonSearch": [
         "./packages/BookSelector/introduction/searchBar/handleGeoJsonSearch.tsx"

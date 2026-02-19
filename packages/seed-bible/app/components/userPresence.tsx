@@ -98,6 +98,7 @@ function getOrSetVisualInTags(remoteId) {
 }
 
 globalThis.GetOrSetVisualInTags = getOrSetVisualInTags;
+shout("onGetOrSetVisualInTagsDefined");
 
 async function getSelfIdSafe() {
   try {
