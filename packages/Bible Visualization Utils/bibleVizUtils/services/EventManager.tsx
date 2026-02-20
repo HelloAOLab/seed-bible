@@ -44,7 +44,7 @@ class BibleVizUtilsEventManager {
     };
   }
 
-  emit(eventName: EventsType, payload?: void): void {
+  emit(eventName: EventsType, payload?: any): void {
     const eventListeners = this.#listeners.get(eventName);
 
     if (eventListeners) {

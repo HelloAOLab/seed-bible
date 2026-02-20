@@ -203,13 +203,13 @@ export const ScriptureMap2DProvider: (
     return newUserPresence;
   }, [onlineUsers, activeTab]);
 
-  useEffect(() => {
-    console.log(`[Debug] ScriptureMap2DContext`, { usersColors });
-  }, [usersColors]);
+  // useEffect(() => {
+  //   console.log(`[Debug] ScriptureMap2DContext`, { usersColors });
+  // }, [usersColors]);
 
-  useEffect(() => {
-    console.log(`[Debug] ScriptureMap2DContext`, { userPresence });
-  }, [userPresence]);
+  // useEffect(() => {
+  //   console.log(`[Debug] ScriptureMap2DContext`, { userPresence });
+  // }, [userPresence]);
 
   const arrangement = useMemo<ArrangementInfo>(() => {
     return BibleVizDataRepository.getArrangementByIndex({

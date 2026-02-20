@@ -3,19 +3,21 @@ import { bibleVizUtilsEventManager } from "bibleVizUtils.services.EventManager";
 
 const { onlineUsers } = that;
 
-if (!onlineUsers) return;
+console.log(`[Debug] OnOnlineUsersChanged`, onlineUsers);
+
 const fixedOnlineUsers = new Map();
+if (onlineUsers) {
+  for (const key in onlineUsers) {
+    if (key === "info") continue;
 
-for (const key in onlineUsers) {
-  if (key === "info") continue;
+    const { book, bookId, chapter } = onlineUsers[key];
 
-  const { book, bookId, chapter } = onlineUsers[key];
-
-  fixedOnlineUsers.set(key, {
-    book,
-    bookId,
-    chapter,
-  });
+    fixedOnlineUsers.set(key, {
+      book,
+      bookId,
+      chapter,
+    });
+  }
 }
 
 updateUserColorStoreDebouncer.execute();
