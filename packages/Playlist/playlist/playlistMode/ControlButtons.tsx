@@ -13,9 +13,7 @@ const resetState = () => {
 const ControlButtons = () => {
   const [open, setOpen] = useState(false);
 
-  const hanldeCancelClick = () => {
-    resetState();
-  };
+  const hanldeCancelClick = () => {};
 
   return (
     <div className={`control-container ${open && "opened"}`}>
@@ -43,22 +41,21 @@ const ControlButtons = () => {
 // os.compileApp("controlButtons", <ControlButtons/>);
 
 return {
-  onSave: (props: any) => {
-    const {
-      attachment,
-      checklist,
-      readingPlan,
-      currentFormat,
-      color,
-      icon,
-      isCustomColor,
-      description,
-      isCustomIcon,
-      selectedTags,
-      isLayers,
-      access,
-      onClose,
-    } = props;
+  onSave: (
+    attachment: any,
+    checklist: any,
+    readingPlan: any,
+    currentFormat: any,
+    color: any,
+    icon: any,
+    isCustomColor: any,
+    description: any,
+    isCustomIcon: any,
+    selectedTags: any,
+    isLayers: any,
+    access: any,
+    onClose: any
+  ) => {
     thisBot.tryAddPlaylistToPlaylists({
       attachment,
       checklist,

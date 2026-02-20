@@ -1,9 +1,7 @@
 const G = globalThis as any;
 if (G.CURRENNT_SOUND_ID) {
   // console.log("FORCE STOP", globalThis.CURRENNT_SOUND_ID);
-  const soundIds: number[] = Object.keys(
-    G.PLAYING_SOUND
-  ) as unknown as number[];
+  const soundIds: any[] = Object.keys(G.PLAYING_SOUND);
   const len = soundIds.length;
 
   for (let i = 0; i++; i < len) {
