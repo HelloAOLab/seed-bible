@@ -52,7 +52,9 @@ console.log("[app.error] Initializing PostHog for error reporting...");
     }),
     (e.__SV = 1));
 })(document, window.posthog || []);
-posthog.init("phc_rEUogfrnXkdTitOTrfWK2laEINF1QwNtGNQizzuMW0", {
+
+const seedBibleApiKey = "phc_rEUogfrnXkdTitOTrfWK2laEINF1QwNtGNQizzuMW0";
+posthog.init(thisBot.tags.posthogApiKey || seedBibleApiKey, {
   api_host: "https://i.ao.bot",
   ui_host: "https://us.posthog.com",
   defaults: "2025-05-24",
