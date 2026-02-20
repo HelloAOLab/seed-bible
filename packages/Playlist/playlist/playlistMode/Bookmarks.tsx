@@ -1,21 +1,24 @@
 const { useLayoutEffect, useState, useMemo } = os.appHooks;
+const G = globalThis as any;
 const isMobile =
   (window?.innerWidth || gridPortalBot.tags.pixelWidth) <
-  MOBILE_VIEWPORT_THRESHOLD;
+  G.MOBILE_VIEWPORT_THRESHOLD;
 
 const UNBOOKMARK_ICON =
   "https://auth-aux-aobot-prod-filesbucket-141297942820.s3.amazonaws.com/aoBot/71edcb41d7fbda4b963eb8b177f190341e7b11f0e150be7aad1a8f102f72e1c4.svg";
 
 const Bookmarks = () => {
   const [bookmarks, setBookmarks] = useState({ ...thisBot.tags.bookmarks });
+  const GetLabelT = useMemo(() => thisBot.GetLabel, []);
+
   useLayoutEffect(() => {
-    globalThis.SetBookmarks = setBookmarks;
+    G.SetBookmarks = setBookmarks;
     return () => {
-      globalThis.SetBookmarks = null;
+      G.SetBookmarks = null;
     };
   }, []);
 
-  const deleteBookmark = async (item) => {
+  const deleteBookmark = async (item: any) => {
     try {
       const content = item.content;
       const oldBookmarks = { ...thisBot.tags.bookmarks };
@@ -72,7 +75,7 @@ const Bookmarks = () => {
             style={{ display: "flex", alignItems: "center" }}
           >
             <p className="number-style" style={{ width: "80px" }}>
-              <GetLabel
+              <GetLabelT
                 value="discover"
                 currentOpenedBook={{
                   book: data.content,

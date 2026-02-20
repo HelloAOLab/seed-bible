@@ -2,17 +2,18 @@ const G = globalThis as any;
 const { Modal, Button, ButtonsCover } = G.Components;
 const AttachLink = await thisBot.AttachLink();
 
-const EditAttachment = ({
-  id = "default",
-  contentId,
-  selectedType,
-  name,
-  data,
-  link,
-  mediaType,
-  parentID,
-  onClose,
-}) => {
+const EditAttachment = (props: any) => {
+  const {
+    id = "default",
+    contentId,
+    selectedType,
+    name,
+    data,
+    link,
+    mediaType,
+    parentID,
+    onClose,
+  } = props;
   const attachLink = (title: string, link: string, linkState: any) => {
     const dataItem = {
       id: contentId,
