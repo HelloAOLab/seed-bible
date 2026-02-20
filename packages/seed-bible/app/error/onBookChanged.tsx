@@ -6,7 +6,7 @@ thisBot.vars.postChapterReadEvent ??= debounce((that) => {
   posthog.capture("user_chapter_read", {
     translationId: that.translation,
     bookId: that.bookId,
-    chapter: that.chapter,
+    chapter: String(that.chapter),
   });
 }, 30_000);
 
