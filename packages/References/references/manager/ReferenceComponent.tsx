@@ -1,4 +1,8 @@
 import type { ReferenceInterface } from "references.manager.interfaces";
+import {
+  GetReferences,
+  GetChapterContent,
+} from "references.manager.GetReferences";
 const { useState, useEffect, useCallback } = os.appHooks;
 const styles = tags["Reference.css"];
 
@@ -14,37 +18,12 @@ const ReferenceComponent = (props: {
     async (props: { reference: ReferenceInterface }) => {
       const { reference } = props;
       setRdLoading(true);
-      const contentReq = await web.get(
-        `https://bible.helloao.org/api/BSB/${reference.book}/${reference.chapter}.json`
-      );
-      if (contentReq.status == 200) {
-        const contentArray = [...contentReq.data.chapter.content];
-        let content = "";
-        const start = reference.verse;
-        const end = reference?.endVerse || reference.verse;
-        if (start <= end) {
-          for (let i = start; i <= end; i++) {
-            for (let j = 0; j < contentArray.length; j++) {
-              if (contentArray[j]?.number == i) {
-                const contentString = contentArray[j].content
-                  .map((data: any) => {
-                    if (typeof data === "string") {
-                      return data;
-                    } else if (data?.text) {
-                      return data.text;
-                    } else {
-                      return "";
-                    }
-                  })
-                  .join(" ");
-                content += `${contentString} `;
-                break;
-              }
-            }
-          }
-        }
-        setRFContent(content);
-      }
+      const content = await GetChapterContent({
+        bookId: reference.book,
+        chapter: reference.chapter,
+        reference,
+      });
+      setRFContent(content);
       setRdLoading(false);
     },
     []

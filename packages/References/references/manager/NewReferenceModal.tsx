@@ -5,6 +5,7 @@ import type {
   ReferencesInterface,
   ReferenceInterface,
 } from "references.manager.interfaces";
+import { GetChapterContent } from "references.manager.GetReferences";
 
 const ReferenceModal = (props: { reference: ReferencesInterface }) => {
   const { reference } = props;
@@ -22,21 +23,20 @@ const ReferenceModal = (props: { reference: ReferencesInterface }) => {
 
     const referenceBot = getBot("system", "references.manager");
 
-    const referenceArrayKey = `${reference.book}.${reference.chapter}.${reference.verse}`;
-    if (
-      referenceBot.masks?.referenceDataObject &&
-      referenceBot.masks?.referenceDataObject[referenceArrayKey]
-    ) {
-      console.log("retriveing from storage");
+    const referenceArrayKey = `referenceDataObject-${reference.book}.${reference.chapter}.${reference.verse}`;
+    if (referenceBot.masks?.[`${referenceArrayKey}`]) {
+      console.log("retrieving from storage");
       setReferenceData({
-        ...referenceBot.masks.referenceDataObject[referenceArrayKey],
+        ...JSON.parse(referenceBot.masks[`${referenceArrayKey}`]),
       });
     } else {
       console.log("retriveing from web");
       const referenceDataPromises = referenceArray.map((reference) => {
-        return web.get(
-          `https://bible.helloao.org/api/BSB/${reference.book}/${reference.chapter}.json`
-        );
+        return GetChapterContent({
+          bookId: reference.book,
+          chapter: reference.chapter,
+          reference: reference,
+        });
       });
 
       const referenceReqs = await Promise.all(referenceDataPromises);
@@ -46,38 +46,14 @@ const ReferenceModal = (props: { reference: ReferencesInterface }) => {
       } = {};
 
       referenceReqs.forEach((res, index) => {
-        if (res.status !== 200) {
+        if (!res) {
           return;
         }
-        const contentArray = [...res.data.chapter.content];
-        let content = "";
         if (referenceArray[index]) {
           const reference: ReferenceInterface = referenceArray[index];
           const referenceKey = `${reference.book}.${reference.chapter}.${reference.verse}`;
-          const start = reference.verse;
-          const end = reference?.endVerse || reference.verse;
-          if (start <= end) {
-            for (let i = start; i <= end; i++) {
-              for (let j = 0; j < contentArray.length; j++) {
-                if (contentArray[j]?.number == i) {
-                  const contentString = contentArray[j].content
-                    .map((data: any) => {
-                      if (typeof data === "string") {
-                        return data;
-                      } else if (data?.text) {
-                        return data.text;
-                      } else {
-                        return "";
-                      }
-                    })
-                    .join(" ");
-                  content += `${contentString} `;
-                  break;
-                }
-              }
-            }
-          }
-          tempReferenceData[referenceKey] = { content };
+
+          tempReferenceData[referenceKey] = { content: res, references: [] };
         }
       });
       setReferenceData({ ...tempReferenceData });

@@ -4,7 +4,11 @@ import type {
   ReferencesInterface,
   ReferenceInterface,
 } from "references.manager.interfaces";
-import { GetReferences } from "references.manager.GetReferences";
+import {
+  GetReferences,
+  GetChapterContent,
+  CalculatePopupPosition,
+} from "references.manager.GetReferences";
 
 const { useState, useEffect, useCallback } = os.appHooks;
 const styles = tags["Reference.css"];
@@ -23,23 +27,22 @@ const ReferenceApp = (props: { reference: ReferencesInterface }) => {
 
     const referenceBot = getBot("system", "references.manager");
 
-    const referenceArrayKey = `${reference.book}.${reference.chapter}.${reference.verse}`;
-
-    if (
-      referenceBot.masks?.referenceDataObject &&
-      referenceBot.masks?.referenceDataObject[referenceArrayKey]
-    ) {
-      console.log("retriveing from storage");
+    const referenceArrayKey = `referenceDataObject-${currentReference.book}.${currentReference.chapter}.${currentReference.verse}`;
+    if (referenceBot.masks?.[`${referenceArrayKey}`]) {
+      console.log("retrieving from storage");
       setReferenceData({
-        ...referenceBot.masks.referenceDataObject[referenceArrayKey],
+        ...JSON.parse(referenceBot.masks[`${referenceArrayKey}`]),
       });
     } else if (currentReference) {
       console.log("retriveing from web");
+      console.log("current reference", currentReference);
       const referenceDataPromises = currentReference.references.map(
         (reference) => {
-          return web.get(
-            `https://bible.helloao.org/api/BSB/${reference.book}/${reference.chapter}.json`
-          );
+          return GetChapterContent({
+            bookId: reference.book,
+            chapter: reference.chapter,
+            reference: reference,
+          });
         }
       );
 
@@ -52,40 +55,15 @@ const ReferenceApp = (props: { reference: ReferencesInterface }) => {
       const subReferences: Promise<ReferencesInterface>[] = [];
 
       referenceReqs.forEach((res, index) => {
-        if (res.status !== 200) {
+        if (!res) {
           return;
         }
-        const contentArray = [...res.data.chapter.content];
-        let content = "";
         if (currentReference.references[index]) {
           const reference: ReferenceInterface =
             currentReference.references[index];
           const referenceKey = `${reference.book}.${reference.chapter}.${reference.verse}`;
-          const start = reference.verse;
-          const end = reference?.endVerse || reference.verse;
-          if (start <= end) {
-            for (let i = start; i <= end; i++) {
-              for (let j = 0; j < contentArray.length; j++) {
-                if (contentArray[j]?.number == i) {
-                  const contentString = contentArray[j].content
-                    .map((data: any) => {
-                      if (typeof data === "string") {
-                        return data;
-                      } else if (data?.text) {
-                        return data.text;
-                      } else {
-                        return "";
-                      }
-                    })
-                    .join(" ");
-                  content += `${contentString} `;
-                  break;
-                }
-              }
-            }
-          }
           tempReferenceData[referenceKey] = {
-            content: content || "",
+            content: res || "",
             references: [],
           };
           subReferences.push(
@@ -181,17 +159,22 @@ const ReferenceApp = (props: { reference: ReferencesInterface }) => {
     }
   };
 
-  const showVerse = async (props: { reference: ReferenceInterface }) => {
-    const { reference } = props;
+  const showVerse = async (props: {
+    reference: ReferenceInterface;
+    mouseEvent: MouseEvent;
+  }) => {
+    const { reference, mouseEvent } = props;
     closePopupSettings();
     await os.sleep(100);
+    const position = CalculatePopupPosition(mouseEvent, 250, 300);
     openPopupSettings(
       <ReferenceComponent
         reference={reference}
         handleRedirect={handleRedirect}
       />,
       null,
-      true
+      true,
+      position
     );
   };
 
@@ -213,6 +196,9 @@ const ReferenceApp = (props: { reference: ReferencesInterface }) => {
       <div
         class="reference-container"
         onContextMenu={(e) => e.stopPropagation()}
+        onScroll={() => {
+          closePopupSettings();
+        }}
       >
         <div class="heading">
           <h2>{`${tags.IdToName[currentReference?.book]} ${currentReference?.chapter}:${currentReference?.verse}`}</h2>
@@ -260,8 +246,32 @@ const ReferenceApp = (props: { reference: ReferencesInterface }) => {
                     ]?.references?.map((subRef) => {
                       return (
                         <span
-                          onClick={() => {
-                            showVerse({ reference: subRef });
+                          onClick={(e) => {
+                            if (masks?.showVerse) {
+                              clearTimeout(masks.showVerse);
+                            }
+                            showVerse({ reference: subRef, mouseEvent: e });
+                          }}
+                          onMouseEnter={(e) => {
+                            if (masks?.showVerse) {
+                              clearTimeout(masks.showVerse);
+                            } else {
+                              const showVerseTimeout = setTimeout(() => {
+                                showVerse({ reference: subRef, mouseEvent: e });
+                              }, 500);
+                              setTagMask(
+                                thisBot,
+                                `showVerse`,
+                                showVerseTimeout,
+                                "local"
+                              );
+                            }
+                          }}
+                          onMouseLeave={() => {
+                            if (masks?.showVerse) {
+                              clearTimeout(masks.showVerse);
+                              setTagMask(thisBot, `showVerse`, null, "local");
+                            }
                           }}
                           class="subRef"
                         >{`(${subRef.book} ${subRef.chapter}:${subRef.verse}) `}</span>

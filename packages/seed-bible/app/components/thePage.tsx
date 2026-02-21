@@ -1528,6 +1528,9 @@ function ThePage({
       onMouseEnter={handleMouseEnter}
       onMouseUp={handleMouseUp}
       onClick={hanldNavFunctions}
+      onScroll={() => {
+        globalThis.closePopupSettings();
+      }}
       style={{
         direction,
       }}
@@ -2667,7 +2670,7 @@ function Section({
                               HighlightStudyNoteSection(verse?.verseNumber);
                             }
                           }}
-                          onPointerEnter={() => {
+                          onPointerEnter={(e) => {
                             globalThis.showRefModal = true;
                             setTimeout(() => {
                               if (globalThis.showRefModal) {
@@ -2675,6 +2678,7 @@ function Section({
                                   book,
                                   chapter,
                                   verse: verse.verseNumber,
+                                  mouseEvent: e,
                                 });
                               }
                             }, 500);
@@ -2835,7 +2839,7 @@ function Section({
                             HighlightStudyNoteSection(verse?.verseNumber);
                           }
                         }}
-                        onPointerEnter={() => {
+                        onPointerEnter={(e) => {
                           globalThis.showRefModal = true;
                           setTimeout(() => {
                             if (globalThis.showRefModal) {
@@ -2843,6 +2847,7 @@ function Section({
                                 book,
                                 chapter,
                                 verse: verse.verseNumber,
+                                mouseEvent: e,
                               });
                             }
                           }, 500);
