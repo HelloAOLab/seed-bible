@@ -859,6 +859,50 @@ const SubOptions = ({ items }) => {
         scrollbarWidth: "none",
       }}
     >
+      <style>{globalThis.ThemeCSS}</style>
+      <style>
+        {`
+.popupSettings2 {
+  position: relative;
+  width: 215px !important;
+  height: fit-content;
+  padding: 10px;
+  display: flex;
+  flex-direction: column;
+  background: var(--primaryColor) !important;
+  align-items: center;
+  gap: 2px;
+  border-radius: 10px;
+  scrollbar-width: none;
+  box-shadow:
+    0 2px 8px rgba(0, 0, 0, 0.15),
+    0 2px 6px rgba(0, 0, 0, 0.1);
+}
+
+        .popupSettings2 .itemSettings2 {
+  display: flex !important;
+  flex-direction: row;
+  gap: 6px;
+  justify-content: start !important;
+  align-items: center;
+  width: 100%;
+  background: rgba(var(--text1), 0.9);
+  color: var(--text1);
+  font-family: "Satoshi", system-ui, sans-serif;
+  font-size: 14px;
+  font-style: normal;
+  font-weight: 400;
+  line-height: normal;
+  border-radius: 10px;
+  padding: 6px;
+  cursor: pointer;
+}
+
+.popupSettings2 .itemSettings2:hover {
+  background: rgba(var(--text1), 0.3);
+}
+        `}
+      </style>
       {items.map((item) => {
         if (item.active === false) return;
         if (item?.type === "line")
@@ -890,7 +934,6 @@ const SubOptions = ({ items }) => {
             </div>
           );
       })}
-      <style>{getStyleOf("sidebar.css")}</style>
     </div>
   );
 };

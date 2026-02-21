@@ -106,7 +106,6 @@ export function SideBarProvider({ children }) {
   }, []);
 
   function openPopupSettings(props, wait, popupComponent) {
-    os.log("popiup");
     setWait(wait);
     if (popupSettings) {
       closePopupSettings();
@@ -194,6 +193,8 @@ export function SideBarProvider({ children }) {
 
   useLayoutEffect(() => {
     if (popupSettings || popupComponent) {
+      console.log("running pop up setting");
+      os.log(themeColors);
       runPopUpSettings({
         ...popupSettings,
         sidebarContext: {
@@ -206,7 +207,7 @@ export function SideBarProvider({ children }) {
     } else {
       os.unregisterApp("PopupSettings");
     }
-  }, [popupSettings, popupComponent]);
+  }, [popupSettings, popupComponent, globalThis.CurrentColors]);
 
   return (
     <MyContext.Provider
