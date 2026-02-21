@@ -176,13 +176,13 @@ const PlayerControls = ({ parentId = "default" }) => {
     }
   };
 
-  const handleOnButtonPress = (
+  const handleOnButtonPress: any = (
     order = 0,
     getIndexOnly = false,
     directSet = false,
     directSetKey = false,
     newIndexs?: any
-  ): any => {
+  ) => {
     const indexes = newIndexs ? newIndexs : { ...currIndex };
 
     let newIndex = directSet ? directSet : indexes.index + order;

@@ -60,7 +60,7 @@ const DragDrop = (props: any) => {
     playListSubIndex = null,
     deleteFromList = () => {},
     onClickItem = () => {},
-    onClick = () => {},
+    onClick,
     creatingPlaylist = false,
     color,
     icon,

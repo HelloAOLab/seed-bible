@@ -3,7 +3,8 @@ const { useRef, useState, useLayoutEffect } = os.appHooks;
 const G = globalThis as any;
 thisBot.CloseFloatingApp();
 
-const VideoPlayerApp = () => {
+const VideoPlayerApp = (props: any) => {
+  const { style } = props;
   const videoRef = useRef<any>(null);
   const seekRef = useRef(null);
   const [playing, setPlaying] = useState(true);
@@ -71,6 +72,7 @@ const VideoPlayerApp = () => {
         flexDirection: "column",
         height: "100%",
         width: "100%",
+        ...style,
       }}
     >
       {isYoutube ? (

@@ -205,7 +205,7 @@ const AttachLinkItem = (props: any) => {
           G.ADDING_TOPLAYLIST_TIMEOUT = setTimeout(() => {
             G.ADDING_TOPLAYLIST_TIMEOUT = null;
             onClickItem({ dataItem: data });
-          }, 1000);
+          }, 50);
         }}
         onPointerUp={() => {
           if (G.ADDING_TOPLAYLIST_TIMEOUT) {
@@ -342,7 +342,7 @@ const AttachLinkItem = (props: any) => {
         <p
           onClick={() => {
             if (data.type === "date") return;
-
+            console.log("FIRE 2", clickPass, onClick);
             if (onClick) {
               clearInterval(G.ADDING_TOPLAYLIST_TIMEOUT);
               G.ADDING_TOPLAYLIST_TIMEOUT = null;
@@ -367,25 +367,26 @@ const AttachLinkItem = (props: any) => {
               G.SetCurrentItem({ ...data });
             }
 
-            if (G.SetVideoSrc) {
-              G.SetVideoSrc(null);
-              if (
-                data.additionalInfo.type === "video-recording" ||
-                data.additionalInfo.type === "Video" ||
-                data.additionalInfo.type === "video" ||
-                data.additionalInfo.type === "youtube"
-              ) {
-                thisBot.CloseFloatingApp();
-                thisBot.VideoPlayer({
-                  src: data.additionalInfo.link,
-                  isYoutube: !!data.additionalInfo.videoId,
-                  videoID: data.additionalInfo.videoId,
-                  content: data.content,
-                });
-                // globalThis.SetVideoSrc(data.additionalInfo.link);
-                return;
-              }
+            console.log("FIRE", data);
+            // if (G.SetVideoSrc) {
+            // G.SetVideoSrc(null);
+            if (
+              data.additionalInfo.type === "video-recording" ||
+              data.additionalInfo.type === "Video" ||
+              data.additionalInfo.type === "video" ||
+              data.additionalInfo.type === "youtube"
+            ) {
+              thisBot.CloseFloatingApp();
+              thisBot.VideoPlayer({
+                src: data.additionalInfo.link,
+                isYoutube: !!data.additionalInfo.videoId,
+                videoID: data.additionalInfo.videoId,
+                content: data.content,
+              });
+              // globalThis.SetVideoSrc(data.additionalInfo.link);
+              return;
             }
+            // }
 
             if (data.additionalInfo.type === "externalLink") {
               // thisBot.RenderLinkContent({ ...data });

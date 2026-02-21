@@ -1185,3 +1185,12 @@ const sortFunc = (a: any, b: any) => {
 };
 
 G.AnnotationSortFunction = sortFunc;
+
+G.FloatBarStyle = {
+  position: "absolute",
+  bottom: 0,
+  left: 0,
+  width: "100%",
+  backgroundColor: "var(--panelBackground)",
+  padding: "0.5rem",
+};

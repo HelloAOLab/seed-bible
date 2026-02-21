@@ -1506,11 +1506,14 @@ const Playlist = (props: any) => {
             )}
             {!!videoSrc && (
               <VideoPlayer
+                style={G.FloatBarStyle}
                 videoSrc={videoSrc}
                 playlistItem={{ ...currentItem }}
               />
             )}
-            {!!mediaURL && <AudioPlayer close mediaURL={mediaURL} />}
+            {!!mediaURL && (
+              <AudioPlayer style={G.FloatBarStyle} close mediaURL={mediaURL} />
+            )}
 
             {regenrateUI && (
               <div

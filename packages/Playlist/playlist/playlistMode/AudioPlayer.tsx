@@ -7,7 +7,7 @@ const G = globalThis as any;
 const { LoaderSecondary } = G.Components;
 
 const AudioPlayer = (props: any) => {
-  const { mediaURL, secondaryClose, close = false } = props;
+  const { mediaURL, secondaryClose, close = false, style } = props;
   const [loading, setLoading] = useState(true);
   const [isRecorded, setIsRecorded] = useState(false);
   const [playCount, setPlayCount] = useState(0);
@@ -92,7 +92,11 @@ const AudioPlayer = (props: any) => {
       <style>{thisBot.tags["RecordingVoiceUI.css"]}</style>
       <div
         className="align-center"
-        style={{ gap: "0.5rem", display: secondaryClose ? "flex" : "" }}
+        style={{
+          gap: "0.5rem",
+          display: secondaryClose ? "flex" : "",
+          ...style,
+        }}
       >
         {isPlaying ? (
           <p className="mic-container">
