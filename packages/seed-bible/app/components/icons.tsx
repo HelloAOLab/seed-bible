@@ -78,6 +78,23 @@ export const GoPrivateIcon = (props) => (
     />
   </svg>
 );
+export const ClientLogo = ({ handleOpenClientSite, url, alt }) => {
+  return (
+    <img
+      onClick={handleOpenClientSite}
+      alt={alt}
+      src={url}
+      style={{
+        width: "36px",
+        height: "36px",
+        backgroundColor: "white",
+        borderRadius: "50%",
+        overflow: "hidden",
+        cursor: "pointer",
+      }}
+    />
+  );
+};
 export const TheNewSettingsIcon = (props) => (
   <svg
     width={24}

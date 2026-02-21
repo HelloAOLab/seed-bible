@@ -7,7 +7,6 @@ const { useState, useLayoutEffect, useRef, useMemo } = os.appHooks;
 const { Input, Modal, Button, ButtonsCover, Checkbox, Tooltip, Select } =
   Components;
 
-
 const ChecklistGIf =
   "https://auth-aux-aobot-prod-filesbucket-141297942820.s3.amazonaws.com/aoBot/90e85308635064b3d0fdaa9c220b8547a9467a10affe3cf22f06ad6b26fbf0a1.gif";
 
@@ -79,8 +78,8 @@ function getSortedDateFormats(selectedValue) {
 }
 
 const PROMPT_OPTIONS = (t) => [
-  { label: t('prompt'), value: "prompt" },
-  { label: t('systemPrompt'), value: "system-prompt" },
+  { label: t("prompt"), value: "prompt" },
+  { label: t("systemPrompt"), value: "system-prompt" },
 ];
 
 const AI_OPTIONS = [
@@ -122,7 +121,6 @@ const CreatePlaylistUI = ({
   playingPlaylist,
   editData,
 }) => {
-  
   const IsPlaylistPlaying = globalThis.IsPlaylistPlaying;
   const isloggedIN = authBot?.id;
 
@@ -215,6 +213,7 @@ const CreatePlaylistUI = ({
   const [name, setName] = useState(
     globalThis[`${id}creatingPlaylistName`] || ""
   );
+
   const [link, setLink] = useState("");
 
   const [mode, setMode] = useState(
@@ -605,22 +604,28 @@ const CreatePlaylistUI = ({
     setOpenAttachLink(false);
   };
 
-  const attachDate = () => {
-    thisBot.onAddDate({
-      onAttach: (date) => {
-        setReadingPlan(true);
-        thisBot.tryAddDataToPlaylist({
-          dataItem: {
-            content: FORMAT_DATE(date || new Date()),
-            additionalInfo: {
-              date: FORMAT_YYYY_MM_DD(date || new Date()),
-            },
-            type: "date",
-          },
-        });
-        setOpenAttachLink(false);
+  const attachDate = (date) => {
+    // thisBot.onAddDate({
+    // onAttach: (date) => {
+    setReadingPlan(true);
+    thisBot.tryAddDataToPlaylist({
+      dataItem: {
+        content: FORMAT_DATE(
+          date.replaceAll("/", "-") || new Date(),
+          "DEFAULT",
+          "MM-DD-YYYY"
+        ),
+        additionalInfo: {
+          date: FORMAT_YYYY_MM_DD(
+            new Date(`${date.replaceAll("/", "-")} 12:00:00`) || new Date()
+          ),
+        },
+        type: "date",
       },
     });
+    // setOpenAttachLink(false);
+    // },
+    // });
   };
 
   useLayoutEffect(() => {
@@ -950,13 +955,11 @@ const CreatePlaylistUI = ({
     >
       {layersWarning && (
         <Modal
-          title={t('noEmbdedItemsFound')}
+          title={t("noEmbdedItemsFound")}
           onClose={() => setLayersWarning(false)}
           showIcon={false}
         >
-          <h2 style={{ fontSize: "1rem" }}>
-            {t('noEmbdedItemsMsg')}
-          </h2>
+          <h2 style={{ fontSize: "1rem" }}>{t("noEmbdedItemsMsg")}</h2>
           <ButtonsCover>
             <Button
               secondary
@@ -986,27 +989,26 @@ const CreatePlaylistUI = ({
                 setLayersWarning(false);
               }}
             >
-              {t('removeAndSave')}
+              {t("removeAndSave")}
             </Button>
             <Button secondaryAlt onClick={() => setLayersWarning(false)}>
-              {t('close')}
+              {t("close")}
             </Button>
           </ButtonsCover>
         </Modal>
       )}
       {openModal && creatingPlaylist && (
         <Modal
-          title={t('copyItems')}
+          title={t("copyItems")}
           showIcon={false}
           onClose={() => setOpenModal(false)}
         >
-          <p style={{ fontSize: "12px" }}>
-            {t('copyItemsInstructions')}
+          <p style={{ fontSize: "12px" }}>{t("copyItemsInstructions")}</p>
+          <p style={{ textAlign: "center", textTransform: "uppercase" }}>
+            {" "}
+            {t("or")}{" "}
           </p>
-          <p style={{ textAlign: "center", textTransform: "uppercase" }}> {t('or')} </p>
-          <p style={{ fontSize: "12px" }}>
-            {t('copyItemInstructions')}
-          </p>
+          <p style={{ fontSize: "12px" }}>{t("copyItemInstructions")}</p>
           <PlaylistList
             creatingPlaylist={!creatingPlaylist}
             isLayers={isLayers}
@@ -1017,7 +1019,7 @@ const CreatePlaylistUI = ({
           <ButtonsCover>
             <p> </p>
             <Button secondaryAlt onClick={() => setOpenModal(false)}>
-              {t('close')}
+              {t("close")}
             </Button>
           </ButtonsCover>
         </Modal>
@@ -1041,10 +1043,12 @@ const CreatePlaylistUI = ({
                 className="more-menu-items"
                 onClick={() => {
                   if (!authBot?.id) {
-                    return ShowNotification({
-                      message: t('pleaseLoginToUseFeature'),
+                    ShowNotification({
+                      message: t("pleaseLoginToUseFeature"),
                       severity: "error",
                     });
+                    shout("tryUserLogin");
+                    return;
                   }
                   setMode(PlaylistModeTypes.annotations);
                   setShowPlaylistSettings(false);
@@ -1065,13 +1069,10 @@ const CreatePlaylistUI = ({
                     }}
                     for="playlistInclude"
                   >
-                    {t('annotationMode')}
+                    {t("annotationMode")}
                   </label>
                 </div>
-                <Tooltip
-                  forRight={true}
-                  text={t('annotationModeTooltip')}
-                >
+                <Tooltip forRight={true} text={t("annotationModeTooltip")}>
                   <p
                     className="what-this center"
                     style={{ margin: "0 0 0 0.5rem" }}
@@ -1108,13 +1109,10 @@ const CreatePlaylistUI = ({
                   }}
                   for="playlistInclude"
                 >
-                  {t('playlistMode')}
+                  {t("playlistMode")}
                 </label>
               </div>
-              <Tooltip
-                forRight={true}
-                text={t('playlistModeTooltip')}
-              >
+              <Tooltip forRight={true} text={t("playlistModeTooltip")}>
                 <p
                   className="what-this center"
                   style={{ margin: "0 0 0 0.5rem" }}
@@ -1151,10 +1149,10 @@ const CreatePlaylistUI = ({
                     }}
                     for="playlistInclude"
                   >
-                    {t('projectMode')}
+                    {t("projectMode")}
                   </label>
                 </div>
-                <Tooltip forRight={true} text={t('projectModeTooltip')}>
+                <Tooltip forRight={true} text={t("projectModeTooltip")}>
                   <p
                     className="what-this center"
                     style={{ margin: "0 0 0 0.5rem" }}
@@ -1189,26 +1187,18 @@ const CreatePlaylistUI = ({
             className="overlay linked-item-custom"
           >
             <p>
-              <b >{t('publishSettings')}</b>
+              <b>{t("publishSettings")}</b>
             </p>
-            <span style={{ fontSize: "10px", color: "#c9c8c6" }}>
-              {t('publishSettingsDesc')}
-            </span>
+            <span style={{ fontSize: "10px" }}>{t("publishSettingsDesc")}</span>
             <div
               className="more-menu-items"
               onClick={() => {
                 setPublishAccess("private");
               }}
             >
-              <span
-                class="material-symbols-outlined"
-              >
-                lock
-              </span>
-              <p>{t('privateAccess')}</p>
-              <span
-                class="material-symbols-outlined"
-              >
+              <span class="material-symbols-outlined">lock</span>
+              <p>{t("privateAccess")}</p>
+              <span class="material-symbols-outlined">
                 {publishAccess === "private"
                   ? "radio_button_checked"
                   : "radio_button_unchecked"}
@@ -1220,27 +1210,19 @@ const CreatePlaylistUI = ({
                 setPublishAccess("public");
               }}
             >
-              <span
-                class="material-symbols-outlined"
-              >
-                public
-              </span>
-              <p>{t('publicAccess')}</p>
-              <span
-                class="material-symbols-outlined"
-              >
+              <span class="material-symbols-outlined">public</span>
+              <p>{t("publicAccess")}</p>
+              <span class="material-symbols-outlined">
                 {publishAccess === "public"
                   ? "radio_button_checked"
                   : "radio_button_unchecked"}
               </span>
             </div>
             <p>
-              <b style={{ marginTop: "10px" }}>
-                {t('playlistSettings')}
-              </b>
+              <b style={{ marginTop: "10px" }}>{t("playlistSettings")}</b>
             </p>
-            <span style={{ fontSize: "10px", color: "#c9c8c6" }}>
-              {t('playlistSettingsTooltip')}
+            <span style={{ fontSize: "10px" }}>
+              {t("playlistSettingsTooltip")}
             </span>
             <div
               className="more-menu-items"
@@ -1254,14 +1236,14 @@ const CreatePlaylistUI = ({
               >
                 {checklist ? (
                   <span
-                    style={{ fontSize: "20px"}}
+                    style={{ fontSize: "20px" }}
                     class="material-symbols-outlined unfollow"
                   >
                     check_box
                   </span>
                 ) : (
                   <span
-                    style={{ fontSize: "20px"}}
+                    style={{ fontSize: "20px" }}
                     class="material-symbols-outlined unfollow"
                   >
                     check_box_outline_blank
@@ -1275,13 +1257,10 @@ const CreatePlaylistUI = ({
                   }}
                   for="playlistInclude"
                 >
-                  {t('checklist')}
+                  {t("checklist")}
                 </label>
               </div>
-              <Tooltip
-                forRight={true}
-                text={t('checklistTooltip')}
-              >
+              <Tooltip forRight={true} text={t("checklistTooltip")}>
                 <p
                   className="what-this center"
                   style={{ margin: "0 0 0 0.5rem" }}
@@ -1334,13 +1313,10 @@ const CreatePlaylistUI = ({
                   }}
                   for="playlistInclude"
                 >
-                 {t('readingPlan')}
+                  {t("readingPlan")}
                 </label>
               </div>
-              <Tooltip
-                forRight={true}
-                text={t('readingPlanTooltip')}
-              >
+              <Tooltip forRight={true} text={t("readingPlanTooltip")}>
                 <p
                   className="what-this center"
                   style={{ margin: "0 0 0 0.5rem" }}
@@ -1370,9 +1346,10 @@ const CreatePlaylistUI = ({
                 onClick={(e) => {
                   if (!isloggedIN) {
                     ShowNotification({
-                      message: t('pleaseLoginToUseMoreFeatures'),
+                      message: t("pleaseLoginToUseMoreFeatures"),
                       severity: "error",
                     });
+                    shout("tryUserLogin");
                     return;
                   }
                   const rect = e.currentTarget.getBoundingClientRect();
@@ -1395,7 +1372,7 @@ const CreatePlaylistUI = ({
                 }}
                 className="pointer"
               >
-                {!name ? t('untitled') : name}
+                {!name ? t("untitled") : name}
                 <span
                   class="material-symbols-outlined"
                   style={{ color: "#D36433" }}
@@ -1415,7 +1392,7 @@ const CreatePlaylistUI = ({
                   if (setTab) setTab("discover");
                 }}
               >
-                {t('cancel')}
+                {t("cancel")}
               </div>
               <TogglePlaylistHeight />
               <div
@@ -1432,7 +1409,11 @@ const CreatePlaylistUI = ({
                   setShowMoreOptions(true);
                 }}
               >
-                <img className="img-icon" src={Settings_Icon} alt="Settings_Icon" />
+                <img
+                  className="img-icon"
+                  src={Settings_Icon}
+                  alt="Settings_Icon"
+                />
               </div>
             </div>
           </div>
@@ -1489,7 +1470,7 @@ const CreatePlaylistUI = ({
                   >
                     delete_forever
                   </span>
-                  <span className="color-inherit">{t('delete')}</span>
+                  <span className="color-inherit">{t("delete")}</span>
                 </Button>
                 {!!embedding && isSomethingChecked && (
                   <Button onClick={onEmbedItems} secondaryAlt color="#3B82F6">
@@ -1499,7 +1480,7 @@ const CreatePlaylistUI = ({
                     >
                       frame_source
                     </span>
-                    <span className="color-inherit">{t('embed')}</span>
+                    <span className="color-inherit">{t("embed")}</span>
                   </Button>
                 )}
                 <Button
@@ -1516,7 +1497,7 @@ const CreatePlaylistUI = ({
                   >
                     close
                   </span>
-                  <span className="color-inherit">{t('cancel')}</span>
+                  <span className="color-inherit">{t("cancel")}</span>
                 </Button>
               </div>
             )}
@@ -1541,7 +1522,7 @@ const CreatePlaylistUI = ({
                   >
                     delete_forever
                   </span>
-                  <span className="color-inherit">{t('delete')}</span>
+                  <span className="color-inherit">{t("delete")}</span>
                 </Button>
                 <Button
                   onClick={() => {
@@ -1559,7 +1540,7 @@ const CreatePlaylistUI = ({
                   >
                     link_off
                   </span>
-                  <span className="color-inherit">{t('remove')}</span>
+                  <span className="color-inherit">{t("remove")}</span>
                 </Button>
                 <Button
                   onClick={() => {
@@ -1573,7 +1554,7 @@ const CreatePlaylistUI = ({
                   >
                     close
                   </span>
-                  <span className="color-inherit">{t('cancel')}</span>
+                  <span className="color-inherit">{t("cancel")}</span>
                 </Button>
               </div>
             )}
@@ -1622,14 +1603,14 @@ const CreatePlaylistUI = ({
                   value={searchText}
                   style={{ marginBottom: "0" }}
                   onChangeListener={setSearchText}
-                  placeholder={t('typeToSearch')}
+                  placeholder={t("typeToSearch")}
                 />
                 <p
                   onClick={onSearchHit}
                   className="playlist-action secondary self-start"
                 >
                   <span class="material-symbols-outlined unfollow">search</span>
-                  <span> {t('searchAndAdd')} </span>
+                  <span> {t("searchAndAdd")} </span>
                 </p>
               </div>
             )}
@@ -1657,7 +1638,7 @@ const CreatePlaylistUI = ({
                   >
                     photo_library
                   </span>
-                  <span className="color-inherit">{t('addMedia')}</span>
+                  <span className="color-inherit">{t("addMedia")}</span>
                 </Button>
                 <p
                   onClick={() => {}}
@@ -1667,7 +1648,7 @@ const CreatePlaylistUI = ({
                   <span class="material-symbols-outlined unfollow">
                     calendar_month
                   </span>
-                  <span>{t('insertDate')}</span>
+                  <span>{t("insertDate")}</span>
                 </p>
               </div>
             )}
@@ -1675,9 +1656,9 @@ const CreatePlaylistUI = ({
             {!itemSelected && !regenrateUI && (
               <AttachLink
                 isDate
-                onDateClick={() => {
+                onDateClick={(date: string = "") => {
                   setRegenrateUI(false);
-                  attachDate();
+                  attachDate(date);
                 }}
                 massAdd={massAdd}
                 attachLink={attachLink}
@@ -1703,7 +1684,7 @@ const CreatePlaylistUI = ({
                   style={{ justifyContent: "space-between" }}
                 >
                   <p style={{ fontSize: "12px", margin: "0.5rem 0" }}>
-                    <b>{t('generationPrompt')}</b>
+                    <b>{t("generationPrompt")}</b>
                   </p>
                   <div class="align-center" style={{ gap: "0.5rem" }}>
                     <Select
@@ -1713,7 +1694,7 @@ const CreatePlaylistUI = ({
                       onChangeListener={(val) => {
                         setCurrentPromptText(val);
                       }}
-                      name={`${t('prompt')}:`}
+                      name={`${t("prompt")}:`}
                       options={PROMPT_OPTIONS(t)}
                       sxSelect={{ padding: "0.25rem" }}
                     />
@@ -1741,7 +1722,7 @@ const CreatePlaylistUI = ({
                     type="textarea"
                     value={genDetails}
                     onChangeListener={setGenDetails}
-                    placeholder={t('describePlaylist')}
+                    placeholder={t("describePlaylist")}
                   />
                 ) : (
                   <Input
@@ -1750,13 +1731,11 @@ const CreatePlaylistUI = ({
                     type="textarea"
                     value={systemPrompt}
                     onChangeListener={setSystemPrompt}
-                    placeholder={t('describeSystemPrompt')}
+                    placeholder={t("describeSystemPrompt")}
                   />
                 )}
                 {currentPromptText === "system-prompt" && (
-                  <p className="info">
-                    {t('systemPromptInfo')}
-                  </p>
+                  <p className="info">{t("systemPromptInfo")}</p>
                 )}
                 <Select
                   hidden={true}
@@ -1765,20 +1744,20 @@ const CreatePlaylistUI = ({
                   onChangeListener={(val) => {
                     setSelectedAI(val);
                   }}
-                  name={`${t('ai')}:`}
+                  name={`${t("ai")}:`}
                   options={AI_OPTIONS}
                   sxSelect={{ padding: "0.25rem" }}
                 />
                 <div className="attach-link-actions">
                   <Button onClick={() => setRegenrateUI(false)} secondaryAlt>
-                    {t('cancel')}
+                    {t("cancel")}
                   </Button>
                   <Button
                     // isDisabled={loading}
                     onClick={onRegenration}
                     secondary
                   >
-                    {loading ? t('generating') : t('generate')}
+                    {loading ? t("generating") : t("generate")}
                   </Button>
                 </div>
               </div>
@@ -1788,7 +1767,7 @@ const CreatePlaylistUI = ({
                 onClick={() => {
                   if (!playList.length)
                     return ShowNotification({
-                      message: t('pleaseAddSomeItemsToSavePlaylist'),
+                      message: t("pleaseAddSomeItemsToSavePlaylist"),
                       severity: "error",
                     });
                   if (layers) {
@@ -1805,11 +1784,11 @@ const CreatePlaylistUI = ({
                 }}
                 secondary
               >
-                {t('save')}
+                {t("save")}
               </Button>
               {hasOldRef.current && (
                 <Button isDisabled={loading} onClick={onRevert} secondary>
-                  {t('revertToPrevious')}
+                  {t("revertToPrevious")}
                 </Button>
               )}
               {!!playList?.length && false && (
@@ -1824,7 +1803,7 @@ const CreatePlaylistUI = ({
                   <span class="material-symbols-outlined unfollow">
                     download
                   </span>
-                  <span>{t('downloadJSON')}</span>
+                  <span>{t("downloadJSON")}</span>
                 </p>
               )}
               {false && !regenrateUI && (
@@ -1840,8 +1819,8 @@ const CreatePlaylistUI = ({
                     animated_images
                   </span>
                   <span>
-                    {hasGenrated ? t('regenerate') : t('generate')}{" "}
-                    {isLayers ? t('layers') : t('playlist')}
+                    {hasGenrated ? t("regenerate") : t("generate")}{" "}
+                    {isLayers ? t("layers") : t("playlist")}
                   </span>
                 </p>
               )}
@@ -1856,7 +1835,7 @@ const CreatePlaylistUI = ({
                   <span class="material-symbols-outlined unfollow">
                     content_copy
                   </span>
-                  <span>{t('copyOtherPlaylists')}</span>
+                  <span>{t("copyOtherPlaylists")}</span>
                 </p>
               )}
               <Button
@@ -1867,7 +1846,7 @@ const CreatePlaylistUI = ({
                 }}
                 secondaryAlt
               >
-                {t('reset')}
+                {t("reset")}
               </Button>
             </div>
             <p

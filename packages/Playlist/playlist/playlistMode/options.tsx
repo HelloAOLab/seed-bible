@@ -28,25 +28,30 @@ const items = [
       });
       if (!globalThis.IsPlaylistPlaying) {
         if (!authBot?.id) {
-          return ShowNotification({
+          ShowNotification({
             message: t("pleaseLoginToUseFeature"),
             severity: "error",
           });
+          shout("tryUserLogin");
+          return;
         }
         globalThis.SetTab("create");
         globalThis[`${"default"}mode`] = PlaylistModeTypes.annotations;
 
         let isAnnotationGoingToAdd = globalThis.AddAnotationUI;
         if (isAnnotationGoingToAdd) {
-          isAnnotationGoingToAdd = dataTempItems[0].additionalInfo.chapter === globalThis[`FirstAnnnotationItem`].additionalInfo.chapter;
+          isAnnotationGoingToAdd =
+            dataTempItems[0].additionalInfo.chapter ===
+            globalThis[`FirstAnnnotationItem`].additionalInfo.chapter;
           if (!isAnnotationGoingToAdd) {
             ShowNotification({
-              message: "You can only annotate the same chapter at a time. In current mode.",
+              message:
+                "You can only annotate the same chapter at a time. In current mode.",
               severity: "error",
             });
             return;
           }
-        };
+        }
 
         if (isAnnotationGoingToAdd && globalThis.SetSelectedAnnotations) {
           globalThis.SetSelectedAnnotations(dataTempItems[0].id);
@@ -84,10 +89,12 @@ const items = [
     },
     onClick: async (selectedItem) => {
       if (!authBot?.id) {
-        return ShowNotification({
+        ShowNotification({
           message: t("pleaseLoginToUseFeature"),
           severity: "error",
         });
+        shout("tryUserLogin");
+        return;
       }
 
       let msg = "";

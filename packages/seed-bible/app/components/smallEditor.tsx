@@ -102,7 +102,7 @@ export function MiniTextEditor({
   style,
   minHeight = 300,
   initialText,
-  initialHTML,
+  initialHTML = "",
   placeholderHTML = '<p style="text-align: left;">Hello World!</p>',
   readOnly = false,
   priorityKey = "simple_rich_editor_toolbar_priority",
@@ -777,7 +777,7 @@ export function MiniTextEditor({
 
     const alignDrop = (
       <div className="sre-drop">
-        <button 
+        <button
           className="sre-ib"
           onClick={(e) => {
             e.preventDefault();

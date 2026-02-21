@@ -24,7 +24,7 @@
 } */
 
 .scripture-map-2d-settings {
-  z-index: 10;
+  /* z-index: 10; */
   top: 0;
   width: 100%;
   gap: 4px;
@@ -106,6 +106,7 @@
   align-items: flex-start;
   min-width: 208px;
   min-height: 20px;
+  z-index: 1;
 }
 .scripture-title {
   color: var(--text1);
@@ -599,6 +600,7 @@
   overflow: scroll;
   gap: calc(28px * var(--scale-factor));
   padding: 8px 16px 0;
+  /* z-index: 10; */
 }
 
 .scripture-map-2d-wrapper .scripture-map-2d-container .testament-container {
@@ -845,7 +847,7 @@
   background-color: var(--iconColor);
   color: var(--pageBackground);
   text-align: center;
-  z-index: 10;
+  z-index: 1;
   border-radius: 12px;
   position: fixed;
   padding: 12px;
@@ -915,7 +917,7 @@
   width: 24px;
   border-radius: 12px;
   margin-left: -12px;
-  border: solid 3px black;
+  border: solid 3px var(--iconColor);
 }
 
 .tooltip .user-presence-tooltip-content > span {

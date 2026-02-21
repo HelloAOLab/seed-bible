@@ -106,6 +106,7 @@ export function SideBarProvider({ children }) {
   }, []);
 
   function openPopupSettings(props, wait, popupComponent) {
+    os.log("popiup");
     setWait(wait);
     if (popupSettings) {
       closePopupSettings();

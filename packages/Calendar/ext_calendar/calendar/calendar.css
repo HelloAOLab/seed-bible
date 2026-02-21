@@ -752,13 +752,16 @@ svg:hover {
   width: 100%;
   border-radius: 6px;
   padding: 2px;
-  color: var(--text1);
   transition: all 0.2s ease;
 }
 
-/* Change SVG on hover */
-.settings-title:hover svg {
-  stroke: var(--text1);
+.settings-title span {
+  stroke: currentColor;
+  color: var(--text1);
+}
+
+.settings-title svg {
+  stroke: currentColor;
 }
 
 .hide-events {

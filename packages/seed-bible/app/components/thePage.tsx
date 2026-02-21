@@ -22,6 +22,7 @@ import { MiniTextEditor } from "app.components.smallEditor";
 import { ConfigurableFunctionCommands } from "app.components.commands";
 import { VerseToolbar } from "app.components.verseToolbar";
 import { useHoldAction } from "app.hooks.useHold";
+
 function getUserSessionInfo(userId) {
   try {
     if (typeof tags === "undefined" || !tags.sessions) {
@@ -218,7 +219,8 @@ function ThePage({
               return {
                 ...trans,
                 name: trans.name,
-                languageEnglishName: trans.languageEnglishName,
+                languageEnglishName:
+                  trans.languageEnglishName || "Unspecified Language",
                 id: trans.id,
                 listOfBooksApiLink: `${url.origin}${trans.listOfBooksApiLink}`,
                 origin: url.origin,
@@ -873,19 +875,22 @@ function ThePage({
       setData(bible.data);
       setFootnotes(bible.footnotes);
     } catch {
-      // const tab = globalThis.AddTab({
-      //   id: uuid(),
-      //   taken: false,
-      //   data: {
-      //     use: "thePage",
-      //     type: "book",
-      //     book: bookId,
-      //     bookId: bookId,
-      //     chapter: chapter,
-      //     translation: translation || "BSB",
-      //   },
-      // });
-      // setTab(tab);
+      if (tab) return;
+      const newTab = globalThis.AddTab({
+        id: uuid(),
+        taken: false,
+        data: {
+          use: "thePage",
+          type: "book",
+          book: bookId,
+          bookId: bookId,
+          chapter: chapter,
+          translation: translation || "BSB",
+        },
+      });
+      setTab(newTab);
+      console.log("newTab created for open error", newTab);
+      return;
     }
   }
 
@@ -1009,6 +1014,7 @@ function ThePage({
   }, [data]);
 
   function hanldNavFunctions() {
+    console.log("hanldNavFunctions", { tab, sharedTab, setActiveTab, panelId });
     if (tab && tab?.id && !sharedTab) setActiveTab(tab?.id);
     setNavFunctions({
       openNextChapter,

@@ -646,7 +646,6 @@ export function VerseToolbar({
 function getMenuActions(that, onClose, activeSpace, spaces) {
   os.log("GET MENU ACTIONS VERSE TOOLBAR", that);
   const { SharePopup } = thisBot.Chips();
-
   // Get copy mode setting - first try globalThis, then fall back to saved space data
   const getSettings = () => {
     if (globalThis.selectionUIBehavior?.[activeSpace]) {
@@ -853,8 +852,12 @@ function getMenuActions(that, onClose, activeSpace, spaces) {
 const SubOptions = ({ items }) => {
   return (
     <div
-      className={`popupSettings`}
-      style={{ maxHeight: "275px", overflowY: "auto", scrollbarWidth: "none" }}
+      className={"popupSettings2"}
+      style={{
+        maxHeight: "275px",
+        overflowY: "auto",
+        scrollbarWidth: "none",
+      }}
     >
       {items.map((item) => {
         if (item.active === false) return;
@@ -874,7 +877,7 @@ const SubOptions = ({ items }) => {
               onClick={() => {
                 item.onClick();
               }}
-              className={`itemSettings`}
+              className={`itemSettings2`}
               style={{
                 cursor: item?.disabled ? "not-allowed" : "pointer",
                 color: item?.disabled ? "#929292" : "",

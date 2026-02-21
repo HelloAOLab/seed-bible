@@ -1,6 +1,3 @@
-import { readingHistoryColorStore } from "bibleVizUtils.services.ReadingHistoryColorStore";
+import { updateUserColorStoreDebouncer } from "bibleVizUtils.services.UpdateUserColorStoreDebouncer";
 
-const { unsubscribedFromId } = that;
-
-readingHistoryColorStore.removeUserColor(unsubscribedFromId);
-globalThis.ScriptureMapHandleSubscriptionsChanged?.();
+updateUserColorStoreDebouncer.execute();

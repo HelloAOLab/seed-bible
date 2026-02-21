@@ -1,14 +1,39 @@
 const { useState, useEffect, useRef, useCallback } = os.appHooks;
 
-export const useResizeObserver = (ref) => {
-  const [size, setSize] = useState({ width: 0, height: 0 });
+interface ResizeObserverSize {
+  width: number;
+  height: number;
+}
+
+type useResizeObserverType = (ref: React.Ref<Element>) => ResizeObserverSize;
+
+interface UseClickAndHoldProps {
+  holdTime?: number;
+  holdCompleteCallback: (event: PointerEvent) => void;
+  holdCancelCallback: (event: PointerEvent) => void;
+  dependencies?: any[];
+}
+
+type useClickAndHoldType = (params: UseClickAndHoldProps) => {
+  onHoldStart: (e: PointerEvent) => void;
+  onHoldEnd: (e: PointerEvent) => void;
+};
+
+type useWhyChangedType = (name: string, value: unknown) => void;
+
+type useIsMobileType = (breakpoint: number) => boolean;
+
+export const useResizeObserver: useResizeObserverType = (ref) => {
+  const [size, setSize] = useState<ResizeObserverSize>({ width: 0, height: 0 });
 
   useEffect(() => {
     if (!ref.current) return;
 
     const observer = new ResizeObserver(([entry]) => {
-      const { width, height } = entry.contentRect;
-      setSize({ width, height });
+      if (entry) {
+        const { width, height } = entry.contentRect;
+        setSize({ width, height });
+      }
     });
 
     observer.observe(ref.current);
@@ -21,31 +46,33 @@ export const useResizeObserver = (ref) => {
   return size;
 };
 
-export const useClickAndHold = ({
+export const useClickAndHold: useClickAndHoldType = ({
   holdTime = 1,
   holdCompleteCallback,
   holdCancelCallback,
   dependencies = [],
 }) => {
-  const timeoutRef = useRef(null);
+  const timeoutRef = useRef<ReturnType<typeof setTimeout> | undefined>(
+    undefined
+  );
 
   const clear = useCallback(() => {
     clearTimeout(timeoutRef.current);
-    timeoutRef.current = null;
+    timeoutRef.current = undefined;
   }, []);
 
-  const onHoldComplete = useCallback((e) => {
+  const onHoldComplete = useCallback((e: PointerEvent) => {
     holdCompleteCallback(e);
     clear();
   }, dependencies);
 
-  const onHoldStart = useCallback((e) => {
+  const onHoldStart = useCallback((e: PointerEvent) => {
     timeoutRef.current = setTimeout(() => {
       onHoldComplete(e);
     }, holdTime);
   }, dependencies);
 
-  const onHoldEnd = useCallback((e) => {
+  const onHoldEnd = useCallback((e: PointerEvent) => {
     if (timeoutRef.current) {
       holdCancelCallback?.(e);
       clear();
@@ -55,7 +82,7 @@ export const useClickAndHold = ({
   return { onHoldStart, onHoldEnd };
 };
 
-export const useWhyChanged = (name, value) => {
+export const useWhyChanged: useWhyChangedType = (name, value) => {
   const prev = useRef(value);
   useEffect(() => {
     if (prev.current !== value) {
@@ -68,15 +95,16 @@ export const useWhyChanged = (name, value) => {
   });
 };
 
-export function useIsMobile(breakpoint = 768) {
-  const [isMobile, setIsMobile] = useState(
+export const useIsMobile: useIsMobileType = (breakpoint = 768) => {
+  const [isMobile, setIsMobile] = useState<boolean>(
     () => window.matchMedia(`(max-width: ${breakpoint}px)`).matches
   );
 
   useEffect(() => {
     const media = window.matchMedia(`(max-width: ${breakpoint}px)`);
 
-    const listener = (event) => setIsMobile(event.matches);
+    const listener: (event: MediaQueryListEvent) => void = (event) =>
+      setIsMobile(event.matches);
 
     media.addEventListener("change", listener);
 
@@ -84,4 +112,4 @@ export function useIsMobile(breakpoint = 768) {
   }, [breakpoint]);
 
   return isMobile;
-}
+};

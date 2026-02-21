@@ -171,8 +171,6 @@ const App = () => {
     }
   }, [showSchedules]);
 
-  console.log(globalThis?.ThemeCSS, "themecss");
-
   useEffect(() => {
     const observer = new MutationObserver(() => {
       const popover = document.querySelector(".fc-popover");

@@ -78,7 +78,14 @@ const Setting = ({
         }
         onMouseLeave={(e) => (e.currentTarget.style.backgroundColor = "")}
       >
-        <span style={{ display: "flex", alignItems: "center", gap: "5px" }}>
+        <span
+          style={{
+            display: "flex",
+            alignItems: "center",
+            gap: "5px",
+            color: "var(--text1)",
+          }}
+        >
           <svg
             xmlns="http://www.w3.org/2000/svg"
             width="15"

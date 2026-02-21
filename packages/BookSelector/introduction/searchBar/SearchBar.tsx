@@ -905,27 +905,27 @@ const SearchBar = (props: { openSidebar: boolean }) => {
                 </span>
               </div>
             )}
-            <div className="dropdown">
+            <div class="dropdown">
               <select
                 value={selectedTestament}
                 onChange={(e) => setSelectedTestament(Number(e.target.value))}
-                className="dropdown-select"
+                class="dropdown-select"
               >
-                <option value={2} className="dropdown-option">
+                <option value={2} class="dropdown-option">
                   {systemTranslation["allBooks"] || "All Books"}
                 </option>
-                <option value={0} className="dropdown-option">
+                <option value={0} class="dropdown-option">
                   {windowSize > 750
                     ? systemTranslation["oldTestament"] || "Old Testament"
                     : systemTranslation["oldTestamentShort"] || "OT"}
                 </option>
-                <option value={1} className="dropdown-option">
+                <option value={1} class="dropdown-option">
                   {windowSize > 750
                     ? systemTranslation["newTestament"] || "New Testament"
                     : systemTranslation["newTestamentShort"] || "NT"}
                 </option>
                 {apocryphaAvailable && (
-                  <option value={3} className="dropdown-option">
+                  <option value={3} class="dropdown-option">
                     {systemTranslation["apocrypha"] || "Apocrypha"}
                   </option>
                 )}
@@ -1021,6 +1021,7 @@ const SearchBar = (props: { openSidebar: boolean }) => {
             setAllowedTranslationLimit={setAllowedTranslationLimit}
             apiTranslations={apiTranslations}
             defaultTranslations={defaultTranslations}
+            windowSize={windowSize}
           />
         )}
       </div>
