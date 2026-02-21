@@ -16,6 +16,7 @@ function PanelSettingsDialog({ onClose }) {
     }, [openPanelCount, isCurrentlyRow]);
 
     const [selectedLayout, setSelectedLayout] = useState(initialLayoutIndex);
+    const [panelOverlap, setPanelOverlap] = useState(screens.overlap !== false);
 
     const nextPanelNumber = openPanelCount ;
 
@@ -115,14 +116,14 @@ function PanelSettingsDialog({ onClose }) {
         if (!selectedLayoutData) return;
 
         const panelCount = nextPanelNumber;
+        const screenConfig: any = { value: panelCount, overlap: panelOverlap };
 
         if (selectedLayoutData.isRow) {
-            globalThis.setCustomScreens({ value: panelCount, row: true });
-            setScreens({ value: panelCount, row: true });
-        } else {
-            globalThis.setCustomScreens({ value: panelCount });
-            setScreens({ value: panelCount });
+            screenConfig.row = true;
         }
+
+        globalThis.setCustomScreens(screenConfig);
+        setScreens(screenConfig);
 
         onClose();
     };
@@ -229,7 +230,7 @@ function PanelSettingsDialog({ onClose }) {
                             color: 'var(--text1) !important',
                             margin: 0
                         }}>
-                            New panel settings
+                            Panel settings
                         </h2>
                         <button
                             onClick={onClose}
@@ -261,11 +262,64 @@ function PanelSettingsDialog({ onClose }) {
                     <div style={{
                         display: 'flex',
                         gap: '24px',
-                        marginBottom: '40px',
+                        marginBottom: '24px',
                         justifyContent: 'center',
                         flexWrap: 'wrap'
                     }}>
                         {layouts.map((layout, index) => renderLayout(layout, index))}
+                    </div>
+
+                    <div style={{
+                        display: 'flex',
+                        alignItems: 'center',
+                        justifyContent: 'space-between',
+                        padding: '12px 16px',
+                        marginBottom: '24px',
+                        borderRadius: '8px',
+                        border: '1px solid #e5e7eb',
+                    }}>
+                        <div>
+                            <div style={{
+                                fontSize: '14px',
+                                fontWeight: '500',
+                                color: 'var(--text1)',
+                            }}>
+                                Panel overlap
+                            </div>
+                            <div style={{
+                                fontSize: '12px',
+                                color: 'var(--descriptionTextColor)',
+                                marginTop: '2px',
+                            }}>
+                                Panel will overlap the content if this setting is on.
+                            </div>
+                        </div>
+                        <div
+                            onClick={() => setPanelOverlap(!panelOverlap)}
+                            style={{
+                                width: '44px',
+                                height: '24px',
+                                borderRadius: '12px',
+                                backgroundColor: panelOverlap ? 'var(--selectedSpaceColor)' : '#d1d5db',
+                                cursor: 'pointer',
+                                position: 'relative',
+                                transition: 'background-color 0.2s',
+                                flexShrink: 0,
+                                marginLeft: '16px',
+                            }}
+                        >
+                            <div style={{
+                                width: '20px',
+                                height: '20px',
+                                borderRadius: '50%',
+                                backgroundColor: 'white',
+                                position: 'absolute',
+                                top: '2px',
+                                left: panelOverlap ? '22px' : '2px',
+                                transition: 'left 0.2s',
+                                boxShadow: '0 1px 3px rgba(0,0,0,0.2)',
+                            }} />
+                        </div>
                     </div>
 
                     <div style={{
