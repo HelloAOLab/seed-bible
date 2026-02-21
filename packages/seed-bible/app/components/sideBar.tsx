@@ -488,7 +488,6 @@ function Tab({
       globalThis.HandleSharedTabClick();
     }
     const checkEmpty = PanelsApps.find((e) => !e.tabData);
-    console.log(checkEmpty, PanelsApps);
     if (el.data.type === "book" && checkEmpty) {
       // console.log("canvas replacing");
       setActiveTab(el.id);
@@ -886,6 +885,7 @@ function SideBar({ panelsNumber }) {
     setPackageAddingOptions,
     closePopupSettings,
     userURL,
+    themeColors,
     t,
   } = useSideBarContext();
   const { setIsDragging, isDragging, setElement, Element } = useMouseMove();
@@ -1039,16 +1039,16 @@ function SideBar({ panelsNumber }) {
           height: "100%",
           " flex-shrink": "0",
           "border-radius": "10px",
-          background: " #202020",
+          background: themeColors ? themeColors[1].primaryColor : "#ffffff",
+          border: "1px solid #1A1A1A",
           padding: "20px",
         }}
       >
         <div
           style={{
-            color: "white",
             textAlign: "left",
             marginBottom: "10px",
-            color: " #FFF",
+            color: themeColors ? themeColors[1].text1 : "#1A1A1A",
             "font-family": "'Satoshi', system-ui, sans-serif",
             "font-size": "16px",
             "font-style": "normal",
@@ -1140,6 +1140,7 @@ function SideBar({ panelsNumber }) {
       <rect width={24} height={24} fill="transparent" />
     </svg>
   );
+
   const MenuOptions = {
     type: "normal",
     items: [

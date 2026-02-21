@@ -90,7 +90,6 @@ function showEventPopup(
   }
 
   const checked = {};
-  console.log(info, "info");
 
   popup.addEventListener("mousedown", (e) => e.stopPropagation());
 

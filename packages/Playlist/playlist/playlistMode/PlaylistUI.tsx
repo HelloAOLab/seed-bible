@@ -639,13 +639,12 @@ const Playlist = () => {
           <div
             onClick={() => setCreateOptions(false)}
             style={{
-              ...showPlaylistPosition.current,
               width: "210px",
               maxHeight: "105px",
               left: "none",
               right: "-12rem",
               padding: "0.5rem",
-              top: "3rem",
+              marginTop: 45,
             }}
             className="overlay linked-item-custom"
           >
