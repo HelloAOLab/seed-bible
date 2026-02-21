@@ -316,7 +316,9 @@ export function PopupSettings({ items, type, disabled, sidebarContext }) {
                         width: "36px",
                         height: "20px",
                         borderRadius: "10px",
-                        backgroundColor: item.toggle ? "#FF6B35" : "#555",
+                        backgroundColor: item.toggle
+                          ? "var(--secondaryColor)"
+                          : "#555",
                         position: "relative",
                         transition: "background-color 0.2s",
                       }}
