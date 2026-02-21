@@ -1,12 +1,20 @@
-globalThis.savePlaylistProgress = (id, progressID, parentID = "default") => {
-    globalThis[`updatePercent${id}`](p => !p);
-    setTag(thisBot, "defaultplaylistProgress", globalThis['defaultplaylistProgress']);
-    setTag(thisBot, "defaultplaylistChecked", globalThis['defaultplaylistChecked']);
-}
+const G = globalThis as any;
+G.savePlaylistProgress = (
+  id: string,
+  progressID: string,
+  parentID = "default"
+) => {
+  G[`updatePercent${id}`]((p: any) => !p);
+  setTag(thisBot, "defaultplaylistProgress", G["defaultplaylistProgress"]);
+  setTag(thisBot, "defaultplaylistChecked", G["defaultplaylistChecked"]);
+};
 
-const playlistsProgress = Object.keys(globalThis.defaultplaylistProgress || {}).length ? globalThis.defaultplaylistProgress : (getTag(thisBot, "defaultplaylistProgress") || {});
-const playlistsChecked = Object.keys(globalThis.defaultplaylistChecked || {}).length ? globalThis.defaultplaylistChecked : (getTag(thisBot, "defaultplaylistChecked") || {});
+const playlistsProgress = Object.keys(G.defaultplaylistProgress || {}).length
+  ? G.defaultplaylistProgress
+  : getTag(thisBot, "defaultplaylistProgress") || {};
+const playlistsChecked = Object.keys(G.defaultplaylistChecked || {}).length
+  ? G.defaultplaylistChecked
+  : getTag(thisBot, "defaultplaylistChecked") || {};
 
-globalThis['defaultplaylistProgress'] = playlistsProgress;
-globalThis['defaultplaylistChecked'] = playlistsChecked;
-
+G["defaultplaylistProgress"] = playlistsProgress;
+G["defaultplaylistChecked"] = playlistsChecked;

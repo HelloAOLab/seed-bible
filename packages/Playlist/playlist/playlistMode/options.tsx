@@ -1,15 +1,15 @@
 import { MenuIcon } from "app.components.icons";
+const G = globalThis as any;
 
 const items = [
   {
     icon: <MenuIcon name="file_export" />,
-    title: () =>
-      !globalThis.IsPlaylistPlaying ? t("annotate") : t("addToQueue"),
-    onClick: (selectedItem) => {
-      const dataTempItems = [];
+    title: () => (!G.IsPlaylistPlaying ? t("annotate") : t("addToQueue")),
+    onClick: (selectedItem: any) => {
+      const dataTempItems: any[] = [];
       selectedItem.verseNumber?.forEach((vNumber) => {
-        const id = createUUID();
-        const booksDetails = globalThis.findNameRank(selectedItem.book);
+        const id = G.createUUID();
+        const booksDetails = G.findNameRank(selectedItem.book);
         const dataItemTemp = {
           type: "verse",
           content: `${selectedItem.book} ${selectedItem.chapter}:${vNumber}`,
@@ -19,14 +19,14 @@ const items = [
             book: selectedItem.book,
             bookRank: booksDetails.item,
             data: { ...selectedItem },
-            chapterData: { ...globalThis.CHAPTER_DATA },
-            groupID: globalThis.ADD_VERSE_ITEM_PLAYLIST_GROUP_ID,
+            chapterData: { ...G.CHAPTER_DATA },
+            groupID: G.ADD_VERSE_ITEM_PLAYLIST_GROUP_ID,
           },
           id,
         };
         dataTempItems.push(dataItemTemp);
       });
-      if (!globalThis.IsPlaylistPlaying) {
+      if (!G.IsPlaylistPlaying) {
         if (!authBot?.id) {
           ShowNotification({
             message: t("pleaseLoginToUseFeature"),
@@ -35,14 +35,14 @@ const items = [
           shout("tryUserLogin");
           return;
         }
-        globalThis.SetTab("create");
-        globalThis[`${"default"}mode`] = PlaylistModeTypes.annotations;
+        G.SetTab("create");
+        G[`${"default"}mode`] = G.PlaylistModeTypes.annotations;
 
-        let isAnnotationGoingToAdd = globalThis.AddAnotationUI;
+        let isAnnotationGoingToAdd = G.AddAnotationUI;
         if (isAnnotationGoingToAdd) {
           isAnnotationGoingToAdd =
             dataTempItems[0].additionalInfo.chapter ===
-            globalThis[`FirstAnnnotationItem`].additionalInfo.chapter;
+            G[`FirstAnnnotationItem`].additionalInfo.chapter;
           if (!isAnnotationGoingToAdd) {
             ShowNotification({
               message:
@@ -53,41 +53,41 @@ const items = [
           }
         }
 
-        if (isAnnotationGoingToAdd && globalThis.SetSelectedAnnotations) {
-          globalThis.SetSelectedAnnotations(dataTempItems[0].id);
+        if (isAnnotationGoingToAdd && G.SetSelectedAnnotations) {
+          G.SetSelectedAnnotations(dataTempItems[0].id);
         } else {
-          globalThis.SelectedItemIDForAttachments = dataTempItems[0].id;
+          G.SelectedItemIDForAttachments = dataTempItems[0].id;
         }
         setTimeout(() => {
           dataTempItems.forEach((dataItemTemp) => {
-            globalThis.Playlist &&
-              Playlist.tryAddDataToHistory({ dataItem: dataItemTemp });
+            G.Playlist &&
+              G.Playlist.tryAddDataToHistory({ dataItem: dataItemTemp });
           });
         }, 100);
         return;
       }
-      if (globalThis.RemotePlaylistPlayed) {
+      if (G.RemotePlaylistPlayed) {
         return ShowNotification({
           message: "Only Host can add items to the queue.",
           severity: "error",
         });
       }
       dataTempItems.forEach((dataItemTemp) => {
-        globalThis.SetQueue?.(dataItemTemp);
+        G.SetQueue?.(dataItemTemp);
       });
     },
   },
 
   {
     icon: <MenuIcon name="book" />,
-    title: (item = {}) => {
+    title: (item: any = {}) => {
       const title = `${item?.book} ${item?.chapter}:${item?.verseNumber?.join(", ")}`;
       if (thisBot.tags.bookmarks[title]) {
         return t("unbookmark");
       }
       return t("bookmark");
     },
-    onClick: async (selectedItem) => {
+    onClick: async (selectedItem: any) => {
       if (!authBot?.id) {
         ShowNotification({
           message: t("pleaseLoginToUseFeature"),
@@ -101,9 +101,9 @@ const items = [
       let errorMsg = "";
       const oldBookmarks = { ...thisBot.tags.bookmarks };
 
-      selectedItem.verseNumber.forEach((vNumber) => {
-        const id = createUUID();
-        const booksDetails = globalThis.findNameRank(selectedItem.book);
+      selectedItem.verseNumber.forEach((vNumber: any) => {
+        const id = G.createUUID();
+        const booksDetails = G.findNameRank(selectedItem.book);
         const title = `${selectedItem.book} ${selectedItem.chapter}:${vNumber}`;
 
         if (oldBookmarks[title]) {
@@ -121,8 +121,8 @@ const items = [
               book: selectedItem.book,
               bookRank: booksDetails.item,
               data: { ...selectedItem },
-              chapterData: { ...globalThis.CHAPTER_DATA },
-              groupID: globalThis.ADD_VERSE_ITEM_PLAYLIST_GROUP_ID,
+              chapterData: { ...G.CHAPTER_DATA },
+              groupID: G.ADD_VERSE_ITEM_PLAYLIST_GROUP_ID,
             },
             id,
             time: new Date().toLocaleString(),
@@ -143,8 +143,8 @@ const items = [
 
         setTag(thisBot, "bookmarks", oldBookmarks);
 
-        if (globalThis.SetBookmarks) {
-          globalThis.SetBookmarks(oldBookmarks);
+        if (G.SetBookmarks) {
+          G.SetBookmarks(oldBookmarks);
         }
         ShowNotification({ message: msg, severity: "success" });
       } catch (err) {

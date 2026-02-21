@@ -1,14 +1,15 @@
+const G = globalThis as any;
 setTag(thisBot, "bookmarks", {});
-let apiResults = {};
+let apiResults: any = {};
 try {
   const authBot = await os.requestAuthBotInBackground();
   if (authBot.id) {
-    globalThis.WAS_PREV_AUTH = true;
+    G.WAS_PREV_AUTH = true;
     apiResults = await os.getData(authBot.id, "bookmarks");
     if (apiResults.data) {
       setTag(thisBot, "bookmarks", { ...apiResults.data });
-      if (globalThis.SetBookmarks) {
-        globalThis.SetBookmarks({ ...apiResults.data });
+      if (G.SetBookmarks) {
+        G.SetBookmarks({ ...apiResults.data });
       }
     }
   }

@@ -1,21 +1,20 @@
+const G = globalThis as any;
 const { data } = that || {};
 
 if (!data) return;
 
-if (globalThis.PLAY_TIMER) clearTimeout(globalThis.PLAY_TIMER);
+if (G.PLAY_TIMER) clearTimeout(G.PLAY_TIMER);
 
-globalThis.PLAY_TIMER = setTimeout(async () => {
-    if (!globalThis.PLAYING_SOUND) {
-        globalThis.PLAYING_SOUND = {};
-    }
+G.PLAY_TIMER = setTimeout(async () => {
+  if (!G.PLAYING_SOUND) {
+    G.PLAYING_SOUND = {};
+  }
 
-    thisBot.cancelCurrentPlayingSound();
+  thisBot.cancelCurrentPlayingSound();
 
-    const id = await os.playSound(data);
+  const id = await os.playSound(data);
 
-    globalThis.PLAYING_SOUND[id] = true;
+  G.PLAYING_SOUND[id] = true;
 
-    // console.log(globalThis.PLAYING_SOUND);
-
-    globalThis.CURRENNT_SOUND_ID = id;
+  G.CURRENNT_SOUND_ID = id;
 }, 20);

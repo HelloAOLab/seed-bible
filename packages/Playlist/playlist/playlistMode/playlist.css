@@ -128,6 +128,9 @@ span.playlist-label-sre {
 
 .annotation-list-item.annotation-list-item-type-comment
   .render-html-content
+  *:not(.playlist-wrapper-sre, .playlist-wrapper-sre *),
+.playlist-item-type.playlist-item-heading
+  .render-html-content
   *:not(.playlist-wrapper-sre, .playlist-wrapper-sre *) {
   margin: 0;
   padding: 0;
@@ -372,7 +375,7 @@ history-item:active {
   display: flex;
   align-items: center;
   align-self: flex-start;
-  margin-top: 6px;
+  margin-top: 3px;
   right: 4px;
 }
 
@@ -579,6 +582,17 @@ div.attachment-link.current-playing-item .playlist-item-type {
   background-color: #dcf0ec;
   border: 1px solid #139981;
   color: black !important;
+}
+
+div.history-item.current-playing-item
+  .playlist-item-type
+  + .actions
+  .material-symbols-outlined,
+div.attachment-link.current-playing-item
+  .playlist-item-type
+  + .actions
+  .material-symbols-outlined {
+  color: var(--primaryButtonFill) !important;
 }
 
 .mini-alert {

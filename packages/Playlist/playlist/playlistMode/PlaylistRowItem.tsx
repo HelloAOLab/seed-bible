@@ -1,4 +1,4 @@
-const { useState, useLayoutEffect, useRef } = os.appHooks;
+const { useState, useLayoutEffect, useRef, useMemo } = os.appHooks;
 const G = globalThis as any;
 const { Checkbox, LoaderSecondary, Modal, ButtonsCover, Button } = G.Components;
 
@@ -15,23 +15,23 @@ const ButtonStyle = {
 };
 
 const startEditingPlaylist = (
-  name,
-  id,
-  list,
-  subId,
-  attachment,
-  checklistEnabled,
-  parentId,
-  readingPlanEnabled,
-  currentFormat,
-  color,
-  icon,
-  isCustomColor,
-  description,
-  isCustomIcon,
-  selectedTags,
-  isLayers,
-  access
+  name: string,
+  id: string,
+  list: any,
+  subId: any,
+  attachment: any,
+  checklistEnabled: boolean,
+  parentId: string,
+  readingPlanEnabled: boolean,
+  currentFormat: string,
+  color: string,
+  icon: string,
+  isCustomColor: boolean,
+  description: string,
+  isCustomIcon: boolean,
+  selectedTags: any,
+  isLayers: boolean,
+  access: string
 ) => {
   // if (globalThis.setTabPlaylist) {
   //     globalThis.setTabPlaylist('create');
@@ -127,6 +127,10 @@ const PlaylistRowItem = (props: any) => {
 
   const [loading, setLoading] = useState(false);
   const [copyURL, setCopyURL] = useState(null);
+
+  const DragDropT = useMemo(() => {
+    return G.DragDrop;
+  }, []);
 
   const setPlaylist = (newList: any) => {
     setPlaylists((prev: any) => {
@@ -708,7 +712,7 @@ const PlaylistRowItem = (props: any) => {
             <h4 style={{ margin: "8px 0" }}>{t("noItemsYet")}</h4>
           )}
           {opendedList && (
-            <DragDrop
+            <DragDropT
               access={access}
               description={description}
               icon={icon}

@@ -1,26 +1,27 @@
 const {
+  currentPlaylistName,
+  currentItemID,
+  typeContent,
+  nextItemName,
+  prevItemName,
+  currentItemName,
+} = that;
+
+const G = globalThis as any;
+if (G.SetItemsPlayer) {
+  G.SetItemsPlayer({
     currentPlaylistName,
     currentItemID,
     typeContent,
     nextItemName,
     prevItemName,
-    currentItemName
-} = that;
-
-if (globalThis.SetItemsPlayer) {
-    globalThis.SetItemsPlayer({
-        currentPlaylistName,
-        currentItemID,
-        typeContent,
-        nextItemName,
-        prevItemName,
-        currentItemName
-    });
+    currentItemName,
+  });
 }
 
-globalThis.PPcurrentPlaylistName = currentPlaylistName;
-globalThis.PPcurrentItemID = currentItemID;
-globalThis.PPtypeContent = typeContent;
-globalThis.PPnextItemName = nextItemName;
-globalThis.PPprevItemName = prevItemName;
-globalThis.PPcurrentItemName = currentItemName;
+G.PPcurrentPlaylistName = currentPlaylistName;
+G.PPcurrentItemID = currentItemID;
+G.PPtypeContent = typeContent;
+G.PPnextItemName = nextItemName;
+G.PPprevItemName = prevItemName;
+G.PPcurrentItemName = currentItemName;

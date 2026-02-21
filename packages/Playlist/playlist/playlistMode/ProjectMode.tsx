@@ -21,11 +21,11 @@ try {
 
 const { useState, useLayoutEffect, useRef, useMemo, useCallback } = os.appHooks;
 import { useProjectMenu } from "playlist.playlistMode.useProjectContext";
-
+const G = globalThis as any;
 const isMobile =
   (window?.innerWidth || gridPortalBot.tags.pixelWidth) <
-  MOBILE_VIEWPORT_THRESHOLD;
-const { Chips, Checkbox, Button, Tooltip } = Components;
+  G.MOBILE_VIEWPORT_THRESHOLD;
+const { Chips, Checkbox, Button, Tooltip } = G.Components;
 
 const ChecklistGIf =
   "https://auth-aux-aobot-prod-filesbucket-141297942820.s3.amazonaws.com/aoBot/90e85308635064b3d0fdaa9c220b8547a9467a10affe3cf22f06ad6b26fbf0a1.gif";
@@ -55,13 +55,14 @@ const menuItems = [
   },
 ];
 
-const ProjectMode = ({
-  setMode,
-  showPlaylistSettings,
-  setShowPlaylistSettings,
-  setTab,
-  onReset,
-}) => {
+const ProjectMode = (props: any) => {
+  const {
+    setMode,
+    showPlaylistSettings,
+    setShowPlaylistSettings,
+    setTab,
+    onReset,
+  } = props;
   const { menuState, setMenuValue } = useProjectMenu();
 
   // const [showingAllChapters, setShowingAllChapters] = useState(true);
@@ -74,27 +75,30 @@ const ProjectMode = ({
     return 0;
   }, []);
   const arrangement = useMemo(() => {
-    return BibleVizUtils.Data.vars.fixedArrangementsInfo?.[arrangementIndex];
+    return G.BibleVizUtils.Data.vars.fixedArrangementsInfo?.[arrangementIndex];
   }, []);
   const getNewProject = useCallback(() => {
     return {
       name: "",
       structure: arrangement
         ? Object.fromEntries(
-            arrangement.testaments.map(({ name: testamentName, sections }) => {
+            arrangement.testaments.map((params: any) => {
+              const { name: testamentName, sections } = params;
               return [
                 testamentName,
                 Object.fromEntries(
-                  sections.map(({ name: sectionName, books }) => {
+                  sections.map((params: any) => {
+                    const { name: sectionName, books } = params;
                     return [
                       sectionName,
                       Object.fromEntries(
-                        books.map(({ commonName }) => {
+                        books.map((params: any) => {
+                          const { commonName } = params;
                           return [
                             commonName,
-                            BibleVizUtils.Data.tags.booksStaticInfo[
+                            G.BibleVizUtils.Data.tags.booksStaticInfo[
                               commonName
-                            ].chaptersInfo.map((_) => {
+                            ].chaptersInfo.map((_: any) => {
                               return ProjectChapterState?.Unset;
                             }),
                           ];
@@ -112,20 +116,23 @@ const ProjectMode = ({
   const getEmptySelection = useCallback(() => {
     return arrangement
       ? Object.fromEntries(
-          arrangement.testaments.map(({ name: testamentName, sections }) => {
+          arrangement.testaments.map((params: any) => {
+            const { name: testamentName, sections } = params;
             return [
               testamentName,
               Object.fromEntries(
-                sections.map(({ name: sectionName, books }) => {
+                sections.map((params: any) => {
+                  const { name: sectionName, books } = params;
                   return [
                     sectionName,
                     Object.fromEntries(
-                      books.map(({ commonName }) => {
+                      books.map((params: any) => {
+                        const { commonName } = params;
                         return [
                           commonName,
-                          BibleVizUtils.Data.tags.booksStaticInfo[
+                          G.BibleVizUtils.Data.tags.booksStaticInfo[
                             commonName
-                          ].chaptersInfo.map((_) => {
+                          ].chaptersInfo.map((_: any) => {
                             return false;
                           }),
                         ];
@@ -144,14 +151,14 @@ const ProjectMode = ({
   const [selection, setSelection] = useState(getEmptySelection());
   const [isInSelectionMode, setIsInSelectionMode] = useState(false);
   const selectedChaptersKeys = useMemo(() => {
-    const keys = [];
+    const keys: any[] = [];
     Object.keys(selection).forEach((testamentName) => {
       const testament = selection[testamentName];
       return Object.keys(testament).forEach((sectionName) => {
         const section = testament[sectionName];
         return Object.keys(section).forEach((bookName) => {
           const chapters = section[bookName];
-          return chapters.forEach((chapter, chapterIndex) => {
+          return chapters.forEach((chapter: any, chapterIndex: number) => {
             if (chapter)
               keys.push({ testamentName, sectionName, bookName, chapterIndex });
           });
@@ -167,7 +174,7 @@ const ProjectMode = ({
   }, []);
 
   const toggleChapterCheckbox = useCallback(
-    (info) => {
+    (info: any) => {
       if (!Array.isArray(info) && info.value)
         lastChapterCheckedKey.current = info.key;
       else lastChapterCheckedKey.current = null;
@@ -185,7 +192,7 @@ const ProjectMode = ({
   );
 
   const setChapterState = useCallback(
-    (info) => {
+    (info: any) => {
       const fixedInfo = Array.isArray(info) ? info : [info];
       const copy = JSON.parse(JSON.stringify(project));
       fixedInfo.forEach((currInfo) => {
@@ -200,7 +207,8 @@ const ProjectMode = ({
   );
 
   const handleChapterShiftClick = useCallback(
-    ({ key, value }) => {
+    (props: any) => {
+      const { key, value } = props;
       if (
         lastChapterCheckedKey.current &&
         !AreKeysEqual(lastChapterCheckedKey.current, key)
@@ -221,43 +229,49 @@ const ProjectMode = ({
 
   const onChapterClickDependencies = [project, isInSelectionMode, selection];
 
-  const handleChapterClick = useCallback((e, key, checked) => {
-    const info = {
-      key,
-      value: !checked,
-    };
+  const handleChapterClick = useCallback(
+    (e: any, key: any, checked: boolean) => {
+      const info = {
+        key,
+        value: !checked,
+      };
 
-    if (project && isInSelectionMode) {
-      if (e.shiftKey && !checked) {
-        handleChapterShiftClick(info);
-      } else {
-        toggleChapterCheckbox(info);
+      if (project && isInSelectionMode) {
+        if (e.shiftKey && !checked) {
+          handleChapterShiftClick(info);
+        } else {
+          toggleChapterCheckbox(info);
+        }
       }
-    }
-  }, onChapterClickDependencies);
+    },
+    onChapterClickDependencies
+  );
 
-  const handleChapterClickAndHold = useCallback((e, key, checked) => {
-    if (project) {
-      const info = { key };
-      if (isInSelectionMode) {
-        info.value = !checked;
-        toggleChapterCheckbox(info);
-      } else {
-        info.value = true;
-        toggleChapterCheckbox(info);
-        setIsInSelectionMode(true);
+  const handleChapterClickAndHold = useCallback(
+    (e: any, key: any, checked: boolean) => {
+      if (project) {
+        const info: any = { key };
+        if (isInSelectionMode) {
+          info.value = !checked;
+          toggleChapterCheckbox(info);
+        } else {
+          info.value = true;
+          toggleChapterCheckbox(info);
+          setIsInSelectionMode(true);
+        }
       }
-    }
-  }, onChapterClickDependencies);
+    },
+    onChapterClickDependencies
+  );
 
   const onBookNameClickAndHoldDependencies = [selection, isInSelectionMode];
 
   const handleBookNameClickAndHold = useCallback(
-    (showChapters, key, checked) => {
+    (showChapters: boolean, key: any, checked: boolean) => {
       if (showChapters) {
         const { testamentName, sectionName, bookName } = key;
         const info = selection[testamentName][sectionName][bookName].map(
-          (_, chapterIndex) => {
+          (_: any, chapterIndex: number) => {
             return {
               key: { testamentName, sectionName, bookName, chapterIndex },
               value: !checked,
@@ -284,7 +298,7 @@ const ProjectMode = ({
   }, []);
 
   const handleStateSetterOptionClick = useCallback(
-    (state) => {
+    (state: any) => {
       const info = selectedChaptersKeys.map((key) => {
         return { key, state };
       });
@@ -310,8 +324,8 @@ const ProjectMode = ({
               const x = rect.left; // X position where the element starts (from left of screen)
               const y = rect.bottom; // Y position where the element ends (bottom of element from top of screen)
 
-              globalThis.LastClickX = x;
-              globalThis.LastClickY = y;
+              G.LastClickX = x;
+              G.LastClickY = y;
               setShowPlaylistSettings(false);
             }}
           />
@@ -540,8 +554,8 @@ const ProjectMode = ({
                 const x = rect.left; // X position where the element starts (from left of screen)
                 const y = rect.bottom; // Y position where the element ends (bottom of element from top of screen)
 
-                globalThis.LastClickX = x;
-                globalThis.LastClickY = y;
+                G.LastClickX = x;
+                G.LastClickY = y;
                 showPlaylistPosition.current = { ...getPosition() };
                 setShowPlaylistSettings(true);
               }}
@@ -558,13 +572,13 @@ const ProjectMode = ({
               const x = rect.left; // X position where the element starts (from left of screen)
               const y = rect.bottom; // Y position where the element ends (bottom of element from top of screen)
 
-              globalThis.LastClickX = x;
-              globalThis.LastClickY = y;
+              G.LastClickX = x;
+              G.LastClickY = y;
               showMorePosition.current = { ...getPosition() };
               setShowMoreOptions(true);
             }}
           >
-            <img src={Settings_Icon} alt="Settings_Icon" />
+            <img src={G.Settings_Icon} alt="Settings_Icon" />
           </div>
         </div>
 
@@ -618,7 +632,7 @@ const ProjectMode = ({
 
 return ProjectMode;
 
-function GetProjectFromSelection(selection) {
+function GetProjectFromSelection(selection: any) {
   const project = JSON.parse(JSON.stringify(selection));
   for (const testamentName of Object.keys(project)) {
     const testament = project[testamentName];
@@ -627,7 +641,7 @@ function GetProjectFromSelection(selection) {
       for (const bookName of Object.keys(section)) {
         const chapters = section[bookName];
 
-        section[bookName] = chapters.map((value) => {
+        section[bookName] = chapters.map((value: any) => {
           return value
             ? ProjectChapterState?.NotStarted
             : ProjectChapterState?.Unset;
@@ -638,7 +652,7 @@ function GetProjectFromSelection(selection) {
   return project;
 }
 
-function AreKeysEqual(keyA, keyB) {
+function AreKeysEqual(keyA: any, keyB: any) {
   return (
     keyA.testamentName === keyB.testamentName &&
     keyA.sectionName === keyB.sectionName &&
@@ -647,7 +661,8 @@ function AreKeysEqual(keyA, keyB) {
   );
 }
 
-function GetKeysInRange({ selection, keyA, keyB }) {
+function GetKeysInRange(props: any) {
+  const { selection, keyA, keyB } = props;
   const allKeys = [];
 
   for (const testamentName of Object.keys(selection).toReversed()) {

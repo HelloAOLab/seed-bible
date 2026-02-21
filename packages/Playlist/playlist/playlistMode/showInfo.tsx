@@ -1,11 +1,14 @@
 const message = that || "Playlist Mode";
-const { FloatingBanner } = Components;
+const G = globalThis as any;
+const { FloatingBanner } = G.Components;
 
 os.unregisterApp("message");
-os.registerApp("message");
+os.registerApp("message", thisBot);
 
-const InfoMessage = ()=> <FloatingBanner>
-        <b>{message}</b>
-    </FloatingBanner>;
+const InfoMessage = () => (
+  <FloatingBanner>
+    <b>{message}</b>
+  </FloatingBanner>
+);
 
-os.compileApp("message",<InfoMessage/>);
+os.compileApp("message", <InfoMessage />);

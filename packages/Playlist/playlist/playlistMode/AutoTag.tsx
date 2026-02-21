@@ -1,4 +1,4 @@
-function autoTagHTML(html) {
+function autoTagHTML(html: string) {
   // ✅ supports punctuation before hashtag + hyphens inside hashtag
   const hashtagRegex = /(^|[^\w#])(#[A-Za-z0-9_]+(?:-[A-Za-z0-9_]+)*)/g;
 
@@ -55,22 +55,25 @@ function autoTagHTML(html) {
     const fragment = doc.createDocumentFragment();
     let lastIndex = 0;
 
-    text.replace(hashtagRegex, (match, prefix, tag, offset) => {
-      fragment.appendChild(doc.createTextNode(text.slice(lastIndex, offset)));
+    text.replace(
+      hashtagRegex,
+      (match: any, prefix: any, tag: any, offset: any) => {
+        fragment.appendChild(doc.createTextNode(text.slice(lastIndex, offset)));
 
-      // prefix might be punctuation or space; keep it
-      if (prefix) fragment.appendChild(doc.createTextNode(prefix));
+        // prefix might be punctuation or space; keep it
+        if (prefix) fragment.appendChild(doc.createTextNode(prefix));
 
-      const span = doc.createElement("span");
-      span.textContent = tag;
-      span.id = "hashtag";
-      // span.style.color = randomColor();
+        const span = doc.createElement("span");
+        span.textContent = tag;
+        span.id = "hashtag";
+        // span.style.color = randomColor();
 
-      fragment.appendChild(span);
+        fragment.appendChild(span);
 
-      lastIndex = offset + match.length;
-      return match;
-    });
+        lastIndex = offset + match.length;
+        return match;
+      }
+    );
 
     fragment.appendChild(doc.createTextNode(text.slice(lastIndex)));
     textNode.replaceWith(fragment);

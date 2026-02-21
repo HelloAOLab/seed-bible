@@ -17,11 +17,27 @@ declare global {
     severity: "error" | "warning" | "info" | "success";
   }) => void;
   const getPosition: () => { x: number; y: number };
-  const FormatRelativeTime: (dateTime: number) => string;
+  const FormatRelativeTime: (dateTime: number | null | Date) => string;
   const setPlaylistLocale: (playLists: any[], id: string) => void;
   const setPlaylistsLocale: (playLists: any[]) => void;
   const setCollectionsLocale: (collections: any[]) => void;
   const PlaylistModeTypes: Record<string, string>;
+  const DataManager: {
+    playSound: (options: { data: string }) => Promise<void>;
+    cancelCurrentPlayingSound: () => void;
+    endVoiceRecord: (options?: { setData?: (data: string) => void }) => void;
+    recordVoice: () => void;
+  };
+  const getPsalmsBookName: (chapter: number) => string;
+  const getSectionRanking: () => Record<string, any>;
+  const getPsalmsBookData: (chapter: number) => Record<string, any>;
+  const findNameRank: (
+    bookName: string,
+    returnRanks?: boolean,
+    isFindByRank?: boolean
+  ) => Record<string, any>;
+  const CheckMultiFuntionHold: () => boolean;
+  const EmitData: (functionName: string, data: any) => void;
 }
 
 export const G = globalThis as unknown as Record<string, any>;
