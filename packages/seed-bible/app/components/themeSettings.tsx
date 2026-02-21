@@ -6616,7 +6616,7 @@ const SettingsUI = () => {
           )
         )}
       </div>
-      {settingsPreset !== "minimal" && (
+      {settingsPreset === "full" && (
         <button
           style={buttonStyle}
           onClick={() => setSideBarMode("advancedThemeSettings")}

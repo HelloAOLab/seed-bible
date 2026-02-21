@@ -1,6 +1,7 @@
 import {
   BibleDataManager,
   getCachedBibleData,
+  getCachedFootnotes,
 } from "app.hooks.bibleDataManager";
 import { getStyleOf } from "app.styles.styler";
 const {
@@ -131,7 +132,12 @@ function ThePage({
   const [wordHighlightsBC, setWordHighlightsBC] = useState("#ffeb3b");
 
   const [bible, setBible] = useState();
-  const [footnotes, setFootnotes] = useState(null);
+  const [footnotes, setFootnotes] = useState(() => {
+    if (tab) {
+      return getCachedFootnotes(tab.data?.translation, tab.data?.bookId, tab.data?.chapter);
+    }
+    return null;
+  });
   const [showFootnoteModal, setShowFootnoteModal] = useState(false);
   const [activeFootnote, setActiveFootnote] = useState(null);
   if (tab) globalThis[`SetEnableEditorOf${tab?.id}`] = setEnableEditor;
