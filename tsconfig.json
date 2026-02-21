@@ -12,8 +12,7 @@
     "jsx": "preserve",
     "noUncheckedIndexedAccess": true,
     "noImplicitOverride": true,
-    "module": "NodeNext",
-    "moduleResolution": "NodeNext",
+    "module": "preserve",
     "noEmit": true,
     "lib": ["es2024", "dom", "dom.iterable"],
     "paths": {
@@ -4046,6 +4045,7 @@
     "useUnknownInCatchVariables": true,
     "useDefineForClassFields": true,
     "allowSyntheticDefaultImports": true,
+    "moduleResolution": "bundler",
     "resolvePackageJsonExports": true,
     "resolvePackageJsonImports": true,
     "preserveConstEnums": true
