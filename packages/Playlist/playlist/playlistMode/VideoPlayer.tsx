@@ -1,10 +1,10 @@
 const { src, isYoutube, videoID, content } = that;
 const { useRef, useState, useLayoutEffect } = os.appHooks;
-
+const G = globalThis as any;
 thisBot.CloseFloatingApp();
 
 const VideoPlayerApp = () => {
-  const videoRef = useRef(null);
+  const videoRef = useRef<any>(null);
   const seekRef = useRef(null);
   const [playing, setPlaying] = useState(true);
   const [progress, setProgress] = useState(0);
@@ -38,23 +38,23 @@ const VideoPlayerApp = () => {
     }
   };
 
-  const handleSeek = (e) => {
-    if(!videoRef?.current) return;
+  const handleSeek = (e: any) => {
+    if (!videoRef?.current) return;
     const video = videoRef.current;
     const newTime = (e.target.value / 100) * video.duration;
     video.currentTime = newTime;
     setProgress(e.target.value);
   };
 
-  const handleVolume = (e) => {
-    if(!videoRef.current) return;
+  const handleVolume = (e: any) => {
+    if (!videoRef.current) return;
     const newVol = e.target.value;
     videoRef.current.volume = newVol;
     setVolume(newVol);
   };
 
   const goFullscreen = () => {
-    if(!videoRef?.current) return;
+    if (!videoRef?.current) return;
     const video = videoRef.current;
     if (video.requestFullscreen) video.requestFullscreen();
   };
@@ -63,7 +63,6 @@ const VideoPlayerApp = () => {
     <div
       className=""
       style={{
-        width: "auto",
         borderRadius: "16px",
         background: "#111",
         boxSizing: "border-box",
@@ -72,11 +71,12 @@ const VideoPlayerApp = () => {
         flexDirection: "column",
         height: "100%",
         width: "100%",
-      }}>
+      }}
+    >
       {isYoutube ? (
         <iframe
           className="item-need-full-height"
-          src={`${globalThis.CONSTANTS.YT_PREFIX}/${videoID}`}
+          src={`${G.CONSTANTS.YT_PREFIX}/${videoID}`}
           style={{
             width: "auto",
             flexGrow: "1",
@@ -94,7 +94,8 @@ const VideoPlayerApp = () => {
           style={{
             flexGrow: "1",
             objectFit: "cover",
-          }}>
+          }}
+        >
           <source
             src={src || "https://www.w3schools.com/html/mov_bbb.mp4"}
             type="video/mp4"
@@ -112,7 +113,8 @@ const VideoPlayerApp = () => {
             gap: "8px",
             marginTop: "auto",
             alignItems: "center",
-          }}>
+          }}
+        >
           <button onClick={togglePlay}>{playing ? "⏸️" : "▶️"}</button>
           <input
             ref={seekRef}
@@ -136,9 +138,9 @@ const VideoPlayerApp = () => {
       )}
     </div>
   );
-}
+};
 
-globalThis.Previous_ID_Floading_App_PL = globalThis.AddFloatingApp({
+G.Previous_ID_Floading_App_PL = G.AddFloatingApp({
   App: <VideoPlayerApp />,
   title: `Video Playlist`,
   position: { x: 200, y: 150 },

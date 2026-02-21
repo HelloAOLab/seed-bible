@@ -128,6 +128,10 @@ span.playlist-label-sre {
 
 .annotation-list-item.annotation-list-item-type-comment
   .render-html-content
+  *:not(.playlist-wrapper-sre, .playlist-wrapper-sre *),
+.playlist-item-type
+  .playlist-item-heading
+  .render-html-content
   *:not(.playlist-wrapper-sre, .playlist-wrapper-sre *) {
   margin: 0;
   padding: 0;

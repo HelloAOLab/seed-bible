@@ -1,5 +1,6 @@
 const { useState, useLayoutEffect, useRef, useMemo, createRef } = os.appHooks;
-const { Button } = Components;
+const G = globalThis as any;
+const { Button } = G.Components;
 const VideoPlayer = await thisBot.VideoSmallScreen();
 const AudioPlayer = await thisBot.AudioPlayer();
 const AttachLink = await thisBot.AttachLink();
@@ -10,7 +11,7 @@ const EditPlaylist =
 const SharePlaylist =
   "https://auth-aux-aobot-prod-filesbucket-141297942820.s3.amazonaws.com/aoBot/d205ab2613e2feb14123b39522527dc72a7b649078fd434c81b0b44ede4cdecf.svg";
 
-const outerWebsiteItem = {
+const outerWebsiteItem: Record<string, boolean> = {
   youtube: true,
   iframe: true,
   video: true,
@@ -48,7 +49,13 @@ const NextIcon = ({ fill = "#939393" }) => (
   </svg>
 );
 
-const getCurrentItem = (key, index, playlists, subIndex, isHint = false) => {
+const getCurrentItem = (
+  key: number,
+  index: number,
+  playlists: any,
+  subIndex: number,
+  isHint = false
+) => {
   const list = playlists[key]?.list;
 
   let targetItem = null;
@@ -73,7 +80,7 @@ const getCurrentItem = (key, index, playlists, subIndex, isHint = false) => {
     if (subIndex === 0) {
       nextTargetItem = targetItem.additionalInfo.layers[subIndex + 1] || null;
       if (nextTargetItem && !isHint) {
-        nextTargetItemVideo = globalThis.IsVideoAttachment(nextTargetItem);
+        nextTargetItemVideo = G.IsVideoAttachment(nextTargetItem);
         if (!nextTargetItemVideo || !nextTargetItem.autoPlay) {
           nextTargetItem = null;
         }
@@ -102,37 +109,33 @@ const PlayerControls = ({ parentId = "default" }) => {
   const [showCurrent, setShowCurrent] = useState(false);
   const [queue, setQueue] = useState([]);
 
-  const [transformedHistory, setTransformedHistory] = useState(
-    globalThis.PPthh
-  );
+  const [transformedHistory, setTransformedHistory] = useState(G.PPthh);
   const [oldData, setOldData] = useState([]);
   const [openAttachLink, setOpenAttachLink] = useState(false);
 
   const [checkedItems, setCheckedItems] = useState(
-    globalThis.PPreadingPlanEnabled ? { ...globalThis.PPpastDateEvents } : {}
+    G.PPreadingPlanEnabled ? { ...G.PPpastDateEvents } : {}
   );
 
   const [currIndex, setCurreIndex] = useState({
     key: 0,
-    index: globalThis.PPchecklistEnabled
+    index: G.PPchecklistEnabled
       ? -1
-      : globalThis.PPreadingPlanEnabled
-        ? globalThis.PPfirstActiveIndex
-        : globalThis.PPfirstIndex,
+      : G.PPreadingPlanEnabled
+        ? G.PPfirstActiveIndex
+        : G.PPfirstIndex,
     fromButton: 0,
     isPreviousQueue: false,
-    subIndex: globalThis.PPsubIndex,
+    subIndex: G.PPsubIndex,
   });
 
-  const [playlists, setPlaylists] = useState({
+  const [playlists, setPlaylists] = useState<any>({
     0: {
-      name: globalThis.PPplaylistName,
-      list: [
-        ...thisBot.PlayingLayersConversion(globalThis.PPplaylist?.list || []),
-      ],
-      id: createUUID(),
-      playlistID: globalThis.PPplaylist?.id,
-      isLayers: globalThis.PPplaylist?.isLayers,
+      name: G.PPplaylistName,
+      list: [...thisBot.PlayingLayersConversion(G.PPplaylist?.list || [])],
+      id: G.createUUID(),
+      playlistID: G.PPplaylist?.id,
+      isLayers: G.PPplaylist?.isLayers,
     },
   });
 
@@ -141,17 +144,17 @@ const PlayerControls = ({ parentId = "default" }) => {
   const [videoSrc, setVideoSrc] = useState(false);
   const [textInfo, setTextInfo] = useState("");
 
-  const setIncrementalCount = async (data) => {
+  const setIncrementalCount = async (data: any) => {
     if (!data) return;
     setMediaURL(data);
   };
 
   // May Use Later
   const [activeIndexs, setActiveIndexs] = useState({
-    ...globalThis.PPclosestNearDateEvent,
+    ...G.PPclosestNearDateEvent,
   });
 
-  const handlesetIndex = (index = 0, key) => {
+  const handlesetIndex = (index = 0, key: any) => {
     const nextItem = transformedHistory[index];
     const isPlaylist = !!nextItem?.list;
     if (isPlaylist) {
@@ -178,8 +181,8 @@ const PlayerControls = ({ parentId = "default" }) => {
     getIndexOnly = false,
     directSet = false,
     directSetKey = false,
-    newIndexs
-  ) => {
+    newIndexs?: any
+  ): any => {
     const indexes = newIndexs ? newIndexs : { ...currIndex };
 
     let newIndex = directSet ? directSet : indexes.index + order;
@@ -295,14 +298,14 @@ const PlayerControls = ({ parentId = "default" }) => {
       ) {
         const isMobile =
           (window?.innerWidth || gridPortalBot.tags.pixelWidth) <
-          MOBILE_VIEWPORT_THRESHOLD;
+          G.MOBILE_VIEWPORT_THRESHOLD;
         if (isMobile) {
-          globalThis.SetTextInfo(targetItem.content);
+          G.SetTextInfo(targetItem.content);
         }
       }
 
       if (targetItem?.type === "date" && !getIndexOnly) {
-        globalThis.PlaylingItemVisitiedMap?.((prev) => ({
+        G.PlaylingItemVisitiedMap?.((prev: any) => ({
           ...prev,
           [targetItem.id]: true,
         }));
@@ -332,37 +335,39 @@ const PlayerControls = ({ parentId = "default" }) => {
     // }
 
     if (targetItem.type === "verse") {
-      if (globalThis.FocusOnVerse) {
-        FocusOnVerse(targetItem.additionalInfo.verse);
+      if (G.FocusOnVerse) {
+        G.FocusOnVerse(targetItem.additionalInfo.verse);
       }
     }
 
     justAddedQueue.current = false;
-    globalThis.LAST_QUEUE_IIEM = {};
+    G.LAST_QUEUE_IIEM = {};
     setCurreIndex(newValues);
   };
 
   const justAddedQueue = useRef(false);
 
-  const addToQueue = (item, combineLast) => {
+  const addToQueue = (item: any, combineLast: boolean) => {
     const isArr = Array.isArray(item);
 
     let toAddItems = [];
 
     if (isArr) {
-      toAddItems = [...item.map((ele) => ({ id: createUUID(), ...ele }))];
-      globalThis.LAST_QUEUE_IIEM = item[item.length];
+      toAddItems = [
+        ...item.map((ele: any) => ({ id: G.createUUID(), ...ele })),
+      ];
+      G.LAST_QUEUE_IIEM = item[item.length];
     } else {
-      const isSame = objectComparator(item, globalThis.LAST_QUEUE_IIEM || {}, [
+      const isSame = G.objectComparator(item, G.LAST_QUEUE_IIEM || {}, [
         "content",
       ]);
 
       if (isSame) return os.toast("Last Item Repeated!");
-      toAddItems = [{ ...item, id: createUUID() }];
-      globalThis.LAST_QUEUE_IIEM = item;
+      toAddItems = [{ ...item, id: G.createUUID() }];
+      G.LAST_QUEUE_IIEM = item;
     }
 
-    setPlaylists((prevPlaylists) => {
+    setPlaylists((prevPlaylists: any) => {
       let currentKey = currIndex.key;
       const currentPlaylist = prevPlaylists[currentKey];
       const playlistID = currentPlaylist.playlistID;
@@ -379,7 +384,7 @@ const PlayerControls = ({ parentId = "default" }) => {
 
       const thh = currentList;
 
-      thh.forEach((ele, index) => {
+      thh.forEach((ele: any, index: number) => {
         if (index <= splitIndex) {
           if (Array.isArray(ele.additionalInfo)) {
             extraPoints += ele.additionalInfo.length - 1;
@@ -405,7 +410,7 @@ const PlayerControls = ({ parentId = "default" }) => {
         }
         // Case: Adding to an existing special queue
         updatedPlaylists[currentKey].list = [
-          ...updatedPlaylists[currentKey]?.list,
+          ...(updatedPlaylists[currentKey]?.list || []),
           ...toAddItems,
         ];
       } else {
@@ -417,12 +422,12 @@ const PlayerControls = ({ parentId = "default" }) => {
         const newQueue = {
           name: `Queue ${totalQueue + 1}`,
           list: [...toAddItems],
-          id: createUUID(),
+          id: G.createUUID(),
           SQ: true, // Mark this as a special queue,
           playlistID: null,
         };
 
-        if (!globalThis.PPchecklistEnabled) {
+        if (!G.PPchecklistEnabled) {
           // Update the current playlist with items before the split
           updatedPlaylists[currentKey] = {
             ...currentPlaylist,
@@ -440,13 +445,13 @@ const PlayerControls = ({ parentId = "default" }) => {
         //     setActiveIndexs(prev => ({ ...prev, [item.id]: true }));
         // }
 
-        if (!globalThis.PPchecklistEnabled) {
+        if (!G.PPchecklistEnabled) {
           updatedPlaylists[currentKey].broken = true;
           if (afterCurrentIndex.length > 0) {
             updatedPlaylists[`${currIndex.key}.2`] = {
               name: `${currentPlaylist.name}`,
               list: [...afterCurrentIndex],
-              id: createUUID(),
+              id: G.createUUID(),
               SQ: false, // Mark this as a special queue
               playlistID,
             };
@@ -456,7 +461,7 @@ const PlayerControls = ({ parentId = "default" }) => {
       justAddedQueue.current = true;
 
       // Renumber keys to ensure sequential ordering
-      const reorderedPlaylists = {};
+      const reorderedPlaylists: any = {};
       Object.keys(updatedPlaylists)
         .sort((a, b) => Number(a) - Number(b)) // Sort numerically
         .forEach((key, index) => {
@@ -472,69 +477,69 @@ const PlayerControls = ({ parentId = "default" }) => {
   };
 
   useLayoutEffect(() => {
-    globalThis.SetCurreIndexPlaylist = handlesetIndex;
-    globalThis.SetCurreIndexDirect = setCurreIndex;
-    globalThis.HandleOnButtonPress = handleOnButtonPress;
-    globalThis.ModifyTransformedHistory = setTransformedHistory;
-    globalThis.IsPlaylistPlaying = true;
-    globalThis.SetQueue = addToQueue;
-    globalThis.SetPlayingList = setPlaylists;
-    globalThis.HandleOnButtonPress = handleOnButtonPress;
+    G.SetCurreIndexPlaylist = handlesetIndex;
+    G.SetCurreIndexDirect = setCurreIndex;
+    G.HandleOnButtonPress = handleOnButtonPress;
+    G.ModifyTransformedHistory = setTransformedHistory;
+    G.IsPlaylistPlaying = true;
+    G.SetQueue = addToQueue;
+    G.SetPlayingList = setPlaylists;
+    G.HandleOnButtonPress = handleOnButtonPress;
 
-    globalThis.SetIncrementalCountPlayingPlaylist = setIncrementalCount;
-    globalThis.SetVideoSrc = setVideoSrc;
-    globalThis.SetMediaURL = setMediaURL;
-    globalThis.SetTextInfo = setTextInfo;
+    G.SetIncrementalCountPlayingPlaylist = setIncrementalCount;
+    G.SetVideoSrc = setVideoSrc;
+    G.SetMediaURL = setMediaURL;
+    G.SetTextInfo = setTextInfo;
 
-    globalThis.PlayingPlaylistCheckedItems = checkedItems;
-    globalThis.PlayingPlaylists = playlists;
-    globalThis.SetPlayingPlaylists = setPlaylists;
-    globalThis.CurrentIndexItem = currIndex;
-    globalThis.SetCheckedItemsPlayingPlaylist = (ids) => {
+    G.PlayingPlaylistCheckedItems = checkedItems;
+    G.PlayingPlaylists = playlists;
+    G.SetPlayingPlaylists = setPlaylists;
+    G.CurrentIndexItem = currIndex;
+    G.SetCheckedItemsPlayingPlaylist = (ids: any) => {
       setCheckedItems(ids);
       setTimeout(() => {
-        globalThis.RenderPlaylistPlaying?.();
+        G.RenderPlaylistPlaying?.();
       }, 100);
     };
 
-    globalThis.UpdateJustAddedToQueue = (val) => {
+    G.UpdateJustAddedToQueue = (val: boolean) => {
       justAddedQueue.current = val;
     };
 
-    if (globalThis.PPreadingPlanEnabled) {
-      globalThis.READING_PLAN_WORK = true;
-      // globalThis.IS_PLAYLIST_ACTIVE = 0;
+    if (G.PPreadingPlanEnabled) {
+      G.READING_PLAN_WORK = true;
+      // G.IS_PLAYLIST_ACTIVE = 0;
     }
     return () => {
-      globalThis.SetCurreIndexPlaylist = null;
-      globalThis.HandleOnButtonPress = null;
-      globalThis.ModifyTransformedHistory = null;
-      globalThis.SetQueue = false;
-      globalThis.SetCurreIndexDirect = null;
-      globalThis.SetPlayingList = () => {};
-      globalThis.SetSelected && SetSelected({});
-      globalThis.READING_PLAN_WORK = false;
-      globalThis.HandleOnButtonPress = null;
-      globalThis.SetIncrementalCountPlayingPlaylist = null;
-      globalThis.SetVideoSrc = null;
-      globalThis.SetTextInfo = null;
-      globalThis.SetMediaURL = null;
-      globalThis.PlayingPlaylistCheckedItems = null;
-      globalThis.PlayingPlaylists = null;
-      globalThis.SetPlayingPlaylists = null;
-      globalThis.CurrentIndexItem = null;
-      globalThis.SetCheckedItemsPlayingPlaylist = null;
-      globalThis.UpdateJustAddedToQueue = null;
+      G.SetCurreIndexPlaylist = null;
+      G.HandleOnButtonPress = null;
+      G.ModifyTransformedHistory = null;
+      G.SetQueue = false;
+      G.SetCurreIndexDirect = null;
+      G.SetPlayingList = () => {};
+      G.SetSelected && G.SetSelected({});
+      G.READING_PLAN_WORK = false;
+      G.HandleOnButtonPress = null;
+      G.SetIncrementalCountPlayingPlaylist = null;
+      G.SetVideoSrc = null;
+      G.SetTextInfo = null;
+      G.SetMediaURL = null;
+      G.PlayingPlaylistCheckedItems = null;
+      G.PlayingPlaylists = null;
+      G.SetPlayingPlaylists = null;
+      G.CurrentIndexItem = null;
+      G.SetCheckedItemsPlayingPlaylist = null;
+      G.UpdateJustAddedToQueue = null;
       // globalThis.IS_PLAYLIST_ACTIVE = true;
     };
   }, [handleOnButtonPress, transformedHistory]);
 
   useLayoutEffect(() => {
     return () => {
-      globalThis.IsPlaylistPlaying = false;
-      globalThis.IsQueuePresent = false;
-      globalThis.RemotePlaylistPlayed = false;
-      EmitData("playlistStopped", {});
+      G.IsPlaylistPlaying = false;
+      G.IsQueuePresent = false;
+      G.RemotePlaylistPlayed = false;
+      G.EmitData("playlistStopped", {});
     };
   }, []);
 
@@ -566,8 +571,7 @@ const PlayerControls = ({ parentId = "default" }) => {
       nextIndexes.index,
       playlists,
       nextIndexes.subIndex,
-      playlists[nextIndexes.key]?.isLayers,
-      true
+      playlists[nextIndexes.key]?.isLayers
     );
     const prevItem = prevIndex.isPreviousQueue
       ? oldData[oldData.length - 1]
@@ -576,12 +580,11 @@ const PlayerControls = ({ parentId = "default" }) => {
           prevIndex.index,
           playlists,
           prevIndex.subIndex,
-          playlists[prevIndex.key]?.isLayers,
-          true
+          playlists[prevIndex.key]?.isLayers
         );
 
     // setOldData(prev => [...prev, targetItem]);
-    globalThis.PlaylingItemVisitiedMap?.((prev) => ({
+    G.PlaylingItemVisitiedMap?.((prev: any) => ({
       ...prev,
       [targetItem.id]: true,
     }));
@@ -612,24 +615,24 @@ const PlayerControls = ({ parentId = "default" }) => {
         ) {
           const isMobile =
             (window?.innerWidth || gridPortalBot.tags.pixelWidth) <
-            MOBILE_VIEWPORT_THRESHOLD;
+            G.MOBILE_VIEWPORT_THRESHOLD;
           if (isMobile) {
-            globalThis.SetTextInfo(targetItem.content);
+            G.SetTextInfo(targetItem.content);
           }
         }
-        if (globalThis.SetMediaURL) {
-          globalThis.SetMediaURL(null);
+        if (G.SetMediaURL) {
+          G.SetMediaURL(null);
         }
         setTimeout(() => {
           thisBot.CloseFloatingApp();
         }, 100);
 
-        if (globalThis.SetVideoSrc) {
-          globalThis.SetVideoSrc(null);
+        if (G.SetVideoSrc) {
+          G.SetVideoSrc(null);
         }
         if (targetItem?.type === "heading")
-          globalThis.PlayingPlaylistSetHeading(targetItem.content);
-        const allKeys = Object.keys(playlists);
+          G.PlayingPlaylistSetHeading(targetItem.content);
+        const allKeys: any = Object.keys(playlists);
 
         const isFirstKey = currIndex.key == 0;
         const isLastKey = currIndex.key == allKeys[allKeys.length - 1];
@@ -648,8 +651,8 @@ const PlayerControls = ({ parentId = "default" }) => {
             bulkAdd: isBulk,
           });
           handleOnButtonPress(currIndex.fromButton);
-          globalThis[`${targetItem.id}OpenToggle`] &&
-            globalThis[`${targetItem.id}OpenToggle`](true);
+          G[`${targetItem.id}OpenToggle`] &&
+            G[`${targetItem.id}OpenToggle`](true);
         }
         if (!isFirstItemAndBackButton && !isLastItemAndLastButton)
           handleOnButtonPress(currIndex.fromButton);
@@ -668,11 +671,11 @@ const PlayerControls = ({ parentId = "default" }) => {
       }
     }
 
-    if (globalThis.RenderPlaylistTimer) {
-      clearTimeout(globalThis.RenderPlaylistTimer);
-      globalThis.RenderPlaylistTimer = null;
+    if (G.RenderPlaylistTimer) {
+      clearTimeout(G.RenderPlaylistTimer);
+      G.RenderPlaylistTimer = null;
     }
-    globalThis.RenderPlaylistTimer = setTimeout(() => {
+    G.RenderPlaylistTimer = setTimeout(() => {
       thisBot.SetItemsPlayerPlaylist({
         currentPlaylistName: currentPlaylistName,
         currentItemID: targetItem.id,
@@ -681,8 +684,8 @@ const PlayerControls = ({ parentId = "default" }) => {
         prevItemName: prevItem,
         currentItemName: currentItemName,
       });
-      globalThis.RenderPlaylist && globalThis.RenderPlaylist();
-      globalThis.RenderPlaylistTimer = null;
+      G.RenderPlaylist && G.RenderPlaylist();
+      G.RenderPlaylistTimer = null;
     }, 50);
     // nextItemName, nextItemType, prevItemName, prevItemType
     //  nextItemName, nextItemType, prevItemName, prevItemType
@@ -703,7 +706,7 @@ const PlayerControls = ({ parentId = "default" }) => {
 
   useLayoutEffect(() => {
     const i = currIndex.index;
-    const list = globalThis.PPplaylist?.list;
+    const list = G.PPplaylist?.list;
 
     const gp = list;
 
@@ -717,19 +720,19 @@ const PlayerControls = ({ parentId = "default" }) => {
     }
 
     setShowCurrent(true);
-    if (globalThis.TIMER_SHOW_NEXT) {
-      clearTimeout(globalThis.TIMER_SHOW_NEXT);
-      globalThis.TIMER_SHOW_NEXT = null;
+    if (G.TIMER_SHOW_NEXT) {
+      clearTimeout(G.TIMER_SHOW_NEXT);
+      G.TIMER_SHOW_NEXT = null;
     }
-    globalThis.TIMER_SHOW_NEXT = setTimeout(() => {
+    G.TIMER_SHOW_NEXT = setTimeout(() => {
       setShowCurrent(false);
     }, 3000);
 
-    globalThis.SetActiveDate?.(lastActiveDateID);
+    G.SetActiveDate?.(lastActiveDateID);
   }, [currIndex]);
 
-  const attachLink = (title, link, linkState) => {
-    globalThis.SetQueue({
+  const attachLink = (title: string, link: string, linkState: any) => {
+    G.SetQueue({
       content: title,
       additionalInfo: {
         link,
@@ -740,27 +743,27 @@ const PlayerControls = ({ parentId = "default" }) => {
     setOpenAttachLink(false);
   };
 
-  const massAdd = (items) => {
-    globalThis.SetQueue(items);
+  const massAdd = (items: any) => {
+    G.SetQueue(items);
   };
 
   useLayoutEffect(() => {
-    if (!globalThis.UPDATE_VIA_SHOUT) {
-      if (globalThis.REMOTE_UPDATE_TIMER) {
-        clearTimeout(globalThis.REMOTE_UPDATE_TIMER);
-        globalThis.REMOTE_UPDATE_TIMER = null;
+    if (!G.UPDATE_VIA_SHOUT) {
+      if (G.REMOTE_UPDATE_TIMER) {
+        clearTimeout(G.REMOTE_UPDATE_TIMER);
+        G.REMOTE_UPDATE_TIMER = null;
       }
-      globalThis.REMOTE_UPDATE_TIMER = setTimeout(() => {
+      G.REMOTE_UPDATE_TIMER = setTimeout(() => {
         EmitData("playlistQueueUpdated", { playlists });
         EmitData("playlistCurrentIndexUpdate", { currIndex });
       }, 100);
     } else {
-      globalThis.UPDATE_VIA_SHOUT = false;
+      G.UPDATE_VIA_SHOUT = false;
     }
 
     return () => {
-      clearTimeout(globalThis.REMOTE_UPDATE_TIMER);
-      globalThis.REMOTE_UPDATE_TIMER = null;
+      clearTimeout(G.REMOTE_UPDATE_TIMER);
+      G.REMOTE_UPDATE_TIMER = null;
     };
   }, [currIndex, playlists]);
 
@@ -936,7 +939,7 @@ const PlayerControls = ({ parentId = "default" }) => {
                         Playlist Ended
                       </p>
                     )}
-                    {!globalThis.ValidTypes[nextItemName?.type] && (
+                    {!G.ValidTypes[nextItemName?.type] && (
                       <p
                         style={{
                           fontSize: "12px",
@@ -993,7 +996,7 @@ const PlayerControls = ({ parentId = "default" }) => {
                       </p>
                     )}
 
-                    {!globalThis.ValidTypes[currentItem?.type] && (
+                    {!G.ValidTypes[currentItem?.type] && (
                       <p
                         style={{
                           fontSize: "12px",
@@ -1021,7 +1024,7 @@ const PlayerControls = ({ parentId = "default" }) => {
                 }}
                 className="playlist-action small"
                 onClick={() => {
-                  if (globalThis.makingPlaylist) {
+                  if (G.makingPlaylist) {
                     // globalThis.PlaylistPlaytoggleHide();
                     thisBot.CloseSelf({ force: true });
                   } else {
@@ -1037,12 +1040,10 @@ const PlayerControls = ({ parentId = "default" }) => {
                     minWidth: "10px",
                   }}
                 />
-
-                {false && <span>{checklistEnabled ? "Player" : "Queue"}</span>}
               </p>
               <p
                 onClick={() => {
-                  if (globalThis.RemotePlaylistPlayed) {
+                  if (G.RemotePlaylistPlayed) {
                     return ShowNotification({
                       message: t("onlyHostCanAddItemsToQueue"),
                       severity: "error",
@@ -1100,12 +1101,11 @@ const PlayerControls = ({ parentId = "default" }) => {
                   marginRight: "1rem",
                   cursor: "pointer",
                 }}
-                onClick={globalThis.PlaylistPlaytoggleHide}
+                onClick={G.PlaylistPlaytoggleHide}
               />
             )}
             <Button
               style={{
-                fontSize: "12px",
                 margin: "0",
                 minWidth: "auto",
                 backgroundColor: "transparent",
@@ -1118,30 +1118,28 @@ const PlayerControls = ({ parentId = "default" }) => {
               onClick={() => {
                 if (!prevItemName?.content) return;
                 DataManager.cancelCurrentPlayingSound();
-                if (globalThis.HandleOnButtonPress)
-                  globalThis.HandleOnButtonPress(-1);
+                if (G.HandleOnButtonPress) G.HandleOnButtonPress(-1);
               }}
             >
               <PrevIcon fill={!prevItemName?.content ? "#939393" : "#000"} />
             </Button>
             <p
               onClick={() => {
-                globalThis.IsPlaylistPlaying = false;
+                G.IsPlaylistPlaying = false;
                 DataManager.cancelCurrentPlayingSound();
-                globalThis.SetSelected && SetSelected({});
-                globalThis.SetHolded && SetHolded({});
+                G.SetSelected && G.SetSelected({});
+                G.SetHolded && G.SetHolded({});
                 // globalThis.SetPlayingPlaylist && globalThis.SetPlayingPlaylist(false);
-                globalThis[`${parentId}ToggleGreyCheckPLayingPlaylist`] &&
-                  globalThis[`${parentId}ToggleGreyCheckPLayingPlaylist`](null);
-                globalThis.IsQueuePresent = false;
+                G[`${parentId}ToggleGreyCheckPLayingPlaylist`] &&
+                  G[`${parentId}ToggleGreyCheckPLayingPlaylist`](null);
+                G.IsQueuePresent = false;
                 // os.unregisterApp("playing-playlist");
-                globalThis.IS_PLAYLIST_ACTIVE = false;
-                globalThis.SetSplitAppPanel2 &&
-                  globalThis.SetSplitAppPanel2(null);
+                G.IS_PLAYLIST_ACTIVE = false;
+                G.SetSplitAppPanel2 && G.SetSplitAppPanel2(null);
                 thisBot.OpenSelf();
                 // thisBot.showInfo(`History Mode`);
-                if (globalThis.RemoveNowBarApp) {
-                  globalThis.RemoveNowBarApp("player-playlist-bar");
+                if (G.RemoveNowBarApp) {
+                  G.RemoveNowBarApp("player-playlist-bar");
                 }
                 os.unregisterApp("playing-playlist-flaot");
                 thisBot.CloseFloatingApp();
@@ -1176,31 +1174,27 @@ const PlayerControls = ({ parentId = "default" }) => {
                 boxShadow: "none",
                 color: "#000",
                 padding: "8px",
-                fontSize: "12px",
                 cursor: !nextItemName?.content ? "not-allowed" : "",
               }}
               onClick={() => {
                 if (!nextItemName?.content) return;
                 DataManager.cancelCurrentPlayingSound();
-                if (
-                  !!nextItemName?.content &&
-                  !!globalThis.HandleOnButtonPress
-                ) {
-                  globalThis.HandleOnButtonPress(1);
+                if (!!nextItemName?.content && !!G.HandleOnButtonPress) {
+                  G.HandleOnButtonPress(1);
                   return;
                 }
                 // globalThis.SetPlayingPlaylist && globalThis.SetPlayingPlaylist(false);
-                globalThis[`${parentId}ToggleGreyCheckPLayingPlaylist`] &&
-                  globalThis[`${parentId}ToggleGreyCheckPLayingPlaylist`](null);
-                globalThis.IsQueuePresent = false;
-                globalThis.IS_PLAYLIST_ACTIVE = false;
+                G[`${parentId}ToggleGreyCheckPLayingPlaylist`] &&
+                  G[`${parentId}ToggleGreyCheckPLayingPlaylist`](null);
+                G.IsQueuePresent = false;
+                G.IS_PLAYLIST_ACTIVE = false;
                 thisBot.CloseFloatingApp();
-                globalThis.SetSplitAppPanel2(null);
+                G.SetSplitAppPanel2(null);
                 // os.unregisterApp("playing-playlist");
                 // thisBot.showInfo(`History Mode`);
                 os.unregisterApp("playing-playlist-flaot");
-                if (globalThis.RemoveNowBarApp) {
-                  globalThis.RemoveNowBarApp("player-playlist-bar");
+                if (G.RemoveNowBarApp) {
+                  G.RemoveNowBarApp("player-playlist-bar");
                 }
               }}
             >

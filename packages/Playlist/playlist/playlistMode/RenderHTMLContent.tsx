@@ -1,14 +1,20 @@
-const { Button } = Components;
+const G = globalThis as any;
+const { Button } = G.Components;
 const { useState, useMemo, useLayoutEffect, useRef, useEffect } = os.appHooks;
 
-const RenderHTMLContent = ({ htmlContent }) => {
+const RenderHTMLContent = (props: any) => {
+  const { htmlContent } = props;
   const [shouldRender, setShouldRender] = useState(false);
   const [open, setOpen] = useState(false);
-  const containerRef = useRef(null);
+  const containerRef = useRef<any>(null);
 
   useLayoutEffect(() => {
     // If html content contains image, video , iframe, audio, etc. then set shouldRender to true
-    const hasMedia = htmlContent.includes("img") || htmlContent.includes("video") || htmlContent.includes("iframe") || htmlContent.includes("audio");
+    const hasMedia =
+      htmlContent.includes("img") ||
+      htmlContent.includes("video") ||
+      htmlContent.includes("iframe") ||
+      htmlContent.includes("audio");
     if (hasMedia) {
       setShouldRender(true);
     } else {
@@ -27,19 +33,21 @@ const RenderHTMLContent = ({ htmlContent }) => {
     const addOverlaysToIframes = () => {
       if (!containerRef.current) return;
       const iframes = containerRef.current.querySelectorAll("iframe");
-      iframes.forEach((iframe) => {
+      iframes.forEach((iframe: any) => {
         // Skip if already wrapped or has overlay
-        if (iframe.parentElement?.classList.contains("iframe-wrapper") || 
-            iframe.parentElement?.querySelector(".iframe-click-overlay")) {
+        if (
+          iframe.parentElement?.classList.contains("iframe-wrapper") ||
+          iframe.parentElement?.querySelector(".iframe-click-overlay")
+        ) {
           return;
         }
-        
+
         // Create wrapper
         const wrapper = document.createElement("div");
         wrapper.style.position = "relative";
         wrapper.style.display = "inline-block";
         wrapper.className = "iframe-wrapper";
-        
+
         // Create overlay
         const overlay = document.createElement("div");
         overlay.className = "iframe-click-overlay";
@@ -49,7 +57,7 @@ const RenderHTMLContent = ({ htmlContent }) => {
         overlay.style.cursor = "pointer";
         overlay.style.background = "transparent";
         overlay.style.pointerEvents = "auto";
-        
+
         // Wrap iframe
         iframe.parentNode?.insertBefore(wrapper, iframe);
         wrapper.appendChild(iframe);
@@ -58,27 +66,26 @@ const RenderHTMLContent = ({ htmlContent }) => {
     };
 
     // Function to handle video clicks
-    const handleVideoClick = (e) => {
+    const handleVideoClick = (e: any) => {
       e.preventDefault();
       e.stopPropagation();
       const src = e.target.getAttribute("src");
       if (!src) return;
-      
+
       thisBot.VideoPlayer({
         src: src,
       });
     };
 
-    const handlePlayCircleClick = async (e) => {
+    const handlePlayCircleClick = async (e: any) => {
       e.preventDefault();
       e.stopPropagation();
       const id = e.target.getAttribute("id");
-      if(!id) return;
-      const [authBotId, playlistId] = id.split(globalThis.RECORD_SEPARATOR);
-      if(!authBotId || !playlistId) return;
+      if (!id) return;
+      const [authBotId, playlistId] = id.split(G.RECORD_SEPARATOR);
+      if (!authBotId || !playlistId) return;
 
-
-      if(globalThis.LoadingOldPlaylist) {
+      if (G.LoadingOldPlaylist) {
         return ShowNotification({
           message: t("pleaseWaitOldPlaylistIsLoading"),
           severity: "error",
@@ -89,19 +96,19 @@ const RenderHTMLContent = ({ htmlContent }) => {
         message: t("loadingPlaylistPleaseWait"),
         severity: "success",
       });
-      
-      globalThis.LoadingOldPlaylist = true;
 
-      let res = null;
+      G.LoadingOldPlaylist = true;
 
-      if (globalThis.LoadedPlaylistAnnotations[playlistId]) {
+      let res: any = null;
+
+      if (G.LoadedPlaylistAnnotations[playlistId]) {
         res = {
           success: true,
-          data: globalThis.LoadedPlaylistAnnotations[playlistId],
-        }
+          data: G.LoadedPlaylistAnnotations[playlistId],
+        };
       } else {
         res = await os.getData(authBotId, playlistId);
-        globalThis.LoadedPlaylistAnnotations[playlistId] = {...res.data};
+        G.LoadedPlaylistAnnotations[playlistId] = { ...res.data };
       }
 
       if (res.success) {
@@ -120,21 +127,21 @@ const RenderHTMLContent = ({ htmlContent }) => {
           severity: "error",
         });
       }
-      globalThis.LoadingOldPlaylist = false;
+      G.LoadingOldPlaylist = false;
     };
 
     // Function to handle iframe overlay clicks
-    const handleIframeOverlayClick = (e) => {
+    const handleIframeOverlayClick = (e: any) => {
       e.preventDefault();
       e.stopPropagation();
       const iframe = e.target.parentElement?.querySelector("iframe");
       if (!iframe) return;
       const src = iframe.getAttribute("src");
       if (!src) return;
-      
-      const linkDetails = validateUrl(src);
-      
-      if(linkDetails.isValid && linkDetails.type === "youtube") {
+
+      const linkDetails = G.validateUrl(src);
+
+      if (linkDetails.isValid && linkDetails.type === "youtube") {
         thisBot.VideoPlayer({
           src: src,
           isYoutube: true,
@@ -143,14 +150,14 @@ const RenderHTMLContent = ({ htmlContent }) => {
         return;
       }
 
-      if(linkDetails.isValid && linkDetails.type === "video") {
+      if (linkDetails.isValid && linkDetails.type === "video") {
         thisBot.VideoPlayer({
           src: src,
         });
         return;
       }
 
-      if(linkDetails.isValid && linkDetails.type === "externalLink") {
+      if (linkDetails.isValid && linkDetails.type === "externalLink") {
         os.openURL(src);
         return;
       }
@@ -163,13 +170,15 @@ const RenderHTMLContent = ({ htmlContent }) => {
 
     // Add click listeners to all video elements
     const videos = containerRef.current.querySelectorAll("video");
-    videos.forEach((video:any) => {
+    videos.forEach((video: any) => {
       video.addEventListener("click", handleVideoClick);
     });
 
     // Add click listeners to all span tags with id="${id}" className="material-symbols-outlined sre-play-circle sre-play-circle-${id}"
-    const playCircleSpans = containerRef.current.querySelectorAll("span.sre-play-circle");
-    playCircleSpans.forEach((span:any) => {
+    const playCircleSpans = containerRef.current.querySelectorAll(
+      "span.sre-play-circle"
+    );
+    playCircleSpans.forEach((span: any) => {
       const id = span.getAttribute("id");
       thisBot.FetchAnnotationContentInBg({
         playlistId: id,
@@ -178,8 +187,11 @@ const RenderHTMLContent = ({ htmlContent }) => {
     });
 
     // Add click listeners to all iframe overlays (using event delegation)
-    const handleContainerClick = (e) => {
-      if (e.target.classList && e.target.classList.contains("iframe-click-overlay")) {
+    const handleContainerClick = (e: any) => {
+      if (
+        e.target.classList &&
+        e.target.classList.contains("iframe-click-overlay")
+      ) {
         handleIframeOverlayClick(e);
       }
     };
@@ -188,10 +200,10 @@ const RenderHTMLContent = ({ htmlContent }) => {
     // Cleanup function
     return () => {
       clearTimeout(timeoutId);
-      videos.forEach((video:any) => {
+      videos.forEach((video: any) => {
         video.removeEventListener("click", handleVideoClick);
       });
-      playCircleSpans.forEach((span:any) => {
+      playCircleSpans.forEach((span: any) => {
         span.removeEventListener("click", handlePlayCircleClick);
       });
       if (containerRef.current) {
@@ -200,11 +212,13 @@ const RenderHTMLContent = ({ htmlContent }) => {
     };
   }, [htmlContent, shouldRender, open]);
 
-  const breakHTMLCONTENT = useMemo(()=>{
-    const content = htmlContent.replaceAll(`<p style="text-align: left;"></p>`,`<br style="text-align: left;"></br>`)
+  const breakHTMLCONTENT = useMemo(() => {
+    const content = htmlContent.replaceAll(
+      `<p style="text-align: left;"></p>`,
+      `<br style="text-align: left;"></br>`
+    );
     return content;
-  },[htmlContent])
-
+  }, [htmlContent]);
 
   return (
     <div>
@@ -217,9 +231,9 @@ const RenderHTMLContent = ({ htmlContent }) => {
           textTransform: "none",
           transition: "all 0.2s linear",
           paddingBottom: "0.25rem",
-          display: 'flex',
-          flexDirection: 'column',
-          alignItems: 'flex-start',
+          display: "flex",
+          flexDirection: "column",
+          alignItems: "flex-start",
           backgroundColor: "white",
         }}
         dangerouslySetInnerHTML={{ __html: breakHTMLCONTENT }}

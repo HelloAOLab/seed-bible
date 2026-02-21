@@ -1,7 +1,8 @@
-if(globalThis.HandleUploadFiles) {
-    globalThis.ToggleCommandBox();
-    globalThis.ThruCommandBox = that.thruCommandBox;
-    globalThis.HandleUploadFiles({
-        files: that.files
-    });
+const G = globalThis as any;
+if (G.HandleUploadFiles) {
+  G.ToggleCommandBox();
+  G.ThruCommandBox = that.thruCommandBox;
+  G.HandleUploadFiles({
+    files: that.files,
+  });
 }

@@ -1,25 +1,24 @@
 const { useState, useLayoutEffect, useRef } = os.appHooks;
-const { Input } = Components;
-
-
+const G = globalThis as any;
 
 const PlaylistRowItem = await thisBot.PlaylistRowItem();
 
-const PlaylistList = ({
-  selectedChip,
-  extraActions = () => {},
-  mergeMode,
-  selectedPlaylists,
-  setSelectPlaylist,
-  selectPlaylist = false,
-  playLists,
-  setPlayLists,
-  creatingPlaylist = false,
-  playingPlaylist,
-  parentId,
-  isLayers,
-}) => {
-  
+const PlaylistList = (props: any) => {
+  const {
+    selectedChip,
+    extraActions = () => {},
+    mergeMode,
+    selectedPlaylists,
+    setSelectPlaylist,
+    selectPlaylist = false,
+    playLists,
+    setPlayLists,
+    creatingPlaylist = false,
+    playingPlaylist,
+    parentId,
+    isLayers,
+  } = props;
+
   const [draggedItemID, setDraggedItemID] = useState(null);
   const [opendedList, setOpenedList] = useState(false);
   const toBeSetItems = useRef(null);
@@ -28,29 +27,29 @@ const PlaylistList = ({
     itemId: "null",
   });
 
-  const setDragoverSet = (newState) => {
+  const setDragoverSet = (newState: any) => {
     if (newState.itemId !== dragOverSet.itemId) {
       setDragoverSetMutate(newState);
     }
   };
 
-  const handleDragStart = (index) => {
+  const handleDragStart = (index: number) => {
     toBeSetItems.current = playLists;
     const id = playLists[index].id;
     setDraggedItemID(id);
     // console.log('Drag Start:', { index, pseudoID, id });
   };
 
-  const handleDragOver = (index) => {
+  const handleDragOver = (index: number) => {
     if (!draggedItemID) return;
 
     let draggedItemIndex = playLists.findIndex(
-      (hist) => hist.id === draggedItemID
+      (hist: any) => hist.id === draggedItemID
     );
 
     let draggedOverItem = playLists[index];
 
-    let dragItem = [playLists[draggedItemIndex]];
+    let dragItem: any = [playLists[draggedItemIndex]];
 
     let newItems = [];
 
@@ -73,7 +72,7 @@ const PlaylistList = ({
     });
 
     // Filter out the currently dragged item
-    newItems = playLists.filter((hist) => !filterAbleItems[hist.id]);
+    newItems = playLists.filter((hist: any) => !filterAbleItems[hist.id]);
     // Add the dragged item after the dragged over item
     newItems.splice(index, 0, ...dragItem);
 
@@ -83,10 +82,10 @@ const PlaylistList = ({
   const handleDragEnd = () => {
     if (mergeMode) {
       const dragItemIndex = playLists.findIndex(
-        ({ id }) => id === draggedItemID
+        (ele: any) => ele.id === draggedItemID
       );
       const dragOverItemIndex = playLists.findIndex(
-        ({ id }) => id === dragOverSet.itemId
+        (ele: any) => ele.id === dragOverSet.itemId
       );
       // console.log("dragItemIndex", dragItemIndex, dragOverItemIndex);
       if (
@@ -94,7 +93,7 @@ const PlaylistList = ({
         dragItemIndex > -1 &&
         dragItemIndex !== dragOverItemIndex
       ) {
-        setPlayLists((prev) => {
+        setPlayLists((prev: any) => {
           const old = [...prev];
           const oldItem = old[dragItemIndex];
           old[dragOverItemIndex].list.push({
@@ -122,12 +121,12 @@ const PlaylistList = ({
 
   useLayoutEffect(() => {
     if (playingPlaylist) {
-      globalThis[`${parentId}ToggleGreyCheckPLayingPlaylist`] = setToggle;
-      globalThis[`${parentId}SetOpenedList`] = setOpenedList;
+      G[`${parentId}ToggleGreyCheckPLayingPlaylist`] = setToggle;
+      G[`${parentId}SetOpenedList`] = setOpenedList;
     }
     return () => {
-      globalThis[`${parentId}SetOpenedList`] = null;
-      globalThis[`${parentId}ToggleGreyCheckPLayingPlaylist`] = null;
+      G[`${parentId}SetOpenedList`] = null;
+      G[`${parentId}ToggleGreyCheckPLayingPlaylist`] = null;
     };
   }, [toggle, opendedList, playingPlaylist]);
 
@@ -141,31 +140,32 @@ const PlaylistList = ({
           <p>{isLayers ? t("noLayersToShow") : t("noPlaylistsToShow")}</p>
         )}
         {playLists
-          .filter((pl) => (!playingPlaylist ? true : pl.id === playingPlaylist))
-          .map(
-            (
-              {
-                shareProfileName,
-                access,
-                name: playlistName,
-                list,
-                id,
-                nesting,
-                toggleRender,
-                description,
-                readingPlanEnabled,
-                dateFormat,
-                attachment,
-                checklistEnabled,
-                color,
-                icon,
-                isCustomColor,
-                isCustomIcon,
-                selectedTags,
-                isLayers,
-              },
-              index
-            ) => (
+          .filter((pl: any) =>
+            !playingPlaylist ? true : pl.id === playingPlaylist
+          )
+          .map((playlist: any, index: number) => {
+            const {
+              shareProfileName,
+              access,
+              name: playlistName,
+              list,
+              id,
+              nesting,
+              toggleRender,
+              description,
+              readingPlanEnabled,
+              dateFormat,
+              attachment,
+              checklistEnabled,
+              color,
+              icon,
+              isCustomColor,
+              isCustomIcon,
+              selectedTags,
+              isLayers,
+            } = playlist;
+
+            return (
               <PlaylistRowItem
                 selectPlaylist={selectPlaylist}
                 shareProfileName={shareProfileName}
@@ -201,8 +201,8 @@ const PlaylistList = ({
                 isCustomColor={isCustomColor}
                 description={description}
               />
-            )
-          )}
+            );
+          })}
       </div>
     </>
   );

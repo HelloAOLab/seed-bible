@@ -1,86 +1,98 @@
 // type =  book/section/testament
 // content = Name
-// additionalInfo = rank, sectionRank, testamentRank  
+// additionalInfo = rank, sectionRank, testamentRank
 // number -> Index of chpater / verse / book
 
-const { useState, useLayoutEffect, useRef, useMemo } = os.appHooks;
-const { Button } = Components;
+const { useState, useLayoutEffect, useMemo } = os.appHooks;
+const G = globalThis as any;
+const { Button } = G.Components;
 
-const History = ({ id }) => {
-    const [history, setHistory] = useState(globalThis?.[`${id}currentHistory`] || []);
+const History = (props: any) => {
+  const { id } = props;
+  const DragDropT = useMemo(() => G.DragDrop, []);
+  const [history, setHistory] = useState(G?.[`${id}currentHistory`] || []);
 
-    const addDataToHistory = (data) => {
-        const lastData = history[history.length - 1];
-        const isSame = objectComparator(data, lastData, ["content"]);
-        if (!isSame) {
-            setHistory(prev => {
-                const old = [...prev];
-                old.push(data);
-                return old;
-            });
-        } else {
-            // os.toast("Last item repeated!");
-        }
+  const addDataToHistory = (data: any) => {
+    const lastData = history[history.length - 1];
+    const isSame = G.objectComparator(data, lastData, ["content"]);
+    if (!isSame) {
+      setHistory((prev: any) => {
+        const old = [...prev];
+        old.push(data);
+        return old;
+      });
+    } else {
+      // os.toast("Last item repeated!");
     }
+  };
 
+  const deleteDataFromHistory = (index: any) => {
+    if (G.creatingPlaylist) return;
+    const idsMap: any = {};
+    const isArray = Array.isArray(index);
+    if (isArray) index.forEach((id) => (idsMap[id] = true));
+    setHistory((prev: any) => {
+      let old = [...prev];
+      if (isArray) {
+        old = old.filter((data) => !idsMap[data.id]);
+      } else {
+        old.splice(index, 1);
+      }
+      return old;
+    });
+  };
 
-    const deleteDataFromHistory = (index) => {
-        if (globalThis.creatingPlaylist) return;
-        const idsMap = {};
-        const isArray = Array.isArray(index);
-        if (isArray) index.forEach(id => idsMap[id] = true);
-        setHistory(prev => {
-            let old = [...prev];
-            if (isArray) {
-                old = old.filter((data) => !idsMap[data.id]);
-            } else {
-                old.splice(index, 1);
-            }
-            return old;
-        })
+  useLayoutEffect(() => {
+    G[`${id}AddDataToHistory`] = addDataToHistory;
+    G[`${id}currentHistory`] = history;
+    G.setHistoryLocale(history, id);
+    return () => {
+      G[`${id}AddDataToHistory`] = null;
+    };
+  }, [history]);
+
+  const onHanldeAddToPlaylistClick = (props: any) => {
+    const { dataItem, bulkAdd = false } = props;
+    if (G.creatingPlaylist) {
+      thisBot.tryAddDataToPlaylist({ dataItem, bulkAdd });
     }
+  };
 
-    useLayoutEffect(() => {
-        globalThis[`${id}AddDataToHistory`] = addDataToHistory;
-        globalThis[`${id}currentHistory`] = history;
-        setHistoryLocale(history, id);
-        return () => {
-            globalThis[`${id}AddDataToHistory`] = null;
-        }
-    }, [history])
+  const onClick = (params: any) => {
+    const { dataItem, bulkAdd = false } = params;
+    thisBot.navigationWithDataItem({ dataItem, bulkAdd });
+  };
 
-    const onHanldeAddToPlaylistClick = ({ dataItem, bulkAdd = false }) => {
-        if (globalThis.creatingPlaylist) {
-            thisBot.tryAddDataToPlaylist({ dataItem, bulkAdd });
-        }
-    }
-
-    const onClick = ({ dataItem, bulkAdd = false }) => {
-        thisBot.navigationWithDataItem({ dataItem, bulkAdd });
-    }
-
-
-    return <div style={{ padding: "12px" }}>
-        <style>{thisBot.tags["playlist.css"]}</style>
-        <div>
-            <div className="history">
-                {globalThis.creatingPlaylist && !!history.length && <Button
-                    style={{ fontSize: '12px', margin: '12px 0' }}
-                    onClick={() => {
-                        onHanldeAddToPlaylistClick({ dataItem: history, bulkAdd: true })
-                    }}
-
-                >Copy All History</Button>}
-                <DragDrop
-                    list={history}
-                    setList={setHistory}
-                    deleteFromList={deleteDataFromHistory}
-                    creatingPlaylist
-                    onClick={onClick}
-                    onClickItem={onHanldeAddToPlaylistClick} />
-            </div>
+  return (
+    <div style={{ padding: "12px" }}>
+      <style>{thisBot.tags["playlist.css"]}</style>
+      <div>
+        <div className="history">
+          {G.creatingPlaylist && !!history.length && (
+            <Button
+              style={{ fontSize: "12px", margin: "12px 0" }}
+              onClick={() => {
+                onHanldeAddToPlaylistClick({
+                  dataItem: history,
+                  bulkAdd: true,
+                });
+              }}
+            >
+              Copy All History
+            </Button>
+          )}
+          <DragDropT
+            list={history}
+            setList={setHistory}
+            deleteFromList={deleteDataFromHistory}
+            creatingPlaylist
+            onClick={onClick}
+            onClickItem={onHanldeAddToPlaylistClick}
+          />
         </div>
+      </div>
     </div>
-}
+  );
+};
 
-return History; 
+return History;

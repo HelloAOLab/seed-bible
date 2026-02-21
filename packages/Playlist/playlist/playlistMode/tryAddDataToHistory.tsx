@@ -1,15 +1,13 @@
-if (globalThis.HISTORYExploreMode) return;
-if (globalThis.makingPlaylist) {
+const G = globalThis as any;
+if (G.HISTORYExploreMode) return;
+if (G.makingPlaylist) {
   const dataItem = that.dataItem;
   let combineLast = that.combineLast;
 
-  if (
-    globalThis.AddAnotationUI &&
-    globalThis[`FirstAnnnotationItem`]?.additionalInfo
-  ) {
+  if (G.AddAnotationUI && G[`FirstAnnnotationItem`]?.additionalInfo) {
     if (
       dataItem.additionalInfo.chapter !=
-      globalThis[`FirstAnnnotationItem`].additionalInfo.chapter
+      G[`FirstAnnnotationItem`].additionalInfo.chapter
     ) {
       ShowNotification({
         message:
@@ -20,8 +18,8 @@ if (globalThis.makingPlaylist) {
     }
   }
 
-  if (globalThis.AddAnotationUI && globalThis.AnnotationUISingleMode) {
-    const oldItems = [...globalThis[`defaultcurrentPlaylist`]];
+  if (G.AddAnotationUI && G.AnnotationUISingleMode) {
+    const oldItems = [...G[`defaultcurrentPlaylist`]];
 
     const allVersePresent: Record<number, boolean> = {};
 
@@ -65,7 +63,7 @@ if (globalThis.makingPlaylist) {
           .filter((verse: number) => !allVersePresent[verse])
           .sort((a: number, b: number) => a - b);
         dataItem.additionalInfo.verse = filteredVerses;
-        dataItem.content = `${dataItem.additionalInfo.book} ${dataItem.additionalInfo.chapter}:${globalThis.GetVerseSummaryHeading(filteredVerses)}`;
+        dataItem.content = `${dataItem.additionalInfo.book} ${dataItem.additionalInfo.chapter}:${G.GetVerseSummaryHeading(filteredVerses)}`;
         combineLast = false;
         return filteredVerses.length === 0;
       }
@@ -131,14 +129,14 @@ if (globalThis.makingPlaylist) {
   //     })
   //     return;
   // }
-  if (!dataItem.id) dataItem.id = createUUID();
+  if (!dataItem.id) dataItem.id = G.createUUID();
   const isDelete = that.isDelete;
   if (dataItem.content === "undefined") return;
   if (!dataItem || !dataItem.type || !dataItem.content)
     return os.toast("Invalid Data format!");
 
   idsActive.forEach((id) => {
-    if (globalThis[`${id}creatingPlaylist`] || that.force) {
+    if (G[`${id}creatingPlaylist`] || that.force) {
       thisBot.tryAddDataToPlaylist({
         dataItem,
         isDelete,
@@ -147,25 +145,23 @@ if (globalThis.makingPlaylist) {
         combineLast,
       });
     } else {
-      if (globalThis[`${id}AddDataToHistory`]) {
+      if (G[`${id}AddDataToHistory`]) {
         // globalThis[`${id}AddDataToHistory`](dataItem);
       } else {
         return;
-        if (globalThis[`${id}currentHistory`]) {
+        if (G[`${id}currentHistory`]) {
           const lastData =
-            globalThis[`${id}currentHistory`][
-              globalThis[`${id}currentHistory`].length - 1
-            ];
-          const isSame = objectComparator(dataItem, lastData, ["content"]);
+            G[`${id}currentHistory`][G[`${id}currentHistory`].length - 1];
+          const isSame = G.objectComparator(dataItem, lastData, ["content"]);
           if (!isSame) {
-            globalThis[`${id}currentHistory`].push(dataItem);
+            G[`${id}currentHistory`].push(dataItem);
           } else {
             os.toast("Last item repeated!");
           }
         } else {
-          globalThis[`${id}currentHistory`] = [dataItem];
+          G[`${id}currentHistory`] = [dataItem];
         }
-        setHistoryLocale(globalThis[`${id}currentHistory`], id);
+        G.setHistoryLocale(G[`${id}currentHistory`], id);
       }
     }
   });

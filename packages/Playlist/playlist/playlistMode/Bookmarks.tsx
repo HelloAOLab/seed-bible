@@ -9,7 +9,7 @@ const UNBOOKMARK_ICON =
 
 const Bookmarks = () => {
   const [bookmarks, setBookmarks] = useState({ ...thisBot.tags.bookmarks });
-  const GetLabelT = useMemo(() => thisBot.GetLabel, []);
+  const GetLabelT = useMemo(() => G.GetLabel, []);
 
   useLayoutEffect(() => {
     G.SetBookmarks = setBookmarks;

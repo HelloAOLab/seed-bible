@@ -1,11 +1,12 @@
-const Overlay = ({
-  position,
-  onClose,
-  positionOverRide = {},
-  items,
-  styles,
-  children,
-}) => {
+const Overlay = (props: any) => {
+  const {
+    position,
+    onClose,
+    positionOverRide = {},
+    items,
+    styles,
+    children,
+  } = props;
   return (
     <>
       <div className="backdrop" onClick={() => onClose()} />

@@ -1,1 +1,1 @@
-this.defineGlobal();
+thisBot.defineGlobal();

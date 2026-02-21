@@ -25,7 +25,7 @@ declare global {
   const DataManager: {
     playSound: (options: { data: string }) => Promise<void>;
     cancelCurrentPlayingSound: () => void;
-    endVoiceRecord: () => void;
+    endVoiceRecord: (options?: { setData?: (data: string) => void }) => void;
     recordVoice: () => void;
   };
   const getPsalmsBookName: (chapter: number) => string;
@@ -37,6 +37,7 @@ declare global {
     isFindByRank?: boolean
   ) => Record<string, any>;
   const CheckMultiFuntionHold: () => boolean;
+  const EmitData: (functionName: string, data: any) => void;
 }
 
 export const G = globalThis as unknown as Record<string, any>;
