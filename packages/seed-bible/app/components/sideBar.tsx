@@ -376,7 +376,10 @@ function Tab({
     setSelectedTabs,
     tabsIcons,
   } = useTabsContext();
-
+ const removeEditMode =
+    tags?.settingsConfigs?.presets?.[
+      configBot?.tags?.settingsPreset || thisBot.tags.settingsPreset || "full"
+    ]?.appSettings?.removeEditMode;
   const OPTIONS = (tab) => ({
     type: "normal",
     items: [
@@ -389,7 +392,7 @@ function Tab({
         },
         active: TabOptions.Delete.active,
       },
-      {
+      !removeEditMode && {
         icon: <MenuIcon name="edit" />,
         title: t("editMode"),
         onClick: () => {
@@ -407,7 +410,7 @@ function Tab({
         },
         active: TabOptions.Select.active,
       },
-    ],
+    ].filter(Boolean),
   });
   const CANVASOPTIONS = {
     type: "normal",
