@@ -166,7 +166,7 @@ const ReferenceApp = (props: { reference: ReferencesInterface }) => {
     const { reference, mouseEvent } = props;
     closePopupSettings();
     await os.sleep(100);
-    const position = CalculatePopupPosition(mouseEvent, 250, 300);
+    const position = CalculatePopupPosition(mouseEvent, 250, 170);
     openPopupSettings(
       <ReferenceComponent
         reference={reference}

@@ -162,50 +162,52 @@ const ReferenceModal = (props: { reference: ReferencesInterface }) => {
           </span>
         </div>
 
-        {referenceArray.map((childReference) => {
-          if (!childReference) return null;
-          return (
-            <div class="reference-components">
-              <span
-                onClick={(e) => {
-                  handleTitleContext({ e, reference: childReference });
-                }}
-                class="reference-title"
-              >{`${tags.IdToName[childReference.book]} ${childReference.chapter}:${childReference.verse}${childReference?.endVerse ? `-${childReference.endVerse}` : ""}`}</span>
-              {rdLoading && <div class="loading-section"></div>}
-              {!rdLoading &&
-                referenceData[
-                  `${childReference.book}.${childReference.chapter}.${childReference.verse}`
-                ] && (
-                  <div class="reference-content">
-                    <span>
-                      {
-                        referenceData[
-                          `${childReference.book}.${childReference.chapter}.${childReference.verse}`
-                        ]?.content
-                      }
-                    </span>
-                  </div>
-                )}
-            </div>
-          );
-        })}
+        <div class="reference-body">
+          {referenceArray.map((childReference) => {
+            if (!childReference) return null;
+            return (
+              <div class="reference-components">
+                <span
+                  onClick={(e) => {
+                    handleTitleContext({ e, reference: childReference });
+                  }}
+                  class="reference-title"
+                >{`${tags.IdToName[childReference.book]} ${childReference.chapter}:${childReference.verse}${childReference?.endVerse ? `-${childReference.endVerse}` : ""}`}</span>
+                {rdLoading && <div class="loading-section"></div>}
+                {!rdLoading &&
+                  referenceData[
+                    `${childReference.book}.${childReference.chapter}.${childReference.verse}`
+                  ] && (
+                    <div class="reference-content">
+                      <span>
+                        {
+                          referenceData[
+                            `${childReference.book}.${childReference.chapter}.${childReference.verse}`
+                          ]?.content
+                        }
+                      </span>
+                    </div>
+                  )}
+              </div>
+            );
+          })}
 
-        {reference.references.length > 3 && (
-          <div
-            class="reference-components"
-            style="cursor: pointer; justify-content: center; align-items: center;"
-          >
-            <span
-              onClick={() => {
-                setShowMore((prev) => !prev);
-              }}
-              class="material-symbols-outlined"
+          {reference.references.length > 3 && (
+            <div
+              class="reference-components"
+              style="cursor: pointer; justify-content: center; align-items: center;"
             >
-              {showMore ? "keyboard_arrow_up" : "keyboard_arrow_down"}
-            </span>
-          </div>
-        )}
+              <span
+                onClick={() => {
+                  setShowMore((prev) => !prev);
+                }}
+                class="material-symbols-outlined"
+              >
+                {showMore ? "keyboard_arrow_up" : "keyboard_arrow_down"}
+              </span>
+            </div>
+          )}
+        </div>
       </div>
     </>
   );

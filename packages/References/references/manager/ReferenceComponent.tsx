@@ -41,7 +41,7 @@ const ReferenceComponent = (props: {
         style={{
           boxShadow: "rgba(99, 99, 99, 0.2) 0px 2px 8px 0px",
           width: "250px",
-          height: "fit-content",
+          height: "170px",
         }}
       >
         <div class="reference-components">

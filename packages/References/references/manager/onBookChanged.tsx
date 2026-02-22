@@ -1,4 +1,3 @@
-console.log(that, "on book changed");
 import type {
   ReferencesInterface,
   ReferenceInterface,
@@ -7,6 +6,10 @@ import {
   GetReferences,
   GetChapterContent,
 } from "references.manager.GetReferences";
+
+import MakeReferenceOptions from "references.manager.makeReferenceOptions";
+
+console.log("Book changed, loading references", that);
 
 const lazyLoadBookReferences = async () => {
   const { bookId, chapter } = that;
@@ -56,7 +59,7 @@ const populateReferenceData = async (reference: ReferencesInterface) => {
   const referenceArrayKey = `referenceDataObject-${reference.book}.${reference.chapter}.${reference.verse}`;
   if (referenceBot.masks?.[`${referenceArrayKey}`]) {
     console.log("reference data present in storage");
-    return;
+    return JSON.parse(referenceBot.masks[`${referenceArrayKey}`]);
   } else {
     console.log("retrieving from web");
     const referenceDataPromises = referenceArray.map((reference) => {
@@ -117,17 +120,21 @@ const populateReferenceData = async (reference: ReferencesInterface) => {
   }
 };
 
+// if (
+//   globalThis?.SetCurrentReference &&
+//   globalThis?.currentReferenceKey !==
+//     `${tags.NameToId[that.bookId]}.${that.chapter}.1`
+// ) {
+//   const reference = await GetReferences({
+//     bookId: that.bookId,
+//     chapter: that.chapter,
+//     verse: 1,
+//   });
+//   globalThis.SetCurrentReference(reference);
+// }
+
 await lazyLoadBookReferences();
 
-if (
-  globalThis?.SetCurrentReference &&
-  globalThis?.currentReferenceKey !==
-    `${tags.NameToId[that.bookId]}.${that.chapter}.1`
-) {
-  const reference = await GetReferences({
-    bookId: tags.NameToId[that.bookId],
-    chapter,
-    verse,
-  });
-  globalThis.SetCurrentReference(reference);
-}
+MakeReferenceOptions({
+  ...that,
+});

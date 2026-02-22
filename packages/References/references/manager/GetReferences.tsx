@@ -20,6 +20,9 @@ export const GetReferences = async (props: {
 
   if (referenceReq.status == 200) {
     const content = [...referenceReq.data.chapter.content];
+    if (!content || content.length == 0) {
+      console.log("No content found for this chapter", referenceReq.data);
+    }
     for (let i = 0; i < content.length; i++) {
       if (content[i].verse == verse) {
         const referenceObject: ReferencesInterface = {
