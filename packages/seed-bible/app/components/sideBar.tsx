@@ -47,6 +47,8 @@ const Reciver = getBot("system", "app.reciver");
 const { useState, useRef, useEffect, useMemo } = os.appHooks;
 
 const LOCAL_ENV = !configBot.tags.pattern;
+const settingsPreset =
+  configBot?.tags?.settingsPreset || thisBot.tags.settingsPreset || "full";
 
 const CircleCounter = ({ data, book, chapter }) => {
   const [isModalOpen, setIsModalOpen] = useState(false);
@@ -561,13 +563,13 @@ function Tab({
   };
   const circles = onlineUsers
     ? Object.fromEntries(
-      Object.entries(onlineUsers).filter(([k, v]) => {
-        // console.log('Filtering user:', k, 'v:', v, 'el.data:', el?.data);
-        return (
-          v?.bookId === el?.data?.bookId && v?.chapter === el?.data?.chapter
-        );
-      })
-    )
+        Object.entries(onlineUsers).filter(([k, v]) => {
+          // console.log('Filtering user:', k, 'v:', v, 'el.data:', el?.data);
+          return (
+            v?.bookId === el?.data?.bookId && v?.chapter === el?.data?.chapter
+          );
+        })
+      )
     : {};
   // console.log('circles result:', circles, 'for tab:', el?.data?.book, el?.data?.chapter);
   const notJoinedSharedTab = sharedTab && activeTab !== el.id;
@@ -583,17 +585,18 @@ function Tab({
       style={{
         ...(index === 0 &&
           sharedTab && {
-          "border-top": "none",
-          "border-radius": "0 0 5px 5px",
-          border: `1px solid ${info.color} !important`,
-          background: `color-mix(in srgb, ${info.color} 50%, transparent) !important`,
-          marginBottom: "5px",
-        }),
+            "border-top": "none",
+            "border-radius": "0 0 5px 5px",
+            border: `1px solid ${info.color} !important`,
+            background: `color-mix(in srgb, ${info.color} 50%, transparent) !important`,
+            marginBottom: "5px",
+          }),
       }}
       className={`
 
       ${index === 0 && sharedTab && "sharedTab"}
-      ${notJoinedSharedTab
+      ${
+        notJoinedSharedTab
           ? "tab notJoinedSharedTab"
           : activeTab === el.id && !multiSelectMode && !collapsed
             ? "activeTab"
@@ -602,7 +605,7 @@ function Tab({
               : collapsed
                 ? "collabsedTab"
                 : "tab"
-        } ${selectedTabs?.includes?.(el.id) ? "selected" : ""}`}
+      } ${selectedTabs?.includes?.(el.id) ? "selected" : ""}`}
     >
       <style>{`
         .notJoinedSharedTab {
@@ -625,7 +628,7 @@ function Tab({
                       : [...prev, el.id]
                   );
                 }}
-              // style={{ marginRight: '8px' }}
+                // style={{ marginRight: '8px' }}
               />
             )}
             {tabsIcons && (
@@ -1146,27 +1149,27 @@ function SideBar({ panelsNumber }) {
     items: [
       ...(!configBot.tags.staticInst
         ? [
-          {
-            disabled: false,
-            icon: <StartSessionIcon />,
-            title: t("startSession"),
-            onClick: () => {
-              // os.log(globalThis?.StartSession,globalThis)
-              HandleSharedTabClick();
+            {
+              disabled: false,
+              icon: <StartSessionIcon />,
+              title: t("startSession"),
+              onClick: () => {
+                // os.log(globalThis?.StartSession,globalThis)
+                HandleSharedTabClick();
+              },
             },
-          },
-          {
-            disabled: false,
-            icon: <MenuIcon name="person_add" />,
-            // icon: <TransparentSvg />,
-            title: t("inviteToSession"),
-            onClick: async () => {
-              const { QRCodeComponent } = thisBot.Chips();
-              const url = `https://ao.bot/?inst=${os.getCurrentInst()}`;
-              ShowModal(<QRCodeComponent url={url} />);
+            {
+              disabled: false,
+              icon: <MenuIcon name="person_add" />,
+              // icon: <TransparentSvg />,
+              title: t("inviteToSession"),
+              onClick: async () => {
+                const { QRCodeComponent } = thisBot.Chips();
+                const url = `https://ao.bot/?inst=${os.getCurrentInst()}`;
+                ShowModal(<QRCodeComponent url={url} />);
+              },
             },
-          },
-        ]
+          ]
         : []),
       {
         disabled: false,
@@ -1191,19 +1194,19 @@ function SideBar({ panelsNumber }) {
       },
       ...(!configBot.tags.staticInst
         ? [
-          {
-            disabled: false,
-            icon: <GoPrivateIcon />,
-            title: globalThis.IsPrivateMode?.()
-              ? t("goPublic")
-              : t("goPrivate"),
-            onClick: async () => {
-              if (globalThis.TogglePrivateMode) {
-                await globalThis.TogglePrivateMode();
-              }
+            {
+              disabled: false,
+              icon: <GoPrivateIcon />,
+              title: globalThis.IsPrivateMode?.()
+                ? t("goPublic")
+                : t("goPrivate"),
+              onClick: async () => {
+                if (globalThis.TogglePrivateMode) {
+                  await globalThis.TogglePrivateMode();
+                }
+              },
             },
-          },
-        ]
+          ]
         : []),
 
       { type: "line" },
@@ -1250,7 +1253,7 @@ function SideBar({ panelsNumber }) {
         disabled: true,
         icon: <MenuIcon name="help" />,
         title: t("help"),
-        onClick: () => { },
+        onClick: () => {},
       },
     ],
   };
@@ -1411,8 +1414,9 @@ function SideBar({ panelsNumber }) {
         className={
           collapsed
             ? "sidebar-collapsed"
-            : `sidebar-1 ${openOnMobile ? "open" : null} ${fullScreen ? "floatSidebar" : null
-            }`
+            : `sidebar-1 ${openOnMobile ? "open" : null} ${
+                fullScreen ? "floatSidebar" : null
+              }`
         }
       >
         <div
@@ -1478,7 +1482,7 @@ function SideBar({ panelsNumber }) {
                     paddingTop: customScreens?.value >= 2 ? "3px" : "0px",
                     color: "var(--selectPanelIcon, var(--text1))",
                     display: hidePanels ? "none" : "",
-                    height: '22px',
+                    height: "22px",
                   }}
                   onContextMenu={(e) => {
                     e.preventDefault();
@@ -1840,8 +1844,9 @@ export const SpaceUI = () => {
           className={
             collapsed
               ? "profileSection-collapsed"
-              : `profileSection ${openOnMobile ? "open" : ""} ${fullScreen ? "floatProfileSection" : null
-              }`
+              : `profileSection ${openOnMobile ? "open" : ""} ${
+                  fullScreen ? "floatProfileSection" : null
+                }`
           }
         >
           {!collapsed ? (
@@ -1913,7 +1918,7 @@ export const SettingsProfile = () => {
           external: (
             <CreateNewSpaceModal addSpace={addSpace} activeSpace={id} />
           ),
-          onClick: () => { },
+          onClick: () => {},
         },
         { type: "line" },
         {
@@ -1929,13 +1934,13 @@ export const SettingsProfile = () => {
           icon: <MenuIcon name="download" />,
           title: t("importSpace"),
           external: <ImportSpaceModal />,
-          onClick: () => { },
+          onClick: () => {},
         },
         { type: "line" },
         {
           icon: <MenuIcon name="share" />,
           title: t("share"),
-          onClick: () => { },
+          onClick: () => {},
         },
         {
           icon: <MenuIcon name="delete" />,
@@ -2047,42 +2052,47 @@ export const UserProfile = ({ collapsed }) => {
     configBot.id,
     userData
   );
+
   const Icon = icons[iconIndex];
   return (
     <div
-      onClick={() => {
-        if (!authBot?.id) {
-          globalThis.AccountSettingsEnteredFrom = "default";
-          setSideBarMode("createAccountSettings");
-        } else {
-          openPopupSettings({
-            type: "normal",
-            items: [
-              {
-                icon: <MenuIcon name="account_circle" />,
-                title: "View profile",
-                onClick: () => {
-                  globalThis.AccountSettingsEnteredFrom = "default";
-                  setSideBarMode("createAccountSettings");
-                },
-              },
-              {
-                icon: <MenuIcon name="logout" />,
-                title: "Sign out",
-                onClick: () => {
-                  destroy(authBot);
-                  setUserData(null);
-                },
-              },
-            ],
-          });
-        }
-      }}
+      onClick={
+        settingsPreset !== "full"
+          ? undefined
+          : () => {
+              if (!authBot?.id) {
+                globalThis.AccountSettingsEnteredFrom = "default";
+                setSideBarMode("createAccountSettings");
+              } else {
+                openPopupSettings({
+                  type: "normal",
+                  items: [
+                    {
+                      icon: <MenuIcon name="account_circle" />,
+                      title: "View profile",
+                      onClick: () => {
+                        globalThis.AccountSettingsEnteredFrom = "default";
+                        setSideBarMode("createAccountSettings");
+                      },
+                    },
+                    {
+                      icon: <MenuIcon name="logout" />,
+                      title: "Sign out",
+                      onClick: () => {
+                        destroy(authBot);
+                        setUserData(null);
+                      },
+                    },
+                  ],
+                });
+              }
+            }
+      }
       style={{ background: userData?.photoLink && "transparent" }}
       className="userProfile"
     >
       <div
-        onClick={() => { }}
+        onClick={() => {}}
         style={{
           width: 30,
           height: 30,
