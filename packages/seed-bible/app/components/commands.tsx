@@ -784,7 +784,9 @@ const ConfigurableFunctionCommands = ({ contextData, clickedVerses }) => {
 
       return (
         <span>
-          <span style={{ color: "#e67e22", fontWeight: "500" }}>{command}</span>
+          <span style={{ color: "var(--secondaryColor)", fontWeight: "500" }}>
+            {command}
+          </span>
           <span style={{ color: "#333" }}>{rest}</span>
         </span>
       );
@@ -807,7 +809,7 @@ const ConfigurableFunctionCommands = ({ contextData, clickedVerses }) => {
         style={{
           backgroundColor: "white",
           borderRadius: "8px",
-          border: "2px solid #e67e22",
+          border: "2px solid var(--secondaryColor)",
           overflow: "hidden",
           position: "relative",
         }}
@@ -878,7 +880,7 @@ const ConfigurableFunctionCommands = ({ contextData, clickedVerses }) => {
                   width: "16px",
                   height: "16px",
                   border: "2px solid #f0f0f0",
-                  borderTop: "2px solid #e67e22",
+                  borderTop: "2px solid var(--secondaryColor)",
                   borderRadius: "50%",
                   animation: "spin 1s linear infinite",
                 }}
@@ -939,7 +941,9 @@ const ConfigurableFunctionCommands = ({ contextData, clickedVerses }) => {
                 }}
                 onMouseEnter={() => setSelectedSuggestion(index)}
               >
-                <span style={{ fontWeight: "500", color: "#e67e22" }}>
+                <span
+                  style={{ fontWeight: "500", color: "var(--secondaryColor)" }}
+                >
                   {cmd}
                 </span>
                 <span style={{ color: "#999", marginLeft: "8px" }}>
@@ -1027,7 +1031,7 @@ const ConfigurableFunctionCommands = ({ contextData, clickedVerses }) => {
                 <button
                   onClick={executeCommand}
                   style={{
-                    backgroundColor: "#e67e22",
+                    backgroundColor: "var(--secondaryColor)",
                     border: "none",
                     borderRadius: "6px",
                     padding: "8px 12px",
@@ -1106,7 +1110,7 @@ const ConfigurableFunctionCommands = ({ contextData, clickedVerses }) => {
                       >
                         <span
                           style={{
-                            color: "#e67e22",
+                            color: "var(--secondaryColor)",
                             fontSize: "12px",
                             flexShrink: 0,
                           }}
@@ -1136,7 +1140,7 @@ const ConfigurableFunctionCommands = ({ contextData, clickedVerses }) => {
                       width: "16px",
                       height: "16px",
                       border: "2px solid #f0f0f0",
-                      borderTop: "2px solid #e67e22",
+                      borderTop: "2px solid var(--secondaryColor)",
                       borderRadius: "50%",
                       animation: "spin 1s linear infinite",
                     }}
@@ -1370,7 +1374,7 @@ const BiblePassageDisplay = ({ content }) => {
         .main-heading {
           font-size: 1.15em;
           font-weight: 600;
-          color: #d35400;
+          color: var(--secondaryColor);
           margin: 0rem 0 0rem 0;
           padding-bottom: 0.05rem;
           border-bottom: 1px solid #f39c12;
@@ -1381,7 +1385,7 @@ const BiblePassageDisplay = ({ content }) => {
         .secondary-heading {
           font-size: 1.05em;
           font-weight: 500;
-          color: #e67e22;
+          color: var(--secondaryColor);
           margin: 0rem 0 0.1rem 0;
           line-height: 1.1;
         }
@@ -1389,7 +1393,7 @@ const BiblePassageDisplay = ({ content }) => {
         /* Scripture quote */
         .scripture-quote {
           background: linear-gradient(135deg, #fdf6f0 0%, #fef9f5 100%);
-          border-left: 3px solid #e67e22;
+          border-left: 3px solid var(--secondaryColor);
           margin: 0rem 0;
           padding: 0.25rem 0.5rem;
           border-radius: 0 4px 4px 0;
@@ -1404,7 +1408,7 @@ const BiblePassageDisplay = ({ content }) => {
           top: -0.05rem;
           left: 0.3rem;
           font-size: 1.3em;
-          color: #e67e22;
+          color: var(--secondaryColor);
           opacity: 0.25;
           font-family: "Newsreader", "Georgia", "Times New Roman", serif;
         }
@@ -1417,7 +1421,7 @@ const BiblePassageDisplay = ({ content }) => {
           padding-left: 0.1rem;
         }
         .bullet {
-          color: #e67e22;
+          color: var(--secondaryColor);
           font-weight: bold;
           margin-right: 0rem;
           flex-shrink: 0;
@@ -1435,7 +1439,7 @@ const BiblePassageDisplay = ({ content }) => {
           padding-left: 0.1rem;
         }
         .number {
-          color: #e67e22;
+          color: var(--secondaryColor);
           font-weight: 600;
           margin-right: 0.5rem;
           flex-shrink: 0;
@@ -1453,7 +1457,7 @@ const BiblePassageDisplay = ({ content }) => {
           padding-left: 0.1rem;
         }
         .numbered-point-with-title .number {
-          color: #e67e22;
+          color: var(--secondaryColor);
           font-weight: 600;
           margin-right: 0.5rem;
           flex-shrink: 0;
