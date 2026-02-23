@@ -692,7 +692,7 @@ function Tab({
   );
 }
 
-function Folder({ folder, onlineUsers, collapsed }) {
+function Folder({ folder, onlineUsers, collapsed, setSidebarWidth, setCollapsed }) {
   const {
     setActiveTab,
     activeTab,
@@ -717,6 +717,7 @@ function Folder({ folder, onlineUsers, collapsed }) {
   function handleMouseUp() {
     if (!isDragging) return;
     moveTab(Element.data.id, folder.id);
+    setIsDragging(false);
     setTabEntered(false);
   }
   const OPTIONS = {
@@ -1620,10 +1621,12 @@ function SideBar({ panelsNumber }) {
         )}
         {folders.map((folder) => (
           <Folder
+            key={folder.id}
             onlineUsers={onlineUsers}
             folder={folder}
             collapsed={collapsed}
-            editMode={editMode}
+            setSidebarWidth={setSidebarWidth}
+            setCollapsed={setCollapsed}
           />
         ))}
         {folders.length > 0 && (
@@ -1696,9 +1699,10 @@ function SideBar({ panelsNumber }) {
                     icon: <MenuIcon name="folder" />,
                     title: `Add to ${item.name}`,
                     onClick: () => {
-                      console.log(tabs.map((e) => selectedTabs.includes(e.id)));
                       moveMultipleTabs(selectedTabs, item.id);
+                      setSelectedTabs([]);
                       setMultiSelectMode(false);
+                      closePopupSettings();
                     },
                   });
                 });
