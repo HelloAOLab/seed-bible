@@ -19,73 +19,65 @@
       "@packages/*": ["./packages/*"],
       "https://esm.helloao.org/vendor-3PZUL55I.js": ["./lib/vendor.ts"],
       "aiApps.voiceAssistant.Audio": [
-        "./packages/Assistant/aiApps/voiceAssistant/Audio.tsx"
+        "./packages/ao.bot/aiApps/voiceAssistant/Audio.tsx"
       ],
       "aiApps.voiceAssistant.ConnectionManager": [
-        "./packages/Assistant/aiApps/voiceAssistant/ConnectionManager.tsx"
+        "./packages/ao.bot/aiApps/voiceAssistant/ConnectionManager.tsx"
       ],
       "aiApps.voiceAssistant.DraggableContainer": [
-        "./packages/Assistant/aiApps/voiceAssistant/DraggableContainer.tsx"
-      ],
-      "aiApps.voiceAssistant.getTools": [
-        "./packages/Assistant/aiApps/voiceAssistant/getTools.tsx"
+        "./packages/ao.bot/aiApps/voiceAssistant/DraggableContainer.tsx"
       ],
       "aiApps.voiceAssistant.HandleEvents": [
-        "./packages/Assistant/aiApps/voiceAssistant/HandleEvents.tsx"
+        "./packages/ao.bot/aiApps/voiceAssistant/HandleEvents.tsx"
       ],
       "aiApps.voiceAssistant.HandleMessageLog": [
-        "./packages/Assistant/aiApps/voiceAssistant/HandleMessageLog.tsx"
-      ],
-      "aiApps.voiceAssistant.icons": [
-        "./packages/Assistant/aiApps/voiceAssistant/icons.tsx"
+        "./packages/ao.bot/aiApps/voiceAssistant/HandleMessageLog.tsx"
       ],
       "aiApps.voiceAssistant.ModeManager": [
-        "./packages/Assistant/aiApps/voiceAssistant/ModeManager.tsx"
-      ],
-      "aiApps.voiceAssistant.onDestroy": [
-        "./packages/Assistant/aiApps/voiceAssistant/onDestroy.tsx"
-      ],
-      "aiApps.voiceAssistant.onInstJoined": [
-        "./packages/Assistant/aiApps/voiceAssistant/onInstJoined.tsx"
+        "./packages/ao.bot/aiApps/voiceAssistant/ModeManager.tsx"
       ],
       "aiApps.voiceAssistant.Status": [
-        "./packages/Assistant/aiApps/voiceAssistant/Status.tsx"
+        "./packages/ao.bot/aiApps/voiceAssistant/Status.tsx"
       ],
       "aiApps.voiceAssistant.StreamTextAI": [
-        "./packages/Assistant/aiApps/voiceAssistant/StreamTextAI.tsx"
+        "./packages/ao.bot/aiApps/voiceAssistant/StreamTextAI.tsx"
       ],
       "aiApps.voiceAssistant.TextAI": [
-        "./packages/Assistant/aiApps/voiceAssistant/TextAI.tsx"
+        "./packages/ao.bot/aiApps/voiceAssistant/TextAI.tsx"
       ],
       "aiApps.voiceAssistant.TextAndAvatar": [
-        "./packages/Assistant/aiApps/voiceAssistant/TextAndAvatar.tsx"
-      ],
-      "aiApps.voiceAssistant.toggleVoiceAssistant": [
-        "./packages/Assistant/aiApps/voiceAssistant/toggleVoiceAssistant.tsx"
+        "./packages/ao.bot/aiApps/voiceAssistant/TextAndAvatar.tsx"
       ],
       "aiApps.voiceAssistant.UserSettings": [
-        "./packages/Assistant/aiApps/voiceAssistant/UserSettings.tsx"
+        "./packages/ao.bot/aiApps/voiceAssistant/UserSettings.tsx"
       ],
       "aiApps.voiceAssistant.Utils": [
-        "./packages/Assistant/aiApps/voiceAssistant/Utils.tsx"
+        "./packages/ao.bot/aiApps/voiceAssistant/Utils.tsx"
       ],
       "aiApps.voiceAssistant.VoiceAI": [
-        "./packages/Assistant/aiApps/voiceAssistant/VoiceAI.tsx"
+        "./packages/ao.bot/aiApps/voiceAssistant/VoiceAI.tsx"
       ],
       "aiApps.voiceAssistant.VoiceAssistant": [
-        "./packages/Assistant/aiApps/voiceAssistant/VoiceAssistant.tsx"
+        "./packages/ao.bot/aiApps/voiceAssistant/VoiceAssistant.tsx"
       ],
       "aiApps.voiceAssistant.VoiceAvatar": [
-        "./packages/Assistant/aiApps/voiceAssistant/VoiceAvatar.tsx"
+        "./packages/ao.bot/aiApps/voiceAssistant/VoiceAvatar.tsx"
       ],
-      "ao.starter.app": ["./packages/ao.bot/ao/starter/app.tsx"],
-      "ao.starter.ChatView": ["./packages/ao.bot/ao/starter/ChatView.tsx"],
-      "ao.starter.init": ["./packages/ao.bot/ao/starter/init.tsx"],
-      "ao.starter.onEggHatch": ["./packages/ao.bot/ao/starter/onEggHatch.tsx"],
-      "ao.starter.onInstJoined": [
-        "./packages/ao.bot/ao/starter/onInstJoined.tsx"
+      "aiApps.voiceAssistant.getTools": [
+        "./packages/ao.bot/aiApps/voiceAssistant/getTools.tsx"
       ],
-      "ao.starter.tools": ["./packages/ao.bot/ao/starter/tools.tsx"],
+      "aiApps.voiceAssistant.icons": [
+        "./packages/ao.bot/aiApps/voiceAssistant/icons.tsx"
+      ],
+      "aiApps.voiceAssistant.onDestroy": [
+        "./packages/ao.bot/aiApps/voiceAssistant/onDestroy.tsx"
+      ],
+      "aiApps.voiceAssistant.onInstJoined": [
+        "./packages/ao.bot/aiApps/voiceAssistant/onInstJoined.tsx"
+      ],
+      "aiApps.voiceAssistant.toggleVoiceAssistant": [
+        "./packages/ao.bot/aiApps/voiceAssistant/toggleVoiceAssistant.tsx"
+      ],
       "bibleStack.main.App": ["./packages/Bible Stack/bibleStack/main/App.tsx"],
       "bibleStack.main.ArePiecesOnSameStack": [
         "./packages/Bible Stack/bibleStack/main/ArePiecesOnSameStack.tsx"
@@ -228,20 +220,11 @@
       "bibleStack.main.OnBibleVizUtilsInitialized": [
         "./packages/Bible Stack/bibleStack/main/OnBibleVizUtilsInitialized.tsx"
       ],
-      "bibleStack.main.onBotChanged": [
-        "./packages/Bible Stack/bibleStack/main/onBotChanged.tsx"
-      ],
       "bibleStack.main.OnCameraRotationChanged": [
         "./packages/Bible Stack/bibleStack/main/OnCameraRotationChanged.tsx"
       ],
       "bibleStack.main.OnColorLerperInitialized": [
         "./packages/Bible Stack/bibleStack/main/OnColorLerperInitialized.tsx"
-      ],
-      "bibleStack.main.onDestroy": [
-        "./packages/Bible Stack/bibleStack/main/onDestroy.tsx"
-      ],
-      "bibleStack.main.onEggHatch": [
-        "./packages/Bible Stack/bibleStack/main/onEggHatch.tsx"
       ],
       "bibleStack.main.OnEnterHistoryMode": [
         "./packages/Bible Stack/bibleStack/main/OnEnterHistoryMode.tsx"
@@ -249,20 +232,11 @@
       "bibleStack.main.OnExitHistoryMode": [
         "./packages/Bible Stack/bibleStack/main/OnExitHistoryMode.tsx"
       ],
-      "bibleStack.main.onFloatingAppRemoved": [
-        "./packages/Bible Stack/bibleStack/main/onFloatingAppRemoved.tsx"
-      ],
-      "bibleStack.main.onGridUp": [
-        "./packages/Bible Stack/bibleStack/main/onGridUp.tsx"
-      ],
       "bibleStack.main.OnHistoryUpdated": [
         "./packages/Bible Stack/bibleStack/main/OnHistoryUpdated.tsx"
       ],
       "bibleStack.main.OnInitialBibleOpenAnimationCompleted": [
         "./packages/Bible Stack/bibleStack/main/OnInitialBibleOpenAnimationCompleted.tsx"
-      ],
-      "bibleStack.main.onInstJoined": [
-        "./packages/Bible Stack/bibleStack/main/onInstJoined.tsx"
       ],
       "bibleStack.main.OnNewBibleStackCreated": [
         "./packages/Bible Stack/bibleStack/main/OnNewBibleStackCreated.tsx"
@@ -528,17 +502,35 @@
       "bibleStack.main.UpdateStackPiecesUsersColor": [
         "./packages/Bible Stack/bibleStack/main/UpdateStackPiecesUsersColor.tsx"
       ],
-      "bibleStack.main.UpdateStacks": [
-        "./packages/Bible Stack/bibleStack/main/UpdateStacks.tsx"
-      ],
       "bibleStack.main.UpdateStackTabsVisualization": [
         "./packages/Bible Stack/bibleStack/main/UpdateStackTabsVisualization.tsx"
+      ],
+      "bibleStack.main.UpdateStacks": [
+        "./packages/Bible Stack/bibleStack/main/UpdateStacks.tsx"
       ],
       "bibleStack.main.UpdateTestamentStack": [
         "./packages/Bible Stack/bibleStack/main/UpdateTestamentStack.tsx"
       ],
       "bibleStack.main.UserPresenceUpdate": [
         "./packages/Bible Stack/bibleStack/main/UserPresenceUpdate.tsx"
+      ],
+      "bibleStack.main.onBotChanged": [
+        "./packages/Bible Stack/bibleStack/main/onBotChanged.tsx"
+      ],
+      "bibleStack.main.onDestroy": [
+        "./packages/Bible Stack/bibleStack/main/onDestroy.tsx"
+      ],
+      "bibleStack.main.onEggHatch": [
+        "./packages/Bible Stack/bibleStack/main/onEggHatch.tsx"
+      ],
+      "bibleStack.main.onFloatingAppRemoved": [
+        "./packages/Bible Stack/bibleStack/main/onFloatingAppRemoved.tsx"
+      ],
+      "bibleStack.main.onGridUp": [
+        "./packages/Bible Stack/bibleStack/main/onGridUp.tsx"
+      ],
+      "bibleStack.main.onInstJoined": [
+        "./packages/Bible Stack/bibleStack/main/onInstJoined.tsx"
       ],
       "bibleStack.prefabs.bibleTransformer.CloseBible": [
         "./packages/Bible Stack/bibleStack/prefabs/bibleTransformer/CloseBible.tsx"
@@ -557,9 +549,6 @@
       ],
       "bibleStack.prefabs.bibleTransformer.DisplaySpinAnimation": [
         "./packages/Bible Stack/bibleStack/prefabs/bibleTransformer/DisplaySpinAnimation.tsx"
-      ],
-      "bibleStack.prefabs.bibleTransformer.onBotChanged": [
-        "./packages/Bible Stack/bibleStack/prefabs/bibleTransformer/onBotChanged.tsx"
       ],
       "bibleStack.prefabs.bibleTransformer.OnLabelInteracted": [
         "./packages/Bible Stack/bibleStack/prefabs/bibleTransformer/OnLabelInteracted.tsx"
@@ -581,6 +570,9 @@
       ],
       "bibleStack.prefabs.bibleTransformer.ShowBibleInteractDialog": [
         "./packages/Bible Stack/bibleStack/prefabs/bibleTransformer/ShowBibleInteractDialog.tsx"
+      ],
+      "bibleStack.prefabs.bibleTransformer.onBotChanged": [
+        "./packages/Bible Stack/bibleStack/prefabs/bibleTransformer/onBotChanged.tsx"
       ],
       "bibleStack.prefabs.book.AnimateToDesiredPosition": [
         "./packages/Bible Stack/bibleStack/prefabs/book/AnimateToDesiredPosition.tsx"
@@ -606,23 +598,8 @@
       "bibleStack.prefabs.book.IncreaseHighlight": [
         "./packages/Bible Stack/bibleStack/prefabs/book/IncreaseHighlight.tsx"
       ],
-      "bibleStack.prefabs.book.onBotChanged": [
-        "./packages/Bible Stack/bibleStack/prefabs/book/onBotChanged.tsx"
-      ],
       "bibleStack.prefabs.book.OnCameraRotationChanged": [
         "./packages/Bible Stack/bibleStack/prefabs/book/OnCameraRotationChanged.tsx"
-      ],
-      "bibleStack.prefabs.book.onClick": [
-        "./packages/Bible Stack/bibleStack/prefabs/book/onClick.tsx"
-      ],
-      "bibleStack.prefabs.book.onDrag": [
-        "./packages/Bible Stack/bibleStack/prefabs/book/onDrag.tsx"
-      ],
-      "bibleStack.prefabs.book.onDragging": [
-        "./packages/Bible Stack/bibleStack/prefabs/book/onDragging.tsx"
-      ],
-      "bibleStack.prefabs.book.onDrop": [
-        "./packages/Bible Stack/bibleStack/prefabs/book/onDrop.tsx"
       ],
       "bibleStack.prefabs.book.OnHighlightToolDisabled": [
         "./packages/Bible Stack/bibleStack/prefabs/book/OnHighlightToolDisabled.tsx"
@@ -632,15 +609,6 @@
       ],
       "bibleStack.prefabs.book.OnLabelInteracted": [
         "./packages/Bible Stack/bibleStack/prefabs/book/OnLabelInteracted.tsx"
-      ],
-      "bibleStack.prefabs.book.onPointerEnter": [
-        "./packages/Bible Stack/bibleStack/prefabs/book/onPointerEnter.tsx"
-      ],
-      "bibleStack.prefabs.book.onPointerExit": [
-        "./packages/Bible Stack/bibleStack/prefabs/book/onPointerExit.tsx"
-      ],
-      "bibleStack.prefabs.book.onPointerUp": [
-        "./packages/Bible Stack/bibleStack/prefabs/book/onPointerUp.tsx"
       ],
       "bibleStack.prefabs.book.OnReleased": [
         "./packages/Bible Stack/bibleStack/prefabs/book/OnReleased.tsx"
@@ -678,6 +646,30 @@
       "bibleStack.prefabs.book.Unhighlight": [
         "./packages/Bible Stack/bibleStack/prefabs/book/Unhighlight.tsx"
       ],
+      "bibleStack.prefabs.book.onBotChanged": [
+        "./packages/Bible Stack/bibleStack/prefabs/book/onBotChanged.tsx"
+      ],
+      "bibleStack.prefabs.book.onClick": [
+        "./packages/Bible Stack/bibleStack/prefabs/book/onClick.tsx"
+      ],
+      "bibleStack.prefabs.book.onDrag": [
+        "./packages/Bible Stack/bibleStack/prefabs/book/onDrag.tsx"
+      ],
+      "bibleStack.prefabs.book.onDragging": [
+        "./packages/Bible Stack/bibleStack/prefabs/book/onDragging.tsx"
+      ],
+      "bibleStack.prefabs.book.onDrop": [
+        "./packages/Bible Stack/bibleStack/prefabs/book/onDrop.tsx"
+      ],
+      "bibleStack.prefabs.book.onPointerEnter": [
+        "./packages/Bible Stack/bibleStack/prefabs/book/onPointerEnter.tsx"
+      ],
+      "bibleStack.prefabs.book.onPointerExit": [
+        "./packages/Bible Stack/bibleStack/prefabs/book/onPointerExit.tsx"
+      ],
+      "bibleStack.prefabs.book.onPointerUp": [
+        "./packages/Bible Stack/bibleStack/prefabs/book/onPointerUp.tsx"
+      ],
       "bibleStack.prefabs.chapter.Deselect": [
         "./packages/Bible Stack/bibleStack/prefabs/chapter/Deselect.tsx"
       ],
@@ -687,32 +679,11 @@
       "bibleStack.prefabs.chapter.Highlight": [
         "./packages/Bible Stack/bibleStack/prefabs/chapter/Highlight.tsx"
       ],
-      "bibleStack.prefabs.chapter.onBotChanged": [
-        "./packages/Bible Stack/bibleStack/prefabs/chapter/onBotChanged.tsx"
-      ],
-      "bibleStack.prefabs.chapter.onClick": [
-        "./packages/Bible Stack/bibleStack/prefabs/chapter/onClick.tsx"
-      ],
-      "bibleStack.prefabs.chapter.onDrag": [
-        "./packages/Bible Stack/bibleStack/prefabs/chapter/onDrag.tsx"
-      ],
-      "bibleStack.prefabs.chapter.onDragging": [
-        "./packages/Bible Stack/bibleStack/prefabs/chapter/onDragging.tsx"
-      ],
-      "bibleStack.prefabs.chapter.onDrop": [
-        "./packages/Bible Stack/bibleStack/prefabs/chapter/onDrop.tsx"
-      ],
       "bibleStack.prefabs.chapter.OnHighlightToolDisabled": [
         "./packages/Bible Stack/bibleStack/prefabs/chapter/OnHighlightToolDisabled.tsx"
       ],
       "bibleStack.prefabs.chapter.OnHighlightToolEnabled": [
         "./packages/Bible Stack/bibleStack/prefabs/chapter/OnHighlightToolEnabled.tsx"
-      ],
-      "bibleStack.prefabs.chapter.onPointerEnter": [
-        "./packages/Bible Stack/bibleStack/prefabs/chapter/onPointerEnter.tsx"
-      ],
-      "bibleStack.prefabs.chapter.onPointerExit": [
-        "./packages/Bible Stack/bibleStack/prefabs/chapter/onPointerExit.tsx"
       ],
       "bibleStack.prefabs.chapter.OnReleased": [
         "./packages/Bible Stack/bibleStack/prefabs/chapter/OnReleased.tsx"
@@ -732,32 +703,38 @@
       "bibleStack.prefabs.chapter.Unhighlight": [
         "./packages/Bible Stack/bibleStack/prefabs/chapter/Unhighlight.tsx"
       ],
+      "bibleStack.prefabs.chapter.onBotChanged": [
+        "./packages/Bible Stack/bibleStack/prefabs/chapter/onBotChanged.tsx"
+      ],
+      "bibleStack.prefabs.chapter.onClick": [
+        "./packages/Bible Stack/bibleStack/prefabs/chapter/onClick.tsx"
+      ],
+      "bibleStack.prefabs.chapter.onDrag": [
+        "./packages/Bible Stack/bibleStack/prefabs/chapter/onDrag.tsx"
+      ],
+      "bibleStack.prefabs.chapter.onDragging": [
+        "./packages/Bible Stack/bibleStack/prefabs/chapter/onDragging.tsx"
+      ],
+      "bibleStack.prefabs.chapter.onDrop": [
+        "./packages/Bible Stack/bibleStack/prefabs/chapter/onDrop.tsx"
+      ],
+      "bibleStack.prefabs.chapter.onPointerEnter": [
+        "./packages/Bible Stack/bibleStack/prefabs/chapter/onPointerEnter.tsx"
+      ],
+      "bibleStack.prefabs.chapter.onPointerExit": [
+        "./packages/Bible Stack/bibleStack/prefabs/chapter/onPointerExit.tsx"
+      ],
       "bibleStack.prefabs.chunkOfVerses.Hide": [
         "./packages/Bible Stack/bibleStack/prefabs/chunkOfVerses/Hide.tsx"
       ],
       "bibleStack.prefabs.chunkOfVerses.Highlight": [
         "./packages/Bible Stack/bibleStack/prefabs/chunkOfVerses/Highlight.tsx"
       ],
-      "bibleStack.prefabs.chunkOfVerses.onClick": [
-        "./packages/Bible Stack/bibleStack/prefabs/chunkOfVerses/onClick.tsx"
-      ],
-      "bibleStack.prefabs.chunkOfVerses.onDrag": [
-        "./packages/Bible Stack/bibleStack/prefabs/chunkOfVerses/onDrag.tsx"
-      ],
-      "bibleStack.prefabs.chunkOfVerses.onDrop": [
-        "./packages/Bible Stack/bibleStack/prefabs/chunkOfVerses/onDrop.tsx"
-      ],
       "bibleStack.prefabs.chunkOfVerses.OnHighlightToolDisabled": [
         "./packages/Bible Stack/bibleStack/prefabs/chunkOfVerses/OnHighlightToolDisabled.tsx"
       ],
       "bibleStack.prefabs.chunkOfVerses.OnHighlightToolEnabled": [
         "./packages/Bible Stack/bibleStack/prefabs/chunkOfVerses/OnHighlightToolEnabled.tsx"
-      ],
-      "bibleStack.prefabs.chunkOfVerses.onPointerEnter": [
-        "./packages/Bible Stack/bibleStack/prefabs/chunkOfVerses/onPointerEnter.tsx"
-      ],
-      "bibleStack.prefabs.chunkOfVerses.onPointerExit": [
-        "./packages/Bible Stack/bibleStack/prefabs/chunkOfVerses/onPointerExit.tsx"
       ],
       "bibleStack.prefabs.chunkOfVerses.Select": [
         "./packages/Bible Stack/bibleStack/prefabs/chunkOfVerses/Select.tsx"
@@ -771,11 +748,23 @@
       "bibleStack.prefabs.chunkOfVerses.Unhighlight": [
         "./packages/Bible Stack/bibleStack/prefabs/chunkOfVerses/Unhighlight.tsx"
       ],
+      "bibleStack.prefabs.chunkOfVerses.onClick": [
+        "./packages/Bible Stack/bibleStack/prefabs/chunkOfVerses/onClick.tsx"
+      ],
+      "bibleStack.prefabs.chunkOfVerses.onDrag": [
+        "./packages/Bible Stack/bibleStack/prefabs/chunkOfVerses/onDrag.tsx"
+      ],
+      "bibleStack.prefabs.chunkOfVerses.onDrop": [
+        "./packages/Bible Stack/bibleStack/prefabs/chunkOfVerses/onDrop.tsx"
+      ],
+      "bibleStack.prefabs.chunkOfVerses.onPointerEnter": [
+        "./packages/Bible Stack/bibleStack/prefabs/chunkOfVerses/onPointerEnter.tsx"
+      ],
+      "bibleStack.prefabs.chunkOfVerses.onPointerExit": [
+        "./packages/Bible Stack/bibleStack/prefabs/chunkOfVerses/onPointerExit.tsx"
+      ],
       "bibleStack.prefabs.cover.OnCameraRotationChanged": [
         "./packages/Bible Stack/bibleStack/prefabs/cover/OnCameraRotationChanged.tsx"
-      ],
-      "bibleStack.prefabs.cover.onClick": [
-        "./packages/Bible Stack/bibleStack/prefabs/cover/onClick.tsx"
       ],
       "bibleStack.prefabs.cover.OnReleased": [
         "./packages/Bible Stack/bibleStack/prefabs/cover/OnReleased.tsx"
@@ -786,11 +775,8 @@
       "bibleStack.prefabs.cover.SetOpacity": [
         "./packages/Bible Stack/bibleStack/prefabs/cover/SetOpacity.tsx"
       ],
-      "bibleStack.prefabs.crossLine.onPointerDown": [
-        "./packages/Bible Stack/bibleStack/prefabs/crossLine/onPointerDown.tsx"
-      ],
-      "bibleStack.prefabs.crossLine.onPointerUp": [
-        "./packages/Bible Stack/bibleStack/prefabs/crossLine/onPointerUp.tsx"
+      "bibleStack.prefabs.cover.onClick": [
+        "./packages/Bible Stack/bibleStack/prefabs/cover/onClick.tsx"
       ],
       "bibleStack.prefabs.crossLine.OnReleased": [
         "./packages/Bible Stack/bibleStack/prefabs/crossLine/OnReleased.tsx"
@@ -798,32 +784,20 @@
       "bibleStack.prefabs.crossLine.OnSpawned": [
         "./packages/Bible Stack/bibleStack/prefabs/crossLine/OnSpawned.tsx"
       ],
+      "bibleStack.prefabs.crossLine.onPointerDown": [
+        "./packages/Bible Stack/bibleStack/prefabs/crossLine/onPointerDown.tsx"
+      ],
+      "bibleStack.prefabs.crossLine.onPointerUp": [
+        "./packages/Bible Stack/bibleStack/prefabs/crossLine/onPointerUp.tsx"
+      ],
       "bibleStack.prefabs.section.ChangeColor": [
         "./packages/Bible Stack/bibleStack/prefabs/section/ChangeColor.tsx"
       ],
       "bibleStack.prefabs.section.Highlight": [
         "./packages/Bible Stack/bibleStack/prefabs/section/Highlight.tsx"
       ],
-      "bibleStack.prefabs.section.onBotChanged": [
-        "./packages/Bible Stack/bibleStack/prefabs/section/onBotChanged.tsx"
-      ],
       "bibleStack.prefabs.section.OnCameraRotationChanged": [
         "./packages/Bible Stack/bibleStack/prefabs/section/OnCameraRotationChanged.tsx"
-      ],
-      "bibleStack.prefabs.section.onClick": [
-        "./packages/Bible Stack/bibleStack/prefabs/section/onClick.tsx"
-      ],
-      "bibleStack.prefabs.section.onCreate": [
-        "./packages/Bible Stack/bibleStack/prefabs/section/onCreate.tsx"
-      ],
-      "bibleStack.prefabs.section.onDrag": [
-        "./packages/Bible Stack/bibleStack/prefabs/section/onDrag.tsx"
-      ],
-      "bibleStack.prefabs.section.onDragging": [
-        "./packages/Bible Stack/bibleStack/prefabs/section/onDragging.tsx"
-      ],
-      "bibleStack.prefabs.section.onDrop": [
-        "./packages/Bible Stack/bibleStack/prefabs/section/onDrop.tsx"
       ],
       "bibleStack.prefabs.section.OnHighlightToolDisabled": [
         "./packages/Bible Stack/bibleStack/prefabs/section/OnHighlightToolDisabled.tsx"
@@ -833,15 +807,6 @@
       ],
       "bibleStack.prefabs.section.OnLabelInteracted": [
         "./packages/Bible Stack/bibleStack/prefabs/section/OnLabelInteracted.tsx"
-      ],
-      "bibleStack.prefabs.section.onPointerEnter": [
-        "./packages/Bible Stack/bibleStack/prefabs/section/onPointerEnter.tsx"
-      ],
-      "bibleStack.prefabs.section.onPointerExit": [
-        "./packages/Bible Stack/bibleStack/prefabs/section/onPointerExit.tsx"
-      ],
-      "bibleStack.prefabs.section.onPointerUp": [
-        "./packages/Bible Stack/bibleStack/prefabs/section/onPointerUp.tsx"
       ],
       "bibleStack.prefabs.section.OnReleased": [
         "./packages/Bible Stack/bibleStack/prefabs/section/OnReleased.tsx"
@@ -873,8 +838,32 @@
       "bibleStack.prefabs.section.Unhighlight": [
         "./packages/Bible Stack/bibleStack/prefabs/section/Unhighlight.tsx"
       ],
-      "bibleStack.prefabs.sectionShadow.onBotChanged": [
-        "./packages/Bible Stack/bibleStack/prefabs/sectionShadow/onBotChanged.tsx"
+      "bibleStack.prefabs.section.onBotChanged": [
+        "./packages/Bible Stack/bibleStack/prefabs/section/onBotChanged.tsx"
+      ],
+      "bibleStack.prefabs.section.onClick": [
+        "./packages/Bible Stack/bibleStack/prefabs/section/onClick.tsx"
+      ],
+      "bibleStack.prefabs.section.onCreate": [
+        "./packages/Bible Stack/bibleStack/prefabs/section/onCreate.tsx"
+      ],
+      "bibleStack.prefabs.section.onDrag": [
+        "./packages/Bible Stack/bibleStack/prefabs/section/onDrag.tsx"
+      ],
+      "bibleStack.prefabs.section.onDragging": [
+        "./packages/Bible Stack/bibleStack/prefabs/section/onDragging.tsx"
+      ],
+      "bibleStack.prefabs.section.onDrop": [
+        "./packages/Bible Stack/bibleStack/prefabs/section/onDrop.tsx"
+      ],
+      "bibleStack.prefabs.section.onPointerEnter": [
+        "./packages/Bible Stack/bibleStack/prefabs/section/onPointerEnter.tsx"
+      ],
+      "bibleStack.prefabs.section.onPointerExit": [
+        "./packages/Bible Stack/bibleStack/prefabs/section/onPointerExit.tsx"
+      ],
+      "bibleStack.prefabs.section.onPointerUp": [
+        "./packages/Bible Stack/bibleStack/prefabs/section/onPointerUp.tsx"
       ],
       "bibleStack.prefabs.sectionShadow.OnLabelInteracted": [
         "./packages/Bible Stack/bibleStack/prefabs/sectionShadow/OnLabelInteracted.tsx"
@@ -885,6 +874,9 @@
       "bibleStack.prefabs.sectionShadow.OnSpawned": [
         "./packages/Bible Stack/bibleStack/prefabs/sectionShadow/OnSpawned.tsx"
       ],
+      "bibleStack.prefabs.sectionShadow.onBotChanged": [
+        "./packages/Bible Stack/bibleStack/prefabs/sectionShadow/onBotChanged.tsx"
+      ],
       "bibleStack.prefabs.shadow.OnReleased": [
         "./packages/Bible Stack/bibleStack/prefabs/shadow/OnReleased.tsx"
       ],
@@ -894,23 +886,8 @@
       "bibleStack.prefabs.testament.Highlight": [
         "./packages/Bible Stack/bibleStack/prefabs/testament/Highlight.tsx"
       ],
-      "bibleStack.prefabs.testament.onBotChanged": [
-        "./packages/Bible Stack/bibleStack/prefabs/testament/onBotChanged.tsx"
-      ],
       "bibleStack.prefabs.testament.OnCameraRotationChanged": [
         "./packages/Bible Stack/bibleStack/prefabs/testament/OnCameraRotationChanged.tsx"
-      ],
-      "bibleStack.prefabs.testament.onClick": [
-        "./packages/Bible Stack/bibleStack/prefabs/testament/onClick.tsx"
-      ],
-      "bibleStack.prefabs.testament.onDrag": [
-        "./packages/Bible Stack/bibleStack/prefabs/testament/onDrag.tsx"
-      ],
-      "bibleStack.prefabs.testament.onDragging": [
-        "./packages/Bible Stack/bibleStack/prefabs/testament/onDragging.tsx"
-      ],
-      "bibleStack.prefabs.testament.onDrop": [
-        "./packages/Bible Stack/bibleStack/prefabs/testament/onDrop.tsx"
       ],
       "bibleStack.prefabs.testament.OnHighlightToolDisabled": [
         "./packages/Bible Stack/bibleStack/prefabs/testament/OnHighlightToolDisabled.tsx"
@@ -920,18 +897,6 @@
       ],
       "bibleStack.prefabs.testament.OnLabelInteracted": [
         "./packages/Bible Stack/bibleStack/prefabs/testament/OnLabelInteracted.tsx"
-      ],
-      "bibleStack.prefabs.testament.onPointerDown": [
-        "./packages/Bible Stack/bibleStack/prefabs/testament/onPointerDown.tsx"
-      ],
-      "bibleStack.prefabs.testament.onPointerEnter": [
-        "./packages/Bible Stack/bibleStack/prefabs/testament/onPointerEnter.tsx"
-      ],
-      "bibleStack.prefabs.testament.onPointerExit": [
-        "./packages/Bible Stack/bibleStack/prefabs/testament/onPointerExit.tsx"
-      ],
-      "bibleStack.prefabs.testament.onPointerUp": [
-        "./packages/Bible Stack/bibleStack/prefabs/testament/onPointerUp.tsx"
       ],
       "bibleStack.prefabs.testament.OnReleased": [
         "./packages/Bible Stack/bibleStack/prefabs/testament/OnReleased.tsx"
@@ -960,11 +925,35 @@
       "bibleStack.prefabs.testament.Unhighlight": [
         "./packages/Bible Stack/bibleStack/prefabs/testament/Unhighlight.tsx"
       ],
+      "bibleStack.prefabs.testament.onBotChanged": [
+        "./packages/Bible Stack/bibleStack/prefabs/testament/onBotChanged.tsx"
+      ],
+      "bibleStack.prefabs.testament.onClick": [
+        "./packages/Bible Stack/bibleStack/prefabs/testament/onClick.tsx"
+      ],
+      "bibleStack.prefabs.testament.onDrag": [
+        "./packages/Bible Stack/bibleStack/prefabs/testament/onDrag.tsx"
+      ],
+      "bibleStack.prefabs.testament.onDragging": [
+        "./packages/Bible Stack/bibleStack/prefabs/testament/onDragging.tsx"
+      ],
+      "bibleStack.prefabs.testament.onDrop": [
+        "./packages/Bible Stack/bibleStack/prefabs/testament/onDrop.tsx"
+      ],
+      "bibleStack.prefabs.testament.onPointerDown": [
+        "./packages/Bible Stack/bibleStack/prefabs/testament/onPointerDown.tsx"
+      ],
+      "bibleStack.prefabs.testament.onPointerEnter": [
+        "./packages/Bible Stack/bibleStack/prefabs/testament/onPointerEnter.tsx"
+      ],
+      "bibleStack.prefabs.testament.onPointerExit": [
+        "./packages/Bible Stack/bibleStack/prefabs/testament/onPointerExit.tsx"
+      ],
+      "bibleStack.prefabs.testament.onPointerUp": [
+        "./packages/Bible Stack/bibleStack/prefabs/testament/onPointerUp.tsx"
+      ],
       "bibleStack.prefabs.verse.Hide": [
         "./packages/Bible Stack/bibleStack/prefabs/verse/Hide.tsx"
-      ],
-      "bibleStack.prefabs.verse.onClick": [
-        "./packages/Bible Stack/bibleStack/prefabs/verse/onClick.tsx"
       ],
       "bibleStack.prefabs.verse.OnHighlightToolDisabled": [
         "./packages/Bible Stack/bibleStack/prefabs/verse/OnHighlightToolDisabled.tsx"
@@ -974,6 +963,9 @@
       ],
       "bibleStack.prefabs.verse.OnReleased": [
         "./packages/Bible Stack/bibleStack/prefabs/verse/OnReleased.tsx"
+      ],
+      "bibleStack.prefabs.verse.onClick": [
+        "./packages/Bible Stack/bibleStack/prefabs/verse/onClick.tsx"
       ],
       "bibleVizUtils.classes.AnimateTagObject": [
         "./packages/Bible Visualization Utils/bibleVizUtils/classes/AnimateTagObject.tsx"
@@ -995,9 +987,6 @@
       ],
       "bibleVizUtils.classes.LayoutChapterData": [
         "./packages/Bible Visualization Utils/bibleVizUtils/classes/LayoutChapterData.tsx"
-      ],
-      "bibleVizUtils.classes.onCreate": [
-        "./packages/Bible Visualization Utils/bibleVizUtils/classes/onCreate.tsx"
       ],
       "bibleVizUtils.classes.ParentDataIds": [
         "./packages/Bible Visualization Utils/bibleVizUtils/classes/ParentDataIds.tsx"
@@ -1038,14 +1027,14 @@
       "bibleVizUtils.classes.UnhighlightDelayInfo": [
         "./packages/Bible Visualization Utils/bibleVizUtils/classes/UnhighlightDelayInfo.tsx"
       ],
+      "bibleVizUtils.classes.onCreate": [
+        "./packages/Bible Visualization Utils/bibleVizUtils/classes/onCreate.tsx"
+      ],
       "bibleVizUtils.data.BibleVizDataRepository": [
         "./packages/Bible Visualization Utils/bibleVizUtils/data/BibleVizDataRepository.tsx"
       ],
       "bibleVizUtils.data.onCreate": [
         "./packages/Bible Visualization Utils/bibleVizUtils/data/onCreate.tsx"
-      ],
-      "bibleVizUtils.functions.ApplyFunctionToElement": [
-        "./packages/Bible Visualization Utils/bibleVizUtils/functions/ApplyFunctionToElement.tsx"
       ],
       "bibleVizUtils.functions.CapitalizeFirstLetter": [
         "./packages/Bible Visualization Utils/bibleVizUtils/functions/CapitalizeFirstLetter.tsx"
@@ -1055,9 +1044,6 @@
       ],
       "bibleVizUtils.functions.ClosestNumber": [
         "./packages/Bible Visualization Utils/bibleVizUtils/functions/ClosestNumber.tsx"
-      ],
-      "bibleVizUtils.functions.colors": [
-        "./packages/Bible Visualization Utils/bibleVizUtils/functions/colors.tsx"
       ],
       "bibleVizUtils.functions.ConvertCompletePsalmsToDivided": [
         "./packages/Bible Visualization Utils/bibleVizUtils/functions/ConvertCompletePsalmsToDivided.tsx"
@@ -1236,9 +1222,6 @@
       "bibleVizUtils.functions.HighlightBiblePiece": [
         "./packages/Bible Visualization Utils/bibleVizUtils/functions/HighlightBiblePiece.tsx"
       ],
-      "bibleVizUtils.functions.index": [
-        "./packages/Bible Visualization Utils/bibleVizUtils/functions/index.tsx"
-      ],
       "bibleVizUtils.functions.IsValueBetween": [
         "./packages/Bible Visualization Utils/bibleVizUtils/functions/IsValueBetween.tsx"
       ],
@@ -1248,18 +1231,6 @@
       "bibleVizUtils.functions.MakePortalRestrict": [
         "./packages/Bible Visualization Utils/bibleVizUtils/functions/MakePortalRestrict.tsx"
       ],
-      "bibleVizUtils.functions.math": [
-        "./packages/Bible Visualization Utils/bibleVizUtils/functions/math.tsx"
-      ],
-      "bibleVizUtils.functions.onBookOrientationChanged": [
-        "./packages/Bible Visualization Utils/bibleVizUtils/functions/onBookOrientationChanged.tsx"
-      ],
-      "bibleVizUtils.functions.onCreate": [
-        "./packages/Bible Visualization Utils/bibleVizUtils/functions/onCreate.tsx"
-      ],
-      "bibleVizUtils.functions.readingHistory": [
-        "./packages/Bible Visualization Utils/bibleVizUtils/functions/readingHistory.tsx"
-      ],
       "bibleVizUtils.functions.ReleaseLabelTransformerFromPiece": [
         "./packages/Bible Visualization Utils/bibleVizUtils/functions/ReleaseLabelTransformerFromPiece.tsx"
       ],
@@ -1268,9 +1239,6 @@
       ],
       "bibleVizUtils.functions.RotateArray": [
         "./packages/Bible Visualization Utils/bibleVizUtils/functions/RotateArray.tsx"
-      ],
-      "bibleVizUtils.functions.scripture": [
-        "./packages/Bible Visualization Utils/bibleVizUtils/functions/scripture.tsx"
       ],
       "bibleVizUtils.functions.SetArrangementIndexByName": [
         "./packages/Bible Visualization Utils/bibleVizUtils/functions/SetArrangementIndexByName.tsx"
@@ -1284,14 +1252,8 @@
       "bibleVizUtils.functions.SetUsersColorPositionOnPiece": [
         "./packages/Bible Visualization Utils/bibleVizUtils/functions/SetUsersColorPositionOnPiece.tsx"
       ],
-      "bibleVizUtils.functions.string": [
-        "./packages/Bible Visualization Utils/bibleVizUtils/functions/string.tsx"
-      ],
       "bibleVizUtils.functions.SubtractArrays": [
         "./packages/Bible Visualization Utils/bibleVizUtils/functions/SubtractArrays.tsx"
-      ],
-      "bibleVizUtils.functions.time": [
-        "./packages/Bible Visualization Utils/bibleVizUtils/functions/time.tsx"
       ],
       "bibleVizUtils.functions.TryHideActivityNotificationOnPiece": [
         "./packages/Bible Visualization Utils/bibleVizUtils/functions/TryHideActivityNotificationOnPiece.tsx"
@@ -1311,6 +1273,33 @@
       "bibleVizUtils.functions.UpdateUsersColorOnPiece": [
         "./packages/Bible Visualization Utils/bibleVizUtils/functions/UpdateUsersColorOnPiece.tsx"
       ],
+      "bibleVizUtils.functions.colors": [
+        "./packages/Bible Visualization Utils/bibleVizUtils/functions/colors.tsx"
+      ],
+      "bibleVizUtils.functions.index": [
+        "./packages/Bible Visualization Utils/bibleVizUtils/functions/index.tsx"
+      ],
+      "bibleVizUtils.functions.math": [
+        "./packages/Bible Visualization Utils/bibleVizUtils/functions/math.tsx"
+      ],
+      "bibleVizUtils.functions.onBookOrientationChanged": [
+        "./packages/Bible Visualization Utils/bibleVizUtils/functions/onBookOrientationChanged.tsx"
+      ],
+      "bibleVizUtils.functions.onCreate": [
+        "./packages/Bible Visualization Utils/bibleVizUtils/functions/onCreate.tsx"
+      ],
+      "bibleVizUtils.functions.readingHistory": [
+        "./packages/Bible Visualization Utils/bibleVizUtils/functions/readingHistory.tsx"
+      ],
+      "bibleVizUtils.functions.scripture": [
+        "./packages/Bible Visualization Utils/bibleVizUtils/functions/scripture.tsx"
+      ],
+      "bibleVizUtils.functions.string": [
+        "./packages/Bible Visualization Utils/bibleVizUtils/functions/string.tsx"
+      ],
+      "bibleVizUtils.functions.time": [
+        "./packages/Bible Visualization Utils/bibleVizUtils/functions/time.tsx"
+      ],
       "bibleVizUtils.functions.userPresence": [
         "./packages/Bible Visualization Utils/bibleVizUtils/functions/userPresence.tsx"
       ],
@@ -1320,11 +1309,17 @@
       "bibleVizUtils.main.Initialize": [
         "./packages/Bible Visualization Utils/bibleVizUtils/main/Initialize.tsx"
       ],
-      "bibleVizUtils.main.onAnyBotsAdded": [
-        "./packages/Bible Visualization Utils/bibleVizUtils/main/onAnyBotsAdded.tsx"
-      ],
       "bibleVizUtils.main.OnBibleVizBotCreated": [
         "./packages/Bible Visualization Utils/bibleVizUtils/main/OnBibleVizBotCreated.tsx"
+      ],
+      "bibleVizUtils.main.OnObjectPoolerInitialized": [
+        "./packages/Bible Visualization Utils/bibleVizUtils/main/OnObjectPoolerInitialized.tsx"
+      ],
+      "bibleVizUtils.main.OnOnlineUsersChanged": [
+        "./packages/Bible Visualization Utils/bibleVizUtils/main/OnOnlineUsersChanged.tsx"
+      ],
+      "bibleVizUtils.main.onAnyBotsAdded": [
+        "./packages/Bible Visualization Utils/bibleVizUtils/main/onAnyBotsAdded.tsx"
       ],
       "bibleVizUtils.main.onCreate": [
         "./packages/Bible Visualization Utils/bibleVizUtils/main/onCreate.tsx"
@@ -1340,12 +1335,6 @@
       ],
       "bibleVizUtils.main.onInstJoined": [
         "./packages/Bible Visualization Utils/bibleVizUtils/main/onInstJoined.tsx"
-      ],
-      "bibleVizUtils.main.OnObjectPoolerInitialized": [
-        "./packages/Bible Visualization Utils/bibleVizUtils/main/OnObjectPoolerInitialized.tsx"
-      ],
-      "bibleVizUtils.main.OnOnlineUsersChanged": [
-        "./packages/Bible Visualization Utils/bibleVizUtils/main/OnOnlineUsersChanged.tsx"
       ],
       "bibleVizUtils.main.userLogin": [
         "./packages/Bible Visualization Utils/bibleVizUtils/main/userLogin.tsx"
@@ -1368,14 +1357,14 @@
       "bibleVizUtils.prefabs.infoLabel.DisplayShakeAnimation": [
         "./packages/Bible Visualization Utils/bibleVizUtils/prefabs/infoLabel/DisplayShakeAnimation.tsx"
       ],
-      "bibleVizUtils.prefabs.infoLabel.onClick": [
-        "./packages/Bible Visualization Utils/bibleVizUtils/prefabs/infoLabel/onClick.tsx"
-      ],
       "bibleVizUtils.prefabs.infoLabel.OnReleased": [
         "./packages/Bible Visualization Utils/bibleVizUtils/prefabs/infoLabel/OnReleased.tsx"
       ],
       "bibleVizUtils.prefabs.infoLabel.OnSpawned": [
         "./packages/Bible Visualization Utils/bibleVizUtils/prefabs/infoLabel/OnSpawned.tsx"
+      ],
+      "bibleVizUtils.prefabs.infoLabel.onClick": [
+        "./packages/Bible Visualization Utils/bibleVizUtils/prefabs/infoLabel/onClick.tsx"
       ],
       "bibleVizUtils.prefabs.infoLabelDate.DisplayShakeAnimation": [
         "./packages/Bible Visualization Utils/bibleVizUtils/prefabs/infoLabelDate/DisplayShakeAnimation.tsx"
@@ -1389,14 +1378,14 @@
       "bibleVizUtils.prefabs.infoLabelTail.DisplayShakeAnimation": [
         "./packages/Bible Visualization Utils/bibleVizUtils/prefabs/infoLabelTail/DisplayShakeAnimation.tsx"
       ],
-      "bibleVizUtils.prefabs.infoLabelTail.onClick": [
-        "./packages/Bible Visualization Utils/bibleVizUtils/prefabs/infoLabelTail/onClick.tsx"
-      ],
       "bibleVizUtils.prefabs.infoLabelTail.OnReleased": [
         "./packages/Bible Visualization Utils/bibleVizUtils/prefabs/infoLabelTail/OnReleased.tsx"
       ],
       "bibleVizUtils.prefabs.infoLabelTail.OnSpawned": [
         "./packages/Bible Visualization Utils/bibleVizUtils/prefabs/infoLabelTail/OnSpawned.tsx"
+      ],
+      "bibleVizUtils.prefabs.infoLabelTail.onClick": [
+        "./packages/Bible Visualization Utils/bibleVizUtils/prefabs/infoLabelTail/onClick.tsx"
       ],
       "bibleVizUtils.prefabs.infoLabelTransformer.GetLabelElements": [
         "./packages/Bible Visualization Utils/bibleVizUtils/prefabs/infoLabelTransformer/GetLabelElements.tsx"
@@ -1446,26 +1435,35 @@
       "bibleVizUtils.services.HandleUserLoggedInDebouncer": [
         "./packages/Bible Visualization Utils/bibleVizUtils/services/HandleUserLoggedInDebouncer.tsx"
       ],
-      "bibleVizUtils.services.onCreate": [
-        "./packages/Bible Visualization Utils/bibleVizUtils/services/onCreate.tsx"
-      ],
       "bibleVizUtils.services.UpdateUserColorStoreDebouncer": [
         "./packages/Bible Visualization Utils/bibleVizUtils/services/UpdateUserColorStoreDebouncer.tsx"
       ],
       "bibleVizUtils.services.UserColorStore": [
         "./packages/Bible Visualization Utils/bibleVizUtils/services/UserColorStore.tsx"
       ],
-      "introduction.searchBar.handleGeoJsonSearch": [
-        "./packages/BookSelector/introduction/searchBar/handleGeoJsonSearch.tsx"
+      "bibleVizUtils.services.onCreate": [
+        "./packages/Bible Visualization Utils/bibleVizUtils/services/onCreate.tsx"
       ],
       "introduction.searchBar.Icons": [
         "./packages/BookSelector/introduction/searchBar/Icons.tsx"
       ],
-      "introduction.searchBar.initialize": [
-        "./packages/BookSelector/introduction/searchBar/initialize.tsx"
-      ],
       "introduction.searchBar.Interfaces": [
         "./packages/BookSelector/introduction/searchBar/Interfaces.tsx"
+      ],
+      "introduction.searchBar.OnOnlineUsersChanged": [
+        "./packages/BookSelector/introduction/searchBar/OnOnlineUsersChanged.tsx"
+      ],
+      "introduction.searchBar.SearchBar": [
+        "./packages/BookSelector/introduction/searchBar/SearchBar.tsx"
+      ],
+      "introduction.searchBar.TranslationModal": [
+        "./packages/BookSelector/introduction/searchBar/TranslationModal.tsx"
+      ],
+      "introduction.searchBar.handleGeoJsonSearch": [
+        "./packages/BookSelector/introduction/searchBar/handleGeoJsonSearch.tsx"
+      ],
+      "introduction.searchBar.initialize": [
+        "./packages/BookSelector/introduction/searchBar/initialize.tsx"
       ],
       "introduction.searchBar.onActiveTabChanged": [
         "./packages/BookSelector/introduction/searchBar/onActiveTabChanged.tsx"
@@ -1482,23 +1480,8 @@
       "introduction.searchBar.onLanguageChanged": [
         "./packages/BookSelector/introduction/searchBar/onLanguageChanged.tsx"
       ],
-      "introduction.searchBar.OnOnlineUsersChanged": [
-        "./packages/BookSelector/introduction/searchBar/OnOnlineUsersChanged.tsx"
-      ],
-      "introduction.searchBar.SearchBar": [
-        "./packages/BookSelector/introduction/searchBar/SearchBar.tsx"
-      ],
       "introduction.searchBar.togglePanel": [
         "./packages/BookSelector/introduction/searchBar/togglePanel.tsx"
-      ],
-      "introduction.searchBar.TranslationModal": [
-        "./packages/BookSelector/introduction/searchBar/TranslationModal.tsx"
-      ],
-      "ext_calendar.calendar.addReadingPlans": [
-        "./packages/Calendar/ext_calendar/calendar/addReadingPlans.tsx"
-      ],
-      "ext_calendar.calendar.buildEventTooltipContent": [
-        "./packages/Calendar/ext_calendar/calendar/buildEventTooltipContent.tsx"
       ],
       "ext_calendar.calendar.Calendar": [
         "./packages/Calendar/ext_calendar/calendar/Calendar.tsx"
@@ -1509,14 +1492,8 @@
       "ext_calendar.calendar.CalendarContext": [
         "./packages/Calendar/ext_calendar/calendar/CalendarContext.tsx"
       ],
-      "ext_calendar.calendar.calendarFunctions": [
-        "./packages/Calendar/ext_calendar/calendar/calendarFunctions.tsx"
-      ],
       "ext_calendar.calendar.CalendarTitle": [
         "./packages/Calendar/ext_calendar/calendar/CalendarTitle.tsx"
-      ],
-      "ext_calendar.calendar.customHooks": [
-        "./packages/Calendar/ext_calendar/calendar/customHooks.tsx"
       ],
       "ext_calendar.calendar.CustomModal": [
         "./packages/Calendar/ext_calendar/calendar/CustomModal.tsx"
@@ -1527,32 +1504,11 @@
       "ext_calendar.calendar.EventView": [
         "./packages/Calendar/ext_calendar/calendar/EventView.tsx"
       ],
-      "ext_calendar.calendar.getHolidays": [
-        "./packages/Calendar/ext_calendar/calendar/getHolidays.tsx"
-      ],
       "ext_calendar.calendar.GoToClanedar": [
         "./packages/Calendar/ext_calendar/calendar/GoToClanedar.tsx"
       ],
-      "ext_calendar.calendar.handleDateClick": [
-        "./packages/Calendar/ext_calendar/calendar/handleDateClick.tsx"
-      ],
-      "ext_calendar.calendar.handleDateSet": [
-        "./packages/Calendar/ext_calendar/calendar/handleDateSet.tsx"
-      ],
-      "ext_calendar.calendar.handleEventContent": [
-        "./packages/Calendar/ext_calendar/calendar/handleEventContent.tsx"
-      ],
-      "ext_calendar.calendar.handleResourceHeader": [
-        "./packages/Calendar/ext_calendar/calendar/handleResourceHeader.tsx"
-      ],
-      "ext_calendar.calendar.handleResourceLabel": [
-        "./packages/Calendar/ext_calendar/calendar/handleResourceLabel.tsx"
-      ],
       "ext_calendar.calendar.Menu": [
         "./packages/Calendar/ext_calendar/calendar/Menu.tsx"
-      ],
-      "ext_calendar.calendar.onToolbarClick1": [
-        "./packages/Calendar/ext_calendar/calendar/onToolbarClick1.tsx"
       ],
       "ext_calendar.calendar.RepeatModal": [
         "./packages/Calendar/ext_calendar/calendar/RepeatModal.tsx"
@@ -1572,11 +1528,44 @@
       "ext_calendar.calendar.Setting": [
         "./packages/Calendar/ext_calendar/calendar/Setting.tsx"
       ],
-      "ext_calendar.calendar.showEventPopup": [
-        "./packages/Calendar/ext_calendar/calendar/showEventPopup.tsx"
-      ],
       "ext_calendar.calendar.ToggleCalendarAndResources": [
         "./packages/Calendar/ext_calendar/calendar/ToggleCalendarAndResources.tsx"
+      ],
+      "ext_calendar.calendar.addReadingPlans": [
+        "./packages/Calendar/ext_calendar/calendar/addReadingPlans.tsx"
+      ],
+      "ext_calendar.calendar.buildEventTooltipContent": [
+        "./packages/Calendar/ext_calendar/calendar/buildEventTooltipContent.tsx"
+      ],
+      "ext_calendar.calendar.calendarFunctions": [
+        "./packages/Calendar/ext_calendar/calendar/calendarFunctions.tsx"
+      ],
+      "ext_calendar.calendar.customHooks": [
+        "./packages/Calendar/ext_calendar/calendar/customHooks.tsx"
+      ],
+      "ext_calendar.calendar.getHolidays": [
+        "./packages/Calendar/ext_calendar/calendar/getHolidays.tsx"
+      ],
+      "ext_calendar.calendar.handleDateClick": [
+        "./packages/Calendar/ext_calendar/calendar/handleDateClick.tsx"
+      ],
+      "ext_calendar.calendar.handleDateSet": [
+        "./packages/Calendar/ext_calendar/calendar/handleDateSet.tsx"
+      ],
+      "ext_calendar.calendar.handleEventContent": [
+        "./packages/Calendar/ext_calendar/calendar/handleEventContent.tsx"
+      ],
+      "ext_calendar.calendar.handleResourceHeader": [
+        "./packages/Calendar/ext_calendar/calendar/handleResourceHeader.tsx"
+      ],
+      "ext_calendar.calendar.handleResourceLabel": [
+        "./packages/Calendar/ext_calendar/calendar/handleResourceLabel.tsx"
+      ],
+      "ext_calendar.calendar.onToolbarClick1": [
+        "./packages/Calendar/ext_calendar/calendar/onToolbarClick1.tsx"
+      ],
+      "ext_calendar.calendar.showEventPopup": [
+        "./packages/Calendar/ext_calendar/calendar/showEventPopup.tsx"
       ],
       "managers.MapsManager.BookComponent": [
         "./packages/Calendar/managers/MapsManager/BookComponent.tsx"
@@ -1701,9 +1690,6 @@
       "managers.MapsManager.MapWrapperComponent": [
         "./packages/Calendar/managers/MapsManager/MapWrapperComponent.tsx"
       ],
-      "managers.MapsManager.onEggHatch": [
-        "./packages/Calendar/managers/MapsManager/onEggHatch.tsx"
-      ],
       "managers.MapsManager.OnEnterHistoryMode": [
         "./packages/Calendar/managers/MapsManager/OnEnterHistoryMode.tsx"
       ],
@@ -1715,12 +1701,6 @@
       ],
       "managers.MapsManager.OnHistoryUpdated": [
         "./packages/Calendar/managers/MapsManager/OnHistoryUpdated.tsx"
-      ],
-      "managers.MapsManager.onInstJoined": [
-        "./packages/Calendar/managers/MapsManager/onInstJoined.tsx"
-      ],
-      "managers.MapsManager.onKeyDown": [
-        "./packages/Calendar/managers/MapsManager/onKeyDown.tsx"
       ],
       "managers.MapsManager.OnMapBookDateLabelClicked": [
         "./packages/Calendar/managers/MapsManager/OnMapBookDateLabelClicked.tsx"
@@ -1857,6 +1837,15 @@
       "managers.MapsManager.UserPresenceUpdate": [
         "./packages/Calendar/managers/MapsManager/UserPresenceUpdate.tsx"
       ],
+      "managers.MapsManager.onEggHatch": [
+        "./packages/Calendar/managers/MapsManager/onEggHatch.tsx"
+      ],
+      "managers.MapsManager.onInstJoined": [
+        "./packages/Calendar/managers/MapsManager/onInstJoined.tsx"
+      ],
+      "managers.MapsManager.onKeyDown": [
+        "./packages/Calendar/managers/MapsManager/onKeyDown.tsx"
+      ],
       "canvas.canvasApp.CanvasApp": [
         "./packages/Canvas/canvas/canvasApp/CanvasApp.tsx"
       ],
@@ -1875,6 +1864,9 @@
       "colorLerper.main.LerpTag": [
         "./packages/Color Lerper/colorLerper/main/LerpTag.tsx"
       ],
+      "colorLerper.main.StopLerp": [
+        "./packages/Color Lerper/colorLerper/main/StopLerp.tsx"
+      ],
       "colorLerper.main.onCreate": [
         "./packages/Color Lerper/colorLerper/main/onCreate.tsx"
       ],
@@ -1886,9 +1878,6 @@
       ],
       "colorLerper.main.onInstJoined": [
         "./packages/Color Lerper/colorLerper/main/onInstJoined.tsx"
-      ],
-      "colorLerper.main.StopLerp": [
-        "./packages/Color Lerper/colorLerper/main/StopLerp.tsx"
       ],
       "ext_canvas.cursorFollow.createErase": [
         "./packages/CursorFollow/ext_canvas/cursorFollow/createErase.tsx"
@@ -1912,11 +1901,11 @@
         "./packages/CursorFollow/ext_canvas/onGridClick.tsx"
       ],
       "aiApps.painter.App": ["./packages/Draw/aiApps/painter/App.tsx"],
-      "aiApps.painter.closePainter": [
-        "./packages/Draw/aiApps/painter/closePainter.tsx"
-      ],
       "aiApps.painter.DraggableContainer": [
         "./packages/Draw/aiApps/painter/DraggableContainer.tsx"
+      ],
+      "aiApps.painter.closePainter": [
+        "./packages/Draw/aiApps/painter/closePainter.tsx"
       ],
       "aiApps.painter.interfaces": [
         "./packages/Draw/aiApps/painter/interfaces.tsx"
@@ -1964,11 +1953,20 @@
       "ext_canvas.eventTool.AquiferInterface": [
         "./packages/Events/ext_canvas/eventTool/AquiferInterface.tsx"
       ],
-      "ext_canvas.eventTool.createAnimationBots": [
-        "./packages/Events/ext_canvas/eventTool/createAnimationBots.tsx"
-      ],
       "ext_canvas.eventTool.CreateAquiferPage": [
         "./packages/Events/ext_canvas/eventTool/CreateAquiferPage.tsx"
+      ],
+      "ext_canvas.eventTool.CreateTimeLine": [
+        "./packages/Events/ext_canvas/eventTool/CreateTimeLine.tsx"
+      ],
+      "ext_canvas.eventTool.PeopleEventsOnMap": [
+        "./packages/Events/ext_canvas/eventTool/PeopleEventsOnMap.tsx"
+      ],
+      "ext_canvas.eventTool.Repository": [
+        "./packages/Events/ext_canvas/eventTool/Repository.tsx"
+      ],
+      "ext_canvas.eventTool.createAnimationBots": [
+        "./packages/Events/ext_canvas/eventTool/createAnimationBots.tsx"
       ],
       "ext_canvas.eventTool.createDataSlits": [
         "./packages/Events/ext_canvas/eventTool/createDataSlits.tsx"
@@ -1984,9 +1982,6 @@
       ],
       "ext_canvas.eventTool.createSlider": [
         "./packages/Events/ext_canvas/eventTool/createSlider.tsx"
-      ],
-      "ext_canvas.eventTool.CreateTimeLine": [
-        "./packages/Events/ext_canvas/eventTool/CreateTimeLine.tsx"
       ],
       "ext_canvas.eventTool.eventApis": [
         "./packages/Events/ext_canvas/eventTool/eventApis.tsx"
@@ -2018,17 +2013,26 @@
       "ext_canvas.eventTool.onInstJoined": [
         "./packages/Events/ext_canvas/eventTool/onInstJoined.tsx"
       ],
-      "ext_canvas.eventTool.PeopleEventsOnMap": [
-        "./packages/Events/ext_canvas/eventTool/PeopleEventsOnMap.tsx"
-      ],
       "ext_canvas.eventTool.playAnimations": [
         "./packages/Events/ext_canvas/eventTool/playAnimations.tsx"
       ],
       "ext_canvas.eventTool.removeEventBotId": [
         "./packages/Events/ext_canvas/eventTool/removeEventBotId.tsx"
       ],
-      "ext_canvas.eventTool.Repository": [
-        "./packages/Events/ext_canvas/eventTool/Repository.tsx"
+      "ext_geoImporter.importer.GeometryCollection": [
+        "./packages/GeoImporter/ext_geoImporter/importer/GeometryCollection.tsx"
+      ],
+      "ext_geoImporter.importer.LineString": [
+        "./packages/GeoImporter/ext_geoImporter/importer/LineString.tsx"
+      ],
+      "ext_geoImporter.importer.MultiLineString": [
+        "./packages/GeoImporter/ext_geoImporter/importer/MultiLineString.tsx"
+      ],
+      "ext_geoImporter.importer.Point": [
+        "./packages/GeoImporter/ext_geoImporter/importer/Point.tsx"
+      ],
+      "ext_geoImporter.importer.Polygon": [
+        "./packages/GeoImporter/ext_geoImporter/importer/Polygon.tsx"
       ],
       "ext_geoImporter.importer.closeMiniMapPortal": [
         "./packages/GeoImporter/ext_geoImporter/importer/closeMiniMapPortal.tsx"
@@ -2039,20 +2043,11 @@
       "ext_geoImporter.importer.focusOnWithCatch": [
         "./packages/GeoImporter/ext_geoImporter/importer/focusOnWithCatch.tsx"
       ],
-      "ext_geoImporter.importer.GeometryCollection": [
-        "./packages/GeoImporter/ext_geoImporter/importer/GeometryCollection.tsx"
-      ],
       "ext_geoImporter.importer.interfaces": [
         "./packages/GeoImporter/ext_geoImporter/importer/interfaces.tsx"
       ],
-      "ext_geoImporter.importer.LineString": [
-        "./packages/GeoImporter/ext_geoImporter/importer/LineString.tsx"
-      ],
       "ext_geoImporter.importer.loadMap": [
         "./packages/GeoImporter/ext_geoImporter/importer/loadMap.tsx"
-      ],
-      "ext_geoImporter.importer.MultiLineString": [
-        "./packages/GeoImporter/ext_geoImporter/importer/MultiLineString.tsx"
       ],
       "ext_geoImporter.importer.onEggHatch": [
         "./packages/GeoImporter/ext_geoImporter/importer/onEggHatch.tsx"
@@ -2062,12 +2057,6 @@
       ],
       "ext_geoImporter.importer.onInstJoined": [
         "./packages/GeoImporter/ext_geoImporter/importer/onInstJoined.tsx"
-      ],
-      "ext_geoImporter.importer.Point": [
-        "./packages/GeoImporter/ext_geoImporter/importer/Point.tsx"
-      ],
-      "ext_geoImporter.importer.Polygon": [
-        "./packages/GeoImporter/ext_geoImporter/importer/Polygon.tsx"
       ],
       "ext_canvas.highlight_locations.onBookChanged": [
         "./packages/Location/ext_canvas/highlight_locations/onBookChanged.tsx"
@@ -2084,6 +2073,9 @@
       "ext_canvas.highlight_locations.options": [
         "./packages/Location/ext_canvas/highlight_locations/options.tsx"
       ],
+      "ext_canvas.mindMap.UMCreateInitNode": [
+        "./packages/MindMap/ext_canvas/mindMap/UMCreateInitNode.tsx"
+      ],
       "ext_canvas.mindMap.addPulseColor": [
         "./packages/MindMap/ext_canvas/mindMap/addPulseColor.tsx"
       ],
@@ -2093,26 +2085,26 @@
       "ext_canvas.mindMap.createEventBots": [
         "./packages/MindMap/ext_canvas/mindMap/createEventBots.tsx"
       ],
-      "ext_canvas.mindMap.createMindmap": [
-        "./packages/MindMap/ext_canvas/mindMap/createMindmap.tsx"
-      ],
       "ext_canvas.mindMap.createMMBot": [
         "./packages/MindMap/ext_canvas/mindMap/createMMBot.tsx"
       ],
       "ext_canvas.mindMap.createMMPointer": [
         "./packages/MindMap/ext_canvas/mindMap/createMMPointer.tsx"
       ],
+      "ext_canvas.mindMap.createMindmap": [
+        "./packages/MindMap/ext_canvas/mindMap/createMindmap.tsx"
+      ],
       "ext_canvas.mindMap.createSlider": [
         "./packages/MindMap/ext_canvas/mindMap/createSlider.tsx"
+      ],
+      "ext_canvas.mindMap.createTLArrows": [
+        "./packages/MindMap/ext_canvas/mindMap/createTLArrows.tsx"
       ],
       "ext_canvas.mindMap.createTextBar": [
         "./packages/MindMap/ext_canvas/mindMap/createTextBar.tsx"
       ],
       "ext_canvas.mindMap.createTextBoxMenu": [
         "./packages/MindMap/ext_canvas/mindMap/createTextBoxMenu.tsx"
-      ],
-      "ext_canvas.mindMap.createTLArrows": [
-        "./packages/MindMap/ext_canvas/mindMap/createTLArrows.tsx"
       ],
       "ext_canvas.mindMap.deleteOnClick": [
         "./packages/MindMap/ext_canvas/mindMap/deleteOnClick.tsx"
@@ -2303,9 +2295,6 @@
       "ext_canvas.mindMap.textBoxOnDrop": [
         "./packages/MindMap/ext_canvas/mindMap/textBoxOnDrop.tsx"
       ],
-      "ext_canvas.mindMap.UMCreateInitNode": [
-        "./packages/MindMap/ext_canvas/mindMap/UMCreateInitNode.tsx"
-      ],
       "ext_canvas.mindMap.viewBot": [
         "./packages/MindMap/ext_canvas/mindMap/viewBot.tsx"
       ],
@@ -2324,18 +2313,6 @@
       "objectPooler.main.Initialize": [
         "./packages/Object Pooler/objectPooler/main/Initialize.tsx"
       ],
-      "objectPooler.main.onCreate": [
-        "./packages/Object Pooler/objectPooler/main/onCreate.tsx"
-      ],
-      "objectPooler.main.onDestroy": [
-        "./packages/Object Pooler/objectPooler/main/onDestroy.tsx"
-      ],
-      "objectPooler.main.onEggHatch": [
-        "./packages/Object Pooler/objectPooler/main/onEggHatch.tsx"
-      ],
-      "objectPooler.main.onInstJoined": [
-        "./packages/Object Pooler/objectPooler/main/onInstJoined.tsx"
-      ],
       "objectPooler.main.Pool": [
         "./packages/Object Pooler/objectPooler/main/Pool.tsm"
       ],
@@ -2347,6 +2324,18 @@
       ],
       "objectPooler.main.RemoveObjectPools": [
         "./packages/Object Pooler/objectPooler/main/RemoveObjectPools.tsx"
+      ],
+      "objectPooler.main.onCreate": [
+        "./packages/Object Pooler/objectPooler/main/onCreate.tsx"
+      ],
+      "objectPooler.main.onDestroy": [
+        "./packages/Object Pooler/objectPooler/main/onDestroy.tsx"
+      ],
+      "objectPooler.main.onEggHatch": [
+        "./packages/Object Pooler/objectPooler/main/onEggHatch.tsx"
+      ],
+      "objectPooler.main.onInstJoined": [
+        "./packages/Object Pooler/objectPooler/main/onInstJoined.tsx"
       ],
       "playlist.playlistMode.AddAnotationUI": [
         "./packages/Playlist/playlist/playlistMode/AddAnotationUI.tsx"
@@ -2372,23 +2361,8 @@
       "playlist.playlistMode.AutoTag": [
         "./packages/Playlist/playlist/playlistMode/AutoTag.tsx"
       ],
-      "playlist.playlistMode.bookDataUpdated": [
-        "./packages/Playlist/playlist/playlistMode/bookDataUpdated.tsx"
-      ],
       "playlist.playlistMode.Bookmarks": [
         "./packages/Playlist/playlist/playlistMode/Bookmarks.tsx"
-      ],
-      "playlist.playlistMode.buildPlaylistFromAI": [
-        "./packages/Playlist/playlist/playlistMode/buildPlaylistFromAI.tsx"
-      ],
-      "playlist.playlistMode.checkAndGetlinkData": [
-        "./packages/Playlist/playlist/playlistMode/checkAndGetlinkData.tsx"
-      ],
-      "playlist.playlistMode.checkGreyOut": [
-        "./packages/Playlist/playlist/playlistMode/checkGreyOut.tsx"
-      ],
-      "playlist.playlistMode.checkIfNeedToSkip": [
-        "./packages/Playlist/playlist/playlistMode/checkIfNeedToSkip.tsx"
       ],
       "playlist.playlistMode.CloseFloatingApp": [
         "./packages/Playlist/playlist/playlistMode/CloseFloatingApp.tsx"
@@ -2411,29 +2385,17 @@
       "playlist.playlistMode.CreatePlaylistUI": [
         "./packages/Playlist/playlist/playlistMode/CreatePlaylistUI.tsx"
       ],
-      "playlist.playlistMode.cursorFollow": [
-        "./packages/Playlist/playlist/playlistMode/cursorFollow.tsx"
-      ],
-      "playlist.playlistMode.cursorReset": [
-        "./packages/Playlist/playlist/playlistMode/cursorReset.tsx"
-      ],
       "playlist.playlistMode.CustomAnnotationTextEditor": [
         "./packages/Playlist/playlist/playlistMode/CustomAnnotationTextEditor.tsx"
-      ],
-      "playlist.playlistMode.defineGlobal": [
-        "./packages/Playlist/playlist/playlistMode/defineGlobal.tsx"
       ],
       "playlist.playlistMode.Discover": [
         "./packages/Playlist/playlist/playlistMode/Discover.tsx"
       ],
-      "playlist.playlistMode.displayOverlay": [
-        "./packages/Playlist/playlist/playlistMode/displayOverlay.tsx"
+      "playlist.playlistMode.DragDropWithGrouping": [
+        "./packages/Playlist/playlist/playlistMode/DragDropWithGrouping.tsx"
       ],
       "playlist.playlistMode.DragableDiv": [
         "./packages/Playlist/playlist/playlistMode/DragableDiv.tsx"
-      ],
-      "playlist.playlistMode.DragDropWithGrouping": [
-        "./packages/Playlist/playlist/playlistMode/DragDropWithGrouping.tsx"
       ],
       "playlist.playlistMode.DynamicCircle": [
         "./packages/Playlist/playlist/playlistMode/DynamicCircle.tsx"
@@ -2446,6 +2408,141 @@
       ],
       "playlist.playlistMode.FetchAnnotationContentInBg": [
         "./packages/Playlist/playlist/playlistMode/FetchAnnotationContentInBg.tsx"
+      ],
+      "playlist.playlistMode.History": [
+        "./packages/Playlist/playlist/playlistMode/History.tsx"
+      ],
+      "playlist.playlistMode.LinkingItems": [
+        "./packages/Playlist/playlist/playlistMode/LinkingItems.tsx"
+      ],
+      "playlist.playlistMode.MergeModal": [
+        "./packages/Playlist/playlist/playlistMode/MergeModal.tsx"
+      ],
+      "playlist.playlistMode.OnEditPlaylistName": [
+        "./packages/Playlist/playlist/playlistMode/OnEditPlaylistName.tsx"
+      ],
+      "playlist.playlistMode.OnSearchHit": [
+        "./packages/Playlist/playlist/playlistMode/OnSearchHit.tsx"
+      ],
+      "playlist.playlistMode.OpenSelf": [
+        "./packages/Playlist/playlist/playlistMode/OpenSelf.tsx"
+      ],
+      "playlist.playlistMode.Overlay": [
+        "./packages/Playlist/playlist/playlistMode/Overlay.tsx"
+      ],
+      "playlist.playlistMode.PlayingLayersConversion": [
+        "./packages/Playlist/playlist/playlistMode/PlayingLayersConversion.tsx"
+      ],
+      "playlist.playlistMode.Playlist": [
+        "./packages/Playlist/playlist/playlistMode/Playlist.tsx"
+      ],
+      "playlist.playlistMode.PlaylistContainer": [
+        "./packages/Playlist/playlist/playlistMode/PlaylistContainer.tsx"
+      ],
+      "playlist.playlistMode.PlaylistInfoItem": [
+        "./packages/Playlist/playlist/playlistMode/PlaylistInfoItem.tsx"
+      ],
+      "playlist.playlistMode.PlaylistLinkModal": [
+        "./packages/Playlist/playlist/playlistMode/PlaylistLinkModal.tsx"
+      ],
+      "playlist.playlistMode.PlaylistList": [
+        "./packages/Playlist/playlist/playlistMode/PlaylistList.tsx"
+      ],
+      "playlist.playlistMode.PlaylistPlayerControls": [
+        "./packages/Playlist/playlist/playlistMode/PlaylistPlayerControls.tsx"
+      ],
+      "playlist.playlistMode.PlaylistRowItem": [
+        "./packages/Playlist/playlist/playlistMode/PlaylistRowItem.tsx"
+      ],
+      "playlist.playlistMode.PlaylistUI": [
+        "./packages/Playlist/playlist/playlistMode/PlaylistUI.tsx"
+      ],
+      "playlist.playlistMode.Playlistplaying": [
+        "./packages/Playlist/playlist/playlistMode/Playlistplaying.tsx"
+      ],
+      "playlist.playlistMode.ProjectMode": [
+        "./packages/Playlist/playlist/playlistMode/ProjectMode.tsx"
+      ],
+      "playlist.playlistMode.RecordVoice": [
+        "./packages/Playlist/playlist/playlistMode/RecordVoice.tsx"
+      ],
+      "playlist.playlistMode.RegenratePlaylistWithNewCommand": [
+        "./packages/Playlist/playlist/playlistMode/RegenratePlaylistWithNewCommand.tsx"
+      ],
+      "playlist.playlistMode.RemoveScreenRecordingControls": [
+        "./packages/Playlist/playlist/playlistMode/RemoveScreenRecordingControls.tsx"
+      ],
+      "playlist.playlistMode.RenderHTMLContent": [
+        "./packages/Playlist/playlist/playlistMode/RenderHTMLContent.tsx"
+      ],
+      "playlist.playlistMode.RenderIcon": [
+        "./packages/Playlist/playlist/playlistMode/RenderIcon.tsx"
+      ],
+      "playlist.playlistMode.RenderLinkContent": [
+        "./packages/Playlist/playlist/playlistMode/RenderLinkContent.tsx"
+      ],
+      "playlist.playlistMode.SelectionOptions": [
+        "./packages/Playlist/playlist/playlistMode/SelectionOptions.tsx"
+      ],
+      "playlist.playlistMode.SetItemsPlayerPlaylist": [
+        "./packages/Playlist/playlist/playlistMode/SetItemsPlayerPlaylist.tsx"
+      ],
+      "playlist.playlistMode.ShowPersonVideoOverlay": [
+        "./packages/Playlist/playlist/playlistMode/ShowPersonVideoOverlay.tsx"
+      ],
+      "playlist.playlistMode.ShowPlayingContentAnnotation": [
+        "./packages/Playlist/playlist/playlistMode/ShowPlayingContentAnnotation.tsx"
+      ],
+      "playlist.playlistMode.ShowScreenRecordingStopButton": [
+        "./packages/Playlist/playlist/playlistMode/ShowScreenRecordingStopButton.tsx"
+      ],
+      "playlist.playlistMode.StopPlayingPlaylist": [
+        "./packages/Playlist/playlist/playlistMode/StopPlayingPlaylist.tsx"
+      ],
+      "playlist.playlistMode.Tabs": [
+        "./packages/Playlist/playlist/playlistMode/Tabs.tsx"
+      ],
+      "playlist.playlistMode.TogglePlaylistHeight": [
+        "./packages/Playlist/playlist/playlistMode/TogglePlaylistHeight.tsx"
+      ],
+      "playlist.playlistMode.VideoPlayer": [
+        "./packages/Playlist/playlist/playlistMode/VideoPlayer.tsx"
+      ],
+      "playlist.playlistMode.VideoRecordUI": [
+        "./packages/Playlist/playlist/playlistMode/VideoRecordUI.tsx"
+      ],
+      "playlist.playlistMode.VideoSmallScreen": [
+        "./packages/Playlist/playlist/playlistMode/VideoSmallScreen.tsx"
+      ],
+      "playlist.playlistMode.bookDataUpdated": [
+        "./packages/Playlist/playlist/playlistMode/bookDataUpdated.tsx"
+      ],
+      "playlist.playlistMode.buildPlaylistFromAI": [
+        "./packages/Playlist/playlist/playlistMode/buildPlaylistFromAI.tsx"
+      ],
+      "playlist.playlistMode.checkAndGetlinkData": [
+        "./packages/Playlist/playlist/playlistMode/checkAndGetlinkData.tsx"
+      ],
+      "playlist.playlistMode.checkGreyOut": [
+        "./packages/Playlist/playlist/playlistMode/checkGreyOut.tsx"
+      ],
+      "playlist.playlistMode.checkIfNeedToSkip": [
+        "./packages/Playlist/playlist/playlistMode/checkIfNeedToSkip.tsx"
+      ],
+      "playlist.playlistMode.convertAnnotationsToReadableFormat": [
+        "./packages/Playlist/playlist/playlistMode/convertAnnotationsToReadableFormat.tsx"
+      ],
+      "playlist.playlistMode.cursorFollow": [
+        "./packages/Playlist/playlist/playlistMode/cursorFollow.tsx"
+      ],
+      "playlist.playlistMode.cursorReset": [
+        "./packages/Playlist/playlist/playlistMode/cursorReset.tsx"
+      ],
+      "playlist.playlistMode.defineGlobal": [
+        "./packages/Playlist/playlist/playlistMode/defineGlobal.tsx"
+      ],
+      "playlist.playlistMode.displayOverlay": [
+        "./packages/Playlist/playlist/playlistMode/displayOverlay.tsx"
       ],
       "playlist.playlistMode.fetchAnnotationsData": [
         "./packages/Playlist/playlist/playlistMode/fetchAnnotationsData.tsx"
@@ -2477,15 +2574,6 @@
       "playlist.playlistMode.groupVerse": [
         "./packages/Playlist/playlist/playlistMode/groupVerse.tsx"
       ],
-      "playlist.playlistMode.History": [
-        "./packages/Playlist/playlist/playlistMode/History.tsx"
-      ],
-      "playlist.playlistMode.LinkingItems": [
-        "./packages/Playlist/playlist/playlistMode/LinkingItems.tsx"
-      ],
-      "playlist.playlistMode.MergeModal": [
-        "./packages/Playlist/playlist/playlistMode/MergeModal.tsx"
-      ],
       "playlist.playlistMode.navigationWithDataItem": [
         "./packages/Playlist/playlist/playlistMode/navigationWithDataItem.tsx"
       ],
@@ -2497,9 +2585,6 @@
       ],
       "playlist.playlistMode.onDuplicatePlaylists": [
         "./packages/Playlist/playlist/playlistMode/onDuplicatePlaylists.tsx"
-      ],
-      "playlist.playlistMode.OnEditPlaylistName": [
-        "./packages/Playlist/playlist/playlistMode/OnEditPlaylistName.tsx"
       ],
       "playlist.playlistMode.onEggHatch": [
         "./packages/Playlist/playlist/playlistMode/onEggHatch.tsx"
@@ -2516,62 +2601,14 @@
       "playlist.playlistMode.onKeyUp": [
         "./packages/Playlist/playlist/playlistMode/onKeyUp.tsx"
       ],
-      "playlist.playlistMode.OnSearchHit": [
-        "./packages/Playlist/playlist/playlistMode/OnSearchHit.tsx"
-      ],
       "playlist.playlistMode.onUnInstallPackage": [
         "./packages/Playlist/playlist/playlistMode/onUnInstallPackage.tsx"
-      ],
-      "playlist.playlistMode.OpenSelf": [
-        "./packages/Playlist/playlist/playlistMode/OpenSelf.tsx"
       ],
       "playlist.playlistMode.options": [
         "./packages/Playlist/playlist/playlistMode/options.tsx"
       ],
-      "playlist.playlistMode.Overlay": [
-        "./packages/Playlist/playlist/playlistMode/Overlay.tsx"
-      ],
-      "playlist.playlistMode.PlayingLayersConversion": [
-        "./packages/Playlist/playlist/playlistMode/PlayingLayersConversion.tsx"
-      ],
-      "playlist.playlistMode.Playlist": [
-        "./packages/Playlist/playlist/playlistMode/Playlist.tsx"
-      ],
-      "playlist.playlistMode.PlaylistContainer": [
-        "./packages/Playlist/playlist/playlistMode/PlaylistContainer.tsx"
-      ],
       "playlist.playlistMode.playlistContentRenderer": [
         "./packages/Playlist/playlist/playlistMode/playlistContentRenderer.tsx"
-      ],
-      "playlist.playlistMode.PlaylistInfoItem": [
-        "./packages/Playlist/playlist/playlistMode/PlaylistInfoItem.tsx"
-      ],
-      "playlist.playlistMode.PlaylistLinkModal": [
-        "./packages/Playlist/playlist/playlistMode/PlaylistLinkModal.tsx"
-      ],
-      "playlist.playlistMode.PlaylistList": [
-        "./packages/Playlist/playlist/playlistMode/PlaylistList.tsx"
-      ],
-      "playlist.playlistMode.PlaylistPlayerControls": [
-        "./packages/Playlist/playlist/playlistMode/PlaylistPlayerControls.tsx"
-      ],
-      "playlist.playlistMode.Playlistplaying": [
-        "./packages/Playlist/playlist/playlistMode/Playlistplaying.tsx"
-      ],
-      "playlist.playlistMode.PlaylistRowItem": [
-        "./packages/Playlist/playlist/playlistMode/PlaylistRowItem.tsx"
-      ],
-      "playlist.playlistMode.PlaylistUI": [
-        "./packages/Playlist/playlist/playlistMode/PlaylistUI.tsx"
-      ],
-      "playlist.playlistMode.ProjectMode": [
-        "./packages/Playlist/playlist/playlistMode/ProjectMode.tsx"
-      ],
-      "playlist.playlistMode.RecordVoice": [
-        "./packages/Playlist/playlist/playlistMode/RecordVoice.tsx"
-      ],
-      "playlist.playlistMode.RegenratePlaylistWithNewCommand": [
-        "./packages/Playlist/playlist/playlistMode/RegenratePlaylistWithNewCommand.tsx"
       ],
       "playlist.playlistMode.remotePlaylistMetaDataUpdate": [
         "./packages/Playlist/playlist/playlistMode/remotePlaylistMetaDataUpdate.tsx"
@@ -2585,18 +2622,6 @@
       "playlist.playlistMode.removeMessage": [
         "./packages/Playlist/playlist/playlistMode/removeMessage.tsx"
       ],
-      "playlist.playlistMode.RemoveScreenRecordingControls": [
-        "./packages/Playlist/playlist/playlistMode/RemoveScreenRecordingControls.tsx"
-      ],
-      "playlist.playlistMode.RenderHTMLContent": [
-        "./packages/Playlist/playlist/playlistMode/RenderHTMLContent.tsx"
-      ],
-      "playlist.playlistMode.RenderIcon": [
-        "./packages/Playlist/playlist/playlistMode/RenderIcon.tsx"
-      ],
-      "playlist.playlistMode.RenderLinkContent": [
-        "./packages/Playlist/playlist/playlistMode/RenderLinkContent.tsx"
-      ],
       "playlist.playlistMode.resetEditingState": [
         "./packages/Playlist/playlist/playlistMode/resetEditingState.tsx"
       ],
@@ -2606,38 +2631,14 @@
       "playlist.playlistMode.savePlaylists": [
         "./packages/Playlist/playlist/playlistMode/savePlaylists.tsx"
       ],
-      "playlist.playlistMode.SelectionOptions": [
-        "./packages/Playlist/playlist/playlistMode/SelectionOptions.tsx"
-      ],
-      "playlist.playlistMode.SetItemsPlayerPlaylist": [
-        "./packages/Playlist/playlist/playlistMode/SetItemsPlayerPlaylist.tsx"
-      ],
       "playlist.playlistMode.showCommandBox": [
         "./packages/Playlist/playlist/playlistMode/showCommandBox.tsx"
       ],
       "playlist.playlistMode.showInfo": [
         "./packages/Playlist/playlist/playlistMode/showInfo.tsx"
       ],
-      "playlist.playlistMode.ShowPersonVideoOverlay": [
-        "./packages/Playlist/playlist/playlistMode/ShowPersonVideoOverlay.tsx"
-      ],
-      "playlist.playlistMode.ShowPlayingContentAnnotation": [
-        "./packages/Playlist/playlist/playlistMode/ShowPlayingContentAnnotation.tsx"
-      ],
-      "playlist.playlistMode.ShowScreenRecordingStopButton": [
-        "./packages/Playlist/playlist/playlistMode/ShowScreenRecordingStopButton.tsx"
-      ],
       "playlist.playlistMode.startRecording": [
         "./packages/Playlist/playlist/playlistMode/startRecording.tsx"
-      ],
-      "playlist.playlistMode.StopPlayingPlaylist": [
-        "./packages/Playlist/playlist/playlistMode/StopPlayingPlaylist.tsx"
-      ],
-      "playlist.playlistMode.Tabs": [
-        "./packages/Playlist/playlist/playlistMode/Tabs.tsx"
-      ],
-      "playlist.playlistMode.TogglePlaylistHeight": [
-        "./packages/Playlist/playlist/playlistMode/TogglePlaylistHeight.tsx"
       ],
       "playlist.playlistMode.togglePlaylistSuggestions": [
         "./packages/Playlist/playlist/playlistMode/togglePlaylistSuggestions.tsx"
@@ -2662,15 +2663,6 @@
       ],
       "playlist.playlistMode.useProjectContext": [
         "./packages/Playlist/playlist/playlistMode/useProjectContext.tsx"
-      ],
-      "playlist.playlistMode.VideoPlayer": [
-        "./packages/Playlist/playlist/playlistMode/VideoPlayer.tsx"
-      ],
-      "playlist.playlistMode.VideoRecordUI": [
-        "./packages/Playlist/playlist/playlistMode/VideoRecordUI.tsx"
-      ],
-      "playlist.playlistMode.VideoSmallScreen": [
-        "./packages/Playlist/playlist/playlistMode/VideoSmallScreen.tsx"
       ],
       "storage.tempStorageBot.defineGlobals": [
         "./packages/Playlist/storage/tempStorageBot/defineGlobals.tsx"
@@ -2702,23 +2694,23 @@
       "references.manager.GetReferences": [
         "./packages/References/references/manager/GetReferences.tsx"
       ],
-      "references.manager.interfaces": [
-        "./packages/References/references/manager/interfaces.tsx"
-      ],
       "references.manager.NewReferenceApp": [
         "./packages/References/references/manager/NewReferenceApp.tsx"
       ],
       "references.manager.NewReferenceModal": [
         "./packages/References/references/manager/NewReferenceModal.tsx"
       ],
-      "references.manager.onDestroy": [
-        "./packages/References/references/manager/onDestroy.tsx"
-      ],
       "references.manager.ReferenceComponent": [
         "./packages/References/references/manager/ReferenceComponent.tsx"
       ],
       "references.manager.ToggleReference": [
         "./packages/References/references/manager/ToggleReference.tsx"
+      ],
+      "references.manager.interfaces": [
+        "./packages/References/references/manager/interfaces.tsx"
+      ],
+      "references.manager.onDestroy": [
+        "./packages/References/references/manager/onDestroy.tsx"
       ],
       "references.manager.toggleReferenceModal": [
         "./packages/References/references/manager/toggleReferenceModal.tsx"
@@ -2741,12 +2733,6 @@
       "scriptureMap2D.main.CustomHooks": [
         "./packages/Scripture Map 2D/scriptureMap2D/main/CustomHooks.tsx"
       ],
-      "scriptureMap2D.main.enums": [
-        "./packages/Scripture Map 2D/scriptureMap2D/main/enums.tsx"
-      ],
-      "scriptureMap2D.main.eventManager": [
-        "./packages/Scripture Map 2D/scriptureMap2D/main/eventManager.tsx"
-      ],
       "scriptureMap2D.main.FiltersSelectorOption": [
         "./packages/Scripture Map 2D/scriptureMap2D/main/FiltersSelectorOption.tsx"
       ],
@@ -2756,20 +2742,8 @@
       "scriptureMap2D.main.Initialize": [
         "./packages/Scripture Map 2D/scriptureMap2D/main/Initialize.tsx"
       ],
-      "scriptureMap2D.main.interfaces": [
-        "./packages/Scripture Map 2D/scriptureMap2D/main/interfaces.tsx"
-      ],
-      "scriptureMap2D.main.onAuthBotAdded": [
-        "./packages/Scripture Map 2D/scriptureMap2D/main/onAuthBotAdded.tsx"
-      ],
       "scriptureMap2D.main.OnBibleVizUtilsInitialized": [
         "./packages/Scripture Map 2D/scriptureMap2D/main/OnBibleVizUtilsInitialized.tsx"
-      ],
-      "scriptureMap2D.main.onEggHatch": [
-        "./packages/Scripture Map 2D/scriptureMap2D/main/onEggHatch.tsx"
-      ],
-      "scriptureMap2D.main.onInstJoined": [
-        "./packages/Scripture Map 2D/scriptureMap2D/main/onInstJoined.tsx"
       ],
       "scriptureMap2D.main.ProjectFiltersSelector": [
         "./packages/Scripture Map 2D/scriptureMap2D/main/ProjectFiltersSelector.tsx"
@@ -2822,20 +2796,38 @@
       "scriptureMap2D.main.Tooltip": [
         "./packages/Scripture Map 2D/scriptureMap2D/main/Tooltip.tsx"
       ],
-      "scriptureMap2D.main.types": [
-        "./packages/Scripture Map 2D/scriptureMap2D/main/types.tsx"
-      ],
       "scriptureMap2D.main.UserPresenceUpdate": [
         "./packages/Scripture Map 2D/scriptureMap2D/main/UserPresenceUpdate.tsx"
+      ],
+      "scriptureMap2D.main.Wrapper": [
+        "./packages/Scripture Map 2D/scriptureMap2D/main/Wrapper.tsx"
+      ],
+      "scriptureMap2D.main.enums": [
+        "./packages/Scripture Map 2D/scriptureMap2D/main/enums.tsx"
+      ],
+      "scriptureMap2D.main.eventManager": [
+        "./packages/Scripture Map 2D/scriptureMap2D/main/eventManager.tsx"
+      ],
+      "scriptureMap2D.main.interfaces": [
+        "./packages/Scripture Map 2D/scriptureMap2D/main/interfaces.tsx"
+      ],
+      "scriptureMap2D.main.onAuthBotAdded": [
+        "./packages/Scripture Map 2D/scriptureMap2D/main/onAuthBotAdded.tsx"
+      ],
+      "scriptureMap2D.main.onEggHatch": [
+        "./packages/Scripture Map 2D/scriptureMap2D/main/onEggHatch.tsx"
+      ],
+      "scriptureMap2D.main.onInstJoined": [
+        "./packages/Scripture Map 2D/scriptureMap2D/main/onInstJoined.tsx"
+      ],
+      "scriptureMap2D.main.types": [
+        "./packages/Scripture Map 2D/scriptureMap2D/main/types.tsx"
       ],
       "scriptureMap2D.main.userSubscribed": [
         "./packages/Scripture Map 2D/scriptureMap2D/main/userSubscribed.tsx"
       ],
       "scriptureMap2D.main.userUnsubscribed": [
         "./packages/Scripture Map 2D/scriptureMap2D/main/userUnsubscribed.tsx"
-      ],
-      "scriptureMap2D.main.Wrapper": [
-        "./packages/Scripture Map 2D/scriptureMap2D/main/Wrapper.tsx"
       ],
       "scriptureMap3D.main.App": [
         "./packages/Scripture Map 3D/scriptureMap3D/main/App.tsx"
@@ -2930,32 +2922,17 @@
       "scriptureMap3D.main.OnBibleVizUtilsInitialized": [
         "./packages/Scripture Map 3D/scriptureMap3D/main/OnBibleVizUtilsInitialized.tsx"
       ],
-      "scriptureMap3D.main.onDestroy": [
-        "./packages/Scripture Map 3D/scriptureMap3D/main/onDestroy.tsx"
-      ],
-      "scriptureMap3D.main.onEggHatch": [
-        "./packages/Scripture Map 3D/scriptureMap3D/main/onEggHatch.tsx"
-      ],
       "scriptureMap3D.main.OnEnterHistoryMode": [
         "./packages/Scripture Map 3D/scriptureMap3D/main/OnEnterHistoryMode.tsx"
       ],
       "scriptureMap3D.main.OnExitHistoryMode": [
         "./packages/Scripture Map 3D/scriptureMap3D/main/OnExitHistoryMode.tsx"
       ],
-      "scriptureMap3D.main.onFloatingAppRemoved": [
-        "./packages/Scripture Map 3D/scriptureMap3D/main/onFloatingAppRemoved.tsx"
-      ],
       "scriptureMap3D.main.OnHidePlaylistComplete": [
         "./packages/Scripture Map 3D/scriptureMap3D/main/OnHidePlaylistComplete.tsx"
       ],
       "scriptureMap3D.main.OnHistoryUpdated": [
         "./packages/Scripture Map 3D/scriptureMap3D/main/OnHistoryUpdated.tsx"
-      ],
-      "scriptureMap3D.main.onInstJoined": [
-        "./packages/Scripture Map 3D/scriptureMap3D/main/onInstJoined.tsx"
-      ],
-      "scriptureMap3D.main.onKeyDown": [
-        "./packages/Scripture Map 3D/scriptureMap3D/main/onKeyDown.tsx"
       ],
       "scriptureMap3D.main.OnLayoutBookDateLabelClicked": [
         "./packages/Scripture Map 3D/scriptureMap3D/main/OnLayoutBookDateLabelClicked.tsx"
@@ -3089,17 +3066,23 @@
       "scriptureMap3D.main.UserPresenceUpdate": [
         "./packages/Scripture Map 3D/scriptureMap3D/main/UserPresenceUpdate.tsx"
       ],
+      "scriptureMap3D.main.onDestroy": [
+        "./packages/Scripture Map 3D/scriptureMap3D/main/onDestroy.tsx"
+      ],
+      "scriptureMap3D.main.onEggHatch": [
+        "./packages/Scripture Map 3D/scriptureMap3D/main/onEggHatch.tsx"
+      ],
+      "scriptureMap3D.main.onFloatingAppRemoved": [
+        "./packages/Scripture Map 3D/scriptureMap3D/main/onFloatingAppRemoved.tsx"
+      ],
+      "scriptureMap3D.main.onInstJoined": [
+        "./packages/Scripture Map 3D/scriptureMap3D/main/onInstJoined.tsx"
+      ],
+      "scriptureMap3D.main.onKeyDown": [
+        "./packages/Scripture Map 3D/scriptureMap3D/main/onKeyDown.tsx"
+      ],
       "scriptureMap3D.prefabs.book.Highlight": [
         "./packages/Scripture Map 3D/scriptureMap3D/prefabs/book/Highlight.tsx"
-      ],
-      "scriptureMap3D.prefabs.book.onBotChanged": [
-        "./packages/Scripture Map 3D/scriptureMap3D/prefabs/book/onBotChanged.tsx"
-      ],
-      "scriptureMap3D.prefabs.book.onClick": [
-        "./packages/Scripture Map 3D/scriptureMap3D/prefabs/book/onClick.tsx"
-      ],
-      "scriptureMap3D.prefabs.book.onDrag": [
-        "./packages/Scripture Map 3D/scriptureMap3D/prefabs/book/onDrag.tsx"
       ],
       "scriptureMap3D.prefabs.book.OnHighlightToolDisabled": [
         "./packages/Scripture Map 3D/scriptureMap3D/prefabs/book/OnHighlightToolDisabled.tsx"
@@ -3116,14 +3099,23 @@
       "scriptureMap3D.prefabs.book.TryStopHighlight": [
         "./packages/Scripture Map 3D/scriptureMap3D/prefabs/book/TryStopHighlight.tsx"
       ],
-      "scriptureMap3D.prefabs.bookDateLabel.onClick": [
-        "./packages/Scripture Map 3D/scriptureMap3D/prefabs/bookDateLabel/onClick.tsx"
+      "scriptureMap3D.prefabs.book.onBotChanged": [
+        "./packages/Scripture Map 3D/scriptureMap3D/prefabs/book/onBotChanged.tsx"
+      ],
+      "scriptureMap3D.prefabs.book.onClick": [
+        "./packages/Scripture Map 3D/scriptureMap3D/prefabs/book/onClick.tsx"
+      ],
+      "scriptureMap3D.prefabs.book.onDrag": [
+        "./packages/Scripture Map 3D/scriptureMap3D/prefabs/book/onDrag.tsx"
       ],
       "scriptureMap3D.prefabs.bookDateLabel.OnReleased": [
         "./packages/Scripture Map 3D/scriptureMap3D/prefabs/bookDateLabel/OnReleased.tsx"
       ],
       "scriptureMap3D.prefabs.bookDateLabel.OnSpawned": [
         "./packages/Scripture Map 3D/scriptureMap3D/prefabs/bookDateLabel/OnSpawned.tsx"
+      ],
+      "scriptureMap3D.prefabs.bookDateLabel.onClick": [
+        "./packages/Scripture Map 3D/scriptureMap3D/prefabs/bookDateLabel/onClick.tsx"
       ],
       "scriptureMap3D.prefabs.bookInfoCardBackground.OnReleased": [
         "./packages/Scripture Map 3D/scriptureMap3D/prefabs/bookInfoCardBackground/OnReleased.tsx"
@@ -3143,14 +3135,14 @@
       "scriptureMap3D.prefabs.bookInfoCardTransformer.OnSpawned": [
         "./packages/Scripture Map 3D/scriptureMap3D/prefabs/bookInfoCardTransformer/OnSpawned.tsx"
       ],
-      "scriptureMap3D.prefabs.button.onClick": [
-        "./packages/Scripture Map 3D/scriptureMap3D/prefabs/button/onClick.tsx"
-      ],
       "scriptureMap3D.prefabs.button.OnReleased": [
         "./packages/Scripture Map 3D/scriptureMap3D/prefabs/button/OnReleased.tsx"
       ],
       "scriptureMap3D.prefabs.button.OnSpawned": [
         "./packages/Scripture Map 3D/scriptureMap3D/prefabs/button/OnSpawned.tsx"
+      ],
+      "scriptureMap3D.prefabs.button.onClick": [
+        "./packages/Scripture Map 3D/scriptureMap3D/prefabs/button/onClick.tsx"
       ],
       "scriptureMap3D.prefabs.buttonIcon.OnReleased": [
         "./packages/Scripture Map 3D/scriptureMap3D/prefabs/buttonIcon/OnReleased.tsx"
@@ -3173,11 +3165,35 @@
       "scriptureMap3D.prefabs.chapter.GetCurrentUsersColor": [
         "./packages/Scripture Map 3D/scriptureMap3D/prefabs/chapter/GetCurrentUsersColor.tsx"
       ],
-      "scriptureMap3D.prefabs.chapter.hideYears": [
-        "./packages/Scripture Map 3D/scriptureMap3D/prefabs/chapter/hideYears.tsx"
-      ],
       "scriptureMap3D.prefabs.chapter.Highlight": [
         "./packages/Scripture Map 3D/scriptureMap3D/prefabs/chapter/Highlight.tsx"
+      ],
+      "scriptureMap3D.prefabs.chapter.OnHighlightToolDisabled": [
+        "./packages/Scripture Map 3D/scriptureMap3D/prefabs/chapter/OnHighlightToolDisabled.tsx"
+      ],
+      "scriptureMap3D.prefabs.chapter.OnHighlightToolEnabled": [
+        "./packages/Scripture Map 3D/scriptureMap3D/prefabs/chapter/OnHighlightToolEnabled.tsx"
+      ],
+      "scriptureMap3D.prefabs.chapter.OnReleased": [
+        "./packages/Scripture Map 3D/scriptureMap3D/prefabs/chapter/OnReleased.tsx"
+      ],
+      "scriptureMap3D.prefabs.chapter.OnSpawned": [
+        "./packages/Scripture Map 3D/scriptureMap3D/prefabs/chapter/OnSpawned.tsx"
+      ],
+      "scriptureMap3D.prefabs.chapter.Select": [
+        "./packages/Scripture Map 3D/scriptureMap3D/prefabs/chapter/Select.tsx"
+      ],
+      "scriptureMap3D.prefabs.chapter.StopChapterTransition": [
+        "./packages/Scripture Map 3D/scriptureMap3D/prefabs/chapter/StopChapterTransition.tsx"
+      ],
+      "scriptureMap3D.prefabs.chapter.TrySetUsersColorPosition": [
+        "./packages/Scripture Map 3D/scriptureMap3D/prefabs/chapter/TrySetUsersColorPosition.tsx"
+      ],
+      "scriptureMap3D.prefabs.chapter.Unhighlight": [
+        "./packages/Scripture Map 3D/scriptureMap3D/prefabs/chapter/Unhighlight.tsx"
+      ],
+      "scriptureMap3D.prefabs.chapter.hideYears": [
+        "./packages/Scripture Map 3D/scriptureMap3D/prefabs/chapter/hideYears.tsx"
       ],
       "scriptureMap3D.prefabs.chapter.onBotChanged": [
         "./packages/Scripture Map 3D/scriptureMap3D/prefabs/chapter/onBotChanged.tsx"
@@ -3191,32 +3207,14 @@
       "scriptureMap3D.prefabs.chapter.onDrop": [
         "./packages/Scripture Map 3D/scriptureMap3D/prefabs/chapter/onDrop.tsx"
       ],
-      "scriptureMap3D.prefabs.chapter.OnHighlightToolDisabled": [
-        "./packages/Scripture Map 3D/scriptureMap3D/prefabs/chapter/OnHighlightToolDisabled.tsx"
-      ],
-      "scriptureMap3D.prefabs.chapter.OnHighlightToolEnabled": [
-        "./packages/Scripture Map 3D/scriptureMap3D/prefabs/chapter/OnHighlightToolEnabled.tsx"
-      ],
       "scriptureMap3D.prefabs.chapter.onPointerEnter": [
         "./packages/Scripture Map 3D/scriptureMap3D/prefabs/chapter/onPointerEnter.tsx"
       ],
       "scriptureMap3D.prefabs.chapter.onPointerExit": [
         "./packages/Scripture Map 3D/scriptureMap3D/prefabs/chapter/onPointerExit.tsx"
       ],
-      "scriptureMap3D.prefabs.chapter.OnReleased": [
-        "./packages/Scripture Map 3D/scriptureMap3D/prefabs/chapter/OnReleased.tsx"
-      ],
-      "scriptureMap3D.prefabs.chapter.OnSpawned": [
-        "./packages/Scripture Map 3D/scriptureMap3D/prefabs/chapter/OnSpawned.tsx"
-      ],
-      "scriptureMap3D.prefabs.chapter.Select": [
-        "./packages/Scripture Map 3D/scriptureMap3D/prefabs/chapter/Select.tsx"
-      ],
       "scriptureMap3D.prefabs.chapter.showYears": [
         "./packages/Scripture Map 3D/scriptureMap3D/prefabs/chapter/showYears.tsx"
-      ],
-      "scriptureMap3D.prefabs.chapter.StopChapterTransition": [
-        "./packages/Scripture Map 3D/scriptureMap3D/prefabs/chapter/StopChapterTransition.tsx"
       ],
       "scriptureMap3D.prefabs.chapter.switchToOld": [
         "./packages/Scripture Map 3D/scriptureMap3D/prefabs/chapter/switchToOld.tsx"
@@ -3224,23 +3222,8 @@
       "scriptureMap3D.prefabs.chapter.switchToYears": [
         "./packages/Scripture Map 3D/scriptureMap3D/prefabs/chapter/switchToYears.tsx"
       ],
-      "scriptureMap3D.prefabs.chapter.TrySetUsersColorPosition": [
-        "./packages/Scripture Map 3D/scriptureMap3D/prefabs/chapter/TrySetUsersColorPosition.tsx"
-      ],
-      "scriptureMap3D.prefabs.chapter.Unhighlight": [
-        "./packages/Scripture Map 3D/scriptureMap3D/prefabs/chapter/Unhighlight.tsx"
-      ],
       "scriptureMap3D.prefabs.chapterPlaylistEntryItem.Highlight": [
         "./packages/Scripture Map 3D/scriptureMap3D/prefabs/chapterPlaylistEntryItem/Highlight.tsx"
-      ],
-      "scriptureMap3D.prefabs.chapterPlaylistEntryItem.onClick": [
-        "./packages/Scripture Map 3D/scriptureMap3D/prefabs/chapterPlaylistEntryItem/onClick.tsx"
-      ],
-      "scriptureMap3D.prefabs.chapterPlaylistEntryItem.onPointerEnter": [
-        "./packages/Scripture Map 3D/scriptureMap3D/prefabs/chapterPlaylistEntryItem/onPointerEnter.tsx"
-      ],
-      "scriptureMap3D.prefabs.chapterPlaylistEntryItem.onPointerExit": [
-        "./packages/Scripture Map 3D/scriptureMap3D/prefabs/chapterPlaylistEntryItem/onPointerExit.tsx"
       ],
       "scriptureMap3D.prefabs.chapterPlaylistEntryItem.OnReleased": [
         "./packages/Scripture Map 3D/scriptureMap3D/prefabs/chapterPlaylistEntryItem/OnReleased.tsx"
@@ -3253,6 +3236,15 @@
       ],
       "scriptureMap3D.prefabs.chapterPlaylistEntryItem.Unhighlight": [
         "./packages/Scripture Map 3D/scriptureMap3D/prefabs/chapterPlaylistEntryItem/Unhighlight.tsx"
+      ],
+      "scriptureMap3D.prefabs.chapterPlaylistEntryItem.onClick": [
+        "./packages/Scripture Map 3D/scriptureMap3D/prefabs/chapterPlaylistEntryItem/onClick.tsx"
+      ],
+      "scriptureMap3D.prefabs.chapterPlaylistEntryItem.onPointerEnter": [
+        "./packages/Scripture Map 3D/scriptureMap3D/prefabs/chapterPlaylistEntryItem/onPointerEnter.tsx"
+      ],
+      "scriptureMap3D.prefabs.chapterPlaylistEntryItem.onPointerExit": [
+        "./packages/Scripture Map 3D/scriptureMap3D/prefabs/chapterPlaylistEntryItem/onPointerExit.tsx"
       ],
       "scriptureMap3D.prefabs.chapterPlaylistEntryItemNode.OnReleased": [
         "./packages/Scripture Map 3D/scriptureMap3D/prefabs/chapterPlaylistEntryItemNode/OnReleased.tsx"
@@ -3269,26 +3261,11 @@
       "scriptureMap3D.prefabs.chunkOfVerses.Highlight": [
         "./packages/Scripture Map 3D/scriptureMap3D/prefabs/chunkOfVerses/Highlight.tsx"
       ],
-      "scriptureMap3D.prefabs.chunkOfVerses.onClick": [
-        "./packages/Scripture Map 3D/scriptureMap3D/prefabs/chunkOfVerses/onClick.tsx"
-      ],
-      "scriptureMap3D.prefabs.chunkOfVerses.onDrag": [
-        "./packages/Scripture Map 3D/scriptureMap3D/prefabs/chunkOfVerses/onDrag.tsx"
-      ],
-      "scriptureMap3D.prefabs.chunkOfVerses.onDrop": [
-        "./packages/Scripture Map 3D/scriptureMap3D/prefabs/chunkOfVerses/onDrop.tsx"
-      ],
       "scriptureMap3D.prefabs.chunkOfVerses.OnHighlightToolDisabled": [
         "./packages/Scripture Map 3D/scriptureMap3D/prefabs/chunkOfVerses/OnHighlightToolDisabled.tsx"
       ],
       "scriptureMap3D.prefabs.chunkOfVerses.OnHighlightToolEnabled": [
         "./packages/Scripture Map 3D/scriptureMap3D/prefabs/chunkOfVerses/OnHighlightToolEnabled.tsx"
-      ],
-      "scriptureMap3D.prefabs.chunkOfVerses.onPointerEnter": [
-        "./packages/Scripture Map 3D/scriptureMap3D/prefabs/chunkOfVerses/onPointerEnter.tsx"
-      ],
-      "scriptureMap3D.prefabs.chunkOfVerses.onPointerExit": [
-        "./packages/Scripture Map 3D/scriptureMap3D/prefabs/chunkOfVerses/onPointerExit.tsx"
       ],
       "scriptureMap3D.prefabs.chunkOfVerses.Select": [
         "./packages/Scripture Map 3D/scriptureMap3D/prefabs/chunkOfVerses/Select.tsx"
@@ -3301,6 +3278,21 @@
       ],
       "scriptureMap3D.prefabs.chunkOfVerses.Unhighlight": [
         "./packages/Scripture Map 3D/scriptureMap3D/prefabs/chunkOfVerses/Unhighlight.tsx"
+      ],
+      "scriptureMap3D.prefabs.chunkOfVerses.onClick": [
+        "./packages/Scripture Map 3D/scriptureMap3D/prefabs/chunkOfVerses/onClick.tsx"
+      ],
+      "scriptureMap3D.prefabs.chunkOfVerses.onDrag": [
+        "./packages/Scripture Map 3D/scriptureMap3D/prefabs/chunkOfVerses/onDrag.tsx"
+      ],
+      "scriptureMap3D.prefabs.chunkOfVerses.onDrop": [
+        "./packages/Scripture Map 3D/scriptureMap3D/prefabs/chunkOfVerses/onDrop.tsx"
+      ],
+      "scriptureMap3D.prefabs.chunkOfVerses.onPointerEnter": [
+        "./packages/Scripture Map 3D/scriptureMap3D/prefabs/chunkOfVerses/onPointerEnter.tsx"
+      ],
+      "scriptureMap3D.prefabs.chunkOfVerses.onPointerExit": [
+        "./packages/Scripture Map 3D/scriptureMap3D/prefabs/chunkOfVerses/onPointerExit.tsx"
       ],
       "scriptureMap3D.prefabs.colorPickerBackground.OnReleased": [
         "./packages/Scripture Map 3D/scriptureMap3D/prefabs/colorPickerBackground/OnReleased.tsx"
@@ -3326,14 +3318,14 @@
       "scriptureMap3D.prefabs.cover.OnSpawned": [
         "./packages/Scripture Map 3D/scriptureMap3D/prefabs/cover/OnSpawned.tsx"
       ],
-      "scriptureMap3D.prefabs.label.onClick": [
-        "./packages/Scripture Map 3D/scriptureMap3D/prefabs/label/onClick.tsx"
-      ],
       "scriptureMap3D.prefabs.label.OnReleased": [
         "./packages/Scripture Map 3D/scriptureMap3D/prefabs/label/OnReleased.tsx"
       ],
       "scriptureMap3D.prefabs.label.OnSpawned": [
         "./packages/Scripture Map 3D/scriptureMap3D/prefabs/label/OnSpawned.tsx"
+      ],
+      "scriptureMap3D.prefabs.label.onClick": [
+        "./packages/Scripture Map 3D/scriptureMap3D/prefabs/label/onClick.tsx"
       ],
       "scriptureMap3D.prefabs.line.Highlight": [
         "./packages/Scripture Map 3D/scriptureMap3D/prefabs/line/Highlight.tsx"
@@ -3347,14 +3339,11 @@
       "scriptureMap3D.prefabs.line.TryStopHighlight": [
         "./packages/Scripture Map 3D/scriptureMap3D/prefabs/line/TryStopHighlight.tsx"
       ],
-      "scriptureMap3D.prefabs.playlistNavigationButton.onClick": [
-        "./packages/Scripture Map 3D/scriptureMap3D/prefabs/playlistNavigationButton/onClick.tsx"
-      ],
       "scriptureMap3D.prefabs.playlistNavigationButton.OnSpawned": [
         "./packages/Scripture Map 3D/scriptureMap3D/prefabs/playlistNavigationButton/OnSpawned.tsx"
       ],
-      "scriptureMap3D.prefabs.settingsButton.onClick": [
-        "./packages/Scripture Map 3D/scriptureMap3D/prefabs/settingsButton/onClick.tsx"
+      "scriptureMap3D.prefabs.playlistNavigationButton.onClick": [
+        "./packages/Scripture Map 3D/scriptureMap3D/prefabs/playlistNavigationButton/onClick.tsx"
       ],
       "scriptureMap3D.prefabs.settingsButton.OnReleased": [
         "./packages/Scripture Map 3D/scriptureMap3D/prefabs/settingsButton/OnReleased.tsx"
@@ -3362,14 +3351,14 @@
       "scriptureMap3D.prefabs.settingsButton.OnSpawned": [
         "./packages/Scripture Map 3D/scriptureMap3D/prefabs/settingsButton/OnSpawned.tsx"
       ],
+      "scriptureMap3D.prefabs.settingsButton.onClick": [
+        "./packages/Scripture Map 3D/scriptureMap3D/prefabs/settingsButton/onClick.tsx"
+      ],
       "scriptureMap3D.prefabs.toggle.Activate": [
         "./packages/Scripture Map 3D/scriptureMap3D/prefabs/toggle/Activate.tsx"
       ],
       "scriptureMap3D.prefabs.toggle.Deactivate": [
         "./packages/Scripture Map 3D/scriptureMap3D/prefabs/toggle/Deactivate.tsx"
-      ],
-      "scriptureMap3D.prefabs.toggle.onClick": [
-        "./packages/Scripture Map 3D/scriptureMap3D/prefabs/toggle/onClick.tsx"
       ],
       "scriptureMap3D.prefabs.toggle.OnReleased": [
         "./packages/Scripture Map 3D/scriptureMap3D/prefabs/toggle/OnReleased.tsx"
@@ -3379,6 +3368,9 @@
       ],
       "scriptureMap3D.prefabs.toggle.StopToggleAnimation": [
         "./packages/Scripture Map 3D/scriptureMap3D/prefabs/toggle/StopToggleAnimation.tsx"
+      ],
+      "scriptureMap3D.prefabs.toggle.onClick": [
+        "./packages/Scripture Map 3D/scriptureMap3D/prefabs/toggle/onClick.tsx"
       ],
       "scriptureMap3D.prefabs.toggleBackground.OnReleased": [
         "./packages/Scripture Map 3D/scriptureMap3D/prefabs/toggleBackground/OnReleased.tsx"
@@ -3395,9 +3387,6 @@
       "scriptureMap3D.prefabs.verse.Hide": [
         "./packages/Scripture Map 3D/scriptureMap3D/prefabs/verse/Hide.tsx"
       ],
-      "scriptureMap3D.prefabs.verse.onClick": [
-        "./packages/Scripture Map 3D/scriptureMap3D/prefabs/verse/onClick.tsx"
-      ],
       "scriptureMap3D.prefabs.verse.OnHighlightToolDisabled": [
         "./packages/Scripture Map 3D/scriptureMap3D/prefabs/verse/OnHighlightToolDisabled.tsx"
       ],
@@ -3407,6 +3396,155 @@
       "scriptureMap3D.prefabs.verse.OnReleased": [
         "./packages/Scripture Map 3D/scriptureMap3D/prefabs/verse/OnReleased.tsx"
       ],
+      "scriptureMap3D.prefabs.verse.onClick": [
+        "./packages/Scripture Map 3D/scriptureMap3D/prefabs/verse/onClick.tsx"
+      ],
+      "tabernacle.altar-of-sacrifice.onClick": [
+        "./packages/Tabernacle/tabernacle/altar-of-sacrifice/onClick.tsx"
+      ],
+      "tabernacle.ark-of-covenant.onClick": [
+        "./packages/Tabernacle/tabernacle/ark-of-covenant/onClick.tsx"
+      ],
+      "tabernacle.bars.onClick": [
+        "./packages/Tabernacle/tabernacle/bars/onClick.tsx"
+      ],
+      "tabernacle.bronze-laver.onClick": [
+        "./packages/Tabernacle/tabernacle/bronze-laver/onClick.tsx"
+      ],
+      "tabernacle.brown-curtain.onClick": [
+        "./packages/Tabernacle/tabernacle/brown-curtain/onClick.tsx"
+      ],
+      "tabernacle.front-curtain.onClick": [
+        "./packages/Tabernacle/tabernacle/front-curtain/onClick.tsx"
+      ],
+      "tabernacle.front-pillars.onClick": [
+        "./packages/Tabernacle/tabernacle/front-pillars/onClick.tsx"
+      ],
+      "tabernacle.grey-curtain.onClick": [
+        "./packages/Tabernacle/tabernacle/grey-curtain/onClick.tsx"
+      ],
+      "tabernacle.incense-altar.onClick": [
+        "./packages/Tabernacle/tabernacle/incense-altar/onClick.tsx"
+      ],
+      "tabernacle.inner-curtain.onClick": [
+        "./packages/Tabernacle/tabernacle/inner-curtain/onClick.tsx"
+      ],
+      "tabernacle.inner-pillars.onClick": [
+        "./packages/Tabernacle/tabernacle/inner-pillars/onClick.tsx"
+      ],
+      "tabernacle.manager.App": [
+        "./packages/Tabernacle/tabernacle/manager/App.tsx"
+      ],
+      "tabernacle.manager.ClearExperience": [
+        "./packages/Tabernacle/tabernacle/manager/ClearExperience.tsx"
+      ],
+      "tabernacle.manager.CreateHitboxes": [
+        "./packages/Tabernacle/tabernacle/manager/CreateHitboxes.tsx"
+      ],
+      "tabernacle.manager.DisplayApp": [
+        "./packages/Tabernacle/tabernacle/manager/DisplayApp.tsx"
+      ],
+      "tabernacle.manager.FixBotsPosition": [
+        "./packages/Tabernacle/tabernacle/manager/FixBotsPosition.tsx"
+      ],
+      "tabernacle.manager.GetFixedTitle": [
+        "./packages/Tabernacle/tabernacle/manager/GetFixedTitle.tsx"
+      ],
+      "tabernacle.manager.HandleTabernacleSectionInteraction": [
+        "./packages/Tabernacle/tabernacle/manager/HandleTabernacleSectionInteraction.tsx"
+      ],
+      "tabernacle.manager.HighlightBot": [
+        "./packages/Tabernacle/tabernacle/manager/HighlightBot.tsx"
+      ],
+      "tabernacle.manager.Initialize": [
+        "./packages/Tabernacle/tabernacle/manager/Initialize.tsx"
+      ],
+      "tabernacle.manager.OnTabernacleItemClicked": [
+        "./packages/Tabernacle/tabernacle/manager/OnTabernacleItemClicked.tsx"
+      ],
+      "tabernacle.manager.OnTabernacleSectionClick": [
+        "./packages/Tabernacle/tabernacle/manager/OnTabernacleSectionClick.tsx"
+      ],
+      "tabernacle.manager.OnTabernacleSectionHover": [
+        "./packages/Tabernacle/tabernacle/manager/OnTabernacleSectionHover.tsx"
+      ],
+      "tabernacle.manager.SetBotsVisibility": [
+        "./packages/Tabernacle/tabernacle/manager/SetBotsVisibility.tsx"
+      ],
+      "tabernacle.manager.StopFocus": [
+        "./packages/Tabernacle/tabernacle/manager/StopFocus.tsx"
+      ],
+      "tabernacle.manager.ToggleContextMenuForPiece": [
+        "./packages/Tabernacle/tabernacle/manager/ToggleContextMenuForPiece.tsx"
+      ],
+      "tabernacle.manager.TryHideCurrentPieceContextMenu": [
+        "./packages/Tabernacle/tabernacle/manager/TryHideCurrentPieceContextMenu.tsx"
+      ],
+      "tabernacle.manager.TryRecenter": [
+        "./packages/Tabernacle/tabernacle/manager/TryRecenter.tsx"
+      ],
+      "tabernacle.manager.TryUpdatePieceContextMenu": [
+        "./packages/Tabernacle/tabernacle/manager/TryUpdatePieceContextMenu.tsx"
+      ],
+      "tabernacle.manager.UpdateHighlightedWords": [
+        "./packages/Tabernacle/tabernacle/manager/UpdateHighlightedWords.tsx"
+      ],
+      "tabernacle.manager.UpdateTabernacleVisuals": [
+        "./packages/Tabernacle/tabernacle/manager/UpdateTabernacleVisuals.tsx"
+      ],
+      "tabernacle.manager.UpdateVerseOptions": [
+        "./packages/Tabernacle/tabernacle/manager/UpdateVerseOptions.tsx"
+      ],
+      "tabernacle.manager.onBookChanged": [
+        "./packages/Tabernacle/tabernacle/manager/onBookChanged.tsx"
+      ],
+      "tabernacle.manager.onDestroy": [
+        "./packages/Tabernacle/tabernacle/manager/onDestroy.tsx"
+      ],
+      "tabernacle.manager.onEggHatch": [
+        "./packages/Tabernacle/tabernacle/manager/onEggHatch.tsx"
+      ],
+      "tabernacle.manager.onFloatingAppRemoved": [
+        "./packages/Tabernacle/tabernacle/manager/onFloatingAppRemoved.tsx"
+      ],
+      "tabernacle.manager.onGridClick": [
+        "./packages/Tabernacle/tabernacle/manager/onGridClick.tsx"
+      ],
+      "tabernacle.manager.onGridUp": [
+        "./packages/Tabernacle/tabernacle/manager/onGridUp.tsx"
+      ],
+      "tabernacle.manager.onInstJoined": [
+        "./packages/Tabernacle/tabernacle/manager/onInstJoined.tsx"
+      ],
+      "tabernacle.manager.onVerseClick": [
+        "./packages/Tabernacle/tabernacle/manager/onVerseClick.tsx"
+      ],
+      "tabernacle.menorah.onClick": [
+        "./packages/Tabernacle/tabernacle/menorah/onClick.tsx"
+      ],
+      "tabernacle.purple-curtain.onClick": [
+        "./packages/Tabernacle/tabernacle/purple-curtain/onClick.tsx"
+      ],
+      "tabernacle.red-curtain.onClick": [
+        "./packages/Tabernacle/tabernacle/red-curtain/onClick.tsx"
+      ],
+      "tabernacle.rings.onClick": [
+        "./packages/Tabernacle/tabernacle/rings/onClick.tsx"
+      ],
+      "tabernacle.table-of-showbread.onClick": [
+        "./packages/Tabernacle/tabernacle/table-of-showbread/onClick.tsx"
+      ],
+      "tabernacle.walls.onClick": [
+        "./packages/Tabernacle/tabernacle/walls/onClick.tsx"
+      ],
+      "ao.starter.ChatView": ["./packages/ao.bot/ao/starter/ChatView.tsx"],
+      "ao.starter.app": ["./packages/ao.bot/ao/starter/app.tsx"],
+      "ao.starter.init": ["./packages/ao.bot/ao/starter/init.tsx"],
+      "ao.starter.onEggHatch": ["./packages/ao.bot/ao/starter/onEggHatch.tsx"],
+      "ao.starter.onInstJoined": [
+        "./packages/ao.bot/ao/starter/onInstJoined.tsx"
+      ],
+      "ao.starter.tools": ["./packages/ao.bot/ao/starter/tools.tsx"],
       "ab.shell.chronicler.chronicleSubscription_updateLookup": [
         "./packages/seed-bible/ab/shell/chronicler/chronicleSubscription_updateLookup.tsx"
       ],
@@ -3422,14 +3560,20 @@
       "aiApps.painterStorage.onBotChanged": [
         "./packages/seed-bible/aiApps/painterStorage/onBotChanged.tsx"
       ],
+      "app.components.Chips": [
+        "./packages/seed-bible/app/components/Chips.tsx"
+      ],
+      "app.components.PromtBarSettings": [
+        "./packages/seed-bible/app/components/PromtBarSettings.tsx"
+      ],
+      "app.components.ReSeed": [
+        "./packages/seed-bible/app/components/ReSeed.tsx"
+      ],
       "app.components.aiSettings": [
         "./packages/seed-bible/app/components/aiSettings.tsx"
       ],
       "app.components.canvasAiSettings": [
         "./packages/seed-bible/app/components/canvasAiSettings.tsx"
-      ],
-      "app.components.Chips": [
-        "./packages/seed-bible/app/components/Chips.tsx"
       ],
       "app.components.circleCounter ": [
         "./packages/seed-bible/app/components/circleCounter .tsx"
@@ -3500,17 +3644,11 @@
       "app.components.profileCard": [
         "./packages/seed-bible/app/components/profileCard.tsx"
       ],
-      "app.components.PromtBarSettings": [
-        "./packages/seed-bible/app/components/PromtBarSettings.tsx"
-      ],
       "app.components.remoteVerseClick": [
         "./packages/seed-bible/app/components/remoteVerseClick.tsx"
       ],
       "app.components.renderToolbar": [
         "./packages/seed-bible/app/components/renderToolbar.tsx"
-      ],
-      "app.components.ReSeed": [
-        "./packages/seed-bible/app/components/ReSeed.tsx"
       ],
       "app.components.screenSettingsOptions": [
         "./packages/seed-bible/app/components/screenSettingsOptions.tsx"
@@ -3542,17 +3680,20 @@
       "app.components.textSettings": [
         "./packages/seed-bible/app/components/textSettings.tsx"
       ],
-      "app.components.themeSettings": [
-        "./packages/seed-bible/app/components/themeSettings.tsx"
-      ],
       "app.components.thePage": [
         "./packages/seed-bible/app/components/thePage.tsx"
+      ],
+      "app.components.themeSettings": [
+        "./packages/seed-bible/app/components/themeSettings.tsx"
       ],
       "app.components.toolbar": [
         "./packages/seed-bible/app/components/toolbar.tsx"
       ],
       "app.components.toolbarSettings": [
         "./packages/seed-bible/app/components/toolbarSettings.tsx"
+      ],
+      "app.components.tryUserLogin": [
+        "./packages/seed-bible/app/components/tryUserLogin.tsx"
       ],
       "app.components.types": [
         "./packages/seed-bible/app/components/types.tsx"
@@ -3580,11 +3721,14 @@
         "./packages/seed-bible/app/contract/provider.tsx"
       ],
       "app.contract.theme": ["./packages/seed-bible/app/contract/theme.tsx"],
-      "app.controller.controllerBuilder": [
-        "./packages/seed-bible/app/controller/controllerBuilder.tsx"
+      "app.controller.GlobalApi": [
+        "./packages/seed-bible/app/controller/GlobalApi.tsx"
       ],
       "app.controller.MainController": [
         "./packages/seed-bible/app/controller/MainController.tsx"
+      ],
+      "app.controller.controllerBuilder": [
+        "./packages/seed-bible/app/controller/controllerBuilder.tsx"
       ],
       "app.emitter.onEggHatch": [
         "./packages/seed-bible/app/emitter/onEggHatch.tsx"
@@ -3607,6 +3751,9 @@
       ],
       "app.error.identify": ["./packages/seed-bible/app/error/identify.tsx"],
       "app.error.init": ["./packages/seed-bible/app/error/init.tsx"],
+      "app.error.onBookChanged": [
+        "./packages/seed-bible/app/error/onBookChanged.tsx"
+      ],
       "app.error.onEggHatch": [
         "./packages/seed-bible/app/error/onEggHatch.tsx"
       ],
@@ -3659,6 +3806,10 @@
         "./packages/seed-bible/app/main/rootContext.tsx"
       ],
       "app.main.tempFluff": ["./packages/seed-bible/app/main/tempFluff.tsx"],
+      "app.main.themeUtils": ["./packages/seed-bible/app/main/themeUtils.tsx"],
+      "app.packager.InstallNamedPackage": [
+        "./packages/seed-bible/app/packager/InstallNamedPackage.tsx"
+      ],
       "app.packager.addDependencies": [
         "./packages/seed-bible/app/packager/addDependencies.tsx"
       ],
@@ -3695,9 +3846,6 @@
       "app.packager.getPackages": [
         "./packages/seed-bible/app/packager/getPackages.tsx"
       ],
-      "app.packager.InstallNamedPackage": [
-        "./packages/seed-bible/app/packager/InstallNamedPackage.tsx"
-      ],
       "app.packager.installPackage": [
         "./packages/seed-bible/app/packager/installPackage.tsx"
       ],
@@ -3711,11 +3859,11 @@
       "app.packager.pushBots": [
         "./packages/seed-bible/app/packager/pushBots.tsx"
       ],
-      "app.packager.readPackageJson": [
-        "./packages/seed-bible/app/packager/readPackageJson.tsx"
-      ],
       "app.packager.reInitPackage": [
         "./packages/seed-bible/app/packager/reInitPackage.tsx"
+      ],
+      "app.packager.readPackageJson": [
+        "./packages/seed-bible/app/packager/readPackageJson.tsx"
       ],
       "app.packager.runAutoPackages": [
         "./packages/seed-bible/app/packager/runAutoPackages.tsx"
@@ -3774,9 +3922,6 @@
       "components.component.Chips": [
         "./packages/seed-bible/components/component/Chips.tsx"
       ],
-      "components.component.components": [
-        "./packages/seed-bible/components/component/components.tsx"
-      ],
       "components.component.Confetti": [
         "./packages/seed-bible/components/component/Confetti.tsx"
       ],
@@ -3810,15 +3955,6 @@
       "components.component.ModelStepper": [
         "./packages/seed-bible/components/component/ModelStepper.tsx"
       ],
-      "components.component.onEggHatch": [
-        "./packages/seed-bible/components/component/onEggHatch.tsx"
-      ],
-      "components.component.onGridClick": [
-        "./packages/seed-bible/components/component/onGridClick.tsx"
-      ],
-      "components.component.onInstJoined": [
-        "./packages/seed-bible/components/component/onInstJoined.tsx"
-      ],
       "components.component.Select": [
         "./packages/seed-bible/components/component/Select.tsx"
       ],
@@ -3827,6 +3963,18 @@
       ],
       "components.component.Tooltip": [
         "./packages/seed-bible/components/component/Tooltip.tsx"
+      ],
+      "components.component.components": [
+        "./packages/seed-bible/components/component/components.tsx"
+      ],
+      "components.component.onEggHatch": [
+        "./packages/seed-bible/components/component/onEggHatch.tsx"
+      ],
+      "components.component.onGridClick": [
+        "./packages/seed-bible/components/component/onGridClick.tsx"
+      ],
+      "components.component.onInstJoined": [
+        "./packages/seed-bible/components/component/onInstJoined.tsx"
       ],
       "db.annotations.library": [
         "./packages/seed-bible/db/annotations/library.tsx"
@@ -3894,144 +4042,6 @@
       ],
       "webhook.API.textToChars": [
         "./packages/seed-bible/webhook/API/textToChars.tsx"
-      ],
-      "tabernacle.altar-of-sacrifice.onClick": [
-        "./packages/Tabernacle/tabernacle/altar-of-sacrifice/onClick.tsx"
-      ],
-      "tabernacle.ark-of-covenant.onClick": [
-        "./packages/Tabernacle/tabernacle/ark-of-covenant/onClick.tsx"
-      ],
-      "tabernacle.bars.onClick": [
-        "./packages/Tabernacle/tabernacle/bars/onClick.tsx"
-      ],
-      "tabernacle.bronze-laver.onClick": [
-        "./packages/Tabernacle/tabernacle/bronze-laver/onClick.tsx"
-      ],
-      "tabernacle.brown-curtain.onClick": [
-        "./packages/Tabernacle/tabernacle/brown-curtain/onClick.tsx"
-      ],
-      "tabernacle.front-curtain.onClick": [
-        "./packages/Tabernacle/tabernacle/front-curtain/onClick.tsx"
-      ],
-      "tabernacle.front-pillars.onClick": [
-        "./packages/Tabernacle/tabernacle/front-pillars/onClick.tsx"
-      ],
-      "tabernacle.grey-curtain.onClick": [
-        "./packages/Tabernacle/tabernacle/grey-curtain/onClick.tsx"
-      ],
-      "tabernacle.incense-altar.onClick": [
-        "./packages/Tabernacle/tabernacle/incense-altar/onClick.tsx"
-      ],
-      "tabernacle.inner-curtain.onClick": [
-        "./packages/Tabernacle/tabernacle/inner-curtain/onClick.tsx"
-      ],
-      "tabernacle.inner-pillars.onClick": [
-        "./packages/Tabernacle/tabernacle/inner-pillars/onClick.tsx"
-      ],
-      "tabernacle.manager.App": [
-        "./packages/Tabernacle/tabernacle/manager/App.tsx"
-      ],
-      "tabernacle.manager.ClearExperience": [
-        "./packages/Tabernacle/tabernacle/manager/ClearExperience.tsx"
-      ],
-      "tabernacle.manager.CreateHitboxes": [
-        "./packages/Tabernacle/tabernacle/manager/CreateHitboxes.tsx"
-      ],
-      "tabernacle.manager.DisplayApp": [
-        "./packages/Tabernacle/tabernacle/manager/DisplayApp.tsx"
-      ],
-      "tabernacle.manager.FixBotsPosition": [
-        "./packages/Tabernacle/tabernacle/manager/FixBotsPosition.tsx"
-      ],
-      "tabernacle.manager.GetFixedTitle": [
-        "./packages/Tabernacle/tabernacle/manager/GetFixedTitle.tsx"
-      ],
-      "tabernacle.manager.HandleTabernacleSectionInteraction": [
-        "./packages/Tabernacle/tabernacle/manager/HandleTabernacleSectionInteraction.tsx"
-      ],
-      "tabernacle.manager.HighlightBot": [
-        "./packages/Tabernacle/tabernacle/manager/HighlightBot.tsx"
-      ],
-      "tabernacle.manager.Initialize": [
-        "./packages/Tabernacle/tabernacle/manager/Initialize.tsx"
-      ],
-      "tabernacle.manager.onBookChanged": [
-        "./packages/Tabernacle/tabernacle/manager/onBookChanged.tsx"
-      ],
-      "tabernacle.manager.onDestroy": [
-        "./packages/Tabernacle/tabernacle/manager/onDestroy.tsx"
-      ],
-      "tabernacle.manager.onEggHatch": [
-        "./packages/Tabernacle/tabernacle/manager/onEggHatch.tsx"
-      ],
-      "tabernacle.manager.onFloatingAppRemoved": [
-        "./packages/Tabernacle/tabernacle/manager/onFloatingAppRemoved.tsx"
-      ],
-      "tabernacle.manager.onGridClick": [
-        "./packages/Tabernacle/tabernacle/manager/onGridClick.tsx"
-      ],
-      "tabernacle.manager.onGridUp": [
-        "./packages/Tabernacle/tabernacle/manager/onGridUp.tsx"
-      ],
-      "tabernacle.manager.onInstJoined": [
-        "./packages/Tabernacle/tabernacle/manager/onInstJoined.tsx"
-      ],
-      "tabernacle.manager.OnTabernacleItemClicked": [
-        "./packages/Tabernacle/tabernacle/manager/OnTabernacleItemClicked.tsx"
-      ],
-      "tabernacle.manager.OnTabernacleSectionClick": [
-        "./packages/Tabernacle/tabernacle/manager/OnTabernacleSectionClick.tsx"
-      ],
-      "tabernacle.manager.OnTabernacleSectionHover": [
-        "./packages/Tabernacle/tabernacle/manager/OnTabernacleSectionHover.tsx"
-      ],
-      "tabernacle.manager.onVerseClick": [
-        "./packages/Tabernacle/tabernacle/manager/onVerseClick.tsx"
-      ],
-      "tabernacle.manager.SetBotsVisibility": [
-        "./packages/Tabernacle/tabernacle/manager/SetBotsVisibility.tsx"
-      ],
-      "tabernacle.manager.StopFocus": [
-        "./packages/Tabernacle/tabernacle/manager/StopFocus.tsx"
-      ],
-      "tabernacle.manager.ToggleContextMenuForPiece": [
-        "./packages/Tabernacle/tabernacle/manager/ToggleContextMenuForPiece.tsx"
-      ],
-      "tabernacle.manager.TryHideCurrentPieceContextMenu": [
-        "./packages/Tabernacle/tabernacle/manager/TryHideCurrentPieceContextMenu.tsx"
-      ],
-      "tabernacle.manager.TryRecenter": [
-        "./packages/Tabernacle/tabernacle/manager/TryRecenter.tsx"
-      ],
-      "tabernacle.manager.TryUpdatePieceContextMenu": [
-        "./packages/Tabernacle/tabernacle/manager/TryUpdatePieceContextMenu.tsx"
-      ],
-      "tabernacle.manager.UpdateHighlightedWords": [
-        "./packages/Tabernacle/tabernacle/manager/UpdateHighlightedWords.tsx"
-      ],
-      "tabernacle.manager.UpdateTabernacleVisuals": [
-        "./packages/Tabernacle/tabernacle/manager/UpdateTabernacleVisuals.tsx"
-      ],
-      "tabernacle.manager.UpdateVerseOptions": [
-        "./packages/Tabernacle/tabernacle/manager/UpdateVerseOptions.tsx"
-      ],
-      "tabernacle.menorah.onClick": [
-        "./packages/Tabernacle/tabernacle/menorah/onClick.tsx"
-      ],
-      "tabernacle.purple-curtain.onClick": [
-        "./packages/Tabernacle/tabernacle/purple-curtain/onClick.tsx"
-      ],
-      "tabernacle.red-curtain.onClick": [
-        "./packages/Tabernacle/tabernacle/red-curtain/onClick.tsx"
-      ],
-      "tabernacle.rings.onClick": [
-        "./packages/Tabernacle/tabernacle/rings/onClick.tsx"
-      ],
-      "tabernacle.table-of-showbread.onClick": [
-        "./packages/Tabernacle/tabernacle/table-of-showbread/onClick.tsx"
-      ],
-      "tabernacle.walls.onClick": [
-        "./packages/Tabernacle/tabernacle/walls/onClick.tsx"
       ]
     },
     "noImplicitAny": true,
