@@ -43,5 +43,5 @@ if (authBot?.id) {
     G.setPlaylistLocale([], true);
   }
   setTag(thisBot, "bookmarks", {});
-  throw new Error("User not logged in!");
+  // throw new Error("User not logged in!");
 }
