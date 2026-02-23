@@ -15,24 +15,26 @@ const LoaderSecondary = thisBot.LoaderSecondary();
 const ImageWrapper = thisBot.ImageWrapper();
 const Chips = thisBot.Chips();
 
-globalThis.ShowNotification = thisBot.ShowNotification;
-globalThis.ComponentsBot = thisBot;
-globalThis.ImageWrapper = ImageWrapper;
+const G = globalThis as any;
+
+G.ShowNotification = thisBot.ShowNotification;
+G.ComponentsBot = thisBot;
+G.ImageWrapper = ImageWrapper;
 
 return {
-    Modal,
-    Button,
-    FloatingBanner,
-    Confetti,
-    ButtonsCover,
-    Input,
-    GlassButton,
-    Loader,
-    Highlighter,
-    ModalStepper,
-    Select,
-    Tooltip,
-    Checkbox,
-    LoaderSecondary,
-    Chips
-}
+  Modal,
+  Button,
+  FloatingBanner,
+  Confetti,
+  ButtonsCover,
+  Input,
+  GlassButton,
+  Loader,
+  Highlighter,
+  ModalStepper,
+  Select,
+  Tooltip,
+  Checkbox,
+  LoaderSecondary,
+  Chips,
+};

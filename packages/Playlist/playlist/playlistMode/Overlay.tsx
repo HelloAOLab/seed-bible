@@ -22,7 +22,7 @@ const Overlay = (props: any) => {
         className="overlay linked-item-custom"
       >
         {children}
-        {items.map((ele) => {
+        {items.map((ele: any) => {
           return (
             <div
               className={`more-menu-items ${ele.disabled ? "inactive" : ""} ${ele.noBorderBottom ? "noBorderBottom" : ""}`}

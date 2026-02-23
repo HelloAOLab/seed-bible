@@ -263,7 +263,7 @@ const CreatePlaylistUI = (props: any) => {
   const [selectedPlaylist, setSelectedPlaylist] = useState<any>({});
 
   const toggleSelectedPlaylist = (id: string, parentID?: string) => {
-    setSelectedPlaylist((prev) => {
+    setSelectedPlaylist((prev: any) => {
       const old: Record<string, boolean | string> = { ...prev };
       old[id] = old[id] ? false : parentID || true;
       return old;

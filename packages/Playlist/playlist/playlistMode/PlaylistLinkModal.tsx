@@ -290,7 +290,7 @@ const PlaylistLinkModal = () => {
             <Select
               secondary
               value={playbackListID}
-              onChangeListener={(val) => {
+              onChangeListener={(val: any) => {
                 setPlaybackListId(val);
                 setPlaylistId("");
               }}
@@ -306,7 +306,7 @@ const PlaylistLinkModal = () => {
               secondary
               disabled={PLAYLIST_OPTIONS.length < 1}
               value={playlistId}
-              onChangeListener={(val) => {
+              onChangeListener={(val: any) => {
                 setPlaylistId(val);
               }}
               name={t("selectPlaylist") + ":"}
