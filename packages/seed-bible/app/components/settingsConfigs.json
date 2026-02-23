@@ -6,7 +6,8 @@
         "disablePanels": true,
         "removeSpaces": true,
         "removeEditMode": true,
-        "removeAccountOptions": true
+        "removeAccountOptions": true,
+        "removeBibleStack": true
       },
       "onlineUsers": {
         "enabled": true,
