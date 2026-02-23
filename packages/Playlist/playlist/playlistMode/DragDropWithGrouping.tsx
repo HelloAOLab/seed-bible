@@ -73,7 +73,7 @@ const DragDrop = (props: any) => {
 
   const checklistEnabled = isPlayer || embedding;
 
-  const toBeSetItems = useRef([]);
+  const toBeSetItems = useRef<any[]>([]);
   const [dragOverSet, setDragoverSetMutate] = useState({
     position: "top",
     itemId: "null",
@@ -177,7 +177,7 @@ const DragDrop = (props: any) => {
 
     // console.log("Drag Over:", { newIndex, draggedItemIndex,originalRespectiveIndex, pseudoIndex, index });
 
-    let newItems = [];
+    let newItems: any[] = [];
 
     let filterAbleItems = {
       [draggedItemID]: true,
@@ -217,7 +217,7 @@ const DragDrop = (props: any) => {
         ),
       ];
     }
-    if (pseudoID) {
+    if (pseudoID && pseudoIndex !== null) {
       newItems[pseudoIndex].additionalInfo.layers.splice(
         newIndex,
         0,

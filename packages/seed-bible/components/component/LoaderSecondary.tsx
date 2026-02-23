@@ -1,4 +1,5 @@
-const LoaderSecondary = ({ secondary }) => {
+const LoaderSecondary = (props: any) => {
+  const { secondary } = props;
   return (
     <>
       <style>{`
