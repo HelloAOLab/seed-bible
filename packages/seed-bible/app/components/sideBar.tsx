@@ -693,7 +693,7 @@ function Tab({
   );
 }
 
-function Folder({ folder, onlineUsers, collapsed }) {
+function Folder({ folder, onlineUsers, collapsed, setSidebarWidth, setCollapsed }) {
   const {
     setActiveTab,
     activeTab,
@@ -718,6 +718,7 @@ function Folder({ folder, onlineUsers, collapsed }) {
   function handleMouseUp() {
     if (!isDragging) return;
     moveTab(Element.data.id, folder.id);
+    setIsDragging(false);
     setTabEntered(false);
   }
   const OPTIONS = {
@@ -822,6 +823,7 @@ function SideBar({ panelsNumber }) {
   const [onlineUsers, setOnlineUsers] = useState(false);
   globalThis.SetOnlineUsers = setOnlineUsers;
   const [showSearch, setShowSearch] = useState(false); // New state for search visibility
+  const [searchQuery, setSearchQuery] = useState(""); // Search filter for tabs
   const [editMode, setEditMode] = useState(false); // New state for edit mode
   const [keepAwake, setKeepAwake] = useState(false); // New state for keep device awaken
   useEffect(() => {
@@ -997,6 +999,7 @@ function SideBar({ panelsNumber }) {
 
   // Toggle search visibility function
   const toggleSearchVisibility = () => {
+    if (showSearch) setSearchQuery("");
     setShowSearch(!showSearch);
   };
 
@@ -1247,12 +1250,12 @@ function SideBar({ panelsNumber }) {
           os.openURL("https://forms.gle/mhtqbQd6VPW8ZDh2A");
         },
       },
-      {
-        disabled: true,
-        icon: <MenuIcon name="help" />,
-        title: t("help"),
-        onClick: () => {},
-      },
+      // {
+      //   disabled: true,
+      //   icon: <MenuIcon name="help" />,
+      //   title: t("help"),
+      //   onClick: () => { },
+      // },
     ],
   };
 
@@ -1547,7 +1550,11 @@ function SideBar({ panelsNumber }) {
             {showSearch && (
               <div className="searchSection">
                 <span className="material-symbols-outlined">search</span>
-                <input placeholder="Search..." />
+                <input
+                  placeholder="Search..."
+                  value={searchQuery}
+                  onChange={(e) => setSearchQuery(e.target.value)}
+                />
               </div>
             )}
             {!configBot.tags.staticInst && <UserPresence />}
@@ -1616,10 +1623,12 @@ function SideBar({ panelsNumber }) {
         )}
         {folders.map((folder) => (
           <Folder
+            key={folder.id}
             onlineUsers={onlineUsers}
             folder={folder}
             collapsed={collapsed}
-            editMode={editMode}
+            setSidebarWidth={setSidebarWidth}
+            setCollapsed={setCollapsed}
           />
         ))}
         {folders.length > 0 && (
@@ -1692,9 +1701,10 @@ function SideBar({ panelsNumber }) {
                     icon: <MenuIcon name="folder" />,
                     title: `Add to ${item.name}`,
                     onClick: () => {
-                      console.log(tabs.map((e) => selectedTabs.includes(e.id)));
                       moveMultipleTabs(selectedTabs, item.id);
+                      setSelectedTabs([]);
                       setMultiSelectMode(false);
+                      closePopupSettings();
                     },
                   });
                 });
@@ -1754,6 +1764,21 @@ function SideBar({ panelsNumber }) {
         >
           {tabs
             .filter((tab) => !tab.sharedTab)
+            .filter((tab) => {
+              if (!searchQuery) return true;
+              const query = searchQuery.toLowerCase();
+              const name = tab?.data?.book || tab?.data?.title || "";
+              const chapter = tab?.data?.chapter ? String(tab.data.chapter) : "";
+              const shortName = tab?.data?.shortName || "";
+              const type = tab?.data?.type || "";
+              return (
+                name.toLowerCase().includes(query) ||
+                chapter.includes(query) ||
+                shortName.toLowerCase().includes(query) ||
+                type.toLowerCase().includes(query) ||
+                `${name} - ${chapter}`.toLowerCase().includes(query)
+              );
+            })
             .map((el, index) => (
               <Tab
                 key={el.id}
@@ -2106,14 +2131,14 @@ export const UserProfile = ({ collapsed }) => {
           overflow: "hidden",
         }}
       >
-        {userData?.photoLink ? (
+        {!configBot.tags.staticInst && userData?.photoLink ? (
           <img
             style={{ "border-radius": "50%", width: "35px", border: "" }}
             src={userData?.photoLink}
           />
-        ) : (
+        ) : !configBot.tags.staticInst ? (
           <Icon width={15} height={15} />
-        )}
+        ) : <span className="material-symbols-outlined">person</span>}
       </div>
       {
         null /*userData?.photoLink ? (
