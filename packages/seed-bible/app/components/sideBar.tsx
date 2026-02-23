@@ -2095,14 +2095,14 @@ export const UserProfile = ({ collapsed }) => {
           overflow: "hidden",
         }}
       >
-        {userData?.photoLink ? (
+        {!configBot.tags.staticInst && userData?.photoLink ? (
           <img
             style={{ "border-radius": "50%", width: "35px", border: "" }}
             src={userData?.photoLink}
           />
-        ) : (
+        ) : !configBot.tags.staticInst ? (
           <Icon width={15} height={15} />
-        )}
+        ) : <span className="material-symbols-outlined">person</span>}
       </div>
       {
         null /*userData?.photoLink ? (
