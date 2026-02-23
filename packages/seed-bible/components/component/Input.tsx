@@ -1,5 +1,4 @@
 const { useCallback, useState } = os.appHooks;
-const G = globalThis as any;
 const Input = (props: any) => {
   const {
     value,
@@ -42,7 +41,7 @@ const Input = (props: any) => {
               transform: `translateY(-50%)`,
             }}
             onClick={() => {
-              G.setHide((p: any) => !p);
+              (globalThis as any).setHide((p: any) => !p);
             }}
           >
             {icon}

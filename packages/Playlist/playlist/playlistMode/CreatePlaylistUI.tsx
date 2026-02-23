@@ -5,11 +5,7 @@
 
 const { useState, useLayoutEffect, useRef, useMemo } = os.appHooks;
 const G = globalThis as any;
-const { Input, Modal, Button, ButtonsCover, Checkbox, Tooltip, Select } =
-  G.Components;
-
-const ChecklistGIf =
-  "https://auth-aux-aobot-prod-filesbucket-141297942820.s3.amazonaws.com/aoBot/90e85308635064b3d0fdaa9c220b8547a9467a10affe3cf22f06ad6b26fbf0a1.gif";
+const { Input, Modal, Button, ButtonsCover, Tooltip, Select } = G.Components;
 
 const PlaylistList = await thisBot.PlaylistList();
 const AttachLink = await thisBot.AttachLink();
@@ -19,8 +15,6 @@ const ProjectMode = await thisBot.ProjectMode();
 const VideoPlayer = await thisBot.VideoSmallScreen();
 const AudioPlayer = await thisBot.AudioPlayer();
 const TogglePlaylistHeight = await thisBot.TogglePlaylistHeight();
-
-import { CustomAnnotationTextEditor } from "playlist.playlistMode.CustomAnnotationTextEditor";
 
 G.DEFAULT_UPLOAD_ICON =
   "https://auth-aux-aobot-prod-filesbucket-141297942820.s3.amazonaws.com/aoBot/67bba604a31cc7e116124f92179d8fe06317fcf70a3c62f071dff529362ebc25.png";

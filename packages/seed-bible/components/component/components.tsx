@@ -18,7 +18,7 @@ const Chips = thisBot.Chips();
 const G = globalThis as any;
 
 G.ShowNotification = thisBot.ShowNotification;
-G.ComponentsBot = thisBot;
+G.Components = thisBot;
 G.ImageWrapper = ImageWrapper;
 
 return {

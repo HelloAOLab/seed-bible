@@ -1,21 +1,20 @@
 const LoaderSecondary = thisBot.LoaderSecondary();
 
-const Button = (props: any) => {
-  const {
-    children,
-    loading,
-    onClick,
-    isOutline = false,
-    isDisabled,
-    secondaryAlt,
-    small,
-    exClass = "",
-    secondary = false,
-    color = "",
-    backgroundColor = "",
-    style = {},
-    varient = "",
-  } = props;
+const Button = ({
+  children,
+  loading,
+  onClick,
+  isOutline = false,
+  isDisabled,
+  secondaryAlt,
+  small,
+  exClass = "",
+  secondary = false,
+  color = "",
+  backgroundColor = "",
+  style = {},
+  varient = "",
+}) => {
   return (
     <>
       <style>{thisBot.tags["button.css"]}</style>
