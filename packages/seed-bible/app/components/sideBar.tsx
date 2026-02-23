@@ -821,6 +821,7 @@ function SideBar({ panelsNumber }) {
   const [onlineUsers, setOnlineUsers] = useState(false);
   globalThis.SetOnlineUsers = setOnlineUsers;
   const [showSearch, setShowSearch] = useState(false); // New state for search visibility
+  const [searchQuery, setSearchQuery] = useState(""); // Search filter for tabs
   const [editMode, setEditMode] = useState(false); // New state for edit mode
   const [keepAwake, setKeepAwake] = useState(false); // New state for keep device awaken
   useEffect(() => {
@@ -996,6 +997,7 @@ function SideBar({ panelsNumber }) {
 
   // Toggle search visibility function
   const toggleSearchVisibility = () => {
+    if (showSearch) setSearchQuery("");
     setShowSearch(!showSearch);
   };
 
@@ -1246,12 +1248,12 @@ function SideBar({ panelsNumber }) {
           os.openURL("https://forms.gle/mhtqbQd6VPW8ZDh2A");
         },
       },
-      {
-        disabled: true,
-        icon: <MenuIcon name="help" />,
-        title: t("help"),
-        onClick: () => { },
-      },
+      // {
+      //   disabled: true,
+      //   icon: <MenuIcon name="help" />,
+      //   title: t("help"),
+      //   onClick: () => { },
+      // },
     ],
   };
 
@@ -1545,7 +1547,11 @@ function SideBar({ panelsNumber }) {
             {showSearch && (
               <div className="searchSection">
                 <span className="material-symbols-outlined">search</span>
-                <input placeholder="Search..." />
+                <input
+                  placeholder="Search..."
+                  value={searchQuery}
+                  onChange={(e) => setSearchQuery(e.target.value)}
+                />
               </div>
             )}
             {!configBot.tags.staticInst && <UserPresence />}
@@ -1752,6 +1758,21 @@ function SideBar({ panelsNumber }) {
         >
           {tabs
             .filter((tab) => !tab.sharedTab)
+            .filter((tab) => {
+              if (!searchQuery) return true;
+              const query = searchQuery.toLowerCase();
+              const name = tab?.data?.book || tab?.data?.title || "";
+              const chapter = tab?.data?.chapter ? String(tab.data.chapter) : "";
+              const shortName = tab?.data?.shortName || "";
+              const type = tab?.data?.type || "";
+              return (
+                name.toLowerCase().includes(query) ||
+                chapter.includes(query) ||
+                shortName.toLowerCase().includes(query) ||
+                type.toLowerCase().includes(query) ||
+                `${name} - ${chapter}`.toLowerCase().includes(query)
+              );
+            })
             .map((el, index) => (
               <Tab
                 key={el.id}
