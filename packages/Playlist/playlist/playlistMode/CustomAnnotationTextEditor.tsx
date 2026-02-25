@@ -2529,8 +2529,8 @@ function clamp(n: any, a: any, b: any) {
 function escapeHTML(s: any) {
   return s.replace(
     /[&<>"]/g,
-    (c: any) =>
-      (({ "&": "&amp;", "<": "&lt;", ">": "&gt;", '"': "&quot;" }) as any)[c]
+    (c: string) =>
+      (({ "&": "&amp;", "<": "&lt;", ">": "&gt;", '"': "&quot;" }) as const)[c]
   );
 }
 
