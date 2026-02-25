@@ -77,7 +77,7 @@ const PlaylistRowItem = (props: any) => {
     shareProfileName,
     oldItemsMap = {},
     checkListData,
-    selectedPlaylists,
+    selectedPlaylists = {},
     selectPlaylist = false,
     setSelectPlaylist,
     playlistParentName = "",
@@ -116,6 +116,7 @@ const PlaylistRowItem = (props: any) => {
     selectedTags,
     isLayers,
     access,
+    onSelectPlaylist = null,
   } = props;
   const isCustomIcons = icon?.startsWith("https") || isCustomIcon;
   const [warningMessage, setWarningMsg] = useState(null);
@@ -487,6 +488,9 @@ const PlaylistRowItem = (props: any) => {
 
             G.LastClickX = x;
             G.LastClickY = y;
+            if (onSelectPlaylist) {
+              return;
+            }
             setShowMoreOptions((p) => !p);
           }}
           onTouchStart={handleTouchStart}
@@ -497,6 +501,11 @@ const PlaylistRowItem = (props: any) => {
             width: "100%",
             position: "relative",
             zIndex: "2",
+          }}
+          onClick={() => {
+            if (onSelectPlaylist) {
+              onSelectPlaylist(id);
+            }
           }}
         >
           {selectPlaylist && (
@@ -570,122 +579,124 @@ const PlaylistRowItem = (props: any) => {
           </h4>
         </div>
 
-        <div
-          style={{
-            position: "absolute",
-            top: "50%",
-            right: "1rem",
-            transform: "translateY(-50%)",
-            display: "flex",
-            alignItems: "center",
-            gap: "0.25rem",
-            color: "#D36433",
-            zIndex: "11",
-          }}
-        >
-          {loading && <LoaderSecondary />}
-          {!!copyURL && (
-            <span
-              class="material-symbols-outlined unfollow"
-              style={{
-                fontSize: "1.5rem",
-                color: "inherit",
-                cursor: "pointer",
-              }}
-              onClick={() => {
-                os.setClipboard(copyURL);
-                ShowNotification({
-                  message: t("shareURLCopied"),
-                  severity: "success",
-                });
-              }}
-            >
-              copy_all
-            </span>
-          )}
-          <div></div>
-          {false && !creatingPlaylist && !viewOnly && (
-            <span
-              style={ButtonStyle}
-              onClick={() => {
-                setShowMoreOptions((p) => !p);
-              }}
-              class="material-symbols-outlined unfollow"
-            >
-              more_vert
-            </span>
-          )}
-          <CircleProgress id={id} progress={`${percentageCompleted}`} />
-          {!creatingPlaylist && !viewOnly ? (
-            !isPlayingPLaylist || true ? (
+        {!onSelectPlaylist && (
+          <div
+            style={{
+              position: "absolute",
+              top: "50%",
+              right: "1rem",
+              transform: "translateY(-50%)",
+              display: "flex",
+              alignItems: "center",
+              gap: "0.25rem",
+              color: "#D36433",
+              zIndex: "11",
+            }}
+          >
+            {loading && <LoaderSecondary />}
+            {!!copyURL && (
               <span
-                style={{
-                  ...ButtonStyle,
-                  fontSize: "1.97rem",
-                  color: "#000000",
-                  top: "51%",
-                  position: "absolute",
-                  right: "0%",
-                  transform: `translate(0%, -50%)`,
-                  backgroundColor: "var(--themeSideMenu)",
-                }}
                 class="material-symbols-outlined unfollow"
+                style={{
+                  fontSize: "1.5rem",
+                  color: "inherit",
+                  cursor: "pointer",
+                }}
                 onClick={() => {
-                  thisBot.Playlistplaying({
-                    playingPlaylist: playListSubId || id,
-                    startIndex: playListSubIndex !== null ? index : 0,
-                    startSubIndex: playListSubIndex !== null ? 0 : -1,
-                    parentId,
-                    name: name,
+                  os.setClipboard(copyURL);
+                  ShowNotification({
+                    message: t("shareURLCopied"),
+                    severity: "success",
                   });
-                  setIsPlay(true);
-                  setTimeout(() => {
-                    setIsPlay(false);
-                    setTimeout(() => {
-                      setIsPlay(true);
-                      setTimeout(() => {
-                        setIsPlay(false);
-                      }, 150);
-                    }, 150);
-                  }, 150);
-
-                  // SetPlayingPlaylist(playListSubId || id);
-                  // toggleOpen();
-                  // thisBot.showInfo(`Playing Playlist!`);
                 }}
               >
-                play_circle
+                copy_all
               </span>
-            ) : (
-              <>
+            )}
+            <div></div>
+            {false && !creatingPlaylist && !viewOnly && (
+              <span
+                style={ButtonStyle}
+                onClick={() => {
+                  setShowMoreOptions((p) => !p);
+                }}
+                class="material-symbols-outlined unfollow"
+              >
+                more_vert
+              </span>
+            )}
+            <CircleProgress id={id} progress={`${percentageCompleted}`} />
+            {!creatingPlaylist && !viewOnly && !onSelectPlaylist ? (
+              !isPlayingPLaylist || true ? (
                 <span
                   style={{
                     ...ButtonStyle,
-                    color: "#139981",
-                  }}
-                  onClick={() => {
-                    // os.unregisterApp("playing-playlist");
-                    G.ToggleGreyCheckPLayingPlaylist &&
-                      G.ToggleGreyCheckPLayingPlaylist(null);
-                    // thisBot.showInfo(`History Mode!`);
+                    fontSize: "1.97rem",
+                    color: "#000000",
+                    top: "51%",
+                    position: "absolute",
+                    right: "0%",
+                    transform: `translate(0%, -50%)`,
+                    backgroundColor: "var(--themeSideMenu)",
                   }}
                   class="material-symbols-outlined unfollow"
-                >
-                  pause_circle
-                </span>
-                <span
-                  style={{
-                    fontSize: "12px",
-                    fontWeight: "400",
-                    color: "#139981",
+                  onClick={() => {
+                    thisBot.Playlistplaying({
+                      playingPlaylist: playListSubId || id,
+                      startIndex: playListSubIndex !== null ? index : 0,
+                      startSubIndex: playListSubIndex !== null ? 0 : -1,
+                      parentId,
+                      name: name,
+                    });
+                    setIsPlay(true);
+                    setTimeout(() => {
+                      setIsPlay(false);
+                      setTimeout(() => {
+                        setIsPlay(true);
+                        setTimeout(() => {
+                          setIsPlay(false);
+                        }, 150);
+                      }, 150);
+                    }, 150);
+
+                    // SetPlayingPlaylist(playListSubId || id);
+                    // toggleOpen();
+                    // thisBot.showInfo(`Playing Playlist!`);
                   }}
                 >
-                  {t("nowPlaying")}
+                  play_circle
                 </span>
-              </>
-            )
-          ) : null}
-        </div>
+              ) : (
+                <>
+                  <span
+                    style={{
+                      ...ButtonStyle,
+                      color: "#139981",
+                    }}
+                    onClick={() => {
+                      // os.unregisterApp("playing-playlist");
+                      G.ToggleGreyCheckPLayingPlaylist &&
+                        G.ToggleGreyCheckPLayingPlaylist(null);
+                      // thisBot.showInfo(`History Mode!`);
+                    }}
+                    class="material-symbols-outlined unfollow"
+                  >
+                    pause_circle
+                  </span>
+                  <span
+                    style={{
+                      fontSize: "12px",
+                      fontWeight: "400",
+                      color: "#139981",
+                    }}
+                  >
+                    {t("nowPlaying")}
+                  </span>
+                </>
+              )
+            ) : null}
+          </div>
+        )}
         <div
           style={{
             height: id === opendedList ? "auto" : "0",

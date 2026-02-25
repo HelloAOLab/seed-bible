@@ -140,5 +140,8 @@
   "pentateuch": "Vitabu vitano vya Musa",
   "historical": "Historia",
   "poetic": "Mashairi",
-  "prophetic": "Unabii"
+  "prophetic": "Unabii",
+  "addToPlaylist": "Ongeza kwenye orodha",
+  "addToNew": "Ongeza kwenye mpya",
+  "itemsAddedToPlaylistSuccessfully": "Vipengele vimeongezwa kwenye orodha kwa mafanikio."
 }

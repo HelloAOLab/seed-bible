@@ -67,6 +67,7 @@ const DragDrop = (props: any) => {
     isCustomColor,
     description,
     isCustomIcon,
+    onSelectPlaylist = null,
   } = props;
 
   const [opendedList, setOpenedList] = useState("");

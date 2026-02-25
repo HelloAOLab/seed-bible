@@ -22,6 +22,7 @@ const ShowPlayingContentAnnotation =
   await thisBot.ShowPlayingContentAnnotation();
 const EditRichText = await thisBot.EditRichText();
 const EditAttachment = await thisBot.EditAttachment();
+const AddToPlaylist = await thisBot.AddToPlaylist();
 
 const bibleVizUtils = getBot("system", "bibleVizUtils.main");
 
@@ -32,6 +33,8 @@ if (bibleVizUtils) {
 
 const Playlist = () => {
   const IsPlaylistPlaying = G.IsPlaylistPlaying;
+
+  const [showAddToPlaylist, setShowAddToPlaylist] = useState(false);
 
   const [createOptions, setCreateOptions] = useState(false);
   const showPlaylistPosition = useRef(
@@ -405,6 +408,7 @@ const Playlist = () => {
     G.CloseVideoOverlay = () => setShowVideoOverlay(false);
     G.SetEditAnnoData = setEditAnnoData;
     G.SetAnnotationData = setAnnotationData;
+    G.SetShowAddToPlaylist = setShowAddToPlaylist;
     G.SetTab = setTab;
     G.SetEditRichText = setEditRichText;
     G.SetEditAttachmentItem = setEditAttachmentItem;
@@ -463,6 +467,7 @@ const Playlist = () => {
       G.SetVideoSrc && G.SetVideoSrc(null);
       G.SetAnnotationData = null;
       G.SetPlaylistForforcedHeight && G.SetPlaylistForforcedHeight(0);
+      G.SetShowAddToPlaylist = null;
     };
   }, []);
 
@@ -960,6 +965,12 @@ const Playlist = () => {
                 </div>
               )}
             </div>
+            {showAddToPlaylist && (
+              <AddToPlaylist
+                id="default"
+                onClose={() => setShowAddToPlaylist(false)}
+              />
+            )}
           </div>
         </ProjectProvider>
         {!!isLayers && !playingPlaylist && !editData.id && (

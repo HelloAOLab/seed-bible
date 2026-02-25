@@ -140,5 +140,8 @@
   "pentateuch": "ሓሙሽተ መጻሕፍቲ ሙሴ",
   "historical": "ታሪኻዊ",
   "poetic": "ግጥማዊ",
-  "prophetic": "ትንቢታዊ"
+  "prophetic": "ትንቢታዊ",
+  "addToPlaylist": "ናብ ዝርዝር ወስኽ",
+  "addToNew": "ናብ ሓድሽ ወስኽ",
+  "itemsAddedToPlaylistSuccessfully": "እቃታት ናብ ዝርዝር ብዓወት ተወሲዶም።"
 }
