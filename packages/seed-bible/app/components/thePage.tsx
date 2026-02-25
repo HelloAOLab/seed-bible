@@ -1695,7 +1695,8 @@ function ThePage({
             <span
               style={{
                 fontSize: "24px",
-                color: "color-mix(in srgb, var(--text1), transparent 40%)",
+                color:
+                  "color-mix(in srgb, var(--pageTextColor), transparent 40%)",
               }}
               onClick={(e) => {
                 e.stopPropagation();

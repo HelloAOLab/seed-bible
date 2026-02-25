@@ -626,7 +626,9 @@ export function VerseToolbar({
                       {option.icon}
                     </div>
                     {selectionSettings.showIconText && (
-                      <span style={{ color: "var(--text1) !important" }}>
+                      <span
+                        style={{ color: "var(--pageTextColor) !important" }}
+                      >
                         {typeof option.title === "function"
                           ? option.title(clickedVersesContext)
                           : option.title}
@@ -871,6 +873,7 @@ const SubOptions = ({ items }) => {
   flex-direction: column;
   background: var(--primaryColor) !important;
   align-items: center;
+  border: 1px solid #1A1A1A;
   gap: 2px;
   border-radius: 10px;
   scrollbar-width: none;
@@ -887,7 +890,7 @@ const SubOptions = ({ items }) => {
   align-items: center;
   width: 100%;
   background: rgba(var(--text1), 0.9);
-  color: var(--text1);
+  color: var(--pageTextColor);
   font-family: "Satoshi", system-ui, sans-serif;
   font-size: 14px;
   font-style: normal;
@@ -899,7 +902,7 @@ const SubOptions = ({ items }) => {
 }
 
 .popupSettings2 .itemSettings2:hover {
-  background: rgba(var(--text1), 0.3);
+  background: rgba(var(--pageTextColor), 0.3);
 }
         `}
       </style>

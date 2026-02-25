@@ -121,7 +121,7 @@
   margin-bottom: var(--text-bookchapter-margin-bottom);
   margin-left: var(--text-bookchapter-margin-left);
   margin-right: var(--text-bookchapter-margin-right);
-  color: var(--bookHeadingColor, var(--pageTextColor));
+  color: var(--pageTextColor);
 }
 
 .sectionTitle {
@@ -129,7 +129,7 @@
     --scripture-chapterHeading-font,
     var(--text-heading-font, "Plus Jakarta Sans", sans-serif)
   );
-  color: var(--chapterHeadingColor, var(--pageTextColor)) !important;
+  color: var(--pageTextColor) !important;
   font-size: var(--scripture-chapterHeading-size, 18px);
   font-style: var(--text-heading-font-style);
   font-weight: var(--text-heading-weight);
@@ -216,7 +216,7 @@
 }
 
 .sectionTextNumber {
-  color: var(--verseNumberColor, #06b6d4);
+  color: var(--pageTextColor);
   font-family: var(
     --scripture-verseNumber-font,
     "Plus Jakarta Sans",
@@ -277,6 +277,7 @@
   position: relative;
   align-items: center;
   gap: 2px;
+  color: var(--pageTextColor);
   font-size: 10px;
 }
 

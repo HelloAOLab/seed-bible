@@ -168,7 +168,7 @@
   gap: 16px;
   margin-top: 15px;
   justify-content: space-between;
-  color: var(--spaceNameText, var(--text1));
+  color: var(--pageTextColor);
   font-weight: 700;
   margin-bottom: 27px;
   align-items: center;
@@ -384,7 +384,7 @@
 
 .icon-button {
   cursor: pointer;
-  color: var(--settingsIcon, var(--text1));
+  color: var(--settingsIcon, var(--pageTextColor));
   font-size: var(--sideMenu-icons-size, 24px);
 }
 

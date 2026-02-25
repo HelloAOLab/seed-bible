@@ -133,7 +133,7 @@
 .form-label {
   font-size: 15px;
   font-weight: 700;
-  color: var(--text1);
+  color: var(--pageTextColor);
   margin-bottom: 10px;
   display: block;
 }
@@ -147,25 +147,21 @@
 .form-input {
   width: 100%;
   padding: 14px 16px;
-  background-color: #e6e6e6;
+  background-color: var(--primaryColor) 50;
   border: none;
   border-radius: 10px;
   font-family: var(--input-title-font, "DM Sans", sans-serif);
   font-size: var(--input-title-size, 15px);
-  color: #333;
+  color: var(--pageTextColor);
   outline: none;
   transition: background-color 0.2s;
   box-sizing: border-box;
 }
 
-.form-input:focus {
-  background-color: #e0e0e0;
-}
-
 .form-input::placeholder {
   font-family: var(--input-placeholder-font, "DM Sans", sans-serif);
   font-size: var(--input-placeholder-size, 15px);
-  color: #999;
+  color: var(--pageTextColor);
 }
 
 .profile-textarea {

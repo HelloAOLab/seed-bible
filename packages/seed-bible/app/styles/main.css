@@ -12,7 +12,7 @@ body {
 }
 
 .material-symbols-outlined {
-  color: var(--iconColor) !important;
+  color: var(--pageTextColor) !important;
 }
 .coloredIcon,
 svg,

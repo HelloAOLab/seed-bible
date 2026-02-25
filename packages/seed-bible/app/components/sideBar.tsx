@@ -693,7 +693,13 @@ function Tab({
   );
 }
 
-function Folder({ folder, onlineUsers, collapsed, setSidebarWidth, setCollapsed }) {
+function Folder({
+  folder,
+  onlineUsers,
+  collapsed,
+  setSidebarWidth,
+  setCollapsed,
+}) {
   const {
     setActiveTab,
     activeTab,
@@ -1052,7 +1058,7 @@ function SideBar({ panelsNumber }) {
           style={{
             textAlign: "left",
             marginBottom: "10px",
-            color: themeColors ? themeColors[1].text1 : "#1A1A1A",
+            color: themeColors ? themeColors[1].pageTextColor : "#1A1A1A",
             "font-family": "'Satoshi', system-ui, sans-serif",
             "font-size": "16px",
             "font-style": "normal",
@@ -1481,7 +1487,7 @@ function SideBar({ panelsNumber }) {
                 <span
                   style={{
                     paddingTop: customScreens?.value >= 2 ? "3px" : "0px",
-                    color: "var(--selectPanelIcon, var(--text1))",
+                    color: "var(--selectPanelIcon, var(--pageTextColor))",
                     display: hidePanels ? "none" : "",
                     height: "22px",
                   }}
@@ -1576,7 +1582,7 @@ function SideBar({ panelsNumber }) {
               />
             )}
             <div className="tabsContainer">
-              <span>{t("tabs")}</span>
+              <span style={{ color: "var(--pageTextColor)" }}>{t("tabs")}</span>
               <div
                 style={{ display: "flex", alignItems: "center", gap: "5px" }}
               >
@@ -1768,7 +1774,9 @@ function SideBar({ panelsNumber }) {
               if (!searchQuery) return true;
               const query = searchQuery.toLowerCase();
               const name = tab?.data?.book || tab?.data?.title || "";
-              const chapter = tab?.data?.chapter ? String(tab.data.chapter) : "";
+              const chapter = tab?.data?.chapter
+                ? String(tab.data.chapter)
+                : "";
               const shortName = tab?.data?.shortName || "";
               const type = tab?.data?.type || "";
               return (
@@ -2138,7 +2146,9 @@ export const UserProfile = ({ collapsed }) => {
           />
         ) : !configBot.tags.staticInst ? (
           <Icon width={15} height={15} />
-        ) : <span className="material-symbols-outlined">person</span>}
+        ) : (
+          <span className="material-symbols-outlined">person</span>
+        )}
       </div>
       {
         null /*userData?.photoLink ? (
