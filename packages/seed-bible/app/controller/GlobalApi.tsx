@@ -1,3 +1,6 @@
+import { EventController } from "app.controller.EventController";
+import type { GlobalHookEventSpec } from "app.contract.globalHooks";
+
 export interface GlobalApiProperties {
   /**
    * Whether the app has finished starting up successfully.
@@ -7,6 +10,12 @@ export interface GlobalApiProperties {
    * The default portal name to use for the grid and map portals.
    */
   defaultPortalName: string;
+
+  /**
+   * A controller for managing global events across the app.
+   * This is a simple pub/sub system that can be used to communicate between different parts of the app without having to pass props down through multiple levels of components.
+   */
+  hooks: EventController<GlobalHookEventSpec>;
 
   spaceLayouts: Record<string, any>; // To store layout per space
 
@@ -23,17 +32,17 @@ export interface GlobalApiMethods {
   openPrevChapter: () => void;
 
   /**
-   * Updates the canvas controller style with position's and size based on the known bounds of the main canvas element.
+   * Updates the canvas style with position's and size based on the known bounds of the main canvas element.
    * Also updates the grid portal tag based on whether or not the canvas was found.
    * TODO: This should be refactored to be concerned only with the canvas, and the grid portal tag update should be moved to a separate method.
    */
-  updateCanvasControllerStyleAndGridPortal: () => void;
+  updateCanvasStyleAndGridPortal: () => void;
 
   /**
-   * A method to set the canvas controller positions directly.
-   * @param positions An object containing left, top, width, height, and borderRadius to set on the canvas controller.
+   * A method to set the canvas style positions directly.
+   * @param positions An object containing left, top, width, height, and borderRadius to set on the canvas style.
    */
-  setCanvasControllerPositions: (positions: {
+  setCanvasStylePositions: (positions: {
     left: number;
     top: number;
     width: number;
@@ -53,8 +62,14 @@ export class TempGlobalAPI implements GlobalApi {
   private _defaultPortalName: string = "";
   private _spaceLayouts: Record<string, any> = {};
   private _spaceScreens: Record<string, any> = {};
+  private _hooks: EventController<GlobalHookEventSpec> =
+    new EventController<GlobalHookEventSpec>();
 
   constructor() {}
+
+  get hooks(): EventController<GlobalHookEventSpec> {
+    return this._hooks;
+  }
 
   checkToolbarOverflow() {}
   open() {}
@@ -90,24 +105,24 @@ export class TempGlobalAPI implements GlobalApi {
     this._spaceScreens = value;
   }
 
-  setCanvasControllerPositions(positions: {
+  setCanvasStylePositions(positions: {
     left: number;
     top: number;
     width: number;
     height: number;
     borderRadius: string;
   }) {
-    this.SetCanvasPositions(positions);
+    this.hooks.emit("setCanvasStylePositions", positions);
   }
 
-  updateCanvasControllerStyleAndGridPortal() {
+  updateCanvasStyleAndGridPortal() {
     const bounds = getLastMainCanvasBounds();
     if (!bounds) {
       refactorme_WhenNoCanvas();
       return;
     }
     refactorme_WhenCanvas(this.defaultPortalName);
-    this.setCanvasControllerPositions({
+    this.setCanvasStylePositions({
       left: bounds.left,
       top: bounds.top,
       width: bounds.width,
