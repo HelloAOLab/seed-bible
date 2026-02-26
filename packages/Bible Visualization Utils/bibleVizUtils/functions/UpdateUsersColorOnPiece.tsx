@@ -1,3 +1,5 @@
+import { PieceActivityService } from "bibleVizUtils.services.PieceActivityService";
+
 const { piece, pieces, manager, source = "Unknown" } = that;
 
 if (!manager.vars.tabsContext) return [];
@@ -14,9 +16,8 @@ const maxAmountOfColors = 4;
 const { color: myUserColor } = globalThis?.GetOrSetVisualInTags(configBot.id);
 
 for (const fixedPiece of fixedPieces) {
-  const currUsersColor = thisBot.GetCurrentUsersColorForPiece({
-    piece: fixedPiece,
-  });
+  const currUsersColor =
+    PieceActivityService.getActivityIndicatorsForPiece(fixedPiece);
   let selectionsPiece;
   let userColorScales;
   let extraUsersContentScales;
@@ -59,9 +60,8 @@ for (const fixedPiece of fixedPieces) {
       break;
   }
 
-  const pieceActivity = thisBot.GetActivityForPiece({
+  const pieceActivity = PieceActivityService.getPieceActivity({
     piece: selectionsPiece,
-    tabsContext: manager.vars.tabsContext,
   });
 
   if (

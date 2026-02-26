@@ -1,3 +1,6 @@
+import { PieceActivityService } from "bibleVizUtils.services.PieceActivityService";
+import { computeNotificationDirection } from "bibleVizUtils.functions.index";
+
 const { piecesData, manager } = that;
 
 if (!manager.vars.tabsContext) return;
@@ -11,13 +14,13 @@ const fixedElementsData = piecesData.filter((currPieceData) => {
 const { color: myUserColor } = globalThis?.GetOrSetVisualInTags(configBot.id);
 
 for (const pieceData of fixedElementsData) {
-  const pieceActivity = thisBot.GetActivityForPiece({
+  const pieceActivity = PieceActivityService.getPieceActivity({
     piece: pieceData.piece,
-    tabsContext: manager.vars.tabsContext,
   });
   let isPieceSelected = false;
-  const relativeDirection =
-    BibleVizUtils.Functions.GetDirectionForNotification();
+  const relativeDirection = computeNotificationDirection(
+    gridPortalBot.tags.cameraRotationZ
+  );
   let direction;
 
   switch (true) {

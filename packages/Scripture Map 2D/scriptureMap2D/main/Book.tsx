@@ -19,7 +19,6 @@ import { BibleVizDataRepository } from "bibleVizUtils.data.BibleVizDataRepositor
 import type { BookStaticInfo } from "bibleVizUtils.data.BibleVizDataRepository";
 import type { Range, TooltipAnchor, BookType } from "scriptureMap2D.main.types";
 import {
-  ConvertDividedPsalmsToComplete,
   GetHistoryColorByReadingTime,
   GetHistoryColorByRecency,
   GetHistoryColorLinearGradient,
@@ -29,6 +28,7 @@ import {
   type HexString,
   type WeightedColor,
 } from "bibleVizUtils.functions.index";
+import { scriptureService } from "bibleVizUtils.services.index";
 
 const { useMemo, useState, useEffect } = os.appHooks;
 const { memo } = os.appCompat;
@@ -529,7 +529,7 @@ export const Book = memo<BookType>(
         }
 
         if (isPsalms) {
-          ({ chapter } = ConvertDividedPsalmsToComplete({
+          ({ chapter } = scriptureService.convertDividedPsalmsToComplete({
             book,
             chapter,
           }));

@@ -1,3 +1,23 @@
+import type fontsData from "./fonts.json";
+import {
+  StackPieceMeasurements,
+  type StackPieceMeasurementsType,
+} from "bibleVizUtils.data.StackPieceMeasurements";
+import {
+  StackSpacings,
+  type StackSpacingsType,
+} from "bibleVizUtils.data.StackSpacings";
+import {
+  BibleLayoutMeasurements,
+  type BibleLayoutMeasurementsType,
+} from "bibleVizUtils.data.BibleLayoutMeasurements";
+
+type FontsSchema = typeof fontsData;
+
+type FontName = keyof FontsSchema;
+
+type FontData = FontsSchema[FontName];
+
 interface ChapterInfo {
   amountOfVerses: number;
   number: number;
@@ -18,32 +38,6 @@ interface BookStaticInfo {
 interface BooksStaticInfo {
   [book: string]: BookStaticInfo;
 }
-
-interface BibleLayoutMeasurements {
-  Book2DMaxColumns: number;
-  Book3DMaxAmountOfColumns: number;
-  Book3DScaleX: number;
-  BookHorizontalGap: number;
-  BookHorizontalOffset: number;
-  BookLabelHeight: number;
-  BookPositionZ: number;
-  BookVerticalGap: number;
-  Chapter3DGap: number;
-  Chapter3DHeight: number;
-  Chapter3DPadding: number;
-  Chapter3DWidth: number;
-  ChapterInitialScaleZ: number;
-  ChapterPlaylistItemDeltaHeight: number;
-  ChapterSelectedScaleZ: number;
-  GapBetweenBookAndLine: number;
-  LayersVerticalGap: number[];
-  MaxAmountOfColumns: number;
-  PlaylistEntryItemPadding: number;
-  PlaylistNavigationButtonVerticalGap: number;
-  PlaylistStackedEntryItemGap: number;
-}
-
-type BibleLayoutMeasurement = keyof BibleLayoutMeasurements;
 
 interface BookInfo {
   commonName: string;
@@ -90,42 +84,90 @@ class BibleVizDataRepository {
     return booksInfo[book];
   }
 
-  // BibleLayoutMeasurements
+  // Measurements
 
-  static getBibleLayoutMeasurements(): BibleLayoutMeasurements {
-    return thisBot.tags.BibleLayoutMeasurements;
+  static getBibleLayoutMeasurements(): BibleLayoutMeasurementsType {
+    return BibleLayoutMeasurements;
   }
 
-  static getBibleLayoutMeasurement(
-    measurement: BibleLayoutMeasurement
-  ): number | number[] {
+  static getBibleLayoutMeasurement: <
+    K extends keyof BibleLayoutMeasurementsType,
+  >(
+    measurement: K
+  ) => BibleLayoutMeasurementsType[K] = (measurement) => {
     const measurements = this.getBibleLayoutMeasurements();
     return measurements[measurement];
+  };
+
+  static getStackPieceMeasurements(): StackPieceMeasurementsType {
+    return StackPieceMeasurements;
   }
+
+  static getStackPieceMeasurement: <K extends keyof StackPieceMeasurementsType>(
+    measurement: K
+  ) => StackPieceMeasurementsType[K] = (measurement) => {
+    return this.getStackPieceMeasurements()[measurement];
+  };
+
+  static getStackSpacings(): StackSpacingsType {
+    return StackSpacings;
+  }
+
+  static getStackSpacing: <K extends keyof StackSpacingsType>(
+    spacing: K
+  ) => StackSpacingsType[K] = (spacing) => {
+    return this.getStackSpacings()[spacing];
+  };
 
   static getReadingHistoryRecencyThresholdTimeSeconds(): number {
     return thisBot.masks.readingHistoryRecencyThresholdTimeSeconds;
   }
 
-  // Arrangement index
+  // Arrangement
 
   static getCurrentArrangementIndex(): number {
     return thisBot.vars.arrangementIndex;
   }
 
-  static getArrangementByIndex: (params: { index: number }) => ArrangementInfo =
-    ({ index }) => {
-      return thisBot.vars.fixedArrangementsInfo[index];
-    };
+  static getArrangements(): ArrangementInfo[] {
+    return thisBot.vars.fixedArrangementsInfo.slice();
+  }
+
+  static getArrangementByIndex: (params: {
+    index: number;
+  }) => ArrangementInfo | undefined = ({ index }) => {
+    return this.getArrangements()[index];
+  };
+
+  static getArrangementIndexByName: (name: string) => number = (name) => {
+    return this.getArrangements().findIndex((arrangementInfo) => {
+      return arrangementInfo.name === name;
+    });
+  };
+
+  static getCurrentArrangement(): ArrangementInfo | undefined {
+    return this.getArrangements()[this.getCurrentArrangementIndex()];
+  }
+
+  static getCurrentArrangementName(): string | undefined {
+    return this.getCurrentArrangement()?.name;
+  }
+
+  // Fonts
+
+  static getFont(name: FontName): FontData {
+    return thisBot.tags.fonts[name];
+  }
 }
 
 export { BibleVizDataRepository };
 export type {
   BookStaticInfo,
+  ChapterInfo,
   BookInfo,
   SectionInfo,
   TestamentInfo,
   ArrangementInfo,
-  BibleLayoutMeasurement,
-  BibleLayoutMeasurements,
+  FontName,
+  FontData,
 };

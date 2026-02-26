@@ -24,6 +24,10 @@ import {
   type UserData,
 } from "bibleVizUtils.services.UserColorStore";
 import { bibleVizUtilsEventManager } from "bibleVizUtils.services.EventManager";
+import {
+  userPresenceService,
+  type UserPresenceType,
+} from "bibleVizUtils.services.UserPresenceService";
 const { createContext, useState, useContext, useCallback, useMemo, useEffect } =
   os.appHooks;
 
@@ -177,7 +181,6 @@ export const ScriptureMap2DProvider: (
   const [usersColors, setUsersColors] = useState<UserData[]>(() =>
     userColorStore.listUsers()
   );
-  const [onlineUsers, setOnlineUsers] = useState<UserPresence>(new Map());
 
   const BASE_BACKGROUND_COLOR = useMemo<string>(() => {
     return themeColors?.["1"]?.firstToolbarbutton ?? "#dfdede";
@@ -191,25 +194,9 @@ export const ScriptureMap2DProvider: (
     });
   }, [tabs, activeTabId]);
 
-  const userPresence = useMemo<UserPresence>(() => {
-    const { bookId, book, chapter } = activeTab.data;
-    const newUserPresence: UserPresence = new Map();
-
-    newUserPresence.set(configBot.id, { bookId, book, chapter });
-    onlineUsers.forEach((data, userId) => {
-      newUserPresence.set(userId, data);
-    });
-
-    return newUserPresence;
-  }, [onlineUsers, activeTab]);
-
-  // useEffect(() => {
-  //   console.log(`[Debug] ScriptureMap2DContext`, { usersColors });
-  // }, [usersColors]);
-
-  // useEffect(() => {
-  //   console.log(`[Debug] ScriptureMap2DContext`, { userPresence });
-  // }, [userPresence]);
+  const [userPresence, setUserPresence] = useState<UserPresenceType>(() =>
+    userPresenceService.getUserPresence()
+  );
 
   const arrangement = useMemo<ArrangementInfo>(() => {
     return BibleVizDataRepository.getArrangementByIndex({
@@ -353,29 +340,25 @@ export const ScriptureMap2DProvider: (
   const updateUserColors = useCallback<() => void>(() => {
     setUsersColors(userColorStore.listUsers());
   }, []);
-
-  const updateOnlineUsers = useCallback<(onlineUsers: UserPresence) => void>(
-    (data) => {
-      setOnlineUsers(data);
-    },
-    []
-  );
+  const updateUserPresence = useCallback(() => {
+    setUserPresence(userPresenceService.getUserPresence());
+  }, []);
 
   useEffect(() => {
     const updateUserColorsUnsubscribe = bibleVizUtilsEventManager.subscribe(
       "UserColorStoreChanged",
       updateUserColors
     );
-    const updateOnlineUsersUnsubscribe = bibleVizUtilsEventManager.subscribe(
-      "OnlineUsersChanged",
-      updateOnlineUsers
+    const updateUserPresenceUnsubscribe = bibleVizUtilsEventManager.subscribe(
+      "OnUserPresenceUpdate",
+      updateUserPresence
     );
 
     updateUserColors();
 
     return () => {
       updateUserColorsUnsubscribe();
-      updateOnlineUsersUnsubscribe();
+      updateUserPresenceUnsubscribe();
     };
   }, []);
 

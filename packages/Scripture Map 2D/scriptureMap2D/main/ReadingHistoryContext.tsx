@@ -29,7 +29,7 @@ import {
   TimelineRangeMethod,
   type TimelineRangeMethodType,
 } from "scriptureMap2D.main.enums";
-import { ConvertCompletePsalmsToDivided } from "bibleVizUtils.functions.scripture";
+import { scriptureService } from "bibleVizUtils.services.index";
 import { GetDayRangeSeconds } from "bibleVizUtils.functions.index";
 import { eventSystem, Events } from "scriptureMap2D.main.eventManager";
 
@@ -404,7 +404,7 @@ export const ReadingHistoryProvider: (
           if (start >= rangeStart && start <= rangeEnd) {
             if (bookId === "PSA") {
               const { bookId: dividedPsalmId, chapter: dividedPsalmChapter } =
-                ConvertCompletePsalmsToDivided({
+                scriptureService.convertCompletePsalmsToDivided({
                   chapter,
                 });
               event = {

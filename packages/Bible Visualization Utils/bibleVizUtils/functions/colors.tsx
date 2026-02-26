@@ -12,6 +12,12 @@ type RgbToHexType = (params: { rgbColor: RGB }) => HexString;
 type GetTextColorBasedOnBackgroundType = (params: {
   backgroundColor: WeightedColor[] | HexString;
 }) => HexString;
+type GetDarkerColorType = (color: HexString, offset?: number) => HexString;
+type GetChildrenLevelColorsType = (params: {
+  sectionColorRGB: RGB;
+  colorRange: number;
+  levelsLength: number;
+}) => HexString[];
 
 export const ClampRGBColor: ClampRGBColorType = (colorToClamp) => {
   const colorClamped: RGB = [
@@ -75,3 +81,55 @@ export const GetTextColorBasedOnBackground: GetTextColorBasedOnBackgroundType =
 
     return averageRelativeLuminance > 0.179 ? "#000000" : "#ffffff";
   };
+
+export const GetDarkerColor: GetDarkerColorType = (color, offset = 55) => {
+  const rgbColor = HexToRgb({ hexColor: color });
+  const darkerColorRGB: RGB = [
+    Math.max(rgbColor[0] - offset, 0),
+    Math.max(rgbColor[1] - offset, 0),
+    Math.max(rgbColor[2] - offset, 0),
+  ];
+  const darkerColorHex = RgbToHex({ rgbColor: darkerColorRGB });
+
+  return darkerColorHex;
+};
+
+export const GetChildrenLevelColors: GetChildrenLevelColorsType = ({
+  sectionColorRGB,
+  colorRange,
+  levelsLength,
+}) => {
+  const levelsColors: HexString[] = [];
+  const levelsColorRange: { min: RGB; max: RGB } = {
+    min: [
+      Math.max(sectionColorRGB[0] - colorRange, 0),
+      Math.max(sectionColorRGB[1] - colorRange, 0),
+      Math.max(sectionColorRGB[2] - colorRange, 0),
+    ],
+    max: [
+      Math.min(sectionColorRGB[0] + colorRange, 255),
+      Math.min(sectionColorRGB[1] + colorRange, 255),
+      Math.min(sectionColorRGB[2] + colorRange, 255),
+    ],
+  };
+  const deltaRed = Math.floor(
+    (levelsColorRange.max[0] - levelsColorRange.min[0]) / levelsLength
+  );
+  const deltaGreen = Math.floor(
+    (levelsColorRange.max[1] - levelsColorRange.min[1]) / levelsLength
+  );
+  const deltaBlue = Math.floor(
+    (levelsColorRange.max[2] - levelsColorRange.min[2]) / levelsLength
+  );
+
+  for (let i = 0; i < levelsLength; i++) {
+    const levelColorRGB: RGB = [
+      levelsColorRange.min[0] + deltaRed * i,
+      levelsColorRange.min[1] + deltaGreen * i,
+      levelsColorRange.min[2] + deltaBlue * i,
+    ];
+    const levelColorHex: HexString = RgbToHex({ rgbColor: levelColorRGB });
+    levelsColors.push(levelColorHex);
+  }
+  return levelsColors;
+};

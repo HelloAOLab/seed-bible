@@ -119,6 +119,7 @@ export function TabsProvider({ children }) {
     const activeTabData = tabs.find((ele) => ele.id === activeTab)?.data;
 
     globalThis.CurrentActiveTabData = activeTabData;
+    shout("oncurrentActiveTabDataUpdated");
 
     if (globalThis.SetCurrentBook && !!activeTabData) {
       globalThis.SetCurrentBook(activeTabData);

@@ -3,6 +3,9 @@ export type EventManagerType = (payload?: any) => void;
 export const Events = {
   UserColorStoreChanged: "UserColorStoreChanged",
   OnlineUsersChanged: "OnlineUsersChanged",
+  OnEnterHistoryMode: "OnEnterHistoryMode",
+  OnExitHistoryMode: "OnExitHistoryMode",
+  OnUserPresenceUpdate: "OnUserPresenceUpdate",
 } as const;
 
 export type EventsType = (typeof Events)[keyof typeof Events];
