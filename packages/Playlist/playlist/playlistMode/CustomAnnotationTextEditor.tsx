@@ -2530,7 +2530,7 @@ function escapeHTML(s: any) {
   return s.replace(
     /[&<>"]/g,
     (c: string) =>
-      (({ "&": "&amp;", "<": "&lt;", ">": "&gt;", '"': "&quot;" }) as const)[c]
+      ({ "&": "&amp;", "<": "&lt;", ">": "&gt;", '"': "&quot;" })[c]
   );
 }
 
