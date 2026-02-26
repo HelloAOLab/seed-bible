@@ -3716,11 +3716,17 @@
       "app.contract.factory": [
         "./packages/seed-bible/app/contract/factory.tsx"
       ],
+      "app.contract.globalHooks": [
+        "./packages/seed-bible/app/contract/globalHooks.tsx"
+      ],
       "app.contract.hooks": ["./packages/seed-bible/app/contract/hooks.tsx"],
       "app.contract.provider": [
         "./packages/seed-bible/app/contract/provider.tsx"
       ],
       "app.contract.theme": ["./packages/seed-bible/app/contract/theme.tsx"],
+      "app.controller.EventController": [
+        "./packages/seed-bible/app/controller/EventController.tsx"
+      ],
       "app.controller.GlobalApi": [
         "./packages/seed-bible/app/controller/GlobalApi.tsx"
       ],
