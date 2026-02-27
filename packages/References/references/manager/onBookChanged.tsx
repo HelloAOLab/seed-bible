@@ -9,12 +9,10 @@ import {
 
 import MakeReferenceOptions from "references.manager.makeReferenceOptions";
 
-console.log("Book changed, loading references", that);
-
 const lazyLoadBookReferences = async () => {
-  const { bookId, chapter } = that;
+  const { bookId, chapter, translation, baseUrl, book } = that;
 
-  if (masks?.[`reference.${bookId}.${chapter}.loaded`]) {
+  if (masks?.[`reference.${translation}.${bookId}.${chapter}.loaded`]) {
     console.log("references already loaded for this chapter");
     return;
   }
@@ -33,10 +31,13 @@ const lazyLoadBookReferences = async () => {
         chapter,
         verse,
         references: [...content[i].references],
+        baseUrl,
+        translation,
+        bookName: book,
       };
       setTagMask(
         thisBot,
-        `reference.${bookId}.${chapter}.${verse}`,
+        `reference.${translation}.${bookId}.${chapter}.${verse}`,
         JSON.stringify(referenceObject),
         "local"
       );
@@ -56,22 +57,28 @@ const populateReferenceData = async (reference: ReferencesInterface) => {
   const referenceArray: ReferenceInterface[] = reference.references || [];
   const referenceBot = getBot("system", "references.manager");
 
-  const referenceArrayKey = `referenceDataObject-${reference.book}.${reference.chapter}.${reference.verse}`;
+  const referenceArrayKey = `referenceDataObject-${reference.translation}.${reference.book}.${reference.chapter}.${reference.verse}`;
   if (referenceBot.masks?.[`${referenceArrayKey}`]) {
     console.log("reference data present in storage");
     return JSON.parse(referenceBot.masks[`${referenceArrayKey}`]);
   } else {
     console.log("retrieving from web");
-    const referenceDataPromises = referenceArray.map((reference) => {
+    const referenceDataPromises = referenceArray.map((subReference) => {
       return GetChapterContent({
-        bookId: reference.book,
-        chapter: reference.chapter,
-        reference: reference,
+        bookId: subReference.book,
+        chapter: subReference.chapter,
+        reference: subReference,
+        baseUrl: reference.baseUrl,
+        translation: reference.translation,
       });
     });
     const referenceReqs = await Promise.all(referenceDataPromises);
     const tempReferenceData: {
-      [key: string]: { content: string; references?: ReferenceInterface[] };
+      [key: string]: {
+        content: string;
+        references?: ReferenceInterface[];
+        bookName: string;
+      };
     } = {};
 
     const subReferences: Promise<ReferencesInterface>[] = [];
@@ -81,14 +88,21 @@ const populateReferenceData = async (reference: ReferencesInterface) => {
         return;
       }
       if (referenceArray[index]) {
-        const reference: ReferenceInterface = referenceArray[index];
-        const referenceKey = `${reference.book}.${reference.chapter}.${reference.verse}`;
-        tempReferenceData[referenceKey] = { content: res, references: [] };
+        const subReference: ReferenceInterface = referenceArray[index];
+        const referenceKey = `${subReference.book}.${subReference.chapter}.${subReference.verse}`;
+        tempReferenceData[referenceKey] = {
+          content: res.content,
+          references: [],
+          bookName: res?.bookData?.name || "",
+        };
         subReferences.push(
           GetReferences({
-            bookId: reference.book,
-            chapter: reference.chapter,
-            verse: reference.verse,
+            bookId: subReference.book,
+            chapter: subReference.chapter,
+            verse: subReference.verse,
+            baseUrl: subReference.baseUrl,
+            translation: reference.translation,
+            bookName: res.bookName,
           })
         );
       }
@@ -107,6 +121,7 @@ const populateReferenceData = async (reference: ReferencesInterface) => {
           tempReferenceData[referenceKey] = {
             content: tempReferenceData[referenceKey].content || "",
             references: [...res.references.slice(0, 5)],
+            bookName: tempReferenceData[referenceKey].bookName || "",
           };
         }
       }

@@ -804,8 +804,8 @@ function getMenuActions(that, onClose, activeSpace, spaces) {
       if (!titleArray.includes(el.title)) {
         itemsHolder.push({
           ...el,
-          onClick: () => {
-            if (el.onClick) el.onClick();
+          onClick: (e: MouseEvent) => {
+            if (el.onClick) el.onClick(e);
             SetInHold({});
           },
         });
@@ -832,7 +832,7 @@ function getMenuActions(that, onClose, activeSpace, spaces) {
       items.forEach((el) => {
         MenuOptions.items.push({
           icon: el.icon,
-          onClick: () => {
+          onClick: (e: MouseEvent) => {
             if (el.onClick) el.onClick(that);
             SetInHold(null);
           },
@@ -871,8 +871,8 @@ const SubOptions = ({ items }) => {
         else
           return (
             <div
-              onClick={() => {
-                item.onClick();
+              onClick={(e: MouseEvent) => {
+                item.onClick(e);
               }}
               className={`itemSettings`}
               style={{

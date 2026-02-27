@@ -4,10 +4,10 @@ const MakeReferenceOptions = async (props: {
   bookId: string;
   chapter: number;
   book: string;
+  translation: string;
+  baseUrl: string;
 }) => {
-  const { bookId, chapter, book } = props;
-
-  console.log("Making reference options for", bookId, chapter);
+  const { bookId, chapter, book, translation, baseUrl } = props;
 
   const referenceUrl = `https://bible.helloao.org/api/d/open-cross-ref/${bookId}/${chapter}.json`;
 
@@ -17,7 +17,14 @@ const MakeReferenceOptions = async (props: {
     const referenceOptionsConfig = {};
 
     const makeReferenceOptions = (props: {
-      reference: { book: string; chapter: number; verse: number };
+      reference: {
+        book: string;
+        chapter: number;
+        verse: number;
+        baseUrl: string;
+        translation: string;
+        bookId: string;
+      };
     }) => {
       const { reference } = props;
       return {
@@ -32,18 +39,15 @@ const MakeReferenceOptions = async (props: {
             chapter: reference.chapter,
             verse: reference.verse,
             mouseEvent: e,
+            baseUrl: reference.baseUrl,
+            translation: reference.translation,
+            bookId: reference.bookId,
           });
         },
       };
     };
 
     const content = [...referenceReq.data.chapter.content];
-
-    console.log(
-      "Content received for reference options",
-      content,
-      referenceReq.data
-    );
 
     for (let i = 0; i < content.length; i++) {
       referenceOptionsConfig[`${book}-${chapter}-${content[i].verse}`] = {
@@ -57,6 +61,9 @@ const MakeReferenceOptions = async (props: {
               book: book,
               chapter: chapter,
               verse: content[i].verse,
+              baseUrl: baseUrl,
+              translation: translation,
+              bookId: bookId,
             },
           }),
         ],

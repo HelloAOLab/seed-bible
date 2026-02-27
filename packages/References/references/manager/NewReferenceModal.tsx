@@ -14,7 +14,11 @@ const ReferenceModal = (props: { reference: ReferencesInterface }) => {
   );
   const [rdLoading, setRdLoading] = useState(true);
   const [referenceData, setReferenceData] = useState<{
-    [key: string]: { content: string; references?: ReferenceInterface[] };
+    [key: string]: {
+      content: string;
+      references?: ReferenceInterface[];
+      bookName: string;
+    };
   }>({});
   const [showMore, setShowMore] = useState(false);
 
@@ -23,7 +27,7 @@ const ReferenceModal = (props: { reference: ReferencesInterface }) => {
 
     const referenceBot = getBot("system", "references.manager");
 
-    const referenceArrayKey = `referenceDataObject-${reference.book}.${reference.chapter}.${reference.verse}`;
+    const referenceArrayKey = `referenceDataObject-${reference.translation}.${reference.book}.${reference.chapter}.${reference.verse}`;
     if (referenceBot.masks?.[`${referenceArrayKey}`]) {
       console.log("retrieving from storage");
       setReferenceData({
@@ -31,18 +35,24 @@ const ReferenceModal = (props: { reference: ReferencesInterface }) => {
       });
     } else {
       console.log("retriveing from web");
-      const referenceDataPromises = referenceArray.map((reference) => {
+      const referenceDataPromises = referenceArray.map((subReference) => {
         return GetChapterContent({
-          bookId: reference.book,
-          chapter: reference.chapter,
-          reference: reference,
+          bookId: subReference.book,
+          chapter: subReference.chapter,
+          reference: subReference,
+          baseUrl: reference.baseUrl,
+          translation: reference.translation,
         });
       });
 
       const referenceReqs = await Promise.all(referenceDataPromises);
 
       const tempReferenceData: {
-        [key: string]: { content: string; references?: ReferenceInterface[] };
+        [key: string]: {
+          content: string;
+          references?: ReferenceInterface[];
+          bookName: string;
+        };
       } = {};
 
       referenceReqs.forEach((res, index) => {
@@ -53,7 +63,11 @@ const ReferenceModal = (props: { reference: ReferencesInterface }) => {
           const reference: ReferenceInterface = referenceArray[index];
           const referenceKey = `${reference.book}.${reference.chapter}.${reference.verse}`;
 
-          tempReferenceData[referenceKey] = { content: res, references: [] };
+          tempReferenceData[referenceKey] = {
+            content: res.content,
+            references: [],
+            bookName: res.bookData.name,
+          };
         }
       });
       setReferenceData({ ...tempReferenceData });
@@ -141,7 +155,7 @@ const ReferenceModal = (props: { reference: ReferencesInterface }) => {
         }}
       >
         <div class="heading">
-          <h2>{`${tags.IdToName[reference.book]} ${reference.chapter}:${reference.verse}`}</h2>
+          <h2>{`${reference.bookName} ${reference.chapter}:${reference.verse}`}</h2>
           <span
             onClick={() => {
               if (
@@ -149,9 +163,12 @@ const ReferenceModal = (props: { reference: ReferencesInterface }) => {
                 `${reference.book}.${reference.chapter}.${reference.verse}`
               ) {
                 shout("ToggleReference", {
-                  book: tags.IdToName[reference.book],
+                  bookId: reference.book,
                   chapter: reference.chapter,
                   verse: reference.verse,
+                  baseUrl: reference.baseUrl,
+                  translation: reference.translation,
+                  bookName: reference.bookName,
                 });
               }
               closePopupSettings();
@@ -167,26 +184,36 @@ const ReferenceModal = (props: { reference: ReferencesInterface }) => {
             if (!childReference) return null;
             return (
               <div class="reference-components">
-                <span
-                  onClick={(e) => {
-                    handleTitleContext({ e, reference: childReference });
-                  }}
-                  class="reference-title"
-                >{`${tags.IdToName[childReference.book]} ${childReference.chapter}:${childReference.verse}${childReference?.endVerse ? `-${childReference.endVerse}` : ""}`}</span>
-                {rdLoading && <div class="loading-section"></div>}
+                {rdLoading && (
+                  <>
+                    <div
+                      class="loading-section"
+                      style={{ height: "1rem" }}
+                    ></div>
+                    <div class="loading-section"></div>
+                  </>
+                )}
                 {!rdLoading &&
                   referenceData[
                     `${childReference.book}.${childReference.chapter}.${childReference.verse}`
                   ] && (
-                    <div class="reference-content">
-                      <span>
-                        {
-                          referenceData[
-                            `${childReference.book}.${childReference.chapter}.${childReference.verse}`
-                          ]?.content
-                        }
-                      </span>
-                    </div>
+                    <>
+                      <span
+                        onClick={(e) => {
+                          handleTitleContext({ e, reference: childReference });
+                        }}
+                        class="reference-title"
+                      >{`${referenceData[`${childReference.book}.${childReference.chapter}.${childReference.verse}`]?.bookName} ${childReference.chapter}:${childReference.verse}${childReference?.endVerse ? `-${childReference.endVerse}` : ""}`}</span>
+                      <div class="reference-content">
+                        <span>
+                          {
+                            referenceData[
+                              `${childReference.book}.${childReference.chapter}.${childReference.verse}`
+                            ]?.content
+                          }
+                        </span>
+                      </div>
+                    </>
                   )}
               </div>
             );
