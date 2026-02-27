@@ -2715,6 +2715,9 @@
       "references.manager.toggleReferenceModal": [
         "./packages/References/references/manager/toggleReferenceModal.tsx"
       ],
+      "references.manager.makeReferenceOptions": [
+        "./packages/References/references/manager/makeReferenceOptions.tsx"
+      ],
       "scriptureMap2D.main.Book": [
         "./packages/Scripture Map 2D/scriptureMap2D/main/Book.tsx"
       ],
