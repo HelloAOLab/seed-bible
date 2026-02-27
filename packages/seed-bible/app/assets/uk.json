@@ -140,5 +140,8 @@
   "pentateuch": "П'ятикнижжя",
   "historical": "Історичні",
   "poetic": "Поетичні",
-  "prophetic": "Пророчі"
+  "prophetic": "Пророчі",
+  "addToPlaylist": "Додати до списку відтворення",
+  "addToNew": "Додати до нового",
+  "itemsAddedToPlaylistSuccessfully": "Елементи успішно додано до списку відтворення."
 }

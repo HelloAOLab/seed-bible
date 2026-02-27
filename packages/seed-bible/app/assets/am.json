@@ -140,5 +140,8 @@
   "pentateuch": "ኦሪት",
   "historical": "ታሪካዊ",
   "poetic": "ግጥማዊ",
-  "prophetic": "ትንቢታዊ"
+  "prophetic": "ትንቢታዊ",
+  "addToPlaylist": "ወደ ዝርዝር ጨምር",
+  "addToNew": "ወደ አዲስ ጨምር",
+  "itemsAddedToPlaylistSuccessfully": "እቃዎች ወደ ዝርዝር በተሳካ ሁኔታ ታክለዋል።"
 }

@@ -140,5 +140,8 @@
   "pentateuch": "Pentateukh",
   "historical": "Sejarah",
   "poetic": "Puisi",
-  "prophetic": "Nubuat"
+  "prophetic": "Nubuat",
+  "addToPlaylist": "Tambah ke playlist",
+  "addToNew": "Tambah ke baru",
+  "itemsAddedToPlaylistSuccessfully": "Item berhasil ditambahkan ke playlist."
 }

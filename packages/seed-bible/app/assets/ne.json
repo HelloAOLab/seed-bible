@@ -140,5 +140,8 @@
   "pentateuch": "मोशाका पाँच पुस्तकहरू",
   "historical": "ऐतिहासिक",
   "poetic": "काव्यात्मक",
-  "prophetic": "भविष्यवाणी"
+  "prophetic": "भविष्यवाणी",
+  "addToPlaylist": "प्लेलिस्टमा थप्नुहोस्",
+  "addToNew": "नयाँमा थप्नुहोस्",
+  "itemsAddedToPlaylistSuccessfully": "आइटमहरू प्लेलिस्टमा सफलतापूर्वक थपियो।"
 }

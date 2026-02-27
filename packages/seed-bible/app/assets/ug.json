@@ -140,5 +140,8 @@
   "pentateuch": "مۇسانىڭ بەش كىتابى",
   "historical": "تارىخىي",
   "poetic": "شېئىرىي",
-  "prophetic": "پەيغەمبەرلىك"
+  "prophetic": "پەيغەمبەرلىك",
+  "addToPlaylist": "تىزىملىككە قوشۇش",
+  "addToNew": "يېڭىغا قوشۇش",
+  "itemsAddedToPlaylistSuccessfully": "تۈرلەر تىزىملىككە مۇۋاپىق قوشۇلدى."
 }
