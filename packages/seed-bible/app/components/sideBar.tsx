@@ -693,7 +693,13 @@ function Tab({
   );
 }
 
-function Folder({ folder, onlineUsers, collapsed, setSidebarWidth, setCollapsed }) {
+function Folder({
+  folder,
+  onlineUsers,
+  collapsed,
+  setSidebarWidth,
+  setCollapsed,
+}) {
   const {
     setActiveTab,
     activeTab,
@@ -1144,6 +1150,10 @@ function SideBar({ panelsNumber }) {
       <rect width={24} height={24} fill="transparent" />
     </svg>
   );
+  const removeJoinSession =
+    tags?.settingsConfigs?.presets?.[
+      configBot?.tags?.settingsPreset || thisBot.tags.settingsPreset || "full"
+    ]?.appSettings?.removeJoinSession || false;
 
   const MenuOptions = {
     type: "normal",
@@ -1172,45 +1182,49 @@ function SideBar({ panelsNumber }) {
             },
           ]
         : []),
-      {
-        disabled: false,
-        icon: <JoinSession />,
-        title: t("joinAnotherSession"),
-        onClick: async () => {
-          const { JoinSessionComponent } = thisBot.Chips();
-          const translations = {
-            joinSession: t("joinSession"),
-            enterSessionCode: t("enterSessionCode"),
-            sessionCodePlaceholder: t("sessionCodePlaceholder"),
-            join: t("join"),
-          };
-          ShowModal(
-            <JoinSessionComponent
-              onJoin={(code) => os.goToURL(code)}
-              translations={translations}
-              CloseModal={() => globalThis.CloseModal()}
-            />
-          );
-        },
-      },
-      ...(!configBot.tags.staticInst
+      ...(!removeJoinSession
         ? [
             {
-              disabled: false,
-              icon: <GoPrivateIcon />,
-              title: globalThis.IsPrivateMode?.()
-                ? t("goPublic")
-                : t("goPrivate"),
+              disabled: true,
+              icon: <JoinSession />,
+              title: t("joinAnotherSession"),
               onClick: async () => {
-                if (globalThis.TogglePrivateMode) {
-                  await globalThis.TogglePrivateMode();
-                }
+                const { JoinSessionComponent } = thisBot.Chips();
+                const translations = {
+                  joinSession: t("joinSession"),
+                  enterSessionCode: t("enterSessionCode"),
+                  sessionCodePlaceholder: t("sessionCodePlaceholder"),
+                  join: t("join"),
+                };
+                ShowModal(
+                  <JoinSessionComponent
+                    onJoin={(code) => os.goToURL(code)}
+                    translations={translations}
+                    CloseModal={() => globalThis.CloseModal()}
+                  />
+                );
               },
             },
+            ...(!configBot.tags.staticInst
+              ? [
+                  {
+                    disabled: false,
+                    icon: <GoPrivateIcon />,
+                    title: globalThis.IsPrivateMode?.()
+                      ? t("goPublic")
+                      : t("goPrivate"),
+                    onClick: async () => {
+                      if (globalThis.TogglePrivateMode) {
+                        await globalThis.TogglePrivateMode();
+                      }
+                    },
+                  },
+                ]
+              : []),
+
+            { type: "line" },
           ]
         : []),
-
-      { type: "line" },
       {
         disabled: false,
         // icon: <MenuIcon name={showSearch ? "visibility_off" : "visibility"} />,
@@ -1742,7 +1756,9 @@ function SideBar({ panelsNumber }) {
             >
               <BurgerMenuIcon size={24} color="var(--text1)" />
             </div>
-            {!configBot.tags.staticInst && <UserPresence collapsed={true} />}
+            {!configBot.tags.staticInst && !removeJoinSession && (
+              <UserPresence collapsed={true} />
+            )}
             <div
               style={{
                 height: "1px",
@@ -1768,7 +1784,9 @@ function SideBar({ panelsNumber }) {
               if (!searchQuery) return true;
               const query = searchQuery.toLowerCase();
               const name = tab?.data?.book || tab?.data?.title || "";
-              const chapter = tab?.data?.chapter ? String(tab.data.chapter) : "";
+              const chapter = tab?.data?.chapter
+                ? String(tab.data.chapter)
+                : "";
               const shortName = tab?.data?.shortName || "";
               const type = tab?.data?.type || "";
               return (
@@ -2138,7 +2156,9 @@ export const UserProfile = ({ collapsed }) => {
           />
         ) : !configBot.tags.staticInst ? (
           <Icon width={15} height={15} />
-        ) : <span className="material-symbols-outlined">person</span>}
+        ) : (
+          <span className="material-symbols-outlined">person</span>
+        )}
       </div>
       {
         null /*userData?.photoLink ? (
