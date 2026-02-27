@@ -9,6 +9,10 @@
         "removeAccountOptions": true,
         "removeBibleStack": true
       },
+      "pageSettings": {
+        "disableHighlighting": true,
+        "removeAiAgent": "true"
+      },
       "onlineUsers": {
         "enabled": true,
         "anonymous": true
