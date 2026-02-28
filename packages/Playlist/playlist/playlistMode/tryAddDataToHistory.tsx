@@ -1,6 +1,6 @@
 const G = globalThis as any;
 if (G.HISTORYExploreMode) return;
-if (G.makingPlaylist) {
+if (G.makingPlaylist || G[`${"default"}creatingPlaylist`]) {
   const dataItem = that.dataItem;
   let combineLast = that.combineLast;
 
@@ -92,43 +92,6 @@ if (G.makingPlaylist) {
     dataItem.additionalInfo.chapters = bookDetails.chapters;
   }
   const idsActive = ["default"];
-  // const idsActive = that.playlistID ? [that.playlistID] : Object.keys(PlaylistsGroups).filter(key => PlaylistsGroups[key].active);
-  // if (dataItem.type === "book" && that.forceAddChapter) {
-  //     idsActive.forEach(id => {
-  //         const bookDetails = findNameRank(dataItem.additionalInfo.bookName);
-  //         if (!(dataItem.additionalInfo.bookName === globalThis[`${id}.lastHistoryBookItem`])) {
-  //             globalThis[`${id}lastHistoryBookItem`] = dataItem.additionalInfo.bookName;
-  //             let startChapter = 0;
-
-  //             if (dataItem.content.includes("Psalm")) {
-  //                 const secondHalf = dataItem.content.split(" ")[0];
-  //                 const psalmsDivision = ["_", 0, 41, 72, 89, 106, 150];
-
-  //                 startChapter = psalmsDivision[secondHalf];
-  //             }
-
-  //             new Array(bookDetails.chapters).fill(0).forEach((_, i) => {
-  //                 thisBot.tryAddDataToHistory({
-  //                     dataItem: {
-  //                         content: `${dataItem.additionalInfo.bookName} ${startChapter + i + 1}`,
-  //                         type: "chapter",
-  //                         additionalInfo: {
-  //                             bookRank: bookDetails.rank,
-  //                             bookName: dataItem.additionalInfo.bookName,
-  //                             chapter: startChapter + i + 1,
-  //                             data: {
-  //                                 ...dataItem.additionalInfo.data
-  //                             }
-  //                         },
-  //                     },
-  //                     playlistID: id,
-  //                 });
-  //             })
-  //         }
-
-  //     })
-  //     return;
-  // }
   if (!dataItem.id) dataItem.id = G.createUUID();
   const isDelete = that.isDelete;
   if (dataItem.content === "undefined") return;
@@ -144,25 +107,6 @@ if (G.makingPlaylist) {
         force: that.force,
         combineLast,
       });
-    } else {
-      if (G[`${id}AddDataToHistory`]) {
-        // globalThis[`${id}AddDataToHistory`](dataItem);
-      } else {
-        return;
-        if (G[`${id}currentHistory`]) {
-          const lastData =
-            G[`${id}currentHistory`][G[`${id}currentHistory`].length - 1];
-          const isSame = G.objectComparator(dataItem, lastData, ["content"]);
-          if (!isSame) {
-            G[`${id}currentHistory`].push(dataItem);
-          } else {
-            os.toast("Last item repeated!");
-          }
-        } else {
-          G[`${id}currentHistory`] = [dataItem];
-        }
-        G.setHistoryLocale(G[`${id}currentHistory`], id);
-      }
     }
   });
 }

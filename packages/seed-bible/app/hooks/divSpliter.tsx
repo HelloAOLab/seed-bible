@@ -443,6 +443,7 @@ export const SplitApp = ({
             transition: "transform 0.3s ease",
             zIndex: 10,
             display: "flex",
+            maxWidth: "100dvw",
           }}
         >
           {/* Drag handle on left edge */}
