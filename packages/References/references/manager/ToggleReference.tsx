@@ -1,23 +1,25 @@
 import ReferenceApp from "references.manager.NewReferenceApp";
 import { GetReferences } from "references.manager.GetReferences";
-const { book, chapter, verse } = that;
+const { bookName, chapter, verse, baseUrl, translation, bookId } = that;
 
 const reference = await GetReferences({
-  bookId: tags.NameToId[book],
+  bookId: bookId,
   chapter,
   verse,
+  baseUrl,
+  translation,
+  bookName,
 });
 
 if (
   globalThis?.SetCurrentReference &&
-  globalThis?.currentReferenceKey !==
-    `${tags.NameToId[book]}.${chapter}.${verse}`
+  globalThis?.currentReferenceKey !== `${bookId}.${chapter}.${verse}`
 ) {
   globalThis.SetCurrentReference(reference);
   return;
 }
 
-globalThis.currentReference = `${tags.NameToId[book]}.${chapter}.${verse}`;
+globalThis.currentReference = `${bookId}.${chapter}.${verse}`;
 
 const panelKey = `reference_PANEL_ID`;
 

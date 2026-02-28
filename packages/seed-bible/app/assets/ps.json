@@ -140,5 +140,8 @@
   "pentateuch": "د موسی پنځه کتابونه",
   "historical": "تاریخي",
   "poetic": "شعري",
-  "prophetic": "نبوي"
+  "prophetic": "نبوي",
+  "addToPlaylist": "لیست ته اضافه کړئ",
+  "addToNew": "نوي ته اضافه کړئ",
+  "itemsAddedToPlaylistSuccessfully": "توکي په لیست کې په بریالیتوب سره زیات شول."
 }

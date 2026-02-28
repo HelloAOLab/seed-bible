@@ -1552,6 +1552,9 @@ function ThePage({
       onMouseEnter={handleMouseEnter}
       onMouseUp={handleMouseUp}
       onClick={hanldNavFunctions}
+      onScroll={() => {
+        globalThis.closePopupSettings();
+      }}
       style={{
         direction,
       }}
@@ -1877,6 +1880,7 @@ function ThePage({
                   <div style={{ "pointer-events": isDragging ? "none" : null }}>
                     <Section
                       {...e}
+                      data={data}
                       inHold={inHold}
                       setInHold={setInHold}
                       book={data.book}
@@ -2293,6 +2297,7 @@ function splitByWordHighlights(
 }
 
 function Section({
+  data,
   heading,
   hebrew_subtitle,
   commandHighlight,
@@ -2740,13 +2745,16 @@ function Section({
                   }}
                   onClick={(e) => {
                     e.stopPropagation();
+                    console.log(data, "data in verse click");
                     if (globalThis?.SetCurrentReference) {
                       shout("ToggleReference", {
-                        book,
+                        bookId: data?.bookId,
                         chapter,
                         verse: verse.verseNumber,
+                        baseUrl: data?.baseUrl,
+                        translation: data?.translation,
+                        bookName: data?.book,
                       });
-                      return;
                     }
                     handleVerseClick(verse.verseNumber);
                     SetShowCommands(false);
@@ -2839,7 +2847,7 @@ function Section({
                               HighlightStudyNoteSection(verse?.verseNumber);
                             }
                           }}
-                          onPointerEnter={() => {
+                          onPointerEnter={(e) => {
                             globalThis.showRefModal = true;
                             setTimeout(() => {
                               if (globalThis.showRefModal) {
@@ -2847,6 +2855,8 @@ function Section({
                                   book,
                                   chapter,
                                   verse: verse.verseNumber,
+                                  mouseEvent: e,
+                                  ...data,
                                 });
                               }
                             }, 500);
@@ -3007,7 +3017,7 @@ function Section({
                             HighlightStudyNoteSection(verse?.verseNumber);
                           }
                         }}
-                        onPointerEnter={() => {
+                        onPointerEnter={(e) => {
                           globalThis.showRefModal = true;
                           setTimeout(() => {
                             if (globalThis.showRefModal) {
@@ -3015,6 +3025,8 @@ function Section({
                                 book,
                                 chapter,
                                 verse: verse.verseNumber,
+                                mouseEvent: e,
+                                ...data,
                               });
                             }
                           }, 500);

@@ -140,5 +140,8 @@
   "pentateuch": "Tevrat'ın Beş Kitabı",
   "historical": "Tarihî",
   "poetic": "Şiirsel",
-  "prophetic": "Peygamberlik"
+  "prophetic": "Peygamberlik",
+  "addToPlaylist": "Listeye ekle",
+  "addToNew": "Yeniye ekle",
+  "itemsAddedToPlaylistSuccessfully": "Öğeler başarıyla listeye eklendi."
 }

@@ -7,7 +7,12 @@
         "removeSpaces": true,
         "removeEditMode": true,
         "removeAccountOptions": true,
-        "removeBibleStack": true
+        "removeBibleStack": true,
+        "removeJoinSession": true
+      },
+      "pageSettings": {
+        "disableHighlighting": true,
+        "removeAiAgent": "true"
       },
       "onlineUsers": {
         "enabled": true,

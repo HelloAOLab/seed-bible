@@ -7,7 +7,7 @@ const items = [
     title: () => (!G.IsPlaylistPlaying ? t("annotate") : t("addToQueue")),
     onClick: (selectedItem: any) => {
       const dataTempItems: any[] = [];
-      selectedItem.verseNumber?.forEach((vNumber) => {
+      selectedItem.verseNumber?.forEach((vNumber: any) => {
         const id = G.createUUID();
         const booksDetails = G.findNameRank(selectedItem.book);
         const dataItemTemp = {
@@ -150,6 +150,73 @@ const items = [
       } catch (err) {
         ShowNotification({ message: errorMsg, severity: "error" });
       }
+    },
+  },
+  {
+    icon: <MenuIcon name="playlist_add" />,
+    title: t("addToPlaylist"),
+    onClick: (selectedItem: any) => {
+      const dataTempItems: any[] = [];
+      const joinedAndGroupedVerses: {
+        verse: number | number[];
+        content: string;
+      }[] = [];
+
+      let oldVerseNumber = 0;
+
+      selectedItem.verseNumber.forEach((vNumber: any) => {
+        if (oldVerseNumber === 0) {
+          joinedAndGroupedVerses.push({
+            verse: vNumber,
+            content: `${vNumber}`,
+          });
+          oldVerseNumber = vNumber;
+        } else {
+          const lastItem: any =
+            joinedAndGroupedVerses[joinedAndGroupedVerses.length - 1];
+          const lastVerseNumber =
+            typeof lastItem?.verse === "number"
+              ? lastItem.verse
+              : lastItem.verse[lastItem.verse.length - 1];
+          if (lastVerseNumber + 1 === vNumber) {
+            if (typeof lastItem.verse === "number") {
+              lastItem.verse = [lastItem.verse, vNumber];
+            } else {
+              lastItem.verse.push(vNumber);
+            }
+            lastItem.content = `${lastItem.verse[0]}-${vNumber}`;
+            joinedAndGroupedVerses[joinedAndGroupedVerses.length - 1] =
+              lastItem;
+          } else {
+            joinedAndGroupedVerses.push({
+              verse: vNumber,
+              content: `${vNumber}`,
+            });
+          }
+        }
+      });
+
+      joinedAndGroupedVerses?.forEach((item) => {
+        const id = G.createUUID();
+        const booksDetails = G.findNameRank(selectedItem.book);
+        const dataItemTemp = {
+          type: "verse",
+          content: `${selectedItem.book} ${selectedItem.chapter}:${item.content}`,
+          additionalInfo: {
+            verse: item.verse,
+            chapter: selectedItem.chapter,
+            book: selectedItem.book,
+            bookRank: booksDetails.item,
+            data: { ...selectedItem },
+            chapterData: { ...G.CHAPTER_DATA },
+            groupID: G.ADD_VERSE_ITEM_PLAYLIST_GROUP_ID,
+          },
+          id,
+        };
+        dataTempItems.push(dataItemTemp);
+      });
+      G.AddToPlaylistData = dataTempItems;
+      G.SetShowAddToPlaylist(true);
     },
   },
 ];

@@ -1,58 +1,47 @@
 import type { ReferenceInterface } from "references.manager.interfaces";
+import {
+  GetReferences,
+  GetChapterContent,
+} from "references.manager.GetReferences";
 const { useState, useEffect, useCallback } = os.appHooks;
 const styles = tags["Reference.css"];
 
 const ReferenceComponent = (props: {
   reference: ReferenceInterface;
+  baseUrl: string;
+  translation: string;
   handleRedirect: (props: { reference: ReferenceInterface }) => void;
 }) => {
-  const { reference, handleRedirect } = props;
+  const { reference, handleRedirect, baseUrl, translation } = props;
   const [rdLoading, setRdLoading] = useState(true);
+  const [bookName, setBookName] = useState("");
   const [rfContent, setRFContent] = useState("");
 
   const loadContent = useCallback(
     async (props: { reference: ReferenceInterface }) => {
       const { reference } = props;
       setRdLoading(true);
-      const contentReq = await web.get(
-        `https://bible.helloao.org/api/BSB/${reference.book}/${reference.chapter}.json`
-      );
-      if (contentReq.status == 200) {
-        const contentArray = [...contentReq.data.chapter.content];
-        let content = "";
-        const start = reference.verse;
-        const end = reference?.endVerse || reference.verse;
-        if (start <= end) {
-          for (let i = start; i <= end; i++) {
-            for (let j = 0; j < contentArray.length; j++) {
-              if (contentArray[j]?.number == i) {
-                const contentString = contentArray[j].content
-                  .map((data: any) => {
-                    if (typeof data === "string") {
-                      return data;
-                    } else if (data?.text) {
-                      return data.text;
-                    } else {
-                      return "";
-                    }
-                  })
-                  .join(" ");
-                content += `${contentString} `;
-                break;
-              }
-            }
-          }
-        }
-        setRFContent(content);
+      const content = await GetChapterContent({
+        bookId: reference.book,
+        chapter: reference.chapter,
+        reference,
+        baseUrl: baseUrl,
+        translation: translation,
+      });
+      if (!content) {
+        setRdLoading(false);
+        return;
       }
+      setRFContent(content.content);
+      setBookName(content.bookData.name);
       setRdLoading(false);
     },
-    []
+    [reference, baseUrl, translation]
   );
 
   useEffect(() => {
     loadContent({ reference });
-  }, [reference]);
+  }, [reference, baseUrl, translation]);
 
   return (
     <>
@@ -62,20 +51,34 @@ const ReferenceComponent = (props: {
         style={{
           boxShadow: "rgba(99, 99, 99, 0.2) 0px 2px 8px 0px",
           width: "250px",
-          height: "fit-content",
+          height: "170px",
         }}
       >
         <div class="reference-components">
-          <span
-            onClick={() => {
-              handleRedirect({ reference });
-            }}
-            class="reference-title"
-          >{`${tags.IdToName[reference?.book]} ${reference?.chapter}:${reference?.verse}`}</span>
-          {rdLoading && <div class="loading-section"></div>}
-          {!rdLoading && (
-            <div class="reference-content">
-              <span>{rfContent}</span>
+          {rdLoading && (
+            <>
+              <div class="loading-section" style={{ height: "1rem" }}></div>
+              <div class="loading-section"></div>
+            </>
+          )}
+          {!rdLoading && rfContent && bookName && (
+            <>
+              <span
+                onClick={() => {
+                  handleRedirect({
+                    reference: { ...reference, bookName: bookName },
+                  });
+                }}
+                class="reference-title"
+              >{`${bookName} ${reference?.chapter}:${reference?.verse}`}</span>
+              <div class="reference-content">
+                <span>{rfContent}</span>
+              </div>
+            </>
+          )}
+          {!rdLoading && (!rfContent || !bookName) && (
+            <div class="no-content">
+              No content found for this reference in the current translation.
             </div>
           )}
         </div>

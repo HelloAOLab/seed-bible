@@ -15,23 +15,9 @@ import { PackageManager } from "app.packager.main";
 import { DragDropOverlay } from "app.main.dragOverlay";
 import { MainController } from "app.controller.MainController";
 import { calcThemeCSS } from "app.main.cssUtil";
+import { globalAPI } from "app.controller.controllerBuilder";
 
-globalThis.AppStartedSuccessfully = false;
-
-//this for defining nav functions globaly
-globalThis.Open = () => {};
-globalThis.OpenNextChapter = () => {};
-globalThis.OpenPrevChapter = () => {};
-globalThis.SpaceLayouts = {}; // To store layout per space
-globalThis.SpaceScreens = {}; // Already used for screen count
-globalThis.CheckToolbarOverflow = () => {};
-
-/**
- * TODO: Once casual supports it, the prop tsx types should be added back in.
- */
-export const MainContent = (
-  { controller } /*: { controller: MainController }*/
-) => {
+export const MainContent = ({ controller }: { controller: MainController }) => {
   if (configBot.tags.extensions) return <PackageManager />;
   const { screens, fullScreen, setFullScreen } = useBibleContext();
   const { collapsed, sidebarWidth, setSidebarWidth, themeColors } =
@@ -123,40 +109,8 @@ export const MainContent = (
     globalThis.SpaceScreens[activeSpace] = screens.value;
   }, [screens]);
 
-  globalThis.LocateCanvas = () => {
-    const nodes = document.querySelectorAll(".mainCanvas");
-    const el = nodes[nodes.length - 1]; // last match
-    if (!el) {
-      configBot.tags.gridPortal = null;
-      configBot.tags.mapPortal = null;
-      return;
-    }
-
-    // Viewport-relative bounds:
-    const { left, top, width, height } = el.getBoundingClientRect();
-
-    // Get border radius from computed style
-    const style = window.getComputedStyle(el);
-    const borderRadius = style.borderRadius;
-    // or if you need individual corners:
-    const borderTopLeft = style.borderTopLeftRadius;
-    const borderTopRight = style.borderTopRightRadius;
-    const borderBottomLeft = style.borderBottomLeftRadius;
-    const borderBottomRight = style.borderBottomRightRadius;
-
-    configBot.tags.gridPortal = globalThis?.defaultPortalName || "thePortal";
-    globalThis.SetCanvasPositions({
-      // ...style,
-      left,
-      top,
-      width,
-      height,
-      borderRadius, // shorthand
-    });
-  };
-
   useEffect(() => {
-    globalThis.LocateCanvas();
+    globalAPI.updateCanvasStyleAndGridPortal();
   }, [
     screens,
     containerProps.apps,
@@ -318,3 +272,13 @@ function getActiveSpace(
 ) {
   return spaces?.find((s) => s.id === activeSpaceId) ?? null;
 }
+
+globalThis.AppStartedSuccessfully = false;
+
+//this for defining nav functions globaly
+globalThis.Open = () => {};
+globalThis.OpenNextChapter = () => {};
+globalThis.OpenPrevChapter = () => {};
+globalThis.SpaceLayouts = {}; // To store layout per space
+globalThis.SpaceScreens = {}; // Already used for screen count
+globalThis.CheckToolbarOverflow = () => {};

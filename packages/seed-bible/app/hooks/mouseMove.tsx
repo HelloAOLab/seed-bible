@@ -2,6 +2,7 @@
 // Enhanced with slide-in/out functionality like iPhone
 // + Mobile tweaks: center at top & keep toolbar visible
 import { preactRenderToString } from "https://esm.helloao.org/vendor-RPNXNWQB.js";
+import { globalAPI } from "app.controller.controllerBuilder";
 
 const { createContext, useContext, useState, useEffect, useRef } = os.appHooks;
 
@@ -48,8 +49,7 @@ export function MouseMoveProvider({ children }) {
   globalThis.ShowModal = (content) => setModalContent(content);
   globalThis.CloseModal = () => setModalContent(null);
   useEffect(() => {
-    // safe if not defined
-    globalThis.LocateCanvas?.();
+    globalAPI.updateCanvasStyleAndGridPortal();
   }, [floatingApps]);
 
   // expose your globals
@@ -951,7 +951,7 @@ const FloatingAppContainer = ({
       });
     }
     setTimeout(() => {
-      globalThis.LocateCanvas?.();
+      globalAPI.updateCanvasStyleAndGridPortal();
     }, 200);
   };
 

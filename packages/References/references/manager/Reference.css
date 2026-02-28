@@ -27,11 +27,21 @@
   align-items: center;
   width: 100%;
   font-family: "Satoshi", system-ui, sans-serif;
+  height: 30px;
 }
 
 .openTab:hover {
   color: #546e7a;
   cursor: pointer;
+}
+
+.reference-body {
+  display: flex;
+  flex-direction: column;
+  overflow: auto;
+  scrollbar-width: none;
+  height: 340px;
+  width: 100%;
 }
 
 .reference-components {
@@ -83,8 +93,4 @@
   100% {
     background-position: 0% 50%;
   }
-}
-
-.reference-content {
-  max-height: 400px;
 }
