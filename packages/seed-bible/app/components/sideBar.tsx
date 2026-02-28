@@ -1638,7 +1638,7 @@ function SideBar({ panelsNumber }) {
             <button
               className="mobile-nav-btn"
               onClick={() => {
-                openPopupSettings(MenuOptions);
+                setSideBarMode("settings");
               }}
             >
               <span className="material-symbols-outlined">settings</span>
