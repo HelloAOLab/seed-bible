@@ -1021,6 +1021,7 @@ const SearchBar = (props: { openSidebar: boolean }) => {
             setAllowedTranslationLimit={setAllowedTranslationLimit}
             apiTranslations={apiTranslations}
             defaultTranslations={defaultTranslations}
+            windowSize={windowSize}
           />
         )}
       </div>
@@ -1735,7 +1736,7 @@ const SideBarChapters = (props: {
               data: {
                 use: "thePage",
                 type: "book",
-                book: "Genesis",
+                book: bookName,
                 bookId: data.id,
                 chapter: chapterNo,
                 translation: data.translationId,
@@ -1743,7 +1744,8 @@ const SideBarChapters = (props: {
               },
             };
             globalThis.AddTab(tab);
-            globalThis.MakingNewTab(tab);
+            // globalThis.MakingNewTab(tab);
+            globalThis.UpdateTab(tab);
             globalThis.MakingNewTab = false;
             setOpenSidebar(false);
           } else {

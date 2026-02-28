@@ -74,10 +74,27 @@ export const GoPrivateIcon = (props) => (
   >
     <path
       d="M5.53199 2.59375C7.7952 2.59375 9.20971 5.04375 8.07811 7.00375C7.55293 7.91339 6.58235 8.47375 5.53199 8.47375C3.26878 8.47375 1.85427 6.02375 2.98588 4.06375C3.51106 3.15411 4.48163 2.59375 5.53199 2.59375ZM19.056 2.59375C21.3192 2.59375 22.7337 5.04375 21.6021 7.00375C21.0769 7.91339 20.1064 8.47375 19.056 8.47375C16.7928 8.47375 15.3783 6.02375 16.5099 4.06375C17.0351 3.15411 18.0056 2.59375 19.056 2.59375ZM0.23999 13.571C0.23999 11.4064 1.99664 9.64975 4.16121 9.64975H5.73044C6.31477 9.64975 6.86969 9.77838 7.36949 10.0062C7.32172 10.2708 7.29967 10.5465 7.29967 10.8258C7.29967 12.2296 7.91707 13.4901 8.89094 14.3538H1.02277C0.59279 14.3538 0.23999 14.001 0.23999 13.571ZM15.1348 14.3538H15.109C16.0866 13.4901 16.7003 12.2296 16.7003 10.8258C16.7003 10.5465 16.6746 10.2745 16.6305 10.0062C17.1303 9.7747 17.6852 9.64975 18.2695 9.64975H19.8388C22.0033 9.64975 23.76 11.4064 23.76 13.571C23.76 14.0046 23.4072 14.3538 22.9772 14.3538H15.1348ZM8.47199 10.8258C8.47199 8.1099 11.412 6.41248 13.764 7.77041C14.8556 8.40063 15.528 9.56532 15.528 10.8258C15.528 13.5416 12.588 15.239 10.236 13.8811C9.14442 13.2509 8.47199 12.0862 8.47199 10.8258ZM4.94399 20.4285C4.94399 17.7237 7.13797 15.5298 9.84277 15.5298H14.1572C16.862 15.5298 19.056 17.7237 19.056 20.4285C19.056 20.9688 18.6187 21.4098 18.0748 21.4098H5.92522C5.38499 21.4098 4.94399 20.9724 4.94399 20.4285Z"
-      fill="white"
+      fill="currentColor"
     />
   </svg>
 );
+export const ClientLogo = ({ handleOpenClientSite, url, alt }) => {
+  return (
+    <img
+      onClick={handleOpenClientSite}
+      alt={alt}
+      src={url}
+      style={{
+        width: "36px",
+        height: "36px",
+        backgroundColor: "white",
+        borderRadius: "50%",
+        overflow: "hidden",
+        cursor: "pointer",
+      }}
+    />
+  );
+};
 export const TheNewSettingsIcon = (props) => (
   <svg
     width={24}
@@ -105,7 +122,7 @@ export const TheNewSettingsIcon = (props) => (
     </g>
     <defs>
       <clipPath id="clip0_1_2958">
-        <rect width={24} height={24} fill="white" />
+        <rect width={24} height={24} fill="currentColor" />
       </clipPath>
     </defs>
   </svg>
@@ -675,7 +692,13 @@ export const SelectionUIIcon = (props) => (
     <path d="M11 12L21 16L15 17L17 22Z" fill="black" />
   </svg>
 );
-const MenuIcon = ({ name, size = 24, invert = false, className = "", style = {} }) => {
+const MenuIcon = ({
+  name,
+  size = 24,
+  invert = false,
+  className = "",
+  style = {},
+}) => {
   // Check if `name` looks like an image URL
   const isImage =
     typeof name === "string" && name.match(/\.(png|jpg|jpeg|svg|gif|webp)$/i);
@@ -712,7 +735,7 @@ export const StartSessionIcon = (props) => (
   >
     <path
       d="M7.50008 4.16797C10.7217 4.16797 13.3334 6.77964 13.3334 10.0013C13.3334 13.223 10.7217 15.8346 7.50008 15.8346C4.27842 15.8346 1.66675 13.223 1.66675 10.0013C1.66675 6.77964 4.27842 4.16797 7.50008 4.16797ZM13.3334 4.22819C16.1602 4.63262 18.3334 7.06263 18.3334 10.0013C18.3334 12.94 16.1602 15.3691 13.3334 15.7736V14.0841C15.2352 13.6981 16.6667 12.0171 16.6667 10.0013C16.6667 7.98548 15.2353 6.30368 13.3334 5.91764V4.22819Z"
-      fill="white"
+      fill="currentColor"
     />
   </svg>
 );
@@ -728,20 +751,20 @@ export const JoinSession = (props) => (
     <g clipPath="url(#clip0_4878_806)">
       <path
         d="M16.25 16.25H3.75V3.75H10V2.5H3.75C3.41858 2.50033 3.10083 2.63213 2.86648 2.86648C2.63213 3.10083 2.50033 3.41858 2.5 3.75V16.25C2.50033 16.5814 2.63213 16.8992 2.86648 17.1335C3.10083 17.3679 3.41858 17.4997 3.75 17.5H16.25C16.5814 17.4997 16.8992 17.3679 17.1335 17.1335C17.3679 16.8992 17.4997 16.5814 17.5 16.25V10H16.25V16.25Z"
-        fill="white"
+        fill="currentColor"
       />
       <path
         d="M16.25 16.25H3.75V3.75H10V2.5H3.75C3.41858 2.50033 3.10083 2.63213 2.86648 2.86648C2.63213 3.10083 2.50033 3.41858 2.5 3.75V16.25C2.50033 16.5814 2.63213 16.8992 2.86648 17.1335C3.10083 17.3679 3.41858 17.4997 3.75 17.5H16.25C16.5814 17.4997 16.8992 17.3679 17.1335 17.1335C17.3679 16.8992 17.4997 16.5814 17.5 16.25V10H16.25V16.25Z"
-        fill="white"
+        fill="currentColor"
       />
       <path
         d="M16.25 3.75V1.25H15V3.75H12.5V5H15V7.5H16.25V5H18.75V3.75H16.25Z"
-        fill="white"
+        fill="currentColor"
       />
     </g>
     <defs>
       <clipPath id="clip0_4878_806">
-        <rect width={20} height={20} fill="white" />
+        <rect width={20} height={20} fill="currentColor" />
       </clipPath>
     </defs>
   </svg>
@@ -869,7 +892,7 @@ const FolderIcon = () => (
     </g>
     <defs>
       <clipPath id="clip0_1_2625">
-        <rect width="24" height="24" fill="white" />
+        <rect width="24" height="24" fill="currentColor" />
       </clipPath>
     </defs>
   </svg>
@@ -906,7 +929,7 @@ const FormatLine = (props) => (
     </g>
     <defs>
       <clipPath id="clip0_1_8275">
-        <rect width={16} height={16} fill="white" />
+        <rect width={16} height={16} fill="currentColor" />
       </clipPath>
     </defs>
   </svg>
@@ -1079,7 +1102,7 @@ const NewSettingsIcon = (props) => (
     </g>
     <defs>
       <clipPath id="clip0_4412_2620">
-        <rect width={24} height={24} fill="white" />
+        <rect width={24} height={24} fill="currentColor" />
       </clipPath>
     </defs>
   </svg>

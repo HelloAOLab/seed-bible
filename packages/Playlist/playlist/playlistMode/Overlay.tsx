@@ -17,7 +17,6 @@ const Overlay = (props: any) => {
           width: "206px",
           padding: "1rem",
           ...styles,
-          ...positionOverRide,
         }}
         className="overlay linked-item-custom"
       >

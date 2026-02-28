@@ -536,7 +536,7 @@ const JoinSessionComponent = ({ onJoin, translations = {}, CloseModal }) => {
       <div
         onClick={(e) => e.stopPropagation()}
         style={{
-          background: "#fff",
+          background: "var(--panelBackground, #fff)",
           borderRadius: 12,
           padding: "32px 24px",
           maxWidth: 543,
@@ -566,7 +566,7 @@ const JoinSessionComponent = ({ onJoin, translations = {}, CloseModal }) => {
         <h2
           style={{
             textAlign: "center",
-            color: "#000",
+            color: "var(--text1, #000)",
             marginTop: 0,
             marginBottom: 8,
             fontSize: 22,
@@ -586,7 +586,7 @@ const JoinSessionComponent = ({ onJoin, translations = {}, CloseModal }) => {
             lineHeight: 1.4,
             position: "relative",
             fontFamily: "'DM Sans'",
-            color: "#585858",
+            color: "var(--text2, #585858)",
             textAlign: "center",
           }}
         >
@@ -603,13 +603,13 @@ const JoinSessionComponent = ({ onJoin, translations = {}, CloseModal }) => {
             width: "100%",
             padding: "12px 16px",
             fontSize: 14,
-            border: "none",
+            border: "1px solid var(--inputBorder, transparent)",
             borderRadius: 4,
-            backgroundColor: "#dbdbdb",
+            backgroundColor: "var(--inputBackground, #dbdbdb)",
             outline: "none",
             boxSizing: "border-box",
             marginBottom: 16,
-            color: "rgb(127, 64, 64)",
+            color: "var(--text1, #333)",
             height: 48,
             position: "relative",
           }}
@@ -621,9 +621,10 @@ const JoinSessionComponent = ({ onJoin, translations = {}, CloseModal }) => {
             width: "100%",
             cursor: "pointer",
             padding: 12,
-            background: "#d36433",
-            color: "white",
-            border: "1px solid #d36433",
+            background: "var(--primaryButton, #d36433)",
+            color: "var(--primaryButtonColor, white)",
+            border:
+              "1px solid var(--primaryButtonBorder, var(--primaryButton, #d36433))",
             borderRadius: 4,
             fontSize: 15,
             fontWeight: 500,
@@ -632,8 +633,6 @@ const JoinSessionComponent = ({ onJoin, translations = {}, CloseModal }) => {
             position: "relative",
             boxSizing: "border-box",
           }}
-          // onMouseOver={(e) => (e.currentTarget.style.background = "#b87a50")}
-          // onMouseOut={(e) => (e.currentTarget.style.background = "#c9885c")}
         >
           {t.join}
         </button>

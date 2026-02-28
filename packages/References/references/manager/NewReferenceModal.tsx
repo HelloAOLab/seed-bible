@@ -1,11 +1,25 @@
 const { useState, useEffect, useCallback } = os.appHooks;
 const styles = tags["Reference.css"];
 import { ThePageWithEditor } from "app.components.thePage";
+import type {
+  ReferencesInterface,
+  ReferenceInterface,
+} from "references.manager.interfaces";
+import { GetChapterContent } from "references.manager.GetReferences";
 
-const ReferenceModal = ({ reference }) => {
-  const [referenceArray, setReferenceArray] = useState([]);
+const ReferenceModal = (props: { reference: ReferencesInterface }) => {
+  const { reference } = props;
+  const [referenceArray, setReferenceArray] = useState<ReferenceInterface[]>(
+    []
+  );
   const [rdLoading, setRdLoading] = useState(true);
-  const [referenceData, setReferenceData] = useState({});
+  const [referenceData, setReferenceData] = useState<{
+    [key: string]: {
+      content: string;
+      references?: ReferenceInterface[];
+      bookName: string;
+    };
+  }>({});
   const [showMore, setShowMore] = useState(false);
 
   const populateReferenceData = useCallback(async () => {
@@ -13,59 +27,48 @@ const ReferenceModal = ({ reference }) => {
 
     const referenceBot = getBot("system", "references.manager");
 
-    const referenceArrayKey = `${reference.book}.${reference.chapter}.${reference.verse}`;
-    if (
-      referenceBot.masks?.referenceDataObject &&
-      referenceBot.masks?.referenceDataObject[referenceArrayKey]
-    ) {
-      console.log("retriveing from storage");
+    const referenceArrayKey = `referenceDataObject-${reference.translation}.${reference.book}.${reference.chapter}.${reference.verse}`;
+    if (referenceBot.masks?.[`${referenceArrayKey}`]) {
+      console.log("retrieving from storage");
       setReferenceData({
-        ...referenceBot.masks.referenceDataObject[referenceArrayKey],
+        ...JSON.parse(referenceBot.masks[`${referenceArrayKey}`]),
       });
     } else {
       console.log("retriveing from web");
-      const referenceDataPromises = referenceArray.map((reference) => {
-        return web.get(
-          `https://bible.helloao.org/api/BSB/${reference.book}/${reference.chapter}.json`
-        );
+      const referenceDataPromises = referenceArray.map((subReference) => {
+        return GetChapterContent({
+          bookId: subReference.book,
+          chapter: subReference.chapter,
+          reference: subReference,
+          baseUrl: reference.baseUrl,
+          translation: reference.translation,
+        });
       });
 
       const referenceReqs = await Promise.all(referenceDataPromises);
 
-      const tempReferenceData = {};
+      const tempReferenceData: {
+        [key: string]: {
+          content: string;
+          references?: ReferenceInterface[];
+          bookName: string;
+        };
+      } = {};
 
       referenceReqs.forEach((res, index) => {
-        if (res.status !== 200) {
+        if (!res) {
           return;
         }
-        const contentArray = [...res.data.chapter.content];
-        let content = "";
-        const reference = referenceArray[index];
-        const referenceKey = `${reference.book}.${reference.chapter}.${reference.verse}`;
-        const start = reference.verse;
-        const end = reference?.endVerse || reference.verse;
-        if (start <= end) {
-          for (let i = start; i <= end; i++) {
-            for (let j = 0; j < contentArray.length; j++) {
-              if (contentArray[j]?.number == i) {
-                const contentString = contentArray[j].content
-                  .map((data) => {
-                    if (typeof data === "string") {
-                      return data;
-                    } else if (data?.text) {
-                      return data.text;
-                    } else {
-                      return "";
-                    }
-                  })
-                  .join(" ");
-                content += `${contentString} `;
-                break;
-              }
-            }
-          }
+        if (referenceArray[index]) {
+          const reference: ReferenceInterface = referenceArray[index];
+          const referenceKey = `${reference.book}.${reference.chapter}.${reference.verse}`;
+
+          tempReferenceData[referenceKey] = {
+            content: res.content,
+            references: [],
+            bookName: res.bookData.name,
+          };
         }
-        tempReferenceData[referenceKey] = { content };
       });
       setReferenceData({ ...tempReferenceData });
     }
@@ -73,7 +76,8 @@ const ReferenceModal = ({ reference }) => {
     setRdLoading(false);
   }, [referenceArray]);
 
-  const openChapter = async ({ reference }) => {
+  const openChapter = async (props: { reference: ReferenceInterface }) => {
+    const { reference } = props;
     const el = {
       id: uuid(),
       taken: false,
@@ -112,7 +116,11 @@ const ReferenceModal = ({ reference }) => {
     }
   };
 
-  const handleTitleContext = async ({ e, reference }) => {
+  const handleTitleContext = async (props: {
+    e: Event;
+    reference: ReferenceInterface;
+  }) => {
+    const { e, reference } = props;
     e.stopPropagation();
     e.preventDefault();
     openChapter({ reference: reference });
@@ -124,9 +132,12 @@ const ReferenceModal = ({ reference }) => {
   }, [referenceArray]);
 
   useEffect(() => {
-    setReferenceArray(
-      showMore ? reference.references : reference.references.slice(0, 3)
-    );
+    if (!reference) return;
+    if (showMore) {
+      setReferenceArray(reference.references);
+    } else {
+      setReferenceArray(reference.references.slice(0, 3));
+    }
   }, [reference, showMore]);
 
   return (
@@ -139,11 +150,12 @@ const ReferenceModal = ({ reference }) => {
         style={{
           height: "400px",
           width: "250px",
-          boxShadow: "rgba(99, 99, 99, 0.2) 0px 2px 8px 0px",
+          boxShadow:
+            "color-mix(in srgb, var(--tabSelection) 20%, transparent) 0px 2px 8px 0px",
         }}
       >
         <div class="heading">
-          <h2>{`${tags.IdToName[reference.book]} ${reference.chapter}:${reference.verse}`}</h2>
+          <h2>{`${reference.bookName} ${reference.chapter}:${reference.verse}`}</h2>
           <span
             onClick={() => {
               if (
@@ -151,9 +163,12 @@ const ReferenceModal = ({ reference }) => {
                 `${reference.book}.${reference.chapter}.${reference.verse}`
               ) {
                 shout("ToggleReference", {
-                  book: tags.IdToName[reference.book],
+                  bookId: reference.book,
                   chapter: reference.chapter,
                   verse: reference.verse,
+                  baseUrl: reference.baseUrl,
+                  translation: reference.translation,
+                  bookName: reference.bookName,
                 });
               }
               closePopupSettings();
@@ -164,49 +179,62 @@ const ReferenceModal = ({ reference }) => {
           </span>
         </div>
 
-        {referenceArray.map((childReference) => {
-          return (
-            <div class="reference-components">
-              <span
-                onClick={(e) => {
-                  handleTitleContext({ e, reference: childReference });
-                }}
-                class="reference-title"
-              >{`${tags.IdToName[childReference.book]} ${childReference.chapter}:${childReference.verse}${childReference?.endVerse ? `-${childReference.endVerse}` : ""}`}</span>
-              {rdLoading && <div class="loading-section"></div>}
-              {!rdLoading &&
-                referenceData[
-                  `${childReference.book}.${childReference.chapter}.${childReference.verse}`
-                ] && (
-                  <div class="reference-content">
-                    <span>
-                      {
-                        referenceData[
-                          `${childReference.book}.${childReference.chapter}.${childReference.verse}`
-                        ].content
-                      }
-                    </span>
-                  </div>
+        <div class="reference-body">
+          {referenceArray.map((childReference) => {
+            if (!childReference) return null;
+            return (
+              <div class="reference-components">
+                {rdLoading && (
+                  <>
+                    <div
+                      class="loading-section"
+                      style={{ height: "1rem" }}
+                    ></div>
+                    <div class="loading-section"></div>
+                  </>
                 )}
-            </div>
-          );
-        })}
+                {!rdLoading &&
+                  referenceData[
+                    `${childReference.book}.${childReference.chapter}.${childReference.verse}`
+                  ] && (
+                    <>
+                      <span
+                        onClick={(e) => {
+                          handleTitleContext({ e, reference: childReference });
+                        }}
+                        class="reference-title"
+                      >{`${referenceData[`${childReference.book}.${childReference.chapter}.${childReference.verse}`]?.bookName} ${childReference.chapter}:${childReference.verse}${childReference?.endVerse ? `-${childReference.endVerse}` : ""}`}</span>
+                      <div class="reference-content">
+                        <span>
+                          {
+                            referenceData[
+                              `${childReference.book}.${childReference.chapter}.${childReference.verse}`
+                            ]?.content
+                          }
+                        </span>
+                      </div>
+                    </>
+                  )}
+              </div>
+            );
+          })}
 
-        {reference.references.length > 3 && (
-          <div
-            class="reference-components"
-            style="cursor: pointer; justify-content: center; align-items: center;"
-          >
-            <span
-              onClick={() => {
-                setShowMore((prev) => !prev);
-              }}
-              class="material-symbols-outlined"
+          {reference.references.length > 3 && (
+            <div
+              class="reference-components"
+              style="cursor: pointer; justify-content: center; align-items: center;"
             >
-              {showMore ? "keyboard_arrow_up" : "keyboard_arrow_down"}
-            </span>
-          </div>
-        )}
+              <span
+                onClick={() => {
+                  setShowMore((prev) => !prev);
+                }}
+                class="material-symbols-outlined"
+              >
+                {showMore ? "keyboard_arrow_up" : "keyboard_arrow_down"}
+              </span>
+            </div>
+          )}
+        </div>
       </div>
     </>
   );

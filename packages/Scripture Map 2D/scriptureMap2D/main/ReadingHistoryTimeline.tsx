@@ -5,7 +5,7 @@ import {
 import { useTimeContext } from "scriptureMap2D.main.TimeContext";
 import { useReadingHistoryContext } from "scriptureMap2D.main.ReadingHistoryContext";
 import { useSideBarContext } from "app.hooks.sideBar";
-import { readingHistoryColorStore } from "bibleVizUtils.services.ReadingHistoryColorStore";
+import { userColorStore } from "bibleVizUtils.services.UserColorStore";
 import type {
   ReadingHistoryTooltipHeaderType,
   ReadingHistoryLabelType,
@@ -196,8 +196,9 @@ export const ReadingHistoryTimeline = () => {
               themeColors?.["1"]?.secondaryColor ?? "#D2691E"; // Hardcoded primary color. Must be accesible in the future
           } else {
             const userKey = usersKeys[0] as string;
-            colorData.userColor =
-              readingHistoryColorStore.getUserColor(userKey);
+            colorData.userColor = userColorStore.getUserColor({
+              authId: userKey,
+            });
           }
           color = GetHistoryColorByReadingTime(colorData);
         }

@@ -1,6 +1,7 @@
 import {
   BibleDataManager,
   getCachedBibleData,
+  getCachedFootnotes,
 } from "app.hooks.bibleDataManager";
 import { getStyleOf } from "app.styles.styler";
 const {
@@ -22,6 +23,7 @@ import { MiniTextEditor } from "app.components.smallEditor";
 import { ConfigurableFunctionCommands } from "app.components.commands";
 import { VerseToolbar } from "app.components.verseToolbar";
 import { useHoldAction } from "app.hooks.useHold";
+
 function getUserSessionInfo(userId) {
   try {
     if (typeof tags === "undefined" || !tags.sessions) {
@@ -130,7 +132,16 @@ function ThePage({
   const [wordHighlightsBC, setWordHighlightsBC] = useState("#ffeb3b");
 
   const [bible, setBible] = useState();
-  const [footnotes, setFootnotes] = useState(null);
+  const [footnotes, setFootnotes] = useState(() => {
+    if (tab) {
+      return getCachedFootnotes(
+        tab.data?.translation,
+        tab.data?.bookId,
+        tab.data?.chapter
+      );
+    }
+    return null;
+  });
   const [showFootnoteModal, setShowFootnoteModal] = useState(false);
   const [activeFootnote, setActiveFootnote] = useState(null);
   if (tab) globalThis[`SetEnableEditorOf${tab?.id}`] = setEnableEditor;
@@ -218,7 +229,8 @@ function ThePage({
               return {
                 ...trans,
                 name: trans.name,
-                languageEnglishName: trans.languageEnglishName,
+                languageEnglishName:
+                  trans.languageEnglishName || "Unspecified Language",
                 id: trans.id,
                 listOfBooksApiLink: `${url.origin}${trans.listOfBooksApiLink}`,
                 origin: url.origin,
@@ -543,7 +555,7 @@ function ThePage({
         config &&
         !config?.sharedTab &&
         role === "host" &&
-        masks["sharedTab"] !== tab.id
+        masks["sharedTab"] !== tab?.id
       ) {
         updateTab(tab?.id, data);
         updateTab(masks["sharedTab"], data);
@@ -565,7 +577,7 @@ function ThePage({
       } else {
         setDirection(null);
       }
-      if (masks["sharedTab"] === tab.id) EmitData("book", { ...data });
+      if (masks["sharedTab"] === tab?.id) EmitData("book", { ...data });
       // const emitter = getBot("system", "app.emitter");
       // sendRemoteData(emitter.masks.otherRemotes, "updateSharingData", {
       //   id: tab?.id,
@@ -588,7 +600,7 @@ function ThePage({
   }, [data]);
 
   useEffect(() => {
-    if (data && tab.id === activeTab) {
+    if (data && tab?.id === activeTab) {
       configBot.tags.book = data?.bookId;
       configBot.tags.chapter = data?.chapter;
     }
@@ -1519,6 +1531,10 @@ function ThePage({
       y: position.y,
     });
   }, [position, dragToolbar]);
+  const removeBibleStack =
+    tags?.settingsConfigs?.presets?.[
+      configBot?.tags?.settingsPreset || thisBot.tags.settingsPreset || "full"
+    ]?.appSettings?.removeBibleStack;
 
   return (
     <div
@@ -1527,6 +1543,9 @@ function ThePage({
       onMouseEnter={handleMouseEnter}
       onMouseUp={handleMouseUp}
       onClick={hanldNavFunctions}
+      onScroll={() => {
+        globalThis.closePopupSettings();
+      }}
       style={{
         direction,
       }}
@@ -1707,6 +1726,7 @@ function ThePage({
                   <div style={{ "pointer-events": isDragging ? "none" : null }}>
                     <Section
                       {...e}
+                      data={data}
                       inHold={inHold}
                       setInHold={setInHold}
                       book={data.book}
@@ -1752,17 +1772,19 @@ function ThePage({
               background: "gray",
             }}
           ></div>
-          <div
-            style={{
-              width: "50%",
-              display: "flex",
-              "align-items": "center",
-              "justify-content": "center",
-              position: "relative",
-            }}
-          >
-            <PageToolbar tab={tab} panelId={panelId} />
-          </div>
+          {removeBibleStack ? null : (
+            <div
+              style={{
+                width: "50%",
+                display: "flex",
+                "align-items": "center",
+                "justify-content": "center",
+                position: "relative",
+              }}
+            >
+              <PageToolbar tab={tab} panelId={panelId} />
+            </div>
+          )}
           <div style={{ height: "160px" }}></div>
 
           {showVerseToolbar &&
@@ -1904,6 +1926,7 @@ function ThePage({
                 onClick={() => {
                   setOpenSidebar((prev) => !prev);
                   setCurrentExperience(0);
+                  globalThis.MakingNewTab = true;
                 }}
                 style={{
                   fontSize: "24px",
@@ -2120,6 +2143,7 @@ function splitByWordHighlights(
 }
 
 function Section({
+  data,
   heading,
   hebrew_subtitle,
   commandHighlight,
@@ -2567,13 +2591,16 @@ function Section({
                   }}
                   onClick={(e) => {
                     e.stopPropagation();
+                    console.log(data, "data in verse click");
                     if (globalThis?.SetCurrentReference) {
                       shout("ToggleReference", {
-                        book,
+                        bookId: data?.bookId,
                         chapter,
                         verse: verse.verseNumber,
+                        baseUrl: data?.baseUrl,
+                        translation: data?.translation,
+                        bookName: data?.book,
                       });
-                      return;
                     }
                     handleVerseClick(verse.verseNumber);
                     SetShowCommands(false);
@@ -2666,7 +2693,7 @@ function Section({
                               HighlightStudyNoteSection(verse?.verseNumber);
                             }
                           }}
-                          onPointerEnter={() => {
+                          onPointerEnter={(e) => {
                             globalThis.showRefModal = true;
                             setTimeout(() => {
                               if (globalThis.showRefModal) {
@@ -2674,6 +2701,8 @@ function Section({
                                   book,
                                   chapter,
                                   verse: verse.verseNumber,
+                                  mouseEvent: e,
+                                  ...data,
                                 });
                               }
                             }, 500);
@@ -2834,7 +2863,7 @@ function Section({
                             HighlightStudyNoteSection(verse?.verseNumber);
                           }
                         }}
-                        onPointerEnter={() => {
+                        onPointerEnter={(e) => {
                           globalThis.showRefModal = true;
                           setTimeout(() => {
                             if (globalThis.showRefModal) {
@@ -2842,6 +2871,8 @@ function Section({
                                 book,
                                 chapter,
                                 verse: verse.verseNumber,
+                                mouseEvent: e,
+                                ...data,
                               });
                             }
                           }, 500);

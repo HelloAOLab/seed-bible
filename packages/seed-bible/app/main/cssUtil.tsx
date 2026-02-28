@@ -1,4 +1,4 @@
-import { getThemeObject, getPreferedColorScheme } from "app.main.themeUtils";
+import { defaultTheme } from "app.components.themeSettings";
 
 function generateCSSVarsFromObjectEntries(obj: Record<string, any>) {
   return Object.entries(obj).map(([key, value]) => `--${key}: ${value};`);
@@ -126,20 +126,11 @@ function getAllVars(
 }
 
 /**
- * This function needs to be reworked, see getThemeCSSColors TODO.
- */
-function refactorme_getCurrentTheme() {
-  return configBot.tags?.theme == "ligonier"
-    ? "ligonier"
-    : getPreferedColorScheme();
-}
-
-/**
  * We need to change how the theme is gathered, a proper store will likely need to be set up.
  * TODO: Setup store and refactor.
  */
 function getThemeCSSColors(themeColorOverride: Record<string, any> | null) {
-  const theme = getThemeObject(refactorme_getCurrentTheme());
+  const theme = defaultTheme;
 
   return themeColorOverride === null
     ? theme

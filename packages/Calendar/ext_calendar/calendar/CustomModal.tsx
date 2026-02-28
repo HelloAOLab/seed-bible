@@ -506,16 +506,15 @@ const CustomModal = ({
     <div
       style={{
         position: "fixed",
-        top: 0,
-        left: 0,
-        width: "100vw",
-        height: "100vh",
+        inset: 0,
+        width: "full",
+        height: "full",
         backgroundColor: "rgba(0,0,0,0.3)",
         backdropFilter: "blur(5px)",
         display: "flex",
         justifyContent: "center",
         alignItems: "center",
-        zIndex: 999,
+        zIndex: 99999,
       }}
     >
       <div ref={modalRef} className="google-modal">

@@ -660,6 +660,7 @@ const Playlist = () => {
               padding: "0.5rem",
               top: !isMobile ? "3rem" : "none",
               bottom: !isMobile ? "none" : "11rem",
+              marginTop: 45,
             }}
             className="overlay linked-item-custom"
           >

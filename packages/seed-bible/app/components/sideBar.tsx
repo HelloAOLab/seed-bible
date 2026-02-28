@@ -18,6 +18,7 @@ import {
   TheNewSettingsIcon,
   GoPrivateIcon,
   BurgerMenuIcon,
+  ClientLogo,
 } from "app.components.icons";
 import { useBibleContext } from "app.hooks.bibleVariables";
 import { useSideBarContext } from "app.hooks.sideBar";
@@ -375,7 +376,10 @@ function Tab({
     setSelectedTabs,
     tabsIcons,
   } = useTabsContext();
-
+  const removeEditMode =
+    tags?.settingsConfigs?.presets?.[
+      configBot?.tags?.settingsPreset || thisBot.tags.settingsPreset || "full"
+    ]?.appSettings?.removeEditMode;
   const OPTIONS = (tab) => ({
     type: "normal",
     items: [
@@ -388,7 +392,7 @@ function Tab({
         },
         active: TabOptions.Delete.active,
       },
-      {
+      !removeEditMode && {
         icon: <MenuIcon name="edit" />,
         title: t("editMode"),
         onClick: () => {
@@ -406,7 +410,7 @@ function Tab({
         },
         active: TabOptions.Select.active,
       },
-    ],
+    ].filter(Boolean),
   });
   const CANVASOPTIONS = {
     type: "normal",
@@ -484,7 +488,6 @@ function Tab({
       globalThis.HandleSharedTabClick();
     }
     const checkEmpty = PanelsApps.find((e) => !e.tabData);
-    console.log(checkEmpty, PanelsApps);
     if (el.data.type === "book" && checkEmpty) {
       // console.log("canvas replacing");
       setActiveTab(el.id);
@@ -690,7 +693,13 @@ function Tab({
   );
 }
 
-function Folder({ folder, onlineUsers, collapsed }) {
+function Folder({
+  folder,
+  onlineUsers,
+  collapsed,
+  setSidebarWidth,
+  setCollapsed,
+}) {
   const {
     setActiveTab,
     activeTab,
@@ -715,6 +724,7 @@ function Folder({ folder, onlineUsers, collapsed }) {
   function handleMouseUp() {
     if (!isDragging) return;
     moveTab(Element.data.id, folder.id);
+    setIsDragging(false);
     setTabEntered(false);
   }
   const OPTIONS = {
@@ -806,6 +816,10 @@ function SideBar({ panelsNumber }) {
     setSelectedTabs,
     sharedTab,
   } = useTabsContext();
+  const hidePanels =
+    tags?.settingsConfigs?.presets?.[
+      configBot?.tags?.settingsPreset || thisBot.tags.settingsPreset || "full"
+    ]?.appSettings?.disablePanels;
   globalThis.AddTab = addTab;
   const { screens, setScreens, fullScreen, setFullScreen, ReSeed, setReSeed } =
     useBibleContext();
@@ -815,6 +829,7 @@ function SideBar({ panelsNumber }) {
   const [onlineUsers, setOnlineUsers] = useState(false);
   globalThis.SetOnlineUsers = setOnlineUsers;
   const [showSearch, setShowSearch] = useState(false); // New state for search visibility
+  const [searchQuery, setSearchQuery] = useState(""); // Search filter for tabs
   const [editMode, setEditMode] = useState(false); // New state for edit mode
   const [keepAwake, setKeepAwake] = useState(false); // New state for keep device awaken
   useEffect(() => {
@@ -879,6 +894,7 @@ function SideBar({ panelsNumber }) {
     setPackageAddingOptions,
     closePopupSettings,
     userURL,
+    themeColors,
     t,
   } = useSideBarContext();
   const { setIsDragging, isDragging, setElement, Element } = useMouseMove();
@@ -989,6 +1005,7 @@ function SideBar({ panelsNumber }) {
 
   // Toggle search visibility function
   const toggleSearchVisibility = () => {
+    if (showSearch) setSearchQuery("");
     setShowSearch(!showSearch);
   };
 
@@ -1032,16 +1049,16 @@ function SideBar({ panelsNumber }) {
           height: "100%",
           " flex-shrink": "0",
           "border-radius": "10px",
-          background: " #202020",
+          background: themeColors ? themeColors[1].primaryColor : "#ffffff",
+          border: "1px solid #1A1A1A",
           padding: "20px",
         }}
       >
         <div
           style={{
-            color: "white",
             textAlign: "left",
             marginBottom: "10px",
-            color: " #FFF",
+            color: themeColors ? themeColors[1].text1 : "#1A1A1A",
             "font-family": "'Satoshi', system-ui, sans-serif",
             "font-size": "16px",
             "font-style": "normal",
@@ -1133,62 +1150,81 @@ function SideBar({ panelsNumber }) {
       <rect width={24} height={24} fill="transparent" />
     </svg>
   );
+  const removeJoinSession =
+    tags?.settingsConfigs?.presets?.[
+      configBot?.tags?.settingsPreset || thisBot.tags.settingsPreset || "full"
+    ]?.appSettings?.removeJoinSession || false;
+
   const MenuOptions = {
     type: "normal",
     items: [
-      {
-        disabled: false,
-        icon: <StartSessionIcon />,
-        title: t("startSession"),
-        onClick: () => {
-          // os.log(globalThis?.StartSession,globalThis)
-          HandleSharedTabClick();
-        },
-      },
-      {
-        disabled: false,
-        icon: <MenuIcon name="person_add" />,
-        // icon: <TransparentSvg />,
-        title: t("inviteToSession"),
-        onClick: async () => {
-          const { QRCodeComponent } = thisBot.Chips();
-          const url = `https://ao.bot/?inst=${os.getCurrentInst()}`;
-          ShowModal(<QRCodeComponent url={url} />);
-        },
-      },
-      {
-        disabled: false,
-        icon: <JoinSession />,
-        title: t("joinAnotherSession"),
-        onClick: async () => {
-          const { JoinSessionComponent } = thisBot.Chips();
-          const translations = {
-            joinSession: t("joinSession"),
-            enterSessionCode: t("enterSessionCode"),
-            sessionCodePlaceholder: t("sessionCodePlaceholder"),
-            join: t("join"),
-          };
-          ShowModal(
-            <JoinSessionComponent
-              onJoin={(code) => os.goToURL(code)}
-              translations={translations}
-              CloseModal={() => globalThis.CloseModal()}
-            />
-          );
-        },
-      },
-      {
-        disabled: false,
-        icon: <GoPrivateIcon />,
-        title: globalThis.IsPrivateMode?.() ? t("goPublic") : t("goPrivate"),
-        onClick: async () => {
-          if (globalThis.TogglePrivateMode) {
-            await globalThis.TogglePrivateMode();
-          }
-        },
-      },
+      ...(!configBot.tags.staticInst
+        ? [
+            {
+              disabled: false,
+              icon: <StartSessionIcon />,
+              title: t("startSession"),
+              onClick: () => {
+                // os.log(globalThis?.StartSession,globalThis)
+                HandleSharedTabClick();
+              },
+            },
+            {
+              disabled: false,
+              icon: <MenuIcon name="person_add" />,
+              // icon: <TransparentSvg />,
+              title: t("inviteToSession"),
+              onClick: async () => {
+                const { QRCodeComponent } = thisBot.Chips();
+                const url = `https://ao.bot/?inst=${os.getCurrentInst()}`;
+                ShowModal(<QRCodeComponent url={url} />);
+              },
+            },
+          ]
+        : []),
+      ...(!removeJoinSession
+        ? [
+            {
+              disabled: true,
+              icon: <JoinSession />,
+              title: t("joinAnotherSession"),
+              onClick: async () => {
+                const { JoinSessionComponent } = thisBot.Chips();
+                const translations = {
+                  joinSession: t("joinSession"),
+                  enterSessionCode: t("enterSessionCode"),
+                  sessionCodePlaceholder: t("sessionCodePlaceholder"),
+                  join: t("join"),
+                };
+                ShowModal(
+                  <JoinSessionComponent
+                    onJoin={(code) => os.goToURL(code)}
+                    translations={translations}
+                    CloseModal={() => globalThis.CloseModal()}
+                  />
+                );
+              },
+            },
+            ...(!configBot.tags.staticInst
+              ? [
+                  {
+                    disabled: false,
+                    icon: <GoPrivateIcon />,
+                    title: globalThis.IsPrivateMode?.()
+                      ? t("goPublic")
+                      : t("goPrivate"),
+                    onClick: async () => {
+                      if (globalThis.TogglePrivateMode) {
+                        await globalThis.TogglePrivateMode();
+                      }
+                    },
+                  },
+                ]
+              : []),
 
-      { type: "line" },
+            { type: "line" },
+          ]
+        : []),
       {
         disabled: false,
         // icon: <MenuIcon name={showSearch ? "visibility_off" : "visibility"} />,
@@ -1228,12 +1264,12 @@ function SideBar({ panelsNumber }) {
           os.openURL("https://forms.gle/mhtqbQd6VPW8ZDh2A");
         },
       },
-      {
-        disabled: true,
-        icon: <MenuIcon name="help" />,
-        title: t("help"),
-        onClick: () => {},
-      },
+      // {
+      //   disabled: true,
+      //   icon: <MenuIcon name="help" />,
+      //   title: t("help"),
+      //   onClick: () => { },
+      // },
     ],
   };
 
@@ -1300,7 +1336,21 @@ function SideBar({ panelsNumber }) {
 
   const { moveMultipleTabs } = useTabsContext();
   const holdTimeout = useRef({ time: null, clicked: null });
-
+  const activePreset =
+    configBot?.tags?.settingsPreset || thisBot.tags.settingsPreset || "full";
+  const clientSite =
+    tags?.settingsConfigs?.presets?.[activePreset]?.clientBranding?.clientSite;
+  const clientName =
+    tags?.settingsConfigs?.presets?.[activePreset]?.clientBranding?.clientName;
+  const clientLogo =
+    tags?.settingsConfigs?.presets?.[activePreset]?.clientBranding?.clientLogo;
+  const isSiteOfClient =
+    tags?.settingsConfigs?.presets?.[activePreset]?.clientBranding?.enabled;
+  const handleOpenClientSite = () => {
+    if (clientSite) {
+      window.open(clientSite);
+    }
+  };
   return (
     <>
       {isResizing.current && (
@@ -1433,12 +1483,21 @@ function SideBar({ panelsNumber }) {
                     <span></span>
                   )}
                 </div>
+                {isSiteOfClient && (
+                  <ClientLogo
+                    handleOpenClientSite={handleOpenClientSite}
+                    url={clientLogo}
+                    alt={clientName}
+                  />
+                )}
               </div>
               <div className="canvasOptions">
                 <span
                   style={{
                     paddingTop: customScreens?.value >= 2 ? "3px" : "0px",
                     color: "var(--selectPanelIcon, var(--text1))",
+                    display: hidePanels ? "none" : "",
+                    height: "22px",
                   }}
                   onContextMenu={(e) => {
                     e.preventDefault();
@@ -1505,7 +1564,11 @@ function SideBar({ panelsNumber }) {
             {showSearch && (
               <div className="searchSection">
                 <span className="material-symbols-outlined">search</span>
-                <input placeholder="Search..." />
+                <input
+                  placeholder="Search..."
+                  value={searchQuery}
+                  onChange={(e) => setSearchQuery(e.target.value)}
+                />
               </div>
             )}
             {!configBot.tags.staticInst && <UserPresence />}
@@ -1574,10 +1637,12 @@ function SideBar({ panelsNumber }) {
         )}
         {folders.map((folder) => (
           <Folder
+            key={folder.id}
             onlineUsers={onlineUsers}
             folder={folder}
             collapsed={collapsed}
-            editMode={editMode}
+            setSidebarWidth={setSidebarWidth}
+            setCollapsed={setCollapsed}
           />
         ))}
         {folders.length > 0 && (
@@ -1650,9 +1715,10 @@ function SideBar({ panelsNumber }) {
                     icon: <MenuIcon name="folder" />,
                     title: `Add to ${item.name}`,
                     onClick: () => {
-                      console.log(tabs.map((e) => selectedTabs.includes(e.id)));
                       moveMultipleTabs(selectedTabs, item.id);
+                      setSelectedTabs([]);
                       setMultiSelectMode(false);
+                      closePopupSettings();
                     },
                   });
                 });
@@ -1690,7 +1756,9 @@ function SideBar({ panelsNumber }) {
             >
               <BurgerMenuIcon size={24} color="var(--text1)" />
             </div>
-            {!configBot.tags.staticInst && <UserPresence collapsed={true} />}
+            {!configBot.tags.staticInst && !removeJoinSession && (
+              <UserPresence collapsed={true} />
+            )}
             <div
               style={{
                 height: "1px",
@@ -1712,6 +1780,23 @@ function SideBar({ panelsNumber }) {
         >
           {tabs
             .filter((tab) => !tab.sharedTab)
+            .filter((tab) => {
+              if (!searchQuery) return true;
+              const query = searchQuery.toLowerCase();
+              const name = tab?.data?.book || tab?.data?.title || "";
+              const chapter = tab?.data?.chapter
+                ? String(tab.data.chapter)
+                : "";
+              const shortName = tab?.data?.shortName || "";
+              const type = tab?.data?.type || "";
+              return (
+                name.toLowerCase().includes(query) ||
+                chapter.includes(query) ||
+                shortName.toLowerCase().includes(query) ||
+                type.toLowerCase().includes(query) ||
+                `${name} - ${chapter}`.toLowerCase().includes(query)
+              );
+            })
             .map((el, index) => (
               <Tab
                 key={el.id}
@@ -1933,8 +2018,9 @@ export const SettingsProfile = () => {
     }
   };
   const removeSpaces =
-    tags?.settingsConfigs?.presets?.[configBot?.tags?.settingsPreset || "full"]
-      ?.appSettings?.removeSpaces;
+    tags?.settingsConfigs?.presets?.[
+      configBot?.tags?.settingsPreset || thisBot.tags.settingsPreset || "full"
+    ]?.appSettings?.removeSpaces;
 
   return (
     <div className="dot">
@@ -2007,37 +2093,45 @@ export const UserProfile = ({ collapsed }) => {
     configBot.id,
     userData
   );
+  const removeAccountOptions =
+    tags?.settingsConfigs?.presets?.[
+      configBot?.tags?.settingsPreset || thisBot.tags.settingsPreset || "full"
+    ]?.appSettings?.removeAccountOptions;
   const Icon = icons[iconIndex];
   return (
     <div
-      onClick={() => {
-        if (!authBot?.id) {
-          globalThis.AccountSettingsEnteredFrom = "default";
-          setSideBarMode("createAccountSettings");
-        } else {
-          openPopupSettings({
-            type: "normal",
-            items: [
-              {
-                icon: <MenuIcon name="account_circle" />,
-                title: "View profile",
-                onClick: () => {
-                  globalThis.AccountSettingsEnteredFrom = "default";
-                  setSideBarMode("createAccountSettings");
-                },
-              },
-              {
-                icon: <MenuIcon name="logout" />,
-                title: "Sign out",
-                onClick: () => {
-                  destroy(authBot);
-                  setUserData(null);
-                },
-              },
-            ],
-          });
-        }
-      }}
+      onClick={
+        removeAccountOptions
+          ? undefined
+          : () => {
+              if (!authBot?.id) {
+                globalThis.AccountSettingsEnteredFrom = "default";
+                setSideBarMode("createAccountSettings");
+              } else {
+                openPopupSettings({
+                  type: "normal",
+                  items: [
+                    {
+                      icon: <MenuIcon name="account_circle" />,
+                      title: "View profile",
+                      onClick: () => {
+                        globalThis.AccountSettingsEnteredFrom = "default";
+                        setSideBarMode("createAccountSettings");
+                      },
+                    },
+                    {
+                      icon: <MenuIcon name="logout" />,
+                      title: "Sign out",
+                      onClick: () => {
+                        destroy(authBot);
+                        setUserData(null);
+                      },
+                    },
+                  ],
+                });
+              }
+            }
+      }
       style={{ background: userData?.photoLink && "transparent" }}
       className="userProfile"
     >
@@ -2055,13 +2149,15 @@ export const UserProfile = ({ collapsed }) => {
           overflow: "hidden",
         }}
       >
-        {userData?.photoLink ? (
+        {!configBot.tags.staticInst && userData?.photoLink ? (
           <img
             style={{ "border-radius": "50%", width: "35px", border: "" }}
             src={userData?.photoLink}
           />
-        ) : (
+        ) : !configBot.tags.staticInst ? (
           <Icon width={15} height={15} />
+        ) : (
+          <span className="material-symbols-outlined">person</span>
         )}
       </div>
       {

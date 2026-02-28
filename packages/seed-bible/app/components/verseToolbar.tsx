@@ -310,6 +310,10 @@ export function VerseToolbar({
       getMenuActions(clickedVersesContext, onClose, activeSpace, spaces) || []
     );
   }, [clickedVersesContext, activeSpace, spaces]);
+  const disableHighlighting =
+    tags?.settingsConfigs?.presets?.[
+      configBot?.tags?.settingsPreset || thisBot.tags.settingsPreset || "full"
+    ]?.pageSettings?.disableHighlighting;
 
   return (
     <>
@@ -431,178 +435,179 @@ export function VerseToolbar({
             <div className="divider-vertical" style={dividerStyle}></div>
           )}
 
-          {selectionSettings.showHighlightColors && (
-            <div
-              onMouseDown={(e) => e.stopPropagation()}
-              className="color-buttons"
-              style={colorButtonsStyle}
-            >
-              {allHighlighted ? (
-                <>
-                  <button
-                    className="clear-button"
-                    style={{
-                      ...plusButtonStyle,
-                      width: "auto",
-                      padding: "8px 16px",
-                      borderRadius: "6px",
-                      fontSize: "13px",
-                      fontWeight: "500",
-                      color: "#dc2626",
-                      border: "2px solid #dc2626",
-                      backgroundColor: "#fff",
-                    }}
-                    onMouseEnter={(e) => {
-                      e.currentTarget.style.backgroundColor = "#fee2e2";
-                      e.currentTarget.style.transform = "scale(1.05)";
-                    }}
-                    onMouseLeave={(e) => {
-                      e.currentTarget.style.backgroundColor = "#fff";
-                      e.currentTarget.style.transform = "scale(1)";
-                    }}
-                    onClick={handleClearHighlights}
-                  >
-                    Clear Selected
-                  </button>
-                  <button
-                    className="clear-all-button"
-                    style={{
-                      ...plusButtonStyle,
-                      width: "auto",
-                      padding: "8px 16px",
-                      borderRadius: "6px",
-                      fontSize: "13px",
-                      fontWeight: "500",
-                      color: "#991b1b",
-                      border: "2px solid #991b1b",
-                      backgroundColor: "#fff",
-                    }}
-                    onMouseEnter={(e) => {
-                      e.currentTarget.style.backgroundColor = "#fecaca";
-                      e.currentTarget.style.transform = "scale(1.05)";
-                    }}
-                    onMouseLeave={(e) => {
-                      e.currentTarget.style.backgroundColor = "#fff";
-                      e.currentTarget.style.transform = "scale(1)";
-                    }}
-                    onClick={handleClearAll}
-                  >
-                    Clear All
-                  </button>
-                </>
-              ) : (
-                <>
-                  {isPickingColor && (
-                    <>
+          {selectionSettings.showHighlightColors && !disableHighlighting && (
+            <>
+              <div
+                onMouseDown={(e) => e.stopPropagation()}
+                className="color-buttons"
+                style={colorButtonsStyle}
+              >
+                {allHighlighted ? (
+                  <>
+                    <button
+                      className="clear-button"
+                      style={{
+                        ...plusButtonStyle,
+                        width: "auto",
+                        padding: "8px 16px",
+                        borderRadius: "6px",
+                        fontSize: "13px",
+                        fontWeight: "500",
+                        color: "#dc2626",
+                        border: "2px solid #dc2626",
+                        backgroundColor: "#fff",
+                      }}
+                      onMouseEnter={(e) => {
+                        e.currentTarget.style.backgroundColor = "#fee2e2";
+                        e.currentTarget.style.transform = "scale(1.05)";
+                      }}
+                      onMouseLeave={(e) => {
+                        e.currentTarget.style.backgroundColor = "#fff";
+                        e.currentTarget.style.transform = "scale(1)";
+                      }}
+                      onClick={handleClearHighlights}
+                    >
+                      Clear Selected
+                    </button>
+                    <button
+                      className="clear-all-button"
+                      style={{
+                        ...plusButtonStyle,
+                        width: "auto",
+                        padding: "8px 16px",
+                        borderRadius: "6px",
+                        fontSize: "13px",
+                        fontWeight: "500",
+                        color: "#991b1b",
+                        border: "2px solid #991b1b",
+                        backgroundColor: "#fff",
+                      }}
+                      onMouseEnter={(e) => {
+                        e.currentTarget.style.backgroundColor = "#fecaca";
+                        e.currentTarget.style.transform = "scale(1.05)";
+                      }}
+                      onMouseLeave={(e) => {
+                        e.currentTarget.style.backgroundColor = "#fff";
+                        e.currentTarget.style.transform = "scale(1)";
+                      }}
+                      onClick={handleClearAll}
+                    >
+                      Clear All
+                    </button>
+                  </>
+                ) : (
+                  <>
+                    {isPickingColor && (
+                      <>
+                        <button
+                          key="cancel-color"
+                          className="color-circle"
+                          style={{
+                            ...circleButtonStyle("#fff"),
+                            border: "2px solid #999",
+                            display: "flex",
+                            alignItems: "center",
+                            justifyContent: "center",
+                            fontSize: "16px",
+                            lineHeight: 1,
+                            color: "#666",
+                          }}
+                          onClick={(e) => {
+                            e.stopPropagation();
+                            setIsPickingColor(false);
+                            setTempColor(selectedColor);
+                          }}
+                          onMouseEnter={(e) =>
+                            (e.currentTarget.style.transform = "scale(1.1)")
+                          }
+                          onMouseLeave={(e) =>
+                            (e.currentTarget.style.transform = "scale(1)")
+                          }
+                          aria-label="Cancel color selection"
+                        >
+                          ✕
+                        </button>
+                        <button
+                          key="temp-preview"
+                          className="color-circle"
+                          style={{
+                            ...circleButtonStyle(tempColor),
+                            border: "3px solid #666",
+                            boxShadow: "0 0 8px rgba(0,0,0,0.3)",
+                          }}
+                          aria-label={`Preview color ${tempColor}`}
+                        />
+                      </>
+                    )}
+
+                    {customColors.map((color) => (
                       <button
-                        key="cancel-color"
+                        key={color}
                         className="color-circle"
-                        style={{
-                          ...circleButtonStyle("#fff"),
-                          border: "2px solid #999",
-                          display: "flex",
-                          alignItems: "center",
-                          justifyContent: "center",
-                          fontSize: "16px",
-                          lineHeight: 1,
-                          color: "#666",
-                        }}
-                        onClick={(e) => {
-                          e.stopPropagation();
-                          setIsPickingColor(false);
-                          setTempColor(selectedColor);
-                        }}
+                        style={circleButtonStyle(color)}
                         onMouseEnter={(e) =>
                           (e.currentTarget.style.transform = "scale(1.1)")
                         }
                         onMouseLeave={(e) =>
                           (e.currentTarget.style.transform = "scale(1)")
                         }
-                        aria-label="Cancel color selection"
-                      >
-                        ✕
-                      </button>
+                        onClick={() => handleColorClick(color)}
+                        aria-label={`Highlight with ${color}`}
+                      />
+                    ))}
+
+                    {defaultColors.map((color) => (
                       <button
-                        key="temp-preview"
+                        key={color}
                         className="color-circle"
-                        style={{
-                          ...circleButtonStyle(tempColor),
-                          border: "3px solid #666",
-                          boxShadow: "0 0 8px rgba(0,0,0,0.3)",
-                        }}
-                        aria-label={`Preview color ${tempColor}`}
-                      />
-                    </>
-                  )}
-
-                  {customColors.map((color) => (
-                    <button
-                      key={color}
-                      className="color-circle"
-                      style={circleButtonStyle(color)}
-                      onMouseEnter={(e) =>
-                        (e.currentTarget.style.transform = "scale(1.1)")
-                      }
-                      onMouseLeave={(e) =>
-                        (e.currentTarget.style.transform = "scale(1)")
-                      }
-                      onClick={() => handleColorClick(color)}
-                      aria-label={`Highlight with ${color}`}
-                    />
-                  ))}
-
-                  {defaultColors.map((color) => (
-                    <button
-                      key={color}
-                      className="color-circle"
-                      style={circleButtonStyle(color)}
-                      onMouseEnter={(e) =>
-                        (e.currentTarget.style.transform = "scale(1.1)")
-                      }
-                      onMouseLeave={(e) =>
-                        (e.currentTarget.style.transform = "scale(1)")
-                      }
-                      onClick={() => handleColorClick(color)}
-                      aria-label={`Highlight with ${color}`}
-                    />
-                  ))}
-
-                  <div ref={colorPickerRef}>
-                    <button
-                      className="plus-button"
-                      style={plusButtonStyle}
-                      onMouseEnter={(e) =>
-                        (e.currentTarget.style.transform = "scale(1.1)")
-                      }
-                      onMouseLeave={(e) =>
-                        (e.currentTarget.style.transform = "scale(1)")
-                      }
-                      onClick={handlePlusClick}
-                      aria-label="Add color"
-                    >
-                      <img
-                        style={{ width: "44px", "-webkit-user-drag": "none" }}
-                        src={
-                          "https://res.cloudinary.com/dfbtwwa8p/image/upload/v1761753902/329cd5727522c1b0f09580e4c7b13964cb2b1a87_fvmcdy.png"
+                        style={circleButtonStyle(color)}
+                        onMouseEnter={(e) =>
+                          (e.currentTarget.style.transform = "scale(1.1)")
                         }
+                        onMouseLeave={(e) =>
+                          (e.currentTarget.style.transform = "scale(1)")
+                        }
+                        onClick={() => handleColorClick(color)}
+                        aria-label={`Highlight with ${color}`}
                       />
-                    </button>
+                    ))}
 
-                    <input
-                      ref={colorInputRef}
-                      type="color"
-                      value={tempColor}
-                      onChange={handleColorChange}
-                      style={colorInputStyle}
-                    />
-                  </div>
-                </>
-              )}
-            </div>
-          )}
+                    <div ref={colorPickerRef}>
+                      <button
+                        className="plus-button"
+                        style={plusButtonStyle}
+                        onMouseEnter={(e) =>
+                          (e.currentTarget.style.transform = "scale(1.1)")
+                        }
+                        onMouseLeave={(e) =>
+                          (e.currentTarget.style.transform = "scale(1)")
+                        }
+                        onClick={handlePlusClick}
+                        aria-label="Add color"
+                      >
+                        <img
+                          style={{ width: "44px", "-webkit-user-drag": "none" }}
+                          src="https://res.cloudinary.com/dfbtwwa8p/image/upload/v1761753902/329cd5727522c1b0f09580e4c7b13964cb2b1a87_fvmcdy.png"
+                        />
+                      </button>
 
-          {selectionSettings.showHighlightColors && (
-            <div className="divider-vertical" style={dividerStyle}></div>
+                      <input
+                        ref={colorInputRef}
+                        type="color"
+                        value={tempColor}
+                        onChange={handleColorChange}
+                        style={colorInputStyle}
+                      />
+                    </div>
+                  </>
+                )}
+              </div>
+
+              {selectionSettings.showHighlightColors &&
+                !disableHighlighting && (
+                  <div className="divider-vertical" style={dividerStyle}></div>
+                )}
+            </>
           )}
 
           <div
@@ -646,7 +651,6 @@ export function VerseToolbar({
 function getMenuActions(that, onClose, activeSpace, spaces) {
   os.log("GET MENU ACTIONS VERSE TOOLBAR", that);
   const { SharePopup } = thisBot.Chips();
-
   // Get copy mode setting - first try globalThis, then fall back to saved space data
   const getSettings = () => {
     if (globalThis.selectionUIBehavior?.[activeSpace]) {
@@ -681,6 +685,10 @@ function getMenuActions(that, onClose, activeSpace, spaces) {
     }
     return `${that.book} ${that.chapter}:${groups.join(",")}`;
   };
+  const removeAiAgent =
+    tags?.settingsConfigs?.presets?.[
+      configBot?.tags?.settingsPreset || thisBot.tags.settingsPreset || "full"
+    ]?.pageSettings?.removeAiAgent;
 
   const MenuOptions = {
     type: "normal",
@@ -698,15 +706,20 @@ function getMenuActions(that, onClose, activeSpace, spaces) {
         },
         title: "Copy",
       },
-      {
-        icon: <ApologistIcon />,
-        onClick: () => {
-          ClearUserSelection();
-          SetShowCommands(true);
-          SetInHold(null);
-        },
-        title: "Agent",
-      },
+
+      ...(!removeAiAgent
+        ? [
+            {
+              icon: <ApologistIcon />,
+              onClick: () => {
+                ClearUserSelection();
+                SetShowCommands(true);
+                SetInHold(null);
+              },
+              title: "Agent",
+            },
+          ]
+        : []),
       {
         icon: <ShareIcon height="24" width="24" />,
         onClick: () => {
@@ -804,8 +817,8 @@ function getMenuActions(that, onClose, activeSpace, spaces) {
       if (!titleArray.includes(el.title)) {
         itemsHolder.push({
           ...el,
-          onClick: () => {
-            if (el.onClick) el.onClick();
+          onClick: (e: MouseEvent) => {
+            if (el.onClick) el.onClick(e);
             SetInHold({});
           },
         });
@@ -832,7 +845,7 @@ function getMenuActions(that, onClose, activeSpace, spaces) {
       items.forEach((el) => {
         MenuOptions.items.push({
           icon: el.icon,
-          onClick: () => {
+          onClick: (e: MouseEvent) => {
             if (el.onClick) el.onClick(that);
             SetInHold(null);
           },
@@ -853,9 +866,57 @@ function getMenuActions(that, onClose, activeSpace, spaces) {
 const SubOptions = ({ items }) => {
   return (
     <div
-      className={`popupSettings`}
-      style={{ maxHeight: "275px", overflowY: "auto", scrollbarWidth: "none" }}
+      className={"popupSettings2"}
+      style={{
+        maxHeight: "275px",
+        overflowY: "auto",
+        scrollbarWidth: "none",
+      }}
     >
+      <style>{globalThis.ThemeCSS}</style>
+      <style>
+        {`
+.popupSettings2 {
+  position: relative;
+  width: 215px !important;
+  height: fit-content;
+  padding: 10px;
+  display: flex;
+  flex-direction: column;
+  background: var(--primaryColor) !important;
+  align-items: center;
+  gap: 2px;
+  border-radius: 10px;
+  scrollbar-width: none;
+  box-shadow:
+    0 2px 8px rgba(0, 0, 0, 0.15),
+    0 2px 6px rgba(0, 0, 0, 0.1);
+}
+
+        .popupSettings2 .itemSettings2 {
+  display: flex !important;
+  flex-direction: row;
+  gap: 6px;
+  justify-content: start !important;
+  align-items: center;
+  width: 100%;
+  background: rgba(var(--text1), 0.9);
+  color: var(--text1);
+  font-family: "Satoshi", system-ui, sans-serif;
+  font-size: 14px;
+  font-style: normal;
+  font-weight: 400;
+  line-height: normal;
+  border-radius: 10px;
+  padding: 6px;
+  cursor: pointer;
+}
+
+.popupSettings2 .itemSettings2:hover {
+  background: rgba(var(--text1), 0.3);
+}
+        `}
+      </style>
       {items.map((item) => {
         if (item.active === false) return;
         if (item?.type === "line")
@@ -871,10 +932,10 @@ const SubOptions = ({ items }) => {
         else
           return (
             <div
-              onClick={() => {
-                item.onClick();
+              onClick={(e: MouseEvent) => {
+                item.onClick(e);
               }}
-              className={`itemSettings`}
+              className={`itemSettings2`}
               style={{
                 cursor: item?.disabled ? "not-allowed" : "pointer",
                 color: item?.disabled ? "#929292" : "",
@@ -887,7 +948,6 @@ const SubOptions = ({ items }) => {
             </div>
           );
       })}
-      <style>{getStyleOf("sidebar.css")}</style>
     </div>
   );
 };

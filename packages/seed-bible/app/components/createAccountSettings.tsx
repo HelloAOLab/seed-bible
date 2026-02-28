@@ -24,7 +24,7 @@ const CreateAccountSettings = () => {
   const [isSignedIn, setIsSignedIn] = useState(false);
 
   useEffect(() => {
-    if (!authBot.id) {
+    if (!authBot?.id) {
       setIsSignedIn(false);
       setUid("");
       setProfileName("");
