@@ -9,6 +9,15 @@
   z-index: 10;
 }
 
+@media (max-width: 480px) {
+  .toolbar-container-1 {
+    bottom: 0;
+    top: auto;
+    width: 100vw;
+    padding: 0;
+  }
+}
+
 .toolbar-1 {
   direction: ltr;
   display: flex;
@@ -32,60 +41,183 @@
   pointer-events: none; /* Disabled until app mounts */
 }
 
-.toolbar-1.mounted {
-  pointer-events: auto; /* Enabled after app mounts */
-}
-
-@media (min-width: 768px) {
-  .mobile-only {
+@media (max-width: 480px) {
+  .toolbar-1 {
     display: none;
   }
 }
 
+.toolbar-1.mounted {
+  pointer-events: auto; /* Enabled after app mounts */
+}
+
+/* Mobile Bottom Navbar */
+.mobile-bottom-navbar {
+  display: none;
+  position: fixed;
+  bottom: 0;
+  left: 0;
+  right: 0;
+  width: 100vw;
+  height: auto;
+  background: var(--pageBackground);
+  border-top: 1px solid var(--borderColor, #e0e0e0);
+  flex-direction: row;
+  align-items: flex-end;
+  justify-content: space-between;
+  padding: 12px 20px 20px 20px;
+  z-index: 100;
+  gap: 16px;
+}
+
 @media (max-width: 480px) {
-  .toolbar-1 {
-    width: 100vw !important;
-    border: none;
-    border-radius: 0px;
-    bottom: 0px;
-    background-color: var(--pageBackground);
-    justify-content: flex-start !important;
-    padding: 0px 0px;
-    height: 54px;
-    gap: 4px;
+  .mobile-bottom-navbar {
+    display: flex;
   }
-  .firstToolbarbutton {
-    background-color: var(--firstToolbarbutton) !important;
-    border-radius: 0px !important;
-  }
+}
 
-  .leftClick {
-    position: absolute !important;
-    left: 16px;
-    bottom: 68px;
-    background: var(--pageBackground) !important;
-    border-radius: 100%;
-    display: block !important;
-    pointer-events: all;
-            height: 48px !important;
-  }
+.mobile-navbar-btn {
+  background: none;
+  border: none;
+  cursor: pointer;
+  padding: 0;
+  border-radius: 8px;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: flex-end;
+  transition: background-color 0.2s ease;
+  color: var(--text1);
+  flex-shrink: 0;
+}
 
-  .rightClick {
-    position: absolute !important;
-    right: 16px;
-    bottom: 68px;
-    background: var(--pageBackground) !important;
-    border-radius: 100%;
-    display: block !important;
-    pointer-events: all;
-            height: 48px !important;
+.mobile-navbar-btn:hover {
+  background-color: transparent;
+}
+
+.mobile-navbar-btn:active {
+  background-color: transparent;
+}
+
+.mobile-btn-content {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 4px;
+}
+
+.mobile-btn-label {
+  font-size: 12px;
+  font-weight: 500;
+  color: var(--text1);
+  text-align: center;
+}
+
+.mobile-navbar-arrow {
+  background: none;
+  border: none;
+  cursor: pointer;
+  padding: 8px;
+  border-radius: 50%;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  transition: background-color 0.2s ease;
+  color: var(--text1);
+  flex-shrink: 0;
+  width: 40px;
+  height: 40px;
+}
+
+.mobile-navbar-arrow:hover {
+  background-color: rgba(0, 0, 0, 0.08);
+}
+
+.mobile-navbar-arrow:active {
+  background-color: rgba(0, 0, 0, 0.12);
+}
+
+.mobile-navbar-arrow .material-symbols-outlined {
+  font-size: 24px;
+}
+
+.today-btn,
+.more-btn {
+  width: auto;
+  height: auto;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+}
+
+.mobile-center-logo {
+  flex: 1;
+  display: flex;
+  justify-content: center;
+  align-items: flex-end;
+  cursor: pointer;
+}
+
+.logo-container {
+  border-radius: 40px;
+  padding: 11px 27px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  box-shadow: 0 2px 8px rgba(0, 0, 0, 0.1);
+  background-color: color-mix(
+    in srgb,
+    var(--selectedSpaceColor) 50%,
+    transparent
+  ) !important;
+  border: var(--selectedSpaceColor) 1px solid !important;
+  border-color: var(--selectedSpaceColor);
+  width: 87px;
+  height: 42px;
+}
+.seed-bible-logo {
+  width: 32px;
+  height: 32px;
+  object-fit: contain;
+}
+
+/* Adjust main content for mobile navbar */
+@media (max-width: 480px) {
+  body {
+    padding-bottom: 100px;
   }
-  .rightClick button,
-  .leftClick button {
-        width: 48px !important;
-        height: 48px !important;
-        border: 1px solid #333333;
-    }
+}
+
+.left-arrow {
+  position: absolute;
+  left: 16px;
+  top: -68px;
+  background: var(--pageBackground);
+  border-radius: 100%;
+  display: block;
+  pointer-events: all;
+  height: 48px;
+  border: 1px solid #333333;
+  width: 48px !important;
+  height: 48px !important;
+}
+.right-arrow {
+  position: absolute;
+  right: 16px;
+  top: -68px;
+  background: var(--pageBackground);
+  border-radius: 100%;
+  display: block;
+  pointer-events: all;
+  height: 48px;
+  border: 1px solid #333333;
+  width: 48px !important;
+  height: 48px !important;
+}
+@media (min-width: 768px) {
+  .mobile-only {
+    display: none;
+  }
 }
 
 .toolbar-button:hover {

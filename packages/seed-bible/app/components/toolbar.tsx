@@ -6,7 +6,7 @@ import { useMouseMove } from "app.hooks.mouseMove";
 import SurroundingDivs from "app.components.surroundingDivs";
 import { useBibleContext } from "app.hooks.bibleVariables";
 import { useTabsContext } from "app.hooks.tabs";
-import { BurgerMenuIcon } from "app.components.icons";
+import { BurgerMenuIcon, MoreIcon, TodayIcon } from "app.components.icons";
 
 // Simple, single-toolbar component (no edit layer). Main logic unchanged.
 export function Toolbar() {
@@ -153,6 +153,84 @@ export function Toolbar() {
 
       <div className="toolbar-container-1 boundElements">
         <SurroundingDivs action={handleMouseLeaveContainer}>
+          {/* Mobile Bottom Navbar */}
+          <div className="mobile-bottom-navbar">
+            <button
+              className="mobile-navbar-arrow left-arrow"
+              onClick={() =>
+                isRTL
+                  ? navFunctions?.openNextChapter()
+                  : navFunctions?.openPrevChapter()
+              }
+              title="Previous"
+              aria-label="Previous chapter"
+            >
+              <span className="material-symbols-outlined">chevron_left</span>
+            </button>
+
+            <button
+              className="mobile-navbar-btn today-btn"
+              title="Today"
+              aria-label="Today"
+            >
+              <div className="mobile-btn-content">
+                <TodayIcon color="var(--text1)" />
+                <span className="mobile-btn-label">Today</span>
+              </div>
+            </button>
+
+            <div
+              onClick={() => {
+                if (globalThis.setOpenSidebar) {
+                  globalThis.setOpenSidebar(true);
+                  globalThis.setSelectingTranslation &&
+                    globalThis.setSelectingTranslation(false);
+                }
+              }}
+              className="mobile-center-logo"
+            >
+              <div className="logo-container">
+                <img
+                  src="https://res.cloudinary.com/dacw0qnpr/image/upload/v1759916122/Seed_Bible_-_All_Logos_2025-25_vvawwg.png"
+                  alt="Seed Bible"
+                  className="seed-bible-logo"
+                />
+              </div>
+            </div>
+
+            <button
+              className="mobile-navbar-btn more-btn"
+              title="More"
+              aria-label="More"
+              onClick={() => {
+                if (globalThis.setOpenSidebar) {
+                  globalThis.setOpenSidebar(true);
+                  globalThis.setSelectingTranslation &&
+                    globalThis.setSelectingTranslation(false);
+                }
+              }}
+            >
+              <div className="mobile-btn-content">
+                <MoreIcon color="var(--text1)" />
+                <span className="mobile-btn-label">More</span>
+              </div>
+            </button>
+
+            <button
+              className="mobile-navbar-arrow right-arrow"
+              onClick={() =>
+                isRTL
+                  ? navFunctions?.openPrevChapter()
+                  : navFunctions?.openNextChapter()
+              }
+              title="Next"
+              aria-label="Next chapter"
+            >
+              <span className="material-symbols-outlined">chevron_right</span>
+            </button>
+          </div>
+
+          {/* Desktop Toolbar */}
           <div
             onMouseUp={handleMouseUp}
             className={`toolbar-1 boundElements ${mounted ? "mounted" : ""}`}
@@ -264,6 +342,11 @@ export function Toolbar() {
         <style>{getStyleOf("toolbar.css")}</style>
       </div>
       <style>{`
+                .mobile-navbar-btn svg {
+                    width: 24px;
+                    height: 24px;
+                }
+                
                 .toolbar-edit-toggle {
                     margin-left: auto;
                 }

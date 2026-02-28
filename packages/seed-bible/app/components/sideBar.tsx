@@ -693,7 +693,13 @@ function Tab({
   );
 }
 
-function Folder({ folder, onlineUsers, collapsed, setSidebarWidth, setCollapsed }) {
+function Folder({
+  folder,
+  onlineUsers,
+  collapsed,
+  setSidebarWidth,
+  setCollapsed,
+}) {
   const {
     setActiveTab,
     activeTab,
@@ -1317,8 +1323,8 @@ function SideBar({ panelsNumber }) {
   };
 
   useEffect(() => {
-    os.log(customScreens, "customScreens");
-  }, [customScreens]);
+    os.log(openOnMobile, "openOnMobile");
+  }, [openOnMobile]);
 
   const { moveMultipleTabs } = useTabsContext();
   const holdTimeout = useRef({ time: null, clicked: null });
@@ -1337,6 +1343,172 @@ function SideBar({ panelsNumber }) {
       window.open(clientSite);
     }
   };
+  // Mobile-only layout: when `isMobile` and `openOnMobile` are true, render a simplified
+  // full-screen sidebar that matches the mobile design (header, list, bottom nav).
+  if (isMobile && openOnMobile) {
+    const handleMobileTabClick = (el) => {
+      setActiveTab(el.id);
+      globalThis.UpdateTab(el);
+      setOpenOnMobile(false);
+      setSidebarWidth(0);
+      setCollapsed(false);
+    };
+
+    const mobileAddTab = () => {
+      const newTab = {
+        id: uuid(),
+        taken: false,
+        data: {
+          use: "thePage",
+          type: "book",
+          book: "Genesis",
+          bookId: "GEN",
+          chapter: 1,
+          translation: "BSB",
+          shortName: "BSB",
+        },
+      };
+      addTab(newTab);
+      setActiveTab(newTab.id);
+      globalThis.UpdateTab(newTab);
+    };
+
+    return (
+      <>
+        <div className="mobile-sidebar-overlay">
+          <div className="mobile-sidebar-header">
+            <h2>Tabs & Folders</h2>
+            <div className="mobile-header-actions">
+              <span
+                className="mobile-header-icon"
+                onClick={() => {
+                  // placeholder for invite/user action
+                }}
+                role="button"
+              >
+                <MenuIcon name={"person_add"} />
+              </span>
+              <span
+                className="mobile-header-icon"
+                onClick={() => {
+                  setOpenOnMobile(false);
+                  setSidebarWidth(0);
+                }}
+                role="button"
+              >
+                <span className="material-symbols-outlined">close</span>
+              </span>
+            </div>
+          </div>
+
+          <div className="mobile-tabs-list">
+            {tabs
+              .filter((tab) => !tab.sharedTab)
+              .map((el) => (
+                <div
+                  key={el.id}
+                  className={`mobile-tab ${activeTab === el.id ? "active" : ""}`}
+                  onClick={() => handleMobileTabClick(el)}
+                >
+                  <div className="mobile-tab-left">
+                    <div className="mobile-tab-title">
+                      {`${el.data?.book || el.data?.title || ""} - ${el.data?.chapter || ""}`}{" "}
+                      <div className="mobile-tab-sub">
+                        • {el.data?.shortName || ""}
+                      </div>
+                    </div>
+                  </div>
+                  <div className="mobile-tab-actions">
+                    <MenuIcon name={"more_vert"} />
+                  </div>
+                </div>
+              ))}
+          </div>
+
+          <div className="mobile-bottom-nav">
+            <button
+              className="mobile-nav-btn"
+              onClick={() => {
+                setSideBarMode("settings");
+                setOpenOnMobile(false);
+              }}
+            >
+              <span className="material-symbols-outlined">settings</span>
+              <div className="mobile-nav-label">Settings</div>
+            </button>
+
+            <button className="mobile-nav-add" onClick={mobileAddTab}>
+              <span>+</span>
+            </button>
+
+            <button
+              className="mobile-nav-btn"
+              onClick={() => {
+                setSideBarMode("bookmarks");
+                setOpenOnMobile(false);
+              }}
+            >
+              <span className="material-symbols-outlined">bookmark</span>
+              <div className="mobile-nav-label">Bookmarks</div>
+            </button>
+          </div>
+
+          <style>{`
+            .mobile-sidebar-overlay{
+              position:fixed;
+              inset:0;
+              background:var(--panelBackground, #fff);
+              z-index:10002;
+              display:flex;
+              flex-direction:column;
+              color:var(--text1);
+            }
+            .mobile-sidebar-header{
+              display:flex;
+              justify-content:space-between;
+              align-items:center;
+              padding:18px 16px;
+              border-bottom:1px solid #eee;
+            }
+            .mobile-sidebar-header h2{margin:0;font-size:18px;font-weight:700}
+            .mobile-header-actions{display:flex;gap:12px;align-items:center}
+            .mobile-header-icon{cursor:pointer;display:flex;align-items:center}
+            .mobile-tabs-list{
+                                overflow: auto;
+                        padding-top: 15px;
+                        flex: 1;
+                        display: flex;
+                        justify-content: start;
+                        flex-direction: column;
+                        align-items: center;
+            }
+            .mobile-tab{display:flex;justify-content:space-between;align-items:center;padding:11px;border-radius:10px;margin-bottom:12px;border:1px solid transparent;cursor:pointer;width: 354px;height: 54px;}
+            .mobile-tab.active{background:#f0a68b;border-color:#e18b69;color:#000}
+            .mobile-tab-title{font-weight:600;font-size:16px}
+            .mobile-tab-sub{font-size:14px;color:rgba(0,0,0,0.45);margin-top:4px;display: inline;}
+            .mobile-tab-left{display:flex;flex-direction:column}
+            .mobile-tab-actions{opacity:0.6}
+            .mobile-bottom-nav{display:flex;justify-content:space-between;align-items:center;padding:12px 20px;border-top:1px solid #eee}
+            .mobile-nav-btn{background:none;border:none;display:flex;flex-direction:column;align-items:center;gap:6px;color:var(--text1);cursor:pointer}
+            .mobile-nav-label{font-size:12px}
+            .mobile-nav-add{
+            border-radius: 28px;
+            background: var(--selectedSpaceColor);
+            border: none;
+            color: white;
+            font-size: 28px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            cursor: pointer;
+            width: 82px;
+            height: 52px;
+            }
+          `}</style>
+        </div>
+      </>
+    );
+  }
   return (
     <>
       {isResizing.current && (
@@ -1768,7 +1940,9 @@ function SideBar({ panelsNumber }) {
               if (!searchQuery) return true;
               const query = searchQuery.toLowerCase();
               const name = tab?.data?.book || tab?.data?.title || "";
-              const chapter = tab?.data?.chapter ? String(tab.data.chapter) : "";
+              const chapter = tab?.data?.chapter
+                ? String(tab.data.chapter)
+                : "";
               const shortName = tab?.data?.shortName || "";
               const type = tab?.data?.type || "";
               return (
@@ -2138,7 +2312,9 @@ export const UserProfile = ({ collapsed }) => {
           />
         ) : !configBot.tags.staticInst ? (
           <Icon width={15} height={15} />
-        ) : <span className="material-symbols-outlined">person</span>}
+        ) : (
+          <span className="material-symbols-outlined">person</span>
+        )}
       </div>
       {
         null /*userData?.photoLink ? (

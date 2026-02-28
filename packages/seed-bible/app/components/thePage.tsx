@@ -3,6 +3,7 @@ import {
   getCachedBibleData,
   getCachedFootnotes,
 } from "app.hooks.bibleDataManager";
+
 import { getStyleOf } from "app.styles.styler";
 const {
   useEffect,
@@ -23,7 +24,9 @@ import { MiniTextEditor } from "app.components.smallEditor";
 import { ConfigurableFunctionCommands } from "app.components.commands";
 import { VerseToolbar } from "app.components.verseToolbar";
 import { useHoldAction } from "app.hooks.useHold";
+import { MobileSettingsIcon, MenuIcon } from "app.components.icons";
 
+import { useSideBarContext } from "app.hooks.sideBar";
 function getUserSessionInfo(userId) {
   try {
     if (typeof tags === "undefined" || !tags.sessions) {
@@ -81,7 +84,13 @@ function ThePage({
   const [direction, setDirection] = useState(null);
   const commandsRef = useRef(null);
   const [userMovedToolbar, setUserMovedToolbar] = useState();
-
+  const {
+    openOnMobile,
+    setOpenOnMobile,
+    sidebarWidth,
+    setSidebarWidth,
+    setCollapsed,
+  } = useSideBarContext();
   useEffect(() => {
     if (deleteTab) {
       if (deleteTab.tabId === tab?.id) {
@@ -1672,10 +1681,155 @@ function ThePage({
           color: var(--text1);
           font-size: 0.95em;
         }
+
+        /* Mobile Header Styles */
+        .mobile-header {
+          display: none;
+          position: sticky;
+          top: 0;
+          background: var(--pageBackground);
+          border-bottom: 1px solid #e0e0e0;
+          padding: 12px 16px;
+          z-index: 100;
+        }
+
+        @media (max-width: 768px) {
+          .mobile-header {
+            display: flex;
+          }
+        }
+
+        .mobile-header-content {
+          display: flex;
+          align-items: center;
+          justify-content: space-between;
+          width: 100%;
+        }
+
+        .mobile-header-left {
+          display: flex;
+          align-items: center;
+          gap: 8px;
+          flex: 1;
+        }
+
+        .mobile-header-title {
+          font-size: 18px;
+          font-weight: 600;
+          color: var(--text1);
+          margin: 0;
+        }
+
+        .mobile-header-translation {
+          font-size: 12px;
+          color: #999;
+          margin: 0;
+          display: inline;
+        }
+
+        .mobile-header-nav {
+          display: flex;
+          gap: 8px;
+        }
+
+        .mobile-nav-button {
+          background: none;
+          border: none;
+          color: var(--spaceSelection);
+          font-size: 20px;
+          cursor: pointer;
+          padding: 4px 8px;
+          border-radius: 4px;
+          display: flex;
+          align-items: center;
+          justify-content: center;
+          min-width: 36px;
+          min-height: 36px;
+          transition: background 0.2s;
+        }
+
+        .mobile-nav-button:active {
+          background: rgba(0, 0, 0, 0.05);
+        }
+
+        .mobile-header-right {
+          display: flex;
+          align-items: center;
+          gap: 8px;
+        }
+
+        .mobile-icon-button {
+          background: none;
+          border: none;
+          color: var(--text1);
+          font-size: 24px;
+          cursor: pointer;
+          padding: 4px;
+          display: flex;
+          align-items: center;
+          justify-content: center;
+          min-width: 40px;
+          min-height: 40px;
+          border-radius: 6px;
+          transition: all 0.2s;
+          background: #F8FAFC;
+          border-radius: 50%;
+        }
+
+        .mobile-icon-button:active {
+          background: rgba(0, 0, 0, 0.05);
+          transform: scale(0.95);
+        }
+
+        .mobile-bookmark-icon {
+          font-size: 22px;
+        }
+
+        .bookTitle {
+          @media (max-width: 768px) {
+            display: none;
+          }
+        }
          `}
       </style>
       {data && tab && !tabEntered ? (
         <>
+          {/* Mobile Header */}
+          {globalThis.IsMobileNow && globalThis.IsMobileNow() && (
+            <div className="mobile-header">
+              <div className="mobile-header-content">
+                <div className="mobile-header-left">
+                  <div>
+                    <h1 className="mobile-header-title">
+                      {`${data?.book} ${data?.chapter}`}{" "}
+                      <p className="mobile-header-translation">
+                        • {data?.shortName || ""}
+                      </p>
+                    </h1>
+                  </div>
+                </div>
+
+                <div className="mobile-header-right">
+                  <button
+                    className="mobile-icon-button"
+                    onClick={(e) => {
+                      e.stopPropagation();
+                      os.log("Opening mobile settings", setOpenOnMobile);
+                      setOpenOnMobile(true);
+                      setSidebarWidth(280);
+                      setCollapsed(false);
+                    }}
+                    title="Settings"
+                  >
+                    <MobileSettingsIcon />
+                  </button>
+                </div>
+              </div>
+              <div className={"mobile-header-bookmark"}>
+                <MenuIcon name={"bookmark"} />
+              </div>
+            </div>
+          )}
           <div
             onClick={(e) => {
               if (globalThis.setOpenSidebar && globalThis.openSidebar) {
