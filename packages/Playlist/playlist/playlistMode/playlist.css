@@ -1438,3 +1438,37 @@ div.attachment-link.dropabble-Embed .playlist-item-type {
   right: 1rem;
   position: absolute;
 }
+
+.show-on-mobile {
+  display: none !important;
+}
+
+.show-on-desktop {
+  display: block !important;
+}
+
+@media only screen and (max-width: 768px) {
+  .show-on-mobile {
+    display: block !important;
+  }
+  .show-on-desktop {
+    display: none !important;
+  }
+}
+
+/* MOBILE STYLES */
+.custom-button.secondaryAlt.create-button-mobile {
+  position: fixed;
+  bottom: 8rem;
+  right: 1rem;
+  box-shadow: 0px 2px 6px 0px #00000026;
+  height: 52px;
+  width: 52px;
+  border-radius: 8px;
+  padding: 0 !important;
+  z-index: 999;
+}
+
+span.material-symbols-outlined.rotate-90 {
+  transform: rotate(90deg);
+}
