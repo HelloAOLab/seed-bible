@@ -15,6 +15,7 @@ declare global {
   const ShowNotification: (options: {
     message: string;
     severity: "error" | "warning" | "info" | "success";
+    onUndoActions?: () => void;
   }) => void;
   const getPosition: () => { x: number; y: number };
   const FormatRelativeTime: (dateTime: number | null | Date) => string;

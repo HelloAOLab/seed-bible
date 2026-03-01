@@ -141,6 +141,10 @@
   "historical": "ታሪካዊ",
   "poetic": "ግጥማዊ",
   "prophetic": "ትንቢታዊ",
+  "bookmarkUpdatedSuccessfully": "ቡክማርክ በተሳካ ሁኔታ ዘምኗል።",
+  "failedToUpdateBookmark": "ቡክማርክ ማዘመን አልተሳካም። እባክዎ እንደገና ይሞክሩ።",
+  "undoActionSuccessfull": "መመለስ በተሳካ ሁኔታ ተፈጽሟል።",
+  "headingAddedToPlaylist": "{{heading}} ወደ ዝርዝር ታክሏል",
   "addToPlaylist": "ወደ ዝርዝር ጨምር",
   "addToNew": "ወደ አዲስ ጨምር",
   "itemsAddedToPlaylistSuccessfully": "እቃዎች ወደ ዝርዝር በተሳካ ሁኔታ ታክለዋል።"

@@ -141,6 +141,10 @@
   "historical": "ऐतिहासिक",
   "poetic": "काव्यात्मक",
   "prophetic": "भविष्यवाणी",
+  "bookmarkUpdatedSuccessfully": "बुकमार्क सफलतापूर्वक अद्यावधिक भयो।",
+  "failedToUpdateBookmark": "बुकमार्क अद्यावधिक गर्न असफल। कृपया पुन: प्रयास गर्नुहोस्।",
+  "undoActionSuccessfull": "पूर्ववत कार्य सफल भयो।",
+  "headingAddedToPlaylist": "{{heading}} प्लेलिस्टमा थपियो",
   "addToPlaylist": "प्लेलिस्टमा थप्नुहोस्",
   "addToNew": "नयाँमा थप्नुहोस्",
   "itemsAddedToPlaylistSuccessfully": "आइटमहरू प्लेलिस्टमा सफलतापूर्वक थपियो।"

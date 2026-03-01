@@ -109,8 +109,8 @@ const items = [
         if (oldBookmarks[title]) {
           delete oldBookmarks[title];
 
-          msg = "Bookmark Updated successfully.";
-          errorMsg = "Failed to update bookmark. Please try again.";
+          msg = t("bookmarkRemovedSuccessfully");
+          errorMsg = t("failedToRemoveBookmark");
         } else {
           const dataItemTemp = {
             type: "verse",
