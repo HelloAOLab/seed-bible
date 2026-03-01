@@ -1,5 +1,5 @@
 const G = globalThis as any;
-if (G.makingPlaylist) {
+if (G[`${"default"}creatingPlaylist`]) {
   let { dataItem, bulkAdd } = that;
 
   const combineLast = that.combineLast;

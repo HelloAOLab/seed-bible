@@ -623,7 +623,8 @@ const JoinSessionComponent = ({ onJoin, translations = {}, CloseModal }) => {
             padding: 12,
             background: "var(--primaryButton, #d36433)",
             color: "var(--primaryButtonColor, white)",
-            border: "1px solid var(--primaryButtonBorder, var(--primaryButton, #d36433))",
+            border:
+              "1px solid var(--primaryButtonBorder, var(--primaryButton, #d36433))",
             borderRadius: 4,
             fontSize: 15,
             fontWeight: 500,

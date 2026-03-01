@@ -320,10 +320,10 @@ const SearchBar = (props: { openSidebar: boolean }) => {
           console.log(apiTranslations, "apiTranslations");
           if (
             apiTranslations[
-            translationValue.languageEnglishName.toLowerCase()
+              translationValue.languageEnglishName.toLowerCase()
             ] &&
             apiTranslations[translationValue.languageEnglishName.toLowerCase()][
-            translationValue.shortName.toLowerCase()
+              translationValue.shortName.toLowerCase()
             ]
           ) {
             globalThis.ChangeTranslation(translationValue.id);
@@ -333,16 +333,16 @@ const SearchBar = (props: { openSidebar: boolean }) => {
             translations[translationValue.languageEnglishName.toLowerCase()] =
               translations[translationValue.languageEnglishName.toLowerCase()]
                 ? {
-                  ...translations[
-                  translationValue.languageEnglishName.toLowerCase()
-                  ],
-                  [translationValue.shortName.toLowerCase()]:
-                    translationValue,
-                }
+                    ...translations[
+                      translationValue.languageEnglishName.toLowerCase()
+                    ],
+                    [translationValue.shortName.toLowerCase()]:
+                      translationValue,
+                  }
                 : {
-                  [translationValue.shortName.toLowerCase()]:
-                    translationValue,
-                };
+                    [translationValue.shortName.toLowerCase()]:
+                      translationValue,
+                  };
             setSelectedTranslation({
               languageEnglishName:
                 translationValue.languageEnglishName.toLowerCase(),
@@ -388,10 +388,10 @@ const SearchBar = (props: { openSidebar: boolean }) => {
           };
           if (
             apiTranslations[
-            translationValue?.languageEnglishName?.toLowerCase() || ""
+              translationValue?.languageEnglishName?.toLowerCase() || ""
             ] &&
             apiTranslations[
-            translationValue?.languageEnglishName?.toLowerCase() || ""
+              translationValue?.languageEnglishName?.toLowerCase() || ""
             ][trValue?.value?.shortName?.toLowerCase() || ""]
           ) {
             os.toast(`Translation Already Exists!`);
@@ -400,11 +400,11 @@ const SearchBar = (props: { openSidebar: boolean }) => {
             translations[translationValue.languageEnglishName.toLowerCase()] =
               translations[translationValue.languageEnglishName.toLowerCase()]
                 ? {
-                  ...translations[
-                  translationValue.languageEnglishName.toLowerCase()
-                  ],
-                  [value.toLowerCase()]: translationValue,
-                }
+                    ...translations[
+                      translationValue.languageEnglishName.toLowerCase()
+                    ],
+                    [value.toLowerCase()]: translationValue,
+                  }
                 : { [value.toLowerCase()]: translationValue };
             setSelectedTranslation({
               languageEnglishName:
@@ -464,14 +464,14 @@ const SearchBar = (props: { openSidebar: boolean }) => {
                   tempApiTranslations[languageEnglishName] =
                     tempApiTranslations[languageEnglishName]
                       ? {
-                        ...tempApiTranslations[languageEnglishName],
-                        [translation.shortName.toLowerCase()]:
-                          controlledTranslation,
-                      }
+                          ...tempApiTranslations[languageEnglishName],
+                          [translation.shortName.toLowerCase()]:
+                            controlledTranslation,
+                        }
                       : {
-                        [translation.shortName.toLowerCase()]:
-                          controlledTranslation,
-                      };
+                          [translation.shortName.toLowerCase()]:
+                            controlledTranslation,
+                        };
                   if (!defaultTranslations.includes(languageEnglishName)) {
                     setDefaultTranslations([
                       ...defaultTranslations,
@@ -523,10 +523,10 @@ const SearchBar = (props: { openSidebar: boolean }) => {
                   };
                   if (
                     apiTranslations[
-                    translation.languageEnglishName.toLowerCase()
+                      translation.languageEnglishName.toLowerCase()
                     ] &&
                     apiTranslations[
-                    translation.languageEnglishName.toLowerCase()
+                      translation.languageEnglishName.toLowerCase()
                     ][trValue?.value?.shortName?.toLowerCase() || ""]
                   ) {
                     os.toast(`Translation Already Exists!`);
@@ -546,14 +546,14 @@ const SearchBar = (props: { openSidebar: boolean }) => {
                     ] = translations[
                       translation.languageEnglishName.toLowerCase()
                     ]
-                        ? {
+                      ? {
                           ...translations[
-                          translation.languageEnglishName.toLowerCase()
+                            translation.languageEnglishName.toLowerCase()
                           ],
                           [translation.shortName.toLowerCase()]:
                             controlledTranslation,
                         }
-                        : {
+                      : {
                           [translation.shortName.toLowerCase()]:
                             controlledTranslation,
                         };
@@ -1136,8 +1136,8 @@ const SideBarBooks = (props: {
   const getBookName = useCallback((book: BookInterface, onlineUsers: any) => {
     const users = onlineUsers
       ? Object.entries(onlineUsers || {}).filter(
-        ([, v]) => v?.bookId === book.id
-      )
+          ([, v]) => v?.bookId === book.id
+        )
       : [];
     let bookName = "";
     if (book?.commonName?.length > 7 && users.length > 0) {
@@ -1270,7 +1270,7 @@ const SideBarBooks = (props: {
                         style={{
                           justifyContent:
                             windowSize < 768 ||
-                              bookData.numberOfChapters < 4 * OTChapterSeparator
+                            bookData.numberOfChapters < 4 * OTChapterSeparator
                               ? "flex-start"
                               : "space-between",
                         }}
@@ -1340,7 +1340,7 @@ const SideBarBooks = (props: {
                         style={{
                           justifyContent:
                             windowSize < 768 ||
-                              bookData.numberOfChapters < 4 * NTChapterSeparator
+                            bookData.numberOfChapters < 4 * NTChapterSeparator
                               ? "flex-start"
                               : "space-between",
                         }}
@@ -1420,7 +1420,7 @@ const SideBarBooks = (props: {
                         style={{
                           justifyContent:
                             windowSize < 768 ||
-                              bookData.numberOfChapters < 4 * allowedRows
+                            bookData.numberOfChapters < 4 * allowedRows
                               ? "flex-start"
                               : "space-between",
                         }}
@@ -1494,7 +1494,7 @@ const SideBarBooks = (props: {
                         style={{
                           justifyContent:
                             windowSize < 768 ||
-                              bookData.numberOfChapters < 4 * allowedRows
+                            bookData.numberOfChapters < 4 * allowedRows
                               ? "flex-start"
                               : "space-between",
                         }}
@@ -1571,7 +1571,7 @@ const SideBarBooks = (props: {
                         style={{
                           justifyContent:
                             windowSize < 768 ||
-                              bookData.numberOfChapters < 4 * allowedRows
+                            bookData.numberOfChapters < 4 * allowedRows
                               ? "flex-start"
                               : "space-between",
                         }}
@@ -1745,7 +1745,7 @@ const SideBarChapters = (props: {
             };
             globalThis.AddTab(tab);
             // globalThis.MakingNewTab(tab);
-            globalThis.UpdateTab(tab)
+            globalThis.UpdateTab(tab);
             globalThis.MakingNewTab = false;
             setOpenSidebar(false);
           } else {
@@ -1977,13 +1977,13 @@ const CircleCounter = (props: {
   const circles = data
     ? !chapter
       ? Object.fromEntries(
-        Object.entries(data).filter(([, v]) => v?.bookId === book)
-      )
-      : Object.fromEntries(
-        Object.entries(data).filter(
-          ([, v]) => v?.bookId === book && v?.chapter === chapter
+          Object.entries(data).filter(([, v]) => v?.bookId === book)
         )
-      )
+      : Object.fromEntries(
+          Object.entries(data).filter(
+            ([, v]) => v?.bookId === book && v?.chapter === chapter
+          )
+        )
     : {};
 
   const preEntries = Object.entries(circles);
@@ -2093,7 +2093,7 @@ const CircleCounter = (props: {
                   }}
                   src={
                     getBot("system", "app.components").masks[
-                    `${value[0]}-photo`
+                      `${value[0]}-photo`
                     ]
                   }
                 />
@@ -2246,7 +2246,7 @@ const CircleCounter = (props: {
                           }}
                           src={
                             getBot("system", "app.components").masks[
-                            `${id}-photo`
+                              `${id}-photo`
                             ]
                           }
                         />
