@@ -1445,7 +1445,7 @@ function SideBar({ panelsNumber }) {
     >({
       ["My bookmarks"]: false,
     });
-    const [showBookmarks, setShowBookmarks] = useState(true);
+    const [showBookmarks, setShowBookmarks] = useState(false);
 
     const toggleCategory = (categoryName) => {
       setExpandedCategories((prev) => ({
