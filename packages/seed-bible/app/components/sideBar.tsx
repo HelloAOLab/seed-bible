@@ -20,6 +20,7 @@ import {
   BurgerMenuIcon,
   ClientLogo,
   BookMarkIcon,
+  MobileSettingsIcon,
 } from "app.components.icons";
 import { useBibleContext } from "app.hooks.bibleVariables";
 import { useSideBarContext } from "app.hooks.sideBar";
@@ -2724,7 +2725,7 @@ export const SpaceUI = () => {
                 onClick={() => setSideBarMode("settings")}
                 className="material-symbols-outlined"
               >
-                <TheNewSettingsIcon />
+                <MobileSettingsIcon />
               </span>
               <SettingsProfile />
               <UserProfile />

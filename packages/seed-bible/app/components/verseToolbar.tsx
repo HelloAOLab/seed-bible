@@ -339,7 +339,7 @@ export function VerseToolbar({
               backgroundColor: "var(--pageBackground)",
             }}
           >
-            Selected:{getVerseReference()}
+            {getVerseReference()}
           </span>
         </>
       )}
@@ -410,11 +410,11 @@ export function VerseToolbar({
 
             .verse-ref {
               position: absolute !important;
-              top: -91.8vh !important;
-              left: 50% !important;
+              top: -93vh !important;
+              left: 53% !important;
               transform: translateX(-50%) !important;
               margin: 0 !important;
-            }
+              }
 
             .color-buttons {
               display: flex !important;
