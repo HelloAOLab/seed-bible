@@ -1321,6 +1321,10 @@ function SideBar({ panelsNumber }) {
                     CloseModal={() => globalThis.CloseModal()}
                   />
                 );
+                if (globalThis.IsMobileNow()) {
+                  setOpenOnMobile(false);
+                  setSidebarWidth(0);
+                }
               },
             },
             ...(!configBot.tags.staticInst
