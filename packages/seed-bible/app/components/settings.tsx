@@ -835,7 +835,7 @@ export const AccountSetting = ({
             width: 40,
             height: 40,
             borderRadius: "50%",
-            border: `2px solid ${colors[colorIndex]}`,
+            border: `2px solid ${!configBot.tags.staticInst ? colors[colorIndex] : "var(--selectedSpaceColor)"}`,
             padding: 2,
             display: "flex",
             alignItems: "center",
@@ -844,18 +844,15 @@ export const AccountSetting = ({
             backgroundColor: "white",
           }}
         >
-          {userData?.photoLink ? (
+          {!configBot.tags.staticInst && userData?.photoLink ? (
             <img
-              style={{
-                borderRadius: "50%",
-                width: "36px",
-                height: "36px",
-                objectFit: "cover",
-              }}
-              src={userData.photoLink}
+              style={{ "border-radius": "50%", width: "35px", border: "" }}
+              src={userData?.photoLink}
             />
+          ) : !configBot.tags.staticInst ? (
+            <Icon width={15} height={15} />
           ) : (
-            <Icon width={20} height={20} />
+            <span className="material-symbols-outlined">person</span>
           )}
         </div>
       ) : userData?.photoLink ? (
