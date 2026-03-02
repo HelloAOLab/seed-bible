@@ -684,5 +684,7 @@
   "pentateuch": "Pentateuch",
   "historical": "Historical",
   "poetic": "Poetic",
-  "prophetic": "Prophetic"
+  "prophetic": "Prophetic",
+  "showNavArrows": "Show navigation arrows",
+  "hideNavArrows": "Hide navigation arrows"
 }

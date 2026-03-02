@@ -26,6 +26,7 @@ export function Toolbar() {
     setTools,
     setCanvasTools,
     setMapTools,
+    showNavArrows,
   } = useBibleContext();
 
   const {
@@ -157,6 +158,7 @@ export function Toolbar() {
           {/* Mobile Bottom Navbar */}
           <div className="mobile-bottom-navbar">
             <button
+              style={{ display: showNavArrows ? "" : "none" }}
               className="mobile-navbar-arrow left-arrow"
               onClick={() =>
                 isRTL
@@ -228,6 +230,7 @@ export function Toolbar() {
             </button>
 
             <button
+              style={{ display: showNavArrows ? "" : "none" }}
               className="mobile-navbar-arrow right-arrow"
               onClick={() =>
                 isRTL
