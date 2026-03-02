@@ -1596,9 +1596,20 @@ function ThePage({
     current: (() => Promise<void>) | null;
   };
 
+  const clearSelectionRef = useRef(null) as { current: (() => void) | null };
+
   // Keep function refs fresh every render
   openNextChapterRef.current = openNextChapter;
   openPrevChapterRef.current = openPrevChapter;
+  clearSelectionRef.current = () => {
+    setClickedVerses([]);
+    setClickedVersesContext({});
+    setShowVerseToolbar(false);
+    setSelectedText("");
+    setCommandHighlight([]);
+    setLastSelectedVerse(null);
+    setShowCommands(false);
+  };
 
   useEffect(() => {
     const viewport = swipeViewportRef.current;
@@ -1683,6 +1694,7 @@ function ThePage({
       if (!track) return;
 
       if (dx < -THRESHOLD && hasNext && openNextChapterRef.current) {
+        clearSelectionRef.current?.();
         const fn = openNextChapterRef.current;
         track.style.transition = "transform 0.25s cubic-bezier(0.4, 0, 0.2, 1)";
         track.style.transform = `translateX(-${PANEL_PCT * 2}%)`;
@@ -1693,6 +1705,7 @@ function ThePage({
           await fn();
         }, 250);
       } else if (dx > THRESHOLD && hasPrev && openPrevChapterRef.current) {
+        clearSelectionRef.current?.();
         const fn = openPrevChapterRef.current;
         track.style.transition = "transform 0.25s cubic-bezier(0.4, 0, 0.2, 1)";
         track.style.transform = `translateX(0%)`;
@@ -1725,71 +1738,72 @@ function ThePage({
     ]?.appSettings?.removeBibleStack;
 
   return (
-    <div
-      ref={swipeViewportRef}
-      style={{
-        overflow: "hidden",
-        width: "100%",
-        height: "100%",
-        position: "relative",
-      }}
-    >
+    <>
       <div
-        ref={swipeTrackRef}
+        ref={swipeViewportRef}
         style={{
-          display: "flex",
-          width: "300%",
+          overflow: "hidden",
+          width: "100%",
           height: "100%",
-          transform: "translateX(-33.333%)",
-          willChange: "transform",
+          position: "relative",
         }}
       >
-        {/* Previous chapter preview panel */}
         <div
-          className="pageContainer"
+          ref={swipeTrackRef}
           style={{
-            flex: "0 0 33.333%",
-            overflowX: "hidden",
-            direction,
-            pointerEvents: "none",
+            display: "flex",
+            width: "300%",
+            height: "100%",
+            transform: "translateX(-33.333%)",
+            willChange: "transform",
           }}
         >
-          <SidePanelContent data={prevChapterData} />
-        </div>
+          {/* Previous chapter preview panel */}
+          <div
+            className="pageContainer"
+            style={{
+              flex: "0 0 33.333%",
+              overflowX: "hidden",
+              direction,
+              pointerEvents: "none",
+            }}
+          >
+            <SidePanelContent data={prevChapterData} />
+          </div>
 
-        {/* Current chapter panel */}
-        <div
-          className="pageContainer"
-          ref={currentPanelRef}
-          onMouseLeave={handleMouseLeave}
-          onMouseEnter={handleMouseEnter}
-          onMouseUp={handleMouseUp}
-          onClick={hanldNavFunctions}
-          onScroll={(e) => {
-            os.log("scrolling, closing popups", e);
-            globalThis.closePopupSettings();
-            const el = e.currentTarget;
-            const currentScrollTop = el.scrollTop;
-            if (currentScrollTop <= 0) {
-              document.body.classList.remove("scroll-hide-bars");
-            } else if (
-              currentScrollTop > lastScrollTopRef.current &&
-              currentScrollTop > 50
-            ) {
-              document.body.classList.add("scroll-hide-bars");
-            } else if (currentScrollTop < lastScrollTopRef.current) {
-              document.body.classList.remove("scroll-hide-bars");
-            }
-            lastScrollTopRef.current = currentScrollTop;
-          }}
-          style={{
-            flex: "0 0 33.333%",
-            direction,
-            overflowX: "hidden",
-          }}
-        >
-          <style>
-            {`
+          {/* Current chapter panel */}
+          <div
+            className="pageContainer"
+            ref={currentPanelRef}
+            onMouseLeave={handleMouseLeave}
+            onMouseEnter={handleMouseEnter}
+            onMouseUp={handleMouseUp}
+            onClick={hanldNavFunctions}
+            onScroll={(e) => {
+              os.log("scrolling, closing popups", e);
+              globalThis.closePopupSettings();
+              const el = e.currentTarget;
+              const currentScrollTop = el.scrollTop;
+              if (currentScrollTop <= 0) {
+                document.body.classList.remove("scroll-hide-bars");
+              } else if (
+                currentScrollTop > lastScrollTopRef.current &&
+                currentScrollTop > 50
+              ) {
+                document.body.classList.add("scroll-hide-bars");
+              } else if (currentScrollTop < lastScrollTopRef.current) {
+                document.body.classList.remove("scroll-hide-bars");
+              }
+              lastScrollTopRef.current = currentScrollTop;
+            }}
+            style={{
+              flex: "0 0 33.333%",
+              direction,
+              overflowX: "hidden",
+            }}
+          >
+            <style>
+              {`
         .pageContainer{
           position: relative;
         }
@@ -2031,372 +2045,367 @@ function ThePage({
           }
         }
          `}
-          </style>
-          {data && tab && !tabEntered ? (
-            <>
-              {/* Mobile Header */}
-              {globalThis.IsMobileNow && globalThis.IsMobileNow() && (
-                <div className="mobile-header">
-                  <div className="mobile-header-content">
-                    <div className="mobile-header-left">
-                      <div>
-                        <h1 className="mobile-header-title">
-                          {`${data?.book} ${data?.chapter}`}{" "}
-                          <p className="mobile-header-translation">
-                            • {data?.shortName || ""}
-                          </p>
-                        </h1>
+            </style>
+            {data && tab && !tabEntered ? (
+              <>
+                {/* Mobile Header */}
+                {globalThis.IsMobileNow && globalThis.IsMobileNow() && (
+                  <div className="mobile-header">
+                    <div className="mobile-header-content">
+                      <div className="mobile-header-left">
+                        <div>
+                          <h1 className="mobile-header-title">
+                            {`${data?.book} ${data?.chapter}`}{" "}
+                            <p className="mobile-header-translation">
+                              • {data?.shortName || ""}
+                            </p>
+                          </h1>
+                        </div>
                       </div>
-                    </div>
 
-                    <div className="mobile-header-right">
-                      <button
-                        className="mobile-icon-button"
-                        onClick={(e) => {
-                          e.stopPropagation();
-                          os.log("Opening mobile settings", setOpenOnMobile);
-                          setOpenOnMobile(true);
-                          setSidebarWidth(280);
-                          setCollapsed(false);
-                          setSideBarMode("settings");
-                        }}
-                        title="Settings"
-                      >
-                        <MobileSettingsIcon />
-                      </button>
-                    </div>
-                  </div>
-                  {tab?.id &&
-                    masks?.mobileBookmarks &&
-                    Object.values(masks.mobileBookmarks)
-                      .flat()
-                      .includes(tab.id) && (
-                      <div className={"mobile-header-bookmark"}>
-                        <BookMarkIcon
-                          stroke={"var(--selectedSpaceColor)"}
-                          fill={"var(--selectedSpaceColor)"}
-                        />
+                      <div className="mobile-header-right">
+                        <button
+                          className="mobile-icon-button"
+                          onClick={(e) => {
+                            e.stopPropagation();
+                            os.log("Opening mobile settings", setOpenOnMobile);
+                            setOpenOnMobile(true);
+                            setSidebarWidth(280);
+                            setCollapsed(false);
+                            setSideBarMode("settings");
+                          }}
+                          title="Settings"
+                        >
+                          <MobileSettingsIcon />
+                        </button>
                       </div>
-                    )}
-                </div>
-              )}
-              <div
-                onClick={(e) => {
-                  if (globalThis.setOpenSidebar && globalThis.openSidebar) {
-                    globalThis.setOpenSidebar(false);
-                    globalThis.selectBookSelectorBook &&
-                      globalThis.selectBookSelectorBook(null);
-                  } else {
-                    globalThis.setOpenSidebar &&
-                      globalThis.setOpenSidebar(true);
-                    globalThis.selectBookSelectorBook &&
-                      globalThis.selectBookSelectorBook(data.bookId);
-                  }
-                }}
-                style={{ "pointer-events": isDragging ? "none" : null }}
-                className="bookTitle"
-              >
-                {`${data?.book} ${data?.chapter}`}{" "}
-                <span
-                  style={{
-                    fontSize: "24px",
-                    color: "color-mix(in srgb, var(--text1), transparent 40%)",
-                  }}
+                    </div>
+                    {tab?.id &&
+                      masks?.mobileBookmarks &&
+                      Object.values(masks.mobileBookmarks)
+                        .flat()
+                        .includes(tab.id) && (
+                        <div className={"mobile-header-bookmark"}>
+                          <BookMarkIcon
+                            stroke={"var(--selectedSpaceColor)"}
+                            fill={"var(--selectedSpaceColor)"}
+                          />
+                        </div>
+                      )}
+                  </div>
+                )}
+                <div
                   onClick={(e) => {
-                    e.stopPropagation();
                     if (globalThis.setOpenSidebar && globalThis.openSidebar) {
                       globalThis.setOpenSidebar(false);
-                      globalThis.setSelectingTranslation &&
-                        globalThis.setSelectingTranslation(false);
                       globalThis.selectBookSelectorBook &&
                         globalThis.selectBookSelectorBook(null);
                     } else {
-                      globalThis.setOpenSidebar(true);
-                      globalThis.setSelectingTranslation &&
-                        globalThis.setSelectingTranslation(true);
+                      globalThis.setOpenSidebar &&
+                        globalThis.setOpenSidebar(true);
                       globalThis.selectBookSelectorBook &&
                         globalThis.selectBookSelectorBook(data.bookId);
                     }
                   }}
-                >{` / ${data?.shortName}`}</span>
-              </div>
-              {showHeading[activeSpace] && (
-                <div style={{ height: "1rem" }}></div>
-              )}
-              {data &&
-                data.content.map((e) => {
-                  return (
-                    <>
-                      <div
-                        style={{ "pointer-events": isDragging ? "none" : null }}
-                      >
-                        <Section
-                          {...e}
-                          data={data}
-                          inHold={inHold}
-                          setInHold={setInHold}
-                          book={data.book}
-                          chapter={data.chapter}
-                          blinker={blinker}
-                          setRef={refs}
-                          holded={holded}
-                          clickedVersesContext={clickedVersesContext}
-                          selected={selected}
-                          highlighted={highlighted}
-                          wordHighlights={wordHighlights}
-                          textEdit={false}
-                          showCommands={showCommands}
-                          setShowCommands={setShowCommands}
-                          selectedText={selectedText}
-                          lastSelectedVerse={lastSelectedVerse}
-                          contextData={contextData}
-                          setContextData={setContextData}
-                          commandsRef={commandsRef}
-                          setLastSelectedVerse={setLastSelectedVerse}
-                          setCommandHighlight={setCommandHighlight}
-                          commandHighlight={commandHighlight}
-                          wordHighlightsTC={wordHighlightsTC}
-                          wordHighlightsBC={wordHighlightsBC}
-                          clickedVerses={clickedVerses}
-                          handleVerseClick={handleVerseClick}
-                          setClickedVerses={setClickedVerses}
-                          setShowVerseToolbar={setShowVerseToolbar}
-                          footnotes={footnotes}
-                          setActiveFootnote={setActiveFootnote}
-                          setShowFootnoteModal={setShowFootnoteModal}
-                        />
-                      </div>
-                    </>
-                  );
-                })}
-              <div style={{ height: "120px" }}></div>
-              <div
-                style={{
-                  margin: "auto",
-                  width: "80%",
-                  height: "1px",
-                  background: "gray",
-                }}
-              ></div>
-              {removeBibleStack ? null : (
-                <div
-                  style={{
-                    width: "50%",
-                    display: "flex",
-                    "align-items": "center",
-                    "justify-content": "center",
-                    position: "relative",
-                  }}
+                  style={{ "pointer-events": isDragging ? "none" : null }}
+                  className="bookTitle"
                 >
-                  <PageToolbar tab={tab} panelId={panelId} />
-                </div>
-              )}
-              <div style={{ height: "160px" }}></div>
-
-              {showVerseToolbar &&
-                !(role === "follower" && config.onlyHostHighlight) && (
-                  <div
-                    onMouseDown={() => {
-                      if (!globalThis.IsMobileNow()) {
-                        // userMovedToolbar.current = true;
-                        setUserMovedToolbar(true);
-                        setDragToolbar(true);
-                      }
-                    }}
-                    onMouseUp={() => setDragToolbar(false)}
-                    // onMouseLeave={() => setDragToolbar(false)}
-                    style={
-                      globalThis.IsMobileNow()
-                        ? {
-                            position: "fixed",
-                            left: "50%",
-                            bottom: "20px",
-                            transform: "translateX(-50%)",
-                            zIndex: 10000,
-                            width: "90%",
-                            maxWidth: "420px",
-                            cursor: "default",
-                            userSelect: "none",
-                          }
-                        : {
-                            position: "fixed",
-                            left: toolbarPos.x - 50,
-                            top: toolbarPos.y,
-                            zIndex: 10000,
-                            cursor: dragToolbar ? "grabbing" : "grab",
-                            userSelect: "none",
-                          }
-                    }
-                    className="verse-toolbar"
-                  >
-                    <VerseToolbar
-                      clickedVerses={clickedVerses}
-                      showVerseToolbar={showVerseToolbar}
-                      toggleVerseHighlight={toggleVerseHighlight}
-                      book={data?.book}
-                      setClickedVerses={setClickedVerses}
-                      chapter={data?.chapter}
-                      highlighted={highlighted}
-                      clickedVersesContext={clickedVersesContext}
-                      onColorSelect={handleColorSelect}
-                      activeSpace={activeSpace}
-                      spaces={spaces}
-                      onClose={() => {
-                        setClickedVerses([]);
-                        setTimeout(() => {
-                          setShowVerseToolbar(false);
-                        }, 5);
-                      }}
-                    />
-                  </div>
-                )}
-
-              {/* Footnote Modal */}
-              {showFootnoteModal && activeFootnote && (
-                <div
-                  className="footnote-modal-overlay"
-                  onClick={() => {
-                    setShowFootnoteModal(false);
-                    setActiveFootnote(null);
-                  }}
-                >
-                  <div
-                    className="footnote-modal"
-                    onClick={(e) => e.stopPropagation()}
-                  >
-                    <div className="footnote-modal-header">
-                      <h3>
-                        {`${activeFootnote.book} ${activeFootnote.chapter}:${activeFootnote.verse}`}
-                      </h3>
-                      <button
-                        className="footnote-modal-close"
-                        onClick={() => {
-                          setShowFootnoteModal(false);
-                          setActiveFootnote(null);
-                        }}
-                      >
-                        ✕
-                      </button>
-                    </div>
-                    <div className="footnote-modal-content">
-                      {activeFootnote.footnotes.map((footnote, idx) => {
-                        if (!footnote) return null;
-
-                        const footnoteText =
-                          footnote.text ||
-                          footnote.note ||
-                          footnote.content ||
-                          "";
-                        if (!footnoteText) return null;
-
-                        return (
-                          <div key={idx} className="footnote-item">
-                            <span className="footnote-number">
-                              {footnote.caller || idx + 1}
-                            </span>
-                            <span className="footnote-text">
-                              {footnoteText}
-                            </span>
-                          </div>
-                        );
-                      })}
-                    </div>
-                  </div>
-                </div>
-              )}
-            </>
-          ) : (
-            <>
-              <div
-                style={{
-                  height: "100%",
-                  width: "100%",
-                  display: "flex",
-                  alignItems: "center",
-                  justifyContent: "center",
-                  // backgroundColor: "#f8f9fa",
-                }}
-                className={`pageContainer ${
-                  tabEntered ? "tabEntered" : "tabDrop"
-                } ${highlightOnce ? "tabHighlightBg" : ""}`}
-              >
-                <div
-                  style={{
-                    pointerEvents: isDragging ? "none" : undefined,
-                    display: "flex",
-                    flexDirection: "column",
-                    alignItems: "center",
-                    textAlign: "center",
-                    padding: "40px",
-                    borderRadius: "12px",
-                    maxWidth: "400px",
-                    width: "90%",
-                  }}
-                >
-                  <div
-                    onClick={() => {
-                      setOpenSidebar((prev) => !prev);
-                      setCurrentExperience(0);
-                      globalThis.MakingNewTab = true;
-                    }}
+                  {`${data?.book} ${data?.chapter}`}{" "}
+                  <span
                     style={{
                       fontSize: "24px",
-                      marginBottom: "20px",
-                      color: "#333",
+                      color:
+                        "color-mix(in srgb, var(--text1), transparent 40%)",
                     }}
-                  >
-                    <img
-                      className="coloredIcon"
-                      style={{ width: "50px" }}
-                      src="https://res.cloudinary.com/dfbtwwa8p/image/upload/v1755365776/717a8527988cca7e0bdc9449ec68581a8400b977_vqc7mx.png"
-                    />
-                  </div>
-
+                    onClick={(e) => {
+                      e.stopPropagation();
+                      if (globalThis.setOpenSidebar && globalThis.openSidebar) {
+                        globalThis.setOpenSidebar(false);
+                        globalThis.setSelectingTranslation &&
+                          globalThis.setSelectingTranslation(false);
+                        globalThis.selectBookSelectorBook &&
+                          globalThis.selectBookSelectorBook(null);
+                      } else {
+                        globalThis.setOpenSidebar(true);
+                        globalThis.setSelectingTranslation &&
+                          globalThis.setSelectingTranslation(true);
+                        globalThis.selectBookSelectorBook &&
+                          globalThis.selectBookSelectorBook(data.bookId);
+                      }
+                    }}
+                  >{` / ${data?.shortName}`}</span>
+                </div>
+                {showHeading[activeSpace] && (
+                  <div style={{ height: "1rem" }}></div>
+                )}
+                {data &&
+                  data.content.map((e) => {
+                    return (
+                      <>
+                        <div
+                          style={{
+                            "pointer-events": isDragging ? "none" : null,
+                          }}
+                        >
+                          <Section
+                            {...e}
+                            data={data}
+                            inHold={inHold}
+                            setInHold={setInHold}
+                            book={data.book}
+                            chapter={data.chapter}
+                            blinker={blinker}
+                            setRef={refs}
+                            holded={holded}
+                            clickedVersesContext={clickedVersesContext}
+                            selected={selected}
+                            highlighted={highlighted}
+                            wordHighlights={wordHighlights}
+                            textEdit={false}
+                            showCommands={showCommands}
+                            setShowCommands={setShowCommands}
+                            selectedText={selectedText}
+                            lastSelectedVerse={lastSelectedVerse}
+                            contextData={contextData}
+                            setContextData={setContextData}
+                            commandsRef={commandsRef}
+                            setLastSelectedVerse={setLastSelectedVerse}
+                            setCommandHighlight={setCommandHighlight}
+                            commandHighlight={commandHighlight}
+                            wordHighlightsTC={wordHighlightsTC}
+                            wordHighlightsBC={wordHighlightsBC}
+                            clickedVerses={clickedVerses}
+                            handleVerseClick={handleVerseClick}
+                            setClickedVerses={setClickedVerses}
+                            setShowVerseToolbar={setShowVerseToolbar}
+                            footnotes={footnotes}
+                            setActiveFootnote={setActiveFootnote}
+                            setShowFootnoteModal={setShowFootnoteModal}
+                          />
+                        </div>
+                      </>
+                    );
+                  })}
+                <div style={{ height: "120px" }}></div>
+                <div
+                  style={{
+                    margin: "auto",
+                    width: "80%",
+                    height: "1px",
+                    background: "gray",
+                  }}
+                ></div>
+                {removeBibleStack ? null : (
                   <div
                     style={{
-                      width: "80%",
-                      height: "1px",
-                      background: "#e0e0e0",
-                      marginTop: "40px",
-                      margin: "auto",
-                    }}
-                  ></div>
-                  <div
-                    style={{
-                      width: "100%",
-                      marginTop: "30px",
+                      width: "50%",
                       display: "flex",
-                      alignItems: "center",
-                      justifyContent: "center",
+                      "align-items": "center",
+                      "justify-content": "center",
                       position: "relative",
                     }}
                   >
-                    <PageToolbar
-                      panelId={panelId}
-                      tab={tab}
-                      path="showInStarterToolbar"
-                    />
+                    <PageToolbar tab={tab} panelId={panelId} />
+                  </div>
+                )}
+                <div style={{ height: "160px" }}></div>
+              </>
+            ) : (
+              <>
+                <div
+                  style={{
+                    height: "100%",
+                    width: "100%",
+                    display: "flex",
+                    alignItems: "center",
+                    justifyContent: "center",
+                    // backgroundColor: "#f8f9fa",
+                  }}
+                  className={`pageContainer ${
+                    tabEntered ? "tabEntered" : "tabDrop"
+                  } ${highlightOnce ? "tabHighlightBg" : ""}`}
+                >
+                  <div
+                    style={{
+                      pointerEvents: isDragging ? "none" : undefined,
+                      display: "flex",
+                      flexDirection: "column",
+                      alignItems: "center",
+                      textAlign: "center",
+                      padding: "40px",
+                      borderRadius: "12px",
+                      maxWidth: "400px",
+                      width: "90%",
+                    }}
+                  >
+                    <div
+                      onClick={() => {
+                        setOpenSidebar((prev) => !prev);
+                        setCurrentExperience(0);
+                        globalThis.MakingNewTab = true;
+                      }}
+                      style={{
+                        fontSize: "24px",
+                        marginBottom: "20px",
+                        color: "#333",
+                      }}
+                    >
+                      <img
+                        className="coloredIcon"
+                        style={{ width: "50px" }}
+                        src="https://res.cloudinary.com/dfbtwwa8p/image/upload/v1755365776/717a8527988cca7e0bdc9449ec68581a8400b977_vqc7mx.png"
+                      />
+                    </div>
+
+                    <div
+                      style={{
+                        width: "80%",
+                        height: "1px",
+                        background: "#e0e0e0",
+                        marginTop: "40px",
+                        margin: "auto",
+                      }}
+                    ></div>
+                    <div
+                      style={{
+                        width: "100%",
+                        marginTop: "30px",
+                        display: "flex",
+                        alignItems: "center",
+                        justifyContent: "center",
+                        position: "relative",
+                      }}
+                    >
+                      <PageToolbar
+                        panelId={panelId}
+                        tab={tab}
+                        path="showInStarterToolbar"
+                      />
+                    </div>
                   </div>
                 </div>
-              </div>
-            </>
-          )}
-        </div>
+              </>
+            )}
+          </div>
 
-        {/* Next chapter preview panel */}
-        <div
-          className="pageContainer"
-          style={{
-            flex: "0 0 33.333%",
-            overflowX: "hidden",
-            direction,
-            pointerEvents: "none",
-          }}
-        >
-          <SidePanelContent data={nextChapterData} />
+          {/* Next chapter preview panel */}
+          <div
+            className="pageContainer"
+            style={{
+              flex: "0 0 33.333%",
+              overflowX: "hidden",
+              direction,
+              pointerEvents: "none",
+            }}
+          >
+            <SidePanelContent data={nextChapterData} />
+          </div>
         </div>
       </div>
-    </div>
+
+      {/* Verse toolbar rendered outside the carousel so position:fixed works relative to the viewport */}
+      {showVerseToolbar &&
+        !(role === "follower" && config.onlyHostHighlight) && (
+          <div
+            onMouseDown={() => {
+              if (!globalThis.IsMobileNow()) {
+                setUserMovedToolbar(true);
+                setDragToolbar(true);
+              }
+            }}
+            onMouseUp={() => setDragToolbar(false)}
+            style={
+              globalThis.IsMobileNow()
+                ? {
+                    position: "fixed",
+                    left: "50%",
+                    bottom: "20px",
+                    transform: "translateX(-50%)",
+                    zIndex: 10000,
+                    width: "90%",
+                    maxWidth: "420px",
+                    cursor: "default",
+                    userSelect: "none",
+                  }
+                : {
+                    position: "fixed",
+                    left: toolbarPos.x - 50,
+                    top: toolbarPos.y,
+                    zIndex: 10000,
+                    cursor: dragToolbar ? "grabbing" : "grab",
+                    userSelect: "none",
+                  }
+            }
+            className="verse-toolbar"
+          >
+            <VerseToolbar
+              clickedVerses={clickedVerses}
+              showVerseToolbar={showVerseToolbar}
+              toggleVerseHighlight={toggleVerseHighlight}
+              book={data?.book}
+              setClickedVerses={setClickedVerses}
+              chapter={data?.chapter}
+              highlighted={highlighted}
+              clickedVersesContext={clickedVersesContext}
+              onColorSelect={handleColorSelect}
+              activeSpace={activeSpace}
+              spaces={spaces}
+              onClose={() => {
+                setClickedVerses([]);
+                setTimeout(() => {
+                  setShowVerseToolbar(false);
+                }, 5);
+              }}
+            />
+          </div>
+        )}
+
+      {/* Footnote Modal rendered outside the carousel so position:fixed works relative to the viewport */}
+      {showFootnoteModal && activeFootnote && (
+        <div
+          className="footnote-modal-overlay"
+          onClick={() => {
+            setShowFootnoteModal(false);
+            setActiveFootnote(null);
+          }}
+        >
+          <div className="footnote-modal" onClick={(e) => e.stopPropagation()}>
+            <div className="footnote-modal-header">
+              <h3>
+                {`${activeFootnote.book} ${activeFootnote.chapter}:${activeFootnote.verse}`}
+              </h3>
+              <button
+                className="footnote-modal-close"
+                onClick={() => {
+                  setShowFootnoteModal(false);
+                  setActiveFootnote(null);
+                }}
+              >
+                ✕
+              </button>
+            </div>
+            <div className="footnote-modal-content">
+              {activeFootnote.footnotes.map((footnote, idx) => {
+                if (!footnote) return null;
+
+                const footnoteText =
+                  footnote.text || footnote.note || footnote.content || "";
+                if (!footnoteText) return null;
+
+                return (
+                  <div key={idx} className="footnote-item">
+                    <span className="footnote-number">
+                      {footnote.caller || idx + 1}
+                    </span>
+                    <span className="footnote-text">{footnoteText}</span>
+                  </div>
+                );
+              })}
+            </div>
+          </div>
+        </div>
+      )}
+    </>
   );
 }
 

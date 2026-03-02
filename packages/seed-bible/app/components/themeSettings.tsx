@@ -6461,7 +6461,7 @@ const SettingsUI = () => {
 
       <div style={toggleRowStyle}>
         <div style={toggleLabelStyle}>
-          {t(showNavArrows ? "showNavArrows" : "hideNavArrows")}
+          {t(showNavArrows ? "hideNavArrows" : "showNavArrows")}
         </div>
 
         <div
