@@ -37,8 +37,9 @@ export function Toolbar() {
     setOpenOnMobile,
     setCollapsed,
     setSideBarMode,
-    openPopupSettings,
   } = useSideBarContext();
+
+  const [showMoreMenu, setShowMoreMenu] = useState(false);
   const { setIsDragging, isDragging, setElement } = useMouseMove();
   const {
     activeSpace,
@@ -146,30 +147,7 @@ export function Toolbar() {
     return () => window.removeEventListener("contextmenu", handleContextMenu);
   }, []);
 
-  type ToolItem = {
-    icon?: string;
-    label?: string;
-    onClick?: () => void;
-    isImg?: boolean;
-    active?: boolean;
-  };
-
-  function buildMoreMenuOptions() {
-    return {
-      type: "normal",
-      items: (tools as ToolItem[])
-        ?.filter((tool) => tool?.active !== false)
-        .map((tool) => ({
-          icon: tool.isImg ? (
-            <img src={tool.icon} style={{ width: "20px" }} alt={tool.label} />
-          ) : (
-            <span className="material-symbols-outlined">{tool.icon}</span>
-          ),
-          title: tool.label,
-          onClick: tool.onClick,
-        })),
-    };
-  }
+  const moreTools = tools ? tools.filter((t) => t?.active !== false) : [];
 
   if (!showToolbar) return <></>;
 
@@ -238,17 +216,48 @@ export function Toolbar() {
               </div>
             </div>
 
-            <button
-              className="mobile-navbar-btn more-btn"
-              title="More"
-              aria-label="More"
-              onClick={() => openPopupSettings(buildMoreMenuOptions())}
-            >
-              <div className="mobile-btn-content">
-                <MoreIcon color="var(--text1)" />
-                <span className="mobile-btn-label">More</span>
-              </div>
-            </button>
+            <div className="more-btn-wrapper">
+              {showMoreMenu && (
+                <div className="more-menu-popup">
+                  {moreTools.map((tool, i) => (
+                    <button
+                      key={i}
+                      className="more-menu-item"
+                      onClick={() => {
+                        tool?.onClick?.();
+                        setShowMoreMenu(false);
+                      }}
+                    >
+                      {tool?.isImg ? (
+                        <img
+                          src={tool.icon}
+                          style={{ width: "20px" }}
+                          alt={tool.label}
+                        />
+                      ) : (
+                        <span className="material-symbols-outlined">
+                          {tool?.icon}
+                        </span>
+                      )}
+                      <span className="more-menu-item-label">
+                        {tool?.label}
+                      </span>
+                    </button>
+                  ))}
+                </div>
+              )}
+              <button
+                className="mobile-navbar-btn more-btn"
+                title="More"
+                aria-label="More"
+                onClick={() => setShowMoreMenu((prev) => !prev)}
+              >
+                <div className="mobile-btn-content">
+                  <MoreIcon color="var(--text1)" />
+                  <span className="mobile-btn-label">More</span>
+                </div>
+              </button>
+            </div>
 
             <button
               style={{ display: showNavArrows ? "" : "none" }}
@@ -377,6 +386,56 @@ export function Toolbar() {
         <style>{getStyleOf("toolbar.css")}</style>
       </div>
       <style>{`
+                .more-btn-wrapper {
+                    position: relative;
+                }
+
+                .more-menu-popup {
+                    position: absolute;
+                    bottom: calc(100% + 8px);
+                    right: 0;
+                    background: var(--bg1, #fff);
+                    border: 1px solid var(--border1, #e0e0e0);
+                    border-radius: 12px;
+                    box-shadow: 0 8px 24px rgba(0,0,0,0.15);
+                    min-width: 180px;
+                    overflow: hidden;
+                    z-index: 1000;
+                    display: flex;
+                    flex-direction: column;
+                }
+
+                .more-menu-item {
+                    display: flex;
+                    align-items: center;
+                    gap: 12px;
+                    padding: 12px 16px;
+                    background: none;
+                    border: none;
+                    cursor: pointer;
+                    width: 100%;
+                    text-align: left;
+                    color: var(--text1);
+                    font-size: 14px;
+                    transition: background 0.15s;
+                }
+
+                .more-menu-item:hover {
+                    background: var(--hover1, rgba(0,0,0,0.06));
+                }
+
+                .more-menu-item .material-symbols-outlined {
+                    font-size: 20px;
+                    flex-shrink: 0;
+                }
+
+                .more-menu-item-label {
+                    flex: 1;
+                    white-space: nowrap;
+                    overflow: hidden;
+                    text-overflow: ellipsis;
+                }
+
                 .mobile-navbar-btn svg {
                     width: 24px;
                     height: 24px;
