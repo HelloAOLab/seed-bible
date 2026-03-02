@@ -129,6 +129,7 @@
   flex-shrink: 0;
   width: 40px;
   height: 40px;
+  display: none !important;
 }
 
 .mobile-navbar-arrow:hover {
