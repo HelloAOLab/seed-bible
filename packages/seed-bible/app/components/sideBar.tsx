@@ -1851,7 +1851,11 @@ function SideBar({ panelsNumber }) {
                         align-items: center;
             }
             .mobile-tab{display:flex;justify-content:space-between;align-items:center;padding:11px;border-radius:10px;margin-bottom:12px;border:1px solid transparent;cursor:pointer;width: 90%;height: 54px;}
-            .mobile-tab.active{background:#f0a68b;border-color:#e18b69;color:#000}
+            .mobile-tab.active{
+                background: var(--activeTabFill);
+                border-color: var(--activeTabBorder);
+                color: var(--activeTabText);
+            }
             .mobile-tab-title{font-weight:600;font-size:16px}
             .mobile-tab-sub{font-size:14px;color:rgba(0,0,0,0.45);margin-top:4px;display: inline;}
             .mobile-tab-left{display:flex;flex-direction:column}
