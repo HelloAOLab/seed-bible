@@ -152,6 +152,7 @@ export function VerseToolbar({
     display: "flex",
     alignItems: "center",
     gap: "12px",
+    width: "400px",
   };
 
   const verseRefStyle = {
@@ -345,6 +346,34 @@ export function VerseToolbar({
       <div className="verse-toolbar" style={containerStyle}>
         <style>
           {`
+          .mobile-action-btn {
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            justify-content: center;
+            flex: 1;
+            background: transparent;
+            border: none;
+            cursor: pointer;
+            gap: 4px;
+            color: var(--text1);
+            padding: 0;
+            height: 100%;
+            font-family: DM Sans;
+            font-weight: 400;
+            font-size: 14px;
+          }
+
+          .mobile-action-btn svg {
+            width: 24px;
+            height: 24px;
+          }
+
+          .mobile-action-btn .material-symbols-outlined {
+            font-size: 24px;
+            line-height: 1;
+          }
+
           @keyframes slideUp {
             from {
               transform: translateX(-50%) translateY(20px);
@@ -466,471 +495,219 @@ export function VerseToolbar({
             e.stopPropagation();
           }}
         >
-          {globalThis.IsMobileNow() ? (
-            /* ── MOBILE: bottom-navbar style ── */
-            <div
-              onMouseDown={(e) => e.stopPropagation()}
-              style={{
-                display: "flex",
-                width: "100%",
-                alignItems: "center",
-                height: "100%",
-              }}
-            >
-              {showMobileColors ? (
-                /* Color picker panel */
-                <>
+          {/* ── Action buttons (mobile + desktop) ── */}
+          <div
+            onMouseDown={(e) => e.stopPropagation()}
+            style={{
+              display: "flex",
+              width: "100%",
+              alignItems: "center",
+              height: "100%",
+            }}
+          >
+            {showMobileColors ? (
+              /* Color picker panel */
+              <>
+                <button
+                  onClick={() => setShowMobileColors(false)}
+                  style={{
+                    background: "transparent",
+                    border: "none",
+                    cursor: "pointer",
+                    color: "var(--text1)",
+                    padding: "4px 4px 4px 0",
+                    flexShrink: 0,
+                    display: "flex",
+                    alignItems: "center",
+                  }}
+                  aria-label="Back"
+                >
+                  <span
+                    className="material-symbols-outlined"
+                    style={{ fontSize: "24px" }}
+                  >
+                    chevron_left
+                  </span>
+                </button>
+
+                <div
+                  className="color-buttons"
+                  style={{ ...colorButtonsStyle, flex: 1 }}
+                >
+                  {isPickingColor && (
+                    <>
+                      <button
+                        key="cancel-color"
+                        className="color-circle"
+                        style={{
+                          ...circleButtonStyle("#fff"),
+                          border: "2px solid #999",
+                          display: "flex",
+                          alignItems: "center",
+                          justifyContent: "center",
+                          fontSize: "16px",
+                          lineHeight: 1,
+                          color: "#666",
+                        }}
+                        onClick={(e) => {
+                          e.stopPropagation();
+                          setIsPickingColor(false);
+                          setTempColor(selectedColor);
+                        }}
+                      >
+                        ✕
+                      </button>
+                      <button
+                        key="temp-preview"
+                        className="color-circle"
+                        style={{
+                          ...circleButtonStyle(tempColor),
+                          border: "3px solid #666",
+                          boxShadow: "0 0 8px rgba(0,0,0,0.3)",
+                        }}
+                      />
+                    </>
+                  )}
+
+                  {customColors.map((color) => (
+                    <button
+                      key={color}
+                      className="color-circle"
+                      style={circleButtonStyle(color)}
+                      onClick={() => handleColorClick(color)}
+                      aria-label={`Highlight with ${color}`}
+                    />
+                  ))}
+
+                  {defaultColors.map((color) => (
+                    <button
+                      key={color}
+                      className="color-circle"
+                      style={circleButtonStyle(color)}
+                      onClick={() => handleColorClick(color)}
+                      aria-label={`Highlight with ${color}`}
+                    />
+                  ))}
+
+                  <div ref={colorPickerRef}>
+                    <button
+                      className="plus-button"
+                      style={plusButtonStyle}
+                      onClick={handlePlusClick}
+                      aria-label="Add color"
+                    >
+                      <img
+                        style={{ width: "44px", "-webkit-user-drag": "none" }}
+                        src="https://res.cloudinary.com/dfbtwwa8p/image/upload/v1761753902/329cd5727522c1b0f09580e4c7b13964cb2b1a87_fvmcdy.png"
+                      />
+                    </button>
+                    <input
+                      ref={colorInputRef}
+                      type="color"
+                      value={tempColor}
+                      onChange={handleColorChange}
+                      style={colorInputStyle}
+                    />
+                  </div>
+
                   <button
-                    onClick={() => setShowMobileColors(false)}
+                    onClick={allHighlighted ? handleClearHighlights : undefined}
                     style={{
+                      display: "flex",
+                      flexDirection: "column",
+                      alignItems: "center",
+                      justifyContent: "center",
                       background: "transparent",
                       border: "none",
-                      cursor: "pointer",
+                      cursor: allHighlighted ? "pointer" : "default",
+                      gap: "2px",
                       color: "var(--text1)",
-                      padding: "4px 4px 4px 0",
+                      fontSize: "10px",
+                      padding: "4px 8px",
+                      marginLeft: "auto",
+                      opacity: allHighlighted ? 1 : 0.35,
+                      fontWeight: "500",
                       flexShrink: 0,
-                      display: "flex",
-                      alignItems: "center",
                     }}
-                    aria-label="Back"
+                    aria-label="Clear highlight"
                   >
                     <span
                       className="material-symbols-outlined"
-                      style={{ fontSize: "24px" }}
+                      style={{ fontSize: "20px" }}
                     >
-                      chevron_left
+                      ink_eraser
                     </span>
+                    <span>Clear</span>
                   </button>
 
-                  <div
-                    className="color-buttons"
-                    style={{ ...colorButtonsStyle, flex: 1 }}
+                  <button
+                    onClick={
+                      hasAnyHighlights ? handleClearAllHighlights : undefined
+                    }
+                    style={{
+                      display: "flex",
+                      flexDirection: "column",
+                      alignItems: "center",
+                      justifyContent: "center",
+                      background: "transparent",
+                      border: "none",
+                      cursor: hasAnyHighlights ? "pointer" : "default",
+                      gap: "2px",
+                      color: "#ef4444",
+                      fontSize: "10px",
+                      padding: "4px 8px",
+                      opacity: hasAnyHighlights ? 1 : 0.35,
+                      fontWeight: "500",
+                      flexShrink: 0,
+                    }}
+                    aria-label="Clear all highlights"
                   >
-                    {isPickingColor && (
-                      <>
-                        <button
-                          key="cancel-color"
-                          className="color-circle"
-                          style={{
-                            ...circleButtonStyle("#fff"),
-                            border: "2px solid #999",
-                            display: "flex",
-                            alignItems: "center",
-                            justifyContent: "center",
-                            fontSize: "16px",
-                            lineHeight: 1,
-                            color: "#666",
-                          }}
-                          onClick={(e) => {
-                            e.stopPropagation();
-                            setIsPickingColor(false);
-                            setTempColor(selectedColor);
-                          }}
-                        >
-                          ✕
-                        </button>
-                        <button
-                          key="temp-preview"
-                          className="color-circle"
-                          style={{
-                            ...circleButtonStyle(tempColor),
-                            border: "3px solid #666",
-                            boxShadow: "0 0 8px rgba(0,0,0,0.3)",
-                          }}
-                        />
-                      </>
-                    )}
-
-                    {customColors.map((color) => (
-                      <button
-                        key={color}
-                        className="color-circle"
-                        style={circleButtonStyle(color)}
-                        onClick={() => handleColorClick(color)}
-                        aria-label={`Highlight with ${color}`}
-                      />
-                    ))}
-
-                    {defaultColors.map((color) => (
-                      <button
-                        key={color}
-                        className="color-circle"
-                        style={circleButtonStyle(color)}
-                        onClick={() => handleColorClick(color)}
-                        aria-label={`Highlight with ${color}`}
-                      />
-                    ))}
-
-                    <div ref={colorPickerRef}>
-                      <button
-                        className="plus-button"
-                        style={plusButtonStyle}
-                        onClick={handlePlusClick}
-                        aria-label="Add color"
-                      >
-                        <img
-                          style={{ width: "44px", "-webkit-user-drag": "none" }}
-                          src="https://res.cloudinary.com/dfbtwwa8p/image/upload/v1761753902/329cd5727522c1b0f09580e4c7b13964cb2b1a87_fvmcdy.png"
-                        />
-                      </button>
-                      <input
-                        ref={colorInputRef}
-                        type="color"
-                        value={tempColor}
-                        onChange={handleColorChange}
-                        style={colorInputStyle}
-                      />
-                    </div>
-
+                    <span
+                      className="material-symbols-outlined"
+                      style={{ fontSize: "20px" }}
+                    >
+                      ink_eraser
+                    </span>
+                    <span>Clear All</span>
+                  </button>
+                </div>
+              </>
+            ) : (
+              /* Action buttons — same style as bottom navbar */
+              <>
+                <button className="mobile-action-btn">
+                  <BookMarkIcon />
+                  <span>Bookmark</span>
+                </button>
+                {selectionSettings.showHighlightColors &&
+                  !disableHighlighting && (
                     <button
-                      onClick={
-                        allHighlighted ? handleClearHighlights : undefined
-                      }
-                      style={{
-                        display: "flex",
-                        flexDirection: "column",
-                        alignItems: "center",
-                        justifyContent: "center",
-                        background: "transparent",
-                        border: "none",
-                        cursor: allHighlighted ? "pointer" : "default",
-                        gap: "2px",
-                        color: "var(--text1)",
-                        fontSize: "10px",
-                        padding: "4px 8px",
-                        marginLeft: "auto",
-                        opacity: allHighlighted ? 1 : 0.35,
-                        fontWeight: "500",
-                        flexShrink: 0,
-                      }}
-                      aria-label="Clear highlight"
+                      className="mobile-action-btn"
+                      onClick={() => setShowMobileColors(true)}
                     >
-                      <span
-                        className="material-symbols-outlined"
-                        style={{ fontSize: "20px" }}
-                      >
-                        ink_eraser
-                      </span>
-                      <span>Clear</span>
+                      <HighlightIcon />
+                      <span>Highlight</span>
                     </button>
-
+                  )}
+                {menuOptions
+                  .filter((o) => o?.type !== "line")
+                  .map((option, i) => (
                     <button
-                      onClick={
-                        hasAnyHighlights ? handleClearAllHighlights : undefined
-                      }
-                      style={{
-                        display: "flex",
-                        flexDirection: "column",
-                        alignItems: "center",
-                        justifyContent: "center",
-                        background: "transparent",
-                        border: "none",
-                        cursor: hasAnyHighlights ? "pointer" : "default",
-                        gap: "2px",
-                        color: "#ef4444",
-                        fontSize: "10px",
-                        padding: "4px 8px",
-                        opacity: hasAnyHighlights ? 1 : 0.35,
-                        fontWeight: "500",
-                        flexShrink: 0,
-                      }}
-                      aria-label="Clear all highlights"
+                      key={i}
+                      className="mobile-action-btn"
+                      onClick={option?.onClick}
                     >
-                      <span
-                        className="material-symbols-outlined"
-                        style={{ fontSize: "20px" }}
-                      >
-                        ink_eraser
+                      {option.icon}
+                      <span>
+                        {typeof option.title === "function"
+                          ? (option.title as any)(clickedVersesContext)
+                          : option.title}
                       </span>
-                      <span>Clear All</span>
                     </button>
-                  </div>
-                </>
-              ) : (
-                /* Action buttons — same style as bottom navbar */
-                <>
-                  {selectionSettings.showHighlightColors &&
-                    !disableHighlighting && (
-                      <>
-                        <button
-                          className="mobile-action-btn"
-                          // onClick={() => setShowMobileColors(true)}
-                        >
-                          <BookMarkIcon />
-                          <span>Bookmark</span>
-                        </button>
-                        <button
-                          className="mobile-action-btn"
-                          onClick={() => setShowMobileColors(true)}
-                        >
-                          <HighlightIcon />
-                          <span>Highlight</span>
-                        </button>
-                      </>
-                    )}
-                  {menuOptions
-                    .filter((o) => o?.type !== "line")
-                    .map((option, i) => (
-                      <button
-                        key={i}
-                        className="mobile-action-btn"
-                        onClick={option?.onClick}
-                      >
-                        {option.icon}
-                        <span>
-                          {typeof option.title === "function"
-                            ? (option.title as any)(clickedVersesContext)
-                            : option.title}
-                        </span>
-                      </button>
-                    ))}
-                </>
-              )}
-            </div>
-          ) : (
-            /* ── DESKTOP: existing design ── */
-            <>
-              {selectionSettings.showSelectedItems && (
-                <span className="verse-ref" style={verseRefStyle}>
-                  {getVerseReference()}
-                </span>
-              )}
-
-              {selectionSettings.showSelectedItems && (
-                <div className="divider-vertical" style={dividerStyle}></div>
-              )}
-
-              {selectionSettings.showHighlightColors &&
-                !disableHighlighting && (
-                  <>
-                    <div
-                      onMouseDown={(e) => e.stopPropagation()}
-                      className="color-buttons"
-                      style={colorButtonsStyle}
-                    >
-                      {isPickingColor && (
-                        <>
-                          <button
-                            key="cancel-color"
-                            className="color-circle"
-                            style={{
-                              ...circleButtonStyle("#fff"),
-                              border: "2px solid #999",
-                              display: "flex",
-                              alignItems: "center",
-                              justifyContent: "center",
-                              fontSize: "16px",
-                              lineHeight: 1,
-                              color: "#666",
-                            }}
-                            onClick={(e) => {
-                              e.stopPropagation();
-                              setIsPickingColor(false);
-                              setTempColor(selectedColor);
-                            }}
-                            onMouseEnter={(e) =>
-                              (e.currentTarget.style.transform = "scale(1.1)")
-                            }
-                            onMouseLeave={(e) =>
-                              (e.currentTarget.style.transform = "scale(1)")
-                            }
-                            aria-label="Cancel color selection"
-                          >
-                            ✕
-                          </button>
-                          <button
-                            key="temp-preview"
-                            className="color-circle"
-                            style={{
-                              ...circleButtonStyle(tempColor),
-                              border: "3px solid #666",
-                              boxShadow: "0 0 8px rgba(0,0,0,0.3)",
-                            }}
-                            aria-label={`Preview color ${tempColor}`}
-                          />
-                        </>
-                      )}
-
-                      {customColors.map((color: string) => (
-                        <button
-                          key={color}
-                          className="color-circle"
-                          style={circleButtonStyle(color)}
-                          onMouseEnter={(e) =>
-                            (e.currentTarget.style.transform = "scale(1.1)")
-                          }
-                          onMouseLeave={(e) =>
-                            (e.currentTarget.style.transform = "scale(1)")
-                          }
-                          onClick={() => handleColorClick(color)}
-                          aria-label={`Highlight with ${color}`}
-                        />
-                      ))}
-
-                      {defaultColors.map((color) => (
-                        <button
-                          key={color}
-                          className="color-circle"
-                          style={circleButtonStyle(color)}
-                          onMouseEnter={(e) =>
-                            (e.currentTarget.style.transform = "scale(1.1)")
-                          }
-                          onMouseLeave={(e) =>
-                            (e.currentTarget.style.transform = "scale(1)")
-                          }
-                          onClick={() => handleColorClick(color)}
-                          aria-label={`Highlight with ${color}`}
-                        />
-                      ))}
-
-                      <div ref={colorPickerRef}>
-                        <button
-                          className="plus-button"
-                          style={plusButtonStyle}
-                          onMouseEnter={(e) =>
-                            (e.currentTarget.style.transform = "scale(1.1)")
-                          }
-                          onMouseLeave={(e) =>
-                            (e.currentTarget.style.transform = "scale(1)")
-                          }
-                          onClick={handlePlusClick}
-                          aria-label="Add color"
-                        >
-                          <img
-                            style={{
-                              width: "44px",
-                              "-webkit-user-drag": "none",
-                            }}
-                            src="https://res.cloudinary.com/dfbtwwa8p/image/upload/v1761753902/329cd5727522c1b0f09580e4c7b13964cb2b1a87_fvmcdy.png"
-                          />
-                        </button>
-                        <input
-                          ref={colorInputRef}
-                          type="color"
-                          value={tempColor}
-                          onChange={handleColorChange}
-                          style={colorInputStyle}
-                        />
-                      </div>
-
-                      <div
-                        className="divider-vertical"
-                        style={dividerStyle}
-                      ></div>
-
-                      <button
-                        className="clear-eraser-btn"
-                        onClick={
-                          allHighlighted ? handleClearHighlights : undefined
-                        }
-                        style={{
-                          display: "flex",
-                          flexDirection: "column",
-                          alignItems: "center",
-                          justifyContent: "center",
-                          background: "transparent",
-                          border: "none",
-                          cursor: allHighlighted ? "pointer" : "default",
-                          gap: "2px",
-                          color: "var(--text1)",
-                          fontSize: "10px",
-                          padding: "4px 8px",
-                          opacity: allHighlighted ? 1 : 0.35,
-                          transition: "opacity 0.2s",
-                          fontWeight: "500",
-                          flexShrink: 0,
-                        }}
-                        aria-label="Clear highlight"
-                      >
-                        <span
-                          className="material-symbols-outlined"
-                          style={{ fontSize: "20px" }}
-                        >
-                          ink_eraser
-                        </span>
-                        <span>Clear</span>
-                      </button>
-
-                      <button
-                        className="clear-eraser-btn"
-                        onClick={
-                          hasAnyHighlights
-                            ? handleClearAllHighlights
-                            : undefined
-                        }
-                        style={{
-                          display: "flex",
-                          flexDirection: "column",
-                          alignItems: "center",
-                          justifyContent: "center",
-                          background: "transparent",
-                          border: "none",
-                          cursor: hasAnyHighlights ? "pointer" : "default",
-                          gap: "2px",
-                          color: "#ef4444",
-                          fontSize: "10px",
-                          padding: "4px 8px",
-                          opacity: hasAnyHighlights ? 1 : 0.35,
-                          transition: "opacity 0.2s",
-                          fontWeight: "500",
-                          flexShrink: 0,
-                        }}
-                        aria-label="Clear all highlights"
-                      >
-                        <span
-                          className="material-symbols-outlined"
-                          style={{ fontSize: "20px" }}
-                        >
-                          ink_eraser
-                        </span>
-                        <span>Clear All</span>
-                      </button>
-                    </div>
-
-                    <div
-                      className="divider-vertical"
-                      style={dividerStyle}
-                    ></div>
-                  </>
-                )}
-
-              <div
-                onMouseDown={(e) => e.stopPropagation()}
-                className="tool-buttons"
-                style={toolButtonsStyle}
-              >
-                {menuOptions.map((option) => {
-                  if (option?.type === "line") {
-                    return (
-                      <div
-                        className="divider-vertical"
-                        style={dividerStyle}
-                      ></div>
-                    );
-                  } else {
-                    return (
-                      <div class="toolbar-icon-container">
-                        <div
-                          onClick={option?.onClick}
-                          className="icon-button"
-                          style={iconButtonStyle}
-                        >
-                          {option.icon}
-                        </div>
-                        {selectionSettings.showIconText && (
-                          <span style={{ color: "var(--text1) !important" }}>
-                            {typeof option.title === "function"
-                              ? (option.title as any)(clickedVersesContext)
-                              : option.title}
-                          </span>
-                        )}
-                      </div>
-                    );
-                  }
-                })}
-              </div>
-            </>
-          )}
+                  ))}
+              </>
+            )}
+          </div>
         </div>
       </div>
     </>
