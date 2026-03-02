@@ -38,7 +38,11 @@ os.registerApp("toast-notification", thisBot);
 const Notification = () => {
   return (
     <FloatingBanner>
-      <img src={ICON} alt="notification" />
+      <img
+        src={ICON}
+        alt="notification"
+        style={{ width: "20px", height: "20px" }}
+      />
       {message}
       <div
         style={{
