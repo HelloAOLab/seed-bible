@@ -36,6 +36,8 @@ export function Toolbar() {
     setSidebarWidth,
     setOpenOnMobile,
     setCollapsed,
+    setSideBarMode,
+    openPopupSettings,
   } = useSideBarContext();
   const { setIsDragging, isDragging, setElement } = useMouseMove();
   const {
@@ -144,6 +146,31 @@ export function Toolbar() {
     return () => window.removeEventListener("contextmenu", handleContextMenu);
   }, []);
 
+  type ToolItem = {
+    icon?: string;
+    label?: string;
+    onClick?: () => void;
+    isImg?: boolean;
+    active?: boolean;
+  };
+
+  function buildMoreMenuOptions() {
+    return {
+      type: "normal",
+      items: (tools as ToolItem[])
+        ?.filter((tool) => tool?.active !== false)
+        .map((tool) => ({
+          icon: tool.isImg ? (
+            <img src={tool.icon} style={{ width: "20px" }} alt={tool.label} />
+          ) : (
+            <span className="material-symbols-outlined">{tool.icon}</span>
+          ),
+          title: tool.label,
+          onClick: tool.onClick,
+        })),
+    };
+  }
+
   if (!showToolbar) return <></>;
 
   return (
@@ -215,13 +242,7 @@ export function Toolbar() {
               className="mobile-navbar-btn more-btn"
               title="More"
               aria-label="More"
-              onClick={() => {
-                // if (globalThis.setOpenSidebar) {
-                //   globalThis.setOpenSidebar(true);
-                //   globalThis.setSelectingTranslation &&
-                //     globalThis.setSelectingTranslation(false);
-                // }
-              }}
+              onClick={() => openPopupSettings(buildMoreMenuOptions())}
             >
               <div className="mobile-btn-content">
                 <MoreIcon color="var(--text1)" />
