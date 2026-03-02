@@ -1449,14 +1449,7 @@ div.attachment-link.dropabble-Embed .playlist-item-type {
   display: none !important;
 }
 
-.show-on-desktop {
-  display: block !important;
-}
-
 @media only screen and (max-width: 768px) {
-  .show-on-mobile {
-    display: block !important;
-  }
   .show-on-desktop {
     display: none !important;
   }
