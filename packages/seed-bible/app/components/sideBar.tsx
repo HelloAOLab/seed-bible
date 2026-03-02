@@ -2773,7 +2773,7 @@ export const UserProfile = ({ collapsed }) => {
           width: 30,
           height: 30,
           borderRadius: "50%",
-          border: `2px solid ${colors[colorIndex]}`,
+          border: `2px solid ${!configBot.tags.staticInst ? colors[colorIndex] : "var(--selectedSpaceColor)"}`,
           padding: 2,
           display: "flex",
           alignItems: "center",
