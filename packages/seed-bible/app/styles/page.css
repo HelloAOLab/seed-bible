@@ -55,8 +55,8 @@
 .mobile-header-bookmark {
   position: absolute;
   left: calc(100% - 48px);
-  top: 61px;
-  display: none;
+  top: 64px;
+  /* display: none; */
 }
 .scroller > div:first-child {
   /* min-height: 100px; */

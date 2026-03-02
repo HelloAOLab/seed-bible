@@ -24,7 +24,11 @@ import { MiniTextEditor } from "app.components.smallEditor";
 import { ConfigurableFunctionCommands } from "app.components.commands";
 import { VerseToolbar } from "app.components.verseToolbar";
 import { useHoldAction } from "app.hooks.useHold";
-import { MobileSettingsIcon, MenuIcon } from "app.components.icons";
+import {
+  MobileSettingsIcon,
+  MenuIcon,
+  BookMarkIcon,
+} from "app.components.icons";
 
 import { useSideBarContext } from "app.hooks.sideBar";
 function getUserSessionInfo(userId) {
@@ -90,6 +94,7 @@ function ThePage({
     sidebarWidth,
     setSidebarWidth,
     setCollapsed,
+    setSideBarMode,
   } = useSideBarContext();
   useEffect(() => {
     if (deleteTab) {
@@ -1821,6 +1826,7 @@ function ThePage({
                       setOpenOnMobile(true);
                       setSidebarWidth(280);
                       setCollapsed(false);
+                      setSideBarMode("settings");
                     }}
                     title="Settings"
                   >
@@ -1828,9 +1834,18 @@ function ThePage({
                   </button>
                 </div>
               </div>
-              <div className={"mobile-header-bookmark"}>
-                <MenuIcon name={"bookmark"} />
-              </div>
+              {tab?.id &&
+                masks?.mobileBookmarks &&
+                Object.values(masks.mobileBookmarks)
+                  .flat()
+                  .includes(tab.id) && (
+                  <div className={"mobile-header-bookmark"}>
+                    <BookMarkIcon
+                      stroke={"var(--selectedSpaceColor)"}
+                      fill={"var(--selectedSpaceColor)"}
+                    />
+                  </div>
+                )}
             </div>
           )}
           <div

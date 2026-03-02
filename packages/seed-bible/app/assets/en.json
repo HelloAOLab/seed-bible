@@ -48,6 +48,7 @@
   "billingServices": "Billing & services",
   "permissions": "Permissions",
   "notifications": "Notifications",
+  "keepScreenAwake": "Keep screen awake",
   "subscriptions": "Subscriptions",
   "createProfile": "Create profile",
   "openAccountSettings": "Open account settings",

@@ -986,6 +986,101 @@ export const NotificationsSetting = ({
   );
 };
 
+// ---------- Keep Screen Awake ----------
+export const KeepScreenAwakeSetting = ({
+  itemKey = "keepScreenAwake",
+  labelKey = "keepScreenAwake",
+}) => {
+  const { t, editMode, labels, visibility } = useSettingsContext();
+  const label = labels[itemKey] || t(labelKey);
+  const isHidden = visibility[itemKey] === false;
+  const [isActive, setIsActive] = useState(false);
+
+  const toggle = async () => {
+    if (isActive) {
+      try {
+        await os.disableWakeLock();
+        setIsActive(false);
+      } catch (err) {
+        os.toast(
+          "Could not disable keep awake: " +
+            (err instanceof Error ? err.message : "")
+        );
+      }
+    } else {
+      try {
+        await os.requestWakeLock();
+        setIsActive(true);
+      } catch (err) {
+        os.toast(
+          "Could not enable keep awake: " +
+            (err instanceof Error ? err.message : "")
+        );
+      }
+    }
+  };
+
+  if (isHidden && !editMode) return null;
+
+  return (
+    <SettingItemWrapper itemKey={itemKey}>
+      <div
+        className="settings-item"
+        style={{ justifyContent: "space-between" }}
+        onClick={toggle}
+      >
+        <div style={{ display: "flex", alignItems: "center", gap: "10px" }}>
+          <div className="item-icon">
+            <span className="material-symbols-outlined">light_mode</span>
+          </div>
+          <div className="item-text">{label}</div>
+        </div>
+        <div className={`settings-toggle ${isActive ? "active" : ""}`}>
+          <div className="settings-toggle-knob" />
+        </div>
+      </div>
+    </SettingItemWrapper>
+  );
+};
+
+// ---------- Report a Bug ----------
+export const ReportBugSetting = ({
+  itemKey = "reportBug",
+  labelKey = "reportBug",
+}) => {
+  return (
+    <SettingRow
+      itemKey={itemKey}
+      labelKey={labelKey}
+      icon="bug_report"
+      onClick={() => os.openURL("https://forms.gle/mhtqbQd6VPW8ZDh2A")}
+    />
+  );
+};
+
+// ---------- Help ----------
+export const HelpSetting = ({ itemKey = "help", labelKey = "help" }) => {
+  const { t, editMode, labels, visibility } = useSettingsContext();
+  const label = labels[itemKey] || t(labelKey);
+  const isHidden = visibility[itemKey] === false;
+
+  if (isHidden && !editMode) return null;
+
+  return (
+    <SettingItemWrapper itemKey={itemKey}>
+      <div className="settings-item">
+        <div className="item-icon">
+          <span className="material-symbols-outlined">help</span>
+        </div>
+        <div className="item-text">{label}</div>
+        <span className="material-symbols-outlined item-chevron">
+          chevron_right
+        </span>
+      </div>
+    </SettingItemWrapper>
+  );
+};
+
 // ---------- Subscriptions Section ----------
 export const SubscriptionsSetting = ({
   itemKey = "subscriptions",
@@ -1225,6 +1320,47 @@ export const SubscriptionsSetting = ({
 };
 
 // ---------- Language Selector ----------
+const LANG_META: Record<string, { cc: string; display: string }> = {
+  am: { cc: "et", display: "Amharic" },
+  ar: { cc: "sa", display: "Arabic" },
+  bn: { cc: "bd", display: "Bengali" },
+  zh: { cc: "cn", display: "Chinese" },
+  en: { cc: "us", display: "English - US" },
+  fr: { cc: "fr", display: "French" },
+  hi: { cc: "in", display: "Hindi" },
+  iid: { cc: "id", display: "Indonesian" },
+  ja: { cc: "jp", display: "Japanese" },
+  ko: { cc: "kr", display: "Korean" },
+  mn: { cc: "mn", display: "Mongolian" },
+  ne: { cc: "np", display: "Nepali" },
+  ps: { cc: "af", display: "Pashto" },
+  fa: { cc: "ir", display: "Persian" },
+  pt: { cc: "br", display: "Portuguese" },
+  ru: { cc: "ru", display: "Russian" },
+  es: { cc: "es", display: "Spanish" },
+  sw: { cc: "tz", display: "Swahili" },
+  ti: { cc: "er", display: "Tigrinya" },
+  tr: { cc: "tr", display: "Turkish" },
+  uk: { cc: "ua", display: "Ukrainian" },
+  ur: { cc: "pk", display: "Urdu" },
+  ug: { cc: "cn", display: "Uyghur" },
+  vi: { cc: "vn", display: "Vietnamese" },
+};
+
+const FlagImg = ({ cc }: { cc: string }) => (
+  <img
+    src={`https://flagcdn.com/w40/${cc}.png`}
+    alt=""
+    style={{
+      width: "22px",
+      height: "22px",
+      borderRadius: "50%",
+      objectFit: "cover",
+      flexShrink: 0,
+    }}
+  />
+);
+
 export const LanguageSetting = ({
   itemKey = "language",
   labelKey = "language",
@@ -1234,15 +1370,17 @@ export const LanguageSetting = ({
     editMode,
     labels,
     visibility,
-    toggleVisibility,
     availableLanguages,
     language,
     changeLanguage,
   } = useSettingsContext();
   const label = labels[itemKey] || t(labelKey);
   const isHidden = visibility[itemKey] === false;
+  const [isOpen, setIsOpen] = useState(false);
 
   if (isHidden && !editMode) return null;
+
+  const current = LANG_META[language] || { cc: null, display: language };
 
   return (
     <SettingItemWrapper itemKey={itemKey}>
@@ -1256,26 +1394,100 @@ export const LanguageSetting = ({
           </div>
           <div className="item-text">{label}</div>
         </div>
-        <select
-          value={language}
-          onChange={(e) => changeLanguage(e.target.value)}
-          style={{
-            padding: "6px 12px",
-            borderRadius: "6px",
-            border: "1px solid #ddd",
-            backgroundColor: "var(--pageBackground)",
-            color: "var(--text1)",
-            fontSize: "14px",
-            cursor: "pointer",
-            outline: "none",
-          }}
-        >
-          {availableLanguages.map((lang) => (
-            <option key={lang.code} value={lang.code}>
-              {lang.nativeName}
-            </option>
-          ))}
-        </select>
+
+        <div style={{ position: "relative" }}>
+          <button
+            onClick={() => setIsOpen((o) => !o)}
+            style={{
+              display: "flex",
+              alignItems: "center",
+              gap: "6px",
+              padding: "6px 10px",
+              borderRadius: "8px",
+              border: "none",
+              backgroundColor: "#e8e8e8",
+              cursor: "pointer",
+              fontSize: "14px",
+              color: "var(--text1)",
+              fontFamily: "inherit",
+            }}
+          >
+            {current.cc && <FlagImg cc={current.cc} />}
+            <span>{current.display}</span>
+            <span
+              className="material-symbols-outlined"
+              style={{ fontSize: "16px", color: "#666" }}
+            >
+              expand_more
+            </span>
+          </button>
+
+          {isOpen && (
+            <>
+              <div
+                style={{ position: "fixed", inset: 0, zIndex: 99 }}
+                onClick={() => setIsOpen(false)}
+              />
+              <div
+                style={{
+                  position: "absolute",
+                  right: 0,
+                  top: "calc(100% + 4px)",
+                  zIndex: 100,
+                  backgroundColor: "var(--pageBackground, #fff)",
+                  border: "1px solid #ddd",
+                  borderRadius: "10px",
+                  boxShadow: "0 4px 16px rgba(0,0,0,0.15)",
+                  maxHeight: "220px",
+                  overflowY: "auto",
+                  minWidth: "180px",
+                }}
+              >
+                {availableLanguages.map((lang) => {
+                  const meta = LANG_META[lang.code];
+                  const isSelected = lang.code === language;
+                  return (
+                    <div
+                      key={lang.code}
+                      onClick={() => {
+                        changeLanguage(lang.code);
+                        setIsOpen(false);
+                      }}
+                      style={{
+                        display: "flex",
+                        alignItems: "center",
+                        gap: "8px",
+                        padding: "8px 12px",
+                        cursor: "pointer",
+                        fontSize: "14px",
+                        color: "var(--text1)",
+                        backgroundColor: isSelected
+                          ? "rgba(0,0,0,0.06)"
+                          : "transparent",
+                        fontWeight: isSelected ? 600 : 400,
+                      }}
+                      onMouseEnter={(e) =>
+                        ((
+                          e.currentTarget as HTMLDivElement
+                        ).style.backgroundColor = "rgba(0,0,0,0.06)")
+                      }
+                      onMouseLeave={(e) =>
+                        ((
+                          e.currentTarget as HTMLDivElement
+                        ).style.backgroundColor = isSelected
+                          ? "rgba(0,0,0,0.06)"
+                          : "transparent")
+                      }
+                    >
+                      {meta?.cc && <FlagImg cc={meta.cc} />}
+                      <span>{meta?.display || lang.nativeName}</span>
+                    </div>
+                  );
+                })}
+              </div>
+            </>
+          )}
+        </div>
       </div>
     </SettingItemWrapper>
   );
@@ -1319,9 +1531,12 @@ const COMPONENT_REGISTRY = {
   billing: BillingSetting,
   permissions: PermissionsSetting,
   notifications: NotificationsSetting,
+  keepScreenAwake: KeepScreenAwakeSetting,
   subscriptions: SubscriptionsSetting,
   language: LanguageSetting,
   reseedToggle: ReSeedToggleSetting,
+  reportBug: ReportBugSetting,
+  help: HelpSetting,
 };
 
 // ═══════════════════════════════════════════════════════════════════════════════
@@ -1375,6 +1590,8 @@ const SettingsSidebar = ({ config }) => {
     setUserURL,
     customIcon,
     setCustomIcon,
+    setOpenOnMobile,
+    setSidebarWidth,
   } = useSideBarContext();
   const { ReSeed, setReSeed } = useBibleContext();
 
@@ -1542,7 +1759,13 @@ const SettingsSidebar = ({ config }) => {
               </button>
             )}
             <button
-              onClick={() => setSideBarMode("default")}
+              onClick={() => {
+                if (globalThis.IsMobileNow()) {
+                  setOpenOnMobile(false);
+                  setSidebarWidth(280);
+                }
+                setSideBarMode("default");
+              }}
               className="close-button"
             >
               <span className="material-symbols-outlined">close</span>

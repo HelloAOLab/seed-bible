@@ -19,6 +19,7 @@ import {
   GoPrivateIcon,
   BurgerMenuIcon,
   ClientLogo,
+  BookMarkIcon,
 } from "app.components.icons";
 import { useBibleContext } from "app.hooks.bibleVariables";
 import { useSideBarContext } from "app.hooks.sideBar";
@@ -1272,7 +1273,78 @@ function SideBar({ panelsNumber }) {
       // },
     ],
   };
+  const SessionsOptions = {
+    type: "normal",
+    items: [
+      ...(!configBot.tags.staticInst
+        ? [
+            {
+              disabled: false,
+              icon: <StartSessionIcon />,
+              title: t("startSession"),
+              onClick: () => {
+                // os.log(globalThis?.StartSession,globalThis)
+                HandleSharedTabClick();
+              },
+            },
+            {
+              disabled: false,
+              icon: <MenuIcon name="person_add" />,
+              // icon: <TransparentSvg />,
+              title: t("inviteToSession"),
+              onClick: async () => {
+                const { QRCodeComponent } = thisBot.Chips();
+                const url = `https://ao.bot/?inst=${os.getCurrentInst()}`;
+                ShowModal(<QRCodeComponent url={url} />);
+              },
+            },
+          ]
+        : []),
+      ...(!removeJoinSession
+        ? [
+            {
+              disabled: true,
+              icon: <JoinSession />,
+              title: t("joinAnotherSession"),
+              onClick: async () => {
+                const { JoinSessionComponent } = thisBot.Chips();
+                const translations = {
+                  joinSession: t("joinSession"),
+                  enterSessionCode: t("enterSessionCode"),
+                  sessionCodePlaceholder: t("sessionCodePlaceholder"),
+                  join: t("join"),
+                };
+                ShowModal(
+                  <JoinSessionComponent
+                    onJoin={(code) => os.goToURL(code)}
+                    translations={translations}
+                    CloseModal={() => globalThis.CloseModal()}
+                  />
+                );
+              },
+            },
+            ...(!configBot.tags.staticInst
+              ? [
+                  {
+                    disabled: false,
+                    icon: <GoPrivateIcon />,
+                    title: globalThis.IsPrivateMode?.()
+                      ? t("goPublic")
+                      : t("goPrivate"),
+                    onClick: async () => {
+                      if (globalThis.TogglePrivateMode) {
+                        await globalThis.TogglePrivateMode();
+                      }
+                    },
+                  },
+                ]
+              : []),
 
+            { type: "line" },
+          ]
+        : []),
+    ],
+  };
   const AddingOption = () => {
     const input = {
       type: "normal",
@@ -1365,6 +1437,7 @@ function SideBar({ panelsNumber }) {
     const [expandedCategories, setExpandedCategories] = useState<
       Record<string, boolean>
     >({});
+    const [showBookmarks, setShowBookmarks] = useState(true);
 
     const toggleCategory = (categoryName) => {
       setExpandedCategories((prev) => ({
@@ -1473,15 +1546,15 @@ function SideBar({ panelsNumber }) {
           <div className="mobile-sidebar-header">
             <h2>Tabs & Folders</h2>
             <div className="mobile-header-actions">
-              <span
+              {/* <span
                 className="mobile-header-icon"
                 onClick={() => {
                   openPopupSettings(MenuOptions);
                 }}
                 role="button"
               >
-                <MenuIcon name={"person_add"} />
-              </span>
+                {<MenuIcon name={"person_add"} />}
+              </span> */}
               <span
                 className="mobile-header-icon"
                 onClick={() => {
@@ -1497,100 +1570,99 @@ function SideBar({ panelsNumber }) {
 
           <div className="mobile-tabs-list">
             {/* Bookmark folders */}
-            {Object.entries(bookmarks).map(
-              ([categoryName, tabIds]: [string, any]) => (
-                <div key={categoryName} className="bookmark-category">
-                  <div
-                    className="bookmark-category-header"
-                    onClick={() => toggleCategory(categoryName)}
-                  >
-                    <span className="bookmark-icon">
-                      <span className="material-symbols-outlined">
-                        bookmark
-                      </span>
-                    </span>
-                    <span className="category-title">{categoryName}</span>
-                    <span
-                      className={`collapse-icon ${
-                        expandedCategories[categoryName] ? "expanded" : ""
-                      }`}
+            {showBookmarks &&
+              Object.entries(bookmarks).map(
+                ([categoryName, tabIds]: [string, any]) => (
+                  <div key={categoryName} className="bookmark-category">
+                    <div
+                      className="bookmark-category-header"
+                      onClick={() => toggleCategory(categoryName)}
                     >
-                      <span className="material-symbols-outlined">
-                        expand_more
+                      <span className="bookmark-icon">
+                        <BookMarkIcon />
                       </span>
-                    </span>
-                  </div>
-                  {expandedCategories[categoryName] && (
-                    <div className="bookmark-items">
-                      {tabIds.length > 0 ? (
-                        tabIds.map((tabId: any) => {
-                          const tab = tabs.find((t: any) => t.id === tabId);
-                          return tab ? (
-                            <div
-                              key={tabId}
-                              className={`mobile-tab ${activeTab === tabId ? "active" : ""}`}
-                              onClick={() => handleMobileTabClick(tab)}
-                            >
-                              <div className="mobile-tab-left">
-                                <div className="mobile-tab-title">
-                                  {`${tab.data?.book || tab.data?.title || ""} – ${tab.data?.chapter || ""}`}{" "}
-                                  <div className="mobile-tab-sub">
-                                    • {tab.data?.shortName || ""}
+                      <span className="category-title">{categoryName}</span>
+                      <span
+                        className={`collapse-icon ${
+                          expandedCategories[categoryName] ? "expanded" : ""
+                        }`}
+                      >
+                        <span className="material-symbols-outlined">
+                          expand_more
+                        </span>
+                      </span>
+                    </div>
+                    {expandedCategories[categoryName] && (
+                      <div className="bookmark-items">
+                        {tabIds.length > 0 ? (
+                          tabIds.map((tabId: any) => {
+                            const tab = tabs.find((t: any) => t.id === tabId);
+                            return tab ? (
+                              <div
+                                key={tabId}
+                                className={`mobile-tab ${activeTab === tabId ? "active" : ""}`}
+                                onClick={() => handleMobileTabClick(tab)}
+                              >
+                                <div className="mobile-tab-left">
+                                  <div className="mobile-tab-title">
+                                    {`${tab.data?.book || tab.data?.title || ""} – ${tab.data?.chapter || ""}`}{" "}
+                                    <div className="mobile-tab-sub">
+                                      • {tab.data?.shortName || ""}
+                                    </div>
                                   </div>
                                 </div>
-                              </div>
-                              <div
-                                className="mobile-tab-actions"
-                                onClick={(e: any) => {
-                                  e.stopPropagation();
-                                  const options = {
-                                    type: "normal",
-                                    items: [
-                                      {
-                                        icon: (
-                                          <MenuIcon name="bookmark_remove" />
-                                        ),
-                                        title: "Remove Bookmark",
-                                        onClick: () => {
-                                          handleRemoveBookmark(tabId);
-                                          closePopupSettings();
+                                <div
+                                  className="mobile-tab-actions"
+                                  onClick={(e: any) => {
+                                    e.stopPropagation();
+                                    const options = {
+                                      type: "normal",
+                                      items: [
+                                        {
+                                          icon: (
+                                            <MenuIcon name="bookmark_remove" />
+                                          ),
+                                          title: "Remove Bookmark",
+                                          onClick: () => {
+                                            handleRemoveBookmark(tabId);
+                                            closePopupSettings();
+                                          },
                                         },
-                                      },
-                                      {
-                                        icon: <MenuIcon name="delete" />,
-                                        title: t("deleteTab"),
-                                        onClick: () => {
-                                          handleRemoveBookmark(tabId);
-                                          removeTab(tabId);
-                                          closePopupSettings();
+                                        {
+                                          icon: <MenuIcon name="delete" />,
+                                          title: t("deleteTab"),
+                                          onClick: () => {
+                                            handleRemoveBookmark(tabId);
+                                            removeTab(tabId);
+                                            closePopupSettings();
+                                          },
+                                          active: TabOptions.Delete.active,
                                         },
-                                        active: TabOptions.Delete.active,
-                                      },
-                                    ].filter(Boolean),
-                                  };
-                                  openPopupSettings(options);
-                                }}
-                              >
-                                <MenuIcon name={"more_vert"} />
+                                      ].filter(Boolean),
+                                    };
+                                    openPopupSettings(options);
+                                  }}
+                                >
+                                  <MenuIcon name={"more_vert"} />
+                                </div>
                               </div>
-                            </div>
-                          ) : null;
-                        })
-                      ) : (
-                        <div className="empty-message">
-                          No bookmarks in this category
-                        </div>
-                      )}
-                    </div>
-                  )}
-                </div>
-              )
-            )}
+                            ) : null;
+                          })
+                        ) : (
+                          <div className="empty-message">
+                            No bookmarks in this category
+                          </div>
+                        )}
+                      </div>
+                    )}
+                  </div>
+                )
+              )}
 
             {/* Divider between bookmarks and free tabs */}
-            {Object.keys(bookmarks).length > 0 && freeTabs.length > 0 && (
-              <div className="mobile-tabs-divider" />
-            )}
+            {showBookmarks &&
+              Object.keys(bookmarks).length > 0 &&
+              freeTabs.length > 0 && <div className="mobile-tabs-divider" />}
 
             {/* Free tabs (not bookmarked) */}
             {freeTabs.map((el: any) => (
@@ -1646,11 +1718,12 @@ function SideBar({ panelsNumber }) {
             <button
               className="mobile-nav-btn"
               onClick={() => {
-                setSideBarMode("settings");
+                // setSideBarMode("settings");
+                openPopupSettings(SessionsOptions);
               }}
             >
-              <span className="material-symbols-outlined">settings</span>
-              <div className="mobile-nav-label">Settings</div>
+              <MenuIcon name={"person_add"} />
+              <div className="mobile-nav-label">Sessions</div>
             </button>
 
             <button className="mobile-nav-add" onClick={mobileAddTab}>
@@ -1658,12 +1731,18 @@ function SideBar({ panelsNumber }) {
             </button>
 
             <button
-              className="mobile-nav-btn"
+              className={`mobile-nav-btn${showBookmarks ? " active" : ""}`}
               onClick={() => {
-                setShowNewCategoryModal(true);
+                setShowBookmarks((prev) => !prev);
               }}
             >
-              <span className="material-symbols-outlined">bookmark</span>
+              <span className="material-symbols-outlined">
+                {/* {showBookmarks ? "bookmark" : "bookmark_border"} */}
+                <BookMarkIcon
+                  stroke={showBookmarks ? "var(--selectedSpaceColor)" : "black"}
+                  fill={showBookmarks ? "var(--selectedSpaceColor)" : "none"}
+                />
+              </span>
               <div className="mobile-nav-label">Bookmarks</div>
             </button>
           </div>
@@ -1704,7 +1783,7 @@ function SideBar({ panelsNumber }) {
             .mobile-tab-left{display:flex;flex-direction:column}
             .mobile-tab-actions{opacity:0.6;cursor:pointer;display:flex;align-items:center;}
             .mobile-tab-actions:hover{opacity:1;}
-            .mobile-bottom-nav{display:flex;justify-content:space-between;align-items:center;padding:12px 20px;border-top:1px solid #eee}
+            .mobile-bottom-nav{display:flex;justify-content:space-between;align-items:center;padding:12px 30px;border-top:1px solid #eee}
             .mobile-nav-btn{background:none;border:none;display:flex;flex-direction:column;align-items:center;gap:6px;color:var(--text1);cursor:pointer}
             .mobile-nav-label{font-size:12px}
             .mobile-nav-add{

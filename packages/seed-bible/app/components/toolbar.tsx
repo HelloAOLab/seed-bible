@@ -6,7 +6,7 @@ import { useMouseMove } from "app.hooks.mouseMove";
 import SurroundingDivs from "app.components.surroundingDivs";
 import { useBibleContext } from "app.hooks.bibleVariables";
 import { useTabsContext } from "app.hooks.tabs";
-import { BurgerMenuIcon, MoreIcon, TodayIcon } from "app.components.icons";
+import { BurgerMenuIcon, MoreIcon, TabsIcon } from "app.components.icons";
 
 // Simple, single-toolbar component (no edit layer). Main logic unchanged.
 export function Toolbar() {
@@ -34,6 +34,7 @@ export function Toolbar() {
     isMobile,
     setSidebarWidth,
     setOpenOnMobile,
+    setCollapsed,
   } = useSideBarContext();
   const { setIsDragging, isDragging, setElement } = useMouseMove();
   const {
@@ -173,19 +174,29 @@ export function Toolbar() {
               title="Today"
               aria-label="Today"
             >
-              <div className="mobile-btn-content">
-                <TodayIcon color="var(--text1)" />
-                <span className="mobile-btn-label">Today</span>
+              <div
+                onClick={(e) => {
+                  e.stopPropagation();
+                  os.log("Opening mobile settings", setOpenOnMobile);
+                  setOpenOnMobile(true);
+                  setSidebarWidth(280);
+                  setCollapsed(false);
+                  setSideBarMode("default");
+                }}
+                className="mobile-btn-content"
+              >
+                <TabsIcon color="var(--text1)" />
+                <span className="mobile-btn-label">Tabs</span>
               </div>
             </button>
 
             <div
               onClick={() => {
-                if (globalThis.setOpenSidebar) {
-                  globalThis.setOpenSidebar(true);
-                  globalThis.setSelectingTranslation &&
-                    globalThis.setSelectingTranslation(false);
-                }
+                globalThis.setOpenSidebar((prev) => !prev);
+                // if (globalThis.setOpenSidebar) {
+                //   globalThis.setSelectingTranslation &&
+                //     globalThis.setSelectingTranslation(false);
+                // }
               }}
               className="mobile-center-logo"
             >
@@ -203,11 +214,11 @@ export function Toolbar() {
               title="More"
               aria-label="More"
               onClick={() => {
-                if (globalThis.setOpenSidebar) {
-                  globalThis.setOpenSidebar(true);
-                  globalThis.setSelectingTranslation &&
-                    globalThis.setSelectingTranslation(false);
-                }
+                // if (globalThis.setOpenSidebar) {
+                //   globalThis.setOpenSidebar(true);
+                //   globalThis.setSelectingTranslation &&
+                //     globalThis.setSelectingTranslation(false);
+                // }
               }}
             >
               <div className="mobile-btn-content">

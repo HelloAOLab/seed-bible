@@ -78,7 +78,21 @@ export const GoPrivateIcon = (props) => (
     />
   </svg>
 );
-
+export const TabsIcon = (props) => (
+  <svg
+    width={24}
+    height={24}
+    viewBox="0 0 24 24"
+    fill="none"
+    xmlns="http://www.w3.org/2000/svg"
+    {...props}
+  >
+    <path
+      d="M3.5 21C3.1 21 2.75 20.85 2.45 20.55C2.15 20.25 2 19.9 2 19.5V9.825C2 9.425 2.15 9.075 2.45 8.775C2.75 8.475 3.1 8.325 3.5 8.325H6.375V4.5C6.375 4.1 6.525 3.75 6.825 3.45C7.125 3.15 7.475 3 7.875 3H20.5C20.9 3 21.25 3.15 21.55 3.45C21.85 3.75 22 4.1 22 4.5V14.175C22 14.575 21.85 14.925 21.55 15.225C21.25 15.525 20.9 15.675 20.5 15.675H17.65V19.5C17.65 19.9 17.5 20.25 17.2 20.55C16.9 20.85 16.55 21 16.15 21H3.5ZM3.5 19.5H16.15V11.325H3.5V19.5ZM17.65 14.175H20.5V6H7.875V8.325H15.8C16.3334 8.325 16.775 8.5 17.125 8.85C17.475 9.2 17.65 9.64165 17.65 10.175V14.175Z"
+      fill="black"
+    />
+  </svg>
+);
 export const MobileSettingsIcon = (props) => (
   <svg
     width={16}
@@ -123,7 +137,24 @@ export const ClientLogo = ({ handleOpenClientSite, url, alt }) => {
     />
   );
 };
-
+export const BookMarkIcon = (props) => (
+  <svg
+    width={14}
+    height={20}
+    viewBox="0 0 14 20"
+    fill="none"
+    xmlns="http://www.w3.org/2000/svg"
+    {...props}
+  >
+    <path
+      d="M13 5V19L7 15L1 19V5C1 3.93913 1.42143 2.92172 2.17157 2.17157C2.92172 1.42143 3.93913 1 5 1H9C10.0609 1 11.0783 1.42143 11.8284 2.17157C12.5786 2.92172 13 3.93913 13 5Z"
+      stroke={props?.stroke ? props.stroke : "black"}
+      strokeWidth={2}
+      strokeLinecap="round"
+      strokeLinejoin="round"
+    />
+  </svg>
+);
 export const TodayIcon = (props) => (
   <svg
     width={24}

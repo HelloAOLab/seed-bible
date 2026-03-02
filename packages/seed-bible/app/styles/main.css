@@ -55,6 +55,12 @@ svg path {
     z-index: 1000;
     height: 100dvh;
     background-color: var(--panelBackground);
+    width: 100% !important;
+  }
+
+  .floatsidebar > * {
+    width: 100% !important;
+    max-width: 100% !important;
   }
 
   .sidebar-1 {
