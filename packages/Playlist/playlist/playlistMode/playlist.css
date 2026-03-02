@@ -375,8 +375,9 @@ history-item:active {
   display: flex;
   align-items: center;
   align-self: flex-start;
-  margin-top: 3px;
+  margin-top: -3px;
   right: 4px;
+  height: 100%;
 }
 
 .side-icon {
@@ -650,6 +651,11 @@ div.history-item.current-date-disorder .playlist-item-type {
   margin: 0 0rem 0 0.5rem;
   width: 100%;
   transition: all 0.2s linear;
+}
+
+.playlist-item-type {
+  padding: 0.5rem;
+  background-color: var(--panelBackground);
 }
 
 .playlist-item-type.bookmark {
@@ -1437,4 +1443,31 @@ div.attachment-link.dropabble-Embed .playlist-item-type {
   place-items: center;
   right: 1rem;
   position: absolute;
+}
+
+.show-on-mobile {
+  display: none !important;
+}
+
+@media only screen and (max-width: 768px) {
+  .show-on-desktop {
+    display: none !important;
+  }
+}
+
+/* MOBILE STYLES */
+.custom-button.secondaryAlt.create-button-mobile {
+  position: fixed;
+  bottom: 8rem;
+  right: 1rem;
+  box-shadow: 0px 2px 6px 0px #00000026;
+  height: 52px;
+  width: 52px;
+  border-radius: 8px;
+  padding: 0 !important;
+  z-index: 999;
+}
+
+span.material-symbols-outlined.rotate-90 {
+  transform: rotate(90deg);
 }

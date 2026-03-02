@@ -24,10 +24,6 @@
   overflow: visible;
 }
 
-.more-menu-items:not(:last-of-type, .noBorderBottom) {
-  /* border-bottom: 1px solid #3E3E3E; */
-}
-
 .more-menu-items:hover {
   background-color: var(--activeTabFill) !important;
 }
@@ -37,4 +33,10 @@
   height: 24px;
   border-radius: 50%;
   font-size: 12px;
+}
+
+@media only screen and (max-width: 768px) {
+  .more-menu-items:not(:last-of-type, .noBorderBottom) {
+    border-bottom: 1px solid var(--firstToolbarbutton);
+  }
 }

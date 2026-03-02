@@ -141,6 +141,10 @@
   "historical": "Tarihî",
   "poetic": "Şiirsel",
   "prophetic": "Peygamberlik",
+  "bookmarkUpdatedSuccessfully": "Yer imi başarıyla güncellendi.",
+  "failedToUpdateBookmark": "Yer imi güncellenemedi. Lütfen tekrar deneyin.",
+  "undoActionSuccessfull": "Geri alma işlemi başarılı.",
+  "headingAddedToPlaylist": "{{heading}} listeye eklendi",
   "addToPlaylist": "Listeye ekle",
   "addToNew": "Yeniye ekle",
   "itemsAddedToPlaylistSuccessfully": "Öğeler başarıyla listeye eklendi."

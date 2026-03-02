@@ -1375,7 +1375,10 @@ const CreatePlaylistUI = (props: any) => {
                 {!name ? t("untitled") : name}
                 <span
                   class="material-symbols-outlined"
-                  style={{ color: "#D36433" }}
+                  style={{
+                    color: "var(--secondaryColor)",
+                    marginLeft: "0.25rem",
+                  }}
                 >
                   edit
                 </span>
