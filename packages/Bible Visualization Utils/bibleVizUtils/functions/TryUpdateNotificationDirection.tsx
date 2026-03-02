@@ -1,4 +1,4 @@
-import { computeNotificationDirection } from "bibleVizUtils.functions.index";
+import { ComputeNotificationDirection } from "bibleVizUtils.functions.index";
 
 const { bot } = that;
 
@@ -9,7 +9,7 @@ if (
   bot.tags.isInUse &&
   bot.links.activityNotification
 ) {
-  const direction = computeNotificationDirection(
+  const direction = ComputeNotificationDirection(
     gridPortalBot.tags.cameraRotationZ
   );
 

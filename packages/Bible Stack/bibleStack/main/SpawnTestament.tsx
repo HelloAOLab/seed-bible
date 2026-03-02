@@ -1,4 +1,5 @@
 import { BibleVizDataRepository } from "bibleVizUtils.data.BibleVizDataRepository";
+import { scriptureService } from "bibleVizUtils.services.index";
 
 /**
  * Spawns a testament in the current dimension with specified properties and initializes it.
@@ -27,7 +28,7 @@ if (jarvis && !spawnPosition) {
   displayJarvisSpawnPieceAnimation = true;
 }
 const { arrangementIndex, testamentIndex, found } =
-  BibleVizUtils.Functions.GetTestamentInfoPathByName({ name });
+  scriptureService.getTestamentInfoPathByName(name);
 let testamentData;
 if (found) {
   if (displayJarvisSpawnPieceAnimation)

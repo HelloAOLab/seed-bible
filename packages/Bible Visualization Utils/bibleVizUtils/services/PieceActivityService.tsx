@@ -1,5 +1,8 @@
 import type { Bot } from "../../../../typings/AuxLibraryDefinitions";
-import { scriptureService } from "bibleVizUtils.services.index";
+import {
+  scriptureService,
+  arrangementService,
+} from "bibleVizUtils.services.index";
 import type { Tab } from "bibleVizUtils.models.interfaces";
 import { BibleVizDataRepository } from "bibleVizUtils.data.BibleVizDataRepository";
 import type { PieceInfo as IPieceInfo } from "bibleVizUtils.models.interfaces";
@@ -15,7 +18,7 @@ import { PieceDataRegistry } from "bibleVizUtils.services.PieceDataRegistry";
 export class PieceActivityService {
   static getPieceActivity({
     piece,
-    desiredArrangementIndex = BibleVizDataRepository.getCurrentArrangementIndex(),
+    desiredArrangementIndex = arrangementService.getCurrentArrangementIndex(),
   }: {
     piece: Bot;
     desiredArrangementIndex?: number;
@@ -42,9 +45,8 @@ export class PieceActivityService {
           arrangementIndex: desiredArrangementIndex,
         });
       if (found) {
-        const arrangement = BibleVizDataRepository.getArrangementByIndex({
-          index: arrangementIndex,
-        });
+        const arrangement =
+          arrangementService.getArrangementByIndex(arrangementIndex);
         if (arrangement) {
           const testament = arrangement.testaments[testamentIndex as number];
           if (testament) {

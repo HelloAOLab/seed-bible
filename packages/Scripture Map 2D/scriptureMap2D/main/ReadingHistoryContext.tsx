@@ -31,7 +31,14 @@ import {
 } from "scriptureMap2D.main.enums";
 import { scriptureService } from "bibleVizUtils.services.index";
 import { GetDayRangeSeconds } from "bibleVizUtils.functions.index";
-import { eventSystem, Events } from "scriptureMap2D.main.eventManager";
+import {
+  scriptureMapEventManager,
+  Events as ScriptureMap2DEvents,
+} from "scriptureMap2D.main.eventManager";
+import {
+  bibleVizUtilsEventManager,
+  Events as BibleVizUtilsEvents,
+} from "bibleVizUtils.services.EventManager";
 
 const { createContext, useContext, useState, useMemo, useEffect, useCallback } =
   os.appHooks;
@@ -205,12 +212,12 @@ export const ReadingHistoryProvider: (
   }, [fetchUsersDataMap]);
 
   useEffect(() => {
-    const unsubscribeUserLoggedIn = eventSystem.subscribe(
-      Events.UserLoggedIn,
+    const unsubscribeUserLoggedIn = bibleVizUtilsEventManager.subscribe(
+      BibleVizUtilsEvents.OnUserLoggedIn,
       handleUserLoggedIn
     );
-    const unsubscribeSubscriptionsChanged = eventSystem.subscribe(
-      Events.SubscriptionsChanged,
+    const unsubscribeSubscriptionsChanged = scriptureMapEventManager.subscribe(
+      ScriptureMap2DEvents.SubscriptionsChanged,
       refreshUsersDataMap
     );
 

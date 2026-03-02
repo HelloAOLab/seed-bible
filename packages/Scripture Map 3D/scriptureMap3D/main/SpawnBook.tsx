@@ -1,5 +1,9 @@
 import { BibleVizDataRepository } from "bibleVizUtils.data.BibleVizDataRepository";
-import { GetChildrenLevelColors } from "bibleVizUtils.functions.index";
+import {
+  GetChildrenLevelColors,
+  HexToRgb,
+} from "bibleVizUtils.functions.index";
+import { arrangementService } from "bibleVizUtils.services.index";
 import { scriptureService } from "bibleVizUtils.services.index";
 
 const { layoutBookStructure, position } = that;
@@ -33,7 +37,7 @@ const book =
 const { arrangementIndex, testamentIndex, sectionIndex } =
   scriptureService.getBookInfoPathByName({
     name: layoutBookStructure.layoutBookData.pieceInfo.commonName,
-    arrangementIndex: BibleVizDataRepository.getCurrentArrangementIndex(),
+    arrangementIndex: arrangementService.getCurrentArrangementIndex(),
   });
 
 const sectionName =
@@ -56,7 +60,7 @@ const sectionInfo =
   BibleVizUtils.Data.vars.fixedArrangementsInfo.slice()[arrangementIndex]
     .testaments[testamentIndex].sections[sectionIndex];
 const sectionLevelsColors = GetChildrenLevelColors({
-  sectionColorRGB: BibleVizUtils.Functions.HexToRgb({
+  sectionColorRGB: HexToRgb({
     hexColor: sectionInfo.color,
   }),
   colorRange: sectionInfo.customColorRange ?? 70,

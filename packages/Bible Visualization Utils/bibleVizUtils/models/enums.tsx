@@ -73,3 +73,12 @@ export const ObjectPoolTags = {
 } as const;
 export type ObjectPoolTagsType =
   (typeof ObjectPoolTags)[keyof typeof ObjectPoolTags];
+
+export const LabelPositionings = {
+  RightSided: "RightSided",
+  LeftSided: "LeftSided",
+  Top: "Top",
+  RightSidedCorner: "RightSidedCorner",
+} as const;
+export type LabelPositioningsType =
+  (typeof LabelPositionings)[keyof typeof LabelPositionings];

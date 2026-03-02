@@ -1,4 +1,8 @@
 import { LabelsRepository } from "bibleVizUtils.data.LabelsRepository";
+import { SpawnLabelForPiece } from "bibleVizUtils.controllers.label.lifecycle";
+import { LabelPositionings } from "bibleVizUtils.models.enums";
+import { HexToRgb } from "bibleVizUtils.functions.index";
+
 /**
  * Highlights the chapter by animating its color and scale.
  * @returns {Promise<boolean>} - Returns true if the highlight animation is successful.
@@ -8,7 +12,7 @@ import { LabelsRepository } from "bibleVizUtils.data.LabelsRepository";
 
 const chapterData = BibleStackManager.GetPieceData({ piece: thisBot });
 const duration = 0.1;
-const rgbTargetColor = BibleVizUtils.Functions.HexToRgb({
+const rgbTargetColor = HexToRgb({
   hexColor: BibleVizUtils.Data.masks.isInHistoryMode
     ? BibleVizUtils.Functions.GetHistoryColor({ piece: thisBot })
     : (chapterData.highlightColor ?? thisBot.tags.highlightedColor),
@@ -36,15 +40,15 @@ if (
 
   const infoLabelTransformer =
     LabelsRepository.getLabelTransformerByOwner(thisBot) ??
-    BibleVizUtils.Functions.GetLabelForPiece({
+    SpawnLabelForPiece({
       piece: thisBot,
       label,
       color: "white",
       labelColor: "black",
       dimension,
       labelPositioning: thisBot.masks.isOnTheGround
-        ? BibleVizUtils.Data.tags.LabelPositioning.Top
-        : BibleVizUtils.Data.tags.LabelPositioning.LeftSided,
+        ? LabelPositionings.Top
+        : LabelPositionings.LeftSided,
       isAnimatable: false,
       pointableDefault: false,
     }).infoLabelTransformer;
@@ -62,7 +66,7 @@ if (
 )
   animations.push(
     ColorLerper.LerpTag({
-      startingColor: BibleVizUtils.Functions.HexToRgb({
+      startingColor: HexToRgb({
         hexColor: thisBot.masks.color ?? thisBot.tags.color,
       }),
       endingColor: rgbTargetColor,

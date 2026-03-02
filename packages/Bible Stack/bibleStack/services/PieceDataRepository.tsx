@@ -8,6 +8,8 @@ import { getSelf as getBibleStackMain } from "bibleStack.main.selfGetter";
 const bibleStackMain = getBibleStackMain();
 
 // TODO: Move the storage of pieces data from bibleStackMain to this repository
+// TODO: Define data entities
+// TODO: Define return type
 
 export class PieceDataRepository {
   static getPieceData({ piece }: { piece: Bot }): any {

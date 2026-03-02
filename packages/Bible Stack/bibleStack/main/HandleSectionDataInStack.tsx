@@ -1,7 +1,11 @@
-import { CapitalizeFirstLetter } from "bibleVizUtils.functions.index";
+import {
+  CapitalizeFirstLetter,
+  GetBotScales,
+} from "bibleVizUtils.functions.index";
 import { LabelsRepository } from "bibleVizUtils.data.LabelsRepository";
-import { GetBotScales } from "bibleVizUtils.functions.index";
 import { BibleVizDataRepository } from "bibleVizUtils.data.BibleVizDataRepository";
+import { SpawnLabelForPiece } from "bibleVizUtils.controllers.label.lifecycle";
+import { LabelPositionings } from "bibleVizUtils.models.enums";
 
 const {
   sectionData,
@@ -11,6 +15,14 @@ const {
   easing,
   speedMultiplier = 1,
   isInstantaneous,
+}: {
+  sectionData: any; // TODO: Define interfaces for piece data entities
+  desiredPositionZ: number;
+  dimension: string;
+  duration: number;
+  easing: { type: string; mode: string };
+  speedMultiplier?: number;
+  isInstantaneous: boolean;
 } = that;
 
 const { bibleData } = thisBot.GetDataChainFromParentDataIds({
@@ -215,21 +227,19 @@ if (sectionData.isSplitIntoBooks) {
         const label = CapitalizeFirstLetter(
           sectionData.piece.tags.sectionName.split("-").join(" ")
         );
-        const { infoLabelTransformer } =
-          BibleVizUtils.Functions.GetLabelForPiece({
-            piece: sectionData.shadow,
-            label,
-            color:
-              sectionData.highlightColor ??
-              sectionData.piece.tags.labelTextColor,
-            labelColor: "white",
-            dimension,
-            labelPositioning: sectionData.piece.masks.isOnTheGround
-              ? BibleVizUtils.Data.tags.LabelPositioning.Top
-              : BibleVizUtils.Data.tags.LabelPositioning.RightSidedCorner,
-            isAnimatable: false,
-            targetOpacity: 0.5,
-          });
+        const { infoLabelTransformer } = SpawnLabelForPiece({
+          piece: sectionData.shadow,
+          label,
+          color:
+            sectionData.highlightColor ?? sectionData.piece.tags.labelTextColor,
+          labelColor: "white",
+          dimension,
+          labelPositioning: sectionData.piece.masks.isOnTheGround
+            ? LabelPositionings.Top
+            : LabelPositionings.RightSidedCorner,
+          isAnimatable: false,
+          targetOpacity: 0.5,
+        });
 
         newSectionAnimations.push(
           infoLabelTransformer.Show({
@@ -277,21 +287,20 @@ if (sectionData.isSplitIntoBooks) {
             const label = CapitalizeFirstLetter(
               sectionData.piece.tags.sectionName.split("-").join(" ")
             );
-            const { infoLabelTransformer } =
-              BibleVizUtils.Functions.GetLabelForPiece({
-                piece: sectionData.shadow,
-                label,
-                color:
-                  sectionData.highlightColor ??
-                  sectionData.piece.tags.labelTextColor,
-                labelColor: "white",
-                dimension,
-                labelPositioning: sectionData.piece.masks.isOnTheGround
-                  ? BibleVizUtils.Data.tags.LabelPositioning.Top
-                  : BibleVizUtils.Data.tags.LabelPositioning.RightSidedCorner,
-                isAnimatable: false,
-                targetOpacity: 0.5,
-              });
+            const { infoLabelTransformer } = SpawnLabelForPiece({
+              piece: sectionData.shadow,
+              label,
+              color:
+                sectionData.highlightColor ??
+                sectionData.piece.tags.labelTextColor,
+              labelColor: "white",
+              dimension,
+              labelPositioning: sectionData.piece.masks.isOnTheGround
+                ? LabelPositionings.Top
+                : LabelPositionings.RightSidedCorner,
+              isAnimatable: false,
+              targetOpacity: 0.5,
+            });
 
             return infoLabelTransformer.Show({
               speedMultiplier,
@@ -345,21 +354,19 @@ if (sectionData.isSplitIntoBooks) {
         const label = CapitalizeFirstLetter(
           sectionData.piece.tags.sectionName.split("-").join(" ")
         );
-        const { infoLabelTransformer } =
-          BibleVizUtils.Functions.GetLabelForPiece({
-            piece: sectionShadow,
-            label,
-            color:
-              sectionData.highlightColor ??
-              sectionData.piece.tags.labelTextColor,
-            labelColor: "white",
-            dimension,
-            labelPositioning: sectionData.piece.masks.isOnTheGround
-              ? BibleVizUtils.Data.tags.LabelPositioning.Top
-              : BibleVizUtils.Data.tags.LabelPositioning.RightSidedCorner,
-            isAnimatable: false,
-            targetOpacity: 0.5,
-          });
+        const { infoLabelTransformer } = SpawnLabelForPiece({
+          piece: sectionShadow,
+          label,
+          color:
+            sectionData.highlightColor ?? sectionData.piece.tags.labelTextColor,
+          labelColor: "white",
+          dimension,
+          labelPositioning: sectionData.piece.masks.isOnTheGround
+            ? LabelPositionings.Top
+            : LabelPositionings.RightSidedCorner,
+          isAnimatable: false,
+          targetOpacity: 0.5,
+        });
         newSectionAnimations.push(
           infoLabelTransformer.Show({
             isInstantaneous,
@@ -384,21 +391,20 @@ if (sectionData.isSplitIntoBooks) {
             const label = CapitalizeFirstLetter(
               sectionData.piece.tags.sectionName.split("-").join(" ")
             );
-            const { infoLabelTransformer } =
-              BibleVizUtils.Functions.GetLabelForPiece({
-                piece: sectionShadow,
-                label,
-                color:
-                  sectionData.highlightColor ??
-                  sectionData.piece.tags.labelTextColor,
-                labelColor: "white",
-                dimension,
-                labelPositioning: sectionData.piece.masks.isOnTheGround
-                  ? BibleVizUtils.Data.tags.LabelPositioning.Top
-                  : BibleVizUtils.Data.tags.LabelPositioning.RightSidedCorner,
-                isAnimatable: false,
-                targetOpacity: 0.5,
-              });
+            const { infoLabelTransformer } = SpawnLabelForPiece({
+              piece: sectionShadow,
+              label,
+              color:
+                sectionData.highlightColor ??
+                sectionData.piece.tags.labelTextColor,
+              labelColor: "white",
+              dimension,
+              labelPositioning: sectionData.piece.masks.isOnTheGround
+                ? LabelPositionings.Top
+                : LabelPositionings.RightSidedCorner,
+              isAnimatable: false,
+              targetOpacity: 0.5,
+            });
             return infoLabelTransformer.Show({ manager: BibleStackManager });
           }
         })

@@ -1,3 +1,10 @@
+import {
+  HexToRgb,
+  RgbToHex,
+  type RGB,
+  ClampRGBColor,
+} from "bibleVizUtils.functions.index";
+
 /**
  * Make a linear interpolation (lerp) on the value of a specific tag from the given start color to the given end color.
  * Available tags to be lerped: Defined on InterpolatableColorTags from interactiveBible.managers.InstanceManager.defineGlobals.
@@ -16,7 +23,7 @@ let { startingColor } = that;
 const { endingColor, durationInSeconds, bot, tag } = that;
 startingColor =
   startingColor ??
-  BibleVizUtils.Functions.HexToRgb({
+  HexToRgb({
     hexColor: bot.masks[tag] ?? bot.tags[tag],
   });
 thisBot.StopLerp({ bot, tag });
@@ -24,12 +31,12 @@ if (startingColor === endingColor) return true;
 
 return new Promise((resolve, reject) => {
   const divisionFactor = 20;
-  const difference = [
+  const difference: RGB = [
     endingColor[0] - startingColor[0],
     endingColor[1] - startingColor[1],
     endingColor[2] - startingColor[2],
   ];
-  const differenceFraction = [
+  const differenceFraction: RGB = [
     difference[0] / divisionFactor,
     difference[1] / divisionFactor,
     difference[2] / divisionFactor,
@@ -37,7 +44,7 @@ return new Promise((resolve, reject) => {
 
   const currentColor = startingColor;
   let i = 0;
-  const rgbColors = [];
+  const rgbColors: RGB[] = [];
   for (let j = 1; j < divisionFactor; j++) {
     const rgbColor = ClampRGBColor([
       currentColor[0] + differenceFraction[0] * j,
@@ -48,8 +55,8 @@ return new Promise((resolve, reject) => {
   }
   const intervalId = setInterval(
     () => {
-      const hexColor = BibleVizUtils.Functions.RgbToHex({
-        rgbColor: rgbColors[i],
+      const hexColor = RgbToHex({
+        rgbColor: rgbColors[i] as RGB,
       });
       setTagMask(bot, tag, hexColor);
       i++;
@@ -58,7 +65,7 @@ return new Promise((resolve, reject) => {
         setTagMask(
           bot,
           tag,
-          BibleVizUtils.Functions.RgbToHex({
+          RgbToHex({
             rgbColor: ClampRGBColor(endingColor),
           })
         );
@@ -78,12 +85,3 @@ return new Promise((resolve, reject) => {
   });
   currentLerps.AddColorLerpData(botLerpData);
 });
-
-function ClampRGBColor(colorToClamp) {
-  const colorClamped = [
-    Math.max(Math.min(Math.round(colorToClamp[0]), 255), 0),
-    Math.max(Math.min(Math.round(colorToClamp[1]), 255), 0),
-    Math.max(Math.min(Math.round(colorToClamp[2]), 255), 0),
-  ];
-  return colorClamped;
-}

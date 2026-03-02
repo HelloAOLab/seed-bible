@@ -1,5 +1,6 @@
 import { BibleVizDataRepository } from "bibleVizUtils.data.BibleVizDataRepository";
 import { GetCamRotationFocusPoint } from "bibleVizUtils.functions.index";
+import { arrangementService } from "bibleVizUtils.services.index";
 /**
  * Creates a new `StackBibleData` instance, sets up the Bible structure, and initializes it.
  *
@@ -51,7 +52,7 @@ thisBot.vars.hasStackEverBeenSpawned = true;
 // }
 const arrangementIndex = !isNaN(customArrangementIndex)
   ? customArrangementIndex
-  : BibleVizDataRepository.getCurrentArrangementIndex();
+  : arrangementService.getCurrentArrangementIndex();
 const bibleData = new StackBibleData({
   bibleType,
   arrangementIndex,

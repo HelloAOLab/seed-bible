@@ -1,5 +1,5 @@
 import { LabelsRepository } from "bibleVizUtils.data.LabelsRepository";
-import { GetBotScales } from "bibleVizUtils.functions.index";
+import { GetBotScales, HexToRgb } from "bibleVizUtils.functions.index";
 /**
  * Selects the chapter by animating its color and scaling effects, and displaying its verses if it has been dragged out of the map
  * @returns {Promise<boolean>} - Returns true if the selection animation is successful.
@@ -30,7 +30,7 @@ if (thisBot.tags.toErase && layoutData.isChapterExpandEnabled) {
   const chapterScales = GetBotScales(thisBot);
   const labelText = `${thisBot.tags.parentBookName} ${thisBot.tags.chapterNumber}`;
   const chapterMargin = 0.5;
-  rgbTargetColor = BibleVizUtils.Functions.HexToRgb({
+  rgbTargetColor = HexToRgb({
     hexColor: BibleVizUtils.Data.masks.isInHistoryMode
       ? BibleVizUtils.Functions.GetHistoryColor({ piece: thisBot })
       : (chapterData.highlightColor ?? thisBot.tags.initialColor),
@@ -105,7 +105,7 @@ if (thisBot.tags.toErase && layoutData.isChapterExpandEnabled) {
       setTagMask(thisBot, "isSelecting", false);
     });
 } else {
-  rgbTargetColor = BibleVizUtils.Functions.HexToRgb({
+  rgbTargetColor = HexToRgb({
     hexColor: BibleVizUtils.Data.masks.isInHistoryMode
       ? BibleVizUtils.Functions.GetHistoryColor({ piece: thisBot })
       : (chapterData.highlightColor ?? layoutData.chapterSelectColor),

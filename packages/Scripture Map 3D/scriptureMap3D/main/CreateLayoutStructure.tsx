@@ -1,8 +1,9 @@
+import { arrangementService } from "bibleVizUtils.services.index";
 import { BibleVizDataRepository } from "bibleVizUtils.data.BibleVizDataRepository";
 const { layoutData } = that;
 
 const layoutBookStructures = [];
-const arrangementIndex = BibleVizDataRepository.getCurrentArrangementIndex();
+const arrangementIndex = arrangementService.getCurrentArrangementIndex();
 const arrangement =
   BibleVizUtils.Data.vars.fixedArrangementsInfo[arrangementIndex];
 let column = 0;

@@ -7,22 +7,28 @@ import type {
 import {
   GetExplodedViewBooksPositions,
   type HexString,
+  GetChildrenLevelColors,
+  HexToRgb,
 } from "bibleVizUtils.functions.index";
 import type { StackPieceMeasurementsType } from "bibleVizUtils.data.StackPieceMeasurements";
 import type { StackSpacingsType } from "bibleVizUtils.data.StackSpacings";
 
 interface ArrangementTemplate {
   name: string;
+  id: string;
   testaments: {
     name: string;
     color: HexString;
+    id: string;
     sections: {
       name: string;
       color: HexString;
+      id: string;
       books: {
         name: string;
         color: HexString;
-        explodedViewPosition: {
+        id: string;
+        explodedViewPosition?: {
           x: number;
           y: number;
           z: number;
@@ -52,15 +58,12 @@ type GetBiggerChapterType = (arrangementIndex?: number) => number;
 type GetFixedArrangementByTemplate = (
   template: ArrangementTemplate
 ) => ArrangementInfo;
+type GetTemplateByArrangement = (
+  arrangement: ArrangementInfo
+) => ArrangementTemplate;
 
 interface ServiceRepository {
   getBookStaticInfo: (book: string) => BookStaticInfo | undefined;
-  getCurrentArrangement: () => ArrangementInfo | undefined;
-  getCurrentArrangementIndex: () => number;
-  getArrangements: () => ArrangementInfo[];
-  getArrangementByIndex: (params: {
-    index: number;
-  }) => ArrangementInfo | undefined;
   getStackPieceMeasurement: <K extends keyof StackPieceMeasurementsType>(
     measurement: K
   ) => StackPieceMeasurementsType[K];
@@ -69,15 +72,26 @@ interface ServiceRepository {
   ) => StackSpacingsType[K];
 }
 
+interface ArrangementService {
+  getFixedArrangements: () => ArrangementInfo[];
+  getCurrentArrangementIndex: () => number;
+  getArrangementByIndex: (index: number) => ArrangementInfo | undefined;
+}
+
 export class ScriptureService {
   #repository: ServiceRepository;
+  #arrangementService: ArrangementService;
   #biggerChapter: number | undefined;
   #biggerChapterArrangementIndex: number;
 
-  constructor(repository: ServiceRepository) {
+  constructor(
+    repository: ServiceRepository,
+    arrangementService: ArrangementService
+  ) {
     this.#repository = repository;
+    this.#arrangementService = arrangementService;
     this.#biggerChapterArrangementIndex =
-      this.#repository.getCurrentArrangementIndex();
+      this.#arrangementService.getCurrentArrangementIndex();
   }
 
   convertDividedPsalmsToComplete: ConvertDividedPsalmsToCompleteType = ({
@@ -142,16 +156,15 @@ export class ScriptureService {
   };
 
   getBiggerChapter: GetBiggerChapterType = (
-    arrangementIndex = this.#repository.getCurrentArrangementIndex()
+    arrangementIndex = this.#arrangementService.getCurrentArrangementIndex()
   ) => {
     if (
       this.#biggerChapterArrangementIndex !== arrangementIndex ||
       this.#biggerChapter === undefined
     ) {
       this.#biggerChapterArrangementIndex = arrangementIndex;
-      const arrangement = this.#repository.getArrangementByIndex({
-        index: arrangementIndex,
-      });
+      const arrangement =
+        this.#arrangementService.getArrangementByIndex(arrangementIndex);
 
       this.#biggerChapter = 0;
 
@@ -196,6 +209,70 @@ export class ScriptureService {
     }, 0);
   };
 
+  getTestamentInfoPathByName: (
+    name: string,
+    arrangementIndex?: number
+  ) => {
+    found: boolean;
+    arrangementIndex: number;
+    testamentIndex: number | undefined;
+  } = (
+    name,
+    arrangementIndex = this.#arrangementService.getCurrentArrangementIndex()
+  ) => {
+    const checkPathInArrangement: (arrangement: ArrangementInfo) =>
+      | {
+          found: true;
+          data: {
+            testamentIndex: number;
+          };
+        }
+      | {
+          found: false;
+        } = (arrangement) => {
+      const testamentIndex = arrangement.testaments.findIndex(
+        (testament) => testament.name === name
+      );
+      if (testamentIndex >= 0) {
+        return {
+          found: true,
+          data: {
+            testamentIndex,
+          },
+        };
+      }
+      return { found: false };
+    };
+
+    let testamentIndex: number | undefined;
+    let found = false;
+    const allArrangements = this.#arrangementService.getFixedArrangements();
+    const initialArrangement =
+      this.#arrangementService.getArrangementByIndex(arrangementIndex);
+    if (initialArrangement) {
+      allArrangements.splice(arrangementIndex, 1);
+      allArrangements.unshift(initialArrangement);
+
+      for (
+        let currentArrangementIndex = 0;
+        currentArrangementIndex < allArrangements.length;
+        currentArrangementIndex++
+      ) {
+        const currentArrangement = allArrangements[currentArrangementIndex];
+        if (currentArrangement) {
+          const result = checkPathInArrangement(currentArrangement);
+          if (result.found) {
+            found = true;
+            arrangementIndex = currentArrangementIndex;
+            ({ testamentIndex } = result.data);
+            break;
+          }
+        }
+      }
+    }
+    return { arrangementIndex, testamentIndex, found };
+  };
+
   getSectionInfoPathByName: (
     name: string,
     arrangementIndex?: number
@@ -206,7 +283,7 @@ export class ScriptureService {
     sectionIndex: number | undefined;
   } = (
     name,
-    arrangementIndex = this.#repository.getCurrentArrangementIndex()
+    arrangementIndex = this.#arrangementService.getCurrentArrangementIndex()
   ) => {
     const checkPathInArrangement: (arrangement: ArrangementInfo) =>
       | {
@@ -245,10 +322,9 @@ export class ScriptureService {
 
     let testamentIndex: number | undefined, sectionIndex: number | undefined;
     let found = false;
-    const allArrangements = this.#repository.getArrangements();
-    const initialArrangement = this.#repository.getArrangementByIndex({
-      index: arrangementIndex,
-    });
+    const allArrangements = this.#arrangementService.getFixedArrangements();
+    const initialArrangement =
+      this.#arrangementService.getArrangementByIndex(arrangementIndex);
     if (initialArrangement) {
       allArrangements.splice(arrangementIndex, 1);
       allArrangements.unshift(initialArrangement);
@@ -297,7 +373,7 @@ export class ScriptureService {
     bookIndex: number | undefined;
   } = ({
     name,
-    arrangementIndex = this.#repository.getCurrentArrangementIndex(),
+    arrangementIndex = this.#arrangementService.getCurrentArrangementIndex(),
   }) => {
     const checkPathInArrangement: (arrangement: ArrangementInfo) =>
       | {
@@ -349,10 +425,9 @@ export class ScriptureService {
       sectionIndex: number | undefined,
       bookIndex: number | undefined;
     let found = false;
-    const allArrangements = this.#repository.getArrangements();
-    const initialArrangement = this.#repository.getArrangementByIndex({
-      index: arrangementIndex,
-    });
+    const allArrangements = this.#arrangementService.getFixedArrangements();
+    const initialArrangement =
+      this.#arrangementService.getArrangementByIndex(arrangementIndex);
     if (initialArrangement) {
       allArrangements.splice(arrangementIndex, 1);
       allArrangements.unshift(initialArrangement);
@@ -381,9 +456,8 @@ export class ScriptureService {
     const { arrangementIndex, testamentIndex, sectionIndex, found } =
       this.getSectionInfoPathByName(name);
     if (found) {
-      const arrangement = this.#repository.getArrangementByIndex({
-        index: arrangementIndex,
-      });
+      const arrangement =
+        this.#arrangementService.getArrangementByIndex(arrangementIndex);
       if (arrangement) {
         const testament = arrangement.testaments[testamentIndex as number];
         if (testament) {
@@ -399,10 +473,11 @@ export class ScriptureService {
     return null;
   };
 
-  getFixedArrangementByTemplate: GetFixedArrangementByTemplate = (template) => {
-    const { name: templateName, testaments } = template;
-
-    const fixedArrangement = {
+  getFixedArrangementByTemplate: GetFixedArrangementByTemplate = ({
+    name: templateName,
+    testaments,
+  }) => {
+    const fixedArrangement: ArrangementInfo = {
       name: templateName,
       testaments: testaments.map((testament) => {
         const {
@@ -469,4 +544,60 @@ export class ScriptureService {
 
     return fixedArrangement;
   };
+
+  getTemplateByArrangement: GetTemplateByArrangement = ({
+    name,
+    testaments,
+  }) => {
+    const template: ArrangementTemplate = {
+      name,
+      id: uuid(),
+      testaments: testaments.map(({ name: testamentName, sections }) => {
+        return {
+          name: testamentName,
+          color: "#FFFFFF",
+          id: uuid(),
+          sections: sections.map(
+            ({
+              name: sectionName,
+              color: sectionColor,
+              books,
+              customColorRange,
+            }) => {
+              const bookLevelColors = GetChildrenLevelColors({
+                sectionColorRGB: HexToRgb({
+                  hexColor: sectionColor,
+                }),
+                colorRange: customColorRange ?? 70,
+                levelsLength: books.length,
+              });
+              return {
+                name: sectionName,
+                color: sectionColor,
+                id: uuid(),
+                books: books.map(({ commonName: bookName }, bookIndex) => {
+                  return {
+                    name: bookName,
+                    color: bookLevelColors[bookIndex] ?? "#FFFFFF",
+                    id: uuid(),
+                  };
+                }),
+              };
+            }
+          ),
+        };
+      }),
+    };
+
+    return template;
+  };
+
+  getBookChapterCount(book: string): number {
+    const bookInfo = this.#repository.getBookStaticInfo(book);
+    if (!bookInfo)
+      throw new Error(
+        `bookStaticInfo not found at ScriptureService.getBookChapterCount for ${book}`
+      );
+    return bookInfo.numberOfChapters;
+  }
 }

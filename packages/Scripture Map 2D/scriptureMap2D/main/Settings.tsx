@@ -8,7 +8,8 @@ import {
   ScriptureMap2DModes,
   TimelineRangeMethod,
 } from "scriptureMap2D.main.enums";
-import { GetHistoryColorByReadingTime } from "bibleVizUtils.functions.index";
+import { readingHistoryService } from "bibleVizUtils.services.index";
+
 import type {
   SettingsOptionType,
   SettingsOptionsType,
@@ -43,7 +44,7 @@ const Legend = () => {
       let backgroundColor: React.CSSProperties["backgroundColor"];
       if (i === 0) backgroundColor = baseColor;
       else {
-        backgroundColor = GetHistoryColorByReadingTime({
+        backgroundColor = readingHistoryService.getColorByReadingTime({
           baseColor,
           userColor: secondaryColor,
           step,

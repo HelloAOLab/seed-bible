@@ -1,3 +1,5 @@
+let BibleVizDataRepository;
+
 let PoolData;
 let CustomTag;
 let PieceInfo;
@@ -47,9 +49,8 @@ globalThis.BibleVizUtils = {
 
 if (authBot) {
   try {
-    const { handleUserLoggedInDebouncer } =
-      await import("bibleVizUtils.services.HandleUserLoggedInDebouncer");
-    handleUserLoggedInDebouncer.execute({ authBot });
+    const { sessionService } = await import("bibleVizUtils.services.index");
+    sessionService.tryEmitUserLoggedInEvent(authBot);
   } catch (error) {
     console.error(error);
   }
@@ -84,6 +85,9 @@ try {
   ({ TourGuideData } = await import("bibleVizUtils.classes.TourGuideData"));
   ({ UnhighlightDelayInfo } =
     await import("bibleVizUtils.classes.UnhighlightDelayInfo"));
+
+  ({ BibleVizDataRepository } =
+    await import("bibleVizUtils.data.BibleVizDataRepository"));
 } catch (err) {
   console.warn("Module not found:", err);
 }
@@ -186,12 +190,6 @@ const { HistoryTimePeriodInfo } =
 //     timeUnit: bibleVizData.tags.TimeUnit.Days,
 //   }),
 // ];
-const tenDaysAgo = new Date();
-tenDaysAgo.setDate(tenDaysAgo.getDate() - 10);
-tenDaysAgo.setHours(0, 0, 0, 0);
-const readingHistoryRecencyThresholdTimeSeconds = Math.floor(
-  tenDaysAgo.getTime() / 1000
-);
 
 const UsersColorValues = {
   InfoLabelColorScales: { x: 0.5, y: 0.5, z: 0 },
@@ -214,17 +212,13 @@ setTag(bibleVizData, "UsersColorValues", UsersColorValues);
 setTagMask(bibleVizData, "isInHistoryMode", false);
 setTagMask(bibleVizData, "highlightHistoryIndex", -1);
 // setTagMask(bibleVizData, "historyTimePeriodsInfo", historyTimePeriodsInfo);
-setTagMask(
-  bibleVizData,
-  "readingHistoryRecencyThresholdTimeSeconds",
-  readingHistoryRecencyThresholdTimeSeconds
-);
 
 bibleVizData.vars.history = [];
 bibleVizData.vars.highlightHistory = [];
 bibleVizData.vars.customArrangements = [];
+BibleVizDataRepository?.setCustomArrangements([]);
 bibleVizData.vars.fixedArrangementsInfo = [];
-bibleVizFunctions.UpdateFixedArrangementsInfo();
+// bibleVizFunctions.UpdateFixedArrangementsInfo();
 
 if (PoolData && CustomTag) {
   const infoLabelPool = new PoolData({

@@ -1044,11 +1044,20 @@
       "bibleVizUtils.classes.UnhighlightDelayInfo": [
         "./packages/Bible Visualization Utils/bibleVizUtils/classes/UnhighlightDelayInfo.tsx"
       ],
+      "bibleVizUtils.controllers.label.lifecycle": [
+        "./packages/Bible Visualization Utils/bibleVizUtils/controllers/label/lifecycle.tsx"
+      ],
+      "bibleVizUtils.controllers.render.renderOrderController": [
+        "./packages/Bible Visualization Utils/bibleVizUtils/controllers/render/renderOrderController.tsx"
+      ],
       "bibleVizUtils.data.BibleLayoutMeasurements": [
         "./packages/Bible Visualization Utils/bibleVizUtils/data/BibleLayoutMeasurements.tsx"
       ],
       "bibleVizUtils.data.BibleVizDataRepository": [
         "./packages/Bible Visualization Utils/bibleVizUtils/data/BibleVizDataRepository.tsx"
+      ],
+      "bibleVizUtils.data.DialogBoxFormAddresses": [
+        "./packages/Bible Visualization Utils/bibleVizUtils/data/DialogBoxFormAddresses.tsx"
       ],
       "bibleVizUtils.data.LabelsRepository": [
         "./packages/Bible Visualization Utils/bibleVizUtils/data/LabelsRepository.tsx"
@@ -1065,35 +1074,17 @@
       "bibleVizUtils.data.StackSpacings": [
         "./packages/Bible Visualization Utils/bibleVizUtils/data/StackSpacings.tsx"
       ],
+      "bibleVizUtils.functions.array": [
+        "./packages/Bible Visualization Utils/bibleVizUtils/functions/array.tsx"
+      ],
       "bibleVizUtils.functions.casualos": [
         "./packages/Bible Visualization Utils/bibleVizUtils/functions/casualos.tsx"
       ],
       "bibleVizUtils.functions.colors": [
         "./packages/Bible Visualization Utils/bibleVizUtils/functions/colors.tsx"
       ],
-      "bibleVizUtils.functions.GetGroupBookData": [
-        "./packages/Bible Visualization Utils/bibleVizUtils/functions/GetGroupBookData.tsx"
-      ],
       "bibleVizUtils.functions.GetHistoryColor": [
         "./packages/Bible Visualization Utils/bibleVizUtils/functions/GetHistoryColor.tsx"
-      ],
-      "bibleVizUtils.functions.GetHistoryColorByDeltaTime": [
-        "./packages/Bible Visualization Utils/bibleVizUtils/functions/GetHistoryColorByDeltaTime.tsx"
-      ],
-      "bibleVizUtils.functions.GetHistoryColorByRange": [
-        "./packages/Bible Visualization Utils/bibleVizUtils/functions/GetHistoryColorByRange.tsx"
-      ],
-      "bibleVizUtils.functions.GetHistoryColorByReadingTime": [
-        "./packages/Bible Visualization Utils/bibleVizUtils/functions/GetHistoryColorByReadingTime.tsx"
-      ],
-      "bibleVizUtils.functions.GetHistoryColorByRecency": [
-        "./packages/Bible Visualization Utils/bibleVizUtils/functions/GetHistoryColorByRecency.tsx"
-      ],
-      "bibleVizUtils.functions.GetHistoryColorConicGradient": [
-        "./packages/Bible Visualization Utils/bibleVizUtils/functions/GetHistoryColorConicGradient.tsx"
-      ],
-      "bibleVizUtils.functions.GetHistoryColorLinearGradient": [
-        "./packages/Bible Visualization Utils/bibleVizUtils/functions/GetHistoryColorLinearGradient.tsx"
       ],
       "bibleVizUtils.functions.GetHistoryEntries": [
         "./packages/Bible Visualization Utils/bibleVizUtils/functions/GetHistoryEntries.tsx"
@@ -1101,98 +1092,23 @@
       "bibleVizUtils.functions.GetHistoryEntriesForElement": [
         "./packages/Bible Visualization Utils/bibleVizUtils/functions/GetHistoryEntriesForElement.tsx"
       ],
-      "bibleVizUtils.functions.GetLabelForPiece": [
-        "./packages/Bible Visualization Utils/bibleVizUtils/functions/GetLabelForPiece.tsx"
-      ],
-      "bibleVizUtils.functions.GetNumberOfChaptersByName": [
-        "./packages/Bible Visualization Utils/bibleVizUtils/functions/GetNumberOfChaptersByName.tsx"
-      ],
-      "bibleVizUtils.functions.GetRandomColor": [
-        "./packages/Bible Visualization Utils/bibleVizUtils/functions/GetRandomColor.tsx"
-      ],
-      "bibleVizUtils.functions.GetRandomElementFromArray": [
-        "./packages/Bible Visualization Utils/bibleVizUtils/functions/GetRandomElementFromArray.tsx"
-      ],
-      "bibleVizUtils.functions.GetRandomUnitVector": [
-        "./packages/Bible Visualization Utils/bibleVizUtils/functions/GetRandomUnitVector.tsx"
-      ],
-      "bibleVizUtils.functions.GetSectionLevels": [
-        "./packages/Bible Visualization Utils/bibleVizUtils/functions/GetSectionLevels.tsx"
-      ],
-      "bibleVizUtils.functions.GetSectionNamesByTestamentName": [
-        "./packages/Bible Visualization Utils/bibleVizUtils/functions/GetSectionNamesByTestamentName.tsx"
-      ],
-      "bibleVizUtils.functions.GetSelectedBookData": [
-        "./packages/Bible Visualization Utils/bibleVizUtils/functions/GetSelectedBookData.tsx"
-      ],
-      "bibleVizUtils.functions.GetSetTagFromObject": [
-        "./packages/Bible Visualization Utils/bibleVizUtils/functions/GetSetTagFromObject.tsx"
-      ],
-      "bibleVizUtils.functions.GetTemplateFromArrangement": [
-        "./packages/Bible Visualization Utils/bibleVizUtils/functions/GetTemplateFromArrangement.tsx"
-      ],
-      "bibleVizUtils.functions.GetTestamentInfoPathByName": [
-        "./packages/Bible Visualization Utils/bibleVizUtils/functions/GetTestamentInfoPathByName.tsx"
-      ],
-      "bibleVizUtils.functions.GetTextColorBasedOnBackground": [
-        "./packages/Bible Visualization Utils/bibleVizUtils/functions/GetTextColorBasedOnBackground.tsx"
-      ],
-      "bibleVizUtils.functions.GetUserPresenceBorderGradientColors": [
-        "./packages/Bible Visualization Utils/bibleVizUtils/functions/GetUserPresenceBorderGradientColors.tsx"
-      ],
-      "bibleVizUtils.functions.GetUsersSelectionForPiece": [
-        "./packages/Bible Visualization Utils/bibleVizUtils/functions/GetUsersSelectionForPiece.tsx"
-      ],
-      "bibleVizUtils.functions.HandleUserLoggedIn": [
-        "./packages/Bible Visualization Utils/bibleVizUtils/functions/HandleUserLoggedIn.tsx"
-      ],
-      "bibleVizUtils.functions.HexToRgb": [
-        "./packages/Bible Visualization Utils/bibleVizUtils/functions/HexToRgb.tsx"
-      ],
       "bibleVizUtils.functions.HighlightBiblePiece": [
         "./packages/Bible Visualization Utils/bibleVizUtils/functions/HighlightBiblePiece.tsx"
       ],
       "bibleVizUtils.functions.index": [
         "./packages/Bible Visualization Utils/bibleVizUtils/functions/index.tsx"
       ],
-      "bibleVizUtils.functions.IsValueBetween": [
-        "./packages/Bible Visualization Utils/bibleVizUtils/functions/IsValueBetween.tsx"
-      ],
       "bibleVizUtils.functions.layout": [
         "./packages/Bible Visualization Utils/bibleVizUtils/functions/layout.tsx"
-      ],
-      "bibleVizUtils.functions.MakePortalFree": [
-        "./packages/Bible Visualization Utils/bibleVizUtils/functions/MakePortalFree.tsx"
-      ],
-      "bibleVizUtils.functions.MakePortalRestrict": [
-        "./packages/Bible Visualization Utils/bibleVizUtils/functions/MakePortalRestrict.tsx"
       ],
       "bibleVizUtils.functions.math": [
         "./packages/Bible Visualization Utils/bibleVizUtils/functions/math.tsx"
       ],
-      "bibleVizUtils.functions.onBookOrientationChanged": [
-        "./packages/Bible Visualization Utils/bibleVizUtils/functions/onBookOrientationChanged.tsx"
-      ],
       "bibleVizUtils.functions.onCreate": [
         "./packages/Bible Visualization Utils/bibleVizUtils/functions/onCreate.tsx"
       ],
-      "bibleVizUtils.functions.readingHistory": [
-        "./packages/Bible Visualization Utils/bibleVizUtils/functions/readingHistory.tsx"
-      ],
-      "bibleVizUtils.functions.ReleaseLabelTransformerFromPiece": [
-        "./packages/Bible Visualization Utils/bibleVizUtils/functions/ReleaseLabelTransformerFromPiece.tsx"
-      ],
-      "bibleVizUtils.functions.RgbToHex": [
-        "./packages/Bible Visualization Utils/bibleVizUtils/functions/RgbToHex.tsx"
-      ],
-      "bibleVizUtils.functions.RotateArray": [
-        "./packages/Bible Visualization Utils/bibleVizUtils/functions/RotateArray.tsx"
-      ],
       "bibleVizUtils.functions.scripture": [
         "./packages/Bible Visualization Utils/bibleVizUtils/functions/scripture.tsx"
-      ],
-      "bibleVizUtils.functions.SetArrangementIndexByName": [
-        "./packages/Bible Visualization Utils/bibleVizUtils/functions/SetArrangementIndexByName.tsx"
       ],
       "bibleVizUtils.functions.SetRenderOrder": [
         "./packages/Bible Visualization Utils/bibleVizUtils/functions/SetRenderOrder.tsx"
@@ -1238,6 +1154,9 @@
       ],
       "bibleVizUtils.main.OnBibleVizBotCreated": [
         "./packages/Bible Visualization Utils/bibleVizUtils/main/OnBibleVizBotCreated.tsx"
+      ],
+      "bibleVizUtils.main.onBookOrientationChanged": [
+        "./packages/Bible Visualization Utils/bibleVizUtils/main/onBookOrientationChanged.tsx"
       ],
       "bibleVizUtils.main.onCreate": [
         "./packages/Bible Visualization Utils/bibleVizUtils/main/onCreate.tsx"
@@ -1362,14 +1281,14 @@
       "bibleVizUtils.prefabs.userColor.OnSpawned": [
         "./packages/Bible Visualization Utils/bibleVizUtils/prefabs/userColor/OnSpawned.tsx"
       ],
+      "bibleVizUtils.services.ArrangementService": [
+        "./packages/Bible Visualization Utils/bibleVizUtils/services/ArrangementService.tsx"
+      ],
       "bibleVizUtils.services.DebouncerService": [
         "./packages/Bible Visualization Utils/bibleVizUtils/services/DebouncerService.tsx"
       ],
       "bibleVizUtils.services.EventManager": [
         "./packages/Bible Visualization Utils/bibleVizUtils/services/EventManager.tsx"
-      ],
-      "bibleVizUtils.services.HandleUserLoggedInDebouncer": [
-        "./packages/Bible Visualization Utils/bibleVizUtils/services/HandleUserLoggedInDebouncer.tsx"
       ],
       "bibleVizUtils.services.HistoryMode": [
         "./packages/Bible Visualization Utils/bibleVizUtils/services/HistoryMode.tsx"
@@ -1389,11 +1308,14 @@
       "bibleVizUtils.services.PieceDataRegistry": [
         "./packages/Bible Visualization Utils/bibleVizUtils/services/PieceDataRegistry.tsx"
       ],
+      "bibleVizUtils.services.ReadingHistoryService": [
+        "./packages/Bible Visualization Utils/bibleVizUtils/services/ReadingHistoryService.tsx"
+      ],
       "bibleVizUtils.services.ScriptureService": [
         "./packages/Bible Visualization Utils/bibleVizUtils/services/ScriptureService.tsx"
       ],
-      "bibleVizUtils.services.ScriptureServiceInstance": [
-        "./packages/Bible Visualization Utils/bibleVizUtils/services/ScriptureServiceInstance.tsx"
+      "bibleVizUtils.services.SessionService": [
+        "./packages/Bible Visualization Utils/bibleVizUtils/services/SessionService.tsx"
       ],
       "bibleVizUtils.services.StackService": [
         "./packages/Bible Visualization Utils/bibleVizUtils/services/StackService.tsx"
@@ -2713,9 +2635,6 @@
       ],
       "scriptureMap2D.main.interfaces": [
         "./packages/Scripture Map 2D/scriptureMap2D/main/interfaces.tsx"
-      ],
-      "scriptureMap2D.main.onAuthBotAdded": [
-        "./packages/Scripture Map 2D/scriptureMap2D/main/onAuthBotAdded.tsx"
       ],
       "scriptureMap2D.main.OnBibleVizUtilsInitialized": [
         "./packages/Scripture Map 2D/scriptureMap2D/main/OnBibleVizUtilsInitialized.tsx"

@@ -1,6 +1,8 @@
 import { GetBotScales } from "bibleVizUtils.functions.index";
 import { labelService } from "bibleVizUtils.services.LabelService";
-import { LabelDateFormat } from "bibleVizUtils.models.enums";
+import { SpawnLabelForPiece } from "bibleVizUtils.controllers.label.lifecycle";
+import { LabelDateFormat, LabelPositionings } from "bibleVizUtils.models.enums";
+
 /**
  * Highlights the book by scaling and changing its opacity, and displays an info label.
  * @param {Object} [that] - Optional parameter containing additional data.
@@ -31,16 +33,16 @@ const date =
   labelService.getDateFormat() === LabelDateFormat.Relative
     ? `${Math.abs(relativeDateRange.min)}${relativeDateRange.min != relativeDateRange.max ? `-${Math.abs(relativeDateRange.max)}` : ``} ${relativeDateRange.min < 0 ? "B.C." : "A.D."}`
     : `${currentYear - relativeDateRange.min}${relativeDateRange.min != relativeDateRange.max ? `-${currentYear - relativeDateRange.max}` : ``} years ago`;
-const { infoLabelTransformer } = BibleVizUtils.Functions.GetLabelForPiece({
+const { infoLabelTransformer } = SpawnLabelForPiece({
   piece: thisBot,
   label: thisBot.tags.bookName,
-  date: BibleStackManager.masks.showBooksLabelDate ? date : null,
+  date: BibleStackManager.masks.showBooksLabelDate ? date : undefined,
   color: "white",
   labelColor: thisBot.tags.labelTextColor,
   dimension,
   labelPositioning: thisBot.masks.isOnTheGround
-    ? BibleVizUtils.Data.tags.LabelPositioning.Top
-    : BibleVizUtils.Data.tags.LabelPositioning.LeftSided,
+    ? LabelPositionings.Top
+    : LabelPositionings.LeftSided,
   isAnimatable: true,
 });
 setTagMask(thisBot, "isHighlighting", true);

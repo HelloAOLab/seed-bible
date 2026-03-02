@@ -2,6 +2,7 @@ import type {
   Vector2 as Vector2Type,
   Vector3 as Vector3Type,
 } from "../../../../typings/AuxLibraryDefinitions";
+import type { BookInfo } from "bibleVizUtils.data.BibleVizDataRepository";
 
 export interface BookLayoutAxis {
   from: number;
@@ -54,7 +55,7 @@ export class StackService {
     return { scale, position, layoutPosition };
   }
 
-  public computeGroupBookProperties = (
+  computeGroupBookProperties = (
     bookLayout: BookLayout,
     sectionPosition: Vector3Type = new Vector3(0, 0, 0)
   ): ComputedGroupBookProperties => {
@@ -80,5 +81,24 @@ export class StackService {
       position: new Vector3(xAxis.position, yAxis.position, sectionPosition.z),
       layoutPosition: new Vector2(xAxis.layoutPosition, yAxis.layoutPosition),
     };
+  };
+
+  getSectionLevels = (books: BookInfo[]) => {
+    const levels: BookInfo[][] = [];
+    const groupsIncluded: number[] = [];
+    for (const book of books) {
+      if (book.group) {
+        if (groupsIncluded.includes(book.group)) continue;
+
+        const group: BookInfo[] = books.filter((currBook) => {
+          return currBook.group === book.group;
+        });
+        levels.push(group);
+        groupsIncluded.push(book.group);
+      } else {
+        levels.push([book]);
+      }
+    }
+    return levels;
   };
 }

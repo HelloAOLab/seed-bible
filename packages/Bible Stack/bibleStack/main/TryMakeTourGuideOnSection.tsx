@@ -1,4 +1,7 @@
-import { GetCamRotationFocusPoint } from "bibleVizUtils.functions.index";
+import {
+  GetCamRotationFocusPoint,
+  MakePortalRestrict,
+} from "bibleVizUtils.functions.index";
 /**
  * Called to determine if a section should make a tour guide
  * @param {Object} that - Object that contains important data for the function
@@ -53,7 +56,7 @@ if (thisBot.HasSectionEverBeenSelected({ sectionData })) {
     const focusOnZoom = 6;
     const customUnhighlightDuration = 0.15;
     // sectionData.piece.ReleaseCurrentInfoLabel();
-    shout("MakePortalRestrict");
+    MakePortalRestrict();
     setTagMask(thisBot, "isASectionMakingTourGuide", true);
     thisBot.vars.currentSectionMakingTourGuide = sectionData.piece;
 

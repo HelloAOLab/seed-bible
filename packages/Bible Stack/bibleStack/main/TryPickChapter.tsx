@@ -16,9 +16,7 @@ import { scriptureService } from "bibleVizUtils.services.index";
 if (thisBot.masks.isBibleAnimating) return false;
 setTagMask(thisBot, "isBibleAnimating", true);
 const { bookName, chapterNumber } = that;
-const numberOfChapters = BibleVizUtils.Functions.GetNumberOfChaptersByName({
-  name: bookName,
-});
+const numberOfChapters = scriptureService.getBookChapterCount(bookName);
 const { arrangementIndex, testamentIndex, sectionIndex } =
   scriptureService.getBookInfoPathByName({ name: bookName });
 if (chapterNumber > 0 && chapterNumber <= numberOfChapters) {

@@ -1,4 +1,6 @@
 import { LabelsRepository } from "bibleVizUtils.data.LabelsRepository";
+import { HexToRgb } from "bibleVizUtils.functions.index";
+
 /**
  * Unhighlights the chapter by resetting its color and scale, and optionally hiding the info label.
  * @param {Object} that - Context object containing important data for the function.
@@ -9,7 +11,7 @@ import { LabelsRepository } from "bibleVizUtils.data.LabelsRepository";
 
 const { chapterData, duration = 0.1 } = that;
 // const dimension = os.getCurrentDimension();
-const rgbTargetColor = BibleVizUtils.Functions.HexToRgb({
+const rgbTargetColor = HexToRgb({
   hexColor: BibleVizUtils.Data.masks.isInHistoryMode
     ? BibleVizUtils.Functions.GetHistoryColor({ piece: thisBot })
     : (chapterData.highlightColor ?? thisBot.tags.initialColor),
@@ -51,7 +53,7 @@ if (
 )
   animations.push(
     ColorLerper.LerpTag({
-      startingColor: BibleVizUtils.Functions.HexToRgb({
+      startingColor: HexToRgb({
         hexColor: thisBot.masks.color ?? thisBot.tags.color,
       }),
       endingColor: rgbTargetColor,

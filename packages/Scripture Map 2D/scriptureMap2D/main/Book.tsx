@@ -19,16 +19,17 @@ import { BibleVizDataRepository } from "bibleVizUtils.data.BibleVizDataRepositor
 import type { BookStaticInfo } from "bibleVizUtils.data.BibleVizDataRepository";
 import type { Range, TooltipAnchor, BookType } from "scriptureMap2D.main.types";
 import {
-  GetHistoryColorByReadingTime,
-  GetHistoryColorByRecency,
-  GetHistoryColorLinearGradient,
   GetTextColorBasedOnBackground,
   IsValueBetween,
-  GetUserPresenceBorderGradientColors,
+  ComputeRawGradientColors,
   type HexString,
   type WeightedColor,
 } from "bibleVizUtils.functions.index";
-import { scriptureService } from "bibleVizUtils.services.index";
+import {
+  scriptureService,
+  readingHistoryService,
+} from "bibleVizUtils.services.index";
+import { ComputeLinearGradient } from "bibleVizUtils.functions.index";
 
 const { useMemo, useState, useEffect } = os.appHooks;
 const { memo } = os.appCompat;
@@ -185,108 +186,113 @@ export const Book = memo<BookType>(
             const isTimeSpentNoticeable =
               userReadingTimeSeconds > SEC_PER_MINUTE; // more than a minute
 
-            if (isTimeSpentNoticeable) {
-              if (readingHistoryRangeSeconds) {
-                color = GetHistoryColorByReadingTime({
-                  baseColor,
-                  userColor,
-                  readingTimeSeconds: userReadingTimeSeconds,
-                  step: 0.25,
-                  fullColorTimeSeconds: 3600, // 1 hour
-                });
-                let fixedContent: string;
-                if (userReadingTimeSeconds >= SEC_PER_HOUR) {
-                  // more than an hour
-                  const hoursCount = Math.floor(
-                    userReadingTimeSeconds / SEC_PER_HOUR
-                  );
-                  fixedContent =
-                    hoursCount > 1
-                      ? t("spentHours", { count: hoursCount })
-                      : t("spentHour", { count: hoursCount });
-                } else {
-                  const minutesCount = Math.floor(
-                    userReadingTimeSeconds / SEC_PER_MINUTE
-                  );
-                  fixedContent =
-                    minutesCount > 1
-                      ? t("spentMinutes", { count: minutesCount })
-                      : t("spentMinute", { count: minutesCount });
-                }
-
-                tooltipContent.push(
-                  <ReadingHistoryTooltipContent
-                    userId={userId}
-                    fixedContent={fixedContent}
-                  />
-                );
-              } else {
-                let lastEntry;
-                const bookSummary = books[bookId];
-                if (bookSummary) {
-                  const { chapters } = bookSummary;
-                  for (const chapter in chapters) {
-                    const events = chapters[chapter];
-                    if (events) {
-                      for (const event of events) {
-                        const { start, end } = event;
-                        const isEventTimeSpentNoticeable =
-                          end - start >= SEC_PER_MINUTE;
-                        const recencySeconds = nowSeconds - end;
-                        const isRecentEnough =
-                          end >=
-                          BibleVizDataRepository.getReadingHistoryRecencyThresholdTimeSeconds();
-                        const isNotTooRecent = recencySeconds >= SEC_PER_MINUTE;
-                        if (
-                          isEventTimeSpentNoticeable &&
-                          isRecentEnough &&
-                          isNotTooRecent &&
-                          (!lastEntry || event.end > lastEntry.end)
-                        ) {
-                          lastEntry = event;
-                        }
-                      }
-                    }
-                  }
-                }
-                if (lastEntry) {
-                  const { end } = lastEntry;
-                  const recencySeconds = nowSeconds - end;
-                  color = GetHistoryColorByRecency({
-                    recencyTimeSeconds: end,
+            if (userColor) {
+              if (isTimeSpentNoticeable) {
+                if (readingHistoryRangeSeconds) {
+                  color = readingHistoryService.getColorByReadingTime({
                     baseColor,
                     userColor,
+                    readingTimeSeconds: userReadingTimeSeconds,
+                    step: 0.25,
+                    fullColorTimeSeconds: 3600, // 1 hour
                   });
                   let fixedContent: string;
-                  if (recencySeconds >= SEC_PER_DAY) {
-                    const daysCount = Math.floor(recencySeconds / SEC_PER_DAY);
-                    fixedContent =
-                      daysCount > 1
-                        ? t("readDaysAgo", { count: daysCount })
-                        : t("readDayAgo", { count: daysCount });
-                  } else if (recencySeconds >= SEC_PER_HOUR) {
+                  if (userReadingTimeSeconds >= SEC_PER_HOUR) {
+                    // more than an hour
                     const hoursCount = Math.floor(
-                      recencySeconds / SEC_PER_HOUR
+                      userReadingTimeSeconds / SEC_PER_HOUR
                     );
                     fixedContent =
                       hoursCount > 1
-                        ? t("readHoursAgo", { count: hoursCount })
-                        : t("readHourAgo", { count: hoursCount });
+                        ? t("spentHours", { count: hoursCount })
+                        : t("spentHour", { count: hoursCount });
                   } else {
                     const minutesCount = Math.floor(
-                      recencySeconds / SEC_PER_MINUTE
+                      userReadingTimeSeconds / SEC_PER_MINUTE
                     );
                     fixedContent =
                       minutesCount > 1
-                        ? t("readMinutesAgo", { count: minutesCount })
-                        : t("readMinuteAgo", { count: minutesCount });
+                        ? t("spentMinutes", { count: minutesCount })
+                        : t("spentMinute", { count: minutesCount });
                   }
+
                   tooltipContent.push(
                     <ReadingHistoryTooltipContent
                       userId={userId}
                       fixedContent={fixedContent}
                     />
                   );
+                } else {
+                  let lastEntry;
+                  const bookSummary = books[bookId];
+                  if (bookSummary) {
+                    const { chapters } = bookSummary;
+                    for (const chapter in chapters) {
+                      const events = chapters[chapter];
+                      if (events) {
+                        for (const event of events) {
+                          const { start, end } = event;
+                          const isEventTimeSpentNoticeable =
+                            end - start >= SEC_PER_MINUTE;
+                          const recencySeconds = nowSeconds - end;
+                          const isRecentEnough =
+                            end >=
+                            BibleVizDataRepository.getReadingHistoryRecencyThresholdTimeSeconds();
+                          const isNotTooRecent =
+                            recencySeconds >= SEC_PER_MINUTE;
+                          if (
+                            isEventTimeSpentNoticeable &&
+                            isRecentEnough &&
+                            isNotTooRecent &&
+                            (!lastEntry || event.end > lastEntry.end)
+                          ) {
+                            lastEntry = event;
+                          }
+                        }
+                      }
+                    }
+                  }
+                  if (lastEntry) {
+                    const { end } = lastEntry;
+                    const recencySeconds = nowSeconds - end;
+                    color = readingHistoryService.getColorByRecency({
+                      recencyTimeSeconds: end,
+                      baseColor,
+                      userColor,
+                    });
+                    let fixedContent: string;
+                    if (recencySeconds >= SEC_PER_DAY) {
+                      const daysCount = Math.floor(
+                        recencySeconds / SEC_PER_DAY
+                      );
+                      fixedContent =
+                        daysCount > 1
+                          ? t("readDaysAgo", { count: daysCount })
+                          : t("readDayAgo", { count: daysCount });
+                    } else if (recencySeconds >= SEC_PER_HOUR) {
+                      const hoursCount = Math.floor(
+                        recencySeconds / SEC_PER_HOUR
+                      );
+                      fixedContent =
+                        hoursCount > 1
+                          ? t("readHoursAgo", { count: hoursCount })
+                          : t("readHourAgo", { count: hoursCount });
+                    } else {
+                      const minutesCount = Math.floor(
+                        recencySeconds / SEC_PER_MINUTE
+                      );
+                      fixedContent =
+                        minutesCount > 1
+                          ? t("readMinutesAgo", { count: minutesCount })
+                          : t("readMinuteAgo", { count: minutesCount });
+                    }
+                    tooltipContent.push(
+                      <ReadingHistoryTooltipContent
+                        userId={userId}
+                        fixedContent={fixedContent}
+                      />
+                    );
+                  }
                 }
               }
             }
@@ -297,7 +303,7 @@ export const Book = memo<BookType>(
           }
         }
         if (colors.length > 0) {
-          fixedBackground = GetHistoryColorLinearGradient(colors);
+          fixedBackground = ComputeLinearGradient(colors);
         }
       } else {
         if (showingBooksColors) {
@@ -398,116 +404,119 @@ export const Book = memo<BookType>(
                 const isTimeSpentNoticeable =
                   userReadingTimeSeconds >= SEC_PER_MINUTE; // more than a minute
 
-                if (isTimeSpentNoticeable) {
-                  if (readingHistoryRangeSeconds) {
-                    color = GetHistoryColorByReadingTime({
-                      baseColor,
-                      userColor,
-                      readingTimeSeconds: userReadingTimeSeconds,
-                      step: 0.25,
-                    });
-
-                    let fixedContent: string | undefined;
-                    if (userReadingTimeSeconds >= SEC_PER_HOUR) {
-                      // more than an hour
-                      const hoursCount = Math.floor(
-                        userReadingTimeSeconds / SEC_PER_HOUR
-                      );
-                      fixedContent =
-                        hoursCount > 1
-                          ? t("spentHours", { count: hoursCount })
-                          : t("spentHour", { count: hoursCount });
-                    } else {
-                      const minutesCount = Math.floor(
-                        userReadingTimeSeconds / SEC_PER_MINUTE
-                      );
-                      fixedContent =
-                        minutesCount > 1
-                          ? t("spentMinutes", { count: minutesCount })
-                          : t("spentMinute", { count: minutesCount });
-                    }
-
-                    tooltipContent.push(
-                      <ReadingHistoryTooltipContent
-                        userId={userId}
-                        fixedContent={fixedContent}
-                      />
-                    );
-                  } else {
-                    let lastValidEvent: ReadingEvent | undefined = undefined;
-                    let recencySeconds: number = 0;
-                    const userBooks = userSummary.books[bookId];
-                    if (userBooks) {
-                      const chapterReadingEvents = userBooks.chapters[chapter];
-                      if (chapterReadingEvents) {
-                        for (
-                          let eventIndex = chapterReadingEvents.length - 1;
-                          eventIndex >= 0;
-                          eventIndex--
-                        ) {
-                          const event = chapterReadingEvents[eventIndex];
-                          if (event) {
-                            const { start, end } = event;
-                            const isEventTimeSpentNoticeable =
-                              end - start >= SEC_PER_MINUTE;
-                            const currRecencySeconds = nowSeconds - event.end;
-                            const isRecentEnough =
-                              event.end >=
-                              BibleVizDataRepository.getReadingHistoryRecencyThresholdTimeSeconds();
-                            const isNotTooRecent =
-                              currRecencySeconds >= SEC_PER_MINUTE;
-
-                            if (
-                              isEventTimeSpentNoticeable &&
-                              isRecentEnough &&
-                              isNotTooRecent
-                            ) {
-                              lastValidEvent = event;
-                              recencySeconds = currRecencySeconds;
-                              break;
-                            }
-                          }
-                        }
-                      }
-                    }
-                    if (lastValidEvent) {
-                      color = GetHistoryColorByRecency({
-                        recencyTimeSeconds: lastValidEvent.end,
+                if (userColor) {
+                  if (isTimeSpentNoticeable) {
+                    if (readingHistoryRangeSeconds) {
+                      color = readingHistoryService.getColorByReadingTime({
                         baseColor,
                         userColor,
+                        readingTimeSeconds: userReadingTimeSeconds,
+                        step: 0.25,
                       });
+
                       let fixedContent: string | undefined;
-                      if (recencySeconds >= SEC_PER_DAY) {
-                        const daysCount = Math.floor(
-                          recencySeconds / SEC_PER_DAY
-                        );
-                        fixedContent =
-                          daysCount > 1
-                            ? t("readDaysAgo", { count: daysCount })
-                            : t("readDayAgo", { count: daysCount });
-                      } else if (recencySeconds >= SEC_PER_HOUR) {
+                      if (userReadingTimeSeconds >= SEC_PER_HOUR) {
+                        // more than an hour
                         const hoursCount = Math.floor(
-                          recencySeconds / SEC_PER_HOUR
+                          userReadingTimeSeconds / SEC_PER_HOUR
                         );
                         fixedContent =
                           hoursCount > 1
-                            ? t("readHoursAgo", { count: hoursCount })
-                            : t("readHourAgo", { count: hoursCount });
+                            ? t("spentHours", { count: hoursCount })
+                            : t("spentHour", { count: hoursCount });
                       } else {
                         const minutesCount = Math.floor(
-                          recencySeconds / SEC_PER_MINUTE
+                          userReadingTimeSeconds / SEC_PER_MINUTE
                         );
                         fixedContent =
                           minutesCount > 1
-                            ? t("readMinutesAgo", { count: minutesCount })
-                            : t("readMinuteAgo", { count: minutesCount });
+                            ? t("spentMinutes", { count: minutesCount })
+                            : t("spentMinute", { count: minutesCount });
                       }
+
                       tooltipContent.push(
                         <ReadingHistoryTooltipContent
                           userId={userId}
                           fixedContent={fixedContent}
                         />
                       );
+                    } else {
+                      let lastValidEvent: ReadingEvent | undefined = undefined;
+                      let recencySeconds: number = 0;
+                      const userBooks = userSummary.books[bookId];
+                      if (userBooks) {
+                        const chapterReadingEvents =
+                          userBooks.chapters[chapter];
+                        if (chapterReadingEvents) {
+                          for (
+                            let eventIndex = chapterReadingEvents.length - 1;
+                            eventIndex >= 0;
+                            eventIndex--
+                          ) {
+                            const event = chapterReadingEvents[eventIndex];
+                            if (event) {
+                              const { start, end } = event;
+                              const isEventTimeSpentNoticeable =
+                                end - start >= SEC_PER_MINUTE;
+                              const currRecencySeconds = nowSeconds - event.end;
+                              const isRecentEnough =
+                                event.end >=
+                                BibleVizDataRepository.getReadingHistoryRecencyThresholdTimeSeconds();
+                              const isNotTooRecent =
+                                currRecencySeconds >= SEC_PER_MINUTE;
+
+                              if (
+                                isEventTimeSpentNoticeable &&
+                                isRecentEnough &&
+                                isNotTooRecent
+                              ) {
+                                lastValidEvent = event;
+                                recencySeconds = currRecencySeconds;
+                                break;
+                              }
+                            }
+                          }
+                        }
+                      }
+                      if (lastValidEvent) {
+                        color = readingHistoryService.getColorByRecency({
+                          recencyTimeSeconds: lastValidEvent.end,
+                          baseColor,
+                          userColor,
+                        });
+                        let fixedContent: string | undefined;
+                        if (recencySeconds >= SEC_PER_DAY) {
+                          const daysCount = Math.floor(
+                            recencySeconds / SEC_PER_DAY
+                          );
+                          fixedContent =
+                            daysCount > 1
+                              ? t("readDaysAgo", { count: daysCount })
+                              : t("readDayAgo", { count: daysCount });
+                        } else if (recencySeconds >= SEC_PER_HOUR) {
+                          const hoursCount = Math.floor(
+                            recencySeconds / SEC_PER_HOUR
+                          );
+                          fixedContent =
+                            hoursCount > 1
+                              ? t("readHoursAgo", { count: hoursCount })
+                              : t("readHourAgo", { count: hoursCount });
+                        } else {
+                          const minutesCount = Math.floor(
+                            recencySeconds / SEC_PER_MINUTE
+                          );
+                          fixedContent =
+                            minutesCount > 1
+                              ? t("readMinutesAgo", { count: minutesCount })
+                              : t("readMinuteAgo", { count: minutesCount });
+                        }
+                        tooltipContent.push(
+                          <ReadingHistoryTooltipContent
+                            userId={userId}
+                            fixedContent={fixedContent}
+                          />
+                        );
+                      }
                     }
                   }
                 }
@@ -521,7 +530,7 @@ export const Book = memo<BookType>(
           }
 
           if (colors.length > 0) {
-            historyBackground = GetHistoryColorLinearGradient(colors);
+            historyBackground = ComputeLinearGradient(colors);
             historyColor = GetTextColorBasedOnBackground({
               backgroundColor: colors,
             });
@@ -549,7 +558,7 @@ export const Book = memo<BookType>(
             }
           }
           if (userPresenceColors.length > 0) {
-            borderGradientColors = GetUserPresenceBorderGradientColors({
+            borderGradientColors = ComputeRawGradientColors({
               colors: userPresenceColors,
               diffuse: 15,
             });

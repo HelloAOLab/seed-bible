@@ -14,11 +14,11 @@ import type {
   Range,
 } from "scriptureMap2D.main.types";
 import {
-  GetHistoryColorByReadingTime,
   CapitalizeFirstLetter,
   GetPastDateInfo,
   type HexString,
 } from "bibleVizUtils.functions.index";
+import { readingHistoryService } from "bibleVizUtils.services.index";
 
 const { useState, useCallback, useMemo, useEffect, useRef } = os.appHooks;
 const { memo } = os.appCompat;
@@ -179,28 +179,25 @@ export const ReadingHistoryTimeline = () => {
 
         if (summary && summary.totalTimeSpentReading > SEC_PER_MINUTE) {
           const usersKeys = Object.keys(summary.users);
-          const colorData: {
-            baseColor: HexString;
-            step: number;
-            readingTimeSeconds: number;
-            fullColorTimeSeconds: number;
-            userColor?: HexString;
-          } = {
-            baseColor: themeColors?.["1"]?.firstToolbarbutton ?? "#dfdede", // Hardcoded firstToolbarbutton. Must be accesible in the future
-            step,
-            readingTimeSeconds: summary.totalTimeSpentReading,
-            fullColorTimeSeconds,
-          };
+          let userColor: HexString | undefined;
           if (usersKeys.length > 1) {
-            colorData.userColor =
-              themeColors?.["1"]?.secondaryColor ?? "#D2691E"; // Hardcoded primary color. Must be accesible in the future
+            userColor = themeColors?.["1"]?.secondaryColor ?? "#D2691E"; // Hardcoded primary color. Must be accesible in the future
           } else {
             const userKey = usersKeys[0] as string;
-            colorData.userColor = userColorStore.getUserColor({
+            userColor = userColorStore.getUserColor({
               authId: userKey,
             });
           }
-          color = GetHistoryColorByReadingTime(colorData);
+          if (userColor) {
+            const colorData = {
+              baseColor: themeColors?.["1"]?.firstToolbarbutton ?? "#dfdede", // Hardcoded firstToolbarbutton. Must be accesible in the future
+              step,
+              readingTimeSeconds: summary.totalTimeSpentReading,
+              fullColorTimeSeconds,
+              userColor,
+            };
+            color = readingHistoryService.getColorByReadingTime(colorData);
+          }
         }
 
         if (!shouldReassign && prevColor !== color) shouldReassign = true;

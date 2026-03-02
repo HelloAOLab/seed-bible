@@ -1,5 +1,6 @@
 import { GetDialogBotScaleY } from "bibleVizUtils.functions.index";
 import { BibleVizDataRepository } from "bibleVizUtils.data.BibleVizDataRepository";
+import { GetTextColorBasedOnBackground } from "bibleVizUtils.functions.index";
 
 const { layoutData, position } = that;
 
@@ -135,7 +136,7 @@ for (let row = 0; row < layoutData.amountOfRows; row++) {
       ].sections.toReversed()[
       layoutBookStructure.layoutBookData.creationInfo.sectionIndex
     ].color;
-    const labelColor = BibleVizUtils.Functions.GetTextColorBasedOnBackground({
+    const labelColor = GetTextColorBasedOnBackground({
       backgroundColor: sectionColor,
     });
 

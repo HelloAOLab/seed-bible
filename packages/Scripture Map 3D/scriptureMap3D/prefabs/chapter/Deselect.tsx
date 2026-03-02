@@ -1,5 +1,5 @@
 import { LabelsRepository } from "bibleVizUtils.data.LabelsRepository";
-import { GetBotScales } from "bibleVizUtils.functions.index";
+import { GetBotScales, HexToRgb } from "bibleVizUtils.functions.index";
 /**
  * Deselects the chapter, animating its appearance and resetting properties.
  * @example
@@ -10,7 +10,7 @@ const chapterData = ScriptureMap3DManager.GetPieceData({ piece: thisBot });
 const dimension = os.getCurrentDimension();
 const duration = 0.15;
 const easing = { type: "sinusoidal", mode: "out" };
-const rgbTargetColor = BibleVizUtils.Functions.HexToRgb(
+const rgbTargetColor = HexToRgb(
   BibleVizUtils.Data.masks.isInHistoryMode
     ? BibleVizUtils.Functions.GetHistoryColor({ piece: thisBot })
     : (chapterData.highlightColor ?? thisBot.tags.initialColor)

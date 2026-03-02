@@ -1,6 +1,14 @@
-import { GetAnimateTagFromObject } from "bibleVizUtils.functions.index";
+import {
+  GetAnimateTagFromObject,
+  type RGB,
+} from "bibleVizUtils.functions.index";
 import { BibleVizDataRepository } from "bibleVizUtils.data.BibleVizDataRepository";
-import { GetCamRotationFocusPoint } from "bibleVizUtils.functions.index";
+import {
+  GetCamRotationFocusPoint,
+  SetTagFromObject,
+  HexToRgb,
+  RgbToHex,
+} from "bibleVizUtils.functions.index";
 import { stackService } from "bibleVizUtils.services.index";
 
 /**
@@ -24,7 +32,7 @@ const { bibleData, testamentData } = thisBot.GetDataChainFromParentDataIds({
 });
 const dimension = os.getCurrentDimension();
 const easeInOutSine = { type: "sinusoidal", mode: "inout" };
-const currentColorRGB = BibleVizUtils.Functions.HexToRgb({
+const currentColorRGB = HexToRgb({
   hexColor: sectionData.highlightColor ?? sectionData.piece.tags.orginalColor,
 });
 const colorRangeSize = sectionData.pieceInfo.customColorRange ?? 70;
@@ -290,7 +298,7 @@ secondSequenceAnimationsObjects.push(
 try {
   if (isInstantaneous)
     firstSequenceAnimationsObjects.forEach((setTagObject) => {
-      BibleVizUtils.Functions.GetSetTagFromObject(setTagObject);
+      SetTagFromObject(setTagObject);
     });
   else {
     const focusOnRotation = { x: 1.01229, y: 0.5 };
@@ -331,7 +339,7 @@ try {
 
   if (isInstantaneous)
     secondSequenceAnimationsObjects.forEach((setTagObject) => {
-      BibleVizUtils.Functions.GetSetTagFromObject(setTagObject);
+      SetTagFromObject(setTagObject);
     });
   else
     await Promise.all(
@@ -347,12 +355,12 @@ try {
 }
 
 for (let i = 0; i < sectionData.childrenData.length; i++) {
-  const levelColorRGB = [
+  const levelColorRGB: RGB = [
     levelsColorRange.min[0] + deltaRed * i,
     levelsColorRange.min[1] + deltaGreen * i,
     levelsColorRange.min[2] + deltaBlue * i,
   ];
-  const levelColorHex = BibleVizUtils.Functions.RgbToHex({
+  const levelColorHex = RgbToHex({
     rgbColor: levelColorRGB,
   });
   levelsColors.push(levelColorHex);

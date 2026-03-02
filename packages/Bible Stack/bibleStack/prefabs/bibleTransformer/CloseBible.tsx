@@ -1,4 +1,5 @@
 import { GetBotScales } from "bibleVizUtils.functions.index";
+import { DespawnLabelForPiece } from "bibleVizUtils.controllers.label.lifecycle";
 /**
  * Gets the reference of the elements on the Bible and performs a close animation with a given duration and easing.
  * Currently active elements like Testaments, sections, Books, Upper cover, etc,
@@ -177,7 +178,7 @@ if (elementsToShrink.length > 0) {
       });
       if (sectionShadows.length > 0) {
         sectionShadows.forEach((piece) => {
-          BibleVizUtils.Functions.ReleaseLabelTransformerFromPiece({ piece });
+          DespawnLabelForPiece(piece);
           ObjectPooler.ReleaseObject({ obj: piece, tag: piece.tags.poolTag });
         });
       }

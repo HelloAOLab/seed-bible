@@ -1,4 +1,5 @@
 import { BibleVizDataRepository } from "bibleVizUtils.data.BibleVizDataRepository";
+import { HexToRgb, RgbToHex, type RGB } from "bibleVizUtils.functions.index";
 import { scriptureService, stackService } from "bibleVizUtils.services.index";
 
 /**
@@ -37,9 +38,7 @@ if (found) {
     ].sections[sectionIndex];
   const amountOfChaptersInSection =
     scriptureService.getAmountOfChaptersInSection(sectionInfo.books);
-  const levels = BibleVizUtils.Functions.GetSectionLevels({
-    books: sectionInfo.books,
-  });
+  const levels = stackService.getSectionLevels(sectionInfo.books);
   const levelsLenght = levels.length;
   const level = levels.find((level) => {
     return level.some((bookInfo) => {
@@ -88,7 +87,7 @@ if (found) {
       groupBookScaleY = groupBookScales.y;
     }
   }
-  const sectionColorRGB = BibleVizUtils.Functions.HexToRgb({
+  const sectionColorRGB = HexToRgb({
     hexColor: sectionInfo.color,
   });
   const colorRangeSize = sectionInfo.customColorRange ?? 70;
@@ -114,12 +113,12 @@ if (found) {
     (levelsColorRange.max[2] - levelsColorRange.min[2]) / levelsLenght
   );
   const levelsColors = levels.map((level, i) => {
-    const levelColorRGB = [
+    const levelColorRGB: RGB = [
       levelsColorRange.min[0] + deltaRed * i,
       levelsColorRange.min[1] + deltaGreen * i,
       levelsColorRange.min[2] + deltaBlue * i,
     ];
-    return BibleVizUtils.Functions.RgbToHex({ rgbColor: levelColorRGB });
+    return RgbToHex({ rgbColor: levelColorRGB });
   });
   if (displayJarvisSpawnPieceAnimation)
     await jarvis.SpawnPieceStart({

@@ -1,5 +1,8 @@
 import { GetBotScales } from "bibleVizUtils.functions.index";
 import { CapitalizeFirstLetter } from "bibleVizUtils.functions.index";
+import { SpawnLabelForPiece } from "bibleVizUtils.controllers.label.lifecycle";
+import { LabelPositionings } from "bibleVizUtils.models.enums";
+import { PieceDataRepository } from "bibleStack.services.PieceDataRepository";
 
 /**
  * Highlights the section by animating its opacity and scale, and shows the associated info label.
@@ -22,16 +25,16 @@ const animationEasing = { type: "sinusoidal", mode: "inout" };
 const label = CapitalizeFirstLetter(
   thisBot.tags.sectionName.split("-").join(" ")
 );
-const sectionData = BibleStackManager.GetPieceData({ piece: thisBot });
-const { infoLabelTransformer } = BibleVizUtils.Functions.GetLabelForPiece({
+const sectionData = PieceDataRepository.getPieceData({ piece: thisBot });
+const { infoLabelTransformer } = SpawnLabelForPiece({
   piece: thisBot,
   label,
   color: "white",
   labelColor: sectionData.highlightColor ?? thisBot.tags.labelTextColor,
   dimension,
   labelPositioning: thisBot.masks.isOnTheGround
-    ? BibleVizUtils.Data.tags.LabelPositioning.Top
-    : BibleVizUtils.Data.tags.LabelPositioning.LeftSided,
+    ? LabelPositionings.Top
+    : LabelPositionings.LeftSided,
   isAnimatable: true,
 });
 

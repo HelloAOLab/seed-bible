@@ -1,4 +1,6 @@
 import { LabelsRepository } from "bibleVizUtils.data.LabelsRepository";
+import { HexToRgb } from "bibleVizUtils.functions.index";
+
 const { chapterData } = that;
 const duration = 0.1;
 let rgbTargetColor;
@@ -15,7 +17,7 @@ if (thisBot.masks.isExpanded) {
       easing,
     })
   );
-  rgbTargetColor = BibleVizUtils.Functions.HexToRgb({
+  rgbTargetColor = HexToRgb({
     hexColor: BibleVizUtils.Data.masks.isInHistoryMode
       ? BibleVizUtils.Functions.GetHistoryColor({ piece: thisBot })
       : (chapterData.highlightColor ?? thisBot.tags.initialColor),
@@ -33,7 +35,7 @@ if (thisBot.masks.isExpanded) {
       })
     );
   if (!chapterData.isSelected) {
-    rgbTargetColor = BibleVizUtils.Functions.HexToRgb({
+    rgbTargetColor = HexToRgb({
       hexColor: BibleVizUtils.Data.masks.isInHistoryMode
         ? BibleVizUtils.Functions.GetHistoryColor({ piece: thisBot })
         : (chapterData.highlightColor ?? thisBot.tags.initialColor),
@@ -45,7 +47,7 @@ setTagMask(thisBot, "isUnhighlighting", true);
 if (rgbTargetColor)
   animations.push(
     ColorLerper.LerpTag({
-      startingColor: BibleVizUtils.Functions.HexToRgb({
+      startingColor: HexToRgb({
         hexColor: thisBot.masks.color ?? thisBot.tags.color,
       }),
       endingColor: rgbTargetColor,

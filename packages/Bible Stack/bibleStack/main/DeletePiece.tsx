@@ -1,3 +1,5 @@
+import { DespawnLabelForPiece } from "bibleVizUtils.controllers.label.lifecycle";
+
 /**
  * Deletes a Bible, Testament, Section, Book, or Chapter based on the provided `pieceData`.
  * It removes the piece from the data structures and releases associated resources.
@@ -65,9 +67,7 @@ function DeleteChapter(chapterData) {
   const chapterDataIndex = thisBot.vars.stackChaptersData.indexOf(chapterData);
   if (chapterData.piece) {
     if (chapterData.piece.masks.isOnTheGround) {
-      BibleVizUtils.Functions.ReleaseLabelTransformerFromPiece({
-        piece: chapterData.piece,
-      });
+      DespawnLabelForPiece(piece);
       if (
         chapterData.isSelected &&
         chapterData.piece.vars.chunksOfVerses?.length > 0
@@ -127,9 +127,7 @@ function DeleteBook(bookData) {
       });
     if (thisBot.IsBiblePieceHighlighted({ piece: bookData.piece }))
       thisBot.RemovePieceFromHighlightedList({ piece: bookData.piece });
-    BibleVizUtils.Functions.ReleaseLabelTransformerFromPiece({
-      piece: bookData.piece,
-    });
+    DespawnLabelForPiece(bookData.piece);
     ObjectPooler.ReleaseObject({
       obj: bookData.piece,
       tag: bookData.piece.tags.poolTag,
@@ -181,9 +179,7 @@ function DeleteSection(sectionData) {
       });
     if (thisBot.IsBiblePieceHighlighted({ piece: sectionData.piece }))
       thisBot.RemovePieceFromHighlightedList({ piece: sectionData.piece });
-    BibleVizUtils.Functions.ReleaseLabelTransformerFromPiece({
-      piece: sectionData.piece,
-    });
+    DespawnLabelForPiece(sectionData.piece);
     ObjectPooler.ReleaseObject({
       obj: sectionData.piece,
       tag: sectionData.piece.tags.poolTag,
@@ -192,9 +188,7 @@ function DeleteSection(sectionData) {
     sectionData.piece = null;
   }
   if (sectionData.shadow) {
-    BibleVizUtils.Functions.ReleaseLabelTransformerFromPiece({
-      piece: sectionData.shadow,
-    });
+    DespawnLabelForPiece(sectionData.shadow);
     ObjectPooler.ReleaseObject({
       obj: sectionData.shadow,
       tag: sectionData.shadow.tags.poolTag,
@@ -241,9 +235,7 @@ function DeleteTestament(testamentData) {
       });
     if (thisBot.IsBiblePieceHighlighted({ piece: testamentData.piece }))
       thisBot.RemovePieceFromHighlightedList({ piece: testamentData.piece });
-    BibleVizUtils.Functions.ReleaseLabelTransformerFromPiece({
-      piece: testamentData.piece,
-    });
+    DespawnLabelForPiece(testamentData.piece);
     ObjectPooler.ReleaseObject({
       obj: testamentData.piece,
       tag: testamentData.piece.tags.poolTag,

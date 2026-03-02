@@ -6,6 +6,9 @@ export const Events = {
   OnEnterHistoryMode: "OnEnterHistoryMode",
   OnExitHistoryMode: "OnExitHistoryMode",
   OnUserPresenceUpdate: "OnUserPresenceUpdate",
+  OnUserLoggedIn: "OnUserLoggedIn",
+  OnCustomArrangementsChanged: "OnCustomArrangementsChanged",
+  OnArrangementIndexChanged: "OnArrangementIndexChanged",
 } as const;
 
 export type EventsType = (typeof Events)[keyof typeof Events];

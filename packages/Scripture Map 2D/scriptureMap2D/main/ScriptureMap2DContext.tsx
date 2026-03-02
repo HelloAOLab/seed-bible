@@ -15,10 +15,7 @@ import type {
   ScriptureMap2DContentValue,
   UserPresence,
 } from "scriptureMap2D.main.types";
-import {
-  BibleVizDataRepository,
-  type ArrangementInfo,
-} from "bibleVizUtils.data.BibleVizDataRepository";
+import { type ArrangementInfo } from "bibleVizUtils.data.BibleVizDataRepository";
 import {
   userColorStore,
   type UserData,
@@ -28,6 +25,8 @@ import {
   userPresenceService,
   type UserPresenceType,
 } from "bibleVizUtils.services.UserPresenceService";
+import { arrangementService } from "bibleVizUtils.services.index";
+
 const { createContext, useState, useContext, useCallback, useMemo, useEffect } =
   os.appHooks;
 
@@ -169,7 +168,7 @@ export const ScriptureMap2DProvider: (
   args: ScriptureMap2DProviderProps
 ) => React.JSX.Element = ({ children, config }) => {
   const {
-    arrangementIndex = BibleVizDataRepository.getCurrentArrangementIndex(),
+    arrangementIndex = arrangementService.getCurrentArrangementIndex(),
     initialScaleFactor = 1,
     initialIsReadingHistoryEnabled = false,
     initialShowingAllChapters = false,
@@ -198,10 +197,8 @@ export const ScriptureMap2DProvider: (
     userPresenceService.getUserPresence()
   );
 
-  const arrangement = useMemo<ArrangementInfo>(() => {
-    return BibleVizDataRepository.getArrangementByIndex({
-      index: arrangementIndex,
-    });
+  const arrangement = useMemo<ArrangementInfo | undefined>(() => {
+    return arrangementService.getArrangementByIndex(arrangementIndex);
   }, [arrangementIndex]);
 
   const projectStateStyle = useMemo<ProjectStateStyle>(() => {
@@ -444,6 +441,8 @@ export const ScriptureMap2DProvider: (
     usersColors,
     userPresence,
   ]);
+
+  if (!arrangement) return <></>;
 
   return (
     <ScriptureMap2DContext.Provider value={value}>

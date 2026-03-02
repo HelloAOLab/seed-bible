@@ -1,5 +1,5 @@
 import { LabelsRepository } from "bibleVizUtils.data.LabelsRepository";
-import { GetBotScales } from "bibleVizUtils.functions.index";
+import { GetBotScales, HexToRgb } from "bibleVizUtils.functions.index";
 import { BibleVizDataRepository } from "bibleVizUtils.data.BibleVizDataRepository";
 
 /**
@@ -35,7 +35,7 @@ if (chapterData) {
     const labelText = `${thisBot.tags.parentBookName} ${thisBot.tags.chapterNumber}`;
     const chapterMargin = 0.5;
     duration = 0.15;
-    rgbTargetColor = BibleVizUtils.Functions.HexToRgb({
+    rgbTargetColor = HexToRgb({
       hexColor: BibleVizUtils.Data.masks.isInHistoryMode
         ? BibleVizUtils.Functions.GetHistoryColor({ piece: thisBot })
         : (chapterData.highlightColor ?? thisBot.tags.initialColor),
@@ -111,7 +111,7 @@ if (chapterData) {
       });
   } else {
     duration = 0.15;
-    rgbTargetColor = BibleVizUtils.Functions.HexToRgb({
+    rgbTargetColor = HexToRgb({
       hexColor: BibleVizUtils.Data.masks.isInHistoryMode
         ? BibleVizUtils.Functions.GetHistoryColor({ piece: thisBot })
         : (chapterData.highlightColor ?? thisBot.tags.selectedColor),

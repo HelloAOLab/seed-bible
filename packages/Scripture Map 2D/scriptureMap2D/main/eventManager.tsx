@@ -62,4 +62,4 @@ class ScriptureMapEventManager {
   }
 }
 
-export const eventSystem = ScriptureMapEventManager.getInstance();
+export const scriptureMapEventManager = ScriptureMapEventManager.getInstance();

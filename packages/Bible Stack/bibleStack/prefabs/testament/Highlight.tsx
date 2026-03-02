@@ -1,4 +1,8 @@
 import { GetBotScales } from "bibleVizUtils.functions.index";
+import { SpawnLabelForPiece } from "bibleVizUtils.controllers.label.lifecycle";
+import { LabelPositionings } from "bibleVizUtils.models.enums";
+import { PieceDataRepository } from "bibleStack.services.PieceDataRepository";
+
 /**
  * Highlights the testament bot by scaling it and displaying its info label transformer.
  * Adjusts the animation based on the provided speed multiplier.
@@ -19,17 +23,17 @@ const duration = isInstantaneous
   : BibleVizUtils.Data.tags.StackAnimationsDuration.Highlight / speedMultiplier;
 const easing = { type: "sinusoidal", mode: "inout" };
 const label = thisBot.tags.infoLabel;
-const testamentData = BibleStackManager.GetPieceData({ piece: thisBot });
+const testamentData = PieceDataRepository.getPieceData({ piece: thisBot });
 
-const { infoLabelTransformer } = BibleVizUtils.Functions.GetLabelForPiece({
+const { infoLabelTransformer } = SpawnLabelForPiece({
   piece: thisBot,
   label,
   color: "white",
   labelColor: testamentData.highlightColor ?? thisBot.tags.labelTextColor,
   dimension,
   labelPositioning: thisBot.masks.isOnTheGround
-    ? BibleVizUtils.Data.tags.LabelPositioning.Top
-    : BibleVizUtils.Data.tags.LabelPositioning.LeftSided,
+    ? LabelPositionings.Top
+    : LabelPositionings.LeftSided,
   isAnimatable: true,
 });
 

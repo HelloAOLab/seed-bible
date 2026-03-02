@@ -4,7 +4,7 @@ import type {
 } from "../../../../typings/AuxLibraryDefinitions";
 import type { AnimateTagFunctionOptions } from "../../../../typings/AuxLibraryDefinitions";
 
-type DistanceBetweenBotAndCameraType = (params: { bot: Bot }) => void;
+type DistanceBetweenBotAndCameraType = (params: { bot: Bot }) => number;
 
 interface GetAnimateTagFromObjectObject {
   bot: Bot;
@@ -12,9 +12,16 @@ interface GetAnimateTagFromObjectObject {
   options: AnimateTagFunctionOptions;
   then?: GetAnimateTagFromObjectObject;
 }
+interface GetSetTagFromObjectObject {
+  bot: Bot;
+  tag: string;
+  options: AnimateTagFunctionOptions;
+  then?: GetSetTagFromObjectObject;
+}
 type GetAnimateTagFromObjectType = (
   obj: GetAnimateTagFromObjectObject
 ) => Promise<void>;
+type GetSetTagFromObjectType = (obj: GetSetTagFromObjectObject) => void;
 type GetBotScalesType = (bot: Bot) => { x: number; y: number; z: number };
 type GetTransformedScalesType = (bot: Bot) => {
   x: number;
@@ -38,8 +45,12 @@ export const DistanceBetweenBotAndCamera: DistanceBetweenBotAndCameraType = ({
   return distance;
 };
 
-export const GetAnimateTagFromObject: GetAnimateTagFromObjectType = (obj) => {
-  const { bot, tag, options, then } = obj;
+export const GetAnimateTagFromObject: GetAnimateTagFromObjectType = ({
+  bot,
+  tag,
+  options,
+  then,
+}) => {
   const animateFn = tag
     ? animateTag(bot, tag, options)
     : animateTag(bot, options);
@@ -48,6 +59,18 @@ export const GetAnimateTagFromObject: GetAnimateTagFromObjectType = (obj) => {
       return GetAnimateTagFromObject(then);
     }
   });
+};
+
+export const SetTagFromObject: GetSetTagFromObjectType = ({
+  bot,
+  tag,
+  options,
+  then,
+}) => {
+  setTag(bot, tag, options.toValue);
+  if (then) {
+    SetTagFromObject(then);
+  }
 };
 
 export const GetBotScales: GetBotScalesType = (bot) => {
@@ -100,4 +123,16 @@ export const GetTransformedPosition: GetTransformedPositionType = (
     }
   }
   return position;
+};
+
+export const MakePortalFree = () => {
+  setTagMask(gridPortalBot, "portalPannable", true);
+  setTagMask(gridPortalBot, "portalZoomable", true);
+  setTagMask(gridPortalBot, "portalRotatable", true);
+};
+
+export const MakePortalRestrict = () => {
+  setTagMask(gridPortalBot, "portalPannable", false);
+  setTagMask(gridPortalBot, "portalZoomable", false);
+  setTagMask(gridPortalBot, "portalRotatable", false);
 };

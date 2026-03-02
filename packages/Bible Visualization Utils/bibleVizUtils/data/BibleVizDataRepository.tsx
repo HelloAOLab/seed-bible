@@ -11,6 +11,10 @@ import {
   BibleLayoutMeasurements,
   type BibleLayoutMeasurementsType,
 } from "bibleVizUtils.data.BibleLayoutMeasurements";
+import {
+  DialogBoxFormAddresses,
+  type DialogBoxFormAddressesType,
+} from "bibleVizUtils.data.DialogBoxFormAddresses";
 
 type FontsSchema = typeof fontsData;
 
@@ -53,7 +57,6 @@ interface BookInfo {
   group?: number;
   customColor?: string;
 }
-
 interface SectionInfo {
   name: string;
   color: string;
@@ -125,38 +128,38 @@ class BibleVizDataRepository {
 
   // Arrangement
 
-  static getCurrentArrangementIndex(): number {
-    return thisBot.vars.arrangementIndex;
+  static getStaticArrangements(): ArrangementInfo[] {
+    return thisBot.tags.arrangementsInfo.slice();
   }
 
-  static getArrangements(): ArrangementInfo[] {
-    return thisBot.vars.fixedArrangementsInfo.slice();
+  static getCustomArrangements(): ArrangementInfo[] {
+    return thisBot.vars.customArrangements.slice();
   }
 
-  static getArrangementByIndex: (params: {
-    index: number;
-  }) => ArrangementInfo | undefined = ({ index }) => {
-    return this.getArrangements()[index];
-  };
-
-  static getArrangementIndexByName: (name: string) => number = (name) => {
-    return this.getArrangements().findIndex((arrangementInfo) => {
-      return arrangementInfo.name === name;
-    });
-  };
-
-  static getCurrentArrangement(): ArrangementInfo | undefined {
-    return this.getArrangements()[this.getCurrentArrangementIndex()];
-  }
-
-  static getCurrentArrangementName(): string | undefined {
-    return this.getCurrentArrangement()?.name;
+  static setCustomArrangements(arrangements: ArrangementInfo[]): void {
+    thisBot.vars.customArrangements = arrangements;
   }
 
   // Fonts
 
   static getFont(name: FontName): FontData {
     return thisBot.tags.fonts[name];
+  }
+
+  static getDialogBoxFormAddresses(): DialogBoxFormAddressesType {
+    return DialogBoxFormAddresses;
+  }
+
+  static getDialogBoxFormAddress<K extends keyof DialogBoxFormAddressesType>(
+    key: K
+  ): DialogBoxFormAddressesType[K] {
+    return this.getDialogBoxFormAddresses()[key];
+  }
+
+  static getDialogBoxAspectRatios(): Array<keyof DialogBoxFormAddressesType> {
+    return Object.keys(DialogBoxFormAddresses).map(Number) as Array<
+      keyof DialogBoxFormAddressesType
+    >;
   }
 }
 

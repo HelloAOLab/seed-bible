@@ -1,2 +1,5 @@
-import { eventSystem, Events } from "scriptureMap2D.main.eventManager";
-eventSystem.emit(Events.SubscriptionsChanged);
+import {
+  scriptureMapEventManager,
+  Events,
+} from "scriptureMap2D.main.eventManager";
+scriptureMapEventManager.emit(Events.SubscriptionsChanged);

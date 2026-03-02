@@ -1,5 +1,9 @@
+import { LabelPositionings } from "bibleVizUtils.models.enums";
 import { LabelsRepository } from "bibleVizUtils.data.LabelsRepository";
+import { SpawnLabelForPiece } from "bibleVizUtils.controllers.label.lifecycle";
 import { GetBotScales } from "bibleVizUtils.functions.index";
+import { HexToRgb } from "bibleVizUtils.functions.index";
+
 /**
  * This tag try to set the book shape into the one passed as an argument
  * @param {Object} that - Object that contains important data for the function
@@ -208,7 +212,7 @@ switch (shape) {
       await Promise.allSettled([
         prevShape !== BibleVizUtils.Data.tags.BookShapeType.RegularSelected
           ? ColorLerper.LerpTag({
-              startingColor: BibleVizUtils.Functions.HexToRgb({
+              startingColor: HexToRgb({
                 hexColor: thisBot.masks.color ?? thisBot.tags.color,
               }),
               endingColor: [255, 255, 255],
@@ -241,19 +245,17 @@ switch (shape) {
           easing,
         }),
       ]);
-      const { infoLabelTransformer } = BibleVizUtils.Functions.GetLabelForPiece(
-        {
-          piece: thisBot,
-          label: thisBot.tags.bookName,
-          color: bookData.highlightColor ?? thisBot.tags.labelTextColor,
-          labelColor: "white",
-          dimension,
-          labelPositioning: thisBot.masks.isOnTheGround
-            ? BibleVizUtils.Data.tags.LabelPositioning.Top
-            : BibleVizUtils.Data.tags.LabelPositioning.RightSided,
-          isAnimatable: false,
-        }
-      );
+      const { infoLabelTransformer } = SpawnLabelForPiece({
+        piece: thisBot,
+        label: thisBot.tags.bookName,
+        color: bookData.highlightColor ?? thisBot.tags.labelTextColor,
+        labelColor: "white",
+        dimension,
+        labelPositioning: thisBot.masks.isOnTheGround
+          ? LabelPositionings.Top
+          : LabelPositionings.RightSided,
+        isAnimatable: false,
+      });
       setTagMask(thisBot, "strokeColor", "#FFFFFF");
       await animateTag(thisBot, "formOpacity", {
         toValue: selectedOpacity,

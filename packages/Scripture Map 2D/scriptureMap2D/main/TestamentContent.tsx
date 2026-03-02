@@ -23,7 +23,7 @@ import {
 import {
   HexToRgb,
   GetChildrenLevelColors,
-  GetUserPresenceBorderGradientColors,
+  ComputeRawGradientColors,
   type HexString,
 } from "bibleVizUtils.functions.index";
 const { useMemo, useCallback, useState, useEffect } = os.appHooks;
@@ -261,7 +261,7 @@ export const TestamentContent = memo<TestamentContentType>(({ hidden }) => {
                   }
                 });
                 if (userPresenceColors.length > 0)
-                  borderGradientColors = GetUserPresenceBorderGradientColors({
+                  borderGradientColors = ComputeRawGradientColors({
                     colors: userPresenceColors,
                     diffuse: 15,
                   });

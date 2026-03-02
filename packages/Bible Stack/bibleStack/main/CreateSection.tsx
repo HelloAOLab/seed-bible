@@ -1,4 +1,4 @@
-import { scriptureService } from "bibleVizUtils.services.index";
+import { scriptureService, stackService } from "bibleVizUtils.services.index";
 
 /**
  * Creates a `StackSectionData` or `StackSectionBookData` instance based on the number of books in the section, and sets up the corresponding books or chapters.
@@ -67,9 +67,7 @@ if (sectionInfo.books.length > 1) {
     isInsideTestament,
     creationInfo,
   });
-  const levels = BibleVizUtils.Functions.GetSectionLevels({
-    books: sectionInfo.books,
-  });
+  const levels = stackService.getSectionLevels(sectionInfo.books);
   const levelsLenght = levels.length;
   for (const level of levels) {
     const booksData = [];

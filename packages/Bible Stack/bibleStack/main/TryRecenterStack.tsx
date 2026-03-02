@@ -1,4 +1,8 @@
 import { GetCamRotationFocusPoint } from "bibleVizUtils.functions.index";
+import {
+  MakePortalFree,
+  MakePortalRestrict,
+} from "bibleVizUtils.functions.index";
 
 if (thisBot.masks.isBibleAnimating || !thisBot.vars.stackBiblesData[0]) return;
 
@@ -67,7 +71,7 @@ const shouldRecenter =
   !isFocusPointInsideArea && !isTransformerVisible && !isUpperCoverVisible;
 
 if (shouldRecenter) {
-  BibleVizUtils.Functions.MakePortalRestrict();
+  MakePortalRestrict();
   setTagMask(thisBot, "isBibleAnimating", true);
   const duration = 1;
   const easing = { type: "sinusoidal", mode: "inout" };
@@ -76,7 +80,7 @@ if (shouldRecenter) {
     easing,
   });
   setTagMask(thisBot, "isBibleAnimating", false);
-  BibleVizUtils.Functions.MakePortalFree();
+  MakePortalFree();
 }
 
 function DirectionToPolar(vector) {

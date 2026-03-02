@@ -1,3 +1,5 @@
+import { HexToRgb } from "bibleVizUtils.functions.index";
+
 /**
     * Handles the stop of the expand animation of this book.
     * Determines if the book should instantly convert itself into a tray, go back to it's regular form, or go forward and finish the animation.
@@ -26,8 +28,8 @@ destroy(bookExpandShadow);
     if(thisBot.masks.expandTransitionPercentage > 0.7)
     {
         SoundsManager.playRandomStopExpandSound();
-        // thisBot.lerpColor({startingColor: BibleVizUtils.Functions.HexToRgb(thisBot.masks.color ?? thisBot.tags.color), endingColor: [255, 255, 255], durationInSeconds: animationDuration})
-        ColorLerper.LerpTag({startingColor: BibleVizUtils.Functions.HexToRgb(thisBot.masks.color ?? thisBot.tags.color), endingColor: [255, 255, 255], durationInSeconds: animationDuration, bot: thisBot, tag: BibleVizUtils.Data.tags.InterpolatableColorTags.Color});
+        // thisBot.lerpColor({startingColor: HexToRgb(thisBot.masks.color ?? thisBot.tags.color), endingColor: [255, 255, 255], durationInSeconds: animationDuration})
+        ColorLerper.LerpTag({startingColor: HexToRgb(thisBot.masks.color ?? thisBot.tags.color), endingColor: [255, 255, 255], durationInSeconds: animationDuration, bot: thisBot, tag: BibleVizUtils.Data.tags.InterpolatableColorTags.Color});
 
         await Promise.all([
             animateTag(thisBot, "scaleX", {
@@ -68,8 +70,8 @@ destroy(bookExpandShadow);
             {
                 SoundsManager.playRandomStopExpandSound();
             }
-            // thisBot.lerpColor({startingColor: BibleVizUtils.Functions.HexToRgb(thisBot.masks.color ?? thisBot.tags.color), endingColor: BibleVizUtils.Functions.HexToRgb(thisBot.tags.initialColor), durationInSeconds: animationDuration})
-            ColorLerper.LerpTag({startingColor: BibleVizUtils.Functions.HexToRgb(thisBot.masks.color ?? thisBot.tags.color), endingColor: BibleVizUtils.Functions.HexToRgb(thisBot.tags.initialColor), durationInSeconds: animationDuration, bot: thisBot, tag: BibleVizUtils.Data.tags.InterpolatableColorTags.Color});
+            // thisBot.lerpColor({startingColor: HexToRgb(thisBot.masks.color ?? thisBot.tags.color), endingColor: HexToRgb(thisBot.tags.initialColor), durationInSeconds: animationDuration})
+            ColorLerper.LerpTag({startingColor: HexToRgb(thisBot.masks.color ?? thisBot.tags.color), endingColor: HexToRgb(thisBot.tags.initialColor), durationInSeconds: animationDuration, bot: thisBot, tag: BibleVizUtils.Data.tags.InterpolatableColorTags.Color});
             await Promise.all([
                 animateTag(thisBot, "formOpacity", {
                     toValue: thisBot.tags.unhoveredOpacity,

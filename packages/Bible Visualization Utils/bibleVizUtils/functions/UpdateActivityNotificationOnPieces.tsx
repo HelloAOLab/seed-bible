@@ -1,5 +1,5 @@
 import { PieceActivityService } from "bibleVizUtils.services.PieceActivityService";
-import { computeNotificationDirection } from "bibleVizUtils.functions.index";
+import { ComputeNotificationDirection } from "bibleVizUtils.functions.index";
 
 const { piecesData, manager } = that;
 
@@ -18,7 +18,7 @@ for (const pieceData of fixedElementsData) {
     piece: pieceData.piece,
   });
   let isPieceSelected = false;
-  const relativeDirection = computeNotificationDirection(
+  const relativeDirection = ComputeNotificationDirection(
     gridPortalBot.tags.cameraRotationZ
   );
   let direction;
