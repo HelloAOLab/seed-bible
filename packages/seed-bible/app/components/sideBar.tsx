@@ -361,9 +361,10 @@ function Tab({
   index,
   setSidebarWidth,
   setCollapsed,
-
   sharedTab,
-}) {
+  isBookmarked,
+  onBookmarkClick,
+}: any) {
   const { openPopupSettings, closePopupSettings, userURL, t } =
     useSideBarContext();
   const { setCanvasMode, setMapMode } = useBibleContext();
@@ -666,16 +667,38 @@ function Tab({
             />
           </div>
 
-          {!sharedTab && activeTab === el.id && (
-            <span
-              onClick={() => {
-                openPopupSettings(OPTIONS(el));
-              }}
-              style={{ display: activeTab ? "" : "none" }}
-              className="material-symbols-outlined "
-            >
-              more_vert
-            </span>
+          {!sharedTab && (
+            <div className="tab-actions">
+              {onBookmarkClick && (
+                <span
+                  className="tab-bookmark-btn"
+                  onClick={(e: MouseEvent) => {
+                    e.stopPropagation();
+                    onBookmarkClick(el.id);
+                  }}
+                  title={isBookmarked ? "Remove bookmark" : "Bookmark"}
+                >
+                  <BookMarkIcon
+                    stroke={
+                      isBookmarked
+                        ? "var(--selectedSpaceColor)"
+                        : "currentColor"
+                    }
+                    fill={isBookmarked ? "var(--selectedSpaceColor)" : "none"}
+                  />
+                </span>
+              )}
+              {activeTab === el.id && (
+                <span
+                  onClick={() => {
+                    openPopupSettings(OPTIONS(el));
+                  }}
+                  className="material-symbols-outlined"
+                >
+                  more_vert
+                </span>
+              )}
+            </div>
           )}
         </>
       ) : (
@@ -834,6 +857,75 @@ function SideBar({ panelsNumber }) {
   const [searchQuery, setSearchQuery] = useState(""); // Search filter for tabs
   const [editMode, setEditMode] = useState(false); // New state for edit mode
   const [keepAwake, setKeepAwake] = useState(false); // New state for keep device awaken
+
+  // Bookmark state (shared between mobile and desktop)
+  const [bookmarks, setBookmarks] = useState(
+    () => masks.mobileBookmarks || { "My bookmarks": [] }
+  );
+  const [showBookmarksFilter, setShowBookmarksFilter] = useState(false);
+  const [showBookmarkModal, setShowBookmarkModal] = useState(false);
+  const [showNewCategoryModal, setShowNewCategoryModal] = useState(false);
+  const [selectedTabForBookmark, setSelectedTabForBookmark] = useState<
+    string | null
+  >(null);
+  const [selectedCategory, setSelectedCategory] = useState("");
+  const [newCategoryName, setNewCategoryName] = useState("");
+  const bookmarkedTabIds = new Set(Object.values(bookmarks).flat());
+
+  const handleRemoveBookmark = (tabId: string) => {
+    setBookmarks((prev: any) => {
+      const updated: Record<string, string[]> = {};
+      for (const [cat, ids] of Object.entries(prev)) {
+        updated[cat] = (ids as string[]).filter((id) => id !== tabId);
+      }
+      setTagMask(thisBot, "mobileBookmarks", updated, "local");
+      return updated;
+    });
+  };
+
+  const handleBookmarkTab = (tabId: string) => {
+    setSelectedTabForBookmark(tabId);
+    const first = Object.keys(bookmarks)[0] || "";
+    setSelectedCategory(first);
+    setShowBookmarkModal(true);
+  };
+
+  const handleAddToCategory = (category: string) => {
+    if (!category) return;
+    setBookmarks((prev: any) => {
+      const updated = { ...prev };
+      if (!updated[category]) updated[category] = [];
+      if (!updated[category].includes(selectedTabForBookmark)) {
+        updated[category].push(selectedTabForBookmark);
+      }
+      setTagMask(thisBot, "mobileBookmarks", updated, "local");
+      return updated;
+    });
+    setShowBookmarkModal(false);
+    setSelectedTabForBookmark(null);
+  };
+
+  const handleCreateCategory = () => {
+    if (!newCategoryName.trim()) return;
+    const name = newCategoryName.trim();
+    setBookmarks((prev: any) => {
+      const updated = { ...prev, [name]: [] };
+      setTagMask(thisBot, "mobileBookmarks", updated, "local");
+      if (
+        selectedTabForBookmark &&
+        !updated[name].includes(selectedTabForBookmark)
+      ) {
+        updated[name] = [selectedTabForBookmark];
+        setTagMask(thisBot, "mobileBookmarks", updated, "local");
+      }
+      return updated;
+    });
+    setNewCategoryName("");
+    setShowNewCategoryModal(false);
+    setShowBookmarkModal(false);
+    setSelectedTabForBookmark(null);
+  };
+
   useEffect(() => {
     setEditMode(ReSeed);
   }, [ReSeed]);
@@ -1431,14 +1523,6 @@ function SideBar({ panelsNumber }) {
   // Mobile-only layout: when `isMobile` and `openOnMobile` are true, render a simplified
   // full-screen sidebar that matches the mobile design (header, list, bottom nav).
   if (isMobile && openOnMobile) {
-    const [bookmarks, setBookmarks] = useState(
-      () => masks.mobileBookmarks || { "My bookmarks": [] }
-    );
-    const [showBookmarkModal, setShowBookmarkModal] = useState(false);
-    const [showNewCategoryModal, setShowNewCategoryModal] = useState(false);
-    const [selectedTabForBookmark, setSelectedTabForBookmark] = useState(null);
-    const [selectedCategory, setSelectedCategory] = useState("");
-    const [newCategoryName, setNewCategoryName] = useState("");
     const [renamingCategory, setRenamingCategory] = useState("");
     const [renameValue, setRenameValue] = useState("");
     const [expandedCategories, setExpandedCategories] = useState<
@@ -1456,21 +1540,9 @@ function SideBar({ panelsNumber }) {
     };
 
     // Compute free tabs (tabs not bookmarked in any category)
-    const bookmarkedTabIds = new Set(Object.values(bookmarks).flat());
     const freeTabs = tabs.filter(
       (tab) => !tab.sharedTab && !bookmarkedTabIds.has(tab.id)
     );
-
-    const handleRemoveBookmark = (tabId: any) => {
-      setBookmarks((prev: any) => {
-        const updated: any = {};
-        for (const [cat, ids] of Object.entries(prev) as any) {
-          updated[cat] = ids.filter((id: any) => id !== tabId);
-        }
-        setTagMask(thisBot, "mobileBookmarks", updated, "local");
-        return updated;
-      });
-    };
 
     const handleMobileTabClick = (el) => {
       setActiveTab(el.id);
@@ -1479,55 +1551,6 @@ function SideBar({ panelsNumber }) {
       setOpenOnMobile(false);
       setSidebarWidth(0);
       setCollapsed(false);
-    };
-
-    const handleBookmarkTab = (tabId) => {
-      setSelectedTabForBookmark(tabId);
-      const first = Object.keys(bookmarks)[0] || "";
-      setSelectedCategory(first);
-      setShowBookmarkModal(true);
-    };
-
-    const handleAddToCategory = (category) => {
-      if (!category) {
-        console.warn("No category selected");
-        return;
-      }
-      setBookmarks((prev) => {
-        const updated = { ...prev };
-        if (!updated[category]) {
-          updated[category] = [];
-        }
-        if (!updated[category].includes(selectedTabForBookmark)) {
-          updated[category].push(selectedTabForBookmark);
-        }
-        setTagMask(thisBot, "mobileBookmarks", updated, "local");
-        return updated;
-      });
-      setShowBookmarkModal(false);
-      setSelectedTabForBookmark(null);
-    };
-
-    const handleCreateCategory = () => {
-      if (!newCategoryName.trim()) return;
-      const name = newCategoryName.trim();
-      setBookmarks((prev) => {
-        const updated = { ...prev, [name]: [] };
-        setTagMask(thisBot, "mobileBookmarks", updated, "local");
-        // After creating, add the selected tab to new category
-        if (
-          selectedTabForBookmark &&
-          !updated[name].includes(selectedTabForBookmark)
-        ) {
-          updated[name] = [selectedTabForBookmark];
-          setTagMask(thisBot, "mobileBookmarks", updated, "local");
-        }
-        return updated;
-      });
-      setNewCategoryName("");
-      setShowNewCategoryModal(false);
-      setShowBookmarkModal(false);
-      setSelectedTabForBookmark(null);
     };
 
     const handleDeleteCategory = (categoryName: string) => {
@@ -2420,6 +2443,26 @@ function SideBar({ panelsNumber }) {
                 style={{ display: "flex", alignItems: "center", gap: "5px" }}
               >
                 <span
+                  className="sidebar-bookmark-filter-btn"
+                  onClick={() => setShowBookmarksFilter((prev) => !prev)}
+                  title={
+                    showBookmarksFilter
+                      ? "Show all tabs"
+                      : "Show bookmarked tabs"
+                  }
+                >
+                  <BookMarkIcon
+                    stroke={
+                      showBookmarksFilter
+                        ? "var(--selectedSpaceColor)"
+                        : "var(--text1)"
+                    }
+                    fill={
+                      showBookmarksFilter ? "var(--selectedSpaceColor)" : "none"
+                    }
+                  />
+                </span>
+                <span
                   style={{ "user-select": "none" }}
                   onMouseDown={() => {
                     clearTimeout(holdTimeout.current.time);
@@ -2605,6 +2648,9 @@ function SideBar({ panelsNumber }) {
         >
           {tabs
             .filter((tab) => !tab.sharedTab)
+            .filter(
+              (tab) => !showBookmarksFilter || bookmarkedTabIds.has(tab.id)
+            )
             .filter((tab) => {
               if (!searchQuery) return true;
               const query = searchQuery.toLowerCase();
@@ -2636,6 +2682,14 @@ function SideBar({ panelsNumber }) {
                 editMode={editMode}
                 setSidebarWidth={setSidebarWidth}
                 setCollapsed={setCollapsed}
+                isBookmarked={bookmarkedTabIds.has(el.id)}
+                onBookmarkClick={(tabId: string) => {
+                  if (bookmarkedTabIds.has(tabId)) {
+                    handleRemoveBookmark(tabId);
+                  } else {
+                    handleBookmarkTab(tabId);
+                  }
+                }}
               />
             ))}
 
@@ -2682,6 +2736,101 @@ function SideBar({ panelsNumber }) {
         <style>{getStyleOf("sidebar.css")}</style>
         <style>{sidebarStyles}</style>
       </div>
+
+      {/* Desktop bookmark category modal */}
+      {showBookmarkModal && (
+        <div
+          className="desktop-modal-overlay"
+          onClick={() => setShowBookmarkModal(false)}
+        >
+          <div className="desktop-modal" onClick={(e) => e.stopPropagation()}>
+            <h3>Add to bookmark category</h3>
+            {Object.keys(bookmarks).length > 0 ? (
+              <>
+                {Object.keys(bookmarks).map((cat) => (
+                  <label key={cat} className="category-item">
+                    <input
+                      type="radio"
+                      name="bookmarkCatDesktop"
+                      value={cat}
+                      checked={selectedCategory === cat}
+                      onChange={() => setSelectedCategory(cat)}
+                    />
+                    <span>{cat}</span>
+                  </label>
+                ))}
+                <div
+                  className="add-new"
+                  onClick={() => {
+                    setShowBookmarkModal(false);
+                    setShowNewCategoryModal(true);
+                  }}
+                >
+                  + Add to new category
+                </div>
+              </>
+            ) : (
+              <div
+                className="add-new"
+                onClick={() => {
+                  setShowBookmarkModal(false);
+                  setShowNewCategoryModal(true);
+                }}
+              >
+                + Create first category
+              </div>
+            )}
+            <div className="modal-actions">
+              <button
+                className="cancel"
+                onClick={() => setShowBookmarkModal(false)}
+              >
+                Cancel
+              </button>
+              <button
+                className="create"
+                onClick={() => handleAddToCategory(selectedCategory)}
+              >
+                Add
+              </button>
+            </div>
+          </div>
+        </div>
+      )}
+
+      {/* Desktop new category modal */}
+      {showNewCategoryModal && (
+        <div
+          className="desktop-modal-overlay"
+          onClick={() => setShowNewCategoryModal(false)}
+        >
+          <div className="desktop-modal" onClick={(e) => e.stopPropagation()}>
+            <h3>New bookmark category</h3>
+            <input
+              placeholder="Category name"
+              value={newCategoryName}
+              onChange={(e) =>
+                setNewCategoryName((e.target as HTMLInputElement).value)
+              }
+              onKeyPress={(e) => {
+                if (e.key === "Enter") handleCreateCategory();
+              }}
+              autoFocus
+            />
+            <div className="modal-actions">
+              <button
+                className="cancel"
+                onClick={() => setShowNewCategoryModal(false)}
+              >
+                Cancel
+              </button>
+              <button className="create" onClick={handleCreateCategory}>
+                Create
+              </button>
+            </div>
+          </div>
+        </div>
+      )}
     </>
   );
 }
@@ -3045,6 +3194,160 @@ const sidebarStyles = `
     .icon-button {
         cursor: pointer;
         color: var(--text1);
+    }
+
+    /* Sidebar header bookmark filter button */
+    .sidebar-bookmark-filter-btn {
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        cursor: pointer;
+        padding: 2px;
+        border-radius: 4px;
+        opacity: 0.7;
+        transition: opacity 0.15s, background 0.15s;
+    }
+
+    .sidebar-bookmark-filter-btn:hover {
+        opacity: 1;
+        background: rgba(0, 0, 0, 0.06);
+    }
+
+    /* Desktop tab bookmark icon */
+    .tab-actions {
+        display: flex;
+        align-items: center;
+        gap: 2px;
+        flex-shrink: 0;
+    }
+
+    .tab-bookmark-btn {
+        display: none;
+        align-items: center;
+        justify-content: center;
+        cursor: pointer;
+        padding: 2px;
+        border-radius: 3px;
+        opacity: 0.6;
+        line-height: 1;
+    }
+
+    .tab:hover .tab-bookmark-btn,
+    .activeTab .tab-bookmark-btn {
+        display: flex;
+    }
+
+    .tab-bookmark-btn:hover {
+        opacity: 1;
+        background: rgba(0, 0, 0, 0.06);
+    }
+
+    /* Desktop bookmark modals */
+    .desktop-modal-overlay {
+        position: fixed;
+        inset: 0;
+        background: rgba(0, 0, 0, 0.4);
+        z-index: 10004;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+    }
+
+    .desktop-modal {
+        background: var(--panelBackground, #fff);
+        color: var(--text1);
+        width: 360px;
+        border-radius: 12px;
+        padding: 24px;
+        box-shadow: 0 4px 20px rgba(0, 0, 0, 0.2);
+        max-height: 80vh;
+        overflow-y: auto;
+    }
+
+    .desktop-modal h3 {
+        margin: 0 0 16px;
+        font-size: 16px;
+        font-weight: 700;
+        color: var(--text1);
+    }
+
+    .desktop-modal input {
+        width: 100%;
+        padding: 10px 12px;
+        border: 1px solid #ddd;
+        border-radius: 8px;
+        font-size: 14px;
+        margin-bottom: 16px;
+        box-sizing: border-box;
+        color: var(--text1);
+        background: var(--panelBackground, #fff);
+    }
+
+    .desktop-modal .category-item {
+        display: flex;
+        align-items: center;
+        padding: 10px 12px;
+        border: 1px solid #e0e0e0;
+        border-radius: 8px;
+        margin-bottom: 8px;
+        cursor: pointer;
+        transition: background 0.15s;
+    }
+
+    .desktop-modal .category-item:hover {
+        background: rgba(0, 0, 0, 0.04);
+    }
+
+    .desktop-modal .category-item input[type=radio] {
+        margin-right: 10px;
+        cursor: pointer;
+    }
+
+    .desktop-modal .category-item span {
+        flex: 1;
+        font-size: 14px;
+        color: var(--text1);
+    }
+
+    .desktop-modal .add-new {
+        cursor: pointer;
+        color: var(--selectedSpaceColor);
+        padding: 10px 0;
+        text-align: center;
+        font-weight: 500;
+        font-size: 14px;
+        margin: 8px 0;
+    }
+
+    .desktop-modal .modal-actions {
+        display: flex;
+        gap: 12px;
+        margin-top: 20px;
+    }
+
+    .desktop-modal .modal-actions button {
+        flex: 1;
+        padding: 10px 16px;
+        border: none;
+        border-radius: 8px;
+        font-size: 14px;
+        font-weight: 600;
+        cursor: pointer;
+        transition: opacity 0.15s;
+    }
+
+    .desktop-modal .modal-actions button:hover {
+        opacity: 0.85;
+    }
+
+    .desktop-modal .modal-actions .cancel {
+        background: #f0f0f0;
+        color: var(--text1);
+    }
+
+    .desktop-modal .modal-actions .create {
+        background: var(--selectedSpaceColor);
+        color: #fff;
     }
 `;
 
