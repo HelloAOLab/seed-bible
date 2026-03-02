@@ -87,6 +87,7 @@ function ThePage({
   const [commandHighlight, setCommandHighlight] = useState([]);
   const [direction, setDirection] = useState(null);
   const commandsRef = useRef(null);
+  const lastScrollTopRef = useRef(0);
   const [userMovedToolbar, setUserMovedToolbar] = useState();
   const {
     openOnMobile,
@@ -1557,8 +1558,22 @@ function ThePage({
       onMouseEnter={handleMouseEnter}
       onMouseUp={handleMouseUp}
       onClick={hanldNavFunctions}
-      onScroll={() => {
+      onScroll={(e) => {
+        os.log("scrolling, closing popups", e);
         globalThis.closePopupSettings();
+        const el = e.currentTarget;
+        const currentScrollTop = el.scrollTop;
+        if (currentScrollTop <= 0) {
+          document.body.classList.remove("scroll-hide-bars");
+        } else if (
+          currentScrollTop > lastScrollTopRef.current &&
+          currentScrollTop > 50
+        ) {
+          document.body.classList.add("scroll-hide-bars");
+        } else if (currentScrollTop < lastScrollTopRef.current) {
+          document.body.classList.remove("scroll-hide-bars");
+        }
+        lastScrollTopRef.current = currentScrollTop;
       }}
       style={{
         direction,
@@ -1702,6 +1717,11 @@ function ThePage({
           border-bottom: 1px solid #e0e0e0;
           padding: 12px 16px;
           z-index: 100;
+          transition: transform 0.3s ease;
+        }
+
+        body.scroll-hide-bars .mobile-header {
+          transform: translateY(-100%);
         }
 
         @media (max-width: 768px) {

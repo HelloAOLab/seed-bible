@@ -39,6 +39,7 @@
   border: 1px solid var(--toolbarBorder, #00000024);
   height: 50px;
   pointer-events: none; /* Disabled until app mounts */
+  transition: transform 0.3s ease;
 }
 
 @media (max-width: 480px) {
@@ -68,6 +69,7 @@
   padding: 12px 40px 15px 40px;
   z-index: 100;
   gap: 16px;
+  transition: transform 0.3s ease;
 }
 
 @media (max-width: 480px) {
@@ -266,4 +268,13 @@
 /* 👇 Empty space where item was */
 .placeholder {
   visibility: hidden;
+}
+
+/* ── Hide bars on scroll-down, show on scroll-up ── */
+body.scroll-hide-bars .toolbar-1 {
+  transform: translateX(-50%) translateY(calc(100% + 18px));
+}
+
+body.scroll-hide-bars .mobile-bottom-navbar {
+  transform: translateY(100%);
 }
