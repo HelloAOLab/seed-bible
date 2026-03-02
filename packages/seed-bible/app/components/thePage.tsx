@@ -1596,9 +1596,20 @@ function ThePage({
     current: (() => Promise<void>) | null;
   };
 
+  const clearSelectionRef = useRef(null) as { current: (() => void) | null };
+
   // Keep function refs fresh every render
   openNextChapterRef.current = openNextChapter;
   openPrevChapterRef.current = openPrevChapter;
+  clearSelectionRef.current = () => {
+    setClickedVerses([]);
+    setClickedVersesContext({});
+    setShowVerseToolbar(false);
+    setSelectedText("");
+    setCommandHighlight([]);
+    setLastSelectedVerse(null);
+    setShowCommands(false);
+  };
 
   useEffect(() => {
     const viewport = swipeViewportRef.current;
@@ -1683,6 +1694,7 @@ function ThePage({
       if (!track) return;
 
       if (dx < -THRESHOLD && hasNext && openNextChapterRef.current) {
+        clearSelectionRef.current?.();
         const fn = openNextChapterRef.current;
         track.style.transition = "transform 0.25s cubic-bezier(0.4, 0, 0.2, 1)";
         track.style.transform = `translateX(-${PANEL_PCT * 2}%)`;
@@ -1693,6 +1705,7 @@ function ThePage({
           await fn();
         }, 250);
       } else if (dx > THRESHOLD && hasPrev && openPrevChapterRef.current) {
+        clearSelectionRef.current?.();
         const fn = openPrevChapterRef.current;
         track.style.transition = "transform 0.25s cubic-bezier(0.4, 0, 0.2, 1)";
         track.style.transform = `translateX(0%)`;
