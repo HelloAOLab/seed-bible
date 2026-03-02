@@ -1431,16 +1431,20 @@ function SideBar({ panelsNumber }) {
   // full-screen sidebar that matches the mobile design (header, list, bottom nav).
   if (isMobile && openOnMobile) {
     const [bookmarks, setBookmarks] = useState(
-      () => masks.mobileBookmarks || {}
+      () => masks.mobileBookmarks || { "My bookmarks": [] }
     );
     const [showBookmarkModal, setShowBookmarkModal] = useState(false);
     const [showNewCategoryModal, setShowNewCategoryModal] = useState(false);
     const [selectedTabForBookmark, setSelectedTabForBookmark] = useState(null);
     const [selectedCategory, setSelectedCategory] = useState("");
     const [newCategoryName, setNewCategoryName] = useState("");
+    const [renamingCategory, setRenamingCategory] = useState("");
+    const [renameValue, setRenameValue] = useState("");
     const [expandedCategories, setExpandedCategories] = useState<
       Record<string, boolean>
-    >({});
+    >({
+      ["My bookmarks"]: false,
+    });
     const [showBookmarks, setShowBookmarks] = useState(true);
 
     const toggleCategory = (categoryName) => {
@@ -1525,6 +1529,41 @@ function SideBar({ panelsNumber }) {
       setSelectedTabForBookmark(null);
     };
 
+    const handleDeleteCategory = (categoryName: string) => {
+      setBookmarks((prev: any) => {
+        const updated = { ...prev };
+        delete updated[categoryName];
+        setTagMask(thisBot, "mobileBookmarks", updated, "local");
+        return updated;
+      });
+    };
+
+    const handleRenameCategory = () => {
+      const newName = renameValue.trim();
+      if (!newName || newName === renamingCategory) {
+        setRenamingCategory("");
+        return;
+      }
+      setBookmarks((prev: any) => {
+        const updated: any = {};
+        for (const [cat, ids] of Object.entries(prev)) {
+          updated[cat === renamingCategory ? newName : cat] = ids;
+        }
+        setTagMask(thisBot, "mobileBookmarks", updated, "local");
+        return updated;
+      });
+      setExpandedCategories((prev) => {
+        const updated: any = { ...prev };
+        if (renamingCategory in updated) {
+          updated[newName] = updated[renamingCategory];
+          delete updated[renamingCategory];
+        }
+        return updated;
+      });
+      setRenamingCategory("");
+      setRenameValue("");
+    };
+
     const mobileAddTab = () => {
       const newTab = {
         id: uuid(),
@@ -1595,6 +1634,37 @@ function SideBar({ panelsNumber }) {
                           expand_more
                         </span>
                       </span>
+                      <div
+                        className="mobile-tab-actions"
+                        onClick={(e: any) => {
+                          e.stopPropagation();
+                          const options = {
+                            type: "normal",
+                            items: [
+                              {
+                                icon: <MenuIcon name="edit" />,
+                                title: "Rename",
+                                onClick: () => {
+                                  setRenamingCategory(categoryName);
+                                  setRenameValue(categoryName);
+                                  closePopupSettings();
+                                },
+                              },
+                              {
+                                icon: <MenuIcon name="delete" />,
+                                title: "Delete",
+                                onClick: () => {
+                                  handleDeleteCategory(categoryName);
+                                  closePopupSettings();
+                                },
+                              },
+                            ],
+                          };
+                          openPopupSettings(options);
+                        }}
+                      >
+                        <MenuIcon name={"more_vert"} />
+                      </div>
                     </div>
                     {expandedCategories[categoryName] && (
                       <div className="bookmark-items">
@@ -2023,6 +2093,41 @@ function SideBar({ panelsNumber }) {
                     onClick={() => handleAddToCategory(selectedCategory)}
                   >
                     Add
+                  </button>
+                </div>
+              </div>
+            </div>
+          )}
+
+          {/* rename category modal */}
+          {renamingCategory && (
+            <div
+              className="mobile-modal-overlay"
+              onClick={() => setRenamingCategory("")}
+            >
+              <div
+                className="mobile-modal"
+                onClick={(e) => e.stopPropagation()}
+              >
+                <h3>Rename category</h3>
+                <input
+                  placeholder="Category name"
+                  value={renameValue}
+                  onChange={(e: any) => setRenameValue(e.target.value)}
+                  onKeyPress={(e: any) => {
+                    if (e.key === "Enter") handleRenameCategory();
+                  }}
+                  autoFocus
+                />
+                <div className="modal-actions">
+                  <button
+                    className="cancel"
+                    onClick={() => setRenamingCategory("")}
+                  >
+                    Cancel
+                  </button>
+                  <button className="create" onClick={handleRenameCategory}>
+                    Rename
                   </button>
                 </div>
               </div>
