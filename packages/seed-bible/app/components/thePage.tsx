@@ -1576,6 +1576,9 @@ function ThePage({
         .toolbar-item-wrapper{
             display:${showVerseToolbar && globalThis.IsMobileNow() ? "none !important" : ""}
           }
+        .mobile-bottom-navbar {
+          display:${showVerseToolbar && globalThis.IsMobileNow() ? "none !important" : ""}
+        }
         .bookTitle,
         .sectionTitle {
           display:${direction ? "ruby" : null}
