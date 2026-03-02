@@ -23,10 +23,16 @@ export function VerseToolbar({
   spaces,
 }) {
   // Get Selection UI settings - first try globalThis, then fall back to saved space data
+  // we intentionally ignore any copyVerseMode stored in the settings
   const getSelectionSettings = () => {
-    // First check globalThis (set by SelectionUISettings component when user changes settings)
+    const pick = (s) => ({
+      showSelectedItems: s.showSelectedItems ?? true,
+      showHighlightColors: s.showHighlightColors ?? true,
+      showIconText: s.showIconText ?? true,
+    });
+    // First check globalThis (set by SelectionUISettings component)
     if (globalThis.selectionUIBehavior?.[activeSpace]) {
-      return globalThis.selectionUIBehavior[activeSpace];
+      return pick(globalThis.selectionUIBehavior[activeSpace]);
     }
     // Fall back to saved space data
     const currentSpace = spaces?.find((s) => s.id === activeSpace);
@@ -37,14 +43,13 @@ export function VerseToolbar({
       }
       globalThis.selectionUIBehavior[activeSpace] =
         currentSpace.selectionUIBehavior;
-      return currentSpace.selectionUIBehavior;
+      return pick(currentSpace.selectionUIBehavior);
     }
     // Default settings
     return {
       showSelectedItems: true,
       showHighlightColors: true,
       showIconText: true,
-      copyVerseMode: "withReference",
     };
   };
 
@@ -651,18 +656,8 @@ export function VerseToolbar({
 function getMenuActions(that, onClose, activeSpace, spaces) {
   os.log("GET MENU ACTIONS VERSE TOOLBAR", that);
   const { SharePopup } = thisBot.Chips();
-  // Get copy mode setting - first try globalThis, then fall back to saved space data
-  const getSettings = () => {
-    if (globalThis.selectionUIBehavior?.[activeSpace]) {
-      return globalThis.selectionUIBehavior[activeSpace];
-    }
-    const currentSpace = spaces?.find((s) => s.id === activeSpace);
-    if (currentSpace?.selectionUIBehavior) {
-      return currentSpace.selectionUIBehavior;
-    }
-    return { copyVerseMode: "withReference" };
-  };
-  const selectionSettings = getSettings();
+  // copy mode is fixed to always include reference – ignore any stored setting
+  // (we don't need to read selection settings for this function)
 
   // Build verse reference for copy with reference
   const buildReference = () => {
@@ -696,10 +691,8 @@ function getMenuActions(that, onClose, activeSpace, spaces) {
       {
         icon: <CopyIcon height="24" width="24" />,
         onClick: () => {
-          const textToCopy =
-            selectionSettings.copyVerseMode === "withReference"
-              ? `${that.text}\n— ${buildReference()}`
-              : that.text;
+          // always include the verse reference when copying
+          const textToCopy = `${that.text}\n— ${buildReference()}`;
           os.setClipboard(textToCopy);
           SetInHold(null);
           onClose();
