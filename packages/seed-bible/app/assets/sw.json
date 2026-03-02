@@ -141,6 +141,10 @@
   "historical": "Historia",
   "poetic": "Mashairi",
   "prophetic": "Unabii",
+  "bookmarkUpdatedSuccessfully": "Alama imesasishwa kwa mafanikio.",
+  "failedToUpdateBookmark": "Imeshindwa kusasisha alama. Tafadhali jaribu tena.",
+  "undoActionSuccessfull": "Tengua kitendo imefanikiwa.",
+  "headingAddedToPlaylist": "{{heading}} imeongezwa kwenye orodha",
   "addToPlaylist": "Ongeza kwenye orodha",
   "addToNew": "Ongeza kwenye mpya",
   "itemsAddedToPlaylistSuccessfully": "Vipengele vimeongezwa kwenye orodha kwa mafanikio."

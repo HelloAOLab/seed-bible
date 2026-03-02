@@ -36,9 +36,37 @@ const AddToPlaylist = ({
         return old;
       });
     }
+    const items = [...G.AddToPlaylistData];
+    const playlistIds = items.reduce((acc: any, ele: any) => {
+      acc[ele.id] = true;
+      return acc;
+    }, {});
+    G.LasttAddedToPlaylist = playlistIds;
+    const verses = items
+      .map((ele) => ele.additionalInfo.verse)
+      .sort((a, b) => a - b);
+    const ranges = G.GetVerseSummaryHeading(verses);
+    const heading = `${items[0].content.split(":")[0]}:${ranges.join(", ")}`;
+
     ShowNotification({
-      message: t("itemsAddedToPlaylistSuccessfully"),
+      message: t("headingAddedToPlaylist", { heading }),
       severity: "success",
+      onUndoActions: () => {
+        G[`${id}SetPlaylists`]((prev: any) => {
+          const old = [...prev];
+          const index = old.findIndex((ele) => ele.id === playlistId);
+          if (index > -1) {
+            old[index].list = old[index].list.filter(
+              (ele: any) => !G.LasttAddedToPlaylist[ele.id]
+            );
+          }
+          return old;
+        });
+        ShowNotification({
+          message: t("undoActionSuccessfull", { heading }),
+          severity: "success",
+        });
+      },
     });
     onClose();
   };

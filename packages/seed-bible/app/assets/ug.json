@@ -141,6 +141,10 @@
   "historical": "تارىخىي",
   "poetic": "شېئىرىي",
   "prophetic": "پەيغەمبەرلىك",
+  "bookmarkUpdatedSuccessfully": "خەتكۈچ مۇۋاپىق يېڭىلاندى.",
+  "failedToUpdateBookmark": "خەتكۈچنى يېڭىلاش مەغلۇپ بولدى. قايتا سىناڭ.",
+  "undoActionSuccessfull": "قايتۇرۇش مۇۋاپىق بولدى.",
+  "headingAddedToPlaylist": "{{heading}} تىزىملىككە قوشۇلدى",
   "addToPlaylist": "تىزىملىككە قوشۇش",
   "addToNew": "يېڭىغا قوشۇش",
   "itemsAddedToPlaylistSuccessfully": "تۈرلەر تىزىملىككە مۇۋاپىق قوشۇلدى."
