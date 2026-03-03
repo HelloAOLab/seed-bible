@@ -819,6 +819,15 @@ const SearchBar = (props: { openSidebar: boolean }) => {
   }, [selectingTranslation]);
 
   useEffect(() => {
+    globalThis.setLanguageQuery = setLanguageQuery;
+    globalThis.setSelectedTranslation = setSelectedTranslation;
+    return () => {
+      globalThis.setLanguageQuery = null;
+      globalThis.setSelectedTranslation = null;
+    };
+  }, []);
+
+  useEffect(() => {
     if (!openSidebar && globalThis?.bookModalOpen) {
       globalThis.bookModalOpen(false);
     }
