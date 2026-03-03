@@ -53,6 +53,10 @@ const removeBookMark =
   tags?.settingsConfigs?.presets?.[
     configBot?.tags?.settingsPreset || thisBot.tags.settingsPreset || "full"
   ]?.appSettings?.removeBookMark;
+const removeAddSession =
+  tags?.settingsConfigs?.presets?.[
+    configBot?.tags?.settingsPreset || thisBot.tags.settingsPreset || "full"
+  ]?.appSettings?.removeAddSession;
 
 const CircleCounter = ({ data, book, chapter }) => {
   const [isModalOpen, setIsModalOpen] = useState(false);
@@ -1817,17 +1821,23 @@ function SideBar({ panelsNumber }) {
             ))}
           </div>
 
-          <div className="mobile-bottom-nav">
-            <button
-              className="mobile-nav-btn"
-              onClick={() => {
-                // setSideBarMode("settings");
-                openPopupSettings(SessionsOptions);
-              }}
-            >
-              <MenuIcon name={"person_add"} />
-              <div className="mobile-nav-label">Sessions</div>
-            </button>
+          <div
+            className={`mobile-bottom-nav ${
+              removeBookMark && removeAddSession ? "single" : "multiple"
+            }`}
+          >
+            {!removeJoinSession && (
+              <button
+                className="mobile-nav-btn"
+                onClick={() => {
+                  // setSideBarMode("settings");
+                  openPopupSettings(SessionsOptions);
+                }}
+              >
+                <MenuIcon name={"person_add"} />
+                <div className="mobile-nav-label">Sessions</div>
+              </button>
+            )}
 
             <button className="mobile-nav-add" onClick={mobileAddTab}>
               <span>+</span>
@@ -1894,7 +1904,9 @@ function SideBar({ panelsNumber }) {
             .mobile-tab-left{display:flex;flex-direction:column}
             .mobile-tab-actions{opacity:0.6;cursor:pointer;display:flex;align-items:center;}
             .mobile-tab-actions:hover{opacity:1;}
-            .mobile-bottom-nav{display:flex;justify-content:space-between;align-items:center;padding:12px 30px;border-top:1px solid #eee}
+            .mobile-bottom-nav{display:flex;align-items:center;padding:12px 30px;border-top:1px solid #eee}
+            .mobile-bottom-nav.single {justify-content: center;}
+            .mobile-bottom-nav.multiple {justify-content: space-between;}
             .mobile-nav-btn{background:none;border:none;display:flex;flex-direction:column;align-items:center;gap:6px;color:var(--text1);cursor:pointer}
             .mobile-nav-label{font-size:12px}
             .mobile-nav-add{

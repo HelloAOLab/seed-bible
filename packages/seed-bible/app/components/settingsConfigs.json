@@ -9,7 +9,8 @@
         "removeAccountOptions": true,
         "removeBibleStack": true,
         "removeJoinSession": true,
-        "removeBookMark": true
+        "removeBookMark": true,
+        "removeAddSession": true
       },
       "pageSettings": {
         "disableHighlighting": true,
