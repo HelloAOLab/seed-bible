@@ -957,7 +957,6 @@ input:checked + .slider:not(#slider):before {
 .close-sideBar {
   right: 0;
   height: 0;
-  bottom: -80px;
   user-select: none;
   visibility: hidden;
   pointer-events: none;
@@ -1167,6 +1166,10 @@ input:checked + .slider:not(#slider):before {
 }
 
 @media only screen and (max-width: 768px) {
+  .testament-line {
+    height: 2px;
+    width: 100%;
+  }
   .dropdown {
     /* display: none; */
     width: 100px;
@@ -1271,9 +1274,10 @@ input:checked + .slider:not(#slider):before {
   }
 
   .books-container {
-    height: calc(100dvh - 110px);
+    height: calc(100dvh - 175px);
     flex-direction: column;
     overflow: auto;
+    top: 100px;
   }
 
   .testament-container {
@@ -1289,8 +1293,10 @@ input:checked + .slider:not(#slider):before {
   }
 
   .testament-title {
-    text-align: left;
+    text-align: center;
     padding-left: 0px;
+    width: 100%;
+    padding-bottom: 10px;
   }
 
   .defocus-input {
@@ -1345,10 +1351,11 @@ input:checked + .slider:not(#slider):before {
     right: 0;
     opacity: 1;
     bottom: 45px;
-    height: calc(100dvh - 40px);
+    height: calc(100dvh - 70px);
     width: 100dvw;
     border-radius: 0px;
     box-shadow: none;
+    top: 0px;
   }
 
   .close-sideBar {
