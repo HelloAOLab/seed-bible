@@ -1208,22 +1208,20 @@ const SideBarBooks = (props: {
     const sortedBooks = sortBooksByTestament(booksData);
     const OTBooks = sortedBooks.OTBooks;
     const NTBooks = sortedBooks.NTBooks;
-    if (query.length > 0) {
+    if (selectedTestament === 2 || query.length > 0) {
       if (OTBooks.length > 0 && NTBooks.length === 0) {
         setLocalSelectedTestament(0);
       } else if (NTBooks.length > 0 && OTBooks.length === 0) {
         setLocalSelectedTestament(1);
-      } else {
+      } else if (query.length > 0) {
         setLocalSelectedTestament(2);
-      }
-    } else {
-      if (windowSize <= 768 && selectedTestament > 1) {
-        setLocalSelectedTestament(0);
       } else {
         setLocalSelectedTestament(selectedTestament);
       }
+    } else {
+      setLocalSelectedTestament(selectedTestament);
     }
-  }, [selectedTestament, booksData, query, windowSize]);
+  }, [selectedTestament, booksData, query]);
 
   const RenderBooksByTestament = useMemo(() => {
     let allowedRows = 5;
@@ -1258,11 +1256,9 @@ const SideBarBooks = (props: {
               width: `${allowedRows === 5 ? 60 : allowedRows === 3 ? 66.66 : 100}%`,
             }}
           >
-            {windowSize >= 768 && (
-              <span class="testament-title">
-                {systemTranslation["oldTestament"] || "Old Testament"}
-              </span>
-            )}
+            <span class="testament-title">
+              {systemTranslation["oldTestament"] || "Old Testament"}
+            </span>
             <div class="books-item">
               {OTBooks.map((book, index) => {
                 return (
@@ -1331,11 +1327,9 @@ const SideBarBooks = (props: {
               width: `${allowedRows === 5 ? 40 : allowedRows === 3 ? 33.33 : 100}%`,
             }}
           >
-            {windowSize >= 768 && (
-              <span class="testament-title">
-                {systemTranslation["newTestament"] || "New Testament"}
-              </span>
-            )}
+            <span class="testament-title">
+              {systemTranslation["newTestament"] || "New Testament"}
+            </span>
             <div class="books-item">
               {NTBooks.map((book, index) => {
                 return (
@@ -1652,72 +1646,7 @@ const SideBarBooks = (props: {
     };
   }, [selectBookSelectorBook]);
 
-  return (
-    <>
-      {windowSize <= 768 && (
-        <div
-          style={{ display: "flex", flexDirection: "column", width: "100%" }}
-        >
-          <div
-            style={{
-              display: "flex",
-              width: "100%",
-              justifyContent: "space-around",
-              alignItems: "center",
-            }}
-          >
-            <span
-              onClick={() => {
-                setSelectedTestament(0);
-              }}
-              class="testament-title"
-              style={{
-                color:
-                  localSelectedTestament === 0 || localSelectedTestament === 2
-                    ? "var(--tabSelection)"
-                    : "var(--text1)",
-              }}
-            >
-              {systemTranslation["oldTestament"] || "Old Testament"}
-            </span>
-            <span
-              onClick={() => {
-                setSelectedTestament(1);
-              }}
-              class="testament-title"
-              style={{
-                color:
-                  localSelectedTestament === 1 || localSelectedTestament === 2
-                    ? "var(--tabSelection)"
-                    : "var(--text1)",
-              }}
-            >
-              {systemTranslation["newTestament"] || "New Testament"}
-            </span>
-          </div>
-          <div
-            class="testament-line"
-            style={
-              localSelectedTestament === 0
-                ? {
-                    background:
-                      "linear-gradient( to right, var(--tabSelection) 50%, #ddd 50% )",
-                  }
-                : localSelectedTestament === 1
-                  ? {
-                      background:
-                        "linear-gradient( to right, #ddd 50%, var(--tabSelection) 50% )",
-                    }
-                  : {
-                      background: "var(--tabSelection)",
-                    }
-            }
-          ></div>
-        </div>
-      )}
-      {RenderBooksByTestament}
-    </>
-  );
+  return <>{RenderBooksByTestament}</>;
 };
 
 const SideBarChapters = (props: {
